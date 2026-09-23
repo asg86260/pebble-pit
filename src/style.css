@@ -1206,12 +1206,6 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    so the middle column is narrow and simply comes out empty on all but the one
    row that is buying something. */
 
-/* The sky's row says a signed rate where a price would go, and a rate is wider
-   than a price: the cost column is sized for "24" and a mark, and "+42.7/min"
-   ran straight out of the sheet. The whole row is given to it instead, with the
-   reading against the right edge like every other number on these boards. */
-#filtershop button[data-key="airrate"] .gain { display: none; }
-
 /* The bill wraps inside its own cell, right-aligned, filling from the right.
    It used to be counted and then stacked one coin to a line past four of them,
    because the price COLUMN was a track shared by the whole sheet and a bill

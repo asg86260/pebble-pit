@@ -48,7 +48,6 @@ export const GLYPHS = {
   bolt:       ['....####', '...#####', '...#..##', '..##..##', '.#.####.', '#.#.#...', '.#.#....', '#.#.....'],
   dome:       ['........', '........', '........', '..####..', '.#....#.', '#......#', '#......#', '#......#'],
   chip:       ['........', '...##...', '..#..#..', '.#.##.#.', '.#.##.#.', '..#..#..', '...##...', '........'],
-  fan:        ['........', '##....##', '.##..##.', '..####..', '..####..', '..####..', '..#..#..', '..#..#..'],
   balloon:    ['...##...', '..#..#..', '.#....#.', '.#....#.', '.#....#.', '..#..#..', '...##...', '...##...'],
   lamp:       ['........', '........', '........', '........', '...##...', '.######.', '........', '........'],
   brim:       ['........', '........', '........', '........', '..###...', '#######.', '........', '........'],
@@ -112,7 +111,7 @@ export const GLYPH_OF = {
   spelldrive: ['ram', 'star'], spellluck: ['ore', 'star'], spellgmo: ['ear', 'star'], spellthrift: ['house', 'star'], spellsweep: ['cap', 'star'],
   dome: ['dome'],
   // the air filter
-  power: ['balloon', 'plus'], balloonspeed: ['balloon', 'up'], balloon: ['balloon'], recycler: ['lever'], airrate: ['fan'],
+  power: ['balloon', 'plus'], balloonspeed: ['balloon', 'up'], balloon: ['balloon'], recycler: ['lever'],
   // the casino
   chip: ['chip', 'plus'], stakedust: ['chip', 'dust'], stakeshard: ['chip', 'ore'], stakespore: ['chip', 'crop'],
   letgo: ['lever'], bank: ['sack', 'dust'], ride: ['die'],

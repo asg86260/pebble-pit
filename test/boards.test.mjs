@@ -99,9 +99,7 @@ group('the shop keeps to one grammar per kind', async () => {
                 ...APOTHECARY_UPGRADES];
 
   // The casino is not a shop -- chips, stake, let it go, bank it, drop again are moves at a
-  // table -- so its rows keep their own register on purpose. And `airrate` is a
-  // readout wearing a row (it says "pollution / holding steady" and sells
-  // nothing), exempt until it stops being a row at all. See "What is exempt".
+  // table -- so its rows keep their own register on purpose. See "What is exempt".
   const casinoKeys = new Set(CASINO_UPGRADES.map(r => r.key));
   // `recycler` is typed `place` for a mechanical reason -- the house's own body
   // walks over to fit it, the same walk a bench costs -- but it is not standing
@@ -109,7 +107,7 @@ group('the shop keeps to one grammar per kind', async () => {
   // recycler") over the "another X" the place rule asks for. The kind cannot
   // move without moving the mechanic, so the row is the one exception to that
   // rule and is named here rather than left to fail silently.
-  const exempt = k => casinoKeys.has(k) || k === 'airrate' || k === 'recycler';
+  const exempt = k => casinoKeys.has(k) || k === 'recycler';
 
   // The three tune rows, held to the register every neighbor on their board
   // keeps: a noun phrase naming the thing that goes up ("crop yield",

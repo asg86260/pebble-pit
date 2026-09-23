@@ -61,7 +61,6 @@ cells wide); those are redrawn at eight, the shape settled.
 | hut             | `unlockshack`                                                                          |
 | bucket and mop  | `unlockouthouse`                                                                       |
 | tower           | `unlocktower`                                                                          |
-| fan             | `airrate`                                                                              |
 | balloon         | `unlockfilter`, `balloon`, `power` +plus, `balloonspeed` +up                           |
 | shovel          | `quarrybench` +plus                                                                    |
 | ore lump        | `seam` +plus, `spellluck` +star                                                          |

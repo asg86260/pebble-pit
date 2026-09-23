@@ -47,54 +47,6 @@ export const TESTS = [
   }],
 
 
-  ['the pollution reading is not a button', async () => {
-    newRun();
-    await settle();
-    window.__crew(4, 4);
-    window.__grant({ cores: 9, spores: 40 });
-    window.__invest();
-    // a dirty sky, and the next front brought forward
-    window.__air({ haze: state().smog.cap });
-    window.__front(1);
-    runUntil(() => state().smog.rains > 0, 60);
-    run(20);
-    // ...and a machine running, which the house waits on
-    window.__fullSites();
-    window.__machine('jaw', { bought: true });
-    buildShopFromTest();
-    shop().querySelector('[data-key="unlockfilter"]').click();
-    window.__finish();  // the page's business, not the yard's
-    buildShopFromTest();
-
-    const row = document.getElementById('filtershop').querySelector('[data-key="airrate"]');
-    // Read either side of the click with no clock in between: the sky fills on
-    // its own, so a run() here would show the yard working and prove nothing.
-    const before = state().smog.haze;
-    row?.click();                                // nothing is hung on it to fire
-    const after = state().smog.haze;
-    const buy = document.getElementById('filtershop')
-                        .querySelector('[data-key]:not([data-key="airrate"])');
-
-    window.__crew(0, 0);
-    window.__air({ haze: 0, muck: 0 });
-    window.__clearFloor();
-    return [
-      ok(!!row, 'the sky has a row on the house board'),
-      ok(row && row.classList.contains('stat'),
-         'and it is marked as a reading rather than a purchase'),
-      ok(row && getComputedStyle(row).cursor === 'default',
-         'the cursor does not change over it', row && getComputedStyle(row).cursor),
-      ok(row && !row.disabled,
-         'it is not dimmed either: a reading is live, it is just not for pressing'),
-      ok(after === before, 'and pressing it does nothing at all', `${before} -> ${after}`),
-      ok(!buy || getComputedStyle(buy).cursor === 'pointer',
-         'while a real row on the same board still offers itself',
-         buy && getComputedStyle(buy).cursor)
-    ];
-  }],
-
-  // The gauge says what it reads when you look at it: the band the needle is
-  // in and how full the sky is, the two rates, and which way it is going.
   ["the air filter's gauge says what it reads when you hover it", async () => {
     newRun();
     await settle();

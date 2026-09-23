@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The air filter's board no longer carries a pollution row: the gauge on its wall reads the sky, and its hover says the rest (src/selftest/sky.js).
 - The fan is balloon power now, and a new balloon speed ladder makes the trips between clouds shorter; a balloon cleans only while it hangs at a cloud, no two balloons work the same cloud, and the filter box under the envelope is gone (test/balloon.test.mjs).
 - The books board keeps just the income rates; the full books sheet is put away for now (test/books-sheets.test.mjs).
 - The air filter no longer filters: the balloons do all the cleaning, and the shed keeps the gauge and the board they are bought from; each balloon bought sends a spare hand over to ride it (test/sky-fan.test.mjs, test/door-staffs.test.mjs).

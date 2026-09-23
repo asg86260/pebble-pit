@@ -12,7 +12,6 @@ import { S, filter } from './state.js';
 import { walkY } from './world.js';
 import { climbTo } from './route.js';
 
-import { airRows, airSection } from './airboard.js';
 import { CRAFT, craftCost, buyCraft, berthFor, stepRider, dismount } from './balloon.js';
 import { registerRows } from './works.js';
 import { JOB, TYPE } from './jobs.js';
@@ -102,9 +101,8 @@ export const FILTER_UPGRADES = [
   ...SPEED,
 
   // No row for who is aboard: a craft is a place for one (`capOf`), so the
-  // balloons staff themselves (`rebalance`). The sky's reading sits over the
-  // rows that decide what to do about it.
-  ...airRows(),
+  // balloons staff themselves (`rebalance`). No row for the sky either: the
+  // gauge on the shed's wall reads it, and its hover says the rest.
   // The craft the shed sells; see balloon.js.
   CRAFT_ROW,
   {
@@ -122,7 +120,6 @@ export const FILTER_UPGRADES = [
 ];
 
 export const FILTER_SECTIONS = [
-  airSection(),
   { title: 'equipment', keys: ['power', 'balloonspeed', 'balloon', 'recycler'] }
 ];
 
