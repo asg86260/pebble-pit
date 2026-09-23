@@ -1040,3 +1040,9 @@ export const HANDLES = {
 // `null` to follow the system. Answers with what the camera will actually do.
 import { setPref, reducedMotion } from './prefs.js';
 HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
+
+// --- wave serpent: RENDER ---
+// Which half the camera is on, straight there with no glide: the setup a
+// scene or a check is not about. The glide itself is reached by a click.
+import { setView } from './view.js';
+HANDLES.__view = v => { setView(v); return S.view; };

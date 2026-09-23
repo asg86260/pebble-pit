@@ -16,7 +16,9 @@ import { shadeOf } from '../grid.js';
 import { drawRoster, kitStands } from '../roster.js';
 import { inBasket } from '../balloon.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
-import { S, bench, floor } from '../state.js';
+import { S, bench, floor, pit } from '../state.js';
+import { deepTop } from '../deep/place.js';
+import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { drawRunSwitch } from './machines.js';
 import { drawCircle, drawMark } from './marks.js';
@@ -490,6 +492,19 @@ export function drawForklifts() {
   }
 }
 
+// A body on the deep's way, or down the shaft past the deep's ceiling: drawn
+// by the deep (render/deep.js, `drawSwimmers`), never by the yard.
+export const inTheDeep = w => w.way === 'deep' || w.y + WORKER > deepTop();
+
+// A body going down into the drowned pit goes under a row at a time: what is
+// below the surface is the liquid's and is not drawn. Only over the pit's own
+// columns, since the plank over it is at the brim and a body on it is dry.
+function underSurface(w) {
+  if (!S.drowned || w.x + WORKER <= pit.x || w.x >= pit.x + pit.w) return null;
+  const line = abyssLine();
+  return w.y + WORKER > line ? line : null;
+}
+
 export function drawWorkers() {
   const t0 = now();
   for (const w of S.workers) {
@@ -497,7 +512,24 @@ export function drawWorkers() {
     // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
     // reason to skip it here. A body in a balloon's basket is drawn by the
     // balloon, wherever in the sky it is (render/balloon.js).
-    if (underground(w) || atHome(w) || inBasket(w)) continue;
+    if (underground(w) || atHome(w) || inBasket(w) || inTheDeep(w)) continue;
+    const sunk = underSurface(w);
+    if (sunk != null) {
+      if (w.y >= sunk) continue;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(w.x - P * 8, w.y - P * 16, WORKER + P * 16, sunk - w.y + P * 16);
+      ctx.clip();
+      drawWorker(w, t0);
+      ctx.restore();
+      continue;
+    }
+    drawWorker(w, t0);
+  }
+}
+
+function drawWorker(w, t0) {
+  {
 
     // Somebody digging at the one in the ground is drawn as a builder,
     // whatever job the body came from.
@@ -546,10 +578,10 @@ export function drawWorkers() {
       ctx.fillStyle = '#000';
     }
 
-    if (!w.carry && !w.hasCore) continue;
+    if (!w.carry && !w.hasCore) return;
 
     // What it brought up, over its head, as the thing itself.
-    if (look.load === 'shard') { drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2); continue; }
+    if (look.load === 'shard') { drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2); return; }
 
     // A load is drawn grain by grain as whatever each grain is: overhead two
     // abreast, or in the cart four abreast. (A forklift's is `drawForklifts`.)
