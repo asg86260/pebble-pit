@@ -39,6 +39,7 @@ group("after the snatch the deep's crew is the sqwife alone, and a yard hire sta
   }
   return [
     ok(deep0.length === 1 && S.deepCrew === 1 && S.brawlers === 1, "the deep's one hand, at the altar", `${deep0.length} below`),
+    ok(S.pods === 1, 'living in the first pod', `pods ${S.pods}`),
     ok(bought, 'a room is bought'),
     ok(down === 0, 'and the new hand never goes down', `${down} frames with a stranger below`)
   ];
@@ -51,7 +52,7 @@ group("a pod is built by the deep's own hand, and its body is the deep's", async
   window.__scales(99999);
   const bought = window.__buy('pod');
   let delver = null, offAltar = false, yardDown = false;
-  for (let f = 0; f < 60 * 240 && S.pods < 1; f++) {
+  for (let f = 0; f < 60 * 240 && S.pods < 2; f++) {
     run(1 / 60);
     const d = S.workers.find(w => w.type === 'delver');
     if (d) delver = { name: d.name, below: belowYard(d) };
@@ -64,7 +65,7 @@ group("a pod is built by the deep's own hand, and its body is the deep's", async
     ok(delver && delver.below, 'a deep builder puts it up, down there', JSON.stringify(delver)),
     ok(offAltar, 'with nobody spare, the sqwife leaves the altar to build it'),
     ok(!yardDown, "and none of the yard's hands went down"),
-    ok(S.pods === 1 && S.deepCrew === 2 && below().length === 2, "the pod's body is the deep's", `pods ${S.pods}, deep ${S.deepCrew}`),
+    ok(S.pods === 2 && S.deepCrew === 2 && below().length === 2, "the pod's body is the deep's", `pods ${S.pods}, deep ${S.deepCrew}`),
     ok(S.brawlers === 1, 'and she is back at the altar', `brawlers ${S.brawlers}`)
   ];
 });
@@ -113,12 +114,17 @@ group("the view goes down only once the wizards' portal is conjured", async () =
   window.__grant({ dust: 1e8, shards: 1e6, spores: 1e6, sparks: 1e6 });
   const bought = window.__buy('portal');
   const arrow = (b => whatIsAt(b.x + b.w / 2, b.y + b.h / 2))(arrowBox(false));
+  run(2);                                 // the portal opening
+  const { mouthX } = await import('../src/deep/place.js');
+  const { abyssLine } = await import('../src/pit.js');
+  const portal = whatIsAt(mouthX(), abyssLine());
   goDeep();
   run(3);
   return [
     ok(before === 'yard' && noArrow, 'before the portal the view stays up, and there is no arrow', before),
     ok(bought && S.portalOpen, 'the tower sells the portal'),
     ok(arrow === 'down to the deep', 'then the arrow at it says the way down', `${arrow}`),
+    ok(portal === 'the portal — down to the deep', 'and so does the portal itself', `${portal}`),
     ok(S.view === 'deep', 'and the view goes down', S.view)
   ];
 }, { reload: false });

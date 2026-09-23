@@ -23,6 +23,14 @@ export function portalOpenness() {
   return ease(Math.min(1, (now() - (S.portalAt || 0)) / PORTAL_OPEN_MS));
 }
 
+// A press on the held-open portal is the way down, as the corner's square
+// and the arrow over it are: its ring and a cell round it.
+export function onPortal(x, y) {
+  if (!S.portalOpen || S.view === 'deep' || portalOpenness() < 1) return false;
+  const dx = (x - mouthX()) / (PORTAL_RX + P), dy = (y - abyssLine()) / (PORTAL_RY + P * 2);
+  return dx * dx + dy * dy <= 1;
+}
+
 export function drawPortal() {
   const k = portalOpenness();
   if (k <= 0) return;

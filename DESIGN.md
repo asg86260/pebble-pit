@@ -14954,7 +14954,8 @@ head out and back, him in its jaws, her leap an arc into the ring. The ring
 shrinks to nothing and is gone. The camera stays in the yard.
 
 **The deep starts with one.** The sqwife lands in the deep and is its whole
-crew: a brawler at the altar, punching the serpent -- the deep's `crew`
+crew, living in its first pod (standing from the snatch, so the altar sells
+the second): a brawler at the altar, punching the serpent -- the deep's `crew`
 begins at one, hers, and every other body in the save is the yard's. The
 yard carries on with the rest, as before.
 
@@ -14974,8 +14975,9 @@ is the deep's first decision, as the bench was the yard's.
 tower sells, once the snatch has played, **conjure the portal**: poured by
 the wizards like the dome (a ring's time, a bill in the dome's shape of dust,
 crops, ore and sparks). It opens a portal over the abyss that stays -- the
-same ring as the snatch's, held open -- and from then the corner's square
-and the arrow at the portal take the view down and back up (the glide as
+same ring as the snatch's, held open -- and from then a click on the portal
+itself, the arrow over it or the corner's square takes the view down, and
+the arrow and the square bring it back up (the glide as
 built, through the abyss). Until it is bought the deep runs unseen: the
 sqwife punches, the wound opens and heals, scales fall on its floor.
 

@@ -6,7 +6,7 @@
 
 import { ok, point, onScreen, run } from './kit.js';
 import { S } from '../state.js';
-import { P, VIEW_GLIDE_S } from '../config.js';
+import { P, VIEW_GLIDE_S, PORTAL_RX } from '../config.js';
 import { mouthX, deepTop } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { arrowBox } from '../render/shaftway.js';
@@ -46,7 +46,8 @@ function deepYard(snatched = true) {
 export const TESTS = [
   ['deep: the arrow at the shaft goes down and up; the surface and the roof take no click', async () => {
     deepYard();
-    click(mouthX(), abyssLine() + P * 2);
+    // The liquid well clear of the portal, which is a way down of its own.
+    click(mouthX() + PORTAL_RX * 3, abyssLine() + P * 2);
     run(VIEW_GLIDE_S + 0.5);
     const surface = S.view;
     clickArrow(false);
@@ -64,6 +65,13 @@ export const TESTS = [
       ok(roof === 'deep', 'a click on the roof is not a way up', roof),
       ok(up === 'yard', 'and the arrow in the light brings it back up', up)
     ];
+  }],
+  ['deep: a click on the conjured portal goes down', async () => {
+    deepYard();
+    run(2);                                // held open, and open all the way
+    click(mouthX(), abyssLine());
+    run(VIEW_GLIDE_S + 0.5);
+    return [ok(S.view === 'deep', 'the portal in the surface takes the view down', S.view)];
   }],
   ['deep: the corner square goes down and up, and only after the snatch', async () => {
     deepYard(false);

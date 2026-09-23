@@ -29,11 +29,11 @@ group('a pod is bought in scales and adds a body who lives down there', async ()
   window.__finish();
   run(0.5);
   const home = residents();
-  const at = podAt(0);
+  const at = podAt(1);                   // the sqwife's pod is the first
   return [
     ok(bought, 'the altar sells a pod'),
     ok(S.scales < scales, 'for scales', `${scales} -> ${S.scales}`),
-    ok(S.crew === crew + 1 && S.pods === 1, 'and the crew is one more, living in it', `crew ${S.crew}, pods ${S.pods}`),
+    ok(S.crew === crew + 1 && S.pods === 2, 'and the crew is one more, living in it', `crew ${S.crew}, pods ${S.pods}`),
     ok(home.length === 1 && inDeep(home[0]), 'who comes out of it on the deep\'s floor',
        home[0] ? `${Math.round(home[0].x)},${Math.round(home[0].y)} by ${at.x}` : 'nobody')
   ];

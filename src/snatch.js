@@ -209,8 +209,8 @@ export function stepSnatch(t) {
 // The one who leapt is one of the crew again, as the rescue's body was, and
 // the deep's whole crew: she comes down through the liquid under the portal
 // and sinks to the deep's floor (crew/falls.js, `sink`), and from there
-// walks to the altar to punch. She is the deep's first body, and the only
-// one until a pod is built.
+// walks to the altar to punch. She is the deep's first body, living in its
+// first pod, and the only one until another is built.
 function giveBack() {
   const b = S.pair[0];
   const w = b?.body || (b && Object.assign(FACTORY(TYPE.HAUL), newRecord()));
@@ -219,6 +219,9 @@ function giveBack() {
   if (!w) return;
   S.crew++;
   S.deepCrew = (S.deepCrew || 0) + 1;
+  // Her home down there: the deep's first pod is hers, standing from the
+  // start, so the altar sells the second.
+  S.pods = Math.max(1, S.pods || 0);
   S.brawlers = 1;
   rebalance();
   retask(w, TYPE.BRAWL);
