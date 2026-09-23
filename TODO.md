@@ -15,7 +15,9 @@ Open:
 - **The coil reads thin** at 5 cells across a 520-cell deep in a wide window
   (`COIL_THICK`, `DEEP_H`).
 - **The sheet before the snatch** still says it is the end of the story.
-- **Dark mode** gets a light deep from the invert; nobody has looked at it.
+- **The crusher** (designed, not built): scales gathered off the floor by a
+  sixth deep job and thrown into a crusher at the deep's left end, which is
+  the purse. DESIGN.md, "The crusher". Waiting on the owner's go-ahead.
 
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 

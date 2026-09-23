@@ -14636,3 +14636,62 @@ wound where they were. A `verify.js` rule: the wound is never below nought
 nor above its stage's depth, the stage never goes back, and nobody is in the
 deep before the snatch. Scenes: `snatch`, `deep`, one for each of the four
 defenses and each weapon at work, and `serpent-freed`.
+
+## The crusher: scales are gathered, not banked where they fall (design, not built)
+
+*Proposed 2026-09-23, the owner's ask after the first pass of the deep: "a
+big crusher on the left side of the deep, that workers toss the scales
+into, so there's not a large build-up."*
+
+Today a scale is counted the moment it lands on the deep's floor, and the
+floor is the purse. That makes the floor a heap that only ever grows, and
+it has nobody in it: in the yard nothing is money until a body has carried
+it somewhere. The crusher makes the deep work the same way.
+
+**The floor is loose scales.** A scale knocked off the serpent still sinks
+on the deep's gravity and settles on the floor where it lands (the bed, a
+plot as now), but it is not the purse: it is lying there, the way dust lies
+on the yard's floor.
+
+**The crusher is the purse's mouth.** A big machine at the deep's left end,
+left of the altar, standing from the snatch like the altar: a hopper on
+top, heavy rollers inside, grit puffing off the bottom. A scale that lands
+in the hopper is crushed and counted: `S.scales` becomes an account (like
+the rift's `riftHeld`), not the bed's count. Nothing else counts one.
+
+**Who puts them in.**
+
+- **Gatherers,** a sixth deep job, on the crusher's roster. A gatherer
+  works the floor like a yard hauler works dust: it claims the heaviest
+  stretch of bed, scoops up to its carry, swims to the crusher and tosses
+  the load into the hopper in an arc; a scale counts when it lands in the
+  mouth. Nobody gathering means scales lie where they fell.
+- **Your hand.** In the deep a drag over the floor picks scales up and a
+  release throws them, as the yard's hand does with dust; one that lands in
+  the hopper counts. So the sqwife's first scales are yours to throw in
+  before anybody is down there to gather.
+
+**Spending** comes out of the crusher: paid scales rise out of the hopper as
+a stream of flecks and drift to the station that took them, as a rift's
+payment surfaces and arcs to its station.
+
+**The crusher's board:** the gatherers' roster, and two ladders through
+`tierRows` with `lead: 'scale'` -- how many scales a gatherer carries, and
+how fast it works -- so gathering keeps up as the weapons shed more.
+
+**What changes for a save from the first pass:** its floor scales are read
+as already crushed (the account set to the bed's count, the bed emptied), so
+nothing a player had is lost.
+
+**Rules it keeps.** Nothing teleports: a scale is carried or thrown into the
+hopper, and a paid one leaves it visibly. `S.scales` never goes below
+nought (a `verify.js` rule, in place of "the purse is the bed"). The crusher
+joins the station systems unasked: the pile-full mark when the floor's bed
+is at its brim, and per-cell variation on its grit.
+
+**Checks.** `test/crusher.test.mjs`: a scale on the floor is not spendable;
+a gatherer put on through the roster walks the shaft down, carries scales to
+the crusher and they count only as they land in the hopper; a scale thrown
+by hand into the hopper counts; a purchase takes from the account and the
+flecks leave the crusher; a first-pass save loads with its scales crushed.
+Scenes: `crusher`, `gathering`.
