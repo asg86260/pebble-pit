@@ -130,6 +130,8 @@ export const SPHERE_OUT = 2;
 // A plate is this many cells square, and a one-cell seam runs between plates:
 // the seams are where the light gets out.
 export const SPHERE_PANEL = 4;
+// The vents on the shell's crown, in cells tall: where its soot comes off.
+export const SPHERE_VENT = 2;
 // How long a slit burns brighter after its panel drops a chip, ms.
 export const SPHERE_FLARE_MS = 420;
 

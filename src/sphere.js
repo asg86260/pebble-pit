@@ -7,7 +7,7 @@
 // because nobody on the ground can reach it: it is poured by the ring after it
 // is bought (`standing`), and its one tender works it from the air (`aloft`).
 
-import { P, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_FLARE_MS, METEOR_CORE,
+import { P, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_VENT, SPHERE_FLARE_MS, METEOR_CORE,
          METEOR_SPARKS, METEOR_CORE_SPARKS, SPARK_CELL, SUMMON_SHAKE, someFind } from './config.js';
 import { S, sky, tower } from './state.js';
 import { now } from './clock.js';
@@ -58,11 +58,20 @@ export function shellCells() {
       // the order the ring pours in: up both sides, closing over the top.
       const tile = Math.floor((c + (every >> 1)) / every) * 31 + Math.floor((r + (every >> 1)) / every);
       const far = Math.abs(Math.atan2(dx, dy)) / Math.PI;
-      out.push({ x: ox + dx, y: oy + dy, seam, tile, far,
+      const d = Math.hypot(dx, dy);
+      out.push({ x: ox + dx, y: oy + dy, seam, tile, far, mc, mr,
+                 // where two seams cross: a bolt, not a gap
+                 cross: mc === SPHERE_PANEL && mr === SPHERE_PANEL,
+                 // the outermost cell of the disc: the riveted band the
+                 // plates are hung in
+                 band: d > R - P,
+                 // a rivet every third cell round the band, by angle so the
+                 // spacing holds all the way round
+                 rivet: (Math.round(Math.atan2(dy, dx) / (Math.PI * 2) * Math.round(Math.PI * 2 * R / P)) % 3 + 3) % 3 === 0,
                  // a fixed quarter for each seam cell, so a rung covers a
                  // quarter of them and the same quarter every frame
                  quarter: ((c * 7 + r * 13) % 4 + 4) % 4,
-                 rim: Math.hypot(dx, dy) > R - P * 2, low: dy > 0 });
+                 rim: d > R - P * 2, low: dy > 0 });
     }
   }
   cachedAt = key;
@@ -70,6 +79,19 @@ export function shellCells() {
 }
 // Snapped to whole cells: `x` and `y` above are each cell's top-left.
 const snap = v => Math.round(v / P) * P;
+
+// The vents on the shell's crown, where the soot comes off: three short
+// chimneys standing out of the band, a cell wide and `SPHERE_VENT` tall, at
+// the top and a little either side of it. Their mouths are where the stack
+// puffs.
+export function sphereVents() {
+  const R = shellR();
+  return [-0.45, 0, 0.45].map(a => {
+    const ux = Math.sin(a), uy = -Math.cos(a);
+    return { x: snap(sky.x + ux * R - P / 2), y: snap(sky.y + uy * R - P / 2), ux, uy,
+             mouth: { x: sky.x + ux * (R + SPHERE_VENT * P), y: sky.y + uy * (R + SPHERE_VENT * P) } };
+  });
+}
 
 // Whether a cell of the shell is poured yet.
 export const laid = (cell, at = pouredAt()) => at >= 1 || cell.far < at;
@@ -119,7 +141,7 @@ const CORE_SHARE = METEOR_CORE * METEOR_CORE;
 // An open seam on the underside's rim, where a chip let go falls clear of the
 // shell. The chips fall from where the light gets out.
 function dropSeams() {
-  return shellCells().filter(c => c.seam && c.rim && c.low && !covered(c));
+  return shellCells().filter(c => c.seam && c.rim && !c.band && !c.cross && c.low && !covered(c));
 }
 
 defineMachine('sphere', {
@@ -131,9 +153,10 @@ defineMachine('sphere', {
   standing: sphereUp,
   at: () => underMeteor(),
   y: () => sky.y,
-  // The tower's spire is the stack: the machine belongs to the tower, and the
-  // chimney a player can point at is on the ground.
-  stack: () => ({ x: tower.x + tower.w / 2, y: tower.y }),
+  // Two kinds of chimney: the vents on the shell, where the light is being
+  // worked, and the tower's spire, the station the machine belongs to. The
+  // runner shares the soot out between them.
+  stacks: () => [...sphereVents().map(v => v.mouth), { x: tower.x + tower.w / 2, y: tower.y }],
   // The ring's own clock, a bolt's worth of cells at a time, divided by what
   // the machine is worth over the three bodies it replaced.
   ms: rate => wizMs() / wizBite() / Math.max(0.01, rate),

@@ -239,9 +239,14 @@ export function stepMachines(now) {
     // the stack in one color. Off the top of the stack, which is the
     // station's to answer, so the chimney puffs where the dirt goes up.
     const dirt = MACHINE_FOUL * did;
-    const s = spec.stack ? spec.stack() : { x: at + P, y: spec.y ? spec.y() : walkY(at) };
-    if (dirt > 0) foul(dirt, s.x, s.y, 'mach');
-    // and the smoke you see, off the same stack, on the same beat
-    puffStack(s.x, s.y, STACK_PUFFS);
+    // A machine with several chimneys (`stacks`, the sphere's vents and the
+    // tower's spire) shares the dirt out between them, each puffing its own.
+    const stacks = spec.stacks ? spec.stacks()
+      : [spec.stack ? spec.stack() : { x: at + P, y: spec.y ? spec.y() : walkY(at) }];
+    for (const s of stacks) {
+      if (dirt > 0) foul(dirt / stacks.length, s.x, s.y, 'mach');
+      // and the smoke you see, off the same stack, on the same beat
+      puffStack(s.x, s.y, Math.max(1, Math.round(STACK_PUFFS / Math.sqrt(stacks.length))));
+    }
   }
 }

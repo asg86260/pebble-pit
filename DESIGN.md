@@ -14105,9 +14105,17 @@ which is the rule the ring already follows. Because the shell sits where the
 star always did, the chips land where the star's chips always landed, and the
 pile, the carry and the pile-full mark need no new plumbing.
 
-### It fouls the sky, off the tower
+### It fouls the sky, off the star and the tower
 
-**The tower's spire is the stack.** A machine is the sky's only producer, and
+*(Amended 2026-09-22, the owner's call: the soot comes off the star as well.)*
+**Four chimneys share it:** three vents standing out of the shell's crown
+(`sphereVents`) and the tower's spire. A spec may name several `stacks`, and
+the runner shares each beat's soot evenly between them and puffs each one, so
+the sphere fouls no more than a one-stack machine did. The dirt rises from
+where the light is being worked, in the sky, and from the station on the ground
+the machine belongs to.
+
+**As first designed, the spire alone was the stack.** A machine is the sky's only producer, and
 the sphere is no exception: `MACHINE_FOUL` a unit, charged in `stepMachines`,
 with `STACK_PUFFS` thrown off the spire's tip on each beat (`puffStack`). The
 soot comes off the tower, not the shell, because the tower is the station the
@@ -14128,7 +14136,11 @@ plates `SPHERE_PANEL` cells a side with a one-cell seam between them
 (`shellCells` in sphere.js, worked out once for where the star is).
 
 - **The plates** are the ink's darker `SHADES`, a tone a plate and a shade
-  either side a cell, so the shell reads as built of pieces.
+  either side a cell, and beveled: lit along the top and left edges, shadowed
+  along the bottom and right, so each reads as a plate with thickness.
+- **It is machined** *(amended, "a bit more mechanical")*: a bolt where two
+  seams cross, a pale band round the edge riveted every third cell, and three
+  vents a cell wide and `SPHERE_VENT` tall standing off the crown.
 - **The seams** are the star's red getting out, shimmering on the core's clock.
   A seam cell on the rim that lets a chip go flares bright and throws a short
   ray for `SPHERE_FLARE_MS`, so the harvest shows as a ripple of red.
@@ -14138,7 +14150,7 @@ plates `SPHERE_PANEL` cells a side with a one-cell seam between them
   and close over the top, and the ring's beams land on the two growing edges.
   The star shows through wherever the plates have not reached.
 - **Closed,** the star and its corona are not drawn at all. The tender's beam
-  runs to the rim nearest it, and the spire puffs on each beat.
+  runs to the rim nearest it, and the vents and the spire puff on each beat.
 
 ### What it touches
 

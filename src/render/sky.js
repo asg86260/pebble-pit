@@ -2,14 +2,14 @@
 // bolts.
 
 import { now } from '../clock.js';
-import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES } from '../config.js';
+import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_PANEL, SPHERE_VENT } from '../config.js';
 import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from '../meteor.js';
 import { S, floor, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { domeRising, domeSpot, domeAt } from '../shield.js';
 import { domeEdge } from './shield.js';
 import { cell } from './marks.js';
-import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt } from '../sphere.js';
+import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt, sphereVents } from '../sphere.js';
 
 // The thing in the sky is a small star: a dead black crust with fire under it,
 // drawn cell by cell. A corona of rays breathes on a slow beat and takes its
@@ -267,8 +267,17 @@ function drawShell() {
   const up = sphereUp();
   for (const c of cells) {
     if (!laid(c)) continue;
-    if (!c.seam) {
-      const k = hash(c.tile) % 3 + 3 + (hash(c.x * 31 + c.y) % 3) - 1;
+    if (c.band) {
+      // The band the plates hang in, riveted every third cell.
+      ctx.fillStyle = c.rivet ? SHADES[5] : SHADES[1];
+    } else if (c.cross) {
+      ctx.fillStyle = SHADES[5];                 // a bolt where two seams cross
+    } else if (!c.seam) {
+      // A plate, beveled: lit along its top and left edges, in shadow along
+      // its bottom and right, its own tone between, a shade either way a cell.
+      const base = 3 + hash(c.tile) % 2;
+      const lit = c.mc === 0 || c.mr === 0, dark = c.mc === SPHERE_PANEL - 1 || c.mr === SPHERE_PANEL - 1;
+      const k = lit && !dark ? base - 2 : dark && !lit ? 5 : base + (hash(c.x * 31 + c.y) % 3) - 1;
       ctx.fillStyle = SHADES[Math.max(0, Math.min(SHADES.length - 1, k))];
     } else if (covered(c)) {
       ctx.fillStyle = SHADES[1];
@@ -279,10 +288,22 @@ function drawShell() {
     }
     ctx.fillRect(c.x, c.y, P, P);
   }
+  // The vents on the crown, once the plates have closed over it: a cell-wide
+  // chimney standing out of the band, its mouth dark.
+  if (up) {
+    for (const v of sphereVents()) {
+      // From the band's own cell outward, so the chimney stands on the shell
+      // rather than floating a cell off it.
+      for (let k = 0; k <= SPHERE_VENT; k++) {
+        ctx.fillStyle = k === SPHERE_VENT ? SHADES[5] : SHADES[3];
+        ctx.fillRect(Math.round((v.x + v.ux * P * k) / P) * P, Math.round((v.y + v.uy * P * k) / P) * P, P, P);
+      }
+    }
+  }
   // A seam on the rim that has just let a chip go throws a short ray.
   if (up) {
     for (const c of cells) {
-      if (!c.seam || !c.rim || covered(c)) continue;
+      if (!c.seam || !c.rim || c.band || c.cross || covered(c)) continue;
       const f = flareOf(c);
       if (f >= 1) continue;
       const dx = c.x + P / 2 - sky.x, dy = c.y + P / 2 - sky.y;
