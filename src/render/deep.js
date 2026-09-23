@@ -4,15 +4,18 @@
 // fill at the end that turns the whole of it over.
 //
 // The palette is the yard's, inverted (docs/wave-serpent.md, "The palette"):
-// everything here draws in the ordinary inks on the paper, and `deep invert`
-// lays a `difference` of raw white over the deep, so the paper comes out as
-// the liquid's black and every mark as its negative. A tone this file names
-// is the tone it will be SEEN in, the abyss's own greys and purples, and is
-// flipped once at load (`seen`) into what has to be drawn to come out that
-// way. The bodies, the serpent and the scales draw as they would in the yard
-// and come out white.
+// everything here draws in the ordinary inks on the paper, and on the light
+// page `deep invert` lays a `difference` of raw white over the deep, so the
+// paper comes out as the liquid's black and every mark as its negative. The
+// dark page needs no turning over -- its paper is already dark and its map
+// already turns black to the light ink -- so there the fill is skipped and
+// the deep is dark on both pages. A tone this file names is the tone it will
+// be SEEN in, the abyss's own greys and purples, and is turned once at load
+// (`seen`) into what has to be drawn to come out that way. The bodies, the
+// serpent and the scales draw as they would in the yard and come out white.
 
 import { now } from '../clock.js';
+import { STATION_SCALE, DOME_PAD, DOME_WALL } from '../config.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
          ABYSS_SHEAR_AMT2, ABYSS_SHEAR_COL, ABYSS_SHEAR_AMT_Y, ABYSS_FLOW_COL2, ABYSS_FLOW_ROW2,
@@ -25,7 +28,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          SWIM_BOB, SWIM_BOB_MS, SWIM_KICK_MS } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, spotX, coilAt } from '../deep/place.js';
-import { raw } from '../ink.js';
+import { raw, darkPage, turned } from '../ink.js';
 import { viewDark } from '../view.js';
 import { ctx } from './ctx.js';
 import { swellAt } from './cores.js';
@@ -33,11 +36,13 @@ import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 
 // --- the inverted palette ---------------------------------------------------------
-// A tone as it is to be seen, turned into what is drawn to get it. Ordinary
-// strings, not `raw`: in dark mode the page maps them like every other color
-// before the difference turns them over, so the deep stays the yard's
-// negative in either mode.
-const flip = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
+// A tone as it is to be seen, turned into what is drawn to get it. On the
+// light page, every channel flipped, which the difference flips back; on the
+// dark page, the lightness turned over with the hue kept, which the page's
+// own map turns back -- a channel flip there would come out the complement,
+// the purples green.
+const xor = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
+const flip = darkPage ? turned : xor;
 const seen = flip;
 export const GREYS = ABYSS_TONES.map(flip);         // the deep's grey ramp, black to white as seen
 export const PURPLES = ABYSS_MAGIC_TONES.map(flip); // and its purple one
@@ -284,21 +289,47 @@ const STANDS = {
   circle: () => S.circleOpen, spire: () => S.spireOpen
 };
 
+// The dome over a station: walls from the floor to DOME_WALL above the
+// sprite, and a half circle over them, cell by cell so it sits on the grid.
+// Lit from inside a shade above the water, its rim a shade above that, and
+// every cell dealt a tone near it so the dome is not a flat block.
+function drawDome(mid, spriteH) {
+  const w = STATION_SCALE * 16 * P + DOME_PAD * 2, r = w / 2;
+  const spring = deepFloor() - spriteH - DOME_WALL;
+  const top = Math.round((spring - r) / P) * P, left = Math.round((mid - r) / P) * P;
+  const inside = (x, y) => {
+    if (x < left || x >= left + w || y >= deepFloor() || y < top) return false;
+    if (y >= spring) return true;
+    const dx = x + P / 2 - (left + r), dy = y + P / 2 - spring;
+    return dx * dx + dy * dy <= r * r;
+  };
+  for (let y = top; y < deepFloor(); y += P) {
+    for (let x = left; x < left + w; x += P) {
+      if (!inside(x, y)) continue;
+      const rim = !inside(x - P, y) || !inside(x + P, y) || !inside(x, y - P);
+      ctx.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x / P, y / P) % 2)];
+      ctx.fillRect(x, y, P, P);
+    }
+  }
+}
+
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
+  const k = STATION_SCALE;
   for (const key in SPRITES) {
     if (!STANDS[key]()) continue;
     const rows = SPRITES[key];
-    const w = rows[0].length * P, h = rows.length * P;
+    const w = rows[0].length * P * k, h = rows.length * P * k;
     const left = Math.round((spotX(key) - w / 2) / P) * P;
-    if (left > x1 || left + w < x0) continue;
+    if (left - DOME_PAD > x1 || left + w + DOME_PAD < x0) continue;
+    drawDome(left + w / 2, h);
     const top = deepFloor() - h;
     for (let r = 0; r < rows.length; r++) {
       for (let c = 0; c < rows[r].length; c++) {
         const ink = SPRITE_INK[rows[r][c]];
         if (!ink) continue;
         ctx.fillStyle = ink;
-        ctx.fillRect(left + c * P, top + r * P, P, P);
+        ctx.fillRect(left + c * P * k, top + r * P * k, P * k, P * k);
       }
     }
   }
@@ -421,6 +452,7 @@ export function drawSwimmers() {
 // black and every mark to its negative. Raw white, so the dark page's map
 // does not turn the white it needs into its own paper.
 export function drawDeepInvert() {
+  if (darkPage) return;
   const { x0, y0, x1, y1 } = deepWindow();
   ctx.save();
   ctx.globalCompositeOperation = 'difference';

@@ -15,7 +15,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
         APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT, STAND_REACH, LIFT_STAND_OFF,
         BRIDGE_RISE, BRIDGE_RUN,
-        OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
+        OPENING_MARGIN, OPENING_ROCK_AT, DEEP_FLOOR_MARGIN } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, cut, farm, apothecary, sky, casino, filter, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
@@ -751,13 +751,12 @@ export const safeBottom = () => safeFoot;
 
 export function clampCam() {
   // In the deep (view.js) the view is held to the deep's own width and its
-  // floor sits where the pit floor sits in the yard: on the bottom of the
-  // window. The deep lies inside the world's width, so the scroller's
+  // floor sits a band up off the bottom of the window, the roster in the band. The deep lies inside the world's width, so the scroller's
   // spacer covers both halves.
   if (S.view === 'deep') {
     const x0 = deepX0();
     S.camX = Math.max(x0, Math.min(S.camX, Math.max(x0, deepX1() - S.viewW)));
-    S.camY = S.camLockY != null ? S.camLockY : deepFloor() - S.viewH;
+    S.camY = S.camLockY != null ? S.camLockY : deepFloor() + DEEP_FLOOR_MARGIN - S.viewH;
     writeScroll();
     return;
   }

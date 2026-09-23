@@ -11,7 +11,7 @@ import { standing } from './scenes-stand.mjs';
 const S = yard.S;
 const { goDeep, goUp } = await import('../src/view.js');
 const { deepX0, deepX1, deepTop, deepFloor } = await import('../src/deep/place.js');
-const { DEEP_SURFACE, VIEW_GLIDE_S } = await import('../src/config.js');
+const { DEEP_SURFACE, VIEW_GLIDE_S, DEEP_FLOOR_MARGIN } = await import('../src/config.js');
 const { hopTarget } = await import('../src/hop.js');
 
 // A yard past the snatch: drowned, with a crew at work up top.
@@ -30,15 +30,15 @@ group('going down puts the camera in the deep, and going up brings it back', asy
   for (let i = 0; i < VIEW_GLIDE_S * 60 / 2 - 5; i++) { window.__fast(1 / 60); midway.push(S.view); }
   run(VIEW_GLIDE_S + 1);
   const down = { view: S.view, x: S.camX, y: S.camY, w: S.viewW, h: S.viewH };
-  const inside = down.x >= deepX0() && down.x + down.w <= deepX1() && down.y + down.h <= deepFloor() + 1;
+  const inside = down.x >= deepX0() && down.x + down.w <= deepX1() && Math.abs(down.y + down.h - (deepFloor() + DEEP_FLOOR_MARGIN)) <= 1;
   const roofShown = down.y <= deepTop() + DEEP_SURFACE;
   goUp();
   run(VIEW_GLIDE_S + 1);
   return [
     ok(midway.every(v => v === 'yard'), 'for the first half of the glide the camera is still in the yard'),
     ok(down.view === 'deep', 'and at the end of it the view is the deep', down.view),
-    ok(inside, 'the camera is inside the deep, floor on the bottom of the window',
-       `x ${Math.round(down.x)}..${Math.round(down.x + down.w)} of ${deepX0()}..${deepX1()}, bottom ${Math.round(down.y + down.h)} of ${deepFloor()}`),
+    ok(inside, 'the camera is inside the deep, the floor a band up off the bottom of the window',
+       `x ${Math.round(down.x)}..${Math.round(down.x + down.w)} of ${deepX0()}..${deepX1()}, bottom ${Math.round(down.y + down.h)} of ${deepFloor() + DEEP_FLOOR_MARGIN}`),
     ok(roofShown, 'with the underside of the surface on the screen', `top ${Math.round(down.y)}, surface ${deepTop() + DEEP_SURFACE}`),
     ok(S.view === 'yard', 'going up comes back to the yard', S.view),
     ok(Math.abs(S.camY - yardCam.y) < 1, 'with the pit floor on the bottom of the window again',

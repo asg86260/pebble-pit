@@ -22,6 +22,7 @@ import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK } from './config.js';
 import { dark } from './prefs.js';
 
 const on = dark();
+export const darkPage = on;
 export const paper = on ? DARK_PAPER : LIGHT_PAPER;
 export const ink = on ? DARK_INK : LIGHT_INK;
 
@@ -57,6 +58,16 @@ function fromHsl(h, s, l) {
     return p;
   };
   return [f(h + 1 / 3), f(h), f(h - 1 / 3)].map(v => Math.round(v * 255));
+}
+
+// A color with its lightness turned over and its hue kept. Written on the
+// dark page, the map turns the lightness back, so it is seen as the light
+// page would show it turned over: the deep is drawn this way there
+// (render/deep.js), a dark field on either page with its purples still purple.
+export function turned(c) {
+  const [h, s, l] = toHsl(...hex(c));
+  const [r, g, b] = fromHsl(h, s, 1 - l);
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
 }
 
 // A gray keeps its step: pure black lands on the ink, pure white on the

@@ -18,8 +18,12 @@ export const DEEP_MOUTH = P * 40;    // the shaft, in from the pit's near lip: w
 // The stations stand on the deep's floor, at these fractions of its width from
 // its left edge. The altar is the deep's bench: punching, and the doors.
 export const DEEP_SPOTS = { altar: 0.16, well: 0.32, font: 0.48, circle: 0.64, spire: 0.82 };
-export const DEEP_STAND_W = P * 16;  // a station's footprint on the floor
-export const DEEP_STAND_H = P * 14;  // and how tall it stands
+// A station's footprint on the floor and how tall it stands: its dome, which
+// is where the pointer opens its board (the sprite at STATION_SCALE, 16 cells
+// across and at most 14 up, under DOME_PAD, DOME_WALL and the arch; see
+// config/deepdraw.js).
+export const DEEP_STAND_W = P * 38;
+export const DEEP_STAND_H = P * 51;
 
 // --- the serpent's body ------------------------------------------------------------
 // A chain of segments across the deep, swaying on its own clock: nothing in the

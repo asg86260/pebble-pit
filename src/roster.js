@@ -3,7 +3,7 @@
 // no buttons: you never put a body *on* carrying, it is what a body does when
 // it is on nothing. Its count is there to be read.
 
-import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_UP } from './config.js';
+import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_DOWN } from './config.js';
 import { spotX, deepFloor } from './deep/place.js';
 import { S, quarry } from './state.js';
 import { groundAt, kitX } from './world.js';
@@ -15,6 +15,7 @@ import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
 import { KIT_MARK, TRADE_OF, liftsOf } from './kit.js';
 import { JOB } from './jobs.js';
 import { shown } from './tween.js';
+import { darkPage } from './ink.js';
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -72,7 +73,7 @@ export const POSTS = [
   deepRoster('spirejob', JOB.WARLOCK, 'spire', () => S.spireOpen)
 ];
 function deepRoster(key, job, station, show) {
-  return { key, job, at: () => spotX(station), y: () => deepFloor() - DEEP_POST_UP, show, deep: true };
+  return { key, job, at: () => spotX(station), y: () => deepFloor() + DEEP_POST_DOWN, show, deep: true };
 }
 
 // Below the ground line, clear of the stopped-station triangle (seven cells
@@ -268,8 +269,11 @@ export function drawRosterCounts(ctx, screenAt) {
   ctx.font = '13px ui-monospace, "Courier New", monospace';
   ctx.textAlign = 'center';                    // it sits in the middle of its own slot
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#000';
   for (const p of posts()) {
+    // Drawn over the finished frame: on the light page the deep has been
+    // turned over under it, so a deep post's number is written in the
+    // paper's white to stand on the black water like the post's own marks.
+    ctx.fillStyle = p.deep && !darkPage ? '#fff' : '#000';
     const b = boxes(p);
     const at = screenAt(b.num.x + b.num.w / 2, b.num.y);
     ctx.fillText(String(Math.round(shown('roster:' + p.job, S[p.job]))), Math.round(at.x), Math.round(at.y));

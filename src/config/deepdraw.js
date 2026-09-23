@@ -13,6 +13,18 @@ export const VIEW_GLIDE_ZOOM = 3;    // how far in the camera has pulled at the 
 // the underside of the surface is pulled back until it does, so the way home
 // is always on the screen. This much of the roof shows over the ceiling.
 export const DEEP_ROOF = P * 4;
+// The floor kept up off the window's foot, with the deep's roster in the band
+// under it: a station stood on the very edge of the glass, under its own
+// plus and minus, was hard to find.
+export const DEEP_FLOOR_MARGIN = P * 12;
+export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the floor
+// The stations are drawn at twice their sprites' cells, each under a lit
+// dome: at one cell a cell they were lost against the water and the bed.
+// The dome stands DOME_PAD out from the sprite either side, its walls rise to
+// DOME_WALL over the sprite's top, and the arch is a half circle over that.
+export const STATION_SCALE = 2;
+export const DOME_PAD = P * 3;
+export const DOME_WALL = P * 4;
 // The band at the top of the deep a click goes up through: the underside of
 // the surface, and the roof over it.
 export const DEEP_CEILING = P * 14;

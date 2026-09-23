@@ -13,7 +13,7 @@
 // does, rather than leaving the one way out off the top of the screen.
 
 import { S } from './state.js';
-import { CELL, P, VIEW_GLIDE_S, VIEW_GLIDE_ZOOM, DEEP_H, DEEP_ROOF, DEEP_SURFACE } from './config.js';
+import { CELL, P, VIEW_GLIDE_S, VIEW_GLIDE_ZOOM, DEEP_H, DEEP_ROOF, DEEP_SURFACE, DEEP_FLOOR_MARGIN } from './config.js';
 import { clampCam, setZoom } from './world.js';
 import { deepTop, deepFloor, mouthX } from './deep/place.js';
 import { abyssLine } from './pit.js';
@@ -32,7 +32,7 @@ const yardZoom = () => CELL / P;
 // number of device pixels a cell, the rule `setZoom` keeps, so the fit is
 // never rounded back up past the window.
 function deepZoom() {
-  const need = DEEP_H + DEEP_ROOF;
+  const need = DEEP_H + DEEP_ROOF + DEEP_FLOOR_MARGIN;
   const k = Math.min(1, S.H / (need * yardZoom()));
   const unit = CELL * S.dpr;
   return Math.max(1, Math.floor(unit * k)) / unit;

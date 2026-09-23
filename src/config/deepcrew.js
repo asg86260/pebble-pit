@@ -19,10 +19,6 @@ export const GRENADE_CAP = 8;        // at the font
 export const SCRIBE_CAP = 4;         // at the circle
 export const WARLOCK_CAP = 6;        // at the spire
 
-// A deep station's roster stands on the deep's floor in front of it, this far
-// up off the floor, where the camera locked to the deep can see it (the deep
-// view's bottom edge is the floor).
-export const DEEP_POST_UP = P * 4;
 
 // --- the snatch ----------------------------------------------------------------------
 // The pair walk to the plank and stand at its edge, something comes up out of
