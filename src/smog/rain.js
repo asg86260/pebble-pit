@@ -6,6 +6,7 @@ import { S } from '../state.js';
 import { DROPS, GOING, SKY, raining } from './band.js';
 import { colAt, muckCols, muckFloor } from './layer.js';
 import { dropped, moteX, moteY } from './sky.js';
+import { skyCam } from '../view.js';   // the yard's window, even with the deep on screen
 
 // --- the rain ----------------------------------------------------------------------
 // A shower is water, and the wash is what is acid in it: a sheet of clean
@@ -153,13 +154,13 @@ export function pour(secs) {
   // width of the world at the window's rate per window, and the acid where
   // its mote hung. Not from the clouds either: they are far, few and
   // parallax, and a sheet tied to them thinned to wherever one happened to be.
-  const top = S.camY - P;
-  const world = Math.max(S.viewW, S.worldW || 0);
+  const top = skyCam().y - P;
+  const world = Math.max(skyCam().w, S.worldW || 0);
 
   // The water, RAIN_PER_S a window's width, across every window's worth,
   // shared out over the sheets by their `share` so the far ones carry the bulk
   // of it. A drop is born into a sheet and stays in it.
-  let owed = RAIN_PER_S * secs * env * (world / S.viewW);
+  let owed = RAIN_PER_S * secs * env * (world / skyCam().w);
   while (owed > 0) {
     if (owed < 1 && waterRand() > owed) break;
     owed -= 1;
@@ -266,8 +267,8 @@ function strike() {
       x += dx; y += BOLT_STEP * P;
     }
   };
-  const x0 = Math.round((S.camX + boltRand() * S.viewW) / P) * P;
-  const y0 = S.camY - P;
+  const x0 = Math.round((skyCam().x + boltRand() * skyCam().w) / P) * P;
+  const y0 = skyCam().y - P;
   // the fork leans the way the main bolt was not
   run(x0, y0, 1e3, 0);
   // A column whose floor is already over the top of the window -- a tall rock

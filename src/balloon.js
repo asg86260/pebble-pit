@@ -16,7 +16,7 @@
 import { P, WORKER, COMMUTE_PACE, BALLOON_DUST, BALLOON_RATE, BALLOON_W, BALLOON_H,
          BALLOON_BASKET, BALLOON_LINES, BALLOON_BOB,
          BALLOON_MAST_GAP, BALLOON_CLIMB_S, BALLOON_TRAVEL_S, BALLOON_DWELL_S,
-         BALLOON_HANG, CLOUD_DRAWN_EASE, CLOUD_LAYERS,
+         BALLOON_HANG, BALLOON_VISIT, CLOUD_DRAWN_EASE, CLOUD_LAYERS,
          BALLOON_SPAN, BALLOON_MIN_SIZE, FILTER_WALL, DIAL_CELLS, DIAL_STUB, CLIMB_PACE,
          rungValue } from './config.js';
 import { S, filter } from './state.js';
@@ -217,13 +217,13 @@ function under(cloud) {
 }
 
 // The next cloud: any sheet, not the one it is at nor one another craft is at
-// or going to, among those within a window's width of where it is on the
-// glass, so it goes visiting rather than crossing the world.
+// or going to, among those within BALLOON_VISIT of where it is on the glass,
+// so it goes visiting rather than crossing the world.
 function nextCloud(i, from, not) {
   const at = onSky(from.x, from.far);
   const held = new Set(CRAFT.map((c, n) => n !== i && c.sky && c.sky.cloud).filter(Boolean));
   const open = GUESTS.clouds().filter(c => c !== not && !held.has(c) && GUESTS.spot(c));
-  const near = open.filter(c => Math.abs(onSky(GUESTS.spot(c).x, c.far) - at) < (S.viewW || 800));
+  const near = open.filter(c => Math.abs(onSky(GUESTS.spot(c).x, c.far) - at) < BALLOON_VISIT);
   const pool = near.length ? near : open;
   return pool.length ? pool[Math.floor(roll() * pool.length)] : null;
 }

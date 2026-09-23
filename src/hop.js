@@ -17,18 +17,24 @@ import { lookAt } from './world.js';
 import { STATIONS, standRect, showPanel } from './board.js';
 import { GLYPHS, drawGlyph } from './glyphs.js';
 import { onTap } from './tap.js';
+import { inDeep } from './view.js';
+import { deepTop } from './deep/place.js';
 
 // The drawing each station's arrow wears: the glyph of the row that opened
 // it, or the nearest thing on the shelf to what it is.
 const GLYPH = {
   bench: 'crate', casino: 'die', filter: 'balloon', quarry: 'hoist', farm: 'furrow',
   apothecary: 'pot', tower: 'tower', house: 'house', stats: 'sack', outhouse: 'bucket',
-  shack: 'hut'
+  shack: 'hut',
+  altar: 'swing', well: 'bucket', font: 'bowl', circle: 'wand', spire: 'tower'
 };
 
-// Every standing station, by where it stands, left to right.
+// Every standing station in the half on screen, by where it stands, left to
+// right: the deep's stations are under the world, and a hop is a glide
+// across, never down the shaft.
+const here = r => (r.y >= deepTop()) === inDeep();
 const standing = () =>
-  STATIONS.map(key => ({ key, r: standRect(key) })).filter(s => s.r)
+  STATIONS.map(key => ({ key, r: standRect(key) })).filter(s => s.r && here(s.r))
           .map(s => ({ key: s.key, mid: s.r.x + s.r.w / 2 }))
           .sort((a, b) => a.mid - b.mid);
 

@@ -27,6 +27,7 @@ import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { sfx } from './audio.js';
 import { refitShield } from './shield.js';
+import { skyCam } from './view.js';
 
 // --- boulder ----------------------------------------------------------------
 // Thickness comes on every other rock: with the rock also growing wider and
@@ -116,10 +117,12 @@ export function dropZone() {
   return { from: S.cx - half - ROCK_CLEAR, to: S.cx + half + ROCK_CLEAR };
 }
 
-// How far above its place a new rock starts: past the top of the window, so
-// it comes in over the top rather than appearing halfway up the sky.
+// How far above its place a new rock starts: past the top of the yard's
+// window, so it comes in over the top rather than appearing halfway up the
+// sky -- the yard's window even with the deep on screen, or the fall would be
+// a different length for the view it was watched from.
 export function dropHeight() {
-  const overhead = S.groundY - S.camY;          // ground line to the top of the window
+  const overhead = S.groundY - skyCam().y;      // ground line to the top of the window
   return Math.max(ROCK_DROP, overhead + ROCK_DROP_CLEAR);
 }
 

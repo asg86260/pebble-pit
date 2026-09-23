@@ -38,7 +38,7 @@ let nextBirds = 0;
 // crosses the works. The haze has the whole sky, so a cloud is seen through
 // the works' own dirt.
 function band() {
-  const top = S.camY + CLOUD_TOP * P;
+  const top = skyCam().y + CLOUD_TOP * P;
   // Deep enough to be a band; a low cloud goes behind the works rather than
   // across it, since they are drawn behind the ground line.
   const low = Math.max(top + P * 12, S.groundY - ROCK_SKY - P * 2);
@@ -65,11 +65,11 @@ function inBand() {
 // behind it, which is the one thing the lanes exist to prevent. A near cloud
 // tall enough to be cut by the top of the window is a cloud overhead.
 function cloudBand() {
-  const top = S.camY + CLOUD_TOP * P;
+  const top = skyCam().y + CLOUD_TOP * P;
   return { top, low: top + Math.max(...Object.values(CLOUD_LANES).map(l => l[1])) * P };
 }
 function cloudY(c) {
-  return S.camY + CLOUD_TOP * P + (c.yb ?? 0);
+  return skyCam().y + CLOUD_TOP * P + (c.yb ?? 0);
 }
 
 // --- the front ---------------------------------------------------------------
@@ -90,6 +90,7 @@ export function swell() {
 // the air filter's dial reads the same number.
 import { murk } from './smog/band.js';
 import { GUESTS } from './skyguests.js';
+import { skyCam } from './view.js';   // the yard's window, even with the deep on screen
 export { murk };
 // One cloud's murk: the sky's, less what a balloon drawing it in has paled it
 // (`drawn`, eased by balloon.js). Picture only; the count is the sky's.
@@ -289,7 +290,7 @@ function columnsOf(c, sw) {
 
 // Where a sky thing is on the screen right now, in world units across the view.
 function acrossView(s) {
-  return s.x - S.camX * s.far;
+  return s.x - skyCam().x * s.far;
 }
 
 // A sky already full, rather than one that fills up while it is being looked
@@ -325,7 +326,7 @@ function spreadSky() {
   CLOUD_LAYERS.forEach((L, sheet) => {
     for (let i = inSheet(sheet, false); i < L.n; i++) {
       const c = makeCloud(0, sheet);
-      c.x = S.camX * c.far + (i + rand()) * (S.viewW / L.n) - c.w * cellOf(c);
+      c.x = skyCam().x * c.far + (i + rand()) * (skyCam().w / L.n) - c.w * cellOf(c);
       CLOUDS.push(c);
     }
   });
@@ -337,7 +338,7 @@ export function stepWeather(now) {
   if (CLOUDS_ON) CLOUD_LAYERS.forEach((L, sheet) => {
     while (inSheet(sheet, false) < L.n) {
       const c = makeCloud(0, sheet);
-      c.x = S.camX * c.far - c.w * cellOf(c) - P * 4;    // in off the left, going right
+      c.x = skyCam().x * c.far - c.w * cellOf(c) - P * 4;    // in off the left, going right
       CLOUDS.push(c);
     }
   });
@@ -351,7 +352,7 @@ export function stepWeather(now) {
   while (CLOUDS_ON && storms < want) {
     const sheet = CLOUD_LAYERS.length - 1 - (storms % CLOUD_LAYERS.length);
     const c = makeCloud(0, sheet, true);
-    c.x = S.camX * c.far + rand() * S.viewW - c.w * cellOf(c) / 2;
+    c.x = skyCam().x * c.far + rand() * skyCam().w - c.w * cellOf(c) / 2;
     CLOUDS.push(c);
     storms++;
   }
@@ -385,9 +386,9 @@ export function stepWeather(now) {
     // while you scroll. Wound back in one step rather than shifted a strip at
     // a time, so a resize (which moves both ends) does not thrash it.
     const at = acrossView(c), wide = c.w * cellOf(c) + P * 32;
-    const from = -(c.w * cellOf(c) + P * 16), span = S.viewW + wide;
-    if (at > S.viewW + P * 16 || at < from) {
-      c.x = from + (((at - from) % span) + span) % span + S.camX * c.far;
+    const from = -(c.w * cellOf(c) + P * 16), span = skyCam().w + wide;
+    if (at > skyCam().w + P * 16 || at < from) {
+      c.x = from + (((at - from) % span) + span) % span + skyCam().x * c.far;
     }
   }
 
@@ -404,7 +405,7 @@ export function stepWeather(now) {
     // A lot is strung out well behind its leader, so the margin here has to be
     // wider than the tail is long or the stragglers are dropped before they fly
     const at = acrossView(b);
-    if (at < -BIRD_TAIL || at > S.viewW + BIRD_TAIL) BIRDS.splice(i, 1);
+    if (at < -BIRD_TAIL || at > skyCam().w + BIRD_TAIL) BIRDS.splice(i, 1);
   }
 }
 
@@ -470,7 +471,7 @@ export function sendBirds() {
   const far = 0.35 + rand() * 0.3;
   const y = inBand();
   const speed = BIRD_SPEED * (0.7 + rand() * 0.6) * dir;
-  const from = dir > 0 ? -P * 8 : S.viewW + P * 8;
+  const from = dir > 0 ? -P * 8 : skyCam().w + P * 8;
   const n = 2 + Math.floor(rand() * (BIRD_FLOCK - 1));
   // The lot they came in as, shared by all of them, is what says whether you
   // got the whole lot. On the birds rather than in the save because the birds
@@ -479,7 +480,7 @@ export function sendBirds() {
   for (let i = 0; i < n; i++) {
     BIRDS.push({
       lot,
-      x: S.camX * far + from - dir * i * (P * 6 + rand() * P * 8),
+      x: skyCam().x * far + from - dir * i * (P * 6 + rand() * P * 8),
       y: y + (rand() - 0.5) * P * 6,
       vx: speed,
       far,
@@ -544,7 +545,7 @@ export function startle(wx, wy) {
 // pixels and go soft. A cloud's is not: it is snapped to device pixels as it
 // is drawn, and rounding it to its cell first made it hop a cell at a time
 // against a camera that scrolls smoothly.
-const skyAt = s => s.x + S.camX * (1 - s.far);
+const skyAt = s => s.x + skyCam().x * (1 - s.far);
 
 // Where a balloon hangs under a cloud, in the cloud's own space: the middle of
 // its base, as an `x` the camera is added to the way it is added to a cloud's
@@ -598,7 +599,7 @@ export function drawClouds() {
   // not a wall running up out of the sky. Not the band's top -- a cloud sits
   // *in* the band, base and all, and cutting there flattened every one that
   // rode high into the same slab.
-  const top = S.camY;
+  const top = skyCam().y;
   // Every edge snapped to a whole device pixel: a sheet's cell is not the
   // yard's, so its edges land between device pixels at most zooms, and two
   // fills meeting there blend into a hairline of page through the cloud.

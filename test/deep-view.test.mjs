@@ -12,6 +12,7 @@ const S = yard.S;
 const { goDeep, goUp } = await import('../src/view.js');
 const { deepX0, deepX1, deepTop, deepFloor } = await import('../src/deep/place.js');
 const { DEEP_SURFACE, VIEW_GLIDE_S } = await import('../src/config.js');
+const { hopTarget } = await import('../src/hop.js');
 
 // A yard past the snatch: drowned, with a crew at work up top.
 function deepYard() {
@@ -45,6 +46,29 @@ group('going down puts the camera in the deep, and going up brings it back', asy
   ];
 });
 
+// The hop glides across the half on screen and never down the shaft: from the
+// yard it passes over the deep's stations, from the deep it passes over the
+// yard's.
+group('a hop keeps to the half on screen', async () => {
+  deepYard();
+  S.wellOpen = S.fontOpen = true;
+  const walk = () => {
+    const seen = [];
+    let at = S.worldW, to;
+    for (let i = 0; i < 40 && (to = hopTarget(-1, at - S.viewW / 2)); i++) { seen.push(to.key); at = to.mid; }
+    return seen;
+  };
+  window.__view('yard');
+  const up = walk();
+  window.__view('deep');
+  const down = walk();
+  const DEEP = ['altar', 'well', 'font'];
+  return [
+    ok(up.length > 0 && !up.some(k => DEEP.includes(k)), 'from the yard, only the yard', up.join(', ')),
+    ok(down.length === DEEP.length && down.every(k => DEEP.includes(k)), 'from the deep, only the deep', down.join(', '))
+  ];
+});
+
 group('a pan in the deep stays in the deep', async () => {
   deepYard();
   window.__view('deep');
@@ -64,9 +88,15 @@ const fingerprint = () => JSON.stringify({
 });
 
 group('the yard runs the same frames whichever half is on the screen', async () => {
+  // The yard's sky is laid out on the yard's window (`skyCam` in view.js),
+  // and a window still gliding to where the snatch left it is a different
+  // sky from one held still. So the camera is let come to rest first; from
+  // there the deep holds the yard's window where it was.
   const from = view => {
     window.__seed(20260923);
     deepYard();
+    for (let i = 0; i < 600 && S.camTo != null && Math.abs(S.camTo - S.camX) > 0.5; i++) yard.fast(1 / 60);
+    S.camTo = null;
     window.__view(view);
     yard.fast(20);
     return fingerprint();

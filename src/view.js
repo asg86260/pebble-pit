@@ -62,6 +62,7 @@ let from = null, to = null;
 function start(v) {
   if (S.view === v || gliding()) return;
   if (reducedMotion()) { frameOn(v); return; }
+  if (S.view === 'yard') keepYard();
   S.viewTo = v;
   S.viewFade = 0;
   S.follow = null;
@@ -69,11 +70,27 @@ function start(v) {
   to = null;
 }
 
+// The camera the yard's sky is laid out against. Clouds, the smog's band and
+// the rain live on the glass of the yard's window, and the rain's wash moves
+// real dust, so while the deep is on screen -- or the camera is on its way
+// there -- the yard's sky goes on being laid out against the window the yard
+// was left in, not against a camera in the deep. A yard reloaded in the deep
+// has no such window, and is given the one it opens on at the shaft.
+let yardCam = null;
+const keepYard = () => { yardCam = { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH }; };
+export function skyCam() {
+  if (S.view !== 'deep' && !gliding()) return { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH };
+  if (yardCam) return yardCam;
+  const z = yardZoom(), w = S.W / z, h = S.H / z;
+  return { x: Math.max(0, mouthX() - w / 2), y: S.worldH - h, w, h };
+}
+
 export const goDeep = () => start('deep');
 export const goUp = () => start('yard');
 
 // Straight there, for scenes and checks (`__view`).
 export function setView(v) {
+  if (S.view === 'yard' && v === 'deep' && !gliding()) keepYard();
   S.viewTo = null;
   S.viewFade = 0;
   from = to = null;
@@ -104,6 +121,7 @@ function glide(dt) {
   }
   if (k >= 1) {
     frameOn(S.viewTo);
+    if (S.view === 'yard') yardCam = null;
     S.viewTo = null;
     S.viewFade = 0;
     from = to = null;

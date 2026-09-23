@@ -35,6 +35,11 @@ export const BALLOON_DWELL_S = 14;
 // Cells of sky between a cloud's base and the crown of the envelope hanging
 // under it: room for the stream the craft draws down out of the cloud.
 export const BALLOON_HANG = 6;
+// How far along the sky a craft looks for its next cloud, in px of glass: about
+// a window's width, so it goes visiting rather than crossing the world. A
+// number rather than the window itself -- where a craft goes is the yard's,
+// and the yard runs the same whatever the screen is (docs/wave-serpent.md).
+export const BALLOON_VISIT = 800;
 // The stream a working craft draws down out of its cloud (craftair.js): cells
 // a second at bare power over a clean sky, and how much more at the brim, so
 // a filthy sky is a thick stream and a clean one a trickle; how many cells

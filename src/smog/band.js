@@ -1,5 +1,6 @@
 import { CLOUD_MURK_POW, P, SMOG_CAP, SMOG_FLOOR, SMOG_TOP, rungValue } from '../config.js';
 import { S } from '../state.js';
+import { skyCam } from '../view.js';   // the yard's window, even with the deep on screen
 
 // Every mote in the air, climbing or arrived. This is the haze: the actual
 // things, not a number. One list, because the climb and the band are two
@@ -50,7 +51,7 @@ export const STACK = [];
 // rather than off a depth so the haze reaches the works whatever the window
 // is; floored against the top so a window too short to hold both still gives
 // the band somewhere to be.
-export const bandTop = () => S.camY + SMOG_TOP * P;
+export const bandTop = () => skyCam().y + SMOG_TOP * P;
 export const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
 
 export const raining = () => !!S.raining;

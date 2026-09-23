@@ -382,6 +382,10 @@ const FLOOR = {
   },
   blank() {
     floor.grid.fill(0);
+    // The settler's band starts at the left again: a new yard picking up
+    // where the last one's pass stopped settles in another order, and two
+    // runs of one seed part company over it.
+    floor.settleAt = 0;
     recount(floor);                          // the ledger, emptied behind `put`
     floor.painter.repaint();
   }

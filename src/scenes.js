@@ -154,10 +154,10 @@ function deepYard({ stage = 0, wound = 0, open = [], crew = {}, scales = 400, vi
   window.__scales(scales);
   window.__serpent({ stage, wound });
   window.__view(view);
-  // Long enough to swim from the station to the coil; the wound set above is
-  // held against the heal by whoever is striking it.
+  // Long enough to swim from the station to the coil. The hands may break
+  // the defense on the way, so the fight is set again once they are at it.
   window.__fast(run);
-  if (wound) window.__serpent({ wound });
+  window.__serpent({ stage, wound });
 }
 
 const lookDeep = x => window.__look(x - S.viewW / 2);
@@ -170,21 +170,21 @@ const stageScene = (stage, wound, open, crew = {}) => () => {
 };
 
 // The snatch as it plays: both facts true, and the clock run until the beat
-// is at the phase wanted.
+// reaches the phase named. The shot tool runs a second more after a scene,
+// and the take is shorter than that, so the scene stops at the start of the
+// phase before the one to be seen.
 const snatchAt = phase => () => {
   rich();
   window.__fullSites();
   window.__snatch();
   for (let i = 0; i < 60 * 60 && S.snatch?.phase !== phase; i++) window.__fast(1 / 60);
-  // A little way into the phase, so the head is over the surface.
-  window.__fast(0.4);
 };
 
 const deepScenes = {
-  snatch: { about: 'the deep', say: 'the snatch: the serpent rising out of the abyss at the shaft',
+  snatch: { about: 'the deep', say: 'the snatch: the serpent up out of the abyss at the shaft, him in its jaws',
     run: snatchAt('rise') },
-  'snatch-take': { about: 'the deep', say: 'the snatch: the serpent with him in its jaws, going under',
-    run: snatchAt('sink') },
+  'snatch-take': { about: 'the deep', say: 'the snatch: the serpent going back under with him',
+    run: snatchAt('take') },
   // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
   deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
   'deep-wound': { about: 'the deep', say: 'the bare coil with the wound held most of the way open',
