@@ -91,7 +91,7 @@ export const GLYPH_OF = {
   // the bench
   props: ['planks'], net: ['net'], arch: ['arch'], askwizards: ['point'],
   carry: ['sack'], auto: ['lever'], speed: ['swing'], pick: ['pickhead'],
-  autotoss: ['lever'], toss: ['swing', 'up'], reach: ['arch'],
+  autotoss: ['lever'], toss: ['swing', 'up'], reach: ['swing'],
   critchance: ['spark'], critmult: ['cracked'],
   haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], driver: ['lift'], liftload: ['lift', 'plus'], liftpace: ['lift', 'up'], belt: ['belt'],
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
