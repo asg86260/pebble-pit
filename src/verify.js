@@ -32,6 +32,9 @@ import { now } from './clock.js';
 import { JOB } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
+import { SERPENT_WOUND } from './config.js';
+import { deepBed } from './state.js';
+import { deepTop } from './deep/place.js';
 
 // The jobs the roster is made of, and the count on S that owns each. Must be
 // the same list `syncWorkers` builds the crew from: a job missing from one is
@@ -115,6 +118,7 @@ const who = w => `${w.name || w.type} (${w.type}) at ${Math.round(w.x)},${Math.r
 // carry over.
 export function resetVerify() {
   everOwned.clear();
+  forgetSerpent();
 }
 
 // The story's table, read for its keys and owners only.
@@ -400,4 +404,39 @@ export function verifyWorld() {
       }
     }
   }
+
+  // --- wave serpent: SERPENT -------------------------------------------------------
+  // The fight (deep/serpent.js). The wound is held open against the heal and
+  // held at its stage's depth until the frame breaks it, so it is never under
+  // nought nor over the depth; a defense that has broken stays broken; and
+  // the serpent's half is nobody's until it has taken him, so no body is
+  // down there before the snatch. The scales are the bed's cells and nothing
+  // else, counted in two places for the reason the ledgers are.
+  {
+    const stage = S.serpentStage;
+    if (!Number.isInteger(stage) || stage < 0 || stage > 4)
+      fail('the serpent is in a stage it does not have', `${stage}`);
+    const depth = stage > 3 ? 0 : SERPENT_WOUND[stage];
+    if (!(S.serpentWound >= 0) || S.serpentWound > depth)
+      fail('the wound is outside its stage', `wound ${S.serpentWound} in stage ${stage}, depth ${depth}`);
+    if (stage < serpentWas)
+      fail('the serpent\'s defense went back', `stage ${serpentWas} then ${stage}`);
+    serpentWas = stage;
+    if (S.serpentFreed !== (stage > 3))
+      fail('he is freed and the belly is not open, or the other way round', `freed ${S.serpentFreed}, stage ${stage}`);
+    if (!S.snatched) {
+      const top = deepTop();
+      for (const w of S.workers)
+        if (w.y + WORKER > top) fail('a body is in the deep before the snatch', `${who(w)}`);
+    }
+    if (S.scales !== deepBed.n)
+      fail('the scales are not the bed', `counter ${S.scales}, bed ${deepBed.n}`);
+    if (S.tick % LEDGER_EVERY === 0 && deepBed.grid && deepBed.n !== count(deepBed))
+      fail('the bed has lost count of itself', `ledger says ${deepBed.n}, the cells say ${count(deepBed)}`);
+  }
 }
+
+// The last stage seen, for the rule that it never goes back. A new game, or a
+// setup that sets the fight outright (`__serpent`), is a new start.
+let serpentWas = -1;
+export function forgetSerpent() { serpentWas = -1; }

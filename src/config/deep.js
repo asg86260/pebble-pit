@@ -63,6 +63,17 @@ export const SCALE_PER_DMG = 1;      // scales a unit of damage sheds
 export const SCALE_HIT_MAX = 12;     // and at most this many off one hit, the rest counted as they land nearby
 export const DUST_PER_SCALE = 10;    // what a scale is worth against dust (DUST_PER in upgrades/price.js)
 export const DEEP_BED_ROWS = 40;     // the floor's plot of scales: this many cells deep at most
+// A scale knocked loose leaves the hit with a little scatter of its own, so a
+// hit sheds a cloud rather than a column. Its tone is dealt near the middle
+// of the shades: a bed of one tone is printed paint.
+export const SCALE_KICK = 1.2;       // px a frame, the most a loosed scale starts moving
+export const SCALE_SHADE = 3;        // the shade a scale is dealt near (SHADES)
+export const SCALE_SPREAD = 1;       // and how far either side
+// Paying lifts scales off the bed to the station that took them. A payment of
+// thousands is drawn as a stream of a few, each one standing for the rest.
+export const LIFT_PACE = 3;          // px a frame a paid scale rises
+export const LIFT_FLECKS = 40;       // the most flecks one payment sends up
+export const LIFT_STAGGER = 2;       // frames between one fleck leaving and the next
 
 // --- the water ---------------------------------------------------------------------
 // Buoyant and slowed: everything sinks at a fraction of a grain's fall and is
@@ -71,6 +82,8 @@ export let DEEP_GRAV = 0.05;         // px a frame a frame, against the yard's G
 export let DEEP_DRAG = 0.95;         // velocity kept a frame
 export let DEEP_CURRENT = 0.3;       // px a frame, the current's push at its strongest
 export const DEEP_CURRENT_MS = 11000; // one turn of it
+// Bodies in the deep swim, at a share of their walk: the water is thick.
+export const SWIM_PACE = 0.5;
 
 // --- the weapons -------------------------------------------------------------------
 // What a rung buys is in LADDERS (config/rungs.js): punch, brawl, lance,
@@ -83,6 +96,15 @@ export const GRENADE_R = P * 14;     // a burst's rings reach this far
 export const GRENADE_RING_S = 0.8;   // and take this long to
 export const SIGIL_DRAW_S = 20;      // seconds a scribe takes to draw one circle
 export const BEAM_REACH = P * 140;   // how far a wizard's beam reaches from the spire
+// The weapons that hurt for as long as they are held -- a stuck lance, a beam
+// -- strike in ticks of this long, each tick a hit that sheds its own scales:
+// a hit a frame would shed a scale a frame whatever the damage was.
+export const DOT_TICK_S = 0.5;
+export const PUNCH_REACH = P * 3;    // how close to a segment a brawler has to be to land one
+export const LANCE_THROW_R = P * 24; // a lancer throws from this far off the coil
+export const GRENADE_FLY_S = 1.6;    // a grenade's aimed time in the water, the font to the coil
+export const SIGIL_GAP = P * 10;     // circles drawn this far apart, either side of the circle
+export const BEAM_LIGHT = 4;         // segments either side of where a beam touches that it lights
 // The called star: a machine, in sparks, with a short spark ladder of its own
 // (like MACHINE_TUNE_SPARKS). A star every STAR_EVERY_S[rung] seconds, doing
 // STAR_DMG[rung] where it lands.
@@ -91,6 +113,9 @@ export const STAR_TUNE_SPARKS = [600, 1000, 1600]; // its three rungs
 export const STAR_EVERY_S = [90, 70, 50, 35];
 export const STAR_DMG = [3000, 4500, 7000, 10000];
 export const STAR_FALL_S = 4;        // from the yard's sky to the surface
+export const STAR_SKY_H = P * 120;   // how high over the ground it is first seen
+export const STAR_UNDER_S = 0.8;     // under the surface, down the shaft, unseen
+export const STAR_DEEP_S = 1.5;      // from the deep's ceiling to the coil
 
 export const DEEP_KNOBS = [
   { key: 'SERPENT_HEAL_1', label: 'serpent heal, bare', min: 0, max: 20, step: 0.5,
