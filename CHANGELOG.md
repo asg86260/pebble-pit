@@ -43,6 +43,7 @@ feature lives in DESIGN.md.
 
 - Hold to toss, throw pace, throw reach and the pollution gauge wear their own pictures instead of a blank crate (test/row-glyphs.test.mjs).
 - The janitor's second cap is fitted at the janitor's closet, by a spare hand, instead of at the bench (test/built-where-sold.test.mjs).
+- A new boulder falling no longer drags the frame rate down for as long as it is in the air (src/scenes.js `introfall`).
 - A late yard with every ladder bought no longer drops to half speed: the stack of finished-work ticks over a station and the thousands of grains in the air are cheap to draw and move again (src/scenes.js `everything`).
 - The rock's spoil is thrown over the boulder on to the belt instead of through it and down on its flank (test/rock-spoil-belt.test.mjs).
 - A hauler tossing a load up at the belt no longer throws a grain short, under the band (test/haul-belt.test.mjs).

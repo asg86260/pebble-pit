@@ -59,15 +59,30 @@ export function drawRock() {
 // number so it is the same lump every frame of one fall. Shaded the way the
 // hill is, so the two are plainly the same object; it carries no mining.
 function drawRoundRock(deep) {
-  const R = S.gw / 2;
   const foot = rockFootY(), left = rockLeft();
+  const bands = roundBands(deep);
+  // Laid about the lump's own corner and moved to where it is: the shape is
+  // the same every frame of one fall, and only the fall moves it.
+  const x0 = left, y0 = foot - S.gw * P;
+  ctx.translate(x0, y0);
+  for (const [v, path] of bands) { ctx.fillStyle = TONE[v]; ctx.fill(path); }
+  ctx.translate(-x0, -y0);
+}
+
+// The lump's cells, a path to each thickness, worked out once a fall: a cell
+// is a root, an arctangent and three sines, and a late rock is two thousand
+// of them, which was the frame's biggest cost for as long as it was falling.
+let lump = null;
+function roundBands(deep) {
+  const key = `${S.boulderNo},${S.gw},${deep}`;
+  if (lump?.key === key) return lump.bands;
+  const R = S.gw / 2;
   const seed = S.boulderNo * 1.7;
   const rim = ang => 1 + 0.07 * Math.sin(ang * 3 + seed)
                        + 0.05 * Math.sin(ang * 5.7 - seed * 2)
                        + 0.03 * Math.sin(ang * 9.1 + seed * 3);
-  let shade = null;
+  const bands = new Map();
   for (let y = 0; y < S.gw; y++) {
-    const py = foot - (S.gw - y) * P;
     for (let x = 0; x < S.gw; x++) {
       const dx = x + 0.5 - R, dy = y + 0.5 - R;
       const d = Math.hypot(dx, dy) / R / rim(Math.atan2(dy, dx));
@@ -77,12 +92,14 @@ function drawRoundRock(deep) {
       // map. Hashed, not random: the same speckle every frame of one fall, or
       // the whole face shimmers.
       const jit = ((((x * 73) ^ (y * 151) ^ (S.boulderNo * 41)) % 7) - 3) * 0.13;
-      const tone = TONE[Math.max(1, Math.min(deep,
-                     Math.round(deep * Math.sqrt(1 - d * d) + jit)))];
-      if (tone !== shade) { shade = tone; ctx.fillStyle = tone; }
-      ctx.fillRect(left + x * P, py, P, P);
+      const v = Math.max(1, Math.min(deep, Math.round(deep * Math.sqrt(1 - d * d) + jit)));
+      let path = bands.get(v);
+      if (!path) bands.set(v, path = new Path2D());
+      path.rect(x * P, y * P, P, P);
     }
   }
+  lump = { key, bands };
+  return bands;
 }
 
 // A chip is a grain in the air, drawn as whatever it is. A crit's chip swells
