@@ -70,8 +70,7 @@ export const POSTS = [
   deepRoster('welljob', JOB.LANCE, 'well', () => S.wellOpen),
   deepRoster('fontjob', JOB.GRENADE, 'font', () => S.fontOpen),
   deepRoster('circlejob', JOB.SCRIBE, 'circle', () => S.circleOpen),
-  deepRoster('spirejob', JOB.WARLOCK, 'spire', () => S.spireOpen),
-  deepRoster('crusherjob', JOB.GATHER, 'crusher', () => S.snatched)
+  deepRoster('spirejob', JOB.WARLOCK, 'spire', () => S.spireOpen)
 ];
 function deepRoster(key, job, station, show) {
   return { key, job, at: () => spotX(station), y: () => deepFloor() + DEEP_POST_DOWN, show, deep: true };

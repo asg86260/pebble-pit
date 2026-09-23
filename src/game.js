@@ -58,7 +58,7 @@ import { stepTimes } from './times.js';          // and the board of times, told
 import { stepSkip } from './skip.js';
 import { take } from './upgrades.js';
 import { mineMs, tossMs } from './levels.js';
-import { restaff, stripKit } from './staffing.js';
+import { restaff, stripKit, stepGatherers } from './staffing.js';
 // The bench's row is registered by this file being loaded, here rather than
 // by the page, because a yard with no document still has to raise a bench
 // (raise.js).
@@ -218,6 +218,7 @@ export const STEPS = [
   { name: 'shield',  step: stepShield },
   { name: 'crew',    step: c => updateWorkers(c.now, c.dt) },
   { name: 'restaff', step: drainRestaff },
+  { name: 'gather',  step: c => stepGatherers(c) },     // haulers lent to the deep's floor, and back
   // Before `smog`, so the dirt a machine makes this frame is in this frame's
   // sky rather than trailing it by one.
   { name: 'machines', step: c => stepMachines(c.now) },   // and whatever the machines got through

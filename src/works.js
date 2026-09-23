@@ -12,7 +12,7 @@ import { S, bench, lab, filter, tower, shack, outhouse } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
-import { standOf, crusherRect } from './deep/place.js';
+import { standOf } from './deep/place.js';
 
 // Where a row's work stands, and therefore whose hands do it: the yard's spare
 // hands (`builders` in crew.js) everywhere a station's own gang is at a post.
@@ -50,7 +50,6 @@ export const SITE_JOB = {
   font: JOB.GRENADE,
   circle: JOB.SCRIBE,
   spire: JOB.WARLOCK,
-  crusher: JOB.GATHER,
   deep: JOB.BRAWL
 };
 
@@ -110,7 +109,7 @@ export const UP_THERE = new Set(['sphere']);
 // SEAM: who counts as hands at these is `setHands` in crew/muster.js, which
 // answers nought for every site not built by the yard's builders until it
 // counts the station's own gang, arrived at its post.
-export const DOWN_THERE = new Set(['altar', 'well', 'font', 'circle', 'spire', 'crusher', 'deep']);
+export const DOWN_THERE = new Set(['altar', 'well', 'font', 'circle', 'spire', 'deep']);
 
 // Where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`
@@ -249,8 +248,7 @@ const SITE_BOX = { filter: () => filter, tower: () => tower, bench: () => bench,
                    // altar, where the brawlers are.
                    altar: () => standOf('altar'), well: () => standOf('well'),
                    font: () => standOf('font'), circle: () => standOf('circle'),
-                   spire: () => standOf('spire'), crusher: () => crusherRect(),
-                   deep: () => standOf('altar') };
+                   spire: () => standOf('spire'), deep: () => standOf('altar') };
 export const setSheds = sheds => Object.assign(SITE_BOX, sheds);
 
 // Every room the settlement will have once the one going up lands, the same

@@ -262,7 +262,7 @@ export const kit = (o = {}) => {
 // wants the pit drowned first, or there is no shaft to send anybody down.
 const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen',
                    brawlers: 'snatched', lancers: 'wellOpen', grenadiers: 'fontOpen',
-                   scribes: 'circleOpen', warlocks: 'spireOpen', gatherers: 'snatched' };
+                   scribes: 'circleOpen', warlocks: 'spireOpen' };
 export const assign = (job, d = 1) => {
   if (d > 0 && DEEP_JOBS.includes(job)) deepReady();
   if (d > 0 && PLACE_OF[job]) S[PLACE_OF[job]] = true;
@@ -301,8 +301,7 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
                    'tossSpeedLevel', 'tossReachLevel',
                    // the deep's ladders and the star's rungs (docs/wave-serpent.md)
                    'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
-                   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel',
-                   'gathercarryLevel', 'gatherpaceLevel']) {
+                   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();

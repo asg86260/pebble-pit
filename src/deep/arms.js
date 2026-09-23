@@ -49,8 +49,8 @@ const afloat = w => { if (w.y < feet() - P) w.aboardAt = S.tick; };
 
 // One frame's swim toward a top-left (tx, ty), at a share of the walk.
 // True once it is there.
-export function swim(w, tx, ty) {
-  const step = commutePace() * SWIM_PACE * frames();
+export function swim(w, tx, ty, pace = commutePace() * SWIM_PACE) {
+  const step = pace * frames();
   const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy);
   if (dx) w.face = dx > 0 ? 1 : -1;
   if (d <= step) { w.x = tx; w.y = ty; afloat(w); return true; }

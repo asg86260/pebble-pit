@@ -113,8 +113,9 @@ export const STATIONS = [
   // answers, so the order is the order the serpent's defenses fall.
   { key: 'altar', open: () => S.snatched, stand: () => standOf('altar'), board: 'altarBoardOpen',
     after: [], needs: () => false },
-  // The crusher, the deep's purse, stands from the snatch like the altar.
-  { key: 'crusher', open: () => S.snatched, stand: () => crusherRect(), board: 'crusherBoardOpen',
+  // The crusher, the deep's purse, stands from the snatch like the altar. It
+  // sells nothing and nobody is put on it: its gatherers are lent haulers.
+  { key: 'crusher', open: () => S.snatched, stand: () => crusherRect(), board: null,
     after: [], needs: () => false },
   { key: 'well', open: () => S.wellOpen, stand: () => standOf('well'), board: 'wellBoardOpen',
     after: ['altar'], needs: () => S.serpentStage >= 1 },

@@ -56,6 +56,9 @@ const DEALT = ['breakers', 'carters', 'blasters', 'growers', 'farmhands',
                // check's nonsense flags may or may not say), clamped to its
                // posts after -- either way rebalance's answer, not the save's
                'builders',
+               // haulers lent to the deep's floor: rebalance's answer from the
+               // scales lying there, the way builders are from the works
+               'gatherers',
                // the marked motes still to fall: a load marks that many of
                // the rebuilt band and writes down how many it found to mark
                // (`remarkSky`), which over this check's empty sky is none

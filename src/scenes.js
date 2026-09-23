@@ -205,17 +205,17 @@ const deepScenes = {
       window.__fast(1.5);
       lookDeep(coilAt(beltSeg(0.5), now()).x);
     } },
-  // The crusher at the deep's left end, gatherers carrying the floor's scales
-  // to it and tossing them over the lip.
+  // The crusher at the deep's left end, haulers lent down to it carrying the
+  // floor's scales and tossing them over the lip.
   crusher: { about: 'the deep', say: 'the crusher: gatherers tossing scales into the hopper, the rollers turning',
     run: () => {
-      deepYard({ crew: { brawlers: 2, gatherers: 3 }, loose: 900, run: 12 });
+      deepYard({ crew: { brawlers: 2 }, loose: 900, run: 12 });
       lookDeep(spotX('crusher') + S.viewW * 0.3);
     } },
   // The floor thick with scales and the gatherers at work on it.
   gathering: { about: 'the deep', say: 'gatherers scooping the floor\'s loose scales, loads overhead',
     run: () => {
-      deepYard({ crew: { brawlers: 2, gatherers: 4 }, loose: 2500, run: 6 });
+      deepYard({ crew: { brawlers: 2 }, loose: 2500, run: 6 });
       lookDeep(spotX('altar'));
     } },
   // Every station on the floor at once, the camera on the middle of them.

@@ -14415,6 +14415,11 @@ before they settle, where dust in the yard drops. Bodies do not walk in the
 deep, they swim -- the same commute at the same pace, along a curve with a
 lag, so the whole place reads as liquid. Still nothing teleports.
 
+**The deep is a void, not a sea** (the owner, 2026-09-23, after the first
+pass): nobody swims or kicks through it. A body glides where it is going and
+hangs still when it is there; what the text below calls water and current is
+the dark and its drift.
+
 **The deep is the inside of the abyss in the pit** (the owner's ask,
 2026-09-23). The player has looked at the drowned pit from above for hours;
 going down should feel like going into *that* -- the same black liquid, the
@@ -14648,7 +14653,7 @@ gravity and goes in only if it is let go over the hopper; the pile-full mark
 hangs over the crusher when any stretch of the floor's bed is within four
 rows of its brim; in the deep the counter card keeps to the left edge of
 the glass, over the crusher. In the same pass the stations were drawn at
-twice their size under lit domes, the floor lifted a band off the window's
+half as big again under lit domes (twice was too big), the floor lifted a band off the window's
 foot with the deep's roster under it, and the dark page stopped turning the
 deep over.*
 
@@ -14670,11 +14675,14 @@ the rift's `riftHeld`), not the bed's count. Nothing else counts one.
 
 **Who puts them in.**
 
-- **Gatherers,** a sixth deep job, on the crusher's roster. A gatherer
-  works the floor like a yard hauler works dust: it claims the heaviest
-  stretch of bed, scoops up to its carry, swims to the crusher and tosses
-  the load into the hopper in an arc; a scale counts when it lands in the
-  mouth. Nobody gathering means scales lie where they fell.
+- **Gatherers** are the yard's haulers, lent down the shaft while scales
+  lie on the floor -- not a job anybody is put on (the owner, 2026-09-23:
+  "pull workers from the yard, and they keep their speed and load size").
+  `rebalance` lends one hauler for every `GATHER_PER` scales lying there, up
+  to `GATHER_CAP`, never the yard's last; they keep a hauler's load and pace
+  (`haulCap`, `haulSpeed`), work the richest stretch of bed, and toss the
+  load into the hopper in an arc; a scale counts when it lands in the mouth.
+  Once the floor has lain bare `GATHER_LINGER_S` they go back up to haul.
 - **Your hand.** In the deep a drag over the floor picks scales up and a
   release throws them, as the yard's hand does with dust; one that lands in
   the hopper counts. So the sqwife's first scales are yours to throw in
@@ -14684,9 +14692,9 @@ the rift's `riftHeld`), not the bed's count. Nothing else counts one.
 a stream of flecks and drift to the station that took them, as a rift's
 payment surfaces and arcs to its station.
 
-**The crusher's board:** the gatherers' roster, and two ladders through
-`tierRows` with `lead: 'scale'` -- how many scales a gatherer carries, and
-how fast it works -- so gathering keeps up as the weapons shed more.
+**The crusher has no board and no roster:** nothing is sold there and
+nobody is put on it. The gathering keeps up through the yard's own hauler
+ladders.
 
 **What changes for a save from the first pass:** its floor scales are read
 as already crushed (the account set to the bed's count, the bed emptied), so

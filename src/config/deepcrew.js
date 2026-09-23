@@ -18,7 +18,16 @@ export const LANCE_CAP = 12;         // at the well
 export const GRENADE_CAP = 8;        // at the font
 export const SCRIBE_CAP = 4;         // at the circle
 export const WARLOCK_CAP = 6;        // at the spire
-export const GATHER_CAP = 8;         // at the crusher, from the snatch
+// The gatherers: haulers lent down the shaft while scales lie on the deep's
+// floor, one for so many scales, up to a cap, and never the last hauler in
+// the yard. They keep a hauler's load and pace (`haulCap`, `haulSpeed`), and
+// scoop at GATHER_SCOOP; once the floor is bare they wait GATHER_LINGER_S
+// before going back up, so two showers are not two trips.
+export const GATHER_CAP = 6;
+export const GATHER_PER = 40;
+export const GATHER_KEEP = 1;
+export const GATHER_LINGER_S = 20;
+export const GATHER_SCOOP = 8;       // scales a second, into a hauler's arms
 
 
 // --- the snatch ----------------------------------------------------------------------

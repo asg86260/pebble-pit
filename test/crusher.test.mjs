@@ -1,10 +1,11 @@
 // The crusher: a scale is money once it lands in the hopper, and not before
 // (DESIGN.md, "The crusher"). The floor's loose scales are gathered to it by
-// the gatherers, a job put on at the roster like any other, or thrown in by
-// hand; a payment comes back out of it.
+// haulers lent down the shaft while they lie there, or thrown in by hand; a
+// payment comes back out of it.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { WORKER, P } from '../src/config.js';
+import { WORKER, P, GATHER_LINGER_S } from '../src/config.js';
+import { haulCap } from '../src/levels.js';
 import { deepBed } from '../src/state.js';
 import { hopperRect, crusherRect, deepTop, deepFloor } from '../src/deep/place.js';
 import { spendScales } from '../src/deep/scales.js';
@@ -33,32 +34,43 @@ group('a scale on the floor is not money', async () => {
   ];
 }, { reload: false });
 
-group('a gatherer walks down, carries the floor to the crusher, and they count as they land', async () => {
+group('haulers go down to gather the floor, with their own load, and it counts as it lands', async () => {
   floorOf(300);
-  // Put on at the crusher's roster, from the yard: it walks the shaft down.
-  const put = window.__assign('gatherers', 1);
+  window.__levels({ haulCarryLevel: 3 });
+  const load = haulCap();
+  const haulers = S.haulers + S.gatherers;   // the yard's carriers, lent or not
   // Every frame, every scale is somewhere: in the purse, on the floor, in the
-  // water or in the gatherer's arms. One counted before it had crossed the
+  // water or in a gatherer's arms. One counted before it had crossed the
   // water, or one lost on the way, is a frame where the sum is not 300.
-  const where = () => S.scales + deepBed.n + S.sinking.length + (gatherers()[0]?.carry || 0);
+  const arms = () => gatherers().reduce((n, g) => n + (g.carry || 0), 0);
+  const where = () => S.scales + deepBed.n + S.sinking.length + arms();
   const early = [];
-  let carried = 0, arcs = 0, down = false;
-  for (let f = 0; f < 60 * 90; f++) {
+  let most = 0, carried = 0, over = 0, arcs = 0, down = false;
+  for (let f = 0; f < 60 * 120; f++) {
     yard.fast(1 / 60);
-    const g = gatherers()[0];
-    if (g && g.y + WORKER > deepTop()) down = true;
-    if (g) carried = Math.max(carried, g.carry || 0);
+    most = Math.max(most, S.gatherers);
+    for (const g of gatherers()) {
+      if (g.y + WORKER > deepTop()) down = true;
+      carried = Math.max(carried, g.carry || 0);
+      if ((g.carry || 0) > load) over++;
+    }
     arcs = Math.max(arcs, S.sinking.filter(s => s.arc != null).length);
     if (where() !== 300) early.push(`${f}: ${where()}`);
   }
+  // The floor cleared, the gang waits a while and then goes back up to haul.
+  runUntil(() => S.gatherers === 0 && gatherers().length === 0, GATHER_LINGER_S + 240);
+  const cleared = deepBed.n === 0;
   return [
-    ok(put !== false && gatherers().length === 1, 'one gatherer put on through the roster'),
-    ok(down, 'it went down the shaft'),
-    ok(carried > 1, 'it carried a load off the floor', `${carried}`),
+    ok(most > 0 && most < haulers, 'haulers were lent to the deep, and not all of them',
+       `${most} of ${haulers}`),
+    ok(down, 'they went down the shaft'),
+    ok(carried === load && over === 0, 'each carried a hauler\'s load and no more', `${carried} of ${load}`),
     ok(arcs > 0, 'and tossed it up over the lip', `${arcs}`),
-    ok(early.length === 0, 'and on every frame each scale was in the purse, the floor, the water or its arms',
+    ok(early.length === 0, 'and on every frame each scale was in the purse, the floor, the water or an arm',
        early.slice(0, 5).join(', ')),
-    ok(S.scales > 0, 'and the purse has what it brought', `${S.scales}`)
+    ok(cleared && S.scales === 300, 'the floor cleared into the purse', `${S.scales}, ${deepBed.n} lying`),
+    ok(S.gatherers === 0 && S.haulers === haulers, 'and once it had lain bare a while, they went back to hauling',
+       `${S.gatherers} gathering, ${S.haulers} hauling`)
   ];
 }, { reload: false });
 

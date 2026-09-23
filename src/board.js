@@ -45,7 +45,7 @@ const shackShopEl = document.getElementById('shackshop');
 // The deep's five, one a station on its floor (deep/rows.js), each page
 // `<key>board` holding its rows in `<key>shop`. Written out rather than read
 // off the rows: this runs while the import ring is still closing.
-const DEEP_PAGES = ['altar', 'well', 'font', 'circle', 'spire', 'crusher'];
+const DEEP_PAGES = ['altar', 'well', 'font', 'circle', 'spire'];
 const deepShopEl = Object.fromEntries(DEEP_PAGES.map(k => [k, document.getElementById(k + 'shop')]));
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');

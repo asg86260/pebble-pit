@@ -124,7 +124,6 @@ export const GLYPH_OF = {
   lance: ['bolt'], lancehold: ['bolt', 'plus'], grenade: ['chip'], grenadepace: ['chip', 'up'],
   sigil: ['wand', 'plus'], beam: ['wand'], curse: ['cracked'],
   callstar: ['star'], tunestar: ['star', 'plus'],
-  gathercarry: ['sack'], gatherpace: ['sack', 'up'],
 };
 
 // A row's drawing; the crate while it is not made yet.

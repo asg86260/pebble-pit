@@ -464,7 +464,7 @@ export const S = {
   // The deep's ladders (LADDERS in config/rungs.js) and the star's spark rungs.
   punchLevel: 0, brawlLevel: 0, lanceLevel: 0, lanceholdLevel: 0, grenadeLevel: 0,
   grenadepaceLevel: 0, sigilLevel: 0, beamLevel: 0, curseLevel: 0, starLevel: 0,
-  gathercarryLevel: 0, gatherpaceLevel: 0,
+  gatherBare: 0,          // seconds the deep's floor has lain bare, for the gatherers going home
   crushAt: 0,             // when a scale last went into the crusher, for its rollers
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
   sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
@@ -478,7 +478,7 @@ export const S = {
   starFall: null,         // the called star on its way: { x, y, at }
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
   starAt: 0,              // when the next star is called
-  altarBoardOpen: false, wellBoardOpen: false, fontBoardOpen: false, crusherBoardOpen: false,
+  altarBoardOpen: false, wellBoardOpen: false, fontBoardOpen: false,
   circleBoardOpen: false, spireBoardOpen: false,
 
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
@@ -631,7 +631,6 @@ export const SAVED = [
   'brawlers', 'lancers', 'grenadiers', 'scribes', 'warlocks', 'gatherers',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
-  'gathercarryLevel', 'gatherpaceLevel',
 ];
 
 // Fields whose encode or decode is more than a copy: a run-length string, a
@@ -775,7 +774,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
-  'starFall', 'deepMotes', 'crushAt', 'heldScales', 'crusherBoardOpen',
+  'starFall', 'deepMotes', 'crushAt', 'heldScales', 'gatherBare',
   'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen',
 ];
 

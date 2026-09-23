@@ -50,8 +50,11 @@ export const JOB = Object.freeze({
 
 // The deep's jobs, apart: a body down the shaft is out of reach of anything in
 // the yard that walks out to the crew (a tonic, a notice for every post).
-export const DEEP_JOBS = Object.freeze([JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER]);
-export const YARD_JOBS = Object.freeze(Object.values(JOB).filter(j => !DEEP_JOBS.includes(j)));
+export const DEEP_JOBS = Object.freeze([JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK]);
+// The gatherers are not put on: they are haulers lent to the deep while scales
+// lie on its floor (`rebalance` in staffing.js), the way builders are lent to
+// a build. Down there all the same, so a deep type below.
+export const YARD_JOBS = Object.freeze(Object.values(JOB).filter(j => !DEEP_JOBS.includes(j) && j !== JOB.GATHER));
 
 // Built from the two tables rather than written a third time, so a job added
 // above cannot be forgotten here.
@@ -64,7 +67,7 @@ export const TYPE_OF = Object.freeze(Object.fromEntries(
 
 // The deep's jobs as what a body IS, for the questions asked of a body rather
 // than of a count: which half of the works it belongs in.
-export const DEEP_TYPES = Object.freeze(DEEP_JOBS.map(j => TYPE_OF[j]));
+export const DEEP_TYPES = Object.freeze([...DEEP_JOBS.map(j => TYPE_OF[j]), TYPE.GATHER]);
 export const isDeepType = type => DEEP_TYPES.includes(type);
 
 // How a job is SAID, where the key is not already the words. Nothing prints a

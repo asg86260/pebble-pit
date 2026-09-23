@@ -25,8 +25,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
          DEEP_SURFACE, SHAFT_LIGHT_W, SHAFT_SPILL, DEEP_VEIL_LIT, DEEP_VEIL_DEEP,
          DEEP_STAR_EVERY, DEEP_STAR_TOP, DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
-         DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX,
-         SWIM_BOB, SWIM_BOB_MS, SWIM_KICK_MS } from '../config.js';
+         DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, spotX, coilAt, crusherRect, hopperRect } from '../deep/place.js';
 import { topRow } from '../grid.js';
@@ -298,7 +297,7 @@ const STANDS = {
 // Lit from inside a shade above the water, its rim a shade above that, and
 // every cell dealt a tone near it so the dome is not a flat block.
 function drawDome(mid, spriteH) {
-  const w = STATION_SCALE * 16 * P + DOME_PAD * 2, r = w / 2;
+  const w = cellsOf(16) * P + DOME_PAD * 2, r = w / 2;
   const spring = deepFloor() - spriteH - DOME_WALL;
   const top = Math.round((spring - r) / P) * P, left = Math.round((mid - r) / P) * P;
   const inside = (x, y) => {
@@ -390,24 +389,30 @@ function drawCrusher() {
   ctx.fillStyle = '#000';
 }
 
+// A sprite `n` cells across drawn at STATION_SCALE is this many cells: the
+// scale need not be whole, since each drawn cell reads the sprite cell under
+// it, nearest first, and so every cell stays on the grid.
+const cellsOf = n => Math.round(n * STATION_SCALE);
+
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
   if (S.snatched) drawCrusher();
-  const k = STATION_SCALE;
   for (const key in SPRITES) {
     if (!STANDS[key]()) continue;
     const rows = SPRITES[key];
-    const w = rows[0].length * P * k, h = rows.length * P * k;
+    const cw = cellsOf(rows[0].length), ch = cellsOf(rows.length);
+    const w = cw * P, h = ch * P;
     const left = Math.round((spotX(key) - w / 2) / P) * P;
     if (left - DOME_PAD > x1 || left + w + DOME_PAD < x0) continue;
     drawDome(left + w / 2, h);
     const top = deepFloor() - h;
-    for (let r = 0; r < rows.length; r++) {
-      for (let c = 0; c < rows[r].length; c++) {
-        const ink = SPRITE_INK[rows[r][c]];
+    for (let r = 0; r < ch; r++) {
+      const row = rows[Math.min(rows.length - 1, Math.floor(r / STATION_SCALE))];
+      for (let c = 0; c < cw; c++) {
+        const ink = SPRITE_INK[row[Math.min(row.length - 1, Math.floor(c / STATION_SCALE))]];
         if (!ink) continue;
         ctx.fillStyle = ink;
-        ctx.fillRect(left + c * P * k, top + r * P * k, P * k, P * k);
+        ctx.fillRect(left + c * P, top + r * P, P, P);
       }
     }
   }
@@ -496,14 +501,13 @@ export function drawDeepMotes() {
   ctx.fillStyle = '#000';
 }
 
-// --- swimmers ----------------------------------------------------------------------
-// A body in the deep is the same square, swimming: it bobs on its own tempo
-// and kicks a cell behind it on a faster one, leaning into the way it faces.
-// A body still in the shaft above the underside of the surface is in the
+// --- the bodies in the deep ----------------------------------------------------------
+// A body in the deep is the same square, drifting: the deep is a void, not a
+// sea, so nothing bobs or kicks -- it glides where it is going and hangs
+// still when it is there. A body still in the shaft above the underside of the surface is in the
 // liquid and not drawn; one crossing it comes out of it a row at a time.
 
 export function drawSwimmers() {
-  const t = now();
   const cut = deepTop() + DEEP_SURFACE + P;
   ctx.save();
   ctx.beginPath();
@@ -511,20 +515,13 @@ export function drawSwimmers() {
   ctx.clip();
   for (const w of S.workers) {
     if (!inTheDeep(w)) continue;
-    const h = hash(w.id != null ? w.id : w.x);
-    const bob = Math.round(Math.sin(t / SWIM_BOB_MS * Math.PI * 2 + h * 6.28) * SWIM_BOB);
-    const x = Math.round(w.x), y = Math.round(w.y) + bob;
-    const face = w.face || 1;
+    const x = Math.round(w.x), y = Math.round(w.y);
     drawBody(x, y);
     // A gatherer's handful, overhead two abreast, each scale as it is.
     for (let i = 0; i < Math.min(w.carry || 0, 24); i++) {
       drawMark(w.load?.[i] || 1, x + (WORKER - P * 2) / 2 + (i % 2) * P + P / 2,
                y - P * (Math.floor(i / 2) + 1) + P / 2);
     }
-    // the kick: a cell off the back corner, up and down
-    const kick = Math.sin(t / SWIM_KICK_MS * Math.PI * 2 + h * 6.28) > 0 ? 0 : P;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(face > 0 ? x - P : x + WORKER, y + WORKER - P * 2 + kick, P, P);
   }
   ctx.restore();
   ctx.fillStyle = '#000';

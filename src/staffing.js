@@ -7,9 +7,9 @@
 // board: a caller that changed the roster and wants the sheet to say so
 // rebuilds the shop itself.
 
-import { LADDER } from './config.js';
-import { S } from './state.js';
-import { JOB, DEEP_JOBS } from './jobs.js';
+import { LADDER, GATHER_CAP, GATHER_PER, GATHER_KEEP, GATHER_LINGER_S } from './config.js';
+import { S, deepBed } from './state.js';
+import { JOB, TYPE, DEEP_JOBS } from './jobs.js';
 import { TRADE_OF, JOB_OF } from './kit.js';
 import { MACHINES, machine } from './machines.js';
 import { syncWorkers } from './crew.js';
@@ -96,9 +96,33 @@ export function rebalance() {
   }
   S.lent = S.workers.filter(w => w.lentFrom).map(w => w.lentFrom);
   S.builders = sites.length ? Math.min(gang, Math.max(0, spareHands())) : 0;
+  // The deep's gatherers are haulers too, lent down the shaft while scales lie
+  // on its floor (DESIGN.md, "The crusher"), never the yard's last carrier.
+  S.gatherers = Math.min(gatherTarget(), Math.max(0, spareHands() - S.builders - GATHER_KEEP));
   // Carrying is what a body does when it is on nothing, less whoever is
-  // building. The carts are the lip's kit and are not held out of this.
-  S.haulers = Math.max(0, spareHands() - S.builders);
+  // building or gathering. The carts are the lip's kit and are not held out.
+  S.haulers = Math.max(0, spareHands() - S.builders - S.gatherers);
+}
+
+// How many haulers the deep wants: one for every GATHER_PER scales lying on
+// its floor, up to GATHER_CAP; any still carrying a load until it is in; and
+// the ones already down there until the floor has been bare GATHER_LINGER_S,
+// so a gang is not sent up the shaft between two showers.
+export function gatherTarget() {
+  if (!S.snatched) return 0;
+  const lying = deepBed.n || 0;
+  const need = lying > 0 ? Math.min(GATHER_CAP, Math.ceil(lying / GATHER_PER)) : 0;
+  const loaded = S.workers.filter(w => w.type === TYPE.GATHER && (w.carry || 0) > 0).length;
+  const stay = (S.gatherBare || 0) < GATHER_LINGER_S ? S.gatherers : 0;
+  return Math.max(need, loaded, stay);
+}
+
+// A frame of the lending: how long the floor has lain bare, and a new deal
+// when the deep wants a different gang from the one it has.
+export function stepGatherers(c) {
+  S.gatherBare = deepBed.n ? 0 : (S.gatherBare || 0) + c.dt / 1000;
+  const want = Math.min(gatherTarget(), Math.max(0, spareHands() - S.builders - GATHER_KEEP));
+  if (want !== S.gatherers) { rebalance(); syncWorkers(); }
 }
 
 // The deal, on the save (persist.js, `SAVERS`). `read` is where the load's

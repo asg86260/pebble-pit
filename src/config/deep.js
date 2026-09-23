@@ -22,8 +22,8 @@ export const DEEP_SPOTS = { crusher: 0.055, altar: 0.16, well: 0.32, font: 0.48,
 // is where the pointer opens its board (the sprite at STATION_SCALE, 16 cells
 // across and at most 14 up, under DOME_PAD, DOME_WALL and the arch; see
 // config/deepdraw.js).
-export const DEEP_STAND_W = P * 38;
-export const DEEP_STAND_H = P * 51;
+export const DEEP_STAND_W = P * 30;
+export const DEEP_STAND_H = P * 40;
 
 // --- the crusher ------------------------------------------------------------------
 // The purse's mouth, at the deep's left end (DESIGN.md, "The crusher"): a

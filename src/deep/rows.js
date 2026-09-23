@@ -108,12 +108,6 @@ const TUNESTAR = {
   show: () => !!S.starOpen
 };
 
-// --- the crusher: the gatherers -------------------------------------------------
-// How much a gatherer carries and how fast it scoops, so the gathering keeps
-// up as the weapons shed more (DESIGN.md, "The crusher").
-const GATHERCARRY = ladder('gathercarry', 'gatherer load', 'crusher', { unit: 'scales', does: 'carry' });
-const GATHERPACE = ladder('gatherpace', 'gatherer pace', 'crusher', { unit: '/s', pct: true, does: 'scoop' });
-
 // --- the boards ------------------------------------------------------------------
 // Each station's rows, keyed by the station, for board.js and shop.js to draw
 // and hooks.js to reach.
@@ -122,14 +116,13 @@ export const DEEP_ROWS = {
   well: [...LANCE, ...LANCEHOLD],
   font: [...GRENADE, ...GRENADEPACE],
   circle: [...SIGIL],
-  spire: [...BEAM, ...CURSE, STAR, TUNESTAR],
-  crusher: [...GATHERCARRY, ...GATHERPACE]
+  spire: [...BEAM, ...CURSE, STAR, TUNESTAR]
 };
 export const DEEP_UPGRADES = Object.values(DEEP_ROWS).flat();
 
 // The job posted at each station, whose headcount the roster heading wears.
 export const DEEP_JOB_AT = { altar: JOB.BRAWL, well: JOB.LANCE, font: JOB.GRENADE,
-                             circle: JOB.SCRIBE, spire: JOB.WARLOCK, crusher: JOB.GATHER };
+                             circle: JOB.SCRIBE, spire: JOB.WARLOCK };
 
 // The roster heading is the job as it is said, and is drawn with nothing
 // under it (`roster` in shop.js's `build`): the bodies are put on and taken
@@ -146,8 +139,7 @@ export const DEEP_SECTIONS = {
   circle: [roster('circle'), { title: 'the circle', keys: ['sigil'] }],
   spire: [roster('spire'),
           { title: 'the spire', keys: ['beam', 'curse'] },
-          { title: 'the star', keys: ['callstar', 'tunestar'] }],
-  crusher: [roster('crusher'), { title: 'the gathering', keys: ['gathercarry', 'gatherpace'] }]
+          { title: 'the star', keys: ['callstar', 'tunestar'] }]
 };
 
 // How many are posted at a station, by its roster heading's words.
