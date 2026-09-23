@@ -4,11 +4,11 @@
 import { P } from './yard.js';
 
 // --- the view, and the glide between the two halves -----------------------------
-// The glide is one clock: the camera closes on the surface over the first
-// half, the frame is black at the middle and the camera is moved there, and
-// the other half opens out of its own side of the surface over the second.
+// The glide is one clock: the camera closes on the pit's liquid over the
+// first half, hands over at the middle to the same liquid in the deep, and
+// opens out over the second while the deep fades in (view.js).
 export let VIEW_GLIDE_S = 1.8;       // the whole glide, down or up
-export const VIEW_GLIDE_ZOOM = 3;    // how far in the camera has pulled at the black, times the view's own
+export const VIEW_GLIDE_ZOOM = 3;    // at least how far in the camera has pulled at the turn, times the yard's own
 // The deep is framed whole: a window too short to hold it from the floor to
 // the underside of the surface is pulled back until it does, so the way home
 // is always on the screen. This much of the roof shows over the ceiling.
@@ -48,13 +48,9 @@ export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
 
 // --- the water ---------------------------------------------------------------------
-// The flowing interference the drowned pit already draws, everywhere, and
-// fainter: the deep is lit by one shaft, so its smoke never reaches the
-// brighter rungs the pit's surface lets its veils climb to.
-export const DEEP_VEIL_LIT = 0.22;   // how far up the grey ramp the veils get
-export const DEEP_VEIL_DEEP = 0.14;  // and how much further toward the floor
-export const DEEP_STAR_EVERY = 61;   // one cell in this many carries a breathing star
-export const DEEP_STAR_TOP = 6;      // and it never climbs past this rung of its ramp
+// The drowned pit's own liquid, carried on under its surface, with the pit's
+// numbers (config/rift.js, ABYSS_*): one liquid, so the glide between the
+// halves hands over on one picture (render/abyssfield.js).
 
 // --- its motes ---------------------------------------------------------------------
 // The deep's own kinds, the way the sky's are SMOG_TINTS: silt hanging, flecks

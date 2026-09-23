@@ -2,21 +2,24 @@
 //
 // The yard and the deep are one game on one clock, and the view is only
 // where the camera is: the sim never reads it (docs/wave-serpent.md, "The two
-// views"). Going between them is a camera move, never a cut. The camera
-// closes on the surface at the shaft until the surface is all there is, the
-// frame is black, the camera is carried to the same surface seen from the
-// other side, and it opens out of it. Under reduced motion the two framings
-// follow one another with nothing between.
+// views"). Going between them is a camera move, never a cut. The deep's
+// water is the drowned pit's liquid carried on under its surface
+// (render/abyssfield.js), so the camera closes on the pit's liquid until it
+// fills the frame, is carried to the same cells of that liquid seen in the
+// deep -- the same picture -- and opens out of it while the deep's roof,
+// light, serpent and stations fade in over the water. Going up is the same
+// the other way. Under reduced motion the two framings follow one another
+// with nothing between.
 //
 // The deep is framed whole, floor to ceiling: its way home is the underside
 // of the surface, so a window too short to show it is pulled back until it
 // does, rather than leaving the one way out off the top of the screen.
 
-import { S } from './state.js';
-import { CELL, P, VIEW_GLIDE_S, VIEW_GLIDE_ZOOM, DEEP_H, DEEP_ROOF, DEEP_SURFACE, DEEP_FLOOR_MARGIN } from './config.js';
+import { S, pit } from './state.js';
+import { CELL, P, VIEW_GLIDE_S, VIEW_GLIDE_ZOOM, DEEP_H, DEEP_ROOF, DEEP_FLOOR_MARGIN } from './config.js';
 import { clampCam, setZoom } from './world.js';
-import { deepTop, deepFloor, mouthX } from './deep/place.js';
-import { abyssLine } from './pit.js';
+import { mouthX, waterShift } from './deep/place.js';
+import { abyssLine, pitDepth } from './pit.js';
 import { reducedMotion } from './prefs.js';
 
 export const inDeep = () => S.view === 'deep';
@@ -51,16 +54,37 @@ function frameOn(v) {
   clampCam();
 }
 
-// The point the glide closes on, on each side of the surface.
-const surfaceOf = v => ({ x: mouthX(), y: v === 'deep' ? deepTop() + DEEP_SURFACE : abyssLine() });
+// The point the glide closes on: the middle of the pit's liquid, clear of
+// its surface and its floor, and in the deep the same cells of the same
+// liquid. At the turn both halves are framed on it at one zoom, so the two
+// frames are one picture.
+function focusOf(v) {
+  const y = (abyssLine() + P * 4 + S.groundY + pitDepth()) / 2;
+  return { x: pit.x + pit.w / 2, y: v === 'deep' ? y - waterShift() : y };
+}
+// How far in at the turn, as a share of the yard's own zoom: at least
+// VIEW_GLIDE_ZOOM, and far enough that the frame holds nothing but the
+// liquid, so no bank, sky or floor is in the picture being handed over.
+function peakZoom() {
+  const w = S.W / yardZoom(), h = S.H / yardZoom();
+  const roomW = Math.max(P, pit.w - P * 4), roomH = Math.max(P, pitDepth() - P * 10);
+  return Math.max(VIEW_GLIDE_ZOOM, w / roomW, h / roomH);
+}
 
 // The camera's middle, where the glide set out from and where the far half
 // opens: module state, being a glide in progress, which a reload does not
 // keep (S.viewTo is not saved either).
 let from = null, to = null;
 
+// A glide held where it is, for a scene that wants a shot of its middle
+// (scenes.js, `glideAt`): the yard runs on, the glide's own clock does not.
+// Let go by the next glide or the next framing.
+let posed = false;
+export const poseGlide = () => { posed = true; };
+
 function start(v) {
   if (S.view === v || gliding()) return;
+  posed = false;
   if (reducedMotion()) { frameOn(v); return; }
   if (S.view === 'yard') keepYard();
   S.viewTo = v;
@@ -90,6 +114,7 @@ export const goUp = () => start('yard');
 
 // Straight there, for scenes and checks (`__view`).
 export function setView(v) {
+  posed = false;
   if (S.view === 'yard' && v === 'deep' && !gliding()) keepYard();
   S.viewTo = null;
   S.viewFade = 0;
@@ -97,8 +122,7 @@ export function setView(v) {
   frameOn(v === 'deep' ? 'deep' : 'yard');
 }
 
-// In and out of the black on one curve, so the camera does not lurch at
-// either end of it.
+// In and out on one curve, so the camera does not lurch at either end.
 const ease = k => k * k * (3 - 2 * k);
 
 export function stepView(c) {
@@ -112,9 +136,11 @@ export function stepView(c) {
 }
 
 function glide(dt) {
+  if (posed) dt = 0;
   S.viewFade = Math.min(1, S.viewFade + dt / (VIEW_GLIDE_S * 1000));
   const k = S.viewFade;
-  // The move to the far half is made under the black, at the middle.
+  // The move to the far half is made at the turn, where both frame the same
+  // liquid.
   if (k >= 0.5 && S.view !== S.viewTo) {
     frameOn(S.viewTo);
     to = { x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2 };
@@ -127,19 +153,26 @@ function glide(dt) {
     from = to = null;
     return;
   }
-  // How far in: nothing at either end, all the way at the black.
+  // How far in: nothing at either end, all the way at the turn.
   const into = ease(k < 0.5 ? k * 2 : (1 - k) * 2);
   const home = k < 0.5 ? from : to;
   if (!home) return;
-  const at = surfaceOf(S.view);
+  const at = focusOf(S.view);
   const base = zoomOf(S.view);
-  setZoom(base + (base * VIEW_GLIDE_ZOOM - base) * into);
+  setZoom(base + (peakZoom() - base) * into);
   const cx = home.x + (at.x - home.x) * into, cy = home.y + (at.y - home.y) * into;
   S.camX = cx - S.viewW / 2;
   S.camLockY = cy - S.viewH / 2;
   clampCam();
 }
 
-// How black the frame is: nothing at either end of a glide, all of it at the
-// middle, where the camera changes halves.
-export const viewDark = () => (gliding() ? 1 - Math.abs(S.viewFade * 2 - 1) : 0);
+// How much of the deep is drawn over its water: all of it, except in a
+// glide, where it fades in as the camera opens out of the water on the way
+// down and out as it closes in on the way up. The water itself is never
+// faded: it is the picture the glide hands over on.
+export function deepFade() {
+  if (!gliding() || S.view !== 'deep') return 1;
+  const k = S.viewFade;
+  return S.viewTo === 'deep' ? ease(Math.max(0, Math.min(1, (k - 0.5) * 2)))
+                             : 1 - ease(Math.min(1, k * 2));
+}

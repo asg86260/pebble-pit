@@ -10,11 +10,12 @@
 // it.
 
 import { S, pit } from '../state.js';
-import { P, DEEP_GAP, DEEP_H, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
+import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS } from '../config.js';
 import { SPRITES } from './sprites.js';
+import { abyssLine } from '../pit.js';
 
 const snap = v => Math.round(v / P) * P;
 
@@ -33,6 +34,11 @@ export const inDeep = (x, y) => y >= deepTop() && y <= deepFloor() && x >= deepX
 // it comes up again. The same x at the top and at the bottom, so the way down
 // is straight.
 export const mouthX = () => snap(pit.x + DEEP_MOUTH);
+
+// How far the drowned pit's surface stands from the deep's underside of it:
+// the deep's water is the pit's liquid carried on below (render/abyssfield.js),
+// so a row down here is this far from the same row of the pit's liquid.
+export const waterShift = () => snap(abyssLine() - (deepTop() + DEEP_SURFACE));
 
 // A station's middle, on the floor.
 export const spotX = key => snap(deepX0() + DEEP_SPOTS[key] * DEEP_W);

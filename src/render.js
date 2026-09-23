@@ -44,7 +44,8 @@ import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawShack } from './render/shack.js';
 import { drawDeepSky, drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
-         drawSwimmers, drawDeepInvert, drawGlideDark } from './render/deep.js';
+         drawSwimmers, drawDeepInvert } from './render/deep.js';
+import { deepFade } from './view.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
 import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
 import { drawSinking, drawLifting } from './render/scales.js';
@@ -229,9 +230,6 @@ const LAYERS = [
   { name: 'world:done', draw: leaveWorld },
 
   { name: 'air near', draw: drawAirNear },       // the nearest dust passes in front of the yard, not behind it
-  // The glide between the halves goes black at its middle, over the whole
-  // picture and under the counter, which is read.
-  { name: 'glide', draw: drawGlideDark },
 
   // The roster's counts are in screen pixels so the digits stay sharp, but
   // moved with the yard rather than pinned to the window: the number belongs
@@ -270,14 +268,20 @@ const DEEP = new Set(['deep sky', 'deep water', 'deep motes', 'deep floor', 'dee
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves and are simply off the glass in one.
-const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'pointed', 'cursor', 'glide',
+const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'pointed', 'cursor',
                       'work bars', 'build sites', 'done marks', 'pile marks']);
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const inHalf = (layer, i, deep) =>
   BOTH.has(layer.name) || i > SCREEN_FROM || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));
 
+// In a glide the deep's picture fades over its water (view.js, `deepFade`):
+// everything but the page, the camera's own moves, the water and the turn
+// of the palette, which are the ground the fade happens on.
+const UNFADED = new Set(['page', 'world', 'world:done', 'screen', 'deep water', 'deep invert']);
+
 export function draw() {
   const deep = S.view === 'deep';
+  const fade = deep ? deepFade() : 1;
   for (let i = 0; i < LAYERS.length; i++) {
     const layer = LAYERS[i];
     if (!inHalf(layer, i, deep)) continue;
@@ -290,9 +294,10 @@ export function draw() {
     // The alpha is put back the same frame: nothing else is ever drawn faint.
     const view = layer.dim ? crewView() : 'show';
     if (view === 'hide') continue;
-    const faint = view === 'fade';
-    if (faint) ctx.globalAlpha = CREW_FADE;
+    const a = (view === 'fade' ? CREW_FADE : 1) * (UNFADED.has(layer.name) ? 1 : fade);
+    if (a <= 0) continue;
+    if (a < 1) ctx.globalAlpha = a;
     layer.draw();
-    if (faint) ctx.globalAlpha = 1;
+    if (a < 1) ctx.globalAlpha = 1;
   }
 }

@@ -22,7 +22,8 @@ import { dropMs } from './rock.js';
 import { now } from './clock.js';
 import { COIL_SEGS } from './config.js';
 import { mouthX, spotX, coilAt, bellySeg } from './deep/place.js';
-import { goDeep } from './view.js';
+import { goDeep, goUp, poseGlide } from './view.js';
+import { pref, setPref } from './prefs.js';
 import { sendDeep } from './staffing.js';
 
 // The parts, in the order the sheet reads them.
@@ -196,6 +197,22 @@ const snatchAt = phase => () => {
   for (let i = 0; i < 60 * 60 && S.snatch?.phase !== phase; i++) window.__fast(1 / 60);
 };
 
+// A glide caught at `k` of the way and held there (`poseGlide`): the first
+// real frame after a long setup would otherwise carry it to its end before
+// the shot.
+const glideAt = (to, k) => () => {
+  deepYard({ view: to === 'deep' ? 'yard' : 'deep', run: 2 });
+  // A glide under reduced motion is a cut, and a headless browser asks for
+  // reduced motion: full motion for the one call that starts it, and the
+  // preference as it was straight after.
+  const was = pref('motion');
+  setPref('motion', false);
+  if (to === 'deep') goDeep(); else goUp();
+  setPref('motion', was);
+  S.viewFade = k;
+  poseGlide();
+};
+
 const deepScenes = {
   snatch: { about: 'the deep', say: 'the snatch: the serpent up out of the abyss at the shaft, him in its jaws',
     run: snatchAt('rise') },
@@ -211,6 +228,16 @@ const deepScenes = {
                  window.__fast(3); window.__look(mouthX() - S.viewW * 0.75); } },
   'shaft-deep': { about: 'the deep', say: "the shaft's post at its foot, on the deep's floor",
     run: () => { deepYard({ run: 2 }); window.__fast(3); lookDeep(mouthX() + S.viewW * 0.25); } },
+  // The glide between the halves, caught at a point of it (`glideAt`): just
+  // past the turn going down is the deep's side of the hand-over, and the
+  // same point going up is the yard's side, so the two shots should be one
+  // picture of the liquid.
+  'glide-down-turn': { about: 'the deep', say: 'going down, just past the turn: the deep over the liquid, barely faded in',
+    run: glideAt('deep', 0.52) },
+  'glide-up-turn': { about: 'the deep', say: "going up, just past the turn: the pit's liquid from the yard's side",
+    run: glideAt('yard', 0.52) },
+  'glide-down-fade': { about: 'the deep', say: 'going down, the deep fading in over the water as the camera opens out',
+    run: glideAt('deep', 0.8) },
   // The ends of it: the head and its slim neck, and the long taper of the tail.
   'serpent-head': { about: 'the deep', say: "the serpent's head and the neck behind it",
     run: () => { deepYard({}); lookDeep(coilAt(4, now()).x + S.viewW * 0.25); } },

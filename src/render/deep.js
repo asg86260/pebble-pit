@@ -23,17 +23,18 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          ABYSS_FLOW_DRIFT2, ABYSS_FLOW_MIX, ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER,
          ABYSS_STAR_MS, ABYSS_BREATH_BEND, ABYSS_RIPPLE_MS,
          DEEP_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
-         DEEP_SURFACE, SHAFT_LIGHT_W, SHAFT_SPILL, DEEP_VEIL_LIT, DEEP_VEIL_DEEP,
-         DEEP_STAR_EVERY, DEEP_STAR_TOP, DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
+         DEEP_SURFACE, SHAFT_LIGHT_W, SHAFT_SPILL,
+         DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, hopperRect, podAt,
-         spriteRect, standOf } from '../deep/place.js';
+         spriteRect, standOf, waterShift } from '../deep/place.js';
+import { paintAbyssField } from './abyssfield.js';
+import { abyssLine } from '../pit.js';
 import { SPRITES } from '../deep/sprites.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
 import { raw, darkPage, turned } from '../ink.js';
-import { viewDark } from '../view.js';
 import { ctx } from './ctx.js';
 import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
@@ -129,46 +130,16 @@ export function drawDeepSky() {
 // plainly the same fluid seen from inside it. Stars breathe in it more
 // sparsely, and never reach the bright end of their ramp.
 export function drawDeepWater() {
-  const t = now();
   const { x0, y0, x1, y1 } = deepWindow();
   const top = Math.max(y0, deepTop() + DEEP_SURFACE + P * 2);
   const bottom = Math.min(y1, deepFloor());
   if (bottom <= top) return;
-  const a = t / ABYSS_FLOW_MS * Math.PI * 2;
-  const dragY = [];
-  for (let x = x0; x < x1; x += P) {
-    dragY.push(Math.sin((x / P) * ABYSS_FLOW_COL * ABYSS_SHEAR_COL - a * ABYSS_SHEAR_COL)
-               * ABYSS_FLOW_SHEAR * ABYSS_SHEAR_AMT_Y);
-  }
-  for (let y = top; y < bottom; y += P) {
-    const r = y / P;
-    const dragX = Math.sin(r * ABYSS_FLOW_ROW + a) * ABYSS_FLOW_SHEAR
-                + Math.sin(r * ABYSS_FLOW_ROW * ABYSS_SHEAR_ROW - a * ABYSS_SHEAR_TURN)
-                  * ABYSS_FLOW_SHEAR * ABYSS_SHEAR_AMT2;
-    const depth = (y - deepTop()) / DEEP_H;
-    for (let x = x0, i = 0; x < x1; x += P, i++) {
-      const c = x / P;
-      const cx = c + dragX, ry = r + dragY[i];
-      const f = Math.sin(cx * ABYSS_FLOW_COL + ry * ABYSS_FLOW_ROW * ABYSS_FLOW_ASPECT - a * ABYSS_FLOW_DRIFT);
-      const h = seeth(c, r);
-      if (h % DEEP_STAR_EVERY === 0) {
-        const swing = (Math.sin(t / ABYSS_STAR_MS * Math.PI * 2 * (0.6 + (h % 7) * 0.1) + h) + 1) / 2;
-        const ramp = h % 5 === 0 ? PURPLES : GREYS;
-        const rung = Math.round(Math.pow(swing, ABYSS_BREATH_BEND) * (DEEP_STAR_TOP - (h >> 4) % 2));
-        if (rung > 0) { ctx.fillStyle = ramp[rung]; ctx.fillRect(x, y, P, P); continue; }
-      }
-      const swell = 1 - ABYSS_FLOW_MIX + ABYSS_FLOW_MIX
-                  * (Math.sin(cx * ABYSS_FLOW_COL2 + ry * ABYSS_FLOW_ROW2 - a * ABYSS_FLOW_DRIFT2) + 1) / 2;
-      const off = Math.abs(f), band = ABYSS_VEIL_AT * swell;
-      if (off > band || h % ABYSS_VEIL_EVERY === 0) continue;
-      const thick = (1 - off / band) * swell;
-      const lit = thick * (DEEP_VEIL_LIT + depth * DEEP_VEIL_DEEP) + (h % 3 - 1) * ABYSS_VEIL_JITTER;
-      const rung = Math.max(0, Math.min(GREYS.length - 1, Math.round(lit * (GREYS.length - 1))));
-      if (rung === 0) continue;
-      ctx.fillStyle = GREYS[rung];
-      ctx.fillRect(x, y, P, P);
-    }
-  }
+  // The drowned pit's own liquid, carried on under its surface: this row of
+  // the deep is the pit's row as far under the pit's surface as it is under
+  // the deep's, so the glide hands over on one picture (view.js).
+  const line = abyssLine();
+  paintAbyssField({ from: x0, to: x1, top, bottom, line, rowShift: waterShift(),
+                    tones: GREYS, magic: PURPLES, t: now() });
   ctx.fillStyle = '#000';
 }
 
@@ -479,18 +450,3 @@ export function drawDeepInvert() {
   ctx.fillStyle = '#000';
 }
 
-// --- the glide ---------------------------------------------------------------------
-// The frame going black at the middle of a glide, in screen pixels over the
-// whole finished yard or deep: the liquid, filling the window as the camera
-// goes into it.
-export function drawGlideDark() {
-  const k = viewDark();
-  if (k <= 0) return;
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.globalAlpha = Math.min(1, k * 1.25);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.restore();
-  ctx.fillStyle = '#000';
-}

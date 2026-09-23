@@ -31,6 +31,7 @@ import { S, floor, pit, rift } from '../state.js';
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawCircle, drawMark } from './marks.js';
+import { paintAbyssField } from './abyssfield.js';
 
 // --- what a core gives off ----------------------------------------------------
 // Rings of cells walking outward and fading, each a different color and all of
@@ -468,83 +469,10 @@ export function drawAbyss() {
     ctx.fillRect(x, top, P, Math.max(0, floorY - top));
   }
 
-  // The deep, in one pass: the current and the stars breathing in it, both
-  // read off the same flow field so the sky and the smoke are plainly the same
-  // fluid. The fine hash seats a star; the coarse hash over eight-cell patches
-  // decides whether that stretch is nebula-thick, ordinary or empty. A star's
-  // breath walks up its family's ramp and back, lifted or lowered by the
-  // current; depth sets its ceiling, so looking down is looking further in.
-  // The veil is the crest of the same field, broken by the hash so it lights
-  // in ragged runs rather than a painted band.
-  //
-  // The row's sideways drag and the column's downward drag each depend on only
-  // one of the two, so both are worked out once; a cell costs one sine.
-  {
-    const a = t / ABYSS_FLOW_MS * Math.PI * 2;
-    const top = Math.round(line / P) * P + P * 3;
-    const dragY = [];
-    for (let x = from; x < to; x += P) {
-      dragY.push(Math.sin((x / P) * ABYSS_FLOW_COL * ABYSS_SHEAR_COL - a * ABYSS_SHEAR_COL)
-                 * ABYSS_FLOW_SHEAR * ABYSS_SHEAR_AMT_Y);
-    }
-    for (let y = top; y < floorY; y += P) {
-      const r = y / P;
-      const dragX = Math.sin(r * ABYSS_FLOW_ROW + a) * ABYSS_FLOW_SHEAR
-                  + Math.sin(r * ABYSS_FLOW_ROW * ABYSS_SHEAR_ROW - a * ABYSS_SHEAR_TURN)
-                    * ABYSS_FLOW_SHEAR * ABYSS_SHEAR_AMT2;
-      const depth = Math.min(1, (y - line) / (P * 32));
-      for (let x = from, i = 0; x < to; x += P, i++) {
-        const c = x / P;
-        const cx = c + dragX, ry = r + dragY[i];
-        const f = Math.sin(cx * ABYSS_FLOW_COL + ry * ABYSS_FLOW_ROW * ABYSS_FLOW_ASPECT
-                           - a * ABYSS_FLOW_DRIFT);
-        // the second, far slower wave rides over the first as a strength,
-        // thinning the filament to nothing along one stretch and swelling it
-        // along another
-        const swell = 1 - ABYSS_FLOW_MIX + ABYSS_FLOW_MIX
-                    * (Math.sin(cx * ABYSS_FLOW_COL2 + ry * ABYSS_FLOW_ROW2
-                                - a * ABYSS_FLOW_DRIFT2) + 1) / 2;
-        const h = seeth(c, r);
-        // the patch's own nature: 0..2 empty, 3..6 ordinary, 7+ nebula
-        const patch = seeth(c >> 3, r >> 3) % 10;
-        const keep = patch >= 7 ? 4 : 1;           // nebula patches keep four times the stars
-        const seated = patch >= 3 && h % ABYSS_STAR_EVERY < keep;
-        if (seated) {
-          // the breath, bent so a star spends most of its life dim, then lifted
-          // or lowered by the current
-          const swing = (Math.sin(t / ABYSS_STAR_MS * Math.PI * 2 * (0.6 + (h % 7) * 0.1) + h)
-                         + 1) / 2;
-          const k = Math.pow(swing, ABYSS_BREATH_BEND)
-                  * (1 - ABYSS_FLOW_LIFT + ABYSS_FLOW_LIFT * (f + 1) / 2);
-          const ramp = h % 7 === 0 ? ABYSS_MAGIC_TONES : ABYSS_TONES;
-          // its ceiling: shallow stars never reach the bright end of their
-          // family. At least two rungs, so even the dimmest star has a fade
-          // rather than a switch.
-          const allowed = ABYSS_STAR_FLOOR
-                        + Math.round(depth * (ramp.length - 1 - ABYSS_STAR_FLOOR));
-          const ceiling = allowed - (h >> 3) % ABYSS_STAR_VARY;
-          const rung = Math.min(ramp.length - 1, Math.round(k * ceiling));
-          if (rung > 0) {
-            ctx.fillStyle = ramp[rung];
-            ctx.fillRect(x, y, P, P);
-            continue;
-          }
-        }
-        const off = Math.abs(f), band = ABYSS_VEIL_AT * swell;
-        if (off > band || h % ABYSS_VEIL_EVERY === 0) continue;
-        // how near the middle of the filament this cell sits; the deep carries
-        // it a shade further up the ramp, and the hash nudges each cell so no
-        // stretch is one flat tone
-        const thick = (1 - off / band) * swell;
-        const lit = thick * (ABYSS_VEIL_LIT + depth * ABYSS_VEIL_DEEP)
-                  + (h % 3 - 1) * ABYSS_VEIL_JITTER;
-        const rung = rungFor(ABYSS_TONES, lit);
-        if (rung === 0) continue;                  // its edges reach black and stop
-        ctx.fillStyle = ABYSS_TONES[rung];
-        ctx.fillRect(x, y, P, P);
-      }
-    }
-  }
+  // The liquid itself: the field the deep's water is drawn from too
+  // (abyssfield.js), from a few cells under the rolling surface down.
+  paintAbyssField({ from, to, top: Math.round(line / P) * P + P * 3, bottom: floorY, line,
+                    tones: ABYSS_TONES, magic: ABYSS_MAGIC_TONES, t });
 
   // The wisps: position is the clock and the column, so a wisp is a place
   // that exhales rather than a particle that exists; it narrows as it rises
