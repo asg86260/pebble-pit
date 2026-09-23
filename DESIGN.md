@@ -3380,6 +3380,25 @@ which is the endless one now. The pit press
 used to be the example here and is cut. The paint store below spends the same red
 on something that is not a multiplier at all.
 
+### Its ladders *(the owner's call: "yes they should get upgrades")*
+
+Two ladders of its own on the bench under the haulers' heading, beside the
+`driver` row, built through `tierRows` with `named` bands like every other
+ladder, so a card each, eight rungs, the bill deepening dust, then crops, then
+ore, then a spark:
+
+- **`liftload`, forklift load** -- grains a forklift carries, its foot what a
+  driver carried at the foot of the haulers' ladders (a load of two, doubled
+  by the cart, doubled by the engine).
+- **`liftpace`, forklift speed** -- pixels a second, its foot twice a bare
+  hauler's walk at the foot.
+
+Their value and dust lines are written in `LADDERS` (config/rungs.js), dearer
+than the haulers' since they are the late yard's. Shown once the yard owns a
+forklift. `LIFT_LOAD` and `LIFT_PACE` go: the forklift no longer rides the
+haulers' ladders, so a hauler rung buys a hauler something and a forklift rung
+buys every forklift something, and the two stop being one decision.
+
 ### The smoke comes on in two steps
 
 The one thing this changes about the rest of the game: **the yard is worked by
@@ -14212,7 +14231,7 @@ topped.
   the ring's size down before. Worth a playbot run on the tower's spark rate at
   three hats before and after.
 
-## The forklifts drive themselves (design, not built)
+## The forklifts drive themselves (approved 2026-09-22, not built)
 
 *(2026-09-22, the owner's call: "the forklifts shouldn't require a hauler to
 run ... I want the workers to eventually have nothing to do." Supersedes "Who
@@ -14245,9 +14264,9 @@ with the load.
   worker the house hires or the dance calls.
 - **It hauls by the haulers' own step.** The loop in `crew/hauler.js` (find
   a pile, claim it, load, drive to the hole, tip) is the hauler's job; the
-  forklift runs the same loop, with its load and pace read off `LIFT_LOAD`
-  and `LIFT_PACE` over the haulers' ladders as the driver's were. The claims
-  are shared, so forklifts and haulers split the piles and never double up.
+  forklift runs the same loop, with its load and pace read off its own two
+  ladders (below). The claims are shared, so forklifts and haulers split the
+  piles and never double up.
 - **It skips everything a person does.** No breaks, no smoke, no outhouse,
   no brews, no dance, no house at night, no crew card, no kit. It can't be
   picked up with the pointer. Every system that walks `S.workers` and means
@@ -14305,10 +14324,8 @@ rule that a forklift is never counted as crew.
 
 ### Open
 
-- **What haulers do once the forklifts have taken all the carrying.** Today
-  an idle body finds something ordinary to do (a smoke, a sit). That is
-  where "the workers have nothing to do" shows, and whatever the next phase
-  gives them is its own design.
-- **Whether a forklift's load and pace should get a ladder of their own**,
-  now it is a machine rather than kit on a body. Left on the haulers'
-  ladders for now, which keeps this change to one thing.
+- **Idle haulers chill as normal** (the owner's call): a smoke, a sit, as any
+  body with nothing to carry does now. What the next phase gives them is its
+  own design.
+- **The ladders' numbers** in `LADDERS` are first guesses, for the ladder
+  book.
