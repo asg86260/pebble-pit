@@ -59,7 +59,10 @@ const DEALT = ['breakers', 'carters', 'blasters', 'growers', 'farmhands',
                // the marked motes still to fall: a load marks that many of
                // the rebuilt band and writes down how many it found to mark
                // (`remarkSky`), which over this check's empty sky is none
-               'stormLeft'];
+               'stormLeft',
+               // the scales are the deep's bed, counted off its cells on the
+               // way in (deep/scales.js), which this check leaves empty
+               'scales'];
 
 group('every plain field on the list survives a save and a load', async () => {
   const fields = SAVED.filter(k => !DEALT.includes(k));

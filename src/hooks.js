@@ -1040,3 +1040,33 @@ export const HANDLES = {
 // `null` to follow the system. Answers with what the camera will actually do.
 import { setPref, reducedMotion } from './prefs.js';
 HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
+
+// --- wave serpent: SERPENT ---
+// The fight set for a setup (`stage`, `wound`), the bed laid with scales, and
+// the deep read back in one object. The fight is set outright only for a check
+// that is not about getting there, and the rule that the stage never goes
+// back is told the setup is a new starting point.
+import { layScales } from './deep/scales.js';
+import { healNow, woundK, litK, boundK } from './deep/serpent.js';
+import { forgetSerpent } from './verify.js';
+HANDLES.__serpent = ({ stage, wound } = {}) => {
+  if (Number.isInteger(stage)) {
+    S.serpentStage = Math.max(0, Math.min(4, stage));
+    S.serpentFreed = S.serpentStage > 3;
+  }
+  if (Number.isFinite(wound)) S.serpentWound = Math.max(0, wound);
+  forgetSerpent();
+  return { stage: S.serpentStage, wound: S.serpentWound };
+};
+HANDLES.__scales = n => layScales(n);
+HANDLES.__deepState = () => ({
+  stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(), heal: healNow(),
+  freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
+  lit: litK(), bound: boundK(),
+  lances: S.lances.map(l => ({ x: l.x, y: l.y, seg: l.seg, stuck: l.stuck, until: l.until })),
+  grenades: S.grenades.map(g => ({ x: g.x, y: g.y })),
+  rings: S.rings.map(r => ({ x: r.x, y: r.y, r: r.r, hit: r.hit.slice() })),
+  beams: S.beams.map(b => ({ x: b.x, y: b.y, seg: b.seg })),
+  sigils: S.sigils.map(s => ({ x: s.x })),
+  starFall: S.starFall && { x: S.starFall.x, y: S.starFall.y, phase: S.starFall.phase }
+});
