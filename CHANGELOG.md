@@ -13,6 +13,7 @@ feature lives in DESIGN.md.
 
 - The balloon row shows three pips, one for each balloon there is to buy, instead of five (test/balloon.test.mjs).
 **New this release**
+- Every station's counter stands centered under its building -- the tower, the farm's shed, the apothecary's hut -- and the carry count under the middle of the houses (src/scenes.js `liftroster`).
 - Idle workers go indoors after a few seconds with nothing to carry, instead of standing about for a minute, and come straight back out when there is work (test/home-pace.test.mjs).
 - Forklifts drive themselves: bought on the bench, they roll off the stand and haul to the pit with nobody aboard, drive into a garage by the bench when there is nothing to carry, and have two ladders of their own, forklift load and forklift speed (test/forklift.test.mjs).
 - The sphere: the tower's machine, a shell the wizards pour round the star that drops sparks without using the star up, tended by one wizard and tuned by three red rungs; the tower now trains a set of three wizards, like every station's kit (test/sphere.test.mjs).

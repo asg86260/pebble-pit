@@ -4,9 +4,10 @@
 // it is on nothing. Its count is there to be read.
 
 import { P, WORKER, LIFT_SEAT as SEAT } from './config.js';
-import { S, quarry, farm, apothecary, filter, sky, outhouse, shack } from './state.js';
-import { groundAt, kitX, quarryShed } from './world.js';
-import { doorAt } from './house.js';
+import { S, quarry } from './state.js';
+import { groundAt, kitX } from './world.js';
+import { houseRect } from './house.js';
+import { siteBox } from './works.js';
 import { JOB_MACHINE, running } from './machines.js';
 import { assign, idle } from './staffing.js';
 import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
@@ -24,46 +25,41 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 
 // Each station and the job it stands for, in yard order, left to right.
 //
+// A roster stands centered under its station's building: the box `siteBox`
+// answers for the site, which is the shed, the hut or the shack the board
+// opens at and the bar hangs over, not the station's whole ground. One rule,
+// so a station added later is placed by naming its site.
+//
 // The lab and the air filter hold one body each, and still have a
 // counter: what you are deciding is whether that station is *running at all*,
 // and the yard deciding it for you means a pair of hands taken off the rock
 // by a building without you having said so.
+const under = site => () => { const b = siteBox(site); return b.x + b.w / 2; };
 export const POSTS = [
-  { key: 'filterjob', job: JOB.PURIFY,
-    at: () => filter.x + filter.w / 2, show: () => S.filterOpen },
-  // One body to a pot, stood under the apothecary it stirs.
-  { key: 'stirjob', job: JOB.STIR,
-    at: () => apothecary.x + apothecary.w / 2, show: () => S.apothecaryOpen },
+  { key: 'filterjob', job: JOB.PURIFY, at: under('filter'), show: () => S.filterOpen },
+  { key: 'stirjob', job: JOB.STIR, at: under('apothecary'), show: () => S.apothecaryOpen },
   // The shed does not clean anything; what it buys is somebody whose job the
   // mess is (`capOf`), so the post stands under it.
-  { key: 'loojob', job: JOB.JANITOR,
-    at: () => outhouse.x + outhouse.w / 2, show: () => S.outhouseOpen, kit: true },
-  { key: 'farmjob', job: JOB.FARM,
-    at: () => farm.x + farm.w / 2, show: () => S.farmOpen, kit: true },
+  { key: 'loojob', job: JOB.JANITOR, at: under('outhouse'), show: () => S.outhouseOpen, kit: true },
+  { key: 'farmjob', job: JOB.FARM, at: under('farm'), show: () => S.farmOpen, kit: true },
   { key: 'quarryjob', job: JOB.QUARRY,
-    // Under the shed beside the cut, which is solid ground that stands clear
-    // of the mouth; a roster under the hole's floor walks off the bottom of
-    // the world as the quarry is dug down. Held clear of the mouth: the strip
-    // is three times as wide as the shed, and centered exactly its plus
-    // reaches into the hole's wall.
-    at: () => { const s = quarryShed();
-                return Math.min(s.x + s.w / 2, quarry.x - WIDE / 2 - P); },
+    // Held clear of the mouth: the strip is three times as wide as the shed,
+    // and centered exactly its plus reaches into the hole's wall, which runs
+    // down past the roster as the quarry is dug.
+    at: () => Math.min(under('quarry')(), quarry.x - WIDE / 2 - P),
     show: () => S.quarryOpen,
     kit: true },
-  // On the ground under the meteor: the buttons belong where the body walks
-  // to, not up beside the work.
-  { key: 'skyjob', job: JOB.WIZARD,
-    at: () => sky.x, show: () => S.meteorOpen, kit: true },
-  // Outside the gang's hut once it stands; `S.cx` before, since the row is
-  // here from the first hire and the shack is not. `kitX` in world.js answers
-  // the stand the same way.
+  { key: 'skyjob', job: JOB.WIZARD, at: under('tower'), show: () => S.meteorOpen, kit: true },
+  // `S.cx` before the shack stands, since the row is here from the first hire
+  // and the shack is not. `kitX` in world.js answers the stand the same way.
   { key: 'mine', job: JOB.ROCK,
-    at: () => (S.shackOpen ? shack.x + shack.w / 2 : S.cx), show: () => S.crew > 0, kit: true },
+    at: () => (S.shackOpen ? under('shack')() : S.cx), show: () => S.crew > 0, kit: true },
   // Under the houses: carrying has no place its work is done, and what this
   // number counts is the bodies that are not on anything, so it belongs where
-  // the bodies come from.
+  // the bodies come from. The block as it stands, not the plot reserved for it.
   { key: 'carry', job: JOB.HAUL,
-    at: () => doorAt().x, show: () => S.crew > 0, fixed: true, kit: true }
+    at: () => { const h = houseRect(); return h.x + h.w / 2; },
+    show: () => S.crew > 0, fixed: true, kit: true }
 ];
 
 // Below the ground line, clear of the stopped-station triangle (seven cells
