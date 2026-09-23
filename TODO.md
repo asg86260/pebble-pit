@@ -101,7 +101,8 @@ touching `src/config/build.js`.
 - **The sphere** (designed 2026-09-22, awaiting sign-off). DESIGN.md, "The
   sphere: the tower's machine": a fifth machine, poured around the star by the
   wizards, harvesting sparks without taking the star apart; one tender, soot off
-  the spire. Blocked on approval; the bill and `SPHERE_WORK` are the open numbers.
+  the spire; the tower capped at three hats, the sphere grown by a three-rung
+  tuning ladder the tender pours. Blocked on approval; the bill and `SPHERE_WORK` are the open numbers.
 - **The noticeboard** (approved 2026-09-10). DESIGN.md, "The noticeboard, and
   the record on it": forty-two notices, recognition only, the books move onto
   its second sheet. Thresholds are dev-panel questions. Wave-sized: catalog,

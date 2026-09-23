@@ -14008,9 +14008,18 @@ machine should read as the same bargain the other four struck.
 
 **One row on the tower's board, `the sphere`, `kind: 'machine'`.** It is gated
 like its neighbors (`canBuy`): the tower's own ladders topped
-(`S.wizSpeedLevel >= RUNGS && S.wizPowerLevel >= RUNGS`), and the star lit at
-least once. The wizards have no kit, so the second gate is at least one trained
-hat, which a yard that has topped two spark ladders always has.
+(`S.wizSpeedLevel >= RUNGS && S.wizPowerLevel >= RUNGS`), and a full set of
+hats (`kitFull(JOB.WIZARD)`), the same second gate every other machine has.
+
+**A full set is three hats, as at every other station.** The hat row was the
+one kit row with no ceiling: each hat cost `WIZ_RATE` more than the last and
+there was always another. The wizard's row in `KIT` gets `set: KIT_MAX, max:
+KIT_MAX` like the helmet, the lamp and the brim, so the tower holds three
+wizards, the row stops at three with pips like any other, and the sphere's gate
+is the same `kitFull` question the drill's is. A save holding more than three
+keeps its bodies (nobody is taken off a yard for a rule it did not break), but
+the sphere reads `kitCap`, which is three, so the extras are worth nothing more
+to it. They come down with the rest of the ring when the sphere closes.
 
 **Buying it opens a pour, not a finished machine.** Nothing teleports, and a
 shell in the sky has no builders who can reach it. The wizards pour it the way
@@ -14035,7 +14044,7 @@ and it resumes where it stopped.
   both say so, and `S.restaff = { job: JOB.WIZARD, want: 1 }` sends the rest of
   the ring down, as `buyMachine` does at every station. The restaff waits until
   the pour is finished, not until the purchase: a machine that cut the ring to
-  one body at the purchase would pour its own shell at a quarter of the pace.
+  one body at the purchase would pour its own shell at a third of the pace.
 
 ### Worked by one tender
 
@@ -14048,23 +14057,38 @@ the wizards emit is purple, and the beam is the one sign the tender is the
 reason the machine runs.
 
 **Its rate is derived, not written.** `machineRate(JOB.WIZARD)` works as it
-does for every machine. `handsOf(JOB.WIZARD)` is `S.wizardHats`, so the sphere
-stands in for however many hats the tower has made. A unit of its work is one
+does for every machine. `handsOf(JOB.WIZARD)` is the tower's three, and
+`gangWorth` counts them hatted, so the sphere stands in for a full ring. A unit of its work is one
 cell's worth of light: a spark chip, or three for a core-weighted unit, split
 in the proportion `makeMeteor` lays rind and core (`METEOR_CORE`). The spec's
 `ms` is `wizMs()` divided by `wizBite()` and by the rate. The yield is read off
 the tower's topped ladders and the hats, with no new rate constant to tune.
 
-**The hat row keeps selling.** A hat made after the sphere is one more pair of
-hands the sphere stands in for: it raises `handsOf`, and the rate reads it, the
-way a bigger quarry would raise the drill's. Nobody wears it, since the station
-holds one body now. It hangs on the tower as a count, which is how the drill
-treats the helmets it absorbed.
+**The hats go in the drawer.** The sphere takes the kit as the drill does
+(`takesKit` left at its default, so `tookKit` is true): the two stood-down
+wizards walk to the tower and hand their hats in, and the tender keeps its own,
+since it is the one body that still has to fly. `gangWorth` counts the set
+whole, as it does for every machine that took its kit.
 
-**The three red rungs come for free.** `tuneRow('sphere', 'sphere yield', ...)`
-on the tower's board: the same written table as every machine
-(`MACHINE_TUNE_SPARKS`), with pips and an end. `tookKit` is false, since there
-is no kit to take.
+### Tuning it
+
+**The sphere's growth is its tuning ladder, and nothing else.** With the hats
+capped at three, the tower has no row left that makes the sphere worth more
+except the one a machine always has: `tuneRow('sphere', 'sphere yield', ...)` on
+the tower's board, three rungs of red from `MACHINE_TUNE_SPARKS`, `MACHINE_TUNE`
+a rung, with pips and an end. It is one multiplier in `machineRate`, like every
+other machine's.
+
+**A rung is poured, not delivered.** At the other machines a spare hand walks
+over and puts a rung in; nobody on the ground can reach the shell. So a sphere
+rung is the tender's work: the row's `site` is the shell, and the works bar
+fills only while the tender is up and channeling (`atTower`), for
+`SPHERE_TUNE_WORK` wizard-seconds. The machine keeps running through it.
+
+**Each rung is seen.** A rung lays a second course of plates over a third of
+the slits, so a topped sphere has its slits narrowed to pinholes: more of the
+light is caught, and less of it gets out. The ladder reads on the ring, not
+only on the card.
 
 ### Where the sparks go
 
@@ -14115,28 +14139,36 @@ through it is red.
 
 | file | change |
 |---|---|
-| `src/machines.js` | a fifth `MACHINES` entry, `{ key: 'sphere', job: JOB.WIZARD, name: 'the sphere', takesKit: false }` |
+| `src/machines.js` | a fifth `MACHINES` entry, `{ key: 'sphere', job: JOB.WIZARD, name: 'the sphere' }` |
+| `src/kit.js` | the wizard's row gets `set: KIT_MAX, max: KIT_MAX` |
+| `src/tower.js` | the hat row stops at the set, with pips |
 | `src/sphere.js` (new) | `defineMachine('sphere', ...)`, `sphereRising`, `pourSphere`, the shell's `laid`, and the `SAVE` for it |
 | `src/wizard.js` | ring center and radius read the shell while it rises; no bolts under a shell; the tender's beam |
 | `src/tower.js` / `src/upgrades/rows-tower.js` | the machine row and its `tuneRow` |
 | `src/render/` | the shell, in `LAYERS` between the star and the wizards |
-| `src/config/machines.js` | `SPHERE_BILL`, `SPHERE_WORK`, `SPHERE_GAP` (slit spacing) |
+| `src/config/machines.js` | `SPHERE_BILL`, `SPHERE_WORK`, `SPHERE_TUNE_WORK`, `SPHERE_GAP` (slit spacing) |
 | `src/state.js` | `sphere` (the shell's `laid`) in `SAVED` |
 
 Checks, in the node tier as `test/sphere.test.mjs`: bought through the tower's
 row (`__buy`) and poured by the ring to the end, never set by a hook; the ring
 cut to one after the pour and not before; no sparks and no soot with nobody on
 the ring; chips reach the hole by a hauler's walk; a full sky pile stops it; a
-reload mid-pour comes back with the same panels laid. Scene: `sphere`, with the
-shell half poured and one with it closed and tended.
+reload mid-pour comes back with the same panels laid; the hat row stops at
+three; a tune rung fills only while the tender is up, and raises the rate.
+Scene: `sphere`, with the shell half poured, one closed and tended, and one
+topped.
 
 ### Open, for the balance pass
 
 - **`SPHERE_BILL`** starts above the ram, the dearest machine so far:
   `[['spark', 720], ['dust', 14400], ['shard', 900], ['spore', 900]]`. It is
   the last machine to open and the only one with no gap in its output.
-- **`SPHERE_WORK`** starts at 120 wizard-seconds, about three minutes for the
-  couple of wizards a yard at this point holds. It is longer than the dome
-  because nothing is falling on anybody while it goes up.
-- **Whether a hat made after the sphere should cost less.** It buys a rate, not
-  a body. The 1.7x hat price was set for a flying worker.
+- **`SPHERE_WORK`** starts at 120 wizard-seconds, forty seconds for a full ring
+  of three. It is longer than the dome because nothing is falling on anybody
+  while it goes up.
+- **`SPHERE_TUNE_WORK`** starts at 30 wizard-seconds a rung, since only the
+  tender pours it.
+- **The three-hat cap is a spark-income cut for a yard that had more.** The
+  star yields in proportion to the ring, and the 1.7x hat price was what held
+  the ring's size down before. Worth a playbot run on the tower's spark rate at
+  three hats before and after.
