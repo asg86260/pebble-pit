@@ -5,11 +5,12 @@
 import { WORKER } from '../config.js';
 import { S } from '../state.js';
 import { kitX } from '../world.js';
-import { keepTo, stepRoute, wayOver } from '../route.js';
+import { keepTo, stepRoute, wayOver, ways } from '../route.js';
 import { JOB_OF } from '../levels.js';
 import { JOBS as ROSTER_JOBS } from '../staffing.js';
 import { commutePace, homePace } from '../levels.js';
-import { TYPE } from '../jobs.js';
+import { TYPE, isDeepType } from '../jobs.js';
+import { deepPost } from './deep.js';
 import { JOB_MACHINE, machine, specOf } from '../machines.js';
 import { postOf } from './tenders.js';
 // kitwalk.js borrows four names back off this file; the cycle is fine because
@@ -62,8 +63,17 @@ function handStationX(type, w) {
   if (type === TYPE.WIZARD) return underMeteor();
   // A builder picks a site of its own and walks itself there (`stepBuilder`).
   if (type === TYPE.BUILD) return null;
+  // The deep's stations stand on its floor, under the drowned pit.
+  if (isDeepType(type)) return deepPost(type);
   return null;
 }
+
+// The way a leg ends on. An x is a place on the yard or the hill (`wayOver`),
+// except the walk to a deep job's own station, which is the same x a long way
+// further down: the deep lies under the yard, and only the job can say which
+// of the two is meant. A hat is fetched and handed in up top.
+const legWay = w =>
+  isDeepType(w.type) && (w.leg === 'work' || w.leg === 'back') ? ways().deep : wayOver(w.walkTo);
 
 // Give a body its new job's own fields, exactly the ones its factory hands
 // out. It keeps where it is standing, what is on its head and what is in its
@@ -102,6 +112,7 @@ export function settle(w) {
   w.tidyAt = null;
   w.foot = null;
   w.footAt = null;
+  w.phase = null;                  // a weapon's round in the deep (deep/arms.js)
 }
 
 // --- the kit walk -------------------------------------------------------------
@@ -209,7 +220,7 @@ export function stepCommute(w, zone) {
   // to there. The destination is on a way of its own, so a stand on the hill
   // is reached over the crest and a place on the yard along the floor, and
   // neither half of that is a job title.
-  if (!keepTo(w, w.walkTo, wayOver(w.walkTo))) { arrive(w); return; }
+  if (!keepTo(w, w.walkTo, legWay(w))) { arrive(w); return; }
 
   // Only a walk on the open yard ducks: holding a body on a rung against the
   // ladder for the length of a fall pushes it off.

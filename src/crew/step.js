@@ -16,6 +16,9 @@
 //   5. **floating** -- falls *through* on the frame its feet land.
 //   6. **commute** -- a body walking somewhere is not yet anywhere: the work,
 //      the mess and the loo are all things you do where you have arrived.
+//   6b. **which half** -- straight after: a body on a yard job with its feet
+//      in the deep swims up before its job is asked anything, and a body on
+//      a deep job left standing in the yard is sent down (crew/deep.js).
 //   7. **relieve** -- below the commute (you do not stop halfway across the
 //      yard), above the work (it is the one thing that interrupts work).
 //   8. **celebrate** -- above the work, the stations and the mess: while a body
@@ -39,11 +42,11 @@ import { P, LUNGE_EASE, WOBBLE, WOBBLE_BEAT, WORKER,
 import { S, floor } from '../state.js';
 import { colOf } from '../grid.js';
 import { dropZone } from '../rock.js';
-import { keepTo, stepRoute, wayOver, solidNear } from '../route.js';
+import { keepTo, stepRoute, wayOver, solidNear, belowYard } from '../route.js';
 import { TIDY_ELBOW } from '../tidy.js';
 import { MUCK_ELBOW, colAt, poopCols, muckFloor } from '../smog.js';
 import { commutePace } from '../levels.js';
-import { TYPE } from '../jobs.js';
+import { TYPE, isDeepType } from '../jobs.js';
 import { floatDown } from '../wizard.js';
 import { comeHome } from '../balloon.js';
 import { stopJig, celebrate, MOVE_KEYS } from './dance.js';
@@ -60,6 +63,7 @@ import { retask, stepCommute } from './commute.js';
 import { relieve } from './nature.js';
 import { takeMess } from './shovel.js';
 import { jobOf } from './jobs.js';
+import { surface } from './deep.js';
 import { sfx } from '../audio.js';
 
 // The yard is celebrating, and the dance ends at the clock and nowhere else.
@@ -170,6 +174,15 @@ const STAGES = [
   // footprint on purpose; the rock coming down is what sends it back out
   // (`stepDig`).
   (w, c) => { if (!w.walking) return false; stepCommute(w, w.dig ? null : c.zone); return true; },
+
+  // Which half of the works it belongs in. Only once the shaft is open: before
+  // the pit drowns there is no way down, and nobody is on a deep job.
+  w => {
+    if (surface(w)) return true;
+    if (!S.drowned || !isDeepType(w.type) || belowYard(w)) return false;
+    retask(w, w.type);
+    return true;
+  },
 
   // Digging at the one lodged in the ground (`stepDig` in intro.js). Under the
   // walk, so it gets there first; over the dance, so it digs while the yard

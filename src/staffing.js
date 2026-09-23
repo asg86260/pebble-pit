@@ -9,7 +9,7 @@
 
 import { LADDER } from './config.js';
 import { S } from './state.js';
-import { JOB } from './jobs.js';
+import { JOB, DEEP_JOBS } from './jobs.js';
 import { TRADE_OF, JOB_OF } from './kit.js';
 import { MACHINES, machine } from './machines.js';
 import { syncWorkers } from './crew.js';
@@ -19,7 +19,10 @@ import { capOf, roomAt } from './levels.js';
 // A job is a count, not a purchase: you buy a body once and move it freely.
 // What a body is twice as good at is its hat, and the hat stays at the station
 // (upgrades/rows-kit.js).
-export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD];
+// The deep's five are on it like any other: a body sent down the shaft is a
+// body off the spares (docs/wave-serpent.md).
+export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD,
+                     ...DEEP_JOBS];
 
 // Bodies on no job. They are the haulers. Builders are not subtracted here:
 // the builder count is derived FROM the spares (`rebalance`), so subtracting
@@ -124,6 +127,9 @@ function nearestLendable(sites) {
   for (const w of S.workers) {
     const job = JOB_OF[w.type];
     if (!job || !JOBS.includes(job) || w.lentFrom) continue;
+    // Never one of the deep's: the yard's builds are the yard's, and a body
+    // down the shaft is the furthest body there is from any of them.
+    if (DEEP_JOBS.includes(job)) continue;
     if (S[job] < 1) continue;
     const d = xs.length ? Math.min(...xs.map(x => Math.abs(w.x - x))) : 0;
     if (d < dist) { dist = d; best = w; }

@@ -10,6 +10,7 @@
 import { LADDER, rungValue, HAUL_SCOOP_MS } from './config.js';
 import { COMMUTE_PACE, HAUL_EMPTY, HOME_HURRY } from './config.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, SPELL_DRIVE } from './config.js';
+import { BRAWL_CAP, LANCE_CAP, GRENADE_CAP, SCRIBE_CAP, WARLOCK_CAP } from './config.js';
 import { S } from './state.js';
 import { craftCount } from './balloon.js';
 import { benches, plotCount } from './world.js';
@@ -101,6 +102,13 @@ const capOfBare = job =>
   job === JOB.WIZARD ? S.wizardHats :
   // Building is derived from the spares (`rebalance`), never assigned.
   job === JOB.BUILD ? 0 :
+  // The deep's stations hold nobody until their doors are open; the altar's
+  // stands from the snatch (docs/wave-serpent.md, "The crew's caps").
+  job === JOB.BRAWL ? (S.snatched ? BRAWL_CAP : 0) :
+  job === JOB.LANCE ? (S.wellOpen ? LANCE_CAP : 0) :
+  job === JOB.GRENADE ? (S.fontOpen ? GRENADE_CAP : 0) :
+  job === JOB.SCRIBE ? (S.circleOpen ? SCRIBE_CAP : 0) :
+  job === JOB.WARLOCK ? (S.spireOpen ? WARLOCK_CAP : 0) :
   // The rock and the lip have no plan.
   Infinity;
 

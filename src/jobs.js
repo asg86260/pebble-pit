@@ -60,6 +60,11 @@ export const JOB_OF = Object.freeze(Object.fromEntries(
 export const TYPE_OF = Object.freeze(Object.fromEntries(
   Object.keys(TYPE).map(k => [JOB[k], TYPE[k]])));
 
+// The deep's jobs as what a body IS, for the questions asked of a body rather
+// than of a count: which half of the works it belongs in.
+export const DEEP_TYPES = Object.freeze(DEEP_JOBS.map(j => TYPE_OF[j]));
+export const isDeepType = type => DEEP_TYPES.includes(type);
+
 // How a job is SAID, where the key is not already the words. Nothing prints a
 // raw key. The keys stay `rockhands` and `quarriers` -- saves and hooks quote
 // them.

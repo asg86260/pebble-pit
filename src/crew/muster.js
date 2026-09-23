@@ -4,11 +4,12 @@
 import { WORKER, CORE_SIZE } from '../config.js';
 import { S } from '../state.js';
 import { spawnChip, bell } from '../dust.js';
-import { setHands, setHandsOn, setStaff, onTheGo, builderManned } from '../works.js';
+import { setHands, setHandsOn, setStaff, onTheGo, builderManned, SITE_JOB } from '../works.js';
 import { JOB_OF, hats, rockhandMs } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { KIT_JOBS } from '../kit.js';
-import { TYPE } from '../jobs.js';
+import { TYPE, TYPE_OF, DEEP_JOBS } from '../jobs.js';
+import { belowYard } from '../route.js';
 import { now } from '../clock.js';
 import { newRecord } from './records.js';
 import { retask } from './commute.js';
@@ -28,6 +29,14 @@ setHands(site => {
   // tender, the one body that can reach it.
   if (site === 'sphere')
     return Math.min(1, S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length);
+  // A deep station's rungs and doors are raised by its own gang, down there
+  // already (docs/wave-serpent.md): a body counts once it has swum the shaft
+  // and arrived, and one pair of hands a work on the go, as the builders.
+  if (DEEP_JOBS.includes(SITE_JOB[site])) {
+    const type = TYPE_OF[SITE_JOB[site]];
+    const there = S.workers.filter(w => w.type === type && !w.walking && belowYard(w)).length;
+    return Math.min(Math.max(1, onTheGo(site).length), there);
+  }
   if (!builderManned(site)) return 0;
   // One pair of hands per work on the go, because each body is at exactly one
   // of them (`handsOn`); a gang of spare hands at one work is still one.

@@ -28,7 +28,17 @@ export function syncEnding() {
     if (up) { savedIn.textContent = sayClock(S.buriedMs); offerPost(); }
     else posted = false;                    // the next story's sheet gets its own line
   }
+  // The second half's end, the same way: up while its beat has the sheet.
+  const freedUp = beatRunning('freedsheet') && !S.paused && !S.fatal;
+  if (freed.hidden === freedUp) freed.hidden = !freedUp;
 }
+
+// The sqhusband out of the belly (snatch.js). The second half is not timed
+// and not on the board of times, so the sheet is the words and the button.
+const freed = document.getElementById('freed');
+document.getElementById('freedkeep').addEventListener('click', () => {
+  skipBeat(now(), 'sheet');
+});
 
 // The board of times' line: with no board the line is blank; with a name
 // already kept the time goes up as the sheet comes up; otherwise the box and

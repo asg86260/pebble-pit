@@ -14,7 +14,7 @@
 import { WORKER } from './config.js';
 import { S, pit, floor, cut, band } from './state.js';
 import { P } from './config.js';
-import { ways, wayAt, standTop, WORKINGS } from './route.js';
+import { ways, wayAt, standTop, WORKINGS, belowYard } from './route.js';
 import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf, liftsOf } from './kit.js';
@@ -45,7 +45,10 @@ const ROSTER_COUNTS = { rockhand: JOB.ROCK, hauler: JOB.HAUL, quarrier: JOB.QUAR
                         janitor: JOB.JANITOR, wizard: JOB.WIZARD,
                         // Nobody is put on building, but `syncWorkers` builds
                         // bodies from the count all the same.
-                        builder: JOB.BUILD };
+                        builder: JOB.BUILD,
+                        // The deep's (docs/wave-serpent.md).
+                        brawler: JOB.BRAWL, lancer: JOB.LANCE, grenadier: JOB.GRENADE,
+                        scribe: JOB.SCRIBE, warlock: JOB.WARLOCK };
 
 // How far below the surface of its way a body may be, and for how long. Feet
 // ease up to the ground fourteen per cent a frame (`climbTo` in crew.js), so
@@ -222,6 +225,9 @@ export function verifyWorld() {
     // indoors. None has a surface under it, so neither rule has anything to
     // say.
     if (w.lifted || w.falling || w.aloft || w.inside) { sunkSince.delete(w); continue; }
+    // Nor does a body down the shaft or in the deep: it swims, held up by the
+    // water, and the deep's own rules are its own (the end of the list).
+    if (belowYard(w)) { sunkSince.delete(w); floatSince.delete(w); offFloorSince.delete(w); continue; }
 
     const feet = w.y + WORKER;
 
