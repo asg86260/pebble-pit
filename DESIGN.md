@@ -13977,3 +13977,166 @@ end, and the yard is still yours -- so the competition is the one thing the
   rescue's pace (the pit arc, the dome's bill) is a new race, and the honest
   answer is a `version` column on the row and `?since=<version>` on the
   read, which is one column and one filter when it is wanted.
+
+## The sphere: the tower's machine (design, not built)
+
+The fifth machine, and the first one off the ground. Every other station hands
+its work to a machine once its hands have been given everything a ladder sells:
+the drill at the cut, the ram at the rock, the tiller at the plots, the belt
+along the lip. The tower is the one station that never does. Its wizards throw
+at the star forever, summon the next one, and throw again. **The sphere** is
+what the tower buys once its own ladders are topped: a shell of panels poured
+around the star, which catches the star's light and turns it into sparks
+without taking the star apart.
+
+### The bargain
+
+**The star stops being a job and becomes a source.** Wizards take the star
+apart a cell at a time, and when it is gone the sky stands empty for the length
+of a summoning. A yard that has built the sphere keeps its star for good: the
+shell closes around whatever is up there, bolts stop, summoning stops, and the
+red comes off the panels at a steady rate with no gap between stars. That
+steadiness is half of what the machine is worth. The other half is the usual
+machine gain, `MACHINE_GAIN` over the hands it stands in for.
+
+**What it costs the player** is what every machine costs: a big red-and-dust
+bill, a complement of hands reduced to one tender, and soot. There is no
+downside that belongs to the sphere alone. That is deliberate, because a fifth
+machine should read as the same bargain the other four struck.
+
+### Bought once, poured by the wizards
+
+**One row on the tower's board, `the sphere`, `kind: 'machine'`.** It is gated
+like its neighbors (`canBuy`): the tower's own ladders topped
+(`S.wizSpeedLevel >= RUNGS && S.wizPowerLevel >= RUNGS`), and the star lit at
+least once. The wizards have no kit, so the second gate is at least one trained
+hat, which a yard that has topped two spark ladders always has.
+
+**Buying it opens a pour, not a finished machine.** Nothing teleports, and a
+shell in the sky has no builders who can reach it. The wizards pour it the way
+they pour the dome. While `sphereRising()` is true, every channel in the ring
+pours into the shell (`pourSphere(hands, secs)`, beside `pourDome` in
+`stepSummon`) instead of throwing, and the shell goes up panel by panel along
+its growing edge. `SPHERE_WORK` is in wizard-seconds, like `DOME_WORK`: one
+body takes that long, two take half. The pour holds while nobody is up there,
+and it resumes where it stopped.
+
+- **If the sky is empty when the sphere is bought,** the ring summons first and
+  pours after. The shell is poured around a star, so it waits for one.
+- **The star is frozen from the first panel on.** No bolts are thrown at a star
+  under a shell, and the cells left on it are what the shell encloses. How much
+  of the star is left does not change what the sphere yields. It harvests
+  light, not cells, so a sphere closed around the last scrap of a star is worth
+  the same as one closed around a fresh one.
+- **The dome comes first.** If a dome is rising, the ring pours the dome
+  (`domeRising()` is checked before anything else in `stepSummon`, as it is
+  today). The sphere's pour holds until the dome is up.
+- **Once the last panel is set,** the record's `bought` and the shell's `laid`
+  both say so, and `S.restaff = { job: JOB.WIZARD, want: 1 }` sends the rest of
+  the ring down, as `buyMachine` does at every station. The restaff waits until
+  the pour is finished, not until the purchase: a machine that cut the ring to
+  one body at the purchase would pour its own shell at a quarter of the pace.
+
+### Worked by one tender
+
+**It is a manned machine.** One wizard stays up on the ring and tends the
+shell, and the rest are stood down to the ground and to carrying, the way the
+rest of a quarry gang is when the drill goes in. With nobody up there, the
+shell catches nothing and puts up no soot (`stepMachines`, like every other
+machine). The tender is drawn channeling a thin purple beam to the shell: what
+the wizards emit is purple, and the beam is the one sign the tender is the
+reason the machine runs.
+
+**Its rate is derived, not written.** `machineRate(JOB.WIZARD)` works as it
+does for every machine. `handsOf(JOB.WIZARD)` is `S.wizardHats`, so the sphere
+stands in for however many hats the tower has made. A unit of its work is one
+cell's worth of light: a spark chip, or three for a core-weighted unit, split
+in the proportion `makeMeteor` lays rind and core (`METEOR_CORE`). The spec's
+`ms` is `wizMs()` divided by `wizBite()` and by the rate. The yield is read off
+the tower's topped ladders and the hats, with no new rate constant to tune.
+
+**The hat row keeps selling.** A hat made after the sphere is one more pair of
+hands the sphere stands in for: it raises `handsOf`, and the rate reads it, the
+way a bigger quarry would raise the drill's. Nobody wears it, since the station
+holds one body now. It hangs on the tower as a count, which is how the drill
+treats the helmets it absorbed.
+
+**The three red rungs come for free.** `tuneRow('sphere', 'sphere yield', ...)`
+on the tower's board: the same written table as every machine
+(`MACHINE_TUNE_SPARKS`), with pips and an end. `tookKit` is false, since there
+is no kit to take.
+
+### Where the sparks go
+
+**Down, as chips, for the haulers.** The panels do not bank anything. Each unit
+drops a spark chip (`spawnChip` with `someFind(SPARK_CELL)`, exactly as
+`takeCell` does) off the underside of the shell. It falls to the ground under
+the tower and lands in the `sky` pile strip, and the haulers carry it to the
+hole. A full sky pile stops the machine through its `ready` (`!S.pileFull.sky`),
+which is the rule the ring already follows. Because the shell sits where the
+star always did, the chips land where the star's chips always landed, and the
+pile, the carry and the pile-full mark need no new plumbing.
+
+### It fouls the sky, off the tower
+
+**The tower's spire is the stack.** A machine is the sky's only producer, and
+the sphere is no exception: `MACHINE_FOUL` a unit, charged in `stepMachines`,
+with `STACK_PUFFS` thrown off the spire's tip on each beat (`puffStack`). The
+soot comes off the tower, not the shell, because the tower is the station the
+machine belongs to, and a stack a player can point at on the ground is the one
+the air filter is arguing with. A yard that runs all four ground machines and
+the sphere puts up more soot than one that runs three. That is the "beatable
+only if you invest" rule doing its job, and it is not a reason to make the
+sphere clean.
+
+### How it is drawn
+
+Black and white, flat, on the `P` grid, like the other machines. Only the light
+through it is red.
+
+- **The shell** is a ring of plates one cell thick at `sky.r + 2 * P`, inside
+  the wizards' ring (`WIZ_ORBIT` is ten cells out), laid in panels a few cells
+  long with a one-cell slit between each pair. The plates are white with a
+  black rim, and each slit shows the star's red through it. Plates alternate
+  two tones of white-grey (`shadeNear`) so the ring reads as built of pieces
+  rather than printed as one line.
+- **While it is poured,** the panels appear one at a time around the ring,
+  growing from where the ring's bodies are thickest, and the wizards' beams land
+  on the growing edge, as they do on the dome's.
+- **Closed,** the star is hidden except through the slits. The corona's rays are
+  cut to the lengths that get out through a slit, which is the picture of a
+  star being caught. A slit brightens for a beat when its panel drops a chip,
+  so the harvest shows as a ripple of red around the ring rather than as a
+  number.
+- **The tender's beam and the spire's puffs** are the two things that move when
+  it runs. A shell with no tender is still, and dark in its slits.
+
+### What it touches
+
+| file | change |
+|---|---|
+| `src/machines.js` | a fifth `MACHINES` entry, `{ key: 'sphere', job: JOB.WIZARD, name: 'the sphere', takesKit: false }` |
+| `src/sphere.js` (new) | `defineMachine('sphere', ...)`, `sphereRising`, `pourSphere`, the shell's `laid`, and the `SAVE` for it |
+| `src/wizard.js` | ring center and radius read the shell while it rises; no bolts under a shell; the tender's beam |
+| `src/tower.js` / `src/upgrades/rows-tower.js` | the machine row and its `tuneRow` |
+| `src/render/` | the shell, in `LAYERS` between the star and the wizards |
+| `src/config/machines.js` | `SPHERE_BILL`, `SPHERE_WORK`, `SPHERE_GAP` (slit spacing) |
+| `src/state.js` | `sphere` (the shell's `laid`) in `SAVED` |
+
+Checks, in the node tier as `test/sphere.test.mjs`: bought through the tower's
+row (`__buy`) and poured by the ring to the end, never set by a hook; the ring
+cut to one after the pour and not before; no sparks and no soot with nobody on
+the ring; chips reach the hole by a hauler's walk; a full sky pile stops it; a
+reload mid-pour comes back with the same panels laid. Scene: `sphere`, with the
+shell half poured and one with it closed and tended.
+
+### Open, for the balance pass
+
+- **`SPHERE_BILL`** starts above the ram, the dearest machine so far:
+  `[['spark', 720], ['dust', 14400], ['shard', 900], ['spore', 900]]`. It is
+  the last machine to open and the only one with no gap in its output.
+- **`SPHERE_WORK`** starts at 120 wizard-seconds, about three minutes for the
+  couple of wizards a yard at this point holds. It is longer than the dome
+  because nothing is falling on anybody while it goes up.
+- **Whether a hat made after the sphere should cost less.** It buys a rate, not
+  a body. The 1.7x hat price was set for a flying worker.
