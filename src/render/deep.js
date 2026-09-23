@@ -18,7 +18,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          ABYSS_SHEAR_AMT2, ABYSS_SHEAR_COL, ABYSS_SHEAR_AMT_Y, ABYSS_FLOW_COL2, ABYSS_FLOW_ROW2,
          ABYSS_FLOW_DRIFT2, ABYSS_FLOW_MIX, ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER,
          ABYSS_STAR_MS, ABYSS_BREATH_BEND, ABYSS_RIPPLE_MS,
-         DEEP_H, DEEP_STAND_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
+         DEEP_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
          DEEP_SURFACE, SHAFT_LIGHT_W, SHAFT_SPILL, DEEP_VEIL_LIT, DEEP_VEIL_DEEP,
          DEEP_STAR_EVERY, DEEP_STAR_TOP, DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX,
@@ -38,7 +38,7 @@ import { drawBody, inTheDeep } from './crew.js';
 // before the difference turns them over, so the deep stays the yard's
 // negative in either mode.
 const flip = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
-export const seen = h => flip(h);
+const seen = flip;
 export const GREYS = ABYSS_TONES.map(flip);         // the deep's grey ramp, black to white as seen
 export const PURPLES = ABYSS_MAGIC_TONES.map(flip); // and its purple one
 const MOTE_TONES = Object.fromEntries(Object.entries(DEEP_MOTE_TINTS)
@@ -58,10 +58,6 @@ export function deepWindow() {
 // surface breathes with (`swellAt`), seen from below.
 export const ceilingAt = (x, t) => deepTop() + DEEP_SURFACE + swellAt(Math.round(x / P), t);
 
-// Whether the deep is on the screen at all this frame. Used by render.js
-// through each layer's `when`, so a yard-side frame spends nothing here.
-export const deepShown = () => S.view === 'deep';
-
 // --- the sky: the roof, the underside of the surface, the shaft's light --------
 // Overhead is the underside of the pit's surface, breathing on the pit's own
 // clock, and over it the dark it holds up. The one light in the deep is the
@@ -78,7 +74,7 @@ export function drawDeepSky() {
     // the roof, mottled so no stretch of it is one flat tone
     for (let y = y0; y < line; y += P) {
       const h = seeth(c, y / P);
-      ctx.fillStyle = lit ? GREYS[GREYS.length - 1 - (h % 2)] : GREYS[1 + (h % 3)];
+      ctx.fillStyle = lit ? GREYS[GREYS.length - 1 - (h % 7 === 0 ? 1 : 0)] : GREYS[h % 5 === 0 ? 2 : 1];
       ctx.fillRect(x, y, P, P);
     }
     // The surface itself: a line of light where it crests, dimmer in its
@@ -308,11 +304,6 @@ export function drawDeepStations() {
   }
   ctx.fillStyle = '#000';
 }
-
-// Station sprites are sized by these tables; the stand the board opens on is
-// DEEP_STAND_H tall, and none of them is drawn taller than it.
-export const STATION_ROWS = Object.fromEntries(Object.entries(SPRITES).map(([k, v]) => [k, v.length]));
-export const STATION_MAX_H = DEEP_STAND_H;
 
 // --- the motes -------------------------------------------------------------------
 // Silt hanging in the water, flecks shed off the coil, the churn off a burst.

@@ -173,15 +173,18 @@ const LAYERS = [
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   // The deep (render/deep.js), back to front, drawn only while the camera is
   // down there: the roof and the underside of the surface, the water, the
-  // floor and its stations, the scales lying on it, then the serpent and
+  // floor, the scales lying on it and its stations, then the serpent and
   // everything in the water with it. Before the roster, so a deep station's
   // post stands on the deep's floor like any other.
   { name: 'deep sky', draw: drawDeepSky },
   { name: 'deep water', draw: drawDeepWater },
   { name: 'deep motes', draw: drawDeepMotes },
   { name: 'deep floor', draw: drawDeepFloor },
+  // The scales, then the stations standing in front of them: the bed can
+  // heap forty cells deep, and a station buried in its own coin could not
+  // be found to be paid at.
+  { name: 'deep bed', draw: drawDeepBed },
   { name: 'deep stations', draw: drawDeepStations },
-  { name: 'deep bed', draw: drawDeepBed },       // and the scales heaped against their feet
   { name: 'sigils', draw: drawSigils },          // lying on the scales, under the coil they hold
   { name: 'beams', draw: drawBeams },            // behind the coil they end on
   { name: 'serpent', draw: drawSerpent },

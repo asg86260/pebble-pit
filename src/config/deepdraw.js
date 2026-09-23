@@ -69,7 +69,7 @@ export const WOUND_GAP = P * 6;      // the wound, wide open: a body's width and
 export const BOUND_BANDS = 3;        // bands of sigil across a held length of coil
 
 // --- the weapons -------------------------------------------------------------------
-export const LANCE_LEN = P * 6;      // a lance of black water
+export const LANCE_LEN = P * 8;      // a lance of black water
 export const RING_CELLS = 28;        // cells round a burst's ring, at its widest
 export const BEAM_MS = 700;          // one crest travelling the length of a beam
 export const BEAM_WAVE = 0.35;       // radians of the beam's interference a cell

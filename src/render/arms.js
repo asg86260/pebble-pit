@@ -59,8 +59,8 @@ export function drawPunches() {
 }
 
 // --- lances ---------------------------------------------------------------------
-// A shaft of black water: grey cells with a crest of lighter ones running up
-// it, and a white point. In the water it is where the thrower's arm sent it,
+// A shaft of black water: pale cells with a crest of the abyss's purple running
+// down it, and a white point. In the water it is where the thrower's arm sent it,
 // pointed at the segment it will stick in; stuck, it rides that segment as
 // the coil sways, point buried, and dissolves from the butt toward the point
 // over its last second and a half.
@@ -69,10 +69,12 @@ export function drawLances() {
   for (const l of S.lances) {
     const target = l.seg != null ? coilAt(l.seg, t) : null;
     const stuck = target && t >= l.at + LANCE_FLY * 1000;
-    const tipX = stuck ? target.x : l.x, tipY = stuck ? target.y : l.y;
-    // it points along its flight: from where it came, toward the coil
+    // Stuck, its point is a cell into the underside of the coil and the
+    // shaft hangs out below, the way it came up from the floor.
+    const tipX = stuck ? target.x : l.x, tipY = stuck ? target.y + COIL_THICK / 2 - P : l.y;
+    // in the water it points along its flight: from where it came, toward the coil
     let dx = target ? target.x - l.x : 1, dy = target ? target.y - l.y : 0;
-    if (stuck) { dx = 1; dy = 0.6; }
+    if (stuck) { dx = -0.35; dy = -1; }
     const d = Math.hypot(dx, dy) || 1;
     const ux = dx / d, uy = dy / d;
     const left = l.until ? (l.until - t) / 1500 : 1;
@@ -82,7 +84,7 @@ export function drawLances() {
       if (left < 1 && (n - i) / n > left) continue;
       const x = tipX - ux * i * P, y = tipY - uy * i * P;
       const crest = Math.sin(i * 1.3 - t / 180) > 0.3;
-      cell(x, y, i === 0 ? GREYS[WHITE] : crest ? GREYS[9] : GREYS[6]);
+      cell(x, y, i === 0 ? GREYS[WHITE] : crest ? PURPLES[WHITE] : GREYS[10]);
     }
   }
   ctx.fillStyle = '#000';
@@ -151,7 +153,7 @@ export function drawBeams() {
   for (const b of S.beams) {
     const p = coilAt(b.seg, t);
     along(b.x, b.y, p.x, p.y, (x, y, i) => {
-      const f = Math.sin(i * BEAM_WAVE * P - t / BEAM_MS * Math.PI * 2);
+      const f = Math.sin(i * BEAM_WAVE - t / BEAM_MS * Math.PI * 2);
       if (f > 0.35) cell(x, y, PURPLES[WHITE]);
       else if (f > -0.3) cell(x, y, GREYS[8]);
     });

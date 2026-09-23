@@ -170,8 +170,10 @@ function layBed() {
 }
 
 // A body put down there: one of the yard's, retyped and set on the deep's
-// way at a place, with a face.
-const swimmer = (type, x, y, face = 1) => ({ type, x: SNAP(x), y: SNAP(y), face, way: 'deep' });
+// way at a place, with a face. Held as a hand holds one (`lifted`), which
+// is the one thing the crew's step leaves alone entirely: stepped as the
+// yard job it came from, it would walk off between two pins.
+const swimmer = (type, x, y, face = 1) => ({ type, x: SNAP(x), y: SNAP(y), face, way: 'deep', lifted: true });
 
 // Under the coil at a segment, where a brawler hangs to punch it.
 const underCoil = (seg, t) => { const p = coilAt(seg, t); return { x: p.x - WORKER / 2, y: p.y + COIL_THICK / 2 + P }; };
