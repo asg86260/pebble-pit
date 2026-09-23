@@ -44,14 +44,15 @@ const filter = () => { sites(); window.__air({ open: true }); };
 // The apothecary's ladders come on with the brews, so it is opened with a few
 // behind it -- the extra pot's own count is on its line.
 const apothecary = () => { sites(); window.__buy('unlockapothecary'); window.__finish(); window.__brews(3); };
-// The deep: the snatch played (its beat runs on the yard's clock, so the
-// clock is turned until it has), and scales on the deep's floor, which the
+// The deep: a yard with every site built, as a yard that has had the rescue
+// has, and the snatch played through (`{ played: true }` runs its beat out on
+// the yard's clock); then scales on the deep's floor, which the
 // flood before every press does not pour -- a bed holds a few thousand. The
 // stations past the altar are opened by their flags, and the serpent's stage
 // is set for the doors that wait on it.
 const deep = (S, run) => {
-  window.__snatch();
-  for (let i = 0; i < 120 && !S.snatched; i++) run(1);
+  sites();
+  window.__snatch({ played: true });
   window.__grant({ scales: 5000 });
 };
 const deepAt = (stage, ...open) => (S, run) => {

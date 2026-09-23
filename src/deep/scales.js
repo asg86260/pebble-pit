@@ -18,6 +18,7 @@ import { put, addGrain, settleSome, recount, wakeGrid, topRow, surfaceY, colOf, 
 import { makePainter } from '../painter.js';
 import { frames, now } from '../clock.js';
 import { rand } from '../rng.js';
+import { earned } from '../income.js';
 import { deepX0, deepX1, deepFloor } from './place.js';
 
 // The push of the deep's current at a moment: one slow turn, so a shed cloud
@@ -128,7 +129,7 @@ export const stepScales = c => {
     if (g.y >= surfaceY(deepBed, col)) {
       // A bed full to its brim has nowhere to put one more, and a scale with
       // nowhere to lie is lost to the dark rather than counted in the air.
-      if (addGrain(deepBed, g.x, null, g.s, true)) S.seenScale = true;
+      if (addGrain(deepBed, g.x, null, g.s, true)) { S.seenScale = true; earned('scale', 1); }
       continue;
     }
     sink[keep++] = g;
