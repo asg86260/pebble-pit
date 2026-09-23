@@ -14744,7 +14744,7 @@ and no seams. **The splitting stage does not split the body**: the coil
 stays whole and thrashes, a ripple a length running down it
 (`SPLIT_WRITHE`), and the lengths are only the rings' accounting.
 
-**The wound is read on the body (D1 + D3).**
+**The wound is read on the body (D1).**
 - *Cracks.* Dark cracks run out along the coil from the belly, both ways;
   how far they reach is the wound's share of its stage's depth (`woundK`),
   from nothing at a closed wound to `CRACK_REACH` either side at a wound
@@ -14753,12 +14753,9 @@ stays whole and thrashes, a ripple a length running down it
   are dealt by a hash of the cell, the same every frame, so a crack does
   not flicker, it grows. Near the belly they are near black; toward their
   tips a grey.
-- *A hit flash.* Every strike that does damage blinks the length of coil it
-  landed on -- `FLASH_CELLS` along the body either side of where it hit --
-  black for `FLASH_MS`. A hit that glances (did nothing) does not blink, so
-  a weapon the stage shrugs off is seen shrugging off. The strike records
-  where and when on `S.serpentHits`, EPHEMERAL, a short list the renderer
-  reads and drops.
+- *No hit flash.* A blink on the coil at every blow (D3) was built and cut
+  the same day: with every weapon striking at once the coil strobed black
+  all over, and it drowned out the cracks it was meant to add to.
 - The gap at the belly stays, and now opens the ribs (below). This replaces
   "the wound is a gap in the coil, the picture is the reading, not a bar":
   still no bar, but the picture is loud about it.
@@ -14775,14 +14772,12 @@ the last ribs go and he swims out, as built.
 cell on the `P` grid; the ward's shimmer and a sigil's bands are read in the
 same body coordinates, so they follow the coil too. The body a click lands
 on is the body drawn (`nearestSeg` is unchanged: the centerline is the
-same). No new number in the renderer: `CRACK_REACH`, `FLASH_CELLS`,
-`FLASH_MS`, `BELLY_BULGE` and `RIB_EVERY` go in `config/deepdraw.js`.
+same). No new number in the renderer: `CRACK_REACH`, `BELLY_BULGE` and
+`RIB_EVERY` go in `config/deepdraw.js`.
 
 **Checks.** Drawing, so the shots are the check: `deep`, `deep-wound`,
 `deep-warded`, `deep-split` and `deep-fading` before and after, and a new
 scene `deep-cracked` with the wound held at nine tenths of the bare stage.
-One node check that a strike that does damage adds a hit to
-`S.serpentHits` and a glancing one does not.
 
 ## One crew, two homes: pods in the deep (built 2026-09-23)
 

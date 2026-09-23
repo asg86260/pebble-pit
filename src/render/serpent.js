@@ -11,13 +11,12 @@
 // lattice, the ward and the cracks follow the coil round a bend.
 //
 // The wound is read on the body: cracks out from the belly as far as it is
-// deep, a blink wherever a blow lands, and the gap at the belly breaking the
-// cage of ribs the one it took is held in (DESIGN.md, "The serpent, redrawn").
+// deep, and the gap at the belly breaking the cage of ribs the one it took is held in (DESIGN.md, "The serpent, redrawn").
 
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_THICK, COIL_TAIL, HEAD_SEGS, HEAD_PLUS, WARD_MS, WARD_AT,
          FADE_SEEN, BEAM_LIGHTS, WOUND_GAP, BOUND_BANDS, SIGIL_RX, BELLY_AT,
-         CRACK_REACH, FLASH_CELLS, FLASH_MS, COIL_STEP, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
+         CRACK_REACH, COIL_STEP, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W } from '../config.js';
 import { S } from '../state.js';
 import { coilLine, mouthX } from '../deep/place.js';
@@ -87,7 +86,6 @@ export function drawSerpent() {
   const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
   const gap = held ? Math.round(wk * WOUND_GAP / P) * P : 0;
   const reach = wk * CRACK_REACH;
-  const hits = S.serpentHits.filter(h => t - h.at < FLASH_MS).map(h => alongAt(h.u));
   // Which segments a beam is lighting: stage four's coil is seen only there.
   const lit = new Set();
   for (const b of S.beams) for (let d = -BEAM_LIGHTS; d <= BEAM_LIGHTS; d++) lit.add(b.seg + d);
@@ -155,8 +153,6 @@ export function drawSerpent() {
     if (c.along < headA && Math.abs(c.across) < P / 2) { ramp = GREYS; rung = 0; }
     if (Math.abs(c.along - headA - P) < P / 2 && Math.abs(c.across + c.r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
     if (boundBand(c.x)) { ramp = PURPLES; rung = WHITE; }
-    // A blow that landed blinks the coil it landed on.
-    if (hits.some(a => Math.abs(c.along - a) < FLASH_CELLS * P)) { ramp = GREYS; rung = 0; }
     ctx.fillStyle = ramp[rung];
     ctx.fillRect(c.x, c.y, P, P);
   }

@@ -84,8 +84,6 @@ export const WOUND_GAP = P * 6;      // the wound, wide open: a body's width and
 export const BOUND_BANDS = 3;        // bands of sigil across a held length of coil
 // The wound read on the body (DESIGN.md, "The serpent, redrawn").
 export const CRACK_REACH = P * 34;   // how far the cracks run each way from the belly, at a wound about to break
-export const FLASH_CELLS = 3;        // cells of coil either side of a hit that blink
-export const FLASH_MS = 160;         // and for how long
 export const COIL_STEP = P / 2;      // how finely the body is laid along its curve
 // The belly swells round the one it holds, a cage of ribs he is seen through.
 export const BELLY_BULGE = P * 2;    // how much fuller than the body either side
