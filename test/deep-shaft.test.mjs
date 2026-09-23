@@ -108,3 +108,36 @@ group('the shaft post and arrow say what they are', async () => {
     ok(yardArrow === 'down to the deep' && deepArrow === 'up to the yard', 'and the arrow', `${yardArrow} / ${deepArrow}`)
   ];
 }, { reload: false });
+
+// A body thrown in the deep sinks there (crew/falls.js, `sink`): it never
+// jumps, never leaves the deep, lands on the deep's floor and goes back to
+// its work from there. It used to be stood on the yard's ground the frame it
+// was let go of.
+group('a hand thrown in the deep sinks to its floor and stays down there', async () => {
+  const { lift, drop } = await import('../src/crew/pointer.js');
+  const { deepTop } = await import('../src/deep/place.js');
+  deepYard();
+  press('altarjob', 'more');
+  const w0 = S.workers.find(o => o.type === 'brawler');
+  runUntil(() => belowYard(S.workers.find(o => o.name === w0.name)) && !S.workers.find(o => o.name === w0.name).walking, 120);
+  const w = S.workers.find(o => o.name === w0.name);
+  lift(w);
+  w.x -= 120; w.y -= 200;                 // carried up into the water and off to one side
+  drop(w);
+  let jump = 0, left = false, at = { x: w.x, y: w.y }, landed = false;
+  for (let f = 0; f < 60 * 30; f++) {
+    run(1 / 60);
+    const b = S.workers.find(o => o.name === w.name);
+    jump = Math.max(jump, Math.hypot(b.x - at.x, b.y - at.y));
+    at = { x: b.x, y: b.y };
+    if (b.y + WORKER <= deepTop()) left = true;
+    if (!b.falling && Math.abs(b.y + WORKER - deepFloor()) < 2) landed = true;
+  }
+  const back = S.workers.find(o => o.name === w.name);
+  return [
+    ok(!left, 'it never came up out of the deep'),
+    ok(jump < WORKER, 'it never jumped', `${jump.toFixed(1)}px in a frame`),
+    ok(landed, "it came to rest on the deep's floor"),
+    ok(back.type === 'brawler' && belowYard(back), 'and it is still the altar\'s, down there')
+  ];
+}, { reload: false });

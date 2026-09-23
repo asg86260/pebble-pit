@@ -23,6 +23,11 @@ export const WARLOCK_CAP = 6;        // at the spire
 // at GATHER_SCOOP, and wait by the crusher on a bare floor.
 export const GATHER_SCOOP = 8;       // scales a second, into a hauler's arms
 
+// A body thrown in the deep (crew/falls.js): the water takes the throw off it
+// and it sinks, slowly, to the floor it is over.
+export const SINK_PULL = 0.06;       // px a frame a frame, down
+export const SINK_DRAG = 0.93;       // what is left of its speed after a frame
+
 
 // --- the snatch ----------------------------------------------------------------------
 // The pair walk to the plank and stand at its edge, something comes up out of

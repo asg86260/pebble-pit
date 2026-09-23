@@ -22,6 +22,7 @@ feature lives in DESIGN.md.
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).
 - The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
+- A worker thrown in the deep sinks to the deep's floor and stays down there, instead of landing on the yard's ground (test/deep-shaft.test.mjs).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 - Clouds no longer show below the ground line in a short window (play.html in a window 300px tall).
 

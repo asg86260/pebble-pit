@@ -2,11 +2,12 @@
 // wearing. Neither of them negotiates with the day's work, which is why both sit
 // at the top of the stage list.
 
-import { WORKER, GRAV, HURL_DRAG } from '../config.js';
+import { WORKER, GRAV, HURL_DRAG, SINK_PULL, SINK_DRAG } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { addGrain } from '../grid.js';
 import { atStation, blocked } from '../world.js';
-import { standTop, rockTop, ways, footing, solidNear, SOLID } from '../route.js';
+import { standTop, rockTop, ways, footing, solidNear, SOLID, feetOn } from '../route.js';
+import { deepX0, deepX1 } from '../deep/place.js';
 import { restOnRock } from '../rock.js';
 import { JOB_OF } from '../levels.js';
 import { now, frames } from '../clock.js';
@@ -53,8 +54,40 @@ const landing = w => {
   return standTop(w.x, rockTop) - WORKER;
 };
 
+// A body let go of under the yard's world is in the deep's water, and sinks
+// there rather than falling: the throw dragged off it, a slow pull down, and
+// it comes to rest on the deep's floor under it -- never on the yard's
+// ground, which the plain fall would have stood it on in one frame.
+function sink(w) {
+  const f = frames();
+  const drag = SINK_DRAG ** f;
+  w.vx *= drag;
+  w.vy = w.vy * drag + SINK_PULL * f;
+  w.x = Math.max(deepX0(), Math.min(deepX1() - WORKER, w.x + w.vx * f));
+  w.y += w.vy * f;
+  const foot = feetOn(ways().deep, w.x);
+  if (w.y < foot) return;
+  w.y = foot;
+  w.vx = w.vy = 0;
+  w.falling = false;
+  w.foot = w.footAt = null;
+  if (w.dizzyFor) {
+    w.dizzyUntil = now() + w.dizzyFor;
+    w.say = { mark: 'dizzy', until: w.dizzyUntil };
+    w.dizzyFor = 0;
+    w.landedAt = w.x;
+    // what it still held goes into the water where it lies, as scales
+    for (let i = 0; i < (w.spill || 0); i++)
+      S.sinking.push({ x: w.x + WORKER / 2, y: w.y, vx: 0, vy: 0, s: 1 });
+    w.spill = 0;
+    return;
+  }
+  retask(w, w.type);                // and swims back to its work from there
+}
+
 // one frame of that fall, and what happens when it stops
 export function fall(w) {
+  if (w.y > S.worldH) { sink(w); return; }
   // The foot is read after the x step, or a body thrown onto the rock stops
   // in the air where the rock was not. Speeds are pixels a frame, gravity
   // pixels a frame a frame, and the drag a proportion of what is left, so it
