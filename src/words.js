@@ -98,7 +98,7 @@ const gainAmount = u => {
   // The gain shares a narrow column with the bill, so the amount is glued to
   // its mark with a no-break space: the verb may wrap off, the amount never
   // breaks. A bare symbol (%, x) sits against its number like everywhere else.
-  const NB = ' ';
+  const NB = ' ';
   const mark = !u.unit ? '' : /^[%x]$/.test(u.unit) ? u.unit : NB + unitText(u.unit);
   // A `to` with no `from` is not a step up a ladder, it is what you get.
   if (!u.from) return `${Number.isInteger(b) ? b : num(b)}${mark}`;

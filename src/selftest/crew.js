@@ -2,7 +2,8 @@
 // the dance, and the headcount badge.
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
-  point, onScreen, hoverBench, hoverStation, run, runUntil } from './kit.js';
+  point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil } from './kit.js';
+import { TOWER_CORES } from '../config.js';
 
 export const TESTS = [
   ['a body is thrown rather than dropped, and shaking one makes it dizzy', async () => {
@@ -100,7 +101,7 @@ export const TESTS = [
     ];
   }],
 
-  ['a core buys the tower and nothing else', async () => {
+  ['cores buy the tower and nothing else', async () => {
     newRun();
     await settle();
     // Four rocks of yard first: the first core is in the fifth.
@@ -145,7 +146,7 @@ export const TESTS = [
     buildShopFromTest();
     refreshShopFromTest();
 
-    // the tower takes a core and a thousand dust, and takes them together
+    // the tower takes its cores and its dust, and takes them together
     const cores0 = state().cores;
     const tower = row('unlocktower');
     const marks = tower && coins(tower);
@@ -167,8 +168,8 @@ export const TESTS = [
       ok(marks && [...marks].sort().join() === 'core,dust',
          'priced in a core and dust', String(marks)),
       ok(built.towerOpen, 'buying it puts it up'),
-      ok(built.cores === cores0 - 1 && built.shards === 2000 && built.spores === 2000,
-         'and takes the core, and leaves the rest of the yard alone',
+      ok(built.cores === cores0 - TOWER_CORES && built.shards === 2000 && built.spores === 2000,
+         'and takes its cores, and leaves the rest of the yard alone',
          `${cores0}->${built.cores} cores, ${built.shards} shards, ${built.spores} spores`)
     ];
   }],
@@ -364,6 +365,9 @@ export const TESTS = [
     // ride: it rides the board's own title. Read standing at the hut, the way
     // a player reads it.
     window.__shack();
+    // Off the bench first: the bench's board stands over the hut, and a
+    // cursor that lands on the board never reaches the hut.
+    await hoverAway();
     await hoverStation('shack');
     const rock = document.querySelector('#shackboard .title');
     const rockBadge = rock && rock.querySelector('.badge');

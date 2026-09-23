@@ -47,6 +47,11 @@ feature lives in DESIGN.md.
 - A new boulder falling no longer drags the frame rate down for as long as it is in the air (src/scenes.js `introfall`).
 - The apothecary, the shields and five other parts of the yard start up again after the air filter change, which had broken their loading (test/shield.test.mjs).
 - A late yard with every ladder bought no longer drops to half speed: the stack of finished-work ticks over a station and the thousands of grains in the air are cheap to draw and move again (src/scenes.js `everything`).
+- A build at the quarry, the farm or the apothecary with nobody free to work it says queued and sits down, instead of saying building with its clock stopped (src/selftest/boards.js).
+- A shelf tile's gain line uses the tile's whole width, so `8 → 10 /harvest` and `360 → 480 /dig` are no longer cut short (src/selftest/boards.js).
+- On a tile you can half afford, the coins you have are in black and the one you are short of stays grey (src/selftest/boards.js).
+- A gain's number no longer breaks from its coin at the end of a line (src/selftest/house.js).
+- The crew window's cards are always wide enough to say where a body is (src/selftest/boards.js).
 - The rock's spoil is thrown over the boulder on to the belt instead of through it and down on its flank (test/rock-spoil-belt.test.mjs).
 - A hauler tossing a load up at the belt no longer throws a grain short, under the band (test/haul-belt.test.mjs).
 - The forklift row sits with the haulers on the bench, beside the carts, instead of under a stray "and" heading (test/boards.test.mjs).

@@ -11,7 +11,7 @@ import { showTipAt } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, buy, billOf, tintOf, canPay, building, inLine, lineAt } from './upgrades.js';
 import { rungOf, rungsOf, maxed, folds } from './words.js';
 import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js';
-import { takesTime, stalled, BUILDER_SITES, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
+import { takesTime, stalled, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
 import { tookLook } from './world.js';
 import { FILTER_UPGRADES, FILTER_SECTIONS } from './filter.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
@@ -22,7 +22,7 @@ import { STATS_UPGRADES, STATS_SECTIONS, BOOK_ROWS, BOOK_SECTIONS } from './stat
 import { windowFor } from './modal.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { shackRows, shackSections } from './shack.js';
-import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
+import { crewRows, crewSections, crewList, crewListSections, WHERE_WORDS } from './crewboard.js';
 import { shown } from './tween.js';
 import { onTap } from './tap.js';
 import { coarse } from './prefs.js';
@@ -590,11 +590,12 @@ export function refresh(el, list, headcount) {
         say(what, u.name);
         // The vocabulary is closed, and every word fits the tightest cell on
         // any board (`pinWidth` in board.js, the width check in
-        // selftest/boards.js). A builders' site always has somebody, so it is
-        // never stuck.
+        // selftest/boards.js). Stalled is read off the site on every site,
+        // the builders' too, as the queue card reads it: a spare hand is not
+        // always there to be had.
         row.classList.add('waiting');
         const queued = inLine(u);
-        const stuck = !queued && stalled(u.site) && !BUILDER_SITES.includes(u.site);
+        const stuck = !queued && stalled(u.site);
         // Two words about bodies: `building` while somebody is at it, `queued`
         // while nobody is. The tile says which by the rest of it.
         sayHTML(gain, queued || stuck ? 'queued' : 'building');
@@ -752,10 +753,31 @@ windowFor('books', {
     }
   }
 });
+// The crew window's column is as wide as the longest place a body can be
+// said to be, measured in a card's own cell once a showing: a floor written
+// in `ch` was a guess, and every new station's name was a chance to outgrow
+// it. Where each body is changes every frame, so the column is fitted to the
+// vocabulary rather than to whatever is being said right now.
+let crewFit = false;
+function fitCrewColumn() {
+  const cell = crewListEl.querySelector('button .cost');
+  if (!cell) return;
+  const card = cell.closest('button');
+  // Not laid out yet (the window's first fill runs as it comes up): a card
+  // with no width measures nothing, so wait for the next fill.
+  if (!card.offsetWidth) return;
+  const said = cell.textContent;
+  let need = 0;
+  for (const w of WHERE_WORDS) { cell.textContent = w; need = Math.max(need, cell.scrollWidth); }
+  cell.textContent = said;
+  crewListEl.style.setProperty('--crew-col', `${Math.ceil(card.offsetWidth - cell.clientWidth + need)}px`);
+  crewFit = true;
+}
 windowFor('crew', {
   title: 'who lives here',
   body: 'modalcrew',
-  fill: () => { buildCrewList(); refresh(crewListEl, crewList(), null); }
+  open: () => { crewFit = false; },
+  fill: () => { buildCrewList(); refresh(crewListEl, crewList(), null); if (!crewFit) fitCrewColumn(); }
 });
 
 // Every board, by the name the panel knows it by. Each row is asked for rather

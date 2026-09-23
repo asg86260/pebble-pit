@@ -46,19 +46,18 @@ export const TESTS = [
          !bench.includes('farmplot') && !bench.includes('tend'),
          'the bench sells neither of them any more', bench.join(',')),
       ok(atQuarry.quarryBoardOpen, 'standing at the quarry opens its own board'),
-      // A place row and the first card of each of the cut's two ladders: only
-      // the band you are on is ever drawn.
-      ok(quarryRows.join(',') === 'quarrybench,seam,quarrypace',
+      // A place row, the blaster's lamp (the kit opens with its station, on
+      // the door chain), and the first card of each of the cut's two ladders:
+      // only the band you are on is ever drawn.
+      ok(quarryRows.join(',') === 'quarrybench,blaster,seam,quarrypace',
          'holding how deep it goes, what a dig turns up and how fast it works',
          quarryRows.join(',')),
       ok(nowBenches === wasBenches + 1, 'and the row on it digs the quarry deeper',
          `${wasBenches} -> ${nowBenches}`),
       ok(atPlots.farmBoardOpen, 'and the plots have theirs'),
-      // ...and the grower's brim, sold where it is worn, opened by the net
-      // answered above. The blaster's lamp is behind the arch, which this
-      // yard has not met, so the cut's board has no kit row yet.
-      ok(plotRows.join(',') === 'farmplot,crop,tend,grower',
-         'holding the next plot, what a cut is worth, how fast a plot comes on, and the brim',
+      // ...and the grower's brim, sold where it is worn.
+      ok(plotRows.join(',') === 'farmplot,grower,crop,tend',
+         'holding the next plot, the brim, what a cut is worth and how fast a plot comes on',
          plotRows.join(','))
     ];
   }],

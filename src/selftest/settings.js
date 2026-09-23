@@ -51,6 +51,12 @@ export const TESTS = [
     persist();
     await storeSettled();
     const blob = exportSave();
+    // This page's own save runs on a wall clock and stamps every write
+    // (`savedAt`), so left running it rewrites the slot under the check a
+    // second at a time. Held for the visit, the way a staged scene holds it,
+    // so the only page that could write the slot is the one under test.
+    const wasStaged = S.staged;
+    S.staged = true;
     const f = document.createElement('iframe');
     f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
     const loaded = () => new Promise(r => f.addEventListener('load', r, { once: true }));
@@ -76,6 +82,7 @@ export const TESTS = [
       crewThere = f.contentWindow.__state ? f.contentWindow.__state().crew : -1;
     } finally {
       f.remove();
+      S.staged = wasStaged;
     }
     return [
       ok(landed, 'index.html is the landing page'),

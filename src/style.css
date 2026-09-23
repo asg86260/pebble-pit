@@ -1860,4 +1860,6 @@ html.dark .modal {
 .modalbody.books > .rows.ledger > .sect:first-child { margin-top: 0; }
 /* The crew: a card a body, as many across as fit. */
 #modalcrew { width: min(72ch, calc(100vw - 48px)); }
-#modalcrew .rows { grid-template-columns: repeat(auto-fill, minmax(22ch, 1fr)); }
+/* The column's floor is the longest place a body can be, measured by
+   `fitCrewColumn` in shop.js; 22ch until it has been. */
+#modalcrew .rows { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--crew-col, 22ch)), 1fr)); }

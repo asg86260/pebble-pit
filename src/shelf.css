@@ -211,8 +211,14 @@
   white-space: nowrap;
   /* one line, and never past the tile's edge: a door's blurb is words, not a
      number, and a long one clipped with an ellipsis is a short one, where
-     one let run wrote itself across the neighbor's tile */
-  min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+     one let run wrote itself across the neighbor's tile. The tile's edge,
+     not the pips' column: the side padding keeps the title clear of the
+     pips, but an amount with its unit (`8 → 10 /harvest`) is wider than the
+     room between them, and a number cut short is the one thing the line is
+     there to say. So the gain takes the side padding back and may pass
+     under the foot of a tall ladder. */
+  min-width: 0; max-width: calc(100% + 2 * var(--shelf-side)); margin-inline: calc(-1 * var(--shelf-side));
+  overflow: hidden; text-overflow: ellipsis;
   /* the board's own size: at .85em the effect was the hardest line on the
      tile to read, and it is the one that says what you are buying */
   font-size: 12px;
@@ -270,6 +276,9 @@
    either, and its price names the coin to go and get. */
 .rows.shelves > button.tile:has(.tag .short) .what,
 .rows.shelves > button.tile.locked .what { color: var(--ink-5); }
+/* ...and the tag says which coin: the ones you have stand at full ink over
+   the dashed, greyed tag, so the grey one left is the one you are short of. */
+.rows.shelves > button.tile:has(.tag .short) .tag .cost > span:not(.short) { color: var(--ink); }
 /* A bill of two or more coins wraps inside its tag, two a line, and the
    clock takes a line under them; the tag grows, the slot does not. Two, not
    three: a two-coin bill and its clock on one line is wider than the room

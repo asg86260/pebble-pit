@@ -24,6 +24,22 @@ const flagInk = which => {
   return n;
 };
 
+// Where a cell's words are painted: the union of its text, and only its text.
+// A Range over the whole cell also takes in a tile's pips, which stand down
+// the tile's right edge out of the flow on purpose (`.ladder` in shelf.css)
+// and are not words running anywhere.
+const textInk = cell => {
+  let right = -Infinity;
+  const walk = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    if (!n.nodeValue.trim()) continue;
+    const r = document.createRange();
+    r.selectNodeContents(n);
+    right = Math.max(right, r.getBoundingClientRect().right);
+  }
+  return { right };
+};
+
 export const TESTS = [
   // Read off the sheets themselves rather than the row list, because what is
   // claimed is where a player finds the row.
@@ -34,17 +50,9 @@ export const TESTS = [
     const St = (await import('/src/state.js')).S;
     St.quarryOpen = true;
     St.farmOpen = true;
-    // before any shield has fallen, nobody sells a hat
     window.__build();
-    const before = {};
-    for (const [name, sel] of Object.entries({ shack: '#shackshop', quarry: '#quarryshop',
-                                               farm: '#farmshop', bench: '#shop' })) {
-      window.__board(name);
-      await sleep(120);
-      before[name] = [...document.querySelector(sel).querySelectorAll('[data-key]')]
-        .filter(b => b.offsetParent).map(r => r.dataset.key);
-    }
-    // ...and once they have, each row is on its own board and no other
+    // The kit gates are the door chain now, not the shields (`shieldOpened`),
+    // so every station open is every hat on offer.
     window.__kit({ learned: true });
     const after = {};
     for (const [name, sel] of Object.entries({ shack: '#shackshop', quarry: '#quarryshop',
@@ -56,57 +64,12 @@ export const TESTS = [
     }
     window.__board(null);
     window.__crew(0, 0);
-    const hats = ['breaker', 'carter', 'blaster', 'grower'];
     const where = k => Object.keys(after).filter(n => after[n].includes(k)).join(',');
     return [
-      ok(Object.values(before).every(rows => !rows.some(k => hats.includes(k))),
-         'no hat is for sale before the sky has taught the trade',
-         JSON.stringify(before)),
       ok(where('breaker') === 'shack', 'the breaker is on the shack\'s board', where('breaker')),
       ok(where('blaster') === 'quarry', 'the blaster on the quarry\'s', where('blaster')),
       ok(where('grower') === 'farm', 'the grower on the farm\'s', where('grower')),
       ok(where('carter') === 'bench', 'and the carter on the bench', where('carter'))
-    ];
-  }],
-
-  // A name too long for its line is clipped inside its card rather than
-  // allowed to wrap or to widen anything (the card in style.css).
-  ['a longer name stays on its line and inside its card', async () => {
-    newRun();
-    await settle();
-    window.__give(999999);
-    window.__grant({ cores: 9, shards: 900, spores: 900 });
-    window.__board('bench');
-    await sleep(400);
-    const rows = () => [...document.querySelectorAll('#shop button')].filter(b => b.offsetParent);
-    const sheetW = () => Math.round(
-      document.querySelector('.panel .sheet').getBoundingClientRect().width);
-    const inside = el => el.getBoundingClientRect().right <= el.closest('button').getBoundingClientRect().right + 1;
-
-    const wasWide = sheetW();
-    const victim = rows().find(b => b.querySelector('.what'));
-    const what = victim.querySelector('.what');
-    const said = what.textContent;
-    const wasTall = Math.round(victim.getBoundingClientRect().height);
-    const cardRight = Math.round(victim.getBoundingClientRect().right);
-
-    what.textContent = said + ' of the everlasting stone';
-    await raf();
-    await raf();
-    const nowWide = sheetW();
-    const nowTall = Math.round(victim.getBoundingClientRect().height);
-    const cardRightNow = Math.round(victim.getBoundingClientRect().right);
-    const held = inside(what);
-    const oneLine = Math.round(what.getBoundingClientRect().height) <= Math.round(parseFloat(getComputedStyle(what).lineHeight) || 20) + 2;
-    what.textContent = said;
-    await raf();
-    window.__board(null);
-    return [
-      ok(held, 'a longer name stays inside its card'),
-      ok(oneLine, 'on one line', `${Math.round(what.getBoundingClientRect().height)}px tall`),
-      ok(Math.abs(nowTall - wasTall) <= 1, 'and the card is no taller for it', `${wasTall}px -> ${nowTall}px`),
-      ok(nowWide === wasWide && Math.abs(cardRightNow - cardRight) <= 1, 'nor wider, nor is the sheet',
-         `sheet ${wasWide}px -> ${nowWide}px, card right ${cardRight} -> ${cardRightNow}`)
     ];
   }],
 
@@ -166,7 +129,9 @@ export const TESTS = [
   // A card is three lines, and only a title longer than the card may make it
   // taller. Everything else that makes cards ragged is a bug: a bill stacked
   // to fit a narrow column, a card with no gain dropping the line its
-  // neighbor held, a pips corner that comes and goes.
+  // neighbor held, a pips corner that comes and goes. The boards are shelves
+  // now, whose tiles share their plank's rows (the long-name check below), so
+  // the cards left to hold to this are the crew window's.
   ['a card is only ever taller by a whole line of title', async () => {
     newRun();
     await settle();
@@ -189,7 +154,7 @@ export const TESTS = [
       if (name === 'house') { await openCrewList(); await sleep(200); }
       const rows = [...document.querySelectorAll(
         '.page:not([hidden]) .rows button, .page:not([hidden]) .rows .job, #crewlistrows button')]
-        .filter(e => e.offsetParent && !e.closest('.step'));
+        .filter(e => e.offsetParent && !e.closest('.step') && !e.classList.contains('tile'));
       if (rows.length < 2) continue;
       seen += rows.length;
       const h = e => Math.round(e.getBoundingClientRect().height);
@@ -233,7 +198,7 @@ export const TESTS = [
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(seen > 20, 'there are cards on the boards to measure', `${seen} cards`),
+      ok(seen >= 8, 'there are cards to measure', `${seen} cards`),
       ok(bad.length === 0,
          'and every one of them is its board\'s step, plus a line per line of title',
          bad.join(' | ') || 'all level')
@@ -332,19 +297,20 @@ export const TESTS = [
     }
     window.__board(null);
     window.__crew(0, 0);
-    // The coin you are short of is the one number you came to read, so it is
-    // the black one; what you have is a readable gray with the rest of the
-    // row.
+    // On a shelf a tile you cannot pay for pales, title and tag, so the plank
+    // sorts itself from across the room; the coin you are short of stays
+    // pale with it and the ones you have stand back up at full ink, so the
+    // grey one is the one to go and get.
     const grey = c => { const m = c.match(/\d+/g); return m && +m[0] === +m[1] && +m[0] > 0 && +m[0] < 200; };
     return [
       ok(dim.length > 0 && lit.length > 0,
          'there is a row priced in something you have and something you have not',
          `${lit.length} held, ${dim.length} short`),
-      ok(dim.every(c => c === 'rgb(0, 0, 0)'),
-         'what you are short of is written in black, being the number you came to read',
+      ok(dim.every(grey),
+         'what you are short of is greyed with the rest of the tile, readably',
          [...new Set(dim)].join(' ')),
-      ok(lit.every(grey),
-         'and what you have is greyed with the rest of the row, readably',
+      ok(lit.every(c => c === 'rgb(0, 0, 0)'),
+         'and what you have is written in black',
          [...new Set(lit)].join(' '))
     ];
   }],
@@ -741,9 +707,11 @@ export const TESTS = [
     const anchored = row && getComputedStyle(row).position;
     const card = row && row.getBoundingClientRect();
     const title = what && what.getBoundingClientRect();
-    // The notch is drawn out of two borders, so its size is the border width;
-    // its face is the words' ink, which is what makes it invert with the card.
-    const size = corner ? parseFloat(corner.borderTopWidth) : 0;
+    // The notch is drawn out of two borders, so its leg is the box they make:
+    // both borders and whatever height is between them. Its face is the
+    // words' ink, which is what makes it invert with the card.
+    const size = corner ? parseFloat(corner.borderTopWidth) + parseFloat(corner.borderBottomWidth) +
+                          (parseFloat(corner.height) || 0) : 0;
     const ink = corner ? corner.borderTopColor : '';
     const words = row ? getComputedStyle(row).color : '';
     // Set by the card's padding alone; if the mark took room in the flow this
@@ -858,9 +826,7 @@ export const TESTS = [
           // one. `scrollWidth` does not see it either (on a grid item with
           // visible overflow it equals `clientWidth`), so the text is
           // measured where it is painted.
-          const range = document.createRange();
-          range.selectNodeContents(cell);
-          const ink = range.getBoundingClientRect();
+          const ink = textInk(cell);
           const box = cell.getBoundingClientRect();
           const over = Math.round(ink.right - box.right);
           if (over > 1) {
@@ -887,9 +853,7 @@ export const TESTS = [
         const text = cell.textContent.trim();
         if (!text || cell.offsetParent === null) continue;
         rows++;
-        const range = document.createRange();
-        range.selectNodeContents(cell);
-        const ink = range.getBoundingClientRect();
+        const ink = textInk(cell);
         const box = cell.getBoundingClientRect();
         const over = Math.round(ink.right - box.right);
         if (over > 1) {
@@ -926,12 +890,13 @@ export const TESTS = [
     const r = b.getBoundingClientRect();
     const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     const rows = [...shop().children];
-    // A row's note spans the whole card (`.rows .note`, style.css) and is not
-    // a column; the pin in the card's corner is a control, not a cell.
-    const cells = rows.filter(el => !el.dataset.sect)
-                      .map(el => [...el.children].filter(sp => !sp.classList.contains('note') &&
-                                                               !sp.classList.contains('pinmark'))
-                                                 .map(sp => sp.textContent));
+    // Read by class, never by position: a tile stands its cells under a
+    // picture and puts the clock inside the price's box, and `refresh` finds
+    // them the same way.
+    const text = (el, sel) => el.querySelector(sel)?.textContent.trim() || '';
+    const cells = rows.filter(el => el.dataset.key)
+                      .map(el => ({ name: text(el, '.what'), gain: text(el, '.gain'),
+                                    price: text(el, '.cost') || text(el, '.time') }));
     return [
       ok(!b.hidden, 'board opens when the cursor nears the bench'),
       ok(r.width > 40 && r.height > 40, 'board has a size', `${r.width}x${r.height}`),
@@ -940,19 +905,15 @@ export const TESTS = [
       ok(hit !== canvas(), 'board is above the canvas, not behind it',
          `topmost is ${hit && (hit.id || hit.tagName)}`),
       ok(rows.some(el => el.dataset.sect), 'board has section headings'),
-      // Name, gain, clock, bill: the four cells of a card. The pips live
-      // inside the name and are not a column.
-      ok(cells.length > 0 && cells.every(c => c.length === 4), 'rows are four cells',
-         JSON.stringify(cells[0])),
-      ok(cells.every(c => c[0] && c[2]), 'every row has a name and a price',
+      ok(cells.length > 0 && cells.every(c => c.name && c.price), 'every row has a name and a price',
          JSON.stringify(cells)),
       // A count says where it is going ("4 -> 5"), a rate what share it gains
       // ("+30%"), a gift the thing itself ("1 hit/s"), each with a verb in
       // front when the row's name is a thing rather than a stat. See
       // `gainText`.
-      ok(cells.every(c => !c[1] || /^(?:[a-z ]+ )?(?:\+\d|[\d,.]+ → |[\d,.]+ [a-z\/]+$)/.test(c[1])),
+      ok(cells.every(c => !c.gain || /^(?:[a-z ]+ )?(?:\+\d|[\d,.]+\s→\s|[\d,.]+\s[a-z\/]+$)/.test(c.gain)),
          'a count says where it is going, a rate says what it gains, a gift says what it is',
-         JSON.stringify(cells.map(c => c[1]))),
+         JSON.stringify(cells.map(c => c.gain))),
       ok(Math.abs(first.top - again.top) < 2 && Math.abs(first.height - again.height) < 2,
          'and it opens in the same place the first time as the second',
          `${Math.round(first.top)}/${Math.round(first.height)} then ` +
@@ -1444,13 +1405,15 @@ export const TESTS = [
         if (!g || getComputedStyle(g).display === 'none') continue;
         const said = g.textContent;
         card.classList.add('waiting');
-        let need = 0;
-        for (const t of SAYS) { g.textContent = t; need = Math.max(need, g.scrollWidth); }
-        g.textContent = 'busy';
-        const room = g.clientWidth;
+        // Each word in its cell, measured against the room the cell has with
+        // that word in it: a card's gain is a track, a tile's is as wide as
+        // its words up to the tile, so the room is read, never assumed.
+        for (const t of SAYS) {
+          g.textContent = t;
+          if (g.scrollWidth > g.clientWidth) spills.push(`${which}:${card.dataset.key} "${t}" ${g.scrollWidth}>${g.clientWidth}`);
+        }
         card.classList.remove('waiting');
         g.textContent = said;
-        if (need > room) spills.push(`${which}:${card.dataset.key} ${need}>${room}`);
       }
     }
     window.__board('bench');
@@ -1533,6 +1496,10 @@ export const TESTS = [
     // sits back down when the site stalls. Read as the lift, which is what
     // the hover sets.
     const lift = () => (tile() ? getComputedStyle(tile()).getPropertyValue('--lift').trim() : '');
+    // The plate goes up on a wall-clock transition too, and the tile says
+    // queued until the spare hand has walked to the site, so twenty game
+    // seconds can pass inside the transition.
+    await sleep(300);
     const liftGoing = lift();
     const secs = t => t.split(':').reduce((a, b) => a * 60 + +b, 0);
     // Nobody at the site: the fill and the clock both hold.

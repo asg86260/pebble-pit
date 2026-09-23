@@ -23,22 +23,29 @@ const AT = { rockhands: 'on the rock', haulers: 'at the pit', quarriers: 'in the
              purifiers: 'at the air filter',
              janitors: 'clearing up' };
 
+const WHERE = { lifted: 'in your hand', falling: 'in mid-air', home: 'at home',
+                basket: 'up in a balloon', yard: 'in the yard',
+                resting: 'on a break', walking: 'on the way' };
+// Every place a body can be said to be, so the crew window can make its
+// column as wide as the longest of them (`fitCrewColumn` in shop.js).
+export const WHERE_WORDS = [...Object.values(WHERE), ...Object.values(AT)];
+
 export function whereIs(w) {
-  if (w.lifted) return 'in your hand';
-  if (w.falling) return 'in mid-air';
-  if (w.inside) return 'at home';
+  if (w.lifted) return WHERE.lifted;
+  if (w.falling) return WHERE.falling;
+  if (w.inside) return WHERE.home;
   // Up in a balloon is not standing anywhere: a body you cannot see in the
   // yard is a body the board has to account for.
-  if (inBasket(w)) return 'up in a balloon';
+  if (inBasket(w)) return WHERE.basket;
 
   // Standing on it beats what it is doing on it. A hauler is the exception:
   // it is at home everywhere, so only the doing says anything.
   const job = JOBS_AT[w.type];
-  if (job !== JOB.HAUL && atStation(job, w.x + WORKER / 2)) return AT[job] || 'in the yard';
+  if (job !== JOB.HAUL && atStation(job, w.x + WORKER / 2)) return AT[job] || WHERE.yard;
 
-  if (w.resting) return 'on a break';
-  if (w.walking) return 'on the way';
-  return AT[job] || 'in the yard';
+  if (w.resting) return WHERE.resting;
+  if (w.walking) return WHERE.walking;
+  return AT[job] || WHERE.yard;
 }
 
 // A line a job, or a body reads a favorite of `undefined`.

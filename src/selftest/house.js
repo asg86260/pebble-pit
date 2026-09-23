@@ -32,7 +32,7 @@ export const TESTS = [
       ok(before.houseRow && /^another house/.test(before.houseRow),
          'and the row is a house rather than a headcount', before.houseRow),
       // a count, so it says where the count is going
-      ok(before.houseRow && /\d → \d/.test(before.houseRow),
+      ok(before.houseRow && /\d\s→\s\d/.test(before.houseRow),
          'saying where it takes you, like every other count', before.houseRow),
       ok(after.crew === before.crew + 1, 'buying one takes somebody on',
          `${before.crew} -> ${after.crew}`),
@@ -196,13 +196,19 @@ export const TESTS = [
     const buy = document.querySelector('#crewshop button[data-key="house"]');
     const rows = [...document.querySelectorAll('#crewshop button')];
     const box = buy.getBoundingClientRect();
-    const x = Math.round(box.left + box.width / 2);
+    // From the house to the row in a straight line, as a hand goes: the row
+    // need not stand over the house, and a walk straight up the row's own
+    // column set off across open yard.
+    const to = { x: box.left + box.width / 2, y: box.top + 8 };
+    const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 6));
     let opened = false;
     // A synthetic pointermove raises no enter and no leave of its own, and a
     // row opens its list on being entered, so a walk that only moves can never
     // trip the thing this is looking for.
     let was = null;
-    for (let y = Math.round(from.y); y >= Math.round(box.top + 8); y -= 6) {
+    for (let i = 0; i <= steps; i++) {
+      const x = Math.round(from.x + (to.x - from.x) * i / steps);
+      const y = Math.round(from.y + (to.y - from.y) * i / steps);
       const el = document.elementFromPoint(x, y) || document.querySelector('canvas');
       const at = { clientX: x, clientY: y, bubbles: true };
       if (el !== was) {
@@ -254,9 +260,10 @@ export const TESTS = [
     ];
   }],
 
-  ['a row wears its description inline, not on a hover', async () => {
-    // The crew window is the one exception (a roster of a dozen bodies keeps
-    // the hover; see shop.js), and this is a board.
+  // A shelf tile has no line for a description (DESIGN.md, "The shelf"): it
+  // comes up in the board's tip on a hover. The goal card is the one row that
+  // is a story, and keeps its sentence in place.
+  ['a tile says what it is on a hover, and the goal card says it in place', async () => {
     newRun();
     await settle();
     window.__crew(4, 2);
@@ -272,23 +279,30 @@ export const TESTS = [
     await sleep(200);
 
     const tip = document.getElementById('tip');
-    let described = 0, hoverTip = 0;
-    for (const b of shop().querySelectorAll('button')) {
+    let told = 0, untold = [], goalInPlace = 0, goalTipped = 0;
+    for (const b of shop().querySelectorAll('button.tile')) {
       const note = b.querySelector('.note');
-      if (note && note.textContent.trim()) described++;
       const r = b.getBoundingClientRect();
       b.dispatchEvent(new PointerEvent('pointerenter',
-        { clientX: r.right - 4, clientY: r.top + 4, bubbles: true }));
+        { clientX: r.left + r.width / 2, clientY: r.top + 4, bubbles: true }));
       await sleep(30);
-      if (!tip.hidden) hoverTip++;
+      if (b.classList.contains('goal')) {
+        if (note && note.textContent.trim() && note.offsetParent) goalInPlace++;
+        if (!tip.hidden) goalTipped++;
+      } else if (note) {
+        if (!tip.hidden && tip.textContent.trim()) told++;
+        else untold.push(b.dataset.key);
+      }
+      b.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false }));
+      await sleep(10);
     }
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(described > 0, 'a row with something to say carries it in its own line',
-         `${described} described`),
-      ok(hoverTip === 0, 'and hovering a board row opens no sheet beside it',
-         `${hoverTip} rows still popped a tip`)
+      ok(told > 0 && untold.length === 0, 'every tile with something to say says it in the tip',
+         `${told} told${untold.length ? ', silent: ' + untold.join(',') : ''}`),
+      ok(goalTipped === 0, 'and the goal card pops no tip, since its sentence is on it',
+         `${goalInPlace} in place, ${goalTipped} tipped`)
     ];
   }],
 

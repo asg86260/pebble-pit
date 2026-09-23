@@ -11195,6 +11195,17 @@ the card markup laid out by the stylesheet, and nothing on it answers the
 cursor. The owner's pick over big-figure tiles: the game calls it the
 books, and a ledger is the thing those words name.
 
+**Which half of a bill you are short of (2026-09-22).** The shelf pales a
+tile you cannot pay for, title and tag, and at first that took every coin
+in the tag with it, so a two-coin bill no longer said which coin was
+missing. The owner's call: the short coin stays grey with the tile, and the
+coins you have stand back up at full ink. The cards had it the other way
+round (the short coin black); on a shelf the grey is already the word for
+"not yet", so the one left grey is the one to go and get. The gain line
+takes the tile's whole width the same day, under the foot of a tall
+ladder's pips, since `8 → 10 /harvest` is wider than the room between them
+and a number cut short is the one thing the line is for.
+
 ## A tile being built shows the building (built)
 
 ### What is wrong
@@ -11335,6 +11346,14 @@ cell. The pips were found to vanish on a building row -- the ladder block
 sat after the status branch's `continue`, on the cards too -- and were
 hoisted above it. The check is "a tile being built fills in, and its clock
 counts down" in `selftest/boards.js`.
+
+When the quarry, the farm and the apothecary went to spare hands
+(2026-09-15), the tile kept an old exemption -- a builders' site "always has
+somebody" -- and so never said `queued` for them; with nobody free the clock
+stopped under the word `building`. The exemption went on 2026-09-22 (the
+owner's call): every site says `queued` and sits down while nobody is at
+it, as the queue card already did, and a spare hand's walk to the site
+reads `queued` until it arrives.
 
 ## A hand on the tile (built)
 

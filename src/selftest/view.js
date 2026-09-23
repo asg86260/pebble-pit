@@ -334,12 +334,17 @@ export const TESTS = [
         // edge stands *above* that foot (`place`).
         const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px/.exec(el.style.transform) || [0, 0, 0];
         const left = +m[1], bottom = -(+m[2]);
-        // the board's own size comes from CSS, which follows the real window and
-        // not the pretend one, so only require it to be tucked in where it fits
+        // The board's own size comes from CSS, which follows the real window
+        // and not the pretend one, so a board may come out taller than the
+        // pretend window where the real sheet's ceiling (the window less a gap
+        // at each edge, `GAP` in board.js) would have held it in. So: a board
+        // that fits inside the gaps is wholly inside the window, and one that
+        // does not keeps its top on the glass, where its title is.
         const bw = el.offsetWidth, bh = el.offsetHeight;
-        const room = bw <= w && bh <= h;
-        checks.push(ok(left >= 0 && bottom >= 0 &&
-                       (!room || (left + bw <= w + 1 && bottom + bh <= h + 1)),
+        const gap = 4;
+        const room = bw <= w - 2 * gap && bh <= h - 2 * gap;
+        checks.push(ok(left >= 0 && bottom + bh <= h + 1 &&
+                       (!room || (bottom >= 0 && left + bw <= w + 1)),
           `${name} keeps the whole board inside the window`,
           `${Math.round(left)}+${bw} wide, ${Math.round(bottom)}+${bh} tall, in ${w}x${h}`));
         el.hidden = true;
