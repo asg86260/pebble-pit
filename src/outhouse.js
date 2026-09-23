@@ -12,7 +12,7 @@ export const OUTHOUSE_UPGRADES = [
   // the rock's problem before it is anybody else's.
   {
     key: 'loopost',
-    kind: 'rung', site: 'bench',
+    kind: 'rung', site: 'outhouse',
     name: 'another cap',
     cost: () => LOOPOST_SHARDS,
     currency: 'shard',

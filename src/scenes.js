@@ -339,6 +339,11 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 2); window.__loo();
                  window.__give(20000); window.__board('outhouse');
                  const s = st(); window.__look(s.outhouseX + 21 - s.viewW / 2); } },
+  // The quarry stands because the cap is priced in ore.
+  loocap: { about: 'the crew', say: "the janitor's second cap being fitted at the closet",
+    run: () => { window.__reset(); window.__crew(3, 2); window.__loo(); S.quarryOpen = true;
+                 window.__give(20000); window.__grant({ shards: 30 }); window.__buy('loopost');
+                 window.__fast(4); window.__look(st().outhouseX - 260); } },
   // `page`: the camera reads `houses` off the page's snapshot, which the node
   // yard's has not got.
   houseboard: { about: 'the crew', say: "the crew's board", page: true,

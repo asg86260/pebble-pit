@@ -24,7 +24,7 @@ const SITE_NAME = {
   yard: 'the yard', bench: 'the bench',
   quarry: 'the quarry', farm: 'the farm', filter: 'the air filter',
   tower: 'the tower', lab: 'the lab', apothecary: 'the apothecary',
-  shack: 'the shack'
+  shack: 'the shack', outhouse: "the janitor's closet"
 };
 
 // The same glyphs a ladder is drawn with on a row.

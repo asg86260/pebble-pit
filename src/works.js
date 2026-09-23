@@ -8,7 +8,7 @@
 // who any of the bodies are: crew.js registers the one thing only it can
 // answer, how many pairs of hands are at a site this frame.
 
-import { S, bench, lab, filter, tower, shack } from './state.js';
+import { S, bench, lab, filter, tower, shack, outhouse } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
@@ -34,7 +34,9 @@ export const SITE_JOB = {
   lab: JOB.SCHOLAR,
   // The rock's gang is capped at one by the ram and had nobody to spare; a
   // carrier off the dust is a cost the yard can always pay.
-  shack: JOB.BUILD
+  shack: JOB.BUILD,
+  // A spare hand, not a janitor: the janitors are what the cap is for.
+  outhouse: JOB.BUILD
 };
 
 // --- what a site can take, and how fast ----------------------------------------
@@ -213,7 +215,8 @@ const YARD_ROW_SITE = {
 // (`setSheds`): world.js and apothecary.js both import this file, so naming
 // them here reads them before they exist.
 const SITE_BOX = { filter: () => filter, tower: () => tower, bench: () => bench,
-                   lab: () => lab, shack: () => shack };
+                   lab: () => lab, shack: () => shack,
+                   outhouse: () => outhouse };
 export const setSheds = sheds => Object.assign(SITE_BOX, sheds);
 
 // Every room the settlement will have once the one going up lands, the same
