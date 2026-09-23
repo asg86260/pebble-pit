@@ -698,6 +698,11 @@ export const SCENES = {
                  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 30000 }); lip();
                  for (let i = 0; i < 3; i++) { window.__buy('driver'); window.__finish(); }
                  window.__fast(30); window.__look(ladenHauler() - st().viewW / 2); } },
+  // The camera held up so the strip under the ground is in the picture.
+  liftroster: { about: 'the kit', say: 'the carry roster: bodies, carts, and forklifts under them',
+    run: () => { rich(); lip(); window.__kit({ drivers: 2 }); window.__fast(20);
+                 const s = st(); window.__look(s.houses.door - s.viewW / 2);
+                 S.camLockY = S.groundY - S.viewH * 0.35; } },
   liftstand: { about: 'the kit', say: 'an engine waiting on its trestle beside the carts\' stand',
     // No haulers, so nobody comes for it and it stays on the trestle.
     run: () => { window.__reset(); window.__crew(3, 0, 5, 7); window.__fullSites();

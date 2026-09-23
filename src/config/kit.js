@@ -39,6 +39,9 @@ export const LIFT_PUFF_CELLS = 6;
 // of ground before the carts' slab. The bench pads its left side by it
 // (`hang` in sites.js), which is what keeps it off the noticeboard.
 export const LIFT_STAND_OFF = P * 11;
+// How far the truck lifts its driver: a wheel and the truck's box. The yard
+// draws the driver this high and the roster leaves this much room for one.
+export const LIFT_SEAT = P * 3;
 
 export const LIFT_KNOBS = [
   { key: 'LIFT_LOAD', label: 'a lift carries, over a cart', min: 1, max: 6, step: 0.5,

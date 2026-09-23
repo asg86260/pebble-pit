@@ -52,6 +52,7 @@ group('a forklift is bought off the bench and reaches a carter on foot', async (
   runUntil(() => state().driving >= 1, 40);
   const s1 = state();
   const d = driver();
+  const carry = r => r.roster.find(p => p.key === 'carry');
   return [
     ok(!cartsOnly?.shown && !laddersOnly?.shown, 'the row waits on the carts and both ladders',
        `carts only ${!!cartsOnly?.shown}, ladders only ${!!laddersOnly?.shown}`),
@@ -60,7 +61,9 @@ group('a forklift is bought off the bench and reaches a carter on foot', async (
     ok(s1.driving === 1, 'and a carter walks over and drives it away', `${s1.driving} driving`),
     ok(d && d.trained && d.kitOf === 'haulers', 'on a body that is wearing a cart'),
     ok(s1.carters === 3 && s1.drivers === 1, 'and the carts are still the carts',
-       `${s1.carters} carts, ${s1.drivers} engines`)
+       `${s1.carters} carts, ${s1.drivers} engines`),
+    ok(carry(s0)?.lifts === 1 && carry(s1)?.lifts === 1,
+       'the carry roster counts the engine under the carts', `${carry(s1)?.lifts}`)
   ];
 });
 

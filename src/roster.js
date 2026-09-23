@@ -3,14 +3,14 @@
 // no buttons: you never put a body *on* carrying, it is what a body does when
 // it is on nothing. Its count is there to be read.
 
-import { P, WORKER } from './config.js';
+import { P, WORKER, LIFT_SEAT as SEAT } from './config.js';
 import { S, quarry, farm, apothecary, filter, sky, outhouse, shack } from './state.js';
 import { groundAt, kitX, liftX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
 import { assign, idle } from './staffing.js';
 import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
-import { KIT_MARK, TRADE_OF, LIFT, spareLifts } from './kit.js';
+import { KIT_MARK, TRADE_OF, LIFT, spareLifts, liftsOf } from './kit.js';
 import { JOB } from './jobs.js';
 import { shown } from './tween.js';
 
@@ -73,11 +73,16 @@ export function postAt(p) {
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
+// The carts' second rung has a line of its own under the carters': the
+// engines the lip owns, drawn as a driver sat up on one.
+const liftLine = p => p.job === JOB.HAUL && liftsOf() > 0;
+
 // The machine's mark stands under the count, at the bottom of the strip, below
-// the tradesmen's line when there is one.
+// the tradesmen's lines when there are any.
 function runBox(p, left, y) {
   const h = BTN;
-  return { x: left, y: y + WORKER + P * 3 + (p.kit ? WORKER + P * 2 : 0), w: WIDE, h };
+  return { x: left, y: y + WORKER + P * 3 + (p.kit ? WORKER + P * 2 : 0) +
+                     (liftLine(p) ? WORKER + SEAT + P * 3 : 0), w: WIDE, h };
 }
 
 // The boxes of one roster, left to right, in world units, and under them a
@@ -97,6 +102,14 @@ function boxes(p) {
     more: { x: left + WIDE - BTN, y: y - BTN / 2, w: BTN, h: BTN },
     trade: { x: left + BTN + GAP, y: under - WORKER / 2, w: WORKER, h: WORKER },
     tradeNum: { x: left + BTN + GAP + WORKER + GAP, y: under, w: NUM, h: BTN },
+    // The driver's line, the same clear air under the carters' as theirs is
+    // under the headcount. `lift.y` is where the body would stand on foot;
+    // the truck lifts it `SEAT`, so the count sits halfway down the pair. A
+    // cell left of the other badges, so the stack out the truck's back ends
+    // where their bodies do and the counts stay one column.
+    lift: { x: left + BTN + GAP - P, y: under + WORKER / 2 + P * 3 + SEAT, w: WORKER, h: WORKER },
+    liftNum: { x: left + BTN + GAP + WORKER + GAP, y: under + WORKER + P * 3 + SEAT / 2,
+               w: NUM, h: BTN },
     // The machine's mark, on the roster: "is this station worked by hands or
     // by the machine" is the same question the counter above answers about
     // *how many* hands.
@@ -175,7 +188,7 @@ export function rosterHit(x, y) {
 // the one thing drawn in screen pixels: it is type, and type scaled by five
 // sixths has a fuzzy edge.
 
-export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
+export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) {
   const spare = idle();
   for (const p of posts()) {
     const b = boxes(p);
@@ -206,6 +219,12 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
       // there.
       if (p.job === JOB.HAUL) drawCart(b.trade.x, b.trade.y, 1);
       else drawHat(b.trade.x, b.trade.y, KIT_MARK[p.job], true);
+    }
+    // Facing left, like the cart trails left: the forks go into the empty
+    // minus slot and the stack stays clear of the count.
+    if (liftLine(p) && drawLift) {
+      drawLift(b.lift.x, b.lift.y, -1);
+      drawBody(b.lift.x, b.lift.y - SEAT);
     }
 
     if (p.fixed) continue;                       // carrying is read, not set
@@ -257,6 +276,10 @@ export function drawRosterCounts(ctx, screenAt) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
       ctx.fillText(String(Math.round(shown('hats:' + p.job, hats(p.job)))), Math.round(t.x), Math.round(t.y));
     }
+    if (liftLine(p)) {
+      const t = screenAt(b.liftNum.x + b.liftNum.w / 2, b.liftNum.y);
+      ctx.fillText(String(Math.round(shown('lifts:' + p.job, liftsOf()))), Math.round(t.x), Math.round(t.y));
+    }
 
   }
   ctx.textAlign = 'left';
@@ -290,6 +313,7 @@ export function rosterReport() {
              // Only where a trade line is actually drawn.
              trade: TRADE_OF[p.job] && hats(p.job) > 0
                ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
+             lifts: liftLine(p) ? liftsOf() : null,
              mark: KIT_MARK[p.job],
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
              more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };

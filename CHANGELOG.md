@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The carry roster under the houses counts forklifts too, a driver on a truck under the cart line (test/forklift.test.mjs).
 - The air filter's board no longer carries a pollution row: the gauge on its wall reads the sky, and its hover says the rest (src/selftest/sky.js).
 - The fan is balloon power now, and a new balloon speed ladder makes the trips between clouds shorter; a balloon cleans only while it hangs at a cloud, no two balloons work the same cloud, and the filter box under the envelope is gone (test/balloon.test.mjs).
 - The books board keeps just the income rates; the full books sheet is put away for now (test/books-sheets.test.mjs).

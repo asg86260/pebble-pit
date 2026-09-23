@@ -4,7 +4,7 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -112,8 +112,7 @@ function drawCartBox(x, y) {
 // truck lifts the body: a wheel and the box. Same footing as the cart: wheels
 // in the cell over the ground line, the box on the wheels. Five cells wide so
 // a three-cell body sits centered on it a whole cell in from each end.
-const LIFT_W = P * 5, LIFT_H = P * 2, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ABREAST = 4;
-export const LIFT_SEAT = P + LIFT_H;
+const LIFT_W = P * 5, LIFT_H = LIFT_SEAT - P, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ABREAST = 4;
 
 // One drawing for all three places it is seen: on the road under a body, on
 // its stand, and lying where it was thrown. `x` is the truck's left edge,
@@ -544,5 +543,5 @@ export function drawWorkers() {
 // roster.js lays the badges out and is handed the draws a badge is made of,
 // so the crew's own drawing stays here.
 export function drawRosterBodies() {
-  drawRoster(ctx, drawBody, drawHat, drawCart, drawRunSwitch);
+  drawRoster(ctx, drawBody, drawHat, drawCart, drawRunSwitch, drawLift);
 }
