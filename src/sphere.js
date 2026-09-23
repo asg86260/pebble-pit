@@ -27,48 +27,69 @@ export const sphereUp = () => sphereBought() && pouredAt() >= 1;
 export const sphereRising = () => sphereBought() && !sphereUp() && meteorAlive();
 
 // --- the shell's geometry --------------------------------------------------------
-// One ring of cells at `SPHERE_OUT` cells past the star's edge, cut into panels
-// of `SPHERE_PANEL` plate and one of slit. Derived from the star every call,
-// never stored: the star's size is the sky's, and the shell follows it.
+// Seen face on, a sphere covers its star: a disc of plates `SPHERE_OUT` cells
+// wider than the star, square plates `SPHERE_PANEL` cells a side with a
+// one-cell seam between them, and the seams are where the light gets out.
+// Derived from the star, never stored, and worked out once for where the star
+// is: the drawing and the machine both walk it every frame.
 export const shellR = () => sky.r + SPHERE_OUT * P;
 
-export function shell() {
+let cached = null, cachedAt = '';
+export function shellCells() {
   const R = shellR();
-  const n = Math.max(12, Math.round((Math.PI * 2 * R) / P));
+  const key = `${sky.x},${sky.y},${R}`;
+  if (cached && cachedAt === key) return cached;
   const every = SPHERE_PANEL + 1;
-  return { R, n, every, panels: Math.floor(n / every) };
+  const n = Math.ceil(R / P);
+  // The top-left of the middle cell, on the lattice: a cell centered on the
+  // star's middle would sit half a cell off it.
+  const ox = Math.round((sky.x - P / 2) / P) * P, oy = Math.round((sky.y - P / 2) / P) * P;
+  const out = [];
+  for (let r = -n; r <= n; r++) {
+    for (let c = -n; c <= n; c++) {
+      const dx = c * P, dy = r * P;
+      if (Math.hypot(dx, dy) > R) continue;
+      // Seams centered on the star, so the lattice is symmetric about it.
+      const mc = ((c + (every >> 1)) % every + every) % every;
+      const mr = ((r + (every >> 1)) % every + every) % every;
+      const seam = mc === SPHERE_PANEL || mr === SPHERE_PANEL;
+      // Which plate, for its tone; and how far round from the bottom this cell
+      // is, nought straight under the star and one straight over it, which is
+      // the order the ring pours in: up both sides, closing over the top.
+      const tile = Math.floor((c + (every >> 1)) / every) * 31 + Math.floor((r + (every >> 1)) / every);
+      const far = Math.abs(Math.atan2(dx, dy)) / Math.PI;
+      out.push({ x: ox + dx, y: oy + dy, seam, tile, far,
+                 // a fixed quarter for each seam cell, so a rung covers a
+                 // quarter of them and the same quarter every frame
+                 quarter: ((c * 7 + r * 13) % 4 + 4) % 4,
+                 rim: Math.hypot(dx, dy) > R - P * 2, low: dy > 0 });
+    }
+  }
+  cachedAt = key;
+  return (cached = out);
+}
+// Snapped to whole cells: `x` and `y` above are each cell's top-left.
+const snap = v => Math.round(v / P) * P;
+
+// Whether a cell of the shell is poured yet.
+export const laid = (cell, at = pouredAt()) => at >= 1 || cell.far < at;
+
+// A seam a rung of the ladder has covered with a second course of plate: a
+// quarter a rung, so a topped sphere still lets one seam cell in four through.
+export const covered = (cell, tune = tuneOf('sphere')) => cell.seam && cell.quarter < tune;
+
+// The two points the pour is landing on, for the beams: the growing edges,
+// one up each side.
+export function sphereEdges() {
+  const a = pouredAt() * Math.PI, R = shellR();
+  return [{ x: snap(sky.x - Math.sin(a) * R), y: snap(sky.y + Math.cos(a) * R) },
+          { x: snap(sky.x + Math.sin(a) * R), y: snap(sky.y + Math.cos(a) * R) }];
 }
 
-// A cell of the ring, in the world, snapped to the lattice. Angle nought is
-// straight down, toward the yard, which is where the pour starts.
-export function shellCell(i, s = shell()) {
-  const a = Math.PI / 2 + (i / s.n) * Math.PI * 2;
-  return { x: Math.round((sky.x + Math.cos(a) * s.R - P / 2) / P) * P,
-           y: Math.round((sky.y + Math.sin(a) * s.R - P / 2) / P) * P };
-}
-
-// Which panels are up: laid from the bottom outward both ways, so the shell
-// closes over the top of the star, the last place the yard can see into.
-// Panel k's place in that order is how far it is from the bottom.
-export function panelLaid(k, s = shell(), at = pouredAt()) {
-  const half = s.panels / 2;
-  const far = Math.min(k, s.panels - k) / half;       // 0 at the bottom, 1 at the top
-  return far < at || at >= 1;
-}
-
-// The two cells the pour is landing on, for the beams: the growing ends.
-export function sphereEdges(s = shell()) {
-  const k = Math.round(pouredAt() * s.panels / 2);
-  return [shellCell(k * s.every, s), shellCell(((s.panels - k) % s.panels) * s.every, s)];
-}
-
-// Which slits a rung of the ladder has covered with a second course of plate:
-// a quarter a rung, so a topped sphere still shows one slit in four.
-export const slitCovered = (j, tune = tuneOf('sphere')) => (j % 4) < tune;
-
-// When each slit last let a chip go, for the drawing. A moment, not state: a
-// flare is over in half a second and a reload owes nobody one.
-export const FLARES = new Map();
+// When each seam cell last let a chip go, for the drawing. A moment, not state:
+// a flare is over in half a second and a reload owes nobody one. Keyed on the
+// cell object, so a star that moves starts a fresh map with its fresh cells.
+export const FLARES = new WeakMap();
 
 // --- the pour --------------------------------------------------------------------
 // Everybody in the ring pours, once a frame (`stepSummon` in wizard.js), the
@@ -95,18 +116,10 @@ function closeSphere() {
 // is a disc `METEOR_CORE` of the radius across, so that share of the area).
 const CORE_SHARE = METEOR_CORE * METEOR_CORE;
 
-// An open slit on the underside, or any open slit if the rungs have covered
-// every one down there. The chips fall from where the light gets out.
-function dropSlit(s) {
-  const open = [];
-  for (let j = 0; j < s.panels; j++) {
-    if (slitCovered(j)) continue;
-    open.push(j);
-  }
-  if (!open.length) return null;
-  const low = open.filter(j => shellCell(j * s.every + SPHERE_PANEL, s).y > sky.y);
-  const from = low.length ? low : open;
-  return from[Math.floor(rand() * from.length)];
+// An open seam on the underside's rim, where a chip let go falls clear of the
+// shell. The chips fall from where the light gets out.
+function dropSeams() {
+  return shellCells().filter(c => c.seam && c.rim && c.low && !covered(c));
 }
 
 defineMachine('sphere', {
@@ -126,24 +139,23 @@ defineMachine('sphere', {
   ms: rate => wizMs() / wizBite() / Math.max(0.01, rate),
   ready: () => sphereUp() && meteorAlive() && !S.pileFull.sky,
   bite: (tender, owed) => {
-    const s = shell();
+    const seams = dropSeams();
+    if (!seams.length) return 0;
     const t = now();
     for (let u = 0; u < owed; u++) {
-      const j = dropSlit(s);
-      if (j == null) return u;
-      const c = shellCell(j * s.every + SPHERE_PANEL, s);
+      const c = seams[Math.floor(rand() * seams.length)];
       const n = rand() < CORE_SHARE ? METEOR_CORE_SPARKS : METEOR_SPARKS;
       for (let i = 0; i < n; i++)
         spawnChip(c.x, c.y, bell() * 0.4, 0.2 + rand() * 0.2, someFind(SPARK_CELL));
-      FLARES.set(j, t);
+      FLARES.set(c, t);
     }
     return owed;
   }
 });
 
 // The flare's age, nought to one, for the drawing.
-export const flareOf = j => {
-  const at = FLARES.get(j);
+export const flareOf = cell => {
+  const at = FLARES.get(cell);
   if (at == null) return 1;
   return Math.min(1, (now() - at) / SPHERE_FLARE_MS);
 };

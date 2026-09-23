@@ -2,13 +2,14 @@
 // bolts.
 
 import { now } from '../clock.js';
-import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER } from '../config.js';
+import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES } from '../config.js';
 import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from '../meteor.js';
 import { S, floor, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { domeRising, domeSpot, domeAt } from '../shield.js';
 import { domeEdge } from './shield.js';
 import { cell } from './marks.js';
+import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt } from '../sphere.js';
 
 // The thing in the sky is a small star: a dead black crust with fire under it,
 // drawn cell by cell. A corona of rays breathes on a slow beat and takes its
@@ -21,7 +22,7 @@ export function drawSky() {
   drawTrail();
   // A dome being cast goes on whether or not there is a star up, so its beams
   // are drawn here, before the sky decides what else it is showing.
-  if (domeRising()) drawBeams(true, domeAt(), domeSpot());
+  if (domeRising()) drawBeams(() => [domeEdge(-1), domeEdge(1)], domeAt(), true);
   // Being made: what is there is whatever they have poured so far.
   if (S.meteorOpen && (!sky.cells || !sky.n)) { drawSummon(); return; }
   // Nothing called down yet: the plain circle, the far end of the world.
@@ -35,6 +36,9 @@ export function drawSky() {
     return;
   }
   drawFlash();
+
+  // Closed, the sphere is all that shows: the star is inside it.
+  if (sphereUp()) { drawShell(); drawBolts(); return; }
 
   // How much of it is fire, which is what the corona is drawn from.
   let core = 0, all = 0;
@@ -63,6 +67,7 @@ export function drawSky() {
     }
   }
   ctx.fillStyle = '#000';
+  if (sphereBought() && pouredAt() > 0) drawShell();
   drawBolts();
 }
 
@@ -97,7 +102,7 @@ function drawCorona(hot) {
 // bead of light running down it, to the star coming into an empty sky or to
 // the dome. The brightness rides the making's own progress. A quiet line says
 // where the magic is going; the bead says it is going.
-function drawBeams(dome, at, mid) {
+function drawBeams(endsOf, at, dome = false) {
   const t = now() / 1000;
   for (const w of S.workers) {
     if (!w.channel || !w.aloft) continue;
@@ -106,7 +111,7 @@ function drawBeams(dome, at, mid) {
     // every body, so the beams climb the shell with it. Both rather than the
     // nearer, because the ring turns: a beam that picked a side would jump to
     // the other horn every time its body crossed the middle.
-    const ends = dome ? [domeEdge(-1), domeEdge(1)] : [mid];
+    const ends = endsOf(fx, fy);
     for (const end of ends) {
       const dx = end.x - fx, dy = end.y - fy;
       const len = Math.hypot(dx, dy) || 1;
@@ -151,7 +156,7 @@ function drawSummon() {
   // While the dome is rising the ring is over the dome and its beams are
   // already drawn.
   if (at <= 0 && (domeRising() || !S.workers.some(w => w.channel))) return;
-  if (!domeRising()) drawBeams(false, at, mid);
+  if (!domeRising()) drawBeams(() => [mid], at);
 
   // The knot in the middle: a solid disc of the star's own fire, opening out
   // as it takes. Its edge is an edge; what moves is the shimmer inside it and
@@ -244,4 +249,64 @@ function skyRing() {
   ctx.beginPath();
   ctx.arc(sky.x, sky.y, sky.r + P * 2, 0, Math.PI * 2);
   ctx.stroke();
+}
+
+// --- the sphere ----------------------------------------------------------------
+// Plates in the ink's darker shades, a tone a plate and a shade either side a
+// cell, so the shell reads as built of pieces rather than printed; the seams
+// between them are the star's light getting out. A seam flares as its cell
+// lets a chip go, and a seam a rung has covered is a second course of plate, a
+// paler gray. Pouring, the plates come in up both sides from under the star
+// and the beams land on the two growing edges.
+const hash = n => ((n * 2654435761) >>> 0) % 997;
+
+function drawShell() {
+  const cells = shellCells();
+  const tones = FIND_COLOR[SPARK_CELL];
+  const flick = Math.floor(now() / CORE_FLICK);
+  const up = sphereUp();
+  for (const c of cells) {
+    if (!laid(c)) continue;
+    if (!c.seam) {
+      const k = hash(c.tile) % 3 + 3 + (hash(c.x * 31 + c.y) % 3) - 1;
+      ctx.fillStyle = SHADES[Math.max(0, Math.min(SHADES.length - 1, k))];
+    } else if (covered(c)) {
+      ctx.fillStyle = SHADES[1];
+    } else {
+      // Open: the star's own fire, dimmer while nobody is up there tending.
+      const f = flareOf(c);
+      ctx.fillStyle = f < 1 ? tones[0] : tones[1 + (hash(c.x + c.y * 7) + flick) % 2];
+    }
+    ctx.fillRect(c.x, c.y, P, P);
+  }
+  // A seam on the rim that has just let a chip go throws a short ray.
+  if (up) {
+    for (const c of cells) {
+      if (!c.seam || !c.rim || covered(c)) continue;
+      const f = flareOf(c);
+      if (f >= 1) continue;
+      const dx = c.x + P / 2 - sky.x, dy = c.y + P / 2 - sky.y;
+      const d = Math.hypot(dx, dy) || 1;
+      ctx.fillStyle = tones[0];
+      for (let k = 1; k <= 2; k++) {
+        ctx.globalAlpha = (1 - f) * (1 - k / 3);
+        ctx.fillRect(Math.round((c.x + dx / d * P * k) / P) * P,
+                     Math.round((c.y + dy / d * P * k) / P) * P, P, P);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = '#000';
+  // The ring pours on to the two growing edges; the tender on to the rim
+  // nearest it.
+  if (sphereRising()) {
+    const edges = sphereEdges();
+    drawBeams(() => edges, pouredAt(), true);
+  } else if (up) {
+    drawBeams((fx, fy) => {
+      const dx = fx - sky.x, dy = fy - sky.y, d = Math.hypot(dx, dy) || 1;
+      const R = sky.r + P * 2;
+      return [{ x: sky.x + dx / d * R, y: sky.y + dy / d * R }];
+    }, 0.4);
+  }
 }

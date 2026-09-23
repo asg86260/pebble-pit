@@ -41,6 +41,17 @@ const rich = () => {
   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: RICH_DUST });
 };
 
+const sphereAt = secs => {
+  rich();
+  window.__crew(0, 8, 0, 0, 0, 3);
+  window.__levels({ wizSpeedLevel: 5, wizPowerLevel: 5 });
+  window.__fast(20);
+  window.__meteor();
+  window.__buy('sphere');
+  window.__fast(secs);
+  const pin = () => { window.__look(st().towerX - 420); requestAnimationFrame(pin); }; pin();
+};
+
 // The lip bought out, which is what the belt is gated behind; `__fullSites`
 // does the same for the other stations, but carrying has no site to fill.
 const lip = () => {
@@ -813,6 +824,17 @@ export const SCENES = {
   towerboard: { about: 'the tower', say: "the tower's board",
     run: () => { rich(); window.__meteor(); window.__loo();
                  window.__machine('ram', { bought: true }); window.__board('tower'); } },
+
+  // The sphere: a ring of three up at the star, the tower's ladders topped, the
+  // sphere bought from its row and poured for `secs`. Twenty seconds before
+  // the purchase gets them up there; a fresh star, since a topped ring has
+  // stripped the first by then.
+  sphererising: { about: 'the tower', say: 'the ring pouring the sphere round the star, half closed',
+    run: () => sphereAt(20) },
+  sphere: { about: 'the tower', say: 'the sphere closed, one wizard tending it, sparks falling',
+    run: () => sphereAt(60) },
+  spheretopped: { about: 'the tower', say: 'the sphere with its three rungs: most seams covered over',
+    run: () => { sphereAt(60); S.machines.sphere.tune = 3; } },
 
   // --- the casino -------------------------------------------------------------
   // The table stood up, the arm held and let go, the sign tapped: the same

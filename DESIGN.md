@@ -13978,7 +13978,7 @@ end, and the yard is still yours -- so the competition is the one thing the
   answer is a `version` column on the row and `?since=<version>` on the
   read, which is one column and one filter when it is wanted.
 
-## The sphere: the tower's machine (design, not built)
+## The sphere: the tower's machine (built 2026-09-22)
 
 The fifth machine, and the first one off the ground. Every other station hands
 its work to a machine once its hands have been given everything a ladder sells:
@@ -14016,10 +14016,12 @@ one kit row with no ceiling: each hat cost `WIZ_RATE` more than the last and
 there was always another. The wizard's row in `KIT` gets `set: KIT_MAX, max:
 KIT_MAX` like the helmet, the lamp and the brim, so the tower holds three
 wizards, the row stops at three with pips like any other, and the sphere's gate
-is the same `kitFull` question the drill's is. A save holding more than three
-keeps its bodies (nobody is taken off a yard for a rule it did not break), but
-the sphere reads `kitCap`, which is three, so the extras are worth nothing more
-to it. They come down with the rest of the ring when the sphere closes.
+is a full set. *(As built: the gate reads `stockOf(JOB.WIZARD) >= KIT_MAX`,
+since `kitFull` measures the set against `handsOf`, which for the tower is the
+hats themselves and so is always full.)* A save holding more than three hats
+comes back with three wizards and the rest carrying: the floor plan is read
+through the set's ceiling (`stockOf`), because a fourth body on the tower
+would be a wizard with no hat to fly in.
 
 **Buying it opens a pour, not a finished machine.** Nothing teleports, and a
 shell in the sky has no builders who can reach it. The wizards pour it the way
@@ -14064,11 +14066,13 @@ in the proportion `makeMeteor` lays rind and core (`METEOR_CORE`). The spec's
 `ms` is `wizMs()` divided by `wizBite()` and by the rate. The yield is read off
 the tower's topped ladders and the hats, with no new rate constant to tune.
 
-**The hats go in the drawer.** The sphere takes the kit as the drill does
-(`takesKit` left at its default, so `tookKit` is true): the two stood-down
-wizards walk to the tower and hand their hats in, and the tender keeps its own,
-since it is the one body that still has to fly. `gangWorth` counts the set
-whole, as it does for every machine that took its kit.
+**The hats stay the tower's.** *(As built; the design had the sphere take the
+kit as the drill does.)* A machine that takes its kit empties the stand, and a
+wizard's hat is its license to fly, so the tender would be grounded by the
+machine it tends. So `takesKit: false`: the two stood-down wizards hand their
+hats back at the tower and the tender keeps its own. A hat is a license, not
+a doubling (`license` on the wizard's row in `KIT`), so `gangWorth` counts the
+ring as three bodies, not six.
 
 ### Tuning it
 
@@ -14118,22 +14122,23 @@ sphere clean.
 Black and white, flat, on the `P` grid, like the other machines. Only the light
 through it is red.
 
-- **The shell** is a ring of plates one cell thick at `sky.r + 2 * P`, inside
-  the wizards' ring (`WIZ_ORBIT` is ten cells out), laid in panels a few cells
-  long with a one-cell slit between each pair. The plates are white with a
-  black rim, and each slit shows the star's red through it. Plates alternate
-  two tones of white-grey (`shadeNear`) so the ring reads as built of pieces
-  rather than printed as one line.
-- **While it is poured,** the panels appear one at a time around the ring,
-  growing from where the ring's bodies are thickest, and the wizards' beams land
-  on the growing edge, as they do on the dome's.
-- **Closed,** the star is hidden except through the slits. The corona's rays are
-  cut to the lengths that get out through a slit, which is the picture of a
-  star being caught. A slit brightens for a beat when its panel drops a chip,
-  so the harvest shows as a ripple of red around the ring rather than as a
-  number.
-- **The tender's beam and the spire's puffs** are the two things that move when
-  it runs. A shell with no tender is still, and dark in its slits.
+*(As built, 2026-09-22.)* A sphere seen face on covers its star, so the shell
+is a **disc**, not a ring: `sky.r + SPHERE_OUT` cells across, tiled in square
+plates `SPHERE_PANEL` cells a side with a one-cell seam between them
+(`shellCells` in sphere.js, worked out once for where the star is).
+
+- **The plates** are the ink's darker `SHADES`, a tone a plate and a shade
+  either side a cell, so the shell reads as built of pieces.
+- **The seams** are the star's red getting out, shimmering on the core's clock.
+  A seam cell on the rim that lets a chip go flares bright and throws a short
+  ray for `SPHERE_FLARE_MS`, so the harvest shows as a ripple of red.
+- **A rung** paves a quarter of the seam cells over in a paler gray: a topped
+  sphere is mostly plate, with one seam cell in four still red.
+- **While it is poured,** the plates come in up both sides from under the star
+  and close over the top, and the ring's beams land on the two growing edges.
+  The star shows through wherever the plates have not reached.
+- **Closed,** the star and its corona are not drawn at all. The tender's beam
+  runs to the rim nearest it, and the spire puffs on each beat.
 
 ### What it touches
 

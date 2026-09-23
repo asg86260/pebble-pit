@@ -124,10 +124,11 @@ export const SPHERE_BILL = [['spark', 720], ['dust', 14400], ['shard', 900], ['s
 export const SPHERE_WORK = 120;
 // And a rung of its ladder, which only the tender pours.
 export const SPHERE_TUNE_WORK = 30;
-// Where the shell sits, in cells out from the star's edge: inside the
+// How far past the star's edge the shell reaches, in cells: inside the
 // wizards' ring (`WIZ_ORBIT` is ten cells out) and over the corona's foot.
 export const SPHERE_OUT = 2;
-// A panel is this many cells of plate, then one cell of slit.
+// A plate is this many cells square, and a one-cell seam runs between plates:
+// the seams are where the light gets out.
 export const SPHERE_PANEL = 4;
 // How long a slit burns brighter after its panel drops a chip, ms.
 export const SPHERE_FLARE_MS = 420;

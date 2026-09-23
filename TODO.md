@@ -48,6 +48,15 @@ yard, so it moves bodies in checks that are not about it.
 
 ## Balance calls, waiting on a decision
 
+### The sphere's numbers (built 2026-09-22)
+
+`SPHERE_BILL`, `SPHERE_WORK` and `SPHERE_TUNE_WORK` are first guesses. Its
+yield is derived (the ring's
+topped rate times `MACHINE_GAIN`), and a closed sphere brims the sky pile
+within a minute in the `sphere` scene, so the haulers set its real pace;
+worth a playbot run on spark income before and after, and on what the
+three-hat cap costs a yard that used to train more.
+
 ### Rain muck clogs the air filter
 
 `clogged()` counts every grain of muck on the filter's strip (`outletMuck`,
@@ -98,11 +107,6 @@ touching `src/config/build.js`.
 
 ## Approved or designed, not built
 
-- **The sphere** (designed 2026-09-22, awaiting sign-off). DESIGN.md, "The
-  sphere: the tower's machine": a fifth machine, poured around the star by the
-  wizards, harvesting sparks without taking the star apart; one tender, soot off
-  the spire; the tower capped at three hats, the sphere grown by a three-rung
-  tuning ladder the tender pours. Blocked on approval; the bill and `SPHERE_WORK` are the open numbers.
 - **The noticeboard** (approved 2026-09-10). DESIGN.md, "The noticeboard, and
   the record on it": forty-two notices, recognition only, the books move onto
   its second sheet. Thresholds are dev-panel questions. Wave-sized: catalog,
@@ -117,6 +121,8 @@ touching `src/config/build.js`.
 
 ## Drawing and listening
 
+- The sphere's shelf glyph (`sphere` in glyphs.js) is a first sketch, for the
+  owner to redraw in `glyphs.html`.
 - The forklift (`drawLiftBox`, render/crew.js) and its `lift` shelf glyph are
   first sketches; want a pass in `glyphs.html` and a shot.
 - The farm shed, the quarry shed and the bench share one silhouette at 1x. One
