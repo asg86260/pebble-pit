@@ -14889,5 +14889,7 @@ the snatch on:
   water line in the deep -- not in the light itself, where a white arrow is
   white on white. A click on it goes through.
 
-The surface and the ceiling still take a click as before. The shaft's post
-reads "abyssal workers" under the pointer in both halves.
+The surface and the ceiling no longer take a click (the owner's call, the
+same day): the square and the arrow are the way, and a click on the liquid
+or the deep's roof is an ordinary click. The shaft's post reads "abyssal
+workers" under the pointer in both halves.

@@ -26,9 +26,6 @@ export const DOME_PAD = P * 4;
 export const DOME_WALL = P * 4;
 // The crusher's rollers, as seen through its window.
 export const CRUSHER_ROLLER = P * 4;
-// The band at the top of the deep a click goes up through: the underside of
-// the surface, and the roof over it.
-export const DEEP_CEILING = P * 14;
 // Where the underside of the surface stands, under the deep's top edge, and
 // how far it breathes (the same swell the drowned pit's surface has).
 export const DEEP_SURFACE = P * 7;
@@ -49,9 +46,6 @@ export const SHAFT_ARROW_UP = P * 8;
 export const SHAFT_ARROW_DOWN = P * 11;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
-// From the yard, how far under the surface a click still means "go down":
-// the liquid's own top few cells, not the plank over it.
-export const SURFACE_CLICK = P * 6;
 
 // --- the water ---------------------------------------------------------------------
 // The flowing interference the drowned pit already draws, everywhere, and

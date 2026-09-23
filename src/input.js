@@ -5,7 +5,7 @@
 
 import { closeWindow } from './modal.js';
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
-         FARM_H, TOSS_DELAY, THUMB, BRUSH, DEEP_CEILING, SURFACE_CLICK } from './config.js';
+         FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt, lockScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
@@ -48,8 +48,7 @@ import { reducedMotion } from './prefs.js';
 import { goDeep, goUp, gliding } from './view.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { clickDeep } from './deep/serpent.js';
-import { deepTop, nearestSeg, coilThick } from './deep/place.js';
-import { abyssLine } from './pit.js';
+import { nearestSeg, coilThick } from './deep/place.js';
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -113,13 +112,6 @@ canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(
 // table.
 const atStation = (x, y) => stationAt(x, y) !== null;
 
-// The two halves (view.js). From the snatch on, the drowned surface is the
-// way down: its top few cells over the pit's columns, under the plank a body
-// crosses on. In the deep, the band along its top -- the underside of that
-// surface and the roof over it -- is the way back up.
-const onSurface = (x, y) => S.snatched && S.drowned && S.view !== 'deep' &&
-  x > pit.x && x < pit.x + pit.w && y > S.groundY && y < abyssLine() + SURFACE_CLICK;
-const onCeiling = (x, y) => S.view === 'deep' && y < deepTop() + DEEP_CEILING;
 const onCoil = (x, y) => {
   if (S.view !== 'deep') return false;
   const near = nearestSeg(x, y, now());
@@ -167,15 +159,12 @@ canvas.addEventListener('pointerdown', e => {
   // not a decision to stop reading.
   if (!atStation(p.x, p.y) && e.pointerType !== 'touch') showPanel(null, true);
   // The camera between the halves answers nothing until it is in one. Then
-  // the way through the surface, either side of it, before anything else;
+  // the way through the surface, the arrow at the shaft (the corner's square
+  // is the other way; the surface and the sky themselves take no click);
   // and in the deep a click is the serpent's first, the way one in the yard
   // is the rock's, and only the ordinary handling's if it missed the coil.
   if (gliding()) return;
-  // The shaft's post stands in the air over the water line: a press on it is
-  // the post's, and anywhere else up there is the way home.
   if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
-  if (onCeiling(p.x, p.y)) { if (!rosterHit(p.x, p.y)) goUp(); return; }
-  if (onSurface(p.x, p.y)) { goDeep(); return; }
   if (S.view === 'deep' && clickDeep(p.x, p.y)) return;
   // the sky first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
@@ -452,11 +441,9 @@ export function whatIsAt(x, y) {
   if (onShaftPost(x, y)) return 'abyssal workers';
   if (onShaftArrow(x, y)) return S.view === 'deep' ? 'up to the yard' : 'down to the deep';
   if (S.view === 'deep') {
-    if (onCeiling(x, y)) return 'the surface — click to go up';
     if (onCoil(x, y)) return 'the serpent';
     return null;
   }
-  if (onSurface(x, y)) return 'the abyss — click to go down';
   if (overCore(x, y)) return 'core';
   const grain = cellLabel(cellAt(floor, x, y) || cellAt(pit, x, y));
   if (grain) return grain;
@@ -559,7 +546,7 @@ const CURSORS = [
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
-  [(x, y) => onShaftArrow(x, y) || onSurface(x, y) || onCeiling(x, y) || onCoil(x, y), 'pointer'],
+  [(x, y) => onShaftArrow(x, y) || onCoil(x, y), 'pointer'],
   [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
