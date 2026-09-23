@@ -625,6 +625,11 @@ export function drawClouds() {
     // eye to the one thing that was leaving, which is the opposite of what a
     // front letting go should do.
     const ate = c.melt * (peak + 1);
+    // This cloud's styles, a tone and an edge step to each, asked of `styleOf`
+    // once apiece rather than once a cell: a swollen storm cloud is thousands
+    // of cells and three tones.
+    const styles = [];
+    const styleAt = (t, e) => styles[t * (CLOUD_EDGE_STEPS + 1) + e] ??= styleOf(tones[t], e);
     // Row by row from the base up, runs of one style as one rect: cells
     // joined along the row rather than up the column, or every column's
     // edge is a seam once the zoom puts it between device pixels.
@@ -635,7 +640,7 @@ export function drawClouds() {
         let now = null;
         if (cx <= hi) {
           const fill = Math.min(below, (h[cx] || 0) - r);   // how much of this cell is cloud
-          if (fill > 0) now = styleOf(tones[cellTone(h, peak, cx, r, u)],
+          if (fill > 0) now = styleAt(cellTone(h, peak, cx, r, u),
                                       Math.max(1, Math.ceil(fill * CLOUD_EDGE_STEPS)));
         }
         if (now === style) continue;

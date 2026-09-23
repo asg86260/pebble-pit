@@ -333,6 +333,7 @@ export function stepBolt(secs) {
 }
 
 
+let dead = new Uint8Array(0);
 export function stepDrops() {
   const m = muckCols();
   const f = frames();
@@ -340,7 +341,13 @@ export function stepDrops() {
   // swings with the gust rather than each drop remembering the air it was
   // born into.
   const lean = gust() * RAIN_LEAN;
-  for (let i = DROPS.length - 1; i >= 0; i--) {
+  // A drop that lands is struck off and the list closed up once at the end:
+  // a storm has thousands in the air, and a splice apiece moved the whole
+  // list for every one that came down.
+  const n = DROPS.length;
+  if (dead.length < n) dead = new Uint8Array(n * 2);
+  dead.fill(0, 0, n);
+  for (let i = n - 1; i >= 0; i--) {
     const d = DROPS[i];
     const sheet = RAIN_SHEETS[d.d] || RAIN_SHEETS[RAIN_NEAR];
     // pixels a frame, so it moves by however long the frame was. A drop
@@ -349,12 +356,12 @@ export function stepDrops() {
     d.x += lean * sheet.speed * f;
     d.y += d.vy * f;
     const c = colAt(d.x);
-    if (c < 0 || c >= m.length) { DROPS.splice(i, 1); continue; }
+    if (c < 0 || c >= m.length) { dead[i] = 1; continue; }
     // A backdrop drop is scenery: it falls behind the works, past the ground
     // line, and is taken off there having laid nothing. Nothing about it is
     // ever asked where it came down, which is what lets it parallax.
     if (!sheet.lands) {
-      if (d.y > S.groundY + RAIN_BEHIND_DROP) DROPS.splice(i, 1);
+      if (d.y > S.groundY + RAIN_BEHIND_DROP) dead[i] = 1;
       continue;
     }
     const rest = muckFloor(c) - m[c] * P;
@@ -364,8 +371,11 @@ export function stepDrops() {
       LEDGER.dirty++;
       if (d.mark && m[c] < MUCK_MAX) { m[c]++; LEDGER.laid++; }
     } else LEDGER.clean++;
-    DROPS.splice(i, 1);
+    dead[i] = 1;
   }
+  let w = 0;
+  for (let r = 0; r < DROPS.length; r++) if (r >= n || !dead[r]) DROPS[w++] = DROPS[r];
+  DROPS.length = w;
 }
 
 // --- when it rains ------------------------------------------------------------------
