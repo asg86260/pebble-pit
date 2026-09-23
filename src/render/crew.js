@@ -115,6 +115,8 @@ function drawCartBox(x, y) {
 const LIFT_W = P * 5, LIFT_H = LIFT_SEAT - P, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ABREAST = 4;
 // the most drawn on the forks: the top of the load ladder
 const LIFT_CAP = 64;
+// how tall the roof antenna's stalk is, under its knob
+const LIFT_ANTENNA = P * 2;
 
 // One drawing for all three places it is seen: on the road under a body, on
 // its stand, and lying where it was thrown. `x` is the truck's left edge,
@@ -136,6 +138,11 @@ function drawLiftBox(x, ground, fwd = 1) {
   ctx.fillRect(forkX, bottom, LIFT_FORK, P);                    // and the forks
   const stackX = fwd > 0 ? x - P : x + LIFT_W;
   ctx.fillRect(stackX, top - P, P, P * 2);                      // the stack, out the back
+  // The antenna on the roof: it drives itself, and this is what it listens
+  // with. A thin stalk up the middle of a cell over the cab and a knob on top.
+  const antX = x + (fwd > 0 ? P : LIFT_W - P * 2);
+  ctx.fillRect(antX + P / 2 - 1, top - LIFT_ANTENNA, 2, LIFT_ANTENNA);
+  ctx.fillRect(antX, top - LIFT_ANTENNA - P, P, P);
   return { forkX, forkTop: bottom };
 }
 
