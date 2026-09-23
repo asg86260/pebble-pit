@@ -14712,3 +14712,35 @@ the crusher and they count only as they land in the hopper; a scale thrown
 by hand into the hopper counts; a purchase takes from the account and the
 flecks leave the crusher; a first-pass save loads with its scales crushed.
 Scenes: `crusher`, `gathering`.
+
+## One crew, two homes: pods in the deep (built 2026-09-23)
+
+*The owner's calls, 2026-09-23: one crew, pods cost scales, the weapon
+rosters stay the player's.*
+
+With one crew, every body the deep takes is a body off hauling, and the
+yard's piles fill behind it. Sorting one fixed crew between the halves only
+moves the shortage about, so the deep gets a way to grow the crew: **pods**,
+the deep's houses, a capsule a body, stacked at the deep's far right end.
+A pod is bought on the altar's board in scales, a steeper price each one
+like the yard's rooms, and built there by the brawlers. The body it adds
+comes out of the pod and lives down there (`w.deepHome`, saved with the
+body; `S.pods` counts them).
+
+**Bodies work where they live.** The counts are the player's for every
+station and every weapon (the rosters), and `rebalance`'s for the carrying
+jobs. Which body fills a count prefers its own half: a deep job is filled
+from deep residents first and a yard job from the yard's, and a body away
+from home is the first one stood down when a count shrinks
+(`syncWorkers`). A deep resident with nothing to do down there still goes up
+to haul -- one crew -- and comes back down when it is wanted.
+
+**The yard lends only when it is calm.** The gatherers (haulers lent to the
+deep's floor) come from deep residents first. A yard hauler is lent down
+only while every yard pile is under `LEND_CALM` of its limit, and the loan
+is called back up the moment any pile fills; between the two the last
+answer stands, so the gang does not flicker. This is what keeps the deep's
+floor from backing up the yard's piles.
+
+**Nothing teleports.** A gatherer stood down with a load drops it as scales
+into the water where it is, never as dust in the yard.
