@@ -181,6 +181,9 @@ export const ROWS = [
   { key: 'beam', part: 2, reach: deepAt(3, 'well', 'font', 'circle', 'spire') },
   { key: 'curse', part: 2, reach: deepAt(3, 'well', 'font', 'circle', 'spire') },
   { key: 'callstar', part: 2, reach: deepAt(3, 'well', 'font', 'circle', 'spire') },
+  // --- the deep: the crusher -----------------------------------------------------
+  { key: 'gathercarry', part: 2, reach: deep },
+  { key: 'gatherpace', part: 2, reach: deep },
   { key: 'tunestar', part: 2, reach: deepAt(3, 'well', 'font', 'circle', 'spire', 'star') },
 
   // The casino has no board: its decisions are levers on the building and

@@ -5,7 +5,7 @@
 // (once that is bought), and anything still in the air can be caught on the
 // way past.
 
-import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR } from './config.js';
+import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY, topRow } from './grid.js';
 import { spawnChip, aim, bell } from './dust.js';
@@ -14,6 +14,8 @@ import { capacity, tossReach } from './levels.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
 import { noteThrow, noteCatch } from './notices.js';
+import { inDeep } from './deep/place.js';
+import { scoop, bedNear } from './deep/scales.js';
 
 export function track(x, y) {
   S.trail.push({ x, y, t: now() });
@@ -79,12 +81,17 @@ export const overCore = (mx, my) =>
 // Is there dust to sweep within `radius` cells of a point: the brush by
 // default, or a finger's reach (input.js, `fingerReach`).
 export function dustUnder(mx, my, radius = BRUSH) {
+  if (inDeep(mx, my)) return bedNear(mx, my, radius * P);
   if (overCore(mx, my)) return true;
   for (const _ of brushCells(mx, my, radius)) return true;
   return false;
 }
 
 export function sweep(mx, my) {
+  // In the deep the same hand works the floor's loose scales, and what it
+  // throws is thrown into the water (DESIGN.md, "The crusher"). Where the
+  // pointer is in the world decides it, not which half is on the screen.
+  if (inDeep(mx, my)) { sweepScales(mx, my); return; }
   // a loose core on the ground is picked up by hand, no capacity needed
   if (S.coreItem && !S.heldCore &&
       Math.abs(S.coreItem.x + CORE_SIZE / 2 - mx) < CORE_SIZE &&
@@ -112,8 +119,30 @@ export function sweep(mx, my) {
   }
 }
 
+// Scales off the deep's bed onto the cursor, as far as the hand holds: the
+// same hand as the yard's, so the same `capacity`. Only near the bed's top:
+// a sweep up in the water is a sweep through nothing.
+function sweepScales(mx, my) {
+  const room = capacity() - S.heldScales;
+  if (room <= 0 || !bedNear(mx, my, BRUSH * P)) return;
+  const got = scoop(mx, room, BRUSH * P);
+  for (const v of got) S.motes.push(mote(v));
+  S.heldScales += got.length;
+}
+
 export function release(x, y) {
   const { vx, vy } = throwVel();
+  // Scales in the hand go into the water where they are let go, on the
+  // deep's own gravity: over the hopper, they fall in and are crushed.
+  if (S.heldScales) {
+    for (let i = 0; i < S.heldScales; i++) {
+      S.sinking.push({ x: x + (rand() - 0.5) * P * 4, y: y + (rand() - 0.5) * P * 4,
+                       vx: vx * DEEP_THROW, vy: vy * DEEP_THROW, s: S.motes[i]?.s || 1 });
+    }
+    S.heldScales = 0;
+    S.motes = [];
+    return;
+  }
   if (S.heldCore) {
     S.heldCore = false;
     S.coreItem = { x: x - CORE_SIZE / 2, y: y - CORE_SIZE / 2, vx, vy, rest: false };

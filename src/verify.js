@@ -48,7 +48,7 @@ const ROSTER_COUNTS = { rockhand: JOB.ROCK, hauler: JOB.HAUL, quarrier: JOB.QUAR
                         builder: JOB.BUILD,
                         // The deep's (docs/wave-serpent.md).
                         brawler: JOB.BRAWL, lancer: JOB.LANCE, grenadier: JOB.GRENADE,
-                        scribe: JOB.SCRIBE, warlock: JOB.WARLOCK };
+                        scribe: JOB.SCRIBE, warlock: JOB.WARLOCK, gatherer: JOB.GATHER };
 
 // How far below the surface of its way a body may be, and for how long. Feet
 // ease up to the ground fourteen per cent a frame (`climbTo` in crew.js), so
@@ -435,8 +435,8 @@ export function verifyWorld() {
       for (const w of S.workers)
         if (w.y + WORKER > top) fail('a body is in the deep before the snatch', `${who(w)}`);
     }
-    if (S.scales !== deepBed.n)
-      fail('the scales are not the bed', `counter ${S.scales}, bed ${deepBed.n}`);
+    if (!(S.scales >= 0))
+      fail('the crusher owes scales', `account ${S.scales}`);
     if (S.tick % LEDGER_EVERY === 0 && deepBed.grid && deepBed.n !== count(deepBed))
       fail('the bed has lost count of itself', `ledger says ${deepBed.n}, the cells say ${count(deepBed)}`);
   }

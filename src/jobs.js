@@ -23,7 +23,8 @@ export const TYPE = Object.freeze({
   LANCE:   'lancer',
   GRENADE: 'grenadier',
   SCRIBE:  'scribe',
-  WARLOCK: 'warlock'
+  WARLOCK: 'warlock',
+  GATHER:  'gatherer'
 });
 
 // What a body DOES. The roster's key, the kit table's key, and the field the
@@ -43,12 +44,13 @@ export const JOB = Object.freeze({
   LANCE:   'lancers',
   GRENADE: 'grenadiers',
   SCRIBE:  'scribes',
-  WARLOCK: 'warlocks'
+  WARLOCK: 'warlocks',
+  GATHER:  'gatherers'
 });
 
 // The deep's jobs, apart: a body down the shaft is out of reach of anything in
 // the yard that walks out to the crew (a tonic, a notice for every post).
-export const DEEP_JOBS = Object.freeze([JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK]);
+export const DEEP_JOBS = Object.freeze([JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER]);
 export const YARD_JOBS = Object.freeze(Object.values(JOB).filter(j => !DEEP_JOBS.includes(j)));
 
 // Built from the two tables rather than written a third time, so a job added

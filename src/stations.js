@@ -24,7 +24,7 @@ import { beatDone } from './beats.js';
 import { MACHINES, running } from './machines.js';
 import { poopLeft } from './smog.js';
 import { canAfford } from './upgrades.js';
-import { standOf } from './deep/place.js';
+import { standOf, crusherRect } from './deep/place.js';
 
 // A door is shown once you are within reach of affording it: a price you have
 // no idea is coming is a price you cannot save for.
@@ -112,6 +112,9 @@ export const STATIONS = [
   // it; the rest are sold on it, each on the stage before the one its weapon
   // answers, so the order is the order the serpent's defenses fall.
   { key: 'altar', open: () => S.snatched, stand: () => standOf('altar'), board: 'altarBoardOpen',
+    after: [], needs: () => false },
+  // The crusher, the deep's purse, stands from the snatch like the altar.
+  { key: 'crusher', open: () => S.snatched, stand: () => crusherRect(), board: 'crusherBoardOpen',
     after: [], needs: () => false },
   { key: 'well', open: () => S.wellOpen, stand: () => standOf('well'), board: 'wellBoardOpen',
     after: ['altar'], needs: () => S.serpentStage >= 1 },

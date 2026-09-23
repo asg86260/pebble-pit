@@ -262,7 +262,7 @@ export const kit = (o = {}) => {
 // wants the pit drowned first, or there is no shaft to send anybody down.
 const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen',
                    brawlers: 'snatched', lancers: 'wellOpen', grenadiers: 'fontOpen',
-                   scribes: 'circleOpen', warlocks: 'spireOpen' };
+                   scribes: 'circleOpen', warlocks: 'spireOpen', gatherers: 'snatched' };
 export const assign = (job, d = 1) => {
   if (d > 0 && DEEP_JOBS.includes(job)) deepReady();
   if (d > 0 && PLACE_OF[job]) S[PLACE_OF[job]] = true;
@@ -301,7 +301,8 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
                    'tossSpeedLevel', 'tossReachLevel',
                    // the deep's ladders and the star's rungs (docs/wave-serpent.md)
                    'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
-                   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel']) {
+                   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel',
+                   'gathercarryLevel', 'gatherpaceLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();
@@ -1065,7 +1066,7 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 // the deep read back in one object. The fight is set outright only for a check
 // that is not about getting there, and the rule that the stage never goes
 // back is told the setup is a new starting point.
-import { layScales } from './deep/scales.js';
+import { layScales, looseScales } from './deep/scales.js';
 import { healNow, woundK, litK, boundK } from './deep/serpent.js';
 import { forgetSerpent } from './verify.js';
 HANDLES.__serpent = ({ stage, wound } = {}) => {
@@ -1077,7 +1078,8 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
   forgetSerpent();
   return { stage: S.serpentStage, wound: S.serpentWound };
 };
-HANDLES.__scales = n => layScales(n);
+HANDLES.__scales = n => layScales(n);                 // crushed: a purse to spend
+HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for the gatherers
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(), heal: healNow(),
   freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,

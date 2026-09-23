@@ -31,8 +31,9 @@ import pour from './2026-09-16-pour.js';
 import doneList from './2026-09-17-done-list.js';
 import weather from './2026-09-20-weather.js';
 import airFilter from './2026-09-22-air-filter.js';
+import crusher from './2026-09-23-crusher.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

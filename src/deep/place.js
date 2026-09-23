@@ -12,7 +12,8 @@
 import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
          DEEP_STAND_W, DEEP_STAND_H, COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
-         COIL_WAVES, COIL_SWAY_MS, BELLY_AT } from '../config.js';
+         COIL_WAVES, COIL_SWAY_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
+         GATHER_TOSS_FROM } from '../config.js';
 
 const snap = v => Math.round(v / P) * P;
 
@@ -33,6 +34,23 @@ export const mouthX = () => snap(pit.x + DEEP_MOUTH);
 export const spotX = key => snap(deepX0() + DEEP_SPOTS[key] * DEEP_W);
 export const standOf = key => ({ x: spotX(key) - DEEP_STAND_W / 2, y: deepFloor() - DEEP_STAND_H,
                                  w: DEEP_STAND_W, h: DEEP_STAND_H });
+
+// The crusher at the deep's left end, standing on the floor, and the hopper
+// across its top: the purse's mouth (DESIGN.md, "The crusher"). A scale is
+// taken once it is inside the mouth and HOPPER_LIP below its rim.
+export const crusherRect = () => ({ x: snap(spotX('crusher') - CRUSHER_W / 2), y: deepFloor() - CRUSHER_H,
+                                     w: CRUSHER_W, h: CRUSHER_H });
+export const hopperRect = () => {
+  const c = crusherRect();
+  return { x: snap(c.x + (CRUSHER_W - HOPPER_W) / 2), y: c.y, w: HOPPER_W, h: HOPPER_LIP };
+};
+export const inHopper = (x, y) => {
+  const h = hopperRect();
+  return x >= h.x && x < h.x + h.w && y >= h.y + h.h && y < h.y + CRUSHER_H / 2;
+};
+// Where a gatherer stands to toss a load in: on the floor, beside the
+// crusher on the side the rest of the deep is.
+export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 
 // The serpent's body: segment `i` of COIL_SEGS, head (0) to tail, at time `t`
 // in ms. A travelling wave along a line across the deep, snapped to the cell

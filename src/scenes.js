@@ -144,7 +144,7 @@ const shieldBuilt = kind => {
 
 // A yard the serpent has come for: every site built, the snatch behind it, the
 // fight at `stage`, scales on the floor, the hands asked for, and the view.
-function deepYard({ stage = 0, wound = 0, open = [], crew = {}, scales = 400, view = 'deep', run = 20 } = {}) {
+function deepYard({ stage = 0, wound = 0, open = [], crew = {}, scales = 400, loose = 0, view = 'deep', run = 20 } = {}) {
   rich();
   window.__fullSites();
   window.__snatch({ played: true });
@@ -152,6 +152,7 @@ function deepYard({ stage = 0, wound = 0, open = [], crew = {}, scales = 400, vi
   for (const k of open) S[k + 'Open'] = true;
   window.__deepCrew({ brawlers: 1, ...crew });
   window.__scales(scales);
+  if (loose) window.__looseScales(loose);
   window.__serpent({ stage, wound });
   window.__view(view);
   // Long enough to swim from the station to the coil. The hands may break
@@ -203,6 +204,19 @@ const deepScenes = {
       S.starAt = 0;
       window.__fast(1.5);
       lookDeep(coilAt(beltSeg(0.5), now()).x);
+    } },
+  // The crusher at the deep's left end, gatherers carrying the floor's scales
+  // to it and tossing them over the lip.
+  crusher: { about: 'the deep', say: 'the crusher: gatherers tossing scales into the hopper, the rollers turning',
+    run: () => {
+      deepYard({ crew: { brawlers: 2, gatherers: 3 }, loose: 900, run: 12 });
+      lookDeep(spotX('crusher') + S.viewW * 0.3);
+    } },
+  // The floor thick with scales and the gatherers at work on it.
+  gathering: { about: 'the deep', say: 'gatherers scooping the floor\'s loose scales, loads overhead',
+    run: () => {
+      deepYard({ crew: { brawlers: 2, gatherers: 4 }, loose: 2500, run: 6 });
+      lookDeep(spotX('altar'));
     } },
   // Every station on the floor at once, the camera on the middle of them.
   'deep-all': { about: 'the deep', say: 'the whole deep, every station standing',

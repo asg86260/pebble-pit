@@ -12,7 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
-- The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought with abyssal fists, lances, grenades, sigils, wizards and a called star (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs).
+- The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought with abyssal fists, lances, grenades, sigils, wizards and a called star; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 
 ## v0.4.0 — 2026-09-23
 

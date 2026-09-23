@@ -14637,11 +14637,20 @@ nor above its stage's depth, the stage never goes back, and nobody is in the
 deep before the snatch. Scenes: `snatch`, `deep`, one for each of the four
 defenses and each weapon at work, and `serpent-freed`.
 
-## The crusher: scales are gathered, not banked where they fall (design, not built)
+## The crusher: scales are gathered, not banked where they fall (built 2026-09-23)
 
-*Proposed 2026-09-23, the owner's ask after the first pass of the deep: "a
-big crusher on the left side of the deep, that workers toss the scales
-into, so there's not a large build-up."*
+*Proposed and built 2026-09-23, the owner's ask after the first pass of the
+deep: "a big crusher on the left side of the deep, that workers toss the
+scales into, so there's not a large build-up." Built as written. The calls
+made at build: a gatherer's toss rides an arc drawn in the water, so every
+scale it throws goes in, while a hand's throw falls on the deep's own
+gravity and goes in only if it is let go over the hopper; the pile-full mark
+hangs over the crusher when any stretch of the floor's bed is within four
+rows of its brim; in the deep the counter card keeps to the left edge of
+the glass, over the crusher. In the same pass the stations were drawn at
+twice their size under lit domes, the floor lifted a band off the window's
+foot with the deep's roster under it, and the dark page stopped turning the
+deep over.*
 
 Today a scale is counted the moment it lands on the deep's floor, and the
 floor is the purse. That makes the floor a heap that only ever grows, and

@@ -17,13 +17,33 @@ export const DEEP_W = P * 520;       // and across
 export const DEEP_MOUTH = P * 40;    // the shaft, in from the pit's near lip: where a body goes in and comes up
 // The stations stand on the deep's floor, at these fractions of its width from
 // its left edge. The altar is the deep's bench: punching, and the doors.
-export const DEEP_SPOTS = { altar: 0.16, well: 0.32, font: 0.48, circle: 0.64, spire: 0.82 };
+export const DEEP_SPOTS = { crusher: 0.055, altar: 0.16, well: 0.32, font: 0.48, circle: 0.64, spire: 0.82 };
 // A station's footprint on the floor and how tall it stands: its dome, which
 // is where the pointer opens its board (the sprite at STATION_SCALE, 16 cells
 // across and at most 14 up, under DOME_PAD, DOME_WALL and the arch; see
 // config/deepdraw.js).
 export const DEEP_STAND_W = P * 38;
 export const DEEP_STAND_H = P * 51;
+
+// --- the crusher ------------------------------------------------------------------
+// The purse's mouth, at the deep's left end (DESIGN.md, "The crusher"): a
+// scale is money once it lands in the hopper, and not before. The hopper is
+// the top of the machine, narrower than its body.
+export const CRUSHER_W = P * 30;
+export const CRUSHER_H = P * 30;
+export const HOPPER_W = P * 20;      // the mouth across the top
+export const HOPPER_LIP = P * 3;     // how far down into the hopper a scale has to fall to be taken
+export const CRUSH_SHOW_MS = 600;    // the rollers turn this long after a scale goes in
+// A gatherer's toss: from beside the crusher up and over into the hopper, on
+// an arc drawn in the water rather than thrown on its gravity, so every scale
+// a gatherer throws goes in.
+export const GATHER_TOSS_FRAMES = 40;       // frames from the hand to the hopper
+export const GATHER_TOSS_RISE = P * 14;     // how high over the lip the arc peaks
+export const GATHER_TOSS_FROM = P * 8;      // how far out from the crusher's side a gatherer stands to toss
+export const GATHER_TOSS_STAGGER = 3;       // frames between one scale of a load leaving and the next
+// A hand's flick in the water: the yard's throw, damped, so a handful let go
+// over the hopper drops in rather than sailing past it.
+export const DEEP_THROW = 0.25;
 
 // --- the serpent's body ------------------------------------------------------------
 // A chain of segments across the deep, swaying on its own clock: nothing in the

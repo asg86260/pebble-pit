@@ -44,7 +44,8 @@ import { newPurifier, stepPurifier } from '../filter.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
 import { quarryMuck, plotMuck } from '../smog.js';
-import { newBrawler, newLancer, newGrenadier, newScribe, newWarlock } from './deep.js';
+import { newBrawler, newLancer, newGrenadier, newScribe, newWarlock, newGatherer } from './deep.js';
+import { stepGatherer } from '../deep/gather.js';
 import { stepBrawler, stepLancer, stepGrenadier, stepScribe, stepWarlock } from '../deep/arms.js';
 
 export const JOBS = {
@@ -147,6 +148,12 @@ export const JOBS = {
     factory: newWarlock,
     want: () => S.warlocks,
     step: { work: (w, c) => stepWarlock(w, c) }
+  },
+  // The deep's haulers: the floor's loose scales into the crusher.
+  [TYPE.GATHER]: {
+    factory: newGatherer,
+    want: () => S.gatherers,
+    step: { work: (w, c) => stepGatherer(w, c) }
   },
 
   [TYPE.BUILD]: {

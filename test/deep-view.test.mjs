@@ -62,7 +62,7 @@ group('a hop keeps to the half on screen', async () => {
   const up = walk();
   window.__view('deep');
   const down = walk();
-  const DEEP = ['altar', 'well', 'font'];
+  const DEEP = ['crusher', 'altar', 'well', 'font'];
   return [
     ok(up.length > 0 && !up.some(k => DEEP.includes(k)), 'from the yard, only the yard', up.join(', ')),
     ok(down.length === DEEP.length && down.every(k => DEEP.includes(k)), 'from the deep, only the deep', down.join(', '))

@@ -10,14 +10,11 @@ Open:
   is mostly the scales a door and a rung cost; tune `SERPENT_HEAL`,
   `SERPENT_WOUND`, the doors' bills and `SCALE_PER_DMG` together against
   the first half's length (the dev panel has the heals and a depth scale).
-- **Glyphs.** The fifteen deep rows and the hop's five arrows borrow
+- **Glyphs.** The seventeen deep rows and the hop's six arrows borrow
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The coil reads thin** at 5 cells across a 520-cell deep in a wide window
   (`COIL_THICK`, `DEEP_H`).
 - **The sheet before the snatch** still says it is the end of the story.
-- **The crusher** (designed, not built): scales gathered off the floor by a
-  sixth deep job and thrown into a crusher at the deep's left end, which is
-  the purse. DESIGN.md, "The crusher". Waiting on the owner's go-ahead.
 
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 

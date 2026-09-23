@@ -90,6 +90,9 @@ export function drawCount() {
   const oldX = (pit.x + P * 4 - S.camX) * S.zoom;
   let x = Math.min(oldX, S.W - wide, lip - CLEAR - wide);
   x = Math.max(EDGE, x);
+  // In the deep the pit is overhead, not beside the card: the card keeps to
+  // the left edge of the glass, over the crusher that is the purse down there.
+  if (S.view === 'deep') x = EDGE;
   // `y` is the bottom row's baseline and the box hangs above it, so the card's
   // own bottom edge is `y + PAD`.
   // Above the safe area, where a phone has one.

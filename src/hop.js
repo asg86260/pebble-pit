@@ -26,7 +26,7 @@ const GLYPH = {
   bench: 'crate', casino: 'die', filter: 'balloon', quarry: 'hoist', farm: 'furrow',
   apothecary: 'pot', tower: 'tower', house: 'house', stats: 'sack', outhouse: 'bucket',
   shack: 'hut',
-  altar: 'swing', well: 'bucket', font: 'bowl', circle: 'wand', spire: 'tower'
+  altar: 'swing', well: 'bucket', font: 'bowl', circle: 'wand', spire: 'tower', crusher: 'sack'
 };
 
 // Every standing station in the half on screen, by where it stands, left to

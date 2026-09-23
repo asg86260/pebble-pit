@@ -32,7 +32,7 @@ export function drawPileMarks() {
 // A warning triangle: hollow, with a bar and a dot inside it. One radius, and
 // everything inside is a fraction of it, so changing it changes the whole sign.
 const WARN_R = P * 2.6;
-function warning(x, y, r = WARN_R) {
+export function warning(x, y, r = WARN_R) {
   drawTriangle(x, y, r, true);
   ctx.fillStyle = '#000';
   // inside the outline rather than on it: a triangle's base is its lowest

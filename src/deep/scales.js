@@ -1,34 +1,41 @@
-// Scales: knocked off the serpent, fallen through the water, lying on the
-// deep's floor. The bed is the deep's purse, the way the pit is the yard's.
+// Scales: knocked off the serpent, fallen through the water, lying loose on
+// the deep's floor, and crushed. The crusher is the deep's purse (DESIGN.md,
+// "The crusher"): a scale is money once it lands in the hopper and never
+// before, the way a grain is the yard's once it is in the pit.
 //
 // Anything that piles up is a cell in a plot, so the floor of the deep is a
-// sand grid like the pit (`deepBed` in state.js) and a scale is counted when
-// it lands in it, never when it is knocked loose: `S.scales` is the bed's
-// cell count and nothing else, kept here and set nowhere else. What is in
-// the water on its way down, or on its way up to a station that paid with
-// it, is this session's and a reload finds it landed or gone.
-//
-// Track SERPENT owns this file (docs/wave-serpent.md).
+// sand grid like the pit (`deepBed` in state.js): the scales lying loose,
+// waiting for a gatherer or the hand. `S.scales` is the crushed account, kept
+// here and set nowhere else (`crush`, `spendScales`). What is in the water on
+// its way down, into the hopper, or up to a station that paid with it, is this
+// session's, and a reload finds it landed or gone.
 
 import { S, deepBed } from '../state.js';
 import { P, SHADES, DEEP_W, DEEP_BED_ROWS, DEEP_GRAV, DEEP_DRAG, DEEP_CURRENT,
          DEEP_CURRENT_MS, SCALE_KICK, SCALE_SHADE, SCALE_SPREAD, LIFT_PACE, LIFT_FLECKS,
-         LIFT_STAGGER, SETTLE_BUDGET } from '../config.js';
+         LIFT_STAGGER, SETTLE_BUDGET, GATHER_TOSS_FRAMES, GATHER_TOSS_RISE, GATHER_TOSS_STAGGER } from '../config.js';
 import { put, addGrain, settleSome, recount, wakeGrid, topRow, surfaceY, colOf, shadeNear } from '../grid.js';
 import { makePainter } from '../painter.js';
 import { frames, now } from '../clock.js';
 import { rand } from '../rng.js';
 import { earned } from '../income.js';
-import { deepX0, deepX1, deepFloor } from './place.js';
+import { deepX0, deepX1, deepFloor, inHopper, hopperRect } from './place.js';
 
 // The push of the deep's current at a moment: one slow turn, so a shed cloud
 // leans one way for a while and then the other.
 const current = t => DEEP_CURRENT * Math.sin(2 * Math.PI * t / DEEP_CURRENT_MS);
 
-// The bed's count is the purse; said in one place so nothing else writes it.
-const tally = () => { S.scales = deepBed.n; };
+// Scales into the crusher: the account, said in one place so nothing else
+// writes it up. `crushAt` is for the drawing, the rollers turning.
+export function crush(n) {
+  if (!(n > 0)) return;
+  S.scales += n;
+  S.seenScale = true;
+  S.crushAt = now();
+  earned('scale', n);
+}
 
-// Loose `n` scales from (x, y): they sink and are counted where they land.
+// Loose `n` scales from (x, y): they sink, and lie where they land.
 export const shed = (x, y, n) => {
   for (let i = 0; i < n; i++) {
     S.sinking.push({ x, y, vx: (rand() * 2 - 1) * SCALE_KICK, vy: -rand() * SCALE_KICK,
@@ -36,10 +43,10 @@ export const shed = (x, y, n) => {
   }
 };
 
-// `n` scales laid straight on the bed, for a setup that is not about the fall
-// (`__scales`, and the board's grant). Spread across the whole floor, as a
-// bed that has been filling for a while would lie.
-export function layScales(n) {
+// `n` scales laid loose on the bed, for a setup that is not about the fall.
+// Spread across the whole floor, as a bed that has been filling for a while
+// would lie.
+export function looseScales(n) {
   if (!deepBed.grid) return 0;
   let laid = 0;
   for (let i = 0; i < n; i++) {
@@ -47,43 +54,90 @@ export function layScales(n) {
     if (!addGrain(deepBed, x, null, shadeNear(SCALE_SHADE, SCALE_SPREAD), true)) break;
     laid++;
   }
-  if (laid) S.seenScale = true;
-  tally();
   return laid;
 }
 
-// Pay `n` scales: taken off the top of the bed and lifted toward (toX, toY).
-// True if the bed held them. Taken column by column outward from the one
-// under the payer, whole columns at a time: a dip dug at the station's foot
-// that the bed slumps back into over the next frames, the way a bite out of
-// the pit does.
+// `n` scales already crushed, for a setup that wants a purse (`__scales`, the
+// board's grant).
+export function layScales(n) {
+  const k = Math.max(0, Math.floor(n));
+  crush(k);
+  return k;
+}
+
+// Up to `n` scales taken off the bed by a hand or a gatherer at world x:
+// column by column outward from the one under it, off the tops, within
+// `reach` px either side. Answers the shades it took, one a scale.
+export function scoop(x, n, reach) {
+  const got = [];
+  if (!deepBed.grid || !(n > 0)) return got;
+  const home = colOf(deepBed, x);
+  const span = Math.max(0, Math.round(reach / P));
+  for (let d = 0; d <= span && got.length < n; d++) {
+    for (const c of d ? [home - d, home + d] : [home]) {
+      if (c < 0 || c >= deepBed.cols || got.length >= n) continue;
+      const r = topRow(deepBed, c);
+      if (r < 0) continue;
+      got.push(deepBed.grid[r * deepBed.cols + c]);
+      put(deepBed, c, r, 0);
+    }
+  }
+  return got;
+}
+
+// The column of the bed a gatherer should work next from x: the most scales
+// for the swim, how deep and how near both counting. -1 on a bare floor.
+export function richestNear(x) {
+  if (!deepBed.grid || !deepBed.n) return -1;
+  const home = colOf(deepBed, x);
+  let best = -1, score = -Infinity;
+  for (let c = 0; c < deepBed.cols; c++) {
+    const h = topRow(deepBed, c) + 1;
+    if (!h) continue;
+    const v = h * 8 - Math.abs(c - home) * 0.25;
+    if (v > score) { score = v; best = c; }
+  }
+  return best;
+}
+export const bedX = c => deepBed.x + c * P + P / 2;
+
+// Whether there are scales on the bed within `reach` of a point near its
+// top: what the hand can sweep there.
+export function bedNear(x, y, reach) {
+  if (!deepBed.grid || !deepBed.n) return false;
+  const home = colOf(deepBed, x);
+  const span = Math.max(0, Math.round(reach / P));
+  for (let c = Math.max(0, home - span); c <= Math.min(deepBed.cols - 1, home + span); c++) {
+    const r = topRow(deepBed, c);
+    if (r >= 0 && Math.abs(y - (deepFloor() - (r + 1) * P)) <= reach) return true;
+  }
+  return false;
+}
+
+// Scales tossed into the hopper by a gatherer: on an arc drawn in the water,
+// each leaving the hand a few frames after the last, crushed where it ends.
+export function tossIn(x, y, shades) {
+  const h = hopperRect();
+  shades.forEach((s, i) => {
+    S.sinking.push({ x, y, x0: x, y0: y, tx: h.x + h.w / 2 + (rand() - 0.5) * (h.w - P * 4),
+                     ty: h.y + h.h + P * 2, arc: 0, wait: i * GATHER_TOSS_STAGGER, s });
+  });
+}
+
+// Pay `n` scales out of the crusher: the account goes down, and a stream of
+// flecks standing for them rises out of the hopper and drifts to (toX, toY).
+// True if the purse held them.
 export const spendScales = (n, toX, toY) => {
   n = Math.floor(n);
   if (!(n > 0)) return true;
-  if (!deepBed.grid || deepBed.n < n) return false;
-  const home = Math.max(0, Math.min(deepBed.cols - 1, colOf(deepBed, toX)));
+  if (!(S.scales >= n)) return false;
+  S.scales -= n;
+  const h = hopperRect();
   const shown = Math.min(n, LIFT_FLECKS);
-  let left = n, sent = 0;
-  const takeFrom = c => {
-    for (let r = topRow(deepBed, c); r >= 0 && left > 0; r--) {
-      const v = deepBed.grid[r * deepBed.cols + c];
-      if (!v) continue;
-      // Every so many cells one goes up as a fleck standing for the rest, so
-      // a big bill is a stream and not a column of thousands.
-      if (sent < shown && (n - left) * shown >= sent * n) {
-        S.lifting.push({ x: deepBed.x + c * P, y: deepFloor() - (r + 1) * P, tx: toX, ty: toY,
-                         s: v, wait: sent * LIFT_STAGGER });
-        sent++;
-      }
-      put(deepBed, c, r, 0);
-      left--;
-    }
-  };
-  for (let d = 0; left > 0 && d < deepBed.cols; d++) {
-    if (home - d >= 0) takeFrom(home - d);
-    if (d && left > 0 && home + d < deepBed.cols) takeFrom(home + d);
+  for (let i = 0; i < shown; i++) {
+    S.lifting.push({ x: h.x + P + rand() * (h.w - P * 2), y: h.y, tx: toX, ty: toY,
+                     s: shadeNear(SCALE_SHADE, SCALE_SPREAD), wait: i * LIFT_STAGGER });
   }
-  tally();
   return true;
 };
 
@@ -106,7 +160,6 @@ export const wireBed = () => {
   deepBed.onPut = deepBed.painter.mark;
   deepBed.painter.repaint();
   wakeGrid(deepBed);
-  tally();
 };
 
 // One frame of the water: the sinking fall on the deep's gravity and drift
@@ -121,15 +174,27 @@ export const stepScales = c => {
   let keep = 0;
   for (let i = 0; i < sink.length; i++) {
     const g = sink[i];
+    // A tossed scale rides its arc over the lip and is crushed at its end.
+    if (g.arc != null) {
+      if (g.wait > 0) { g.wait -= f; sink[keep++] = g; continue; }
+      g.arc = Math.min(1, g.arc + f / GATHER_TOSS_FRAMES);
+      g.x = g.x0 + (g.tx - g.x0) * g.arc;
+      g.y = g.y0 + (g.ty - g.y0) * g.arc - Math.sin(Math.PI * g.arc) * (GATHER_TOSS_RISE + Math.max(0, g.y0 - g.ty));
+      if (g.arc >= 1) { crush(1); continue; }
+      sink[keep++] = g;
+      continue;
+    }
     g.vx *= Math.pow(DEEP_DRAG, f);
     g.vy = g.vy * Math.pow(DEEP_DRAG, f) + DEEP_GRAV * f;
     g.x = Math.max(lo, Math.min(hi, g.x + (g.vx + push) * f));
     g.y += g.vy * f;
+    // Anything that falls into the hopper is crushed, whoever let it go.
+    if (inHopper(g.x, g.y)) { crush(1); continue; }
     const col = Math.max(0, Math.min(deepBed.cols - 1, colOf(deepBed, g.x)));
     if (g.y >= surfaceY(deepBed, col)) {
       // A bed full to its brim has nowhere to put one more, and a scale with
-      // nowhere to lie is lost to the dark rather than counted in the air.
-      if (addGrain(deepBed, g.x, null, g.s, true)) { S.seenScale = true; earned('scale', 1); }
+      // nowhere to lie is lost to the dark.
+      addGrain(deepBed, g.x, null, g.s, true);
       continue;
     }
     sink[keep++] = g;
@@ -151,7 +216,6 @@ export const stepScales = c => {
   lift.length = keep;
 
   settleSome(deepBed, SETTLE_BUDGET);
-  tally();
 };
 
 // On the save the bed is the height of every column: every cell is a scale,
@@ -194,13 +258,11 @@ export const SAVE = {
     }
     recount(deepBed);                        // written cell by cell, not put
     deepBed.painter.repaint();
-    tally();
   },
   blank() {
     if (!deepBed.grid) return;
     deepBed.grid.fill(0);
     recount(deepBed);
     deepBed.painter.repaint();
-    tally();
   }
 };

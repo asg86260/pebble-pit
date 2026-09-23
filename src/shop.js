@@ -42,6 +42,7 @@ const statsEl = document.getElementById('statsshop');
 const looEl = document.getElementById('looshop');
 const shackEl = document.getElementById('shackshop');
 const altarEl = document.getElementById('altarshop');
+const crusherEl = document.getElementById('crushershop');
 const wellEl = document.getElementById('wellshop');
 const fontEl = document.getElementById('fontshop');
 const circleEl = document.getElementById('circleshop');
@@ -834,7 +835,8 @@ const BOARDS = {
   well:   () => [wellEl, DEEP_ROWS.well, DEEP_SECTIONS.well, 'the well is still'],
   font:   () => [fontEl, DEEP_ROWS.font, DEEP_SECTIONS.font, 'the font is still'],
   circle: () => [circleEl, DEEP_ROWS.circle, DEEP_SECTIONS.circle, 'the floor is bare'],
-  spire:  () => [spireEl, DEEP_ROWS.spire, DEEP_SECTIONS.spire, 'the spire is dark']
+  spire:  () => [spireEl, DEEP_ROWS.spire, DEEP_SECTIONS.spire, 'the spire is dark'],
+  crusher: () => [crusherEl, DEEP_ROWS.crusher, DEEP_SECTIONS.crusher, 'the rollers are still']
 };
 
 // One board, rebuilt if the set of rows on it has moved. The open board asks

@@ -18,6 +18,7 @@ import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/dee
 import { now } from '../src/clock.js';
 
 const S = yard.S;
+const { deepBed } = await import('../src/state.js');
 
 // A yard the serpent has come for. The snatch itself is snatch.test.mjs's
 // subject; here it is the setup, and the sqwife it leaves on the deep's
@@ -174,9 +175,9 @@ group('sigils and the curse cut the heal', async () => {
 
 // Follows particular scales from the hit to the floor, and a save writes the
 // water down as nothing: the scales in it are this session's.
-group('a hit sheds scales, and they are counted when they land', async () => {
+group('a hit sheds scales, and they lie on the floor until they are crushed', async () => {
   deepYard();
-  const before = S.scales;
+  const before = S.scales, bed = deepBed.n;
   const p = belly();
   const done = strike('beam', 5, p.x, p.y);
   const inWater = S.sinking.length, countedAtOnce = S.scales - before;
@@ -185,14 +186,14 @@ group('a hit sheds scales, and they are counted when they land', async () => {
   return [
     ok(done === 5 && inWater === 5, 'five done, five knocked loose', `${done} done, ${inWater} in the water`),
     ok(countedAtOnce === 0, 'and none counted in the water', `${countedAtOnce}`),
-    ok(landed && S.scales - before === 5, 'all five counted on the bed once they land', `${S.scales - before}`),
-    ok(S.seenScale, 'and the yard has seen a scale'),
+    ok(landed && deepBed.n - bed === 5, 'all five lying on the bed once they land', `${deepBed.n - bed}`),
+    ok(S.scales === before, 'and none of them is money until it is crushed', `${S.scales - before}`),
     ok(nothing === 0 && S.sinking.length === 0, 'a blow that did nothing sheds nothing', `${S.sinking.length}`)
   ];
 }, { reload: false });
 
 // Follows the flecks a payment sends up to their station.
-group('paying lifts scales off the bed to the station that took them', async () => {
+group('paying lifts scales out of the crusher to the station that took them', async () => {
   deepYard();
   window.__scales(50);
   const laid = S.scales;
@@ -202,10 +203,10 @@ group('paying lifts scales off the bed to the station that took them', async () 
   const tooMuch = spendScales(1000, x, y);
   const gone = runUntil(() => S.lifting.length === 0, 30);
   return [
-    ok(laid === 50, 'fifty on the bed', `${laid}`),
-    ok(paid && after === 30, 'twenty paid off the bed', `${paid}, ${after} left`),
+    ok(laid === 50, 'fifty crushed', `${laid}`),
+    ok(paid && after === 30, 'twenty paid out of the crusher', `${paid}, ${after} left`),
     ok(rising > 0 && rising <= 20, 'and they rise to the station', `${rising} in the water`),
-    ok(!tooMuch && S.scales === 30, 'a bill the bed cannot cover takes nothing', `${tooMuch}, ${S.scales}`),
+    ok(!tooMuch && S.scales === 30, 'a bill the crusher cannot cover takes nothing', `${tooMuch}, ${S.scales}`),
     ok(gone, 'and the risen are gone at the station')
   ];
 }, { reload: false });
@@ -220,7 +221,7 @@ group('a cold reload in the split comes back split, wounded and with its scales'
   return [
     ok(back.stage === 2, 'the stage', `${back.stage}`),
     ok(back.wound === 1234, 'the wound', `${back.wound}`),
-    ok(back.scales === 37, 'and the scales on the bed', `${back.scales}`),
+    ok(back.scales === 37, 'and the crushed scales', `${back.scales}`),
     ok(woundK() > 0 && S.serpentWound < 1234, 'and the fight goes on from there', `${S.serpentWound}`),
     ok(deepTop() < deepFloor(), 'the deep is where it was')
   ];

@@ -33,13 +33,13 @@ import { strike } from './serpent.js';
 
 // --- a body in the water ----------------------------------------------------------
 
-const mid = w => w.x + WORKER / 2;
+export const mid = w => w.x + WORKER / 2;
 // Where a body's top stands on the deep's floor: the deep way's feet.
-const feet = () => deepFloor() - WORKER;
+export const feet = () => deepFloor() - WORKER;
 
 // Arrived: not commuting, and down in the deep rather than in the shaft or
 // the yard above it.
-const working = w => !w.walking && inDeep(mid(w), w.y + WORKER - 1);
+export const working = w => !w.walking && inDeep(mid(w), w.y + WORKER - 1);
 
 // A body off the floor is held up by the water, the way a seat holds a
 // driver: stamped every frame it is up there, so the rules about falling and
@@ -49,7 +49,7 @@ const afloat = w => { if (w.y < feet() - P) w.aboardAt = S.tick; };
 
 // One frame's swim toward a top-left (tx, ty), at a share of the walk.
 // True once it is there.
-function swim(w, tx, ty) {
+export function swim(w, tx, ty) {
   const step = commutePace() * SWIM_PACE * frames();
   const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy);
   if (dx) w.face = dx > 0 ? 1 : -1;

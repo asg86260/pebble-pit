@@ -18,6 +18,7 @@ export const LANCE_CAP = 12;         // at the well
 export const GRENADE_CAP = 8;        // at the font
 export const SCRIBE_CAP = 4;         // at the circle
 export const WARLOCK_CAP = 6;        // at the spire
+export const GATHER_CAP = 8;         // at the crusher, from the snatch
 
 
 // --- the snatch ----------------------------------------------------------------------

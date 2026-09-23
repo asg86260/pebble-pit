@@ -78,7 +78,9 @@ export const LADDERS = {
   grenadepace:  { value: [4, 5, 6, 8, 10, 12, 15, 18, 22], dust: [120, 240, 450, 900, 1600, 2800, 4500, 7000] },    // grenades a minute, a grenadier
   sigil:        { value: [1, 2, 3, 4, 5, 6, 7, 8, 9], dust: [120, 240, 450, 900, 1600, 2800, 4500, 7000] },         // circles the floor holds
   beam:         { value: [20, 30, 45, 65, 90, 130, 180, 250, 350], dust: [400, 800, 1500, 2800, 5000, 8000, 12000, 18000] }, // damage a second, a wizard
-  curse:        { value: [0, 5, 10, 15, 20, 25, 30, 35, 40], dust: [400, 800, 1500, 2800, 5000, 8000, 12000, 18000] }  // % off the heal
+  curse:        { value: [0, 5, 10, 15, 20, 25, 30, 35, 40], dust: [400, 800, 1500, 2800, 5000, 8000, 12000, 18000] },  // % off the heal
+  gathercarry:  { value: [4, 6, 8, 10, 14, 18, 24, 32, 40], dust: [20, 40, 80, 160, 300, 550, 900, 1500] },       // scales a gatherer carries
+  gatherpace:   { value: [2, 3, 4, 5, 6, 8, 10, 12, 15], dust: [20, 40, 80, 160, 300, 550, 900, 1500] }         // scales a second a gatherer scoops
 };
 
 // A ladder's value at a rung: the foot below nought, the top past the end. A

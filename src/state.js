@@ -453,16 +453,20 @@ export const S = {
   serpentWound: 0,
   serpentFreed: false,
   snatch: null,           // the snatch beat's own state while it plays (snatch.js)
-  // The deep's coin: every scale lying on its floor, and whether one ever has.
+  // The deep's coin: every scale crushed and not yet spent (the crusher is the
+  // purse; the floor's loose scales are `deepBed`), and whether one ever has.
   scales: 0,
   seenScale: false,
   // The deep's doors.
   wellOpen: false, fontOpen: false, circleOpen: false, spireOpen: false, starOpen: false,
   // The deep's jobs: bodies of the yard's crew, gone down the shaft.
-  brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0,
+  brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0, gatherers: 0,
   // The deep's ladders (LADDERS in config/rungs.js) and the star's spark rungs.
   punchLevel: 0, brawlLevel: 0, lanceLevel: 0, lanceholdLevel: 0, grenadeLevel: 0,
   grenadepaceLevel: 0, sigilLevel: 0, beamLevel: 0, curseLevel: 0, starLevel: 0,
+  gathercarryLevel: 0, gatherpaceLevel: 0,
+  crushAt: 0,             // when a scale last went into the crusher, for its rollers
+  heldScales: 0,          // scales in the hand, scooped off the deep's floor
   sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
   // In the water, and so this session's: a reload finds them landed or gone.
   sinking: [],            // scales falling to the floor: { x, y, vx, vy, s }
@@ -474,7 +478,7 @@ export const S = {
   starFall: null,         // the called star on its way: { x, y, at }
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
   starAt: 0,              // when the next star is called
-  altarBoardOpen: false, wellBoardOpen: false, fontBoardOpen: false,
+  altarBoardOpen: false, wellBoardOpen: false, fontBoardOpen: false, crusherBoardOpen: false,
   circleBoardOpen: false, spireBoardOpen: false,
 
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
@@ -624,9 +628,10 @@ export const SAVED = [
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
   'wellOpen', 'fontOpen', 'circleOpen', 'spireOpen', 'starOpen',
-  'brawlers', 'lancers', 'grenadiers', 'scribes', 'warlocks',
+  'brawlers', 'lancers', 'grenadiers', 'scribes', 'warlocks', 'gatherers',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
+  'gathercarryLevel', 'gatherpaceLevel',
 ];
 
 // Fields whose encode or decode is more than a copy: a run-length string, a
@@ -770,7 +775,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
-  'starFall', 'deepMotes',
+  'starFall', 'deepMotes', 'crushAt', 'heldScales', 'crusherBoardOpen',
   'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen',
 ];
 

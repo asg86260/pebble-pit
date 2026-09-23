@@ -19,7 +19,8 @@ export const DEEP_STATION = Object.freeze({
   [TYPE.LANCE]: 'well',
   [TYPE.GRENADE]: 'font',
   [TYPE.SCRIBE]: 'circle',
-  [TYPE.WARLOCK]: 'spire'
+  [TYPE.WARLOCK]: 'spire',
+  [TYPE.GATHER]: 'crusher'
 });
 
 // Where a body stands to work its station: in front of it, on the floor.
@@ -35,6 +36,7 @@ export const newLancer = made(TYPE.LANCE);
 export const newGrenadier = made(TYPE.GRENADE);
 export const newScribe = made(TYPE.SCRIBE);
 export const newWarlock = made(TYPE.WARLOCK);
+export const newGatherer = made(TYPE.GATHER);
 
 // A body on a yard job with its feet in the deep -- taken off the deep's
 // roster, or the one who came out of the belly -- goes back up before it does
