@@ -39,6 +39,7 @@ export function drawSmoke() {
 // the smoke's, because it is the crew's and the crew switch fades or hides it
 // with them (render.js, a `dim` layer).
 export function drawDoseMotes() {
-  for (const p of S.smoke) if (p.color) drawDoseMote(ctx, p.x, p.y, p.color, Math.min(1, age(p)), p.v);
+  // One let go among the clouds is the sky's to draw (render/balloon.js).
+  for (const p of S.smoke) if (p.color && p.far == null) drawDoseMote(ctx, p.x, p.y, p.color, Math.min(1, age(p)), p.v);
 }
 

@@ -2,7 +2,8 @@
 // craft themselves among the clouds.
 
 import { BALLOON_BASKET, BALLOON_LINES, BALLOON_H, BALLOON_W, CRAFT,
-         aboard, craftAt, mastX, postY } from '../balloon.js';
+         aboard, craftAt, mastX, postY, sizeAt, skyX } from '../balloon.js';
+import { drawDoseMote } from './effects.js';
 import { DRAWN } from '../craftair.js';
 import { fadeAt, murkTone } from '../weather.js';
 import { BALLOON_HANG, P, WORKER } from '../config.js';
@@ -37,6 +38,17 @@ export function skyGuests() {
   for (let i = 0; i < CRAFT.length; i++) {
     const a = craftAt(i);
     out.push({ far: a.far, draw: () => drawCraft(i, a) });
+  }
+  // A plume off a rider is let go at the craft's depth and stays there: drawn
+  // with the clouds, sized and faded as they are, a hair nearer than the
+  // craft it came off so it is in front of the basket.
+  for (const p of S.smoke) {
+    if (p.far == null || !p.color) continue;
+    out.push({ far: p.far + 0.001, draw: () => {
+      ctx.globalAlpha = 1 - Math.max(0, fadeAt(p.far));
+      drawDoseMote(ctx, skyX(p.x, p.far), p.y, p.color, Math.min(1, p.t / p.life), p.v, sizeAt(p.far));
+      ctx.globalAlpha = 1;
+    } });
   }
   return out;
 }

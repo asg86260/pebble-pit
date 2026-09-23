@@ -40,6 +40,9 @@ export function puff(x, y, o = {}) {
       // six thousand frames later, in a test that has nothing to do with
       // smoke). Decoration does not touch the stream the game is dealt from.
       v: ((Math.sin((x + y * 3 + i) * 12.9898) * 43758.5453) % 1 + 1) % 1,
+      // A mote let go among the clouds: its depth, with `x` in the clouds'
+      // own space, so the sky draws it at that depth (render/balloon.js).
+      ...(o.far != null ? { far: o.far } : {}),
       ...(o.flag ? { [o.flag]: true } : {})
     });
   }

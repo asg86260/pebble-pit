@@ -32,11 +32,11 @@ function hsl(hex) {
 // plume from reading as a decal. Paling is lightness, no alpha: a color at
 // low alpha over a dark body is mud, and this has to stay legible as *which
 // tonic*.
-export function drawDoseMote(g, x, y, color, k, v = 0.5) {
+export function drawDoseMote(g, x, y, color, k, v = 0.5, scale = 1) {
   const c = hsl(color);
   const h = c.h + (v - 0.5) * DOSE_MOTE_HUE;
   const l = c.l + (100 - c.l) * Math.min(1, k * 0.95);
-  const size = Math.max(1, Math.round(P * (1.05 - k * 0.35)));
+  const size = Math.max(1, Math.round(P * scale * (1.05 - k * 0.35)));
   g.fillStyle = `hsl(${h.toFixed(1)} ${c.s.toFixed(1)}% ${l.toFixed(1)}%)`;
   g.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
   g.fillStyle = '#000';
