@@ -907,7 +907,7 @@ export const SCENES = {
   balloondose: { about: 'the house and the sky', say: 'a dosed rider, its plume off the basket', page: true,
     run: () => { rich(); window.__air({ open: true, haze: 1800 }); window.__fast(2);
                  window.__buy('balloon'); window.__finish(); window.__air({ purifiers: 2 }); window.__fast(30);
-                 window.__dose('purifier', 'stew'); window.__dose('purifier', 'strong');
+                 window.__dose(TYPE.PURIFY, 'stew'); window.__dose(TYPE.PURIFY, 'strong');
                  window.__look(st().craft[0].x - 380); window.__fast(3); } },
   // The sky at four levels (DESIGN.md, "The sky is the band").
   sky0: { about: 'the house and the sky', say: 'a clear sky', run: () => skyAt(0) },

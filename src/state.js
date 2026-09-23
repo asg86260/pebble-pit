@@ -630,7 +630,7 @@ export const SAVED = [
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
   'wellOpen', 'fontOpen', 'circleOpen', 'spireOpen', 'starOpen',
-  'brawlers', 'lancers', 'grenadiers', 'scribes', 'warlocks', 'gatherers', 'pods',
+  JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
 ];

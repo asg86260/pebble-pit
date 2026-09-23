@@ -9,6 +9,7 @@ import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { domeOrbitR } from '../src/shield.js';
 import { DUST_PER } from '../src/levels.js';
+import { DEEP_UPGRADES } from '../src/deep/rows.js';
 
 // The dome is priced in everything the yard makes, and the fixture pays for
 // it the way the yard would: dust into the hole, the rest through the grant.
@@ -503,13 +504,16 @@ group('a wizard at the star is called to the dome, and gets there fast', async (
 // ladders are climbed first, because a ladder's dearest rung is its last and
 // the check used to read its first -- and the whole bill, in dust, stands
 // above every other bill in dust.
+// The dome is the first half's dearest thing; the deep comes after it, and
+// its ladders are priced against the second half, so they are not in this.
 group('the dome is priced in every coin and is the dearest thing on any board', async () => {
   window.__reset();
   const inDust = bill => bill.reduce((d, [money, n]) =>
     d + (money === 'time' ? 0 : money === 'dust' ? n : (DUST_PER[money] || 0) * n), 0);
   const dome = window.__rows().find(r => r.key === 'dome');
   // every bill every other row will ever ask, one entry a rung
-  const rows = window.__climbed().filter(r => r.key !== 'dome')
+  const deep = new Set(DEEP_UPGRADES.map(u => u.key));
+  const rows = window.__climbed().filter(r => r.key !== 'dome' && !deep.has(r.key))
     .flatMap(r => r.bills.map((bill, i) =>
       ({ key: r.bills.length > 1 ? `${r.key}@${i + 1}` : r.key, bill })));
   window.__reset();
