@@ -77,7 +77,7 @@ export function downTheCut(w, col) {
   w.y = climbTo(w, feetOn(on, w.x));
   if (now() < (w.next || 0)) return;
   const r = topRow(cut, col);
-  if (r < 0 || !isDust(at(cut, col, r)) || !roomToTake(w)) { w.cutClaim = null; return; }
+  if (!cutDustAt(col) || !roomToTake(w)) { w.cutClaim = null; return; }
   (w.load ||= []).push(at(cut, col, r));
   put(cut, col, r, 0);
   w.carry = (w.carry || 0) + 1;
@@ -94,12 +94,17 @@ export function nearestCutDust(x, taken) {
   for (let d = 0; d <= cut.cols; d++) {
     for (const c of [from - d, from + d]) {
       if (c < 0 || c >= cut.cols || taken.has(c)) continue;
-      const r = topRow(cut, c);
-      if (r >= 0 && isDust(at(cut, c, r))) return c;
+      if (cutDustAt(c)) return c;
     }
   }
   return -1;
 }
+
+// Is there dust on top of column c of the cut
+export const cutDustAt = c => {
+  const r = topRow(cut, c);
+  return r >= 0 && isDust(at(cut, c, r));
+};
 
 // --- booking the trip ---------------------------------------------------------
 // A hauler says how much it is going for *before* it goes: a trip is

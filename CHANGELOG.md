@@ -98,6 +98,7 @@ feature lives in DESIGN.md.
 - The clock in a card's price is the same ink as the coins beside it, on the dark page too (src/selftest/boards.js, "the clock in a tag is in the same ink as the bill beside it").
 - On an iPhone playing the itch page, the yard stays put under a sweeping finger even when the phone ignores the game's refusal (src/selftest/touch.js, "one finger on the yard scrolls it").
 - The load on the belt lies as a heap: no needles standing up out of it under a tuned ram, and no cliff at the tail (test/belt-load.test.mjs).
+- Haulers cross the quarry on the bridge instead of climbing down the ladder and back out again and again: the cut's sand stays under the quarry after a load, and one grain on the floor calls one hauler down, not a crowd (test/quarry-crossing.test.mjs).
 
 ## v0.3.3 — 2026-09-17
 

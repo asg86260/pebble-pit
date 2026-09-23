@@ -22,7 +22,7 @@ import { frames } from '../clock.js';
 import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
 import { duck, stand, hireSpot, sideOf } from './body.js';
-import { downTheHole, downTheCut, nearestCutDust, load, roomToTake, tookOne, bookRoom, unbook } from './hole.js';
+import { downTheHole, downTheCut, nearestCutDust, cutDustAt, load, roomToTake, tookOne, bookRoom, unbook } from './hole.js';
 import { takeMess } from './shovel.js';
 import { strollTo, elbowIdle, amble, ROAM_PACE } from './idle.js';
 
@@ -264,6 +264,17 @@ export function haulerWork(w, c) {
   // `away || through`: there is no unbooking it on the way past.
   if (here.key === 'cut' || w.cutClaim != null) {
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+    // The claim is on a column, but what it was made for is a grain, and a
+    // grain on the cut's sloped floor slides a column at a time toward the
+    // bottom. A column gone bare before the body gets there hands the claim
+    // on to wherever the grain went, or the body is walked down for nothing
+    // and the slid grain calls somebody else down after it.
+    if (w.cutClaim != null && !cutDustAt(w.cutClaim)) {
+      cutTaken.delete(w.cutClaim);
+      const next = nearestCutDust(cut.x + w.cutClaim * P + P / 2, cutTaken);
+      w.cutClaim = next >= 0 ? next : null;
+      if (next >= 0) cutTaken.add(next);
+    }
     const fetching = w.cutClaim != null && roomToTake(w);
     w.goal = 'cut';
     downTheCut(w, fetching ? w.cutClaim : null);
@@ -333,10 +344,11 @@ export function haulerWork(w, c) {
   haulerBack(w);                                   // the yard is clear
 
   // Fresh dust down the cut, before the yard's own: it is what keeps the
-  // ladder trip working. One column, one hauler (`nearestCutDust`), and only
-  // for empty hands with nothing claimed, so it never steals a load.
+  // ladder trip working. One column, one hauler (`nearestCutDust`), never
+  // more hands sent down than there are grains lying loose, and only for
+  // empty hands with nothing claimed, so it never steals a load.
   if ((w.goal === 'seek' || w.goal === 'idle') && w.claim < 0 && !w.carry && !w.hasCore &&
-      w.cutClaim == null && cut.n > (cut.rock || 0) && bookRoom(w) > 0) {
+      w.cutClaim == null && cut.n - (cut.rock || 0) > cutTaken.size && bookRoom(w) > 0) {
     const pick = nearestCutDust(w.x + WORKER / 2, cutTaken);
     // Acted on the same frame it is found, or a floor column picked below
     // could double up with it: two claims on one pair of hands.

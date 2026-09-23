@@ -17,7 +17,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         BRIDGE_RISE, BRIDGE_RUN,
         OPENING_MARGIN, OPENING_ROCK_AT } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, apothecary, sky, casino, filter, table, tray, tower, outhouse, shack } from './state.js';
+import { S, floor, pit, bench, quarry, cut, farm, apothecary, sky, casino, filter, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
 import { rockWidthAt, RAM_REACH } from './rock.js';
 import { machine } from './machines.js';
@@ -467,6 +467,7 @@ export function seatSites() {
   quarry.w = S.placed.quarry.w;
   quarry.x = S.placed.quarry.x;
   quarry.y = S.groundY;                 // a hole hangs below the line, not on it
+  cut.x = quarry.x;                     // and its sand with it: columns off the same edge
 
   farm.h = FARM_H;
   // The farm's reservation is its widest future self (SITES); it grows
