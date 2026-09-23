@@ -226,3 +226,18 @@ group('no two balloons hang at the same cloud', async () => {
     ok(shared === 0, 'and never two at, or bound for, one cloud', `${shared} seconds shared`)
   ];
 });
+
+// The row carries as many pips as there are balloons to buy, and is finished
+// on the last one; it once drew the default ladder's five and vanished at three.
+group('the balloon row has a pip for each balloon there is to buy', async () => {
+  rich();
+  const row = () => window.__rows().find(r => r.key === 'balloon');
+  const seen = [];
+  for (let i = 0; i < 3; i++) { seen.push(row() && row().rungs); buyNow('balloon'); }
+  const last = row();
+  return [
+    ok(seen.every(n => n === 3), 'three pips from the first', seen.join(', ')),
+    ok(CRAFT.length === 3, 'three bought off the row', `${CRAFT.length}`),
+    ok(!last || last.done, 'and the row is finished at the third', JSON.stringify(last && { rung: last.rung, rungs: last.rungs }))
+  ];
+});

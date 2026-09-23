@@ -88,6 +88,7 @@ const CRAFT_ROW = {
   name: 'the balloon',
   note: () => 'rides the clouds and lets what it catches fall under itself',
   rung: () => CRAFT.length,
+  rungs: () => BALLOON_RUNGS,
   cost: () => craftCost(),
   currency: 'dust',
   // A craft is a place for one, and opens like a door: a spare body is sent

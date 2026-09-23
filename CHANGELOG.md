@@ -11,6 +11,7 @@ feature lives in DESIGN.md.
 
 ## Unreleased
 
+- The balloon row shows three pips, one for each balloon there is to buy, instead of five (test/balloon.test.mjs).
 **New this release**
 - The sphere: the tower's machine, a shell the wizards pour round the star that drops sparks without using the star up, tended by one wizard and tuned by three red rungs; the tower now trains a set of three wizards, like every station's kit (test/sphere.test.mjs).
 - The carry roster under the houses counts forklifts too, a driver on a truck under the cart line (test/forklift.test.mjs).
