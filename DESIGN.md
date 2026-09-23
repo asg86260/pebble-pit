@@ -14167,8 +14167,11 @@ plates `SPHERE_PANEL` cells a side with a one-cell seam between them
   band, and the beam is what turns the sphere. With the beam on, the turn comes
   up to `SPHERE_SPIN` over `SPHERE_SPIN_EASE` seconds; with nobody beaming it
   runs down and stops (`stepSphere`). The angle is a picture and is not saved.
-  A faint purple aura lies over the shell and a cell out from it, breathing
-  slowly and only as strong as the turn. The sky's pile-full mark, which hung
+  The aura turns with it: purple streaks laid on the ball the way the plates
+  are (`SPHERE_SWIRL_BANDS` round it), turning on the same axis
+  `SPHERE_SWIRL` times as fast, so the magic is seen sweeping the metal round,
+  over a faint wash and a halo a cell out. All of it breathes slowly and is only
+  as strong as the turn. The sky's pile-full mark, which hung
   where the tender now hangs, stands beside the sphere once it is closed.
 
 ### What it touches

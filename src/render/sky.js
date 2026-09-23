@@ -2,14 +2,14 @@
 // bolts.
 
 import { now } from '../clock.js';
-import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_VENT } from '../config.js';
+import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_VENT, SPHERE_SWIRL_BANDS } from '../config.js';
 import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from '../meteor.js';
 import { S, floor, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { domeRising, domeSpot, domeAt } from '../shield.js';
 import { domeEdge } from './shield.js';
 import { cell } from './marks.js';
-import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt, sphereVents, spinShare, shellR } from '../sphere.js';
+import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt, sphereVents, spinShare, shellR, swirlAt } from '../sphere.js';
 
 // The thing in the sky is a small star: a dead black crust with fire under it,
 // drawn cell by cell. A corona of rays breathes on a slow beat and takes its
@@ -333,18 +333,24 @@ function drawShell() {
   }
 }
 
-// The magic that turns it, over the whole shell: a faint wash of the wizards'
-// purple, a little stronger round the edge, breathing slowly, and only as
-// strong as the turn. A sphere nobody is beaming has none.
+// The magic that turns it: streaks of the wizards' purple laid on the ball
+// like the plates are, turning on the same axis a little faster than the
+// metal, so they are seen sweeping it round -- over a faint wash, a little
+// stronger at the edge. Only as strong as the turn: a sphere nobody is
+// beaming has none.
 function drawAura(cells) {
   const k = spinShare();
   if (k <= 0) return;
   const breath = 0.8 + 0.2 * Math.sin(now() / 1000 * 1.3);
-  ctx.fillStyle = MAGIC_TONES[2];
+  const sw = swirlAt();
   for (const c of cells) {
-    ctx.globalAlpha = (c.band ? 0.22 : 0.1) * k * breath;
+    const s = Math.max(0, Math.cos(SPHERE_SWIRL_BANDS * (c.lon + sw)));
+    const streak = s * s * s * s * s * s;
+    ctx.fillStyle = streak > 0.5 ? MAGIC_TONES[1] : MAGIC_TONES[2];
+    ctx.globalAlpha = ((c.band ? 0.16 : 0.05) + 0.4 * streak) * k * breath;
     ctx.fillRect(c.x, c.y, P, P);
   }
+  ctx.fillStyle = MAGIC_TONES[2];
   // and a halo a cell out, thinner
   const R = shellR() + P, n = Math.round(Math.PI * 2 * R / P);
   ctx.globalAlpha = 0.14 * k * breath;

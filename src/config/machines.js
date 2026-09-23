@@ -136,6 +136,10 @@ export const SPHERE_PANEL = 4;
 // seconds, so a tender arriving or leaving is seen in the turn.
 export const SPHERE_SPIN = 0.14;
 export const SPHERE_SPIN_EASE = 2.5;
+// The aura's streaks: this many round the ball, running this many times the
+// plates' pace, so the magic is seen to be ahead of the metal, driving it.
+export const SPHERE_SWIRL_BANDS = 3;
+export const SPHERE_SWIRL = 1.6;
 // Where the tender hangs: this many cells under the shell's lowest edge.
 export const SPHERE_UNDER = 9;
 // The vents on the shell's crown, in cells tall: where its soot comes off.

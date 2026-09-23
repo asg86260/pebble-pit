@@ -7,7 +7,7 @@
 // because nobody on the ground can reach it: it is poured by the ring after it
 // is bought (`standing`), and its one tender works it from the air (`aloft`).
 
-import { P, WORKER, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_VENT, SPHERE_SPIN, SPHERE_SPIN_EASE, SPHERE_UNDER, SPHERE_FLARE_MS, METEOR_CORE,
+import { P, WORKER, SPHERE_WORK, SPHERE_OUT, SPHERE_PANEL, SPHERE_VENT, SPHERE_SPIN, SPHERE_SPIN_EASE, SPHERE_UNDER, SPHERE_SWIRL, SPHERE_FLARE_MS, METEOR_CORE,
          METEOR_SPARKS, METEOR_CORE_SPARKS, SPARK_CELL, SUMMON_SHAKE, someFind } from './config.js';
 import { S, sky } from './state.js';
 import { now } from './clock.js';
@@ -45,13 +45,18 @@ function discCells(R) {
   // star's middle would sit half a cell off it.
   const ox = Math.round((sky.x - P / 2) / P) * P, oy = Math.round((sky.y - P / 2) / P) * P;
   const around = Math.round(Math.PI * 2 * R / P);
+  const ri = R - P;
   const out = [];
   for (let r = -n; r <= n; r++) {
     for (let c = -n; c <= n; c++) {
       const dx = c * P, dy = r * P;
       const d = Math.hypot(dx, dy);
       if (d > R) continue;
-      out.push({ x: ox + dx, y: oy + dy, dx, dy,
+      // its longitude on the ball at a turn of nought, for the aura, which
+      // turns on the same axis (`drawAura`)
+      const sy = Math.max(-1, Math.min(1, dy / ri)), w = Math.sqrt(1 - sy * sy);
+      const lon = w > 0 ? Math.asin(Math.max(-1, Math.min(1, dx / (ri * w)))) : 0;
+      out.push({ x: ox + dx, y: oy + dy, dx, dy, lon,
                  // how far round from the bottom, nought straight under the
                  // star and one straight over it: the order the ring pours in,
                  // up both sides and closing over the top
@@ -132,8 +137,11 @@ export function shellCells() {
 // `SPHERE_SPIN`; with nobody up there it runs down and stops. Where it has got
 // to is a picture, not a fact about the yard, so it is not saved: a reload
 // finds it where it started, which no body walks across.
-let angle = 0, spin = 0;
+let angle = 0, spin = 0, swirl = 0;
 export const spinShare = () => spin / SPHERE_SPIN;
+// Where the aura's streaks have got to: turned on the same axis as the plates,
+// `SPHERE_SWIRL` times as fast.
+export const swirlAt = () => swirl;
 export function stepSphere(dt) {
   if (!sphereUp()) { spin = 0; return; }
   const beamed = S.workers.some(w => w.type === TYPE.WIZARD && w.aloft && w.channel);
@@ -141,6 +149,7 @@ export function stepSphere(dt) {
   spin += (want - spin) * Math.min(1, dt / 1000 / SPHERE_SPIN_EASE);
   if (spin < SPHERE_SPIN * 0.002 && !beamed) spin = 0;
   angle = (angle + spin * dt / 1000) % (Math.PI * 2);
+  swirl = (swirl + spin * SPHERE_SWIRL * dt / 1000) % (Math.PI * 2);
 }
 
 // Where the tender hangs to beam it round: under the middle of the shell. A
