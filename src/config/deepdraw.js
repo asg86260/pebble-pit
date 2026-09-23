@@ -85,6 +85,11 @@ export const BOUND_BANDS = 3;        // bands of sigil across a held length of c
 // The wound read on the body (DESIGN.md, "The serpent, redrawn").
 export const CRACK_REACH = P * 34;   // how far the cracks run each way from the belly, at a wound about to break
 export const COIL_STEP = P / 2;      // how finely the body is laid along its curve
+// The head (the owner's pick of five mocked, 2026-09-23): a long snout, and a
+// finned crest of the abyss's purple running back along the neck.
+export const SNOUT = P * 6;          // the snout, run on past the head's segment
+export const CREST_LEN = P * 34;     // how far back along the neck the crest runs
+export const CREST_H = 3;            // its tallest spikes, in cells over the body
 // The belly swells round the one it holds, a cage of ribs he is seen through.
 export const BELLY_BULGE = P * 2;    // how much fuller than the body either side
 export const BELLY_LEN = P * 8;      // half its length along the coil

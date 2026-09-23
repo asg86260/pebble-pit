@@ -14747,6 +14747,13 @@ and no seams. **The splitting stage does not split the body**: the coil
 stays whole and thrashes, a ripple a length running down it
 (`SPLIT_WRITHE`), and the lengths are only the rings' accounting.
 
+**A sea serpent's head.** *(Voted 2026-09-23, D of five mocked heads.)* A
+longer snout (`SNOUT`), and a finned crest of the abyss's purple standing
+up off the head and running back along the neck (`CREST_LEN`, `CREST_H`):
+spikes a cell apart, every other one taller, shortening to nothing, stood
+on the body's top edge so it rides the bends. It dims with the rest of the
+coil in the fading stage.
+
 **It keeps its length.** *(Voted 2026-09-23, option A of three mocked.)*
 The wave the coil lies along travels as before, but the body is laid along
 it from the head at a fixed length a segment (`coilLine` walks the line a

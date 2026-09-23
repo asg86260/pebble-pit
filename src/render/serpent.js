@@ -16,7 +16,7 @@
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          FADE_SEEN, BEAM_LIGHTS, WOUND_GAP, BOUND_BANDS, SIGIL_RX, BELLY_AT,
-         CRACK_REACH, COIL_STEP, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
+         CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W } from '../config.js';
 import { S } from '../state.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
@@ -30,7 +30,6 @@ import { swellAt } from './cores.js';
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 const snap = v => Math.round(v / P) * P;
 const WHITE = GREYS.length - 1;
-const SNOUT = P * 3;          // the snout, run on past the head's segment
 
 // How far the body reaches either side of its centerline at `u` segments
 // from the head: the coil's own girth (`coilThick`), and the snout, run on
@@ -161,6 +160,26 @@ export function drawSerpent() {
     if (boundBand(c.x)) { ramp = PURPLES; rung = WHITE; }
     ctx.fillStyle = ramp[rung];
     ctx.fillRect(c.x, c.y, P, P);
+  }
+  // The crest: a fin of the abyss's purple standing up off the head and
+  // running back along the neck, spikes a cell apart, every other one a cell
+  // taller, shortening to nothing at its end. Stood on the body's top edge
+  // across the body, so it rides the bends with the rest.
+  const crestFrom = headA - SNOUT / 2, crestTo = headA + CREST_LEN;
+  const lit3 = !(stage === 3);
+  const spiked = new Set();
+  for (const p of pts) {
+    if (p.along < crestFrom || p.along > crestTo) continue;
+    const j = Math.round((p.along - crestFrom) / P);
+    if (spiked.has(j) || j % 2) continue;       // a spike, then a cell of water
+    spiked.add(j);
+    const left = 1 - (p.along - crestFrom) / (crestTo - crestFrom);
+    const tall = Math.max(1, Math.round((j % 4 === 0 ? CREST_H : CREST_H - 1) * Math.min(1, left * 1.6)));
+    for (let m = 1; m <= tall; m++) {
+      const d = p.r - P / 2 + m * P;
+      ctx.fillStyle = PURPLES[Math.max(1, (lit3 || lit.has(Math.round(p.u)) ? WHITE - 1 - (j % 2) : Math.round((WHITE - 1) * FADE_SEEN)))];
+      ctx.fillRect(snap(p.x - p.nx * d - P / 2), snap(p.y - p.ny * d - P / 2), P, P);
+    }
   }
   // Him, whole in the cage, and the ribs over him: the wound's gap has
   // already taken the ribs it crossed.
