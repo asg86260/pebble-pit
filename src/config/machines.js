@@ -113,6 +113,24 @@ export const TILLER_BILL = [['spark', 240], ['dust', 4800], ['shard', 360]];
 // because carrying does not *have* a coin: a hauler moves what everybody else
 // made. So it is priced in all three grounds.
 export const BELT_BILL = [['spark', 480], ['dust', 9600], ['shard', 600], ['spore', 600]];
+// The sphere is the last machine to open and the one with no gap in its
+// output, so it is dearer than the ram; the tower makes neither ground coin.
+export const SPHERE_BILL = [['spark', 720], ['dust', 14400], ['shard', 900], ['spore', 900]];
+
+// --- the sphere ---------------------------------------------------------------
+// Wizard-seconds to pour the shell, like `DOME_WORK`: one body takes this long,
+// a ring of three a third of it. Longer than the dome, since nothing is falling
+// on anybody while it goes up.
+export const SPHERE_WORK = 120;
+// And a rung of its ladder, which only the tender pours.
+export const SPHERE_TUNE_WORK = 30;
+// Where the shell sits, in cells out from the star's edge: inside the
+// wizards' ring (`WIZ_ORBIT` is ten cells out) and over the corona's foot.
+export const SPHERE_OUT = 2;
+// A panel is this many cells of plate, then one cell of slit.
+export const SPHERE_PANEL = 4;
+// How long a slit burns brighter after its panel drops a chip, ms.
+export const SPHERE_FLARE_MS = 420;
 
 // The dev panel's rows for the knobs above, beside the bindings because an
 // imported `let` is read-only; config.js gathers every file's rows into TUNABLE.

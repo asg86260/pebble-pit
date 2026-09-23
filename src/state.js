@@ -306,6 +306,7 @@ export const S = {
   // lands.
   wizSpeedLevel: 0,
   wizPowerLevel: 0,
+  spherePour: 0,          // how much of the sphere's shell is poured, 0..1 (sphere.js)
   // There is no lab, and nobody is ever a scholar again; the count stays on
   // the roster (staffing.js) at nought so `spareHands` adds up.
   scholars: 0,
@@ -524,6 +525,7 @@ export const SAVED = [
   'spells',
   'wizSpeedLevel',
   'wizPowerLevel',
+  'spherePour',
   'labRooms',
   // What is left of the meteor is cells, so it is hand-written.
   'meteorOpen',

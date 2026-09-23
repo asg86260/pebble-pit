@@ -34,6 +34,9 @@ export function stepTender(w, now) {
   if (UNMANNED.has(key)) return false;
   const spec = specOf(key);
   if (!spec) return false;
+  // Worked from the air (the sphere): the body flies its own ring, and the
+  // wizard's step is what puts it there.
+  if (spec.aloft) return false;
 
   // One machine, one tender: whoever is nearest the post this frame. Everybody
   // else answers to the yard's ordinary work, or nine haulers park at the
@@ -137,6 +140,12 @@ const MACHINE_REACH = WORKER * 3;
 function tenderFor(spec, at) {
   for (const w of S.workers) {
     if (w.type !== spec.type) continue;
+    // A machine worked from the air is tended by a body up there pouring into
+    // it, and by nobody on the ground under it.
+    if (spec.aloft) {
+      if (w.aloft && w.channel && !w.floating) return w;
+      continue;
+    }
     if (w.walking || w.inside || w.aloft || inWorking(w) || w.lifted || w.falling) continue;
     if (w.looUntil) continue;                  // stopped, but not for the machine
     if (Math.abs(w.x - postOf(spec, at)) > MACHINE_REACH) continue;

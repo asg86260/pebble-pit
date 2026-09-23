@@ -16,6 +16,7 @@ import { rand } from './rng.js';
 import { critRoll } from './crit.js';
 import { critBoost, speedBoost, strengthBoost, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
+import { sphereRising, sphereUp, pourSphere } from './sphere.js';
 
 // The ground under the meteor: where a wizard walks to before it goes up, and
 // comes back down to.
@@ -181,7 +182,9 @@ export function stepWizard(w, now) {
 
   // What it is working on: a cell is kept until it is gone, so the body is not
   // drifting between two of them. Nothing to pick while it is here to pour.
-  if (domeRising() || !meteorAlive()) w.cell = null;
+  // Nor while the shell is poured or standing: nobody throws at a star under
+  // a sphere.
+  if (domeRising() || !meteorAlive() || sphereRising() || sphereUp()) w.cell = null;
   else if (!w.cell || !cellLeft(w.cell)) {
     // Elbows first, and the bare cells if that leaves nothing: at the end of a
     // meteor everybody's elbows are over all of it.
@@ -244,8 +247,10 @@ export function stepWizard(w, now) {
   w.y = mid.y + Math.sin(a) * r - WORKER / 2;
 
   // Nothing there to work: everybody in the ring pours into the middle
-  // (`summon`), and the channel is drawn off the same fact.
-  if (domeRising() || !meteorAlive()) {
+  // (`summon`), and the channel is drawn off the same fact. The shell is the
+  // same: poured into while it rises (`pourSphere`), tended once it stands
+  // (`tenderFor` in crew/tenders.js reads the channel).
+  if (domeRising() || !meteorAlive() || sphereRising() || sphereUp()) {
     w.channel = true;
     return;
   }
@@ -274,6 +279,7 @@ export function stepSummon(dt) {
   const hands = S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length;
   // The dome first: while one is rising every channel pours into it.
   if (domeRising()) { pourDome(hands, dt / 1000); return; }
+  if (sphereRising()) { pourSphere(hands, dt / 1000); return; }
   if (!summoning()) return;
   summon(hands, dt / 1000);
 }

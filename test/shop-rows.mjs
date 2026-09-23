@@ -101,6 +101,12 @@ export const ROWS = [
   { key: 'wizard', part: 2, reach: tower },
   { key: 'wizspeed', part: 2, reach: tower },
   { key: 'wizpower', part: 2, reach: tower },
+  // The sphere's gate: a full set of hats and the tower's two ladders topped.
+  { key: 'sphere', part: 2,
+    reach: () => { tower(); window.__wizardHat(3); window.__levels({ wizSpeedLevel: 99, wizPowerLevel: 99 }); } },
+  // Its ladder is offered once the shell stands, which is the pour, not the purchase.
+  { key: 'tunesphere', part: 2,
+    reach: S => { tower(); window.__wizardHat(3); window.__machine('sphere', { bought: true }); S.spherePour = 1; } },
   // A spell is offered once the thing it enchants is in the yard (tower.js,
   // SPELL_NEEDS): a machine for the drive, the closet for the sweep.
   { key: 'spelldrive', part: 2, reach: () => { tower(); window.__machine('ram', { bought: true }); } },

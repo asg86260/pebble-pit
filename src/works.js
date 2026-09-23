@@ -36,7 +36,10 @@ export const SITE_JOB = {
   // carrier off the dust is a cost the yard can always pay.
   shack: JOB.BUILD,
   // A spare hand, not a janitor: the janitors are what the cap is for.
-  outhouse: JOB.BUILD
+  outhouse: JOB.BUILD,
+  // The sphere's rungs: nobody on the ground can reach the shell, so its one
+  // tender pours them from the ring (`setHands` in crew/muster.js).
+  sphere: JOB.WIZARD
 };
 
 // --- what a site can take, and how fast ----------------------------------------
@@ -84,7 +87,11 @@ const noGang = site => !(S[SITE_JOB[site]] > 0);
 export const builderManned = site => SITE_JOB[site] === JOB.BUILD;
 
 export const busyBuilderSites = () =>
-  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)));
+  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD
+                                        || (noGang(site) && !UP_THERE.has(site))));
+// A site in the air, which a spare hand lent from the ground could walk under
+// and never reach.
+const UP_THERE = new Set(['sphere']);
 
 // Where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`

@@ -15,7 +15,11 @@ import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
 import { registerRows, workOn, progressOf } from './works.js';
 import { TYPE, JOB } from './jobs.js';
-import { MACHINES, machine } from './machines.js';
+import { MACHINES, machine, buyMachine, canBuy, tuneRow } from './machines.js';
+import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE } from './config.js';
+import { stockOf } from './kit.js';
+import { sky } from './state.js';
+import { sphereUp } from './sphere.js';
 
 // what the next hat costs, in each of the three things the yard makes
 export const wizCost = () => {
@@ -148,8 +152,37 @@ export const TOWER_UPGRADES = [
                   return [['dust', c.dust], ['shard', c.shards], ['spore', c.spores]]; },
     cost: () => wizCost().dust,
     buy: hatMade,
+    // A set of three, like every station's kit, with pips and an end: the
+    // sphere is gated on the set (`KIT` in kit.js).
+    rung: () => stockOf(JOB.WIZARD),
+    rungs: () => KIT_MAX,
     // Once the tower is up, not once the sky is: this row is how the sky opens.
-    show: () => S.towerOpen
+    show: () => S.towerOpen && stockOf(JOB.WIZARD) < KIT_MAX
+  },
+  // The tower's machine, gated like its neighbors (`canBuy`): the tower's two
+  // ladders topped and a full set of hats. Bought, not built: what it buys is
+  // the pour, which the ring does in the sky (`pourSphere` in sphere.js), so
+  // there is no work on the ground and no bar under the tower.
+  {
+    key: 'sphere',
+    name: 'the sphere',
+    note: () => 'a shell round the star: it catches the light and drops sparks, and the star is never used up',
+    bill: () => [...SPHERE_BILL.map(l => [...l]), ['time', SPHERE_WORK * 1000]],
+    cost: () => SPHERE_BILL.find(([m]) => m === 'dust')[1],
+    buy: () => buyMachine('sphere'),
+    show: () => S.meteorOpen && canBuy('sphere',
+      () => S.wizSpeedLevel >= RUNGS && S.wizPowerLevel >= RUNGS,
+      () => stockOf(JOB.WIZARD) >= KIT_MAX)
+  },
+  // Its ladder: the same three red rungs as every machine's, poured by the
+  // tender from the ring (`sphere` in works.js's SITE_JOB), and offered once the
+  // shell stands rather than once it is bought.
+  {
+    ...tuneRow('sphere', 'sphere yield',
+               () => `the sphere catches ${MACHINE_TUNE}x the light`, 'sphere', 'tower'),
+    at: () => sky.x,
+    work: () => SPHERE_TUNE_WORK,
+    show: sphereUp
   },
   // The last shield, poured by the wizards rather than carried out and put
   // up, which is why it is here and not on the bench. The clock on the bill
@@ -176,6 +209,7 @@ export const TOWER_UPGRADES = [
 // tower to see it (`fillPin` in shop.js).
 export const TOWER_SECTIONS = [
   { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
+  { title: 'the sphere', keys: ['sphere', 'tunesphere'] },
   { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
   { title: 'the dome', goal: true, keys: ['dome'] }
 ];

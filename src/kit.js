@@ -36,8 +36,11 @@ export const KIT = {
   // question about it is asked of this row (`liftsOf`, `driving`, `spareLifts`).
   [JOB.HAUL]:   { mark: 'cart',   trade: 'carters',  tall: P * 2, set: KIT_MAX,
                   up: { mark: 'lift', trade: 'drivers', tall: P * 3 } },
-  // Not a doubling but a license: no hat, no flying. See wizard.js.
-  [JOB.WIZARD]:   { mark: 'point',  trade: 'wizardHats', tall: P * 3 },
+  // Not a doubling but a license: no hat, no flying. See wizard.js. A set of
+  // three like every station's, and the tower makes no more: the sphere is
+  // gated on the set, and its tuning ladder is what grows past it.
+  [JOB.WIZARD]:   { mark: 'point',  trade: 'wizardHats', tall: P * 3,
+                    set: KIT_MAX, max: KIT_MAX, license: true },
   // The one hat nobody buys: the shed hangs one on the stand for every post it
   // opens. A stock rather than a trade is the only difference from the rows
   // above; it is still fetched, walked home and shaken off like a helmet.

@@ -23,6 +23,10 @@ import { FACTORY, TYPES, wanted } from './jobs.js';
 const building = site => w => w.type === TYPE.BUILD && w.goal === 'at' && w.site === site;
 
 setHands(site => {
+  // The sphere's rung is poured by whoever is up on the ring pouring: the
+  // tender, the one body that can reach it.
+  if (site === 'sphere')
+    return Math.min(1, S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length);
   if (!builderManned(site)) return 0;
   // One pair of hands per work on the go, because each body is at exactly one
   // of them (`handsOn`); a gang of spare hands at one work is still one.

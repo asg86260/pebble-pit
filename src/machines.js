@@ -32,7 +32,10 @@ export const MACHINES = [
   // lip, where every hauler comes to tip, so a tender taken there is a laden
   // body that stands holding its load for the rest of the run
   // (test/fixtures/belt-lip.json).
-  { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false, unmanned: true }
+  { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false, unmanned: true },
+  // The shell round the star (sphere.js). `takesKit: false`: a wizard's hat is
+  // its license to fly, and the tender is the one body that still has to.
+  { key: 'sphere', job: JOB.WIZARD, name: 'the sphere', takesKit: false }
 ];
 // The machines that run themselves, by key.
 export const UNMANNED = new Set(MACHINES.filter(m => m.unmanned).map(m => m.key));
@@ -122,7 +125,12 @@ export const SAVE = {
 export const machineFor = job => {
   const k = JOB_MACHINE[job];
   const m = k && machine(k);
-  return m && m.bought ? m : null;
+  if (!m || !m.bought) return null;
+  // A machine that has to be put up after it is bought (the sphere, poured by
+  // the ring) stands in for nobody until it stands: capped at one body on the
+  // purchase, the ring would pour its own shell at a third of the pace.
+  const standing = SPEC[k]?.standing;
+  return !standing || standing() ? m : null;
 };
 
 // --- tuning one --------------------------------------------------------------
@@ -162,7 +170,7 @@ export const tuneRow = (key, name, note, site, board) => ({
 
 export const running = key => {
   const m = machine(key);
-  return !!(m && m.bought);
+  return !!(m && m.bought && (!SPEC[key]?.standing || SPEC[key].standing()));
 };
 
 // `handsOf`, `machineRate` and `restaff` live in upgrades.js beside `capOf`.
@@ -215,7 +223,9 @@ export function buyMachine(key) {
   // recomputes that per frame, so the complement has to be walked to carrying
   // in the same breath or the whole gang stands at a station that now holds
   // one, for good. `rebalance` only ever clamps down.
-  S.restaff = { job: spec.job, want: 1 };
+  // A machine still to be put up leaves the gang where it is and sends them
+  // off itself on the frame it stands (`closeSphere` in sphere.js).
+  if (!SPEC[key]?.standing) S.restaff = { job: spec.job, want: 1 };
 }
 
 // On the board while the station's own ladders are topped AND every hat it

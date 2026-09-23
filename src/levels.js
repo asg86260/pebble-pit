@@ -15,7 +15,7 @@ import { craftCount } from './balloon.js';
 import { benches, plotCount } from './world.js';
 import { machineFor, UNMANNED, machine, JOB_MACHINE, tuneGain } from './machines.js';
 import { spelled } from './tower.js';
-import { TRADE_OF, JOB_OF, stockOf, hasKit, kitSetOf } from './kit.js';
+import { KIT, TRADE_OF, JOB_OF, stockOf, hasKit, kitSetOf } from './kit.js';
 import { JOB } from './jobs.js';
 
 export const capacity = (lvl = S.carryLevel) => rungValue('carry', lvl);
@@ -94,7 +94,9 @@ const capOfBare = job =>
   // one fact.
   job === JOB.JANITOR ? hats(JOB.JANITOR) :
   // The tower's floor plan is the hats it has made: one body per hat.
-  job === JOB.WIZARD ? S.wizardHats :
+  // Read through the set's ceiling (`stockOf`): a save with more hats than a
+  // set stands the extras down to carrying rather than grounding them hatless.
+  job === JOB.WIZARD ? stockOf(JOB.WIZARD) :
   // Building is derived from the spares (`rebalance`), never assigned.
   job === JOB.BUILD ? 0 :
   // The rock and the lip have no plan.
@@ -136,6 +138,8 @@ export const gangWorth = job => {
   const n = handsOf(job);
   if (!isFinite(n)) return n;
   const m = machineFor(job) || (JOB_MACHINE[job] && machine(JOB_MACHINE[job]));
+  // A license is not a doubling: a wizard's hat is what lets it fly at all.
+  if (KIT[job]?.license) return n;
   const hatted = (m && m.bought && m.tookKit) ? kitCap(job) : Math.min(hats(job), n);
   return n + hatted;
 };

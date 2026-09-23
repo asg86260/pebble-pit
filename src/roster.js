@@ -7,7 +7,7 @@ import { P, WORKER, LIFT_SEAT as SEAT } from './config.js';
 import { S, quarry, farm, apothecary, filter, sky, outhouse, shack } from './state.js';
 import { groundAt, kitX, liftX, quarryShed } from './world.js';
 import { doorAt } from './house.js';
-import { JOB_MACHINE, machine } from './machines.js';
+import { JOB_MACHINE, running } from './machines.js';
 import { assign, idle } from './staffing.js';
 import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
 import { KIT_MARK, TRADE_OF, LIFT, spareLifts, liftsOf } from './kit.js';
@@ -290,8 +290,7 @@ export function drawRosterCounts(ctx, screenAt) {
 // is whether anybody is standing at it, which is the count on the roster.
 export const machineAt = job => {
   const key = JOB_MACHINE[job];
-  const m = key && machine(key);
-  return !!(m && m.bought);
+  return !!key && running(key);
 };
 
 // what the roster is showing and where its buttons are, for the checks
