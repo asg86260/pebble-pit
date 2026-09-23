@@ -23,13 +23,8 @@ const S = yard.S;
 // subject; here it is the setup, and the sqwife it leaves on the deep's
 // first job is taken off it, so every blow in these checks is the check's own.
 function deepYard() {
-  // SEAM: CREW's `__snatch` and `__deepCrew`; until the merge, the fact alone.
-  if (typeof window.__snatch === 'function') {
-    window.__snatch({ played: true });
-    if (typeof window.__deepCrew === 'function') window.__deepCrew({ brawlers: 0 });
-  } else {
-    S.snatched = true;
-  }
+  window.__snatch({ played: true });
+  window.__deepCrew({ brawlers: 0 });
   window.__serpent({ stage: 0, wound: 0 });
 }
 

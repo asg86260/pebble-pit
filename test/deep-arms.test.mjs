@@ -4,75 +4,40 @@
 // Nothing strikes the serpent that a body did not bring, so the first check
 // is that a body not yet down there does nothing at all; the rest follow one
 // weapon each from the hand to the coil. The stations are opened by their
-// flags and the hands put on with `__deepCrew`: the doors and the roster are
+// flags and, after that first check, the hands put on with `__deepCrew`: the doors and the roster are
 // the boards' and the crew's checks, and these are about what a body does
 // once it is standing at its station.
-//
-// Until the crew's half of the wave is merged there are no deep bodies to put
-// on (no JOBS rows, no `__deepCrew`), so this file stands its own bodies at
-// the stations and turns their work steps on the frame the registry would,
-// before the water's own step. The checks read the same either way.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { WORKER, P, SERPENT_WOUND, SIGIL_HEAL_CUT, SPLIT_LENGTHS, COIL_SEGS,
          STAR_EVERY_S, DEEP_KNOBS, rungValue } from '../src/config.js';
-import { STEPS } from '../src/game.js';
-import { stepBrawler, stepLancer, stepGrenadier, stepScribe, stepWarlock, lengthOf } from '../src/deep/arms.js';
+import { lengthOf } from '../src/deep/arms.js';
 import { strike, healNow, litK, isLit } from '../src/deep/serpent.js';
 import { coilAt, spotX, deepFloor, deepTop, mouthX } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 
 const S = yard.S;
 
-// SEAM: CREW's `__deepCrew` and the JOBS rows' `work`; until the merge, bodies of our own.
-const merged = typeof window.__deepCrew === 'function';
-
 const KINDS = {
-  brawler:   { job: 'brawlers',   at: 'altar',  step: stepBrawler,   open: null },
-  lancer:    { job: 'lancers',    at: 'well',   step: stepLancer,    open: 'wellOpen' },
-  grenadier: { job: 'grenadiers', at: 'font',   step: stepGrenadier, open: 'fontOpen' },
-  scribe:    { job: 'scribes',    at: 'circle', step: stepScribe,    open: 'circleOpen' },
-  warlock:   { job: 'warlocks',   at: 'spire',  step: stepWarlock,   open: 'spireOpen' }
+  brawler:   { job: 'brawlers',   open: null },
+  lancer:    { job: 'lancers',    open: 'wellOpen' },
+  grenadier: { job: 'grenadiers', open: 'fontOpen' },
+  scribe:    { job: 'scribes',    open: 'circleOpen' },
+  warlock:   { job: 'warlocks',   open: 'spireOpen' }
 };
-
-// The stand-ins, worked where the crew step would work them: before the
-// serpent and the water, so what a body put in the water this frame is in
-// this frame's fight.
-let standIns = [];
-if (!merged) {
-  const at = STEPS.findIndex(s => s.name === 'serpent');
-  STEPS.splice(at, 0, { name: 'standins', step: c => {
-    for (const w of standIns) KINDS[w.type].step(w, c);
-  } });
-}
 
 // A yard the serpent has come for, with the hands asked for at their
 // stations and nobody else in the deep.
-function deepYard(counts = {}, where = 'station') {
-  standIns = [];
-  if (typeof window.__snatch === 'function') window.__snatch({ played: true });
-  else S.snatched = true;
+function deepYard(counts = {}) {
+  window.__snatch({ played: true });
   window.__serpent({ stage: 0, wound: 0 });
   for (const k of Object.values(KINDS)) if (k.open) S[k.open] = true;
-  if (merged) {
-    window.__crew(0, 12);
-    const want = { brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0 };
-    for (const [type, n] of Object.entries(counts)) want[KINDS[type].job] = n;
-    window.__deepCrew(want);
-    return;
-  }
-  for (const [type, n] of Object.entries(counts)) {
-    for (let i = 0; i < n; i++) {
-      const x = spotX(KINDS[type].at) - WORKER / 2 + i * P;
-      const body = { type, x, y: deepFloor() - WORKER, ph: 0, sp: 1, face: 1, walking: false };
-      // Not arrived: on the way down the shaft, or still walking to it.
-      if (where === 'shaft') { body.x = mouthX(); body.y = deepTop() - P * 6; }
-      if (where === 'walking') body.walking = true;
-      standIns.push(body);
-    }
-  }
+  window.__crew(0, 12);
+  const want = { brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0 };
+  for (const [type, n] of Object.entries(counts)) want[KINDS[type].job] = n;
+  window.__deepCrew(want);
 }
-const bodies = type => merged ? S.workers.filter(w => w.type === type) : standIns.filter(w => w.type === type);
+const bodies = type => S.workers.filter(w => w.type === type);
 const arrived = w => !w.walking && w.y + WORKER > deepTop();
 
 // Everything in the water, and the fight, read once a frame over `s` seconds.
@@ -91,34 +56,30 @@ function watch(s, each = () => {}) {
   }
   return seen;
 }
-const nothing = s => !s.lances && !s.grenades && !s.rings && !s.beams && !s.sigils && !s.wound && !s.punched;
 const everyKind = { brawler: 1, lancer: 1, grenadier: 1, scribe: 1, warlock: 1 };
 
 group('a body works only once it has arrived', async () => {
-  let before = null, early = [];
-  if (merged) {
-    // The walk down is the crew's; here, nothing is in the water until
-    // somebody is standing in the deep.
-    deepYard(everyKind);
-    watch(60, () => {
-      if (bodies('lancer').concat(bodies('warlock'), bodies('brawler')).some(arrived)) return;
-      if (S.lances.length || S.beams.length || S.serpentWound) early.push(S.tick);
-    });
-  } else {
-    deepYard(everyKind, 'shaft');
-    const shaft = watch(10);
-    deepYard(everyKind, 'walking');
-    const walking = watch(10);
-    before = { shaft, walking };
-  }
+  // Put on from the yard, so each walks the shaft down: nothing of theirs is
+  // in the water until they are standing in the deep.
+  deepYard({});
+  window.__assign('lancers', 1);
+  window.__assign('warlocks', 1);
+  // Each weapon against its own body: the lancer may be down and throwing
+  // while the wizard is still on the way.
+  const early = [];
+  const seen = { lancer: false, warlock: false };
+  watch(90, () => {
+    for (const t of Object.keys(seen)) if (bodies(t).some(arrived)) seen[t] = true;
+    if (!seen.lancer && S.lances.length) early.push(`lance at ${S.tick}`);
+    if (!seen.warlock && S.beams.length) early.push(`beam at ${S.tick}`);
+  });
+  const down = seen.lancer && seen.warlock;
   deepYard(everyKind);
-  if (merged) runUntil(() => Object.keys(everyKind).every(t => bodies(t).length && bodies(t).every(arrived)), 120);
+  runUntil(() => Object.keys(everyKind).every(t => bodies(t).length && bodies(t).every(arrived)), 120);
   const at = watch(30);
   return [
-    ...(before ? [
-      ok(nothing(before.shaft), 'a body in the shaft is nobody\'s weapon yet', JSON.stringify(before.shaft)),
-      ok(nothing(before.walking), 'nor one still walking to its station', JSON.stringify(before.walking))
-    ] : [ok(early.length === 0, 'nothing is in the water before a body is in the deep', early.slice(0, 5).join(', '))]),
+    ok(down, 'a lancer and a wizard put on from the yard walk down the shaft'),
+    ok(early.length === 0, 'and nothing of theirs is in the water before they are in the deep', early.slice(0, 5).join(', ')),
     ok(at.punched > 0, 'at its station a brawler punches'),
     ok(at.lances > 0, 'a lancer throws'),
     ok(at.grenades > 0 && at.rings > 0, 'a grenadier throws and the grenade bursts', JSON.stringify(at)),
@@ -235,7 +196,7 @@ group('a wizard\'s beam lights the coil, and goes out with the wizard', async ()
   const hurt = S.sinking.length + S.scales > shedAt;
   const p = coilAt(S.beams[0].seg, now());
   const punch = strike('punch', 100, p.x, p.y);
-  if (merged) window.__deepCrew({ warlocks: 0 }); else standIns = [];
+  window.__deepCrew({ warlocks: 0 });
   run(1 / 60);
   const after = S.beams.length;
   const dim = strike('punch', 100, p.x, p.y);

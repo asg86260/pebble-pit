@@ -25,16 +25,8 @@ const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 const snap = v => Math.round(v / P) * P;
 const WHITE = GREYS.length - 1;
 
-// The wound as a share of the stage's depth. The serpent's own answer when it
-// has one; until then the same sum off the fields it keeps.
-// SEAM: woundK() is the stub's 0 until track SERPENT lands; the fallback is
-// its definition and can go at the merge.
-const woundNow = () => {
-  const k = woundK();
-  if (k > 0) return k;
-  const stage = Math.min(3, S.serpentStage);
-  return Math.max(0, Math.min(1, S.serpentWound / SERPENT_WOUND[stage]));
-};
+// The wound as a share of the stage's depth: the serpent's own answer.
+const woundNow = woundK;
 
 // How thick the body is at `k` of the way from head to tail: the head a
 // little fuller, the tail thinning over its last stretch.

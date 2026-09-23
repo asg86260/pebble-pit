@@ -20,11 +20,8 @@ import { JOB, TYPE } from './jobs.js';
 import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { P, WORKER, DEEP_W, DEEP_BED_ROWS, COIL_SEGS, COIL_THICK, GRENADE_RING_S } from './config.js';
-import { deepBed } from './state.js';
-import { deepX0, deepFloor, mouthX, spotX, coilAt, bellySeg } from './deep/place.js';
-import { abyssLine } from './pit.js';
-import { makePainter } from './painter.js';
+import { COIL_SEGS } from './config.js';
+import { mouthX, spotX, coilAt, bellySeg } from './deep/place.js';
 import { goDeep } from './view.js';
 
 // The parts, in the order the sheet reads them.
@@ -139,183 +136,88 @@ const shieldBuilt = kind => {
 };
 
 // --- the deep ---------------------------------------------------------------
-// The second half (docs/wave-serpent.md). Until the serpent's, the crew's and
-// the board's tracks land, nothing puts anybody in the deep, nothing lays the
-// bed and nothing moves a lance, so these scenes stand it up by hand.
-//
-// SEAM: replace with __snatch/__serpent/__deepCrew. Everything from here to
-// `deepScenes` is the stand-in: a drowned yard with the snatch done, the
-// fight set, the doors open, a bed of scales laid, bodies of the yard's crew
-// put down there, and the weapons' water filled. The bodies are the yard's
-// own taken off their work, so they are pinned where the scene puts them on
-// every frame the page draws; the pin lets go on the next fresh game.
-const SNAP = v => Math.round(v / P) * P;
+// The second half (docs/wave-serpent.md). Every scene stands the real deep up:
+// the snatch played through, the fight set at a stage, the doors and hands
+// asked for, and then the yard's clock run until the bodies have swum to their
+// work and the weapons are in the water. Nothing is drawn that the game did
+// not put there.
 
-// A heap of scales along the floor, highest under the coil's middle, each
-// cell a shade of the bed's so the painter mottles it.
-function layBed() {
-  const b = deepBed;
-  b.x = deepX0(); b.p = P; b.cols = DEEP_W / P; b.rows = DEEP_BED_ROWS;
-  b.y = deepFloor() - b.rows * P;
-  b.grid = new Uint8Array(b.cols * b.rows);
-  let n = 0;
-  for (let c = 0; c < b.cols; c++) {
-    const k = c / b.cols;
-    const h = Math.max(0, Math.round(1 + 3 * Math.sin(k * Math.PI) + 2 * Math.sin(k * 23) * Math.sin(k * 7)));
-    for (let r = 0; r < h; r++) { b.grid[r * b.cols + c] = 1 + ((c * 7 + r * 3) % 6); n++; }
-  }
-  b.n = n;
-  b.painter = makePainter(b);
-  S.scales = n; S.seenScale = true;
-}
-
-// A body put down there: one of the yard's, retyped and set on the deep's
-// way at a place, with a face. Held as a hand holds one (`lifted`), which
-// is the one thing the crew's step leaves alone entirely: stepped as the
-// yard job it came from, it would walk off between two pins.
-const swimmer = (type, x, y, face = 1) => ({ type, x: SNAP(x), y: SNAP(y), face, way: 'deep', lifted: true });
-
-// Under the coil at a segment, where a brawler hangs to punch it.
-const underCoil = (seg, t) => { const p = coilAt(seg, t); return { x: p.x - WORKER / 2, y: p.y + COIL_THICK / 2 + P }; };
-const onFloor = x => ({ x: x - WORKER / 2, y: deepFloor() - WORKER - P * 2 });
-
-// A pin is put back every frame the page draws until the next deep scene or
-// the next fresh game, whichever is first: numbered, so a scene stood up
-// after another is not fought by the one before's. It is the page's alone
-// (the scene sheet is what hangs `__scene` on it): the node yard stands the
-// scene without the stand-ins, since a retyped body is no body a save knows,
-// and a frame loop there would never let the process end.
-let staged = 0;
-function pinned(fn) {
-  if (typeof window.__scene !== 'function') return;
-  const mine = staged;
-  const pin = () => {
-    if (mine !== staged || !S.snatched) return;
-    fn(now());
-    requestAnimationFrame(pin);
-  };
-  pin();
-}
-
-function deepYard({ stage = 0, wound = 0, freed = false, open = [], view = 'deep' } = {}) {
-  staged++;
-  rich(); window.__rift();
-  S.snatched = true;
-  S.serpentStage = stage; S.serpentWound = wound; S.serpentFreed = freed;
+// A yard the serpent has come for: every site built, the snatch behind it, the
+// fight at `stage`, scales on the floor, the hands asked for, and the view.
+function deepYard({ stage = 0, wound = 0, open = [], crew = {}, scales = 400, view = 'deep', run = 20 } = {}) {
+  rich();
+  window.__fullSites();
+  window.__snatch({ played: true });
+  window.__crew(0, 4);
   for (const k of open) S[k + 'Open'] = true;
-  layBed();
+  window.__deepCrew({ brawlers: 1, ...crew });
+  window.__scales(scales);
+  window.__serpent({ stage, wound });
   window.__view(view);
-}
-
-// Every frame, the bodies and the water put back where the scene wants them:
-// `bodies` is a list of swimmers, `water` a function filling the weapons'
-// fields afresh off the clock.
-function pinDeep(bodies = () => [], water = null) {
-  pinned(t => {
-    const want = bodies(t);
-    S.workers.slice(0, want.length).forEach((w, i) => Object.assign(w, want[i], { carry: 0, load: [] }));
-    if (water) water(t);
-  });
+  // Long enough to swim from the station to the coil; the wound set above is
+  // held against the heal by whoever is striking it.
+  window.__fast(run);
+  if (wound) window.__serpent({ wound });
 }
 
 const lookDeep = x => window.__look(x - S.viewW / 2);
 const beltSeg = f => Math.round(f * (COIL_SEGS - 1));
 
-// Every weapon at work at once: a lance stuck and one thrown, a grenade in
-// the water and a ring off another, two sigils on the floor, a wizard's beam
-// on the coil, the called star coming down, and scales sinking and lifting.
-function armsWater(t) {
-  const seg = s => coilAt(s, t);
-  const well = spotX('well'), altar = spotX('altar');
-  S.lances = [
-    { x: seg(beltSeg(0.3)).x, y: seg(beltSeg(0.3)).y, at: t - 4000, seg: beltSeg(0.3), until: t + 8000 },
-    { x: seg(beltSeg(0.36)).x, y: seg(beltSeg(0.36)).y, at: t - 4000, seg: beltSeg(0.36), until: t + 900 },
-    { x: well + P * 10, y: deepFloor() - P * 30, at: t, seg: beltSeg(0.33), until: t + 9000 }
-  ];
-  S.grenades = [{ x: spotX('font') + P * 6, y: deepFloor() - P * 28, vx: 0.5, vy: -0.3 }];
-  const r = seg(beltSeg(0.5));
-  S.rings = [{ x: r.x, y: r.y, at: t - GRENADE_RING_S * 450 }];
-  S.sigils = [{ x: spotX('circle') - P * 14 }, { x: spotX('circle') + P * 14 }];
-  const spire = spotX('spire');
-  S.beams = [{ x: spire, y: deepFloor() - P * 16, seg: beltSeg(0.8) }];
-  const st = seg(beltSeg(0.72));
-  S.starFall = { x: st.x, y: st.y - P * 22, at: t };
-  S.sinking = Array.from({ length: 18 }, (_, i) => ({
-    x: SNAP(r.x - P * 40 + i * P * 5), y: SNAP(r.y + P * 6 + (i * 37 % 11) * P * 3), vx: 0, vy: 0.3, s: 1 + i % 6 }));
-  S.lifting = Array.from({ length: 6 }, (_, i) => ({ x: SNAP(altar + P * 4 + i * P), y: deepFloor() - P * (6 + i * 3), s: 2 + i % 4 }));
-}
-const clearWater = () => { S.lances = []; S.grenades = []; S.rings = []; S.beams = []; S.starFall = null; S.sinking = []; S.lifting = []; };
-
-// The sqwife at the coil, her fists on it, a stage's look on the serpent.
-const stageScene = (stage, wound, open, extra) => () => {
-  deepYard({ stage, wound, open });
-  pinDeep(t => { const at = underCoil(bellySeg() - 8, t); return [swimmer(TYPE.BRAWL, at.x, at.y)]; },
-          t => { clearWater(); extra?.(t); });
+// The sqwife at the coil, a stage's look on the serpent.
+const stageScene = (stage, wound, open, crew = {}) => () => {
+  deepYard({ stage, wound, open, crew });
   lookDeep(coilAt(bellySeg() - 4, now()).x);
 };
 
-// The head over the surface at the shaft, the pair on the plank beside it.
-const snatchAt = (up, carried) => () => {
-  deepYard({ view: 'yard' });
-  const mx = mouthX();
-  const pair = carried ? [mx - P * 22] : [mx - P * 22, mx - P * 17];
-  pinned(() => {
-    S.snatch = { phase: carried ? 'sink' : 'rise', at: now(), headY: abyssLine() - up, carried };
-    S.pair = pair.map(x => ({ x, y: S.groundY - P - WORKER }));
-  });
-  window.__look(mx - S.viewW / 2);
+// The snatch as it plays: both facts true, and the clock run until the beat
+// is at the phase wanted.
+const snatchAt = phase => () => {
+  rich();
+  window.__fullSites();
+  window.__snatch();
+  for (let i = 0; i < 60 * 60 && S.snatch?.phase !== phase; i++) window.__fast(1 / 60);
+  // A little way into the phase, so the head is over the surface.
+  window.__fast(0.4);
 };
 
 const deepScenes = {
   snatch: { about: 'the deep', say: 'the snatch: the serpent rising out of the abyss at the shaft',
-    run: snatchAt(P * 14, false) },
+    run: snatchAt('rise') },
   'snatch-take': { about: 'the deep', say: 'the snatch: the serpent with him in its jaws, going under',
-    run: snatchAt(P * 8, true) },
+    run: snatchAt('sink') },
   // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
   deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
   'deep-wound': { about: 'the deep', say: 'the bare coil with the wound held most of the way open',
     run: stageScene(0, 52, []) },
-  'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales',
-    run: stageScene(1, 300, ['well']) },
-  'deep-split': { about: 'the deep', say: 'the third defense: the coil in lengths, each writhing, one held by a sigil',
-    run: stageScene(2, 1500, ['well', 'font', 'circle'], () => {
-      S.sigils = [{ x: coilAt(bellySeg() - 14, now()).x }];
-    }) },
+  'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales, lances in it',
+    run: stageScene(1, 300, ['well'], { lancers: 3 }) },
+  'deep-split': { about: 'the deep', say: 'the third defense: the coil in lengths, grenades bursting, sigils drawn',
+    run: stageScene(2, 1500, ['well', 'font', 'circle'], { grenadiers: 2, scribes: 2 }) },
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded but where a beam lights it',
-    run: stageScene(3, 8000, ['well', 'font', 'circle', 'spire'], t => {
-      S.beams = [{ x: coilAt(bellySeg() - 4, t).x + P * 20, y: deepFloor() - P * 20, seg: bellySeg() - 4 }];
-    }) },
-  'deep-arms': { about: 'the deep', say: 'every weapon at work: fists, lances, a grenade, sigils, a beam, the star',
+    run: stageScene(3, 8000, ['well', 'font', 'circle', 'spire'], { warlocks: 2 }) },
+  'deep-arms': { about: 'the deep', say: 'every weapon at work: fists, lances, grenades, sigils, beams, the star',
     run: () => {
-      deepYard({ stage: 1, wound: 450, open: ['well', 'font', 'circle', 'spire'] });
-      pinDeep(t => {
-        const u = s => underCoil(beltSeg(s), t);
-        return [
-          swimmer(TYPE.BRAWL, u(0.46).x, u(0.46).y), swimmer(TYPE.BRAWL, u(0.55).x, u(0.55).y, -1),
-          swimmer(TYPE.LANCE, onFloor(spotX('well')).x, onFloor(spotX('well')).y),
-          swimmer(TYPE.LANCE, spotX('well') + P * 4, deepFloor() - P * 26),
-          swimmer(TYPE.GRENADE, onFloor(spotX('font')).x, onFloor(spotX('font')).y, -1),
-          swimmer(TYPE.SCRIBE, onFloor(spotX('circle') - P * 8).x, onFloor(spotX('circle')).y),
-          swimmer(TYPE.WARLOCK, spotX('spire') - WORKER / 2, deepFloor() - P * 16 - WORKER / 2, -1)
-        ];
-      }, armsWater);
+      deepYard({ stage: 1, wound: 450, open: ['well', 'font', 'circle', 'spire', 'star'],
+                 crew: { brawlers: 2, lancers: 2, grenadiers: 2, scribes: 1, warlocks: 1 }, run: 30 });
+      // The star called now, so it is on its way down in the shot.
+      S.starAt = 0;
+      window.__fast(1.5);
       lookDeep(coilAt(beltSeg(0.5), now()).x);
     } },
   // Every station on the floor at once, the camera on the middle of them.
   'deep-all': { about: 'the deep', say: 'the whole deep, every station standing',
     run: () => {
-      deepYard({ stage: 1, wound: 300, open: ['well', 'font', 'circle', 'spire'] });
-      pinDeep(() => [], armsWater);
+      deepYard({ stage: 1, wound: 300, open: ['well', 'font', 'circle', 'spire'],
+                 crew: { brawlers: 1, lancers: 1, grenadiers: 1, scribes: 1, warlocks: 1 } });
       lookDeep(spotX('font'));
     } },
-  // The belly open and him coming out of it, swimming for the floor.
+  // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {
-      deepYard({ stage: 4, freed: true, open: ['well', 'font', 'circle', 'spire'] });
-      pinDeep(t => {
-        const b = coilAt(bellySeg(), t), at = underCoil(bellySeg() - 8, t);
-        return [swimmer(TYPE.HAUL, b.x - WORKER / 2, b.y + COIL_THICK + P * 2, -1), swimmer(TYPE.BRAWL, at.x, at.y)];
-      }, clearWater);
+      deepYard({ stage: 3, open: ['well', 'font', 'circle', 'spire'] });
+      window.__serpent({ stage: 4 });
+      for (let i = 0; i < 60 * 30 && S.beat.yard !== 'freed'; i++) window.__fast(1 / 60);
+      window.__fast(1.5);
       lookDeep(coilAt(bellySeg(), now()).x);
     } },
   // Going down, a fifth of the way through the glide: the camera closing on
@@ -323,13 +225,13 @@ const deepScenes = {
   // first frame the page draws, since a glide is the page's clock as well.
   'deep-glide': { about: 'the deep', say: 'the glide down: the camera closing on the surface, going dark', page: true,
     run: () => {
-      deepYard({ view: 'yard' });
-      window.__motion(false);
+      deepYard({ view: 'yard', run: 2 });
       window.__motion(false);
       window.__look(mouthX() - S.viewW / 2);
       requestAnimationFrame(() => {
         goDeep();
-        pinned(() => { if (S.viewTo) S.viewFade = 0.22; });
+        const hold = () => { if (S.viewTo) { S.viewFade = 0.22; requestAnimationFrame(hold); } };
+        hold();
       });
     } }
 };

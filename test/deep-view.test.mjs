@@ -14,11 +14,9 @@ const { deepX0, deepX1, deepTop, deepFloor } = await import('../src/deep/place.j
 const { DEEP_SURFACE, VIEW_GLIDE_S } = await import('../src/config.js');
 
 // A yard past the snatch: drowned, with a crew at work up top.
-// SEAM: `__snatch()` once track CREW lands; until then the two facts are set.
 function deepYard() {
   window.__crew(3, 3, 5, 7);
-  window.__rift();
-  S.snatched = true;
+  window.__snatch({ played: true });
 }
 
 group('going down puts the camera in the deep, and going up brings it back', async () => {

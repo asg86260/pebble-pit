@@ -388,6 +388,9 @@ export const abandon = () => { abandonAt('lab'); buildShop(); };
 // wants the same yard both times. A player's reset draws its own seed.
 export const newGame = (intro = false, fresh = false) => {
   resetGame(fresh);
+  // A new yard's serpent starts at its first defense: the rule that a stage
+  // never goes back is about one yard, not the one before it.
+  forgetSerpent();
   if (!intro) skipIntro();
   // A yard the last group left held would stall this one: `fast` does
   // nothing held.

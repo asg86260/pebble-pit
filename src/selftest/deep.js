@@ -16,11 +16,9 @@ const click = (wx, wy) => {
 };
 
 // A drowned yard past the snatch.
-// SEAM: `__snatch()` once track CREW lands; until then the two facts are set.
 function deepYard() {
   window.__crew(3, 3, 5, 7);
-  window.__rift();
-  S.snatched = true;
+  window.__snatch({ played: true });
   window.__view('yard');
   window.__look(mouthX() - S.viewW / 2);
   run(0.5);
