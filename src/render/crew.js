@@ -114,7 +114,8 @@ function drawCartBox(x, y) {
 // in the cell over the ground line, the box on the wheels. Five cells wide so
 // a three-cell body sits centered on it a whole cell in from each end.
 const LIFT_W = P * 5, LIFT_H = LIFT_SEAT - P, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ABREAST = 4;
-// the most drawn on the forks: the top of the load ladder
+// the most drawn on the forks: a load past this is a stack taller than the
+// mast, and the rest rides unseen
 const LIFT_CAP = 64;
 // how tall the roof antenna's stalk is, under its knob
 const LIFT_ANTENNA = P * 2;
