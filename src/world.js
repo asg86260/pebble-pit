@@ -26,6 +26,7 @@ import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
 import { JOB } from './jobs.js';
 import { reducedMotion } from './prefs.js';
+import { deepX0, deepX1, deepFloor } from './deep/place.js';
 
 const canvas = document.getElementById('c');
 
@@ -749,6 +750,17 @@ export function measureSafeArea() {
 export const safeBottom = () => safeFoot;
 
 export function clampCam() {
+  // In the deep (view.js) the view is held to the deep's own width and its
+  // floor sits where the pit floor sits in the yard: on the bottom of the
+  // window. The deep lies inside the world's width, so the scroller's
+  // spacer covers both halves.
+  if (S.view === 'deep') {
+    const x0 = deepX0();
+    S.camX = Math.max(x0, Math.min(S.camX, Math.max(x0, deepX1() - S.viewW)));
+    S.camY = S.camLockY != null ? S.camLockY : deepFloor() - S.viewH;
+    writeScroll();
+    return;
+  }
   S.camX = Math.max(0, Math.min(S.camX, Math.max(0, S.worldW - S.viewW)));
   // The bottom of the world sits on the bottom of the window, always, except
   // when a scene locks the height: pulled in close, half as much world

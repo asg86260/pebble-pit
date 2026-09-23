@@ -172,7 +172,7 @@ export function drawPaid() { drawLeaving(S.paid); }
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 
 // The surface's height at a world column, snapped to the cell.
-const swellAt = (c, t) => {
+export const swellAt = (c, t) => {
   // The middle wave runs the other way and none of the three periods divide
   // any other, so no arrangement of crests repeats. Two waves phased alike
   // carry one fixed profile sideways forever.

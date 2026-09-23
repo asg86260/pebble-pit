@@ -42,6 +42,12 @@ import { drawDoseMotes, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawShack } from './render/shack.js';
+import { drawDeepSky, drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
+         drawSwimmers, drawDeepInvert, drawGlideDark } from './render/deep.js';
+import { drawSerpent, drawSnatch } from './render/serpent.js';
+import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
+import { drawSinking, drawLifting } from './render/scales.js';
+import { S } from './state.js';
 
 // The drawing side's public surface: the rest of the game imports every one of
 // these from render.js and has no business knowing which file each is in.
@@ -165,6 +171,30 @@ const LAYERS = [
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them
   { name: 'garage', draw: drawGarage },           // where the forklifts go when there is nothing to fetch
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
+  // The deep (render/deep.js), back to front, drawn only while the camera is
+  // down there: the roof and the underside of the surface, the water, the
+  // floor, the scales lying on it and its stations, then the serpent and
+  // everything in the water with it. Before the roster, so a deep station's
+  // post stands on the deep's floor like any other.
+  { name: 'deep sky', draw: drawDeepSky },
+  { name: 'deep water', draw: drawDeepWater },
+  { name: 'deep motes', draw: drawDeepMotes },
+  { name: 'deep floor', draw: drawDeepFloor },
+  // The scales, then the stations standing in front of them: the bed can
+  // heap forty cells deep, and a station buried in its own coin could not
+  // be found to be paid at.
+  { name: 'deep bed', draw: drawDeepBed },
+  { name: 'deep stations', draw: drawDeepStations },
+  { name: 'sigils', draw: drawSigils },          // lying on the scales, under the coil they hold
+  { name: 'beams', draw: drawBeams },            // behind the coil they end on
+  { name: 'serpent', draw: drawSerpent },
+  { name: 'lances', draw: drawLances },          // in front of the coil they are stuck in
+  { name: 'grenades', draw: drawGrenades },
+  { name: 'deep star', draw: drawStarDeep },
+  { name: 'swimmers', draw: drawSwimmers },
+  { name: 'punches', draw: drawPunches },
+  { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
+  { name: 'lifting', draw: drawLifting },
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines
@@ -173,6 +203,11 @@ const LAYERS = [
   { name: 'says', draw: drawSays, dim: 1 },      // and what any of them stood about is saying
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
+  // The called star on its way down the yard's sky into the pit, in front of
+  // the smog it falls through; the serpent's head over the liquid it came
+  // out of, and the one it takes in its jaws, in front of the pair.
+  { name: 'star fall', draw: drawStarYard },
+  { name: 'snatch', draw: drawSnatch },
 
   // The rift bends what is behind it, so it must come after everything of the
   // world: painted back with the pit, it warped blank page and read as a plain
@@ -182,9 +217,14 @@ const LAYERS = [
   { name: 'bolt', draw: drawBolt },              // and a strike, in front of the shower it came with
   { name: 'pointed', draw: drawPointed },        // and an arrow over whoever you just asked for by name
   { name: 'cursor', draw: drawCursor },
+  // Last in the world, over everything the deep drew: the negative of it.
+  { name: 'deep invert', draw: drawDeepInvert },
   { name: 'world:done', draw: leaveWorld },
 
   { name: 'air near', draw: drawAirNear },       // the nearest dust passes in front of the yard, not behind it
+  // The glide between the halves goes black at its middle, over the whole
+  // picture and under the counter, which is read.
+  { name: 'glide', draw: drawGlideDark },
 
   // The roster's counts are in screen pixels so the digits stay sharp, but
   // moved with the yard rather than pinned to the window: the number belongs
@@ -212,8 +252,24 @@ const READING = new Set(['offer flags', 'paid', 'pile marks', 'auras', 'work bar
 let picture = false;
 export const asPicture = on => { picture = on; };
 
+// The deep's layers, and the ones both halves share: the spaces, the posts,
+// the pointer's own marks, and everything in screen pixels. With the camera
+// in the deep every other layer is the yard's and is not drawn; in the yard
+// the deep's are not. A glide draws whichever half the camera is in at that
+// moment (view.js moves it at the black).
+const DEEP = new Set(['deep sky', 'deep water', 'deep motes', 'deep floor', 'deep stations', 'deep bed',
+                      'sigils', 'beams', 'serpent', 'lances', 'grenades', 'deep star', 'swimmers',
+                      'punches', 'sinking', 'lifting', 'deep invert']);
+const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'pointed', 'cursor', 'glide']);
+const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
+const inHalf = (layer, i, deep) =>
+  BOTH.has(layer.name) || i > SCREEN_FROM || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));
+
 export function draw() {
-  for (const layer of LAYERS) {
+  const deep = S.view === 'deep';
+  for (let i = 0; i < LAYERS.length; i++) {
+    const layer = LAYERS[i];
+    if (!inHalf(layer, i, deep)) continue;
     if (picture && READING.has(layer.name)) continue;
     if (layer.when && !layer.when()) continue;
     // A `dim` layer is the crew's own plane, and the corner's crew switch

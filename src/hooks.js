@@ -1144,3 +1144,9 @@ HANDLES.__deepCrew = (o = {}) => {
 // --- wave serpent: BOARD ---
 // The deep's boards, for `boards()` and `everyRow()` above.
 import { DEEP_ROWS, DEEP_SECTIONS, DEEP_UPGRADES } from './deep/rows.js';
+
+// --- wave serpent: RENDER ---
+// Which half the camera is on, straight there with no glide: the setup a
+// scene or a check is not about. The glide itself is reached by a click.
+import { setView } from './view.js';
+HANDLES.__view = v => { setView(v); return S.view; };
