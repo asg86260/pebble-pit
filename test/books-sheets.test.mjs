@@ -4,7 +4,7 @@
 // out here.
 
 import { group, ok, run, yard } from './helpers.mjs';
-import { BOOK_ROWS, BOOK_SECTIONS, STATS_UPGRADES } from '../src/stats.js';
+import { BOOK_ROWS, BOOK_SECTIONS, OPEN_ROW } from '../src/stats.js';
 import { showWindow } from '../src/modal.js';
 import { bookTrend } from '../src/income.js';
 import { refund } from '../src/pit.js';
@@ -122,10 +122,10 @@ group('the crew sheet counts every body once, each way', async () => {
 });
 
 // --- the board and the window -------------------------------------------------------
-// The board at the noticeboard is the rates and a way in; the window it opens
-// holds every sheet, each under its own heading, in the order the design gives.
-// Pressed the way the board presses a row (`buy`, what the tap calls).
-group('the board is the rates, and the books open in a window', async () => {
+// The board at the noticeboard is the rates and nothing else; the way into the
+// books is off it for now. The window it used to open still holds every sheet,
+// each under its own heading, in the order the design gives.
+group('the board is the rates, and the books still open in a window', async () => {
   window.__reset();
   window.__fullSites();
   window.__crew(3, 3, 3, 0);
@@ -134,7 +134,7 @@ group('the board is the rates, and the books open in a window', async () => {
   showPanel('stats', true);
   hud();
   const onBoard = [...document.getElementById('statsshop').children].map(r => r.dataset.key).filter(Boolean);
-  buy(STATS_UPGRADES.find(u => u.key === 'openbooks'));
+  buy(OPEN_ROW);
   hud();
   const opened = yard.S.modal;
   const sheets = ['bookincome', 'booksky', 'bookcrew', 'booktally'].map(id => document.getElementById(id));
@@ -147,8 +147,8 @@ group('the board is the rates, and the books open in a window', async () => {
   showPanel(null, true);
 
   return [
-    ok(onBoard.includes('ratedust') && onBoard.includes('openbooks') && !onBoard.some(k => /^(sky|crew|now|best|tally)/.test(k)),
-       'the board carries the rates and the way in, and nothing else', onBoard.join(',')),
+    ok(onBoard.includes('ratedust') && !onBoard.includes('openbooks') && !onBoard.some(k => /^(sky|crew|now|best|tally)/.test(k)),
+       'the board carries the rates, and nothing else', onBoard.join(',')),
     ok(opened === 'books', 'pressing the way in opens the books', String(opened)),
     ok(heads.join(' | ') === BOOK_SECTIONS.map(s => s.title).join(' | '), 'every sheet has its heading, in order',
        heads.join(' | ')),

@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The books board keeps just the income rates; the full books sheet is put away for now (test/books-sheets.test.mjs).
 - The air filter no longer filters: the balloons do all the cleaning, and the shed keeps the gauge and the board they are bought from; each balloon bought sends a spare hand over to ride it (test/sky-fan.test.mjs, test/door-staffs.test.mjs).
 - Haulers tip their loads onto the belt just past the rock once it is running, instead of walking them the length of the belt to the hole (test/haul-belt.test.mjs).
 - The belt ends in a ramp the band runs up, carrying its load up it in step with the band and flicking it up and out over the hole in a fan, instead of dropping it in hard vertical sheets (src/scenes.js `beltdrop`).

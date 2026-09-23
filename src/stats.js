@@ -215,9 +215,11 @@ export const BOOK_SECTIONS = [
   { title: 'the tally', keys: TALLY_ROWS.map(u => u.key) }
 ];
 
-// The board at the noticeboard: what you glance at in passing, the rates, and
-// the way into the rest. A signpost's press, like the window row.
-const OPEN_ROW = {
+// The board at the noticeboard: what you glance at in passing, the rates. The
+// way into the books window is off the board for now -- most of what the
+// sheets say is not worth a player's glance -- so the window is reached only
+// from the dev panel (`__window('books')`) until it is cut down.
+export const OPEN_ROW = {
   key: 'openbooks',
   name: 'open the books',
   sign: true,
@@ -228,7 +230,7 @@ const OPEN_ROW = {
   buy: () => showWindow('books'),
   show: () => true
 };
-export const STATS_UPGRADES = [...INCOME_ROWS, OPEN_ROW];
+export const STATS_UPGRADES = [...INCOME_ROWS];
 export const STATS_SECTIONS = [
   { title: 'income, a second', keys: STATS_UPGRADES.map(u => u.key) }
 ];

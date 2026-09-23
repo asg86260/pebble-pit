@@ -1150,19 +1150,6 @@ export const TESTS = [
     // "a second" is the heading's word, said once over the rates rather than
     // as a clock on every line.
     const heading = [...document.querySelectorAll('#statsshop [data-sect]')].map(h => h.dataset.sect).join(' | ');
-    // The way into the rest, pressed with the pointer: the books open in the
-    // window, and the window row there steps to the next window and says so.
-    document.querySelector('#statsshop [data-key="openbooks"]')?.click();
-    await raf(); await raf();
-    const booksOpen = state().modal === 'books';
-    const sheets = [...document.querySelectorAll('#modalbooks [data-sect]')].map(h => h.dataset.sect);
-    const over = () => document.querySelector('#bookincome [data-key="ratesover"]');
-    const overWas = over()?.querySelector('.cost')?.textContent || '';
-    over()?.click();
-    await raf();
-    const overNow = over()?.querySelector('.cost')?.textContent || '';
-    window.__window(null);
-    await raf();
     // The books hang well to the LEFT of the rock, so the top-left corner
     // `hoverAway` points at is squarely inside the safe wedge on the way to
     // their sheet (input.js). The other corner is the one that means away.
@@ -1178,9 +1165,7 @@ export const TESTS = [
       ok(rows.includes('ratedust'), 'and dust is on them', rows.join(',')),
       ok(/class="dust"/.test(said) && /\d/.test(said) && !/class="clock"/.test(said), 'with its rate as a mark and a number', said),
       ok(/a second/.test(heading), 'and the heading says the rate is a second', heading),
-      ok(booksOpen && sheets.length >= 3, 'the way in opens the books in a window, a sheet a heading', sheets.join(' | ')),
-      ok(overWas === '1 min' && overNow === '5 min', 'and pressing the window row steps it to the next window',
-         `${overWas} -> ${overNow}`),
+      ok(!rows.includes('openbooks'), 'and there is no way into the books window from them', rows.join(',')),
       ok(shut, 'and walking away shuts them again')
     ];
   }],
