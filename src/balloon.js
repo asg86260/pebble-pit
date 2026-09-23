@@ -86,6 +86,17 @@ export const drawing = i => working(i) && CRAFT[i].hang;
 // And it is seen drawing a cloud in only once the picture has it under one
 // (craftair.js): a picture question, asked of the picture's half.
 export const atCloud = i => drawing(i) && !!CRAFT[i].sky && !!CRAFT[i].sky.cloud && CRAFT[i].sky.go >= 1;
+// Tied off at its post, where a body on the ground can reach into the basket.
+export const moored = i => !!CRAFT[i] && CRAFT[i].phase === 'moored';
+
+// A stirrer is on its way with a dose for this craft's rider: the craft comes
+// home for it, the way the wizard lands for one, and goes back up once it is
+// handed over. `doseComing` in apothecary.js, asked here without the import
+// ring; derived from the stirrers so a trip given up lets the craft go.
+const sentFor = i => {
+  const r = riderOf(i);
+  return !!r && S.workers.some(s => s.type === TYPE.STIR && s.holding > 0 && s.dealTo === r);
+};
 
 // Seconds a trip from one cloud to the next takes, at the fleet's speed.
 export const travelS = () => BALLOON_TRAVEL_S / rungValue('balloonspeed', S.balloonSpeedLevel || 0);
@@ -163,7 +174,9 @@ export function stepBalloons(dt) {
   const secs = dt / 1000;
   for (let i = 0; i < CRAFT.length; i++) {
     const c = CRAFT[i];
-    const manned = crewed(i);
+    // Called home for a dose reads as unmanned to the clock: down it comes,
+    // rider and all, and it stays moored until the vial is in the basket.
+    const manned = crewed(i) && !sentFor(i);
     if (c.phase === 'moored') {
       if (manned) { c.phase = 'up'; c.t = 0; }
     } else if (c.phase === 'up') {
