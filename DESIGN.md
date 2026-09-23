@@ -14923,3 +14923,63 @@ The surface and the ceiling no longer take a click (the owner's call, the
 same day): the square and the arrow are the way, and a click on the liquid
 or the deep's roof is an ordinary click. The shaft's post reads "abyssal
 workers" under the pointer in both halves.
+
+### Two crews and a portal (design, not built)
+
+*Proposed 2026-09-23 by the owner; the three calls answered the same day:
+the wizards' portal opens the way for the player, the deep's own crew
+builds the deep's works, one purse.* This undoes the shaft: nobody crosses
+between the halves any more. The yard and the deep become two crews on one
+clock and one purse, and the way between them is the player's alone.
+
+**The snatch goes through a portal.** In place of the head rising through
+the drowned surface, a portal opens over the abyss -- a ring of the
+abyss's purple standing in the air over the pit, its middle the liquid's
+own dark -- and the serpent reaches out of it, takes the sqhusband and
+draws back through. The portal starts to close. The sqwife runs and jumps
+through it before it shuts. Both are carried, never popped: the serpent's
+head out and back, him in its jaws, her leap an arc into the ring. The ring
+shrinks to nothing and is gone. The camera stays in the yard.
+
+**The deep starts with one.** The sqwife lands in the deep and is its whole
+crew: a brawler at the altar, punching the serpent -- the deep's `crew`
+begins at one, hers, and every other body in the save is the yard's. The
+yard carries on with the rest, as before.
+
+**The deep grows itself.** Pods (bought on the altar, as now) are the only
+way the deep's crew grows. A pod's body comes out of it on the deep's floor.
+The yard's hires stay in the yard; the deep's rosters move the deep's own
+bodies between the weapons and gathering, and never take one from the yard.
+
+**The deep builds its own works.** A door, a rung or a pod bought for the
+deep is put up by the deep's spare hands -- a gatherer walks to it and works
+it, the way the yard's spare hands build -- and never by a yard builder
+going down. At the start that is only the sqwife: to build the first pod she
+leaves the altar to put it up, and the serpent heals while she does. That
+is the deep's first decision, as the bench was the yard's.
+
+**The wizards conjure the way down.** The camera cannot go down until the
+tower sells, once the snatch has played, **conjure the portal**: poured by
+the wizards like the dome (a ring's time, a bill in the dome's shape of dust,
+crops, ore and sparks). It opens a portal over the abyss that stays -- the
+same ring as the snatch's, held open -- and from then the corner's square
+and the arrow at the portal take the view down and back up (the glide as
+built, through the abyss). Until it is bought the deep runs unseen: the
+sqwife punches, the wound opens and heals, scales fall on its floor.
+
+**What goes.** The shaft's count and its two posts, `S.deepCrew` as a thing
+the player sets, `sendDeep`, the shaft walk for bodies, the yard's builders
+going down, and "+ under a deep station brings a yard hand down". The
+counts' split stays -- the deep's crew is its own -- but it is set only by
+pods (and the sqwife).
+
+**Old saves.** Whoever is down there stays the deep's; whoever is up top
+stays the yard's. A save past the snatch with no portal bought gets the
+tower's row, and the view goes back to the yard if it was in the deep.
+
+**Checks.** Rewritten: `deep-shaft.test.mjs` becomes the two-crews check --
+a yard hire never reaches the deep, a pod's body is the deep's, a deep
+work is built by a deep hand; `snatch.test.mjs` for the portal beat (her
+jump is a walked arc, the ring closes); a check that the view cannot go
+down before the portal is bought and can after, through the tower's row.
+Scenes for the portal opening, her leap, and the conjured portal.
