@@ -22,6 +22,10 @@ export const deepFloor = () => deepTop() + DEEP_H;
 export const deepX0 = () => snap(Math.max(0, pit.x - DEEP_LEFT));
 export const deepX1 = () => deepX0() + DEEP_W;
 export const deepRect = () => ({ x: deepX0(), y: deepTop(), w: DEEP_W, h: DEEP_H });
+// The ground a thing at world height y stands on: the deep's floor for
+// anything down there, the yard's ground line for anything else. What a bar,
+// a fence or a mark is hung off, so each is drawn in the half its site is in.
+export const groundOf = y => (y != null && y > deepTop() ? deepFloor() : S.groundY);
 export const inDeep = (x, y) => y >= deepTop() && y <= deepFloor() && x >= deepX0() && x <= deepX1();
 
 // The shaft: where a body steps off the plank into the drowned pit, and where

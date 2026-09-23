@@ -24,7 +24,8 @@ import { beatDone } from './beats.js';
 import { MACHINES, running } from './machines.js';
 import { poopLeft } from './smog.js';
 import { canAfford } from './upgrades.js';
-import { standOf, crusherRect } from './deep/place.js';
+import { standOf, crusherRect, podsRect } from './deep/place.js';
+import { bedAtBrim } from './deep/scales.js';
 
 // A door is shown once you are within reach of affording it: a price you have
 // no idea is coming is a price you cannot save for.
@@ -35,6 +36,12 @@ const nearly = n => S.stored >= n * UNLOCK_SHOW;
 // otherwise in `reach`.
 const REACH = { left: 8, right: 8, up: 8, down: 4 };
 
+// Every row says what the place is called (`name`: the pointer's label, the
+// queue card's line) and what it is drawn as (`glyph`: the hop's arrow, and the
+// drawing any row it sells inherits when it has none of its own), so a new
+// place is named and drawn everywhere by its one row. A row with a `pile`
+// has a pile that can fill: the mark over it and its hover come from that.
+//
 // The rows, in the order the pointer asks them (`stationAt`), which is the
 // order that settles which wins where two patches overlap: the hut before the
 // bench it stands in front of; the house, a block that grows a room per body
@@ -43,11 +50,11 @@ const REACH = { left: 8, right: 8, up: 8, down: 4 };
 // The shields come after, since they have no ground and answer to no pointer.
 export const STATIONS = [
   // No board: the casino's decisions are levers on the building (levers.js).
-  { key: 'casino', open: () => S.casinoOpen, stand: () => casino, board: null,
+  { key: 'casino', name: 'the casino', glyph: 'die', open: () => S.casinoOpen, stand: () => casino, board: null,
     after: ['quarry'],
     // The yard has been invested in: a second rock, not any one building.
     needs: () => S.boulderNo >= 2 },
-  { key: 'filter', open: () => S.filterOpen, stand: () => filter, board: 'filterBoardOpen',
+  { key: 'filter', name: 'the air filter', glyph: 'balloon', open: () => S.filterOpen, stand: () => filter, board: 'filterBoardOpen',
     after: [],
     // After the first rain (the problem arriving), after the sky's readout has
     // been seen (you know what the house has to keep up with), and after the
@@ -58,36 +65,36 @@ export const STATIONS = [
   // tight margin: `SHED_GAP` is much narrower than `BRIDGE_RUN`, so the usual
   // eight cells would reach from the shed onto the ramp and open the board
   // there.
-  { key: 'quarry', open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
+  { key: 'quarry', name: 'the quarry', glyph: 'hoist', open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
     reach: { right: 1 },
     after: ['farm'],
     needs: () => S.seenCore },
-  { key: 'farm', open: () => S.farmOpen, stand: () => farmShed(), board: 'farmBoardOpen',
+  { key: 'farm', name: 'the farm', glyph: 'furrow', open: () => S.farmOpen, stand: () => farmShed(), board: 'farmBoardOpen',
     after: [],
     // Sticky: `nearly` reads the dust in the hole, and as a plain `show` the
     // door came and went every time you spent.
     needs: () => S.seenCore && nearly(FARM_DUST), sticky: true },
   // The hut, not the plot: a pot answers to its own picker (potpick.js), and
   // a pointer near a cauldron must not throw the shop menu over it.
-  { key: 'apothecary', open: () => S.apothecaryOpen, stand: () => apothHut(), board: 'apothBoardOpen',
+  { key: 'apothecary', name: 'the apothecary', glyph: 'pot', open: () => S.apothecaryOpen, stand: () => apothHut(), board: 'apothBoardOpen',
     after: ['farm'],
     needs: () => S.seenSpore },
-  { key: 'tower', open: () => S.towerOpen, stand: () => tower, board: 'towerBoardOpen',
+  { key: 'tower', name: 'the tower', glyph: 'tower', open: () => S.towerOpen, stand: () => tower, board: 'towerBoardOpen',
     after: ['quarry'],
     needs: () => S.seenCore },
   // The hut stands on ground the rock's own reach covers, so it is asked
   // before the rock in input.js's cascade.
-  { key: 'shack', open: () => S.shackOpen, stand: () => shack, board: 'shackBoardOpen',
+  { key: 'shack', name: 'the shack', glyph: 'hut', open: () => S.shackOpen, stand: () => shack, board: 'shackBoardOpen',
     after: [],
     // Sticky, for the same reason as the farm: a third of a building, and the
     // first thing most players ever put up.
     needs: () => S.crew > 0 && nearly(SHACK_DUST), sticky: true },
   // The bench has no door row: the call to build it (raise.js) is its door,
   // and `needs` is what the call asks.
-  { key: 'bench', open: () => S.seenBench, stand: () => bench, board: 'boardOpen',
+  { key: 'bench', name: 'the bench', glyph: 'crate', open: () => S.seenBench, stand: () => bench, board: 'boardOpen',
     after: [],
     needs: () => canAfford() },
-  { key: 'outhouse', open: () => S.outhouseOpen, stand: () => outhouse, board: 'looBoardOpen',
+  { key: 'outhouse', name: "the janitor's closet", glyph: 'bucket', open: () => S.outhouseOpen, stand: () => outhouse, board: 'looBoardOpen',
     after: [],
     // Once you have seen why you want one: five patches of mess nobody is
     // clearing up.
@@ -98,32 +105,37 @@ export const STATIONS = [
   // the bench's board; the strip between them belongs to neither, which is
   // what the safe wedge needs. Nothing above the roof either. Nobody sells
   // the house: it stands from the first hire.
-  { key: 'house', open: () => S.crew > 0, stand: () => houseRect(), board: 'houseBoardOpen',
+  { key: 'house', name: 'the house', glyph: 'house', open: () => S.crew > 0, stand: () => houseRect(), board: 'houseBoardOpen',
     reach: { right: 2, up: 0 },
     after: [], needs: () => false },
   // The books open once the hole has had something in it: a rate measured
   // over a yard that has never earned anything is a column of noughts. Nobody
   // sells them either.
-  { key: 'stats', open: () => S.banked > 0, stand: () => S.noticeboard, board: 'statsBoardOpen',
+  { key: 'stats', name: 'the books', glyph: 'sack', open: () => S.banked > 0, stand: () => S.noticeboard, board: 'statsBoardOpen',
     after: [], needs: () => false },
 
   // The deep's stations, on its floor under the drowned pit
   // (docs/wave-serpent.md). The altar stands from the snatch and nobody sells
   // it; the rest are sold on it, each on the stage before the one its weapon
   // answers, so the order is the order the serpent's defenses fall.
-  { key: 'altar', open: () => S.snatched, stand: () => standOf('altar'), board: 'altarBoardOpen',
+  { key: 'altar', name: 'the altar', glyph: 'swing', open: () => S.snatched, stand: () => standOf('altar'), board: 'altarBoardOpen',
     after: [], needs: () => false },
   // The crusher, the deep's purse, stands from the snatch like the altar. It
   // sells nothing and nobody is put on it: its gatherers are lent haulers.
-  { key: 'crusher', open: () => S.snatched, stand: () => crusherRect(), board: null,
+  { key: 'crusher', name: 'the crusher', glyph: 'sack', open: () => S.snatched, stand: () => crusherRect(), board: null,
+    after: [], needs: () => false,
+    // Its pile is the floor: scales lying at the brim, the gathering behind.
+    pile: () => bedAtBrim(), full: 'the floor is full of scales' },
+  // The pods, the deep's houses: nothing sold there, nothing put on.
+  { key: 'pods', name: 'the pods', glyph: 'house', open: () => S.pods > 0, stand: () => podsRect(), board: null,
     after: [], needs: () => false },
-  { key: 'well', open: () => S.wellOpen, stand: () => standOf('well'), board: 'wellBoardOpen',
+  { key: 'well', name: 'the well', glyph: 'bucket', open: () => S.wellOpen, stand: () => standOf('well'), board: 'wellBoardOpen',
     after: ['altar'], needs: () => S.serpentStage >= 1 },
-  { key: 'font', open: () => S.fontOpen, stand: () => standOf('font'), board: 'fontBoardOpen',
+  { key: 'font', name: 'the font', glyph: 'bowl', open: () => S.fontOpen, stand: () => standOf('font'), board: 'fontBoardOpen',
     after: ['well'], needs: () => S.serpentStage >= 2 },
-  { key: 'circle', open: () => S.circleOpen, stand: () => standOf('circle'), board: 'circleBoardOpen',
+  { key: 'circle', name: 'the circle', glyph: 'wand', open: () => S.circleOpen, stand: () => standOf('circle'), board: 'circleBoardOpen',
     after: ['well'], needs: () => S.serpentStage >= 2 },
-  { key: 'spire', open: () => S.spireOpen, stand: () => standOf('spire'), board: 'spireBoardOpen',
+  { key: 'spire', name: 'the spire', glyph: 'tower', open: () => S.spireOpen, stand: () => standOf('spire'), board: 'spireBoardOpen',
     after: ['font', 'circle'], needs: () => S.serpentStage >= 3 },
 
   // The shields, each offered only once its predecessor has failed and the
@@ -153,6 +165,8 @@ export const BOARDS = STATIONS.filter(r => r.board).map(r => r.key);
 // The row for a key, or undefined for a thing that is not a station (the
 // rift, the meteor, the lab that was).
 export const station = key => byKey.get(key);
+// What a place is called, for any key a site or a station goes by.
+export const nameOf = key => byKey.get(key)?.name || null;
 
 // Whether the place stands. A key that is not a station is not open.
 export const open = key => !!station(key)?.open();

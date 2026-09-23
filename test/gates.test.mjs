@@ -120,6 +120,7 @@ group('the pointer finds every standing station by its ground, and nothing else'
   window.__shack();
   for (const r of doors) if (r.key !== 'house' && r.key !== 'stats') S()[r.key + 'Open'] = true;
   S().snatched = true;                           // the altar stands from the snatch, not a flag of its own
+  S().pods = 1;                                  // and the pods from the first one bought
   S().seenBench = true; S().banked = 1;
   run(1);
   for (const r of doors) {

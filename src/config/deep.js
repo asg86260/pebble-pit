@@ -93,6 +93,7 @@ export const SCALE_PER_DMG = 1;      // scales a unit of damage sheds
 export const SCALE_HIT_MAX = 12;     // and at most this many off one hit, the rest counted as they land nearby
 export const DUST_PER_SCALE = 10;    // what a scale is worth against dust (DUST_PER in upgrades/price.js)
 export const DEEP_BED_ROWS = 40;     // the floor's plot of scales: this many cells deep at most
+export const DEEP_BED_BRIM = 4;      // rows short of that the floor counts as full (the pile-full mark)
 // A scale knocked loose leaves the hit with a little scatter of its own, so a
 // hit sheds a cloud rather than a column. Its tone is dealt near the middle
 // of the shades: a bed of one tone is printed paint.

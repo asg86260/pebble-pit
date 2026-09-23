@@ -126,8 +126,13 @@ export const GLYPH_OF = {
   callstar: ['star'], tunestar: ['star', 'plus'], pod: ['house'],
 };
 
-// A row's drawing; the crate while it is not made yet.
-export const glyphFor = key => GLYPHS[(GLYPH_OF[key] || ['crate'])[0]] || GLYPHS.crate;
+// A row's drawing: its own, else the drawing of the station that sells it
+// (`inheritGlyph`, wired by the shop, which knows the rows and the stations),
+// else the crate.
+let inherited = () => null;
+export const inheritGlyph = fn => { inherited = fn; };
+export const glyphNameOf = key => (GLYPH_OF[key] || [])[0] || inherited(key) || 'crate';
+export const glyphFor = key => GLYPHS[glyphNameOf(key)] || GLYPHS.crate;
 // Its badge's rows, if it wears one. Laid on in `drawGlyph` at the pixel, not
 // the cell: a one-pixel halo round the badge's ink is all that is cut out of
 // the drawing, since a whole cell cleared took the corner off the belt.

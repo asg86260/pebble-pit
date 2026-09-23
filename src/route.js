@@ -561,8 +561,9 @@ export function climbTo(w, want) {
   // the rungs it was climbing down.
   //
   // Half a cell a frame, not a snap: half a cell is the bar `dance.test.mjs`
-  // holds every move to.
-  if (pit.grid && pit.cols && !(w.route && w.route.length)) {
+  // holds every move to. Not under the world: the deep lies beneath the pit's
+  // columns, and a body on its floor is not inside the pile over its head.
+  if (pit.grid && pit.cols && !(w.route && w.route.length) && !belowYard(w)) {
     const mid = w.x + WORKER / 2;
     if (mid > pit.x && mid < pit.x + pit.w && pitTop(mid) < w.y) {
       const out = Math.max(pitTop(mid) - WORKER, w.y - P / 2 * frames());

@@ -12,6 +12,7 @@ import { TYPE, isDeepType } from '../jobs.js';
 import { spotX, mouthX } from '../deep/place.js';
 import { belowYard, keepTo, stepRoute, ways } from '../route.js';
 import { commutePace } from '../levels.js';
+import { DOWN_THERE } from '../works.js';
 
 // Which station of the deep each job stands at: the keys of `DEEP_SPOTS`.
 export const DEEP_STATION = Object.freeze({
@@ -46,6 +47,8 @@ export const newGatherer = made(TYPE.GATHER);
 // ground a cell a frame. True while it is on its way.
 export function surface(w) {
   if (isDeepType(w.type) || !belowYard(w)) return false;
+  // A builder at work down there is where its work is.
+  if (w.type === TYPE.BUILD && DOWN_THERE.has(w.site)) return false;
   if (!keepTo(w, mouthX(), ways().yard)) return false;
   if (stepRoute(w, commutePace())) return true;
   w.route = null;

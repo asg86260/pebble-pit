@@ -15,19 +15,12 @@ import { S } from './state.js';
 import { coarse } from './prefs.js';
 import { lookAt } from './world.js';
 import { STATIONS, standRect, showPanel } from './board.js';
+import { station } from './stations.js';
 import { GLYPHS, drawGlyph } from './glyphs.js';
 import { onTap } from './tap.js';
 import { inDeep } from './view.js';
 import { deepTop } from './deep/place.js';
 
-// The drawing each station's arrow wears: the glyph of the row that opened
-// it, or the nearest thing on the shelf to what it is.
-const GLYPH = {
-  bench: 'crate', casino: 'die', filter: 'balloon', quarry: 'hoist', farm: 'furrow',
-  apothecary: 'pot', tower: 'tower', house: 'house', stats: 'sack', outhouse: 'bucket',
-  shack: 'hut',
-  altar: 'swing', well: 'bucket', font: 'bowl', circle: 'wand', spire: 'tower', crusher: 'sack'
-};
 
 // Every standing station in the half on screen, by where it stands, left to
 // right: the deep's stations are under the world, and a hop is a glide
@@ -89,7 +82,8 @@ export function refreshHop() {
     if (!key) continue;
     el.dataset.to = key;
     const pic = el.querySelector('.pic');
-    const c = drawGlyph(GLYPHS[GLYPH[key]] || GLYPHS.crate);
+    // The station's own drawing (`glyph` on its row).
+    const c = drawGlyph(GLYPHS[station(key)?.glyph] || GLYPHS.crate);
     // A tile hangs its glyph off a zero-width anchor by the ink's half-width;
     // here it stands in the row beside the arrow.
     c.style.marginLeft = '0';

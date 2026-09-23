@@ -16,7 +16,7 @@
 
 import { now } from '../clock.js';
 import { STATION_SCALE, DOME_PAD, DOME_WALL, CRUSHER_W, CRUSHER_H, HOPPER_W, CRUSH_SHOW_MS,
-         CRUSHER_ROLLER, CRUSHER_BRIM } from '../config.js';
+         CRUSHER_ROLLER } from '../config.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
          ABYSS_SHEAR_AMT2, ABYSS_SHEAR_COL, ABYSS_SHEAR_AMT_Y, ABYSS_FLOW_COL2, ABYSS_FLOW_ROW2,
@@ -30,7 +30,6 @@ import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, spotX, coilAt, crusherRect, hopperRect, podAt } from '../deep/place.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
-import { warning } from './pilemarks.js';
 import { raw, darkPage, turned } from '../ink.js';
 import { viewDark } from '../view.js';
 import { ctx } from './ctx.js';
@@ -380,12 +379,6 @@ function drawCrusher() {
       ctx.fillRect(Math.round(gx / P) * P, Math.round(gy / P) * P, P, P);
     }
   }
-  // Scales lying at the brim of the floor's bed: the gathering has fallen
-  // behind, and the mark says so over the crusher that is waiting on it.
-  let brim = false;
-  if (deepBed.grid) for (let col = 0; col < deepBed.cols && !brim; col++)
-    brim = topRow(deepBed, col) >= deepBed.rows - CRUSHER_BRIM;
-  if (brim) warning(c.x + CRUSHER_W / 2, c.y - P * 5);
   ctx.fillStyle = '#000';
 }
 

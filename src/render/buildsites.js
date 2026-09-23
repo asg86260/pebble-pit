@@ -6,6 +6,7 @@ import { S } from '../state.js';
 import { SITES, rowFor, siteBox, worksAt } from '../works.js';
 import { ctx } from './ctx.js';
 import { xorInk } from '../ink.js';
+import { groundOf } from '../deep/place.js';
 
 // --- a busy site looks like a building site -----------------------------------
 // A station's footprint is its own rect. The yard is one slot shared by every
@@ -41,14 +42,15 @@ export function drawBuildSites() {
     const postW = P * 2, postBands = 5, postH = P * postBands;
     const left = Math.round(foot.x / P) * P - P * 3 - postW;
     const right = Math.round((foot.x + foot.w) / P) * P + P * 3;
-    const topY = S.groundY - postH;
+    const ground = groundOf(foot.y);
+    const topY = ground - postH;
 
     ctx.fillStyle = '#000';
     drawBarrierPost(left, topY, postW, postBands);
     drawBarrierPost(right, topY, postW, postBands);
 
     // the tape, at head height, dashed a cell on and a cell off
-    const tapeY = S.groundY - P * 3;
+    const tapeY = ground - P * 3;
     for (let x = left + postW; x < right; x += P * 2)
       ctx.fillRect(x, tapeY, P, 2);
 

@@ -8,10 +8,10 @@
 // what it costs is LADDERS in config/rungs.js; this file only says where each
 // ladder hangs.
 //
-// A rung is built at its station by the deep's own gang, never by the yard's
-// builders (`SITE_JOB` and `DOWN_THERE` in works.js): the site of every row
-// here is the station's key, or `deep` for a door, which is put up at the
-// altar.
+// A rung is built at its station by the yard's builders, who go down the
+// shaft to it (`DOWN_THERE` in works.js): the site of every row here is the
+// station's key, or `deep` for a door, which goes up where its station will
+// stand.
 
 import { S } from '../state.js';
 import { rungValue, DOOR_BILLS, STAR_SPARKS, STAR_TUNE_SPARKS, STAR_EVERY_S, POD_SCALES0, POD_RATE } from '../config.js';
@@ -20,6 +20,7 @@ import { staffDoor, hirePod } from '../staffing.js';
 import { open, offered } from '../stations.js';
 import { registerRows } from '../works.js';
 import { JOB, jobSaid } from '../jobs.js';
+import { spotX, standOf } from './place.js';
 
 // One weapon's ladder, on the board of the station that throws it. The level
 // field is the ladder's key and `Level` (state.js), and the rung's value is
@@ -39,13 +40,14 @@ const PUNCH = ladder('punch', 'punch strength', 'altar', { unit: 'dmg', does: 'p
 const BRAWL = ladder('brawl', 'punch pace', 'altar', { unit: '/s', pct: true, does: 'punch' });
 
 // A door, cut from the shape `site()` gives a yard door (upgrades/site.js),
-// with the three things that differ in the deep: the bill is the doors table
-// (DOOR_BILLS), it is sold on the altar and built there by the brawlers
-// (`site: 'deep'`), and the view does not glide to it, since the place it
-// opens is on the same floor as the board that sold it.
+// with what differs in the deep: the bill is the doors table (DOOR_BILLS),
+// it is sold on the altar and goes up where its station will stand (`at`,
+// `box`), and the view does not glide to it, since the place it opens is on
+// the same floor as the board that sold it.
 const door = ({ key, name, blurb, note, job }) => ({
   key: 'unlock' + key, name, blurb, note,
   kind: 'building', site: 'deep', board: 'altar',
+  at: () => spotX(key), box: () => standOf(key),
   bill: () => DOOR_BILLS[key],
   buy: () => { S[key + 'Open'] = true; staffDoor(job); },
   // The gate is the station's row (`after` and `needs` in stations.js).
@@ -68,7 +70,7 @@ const DOORS = [
 ];
 
 // A pod: one more of the crew, living down here (DESIGN.md, "One crew, two
-// homes"). Sold on the altar and built at the pods by the brawlers, a
+// homes"). Sold on the altar and built at the pods by the builders, a
 // steeper price in scales each one, like the yard's rooms.
 const POD = {
   key: 'pod', name: 'another pod', kind: 'building', site: 'pods', board: 'altar',

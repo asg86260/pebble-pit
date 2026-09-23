@@ -26,10 +26,8 @@ export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the
 export const STATION_SCALE = 1.5;
 export const DOME_PAD = P * 3;
 export const DOME_WALL = P * 4;
-// The crusher's rollers, as seen through its window, and how near the brim
-// the floor's bed has to lie for the pile-full mark to hang over it.
+// The crusher's rollers, as seen through its window.
 export const CRUSHER_ROLLER = P * 4;
-export const CRUSHER_BRIM = 4;       // rows short of the bed's top
 // The band at the top of the deep a click goes up through: the underside of
 // the surface, and the roof over it.
 export const DEEP_CEILING = P * 14;

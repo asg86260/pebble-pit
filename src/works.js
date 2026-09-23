@@ -41,17 +41,17 @@ export const SITE_JOB = {
   // The sphere's rungs: nobody on the ground can reach the shell, so its one
   // tender pours them from the ring (`setHands` in crew/muster.js).
   sphere: JOB.WIZARD,
-  // The deep's: a spare hand lent from the yard would have to swim down the
-  // shaft to hammer on a rung, so every station down there is built by its
-  // own gang, and the doors by the brawlers at the altar, where they are sold
-  // (docs/wave-serpent.md, "The deep's work is done by the deep's own gang").
-  altar: JOB.BRAWL,
-  well: JOB.LANCE,
-  font: JOB.GRENADE,
-  circle: JOB.SCRIBE,
-  spire: JOB.WARLOCK,
-  pods: JOB.BRAWL,
-  deep: JOB.BRAWL
+  // The deep's, by the same spare hands as the yard's: a builder goes down the
+  // shaft to the work and hammers there like anywhere else (crew/builders.js
+  // routes it to the deep's floor). A door goes up at its own station and a
+  // pod at the pods.
+  altar: JOB.BUILD,
+  well: JOB.BUILD,
+  font: JOB.BUILD,
+  circle: JOB.BUILD,
+  spire: JOB.BUILD,
+  pods: JOB.BUILD,
+  deep: JOB.BUILD
 };
 
 // --- what a site can take, and how fast ----------------------------------------
@@ -105,11 +105,9 @@ export const busyBuilderSites = () =>
 // under and never reach: their work is done by whoever is up there (the
 // sphere's rungs, by its tender).
 export const UP_THERE = new Set(['sphere']);
-// And the sites under the drowned pit, the same rule the other way: nobody is
-// lent down the shaft, and a deep station with nobody posted at it waits.
-// SEAM: who counts as hands at these is `setHands` in crew/muster.js, which
-// answers nought for every site not built by the yard's builders until it
-// counts the station's own gang, arrived at its post.
+// And the sites under the drowned pit: built like any other, but a builder
+// reaches them down the shaft, on the deep's floor (crew/builders.js), and
+// one working there is not sent back up (`surface` in crew/deep.js).
 export const DOWN_THERE = new Set(['altar', 'well', 'font', 'circle', 'spire', 'pods', 'deep']);
 
 // Where a station itself stands, for a body walking to a work that is not a
@@ -266,6 +264,12 @@ export const setRooms = fn => { houseRooms = fn; };
 // bar and the builder for the SECOND thing going up must stand on the second
 // thing's ground. Left out, it is the head work.
 export function siteBox(site, which = null) {
+  // A door of the deep goes up at the station it opens, which its row knows.
+  if (site === 'deep') {
+    const w = which || workAt(site);
+    const boxed = w && rowFor(w.key)?.box?.();
+    if (boxed) return boxed;
+  }
   const box = SITE_BOX[site]?.();
   if (box) return { x: box.x, w: box.w, y: box.y, h: box.h };
   if (site !== 'yard') return null;

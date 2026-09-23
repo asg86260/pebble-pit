@@ -30,14 +30,6 @@ setHands(site => {
   // tender, the one body that can reach it.
   if (site === 'sphere')
     return Math.min(1, S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length);
-  // A deep station's rungs and doors are raised by its own gang, down there
-  // already (docs/wave-serpent.md): a body counts once it has swum the shaft
-  // and arrived, and one pair of hands a work on the go, as the builders.
-  if (DEEP_JOBS.includes(SITE_JOB[site])) {
-    const type = TYPE_OF[SITE_JOB[site]];
-    const there = S.workers.filter(w => w.type === type && !w.walking && belowYard(w)).length;
-    return Math.min(Math.max(1, onTheGo(site).length), there);
-  }
   if (!builderManned(site)) return 0;
   // One pair of hands per work on the go, because each body is at exactly one
   // of them (`handsOn`); a gang of spare hands at one work is still one.

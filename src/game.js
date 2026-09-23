@@ -76,6 +76,7 @@ import { stepFilter } from './filter.js';
 import { stepSerpent } from './deep/serpent.js';
 import { stepArms } from './deep/arms.js';
 import { stepScales, wireBed } from './deep/scales.js';
+import { STATIONS } from './stations.js';
 import { stepView } from './view.js';
 import { stepApothecary, stepDoseMotes, stepDoses, setTake, apothHut } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
@@ -441,6 +442,9 @@ export function surveyFloor() {
   // again: clearing a handful should put somebody back to work.
   const full = {};
   for (const p of S.piles) full[p.key] = count[p.key] >= (PILE_LIMIT[p.key] || Infinity);
+  // And every station whose row has a pile of its own (the crusher's floor):
+  // not one of `S.piles`, which are the yard's ground.
+  for (const r of STATIONS) if (r.pile) full[r.key] = r.open() && r.pile();
   S.pileFull = full;
 }
 

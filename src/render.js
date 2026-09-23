@@ -260,7 +260,11 @@ export const asPicture = on => { picture = on; };
 const DEEP = new Set(['deep sky', 'deep water', 'deep motes', 'deep floor', 'deep stations', 'deep bed',
                       'sigils', 'beams', 'serpent', 'lances', 'grenades', 'deep star', 'swimmers',
                       'punches', 'sinking', 'lifting', 'deep invert']);
-const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'pointed', 'cursor', 'glide']);
+// The marks of work -- the bar over a work on the go, the tape round it, the
+// tick when it lands -- and the pile-full marks stand wherever their site
+// does, so they are drawn in both halves and are simply off the glass in one.
+const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'pointed', 'cursor', 'glide',
+                      'work bars', 'build sites', 'done marks', 'pile marks']);
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const inHalf = (layer, i, deep) =>
   BOTH.has(layer.name) || i > SCREEN_FROM || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));

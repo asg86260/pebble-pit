@@ -7,7 +7,8 @@ import { WORKER, BUILD_SHIFT, BUILD_SHIFT_SPAN } from '../config.js';
 import { S, bench } from '../state.js';
 import { walkY } from '../world.js';
 import { busyBuilderSites, siteX, siteBox, handsAt, worksAt, onTheGo } from '../works.js';
-import { keepTo, stepRoute, wayOver, climbTo, feetOn } from '../route.js';
+import { keepTo, stepRoute, wayOver, climbTo, feetOn, ways, belowYard, inShaft } from '../route.js';
+import { DOWN_THERE } from '../works.js';
 import { commutePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
 import { now } from '../clock.js';
@@ -54,6 +55,14 @@ const nearestIn = (box, x) => Math.max(box.x, Math.min(box.x + box.w - WORKER, x
 const ownBox = w =>
   siteBox(w.site, worksAt(w.site).find(x => x.key === w.workKey) || null);
 
+// The ground a builder's work stands on: the deep's floor for a site down
+// the shaft, the yard's otherwise.
+const wayFor = (w, x) => (DOWN_THERE.has(w.site) ? ways().deep : wayOver(x));
+// Whether it is on that ground. Being over the work is not being at it: a
+// deep work's span can lie right under the shaft, and a body coming down it
+// is over the work all the way from the plank.
+const onGround = w => !DOWN_THERE.has(w.site) || (belowYard(w) && !inShaft(w));
+
 function buildStationX(w) {
   const site = siteFor(w);
   if (!site) return null;
@@ -77,14 +86,14 @@ export function stepBuilder(w) {
     // burst, and a walk re-aimed at one pixel drags it straight back, sixty
     // times a second. Only a body genuinely somewhere else is walked again.
     const slack = w.goal === 'at' ? BUILD_SHIFT_SPAN + BUILD_SHIFT * 2 : 1;
-    if (Math.abs(d) >= slack) {
+    if (Math.abs(d) >= slack || !onGround(w)) {
       if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
       w.goal = 'to';
       // Routed, not slid: a body stepped in x and stood on "whatever is under
       // me now" takes the drop off the hill's footprint in one frame, because
       // `climbTo` has a wall rule facing up and none facing down. A route gets
       // it down a flank like every other errand (`stepCommute`).
-      if (!keepTo(w, to, wayOver(to))) return;
+      if (!keepTo(w, to, wayFor(w, to))) return;
       // At a trip's pace, so it climbs the pace ladder with everybody else.
       if (stepRoute(w, commutePace())) return;
       w.route = null;
@@ -105,10 +114,10 @@ export function stepBuilder(w) {
     // underfoot, or a builder on a rock-mounted machine sits pinned to the
     // ground line under it.
     if (w.site === 'bench') { w.foot = bench.y - WORKER; w.footAt = w.x; }
-    else climbTo(w, feetOn(wayOver(w.x + WORKER / 2), w.x));
+    else climbTo(w, feetOn(wayFor(w, w.x + WORKER / 2), w.x));
     workJig(w, now());
   } else {
     if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
-    w.y = stand(w);
+    w.y = DOWN_THERE.has(w.site) ? feetOn(ways().deep, w.x) : stand(w);
   }
 }

@@ -15,17 +15,14 @@ import { leftText } from './words.js';
 import { placeWord } from './shop.js';
 import { showTipAt } from './board.js';
 import { QUEUE_PIPS } from './config.js';
+import { nameOf } from './stations.js';
 
 const el = document.getElementById('queue');
 
-// The same words the yard answers with when you point at the building
-// (`BUILDING_NAME` in input.js).
-const SITE_NAME = {
-  yard: 'the yard', bench: 'the bench',
-  quarry: 'the quarry', farm: 'the farm', filter: 'the air filter',
-  tower: 'the tower', lab: 'the lab', apothecary: 'the apothecary',
-  shack: 'the shack', outhouse: "the janitor's closet"
-};
+// A site's name is its station's (`nameOf`, the same words the pointer
+// answers with); these are the sites that are not a station.
+const NOT_A_STATION = { yard: 'the yard', deep: 'the deep', sphere: 'the sphere', lab: 'the lab' };
+const siteName = site => nameOf(site) || NOT_A_STATION[site] || site;
 
 // The same glyphs a ladder is drawn with on a row.
 const pips = w => {
@@ -87,7 +84,7 @@ export function fillQueue() {
       if (!l.front) b.addEventListener('click', () => { const u = rowFor(l.key); if (u) buy(u); });
       const say = () => {
         const r = b.getBoundingClientRect();
-        showTipAt(SITE_NAME[l.site] || l.site, r.right + 8, r.top - 2);
+        showTipAt(siteName(l.site), r.right + 8, r.top - 2);
       };
       b.addEventListener('pointerenter', say);
       b.addEventListener('pointerleave', () => showTipAt(null));

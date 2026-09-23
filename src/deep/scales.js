@@ -13,7 +13,7 @@
 import { S, deepBed } from '../state.js';
 import { P, SHADES, DEEP_W, DEEP_BED_ROWS, DEEP_GRAV, DEEP_DRAG, DEEP_CURRENT,
          DEEP_CURRENT_MS, SCALE_KICK, SCALE_SHADE, SCALE_SPREAD, LIFT_PACE, LIFT_FLECKS,
-         LIFT_STAGGER, SETTLE_BUDGET, GATHER_TOSS_FRAMES, GATHER_TOSS_RISE, GATHER_TOSS_STAGGER } from '../config.js';
+         LIFT_STAGGER, SETTLE_BUDGET, DEEP_BED_BRIM, GATHER_TOSS_FRAMES, GATHER_TOSS_RISE, GATHER_TOSS_STAGGER } from '../config.js';
 import { put, addGrain, settleSome, recount, wakeGrid, topRow, surfaceY, colOf, shadeNear } from '../grid.js';
 import { makePainter } from '../painter.js';
 import { frames, now } from '../clock.js';
@@ -100,6 +100,14 @@ export function richestNear(x) {
   return best;
 }
 export const bedX = c => deepBed.x + c * P + P / 2;
+
+// The floor at its brim: some stretch of the bed within DEEP_BED_BRIM rows of
+// its top, so the gathering has fallen behind. The deep's pile-full mark.
+export function bedAtBrim() {
+  if (!deepBed.grid || !deepBed.n) return false;
+  for (let c = 0; c < deepBed.cols; c++) if (topRow(deepBed, c) >= deepBed.rows - DEEP_BED_BRIM) return true;
+  return false;
+}
 
 // Whether there are scales on the bed within `reach` of a point near its
 // top: what the hand can sweep there.

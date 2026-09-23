@@ -5,7 +5,7 @@
 
 import { S } from './state.js';
 import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, SHELF_HAND_FADE, GRIT_MOTES, GRIT_SPREAD, GRIT_RISE, GRIT_GRAV, GRIT_LIFE } from './config.js';
-import { drawGlyph, glyphFor, badgeFor, cellsOf } from './glyphs.js';
+import { drawGlyph, glyphFor, badgeFor, cellsOf, inheritGlyph } from './glyphs.js';
 import { ownsCamera } from './beats.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, lodgers, SECTIONS, buy, billOf, tintOf, canPay, building, inLine, lineAt } from './upgrades.js';
@@ -28,6 +28,14 @@ import { shown } from './tween.js';
 import { onTap } from './tap.js';
 import { now as clockNow } from './clock.js';
 import { coarse } from './prefs.js';
+import { station as stationRow } from './stations.js';
+
+// A row with no drawing of its own wears the drawing of the station whose
+// board sells it, or of the site it is built at.
+inheritGlyph(key => {
+  const u = rowFor(key);
+  return (u && (stationRow(u.board)?.glyph || stationRow(u.site)?.glyph)) || null;
+});
 
 const shopEl = document.getElementById('shop');
 const pinEl = document.getElementById('pin');

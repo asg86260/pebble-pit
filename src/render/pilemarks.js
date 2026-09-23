@@ -7,6 +7,7 @@ import { S, farm, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawTriangle } from './marks.js';
 import { sphereUp, shellR } from '../sphere.js';
+import { STATIONS, station } from '../stations.js';
 
 // --- the ground a station pays out on to -------------------------------------
 // The strips in `S.piles` are unmarked ground: the heaps themselves are their
@@ -22,12 +23,18 @@ export function drawPileMarks() {
   // grain it will not take tears it open and the rest goes through the rift
   // (`throughRift` in pit.js). A warning about a thing that no longer happens
   // teaches you to ignore warnings.
-  for (const p of S.piles) {
+  for (const p of markedPiles()) {
     if (!S.pileFull[p.key]) continue;
     const at = pileMarkAt(p.key);
     warning(at.x, at.y);
   }
 }
+
+// Every pile that can be full: the yard's strips, and every standing station
+// whose row has a pile of its own, its mark over the station.
+export const markedPiles = () => [...S.piles, ...STATIONS.filter(r => r.pile && r.open()).map(r => ({ key: r.key }))];
+// What the hover says over one: the row's own words, or the yard's.
+export const fullSays = key => station(key)?.full || 'pile is full';
 
 // A warning triangle: hollow, with a bar and a dot inside it. One radius, and
 // everything inside is a fraction of it, so changing it changes the whole sign.
@@ -50,6 +57,11 @@ const SLOT_W = P * 5.5;
 // is a heap lying somewhere else; the station's own ground is where the roster
 // stands.
 export function pileMarkAt(key) {
+  const row = station(key);
+  if (row?.pile) {
+    const r = row.stand();
+    return { x: Math.round((r.x + r.w / 2) / P) * P, y: Math.round((r.y - P * 5) / P) * P };
+  }
   const strip = S.piles.find(p => p.key === key);
   // The star's dust hangs in the air with no ground under it, so its mark
   // stays under the meteor where the wizards are -- or, once a sphere stands,

@@ -11,6 +11,7 @@ import { KINDS, shieldPlan } from '../shield.js';
 import { flagReach } from './aura.js';
 import { risingPlaces } from './rise.js';
 import { ctx } from './ctx.js';
+import { groundOf } from '../deep/place.js';
 
 // One bar for every site that builds: a thing filling a cell at a time, over
 // the place it is happening, that stops dead while nobody is standing there.
@@ -75,7 +76,8 @@ export function barSpot(site, w = null) {
   if (!box) return null;
   // A hole in the ground has no top above the line, so the bar hangs off the
   // ground line for those.
-  let top = Math.min(box.y ?? S.groundY, S.groundY);
+  const ground = groundOf(box.y);
+  let top = Math.min(box.y ?? ground, ground);
   // A bar hangs over the WHOLE station at its finished height, not the slice
   // that has risen so far: a bar that creeps up as it fills cannot be glanced
   // at twice from the same place. The yard's own box carries no `y` for an

@@ -20,6 +20,7 @@ import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
 import { station, stationAt, STATIONS } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
+import { markedPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
 import { fadeIn, fadeOut } from './fade.js';
@@ -365,15 +366,13 @@ function cellLabel(v) {
 }
 
 // Every building `standRect` (board.js) answers "is it there, and where" for.
-const BUILDING_NAME = {
-  shack: 'the shack',
-  bench: 'the bench', lab: 'the lab', casino: 'the casino',
-  filter: 'the air filter', quarry: 'the quarry', farm: 'the farm', tower: 'the tower'
-};
-
 function buildingAt(x, y) {
-  for (const key in BUILDING_NAME) if (inRect(standRect(key), x, y)) return BUILDING_NAME[key];
-  if (S.outhouseOpen && inRect(outhouse, x, y)) return "the janitor's closet";
+  // Every standing place by its own row's name (`STATIONS`).
+  for (const r of STATIONS) {
+    if (!r.name || !r.stand || !r.open()) continue;
+    const rect = standRect(r.key);
+    if (rect && inRect(rect, x, y)) return r.name;
+  }
   // the drowned pit answers as the abyss; through the torn era, the disc
   // answers as the rift
   if (S.drowned && x > pit.x && x < pit.x + pit.w && y > S.groundY) return 'the abyss';
@@ -500,9 +499,9 @@ function askedAbout(x, y, cx, cy) {
                        (w.y - P * 3 - S.camY) * S.zoom);
     return true;
   }
-  for (const p of S.piles) {
+  for (const p of markedPiles()) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
-    showTip('pile is full', pileMarkAt(p.key));
+    showTip(fullSays(p.key), pileMarkAt(p.key));
     return true;
   }
 
