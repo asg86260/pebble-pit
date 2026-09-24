@@ -2,8 +2,9 @@
 // are seen in: `#` the white of anything made, `+` and `-` its greys, `o` the
 // black water held in it, `*` the abyss's purple, `.` nothing. Each is its
 // weapon's shape: the altar a black bag hung off a gibbet, a tentacle up out
-// of the floor wound twice round it and curled over its top, the well a ring
-// holding black water with a lance stood in it, the font a goblet with a
+// of the floor wound twice round it and curled over its top, the well a
+// trestle rack with four barbed lances stood up through its bar, their butts
+// in a trough of black water, the font a goblet with a
 // ball of held ripples, the circle a standing stone over its ring, the spire
 // a tower to a point.
 //
@@ -39,23 +40,24 @@ export const SPRITES = {
     '####################'
   ],
   well: [
-    '..........#..........',
-    '..........#..........',
-    '..........#..........',
-    '..........#..........',
-    '..........#..........',
-    '.........*#*.........',
-    '..........*..........',
-    '..........*..........',
-    '.###.............###.',
-    '.##+#############+##.',
-    '.##+#############+##.',
-    '.##+ooo**ooo**ooo+##.',
-    '.##+ooooooooooooo+##.',
-    '.##+ooooooooooooo+##.',
-    '.##+ooooo*ooooo**+##.',
-    '.###################.',
-    '.###################.'
+    '...#............#...',
+    '..*+*..#....#..*+*..',
+    '...+..*+*..*+*..+...',
+    '...*...*....*...*...',
+    '...+...+....+...+...',
+    '.##-###-####-###-##.',
+    '.#+*...*....*...*-#.',
+    '.#++...+....+...+-#.',
+    '.#++...+....+...+-#.',
+    '#+.*...*....*...*.-#',
+    '#+.+...+....+...+.-#',
+    '#+.+...+....+...+.-#',
+    '#+.*...*....*...*.-#',
+    '###-###-####-###-###',
+    '#+oooooooooooooooo-#',
+    '#+ooo*oooooooo*ooo-#',
+    '#+oooooo*oo*oooooo-#',
+    '####################'
   ],
   font: [
     '......--++-........',
