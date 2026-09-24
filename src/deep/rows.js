@@ -1,8 +1,8 @@
 // What the deep's boards sell: the weapons' ladders, the doors, and the star.
 //
-// Five boards, one a station on the deep's floor, each the shape of a yard
+// Six boards, one a station on the deep's floor, each the shape of a yard
 // station's: a roster heading for the bodies posted there, then what the
-// place sells. Every ladder goes through `tierRows` and leads with scales
+// place sells. The pods have no post, so no heading. Every ladder goes through `tierRows` and leads with scales
 // (`lead: 'scale'`): scales alone, then scales and the yard's coins, a spark
 // at the top (DESIGN.md, "What the scale buys"). What a rung is worth and
 // what it costs is LADDERS in config/rungs.js; this file only says where each
@@ -71,10 +71,10 @@ const DOORS = [
 ];
 
 // A pod: one more of the crew, living down here (DESIGN.md, "One crew, two
-// homes"). Sold on the altar and built at the pods by the builders, a
-// steeper price in scales each one, like the yard's rooms.
+// homes"). Sold on the pods' own board, as the yard's rooms are on the
+// house's, and built there by the builders, a steeper price in scales each one.
 const POD = {
-  key: 'pod', name: 'another pod', kind: 'building', site: 'pods', board: 'altar',
+  key: 'pod', name: 'another pod', kind: 'building', site: 'pods', board: 'pods',
   note: () => 'a capsule on the deep\'s far side: one more of the crew, living down here',
   from: () => S.crew, to: () => S.crew + 1,
   // Scales alone: naming no dust at nought would have `billOf` add its worth.
@@ -128,7 +128,8 @@ const TUNESTAR = {
 // Each station's rows, keyed by the station, for board.js and shop.js to draw
 // and hooks.js to reach.
 export const DEEP_ROWS = {
-  altar: [...PUNCH, ...BRAWL, ...DOORS, POD],
+  altar: [...PUNCH, ...BRAWL, ...DOORS],
+  pods: [POD],
   well: [...LANCE, ...LANCEHOLD],
   font: [...GRENADE, ...GRENADEPACE],
   circle: [...SIGIL],
@@ -150,8 +151,8 @@ const roster = station => ({ title: jobSaid(DEEP_JOB_AT[station]), roster: true,
 export const DEEP_SECTIONS = {
   altar: [roster('altar'),
           { title: 'the fist', keys: ['punch', 'brawl'] },
-          { title: 'the deep', keys: DOORS.map(u => u.key) },
-          { title: 'the pods', keys: ['pod'] }],
+          { title: 'the deep', keys: DOORS.map(u => u.key) }],
+  pods: [{ title: 'the pods', keys: ['pod'] }],
   well: [roster('well'), { title: 'the lance', keys: ['lance', 'lancehold'] }],
   font: [roster('font'), { title: 'the grenade', keys: ['grenade', 'grenadepace'] }],
   circle: [roster('circle'), { title: 'the circle', keys: ['sigil'] }],

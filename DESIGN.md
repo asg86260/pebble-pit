@@ -14815,8 +14815,10 @@ rosters stay the player's.*
 With one crew, every body the deep takes is a body off hauling, and the
 yard's piles fill behind it. Sorting one fixed crew between the halves only
 moves the shortage about, so the deep gets a way to grow the crew: **pods**,
-the deep's houses, a capsule a body, stacked at the deep's far right end.
-A pod is bought on the altar's board in scales, a steeper price each one
+the deep's houses, a capsule a body, stacked between the crusher and the altar.
+A pod is bought on the pods' own board in scales (the owner's call,
+2026-09-23: the yard's rooms are sold on the house, so the deep's are sold
+on the pods), a steeper price each one
 like the yard's rooms, and built there by the brawlers. The body it adds
 comes out of the pod and lives down there (`w.deepHome`, saved with the
 body; `S.pods` counts them).
@@ -14952,8 +14954,8 @@ head out and back, him in its jaws, her leap an arc into the ring. The ring
 shrinks to nothing and is gone. The camera stays in the yard.
 
 **The deep starts with one.** The sqwife lands in the deep and is its whole
-crew, living in its first pod (standing from the snatch, so the altar sells
-the second): a brawler at the altar, punching the serpent -- the deep's `crew`
+crew, living in its first pod (standing from the snatch, so the pods' board
+is there from the first frame and sells the second): a brawler at the altar, punching the serpent -- the deep's `crew`
 begins at one, hers, and every other body in the save is the yard's. The
 yard carries on with the rest, as before.
 
@@ -14989,7 +14991,10 @@ seen the way the pit is from above, closer in: the yard's white sky over the
 water line and the line in the abyss's purple, not a black roof, framed so
 about nine tenths of the window is water. In a glide the yard fades to that
 same white round the abyss, so the two halves are one picture at the turn.
-The pods stand between the crusher and the altar.
+The pods stand between the crusher and the altar. Past the crusher the
+stations stand an even step apart across the floor (`DEEP_SPOTS`), each
+step wider than a dome and its crew's stand ground together, the spire's
+dome well inside the deep's right end.
 
 **The portal is a hole torn into the wall, and it has two ends.** *(The
 owner's calls, the same day: first B of the mocked shapes, "set into the

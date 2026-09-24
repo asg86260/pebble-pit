@@ -484,7 +484,7 @@ export const S = {
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
   starAt: 0,              // when the next star is called
   altarBoardOpen: false, wellBoardOpen: false, fontBoardOpen: false,
-  circleBoardOpen: false, spireBoardOpen: false,
+  circleBoardOpen: false, spireBoardOpen: false, podsBoardOpen: false,
 
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
 };
@@ -781,7 +781,7 @@ export const EPHEMERAL = [
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
   'starFall', 'deepMotes', 'crushAt', 'heldScales', 'portalAt',
-  'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen',
+  'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen', 'podsBoardOpen',
 ];
 
 // The sand grids, mutated in place and never reassigned. `p` is the size of

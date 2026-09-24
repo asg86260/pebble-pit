@@ -61,7 +61,7 @@ group("a pod is built by the deep's own hand, and its body is the deep's", async
   }
   run(5);
   return [
-    ok(bought, 'the altar sells a pod'),
+    ok(bought, 'the pods sell another pod'),
     ok(delver && delver.below, 'a deep builder puts it up, down there', JSON.stringify(delver)),
     ok(offAltar, 'with nobody spare, the sqwife leaves the altar to build it'),
     ok(!yardDown, "and none of the yard's hands went down"),
