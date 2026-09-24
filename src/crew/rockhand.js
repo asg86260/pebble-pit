@@ -20,6 +20,7 @@ import { frames } from '../clock.js';
 import { amble } from './idle.js';
 import { rand } from '../rng.js';
 import { stopJig } from './dance.js';
+import { nextLeg, stationX } from './commute.js';
 
 const MINE_BAND = 3;      // cells below the peak still counted as the top layer
 
@@ -148,7 +149,23 @@ export function rockhandWork(w, c) {
 export const rockhandMess = () => rockMuck() > 0 || S.pileFull.rock;
 
 // A rockhand carries no goal of its own, so the shovel's is put down with the
-// shovel.
+// shovel. And a full pile sends the gang to the whole yard's mess, past the
+// hole as readily as not, so the errand can end anywhere: off the rock, the
+// work's own walk-back is a straight line along the layer that knows nothing
+// of the ground between, and it marches the body out over the hole. The
+// commute is what knows the way, so the body walks home on it first.
 export function rockhandBack(w) {
   if (w.goal === 'muck') { w.goal = null; w.muckAt = null; }
+  if (!w.walking && offRock(w)) {
+    w.legs = [{ to: stationX(TYPE.ROCK, w), do: 'back' }];
+    nextLeg(w);
+  }
+}
+
+// Standing clear of every column the rock has, by more than a body's width:
+// nowhere the layer walk can reach from.
+function offRock(w) {
+  if (!S.gw) return false;
+  const mid = w.x + WORKER / 2;
+  return mid < rockLeft() - WORKER || mid > rockLeft() + S.gw * P + WORKER;
 }

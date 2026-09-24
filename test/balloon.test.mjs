@@ -187,9 +187,15 @@ group('a balloon rider is still on the job after a reload', async () => {
 // hanging cleans: the trip is the yard's clock, so balloon speed shortens it
 // whatever the view. Timed off the clock's own hang flag, in game seconds.
 // Read afresh each time: the reload check reads the craft back as new objects.
+// The start is found at the stopwatch's own tenth, not `runUntil`'s whole
+// second: caught up to a second late, a six-second trip read anywhere from
+// five to six, and whether two rungs looked quick enough hung on where in the
+// second the rider happened to board.
 const tripTime = () => {
   const c = () => CRAFT[0];
-  runUntil(() => c().phase === 'aloft' && !c().hang, 120);
+  runUntil(() => c().phase === 'aloft', 120);
+  for (let t = 0; !c().hang && t < 60; t += 0.1) run(0.1);    // at a cloud
+  for (let t = 0; c().hang && t < 60; t += 0.1) run(0.1);     // and off it
   let t = 0;
   while (!c().hang && t < 60) { run(0.1); t += 0.1; }
   return t;

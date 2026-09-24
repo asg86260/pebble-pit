@@ -31,6 +31,7 @@ feature lives in DESIGN.md.
 - The deep's crew no longer shouts when a rock lands up in the yard (test/two-crews.test.mjs).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 - Clouds no longer show below the ground line in a short window (play.html in a window 300px tall).
+- A rockhand who shoveled a mess on the far side of the pit walks back round the hole to the rock, instead of walking home across thin air (test/rockhand-home.test.mjs).
 
 ## v0.4.1 — 2026-09-23
 
