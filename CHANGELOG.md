@@ -24,6 +24,7 @@ feature lives in DESIGN.md.
 - The deep's crew no longer hangs still with nothing to do: a gatherer on a bare floor, a scribe whose circles are full and a wizard with nothing in reach stroll, float and hop about their station, and go straight to work from mid-air when called (test/deep-rest.test.mjs).
 
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
+- The deep no longer drops to about 35 frames a second in Firefox on the light page (Firefox at 2560x1440 on the `deep` scene, PERF.md "The deep in Firefox").
 - On a tall window the deep's water goes all the way up to the top of the screen, with no black band over it (src/selftest/deep.js).
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).

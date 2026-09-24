@@ -460,7 +460,9 @@ function filterIsExact() {
 }
 export function drawDeepInvert() {
   if (darkPage) return;
-  if (filterTurns === null) filterTurns = filterIsExact();
+  // Asked after the frame rather than inside it: a readback in the middle of
+  // the frame's own drawing upset the headless Chrome's next frames.
+  if (filterTurns === null) { filterTurns = false; setTimeout(() => { filterTurns = filterIsExact(); }, 0); }
   const { x0, y0, x1, y1 } = deepWindow();
   ctx.save();
   if (filterTurns) {
