@@ -51,6 +51,52 @@ export const PORTAL_RX = P * 11;
 export const PORTAL_RY = P * 3;
 export const PORTAL_OPEN_MS = 1500;
 export const PORTAL_TURN_MS = 2400;    // one turn of its rim
+// The wizards' portal is a hole torn into the drowned pit's near wall
+// (DESIGN.md, "Two crews and a portal", F of the mocks): this much of its
+// width in the ground, the rest in the liquid.
+export const PORTAL_INTO_WALL = 0.7;
+// Its lip is the abyss's veil laid round the tear: from and to this far out,
+// in the hole's own radius, brightest at the middle and fading this far to
+// either side; streaming round in this many runs a turn, one run passing in
+// PORTAL_LIP_MS, bent by a slower wobble.
+export const PORTAL_LIP_FROM = 0.8;
+export const PORTAL_LIP_TO = 1.12;
+export const PORTAL_LIP_MID = 0.96;
+export const PORTAL_LIP_HALF = 0.16;
+export const PORTAL_LIP_RUNS = 7;
+export const PORTAL_LIP_MS = 900;
+export const PORTAL_LIP_WOBBLE_MS = 2300;
+export const PORTAL_LIP_FLOOR = 0.4;      // how lit its dimmest stretch still is
+export const PORTAL_LIP_WOBBLE_RUNS = 3;
+export const PORTAL_LIP_WOBBLE = 3;       // radians the wobble bends the runs by
+export const PORTAL_LIP_JITTER = 0.06;    // the hash's nudge, so no stretch is one flat tone
+export const PORTAL_LIP_MIN = 0.12;       // lit under this, the liquid or the ground shows through
+export const PORTAL_LIP_GREY_TOP = 0.8;   // how far up the grey ramp its greys reach
+export const PORTAL_LIP_PURPLE_FROM = 0.55; // where on the purple ramp its purples start
+export const PORTAL_LIP_PURPLE = 0.72;    // lit past this, the veil goes purple
+// Stars riding round in the lip: this many seats a turn, a lap in this long.
+export const PORTAL_LIP_SEATS = 60;
+export const PORTAL_LIP_LAP_MS = 5200;
+export const PORTAL_LIP_SEAT_EVERY = 3;   // one seat in this many holds a star
+export const PORTAL_LIP_SEAT_W = 0.05;    // a star's width round the turn, in seats, and across the lip, in radii
+// The tear wanders a little cell to cell and in slow lobes round the turn;
+// the ground torn behind the lip is these greys.
+export const PORTAL_TEAR_JITTER = 1 / 90;
+export const PORTAL_TEAR_LOBES = 5;
+export const PORTAL_TEAR_LOBE = 0.05;
+export const PORTAL_TORN = ['#8a8a8a', '#b0b0b0'];
+// The mouth: the liquid under it, a little deeper and purpler, held this
+// many rungs darker on the grey ramp and on the purple one.
+export const PORTAL_MOUTH_DEEP = 0.4;
+export const PORTAL_MOUTH_PURPLE = 2;     // stars in seven
+export const PORTAL_MOUTH_DIM = 3;
+export const PORTAL_MOUTH_DIM_PURPLE = 2;
+// Crumbs of the torn ground falling off the lip and spiraling in: this many
+// at once, each in this long from the lip to the middle, going round this
+// many turns on the way.
+export const PORTAL_CRUMBS = 9;
+export const PORTAL_CRUMB_MS = 5200;
+export const PORTAL_CRUMB_TURNS = 0.45;
 // The wizards' portal is summoned, not bought outright: a wizard flies out
 // over the pit and pours it for this many wizard-seconds, from this high
 // over the surface.

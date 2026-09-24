@@ -157,10 +157,11 @@ const LAYERS = [
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
   { name: 'clods', draw: drawClods },            // and the loads still falling off the air filter's spout
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
-  { name: 'portal', draw: drawPortal },          // the whirlpool in the surface: the snatch's, and the wizards' held open
-  { name: 'shaft arrow', draw: drawYardArrow },  // and over the plank, the way down
-
   { name: 'pit outline', draw: drawPitOutline },
+  // The snatch's whirlpool, and the wizards' hole torn through the pit's
+  // near wall: after the outline, which would otherwise rule a line down it.
+  { name: 'portal', draw: drawPortal },
+  { name: 'shaft arrow', draw: drawYardArrow },  // and over it, the way down
 
   { name: 'paid', draw: drawPaid },
   { name: 'core', draw: drawCore },

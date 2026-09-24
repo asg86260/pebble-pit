@@ -14991,17 +14991,24 @@ about nine tenths of the window is water. In a glide the yard fades to that
 same white round the abyss, so the two halves are one picture at the turn.
 The pods stand between the crusher and the altar.
 
-**The portal is a circle, and it has two ends.** *(The owner's call, the
-same day: B of the mocked shapes, "set into the edge", but facing the
-window.)* The wizards' portal is no longer a whirlpool lying on the surface:
-it is a round ring facing the screen, set into the drowned pit against its
-near wall, as tall as the abyss is deep (`portalCircle`), poured from above
-and growing from its middle. Its other end hangs in the deep's water,
-straight under it and smaller (`deepPortal`, `DEEP_PORTAL_R`), with the
-arrow under it pointing up: a click on either end goes through. Going down,
-the ripple opens out of the pit's end; going up, it draws back into the
-deep's end, so the deep closes onto the circle that was pressed. The
-snatch's whirlpool on the surface at the mouth is unchanged.
+**The portal is a hole torn into the wall, and it has two ends.** *(The
+owner's calls, the same day: first B of the mocked shapes, "set into the
+edge", facing the window; then, to make it look like it is in the world, F
+of six mocks drawn from the abyss's own field -- docs/mocks/portal-*.html.)*
+The wizards' portal is a hole torn into the drowned pit's near wall, as tall
+as the abyss is deep and most of it in the ground (`portalCircle`,
+`PORTAL_INTO_WALL`). It is made of the abyss, not laid over it: its lip is
+the liquid's own veil streaming round the ragged tear, purple where it is
+thickest, with stars riding round in it; its mouth is the liquid itself,
+deeper and held a few rungs darker (`abyssRung`); and crumbs of the torn
+ground fall off the lip and spiral in, going dark. Everything in it turns
+the other way from the first mocks (the owner's call). It is poured from
+above and grows from its middle. Its other end hangs in the deep's water,
+straight under it and smaller (`deepPortal`, `DEEP_PORTAL_R`): the same lip
+and mouth with no ground to tear, and the arrow under it pointing up. A
+click on either end goes through. Going down, the ripple opens out of the
+pit's end; going up, it draws back into the deep's end. The snatch's
+whirlpool on the surface at the mouth is unchanged.
 
 **What goes.** The shaft's count and its two posts, `S.deepCrew` as a thing
 the player sets, `sendDeep`, the shaft walk for bodies, the yard's builders

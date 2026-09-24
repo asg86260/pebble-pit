@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Portal Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1040px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 500px)); gap: 18px; }
+  figure { margin: 0; }
+  canvas { width: 100%; image-rendering: pixelated; display: block; border: 1px solid #000; }
+  figcaption { margin-top: 6px; }
+  figcaption b { display: block; }
+  figcaption span { color: var(--dim); }
+</style>
+</head>
+<body>
+<h1>The portal, in the world: four options</h1>
+<p class="note">A mock drawn from plain cells, not the game. Every panel is painted by a copy of the
+pit's own abyss field (the same flow, breathing stars and veil, the same tone ramps), so each portal is
+made of the liquid rather than laid on top of it. It can't show the wizard pouring it, the deep's end
+(which would get the same treatment, turned over), the ripple, or the real window's size.
+The field's turn is its real 52 seconds, so the veils drift slowly; the portals move faster.</p>
+<div class="grid">
+  <figure><canvas id="A"></canvas><figcaption><b>A — Whorl</b><span>No ring at all. Inside the circle the abyss's own filaments and stars are wound into a slow spiral, going deeper (brighter, then purple) toward a black eye. At the edge it's just the liquid again.</span></figcaption></figure>
+  <figure><canvas id="B"></canvas><figcaption><b>B — Veil ring</b><span>The ring is made of the veil smoke: ragged grey runs with holes punched in them, lit purple where they're thickest, streaming around. Stars orbit in it. Inside, the liquid goes on, darker.</span></figcaption></figure>
+  <figure><canvas id="C"></canvas><figcaption><b>C — Window down</b><span>A circle you look through into the deep: the same liquid from much further down, closer up, so the stars are brighter and purpler and drift at their own pace. The rim is just a broken thread of the brightest purple.</span></figcaption></figure>
+  <figure><canvas id="D"></canvas><figcaption><b>D — Torn into the wall</b><span>The whorl, but it eats into the pit's near wall: a ragged hole in the ground, dust crumbling off its lip and spiraling in, fading into the abyss's greys as it goes.</span></figcaption></figure>
+</div>
+<script>
+// --- the pit's numbers (src/config/rift.js) -------------------------------
+const STAR_EVERY = 34, STAR_MS = 5200, STAR_FLOOR = 5, STAR_VARY = 3, BEND = 0.7;
+const FLOW_MS = 52000, COL = 0.16, ROW = 0.09, ASPECT = 0.7, DRIFT = 0.6, SHEAR = 9;
+const SHEAR_ROW = 0.43, SHEAR_TURN = 1.7, AMT2 = 0.6, SHEAR_COL = 1.3, AMT_Y = 0.5;
+const COL2 = 0.018, ROW2 = -0.035, DRIFT2 = -0.35, MIX = 0.8;
+const VEIL_AT = 0.22, VEIL_EVERY = 3, JITTER = 0.04, VEIL_LIT = 0.34, VEIL_DEEP = 0.34, LIFT = 0.45;
+const TONES = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const MAGIC = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+               '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const rungFor = (ramp, k) => Math.max(0, Math.min(ramp.length - 1, Math.round(k * (ramp.length - 1))));
+
+// --- the scene: yard sky, ground, the pit's near wall, the drowned pit -----
+const CELL = 5, COLS = 100, ROWS = 64;
+const GROUND = 15, LINE = 16, WALL = 16;          // ground line row, abyss line row, first pit column
+const R = 22, CX = WALL + R + 2, CY = (LINE + ROWS) / 2 - 1;
+
+// The field at a (possibly warped) cell. `deep` lifts it further in;
+// `magicShare` is how many stars in seven are purple; `veilMagic` turns the
+// veil's ramp purple.
+function field(c, r, t, o = {}) {
+  const a = t / FLOW_MS * Math.PI * 2;
+  const dragX = Math.sin(r * ROW + a) * SHEAR + Math.sin(r * ROW * SHEAR_ROW - a * SHEAR_TURN) * SHEAR * AMT2;
+  const dragY = Math.sin(c * COL * SHEAR_COL - a * SHEAR_COL) * SHEAR * AMT_Y;
+  const depth = Math.max(0, Math.min(1, (r - LINE) / 32 + (o.deep || 0)));
+  const cx = c + dragX, ry = r + dragY;
+  const f = Math.sin(cx * COL + ry * ROW * ASPECT - a * DRIFT);
+  const swell = 1 - MIX + MIX * (Math.sin(cx * COL2 + ry * ROW2 - a * DRIFT2) + 1) / 2;
+  const ci = Math.floor(c), ri = Math.floor(r);
+  const h = seeth(ci, ri), patch = seeth(ci >> 3, ri >> 3) % 10;
+  const keep = patch >= 7 ? 4 : 1;
+  if (patch >= 3 && h % STAR_EVERY < keep * (o.stars || 1)) {
+    const swing = (Math.sin(t / STAR_MS * Math.PI * 2 * (0.6 + (h % 7) * 0.1) + h) + 1) / 2;
+    const k = Math.pow(swing, BEND) * (1 - LIFT + LIFT * (f + 1) / 2);
+    const ramp = h % 7 < (o.magicShare || 1) ? MAGIC : TONES;
+    const allowed = STAR_FLOOR + Math.round(depth * (ramp.length - 1 - STAR_FLOOR));
+    const rung = Math.min(ramp.length - 1, Math.round(k * (allowed - (h >> 3) % STAR_VARY)));
+    if (rung > 0) return ramp[rung];
+  }
+  const off = Math.abs(f), band = VEIL_AT * swell * (o.band || 1);
+  if (off > band || h % VEIL_EVERY === 0) return null;
+  const thick = (1 - off / band) * swell;
+  const lit = thick * (VEIL_LIT + depth * VEIL_DEEP) + (h % 3 - 1) * JITTER;
+  const ramp = o.veilMagic ? MAGIC : TONES;
+  const rung = rungFor(ramp, lit * (o.veilLift || 1));
+  return rung ? ramp[rung] : null;
+}
+
+// Where the ground is and what it looks like: the pale hatched near wall.
+const isWall = (c, r) => r > GROUND && c < WALL;
+function wallTone(c, r) { return (c + r) % 4 === 0 ? '#c9c9c9' : '#ececec'; }
+function sky(c, r) {
+  if (r === GROUND && c < WALL) return '#000';
+  if (r < GROUND || (r === GROUND)) return seeth(c, r) % 53 === 0 ? '#d8d8d8' : '#f6f6f6';
+  return null;
+}
+
+// The whorl: the liquid inside sampled from coordinates turned about the
+// middle, the more the nearer, and the whole of it turning; and the veil
+// itself wound into three arms that tighten toward a black eye, lit further
+// up its ramp (and into purple) the deeper in they reach, holed by the hash
+// like the veil anywhere else.
+function whorl(c, r, t, cx, cy, rad) {
+  const dx = c - cx, dy = r - cy, d = Math.hypot(dx, dy) / rad;
+  if (d >= 1) return undefined;
+  if (d < 0.1) return '#000';
+  const s = (1 - d) * (1 - d), e = 1 - d;
+  const th = Math.atan2(dy, dx);
+  const h = seeth(c, r);
+  const arm = Math.sin(th * 3 + Math.log(d) * 5.5 + t / 700);
+  const armW = 0.55 + 0.25 * e;
+  if (arm > 1 - armW * e * 1.4 && h % VEIL_EVERY !== 0) {
+    const lit = (arm - (1 - armW)) / armW * (0.35 + e * 0.75) + (h % 3 - 1) * JITTER;
+    const ramp = e > 0.45 ? MAGIC : TONES;
+    const g = rungFor(ramp, Math.min(1, lit));
+    if (g) return ramp[g];
+  }
+  const ang = s * 9 + s * t / 1800, pull = 1 + s * 3;
+  const x = cx + (dx * Math.cos(ang) - dy * Math.sin(ang)) * pull;
+  const y = cy + (dx * Math.sin(ang) + dy * Math.cos(ang)) * pull;
+  return field(x, y, t, { deep: s * 0.9 + e * 0.3, magicShare: 1 + Math.round(s * 5), veilMagic: s > 0.3,
+                          veilLift: 1 + e * 1.6, stars: 1 + s * 3, band: 1 + e * 2.2 }) || '#000';
+}
+
+const OPTIONS = {
+  A(c, r, t) {
+    return whorl(c, r, t, CX, CY, R);
+  },
+  B(c, r, t) {
+    const dx = c - CX, dy = r - CY, d = Math.hypot(dx, dy) / R;
+    const th = Math.atan2(dy, dx);
+    if (r <= LINE) return undefined;
+    if (d >= 0.78 && d <= 1.08) {
+      const h = seeth(c, r);
+      const wave = 0.5 + 0.5 * Math.sin(th * 7 + t / 900 + 3 * Math.sin(th * 3 - t / 2300));
+      const lit = (1 - Math.abs(d - 0.93) / 0.15) * wave + (h % 3 - 1) * 0.06;
+      if (lit > 0.12 && h % 3 !== 0) {
+        return lit > 0.72 ? MAGIC[rungFor(MAGIC, 0.55 + lit * 0.45)] : TONES[rungFor(TONES, lit * 0.8)];
+      }
+      // stars riding round it
+      const ang = ((th + t / 5200) / (Math.PI * 2) * 60 + 600) % 60;
+      if (Math.abs(ang - Math.round(ang)) < 0.05 && seeth(Math.round(ang), 7) % 3 === 0 && Math.abs(d - 0.93) < 0.05) {
+        const br = (Math.sin(t / 900 + Math.round(ang)) + 1) / 2;
+        const g = rungFor(TONES, br);
+        if (g) return TONES[g];
+      }
+      return field(c, r, t);
+    }
+    if (d < 0.78) {
+      const v = field(c, r, t, { deep: 0.4, magicShare: 2 });
+      if (!v) return '#000';
+      // the liquid inside held back a few rungs, so the ring reads as a mouth
+      const i = Math.max(0, TONES.indexOf(v) - 3), j = Math.max(0, MAGIC.indexOf(v) - 2);
+      return TONES.includes(v) ? TONES[i] : MAGIC[j];
+    }
+    return undefined;
+  },
+  C(c, r, t) {
+    const dx = c - CX, dy = r - CY, d = Math.hypot(dx, dy) / R;
+    if (d < 0.96) {
+      // far down, closer up: a cell of the window is less than a cell of the deep
+      const x = CX + 300 + dx * 0.55 + t / 900, y = CY + 60 + dy * 0.55;
+      return field(x, y, t * 1.4, { deep: 0.8, magicShare: 3, veilMagic: true, veilLift: 1.6, stars: 2 }) || '#000';
+    }
+    if (d < 1.04) {
+      const th = Math.atan2(dy, dx), h = seeth(c, r);
+      const br = (Math.sin(th * 5 - t / 1100) + 1) / 2;
+      if (h % 3 === 0) return field(c, r, t);
+      const g = rungFor(MAGIC, 0.35 + br * 0.65);
+      return g ? MAGIC[g] : '#000';
+    }
+    return undefined;
+  },
+  D(c, r, t) {
+    const rad = R * 0.95, cx = WALL + 6, cy = CY;
+    const dx = c - cx, dy = r - cy, dd = Math.hypot(dx, dy);
+    const h = seeth(c, r);
+    const edge = rad * (1 + ((h % 11) - 5) / 90 + 0.05 * Math.sin(Math.atan2(dy, dx) * 5));
+    if (dd < edge && r > GROUND) {
+      return whorl(c, r, t, cx, cy, edge) ?? '#000';
+    }
+    if (isWall(c, r) && dd < edge + 1.6) return h % 2 ? '#8a8a8a' : '#b0b0b0';   // the torn lip
+    return undefined;
+  }
+};
+
+// D's crumbs: dust off the lip, spiraling in and going dark as it goes.
+const crumbs = [];
+function stepCrumbs(t, dt) {
+  const rad = R * 0.95;
+  if (Math.random() < dt / 180) {
+    const a = Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.5;
+    crumbs.push({ a: a + Math.PI, d: rad });
+  }
+  for (const k of crumbs) { k.a += dt / 1400 * (1 + (rad - k.d) / 8); k.d -= dt / 260; }
+  for (let i = crumbs.length - 1; i >= 0; i--) if (crumbs[i].d < 2) crumbs.splice(i, 1);
+}
+
+const canvases = {};
+for (const id of Object.keys(OPTIONS)) {
+  const cv = document.getElementById(id);
+  cv.width = COLS * CELL; cv.height = ROWS * CELL;
+  const g = cv.getContext('2d');
+  canvases[id] = { g, img: g.createImageData(COLS, ROWS), off: Object.assign(document.createElement('canvas'), { width: COLS, height: ROWS }) };
+}
+const rgb = new Map();
+function put(data, i, hex) {
+  let v = rgb.get(hex);
+  if (!v) { const n = parseInt(hex.slice(1), 16); v = [n >> 16 & 255, n >> 8 & 255, n & 255]; rgb.set(hex, v); }
+  data[i] = v[0]; data[i + 1] = v[1]; data[i + 2] = v[2]; data[i + 3] = 255;
+}
+
+let last = performance.now();
+function frame(now) {
+  const t = now, dt = Math.min(100, now - last); last = now;
+  stepCrumbs(t, dt);
+  for (const [id, draw] of Object.entries(OPTIONS)) {
+    const { g, img, off } = canvases[id];
+    const data = img.data;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const i = (r * COLS + c) * 4;
+      let v = draw(c, r, t);
+      if (v === undefined) v = sky(c, r) ?? (isWall(c, r) ? wallTone(c, r) : (r === LINE ? MAGIC[9] : field(c, r, t)));
+      if (v === undefined || v === null) v = '#000';
+      put(data, i, v);
+    }
+    if (id === 'D') {
+      const rad = R * 0.95;
+      for (const k of crumbs) {
+        const c = Math.round(WALL + 6 + Math.cos(k.a) * k.d), r = Math.round(CY + Math.sin(k.a) * k.d);
+        if (c < 0 || c >= COLS || r < 0 || r >= ROWS) continue;
+        put(data, (r * COLS + c) * 4, TONES[Math.max(1, Math.round(k.d / rad * 10))]);
+      }
+    }
+    off.getContext('2d').putImageData(img, 0, 0);
+    g.imageSmoothingEnabled = false;
+    g.drawImage(off, 0, 0, COLS * CELL, ROWS * CELL);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

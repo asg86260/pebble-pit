@@ -13,7 +13,7 @@ import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
-         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN } from '../config.js';
+         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, PORTAL_INTO_WALL } from '../config.js';
 import { SPRITES } from './sprites.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -35,15 +35,15 @@ export const inDeep = (x, y) => y >= deepTop() && y <= deepFloor() && x >= deepX
 // is straight.
 export const mouthX = () => snap(pit.x + DEEP_MOUTH);
 
-// The wizards' portal, and the deep's way in and out for the player: a
-// circle facing the window, set into the drowned pit against its near wall,
-// as tall as the abyss is deep -- its floor to a little over the surface
-// (DESIGN.md, "Two crews and a portal", the owner's call). The snatch's own
-// whirlpool opens on the surface at the mouth, where the pair stand.
+// The wizards' portal, and the deep's way in and out for the player: a hole
+// torn into the drowned pit's near wall, as tall as the abyss is deep, most
+// of it in the ground (DESIGN.md, "Two crews and a portal", the owner's
+// call). The snatch's own whirlpool opens on the surface at the mouth, where
+// the pair stand.
 export function portalCircle() {
   const line = abyssLine(), floor = S.groundY + pitDepth();
-  const r = snap((floor - line) / 2 + P * 2);
-  return { x: snap(pit.x + r + P * 2), y: snap((line + floor) / 2 - P * 2), r };
+  const r = snap((floor - line) / 2);
+  return { x: snap(pit.x + r * (1 - PORTAL_INTO_WALL)), y: snap((line + floor) / 2), r };
 }
 export const portalX = () => portalCircle().x;
 // Its other end in the deep, straight under it in the water: the way up.
