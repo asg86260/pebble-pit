@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crusher Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .opt { border-top: 1px solid var(--rule); padding: 14px 0 18px; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 10px; max-width: 1080px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .lbl { color: var(--dim); font-size: 11px; margin-top: 3px; }
+  pre { margin: 0; padding: 8px; border: 1px solid var(--rule); font-size: 11px; line-height: 1.15; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; margin-top: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>The crusher, redrawn: four options</h1>
+<p class="note">A mock drawn from plain cells, not the game. The crusher is the deep's purse: gatherers (haulers
+lent down the shaft) scoop the loose scales off the floor and toss them in an arc into its mouth, and a scale is
+money once it is crushed in there. Each drawing is 30 x 30 cells, the crusher's own box (<code>CRUSHER_W</code> x
+<code>CRUSHER_H</code>), with its mouth open across the middle 20 columns at the top where the hopper is today, so
+the tosses still land where the game counts them. It is painted the way the deep paints a station: a cell a
+character, in the five tones as they are seen down there (<code>#</code> white, <code>+</code> light grey,
+<code>-</code> dark grey, <code>o</code> the black water, <code>*</code> the abyss's purple), on the deep's mottled
+floor. The crusher has no dome in the game today, so none is drawn here. Left is the game's own size (a cell is
+6 px), right is four times that. White squares to its right toss scales in; while scales are going in, the
+working part moves (two frames) and grit puffs off the foot, as the rollers turn today only while it is fed.
+What it cannot show: the real abyss field (the water here is a cheap stand-in), the scale bed on the floor, the
+serpent overhead, the pile-full mark, and the counter card that sits over the crusher at the left of the glass.
+The crusher is drawn by code today (<code>drawCrusher</code> in render/deep.js), not from <code>SPRITES</code>:
+building one of these means painting its entry at <code>crusherRect()</code> in place of that code, plus its
+second frame for the moving part.</p>
+<div id="opts"></div>
+<script>
+// --- the drawings -------------------------------------------------------------------
+// Each option is drawn by a function of its frame (0 at rest, 1 the working
+// part moved), onto a 30 x 30 grid of tone characters.
+const N = 30;
+function grid() {
+  const g = Array.from({ length: N }, () => Array(N).fill('.'));
+  const P = {
+    put(r, c, ch) { if (r >= 0 && r < N && c >= 0 && c < N && ch !== ' ') g[r][c] = ch; },
+    row(r, c, s) { [...s].forEach((ch, i) => P.put(r, c + i, ch)); },
+    fill(r0, c0, r1, c1, f) { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) P.put(r, c, typeof f === 'function' ? f(r, c) : f); },
+    mir(r, c, ch) { P.put(r, c, ch); P.put(r, N - 1 - c, ch); },
+    at(r, c) { return g[r] && g[r][c]; },
+    rows() { return g.map(r => r.join('')); }
+  };
+  return P;
+}
+// Serpent's scales: a light plate with a dark edge, every other row staggered.
+const scale = (r, c) => (c + (r % 2) * 2) % 4 === 0 ? '-' : '+';
+// Stone: light, with a crack here and there.
+const stone = (r, c) => (c * 7 + r * 3) % 11 === 0 ? '-' : '+';
+// A heap of grit: a mound from the floor, `w` wide at its foot, `h` high.
+function heap(P, c0, w, h, seed) {
+  for (let k = 0; k < h; k++) {
+    const inset = Math.round(k * (w / 2) / h);
+    for (let c = c0 + inset; c < c0 + w - inset; c++) {
+      const v = (c * 13 + k * 7 + seed) % 9;
+      P.put(28 - k, c, v === 0 ? '*' : v < 4 ? '-' : '+');
+    }
+  }
+}
+
+// A -- the maw: a serpent's head stood up out of the floor, jaws gaping.
+function maw(f) {
+  const P = grid();
+  const upOut = r => Math.round(1 + r * 0.4), upTh = r => r < 4 ? 3 : r < 9 ? 4 : 5;
+  const loOut = r => Math.round(28 - (r - 4) * 0.33), loTh = r => r < 10 ? 3 : 4;
+  // the upper jaw, on the left: snout up top, the eye down by the hinge
+  for (let r = 0; r <= 15; r++) {
+    const x = upOut(r), th = upTh(r);
+    P.put(r, x, '#'); P.fill(r, x + 1, r, x + th - 1, scale); P.put(r, x + th, '#');
+  }
+  P.row(0, upOut(0), '####');
+  P.row(11, upOut(11) + 1, '##'); P.row(12, upOut(12) + 1, '#**#'.slice(1, 3)); P.row(13, upOut(13) + 1, '**');
+  P.put(2, upOut(2) + 1, '-'); P.put(2, upOut(2) + 2, '-');
+  // the lower jaw, on the right
+  for (let r = 4; r <= 15; r++) {
+    const x = loOut(r), th = loTh(r);
+    P.put(r, x, '#'); P.fill(r, x - th + 1, r, x - 1, scale); P.put(r, x - th, '#');
+  }
+  P.row(4, loOut(4) - 3, '####');
+  // the gullet between them, black from a little way down
+  for (let r = 7; r <= 15; r++) P.fill(r, upOut(r) + upTh(r) + 1, r, loOut(r) - loTh(r) - 1, 'o');
+  // two long fangs off the upper jaw, and a row of teeth up the lower
+  for (const r0 of [1, 6]) {
+    const e = r => upOut(r) + upTh(r);
+    P.put(r0, e(r0) + 1, '#'); P.put(r0 + 1, e(r0 + 1) + 1, '#'); P.put(r0 + 1, e(r0 + 1) + 2, '#');
+    P.put(r0 + 2, e(r0 + 2) + 2, '#'); P.put(r0 + 3, e(r0 + 3) + 2, '#');
+  }
+  for (let r = 6; r <= 14; r += 2) P.put(r, loOut(r) - loTh(r) - 1, '#');
+  // the grinding teeth down in the throat, and the purple where it chews
+  for (let c = 12; c <= 18; c++) {
+    if ((c + f) % 2 === 0) P.put(13, c, '#');
+    if ((c + f) % 2 === 1) P.put(15, c, '#');
+  }
+  P.fill(14, 13, 14, 16, '*');
+  // the hinge: the head where the jaws meet
+  P.fill(16, 6, 16, 23, '#');
+  P.fill(17, 5, 18, 24, (r, c) => c === 5 || c === 24 ? '#' : scale(r, c));
+  P.put(17, 7, '*'); P.put(17, 22, '*');                  // gill slits
+  P.fill(19, 6, 19, 23, '#');
+  // the neck down into the floor: belly plates, a band each
+  for (let r = 20; r <= 28; r++) {
+    const w = Math.round((r - 20) * 0.4);
+    P.put(r, 9 - w, '#'); P.put(r, 20 + w, '#');
+    P.fill(r, 10 - w, r, 19 + w, r % 2 ? '+' : '-');
+  }
+  // grit dropping off the gills into a heap each side
+  P.put(19, 4, '-'); P.put(21, 3, '+'); P.put(23, 4, '-');
+  P.put(19, 25, '-'); P.put(21, 26, '+'); P.put(23, 25, '-');
+  heap(P, 0, 9, 4, 1); heap(P, 21, 9, 4, 5);
+  P.fill(29, 0, 29, 29, '#');
+  return P.rows();
+}
+
+// B -- the quern: a funnel over two millstones, the top one turned by a crank.
+function quern(f) {
+  const P = grid();
+  // the funnel: its front face, a ring of runes cut round it
+  for (let r = 1; r <= 7; r++) {
+    const x = 3 + Math.round(r * 0.75);
+    P.mir(r, x, '#');
+    P.fill(r, x + 1, r, N - 2 - x, (rr, c) => rr === 3 ? (c % 3 === 1 ? '*' : '-') : stone(rr, c));
+  }
+  P.fill(0, 3, 0, 26, '#');
+  // the top stone: it turns, so its grooves and runes slide round
+  const stoneBand = (r0, turn) => {
+    for (let r = r0; r <= r0 + 4; r++) for (let c = 1; c <= 28; c++) {
+      const edge = r === r0 || r === r0 + 4 || c === 1 || c === 28;
+      if ((r === r0 || r === r0 + 4) && (c === 1 || c === 28)) continue;
+      const k = c + turn;
+      P.put(r, c, edge ? '#' : (r === r0 + 2 && k % 8 === 3) ? '*' : k % 4 === 0 ? '-' : '+');
+    }
+  };
+  stoneBand(8, f * 2);
+  stoneBand(14, 0);
+  // the crank, stood up off the top stone's right end
+  P.put(3, 26, '*'); P.put(3, 27, '*');
+  for (let r = 4; r <= 7; r++) { P.put(r, 26, '#'); P.put(r, 27, '+'); }
+  // the seam between them, grit spraying out of both ends
+  P.fill(13, 2, 13, 27, 'o');
+  P.row(13, 0, f ? '+-' : '-+'); P.row(13, 28, f ? '-+' : '+-');
+  for (const r of [15, 18, 21, 24]) { P.put(r + f, 0, '-'); P.put(r + 1 - f, 29, '-'); }
+  heap(P, 0, 6, 3, 2); heap(P, 24, 6, 3, 4);
+  // the stand: two legs with a chain slung between them
+  P.fill(19, 5, 19, 24, '#');
+  for (let r = 20; r <= 28; r++) { P.row(r, 6, '#+#'); P.row(r, 21, '#+#'); }
+  for (let c = 9; c <= 20; c++) {
+    const r = 21 + Math.round(3 * Math.sin(Math.PI * (c - 8.5) / 12.5));
+    P.put(r, c, c % 2 ? '+' : '-');
+  }
+  P.fill(28, 4, 28, 25, '#');
+  P.fill(29, 0, 29, 29, '#');
+  return P.rows();
+}
+
+// C -- the mortar: a black-water bowl on three claw legs, a pestle in it
+// worked by a tentacle up out of the water.
+function mortar(f) {
+  const P = grid();
+  // the bowl: the back of its rim, the water, the front of its rim, its wall
+  P.fill(4, 6, 4, 23, '#');
+  for (const r of [5, 6]) {
+    P.row(r, 3, '##'); P.row(r, 25, '##');
+    P.fill(r, 5, r, 24, (rr, c) => rr === 5 && c === 8 ? '-' : rr === 6 && c === 22 ? '*' : 'o');
+  }
+  const out = [3, 3, 4, 4, 5, 6, 7, 9, 11];
+  out.forEach((x, i) => {
+    const r = 8 + i;
+    P.put(r, x, '#'); P.put(r, N - 1 - x, '#');
+    // dark stone, a band of purple runes cut round it
+    P.fill(r, x + 1, r, N - 2 - x, (rr, c) => i === 8 ? '#' : rr === 10 ? (c % 3 === 0 ? '*' : '-') : (c * 5 + rr * 3) % 7 === 0 ? '+' : '-');
+  });
+  // three claw legs, and the grit heaped between them
+  heap(P, 8, 14, 4, 3);
+  for (let r = 17; r <= 28; r++) {
+    const d = Math.round((r - 17) * 0.45);
+    P.row(r, 9 - d, '#+'); P.row(r, 19 + d, '+#');
+    P.row(r, 14, '#+');
+  }
+  P.row(28, 2, '#-#-'); P.row(28, 24, '-#-#'); P.row(28, 13, '#-#-');
+  // grit dribbling off the lip on the left
+  P.put(7, 1, '#'); P.put(7, 2, '+');
+  for (const r of [9, 12, 16, 20]) P.put(r + f, 1, '-');
+  heap(P, 0, 5, 3, 6);
+  // the pestle, lifted two rows while it pounds, its head sunk in the water
+  // behind the front of the rim; the tentacle up out of the water, wound
+  // round it twice, suckers along it
+  const K = f ? 0 : 2;
+  P.row(K, 13, '####');
+  for (let r = K + 1; r <= 6; r++) P.row(r, 13, '#++#');
+  P.row(K + 5, 12, '#++++#'); P.row(K + 6, 12, '#++++#');
+  const arm = [[6, 21], [5, 21]];
+  for (let r = 4; r >= K + 3; r--) arm.push([r, 20]);
+  for (let c = 19; c >= 11; c--) arm.push([K + 3, c]);
+  arm.push([K + 2, 10], [K + 1, 11]);
+  for (let c = 12; c <= 17; c++) arm.push([K + 1, c]);
+  arm.push([K, 18], [K, 19], [K + 1, 20]);
+  arm.forEach(([r, c], i) => P.put(r, c, i % 3 === 2 ? '*' : '+'));
+  P.fill(7, 3, 7, 26, '#');
+  P.fill(29, 0, 29, 29, '#');
+  return P.rows();
+}
+
+// D -- the gear crusher: a funnel of scale plates over two toothed drums
+// that turn into each other on trestles, grit dropping out of the nip.
+function gears(f) {
+  const P = grid();
+  // the hopper: its front face, overlapping plates of the serpent's scales
+  for (let r = 1; r <= 8; r++) {
+    const x = 1 + Math.round(r * 0.75);
+    P.mir(r, x, '#'); P.fill(r, x + 1, r, N - 2 - x, scale);
+  }
+  P.fill(0, 1, 0, 28, '#');
+  // the trestles under each drum's axle, drawn first so the drums sit on them
+  for (const hub of [8, 21]) {
+    for (let r = 15; r <= 28; r++) {
+      const d = Math.round((r - 15) * 0.3);
+      P.put(r, hub - 1 - d, '#'); P.put(r, hub + 1 + d, '#');
+    }
+    P.fill(22, hub - 3, 22, hub + 3, '-');
+  }
+  // the drums: a solid wheel each, teeth round the rim, spokes turning,
+  // turning toward each other so what falls in the nip goes down
+  for (const [cc, dir] of [[8.5, 1], [21.5, -1]]) {
+    for (let r = 7; r <= 22; r++) for (let c = 0; c <= 29; c++) {
+      const dx = c + 0.5 - cc, dy = r + 0.5 - 14.5, d = Math.hypot(dx, dy);
+      if (d > 6.6) continue;
+      const a = Math.atan2(dy, dx), turn = f * dir * Math.PI / 10;
+      const tooth = ((Math.floor((a + turn) / (Math.PI / 5)) % 2) + 2) % 2 === 0;
+      if (d > 5.3) { if (tooth) P.put(r, c, '#'); continue; }
+      if (d > 4.3) { P.put(r, c, '-'); continue; }
+      if (d < 1.2) { P.put(r, c, '*'); continue; }
+      // three spokes, each a line out from the hub
+      const spoke = [0, 1, 2].some(k => {
+        const t = k * 2 * Math.PI / 3 + turn * 2;
+        return Math.abs(dx * Math.sin(t) - dy * Math.cos(t)) < 0.6 && dx * Math.cos(t) + dy * Math.sin(t) > 0;
+      });
+      P.put(r, c, spoke ? '-' : '+');
+    }
+  }
+  // grit out of the nip, and the heap under it
+  for (const r of [22, 24, 26]) P.put(r + f, 14 + ((r / 2 + f) % 2), r === 24 ? '*' : '-');
+  heap(P, 10, 10, 3, 7);
+  P.fill(29, 0, 29, 29, '#');
+  return P.rows();
+}
+
+// --- the four -------------------------------------------------------------------------
+const OPTIONS = [
+  { key: 'A', name: 'The maw', rows: maw(0), alt: maw(1), grit: [[27, 4], [27, 25]],
+    cap: 'A serpent\'s head stood up out of the floor, jaws gaping as the mouth: the upper jaw with its purple eye and two long fangs, the lower toothed. Scales go down its throat, the back teeth grind on a purple glow, and grit drops off its gills into heaps either side.' },
+  { key: 'B', name: 'The quern', rows: quern(0), alt: quern(1), grit: [[13, 1], [13, 28]],
+    cap: 'A rune-ringed stone funnel over two millstones on a two-legged stand with a chain slung under it; the top stone turns on its crank against the bottom one, and grit sprays out of the seam and falls in heaps at the foot.' },
+  { key: 'C', name: 'The mortar', rows: mortar(0), alt: mortar(1), grit: [[6, 1], [25, 1]],
+    cap: 'A dark stone bowl of black water with a band of purple runes, on three claw legs over a heap of grit; a white pestle in it is worked by a tentacle up out of the water, pounding while scales go in, and grit dribbles off the lip.' },
+  { key: 'D', name: 'The gear drums', rows: gears(0), alt: gears(1), grit: [[27, 14]],
+    cap: 'The machine today, made abyssal: a hopper faced with the serpent\'s scales over two toothed drums on trestles, turning into each other round purple hubs, the grit dropping out of the nip into a heap between them.' }
+];
+
+// --- the deep's tones, as seen -----------------------------------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const INK = { '#': '#ffffff', '+': GREYS[9], '-': GREYS[6], 'o': '#000000', '*': PURPLES[11] };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const hash = n => { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); };
+
+// --- the scene, in cells -------------------------------------------------------------
+// The mouth: the middle 20 columns of the top, three rows down (HOPPER_W, HOPPER_LIP).
+const SIZE = 30, MOUTH_W = 20, LIP = 3, WORKER = 3, TOSS_FROM = 8, RISE = 14;
+const LEFT = 8, RIGHT = 30, SKY = 20, FLOOR_ROWS = 4;
+
+function layout(o) {
+  const W = LEFT + SIZE + RIGHT, floor = SKY + SIZE;
+  return { W, Hc: floor + FLOOR_ROWS, floor, sx: LEFT, sy: floor - SIZE };
+}
+
+function water(g, L, s, t) {
+  for (let y = 0; y < L.floor; y++) for (let x = 0; x < L.W; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + t / 5200) * 2.4 + t / 7000);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 6) {
+      const b = 0.5 + 0.5 * Math.sin(t / 900 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 9))];
+    }
+    g.fillStyle = tone; g.fillRect(x * s, y * s, s, s);
+  }
+  for (let r = 0; r < FLOOR_ROWS; r++) for (let x = 0; x < L.W; x++) {
+    g.fillStyle = GREYS[2 + (seeth(x, L.floor + r + 7) % 3) + (r === 0 ? 2 : 0)];
+    g.fillRect(x * s, (L.floor + r) * s, s, s);
+  }
+  // a few loose scales lying on the floor to the right, waiting to be gathered
+  for (let x = L.sx + SIZE + 2; x < L.W; x++) {
+    const n = seeth(x, 3) % 3;
+    for (let k = 0; k < n; k++) { g.fillStyle = GREYS[8 + (seeth(x, k) % 3)]; g.fillRect(x * s, (L.floor - 1 - k) * s, s, s); }
+  }
+}
+
+// A gatherer's load: a scale every beat, on an arc from its hand into the mouth.
+const EVERY = 0.9, FLIGHT = 0.67, BUSY = 0.6;
+function tosses(t) {
+  const n = Math.floor(t / EVERY), dt = t - n * EVERY;
+  return { n, dt, busy: dt > FLIGHT && dt < FLIGHT + BUSY };
+}
+
+function sprite(g, L, s, o, t) {
+  const { busy } = tosses(t);
+  const rows = busy && Math.floor(t * 1000 / 110) % 2 ? o.alt : o.rows;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    g.fillStyle = INK[ch]; g.fillRect((L.sx + c) * s, (L.sy + r) * s, s, s);
+  }));
+  if (!busy) return;
+  // grit puffing where it leaves
+  for (const [gr, gc] of o.grit) for (let i = 0; i < 3; i++) {
+    const k = Math.floor(t * 1000 / 80) + i * 7 + gc;
+    const x = L.sx + gc + Math.round((hash(k) - 0.5) * 3), y = L.sy + gr + Math.round(hash(k * 3 + 1) * 3) - 1;
+    g.fillStyle = GREYS[6 + (k % 4)]; g.fillRect(x * s, y * s, s, s);
+  }
+}
+
+function bodies(g, L, s, t) {
+  const { n, dt } = tosses(t);
+  const hand = L.sx + SIZE + TOSS_FROM, y = L.floor - WORKER;
+  const who = n % 2;                                      // two gatherers, turn about
+  for (let i = 0; i < 2; i++) {
+    const x = hand + i * 5 - (i === who && dt < 0.12 ? 1 : 0);
+    g.fillStyle = '#ffffff'; g.fillRect(x * s, y * s, WORKER * s, WORKER * s);
+    g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(x * s, y * s, WORKER * s, WORKER * s);
+  }
+  // the scale in the air: from the tosser's head, up over the lip, down into the mouth
+  if (dt < FLIGHT) {
+    const k = dt / FLIGHT, x0 = hand + who * 5 + 1, y0 = y - 1;
+    const x1 = L.sx + SIZE / 2 + ((n * 7) % 9) - 4, y1 = L.sy + LIP + 1;
+    const x = x0 + (x1 - x0) * k, yy = y0 + (y1 - y0) * k - 4 * RISE * k * (1 - k);
+    g.fillStyle = GREYS[10]; g.fillRect(Math.round(x) * s, Math.round(yy) * s, s, s);
+  }
+}
+
+function entry(o) {
+  return '  crusher: [\n' + o.rows.map(r => `    '${r}'`).join(',\n') + '\n  ],';
+}
+
+const panes = [];
+const only = location.hash.slice(1);
+for (const o of OPTIONS.filter(o => !only || only.includes(o.key))) {
+  const L = layout(o);
+  const box = document.createElement('div');
+  box.className = 'opt';
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2><p class="cap">${o.cap}
+    <br>${o.rows[0].length} x ${o.rows.length}</p><div class="row"></div>`;
+  const row = box.querySelector('.row');
+  const mk = (s, crop, label) => {
+    const wrap = document.createElement('div');
+    const c = document.createElement('canvas');
+    c.width = crop.w * s; c.height = crop.h * s;
+    wrap.append(c);
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = label; wrap.append(l);
+    row.append(wrap);
+    panes.push({ o, L, s, crop, g: c.getContext('2d') });
+  };
+  mk(6, { x: 0, y: 0, w: L.W, h: L.Hc }, '1x -- the game\'s size');
+  mk(24, { x: L.sx - 2, y: L.sy - 3, w: SIZE + 4, h: SIZE + 4 }, '4x, cropped to the drawing');
+  const code = document.createElement('div');
+  const pre = document.createElement('pre'); pre.textContent = entry(o);
+  const b = document.createElement('button'); b.textContent = 'copy';
+  b.onclick = () => navigator.clipboard.writeText(entry(o)).then(() => { b.textContent = 'copied'; });
+  code.append(pre, b);
+  row.append(code);
+  document.getElementById('opts').append(box);
+  for (const rs of [o.rows, o.alt]) if (rs.length !== SIZE || rs.some(r => r.length !== SIZE)) console.warn(o.key, 'not 30 x 30');
+}
+
+const t0 = performance.now();
+function frame() {
+  const ms = performance.now() - t0, t = ms / 1000;
+  for (const p of panes) {
+    const { g, s, crop, L, o } = p;
+    g.setTransform(1, 0, 0, 1, -crop.x * s, -crop.y * s);
+    water(g, L, s, ms);
+    sprite(g, L, s, o, t);
+    bodies(g, L, s, t);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
