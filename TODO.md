@@ -21,13 +21,17 @@ Open:
 deep bodies wander, float or hop instead of hanging still. Blocker: the
 owner's vote on a mock, and how far a body may wander from its station.
 
-## The janitors' roomba -- DESIGNED, AWAITING THE VOTE (2026-09-23)
+## The janitors' roomba -- BUILT, TUNING OPEN (2026-09-23)
 
-"The janitors' roomba" at the end of DESIGN.md; mocks in
-`docs/mocks/roomba-2026-09-23.html` (three options). The closet's machine: a
-disc that drives to each patch of poop, takes it into a bin and docks at the
-closet. Blocker: the owner's vote on a mock, and the three open calls in the
-design -- poop only or the sky's muck too, a tender or unmanned, soot or none.
+"The janitors' roomba" at the end of DESIGN.md, option B of the mocks. Up to
+three roombas on a dock by the closet take the poop and the sky's muck off
+the open yard; one janitor minds them and tips their bins. Open:
+- **Nobody has watched a front with them.** `ROOMBA_BIN` (24), `ROOMBA_PACE`
+  (2.5x a walk) and `ROOMBA_TIP_MS` are first guesses on the dev panel; after
+  a heavy rain the bins fill in a patch or two and the trips home are most of
+  the work. The soot (`MACHINE_FOUL` a grain) is unmeasured against the air
+  filter.
+- **The suck is silent** (`roomba-suck` maps to null in `SOUNDS`).
 
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 

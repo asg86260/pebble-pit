@@ -20,6 +20,7 @@ feature lives in DESIGN.md.
 - The wizards' portal is a hole torn into the pit's wall, made of the abyss's own smoke and liquid, and its other end hangs in the deep: a click on it goes back up (src/selftest/deep.js).
 - A builder hammering in the deep stirs up silt that sinks back and settles on the floor (test/deep-works.test.mjs).
 - The pods have a board of their own that sells another pod, and the deep's stations stand further apart (test/pods.test.mjs, src/selftest/deep.js).
+- Roombas for the janitor's closet, up to three: they drive out to the poop and the rain's muck on the open yard and bring it home for the one janitor minding them to tip away, and they smoke (test/roomba.test.mjs).
 
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).
