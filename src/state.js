@@ -473,7 +473,7 @@ export const S = {
   portalOpen: false,      // the wizards' portal over the abyss stands: the player's way down
   portalAt: 0,            // when it was conjured, for its opening
   portalPour: 0,          // how much of it the wizard has poured, 0..1, while it is being summoned
-  crushAt: 0,             // when a scale last went into the crusher, for its rollers
+  crushAt: 0,             // when a scale last went into the crusher, for its fire
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
   sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
   // In the water, and so this session's: a reload finds them landed or gone.

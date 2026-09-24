@@ -14669,8 +14669,16 @@ plot as now), but it is not the purse: it is lying there, the way dust lies
 on the yard's floor.
 
 **The crusher is the purse's mouth.** A big machine at the deep's left end,
-left of the altar, standing from the snatch like the altar: a hopper on
-top, heavy rollers inside, grit puffing off the bottom. A scale that lands
+left of the altar, standing from the snatch like the altar, drawn as a
+brick furnace (the owner's pick of four, 2026-09-23): a squat brick block
+under a square chute, the chute's mouth open across the middle twenty
+columns of the top where the hopper takes a toss, and an arched
+white-framed door low in its middle with a bed of purple fire in it. Two
+frames of one drawing (`CRUSHER_SPRITES` in deep/sprites.js, painted once
+each like a station): while scales are going in (`S.crushAt`, for
+`CRUSH_SHOW_MS`) the fire climbs the door with a white heart, flickering
+against the rest frame, and sparks hop out by the door. It has no dome.
+A scale that lands
 in the hopper is crushed and counted: `S.scales` becomes an account (like
 the rift's `riftHeld`), not the bed's count. Nothing else counts one.
 

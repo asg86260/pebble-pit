@@ -41,7 +41,7 @@ export const CRUSHER_W = P * 30;
 export const CRUSHER_H = P * 30;
 export const HOPPER_W = P * 20;      // the mouth across the top
 export const HOPPER_LIP = P * 3;     // how far down into the hopper a scale has to fall to be taken
-export const CRUSH_SHOW_MS = 600;    // the rollers turn this long after a scale goes in
+export const CRUSH_SHOW_MS = 600;    // the fire burns up this long after a scale goes in
 // A gatherer's toss: from beside the crusher up and over into the hopper, on
 // an arc drawn in the water rather than thrown on its gravity, so every scale
 // a gatherer throws goes in.

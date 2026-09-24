@@ -20,8 +20,13 @@ export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the
 // over that.
 export const DOME_PAD = P * 4;
 export const DOME_WALL = P * 4;
-// The crusher's rollers, as seen through its window.
-export const CRUSHER_ROLLER = P * 4;
+// The crusher's fire while it works: the two frames of its drawing traded
+// this often, and the sparks that jump out by its door, each a cell, from a
+// cell of the drawing (row, column) and one hop across CRUSH_SPARK_MS.
+export const CRUSH_FLICKER_MS = 110;
+export const CRUSH_SPARKS = 3;
+export const CRUSH_SPARK_MS = 240;
+export const CRUSH_SPARK_AT = { r: 22, c: 21 };
 // Where the water line stands, under the deep's top edge, and how far it
 // breathes (the same swell the drowned pit's surface has).
 export const DEEP_SURFACE = P * 5;

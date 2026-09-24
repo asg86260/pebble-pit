@@ -15,8 +15,8 @@
 // serpent and the scales draw as they would in the yard and come out white.
 
 import { now } from '../clock.js';
-import { DOME_PAD, DOME_WALL, CRUSHER_W, CRUSHER_H, HOPPER_W, CRUSH_SHOW_MS,
-         CRUSHER_ROLLER } from '../config.js';
+import { DOME_PAD, DOME_WALL, CRUSH_SHOW_MS, CRUSH_FLICKER_MS, CRUSH_SPARKS, CRUSH_SPARK_MS,
+         CRUSH_SPARK_AT } from '../config.js';
 import { invertByFilter } from './invert.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
@@ -28,11 +28,11 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
-import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, hopperRect, podAt,
+import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, podAt,
          spriteRect, standOf, waterShift } from '../deep/place.js';
 import { paintAbyssField } from './abyssfield.js';
 import { abyssLine } from '../pit.js';
-import { SPRITES } from '../deep/sprites.js';
+import { SPRITES, CRUSHER_SPRITES } from '../deep/sprites.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
 import { raw, darkPage, turned } from '../ink.js';
@@ -175,68 +175,52 @@ function drawDome(stand, g = ctx) {
   }
 }
 
-// The crusher: a hopper open at the top, a body with two rollers seen through
-// its window, and a chute at the foot where the grit comes out. The rollers
-// turn only while scales are going in (`S.crushAt`), so a busy crusher looks
-// busy and an idle one is still. Every cell a tone near its part's, like the
-// domes, so the machine is not a printed block.
+// The crusher, a brick furnace (deep/sprites.js), painted at crusherRect():
+// the rest frame, and while scales are going in (`S.crushAt`) the working
+// frame traded with it so the fire flickers, and sparks hop out by the door.
+// Each frame is painted once into an image of its own, as a station is, and
+// drawn from there; kept by where the crusher stands, so a resize repaints it.
+const furnace = new Map();
+function crusherImage(frame, c) {
+  const rows = CRUSHER_SPRITES[frame];
+  const id = `${c.x}|${c.y}`;
+  const had = furnace.get(frame);
+  if (had && had.id === id) return had;
+  const img = document.createElement('canvas');
+  img.width = rows[0].length * P; img.height = rows.length * P;
+  const g = img.getContext('2d');
+  for (let r = 0; r < rows.length; r++) {
+    for (let col = 0; col < rows[r].length; col++) {
+      const ink = SPRITE_INK[rows[r][col]];
+      if (!ink) continue;
+      g.fillStyle = ink;
+      g.fillRect(col * P, r * P, P, P);
+    }
+  }
+  const out = { id, img };
+  furnace.set(frame, out);
+  return out;
+}
+
 function drawCrusher() {
-  const c = crusherRect(), h = hopperRect(), t = now();
+  const c = crusherRect(), t = now();
   const busy = t - (S.crushAt || -Infinity) < CRUSH_SHOW_MS;
-  const cell = (x, y, tone) => { ctx.fillStyle = GREYS[tone + (seeth(x / P, y / P) % 2)]; ctx.fillRect(x, y, P, P); };
-  // the hopper: a funnel from the mouth down to the body, dark inside
-  const funnel = Math.round(CRUSHER_H * 0.3 / P) * P;
-  // A funnel with walls two cells thick and a lip across its mouth, the
-  // inside a shade off the water so it reads as a bowl and not two sticks.
-  const mid = h.x + h.w / 2;
-  for (let y = c.y; y < c.y + funnel; y += P) {
-    const k = (y - c.y) / funnel;
-    const half = Math.round((h.w / 2 - k * (h.w / 2 - P * 4)) / P) * P;
-    for (let x = mid - half - P * 2; x < mid + half + P * 2; x += P) {
-      const wall = x < mid - half || x >= mid + half;
-      cell(x, y, y === c.y ? 9 : wall ? 7 : 2);
-    }
-  }
-  // the body, and its window onto the rollers
-  const top = c.y + funnel, foot = c.y + CRUSHER_H - P * 4;
-  for (let y = top; y < foot; y += P) {
-    for (let x = c.x; x < c.x + CRUSHER_W; x += P) {
-      const rim = x === c.x || x === c.x + CRUSHER_W - P || y === top;
-      cell(x, y, rim ? 8 : 4);
-    }
-  }
-  const wy = top + P * 3, wh = foot - wy - P * 3, wx = c.x + P * 3, ww = CRUSHER_W - P * 6;
-  ctx.fillStyle = GREYS[1];
-  ctx.fillRect(wx, wy, ww, wh);
-  // two rollers, turning toward each other while it crushes
-  const turn = busy ? t / 90 : 0;
-  for (const [cx, dir] of [[wx + ww * 0.3, 1], [wx + ww * 0.7, -1]]) {
-    const cy = wy + wh / 2;
-    for (let y = cy - CRUSHER_ROLLER; y <= cy + CRUSHER_ROLLER; y += P) {
-      for (let x = cx - CRUSHER_ROLLER; x <= cx + CRUSHER_ROLLER; x += P) {
-        const dx = x - cx, dy = y - cy;
-        if (dx * dx + dy * dy > CRUSHER_ROLLER * CRUSHER_ROLLER) continue;
-        // teeth: a band every quarter turn, rolling round as it works
-        const a = Math.atan2(dy, dx) + turn * dir;
-        const tooth = Math.floor(((a / (Math.PI / 2)) % 1 + 1) % 1 * 4) === 0;
-        ctx.fillStyle = GREYS[tooth ? 10 : 7];
-        ctx.fillRect(Math.round(x / P) * P, Math.round(y / P) * P, P, P);
-      }
-    }
-  }
-  // the feet, and the chute the grit leaves by
-  for (let y = foot; y < c.y + CRUSHER_H; y += P) {
-    for (let x = c.x + P * 2; x < c.x + CRUSHER_W - P * 2; x += P) {
-      if (y > foot && x > c.x + P * 5 && x < c.x + CRUSHER_W - P * 6) continue;
-      cell(x, y, 6);
-    }
-  }
+  const hot = busy && Math.floor(t / CRUSH_FLICKER_MS) % 2;
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(crusherImage(hot ? 'working' : 'rest', c).img, c.x, c.y);
+  ctx.imageSmoothingEnabled = smooth;
   if (busy) {
-    for (let i = 0; i < 6; i++) {
-      const gx = c.x + CRUSHER_W / 2 + (hash(Math.floor(t / 70) + i) - 0.5) * P * 6;
-      const gy = c.y + CRUSHER_H - P * 2 - hash(i * 7 + Math.floor(t / 90)) * P * 3;
-      ctx.fillStyle = GREYS[5 + (i % 3)];
-      ctx.fillRect(Math.round(gx / P) * P, Math.round(gy / P) * P, P, P);
+    // Each spark hops out and falls on its own offset of the cycle, white as
+    // it leaves and purple as it cools.
+    const { r, c: col } = CRUSH_SPARK_AT;
+    for (let i = 0; i < CRUSH_SPARKS; i++) {
+      const run = t / CRUSH_SPARK_MS + i / CRUSH_SPARKS;
+      const age = run % 1, k = Math.floor(run) * CRUSH_SPARKS + i;
+      const dx = Math.round(age * (2 + hash(k) * 4));
+      const dy = Math.round(-2 * age + 7 * age * age);
+      ctx.fillStyle = age < 0.5 ? SPRITE_INK['#'] : SPRITE_INK['*'];
+      ctx.fillRect(c.x + (col + dx) * P, c.y + (r + dy) * P, P, P);
     }
   }
   ctx.fillStyle = '#000';

@@ -26,7 +26,7 @@ import { deepX0, deepX1, deepFloor, inHopper, hopperRect } from './place.js';
 export const current = t => DEEP_CURRENT * Math.sin(2 * Math.PI * t / DEEP_CURRENT_MS);
 
 // Scales into the crusher: the account, said in one place so nothing else
-// writes it up. `crushAt` is for the drawing, the rollers turning.
+// writes it up. `crushAt` is for the drawing, the fire burning up.
 export function crush(n) {
   if (!(n > 0)) return;
   S.scales += n;
