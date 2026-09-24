@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spire Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .opt { border-top: 1px solid var(--rule); padding: 14px 0 18px; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 10px; max-width: 1080px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .lbl { color: var(--dim); font-size: 11px; margin-top: 3px; }
+  pre { margin: 0; padding: 8px; border: 1px solid var(--rule); font-size: 11px; line-height: 1.15; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; margin-top: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>The spire, redrawn to its work: four options</h1>
+<p class="note">A mock drawn from plain cells, not the game. The spire is where the wizards stand and
+channel: each holds a purple beam on the serpent's coil for as long as it is in reach, the board's two ladders
+are <i>beam strength</i> and <i>curse the heal</i>, and the called star is pulled down onto the coil from
+here. Each drawing is painted the way the deep paints a station: a cell a character, in the five tones as they
+are seen down there (<code>#</code> white, <code>+</code> light grey, <code>-</code> dark grey, <code>o</code>
+the black water, <code>*</code> the abyss's purple), under a dome sized from the drawing's inked width (4 cells
+of pad, 4 of wall), on the deep's mottled floor. Left is the game's own size (a cell is 6 px), right is four
+times that. Two wizard squares stand at the foot and feed a thread of purple into the spire, and the spire
+throws the beam up out of the dome toward the coil (a grey stand-in band at the top); the bodies have a
+keyline the game's do not. What it cannot show: the real abyss field, the scale bed, the serpent and the
+star, the board and fence. In the game the beam leaves from the wizard's own body, not from the spire's head,
+and a station is painted once into an image, so the threads, a beam from the tip, and anything that glows or
+turns would be new drawing code, not a sprite edit; the sprite alone is only the still picture.</p>
+<div id="opts"></div>
+<script>
+// --- the four drawings, in sprites.js form ---------------------------------------
+// Each: the rows, and the cell the beam leaves from (row, column edge).
+const OPTIONS = [
+  { key: 'A', name: 'Beam obelisk with a crystal head',
+    cap: 'A black obelisk of the abyss\'s water, purple runes spiralling up it, and on its head a white crystal with a purple heart throwing rays: the thing that fires the beam.',
+    rows: [
+      '....*....**....*....',
+      '.....*..*##*..*.....',
+      '.......*####*.......',
+      '......*##**##*......',
+      '.......*####*.......',
+      '.....*..*##*..*.....',
+      '.........**.........',
+      '........#oo#........',
+      '........#o*#........',
+      '........#oo#........',
+      '.......#oo*o#.......',
+      '.......#o*oo#.......',
+      '.......#oo*o#.......',
+      '.......#o*oo#.......',
+      '......#oooooo#......',
+      '......#o*oo*o#......',
+      '......#oooooo#......',
+      '.....##++++++##.....',
+      '....#-*------*-#....',
+      '...##############...',
+      '####################'
+    ],
+    tip: [3.5, 10] },
+
+  { key: 'B', name: 'Star cradle',
+    cap: 'A white stone tower whose head opens into two horns, a crescent, holding a four-pointed star with purple under it: where the called star is pulled down from.',
+    rows: [
+      '..#......##......#..',
+      '..##....*##*....##..',
+      '...#..########..#...',
+      '...##.########.##...',
+      '....#...*##*...#....',
+      '....##...##...##....',
+      '.....##.*..*.##.....',
+      '......###--###......',
+      '........#++#........',
+      '........#+*#........',
+      '........#++#........',
+      '.......##+-##.......',
+      '.......#+*++#.......',
+      '.......#++-+#.......',
+      '.......#-++*#.......',
+      '......##++++##......',
+      '......#+-*+-+#......',
+      '.....##++++++##.....',
+      '....##-*-oo-*-##....',
+      '...######oo######...',
+      '####################'
+    ],
+    tip: [3, 10] },
+
+  { key: 'C', name: 'The cursing eye',
+    cap: 'An unlidded eye on a pillar, purple iris round a black pupil, weeping purple, chained down to two stakes in the floor: it glares the serpent\'s heal away.',
+    rows: [
+      '......########......',
+      '....##++++++++##....',
+      '..##+++*oooo*+++##..',
+      '.#++++*oo#ooo*++++#.',
+      '..##+++*oooo*+++##..',
+      '....##++++++++##....',
+      '......########......',
+      '......*..##..*......',
+      '........#++#........',
+      '.......-#+*#-.......',
+      '......+.#++#.+......',
+      '.....-..#*+#..-.....',
+      '....+...#++#...+....',
+      '...-....#+*#....-...',
+      '..+.....#++#.....+..',
+      '.##....##++##....##.',
+      '.##....#+**+#....##.',
+      '.##...##++++##...##.',
+      '.##..##-*--*-##..##.',
+      '####################'
+    ],
+    tip: [3.5, 10] },
+
+  { key: 'D', name: 'Ritual coil',
+    cap: 'A shaft through three rings, widening to the floor, purple sparks jumping off the ring ends, and on top an orb of black water crackling: a coil that winds the wizards\' power up.',
+    rows: [
+      '.....*...**...*.....',
+      '......*.####.*......',
+      '.......#oooo#.......',
+      '..*...#oo*ooo#...*..',
+      '...*..#ooo*oo#..*...',
+      '.......#oooo#.......',
+      '........####........',
+      '.........++.........',
+      '......########......',
+      '......*..++..*......',
+      '.........++.........',
+      '.....##########.....',
+      '.....*...+-...*.....',
+      '.........++.........',
+      '....############....',
+      '....*....-+....*....',
+      '.......##+-##.......',
+      '......##++++##......',
+      '....##*-*--*-*##....',
+      '..################..',
+      '####################'
+    ],
+    tip: [3.5, 10] }
+];
+
+// --- the deep's tones, as seen -----------------------------------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const INK = { '#': '#ffffff', '+': GREYS[9], '-': GREYS[6], 'o': '#000000', '*': PURPLES[11] };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+
+// --- the scene, in cells -------------------------------------------------------------
+// Everything below is in cells; `s` is screen pixels a cell.
+const DOME_PAD = 4, DOME_WALL = 4, WORKER = 3, MARGIN = 13, SKY = 8, FLOOR_ROWS = 4;
+
+function inkOf(rows) {
+  let c0 = 99, c1 = -1, r0 = 99, r1 = -1;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+  }));
+  return { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
+}
+
+function layout(o) {
+  const ink = inkOf(o.rows), H = o.rows.length;
+  const w = ink.cols + DOME_PAD * 2, rad = w / 2;
+  const W = w + MARGIN * 2;
+  const standY = SKY + Math.ceil(rad) + DOME_WALL;        // top of the drawing's ink
+  const floor = standY + ink.rows;
+  const sx = MARGIN + DOME_PAD - ink.c0, sy = floor - H;  // sprite grid's top-left
+  return { ink, W, Hc: floor + FLOOR_ROWS, floor, sx, sy, domeL: MARGIN, domeW: w, rad,
+           spring: standY - DOME_WALL, top: Math.round(standY - DOME_WALL - rad) };
+}
+
+function water(g, L, s, t) {
+  for (let y = 0; y < L.floor; y++) for (let x = 0; x < L.W; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + t / 5200) * 2.4 + t / 7000);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 6) {
+      const b = 0.5 + 0.5 * Math.sin(t / 900 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 9))];
+    }
+    g.fillStyle = tone; g.fillRect(x * s, y * s, s, s);
+  }
+  for (let r = 0; r < FLOOR_ROWS; r++) for (let x = 0; x < L.W; x++) {
+    g.fillStyle = GREYS[2 + (seeth(x, L.floor + r + 7) % 3) + (r === 0 ? 2 : 0)];
+    g.fillRect(x * s, (L.floor + r) * s, s, s);
+  }
+  // the coil's stand-in: a grey band across the top, where the beam lands
+  for (let x = 0; x < L.W; x++) for (let r = 1; r < 4; r++) {
+    g.fillStyle = GREYS[r === 2 ? 4 : 3 + (seeth(x, r) % 2)];
+    g.fillRect(x * s, r * s, s, s);
+  }
+}
+
+function dome(g, L, s) {
+  const cx = L.domeL + L.rad;
+  const inside = (x, y) => {
+    if (x < L.domeL || x >= L.domeL + L.domeW || y >= L.floor || y < L.top) return false;
+    if (y >= L.spring) return true;
+    const dx = x + 0.5 - cx, dy = y + 0.5 - L.spring;
+    return dx * dx + dy * dy <= L.rad * L.rad;
+  };
+  for (let y = L.top; y < L.floor; y++) for (let x = L.domeL; x < L.domeL + L.domeW; x++) {
+    if (!inside(x, y)) continue;
+    const rim = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1);
+    g.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x, y) % 2)];
+    g.fillRect(x * s, y * s, s, s);
+  }
+}
+
+function sprite(g, L, s, o) {
+  o.rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    g.fillStyle = INK[ch]; g.fillRect((L.sx + c) * s, (L.sy + r) * s, s, s);
+  }));
+}
+
+// A line of cells from one point to another, each cell a little off the line
+// so the beam crackles; every third frame of a tenth of a second it re-rolls.
+function bolt(g, s, x0, y0, x1, y1, t, tone, jit, gap = 1) {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) | 0;
+  const roll = Math.floor(t * 10);
+  for (let i = 0; i <= n; i += gap) {
+    const k = i / n, h = seeth(i + roll * 7, roll);
+    const j = jit ? (h % 3) - 1 : 0;
+    const x = Math.round(x0 + (x1 - x0) * k + (Math.abs(x1 - x0) < Math.abs(y1 - y0) ? j : 0));
+    const y = Math.round(y0 + (y1 - y0) * k + (Math.abs(x1 - x0) >= Math.abs(y1 - y0) ? j : 0));
+    g.fillStyle = tone(i, n); g.fillRect(x * s, y * s, s, s);
+  }
+}
+
+// Two wizards at the foot, feeding threads up into the spire's head; the head
+// throws the beam up to the coil. The beam holds and flickers, it is not
+// thrown and gone: the spire's weapon is a held one.
+function work(g, L, s, o, t) {
+  const tipY = L.sy + o.tip[0], tipX = L.sx + o.tip[1];
+  const y = L.floor - WORKER;
+  const left = L.sx + L.ink.c0 - WORKER - 1, right = L.sx + L.ink.c0 + L.ink.cols + 1;
+  const bob = Math.round(Math.sin(t * 2.2) * 0.6);
+  for (const [x, ph] of [[left, 0], [right, 1.7]]) {
+    // a pulse climbing the thread, so it reads as fed from the body upward
+    const p = (t * 1.4 + ph) % 1;
+    bolt(g, s, x + 1, y - 1 + bob, tipX - 0.5, tipY, t, (i, n) => Math.abs(i / n - (1 - p)) < 0.12 ? PURPLES[11] : PURPLES[6], false, 2);
+    g.fillStyle = '#ffffff'; g.fillRect(x * s, (y + bob) * s, WORKER * s, WORKER * s);
+    g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(x * s, (y + bob) * s, WORKER * s, WORKER * s);
+    // arms up: two cells over the head
+    g.fillStyle = '#ffffff';
+    g.fillRect(x * s, (y + bob - 1) * s, s, s); g.fillRect((x + 2) * s, (y + bob - 1) * s, s, s);
+  }
+  // the beam, up and to the right out of the dome, onto the coil
+  const flick = 0.75 + 0.25 * Math.sin(t * 31);
+  bolt(g, s, tipX - 0.5, tipY - 1, L.W - 4, 2, t, (i, n) => i % 5 === 0 ? '#ffffff' : PURPLES[Math.round(8 + 3 * flick)], true);
+  // where it lands
+  g.fillStyle = PURPLES[11];
+  for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) g.fillRect((L.W - 4 + dx) * s, (2 + dy) * s, s, s);
+}
+
+function entry(o) {
+  return '  spire: [\n' + o.rows.map(r => `    '${r}'`).join(',\n') + '\n  ]';
+}
+
+const panes = [];
+const only = location.hash.slice(1);
+for (const o of OPTIONS.filter(o => !only || only.includes(o.key))) {
+  const L = layout(o);
+  const box = document.createElement('div');
+  box.className = 'opt';
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2><p class="cap">${o.cap}
+    <br>${o.rows[0].length} x ${o.rows.length}, inked ${L.ink.cols} x ${L.ink.rows}</p><div class="row"></div>`;
+  const row = box.querySelector('.row');
+  const mk = (s, crop, label) => {
+    const wrap = document.createElement('div');
+    const c = document.createElement('canvas');
+    c.width = crop.w * s; c.height = crop.h * s;
+    wrap.append(c);
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = label; wrap.append(l);
+    row.append(wrap);
+    panes.push({ o, L, s, crop, g: c.getContext('2d') });
+  };
+  mk(6, { x: 0, y: 0, w: L.W, h: L.Hc }, '1x -- the game\'s size');
+  const y4 = L.floor - L.ink.rows - 4;
+  mk(24, { x: L.domeL - 2, y: y4, w: L.domeW + 4, h: L.floor + 1 - y4 }, '4x, cropped to the drawing');
+  const code = document.createElement('div');
+  const pre = document.createElement('pre'); pre.textContent = entry(o);
+  const b = document.createElement('button'); b.textContent = 'copy';
+  b.onclick = () => navigator.clipboard.writeText(entry(o)).then(() => { b.textContent = 'copied'; });
+  code.append(pre, b);
+  row.append(code);
+  document.getElementById('opts').append(box);
+  if (o.rows.some(r => r.length !== o.rows[0].length)) console.warn(o.key, 'ragged rows');
+}
+
+const t0 = performance.now();
+function frame() {
+  const ms = performance.now() - t0, t = ms / 1000;
+  for (const p of panes) {
+    const { g, s, crop, L, o } = p;
+    g.setTransform(1, 0, 0, 1, -crop.x * s, -crop.y * s);
+    water(g, L, s, ms);
+    dome(g, L, s);
+    sprite(g, L, s, o);
+    work(g, L, s, o, t);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
