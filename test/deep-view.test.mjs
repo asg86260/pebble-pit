@@ -108,3 +108,32 @@ group('the yard runs the same frames whichever half is on the screen', async () 
 
 // Every scene about the deep stands a yard up, and survives a reload.
 standing(['the deep']);
+
+// Every knock is the yard's (world.js, `stepShake`): a boulder landing while
+// the view is in the deep rings out unfelt there, and the same landing looked
+// at from the yard rocks it as it always has.
+group('a boulder landing up top shakes the yard and not the deep', async () => {
+  deepYard();
+  const land = view => {
+    window.__view(view);
+    run(1);
+    const was = S.landAt;
+    window.__next();
+    let n = 0;
+    while (S.landAt === was && n++ < 3600) window.__fast(1 / 60);
+    let knock = 0, most = 0;
+    for (let i = 0; i < 30; i++) {
+      window.__fast(1 / 60);
+      knock = Math.max(knock, S.shake);
+      most = Math.max(most, Math.abs(S.shakeX), Math.abs(S.shakeY));
+    }
+    return { landed: S.landAt !== was, knock, most };
+  };
+  const deep = land('deep');
+  const top = land('yard');
+  return [
+    ok(deep.landed && deep.knock > 0, 'a boulder lands while the view is down, and knocks the yard', JSON.stringify(deep)),
+    ok(deep.most === 0, 'but the deep does not move', JSON.stringify(deep)),
+    ok(top.landed && top.most > 0, 'the same landing looked at from the yard shakes it', JSON.stringify(top))
+  ];
+});

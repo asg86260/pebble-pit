@@ -49,6 +49,25 @@ export function enterScreen() {
 export const screenAt = (wx, wy) => ({ x: (wx - S.camX + S.shakeX) * S.zoom,
                                       y: (wy - S.camY + S.shakeY) * S.zoom });
 
+// A layer both halves draw is held to its own half's side of the shaft's
+// middle. Everything such a layer puts up stands over something in one half
+// or the other -- a body's say, a station's roster or bar -- and the deep's
+// camera, on a window taller than the deep, looks up past its ceiling into
+// the yard's lowest rows: without this the yard's marks hang over the deep's
+// water with nobody under them. Set in device pixels, so it holds whichever
+// space the layer then draws in; the caller restores.
+export function clipToHalf(deep, line) {
+  const y = Math.round((line - S.camY + S.shakeY) * S.zoom * S.dpr);
+  const t = ctx.getTransform();
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.beginPath();
+  if (deep) ctx.rect(0, y, canvas.width, Math.max(0, canvas.height - y));
+  else ctx.rect(0, 0, canvas.width, Math.max(0, y));
+  ctx.clip();
+  ctx.setTransform(t);
+}
+
 // The filter, over the finished frame and on the frame's own canvas: two
 // cached fills rather than a trip through a second graphics context (press.js).
 export function pressFrame() {

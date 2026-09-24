@@ -28,6 +28,8 @@ feature lives in DESIGN.md.
 - A worker thrown in the deep sinks to the deep's floor and stays down there, instead of landing on the yard's ground (test/deep-shaft.test.mjs).
 - The counts card keeps clear of the wizards' portal instead of covering it (src/selftest/deep.js).
 - The deep draws its water, serpent, stations and floor as a few images a frame instead of thousands of cells, so it no longer drops to a crawl on a large screen (scene deep-all).
+- On a tall window the deep no longer shows the yard workers' shouts, squats and roster badges hanging over its water (src/selftest/deep.js).
+- A boulder landing in the yard no longer shakes the screen while you are in the deep (test/deep-view.test.mjs).
 - The deep's crew no longer shouts when a rock lands up in the yard (test/two-crews.test.mjs).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 - Clouds no longer show below the ground line in a short window (play.html in a window 300px tall).

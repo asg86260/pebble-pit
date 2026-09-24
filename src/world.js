@@ -800,5 +800,9 @@ export function stepShake() {
   const x = Math.sin(S.shakePh * 0.6 + 1.7) * S.shake * 0.35;
   S.shakeY = Math.max(-room.u, y);              // down is sky, and there is plenty of it
   S.shakeX = Math.max(-room.r, Math.min(room.l, x));
+  // Every knock is the yard's, and the deep is under the abyss: looked at
+  // from down there it goes on ringing out unfelt, so a view gone back up
+  // mid-shake finds the yard still rocking.
+  if (S.view === 'deep') { S.shakeX = 0; S.shakeY = 0; }
 }
 

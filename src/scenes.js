@@ -278,11 +278,21 @@ const deepScenes = {
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true }); window.__view('deep'); } },
   'glide-up-in': { about: 'the deep', say: "going up, a third in: the deep drawing back into its end of the portal",
     run: glideAt('yard', 0.35) },
-  // The deep with the whole yard shouting over its head: none of it shows.
-  'deep-hush': { about: 'the deep', say: "the deep while every body in the yard is shouting: nothing of it shows",
+  // The deep with the whole yard shouting over its head: a boulder landed for
+  // real a few frames ago (the shouts, and the knock the deep must not feel)
+  // and half the yard's bodies squatting. None of it shows. The deep's camera
+  // only looks up into the yard's lowest rows on a window taller than the
+  // deep, so shoot it with `WINDOW=1600,1100`: at 800 by 600 it is a pass
+  // whatever the drawing does.
+  'deep-hush': { about: 'the deep', say: "the deep just after a boulder lands, the yard shouting and squatting: nothing of it shows, nothing shakes (WINDOW=1600,1100)",
     run: () => { rich(); window.__fullSites(); window.__crew(4, 4); window.__snatch({ played: true });
                  window.__view('deep');
-                 for (const w of S.workers) if (w.y < S.worldH) w.say = { mark: 'bang', until: now() + 60000 }; } },
+                 window.__fast(2);
+                 const was = S.landAt;
+                 window.__next();
+                 for (let i = 0; i < 600 && S.landAt === was; i++) window.__fast(1 / 60);
+                 let n = 0;
+                 for (const w of S.workers) if (w.y < S.worldH && n++ % 2) w.say = { mark: 'loo', until: now() + 60000 }; } },
   // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
   deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
   // The glide between the halves, caught at a point of it (`glideAt`): just

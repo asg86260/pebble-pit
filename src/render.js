@@ -25,7 +25,8 @@ import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
-import { clearPage, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
+import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
+import { deepTop } from './deep/place.js';
 import { drawFloor, drawGroundLine, drawGroundTexture, drawPit, drawPitOutline } from './render/ground.js';
 import { drawRisingHouse, drawSettlement } from './render/houses.js';
 import { drawDoneMarks } from './render/donemarks.js';
@@ -273,12 +274,21 @@ const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', '
                       'punches', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
-// does, so they are drawn in both halves and are simply off the glass in one.
+// does, so they are drawn in both halves, each cut to its own (`PINNED`).
 const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'pointed', 'cursor',
                       'work bars', 'build sites', 'done marks', 'pile marks']);
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
+const shared = (layer, i) => BOTH.has(layer.name) || i > SCREEN_FROM;
 const inHalf = (layer, i, deep) =>
-  BOTH.has(layer.name) || i > SCREEN_FROM || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));
+  shared(layer, i) || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));
+// Of the shared layers, the ones pinned to the window rather than standing
+// over something in the world: the spaces, the pointer, the counter and the
+// frame's own finish. Every other shared layer is cut at the shaft's middle
+// (frame.js, `clipToHalf`), so what it draws over the yard never shows in the
+// deep and the other way about -- "off the glass in the other half" does not
+// hold on a window taller than the deep.
+const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'cursor', 'counter', 'flash', 'press']);
+const halfLine = () => (S.worldH + deepTop()) / 2;
 
 // One half, every layer that belongs to it, with whatever camera is standing.
 function drawHalf(deep) {
@@ -296,7 +306,10 @@ function drawHalf(deep) {
     if (view === 'hide') continue;
     const faint = view === 'fade';
     if (faint) ctx.globalAlpha = CREW_FADE;
+    const cut = shared(layer, i) && !PINNED.has(layer.name);
+    if (cut) clipToHalf(deep, halfLine());
     layer.draw();
+    if (cut) ctx.restore();
     if (faint) ctx.globalAlpha = 1;
   }
 }
@@ -309,8 +322,11 @@ export function draw() {
   drawHalf(S.view === 'deep');
   const rip = ripple();
   if (!rip || rip.r <= 0) return;
-  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH };
-  Object.assign(S, deepCamera(), { view: 'deep' });
+  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH,
+                 shakeX: S.shakeX, shakeY: S.shakeY };
+  // The yard's knock is the yard's (world.js, `stepShake`): the deep through
+  // the ripple holds still while the yard around it rocks.
+  Object.assign(S, deepCamera(), { view: 'deep', shakeX: 0, shakeY: 0 });
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.beginPath();
