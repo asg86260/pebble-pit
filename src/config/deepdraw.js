@@ -25,6 +25,11 @@ export const CRUSHER_ROLLER = P * 4;
 // Where the water line stands, under the deep's top edge, and how far it
 // breathes (the same swell the drowned pit's surface has).
 export const DEEP_SURFACE = P * 5;
+// How far into the abyss's field the deep's water is seen, all of it: the
+// field's own depth, which fades toward the pit's surface, is lifted by this
+// (render/abyssfield.js), so the deep reads as deep from the window's top
+// edge to its floor, however tall the window.
+export const DEEP_WATER_DEPTH = 1;
 // The arrow that says the view goes through (render/shaftway.js): in the
 // yard in the liquid this far right of the torn portal's lip, level with its
 // middle, pointing left at it and bobbing toward it and back; in the deep

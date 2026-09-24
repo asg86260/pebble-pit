@@ -23,7 +23,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          ABYSS_FLOW_DRIFT2, ABYSS_FLOW_MIX, ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER,
          ABYSS_STAR_MS, ABYSS_BREATH_BEND, ABYSS_RIPPLE_MS,
          DEEP_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
-         DEEP_SURFACE,
+         DEEP_SURFACE, DEEP_WATER_DEPTH,
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
@@ -73,11 +73,14 @@ export function drawDeepWater() {
   const { x0, y0, x1, y1 } = deepWindow();
   // The whole window, top edge to floor: the deep has no surface on screen
   // (DESIGN.md, "The way between the halves"). The field is the drowned
-  // pit's own liquid, carried on under it.
+  // pit's own liquid, carried on under it, and at its full depth from the
+  // window's top edge down: its fade toward the pit's surface would stand in
+  // the deep as a black band over the water wherever the window reaches
+  // higher than the deep's own top, as a tall one does.
   const top = y0, bottom = Math.min(y1, deepFloor());
   if (bottom <= top) return;
   paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
-                    tones: GREYS, magic: PURPLES, t: now() });
+                    deep: DEEP_WATER_DEPTH, tones: GREYS, magic: PURPLES, t: now() });
   ctx.fillStyle = '#000';
 }
 
@@ -328,7 +331,8 @@ function stepMotes() {
   motesAt = t;
   const f = dt / (1000 / 60);
   const { x0, y0, x1, y1 } = deepWindow();
-  const top = Math.max(y0, deepTop() + DEEP_SURFACE + P), bottom = Math.min(y1, deepFloor());
+  // The window's top edge, not the deep's: the water goes all the way up.
+  const top = y0, bottom = Math.min(y1, deepFloor());
   const list = S.deepMotes;
   // The silt keeps the window full: a mote that drifts out of it comes back
   // in at the far side, so the water is never thinner in one place for having

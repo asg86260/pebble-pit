@@ -22,6 +22,7 @@ feature lives in DESIGN.md.
 - The pods have a board of their own that sells another pod, and the deep's stations stand further apart (test/pods.test.mjs, src/selftest/deep.js).
 - Roombas for the janitor's closet, up to three: they drive out to the poop and the rain's muck on the open yard and bring it home for the one janitor minding them to tip away, and they smoke (test/roomba.test.mjs).
 
+- On a tall window the deep's water goes all the way up to the top of the screen, with no black band over it (src/selftest/deep.js).
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).
 - The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
