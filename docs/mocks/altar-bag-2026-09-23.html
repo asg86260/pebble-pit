@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Altar Bag Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .opt { border-top: 1px solid var(--rule); padding: 14px 0 18px; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 10px; max-width: 1080px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .lbl { color: var(--dim); font-size: 11px; margin-top: 3px; }
+  pre { margin: 0; padding: 8px; border: 1px solid var(--rule); font-size: 11px; line-height: 1.15; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; margin-top: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>The altar as a punching bag: four options</h1>
+<p class="note">A mock drawn from plain cells, not the game. Each drawing is painted the way the deep paints a
+station: a cell a character, in the five tones as they are seen down there (<code>#</code> white,
+<code>+</code> light grey, <code>-</code> dark grey, <code>o</code> the black water, <code>*</code> the abyss's
+purple), under a dome sized from the drawing's inked width (4 cells of pad, 4 of wall), on the deep's mottled
+floor. Left is the game's own size (a cell is 6 px), right is four times that. A body square jabs the bag (from
+either side, or from the open side where a frame is in the way) and it swings, cell-snapped; the body has a
+keyline the game's does not, so it reads against a white post. What it cannot show: the real abyss field (the water here is a cheap
+stand-in), the scale bed and loose scales on the floor, the serpent overhead, the board and fence, and how
+brawlers really move -- in the game they swim up and punch the serpent, and nothing on a station moves:
+a station is painted once into an image, so a swinging bag would be new drawing code, not a sprite edit.</p>
+<div id="opts"></div>
+<script>
+// --- the four drawings, in sprites.js form ---------------------------------------
+// Each: the rows, and which cells swing (and about what point, in cell edges).
+const OPTIONS = [
+  { key: 'A', name: 'Scale bag on a chain',
+    cap: 'A heavy bag sewn from the serpent\'s scales, a purple rune band round its waist, hung on a chain from an arch lit purple inside.',
+    rows: [
+      '.....##########.....',
+      '...###*------*###...',
+      '..##*....##....*##..',
+      '.##*.....--.....*##.',
+      '.#*......##......*#.',
+      '.#*......--......*#.',
+      '.#.......##.......#.',
+      '.#......####......#.',
+      '.#.....#++++#.....#.',
+      '.#....#+-++-+#....#.',
+      '.#....#-+--+-#....#.',
+      '.#....#+-++-+#....#.',
+      '.#....**-**-**....#.',
+      '.#....#-+--+-#....#.',
+      '.#....#+-++-+#....#.',
+      '.#....#-+--+-#....#.',
+      '.#.....#-++-#.....#.',
+      '.#......####......#.',
+      '.#*......--......*#.',
+      '####-*--------*-####',
+      '####################'
+    ],
+    moves: (r, c) => r >= 3 && r <= 18 && c >= 4 && c <= 15, pivot: [10, 3], kind: 'hang' },
+
+  { key: 'B', name: 'Bound lump on a ritual post',
+    cap: 'A lump of the abyss\'s own black, lashed with grey cord and scratched with purple runes, stuck on a post over a stepped plinth; a purple flame burns on the post\'s head.',
+    rows: [
+      '.........**.........',
+      '........*##*........',
+      '.........##.........',
+      '.....##########.....',
+      '....#oooooooooo#....',
+      '...#oo*oooooo*oo#...',
+      '...#++++++++++++#...',
+      '...#oooo*oo*oooo#...',
+      '...#ooo*oooo*ooo#...',
+      '...#oooo*oo*oooo#...',
+      '...#++++++++++++#...',
+      '...#oo*oooooo*oo#...',
+      '....#oooooooooo#....',
+      '.....##########.....',
+      '.........#+.........',
+      '.........#+.........',
+      '.........#+.........',
+      '......--*#+*--......',
+      '.....###*##*###.....',
+      '...##############...',
+      '.##################.'
+    ],
+    moves: (r, c) => r <= 13, pivot: [10, 17], kind: 'post' },
+
+  { key: 'C', name: 'Speed bag with a purple orb',
+    cap: 'A rebound board on a bracket, and under it a little pear of purple light on a swivel that rattles when struck, over a basin of black water that catches what drips off it.',
+    rows: [
+      '.##################.',
+      '.#++++++++++++++++#.',
+      '.##################.',
+      '.........##.....++#.',
+      '........#**#...+.-#.',
+      '.......#****#....-#.',
+      '......#*##***#...-#.',
+      '......#*#****#...-#.',
+      '......#******#...-#.',
+      '.......#****#....-#.',
+      '........#**#.....-#.',
+      '.........##......-#.',
+      '.................-#.',
+      '.....*........*..-#.',
+      '.................-#.',
+      '.....##########..-#.',
+      '.....#oooooooo#..-#.',
+      '......########...-#.',
+      '.........##......-#.',
+      '####################'
+    ],
+    moves: (r, c) => r >= 3 && r <= 11 && c >= 4 && c <= 14, pivot: [10, 3], kind: 'speed', from: [1] },
+
+  { key: 'D', name: 'Tentacle-bound bag on a gibbet',
+    cap: 'A black bag hung off a leaning gibbet, with a tentacle up out of the floor wound twice round it, purple suckers along it, its tip curled over the top. The tentacle tethers it, so it swings short.',
+    rows: [
+      '..#############.....',
+      '..##+-...##...#.....',
+      '..##.+-..--...-.....',
+      '...##....##.........',
+      '...##...####........',
+      '...##..#oooo#...+*..',
+      '...##..#oooo#..+....',
+      '...##..#oo++++*.....',
+      '...##..#++-*o#......',
+      '...##.*+oooo#.......',
+      '...##.+#oooo#.......',
+      '...##.-#oooo#.......',
+      '...##..#oooo++......',
+      '...##..#oo++*#......',
+      '...##..#++*oo#......',
+      '...##.+*####........',
+      '...##.+*............',
+      '..###.-+*...........',
+      '.####--++*..........',
+      '####################'
+    ],
+    moves: (r, c) => r >= 3 && r <= 15 && c >= 6 && c <= 17, pivot: [10, 3], kind: 'hang', from: [-1], feel: { amp: 0.14 } }
+];
+
+// --- the deep's tones, as seen -----------------------------------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const INK = { '#': '#ffffff', '+': GREYS[9], '-': GREYS[6], 'o': '#000000', '*': PURPLES[11] };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const hash = n => { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); };
+
+// --- the scene, in cells -------------------------------------------------------------
+// Everything below is in cells; `s` is screen pixels a cell.
+const DOME_PAD = 4, DOME_WALL = 4, WORKER = 3, MARGIN = 13, SKY = 8, FLOOR_ROWS = 4;
+
+function inkOf(rows) {
+  let c0 = 99, c1 = -1, r0 = 99, r1 = -1;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+  }));
+  return { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
+}
+
+function layout(o) {
+  const ink = inkOf(o.rows), H = o.rows.length;
+  const w = ink.cols + DOME_PAD * 2, rad = w / 2;
+  const W = w + MARGIN * 2;
+  const standY = SKY + Math.ceil(rad) + DOME_WALL;        // top of the drawing's ink
+  const floor = standY + ink.rows;
+  const sx = MARGIN + DOME_PAD - ink.c0, sy = floor - H;  // sprite grid's top-left
+  return { ink, W, Hc: floor + FLOOR_ROWS, floor, sx, sy, domeL: MARGIN, domeW: w, rad,
+           spring: standY - DOME_WALL, top: Math.round(standY - DOME_WALL - rad) };
+}
+
+function water(g, L, s, t) {
+  for (let y = 0; y < L.floor; y++) for (let x = 0; x < L.W; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + t / 5200) * 2.4 + t / 7000);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 6) {
+      const b = 0.5 + 0.5 * Math.sin(t / 900 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 9))];
+    }
+    g.fillStyle = tone; g.fillRect(x * s, y * s, s, s);
+  }
+  for (let r = 0; r < FLOOR_ROWS; r++) for (let x = 0; x < L.W; x++) {
+    g.fillStyle = GREYS[2 + (seeth(x, L.floor + r + 7) % 3) + (r === 0 ? 2 : 0)];
+    g.fillRect(x * s, (L.floor + r) * s, s, s);
+  }
+}
+
+function dome(g, L, s) {
+  const cx = L.domeL + L.rad;
+  const inside = (x, y) => {
+    if (x < L.domeL || x >= L.domeL + L.domeW || y >= L.floor || y < L.top) return false;
+    if (y >= L.spring) return true;
+    const dx = x + 0.5 - cx, dy = y + 0.5 - L.spring;
+    return dx * dx + dy * dy <= L.rad * L.rad;
+  };
+  for (let y = L.top; y < L.floor; y++) for (let x = L.domeL; x < L.domeL + L.domeW; x++) {
+    if (!inside(x, y)) continue;
+    const rim = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1);
+    g.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x, y) % 2)];
+    g.fillRect(x * s, y * s, s, s);
+  }
+}
+
+// The bag's swing after each jab: a damped pendulum, its sign the side it was
+// struck from. A speed bag rattles quick and small; a post only rocks.
+const FEEL = { hang: { amp: 0.32, w: 5.2, decay: 0.9 }, post: { amp: 0.09, w: 11, decay: 0.35 },
+               speed: { amp: 0.55, w: 22, decay: 0.45 } };
+const EVERY = 1.7;   // seconds between jabs
+
+function angleAt(o, t) {
+  const f = { ...FEEL[o.kind], ...(o.feel || {}) }, n = Math.floor(t / EVERY), dt = t - n * EVERY;
+  const sides = o.from || [1, -1], side = sides[n % sides.length];                          // struck from the left pushes it right
+  let a = side * f.amp * Math.exp(-dt / f.decay) * Math.sin(f.w * dt);
+  // the swing left over from the jab before
+  const dp = dt + EVERY;
+  a += -side * f.amp * Math.exp(-dp / f.decay) * Math.sin(f.w * dp);
+  return { a, side, dt };
+}
+
+function sprite(g, L, s, o, t) {
+  const rows = o.rows, { a } = angleAt(o, t);
+  const [px, py] = o.pivot, cs = Math.cos(a), sn = Math.sin(a);
+  // what stays put
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.' || o.moves(r, c)) return;
+    g.fillStyle = INK[ch]; g.fillRect((L.sx + c) * s, (L.sy + r) * s, s, s);
+  }));
+  // what swings: each cell on the grid asks which drawn cell turned onto it
+  for (let r = -6; r < rows.length + 4; r++) for (let c = -8; c < rows[0].length + 8; c++) {
+    const x = c + 0.5 - px, y = r + 0.5 - py;
+    const sc = Math.floor(px + x * cs + y * sn), sr = Math.floor(py - x * sn + y * cs);
+    if (sr < 0 || sr >= rows.length || sc < 0 || sc >= rows[0].length) continue;
+    const ch = rows[sr][sc];
+    if (ch === '.' || !o.moves(sr, sc)) continue;
+    g.fillStyle = INK[ch]; g.fillRect((L.sx + c) * s, (L.sy + r) * s, s, s);
+  }
+}
+
+// Where the bag's flank is at its middle row, left and right, unswung.
+function flanks(o) {
+  let r0 = 99, r1 = -1;
+  o.rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.' && o.moves(r, c)) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); } }));
+  const mid = Math.round((r0 + r1) / 2) + (o.kind === 'speed' ? 0 : 1);
+  let c0 = 99, c1 = -1;
+  [...o.rows[mid]].forEach((ch, c) => { if (ch !== '.' && o.moves(mid, c)) { c0 = Math.min(c0, c); c1 = Math.max(c1, c); } });
+  return { mid, c0, c1 };
+}
+
+function bodies(g, L, s, o, t) {
+  const { side, dt } = angleAt(o, t), fl = flanks(o);
+  const y = L.sy + fl.mid - 1;
+  // each body: drawn back, jab in to touch, recoil
+  for (const who of o.from || [1, -1]) {
+    const hitting = who === side;
+    const reach = hitting ? (dt < 0.08 ? dt / 0.08 : Math.max(0, 1 - (dt - 0.08) / 0.35)) : 0;
+    const gap = 1 - Math.round(reach);
+    const x = who === 1 ? L.sx + fl.c0 - WORKER - gap : L.sx + fl.c1 + 1 + gap;
+    g.fillStyle = '#ffffff'; g.fillRect(x * s, y * s, WORKER * s, WORKER * s);
+    // a keyline, so a body against a white post still reads as a body
+    g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(x * s, y * s, WORKER * s, WORKER * s);
+    // the ring off the blow: purple, thrown outward and gone
+    if (hitting && dt > 0.06 && dt < 0.5) {
+      const k = (dt - 0.06) / 0.44, rad = 1 + k * 5, hx = who === 1 ? L.sx + fl.c0 : L.sx + fl.c1 + 1, hy = y + 1.5;
+      g.fillStyle = PURPLES[Math.max(4, 11 - Math.round(k * 8))];
+      for (let i = 0; i < 14; i++) {
+        const an = i / 14 * Math.PI * 2;
+        g.fillRect(Math.round(hx + Math.cos(an) * rad) * s, Math.round(hy + Math.sin(an) * rad) * s, s, s);
+      }
+    }
+  }
+}
+
+function entry(o) {
+  return '  altar: [\n' + o.rows.map(r => `    '${r}'`).join(',\n') + '\n  ],';
+}
+
+const panes = [];
+const only = location.hash.slice(1);
+for (const o of OPTIONS.filter(o => !only || only.includes(o.key))) {
+  const L = layout(o);
+  const box = document.createElement('div');
+  box.className = 'opt';
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2><p class="cap">${o.cap}
+    <br>${o.rows[0].length} x ${o.rows.length}, inked ${L.ink.cols} x ${L.ink.rows}</p><div class="row"></div>`;
+  const row = box.querySelector('.row');
+  const mk = (s, crop, label) => {
+    const wrap = document.createElement('div');
+    const c = document.createElement('canvas');
+    c.width = crop.w * s; c.height = crop.h * s;
+    wrap.append(c);
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = label; wrap.append(l);
+    row.append(wrap);
+    panes.push({ o, L, s, crop, g: c.getContext('2d') });
+  };
+  mk(6, { x: 0, y: 0, w: L.W, h: L.Hc }, '1x -- the game\'s size');
+  const y4 = L.floor - L.ink.rows - 4;
+  mk(24, { x: L.domeL - 2, y: y4, w: L.domeW + 4, h: L.floor + 1 - y4 }, '4x, cropped to the drawing');
+  const code = document.createElement('div');
+  const pre = document.createElement('pre'); pre.textContent = entry(o);
+  const b = document.createElement('button'); b.textContent = 'copy';
+  b.onclick = () => navigator.clipboard.writeText(entry(o)).then(() => { b.textContent = 'copied'; });
+  code.append(pre, b);
+  row.append(code);
+  document.getElementById('opts').append(box);
+  if (o.rows.some(r => r.length !== o.rows[0].length)) console.warn(o.key, 'ragged rows');
+}
+
+const t0 = performance.now();
+function frame() {
+  const ms = performance.now() - t0, t = ms / 1000;
+  for (const p of panes) {
+    const { g, s, crop, L, o } = p;
+    g.setTransform(1, 0, 0, 1, -crop.x * s, -crop.y * s);
+    water(g, L, s, ms);
+    dome(g, L, s);
+    sprite(g, L, s, o, t);
+    bodies(g, L, s, o, t);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
