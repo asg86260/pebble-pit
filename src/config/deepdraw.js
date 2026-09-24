@@ -35,8 +35,8 @@ export const SHAFT_ARROW_DOWN = P * 2;
 // water over the wizards' one, its top this far under the highest the deep's
 // framing ever shows (view.js, `deepZoom`), so it is on the glass whatever
 // the window.
-export const DEEP_PORTAL_R = P * 12;
-export const DEEP_PORTAL_DOWN = P * 5;
+export const DEEP_PORTAL_R = P * 15;
+export const DEEP_PORTAL_DOWN = P;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
 
