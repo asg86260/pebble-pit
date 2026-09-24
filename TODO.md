@@ -14,8 +14,9 @@ Open:
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
 - **Reading the fight** (DESIGN.md, design, not built): nothing says what a
-  hit did or how fast the serpent heals. Four options mocked in
-  `docs/mocks/serpent-hits-2026-09-23.html`; blocked on the owner's vote.
+  hit did or how fast the serpent heals. Voted: numbers off the hit, no
+  splats, in a screen-pixel font of their own; four faces mocked in
+  `docs/mocks/serpent-numbers-2026-09-23.html`; blocked on the owner's pick.
 
 ## The deep's crew at rest -- BUILT, TUNING OPEN (2026-09-23)
 

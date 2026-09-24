@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Number Fonts</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  h3 { font-size: 13px; margin: 18px 0 6px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .opt { border-top: 1px solid var(--rule); padding: 8px 0 0; max-width: 100%; }
+  .opt h2 { font-size: 13px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 8px; min-height: 4.2em; font-size: 12px; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .bar { display: flex; gap: 10px; align-items: center; margin: 0 0 12px; flex-wrap: wrap; }
+  .bar input[type=range] { width: 360px; max-width: 60vw; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; cursor: pointer; }
+  #log { color: var(--dim); font-size: 11px; }
+</style>
+</head>
+<body>
+<h1>Reading the fight: four fonts for the serpent's numbers</h1>
+<p class="note">The owner's call: numbers, no splats, and not in the world's 6 px cells -- a font of their own. A mock
+drawn from plain cells, not the game: the same scripted twenty-two seconds of fight as the serpent-hits mock (a brawler
+punches 6 a blow, a lance bleeds, a grenade's burst, a wizard's beam and curse, a sigil, a star for 60, then the heal),
+with option A's behavior in every pane -- a number rises from where a blow lands and fades out through the tones; the
+lance and the beam say their total once a second; a grenade's whole burst is one number; the heal rises off the wound
+in purple as <code>+N</code> once a second. What differs is only the font. The top row is the game's real scale: a
+world cell is 6 screen pixels, as at the yard's own zoom on a 1920x1080 screen, and each pane is a 72x34-cell stretch
+of that screen. The second row is the camera zoomed in 2x: the world doubles and every number stays the size it was,
+because all four are drawn in screen pixels, as the counter card is. What it cannot show: the real abyss and camera,
+the real bodies and weapons (squares and lines here), a crowd of numbers from many weapons at once, the stages' tones,
+and the numbers are the mock's, not the game's.</p>
+<div class="bar">
+  <button id="play">pause</button>
+  <input id="scrub" type="range" min="0" max="22" step="0.05" value="0">
+  <span id="clock">0.0 s</span>
+  <button id="mag">magnify the top row 2x</button>
+  <span id="log"></span>
+</div>
+<h3>At the game's real scale (world 1x)</h3>
+<div class="grid" id="opts"></div>
+<h3>The camera zoomed in 2x: the world doubles, the numbers do not</h3>
+<div class="grid" id="zoomed"></div>
+<script>
+// --- the deep's tones, as seen (the altar-bag mock's ramps) --------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const WHITE = 11;
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// --- the scene, in cells -------------------------------------------------------------
+const CW = 72, CH = 34, FLOOR = 31, LOOP = 22;
+const BELLY = 34, BELLY_LEN = 6, BULGE = 1.6, GIRTH = 3.4;
+const CRACK_REACH = 22, WOUND_GAP = 6, RIB_EVERY = 3;
+const DEPTH = 240;          // the stage's depth, in the mock's own units
+const HEAL = 18;           // wound a second it closes, uncut
+const SIGIL = { x: 34, from: 7.0, to: 15.0, cut: 0.36, rx: 6 };
+const CURSE = 0.4;          // off the heal while the wizard's beam is on
+
+const yc = (x, t) => 15.5 + 2.6 * Math.sin(x * 0.085 + t * 0.5) + 1.1 * Math.sin(x * 0.21 - t * 0.8);
+const slope = (x, t) => yc(x + 0.5, t) - yc(x - 0.5, t);
+const radius = x => GIRTH + BULGE * Math.sqrt(Math.max(0, 1 - ((x - BELLY) / BELLY_LEN) ** 2));
+
+// --- the fight, scripted -------------------------------------------------------------
+// Every hit: when, where along the coil, how much, by what, and which side of
+// the body it landed on (1 below, -1 above).
+const hits = [];
+for (let k = 0; k < 6; k++) hits.push({ t: 0.4 + 0.9 * k, x: 19 + (k % 2), dmg: 6, w: 'punch', side: 1 });
+const LANCE = { throwAt: 2.5, fly: 0.6, x: 27, hold: 5, from: [9, 4] };
+for (let s = LANCE.throwAt + LANCE.fly; s < LANCE.throwAt + LANCE.fly + LANCE.hold - 1e-6; s += 0.5)
+  hits.push({ t: s, x: LANCE.x, dmg: 3, w: 'lance', side: -1, dot: true });
+const GREN = { throwAt: 5.0, fly: 1.2, x: 40, from: [55, 29] };
+[[0, 0], [-4, 0.15], [4, 0.15]].forEach(([dx, dt]) =>
+  hits.push({ t: GREN.throwAt + GREN.fly + dt, x: GREN.x + dx, dmg: 25, w: 'grenade', side: -1 }));
+const BEAM = { from: 8.0, to: 11.0, x: 48, at: [66, 3] };
+for (let s = BEAM.from + 0.5; s <= BEAM.to + 1e-6; s += 0.5)
+  hits.push({ t: s, x: BEAM.x, dmg: 8, w: 'beam', side: -1, dot: true });
+const STAR = { from: 11.0, land: 11.8, x: 29 };
+hits.push({ t: STAR.land, x: STAR.x, dmg: 60, w: 'star', side: -1 });
+hits.sort((a, b) => a.t - b.t);
+hits.forEach((h, i) => { h.id = i; });
+
+const sigilOn = t => t >= SIGIL.from && t < SIGIL.to;
+const beamOn = t => t >= BEAM.from && t < BEAM.to;
+const healRate = t => HEAL * Math.max(0, 1 - (sigilOn(t) ? SIGIL.cut : 0) - (beamOn(t) ? CURSE : 0));
+
+// --- the sim, stepped once over the loop --------------------------------------------
+// The wound opened by the hits and closed at the heal, read back by any time
+// in the loop. Also what the bars want: a trail that drains after a drop, a
+// low mark the heal climbs away from, and the heal done so far.
+const DT = 1 / 60, N = Math.ceil(LOOP / DT) + 1;
+const W = new Float32Array(N), TRAIL = new Float32Array(N), LOW = new Float32Array(N), HEALED = new Float32Array(N);
+const HEALSEC = [];        // the heal actually done in each whole second
+{
+  let w = 0, trail = 1, hold = 0, low = 1, healed = 0, hi = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i * DT;
+    while (hi < hits.length && hits[hi].t <= t) { w = Math.min(DEPTH, w + hits[hi].dmg); hi++; hold = 0.35; }
+    const closed = Math.min(w, healRate(t) * DT);
+    w -= closed; healed += closed;
+    HEALSEC[Math.floor(t)] = (HEALSEC[Math.floor(t)] || 0) + closed;
+    const h = 1 - w / DEPTH;
+    // the trail holds a moment on a drop, then drains down to the health
+    if (h < trail) { if (hold > 0) hold -= DT; else trail = Math.max(h, trail - 0.5 * DT); } else trail = h;
+    // the low mark: dropped with every hit, then walks up behind the heal
+    if (h < low) low = h; else low += (h - low) * DT / 2.5;
+    W[i] = w; TRAIL[i] = trail; LOW[i] = low; HEALED[i] = healed;
+  }
+}
+const at = (arr, t) => arr[clamp(Math.round(t / DT), 0, N - 1)];
+const woundK = t => at(W, t) / DEPTH;
+
+// --- drawing, a cell at a time --------------------------------------------------------
+let g, s;                                         // the pane's context and its cell size
+const cell = (x, y, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * s, Math.round(y) * s, s, s); };
+
+function water(t) {
+  const ms = t * 1000;
+  for (let y = 0; y < FLOOR; y++) for (let x = 0; x < CW; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + ms / 5200) * 2.4 + ms / 7000);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 8) {
+      const b = 0.5 + 0.5 * Math.sin(ms / 900 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 8))];
+    }
+    cell(x, y, tone);
+  }
+  for (let r = FLOOR; r < CH; r++) for (let x = 0; x < CW; x++)
+    cell(x, r, GREYS[2 + (seeth(x, r + 7) % 3) + (r === FLOOR ? 2 : 0)]);
+}
+
+// A sigil on the floor under the belly, and its bands across the coil; drawn
+// in and out through the purple ramp.
+function sigilTone(t) {
+  if (t < SIGIL.from || t > SIGIL.to + 0.6) return 0;
+  const k = Math.min((t - SIGIL.from) / 0.6, 1, (SIGIL.to + 0.6 - t) / 0.6);
+  return Math.round(clamp(k, 0, 1) * WHITE);
+}
+function sigilFloor(t) {
+  const k = sigilTone(t);
+  if (!k) return;
+  for (let a = 0; a < 28; a++) {
+    const an = a / 28 * Math.PI * 2;
+    cell(SIGIL.x + Math.cos(an) * SIGIL.rx, FLOOR - 1.5 + Math.sin(an) * 1.2, PURPLES[k]);
+  }
+}
+
+// The coil as the game draws it: plain white hide, grey spine, shaded belly,
+// cracks out from the belly as far as the wound is deep, the gap at the belly
+// breaking the cage of ribs he is held in. `mark(x, y, d, tone)` lets an
+// option recolor a cell of the body (the chips' divots, the heal's knitting).
+function coil(t, mark) {
+  const wk = woundK(t), reach = wk * CRACK_REACH, gap = Math.round(wk * WOUND_GAP);
+  const sk = sigilTone(t);
+  for (let x = 0; x < CW; x++) {
+    const c = yc(x + 0.5, t), cos = 1 / Math.sqrt(1 + slope(x + 0.5, t) ** 2), r = radius(x + 0.5);
+    for (let y = Math.floor(c - r - 2); y <= Math.ceil(c + r + 2); y++) {
+      const d = (y + 0.5 - c) * cos, da = x + 0.5 - BELLY;
+      if (gap && Math.abs(da) < gap / 2) continue;
+      if (Math.abs(d) > r) {
+        if (sk && Math.abs(da) <= SIGIL.rx / 2 && Math.abs(d) < r + 1 && Math.round(da) % 2 === 0) cell(x, y, PURPLES[sk]);
+        continue;
+      }
+      let tone;
+      if (Math.abs(da) < BELLY_LEN && Math.abs(d) < r - 1 && r > GIRTH + 0.5) {
+        tone = ((Math.round(da) % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0 ? GREYS[2] : GREYS[WHITE - 4 - (seeth(x, y) % 2)];
+      } else {
+        tone = GREYS[d > r - 1 ? WHITE - 3 : Math.abs(d) < 0.5 ? WHITE - 2 : d > 0.9 ? WHITE - 1 : WHITE];
+        if (reach > 0 && Math.abs(da) < reach) {
+          const w1 = Math.sin(x / 2.3) * r * 0.5, w2 = Math.sin(x / 3.1 + 2) * r * 0.55;
+          if (Math.abs(d - w1) < 0.6 || (Math.abs(d - w2) < 0.6 && seeth(x, 7) % 3)) {
+            tone = GREYS[1 + Math.round(3 * Math.abs(da) / reach)];
+            if (mark) tone = mark.crack(x, y, Math.abs(da), reach, tone) || tone;
+          }
+        }
+        if (sk && Math.abs(da) <= SIGIL.rx / 2 && Math.round(da) % 2 === 0) tone = PURPLES[sk];
+      }
+      if (mark) tone = mark.body(x, y, d, r, tone) || tone;
+      cell(x, y, tone);
+    }
+  }
+  // him, whole in the cage: the crew's white square with its dark edge
+  const hy = Math.round(yc(BELLY, t)) - 1;
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++)
+    cell(BELLY - 1 + i, hy + j, i === 1 && j === 1 ? GREYS[WHITE] : GREYS[WHITE - 1]);
+}
+
+// A body: a square of three cells, white with a black edge, the altar mock's.
+function body(x, y) {
+  g.fillStyle = GREYS[WHITE]; g.fillRect(Math.round(x) * s, Math.round(y) * s, 3 * s, 3 * s);
+  g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(Math.round(x) * s, Math.round(y) * s, 3 * s, 3 * s);
+}
+function line(x0, y0, x1, y1, tone) {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) | 0;
+  for (let i = 0; i <= n; i++) cell(x0 + (x1 - x0) * i / (n || 1), y0 + (y1 - y0) * i / (n || 1), tone);
+}
+const edgeY = (x, t, side) => yc(x + 0.5, t) + side * (radius(x + 0.5) + 0.5);
+
+function weapons(t) {
+  // the brawler, under the coil, jabbing up
+  const punch = hits.filter(h => h.w === 'punch');
+  const last = punch.filter(h => h.t <= t).pop();
+  const jab = last && t - last.t < 0.3 ? 1 : 0;
+  if (t < 5.6) body(18, edgeY(19, t, 1) + 1 - jab);
+  // the lancer, thrown from up-left; the lance sticks and dissolves through the ramp
+  const lt = t - LANCE.throwAt, [lx, ly] = LANCE.from;
+  if (t < LANCE.throwAt + LANCE.fly + LANCE.hold + 1) body(lx - 1, ly - 1);
+  const tip = [LANCE.x, edgeY(LANCE.x, t, -1) + 1];
+  if (lt >= 0 && lt < LANCE.fly) {
+    const k = lt / LANCE.fly, hx = lx + (tip[0] - lx) * k, hy = ly + (tip[1] - ly) * k;
+    line(hx - 2, hy - 1.4, hx, hy, PURPLES[WHITE]);
+  } else if (lt >= LANCE.fly && lt < LANCE.fly + LANCE.hold + 0.6) {
+    const fade = clamp((LANCE.fly + LANCE.hold + 0.6 - lt) / 0.6, 0, 1);
+    line(tip[0] - 3, tip[1] - 3, tip[0], tip[1], PURPLES[Math.round(fade * WHITE)]);
+  }
+  // the grenadier: an arc to the coil, then rings that go out through the ramp
+  const gt = t - GREN.throwAt, [gx, gy] = GREN.from;
+  if (t < GREN.throwAt + GREN.fly + 1.2) body(gx, gy - 1);
+  if (gt >= 0 && gt < GREN.fly) {
+    const k = gt / GREN.fly, x = gx + (GREN.x - gx) * k, y = gy + (yc(GREN.x, t) - gy) * k - Math.sin(k * Math.PI) * 6;
+    cell(x, y, GREYS[WHITE]); cell(x + 1, y, PURPLES[WHITE]); cell(x, y + 1, PURPLES[WHITE]); cell(x + 1, y + 1, GREYS[WHITE]);
+  } else if (gt >= GREN.fly && gt < GREN.fly + 0.8) {
+    const k = (gt - GREN.fly) / 0.8, rad = 1 + k * 7, cy = yc(GREN.x, t);
+    for (let i = 0; i < 26; i++) {
+      const an = i / 26 * Math.PI * 2;
+      cell(GREN.x + Math.cos(an) * rad, cy + Math.sin(an) * rad * 0.7, PURPLES[Math.max(3, WHITE - Math.round(k * 8))]);
+    }
+  }
+  // the wizard: a beam held on the coil, an interference dash running down it
+  if (t > BEAM.from - 1 && t < BEAM.to + 1.5) body(BEAM.at[0], BEAM.at[1] - 1);
+  if (beamOn(t)) {
+    const [bx, by] = BEAM.at, ex = BEAM.x, ey = edgeY(BEAM.x, t, -1);
+    const n = Math.max(Math.abs(ex - bx), Math.abs(ey - by)) | 0;
+    for (let i = 0; i <= n; i++) {
+      const k = i / n, on = ((i - Math.floor(t * 12)) % 4 + 4) % 4 !== 0;
+      cell(bx + (ex - bx) * k, by + 1 + (ey - by - 1) * k, PURPLES[on ? WHITE : 8]);
+    }
+  }
+  // the called star, a white head and a purple tail, falling
+  if (t >= STAR.from && t < STAR.land) {
+    const k = (t - STAR.from) / (STAR.land - STAR.from), y = -2 + (edgeY(STAR.x, t, -1) + 2) * k;
+    for (let i = 1; i < 8; i++) cell(STAR.x, y - i, PURPLES[Math.max(2, WHITE - i)]);
+    cell(STAR.x, y, GREYS[WHITE]); cell(STAR.x - 1, y, GREYS[WHITE]);
+  } else if (t >= STAR.land && t < STAR.land + 0.7) {
+    const k = (t - STAR.land) / 0.7, rad = 1 + k * 6, cy = edgeY(STAR.x, t, -1);
+    for (let i = 0; i < 22; i++) {
+      const an = Math.PI + i / 21 * Math.PI;
+      cell(STAR.x + Math.cos(an) * rad, cy + Math.sin(an) * rad * 0.6, GREYS[Math.max(3, WHITE - Math.round(k * 8))]);
+    }
+  }
+}
+
+// The damage a number says: a single blow is its own number; a weapon that
+// hurts for as long as it is held (the lance, the beam) says its sum once a
+// second, or it would be a column of 3s. A grenade's burst is one number, its
+// lengths summed, said where the rings started: three at once printed over
+// each other.
+function tallies(minDmg) {
+  const out = [];
+  for (const h of hits) {
+    if (h.dot) continue;
+    const prev = out.find(o => o.w === h.w && h.t - o.t < 0.3);
+    if (prev) { prev.dmg += h.dmg; continue; }
+    out.push({ t: h.t, x: h.x, side: h.side, dmg: h.dmg, id: h.id, w: h.w });
+  }
+  for (let i = out.length - 1; i >= 0; i--) if (out[i].dmg < minDmg) out.splice(i, 1);
+  const buckets = {};
+  for (const h of hits) if (h.dot) {
+    const k = h.w + Math.ceil(h.t - 1e-6);
+    (buckets[k] = buckets[k] || { t: Math.ceil(h.t - 1e-6), x: h.x, side: h.side, dmg: 0, id: 100 + h.id }).dmg += h.dmg;
+  }
+  for (const b of Object.values(buckets)) if (b.dmg >= minDmg) out.push(b);
+  return out;
+}
+
+
+// --- fonts of their own, in screen pixels ---------------------------------------------
+// Each glyph a list of rows, '#' inked. Nothing here is on the world's P grid:
+// a font pixel is one or two screen pixels, however the camera is zoomed.
+const G = rows => rows.split(' ');
+const F35 = {          // 3x5, the old mock's digits
+  '0': G('### #.# #.# #.# ###'), '1': G('.#. ##. .#. .#. ###'), '2': G('### ..# ### #.. ###'),
+  '3': G('### ..# ### ..# ###'), '4': G('#.# #.# ### ..# ..#'), '5': G('### #.. ### ..# ###'),
+  '6': G('### #.. ### #.# ###'), '7': G('### ..# .#. .#. .#.'), '8': G('### #.# ### #.# ###'),
+  '9': G('### #.# ### ..# ###'), '+': G('... .#. ### .#. ...')
+};
+const F57 = {          // 5x7 bold condensed: two-pixel stems, a one-pixel counter
+  '0': G('.###. ##.## ##.## ##.## ##.## ##.## .###.'), '1': G('.##.. ###.. .##.. .##.. .##.. .##.. ####.'),
+  '2': G('.###. ##.## ...## ..##. .##.. ##... #####'), '3': G('####. ...## ...## .###. ...## ...## ####.'),
+  '4': G('##.## ##.## ##.## ##### ...## ...## ...##'), '5': G('##### ##... ####. ...## ...## ##.## .###.'),
+  '6': G('.###. ##... ####. ##.## ##.## ##.## .###.'), '7': G('##### ...## ..##. ..##. .##.. .##.. .##..'),
+  '8': G('.###. ##.## ##.## .###. ##.## ##.## .###.'), '9': G('.###. ##.## ##.## .#### ...## ...## .###.'),
+  '+': G('..... .##.. .##.. ##### .##.. .##.. .....')
+};
+const F46 = {          // 4x6, rounder, for the carved face
+  '0': G('.##. #..# #..# #..# #..# .##.'), '1': G('.#.. ##.. .#.. .#.. .#.. ###.'),
+  '2': G('.##. #..# ..#. .#.. #... ####'), '3': G('###. ...# .##. ...# ...# ###.'),
+  '4': G('#..# #..# #### ...# ...# ...#'), '5': G('#### #... ###. ...# ...# ###.'),
+  '6': G('.##. #... ###. #..# #..# .##.'), '7': G('#### ...# ..#. .#.. .#.. .#..'),
+  '8': G('.##. #..# .##. #..# #..# .##.'), '9': G('.##. #..# #..# .### ...# .##.'),
+  '+': G('.... .#.. ###. .#.. .... ....')
+};
+
+// A string laid out as a mask of device pixels: `px` of them a font pixel,
+// one font pixel between glyphs.
+function mask(str, font, px) {
+  const gw = font['0'][0].length, gh = font['0'].length;
+  const w = (str.length * (gw + 1) - 1) * px, h = gh * px, on = new Uint8Array(w * h);
+  [...str].forEach((ch, i) => font[ch].forEach((row, r) => {
+    for (let c = 0; c < gw; c++) if (row[c] === '#')
+      for (let a = 0; a < px; a++) for (let b = 0; b < px; b++) on[(r * px + a) * w + (i * (gw + 1) + c) * px + b] = 1;
+  }));
+  return { w, h, on };
+}
+function paintMask(x, m, ox, oy, tone) {
+  x.fillStyle = tone;
+  for (let y = 0; y < m.h; y++) for (let i = 0; i < m.w; i++) if (m.on[y * m.w + i]) x.fillRect(ox + i, oy + y, 1, 1);
+}
+// Every pixel within `r` of the mask and not in it: the keyline.
+function paintKeyline(x, m, ox, oy, tone, r) {
+  x.fillStyle = tone;
+  const at = (i, y) => i >= 0 && y >= 0 && i < m.w && y < m.h && m.on[y * m.w + i];
+  for (let y = -r; y < m.h + r; y++) for (let i = -r; i < m.w + r; i++) {
+    if (at(i, y)) continue;
+    let near = false;
+    for (let dy = -r; dy <= r && !near; dy++) for (let dx = -r; dx <= r; dx++) if (at(i + dx, y + dy)) { near = true; break; }
+    if (near) x.fillRect(ox + i, oy + y, 1, 1);
+  }
+}
+
+const HEALTONE = PURPLES[WHITE], HEALDROP = PURPLES[5], DROP = GREYS[6];
+
+// Each option draws a number onto its own little sheet, whole and opaque; the
+// fade is laid over the whole sheet at once, so a keyline never outlives the
+// face it outlines. `u` is device pixels to a screen pixel.
+function sheet(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, h); return c; }
+const OPTIONS = [
+  { key: '1', name: 'A hand-made 3x5, doubled, keylined',
+    cap: 'A 3x5 pixel font at two screen pixels a font pixel (a digit is 6x10 px, where the world\'s cells made it 18x30), white with a one-pixel black keyline; the heal purple. Crisp and tiny; reads on the white hide and the black water alike.',
+    make(str, heal, u) {
+      const m = mask(str, F35, 2 * u), c = sheet(m.w + 2 * u, m.h + 2 * u), x = c.getContext('2d');
+      paintKeyline(x, m, u, u, '#000', u);
+      paintMask(x, m, u, u, heal ? HEALTONE : GREYS[WHITE]);
+      return c;
+    } },
+  { key: '2', name: 'The counter\'s own face, 13px monospace',
+    cap: 'The counter card\'s ui-monospace at 13 px (bold here), in screen pixels: the one face already read rather than looked at. White over a 3 px black stroke for the white hide; the heal purple. Smooth rather than pixel -- it antialiases.',
+    make(str, heal, u) {
+      const c = sheet((str.length * 8 + 8) * u, 20 * u), x = c.getContext('2d');
+      x.font = `bold ${13 * u}px ui-monospace, "Courier New", monospace`;
+      x.textBaseline = 'alphabetic'; x.textAlign = 'center'; x.lineJoin = 'round';
+      x.lineWidth = 3 * u; x.strokeStyle = '#000'; x.strokeText(str, c.width / 2, 15 * u);
+      x.fillStyle = heal ? HEALTONE : GREYS[WHITE]; x.fillText(str, c.width / 2, 15 * u);
+      return c;
+    } },
+  { key: '3', name: 'Bold 5x7 on a black tag',
+    cap: 'A bold condensed 5x7 pixel font at one screen pixel a font pixel -- the smallest of the four, 7 px tall -- white on a black tag two pixels bigger all round; the heal purple on the same tag. No keyline needed: the tag is the ground.',
+    make(str, heal, u) {
+      const m = mask(str, F57, u), pad = 2 * u, c = sheet(m.w + 2 * pad, m.h + 2 * pad), x = c.getContext('2d');
+      x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height);
+      paintMask(x, m, pad, pad, heal ? HEALTONE : GREYS[WHITE]);
+      return c;
+    } },
+  { key: '4', name: 'Carved: 4x6 with a grey drop line',
+    cap: 'A rounder 4x6 pixel font doubled (8x12 px), white with a grey line one font pixel under it, as if cut into a plate; the heal purple with a dark purple drop and a leading +. No black: the lightest of the four, and the one the white hide eats most.',
+    make(str, heal, u) {
+      const m = mask(str, F46, 2 * u), c = sheet(m.w, m.h + 2 * u), x = c.getContext('2d');
+      paintMask(x, m, 0, 2 * u, heal ? HEALDROP : DROP);
+      paintMask(x, m, 0, 0, heal ? HEALTONE : GREYS[WHITE]);
+      return c;
+    } }
+];
+
+// A number's whole-sheet opacity over its life, in eighths, so it steps
+// through the tones of whatever it is over: in over a tenth of a second, held,
+// out over the last half of its life. Never a jump bigger than an eighth.
+function lifeK(age, life) {
+  const k = age < 0.12 ? age / 0.12 : age > life / 2 ? (life - age) / (life / 2) : 1;
+  return Math.round(clamp(k, 0, 1) * 8) / 8;
+}
+const RISE = 14;       // screen pixels a second a number climbs
+
+function stamp(o, str, heal, sx, sy, k, u) {
+  if (k <= 0) return;
+  const c = o.make(str, heal, u);
+  g.globalAlpha = k;
+  g.drawImage(c, Math.round(sx - c.width / 2), Math.round(sy - c.height));
+  g.globalAlpha = 1;
+}
+// Anchored in the world (`s` device pixels a cell), offset and risen in
+// screen pixels (`u` device pixels each), so the camera moves where a number
+// stands and never how big it is.
+function numbers(t, o, u) {
+  const life = 1.3;
+  for (const n of tallies(0)) {
+    const age = t - n.t;
+    if (age < 0 || age > life) continue;
+    const sx = (n.x + 0.5 + (hash(n.id) - 0.5) * 2) * s;
+    const sy = edgeY(n.x, n.t, -1) * s - 6 * u - Math.floor(age * RISE) * u;
+    stamp(o, String(Math.round(n.dmg)), false, sx, sy, lifeK(age, life), u);
+  }
+  const hlife = 1.6;
+  for (let sec = 1; sec <= Math.floor(t); sec++) {
+    const age = t - sec;
+    if (age > hlife) continue;
+    const v = Math.round(HEALSEC[sec - 1] || 0);
+    if (v < 1) continue;
+    const sx = (BELLY + 0.5) * s + (sec % 2 ? 14 : -14) * u;
+    const sy = (edgeY(BELLY, sec, 1) + 1) * s + 22 * u - Math.floor(age * RISE) * u;
+    stamp(o, '+' + v, true, sx, sy, lifeK(age, hlife), u);
+  }
+}
+
+// --- the page -------------------------------------------------------------------------
+// The backing store at whole device pixels, as the game rounds its own, so a
+// font pixel is never smeared across two.
+const DPR = Math.max(1, Math.round(window.devicePixelRatio || 1));
+function drawAt(t, ctx, o, zoom, u) {
+  g = ctx; s = 6 * zoom * u;
+  const tt = ((t % LOOP) + LOOP) % LOOP;
+  water(tt); sigilFloor(tt); coil(tt); weapons(tt); numbers(tt, o, u);
+}
+const panes = [];
+function pane(where, o, zoom, withCap) {
+  const box = document.createElement('div');
+  box.className = 'opt';
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2>` + (withCap ? `<p class="cap">${o.cap}</p>` : '');
+  const c = document.createElement('canvas');
+  const w = CW * 6 * zoom, h = CH * 6 * zoom;
+  c.width = w * DPR; c.height = h * DPR; c.style.width = w + 'px'; c.style.height = h + 'px';
+  c.dataset.w = w;
+  box.append(c);
+  if (withCap) box.style.width = w + 'px';
+  document.getElementById(where).append(box);
+  panes.push({ o, g: c.getContext('2d'), zoom, c });
+}
+for (const o of OPTIONS) pane('opts', o, 1, true);
+for (const o of OPTIONS) pane('zoomed', o, 2, false);
+
+let big = false;
+document.getElementById('mag').onclick = () => {
+  big = !big;
+  for (const p of panes) if (p.zoom === 1) {
+    const w = +p.c.dataset.w * (big ? 2 : 1);
+    p.c.style.width = w + 'px'; p.c.style.height = (w * CH / CW) + 'px';
+    p.c.parentNode.style.width = w + 'px';
+  }
+};
+
+const scrub = document.getElementById('scrub'), clock = document.getElementById('clock'), play = document.getElementById('play');
+let playing = !/still/.test(location.search), t0 = performance.now(), held = 0;
+const nowT = () => playing ? ((performance.now() - t0) / 1000) % LOOP : held;
+play.onclick = () => { if (playing) { held = nowT(); playing = false; play.textContent = 'play'; } else { t0 = performance.now() - held * 1000; playing = true; play.textContent = 'pause'; } };
+scrub.oninput = () => { held = +scrub.value; if (playing) t0 = performance.now() - held * 1000; };
+function frame() {
+  const t = nowT();
+  for (const p of panes) drawAt(t, p.g, p.o, p.zoom, DPR);
+  scrub.value = t; clock.textContent = t.toFixed(1) + ' s  wound ' + Math.round(at(W, t)) + ' / ' + DEPTH + '  heal ' + healRate(t).toFixed(1) + '/s';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// --- stills, for a preview that runs no scripts ---------------------------------------
+// `__stills(t)` hands back png data urls (tools, not the page, save them): a
+// montage of all four at one moment at real scale with a 2x crop of each, and
+// per option its moments at real scale, the zoomed camera and a 3x crop.
+const MOMENTS = [
+  { t: 1.5, say: 'punch' }, { t: 6.55, say: 'grenade + lance' }, { t: 10.2, say: 'beam, sigil, curse' },
+  { t: 12.2, say: 'the star' }, { t: 15.4, say: 'healing' }
+];
+const CROP = { x: 96, y: 0, w: 240, h: 170 };          // screen pixels of a 1x pane, round the fight
+function canvasOf(w, h, draws) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.fillStyle = '#1a1a1a'; x.fillRect(0, 0, w, h); x.imageSmoothingEnabled = false;
+  draws(x); return c;
+}
+function paneAt(t, o, zoom) {
+  const c = document.createElement('canvas'); c.width = CW * 6 * zoom; c.height = CH * 6 * zoom;
+  drawAt(t, c.getContext('2d'), o, zoom, 1); return c;
+}
+function label(x, str, px, py, size = 15, tone = '#eee') { x.fillStyle = tone; x.font = `${size}px Consolas, monospace`; x.fillText(str, px, py); }
+function wrap(x, str, px, py, width, size = 14) {
+  x.fillStyle = '#bbb'; x.font = `${size}px Consolas, monospace`;
+  let line = '';
+  for (const word of str.split(' ')) {
+    if (x.measureText(line + word).width > width) { x.fillText(line, px, py); line = ''; py += size + 5; }
+    line += word + ' ';
+  }
+  x.fillText(line, px, py);
+}
+function cropOf(x, src, dx, dy, k) {
+  x.drawImage(src, CROP.x, CROP.y, CROP.w, CROP.h, dx, dy, CROP.w * k, CROP.h * k);
+  x.strokeStyle = '#555'; x.strokeRect(dx - 0.5, dy - 0.5, CROP.w * k + 1, CROP.h * k + 1);
+}
+window.__stills = (mt = 12.2) => {
+  const pw = CW * 6, ph = CH * 6, pad = 14, out = {};
+  const colW = Math.max(pw, CROP.w * 2);
+  out.montage = canvasOf(pad + 4 * (colW + pad), 48 + ph + 30 + CROP.h * 2 + 110, x => {
+    label(x, `Four fonts at one moment (${mt.toFixed(2)} s), real scale: a world cell is 6 px. Below, a 2x blow-up of each.`, pad, 22, 16);
+    OPTIONS.forEach((o, i) => {
+      const cx = pad + i * (colW + pad), p = paneAt(mt, o, 1);
+      label(x, `${o.key} -- ${o.name}`, cx, 42, 14);
+      x.drawImage(p, cx, 48);
+      label(x, '2x crop', cx, 48 + ph + 22, 12, '#999');
+      cropOf(x, p, cx, 48 + ph + 30, 2);
+      wrap(x, o.cap, cx, 48 + ph + 30 + CROP.h * 2 + 20, colW - 10, 12);
+    });
+  }).toDataURL('image/png');
+  for (const o of OPTIONS) {
+    const zw = CW * 12, zh = CH * 12;
+    out[o.key] = canvasOf(pad + 5 * (pw + pad), 70 + ph + 40 + zh + 30, x => {
+      label(x, `${o.key} -- ${o.name}`, pad, 22, 17);
+      wrap(x, o.cap, pad, 44, 5 * (pw + pad) - 2 * pad, 13);
+      MOMENTS.forEach((m, i) => {
+        const cx = pad + i * (pw + pad);
+        x.drawImage(paneAt(m.t, o, 1), cx, 70);
+        label(x, `${m.t.toFixed(2)} s -- ${m.say} (real scale)`, cx, 70 + ph + 18, 12, '#999');
+      });
+      const y2 = 70 + ph + 40;
+      x.drawImage(paneAt(mt, o, 2), pad, y2);
+      label(x, `camera zoomed 2x at ${mt.toFixed(2)} s: the world doubles, the numbers keep their size`, pad, y2 + zh + 18, 12, '#999');
+      const cx = pad + zw + pad * 2;
+      cropOf(x, paneAt(mt, o, 1), cx, y2, 2);
+      label(x, 'real scale, blown up 2x to read the glyphs', cx, y2 + CROP.h * 2 + 18, 12, '#999');
+    }).toDataURL('image/png');
+  }
+  return out;
+};
+document.getElementById('log').textContent = `peak wound ${Math.round(Math.max(...W))} of ${DEPTH}`;
+window.__test = () => true;     // lets the repo's CDP driver see the page is up
+</script>
+</body>
+</html>

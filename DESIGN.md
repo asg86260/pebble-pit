@@ -14818,7 +14818,43 @@ scene `deep-cracked` with the wound held at nine tenths of the bare stage.
 ### Reading the fight: what a hit did and how fast it heals (design, not built)
 
 *Mocked 2026-09-23, `docs/mocks/serpent-hits-2026-09-23.html` (stills in
-`docs/mocks/serpent-hits/`); awaiting the owner's vote.* The cracks say how
+`docs/mocks/serpent-hits/`).*
+
+**The owner's call, 2026-09-23: numbers, in a font of their own, and no
+splats.** In the owner's words: "id rather not have damage splats, but with
+the upgrades in the stations, with the hard dmg numbers. i dont see a way
+around it. i dont think the numbers should be rendered as full cells
+though. it should be its own font". So A's behavior stands -- a number rises
+from where a blow lands and fades out through the tones; the lance and the
+beam total once a second; a grenade's whole burst is one number; the heal
+rises in purple as `+N` once a second off the wound -- and B, C and D's
+bars, chips and divots are out. The digits are not drawn in the world's
+`P` cells as the mock drew them: they are drawn in **screen pixels**, as
+the counter card is (`render/counter.js`), so they are finer than the world
+and stay the same size however the camera zooms. They are the one place the
+`P` grid is left on purpose, beside the counter. Their fade is the whole
+number's opacity stepped in eighths, so it goes through the tones of what
+is behind it and a keyline never outlives its face.
+
+Which face is the second vote, mocked in
+`docs/mocks/serpent-numbers-2026-09-23.html` (stills in
+`docs/mocks/serpent-numbers/`), each at the game's real scale (a world cell
+is 6 screen pixels) and under a 2x camera:
+
+1. **A hand-made 3x5, doubled, keylined** -- two screen pixels a font pixel
+   (6x10 a digit, against the cells' 18x30), white in a one-pixel black
+   keyline, the heal purple.
+2. **The counter's own face** -- ui-monospace at 13 px, bold, white over a
+   3 px black stroke; the one face the game already reads. Antialiased, not
+   pixel.
+3. **A bold 5x7 on a black tag** -- two-pixel stems, one screen pixel a font
+   pixel (7 px tall, the smallest), white or purple on a black tag two
+   pixels bigger all round.
+4. **Carved** -- a rounder 4x6 doubled (8x12), white with a grey drop line
+   one font pixel under it, the heal purple on a dark purple drop. No black,
+   so the white hide eats it most.
+
+The first mock's reasoning, kept for the record: the cracks say how
 deep the wound is, but not what put it there or what is taking it back. With
 five weapons on the coil at once, a player cannot tell whether the lances are
 worth their rungs, whether the curse did anything, or why the wound stopped
@@ -14869,11 +14905,13 @@ already has but does not keep:
 
 **The calls for the owner.**
 
-1. **Numbers or not.** A and D put digits on the screen, which nothing else in
+1. **Numbers or not.** *Answered 2026-09-23: numbers, own font, no splats
+   (above).* A and D put digits on the screen, which nothing else in
    the game does outside the boards; C keeps the whole reading in the
    picture at the cost of exactness. Is a number on the coil in the game's
    register?
-2. **Is the bar the wound or the defense?** B and D draw what is left of the
+2. **Is the bar the wound or the defense?** *Moot since the vote: no bar.*
+   B and D draw what is left of the
    stage, so the bar refills at every break and the four stages share one
    bar; drawn instead as the wound, it grows with damage and the heal eats it.
    Either way it replaces "still no bar" in "The serpent, redrawn".
