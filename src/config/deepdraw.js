@@ -26,9 +26,10 @@ export const CRUSHER_ROLLER = P * 4;
 // breathes (the same swell the drowned pit's surface has).
 export const DEEP_SURFACE = P * 5;
 // The arrow that says the view goes through (render/shaftway.js): in the
-// yard in the liquid this far right of the torn portal's lip, pointing down;
-// in the deep this far under the bottom of the deep's own end, pointing up
-// into it -- bobbing a cell each way over SHAFT_ARROW_MS.
+// yard in the liquid this far right of the torn portal's lip, level with its
+// middle, pointing left at it and bobbing toward it and back; in the deep
+// this far under the bottom of the deep's own end, pointing up into it and
+// bobbing up and down -- a cell each way (SHAFT_ARROW_BOB) over SHAFT_ARROW_MS.
 export const SHAFT_ARROW_SIDE = P * 3;
 export const SHAFT_ARROW_DOWN = P * 2;
 // The deep's end of the portal, the way back up: a circle hanging in the
