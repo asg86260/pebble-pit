@@ -83,7 +83,7 @@ group("the deep's caps hold: nobody before a door, no more than a station holds 
   const fontShut = !post('fontjob');
   assign('grenadiers', 1);               // the roster's own move, refused: nowhere to stand
   const shutCount = S.grenadiers;
-  S.fontOpen = true;                     // the font's door (its row is the board's)
+  S.fontOpen = true;                     // the armory's door (its row is the board's)
   window.__build();
   for (let i = 0; i < GRENADE_CAP + 3; i++) press('fontjob', 'more');
   return [

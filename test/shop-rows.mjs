@@ -180,7 +180,7 @@ export const ROWS = [
   { key: 'unlockspire', part: 1, reach: deepAt(3, 'well', 'font', 'circle') },
   { key: 'pod', part: 1, reach: deep },
 
-  // --- the deep: the well, the font, the circle, the spire ----------------------
+  // --- the deep: the well, the armory, the circle, the spire -------------------
   { key: 'lance', part: 2, reach: deepAt(1, 'well') },
   { key: 'lancehold', part: 2, reach: deepAt(1, 'well') },
   { key: 'grenade', part: 2, reach: deepAt(2, 'well', 'font') },

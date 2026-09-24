@@ -90,7 +90,7 @@ group('a door is offered on the stage before the one its weapon answers', async 
   return [
     ok(!bare, 'the well is not offered while the coil is bare'),
     ok(warded, 'and is offered once the wards are up'),
-    ok(!font, 'the font waits on the well and the next stage'),
+    ok(!font, 'the armory waits on the well and the next stage'),
     ok(pressed && S.wellOpen, 'the well opens when its door is bought and built')
   ];
 });

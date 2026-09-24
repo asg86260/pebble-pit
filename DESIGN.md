@@ -14556,7 +14556,7 @@ coins, then a spark on the last band.
   bleeds the serpent until it dissolves, and the thrower swims back to the
   well for another. Damage over time; pierces wards. Its ladders: the bleed,
   how long a lance holds, how fast the well gives them.
-- **Abyssal grenades.** A font where the surface's ripples are held in a
+- **Abyssal grenades.** An armory where the surface's ripples are held in a
   ball. Thrown, it bursts in rings, and every length of coil a ring crosses
   is hit. Damage in an area; the answer to splitting.
 - **Binding sigils.** Scribes draw circles on the floor. A length of coil

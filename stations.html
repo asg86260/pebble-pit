@@ -104,13 +104,16 @@ const rowsOf = key => edits[key] || COMMITTED[key];
 const save = () => { localStorage.setItem(SPRITES_KEY, JSON.stringify(edits)); };
 
 let key = Object.keys(COMMITTED)[0], tone = '#';
+// A station is listed by the name the player reads, off the game frame once
+// it is up; the sprite key until then, and for a drawing no station owns.
+const shown = k => yard()?.__siteName?.(k)?.replace(/^the /, '') || k;
 
 // --- the list and the tones -----------------------------------------------------
 const names = document.getElementById('names');
 function list() {
   names.replaceChildren(...Object.keys(COMMITTED).map(k => {
     const b = document.createElement('button');
-    b.textContent = k;
+    b.textContent = shown(k);
     b.className = (k === key ? 'on ' : '') + (edits[k] ? 'edited' : '');
     b.onclick = () => { key = k; draw(); lookAt(); };
     return b;
@@ -273,7 +276,7 @@ document.getElementById('forget').onclick = () => {
 
 function draw() {
   const rows = rowsOf(key);
-  document.getElementById('editing').textContent = `${key}${edits[key] ? ' (edited)' : ''}`;
+  document.getElementById('editing').textContent = `${shown(key)}${edits[key] ? ' (edited)' : ''}`;
   list(); paintGrid(rows); drawPreview(rows);
   code.value = entry(key);
 }
@@ -295,7 +298,7 @@ frame.addEventListener('load', () => {
     const w = yard();
     if (!w?.__scene || !w.__reset || !w.__deepZoom) return setTimeout(stand, 50);
     w.__scene('deep-all');
-    lookAt();
+    draw(); lookAt();
   };
   stand();
 });

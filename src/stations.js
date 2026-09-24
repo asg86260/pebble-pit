@@ -168,8 +168,10 @@ export const STATIONS = [
     empty: 'the well is still', post: { key: 'welljob', job: JOB.LANCE },
     open: () => S.wellOpen, stand: () => standOf('well'), board: 'wellBoardOpen',
     after: ['altar'], needs: () => S.serpentStage >= 1 },
-  { key: 'font', name: 'the font', glyph: 'bowl',
-    empty: 'the font is still', post: { key: 'fontjob', job: JOB.GRENADE },
+  // The armory keeps its first name, `font`, as its key: the key is in saves
+  // (`fontOpen`, `fontBoardOpen`) and every row and sprite that finds it.
+  { key: 'font', name: 'the armory', glyph: 'bowl',
+    empty: 'the racks are bare', post: { key: 'fontjob', job: JOB.GRENADE },
     open: () => S.fontOpen, stand: () => standOf('font'), board: 'fontBoardOpen',
     after: ['well'], needs: () => S.serpentStage >= 2 },
   { key: 'circle', name: 'the circle', glyph: 'wand',
