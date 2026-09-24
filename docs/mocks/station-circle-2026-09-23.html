@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circle Station Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .opt { border-top: 1px solid var(--rule); padding: 14px 0 18px; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 10px; max-width: 1080px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .lbl { color: var(--dim); font-size: 11px; margin-top: 3px; }
+  pre { margin: 0; padding: 8px; border: 1px solid var(--rule); font-size: 11px; line-height: 1.15; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; margin-top: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>The circle, redrawn around the scribes' work: four options</h1>
+<p class="note">A mock drawn from plain cells, not the game. The circle's scribes draw sigils: rings on the floor,
+either side of the station, that hold the length of coil over them so it cannot thrash or heal. Each drawing is
+painted the way the deep paints a station: a cell a character, in the five tones as they are seen down there
+(<code>#</code> white, <code>+</code> light grey, <code>-</code> dark grey, <code>o</code> the black water,
+<code>*</code> the abyss's purple), under a dome sized from the drawing's inked width (4 cells of pad, 4 of wall),
+on the deep's mottled floor. Left is the game's own size (a cell is 6 px), right is four times that. A body square
+(keylined, as the game's is not) walks out to a slot ten cells from the station's middle, the game's
+<code>SIGIL_GAP</code>, and draws a ring there the size of the game's (7 across, 2 deep, the purple crawling round
+it), first one side then the other. What it cannot show: the real abyss field (the water here is a cheap stand-in),
+the scale bed the rings really lie on, the coil overhead and the thread each ring sends up to it, the board and
+fence, and the twenty seconds a real circle takes to draw. Nothing on a station moves in the game: a station is
+painted once into an image, so every option here is a sprites.js edit and nothing more.</p>
+<div id="opts"></div>
+<script>
+// --- the four drawings, in sprites.js form ---------------------------------------
+const OPTIONS = [
+  { key: 'A', name: 'Quill in the ink pot',
+    cap: 'A scribe\'s quill stood in a pot of the abyss\'s black ink, and the ring it draws lying on the floor round the pot\'s foot with runes in it.',
+    rows: [
+      '.............#........',
+      '............+#+.......',
+      '...........++#+-......',
+      '..........+-+#-+......',
+      '.........+-++#+-......',
+      '.........-++-#-+......',
+      '........+-++-#+-......',
+      '........-++-+#-+......',
+      '.........++-+#+.......',
+      '..........-+.#-.......',
+      '........######........',
+      '.........#oo#.........',
+      '.......##oooo##.......',
+      '......#oo*ooooo#......',
+      '......#o*oooooo#......',
+      '..**..#oooooooo#..**..',
+      '.*..+.#ooooooo*#.+..*.',
+      '.*....##########....*.',
+      '..******************..'
+    ] },
+  { key: 'B', name: 'A coil held in the ring',
+    cap: 'What the circle is for: a length of the serpent up out of a purple ring on the floor, suckers along it, shackled twice and chained to two posts so it cannot thrash.',
+    rows: [
+      '..........+++.........',
+      '.........+-.*+........',
+      '.........+*.-+........',
+      '.**.......+*++.....**.',
+      '.##......+*+-......##.',
+      '.###-#-########-#-###.',
+      '.##......++*+......##.',
+      '.##......+*++......##.',
+      '.##.....++*++......##.',
+      '.##.....+*+++-.....##.',
+      '.###-#-########-#-###.',
+      '.##....-+*++*+-....##.',
+      '.##...++*+++*++-...##.',
+      '.##.**+*++++*+-+**.##.',
+      '.##*..............*##.',
+      '.##.**************.##.'
+    ] },
+  { key: 'C', name: 'The grimoire on its lectern',
+    cap: 'An open book on a lectern between two candles, a purple circle drawn across its spread among the writing, and its ring again on the floor at the lectern\'s foot.',
+    rows: [
+      '..#######....#######..',
+      '..########..########..',
+      '..#-#-#********#-#-#..',
+      '..#--#*###++###*#--#..',
+      '..#-#-*#-#++#-#*-#-#..',
+      '..#--#*###++###*#--#..',
+      '..#-#-#********#-#-#..',
+      '..########++########..',
+      '..##################..',
+      '.....#####**#####.....',
+      '.........#+*#.........',
+      '.*.......#++#.......*.',
+      '.#.......#-+#.......#.',
+      '.#.......#++#.......#.',
+      '.#+......#++#......+#.',
+      '.#.......#++#.......#.',
+      '###....########....###',
+      '..******************..'
+    ] },
+  { key: 'D', name: 'The stood ring',
+    cap: 'The circle itself stood on its edge: a white hoop full of black water with a purple star bound in it, on a plinth, and the same ring laid flat on the floor in front.',
+    rows: [
+      '.......########.......',
+      '......##oo**oo##......',
+      '.....##ooo**ooo##.....',
+      '....##oooo**oooo##....',
+      '...##oooo*oo*oooo##...',
+      '...#ooooo*oo*ooooo#...',
+      '...+o************o+...',
+      '...#oo****oo****oo#...',
+      '...#ooo**oooo**ooo#...',
+      '...#oooo******oooo#...',
+      '...+oooo*o**o*oooo+...',
+      '...##oo***oo***oo##...',
+      '....##o**oooo**o##....',
+      '.....##*oooooo*##.....',
+      '......##oooooo##......',
+      '.......########.......',
+      '........##++##........',
+      '.....############.....',
+      '..******************..'
+    ] }
+];
+
+// --- the deep's tones, as seen -----------------------------------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const INK = { '#': '#ffffff', '+': GREYS[9], '-': GREYS[6], 'o': '#000000', '*': PURPLES[11] };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+
+// --- the scene, in cells -------------------------------------------------------------
+// Everything below is in cells; `s` is screen pixels a cell. The sigil's size
+// and slot are the game's (SIGIL_RX, SIGIL_RY, SIGIL_GAP over P).
+const DOME_PAD = 4, DOME_WALL = 4, WORKER = 3, MARGIN = 6, SKY = 8, FLOOR_ROWS = 4;
+const GAP = 10, RX = 7, RY = 2;
+
+function inkOf(rows) {
+  let c0 = 99, c1 = -1, r0 = 99, r1 = -1;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+  }));
+  return { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
+}
+
+function layout(o) {
+  const ink = inkOf(o.rows), H = o.rows.length;
+  const w = ink.cols + DOME_PAD * 2, rad = w / 2;
+  const W = w + MARGIN * 2;
+  const standY = SKY + Math.ceil(rad) + DOME_WALL;        // top of the drawing's ink
+  const floor = standY + ink.rows;
+  const sx = MARGIN + DOME_PAD - ink.c0, sy = floor - H;  // sprite grid's top-left
+  return { ink, W, Hc: floor + FLOOR_ROWS, floor, sx, sy, domeL: MARGIN, domeW: w, rad, mid: MARGIN + rad,
+           spring: standY - DOME_WALL, top: Math.round(standY - DOME_WALL - rad) };
+}
+
+function water(g, L, s, t) {
+  for (let y = 0; y < L.floor; y++) for (let x = 0; x < L.W; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + t / 5200) * 2.4 + t / 7000);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 6) {
+      const b = 0.5 + 0.5 * Math.sin(t / 900 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 9))];
+    }
+    g.fillStyle = tone; g.fillRect(x * s, y * s, s, s);
+  }
+  for (let r = 0; r < FLOOR_ROWS; r++) for (let x = 0; x < L.W; x++) {
+    g.fillStyle = GREYS[2 + (seeth(x, L.floor + r + 7) % 3) + (r === 0 ? 2 : 0)];
+    g.fillRect(x * s, (L.floor + r) * s, s, s);
+  }
+}
+
+function dome(g, L, s) {
+  const cx = L.domeL + L.rad;
+  const inside = (x, y) => {
+    if (x < L.domeL || x >= L.domeL + L.domeW || y >= L.floor || y < L.top) return false;
+    if (y >= L.spring) return true;
+    const dx = x + 0.5 - cx, dy = y + 0.5 - L.spring;
+    return dx * dx + dy * dy <= L.rad * L.rad;
+  };
+  for (let y = L.top; y < L.floor; y++) for (let x = L.domeL; x < L.domeL + L.domeW; x++) {
+    if (!inside(x, y)) continue;
+    const rim = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1);
+    g.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x, y) % 2)];
+    g.fillRect(x * s, y * s, s, s);
+  }
+}
+
+function sprite(g, L, s, o) {
+  o.rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    g.fillStyle = INK[ch]; g.fillRect((L.sx + c) * s, (L.sy + r) * s, s, s);
+  }));
+}
+
+// A scribe's round, first to the right slot then the left: walk out, draw the
+// ring a cell at a time, stand while it holds, and walk home as it fades.
+const ROUND = 7;   // seconds
+function scribe(g, L, s, t) {
+  const n = Math.floor(t / ROUND), dt = t - n * ROUND, side = n % 2 ? -1 : 1;
+  const home = L.mid - WORKER / 2, slot = L.mid + side * GAP;
+  const walk = k => home + (slot - WORKER / 2 - home) * Math.min(1, Math.max(0, k));
+  let x, drawn = 0, fade = 1;
+  if (dt < 1.4) x = walk(dt / 1.4);
+  else if (dt < 3.6) { x = walk(1); drawn = (dt - 1.4) / 2.2; }
+  else if (dt < 5.4) { x = walk(1); drawn = 1; }
+  else { x = walk(1 - (dt - 5.4) / 1.4); drawn = 1; fade = 1 - (dt - 5.4) / 1.6; }
+  // the ring, edge-on, as drawSigils lays it: a cell a step round, the purple crawling
+  const cells = Math.round(RX * 2) * 2, cy = L.floor - 1 - RY;
+  for (let i = 0; i < cells * drawn; i++) {
+    const a = i / cells * Math.PI * 2 + Math.PI / 2;
+    const lit = Math.sin(a * 3 - t * 2.5) > 0.5;
+    g.fillStyle = PURPLES[Math.max(0, Math.round((lit ? 11 : 9) * fade))];
+    g.fillRect(Math.round(slot + Math.cos(a) * RX - 0.5) * s, Math.round(cy + Math.sin(a) * RY) * s, s, s);
+  }
+  const bx = Math.round(x), by = L.floor - WORKER;
+  g.fillStyle = '#ffffff'; g.fillRect(bx * s, by * s, WORKER * s, WORKER * s);
+  g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(bx * s, by * s, WORKER * s, WORKER * s);
+}
+
+function entry(o) {
+  return '  circle: [\n' + o.rows.map(r => `    '${r}'`).join(',\n') + '\n  ],';
+}
+
+const panes = [];
+const only = location.hash.slice(1);
+for (const o of OPTIONS.filter(o => !only || only.includes(o.key))) {
+  const L = layout(o);
+  const box = document.createElement('div');
+  box.className = 'opt';
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2><p class="cap">${o.cap}
+    <br>${o.rows[0].length} x ${o.rows.length}, inked ${L.ink.cols} x ${L.ink.rows}</p><div class="row"></div>`;
+  const row = box.querySelector('.row');
+  const mk = (s, crop, label) => {
+    const wrap = document.createElement('div');
+    const c = document.createElement('canvas');
+    c.width = crop.w * s; c.height = crop.h * s;
+    wrap.append(c);
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = label; wrap.append(l);
+    row.append(wrap);
+    panes.push({ o, L, s, crop, g: c.getContext('2d') });
+  };
+  mk(6, { x: 0, y: 0, w: L.W, h: L.Hc }, '1x -- the game\'s size');
+  const y4 = L.floor - L.ink.rows - 4;
+  mk(24, { x: L.domeL - 2, y: y4, w: L.domeW + 4, h: L.floor + 1 - y4 }, '4x, cropped to the drawing');
+  const code = document.createElement('div');
+  const pre = document.createElement('pre'); pre.textContent = entry(o);
+  const b = document.createElement('button'); b.textContent = 'copy';
+  b.onclick = () => navigator.clipboard.writeText(entry(o)).then(() => { b.textContent = 'copied'; });
+  code.append(pre, b);
+  row.append(code);
+  document.getElementById('opts').append(box);
+  if (o.rows.some(r => r.length !== o.rows[0].length)) console.warn(o.key, 'ragged rows');
+  if (o.rows[0].length % 2) console.warn(o.key, 'odd width');
+}
+
+const t0 = performance.now();
+function frame() {
+  const ms = performance.now() - t0, t = ms / 1000;
+  for (const p of panes) {
+    const { g, s, crop, L, o } = p;
+    g.setTransform(1, 0, 0, 1, -crop.x * s, -crop.y * s);
+    water(g, L, s, ms);
+    dome(g, L, s);
+    sprite(g, L, s, o);
+    scribe(g, L, s, t);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
