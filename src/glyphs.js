@@ -32,6 +32,9 @@ export const GLYPHS = {
   door:       ['........', '........', '.######.', '.#....#.', '.#....#.', '.#....#.', '.#....#.', '.######.'],
   house:      ['........', '........', '........', '.#######', '..#####.', '..#...#.', '..#...#.', '..#...#.'],
   cap:        ['........', '........', '...#....', '...#....', '...#....', '...#....', '..###...', '..###...'],
+  // The closet's machine as it is drawn in the yard: the stub, the dome, the
+  // band with its bin part full, the base.
+  roomba:     ['........', '........', '........', '.....#..', '..####..', '.#.##.#.', '.######.', '........'],
   helmet:     ['.#####..', '#######.', '#.....#.', '..###...', '.#####..', '#..#..#.', '...#....', '...#....'],
   shovel:     ['..###...', '...#....', '...#....', '...#....', '...#....', '..###...', '..###...', '...#....'],
   ore:        ['........', '........', '........', '........', '...##...', '..####..', '.######.', '########'],
@@ -100,6 +103,7 @@ export const GLYPH_OF = {
   unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockfilter: ['balloon'],
   // the house and the closet
   crewlist: ['door'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
+  roomba: ['roomba'], tuneroomba: ['roomba', 'plus'],
   // the shack
   rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'plus'],
   // the quarry

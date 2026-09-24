@@ -43,6 +43,7 @@ import { drawBolt, drawFlash, drawMuck, drawPuffs, drawRain, drawRainBack, drawS
 import { drawDoseMotes, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
+import { drawRoombaDock, drawRoombas } from './render/roomba.js';
 import { drawShack } from './render/shack.js';
 import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
          drawSwimmers, drawDeepInvert } from './render/deep.js';
@@ -129,6 +130,7 @@ const LAYERS = [
   { name: 'balloon posts', draw: drawBalloonPosts }, // where the filter's balloons moor; the craft are drawn among the clouds
   { name: 'tower', draw: drawTower },
   { name: 'outhouse', draw: drawOuthouse },
+  { name: 'roomba dock', draw: drawRoombaDock }, // the closet's charge posts, one a roomba owned
   { name: 'pot pile', draw: drawPotPile },       // what is on the table, as a heap on the ground
   { name: 'sparks', draw: drawSparks },          // and whatever the last spin threw out of it
   { name: 'smoke', draw: drawSmoke },
@@ -155,6 +157,7 @@ const LAYERS = [
   { name: 'floor', draw: drawFloor },
   { name: 'pit', draw: drawPit },
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
+  { name: 'roombas', draw: drawRoombas },        // driving over the mess they take in, under everybody's feet
   { name: 'clods', draw: drawClods },            // and the loads still falling off the air filter's spout
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
   { name: 'pit outline', draw: drawPitOutline },

@@ -6,7 +6,7 @@
 import { P, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { workSpot, muckAtCol, nearestMuck, muckFor, sweepMuckAt, poopCols, colAt,
-         MUCK_ELBOW } from '../smog.js';
+         MUCK_ELBOW, onOpenYard } from '../smog.js';
 import { NONE, footing, ways, wayAt, wayOver, keepTo, stepRoute, climbTo, feetOn, inWorking } from '../route.js';
 import { commutePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
@@ -16,6 +16,7 @@ import { stopJig } from './dance.js';
 import { swingFor } from './tenders.js';
 import { across, stand } from './body.js';
 import { unbook } from './hole.js';
+import { roombasOf } from './roomba.js';
 
 // Nobody shovels inside anybody, but only when two are genuinely standing in
 // each other: the claims already keep them four columns apart, and a wider
@@ -41,13 +42,15 @@ function elbowMuck(w) {
 // The nearest column of poop, `nearestMuck`'s search kept to the one kind
 // that is a janitor's alone. Reads and writes the same `taken` set with the
 // same elbow, so the two searches can never both hand out the same ground.
-function nearestPoop(wx, taken) {
+// `skip` holds out ground somebody else keeps: the roombas' open yard.
+function nearestPoop(wx, taken, skip = null) {
   const p = poopCols();
   const home = colAt(wx);
   for (let d = 0; d < p.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
       if (c < 0 || c >= p.length || !p[c]) continue;
       if (taken && taken.has(c)) continue;
+      if (skip && skip(c)) continue;
       if (taken) for (let k = c - MUCK_ELBOW; k <= c + MUCK_ELBOW; k++) taken.add(k);
       return c * P + P / 2;
     }
@@ -81,8 +84,14 @@ export function takeMess(w, c) {
     // A janitor's own kind first: with the rest of the crew free to work
     // everything else, the nearest shared column keeps drifting away from
     // the poop, and the mess the player wants gone is never the nearest.
-    const pick = (w.type === TYPE.JANITOR ? nearestPoop(w.x + WORKER / 2, poopTaken) : null)
-      ?? nearestMuck(w.x + WORKER / 2, muckTaken, w);
+    //
+    // With the roombas standing, the janitor left is their tender and keeps to
+    // the closet: the open yard is theirs, and it goes only for the poop they
+    // cannot reach (on a heap, down a working, over the hole or past it). The
+    // weather's muck off the open yard is the rest of the crew's, as it was.
+    const tending = w.type === TYPE.JANITOR && roombasOf() > 0;
+    const pick = (w.type === TYPE.JANITOR ? nearestPoop(w.x + WORKER / 2, poopTaken, tending ? onOpenYard : null) : null)
+      ?? (tending ? null : nearestMuck(w.x + WORKER / 2, muckTaken, w));
     w.muckAt = pick == null ? null : Math.floor(pick / P);
     // The elbow's push belongs to the stance it was pushed on (see below).
     w.shovelAt = null;

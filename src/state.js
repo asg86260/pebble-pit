@@ -351,6 +351,9 @@ export const S = {
   shackBoardOpen: false,  // and whether it is open right now
   outhouseOpen: false,    // there is somewhere to go
   looPosts: LOO_POSTS,    // how many caps the outhouse's stand has; `loopost` sells the second
+  roombas: 0,             // how many roombas the closet owns, up to ROOMBA_MAX
+  roombaBots: [],         // and each one in the yard: not crew, they drive themselves (crew/roomba.js)
+  roombaFlecks: [],       // grains of mess in the air, into a roomba's mouth or out of its bin
   towerOpen: false,       // the tower is up
   towerBoardOpen: false,
   filterBoardOpen: false,
@@ -628,6 +631,7 @@ export const SAVED = [
   'quarryOwed',           // how much of the seam is still in the cut; goes with `quarryCells`
   'seenCore', 'seenShard', 'seenSpore', 'seenSpark',
   'looPosts',
+  'roombas',              // the count; where each one is is crew/roomba.js's
   'coreBuried',           // whether this rock still owes you its core
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
@@ -653,6 +657,7 @@ export const SAVED_BY_HAND = [
   'coreItem',             // a core loose in the world: a spot, or the fact of one
   'workers',              // saved as `who`: a name and a record apiece, not four counts
   'lifts',                // saved by crew/lifts.js: where each is and what is on its forks
+  'roombaBots',           // saved by crew/roomba.js: where each roomba is and what is in its bin
   'mouth',                // where the cut's mouth was under them; not a field on S, read by `restoreCrew`
   'skyKinds',             // what the haze is made of, by kind; not a field on S, read by `skyFromSave`
   'drops',                // and the rain in the air, [x, y, vy] a drop; the same
@@ -771,6 +776,9 @@ export const EPHEMERAL = [
   'nextHit', 'nextToss', 'resetArmed',
   // Worked out again from the counts, or only true for a few lines of a frame.
   'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
+  // A grain of mess mid-flight into a roomba or out of its bin: the bin's
+  // count is saved, the flight has no beginning to come back to.
+  'roombaFlecks',
   // The weather, and the part-grain the house is partway through.
   'bolt', 'filterBank', 'filterMuck', 'dialAt', 'dialStep',
   'placed', 'strips', 'introHeart',

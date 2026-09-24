@@ -90,6 +90,10 @@ export const ROWS = [
   { key: 'unlockfilter', part: 1,
     reach: S => { sites(); window.__machine('ram', { bought: true }); window.__air({ rains: 1 }); S.seenAir = true; } },
   { key: 'loopost', part: 1, reach: () => { sites(); window.__loo(); } },
+  // The roombas' gate: the closet's second cap, its caps worn. The row is a
+  // count to three; its ladder is offered once the first stands.
+  { key: 'roomba', part: 1, reach: S => { sites(); window.__loo(); S.looPosts = 2; window.__air({ janitors: 1 }); } },
+  { key: 'tuneroomba', part: 1, reach: () => { sites(); window.__loo(); window.__machine('roomba', { bought: true }); } },
 
   // --- the shields, and the crew's kit ----------------------------------------
   { key: 'props', part: 1, reach: S => { crew(); S.boulderNo = 5; } },

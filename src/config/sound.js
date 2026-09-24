@@ -178,6 +178,7 @@ export const SOUNDS = {
   // body's work done faster, not a louder body.
   'machine-beat': { label: 'a beat of the ram or the tiller',           cls: 'fold',  recipe: 'worker mine' },
   'drill-beat':   { label: 'a beat of the drill',                       cls: 'fold',  recipe: 'worker mine' },
+  'roomba-suck':  { label: 'a roomba takes in a patch of mess',         cls: 'fold',  recipe: null },
   'belt-load':    { label: 'the scoop sets a chunk on the belt',        cls: 'fold',  recipe: null },
   'belt-catch':   { label: 'a thrown chunk lands on the belt',          cls: 'fold',  recipe: null },
   'grain-land':   { label: 'a grain comes to rest on the ground',       cls: 'fold',  recipe: null },

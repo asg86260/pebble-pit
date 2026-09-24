@@ -606,6 +606,11 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   drivers: S.drivers || 0,
   lifts: (S.lifts || []).map(w => ({ x: Math.round(w.x), carry: w.carry || 0, goal: w.goal,
                                      core: !!w.hasCore, inside: !!w.inside })),
+  // The roombas: owned, and each one in the yard, where it is, what it is
+  // doing and what is in its bin.
+  roombas: S.roombas || 0,
+  roombaBots: (S.roombaBots || []).map(r => ({ x: Math.round(r.x), goal: r.goal, patch: r.patch,
+                                              muck: r.muck | 0, poop: r.poop | 0 })),
 
   // The piles as they are drawn.
   pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key),

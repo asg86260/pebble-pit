@@ -17,6 +17,7 @@ import { retask } from './commute.js';
 import { unbook } from './hole.js';
 import { FACTORY, TYPES, wanted } from './jobs.js';
 import { syncLifts } from './lifts.js';
+import { syncRoombas } from './roomba.js';
 
 // --- who is actually at a site ------------------------------------------------
 // The one question works.js cannot answer for itself: a count is not a body,
@@ -53,6 +54,7 @@ const away = (w, type = w.type) => !!w.deepHome !== isDeepType(type);
 
 export function syncWorkers() {
   syncLifts();
+  syncRoombas();
   // The registry is the one list that decides whether a job exists at all
   // (`wanted` in crew/jobs.js).
   const want = wanted();

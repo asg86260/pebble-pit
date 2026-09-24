@@ -4,7 +4,7 @@ import { pitTop } from '../pit.js';
 import { dugTopY } from '../quarry.js';
 import { boulderAlive, rockTopY } from '../rock.js';
 import { SOLID, footing, solidNear } from '../route.js';
-import { S, farm, floor, quarry } from '../state.js';
+import { S, farm, floor, pit, quarry } from '../state.js';
 import { overPitMouth, rockLeft } from '../world.js';
 
 // --- the layer -----------------------------------------------------------------------
@@ -394,6 +394,38 @@ export function nearestMuck(wx, taken, hand) {
   // nearest patch anyway: that ends every clear-up with three bodies standing
   // in each other over one shovelful. A claim frees the instant its column is
   // clear, so the wait is a beat.
+  return null;
+}
+
+// --- the open yard --------------------------------------------------------------
+// The ground a roomba works (crew/roomba.js): mess lying on the yard's own
+// floor on the near side of the hole, where a low machine driving the floor
+// can sit over it. Not a site (`onSite`: a mouth, a heap, the plots), not the
+// rock and not down a working (the mess does not lie on the ground line
+// there, `muckFloor`), and not past the hole, which is a climb down and up.
+// Everything else the tender janitor and the crew take as they always have.
+export function onOpenYard(c) {
+  if (c < 0 || c >= floor.cols) return false;
+  const x = c * P + P / 2;
+  if (pit.grid && pit.cols && x >= pit.x) return false;
+  if (muckFloor(c) !== S.groundY) return false;
+  return !onSite(c);
+}
+
+// The nearest open-yard column with mess in it, of either kind, that no one
+// has claimed, or null. `taken(c)` is the claim books' question; the claim
+// itself is the caller's to book.
+export function nearestOpenMess(wx, taken) {
+  if (!tally().yard) return null;
+  const home = colAt(wx);
+  const n = floor.cols;
+  for (let d = 0; d < n; d++) {
+    for (const c of (d ? [home - d, home + d] : [home])) {
+      if (c < 0 || c >= n || !messAt(c) || taken(c) || !onOpenYard(c)) continue;
+      return c;
+    }
+    if (home - d < 0 && home + d >= n) break;
+  }
   return null;
 }
 

@@ -58,6 +58,7 @@ import { onYard, stand, surfaceUnder, duck, sideOf } from './body.js';
 import { findPeak } from './rockhand.js';
 import { claims } from './hauler.js';
 import { stepLifts } from './lifts.js';
+import { stepRoombas, bookRoombas } from './roomba.js';
 import { fall, stepHat } from './falls.js';
 import { retask, stepCommute } from './commute.js';
 import { relieve } from './nature.js';
@@ -303,6 +304,8 @@ export function updateWorkers(now, dt) {
       if (w.type === TYPE.JANITOR) poopTaken.add(k);
     }
   }
+  // And the roombas' patches, in both: they take either kind.
+  bookRoombas(muckTaken, poopTaken);
   // The same book for the cut's own dust: one column, one hauler.
   const cutTaken = new Set();
   for (const w of S.workers) if (w.cutClaim != null) cutTaken.add(w.cutClaim);
@@ -362,6 +365,9 @@ export function updateWorkers(now, dt) {
   // The forklifts, on the same books and held off the same footprint; not
   // crew, so none of the stages above.
   stepLifts(c, (w, x0) => holdTheLine(w, x0, zone));
+  // The roombas the same, after the crew, so a tender this frame is a tender
+  // standing where the crew's frame left it.
+  stepRoombas(c);
 
   faceTravel(was);
 }

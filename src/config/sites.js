@@ -10,6 +10,7 @@ import { BALLOON_SPAN, BALLOON_MAST_GAP, BALLOON_RUNGS } from './balloon.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
 import { LIFT_STAND_OFF } from './kit.js';
+import { ROOMBA_DOCK_W } from './roomba.js';
 
 export const TO_LEDGE = 636;     // rock center to the lip of the pit
 // The rock is the only thing on this side, so the ground is its spoil's: the
@@ -105,8 +106,10 @@ export const SITES = [
   // gap with a walk's worth of ground round it.
   { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null,
     furniture: () => BOARD_W },
+  // The closet keeps its roombas' dock on its rock side, every slot from the
+  // start, so the third roomba docks where the ground was always kept for it.
   { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null,
-    hang: () => kitHang('outhouse') },
+    hang: () => kitHang('outhouse'), right: () => ROOMBA_DOCK_W },
   { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry',
     hang: () => kitHang('quarry') },
   { key: 'farm',     w: () => (FARM_PLOTS_MAX - 1) * FARM_GAP, standoff: PILE_STANDOFF.farm, pile: 'farm',

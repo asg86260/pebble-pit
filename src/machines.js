@@ -35,7 +35,14 @@ export const MACHINES = [
   { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false, unmanned: true },
   // The shell round the star (sphere.js). `takesKit: false`: a wizard's hat is
   // its license to fly, and the tender is the one body that still has to.
-  { key: 'sphere', job: JOB.WIZARD, name: 'the sphere', takesKit: false }
+  { key: 'sphere', job: JOB.WIZARD, name: 'the sphere', takesKit: false },
+  // The closet's roombas (crew/roomba.js). One record for however many are
+  // owned (`S.roombas`): bought with the first, and its ladder tunes them all.
+  // `takesKit: false`: a janitor's cap is its post, and the one janitor left
+  // is the tender the roombas run on. No `defineMachine`: a roomba is a
+  // vehicle that drives, not a station worked on a beat, so it steps itself
+  // and `stepMachines` passes it by.
+  { key: 'roomba', job: JOB.JANITOR, name: 'the roombas', takesKit: false }
 ];
 // The machines that run themselves, by key.
 export const UNMANNED = new Set(MACHINES.filter(m => m.unmanned).map(m => m.key));

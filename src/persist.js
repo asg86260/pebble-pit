@@ -30,6 +30,7 @@ import { SAVE as DUST } from './dust.js';
 import { SAVE as SHIELD } from './shield.js';
 import { syncWorkers, SAVE as CREW } from './crew.js';
 import { SAVE as LIFTS } from './crew/lifts.js';
+import { SAVE as ROOMBAS } from './crew/roomba.js';
 import { SAVE as STAFF } from './staffing.js';
 import { SAVE as TOWER } from './tower.js';
 import { SAVE as CORE } from './core.js';
@@ -477,6 +478,8 @@ export const SAVERS = [
   CREW,
   // The forklifts after the crew, whose rebalance they are not part of.
   LIFTS,
+  // The roombas the same, after the machines' record that says they stand.
+  ROOMBAS,
   FLOOR,
   // The rift comes back before the dust is put away, because how much
   // belongs in the hole depends on how much is already through; the pit's

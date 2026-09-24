@@ -17,7 +17,7 @@
 
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
+import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_CLOSE_MS } from './config.js';
@@ -75,6 +75,29 @@ const sphereAt = secs => {
 const lip = () => {
   window.__levels({ haulCarryLevel: LADDER, haulPaceLevel: LADDER });
   window.__kit({ carters: 6 });
+};
+
+// The closet with its caps and its tender, and `n` roombas bought through
+// their row and built. The haulers are the spare hands that build them.
+const roombaYard = (n = 3) => {
+  window.__reset(); window.__crew(0, 3); window.__loo(); S.looPosts = 2;
+  window.__air({ janitors: 1, haze: 0, muck: 0 });
+  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 90000 });
+  for (let i = 0; i < n; i++) { window.__buy('roomba'); window.__finish(); }
+  window.__fast(1);
+};
+// The camera's middle on the dock's middle, so a zoomed shot is of the dock.
+const lookAtDock = () => {
+  const s = st(), b = s.roombaBots;
+  const mid = b.length ? (b[0].x + b[b.length - 1].x) / 2 : s.outhouseX;
+  window.__look(mid - s.viewW / 2);
+};
+// Muck a cell or two deep in runs along the open yard either side of the
+// closet, and a patch of poop every so often, as a front and a crew leave it.
+const dirty = () => {
+  const c0 = Math.floor(st().outhouseX / P);
+  window.__muckSet(c => (c > c0 - 90 && c < c0 + 110 && (c * 7) % 11 < 6) ? 1 + ((c * 13) % 5 === 0) : 0);
+  window.__poopSet(c => (c > c0 - 90 && c < c0 + 110 && c % 17 === 0) ? 2 : 0);
 };
 
 // Where the hauler with the most in its arms is standing, off the snapshot's
@@ -591,9 +614,26 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 2); window.__loo(); S.quarryOpen = true;
                  window.__give(20000); window.__grant({ shards: 30 }); window.__buy('loopost');
                  window.__fast(4); window.__look(st().outhouseX - 260); } },
+  // The roombas, bought through their row the way a player does: the closet
+  // up with both its caps, one janitor posted (the tender they run on), the
+  // three built on their slots. A dirty stretch of open yard either side of
+  // the closet, the weather's muck and a few patches of poop, so there is
+  // something to drive to.
+  roomba: { about: 'the crew', say: 'three roombas out on a dirty yard, taking in muck and poop, their tender at the closet',
+    run: () => { roombaYard(); dirty(); window.__fast(2.5);
+                 const s = st(), r = s.roombaBots.find(b => b.goal === 'out') || s.roombaBots[0];
+                 window.__look(r.x - s.viewW / 2); } },
+  // Home and full: the yard dirtied well past what three bins hold, run long
+  // enough for them to fill and drive back, and the tender caught tipping one.
+  roombadock: { about: 'the crew', say: 'the roombas home on their dock, the tender tipping a bin in at the closet door',
+    run: () => { roombaYard(); dirty(); window.__fast(16); lookAtDock(); } },
+  // The row and its ladder on the closet's board, one roomba owned.
+  roombarow: { about: 'the crew', say: "the roomba row on the closet's board, with its suction ladder",
+    run: () => { roombaYard(1); window.__board('outhouse');
+                 const s = st(); window.__look(s.outhouseX + 21 - s.viewW / 2); } },
   // `page`: the camera reads `houses` off the page's snapshot, which the node
   // yard's has not got.
-  houseboard: { about: 'the crew', say: "the crew's board", page: true,
+  houseboard:{ about: 'the crew', say: "the crew's board", page: true,
     run: () => { rich(); window.__board('house'); window.__look(st().houses.door - 400); } },
   // The door hovered the way a pointer does it, since nothing but a hover
   // opens the list.

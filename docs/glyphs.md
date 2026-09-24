@@ -53,6 +53,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | pointed hat *   | `wizard` +plus, `askwizards`                                                           |
 | sphere          | `sphere`, `tunesphere` +plus                                                       |
 | cap *           | `loopost` +plus, `spellsweep` +star                                                    |
+| roomba          | `roomba`, `tuneroomba` +plus                                                           |
 | house           | `house` +plus, `spellthrift` +star                                                     |
 | door            | `crewlist`                                                                             |
 | hoist frame     | `unlockquarry`                                                                         |

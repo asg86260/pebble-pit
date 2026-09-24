@@ -13,6 +13,7 @@ import { rand } from '../rng.js';
 import { stand } from './body.js';
 import { stationX } from './commute.js';
 import { amble } from './idle.js';
+import { tipBins } from './roomba.js';
 
 // Starts at the shed it belongs to; the work is wherever the mess is.
 export function newJanitor() {
@@ -21,6 +22,8 @@ export function newJanitor() {
 
 export function janitorWork(w, c) {
   const { now } = c;
+  // A roomba home with something in its bin is emptied before anything else.
+  if (tipBins(w)) return;
   const post = stationX(TYPE.JANITOR);
   const d = post - w.x;
   // Far enough off its post to have left it: the loitering below is meant to

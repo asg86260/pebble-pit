@@ -40,7 +40,7 @@ import { airRate, pullCraft, stepClods } from './smog/craft.js';
 import { dryTime, forceStrike, LEDGER, markSky, nextDue, pinHeft, pour, remarkSky, rollHeft, stepBolt, stepDrops, stepEmbers, EMBERS,
          stepFront, stepGoing, stepStorm } from './smog/rain.js';
 import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
-         muckAtCol, muckCols, muckFloor, muckFor, muckLeft, nearestMuck,
+         muckAtCol, muckCols, muckFloor, muckFor, muckLeft, nearestMuck, nearestOpenMess, onOpenYard,
          plotMuck, poopCols, poopLeft, quarryMuck, retally, rockMuck, slumpMess,
          sweepMuckAt, throughPlotMuck, throughQuarryMuck, throughRockMuck,
          workSpot, yardMuck, yardMuckFor } from './smog/layer.js';
@@ -149,7 +149,7 @@ export { murk, SKY, DROPS, CLODS, GOING, STACK, bandTop, bandLow, raining,
          dryTime, forceStrike, EMBERS, LEDGER, pinHeft,
          MESS, MUCK_ELBOW, colAt, messAt, muckCols, poopCols, muckFloor,
          muckAtCol, muckLeft, poopLeft, muckFor, yardMuck, yardMuckFor,
-         nearestMuck, rockMuck, quarryMuck, plotMuck, buried, retally,
+         nearestMuck, nearestOpenMess, onOpenYard, rockMuck, quarryMuck, plotMuck, buried, retally,
          throughRockMuck, throughQuarryMuck, throughPlotMuck, cleanSpotNear,
          workSpot, dropMuckAt, slumpMess, sweepMuckAt,
          sampleAir, airTrend, airSides, airReadout, clumpiness, skyBins,

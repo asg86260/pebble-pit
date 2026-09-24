@@ -32,7 +32,8 @@ import { now } from './clock.js';
 import { JOB, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
-import { SERPENT_WOUND } from './config.js';
+import { SERPENT_WOUND, ROOMBA_MAX, ROOMBA_BIN } from './config.js';
+import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop } from './deep/place.js';
 
@@ -338,6 +339,23 @@ export function verifyWorld() {
            `${(S.lifts || []).length} in the yard, ${owned} owned`);
     for (const w of S.workers)
       if (w.vehicle) fail('a forklift is on the crew', `${who(w)}`);
+  }
+
+  // --- rule 3d: the roombas are the count, and none of them is crew -----------
+  // The same for the closet's machine (crew/roomba.js): a roomba on the yard
+  // for every one owned while the machine stands, never more than the closet
+  // holds, never one in `S.workers`, and never a bin fuller than a bin.
+  {
+    const want = roombasOf();
+    if ((S.roombaBots || []).length !== want)
+      fail('the yard does not have a roomba for every one it owns',
+           `${(S.roombaBots || []).length} in the yard, ${want} owned`);
+    if ((S.roombas | 0) > ROOMBA_MAX) fail('the closet owns more roombas than it holds', `${S.roombas}`);
+    for (const w of S.workers)
+      if (w.roomba) fail('a roomba is on the crew', `${who(w)}`);
+    for (const r of S.roombaBots || [])
+      if (binOf(r) > ROOMBA_BIN || r.muck < 0 || r.poop < 0)
+        fail('a roomba holds more than its bin', `${r.muck} muck, ${r.poop} poop`);
   }
 
   // --- rule 7: the ledgers --------------------------------------------------------
