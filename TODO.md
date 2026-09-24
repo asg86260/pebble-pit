@@ -14,6 +14,14 @@ Open:
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
 
+## The janitors' roomba -- DESIGNED, AWAITING THE VOTE (2026-09-23)
+
+"The janitors' roomba" at the end of DESIGN.md; mocks in
+`docs/mocks/roomba-2026-09-23.html` (three options). The closet's machine: a
+disc that drives to each patch of poop, takes it into a bin and docks at the
+closet. Blocker: the owner's vote on a mock, and the three open calls in the
+design -- poop only or the sky's muck too, a tender or unmanned, soot or none.
+
 ## The air filter is the balloons' shed -- BUILT (2026-09-22)
 
 "The air filter is the balloons' shed" in DESIGN.md. The shed filters nothing:
