@@ -86,6 +86,17 @@ const roombaYard = (n = 3) => {
   for (let i = 0; i < n; i++) { window.__buy('roomba'); window.__finish(); }
   window.__fast(1);
 };
+// The camera held on the first roomba out, every frame the page draws for as
+// long as `pinCamera` would hold a spot: it drives faster than a shot is taken.
+function followRoomba() {
+  const r = S.roombaBots.find(b => b.goal === 'out') || S.roombaBots[0];
+  const at = () => window.__look(r.x - S.viewW / 2);
+  at();
+  if (typeof window.__scene !== 'function') return;     // the page's alone
+  let left = PIN_FRAMES;
+  const pin = () => { at(); if (--left > 0) requestAnimationFrame(pin); };
+  pin();
+}
 // The camera's middle on the dock's middle, so a zoomed shot is of the dock.
 const lookAtDock = () => {
   const s = st(), b = s.roombaBots;
@@ -620,9 +631,7 @@ export const SCENES = {
   // the closet, the weather's muck and a few patches of poop, so there is
   // something to drive to.
   roomba: { about: 'the crew', say: 'three roombas out on a dirty yard, taking in muck and poop, their tender at the closet',
-    run: () => { roombaYard(); dirty(); window.__fast(2.5);
-                 const s = st(), r = s.roombaBots.find(b => b.goal === 'out') || s.roombaBots[0];
-                 window.__look(r.x - s.viewW / 2); } },
+    run: () => { roombaYard(); dirty(); window.__fast(2.5); followRoomba(); } },
   // Home and full: the yard dirtied well past what three bins hold, run long
   // enough for them to fill and drive back, and the tender caught tipping one.
   roombadock: { about: 'the crew', say: 'the roombas home on their dock, the tender tipping a bin in at the closet door',
