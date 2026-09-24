@@ -132,6 +132,23 @@ function drawPourBeams() {
   ctx.fillStyle = '#000';
 }
 
+// How far out from its middle the hole reaches at radius `r`: the lip's
+// outer edge where the tear's lobes and jitter carry it furthest.
+const reach = r => r * (PORTAL_LIP_TO + PORTAL_TEAR_LOBE + PORTAL_TEAR_JITTER * 5);
+
+// How far out the whole hole reaches from its middle, standing open.
+export const holeReach = () => reach(portalCircle().r);
+
+// The world x of the hole's near edge, for the counter card that keeps to
+// the ground left of everything worth watching (counter.js); null while
+// there is no hole.
+export function portalNearEdge() {
+  const k = portalOpenness();
+  if (k <= 0) return null;
+  const c = portalCircle();
+  return c.x - reach(Math.max(P, c.r * k));
+}
+
 // The wizards' hole `c`, open `k` of the way, grown from its middle as it is
 // poured. `sample` is the liquid's rung under a cell (abyssfield.js), `skip`
 // the cells it leaves alone, `torn` the ones in the ground. It turns the
@@ -142,7 +159,7 @@ const hole = cellImage();
 const rung = (ramp, k) => Math.max(0, Math.min(ramp.length - 1, Math.round(k * (ramp.length - 1))));
 function drawHole(c, k, { tones, magic, sample, skip, torn }) {
   const t = now(), r = Math.max(P, c.r * k);
-  const out = r * (PORTAL_LIP_TO + PORTAL_TEAR_LOBE * 2) + P;
+  const out = reach(r) + P;
   const x0 = snap(c.x - out), y0 = snap(c.y - out);
   const cols = Math.ceil((c.x + out - x0) / P) + 1, rows = Math.ceil((c.y + out - y0) / P) + 1;
   hole.begin(cols, rows);

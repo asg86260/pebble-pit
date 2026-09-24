@@ -6,7 +6,7 @@ import { P } from './yard.js';
 // --- the view, and the glide between the two halves -----------------------------
 // The glide is one clock: a ripple out of the wizards' portal that the deep
 // is drawn inside, the camera still (view.js).
-export let VIEW_GLIDE_S = 1.8;       // the whole glide, down or up
+export let VIEW_GLIDE_S = 1.3;       // the whole glide, down or up
 export const RIPPLE_RINGS = 4;       // rings in the ripple out of the portal, the leading one brightest
 export const RIPPLE_GAP = 3;         // cells between one ring and the next
 // The floor kept up off the window's foot, with the deep's roster in the band
@@ -26,10 +26,10 @@ export const CRUSHER_ROLLER = P * 4;
 // breathes (the same swell the drowned pit's surface has).
 export const DEEP_SURFACE = P * 5;
 // The arrow that says the view goes through (render/shaftway.js): in the
-// yard this far over the top of the wizards' circle, in the deep this far
-// under the bottom of the deep's own circle, pointing up into it -- bobbing
-// a cell each way over SHAFT_ARROW_MS.
-export const SHAFT_ARROW_UP = P * 8;
+// yard in the liquid this far right of the torn portal's lip, pointing down;
+// in the deep this far under the bottom of the deep's own end, pointing up
+// into it -- bobbing a cell each way over SHAFT_ARROW_MS.
+export const SHAFT_ARROW_SIDE = P * 3;
 export const SHAFT_ARROW_DOWN = P * 2;
 // The deep's end of the portal, the way back up: a circle hanging in the
 // water over the wizards' one, its top this far under the highest the deep's

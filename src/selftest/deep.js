@@ -4,7 +4,9 @@
 // surface and the deep's roof themselves take no click. The camera's part of
 // it is test/deep-view.test.mjs; this is the click reaching it.
 
-import { ok, point, onScreen, run } from './kit.js';
+import { ok, point, onScreen, run, settle } from './kit.js';
+import { countRect } from '../render/counter.js';
+import { portalNearEdge } from '../render/portal.js';
 import { S } from '../state.js';
 import { P, VIEW_GLIDE_S, PORTAL_RX } from '../config.js';
 import { mouthX, portalX, portalCircle, deepPortal, deepTop } from '../deep/place.js';
@@ -77,6 +79,13 @@ export const TESTS = [
     run(VIEW_GLIDE_S + 0.5);
     return [ok(down === 'deep', 'the portal in the pit takes the view down', down),
             ok(S.view === 'yard', 'and its end in the deep brings it back up', S.view)];
+  }],
+  ['deep: the counter card keeps to the ground left of the torn portal', async () => {
+    deepYard();
+    window.__look(portalX() - S.viewW / 2);
+    await settle(2);                       // held open, all the way, and drawn
+    const box = countRect(), edge = (portalNearEdge() - S.camX) * S.zoom;
+    return [ok(box && box.x + box.w <= edge, 'the card stands clear of the hole', box && `${box.x + box.w} > ${edge}`)];
   }],
   ['deep: the corner square goes down and up, and only after the snatch', async () => {
     deepYard(false);

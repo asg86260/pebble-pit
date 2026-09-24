@@ -24,6 +24,7 @@ feature lives in DESIGN.md.
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).
 - The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
 - A worker thrown in the deep sinks to the deep's floor and stays down there, instead of landing on the yard's ground (test/deep-shaft.test.mjs).
+- The counts card keeps clear of the wizards' portal instead of covering it (src/selftest/deep.js).
 - The deep draws its water, serpent, stations and floor as a few images a frame instead of thousands of cells, so it no longer drops to a crawl on a large screen (scene deep-all).
 - The deep's crew no longer shouts when a rock lands up in the yard (test/two-crews.test.mjs).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).

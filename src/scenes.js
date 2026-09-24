@@ -244,6 +244,11 @@ const deepScenes = {
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true }); window.__view('deep'); } },
   'glide-up-in': { about: 'the deep', say: "going up, a third in: the deep drawing back into its end of the portal",
     run: glideAt('yard', 0.35) },
+  // The deep with the whole yard shouting over its head: none of it shows.
+  'deep-hush': { about: 'the deep', say: "the deep while every body in the yard is shouting: nothing of it shows",
+    run: () => { rich(); window.__fullSites(); window.__crew(4, 4); window.__snatch({ played: true });
+                 window.__view('deep');
+                 for (const w of S.workers) if (w.y < S.worldH) w.say = { mark: 'bang', until: now() + 60000 }; } },
   // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
   deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
   // The glide between the halves, caught at a point of it (`glideAt`): just

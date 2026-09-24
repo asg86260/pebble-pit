@@ -1,13 +1,14 @@
 // The way through the portal, marked at it (DESIGN.md, "The way between the
-// halves"; "Two crews and a portal"): a pixel arrow bobbing over the portal
-// in the yard, pointing down, and one under its deep end, pointing up into
+// halves"; "Two crews and a portal"): a pixel arrow bobbing in the liquid
+// beside the portal in the yard, pointing down, and one under its deep end, pointing up into
 // it. A click on either takes the view through. From the
 // wizards' portal on, while the camera is not already gliding.
 
-import { P, SHAFT_ARROW_UP, SHAFT_ARROW_DOWN, SHAFT_ARROW_BOB, SHAFT_ARROW_MS } from '../config.js';
+import { P, SHAFT_ARROW_SIDE, SHAFT_ARROW_DOWN, SHAFT_ARROW_BOB, SHAFT_ARROW_MS, ABYSS_TONES } from '../config.js';
 import { S } from '../state.js';
 import { now } from '../clock.js';
-import { portalX, portalCircle, deepPortal } from '../deep/place.js';
+import { portalCircle, deepPortal } from '../deep/place.js';
+import { holeReach } from './portal.js';
 import { gliding } from '../view.js';
 import { ctx } from './ctx.js';
 import { GREYS } from './deep.js';
@@ -24,10 +25,12 @@ const shown = () => !!S.portalOpen && !gliding();
 // sits half off the grid.
 const bob = () => snap(Math.sin(now() / SHAFT_ARROW_MS * Math.PI * 2) * SHAFT_ARROW_BOB);
 export function arrowBox(deep) {
-  const x = snap(portalX() - W / 2);
-  const c = deep ? deepPortal() : portalCircle();
-  const y = deep ? snap(c.y + c.r + SHAFT_ARROW_DOWN) - bob() : snap(c.y - c.r - SHAFT_ARROW_UP) + bob();
-  return { x, y, w: W, h: H };
+  if (deep) {
+    const c = deepPortal();
+    return { x: snap(c.x - W / 2), y: snap(c.y + c.r + SHAFT_ARROW_DOWN) - bob(), w: W, h: H };
+  }
+  const c = portalCircle();
+  return { x: snap(c.x + holeReach() + SHAFT_ARROW_SIDE), y: snap(c.y - H / 2) + bob(), w: W, h: H };
 }
 
 // A click near either: a cell of slack round the drawing, since it is small
@@ -46,7 +49,7 @@ function paint(b, up, ink) {
 }
 
 export function drawYardArrow() {
-  if (shown()) paint(arrowBox(false), false, '#000');
+  if (shown()) paint(arrowBox(false), false, ABYSS_TONES[ABYSS_TONES.length - 1]);   // light, on the liquid
   ctx.fillStyle = '#000';
 }
 

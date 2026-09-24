@@ -9,6 +9,7 @@ import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 import { shown } from '../tween.js';
 import { safeBottom } from '../world.js';
+import { portalNearEdge } from './portal.js';
 
 // Drawn in **screen** pixels, so it stays the size it is however far the yard
 // has been scaled down to fit the window.
@@ -84,9 +85,12 @@ export function drawCount() {
   // On the floor of the glass, where nothing in the yard is ever drawn, and
   // left of the hole, never over it: it slides along to stay with the pit, but
   // the near lip is a wall it does not cross, since everything past that is
-  // the one part of the screen worth watching. EDGE is the degenerate case,
-  // the lip scrolled off the left of the glass.
-  const lip = (pit.x - S.camX) * S.zoom;
+  // the one part of the screen worth watching. The wizards' portal is torn
+  // into the ground this side of the lip, so while it stands its near edge
+  // is the wall instead. EDGE is the degenerate case, the lip scrolled off
+  // the left of the glass.
+  const near = portalNearEdge();
+  const lip = (Math.min(pit.x, near ?? pit.x) - S.camX) * S.zoom;
   const oldX = (pit.x + P * 4 - S.camX) * S.zoom;
   let x = Math.min(oldX, S.W - wide, lip - CLEAR - wide);
   x = Math.max(EDGE, x);
