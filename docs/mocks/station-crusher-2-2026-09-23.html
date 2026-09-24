@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Furnace Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .opt { border-top: 1px solid var(--rule); padding: 14px 0 18px; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 10px; max-width: 1080px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .lbl { color: var(--dim); font-size: 11px; margin-top: 3px; }
+  pre { margin: 0; padding: 8px; border: 1px solid var(--rule); font-size: 11px; line-height: 1.15; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; margin-top: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>The crusher, second round: four quieter furnaces</h1>
+<p class="note">A mock drawn from plain cells, not the game. Round one (the maw, the quern, the mortar, the gear
+drums) was too busy; these are calmer and furnace-leaning: a few big shapes, mostly white, grey and black, and
+the purple kept for the fire alone. Each is 30 x 30 cells, the crusher's own box (<code>CRUSHER_W</code> x
+<code>CRUSHER_H</code>), with the mouth open across the middle 20 columns at the top where the hopper counts a
+toss today. The left third is where the counter card sits over it in the game, so nothing that matters is
+drawn there: every door and flame is in the middle or right. Painted as the deep paints a station, a cell a
+character in its five tones as seen (<code>#</code> white, <code>+</code> light grey, <code>-</code> dark grey,
+<code>o</code> the black water, <code>*</code> purple), on a stand-in for the deep's floor. Left is the game's
+size (a cell is 6 px), then four times that, then the rest frame and the working frame side by side. White
+squares to its right toss scales in; while scales go in (<code>S.crushAt</code> recent) the second frame shows
+-- the fire climbs and brightens -- and sparks or a puff leave by the door or the flue. What it cannot show: the
+real abyss field, the scale bed, the serpent overhead, the pile-full mark and the counter card. Building one
+means painting its rows at <code>crusherRect()</code> in place of <code>drawCrusher</code>'s code, plus the
+second frame. Add <code>?t=2.3</code> to the address to hold the animation still at a moment.</p>
+<div id="opts"></div>
+<script>
+// --- the drawings (begin) -------------------------------------------------------------
+// Each option is drawn by a function of its frame (0 at rest, 1 working), onto
+// a 30 x 30 grid of tone characters. The mouth is columns 5..24 of the top.
+const N = 30;
+function grid() {
+  const g = Array.from({ length: N }, () => Array(N).fill('.'));
+  const P = {
+    put(r, c, ch) { if (r >= 0 && r < N && c >= 0 && c < N && ch !== ' ') g[r][c] = ch; },
+    fill(r0, c0, r1, c1, f) { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) P.put(r, c, typeof f === 'function' ? f(r, c) : f); },
+    rows() { return g.map(r => r.join('')); }
+  };
+  return P;
+}
+// A funnel from the top: `rows` deep, from columns a0..a1 at its lip to b0..b1
+// at its foot, one white wall a side, black inside, a grey back rim.
+function funnel(P, r0, r1, a0, a1, b0, b1) {
+  for (let r = r0; r <= r1; r++) {
+    const k = (r - r0) / (r1 - r0);
+    const L = Math.round(a0 + (b0 - a0) * k), R = Math.round(a1 + (b1 - a1) * k);
+    P.fill(r, L + 1, r, R - 1, r === r0 ? '+' : 'o');
+    P.put(r, L, '#'); P.put(r, R, '#');
+  }
+}
+// A fire in a black opening: tongues up to `top`, rising out of a full bed at
+// `bed`..`foot`, across c0..c1. Working, it climbs and takes a white heart.
+function fire(P, c0, c1, bed, foot, top, hot) {
+  P.fill(bed, c0, foot, c1, '*');
+  for (let c = c0; c <= c1; c++) {
+    const i = (c - c0) % 8;
+    const h = hot ? bed - top - [0, 2, 1, 0, 1, 2, 0, 1][i] : [2, 0, 1, 3, 1, 0, 2, 1][i];
+    for (let r = bed - 1; r >= Math.max(top, bed - h); r--) P.put(r, c, '*');
+  }
+  if (hot) { const m = (c0 + c1) >> 1; P.fill(foot - 1, m - 1, foot, m + 2, '#'); P.put(foot - 2, m, '#'); P.put(foot - 2, m + 1, '#'); }
+}
+
+// A -- the brick furnace: a square chute into a squat brick block, an arched
+// firebox door low in its middle.
+function brick(f) {
+  const P = grid();
+  funnel(P, 0, 6, 4, 25, 9, 20);
+  P.fill(7, 1, 7, 28, '#');                                 // the cap
+  for (let r = 8; r <= 27; r++) for (let c = 2; c <= 27; c++) {
+    const edge = c === 2 || c === 27;
+    const joint = (r - 8) % 5 === 4 || (c + ((r - 8) / 5 | 0) % 2 * 4) % 8 === 0 && (r - 8) % 5 !== 4;
+    P.put(r, c, edge ? '#' : (r - 8) % 5 === 4 ? '-' : joint ? '-' : '+');
+  }
+  // the door: an arch, a white frame round a black mouth
+  P.fill(15, 12, 15, 19, '#'); P.fill(16, 11, 27, 20, '#');
+  P.fill(16, 13, 16, 18, 'o'); P.fill(17, 12, 27, 19, 'o');
+  fire(P, 12, 19, 25, 27, f ? 19 : 23, f);
+  P.fill(28, 0, 29, 29, (r, c) => r === 28 ? (c === 0 || c === 29 ? '.' : '#') : '-');
+  return P.rows();
+}
+
+// B -- the bottle kiln: a round oven under a wide collar, iron hoops round
+// it, a small arched port at its foot. Fed, the fire shows down its throat.
+function kiln(f) {
+  const P = grid();
+  funnel(P, 0, 4, 3, 26, 8, 21);
+  if (f) P.fill(3, 12, 4, 17, '*');                         // the glow down the throat
+  const hw = r => 7 + Math.round(6.5 * Math.sin(Math.min(1, (r - 5) / 11) * Math.PI / 2));
+  for (let r = 5; r <= 27; r++) {
+    const h = hw(r), L = Math.round(14.5 - h), R = Math.round(14.5 + h) - 1;
+    P.fill(r, L, r, R, (rr, c) => c === L || c === R ? '#' : rr === 11 || rr === 20 ? '-' : '+');
+  }
+  // the port
+  P.fill(21, 13, 21, 18, '#'); P.fill(22, 12, 27, 19, '#');
+  P.fill(22, 14, 22, 17, 'o'); P.fill(23, 13, 27, 18, 'o');
+  fire(P, 13, 18, 26, 27, f ? 23 : 25, f);
+  P.fill(28, 1, 28, 28, '#'); P.fill(29, 0, 29, 29, '-');
+  return P.rows();
+}
+
+// C -- the smelter: a hopper on two posts pouring into a crucible, the
+// crucible over a purple flame on a low hearth. Fed, the melt goes white.
+function smelter(f) {
+  const P = grid();
+  for (const c of [3, 26]) P.fill(4, c, 28, c + 1, (r, cc) => cc === c ? '#' : '-');
+  funnel(P, 0, 8, 4, 25, 12, 17);
+  P.fill(9, 13, 11, 16, (r, c) => c === 13 || c === 16 ? '#' : 'o');  // the spout
+  // the crucible, the melt showing at its top
+  for (let r = 13; r <= 20; r++) {
+    const i = Math.round((r - 13) * 0.45), L = 8 + i, R = 21 - i;
+    P.fill(r, L, r, R, (rr, c) => c === L || c === R || rr === 20 ? '#' : rr === 13 ? (f ? '#' : '-') : '+');
+  }
+  if (f) { P.put(12, 14, '+'); P.put(12, 15, '+'); }       // what the spout drops
+  // the flame under it, and the hearth it burns on
+  P.fill(21, 9, 23, 20, 'o');
+  fire(P, 10, 19, 23, 23, f ? 20 : 22, f);
+  P.fill(24, 6, 28, 23, (r, c) => r === 24 || c === 6 || c === 23 ? '#' : '+');
+  P.fill(29, 1, 29, 28, '-');
+  return P.rows();
+}
+
+// D -- the iron stove: a dark box on four short legs, a loading tray on top,
+// a round glass in its front, the flue up the right side.
+function stove(f) {
+  const P = grid();
+  funnel(P, 2, 7, 4, 25, 7, 22);
+  P.fill(8, 2, 8, 26, '#');                                 // the top plate
+  P.fill(9, 3, 25, 25, (r, c) => c === 3 || c === 25 || r === 25 ? '#' : '-');
+  // the flue: up the right side, a cap on it
+  P.fill(4, 26, 14, 28, (r, c) => c === 27 && r < 14 ? '+' : '#');
+  P.fill(3, 26, 3, 29, '#');
+  if (f) { P.put(1, 27, '+'); P.put(0, 28, '+'); P.put(1, 28, '-'); P.put(0, 26, '-'); P.put(2, 29, '-'); }
+  // the glass: a round window with the fire behind it
+  const cx = 16.5, cy = 16.5;
+  for (let r = 11; r <= 22; r++) for (let c = 10; c <= 23; c++) {
+    const d = Math.hypot(c + 0.5 - cx - 0.5, r + 0.5 - cy - 0.5);
+    if (d <= 5.2) P.put(r, c, d > 4.2 ? '#' : 'o');
+  }
+  fire(P, 14, 19, 20, 21, f ? 15 : 18, f);
+  // the legs
+  for (const c of [4, 23]) P.fill(26, c, 29, c + 1, '#');
+  return P.rows();
+}
+// --- the drawings (end) ---------------------------------------------------------------
+
+const OPTIONS = [
+  { key: 'A', name: 'The brick furnace', draw: brick, out: [{ r: 22, c: 21, kind: 'spark' }],
+    cap: 'A squat brick block under a square chute, the courses marked by a grey joint every fifth row, and an arched white-framed firebox door low in the middle with a purple bed of fire in it. Fed, the fire climbs the door with a white heart, and sparks jump out of it onto the floor.' },
+  { key: 'B', name: 'The bottle kiln', draw: kiln, out: [{ r: 23, c: 20, kind: 'spark' }],
+    cap: 'A round oven stood under a wide collar that is the mouth, two dark iron hoops round its belly and a small arched port at its foot with the fire low in it. Fed, the port burns up and the purple shows down the throat under the tosses.' },
+  { key: 'C', name: 'The smelter', draw: smelter, out: [{ r: 13, c: 22, kind: 'puff' }],
+    cap: 'An open frame: a hopper on two posts pouring through a short spout into a crucible, the crucible over a purple flame on a low hearth. Fed, a scale drops from the spout, the melt goes white-hot and the flame stands taller; heat puffs off the crucible\'s lip.' },
+  { key: 'D', name: 'The iron stove', draw: stove, out: [{ r: 1, c: 27, kind: 'puff' }],
+    cap: 'A plain dark iron box on four short legs with a loading tray on top, a round glass in its front and the flue up its right side. Fed, the fire behind the glass climbs and brightens and a puff leaves the flue.' }
+];
+for (const o of OPTIONS) { o.rows = o.draw(0); o.alt = o.draw(1); }
+
+// --- the deep's tones, as seen -----------------------------------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const INK = { '#': '#ffffff', '+': GREYS[9], '-': GREYS[6], 'o': '#000000', '*': PURPLES[11] };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const hash = n => { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); };
+
+// --- the scene, in cells -------------------------------------------------------------
+const SIZE = 30, LIP = 3, WORKER = 3, TOSS_FROM = 8, RISE = 14;
+const LEFT = 8, RIGHT = 30, SKY = 20, FLOOR_ROWS = 4;
+const L = { W: LEFT + SIZE + RIGHT, floor: SKY + SIZE, sx: LEFT, sy: SKY };
+L.Hc = L.floor + FLOOR_ROWS;
+
+function water(g, s, t) {
+  for (let y = 0; y < L.floor; y++) for (let x = 0; x < L.W; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + t / 5200) * 2.4 + t / 7000);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 6) {
+      const b = 0.5 + 0.5 * Math.sin(t / 900 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 9))];
+    }
+    g.fillStyle = tone; g.fillRect(x * s, y * s, s, s);
+  }
+  for (let r = 0; r < FLOOR_ROWS; r++) for (let x = 0; x < L.W; x++) {
+    g.fillStyle = GREYS[2 + (seeth(x, L.floor + r + 7) % 3) + (r === 0 ? 2 : 0)];
+    g.fillRect(x * s, (L.floor + r) * s, s, s);
+  }
+  for (let x = L.sx + SIZE + 2; x < L.W; x++) {
+    const n = seeth(x, 3) % 3;
+    for (let k = 0; k < n; k++) { g.fillStyle = GREYS[8 + (seeth(x, k) % 3)]; g.fillRect(x * s, (L.floor - 1 - k) * s, s, s); }
+  }
+}
+
+const EVERY = 0.9, FLIGHT = 0.67, BUSY = 0.6;
+function tosses(t) {
+  const n = Math.floor(t / EVERY), dt = t - n * EVERY;
+  return { n, dt, busy: dt > FLIGHT && dt < FLIGHT + BUSY };
+}
+
+function paint(g, s, rows) {
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    g.fillStyle = INK[ch]; g.fillRect((L.sx + c) * s, (L.sy + r) * s, s, s);
+  }));
+}
+// What leaves while it works: sparks hop out and fall, a puff rises and thins.
+function leaving(g, s, o, t) {
+  for (const { r, c, kind } of o.out) for (let i = 0; i < 3; i++) {
+    const age = ((t * 1000 / 240) + i / 3) % 1, k = Math.floor(t * 1000 / 240 + i / 3) * 3 + i;
+    const dx = Math.round(age * (2 + hash(k) * 4)) * (kind === 'puff' ? (hash(k + 5) < 0.5 ? -1 : 1) * 0.5 : 1);
+    const dy = kind === 'puff' ? -Math.round(age * 4) : Math.round(-2 * age + 7 * age * age);
+    g.fillStyle = kind === 'puff' ? GREYS[age < 0.5 ? 9 : 7] : age < 0.5 ? '#ffffff' : PURPLES[11];
+    g.fillRect(Math.round(L.sx + c + dx) * s, (L.sy + r + dy) * s, s, s);
+  }
+}
+function sprite(g, s, o, t) {
+  const { busy } = tosses(t);
+  paint(g, s, busy && Math.floor(t * 1000 / 110) % 2 ? o.alt : o.rows);
+  if (busy) leaving(g, s, o, t);
+}
+
+function bodies(g, s, t) {
+  const { n, dt } = tosses(t);
+  const hand = L.sx + SIZE + TOSS_FROM, y = L.floor - WORKER;
+  const who = n % 2;
+  for (let i = 0; i < 2; i++) {
+    const x = hand + i * 5 - (i === who && dt < 0.12 ? 1 : 0);
+    g.fillStyle = '#ffffff'; g.fillRect(x * s, y * s, WORKER * s, WORKER * s);
+    g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(x * s, y * s, WORKER * s, WORKER * s);
+  }
+  if (dt < FLIGHT) {
+    const k = dt / FLIGHT, x0 = hand + who * 5 + 1, y0 = y - 1;
+    const x1 = L.sx + SIZE / 2 + ((n * 7) % 9) - 4, y1 = L.sy + LIP + 1;
+    const x = x0 + (x1 - x0) * k, yy = y0 + (y1 - y0) * k - 4 * RISE * k * (1 - k);
+    g.fillStyle = GREYS[10]; g.fillRect(Math.round(x) * s, Math.round(yy) * s, s, s);
+  }
+}
+
+const entry = o => '  crusher: [\n' + o.rows.map(r => `    '${r}'`).join(',\n') + '\n  ],\n  crusherWorking: [\n' +
+  o.alt.map(r => `    '${r}'`).join(',\n') + '\n  ],';
+
+const panes = [];
+for (const o of OPTIONS) {
+  const box = document.createElement('div');
+  box.className = 'opt'; box.id = 'opt-' + o.key;
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2><p class="cap">${o.cap}</p><div class="row"></div><div class="row" style="margin-top:10px"></div>`;
+  const [row1, row2] = box.querySelectorAll('.row');
+  let row = row1;
+  const mk = (s, crop, label, still) => {
+    const wrap = document.createElement('div');
+    const c = document.createElement('canvas');
+    c.width = crop.w * s; c.height = crop.h * s;
+    wrap.append(c);
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = label; wrap.append(l);
+    row.append(wrap);
+    const p = { o, s, crop, g: c.getContext('2d'), still };
+    panes.push(p);
+  };
+  const tight = { x: L.sx - 2, y: L.sy - 3, w: SIZE + 4, h: SIZE + 4 };
+  mk(6, { x: 0, y: 0, w: L.W, h: L.Hc }, '1x -- the game\'s size');
+  mk(24, tight, '4x, animated');
+  row = row2;
+  mk(12, tight, '2x, at rest', 'rest');
+  mk(12, tight, '2x, working', 'work');
+  const code = document.createElement('div');
+  const pre = document.createElement('pre'); pre.textContent = entry(o); pre.style.display = 'none';
+  const b = document.createElement('button'); b.textContent = 'copy rows';
+  b.onclick = () => navigator.clipboard.writeText(entry(o)).then(() => { b.textContent = 'copied'; });
+  code.append(b, pre);
+  row.append(code);
+  document.getElementById('opts').append(box);
+  for (const rs of [o.rows, o.alt]) if (rs.length !== SIZE || rs.some(r => r.length !== SIZE)) console.warn(o.key, 'not 30 x 30');
+}
+
+const held = new URLSearchParams(location.search).get('t');
+const t0 = performance.now();
+function frame() {
+  const ms = held != null ? +held * 1000 : performance.now() - t0, t = ms / 1000;
+  for (const p of panes) {
+    const { g, s, crop, o, still } = p;
+    g.setTransform(1, 0, 0, 1, -crop.x * s, -crop.y * s);
+    water(g, s, still ? 0 : ms);
+    if (still === 'rest') paint(g, s, o.rows);
+    else if (still === 'work') { paint(g, s, o.alt); leaving(g, s, o, 0.13); }
+    else { sprite(g, s, o, t); bodies(g, s, t); }
+  }
+  if (held == null) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
