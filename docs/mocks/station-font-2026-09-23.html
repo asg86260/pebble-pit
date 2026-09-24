@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Font Station Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .opt { border-top: 1px solid var(--rule); padding: 14px 0 18px; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 10px; max-width: 1080px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .lbl { color: var(--dim); font-size: 11px; margin-top: 3px; }
+  pre { margin: 0; padding: 8px; border: 1px solid var(--rule); font-size: 11px; line-height: 1.15; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; margin-top: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>The font, redrawn for the grenadiers: four options</h1>
+<p class="note">A mock drawn from plain cells, not the game. The font is where the grenadiers work: each one
+stands at it, holds a grenade (the surface's ripples held in a ball) for three seconds, and throws it at the
+coil, where it bursts in rings. Each drawing is painted the way the deep paints a station: a cell a character,
+in the five tones as they are seen down there (<code>#</code> white, <code>+</code> light grey, <code>-</code>
+dark grey, <code>o</code> the black water, <code>*</code> the abyss's purple), under a dome sized from the
+drawing's inked width (4 cells of pad, 4 of wall), on the deep's mottled floor. Left is the game's own size (a
+cell is 6 px), right is four times that. A body square stands at the font: a ball lifts off the station into
+its hands, is held, is thrown up out of the dome and bursts in purple rings; the body has a keyline the game's
+does not, so it reads against white. What it cannot show: the real abyss field (the water here is a cheap
+stand-in), the scale bed and loose scales on the floor, the serpent overhead (the throw here aims at empty
+water), the board and fence, and the real grenade and ring drawing -- those are the game's own, drawn
+elsewhere. Nothing on a station moves: a station is painted once into an image, so the lifting ball is the
+body's grenade, not part of the sprite.</p>
+<div id="opts"></div>
+<script>
+// --- the four drawings, in sprites.js form ---------------------------------------
+// Each: the rows, and the cell the grenade lifts off (its center, in cell edges).
+const OPTIONS = [
+  { key: 'A', name: 'The ripple font',
+    cap: 'A stone font brimming with black water, a purple thread rising off its middle, ripples curling up both sides, and a grenade held over it: a black ball ringed in purple, rimmed white.',
+    rows: [
+      '........####........',
+      '.......#o**o#.......',
+      '......-#*oo*#-......',
+      '......-#*oo*#-......',
+      '.......#o**o#.......',
+      '........####........',
+      '.....-...**...-.....',
+      '....+....**....+....',
+      '....+...-**-...+....',
+      '.##################.',
+      '.#oo*ooo****ooo*oo#.',
+      '..#oooooooooooooo#..',
+      '...##++++++++++##...',
+      '.....##########.....',
+      '........#++#........',
+      '........#++#........',
+      '........#--#........',
+      '......########......',
+      '....############....',
+      '.##################.'
+    ], src: [10, 3] },
+
+  { key: 'B', name: 'The tentacle\'s gift',
+    cap: 'A font on a slim stem, and a tentacle up out of the floor beside it, purple suckers along it, arched over the bowl with a grenade curled in its tip, lifting it out of the black water to hand over.',
+    rows: [
+      '......-+++++++-.....',
+      '.....+*+*++*+*+-....',
+      '....+*..####..-+*...',
+      '....+.-#o**o#..+*...',
+      '....*+.#*oo*#..*+...',
+      '.....*.#*oo*#...+*..',
+      '.......#o**o#...*+..',
+      '........####....+*..',
+      '..##############.*+.',
+      '..#oo*ooooo*oo#..+*.',
+      '...#oooooooooo#..*+.',
+      '....##########...+*.',
+      '........##.......*+.',
+      '........##......+*..',
+      '........#+......*+..',
+      '.......####.....+*..',
+      '......######...-+*..',
+      '....##########-+++*.',
+      '####################'
+    ], src: [10, 5] },
+
+  { key: 'C', name: 'The black cauldron',
+    cap: 'A black cauldron on stubby legs over purple fire, a chain bound round its belly and runes scratched on it, a grenade boiling up out of it on two wisps of the steam.',
+    rows: [
+      '........####........',
+      '.......#*oo*#.......',
+      '.......#o**o#.......',
+      '........####........',
+      '.....+...**...+.....',
+      '......-..**..-......',
+      '.##################.',
+      '..#oo*oooooooo*oo#..',
+      '.#oooooo*oo*oooooo#.',
+      '.#-+-+-+-++-+-+-+-#.',
+      '.#ooo*oooooooo*ooo#.',
+      '..#oooooooooooooo#..',
+      '...##############...',
+      '...#+.*......*.+#...',
+      '...#+..*.**.*..+#...',
+      '..##+.**.**.**.+##..',
+      '..-+-****--****-+-..',
+      '####################'
+    ], src: [10, 2] },
+
+  { key: 'D', name: 'The font and the stack',
+    cap: 'A narrow goblet with a grenade rising out of its water, and beside it the stack of the ones already made, six balls of black ringed in purple, piled like shot by a cannon.',
+    rows: [
+      '..-##-..............',
+      '.-#o*#-.............',
+      '.-#*o#-.............',
+      '..-##-..............',
+      '..*..*..............',
+      '...**...............',
+      '########.....**.....',
+      '#oo**oo#....*#o*....',
+      '.#oooo#.....*oo*....',
+      '..####.......**.....',
+      '...##......**..**...',
+      '...#+.....*#o**#o*..',
+      '...#+.....*oo**oo*..',
+      '...#+......**..**...',
+      '...#-....**..**..**.',
+      '..####..*#o**#o**#o*',
+      '.######.*oo**oo**oo*',
+      '########.**..**..**.',
+      '####################'
+    ], src: [4, 2] }
+];
+
+// --- the deep's tones, as seen -----------------------------------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const INK = { '#': '#ffffff', '+': GREYS[9], '-': GREYS[6], 'o': '#000000', '*': PURPLES[11] };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+
+// --- the scene, in cells -------------------------------------------------------------
+// Everything below is in cells; `s` is screen pixels a cell.
+const DOME_PAD = 4, DOME_WALL = 4, WORKER = 3, MARGIN = 13, SKY = 8, FLOOR_ROWS = 4;
+
+function inkOf(rows) {
+  let c0 = 99, c1 = -1, r0 = 99, r1 = -1;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+  }));
+  return { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
+}
+
+function layout(o) {
+  const ink = inkOf(o.rows), H = o.rows.length;
+  const w = ink.cols + DOME_PAD * 2, rad = w / 2;
+  const W = w + MARGIN * 2;
+  const standY = SKY + Math.ceil(rad) + DOME_WALL;        // top of the drawing's ink
+  const floor = standY + ink.rows;
+  const sx = MARGIN + DOME_PAD - ink.c0, sy = floor - H;  // sprite grid's top-left
+  return { ink, W, Hc: floor + FLOOR_ROWS, floor, sx, sy, domeL: MARGIN, domeW: w, rad,
+           spring: standY - DOME_WALL, top: Math.round(standY - DOME_WALL - rad) };
+}
+
+function water(g, L, s, t) {
+  for (let y = 0; y < L.floor; y++) for (let x = 0; x < L.W; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + t / 5200) * 2.4 + t / 7000);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 6) {
+      const b = 0.5 + 0.5 * Math.sin(t / 900 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 9))];
+    }
+    g.fillStyle = tone; g.fillRect(x * s, y * s, s, s);
+  }
+  for (let r = 0; r < FLOOR_ROWS; r++) for (let x = 0; x < L.W; x++) {
+    g.fillStyle = GREYS[2 + (seeth(x, L.floor + r + 7) % 3) + (r === 0 ? 2 : 0)];
+    g.fillRect(x * s, (L.floor + r) * s, s, s);
+  }
+}
+
+function dome(g, L, s) {
+  const cx = L.domeL + L.rad;
+  const inside = (x, y) => {
+    if (x < L.domeL || x >= L.domeL + L.domeW || y >= L.floor || y < L.top) return false;
+    if (y >= L.spring) return true;
+    const dx = x + 0.5 - cx, dy = y + 0.5 - L.spring;
+    return dx * dx + dy * dy <= L.rad * L.rad;
+  };
+  for (let y = L.top; y < L.floor; y++) for (let x = L.domeL; x < L.domeL + L.domeW; x++) {
+    if (!inside(x, y)) continue;
+    const rim = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1);
+    g.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x, y) % 2)];
+    g.fillRect(x * s, y * s, s, s);
+  }
+}
+
+function sprite(g, L, s, o) {
+  o.rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    g.fillStyle = INK[ch]; g.fillRect((L.sx + c) * s, (L.sy + r) * s, s, s);
+  }));
+}
+
+// One grenadier's round: the ball lifts off the station into its hands, is
+// held over its head (the game's three seconds, shortened), is thrown up and
+// out of the dome, and bursts in two rings. Everything snaps to the cell.
+const ROUND = 4.2, LIFT = [0.4, 1.1], THROW = 2.6, FLY = 0.8, RING = 0.9;
+const lerp = (a, b, k) => a + (b - a) * k;
+
+function grenadier(g, L, s, o, t) {
+  const dt = t % ROUND;
+  const bx = L.domeL + 1, by = L.floor - WORKER;              // the body, on the floor at the dome's left
+  g.fillStyle = '#ffffff'; g.fillRect(bx * s, by * s, WORKER * s, WORKER * s);
+  g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(bx * s, by * s, WORKER * s, WORKER * s);
+  const hand = { x: bx + WORKER / 2, y: by - 1.5 };
+  const from = { x: L.sx + o.src[0], y: L.sy + o.src[1] };
+  const aim = { x: L.W - 6, y: 4 };
+  let p = null;
+  if (dt >= LIFT[0] && dt < LIFT[1]) {
+    const k = (dt - LIFT[0]) / (LIFT[1] - LIFT[0]);
+    p = { x: lerp(from.x, hand.x, k), y: lerp(from.y, hand.y, k) - Math.sin(k * Math.PI) * 3 };
+  } else if (dt >= LIFT[1] && dt < THROW) p = hand;
+  else if (dt >= THROW && dt < THROW + FLY) {
+    const k = (dt - THROW) / FLY;
+    p = { x: lerp(hand.x, aim.x, k), y: lerp(hand.y, aim.y, k) - Math.sin(k * Math.PI) * 6 };
+  }
+  if (p) ball(g, s, p.x, p.y);
+  const rt = dt - THROW - FLY;
+  if (rt >= 0 && rt < RING) for (const lag of [0, 0.25]) {
+    const k = (rt - lag) / (RING - 0.25);
+    if (k < 0 || k > 1) continue;
+    const rad = 1 + k * 7, n = Math.round(8 + rad * 5);
+    g.fillStyle = PURPLES[Math.max(4, 11 - Math.round(k * 7))];
+    for (let i = 0; i < n; i++) {
+      const an = i / n * Math.PI * 2;
+      g.fillRect(Math.round(aim.x + Math.cos(an) * rad) * s, Math.round(aim.y + Math.sin(an) * rad) * s, s, s);
+    }
+  }
+}
+
+// A grenade: two cells square, a purple ring round a black middle at four
+// times, a purple dot at one.
+function ball(g, s, x, y) {
+  const cx = Math.round(x - 1), cy = Math.round(y - 1);
+  g.fillStyle = PURPLES[11]; g.fillRect(cx * s, cy * s, 2 * s, 2 * s);
+  g.fillStyle = '#000'; g.fillRect((cx + 0.5) * s, (cy + 0.5) * s, s, s);
+}
+
+function entry(o) {
+  return '  font: [\n' + o.rows.map(r => `    '${r}'`).join(',\n') + '\n  ],';
+}
+
+const panes = [];
+const only = location.hash.slice(1);
+for (const o of OPTIONS.filter(o => !only || only.includes(o.key))) {
+  const L = layout(o);
+  const box = document.createElement('div');
+  box.className = 'opt';
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2><p class="cap">${o.cap}
+    <br>${o.rows[0].length} x ${o.rows.length}, inked ${L.ink.cols} x ${L.ink.rows}</p><div class="row"></div>`;
+  const row = box.querySelector('.row');
+  const mk = (s, crop, label) => {
+    const wrap = document.createElement('div');
+    const c = document.createElement('canvas');
+    c.width = crop.w * s; c.height = crop.h * s;
+    wrap.append(c);
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = label; wrap.append(l);
+    row.append(wrap);
+    panes.push({ o, L, s, crop, g: c.getContext('2d') });
+  };
+  mk(6, { x: 0, y: 0, w: L.W, h: L.Hc }, '1x -- the game\'s size');
+  const y4 = L.floor - L.ink.rows - 4;
+  mk(24, { x: L.domeL - 2, y: y4, w: L.domeW + 4, h: L.floor + 1 - y4 }, '4x, cropped to the drawing');
+  const code = document.createElement('div');
+  const pre = document.createElement('pre'); pre.textContent = entry(o);
+  const b = document.createElement('button'); b.textContent = 'copy';
+  b.onclick = () => navigator.clipboard.writeText(entry(o)).then(() => { b.textContent = 'copied'; });
+  code.append(pre, b);
+  row.append(code);
+  document.getElementById('opts').append(box);
+  if (o.rows.some(r => r.length !== o.rows[0].length)) console.warn(o.key, 'ragged rows');
+}
+
+const t0 = performance.now();
+function frame() {
+  const ms = performance.now() - t0, t = ms / 1000;
+  for (const p of panes) {
+    const { g, s, crop, L, o } = p;
+    g.setTransform(1, 0, 0, 1, -crop.x * s, -crop.y * s);
+    water(g, L, s, ms);
+    dome(g, L, s);
+    sprite(g, L, s, o);
+    grenadier(g, L, s, o, t);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
