@@ -15026,3 +15026,168 @@ work is built by a deep hand; `snatch.test.mjs` for the portal beat (her
 jump is a walked arc, the ring closes); a check that the view cannot go
 down before the portal is bought and can after, through the tower's row.
 Scenes for the portal opening, her leap, and the conjured portal.
+
+## The janitors' roomba (design, not built)
+
+*(2026-09-23, the owner's call: "lets give the janitors a machine also, a
+roomba that runs around and cleans up poop super quick." Mocks:
+`docs/mocks/roomba-2026-09-23.html`, three options, not yet voted on.)*
+
+Every station's line ends in a machine -- the drill, the ram, the tiller, the
+belt, the sphere -- and the forklifts took the last body off carrying. The
+janitor's closet is the one station with no end at all: one row on its board
+(`another cap`), no ladder, and a job that is mostly standing about smoking.
+The roomba is the closet's machine: a low disc that drives out of the closet
+to every patch of poop in the yard, takes it in, and drives home.
+
+### The bargain
+
+**What it does for the player.** Poop goes almost as soon as it lands, and the
+janitors stop being a post the yard pays for. The closet's line gets the same
+shape as every other station's: hands first, then a set of caps, then the
+machine that stands in for them, then three red rungs on that machine.
+
+**What it costs.** Red and dust like every machine, and the closet's gang
+reduced to one tender (see "Replaces, or helps", below). Whether it also costs
+soot is an open call.
+
+**The honest part.** Poop is rare. `LOO_EVERY` is ten minutes a body and a
+visit leaves `LOO_MUCK` (two grains), which one janitor at `MUCK_SWEEP` clears
+in well under a second; what takes a janitor's time is the walk. A roomba that
+only does poop buys a faster walk to a thing that was already being cleaned,
+and the player will see very little change in the yard. That is why the first
+open call below is about **what it cleans**, not what it looks like.
+
+### Nothing teleports
+
+- **It drives to every patch.** The roomba is a body with an `x`, on the yard's
+  `ways` like any walker, and it cleans only the column it is sitting over. It
+  picks its patch through the same claim books the janitors use (`poopTaken`
+  in `crew/step.js`, `nearestPoop` in `crew/shovel.js`), so a janitor and the
+  roomba never go for the same column.
+- **What it takes in rides with it.** A bin of `ROOMBA_BIN` grains, drawn on
+  the machine as a fill gauge. The mess is not deleted where it lies; it is
+  carried home and tipped into the closet's door, which is where a janitor's
+  shovelful already goes in spirit ("shifted to the edge and gone"). A full bin
+  sends it home before it goes for the next patch.
+- **It docks at the closet.** A dock beside the closet's door, on the closet's
+  own ground (the site `outhouse`, padded right by the dock's width in
+  `world.js`, the way `KIT_OUT` pads a station for its stand). Idle, it sits on
+  the dock; that is where you look for it, as you looked for the janitor at the
+  shed. No battery: the bin is the reason to come home, and a charge meter
+  would be a second clock saying the same thing.
+- **Where it cannot go, it does not.** It does not climb loose heaps, go down
+  the pit's mouth, or onto the rock, the cut or the plots -- the same places
+  `onSite` and `workSpot` already hold a body off. Poop over the pit's mouth or
+  on a heap stays the tender janitor's (`canDescend` in `nearestMuck`). This is
+  the main reason to keep one janitor.
+
+### How quick is "super quick"
+
+Two numbers, against the janitor it replaces:
+
+| | a janitor | the roomba |
+|---|---|---|
+| getting there | `commutePace()` | `ROOMBA_PACE` x `commutePace()`, first guess **2.5** |
+| taking it in | `MUCK_SWEEP` grains a second | `MUCK_SWEEP` x `machineRate(JOB.JANITOR)` |
+
+The intake runs through `machineRate` like every machine's work, so it is worth
+`gangWorth(JOB.JANITOR) * MACHINE_GAIN` over the caps it stands in for, and the
+three red rungs multiply it by `MACHINE_TUNE` each. With two caps that is six
+janitors' shovels to the second untuned, about thirteen topped out: a two-grain
+patch vanishes in a few frames, which is the "super quick" you see. The drive
+pace is a separate constant, not a rung, because a ladder that made the drive
+faster would be a second multiplier the other machines do not have.
+
+### Replaces, or helps
+
+**Recommended: it stands in for the closet, as every machine does, and keeps
+one tender.** `buyMachine('roomba')` caps the closet at one body (`capOf`
+answers 1 for a station with a machine standing), the second janitor is stood
+down to the spare pool, and the tender stays at the dock. The tender has two
+jobs nobody else can do: it tips the roomba's bin into the closet when it docks
+full (the one sign the tender is why the machine runs), and it takes the poop
+the roomba cannot reach. With nobody posted, the roomba sits on its dock: a
+station idles until somebody is standing there.
+
+`takesKit: false`, like the sphere: a janitor's cap is its post, not a
+doubling, and the tender keeps its own. The stood-down janitor hands its cap
+back at the closet's stand.
+
+The alternative the mocks also show is **unmanned**, like the belt and the
+forklifts: no tender, the janitors gone entirely, and the bin tipped at the
+door by the roomba itself. It fits the owner's "workers eventually have
+nothing to do", but it leaves poop on heaps and over the mouth with nobody
+allowed to shift it (poop is `theirs`), so it needs a rule for who clears
+those.
+
+### Sold like the other machines
+
+- **The row.** `roomba` on the closet's own board (`OUTHOUSE_UPGRADES` in
+  `outhouse.js`), `kind: 'machine'`, `site: 'outhouse'`, `at` the dock, built
+  by the spare hands on the closet's ground like any work. One entry in
+  `MACHINES` (`{ key: 'roomba', job: JOB.JANITOR, name: 'the roomba',
+  takesKit: false }`), which gives it its record, its save and its tune row
+  for free.
+- **The gate.** `canBuy('roomba', ...)`: the closet's ladders topped and its
+  caps full. The closet has no ladder, so "topped" is its one rung, the second
+  cap (`(S.looPosts ?? LOO_POSTS) >= 2`), and the caps are
+  `kitFull(JOB.JANITOR)`. That makes the roomba the cheapest gate of any
+  machine; the price carries the weight instead.
+- **The bill.** Janitors make no coin, so it is priced like the belt, in all
+  three grounds: `ROOMBA_BILL = [['spark', 240], ['dust', 4800], ['shard',
+  300], ['spore', 300]]` -- the tiller's red, the cheapest machine, because it
+  does the least. The dust leg sits on `DUST_PER_SPARK`.
+- **The ladder.** `tuneRow('roomba', 'roomba suction', ...)` on the closet's
+  board: three rungs of `MACHINE_TUNE_SPARKS`, pips and an end, exactly as
+  every other machine ("A machine's ladder ends"). No new table.
+
+### What it saves
+
+- The machine's record in `S.machines.roomba` (`bought`, `tune`, `tookKit`,
+  the clocks) -- nothing new; `MACHINES` carries it.
+- **Its position and its load**, because it moves and a reload must not stand
+  it back on its dock (`reloadCheck` would call that a teleport). Following
+  the forklifts (`crew/lifts.js`, whose `SAVE` writes each lift's `x`), a
+  roomba file with its own `SAVE`: `roomba: { x, face, bin }`, one line in
+  `SAVERS`, and `roomba` in `SAVED_BY_HAND`. Its claim column is `EPHEMERAL`
+  and re-picked on the first frame.
+- No migration: a save from before has no roomba and reads `blank()`.
+
+### What it joins, unasked
+
+- **The claim books** -- `poopTaken`, and `muckTaken` if it takes muck.
+- **Not `S.workers`.** Like the forklifts, it is a body in a list of its own
+  (`S.roomba`), stepped inside the crew's frame, so the breaks, the loo, the
+  dance, the names and the crew board never mistake it for a person.
+  `verify.js` gets the forklifts' rule for it: never counted as crew.
+- **Rendering.** A `LAYERS` entry after the mess and before the crew, so it
+  drives over the muck and under the bodies' feet; the dock drawn with the
+  closet.
+- **The pile-full mark.** It has no strip in `S.piles`, so it gets none; a full
+  bin is drawn on the machine and ends in a trip home, never in a stall.
+- **Per-cell variation.** The poop it takes in is drawn going into the bin in
+  the mess's own tones (`shadeNear`), not one flat grey.
+- **Sound.** An event for the suck and the tip (`sfx('roomba-suck')`), mapped
+  to null in `SOUNDS` until somebody listens.
+- **Test and bench.** A line in `test/shop-rows.mjs`; `test/roomba.test.mjs`
+  buying it through the closet's board; a `roomba` scene in `src/scenes.js`
+  (a dirty yard, the machine bought, a tender at the dock).
+
+### The open calls
+
+1. **What it cleans.** Poop only (the request as written) buys very little,
+   because poop is rare and one janitor already keeps up. **Poop first, then
+   the sky's muck on the open yard** (never on a site, a heap or over the pit)
+   is the version that changes the yard: after a front, it is the machine that
+   frees the crew from dropping everything to shovel. That also makes it a
+   companion to the balloons and the air filter rather than a toy.
+2. **Replaces or helps.** One tender who tips its bin and takes the ground it
+   cannot reach (recommended, the machine pattern), or unmanned with the
+   janitors gone (the forklifts' pattern, and the owner's direction of
+   travel), which needs a rule for the poop it cannot reach.
+3. **Soot, and how many.** Every machine fouls (`MACHINE_FOUL` off its stack in
+   `stepMachines`); a cleaning machine that puts up soot is consistent but
+   odd, and one that puts up none is the first clean machine in the game. And
+   one roomba, bought once like a machine, or a count like the forklifts (a
+   row with no end) -- the request says "a machine", so one is the default.
