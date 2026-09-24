@@ -149,6 +149,59 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   yard and the silt in the deep (render/buildsites.js, `paintGrit`), which
   invert a few cells each.
 
+- **Firefox after a reload (2026-09-23).** With the invert fix in, the owner
+  still saw 20-30 fps in Firefox at 1440p, in both halves. Measured the same
+  way (Firefox 156 headless over BiDi, the GPU prefs forced, a fresh
+  profile per run, `play.html?bench` at 2560x1440 through
+  `browsingContext.setViewport` on a created tab -- the first tab is
+  privileged and refuses it -- light page, `layout.frame_rate` 0, per-layer
+  timers on `globalThis`). Two faults:
+
+  1. **The canvas leaves the card for good.** A page reloaded straight into
+     the deep with its crew at rest (`deep-rest`: silt off every hop, on the
+     `difference` fill) was, three runs in three, drawn in software for the
+     rest of its life: `page` (one white fill) 0.02 -> 0.9 ms, `deep invert`
+     0.04 -> 24 ms, `press` 0 -> 12 ms, 18 fps; and the yard after it in the
+     same page stayed there (`press` 2.1, `ground texture` 1.6, `page` 0.9,
+     draw 10 ms where the card draws it in 2). A page that reached the deep
+     after some frames on the card mostly stayed on it, but ran 20-60 fps
+     in `deep-rest` with 60 ms hitches. So Firefox judges the canvas on its
+     early frames, and a `difference` fill on many of them loses the card.
+     Now nothing in the frame uses `difference` where the invert filter is
+     exact: the grit and silt copy the patch under this half's grains once,
+     through `invert(1)`, into a kept canvas and draw each grain's cell back
+     from it at its alpha (render/buildsites.js); and until the probe
+     (moved to render/invert.js, shared) has answered, the filter is used
+     wherever one exists, so the first deep frame after a reload is not a
+     `difference` fill either. Chrome's probe still says no, so Chrome is on
+     the fills as before. The dark page keeps the `difference` grit (the
+     wanted color there is not 255 minus the ground).
+  2. **The rift's still copy was a fresh canvas every frame.** `drawBend`
+     sized its copy to the disc exactly, and a growing rift changes that
+     every frame; in Firefox the copy into the new canvas cost 2.5-4.6 ms of
+     main thread a frame (`rift` 4.6-6.9 ms of the endgame's 7-10). The sheet
+     now only grows, in `RIFT_BEND_SHEET_STEP` steps: `rift` 0.08 ms.
+
+  | fps (ms draw), 2560x1440 light | Firefox before | Firefox after | Chrome before | Chrome after |
+  |---|---:|---:|---:|---:|
+  | `deep` | 109 (7.4) | 126 (6.2) | 159 (4.8) | 160 (5.2) |
+  | `deep-rest`, reloaded into | 18 (55, software) | 132-134 (5.8) | 159 (5.0) | 157 (5.6) |
+  | `yard` after that, same page | 89-104 (10, software) | 125-126 (2.2) | 165 (2.2) | 165 (2.0) |
+  | `deep-build` | 144 (5.7) | 141 (5.6) | 149 (5.7) | 159 (5.3) |
+  | `portal` | 138 (2.9) | 154 (2.4) | 165 (2.1) | 165 (2.2) |
+  | `endgame` | 88 (9.9) | 148 (2.0) | 165 (2.0) | 165 (1.8) |
+  | `yard` fresh | 90 (9.8) | 126 (2.1) | -- | -- |
+
+  Chrome is `--headless=new` with its GPU, 2544x1345 (the headless window's
+  own frame). Headless fps here swing between ~75 and ~150 on the same code
+  with other agents on the machine; the software switch and the draw times
+  are the steady readings. After, Firefox ranks the deep water 2.7, serpent
+  2.0, portal 0.3, stations 0.2; the yard pit 0.45, clouds 0.35, floor 0.3,
+  offer flags 0.15, everything else under 0.1. Nothing in `src/` now reads a
+  canvas back each frame (`getImageData` is only the one-time probe and the
+  self-tests) or uses a blend Firefox's card lacks, outside the dark page's
+  grit and Chrome's fills.
+
 ## 1. The frame budget
 
 The busy yard costs ~0.80 ms/frame bare, ~0.89 under the profiler. Broken down

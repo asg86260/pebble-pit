@@ -16,7 +16,8 @@
 
 import { now } from '../clock.js';
 import { DOME_PAD, DOME_WALL, CRUSHER_W, CRUSHER_H, HOPPER_W, CRUSH_SHOW_MS,
-         CRUSHER_ROLLER, INVERT_PROBE, INVERT_PROBE_SIDE } from '../config.js';
+         CRUSHER_ROLLER } from '../config.js';
+import { invertByFilter } from './invert.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
          ABYSS_SHEAR_AMT2, ABYSS_SHEAR_COL, ABYSS_SHEAR_AMT_Y, ABYSS_FLOW_COL2, ABYSS_FLOW_ROW2,
@@ -426,46 +427,14 @@ export function drawSwimmers() {
 // Everything drawn over the deep, turned over: the paper to the liquid's
 // black and every mark to its negative. The frame so far is drawn back over
 // itself through an `invert` filter, over the deep's window in device
-// pixels: on the opaque frame that is the picture a `difference` of white
-// gives, but Firefox draws a filtered image on the graphics card and a
-// `difference` fill on the processor, taking the whole window off the card
-// to do it (PERF.md, "The deep in Firefox"). Chrome's filter lands a
-// channel a step off 255 minus itself on about a fifth of colors, where its
-// `difference` is exact and just as quick; a context with no `filter`
-// (older Safari) would draw the frame over itself unturned. So the filter is
-// asked once, on a scrap of every channel value, and used only where it
-// turns each one over exactly; everywhere else the fill stays: raw white,
-// so the dark page's map does not turn the white it needs into its own
-// paper.
-let filterTurns = null;
-function filterIsExact() {
-  try {
-    const c = document.createElement('canvas'), n = INVERT_PROBE_SIDE;
-    c.width = c.height = INVERT_PROBE;
-    const g = c.getContext('2d');
-    if (typeof g.filter !== 'string') return false;
-    for (let i = 0; i < n * n; i++) {
-      g.fillStyle = raw(`rgb(${i & 255},${(i * 7) & 255},${(i * 13) & 255})`);
-      g.fillRect(i % n, Math.floor(i / n), 1, 1);
-    }
-    const before = g.getImageData(0, 0, n, n).data;
-    g.filter = 'invert(1)';
-    g.drawImage(c, 0, 0);
-    const after = g.getImageData(0, 0, n, n).data;
-    for (let i = 0; i < after.length; i++) {
-      if ((i & 3) !== 3 && after[i] !== 255 - before[i]) return false;
-    }
-    return true;
-  } catch { return false; }
-}
+// pixels, where the filter turns every channel over exactly (render/invert.js);
+// everywhere else a `difference` fill: raw white, so the dark page's map
+// does not turn the white it needs into its own paper.
 export function drawDeepInvert() {
   if (darkPage) return;
-  // Asked after the frame rather than inside it: a readback in the middle of
-  // the frame's own drawing upset the headless Chrome's next frames.
-  if (filterTurns === null) { filterTurns = false; setTimeout(() => { filterTurns = filterIsExact(); }, 0); }
   const { x0, y0, x1, y1 } = deepWindow();
   ctx.save();
-  if (filterTurns) {
+  if (invertByFilter(ctx)) {
     const t = ctx.getTransform(), c = ctx.canvas;
     const left = Math.max(0, Math.floor(t.a * (x0 - P) + t.e));
     const top = Math.max(0, Math.floor(t.d * (y0 - P) + t.f));
