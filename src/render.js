@@ -50,6 +50,7 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
          drawSwimmers, drawDeepInvert } from './render/deep.js';
 import { ripple, deepCamera } from './view.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
+import { drawFightNumbers } from './render/fightnums.js';
 import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
 import { drawSinking, drawLifting } from './render/scales.js';
 import { S } from './state.js';
@@ -235,6 +236,11 @@ const LAYERS = [
   { name: 'cursor', draw: drawCursor },
   // Last in the world, over everything the deep drew: the negative of it.
   { name: 'deep invert', draw: drawDeepInvert },
+  // What the blows did and what the heal took back, over the finished deep
+  // and not turned over with it: their tones are written as seen, so each
+  // fades against the picture actually behind it, whichever way the deep was
+  // turned (render/fightnums.js). Still in the world, for the deep's camera.
+  { name: 'fight numbers', draw: drawFightNumbers },
   { name: 'world:done', draw: leaveWorld },
 
   { name: 'air near', draw: drawAirNear },       // the nearest dust passes in front of the yard, not behind it
@@ -261,7 +267,7 @@ export { LAYERS };
 // and not read: the layers a player reads off the picture are left out of it.
 const READING = new Set(['offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
-                         'stock count', 'pot labels', 'counter']);
+                         'stock count', 'pot labels', 'counter', 'fight numbers']);
 let picture = false;
 export const asPicture = on => { picture = on; };
 
@@ -272,7 +278,8 @@ export const asPicture = on => { picture = on; };
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
                       'sigils', 'beams', 'serpent', 'lances', 'grenades', 'deep star', 'swimmers',
-                      'punches', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert']);
+                      'punches', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'fight numbers']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves, each cut to its own (`PINNED`).
