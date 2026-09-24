@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Furnace Fire Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 12px; color: var(--dim); max-width: 1080px; }
+  .bar { margin: 0 0 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .cols { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+  .opt { border-top: 1px solid var(--rule); padding: 10px 0 0; max-width: 100%; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 8px; max-width: 520px; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; height: auto; }
+  .lbl { color: var(--dim); font-size: 11px; margin: 3px 0 10px; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; cursor: pointer; }
+  input[type=range] { width: 260px; max-width: 60vw; }
+</style>
+</head>
+<body>
+<h1>The furnace's fire: three idle loops, each with its own per-scale particles</h1>
+<p class="note">A mock drawn from plain cells, not the game. The furnace is <code>CRUSHER_SPRITES.rest</code>
+copied verbatim from <code>src/deep/sprites.js</code>, in the deep's tones as seen (<code>#</code> white,
+<code>+</code> and <code>-</code> the grey ramp, <code>o</code> the black water, <code>*</code> the top of the
+purple ramp), on a stand-in for the deep's water and floor. Only the eight-by-twelve inside of the door arch is
+redrawn each frame -- no frame is ever swapped -- plus the few cells each scale gives off. Three gatherers to the
+right toss loads of three scales (three frames apart, forty frames in the air, as <code>GATHER_TOSS_*</code>)
+on their own rhythms, about two scales a second in all. Each scale that lands warms the fire a little
+(it swells for about a quarter second and eases back over a second); every particle fades down its own tone
+ramp, never an alpha and never a flash. What it cannot show: the real abyss field, the scale bed, the counter
+card over the furnace's left third, the serpent overhead, and the real gatherers' walk to and from the scale
+bed. Add <code>?t=2.3</code> to the address to hold one moment.</p>
+<div class="bar">
+  <button id="play">pause</button>
+  <input id="scrub" type="range" min="0" max="12" step="0.01" value="0">
+  <span id="clock"></span>
+</div>
+<div class="cols" id="opts"></div>
+<script>
+// --- the deep's tones, as seen ------------------------------------------------------
+// ABYSS_TONES and ABYSS_MAGIC_TONES (src/config/rift.js), dark to bright. The
+// game draws their flips under a difference; the mock paints what is seen.
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const INK = { '#': '#ffffff', '+': GREYS[9], '-': GREYS[6], 'o': '#000000', '*': PURPLES[11] };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const TAU = Math.PI * 2;
+
+// --- CRUSHER_SPRITES.rest, verbatim ---------------------------------------------------
+const REST = [
+  '....#++++++++++++++++++++#....',
+  '.....#oooooooooooooooooo#.....',
+  '......#oooooooooooooooo#......',
+  '.......#ooooooooooooooo#......',
+  '.......#oooooooooooooo#.......',
+  '........#oooooooooooo#........',
+  '.........#oooooooooo#.........',
+  '.############################.',
+  '..#+++++-+++++++-+++++++-++#..',
+  '..#+++++-+++++++-+++++++-++#..',
+  '..#+++++-+++++++-+++++++-++#..',
+  '..#+++++-+++++++-+++++++-++#..',
+  '..#------------------------#..',
+  '..#+-+++++++-+++++++-++++++#..',
+  '..#+-+++++++-+++++++-++++++#..',
+  '..#+-+++++++########-++++++#..',
+  '..#+-++++++##oooooo##++++++#..',
+  '..#--------#oooooooo#------#..',
+  '..#+++++-++#oooooooo#+++-++#..',
+  '..#+++++-++#oooooooo#+++-++#..',
+  '..#+++++-++#oooooooo#+++-++#..',
+  '..#+++++-++#oooooooo#+++-++#..',
+  '..#--------#oooooooo#------#..',
+  '..#+-++++++#*oo*oo*o#++++++#..',
+  '..#+-++++++#*o***o**#++++++#..',
+  '..#+-++++++#********#++++++#..',
+  '..#+-++++++#********#++++++#..',
+  '..#--------#********#------#..',
+  '.############################.',
+  '------------------------------'
+];
+const SIZE = 30;
+// The door's inside, in sprite cells: row 16 is the arch's crown (13..18),
+// rows 17..27 the full opening (12..19). The fire is drawn here and nowhere else.
+const DOOR = { top: 16, foot: 27, c0: 12, c1: 19 };
+const inDoor = (r, c) => r === 16 ? c >= 13 && c <= 18 : r > 16 && r <= 27 && c >= 12 && c <= 19;
+const DOOR_CELLS = [];
+for (let r = DOOR.top; r <= DOOR.foot; r++) for (let c = DOOR.c0; c <= DOOR.c1; c++) if (inDoor(r, c)) DOOR_CELLS.push([r, c]);
+
+// --- the scene, in cells ---------------------------------------------------------------
+const LEFT = 8, RIGHT = 26, SKY = 20, FLOOR_ROWS = 4, WORKER = 3, RISE = 14, TOSS_FROM = 8;
+const L = { W: LEFT + SIZE + RIGHT, floor: SKY + SIZE, sx: LEFT, sy: SKY };
+L.Hc = L.floor + FLOOR_ROWS;
+
+// --- the tosses: every landing is a pure function of the clock ------------------------
+// Three gatherers, a load of three each, on periods that divide the loop, so
+// the page loops seamlessly and a still at any time is the same still.
+const LOOP = 12, FLIGHT = 40 / 60, STAGGER = 3 / 60, LOAD = 3;
+const GATHERERS = [{ every: 3, at: 0.15, x: 0 }, { every: 4, at: 1.3, x: 5 }, { every: 6, at: 2.45, x: 10 }];
+function tossesNear(t, back = 3) {
+  const out = [];
+  GATHERERS.forEach((g, gi) => {
+    for (let n = Math.floor((t - back - g.at) / g.every); n * g.every + g.at <= t; n++) {
+      for (let k = 0; k < LOAD; k++) {
+        const left = n * g.every + g.at + k * STAGGER;
+        const per = LOOP / g.every, id = ((n % per) + per) % per * 31 + gi * 7 + k;
+        out.push({ gi, k, left, land: left + FLIGHT, id,
+                   col: 7 + Math.floor(hash(id) * 16) });                // where in the mouth it drops
+      }
+    }
+  });
+  return out;
+}
+// How warm the fire is from what came in: each scale swells it over a
+// quarter second and lets it ease back over a second, summed and bent under one.
+function heat(t) {
+  let sum = 0;
+  for (const s of tossesNear(t, 5)) {
+    const d = t - s.land;
+    if (d > 0) sum += 0.3 * (1 - Math.exp(-d / 0.22)) * Math.exp(-d / 1.0);
+  }
+  return 1 - Math.exp(-sum);
+}
+
+// --- painting -----------------------------------------------------------------------------
+let g, s;
+const cell = (x, y, tone) => { g.fillStyle = tone; g.fillRect(Math.round(x) * s, Math.round(y) * s, s, s); };
+const at = (r, c, tone) => cell(L.sx + c, L.sy + r, tone);        // a sprite cell
+
+function water(t) {
+  for (let y = 0; y < L.floor; y++) for (let x = 0; x < L.W; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + t / 5.2) * 2.4 + t / 7);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 6) {
+      const b = 0.5 + 0.5 * Math.sin(t / 0.9 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 9))];
+    }
+    cell(x, y, tone);
+  }
+  for (let r = 0; r < FLOOR_ROWS; r++) for (let x = 0; x < L.W; x++)
+    cell(x, L.floor + r, GREYS[2 + (seeth(x, L.floor + r + 7) % 3) + (r === 0 ? 2 : 0)]);
+  for (let x = L.sx + SIZE + 2; x < L.W; x++) {                    // the scale bed, a stand-in
+    const n = seeth(x, 3) % 3;
+    for (let k = 0; k < n; k++) cell(x, L.floor - 1 - k, GREYS[8 + (seeth(x, k) % 3)]);
+  }
+}
+function furnace() {
+  REST.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    at(r, c, inDoor(r, c) ? '#000000' : INK[ch]);                  // the door is the option's to fill
+  }));
+}
+function bodies(t) {
+  const hand = L.sx + SIZE + TOSS_FROM, y = L.floor - WORKER;
+  const tosses = tossesNear(t, 1.2);
+  GATHERERS.forEach((gg, gi) => {
+    const lean = tosses.some(q => q.gi === gi && t - q.left >= 0 && t - q.left < 0.12);
+    const x = hand + gg.x - (lean ? 1 : 0);
+    g.fillStyle = '#ffffff'; g.fillRect(x * s, y * s, WORKER * s, WORKER * s);
+    g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(x * s, y * s, WORKER * s, WORKER * s);
+  });
+  for (const q of tosses) {
+    const k = (t - q.left) / FLIGHT;
+    if (k < 0 || k >= 1) continue;
+    const x0 = hand + GATHERERS[q.gi].x + 1, y0 = y - 1, x1 = L.sx + q.col, y1 = L.sy + 1;
+    cell(x0 + (x1 - x0) * k, y0 + (y1 - y0) * k - RISE * 4 * k * (1 - k), GREYS[10]);
+  }
+}
+
+// --- the three options ------------------------------------------------------------------
+// Each is { idle(t, h), scale(t, q) }: `idle` paints the door's inside from the
+// clock and the heat, `scale` the cells one landed scale gives off, `d` seconds
+// after it landed (nothing once it is spent).
+const ramp = (tones, k) => tones[clamp(Math.round(k), 0, tones.length - 1)];
+
+// A: tongues. Each of the eight columns is a tongue whose height is two slow
+// sines out of step with its neighbors; its cells run from the top of the
+// purple ramp at the bed to four rungs down at the tip. A white heart at the
+// bed's middle breathes through the grey ramp.
+const A = {
+  key: 'A', name: 'tongues and a puff of ash',
+  cap: 'Eight flame tongues rise and fall column by column through the purple ramp, over a white heart that breathes; each scale lets a small grey puff of ash out of the chute\'s mouth that drifts up and fades.',
+  idle(t, h) {
+    for (let i = 0; i < 8; i++) {
+      const mid = i >= 2 && i <= 5 ? 1.5 : 0;
+      const hgt = 2.5 + mid + 1.6 * (0.5 + 0.5 * Math.sin(TAU * t / 1.3 + i * 1.7))
+                + 1.1 * (0.5 + 0.5 * Math.sin(TAU * t / 0.83 + i * 2.9)) + h * 3.5;
+      const top = Math.round(hgt);
+      for (let k = 0; k < top; k++) {
+        const r = DOOR.foot - k, c = DOOR.c0 + i;
+        if (!inDoor(r, c)) break;
+        const f = k / Math.max(1, top - 1);
+        at(r, c, ramp(PURPLES, 11 - 4 * f * f - (k === top - 1 ? 1 : 0)));
+      }
+    }
+    const b = 0.5 + 0.5 * Math.sin(TAU * t / 1.6);                  // the heart's breath
+    const size = 0.9 + 0.9 * b + h * 1.2;
+    for (let r = DOOR.foot - 3; r <= DOOR.foot; r++) for (let c = 13; c <= 18; c++) {
+      const v = size - Math.hypot((c - 15.5) * 0.8, (DOOR.foot - r) * 1.1);
+      if (v > 0) at(r, c, ramp(GREYS, 9 + v * 2.2));
+    }
+  },
+  scale(d, q) {
+    if (d > 0.9) return;
+    for (let i = 0; i < 3; i++) {
+      const k = clamp((d - i * 0.06) / 0.8, 0, 1);
+      if (k <= 0) continue;
+      const dx = (hash(q.id * 3 + i) - 0.5) * 5 * k, dy = -1 - 4 * Math.sqrt(k) - i * 0.6;
+      at(dy, q.col + dx, ramp(GREYS, 10 - 8 * k));
+    }
+  }
+};
+
+// B: a low bed and embers. The bed's surface rolls a cell at a time and the
+// whole bed breathes a row over a second; embers leave it and drift up the
+// arch, dimming as they climb. Each scale is a glint sinking down the chute.
+const B = {
+  key: 'B', name: 'embers and a sinking glint',
+  cap: 'A low bed of fire breathes a row up and down with embers drifting up the arch and dimming as they climb; each scale is a white glint that sinks down the chute into the brick, and the bed gives off one extra ember.',
+  idle(t, h) {
+    const breath = 0.5 + 0.5 * Math.sin(TAU * t / 1.15);
+    for (let i = 0; i < 8; i++) {
+      const roll = Math.floor(t / 0.35 + seeth(i, 2) % 5);            // a column moves a cell at a time
+      const surf = 3 + Math.round(breath + h * 3) + (seeth(i, roll) % 3 === 0 ? 1 : 0);
+      for (let k = 0; k < surf; k++) {
+        const r = DOOR.foot - k, c = DOOR.c0 + i;
+        const shim = seeth(c, r + Math.floor(t / 0.45 + (c + r) % 3)) % 2;   // one rung, slowly
+        at(r, c, ramp(PURPLES, (k === surf - 1 ? 9 : 11) - shim));
+      }
+    }
+    const b = 0.5 + 0.5 * Math.sin(TAU * t / 1.7 + 1);
+    const hw = b + h > 0.9 ? 2 : 1;                                   // the heart widens as it breathes
+    for (let c = 16 - hw; c < 16 + hw; c++) at(DOOR.foot, c, ramp(GREYS, 9 + b * 2 + h * 2));
+    for (let e = 0; e < 5; e++) {                                     // embers
+      const per = 1.7 + (e % 3) * 0.35, u = (t / per + e * 0.37) % 1, n = Math.floor(t / per + e * 0.37);
+      const c = DOOR.c0 + 1 + Math.floor(hash(e * 13 + n) * 6) + Math.round(Math.sin(u * 5 + e) * 0.6);
+      const r = DOOR.foot - 4 - u * 8;
+      if (inDoor(Math.round(r), c)) at(r, c, ramp(PURPLES, 11 - u * 7));
+    }
+  },
+  scale(d, q) {
+    if (d < 0.55) {                                                   // the glint, down the chute
+      const k = d / 0.55;
+      at(1 + k * 5, q.col + (15 - q.col) * k, ramp(GREYS, 11 - k * 5));
+    } else if (d < 1.55) {                                            // its ember, up the arch
+      const u = (d - 0.55) / 1.0;
+      at(DOOR.foot - 3 - u * 9, DOOR.c0 + 2 + Math.floor(hash(q.id) * 4), ramp(PURPLES, 11 - u * 7));
+    }
+  }
+};
+
+// C: a heat field. Every cell of the door reads a heat -- highest at the
+// heart, falling off upward and outward, stirred by a slow noise that climbs --
+// and paints the rung of the ramp it reaches: white, pale grey, then purple
+// down to black. The whole field breathes. Each scale spits two sparks out
+// of the door that arc onto the floor and cool.
+const noise = (x, y, t) => {
+  const a = Math.sin(x * 1.9 + t * 3.1 + Math.sin(y * 0.7 - t * 1.3) * 1.5);
+  const b = Math.sin(y * 1.3 + t * 5.3 + x * 0.6);
+  return (a + b) * 0.5;
+};
+const C = {
+  key: 'C', name: 'a breathing heat field and sparks',
+  cap: 'The whole door is one heat field that breathes and stirs upward, white at the heart through grey and down the purple ramp to black at the tips; each scale spits two purple sparks out of the door that arc onto the floor and cool.',
+  idle(t, h) {
+    const breath = 0.5 + 0.5 * Math.sin(TAU * t / 1.4);
+    const base = 4.6 + breath * 1.1 + h * 2;
+    for (const [r, c] of DOOR_CELLS) {
+      const up = DOOR.foot - r, side = Math.abs(c - 15.5);
+      const v = base - up * 0.62 - side * side * 0.16 + noise(c, r + t * 2.2, t) * 0.9;
+      if (v < 0.4) continue;
+      at(r, c, v > 5.3 ? '#ffffff' : v > 4.6 ? GREYS[10] : ramp(PURPLES, 5 + v * 1.45));
+    }
+  },
+  scale(d, q) {
+    if (d > 1.0) return;
+    for (let i = 0; i < 2; i++) {
+      const u = d / 1.0, dir = i ? 1 : -1, speed = 5 + hash(q.id * 5 + i) * 4;
+      const x = 15.5 + dir * (1 + speed * u), y = DOOR.foot - 2 - 9 * u + 12 * u * u;
+      at(Math.min(y, SIZE - 1), x, u < 0.1 ? '#ffffff' : ramp(PURPLES, 11 - Math.max(0, u - 0.5) * 20));
+    }
+  }
+};
+const OPTIONS = [A, B, C];
+
+function scene(t, o, sc, ctx, withBodies = true) {
+  g = ctx; s = sc;
+  t = ((t % LOOP) + LOOP) % LOOP + LOOP;          // well into the loop, so the past is populated
+  water(t);
+  furnace();
+  o.idle(t, heat(t));
+  for (const q of tossesNear(t, 2)) { const d = t - q.land; if (d >= 0) o.scale(d, q); }
+  if (withBodies) bodies(t);
+}
+
+// --- the page ------------------------------------------------------------------------------
+const panes = [];
+const TIGHT = { x: L.sx - 3, y: L.sy - 7, w: SIZE + 6, h: SIZE + 9 };
+const WHOLE = { x: 0, y: 0, w: L.W, h: L.Hc };
+for (const o of OPTIONS) {
+  const box = document.createElement('div');
+  box.className = 'opt'; box.id = 'opt-' + o.key;
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2><p class="cap">${o.cap}</p>`;
+  const mk = (sc, crop, label) => {
+    const c = document.createElement('canvas');
+    c.width = crop.w * sc; c.height = crop.h * sc;
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = label;
+    box.append(c, l);
+    panes.push({ o, sc, crop, g: c.getContext('2d') });
+  };
+  mk(6, WHOLE, '1x -- the game\'s size (a cell is 6 px)');
+  mk(24, TIGHT, '4x');
+  document.getElementById('opts').append(box);
+}
+function draw(t, p) {
+  p.g.setTransform(1, 0, 0, 1, -p.crop.x * p.sc, -p.crop.y * p.sc);
+  scene(t, p.o, p.sc, p.g);
+}
+const scrub = document.getElementById('scrub'), clock = document.getElementById('clock'), play = document.getElementById('play');
+const heldQ = new URLSearchParams(location.search).get('t');
+let playing = heldQ == null, t0 = performance.now(), held = heldQ == null ? 0 : +heldQ;
+if (!playing) play.textContent = 'play';
+const nowT = () => playing ? ((performance.now() - t0) / 1000) % LOOP : held;
+play.onclick = () => { if (playing) { held = nowT(); playing = false; play.textContent = 'play'; } else { t0 = performance.now() - held * 1000; playing = true; play.textContent = 'pause'; } };
+scrub.oninput = () => { held = +scrub.value; if (playing) t0 = performance.now() - held * 1000; };
+function frame() {
+  const t = nowT();
+  for (const p of panes) draw(t, p);
+  scrub.value = t; clock.textContent = `${t.toFixed(2)} s   heat ${heat(t + LOOP).toFixed(2)}`;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// --- stills, for a preview that runs no scripts ---------------------------------------------
+// `__stills()` draws each option as a strip of eight moments across one load
+// landing, and all three at two moments, and hands back png data urls (a tool,
+// not the page, saves them).
+function canvasOf(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function crop(t, o, sc, box) {
+  const c = canvasOf(box.w * sc, box.h * sc), x = c.getContext('2d');
+  x.setTransform(1, 0, 0, 1, -box.x * sc, -box.y * sc);
+  scene(t, o, sc, x);
+  return c;
+}
+window.__stills = () => {
+  const sc = 12, pad = 10, head = 30, foot = 24;
+  const pw = TIGHT.w * sc, ph = TIGHT.h * sc;
+  // gatherer 0's load at 3.15 s leaves, lands 3.82..3.92; the strip runs across it
+  const T0 = 3.72, DT = 0.14, N = 8;
+  const out = {};
+  for (const o of OPTIONS) {
+    const c = canvasOf(pad + N * (pw + pad), head + ph + foot + pad), x = c.getContext('2d');
+    x.fillStyle = '#111'; x.fillRect(0, 0, c.width, c.height);
+    x.fillStyle = '#eee'; x.font = '18px Consolas, monospace';
+    x.fillText(`${o.key} -- ${o.name}: ${N} frames, ${DT} s apart, across a load of three landing at 3.82 s`, pad, 21);
+    for (let i = 0; i < N; i++) {
+      const t = T0 + i * DT, cx = pad + i * (pw + pad);
+      x.drawImage(crop(t, o, sc, TIGHT), cx, head);
+      x.fillStyle = '#aaa'; x.font = '15px Consolas, monospace';
+      x.fillText(`${t.toFixed(2)} s`, cx, head + ph + 18);
+    }
+    out[o.key] = c.toDataURL('image/png');
+  }
+  const sm = 18, mw = TIGHT.w * sm, mh = TIGHT.h * sm, MOM = [{ t: 4.1, say: 'a load just landed' }, { t: 2.9, say: 'between loads' }];
+  const m = canvasOf(pad + 3 * (mw + pad), MOM.length * (head + mh + pad) + pad), x = m.getContext('2d');
+  x.fillStyle = '#111'; x.fillRect(0, 0, m.width, m.height);
+  MOM.forEach((mo, j) => OPTIONS.forEach((o, i) => {
+    const cx = pad + i * (mw + pad), cy = pad + j * (head + mh + pad);
+    x.fillStyle = '#eee'; x.font = '17px Consolas, monospace';
+    x.fillText(`${o.key} -- ${o.name}  (${mo.t} s, ${mo.say})`, cx, cy + 18);
+    x.drawImage(crop(mo.t, o, sm, TIGHT), cx, cy + head - 4);
+  }));
+  out.montage = m.toDataURL('image/png');
+  return out;
+};
+</script>
+</body>
+</html>
