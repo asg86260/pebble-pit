@@ -374,6 +374,15 @@ const deepScenes = {
                  crew: { brawlers: 1, lancers: 1, grenadiers: 1, scribes: 1, warlocks: 1 } });
       lookDeep(spotX('font'));
     } },
+  // One station in the middle of the frame, the same yard as `deep-all`: the
+  // shot to crop when a station's drawing changes.
+  ...Object.fromEntries(['font', 'circle', 'spire'].map(k => [`deep-${k}`, {
+    about: 'the deep', say: `the ${k} alone in the middle of the frame, under its dome`,
+    run: () => {
+      deepYard({ stage: 1, wound: 300, open: ['well', 'font', 'circle', 'spire'],
+                 crew: { brawlers: 1, lancers: 1, grenadiers: 1, scribes: 1, warlocks: 1 } });
+      lookDeep(spotX(k));
+    } }])),
   // A line at the altar: the stack of glyphs over a station's dome, one going
   // up and the rest in outline behind it.
   'deep-queue': { about: 'the deep', say: 'the altar with a line of rungs stacked over it',
