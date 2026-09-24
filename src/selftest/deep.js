@@ -113,19 +113,26 @@ export const TESTS = [
   // water. Here the camera is put up there by hand and the frame drawn twice,
   // with the yard's bodies saying something and with them quiet: in the deep
   // the two are the same picture, and in the yard (the control) they are not.
+  // The camera is put across as well, over the yard's bodies: the deep's own
+  // opens on the deep's end of the portal, mid-deep, with nobody of the
+  // yard's under it, and the check would pass in the deep with nothing to hide.
   ['deep: nothing said over a yard body shows in the deep, even with the yard on the glass', async () => {
     deepYard();
     window.__view('deep');
     run(1);
     const up = S.workers.filter(w => w.y < S.worldH && !w.inside);
+    const xs = up.map(w => w.x).sort((a, b) => a - b);
+    const camX = (xs[xs.length >> 1] ?? 0) - S.viewW / 2;
+    const seen = up.filter(w => w.x >= camX && w.x <= camX + S.viewW).length;
     const c = document.getElementById('c');
     const frame = (view, say) => {
       for (const w of up) w.say = say ? { mark: say, until: now() + 60000 } : null;
-      const keep = { view: S.view, camY: S.camY };
+      const keep = { view: S.view, camX: S.camX, camY: S.camY };
       S.view = view;
+      S.camX = camX;
       S.camY = S.groundY - S.viewH * 0.4;
       draw();
-      S.view = keep.view; S.camY = keep.camY;
+      S.view = keep.view; S.camX = keep.camX; S.camY = keep.camY;
       return c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
     };
     const differ = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++; return n; };
@@ -135,7 +142,7 @@ export const TESTS = [
                   `${differ(frame('deep', mark), frame('deep', null))} pixels`));
     }
     const shown = differ(frame('yard', 'bang'), frame('yard', null));
-    out.push(ok(up.length > 0 && shown > 0, 'and the same marks are drawn in the yard', `${up.length} bodies, ${shown} pixels`));
+    out.push(ok(seen > 0 && shown > 0, 'and the same marks are drawn in the yard', `${seen} of ${up.length} bodies on the glass, ${shown} pixels`));
     for (const w of up) w.say = null;
     return out;
   }],
