@@ -15032,6 +15032,81 @@ jump is a walked arc, the ring closes); a check that the view cannot go
 down before the portal is bought and can after, through the tower's row.
 Scenes for the portal opening, her leap, and the conjured portal.
 
+## The deep's crew at rest (design, not built)
+
+*(2026-09-23, the owner: "also let the deep workers walk around a bit,
+float around, jump around, instead of just idling still." Mocks:
+`docs/mocks/deep-idle-2026-09-23.html`, four options beside today's, not yet
+voted on.)*
+
+A body in the deep with nothing to do swims to its spot and hangs there
+dead still (`swim` in deep/arms.js, then nothing). In the yard an idle body
+has a life -- a stroll to a mate, a look at the rock, a break -- and the
+deep's crew, which is most of what moves down there once the serpent is
+quiet, reads as a row of switched-off squares. The options in the mock:
+
+- **A, wander and pause.** A slow walk along the floor to a spot near its
+  station or beside a mate, eased in and out like the yard's `amble`, with a
+  bob of a half cell that grows and dies with the pace; then a few seconds
+  standing.
+- **B, float up, drift down.** It lifts off the floor a few cells, hangs
+  swaying while the current (`DEEP_CURRENT`) nudges it sideways, and sinks
+  back slow, landing soft with a puff of silt.
+- **C, hop.** Slow jumps on the deep's own weak pull: a push off, a long hang,
+  a slow fall, silt on landing; one to three across the floor, then a rest.
+- **D, a mix.** Each body picks one of the three now and then, a walk most
+  often, with a rest between, so no two are doing the same thing.
+
+**Who is at rest.** Only a body whose station has nothing for it: a gatherer
+on a bare floor, a scribe whose circles are full, a warlock with nothing in
+reach -- the steps that set `goal = 'rest'` today. A grenadier's wait and a
+lancer's draw are the work's own clock and stay still.
+
+**The rules every option keeps.**
+- **Nothing teleports.** The rest moves the body's real `x` and `y`, not a
+  drawn offset, so the body is where it is drawn. The rest writes no
+  destination the work must first undo.
+- **Called to work, it goes straight from where it is.** The moment its
+  station wants it (scales land, a slot frees, the coil comes in reach) the
+  station's own step takes over and `swim` carries it on a straight line from
+  wherever it floated or hopped to, mid-air included. Nothing first sets it
+  back on the floor.
+- **Inside the deep, above its floor.** Every step of the rest is held to its
+  station's standing ground (`DEEP_STAND_W` about its `spotX`, as `home()`
+  already reads it) and inside `deepX0`..`deepX1`; its feet never below
+  `feet()` and its top never above a ceiling well under the water line, so no
+  body drifts into the shaft, the portal's end or the surface's clip. A body
+  off the floor is swimming, and stamps `aboardAt` through the same `afloat`
+  as any swim, so rule 9 (nothing floats) reads it as held up by the water.
+- **It saves as it stands, and nothing new is saved.** `x` and `y` are in
+  `KEEPS` already, so a reload finds a floating body in the air where it was.
+  What it was doing (rising, a hop's speed, its next rest) is not saved: on
+  the first frame back, a body at rest off the floor starts a slow sink from
+  where it is, which reads as the float ending, never as a snap to the floor.
+  No field on `S`; the rest's fields live on the body and die with the frame's
+  work, like the yard's `idleAt`. Its dice are `rng.js`'s, so the node tier
+  stays repeatable.
+- **Numbers in `config/deep.js`**, with the pace, the height and the rests
+  on `TUNABLE`.
+
+**What it undoes.** render/deep.js says the deep is a void, not a sea, so
+nothing bobs or kicks. The owner's request is that it does, at rest. A body
+at work still glides straight where it is going.
+
+**Checks.** A node file, `test/deep-rest.test.mjs`, reached as a player
+does (the pod bought, its body gathering on a bare floor): over half a
+minute a resting body moves, never leaves its station's ground and never
+goes under the floor or over the ceiling; scales dropped on the floor send it
+straight to them (the distance only shrinks); a reload mid-float keeps its
+height. A scene, `deep-rest`, for the shot.
+
+**The calls for the owner.**
+1. Which option (A, B, C or D).
+2. How far a body wanders: its own station's ground (the mock, and what
+   keeps a gatherer a second from the next shower), or the whole floor --
+   visiting the other stations and going home to its pod -- at the cost of a
+   slower answer when the work comes back.
+
 ## The janitors' roomba (design, not built)
 
 *(2026-09-23, the owner's call: "lets give the janitors a machine also, a

@@ -14,6 +14,13 @@ Open:
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
 
+## The deep's crew at rest -- DESIGNED, AWAITING THE VOTE (2026-09-23)
+
+"The deep's crew at rest" in DESIGN.md; mocks in
+`docs/mocks/deep-idle-2026-09-23.html` (four options beside today's). Idle
+deep bodies wander, float or hop instead of hanging still. Blocker: the
+owner's vote on a mock, and how far a body may wander from its station.
+
 ## The janitors' roomba -- DESIGNED, AWAITING THE VOTE (2026-09-23)
 
 "The janitors' roomba" at the end of DESIGN.md; mocks in
