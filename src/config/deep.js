@@ -173,7 +173,7 @@ export const DEEP_REST_SILT = 4;                  // silt a landing kicks up
 // parts of each weapon.
 export const LANCE_DRAW_S = 2;       // seconds at the well to draw a lance
 export const LANCE_FLY = 0.6;        // seconds a thrown lance is in the water
-export const GRENADE_DRAW_S = 3;     // seconds at the font to hold a grenade
+export const GRENADE_DRAW_S = 3;     // seconds at the armory to hold a grenade
 export const GRENADE_R = P * 14;     // a burst's rings reach this far
 export const GRENADE_RING_S = 0.8;   // and take this long to
 export const SIGIL_DRAW_S = 20;      // seconds a scribe takes to draw one circle
@@ -184,7 +184,7 @@ export const BEAM_REACH = P * 140;   // how far a wizard's beam reaches from the
 export const DOT_TICK_S = 0.5;
 export const PUNCH_REACH = P * 3;    // how close to a segment a brawler has to be to land one
 export const LANCE_THROW_R = P * 24; // a lancer throws from this far off the coil
-export const GRENADE_FLY_S = 1.6;    // a grenade's aimed time in the water, the font to the coil
+export const GRENADE_FLY_S = 1.6;    // a grenade's aimed time in the water, the armory to the coil
 export const SIGIL_GAP = P * 10;     // circles drawn this far apart, either side of the circle
 export const BEAM_LIGHT = 4;         // segments either side of where a beam touches that it lights
 // The called star: a machine, in sparks, with a short spark ladder of its own

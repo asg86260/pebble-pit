@@ -11,6 +11,7 @@ import { seatBoard, boardFit, showPanel } from './board.js';
 import { barSpot, pileMarkAt } from './render.js';
 import { dialRect } from './render/filter.js';
 import { siteBox } from './works.js';
+import { nameOf } from './stations.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {
@@ -27,6 +28,7 @@ Object.assign(window, {
 // that copies the layout goes red the next time the layout is right.
 window.__barAt = barSpot;
 window.__siteBox = siteBox;
+window.__siteName = nameOf;
 window.__pileMarkAt = pileMarkAt;
 window.__dialRect = dialRect;
 

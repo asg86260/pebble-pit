@@ -59,7 +59,7 @@ const DOORS = [
   door({ key: 'well', name: 'draw the well', job: JOB.LANCE,
          blurb: 'lances that pierce wards',
          note: () => 'a well of black water: lances drawn from it stick in the coil and bleed it' }),
-  door({ key: 'font', name: 'raise the font', job: JOB.GRENADE,
+  door({ key: 'font', name: 'open the armory', job: JOB.GRENADE,
          blurb: 'grenades that burst in rings',
          note: () => 'the surface\'s ripples held in a ball: a burst hits every length it crosses' }),
   door({ key: 'circle', name: 'mark the circle', job: JOB.SCRIBE,
@@ -83,7 +83,7 @@ const POD = {
   show: () => S.snatched
 };
 
-// --- the well, the font, the circle --------------------------------------------
+// --- the well, the armory, the circle -----------------------------------------
 const LANCE = ladder('lance', 'lance bleed', 'well', { unit: 'dmg/s', does: 'bleed' });
 const LANCEHOLD = ladder('lancehold', 'lance hold', 'well', { unit: 's', does: 'hold' });
 const GRENADE = ladder('grenade', 'grenade burst', 'font', { unit: 'dmg', does: 'burst' });

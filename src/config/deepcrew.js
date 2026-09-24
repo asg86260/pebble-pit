@@ -15,7 +15,7 @@ export let SHAFT_PACE = 0.6;
 // `capOfBare` in levels.js; each is nought until its door is open.
 export const BRAWL_CAP = 12;         // at the altar, from the snatch
 export const LANCE_CAP = 12;         // at the well
-export const GRENADE_CAP = 8;        // at the font
+export const GRENADE_CAP = 8;        // at the armory
 export const SCRIBE_CAP = 4;         // at the circle
 export const WARLOCK_CAP = 6;        // at the spire
 // The gatherers: the deep's crew on no weapon (`S.deepCrew`, set at the

@@ -121,7 +121,7 @@ export const stepLancer = (w, c) => {
   w.goal = 'back';
 };
 
-// Grenades: held at the font, thrown at the coil at the grenadier's pace.
+// Grenades: held at the armory, thrown at the coil at the grenadier's pace.
 export const stepGrenadier = (w, c) => {
   if (!working(w)) return;
   const t = c.now;
@@ -139,7 +139,7 @@ export const stepGrenadier = (w, c) => {
   w.next = t + every;
 };
 
-// Aimed where the segment over the font will be when it arrives: the coil's
+// Aimed where the segment over the armory will be when it arrives: the coil's
 // sway is a function of the clock, so where it will be is known. The water's
 // drag is left out of the aim, so a throw falls a little short and bursts on
 // the way up instead; the ring reaches the coil all the same.

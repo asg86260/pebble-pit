@@ -367,6 +367,13 @@ const deepScenes = {
       lookDeep(spotX('pods'));
       window.__board('pods');
     } },
+  'armory-board': { about: 'the deep', say: "the armory's board: the grenadiers and their two ladders",
+    run: () => {
+      deepYard({ stage: 2, open: ['well', 'font'], run: 2 });
+      window.__scales(99999);
+      lookDeep(spotX('font'));
+      window.__board('font');
+    } },
   // Every station on the floor at once, the camera on the middle of them.
   'deep-all': { about: 'the deep', say: 'the whole deep, every station standing',
     run: () => {
