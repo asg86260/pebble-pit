@@ -109,6 +109,46 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   with the main thread at ~6, spread over every layer (the rift's bend is
   about 2 ms of it), and nothing there was changed.
 
+- **The deep in Firefox (2026-09-23).** The owner saw ~35 fps in the deep
+  at 1440p in Firefox, where Chrome held the monitor's 165. Measured in
+  Firefox 156 over WebDriver BiDi (`--remote-debugging-port`, a fresh
+  profile), the `deep` scene through `play.html?bench`, per-layer timers
+  published on `globalThis`, main-thread ms a frame, min of 3-4 three-second
+  segments. A fresh profile on this machine's dark Windows theme ran at
+  165 fps and could not see it: the dark page skips `deep invert`. On the
+  light page (`layout.css.prefers-color-scheme.content-override` 1) it was
+  37 fps, draw 26 ms: `press` 10.9, water 5.0, `deep invert` 3.5, floor 2.0,
+  serpent 1.7, page 0.9. `press` is one unscaled drawImage; it is where the
+  bill for the invert lands. Firefox's GPU canvas has no `difference` (nor
+  `exclusion`) blend, so the invert fill falls back to software, taking the
+  whole window off the card and sending it back. With the fill swapped for
+  `source-over` (wrong picture, same work otherwise) it was 165 fps again.
+  The invert is now the frame drawn back over itself through
+  `filter = 'invert(1)'`, which Firefox keeps on the card and which comes
+  out exactly 255 minus each channel there (checked on every value).
+  Chrome's filter is a step off on about a fifth of colors, and Firefox's
+  own software canvas (under 128 px, or with no GPU) is too, so a one-time
+  probe after the first deep frame keeps the `difference` fill anywhere the
+  filter is not exact: Chrome is on the same path as before.
+
+  | ms a frame (fps), light page | before | after |
+  |---|---:|---:|
+  | Firefox, headed full screen 2560x1440 | 26.1 draw (37 fps) | 5.2 draw (163 fps) |
+  | Firefox, headless GPU canvas 2560x1355 | 26.8 draw (36 fps) | 5.2 draw (160 fps) |
+  | Firefox, headless GPU canvas 1920x995 | 16.6 draw (58 fps) | 4.0 draw (165 fps) |
+  | Chrome, headed full screen 2560x1440 | 4.4 draw (165 fps) | 4.4 draw (165 fps) |
+  | Chrome, `--headless=new` GPU 2544x1345 | 4.3 draw (165 fps) | 4.3 draw (165 fps) |
+
+  Headless Firefox draws its canvas in software unless
+  `gfx.canvas.accelerated.force-enabled` and
+  `layers.acceleration.force-enabled` are set; with them it reproduces the
+  headed numbers and is how this should be measured again. After, in
+  Firefox the deep ranks water 2.4, serpent 1.8, portal 0.3, stations 0.15,
+  everything else under 0.1. Still on the `difference` fill, and so still a
+  software round trip in Firefox while they last: the builders' grit in the
+  yard and the silt in the deep (render/buildsites.js, `paintGrit`), which
+  invert a few cells each.
+
 ## 1. The frame budget
 
 The busy yard costs ~0.80 ms/frame bare, ~0.89 under the profiler. Broken down

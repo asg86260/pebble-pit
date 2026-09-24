@@ -106,6 +106,12 @@ export const SIGIL_RX = P * 7;       // a sigil on the floor, across
 export const SIGIL_RY = P * 2;       // and seen edge-on
 export const STAR_TAIL = 7;          // cells of the called star's tail
 export const PUNCH_MS = 260;         // a brawler's fist out and back
+// The scrap the invert filter is tried on before the deep is turned over with
+// it (render/deep.js, `filterIsExact`): big enough that Firefox puts it on
+// the graphics card as it does the window (smaller, it is drawn in software,
+// where the filter is a step off), and a side of cells for every channel value.
+export const INVERT_PROBE = 256;
+export const INVERT_PROBE_SIDE = 16;
 
 
 // --- the snatch, from the yard -----------------------------------------------------
