@@ -513,7 +513,7 @@ export function drawWorkers() {
     // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
     // reason to skip it here. A body in a balloon's basket is drawn by the
     // balloon, wherever in the sky it is (render/balloon.js).
-    if (underground(w) || atHome(w) || inBasket(w) || inTheDeep(w)) continue;
+    if (w.lifted || underground(w) || atHome(w) || inBasket(w) || inTheDeep(w)) continue;
     const sunk = underSurface(w);
     if (sunk != null) {
       if (w.y >= sunk) continue;
@@ -527,6 +527,16 @@ export function drawWorkers() {
     }
     drawWorker(w, t0);
   }
+}
+
+// The body in your hand is the pointer's, not the ground's: drawn whole, over
+// everything of the world, in whichever half the camera is in. Left to the
+// half it hangs over, it went under the drowned pit's surface with the bodies
+// wading in, and past the deep's ceiling out of the swimmers' water, both a
+// line nothing in the hand ever crosses.
+export function drawHeld() {
+  const w = S.workers.find(o => o.lifted);
+  if (w) drawWorker(w, now());
 }
 
 function drawWorker(w, t0) {

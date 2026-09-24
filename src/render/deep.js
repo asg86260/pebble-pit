@@ -409,7 +409,7 @@ export function drawSwimmers() {
   ctx.rect(deepX0() - P * 8, cut, deepX1() - deepX0() + P * 16, deepFloor() - cut + P * 4);
   ctx.clip();
   for (const w of S.workers) {
-    if (!inTheDeep(w)) continue;
+    if (w.lifted || !inTheDeep(w)) continue;   // the one in your hand: `drawHeld`
     const x = Math.round(w.x), y = Math.round(w.y);
     drawBody(x, y);
     // A gatherer's handful, overhead two abreast, each scale as it is.
