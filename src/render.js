@@ -48,7 +48,8 @@ import { drawRoombaDock, drawRoombas } from './render/roomba.js';
 import { drawShack } from './render/shack.js';
 import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
          drawSwimmers, drawDeepInvert } from './render/deep.js';
-import { ripple, deepCamera } from './view.js';
+import { ripple, deepCamera, canGoDown, gliding } from './view.js';
+import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
@@ -325,26 +326,40 @@ function drawHalf(deep) {
 
 // The half on screen, and in a glide the deep through the ripple out of the
 // portal (view.js, `ripple`): drawn a second time with the deep's own
-// camera, clipped to the leading ring, so neither half's camera moves while
-// the other shows through; then the rings themselves over both.
+// camera, through the leading ring (render/ripple.js), so neither half's
+// camera moves while the other shows through; then the rings themselves over
+// both. With no glide, the ripple is readied while the page is idle -- not on
+// the landing page's picture, which never goes down.
 export function draw() {
   drawHalf(S.view === 'deep');
   const rip = ripple();
-  if (!rip || rip.r <= 0) return;
-  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH,
-                 shakeX: S.shakeX, shakeY: S.shakeY };
+  if (!rip) { if (!picture) warmRipple(canWarm, drawDeepUnseen); return; }
+  if (rip.r <= 0) return;
   // The yard's knock is the yard's (world.js, `stepShake`): the deep through
   // the ripple holds still while the yard around it rocks.
-  Object.assign(S, deepCamera(), { view: 'deep', shakeX: 0, shakeY: 0 });
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.beginPath();
-  ctx.arc(rip.cx * S.dpr, rip.cy * S.dpr, rip.r * S.dpr, 0, Math.PI * 2);
-  ctx.clip();
-  drawHalf(true);
-  ctx.restore();
-  Object.assign(S, keep);
+  asDeep(() => drawThrough(rip, S.dpr, () => drawHalf(true)));
   drawRipples(rip);
+}
+
+// The deep's camera standing for the length of `fn`, and the yard's put back.
+function asDeep(fn) {
+  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH,
+                 shakeX: S.shakeX, shakeY: S.shakeY };
+  Object.assign(S, deepCamera(), { view: 'deep', shakeX: 0, shakeY: 0 });
+  try { fn(); } finally { Object.assign(S, keep); }
+}
+
+// The ripple can be readied while the yard is on screen with the way down
+// open and nothing under way.
+const canWarm = () => S.view === 'yard' && canGoDown() && !gliding();
+
+// The deep's own layers, unseen, for the ripple's sake (render/ripple.js,
+// `warmRipple`): the ones that paint an image once or run the most code the
+// first time. Not the motes, which are stepped as they are drawn.
+const UNSEEN = LAYERS.filter(l => ['page', 'world', 'world:done'].includes(l.name) ||
+                                  (DEEP.has(l.name) && l.name !== 'deep motes'));
+function drawDeepUnseen() {
+  asDeep(() => { for (const layer of UNSEEN) if (!layer.when || layer.when()) layer.draw(); });
 }
 
 // The rings: the leading one bright, three more following it in darker

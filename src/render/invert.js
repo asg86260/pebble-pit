@@ -44,12 +44,22 @@ function filterIsExact() {
   } catch { return false; }
 }
 
+// Asked once, between frames, when the page is first idle after load
+// (render/ripple.js, `warmRipple`): the readback stalls the page for tens of
+// milliseconds in Firefox and up to hundreds in Chrome, and asked on the first
+// frame of the deep it landed in the middle of the ripple down. Never inside
+// a frame: a readback in the middle of the frame's own drawing upset the
+// headless Chrome's next frames.
+export function askInvert() {
+  asked = true;
+  if (exact === null) exact = filterIsExact();
+}
+
 // Whether to turn the frame over through the filter rather than a
-// `difference` fill. The probe is asked after the frame rather than inside
-// it: a readback in the middle of the frame's own drawing upset the headless
-// Chrome's next frames.
+// `difference` fill. A frame that needs the answer before the page has been
+// idle asks for it after itself.
 export function invertByFilter(g) {
   if (exact !== null) return exact;
-  if (!asked) { asked = true; setTimeout(() => { exact = filterIsExact(); }, 0); }
+  if (!asked) { asked = true; setTimeout(askInvert, 0); }
   return typeof g.filter === 'string';
 }

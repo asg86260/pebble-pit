@@ -202,6 +202,58 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   self-tests) or uses a blend Firefox's card lacks, outside the dark page's
   grit and Chrome's fills.
 
+- **The ripple in Firefox (2026-09-24).** With both halves fast, the owner
+  still saw a hitch going between them through the portal (Firefox, 2560x1440,
+  light page). Measured the same way as the two entries above (Firefox 156
+  headless over BiDi with the GPU prefs, `layout.frame_rate` 0 and
+  `privacy.reduceTimerPrecision` off; Chrome `--headless=new` with its GPU;
+  a fresh profile each run), the transition bought the player's way (a
+  press on the corner's square, after one earlier press so the audio's
+  first-gesture start is not in the window), every frame logged from six
+  before the press to six after the glide, per layer. Three faults:
+
+  1. **The circle clip, every frame of the glide, in Firefox.** The deep was
+     drawn under the ripple's circle as a clip on the window. Firefox's card
+     takes a clip that is not a rectangle as a mask, and the deep's few
+     hundred draws under it put the frame at 25-40 ms on a tenth of the glide,
+     the main thread's share staying at 9. The same deep under a square clip
+     ran at 13; skipping the invert or the press under the circle changed
+     nothing, nor did dropping the nested half-line clips. The deep is now
+     drawn on a sheet the window's size, clipped to the square round the
+     circle, and put on the window through the circle in one draw
+     (render/ripple.js, `drawThrough`; `ctx` is pointed at the sheet for the
+     pass, `paintOn` in render/ctx.js). The draw costs 0.1 ms in Chrome.
+  2. **The deep's first frame was the ripple's first frame.** After the yard,
+     frame 0 of the ripple down drew for 20-23 ms in Firefox and 30-86 in
+     Chrome: the floor and the stations painted into their images, the coil's
+     code run for the first time (7-11 ms against a settled 1.8, the second
+     run still 3-7). It is drawn unseen on the sheet three times, one idle
+     moment apart, once the portal stands and again for each window size
+     (`warmRipple`); the first frame is now 9-17 ms.
+  3. **The invert probe's readback, a frame into the glide.** 21-30 ms in
+     Firefox; 80-490 ms in Chrome, where its GPU sync held a frame of the
+     ripple for that long, every first descent. It is now asked the first
+     time the page is idle after load (render/invert.js, `askInvert`).
+
+  | 2560x1440 unless said, ms between frames | before | after |
+  |---|---:|---:|
+  | Firefox `portal`, glide p90 (12 transitions) | 24.6-28.0 | 12.9-19.6 |
+  | Firefox `portal`, worst frame | 27-42 | 15-24 |
+  | Firefox `portal`, frames over 20 ms, a transition | 17-26 | 0-7 |
+  | Firefox `portal` 1920x1080, glide p90 / worst | 16-26 / 19-42 | 10.5-14.5 / 14-18.5 |
+  | Firefox heavy yard (`everything`, snatch played), p90 / worst | 29-37 / 34-58 | 21-23.5 / 27-35 (one 55) |
+  | Chrome `portal`, first ripple down, worst frame | 390-500 | 36-37 |
+  | Chrome `portal`, warm glide p90 | 8.7-13.6 | 7.7-13.2 |
+
+  A throwaway WebGL context in the measuring page, collected mid-glide, cost
+  Chrome 180-330 ms inside Blink's GC waiting on the card: a measuring page
+  keeps every context it makes. What is left: a 30-37 ms frame in Chrome
+  about 0.35 into the first ripple down (the card rasterizing page elements
+  for the first time, not the canvas), 6-7 ms of `hud` on the first frame in
+  the deep (the board seated for the first time), and after 90 s in the yard
+  Firefox has let the coil's compiled code go, so the first frames of the
+  next ripple draw in 17-23 ms (worst frame 27).
+
 ## 1. The frame budget
 
 The busy yard costs ~0.80 ms/frame bare, ~0.89 under the profiler. Broken down
