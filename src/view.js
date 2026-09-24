@@ -33,10 +33,17 @@ const yardZoom = () => CELL / P;
 // never rounded back up past the window.
 function deepZoom() {
   const need = DEEP_H - DEEP_SURFACE - P * 2 + DEEP_FLOOR_MARGIN;
-  const k = Math.min(1, S.H / (need * yardZoom()));
+  const k = held ?? Math.min(1, S.H / (need * yardZoom()));
   const unit = CELL * S.dpr;
   return Math.max(1, Math.floor(unit * k)) / unit;
 }
+
+// A zoom the deep is held at in place of its fit, for the station editor
+// (stations.html), which pulls in on the one station being painted: the deep
+// re-takes its zoom every frame, so a setZoom from outside lasts one frame.
+// Null lets go. Never saved, and nothing in the game sets it.
+let held = null;
+export const holdDeepZoom = k => { held = k; if (S.view === 'deep') setZoom(deepZoom()); };
 const zoomOf = v => (v === 'deep' ? deepZoom() : 1);
 
 // Where each half is looked at from: the floor of the deep on the bottom of

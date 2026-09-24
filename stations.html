@@ -12,10 +12,15 @@
      dev build), so the game frame shows them on its next reload; "copy"
      hands back the entry for SPRITES, which is where a finished drawing goes. */
   body { background: #fff; margin: 0; font: 12px/1.4 ui-monospace, "Courier New", monospace; color: #000; height: 100vh; overflow: hidden; }
-  .app { display: grid; grid-template-columns: 170px minmax(0, 1fr) 440px; height: 100vh; }
+  /* The painting is as wide as its widest fixed part -- the tone bar, the
+     grid, the drawing -- and the game frame has every pixel left over. The
+     text and button rows under the painting wrap to its width rather than
+     widening it (`.fit`). */
+  .app { display: grid; grid-template-columns: 170px max-content minmax(0, 1fr); height: 100vh; }
   .app > * { overflow: auto; padding: 12px 14px; }
   .list { border-right: 1px solid #000; }
-  .out { border-left: 1px solid #000; }
+  .out { border-left: 1px solid #000; display: flex; flex-direction: column; }
+  .fit { width: 0; min-width: 100%; box-sizing: border-box; }
   h1, h2 { font: inherit; font-weight: bold; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 8px; }
   h2 { display: inline-block; background: #000; color: #fff; padding: 3px 10px 4px; margin-top: 14px; }
   .list button { display: block; width: 100%; text-align: left; font: inherit; letter-spacing: .06em; padding: 3px 6px; border: 0; background: none; color: #000; cursor: pointer; }
@@ -35,12 +40,15 @@
   .read { margin: 6px 0; }
   .read b.bad { color: #d00; }
   textarea { width: 100%; box-sizing: border-box; height: 220px; font: 11px/1.4 ui-monospace, monospace; border: 1px solid #000; padding: 6px; white-space: pre; }
-  iframe { width: 100%; height: 300px; border: 1px solid #000; display: block; }
-  /* narrow: the game and the code go under the painting */
+  /* The frame takes the rest of its column's height, and the game pulls in on
+     the station to fill it (`lookAt` below). */
+  iframe { flex: 1 1 0; min-height: 0; width: 100%; box-sizing: border-box; border: 1px solid #000; display: block; }
+  /* narrow: the game goes under the painting */
   @media (max-width: 1100px) {
     body { height: auto; overflow: auto; }
     .app { height: auto; grid-template-columns: 130px minmax(0, 1fr); }
     .out { grid-column: 1 / -1; border-left: 0; border-top: 1px solid #000; }
+    iframe { flex: none; height: 80vh; }
   }
 </style>
 </head>
@@ -52,10 +60,10 @@
   </div>
   <div class="edit">
     <div class="name" id="editing">—</div>
-    <div class="hint">left-drag paints the tone picked, right-drag erases. the red line is the drawing's middle.</div>
+    <div class="hint fit">left-drag paints the tone picked, right-drag erases. the red line is the drawing's middle.</div>
     <div class="tools" id="tones"></div>
     <div id="grid" class="grid"></div>
-    <div class="tools">
+    <div class="tools fit">
       <button class="t" data-op="fliph">flip ↔</button>
       <button class="t" data-op="mirror">mirror left → right</button>
       <button class="t" data-op="left">◀</button><button class="t" data-op="right">▶</button>
@@ -66,23 +74,23 @@
       <button class="t" data-op="revert">revert to committed</button>
     </div>
     <h2>as drawn</h2>
-    <div class="read" id="read"></div>
+    <div class="read fit" id="read"></div>
     <canvas id="drawn"></canvas>
+    <h2>as code</h2>
+    <div class="hint fit">the entry for SPRITES in src/deep/sprites.js. every edited station is in the box; paste them in, then "forget edits" here.</div>
+    <div class="tools fit"><button class="t" id="copyone">copy this one</button><button class="t" id="copyall">copy all edited</button><button class="t" id="forget">forget edits</button></div>
+    <textarea id="code" class="fit" readonly></textarea>
   </div>
   <div class="out">
     <h1>in the deep</h1>
-    <div class="hint">the real game (play.html?bench), standing the deep with every door open. it reloads when you stop painting.</div>
+    <div class="hint">the real game (play.html?bench), standing the deep with every door open and pulled in on this station. it reloads when you stop painting.</div>
     <div class="tools"><button class="t" id="reload">reload the game</button></div>
     <iframe id="yard" title="the deep"></iframe>
-    <h1 style="margin-top:14px">as code</h1>
-    <div class="hint">the entry for SPRITES in src/deep/sprites.js. every edited station is in the box; paste them in, then "forget edits" here.</div>
-    <div class="tools"><button class="t" id="copyone">copy this one</button><button class="t" id="copyall">copy all edited</button><button class="t" id="forget">forget edits</button></div>
-    <textarea id="code" readonly></textarea>
   </div>
 </div>
 <script type="module">
 import { SPRITES, COMMITTED, SPRITES_KEY } from './src/deep/sprites.js';
-import { P, DOME_PAD, DOME_WALL } from './src/config.js';
+import { P, CELL, DOME_PAD, DOME_WALL, DEEP_FLOOR_MARGIN } from './src/config.js';
 
 // The tones a character is seen in, near enough for painting by: the game
 // frame is the truth.
@@ -284,19 +292,33 @@ function settle(now) {
 function reloadGame() { frame.src = `./play.html?bench&t=${Date.now()}`; }
 frame.addEventListener('load', () => {
   const stand = () => {
-    if (!yard()?.__scene) return setTimeout(stand, 50);
-    yard().__scene('deep-all');
+    const w = yard();
+    if (!w?.__scene || !w.__reset || !w.__deepZoom) return setTimeout(stand, 50);
+    w.__scene('deep-all');
     lookAt();
   };
   stand();
 });
+// Pulled in on the station: the deep's floor stays on the frame's foot (the
+// game's own framing), and the zoom is the one at which the station's dome
+// fills DOME_SHARE of the frame's height or width, whichever is tighter. The
+// game snaps it to a whole number of device pixels a cell, so it stays crisp.
+const DOME_SHARE = 1 / 2;
 function lookAt() {
   const w = yard();
-  if (!w?.__siteBox || !w.__look) return;
+  if (!w?.__siteBox || !w.__look || !w.__deepZoom) return;
   const box = w.__siteBox(key);
   if (!box) return;
+  // the dome round the drawing, as drawDome lays it out
+  const domeW = box.w + DOME_PAD * 2;
+  const domeTop = Math.round((box.y - DOME_WALL - domeW / 2) / P) * P;
+  const domeH = box.y + box.h - domeTop;
+  const fit = Math.min(w.innerWidth * DOME_SHARE / domeW,
+                       (w.innerHeight - DEEP_FLOOR_MARGIN * CELL / P) * DOME_SHARE / domeH);
+  w.__deepZoom(Math.max(1, fit / (CELL / P)));
   w.__look(box.x + box.w / 2 - (w.__state().viewW || 0) / 2);
 }
+new ResizeObserver(() => lookAt()).observe(frame);
 document.getElementById('reload').onclick = reloadGame;
 
 toneBar(); draw(); reloadGame();
