@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Deep glyphs mock</title>
+<style>
+  /* A mock, not the game: every option below is drawn by a copy of
+     `drawGlyph` from src/glyphs.js (the hands left out) with the shelf's own
+     numbers inlined -- three screen pixels a cell, the badge on its two-pixel
+     grid with a one-pixel halo, the rung strokes in SHELF_INK's tones. What it
+     cannot show: the drawing on the real plank beside its neighbors (that is
+     shelf.html), the hop arrow's frame, or a tile being built. */
+  :root { --bg: #fff; --ink: #000; --dim: #666; --rule: #000; }
+  body { background: var(--bg); color: var(--ink); margin: 0; padding: 16px; font: 12px/1.4 ui-monospace, "Courier New", monospace; }
+  h1, h2 { font: inherit; font-weight: bold; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 8px; }
+  h2 { display: inline-block; background: #000; color: #fff; padding: 3px 10px 4px; margin: 22px 0 8px; }
+  p.lede { max-width: 90ch; margin: 0 0 6px; }
+  .glyph-row { border-top: 1px solid var(--rule); padding: 10px 0 12px; }
+  .head { display: flex; gap: 18px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  .head b { letter-spacing: .12em; text-transform: uppercase; }
+  .head .why { color: var(--dim); max-width: 80ch; }
+  .opts { display: flex; gap: 12px; flex-wrap: wrap; align-items: stretch; }
+  .opt { border: 1px solid #000; padding: 8px 10px; min-width: 250px; max-width: 330px; }
+  .opt.now { border-style: dashed; color: var(--dim); }
+  .opt .t { display: flex; gap: 8px; align-items: baseline; margin-bottom: 6px; }
+  .opt .letter { background: #000; color: #fff; padding: 0 7px; font-weight: bold; }
+  .opt.now .letter { background: #999; }
+  .plank { padding: 8px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E"); border-bottom: 4px solid #000; }
+  .sizes, .tints { display: flex; align-items: flex-end; gap: 12px; margin: 4px 0; }
+  .rows { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+  .row { display: flex; align-items: center; gap: 6px; font-size: .9em; }
+  .row .k { opacity: .7; }
+  canvas { image-rendering: pixelated; display: block; }
+  code { display: block; margin-top: 6px; font-size: 10px; white-space: pre-wrap; word-break: break-all; background: #f2f2f2; padding: 4px; user-select: all; }
+  @media (max-width: 600px) { body { padding: 16px; } .opt { min-width: 0; max-width: none; width: 100%; } }
+</style>
+</head>
+<body>
+<h1>The deep's glyphs -- options, 2026-09-24</h1>
+<p class="lede">Every station on the deep's floor and every row on its boards is wearing a drawing borrowed from the yard. One row per drawing needed: the dashed card is what it wears now, the lettered cards are the options. Each is shown at 1x, 3x, 6x, then (at 2x) plain and in the four strokes a deep rung wears -- scale grey, crop green, ore blue, spark red -- then on every row that would borrow it, with that row's badge. The code line under each is the entry for <b>GLYPHS</b> in src/glyphs.js.</p>
+<p class="lede">A mock drawn with a copy of the shelf's glyph painter, not the game: it cannot show the drawing among its neighbors on the plank, or the hop arrow.</p>
+<div id="out"></div>
+<script>
+// --- the shelf's numbers (src/config/boards.js) --------------------------------
+const CELL = 3, CELLS = 8, BCELL = 2, BADGE_HALO = 1;
+const INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', scale: '#5a5a5a' };
+
+// --- the badges, as BADGES in src/glyphs.js ------------------------------------
+const BADGES = {
+  up:     ['..#..', '.#.#.', '.....', '..#..', '.#.#.'],
+  plus:   ['.....', '..#..', '.###.', '..#..', '.....'],
+  star:   ['..#..', '.#.#.', '.....', '..#..', '.#.#.'],
+};
+
+// --- the drawings they wear now (GLYPHS in src/glyphs.js) ----------------------
+const NOW = {
+  swing:  ['...##...', '##..##..', '.##..##.', '..##..##', '..##..##', '.##..##.', '##..##..', '...##...'],
+  sack:   ['########', '#......#', '#..##..#', '########', '#..##..#', '#......#', '#......#', '########'],
+  house:  ['........', '........', '........', '.#######', '..#####.', '..#...#.', '..#...#.', '..#...#.'],
+  bucket: ['........', '........', '..#.....', '..#.....', '..#.....', '..#.....', '.###....', '.###....'],
+  bowl:   ['........', '.#..#...', '..#..#..', '...#..#.', '#.#..#.#', '#......#', '########', '.######.'],
+  wand:   ['.###....', '.#.#....', '.###....', '..#.....', '..#.....', '..#.....', '..#.....', '..#.....'],
+  tower:  ['.#......', '###.....', '#.#.....', '###.#...', '######..', '#.##.#..', '######..', '#.####..'],
+  bolt:   ['....####', '...#####', '...#..##', '..##..##', '.#.####.', '#.#.#...', '.#.#....', '#.#.....'],
+  chip:   ['........', '...##...', '..#..#..', '.#.##.#.', '.#.##.#.', '..#..#..', '...##...', '........'],
+  cracked:['##....##', '###..###', '.######.', '..####..', '..####..', '.######.', '###..###', '##....##'],
+};
+
+// --- what needs drawing, and the options -----------------------------------------
+// `rows`: the rows that would borrow the drawing, [key, name, board, badge].
+const GROUPS = [
+ { id: 'stations', title: 'The stations', items: [
+  { name: 'bag', what: 'the altar', now: 'swing',
+    why: 'the altar is a punching bag hung off a gibbet, a tentacle wound round it; it wears the pick mid-swing, which is the bench\'s pace rows.',
+    rows: [['(station)', 'the altar', 'hop arrow', null]],
+    opts: [
+      ['gibbet and bag, a tentacle wound round it', ['.######.', '.#...#..', '.#..###.', '.#.##.##', '.#.#.###', '.#.##.##', '.#..###.', '####....']],
+      ['the bag alone on its chain, a band round it', ['...##...', '....#...', '..####..', '.######.', '.#....#.', '.######.', '.######.', '..####..']],
+      ['the bag on its hook, a tentacle up out of the floor curled round it', ['........', '....#...', '...###..', '..#####.', '#.#.###.', '#..#.##.', '.#.###..', '..#.....']],
+    ]},
+  { name: 'furnace', what: 'the crusher', now: 'sack',
+    why: 'the crusher is a brick furnace with a hopper; it wears the sack, which is carry and the books.',
+    rows: [['(station)', 'the crusher', 'hop arrow', null]],
+    opts: [
+      ['hopper over an outlined block, its arched door', ['#......#', '.##..##.', '########', '#......#', '#..##..#', '#.#..#.#', '#.#..#.#', '########']],
+      ['solid brick block, mortar joints, the arched door cut out', ['.######.', '..####..', '########', '#..#..##', '###..###', '##....##', '##....##', '########']],
+      ['block and door with the fire lit in it', ['#......#', '.#....#.', '########', '#......#', '#.####.#', '#.#..#.#', '#.#.##.#', '########']],
+    ]},
+  { name: 'pod', what: 'the pods', now: 'house',
+    why: 'the pods are capsules with a lit porthole; they wear the yard\'s house, and so does another pod.',
+    rows: [['(station)', 'the pods', 'hop arrow', null], ['pod', 'another pod', 'the pods', 'plus']],
+    opts: [
+      ['one capsule, porthole lit', ['........', '........', '.######.', '#......#', '#..##..#', '#..##..#', '#......#', '.######.']],
+      ['two capsules stacked, a porthole each', ['........', '.######.', '###..###', '.######.', '.######.', '###..###', '.######.', '........']],
+      ['a capsule on its feet, dark porthole', ['........', '..####..', '.######.', '###..###', '###..###', '########', '.######.', '.#....#.']],
+    ]},
+  { name: 'rack', what: 'the well', now: 'bucket',
+    why: 'the well is a trestle rack of barbed lances over a trough of black water; it wears the janitor\'s mop, and so does its door.',
+    rows: [['(station)', 'the well', 'hop arrow', null], ['unlockwell', 'draw the well', 'the altar', null]],
+    opts: [
+      ['three lances through a bar, the trough under them', ['.#..#..#', '###.#.##', '.#..#..#', '########', '.#..#..#', '########', '#......#', '########']],
+      ['a trestle: bar, splayed legs, two barbed heads', ['.#...#..', '###.###.', '.#...#..', '########', '.#...#..', '.#...#..', '#.#.#.#.', '#.#.#.#.']],
+      ['one lance stood in the trough, barbed head, the bar through it', ['...#....', '..###...', '.#.#.#..', '...#....', '########', '...#....', '########', '.######.']],
+    ]},
+  { name: 'armory', what: 'the armory (key `font`)', now: 'bowl',
+    why: 'the armory is where grenades come from; it wears the apothecary\'s stew bowl, and so does its door.',
+    rows: [['(station)', 'the armory', 'hop arrow', null], ['unlockfont', 'open the armory', 'the altar', null]],
+    opts: [
+      ['a grenade held over the basin, its fuse lit', ['.....#..', '....#...', '..####..', '..####..', '...##...', '........', '########', '..####..']],
+      ['a pile of three bombs', ['...##...', '..####..', '..####..', '...##...', '.##..##.', '########', '########', '.##..##.']],
+      ['a lidded crate, a bomb stenciled on it', ['.######.', '########', '#......#', '#..##..#', '#.####.#', '#.####.#', '#..##..#', '########']],
+    ]},
+  { name: 'ring', what: 'the circle', now: 'wand',
+    why: 'the circle is a ring stood on edge with a star bound in it; it wears the wizard\'s wand, and so do its door and the beam.',
+    rows: [['(station)', 'the circle', 'hop arrow', null], ['unlockcircle', 'mark the circle', 'the altar', null]],
+    opts: [
+      ['the ring, a star bound in it', ['..####..', '.#....#.', '#..##..#', '#.####.#', '#..##..#', '#.#..#.#', '.#....#.', '..####..']],
+      ['the ring on its plinth, over the ring on the floor', ['..####..', '.#....#.', '.#.##.#.', '.#....#.', '..####..', '...##...', '.######.', '#......#']],
+      ['a solid hoop, the star cut out of it', ['..####..', '.######.', '####.###', '##....##', '###..###', '##.##.##', '.######.', '..####..']],
+    ]},
+  { name: 'obelisk', what: 'the spire', now: 'tower',
+    why: 'the spire is a black obelisk with a crystal throwing rays on top; it wears the yard\'s tower, the wizards\' other home, and so does its door.',
+    rows: [['(station)', 'the spire', 'hop arrow', null], ['unlockspire', 'raise the spire', 'the altar', null]],
+    opts: [
+      ['obelisk, the crystal over it throwing rays', ['#..##..#', '.#.##.#.', '........', '...##...', '..####..', '..####..', '..####..', '.######.']],
+      ['obelisk with runes cut up it, the crystal a ring', ['...##...', '..#..#..', '...##...', '..####..', '..#.##..', '..##.#..', '.######.', '########']],
+      ['a tall needle, rays off its point', ['#..#..#.', '.#.#.#..', '...#....', '..###...', '..###...', '..#.#...', '.#####..', '#######.']],
+    ]},
+ ]},
+ { id: 'rows', title: 'The rows', items: [
+  { name: 'fist', what: 'the altar\'s fists', now: 'swing',
+    why: 'punch strength and punch pace wear the pick mid-swing; a brawler throws fists.',
+    rows: [['punch', 'punch strength', 'the altar', null], ['brawl', 'punch pace', 'the altar', 'up']],
+    opts: [
+      ['a fist seen from the front, four knuckles', ['........', '.#.#.#..', '#.#.#.#.', '#######.', '#.....#.', '######..', '.####...', '.####...']],
+      ['a fist raised on its forearm, knuckles up', ['.#.#.#..', '#######.', '#######.', '#.....#.', '.#####..', '..###...', '..###...', '..###...']],
+      ['a fist thrown to the right, the arm behind it', ['........', '.....##.', '....####', '#######.', '#######.', '....####', '.....##.', '........']],
+    ]},
+  { name: 'lance', what: 'the well\'s lances', now: 'bolt',
+    why: 'lance bleed and lance hold wear the wizards\' lightning bolt.',
+    rows: [['lance', 'lance bleed', 'the well', null], ['lancehold', 'lance hold', 'the well', 'plus']],
+    opts: [
+      ['a lance, point up and left, clear of the badge', ['###.....', '##......', '#.#.....', '...#....', '....#...', '.....#..', '......#.', '.......#']],
+      ['a lance stood up, barbs at the head', ['...#....', '..###...', '.#.#.#..', '...#....', '...#....', '...#....', '...#....', '..###...']],
+      ['a barbed lance, heavy head', ['.##.....', '####....', '###.....', '.#.#....', '....#...', '.....#..', '......#.', '.......#']],
+    ]},
+  { name: 'grenade', what: 'the armory\'s grenades', now: 'chip',
+    why: 'grenade burst and grenade pace wear the casino\'s chip.',
+    rows: [['grenade', 'grenade burst', 'the armory', null], ['grenadepace', 'grenade pace', 'the armory', 'up']],
+    opts: [
+      ['a bomb, its fuse lit', ['......#.', '.....#..', '...##...', '..####..', '.######.', '.######.', '.######.', '..####..']],
+      ['a grenade, the pin\'s ring on top', ['..##....', '.#..#...', '..##....', '..####..', '.######.', '.######.', '.######.', '..####..']],
+      ['a ball, the rings of its burst either side', ['........', '.#....#.', '#..##..#', '#.####.#', '#.####.#', '#..##..#', '.#....#.', '........']],
+    ]},
+  { name: 'sigil', what: 'the circle\'s sigils', now: 'wand',
+    why: 'sigil circles wears the wand; a scribe chalks a circle under the coil. (Or it borrows the ring above.)',
+    rows: [['sigil', 'sigil circles', 'the circle', 'plus']],
+    opts: [
+      ['the circle chalked flat, a star in it', ['........', '........', '..####..', '.#.##.#.', '#.#..#.#', '#..##..#', '.######.', '........']],
+      ['a stick of chalk and the arc it drew', ['......#.', '.....###', '....###.', '...###..', '..#.#...', '.#......', '#.......', '.######.']],
+      ['a scroll unrolled, a mark on it', ['.######.', '#......#', '.#.##.#.', '.#.##.#.', '.#....#.', '.######.', '#......#', '.######.']],
+    ]},
+  { name: 'beam', what: 'the spire\'s beam', now: 'wand',
+    why: 'beam strength wears the wand, which is the tower\'s wizard pace.',
+    rows: [['beam', 'beam strength', 'the spire', null]],
+    opts: [
+      ['a ray, down to the right', ['##......', '###.....', '.###....', '..###...', '...###..', '....###.', '.....###', '......##']],
+      ['the crystal throwing its rays', ['#..##..#', '.#.##.#.', '..####..', '########', '..####..', '.#.##.#.', '#..##..#', '........']],
+      ['a ray, bursting where it lands', ['##......', '###.....', '.###....', '..###...', '...##...', '....#.#.', '.....#..', '....#.#.']],
+    ]},
+  { name: 'curse', what: 'the spire\'s curse', now: 'cracked',
+    why: 'curse the heal wears the critical cracked rock; the curse cuts the serpent\'s heal.',
+    rows: [['curse', 'curse the heal', 'the spire', null]],
+    opts: [
+      ['a heart cracked through', ['........', '.##..##.', '####.###', '###.####', '.###.##.', '..#.##..', '...##...', '........']],
+      ['a skull', ['..####..', '.######.', '#..##..#', '#..##..#', '########', '.##..##.', '.#.##.#.', '..####..']],
+      ['a drop, struck through', ['...#...#', '..###.#.', '..##.#..', '.##.###.', '.#.####.', '#.#####.', '.######.', '..####..']],
+    ]},
+ ]},
+];
+
+// --- the painter: drawGlyph from src/glyphs.js, the hands left out ---------------
+const inkSpan = rows => {
+  let lo = CELLS, hi = 0;
+  rows.forEach(r => [...r].forEach((c, x) => { if (c === '#') { lo = Math.min(lo, x); hi = Math.max(hi, x + 1); } }));
+  return [lo, hi];
+};
+const drawGlyph = (rows, tint = null, ink = '#000', badge = null) => {
+  const M = 2, L = 0;
+  const W = L + CELLS * CELL + 2 * M, H = CELLS * CELL + 2 * M;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const solid = new Uint8Array(W * H);
+  rows.forEach((r, y) => [...r].forEach((ch, x) => {
+    if (ch !== '#') return;
+    for (let j = 0; j < CELL; j++) for (let i = 0; i < CELL; i++) solid[(y * CELL + j + M) * W + x * CELL + i + M + L] = 1;
+  }));
+  if (badge) {
+    const mark = new Uint8Array(W * H), ox = L + CELLS * CELL + M - badge[0].length * BCELL, oy = M;
+    badge.forEach((r, y) => [...r].forEach((ch, x) => {
+      if (ch !== '#') return;
+      for (let j = 0; j < BCELL; j++) for (let i = 0; i < BCELL; i++) mark[(oy + y * BCELL + j) * W + ox + x * BCELL + i] = 1;
+    }));
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (mark[y * W + x]) { solid[y * W + x] = 1; continue; }
+      let near = false;
+      for (let dy = -BADGE_HALO; dy <= BADGE_HALO && !near; dy++) for (let dx = -BADGE_HALO; dx <= BADGE_HALO; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && mark[ny * W + nx]) { near = true; break; }
+      }
+      if (near) solid[y * W + x] = 0;
+    }
+  }
+  if (tint) {
+    const out = new Uint8Array(W * H); const q = [0]; out[0] = 1;
+    while (q.length) {
+      const k = q.pop(), x = k % W, y = (k - x) / W;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const n = ny * W + nx;
+        if (out[n] || solid[n]) continue;
+        out[n] = 1; q.push(n);
+      }
+    }
+    g.fillStyle = tint;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (!out[y * W + x]) continue;
+      let near = false;
+      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && solid[ny * W + nx]) { near = true; break; }
+      }
+      if (near) g.fillRect(x, y, 1, 1);
+    }
+  }
+  g.fillStyle = ink;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (solid[y * W + x]) g.fillRect(x, y, 1, 1);
+  return c;
+};
+
+// --- the page ----------------------------------------------------------------------
+const scaled = (canvas, k) => { canvas.style.width = `${canvas.width * k}px`; canvas.style.height = `${canvas.height * k}px`; return canvas; };
+const line = (name, rows) => `  ${name}: [${rows.map(r => `'${r}'`).join(', ')}],`;
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+function card(letter, label, rows, item, isNow) {
+  const o = el('div', 'opt' + (isNow ? ' now' : ''));
+  o.append(el('div', 't', `<span class="letter">${letter}</span><span>${label}</span>`));
+  const plank = el('div', 'plank');
+  const sizes = el('div', 'sizes');
+  for (const k of [1, 3, 6]) sizes.append(scaled(drawGlyph(rows), k));
+  const tints = el('div', 'tints');
+  for (const t of [null, INK.scale, INK.spore, INK.shard, INK.spark]) tints.append(scaled(drawGlyph(rows, t), 2));
+  plank.append(sizes, tints);
+  o.append(plank);
+  const list = el('div', 'rows');
+  for (const [key, name, board, badge] of item.rows) {
+    const r = el('div', 'row');
+    r.append(scaled(drawGlyph(rows, null, '#000', badge && BADGES[badge]), 2));
+    r.append(el('span', 'k', `${name} <i>(${board})</i>${badge ? ' +' + badge : ''}`));
+    list.append(r);
+  }
+  o.append(list);
+  if (!isNow) o.append(el('code', null, line(item.name, rows)));
+  return o;
+}
+
+// `#stations`, `#rows`, or a list of drawings (`#rack,ring`): that much of the
+// page, for a shot of one part.
+const only = location.hash.slice(1).split(',').filter(Boolean);
+const out = document.getElementById('out');
+for (const grp of GROUPS) {
+  const items = grp.items.filter(it => !only.length || only.includes(grp.id) || only.includes(it.name));
+  if (!items.length) continue;
+  out.append(el('h2', null, grp.title));
+  for (const item of items) {
+    const row = el('div', 'glyph-row');
+    row.append(el('div', 'head', `<b>${item.name}</b><span>${item.what}</span><span class="why">${item.why}</span>`));
+    const opts = el('div', 'opts');
+    opts.append(card('now', item.now, NOW[item.now], item, true));
+    item.opts.forEach(([label, rows], i) => opts.append(card('ABC'[i], label, rows, item, false)));
+    row.append(opts);
+    out.append(row);
+  }
+}
+</script>
+</body>
+</html>
