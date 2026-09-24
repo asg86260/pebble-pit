@@ -329,6 +329,22 @@ const deepScenes = {
       window.__fast(1.5);
       lookDeep(coilAt(beltSeg(0.5), now()).x);
     } },
+  // Reading the fight: the numbers off the blows and the heal's purple `+`
+  // off the belly, mid-fight, with a lance's and a beam's second summed.
+  'deep-numbers': { about: 'the deep', say: "the fight's numbers: each blow's damage rising off the coil, the heal's +N in purple",
+    run: () => {
+      deepYard({ stage: 1, wound: 450, open: ['well', 'font', 'spire'],
+                 crew: { brawlers: 3, lancers: 2, grenadiers: 1, warlocks: 1 }, run: 30 });
+      // A few rungs up, so a punch through the ward still says something.
+      Object.assign(S, { punchLevel: 6, brawlLevel: 6, lanceLevel: 4, grenadeLevel: 3, beamLevel: 2 });
+      window.__fast(2);
+      window.__serpent({ stage: 1, wound: 450 });
+      // Between the fists and the belly, so a narrow window has both the
+      // blows' white and the heal's purple.
+      const fist = S.hits.find(h => h.weapon === 'punch');
+      const belly = coilAt(bellySeg(), now()).x;
+      lookDeep(fist ? (fist.x + belly) / 2 : belly);
+    } },
   // The crusher at the deep's left end, haulers lent down to it carrying the
   // floor's scales and tossing them over the lip.
   crusher: { about: 'the deep', say: 'the crusher: gatherers tossing scales into the hopper, the fire burning up',

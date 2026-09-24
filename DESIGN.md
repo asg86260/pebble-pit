@@ -14822,7 +14822,7 @@ same). No new number in the renderer: `CRACK_REACH`, `BELLY_BULGE` and
 `deep-warded`, `deep-split` and `deep-fading` before and after, and a new
 scene `deep-cracked` with the wound held at nine tenths of the bare stage.
 
-### Reading the fight: what a hit did and how fast it heals (design, not built)
+### Reading the fight: what a hit did and how fast it heals (built 2026-09-24)
 
 *Mocked 2026-09-23, `docs/mocks/serpent-hits-2026-09-23.html` (stills in
 `docs/mocks/serpent-hits/`).*
@@ -14860,6 +14860,30 @@ is 6 screen pixels) and under a 2x camera:
 4. **Carved** -- a rounder 4x6 doubled (8x12), white with a grey drop line
    one font pixel under it, the heal purple on a dark purple drop. No black,
    so the white hide eats it most.
+
+**Built 2026-09-24: face 4, carved.** The glyphs are the mock's, lifted out
+of its source (`NUM_FONT` in config/deepdraw.js), two screen pixels a font
+pixel rounded to whole device pixels; white on a `#42424a` drop, the heal
+`#9b5de5` on `#2d1d47` with its `+`. The calls made at build:
+
+- *Where they are drawn:* the `fight numbers` layer, the deep's own, right
+  after `deep invert` and before the world is left. After the negative, so
+  the tones are written as seen and each step of the fade is against the
+  picture actually behind it, whichever way the deep was turned (the filter,
+  the `difference` fill, or the dark page, which is not turned and gets the
+  tones through `turned`); still inside the world, so the deep's camera
+  places a hit, then set to device pixels for the digits.
+- *The sim's list:* `S.hits` (ephemeral), filled by `strike()` and by the
+  heal. A held weapon's ticks are summed per body (the lance, the wizard)
+  and said when its second is up, where the last tick landed; a grenade's
+  lengths into its ring's one number as they land; and blows of one kind
+  landing within four cells of each other are summed until the last
+  one's number has risen clear of its own height (`NUM_FOLD_S`, derived
+  from the font and `NUM_RISE`), so a gang of brawlers or one fast one
+  prints a running sum and not digits over digits. The heal says what it
+  actually closed each second, off the belly, alternating sides.
+- *Under one:* a sum that rounds to nothing is not drawn, so a punch
+  glancing off the ward at the first rung says nothing.
 
 The first mock's reasoning, kept for the record: the cracks say how
 deep the wound is, but not what put it there or what is taking it back. With

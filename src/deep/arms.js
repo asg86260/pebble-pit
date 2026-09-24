@@ -211,7 +211,7 @@ export const stepWarlock = (w, c) => {
   Object.assign(b, { x, y, tx: p.x, ty: p.y, seg: near.seg, tick: S.tick });
   if (!(w.next > 0)) w.next = t + DOT_TICK_S * 1000;
   if (t < w.next) return;
-  strike('beam', rungValue('beam', S.beamLevel) * DOT_TICK_S, p.x, p.y);
+  strike('beam', rungValue('beam', S.beamLevel) * DOT_TICK_S, p.x, p.y, w);
   w.next = Math.max(t, w.next) + DOT_TICK_S * 1000;
 };
 
@@ -239,7 +239,7 @@ function stepLances(t) {
     l.x = p.x;
     l.y = p.y;
     while (l.tickAt <= t && l.tickAt <= l.until) {
-      strike('lance', rungValue('lance', S.lanceLevel) * DOT_TICK_S, p.x, p.y);
+      strike('lance', rungValue('lance', S.lanceLevel) * DOT_TICK_S, p.x, p.y, l);
       l.tickAt += DOT_TICK_S * 1000;
     }
     if (t >= l.until) continue;                     // dissolved
@@ -281,7 +281,7 @@ function stepRings(t) {
       const p = coilAt(i, t);
       if (Math.hypot(p.x - ring.x, p.y - ring.y) > ring.r + coilThick(i) / 2) continue;
       ring.hit.push(len);
-      strike('grenade', dmg, p.x, p.y);
+      strike('grenade', dmg, p.x, p.y, ring);
     }
     if (k < 1) S.rings[keep++] = ring;
   }

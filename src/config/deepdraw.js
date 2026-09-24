@@ -157,3 +157,50 @@ export const DEEP_DRAW_KNOBS = [
   { key: 'VIEW_GLIDE_S', label: 'deep glide, s', min: 0.2, max: 5, step: 0.1,
     get: () => VIEW_GLIDE_S, set: v => { VIEW_GLIDE_S = v; } }
 ];
+
+// --- reading the fight: the numbers off the hits and the heal ----------------------
+// DESIGN.md, "Reading the fight" (the owner's font, option 4: carved). Drawn in
+// screen pixels, not on the P grid, so they stay one size however the camera
+// is zoomed. A glyph is four font pixels by six, NUM_FONT_PX screen pixels a
+// font pixel, one font pixel between glyphs, with its drop line one font pixel
+// under it.
+export const NUM_FONT = {
+  '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'],
+  '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+  '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'],
+  '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+  '4': ['#..#', '#..#', '####', '...#', '...#', '...#'],
+  '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+  '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'],
+  '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+  '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'],
+  '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.'],
+  '+': ['....', '.#..', '###.', '.#..', '....', '....']
+};
+export const NUM_FONT_PX = 2;        // screen pixels a font pixel
+// The tones as seen, after the deep's negative: the numbers are drawn over
+// the finished deep, not turned over with it.
+export const NUM_FACE = '#ffffff';   // a blow: white
+export const NUM_DROP = '#42424a';   // on a grey drop line
+export const NUM_HEAL = '#9b5de5';   // the heal: the abyss's purple
+export const NUM_HEAL_DROP = '#2d1d47'; // on a dark purple drop
+export const NUM_LIFE_S = 1.3;       // a blow's number, in and out
+export const NUM_HEAL_LIFE_S = 1.6;  // the heal's, a little longer
+export const NUM_IN_S = 0.12;        // faded in over this; out over the last half of its life
+export const NUM_STEPS = 8;          // the fade in whole steps of opacity: never a jump bigger than one
+export const NUM_RISE = 14;          // screen pixels a second a number climbs
+export const NUM_LIFT = 6;           // screen pixels over the coil's top edge it starts
+export const NUM_JITTER = 6;         // screen pixels either way a blow's number is set off its hit
+export const NUM_HEAL_SIDE = 14;     // screen pixels either side of the belly the heal alternates
+export const NUM_HEAL_DROP_BY = 22;  // and under the coil's bottom edge it starts
+// What the sim keeps for them (deep/serpent.js): a weapon that hurts while it
+// is held (the lance, the beam) says its sum once this often, a body at a
+// time; the heal says what it actually closed once this often.
+export const NUM_HELD_S = 1;
+export const NUM_HEAL_EVERY_S = 1;
+// Blows of one kind landing this near each other before the last one's number
+// has risen clear of its own height are summed into it: three brawlers
+// swinging as one, or one swinging faster than its numbers climb, print a
+// running sum and not a smear of digits over digits.
+export const NUM_FOLD_S = (NUM_FONT['0'].length + 1) * NUM_FONT_PX / NUM_RISE;
+export const NUM_FOLD_R = P * 4;

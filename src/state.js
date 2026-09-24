@@ -483,6 +483,12 @@ export const S = {
   grenades: [],           // a grenade in the water: { x, y, vx, vy }
   rings: [],              // a burst's rings: { x, y, at }
   beams: [],              // a wizard's beam, this frame: { x, y, seg }
+  // What the fight has just done, for the numbers over it (render/fightnums.js):
+  // a blow, or a held weapon's second, or the heal's: { at, shut, x, y, done,
+  // weapon, key, side }. A drawing, never a save.
+  hits: [],
+  healSum: 0,             // the wound the heal has closed since it last said so
+  healAt: 0,              // when it next says so
   starFall: null,         // the called star on its way: { x, y, at }
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
   starAt: 0,              // when the next star is called
@@ -788,6 +794,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
+  'hits', 'healSum', 'healAt',
   'starFall', 'deepMotes', 'crushes', 'heldScales', 'portalAt',
   'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen', 'podsBoardOpen',
 ];
