@@ -331,15 +331,15 @@ const deepScenes = {
     } },
   // The crusher at the deep's left end, haulers lent down to it carrying the
   // floor's scales and tossing them over the lip.
-  crusher: { about: 'the deep', say: 'the crusher: gatherers tossing scales into the hopper, the rollers turning',
+  crusher: { about: 'the deep', say: 'the crusher: gatherers tossing scales into the hopper, the fire burning up',
     run: () => {
-      deepYard({ crew: { brawlers: 2 }, loose: 900, run: 12 });
+      deepYard({ crew: { brawlers: 2, spare: 3 }, loose: 900, run: 12 });
       lookDeep(spotX('crusher') + S.viewW * 0.3);
     } },
   // The floor thick with scales and the gatherers at work on it.
   gathering: { about: 'the deep', say: 'gatherers scooping the floor\'s loose scales, loads overhead',
     run: () => {
-      deepYard({ crew: { brawlers: 2 }, loose: 2500, run: 6 });
+      deepYard({ crew: { brawlers: 2, spare: 3 }, loose: 2500, run: 6 });
       lookDeep(spotX('altar'));
     } },
   // The deep's crew at rest: six hands on no weapon by the crusher on a bare
