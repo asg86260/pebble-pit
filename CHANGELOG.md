@@ -38,6 +38,7 @@ feature lives in DESIGN.md.
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 - Clouds no longer show below the ground line in a short window (play.html in a window 300px tall).
 - A rockhand who shoveled a mess on the far side of the pit walks back round the hole to the rock, instead of walking home across thin air (test/rockhand-home.test.mjs).
+- A worker you pick up no longer vanishes when carried down over the drowned pit or up past the deep's ceiling (src/selftest/crew.js).
 
 ## v0.4.1 — 2026-09-23
 

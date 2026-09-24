@@ -23,7 +23,7 @@ import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand }
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
-         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage } from './render/crew.js';
+         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { deepTop } from './deep/place.js';
@@ -230,6 +230,7 @@ const LAYERS = [
   { name: 'rift', draw: drawRift },              // through the torn era, the disc growing over the mouth
   { name: 'rain', draw: drawRain },              // and whatever is coming down out of it, or going into the house
   { name: 'bolt', draw: drawBolt },              // and a strike, in front of the shower it came with
+  { name: 'held', draw: drawHeld, dim: 1 },      // the body in your hand, in front of all of it
   { name: 'pointed', draw: drawPointed },        // and an arrow over whoever you just asked for by name
   { name: 'cursor', draw: drawCursor },
   // Last in the world, over everything the deep drew: the negative of it.
@@ -275,7 +276,7 @@ const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', '
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves, each cut to its own (`PINNED`).
-const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'pointed', 'cursor',
+const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'held', 'pointed', 'cursor',
                       'work bars', 'build sites', 'done marks', 'pile marks']);
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const shared = (layer, i) => BOTH.has(layer.name) || i > SCREEN_FROM;
@@ -287,7 +288,8 @@ const inHalf = (layer, i, deep) =>
 // (frame.js, `clipToHalf`), so what it draws over the yard never shows in the
 // deep and the other way about -- "off the glass in the other half" does not
 // hold on a window taller than the deep.
-const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'cursor', 'counter', 'flash', 'press']);
+// The body in your hand goes where the pointer goes, so it is the pointer's.
+const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'held', 'cursor', 'counter', 'flash', 'press']);
 const halfLine = () => (S.worldH + deepTop()) / 2;
 
 // One half, every layer that belongs to it, with whatever camera is standing.

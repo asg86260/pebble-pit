@@ -2,8 +2,12 @@
 // the dance, and the headcount badge.
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
-  point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil } from './kit.js';
-import { TOWER_CORES } from '../config.js';
+  point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil, canvas } from './kit.js';
+import { TOWER_CORES, P, WORKER } from '../config.js';
+import { S } from '../state.js';
+import { draw } from '../render.js';
+import { lifted } from '../crew.js';
+import { deepTop, deepFloor, mouthX } from '../deep/place.js';
 
 export const TESTS = [
   ['a body is thrown rather than dropped, and shaking one makes it dizzy', async () => {
@@ -386,5 +390,57 @@ export const TESTS = [
          'the badge is solid black, not dimmed with the rest of the heading',
          rockBadge && `${getComputedStyle(rockBadge).backgroundColor} @ ${getComputedStyle(rockBadge).opacity}`)
     ];
+  }],
+
+  // A body in your hand is on the glass wherever you carry it. It was drawn
+  // by the half it hung over: over the drowned pit it went under the liquid's
+  // surface like a body wading in, and in the deep, on a window tall enough
+  // to see past the deep's ceiling, it left the swimmers' water and was drawn
+  // by nobody. The camera is put at each height by hand, the body carried
+  // there by the pointer, and the pixels read with and without it.
+  ['a body in your hand is drawn at every height, over the drowned pit and in the deep', async () => {
+    window.__crew(3, 3, 5, 7);
+    window.__snatch({ played: true });
+    window.__view('yard');
+    run(2);
+    const [wx, wy] = state().workerPos[0].split(':')[1].split(',').map(Number);
+    window.__look(wx - S.viewW / 2);
+    const [sx, sy] = onScreen(wx, wy);
+    point('pointerdown', sx + 2, sy + 2, 2, 2);
+    const w = lifted();
+    if (!w) return [ok(false, 'a body is picked up')];
+    const g = canvas().getContext('2d');
+    const seen = () => {
+      const [bx, by] = onScreen(w.x, w.y);
+      const k = S.dpr, pad = WORKER;
+      return g.getImageData(Math.round((bx - pad) * k), Math.round((by - pad) * k),
+                            Math.round((WORKER + 2 * pad) * k), Math.round((WORKER + 2 * pad) * k)).data;
+    };
+    const lost = [];
+    const carry = (view, x0, from, to) => {
+      for (let y = from; y <= to; y += P * 8) {
+        S.view = view;
+        S.camX = x0;
+        S.camY = y - S.viewH / 2;
+        point('pointermove', S.viewW / 2, S.viewH / 2, 2, 2);
+        draw();
+        const held = seen();
+        const all = S.workers;
+        S.workers = all.filter(o => o !== w);
+        draw();
+        const bare = seen();
+        S.workers = all;
+        let n = 0;
+        for (let i = 0; i < held.length; i += 4) if (held[i] !== bare[i]) n++;
+        if (n === 0) lost.push(`${view} ${Math.round(w.y)}`);
+      }
+    };
+    const x0 = mouthX() - S.viewW / 2;
+    carry('yard', x0, S.groundY - P * 60, S.worldH);
+    carry('deep', x0, deepTop() - P * 60, deepFloor() - P * 4);
+    point('pointerup', S.viewW / 2, S.viewH / 2, 0, 2);
+    window.__view('yard');
+    return [ok(lost.length === 0, 'the body in your hand is drawn at every height it is carried to',
+               `not drawn at ${lost.slice(0, 6).join(', ')}${lost.length > 6 ? ` and ${lost.length - 6} more` : ''}`)];
   }],
 ];
