@@ -13,7 +13,7 @@ import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
-         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, PORTAL_INTO_WALL } from '../config.js';
+         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL } from '../config.js';
 import { SPRITES } from './sprites.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -46,10 +46,12 @@ export function portalCircle() {
   return { x: snap(pit.x + r * (1 - PORTAL_INTO_WALL)), y: snap((line + floor) / 2), r };
 }
 export const portalX = () => portalCircle().x;
-// Its other end in the deep, straight under it in the water: the way up.
+// Its other end in the deep, hanging in the water across the deep's middle
+// rather than under the yard's end, which stands near the deep's left edge:
+// the way up, and where the deep's camera opens.
 export function deepPortal() {
   const r = DEEP_PORTAL_R;
-  return { x: portalX(), y: snap(deepTop() + DEEP_SURFACE + P * 2 + DEEP_PORTAL_DOWN + r), r };
+  return { x: snap(deepX0() + DEEP_PORTAL_AT * DEEP_W), y: snap(deepTop() + DEEP_SURFACE + P * 2 + DEEP_PORTAL_DOWN + r), r };
 }
 
 // How far the drowned pit's surface stands from the deep's underside of it:

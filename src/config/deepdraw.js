@@ -38,11 +38,14 @@ export const DEEP_WATER_DEPTH = 1;
 export const SHAFT_ARROW_SIDE = P * 3;
 export const SHAFT_ARROW_DOWN = P * 2;
 // The deep's end of the portal, the way back up: a circle hanging in the
-// water over the wizards' one, its top this far under the highest the deep's
-// framing ever shows (view.js, `deepZoom`), so it is on the glass whatever
-// the window.
+// water, its top this far under the highest the deep's framing ever shows
+// (view.js, `deepZoom`), so it is on the glass whatever the window. Across,
+// it hangs this fraction of DEEP_W in from the deep's left end -- its middle,
+// so the camera that opens on it (view.js) shows it in the middle of the
+// window however much of the deep the window holds (the owner's call).
 export const DEEP_PORTAL_R = P * 15;
 export const DEEP_PORTAL_DOWN = P;
+export const DEEP_PORTAL_AT = 0.5;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
 

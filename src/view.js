@@ -41,12 +41,13 @@ const zoomOf = v => (v === 'deep' ? deepZoom() : 1);
 
 // Where each half is looked at from: the floor of the deep on the bottom of
 // the window (world.js, `clampCam`), and in the yard the pit floor there as
-// always. Across, both open on the portal.
+// always. Across, each opens on its own end of the portal.
+const openX = v => (v === 'deep' ? deepPortal().x : portalX());
 function frameOn(v) {
   S.view = v;
   S.camLockY = null;
   setZoom(zoomOf(v));
-  S.camX = portalX() - S.viewW / 2;
+  S.camX = openX(v) - S.viewW / 2;
   S.camTo = null;
   clampCam();
 }
@@ -58,7 +59,7 @@ export function deepCamera() {
   const zoom = yardZoom() * deepZoom();
   const viewW = S.W / zoom, viewH = S.H / zoom;
   const x0 = deepX0();
-  const camX = Math.max(x0, Math.min(portalX() - viewW / 2, Math.max(x0, deepX1() - viewW)));
+  const camX = Math.max(x0, Math.min(openX('deep') - viewW / 2, Math.max(x0, deepX1() - viewW)));
   return { zoom, viewW, viewH, camX, camY: deepFloor() + DEEP_FLOOR_MARGIN - viewH };
 }
 

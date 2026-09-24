@@ -15009,8 +15009,12 @@ deeper and held a few rungs darker (`abyssRung`); and crumbs of the torn
 ground fall off the lip and spiral in, going dark. Everything in it turns
 the other way from the first mocks (the owner's call). It is poured from
 above and grows from its middle. Its other end hangs in the deep's water,
-straight under it and smaller (`deepPortal`, `DEEP_PORTAL_R`): the same lip
-and mouth with no ground to tear, and the arrow under it pointing up. A
+smaller (`deepPortal`, `DEEP_PORTAL_R`), across the deep's middle rather
+than under the yard's end (`DEEP_PORTAL_AT`, the owner's call), and the
+deep's camera opens on it, so it arrives in the middle of the window: the
+same lip with no ground to tear, round a mouth of solid black rather than
+the water seen through (the owner's call), and the arrow under it pointing
+up. A
 click on either end goes through. Going down, the ripple opens out of the
 pit's end; going up, it draws back into the deep's end. The snatch's
 whirlpool on the surface at the mouth is unchanged.

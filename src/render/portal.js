@@ -18,7 +18,7 @@ import { P, PORTAL_RX, PORTAL_RY, PORTAL_TURN_MS, ABYSS_TONES, ABYSS_MAGIC_TONES
          PORTAL_CRUMBS, PORTAL_CRUMB_MS, PORTAL_CRUMB_TURNS } from '../config.js';
 import { S, pit } from '../state.js';
 import { now } from '../clock.js';
-import { mouthX, portalCircle, deepPortal, waterShift } from '../deep/place.js';
+import { mouthX, portalCircle, deepPortal } from '../deep/place.js';
 import { pouringPortal } from '../wizard.js';
 import { WORKER, MAGIC_TONES } from '../config.js';
 import { abyssLine, pitDepth } from '../pit.js';
@@ -68,18 +68,13 @@ export function drawPortal() {
   drawSnatch();
 }
 
-// The deep's end, once the portal stands: the same lip and mouth hanging in
-// its water, with no ground to tear. The deep is drawn turned over, so its
-// ramps are the turned-over ones, and its water is the pit's liquid carried
-// on down (`waterShift`).
+// The deep's end, once the portal stands: the same lip hanging in its
+// water, with no ground to tear, round a mouth of solid black rather than
+// the water seen through (the owner's call). The deep is drawn turned over,
+// so its ramps are the turned-over ones and their foot is the black as seen.
 export function drawDeepPortal() {
   if (!S.portalOpen) return;
-  const line = abyssLine(), shift = waterShift(), t = now();
-  drawHole(deepPortal(), 1, {
-    tones: GREYS, magic: PURPLES, skip: () => false, torn: () => false,
-    sample: (x, y) => abyssRung(x, y + shift, { line, t, rampLen: GREYS.length, magicLen: PURPLES.length,
-                                                deep: PORTAL_MOUTH_DEEP, magicShare: PORTAL_MOUTH_PURPLE })
-  });
+  drawHole(deepPortal(), 1, { tones: GREYS, magic: PURPLES, skip: () => false, torn: () => false, sample: () => 0 });
 }
 
 function drawSnatch() {
