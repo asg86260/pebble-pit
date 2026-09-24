@@ -171,7 +171,7 @@ function drawHole(c, k, { tones, magic, sample, skip, torn }) {
       const dx = x + P / 2 - c.x, dy = y + P / 2 - c.y, h = seeth(x / P, y / P);
       const at = Math.atan2(dy, dx);
       const edge = r * (1 + ((h % 11) - 5) * PORTAL_TEAR_JITTER + PORTAL_TEAR_LOBE * Math.sin(at * PORTAL_TEAR_LOBES));
-      const d = Math.hypot(dx, dy) / edge;
+      const d = Math.sqrt(dx * dx + dy * dy) / edge;   // hypot's overflow guard is not wanted a cell
       if (d > PORTAL_LIP_TO) continue;
       const tone = lip(d, -at, h, t, tones, magic);
       if (tone) { hole.put(j * cols + i, tone); continue; }

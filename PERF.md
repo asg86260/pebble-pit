@@ -91,6 +91,24 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   grains through `markInto` in render/marks.js). A body's carried load was tried the same
   way and measured nothing, so it was left as it was.
 
+- **The deep, drawn (2026-09-23).** Measured on a GPU Chrome (`--headless=new`,
+  D3D11) over the `deep` and `deep-portal` scenes, main-thread ms a frame, min
+  of four 120-frame segments, each run twice. The deep's draw was 11.5 ms at
+  1920x1080 and 17.9 at 2560x1440, two passes of it: the water 7.1 and the
+  coil 3.8. The water's two waves are each a column's phase plus a row's, so
+  their sines go a column and a row at a time and a cell puts them together
+  (`sin(u + v)`), a hash reading is a table rather than a division, and a
+  cell outside the veil's widest band on a hash no patch seats a star on is
+  skipped before anything else is asked -- the same cells, checked against
+  the per-cell field in test/deep-paint-cost.test.mjs. The coil's cell loop
+  was `Math.hypot`, a hundred thousand a frame; a square root is the same
+  length. The line the coil is laid along takes its constants once a walk.
+  After: 3.8 ms at 1920x1080, 5.1 at 2560x1440 (water 1.5, coil 1.3). The
+  endgame yard was not the owner's slow half on this machine (6-8 ms a
+  frame at dpr 1); at a device pixel ratio of 2 it is GPU-bound at ~13 ms
+  with the main thread at ~6, spread over every layer (the rift's bend is
+  about 2 ms of it), and nothing there was changed.
+
 ## 1. The frame budget
 
 The busy yard costs ~0.80 ms/frame bare, ~0.89 under the profiler. Broken down

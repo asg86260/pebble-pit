@@ -135,13 +135,19 @@ export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 // passed. The tail's end drifts in and out as the wave goes by instead.
 // Unsnapped, so the body can be laid smoothly along it; everything that
 // asks where a segment is uses `coilAt`, the same point on the grid.
-const waveY = (x, t) => {
-  const k = (x - coilX0()) / coilSpan();
-  let y = deepTop() + COIL_Y * DEEP_H + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
-  if (S.serpentStage === 2 && !S.serpentFreed)
-    y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
-  return y;
+// `waveLine(t)` is the line at one instant, everything but x worked out
+// once: the walk below asks it for thousands of points a frame.
+const waveLine = t => {
+  const x0 = coilX0(), span = coilSpan(), base = deepTop() + COIL_Y * DEEP_H;
+  const split = S.serpentStage === 2 && !S.serpentFreed;
+  return x => {
+    const k = (x - x0) / span;
+    let y = base + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
+    if (split) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
+    return y;
+  };
 };
+const waveY = (x, t) => waveLine(t)(x);
 const coilX0 = () => deepX0() + COIL_X0 * DEEP_W;
 const coilSpan = () => (COIL_X1 - COIL_X0) * DEEP_W;
 
@@ -154,12 +160,15 @@ function walk(t) {
   const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}`;
   if (walked?.key === key) return walked;
   const xs = [coilX0()];
-  let x = xs[0], y = waveY(x, t), acc = 0;
+  const wave = waveLine(t);
+  let x = xs[0], y = wave(x), acc = 0;
   const end = coilSpan() * 1.02;          // the body's length, and a little over
-  // Small x steps, arc summed, a table entry every STEP of arc.
+  // Small x steps, arc summed, a table entry every STEP of arc. A step's
+  // length is a square root rather than `Math.hypot`, whose overflow guard
+  // nothing here needs and which costs several times as much.
   while (acc < end) {
-    const nx = x + 0.5, ny = waveY(nx, t);
-    acc += Math.hypot(0.5, ny - y);
+    const nx = x + 0.5, ny = wave(nx);
+    acc += Math.sqrt((nx - x) * (nx - x) + (ny - y) * (ny - y));
     x = nx; y = ny;
     while (xs.length * STEP <= acc) xs.push(x);
   }

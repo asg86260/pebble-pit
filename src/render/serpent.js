@@ -32,6 +32,10 @@ const coil = cellImage();
 
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 const snap = v => Math.round(v / P) * P;
+// A length, as a square root: `Math.hypot` guards against overflow nothing
+// here comes near, and costs several times as much, which in the coil's
+// cell loop was most of the deep's frame.
+const lengthOf = (dx, dy) => Math.sqrt(dx * dx + dy * dy);
 const WHITE = GREYS.length - 1;
 
 // How far the body reaches either side of its centerline at `u` segments
@@ -64,9 +68,9 @@ function lay(t, x0, x1) {
   let along = 0, last = null;
   for (let u = -snoutU; u <= COIL_SEGS - 1; u += du) {
     const p = coilLine(u, t), q = coilLine(u + du, t);
-    if (last) along += Math.hypot(p.x - last.x, p.y - last.y);
+    if (last) along += lengthOf(p.x - last.x, p.y - last.y);
     last = p;
-    const len = Math.hypot(q.x - p.x, q.y - p.y) || 1;
+    const len = lengthOf(q.x - p.x, q.y - p.y) || 1;
     const tx = (q.x - p.x) / len, ty = (q.y - p.y) / len;
     const r = radiusAt(u, snoutU);
     pts.push({ u, x: p.x, y: p.y, tx, ty, nx: -ty, ny: tx, along, r, r0: r });
@@ -120,7 +124,7 @@ export function drawSerpent() {
       const row = (cy - minY) / P;
       for (let cx = snap(p.x - R) - P; cx <= p.x + R; cx += P) {
         const dx = cx + P / 2 - p.x, dy = cy + P / 2 - p.y;
-        const dist = Math.hypot(dx, dy);
+        const dist = lengthOf(dx, dy);
         if (dist > R) continue;
         const i = row * cols + (cx - minX) / P;
         if (dist >= best[i]) continue;
