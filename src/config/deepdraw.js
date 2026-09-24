@@ -20,13 +20,39 @@ export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the
 // over that.
 export const DOME_PAD = P * 4;
 export const DOME_WALL = P * 4;
-// The crusher's fire while it works: the two frames of its drawing traded
-// this often, and the sparks that jump out by its door, each a cell, from a
-// cell of the drawing (row, column) and one hop across CRUSH_SPARK_MS.
-export const CRUSH_FLICKER_MS = 110;
-export const CRUSH_SPARKS = 3;
-export const CRUSH_SPARK_MS = 240;
-export const CRUSH_SPARK_AT = { r: 22, c: 21 };
+// The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
+// the door's inside is one heat field. A cell's heat is the base, raised by
+// the breath and by the scales going in, less CRUSH_FIRE.rise a row up from
+// the door's foot and CRUSH_FIRE.side times the square of its distance from
+// the door's middle, stirred by CRUSH_STIR; it paints white over `white`,
+// the palest grey over `grey`, the purple ramp's rung `rampAt + v * rampPer`
+// under that, and nothing under `dark`. The stir climbs `climb` rows a
+// second. Times in seconds.
+export const CRUSH_FIRE = {
+  breathS: 1.4, base: 4.6, breath: 1.1, heat: 2, rise: 0.62, side: 0.16,
+  stir: 0.9, climb: 2.2, dark: 0.4, white: 5.3, grey: 4.6, rampAt: 5, rampPer: 1.45
+};
+// The stir: two sine waves summed and halved, the first bent by a third.
+// sin(col * a.col + t * a.t + sin(row * bend.row - t * bend.t) * bend.amp)
+// + sin(row * b.row + t * b.t + col * b.col).
+export const CRUSH_STIR = {
+  a: { col: 1.9, t: 3.1 }, bend: { row: 0.7, t: 1.3, amp: 1.5 }, b: { row: 1.3, t: 5.3, col: 0.6 }
+};
+// How warm the scales going in make it: each one adds `each`, swelling in
+// over `swellS` and easing back over `easeS`, summed and bent under one
+// (1 - e^-sum). A landing older than `keepS` is forgotten.
+export const CRUSH_HEAT = { each: 0.3, swellS: 0.22, easeS: 1.0, keepS: 5 };
+export const CRUSH_HEAT_KEEP = 32;     // landings kept at most, however fast they come
+// Each scale spits CRUSH_SPARKS sparks out of the door, one each way, that
+// fly CRUSH_SPARK_MS: `up` rows over the door's foot, out `out` cells plus
+// `speed` (and up to `spread` more) across the flight, up `rise` and down
+// `fall` on a parabola, onto the floor at the drawing's foot. White for the
+// first `whiteFor` of the flight, the top of the purple ramp until
+// `coolAfter`, then `cool` rungs down it for every whole flight after.
+export const CRUSH_SPARKS = 2;
+export const CRUSH_SPARK_MS = 1000;
+export const CRUSH_SPARK = { up: 2, out: 1, speed: 5, spread: 4, rise: 9, fall: 12,
+                             whiteFor: 0.1, coolAfter: 0.5, cool: 20 };
 // Where the water line stands, under the deep's top edge, and how far it
 // breathes (the same swell the drowned pit's surface has).
 export const DEEP_SURFACE = P * 5;

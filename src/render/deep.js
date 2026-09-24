@@ -15,8 +15,8 @@
 // serpent and the scales draw as they would in the yard and come out white.
 
 import { now } from '../clock.js';
-import { DOME_PAD, DOME_WALL, CRUSH_SHOW_MS, CRUSH_FLICKER_MS, CRUSH_SPARKS, CRUSH_SPARK_MS,
-         CRUSH_SPARK_AT } from '../config.js';
+import { DOME_PAD, DOME_WALL, CRUSH_FIRE, CRUSH_STIR, CRUSH_HEAT, CRUSH_SPARKS, CRUSH_SPARK_MS,
+         CRUSH_SPARK } from '../config.js';
 import { invertByFilter } from './invert.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
@@ -176,53 +176,107 @@ function drawDome(stand, g = ctx) {
 }
 
 // The crusher, a brick furnace (deep/sprites.js), painted at crusherRect():
-// the rest frame, and while scales are going in (`S.crushAt`) the working
-// frame traded with it so the fire flickers, and sparks hop out by the door.
-// Each frame is painted once into an image of its own, as a station is, and
-// drawn from there; kept by where the crusher stands, so a resize repaints it.
-const furnace = new Map();
-function crusherImage(frame, c) {
-  const rows = CRUSHER_SPRITES[frame];
+// the drawing, painted once into an image of its own as a station is and
+// kept by where the crusher stands, so a resize repaints it; then the fire
+// in its door, drawn over that every frame; then the sparks of each scale
+// that has gone in lately (`S.crushes`).
+const FURNACE = CRUSHER_SPRITES.rest;
+let furnace = null;
+function crusherImage(c) {
   const id = `${c.x}|${c.y}`;
-  const had = furnace.get(frame);
-  if (had && had.id === id) return had;
+  if (furnace && furnace.id === id) return furnace;
   const img = document.createElement('canvas');
-  img.width = rows[0].length * P; img.height = rows.length * P;
+  img.width = FURNACE[0].length * P; img.height = FURNACE.length * P;
   const g = img.getContext('2d');
-  for (let r = 0; r < rows.length; r++) {
-    for (let col = 0; col < rows[r].length; col++) {
-      const ink = SPRITE_INK[rows[r][col]];
+  for (let r = 0; r < FURNACE.length; r++) {
+    for (let col = 0; col < FURNACE[r].length; col++) {
+      const ink = SPRITE_INK[FURNACE[r][col]];
       if (!ink) continue;
       g.fillStyle = ink;
       g.fillRect(col * P, r * P, P, P);
     }
   }
-  const out = { id, img };
-  furnace.set(frame, out);
-  return out;
+  furnace = { id, img };
+  return furnace;
+}
+
+// The door, read off the drawing: every open cell under the brick's top
+// edge (the chute's are over it). Its foot is the lowest of them and its
+// middle their mean column, so the fire's heart sits on the door's own axis.
+const BRICK_TOP = FURNACE.findIndex(row => row.includes('####'));
+const DOOR = [];
+FURNACE.forEach((row, r) => {
+  if (r > BRICK_TOP) [...row].forEach((ch, c) => { if (ch === 'o') DOOR.push([r, c]); });
+});
+const DOOR_FOOT = Math.max(...DOOR.map(([r]) => r));
+const DOOR_MID = DOOR.reduce((sum, [, c]) => sum + c, 0) / DOOR.length;
+const FIRE_WHITE = seen('#ffffff'), FIRE_GREY = GREYS[GREYS.length - 2];
+const rung = k => PURPLES[Math.max(0, Math.min(PURPLES.length - 1, Math.round(k)))];
+
+// How warm the scales going in have made it, 0..1: each swells in and eases
+// back, summed and bent under one.
+function fireHeat(t) {
+  const { each, swellS, easeS } = CRUSH_HEAT;
+  let sum = 0;
+  for (const q of S.crushes) {
+    const d = (t - q.at) / 1000;
+    if (d > 0) sum += each * (1 - Math.exp(-d / swellS)) * Math.exp(-d / easeS);
+  }
+  return 1 - Math.exp(-sum);
+}
+
+// The stir, -1..1, in the door's cells and seconds.
+function stir(x, y, t) {
+  const { a, bend, b } = CRUSH_STIR;
+  const one = Math.sin(x * a.col + t * a.t + Math.sin(y * bend.row - t * bend.t) * bend.amp);
+  const two = Math.sin(y * b.row + t * b.t + x * b.col);
+  return (one + two) * 0.5;
+}
+
+// The fire: every cell of the door reads a heat -- highest at the heart,
+// falling off upward and outward, stirred by the climbing noise -- and paints
+// the rung it reaches: white, the palest grey, then down the purple ramp.
+// The whole field breathes, and burns up as scales go in.
+function drawFire(c, t) {
+  const F = CRUSH_FIRE, s = t / 1000;
+  const breath = 0.5 + 0.5 * Math.sin(2 * Math.PI * s / F.breathS);
+  const base = F.base + breath * F.breath + fireHeat(t) * F.heat;
+  for (const [r, col] of DOOR) {
+    const up = DOOR_FOOT - r, side = col - DOOR_MID;
+    const v = base - up * F.rise - side * side * F.side + stir(col, r + s * F.climb, s) * F.stir;
+    if (v < F.dark) continue;
+    ctx.fillStyle = v > F.white ? FIRE_WHITE : v > F.grey ? FIRE_GREY : rung(F.rampAt + v * F.rampPer);
+    ctx.fillRect(c.x + col * P, c.y + r * P, P, P);
+  }
+}
+
+// Each scale's sparks: out of the door's foot either way, over the brick and
+// down onto the floor at the drawing's foot, white as they leave and cooling
+// down the purple ramp as they land.
+function drawSparks(c, t) {
+  const K = CRUSH_SPARK, floor = FURNACE.length - 1;
+  for (const q of S.crushes) {
+    const u = (t - q.at) / CRUSH_SPARK_MS;
+    if (u < 0 || u > 1) continue;
+    for (let i = 0; i < CRUSH_SPARKS; i++) {
+      const dir = i % 2 ? 1 : -1, speed = K.speed + hash(q.id * 5 + i) * K.spread;
+      const x = Math.round(DOOR_MID + dir * (K.out + speed * u));
+      const y = Math.round(Math.min(DOOR_FOOT - K.up - K.rise * u + K.fall * u * u, floor));
+      ctx.fillStyle = u < K.whiteFor ? FIRE_WHITE
+        : rung(PURPLES.length - 1 - Math.max(0, u - K.coolAfter) * K.cool);
+      ctx.fillRect(c.x + x * P, c.y + y * P, P, P);
+    }
+  }
 }
 
 function drawCrusher() {
   const c = crusherRect(), t = now();
-  const busy = t - (S.crushAt || -Infinity) < CRUSH_SHOW_MS;
-  const hot = busy && Math.floor(t / CRUSH_FLICKER_MS) % 2;
   const smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(crusherImage(hot ? 'working' : 'rest', c).img, c.x, c.y);
+  ctx.drawImage(crusherImage(c).img, c.x, c.y);
   ctx.imageSmoothingEnabled = smooth;
-  if (busy) {
-    // Each spark hops out and falls on its own offset of the cycle, white as
-    // it leaves and purple as it cools.
-    const { r, c: col } = CRUSH_SPARK_AT;
-    for (let i = 0; i < CRUSH_SPARKS; i++) {
-      const run = t / CRUSH_SPARK_MS + i / CRUSH_SPARKS;
-      const age = run % 1, k = Math.floor(run) * CRUSH_SPARKS + i;
-      const dx = Math.round(age * (2 + hash(k) * 4));
-      const dy = Math.round(-2 * age + 7 * age * age);
-      ctx.fillStyle = age < 0.5 ? SPRITE_INK['#'] : SPRITE_INK['*'];
-      ctx.fillRect(c.x + (col + dx) * P, c.y + (r + dy) * P, P, P);
-    }
-  }
+  drawFire(c, t);
+  drawSparks(c, t);
   ctx.fillStyle = '#000';
 }
 

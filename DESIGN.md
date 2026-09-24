@@ -14673,11 +14673,18 @@ left of the altar, standing from the snatch like the altar, drawn as a
 brick furnace (the owner's pick of four, 2026-09-23): a squat brick block
 under a square chute, the chute's mouth open across the middle twenty
 columns of the top where the hopper takes a toss, and an arched
-white-framed door low in its middle with a bed of purple fire in it. Two
-frames of one drawing (`CRUSHER_SPRITES` in deep/sprites.js, painted once
-each like a station): while scales are going in (`S.crushAt`, for
-`CRUSH_SHOW_MS`) the fire climbs the door with a white heart, flickering
-against the rest frame, and sparks hop out by the door. It has no dome.
+white-framed door low in its middle with a fire in it. The drawing
+(`CRUSHER_SPRITES` in deep/sprites.js) is painted once like a station, its
+door left black; the fire is drawn into the door every frame (the owner's
+pick, option C of three, 2026-09-24): the whole door is one heat field that
+breathes and stirs upward, white at the heart, then the palest grey, then
+down the purple ramp to black at the tips (`CRUSH_FIRE`, `CRUSH_STIR`).
+Nothing is ever swapped and nothing flashes. Each scale that lands warms it
+-- swelling over about a quarter second and easing back over about a second
+(`CRUSH_HEAT`) -- and spits two sparks out of the door that arc over the
+brick onto the floor and cool down the purple ramp (`CRUSH_SPARK`). The
+landings are this session's (`S.crushes`, the last few seconds of them),
+never saved. It has no dome.
 A scale that lands
 in the hopper is crushed and counted: `S.scales` becomes an account (like
 the rift's `riftHeld`), not the bed's count. Nothing else counts one.

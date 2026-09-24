@@ -133,9 +133,10 @@ export const SPRITES = {
 // The crusher, a brick furnace: a square chute into a squat brick block, its
 // mouth open across the middle twenty columns of the top row where the
 // hopper takes a toss (`hopperRect`), an arched white-framed door low in its
-// middle with a bed of purple fire in it. `working` is the fire climbing the
-// door with a white heart, shown while scales are going in. Kept apart from
-// SPRITES, whose every entry stands under a dome: the crusher has none.
+// middle, left black: the fire in it is drawn over it every frame
+// (render/deep.js, `drawFire`), and the door is every `o` under the brick's
+// top edge. Kept apart from SPRITES, whose every entry stands under a dome:
+// the crusher has none.
 export const CRUSHER_SPRITES = {
   rest: [
     '....#++++++++++++++++++++#....',
@@ -161,43 +162,11 @@ export const CRUSHER_SPRITES = {
     '..#+++++-++#oooooooo#+++-++#..',
     '..#+++++-++#oooooooo#+++-++#..',
     '..#--------#oooooooo#------#..',
-    '..#+-++++++#*oo*oo*o#++++++#..',
-    '..#+-++++++#*o***o**#++++++#..',
-    '..#+-++++++#********#++++++#..',
-    '..#+-++++++#********#++++++#..',
-    '..#--------#********#------#..',
-    '.############################.',
-    '------------------------------'
-  ],
-  working: [
-    '....#++++++++++++++++++++#....',
-    '.....#oooooooooooooooooo#.....',
-    '......#oooooooooooooooo#......',
-    '.......#ooooooooooooooo#......',
-    '.......#oooooooooooooo#.......',
-    '........#oooooooooooo#........',
-    '.........#oooooooooo#.........',
-    '.############################.',
-    '..#+++++-+++++++-+++++++-++#..',
-    '..#+++++-+++++++-+++++++-++#..',
-    '..#+++++-+++++++-+++++++-++#..',
-    '..#+++++-+++++++-+++++++-++#..',
-    '..#------------------------#..',
-    '..#+-+++++++-+++++++-++++++#..',
-    '..#+-+++++++-+++++++-++++++#..',
-    '..#+-+++++++########-++++++#..',
-    '..#+-++++++##oooooo##++++++#..',
+    '..#+-++++++#oooooooo#++++++#..',
+    '..#+-++++++#oooooooo#++++++#..',
+    '..#+-++++++#oooooooo#++++++#..',
+    '..#+-++++++#oooooooo#++++++#..',
     '..#--------#oooooooo#------#..',
-    '..#+++++-++#oooooooo#+++-++#..',
-    '..#+++++-++#*oo*oo*o#+++-++#..',
-    '..#+++++-++#*o***o**#+++-++#..',
-    '..#+++++-++#********#+++-++#..',
-    '..#--------#********#------#..',
-    '..#+-++++++#********#++++++#..',
-    '..#+-++++++#********#++++++#..',
-    '..#+-++++++#***##***#++++++#..',
-    '..#+-++++++#**####**#++++++#..',
-    '..#--------#**####**#------#..',
     '.############################.',
     '------------------------------'
   ]

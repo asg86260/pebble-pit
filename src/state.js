@@ -473,7 +473,7 @@ export const S = {
   portalOpen: false,      // the wizards' portal over the abyss stands: the player's way down
   portalAt: 0,            // when it was conjured, for its opening
   portalPour: 0,          // how much of it the wizard has poured, 0..1, while it is being summoned
-  crushAt: 0,             // when a scale last went into the crusher, for its fire
+  crushes: [],            // the scales lately into the crusher, for its fire: { at, id }, newest last
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
   sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
   // In the water, and so this session's: a reload finds them landed or gone.
@@ -788,7 +788,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
-  'starFall', 'deepMotes', 'crushAt', 'heldScales', 'portalAt',
+  'starFall', 'deepMotes', 'crushes', 'heldScales', 'portalAt',
   'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen', 'podsBoardOpen',
 ];
 

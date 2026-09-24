@@ -13,7 +13,8 @@
 import { S, deepBed } from '../state.js';
 import { P, SHADES, DEEP_W, DEEP_BED_ROWS, DEEP_GRAV, DEEP_DRAG, DEEP_CURRENT,
          DEEP_CURRENT_MS, SCALE_KICK, SCALE_SHADE, SCALE_SPREAD, LIFT_PACE, LIFT_FLECKS,
-         LIFT_STAGGER, SETTLE_BUDGET, DEEP_BED_BRIM, GATHER_TOSS_FRAMES, GATHER_TOSS_RISE, GATHER_TOSS_STAGGER } from '../config.js';
+         LIFT_STAGGER, SETTLE_BUDGET, DEEP_BED_BRIM, GATHER_TOSS_FRAMES, GATHER_TOSS_RISE, GATHER_TOSS_STAGGER,
+         CRUSH_HEAT, CRUSH_HEAT_KEEP } from '../config.js';
 import { put, addGrain, settleSome, recount, wakeGrid, topRow, surfaceY, colOf, shadeNear } from '../grid.js';
 import { makePainter } from '../painter.js';
 import { frames, now } from '../clock.js';
@@ -26,12 +27,20 @@ import { deepX0, deepX1, deepFloor, inHopper, hopperRect } from './place.js';
 export const current = t => DEEP_CURRENT * Math.sin(2 * Math.PI * t / DEEP_CURRENT_MS);
 
 // Scales into the crusher: the account, said in one place so nothing else
-// writes it up. `crushAt` is for the drawing, the fire burning up.
+// writes it up. `crushes` is for the drawing: each landing warms the fire
+// and spits its own sparks, so each keeps its moment (and a number for its
+// sparks' throw), forgotten once it has burned out or been crowded off.
+let crushed = 0;
 export function crush(n) {
   if (!(n > 0)) return;
   S.scales += n;
   S.seenScale = true;
-  S.crushAt = now();
+  const t = now(), gone = t - CRUSH_HEAT.keepS * 1000;
+  const list = S.crushes;
+  for (let i = 0; i < Math.min(n, CRUSH_HEAT_KEEP); i++) list.push({ at: t, id: crushed++ });
+  let drop = Math.max(0, list.length - CRUSH_HEAT_KEEP);
+  while (drop < list.length && list[drop].at < gone) drop++;
+  if (drop) list.splice(0, drop);
   earned('scale', n);
 }
 
