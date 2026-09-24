@@ -26,6 +26,7 @@ feature lives in DESIGN.md.
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - The deep no longer drops to about 35 frames a second in Firefox on the light page (Firefox at 2560x1440 on the `deep` scene, PERF.md "The deep in Firefox").
 - Firefox no longer drops the whole game, yard and deep alike, to about 20 frames a second after a reload in the deep with its crew at rest or a builder at work, and the endgame yard with the rift open draws in a fifth of the time it did there (Firefox at 2560x1440, reloaded into `deep-rest` then `yard`, PERF.md "Firefox after a reload").
+- Going between the yard and the deep through the portal no longer hitches: the ripple holds its frame rate in Firefox, and the first trip down no longer stalls (Firefox and Chrome at 2560x1440 on `portal`, PERF.md "The ripple in Firefox").
 - On a tall window the deep's water goes all the way up to the top of the screen, with no black band over it (src/selftest/deep.js).
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).

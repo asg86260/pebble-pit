@@ -9,6 +9,11 @@ import { P } from './yard.js';
 export let VIEW_GLIDE_S = 1.3;       // the whole glide, down or up
 export const RIPPLE_RINGS = 4;       // rings in the ripple out of the portal, the leading one brightest
 export const RIPPLE_GAP = 3;         // cells between one ring and the next
+// The deep drawn unseen while the yard is idle, so the ripple's first frames
+// are not the deep's first (render/ripple.js): the first two runs of the
+// coil's code are three and five times the settled one's, the third near it.
+export const RIPPLE_WARM_PASSES = 3;
+export const RIPPLE_WARM_WAIT_MS = 1000; // the longest a pass waits for an idle moment
 // The floor kept up off the window's foot, with the deep's roster in the band
 // under it: a station stood on the very edge of the glass, under its own
 // plus and minus, was hard to find.
