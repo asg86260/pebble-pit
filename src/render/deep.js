@@ -391,10 +391,12 @@ export function drawDeepMotes() {
 }
 
 // --- the bodies in the deep ----------------------------------------------------------
-// A body in the deep is the same square, drifting: the deep is a void, not a
-// sea, so nothing bobs or kicks -- it glides where it is going and hangs
-// still when it is there. A body still in the shaft above the underside of the surface is in the
-// liquid and not drawn; one crossing it comes out of it a row at a time.
+// A body in the deep is the same square. At work it glides straight where it
+// is going; at rest it strolls, floats and hops about its station
+// (deep/rest.js), and that motion is its real position, so nothing here adds
+// a bob of its own. A body still in the shaft above the underside of the
+// surface is in the liquid and not drawn; one crossing it comes out of it a
+// row at a time.
 
 export function drawSwimmers() {
   const cut = deepTop() + DEEP_SURFACE + P;

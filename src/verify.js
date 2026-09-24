@@ -35,7 +35,7 @@ import { LEDGER } from './smog/rain.js';
 import { SERPENT_WOUND, ROOMBA_MAX, ROOMBA_BIN } from './config.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
-import { deepTop } from './deep/place.js';
+import { deepTop, deepFloor } from './deep/place.js';
 
 // The jobs the roster is made of, and the count on S that owns each: every
 // body type and its job, read off the one table (jobs.js) rather than kept
@@ -444,6 +444,12 @@ export function verifyWorld() {
       for (const w of S.workers)
         if (w.y + WORKER > top) fail('a body is in the deep before the snatch', `${who(w)}`);
     }
+    // Nothing in the deep goes through its floor: a body at rest floats and
+    // hops (deep/rest.js), and every way it comes down lands on the floor.
+    const floor = deepFloor();
+    for (const w of S.workers)
+      if (w.y + WORKER > floor + 1 && !w.lifted)
+        fail("a body is under the deep's floor", `${who(w)} has its feet ${Math.round(w.y + WORKER - floor)}px under it`);
     if (!(S.scales >= 0))
       fail('the crusher owes scales', `account ${S.scales}`);
     // The deep's crew is the shaft's count, and its weapons are out of it

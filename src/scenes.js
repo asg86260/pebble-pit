@@ -342,6 +342,14 @@ const deepScenes = {
       deepYard({ crew: { brawlers: 2 }, loose: 2500, run: 6 });
       lookDeep(spotX('altar'));
     } },
+  // The deep's crew at rest: six hands on no weapon by the crusher on a bare
+  // floor, strolling, floating and hopping about its ground (deep/rest.js).
+  // A still catches each in its own phase; shoot it again for others.
+  'deep-rest': { about: 'the deep', say: "the deep's crew at rest: gatherers on a bare floor, strolling, floating, hopping",
+    run: () => {
+      deepYard({ crew: { brawlers: 0, spare: 6 }, run: 30 });
+      lookDeep(spotX('crusher') + S.viewW * 0.35);
+    } },
   // The pods between the crusher and the altar, a stack of them, some of
   // their people home.
   pods: { about: 'the deep', say: "the pods: the deep's houses, stacked between the crusher and the altar",

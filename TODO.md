@@ -14,12 +14,14 @@ Open:
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
 
-## The deep's crew at rest -- DESIGNED, AWAITING THE VOTE (2026-09-23)
+## The deep's crew at rest -- BUILT, TUNING OPEN (2026-09-23)
 
-"The deep's crew at rest" in DESIGN.md; mocks in
-`docs/mocks/deep-idle-2026-09-23.html` (four options beside today's). Idle
-deep bodies wander, float or hop instead of hanging still. Blocker: the
-owner's vote on a mock, and how far a body may wander from its station.
+"The deep's crew at rest" in DESIGN.md, option D of the mocks. Open:
+- **Nobody has watched it with forty bodies down there.** The pace, float
+  height, pull and rests (`DEEP_REST_*` in config/deep.js, four on the dev
+  panel) are the mock's numbers; the `deep-rest` scene is six gatherers.
+- **The landing silt is the builders' grit**, drawn by `difference`, so it
+  shows as bright white flecks on the dark floor, brighter than the bed.
 
 ## The janitors' roomba -- BUILT, TUNING OPEN (2026-09-23)
 
