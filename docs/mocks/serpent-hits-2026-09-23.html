@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Hit Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 18px; }
+  .opt { border-top: 1px solid var(--rule); padding: 10px 0 0; max-width: 100%; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 8px; max-width: 864px; min-height: 3.6em; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .bar { display: flex; gap: 10px; align-items: center; margin: 0 0 12px; flex-wrap: wrap; }
+  .bar input[type=range] { width: 360px; max-width: 60vw; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; cursor: pointer; }
+  #log { color: var(--dim); font-size: 11px; }
+</style>
+</head>
+<body>
+<h1>Reading the fight: four ways to show the serpent's damage and heal</h1>
+<p class="note">A mock drawn from plain cells, not the game. All four panes run the same scripted twenty-two seconds
+of fight on a stretch of coil, so they can be compared frame by frame: a brawler punches (6 a blow), a lance sticks
+and bleeds (3 a half second), a grenade bursts and its rings cross three lengths (25 each), a scribe's sigil holds the
+belly, a wizard's beam burns (8 a half second) and curses the heal, a star lands (60), and then nothing strikes and it
+heals shut. The wound and its cracks, the gap and the cage are drawn in all four, as the game draws them; what differs
+is only what each option adds. The coil is the game's plain white hide on the deep's black water, a cell is 6 px,
+and each pane is shown at twice the game's size. What it cannot show: the real abyss field and camera, the real
+bodies and weapons (squares and lines here), a fight with many weapons at once, the four stages' tones (this is the
+bare coil throughout), and the numbers are the mock's, not the game's.</p>
+<div class="bar">
+  <button id="play">pause</button>
+  <input id="scrub" type="range" min="0" max="22" step="0.05" value="0">
+  <span id="clock">0.0 s</span>
+  <span id="log"></span>
+</div>
+<div class="grid" id="opts"></div>
+<script>
+// --- the deep's tones, as seen (the altar-bag mock's ramps) --------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const WHITE = 11;
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// --- the scene, in cells -------------------------------------------------------------
+const CW = 72, CH = 34, FLOOR = 31, LOOP = 22;
+const BELLY = 34, BELLY_LEN = 6, BULGE = 1.6, GIRTH = 3.4;
+const CRACK_REACH = 22, WOUND_GAP = 6, RIB_EVERY = 3;
+const DEPTH = 240;          // the stage's depth, in the mock's own units
+const HEAL = 18;           // wound a second it closes, uncut
+const SIGIL = { x: 34, from: 7.0, to: 15.0, cut: 0.36, rx: 6 };
+const CURSE = 0.4;          // off the heal while the wizard's beam is on
+
+const yc = (x, t) => 15.5 + 2.6 * Math.sin(x * 0.085 + t * 0.5) + 1.1 * Math.sin(x * 0.21 - t * 0.8);
+const slope = (x, t) => yc(x + 0.5, t) - yc(x - 0.5, t);
+const radius = x => GIRTH + BULGE * Math.sqrt(Math.max(0, 1 - ((x - BELLY) / BELLY_LEN) ** 2));
+
+// --- the fight, scripted -------------------------------------------------------------
+// Every hit: when, where along the coil, how much, by what, and which side of
+// the body it landed on (1 below, -1 above).
+const hits = [];
+for (let k = 0; k < 6; k++) hits.push({ t: 0.4 + 0.9 * k, x: 19 + (k % 2), dmg: 6, w: 'punch', side: 1 });
+const LANCE = { throwAt: 2.5, fly: 0.6, x: 27, hold: 5, from: [9, 4] };
+for (let s = LANCE.throwAt + LANCE.fly; s < LANCE.throwAt + LANCE.fly + LANCE.hold - 1e-6; s += 0.5)
+  hits.push({ t: s, x: LANCE.x, dmg: 3, w: 'lance', side: -1, dot: true });
+const GREN = { throwAt: 5.0, fly: 1.2, x: 40, from: [55, 29] };
+[[0, 0], [-4, 0.15], [4, 0.15]].forEach(([dx, dt]) =>
+  hits.push({ t: GREN.throwAt + GREN.fly + dt, x: GREN.x + dx, dmg: 25, w: 'grenade', side: -1 }));
+const BEAM = { from: 8.0, to: 11.0, x: 48, at: [66, 3] };
+for (let s = BEAM.from + 0.5; s <= BEAM.to + 1e-6; s += 0.5)
+  hits.push({ t: s, x: BEAM.x, dmg: 8, w: 'beam', side: -1, dot: true });
+const STAR = { from: 11.0, land: 11.8, x: 29 };
+hits.push({ t: STAR.land, x: STAR.x, dmg: 60, w: 'star', side: -1 });
+hits.sort((a, b) => a.t - b.t);
+hits.forEach((h, i) => { h.id = i; });
+
+const sigilOn = t => t >= SIGIL.from && t < SIGIL.to;
+const beamOn = t => t >= BEAM.from && t < BEAM.to;
+const healRate = t => HEAL * Math.max(0, 1 - (sigilOn(t) ? SIGIL.cut : 0) - (beamOn(t) ? CURSE : 0));
+
+// --- the sim, stepped once over the loop --------------------------------------------
+// The wound opened by the hits and closed at the heal, read back by any time
+// in the loop. Also what the bars want: a trail that drains after a drop, a
+// low mark the heal climbs away from, and the heal done so far.
+const DT = 1 / 60, N = Math.ceil(LOOP / DT) + 1;
+const W = new Float32Array(N), TRAIL = new Float32Array(N), LOW = new Float32Array(N), HEALED = new Float32Array(N);
+const HEALSEC = [];        // the heal actually done in each whole second
+{
+  let w = 0, trail = 1, hold = 0, low = 1, healed = 0, hi = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i * DT;
+    while (hi < hits.length && hits[hi].t <= t) { w = Math.min(DEPTH, w + hits[hi].dmg); hi++; hold = 0.35; }
+    const closed = Math.min(w, healRate(t) * DT);
+    w -= closed; healed += closed;
+    HEALSEC[Math.floor(t)] = (HEALSEC[Math.floor(t)] || 0) + closed;
+    const h = 1 - w / DEPTH;
+    // the trail holds a moment on a drop, then drains down to the health
+    if (h < trail) { if (hold > 0) hold -= DT; else trail = Math.max(h, trail - 0.5 * DT); } else trail = h;
+    // the low mark: dropped with every hit, then walks up behind the heal
+    if (h < low) low = h; else low += (h - low) * DT / 2.5;
+    W[i] = w; TRAIL[i] = trail; LOW[i] = low; HEALED[i] = healed;
+  }
+}
+const at = (arr, t) => arr[clamp(Math.round(t / DT), 0, N - 1)];
+const woundK = t => at(W, t) / DEPTH;
+
+// --- drawing, a cell at a time --------------------------------------------------------
+let g, s;                                         // the pane's context and its cell size
+const cell = (x, y, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * s, Math.round(y) * s, s, s); };
+
+function water(t) {
+  const ms = t * 1000;
+  for (let y = 0; y < FLOOR; y++) for (let x = 0; x < CW; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11 + ms / 5200) * 2.4 + ms / 7000);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.96) tone = GREYS[3]; else if (v > 0.9) tone = GREYS[2];
+    const h = seeth(x + 3, y + 11);
+    if (h < 8) {
+      const b = 0.5 + 0.5 * Math.sin(ms / 900 + h * 2.1);
+      tone = (h % 2 ? PURPLES : GREYS)[Math.max(0, Math.round(b * 8))];
+    }
+    cell(x, y, tone);
+  }
+  for (let r = FLOOR; r < CH; r++) for (let x = 0; x < CW; x++)
+    cell(x, r, GREYS[2 + (seeth(x, r + 7) % 3) + (r === FLOOR ? 2 : 0)]);
+}
+
+// A sigil on the floor under the belly, and its bands across the coil; drawn
+// in and out through the purple ramp.
+function sigilTone(t) {
+  if (t < SIGIL.from || t > SIGIL.to + 0.6) return 0;
+  const k = Math.min((t - SIGIL.from) / 0.6, 1, (SIGIL.to + 0.6 - t) / 0.6);
+  return Math.round(clamp(k, 0, 1) * WHITE);
+}
+function sigilFloor(t) {
+  const k = sigilTone(t);
+  if (!k) return;
+  for (let a = 0; a < 28; a++) {
+    const an = a / 28 * Math.PI * 2;
+    cell(SIGIL.x + Math.cos(an) * SIGIL.rx, FLOOR - 1.5 + Math.sin(an) * 1.2, PURPLES[k]);
+  }
+}
+
+// The coil as the game draws it: plain white hide, grey spine, shaded belly,
+// cracks out from the belly as far as the wound is deep, the gap at the belly
+// breaking the cage of ribs he is held in. `mark(x, y, d, tone)` lets an
+// option recolor a cell of the body (the chips' divots, the heal's knitting).
+function coil(t, mark) {
+  const wk = woundK(t), reach = wk * CRACK_REACH, gap = Math.round(wk * WOUND_GAP);
+  const sk = sigilTone(t);
+  for (let x = 0; x < CW; x++) {
+    const c = yc(x + 0.5, t), cos = 1 / Math.sqrt(1 + slope(x + 0.5, t) ** 2), r = radius(x + 0.5);
+    for (let y = Math.floor(c - r - 2); y <= Math.ceil(c + r + 2); y++) {
+      const d = (y + 0.5 - c) * cos, da = x + 0.5 - BELLY;
+      if (gap && Math.abs(da) < gap / 2) continue;
+      if (Math.abs(d) > r) {
+        if (sk && Math.abs(da) <= SIGIL.rx / 2 && Math.abs(d) < r + 1 && Math.round(da) % 2 === 0) cell(x, y, PURPLES[sk]);
+        continue;
+      }
+      let tone;
+      if (Math.abs(da) < BELLY_LEN && Math.abs(d) < r - 1 && r > GIRTH + 0.5) {
+        tone = ((Math.round(da) % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0 ? GREYS[2] : GREYS[WHITE - 4 - (seeth(x, y) % 2)];
+      } else {
+        tone = GREYS[d > r - 1 ? WHITE - 3 : Math.abs(d) < 0.5 ? WHITE - 2 : d > 0.9 ? WHITE - 1 : WHITE];
+        if (reach > 0 && Math.abs(da) < reach) {
+          const w1 = Math.sin(x / 2.3) * r * 0.5, w2 = Math.sin(x / 3.1 + 2) * r * 0.55;
+          if (Math.abs(d - w1) < 0.6 || (Math.abs(d - w2) < 0.6 && seeth(x, 7) % 3)) {
+            tone = GREYS[1 + Math.round(3 * Math.abs(da) / reach)];
+            if (mark) tone = mark.crack(x, y, Math.abs(da), reach, tone) || tone;
+          }
+        }
+        if (sk && Math.abs(da) <= SIGIL.rx / 2 && Math.round(da) % 2 === 0) tone = PURPLES[sk];
+      }
+      if (mark) tone = mark.body(x, y, d, r, tone) || tone;
+      cell(x, y, tone);
+    }
+  }
+  // him, whole in the cage: the crew's white square with its dark edge
+  const hy = Math.round(yc(BELLY, t)) - 1;
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++)
+    cell(BELLY - 1 + i, hy + j, i === 1 && j === 1 ? GREYS[WHITE] : GREYS[WHITE - 1]);
+}
+
+// A body: a square of three cells, white with a black edge, the altar mock's.
+function body(x, y) {
+  g.fillStyle = GREYS[WHITE]; g.fillRect(Math.round(x) * s, Math.round(y) * s, 3 * s, 3 * s);
+  g.strokeStyle = '#000'; g.lineWidth = Math.max(1, s / 6); g.strokeRect(Math.round(x) * s, Math.round(y) * s, 3 * s, 3 * s);
+}
+function line(x0, y0, x1, y1, tone) {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) | 0;
+  for (let i = 0; i <= n; i++) cell(x0 + (x1 - x0) * i / (n || 1), y0 + (y1 - y0) * i / (n || 1), tone);
+}
+const edgeY = (x, t, side) => yc(x + 0.5, t) + side * (radius(x + 0.5) + 0.5);
+
+function weapons(t) {
+  // the brawler, under the coil, jabbing up
+  const punch = hits.filter(h => h.w === 'punch');
+  const last = punch.filter(h => h.t <= t).pop();
+  const jab = last && t - last.t < 0.3 ? 1 : 0;
+  if (t < 5.6) body(18, edgeY(19, t, 1) + 1 - jab);
+  // the lancer, thrown from up-left; the lance sticks and dissolves through the ramp
+  const lt = t - LANCE.throwAt, [lx, ly] = LANCE.from;
+  if (t < LANCE.throwAt + LANCE.fly + LANCE.hold + 1) body(lx - 1, ly - 1);
+  const tip = [LANCE.x, edgeY(LANCE.x, t, -1) + 1];
+  if (lt >= 0 && lt < LANCE.fly) {
+    const k = lt / LANCE.fly, hx = lx + (tip[0] - lx) * k, hy = ly + (tip[1] - ly) * k;
+    line(hx - 2, hy - 1.4, hx, hy, PURPLES[WHITE]);
+  } else if (lt >= LANCE.fly && lt < LANCE.fly + LANCE.hold + 0.6) {
+    const fade = clamp((LANCE.fly + LANCE.hold + 0.6 - lt) / 0.6, 0, 1);
+    line(tip[0] - 3, tip[1] - 3, tip[0], tip[1], PURPLES[Math.round(fade * WHITE)]);
+  }
+  // the grenadier: an arc to the coil, then rings that go out through the ramp
+  const gt = t - GREN.throwAt, [gx, gy] = GREN.from;
+  if (t < GREN.throwAt + GREN.fly + 1.2) body(gx, gy - 1);
+  if (gt >= 0 && gt < GREN.fly) {
+    const k = gt / GREN.fly, x = gx + (GREN.x - gx) * k, y = gy + (yc(GREN.x, t) - gy) * k - Math.sin(k * Math.PI) * 6;
+    cell(x, y, GREYS[WHITE]); cell(x + 1, y, PURPLES[WHITE]); cell(x, y + 1, PURPLES[WHITE]); cell(x + 1, y + 1, GREYS[WHITE]);
+  } else if (gt >= GREN.fly && gt < GREN.fly + 0.8) {
+    const k = (gt - GREN.fly) / 0.8, rad = 1 + k * 7, cy = yc(GREN.x, t);
+    for (let i = 0; i < 26; i++) {
+      const an = i / 26 * Math.PI * 2;
+      cell(GREN.x + Math.cos(an) * rad, cy + Math.sin(an) * rad * 0.7, PURPLES[Math.max(3, WHITE - Math.round(k * 8))]);
+    }
+  }
+  // the wizard: a beam held on the coil, an interference dash running down it
+  if (t > BEAM.from - 1 && t < BEAM.to + 1.5) body(BEAM.at[0], BEAM.at[1] - 1);
+  if (beamOn(t)) {
+    const [bx, by] = BEAM.at, ex = BEAM.x, ey = edgeY(BEAM.x, t, -1);
+    const n = Math.max(Math.abs(ex - bx), Math.abs(ey - by)) | 0;
+    for (let i = 0; i <= n; i++) {
+      const k = i / n, on = ((i - Math.floor(t * 12)) % 4 + 4) % 4 !== 0;
+      cell(bx + (ex - bx) * k, by + 1 + (ey - by - 1) * k, PURPLES[on ? WHITE : 8]);
+    }
+  }
+  // the called star, a white head and a purple tail, falling
+  if (t >= STAR.from && t < STAR.land) {
+    const k = (t - STAR.from) / (STAR.land - STAR.from), y = -2 + (edgeY(STAR.x, t, -1) + 2) * k;
+    for (let i = 1; i < 8; i++) cell(STAR.x, y - i, PURPLES[Math.max(2, WHITE - i)]);
+    cell(STAR.x, y, GREYS[WHITE]); cell(STAR.x - 1, y, GREYS[WHITE]);
+  } else if (t >= STAR.land && t < STAR.land + 0.7) {
+    const k = (t - STAR.land) / 0.7, rad = 1 + k * 6, cy = edgeY(STAR.x, t, -1);
+    for (let i = 0; i < 22; i++) {
+      const an = Math.PI + i / 21 * Math.PI;
+      cell(STAR.x + Math.cos(an) * rad, cy + Math.sin(an) * rad * 0.6, GREYS[Math.max(3, WHITE - Math.round(k * 8))]);
+    }
+  }
+}
+
+// --- small pixel numbers, a font cell a game cell ------------------------------------
+const FONT = {
+  '0': '111101101101111', '1': '010110010010111', '2': '111001111100111', '3': '111001111001111',
+  '4': '101101111001001', '5': '111100111001111', '6': '111100111101111', '7': '111001010010010',
+  '8': '111101111101111', '9': '111101111001111', '+': '000010111010000'
+};
+// Drawn with a black keyline, so a white number reads over the white hide.
+function number(str, x, y, tone) {
+  const w = str.length * 4 - 1;
+  const on = new Set();
+  [...str].forEach((ch, i) => { const f = FONT[ch]; for (let k = 0; k < 15; k++) if (f[k] === '1') on.add(`${x + i * 4 + k % 3},${y + (k / 3 | 0)}`); });
+  for (const key of on) {
+    const [cx, cy] = key.split(',').map(Number);
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++)
+      if (!on.has(`${cx + dx},${cy + dy}`)) cell(cx + dx, cy + dy, '#000');
+  }
+  for (const key of on) { const [cx, cy] = key.split(',').map(Number); cell(cx, cy, tone); }
+  return w;
+}
+// A number's tone over its life: up through the ramp in a tenth of a second,
+// held, then down it over the last half of its life. Never a jump.
+function lifeTone(age, life) {
+  if (age < 0.12) return Math.round(4 + 7 * age / 0.12);
+  const out = life * 0.5;
+  return age > life - out ? Math.round(2 + 9 * (life - age) / out) : WHITE;
+}
+
+// The damage a number says: a single blow is its own number; a weapon that
+// hurts for as long as it is held (the lance, the beam) says its sum once a
+// second, or it would be a column of 3s. A grenade's burst is one number, its
+// lengths summed, said where the rings started: three at once printed over
+// each other.
+function tallies(minDmg) {
+  const out = [];
+  for (const h of hits) {
+    if (h.dot) continue;
+    const prev = out.find(o => o.w === h.w && h.t - o.t < 0.3);
+    if (prev) { prev.dmg += h.dmg; continue; }
+    out.push({ t: h.t, x: h.x, side: h.side, dmg: h.dmg, id: h.id, w: h.w });
+  }
+  for (let i = out.length - 1; i >= 0; i--) if (out[i].dmg < minDmg) out.splice(i, 1);
+  const buckets = {};
+  for (const h of hits) if (h.dot) {
+    const k = h.w + Math.ceil(h.t - 1e-6);
+    (buckets[k] = buckets[k] || { t: Math.ceil(h.t - 1e-6), x: h.x, side: h.side, dmg: 0, id: 100 + h.id }).dmg += h.dmg;
+  }
+  for (const b of Object.values(buckets)) if (b.dmg >= minDmg) out.push(b);
+  return out;
+}
+
+function floatNumbers(t, list, life) {
+  for (const n of list) {
+    const age = t - n.t;
+    if (age < 0 || age > life) continue;
+    const str = String(Math.round(n.dmg)), w = str.length * 4 - 1;
+    const x0 = Math.round(n.x - w / 2 + (hash(n.id) - 0.5) * 2);
+    const y0 = Math.max(4, Math.round(edgeY(n.x, n.t, -1)) - 7) - Math.floor(age * 3);
+    number(str, x0, y0, GREYS[lifeTone(age, life)]);
+  }
+}
+// The heal as a number: what closed in each second, rising purple off the wound.
+function healNumbers(t) {
+  const life = 1.6;
+  for (let sec = 1; sec <= Math.floor(t); sec++) {
+    const age = t - sec;
+    if (age > life) continue;
+    const v = Math.round(HEALSEC[sec - 1] || 0);
+    if (v < 1) continue;
+    const str = '+' + v, w = str.length * 4 - 1;
+    number(str, BELLY - (w >> 1) + (sec % 2 ? 3 : -3), Math.round(edgeY(BELLY, sec, 1)) + 7 - Math.floor(age * 3), PURPLES[lifeTone(age, life)]);
+  }
+}
+
+// --- a bar: what is left of the stage, the drain behind a hit, the heal creeping -----
+function bar(t, x0, y0, len, tall, frame) {
+  const h = 1 - woundK(t), hc = Math.round(h * len), tc = Math.round(at(TRAIL, t) * len);
+  const lc = Math.round(at(LOW, t) * len);
+  if (frame) {
+    for (let x = x0 - 1; x <= x0 + len; x++) { cell(x, y0 - 1, GREYS[5]); cell(x, y0 + tall, GREYS[5]); }
+    for (let y = y0; y < y0 + tall; y++) { cell(x0 - 1, y, GREYS[5]); cell(x0 + len, y, GREYS[5]); }
+  }
+  for (let i = 0; i < len; i++) for (let y = y0; y < y0 + tall; y++) {
+    let tone = GREYS[2];
+    if (i < hc) {
+      tone = GREYS[WHITE];
+      // the heal: the cells it has climbed back lately, purple, brightest at its edge
+      if (i >= lc && hc > lc) tone = PURPLES[Math.max(7, WHITE - Math.round(4 * (hc - 1 - i) / Math.max(1, hc - lc)))];
+    } else if (i < tc) tone = GREYS[7];                     // the drain behind a hit
+    else if (frame && i % 10 === 9) tone = GREYS[4];        // a notch every tenth
+    cell(x0 + i, y, tone);
+  }
+}
+
+// --- C: chips knocked off, divots knit shut ------------------------------------------
+const chipSize = d => d >= 15 ? 2 : 1;
+function chips(t) {
+  for (const h of hits) {
+    const age = t - h.t, life = 1.7;
+    if (age < 0 || age > life) continue;
+    const n = h.dot ? 1 : Math.min(5, 1 + Math.floor(h.dmg / 12)), sz = h.dot ? 1 : chipSize(h.dmg);
+    const y0 = edgeY(h.x, h.t, h.side) + h.side * 1.5;
+    for (let k = 0; k < n; k++) {
+      const r = hash(h.id * 7 + k), q = hash(h.id * 13 + k);
+      const vx = (r - 0.5) * 14, vy = h.side * (6 + q * 7);
+      // thrown off, then slowed by the water and sinking
+      const drag = (1 - Math.exp(-age * 2.2)) / 2.2;
+      const x = h.x + vx * drag, y = y0 + vy * drag + 2.2 * age * age;
+      const tone = GREYS[Math.round(3 + 8 * (1 - age / life))];
+      for (let i = 0; i < sz; i++) for (let j = 0; j < sz; j++) cell(x + i, y + j, tone);
+    }
+  }
+}
+// A divot at each blow, as deep as the damage, filled back by the heal done
+// since: the edge it is filling from is purple.
+function divots(t) {
+  const list = [];
+  for (const h of hits) {
+    if (h.t > t || h.dot) continue;
+    const healed = at(HEALED, t) - at(HEALED, h.t);
+    const f = healed / (h.dmg * 0.9);
+    if (f >= 1) continue;
+    list.push({ x: h.x, side: h.side, r: (h.dmg >= 40 ? 3.2 : h.dmg >= 15 ? 2.3 : 1.5) * (1 - f), knit: at(HEALED, t) - at(HEALED, t - 0.1) > 0 });
+  }
+  return list;
+}
+function markC(t) {
+  const ds = divots(t), H = healRate(t) / HEAL, wk = woundK(t);
+  return {
+    body(x, y, d, r) {
+      for (const v of ds) {
+        const dx = x + 0.5 - v.x, dy = d - v.side * r;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < v.r) return GREYS[1];
+        if (dist < v.r + 0.9 && v.knit) return PURPLES[WHITE - 1];
+      }
+    },
+    // the heal knitting the cracks from their tips: a shimmer runs in toward
+    // the belly, quick at the full heal and slow and dim when cursed or bound
+    crack(x, y, da, reach) {
+      if (!(wk > 0) || H <= 0) return;
+      const tipK = da / reach;
+      if (tipK < 0.55) return;
+      const ph = Math.sin(da * 1.4 + t * 9 * H);
+      if (ph < 0.2) return;
+      return PURPLES[Math.round(6 + 5 * H * (tipK - 0.55) / 0.45)];
+    }
+  };
+}
+
+// --- the four options -----------------------------------------------------------------
+const OPTIONS = [
+  { key: 'A', name: 'Numbers off the hit',
+    cap: 'Small pixel numbers pop off where each blow lands and drift up, dimming out through the greys; the lance and the beam say their sum once a second, a grenade its whole burst. The heal rises off the wound in purple as +N, once a second, so a curse or a sigil reads as a smaller +.',
+    draw: t => { water(t); sigilFloor(t); coil(t); weapons(t); healNumbers(t); floatNumbers(t, tallies(0), 1.3); } },
+  { key: 'B', name: 'A bar for the stage',
+    cap: 'A health bar pinned across the top, for what is left of this stage\'s defense: white is left, a grey chunk hangs behind each hit and drains, and the heal creeps back in purple, brightest at its edge. Empty is the break.',
+    draw: t => { water(t); sigilFloor(t); coil(t); weapons(t); bar(t, 6, 2, 60, 2, true); } },
+  { key: 'C', name: 'Chips and knitting',
+    cap: 'No numbers. Each blow knocks off scale chips and leaves a divot, both sized by the damage; the heal fills the divots from a purple edge and a purple shimmer runs in along the crack tips, quick at the full heal and slow and dim when cursed or bound.',
+    draw: t => { water(t); sigilFloor(t); coil(t, markC(t)); weapons(t); chips(t); } },
+  { key: 'D', name: 'A thin bar, numbers only on big hits',
+    cap: 'A one-cell bar at the top, with the same drain and purple heal as B but quiet, and a number only when a blow does 20 or more (the grenade, the star): the big hits say how much, the punches and the bleed do not.',
+    draw: t => { water(t); sigilFloor(t); coil(t); weapons(t); bar(t, 21, 2, 30, 1, false); floatNumbers(t, tallies(20), 1.5); } }
+];
+
+// --- the page -------------------------------------------------------------------------
+const SCALE = 12;   // twice the game's cell
+const panes = [];
+const only = location.hash.slice(1);
+for (const o of OPTIONS.filter(o => !only || only.includes(o.key))) {
+  const box = document.createElement('div');
+  box.className = 'opt';
+  box.innerHTML = `<h2>${o.key} -- ${o.name}</h2><p class="cap">${o.cap}</p>`;
+  const c = document.createElement('canvas');
+  c.width = CW * SCALE; c.height = CH * SCALE;
+  box.append(c);
+  document.getElementById('opts').append(box);
+  panes.push({ o, g: c.getContext('2d') });
+}
+
+function drawAt(t, ctx, o, sc) { g = ctx; s = sc; o.draw(((t % LOOP) + LOOP) % LOOP); }
+
+const scrub = document.getElementById('scrub'), clock = document.getElementById('clock'), play = document.getElementById('play');
+let playing = !/still/.test(location.search), t0 = performance.now(), held = 0;
+const nowT = () => playing ? ((performance.now() - t0) / 1000) % LOOP : held;
+play.onclick = () => { if (playing) { held = nowT(); playing = false; play.textContent = 'play'; } else { t0 = performance.now() - held * 1000; playing = true; play.textContent = 'pause'; } };
+scrub.oninput = () => { held = +scrub.value; if (playing) t0 = performance.now() - held * 1000; };
+function frame() {
+  const t = nowT();
+  for (const p of panes) drawAt(t, p.g, p.o, SCALE);
+  scrub.value = t; clock.textContent = t.toFixed(1) + ' s  wound ' + Math.round(at(W, t)) + ' / ' + DEPTH + '  heal ' + healRate(t).toFixed(1) + '/s';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// --- stills, for a preview that runs no scripts ---------------------------------------
+// `__stills(times)` draws each option as a strip of moments and all four at
+// one moment, and hands back png data urls (tools, not the page, save them).
+const MOMENTS = [
+  { t: 1.35, say: 'punch' }, { t: 6.5, say: 'grenade + lance' }, { t: 9.7, say: 'beam, sigil, curse' },
+  { t: 12.25, say: 'the star' }, { t: 14.2, say: 'healing, sigil still held' }
+];
+function labelled(W2, H2, draws) {
+  const c = document.createElement('canvas'); c.width = W2; c.height = H2;
+  const x = c.getContext('2d'); x.fillStyle = '#111'; x.fillRect(0, 0, W2, H2);
+  draws(x); return c;
+}
+window.__stills = (montageT = 12.25) => {
+  const sc = 12, pw = CW * sc, ph = CH * sc, head = 26, pad = 10;
+  const out = {};
+  for (const o of OPTIONS) {
+    // three across, two down: the five moments and the option's caption
+    const cellH = ph + 26;
+    const c = labelled(pad + 3 * (pw + pad), head + 2 * (cellH + pad), x => {
+      x.fillStyle = '#eee'; x.font = '18px Consolas, monospace';
+      x.fillText(`${o.key} -- ${o.name}`, pad, 20);
+      MOMENTS.forEach((m, i) => {
+        const cx = pad + (i % 3) * (pw + pad), cy = head + Math.floor(i / 3) * (cellH + pad);
+        const cv = document.createElement('canvas'); cv.width = pw; cv.height = ph;
+        drawAt(m.t, cv.getContext('2d'), o, sc);
+        x.drawImage(cv, cx, cy);
+        x.fillStyle = '#aaa'; x.font = '15px Consolas, monospace';
+        x.fillText(`${m.t.toFixed(2)} s -- ${m.say}`, cx, cy + ph + 18);
+      });
+      // the caption, wrapped, in the sixth cell
+      const cx = pad + 2 * (pw + pad), cy = head + cellH + pad + 10;
+      x.fillStyle = '#ccc'; x.font = '17px Consolas, monospace';
+      let lineStr = '', ly = cy + 16;
+      for (const word of o.cap.split(' ')) {
+        if (x.measureText(lineStr + word).width > pw - 20) { x.fillText(lineStr, cx + 10, ly); lineStr = ''; ly += 24; }
+        lineStr += word + ' ';
+      }
+      x.fillText(lineStr, cx + 10, ly);
+    });
+    out[o.key] = c.toDataURL('image/png');
+  }
+  const m = labelled(pad + 2 * (pw + pad), 2 * (head + ph + pad) + pad, x => {
+    OPTIONS.forEach((o, i) => {
+      const cx = pad + (i % 2) * (pw + pad), cy = pad + Math.floor(i / 2) * (head + ph + pad);
+      x.fillStyle = '#eee'; x.font = '16px Consolas, monospace';
+      x.fillText(`${o.key} -- ${o.name}   (${montageT.toFixed(2)} s)`, cx, cy + 16);
+      const cv = document.createElement('canvas'); cv.width = pw; cv.height = ph;
+      drawAt(montageT, cv.getContext('2d'), o, sc);
+      x.drawImage(cv, cx, cy + head - 4);
+    });
+  });
+  out.montage = m.toDataURL('image/png');
+  return out;
+};
+document.getElementById('log').textContent = `peak wound ${Math.round(Math.max(...W))} of ${DEPTH}, closed by ${(W.findLastIndex(v => v > 0.5) * DT).toFixed(1)} s`;
+</script>
+</body>
+</html>

@@ -14807,6 +14807,69 @@ same). No new number in the renderer: `CRACK_REACH`, `BELLY_BULGE` and
 `deep-warded`, `deep-split` and `deep-fading` before and after, and a new
 scene `deep-cracked` with the wound held at nine tenths of the bare stage.
 
+### Reading the fight: what a hit did and how fast it heals (design, not built)
+
+*Mocked 2026-09-23, `docs/mocks/serpent-hits-2026-09-23.html` (stills in
+`docs/mocks/serpent-hits/`); awaiting the owner's vote.* The cracks say how
+deep the wound is, but not what put it there or what is taking it back. With
+five weapons on the coil at once, a player cannot tell whether the lances are
+worth their rungs, whether the curse did anything, or why the wound stopped
+growing. The fight needs two readings the picture does not give: **how much
+each blow did**, and **when and how fast it is healing**. The flash is out
+(cut, "really bad"); whatever is added fades in and out through the tone
+ramp, pops nothing, and sits on the `P` grid in black, white and the
+abyss's purple.
+
+The four options, each run in the mock over the same scripted fight:
+
+- **A -- numbers off the hit.** A 3x5 pixel number, a font cell a game cell,
+  keylined in black, rises off where each blow landed and dims out through
+  the greys. The weapons that hurt while held (the lance, the beam) say their
+  sum once a second, and a grenade its whole burst, or the coil wears a
+  column of 3s. The heal rises off the wound in purple as `+N`, once a second,
+  so a sigil or a curse reads as a smaller `+`.
+- **B -- a bar for the stage.** A bar pinned across the top of the deep: white
+  is what is left of this stage's depth, a grey chunk hangs behind each hit
+  and drains, and the heal creeps back in purple, brightest at its edge. Empty
+  is the break. The one place the running total is plain.
+- **C -- chips and knitting.** No numbers. A blow knocks off chips and bites
+  a divot out of the hide, both sized by the damage; the heal fills each
+  divot back from a purple edge, and a purple shimmer runs in along the crack
+  tips, quick at the full heal, slow and dim when cursed or bound. The only
+  option that stays inside the picture, and the least exact.
+- **D -- a thin bar, and numbers only on big hits.** B's bar as one quiet
+  row of cells, plus A's numbers only for a blow of `READ_BIG` or more (20 in
+  the mock: the grenade's burst, the star). The punches and the bleed stay
+  silent; the blows worth a player's attention say so.
+
+**What it needs from the sim.** Every option but C reads facts the fight
+already has but does not keep:
+
+- *Per-hit damage, where it landed:* `strike()` returns `done` and knows
+  (x, y) and the weapon, but nothing records it. A short-lived list on `S`
+  (`EPHEMERAL`: a hit is a drawing, never a save) of `{ at, x, y, done,
+  weapon }`, with held weapons folded into one entry a second per body.
+  A needs it, D needs it above the threshold, C needs it for the chips and
+  divots (and C's divots also want the hit in body coordinates, the segment
+  and the side, so they ride the coil).
+- *The heal rate:* `healNow()` already gives it after sigils and the curse.
+  A needs the wound actually closed each second (the heal stops at a closed
+  wound), C the rate for the shimmer's pace.
+- *The stage's depth* (`SERPENT_WOUND`, the "max health"): B and D draw
+  `1 - woundK()`, already exported; the drain behind a hit and the heal's
+  purple want a lagged copy of it kept by the renderer, not the sim.
+
+**The calls for the owner.**
+
+1. **Numbers or not.** A and D put digits on the screen, which nothing else in
+   the game does outside the boards; C keeps the whole reading in the
+   picture at the cost of exactness. Is a number on the coil in the game's
+   register?
+2. **Is the bar the wound or the defense?** B and D draw what is left of the
+   stage, so the bar refills at every break and the four stages share one
+   bar; drawn instead as the wound, it grows with damage and the heal eats it.
+   Either way it replaces "still no bar" in "The serpent, redrawn".
+
 ## One crew, two homes: pods in the deep (built 2026-09-23)
 
 *The owner's calls, 2026-09-23: one crew, pods cost scales, the weapon
