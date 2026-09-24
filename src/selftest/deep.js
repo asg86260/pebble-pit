@@ -4,7 +4,7 @@
 // surface and the deep's roof themselves take no click. The camera's part of
 // it is test/deep-view.test.mjs; this is the click reaching it.
 
-import { ok, point, onScreen, run, settle } from './kit.js';
+import { ok, point, onScreen, run, settle, hoverStation, hoverAway } from './kit.js';
 import { countRect } from '../render/counter.js';
 import { portalNearEdge } from '../render/portal.js';
 import { S } from '../state.js';
@@ -103,6 +103,28 @@ export const TESTS = [
       ok(hiddenBefore, 'before the snatch there is no square'),
       ok(pressed && down === 'deep', 'after it, the square takes the view down', down),
       ok(up === 'yard', 'and back up', up)
+    ];
+  }],
+  // The pods stand from the snatch with the sqwife's in them, so their board
+  // is there from the deep's first frame; another pod is sold on it and not
+  // on the altar's.
+  ['deep: walking up to the pods opens their own board, with another pod on it', async () => {
+    deepYard();
+    window.__view('deep');
+    run(VIEW_GLIDE_S + 0.5);
+    const at = await hoverStation('pods');
+    const open = S.podsBoardOpen;
+    const rows = [...document.querySelectorAll('#podsshop [data-key]')].map(r => r.dataset.key);
+    const title = document.querySelector('#podsboard .title')?.textContent.trim();
+    await hoverAway();
+    await hoverStation('altar');
+    const altar = [...document.querySelectorAll('#altarshop [data-key]')].map(r => r.dataset.key);
+    await hoverAway();
+    return [
+      ok(!!at && open, 'the pods open a board', at ? `${S.pods} pods` : 'no ground'),
+      ok(title === 'the pods', 'which says whose it is', title),
+      ok(rows.includes('pod'), 'another pod is on it', rows.join(' ')),
+      ok(!altar.includes('pod'), "and not on the altar's", altar.join(' '))
     ];
   }]
 ];

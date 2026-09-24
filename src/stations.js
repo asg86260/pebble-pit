@@ -159,8 +159,10 @@ export const STATIONS = [
     after: [], needs: () => false,
     // Its pile is the floor: scales lying at the brim, the gathering behind.
     pile: () => bedAtBrim(), full: 'the floor is full of scales' },
-  // The pods, the deep's houses: nothing sold there, nothing put on.
-  { key: 'pods', name: 'the pods', glyph: 'house', site: true, open: () => S.pods > 0, stand: () => podsRect(), board: null,
+  // The pods, the deep's houses, standing from the snatch with the sqwife's
+  // in them. Another pod is sold on their own board; nobody is put on them.
+  { key: 'pods', name: 'the pods', glyph: 'house', empty: 'nothing to build',
+    open: () => S.pods > 0, stand: () => podsRect(), board: 'podsBoardOpen',
     after: [], needs: () => false },
   { key: 'well', name: 'the well', glyph: 'bucket',
     empty: 'the well is still', post: { key: 'welljob', job: JOB.LANCE },

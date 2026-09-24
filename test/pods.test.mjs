@@ -23,6 +23,8 @@ function deepYard() {
 group('a pod is bought in scales and adds a body who lives down there', async () => {
   deepYard();
   const crew = S.crew;
+  const onBoard = name => window.__boards().find(b => b.name === name)?.keys.includes('pod');
+  const board = { pods: onBoard('pods'), altar: onBoard('altar'), stands: !!state().stands.pods };
   window.__scales(1000);
   const scales = S.scales;
   const bought = window.__buy('pod');
@@ -31,7 +33,9 @@ group('a pod is bought in scales and adds a body who lives down there', async ()
   const home = residents();
   const at = podAt(1);                   // the sqwife's pod is the first
   return [
-    ok(bought, 'the altar sells a pod'),
+    ok(board.stands && board.pods && !board.altar, "another pod is on the pods' own board, standing from the snatch, and not the altar's",
+       JSON.stringify(board)),
+    ok(bought, 'the pods sell another pod'),
     ok(S.scales < scales, 'for scales', `${scales} -> ${S.scales}`),
     ok(S.crew === crew + 1 && S.pods === 2, 'and the crew is one more, living in it', `crew ${S.crew}, pods ${S.pods}`),
     ok(home.length === 1 && inDeep(home[0]), 'who comes out of it on the deep\'s floor',
