@@ -139,6 +139,27 @@ export const TESTS = [
     for (const w of up) w.say = null;
     return out;
   }],
+  // The deep has no top on screen: a window taller than the deep looks up
+  // past its ceiling, and the water goes on up there, stars and veil, rather
+  // than a flat black band over it. The checks' window is short, so the
+  // camera is put up there by hand, as the stuck-over-the-water check does.
+  ['deep: the water reaches the top of a window that looks up past the deep', async () => {
+    deepYard();
+    window.__view('deep');
+    run(1);
+    const c = document.getElementById('c');
+    const keep = S.camY;
+    S.camY = deepTop() - S.viewH / 2;
+    draw();
+    S.camY = keep;
+    // The band over the deep's ceiling, clear of the corner's squares.
+    const y0 = Math.round(c.height * 0.15), h = Math.round(c.height * 0.3);
+    const d = c.getContext('2d').getImageData(0, y0, c.width, h).data;
+    let lit = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 120) lit++;
+    const share = lit / (d.length / 4);
+    return [ok(share > 0.01, 'the water is lit over the deep\'s ceiling, not a black band', `${(share * 100).toFixed(2)}% lit`)];
+  }],
   // The pods stand from the snatch with the sqwife's in them, so their board
   // is there from the deep's first frame; another pod is sold on it and not
   // on the altar's.

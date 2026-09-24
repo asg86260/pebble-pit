@@ -129,8 +129,10 @@ export function abyssRung(x, y, { line, t, rampLen, magicLen, deep = 0, magicSha
 // liquid's surface at `line` in the pit's own rows, and this place's rows
 // `rowShift` under the pit's (nought in the pit itself). `tones` and `magic`
 // are the ramps as drawn: the yard's as they are, the deep's turned over for
-// its inversion.
-export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, tones, magic, t }) {
+// its inversion. `deep` lifts every cell further in, as `abyssRung`'s does:
+// the pit's field darkens toward the surface it is seen through, and a place
+// with no surface on screen asks for the whole of its depth everywhere.
+export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, deep = 0, tones, magic, t }) {
   const cols = Math.max(0, Math.round((to - from) / P)), rows = Math.max(0, Math.ceil((bottom - top) / P));
   if (!cols || !rows) return;
   const data = surface(cols, rows);
@@ -140,7 +142,7 @@ export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, ton
   for (let y = top, j = 0; y < bottom; y += P, j++) {
     const py = y + rowShift;                     // where this row is in the pit's liquid
     const r = py / P, dragX = dragRow(r, a);
-    const depth = Math.min(1, (py - line) / (P * 32));
+    const depth = Math.min(1, Math.max(0, (py - line) / (P * 32)) + deep);
     for (let x = from, i = 0; x < to; x += P, i++) {
       const rung = cellRung(x / P, r, dragX, dragY[i], depth, a, t, tones.length, magic.length, 1);
       if (!rung) continue;
