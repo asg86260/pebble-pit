@@ -30,6 +30,7 @@ import { commutePace } from '../levels.js';
 import { abyssLine } from '../pit.js';
 import { deepTop, deepFloor, deepX0, deepX1, inDeep, mouthX, spotX, coilAt, coilThick, nearestSeg } from './place.js';
 import { strike } from './serpent.js';
+import { rest } from './rest.js';
 
 // --- a body in the water ----------------------------------------------------------
 
@@ -45,7 +46,7 @@ export const working = w => !w.walking && inDeep(mid(w), w.y + WORKER - 1);
 // driver: stamped every frame it is up there, so the rules about falling and
 // floating (crew/step.js, verify.js rule 9) read it as supported for as long
 // as it is swimming and not a frame longer.
-const afloat = w => { if (w.y < feet() - P) w.aboardAt = S.tick; };
+export const afloat = w => { if (w.y < feet() - P) w.aboardAt = S.tick; };
 
 // One frame's swim toward a top-left (tx, ty), at a share of the walk.
 // True once it is there.
@@ -162,7 +163,7 @@ export const stepScribe = (w, c) => {
     w.circle = null;
     w.goal = 'rest';
     w.next = 0;
-    toFloor(w, 'circle');
+    rest(w, 'circle', c);
     return;
   }
   if (w.circle == null || slotTaken(w.circle, w)) w.circle = freeSlot(w);
@@ -196,10 +197,13 @@ const beamOf = new WeakMap();
 export const stepWarlock = (w, c) => {
   if (!working(w)) return;
   const t = c.now;
+  // Reach is asked from its place at the spire, not from wherever it is: a
+  // wizard at rest floats and strolls, and the coil coming in reach of the
+  // float is not the coil in reach of the spire.
+  const near = nearestSeg(home(w, 'spire') + WORKER / 2, feet(), t);
+  if (near.d > BEAM_REACH) { w.goal = 'rest'; w.next = 0; rest(w, 'spire', c); return; }
   if (!toFloor(w, 'spire')) { w.goal = 'back'; return; }
   const x = mid(w), y = w.y;
-  const near = nearestSeg(x, y, t);
-  if (near.d > BEAM_REACH) { w.goal = 'rest'; w.next = 0; return; }
   w.goal = 'channel';
   const p = coilAt(near.seg, t);
   let b = beamOf.get(w);

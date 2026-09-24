@@ -21,6 +21,7 @@ feature lives in DESIGN.md.
 - A builder hammering in the deep stirs up silt that sinks back and settles on the floor (test/deep-works.test.mjs).
 - The pods have a board of their own that sells another pod, and the deep's stations stand further apart (test/pods.test.mjs, src/selftest/deep.js).
 - Roombas for the janitor's closet, up to three: they drive out to the poop and the rain's muck on the open yard and bring it home for the one janitor minding them to tip away, and they smoke (test/roomba.test.mjs).
+- The deep's crew no longer hangs still with nothing to do: a gatherer on a bare floor, a scribe whose circles are full and a wizard with nothing in reach stroll, float and hop about their station, and go straight to work from mid-air when called (test/deep-rest.test.mjs).
 
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).

@@ -23,7 +23,7 @@ import { deepX0, deepX1, deepFloor, inHopper, hopperRect } from './place.js';
 
 // The push of the deep's current at a moment: one slow turn, so a shed cloud
 // leans one way for a while and then the other.
-const current = t => DEEP_CURRENT * Math.sin(2 * Math.PI * t / DEEP_CURRENT_MS);
+export const current = t => DEEP_CURRENT * Math.sin(2 * Math.PI * t / DEEP_CURRENT_MS);
 
 // Scales into the crusher: the account, said in one place so nothing else
 // writes it up. `crushAt` is for the drawing, the rollers turning.

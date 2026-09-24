@@ -15032,12 +15032,31 @@ jump is a walked arc, the ring closes); a check that the view cannot go
 down before the portal is bought and can after, through the tower's row.
 Scenes for the portal opening, her leap, and the conjured portal.
 
-## The deep's crew at rest (design, not built)
+## The deep's crew at rest (built 2026-09-23)
 
 *(2026-09-23, the owner: "also let the deep workers walk around a bit,
 float around, jump around, instead of just idling still." Mocks:
-`docs/mocks/deep-idle-2026-09-23.html`, four options beside today's, not yet
-voted on.)*
+`docs/mocks/deep-idle-2026-09-23.html`, four options beside today's. **The
+vote: D, the mix.** The owner did not answer how far a body wanders, so it
+is the default below: each body keeps to its own station's ground.)*
+
+**As built.** `deep/rest.js`, called by the three steps that set
+`goal = 'rest'` (the gatherer on a bare floor, the scribe with its circles
+full, the wizard with nothing in reach of the spire). A body off its ground
+swims to its place on the floor as it always did; on its ground it rests a
+few seconds, then picks a stroll (the yard's `amble`, with a half-cell bob
+that grows and dies with the pace), a float (an eased rise, a sway, a soft
+sink) or one to three hops, by `DEEP_REST_MIX`, a stroll most often. Where
+it goes is the spot on its ground furthest from every other body, so a crowd
+spreads. Every landing throws a puff of the builders' silt (`spawnGrit`).
+The crusher's ground is `DEEP_STAND_W` run out from the machine's side, not
+about its middle, since its hands wait at the toss and the ground about the
+middle is the machine. A wizard's reach is now asked from its place at the
+spire rather than from where it is, or a float that brought the coil into
+reach sent it back to the floor to find it out of reach again. The numbers
+are `DEEP_REST_*` in config/deep.js; the pace, the top of a float, the least
+rest and the pull are on the dev panel. A new rule in verify.js says no
+body is ever under the deep's floor.
 
 A body in the deep with nothing to do swims to its spot and hangs there
 dead still (`swim` in deep/arms.js, then nothing). In the yard an idle body
@@ -15101,11 +15120,12 @@ straight to them (the distance only shrinks); a reload mid-float keeps its
 height. A scene, `deep-rest`, for the shot.
 
 **The calls for the owner.**
-1. Which option (A, B, C or D).
+1. Which option (A, B, C or D). *D.*
 2. How far a body wanders: its own station's ground (the mock, and what
    keeps a gatherer a second from the next shower), or the whole floor --
    visiting the other stations and going home to its pod -- at the cost of a
-   slower answer when the work comes back.
+   slower answer when the work comes back. *Not answered; built as its own
+   station's ground.*
 
 ## The janitors' roomba (built)
 

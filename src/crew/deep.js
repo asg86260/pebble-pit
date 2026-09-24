@@ -1,11 +1,14 @@
 // The deep's hands: the yard's crew, gone down the shaft (docs/wave-serpent.md).
 //
-// There is no crew of the deep's own. A deep job is a job like any other: a
-// body put on it walks to the plank, swims down the shaft and along the
-// deep's floor to its station (route.js), and a body taken off it swims back
-// up and walks to whatever the yard wants of it. What each does at its
-// station is deep/arms.js's; here is only where each station is, and the one
-// rule every body obeys about which half of the works it belongs in.
+// One crew, two homes (DESIGN.md, "One crew, two homes"): a body may live in
+// the yard's rooms or in the deep's pods (`deepHome`), and either may be put
+// on a deep job. A deep job is a job like any other: a body from the yard
+// walks to the plank, swims down the shaft and along the deep's floor to its
+// station (route.js), and a body taken off it swims back up and walks to
+// whatever the yard wants of it. What each does at its station is
+// deep/arms.js's and deep/gather.js's, and what it does there with nothing to
+// do is deep/rest.js's; here is only where each station is, and the one rule
+// every body obeys about which half of the works it belongs in.
 
 import { WORKER } from '../config.js';
 import { TYPE, isDeepType } from '../jobs.js';

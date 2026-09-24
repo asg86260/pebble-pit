@@ -17,6 +17,7 @@ import { topRow } from '../grid.js';
 import { tossX } from './place.js';
 import { scoop, richestNear, bedX, tossIn } from './scales.js';
 import { mid, feet, working, swim } from './arms.js';
+import { rest } from './rest.js';
 
 // How far either side of where it stands a gatherer reaches for scales.
 const REACH = P * 3;
@@ -38,10 +39,11 @@ export const stepGatherer = (w, c) => {
     w.goal = 'seek';
     return;
   }
-  // A bare floor: it waits by the crusher for the next shower.
+  // A bare floor: it waits by the crusher for the next shower, at rest on
+  // the crusher's ground (deep/rest.js).
   if (!deepBed.n) {
     w.goal = 'rest';
-    swim(w, tossX() - WORKER / 2, feet(), pace);
+    rest(w, 'crusher', c, pace);
     return;
   }
   // The stretch it was working gave out, or it has none: pick again.

@@ -128,6 +128,45 @@ export const DEEP_CURRENT_MS = 11000; // one turn of it
 // Bodies in the deep swim, at a share of their walk: the water is thick.
 export const SWIM_PACE = 0.5;
 
+// --- the deep's crew at rest -----------------------------------------------------
+// A body whose station has nothing for it strolls, floats or hops about its
+// station's ground (DEEP_STAND_W), with a rest between (DESIGN.md, "The deep's
+// crew at rest", D of the mocks). Speeds are px a frame, times ms.
+export let DEEP_REST_WALK = 0.3;          // a stroll's top pace, against the yard's IDLE_PACE
+export const DEEP_REST_BOB = P / 2;       // how high a stroll's step lifts it, at full pace
+export const DEEP_REST_STRIDE = P * 2.5;  // px of stroll a step
+export const DEEP_REST_REACH = 0.6;       // a stroll goes at most this share of the ground from where it is
+export let DEEP_REST_MS = 2000;           // the least rest between two goes
+export const DEEP_REST_MORE_MS = 3000;    // and up to this much longer
+// What a body picks once its rest is up: a stroll, a float, a hop, as weights.
+// A stroll most often, as the owner voted.
+export const DEEP_REST_MIX = { walk: 0.45, float: 0.27, hop: 0.28 };
+// A float: it rises this many cells, eased, hangs swaying, and sinks back.
+export let DEEP_REST_RISE = [4, 11];              // cells: fewest, most
+export const DEEP_REST_RISE_MS = [2600, 4400];    // the rise takes between these
+export const DEEP_REST_HANG_MS = [1200, 3400];    // and it hangs between these
+export const DEEP_REST_SWAY = 2;                  // px a hanging body sways up and down
+export const DEEP_REST_SWAY_MS = 1800;            // one sway
+export const DEEP_REST_CURRENT = 0.25;            // the share of the current that pushes a floating body
+export const DEEP_REST_DRIFT = 0.15;              // and its own sideways drift, at most
+// The pull on a body sinking or hopping: the water's, far under the yard's,
+// and held back by the drag. A sink comes in soft: never faster than the
+// first number plus the second for each px it still has to fall.
+export let DEEP_REST_PULL = 0.018;
+export const DEEP_REST_DRAG = 0.985;
+export const DEEP_REST_SOFT = [0.06, 0.02];
+export const DEEP_REST_SINK = 0.6;                // a sink's pull, a share of the hop's
+// A hop: a push off between these (px a frame, up), aimed a few cells along,
+// one to DEEP_REST_HOPS in a row with a crouch between.
+export const DEEP_REST_HOP = [1.4, 2.2];
+export const DEEP_REST_HOP_REACH = P * 8;
+export const DEEP_REST_HOPS = 3;
+export const DEEP_REST_CROUCH_MS = [500, 1000];
+// How far under the water line a resting body's top keeps, so nothing at rest
+// drifts up into the surface's clip.
+export const DEEP_REST_HEADROOM = P * 30;
+export const DEEP_REST_SILT = 4;                  // silt a landing kicks up
+
 // --- the weapons -------------------------------------------------------------------
 // What a rung buys is in LADDERS (config/rungs.js): punch, brawl, lance,
 // lancehold, grenade, grenadepace, sigil, beam, curse. These are the fixed
@@ -177,5 +216,13 @@ export const DEEP_KNOBS = [
   { key: 'DEEP_DRAG', label: 'deep drag', min: 0.8, max: 1, step: 0.005,
     get: () => DEEP_DRAG, set: v => { DEEP_DRAG = v; } },
   { key: 'DEEP_CURRENT', label: 'deep current', min: 0, max: 1.5, step: 0.05,
-    get: () => DEEP_CURRENT, set: v => { DEEP_CURRENT = v; } }
+    get: () => DEEP_CURRENT, set: v => { DEEP_CURRENT = v; } },
+  { key: 'DEEP_REST_WALK', label: 'deep rest, stroll pace', min: 0.05, max: 1.5, step: 0.05,
+    get: () => DEEP_REST_WALK, set: v => { DEEP_REST_WALK = v; } },
+  { key: 'DEEP_REST_RISE_TOP', label: 'deep rest, float cells at most', min: 4, max: 24, step: 1,
+    get: () => DEEP_REST_RISE[1], set: v => { DEEP_REST_RISE = [DEEP_REST_RISE[0], v]; } },
+  { key: 'DEEP_REST_MS', label: 'deep rest, least rest ms', min: 0, max: 10000, step: 250,
+    get: () => DEEP_REST_MS, set: v => { DEEP_REST_MS = v; } },
+  { key: 'DEEP_REST_PULL', label: 'deep rest, pull on a hop', min: 0.005, max: 0.1, step: 0.001,
+    get: () => DEEP_REST_PULL, set: v => { DEEP_REST_PULL = v; } }
 ];
