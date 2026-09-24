@@ -15271,6 +15271,164 @@ height. A scene, `deep-rest`, for the shot.
    slower answer when the work comes back. *Not answered; built as its own
    station's ground.*
 
+## The deep's bench (design, not built)
+
+*(2026-09-24, the owner: "i think we need to reorg the deep stations. we
+should either make a new bench level station or change the stations sprite
+to be more generic. since it holds so many upgrades". Mocks:
+`docs/mocks/deep-bench-2026-09-24.html`, pngs in `docs/mocks/deep-bench/`.)*
+
+The deep's stations were just redrawn to show each crew's work -- the altar
+a punching bag, the well a spear rack, the armory a ripple font, the circle
+its ring, the spire the beam's obelisk -- and the altar's board no longer
+matches its drawing: it is the brawlers' station and the deep's bench at
+once (`DEEP_SPOTS` in config/deep.js still says so: "The altar is the deep's
+bench: punching, and the doors").
+
+### What each board sells today
+
+From `DEEP_ROWS` and `DEEP_SECTIONS` in `src/deep/rows.js`. "Own" is the
+crew posted there; "general" is the deep's, belonging to no one crew.
+
+| board | row (key) | whose |
+|---|---|---|
+| altar | brawlers (roster heading) | own |
+| altar | punch strength (`punch`) | own -- and the click's: `strike('punch', ...)` in serpent.js reads the same level, so it is also "you" |
+| altar | punch pace (`brawl`) | own |
+| altar | draw the well (`unlockwell`) | **general** -- a door |
+| altar | open the armory (`unlockfont`) | **general** -- a door |
+| altar | mark the circle (`unlockcircle`) | **general** -- a door |
+| altar | raise the spire (`unlockspire`) | **general** -- a door |
+| pods | another pod (`pod`) | general (the deep's crew), but on its own station, as the yard's rooms are on the house's board (the owner's call, 2026-09-23) |
+| well | lancers; lance bleed (`lance`), lance hold (`lancehold`) | own |
+| armory (`font`) | grenadiers; grenade burst (`grenade`), grenade pace (`grenadepace`) | own |
+| circle | scribes; sigil circles (`sigil`) | own |
+| spire | abyssal wizards; beam strength (`beam`), curse the heal (`curse`) | own |
+| spire | the called star (`callstar`), star pace (`tunestar`) | own: the deep's machine, put up and lit by the wizards, sold where it is built as every yard machine is |
+| crusher | no board | -- |
+| tower (yard) | conjure the portal | general, but it stays in the yard: it is what lets the camera down |
+
+So the one overloaded board is the altar's: its crew's two ladders and all
+four doors. Nothing else in the deep is general -- the deep builders
+(`TYPE.DELVE`) and the gatherers are spare hands with no row, and there is
+no "you" section down there beyond the punch the click shares with the
+fists. In the yard the rule is the bench's: stations sell their crews'
+ladders and their machines; the bench sells you, the haulers, the shields
+and every door, because "the place is what they buy" (`SECTIONS` in
+upgrades.js). The deep broke that rule by hanging its doors on a crew's
+station.
+
+### (a) A deep bench of its own -- recommended
+
+A station with no crew, "the bench" in the deep's words (the pointer's
+label and the board's title), holding every door. Each crew station keeps
+only its crew's rows.
+
+- **What moves.** The four door rows' `board: 'altar'` becomes the bench's
+  key; `DEEP_SECTIONS.altar` loses "the deep", and the bench's is that one
+  section, the four doors. The altar keeps its roster, punch strength and
+  punch pace. The pods, the well, the armory, the circle and the spire do
+  not change. The called star stays on the spire.
+- **Where it stands.** Recommended (a1): between the pods and the altar, so
+  the floor reads homes and shop on the left, then the weapons in door
+  order. `DEEP_SPOTS` becomes `{ crusher: 0.05, pods: 0.19, bench: 0.29,
+  altar: 0.41, well: 0.53, font: 0.655, circle: 0.78, spire: 0.9 }`: the
+  crusher, the pods and the spire stay put, and the five crews close up to
+  a step of 62-65 cells, each still wider than a crew's ground (60,
+  `DEEP_STAND_W` either side). The bench needs no crew ground, only its
+  dome, so it fits in the gap by the pods. The other shape (a2) puts it
+  under the portal at 0.5, where the camera opens, moving the altar to
+  0.295 and the well to 0.41 -- the arrival and the shop in one place, but
+  the doors' order broken across the floor.
+- **When it stands.** From the snatch, like the altar and the crusher, with
+  its empty line ("nothing to open yet") until the first ward goes up and
+  the well's door is offered. The other shape is the yard's: raised by the
+  deep's builders when its first door is offered (`raise.js`'s call, in the
+  deep), so it is not on the floor until there is something on it -- truer
+  to the yard, and a second raise to build. After the spire's door the
+  board is empty for good, as the yard's "build" section empties; the
+  drawing stays.
+- **Its drawing.** Three options, all 20 wide, five tones, under the same
+  dome as the rest: **A, the carved workbench** -- a stone slab on squat
+  legs, purple runes along its face, a trough of black water slung under
+  it, a hammer and tongs on top and a purple lamp hung off a crook; the
+  yard's bench, drowned. **B, the slate post** -- a lintel on two posts over
+  a plinth, four black slates hung off it on cords, each cut with one door's
+  mark (a lance, a ring, a bound star, a crystal): the deep's noticeboard of
+  what it can open. **C, the bound chest** -- black water bound in white
+  iron, two chains crossed over it and a purple lock where they meet, its
+  lid lifted a crack on the purple. B says "doors" most plainly; A says "the
+  bench" most plainly.
+- **What the player sees the first time down.** Arriving through the portal
+  at the deep's middle, the floor to its left reads crusher, pods, bench,
+  altar -- the sqwife at the bag, the bench's board empty (or, raised, the
+  bench not yet there). When the first ward goes up the well's door comes
+  up on the bench's board, and its tick lands over the bench.
+- **What the code joins, unasked.** A row in `STATIONS` (open from the
+  snatch, `stand: () => standOf(<key>)`, its own `<key>BoardOpen`,
+  `glyph: 'crate'`, no post, `after: []`, `needs: () => false`); an entry
+  in `SPRITES`, in `STANDS` in render/deep.js and in `DOWN_THERE` in
+  works.js; `TICKS_AT.deep` becomes the bench, so a door's tick lands where
+  it was sold; the board flag in `EPHEMERAL`; `registerBoard` picks the
+  board up from `DEEP_ROWS`. The key cannot be `bench` -- the yard's bench
+  has it (`S.boardOpen`, `bench` in state.js, `siteDone.bench`) -- so it is
+  `deepbench` in code and "the bench" in words, or the drawing's own name
+  ("the slates", "the chest") if B or C wins. No pile, so no pile-full
+  mark; per-cell variation is the dome's, as every station's.
+- **Saves.** Nothing saved names a row's board. The doors keep their keys
+  (`unlockwell` and the rest) and what they set (`S.wellOpen` and the rest);
+  a door part-built is a work on the site `deep` and stays one;
+  `siteDone.altar` may hold a door's tick from before, which clears when the
+  altar's board is read, as it would have. The spots moving is a picture
+  change on load: the bodies swim to their stations' new places from where
+  they are, the sigils are laid about the circle's new spot, and nothing
+  teleports. No migration.
+- **Checks.** `test/shop-rows.mjs`: the four door lines move under a "the
+  deep: the bench" heading; their `reach` does not change, and the coverage
+  files buy and cold-reload them as before. A node check buying the well's
+  door through the bench's board, the player's way, and finding it gone
+  from the altar's. A scene, `deep-bench`, for the shot.
+
+### (b) Keep the boards, make the altar's drawing general
+
+Nothing moves on any board; the altar is redrawn as the deep's place rather
+than the brawlers'. Options in the mock: **b1, an altar proper** -- a
+stepped stone block with a basin of purple fire and runes down its face;
+**b2, the slate post with wraps** -- B's slates with a black hand wrap hung
+in place of two of them, general first and fists second; **b3, the
+workbench with the bag at its end** -- A's slab with today's bag hung off a
+gibbet over its end, 22 wide.
+
+What it costs: the brawlers are then the one crew whose station does not
+show its weapon, a day after the bag was voted in for exactly that; b1 loses
+the fists altogether, b2 and b3 keep a trace of them at the cost of a
+drawing that says two things. And it fixes the picture, not the rule: the
+doors are still sold on a crew's station, the altar's board is still the
+longest in the deep, and a door's tick still lands over the brawlers.
+
+### Recommendation
+
+(a), placed as a1, drawn as B or A. It is one station row, one sprite, one
+spot table and four `board` fields; every door keeps its key; and it puts
+the deep back under the yard's rule, where the crew stations sell their
+crews and the bench sells the places.
+
+### The calls
+
+1. **(a) or (b)** -- and for (a), **where the bench stands**: a1, beside the
+   pods, the weapons in door order (recommended), or a2, under the portal
+   where the player arrives.
+2. **When it stands**: from the snatch with an empty board until the first
+   door (recommended: nothing to build before the deep has anything to
+   sell), or raised by the deep's builders when its first door is offered,
+   as the yard's bench is.
+
+Open but not shape-changing: which drawing (A, B, C; b1, b2, b3), and
+whether punch strength, which the click shares, should one day be split
+into the player's own ladder on the bench and the brawlers' on the altar,
+as the yard's pick damage is the bench's and the rock hands' ladders are
+the shack's.
+
 ## The janitors' roomba (built)
 
 *(2026-09-23, the owner's call: "lets give the janitors a machine also, a

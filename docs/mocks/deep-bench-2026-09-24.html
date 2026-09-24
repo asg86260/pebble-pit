@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Bench Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .opt { border-top: 1px solid var(--rule); padding: 14px 0 18px; }
+  .opt h2 { font-size: 14px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 10px; max-width: 1080px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .lbl { color: var(--dim); font-size: 11px; margin-top: 3px; }
+  pre { margin: 0; padding: 8px; border: 1px solid var(--rule); font-size: 11px; line-height: 1.15; }
+  table { border-collapse: collapse; font-size: 12px; }
+  td, th { border: 1px solid var(--rule); padding: 3px 8px; vertical-align: top; text-align: left; }
+  th { font-weight: bold; }
+  .gen { font-weight: bold; }
+  .moved { text-decoration: line-through; color: var(--dim); }
+  body.shot > *:not(.keep) { display: none; }
+  body.shot { padding: 8px; }
+</style>
+</head>
+<body>
+<h1>The deep's bench: a general station, or a generic altar</h1>
+<p class="note">A mock drawn from plain cells, not the game. The floor strips are the whole deep, 520 cells across
+and 130 down, at two screen pixels a cell: the stations at their <code>DEEP_SPOTS</code> fractions, each under a
+dome sized from its drawing's inked width (4 cells of pad, 4 of wall), the crusher at its spot, three pods, the
+portal's deep end at <code>DEEP_PORTAL_AT</code> with its real radius and drop, and a flat stand-in for the
+coil at <code>COIL_Y</code>. The bars under the floor are each crew's standing ground (<code>DEEP_STAND_W</code>
+either side of its spot); the bench has no crew and so no bar. The sprite cards are the deep's five tones
+(<code>#</code> white, <code>+</code> light grey, <code>-</code> dark grey, <code>o</code> the black water,
+<code>*</code> the abyss's purple), at the game's size and four times it. What it cannot show: the real abyss
+field (the water is a cheap stand-in), the serpent's body and its sway, the scale bed, bodies at work, the
+fences and boards, and how much of the floor the camera shows on a given window -- it opens on the portal and
+scrolls from there.</p>
+
+<div id="strips"></div>
+<div id="cards"></div>
+
+<div class="opt keep" id="boards">
+<h2>The boards, before and after (option a)</h2>
+<p class="cap">Bold rows are general -- the deep's, not the crew's. Struck rows leave that board. Row keys do
+not change; only the board a row is drawn on does.</p>
+<table>
+<tr><th>board</th><th>today</th><th>option (a)</th><th>option (b)</th></tr>
+<tr><td>the bench (new)</td><td>--</td>
+  <td>the deep: <span class="gen">draw the well</span> (unlockwell), <span class="gen">open the armory</span>
+  (unlockfont), <span class="gen">mark the circle</span> (unlockcircle), <span class="gen">raise the spire</span>
+  (unlockspire)</td><td>--</td></tr>
+<tr><td>the altar</td>
+  <td>brawlers (roster)<br>the fist: punch strength (punch), punch pace (brawl)<br>the deep:
+  <span class="gen">draw the well, open the armory, mark the circle, raise the spire</span></td>
+  <td>brawlers (roster)<br>the fist: punch strength, punch pace<br><span class="moved">the deep: the four doors</span></td>
+  <td>as today, under a general drawing</td></tr>
+<tr><td>the pods</td><td>the pods: <span class="gen">another pod</span> (pod)</td><td>unchanged</td><td>unchanged</td></tr>
+<tr><td>the well</td><td>lancers; the lance: lance bleed, lance hold</td><td>unchanged</td><td>unchanged</td></tr>
+<tr><td>the armory</td><td>grenadiers; the grenade: grenade burst, grenade pace</td><td>unchanged</td><td>unchanged</td></tr>
+<tr><td>the circle</td><td>scribes; the circle: sigil circles</td><td>unchanged</td><td>unchanged</td></tr>
+<tr><td>the spire</td><td>abyssal wizards; the spire: beam strength, curse the heal; the star: the called star,
+  star pace</td><td>unchanged</td><td>unchanged</td></tr>
+<tr><td>the crusher</td><td>no board</td><td>no board</td><td>no board</td></tr>
+<tr><td>the tower (yard)</td><td><span class="gen">conjure the portal</span></td><td>stays in the yard: it is bought
+  before the deep can be seen</td><td>unchanged</td></tr>
+</table>
+</div>
+
+<script>
+// --- the stations as the game has them (deep/sprites.js, 2026-09-24) -----------------
+const GAME = {
+  altar: [
+    '..#############.....', '..##+-...##...#.....', '..##.+-..--...-.....', '...##....##.........',
+    '...##...####........', '...##..#oooo#...+*..', '...##..#oooo#..+....', '...##..#oo++++*.....',
+    '...##..#++-*o#......', '...##.*+oooo#.......', '...##.+#oooo#.......', '...##.-#oooo#.......',
+    '...##..#oooo++......', '...##..#oo++*#......', '...##..#++*oo#......', '...##.+*####........',
+    '...##.+*............', '..###.-+*...........', '.####--++*..........', '####################'
+  ],
+  well: [
+    '...#............#...', '..*+*..#....#..*+*..', '...+..*+*..*+*..+...', '...*...*....*...*...',
+    '...+...+....+...+...', '.##-###-####-###-##.', '.#+*...*....*...*-#.', '.#++...+....+...+-#.',
+    '.#++...+....+...+-#.', '#+.*...*....*...*.-#', '#+.+...+....+...+.-#', '#+.+...+....+...+.-#',
+    '#+.*...*....*...*.-#', '###-###-####-###-###', '#+oooooooooooooooo-#', '#+ooo*oooooooo*ooo-#',
+    '#+oooooo*oo*oooooo-#', '####################'
+  ],
+  font: [
+    '........####........', '.......#o**o#.......', '......-#*oo*#-......', '......-#*oo*#-......',
+    '.......#o**o#.......', '........####........', '.....-...**...-.....', '....+....**....+....',
+    '....+...-**-...+....', '.##################.', '.#oo*ooo****ooo*oo#.', '..#oooooooooooooo#..',
+    '...##++++++++++##...', '.....##########.....', '........#++#........', '........#++#........',
+    '........#--#........', '......########......', '....############....', '.##################.'
+  ],
+  circle: [
+    '.......########.......', '......##oo**oo##......', '.....##ooo**ooo##.....', '....##oooo**oooo##....',
+    '...##oooo*oo*oooo##...', '...#ooooo*oo*ooooo#...', '...+o************o+...', '...#oo****oo****oo#...',
+    '...#ooo**oooo**ooo#...', '...#oooo******oooo#...', '...+oooo*o**o*oooo+...', '...##oo***oo***oo##...',
+    '....##o**oooo**o##....', '.....##*oooooo*##.....', '......##oooooo##......', '.......########.......',
+    '........##++##........', '.....############.....', '..******************..'
+  ],
+  spire: [
+    '....*....**....*....', '.....*..*##*..*.....', '.......*####*.......', '......*##**##*......',
+    '.......*####*.......', '.....*..*##*..*.....', '.........**.........', '........#oo#........',
+    '........#o*#........', '........#oo#........', '.......#oo*o#.......', '.......#o*oo#.......',
+    '.......#oo*o#.......', '.......#o*oo#.......', '......#oooooo#......', '......#o*oo*o#......',
+    '......#oooooo#......', '.....##++++++##.....', '....#-*------*-#....', '...##############...',
+    '####################'
+  ]
+};
+const CRUSHER = [
+  '....#++++++++++++++++++++#....', '.....#oooooooooooooooooo#.....', '......#oooooooooooooooo#......',
+  '.......#ooooooooooooooo#......', '.......#oooooooooooooo#.......', '........#oooooooooooo#........',
+  '.........#oooooooooo#.........', '.############################.', '..#+++++-+++++++-+++++++-++#..',
+  '..#+++++-+++++++-+++++++-++#..', '..#+++++-+++++++-+++++++-++#..', '..#+++++-+++++++-+++++++-++#..',
+  '..#------------------------#..', '..#+-+++++++-+++++++-++++++#..', '..#+-+++++++-+++++++-++++++#..',
+  '..#+-+++++++########-++++++#..', '..#+-++++++##oooooo##++++++#..', '..#--------#oooooooo#------#..',
+  '..#+++++-++#oooooooo#+++-++#..', '..#+++++-++#oooooooo#+++-++#..', '..#+++++-++#oooooooo#+++-++#..',
+  '..#+++++-++#oooooooo#+++-++#..', '..#--------#oooooooo#------#..', '..#+-++++++#oooooooo#++++++#..',
+  '..#+-++++++#oooooooo#++++++#..', '..#+-++++++#oooooooo#++++++#..', '..#+-++++++#oooooooo#++++++#..',
+  '..#--------#oooooooo#------#..', '.############################.', '------------------------------'
+];
+
+// --- the options ------------------------------------------------------------------------
+// (a): the bench's drawing, a station of its own. (b): the altar's, standing for everything it sells.
+const BENCH = [
+  { key: 'A', name: 'The carved workbench',
+    cap: 'A slab of the deep\'s stone on two squat legs, runes cut purple along its face, a trough of black water slung between the legs; a hammer and tongs laid on top and a lamp of purple light hung off a crook at its end. The yard\'s bench, drowned.',
+    rows: [
+      '................###.',
+      '............#####+#.',
+      '............#....+#.',
+      '...........###...+#.',
+      '..........#*o*#..+#.',
+      '..........#o*o#..+#.',
+      '..........#*o*#..+#.',
+      '...........###...+#.',
+      '............*....+#.',
+      '..##.............+#.',
+      '..##......#......+#.',
+      '.####...-###-....+#.',
+      '..##....-+.+-....+#.',
+      '####################',
+      '#+*+-+*+-+*+-+*+-+*#',
+      '####################',
+      '.##+............+##.',
+      '.##+............+##.',
+      '.##+oooo*oo*oooo+##.',
+      '.##++++++++++++++##.',
+      '.##+............+##.',
+      '####################'
+    ] },
+  { key: 'B', name: 'The slate post',
+    cap: 'A lintel on two posts over a stepped plinth, and hung off it by cords four black slates, one a door: a lance, a ring of ripples, a bound star, a rayed crystal, each cut in purple. A notice post for the deep -- what it can open next, on the wall.',
+    rows: [
+      '.##################.',
+      '####################',
+      '.#+...+......+...#+.',
+      '.#+...+......+...#+.',
+      '.#+.#####..#####.#+.',
+      '.#+.#o*o#..#***#.#+.',
+      '.#+.#o*o#..#*o*#.#+.',
+      '.#+.#o*o#..#***#.#+.',
+      '.#+.#####..#####.#+.',
+      '.#+...+......+...#+.',
+      '.#+...+......+...#+.',
+      '.#+.#####..#####.#+.',
+      '.#+.#*o*#..#o*o#.#+.',
+      '.#+.#o*o#..#***#.#+.',
+      '.#+.#*o*#..#o*o#.#+.',
+      '.#+.#####..#####.#+.',
+      '.#+..............#+.',
+      '.#+..............#+.',
+      '.##################.',
+      '...##############...',
+      '####################'
+    ] },
+  { key: 'C', name: 'The bound chest',
+    cap: 'A chest of black water bound in white iron, two grey chains crossed over it and a purple lock where they meet, its lid lifted a crack with the abyss\'s purple showing under it. What the deep keeps for later.',
+    rows: [
+      '...##############...',
+      '..#++++++++++++++#..',
+      '.#++++++++++++++++#.',
+      '.##################.',
+      '..****************..',
+      '.##################.',
+      '.#-oooooo##oooooo-#.',
+      '.#o-ooooo##ooooo-o#.',
+      '.#oo-oooo##oooo-oo#.',
+      '.#ooo-oo*##*oo-ooo#.',
+      '.######-*##*-######.',
+      '.#oooo-o****o-oooo#.',
+      '.#ooo-ooo##ooo-ooo#.',
+      '.#oo-oooo##oooo-oo#.',
+      '.#o-ooooo##ooooo-o#.',
+      '.#-oooooo##oooooo-#.',
+      '.##################.',
+      '..#+............+#..',
+      '####################'
+    ] }
+];
+
+const ALTAR = [
+  { key: 'b1', name: 'An altar proper',
+    cap: 'A stepped block of the deep\'s stone with a basin of purple fire on it and runes cut down its face. Reads as "the deep\'s place", and nothing of the fists is left on it.',
+    rows: [
+      '.......*....*.......',
+      '........*..*........',
+      '......*.*..*.*......',
+      '.......******.......',
+      '......*******.......',
+      '....############....',
+      '....#oooooooooo#....',
+      '.....##########.....',
+      '...##############...',
+      '...#+-++++++++-+#...',
+      '...#+*++++++++*+#...',
+      '...#+-++*++*++-+#...',
+      '...#+*+++**+++*+#...',
+      '...#+-++*++*++-+#...',
+      '...#+*++++++++*+#...',
+      '...#+-++++++++-+#...',
+      '..################..',
+      '.##################.',
+      '####################'
+    ] },
+  { key: 'b2', name: 'The slate post, wraps hung on it',
+    cap: 'Bench B with the brawlers kept in it: the right-hand slates swapped for a black hand wrap hanging off the lintel. General first, fists second.',
+    rows: [
+      '.##################.',
+      '####################',
+      '.#+...+......+...#+.',
+      '.#+...+......+...#+.',
+      '.#+.#####...###..#+.',
+      '.#+.#o*o#...#o#..#+.',
+      '.#+.#o*o#...#*#..#+.',
+      '.#+.#o*o#...#o#..#+.',
+      '.#+.#####...#o#..#+.',
+      '.#+...+.....#*#..#+.',
+      '.#+...+.....#o#..#+.',
+      '.#+.#####...###..#+.',
+      '.#+.#***#........#+.',
+      '.#+.#*o*#........#+.',
+      '.#+.#***#........#+.',
+      '.#+.#####........#+.',
+      '.#+..............#+.',
+      '.#+..............#+.',
+      '.##################.',
+      '...##############...',
+      '####################'
+    ] },
+  { key: 'b3', name: 'The bench with the bag at its end',
+    cap: 'Bench A\'s slab, with today\'s black bag hung off a gibbet over its end in place of the lamp: a workbench you also hit. Two drawings in one, and wider than the rest.',
+    rows: [
+      '................######',
+      '................#+...#',
+      '................#+...#',
+      '................#+..##',
+      '................#+.#oo',
+      '................#+.#oo',
+      '................#+.#o*',
+      '................#+.#oo',
+      '................#+.#*o',
+      '................#+.#oo',
+      '..##............#+.##+',
+      '..##......#.....#+....',
+      '.####...-###-...#+....',
+      '..##....-+.+-...#+....',
+      '######################',
+      '#+*+-+*+-+*+-+*+-+*+-#',
+      '######################',
+      '.##+..............+##.',
+      '.##+oooo*oo*oooooo+##.',
+      '.##++++++++++++++++##.',
+      '.##+..............+##.',
+      '######################'
+    ] }
+];
+
+// --- the deep's tones, as seen ----------------------------------------------------------
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const INK = { '#': '#ffffff', '+': GREYS[9], '-': GREYS[6], 'o': '#000000', '*': PURPLES[11] };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+
+// --- the deep, in cells (config/deep.js, config/deepdraw.js) ------------------------------
+const DEEP_W = 520, DEEP_H = 130, DOME_PAD = 4, DOME_WALL = 4, STAND = 30;
+const CRUSHER_W = 30, POD_W = 7, POD_H = 5, POD_GAP = 1, POD_COLS = 4, PODS = 3;
+const PORTAL = { at: 0.5, r: 15, y: 5 + 2 + 1 + 15 };
+const COIL = { y: 0.5 * DEEP_H, amp: 9, waves: 3, x0: 0.06, x1: 0.94, girth: 9 };
+const FLOOR = DEEP_H, UNDER = 12;
+
+const LAYOUTS = [
+  { key: 'today', name: 'Today', cap: 'As the game stands: the doors are sold on the altar.',
+    spots: { crusher: 0.05, pods: 0.19, altar: 0.335, well: 0.475, font: 0.62, circle: 0.76, spire: 0.9 } },
+  { key: 'a1', name: '(a1) The bench between the pods and the altar -- recommended',
+    cap: 'The homes and the shop on the left, then the weapons in door order. The five crews close up to a step of 0.12-0.125 (62-65 cells, each crew\'s ground 60), the spire where it was.',
+    bench: 'A', spots: { crusher: 0.05, pods: 0.19, bench: 0.29, altar: 0.41, well: 0.53, font: 0.655, circle: 0.78, spire: 0.9 } },
+  { key: 'a2', name: '(a2) The bench under the portal',
+    cap: 'Where the camera opens and the player arrives. The altar and the well move left to make room; the armory, circle and spire stay put. Breaks door order across the floor.',
+    bench: 'A', spots: { crusher: 0.05, pods: 0.19, altar: 0.295, well: 0.41, bench: 0.5, font: 0.62, circle: 0.76, spire: 0.9 } },
+  { key: 'b', name: '(b) Today\'s floor, the altar redrawn generic (b1 shown)',
+    cap: 'Nothing moves; the altar\'s drawing is the only change.', altar: 'b1',
+    spots: { crusher: 0.05, pods: 0.19, altar: 0.335, well: 0.475, font: 0.62, circle: 0.76, spire: 0.9 } }
+];
+
+const NAMES = { crusher: 'crusher', pods: 'pods', altar: 'altar', bench: 'BENCH', well: 'well', font: 'armory',
+                circle: 'circle', spire: 'spire' };
+const CREWED = new Set(['altar', 'well', 'font', 'circle', 'spire']);
+
+function inkOf(rows) {
+  let c0 = 99, c1 = -1, r0 = 99, r1 = -1;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+  }));
+  return { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
+}
+
+function water(g, W, H, s) {
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const v = Math.sin(x * 0.42 + Math.sin(y * 0.11) * 2.4);
+    let tone = GREYS[seeth(x, y) % 2];
+    if (v > 0.985) tone = GREYS[2];
+    if (seeth(x + 3, y + 11) < 4) tone = PURPLES[3 + seeth(x, y + 5) % 5];
+    g.fillStyle = tone; g.fillRect(x * s, y * s, s, s);
+  }
+}
+
+function floorBand(g, W, y0, s) {
+  for (let r = 0; r < 4; r++) for (let x = 0; x < W; x++) {
+    g.fillStyle = GREYS[2 + (seeth(x, y0 + r + 7) % 3) + (r === 0 ? 2 : 0)];
+    g.fillRect(x * s, (y0 + r) * s, s, s);
+  }
+}
+
+// A station at its spot: the drawing's inked middle on the spot, standing on the floor, domed.
+function station(g, rows, spot, floor, s, dome = true) {
+  const ink = inkOf(rows), H = rows.length;
+  const sx = Math.round(spot - (ink.c0 + ink.cols / 2)), sy = floor - H;
+  if (dome) {
+    const w = ink.cols + DOME_PAD * 2, rad = w / 2, left = sx + ink.c0 - DOME_PAD;
+    const spring = sy + ink.r0 - DOME_WALL, top = Math.round(spring - rad);
+    const inside = (x, y) => {
+      if (x < left || x >= left + w || y >= floor || y < top) return false;
+      if (y >= spring) return true;
+      const dx = x + 0.5 - (left + rad), dy = y + 0.5 - spring;
+      return dx * dx + dy * dy <= rad * rad;
+    };
+    for (let y = top; y < floor; y++) for (let x = left; x < left + w; x++) {
+      if (!inside(x, y)) continue;
+      const rim = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1);
+      g.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x, y) % 2)];
+      g.fillRect(x * s, y * s, s, s);
+    }
+  }
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    g.fillStyle = INK[ch]; g.fillRect((sx + c) * s, (sy + r) * s, s, s);
+  }));
+  return { left: sx + ink.c0, right: sx + ink.c0 + ink.cols, top: sy + ink.r0 };
+}
+
+function portal(g, s) {
+  const cx = Math.round(PORTAL.at * DEEP_W), cy = PORTAL.y, r = PORTAL.r;
+  for (let y = cy - r - 2; y <= cy + r + 2; y++) for (let x = cx - r - 2; x <= cx + r + 2; x++) {
+    const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+    if (d < r - 2) g.fillStyle = '#000';
+    else if (d < r + 1) g.fillStyle = PURPLES[8 + seeth(x, y) % 4];
+    else if (d < r + 2 && seeth(x, y) % 3 === 0) g.fillStyle = PURPLES[6];
+    else continue;
+    g.fillRect(x * s, y * s, s, s);
+  }
+  // the arrow under it, pointing up
+  g.fillStyle = '#fff';
+  for (let i = 0; i < 3; i++) g.fillRect((cx - i) * s, (cy + r + 3 + i) * s, (i * 2 + 1) * s, s);
+}
+
+function coil(g, s) {
+  const x0 = COIL.x0 * DEEP_W, x1 = COIL.x1 * DEEP_W;
+  for (let x = Math.round(x0); x < x1; x++) {
+    const k = (x - x0) / (x1 - x0);
+    const y = COIL.y + COIL.amp * Math.sin(2 * Math.PI * k * COIL.waves);
+    const t = k < 0.03 ? 8 : k > 0.8 ? COIL.girth * (1 - (k - 0.8) / 0.25) : COIL.girth;
+    for (let d = -t / 2; d < t / 2; d++) {
+      g.fillStyle = GREYS[4 + seeth(x, Math.round(y + d)) % 2];
+      g.fillRect(x * s, Math.round(y + d) * s, s, s);
+    }
+  }
+}
+
+function strip(L) {
+  const s = 2, W = DEEP_W, H = FLOOR + 4 + UNDER;
+  const box = document.createElement('div');
+  box.className = 'opt'; box.id = 'strip-' + L.key;
+  box.innerHTML = `<h2>${L.name}</h2><p class="cap">${L.cap}</p>`;
+  const c = document.createElement('canvas');
+  c.width = W * s; c.height = H * s;
+  const g = c.getContext('2d');
+  water(g, W, FLOOR, s);
+  coil(g, s);
+  portal(g, s);
+  floorBand(g, W, FLOOR, s);
+  g.fillStyle = '#fff'; g.fillRect(0, (FLOOR + 4) * s, W * s, UNDER * s);
+  const at = k => Math.round(L.spots[k] * W);
+  g.font = '11px ui-monospace, Consolas, monospace'; g.textAlign = 'center';
+  for (const k of Object.keys(L.spots)) {
+    const x = at(k);
+    if (k === 'crusher') station(g, CRUSHER, x, FLOOR, s, false);
+    else if (k === 'pods') {
+      const across = POD_COLS * (POD_W + POD_GAP) - POD_GAP, left = Math.round(x - across / 2);
+      for (let i = 0; i < PODS; i++) {
+        const px = left + (i % POD_COLS) * (POD_W + POD_GAP), py = FLOOR - (Math.floor(i / POD_COLS) + 1) * (POD_H + POD_GAP) + POD_GAP;
+        for (let yy = 0; yy < POD_H; yy++) for (let xx = 0; xx < POD_W; xx++) {
+          const edge = yy === 0 || yy === POD_H - 1 || xx === 0 || xx === POD_W - 1;
+          g.fillStyle = edge ? '#fff' : (yy === 2 && xx > 1 && xx < 5 ? PURPLES[11] : '#000');
+          g.fillRect((px + xx) * s, (py + yy) * s, s, s);
+        }
+      }
+    } else {
+      const rows = k === 'bench' ? BENCH.find(b => b.key === L.bench).rows
+                 : k === 'altar' && L.altar ? ALTAR.find(b => b.key === L.altar).rows : GAME[k];
+      station(g, rows, x, FLOOR, s);
+    }
+    if (CREWED.has(k)) {
+      g.fillStyle = k === 'altar' ? GREYS[8] : GREYS[6 + (Object.keys(L.spots).indexOf(k) % 2) * 3];
+      g.fillRect((x - STAND) * s + 1, (FLOOR + 5) * s, (STAND * 2) * s - 2, s * 2);
+    }
+    g.fillStyle = k === 'bench' ? PURPLES[9] : '#000';
+    g.fillText(`${NAMES[k]} ${L.spots[k]}`, x * s, (FLOOR + 4 + UNDER) * s - 4);
+  }
+  box.append(c);
+  document.getElementById('strips').append(box);
+}
+
+function card(o, title) {
+  const ink = inkOf(o.rows), H = o.rows.length, s1 = 6, s4 = 18;
+  const box = document.createElement('div');
+  box.className = 'opt'; box.id = 'card-' + o.key;
+  box.innerHTML = `<h2>${title} ${o.key} -- ${o.name}</h2><p class="cap">${o.cap}<br>${o.rows[0].length} x ${H}, inked ${ink.cols} x ${ink.rows}</p><div class="row"></div>`;
+  const row = box.querySelector('.row');
+  const domeW = ink.cols + DOME_PAD * 2, rad = domeW / 2;
+  const W = domeW + 10, top = 3, floor = top + Math.ceil(rad) + DOME_WALL + ink.rows;
+  for (const [s, lbl, y0] of [[s1, '1x -- the game\'s size', 0], [s4, '4x, cropped to the drawing', floor - ink.rows - 3]]) {
+    const wrap = document.createElement('div');
+    const c = document.createElement('canvas');
+    c.width = W * s; c.height = (floor + 3 - y0) * s;
+    const g = c.getContext('2d');
+    g.translate(0, -y0 * s);
+    water(g, W, floor, s); floorBand(g, W, floor, s);
+    station(g, o.rows, W / 2, floor, s);
+    const l = document.createElement('div'); l.className = 'lbl'; l.textContent = lbl;
+    wrap.append(c, l); row.append(wrap);
+  }
+  const pre = document.createElement('pre');
+  pre.textContent = `  ${title === 'bench' ? 'bench' : 'altar'}: [\n` + o.rows.map(r => `    '${r}'`).join(',\n') + '\n  ],';
+  row.append(pre);
+  document.getElementById('cards').append(box);
+  if (o.rows.some(r => r.length !== o.rows[0].length)) console.warn(o.key, 'ragged rows');
+}
+
+LAYOUTS.forEach(strip);
+BENCH.forEach(o => card(o, 'bench'));
+ALTAR.forEach(o => card(o, 'altar'));
+
+// ?shot=<id>: only that block, for the pngs beside this page.
+const shot = new URLSearchParams(location.search).get('shot');
+if (shot) {
+  document.body.classList.add('shot');
+  for (const id of shot.split(',')) document.getElementById(id)?.classList.add('keep');
+  document.getElementById('strips').classList.add('keep');
+  document.getElementById('cards').classList.add('keep');
+  for (const el of document.querySelectorAll('#strips > .opt, #cards > .opt'))
+    if (!shot.split(',').includes(el.id)) el.style.display = 'none';
+}
+</script>
+</body>
+</html>

@@ -14,6 +14,15 @@ Open:
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
 
+## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
+
+"The deep's bench" in DESIGN.md; mocks `docs/mocks/deep-bench-2026-09-24.html`
+and `docs/mocks/deep-bench/`. The altar's board sells the brawlers' two
+ladders and all four doors. Blocked on the owner's calls: (a) a deep bench
+holding the doors (a1 beside the pods, recommended, or a2 under the portal;
+standing from the snatch or raised with its first door) or (b) the altar
+redrawn generic; and which drawing (A, B, C or b1, b2, b3). No game code yet.
+
 ## The deep's crew at rest -- BUILT, TUNING OPEN (2026-09-23)
 
 "The deep's crew at rest" in DESIGN.md, option D of the mocks. Open:
