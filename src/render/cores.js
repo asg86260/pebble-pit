@@ -18,7 +18,7 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_FLOW_LIFT,
          ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS,
          RIFT_HALO, RIFT_WAVER, RIFT_RIM_MODES, RIFT_BEND, RIFT_TWINKLE_MS,
-         RIFT_BEND_RINGS, RIFT_BEND_R, RIFT_BEND_AMT, RIFT_RING_W, RIFT_RING_INK,
+         RIFT_BEND_RINGS, RIFT_BEND_R, RIFT_BEND_AMT, RIFT_BEND_SHEET_STEP, RIFT_RING_W, RIFT_RING_INK,
          RIFT_DEEP_LAYERS, RIFT_DEEP_NEAR, RIFT_DEEP_FAR, RIFT_DEEP_SPACING,
          RIFT_PULL_MOTES, RIFT_PULL_MS, RIFT_PULL_FROM, RIFT_PULL_INK,
          RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
@@ -343,7 +343,8 @@ function drawBend(cx, cy, rad) {
   const side = R1 * 2;
   const dw = Math.ceil(side * S.dpr);
   if (!bendCan) { bendCan = document.createElement('canvas'); bendCtx = bendCan.getContext('2d'); }
-  if (bendCan.width !== dw || bendCan.height !== dw) { bendCan.width = dw; bendCan.height = dw; }
+  if (bendCan.width < dw || bendCan.height < dw)
+    bendCan.width = bendCan.height = Math.ceil(dw / RIFT_BEND_SHEET_STEP) * RIFT_BEND_SHEET_STEP;
   bendCtx.setTransform(1, 0, 0, 1, 0, 0);
   bendCtx.clearRect(0, 0, dw, dw);
   bendCtx.drawImage(can, bx0 * S.dpr, by0 * S.dpr, dw, dw, 0, 0, dw, dw);

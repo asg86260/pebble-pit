@@ -64,6 +64,11 @@ export const RIFT_TWINKLE_MS = 2800;
 export const RIFT_BEND_RINGS = 4;    // rings the warp is stepped through
 export const RIFT_BEND_R = 2.1;      // how far out it reaches, in disc radii
 export const RIFT_BEND_AMT = 0.7;    // and how hard it magnifies at the rim
+// The still copy the bend reads from is grown in steps of this many device
+// pixels and never shrunk: sized to the disc every frame, a growing rift
+// made a fresh canvas a frame, and in Firefox the copy into a fresh one
+// waited on the graphics card, three to five milliseconds a frame (PERF.md).
+export const RIFT_BEND_SHEET_STEP = 256;
 
 // The light piled up at the very edge. On the boundary, never across the
 // middle: everything tried across the middle read as a face.
