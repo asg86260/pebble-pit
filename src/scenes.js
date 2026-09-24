@@ -239,6 +239,11 @@ const deepScenes = {
   portal: { about: 'the deep', say: "the wizards' portal held open over the abyss, the way down",
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true });
                  window.__view('yard'); window.__look(portalX() - S.viewW / 2); } },
+  // Its other end in the deep, hanging in the water, the arrow under it.
+  'deep-portal': { about: 'the deep', say: "the portal's deep end, the way back up to the yard",
+    run: () => { rich(); window.__fullSites(); window.__snatch({ played: true }); window.__view('deep'); } },
+  'glide-up-in': { about: 'the deep', say: "going up, a third in: the deep drawing back into its end of the portal",
+    run: glideAt('yard', 0.35) },
   // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
   deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
   // The glide between the halves, caught at a point of it (`glideAt`): just

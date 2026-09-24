@@ -17,7 +17,7 @@ import { drawBalloonPosts } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit, drawSilt } from './render/buildsites.js';
 import { drawYardArrow, drawDeepArrow } from './render/shaftway.js';
-import { drawPortal } from './render/portal.js';
+import { drawPortal, drawDeepPortal } from './render/portal.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
@@ -181,6 +181,7 @@ const LAYERS = [
   // post stands on the deep's floor like any other.
   { name: 'deep water', draw: drawDeepWater },
   { name: 'deep motes', draw: drawDeepMotes },
+  { name: 'deep portal', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
   { name: 'deep floor', draw: drawDeepFloor },
   // The scales, then the stations standing in front of them: the bed can
   // heap forty cells deep, and a station buried in its own coin could not
@@ -197,7 +198,7 @@ const LAYERS = [
   { name: 'punches', draw: drawPunches },
   { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
   { name: 'lifting', draw: drawLifting },
-  { name: 'deep arrow', draw: drawDeepArrow },   // the way up, rising in the shaft's light
+  { name: 'deep arrow', draw: drawDeepArrow },   // the way up, under the deep's end of the portal
   { name: 'silt', draw: drawSilt },              // off a builder's blows down there, in the water with the rest
   // What a station is putting up and what it has finished hang over it in
   // front of the deep's domes as well as the yard's roofs: behind them, the
@@ -263,7 +264,7 @@ export const asPicture = on => { picture = on; };
 // in the deep every other layer is the yard's and is not drawn; in the yard
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
-const DEEP = new Set(['deep water', 'deep motes', 'deep floor', 'deep stations', 'deep bed',
+const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
                       'sigils', 'beams', 'serpent', 'lances', 'grenades', 'deep star', 'swimmers',
                       'punches', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert']);
 // The marks of work -- the bar over a work on the go, the tape round it, the

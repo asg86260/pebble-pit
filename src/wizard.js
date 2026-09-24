@@ -17,7 +17,7 @@ import { critRoll } from './crit.js';
 import { critBoost, speedBoost, strengthBoost, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
 import { sphereRising, sphereUp, pourSphere, stepSphere, underSphere } from './sphere.js';
-import { portalX } from './deep/place.js';
+import { portalCircle } from './deep/place.js';
 import { abyssLine } from './pit.js';
 import { PORTAL_POUR_S, PORTAL_HOVER } from './config.js';
 
@@ -291,7 +291,7 @@ export const pouringPortal = () => S.portalPour > 0 && !S.portalOpen;
 // Which wizard goes: the first with a hat, the same one every frame.
 const portalHand = () => S.workers.find(o => o.type === TYPE.WIZARD && o.trained) || null;
 // Where it pours from: over the portal's middle, high over the surface.
-export const portalHover = () => ({ x: portalX() - WORKER / 2, y: abyssLine() - PORTAL_HOVER });
+export const portalHover = () => { const c = portalCircle(); return { x: c.x - WORKER / 2, y: c.y - c.r - PORTAL_HOVER }; };
 
 // Out over the pit, lifting off where it stands and flying there flat out as
 // it does for the dome, and pouring once it is within reach.

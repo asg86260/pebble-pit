@@ -17,8 +17,7 @@
 import { S } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN } from './config.js';
 import { clampCam, setZoom } from './world.js';
-import { portalX, deepX0, deepX1, deepFloor } from './deep/place.js';
-import { abyssLine } from './pit.js';
+import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
 
 export const inDeep = () => S.view === 'deep';
@@ -144,15 +143,20 @@ function glide(dt) {
   S.viewFade = 0;
 }
 
-// The ripple, in screen pixels, while a glide runs: its middle (the portal
-// as the yard's camera sees it, on the surface) and how far its leading ring
-// has gone -- nothing to past the window's farthest corner going down, back
-// again going up. Null when there is no glide.
+// The ripple, in screen pixels, while a glide runs: its middle and how far
+// its leading ring has gone -- nothing to past the window's farthest corner
+// going down, back again going up. Down it opens out of the yard's end of
+// the portal as the yard's camera sees it; up it draws back into the deep's
+// end as the deep's camera sees it, so the deep closes onto the circle that
+// was pressed. Null when there is no glide.
 export function ripple() {
   if (!gliding()) return null;
-  const cx = (portalX() - S.camX) * S.zoom, cy = (abyssLine() - S.camY) * S.zoom;
+  const down = S.viewTo === 'deep';
+  const c = down ? portalCircle() : deepPortal();
+  const cam = down ? { camX: S.camX, camY: S.camY, zoom: S.zoom } : deepCamera();
+  const cx = (c.x - cam.camX) * cam.zoom, cy = (c.y - cam.camY) * cam.zoom;
   const far = Math.max(...[[0, 0], [S.W, 0], [0, S.H], [S.W, S.H]]
     .map(([x, y]) => Math.hypot(x - cx, y - cy))) + P * 8;
   const e = ease(S.viewFade);
-  return { cx, cy, r: far * (S.viewTo === 'deep' ? e : 1 - e) };
+  return { cx, cy, r: far * (down ? e : 1 - e) };
 }

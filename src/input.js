@@ -166,7 +166,7 @@ canvas.addEventListener('pointerdown', e => {
   // is the rock's, and only the ordinary handling's if it missed the coil.
   if (gliding()) return;
   if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
-  if (onPortal(p.x, p.y)) { goDeep(); return; }
+  if (onPortal(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
   if (S.view === 'deep' && clickDeep(p.x, p.y)) return;
   // the sky first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
@@ -440,7 +440,7 @@ export function whatIsAt(x, y) {
   // serpent.
   // The arrow at the portal stands in both halves.
   if (onShaftArrow(x, y)) return S.view === 'deep' ? 'up to the yard' : 'down to the deep';
-  if (onPortal(x, y)) return 'the portal — down to the deep';
+  if (onPortal(x, y)) return S.view === 'deep' ? 'the portal — up to the yard' : 'the portal — down to the deep';
   if (S.view === 'deep') {
     if (onCoil(x, y)) return 'the serpent';
     return null;

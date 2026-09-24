@@ -25,13 +25,18 @@ export const CRUSHER_ROLLER = P * 4;
 // Where the water line stands, under the deep's top edge, and how far it
 // breathes (the same swell the drowned pit's surface has).
 export const DEEP_SURFACE = P * 5;
-// The arrow at the shaft that says the view goes through (render/shaftway.js):
-// in the yard this far over the drowned pit's surface, in the deep this far
-// under the deep's top edge -- under the water line, white on the dark --
-// bobbing a
-// cell each way over SHAFT_ARROW_MS.
+// The arrow that says the view goes through (render/shaftway.js): in the
+// yard this far over the top of the wizards' circle, in the deep this far
+// under the bottom of the deep's own circle, pointing up into it -- bobbing
+// a cell each way over SHAFT_ARROW_MS.
 export const SHAFT_ARROW_UP = P * 8;
-export const SHAFT_ARROW_DOWN = P * 11;
+export const SHAFT_ARROW_DOWN = P * 2;
+// The deep's end of the portal, the way back up: a circle hanging in the
+// water over the wizards' one, its top this far under the highest the deep's
+// framing ever shows (view.js, `deepZoom`), so it is on the glass whatever
+// the window.
+export const DEEP_PORTAL_R = P * 12;
+export const DEEP_PORTAL_DOWN = P * 5;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
 

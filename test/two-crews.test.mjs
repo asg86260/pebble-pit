@@ -127,7 +127,8 @@ group("a wizard flies out and summons the portal, and only then does the view go
     return S.portalOpen;
   }, 120);
   const arrow = (b => whatIsAt(b.x + b.w / 2, b.y + b.h / 2))(arrowBox(false));
-  const portal = whatIsAt(portalX(), abyssLine());
+  const { portalCircle } = await import('../src/deep/place.js');
+  const portal = whatIsAt(portalCircle().x, portalCircle().y);
   goDeep();
   run(3);
   return [

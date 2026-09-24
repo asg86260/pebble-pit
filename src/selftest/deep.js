@@ -7,7 +7,7 @@
 import { ok, point, onScreen, run } from './kit.js';
 import { S } from '../state.js';
 import { P, VIEW_GLIDE_S, PORTAL_RX } from '../config.js';
-import { mouthX, portalX, deepTop } from '../deep/place.js';
+import { mouthX, portalX, portalCircle, deepPortal, deepTop } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { arrowBox } from '../render/shaftway.js';
 import { refreshCorner } from '../corner.js';
@@ -66,13 +66,17 @@ export const TESTS = [
       ok(up === 'yard', 'and the arrow in the light brings it back up', up)
     ];
   }],
-  ['deep: a click on the conjured portal goes down', async () => {
+  ['deep: a click on the conjured portal goes down, and on its deep end back up', async () => {
     deepYard();
     window.__look(portalX() - S.viewW / 2);
     run(2);                                // held open, and open all the way
-    click(portalX(), abyssLine());
+    click(portalCircle().x, portalCircle().y);
     run(VIEW_GLIDE_S + 0.5);
-    return [ok(S.view === 'deep', 'the portal in the surface takes the view down', S.view)];
+    const down = S.view;
+    click(deepPortal().x, deepPortal().y);
+    run(VIEW_GLIDE_S + 0.5);
+    return [ok(down === 'deep', 'the portal in the pit takes the view down', down),
+            ok(S.view === 'yard', 'and its end in the deep brings it back up', S.view)];
   }],
   ['deep: the corner square goes down and up, and only after the snatch', async () => {
     deepYard(false);

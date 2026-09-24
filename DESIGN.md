@@ -14991,6 +14991,18 @@ about nine tenths of the window is water. In a glide the yard fades to that
 same white round the abyss, so the two halves are one picture at the turn.
 The pods stand between the crusher and the altar.
 
+**The portal is a circle, and it has two ends.** *(The owner's call, the
+same day: B of the mocked shapes, "set into the edge", but facing the
+window.)* The wizards' portal is no longer a whirlpool lying on the surface:
+it is a round ring facing the screen, set into the drowned pit against its
+near wall, as tall as the abyss is deep (`portalCircle`), poured from above
+and growing from its middle. Its other end hangs in the deep's water,
+straight under it and smaller (`deepPortal`, `DEEP_PORTAL_R`), with the
+arrow under it pointing up: a click on either end goes through. Going down,
+the ripple opens out of the pit's end; going up, it draws back into the
+deep's end, so the deep closes onto the circle that was pressed. The
+snatch's whirlpool on the surface at the mouth is unchanged.
+
 **What goes.** The shaft's count and its two posts, `S.deepCrew` as a thing
 the player sets, `sendDeep`, the shaft walk for bodies, the yard's builders
 going down, and "+ under a deep station brings a yard hand down". The

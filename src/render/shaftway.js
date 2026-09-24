@@ -1,14 +1,13 @@
 // The way through the portal, marked at it (DESIGN.md, "The way between the
 // halves"; "Two crews and a portal"): a pixel arrow bobbing over the portal
-// in the yard, pointing down, and one rising under it in the deep, pointing
-// up. A click on either takes the view through. From the
+// in the yard, pointing down, and one under its deep end, pointing up into
+// it. A click on either takes the view through. From the
 // wizards' portal on, while the camera is not already gliding.
 
 import { P, SHAFT_ARROW_UP, SHAFT_ARROW_DOWN, SHAFT_ARROW_BOB, SHAFT_ARROW_MS } from '../config.js';
 import { S } from '../state.js';
 import { now } from '../clock.js';
-import { portalX, deepTop } from '../deep/place.js';
-import { abyssLine } from '../pit.js';
+import { portalX, portalCircle, deepPortal } from '../deep/place.js';
 import { gliding } from '../view.js';
 import { ctx } from './ctx.js';
 import { GREYS } from './deep.js';
@@ -26,7 +25,8 @@ const shown = () => !!S.portalOpen && !gliding();
 const bob = () => snap(Math.sin(now() / SHAFT_ARROW_MS * Math.PI * 2) * SHAFT_ARROW_BOB);
 export function arrowBox(deep) {
   const x = snap(portalX() - W / 2);
-  const y = deep ? snap(deepTop() + SHAFT_ARROW_DOWN) - bob() : snap(abyssLine() - SHAFT_ARROW_UP) + bob();
+  const c = deep ? deepPortal() : portalCircle();
+  const y = deep ? snap(c.y + c.r + SHAFT_ARROW_DOWN) - bob() : snap(c.y - c.r - SHAFT_ARROW_UP) + bob();
   return { x, y, w: W, h: H };
 }
 
