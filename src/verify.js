@@ -32,7 +32,7 @@ import { now } from './clock.js';
 import { JOB, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
-import { SERPENT_WOUND, ROOMBA_MAX, ROOMBA_BIN } from './config.js';
+import { SERPENT_WOUND, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN } from './config.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor } from './deep/place.js';
@@ -436,7 +436,16 @@ export function verifyWorld() {
       fail('the wound is outside its stage', `wound ${S.serpentWound} in stage ${stage}, depth ${depth}`);
     if (stage < serpentWas)
       fail('the serpent\'s defense went back', `stage ${serpentWas} then ${stage}`);
+    // A stunned serpent does not heal: a wound that was stunned at the end
+    // of the last frame is no shallower at the end of this one, unless the
+    // stage broke under it. And no stun is longer than the longest.
+    if (stunWas && stage === serpentWas && S.serpentWound < woundWas - 1e-9)
+      fail('the serpent healed while it was stunned', `wound ${woundWas} then ${S.serpentWound} in stage ${stage}`);
+    if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)
+      fail('the stun is outside its bounds', `${S.serpentStun}s, at most ${STUN_MAX_S}`);
     serpentWas = stage;
+    woundWas = S.serpentWound;
+    stunWas = S.serpentStun > 0;
     if (S.serpentFreed !== (stage > 3))
       fail('he is freed and the belly is not open, or the other way round', `freed ${S.serpentFreed}, stage ${stage}`);
     if (!S.snatched) {
@@ -467,5 +476,5 @@ export function verifyWorld() {
 
 // The last stage seen, for the rule that it never goes back. A new game, or a
 // setup that sets the fight outright (`__serpent`), is a new start.
-let serpentWas = -1;
-export function forgetSerpent() { serpentWas = -1; }
+let serpentWas = -1, woundWas = 0, stunWas = false;
+export function forgetSerpent() { serpentWas = -1; stunWas = false; }

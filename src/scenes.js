@@ -20,7 +20,8 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, STAR_DMG, rungValue } from './config.js';
+import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg } from './deep/place.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
@@ -344,6 +345,36 @@ const deepScenes = {
       const fist = S.hits.find(h => h.weapon === 'punch');
       const belly = coilAt(bellySeg(), now()).x;
       lookDeep(fist ? (fist.x + belly) / 2 : belly);
+    } },
+  // Blows land (DESIGN.md, "Blows land: the burst and the stun"). A star
+  // called and fallen onto the split coil, which stuns it: the coil held and
+  // shuddering, the bar's pip held open, no `+` off the belly. The split,
+  // because a first star is deeper than the warded coil's whole depth and
+  // breaks it, and a break ends a stun. The shot is a second on, well inside
+  // the longest stun.
+  'deep-stun': { about: 'the deep', say: 'a star has stunned the coil: held still and shuddering, the heal stopped, the pip held open',
+    run: () => {
+      deepYard({ stage: 2, wound: 1500, open: ['star'], crew: { brawlers: 2 } });
+      S.starAt = 0;
+      for (let i = 0; i < 60 * 20 && !(S.serpentStun > 0); i++) window.__fast(1 / 60);
+      const bite = S.serpentChips[S.serpentChips.length - 1];
+      lookDeep(coilAt(bite ? bite.u : bellySeg(), now()).x);
+    } },
+  // Three blows just landed on the split coil, no stun left over so the
+  // bites are read on a coil at its sway: a star's bite out of the top edge
+  // with its scales bursting up, a grenade's burst from under, and a click
+  // on the top edge, the smallest.
+  'deep-chip': { about: 'the deep', say: "fresh bites out of the hide -- a star's, a grenade's, a click's -- and the scales bursting off them",
+    run: () => {
+      deepYard({ stage: 2, wound: 1500, open: ['well', 'font', 'circle'], crew: { brawlers: 0 } });
+      const t = now(), at = i => coilAt(bellySeg() + i, t);
+      const star = at(-9), burst = at(-3), fist = at(3);
+      strike('star', STAR_DMG[0], star.x, star.y);
+      strike('grenade', rungValue('grenade', 8), burst.x, burst.y, {});
+      S.punchLevel = 8;
+      clickDeep(fist.x, fist.y - P);
+      S.serpentStun = S.serpentGrace = 0;
+      lookDeep(at(-3).x);
     } },
   // The crusher at the deep's left end, haulers lent down to it carrying the
   // floor's scales and tossing them over the lip.

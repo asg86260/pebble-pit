@@ -4,7 +4,8 @@
 // goes down the shaft arrives somewhere real, and every position in the deep
 // is an ordinary world position that the route, the camera and the drawing
 // all read the same way. Nothing here moves on its own except the serpent's
-// body, which is a function of the clock and so needs nothing saved.
+// body, which is a function of the clock and of the sway its stuns have held
+// back (`serpentStill`, saved).
 //
 // Track SERPENT owns this file (docs/wave-serpent.md); every other track reads
 // it.
@@ -136,7 +137,8 @@ export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 // segment's own x, the wave pulled the segments apart and together as it
 // passed. The tail's end drifts in and out as the wave goes by instead.
 // Unsnapped, so the body can be laid smoothly along it; everything that
-// asks where a segment is uses `coilAt`, the same point on the grid.
+// asks where a segment is uses `coilAt`, the same point on the grid. Every
+// reader comes through `coilLine`, which turns the clock into the coil's.
 // `waveLine(t)` is the line at one instant, everything but x worked out
 // once: the walk below asks it for thousands of points a frame.
 const waveLine = t => {
@@ -178,6 +180,10 @@ function walk(t) {
   return walked;
 }
 export function coilLine(u, t) {
+  // The sway runs on the clock less what the stuns have held back, so a
+  // stunned coil holds its pose and the one after it carries on from there
+  // (`serpentStill`, deep/serpent.js).
+  t -= S.serpentStill;
   const s = u / (COIL_SEGS - 1) * coilSpan();   // arc from the head
   if (s <= 0) {
     // The snout, run on past the head along the same wave.

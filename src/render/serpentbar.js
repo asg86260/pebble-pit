@@ -11,7 +11,8 @@ import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
 import { woundK } from '../deep/serpent.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
-         BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, SERPENT_WOUND } from '../config.js';
+         BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
+         SERPENT_WOUND } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
@@ -51,6 +52,12 @@ export function drawSerpentBar() {
     const py = y + Math.round((BAR_H - BAR_PIP) / 2);
     fill(BAR_EDGE, px - 1, py - 1, BAR_PIP + 2, BAR_PIP + 2);
     fill(s < S.serpentStage ? BAR_TRACK : s === S.serpentStage ? BAR_LEFT : BAR_TO_COME, px, py, BAR_PIP, BAR_PIP);
+    // Stunned, the heal is stopped: the defense's own pip is held open, a
+    // ring of the heal's purple round nothing, for as long as it lasts.
+    if (s === S.serpentStage && S.serpentStun > 0) {
+      fill(BAR_STUN, px, py, BAR_PIP, BAR_PIP);
+      fill(BAR_TRACK, px + BAR_STUN_RIM, py + BAR_STUN_RIM, BAR_PIP - BAR_STUN_RIM * 2, BAR_PIP - BAR_STUN_RIM * 2);
+    }
   }
   ctx.restore();
 }

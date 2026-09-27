@@ -455,6 +455,18 @@ export const S = {
   serpentStage: 0,
   serpentWound: 0,
   serpentFreed: false,
+  // A heavy blow's stun: seconds of it left (the heal stops while there
+  // are), and seconds of the grace after one in which no new one can start.
+  // `serpentStill` is the ms of sway the stuns have held back: the coil's
+  // pose is read off the clock less this, so it holds still while stunned
+  // and carries on from there after (deep/place.js).
+  serpentStun: 0,
+  serpentGrace: 0,
+  serpentStill: 0,
+  // The bites single blows took out of the hide, closing: { u, side, k, at },
+  // `u` the segment, `side` -1 the top edge and 1 the underside, `k` how big
+  // the blow was 0..1 (render/serpent.js).
+  serpentChips: [],
   snatch: null,           // the snatch beat's own state while it plays (snatch.js)
   // The deep's coin: every scale crushed and not yet spent (the crusher is the
   // purse; the floor's loose scales are `deepBed`), and whether one ever has.
@@ -642,6 +654,7 @@ export const SAVED = [
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
+  'serpentStun', 'serpentGrace', 'serpentStill',
   'wellOpen', 'fontOpen', 'circleOpen', 'spireOpen', 'starOpen',
   JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
@@ -731,6 +744,8 @@ export const SAVED_BY_HAND = [
 // beginning for. Named rather than assumed, so that adding a field and not
 // thinking about it is a failing test.
 export const EPHEMERAL = [
+  // A bite out of the serpent's hide closes in seconds; a reload finds it closed.
+  'serpentChips',
   // What the store said about this page (persist.js, save.js).
   'unsaved', 'yielded', 'broken',
   'fellBack', 'newerSave',

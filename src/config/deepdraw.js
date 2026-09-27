@@ -133,6 +133,27 @@ export const BELLY_BULGE = P * 2;    // how much fuller than the body either sid
 export const BELLY_LEN = P * 8;      // half its length along the coil
 export const RIB_EVERY = 3;          // cells between ribs
 
+// A blow lands (DESIGN.md, "Blows land: the burst and the stun", option C of
+// docs/mocks/serpent-impact-2026-09-26.html). How big a blow is, 0..1, is
+// read off what it did on a log scale -- a punch of one is nothing, a star is
+// all of it -- and the bite and the spray both grow with that one number.
+export const BLOW_FULL = 3000;       // the damage a blow is at its biggest from: a first star
+// The bite: a hole of cells in the hide where a single blow landed, on the
+// edge the blow came from, closing over CHIP_HEAL_S. A few of its cells are
+// left standing so its edge is ragged.
+export const CHIP_R = [1, 4.5];    // its radius in cells, the least blow and the biggest
+export const CHIP_HEAL_S = 3;        // seconds it takes to close
+export const CHIP_RAGGED = 0.2;      // the share of its cells left standing
+export const CHIPS_MAX = 24;         // bites kept at once, however fast they come
+// The spray: the scales a blow knocks loose leave the bitten edge outward,
+// at SCALE_KICK and up to SPRAY_GAIN times more for the biggest blow, across
+// SPRAY_FAN radians either side of straight out.
+export const SPRAY_GAIN = 2.5;
+export const SPRAY_FAN = 1.1;
+// A stunned coil holds still and shudders a cell, up and down, at this pace.
+export const STUN_SHAKE = P;
+export const STUN_SHAKE_MS = 70;
+
 // --- the weapons -------------------------------------------------------------------
 export const LANCE_LEN = P * 8;      // a lance of black water
 export const RING_CELLS = 28;        // cells round a burst's ring, at its widest
@@ -225,5 +246,7 @@ export const BAR_LEFT = '#ffffff';     // what the defense has left
 export const BAR_TRAIL = '#55555e';    // what a blow just took, lingering
 export const BAR_HEALED = '#9b5de5';   // what the heal has given back since the last blow
 export const BAR_TO_COME = '#55555e';  // a defense not yet reached
-export const BAR_TRAIL_HOLD_S = 0.5;   // the trail waits this long after the last blow
+export const BAR_STUN = '#9b5de5';     // the defense's pip while a stun has stopped the heal: a ring of the heal's purple
+export const BAR_STUN_RIM = 2;         // screen pixels, the ring's width
+export const BAR_TRAIL_HOLD_S = 0.5;  // the trail waits this long after the last blow
 export const BAR_TRAIL_RATE = 1;       // then drains at this share of the bar a second

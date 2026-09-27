@@ -15599,7 +15599,7 @@ Flare and Lantern for fading, Brute's weight through the ward). The sqwife
 alone at any station breaks the first phase; the party is how the later ones
 go faster, not a key. `FADE_UNLIT` rises to the same one half.
 
-### Blows land: the burst and the stun (voted C + D)
+### Blows land: the burst and the stun (voted C + D) (built)
 
 - **The scales burst (C).** The scales a blow knocks off leave in a spray,
   more of them and farther for a bigger blow (`shed` already counts them by
@@ -15619,6 +15619,47 @@ go faster, not a key. `FADE_UNLIT` rises to the same one half.
   a stunned heal (the pip after it) and the numbers stop saying `+N`.
 
 C and D do not depend on the rest and are built first, on today's weapons.
+
+**Built 2026-09-27**, on today's weapons (`test/serpent-stun.test.mjs`;
+scenes `deep-stun`, `deep-chip`). The calls made at build:
+
+- **The share, measured.** Per blow after the defense, today: a punch does
+  1 / 5 / 12 / 40 on the bare coil at rungs 0 / 3 / 5 / 8, and 6 at most
+  through the ward; a grenade burst 10 / 60 / 280 a length on the bare coil,
+  half that on the ward, up to two lengths on the split; a star 3000-10000
+  on every stage, a tenth of it on the fading coil unlit. Against depths of
+  60 / 900 / 6000 / 30000, `STUN_SHARE` is **0.03**: a punch from rung 1
+  stuns the bare coil, a burst from rung 4 the ward and from rung 7 (one
+  length; rung 5 across two) the split, a star every stage -- the fading one where a
+  wizard lights it, or unlit from its last rung. A share cannot make only a
+  late punch stun the bare coil and still let a burst stun the split: the
+  depths grow a hundredfold between them and a burst a few times, so the
+  punch was let go early. The punch never stuns past the bare coil, and no
+  burst stuns the fading one -- a fortieth of its depth is out of a
+  grenade's reach today, so that is a star's alone until the branches.
+- **The length:** `STUN_BASE_S` (1.5 s) at the share, times the square root
+  of how many shares the blow was, up to `STUN_MAX_S` (5 s); a star stuns
+  for the most everywhere. `STUN_GRACE_S` 4 s. All four are dev-panel knobs.
+- **A burst is one blow:** the lengths a grenade's ring strikes on the split
+  coil are summed on the ring, and the sum is what stuns and bites.
+- **A break ends the stun**, and its grace: the stun was measured against
+  the defense that broke. A blow that breaks the stage stuns nothing.
+- **Holding still** is the coil's sway run on the clock less
+  `serpentStill`, the ms the stuns have held back (saved), so every body,
+  lance and ring sees the coil held; the shudder (a cell down, back, up,
+  back) is the drawing's only.
+- **The bite** is a half disc out of the edge the blow came from -- a star
+  from above, a fist and a grenade from below, a click from whichever side
+  of the centerline it was on -- 1 to 4.5 cells for a blow's size on a log
+  scale (`BLOW_FULL`, a first star), a fifth of its cells left standing,
+  closing slowly then fast over `CHIP_HEAL_S` (3 s). Held ticks do not bite
+  and do not spray: they bleed, as before. Bites are not saved.
+- **The spray:** the blow's scales leave the bite outward, in a fan, up to
+  `SPRAY_GAIN` times faster for the biggest blow; how many is `shed`'s count
+  as it was.
+- **The bar:** the defense's own pip is a ring of the heal's purple round
+  nothing while the stun lasts. A rule in verify.js: a stunned wound never
+  closes.
 
 ### What goes
 
