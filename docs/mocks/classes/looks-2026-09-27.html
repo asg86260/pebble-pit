@@ -20,9 +20,13 @@
   ul.bargain { max-width: 110ch; padding-left: 18px; margin: 8px 0 12px; }
   ul.bargain li { margin-bottom: 6px; }
   canvas { image-rendering: pixelated; display: block; }
-  .strip { display: grid; grid-template-columns: 11ch auto; gap: 6px 12px; align-items: center; margin: 10px 0; }
-  .names { display: grid; grid-template-columns: repeat(10, 66px); font-size: 10px; color: var(--dim); text-align: center; }
-  .scroll { overflow-x: auto; max-width: 100%; }
+  .strip { display: grid; grid-template-columns: 11ch minmax(0, 1fr); gap: 6px 12px; align-items: center; margin: 10px 0; }
+  .names { display: grid; grid-template-columns: repeat(10, 1fr); max-width: 660px; font-size: 10px; color: var(--dim); text-align: center; }
+  /* A row shrinks to the window rather than scrolling: a viewer that hides the
+     sideways scrollbar showed only the first class. */
+  .scroll { max-width: 100%; }
+  .scroll canvas { width: 100%; max-width: 660px; height: auto; }
+  @media (max-width: 520px) { .strip { grid-template-columns: 1fr; } }
   .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(264px, 1fr)); gap: 12px; }
   .tile { display: grid; gap: 4px; justify-items: start; }
   .tile span { font-size: 12px; }
