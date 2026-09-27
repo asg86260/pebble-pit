@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Class Bench</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; --purple: #6f36c9; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; --purple: #a979ef; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; --purple: #a979ef; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 34px 0 10px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  p.note { color: var(--dim); max-width: 90ch; margin: 0 0 12px; }
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; background: var(--paper);
+         padding-block: 8px; z-index: 2; border-bottom: 1px solid var(--rule); }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink);
+           padding: 4px 10px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; }
+  .card h3 { margin: 0; font-size: 14px; }
+  .card .station { color: var(--dim); font-size: 12px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+  canvas { width: 100%; image-rendering: pixelated; display: block; border: 1px solid var(--rule); }
+  .about { color: var(--dim); font-size: 12px; min-height: 3em; margin: 0; }
+  .empty { color: var(--dim); font-size: 12px; border: 1px dashed var(--rule); padding: 10px; }
+  .statuses { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Serpent Class Bench</h1>
+  <p class="note">A mock drawn from plain cells, not the game: the deep's tones, the game's square body, the P grid.
+    Each class stands at its station (left plinth); a second fighter stands at another station (right) to show
+    buffs. Tabs play the base attack and each branch's keystone. What it cannot show: the real coil's girth,
+    cracks and ribs, the game's camera, numbers, many fighters at once, and the real timings.</p>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <span id="clock">0.0 s</span>
+  </div>
+  <div id="stations"></div>
+  <h2>Statuses</h2>
+  <p class="note">Every status as drawn on its own. Serpent statuses cover the whole snake.</p>
+  <div class="statuses" id="statuses"></div>
+</div>
+<script type="module">
+import { P, CW, CH, CLASSES, STATUS, frame, drawDeep, drawCoil, drawPlinth, drawBody, FLOOR, BUDDY_X, BODY } from './harness.js';
+// Each group's classes and statuses; a group not yet built is an empty module.
+import './group-hand.js';
+import './group-blade.js';
+import './group-fire.js';
+import './group-word.js';
+
+const STATIONS = [['altar', 'The altar · the empty hand'], ['well', 'The well · the blade'],
+  ['armory', 'The armory · the thrown and the shot'], ['circle', 'The circle · the word'],
+  ['spire', 'The spire · the abyss\'s power']];
+const ORDER = ['brawler', 'martial', 'sword', 'assassin', 'sapper', 'ranger', 'hexer', 'bard', 'mage', 'monk'];
+const EXPECT = { altar: ['brawler', 'martial'], well: ['sword', 'assassin'], armory: ['sapper', 'ranger'],
+  circle: ['hexer', 'bard'], spire: ['mage', 'monk'] };
+
+const panes = [];
+let playing = true, clock = 0, last = performance.now();
+const host = document.getElementById('stations');
+for (const [key, label] of STATIONS) {
+  const h = document.createElement('h2'); h.textContent = label; host.append(h);
+  const grid = document.createElement('div'); grid.className = 'grid'; host.append(grid);
+  for (const ck of EXPECT[key]) {
+    const cls = CLASSES.find(c => c.key === ck);
+    const card = document.createElement('div'); card.className = 'card';
+    if (!cls) { card.innerHTML = `<h3>${ck}</h3><div class="empty">not built yet</div>`; grid.append(card); continue; }
+    card.innerHTML = `<h3>${cls.name}</h3><div class="station">${cls.look || ''}</div>`;
+    const tabs = document.createElement('div'); tabs.className = 'tabs';
+    const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P;
+    const about = document.createElement('p'); about.className = 'about';
+    const pane = { cls, g: cv.getContext('2d'), i: 0, t0: clock, about };
+    cls.scenes.forEach((s, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = s.name;
+      b.setAttribute('aria-pressed', String(i === 0));
+      b.onclick = () => { pane.i = i; pane.t0 = clock; for (const x of tabs.children) x.setAttribute('aria-pressed', String(x === b)); };
+      tabs.append(b);
+    });
+    card.append(tabs, cv, about); grid.append(card); panes.push(pane);
+  }
+}
+// Statuses, each on its own: serpent ones on a bare coil, fighter ones on a body.
+const sHost = document.getElementById('statuses');
+const sPanes = Object.entries(STATUS).map(([k, st]) => {
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<h3>${st.name || k}</h3><div class="station">on the ${st.on || 'serpent'}</div>`;
+  const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P;
+  card.append(cv); sHost.append(card);
+  return { k, st, g: cv.getContext('2d') };
+});
+if (!sPanes.length) sHost.innerHTML = '<div class="empty">none registered yet</div>';
+
+document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+function tick(now) {
+  if (playing) clock += (now - last) / 1000;
+  last = now;
+  document.getElementById('clock').textContent = clock.toFixed(1) + ' s';
+  for (const p of panes) {
+    const s = p.cls.scenes[p.i];
+    const t = (clock - p.t0) % s.dur;
+    try { frame(p.g, p.cls, s, t); p.about.textContent = s.about || ''; }
+    catch (err) { p.about.textContent = 'error: ' + err.message; }
+  }
+  for (const sp of sPanes) {
+    const t = clock % 6, st = { stun: 0, statuses: {} };
+    drawDeep(sp.g, t);
+    if (sp.st.on === 'fighter') {
+      drawPlinth(sp.g, 32); const x = 31, y = FLOOR - 2 - BODY;
+      drawBody(sp.g, x, y); sp.st.fighter?.(sp.g, t, x, y, 1);
+    } else {
+      if (sp.k === 'stunned') { st.stun = 1; st.stunAt = 0; }
+      drawCoil(sp.g, t, st); sp.st.serpent?.(sp.g, t, st, 1);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
