@@ -1335,6 +1335,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    not a thing you can press. The lines behind it are the ones you can hand
    back, and they invert on hover the way a board's rows do. */
 .queue button.front { cursor: default; }
+.queue button.front.wait { cursor: pointer; }
 /* The clock on every line, pushed to the right edge so the figures line up
    down the card whatever the names do. */
 .queue button .left { margin-left: auto; padding-left: 10px; opacity: var(--pip-tone, .78); white-space: nowrap; display: inline-flex; gap: 5px; align-items: baseline; }

@@ -18,7 +18,7 @@ import { rungValue, DOOR_BILLS, STAR_SPARKS, STAR_TUNE_SPARKS, STAR_EVERY_S, POD
 import { tierRows, named } from '../upgrades/tiers.js';
 import { staffDoor, hirePod } from '../staffing.js';
 import { open, offered } from '../stations.js';
-import { registerRows } from '../works.js';
+import { registerRows, ahead } from '../works.js';
 import { JOB, jobSaid } from '../jobs.js';
 import { spotX, standOf } from './place.js';
 import { registerBoard } from '../boardrows.js';
@@ -76,9 +76,11 @@ const DOORS = [
 const POD = {
   key: 'pod', name: 'another pod', kind: 'building', site: 'pods', board: 'pods',
   note: () => 'a capsule on the deep\'s far side: one more of the crew, living down here',
-  from: () => S.crew, to: () => S.crew + 1,
+  // One more each press, each priced as the pod it will be.
+  repeats: true,
+  from: () => S.crew + ahead('pod'), to: () => S.crew + ahead('pod') + 1,
   // Scales alone: naming no dust at nought would have `billOf` add its worth.
-  bill: () => [['scale', Math.round(POD_SCALES0 * Math.pow(POD_RATE, S.pods || 0))], ['dust', 0]],
+  bill: () => [['scale', Math.round(POD_SCALES0 * Math.pow(POD_RATE, (S.pods || 0) + ahead('pod')))], ['dust', 0]],
   buy: () => { hirePod(); S.shopStale = true; },
   show: () => S.snatched
 };
@@ -119,7 +121,7 @@ const TUNESTAR = {
   note: () => 'the wizards call the star down sooner',
   rung: () => Math.min(S.starLevel, STAR_RUNGS),
   rungs: () => STAR_RUNGS,
-  bill: () => [['spark', STAR_TUNE_SPARKS[Math.min(S.starLevel, STAR_RUNGS - 1)]]],
+  bill: () => [['spark', STAR_TUNE_SPARKS[Math.min(S.starLevel + ahead('tunestar'), STAR_RUNGS - 1)]]],
   buy: () => { S.starLevel++; },
   show: () => !!S.starOpen
 };

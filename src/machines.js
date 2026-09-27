@@ -15,6 +15,7 @@ import { S } from './state.js';
 import { MACHINE_TUNE, MACHINE_TUNE_SPARKS, MACHINE_TUNE_RUNGS, DUST_PER_SPARK } from './config.js';
 import { JOB } from './jobs.js';
 import { now } from './clock.js';
+import { ahead } from './works.js';
 
 // The job is the link to everything else: what `capOf` answers about, what
 // `handsOf` reads, and what `restaff` puts back.
@@ -149,8 +150,9 @@ export const tuneOf = key => machine(key)?.tune || 0;
 export const tuneGain = key => Math.pow(MACHINE_TUNE, tuneOf(key));
 // The bill for the rung you are standing on. Clamped at the top so a topped
 // row still has a price to draw against the purse rather than `undefined`.
-export const tuneCost = key =>
-  MACHINE_TUNE_SPARKS[Math.min(tuneOf(key), MACHINE_TUNE_RUNGS - 1)];
+// `extra` is the rungs already paid for and not yet fitted.
+export const tuneCost = (key, extra = 0) =>
+  MACHINE_TUNE_SPARKS[Math.min(tuneOf(key) + extra, MACHINE_TUNE_RUNGS - 1)];
 
 // The row, on the board of the place the machine stands.
 //
@@ -169,7 +171,7 @@ export const tuneRow = (key, name, note, site, board) => ({
   // A ladder like any other: pips a rung, and an end to reach.
   rung: () => tuneOf(key),
   rungs: () => MACHINE_TUNE_RUNGS,
-  bill: () => [['spark', tuneCost(key)], ['dust', tuneCost(key) * DUST_PER_SPARK]],
+  bill: () => { const c = tuneCost(key, ahead('tune' + key)); return [['spark', c], ['dust', c * DUST_PER_SPARK]]; },
   buy: () => { const m = machine(key); if (m) m.tune = (m.tune || 0) + 1; },
   // A ladder for a thing you have not bought is a row about nothing.
   show: () => !!machine(key)?.bought

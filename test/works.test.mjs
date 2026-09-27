@@ -209,13 +209,13 @@ group('a bench rung is fitted at the bench by a spare body', async () => {
   window.__grant({ dust: 90000 });
   run(2);
 
-  const price = () => window.__rows().find(r => r.key === 'carry')?.bill?.[0]?.[1] ?? 0;
-  const was = price();
+  // Landed is the rung itself: the tag shows the next copy's bill from the
+  // press on, so a dearer price no longer means the last one is in.
+  const was = state().carryLevel;
   const started = window.__buy('carry');
   const work = on('carry');
   const walked = runUntil(() => state().works?.bench?.hands > 0, 60);
-  const atX = state().crewDetail?.length ? state().builders : 0;
-  const landed = runUntil(() => price() > was, 60);
+  const landed = runUntil(() => state().carryLevel > was, 60);
 
   return [
     ok(started, 'strength can be bought'),

@@ -73,32 +73,34 @@ group('they land in the order bought, each stepping up as the one before lands',
   ];
 });
 
-group('a press on a row in line pulls it out and hands the bill back', async () => {
+group('a refund on a row in line pulls it out and hands the bill back', async () => {
   setUp();
   window.__buy('carry');
   const before = purse();
   window.__buy('pick');
   const paid = before - purse();
   run(0.25);
-  const pulled = window.__buy('pick');        // the same press, the other way
+  // The card's refund strip, by the path it calls (`handBack`). A press on
+  // the card itself would queue another rung (test/queue-repeats.test.mjs).
+  const pulled = window.__handBack('pick');
   run(0.25);
   const list = at('bench').map(w => w.key);
   return [
     ok(paid > 0, 'the pick was paid for', `${paid}`),
-    ok(pulled === false, 'the press is not a purchase', `${pulled}`),
+    ok(pulled === true, 'a copy came out of the line', `${pulled}`),
     ok(list.join(',') === 'carry', 'and the pick is out of the line', list.join(',')),
     ok(purse() === before, 'with the whole bill back in the pile', `${before} -> ${purse()}`),
   ];
 });
 
-group('the one being built is committed: pressing it again does nothing', async () => {
+group('the one being built is committed: nothing hands it back', async () => {
   setUp();
   window.__buy('carry');
   run(1);
   const before = purse();
-  const again = window.__buy('carry');
+  const again = window.__handBack('carry');
   return [
-    ok(again === false, 'the press is refused', `${again}`),
+    ok(again === false, 'the refund is refused', `${again}`),
     ok(at('bench').length === 1 && at('bench')[0].key === 'carry', 'the work is still there',
        at('bench').map(w => w.key).join(',')),
     ok(purse() === before, 'and nothing changed hands', `${before} -> ${purse()}`),

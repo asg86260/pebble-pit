@@ -1,14 +1,13 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
          SHEET_MS, SCALE_MARK } from './config.js';
 import { fmt } from './words.js';
 import { S, bench } from './state.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
 import { crewRows } from './crewboard.js';
-import { UPGRADES, lodgers, markSectionsSeen, canPay, inLine } from './upgrades.js';
-import { maxed } from './words.js';
+import { UPGRADES, lodgers, markSectionsSeen, canPay, forSale, building } from './upgrades.js';
 import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
 import { cutsceneRunning } from './cutscene.js';
@@ -42,7 +41,7 @@ document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
 document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
 document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
 // The shelf's steps, the same way: config owns them, shelf.css reads them.
-for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHELF_TOP], ['foot', SHELF_FOOT], ['air', SHELF_AIR], ['sign', SHELF_SIGN], ['plank', SHELF_PLANK]])
+for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHELF_TOP], ['foot', SHELF_FOOT], ['air', SHELF_AIR], ['sign', SHELF_SIGN], ['plank', SHELF_PLANK], ['refund', SHELF_REFUND]])
   document.documentElement.style.setProperty?.(`--shelf-${name}`, `${v}px`);
 document.documentElement.style.setProperty?.('--shelf-hover-ms', `${SHELF_HOVER_MS}ms`);
 document.documentElement.style.setProperty?.('--shelf-float-ms', `${SHELF_FLOAT_MS}ms`);
@@ -84,11 +83,11 @@ export function hasOffer(which) {
   if (!standing(which)) return false;      // a place that is not there offers nothing
   // Something you could buy this second, and nothing else. Not an unseen row
   // (a new yard has seen none, so every station would point at itself from
-  // the first frame), not a job count, not a maxed ladder, not a row already
-  // bought and waiting its turn.
-  return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial &&
-                                  !u.price && !maxed(u) && !u.dead?.() &&
-                                  canPay(u) && !inLine(u));
+  // the first frame), not a job count, not a maxed ladder: the gate a press
+  // goes through (`forSale`). A row the yard is building there keeps the flag
+  // up too, so a station's flag does not drop the moment its last row is
+  // paid for and come back when the next is offered (test/boards.test.mjs).
+  return listFor(which).some(u => u.show && !u.job && (forSale(u) || (building(u) && u.show())) && canPay(u));
 }
 
 // Whether a station's board holds a row you have never had on an open board:

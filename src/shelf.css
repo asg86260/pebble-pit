@@ -322,6 +322,32 @@
 @media (hover: hover) {
   .rows.shelves > .tile:hover .pinmark { opacity: 1; }
 }
+/* The refund strip (DESIGN.md, "The same row, queued again"): the whole
+   width of the tile along its foot, in the title's capitals, there only while
+   a copy of the row is waiting its turn. The tile grows by the strip rather
+   than the strip covering the tag, and the pin mark stands on it. Inside the
+   tile's border, so a lifted plate carries it. */
+.rows.shelves > .tile .refund {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: var(--shelf-refund, 18px);
+  box-sizing: border-box;
+  border-top: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-style: normal;
+  font-size: .85em;
+  line-height: calc(var(--shelf-refund, 18px) - 1px);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+}
+.rows.shelves > .tile .refund[hidden] { display: none; }
+.rows.shelves > .tile.refunds { padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
+.rows.shelves > .tile.refunds .pinmark { bottom: calc(var(--shelf-refund, 18px) + 2px); }
+@media (hover: hover) {
+  .rows.shelves > .tile .refund:hover { background: var(--ink); color: var(--paper); }
+}
 /* The new-corner is top-LEFT on a tile: the pips stand down the right edge,
    and a notch over them read as the top of the ladder. */
 .rows.shelves > .tile.new::before {

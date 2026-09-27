@@ -1863,4 +1863,57 @@ export const TESTS = [
       ok(stays, 'where it stays once the board is closed')
     ];
   }],
+
+  // DESIGN.md, "The same row, queued again": the card's body buys another
+  // copy, and the strip along its foot hands the newest waiting one back.
+  // The strip is pressed the way a pointer presses it -- down, up, click --
+  // since the card under it listens to the same press, and a strip whose
+  // click reached the card would buy a copy as it refunded one.
+  ['a card pressed twice queues two, and its refund strip hands the newest back', async () => {
+    newRun();
+    await settle();
+    window.__crew(3, 0);
+    window.__give(200000);
+    run(20);                                    // `carry` is offered once a load has been carried
+    await hoverBench();
+    const card = () => shop().querySelector('button[data-key="carry"]');
+    const copies = () => (state().line?.bench || []).filter(w => w.key === 'carry').length;
+    const had = state().stored;
+    card()?.click();
+    await settle(0.1);
+    const paidOne = had - state().stored;
+    const noStrip = card()?.querySelector('.refund')?.hidden !== false;
+    card()?.click();
+    await settle(0.1);
+    const two = copies();
+    const strip = card()?.querySelector('.refund');
+    const says = strip && !strip.hidden ? strip.textContent : '';
+    // Inside the card, along its foot: the strip's box against the card's.
+    const c = card()?.getBoundingClientRect(), s = strip?.getBoundingClientRect();
+    const inFoot = !!c && !!s && s.left >= c.left && s.right <= c.right && s.bottom <= c.bottom + 0.5
+      && c.bottom - s.bottom <= 2 && s.width >= c.width - 4;
+    const before = state().stored;
+    if (strip) {
+      const x = s.left + s.width / 2, y = s.top + s.height / 2;
+      const at = { clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0, bubbles: true };
+      strip.dispatchEvent(new PointerEvent('pointerdown', { ...at, buttons: 1 }));
+      strip.dispatchEvent(new PointerEvent('pointerup', { ...at, buttons: 0 }));
+      strip.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true }));
+    }
+    await settle(0.1);
+    const back = state().stored - before;
+    const one = copies();
+    const gone = card()?.querySelector('.refund')?.hidden !== false;
+    window.__board(null);
+    newRun();
+    return [
+      ok(paidOne > 0 && noStrip, 'one press buys one copy, and with nothing waiting there is no strip', `${paidOne}`),
+      ok(two === 2, 'a second press on the card queues a second copy', `${two}`),
+      ok(/refund ×1/i.test(says), 'the strip counts the copy waiting', says),
+      ok(inFoot, 'and stands inside the card, along its foot',
+         c && s ? `card ${c.left},${c.bottom} ${c.width} strip ${s.left},${s.bottom} ${s.width}` : 'no strip'),
+      ok(one === 1 && back > 0, 'pressing it hands the waiting copy back and buys nothing', `${one} left, ${back} back`),
+      ok(gone, 'and with nothing left waiting the strip goes'),
+    ];
+  }],
 ];

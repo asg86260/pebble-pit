@@ -54,7 +54,7 @@ import { drawSerpent, drawSnatch } from './render/serpent.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
 import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
-import { drawSinking, drawLifting } from './render/scales.js';
+import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
 import { S } from './state.js';
 
 // The drawing side's public surface: the rest of the game imports every one of
@@ -195,6 +195,7 @@ const LAYERS = [
   // heap forty cells deep, and a station buried in its own coin could not
   // be found to be paid at.
   { name: 'deep bed', draw: drawDeepBed },
+  { name: 'into crusher', draw: drawIntoCrusher }, // behind the furnace, dropping into its funnel
   { name: 'deep stations', draw: drawDeepStations },
   { name: 'sigils', draw: drawSigils },          // lying on the scales, under the coil they hold
   { name: 'beams', draw: drawBeams },            // behind the coil they end on

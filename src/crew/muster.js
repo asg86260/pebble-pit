@@ -39,10 +39,10 @@ setHands(site => {
 });
 
 // The hands at ONE work of a site's several; only builders answer. A body
-// with no `workKey` yet is still walking and counts toward nothing.
-setHandsOn((site, key) =>
+// with no `workId` yet is still walking and counts toward nothing.
+setHandsOn((site, id) =>
   S.workers.filter(w => builds(w) && w.goal === 'at'
-                     && w.site === site && w.workKey === key).length);
+                     && w.site === site && w.workId === id).length);
 
 // A build starting turns spare hands into builders and a build landing turns
 // them back; both have to be walked out to the yard on the frame it happens.
