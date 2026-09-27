@@ -109,7 +109,7 @@ One fighter a station still; four fighters at most. **Each station is its
 own** (the owner: "Each station is independent. Even if it's the same type
 of station"): its own ladder of eight, bought for that building, its own
 class, branch and capstone. Respec is free: class, branch and capstone.
-Whether a second station of a kind costs more than the first is open.
+A second station of a kind costs the same as the first.
 
 ---
 
@@ -379,7 +379,12 @@ shape:
 0. **The first fighter's classes** -- answered 2026-09-27: the sqwife picks
    from **three: Brawler, Ranger, Mage**, one class of each of the altar,
    the armory and the spire. **The Bard unlocks after the first fighter**,
-   so she never stands alone. When the other six unlock is open.
+   so she never stands alone. **The other classes unlock when a second
+   station is bought** (the owner, 2026-09-27: "This will make sure they
+   have good damage as the first option"): the first fighter is always
+   one of the three damage classes, and every class is open from the
+   second station on. **A second station of a kind costs the same as the
+   first** ("Don't matter").
 
 1. **Ten classes on five stations, two a station** (above), or ten stations,
    or classes free of stations (the spec the fighter's, which undoes the
