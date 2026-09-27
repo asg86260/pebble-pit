@@ -16132,11 +16132,11 @@ per slot, the `rev` it last pulled or pushed (its *base*).
 | `DELETE /vaults/me` | forgets the code and every slot under it |
 
 The code rides in `Authorization: Bearer`, never in a URL. The worker
-keeps only the code's hash, so its database leaks no code. A blob over 1 MB
-is `413`; a code unseen for a year is swept. CORS is open, as the board's
-is: the game runs on itch's origin, on the desk and on localhost. A hundred
-bits are not guessed, so there is no lockout to design; a plain per-ip rate
-limit keeps the free tier from being spent by a script.
+keeps only the code's hash, so its database leaks no code. CORS is open, as
+the board's is: the game runs on itch's origin, on the desk and on
+localhost. A hundred bits are not guessed, so there is no lockout to
+design. What the worker refuses so that space and budget stay bounded is
+its own section, "Fail-safes", below.
 
 ### The sync
 
@@ -16185,12 +16185,92 @@ each, and the player keeps one; the other goes to that slot's `.prev`, and
 `save a copy` still hands it out. Slots where one side is empty fill
 without asking.
 
+### Fail-safes: space and budget
+
+A mirror that runs away costs money or fills a disk, and nobody is
+watching it at three in the morning. So every way it could grow has a
+written ceiling, and every ceiling fails the same way the whole design
+already fails: **the cloud refuses, and the yard plays and saves locally
+as if the cloud were down.** No limit here can cost a yard, which is what
+makes it safe to set them tight. The numbers live in `config/cloud.js` and
+are read by both ends, as `config/times.js` is.
+
+**The plan cannot bill.** The worker runs on Cloudflare's Workers Free
+plan, on an account with no card behind it. Over the free limits (100k
+requests a day; D1's 100k row writes a day and 5 GB) Cloudflare refuses
+requests rather than charging for them. That is the backstop every limit
+below sits inside of. If the account is ever moved to Paid for something
+else, the worker's own caps become the real bound, and billing
+notifications go on the same day. The free limits are shared by every
+worker on the account, so the caps below leave the other projects room.
+
+**Storage is overwritten, never appended.** One row a code and a slot,
+replaced on every push: no history, no versions, no log of blobs. Space
+is at most codes × 3 × the blob cap, and each of those three is capped:
+
+- **A blob** over `CLOUD_BLOB_MAX` (256 kb, fifty times a busy yard
+  gzipped) is `413`. The client measures before it sends and never tries
+  it: the sheet says `too big for the cloud`, the slot stays local, and the
+  size is a bug report rather than a bill.
+- **The whole store** keeps a running byte total, one counter row updated in
+  the same D1 batch as each write. A write that would carry it past
+  `CLOUD_BYTES_MAX` (1 GB, a fifth of the free 5 GB) is `507`. The client
+  stops pushing for the session and the sheet says `the cloud is full`.
+- **New codes** are rate limited, `CLOUD_MINTS_IP_DAY` (3) per ip a day.
+  A code minted and never pushed to is swept after 7 days, and a code
+  unseen for `CLOUD_STALE_D` (180) days is swept with its slots. The sweep
+  is a daily cron trigger, which the free plan has.
+
+**Writes have three ceilings, and none of them trusts the game.** A bug in
+the client (an autosave loop, a retry with no backoff, a thousand tabs) is
+the likeliest runaway. So the worker enforces the limits itself, and the
+client carries its own copy of them so a healthy one never meets them:
+
+- **Per slot:** a PUT within `CLOUD_PUSH_FLOOR_S` (30) of the slot's last
+  one is `429` before D1 is written.
+- **Per code:** `CLOUD_VAULT_DAY_WRITES` (1,500) a day. That is three slots
+  pushed once a minute for over eight hours of play; past it, `429` until
+  midnight UTC.
+- **The whole worker:** `CLOUD_DAY_WRITES` (40,000) a day, a counter keyed
+  by date. Each push is two row writes (the slot and the counter), so this
+  holds the worker to 80k of the account's 100k, the rest left for mints,
+  sweeps and the other workers. Past it, every write is `503` with
+  `Retry-After` set to midnight UTC.
+
+**The client backs off and gives up.** Pushes are driven by a timer, never
+by the autosave, so no rate of local saving becomes a rate of requests. A
+slot is pushed only when its `playedS` has moved since the last push (or it
+was cleared), so an idle or paused yard sends nothing however long it sits
+open. Any refusal or network error doubles the wait, up to 30 minutes, and
+`Retry-After` is obeyed. A `507` or `413` stops that slot for the session.
+A session that has sent `CLOUD_PUSH_HOUR_MAX` (90) pushes in an hour stops
+pushing: a healthy one sends 60 and a few `pagehide`s, so hitting that cap
+is a bug, and the sheet says `cloud paused`.
+
+**One switch stops it all.** `CLOUD_PAUSED`, a worker variable set with one
+`wrangler` command and no game release, makes every route answer `503`
+with a day's `Retry-After` before it touches D1. Every client already out
+there backs off and plays locally. `CLOUD_ON` in the build is the second,
+slower switch.
+
+**The owner can see it.** `GET /stats`, behind an owner token kept as a
+worker secret: today's writes against the cap, bytes stored against the
+cap, and codes live. The daily cron logs the same line, so a curve heading
+for a ceiling is visible before it arrives.
+
 ### What it must not break
 
 - *The local save's guarantees.* The atomic write, the last-good copy, the
   broken-blob aside and the save floor stay as they are: a pulled blob
   goes through `isSave` like any other before it is written anywhere, and
   a cloud blob that will not read is never written over a local yard.
+- *Every platform, one save.* The web page on itch, the desk and a phone
+  all write the same blob, so a code carries a yard across them with
+  nothing per platform. What crosses badly is a version: migrations only
+  run forward, so a desk a release behind cannot read a save the newer
+  web build wrote. A client never takes a cloud blob whose `saveV` is above
+  its own `SAVE_V`, and never pushes over one. It keeps its local yard,
+  and the sheet says `newer on another device: update to take it`.
 - *The desk.* The same `cloud.js` runs in Electron. The desk reads and
   writes through `window.desk` as now, and `cloud.js` only ever calls
   save.js, so the bridge does not grow.
@@ -16209,8 +16289,17 @@ sides; a `412` on a device that is behind stops its pushes and overwrites
 nothing; different `yardId`s never overwrite without the choice; a cleared
 slot stays cleared on the other device; a dead server boots the local yard
 inside `CLOUD_BOOT_MS`; a cloud blob that fails `isSave` is never written.
+The same file covers the fail-safes from the client's side: an autosave
+loop at sixty a second sends one push a minute; an idle yard sends none; a
+`429`/`503` doubles the wait and obeys `Retry-After`; `507`, `413` and the
+hour cap each stop pushing and leave the local save writing.
+`test/cloud-size.test.mjs` gzips the veteran save fixture and asserts it is
+under a quarter of `CLOUD_BLOB_MAX`, so a save format that grows trips a
+check long before a player trips the cap.
 `cloud/test/` runs the worker's routes against a local D1: the conditional
-PUT under two writers, hash-only storage, `413` and the bearer check.
+PUT under two writers, hash-only storage, the bearer check, and every
+ceiling -- blob, store bytes, mints, per-slot floor, per-code and whole-worker
+day caps, and `CLOUD_PAUSED` answering before D1 is touched.
 `test/persist-roundtrip.test.mjs` covers the two new fields unasked.
 
 ### What the design still does not know

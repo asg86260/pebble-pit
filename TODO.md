@@ -5,6 +5,8 @@
 "Cloud saves: a sync code and a worker" in DESIGN.md: the local store stays
 what play reads; a Cloudflare Worker + D1 mirrors every slot under a
 hundred-bit sync code (no accounts), pulled at boot, pushed once a minute.
+Every way it can grow has a ceiling ("Fail-safes"), and a free plan with
+no card behind it is the backstop.
 Blocker: the owner's sign-off, and a Cloudflare account for the worker. No
 game code yet.
 
