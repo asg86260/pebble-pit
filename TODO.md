@@ -25,7 +25,12 @@ synergies; no station order; blows burst scales and a heavy one stuns the
 heal (C + D of `docs/mocks/serpent-impact-2026-09-26.html`). The owner's
 four calls answered 2026-09-26; every branch detailed in
 `docs/serpent-branches.md`. Blocker: the owner's read of that, and its three
-open calls. C + D can be built first.
+open calls. **C + D is built** (2026-09-27, on today's weapons, branch
+`serpent-stun`): blows bite the hide and burst their scales, a heavy blow
+stuns the heal; the calls made at build are under "Blows land" in DESIGN.md.
+Open: the punch stuns the bare coil from rung 1 (one share cannot hold it
+to late rungs and still let a burst stun the split), and no grenade stuns
+the fading coil today.
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 

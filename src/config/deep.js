@@ -94,10 +94,10 @@ export const SERPENT_DEFENSE = {
 // A heavy blow stuns (DESIGN.md, "Blows land: the burst and the stun"): one
 // blow worth STUN_SHARE of the stage's depth or more seizes the coil and
 // stops the heal. A share rather than a number, measured against today's
-// weapons: a punch from its second rung stuns the bare coil (depth 60), a
-// grenade burst from its sixth rung the warded coil and from its eighth the
-// split one, and a star every stage -- the fading one where a wizard lights
-// it, or unlit from its last rung. Longer for a bigger blow, on the square
+// weapons: a punch from rung 1 stuns the bare coil (depth 60), a grenade
+// burst from rung 4 the warded coil and from rung 7 the split one, and a
+// star every stage -- the fading one where a wizard lights it, or unlit
+// from its last rung. Longer for a bigger blow, on the square
 // root of how many times over the share it was; a new stun keeps the longer
 // of the two, and none can start in the grace after one ends.
 export let STUN_SHARE = 0.03;        // a blow's share of the stage's depth that stuns
