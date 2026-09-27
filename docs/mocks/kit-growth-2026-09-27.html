@@ -61,7 +61,7 @@
     <div class="grp" id="classic"><span>classic</span></div></div>
 
   <h2>Pick a fix</h2>
-  <p class="dim">Three rough spots in the classic pass, each the current version beside its alternatives, looping with classic on.</p>
+  <p class="dim">Still open: the Martial Artist's thrust smear, the current version beside its alternatives, looping with classic on.</p>
   <div id="fixes"></div>
 
   <h2>Live: the ten at five stations, each attacking in turn</h2>
@@ -326,8 +326,12 @@ const dip = (a, at, depth, lead = 0.15, back = 0.2) => {
 // whole cell at contact. Travel away from a strike stays smooth.
 let CLASSIC = true;
 const POSE = 0.08;
-// Pick a fix: which alternative a tile is drawn with ('' the current one).
-let VAR = { hay: '', thrust: '', whirl: '' };
+// The fix alternatives in force. The owner picked (2026-09-28) C for the
+// Haymaker (the fist held a pose alone, then the star) and A for the
+// Whirlwind (one star, on the middle hit); the thrust smear is still open,
+// its alternatives shown in "Pick a fix" ('' is the current one).
+const PICKED = { hay: 'C', thrust: '', whirl: 'A' };
+let VAR = { ...PICKED };
 const EX = () => CLASSIC ? 1.7 : 1;
 // The world at the moment a fighter is drawn, so a smear can find the hide.
 let CUR = { t: 0, s: {} };
@@ -455,7 +459,9 @@ const holdPose = (a, at) => CLASSIC && Math.abs(a - at) < 1e-6;
 // at contact or on recovery -- the weapon's rigid sprite gives way to a smear:
 // its own drawing of whole cells along the path the weapon sweeps, brightest
 // at the leading edge with the weapon's point at the front, stepping down the
-// greys behind. No blur, no alpha.
+// greys behind. No blur, no alpha. Under classic these give way to classic's
+// own held smear pose: on the posed clock a 35 ms window could catch a whole
+// held pose, a stray smear hanging beside the weapon.
 let SMEAR = true;
 const inWin = (a, c, half = 0.0175) => a >= c - half && a < c + half;
 // The cells a turning weapon sweeps about a pivot cell (px, py) between the
@@ -658,7 +664,7 @@ const swordsman = {
     for (const w of sw) { const an = this.angle(w, a, held); if (an != null) { on = w; ang = an; } }
     // a smear at top speed: just before the blade crosses the hide, and for a
     // spin once more late in the turn, clear of the contact and its pause
-    const smear = SMEAR && on && Math.abs(a - on.hit) > 0.02
+    const smear = SMEAR && !CLASSIC && on && Math.abs(a - on.hit) > 0.02
       && (inWin(a, on.hit - 0.055) || (on.spin && inWin(a, on.at + on.dur - 0.06)));
     const pose = on && sw.find(w => smearPose(a, w.hit));
     if (pose) {
@@ -796,8 +802,9 @@ const martial = {
         for (let c = x - 2 + sh; c <= x + 4 - sh; c++) cell(g, c, top + i, i === 0 ? WHITE : i === 1 ? GREYS[10] : GREYS[9]);
       }
       if (R8(R)) pike(g, x + 4, top, 1, 0);
-      speed(g, x + 1, top + rows - 1, 4, 3);
-    } else if (sweep && SMEAR && inWin(a, pl.fin - 0.0175)) {
+      // the speed lines trail the staff's two ends, clear of her body
+      for (const ex of [x - 2, x + 4]) for (let j = 0; j < 3; j++) cell(g, ex, top + rows + j, j === 0 ? GREYS[9] : j === 1 ? GREYS[7] : GREYS[5]);
+    } else if (sweep && SMEAR && !CLASSIC && inWin(a, pl.fin - 0.0175)) {
       // the finisher's smear: the staff's sweep from over her head up to the
       // hide as one wide arc, the leading row bright, narrower and darker behind
       const top = maxBot([x - 2, x + 4], t, s) + 1, rows = Math.max(2, Math.round(y - 1 - top) + 1);
@@ -818,7 +825,7 @@ const martial = {
       const st = SAUCE ? this.tipAt(a, all, y - 3, ht) : null;
       const tip = st != null ? st : on != null ? ht : y - 3;
       // a thrust's smear, at top speed on the way up: a streak from the point down
-      const smear = SMEAR && all.some(p => SAUCE ? inWin(a - p, -0.028, 0.014) : inWin(a - p, -0.065, 0.015));
+      const smear = SMEAR && !CLASSIC && all.some(p => SAUCE ? inWin(a - p, -0.028, 0.014) : inWin(a - p, -0.065, 0.015));
       const cp = all.find(p => smearPose(a, p)), hp = all.find(p => holdPose(a, p));
       if (cp != null) {
         // classic: the pose before contact is a held streak from the hide down
@@ -827,7 +834,7 @@ const martial = {
           // A: two cells wide, a white edge and a grey core
           boldStreak(g, x + 1, top, bot);
           for (let yy = top; yy <= bot; yy++) cell(g, x + 2, yy, yy === top ? GREYS[10] : GREYS[8]);
-          speed(g, x + 1.5, ht + 1, 2, 3);
+          speed(g, x + 1.5, ht + 2, 2, 3);
         } else if (VAR.thrust === 'B') {
           // B: a tapered wedge, three cells at the point narrowing to one
           const n = bot - top;
@@ -844,7 +851,7 @@ const martial = {
           speed(g, x + 1, ht + 2, 2, 4);
         } else {
           boldStreak(g, x + 1, top, bot);
-          speed(g, x + 1, ht + 1, 2, 3);
+          speed(g, x + 1, ht + 2, 2, 3);
         }
       } else if (smear) streak(g, x + 1, tip - blade, 10 + blade);
       else {
@@ -853,9 +860,17 @@ const martial = {
         // classic contact: the tip stretched a cell longer into the hide
         if (hp != null) cell(g, x + 1, tip - blade - 1, WHITE);
       }
-      if (on != null && R4(R)) for (let r = tip + 1; r < tip + 5; r++) cell(g, x + 2, r, GREYS[6]);  // Flow's after-image
-      if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t);
+      // Flow's after-image: a dark staff beside the real one while the tip is
+      // at the hide. Classic has its own smear and speed lines, and there the
+      // column hung beside a staff that had already left the hide (the clock
+      // is posed but the window was not), so it is the smooth clock's only.
+      if (!CLASSIC && on != null && R4(R) && Math.abs(tip - ht) < 0.5) for (let r = tip + 1; r < tip + 5; r++) cell(g, x + 2, r, GREYS[6]);
       drawBody(g, x, y);
+      // the ribbon is tied to the staff's foot, which is inside her body on a
+      // thrust: drawn under the body, only its waving tail poked out past her
+      // edge, a cell or two popping in and out beside the staff. Over the
+      // body, it streams out whole from where it is tied.
+      if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t);
     } else staffBack(g, x, y, R, t);
     all.forEach((p, i) => blow(g, t, t - (a - p), x + 1, s, 0.18, 50 + i));
     blow(g, t, t - (a - pl.fin), x + 1, s, 0.7, 59);
@@ -1020,7 +1035,7 @@ const assassin = {
       const spinAt = d => R8(R) ? (d < this.out ? d / this.out : 1 + (d - this.out) / this.back) * Math.PI * 2 : 0;
       const spins = spinAt(d);
       // a smear at top speed on the way out, before the point reaches the hide
-      const smear = SMEAR && (SAUCE ? inWin(d - this.out, -0.0575) : inWin(d, 0.0975));
+      const smear = SMEAR && !CLASSIC && (SAUCE ? inWin(d - this.out, -0.0575) : inWin(d, 0.0975));
       if (CLASSIC && d - this.out >= -POSE - 1e-9 && d - this.out < -1e-9) {
         // classic: the pose before contact is a held streak from the hide down to her fist
         boldStreak(g, bx, top - 3, gy + 1, R8(R) ? PURPLES[11] : WHITE);
@@ -1381,15 +1396,9 @@ const host = document.getElementById('host');
 // Pick a fix: a row a rough spot, the current version then its alternatives,
 // all on one clock so the contacts land together.
 const FIXES = [
-  { name: '1 · Haymaker contact (reads as the star, not the fist)', c: 'brawler', key: 'hay', opts: [
-    ['', 'current: the full star'], ['A', 'A: a small dark-grey star behind the fist'],
-    ['B', 'B: no star; keyline, a bigger burst, speed lines'], ['C', 'C: the fist held a pose, then the star']] },
-  { name: '2 · Martial Artist thrust smear (1 cell, reads as a staff)', c: 'martial', key: 'thrust', opts: [
+  { name: 'Martial Artist thrust smear (1 cell, reads as a staff)', c: 'martial', key: 'thrust', opts: [
     ['', 'current: a 1-cell streak'], ['A', 'A: 2 cells, white edge, grey core'],
     ['B', 'B: a wedge, 3 cells at the point to 1'], ['C', 'C: a ghost staff behind, speed lines']] },
-  { name: '3 · Whirlwind (three stars at once, busy)', c: 'sword', key: 'whirl', opts: [
-    ['', 'current: three full stars'], ['A', 'A: one star, at the middle hit'],
-    ['B', 'B: three small dim stars'], ['C', 'C: no stars; the crescent and three chips']] },
 ];
 for (const f of FIXES) {
   const row = el('div', { className: 'tiles' });
@@ -1468,7 +1477,7 @@ function paintAll(t) {
   for (const tl of tiles) paintTile(tl.g, tl.c, tl.R, t, tl.phase);
   // the fix tiles: classic on, their own variant, rung 4, one clock
   const keep = [CLASSIC, VAR];
-  for (const tl of fixTiles) { CLASSIC = true; VAR = { [tl.key]: tl.v }; paintTile(tl.g, tl.c, 4, t, 0); }
+  for (const tl of fixTiles) { CLASSIC = true; VAR = { ...PICKED, [tl.key]: tl.v }; paintTile(tl.g, tl.c, 4, t, 0); }
   [CLASSIC, VAR] = keep;
   paintPane(pane, t);
 }
@@ -1488,7 +1497,7 @@ window.__tileSheet = (list, cols = 6) => {
     const c = ORDER.find(o => o.key === k), cv = el('canvas'); cv.width = w; cv.height = h;
     // an entry may name a fix alternative, drawn with classic on
     const keep = [CLASSIC, VAR];
-    if (v) { CLASSIC = true; VAR = v; }
+    if (v) { CLASSIC = true; VAR = { ...PICKED, ...v }; }
     paintTile(cv.getContext('2d'), c, R, a, 0);
     [CLASSIC, VAR] = keep;
     g.drawImage(cv, (i % cols) * (w + 4), Math.floor(i / cols) * (h + 4));
