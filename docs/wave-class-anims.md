@@ -169,3 +169,59 @@ One line per class and per status painter; the hats in one line each (so
 the orchestrator can check all ten are distinct); the shot paths; anything
 the spec did not say that you had to decide; anything you think is wrong
 with it. And the branch and last commit SHA.
+
+---
+
+## Round 2: the kit (2026-09-27)
+
+*Canon for the four tracks' second pass. Everything above still holds
+except where this section overrides it.*
+
+The owner chose **kit first** over hats (`docs/mocks/classes/looks-2026-09-27.html`,
+"Fighter Looks"): "i think we will want to redo the hats. they look just a
+bit wonky. i think the hats are too much of a restraint design wise." Then
+revised the kit class by class on that page. **The looks page is canon for
+each class's kit**: its resting pose (the 1x row and the 4x tile) and the
+way its attack comes out of the kit (the live pane). Copy the kit's drawing
+out of the looks page into your own group file; do not import from it.
+
+What changes in your group file:
+
+1. **No hats.** Each class's `hat(g, cx, cy, t)` now draws its **kit** in
+   the resting pose, beside, over or in the hands of the plain square, as
+   the looks page draws it. (The hook keeps its name; `frame` calls it the
+   same way.) A class with no held kit (the Hexer) draws her rising motes
+   there.
+2. **Every attack comes out of the kit.** Rework each of the four scenes
+   so the base attack and the three keystones are done *with the gear*:
+   - the Brawler's small wrapped fists;
+   - the Martial Artist's bo staff, thrust and sweep; there are no
+     nunchaku and no one-cell hands;
+   - the Monk's beads (unchanged);
+   - the Swordsman's sword, always point up at rest;
+   - the Assassin's two daggers, points up in her fists, with no mask;
+   - the Ranger's bow, with no quiver. **The bow goes above the head,
+     level, and the arrow is shot straight up**, then the bow comes back
+     down to the side, as on the looks page;
+   - the Sapper's charge bundle (unchanged);
+   - the Mage's staff (unchanged);
+   - the Hexer's rising purple motes: the hex is the motes streaming up;
+   - the Bard's **flute**, held sideways at the mouth; her notes rise off
+     its end to the other fighter.
+   A fighter who leaves the station (melee) carries the kit with it and
+   brings it back. A scene with `body: false` draws the kit itself.
+3. **Keep everything else**: the statuses you own, what each scene
+   applies, the burst and chip, the stun, the timings, unless the kit
+   forces a change. Say so if it does.
+4. **Stations:** the owner re-paired the classes (altar: Brawler,
+   Swordsman; well: Monk, Martial Artist; armory: Ranger, Assassin;
+   circle: Hexer, Sapper; spire: Mage, Bard). The bench places classes by
+   that table already; set your classes' `station` field to match.
+
+Tracks and files are as before (hand: Brawler, Martial Artist, Monk; blade:
+Swordsman, Assassin, Ranger; fire: Sapper, Mage; word: Hexer, Bard), each
+owning only its `group-<track>.js`. First command:
+`git reset --hard class-kits && git switch -c kits-<track>`. Ports as
+before (hand 5301, blade 5302, fire 5303, word 5304; CDP 9300 + the same
+last digit), always with `GAME` and `CDP_PORT` set. Report as before, plus
+one line a class on how the kit carries its attack.

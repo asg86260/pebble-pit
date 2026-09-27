@@ -63,12 +63,13 @@ import './group-blade.js';
 import './group-fire.js';
 import './group-word.js';
 
-const STATIONS = [['altar', 'The altar · the empty hand'], ['well', 'The well · the blade'],
-  ['armory', 'The armory · the thrown and the shot'], ['circle', 'The circle · the word'],
-  ['spire', 'The spire · the abyss\'s power']];
-const ORDER = ['brawler', 'martial', 'sword', 'assassin', 'sapper', 'ranger', 'hexer', 'bard', 'mage', 'monk'];
-const EXPECT = { altar: ['brawler', 'martial'], well: ['sword', 'assassin'], armory: ['sapper', 'ranger'],
-  circle: ['hexer', 'bard'], spire: ['mage', 'monk'] };
+// The owner's pairs (2026-09-27, docs/serpent-classes.md section 2). The
+// index places each class by this table, not by the class's own `station`.
+const STATIONS = [['altar', 'The altar · the front line'], ['well', 'The well · the discipline'],
+  ['armory', 'The armory · from afar and from the shadow'], ['circle', 'The circle · the saboteurs'],
+  ['spire', 'The spire · the abyss's voice']];
+const EXPECT = { altar: ['brawler', 'sword'], well: ['monk', 'martial'], armory: ['ranger', 'assassin'],
+  circle: ['hexer', 'sapper'], spire: ['mage', 'bard'] };
 
 const panes = [], reviews = [];
 let playing = true, clock = 0, last = performance.now();
