@@ -71,10 +71,11 @@ These close questions the design left open; they are the simplest reading.
    and it stands without a fighter until a pod resident is free, who then
    swims to it. A station without a fighter does nothing.
 5. **The station's rungs are its own.** `S.stations[i].rung`, bought on
-   that station's rails. The class chosen reads them. **Reset** refunds
-   every rung bought at that station (the bills paid, from the station's
-   own record) and blanks its class; the fighter stays and fights the
-   station's base attack at rung 0 of the next class taken.
+   that station's rails. **Reset** refunds every rung bought at that
+   station (the bills paid, from the station's own record) and blanks its
+   class; **the fighter stays assigned and goes back to a base fighter**
+   (the plain square, no kit), standing guard until a class is bought
+   again (the owner, 2026-09-28).
 6. **Before a class is taken the station's fighter does nothing** but
    stand guard; the first rung bought commits the class.
 7. **The star** stays the machine bought in sparks on the spire's board --
@@ -83,8 +84,7 @@ These close questions the design left open; they are the simplest reading.
    other fighter her song does nothing, and her rail says so in its line.
 9. **Every class wins alone except the Bard** (the owner). Each damage class
    does half in one phase (`SERPENT_DEFENSE`, below); nothing walls.
-10. **Old saves** are migrated by refund (v7, below): nothing is lost, the
-    player rebuilds.
+10. **Old saves** are out of scope for now (below).
 
 ## The model (the seam every track codes against)
 
@@ -292,23 +292,13 @@ are the cards' own (`board.js` builders), so a rail reads as the boards do.
   are replaced by `fighters` and `shots` (arrows, bolts, charges) in
   `LAYERS`, in the `DEEP` set.
 
-## Old saves (owner: STATE) -- migration v7
+## Old saves (owner: STATE) -- out of scope for now
 
-`src/migrations/2026-09-28-party.js`, `SAVE_V` 7:
-
-- The altar and the open old doors become built stations of their kind
-  (`font` -> `armory`), classless, rung 0, in the floor's order, **at most
-  `1 + serpentStage`** (the first station and a fang a break); a door past
-  that is refunded with the rest.
-- **Every weapon ladder level is refunded**: the sum of its bills paid,
-  added to the purse. Sigils, lances, grenades, beams are dropped.
-- `fangsDropped = serpentStage`, and `fangs` = the breaks past, less the
-  stations beyond the first that the old save already stands (at least 0),
-  so no fang is lost or doubled.
-- Weapon bodies become pod residents (gatherers); the sqwife becomes the
-  fighter of the first station.
-- The migration says one line on load (`says`): "The deep was rebuilt:
-  pick your fighters' classes; your upgrades were refunded."
+The owner, 2026-09-28: "dont worry about old saves right now." No
+migration is written. A save from before this wave loads its yard as ever;
+its deep starts fresh at the snatch (the retired fields are dropped on
+load, the weapon bodies stood down to pods). `SAVE_V` is not raised. A
+proper migration is a later job.
 
 ## Tracks and ownership
 
@@ -322,7 +312,7 @@ comment naming the track.
 | **FIGHT** | src/deep/arms.js, src/deep/serpent.js, src/deep/rest.js, src/deep/classes.js (new), src/deep/statuses.js (new), src/config/deep.js, src/config/classes.js (new) | classes.test.mjs (new, one group a class), statuses.test.mjs (new), deep-arms, serpent, serpent-stun, serpent-numbers, deep-rest |
 | **BOARD** | src/stations.js, src/deep/rows.js, src/deep/rails.js (new), src/deep/buildbutton.js (new), src/config/deepboard.js, src/config/rungs.js, src/deep/place.js, src/deep/sprites.js, src/works.js (DOWN_THERE, TICKS_AT only), src/upgrades/tiers.js (the field getter only), src/glyphs.js, ladders.html, glyphs.html, stations.html | rails.test.mjs (new), deep-board, deep-works, gates, test/shop-rows.mjs; a browser group `rails` in src/selftest/deep.js |
 | **RENDER** | src/render/arms.js, src/render/deep.js, src/render/crew.js (deep bodies only), src/render/serpent.js, src/render/scales.js, src/config/deepdraw.js, src/deep/kits.js (new) | deep-view; shots of every scene below |
-| **STATE** | src/state.js, src/migrations/*, src/config/saves.js, src/crew/records.js, src/hooks.js, src/scenes.js, src/verify.js | persist-roundtrip, save-floor, party-migrate.test.mjs (new, from a real v6 save in test/fixtures/) |
+| **STATE** | src/state.js, src/crew/records.js, src/hooks.js, src/scenes.js, src/verify.js | persist-roundtrip |
 
 Shared, additive-only: `src/config.js` (the barrel), `src/render.js`
 (LAYERS entries), `src/game.js` (STEPS), `src/selftest.js`, `src/shelf.css`,
@@ -362,10 +352,6 @@ removed or rewritten onto classes.
 - **rails.test.mjs** (BOARD): view does not commit; the first rung commits
   and folds; Reset refunds exactly what was paid; a locked class opens with
   the second station; a station built twice keeps two ladders.
-- **party-migrate.test.mjs** (STATE): a real v6 save (stations open,
-  weapon levels bought, a stage broken) loads: stations stand, the purse
-  holds the refund, slots equal the stage plus one, no body lost, the reload
-  check holds.
 - New `verify.js` rules (STATE): one fighter a station; stations ≤ `FIGHT_STATIONS_MAX`; a fighter's station exists and is built;
   `fangsDropped` ≤ stage; no fighter in the yard.
 - Every test file that hardcodes a retired job, row or flag is rewritten by
