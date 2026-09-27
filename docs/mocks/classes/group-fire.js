@@ -123,6 +123,7 @@ registerStatus('lit', {
 // landed, painting the whole column of the body as it passes, and the Lit
 // outline behind it. Loud for the half second it takes; then the painter.
 const LIT_RUN = 60;
+const litDone = (x0, t0) => t0 + (Math.max(x0 - COIL_X0, COIL_X1 - x0) + 4) / LIT_RUN;
 function lightUp(g, t, t0, x0, s) {
   const a = t - t0;
   const r = a * LIT_RUN;
@@ -351,19 +352,21 @@ registerClass({
 });
 
 // --- the Mage ------------------------------------------------------------------------
-// A tall hat whose tip has fallen over to one side, in the abyss's purple,
+// A pointed hat with a wide brim, in the abyss's purple,
 // and a staff with a purple stone that brightens as a spell gathers.
 function mageHat(g, cx, cy) {
   rect(g, cx - 1, cy - 1, 5, 1, PURPLES[8]);
-  rect(g, cx, cy - 2, 2, 1, PURPLES[9]);
-  cell(g, cx - 1, cy - 2, PURPLES[10]);   // the fallen tip
+  cell(g, cx + 1, cy - 2, PURPLES[10]);   // the point
 }
-const tipOf = me => ({ x: me.x + 4, y: me.y - 2 });
+// The staff stands a cell clear of the body and rises past the hat, so its
+// stone is the highest thing on the plinth and a spell starts from it.
+const tipOf = me => ({ x: me.x + 4, y: me.y - 3 });
 // `glow` 0..1: how gathered the spell is.
 function staff(g, me, glow) {
   const tip = tipOf(me);
   for (let y = tip.y + 1; y <= me.y + 2; y++) cell(g, tip.x, y, GREYS[7]);
   cell(g, tip.x, tip.y, glow > 0.66 ? WHITE : glow > 0.33 ? PURPLES[11] : PURPLES[9]);
+  if (glow > 0.66) { cell(g, tip.x - 1, tip.y, PURPLES[10]); cell(g, tip.x + 1, tip.y, PURPLES[10]); cell(g, tip.x, tip.y - 1, PURPLES[10]); }
 }
 // A spell gathering at the staff's stone: a ring of cells that draws in.
 function gather(g, t, t0, len, me) {
@@ -378,7 +381,7 @@ function gather(g, t, t0, len, me) {
 function bolt(g, t, t0, fl, me, tx, s, fire = false) {
   const a = t - t0;
   if (a < 0 || a >= fl) return;
-  const tip = tipOf(me), ty = coilY(tx, t0 + fl, s);
+  const tip = tipOf(me), ty = coilBottom(tx, t0 + fl, s);
   const at = q => ({ x: lerp(tip.x, tx, q), y: lerp(tip.y, ty, q) + Math.sin(q * Math.PI * 4) * 0.8 });
   const p = a / fl;
   if (fire) {
@@ -409,12 +412,14 @@ function ripple(g, t, t0, cx, cy) {
   ring(g, cx, cy, 1 + a * 8, a < 0.3 ? PURPLES[11] : a < 0.55 ? PURPLES[9] : PURPLES[6], 2);
   if (a > 0.2) ring(g, cx, cy, 1 + (a - 0.2) * 8, PURPLES[7], 3);
 }
-// One cast: gather, fly, land. Returns when and where it landed.
-function cast(g, t, api, { t0, tx, fl = 0.4, fire = false, id = 0, k = 0.4 }) {
+// One cast: gather for half a second, fly, land. Returns when and where it
+// landed; CAST is how long after its start a cast lands.
+const CAST = 0.5 + 0.55;
+function cast(g, t, api, { t0, tx, fl = 0.55, fire = false, id = 0, k = 0.4 }) {
   const me = api.me, s = api.st;
   const tL = t0 + 0.5 + fl;
   bolt(g, t, t0 + 0.5, fl, me, tx, s, fire);
-  const y = Math.round(coilY(tx, tL, s));
+  const y = coilBottom(tx, tL, s);
   if (t >= tL) {
     ripple(g, t, tL, tx, y);
     burst(g, t, tL, tx, y, k, id);
@@ -431,17 +436,24 @@ function glowAt(t, starts) {
 
 // The Storm's forks: jagged runs of cells between two points, redrawn in a
 // new zigzag every flicker so the lightning crawls rather than holds a shape.
-function fork(g, t, ax, ay, bx, by, seed) {
+// `bow` lifts the middle of the run, so a jump from one length to the next
+// arcs over the coil's back instead of running along it.
+function fork(g, t, ax, ay, bx, by, seed, bow = 0) {
   const f = Math.floor(t * 24);
-  const n = Math.max(2, Math.round(Math.hypot(bx - ax, by - ay) / 3));
-  let px = ax, py = ay;
+  const len = Math.hypot(bx - ax, by - ay);
+  const n = Math.max(2, Math.round(len / 2.5));
+  const nx = -(by - ay) / len, ny = (bx - ax) / len;   // across the run
+  const pts = [{ x: ax, y: ay }];
   for (let i = 1; i <= n; i++) {
     const q = i / n;
-    const j = i === n ? 0 : (hash(seed * 17 + i * 5 + f) - 0.5) * 4;
-    const nx = lerp(ax, bx, q) + j * 0.4, ny = lerp(ay, by, q) + j;
-    line(g, px, py, nx, ny, f % 2 ? WHITE : PURPLES[11]);
-    px = nx; py = ny;
+    const j = i === n ? 0 : (hash(seed * 17 + i * 5 + f) - 0.5) * 3.5;
+    pts.push({ x: lerp(ax, bx, q) + nx * j, y: lerp(ay, by, q) + ny * j - bow * Math.sin(Math.PI * q) });
   }
+  // a purple fringe a cell to the side of the white, so the bolt has the
+  // abyss in it, then the white stroke over it
+  for (const dx of [1, 0]) for (let i = 1; i < pts.length; i++)
+    line(g, pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y, null, (cx, cy) =>
+      cell(g, cx + dx, cy, dx ? ((i + f) % 2 ? PURPLES[10] : PURPLES[8]) : WHITE));
 }
 
 const STORM = [{ x: 24, at: 0 }, { x: 36, at: 0.12 }, { x: 48, at: 0.24 }];
@@ -449,24 +461,25 @@ const STRIKE = 1.0;   // when the first fork lands
 
 registerClass({
   key: 'mage', name: 'Mage', station: 'spire', group: 'fire',
-  look: 'a tall purple hat with its tip fallen over; a staff with a purple stone',
+  look: 'a pointed purple hat with a wide brim; a staff with a purple stone',
   hat: mageHat,
   scenes: [
     { name: 'Base', about: 'A bolt every 2 s, a blow; the bolt Lights the coil where it lands.', dur: 4,
-      state(t, api) { if (t >= 0.9 + 0.5) api.status('lit', 1); },
+      state(t, api) { if (t >= litDone(26, 0.5 + CAST)) api.status('lit', 1); },
       draw(g, t, api) {
         const starts = [0.5, 2.5];
         staff(g, api.me, glowAt(t, starts));
         for (const t0 of starts) gather(g, t, t0, 0.5, api.me);
         const a = cast(g, t, api, { t0: 0.5, tx: 26, id: 11 });
         lightUp(g, t, a.tL, a.x, api.st);
-        cast(g, t, api, { t0: 2.5, tx: 38, id: 12 });
+        const b = cast(g, t, api, { t0: 2.5, tx: 38, id: 12 });
+        lightUp(g, t, b.tL, b.x, api.st);
       } },
     { name: 'Pyromancy', about: 'Bolts set Burning, from where they land to the whole coil.', dur: 7,
       state(t, api) {
-        if (t >= 1.4) api.status('lit', 1);
-        if (t >= spreadDone(30, 1.4)) api.status('burning', 0.34);
-        if (t >= spreadDone(40, 4.4)) api.status('burning', 0.67);
+        if (t >= litDone(30, 0.5 + CAST)) api.status('lit', 1);
+        if (t >= spreadDone(30, 0.5 + CAST)) api.status('burning', 0.34);
+        if (t >= spreadDone(40, 3.5 + CAST)) api.status('burning', 0.67);
       },
       draw(g, t, api) {
         const starts = [0.5, 3.5];
@@ -479,16 +492,18 @@ registerClass({
         catchFire(g, t, b.tL, b.x, api.st, 0.67);
       } },
     { name: 'Storm', about: 'A bolt jumps to two more lengths, each a blow.', dur: 3.5,
-      state(t, api) { if (t >= STRIKE) api.status('lit', 1); },
+      // the light goes on once the forks have gone, so the two do not talk over each other
+      state(t, api) { if (t >= litDone(STORM[0].x, STRIKE + 0.5)) api.status('lit', 1); },
       draw(g, t, api) {
         const me = api.me, s = api.st, tip = tipOf(me);
         staff(g, me, glowAt(t, [STRIKE - 0.5]));
         gather(g, t, STRIKE - 0.5, 0.5, me);
         let from = { x: tip.x, y: tip.y };
         STORM.forEach((j, i) => {
-          const at = STRIKE + j.at, y = Math.round(coilY(j.x, at, s));
+          // the first fork strikes the belly; each jump comes down on the back
+          const at = STRIKE + j.at, y = i ? coilTop(j.x, at, s) : coilBottom(j.x, at, s);
           // a fork shows for a quarter second from the moment it lands
-          if (t >= at && t < at + 0.28) fork(g, t, from.x, from.y, j.x, i ? coilTop(j.x, t, s) - 1 : y, i + 1);
+          if (t >= at && t < at + 0.28) fork(g, t, from.x, from.y, j.x, i ? coilTop(j.x, t, s) - 1 : y, i + 1, i ? 4 : 0);
           if (t >= at) {
             ripple(g, t, at, j.x, y);
             burst(g, t, at, j.x, y, 0.35, 20 + i);
@@ -496,7 +511,7 @@ registerClass({
           }
           from = { x: j.x, y: coilTop(j.x, t, s) - 1 };
         });
-        lightUp(g, t, STRIKE, STORM[0].x, s);
+        lightUp(g, t, STRIKE + 0.5, STORM[0].x, s);
       } },
     { name: 'Arcane', about: 'Every 8 s the spire\'s light sweeps the whole coil, head to tail: all of it Lit.', dur: 6,
       state(t, api) { if (t >= 3.4) api.status('lit', 1); },
@@ -508,14 +523,20 @@ registerClass({
         if (t < t1 || t >= t2) return;
         const xs = lerp(COIL_X0, COIL_X1, (t - t1) / (t2 - t1));
         litCells(g, t, s, COIL_X0, xs);
-        // the beam: two runs of cells from the stone up to the underside of
-        // the coil, shimmering as they go, and a bright band where it falls
+        // the beam: a fan of runs from the stone that opens to five cells
+        // where it meets the coil -- dim and broken at its edges, solid and
+        // shimmering down its middle -- and a bright band where it falls
         const by = coilBottom(Math.round(xs), t, s) + 1;
         const f = Math.floor(t * 12);
-        for (const dx of [0, 1]) line(g, tip.x, tip.y - 1, xs + dx, by, null, (x, y, i) =>
-          cell(g, x, y, (i + f + dx) % 3 === 0 ? PURPLES[11] : (i + dx) % 2 ? PURPLES[8] : PURPLES[6]));
-        const top = coilTop(Math.round(xs), t, s);
-        for (let cy = top - 1; cy <= by; cy++) { cell(g, xs, cy, WHITE); cell(g, xs + 1, cy, PURPLES[11]); }
+        for (const dx of [-2, 2, -1, 1, 0]) line(g, tip.x, tip.y - 1, xs + dx, by, null, (x, y, i) => {
+          const edge = Math.abs(dx);
+          if (edge === 2 && (i + f) % 2) return;
+          cell(g, x, y, edge === 2 ? PURPLES[5] : edge === 1 ? PURPLES[7] : (i + f) % 3 === 0 ? WHITE : PURPLES[10]);
+        });
+        for (let dx = -1; dx <= 1; dx++) {
+          const cx = Math.round(xs) + dx, top = coilTop(cx, t, s), bot = coilBottom(cx, t, s);
+          for (let cy = top - 1; cy <= bot + 1; cy++) cell(g, cx, cy, dx ? PURPLES[11] : WHITE);
+        }
       } },
   ],
 });
