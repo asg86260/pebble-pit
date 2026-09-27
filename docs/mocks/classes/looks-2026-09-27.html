@@ -40,31 +40,24 @@
 <body>
 <div class="wrap">
   <h1>Fighter Looks</h1>
-  <p>The owner, 2026-09-27: the hats "look just a bit wonky ... too much of a restraint design wise." Two directions
-    for telling ten classes apart without a hat, each drawn for all ten, so the vote is on a direction, not a sprite.
-    Directions 2 (silhouette) and 3 (little figures) were dropped before drawing, on the owner's word.</p>
+  <p>The owner, 2026-09-27: the hats "look just a bit wonky ... too much of a restraint design wise." This page
+    draws the ten classes without a hat, each carrying its kit: the plain square, and beside or over it the thing it
+    fights with.</p>
+  <p><b>Kit first chosen 2026-09-27; revised on the owner's notes.</b> Directions 2 (silhouette) and 3 (little
+    figures) were dropped before drawing; direction 4 (square plus emblem) was drawn and then dropped on the owner's
+    word ("some are gear, some are thematic icons/clothes"). Where a class needs an icon, it is its kit drawn on its own.</p>
   <ul class="bargain">
-    <li><b>1 · Kit first.</b> Costs: a fighter is wider than its square (up to nine cells), every attack has to move
+    <li><b>Kit first.</b> Costs: a fighter is wider than its square (up to seven cells), every attack has to move
       its kit, and a class read from across the deep rests on one or two grey pieces. Buys: the class is known from
       its outline at the game's scale, the blow comes out of the thing it is struck with (the bow shoots, the staff
       casts), and it stays the square on the P grid.</li>
-    <li><b>4 · Square plus emblem.</b> Costs: it is the one direction that leaves the P grid (the emblem is drawn in
-      two-pixel units, a third of a cell, the way the fight numbers are drawn in screen pixels); a 14-pixel emblem is
-      read when looked at, not at a glance; any dark mark on a white square is read as a face first; and the
-      outline says nothing, so ten fighters in a row are ten squares.
-      Buys: the square untouched and every fighter the same footprint, nothing to animate but the attack, and a
-      set of ten icons the boards and cards can use as they are.</li>
   </ul>
   <p class="dim">A mock drawn from plain cells, not the game. It cannot show: the game's camera and zoom, the real coil
     (its girth, cracks and ribs), the yard's other bodies and their trade hats beside these, real attack timings,
-    numbers, statuses, or how either direction carries the branch looks (a keystone that changes the kit or the
-    emblem). The emblem's two-pixel units stay two pixels only at the 1x row; the live panes are drawn at the game's
-    scale and shown doubled.</p>
+    numbers, statuses, or how a branch's keystone would change the kit. The live pane is drawn at the game's scale
+    and shown doubled.</p>
 
   <div class="bar"><button id="play" type="button">pause</button><span id="clock">0.0 s</span></div>
-
-  <h2>Side by side, at the game's scale</h2>
-  <div class="scroll" id="compare"></div>
 
   <div id="dirs"></div>
 </div>
@@ -109,7 +102,6 @@ function drawArt(g, art, bx, by, t = 0) {
       if (isW(c + dx, r) && isW(c, r + dy) && !isW(c + dx, r + dy))
         g.fillRect(px + (dx < 0 ? 0 : P - 2), py + (dy < 0 ? 0 : P - 2), 2, 2);
   }
-  if (art.emblem) drawEmblem(g, art, rows, x0, y0, t);
   return { x0, y0, w: Math.max(...rows.map(s => s.length)), h: rows.length };
 }
 // An art may be one drawing or several, stepped through at `fps`.
@@ -131,23 +123,6 @@ function pointOf(art, bx, by, t, pt) {
   return { x: bx - art.ox + pt[0], y: by - rows.length + 1 + pt[1] };
 }
 
-// --- the emblem (direction 4) ---------------------------------------------------------------
-// Seven units of two pixels across the square's white face: the face is
-// fourteen pixels inside the two-pixel edge, so seven units fill it exactly.
-const EU = 2;
-const ETONE = { x: GREYS[1], s: GREYS[6], p: PURPLES[8], q: PURPLES[10] };
-function drawEmblem(g, art, rows, x0, y0, t) {
-  let bc = -1, br = -1;
-  for (let r = 0; r < rows.length && br < 0; r++) { const c = rows[r].indexOf('#'); if (c >= 0) { bc = c; br = r; } }
-  const e = art.emblem, bits = e.frames ? e.frames[Math.floor(t * (e.fps || 2)) % e.frames.length] : e.rows;
-  const px = (x0 + bc) * P + 2, py = (y0 + br) * P + 2;
-  for (let j = 0; j < 7; j++) for (let i = 0; i < 7; i++) {
-    const ch = bits[j][i];
-    if (ch === '.') continue;
-    g.fillStyle = ETONE[ch]; g.fillRect(px + i * EU, py + j * EU, EU, EU);
-  }
-}
-
 // ================================================================================
 // Direction 1: kit first. The plain square, no hat; the class is the thing it
 // carries, two to four cells of it, beside or over the body.
@@ -159,55 +134,63 @@ const build = (w, h, n, fn) => Array.from({ length: n }, (_, k) => {
   return g.map(r => r.join(''));
 });
 const body3 = (put, c, r, ch = '#') => { for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) put(c + x, r + y, ch); };
+// A few purple motes rising off a body and stepping down the purples as they
+// go: the Hexer's whole kit. (x, top) is the body's middle column and top row.
+const MOTE_TONES = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
+function motes(g, x, top, t) {
+  for (let i = 0; i < 4; i++) {
+    const p = (t / 2.2 + i / 4) % 1;
+    const dx = [-1, 1, 0, 2][i] - (p > 0.55 ? (i % 2 ? 0 : 1) : 0);
+    cell(g, x + dx - (i === 3 ? 2 : 0), top - 1 - Math.floor(p * 5), MOTE_TONES[Math.floor(p * 3.99)]);
+  }
+}
 const KIT = {
   brawler: {
-    look: 'two wrapped fists as big as his head, held up in a guard either side',
-    idle: { ox: 3, rows: [
-      'ww...ww',
-      'ww###ww',
-      'gg###gg',
-      '..###..'] },
+    look: 'two small wrapped fists held up in a guard, one each side of his head',
+    idle: { ox: 2, rows: [
+      'w...w',
+      'g###g',
+      '.###.',
+      '.###.'] },
     jab: [
-      { ox: 3, rows: [
-        'ww.....',
-        'ww.....',
-        'gg...ww',
-        '.h###ww',
-        '..###gg',
-        '..###..'] },
-      { ox: 3, rows: [
-        '.....ww',
-        '.....ww',
-        'ww...gg',
-        'ww###h.',
-        'gg###..',
-        '..###..'] },
+      { ox: 2, rows: [
+        'w....',
+        'g....',
+        'h...w',
+        '.###g',
+        '.###.',
+        '.###.'] },
+      { ox: 2, rows: [
+        '....w',
+        '....g',
+        'w...h',
+        'g###.',
+        '.###.',
+        '.###.'] },
     ],
   },
   martial: {
-    look: 'a pair of nunchaku, one stick in her fist, the other swung round on its chain',
-    // the held stick stands at column 4; the free one turns round the chain above it
-    idle: { ox: 1, frames: build(7, 5, 5, (g, k, put) => {
-      body3(put, 0, 2);
-      put(4, 3, 'a'); put(4, 4, 'a'); put(4, 2, 'd');
-      const at = [[[4, 1], [4, 0]], [[5, 1], [6, 0]], [[5, 2], [6, 2]], [[3, 1], [2, 0]], [[5, 3], [6, 4]]][k];
-      for (const [c, r] of at) put(c, r, 'a');
-    }), fps: 6, seq: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 0, 3, 0, 1] },
+    look: 'a bo staff held across her back, longer than she is wide; she thrusts it and sweeps it',
+    idle: { ox: 3, rows: [
+      '..###..',
+      'gh###hg',
+      '..###..'] },
     jab: [
+      // the thrust: the staff stood on end and driven up
       { ox: 1, rows: [
-        '....a..',
-        '....a..',
-        '....d..',
-        '###.a..',
-        '###.a..',
-        '###....'] },
-      { ox: 1, rows: [
-        '..a....',
-        '...a...',
-        '....d..',
-        '###.a..',
-        '###.a..',
-        '###....'] },
+        '.g.',
+        '.h.',
+        '.h.',
+        '###',
+        '###',
+        '###',
+        '.g.'] },
+      // the sweep: the staff over her head, flat along the hide
+      { ox: 3, rows: [
+        'ghhhhhg',
+        '..###..',
+        '..###..',
+        '..###..'] },
     ],
   },
   monk: {
@@ -227,15 +210,15 @@ const KIT = {
       '.......'] },
   },
   sword: {
-    look: 'a greatsword taller than him, planted point-down at his side',
-    idle: { ox: 4, rows: [
-      '.g....',
-      '.d....',
-      'hhh...',
-      '.a....',
-      '.a.###',
-      '.a.###',
-      '.a.###'] },
+    look: 'a greatsword taller than him, held point-up at his side, the hilt at his hand',
+    idle: { ox: 5, rows: [
+      '.w.....',
+      '.a.....',
+      '.a.....',
+      '.a.....',
+      'hhh.###',
+      '.d..###',
+      '.g..###'] },
     jab: [
       { ox: 2, rows: [
         '..w..',
@@ -249,30 +232,37 @@ const KIT = {
     ],
   },
   assassin: {
-    look: 'a pair of daggers held point-down, one each side, and a dark mask over the eyes',
-    idle: { ox: 3, rows: [
-      'd.KKK.d',
-      'a.###.a',
-      'w.###.w'] },
+    look: 'a dagger in each fist, arms out, points up: a bright blade over a short crossguard',
+    idle: { ox: 4, rows: [
+      '.w.....w.',
+      '.a.....a.',
+      '.a.....a.',
+      'mmm###mmm',
+      '.h.###.h.',
+      '...###...'] },
     jab: [
-      { ox: 3, rows: [
-        '......w',
-        '......a',
-        'd.KKK.d',
-        'a.###..',
-        'w.###..'] },
+      // both blades driven up at once
+      { ox: 4, rows: [
+        '.w.....w.',
+        '.a.....a.',
+        '.a.....a.',
+        'mmm...mmm',
+        '.h.....h.',
+        '.h.###.h.',
+        '...###...',
+        '...###...'] },
     ],
   },
   ranger: {
-    look: 'a bow twice his height; a quiver on his back, the fletching over his shoulder',
-    idle: { ox: 2, rows: [
-      '.....h..',
-      'w....gh.',
-      'h....g.h',
-      'd###.g.h',
-      'd###.gh.',
-      'd###.h..'] },
-    tip: [5, 0],
+    look: 'a bow twice his height, nothing else',
+    idle: { ox: 1, rows: [
+      '....h..',
+      '....gh.',
+      '....g.h',
+      '###.g.h',
+      '###.gh.',
+      '###.h..'] },
+    tip: [4, 0],
   },
   sapper: {
     look: 'a bundle of three charges under his arm, the fuse lit and sparking',
@@ -304,176 +294,26 @@ const KIT = {
     tip: [1, 0],
   },
   hexer: {
-    look: 'a short wand held up, a purple thread trailing off its tip in a wave',
-    idle: { ox: 1, fps: 5, frames: build(7, 6, 4, (g, k, put) => {
-      body3(put, 0, 3);
-      put(3, 3, 'd'); put(4, 2, 'h'); put(5, 1, 'p');
-      for (let x = 0; x <= 4; x++) put(x, 1 + Math.round(Math.sin((4 - x) * 1.25 - k * Math.PI / 2)), 'q');
-    }) },
-    tip: [5, 1],
+    look: 'nothing held: a few small purple motes rise off her and fade; the hex is the motes let go at once',
+    idle: { ox: 1, rows: [
+      '###',
+      '###',
+      '###'] },
+    fx(g, x, by, t) { motes(g, x, by - 2, t); },
   },
   bard: {
-    look: 'a lute held up at her side, a note let go now and then',
+    look: 'a flute held sideways at her mouth; notes drift off its end to the fighters either side',
     idle: { ox: 1, rows: [
-      '....gg',
-      '....d.',
-      '....d.',
-      '###hhh',
-      '###hkh',
-      '###.h.'] },
-    tip: [4, 0],
+      '###adaa',
+      '###....',
+      '###....'] },
+    tip: [6, 0],
   },
 };
-
-// ================================================================================
-// Direction 4: square plus emblem. The plain square; the class is an emblem
-// on its face, in two-pixel units.
-// ================================================================================
-const SQ = ['###', '###', '###'];
-const EMB = {
-  brawler: { look: 'an impact star: the blow itself', rows: [
-    'x..x..x',
-    '.x.x.x.',
-    '..xxx..',
-    'xxxxxxx',
-    '..xxx..',
-    '.x.x.x.',
-    'x..x..x'] },
-  martial: { look: 'a belt, knotted, its tails flying', fps: 3, frames: [[
-    '.......',
-    '.......',
-    'xxxxxxx',
-    'xxx.xxx',
-    '..x.x..',
-    '.x...x.',
-    'x.....x'], [
-    '.......',
-    '.......',
-    'xxxxxxx',
-    'xxx.xxx',
-    '..x.x..',
-    '..x..x.',
-    '.x....x']] },
-  monk: { look: 'a ring of chi with its middle lit', fps: 2, frames: [[
-    '..ppp..',
-    '.p...p.',
-    'p.....p',
-    'p..q..p',
-    'p.....p',
-    '.p...p.',
-    '..p.p..'], [
-    '..ppp..',
-    '.p...p.',
-    'p.....p',
-    'p.qqq.p',
-    'p.....p',
-    '.p...p.',
-    '..p.p..']] },
-  sword: { look: 'a sword, point up and over', rows: [
-    '.....xx',
-    '....xxx',
-    '...xxx.',
-    'x.xxx..',
-    '.xxx...',
-    '.xx....',
-    'x..x...'] },
-  assassin: { look: 'a skull', rows: [
-    '.xxxxx.',
-    'xxxxxxx',
-    'x..x..x',
-    'xxxxxxx',
-    '.xx.xx.',
-    '.xxxxx.',
-    '.x.x.x.'] },
-  ranger: { look: 'an arrow, point up, fletched', rows: [
-    '...x...',
-    '..xxx..',
-    '.x.x.x.',
-    '...x...',
-    '...x...',
-    '..xxx..',
-    '.x.x.x.'] },
-  sapper: { look: 'a round charge, its fuse lit', fps: 4, frames: [[
-    '.....s.',
-    '....x.s',
-    '..xxx..',
-    '.xxxxx.',
-    'xxxxxxx',
-    '.xxxxx.',
-    '..xxx..'], [
-    '......s',
-    '....xs.',
-    '..xxx..',
-    '.xxxxx.',
-    'xxxxxxx',
-    '.xxxxx.',
-    '..xxx..']] },
-  mage: { look: 'a purple flame', fps: 3, frames: [[
-    '...p...',
-    '..pp...',
-    '..ppp..',
-    '.pp.pp.',
-    '.p...p.',
-    '.pp.pp.',
-    '..ppp..'], [
-    '....p..',
-    '...pp..',
-    '..ppp..',
-    '.pp.pp.',
-    '.p...p.',
-    '.pp.pp.',
-    '..ppp..']] },
-  hexer: { look: 'an eye with a purple iris, which blinks', fps: 2, frames: [[
-    '.......',
-    '..xxx..',
-    '.x.p.x.',
-    'x.ppp.x',
-    '.x.p.x.',
-    '..xxx..',
-    '.......'], [
-    '.......',
-    '..xxx..',
-    '.x.p.x.',
-    'x.ppp.x',
-    '.x.p.x.',
-    '..xxx..',
-    '.......'], [
-    '.......',
-    '.......',
-    '.......',
-    'xxxxxxx',
-    '.......',
-    '.......',
-    '.......']], seqNote: 'blink' },
-  bard: { look: 'a note', rows: [
-    '...xx..',
-    '...x.x.',
-    '...x..x',
-    '...x...',
-    '.xxx...',
-    'xxxx...',
-    '.xx....'] },
-};
-// the eye blinks once in a while rather than every other beat
-EMB.hexer.frames = [0, 0, 0, 0, 0, 0, 2, 0].map(i => EMB.hexer.frames[i]);
-const EMBLEM = {};
-for (const [k] of CLASSES) {
-  const e = EMB[k];
-  const emblem = e.frames ? { frames: e.frames, fps: e.fps } : { rows: e.rows };
-  EMBLEM[k] = {
-    look: e.look,
-    idle: { ox: 1, rows: SQ, emblem },
-    // a melee strike is the square itself, a cell higher: it butts the coil
-    jab: [{ ox: 1, rows: [...SQ, '...'], emblem }],
-    cast: { ox: 1, rows: SQ, emblem },
-  };
-}
 
 const DIRS = [
   { key: 'kit', n: 1, name: 'Kit first', sprites: KIT,
     about: 'The plain square, no hat. Each class carries two to four cells of kit beside or over it, and the attack comes out of that kit.' },
-  { key: 'emblem', n: 4, name: 'Square plus emblem', sprites: EMBLEM, finer: true,
-    about: 'The plain square, the class drawn on its white face as an emblem in two-pixel units -- off the P grid, the way the fight numbers are. The attacks are the same as direction 1\'s, but they leave the square itself: melee fighters butt the coil with it.' },
 ];
 
 // ================================================================================
@@ -484,6 +324,7 @@ function drawSlot(g, dir, key, sx, t) {
   const base = sx + 5;
   const art = dir.sprites[key].idle;
   drawArt(g, art, base, ROW_FLOOR - 3, t);
+  dir.sprites[key].fx?.(g, base, ROW_FLOOR - 3, t);
 }
 function drawRowBack(g, w) {
   rect(g, 0, 0, w, SLOT_H, GREYS[0]);
@@ -635,6 +476,8 @@ function drawFighter(g, dir, key, i, t) {
     return;
   }
   drawArt(g, S.idle, x, by, t);
+  // the hexer's motes leave her while she hexes, and come back after
+  if (S.fx && !(key === 'hexer' && a < 1.6)) S.fx(g, x, by, t);
   const tip = S.tip ? pointOf(S.idle, x, by, t, S.tip) : { x, y: by - 3 };
   if (key === 'ranger') {
     // an arrow flown straight up from the bow's tip, then left standing in the hide
@@ -665,15 +508,17 @@ function drawFighter(g, dir, key, i, t) {
     burst(g, t, t0, tx, hitY, 0.65, i * 7);
     chip(g, t, t0, tx, Math.round(cY(tx, t)), 0.65, i * 7);
   } else if (key === 'hexer') {
-    // a sigil floated up off the wand; it sets into the hide as a purple ripple
-    const fly = 0.8, tx = tip.x, hitY = cBot(tx, t);
-    if (a >= 0.1 && a < 0.1 + fly) {
-      const k = along(a, 0.1, 0.1 + fly);
-      const cx = tx, cy = Math.round(lerp(tip.y - 2, hitY + 2, k));
-      for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) cell(g, cx + dx, cy + dy, PURPLES[9]);
-      cell(g, cx, cy, Math.floor(t * 8) % 2 ? PURPLES[11] : PURPLES[8]);
+    // the motes let go at once: they stream up off her into the hide, where
+    // they set as a purple ripple
+    const fly = 0.5, tx = x, hitY = cBot(tx, t), top = by - 2;
+    for (let n = 0; n < 5; n++) {
+      const s0 = 0.1 + n * 0.1;
+      if (a < s0 || a >= s0 + fly) continue;
+      const k = along(a, s0, s0 + fly), cx = tx + [-1, 1, 0, -1, 1][n];
+      const cy = Math.round(lerp(top - 1, hitY + 1, k));
+      cell(g, cx, cy, PURPLES[11]); cell(g, cx, cy + 1, PURPLES[7]);
     }
-    const e = a - 0.1 - fly;
+    const e = a - 0.1 - 0.4 - fly;
     if (e >= 0 && e < 0.8) {
       const r = 1 + e * 8;
       ring(g, tx, hitY, r, [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.floor(e / 0.2)], 2);
@@ -681,7 +526,7 @@ function drawFighter(g, dir, key, i, t) {
     const t0 = t - e;
     burst(g, t, t0, tx, hitY, 0.15, i * 7);
   } else if (key === 'bard') {
-    // she sings: notes rise off the lute and drift to the fighters either side
+    // she plays: notes rise off the flute and drift to the fighters either side
     for (let n = 0; n < 4; n++) {
       const s = 0.1 + n * 0.25, k = along(a, s, s + 1.2);
       if (a < s || a >= s + 1.2) continue;
@@ -731,13 +576,6 @@ function paintPane(p, t) {
 }
 
 // --- the page ------------------------------------------------------------------------------
-const compare = document.getElementById('compare');
-const strip = document.createElement('div'); strip.className = 'strip';
-for (const d of DIRS) {
-  const lab = document.createElement('div'); lab.textContent = `${d.n} · ${d.name}`;
-  strip.append(lab, makeRow(d));
-}
-compare.append(strip);
 const host = document.getElementById('dirs');
 for (const d of DIRS) {
   const h = document.createElement('h2'); h.textContent = `${d.n} · ${d.name}`; h.id = d.key;
