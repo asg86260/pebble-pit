@@ -263,6 +263,15 @@ are the cards' own (`board.js` builders), so a rail reads as the boards do.
   the page's cells to world cells, driven by the sim's own timers (not
   fixed animation clocks: the old `PUNCH_MS` bug), so tempo and positions
   follow the game while shapes, gear, tones and motion match the page.
+- **Off-grid motion** (the owner, 2026-09-28, option 2 of
+  `docs/mocks/grid-2026-09-28.html`): kits and attacks are built from whole
+  cells, but a thing **in motion** is drawn at whole pixels, and everything
+  returns to the cell grid at rest -- as bodies already walk. **A moving kit
+  is one rigid sprite**: its cells drawn once into its own image and that
+  image moved, and for a spin rotated, whole; never re-drawn as a new line of
+  cells at each position or angle ("the cells should stay intact and aligned
+  correctly"). No smoothing, no sub-pixel. This is a deliberate exception to
+  CLAUDE.md's "everything on the P grid", for the deep's fighters only.
 - **Statuses** on the whole serpent (the bench's painters for Bleeding,
   Exposed, Held, Lit, Weakened) and on fighters (Inspired, Hasted); the
   stun is the built ring.
