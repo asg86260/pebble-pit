@@ -55,7 +55,8 @@
   <div class="bar"><button id="play" type="button">pause</button><span id="clock" class="dim">0.0 s</span>
     <div class="grp" id="rungs"><span>rung</span></div>
     <div class="grp" id="sauce"><span>sauce</span></div>
-    <div class="grp" id="smears"><span>smears</span></div></div>
+    <div class="grp" id="smears"><span>smears</span></div>
+    <div class="grp" id="classic"><span>classic</span></div></div>
 
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
@@ -305,29 +306,108 @@ const dip = (a, at, depth, lead = 0.15, back = 0.2) => {
   if (!SAUCE) return 0;
   const u = a - at;
   if (u < -lead || u > back) return 0;
+  depth *= EX();
   return u < 0 ? depth * ease((u + lead) / lead) : depth * (1 - ease(u / back));
 };
+
+// --- classic: held key poses (the owner, 2026-09-28) -------------------------------------
+// "Some of that classic pixel art sauce." Around every strike the fighter's
+// clock steps in poses of POSE seconds rather than running smooth, so each
+// strike reads as held drawings: the wind-up, a bold smear, the contact held
+// two poses with an impact star that breaks up on the second, the follow-
+// through and the recovery. The key poses are pushed further (EX), fast
+// things trail speed lines, and a fist or a staff tip squashes or stretches a
+// whole cell at contact. Travel away from a strike stays smooth.
+let CLASSIC = true;
+const POSE = 0.08;
+const EX = () => CLASSIC ? 1.7 : 1;
+// The world at the moment a fighter is drawn, so a smear can find the hide.
+let CUR = { t: 0, s: {} };
+const onHide = (cx, cy) => { const x = Math.round(cx), y = Math.round(cy); return y >= cTop(x, CUR.t, CUR.s) && y <= cBot(x, CUR.t, CUR.s); };
+// A held smear: the cells a turning weapon sweeps from `from` to `to` about the
+// pivot cell (px, py), radius r0 to r1 -- solid, the leading edge white, a
+// step of grey inside; where the leading edge crosses the white hide, a dark
+// keyline one cell ahead keeps it from vanishing.
+function boldArc(g, px, py, from, to, r0, r1, lead) {
+  const seen = new Map(), n = Math.max(3, Math.ceil(Math.abs(to - from) * r1 * 1.6)), dir = Math.sign(to - from) || 1;
+  for (let i = 0; i <= n; i++) {
+    const q = i / n, an = lerp(to, from, q);
+    for (let r = r0; r <= r1; r++) {
+      const ox = Math.round(Math.sin(an) * r), oy = Math.round(-Math.cos(an) * r), key = ox + ',' + oy;
+      if (!seen.has(key)) seen.set(key, [ox, oy, q]);
+    }
+  }
+  for (const [ox, oy, q] of seen.values()) {
+    if (q < 0.1 && onHide(px + ox, py + oy)) {
+      const ka = to + dir * 0.9 / r1, r = Math.hypot(ox, oy);
+      cell(g, px + Math.round(Math.sin(ka) * r), py + Math.round(-Math.cos(ka) * r), GREYS[2]);
+    }
+    cell(g, px + ox, py + oy, q < 0.1 ? WHITE : GREYS[9]);
+  }
+  for (let r = lead; r < r0; r++) cell(g, px + Math.round(Math.sin(to) * r), py + Math.round(-Math.cos(to) * r), GREYS[10]);
+}
+// A held streak: a thrust's travel from the point (x, top) down to `bottom`,
+// solid -- the point white, then bright, then one grey -- with a dark keyline
+// over the point if it sits on the hide.
+function boldStreak(g, x, top, bottom, tip = WHITE) {
+  if (onHide(x, top)) cell(g, x, top - 1, GREYS[2]);
+  cell(g, x, top, tip);
+  for (let y = top + 1; y <= bottom; y++) cell(g, x, y, y - top < 3 ? GREYS[10] : GREYS[9]);
+}
+// Speed lines: `n` short straight streaks of cells trailing (below) a fast
+// thing at column cx, row cy, a cell or two to its sides.
+function speed(g, cx, cy, n = 2, len = 3) {
+  const cols = [-1, 1, -2, 2];
+  for (let i = 0; i < n; i++) for (let j = 0; j < len; j++)
+    cell(g, cx + cols[i], cy + 1 + (i % 2) + j, j === 0 ? GREYS[9] : j === 1 ? GREYS[7] : GREYS[5]);
+}
+// The impact star, held two poses: first a bold star of cells at the contact
+// point, bright; then broken, its arms thrown a cell further out and dimmer.
+const ARMS = [[-1, 0, 1], [1, 0, 1], [0, 1, 1], [-1, 1, 0], [1, 1, 0], [-1, -1, 0], [1, -1, 0]];
+function star(g, t, t0, cx, cy, k) {
+  const u = t - t0;
+  if (u < 0 || u >= 2 * POSE) return;
+  // the arms start two cells out, so the fist or blade at the middle reads on top
+  const L = 3 + Math.round(2 * k), broke = u >= POSE;
+  for (const [dx, dy, main] of ARMS) {
+    const len = main ? L : L - 1;
+    for (let r = 2; r <= len; r++) {
+      if (broke && r % 2 === 0) continue;
+      const rr = broke ? r + 1 : r, x = cx + dx * rr, y = cy + dy * rr;
+      const tone = broke ? (r < len ? GREYS[9] : GREYS[7]) : r < len ? WHITE : GREYS[10];
+      if (onHide(x, y)) cell(g, x, y + (dy < 0 ? 0 : 0), GREYS[3]); else cell(g, x, y, tone);
+    }
+  }
+}
 // A class's clock under the sauce. Each contact (`hits`, on the fighter's own
 // clock) holds the fighter still for 40-120 ms by its size, so the fighter's
 // clock `a` runs behind the world's; the contacts' real times place the
 // coil's dents and the sparks. `kick` is the recoil after a heavy one, in cells.
 function sauceOf(c, R, a, x) {
-  if (!SAUCE || !c.hits) return { a, kick: 0, groups: [] };
+  if (!SAUCE && !CLASSIC) return { a, kick: 0, groups: [] };
   const groups = [];
-  for (const h of c.hits(R, x).sort((p, q) => p.at - q.at)) {
+  for (const h of (c.hits ? c.hits(R, x) : []).sort((p, q) => p.at - q.at)) {
     const gr = groups.find(gr => Math.abs(gr.at - h.at) < 1e-6);
     if (gr) { gr.k = Math.max(gr.k, h.k); gr.list.push(h); } else groups.push({ at: h.at, k: h.k, list: [h] });
   }
   let shift = 0, aw = null, kick = 0;
   for (const gr of groups) {
-    gr.real = gr.at + shift; gr.pause = 0.04 + 0.08 * Math.min(1, gr.k);
+    gr.real = gr.at + shift; gr.pause = CLASSIC ? 2 * POSE : 0.04 + 0.08 * Math.min(1, gr.k);
     if (aw == null && a < gr.real) aw = a - shift;
     else if (aw == null && a < gr.real + gr.pause) aw = gr.at;
     shift += gr.pause;
     const u = a - gr.real - gr.pause, amt = gr.k >= 0.7 ? 1.5 : gr.k >= 0.45 ? 0.75 : 0;
-    if (amt && u >= 0 && u < 0.5) kick += amt * (u < 0.05 ? u / 0.05 : 1 - ease((u - 0.05) / 0.45));
+    if (SAUCE && amt && u >= 0 && u < 0.5) kick += amt * (u < 0.05 ? u / 0.05 : 1 - ease((u - 0.05) / 0.45));
   }
   if (aw == null) aw = a - shift;
+  if (CLASSIC) {
+    // round each strike (its contacts, and a caster's gather and release) the
+    // clock steps in held poses, one of them landing on the contact itself
+    const beats = [...groups.map(gr => gr.at), ...(c.beats ? c.beats(R) : [])];
+    let best = null;
+    for (const b of beats) if (Math.abs(aw - b) <= 0.32 && (best == null || Math.abs(aw - b) < Math.abs(aw - best))) best = b;
+    if (best != null) aw = best + Math.floor((aw - best) / POSE + 1e-9) * POSE;
+  }
   return { a: aw, kick: Math.min(c.kickMax ?? 0, kick), groups };
 }
 // The contact spark: a short star of cells jumping off the hit along the
@@ -341,10 +421,17 @@ function spark(g, t, t0, cx, cy, k) {
   for (let i = 0; i < n; i++) cell(g, cx + RAYS[i][0] * r, cy + RAYS[i][1] * r, f < 0.4 ? WHITE : f < 0.75 ? GREYS[9] : GREYS[6]);
 }
 // The sauce's world half, for one class: the dents it leaves and its sparks.
-function sauceDents(S, t, a) { return S.groups.flatMap(gr => gr.list.map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) }))); }
+function sauceDents(S, t, a) { if (!SAUCE) return []; return S.groups.flatMap(gr => gr.list.map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) }))); }
 function sauceSparks(g, S, t, a, st) {
-  for (const gr of S.groups) for (const h of gr.list) spark(g, t, t - (a - gr.real), h.x, cBot(Math.round(h.x), t, st) + 0.5, h.k);
+  for (const gr of S.groups) for (const h of gr.list) {
+    const t0 = t - (a - gr.real), cy = cBot(Math.round(h.x), t, st) + 1;
+    if (CLASSIC) star(g, t, t0, Math.round(h.x), cy, h.k); else spark(g, t, t0, h.x, cy - 0.5, h.k);
+  }
 }
+// Is `a` the pose just before a contact at `at` (the smear), or one of the two
+// contact poses (the hold)?
+const smearPose = (a, at) => CLASSIC && a >= at - POSE - 1e-9 && a < at - 1e-9;
+const holdPose = (a, at) => CLASSIC && Math.abs(a - at) < 1e-6;
 
 // --- smears: the fast part of a swing (the owner, 2026-09-28) ---------------------------
 // For a frame or two at a swing's top speed -- never at rest, in the wind-up,
@@ -436,11 +523,19 @@ const brawler = {
     drawBody(g, x, y);
     for (const side of [-1, 1]) {
       let reach = 0, size = bSize(R);
-      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at, p.hay ? 2 : 1); if (r) { reach = r; size = p.size; } }
+      let held = null;
+      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at, (p.hay ? 2 : 1) * EX()); if (r) { reach = r; size = p.size; if (holdPose(a, p.at)) held = p; } }
       const fx = side < 0 ? x - size : x + BODY, rest = y;
       let fy = reach < 0 ? rest - reach : rest;
       if (reach > 0) fy = rest + (maxBot([fx, fx + size - 1], t, s) + 1 - rest) * reach;
-      bFist(g, fx, fy, size, R, t, side);
+      if (held) {
+        // classic contact: the fist squashed a cell wider and a cell shorter
+        // against the hide; the haymaker trails speed lines
+        // (a dark keyline round it, so it reads against the white of the hide)
+        rect(g, fx - (side < 0 ? 1 : 0) - 1, fy - 1, size + 3, 3, GREYS[2]);
+        rect(g, fx - (side < 0 ? 1 : 0), fy, size + 1, 1, R4(R) ? WHITE : GREYS[10]);
+        if (held.hay) speed(g, fx + size / 2 - 0.5, fy, 4, 3);
+      } else bFist(g, fx, fy, size, R, t, side);
     }
     if (hay) {
       const d = a - hay.at, cx = spot(hay).cx, cy = cBot(cx, t, s);
@@ -516,12 +611,12 @@ const swordsman = {
   angle(w, a, held) {
     const dir = Math.sign(w.a1 - w.a0), u = a - w.at;
     if (!SAUCE) return u >= 0 && u < w.dur ? lerp(w.a0, w.a1, u / w.dur) : null;
-    const back = w.a0 - dir * 0.45, home = held + 2 * Math.PI * Math.round((w.a1 - held) / (2 * Math.PI));
+    const back = w.a0 - dir * 0.45 * EX(), home = held + 2 * Math.PI * Math.round((w.a1 - held) / (2 * Math.PI));
     if (u < -0.15 || u > w.dur + 0.38) return null;
     if (u < 0) return lerp(held + 2 * Math.PI * Math.round((w.a0 - held) / (2 * Math.PI)), back, ease((u + 0.15) / 0.15));
     if (u < w.dur) return lerp(back, w.a1, Math.pow(u / w.dur, 1.6));
-    if (u < w.dur + 0.08) return w.a1 + dir * 0.35 * ease((u - w.dur) / 0.08);
-    return lerp(w.a1 + dir * 0.35, home, ease((u - w.dur - 0.08) / 0.3));
+    if (u < w.dur + 0.08) return w.a1 + dir * 0.35 * EX() * ease((u - w.dur) / 0.08);
+    return lerp(w.a1 + dir * 0.35 * EX(), home, ease((u - w.dur - 0.08) / 0.3));
   },
   kickMax: 1,
   hits(R, x) { const px = x + 1; return this.swings(R).flatMap(w => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({ at: w.hit, x: sx, k: 0.35 }))); },
@@ -548,7 +643,14 @@ const swordsman = {
     // spin once more late in the turn, clear of the contact and its pause
     const smear = SMEAR && on && Math.abs(a - on.hit) > 0.02
       && (inWin(a, on.hit - 0.055) || (on.spin && inWin(a, on.at + on.dur - 0.06)));
-    if (on) swungSword(g, px, py, ang, R, t, from, a >= on.at && a < on.at + on.dur ? Math.sign(on.a1 - on.a0) : 0,
+    const pose = on && sw.find(w => smearPose(a, w.hit));
+    if (pose) {
+      // classic: the pose before contact is a held crescent, from where the
+      // blade was two poses back to where it bites
+      const tip = from + L + 1, dir = Math.sign(pose.a1 - pose.a0);
+      const to = this.angle(pose, pose.hit, held), back = this.angle(pose, pose.hit - 2.5 * POSE, held) ?? to - dir * 1.4;
+      boldArc(g, px, py, back, to, tip - 2, tip, from);
+    } else if (on) swungSword(g, px, py, ang, R, t, from, a >= on.at && a < on.at + on.dur ? Math.sign(on.a1 - on.a0) : 0,
                        smear ? this.angle(on, a - 0.05, held) : null);
     else swungSword(g, px, py, held, R, t, from);
   },
@@ -586,6 +688,7 @@ const monk = {
   state(a, api, R) { const p = this.palms(R), c = p[this.chi(R)]; api.stun(c + 0.5, R8(R) ? 2.6 : 1.4); },
   kickMax: 0.75,
   hits(R, x) { return this.palms(R).map((p, i) => ({ at: p + 0.5, x: x + 1, k: i === this.chi(R) ? 0.7 : 0.3 })); },
+  beats(R) { return this.palms(R); },
   draw(g, t, a, api, R, x) {
     const ps = this.palms(R), n = this.chi(R);
     // sauced, he sinks into each palm, deeper for the chi palm, and rises out of it
@@ -653,8 +756,8 @@ const martial = {
     for (const p of all) {
       const u = a - p;
       if (u < -0.2 || u >= 0.25) continue;
-      if (u < -0.08) return rt + ease((u + 0.2) / 0.12);
-      if (u < 0) return lerp(rt + 1, ht, ((u + 0.08) / 0.08) ** 2);
+      if (u < -0.08) return rt + EX() * ease((u + 0.2) / 0.12);
+      if (u < 0) return lerp(rt + EX(), ht, ((u + 0.08) / 0.08) ** 2);
       if (u < 0.05) return ht - 0.4 * Math.sin(Math.PI * u / 0.05);
       return lerp(ht, rt, ease((u - 0.05) / 0.2));
     }
@@ -668,7 +771,16 @@ const martial = {
     const sweep = a >= pl.fin - 0.15 && a < pl.fin + 0.3;
     const on = all.find(p => a >= p - 0.08 && a < p + 0.12);
     drawBody(g, x, y);
-    if (sweep && SMEAR && inWin(a, pl.fin - 0.0175)) {
+    if (sweep && smearPose(a, pl.fin)) {
+      // classic: the finisher's sweep held as one wide bold arc up to the hide
+      const top = maxBot([x - 2, x + 4], t, s) + 1, rows = Math.max(2, Math.round(y - 1 - top) + 1);
+      for (let i = rows - 1; i >= 0; i--) {
+        const sh = Math.floor(i * 3 / rows);
+        for (let c = x - 2 + sh; c <= x + 4 - sh; c++) cell(g, c, top + i, i === 0 ? WHITE : i === 1 ? GREYS[10] : GREYS[9]);
+      }
+      if (R8(R)) pike(g, x + 4, top, 1, 0);
+      speed(g, x + 1, top + rows - 1, 4, 3);
+    } else if (sweep && SMEAR && inWin(a, pl.fin - 0.0175)) {
       // the finisher's smear: the staff's sweep from over her head up to the
       // hide as one wide arc, the leading row bright, narrower and darker behind
       const top = maxBot([x - 2, x + 4], t, s) + 1, rows = Math.max(2, Math.round(y - 1 - top) + 1);
@@ -690,10 +802,17 @@ const martial = {
       const tip = st != null ? st : on != null ? ht : y - 3;
       // a thrust's smear, at top speed on the way up: a streak from the point down
       const smear = SMEAR && all.some(p => SAUCE ? inWin(a - p, -0.028, 0.014) : inWin(a - p, -0.065, 0.015));
-      if (smear) streak(g, x + 1, tip - blade, 10 + blade);
+      const cp = all.find(p => smearPose(a, p)), hp = all.find(p => holdPose(a, p));
+      if (cp != null) {
+        // classic: the pose before contact is a held streak from the hide down
+        boldStreak(g, x + 1, ht - blade, tip + 7);
+        speed(g, x + 1, ht + 1, 2, 3);
+      } else if (smear) streak(g, x + 1, tip - blade, 10 + blade);
       else {
         for (let r = 0; r < 7; r++) cell(g, x + 1, tip + r, r === 0 && !blade ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
         if (blade) pike(g, x + 1, tip, 0, -1);
+        // classic contact: the tip stretched a cell longer into the hide
+        if (hp != null) cell(g, x + 1, tip - blade - 1, WHITE);
       }
       if (on != null && R4(R)) for (let r = tip + 1; r < tip + 5; r++) cell(g, x + 2, r, GREYS[6]);  // Flow's after-image
       if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t);
@@ -753,6 +872,7 @@ const ranger = {
   rest(g, x, y, R, t) { drawBody(g, x, y); drawBow(g, 'rest', x, y, R, t); },
   len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
   state(a, api, R) { if (R8(R)) api.stun(this.aimed + 0.1, 1.5); },
+  beats(R) { return R4(R) ? [...this.shots, this.aimed] : [0.8]; },
   hits(R, x) {
     const lx = x + 1, hs = (R4(R) ? this.shots : [0.8]).map(v => ({ at: v + 0.25, x: lx, k: 0.2 }));
     if (R4(R)) for (const dx of [-1, 1]) hs.push({ at: this.aimed + 0.1, x: lx + dx, k: 0.8 });
@@ -782,6 +902,7 @@ const ranger = {
       if (d < ar.fly) {
         const hy = lerp(ly, ay, d / ar.fly);
         cell(g, ax, hy, pu ? PURPLES[11] : WHITE); cell(g, ax, hy + 1, pu ? PURPLES[10] : GREYS[10]); cell(g, ax, hy + 2, pu ? PURPLES[8] : GREYS[8]);
+        if (CLASSIC) speed(g, ax, hy + 1, 2, 3);
         continue;
       }
       const since = d - ar.fly;
@@ -849,8 +970,8 @@ const assassin = {
       if (SAUCE) {
         // pulled back a cell, then out accelerating, a little into the hide, eased home
         const u = d - this.out;
-        gy = u < -this.out ? home + ease((d + 0.12) / 0.12)
-           : u < 0 ? lerp(home + 1, top, ((u + this.out) / this.out) ** 2)
+        gy = u < -this.out ? home + EX() * ease((d + 0.12) / 0.12)
+           : u < 0 ? lerp(home + EX(), top, ((u + this.out) / this.out) ** 2)
            : u < 0.05 ? top - 0.5 * Math.sin(Math.PI * u / 0.05)
            : lerp(top, home, ease((u - 0.05) / (this.back - 0.05)));
       } else {
@@ -861,7 +982,11 @@ const assassin = {
       const spins = spinAt(d);
       // a smear at top speed on the way out, before the point reaches the hide
       const smear = SMEAR && (SAUCE ? inWin(d - this.out, -0.0575) : inWin(d, 0.0975));
-      if (smear && R8(R)) smearArc(g, bx, gy, spinAt(d - 0.04), spins, 1, 3, PURPLES[11]);
+      if (CLASSIC && d - this.out >= -POSE - 1e-9 && d - this.out < -1e-9) {
+        // classic: the pose before contact is a held streak from the hide down to her fist
+        boldStreak(g, bx, top - 3, gy + 1, R8(R) ? PURPLES[11] : WHITE);
+        speed(g, bx, gy, 2, 3);
+      } else if (smear && R8(R)) smearArc(g, bx, gy, spinAt(d - 0.04), spins, 1, 3, PURPLES[11]);
       else if (smear) streak(g, bx, gy - 3, 7, R8(R) ? PURPLES[11] : WHITE);
       else dagger(g, bx, gy, R, spins);
     }
@@ -907,6 +1032,7 @@ const sapper = {
   targets(R, x) { return R8(R) ? [x - 1, x + 8] : [x + 4]; },
   state(a, api, R) { if (R4(R)) api.stun(this.blowAt, 1.5); },
   hits(R, x) { return this.targets(R, x).map((tx, i) => ({ at: R4(R) ? this.blowAt : this.throwAt + i * 0.15 + this.fly, x: tx, k: R4(R) ? 0.9 : 0.6 })); },
+  beats() { return [this.throwAt]; },
   draw(g, t, a, api, R, x) {
     // sauced, he leans back before the throw, swings through it and settles;
     // the charges still go where they were aimed
@@ -933,7 +1059,9 @@ const sapper = {
       const boomAt = R4(R) ? this.blowAt : land;
       // Sticky: stuck under the belly, its light ticking faster as it runs down
       if (R4(R) && a < boomAt) {
-        charge(g, tx, hitY, t, R, false);
+        // classic: squashed flat for the pose it sticks, then its own shape
+        if (CLASSIC && a < land + POSE) rect(g, tx - 1.5, hitY, 4, 1, GREYS[9]);
+        else charge(g, tx, hitY, t, R, false);
         const rate = 3 + 8 * along(a, land, boomAt);
         cell(g, tx, hitY + 2, Math.floor(t * rate) % 2 ? WHITE : GREYS[6]);
       }
@@ -981,6 +1109,7 @@ const hexer = {
     if (R4(R)) api.hold(this.land + 0.3, 1.8, R8(R) && a >= 2.2 && a < 2.5 ? 2 : 1);
   },
   hits(R, x) { const h = [{ at: this.land, x: x + 1, k: R8(R) ? 0.45 : 0.15 }]; if (R8(R)) h.push({ at: 2.2, x: x + 7, k: 0.6 }); return h; },
+  beats() { return [0.3]; },
   draw(g, t, a, api, R, x) {
     // sauced, she rises as she gathers the hex and settles as it goes
     const s = api.st, y = REST_Y - liftOf(this, R) - dip(a, 0.3, 1, 0.25, 0.35), tx = x + 1, hitY = cBot(tx, t, s), big = R8(R);
@@ -1029,6 +1158,7 @@ const mage = {
   len: 3.4,
   state(a, api, R) { if (a >= (R4(R) ? litDone(SPOT.mage - 12, 1.3) : 1.1)) api.status('lit'); },
   hits(R, x) { return R4(R) ? [] : [{ at: 1.1, x: x - 5, k: 0.35 }]; },
+  beats(R) { return R4(R) ? [0.5, 1.3, 2.5] : [0.3, 0.65]; },
   draw(g, t, a, api, R, x) {
     // sauced, she rises into the cast and settles as the bolt leaves
     const s = api.st, y = REST_Y - dip(a, R4(R) ? 0.5 : 0.65, 0.5, 0.3, 0.3), sx = x - 1;
@@ -1073,6 +1203,7 @@ const bard = {
   mark: 'a purple tip on the flute', touch: 'the whole flute purple',
   rest(g, x, y, R, t) { drawBody(g, x, y); flute(g, x, y, R, t); },
   len: 3.0,
+  beats() { return [0.1]; },
   state(a, api, R) { if (a >= 1.2 && a < (R8(R) ? 6 : 3.4)) api.buff('inspired', R4(R) ? 2 : 1); },
   draw(g, t, a, api, R, x) {
     // sauced, she draws a breath before the song: a rise and a settle
@@ -1135,9 +1266,10 @@ function paintPane(g, T) {
   for (const c of ORDER) {
     const x = SPOT[c.key], a = A[c.key];
     const others = ORDER.filter(o => o !== c).map(o => ({ x: SPOT[o.key], y: REST_Y - liftOf(o, RUNG) }));
+    CUR = { t, s: st };
+    sauceSparks(g, SA[c.key], t, A0[c.key], st);
     if (a < c.len) c.draw(g, t, a, { st, others, kick: SA[c.key].kick }, RUNG, x);
     else c.rest(g, x, REST_Y - liftOf(c, RUNG), RUNG, t);
-    sauceSparks(g, SA[c.key], t, A0[c.key], st);
     const b = st.buffs[c.key] || {};
     if (b.inspired) paintInspired(g, t, x, REST_Y - liftOf(c, RUNG), b.inspired);
     if (b.hasted) paintHasted(g, t, x, REST_Y - liftOf(c, RUNG));
@@ -1182,9 +1314,11 @@ function paintTile(g, c, R, T, phase) {
     if (st.buffs.inspired) paintInspired(g, t, bx, REST_Y, st.buffs.inspired);
     if (st.buffs.hasted) paintHasted(g, t, bx + 8, REST_Y);
   }
+  CUR = { t, s: st };
+  // the impact under the weapon, so the fist or blade reads on top of it
+  sauceSparks(g, S, t, a0, st);
   if (a < c.len) c.draw(g, t, a, { st, others, kick: S.kick }, R, WX);
   else c.rest(g, WX, REST_Y - liftOf(c, R), R, t);
-  sauceSparks(g, S, t, a0, st);
   g.restore();
 }
 
@@ -1255,6 +1389,15 @@ for (const [label, on] of [['on', true], ['off', false]]) {
 }
 function syncSmear() { for (const [b, on] of smearBtns) b.setAttribute('aria-pressed', String(on === SMEAR)); if (!playing) paintAll(clock); }
 window.__smear = on => { SMEAR = on; syncSmear(); paintAll(clock); return on; };
+const classicBtns = [];
+for (const [label, on] of [['on', true], ['off', false]]) {
+  const b = el('button', { type: 'button', textContent: label });
+  b.onclick = () => { CLASSIC = on; syncClassic(); };
+  classicBtns.push([b, on]);
+  document.getElementById('classic').append(b);
+}
+function syncClassic() { for (const [b, on] of classicBtns) b.setAttribute('aria-pressed', String(on === CLASSIC)); if (!playing) paintAll(clock); }
+window.__classic = on => { CLASSIC = on; syncClassic(); paintAll(clock); return on; };
 function syncRung() { for (const [b, R] of rungBtns) b.setAttribute('aria-pressed', R === RUNG ? 'true' : 'false'); if (!playing) paintAll(clock); }
 
 let playing = true, clock = 0, last = performance.now();
@@ -1295,7 +1438,7 @@ window.__sheet = (states, cols = 2, x0 = 0, w0 = W) => {
   document.body.append(sheet);
   return true;
 };
-syncRung(); syncSauce(); syncSmear();
+syncRung(); syncSauce(); syncSmear(); syncClassic();
 function tick(now) {
   if (playing) clock += Math.max(0, now - last) / 1000;
   last = now;
