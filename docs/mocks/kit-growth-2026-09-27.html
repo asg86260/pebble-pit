@@ -53,7 +53,8 @@
     pieces off.</p>
 
   <div class="bar"><button id="play" type="button">pause</button><span id="clock" class="dim">0.0 s</span>
-    <div class="grp" id="rungs"><span>rung</span></div></div>
+    <div class="grp" id="rungs"><span>rung</span></div>
+    <div class="grp" id="sauce"><span>sauce</span></div></div>
 
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
@@ -160,7 +161,20 @@ const girth = cx => {
   return 1.4 + 1.9 * Math.sin(Math.PI * Math.min(1, u * 1.15)) + (Math.abs(cx - W * 0.55) < 6 ? 0.8 : 0);
 };
 // A stunned or Held coil holds still where it was.
-const cY = (cx, t, s = {}) => sway(cx, s.still != null ? s.still : t);
+const cY = (cx, t, s = {}) => sway(cx, s.still != null ? s.still : t) + (s.dents ? dentAt(cx, t, s.dents) : 0);
+// The coil answers a blow: the hide round the hit is pushed up a beat and
+// springs back, over a few columns either side, deeper and wider for a
+// bigger blow. It never overshoots, so nothing shudders, even under a stun.
+function dentAt(cx, t, dents) {
+  let off = 0;
+  for (const d of dents) {
+    const u = t - d.t0;
+    if (u < 0 || u > 0.6) continue;
+    const w = 1.2 + 2 * d.k, fall = Math.exp(-((cx - d.x) ** 2) / (2 * w * w));
+    off -= (0.5 + 1.6 * d.k) * fall * (u < 0.05 ? u / 0.05 : Math.exp(-(u - 0.05) * 9));
+  }
+  return off;
+}
 const cTop = (cx, t, s) => Math.round(cY(cx, t, s) - girth(cx));
 const cBot = (cx, t, s) => Math.round(cY(cx, t, s) + girth(cx));
 const maxBot = (xs, t, s) => Math.max(...xs.map(c => cBot(c, t, s)));
@@ -278,6 +292,59 @@ function drift(g, cx, cy, t, n = 1, seed = 0, rise = 3, period = 2.2, tones = DR
     cell(g, cx + dx, cy - Math.floor(p * rise), tones[Math.floor(p * tones.length)]);
   }
 }
+// --- sauce: weight on the blows (the owner, 2026-09-28) ---------------------------------
+// With it on, every blow winds up, eases in, lands with a beat's hit-pause
+// (the fighter frozen, the world going on), carries a little past and eases
+// home; a heavy one kicks its fighter back a cell or two; the coil gives
+// where it is hit; and a short star of cells jumps off the contact point.
+let SAUCE = true;
+// A wind-up and its settle: nothing until `lead` before `at`, easing out to
+// `depth` by `at`, then easing back over `back`.
+const dip = (a, at, depth, lead = 0.15, back = 0.2) => {
+  if (!SAUCE) return 0;
+  const u = a - at;
+  if (u < -lead || u > back) return 0;
+  return u < 0 ? depth * ease((u + lead) / lead) : depth * (1 - ease(u / back));
+};
+// A class's clock under the sauce. Each contact (`hits`, on the fighter's own
+// clock) holds the fighter still for 40-120 ms by its size, so the fighter's
+// clock `a` runs behind the world's; the contacts' real times place the
+// coil's dents and the sparks. `kick` is the recoil after a heavy one, in cells.
+function sauceOf(c, R, a, x) {
+  if (!SAUCE || !c.hits) return { a, kick: 0, groups: [] };
+  const groups = [];
+  for (const h of c.hits(R, x).sort((p, q) => p.at - q.at)) {
+    const gr = groups.find(gr => Math.abs(gr.at - h.at) < 1e-6);
+    if (gr) { gr.k = Math.max(gr.k, h.k); gr.list.push(h); } else groups.push({ at: h.at, k: h.k, list: [h] });
+  }
+  let shift = 0, aw = null, kick = 0;
+  for (const gr of groups) {
+    gr.real = gr.at + shift; gr.pause = 0.04 + 0.08 * Math.min(1, gr.k);
+    if (aw == null && a < gr.real) aw = a - shift;
+    else if (aw == null && a < gr.real + gr.pause) aw = gr.at;
+    shift += gr.pause;
+    const u = a - gr.real - gr.pause, amt = gr.k >= 0.7 ? 1.5 : gr.k >= 0.45 ? 0.75 : 0;
+    if (amt && u >= 0 && u < 0.5) kick += amt * (u < 0.05 ? u / 0.05 : 1 - ease((u - 0.05) / 0.45));
+  }
+  if (aw == null) aw = a - shift;
+  return { a: aw, kick: Math.min(c.kickMax ?? 0, kick), groups };
+}
+// The contact spark: a short star of cells jumping off the hit along the
+// hide and out from it, starting clear of the weapon so the blow stays
+// readable, stepping down the greys; more rays and longer for a bigger blow.
+const RAYS = [[-1, 0], [1, 0], [-1, 0.6], [1, 0.6], [-1, -0.5], [1, -0.5], [-0.5, 1], [0.5, 1]];
+function spark(g, t, t0, cx, cy, k) {
+  const u = t - t0, dur = 0.12 + 0.14 * k;
+  if (u < 0 || u >= dur) return;
+  const f = u / dur, r = 1.8 + f * (1 + 2 * k), n = k >= 0.6 ? 8 : k >= 0.3 ? 4 : 2;
+  for (let i = 0; i < n; i++) cell(g, cx + RAYS[i][0] * r, cy + RAYS[i][1] * r, f < 0.4 ? WHITE : f < 0.75 ? GREYS[9] : GREYS[6]);
+}
+// The sauce's world half, for one class: the dents it leaves and its sparks.
+function sauceDents(S, t, a) { return S.groups.flatMap(gr => gr.list.map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) }))); }
+function sauceSparks(g, S, t, a, st) {
+  for (const gr of S.groups) for (const h of gr.list) spark(g, t, t - (a - gr.real), h.x, cBot(Math.round(h.x), t, st) + 0.5, h.k);
+}
+
 // A fighter's float off the plinth, which may come with a rung (the Hexer's).
 const liftOf = (c, R) => typeof c.lift === 'function' ? c.lift(R) : (c.lift || 0);
 // A melee fighter's swim: 0 at the plinth, 1 under the coil.
@@ -294,8 +361,18 @@ function bFist(g, fx, fy, size, R, t, side) {
   rect(g, fx, fy, size, 1, WHITE); rect(g, fx, fy + 1, size, 1, GREYS[9]);
   if (R8(R)) drift(g, side < 0 ? fx : fx + size - 1, fy - 1, t, 1, side > 0 ? 0.5 : 0);
 }
-function punchReach(a, L) {
+// A punch's reach at `a` for one landing at L: 1 at the hide, negative the
+// wind-up in cells. Sauced, it winds back `wind` cells (eased), drives in
+// accelerating, carries a little past the hide and eases home.
+function punchReach(a, L, wind = 1) {
   const d = a - L;
+  if (SAUCE) {
+    if (d < -0.34 || d > 0.42) return 0;
+    if (d < -0.1) return -wind * ease((d + 0.34) / 0.24);
+    if (d < 0) return lerp(-wind, 1, ((d + 0.1) / 0.1) ** 2);
+    if (d < 0.07) return 1 + 0.2 * Math.sin(Math.PI * d / 0.07);
+    return 1 - ease((d - 0.07) / 0.35);
+  }
   if (d < -0.24 || d > 0.3) return 0;
   if (d < -0.08) return -1;
   if (d < 0) return (d + 0.08) / 0.08;
@@ -313,19 +390,22 @@ const brawler = {
     return p;
   },
   state(a, api, R) { if (R4(R)) api.stun(1.9, R8(R) ? 2.6 : 1.5); },
+  kickMax: 2,
+  hits(R, x) { return this.punches(R).map(p => { const fx = p.side < 0 ? x - p.size : x + BODY; return { at: p.at, x: fx + (p.size - 1) / 2, k: p.k }; }); },
   draw(g, t, a, api, R, x) {
     const s = api.st, ps = this.punches(R), hover = maxBot([x - 2, x + 5], t, s) + 5;
-    let y = lerp(REST_Y, hover, trip(a, 0.4, 2.5, this.len));
+    let y = lerp(REST_Y, hover, trip(a, 0.4, 2.5, this.len)) + (api.kick || 0);
     const hay = ps.find(p => p.hay);
-    if (hay && a > hay.at - 0.45 && a < hay.at - 0.12) y += 2;   // the wind-up
+    // the haymaker's wind-up: the body sinks, eased with the sauce
+    if (hay) y += SAUCE ? dip(a, hay.at - 0.12, 2, 0.33, 0.1) : a > hay.at - 0.45 && a < hay.at - 0.12 ? 2 : 0;
     const spot = p => { const size = p.size || 1, fx = p.side < 0 ? x - size : x + BODY; return { fx, size, cx: fx + (size - 1) / 2 }; };
     ps.forEach((p, i) => blow(g, t, t - (a - p.at), spot(p).cx, s, p.k, i + 1));
     drawBody(g, x, y);
     for (const side of [-1, 1]) {
       let reach = 0, size = bSize(R);
-      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at); if (r) { reach = r; size = p.size; } }
+      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at, p.hay ? 2 : 1); if (r) { reach = r; size = p.size; } }
       const fx = side < 0 ? x - size : x + BODY, rest = y;
-      let fy = reach < 0 ? rest + 1 : rest;
+      let fy = reach < 0 ? rest - reach : rest;
       if (reach > 0) fy = rest + (maxBot([fx, fx + size - 1], t, s) + 1 - rest) * reach;
       bFist(g, fx, fy, size, R, t, side);
     }
@@ -383,18 +463,38 @@ const swordsman = {
   // Rung 0 swipes the blade over his head through an arc; from rung 4 he spins
   // round whole, sword out; at rung 8 the third cut is a spin and a spin back.
   swings(R) {
-    if (!R4(R)) return this.cuts.map(c => ({ at: c, dur: 0.18, a0: -1.2, a1: 1.2, hit: c + 0.09 }));
-    const sw = this.cuts.map(c => ({ at: c, dur: 0.4, a0: -Math.PI / 2, a1: Math.PI * 1.5, hit: c + 0.1, spin: true }));
+    const sw = !R4(R) ? this.cuts.map(c => ({ at: c, dur: 0.18, a0: -1.2, a1: 1.2, hit: c + 0.09 }))
+      : this.cuts.map(c => ({ at: c, dur: 0.4, a0: -Math.PI / 2, a1: Math.PI * 1.5, hit: c + 0.1, spin: true }));
     if (R8(R)) sw.push({ at: 2.45, dur: 0.4, a0: Math.PI * 1.5, a1: -Math.PI / 2, hit: 2.75, spin: true });
+    // sauced, the swing accelerates, so the blade crosses the top later in it
+    if (SAUCE) for (const w of sw) {
+      const dir = Math.sign(w.a1 - w.a0), from = w.a0 - dir * 0.45, up = 0;
+      w.hit = w.at + w.dur * Math.pow((up - from) / (w.a1 - from), 1 / 1.6);
+    }
     return sw;
   },
+  // The blade's angle for a swing at `a`, or null outside it. Sauced: cocked
+  // further back first, then accelerating through the hit, carrying a little
+  // past the end and easing back to the held angle.
+  angle(w, a, held) {
+    const dir = Math.sign(w.a1 - w.a0), u = a - w.at;
+    if (!SAUCE) return u >= 0 && u < w.dur ? lerp(w.a0, w.a1, u / w.dur) : null;
+    const back = w.a0 - dir * 0.45, home = held + 2 * Math.PI * Math.round((w.a1 - held) / (2 * Math.PI));
+    if (u < -0.15 || u > w.dur + 0.38) return null;
+    if (u < 0) return lerp(held + 2 * Math.PI * Math.round((w.a0 - held) / (2 * Math.PI)), back, ease((u + 0.15) / 0.15));
+    if (u < w.dur) return lerp(back, w.a1, Math.pow(u / w.dur, 1.6));
+    if (u < w.dur + 0.08) return w.a1 + dir * 0.35 * ease((u - w.dur) / 0.08);
+    return lerp(w.a1 + dir * 0.35, home, ease((u - w.dur - 0.08) / 0.3));
+  },
+  kickMax: 1,
+  hits(R, x) { const px = x + 1; return this.swings(R).flatMap(w => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({ at: w.hit, x: sx, k: 0.35 }))); },
   state(a, api) { if (a >= 0.8) api.status('bleeding'); },
   draw(g, t, a, api, R, x) {
     const s = api.st, L = bladeLen(R), spin = R4(R);
     // a swipe pivots over his head; a spin about the body's middle, the blade clear of it
     const from = spin ? 2 : 1, reach = from + L + 1;
     const hover = maxBot([x, x + 2], t, s) + reach + (spin ? -1 : 1);
-    const k = trip(a, 0.4, 2.9, this.len + 0.3), y = lerp(REST_Y, hover, k);
+    const k = trip(a, 0.4, 2.9, this.len + 0.3), y = lerp(REST_Y, hover, k) + (api.kick || 0);
     const px = x + 1, py = spin ? y + 1 : y - 1;
     drawBody(g, x, y);
     const sw = this.swings(R);
@@ -404,9 +504,11 @@ const swordsman = {
     });
     if (k < 0.2) { sword(g, x - 3, y + 1, R, t); return; }
     // the swing under way, or held cocked between swings
-    const on = sw.find(w => a >= w.at && a < w.at + w.dur);
-    if (on) swungSword(g, px, py, lerp(on.a0, on.a1, (a - on.at) / on.dur), R, t, from, Math.sign(on.a1 - on.a0));
-    else swungSword(g, px, py, spin ? -0.7 : -1.2, R, t, from);
+    const held = spin ? -0.7 : -1.2;
+    let on = null, ang = null;
+    for (const w of sw) { const an = this.angle(w, a, held); if (an != null) { on = w; ang = an; } }
+    if (on) swungSword(g, px, py, ang, R, t, from, a >= on.at && a < on.at + on.dur ? Math.sign(on.a1 - on.a0) : 0);
+    else swungSword(g, px, py, held, R, t, from);
   },
 };
 
@@ -440,8 +542,14 @@ const monk = {
   palms(R) { return R4(R) ? [0.3, 0.8, 1.3, 2.0] : [0.3, 0.75, 1.2, 1.65, 2.2]; },
   chi(R) { return R4(R) ? 2 : 4; },   // palms to a chi palm, the last of them the chi palm
   state(a, api, R) { const p = this.palms(R), c = p[this.chi(R)]; api.stun(c + 0.5, R8(R) ? 2.6 : 1.4); },
+  kickMax: 0.75,
+  hits(R, x) { return this.palms(R).map((p, i) => ({ at: p + 0.5, x: x + 1, k: i === this.chi(R) ? 0.7 : 0.3 })); },
   draw(g, t, a, api, R, x) {
-    const s = api.st, y = REST_Y - 1, ps = this.palms(R), n = this.chi(R);
+    const ps = this.palms(R), n = this.chi(R);
+    // sauced, he sinks into each palm, deeper for the chi palm, and rises out of it
+    let dy = 0;
+    ps.forEach((p, i) => { dy += dip(a, p, i === n ? 1 : 0.5, 0.15, 0.25); });
+    const s = api.st, y = REST_Y - 1 + Math.min(1, dy + (api.kick || 0));
     const casting = ps.some(p => a >= p && a < p + 0.5);
     drawBody(g, x, y); beads(g, x, y, R, t, casting);
     const lit = ps.filter((p, i) => i < n && a >= p).length % (n + 1);
@@ -450,7 +558,7 @@ const monk = {
     ps.forEach((p, i) => {
       const big = i === n, d = a - p, top = y - 2, hit = cBot(x + 1, t, s) + 1;
       if (d >= 0 && d < 0.5) {
-        const k = d / 0.5, wy = lerp(top - 1, hit, k), half = (big ? 2 : 1) + Math.round(k * 2);
+        const k = SAUCE ? (d / 0.5) ** 1.6 : d / 0.5, wy = lerp(top - 1, hit, k), half = (big ? 2 : 1) + Math.round(k * 2);
         for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, wy, Math.abs(dx) === half ? PURPLES[8] : PURPLES[11]);
       }
       if (d >= 0.5 && d < 1.0) ring(g, x + 1, hit - 1, 1 + (d - 0.5) * (big ? 12 : 8), [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.floor((d - 0.5) / 0.125)], 2);
@@ -495,9 +603,25 @@ const martial = {
   len: 3.0,
   plan(R) { return R4(R) ? { thrusts: [0.5, 0.8, 1.1], fin: 1.5, after: [2.0, 2.3], per: 2 } : { thrusts: [0.5, 0.75, 1.0, 1.25, 1.5], fin: 1.9, after: [], per: 1 }; },
   state(a, api, R) { if (R8(R) && a >= this.plan(R).fin) api.buff('hasted'); },
+  kickMax: 1.5,
+  hits(R, x) { const pl = this.plan(R); return [...pl.thrusts, ...pl.after].map(p => ({ at: p, x: x + 1, k: 0.18 })).concat([{ at: pl.fin, x: x + 1, k: 0.7 }]); },
+  // Sauced, a thrust's tip: pulled down a cell, driven up accelerating, a
+  // little into the hide, then eased home. Null outside every thrust.
+  tipAt(a, all, rt, ht) {
+    for (const p of all) {
+      const u = a - p;
+      if (u < -0.2 || u >= 0.25) continue;
+      if (u < -0.08) return rt + ease((u + 0.2) / 0.12);
+      if (u < 0) return lerp(rt + 1, ht, ((u + 0.08) / 0.08) ** 2);
+      if (u < 0.05) return ht - 0.4 * Math.sin(Math.PI * u / 0.05);
+      return lerp(ht, rt, ease((u - 0.05) / 0.2));
+    }
+    return null;
+  },
   draw(g, t, a, api, R, x) {
     const s = api.st, pl = this.plan(R), hover = maxBot([x - 2, x + 4], t, s) + 6;
-    const y = lerp(REST_Y, hover, trip(a, 0.35, 2.5, this.len));
+    // she sinks before the finisher, sauced
+    const y = lerp(REST_Y, hover, trip(a, 0.35, 2.5, this.len)) + (api.kick || 0) + dip(a, pl.fin - 0.15, 1.5, 0.2, 0.15);
     const all = [...pl.thrusts, ...pl.after];
     const sweep = a >= pl.fin - 0.15 && a < pl.fin + 0.3;
     const on = all.find(p => a >= p - 0.08 && a < p + 0.12);
@@ -510,9 +634,10 @@ const martial = {
       if (R8(R)) pike(g, x + 4, row, 1, 0);
     } else if (a > 0.3 && a < 2.5) {
       // on end through her middle, the tip driven up to the hide on a thrust
-      const blade = R8(R) ? 3 : 0;
-      const tip = on != null ? cBot(x + 1, t, s) + 1 + blade : y - 3;
-      for (let r = tip; r < tip + 7; r++) cell(g, x + 1, r, r === tip && !blade ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
+      const blade = R8(R) ? 3 : 0, ht = cBot(x + 1, t, s) + 1 + blade;
+      const st = SAUCE ? this.tipAt(a, all, y - 3, ht) : null;
+      const tip = st != null ? st : on != null ? ht : y - 3;
+      for (let r = 0; r < 7; r++) cell(g, x + 1, tip + r, r === 0 && !blade ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
       if (blade) pike(g, x + 1, tip, 0, -1);
       if (on != null && R4(R)) for (let r = tip + 1; r < tip + 5; r++) cell(g, x + 2, r, GREYS[6]);  // Flow's after-image
       if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t);
@@ -572,6 +697,11 @@ const ranger = {
   rest(g, x, y, R, t) { drawBody(g, x, y); drawBow(g, 'rest', x, y, R, t); },
   len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
   state(a, api, R) { if (R8(R)) api.stun(this.aimed + 0.1, 1.5); },
+  hits(R, x) {
+    const lx = x + 1, hs = (R4(R) ? this.shots : [0.8]).map(v => ({ at: v + 0.25, x: lx, k: 0.2 }));
+    if (R4(R)) for (const dx of [-1, 1]) hs.push({ at: this.aimed + 0.1, x: lx + dx, k: 0.8 });
+    return hs;
+  },
   draw(g, t, a, api, R, x) {
     // rung 0 shoots once; from rung 4 a run of arrows, then the aimed shot, two at once
     const s = api.st, y = REST_Y, aimed = R4(R) ? this.aimed : null;
@@ -635,16 +765,20 @@ const assassin = {
   rest(g, x, y, R) { drawBody(g, x, y); daggers(g, x, y - 3, R); },
   len: 3.0, stabs: [0.6, 1.1, 1.6, 2.1], out: 0.2, back: 0.3,
   state() {},
+  kickMax: 1.5,
+  stabK(R, i) { return R8(R) && i === 3 ? 1 : R4(R) ? 0.25 + i * 0.12 : 0.3; },
+  hits(R, x) { const bs = blades(x, R); return this.stabs.map((p, i) => ({ at: p, x: bs[i % bs.length], k: this.stabK(R, i) })); },
   draw(g, t, a, api, R, x) {
     const s = api.st, bs = blades(x, R), hover = maxBot([x - 2, x + 4], t, s) + 9;
-    let y = lerp(REST_Y, hover, trip(a, 0.35, 2.45, this.len));
+    let y = lerp(REST_Y, hover, trip(a, 0.35, 2.45, this.len)) + (api.kick || 0);
     if (this.stabs.some(p => a >= p - 0.05 && a < p + 0.1)) y -= 1;
     drawBody(g, x, y);
     // which blade each stab is: the one at rung 0, turn and turn about after
     const flying = new Map();
     this.stabs.forEach((p, i) => {
       const bx = bs[i % bs.length], d = a - p + this.out;
-      if (d >= 0 && d < this.out + this.back) flying.set(bx, d);
+      // sauced, the window opens a beat early for the dagger's pull back
+      if (d >= (SAUCE ? -0.12 : 0) && d < this.out + this.back) flying.set(bx, d);
       const last = R8(R) && i === 3, k = last ? 1 : R4(R) ? 0.25 + i * 0.12 : 0.3;
       blow(g, t, t - (a - p), bx, s, k, 70 + i);
       const e = a - p;
@@ -655,8 +789,19 @@ const assassin = {
       if (d == null) { dagger(g, bx, home, R); continue; }
       // out fast, point first, to where its tip meets the belly; back slower
       const top = cBot(bx, t, s) + 4;
-      const k = d < this.out ? ease(d / this.out) : 1 - ease((d - this.out) / this.back);
-      const gy = lerp(home, top, k), spins = R8(R) ? (d < this.out ? d / this.out : 1 + (d - this.out) / this.back) * Math.PI * 2 : 0;
+      let gy;
+      if (SAUCE) {
+        // pulled back a cell, then out accelerating, a little into the hide, eased home
+        const u = d - this.out;
+        gy = u < -this.out ? home + ease((d + 0.12) / 0.12)
+           : u < 0 ? lerp(home + 1, top, ((u + this.out) / this.out) ** 2)
+           : u < 0.05 ? top - 0.5 * Math.sin(Math.PI * u / 0.05)
+           : lerp(top, home, ease((u - 0.05) / (this.back - 0.05)));
+      } else {
+        const k = d < this.out ? ease(d / this.out) : 1 - ease((d - this.out) / this.back);
+        gy = lerp(home, top, k);
+      }
+      const spins = R8(R) ? (d < this.out ? d / this.out : 1 + (d - this.out) / this.back) * Math.PI * 2 : 0;
       dagger(g, bx, gy, R, spins);
     }
   },
@@ -700,8 +845,16 @@ const sapper = {
   len: 3.2, throwAt: 0.3, fly: 0.6, blowAt: 2.1,
   targets(R, x) { return R8(R) ? [x - 1, x + 8] : [x + 4]; },
   state(a, api, R) { if (R4(R)) api.stun(this.blowAt, 1.5); },
+  hits(R, x) { return this.targets(R, x).map((tx, i) => ({ at: R4(R) ? this.blowAt : this.throwAt + i * 0.15 + this.fly, x: tx, k: R4(R) ? 0.9 : 0.6 })); },
   draw(g, t, a, api, R, x) {
-    const s = api.st, y = REST_Y, ts = this.targets(R, x);
+    // sauced, he leans back before the throw, swings through it and settles;
+    // the charges still go where they were aimed
+    const ts = this.targets(R, x);
+    if (SAUCE) {
+      const u = a - this.throwAt;
+      x += u >= -0.2 && u < 0 ? -ease((u + 0.2) / 0.2) : u >= 0 && u < 0.08 ? lerp(-1, 0.5, u / 0.08) : u >= 0.08 && u < 0.38 ? 0.5 * (1 - ease((u - 0.08) / 0.3)) : 0;
+    }
+    const s = api.st, y = REST_Y;
     // a charge is gone from its hand from the throw until a beat after the blow
     const away = i => a >= this.throwAt + i * 0.15 && a < (R4(R) ? this.blowAt : this.throwAt + this.fly) + 0.5;
     drawBody(g, x, y); bundle(g, x, y, R, t, R8(R) ? { l: away(0), r: away(1) } : { r: away(0) });
@@ -766,8 +919,10 @@ const hexer = {
     if (a >= this.land + 0.3) api.status('weakened');
     if (R4(R)) api.hold(this.land + 0.3, 1.8, R8(R) && a >= 2.2 && a < 2.5 ? 2 : 1);
   },
+  hits(R, x) { const h = [{ at: this.land, x: x + 1, k: R8(R) ? 0.45 : 0.15 }]; if (R8(R)) h.push({ at: 2.2, x: x + 7, k: 0.6 }); return h; },
   draw(g, t, a, api, R, x) {
-    const s = api.st, y = REST_Y - liftOf(this, R), tx = x + 1, hitY = cBot(tx, t, s), big = R8(R);
+    // sauced, she rises as she gathers the hex and settles as it goes
+    const s = api.st, y = REST_Y - liftOf(this, R) - dip(a, 0.3, 1, 0.25, 0.35), tx = x + 1, hitY = cBot(tx, t, s), big = R8(R);
     drawBody(g, x, y);
     // the hex leaves the book (her head, at rung 0) as a stream of motes
     const by = bookY(y, t), from = R4(R) ? by - 1 : y - 2;
@@ -777,7 +932,7 @@ const hexer = {
     for (let m = 0; m < n; m++) {
       const s0 = 0.3 + m * 0.5 / n;
       if (a < s0 || a >= s0 + 0.5) continue;
-      const cx = tx + [-1, 1, 0, -2, 2, -1, 1, 0, 0][m], cy = lerp(from, hitY + 1, (a - s0) / 0.5);
+      const cx = tx + [-1, 1, 0, -2, 2, -1, 1, 0, 0][m], cy = lerp(from, hitY + 1, SAUCE ? ((a - s0) / 0.5) ** 1.5 : (a - s0) / 0.5);
       cell(g, cx, cy, PURPLES[11]); cell(g, cx, cy + 1, PURPLES[7]);
     }
     const e = a - this.land;
@@ -812,8 +967,10 @@ const mage = {
   rest(g, x, y, R, t) { drawBody(g, x, y); mStaff(g, x, y, R, t); },
   len: 3.4,
   state(a, api, R) { if (a >= (R4(R) ? litDone(SPOT.mage - 12, 1.3) : 1.1)) api.status('lit'); },
+  hits(R, x) { return R4(R) ? [] : [{ at: 1.1, x: x - 5, k: 0.35 }]; },
   draw(g, t, a, api, R, x) {
-    const s = api.st, y = REST_Y, sx = x - 1;
+    // sauced, she rises into the cast and settles as the bolt leaves
+    const s = api.st, y = REST_Y - dip(a, R4(R) ? 0.5 : 0.65, 0.5, 0.3, 0.3), sx = x - 1;
     this.lx = x - 12;
     if (!R4(R)) {
       // the base bolt: a lift, a bright stone, one small bolt that Lights where it lands
@@ -857,7 +1014,8 @@ const bard = {
   len: 3.0,
   state(a, api, R) { if (a >= 1.2 && a < (R8(R) ? 6 : 3.4)) api.buff('inspired', R4(R) ? 2 : 1); },
   draw(g, t, a, api, R, x) {
-    const y = REST_Y;
+    // sauced, she draws a breath before the song: a rise and a settle
+    const y = REST_Y - dip(a, 0.1, 0.5, 0.25, 0.4);
     drawBody(g, x, y); flute(g, x, y, R, t);
     if (a > 2.6) return;
     // notes rise off the flute and drift to the fighters, each to a station
@@ -888,9 +1046,14 @@ const LINGER = 0.8;
 let RUNG = 8;
 function paintPane(g, T) {
   const t = T % LOOP;
-  const st = { still: null, statuses: {}, buffs: {} };
-  const A = {};
-  for (const c of ORDER) A[c.key] = ((t - START[c.key]) % LOOP + LOOP) % LOOP;
+  const st = { still: null, statuses: {}, buffs: {}, dents: [] };
+  const A = {}, A0 = {}, SA = {};
+  for (const c of ORDER) {
+    A0[c.key] = ((t - START[c.key]) % LOOP + LOOP) % LOOP;
+    SA[c.key] = sauceOf(c, RUNG, A0[c.key], SPOT[c.key]);
+    A[c.key] = SA[c.key].a;
+    st.dents.push(...sauceDents(SA[c.key], t, A0[c.key]));
+  }
   for (const c of ORDER) {
     const a = A[c.key], end = c.len + LINGER;
     const api = {
@@ -911,8 +1074,9 @@ function paintPane(g, T) {
   for (const c of ORDER) {
     const x = SPOT[c.key], a = A[c.key];
     const others = ORDER.filter(o => o !== c).map(o => ({ x: SPOT[o.key], y: REST_Y - liftOf(o, RUNG) }));
-    if (a < c.len) c.draw(g, t, a, { st, others }, RUNG, x);
+    if (a < c.len) c.draw(g, t, a, { st, others, kick: SA[c.key].kick }, RUNG, x);
     else c.rest(g, x, REST_Y - liftOf(c, RUNG), RUNG, t);
+    sauceSparks(g, SA[c.key], t, A0[c.key], st);
     const b = st.buffs[c.key] || {};
     if (b.inspired) paintInspired(g, t, x, REST_Y - liftOf(c, RUNG), b.inspired);
     if (b.hasted) paintHasted(g, t, x, REST_Y - liftOf(c, RUNG));
@@ -931,8 +1095,9 @@ const TW = 22, TY0 = 1, TH = FLOOR + 2, WX = 104;   // WX toward the tail, where
 function paintTile(g, c, R, T, phase) {
   const at = c.tileAt || 9, x0 = WX - at;
   const dur = c.loop || Math.max(c.len + 1.6, 4.6);
-  const t = T, a = ((T + phase) % dur + dur) % dur, end = c.len + LINGER;
-  const st = { still: null, statuses: {}, buffs: {} };
+  const t = T, a0 = ((T + phase) % dur + dur) % dur, end = c.len + LINGER;
+  const S = sauceOf(c, R, a0, WX), a = S.a;
+  const st = { still: null, statuses: {}, buffs: {}, dents: sauceDents(S, t, a0) };
   c.state(a, {
     stun(from, len) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.stunned = 1; } },
     hold(from, len, lv = 1) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.held = Math.max(st.statuses.held || 0, lv); } },
@@ -956,8 +1121,9 @@ function paintTile(g, c, R, T, phase) {
     if (st.buffs.inspired) paintInspired(g, t, bx, REST_Y, st.buffs.inspired);
     if (st.buffs.hasted) paintHasted(g, t, bx + 8, REST_Y);
   }
-  if (a < c.len) c.draw(g, t, a, { st, others }, R, WX);
+  if (a < c.len) c.draw(g, t, a, { st, others, kick: S.kick }, R, WX);
   else c.rest(g, WX, REST_Y - liftOf(c, R), R, t);
+  sauceSparks(g, S, t, a0, st);
   g.restore();
 }
 
@@ -1010,6 +1176,15 @@ for (const R of RUNGS) {
   rungBtns.push([b, R]);
   document.getElementById('rungs').append(b);
 }
+const sauceBtns = [];
+for (const [label, on] of [['on', true], ['off', false]]) {
+  const b = el('button', { type: 'button', textContent: label });
+  b.onclick = () => { SAUCE = on; syncSauce(); };
+  sauceBtns.push([b, on]);
+  document.getElementById('sauce').append(b);
+}
+function syncSauce() { for (const [b, on] of sauceBtns) b.setAttribute('aria-pressed', String(on === SAUCE)); if (!playing) paintAll(clock); }
+window.__sauce = on => { SAUCE = on; syncSauce(); paintAll(clock); return on; };
 function syncRung() { for (const [b, R] of rungBtns) b.setAttribute('aria-pressed', R === RUNG ? 'true' : 'false'); if (!playing) paintAll(clock); }
 
 let playing = true, clock = 0, last = performance.now();
@@ -1050,7 +1225,7 @@ window.__sheet = (states, cols = 2, x0 = 0, w0 = W) => {
   document.body.append(sheet);
   return true;
 };
-syncRung();
+syncRung(); syncSauce();
 function tick(now) {
   if (playing) clock += Math.max(0, now - last) / 1000;
   last = now;
