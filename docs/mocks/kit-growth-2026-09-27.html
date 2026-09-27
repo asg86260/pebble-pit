@@ -225,19 +225,29 @@ function paintHasted(g, t, x, y) {
 // at 8; every piece is drawn where it rides the kit, so it goes with the blow.
 // ================================================================================
 const R4 = R => R >= 4, R8 = R => R >= 8;
+// Particles: a few single cells drifting up off a point, stepping down the
+// tones as they rise, slow, so a rung-8 fighter reads as more and not busy.
+const DRIFT = [GREYS[10], GREYS[8], GREYS[6], GREYS[4]];
+function drift(g, cx, cy, t, n = 1, seed = 0, rise = 3, period = 2.2, tones = DRIFT) {
+  for (let i = 0; i < n; i++) {
+    const p = (t / period + i / n + seed) % 1;
+    const dx = Math.round(Math.sin(p * 5 + i * 2 + seed * 9) * 0.7);
+    cell(g, cx + dx, cy - Math.floor(p * rise), tones[Math.floor(p * tones.length)]);
+  }
+}
+// A fighter's float off the plinth, which may come with a rung (the Hexer's).
+const liftOf = (c, R) => typeof c.lift === 'function' ? c.lift(R) : (c.lift || 0);
 // A melee fighter's swim: 0 at the plinth, 1 under the coil.
 const trip = (a, up, back, len) => a < up ? ease(a / up) : a < back ? 1 : 1 - ease(clamp((a - back) / (len - back), 0, 1));
 
-// --- Brawler: two small wrapped fists in a guard --------------------------------------
-function bFist(g, fx, fy, size, R) {
+// --- Brawler: fists up in a guard -------------------------------------------------------
+// Bare at rung 0, a pale knuckle cell; wrapped from rung 4, a white wrap over
+// the knuckles; at rung 8 the wrapped fists a cell wider, a mote drifting off each.
+const bSize = R => R8(R) ? 2 : 1;
+function bFist(g, fx, fy, size, R, t, side) {
+  if (!R4(R)) { rect(g, fx, fy, size, 1, GREYS[10]); return; }
   rect(g, fx, fy, size, 1, WHITE); rect(g, fx, fy + 1, size, 1, GREYS[9]);
-  if (R4(R)) rect(g, fx, fy + 2, size, 1, GREYS[10]);       // mark: the wrap wound down the wrist
-}
-// touch: a small halo over his head, a bright cell running round it (the stun's)
-function bHalo(g, x, y, R, t) {
-  if (!R8(R)) return;
-  const lead = Math.floor(t * 6) % 3;
-  [[0, -2], [1, -3], [2, -2]].forEach(([dx, dy], i) => cell(g, x + dx, y + dy, i === lead ? WHITE : GREYS[7]));
+  if (R8(R)) drift(g, side < 0 ? fx : fx + size - 1, fy - 1, t, 1, side > 0 ? 0.5 : 0);
 }
 function punchReach(a, L) {
   const d = a - L;
@@ -249,17 +259,17 @@ function punchReach(a, L) {
 const brawler = {
   key: 'brawler', name: 'Brawler', at: 4,
   base: 'heavy punches', move: 'Haymaker: every 4th punch x4, stuns', cap: 'haymakers stun longer',
-  mark: 'the wraps wound down each wrist', touch: 'a small halo, a light running round it',
-  rest(g, x, y, R, t) { drawBody(g, x, y); bFist(g, x - 1, y - 1, 1, R); bFist(g, x + 3, y - 1, 1, R); bHalo(g, x, y, R, t); },
+  mark: 'the bare fists wrapped', touch: 'bigger wrapped fists, a mote off each',
+  rest(g, x, y, R, t) { drawBody(g, x, y); const z = bSize(R); bFist(g, x - z, y - 1, z, R, t, -1); bFist(g, x + 3, y - 1, z, R, t, 1); },
   len: 3.0,
   punches(R) {
-    const p = [[0.6, -1], [1.0, 1], [1.4, -1], [1.9, 1]].map(([at, side]) => ({ at, side, k: 0.3 }));
-    if (R4(R)) Object.assign(p[3], { size: 2, k: 0.75, hay: true });
+    const p = [[0.6, -1], [1.0, 1], [1.4, -1], [1.9, 1]].map(([at, side]) => ({ at, side, k: 0.3, size: bSize(R) }));
+    if (R4(R)) Object.assign(p[3], { size: bSize(R) + 1, k: 0.75, hay: true });
     return p;
   },
   state(a, api, R) { if (R4(R)) api.stun(1.9, R8(R) ? 2.6 : 1.5); },
   draw(g, t, a, api, R, x) {
-    const s = api.st, ps = this.punches(R), hover = maxBot([x - 1, x + 4], t, s) + 4;
+    const s = api.st, ps = this.punches(R), hover = maxBot([x - 2, x + 5], t, s) + 4;
     let y = Math.round(lerp(REST_Y, hover, trip(a, 0.4, 2.5, this.len)));
     const hay = ps.find(p => p.hay);
     if (hay && a > hay.at - 0.45 && a < hay.at - 0.12) y += 2;   // the wind-up
@@ -267,15 +277,14 @@ const brawler = {
     ps.forEach((p, i) => blow(g, t, t - (a - p.at), spot(p).cx, s, p.k, i + 1));
     drawBody(g, x, y);
     for (const side of [-1, 1]) {
-      let reach = 0, size = 1;
-      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at); if (r) { reach = r; size = p.size || 1; } }
+      let reach = 0, size = bSize(R);
+      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at); if (r) { reach = r; size = p.size; } }
       const fx = side < 0 ? x - size : x + BODY, rest = y - 1;
       let fy = reach < 0 ? rest + 1 : rest;
       if (reach > 0) fy = Math.round(rest + (maxBot([fx, fx + size - 1], t, s) + 1 - rest) * reach);
-      for (let r = fy + 2; r < y; r++) cell(g, side < 0 ? x - 1 : x + BODY, r, GREYS[8]);
-      bFist(g, fx, fy, size, R);
+      for (let r = fy + (R4(R) ? 2 : 1); r < y; r++) cell(g, side < 0 ? x - 1 : x + BODY, r, GREYS[8]);
+      bFist(g, fx, fy, size, R, t, side);
     }
-    bHalo(g, x, y, R, t);
     if (hay) {
       const d = a - hay.at, cx = spot(hay).cx, cy = cBot(cx, t, s);
       if (d >= 0 && d < 0.5) ring(g, cx, cy, 1 + d * 14, d < 0.25 ? WHITE : GREYS[7], 2);
@@ -285,30 +294,32 @@ const brawler = {
 };
 
 // --- Swordsman: a greatsword point-up at his side --------------------------------------
-// (bx, ty) the blade's column and its tip's row; the guard two rows under the blade.
-function sword(g, bx, ty, R, hot = false) {
+// (bx, gy) the blade's column and the grip's row: the guard over the grip, the
+// blade over the guard -- three cells, four from rung 4 -- the point on top.
+// At rung 8 a mote drifts off either side of the blade.
+function sword(g, bx, gy, R, t, hot = false) {
+  const L = R4(R) ? 4 : 3, ty = gy - 2 - L;
   cell(g, bx, ty, WHITE);
-  for (let r = ty + 1; r <= ty + 3; r++) cell(g, bx, r, hot ? WHITE : GREYS[10]);
-  if (R8(R)) for (let r = ty + 1; r <= ty + 3; r++) cell(g, bx + 1, r, GREYS[8]);   // touch: a second edge
-  for (let d = -1; d <= 1; d++) cell(g, bx + d, ty + 4, GREYS[8]);
-  if (R4(R)) { cell(g, bx - 2, ty + 4, GREYS[8]); cell(g, bx + 2, ty + 4, GREYS[8]); }  // mark: the guard wide
-  cell(g, bx, ty + 5, GREYS[6]);
+  for (let r = ty + 1; r <= ty + L; r++) cell(g, bx, r, hot ? WHITE : GREYS[10]);
+  for (let d = -1; d <= 1; d++) cell(g, bx + d, gy - 1, GREYS[8]);
+  cell(g, bx, gy, GREYS[6]);
+  if (R8(R)) { drift(g, bx - 1, ty + 2, t, 1, 0); drift(g, bx + 1, ty + 3, t, 1, 0.5); }
 }
 const swordsman = {
   key: 'sword', name: 'Swordsman', at: 5,
   base: 'cuts that bleed', move: 'Whirlwind: each cut hits wide', cap: 'every 3rd cut hits twice',
-  mark: 'the crossguard two cells wider', touch: 'a second edge down the blade',
-  rest(g, x, y, R, t) { drawBody(g, x, y); sword(g, x - 3, y - 4, R); cell(g, x - 3, y + 2, GREYS[9]); },
+  mark: 'the blade a cell longer', touch: 'motes drifting off the blade',
+  rest(g, x, y, R, t) { drawBody(g, x, y); sword(g, x - 3, y + 1, R, t); cell(g, x - 3, y + 2, GREYS[9]); },
   len: 3.0, cuts: [0.8, 1.4, 2.0],
   state(a, api) { if (a >= 0.8) api.status('bleeding'); },
   draw(g, t, a, api, R, x) {
-    const s = api.st, hover = maxBot([x, x + 2], t, s) + 7;
+    const s = api.st, hover = maxBot([x, x + 2], t, s) + 7 + (R4(R) ? 1 : 0);
     const k = trip(a, 0.4, 2.5, this.len), y = Math.round(lerp(REST_Y, hover, k));
     drawBody(g, x, y);
     // lifted over his head for the whole trip up, point to the hide
     const up = k > 0.2;
-    if (up) sword(g, x + 1, y - 6, R, this.cuts.some(c => a >= c - 0.05 && a < c + 0.1));
-    else { sword(g, x - 3, y - 4, R); }
+    if (up) sword(g, x + 1, y - 1, R, t, this.cuts.some(c => a >= c - 0.05 && a < c + 0.1));
+    else sword(g, x - 3, y + 1, R, t);
     const cx0 = x + 1, reach = R4(R) ? 8 : 4;
     this.cuts.forEach((c, i) => {
       const passes = R8(R) && i === 2 ? [c, c + 0.25] : [c];
@@ -371,20 +382,32 @@ const monk = {
 };
 
 // --- Martial Artist: a bo staff across her back -------------------------------------------
-// mark: a ribbon tied to one end, fluttering; touch: one on the other end too.
-function ribbon(g, ex, ey, dir, t, off = 0) {
-  const f = Math.floor(t * 7 + off) % 2;
-  cell(g, ex + dir, ey + f, GREYS[10]); cell(g, ex + 2 * dir, ey + 1 - f, GREYS[8]);
+// mark: a ribbon off the staff's end, waved as the shop flags are
+// (render/aura.js): walked out from its knot half a cell at a time, its
+// heading turned by one ripple that travels out to the loose end and grows
+// toward it. touch: the staff's other end a pike, a blade on it.
+function ribbon(g, ex, ey, dir, t, len = 4, seed = 0) {
+  let px = 0, py = 0;
+  for (let s = 0.5; s <= len; s += 0.5) {
+    const rip = Math.sin((t / 1.3 - s * 0.75 / len) * Math.PI * 2 + seed * 7) * Math.pow(s / len, 1.2) * 1.2;
+    const th = Math.PI / 2 * 0.5 + rip;
+    px += Math.sin(th) * 0.5; py += Math.cos(th) * 0.5;
+    const cx = Math.round(px), cy = Math.round(py);
+    if (cx === 0 && cy === 0) continue;
+    cell(g, ex + dir * cx, ey + cy, s > len - 1 ? GREYS[8] : GREYS[10]);
+  }
 }
+// The pike's blade off a staff end at (ex, ey), pointing (dx, dy).
+function pike(g, ex, ey, dx, dy) { cell(g, ex + dx, ey + dy, GREYS[10]); cell(g, ex + 2 * dx, ey + 2 * dy, WHITE); }
 function staffBack(g, x, y, R, t) {
   cell(g, x - 2, y + 1, GREYS[9]); cell(g, x - 1, y + 1, GREYS[8]); cell(g, x + 3, y + 1, GREYS[8]); cell(g, x + 4, y + 1, GREYS[9]);
-  if (R4(R)) ribbon(g, x + 4, y + 1, 1, t);
-  if (R8(R)) ribbon(g, x - 2, y + 1, -1, t, 1);
+  if (R4(R)) ribbon(g, x - 2, y + 1, -1, t);
+  if (R8(R)) pike(g, x + 4, y + 1, 1, 0);
 }
 const martial = {
-  key: 'martial', name: 'Martial Artist', at: 5,
+  key: 'martial', name: 'Martial Artist', at: 6,
   base: 'quick thrusts charge a finisher', move: 'Flow: thrusts charge double', cap: 'the finisher Hastes the party',
-  mark: 'a ribbon on the staff\'s end', touch: 'a ribbon on the other end',
+  mark: 'a ribbon waving off the staff\'s end', touch: 'the staff a pike, a blade on its end',
   rest(g, x, y, R, t) { drawBody(g, x, y); staffBack(g, x, y, R, t); },
   len: 3.0,
   plan(R) { return R4(R) ? { thrusts: [0.5, 0.8, 1.1], fin: 1.5, after: [2.0, 2.3], per: 2 } : { thrusts: [0.5, 0.75, 1.0, 1.25, 1.5], fin: 1.9, after: [], per: 1 }; },
@@ -400,15 +423,16 @@ const martial = {
       // the finisher: flat over her head, pressed into the hide
       const row = a >= pl.fin ? maxBot([x - 2, x + 4], t, s) + 1 : y - 1;
       for (let c = x - 2; c <= x + 4; c++) cell(g, c, row, c === x - 2 || c === x + 4 ? WHITE : GREYS[8]);
-      if (R4(R)) ribbon(g, x + 4, row, 1, t);
-      if (R8(R)) ribbon(g, x - 2, row, -1, t, 1);
+      if (R4(R)) ribbon(g, x - 2, row, -1, t);
+      if (R8(R)) pike(g, x + 4, row, 1, 0);
     } else if (a > 0.3 && a < 2.5) {
       // on end through her middle, the tip driven up to the hide on a thrust
-      const tip = on != null ? cBot(x + 1, t, s) + 1 : y - 3;
-      for (let r = tip; r < tip + 7; r++) cell(g, x + 1, r, r === tip ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
+      const blade = R8(R) ? 2 : 0;
+      const tip = on != null ? cBot(x + 1, t, s) + 1 + blade : y - 3;
+      for (let r = tip; r < tip + 7; r++) cell(g, x + 1, r, r === tip && !blade ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
+      if (blade) pike(g, x + 1, tip, 0, -1);
       if (on != null && R4(R)) for (let r = tip + 1; r < tip + 5; r++) cell(g, x + 2, r, GREYS[6]);  // Flow's after-image
-      if (R4(R)) ribbon(g, x + 1, tip, 1, t);
-      if (R8(R)) ribbon(g, x + 1, tip + 6, -1, t, 1);
+      if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t);
       drawBody(g, x, y);
     } else staffBack(g, x, y, R, t);
     all.forEach((p, i) => blow(g, t, t - (a - p), x + 1, s, 0.18, 50 + i));
@@ -422,37 +446,56 @@ const martial = {
 };
 
 // --- Ranger: a bow twice his height ---------------------------------------------------------
-// The bow's poses in letters, so every piece keeps its cell in each: L limb,
-// T tip (touch: capped white), S string, N the sight pin (mark), A shaft, W
-// head, D nock. `bx` the body's left column in the art.
-const BOW = {
-  rest: { bx: 0, rows: ['....T..', '....SL.', '....SNL', '###.S.L', '###.SL.', '###.T..'] },
-  lift: { bx: 0, rows: ['....T..', '....SL.', '....SNL', '....S.L', '....SL.', '###.T..', '###....', '###....'] },
-  over: { bx: 1, rows: ['...LLL..', '..LN..L.', '.TSSSSST', '........', '.###....', '.###....', '.###....'] },
-  braced: { bx: 2, rows: ['..LLL..', '.LN..L.', 'TSSSSST', '.......', '..###..', '..###..', '..###..'] },
-  drawn: { bx: 2, rows: ['...W...', '..LAL..', '.LNA.L.', 'TS.A.ST', '..SDS..', '..###..', '..###..', '..###..'] },
-};
-function bowTone(ch, R) {
-  return { L: GREYS[8], T: R8(R) ? WHITE : GREYS[8], S: GREYS[9], N: R4(R) ? WHITE : null, A: GREYS[10], D: GREYS[6], W: WHITE }[ch];
+// The bow drawn from its span, so a longer one is the same bow: the string
+// straight between the tips, the limb bellied two cells off it at the middle.
+// It is a cell longer at rung 4, two at rung 8, with motes off its tips.
+const bowGrow = R => R8(R) ? 2 : R4(R) ? 1 : 0;
+function vbow(g, sx, top, bot) {
+  const n = bot - top;
+  for (let r = top; r <= bot; r++) {
+    const off = Math.round(2 * Math.sin(Math.PI * (r - top) / n));
+    cell(g, sx, r, off ? GREYS[9] : GREYS[8]);
+    if (off) cell(g, sx + off, r, GREYS[8]);
+  }
 }
-function drawBow(g, art, x, y, R) {
-  const x0 = x - art.bx, y0 = y + BODY - art.rows.length;
-  art.rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.' && ch !== '#') cell(g, x0 + c, y0 + r, bowTone(ch, R)); }));
+// Level over his head, string row sy, limb up; drawn, the string is pulled
+// down to the nock under an arrow standing on it.
+function hbow(g, cx, sy, half, drawn) {
+  for (let c = -half; c <= half; c++) {
+    const off = Math.round(2 * Math.sin(Math.PI * (c + half) / (2 * half)));
+    if (!off) { cell(g, cx + c, sy, GREYS[8]); continue; }
+    if (!(drawn && c === 0)) cell(g, cx + c, sy - off, GREYS[8]);
+    if (!drawn || Math.abs(c) >= half - 1) cell(g, cx + c, sy, GREYS[9]);
+    else if (c) cell(g, cx + c, sy + 1, GREYS[9]);
+  }
+  if (drawn) { cell(g, cx, sy - 3, WHITE); for (let r = sy - 2; r <= sy; r++) cell(g, cx, r, GREYS[10]); cell(g, cx, sy + 1, GREYS[6]); }
+}
+function drawBow(g, pose, x, y, R, t) {
+  const e = bowGrow(R), half = 3 + e;
+  if (pose === 'rest' || pose === 'lift') {
+    const bot = pose === 'rest' ? y + 2 : y, top = bot - 5 - e;
+    vbow(g, x + 4, top, bot);
+    if (R8(R)) drift(g, x + 4, top - 1, t, 2);
+  } else {
+    const cx = pose === 'over' ? x + 3 : x + 1;
+    hbow(g, cx, y - 2, half, pose === 'drawn');
+    if (R8(R)) { drift(g, cx - half, y - 3, t, 1, 0); drift(g, cx + half, y - 3, t, 1, 0.5); }
+  }
 }
 const ranger = {
   key: 'ranger', name: 'Ranger', at: 3,
   base: 'arrows from overhead', move: 'Aimed shot: every 5th arrow x5', cap: 'the aimed shot stuns',
-  mark: 'a white sight pin in the bow', touch: 'the bow\'s tips capped white',
-  rest(g, x, y, R) { drawBody(g, x, y); drawBow(g, BOW.rest, x, y, R); },
+  mark: 'the bow a cell longer', touch: 'longer again, motes off its tips',
+  rest(g, x, y, R, t) { drawBody(g, x, y); drawBow(g, 'rest', x, y, R, t); },
   len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
   state(a, api, R) { if (R8(R)) api.stun(this.aimed + 0.1, 1.5); },
   draw(g, t, a, api, R, x) {
     const s = api.st, y = REST_Y, aimed = R4(R) ? this.aimed : null;
     const last = aimed || this.shots[3], up = 0.15, down = last + 0.35;
     const pulling = this.shots.some(v => a >= v - 0.18 && a < v) || (aimed && a >= 1.9 && a < aimed);
-    const pose = a < up || a >= down + 0.24 ? BOW.rest : a < up + 0.12 || a >= down + 0.12 ? BOW.lift
-               : a < up + 0.24 || a >= down ? BOW.over : pulling ? BOW.drawn : BOW.braced;
-    drawBody(g, x, y); drawBow(g, pose, x, y, R);
+    const pose = a < up || a >= down + 0.24 ? 'rest' : a < up + 0.12 || a >= down + 0.12 ? 'lift'
+               : a < up + 0.24 || a >= down ? 'over' : pulling ? 'drawn' : 'braced';
+    drawBody(g, x, y); drawBow(g, pose, x, y, R, t);
     const lx = x + 1, ly = y - 6, ty = cBot(lx, t, s) + 1;
     if (aimed && a >= 1.95 && a < aimed) {
       const tone = a > 2.25 ? GREYS[9] : GREYS[6];
@@ -473,22 +516,22 @@ const ranger = {
   },
 };
 
-// --- Assassin: a dagger point-up in each fist -------------------------------------------------
-// (x, y) body; `ty` the tips' row. mark: a pale pommel under each grip;
-// touch: the tips go the abyss's purple.
+// --- Assassin: a dagger point-up in her fist -------------------------------------------------
+// One dagger at rung 0; the mark is the second, in the other fist; the touch
+// turns both tips the abyss's purple. (x, ty): the body and the tips' row.
+const blades = (x, R) => R4(R) ? [x - 2, x + 4] : [x + 4];
 function daggers(g, x, ty, R) {
-  for (const bx of [x - 2, x + 4]) {
+  for (const bx of blades(x, R)) {
     cell(g, bx, ty, R8(R) ? PURPLES[11] : WHITE);
     cell(g, bx, ty + 1, GREYS[10]); cell(g, bx, ty + 2, GREYS[10]);
     for (let d = -1; d <= 1; d++) cell(g, bx + d, ty + 3, GREYS[7]);
     cell(g, bx, ty + 4, GREYS[8]);
-    if (R4(R)) cell(g, bx, ty + 5, GREYS[10]);
   }
 }
 const assassin = {
   key: 'assassin', name: 'Assassin', at: 5,
   base: 'stabs, x3 on a stunned serpent', move: 'Execution: stabs grow with the wound', cap: 'x3 in the phase\'s last tenth',
-  mark: 'a pale pommel under each grip', touch: 'the dagger tips purple',
+  mark: 'a second dagger', touch: 'the dagger tips purple',
   rest(g, x, y, R) { drawBody(g, x, y); daggers(g, x, y - 3, R); },
   len: 3.0, stabs: [0.6, 1.1, 1.6, 2.1],
   state() {},
@@ -500,30 +543,46 @@ const assassin = {
     drawBody(g, x, y); daggers(g, x, y - 5, R);
     this.stabs.forEach((p, i) => {
       const last = R8(R) && i === 3, k = last ? 1 : R4(R) ? 0.25 + i * 0.12 : 0.3;
-      for (const bx of [x - 2, x + 4]) blow(g, t, t - (a - p), bx, s, k, 70 + i * 2 + (bx > x ? 1 : 0));
+      for (const bx of blades(x, R)) blow(g, t, t - (a - p), bx, s, k, 70 + i * 2 + (bx > x ? 1 : 0));
       const d = a - p;
       if (last && d >= 0 && d < 0.3) ring(g, x + 1, Math.round(cY(x + 1, t, s)), Math.round(6 - d * 16), PURPLES[d < 0.15 ? 11 : 8]);
     });
   },
 };
 
-// --- Sapper: a bundle of three charges, the fuse sparking ---------------------------------
-function bundle(g, x, y, R, t) {
-  for (const c of [4, 5, 6]) for (const r of [0, 1, 2]) cell(g, x + c, y + r, r === 1 ? GREYS[6] : c === 5 ? GREYS[10] : GREYS[9]);
-  cell(g, x + 5, y - 1, GREYS[6]);
+// --- Sapper: a bomb under his arm, the fuse sparking ----------------------------------------
+// A fuse: one cell standing up off the top at (fx, fy), the spark on its tip,
+// leaning out and flickering.
+function fuse(g, fx, fy, dir, t) {
+  cell(g, fx, fy, GREYS[7]);
   const k = Math.floor(t * 6) % 3;
-  cell(g, x + 4 + k, y - 2, k === 1 ? GREYS[9] : WHITE);
-  if (R4(R)) cell(g, x + 4, y - 1, Math.floor(t * 3) % 2 ? WHITE : GREYS[6]);      // mark: a countdown light
-  if (R8(R)) { cell(g, x - 1, y + 1, GREYS[9]); cell(g, x - 1, y + 2, GREYS[8]); }  // touch: a spare charge on his back
+  cell(g, fx + (k === 2 ? 0 : dir), fy - 1, k === 1 ? GREYS[9] : WHITE);
+}
+// Rung 0: a round bomb, two cells across, lit from its top corner.
+function bomb(g, bx, by, t) {
+  cell(g, bx, by, GREYS[10]); cell(g, bx + 1, by, GREYS[8]); cell(g, bx, by + 1, GREYS[8]); cell(g, bx + 1, by + 1, GREYS[7]);
+  fuse(g, bx + 1, by - 1, 1, t);
+}
+// Rung 4: the sticky charge, a flat slab three across; rung 8 holds two.
+function slab(g, bx, by, dir, t) {
+  const c0 = dir > 0 ? bx : bx - 2;
+  for (let c = 0; c < 3; c++) { cell(g, c0 + c, by, c === 1 ? GREYS[10] : GREYS[9]); cell(g, c0 + c, by + 1, c === 1 ? GREYS[6] : GREYS[7]); }
+  fuse(g, c0 + 1, by - 1, dir, t);
+}
+function bundle(g, x, y, R, t) {
+  if (!R4(R)) return bomb(g, x + 4, y + 1, t);
+  slab(g, x + 4, y + 1, 1, t);
+  if (R8(R)) slab(g, x - 2, y + 1, -1, t);
 }
 function charge(g, cx, cy, t, R, lit) {
-  rect(g, cx, cy, 2, 2, GREYS[8]); cell(g, cx + 1, cy, GREYS[9]);
-  if (lit) cell(g, cx, cy - 1, Math.floor(t * 6) % 2 ? WHITE : GREYS[6]);
+  if (!R4(R)) { cell(g, cx, cy, GREYS[10]); cell(g, cx + 1, cy, GREYS[8]); cell(g, cx, cy + 1, GREYS[8]); cell(g, cx + 1, cy + 1, GREYS[7]); }
+  else { for (let c = 0; c < 3; c++) { cell(g, cx - 1 + c, cy, c === 1 ? GREYS[10] : GREYS[9]); cell(g, cx - 1 + c, cy + 1, c === 1 ? GREYS[6] : GREYS[7]); } }
+  if (lit) cell(g, cx + 1, cy - 1, Math.floor(t * 6) % 2 ? WHITE : GREYS[9]);
 }
 const sapper = {
-  key: 'sapper', name: 'Sapper', at: 2,
+  key: 'sapper', name: 'Sapper', at: 5,
   base: 'thrown charges', move: 'Sticky charge: stuck, ticks down, one big stunning blow', cap: 'two charges at once',
-  mark: 'a countdown light on the bundle', touch: 'a spare charge on his back',
+  mark: 'the bomb a sticky charge', touch: 'two charges held',
   rest(g, x, y, R, t) { drawBody(g, x, y); bundle(g, x, y, R, t); },
   len: 3.2, throwAt: 0.3, fly: 0.6, blowAt: 2.1,
   targets(R, x) { return R8(R) ? [x - 1, x + 8] : [x + 4]; },
@@ -554,34 +613,31 @@ const sapper = {
   },
 };
 
-// --- Hexer: nothing held, a few purple motes rising off her --------------------------------
+// --- Hexer: nothing held, purple motes rising slowly off her --------------------------------
+// One mote at a time at rung 0; a second at rung 4; at rung 8 she floats a
+// cell off the plinth and four rise.
 const MOTE_TONES = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
-function motes(g, x, top, t) {
-  for (let i = 0; i < 4; i++) {
-    const p = (t / 2.2 + i / 4) % 1, dx = [-1, 1, 0, 2][i] - (p > 0.55 ? (i % 2 ? 0 : 1) : 0);
-    cell(g, x + dx - (i === 3 ? 2 : 0), top - 1 - Math.floor(p * 5), MOTE_TONES[Math.floor(p * 3.99)]);
+const moteCount = R => R8(R) ? 4 : R4(R) ? 2 : 1;
+function motes(g, x, top, t, n = 1) {
+  for (let i = 0; i < n; i++) {
+    const p = (t / 3.2 + i / n) % 1, dx = Math.round(Math.sin(p * 6 + i * 2.1) * 1.2);
+    cell(g, x + dx, top - 1 - Math.floor(p * 5), MOTE_TONES[Math.floor(p * 3.99)]);
   }
-}
-// mark: a purple band clasped round her middle, as the Held bands clasp the
-// coil; touch: its tethers, a cell down from each clasp.
-function hexBand(g, x, y, R) {
-  if (R4(R)) { cell(g, x - 1, y + 1, PURPLES[9]); cell(g, x + 3, y + 1, PURPLES[9]); }
-  if (R8(R)) { cell(g, x - 1, y + 2, PURPLES[7]); cell(g, x + 3, y + 2, PURPLES[7]); }
 }
 const hexer = {
   key: 'hexer', name: 'Hexer', at: 4,
   base: 'hexes Weaken the serpent', move: 'Binding: the serpent is Held', cap: 'Held takes more from blows',
-  mark: 'a purple band clasped round her', touch: 'the band\'s tethers',
-  rest(g, x, y, R, t) { drawBody(g, x, y); motes(g, x + 1, y, t); hexBand(g, x, y, R); },
+  mark: 'a second slow mote', touch: 'floating a cell up, more motes', lift: R => R8(R) ? 1 : 0,
+  rest(g, x, y, R, t) { drawBody(g, x, y); motes(g, x + 1, y, t, moteCount(R)); },
   len: 3.0, land: 1.3,
   state(a, api, R) {
     if (a >= this.land + 0.3) api.status('weakened');
     if (R4(R)) api.hold(this.land + 0.3, 1.8, R8(R) && a >= 2.2 && a < 2.5 ? 2 : 1);
   },
   draw(g, t, a, api, R, x) {
-    const s = api.st, y = REST_Y, tx = x + 1, hitY = cBot(tx, t, s);
-    drawBody(g, x, y); hexBand(g, x, y, R);
-    if (a >= 1.8) motes(g, tx, y, t);
+    const s = api.st, y = REST_Y - liftOf(this, R), tx = x + 1, hitY = cBot(tx, t, s);
+    drawBody(g, x, y);
+    if (a >= 1.8) motes(g, tx, y, t, moteCount(R));
     for (let n = 0; n < 5; n++) {
       const s0 = 0.3 + n * 0.1;
       if (a < s0 || a >= s0 + 0.5) continue;
@@ -598,12 +654,14 @@ const hexer = {
 
 // --- Mage: a staff taller than her, a purple stone in its claws ---------------------------
 const ORBIT = Array.from({ length: 8 }, (_, k) => { const a = k / 8 * Math.PI * 2; return [Math.round(Math.cos(a) * 2.5), Math.round(0.5 + Math.sin(a) * 2.5)]; });
-// The stone at (sx, top): mark, a cell orbiting it; touch, the stone a cell bigger.
+// The stone at (sx, top): mark, a cell orbiting it; touch, three orbiting.
 function stone(g, sx, top, R, t, up, glow) {
-  if (R8(R)) cell(g, sx, top - 1, PURPLES[9]);
   cell(g, sx, top + 1, up ? PURPLES[11] : PURPLES[9]);
   cell(g, sx, top, glow > 0.66 ? WHITE : PURPLES[11]);
-  if (R4(R)) { const [dx, dy] = ORBIT[Math.floor(t * 5) % 8]; cell(g, sx + dx, top + dy, PURPLES[10]); }
+  if (R4(R)) for (let i = 0; i < (R8(R) ? 3 : 1); i++) {
+    const [dx, dy] = ORBIT[(Math.floor(t * 5) + i * 3) % 8];
+    cell(g, sx + dx, top + dy, i ? PURPLES[8] : PURPLES[10]);
+  }
 }
 function mStaff(g, x, y, R, t, up = false, glow = 0, home = true) {
   const sx = x - 1, lift = up ? 1 : 0, top = y - 3 - lift;
@@ -614,7 +672,7 @@ function mStaff(g, x, y, R, t, up = false, glow = 0, home = true) {
 const mage = {
   key: 'mage', name: 'Mage', at: 5,
   base: 'bolts that Light', move: 'Arcane lantern: the whole serpent Lit', cap: 'Lit takes more from everyone',
-  mark: 'a small cell orbiting the stone', touch: 'the stone a cell bigger',
+  mark: 'a cell orbiting the stone', touch: 'three cells orbiting',
   rest(g, x, y, R, t) { drawBody(g, x, y); mStaff(g, x, y, R, t); },
   len: 3.4,
   state(a, api, R) { if (a >= (R4(R) ? litDone(SPOT.mage - 12, 1.3) : 1.1)) api.status('lit'); },
@@ -649,16 +707,16 @@ const mage = {
 };
 
 // --- Bard: a flute held sideways at her mouth -------------------------------------------------
-// mark: the flute's end flares into a bell; touch: a note that stays over her head.
-function flute(g, x, y, R, t) {
-  cell(g, x + 3, y, GREYS[10]); cell(g, x + 4, y, GREYS[6]); cell(g, x + 5, y, GREYS[10]); cell(g, x + 6, y, GREYS[10]);
-  if (R4(R)) { cell(g, x + 7, y - 1, GREYS[8]); cell(g, x + 7, y + 1, GREYS[8]); }
-  if (R8(R)) { const b = Math.floor(t * 1.5) % 2; cell(g, x + 1, y - 3 - b, PURPLES[9]); cell(g, x + 2, y - 4 - b, PURPLES[9]); }
+// mark: a purple tip on the flute; touch: the whole flute purple.
+function flute(g, x, y, R) {
+  const p = R8(R);
+  cell(g, x + 3, y, p ? PURPLES[9] : GREYS[10]); cell(g, x + 4, y, p ? PURPLES[6] : GREYS[6]);
+  cell(g, x + 5, y, p ? PURPLES[9] : GREYS[10]); cell(g, x + 6, y, R4(R) ? PURPLES[11] : GREYS[10]);
 }
 const bard = {
   key: 'bard', name: 'Bard', at: 2,
   base: 'sings: the party Inspired (no damage)', move: 'Anthem: Inspired doubles', cap: 'Inspired lingers after the song',
-  mark: 'a bell flared at the flute\'s end', touch: 'a note that stays over her head',
+  mark: 'a purple tip on the flute', touch: 'the whole flute purple',
   rest(g, x, y, R, t) { drawBody(g, x, y); flute(g, x, y, R, t); },
   len: 3.0,
   state(a, api, R) { if (a >= 1.2 && a < (R8(R) ? 6 : 3.4)) api.buff('inspired', R4(R) ? 2 : 1); },
@@ -667,7 +725,7 @@ const bard = {
     drawBody(g, x, y); flute(g, x, y, R, t);
     if (a > 2.6) return;
     // notes rise off the flute and drift to the fighters, each to a station
-    const tip = [x + 7, y - 1];
+    const tip = [x + 6, y - 1];
     api.others.forEach((o, n) => {
       const s0 = 0.1 + (n % 5) * 0.12, k = along(a, s0, s0 + 1.2);
       if (a < s0 || a >= s0 + 1.2) return;
@@ -716,12 +774,12 @@ function paintPane(g, T) {
   if (st.statuses.stunned) paintStunned(g, t, st);
   for (const c of ORDER) {
     const x = SPOT[c.key], a = A[c.key];
-    const others = ORDER.filter(o => o !== c).map(o => ({ x: SPOT[o.key], y: REST_Y - (o.lift || 0) }));
+    const others = ORDER.filter(o => o !== c).map(o => ({ x: SPOT[o.key], y: REST_Y - liftOf(o, RUNG) }));
     if (a < c.len) c.draw(g, t, a, { st, others }, RUNG, x);
-    else c.rest(g, x, REST_Y - (c.lift || 0), RUNG, t);
+    else c.rest(g, x, REST_Y - liftOf(c, RUNG), RUNG, t);
     const b = st.buffs[c.key] || {};
-    if (b.inspired) paintInspired(g, t, x, REST_Y - (c.lift || 0), b.inspired);
-    if (b.hasted) paintHasted(g, t, x, REST_Y - (c.lift || 0));
+    if (b.inspired) paintInspired(g, t, x, REST_Y - liftOf(c, RUNG), b.inspired);
+    if (b.hasted) paintHasted(g, t, x, REST_Y - liftOf(c, RUNG));
   }
 }
 
@@ -735,7 +793,7 @@ function drawSlot(g, c, R, sx, t) {
   rect(g, sx, ROW_FLOOR, SLOT, SLOT_H - ROW_FLOOR, GREYS[2]);
   for (let col = sx; col < sx + SLOT; col++) for (let r = ROW_FLOOR; r < SLOT_H; r++)
     if (hash(col * 31 + r * 17) < 0.22) cell(g, col, r, GREYS[3 + Math.floor(hash(col + r * 7) * 2)]);
-  const x = sx + c.at, y = ROW_FLOOR - 2 - BODY - (c.lift || 0);
+  const x = sx + c.at, y = ROW_FLOOR - 2 - BODY - liftOf(c, R);
   drawPlinthAt(g, x + 1, ROW_FLOOR);
   c.rest(g, x, y, R, t);
 }
