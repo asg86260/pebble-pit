@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Health Bar</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .opt { border-top: 1px solid var(--rule); padding: 8px 0 0; max-width: 100%; }
+  .opt h2 { font-size: 13px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 8px; min-height: 4.2em; font-size: 12px; max-width: 432px; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .bar { display: flex; gap: 10px; align-items: center; margin: 0 0 12px; flex-wrap: wrap; }
+  .bar input[type=range] { width: 360px; max-width: 60vw; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>A health bar for the serpent: four shapes</h1>
+<p class="note">A mock drawn from plain cells, not the game. The same scripted twenty seconds in every pane: blows
+open the wound (stage one), a pause lets it heal back, a second flurry breaks the bare coil, then the warded stage
+opens partway and heals again. The bar reads the serpent's health as what is left of the stage: full at a closed
+wound, empty at the break -- so it drains under blows and refills at the heal. Four stages, four defenses, so every
+option shows where you are among the four as well. What it cannot show: the real coil, weapons, numbers, camera and
+the deep's inverted tones; the fading stage dimming the bar; how it sits beside the counter card.</p>
+<div class="bar">
+  <button id="play">pause</button>
+  <input id="scrub" type="range" min="0" max="20" step="0.05" value="0">
+  <span id="clock">0.0 s</span>
+</div>
+<div class="grid" id="opts"></div>
+<script>
+const P = 6, CW = 72, CH = 34, LOOP = 20;
+const GREY = ['#000', '#1c1c21', '#333339', '#55555e', '#8b8b96', '#b4b4c0', '#fff'];
+const PURPLE = '#9b5de5', DPURPLE = '#2d1d47';
+const DEPTH = 100, HEAL = [10, 15, 20, 30];
+
+// --- the fight, precomputed at 60 Hz ---------------------------------------------
+const blows = [];
+for (let t = 0.5; t < 5.5; t += 0.25) blows.push(t);
+for (let t = 8; t < 12; t += 0.2) blows.push(t);
+for (let t = 12.5; t < 17; t += 0.2) blows.push(t);
+const frames = [];
+{
+  let stage = 0, wound = 0, bi = 0, lastHit = -9, breakAt = -9;
+  for (let f = 0; f <= LOOP * 60; f++) {
+    const t = f / 60;
+    while (bi < blows.length && blows[bi] <= t) { wound = Math.min(DEPTH, wound + 6); lastHit = t; bi++; }
+    if (wound >= DEPTH) { stage++; wound = 0; breakAt = t; }
+    else wound = Math.max(0, wound - HEAL[stage] / 60);
+    frames.push({ t, stage, wound, lastHit, breakAt });
+  }
+}
+// a trail that lags the true value, the classic "what you just took" sliver
+const trail = [];
+{
+  let tr = 1;
+  frames.forEach((fr, i) => {
+    const hp = 1 - fr.wound / DEPTH;
+    if (i && fr.stage !== frames[i - 1].stage) tr = 1;
+    tr = hp > tr ? hp : tr - Math.min(tr - hp, 0.35 / 60 * (fr.t - fr.lastHit > 0.5 ? 3 : 0));
+    trail.push(tr);
+  });
+}
+
+// --- the coil, the same in every pane ------------------------------------------------
+const yc = (x, t) => 17 + 3 * Math.sin(x * 0.09 + t * 0.6) + 1.2 * Math.sin(x * 0.23 - t * 0.9);
+const BELLY = 36;
+function drawCoil(g, fr) {
+  g.fillStyle = GREY[0]; g.fillRect(0, 0, CW * P, CH * P);
+  for (let c = 0; c < CW; c++) for (let r = 30; r < CH; r++)
+    if ((c * 7 + r * 13) % 5 === 0) { g.fillStyle = GREY[1]; g.fillRect(c * P, r * P, P, P); }
+  const t = fr.t, k = fr.wound / DEPTH;
+  for (let c = 6; c < 66; c++) {
+    const y = yc(c, t);
+    const u = (c - 6) / 60;
+    const th = 2.2 + 1.4 * Math.sin(Math.PI * Math.min(1, u * 1.3)) + (Math.abs(c - BELLY) < 5 ? 1.2 : 0);
+    for (let r = Math.round(y - th); r <= Math.round(y + th); r++) {
+      let tone = r >= Math.round(y + th) - 0 ? 4 : r === Math.round(y) ? 5 : 6;
+      const reach = k * 18;
+      const crack = Math.abs(c - BELLY) < reach && ((c * 31 + r * 17) % 7 === 0);
+      if (crack) tone = Math.abs(c - BELLY) < reach * 0.5 ? 1 : 3;
+      if (Math.abs(c - BELLY) < 4 && Math.abs(r - y) < th - 1) tone = 1;
+      g.fillStyle = GREY[tone]; g.fillRect(c * P, r * P, P, P);
+    }
+  }
+  const y = Math.round(yc(BELLY, t));
+  g.fillStyle = GREY[6]; g.fillRect((BELLY - 1) * P, (y - 1) * P, 2 * P, 2 * P);
+}
+
+// --- the four options -------------------------------------------------------------------
+const hp = fr => 1 - fr.wound / DEPTH;
+const OPTS = [
+  { name: 'A -- a boss bar across the top, four lengths',
+    cap: 'Screen pixels, like the counter: one bar across the top of the deep cut in four, a length a defense. ' +
+         'The live length drains white to black under blows and fills back at the heal; a broken defense is left empty.',
+    draw(g, fr) {
+      const W = CW * P - 48, x0 = 24, y0 = 10, h = 8, gap = 4, seg = (W - gap * 3) / 4;
+      for (let s = 0; s < 4; s++) {
+        const x = Math.round(x0 + s * (seg + gap));
+        g.fillStyle = GREY[4]; g.fillRect(x - 1, y0 - 1, Math.round(seg) + 2, h + 2);
+        g.fillStyle = GREY[0]; g.fillRect(x, y0, Math.round(seg), h);
+        const f = s < fr.stage ? 0 : s > fr.stage ? 1 : hp(fr);
+        g.fillStyle = GREY[6]; g.fillRect(x, y0, Math.round(seg * f), h);
+      }
+    } },
+  { name: 'B -- one bar, the heal drawn in purple',
+    cap: 'The stage\'s bar alone, with four pips beside it for the defenses. What a blow took lingers grey a ' +
+         'moment before draining, and what the heal gives back grows in the heal\'s own purple, so the rate reads.',
+    draw(g, fr, i) {
+      const x0 = 24, y0 = 10, W = 300, h = 8;
+      g.fillStyle = GREY[4]; g.fillRect(x0 - 1, y0 - 1, W + 2, h + 2);
+      g.fillStyle = GREY[0]; g.fillRect(x0, y0, W, h);
+      const now = hp(fr), tr = trail[i];
+      const healing = fr.t - fr.lastHit > 0.3 && fr.wound > 0;
+      g.fillStyle = GREY[3]; g.fillRect(x0, y0, Math.round(W * tr), h);
+      g.fillStyle = healing ? PURPLE : GREY[6]; g.fillRect(x0, y0, Math.round(W * now), h);
+      if (healing) { g.fillStyle = GREY[6]; g.fillRect(x0, y0, Math.round(W * Math.min(now, tr)), h); }
+      for (let s = 0; s < 4; s++) {
+        const x = x0 + W + 14 + s * 14;
+        g.fillStyle = GREY[4]; g.fillRect(x - 1, y0 - 1, 10, 10);
+        g.fillStyle = s < fr.stage ? GREY[0] : s === fr.stage ? GREY[6] : GREY[3];
+        g.fillRect(x, y0, 8, 8);
+      }
+    } },
+  { name: 'C -- a bar on the body, in world cells',
+    cap: 'On the P grid, riding the coil: a bar of cells floating over the belly, bobbing with it, and four ' +
+         'pip cells after it. A cell a tenth of the stage, so it steps rather than slides. It is where the eye already is.',
+    draw(g, fr) {
+      const y = Math.round(yc(BELLY, fr.t)) - 8, x0 = BELLY - 7;
+      const cells = Math.ceil(hp(fr) * 10 - 1e-9);
+      for (let c = 0; c < 10; c++) {
+        g.fillStyle = c < cells ? GREY[6] : GREY[2];
+        g.fillRect((x0 + c) * P, y * P, P, P);
+      }
+      for (let s = 0; s < 4; s++) {
+        g.fillStyle = s < fr.stage ? GREY[1] : s === fr.stage ? GREY[6] : GREY[3];
+        g.fillRect((x0 + 11 + s) * P + 1, y * P + 1, P - 2, P - 2);
+      }
+    } },
+  { name: 'D -- a cage of ribs across the bottom',
+    cap: 'In world cells along the floor: four cages of five ribs, a cage a defense. A rib goes dark for each ' +
+         'fifth of the wound and comes back white as it heals; a broken cage stays open. Echoes the ribs round him.',
+    draw(g, fr) {
+      const y = CH - 3, x0 = 8;
+      for (let s = 0; s < 4; s++) {
+        const cx = x0 + s * 15;
+        const left = s < fr.stage ? 0 : s > fr.stage ? 5 : Math.ceil(hp(fr) * 5 - 1e-9);
+        g.fillStyle = GREY[3];
+        g.fillRect(cx * P, (y - 2) * P, 11 * P, P / 2);
+        g.fillRect(cx * P, (y + 1) * P - P / 2, 11 * P, P / 2);
+        for (let r = 0; r < 5; r++) {
+          g.fillStyle = r < left ? GREY[6] : GREY[1];
+          g.fillRect((cx + r * 2 + 1) * P, (y - 2) * P, P, 3 * P);
+        }
+      }
+    } },
+];
+
+const panes = OPTS.map(o => {
+  const d = document.createElement('div'); d.className = 'opt';
+  d.innerHTML = `<h2>${o.name}</h2><p class="cap">${o.cap}</p>`;
+  const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P;
+  d.appendChild(cv); document.getElementById('opts').appendChild(d);
+  return { o, g: cv.getContext('2d') };
+});
+
+let t = 0, playing = true, last = performance.now();
+const scrub = document.getElementById('scrub');
+document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+scrub.oninput = () => { t = +scrub.value; };
+function frame(now) {
+  if (playing) t = (t + (now - last) / 1000) % LOOP;
+  last = now;
+  const i = Math.min(frames.length - 1, Math.floor(t * 60)), fr = frames[i];
+  scrub.value = t; document.getElementById('clock').textContent =
+    `${t.toFixed(1)} s  stage ${fr.stage + 1}  wound ${fr.wound.toFixed(0)} / ${DEPTH}`;
+  for (const p of panes) { drawCoil(p.g, fr); p.o.draw(p.g, fr, i); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -209,3 +209,21 @@ export const NUM_HEAL_EVERY_S = 1;
 // running sum and not a smear of digits over digits.
 export const NUM_FOLD_S = (NUM_FONT['0'].length + 1) * NUM_FONT_PX / NUM_RISE;
 export const NUM_FOLD_R = P * 4;
+
+// --- the serpent's bar: what is left of the defense up -------------------------------
+// DESIGN.md, "The serpent's bar" (option B of four mocked). In screen pixels,
+// top-center of the glass, like the counter: full at a closed wound, empty at
+// the break. Tones as seen, over the finished deep.
+export const BAR_W = 240;              // screen pixels, the bar's length
+export const BAR_H = 8;                // and its height
+export const BAR_TOP = 12;             // from the top of the glass
+export const BAR_PIP = 8;              // a defense's pip, square, after the bar
+export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to pip
+export const BAR_EDGE = '#8b8b96';     // a one-pixel rim round the bar and each pip
+export const BAR_TRACK = '#000000';    // the empty of it
+export const BAR_LEFT = '#ffffff';     // what the defense has left
+export const BAR_TRAIL = '#55555e';    // what a blow just took, lingering
+export const BAR_HEALED = '#9b5de5';   // what the heal has given back since the last blow
+export const BAR_TO_COME = '#55555e';  // a defense not yet reached
+export const BAR_TRAIL_HOLD_S = 0.5;   // the trail waits this long after the last blow
+export const BAR_TRAIL_RATE = 1;       // then drains at this share of the bar a second

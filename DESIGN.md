@@ -14801,7 +14801,8 @@ the lance's tip -- so a blow on the fat middle lands where the fat middle is.
   all over, and it drowned out the cracks it was meant to add to.
 - The gap at the belly stays, and now opens the ribs (below). This replaces
   "the wound is a gap in the coil, the picture is the reading, not a bar":
-  still no bar, but the picture is loud about it.
+  the picture is loud about it. (A bar was added over it since: "The
+  serpent's bar", below.)
 
 **Him in a cage of ribs (B2).** The belly swells round him, `BELLY_BULGE`
 cells fuller than the body either side, an oval along the coil. Inside the
@@ -14946,6 +14947,30 @@ already has but does not keep:
    stage, so the bar refills at every break and the four stages share one
    bar; drawn instead as the wound, it grows with damage and the heal eats it.
    Either way it replaces "still no bar" in "The serpent, redrawn".
+
+### The serpent's bar (built 2026-09-26)
+
+*The owner's call, 2026-09-26: B of four mocked,
+`docs/mocks/serpent-bar-2026-09-26.html` (still in `docs/mocks/serpent-bar/`).*
+The cracks say how deep the wound is only to someone who has learned to read
+them, and the four defenses are nowhere on screen. The bar is **the defense
+up**, not the wound: full at a closed wound, empty at the break, so it drains
+under blows, refills at the heal, and starts full again at every break. Four
+pips after it are the four defenses -- black for broken, white for the one up,
+grey for those to come. Answering the old mock's question 2: the defense.
+
+- *Where:* screen pixels, top-center of the glass, after the counter and
+  pinned like it, only while the camera is in the deep and the serpent has a
+  defense up. The toast shares that strip and is over it while it is up; the
+  toast is the louder news and gone in seconds.
+- *The two memories:* what a blow just took lingers grey (`BAR_TRAIL_HOLD_S`,
+  then drains at `BAR_TRAIL_RATE`), and what the heal has grown back since the
+  last blow is the heal's purple. Both are kept by the renderer
+  (render/serpentbar.js), not the sim: they are the picture's, nothing saves
+  them. Under a steady fight the purple is a sliver, which is the honest
+  reading: the heal is small against a stage's depth until you stop.
+- *Stages are not to scale:* each stage is its own full bar, since the depths
+  run 60 to 30,000 and a bar drawn to scale would hide the first three.
 
 ## One crew, two homes: pods in the deep (built 2026-09-23)
 

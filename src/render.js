@@ -52,6 +52,7 @@ import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
 import { drawFightNumbers } from './render/fightnums.js';
+import { drawSerpentBar, barShown } from './render/serpentbar.js';
 import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
 import { drawSinking, drawLifting } from './render/scales.js';
 import { S } from './state.js';
@@ -256,6 +257,7 @@ const LAYERS = [
   { name: 'pot labels', draw: drawPotLabels },        // the brew each pot is set to, as a color block under it
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
+  { name: 'serpent bar', draw: drawSerpentBar, when: barShown },  // and in the deep, what the defense up has left
 
   { name: 'flash', draw: drawFlash },            // a strike's instant: the whole finished frame, inverted
 
@@ -268,7 +270,7 @@ export { LAYERS };
 // and not read: the layers a player reads off the picture are left out of it.
 const READING = new Set(['offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
-                         'stock count', 'pot labels', 'counter', 'fight numbers']);
+                         'stock count', 'pot labels', 'counter', 'fight numbers', 'serpent bar']);
 let picture = false;
 export const asPicture = on => { picture = on; };
 
@@ -297,7 +299,8 @@ const inHalf = (layer, i, deep) =>
 // deep and the other way about -- "off the glass in the other half" does not
 // hold on a window taller than the deep.
 // The body in your hand goes where the pointer goes, so it is the pointer's.
-const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'held', 'cursor', 'counter', 'flash', 'press']);
+const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'held', 'cursor', 'counter', 'serpent bar',
+                        'flash', 'press']);
 const halfLine = () => (S.worldH + deepTop()) / 2;
 
 // One half, every layer that belongs to it, with whatever camera is standing.
