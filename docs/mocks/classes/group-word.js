@@ -97,24 +97,26 @@ registerStatus('inspired', { name: 'Inspired', on: 'fighter',
   fighter(g, t, cx, cy, lv) {
     const bob = Math.floor(t * 2.5) % 2;
     chevron(g, cx, cy - 5 - bob, PURPLES[11]);
-    if (lv >= 0.75) chevron(g, cx, cy - 7 - bob, PURPLES[9]);
+    if (lv >= 0.75) chevron(g, cx, cy - 8 - bob, PURPLES[9]);
     // a cell at each shoulder, so it reads as the whole fighter lifted
     cell(g, cx - 1, cy, PURPLES[8]); cell(g, cx + 3, cy, PURPLES[8]);
   } });
 
 // Hasted: attacks more often, drawn as speed lines streaming off the back of
 // the body and a cell kicked up at the heel -- sideways and white, where
-// Inspired is upward and purple, so the two never read as each other.
+// Inspired is upward and purple, so the two never read as each other. The
+// back is the right: a fighter faces the coil's middle, and the song comes in
+// from the left.
 registerStatus('hasted', { name: 'Hasted', on: 'fighter',
   fighter(g, t, cx, cy, lv) {
     for (let r = 0; r < 3; r++) {
       const a = (t * 3 + r * 0.37) % 1;
-      const x = cx - 2 - Math.floor(a * 5);
+      const x = cx + 4 + Math.floor(a * 5);
       const tone = GREYS[[11, 10, 8, 6, 5][Math.floor(a * 5)]];
-      cell(g, x, cy + r, tone); cell(g, x - 1, cy + r, r === 1 ? tone : GREYS[5]);
+      cell(g, x, cy + r, tone); cell(g, x + 1, cy + r, tone); cell(g, x + 2, cy + r, GREYS[5]);
     }
     const k = Math.floor(t * 8) % 4;
-    if (k < 2) cell(g, cx - 1 - k, cy + 2 - k, GREYS[8]);
+    if (k < 2) cell(g, cx + 3 + k, cy + 2 - k, GREYS[8]);
   } });
 
 // --- shared motion -------------------------------------------------------------------
@@ -305,14 +307,16 @@ registerClass({
 const SONG_AT = 0.2;           // she starts to sing
 function lute(g, me, t, rate = 4) {
   rect(g, me.x - 2, me.y + 1, 2, 2, GREYS[7]);
-  cell(g, me.x - 3, me.y, GREYS[6]); cell(g, me.x - 4, me.y - 1, GREYS[8]);
+  // held low and level, so its neck stays clear of the plume
+  cell(g, me.x - 3, me.y + 1, GREYS[6]); cell(g, me.x - 4, me.y + 1, GREYS[8]);
   if (Math.floor(t * rate) % 2) cell(g, me.x - 1, me.y + 2, WHITE);
 }
 // Little ripples off her head: a quarter ring opening up and toward where
 // the song goes, one every `every` seconds.
 function voice(g, me, t, every = 0.5, dir = 1, tone = PURPLES[10]) {
-  const a = (t % every) / every, r = 1 + Math.floor(a * 3);
-  const hx = me.x + 1, hy = me.y - 3;
+  // centered on her brow and starting three cells out, clear of the plume
+  const a = (t % every) / every, r = 3 + Math.floor(a * 3);
+  const hx = me.x + 2, hy = me.y - 1;
   for (let k = 0; k <= r * 2; k++) {
     const ang = -Math.PI / 2 + (dir > 0 ? 1 : -1) * (k / (r * 2)) * Math.PI / 2;
     cell(g, hx + Math.cos(ang) * r, hy + Math.sin(ang) * r, a < 0.7 ? tone : PURPLES[7]);
@@ -358,6 +362,10 @@ const B_BX = b => [b.x - 1, b.y - 1];
 const ME0 = { x: 17, y: 26 }, BUD0 = { x: 43, y: 26 };  // the harness's places, for state()
 const INSPIRE_AT = reachedAt(...B_AX(ME0), ...B_BX(BUD0));
 const HASTE_AT = reachedAt(...B_AX(ME0), ...B_BX(BUD0), 34);
+// The dirge climbs slowly to the coil's underside at DIRGE_TX; the row it
+// ends on sways, so its arrival is timed to the coil's mean underside.
+const DIRGE_TX = 32, DIRGE_SPEED = 9;
+const DIRGE_AT = reachedAt(...B_AX(ME0), DIRGE_TX, 17, DIRGE_SPEED);
 
 registerClass({
   key: 'bard', name: 'Bard', station: 'circle', group: 'word',
@@ -365,10 +373,11 @@ registerClass({
   hat(g, cx, cy, t) {
     rect(g, cx, cy - 1, 3, 1, GREYS[9]);
     cell(g, cx + 1, cy - 2, GREYS[9]);
-    // the plume, back over the right, nodding to the song
+    // the plume, back over the left (her song goes out to the right), nodding
+    // to the beat
     const nod = Math.floor(t * 2) % 2;
-    cell(g, cx + 3, cy - 1 - nod, WHITE);
-    cell(g, cx + 4, cy - 2, nod ? GREYS[10] : WHITE);
+    cell(g, cx - 1, cy - 1 - nod, WHITE);
+    cell(g, cx - 2, cy - 2, nod ? GREYS[10] : WHITE);
   },
   scenes: [
     { name: 'Base', dur: 6,
@@ -402,18 +411,14 @@ registerClass({
       } },
     { name: 'Requiem', dur: 7,
       about: 'Keystone: a dirge -- a slow, low song up to the coil -- and the whole serpent is Weakened (heal cut 15%).',
-      state(t, api) {
-        const at = reachedAt(21, 25, 24, 18, 8);
-        if (t >= at + SPREAD_S) api.status('weakened', 0.5);
-      },
+      state(t, api) { if (t >= DIRGE_AT + SPREAD_S) api.status('weakened', 0.5); },
       draw(g, t, api) {
         const { me, st } = api;
-        lute(g, me, t, 1.5); if (t >= SONG_AT) voice(g, me, t, 1.2, 1, PURPLES[7]);
-        const tx = 24, ty = coilBottom(tx, t, st) + 1;
-        song(g, t, SONG_AT, me.x + 4, me.y - 1, tx, ty,
-          { amp: 1, period: 9, lit: 5, speed: 8, wave: 0.35, tones: [9, 8, 7, 6, 5] });
-        const at = reachedAt(21, 25, 24, 18, 8);
-        spread(g, t, st, at, tx, [(g, t, s, a, b) => paintWeakened(g, t, s, 0.5, a, b)]);
+        lute(g, me, t, 1.5); if (t >= SONG_AT) voice(g, me, t, 1.2, 1, PURPLES[8]);
+        const ty = coilBottom(DIRGE_TX, t, st) + 1;
+        song(g, t, SONG_AT, me.x + 4, me.y - 1, DIRGE_TX, ty,
+          { amp: 1.5, period: 7, lit: 5, speed: DIRGE_SPEED, wave: 0.35, tones: [11, 10, 9, 8, 7] });
+        spread(g, t, st, DIRGE_AT, DIRGE_TX, [(g, t, s, a, b) => paintWeakened(g, t, s, 0.5, a, b)]);
       } },
   ],
 });
