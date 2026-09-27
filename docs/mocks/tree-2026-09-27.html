@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Station Tree Mock</title>
+<!-- A design mock (2026-09-27), drawn from plain shapes, not the game. The
+     owner's ask: "i think we need to rethink how the upgrades are displayed. i
+     wonder if we should have an always full tree shown for the diff branches,
+     effects, and capstones". Three ways to show one station's whole tree, all
+     live on one altar, side by side. One plain script, no imports, so it opens
+     from disk and inside the artifact viewer alike. -->
+<style>
+  :root {
+    --paper: #fff; --ink: #000;
+    --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf; --ink-9: #ececec;
+    --blue: #2f5fd0; --red: #d93a25; --green: #2e9e4b;
+    --deep: #9b5de5;          /* the abyss's purple, NUM_HEAL: the deep's accent only */
+    --deep-bg: #111114;
+    --mono: ui-monospace, "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 12px/1.45 var(--mono); }
+  .page { max-width: 1480px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 14px; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 6px; }
+  .ask { color: var(--ink-4); margin: 0 0 12px; max-width: 80ch; }
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .note { border: 1px solid var(--ink); padding: 8px 10px; }
+  .note h2, .opt > h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 6px; }
+  .note ul { margin: 0; padding-left: 16px; }
+  .note li { margin: 2px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend svg { overflow: visible; }
+
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(368px, 1fr)); gap: 16px; align-items: start; }
+  .opt { border: 2px solid var(--ink); padding: 10px; min-width: 0; }
+  .opt > h2 { display: inline-block; background: var(--ink); color: var(--paper); padding: 3px 10px 4px; letter-spacing: .18em; }
+  .bargain { margin: 6px 0 10px; color: var(--ink-2); }
+  .bargain b { color: var(--ink); }
+
+  /* The station header every option shares: the fighter under the altar's
+     dome, drawn on the deep's own black, and the one line that says where the
+     station stands. */
+  .station { display: flex; gap: 10px; align-items: center; border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 10px; }
+  .station canvas { image-rendering: pixelated; flex: none; display: block; }
+  .station .who { min-width: 0; flex: 1; }
+  .station .title { letter-spacing: .1em; text-transform: uppercase; font-size: 13px; }
+  .station .line { color: var(--ink-4); }
+  .station .free { color: var(--ink-4); font-size: 11px; }
+  .reset { font: inherit; font-size: 11px; background: none; border: 1px dashed var(--ink-5); color: var(--ink-4); padding: 1px 6px; cursor: pointer; }
+  .reset:hover { border-style: solid; color: var(--ink); }
+
+  /* The price tag, as the shelf draws it: one box, the bill and the clock. */
+  .tag { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 2px 8px; border: 1px solid var(--ink); background: var(--paper); padding: 0 6px; line-height: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tag > span { display: inline-flex; align-items: center; gap: 4px; }
+  .tag.free { border-style: dashed; color: var(--ink-4); }
+  i.scale, i.dust, i.shard, i.spark, i.clock { display: inline-block; flex: none; }
+  i.scale { width: 9px; height: 9px; background: currentColor; -webkit-mask: var(--scale-mark) 0 0 / 100% 100% no-repeat; mask: var(--scale-mark) 0 0 / 100% 100% no-repeat; }
+  i.dust { width: 7px; height: 7px; background: currentColor; }
+  i.shard { width: 0; height: 0; border-left: 4.5px solid transparent; border-right: 4.5px solid transparent; border-bottom: 8px solid var(--blue); }
+  i.spark { width: 11px; height: 11px; background: linear-gradient(var(--red), var(--red)) center/3px 11px no-repeat, linear-gradient(var(--red), var(--red)) center/11px 3px no-repeat; }
+  i.clock { position: relative; width: 9px; height: 9px; border: 1px solid currentColor; border-radius: 50%; box-sizing: content-box; }
+  i.clock::before, i.clock::after { content: ''; position: absolute; background: currentColor; }
+  i.clock::after { left: 4px; top: 1px; width: 1px; height: 4px; }
+  i.clock::before { left: 2px; top: 4px; width: 3px; height: 1px; }
+
+  .buy { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .buybtn { font: inherit; text-transform: uppercase; letter-spacing: .08em; background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 4px 10px; cursor: pointer; display: inline-flex; gap: 10px; align-items: center; }
+  .buybtn:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+  .buybtn:hover:not(:disabled) .tag { background: var(--ink); color: var(--paper); border-color: var(--paper); }
+  .buybtn:disabled { border-style: dashed; color: var(--ink-5); cursor: default; }
+
+  svg text { font-family: var(--mono); }
+  .hit { cursor: pointer; }
+  .hit:focus { outline: none; }
+
+  /* Option 1's tip: the game's hover card, a white box on a black edge. */
+  .tip { position: fixed; z-index: 10; max-width: 260px; background: var(--paper); border: 1px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); padding: 6px 8px; pointer-events: none; font-size: 11px; line-height: 1.4; }
+  .tip[hidden] { display: none; }
+  .tip b { display: block; text-transform: uppercase; letter-spacing: .08em; }
+  .tip .st { color: var(--ink-4); margin-top: 4px; display: block; }
+
+  /* Option 2: the rails and their panel. */
+  .rails { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; }
+  .railset { min-width: 0; }
+  .cls { display: flex; align-items: baseline; gap: 8px; margin: 6px 0 2px; }
+  .plate { font: inherit; font-weight: bold; letter-spacing: .18em; text-transform: uppercase; padding: 3px 10px 4px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+  .plate.on { background: var(--ink); color: var(--paper); }
+  .plate:hover:not(.on) { border-width: 1px; box-shadow: inset 0 0 0 1px var(--ink); }
+  .cls .base { color: var(--ink-4); font-size: 11px; min-width: 0; }
+  .rail { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; }
+  .rail .bname { font: inherit; text-align: left; letter-spacing: .06em; text-transform: uppercase; background: none; border: 0; border-left: 3px solid transparent; padding: 2px 4px; color: var(--ink-4); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rail .bname.on { color: var(--ink); border-left-color: var(--ink); font-weight: bold; }
+  .rail .bname:hover { color: var(--ink); }
+  .rail svg { width: 100%; height: auto; display: block; }
+  .panel { border: 1px solid var(--ink); padding: 8px; font-size: 11px; line-height: 1.45; align-self: start; min-height: 190px; }
+  .panel .ph { text-transform: uppercase; letter-spacing: .08em; font-weight: bold; }
+  .panel .pk { color: var(--ink-4); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; margin-bottom: 4px; }
+  .panel .pd { margin: 6px 0; }
+  .panel .pst { color: var(--ink-4); margin-bottom: 6px; }
+
+  /* Option 3: the board, as the shelf draws it. */
+  .sheet { border: 2px solid var(--ink); padding: 10px 12px 12px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E"); }
+  .sheet .shtitle { letter-spacing: .1em; text-transform: uppercase; border-bottom: 2px solid var(--ink); padding-bottom: 6px; margin-bottom: 8px; font-size: 13px; }
+  .strip { background: var(--paper); border: 1px solid var(--ink); padding: 6px 6px 4px; }
+  .strip svg { width: 100%; height: auto; display: block; }
+  .caption { min-height: 30px; font-size: 11px; line-height: 1.35; color: var(--ink-4); padding: 4px 2px 0; }
+  .caption b { color: var(--ink); text-transform: uppercase; letter-spacing: .06em; }
+  .sect { display: inline-block; background: var(--ink); color: var(--paper); font-weight: bold; letter-spacing: .18em; text-transform: uppercase; padding: 3px 10px 4px; margin: 12px 0 6px; position: relative; }
+  .plank { display: grid; grid-template-columns: repeat(auto-fill, 116px); gap: 0; border-bottom: 5px solid var(--ink); }
+  .tile { position: relative; display: grid; grid-template-rows: 26px auto auto auto; row-gap: 5px; justify-items: center; align-items: center; width: 116px; padding: 8px 16px 8px; margin: 0 0 6px; border: 1px solid transparent; background: none; font: inherit; color: inherit; text-align: center; cursor: pointer; }
+  .tile:hover:not(:disabled) { border-color: var(--ink); background: var(--paper); }
+  .tile:disabled { cursor: default; }
+  .tile .pic { image-rendering: pixelated; display: block; }
+  .tile .what { font-size: .85em; line-height: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  .tile .gain { font-size: 11px; line-height: 13px; color: var(--ink-4); max-width: calc(100% + 26px); margin-inline: -13px; }
+  .tile.on { background: var(--ink); color: var(--paper); }
+  .tile.on .gain { color: var(--ink-8); }
+  .tile.on:hover { background: var(--ink); }
+  .tile:disabled .what, .tile:disabled .gain { color: var(--ink-5); }
+  .tile:disabled .tag { border-style: dashed; color: var(--ink-5); }
+  .tile .ladder { position: absolute; right: 4px; top: 12px; display: flex; flex-direction: column-reverse; gap: 4px; opacity: .78; }
+  .tile .ladder b { display: flex; flex-direction: column-reverse; gap: 2px; }
+  .tile .ladder i { display: block; width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; }
+  .tile .ladder i.on { background: currentColor; }
+  .tile .ladder b:nth-child(2) { color: var(--blue); }
+  .tile .ladder b:nth-child(3) { color: var(--red); }
+  .tile .picks { display: flex; gap: 4px; }
+  .tile .picks button { font: inherit; font-size: 11px; width: 26px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; padding: 0; line-height: 16px; }
+  .tile .picks button.on { background: var(--ink); color: var(--paper); }
+
+  @media (max-width: 480px) {
+    .page { padding: 16px; }
+    .opt { padding: 8px; }
+    .rails { grid-template-columns: minmax(0, 1fr); }
+    .panel { min-height: 0; }
+    .rail { grid-template-columns: 88px minmax(0, 1fr); }
+    .plank { grid-template-columns: repeat(auto-fill, 108px); }
+    .tile { width: 108px; padding-inline: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>A station's whole tree, three ways</h1>
+  <p class="ask">The owner, 2026-09-27: <i>"i think we need to rethink how the upgrades are displayed. i wonder if we should have an always full tree shown for the diff branches, effects, and capstones"</i>. One altar, the same in all three: the sqwife promoted to <b>Brawler</b>, on <b>Pummel</b>, the station bought to <b>rung 5 of 8</b>, the capstone not reached. Every one is live: class, branch and capstone are free clicks, the buy button lights the next pip, and every node says what it does on hover or tap.</p>
+
+  <div class="notes">
+    <div class="note">
+      <h2>What this mock cannot show</h2>
+      <ul>
+        <li>It is drawn from plain shapes, not the game: no <code>board.js</code>, no real <code>tierRows</code>, no shelf builder, no dev-panel knobs.</li>
+        <li>The numbers on rungs 1-3 and 5-7 are placeholders; only the keystones and capstones are <code>serpent-classes.md</code>'s words. The bills are a made-up deep ladder in the right band shape.</li>
+        <li>No purse: every rung is affordable, so the dashed "short of a coin" tag never shows.</li>
+        <li>The fighter is a stand-in drawing, still; nobody swims, nothing is built, the altar has no dome.</li>
+        <li>One station. A deep with five kinds, some built twice, four fighters, is not drawn: how the player gets between trees is not answered here.</li>
+        <li>The board's real width, the sheet's gutters, and how it sits over the deep's dark floor.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h2>The marks, in all three</h2>
+      <div class="legend" id="legend"></div>
+      <p style="margin:8px 0 0;color:var(--ink-4)">The pip's color is its band, as on every ladder: rungs 1-4 the ink of the scale, 5-6 the quarry's blue, 7-8 the spark's red. The station's depth is one number: switching branch or class keeps it, and lights the same depth on the new path.</p>
+    </div>
+  </div>
+
+  <div class="opts">
+    <section class="opt" id="o1">
+      <h2>1 · Columns</h2>
+      <p class="bargain"><b>Bargain:</b> the whole tree as one picture, the fork and every path readable at a glance, and the effects only in a tip; it costs the most room and a second vocabulary beside the boards' cards, and at 400 px its six columns are 58 px each with 8 px type, readable but the tightest of the three.</p>
+      <div class="body"></div>
+    </section>
+    <section class="opt" id="o2">
+      <h2>2 · Rails</h2>
+      <p class="bargain"><b>Bargain:</b> six rows of pips that read left to right like the ladders do, and the effects always written out in the panel, not a hover; it costs the fork's picture (the classes are two headings, not a split), and on a phone the panel drops under the rails, so the effect is a glance down rather than beside.</p>
+      <div class="body"></div>
+    </section>
+    <section class="opt" id="o3">
+      <h2>3 · Tree on the board</h2>
+      <p class="bargain"><b>Bargain:</b> the board stays the board, its cards unchanged, and a thin tree strip on top shows every path; the smallest change and the cheapest to build, but the strip's pips are tiny and its effects are a one-line caption, and at 400 px the cards fall three to a plank under a strip that still fits.</p>
+      <div class="body"></div>
+    </section>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function () {
+'use strict';
+
+// --- the words: the altar's two classes, from docs/serpent-classes.md ------------------
+// The keystones (rung 4) and capstones (rung 8) are the document's; the other
+// six rungs of each branch are placeholders in the branch's own direction --
+// before the keystone the base attack, after it the keystone's number.
+var CLASSES = [
+  { id: 'brawler', name: 'Brawler', base: 'a heavy punch every 1.2 s; blows; the party’s stun-maker',
+    branches: [
+      { name: 'Pummel', what: 'the stun',
+        pre: ['punch 1 → 2 dmg', 'punch 2 → 3 dmg', 'punch 3 → 5 dmg'],
+        K: 'every fourth punch is a haymaker ×4 that breaks the ward',
+        post: ['haymaker ×4 → ×4.5', 'haymaker ×4.5 → ×5', 'haymaker ×5 → ×6'],
+        A: 'stuns you start last +50%', B: 'a haymaker on a Stunned serpent does ×2 and ends the stun' },
+      { name: 'Rage', what: 'worse as it goes',
+        pre: ['a punch every 1.2 → 1.1 s', 'a punch every 1.1 → 1.0 s', 'a punch every 1.0 → 0.9 s'],
+        K: 'each punch in a row adds +5% damage, up to +60%; a stun resets it',
+        post: ['full rage +60% → +70%', 'full rage +70% → +80%', 'full rage +80% → +90%'],
+        A: 'at full rage, punches Expose', B: 'at full rage, the party is Inspired' },
+      { name: 'Bruiser', what: 'open it up',
+        pre: ['punch 1 → 2 dmg', 'punch 2 → 3 dmg', 'punch 3 → 5 dmg'],
+        K: 'every punch Exposes its length',
+        post: ['Exposed lasts 3 → 4 s', 'Exposed lasts 4 → 5 s', 'Exposed lasts 5 → 6 s'],
+        A: 'Exposed spreads to the lengths either side', B: 'an Exposed length cannot be warded, for everyone' }
+    ] },
+  { id: 'swordsman', name: 'Swordsman', base: 'a cut every 1 s that leaves a short Bleed; blows that bleed',
+    branches: [
+      { name: 'Swordmaster', what: 'crits',
+        pre: ['cut 1 → 2 dmg', 'cut 2 → 3 dmg', 'cut 3 → 5 dmg'],
+        K: '+25% crit; a crit’s bleed is doubled',
+        post: ['crit 25% → 30%', 'crit 30% → 35%', 'crit 35% → 40%'],
+        A: 'crits on a Stunned serpent always land', B: 'each crit makes her Keen, stacking, until she misses a crit' },
+      { name: 'Whirlwind', what: 'the wide cut',
+        pre: ['a cut every 1.0 → 0.9 s', 'a cut every 0.9 → 0.8 s', 'a cut every 0.8 → 0.7 s'],
+        K: 'each cut hits the lengths either side; the answer to splitting',
+        post: ['side cuts 50% → 60%', 'side cuts 60% → 70%', 'side cuts 70% → 80%'],
+        A: 'every third cut hits every length', B: 'cuts spread Bleeding already on a length to its neighbors' },
+      { name: 'Iaido', what: 'the drawn blade',
+        pre: ['bleed 2 → 3 s', 'bleed 3 → 4 s', 'bleed 4 → 5 s'],
+        K: 'she stops cutting to draw for 4 s, then one blow of everything the 4 s would have done, ×1.5',
+        post: ['the draw ×1.5 → ×1.7', 'the draw ×1.7 → ×1.9', 'the draw ×1.9 → ×2.1'],
+        A: 'the draw stuns at half the share', B: 'the draw Inspires the party for 6 s' }
+    ] }
+];
+var LADDER = 8, KEY = 4;
+
+// A made-up deep bill in the decided band shape: scales throughout, dust from
+// the second band, ore from the third, a spark on the last two rungs.
+var BILL = {
+  scale: [30, 60, 120, 240, 500, 1000, 2000, 4000],
+  dust:  [0, 0, 10, 20, 40, 80, 160, 320],
+  shard: [0, 0, 0, 0, 5, 10, 20, 40],
+  spark: [0, 0, 0, 0, 0, 0, 1, 2],
+  time:  [5, 5, 8, 8, 12, 12, 20, 20]
+};
+function short(n) { return n >= 1000 ? (n / 1000) + 'k' : String(n); }
+function tagHTML(r, cls) {
+  var i = r - 1, s = '<span class="tag' + (cls ? ' ' + cls : '') + '">';
+  s += '<span><i class="scale"></i>' + short(BILL.scale[i]) + '</span>';
+  if (BILL.dust[i]) s += '<span><i class="dust"></i>' + short(BILL.dust[i]) + '</span>';
+  if (BILL.shard[i]) s += '<span><i class="shard"></i>' + BILL.shard[i] + '</span>';
+  if (BILL.spark[i]) s += '<span><i class="spark"></i>' + BILL.spark[i] + '</span>';
+  s += '<span><i class="clock"></i>' + BILL.time[i] + '</span></span>';
+  return s;
+}
+
+// The scale mark, from SCALE_MARK in config/deepboard.js, as a mask.
+var SCALE_MARK = ['#########', '#.#####.#', '#..###..#', '#.......#', '#.......#', '#.......#', ' #.....# ', '  #...#  ', '   ###   '];
+(function () {
+  var r = '';
+  SCALE_MARK.forEach(function (row, y) { for (var x = 0; x < row.length; x++) if (row[x] === '#') r += "<rect x='" + x + "' y='" + y + "' width='1' height='1'/>"; });
+  var svg = "<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9' shape-rendering='crispEdges'>" + r + '</svg>';
+  document.documentElement.style.setProperty('--scale-mark', 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")');
+})();
+
+// --- what a node is --------------------------------------------------------------------
+function band(r) { return r <= 4 ? 'var(--ink)' : r <= 6 ? 'var(--blue)' : 'var(--red)'; }
+function rungText(b, r, cap) {
+  if (r === KEY) return b.K;
+  if (r === LADDER) return cap === 'B' ? b.B : b.A;
+  return r < KEY ? b.pre[r - 1] : b.post[r - KEY - 1];
+}
+function rungKind(r) { return r === KEY ? 'keystone' : r === LADDER ? 'capstone' : 'rung'; }
+// Where a node stands against the station: bought on the chosen path, the next
+// one to buy, bought-depth on another path (lit the moment you respec to it),
+// or past the depth.
+function nodeState(st, c, b, r, cap) {
+  var on = c === st.cls && b === st.br;
+  var bought = r <= st.depth;
+  if (r === LADDER && cap) {
+    var picked = on && st.cap === cap;
+    if (picked && bought) return 'lit';
+    if (picked) return 'next-pick';
+    if (on) return bought ? 'lit-other' : 'open-on';
+    return bought ? 'reach' : 'open';
+  }
+  if (on && bought) return 'lit';
+  if (on && r === st.depth + 1) return 'next';
+  if (on) return 'open-on';
+  return bought ? 'reach' : 'open';
+}
+var STATE_WORDS = {
+  'lit': 'bought, on this path',
+  'next': 'the next rung to buy',
+  'next-pick': 'the capstone picked; lit when rung 8 is bought',
+  'open-on': 'on this path, past the station’s depth',
+  'lit-other': 'the other capstone: a free click swaps it in',
+  'reach': 'reachable now: a free respec lights it at this depth',
+  'open': 'past the station’s depth'
+};
+
+// One node drawn in SVG, in the state it is in: a pip (circle), a keystone
+// (diamond) or a capstone (square). Ink for the chosen path, pale for the rest.
+function nodeSVG(x, y, r, state, size) {
+  var col = band(r), k = rungKind(r), s = size || 1;
+  var chosen = state === 'lit' || state === 'next' || state === 'next-pick' || state === 'open-on' || state === 'lit-other';
+  var op = chosen ? 1 : state === 'reach' ? 0.75 : 0.35;
+  var fill = state === 'lit' ? col : 'var(--paper)';
+  var sw = state === 'next' || state === 'next-pick' ? 2 : 1;
+  var shape;
+  if (k === 'keystone') { var d = 7 * s; shape = '<path d="M' + x + ' ' + (y - d) + 'L' + (x + d) + ' ' + y + 'L' + x + ' ' + (y + d) + 'L' + (x - d) + ' ' + y + 'Z"'; }
+  else if (k === 'capstone') { var h = 5.5 * s; shape = '<rect x="' + (x - h) + '" y="' + (y - h) + '" width="' + (2 * h) + '" height="' + (2 * h) + '"'; }
+  else shape = '<circle cx="' + x + '" cy="' + y + '" r="' + (4.5 * s) + '"';
+  var out = shape + ' fill="' + fill + '" stroke="' + col + '" stroke-width="' + sw + '" opacity="' + op + '"/>';
+  // Reachable: a dot in the middle, the depth held on a path not taken.
+  if (state === 'reach' || state === 'lit-other') out += '<circle cx="' + x + '" cy="' + y + '" r="' + (1.6 * s) + '" fill="' + col + '" opacity="' + op + '"/>';
+  if (state === 'next' || state === 'next-pick') out += '<circle cx="' + x + '" cy="' + y + '" r="' + (9 * s) + '" fill="none" stroke="var(--ink)" stroke-dasharray="2 2" stroke-width="1"/>';
+  return out;
+}
+// A generous invisible target, so a thumb can take a pip.
+function hitSVG(x, y, rad, data) {
+  return '<circle class="hit" cx="' + x + '" cy="' + y + '" r="' + rad + '" fill="transparent" ' + data + '/>';
+}
+function dataAttr(c, b, r, cap) { return 'data-c="' + c + '" data-b="' + b + '" data-r="' + r + '"' + (cap ? ' data-cap="' + cap + '"' : ''); }
+
+// --- the station, shared ----------------------------------------------------------------
+function fresh() { return { cls: 0, br: 0, depth: 5, cap: null }; }
+
+// The fighter, a still stand-in: white on the deep's black, the altar's
+// purple under her. '#' white, 'g' grey, 'p' the deep's purple.
+var SPRITES = {
+  brawler: [
+    '...........',
+    '....###....',
+    '...#####...',
+    '...#####...',
+    '....###....',
+    '..#######..',
+    '.#########.',
+    'gg.#####.gg',
+    'gg.#####.gg',
+    '...#####...',
+    '...##.##...',
+    '...##.##...',
+    '..###.###..',
+    '...........',
+    '..ppppppp..',
+    '.ggggggggg.'
+  ],
+  swordsman: [
+    '.........#.',
+    '....###.#..',
+    '...######..',
+    '...####....',
+    '....###....',
+    '...#####...',
+    '..#.###.#..',
+    '..#.###.g..',
+    '....###....',
+    '...#####...',
+    '...##.##...',
+    '...#...#...',
+    '..##...##..',
+    '...........',
+    '..ppppppp..',
+    '.ggggggggg.'
+  ]
+};
+function drawSprite(cv, rows, px, ink) {
+  var g = cv.getContext('2d');
+  g.clearRect(0, 0, cv.width, cv.height);
+  var cols = { '#': ink || '#fff', 'g': '#8b8b96', 'p': '#9b5de5' };
+  rows.forEach(function (row, y) { for (var x = 0; x < row.length; x++) if (cols[row[x]]) { g.fillStyle = cols[row[x]]; g.fillRect(x * px, y * px, px, px); } });
+}
+function stationHTML(st) {
+  var c = CLASSES[st.cls], b = c.branches[st.br];
+  var cap = st.cap ? ' · capstone ' + st.cap : ' · capstone not picked';
+  return '<div class="station"><canvas width="52" height="72" style="background:var(--deep-bg);padding:4px;width:60px;height:80px"></canvas>' +
+    '<div class="who"><div class="title">The altar</div>' +
+    '<div class="line">the sqwife · <b style="color:var(--ink)">' + c.name + '</b> · ' + b.name + ' · rung ' + st.depth + ' of ' + LADDER + cap + '</div>' +
+    '<div class="free">class, branch and capstone: free to change · <button class="reset" data-act="reset">reset to rung 5</button></div></div></div>';
+}
+function mountStation(root, st) {
+  var cv = root.querySelector('.station canvas');
+  drawSprite(cv, SPRITES[CLASSES[st.cls].id], 4);
+}
+// The buy line under a tree: the next rung on the chosen path and its bill.
+function buyHTML(st) {
+  var b = CLASSES[st.cls].branches[st.br];
+  if (st.depth >= LADDER) return '<div class="buy"><button class="buybtn" disabled>climbed · 8 of 8</button></div>';
+  var r = st.depth + 1;
+  var needPick = r === LADDER && !st.cap;
+  var label = needPick ? 'pick a capstone first' : 'buy ' + b.name + ' ' + r;
+  return '<div class="buy"><button class="buybtn" data-act="buy"' + (needPick ? ' disabled' : '') + '>' + label + ' ' + tagHTML(r) + '</button>' +
+    '<span style="color:var(--ink-4);font-size:11px">' + (needPick ? '' : rungText(b, r, st.cap)) + '</span></div>';
+}
+function describe(st, c, b, r, cap) {
+  var cl = CLASSES[c], br = cl.branches[b];
+  var k = rungKind(r);
+  var head = cl.name + ' · ' + br.name + ' · ' + (k === 'capstone' ? 'capstone ' + cap : k === 'keystone' ? 'keystone, rung 4' : 'rung ' + r);
+  return { head: head, text: rungText(br, r, cap), state: STATE_WORDS[nodeState(st, c, b, r, cap)], r: r };
+}
+// What a click does, the same in all three: a class or a branch is a free
+// respec, a capstone a free pick (and its branch with it), a rung only says
+// what it does.
+function act(st, el) {
+  var a = el.getAttribute('data-act');
+  if (a === 'reset') { var f = fresh(); for (var k in f) st[k] = f[k]; return true; }
+  if (a === 'buy') {
+    if (st.depth < LADDER && !(st.depth + 1 === LADDER && !st.cap)) { st.depth++; return true; }
+    return false;
+  }
+  if (a === 'class') { var nc = +el.getAttribute('data-c'); if (nc !== st.cls) { st.cls = nc; } return true; }
+  if (a === 'branch') { st.cls = +el.getAttribute('data-c'); st.br = +el.getAttribute('data-b'); return true; }
+  if (el.hasAttribute('data-cap')) {
+    st.cls = +el.getAttribute('data-c'); st.br = +el.getAttribute('data-b'); st.cap = el.getAttribute('data-cap'); return true;
+  }
+  return false;
+}
+
+// --- the tip (option 1) -----------------------------------------------------------------
+var tip = document.getElementById('tip');
+function showTip(d, x, y) {
+  tip.innerHTML = '<b>' + d.head + '</b>' + d.text + '<span class="st">' + d.state + '</span>';
+  tip.hidden = false;
+  var w = tip.offsetWidth, h = tip.offsetHeight;
+  var left = Math.min(x + 12, window.innerWidth - w - 8), top = y + 14;
+  if (top + h > window.innerHeight - 8) top = y - h - 10;
+  tip.style.left = Math.max(8, left) + 'px'; tip.style.top = Math.max(8, top) + 'px';
+}
+function hideTip() { tip.hidden = true; }
+
+// --- option 1: columns --------------------------------------------------------------------
+// Six columns under a two-way fork, eight rungs down each, the keystone a
+// diamond and the capstone a split at the foot.
+function renderColumns(root, st) {
+  var W = 420, pitch = 70, top = 96, step = 25;
+  var colX = function (c, b) { return pitch / 2 + pitch * (c * 3 + b); };
+  var s = '<svg viewBox="0 0 ' + W + ' 300" xmlns="http://www.w3.org/2000/svg">';
+  // The fork: the altar at the head, the two classes under it.
+  var rootX = W / 2;
+  s += '<rect x="' + (rootX - 34) + '" y="2" width="68" height="16" fill="var(--paper)" stroke="var(--ink)"/>';
+  s += '<text x="' + rootX + '" y="14" text-anchor="middle" font-size="10" letter-spacing="1.5">ALTAR</text>';
+  CLASSES.forEach(function (cl, c) {
+    var cx = colX(c, 1), on = c === st.cls;
+    s += '<path d="M' + rootX + ' 18 V26 H' + cx + ' V34" fill="none" stroke="' + (on ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (on ? 2 : 1) + '"/>';
+    s += '<g class="hit" data-act="class" data-c="' + c + '">';
+    s += '<rect x="' + (cx - 48) + '" y="34" width="96" height="18" fill="' + (on ? 'var(--ink)' : 'var(--paper)') + '" stroke="var(--ink)"/>';
+    s += '<text x="' + cx + '" y="47" text-anchor="middle" font-size="10.5" font-weight="bold" letter-spacing="2" fill="' + (on ? 'var(--paper)' : 'var(--ink)') + '">' + cl.name.toUpperCase() + '</text></g>';
+    cl.branches.forEach(function (br, b) {
+      var x = colX(c, b), onB = on && b === st.br;
+      s += '<path d="M' + cx + ' 52 V58 H' + x + ' V64" fill="none" stroke="' + (onB ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (onB ? 2 : 1) + '"/>';
+      s += '<g class="hit" data-act="branch" data-c="' + c + '" data-b="' + b + '">';
+      s += '<rect x="' + (x - pitch / 2 + 2) + '" y="64" width="' + (pitch - 4) + '" height="17" fill="' + (onB ? 'var(--ink)' : 'var(--paper)') + '" stroke="' + (onB ? 'var(--ink)' : 'var(--ink-7)') + '"/>';
+      s += '<text x="' + x + '" y="76" text-anchor="middle" font-size="9" letter-spacing=".3"' + (br.name.length > 9 ? ' textLength="' + (pitch - 10) + '" lengthAdjust="spacingAndGlyphs"' : '') + ' fill="' + (onB ? 'var(--paper)' : 'var(--ink-2)') + '">' + br.name.toUpperCase() + '</text></g>';
+      // The rail down the column, bold where it is bought on the chosen path.
+      for (var r = 1; r < LADDER - 1; r++) {
+        var lit = onB && r + 1 <= st.depth;
+        s += '<line x1="' + x + '" y1="' + (top + (r - 1) * step) + '" x2="' + x + '" y2="' + (top + r * step) + '" stroke="' + (lit ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (lit ? 2 : 1) + '"/>';
+      }
+      s += '<line x1="' + x + '" y1="81" x2="' + x + '" y2="' + top + '" stroke="' + (onB ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (onB && st.depth >= 1 ? 2 : 1) + '"/>';
+      var y7 = top + 6 * step, y8 = top + 7 * step + 4;
+      ['A', 'B'].forEach(function (cap, k) {
+        var fx = x + (k ? 13 : -13);
+        var litF = onB && st.cap === cap && st.depth >= LADDER;
+        s += '<path d="M' + x + ' ' + y7 + ' V' + (y7 + 10) + ' H' + fx + ' V' + y8 + '" fill="none" stroke="' + (litF ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (litF ? 2 : 1) + '"/>';
+      });
+      for (r = 1; r < LADDER; r++) {
+        var y = top + (r - 1) * step;
+        s += nodeSVG(x, y, r, nodeState(st, c, b, r), 1);
+        s += hitSVG(x, y, 11, dataAttr(c, b, r));
+        if (r === KEY) s += '<text x="' + (x + 11) + '" y="' + (y + 3) + '" font-size="8" fill="var(--ink-5)">K</text>';
+      }
+      ['A', 'B'].forEach(function (cap, k) {
+        var fx = x + (k ? 13 : -13);
+        s += nodeSVG(fx, y8, LADDER, nodeState(st, c, b, LADDER, cap), 0.9);
+        s += '<text x="' + fx + '" y="' + (y8 + 16) + '" text-anchor="middle" font-size="8.5" fill="' + (on && b === st.br ? 'var(--ink)' : 'var(--ink-5)') + '">' + cap + '</text>';
+        s += hitSVG(fx, y8, 10, dataAttr(c, b, LADDER, cap));
+      });
+    });
+  });
+  // The rung numbers, once, down the gap between the two classes.
+  s += '<line x1="' + (W / 2) + '" y1="64" x2="' + (W / 2) + '" y2="296" stroke="var(--ink)" stroke-dasharray="1 3"/>';
+  s += '</svg>';
+  root.innerHTML = stationHTML(st) + s + buyHTML(st) +
+    '<p style="margin:8px 0 0;color:var(--ink-4);font-size:11px">Hover or tap a node for what it does. Tap a class, a branch or a capstone to take it.</p>';
+  mountStation(root, st);
+}
+
+// --- option 2: rails ----------------------------------------------------------------------
+// One row a branch, the pips left to right as a ladder is read, the keystone
+// and the capstone fork bigger on the rail; the panel beside follows the node
+// under the pointer, and falls back to the last one tapped.
+function railSVG(st, c, b) {
+  var W = 214, H = 36, x0 = 9, gap = 23, y = H / 2;
+  var onB = c === st.cls && b === st.br;
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  var X = function (r) { return x0 + (r - 1) * gap; };
+  for (var r = 1; r < LADDER - 1; r++) {
+    var lit = onB && r + 1 <= st.depth;
+    s += '<line x1="' + X(r) + '" y1="' + y + '" x2="' + X(r + 1) + '" y2="' + y + '" stroke="' + (lit ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (lit ? 2 : 1) + '"/>';
+  }
+  var fx = X(LADDER) + 6;
+  ['A', 'B'].forEach(function (cap, k) {
+    var fy = k ? y + 9 : y - 9;
+    var litF = onB && st.cap === cap && st.depth >= LADDER;
+    s += '<path d="M' + X(LADDER - 1) + ' ' + y + ' H' + (X(LADDER - 1) + 12) + ' V' + fy + ' H' + fx + '" fill="none" stroke="' + (litF ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (litF ? 2 : 1) + '"/>';
+  });
+  for (r = 1; r < LADDER; r++) {
+    s += nodeSVG(X(r), y, r, nodeState(st, c, b, r), r === KEY ? 1.15 : 1);
+    s += hitSVG(X(r), y, 12, dataAttr(c, b, r));
+  }
+  ['A', 'B'].forEach(function (cap, k) {
+    var fy = k ? y + 9 : y - 9;
+    s += nodeSVG(fx, fy, LADDER, nodeState(st, c, b, LADDER, cap), 1);
+    s += '<text x="' + (fx + 10) + '" y="' + (fy + 3) + '" font-size="9" fill="' + (onB ? 'var(--ink)' : 'var(--ink-5)') + '">' + cap + '</text>';
+    s += hitSVG(fx, fy, 9, dataAttr(c, b, LADDER, cap));
+  });
+  return s + '</svg>';
+}
+function panelHTML(st, d) {
+  if (!d) { var c0 = CLASSES[st.cls]; return '<div class="pk">' + c0.name + ', the base</div><div class="pd">' + c0.base + '.</div><div class="pst">Hover or tap a node for what it does; tap a class or a branch name to take it.</div>'; }
+  var tag = d.r > st.depth ? '<div>' + tagHTML(d.r) + '</div>' : '<div class="pst">within the station’s depth: no bill</div>';
+  return '<div class="pk">' + d.head + '</div><div class="pd">' + d.text + '</div><div class="pst">' + d.state + '</div>' + tag;
+}
+function renderRails(root, st) {
+  var h = '<div class="rails"><div class="railset">';
+  CLASSES.forEach(function (cl, c) {
+    h += '<div class="cls"><button class="plate' + (c === st.cls ? ' on' : '') + '" data-act="class" data-c="' + c + '">' + cl.name + '</button></div>';
+    cl.branches.forEach(function (br, b) {
+      var on = c === st.cls && b === st.br;
+      h += '<div class="rail"><button class="bname' + (on ? ' on' : '') + '" data-act="branch" data-c="' + c + '" data-b="' + b + '" title="' + br.what + '">' + br.name + '</button>' + railSVG(st, c, b) + '</div>';
+    });
+  });
+  h += '</div><div class="panel"></div></div>';
+  root.innerHTML = stationHTML(st) + h + buyHTML(st);
+  mountStation(root, st);
+}
+
+// --- option 3: the tree on the board ----------------------------------------------------------
+// The board as it is, a strip of the whole tree across its top: six columns of
+// the shelf's own six-pixel pips, climbing from the foot as a tile's ladder
+// does, the capstone a pair at the head. The cards under it are the chosen
+// path's next rung and the respec.
+function stripSVG(st) {
+  var W = 360, H = 128, foot = 96, gap = 10, colW = 44;
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  CLASSES.forEach(function (cl, c) {
+    var gx = c ? W / 2 + 18 : 18;
+    var on = c === st.cls;
+    cl.branches.forEach(function (br, b) {
+      var x = gx + colW * b + colW / 2 - 8;
+      var onB = on && b === st.br;
+      s += '<line x1="' + x + '" y1="' + foot + '" x2="' + x + '" y2="' + (foot - gap * 6) + '" stroke="' + (onB ? 'var(--ink)' : 'var(--ink-8)') + '"/>';
+      for (var r = 1; r < LADDER; r++) {
+        var y = foot - (r - 1) * gap;
+        s += nodeSVG(x, y, r, nodeState(st, c, b, r), r === KEY ? 0.62 : 0.72);
+        s += hitSVG(x, y, 6, dataAttr(c, b, r));
+      }
+      var yc = foot - 7 * gap - 3;
+      ['A', 'B'].forEach(function (cap, k) {
+        var fx = x + (k ? 6 : -6);
+        s += '<path d="M' + x + ' ' + (foot - 6 * gap) + ' V' + (yc + 4) + ' H' + fx + '" fill="none" stroke="var(--ink-8)"/>';
+        s += nodeSVG(fx, yc, LADDER, nodeState(st, c, b, LADDER, cap), 0.62);
+        s += hitSVG(fx, yc, 6, dataAttr(c, b, LADDER, cap));
+      });
+      s += '<g class="hit" data-act="branch" data-c="' + c + '" data-b="' + b + '"><rect x="' + (x - 20) + '" y="' + (foot + 8) + '" width="40" height="12" fill="' + (onB ? 'var(--ink)' : 'transparent') + '"/>';
+      s += '<text x="' + x + '" y="' + (foot + 17) + '" text-anchor="middle" font-size="8"' + (br.name.length > 6 ? ' textLength="38" lengthAdjust="spacingAndGlyphs"' : '') + ' fill="' + (onB ? 'var(--paper)' : 'var(--ink-4)') + '">' + br.name.toUpperCase() + '</text></g>';
+    });
+    s += '<g class="hit" data-act="class" data-c="' + c + '"><text x="' + (gx + colW * 1.5 - 8) + '" y="' + (foot + 30) + '" text-anchor="middle" font-size="9" letter-spacing="1.5" font-weight="' + (on ? 'bold' : 'normal') + '" fill="' + (on ? 'var(--ink)' : 'var(--ink-5)') + '">' + cl.name.toUpperCase() + '</text></g>';
+  });
+  s += '<line x1="' + (W / 2) + '" y1="6" x2="' + (W / 2) + '" y2="' + (H - 4) + '" stroke="var(--ink)" stroke-dasharray="1 3"/>';
+  return s + '</svg>';
+}
+// The branches' glyphs, eight cells a side: a fist, a flame, a cracked
+// plate, a sword, a swirl, a sheathed blade.
+var GLYPHS = [
+  ['........', '.####...', '#######.', '#######.', '########', '.#######', '..#####.', '..#####.'],
+  ['....#...', '...##...', '..###.#.', '..#####.', '.######.', '.###.##.', '.##..##.', '..####..'],
+  ['########', '#..#...#', '#...#..#', '#..#...#', '#...##.#', '#..#...#', '#...#..#', '########'],
+  ['.......#', '......#.', '.....#..', '....#...', '.#.#....', '..#.....', '.#.#....', '#.......'],
+  ['..####..', '.#....#.', '#..##..#', '#.#..#.#', '#.#.##.#', '#..#...#', '.#....#.', '..####..'],
+  ['.......#', '......##', '.....##.', '....##..', '...##...', '.###....', '.##.....', '#.#.....']
+];
+function glyphCanvas(i) { return '<canvas class="pic" width="24" height="24" data-glyph="' + i + '"></canvas>'; }
+function ladderHTML(st) {
+  var s = '<span class="ladder">', bands = [[1, 4], [5, 6], [7, 8]];
+  bands.forEach(function (bd) {
+    s += '<b>';
+    for (var r = bd[0]; r <= bd[1]; r++) s += '<i' + (r <= st.depth ? ' class="on"' : '') + '></i>';
+    s += '</b>';
+  });
+  return s + '</span>';
+}
+function renderBoard(root, st) {
+  var cl = CLASSES[st.cls], br = cl.branches[st.br];
+  var gi = st.cls * 3 + st.br;
+  var h = '<div class="sheet"><div class="shtitle">The altar · the sqwife, ' + cl.name + '</div>';
+  h += '<div class="strip">' + stripSVG(st) + '</div><div class="caption"></div>';
+  // The chosen path's plank: its next rung, and the capstone pick.
+  h += '<div class="sect">' + br.name + '</div><div class="plank">';
+  if (st.depth < LADDER) {
+    var r = st.depth + 1, need = r === LADDER && !st.cap;
+    h += '<button class="tile" data-act="buy"' + (need ? ' disabled' : '') + '>' + glyphCanvas(gi) + '<span class="what">' + br.name + ' ' + r + '</span><span class="gain">' + (need ? 'pick a capstone' : rungText(br, r, st.cap)) + '</span>' + tagHTML(r) + ladderHTML(st) + '</button>';
+  } else {
+    h += '<button class="tile" disabled>' + glyphCanvas(gi) + '<span class="what">' + br.name + '</span><span class="gain">climbed</span>' + ladderHTML(st) + '</button>';
+  }
+  h += '<div class="tile" style="cursor:default"><canvas class="pic" width="24" height="24" data-glyph="cap"></canvas><span class="what">capstone</span><span class="gain">' + (st.cap ? (st.cap === 'A' ? br.A : br.B) : 'at rung 8: pick one') + '</span>' +
+    '<span class="picks"><button class="' + (st.cap === 'A' ? 'on' : '') + '" data-c="' + st.cls + '" data-b="' + st.br + '" data-r="8" data-cap="A">A</button><button class="' + (st.cap === 'B' ? 'on' : '') + '" data-c="' + st.cls + '" data-b="' + st.br + '" data-r="8" data-cap="B">B</button></span></div>';
+  h += '</div>';
+  // Respec, free: the class and the branch, each a card.
+  h += '<div class="sect">respec · free</div><div class="plank">';
+  CLASSES.forEach(function (c2, c) {
+    var on = c === st.cls;
+    h += '<button class="tile' + (on ? ' on' : '') + '" data-act="class" data-c="' + c + '"><canvas class="pic" width="24" height="24" data-sprite="' + c2.id + '"></canvas><span class="what">' + c2.name + '</span><span class="gain">' + (on ? 'the class' : 'promote') + '</span></button>';
+  });
+  cl.branches.forEach(function (b2, b) {
+    var on = b === st.br;
+    h += '<button class="tile' + (on ? ' on' : '') + '" data-act="branch" data-c="' + st.cls + '" data-b="' + b + '">' + glyphCanvas(st.cls * 3 + b) + '<span class="what">' + b2.name + '</span><span class="gain">' + b2.what + '</span></button>';
+  });
+  h += '</div></div>';
+  root.innerHTML = stationHTML(st) + h;
+  mountStation(root, st);
+  root.querySelectorAll('canvas[data-glyph]').forEach(function (cv) {
+    var tile = cv.closest('.tile'), ink = tile && tile.classList.contains('on') ? '#fff' : '#000';
+    var gk = cv.getAttribute('data-glyph');
+    var rows = gk === 'cap' ? ['########', '#......#', '#.#..#.#', '#..##..#', '#..##..#', '#.#..#.#', '#......#', '########'] : GLYPHS[+gk];
+    drawSprite(cv, rows, 3, ink);
+  });
+  root.querySelectorAll('canvas[data-sprite]').forEach(function (cv) {
+    var on = cv.closest('.tile').classList.contains('on');
+    // The class card's sprite, cropped to the fighter, in the card's ink.
+    drawSprite(cv, SPRITES[cv.getAttribute('data-sprite')].slice(0, 13).map(function (r) { return r.replace(/g/g, '#'); }), 1.8, on ? '#fff' : '#000');
+  });
+}
+
+// --- wiring ---------------------------------------------------------------------------------
+var OPTS = [
+  { id: 'o1', render: renderColumns, focus: 'tip' },
+  { id: 'o2', render: renderRails, focus: 'panel' },
+  { id: 'o3', render: renderBoard, focus: 'caption' }
+];
+OPTS.forEach(function (o) {
+  var root = document.querySelector('#' + o.id + ' .body');
+  var st = fresh();
+  var pinned = null;   // the key of the last node tapped, which the panel falls back to
+  o.st = st; o.root = root;
+  function nodeOf(t) { return t && t.closest ? t.closest('[data-r]') : null; }
+  function keyOf(n) { return { c: +n.getAttribute('data-c'), b: +n.getAttribute('data-b'), r: +n.getAttribute('data-r'), cap: n.getAttribute('data-cap') }; }
+  function dOf(k) { return k ? describe(st, k.c, k.b, k.r, k.cap) : null; }
+  function show(d, ev) {
+    if (o.focus === 'tip') { if (d && ev) showTip(d, ev.clientX, ev.clientY); else hideTip(); return; }
+    d = d || dOf(pinned);
+    if (o.focus === 'panel') root.querySelector('.panel').innerHTML = panelHTML(st, d);
+    else root.querySelector('.caption').innerHTML = d
+      ? '<b>' + d.head + '</b>: ' + d.text + ' <span style="color:var(--ink-5)">(' + d.state + ')</span>'
+      : 'Hover or tap a pip in the tree; tap a branch’s name or a class to take it.';
+  }
+  function draw() { o.render(root, st); show(null, null); }
+  root.addEventListener('mouseover', function (ev) { var n = nodeOf(ev.target); if (n) show(dOf(keyOf(n)), ev); });
+  root.addEventListener('mousemove', function (ev) { if (o.focus === 'tip') { var n = nodeOf(ev.target); if (n) show(dOf(keyOf(n)), ev); } });
+  root.addEventListener('mouseout', function (ev) { var n = nodeOf(ev.target); if (n && !(ev.relatedTarget && n.contains(ev.relatedTarget))) show(null, ev); });
+  root.addEventListener('click', function (ev) {
+    var el = ev.target.closest('[data-act],[data-cap],[data-r]');
+    if (!el || !root.contains(el)) return;
+    var n = nodeOf(el);
+    if (n) pinned = keyOf(n);
+    if (act(st, el)) draw();
+    if (n) show(dOf(pinned), ev);
+  });
+  o.draw = draw;
+  o.pin = function (k) { pinned = k; show(null, null); };
+  draw();
+});
+document.addEventListener('scroll', hideTip, true);
+document.addEventListener('click', function (ev) { if (!ev.target.closest('#o1 [data-r]')) hideTip(); });
+
+// The legend: the same node in each state it can be in.
+(function () {
+  var st = { cls: 0, br: 0, depth: 5, cap: 'A' };
+  var rows = [
+    ['lit', 2, 'bought on the chosen path'],
+    ['next', 6, 'the next rung'],
+    ['reach', 3, 'bought depth on a path not taken: lit by a free respec'],
+    ['open', 6, 'past the depth'],
+    ['lit', 4, 'keystone (rung 4)'],
+    ['next-pick', 8, 'capstone, A or B (rung 8)']
+  ];
+  document.getElementById('legend').innerHTML = rows.map(function (r) {
+    return '<span><svg width="22" height="22" viewBox="-11 -11 22 22">' + nodeSVG(0, 0, r[1], r[0], r[1] === 8 ? 0.8 : 0.85) + '</svg>' + r[2] + '</span>';
+  }).join('');
+})();
+
+window.__tree = OPTS;   // for the shots: __tree[i].st, __tree[i].draw()
+})();
+</script>
+</body>
+</html>
