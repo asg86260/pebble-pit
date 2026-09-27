@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Off The Grid</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  canvas { image-rendering: pixelated; display: block; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; position: sticky; top: 0; background: var(--paper);
+         padding-block: 8px; z-index: 2; border-bottom: 1px solid var(--rule); margin-bottom: 12px; }
+  .grp { display: flex; gap: 4px; align-items: center; }
+  .grp > span { color: var(--dim); font-size: 12px; margin-right: 2px; }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 9px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 10px 14px; align-items: start; }
+  .head { font-size: 12px; max-width: 264px; }
+  .head b { display: block; font-size: 13px; }
+  .head span { color: var(--dim); }
+  .rowname { grid-column: 1 / -1; font-size: 13px; font-weight: bold; margin-top: 10px; border-top: 1px solid var(--rule); padding-top: 8px; }
+  .grid canvas { width: 132px; max-width: 100%; height: auto; }
+  .x2 .grid canvas { width: 264px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Off The Grid</h1>
+  <p>The owner, 2026-09-28: "i wonder if for the animations, we allow the sprites to leave the cell grid. otherwise
+    they are kind of hard to read." Three ways, side by side, playing the same attacks on the same clock: four fast
+    attackers at rung 4, the coil above them.</p>
+  <p class="dim">A mock from plain shapes, not the game. It cannot show: the game's camera and zoom (a scaled canvas
+    changes what a pixel is), its real frame rate, these next to the yard's walking bodies, or the other six classes.
+    At phone width the rows shrink below the game's scale.</p>
+  <div class="bar"><button id="play" type="button">pause</button><span id="clock" class="dim">0.0 s</span>
+    <div class="grp" id="scale"><span>scale</span></div></div>
+  <div id="host"></div>
+</div>
+<script>
+'use strict';
+// ================================================================================
+// The shared ground, copied from docs/mocks/kit-growth-2026-09-27.html.
+// ================================================================================
+const P = 6;
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+               '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                 '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const WHITE = GREYS[11], INK = GREYS[0];
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = k => k * k * (3 - 2 * k);
+
+// --- the three ways -------------------------------------------------------------------
+// MODE 1 on the grid: every position snapped to the 6 px cell.
+// MODE 2 off-grid motion: the same cells, but a thing in motion is placed at
+//   whole pixels; at rest its positions are whole cells, so it sits on the grid.
+// MODE 3 half-cell: the fighters' kits and attacks drawn with 3 px cells, and
+//   moving on the 3 px grid. The world (water, coil, floor) is always drawn in
+//   mode 1, so the half-cell column shows both resolutions together.
+let MODE = 1;
+const pxOf = v => MODE === 1 ? Math.round(v) * P : MODE === 2 ? Math.round(v * P) : Math.round(v * 2) * (P / 2);
+const snap = v => MODE === 1 ? Math.round(v) : MODE === 2 ? v : Math.round(v * 2) / 2;
+// The kit's step along a line: a cell, or half of one.
+const KS = () => MODE === 3 ? 0.5 : 1;
+function cell(g, cx, cy, tone) { if (!tone) return; g.fillStyle = tone; g.fillRect(pxOf(cx), pxOf(cy), P, P); }
+function rect(g, cx, cy, w, h, tone) { g.fillStyle = tone; g.fillRect(pxOf(cx), pxOf(cy), Math.round(w) * P, Math.round(h) * P); }
+// A kit's own dot, placed by its middle: a cell in modes 1 and 2, a 3 px
+// half-cell in mode 3.
+function dot(g, x, y, tone) {
+  if (!tone) return;
+  g.fillStyle = tone;
+  if (MODE === 3) g.fillRect(Math.round(x * 2 - 0.5) * 3, Math.round(y * 2 - 0.5) * 3, 3, 3);
+  else g.fillRect(pxOf(x - 0.5), pxOf(y - 0.5), P, P);
+}
+function ring(g, cx, cy, r, tone, every = 1) {
+  const n = Math.max(8, Math.ceil(Math.PI * 2 * r)), seen = new Set();
+  for (let k = 0; k < n; k += every) {
+    const a = k / n * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r);
+    if (seen.has(x + ',' + y)) continue;
+    seen.add(x + ',' + y); cell(g, x, y, tone);
+  }
+}
+const BODY = 3;
+function drawBody(g, cx, cy) {
+  const x = pxOf(cx), y = pxOf(cy), w = BODY * P;
+  g.fillStyle = GREYS[6]; g.fillRect(x, y, w, w);
+  g.fillStyle = WHITE; g.fillRect(x + 2, y + 2, w - 4, w - 4);
+}
+function drawPlinthAt(g, cx, floor, w = 7) {
+  rect(g, cx - Math.floor(w / 2), floor - 1, w, 1, GREYS[5]);
+  rect(g, cx - Math.floor(w / 2) + 1, floor - 2, w - 2, 1, GREYS[4]);
+}
+
+// --- the world and its coil -------------------------------------------------------------
+const W = 130, H = 36, FLOOR = 31, X0 = 3, X1 = W - 4;
+const REST_Y = FLOOR - 2 - BODY;
+const sway = (cx, t) => 12 + 2.6 * Math.sin(cx * 0.09 + t * 0.6) + 1.1 * Math.sin(cx * 0.23 - t * 0.9);
+const girth = cx => {
+  if (cx < X0 || cx > X1) return 0;
+  const u = (cx - X0) / (X1 - X0);
+  return 1.4 + 1.9 * Math.sin(Math.PI * Math.min(1, u * 1.15)) + (Math.abs(cx - W * 0.55) < 6 ? 0.8 : 0);
+};
+const cY = (cx, t, s = {}) => sway(cx, s.still != null ? s.still : t);
+const cTop = (cx, t, s) => Math.round(cY(cx, t, s) - girth(cx));
+const cBot = (cx, t, s) => Math.round(cY(cx, t, s) + girth(cx));
+const maxBot = (xs, t, s) => Math.max(...xs.map(c => cBot(c, t, s)));
+function drawDeep(g, t) {
+  rect(g, 0, 0, W, H, GREYS[0]);
+  for (let i = 0; i < 44; i++) {
+    const x = (hash(i) * W + t * (0.3 + hash(i + 9) * 0.5)) % W, y = hash(i + 3) * FLOOR + Math.sin(t * 0.4 + i) * 0.8;
+    cell(g, x, y, GREYS[2 + Math.floor(hash(i + 5) * 3)]);
+  }
+  rect(g, 0, FLOOR, W, H - FLOOR, GREYS[2]);
+  for (let c = 0; c < W; c++) for (let r = FLOOR; r < H; r++)
+    if (hash(c * 31 + r * 17) < 0.22) cell(g, c, r, GREYS[3 + Math.floor(hash(c + r * 7) * 2)]);
+}
+function drawCoil(g, t, s) {
+  for (let cx = X0; cx <= X1; cx++) {
+    const top = cTop(cx, t, s), bot = cBot(cx, t, s), mid = Math.round(cY(cx, t, s));
+    for (let cy = top; cy <= bot; cy++) cell(g, cx, cy, cy === bot ? GREYS[8] : cy === mid ? GREYS[10] : WHITE);
+  }
+}
+// The voted C. The scales are an attack's, so they follow the column's way; the
+// bite in the hide is the world's, on the grid.
+function burst(g, t, t0, cx, cy, k = 0.3, id = 0) {
+  const a = t - t0;
+  if (a < 0 || a > 3) return;
+  const n = Math.round(3 + 12 * k * k);
+  for (let i = 0; i < n; i++) {
+    const ang = -Math.PI * (0.15 + 0.7 * hash(id * 97 + i)), sp = (8 + 12 * k) * (0.5 + hash(i + id));
+    const x = cx + Math.cos(ang) * sp * a, y = cy + Math.sin(ang) * sp * a + 8 * a * a;
+    if (y < FLOOR) dot(g, x + 0.5, y + 0.5, GREYS[a < 1 ? 11 : a < 2 ? 9 : 7]);
+  }
+}
+function chip(g, t, t0, cx, cy, k = 0.3, id = 0) {
+  const a = t - t0;
+  if (a < 0 || a > 2.5) return;
+  const m = MODE; MODE = 1;
+  const rad = (0.8 + 2 * k) * (1 - a / 2.5);
+  for (let x = Math.floor(cx - rad); x <= cx + rad; x++)
+    for (let y = Math.floor(cy - rad); y <= cy + rad; y++)
+      if ((x - cx) ** 2 + (y - cy) ** 2 <= rad * rad && hash(x * 31 + y * 7 + id) < 0.8) cell(g, x, y, GREYS[1]);
+  MODE = m;
+}
+function blow(g, t, t0, cx, s, k, id) { chip(g, t, t0, Math.round(cx), Math.round(cY(cx, t, s)), k, id); burst(g, t, t0, cx, cBot(Math.round(cx), t, s), k, id); }
+const HALO = [[-2, 0], [-1, -1], [0, -1], [1, -1], [2, 0], [1, 1], [0, 1], [-1, 1]];
+function paintStunned(g, t, s, hx) {
+  const hy = cTop(hx, t, s) - 3, lead = Math.floor(t * 14) % 8;
+  HALO.forEach(([dx, dy], i) => { const b = (lead - i + 8) % 8; cell(g, hx + dx, hy + dy, b === 0 ? WHITE : b === 1 ? GREYS[9] : b === 2 ? GREYS[7] : GREYS[5]); });
+}
+function paintBleeding(g, t, s) {
+  for (let i = 0; i < 9; i++) {
+    const cx = X0 + 4 + Math.floor(hash(i * 7 + 1) * (X1 - X0 - 8)), bot = cBot(cx, t, s);
+    cell(g, cx, bot, GREYS[5]);
+    const a = (t * 0.8 + hash(i * 3)) % 1;
+    cell(g, cx, bot + 1 + Math.floor(a * 4), GREYS[[9, 8, 6, 4][Math.floor(a * 4)]]);
+  }
+}
+const trip = (a, up, back, len) => a < up ? ease(a / up) : a < back ? 1 : 1 - ease(clamp((a - back) / (len - back), 0, 1));
+
+// ================================================================================
+// The four, at rung 4. Everything a fighter draws goes through `dot`, `drawBody`
+// and `snap`, so the three columns differ only in the mode they are drawn in.
+// ================================================================================
+
+// --- Brawler: the Haymaker ----------------------------------------------------------------
+// Two wrapped fists floating beside him, flying up to the hide and back; every
+// 4th punch a haymaker twice the size that stuns.
+function fist(g, fx, fy, size) {
+  if (MODE === 3) {
+    // at half a cell: the striking face, the wrap wound round, the knuckles' shadow
+    for (let c = 0; c < size * 2; c++) {
+      const x = fx + c / 2 + 0.25;
+      dot(g, x, fy + 0.25, c === 0 ? GREYS[10] : WHITE);
+      dot(g, x, fy + 0.75, c % 2 ? GREYS[10] : WHITE);
+      dot(g, x, fy + 1.25, c % 2 ? WHITE : GREYS[10]);
+      dot(g, x, fy + 1.75, GREYS[8]);
+    }
+    return;
+  }
+  for (let c = 0; c < size; c++) { dot(g, fx + c + 0.5, fy + 0.5, WHITE); dot(g, fx + c + 0.5, fy + 1.5, GREYS[9]); }
+}
+function punchReach(a, L) {
+  const d = a - L;
+  if (d < -0.24 || d > 0.3) return 0;
+  if (d < -0.08) return -1;
+  if (d < 0) return (d + 0.08) / 0.08;
+  return d < 0.1 ? 1 : 1 - (d - 0.1) / 0.2;
+}
+const brawler = {
+  key: 'brawler', name: 'Brawler: the Haymaker', at: 9, len: 3.0,
+  punches: [{ at: 0.6, side: -1, size: 1, k: 0.3 }, { at: 1.0, side: 1, size: 1, k: 0.3 }, { at: 1.4, side: -1, size: 1, k: 0.3 },
+            { at: 1.9, side: 1, size: 2, k: 0.75, hay: true }],
+  state(a, api) { api.stun(1.9, 1.5); },
+  draw(g, t, a, s, x) {
+    const ps = this.punches, on = a < this.len;
+    const hover = maxBot([x - 2, x + 5], t, s) + 5;
+    let y = on ? snap(lerp(REST_Y, hover, trip(a, 0.4, 2.5, this.len))) : REST_Y;
+    if (a > 1.45 && a < 1.78) y += 2;   // the haymaker's wind-up
+    const spot = p => { const fx = p.side < 0 ? x - p.size : x + BODY; return fx + (p.size - 1) / 2; };
+    ps.forEach((p, i) => blow(g, t, t - (a - p.at), spot(p), s, p.k, i + 1));
+    drawBody(g, x, y);
+    for (const side of [-1, 1]) {
+      let reach = 0, size = 1;
+      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at); if (r) { reach = r; size = p.size; } }
+      const fx = side < 0 ? x - size : x + BODY;
+      let fy = reach < 0 ? y + 1 : y;
+      if (reach > 0) fy = snap(y + (maxBot([fx, fx + size - 1], t, s) + 1 - y) * reach);
+      fist(g, fx, fy, size);
+    }
+    const d = a - 1.9;
+    if (d >= 0 && d < 0.5) ring(g, x + 3.5, cBot(x + 4, t, s), 1 + d * 14, d < 0.25 ? WHITE : GREYS[7], 2);
+  },
+};
+
+// --- Swordsman: the Whirlwind spin ----------------------------------------------------------
+// The sword held out from the hand at (px, py), `ang` from straight up: the
+// grip, the guard across, four cells of blade, the point. Swinging, it leaves
+// a trail at the angles it has just passed, a step darker each.
+const BLADE = 4;
+function sword(g, px, py, ang, from, dir = 0) {
+  const st = KS(), at = (i, a2 = ang) => [px + Math.sin(a2) * i, py - Math.cos(a2) * i];
+  const tip = from + BLADE + 2;
+  if (dir) [[0.35, GREYS[7]], [0.7, GREYS[6]], [1.05, GREYS[5]]].forEach(([back, tone], n) => {
+    if (MODE !== 3 && n === 1) return;
+    for (let i = tip - 2; i <= tip; i += st) dot(g, ...at(i, ang - dir * back), tone);
+  });
+  dot(g, ...at(from), GREYS[6]);
+  const [gx, gy] = at(from + 1), cx = Math.cos(ang), cy = Math.sin(ang);
+  for (let d = -1; d <= 1; d += st) dot(g, gx + cx * d, gy + cy * d, GREYS[8]);
+  for (let i = from + 1 + st; i < tip; i += st) dot(g, ...at(i), GREYS[10]);
+  dot(g, ...at(tip), WHITE);
+}
+const swordsman = {
+  key: 'sword', name: 'Swordsman: the Whirlwind', at: 9, len: 3.3, cuts: [0.8, 1.4, 2.0], spin: 0.4,
+  state(a, api) { if (a >= 0.8 && a < this.len + 0.8) api.status('bleeding'); },
+  draw(g, t, a, s, x) {
+    const on = a < this.len, from = 1.5, reach = from + BLADE + 2;
+    const hover = maxBot([x - 4, x + 6], t, s) + reach - 1;
+    const k = on ? trip(a, 0.4, 2.9, this.len) : 0, y = snap(lerp(REST_Y, hover, k));
+    this.cuts.forEach((c, i) => [-6, 0, 6].forEach((dx, n) => blow(g, t, t - (a - c - 0.1), x + 1 + dx, s, 0.35, i * 9 + n)));
+    drawBody(g, x, y);
+    if (k < 0.2) { sword(g, x - 2.5, y + 2.5, 0, 0); return; }
+    const c = this.cuts.find(c => a >= c && a < c + this.spin);
+    const ang = c != null ? lerp(-Math.PI / 2, Math.PI * 1.5, (a - c) / this.spin) : -0.7;
+    sword(g, x + 1.5, y + 1.5, ang, from, c != null ? 1 : 0);
+  },
+};
+
+// --- Assassin: the alternating daggers -------------------------------------------------------
+// A dagger by its guard's middle (gx, gy): the grip under, the guard across,
+// the blade up to its point. She stays on her plinth; a stab is the dagger
+// alone darting up to the hide and back, the two taking turns.
+function dagger(g, gx, gy) {
+  const st = KS();
+  dot(g, gx, gy + 1, GREYS[8]);
+  if (MODE === 3) dot(g, gx, gy + 1.5, GREYS[10]);            // a pommel, at half a cell
+  for (let d = -1; d <= 1; d += st) dot(g, gx + d, gy, GREYS[7]);
+  for (let i = st; i < 3; i += st) dot(g, gx, gy - i, GREYS[10]);
+  dot(g, gx, gy - 3, WHITE);
+  if (MODE === 3) { dot(g, gx + 0.5, gy - 2, GREYS[8]); }       // a bevel down one edge
+}
+const assassin = {
+  key: 'assassin', name: 'Assassin: two daggers in turn', at: 9, len: 3.0, stabs: [0.6, 1.1, 1.6, 2.1], out: 0.2, back: 0.3,
+  state() {},
+  draw(g, t, a, s, x) {
+    const y = REST_Y, bs = [x - 1.5, x + 4.5];
+    drawBody(g, x, y);
+    const flying = new Map();
+    this.stabs.forEach((p, i) => {
+      const bx = bs[i % 2], d = a - p + this.out;
+      if (d >= 0 && d < this.out + this.back) flying.set(bx, d);
+      blow(g, t, t - (a - p), bx - 0.5, s, 0.25 + i * 0.12, 70 + i);
+    });
+    for (const bx of bs) {
+      const home = y + 0.5, d = flying.get(bx);
+      if (d == null) { dagger(g, bx, home); continue; }
+      const top = cBot(Math.floor(bx), t, s) + 4.5;
+      const k = d < this.out ? ease(d / this.out) : 1 - ease((d - this.out) / this.back);
+      dagger(g, bx, snap(lerp(home, top, k)));
+    }
+  },
+};
+
+// --- Ranger: the aimed double shot -------------------------------------------------------------
+// The bow drawn from its span: the string straight, the limb bellied two
+// cells off it at the middle. At half a cell the belly is a smooth curve.
+function vbow(g, sx, top, bot) {
+  const st = KS(), n = bot - top;
+  for (let r = top; r <= bot + 1e-6; r += st) {
+    const off = Math.round(2 * Math.sin(Math.PI * (r - top) / n) / st) * st;
+    dot(g, sx, r, off ? GREYS[9] : GREYS[8]);
+    if (off) dot(g, sx + off, r, GREYS[8]);
+  }
+}
+function hbow(g, cx, sy, half, drawn, two) {
+  const st = KS();
+  for (let c = -half; c <= half + 1e-6; c += st) {
+    const off = Math.round(2 * Math.sin(Math.PI * (c + half) / (2 * half)) / st) * st;
+    if (!off) { dot(g, cx + c, sy, GREYS[8]); continue; }
+    if (!(drawn && Math.abs(c) < 0.01)) dot(g, cx + c, sy - off, GREYS[8]);
+    if (!drawn || Math.abs(c) >= half - 1) dot(g, cx + c, sy, GREYS[9]);
+    else if (Math.abs(c) > 0.01) dot(g, cx + c, sy + (MODE === 3 ? 1 - Math.abs(c) / half : 1), GREYS[9]);
+  }
+  if (drawn) for (const ax of two ? [cx - 1, cx + 1] : [cx]) arrowAt(g, ax, sy - 3);
+}
+// An arrow by its head: the head, the shaft, the fletch. At half a cell the
+// head has barbs and the shaft is a thin line.
+function arrowAt(g, ax, hy) {
+  const st = KS();
+  dot(g, ax, hy, WHITE);
+  if (MODE === 3) { dot(g, ax - 0.5, hy + 0.5, GREYS[9]); dot(g, ax + 0.5, hy + 0.5, GREYS[9]); }
+  for (let i = st; i < 3; i += st) dot(g, ax, hy + i, GREYS[10]);
+  dot(g, ax, hy + 3, GREYS[7]);
+}
+const ranger = {
+  key: 'ranger', name: 'Ranger: the aimed double shot', at: 7, len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
+  state() {},
+  draw(g, t, a, s, x) {
+    const y = REST_Y, aimed = this.aimed, last = aimed, up = 0.15, down = last + 0.35;
+    const pulling = this.shots.some(v => a >= v - 0.18 && a < v) || (a >= 1.9 && a < aimed);
+    const pose = a < up || a >= down + 0.24 ? 'rest' : a < up + 0.12 || a >= down + 0.12 ? 'lift'
+               : a < up + 0.24 || a >= down ? 'over' : pulling ? 'drawn' : 'braced';
+    drawBody(g, x, y);
+    if (pose === 'rest' || pose === 'lift') { const bot = pose === 'rest' ? y + 2.5 : y + 0.5; vbow(g, x + 4.5, bot - 6, bot); }
+    else hbow(g, pose === 'over' ? x + 3.5 : x + 1.5, y - 1.5, 4, pose === 'drawn', a >= 1.9 && a < aimed);
+    const lx = x + 1.5, ly = y - 5.5, ty = cBot(x + 1, t, s) + 1.5;
+    if (a >= 1.95 && a < aimed) {
+      const tone = a > 2.25 ? GREYS[9] : GREYS[6];
+      for (let cy = ly - 1; cy > ty; cy -= 2 * KS()) dot(g, lx, cy, tone);
+    }
+    const arrows = this.shots.map((v, i) => ({ at: v, k: 0.2, fly: 0.25, id: 60 + i, ax: lx }));
+    for (const dx of [-1, 1]) arrows.push({ at: aimed, k: 0.8, fly: 0.12, id: 68 + dx, ax: lx + dx });
+    for (const ar of arrows) {
+      const d = a - ar.at, ay = cBot(Math.floor(ar.ax), t, s) + 1.5;
+      if (d < 0) continue;
+      if (d < ar.fly) { arrowAt(g, ar.ax, lerp(ly, ay, d / ar.fly)); continue; }
+      const since = d - ar.fly;
+      blow(g, t, t - since, ar.ax - 0.5, s, ar.k, ar.id);
+      if (since < 0.9) { const tone = GREYS[since < 0.4 ? 9 : 6]; for (let i = 0; i < 2; i += KS()) dot(g, ar.ax, ay + i, tone); }
+    }
+    const since = a - aimed - 0.12;
+    if (since >= 0 && since < 0.45) ring(g, x + 1, cBot(x + 1, t, s), 1 + since * 14, since < 0.2 ? WHITE : GREYS[7], 2);
+  },
+};
+
+// ================================================================================
+// A tile: the world cropped round one fighter, the world in mode 1 and the
+// fighter in the column's mode.
+// ================================================================================
+const CLASSES = [brawler, swordsman, assassin, ranger];
+const TW = 22, TY0 = 1, TH = FLOOR + 2 - TY0, WX = 104, DUR = 4.6;
+const COLUMNS = [
+  { mode: 1, name: '1 · On the grid (today)', cost: 'Costs nothing; motion jumps a whole 6 px cell a step.' },
+  { mode: 2, name: '2 · Off-grid motion', cost: 'Costs a rule, not art: moving things sit at whole pixels, rests on the grid.' },
+  { mode: 3, name: '3 · Half-cell', cost: 'Costs every kit and attack redrawn at 3 px, ten classes; two resolutions in one frame.' },
+];
+function paintTile(g, c, mode, T) {
+  const x0 = WX - c.at, t = T, a = ((T % DUR) + DUR) % DUR;
+  const st = { still: null, statuses: {} };
+  c.state(a, {
+    stun(from, len) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.stunned = 1; } },
+    status(k) { st.statuses[k] = 1; },
+  });
+  g.imageSmoothingEnabled = false;
+  g.save();
+  g.translate(-x0 * P, -TY0 * P);
+  MODE = 1;
+  drawDeep(g, t);
+  drawPlinthAt(g, WX + 1, FLOOR);
+  drawCoil(g, t, st);
+  if (st.statuses.bleeding) paintBleeding(g, t, st);
+  if (st.statuses.stunned) paintStunned(g, t, st, x0 + 4);
+  MODE = mode;
+  c.draw(g, t, a, st, WX);
+  MODE = 1;
+  g.restore();
+}
+
+// --- the page -------------------------------------------------------------------------------
+const el = (tag, props = {}, kids = []) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const grid = el('div', { className: 'grid' });
+for (const col of COLUMNS) grid.append(el('div', { className: 'head' }, [el('b', { textContent: col.name }), el('span', { textContent: col.cost })]));
+const tiles = [];
+for (const c of CLASSES) {
+  grid.append(el('div', { className: 'rowname', textContent: c.name, id: c.key }));
+  for (const col of COLUMNS) {
+    const cv = el('canvas'); cv.width = TW * P; cv.height = TH * P;
+    grid.append(cv);
+    tiles.push({ c, mode: col.mode, g: cv.getContext('2d') });
+  }
+}
+document.getElementById('host').append(grid);
+
+let playing = true, clock = 0, last = performance.now();
+document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+const scaleBtns = [];
+for (const [label, on] of [['1x (the game\'s)', false], ['2x', true]]) {
+  const b = el('button', { type: 'button', textContent: label });
+  b.onclick = () => { document.body.classList.toggle('x2', on); syncScale(); };
+  scaleBtns.push([b, on]); document.getElementById('scale').append(b);
+}
+function syncScale() { for (const [b, on] of scaleBtns) b.setAttribute('aria-pressed', String(document.body.classList.contains('x2') === on)); }
+syncScale();
+function paintAll(t) { for (const tl of tiles) paintTile(tl.g, tl.c, tl.mode, t); }
+window.__at = s => { clock = s; playing = false; document.getElementById('play').textContent = 'play'; paintAll(clock); return clock; };
+window.__x2 = on => { document.body.classList.toggle('x2', on); syncScale(); return on; };
+window.__test = () => 0;
+function tick(now) {
+  if (playing) clock += Math.max(0, now - last) / 1000;
+  last = now;
+  document.getElementById('clock').textContent = clock.toFixed(2) + ' s';
+  paintAll(clock);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
