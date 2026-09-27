@@ -255,12 +255,14 @@ are the cards' own (`board.js` builders), so a rail reads as the boards do.
 
 ## The picture (owner: RENDER)
 
-- **Fighters**: the square body plus the class's kit, from the class bench
-  (`docs/mocks/classes/group-*.js`, as revised, and the looks page), ported
-  from bench cells to world cells; the **mark at rung 4 and the touch at
-  rung 8** from `docs/mocks/kit-growth-2026-09-27.html` (version 2). Each
-  class's base attack, move and capstone drawn as on those pages, driven by
-  the sim's own timers (not fixed animation clocks: the old `PUNCH_MS` bug).
+- **Fighters**: the square body plus the class's kit, its rung-4 mark and
+  rung-8 touch, and **each rung's attack**, exactly as the owner approves
+  them on `docs/mocks/kit-growth-2026-09-27.html` -- **the single visual
+  reference** for classes (the class bench shows the retired branch
+  keystones; use it only for a detail the growth page lacks). Ported from
+  the page's cells to world cells, driven by the sim's own timers (not
+  fixed animation clocks: the old `PUNCH_MS` bug), so tempo and positions
+  follow the game while shapes, gear, tones and motion match the page.
 - **Statuses** on the whole serpent (the bench's painters for Bleeding,
   Exposed, Held, Lit, Weakened) and on fighters (Inspired, Hasted); the
   stun is the built ring.
