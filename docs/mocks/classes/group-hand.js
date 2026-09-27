@@ -1,11 +1,12 @@
-// Track hand of docs/wave-class-anims.md: the altar's two classes (Brawler,
-// Martial Artist) and the spire's inward one (Monk), and the two serpent
-// statuses this track owns (Stunned, Exposed). A mock drawn from plain cells.
+// Track hand of docs/wave-class-anims.md: the Brawler (the altar), the
+// Martial Artist and the Monk (the well), and the two serpent statuses this
+// track owns (Stunned, Exposed). A mock drawn from plain cells.
 //
-// The three are told apart by how they reach the coil: the Brawler swims up
-// and swings big fists, the Martial Artist swims up and jabs fast off a pip
-// meter, the Monk never leaves her spire and pushes waves of the abyss up
-// from her palms, filling a ring of chi round herself.
+// Each is its kit, as the looks page draws it, and every blow comes out of
+// the kit: the Brawler swims up and drives his small wrapped fists into the
+// coil, the Martial Artist swims up and thrusts and sweeps her bo staff off
+// a pip meter, the Monk never leaves her station and pushes waves of the
+// abyss up off her string of prayer beads, lighting a bead a palm.
 
 import {
   P, FLOOR, STATION_X, BUDDY_X, BODY, GREYS, PURPLES, WHITE, INK, hash, clamp, steps,
@@ -102,16 +103,22 @@ function exposeWave(g, t, t0, hx, st) {
 }
 
 // --- the Brawler ---------------------------------------------------------------------
-// Strength: a flat cap with its peak forward, and two bare fists as big as
-// his head, hung either side of him. He swims up under the coil and swings
-// them straight up into it, one then the other.
-const FIST = 2;
-// A fist's column: left hangs two cells off the body, right one past it.
-const fistX = (x, side) => side < 0 ? x - FIST - 0 : x + BODY;
+// Strength: two small wrapped fists held up in a guard, one each side of
+// his head (the looks page's kit). He swims up under the coil and drives
+// them straight up into it, one then the other, the arm trailing under the
+// fist.
+const FIST = 1;
+// A fist is its wrap over its knuckles: a white row on top, the striking
+// face, over a grey one. `size` is its width; the haymaker's is two.
 function drawFist(g, fx, fy, size = FIST) {
-  rect(g, fx, fy, size, size, WHITE);
-  // the knuckles: a darker row along the striking face
-  rect(g, fx, fy, size, 1, GREYS[9]);
+  rect(g, fx, fy, size, 1, WHITE);
+  rect(g, fx, fy + 1, size, 1, GREYS[9]);
+}
+// The guard at rest: a fist each side, its wrap level with the head's top
+// row less one, so the pair frames the head.
+function drawGuard(g, x, y) {
+  drawFist(g, x - 1, y - 1);
+  drawFist(g, x + BODY, y - 1);
 }
 // A punch's reach at time t for one that lands at L: 0 rest, 1 full, -1 the
 // wind-up (fist drawn down).
@@ -123,25 +130,31 @@ function punchReach(t, L) {
   if (a < 0.1) return 1;
   return 1 - (a - 0.1) / 0.2;
 }
-// Both fists, the one punching extended up to the coil's underside with its
-// arm behind it. `punches` is a list of { at, side, size }.
-function drawFists(g, t, x, y, st, punches, rest0 = FIST) {
+// Both fists from the guard, the one punching driven straight up to the
+// coil's underside with its arm under it. `punches` is a list of
+// { at, side, size }; `frayed` hangs a loose end of wrap off each fist.
+function drawFists(g, t, x, y, st, punches, frayed = false) {
   for (const side of [-1, 1]) {
     const mine = punches.filter(p => p.side === side);
-    let reach = 0, size = rest0;
+    let reach = 0, size = FIST;
     for (const p of mine) { const r = punchReach(t, p.at); if (r !== 0) { reach = r; size = p.size || FIST; } }
     const fx = side < 0 ? x - size : x + BODY;
-    const rest = y + 1;
+    const rest = y - 1;
     let fy = rest;
     if (reach < 0) fy = rest + 1;
     else if (reach > 0) {
       const face = Math.max(coilBottom(fx, t, st), coilBottom(fx + size - 1, t, st)) + 1;
       fy = Math.round(rest + (face - rest) * reach);
     }
-    // the arm, from the shoulder to the fist, on the fist's inner column
+    // the arm, under the fist down to the shoulder, on the fist's inner column
     const armX = side < 0 ? x - 1 : x + BODY;
-    for (let r = fy + size; r < y + 1; r++) cell(g, armX, r, GREYS[8]);
+    for (let r = fy + 2; r < y; r++) cell(g, armX, r, GREYS[8]);
     drawFist(g, fx, fy, size);
+    // a wrap come loose, flapping a cell out and back off the fist's outside
+    if (frayed) {
+      const f = Math.floor(t * 8 + (side > 0 ? 1 : 0)) % 2;
+      cell(g, side < 0 ? fx - 1 : fx + size, fy + f, GREYS[10]);
+    }
   }
 }
 // Where a punch lands, for the burst: the middle of the fist's face.
@@ -150,7 +163,7 @@ function punchSpot(t, st, x, side, size = FIST) {
   return { cx: fx + (size - 1) / 2, cy: Math.max(coilBottom(fx, t, st), coilBottom(fx + size - 1, t, st)) };
 }
 
-const BR_GAP = 6;
+const BR_GAP = 4;
 // A trip up and a row of punches, then home: the shape every Brawler scene
 // shares. Returns the body's (x, y) for the frame.
 function brawlerAt(t, st, up0, up1, dn0, dn1, shake = 0) {
@@ -158,15 +171,16 @@ function brawlerAt(t, st, up0, up1, dn0, dn1, shake = 0) {
   const x = HOME_X + (shake ? (hash(Math.floor(t * 18)) < 0.5 ? -1 : 0) : 0);
   return { x, y };
 }
-function drawBrawler(g, t, api, at, punches, heavy = [], fist = FIST) {
+function drawBrawler(g, t, api, at, punches, heavy = [], frayed = false) {
   // the bite and the scales first, so the fist is seen in front of them
   for (const p of [...punches, ...heavy]) {
     const s = punchSpot(t, api.st, at.x, p.side, p.size || FIST);
     land(g, t, p.at, s.cx, s.cy, p.k || 0.3, Math.round(p.at * 10));
   }
   drawBody(g, at.x, at.y);
-  api.cls.hat(g, at.x, at.y, t);
-  drawFists(g, t, at.x, at.y, api.st, [...punches, ...heavy], fist);
+  // the fists are the kit: drawn here from the guard rather than by `hat`,
+  // so a punching fist leaves its place in the guard
+  drawFists(g, t, at.x, at.y, api.st, [...punches, ...heavy], frayed);
 }
 const alt = (times, k = 0.3) => times.map((at, i) => ({ at, side: i % 2 ? 1 : -1, k }));
 
@@ -177,13 +191,8 @@ const BRU = [1.0, 2.2, 3.4];
 
 registerClass({
   key: 'brawler', name: 'Brawler', station: 'altar', group: 'hand',
-  look: 'a flat cap, peak forward; two bare fists as big as his head',
-  hat(g, cx, cy) {
-    // the crown sits on the head, the peak juts a cell forward
-    rect(g, cx, cy - 1, BODY, 1, GREYS[8]);
-    rect(g, cx, cy - 2, 2, 1, GREYS[8]);
-    cell(g, cx + BODY, cy - 1, GREYS[9]);
-  },
+  look: 'two small wrapped fists held up in a guard, one each side of his head',
+  hat(g, cx, cy) { drawGuard(g, cx, cy); },
   scenes: [
     {
       name: 'Base', about: 'A heavy punch every 1.2 s: he swims up under the coil and swings, one fist then the other.',
@@ -204,7 +213,7 @@ registerClass({
         // the haymaker's wind-up: the body sinks two cells, then drives up
         const a = t - PUM_HAY;
         if (a > -0.5 && a < 0) at = { x: at.x, y: at.y + (a < -0.12 ? 2 : 0) };
-        const heavy = [{ at: PUM_HAY, side: 1, size: 3, k: 0.75 }];
+        const heavy = [{ at: PUM_HAY, side: 1, size: 2, k: 0.75 }];
         drawBrawler(g, t, api, at, alt(PUM_JABS), heavy);
         // the count to four: a pip a punch beside him, the fourth the haymaker
         const n = countTo([...PUM_JABS, PUM_HAY], t) % 4 || (t >= PUM_HAY && t < PUM_HAY + 0.6 ? 4 : 0);
@@ -212,30 +221,30 @@ registerClass({
           cell(g, at.x - 3, at.y + 2 - i, i < n ? (i === 3 ? WHITE : GREYS[9]) : GREYS[3]);
         // the blow rings the coil out from where it landed
         if (a >= 0 && a < 0.5) {
-          const s = punchSpot(t, st, at.x, 1, 3);
+          const s = punchSpot(t, st, at.x, 1, 2);
           ring(g, s.cx, s.cy, 1 + a * 14, a < 0.25 ? WHITE : GREYS[7], 2);
         }
       },
     },
     {
-      name: 'Rage', about: 'Each punch in a row hits 5% harder, to +60%: he steams, then shakes, and the blows grow.',
+      name: 'Rage', about: 'Each punch in a row hits 5% harder, to +60%: he steams, his wraps work loose, then he shakes, and the blows grow.',
       dur: 7.4, body: false,
       state() {},
       draw(g, t, api) {
         const rage = countTo(RAGE, t) / RAGE.length * (t < 6.4 ? 1 : 1 - along(t, 6.4, 7.2));
         const at = brawlerAt(t, api.st, 0.2, 0.8, 6.4, 7.1, rage >= 1);
-        // past half rage the fists swell a cell, and the blows with them
-        const big = i => i >= RAGE.length / 2 ? 3 : FIST;
-        const punches = RAGE.map((p, i) => ({ at: p, side: i % 2 ? 1 : -1, size: big(i), k: 0.25 + 0.4 * (i / (RAGE.length - 1)) }));
-        drawBrawler(g, t, api, at, punches, [], rage >= 0.5 ? 3 : FIST);
+        // the fists stay the kit's small ones; the blows grow, and past half
+        // rage the wraps come loose and flap
+        const punches = RAGE.map((p, i) => ({ at: p, side: i % 2 ? 1 : -1, k: 0.25 + 0.4 * (i / (RAGE.length - 1)) }));
+        drawBrawler(g, t, api, at, punches, [], rage >= 0.5);
         // steam off his head, more of it the longer the row: puffs rise off
-        // both sides of the cap and step down the tones as they go
+        // the crown between the fists and step down the tones as they go
         const puffs = Math.round(rage * 8);
         for (let i = 0; i < puffs; i++) {
-          const side = i % 2 ? at.x + BODY : at.x - 1;
+          const col = at.x + [0, 2, 1][i % 3];
           const rise = (t * 3 + hash(i + 3) * 4) % 4;
           const drift = rise > 2 ? (i % 2 ? 1 : -1) : 0;
-          cell(g, side + drift, at.y - 1 - rise, [WHITE, GREYS[9], GREYS[7], GREYS[5]][Math.floor(rise)]);
+          cell(g, col + drift, at.y - 1 - rise, [WHITE, GREYS[9], GREYS[7], GREYS[5]][Math.floor(rise)]);
         }
       },
     },
@@ -264,44 +273,57 @@ registerClass({
 });
 
 // --- the Martial Artist -------------------------------------------------------------
-// Technique: a white headband with its two tails streaming behind her, and
-// small hands. She swims up under the coil and jabs, a thin fast streak a
-// strike, three a second; every strike lights a pip of the five under her,
-// and at five she crouches and launches her whole body into the coil.
-const MA_GAP = 5, PIPS = 5;
-function maHands(g, x, y, busy, guard) {
-  const hy = guard ? y : y + 1;
-  if (!busy.includes(-1)) cell(g, x - 1, hy, WHITE);
-  if (!busy.includes(1)) cell(g, x + BODY, hy, WHITE);
+// Technique: a bo staff, longer than she is wide, carried across her back
+// (the looks page's kit). She swims up under the coil with it stood on end
+// and thrusts it, the whole staff driven up two cells so its tip strikes, a
+// thrust a pip, three a second; at five pips she crouches, swings it flat
+// over her head and launches her whole body up, sweeping it along the hide.
+const MA_GAP = 6, PIPS = 5;
+const STAFF = 7;          // cells, end to end
+const TIP = 3;            // on end, the tip stands this many cells over her head
+// At rest, across her back: its ends out either side of the middle row.
+function staffBack(g, x, y) {
+  cell(g, x - 2, y + 1, GREYS[9]); cell(g, x - 1, y + 1, GREYS[8]);
+  cell(g, x + BODY, y + 1, GREYS[8]); cell(g, x + BODY + 1, y + 1, GREYS[9]);
 }
-// A jab landing at L from the hand on `side`: the hand shoots up as a streak
-// from the head to the coil's underside and pulls back as it fades.
-function jab(g, t, L, x, y, side, st, echo = false) {
-  const a = t - L;
-  if (a < -0.06 || a > 0.16) return false;
-  const col = side < 0 ? x - 1 : x + BODY;
-  const face = coilBottom(col, t, st) + 1;
-  const tip = a < 0 ? Math.round(y - 1 + (face - (y - 1)) * (1 + a / 0.06)) : face;
-  const shaft = a < 0.05 ? GREYS[8] : a < 0.1 ? GREYS[6] : GREYS[4];
-  for (let r = tip; r <= y; r++) cell(g, col, r, r === tip && a < 0.1 ? WHITE : shaft);
-  // Flow's double: an after-image a column out, a beat behind
-  if (echo && a > 0) for (let r = face; r <= y; r++) cell(g, col + side, r, a < 0.08 ? GREYS[7] : GREYS[4]);
-  return true;
+// On end through her middle column, its tip at row `tip`: drawn before the
+// body, so the body covers its middle. `hot` whitens the tip as it strikes.
+function staffUp(g, x, tip, hot = false) {
+  const cx = x + 1;
+  for (let r = tip; r < tip + STAFF; r++) cell(g, cx, r, r === tip || r === tip + STAFF - 1 ? GREYS[9] : GREYS[8]);
+  if (hot) cell(g, cx, tip, WHITE);
+}
+// Flat over her head on row `row`, both ends bright where they cap it. As
+// it strikes it is pressed into the hide's edge, so it is drawn dark there,
+// where a light one would vanish into the white.
+function staffOver(g, x, row, hot = false) {
+  for (let c = x - 2; c <= x + BODY + 1; c++)
+    cell(g, c, row, c === x - 2 || c === x + BODY + 1 ? GREYS[9] : hot ? GREYS[5] : GREYS[8]);
+}
+// A thrust landing at L: the staff's tip row at t, or null outside it. It
+// slides from the ready (TIP over the head) to the coil's underside and
+// back as it fades.
+function thrustTip(t, L, y, face) {
+  const a = t - L, ready = y - TIP;
+  if (a < -0.06 || a > 0.16) return null;
+  if (a < 0) return Math.round(ready + (face - ready) * (1 + a / 0.06));
+  if (a < 0.1) return face;
+  return Math.round(face + (ready - face) * ((a - 0.1) / 0.06));
 }
 function drawPips(g, x, y, n, flash) {
   for (let i = 0; i < PIPS; i++)
     cell(g, x - 1 + i, y + BODY + 1, flash ? (flash > 0 ? WHITE : GREYS[6]) : i < n ? WHITE : GREYS[3]);
 }
-// The finisher at F: crouch two cells, launch the body up into the coil,
-// hold, drop back to the hover. Returns the body's row, or null when the
-// finisher is not under way.
-function finisherY(t, F, hover, face) {
+// The finisher at F: crouch two cells, launch the body up until the staff
+// meets the coil (the body's row there is `top`), hold, drop back to the
+// hover. Returns the body's row, or null when the finisher is not under way.
+function finisherY(t, F, hover, top) {
   const a = t - F;
   if (a < -0.35 || a > 0.45) return null;
   if (a < -0.15) return hover + 2;
-  if (a < 0) return Math.round(hover + 2 + (face - hover - 2) * ease((a + 0.15) / 0.15));
-  if (a < 0.2) return face;
-  return Math.round(face + (hover - face) * ease((a - 0.2) / 0.25));
+  if (a < 0) return Math.round(hover + 2 + (top - hover - 2) * ease((a + 0.15) / 0.15));
+  if (a < 0.2) return top;
+  return Math.round(top + (hover - top) * ease((a - 0.2) / 0.25));
 }
 function launchTrail(g, t, F, x, y, from) {
   const a = t - F;
@@ -311,27 +333,55 @@ function launchTrail(g, t, F, x, y, from) {
     rect(g, x, r, BODY, 1, k < 0.3 ? GREYS[7] : k < 0.6 ? GREYS[5] : GREYS[3]);
   }
 }
+// The sweep's wake: from the middle of the staff out both ways along the
+// hide's underside, the struck edge whitening and stepping back down.
+function sweepWake(g, t, F, cx, st) {
+  const a = t - F;
+  if (a < 0 || a > 0.5) return;
+  const reach = 3 + along(a, 0, 0.1) * 5, fade = along(a, 0.12, 0.5);
+  const tone = GREYS[[11, 11, 10, 9, 7, 5][Math.floor(fade * 5.99)]];
+  // it starts past the staff's ends, the staff itself covering the middle
+  for (let dx = -8; dx <= 8; dx++)
+    if (Math.abs(dx) > 3 && Math.abs(dx) <= reach) cell(g, cx + dx, coilBottom(cx + dx, t, st), tone);
+}
 // One Martial Artist scene's whole drawing, off its timetable.
 //   jabs: [{ at, side }], fins: [finisher times], trip: [up0, up1, dn0, dn1],
-//   per: pips a jab lights, echo: Flow's after-image, k: the finisher's size.
-function drawMartial(g, t, api, { jabs, fins, trip, per = 1, echo = false, k = 0.65 }) {
+//   per: pips a jab lights, echo: Flow's after-image, k: the finisher's size,
+//   point: the finisher is a thrust (Pressure Points) rather than the sweep.
+function drawMartial(g, t, api, { jabs, fins, trip, per = 1, echo = false, k = 0.65, point = false }) {
   const st = api.st, x = HOME_X;
   const hover = tripY(t, st, MA_GAP, ...trip);
-  const face = coilBottom(STATION_X, t, st) + 1;
+  const face = coilBottom(x + 1, t, st) + 1;
+  // at contact the body sits under the staff: its tip on end at the
+  // underside, or flat along the hide's edge with the body right under it
+  const top = point ? face + TIP : face;
   let y = hover, fin = null;
-  for (const F of fins) { const fy = finisherY(t, F, hover, face); if (fy != null) { y = fy; fin = F; } }
+  for (const F of fins) { const fy = finisherY(t, F, hover, top); if (fy != null) { y = fy; fin = F; } }
   // the bite and the scales under everything she draws
-  for (const j of jabs) {
-    const col = j.side < 0 ? x - 1 : x + BODY;
-    land(g, t, j.at, col, coilBottom(col, t, st), 0.18, Math.round(j.at * 10));
-  }
+  for (const j of jabs) land(g, t, j.at, x + 1, face - 1, 0.18, Math.round(j.at * 10));
   for (const F of fins) land(g, t, F, x + 1, face - 1, k, Math.round(F * 10) + 50);
+  if (!point) for (const F of fins) sweepWake(g, t, F, x + 1, st);
   if (fin != null) launchTrail(g, t, fin, x, y, hover + 2);
+  // the staff: across her back on the swim, on end in the fight, flat over
+  // her head for the sweep
+  const fighting = t >= trip[1] && t < trip[2];
+  let tip = null, hot = false;
+  if (fin != null) {
+    if (point) { tip = y - TIP; hot = t >= fin && t < fin + 0.2; }
+  } else if (fighting) {
+    tip = y - TIP;
+    for (const j of jabs) {
+      const jt = thrustTip(t, j.at, y, face);
+      if (jt != null) { tip = jt; hot = t >= j.at && t < j.at + 0.1; }
+      // Flow's double: an after-image of the shaft a column out, a beat behind
+      const a = t - j.at;
+      if (echo && a > 0 && a < 0.16) for (let r = face; r < y; r++) cell(g, x + 1 + j.side, r, a < 0.08 ? GREYS[7] : GREYS[4]);
+    }
+  }
+  if (tip != null) staffUp(g, x, tip, hot);
   drawBody(g, x, y);
-  api.cls.hat(g, x, y, t);
-  const busy = [];
-  for (const j of jabs) if (jab(g, t, j.at, x, y, j.side, st, echo)) busy.push(j.side);
-  maHands(g, x, y, busy, false);
+  if (fin != null && !point) staffOver(g, x, y - 1, t >= fin && t < fin + 0.2);
+  else if (tip == null) staffBack(g, x, y);
   // the pips: jabs since the last finisher, `per` a jab, flashing as she crouches
   const lastF = lastOf(fins, t) ?? -1;
   const n = Math.min(PIPS, jabs.filter(j => j.at <= t && j.at > lastF).length * per);
@@ -343,7 +393,7 @@ const jabRow = (from, n, gap = 1 / 3) => Array.from({ length: n }, (_, i) => ({ 
 
 const MA_BASE = { jabs: jabRow(0.8, 5), fins: [2.75], trip: [0.1, 0.6, 3.5, 4.1] };
 const MA_FLOW = { jabs: [...jabRow(0.8, 3), ...jabRow(2.45, 3)], fins: [2.0, 3.65], trip: [0.1, 0.6, 4.3, 4.9], per: 2, echo: true };
-const MA_PP = { ...MA_BASE, k: 0.55 };
+const MA_PP = { ...MA_BASE, k: 0.55, point: true };
 const PP_F = MA_PP.fins[0];
 // Counter: the thrash's ripple leaves the belly at THRASH and she answers
 // the moment it reaches her.
@@ -352,31 +402,24 @@ const RIPPLE_REACH = Math.hypot(STATION_X - RIPPLE_X, (HOME_Y + 1) - 12) / RIPPL
 const COUNTER = THRASH + RIPPLE_REACH + 0.25;
 
 registerClass({
-  key: 'martial', name: 'Martial Artist', station: 'altar', group: 'hand',
-  look: 'a white headband, its two tails streaming; small quick hands; five pips under her',
-  hat(g, cx, cy, t) {
-    // a white band, where the swordsman's is grey, so the two headbands part
-    rect(g, cx, cy - 1, BODY, 1, WHITE);
-    // the tails stream back off the knot and flutter a cell
-    const f = Math.floor(t * 6) % 2;
-    cell(g, cx - 1, cy - 1, WHITE);
-    cell(g, cx - 2, cy - 1 + f, GREYS[10]);
-  },
+  key: 'martial', name: 'Martial Artist', station: 'well', group: 'hand',
+  look: 'a bo staff held across her back, longer than she is wide; she thrusts it and sweeps it; five pips under her',
+  hat(g, cx, cy) { staffBack(g, cx, cy); },
   scenes: [
     {
-      name: 'Base', about: 'Quick light strikes, three a second, each a pip; at five pips she launches herself into the coil, all five in one blow.',
+      name: 'Base', about: 'Quick thrusts of the staff, three a second, each a pip; at five pips she swings it over her head and launches herself into the coil, sweeping it along the hide: all five in one blow.',
       dur: 4.6, body: false,
       state() {},
       draw(g, t, api) { drawMartial(g, t, api, MA_BASE); },
     },
     {
-      name: 'Flow', about: 'Each strike counts double: two pips a jab, an after-image beside every hand, and the finisher twice as often.',
+      name: 'Flow', about: 'Each thrust counts double: two pips a thrust, an after-image of the staff beside every one, and the sweep twice as often.',
       dur: 5.4, body: false,
       state() {},
       draw(g, t, api) { drawMartial(g, t, api, MA_FLOW); },
     },
     {
-      name: 'Pressure Points', about: 'Her finisher is aimed: a sight closes on one point, and the blow Marks the whole coil.',
+      name: 'Pressure Points', about: 'Her finisher is aimed: a sight closes on one point, she launches the staff on end into it, and the blow Marks the whole coil.',
       dur: 4.6, body: false,
       state(t, api) { if (t >= PP_F) api.status('marked', 1); },
       draw(g, t, api) {
@@ -404,7 +447,7 @@ registerClass({
       },
     },
     {
-      name: 'Counter', about: 'She waits in guard. When the serpent thrashes, its ripple reaches her and she answers at once with a full finisher.',
+      name: 'Counter', about: 'She waits in guard, the staff grounded on end. When the serpent thrashes, its ripple reaches her and she answers at once with a full sweep.',
       dur: 4, body: false,
       state() {},
       draw(g, t, api) {
@@ -425,18 +468,22 @@ registerClass({
             }
           }
         }
-        // her answer: a straight dash from the station into the coil and back
-        const face = coilBottom(STATION_X, t, st) + 1;
+        // her answer: a straight dash from the station into the coil and
+        // back, the staff swung flat over her head on the way up
+        const face = coilBottom(x + 1, t, st) + 1, top = face;
         const c = t - COUNTER;
         let y = HOME_Y;
-        if (c > -0.25 && c < 0) y = Math.round(HOME_Y + (face - HOME_Y) * ease((c + 0.25) / 0.25));
-        else if (c >= 0 && c < 0.2) y = face;
-        else if (c >= 0.2 && c < 0.9) y = Math.round(face + (HOME_Y - face) * ease((c - 0.2) / 0.7));
+        if (c > -0.25 && c < 0) y = Math.round(HOME_Y + (top - HOME_Y) * ease((c + 0.25) / 0.25));
+        else if (c >= 0 && c < 0.2) y = top;
+        else if (c >= 0.2 && c < 0.9) y = Math.round(top + (HOME_Y - top) * ease((c - 0.2) / 0.7));
         land(g, t, COUNTER, x + 1, face - 1, 0.7, 77);
+        sweepWake(g, t, COUNTER, x + 1, st);
         if (c > -0.25 && c < 0.1) launchTrail(g, t, COUNTER, x, y, HOME_Y);
+        const out = c > -0.25 && c < 0.9;
+        // in guard the staff stands on end, grounded on the plinth
+        if (!out) staffUp(g, x, y - TIP);
         drawBody(g, x, y);
-        api.cls.hat(g, x, y, t);
-        maHands(g, x, y, [], y === HOME_Y);
+        if (out) staffOver(g, x, y - 1, c >= 0 && c < 0.2);
         // in guard the pips stand full; the counter spends them all, and
         // they fill again once she is home
         const n = c >= 0 && c < 1.4 ? Math.floor(Math.max(0, c - 0.9) / 0.1) : PIPS;
@@ -447,45 +494,49 @@ registerClass({
 });
 
 // --- the Monk --------------------------------------------------------------------
-// The abyss inward: a shaved head and a topknot, floating a cell off her
-// spire in a ring of chi. She never leaves it. Her palm pushes a flat wave
-// of the abyss's purple up into the coil, and every palm that lands lights
-// a quarter of the ring; a full ring is spent on a chi palm, a wave twice
-// as wide that stuns.
+// The abyss inward: a string of five prayer beads arched over the head, one
+// purple bead told round them at rest (the looks page's kit), floating a
+// cell off the station. She never leaves it. The beads are her chi: every
+// palm that lands lights one purple, and with four lit she gathers the
+// fifth and spends the string on a chi palm, a wave twice as wide that
+// stuns. A palm is a flat wave of the abyss pushed up off the beads into
+// the coil.
 const MONK_FLOAT = HOME_Y - 1;
-const CHI_R = 3.2;
-// The ring's cells in order, clockwise from the top, so chi fills round it.
-const CHI_RING = (() => {
-  const out = [], seen = new Set();
-  for (let k = 0; k < 64; k++) {
-    const a = -Math.PI / 2 + k / 64 * Math.PI * 2;
-    const dx = Math.round(Math.cos(a) * CHI_R), dy = Math.round(Math.sin(a) * CHI_R);
-    if (!seen.has(dx + ',' + dy)) { seen.add(dx + ',' + dy); out.push([dx, dy]); }
-  }
-  return out;
-})();
-// Chi round the body at (x, y): lit cells bright purple, the rest a faint
-// ring. `spin` turns the whole ring (Windwalker's wind); `pull` draws the
-// lit cells in toward her as a chi palm gathers.
-function drawChi(g, x, y, chi, spin = 0, pull = 0) {
-  const n = CHI_RING.length, lit = Math.round(clamp(chi, 0, 1) * n);
-  const cx = x + 1, cy = y + 1;
-  for (let i = 0; i < n; i++) {
-    const [dx, dy] = CHI_RING[(i + spin) % n];
-    const on = i < lit;
-    const k = on ? 1 - pull * 0.6 : 1;
-    cell(g, cx + dx * k, cy + dy * k, on ? (pull > 0.5 ? WHITE : PURPLES[11]) : PURPLES[3]);
-  }
+// The five beads, left to right, from the body's top-left: an arch over the
+// head, its ends a row lower than its crown.
+const BEADS = [[-2, -1], [-1, -2], [1, -2], [3, -2], [4, -1]];
+// The told bead at rest walks out and back along the string.
+const TOLD = [0, 1, 2, 3, 4, 3, 2, 1];
+const told = t => TOLD[Math.floor(t * 3) % TOLD.length];
+function drawBeads(g, x, y, t) {
+  const k = told(t);
+  BEADS.forEach(([dx, dy], i) => cell(g, x + dx, y + dy, i === k ? PURPLES[11] : GREYS[9]));
 }
-// A palm launched at L: a flat wave `w` cells wide leaves her head and
-// rises to the coil's underside in TRAVEL seconds, a bright front with two
-// fading rows behind it; where it lands, a ring of purple opens on the hide.
+// The beads as a meter: `lit` of the five purple, the rest grey. `spin`
+// turns which beads are lit round the string (Windwalker's wind); `glow`
+// lights the dark ones a dim purple while a palm leaves, so the whole
+// string answers the push; `gather` flashes the full string as a chi palm
+// is drawn in.
+function drawChiBeads(g, x, y, lit, { spin = 0, glow = false, gather = 0, t = 0 } = {}) {
+  BEADS.forEach(([dx, dy], i) => {
+    const on = (i - spin + BEADS.length * 8) % BEADS.length < lit;
+    let tone = on ? PURPLES[11] : glow ? PURPLES[7] : GREYS[9];
+    if (gather > 0) tone = gather > 0.5 && Math.floor(t * 16) % 2 ? WHITE : PURPLES[11];
+    // drawn in a cell toward the crown as the chi palm gathers
+    const pull = gather > 0.5 ? 1 : 0;
+    cell(g, x + dx + (dx < 1 ? pull : dx > 1 ? -pull : 0), y + dy + (dy < -1 ? pull : 0), tone);
+  });
+}
+// A palm launched at L: a flat wave `w` cells wide leaves the crown of the
+// beads and rises to the coil's underside in TRAVEL seconds, a bright front
+// with two fading rows behind it; where it lands, a ring of purple opens on
+// the hide.
 const TRAVEL = 0.35;
 function palmWave(g, t, L, x, y, st, w = 3) {
   const a = t - L;
   if (a < 0 || a > TRAVEL + 0.5) return;
   const cx = x + 1, x0 = cx - Math.floor(w / 2);
-  const face = coilBottom(cx, t, st) + 1, from = y - 1;
+  const face = coilBottom(cx, t, st) + 1, from = y - 3;
   if (a <= TRAVEL) {
     const front = Math.round(from + (face - from) * (a / TRAVEL));
     rect(g, x0, front, w, 1, PURPLES[11]);
@@ -514,15 +565,15 @@ function drawMonk(g, t, api, { palms, chiPalms, per = 0.25, sit = null, spin = f
   let chi = palms.filter(L => L + TRAVEL <= t && L + TRAVEL > lastChi).length * per;
   if (sit && t >= sit[0]) chi += (t < sit[1] ? along(t, sit[0], sit[1]) : 1) * (1 - chi);
   const gather = chiPalms.find(L => t >= L - 0.3 && t < L + 0.05);
-  const pull = gather != null ? along(t, gather - 0.3, gather) : 0;
+  const pull = gather != null ? Math.max(0.01, along(t, gather - 0.3, gather)) : 0;
   if (chiPalms.some(L => t >= L + 0.05 && t < L + TRAVEL)) chi = 0;
-  drawChi(g, x, y, gather != null ? 1 : chi, spin ? Math.floor(t * 10) : 0, pull);
+  // four beads are the four palms; the fifth lights only as the chi palm
+  // gathers, so a full string is always the one about to be spent
+  const lit = Math.min(4, Math.round(clamp(chi, 0, 1) * 4));
+  const pushing = palms.some(L => t >= L - 0.1 && t < L + 0.15);
   drawBody(g, x, y);
-  api.cls.hat(g, x, y, t);
-  // her hands: at her sides, raised to push as a palm leaves
-  const pushing = [...palms, ...chiPalms].some(L => t >= L - 0.1 && t < L + 0.15);
-  const hy = sitting ? y + 2 : pushing ? y - 1 : y + 1;
-  cell(g, x - 1, hy, WHITE); cell(g, x + BODY, hy, WHITE);
+  if (lit === 0 && !pull && !pushing) drawBeads(g, x, y, t);
+  else drawChiBeads(g, x, y, lit, { spin: spin ? Math.floor(t * 6) : 0, glow: pushing, gather: pull, t });
   return { x, y };
 }
 
@@ -536,28 +587,24 @@ const CHI_STUN = 1.2;
 const chiStuns = (api, t, sc) => { for (const L of sc.chiPalms) stunFor(api, t, L + TRAVEL, CHI_STUN); };
 
 registerClass({
-  key: 'monk', name: 'Monk', station: 'spire', group: 'hand',
-  look: 'a topknot on a shaved head; floats a cell off the spire in a ring of purple chi',
-  hat(g, cx, cy) {
-    // the knot sits on a one-cell tie, so there is water under its corners
-    cell(g, cx + 1, cy - 1, GREYS[7]);
-    rect(g, cx, cy - 2, BODY, 1, GREYS[9]);
-  },
+  key: 'monk', name: 'Monk', station: 'well', group: 'hand',
+  look: 'a ring of prayer beads over the head, one purple bead told round; floats a cell off the well',
+  hat(g, cx, cy, t) { drawBeads(g, cx, cy, t); },
   scenes: [
     {
-      name: 'Base', about: 'A palm every second pushes a wave of the abyss into the coil and lights a quarter of her chi; a full ring is a chi palm that stuns.',
+      name: 'Base', about: 'A palm every second pushes a wave of the abyss up off her beads into the coil and lights a bead; four lit, she gathers the fifth and spends the string on a chi palm that stuns.',
       dur: 6, body: false,
       state(t, api) { chiStuns(api, t, MK_BASE); },
       draw(g, t, api) { drawMonk(g, t, api, MK_BASE); },
     },
     {
-      name: 'Windwalker', about: 'Chi fills twice as fast: half a ring a palm, the ring turning, a chi palm every third blow.',
+      name: 'Windwalker', about: 'Chi fills twice as fast: two beads a palm, the lit beads running round the string, a chi palm every third blow.',
       dur: 6, body: false,
       state(t, api) { chiStuns(api, t, MK_WIND); },
       draw(g, t, api) { drawMonk(g, t, api, MK_WIND); },
     },
     {
-      name: 'Stillness', about: 'Between palms she settles on the spire and breathes; slow rings rise off her, and while she sits the serpent is Weakened.',
+      name: 'Stillness', about: 'Between palms she settles on her station and breathes; the beads fill on their own, slow rings rise off her, and while she sits the serpent is Weakened.',
       dur: 6.6, body: false,
       state(t, api) {
         chiStuns(api, t, MK_STILL);
