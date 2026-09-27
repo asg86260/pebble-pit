@@ -16194,12 +16194,14 @@ took tells `cloud.js` the slot is dirty.
 
 ### Linking a device
 
-**The title page carries it.** A footnote under the three slots, on every
+**The title page carries it.** A footnote in the foot bar, bottom left
+beside the build number, where the small print already is, on every
 visit: `cloud · off` before it is turned on, `cloud · in the cloud, 2 min
 ago · link a device` after. *Link a device* shows a fresh pairing code in
 the footnote's place (`K7Q-94M`, with the minutes it has left), and the
-footnote on the other device, with cloud off, offers *enter a code*. Its
-shape is a mock for the vote before it is built.
+footnote on the other device, with cloud off, offers *enter a code*.
+Voted 2026-09-27: A1 of `docs/mocks/cloud-footnote-2026-09-27.html`, over a
+line or a card under the menu. It never pushes the menu.
 
 **The sheet's cloud page** holds the rest. Off, it offers *keep my yards in
 the cloud* (mints the secret and shows it once as the recovery code) and

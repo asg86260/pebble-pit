@@ -6,7 +6,9 @@
 what play reads; a Cloudflare Worker + D1 mirrors every slot under a
 hundred-bit sync code (no accounts), pulled at boot, pushed once a minute.
 Every way it can grow has a ceiling ("Fail-safes"), and a free plan with
-no card behind it is the backstop.
+no card behind it is the backstop. Devices pair by a six-character code
+that dies in ten minutes; the title page's footnote is voted (A1, the foot
+bar).
 Blocker: the owner's sign-off, and a Cloudflare account for the worker. No
 game code yet.
 
