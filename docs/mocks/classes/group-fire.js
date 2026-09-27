@@ -190,54 +190,99 @@ function ringOf(cx, cy, r, every, fn) {
   }
 }
 
-// A charge: a round of dark powder with a pale shine, a stub of fuse and a
-// spark that will not sit still on it. (x, y) is its top-left cell.
-function charge(g, x, y, t, n = 2) {
-  x = Math.round(x); y = Math.round(y);
-  rect(g, x, y, n, n, GREYS[7]);
-  cell(g, x, y, WHITE);
-  cell(g, x + n, y - 1, GREYS[7]);
-  const f = Math.floor(t * 16);
-  cell(g, x + n + (f % 2), y - 2 + (f % 3 === 0 ? 1 : 0), f % 2 ? WHITE : GREYS[10]);
-}
-
 // --- the Sapper ---------------------------------------------------------------------
-// A miner's helmet with its lamp at the front, and a satchel of charges on
-// the hip that every charge is drawn out of.
-function sapperHat(g, cx, cy, t) {
-  rect(g, cx - 1, cy - 1, 5, 1, GREYS[7]);
-  rect(g, cx, cy - 2, 3, 1, GREYS[8]);
-  cell(g, cx + 3, cy - 2, Math.floor(t * 3) % 5 ? WHITE : GREYS[10]);  // the lamp
+// His kit is the looks page's (docs/mocks/classes/looks-2026-09-27.html): a
+// bundle of three charges under his arm, a cell clear of the body -- three
+// sticks of powder three cells tall, the middle one paler, bound by a dark
+// band across their middle -- with the fuse standing off the middle stick and
+// its spark hopping along the tops. Every charge he throws or lays is a stick
+// out of that bundle, so the bundle is short a stick while it is gone, and a
+// fresh one is slid out from behind him to fill the gap before the next.
+// Because the bundle changes through a scene, every Sapper scene draws its
+// own body and kit (`body: false`); the `hat` is the full bundle at rest.
+const STICKS = [4, 5, 6];            // the sticks' columns, off the body's left edge
+const FULL = [1, 1, 1];
+const SPARK_SEQ = [0, 1, 0, 2, 1];   // the looks page's hop, six a second
+// One stick, its top at (x, y): pale powder with the band across its middle.
+function stick(g, x, y, middle = false) {
+  x = Math.round(x); y = Math.round(y);
+  cell(g, x, y, middle ? GREYS[10] : GREYS[9]);
+  cell(g, x, y + 1, GREYS[6]);
+  cell(g, x, y + 2, middle ? GREYS[10] : GREYS[9]);
 }
-function satchel(g, x, y) {
-  rect(g, x - 1, y + 1, 1, 2, GREYS[5]);
-  cell(g, x - 1, y + 1, GREYS[8]);
+// A lit fuse's spark at (x, y): a cell that will not sit still in its tone.
+// `hot` is the Incendiary's, a two-cell tongue.
+function sparkAt(g, x, y, t, hot = false) {
+  const f = Math.floor(t * 16);
+  cell(g, x, y, f % 2 ? WHITE : GREYS[10]);
+  if (hot) cell(g, x + (f % 3 === 0 ? 1 : 0), y - 1, f % 2 ? GREYS[9] : GREYS[7]);
+}
+// The bundle at the body whose top-left is (bx, by): the sticks it still
+// holds (`have`, left to right), and the fuse and its hopping spark while the
+// middle stick, which carries the fuse, is in it.
+function bundle(g, bx, by, t, have = FULL) {
+  STICKS.forEach((c, i) => { if (have[i]) stick(g, bx + c, by, i === 1); });
+  if (!have[1]) return;
+  cell(g, bx + STICKS[1], by - 1, GREYS[6]);
+  const k = SPARK_SEQ[Math.floor(t * 6) % SPARK_SEQ.length];
+  cell(g, bx + STICKS[k], by - 2, k === 1 ? GREYS[9] : WHITE);
+}
+function sapperKit(g, cx, cy, t) { bundle(g, cx, cy, t); }
+
+// A fresh stick for slot `i`, slid out from behind the body a row high and
+// dropped into its place over RESTOCK seconds from t0. Drawn before the body,
+// so it comes out from behind him; `restocked` says when it is back.
+const RESTOCK = 0.5;
+function restock(g, t, t0, bx, by, i) {
+  const a = t - t0;
+  if (a < 0 || a >= RESTOCK) return;
+  const k = a / RESTOCK;
+  const x = lerp(bx + 1, bx + STICKS[i], clamp(k / 0.75, 0, 1));
+  stick(g, x, by - (k < 0.75 ? 1 : 0), i === 1);
+}
+const restocked = (t, t0) => t >= t0 + RESTOCK;
+
+// A charge in the air, its middle at (x, y), turning end over end a quarter
+// every eighth of a second with its lit end going round: up, right, down, left.
+function tumbling(g, x, y, t, a, hot) {
+  x = Math.round(x); y = Math.round(y);
+  const q = Math.floor(a * 8) % 4;
+  if (q % 2 === 0) { stick(g, x, y - 1); sparkAt(g, x, q === 0 ? y - 2 : y + 2, t, hot && q === 0); }
+  else {
+    cell(g, x - 1, y, GREYS[9]); cell(g, x, y, GREYS[6]); cell(g, x + 1, y, GREYS[9]);
+    sparkAt(g, q === 1 ? x + 2 : x - 2, y, t);
+  }
 }
 
-// One throw: the charge comes out of the satchel, is held, flies in an arc
-// to the coil and goes off. `tT` the throw, `fl` the flight, `tx` the column
-// it lands on. Returns where it landed for the scene to hang its blow on.
-function throwCharge(g, t, api, { tT, fl = 0.8, tx, n = 2, r = 6, id = 0, s = api.st }) {
-  const me = api.me, tL = tT + fl;
-  const hand = { x: me.x + 3, y: me.y + 1 };
+// One throw: stick `slot` is drawn up out of the bundle past the fuse, which
+// lights it, then thrown end over end in an arc to the coil, where it goes
+// off. `tT` the throw, `fl` the flight, `tx` the column it lands on. Returns
+// when the stick left the bundle and where it landed, for the scene to hang
+// its blow and its restock on.
+const LIFT = 0.6;   // how long before the throw the stick starts up out of the bundle
+function throwStick(g, t, api, { tT, fl = 0.8, tx, slot = 2, r = 6, id = 0, hot = false, s = api.st }) {
+  const me = api.me, tL = tT + fl, left = tT - LIFT;
+  const sx = me.x + STICKS[slot];
   const land = { x: tx, y: coilBottom(tx, tL, s) };
-  const out = tT - 0.9;   // drawn from the satchel this long before the throw
-  if (t >= out && t < tT) {
-    const k = clamp((t - out) / 0.35, 0, 1);
-    charge(g, lerp(me.x - 1, hand.x, k), lerp(me.y + 1, hand.y, k) - Math.sin(Math.PI * k) * 2, t, n);
+  if (t >= left && t < tT) {
+    // up out of the bundle, three cells, and lit at the top as it clears the fuse
+    const k = clamp((t - left) / 0.3, 0, 1);
+    const y = Math.round(lerp(me.y, me.y - 3, k));
+    stick(g, sx, y, slot === 1);
+    if (k >= 1) sparkAt(g, sx, y - 1, t, hot);
   } else if (t >= tT && t < tL) {
     const p = (t - tT) / fl;
-    const x = lerp(hand.x, land.x - n / 2, p);
-    const y = lerp(hand.y, land.y + 1, p) - Math.sin(Math.PI * p) * 3;
-    // the fuse sparks off a cell or two behind it as it goes
+    const arc = q => ({ x: lerp(sx, land.x, q), y: lerp(me.y - 2, land.y + 2, q) - Math.sin(Math.PI * q) * 3 });
+    // the fuse's sparks hang a cell or two behind it as it goes
     for (let i = 1; i <= 2; i++) {
-      const q = Math.max(0, p - i * 0.05);
-      cell(g, lerp(hand.x, land.x, q), lerp(hand.y, land.y, q) - Math.sin(Math.PI * q) * 3 - 1, i === 1 ? GREYS[8] : GREYS[5]);
+      const c = arc(Math.max(0, p - i * 0.06));
+      cell(g, c.x, c.y - 1, i === 1 ? GREYS[8] : GREYS[5]);
     }
-    charge(g, x, y, t, n);
+    const c = arc(p);
+    tumbling(g, c.x, c.y, t, t - tT, hot);
   }
   boom(g, t, tL, land.x, land.y, r, s, id);
-  return { tL, land };
+  return { left, tL, land };
 }
 
 // A landed charge's blow, on every length the blast crosses: the burst at the
@@ -250,25 +295,58 @@ function blows(g, t, tL, land, k, spread, s, id) {
   }
 }
 
-// The Minefield's charges, each laid at column `x` as the Sapper swims past,
-// sinking to the floor as an anchor, then riding up its tether to hang where
-// the coil will come down on it. Each one's height is the lowest reach of the
-// coil's belly over its column while it is armed, so the sway sets it off at
-// the bottom of a swing; `at` is the first frame the belly touches it.
-const MINE_DUR = 11, SWIM = 9;
-// A mine: a squat round of powder with two horns on top and, once it is up
-// its tether and armed, a light between the horns that blinks. `x` is its
-// middle column, `y` its top row below the horns.
-function mine(g, x, y, t, armed) {
-  x = Math.round(x); y = Math.round(y);
-  rect(g, x - 1, y, 3, 2, GREYS[7]);
-  cell(g, x - 1, y, WHITE);
-  cell(g, x - 1, y - 1, GREYS[9]); cell(g, x + 1, y - 1, GREYS[9]);
-  if (armed) cell(g, x, y - 1, Math.floor(t * 3) % 2 ? WHITE : GREYS[4]);
+// The Demolition's throw: not a stick but the whole bundle, lifted over the
+// shoulder, fuse sparking, and lobbed without a turn -- it is heavy -- to go
+// off as one blow. Returns when it left and where it landed.
+function throwBundle(g, t, api, { tT, fl = 1.0, tx, r = 10, id = 0, s = api.st }) {
+  const me = api.me, tL = tT + fl, left = tT - LIFT;
+  const land = { x: tx, y: coilBottom(tx, tL, s) };
+  // the bundle's own drawing, moved so its left stick sits at (x, y)
+  const at = (x, y) => bundle(g, Math.round(x) - STICKS[0], Math.round(y), t);
+  if (t >= left && t < tT) {
+    const k = clamp((t - left) / 0.35, 0, 1);
+    at(me.x + STICKS[0] - k, lerp(me.y, me.y - 4, k));   // up over the shoulder
+  } else if (t >= tT && t < tL) {
+    const p = (t - tT) / fl;
+    const x0 = me.x + STICKS[0] - 1, y0 = me.y - 4;
+    at(lerp(x0, land.x - 1, p), lerp(y0, land.y + 3, p) - Math.sin(Math.PI * p) * 4);
+  }
+  boom(g, t, tL, land.x, land.y, r, s, id);
+  return { left, tL, land };
 }
-const MINE_XS = [26, 30, 36];   // chosen so the three go off apart: 8.4 s, 6.2 s, 7.3 s
+
+// A Sapper scene's own fighter at the station: the fresh sticks coming out
+// from behind him, then the body, then the bundle as it stands at `t`.
+// `gone` is, for each slot, when its stick left and when its restock starts.
+function sapperAt(g, t, me, gone) {
+  const have = [1, 1, 1];
+  for (const [i, left, back] of gone) {
+    restock(g, t, back, me.x, me.y, i);
+    if (t >= left && !restocked(t, back)) have[i] = 0;
+  }
+  drawBody(g, me.x, me.y);
+  bundle(g, me.x, me.y, t, have);
+}
+
+// The Minefield's charges: each a stick let go out of the bundle as the
+// Sapper swims over its column, sinking to the floor on an anchor, then
+// riding up its tether to hang where the coil will come down on it. Each
+// one's height is the lowest reach of the coil's belly over its column while
+// it is armed, so the sway sets it off at the bottom of a swing; `at` is the
+// first frame the belly touches its spark.
+const MINE_DUR = 11, SWIM = 9, SWIM_OUT = 0.6;
+// A laid charge: the stick standing on end, and once it is up its tether and
+// armed, its spark blinking on top. `x` its column, `y` its top row.
+function mine(g, x, y, t, armed, middle) {
+  stick(g, x, y, middle);
+  if (armed) cell(g, Math.round(x), Math.round(y) - 1, Math.floor(t * 3) % 2 ? WHITE : GREYS[4]);
+}
+const MINE_XS = [26, 30, 36], MINE_SLOT = [2, 0, 1];   // the fuse's stick goes last
+const HOME_X = STATION_X - 1;
 const MINES = MINE_XS.map((x, i) => {
-  const laid = 0.6 + (x - STATION_X) / SWIM;         // swimming out, it drops each as it passes
+  const slot = MINE_SLOT[i];
+  // swimming out, it lets each stick go as that stick passes over its column
+  const laid = SWIM_OUT + (x - STICKS[slot] - HOME_X) / SWIM;
   const armed = laid + 0.5 + 1.2;                     // 0.5 s to sink, 1.2 s to rise
   let y = 0, at = armed;
   for (let t = armed + 0.3; t < MINE_DUR - 2; t += 1 / 60) {
@@ -278,70 +356,81 @@ const MINES = MINE_XS.map((x, i) => {
   y += 1;
   // first frame the belly comes within a cell of it
   for (let t = armed; t < MINE_DUR - 2; t += 1 / 60) if (coilBottom(x, t, {}) >= y - 1) { at = t; break; }
-  return { x, laid, armed, y, at, id: 60 + i };
+  return { x, slot, laid, armed, y, at, id: 60 + i };
 });
+// how far out the swim goes: until the last stick is let go
+const SWIM_FAR = MINE_XS[2] - STICKS[MINE_SLOT[2]] - HOME_X;
+const SWIM_BACK = SWIM_OUT + SWIM_FAR / SWIM, SWIM_HOME = SWIM_BACK + 0.4 + SWIM_FAR / SWIM;
+const MINE_RESTOCK = [0, 1, 2].map(i => SWIM_HOME + 0.3 + i * 0.5);
 
 registerClass({
-  key: 'sapper', name: 'Sapper', station: 'armory', group: 'fire',
-  look: 'a miner\'s helmet with its lamp lit; a satchel of charges on the hip',
-  hat: sapperHat,
+  key: 'sapper', name: 'Sapper', station: 'circle', group: 'fire',
+  look: 'a bundle of three charges under his arm, the fuse lit and sparking',
+  hat: sapperKit,
   scenes: [
     { name: 'Base', about: 'A charge thrown every 6 s; its burst hits every length it crosses.', dur: 4,
+      body: false,
       draw(g, t, api) {
-        satchel(g, api.me.x, api.me.y);
-        const { tL, land } = throwCharge(g, t, api, { tT: 1.1, tx: 27, id: 1 });
+        const tT = 1.1;
+        sapperAt(g, t, api.me, [[2, tT - LIFT, 2.8]]);
+        const { tL, land } = throwStick(g, t, api, { tT, tx: 27, slot: 2, id: 1 });
         blows(g, t, tL, land, 0.45, [-4, 0, 4], api.st, 1);
       } },
     { name: 'Demolition', about: 'The whole burst is one blow, and it stuns.', dur: 5,
+      body: false,
       state(t, api) { api.stun(2.2, 1.8); },
       draw(g, t, api) {
-        satchel(g, api.me.x, api.me.y);
-        const { tL, land } = throwCharge(g, t, api, { tT: 1.2, fl: 1.0, tx: 29, n: 3, r: 10, id: 2 });
+        const tT = 1.2, left = tT - LIFT;
+        sapperAt(g, t, api.me, [[0, left, 3.0], [1, left, 3.5], [2, left, 4.0]]);
+        const { tL, land } = throwBundle(g, t, api, { tT, fl: 1.0, tx: 29, r: 10, id: 2 });
         blows(g, t, tL, land, 0.85, [0], api.st, 2);
       } },
     { name: 'Incendiary', about: 'The burst sets every length it crosses Burning; a second charge stacks it.', dur: 8,
+      body: false,
       state(t, api) {
         if (t >= spreadDone(27, 1.9)) api.status('burning', 0.34);
         if (t >= spreadDone(35, 5.4)) api.status('burning', 0.67);
       },
       draw(g, t, api) {
-        satchel(g, api.me.x, api.me.y);
-        const a = throwCharge(g, t, api, { tT: 1.1, tx: 27, r: 5, id: 3 });
+        sapperAt(g, t, api.me, [[2, 1.1 - LIFT, 6.4], [0, 4.6 - LIFT, 6.9]]);
+        const a = throwStick(g, t, api, { tT: 1.1, tx: 27, slot: 2, r: 5, id: 3, hot: true });
         blows(g, t, a.tL, a.land, 0.35, [0], api.st, 3);
         catchFire(g, t, a.tL, 27, api.st, 0.34);
-        const b = throwCharge(g, t, api, { tT: 4.6, tx: 35, r: 5, id: 4 });
+        const b = throwStick(g, t, api, { tT: 4.6, tx: 35, slot: 0, r: 5, id: 4, hot: true });
         blows(g, t, b.tL, b.land, 0.35, [0], api.st, 4);
         catchFire(g, t, b.tL, 35, api.st, 0.67);
       } },
     { name: 'Minefield', about: 'Charges laid on the floor ride up their tethers; the coil sets each off as it sways down on it.', dur: MINE_DUR,
       body: false,
       draw(g, t, api) {
-        // the swim: out along the mines, dropping one at each, and home
-        const out = 0.6, far = MINE_XS[MINE_XS.length - 1];
-        const back = out + (far - STATION_X) / SWIM;
-        const home = back + 0.4 + (far - STATION_X) / SWIM;
+        // the swim: out over the mines, letting a stick go at each, and home
         let bx = api.me.x;
-        if (t >= out && t < back) bx = api.me.x + (t - out) * SWIM;
-        else if (t >= back && t < back + 0.4) bx = api.me.x + far - STATION_X;
-        else if (t >= back + 0.4 && t < home) bx = api.me.x + far - STATION_X - (t - back - 0.4) * SWIM;
-        const by = api.me.y + (t > out && t < home ? Math.round(Math.sin(t * 8) * 0.5) : 0);
-        drawBody(g, bx, by); sapperHat(g, bx, by, t); satchel(g, bx, by);
+        if (t >= SWIM_OUT && t < SWIM_BACK) bx = api.me.x + (t - SWIM_OUT) * SWIM;
+        else if (t >= SWIM_BACK && t < SWIM_BACK + 0.4) bx = api.me.x + SWIM_FAR;
+        else if (t >= SWIM_BACK + 0.4 && t < SWIM_HOME) bx = api.me.x + SWIM_FAR - (t - SWIM_BACK - 0.4) * SWIM;
+        bx = Math.round(bx);
+        const by = api.me.y + (t > SWIM_OUT && t < SWIM_HOME ? Math.round(Math.sin(t * 8) * 0.5) : 0);
+        sapperAt(g, t, { x: bx, y: by }, MINES.map((m, i) => [m.slot, m.laid, MINE_RESTOCK[i]]));
         for (const m of MINES) {
           if (t < m.laid) continue;
-          const sink = clamp((t - m.laid) / 0.5, 0, 1);
           const floorY = FLOOR - 1;
-          if (t < m.laid + 0.5) { mine(g, m.x, lerp(by + 3, floorY - 2, sink), t, false); continue; }
+          if (t < m.laid + 0.5) {
+            // let go: it sinks from the bundle to the floor
+            const k = clamp((t - m.laid) / 0.5, 0, 1);
+            mine(g, m.x, lerp(api.me.y, floorY - 3, k), t, false, m.slot === 1);
+            continue;
+          }
           // the anchor on the floor and the tether up to the charge
           rect(g, m.x - 1, floorY, 3, 1, GREYS[6]);
           const rise = clamp((t - m.laid - 0.5) / 1.2, 0, 1);
-          const my = Math.round(lerp(floorY - 2, m.y, rise));
+          const my = Math.round(lerp(floorY - 3, m.y, rise));
           if (t < m.at) {
-            for (let y = my + 2; y < floorY; y++) if (y % 2 === 0) cell(g, m.x, y, GREYS[5]);
-            mine(g, m.x, my, t, rise >= 1);
+            for (let y = my + 3; y < floorY; y++) if (y % 2 === 0) cell(g, m.x, y, GREYS[5]);
+            mine(g, m.x, my, t, rise >= 1, m.slot === 1);
           } else {
             // the tether, cut, sinks back to the anchor
             const k = clamp((t - m.at) / 1.2, 0, 1);
-            for (let y = Math.round(lerp(my + 2, floorY - 1, k)); y < floorY; y++) if (y % 2 === 0) cell(g, m.x, y, GREYS[4]);
+            for (let y = Math.round(lerp(my + 3, floorY - 1, k)); y < floorY; y++) if (y % 2 === 0) cell(g, m.x, y, GREYS[4]);
           }
           boom(g, t, m.at, m.x, m.y, 6, api.st, m.id);
           burst(g, t, m.at, m.x, m.y - 1, 0.45, m.id);
