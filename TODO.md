@@ -16,21 +16,13 @@ Open:
 - **The second half plays shallow** (the owner, 2026-09-26): answered by
   "Fighters in slots" (below).
 
-## Fighters in slots -- DESIGNED, AWAITING APPROVAL (2026-09-26)
+## Fighters in slots -- SPEC WRITTEN, AWAITING SIGN-OFF (2026-09-27)
 
-"Fighters in slots" in DESIGN.md: one fighter a station, the sqwife first;
-each phase broken drops a fang that buys another fighter's slot (four at
-most, five stations); three branches a station, fifteen in all, built for
-synergies; no station order; blows burst scales and a heavy one stuns the
-heal (C + D of `docs/mocks/serpent-impact-2026-09-26.html`). The owner's
-four calls answered 2026-09-26; every branch detailed in
-`docs/serpent-branches.md`. Blocker: the owner's read of that, and its three
-open calls. **C + D is built** (2026-09-27, on today's weapons, branch
-`serpent-stun`): blows bite the hide and burst their scales, a heavy blow
-stuns the heal; the calls made at build are under "Blows land" in DESIGN.md.
-Open: the punch stuns the bare coil from rung 1 (one share cannot hold it
-to late rungs and still let a burst stun the split), and no grenade stuns
-the fading coil today.
+The build spec is `docs/wave-party.md`: stations built in any order, one
+fighter a station, ten classes one ladder each (canon: section 0 of
+`docs/serpent-classes.md`), collapsing rails, fangs buy slots, migration v7
+by refund. C + D and the stun ring are built. Blocker: the owner's sign-off
+on the spec and its "Decided here" list.
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 
