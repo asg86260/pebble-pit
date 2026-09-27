@@ -445,3 +445,176 @@ registerClass({
     },
   ],
 });
+
+// --- the Monk --------------------------------------------------------------------
+// The abyss inward: a shaved head and a topknot, floating a cell off her
+// spire in a ring of chi. She never leaves it. Her palm pushes a flat wave
+// of the abyss's purple up into the coil, and every palm that lands lights
+// a quarter of the ring; a full ring is spent on a chi palm, a wave twice
+// as wide that stuns.
+const MONK_FLOAT = HOME_Y - 1;
+const CHI_R = 3.2;
+// The ring's cells in order, clockwise from the top, so chi fills round it.
+const CHI_RING = (() => {
+  const out = [], seen = new Set();
+  for (let k = 0; k < 64; k++) {
+    const a = -Math.PI / 2 + k / 64 * Math.PI * 2;
+    const dx = Math.round(Math.cos(a) * CHI_R), dy = Math.round(Math.sin(a) * CHI_R);
+    if (!seen.has(dx + ',' + dy)) { seen.add(dx + ',' + dy); out.push([dx, dy]); }
+  }
+  return out;
+})();
+// Chi round the body at (x, y): lit cells bright purple, the rest a faint
+// ring. `spin` turns the whole ring (Windwalker's wind); `pull` draws the
+// lit cells in toward her as a chi palm gathers.
+function drawChi(g, x, y, chi, spin = 0, pull = 0) {
+  const n = CHI_RING.length, lit = Math.round(clamp(chi, 0, 1) * n);
+  const cx = x + 1, cy = y + 1;
+  for (let i = 0; i < n; i++) {
+    const [dx, dy] = CHI_RING[(i + spin) % n];
+    const on = i < lit;
+    const k = on ? 1 - pull * 0.6 : 1;
+    cell(g, cx + dx * k, cy + dy * k, on ? (pull > 0.5 ? WHITE : PURPLES[11]) : PURPLES[3]);
+  }
+}
+// A palm launched at L: a flat wave `w` cells wide leaves her head and
+// rises to the coil's underside in TRAVEL seconds, a bright front with two
+// fading rows behind it; where it lands, a ring of purple opens on the hide.
+const TRAVEL = 0.35;
+function palmWave(g, t, L, x, y, st, w = 3) {
+  const a = t - L;
+  if (a < 0 || a > TRAVEL + 0.5) return;
+  const cx = x + 1, x0 = cx - Math.floor(w / 2);
+  const face = coilBottom(cx, t, st) + 1, from = y - 1;
+  if (a <= TRAVEL) {
+    const front = Math.round(from + (face - from) * (a / TRAVEL));
+    rect(g, x0, front, w, 1, PURPLES[11]);
+    if (front + 1 <= from) rect(g, x0 + 1, front + 1, w - 2, 1, PURPLES[9]);
+    if (front + 2 <= from) rect(g, x0 + 1, front + 2, w - 2, 1, PURPLES[6]);
+    return;
+  }
+  // the ring opens to about the wave's own width
+  const b = a - TRAVEL, r = 1 + (b / 0.5) * (w - 1);
+  ring(g, cx, face - 1, r, b < 0.2 ? PURPLES[11] : b < 0.35 ? PURPLES[9] : PURPLES[7]);
+}
+// One Monk scene off its timetable.
+//   palms: launch times; chiPalms: the chi palm's launch times; per: chi a
+//   palm lights; sit: [from, to] she meditates on the plinth; spin: the ring turns.
+function drawMonk(g, t, api, { palms, chiPalms, per = 0.25, sit = null, spin = false }) {
+  const st = api.st, x = HOME_X;
+  const sitting = sit && t >= sit[0] && t < sit[1];
+  const y = sitting ? HOME_Y : MONK_FLOAT;
+  for (const L of palms) land(g, t, L + TRAVEL, x + 1, coilBottom(x + 1, t, st), 0.3, Math.round(L * 10));
+  for (const L of chiPalms) land(g, t, L + TRAVEL, x + 1, coilBottom(x + 1, t, st), 0.75, Math.round(L * 10) + 50);
+  for (const L of palms) palmWave(g, t, L, x, y, st, 3);
+  for (const L of chiPalms) palmWave(g, t, L, x, y, st, 7);
+  // chi: a share for every palm landed since the last chi palm, and in
+  // meditation it fills on its own toward full
+  const lastChi = lastOf(chiPalms.map(L => L + TRAVEL), t) ?? -1;
+  let chi = palms.filter(L => L + TRAVEL <= t && L + TRAVEL > lastChi).length * per;
+  if (sit && t >= sit[0]) chi += (t < sit[1] ? along(t, sit[0], sit[1]) : 1) * (1 - chi);
+  const gather = chiPalms.find(L => t >= L - 0.3 && t < L + 0.05);
+  const pull = gather != null ? along(t, gather - 0.3, gather) : 0;
+  if (chiPalms.some(L => t >= L + 0.05 && t < L + TRAVEL)) chi = 0;
+  drawChi(g, x, y, gather != null ? 1 : chi, spin ? Math.floor(t * 10) : 0, pull);
+  drawBody(g, x, y);
+  api.cls.hat(g, x, y, t);
+  // her hands: at her sides, raised to push as a palm leaves
+  const pushing = [...palms, ...chiPalms].some(L => t >= L - 0.1 && t < L + 0.15);
+  const hy = sitting ? y + 2 : pushing ? y - 1 : y + 1;
+  cell(g, x - 1, hy, WHITE); cell(g, x + BODY, hy, WHITE);
+  return { x, y };
+}
+
+const MK_BASE = { palms: [0.4, 1.4, 2.4, 3.4], chiPalms: [4.4] };
+const MK_WIND = { palms: [0.4, 1.2, 2.8, 3.6], chiPalms: [2.0, 4.4], per: 0.5, spin: true };
+const MK_STILL = { palms: [0.3], chiPalms: [5.0], sit: [1.0, 4.8] };
+const STILL_WEAK = [1.6, 4.8];
+const MK_HARM = { palms: [1.0, 3.2], chiPalms: [] };
+const BUDDY_THROWS = [0.3, 2.6], PEBBLE_S = 0.5, THREAD_S = 0.55;
+const CHI_STUN = 1.2;
+const chiStuns = (api, t, sc) => { for (const L of sc.chiPalms) stunFor(api, t, L + TRAVEL, CHI_STUN); };
+
+registerClass({
+  key: 'monk', name: 'Monk', station: 'spire', group: 'hand',
+  look: 'a topknot on a shaved head; floats a cell off the spire in a ring of purple chi',
+  hat(g, cx, cy) {
+    // the knot sits on a one-cell tie, so there is water under its corners
+    cell(g, cx + 1, cy - 1, GREYS[7]);
+    rect(g, cx, cy - 2, BODY, 1, GREYS[9]);
+  },
+  scenes: [
+    {
+      name: 'Base', about: 'A palm every second pushes a wave of the abyss into the coil and lights a quarter of her chi; a full ring is a chi palm that stuns.',
+      dur: 6, body: false,
+      state(t, api) { chiStuns(api, t, MK_BASE); },
+      draw(g, t, api) { drawMonk(g, t, api, MK_BASE); },
+    },
+    {
+      name: 'Windwalker', about: 'Chi fills twice as fast: half a ring a palm, the ring turning, a chi palm every third blow.',
+      dur: 6, body: false,
+      state(t, api) { chiStuns(api, t, MK_WIND); },
+      draw(g, t, api) { drawMonk(g, t, api, MK_WIND); },
+    },
+    {
+      name: 'Stillness', about: 'Between palms she settles on the spire and breathes; slow rings rise off her, and while she sits the serpent is Weakened.',
+      dur: 6.6, body: false,
+      state(t, api) {
+        chiStuns(api, t, MK_STILL);
+        if (t >= STILL_WEAK[0] && t < STILL_WEAK[1]) api.status('weakened', 1);
+      },
+      draw(g, t, api) {
+        const { x, y } = drawMonk(g, t, api, MK_STILL);
+        // the held breath: a slow ring every 1.2 s, rising off her into the coil
+        const [s0, s1] = MK_STILL.sit;
+        for (let b = s0; b <= s1 - 1.2; b += 1.2) {
+          const a = t - b;
+          if (a < 0 || a > 1.6) continue;
+          const r = 3 + a * 14, cx = x + 1, cy = y + 1;
+          const tone = a < 0.6 ? PURPLES[8] : a < 1.1 ? PURPLES[6] : PURPLES[4];
+          const n = Math.ceil(Math.PI * 2 * r);
+          for (let i = 0; i < n; i++) {
+            const ang = Math.PI + i / n * Math.PI;   // the upper half only
+            const px = cx + Math.cos(ang) * r, py = cy + Math.sin(ang) * r;
+            if (py > coilBottom(Math.round(px), t, api.st)) cell(g, px, py, tone);
+          }
+        }
+      },
+    },
+    {
+      name: 'Harmony', about: 'Her palm Inspires the fighter who hit last: the other fighter throws, her wave lands, and a thread of purple runs from the hit to them.',
+      dur: 5, body: false,
+      state(t, api) {
+        const first = MK_HARM.palms[0] + TRAVEL + THREAD_S;
+        if (t >= first) api.buff('buddy', 'inspired', 1);
+      },
+      draw(g, t, api) {
+        const st = api.st, bx = BUDDY_X, by = api.buddy.y;
+        // the other fighter's own blow: a stone thrown straight up into the coil
+        BUDDY_THROWS.forEach((T, i) => {
+          const a = t - T, face = coilBottom(bx, t, st) + 1;
+          if (a >= 0 && a < PEBBLE_S) { const py = Math.round(by - 1 + (face - by + 1) * (a / PEBBLE_S)); cell(g, bx, py, WHITE); cell(g, bx, py + 1, GREYS[6]); }
+          land(g, t, T + PEBBLE_S, bx, face - 1, 0.22, 90 + i);
+        });
+        const { x } = drawMonk(g, t, api, MK_HARM);
+        // from where her wave lands, a thread runs down to the one who hit last
+        for (const L of MK_HARM.palms) {
+          const a = t - (L + TRAVEL);
+          const hx = x + 1, hy = coilBottom(hx, t, st) + 1;
+          if (a >= 0 && a < THREAD_S) {
+            const u = a / THREAD_S;
+            for (let k = 0; k < 6; k++) {
+              const v = clamp(u - k * 0.035, 0, 1);
+              // a shallow arc, so it reads as sent rather than a straight laser
+              const px = hx + (bx - hx) * v, py = hy + (by - 1 - hy) * v - Math.sin(v * Math.PI) * 3;
+              cell(g, px, py, k === 0 ? PURPLES[11] : k < 3 ? PURPLES[9] : PURPLES[6]);
+            }
+          }
+          // the buff arriving: a ring round the fighter, opening and fading
+          const b = a - THREAD_S;
+          if (b >= 0 && b < 0.4) ring(g, bx, by + 1, 2 + b * 6, b < 0.15 ? PURPLES[11] : b < 0.3 ? PURPLES[9] : PURPLES[6]);
+        }
+      },
+    },
+  ],
+});
