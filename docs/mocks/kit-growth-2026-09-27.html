@@ -37,8 +37,6 @@
   .tile { display: grid; gap: 2px; justify-items: start; }
   .tile canvas { width: 330px; max-width: 100%; height: auto; }
   .tile span { font-size: 11px; color: var(--dim); }
-  .fixrow { padding-block: 10px; border-bottom: 1px solid var(--rule); }
-  .fixrow h3 { font-size: 13px; margin: 0 0 6px; }
   @media (max-width: 760px) { .cls { grid-template-columns: 1fr; } .bar { position: static; }
     .tile canvas { width: calc((100vw - 72px) / 2); } }
 </style>
@@ -59,10 +57,6 @@
     <div class="grp" id="sauce"><span>sauce</span></div>
     <div class="grp" id="smears"><span>smears</span></div>
     <div class="grp" id="classic"><span>classic</span></div></div>
-
-  <h2>Pick a fix</h2>
-  <p class="dim">Still open: the Martial Artist's thrust smear, the current version beside its alternatives, looping with classic on.</p>
-  <div id="fixes"></div>
 
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
@@ -326,11 +320,12 @@ const dip = (a, at, depth, lead = 0.15, back = 0.2) => {
 // whole cell at contact. Travel away from a strike stays smooth.
 let CLASSIC = true;
 const POSE = 0.08;
-// The fix alternatives in force. The owner picked (2026-09-28) C for the
-// Haymaker (the fist held a pose alone, then the star) and A for the
-// Whirlwind (one star, on the middle hit); the thrust smear is still open,
-// its alternatives shown in "Pick a fix" ('' is the current one).
-const PICKED = { hay: 'C', thrust: '', whirl: 'A' };
+// The fix alternatives in force, all picked by the owner (2026-09-28): C for
+// the Haymaker (the fist held a pose alone, then the star), A for the
+// Whirlwind (one star, on the middle hit), B for the Martial Artist's thrust
+// smear (a tapered wedge, three cells at the point narrowing to one, longer
+// by the blade on the pike). The others stay in the code, as '' the old ones.
+const PICKED = { hay: 'C', thrust: 'B', whirl: 'A' };
 let VAR = { ...PICKED };
 const EX = () => CLASSIC ? 1.7 : 1;
 // The world at the moment a fighter is drawn, so a smear can find the hide.
@@ -839,8 +834,11 @@ const martial = {
           // B: a tapered wedge, three cells at the point narrowing to one
           const n = bot - top;
           for (let yy = top; yy <= bot; yy++) {
-            const q = (yy - top) / Math.max(1, n), half = q < 0.3 ? 1 : 0;
-            for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, yy, yy === top ? WHITE : dx ? GREYS[9] : q < 0.5 ? GREYS[10] : GREYS[9]);
+            // three wide at the point (and down the pike's blade, which leads
+            // at rung 8 and makes the wedge longer), then one
+            const q = (yy - top) / Math.max(1, n), k = yy - top, half = k < 2 + blade ? 1 : 0;
+            const core = yy === top || (blade && k < blade) ? WHITE : q < 0.5 ? GREYS[10] : GREYS[9];
+            for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, yy, dx ? GREYS[9] : core);
           }
           if (onHide(x + 1, top)) for (let dx = -1; dx <= 1; dx++) cell(g, x + 1 + dx, top - 1, GREYS[2]);
         } else if (VAR.thrust === 'C') {
@@ -1391,24 +1389,8 @@ function drawSlot(g, c, R, sx, t) {
   drawPlinthAt(g, x + 1, ROW_FLOOR);
   c.rest(g, x, y, R, t);
 }
-const strips = [], tiles = [], fixTiles = [];
+const strips = [], tiles = [];
 const host = document.getElementById('host');
-// Pick a fix: a row a rough spot, the current version then its alternatives,
-// all on one clock so the contacts land together.
-const FIXES = [
-  { name: 'Martial Artist thrust smear (1 cell, reads as a staff)', c: 'martial', key: 'thrust', opts: [
-    ['', 'current: a 1-cell streak'], ['A', 'A: 2 cells, white edge, grey core'],
-    ['B', 'B: a wedge, 3 cells at the point to 1'], ['C', 'C: a ghost staff behind, speed lines']] },
-];
-for (const f of FIXES) {
-  const row = el('div', { className: 'tiles' });
-  for (const [v, label] of f.opts) {
-    const cv = el('canvas'); cv.width = TW * P; cv.height = TH * P;
-    row.append(el('div', { className: 'tile' }, [cv, el('span', { textContent: label })]));
-    fixTiles.push({ c: ORDER.find(o => o.key === f.c), key: f.key, v, g: cv.getContext('2d') });
-  }
-  document.getElementById('fixes').append(el('div', { className: 'fixrow', id: 'fix-' + f.key }, [el('h3', { textContent: f.name }), row]));
-}
 STATIONS.forEach(([where, ...pair]) => pair.forEach(c => {
   const lines = el('div', { className: 'lines' }, [
     el('h3', { textContent: c.name }), el('span', { className: 'k', textContent: where }),
@@ -1475,10 +1457,6 @@ document.getElementById('play').onclick = e => { playing = !playing; e.target.te
 function paintAll(t) {
   for (const s of strips) RUNGS.forEach((R, i) => drawSlot(s.g, s.c, R, i * SLOT, t));
   for (const tl of tiles) paintTile(tl.g, tl.c, tl.R, t, tl.phase);
-  // the fix tiles: classic on, their own variant, rung 4, one clock
-  const keep = [CLASSIC, VAR];
-  for (const tl of fixTiles) { CLASSIC = true; VAR = { ...PICKED, [tl.key]: tl.v }; paintTile(tl.g, tl.c, 4, t, 0); }
-  [CLASSIC, VAR] = keep;
   paintPane(pane, t);
 }
 // For shots: stand the page at a time; set the rung; a contact sheet of the pane.
