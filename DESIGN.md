@@ -15608,8 +15608,8 @@ go faster, not a key. `FADE_UNLIT` rises to the same one half.
   closes over `CHIP_HEAL_S`. Drawn in the coil's own body coordinates, so it
   rides the bends like the cracks.
 - **A heavy blow stuns (D).** One blow worth at least `STUN_SHARE` of the
-  stage's depth makes the serpent seize: the coil holds still and shudders a
-  cell, and **the heal stops** for as long as it lasts, longer for a bigger
+  stage's depth makes the serpent seize: the coil holds still under a ring
+  of cells running over its head, and **the heal stops** for as long as it lasts, longer for a bigger
   blow (up to `STUN_MAX_S`). A share of the depth rather than a number, so a
   punch can stun the bare coil and only a star or a grenade's whole burst
   stuns the fading one. Only single blows stun -- a fist, a grenade's burst, a
@@ -15646,8 +15646,12 @@ scenes `deep-stun`, `deep-chip`). The calls made at build:
   the defense that broke. A blow that breaks the stage stuns nothing.
 - **Holding still** is the coil's sway run on the clock less
   `serpentStill`, the ms the stuns have held back (saved), so every body,
-  lance and ring sees the coil held; the shudder (a cell down, back, up,
-  back) is the drawing's only.
+  lance and ring sees the coil held.
+- **No shudder; a ring** (the owner, 2026-09-27: "just stop and the ring
+  around", "drop the shudder"). The coil built first shuddered a cell while
+  stunned; it now only holds still, and a flat ring of eight cells stands
+  over its head, one bright cell running round it with a short tail fading
+  behind (the class bench's Stunned). `STUN_RING*` in config/deepdraw.js.
 - **The bite** is a half disc out of the edge the blow came from -- a star
   from above, a fist and a grenade from below, a click from whichever side
   of the centerline it was on -- 1 to 4.5 cells for a blow's size on a log

@@ -13,14 +13,15 @@
 // The wound is read on the body: cracks out from the belly as far as it is
 // deep, and the gap at the belly breaking the cage of ribs the one it took is held in (DESIGN.md, "The serpent, redrawn").
 // A blow is read on it too: a bite out of the edge it came from, closing,
-// and a stunned coil shuddering a cell (DESIGN.md, "Blows land").
+// and a ring running over a stunned coil's head (DESIGN.md, "Blows land").
 
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          FADE_SEEN, BEAM_LIGHTS, WOUND_GAP, BOUND_BANDS, SIGIL_RX, BELLY_AT,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
-         STUN_SHAKE, STUN_SHAKE_MS } from '../config.js';
+         STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
+         STUN_RING_DIM } from '../config.js';
 import { S } from '../state.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
@@ -83,10 +84,21 @@ function lay(t, x0, x1) {
   return { pts: pts.filter(p => p.x > x0 - reach && p.x < x1 + reach), alongAt };
 }
 
-// A stunned coil holds still but for this: a cell down, back, a cell up,
-// back, over and over.
-const SHUDDER = [0, 1, 0, -1];
-const shudder = t => S.serpentStun > 0 ? SHUDDER[Math.floor(t / STUN_SHAKE_MS) % SHUDDER.length] * STUN_SHAKE : 0;
+// A stunned coil holds still (deep/place.js), and this says so: a flat ring
+// of cells over the head, standing straight up off its top edge whichever
+// way the neck is bent, with one bright cell running round it and a tail
+// fading behind. `head` is the sample at the head's segment, or none when the
+// head is off the glass.
+function drawStunRing(t, head) {
+  if (!(S.serpentStun > 0) || !head) return;
+  const cx = snap(head.x), cy = snap(head.y - head.r) - STUN_RING_UP * P;
+  const n = STUN_RING.length, lead = Math.floor(t / STUN_RING_STEP_MS) % n;
+  STUN_RING.forEach(([dx, dy], i) => {
+    const behind = (lead - i + n) % n;
+    ctx.fillStyle = GREYS[WHITE - (behind < STUN_RING_TONES.length ? STUN_RING_TONES[behind] : STUN_RING_DIM)];
+    ctx.fillRect(cx + dx * P, cy + dy * P, P, P);
+  });
+}
 
 // The bites still open, each where it is along the body, the edge it is on
 // and how wide it still is: a blow's size gives its radius, and it closes
@@ -119,8 +131,6 @@ export function drawSerpent() {
   const wk = stage >= 4 ? 0 : woundK();
   const { pts, alongAt } = lay(t, x0, x1);
   if (!pts.length) return;
-  ctx.save();
-  ctx.translate(0, shudder(t));
   const bit = bites(t, alongAt);
   const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
   const gap = held ? Math.round(wk * WOUND_GAP / P) * P : 0;
@@ -251,7 +261,10 @@ export function drawSerpent() {
     ctx.fillStyle = GREYS[2];
     for (const c of ribs) ctx.fillRect(c.x, c.y, P, P);
   }
-  ctx.restore();
+  const ringA = headA + STUN_RING_BACK * P;
+  let head = null;
+  for (const p of pts) if (Math.abs(p.along - ringA) < P && (!head || Math.abs(p.along - ringA) < Math.abs(head.along - ringA))) head = p;
+  drawStunRing(t, head);
   ctx.fillStyle = '#000';
 }
 
