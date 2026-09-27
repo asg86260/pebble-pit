@@ -574,8 +574,9 @@ function sword(g, bx, gy, R, t) {
   for (let r = ty + 1; r <= ty + L; r++) cell(g, bx, r, GREYS[10]);
   for (let d = -1; d <= 1; d++) cell(g, bx + d, gy - 1, GREYS[8]);
   cell(g, bx, gy, GREYS[6]);
-  if (R8(R)) { drift(g, bx - 1, ty + 2, t, 1, 0); drift(g, bx + 1, ty + 3, t, 1, 0.5); }
+  if (R8(R)) { drift(g, bx - 1, ty + 2, t, 1, 0, 3, 2.2, MOTES_P); drift(g, bx + 1, ty + 3, t, 1, 0.5, 3, 2.2, MOTES_P); }
 }
+const MOTES_P = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
 // The sword swung about a pivot (px, py), at `ang` radians from straight up,
 // clockwise: the guard `from` cells out, then the blade, the point last.
 // Behind it the swing leaves a short trail, its outer cells a step darker
@@ -601,76 +602,123 @@ function swungSword(g, px, py, ang, R, t, from, dir = 0, behind = null) {
   // with smears off, the old ghost trail of darker blade copies
   if (dir && !SMEAR) [[0.45, GREYS[7]], [0.9, GREYS[5]]].forEach(([back, tone]) => blit(g, swordSprite(R, from, tone), cx, cy, ang - dir * back));
   blit(g, swordSprite(R, from), cx, cy, ang);
-  if (R8(R)) drift(g, ...swordAt(px, py, ang, from + 2), t, 1, 0.3);
+  if (R8(R)) { drift(g, ...swordAt(px, py, ang, from + 2), t, 1, 0.3, 3, 2.2, MOTES_P); drift(g, ...swordAt(px, py, ang, from + 4), t, 1, 0.8, 3, 2.2, MOTES_P); }
 }
 const swordsman = {
   key: 'sword', name: 'Swordsman', at: 5,
   base: 'cuts that bleed', move: 'Whirlwind: each cut hits wide', cap: 'every 3rd cut hits twice',
-  mark: 'the blade a cell longer', touch: 'motes drifting off the blade',
+  mark: 'the blade a cell longer', touch: 'purple motes drifting off the blade',
   rest(g, x, y, R, t) { drawBody(g, x, y); sword(g, x - 3, y + 1, R, t); cell(g, x - 3, y + 2, GREYS[9]); },
-  len: 3.3, cuts: [0.8, 1.4, 2.0],
-  // Each swing: when it starts, how long, its angles, which way, where it hits.
-  // Rung 0 swipes the blade over his head through an arc; from rung 4 he spins
-  // round whole, sword out; at rung 8 the third cut is a spin and a spin back.
-  swings(R) {
-    const sw = !R4(R) ? this.cuts.map(c => ({ at: c, dur: 0.18, a0: -1.2, a1: 1.2, hit: c + 0.09 }))
-      : this.cuts.map(c => ({ at: c, dur: 0.4, a0: -Math.PI / 2, a1: Math.PI * 1.5, hit: c + 0.1, spin: true }));
-    if (R8(R)) sw.push({ at: 2.45, dur: 0.4, a0: Math.PI * 1.5, a1: -Math.PI / 2, hit: 2.75, spin: true });
-    // sauced, the swing accelerates, so the blade crosses the top later in it
-    if (SAUCE) for (const w of sw) {
-      const dir = Math.sign(w.a1 - w.a0), from = w.a0 - dir * 0.45, up = 0;
-      w.hit = w.at + w.dur * Math.pow((up - from) / (w.a1 - from), 1 / 1.6);
+  len: 3.4,
+  // The blade's angle is a track of keys (the owner, 2026-09-28: "the first
+  // looks a bit lame, second should end with a full circle whirlwind ... rung
+  // 8 ... more connection between the swings"). A key is [time, angle, how the
+  // blade gets there]: 'in' accelerating (a strike into the hide), 'out'
+  // decelerating (a follow-through), 'io' eased both ends. Each contact is a
+  // key at angle 0 (the blade straight up into the hide), so the posed clock
+  // lands a pose on it.
+  //   Rung 0, the cut: a held wind-up cocked far back over the shoulder, a
+  //   strike into the hide, a follow-through well past, then home.
+  //   Rung 4, the Whirlwind: three spins, the last one a whole circle.
+  //   Rung 8: one unbroken combo -- each spin's end carries straight into the
+  //   next wind-up, the last one a spin back -- only settling after it.
+  HELD: [-1.2, -0.7],
+  track(R) {
+    const T = Math.PI * 2, K = [];
+    if (!R4(R)) {
+      const H = -1.2, W = -2.5;
+      for (const c of [0.8, 1.4, 2.0]) K.push([c - 0.26, H, 'io'], [c - 0.08, W, 'io'], [c, 0, 'in'], [c + 0.12, 1.9, 'out'], [c + 0.34, H, 'io']);
+      return K;
     }
-    return sw;
+    const H = -0.7, B = -Math.PI / 2 - 0.8;
+    if (!R8(R)) {
+      for (const [i, c] of [0.8, 1.4, 2.0].entries()) {
+        K.push([c - 0.22, H, 'io'], [c - 0.06, B, 'io'], [c, 0, 'in']);
+        // the last spin runs the whole circle back to the top, then carries on a little
+        if (i === 2) K.push([c + 0.3, T, 'out'], [c + 0.4, T + 0.5, 'out'], [c + 0.62, T + H, 'io']);
+        else K.push([c + 0.22, 1.5 * Math.PI, 'out'], [c + 0.42, T + H, 'io']);
+      }
+      return K;
+    }
+    // rung 8: wind up once, then spin into spin into spin, and spin back
+    K.push([0.58, H, 'io'], [0.74, B, 'io'], [0.8, 0, 'in'], [1.02, 1.5 * Math.PI, 'out'],
+           [1.3, 1.5 * Math.PI - 0.8, 'io'], [1.4, T, 'in'], [1.62, T + 1.5 * Math.PI, 'out'],
+           [1.9, T + 1.5 * Math.PI - 0.8, 'io'], [2.0, 2 * T, 'in'], [2.22, 2 * T + 1.5 * Math.PI, 'out'],
+           [2.4, 2 * T + 1.5 * Math.PI + 0.6, 'out'], [2.75, 2 * T, 'in'], [2.95, 2 * T - Math.PI / 2, 'out'],
+           [3.2, 2 * T + H, 'io']);
+    return K;
   },
-  // The blade's angle for a swing at `a`, or null outside it. Sauced: cocked
-  // further back first, then accelerating through the hit, carrying a little
-  // past the end and easing back to the held angle.
-  angle(w, a, held) {
-    const dir = Math.sign(w.a1 - w.a0), u = a - w.at;
-    if (!SAUCE) return u >= 0 && u < w.dur ? lerp(w.a0, w.a1, u / w.dur) : null;
-    const back = w.a0 - dir * 0.45 * EX(), home = held + 2 * Math.PI * Math.round((w.a1 - held) / (2 * Math.PI));
-    if (u < -0.15 || u > w.dur + 0.38) return null;
-    if (u < 0) return lerp(held + 2 * Math.PI * Math.round((w.a0 - held) / (2 * Math.PI)), back, ease((u + 0.15) / 0.15));
-    if (u < w.dur) return lerp(back, w.a1, Math.pow(u / w.dur, 1.6));
-    if (u < w.dur + 0.08) return w.a1 + dir * 0.35 * EX() * ease((u - w.dur) / 0.08);
-    return lerp(w.a1 + dir * 0.35 * EX(), home, ease((u - w.dur - 0.08) / 0.3));
+  // Contacts: every key at a whole turn (straight up) reached by a strike.
+  contacts(R) { return this.track(R).filter(([, an, e]) => e === 'in').map(([at]) => at); },
+  // The angle at `a`, or null outside the track (held).
+  angle(R, a) {
+    const K = this.track(R);
+    if (a < K[0][0] || a >= K[K.length - 1][0]) return null;
+    for (let i = 1; i < K.length; i++) {
+      const [t1, a1, e] = K[i], [t0, a0] = K[i - 1];
+      if (a >= t1) continue;
+      const u = (a - t0) / (t1 - t0);
+      return lerp(a0, a1, e === 'in' ? u * u : e === 'out' ? 1 - (1 - u) * (1 - u) : ease(u));
+    }
+    return null;
   },
   kickMax: 1,
-  hits(R, x) { const px = x + 1; return this.swings(R).flatMap(w => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({ at: w.hit, x: sx, k: 0.35, kind: R4(R) ? 'whirl' : '', mid: sx === px }))); },
+  hits(R, x) { const px = x + 1; return this.contacts(R).flatMap(at => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({ at, x: sx, k: R4(R) ? 0.35 : 0.45, kind: R4(R) ? 'whirl' : '', mid: sx === px }))); },
   state(a, api) { if (a >= 0.8) api.status('bleeding'); },
   draw(g, t, a, api, R, x) {
     const s = api.st, L = bladeLen(R), spin = R4(R);
-    // a swipe pivots over his head; a spin about the body's middle, the blade clear of it
-    const from = spin ? 2 : 1, reach = from + L + 1;
-    const hover = maxBot([x, x + 2], t, s) + reach + (spin ? -1 : 1);
-    const k = trip(a, 0.4, 2.9, this.len + 0.3), y = lerp(REST_Y, hover, k) + (api.kick || 0);
-    const px = x + 1, py = spin ? y + 1 : y - 1;
-    drawBody(g, x, y);
-    const sw = this.swings(R);
-    sw.forEach((w, i) => {
-      const spots = spin ? [px - 6, px, px + 6] : [px];
-      spots.forEach((sx, n) => blow(g, t, t - (a - w.hit), sx, s, 0.35, i * 9 + n));
-    });
-    if (k < 0.2) { sword(g, x - 3, y + 1, R, t); return; }
-    // the swing under way, or held cocked between swings
-    const held = spin ? -0.7 : -1.2;
-    let on = null, ang = null;
-    for (const w of sw) { const an = this.angle(w, a, held); if (an != null) { on = w; ang = an; } }
-    // a smear at top speed: just before the blade crosses the hide, and for a
-    // spin once more late in the turn, clear of the contact and its pause
-    const smear = SMEAR && !CLASSIC && on && Math.abs(a - on.hit) > 0.02
-      && (inWin(a, on.hit - 0.055) || (on.spin && inWin(a, on.at + on.dur - 0.06)));
-    const pose = on && sw.find(w => smearPose(a, w.hit));
-    if (pose) {
-      // classic: the pose before contact is a held crescent, from where the
-      // blade was two poses back to where it bites
-      const tip = from + L + 1, dir = Math.sign(pose.a1 - pose.a0);
-      const to = this.angle(pose, pose.hit, held), back = this.angle(pose, pose.hit - 2.5 * POSE, held) ?? to - dir * 1.4;
+    // a cut pivots over his head; a spin about the body's middle, the blade clear of it
+    const from = spin ? 2 : 1, reach = from + L + 1, tip = reach;
+    // the cut buries its point a cell past the hide line
+    const hover = maxBot([x - 1, x + 3], t, s) + reach + (spin ? -1 : 0);
+    const k = trip(a, 0.4, 3.0, this.len), cs = this.contacts(R);
+    let y = lerp(REST_Y, hover, k) + (api.kick || 0), bx = x;
+    // the cut: the body leans into the swing by a cell and settles
+    if (!spin) for (const c of cs) {
+      const u = a - c;
+      if (u > -0.08 && u < 0.34) bx += u < 0 ? ease((u + 0.08) / 0.08) : u < 0.14 ? 1 : 1 - ease((u - 0.14) / 0.2);
+    }
+    const px = bx + 1, py = spin ? y + 1 : y - 1;
+    drawBody(g, bx, y);
+    cs.forEach((c, i) => (spin ? [px - 6, px, px + 6] : [px]).forEach((sx, n) => blow(g, t, t - (a - c), sx, s, spin ? 0.35 : 0.45, i * 9 + n)));
+    if (k < 0.2) { sword(g, bx - 3, y + 1, R, t); return; }
+    const held = this.HELD[spin ? 1 : 0], ang = this.angle(R, a) ?? held;
+    const at = a0 => this.angle(R, a0) ?? held;
+    // rung 8's combo trails the blade all the way: a dim arc behind its point
+    if (R8(R) && this.angle(R, a) != null) {
+      const back = at(a - 0.12), dir = Math.sign(ang - back);
+      if (Math.abs(ang - back) > 0.2) for (let q = 0.15; q <= 1; q += 0.1) {
+        const an = lerp(ang - dir * 0.15, back, q);
+        for (const r of [tip, tip - 1]) cell(g, px + Math.round(Math.sin(an) * r), py + Math.round(-Math.cos(an) * r), q < 0.5 ? GREYS[7] : GREYS[5]);
+      }
+    }
+    // classic's held poses: the smear before each contact, and the Whirlwind's
+    // closing circle as a full ring
+    const pre = cs.find(c => smearPose(a, c));
+    const lastC = cs[cs.length - 1], ring = CLASSIC && spin && !R8(R) && a >= lastC + 0.3 - POSE - 1e-9 && a < lastC + 0.3 - 1e-9;
+    if (ring) {
+      boldArc(g, px, py, ang - 2 * Math.PI + 0.05, ang, tip - 2, tip, from);
+    } else if (pre != null) {
+      // where the blade was two and a half poses back, brought round to within
+      // a turn behind where it bites (the track counts whole turns), and kept
+      // to a crescent, not a ring
+      const to = at(pre), sgn = Math.sign(to - at(pre - 0.02)) || 1, T = 2 * Math.PI;
+      let span = ((sgn * (to - at(pre - 2.5 * POSE))) % T + T) % T;
+      if (span < 0.3) span = 1.4;
+      const back = to - sgn * Math.min(span, 2.4);
+      // the crescent, three cells deep, with speed lines trailing off its back
       boldArc(g, px, py, back, to, tip - 2, tip, from);
-    } else if (on) swungSword(g, px, py, ang, R, t, from, a >= on.at && a < on.at + on.dur ? Math.sign(on.a1 - on.a0) : 0,
-                       smear ? this.angle(on, a - 0.05, held) : null);
-    else swungSword(g, px, py, held, R, t, from);
+      const dir = Math.sign(to - back) || 1;
+      for (const [dA, r0] of [[0.25, tip], [0.45, tip - 2]]) for (let j = 0; j < 2; j++) {
+        const an = back - dir * (dA + j * 0.12);
+        cell(g, px + Math.round(Math.sin(an) * r0), py + Math.round(-Math.cos(an) * r0), j ? GREYS[5] : GREYS[7]);
+      }
+    } else {
+      // the smooth clock's short smear, just before each contact
+      const smear = SMEAR && !CLASSIC && cs.some(c => inWin(a, c - 0.035));
+      const moving = this.angle(R, a) != null && Math.abs(at(a) - at(a - 0.03)) > 0.05;
+      swungSword(g, px, py, ang, R, t, from, moving ? Math.sign(at(a) - at(a - 0.03)) : 0, smear ? at(a - 0.05) : null);
+    }
   },
 };
 
