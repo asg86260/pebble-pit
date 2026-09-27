@@ -4,9 +4,9 @@
 // from plain cells through the harness; nothing here is read by the game.
 
 import {
-  P, FLOOR, STATION_X, BODY, GREYS, PURPLES, WHITE, INK, hash, clamp, steps,
+  FLOOR, STATION_X, BODY, GREYS, PURPLES, WHITE, hash, clamp, steps,
   cell, rect, line, ring, coilY, coilTop, coilBottom, COIL_X0, COIL_X1,
-  burst, chip, drawBody, registerStatus, registerClass, STATUS,
+  burst, chip, drawBody, registerStatus, registerClass,
 } from './harness.js';
 
 // --- shared ground -----------------------------------------------------------------
@@ -117,18 +117,12 @@ function markArrive(g, t, s, x0, a) {
 }
 registerStatus('marked', { name: 'Marked', on: 'serpent', serpent(g, t, s) { drawMarks(g, t, s); } });
 
-// Keen: a honed edge held level across the fighter, a cell out either side,
-// and a glint running along it now and then.
+// Keen: a point over the fighter, clear of any hat (two rows above the
+// body at most), a whetted edge that a glint runs up and over now and then.
 function drawKeen(g, t, x, y) {
-  const row = y + 1;
-  for (const cx of [x - 2, x - 1, x + 3, x + 4]) cell(g, cx, row, GREYS[8]);
-  for (let cx = x; cx < x + BODY; cx++) cell(g, cx, row, GREYS[7]);
-  const p = (t % 1.6) / 0.5;
-  if (p < 1) {
-    const gx = Math.round(x - 2 + p * 6);
-    cell(g, gx, row, gx >= x && gx < x + BODY ? INK : WHITE);
-    cell(g, gx, row - 1, gx >= x && gx < x + BODY ? GREYS[8] : GREYS[6]);
-  }
+  const pts = [[x - 1, y - 3], [x, y - 4], [x + 1, y - 5], [x + 2, y - 4], [x + 3, y - 3]];
+  const p = (t % 1.6) / 0.4;
+  pts.forEach(([cx, cy], i) => cell(g, cx, cy, p < 1 && Math.round(p * 4) === i ? WHITE : i === 2 ? GREYS[9] : GREYS[7]));
 }
 registerStatus('keen', { name: 'Keen', on: 'fighter', fighter(g, t, cx, cy) { drawKeen(g, t, cx, cy); } });
 
@@ -389,6 +383,121 @@ registerClass({
           if (i === 0 && a >= 0 && a < RUN_S) markArrive(g, t, st, AX, a);
           // the stab that lands on the Mark: a ring closing on the spot
           if (i > 0 && a >= 0 && a < 0.3) ring(g, AX, Math.round(coilY(AX, t, st)), Math.round(4 - a * 8), PURPLES[a < 0.15 ? 11 : 8]);
+        },
+      }) },
+  ],
+});
+
+// --- the Ranger ----------------------------------------------------------------------
+
+// She never leaves the station: the bow is drawn at her right, and every
+// arrow flies its whole way up to the coil.
+const FLY = 0.4;                                     // an arrow's flight, in seconds
+const NOCK = 0.2;                                    // the pull before each release
+const launch = () => [HX + 5, HY - 2];
+function bow(g, x, y, pull) {
+  for (const [cx, cy] of [[x + 3, y - 1], [x + 4, y], [x + 4, y + 1], [x + 3, y + 2]]) cell(g, cx, cy, GREYS[8]);
+  // the string, drawn back into her as she pulls, and the arrow on it
+  const sx = pull ? x + 2 : x + 3;
+  cell(g, sx, y, GREYS[5]); cell(g, sx, y + 1, GREYS[5]);
+  if (pull) { cell(g, x + 4, y - 1, GREYS[7]); cell(g, x + 5, y - 2, WHITE); }
+}
+// Where an arrow is `p` of the way along its flight: a line from the bow to
+// the hide, lifted in the middle by `h` cells.
+function arrowPos(t, st, tx, p, h) {
+  const [lx, ly] = launch(), ty = coilBottom(tx, t, st) + 1;
+  return [lerp(lx, tx, p), lerp(ly, ty, p) - h * 4 * p * (1 - p)];
+}
+// One arrow shot at `t0` at column tx: its flight, its landing (a small
+// blow), and the shaft left standing out of the hide for a moment.
+function arrow(g, t, st, t0, tx, o = {}) {
+  const fly = o.fly ?? FLY, h = o.h ?? 3, a = t - t0;
+  if (a < 0) return;
+  const head = o.head ?? WHITE;
+  if (a < fly) {
+    // the shaft lies along the way it is going, `len` cells behind the head
+    const p = a / fly, [hx, hy] = arrowPos(t, st, tx, p, h);
+    const [px, py] = arrowPos(t, st, tx, Math.max(0, p - 0.05), h);
+    const d = Math.hypot(hx - px, hy - py) || 1, len = o.len ?? 3;
+    line(g, hx - (hx - px) / d * len, hy - (hy - py) / d * len, hx, hy, null,
+      (cx, cy, i, n) => cell(g, cx, cy, i === n ? head : i === 0 ? GREYS[6] : GREYS[8]));
+    return;
+  }
+  const b = coilBottom(tx, t, st), since = a - fly;
+  burst(g, t, t0 + fly, tx, b, o.k ?? 0.2, tx * 3 + (o.id ?? 0));
+  chip(g, t, t0 + fly, tx, b, o.k ?? 0.2, tx * 3 + (o.id ?? 0));
+  if (since < 0.9) {
+    const dx = tx >= launch()[0] ? -1 : 1, tone = GREYS[since < 0.4 ? 8 : since < 0.65 ? 6 : 4];
+    cell(g, tx + dx, b + 1, tone); cell(g, tx + 2 * dx, b + 2, tone);
+  }
+  o.landed?.(g, t, st, since, tx, b);
+}
+function rangerScene(opts) {
+  const { shots } = opts;
+  return {
+    dur: opts.dur,
+    state(t, api) { opts.state?.(t, api); },
+    draw(g, t, api) {
+      const st = api.st;
+      const pulling = opts.pull ? opts.pull(t) : shots.some(([s]) => t >= s - NOCK && t < s);
+      bow(g, HX, HY, pulling);
+      opts.before?.(g, t, st);
+      shots.forEach(([s, tx, o], i) => arrow(g, t, st, s, tx, { ...opts.arrow, ...o, id: i }));
+    },
+  };
+}
+
+// The flare: where an arrow of the Warden lands a ring of the abyss's light
+// opens, and the arrowhead stays lit in the hide.
+function flare(g, t, st, since, tx, b) {
+  if (since < 0.35) ring(g, tx, b, 1 + since * 12, PURPLES[since < 0.12 ? 11 : since < 0.24 ? 9 : 7], since < 0.2 ? 1 : 2);
+  if (since < 1.4) cell(g, tx, b, Math.floor(t * 6) % 2 ? PURPLES[11] : PURPLES[9]);
+}
+
+registerClass({
+  key: 'ranger', name: 'Ranger', station: 'armory', group: 'blade',
+  look: 'a low cap with a white feather stood up at the back; a bow at the right, arrows flown the whole way',
+  hat(g, x, y) {
+    rect(g, x - 1, y - 1, BODY + 1, 1, GREYS[8]);                     // the brim
+    rect(g, x, y - 2, 2, 1, GREYS[8]);                                // the crown
+    cell(g, x - 1, y - 2, WHITE);                                     // the feather
+  },
+  scenes: [
+    { name: 'Base', about: 'An arrow every 0.8 s from the station, flown the whole way up: a small blow that never misses, the shaft left standing in the hide.',
+      ...rangerScene({ dur: 4, shots: [[0.4, 26], [1.2, 31], [2.0, 23], [2.8, 35], [3.6, 28]] }) },
+    { name: 'Marksman', about: 'Every fifth arrow is aimed: a long pull, a sight laid out to the coil, then a straight shot, x5. On a Marked serpent (here another fighter\'s Mark) it crits.',
+      ...rangerScene({
+        dur: 5.8,
+        shots: [[0.3, 26], [1.1, 31], [1.9, 23], [2.7, 35], [4.6, 30, { fly: 0.14, h: 0, len: 3, k: 1, landed(g, t, st, since, tx, b) {
+          if (since < 0.3) ring(g, tx, Math.round(coilY(tx, t, st)), Math.round(4 - since * 8), PURPLES[since < 0.15 ? 11 : 8]);
+        } }]],
+        state(t, api) { api.status('marked', 1); },
+        pull: t => [0.3, 1.1, 1.9, 2.7].some(s => t >= s - NOCK && t < s) || (t >= 3.2 && t < 4.6),
+        before(g, t, st) {
+          // the sight: a dotted line laid out from the bow to the mark, a
+          // cell at a time, brightening as the pull holds
+          if (t < 3.3 || t >= 4.6) return;
+          const [lx, ly] = launch(), tx = 30, ty = coilBottom(tx, t, st) + 1;
+          const shown = clamp((t - 3.3) / 0.6, 0, 1), tone = t > 4.2 ? GREYS[8] : GREYS[5];
+          line(g, lx, ly, tx, ty, null, (cx, cy, i, n) => { if (i % 2 === 0 && i > 1 && i / n <= shown) cell(g, cx, cy, tone); });
+        },
+      }) },
+    { name: 'Volley', about: 'Arrows fly three at a time, each over a different length: the fan opens off the bow and comes down along the coil.',
+      ...rangerScene({
+        dur: 4,
+        shots: [0.4, 1.2, 2.0, 2.8].flatMap((s, v) => {
+          const c = [26, 31, 24, 33][v];
+          return [[s, c - 10, { h: 2 }], [s, c, { h: 4 }], [s, c + 10, { h: 6 }]];
+        }),
+      }) },
+    { name: 'Warden', about: 'Every arrow is a flare: it lands in a ring of the abyss\'s light, and the serpent is Lit -- the whole of it -- from the first one on.',
+      ...rangerScene({
+        dur: 4.4, shots: [[0.4, 26], [1.2, 31], [2.0, 23], [2.8, 35], [3.6, 28]],
+        arrow: { head: PURPLES[11], landed: flare },
+        state(t, api) { if (t >= 0.4 + FLY + RUN_S) api.status('lit', 1); },
+        before(g, t, st) {
+          const a = t - 0.4 - FLY;
+          if (a >= 0 && a < RUN_S) runAlong(g, t, st, 26, a, [PURPLES[11], PURPLES[9], PURPLES[7]]);
         },
       }) },
   ],
