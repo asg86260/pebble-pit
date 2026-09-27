@@ -9,6 +9,40 @@ five station styles of `docs/serpent-branches.md` if the owner takes it; the
 tree shape, free respecs, the spec belonging to the station, four fighters
 and the loop rules carry over unchanged.*
 
+## 0. Simplified: one ladder a class (the owner, 2026-09-27) -- CANON
+
+"this game isnt really about the fighting or classes. so we should keep it
+simple. simpler the better." **This section overrides the branches,
+keystones and capstone forks below**; the ten classes, their kits, the
+stations and pairs, the fangs and slots, the rails and the refund reset
+all stand.
+
+- **Ten classes, one ladder each.** No branches, no capstone forks. Rungs
+  1-8 raise the class's numbers; **rung 4** gives its one signature move;
+  **rung 8** one capstone, a stronger form of it. The only choice is which
+  class stands at a station.
+- **The kit grows twice**: a mark at rung 4, a touch at rung 8.
+- **The tree**: one rail a class, two a station; it folds to the class
+  bought, and the reset refunds it.
+- **Statuses trimmed** to what the ten moves use: Stunned, Bleeding,
+  Exposed, Held, Lit, Weakened on the serpent (all on the whole snake);
+  Inspired and Hasted on fighters. Poisoned, Burning, Marked and Keen go.
+- **No "whole coil" effects**: the serpent's lengths only matter to the
+  splitting phase's heal, and a status or a blow is on the whole snake.
+
+| class | base | rung 4 | rung 8 |
+|---|---|---|---|
+| Brawler | heavy punches | **Haymaker**: every 4th punch x4, stuns | haymakers stun longer |
+| Swordsman | cuts that bleed | **Whirlwind**: each cut hits wide | every 3rd cut hits twice |
+| Monk | palms build chi; a chi palm stuns | chi fills twice as fast | the chi palm stuns longer |
+| Martial Artist | quick thrusts charge a finisher | **Flow**: thrusts charge double | the finisher Hastes the party |
+| Ranger | arrows from overhead | **Aimed shot**: every 5th arrow x5 | the aimed shot stuns |
+| Assassin | stabs, x3 on a stunned serpent | **Execution**: stabs grow with the wound | x3 in the phase's last tenth |
+| Sapper | thrown charges | **Sticky charge**: stuck, ticks down, one big stunning blow | two charges at once |
+| Hexer | hexes Weaken the serpent | **Binding**: the serpent is Held | Held takes more from blows |
+| Mage | bolts that Light | **Arcane lantern**: the whole serpent Lit | Lit takes more from everyone |
+| Bard | sings: the party Inspired (no damage) | **Anthem**: Inspired doubles | Inspired lingers after the song |
+
 ---
 
 ## 1. What the research found
