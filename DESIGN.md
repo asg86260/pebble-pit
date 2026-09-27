@@ -16247,8 +16247,8 @@ this device; the cloud copy stays for the other devices).
 
 Linking a device that already has yards is the one real decision in the
 feature. For each slot where both sides hold a yard with different
-`yardId`s, the sheet shows both, with the station count and playtime for
-each, and the player keeps one; the other goes to that slot's `.prev`, and
+`yardId`s, the sheet shows both, each as the saves page already says a
+yard (rock, crew, how long ago), and the player keeps one; the other goes to that slot's `.prev`, and
 `save a copy` still hands it out. Slots where one side is empty fill
 without asking.
 
@@ -16298,9 +16298,9 @@ client carries its own copy of them so a healthy one never meets them:
 - **Per code:** `CLOUD_VAULT_DAY_WRITES` (1,500) a day. That is three slots
   pushed once a minute for over eight hours of play; past it, `429` until
   midnight UTC.
-- **The whole worker:** `CLOUD_DAY_WRITES` (40,000) a day, a counter keyed
-  by date. Each push is two row writes (the slot and the counter), so this
-  holds the worker to 80k of the account's 100k, the rest left for mints,
+- **The whole worker:** `CLOUD_DAY_WRITES` (25,000) a day, a counter keyed
+  by date. Each push is three row writes (the slot, the code's day count and
+  the worker's totals), so this holds the worker to 75k of the account's 100k, the rest left for mints,
   sweeps and the other workers. Past it, every write is `503` with
   `Retry-After` set to midnight UTC.
 
@@ -16361,7 +16361,8 @@ The same file covers the fail-safes from the client's side: an autosave
 loop at sixty a second sends one push a minute; an idle yard sends none; a
 `429`/`503` doubles the wait and obeys `Retry-After`; `507`, `413` and the
 hour cap each stop pushing and leave the local save writing.
-`test/cloud-size.test.mjs` gzips the veteran save fixture and asserts it is
+`test/cloud-size.test.mjs` gzips the largest save fixture
+(`quarry-crossing.json`) and asserts it is
 under a quarter of `CLOUD_BLOB_MAX`, so a save format that grows trips a
 check long before a player trips the cap.
 `cloud/test/` runs the worker's routes against a local D1: the conditional

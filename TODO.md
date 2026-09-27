@@ -1,6 +1,6 @@
 # Still to do
 
-## Cloud saves -- DESIGNED, AWAITING SIGN-OFF (2026-09-27)
+## Cloud saves -- DESIGN SIGNED, SPEC WRITTEN (2026-09-27)
 
 "Cloud saves: a sync code and a worker" in DESIGN.md: the local store stays
 what play reads; a Cloudflare Worker + D1 mirrors every slot under a
@@ -9,8 +9,9 @@ Every way it can grow has a ceiling ("Fail-safes"), and a free plan with
 no card behind it is the backstop. Devices pair by a six-character code
 that dies in ten minutes; the title page's footnote is voted (A1, the foot
 bar).
-Blocker: the owner's sign-off, and a Cloudflare account for the worker. No
-game code yet.
+Build spec: `docs/wave-cloud.md` (three tracks: WORKER, SYNC, FACE).
+Blocker: the owner's sign-off on its "Decided here"; the Cloudflare account
+is needed only to deploy, after the merge. No game code yet.
 
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 
