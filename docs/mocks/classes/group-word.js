@@ -1,5 +1,5 @@
-// Track word of docs/wave-class-anims.md: the circle's two classes, the
-// Hexer and the Bard, and the statuses they own -- Poisoned, Weakened and
+// Track word of docs/wave-class-anims.md: the Hexer (the circle) and the
+// Bard (the spire), each told by her kit, and the statuses they own -- Poisoned, Weakened and
 // Held on the serpent, Inspired and Hasted on a fighter. A mock drawn from
 // plain cells through the harness, not the game.
 
@@ -321,49 +321,42 @@ registerClass({
 });
 
 // --- the Bard --------------------------------------------------------------------------
-// A cap with a plume, a lute. She does no damage: her song is a run of purple
-// cells that travels from her to the other fighter (and, in the Requiem, up
-// to the coil), and what it does shows on the one it reaches. The other
-// fighter throws a stone at the coil on its own clock, so Inspired is seen as
-// a bigger bite and Hasted as more of them.
+// A flute held sideways at her mouth, out to her right toward the others (the
+// looks page, 2026-09-27). She does no damage: her song is notes, rising off
+// the flute's end and drifting over to the other fighter (and, in the
+// Requiem, up into the coil), and what it does shows on the one it reaches.
+// The other fighter throws a stone at the coil on its own clock, so Inspired
+// is seen as a bigger bite and Hasted as more of them.
 
-const SONG_AT = 0.2;           // she starts to sing
-function lute(g, me, t, rate = 4) {
-  rect(g, me.x - 2, me.y + 1, 2, 2, GREYS[7]);
-  // held low and level, so its neck stays clear of the plume
-  cell(g, me.x - 3, me.y + 1, GREYS[6]); cell(g, me.x - 4, me.y + 1, GREYS[8]);
-  if (Math.floor(t * rate) % 2) cell(g, me.x - 1, me.y + 2, WHITE);
+const SONG_AT = 0.2;           // she starts to play
+// The flute: four cells off her mouth along her top row, the looks page's
+// 'adaa'. The stopped hole (the dark cell) steps between two places at `rate`
+// a second while she plays -- her fingers -- and rests on the first.
+function flute(g, me, t, rate = 0) {
+  const stop = 1 + (rate ? Math.floor(t * rate) % 2 : 0);
+  for (let i = 0; i < 4; i++) cell(g, me.x + 3 + i, me.y, i === stop ? GREYS[6] : GREYS[10]);
 }
-// Little ripples off her head: a quarter ring opening up and toward where
-// the song goes, one every `every` seconds.
-function voice(g, me, t, every = 0.5, dir = 1, tone = PURPLES[10]) {
-  // centered on her brow and starting three cells out, clear of the plume
-  const a = (t % every) / every, r = 3 + Math.floor(a * 3);
-  const hx = me.x + 2, hy = me.y - 1;
-  for (let k = 0; k <= r * 2; k++) {
-    const ang = -Math.PI / 2 + (dir > 0 ? 1 : -1) * (k / (r * 2)) * Math.PI / 2;
-    cell(g, hx + Math.cos(ang) * r, hy + Math.sin(ang) * r, a < 0.7 ? tone : PURPLES[7]);
+// The flute's end, where every note leaves it: a cell above its last cell.
+const TIP = me => [me.x + 6, me.y - 1];
+const EAR = b => [b.x, b.y - 1];       // where a note reaches the other fighter
+
+// The song: a note let go off the flute's end every `every` seconds from
+// `start` until `stop`, each arcing to (bx, by) in `fly` seconds, `lift`
+// cells high at its middle, and stepping down its tones over the last third
+// of the way, into the one it reaches. A note is the looks page's: a head and
+// a flag a cell up and right; `flag: false` clips it to the head alone. `by`
+// may be a function of the landing time, for a target that sways.
+function notes(g, t, start, stop, ax, ay, bx, by, o = {}) {
+  const { every = 0.5, fly = 1.2, lift = 5, tones = [11, 9, 7, 5], flag = true } = o;
+  for (let n = 0; start + n * every <= stop; n++) {
+    const s = start + n * every;
+    const p = along(t, s, fly, ax, ay, bx, typeof by === 'function' ? by(s + fly) : by, lift);
+    if (!p) continue;
+    const i = p.u < 0.67 ? 0 : Math.min(tones.length - 1, 1 + Math.floor((p.u - 0.67) / 0.33 * (tones.length - 1)));
+    cell(g, p.x, p.y, PURPLES[tones[i]]);
+    if (flag) cell(g, p.x + 1, p.y - 1, PURPLES[tones[Math.min(tones.length - 1, i + 1)]]);
   }
 }
-// The song: a wave of cells running from a to b, drawn only as far as it has
-// reached, in travelling pulses. `amp` is its swing, `period` the pulse
-// spacing, `lit` how much of each pulse is lit, `speed` cells a second.
-function song(g, t, start, ax, ay, bx, by, o = {}) {
-  const { amp = 1.5, period = 6, lit = 3, speed = 22, wave = 0.55, tones = [11, 10, 8, 6], phase = 0 } = o;
-  const len = Math.hypot(bx - ax, by - ay), n = Math.round(len);
-  const reach = (t - start) * speed;
-  if (reach <= 0) return 0;
-  const nx = -(by - ay) / len, ny = (bx - ax) / len;
-  for (let i = 0; i <= n && i <= reach; i++) {
-    const ph = ((reach - i + phase) % period + period) % period;
-    if (ph >= lit) continue;
-    const off = amp * Math.sin(i * wave - t * 5 + phase);
-    const tone = PURPLES[tones[Math.min(tones.length - 1, Math.floor(ph / lit * tones.length))]];
-    cell(g, ax + (bx - ax) * i / n + nx * off, ay + (by - ay) * i / n + ny * off, tone);
-  }
-  return clamp(reach / len, 0, 1);
-}
-const reachedAt = (ax, ay, bx, by, speed = 22) => SONG_AT + Math.hypot(bx - ax, by - ay) / speed;
 
 // The other fighter's stone, thrown at the coil at each time in `times`: it
 // flies, it bites, bigger for `k` -- the buffs' effect, seen.
@@ -380,67 +373,58 @@ function stones(g, t, api, times, kOf) {
   });
 }
 
-const B_AX = me => [me.x + 4, me.y - 1];
-const B_BX = b => [b.x - 1, b.y - 1];
-const ME0 = { x: 17, y: 26 }, BUD0 = { x: 43, y: 26 };  // the harness's places, for state()
-const INSPIRE_AT = reachedAt(...B_AX(ME0), ...B_BX(BUD0));
-const HASTE_AT = reachedAt(...B_AX(ME0), ...B_BX(BUD0), 34);
-// The dirge climbs slowly to the coil's underside at DIRGE_TX; the row it
-// ends on sways, so its arrival is timed to the coil's mean underside.
-const DIRGE_TX = 32, DIRGE_SPEED = 9;
-const DIRGE_AT = reachedAt(...B_AX(ME0), DIRGE_TX, 17, DIRGE_SPEED);
+// The song's speeds a scene: the plain air, the Tempo's quick clipped one,
+// and the Requiem's slow low dirge up to the coil's underside at DIRGE_TX.
+const AIR_FLY = 1.2, TEMPO_FLY = 0.6, DIRGE_FLY = 1.4;
+const INSPIRE_AT = SONG_AT + AIR_FLY;
+const HASTE_AT = SONG_AT + TEMPO_FLY;
+const DIRGE_TX = 32;
+const DIRGE_AT = SONG_AT + DIRGE_FLY;
 
 registerClass({
-  key: 'bard', name: 'Bard', station: 'circle', group: 'word',
-  look: 'a cap with a plume; a lute, a song of purple cells to the others',
-  hat(g, cx, cy, t) {
-    rect(g, cx, cy - 1, 3, 1, GREYS[9]);
-    cell(g, cx + 1, cy - 2, GREYS[9]);
-    // the plume, in her song's purple, back over the left (her song goes out to the right), nodding
-    // to the beat
-    const nod = Math.floor(t * 2) % 2;
-    cell(g, cx - 1, cy - 1 - nod, PURPLES[11]);
-    cell(g, cx - 2, cy - 2, nod ? PURPLES[9] : PURPLES[11]);
-  },
+  key: 'bard', name: 'Bard', station: 'spire', group: 'word',
+  look: 'a flute held sideways at her mouth; notes rise off its end and drift to the other fighter',
+  hat(g, cx, cy, t) { flute(g, { x: cx, y: cy }, t); },
   scenes: [
     { name: 'Base', dur: 6,
-      about: 'She sings, and the other fighter is Inspired (+10% damage): its stones bite harder once the song reaches it. No damage of her own.',
+      about: 'She plays, and the other fighter is Inspired (+10% damage): its stones bite harder once the first note reaches it. No damage of her own.',
       state(t, api) { if (t >= INSPIRE_AT) api.buff('buddy', 'inspired', 0.5); },
       draw(g, t, api) {
         const { me, buddy } = api;
-        lute(g, me, t); if (t >= SONG_AT) voice(g, me, t);
-        song(g, t, SONG_AT, ...B_AX(me), ...B_BX(buddy));
+        flute(g, me, t, 4);
+        notes(g, t, SONG_AT, 6 - AIR_FLY, ...TIP(me), ...EAR(buddy), { fly: AIR_FLY });
         stones(g, t, api, [0.5, 1.9, 3.3, 4.7], l => l + STONE_FLY >= INSPIRE_AT ? 0.5 : 0.25);
       } },
     { name: 'Anthem', dur: 6,
-      about: 'Keystone: Inspired doubles -- a louder song, two lines of it, and the other fighter lifted twice over.',
+      about: 'Keystone: Inspired doubles -- a louder song, two lines of notes, and the other fighter lifted twice over.',
       state(t, api) { if (t >= INSPIRE_AT) api.buff('buddy', 'inspired', 1); },
       draw(g, t, api) {
         const { me, buddy } = api;
-        lute(g, me, t, 6); if (t >= SONG_AT) { voice(g, me, t, 0.35); voice(g, me, t + 0.17, 0.35, 1, PURPLES[8]); }
-        song(g, t, SONG_AT, ...B_AX(me), ...B_BX(buddy), { amp: 2.2 });
-        song(g, t, SONG_AT, ...B_AX(me), ...B_BX(buddy), { amp: 2.2, phase: Math.PI, tones: [9, 8, 6] });
+        flute(g, me, t, 6);
+        notes(g, t, SONG_AT, 6 - AIR_FLY, ...TIP(me), ...EAR(buddy), { fly: AIR_FLY, every: 0.3 });
+        notes(g, t, SONG_AT + 0.15, 6 - AIR_FLY, ...TIP(me), ...EAR(buddy),
+          { fly: AIR_FLY, every: 0.3, lift: 9, tones: [9, 8, 6, 4] });
         stones(g, t, api, [0.5, 1.9, 3.3, 4.7], l => l + STONE_FLY >= INSPIRE_AT ? 0.75 : 0.25);
       } },
     { name: 'Tempo', dur: 6,
-      about: 'Keystone: the other fighter is Hasted (+20%): a quick, clipped song, and its stones come faster once it lands.',
+      about: 'Keystone: the other fighter is Hasted (+20%): quick, clipped notes, flat and fast, and its stones come faster once they land.',
       state(t, api) { if (t >= HASTE_AT) api.buff('buddy', 'hasted', 1); },
       draw(g, t, api) {
         const { me, buddy } = api;
-        lute(g, me, t, 10); if (t >= SONG_AT) voice(g, me, t, 0.25);
-        song(g, t, SONG_AT, ...B_AX(me), ...B_BX(buddy), { amp: 0, period: 3, lit: 1, speed: 34, tones: [11] });
+        flute(g, me, t, 10);
+        notes(g, t, SONG_AT, 6 - TEMPO_FLY, ...TIP(me), ...EAR(buddy),
+          { fly: TEMPO_FLY, every: 0.15, lift: 2, flag: false, tones: [11, 11, 9, 7] });
         // a stone every 1.2 s, then every 0.6 s once Hasted
         stones(g, t, api, [0.2, 1.4, 2.0, 2.6, 3.2, 3.8, 4.4, 5.0], () => 0.25);
       } },
     { name: 'Requiem', dur: 7,
-      about: 'Keystone: a dirge -- a slow, low song up to the coil -- and the whole serpent is Weakened (heal cut 15%).',
+      about: 'Keystone: a dirge -- slow, low notes up into the coil -- and the whole serpent is Weakened (heal cut 15%).',
       state(t, api) { if (t >= DIRGE_AT + SPREAD_S) api.status('weakened', 0.5); },
       draw(g, t, api) {
         const { me, st } = api;
-        lute(g, me, t, 1.5); if (t >= SONG_AT) voice(g, me, t, 1.2, 1, PURPLES[8]);
-        const ty = coilBottom(DIRGE_TX, t, st) + 1;
-        song(g, t, SONG_AT, me.x + 4, me.y - 1, DIRGE_TX, ty,
-          { amp: 1.5, period: 7, lit: 5, speed: DIRGE_SPEED, wave: 0.35, tones: [11, 10, 9, 8, 7] });
+        flute(g, me, t, 1.5);
+        notes(g, t, SONG_AT, 7 - DIRGE_FLY, ...TIP(me), DIRGE_TX, l => coilBottom(DIRGE_TX, l, st) + 1,
+          { fly: DIRGE_FLY, every: 0.7, lift: 3, tones: [9, 8, 7, 5] });
         spread(g, t, st, DIRGE_AT, DIRGE_TX, [(g, t, s, a, b) => paintWeakened(g, t, s, 0.5, a, b)]);
       } },
   ],
