@@ -83,8 +83,7 @@ export function drawPlinth(g, cx, w = 7) {
 // --- the coil --------------------------------------------------------------------
 // The serpent across the top half of the pane: a centerline that sways on its
 // own clock, a girth that swells at the belly and tapers to the tail. While
-// it is stunned the sway freezes where it was and the whole body shudders one
-// cell (the voted D).
+// it is stunned the sway freezes where it was (the voted D).
 export const COIL_X0 = 4, COIL_X1 = 60;
 export const BELLY = 34;
 const sway = (cx, t) => 12 + 2.6 * Math.sin(cx * 0.09 + t * 0.6) + 1.1 * Math.sin(cx * 0.23 - t * 0.9);
@@ -97,8 +96,9 @@ export const girth = cx => {
 // `stunAt` the time it began, so the sway is frozen where it was.
 export function coilY(cx, t, s = {}) {
   const at = s.stun > 0 && s.stunAt != null ? s.stunAt : t;
-  const shake = s.stun > 0 ? (hash(Math.floor(t * 14)) < 0.5 ? -1 : 1) : 0;
-  return sway(cx, at) + shake;
+  // No shudder (the owner, 2026-09-27: "get rid of the shake, just stop
+  // and the ring around"): a stunned coil only holds still.
+  return sway(cx, at);
 }
 export const coilTop = (cx, t, s) => Math.round(coilY(cx, t, s) - girth(cx));
 export const coilBottom = (cx, t, s) => Math.round(coilY(cx, t, s) + girth(cx));
@@ -202,7 +202,7 @@ export function frame(g, cls, scene, t) {
   const st = { stun: 0, stunAt: null, statuses: {}, buffs: {}, notes: [] };
   const probe = {
     // A stun is always marked: whichever class landed it, the stunned
-    // painter shows over the head while the coil shudders.
+    // painter shows over the head while the coil holds still.
     stun(from, len) {
       if (t >= from && t < from + len) { st.stun = from + len - t; st.stunAt = from; st.statuses.stunned = 1; }
     },

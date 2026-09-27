@@ -23,7 +23,7 @@ const along = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
 const lastOf = (times, t) => { let r = null; for (const x of times) if (x <= t) r = x; return r; };
 const countTo = (times, t) => times.filter(x => x <= t).length;
 
-// A stunning blow: the harness's freeze and shudder, and this track's mark
+// A stunning blow: the harness's freeze, and this track's mark
 // over the head for as long as it stands.
 function stunFor(api, t, from, len) {
   api.stun(from, len);
@@ -32,7 +32,7 @@ function stunFor(api, t, from, len) {
 
 // Where a melee fighter hovers under the coil: its body's top `gap` cells
 // under the coil's underside at its own column, so it rides the sway (and
-// the stun's shudder) rather than punching air.
+// the stun's freeze) rather than punching air.
 const hoverY = (t, st, gap) => coilBottom(STATION_X, t, st) + gap;
 // A swim up at [up0, up1] and back at [dn0, dn1]: the body's row at t.
 function tripY(t, st, gap, up0, up1, dn0, dn1) {
@@ -47,7 +47,7 @@ function land(g, t, t0, cx, cy, k, id) { chip(g, t, t0, cx, cy, k, id); burst(g,
 // --- the statuses ----------------------------------------------------------------------
 // Stunned: a dizzy ring over the head, flat as a halo, with a bright cell
 // racing round it and a tail behind, while the harness freezes the sway and
-// shudders the whole coil.
+// holds the whole coil still.
 const HALO = [[-2, 0], [-1, -1], [0, -1], [1, -1], [2, 0], [1, 1], [0, 1], [-1, 1]];
 registerStatus('stunned', {
   name: 'Stunned', on: 'serpent',
