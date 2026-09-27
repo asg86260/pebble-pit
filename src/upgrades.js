@@ -192,9 +192,11 @@ export const billOf = u => {
   // first band asks no dust and names it so, or the line above would add it.
   bill = bill.filter(([, n]) => n !== 0);
   if (!takesTime(u)) return bill;
-  // A row that can take another copy is offering the next one, whose time is
-  // its own; a row that cannot is showing the one it has on.
-  const on = !again(u) && workOn(u.key);
+  // While a copy is on the go the clock is what is left of it, even on a row
+  // whose coins are already the next copy's: the clock on a tag is the
+  // waiting you can see, and the build under way is that
+  // (test/works.test.mjs).
+  const on = workOn(u.key);
   return [...bill, ['time', on ? leftAt(u.site, u.key) : workFor(u) * 1000]];
 };
 
