@@ -23,6 +23,18 @@ Open:
   the star's spot), stages that change behavior, a wound where you hit.
   Blocker: the owner's pick, then a design.
 
+## The same row, queued again -- DESIGNED, AWAITING THE VOTE (2026-09-26)
+
+"The same row, queued again" in DESIGN.md; mock
+`docs/mocks/queue-repeats-2026-09-26.html`. Today a second press on a row
+whose work is on the go is refused and one whose work is in line hands it
+back, for every row that takes time, because the line is keyed by row. The
+design: a press on a row in the works queues the next one (the next rung, the
+next house), paid on the press at its own price, handed back newest-first on
+the queue card. Blocked on the owner's calls: (a) a row in line pressed again
+is refused rather than refunded, (b) the card shows a run as one line `×n` or
+a line a copy, (c) the card alone hands back, or a right-click on the row too.
+
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 
 "The deep's bench" in DESIGN.md; mocks `docs/mocks/deep-bench-2026-09-24.html`

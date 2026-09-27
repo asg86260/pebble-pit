@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Queue Repeats Mocks</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #777; --rule: #000; --soft: #ddd; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #666; --soft: #333; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #666; --soft: #333; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  h2 { font-size: 14px; margin: 0 0 2px; }
+  p.note, .cap { color: var(--dim); margin: 0 0 12px; max-width: 1080px; }
+  section { border-top: 1px solid var(--rule); padding: 14px 0 18px; }
+  .flex { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+
+  /* the yard strip: a site, a builder, and the purse */
+  #yard { position: relative; width: 100%; max-width: 640px; height: 90px; border: 1px solid var(--rule); overflow: hidden; }
+  #ground { position: absolute; left: 0; right: 0; bottom: 18px; border-top: 2px solid var(--ink); }
+  .box { position: absolute; bottom: 20px; border: 2px solid var(--ink); background: var(--paper); }
+  #site { left: 60%; width: 72px; height: 36px; }
+  #site .fill { position: absolute; left: 0; bottom: 0; top: 0; background: var(--ink); width: 0; }
+  #home { left: 6%; width: 48px; height: 28px; }
+  #body { position: absolute; bottom: 20px; width: 8px; height: 14px; background: var(--ink); }
+  .ylbl { position: absolute; bottom: 2px; font-size: 10px; color: var(--dim); }
+  #purse { position: absolute; top: 6px; left: 8px; }
+  #fly { position: absolute; width: 5px; height: 5px; background: var(--ink); display: none; }
+
+  /* the board: three tiles, in two drawings */
+  .board { border: 2px solid var(--ink); padding: 8px; width: 300px; background: var(--paper); }
+  .board h3 { font-size: 11px; margin: 0 0 6px; color: var(--dim); font-weight: normal; }
+  .tile { display: grid; grid-template-columns: 26px 1fr auto; gap: 2px 8px; width: 100%;
+          border: 2px solid var(--ink); padding: 5px 6px; margin-bottom: 6px; position: relative; background: var(--paper); }
+  .tile .g { grid-row: span 2; width: 22px; height: 22px; border: 2px solid var(--ink); }
+  .tile .n { font-weight: bold; }
+  .tile .p { text-align: right; }
+  .tile .s { color: var(--dim); font-size: 11px; }
+  .tile .t { text-align: right; font-size: 11px; }
+  .tile.poor .p { color: var(--dim); text-decoration: line-through; }
+  .tile.done { opacity: .45; }
+  .tile.flash { outline: 2px dashed var(--ink); outline-offset: 2px; }
+  .pips i { display: inline-block; width: 5px; height: 5px; border: 1px solid var(--ink); margin-right: 1px; }
+  .pips i.on { background: var(--ink); }
+  .pips i.q { background: repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px 2px); }
+  .tag { border: 1px solid var(--ink); padding: 0 3px; font-size: 11px; }
+  /* drawing two: copies stacked behind the tile, a card edge a copy */
+  .deck { position: absolute; left: 4px; right: -4px; height: 100%; border: 2px solid var(--ink); background: var(--paper); z-index: -1; }
+  .board.stack .tile { z-index: 0; }
+
+  /* the queue card, three ways */
+  .card { border: 2px solid var(--ink); padding: 5px 7px; width: 250px; min-height: 40px; background: var(--paper); }
+  .card .ln { display: flex; gap: 6px; width: 100%; padding: 1px 0; }
+  .card .ln .nm { flex: 1; }
+  .card .ln.wait:hover { text-decoration: underline; }
+  .card .ln.front { cursor: default; }
+  .card .ln .cl { color: var(--dim); }
+  .card .empty { color: var(--dim); font-size: 11px; }
+  .card .cps i { display: inline-block; width: 7px; height: 7px; border: 1px solid var(--ink); margin-right: 2px; vertical-align: middle; }
+  .card .cps i.on { background: var(--ink); }
+  .card .cps i.half { background: linear-gradient(90deg, var(--ink) 50%, transparent 50%); }
+  .opt { max-width: 260px; }
+  .opt .lbl { font-weight: bold; margin: 0 0 4px; }
+  .opt .cap { font-size: 11px; margin: 6px 0 0; }
+  #log { font-size: 11px; color: var(--dim); min-height: 1.4em; margin-top: 6px; }
+  label { user-select: none; }
+</style>
+</head>
+<body>
+<h1>Queueing the same row again</h1>
+<p class="note">A mock drawn from plain boxes, not the game. One made-up model drives every drawing on the page: a
+purse filling at a steady rate, three rows at one site (a ladder, a count row and a one-off), one builder who walks
+to the site for each work. Press a tile to buy; press a waiting line on any queue card to hand the newest copy of
+that row back. Prices are illustrative, not the game's tables. <b>What it cannot show:</b> the real board's layout
+and fonts, the real walk and the lent body, dust flying grain by grain, the band coins (crops, ore, sparks) on a
+ladder's bill, several sites sharing one card, or a phone.</p>
+
+<section>
+  <h2>The yard and the board</h2>
+  <p class="cap">Every press on a row already in the works puts the next one in line, at its own price: the ladder's
+  next rung, the next house. The one-off is refused once it is paid for. <label><input type="checkbox" id="auto" checked>
+  press things by itself</label></p>
+  <div id="yard">
+    <div id="purse"></div>
+    <div id="ground"></div>
+    <div class="box" id="home"></div><div class="ylbl" style="left:6%">rest</div>
+    <div class="box" id="site"><div class="fill"></div></div><div class="ylbl" style="left:60%">the site</div>
+    <div id="body"></div>
+    <div id="fly"></div>
+  </div>
+  <div id="log"></div>
+  <div class="flex" style="margin-top:12px">
+    <div class="opt">
+      <div class="lbl">Tile 1 -- a count in the tag</div>
+      <div class="board" id="b1"><h3>the bench</h3></div>
+      <p class="cap">The price is the next copy's, live; the tag says <code>×n</code> and the place of the last one.
+      Queued rungs show hatched in the pips.</p>
+    </div>
+    <div class="opt">
+      <div class="lbl">Tile 2 -- a card edge a copy</div>
+      <div class="board stack" id="b2"><h3>the bench</h3></div>
+      <p class="cap">No new word: the copies sit behind the tile as card edges, one a copy, and fall away as each lands.
+      Reads at a glance; stops being countable past four or so.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>The queue card</h2>
+  <p class="cap">The same line, drawn three ways. A waiting line is a button: it hands back that row's newest copy,
+  the dearest, at the price it was paid.</p>
+  <div class="flex">
+    <div class="opt"><div class="lbl">A -- a line a copy</div><div class="card" id="cA"></div>
+      <p class="cap">Today's card, with repeats written out. Every copy has its own clock; five rungs of one ladder is
+      five lines.</p></div>
+    <div class="opt"><div class="lbl">B -- a line a run, <code>×n</code> (recommended)</div><div class="card" id="cB"></div>
+      <p class="cap">A run of one row is one line. The front's pips are the copy being built; the clock is to the last of
+      the run landing.</p></div>
+    <div class="opt"><div class="lbl">C -- a line a run, a box a copy</div><div class="card" id="cC"></div>
+      <p class="cap">As B, with the count drawn as boxes: the front one fills as it is built, the rest stand empty.</p></div>
+  </div>
+</section>
+
+<script>
+(() => {
+  const RATE = 14;                       // dust a second
+  const WALK = 70;                       // px a second
+  const LADDER = [1, 2, 3, 4, 6, 8, 10, 12, 15].map(n => n * 10);
+  const rows = [
+    { key: 'pocket', name: 'a bigger pocket', level: 2, top: 8, work: 3.5,
+      price: k => LADDER[k], gain: k => `${k} -> ${k + 1}` },
+    { key: 'house', name: 'another house', level: 3, top: Infinity, work: 5,
+      price: k => Math.round(40 * Math.pow(1.45, k - 3)), gain: k => `crew ${k} -> ${k + 1}` },
+    { key: 'quarry', name: 'the quarry', level: 0, top: 1, work: 6,
+      price: () => 180, gain: () => 'opens the cut' }
+  ];
+  const byKey = k => rows.find(r => r.key === k);
+  let dust = 120;
+  const line = [];                       // { key, rung, paid, done, of }
+  const pending = r => line.filter(w => w.key === r.key).length;
+  const nextRung = r => r.level + pending(r);
+  const log = t => { document.getElementById('log').textContent = t; };
+
+  function press(r) {
+    const k = nextRung(r);
+    if (k >= r.top) { log(`${r.name}: refused -- ${r.top === 1 ? 'there is no second one' : 'the ladder is full, counting what is queued'}`); flash(r); return; }
+    const bill = r.price(k);
+    if (dust < bill) { log(`${r.name}: ${bill} dust, and the purse has ${Math.floor(dust)} -- nothing bought`); return; }
+    dust -= bill;
+    line.push({ key: r.key, rung: k, paid: bill, done: 0, of: r.work });
+    fly(false);
+    log(`${r.name}: ${pending(r) > 1 ? 'one more in line' : 'bought'}, ${bill} dust taken on the press`);
+    draw(true);
+  }
+  function handBack(key) {
+    for (let i = line.length - 1; i >= 1; i--) {   // the front is committed
+      if (line[i].key !== key) continue;
+      const w = line.splice(i, 1)[0];
+      dust += w.paid; fly(true);
+      log(`${byKey(key).name}: newest copy handed back, ${w.paid} dust home`);
+      draw(true); return;
+    }
+  }
+  function flash(r) {
+    document.querySelectorAll(`.tile[data-k="${r.key}"]`).forEach(t => {
+      t.classList.add('flash'); setTimeout(() => t.classList.remove('flash'), 350);
+    });
+  }
+
+  // one builder: walks to the site, works the front, walks home when the line is empty
+  const yard = document.getElementById('yard');
+  const body = document.getElementById('body');
+  let bx = 0, flyT = -1, flyBack = false;
+  const siteX = () => yard.clientWidth * 0.6 + 32, homeX = () => yard.clientWidth * 0.06 + 20;
+  function fly(back) { flyT = 0; flyBack = back; }
+
+  // --- drawing ---
+  const pipsOf = r => {
+    if (r.top === Infinity || r.top === 1) return '';
+    let s = '';
+    for (let i = 0; i < r.top; i++) s += `<i class="${i < r.level ? 'on' : i < nextRung(r) ? 'q' : ''}"></i>`;
+    return `<span class="pips">${s}</span>`;
+  };
+  const clockTo = i => { let t = 0; for (let j = 0; j <= i; j++) t += line[j].of - line[j].done; return t; };
+  const clk = s => `${Math.ceil(s)}s`;
+  const ord = n => n <= 1 ? 'next' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;
+
+  function tileHTML(r, style) {
+    const n = pending(r), k = nextRung(r);
+    const full = k >= r.top;
+    const price = full ? (r.top === 1 && n ? 'bought' : 'done') : `${r.price(k)} dust`;
+    let tag = '';
+    if (n) {
+      const front = line[0].key === r.key;
+      const lastAt = line.map(w => w.key).lastIndexOf(r.key);
+      if (style === 1) tag = `<span class="tag">${n > 1 ? '×' + n + ' ' : ''}${front && n === 1 ? 'building' : ord(lastAt)}</span>`;
+      else tag = `<span class="tag">${front ? 'building' : 'queued'}</span>`;
+    }
+    const decks = style === 2 ? Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
+      `<span class="deck" style="top:${(i + 1) * 4}px;left:${(i + 1) * 4}px;right:${-(i + 1) * 4}px"></span>`).join('') : '';
+    const poor = !full && dust < r.price(k);
+    return `<button class="tile${full && !n ? ' done' : ''}${poor ? ' poor' : ''}" data-k="${r.key}" style="margin-bottom:${6 + (style === 2 ? Math.max(0, n - 1) * 4 : 0)}px">
+      ${decks}<span class="g"></span><span class="n">${r.name}</span><span class="p">${price}</span>
+      <span class="s">${r.gain(k)} ${pipsOf(r)}</span><span class="t">${tag}</span></button>`;
+  }
+
+  function runs() {
+    const out = [];
+    line.forEach((w, i) => {
+      const last = out[out.length - 1];
+      if (last && last.key === w.key) { last.n++; last.end = i; }
+      else out.push({ key: w.key, n: 1, start: i, end: i });
+    });
+    return out;
+  }
+  const bar = w => { const at = Math.round((w.done / w.of) * 5); return '●'.repeat(at) + '○'.repeat(5 - at); };
+
+  let built = '';
+  function draw(force) {
+    const sig = line.map(w => w.key).join(',') + '|' + Math.floor(dust / 5) + '|' + rows.map(r => r.level).join(',');
+    document.getElementById('purse').textContent = `purse ${Math.floor(dust)} dust`;
+    if (force || sig !== built) {
+      built = sig;
+      for (const [id, style] of [['b1', 1], ['b2', 2]]) {
+        const b = document.getElementById(id);
+        b.innerHTML = '<h3>the bench</h3>' + rows.map(r => tileHTML(r, style)).join('');
+        b.querySelectorAll('.tile').forEach(t => t.onclick = () => press(byKey(t.dataset.k)));
+      }
+    }
+    // A: a line a copy
+    const A = document.getElementById('cA');
+    A.innerHTML = line.length ? line.map((w, i) => {
+      const r = byKey(w.key);
+      const nm = r.top !== Infinity && r.top !== 1 ? `${r.name} ${w.rung + 1}` : r.name;
+      return `<button class="ln ${i ? 'wait' : 'front'}" data-k="${w.key}">${i ? '' : `<span>${bar(w)}</span>`}<span class="nm">${nm}</span><span class="cl">${i ? ord(i) + ' ' : ''}${clk(clockTo(i))}</span></button>`;
+    }).join('') : '<div class="empty">(absent when nothing is building)</div>';
+    // B and C: a line a run
+    const rs = runs();
+    for (const [id, boxes] of [['cB', false], ['cC', true]]) {
+      const el = document.getElementById(id);
+      el.innerHTML = rs.length ? rs.map(g => {
+        const r = byKey(g.key), front = g.start === 0;
+        const cnt = boxes
+          ? `<span class="cps">${Array.from({ length: g.n }, (_, i) => `<i class="${front && i === 0 ? (line[0].done / line[0].of > .5 ? 'on' : 'half') : ''}"></i>`).join('')}</span>`
+          : (g.n > 1 ? `<b>×${g.n}</b>` : '');
+        const lead = front && !boxes ? `<span>${bar(line[0])}</span>` : '';
+        const place = front ? '' : ord(g.start) + ' ';
+        return `<button class="ln ${front && g.n === 1 ? 'front' : 'wait'}" data-k="${g.key}">${lead}<span class="nm">${r.name} ${cnt}</span><span class="cl">${place}${clk(clockTo(g.end))}</span></button>`;
+      }).join('') : '<div class="empty">(absent when nothing is building)</div>';
+    }
+    document.querySelectorAll('.card .ln.wait').forEach(b => b.onclick = () => handBack(b.dataset.k));
+  }
+
+  // --- the clock ---
+  let last = performance.now(), autoT = 0;
+  function frame(t) {
+    const dt = Math.min(0.1, (t - last) / 1000); last = t;
+    dust += RATE * dt;
+    const target = line.length ? siteX() : homeX();
+    const d = target - bx;
+    const there = Math.abs(d) < 2;
+    if (!there) bx += Math.sign(d) * Math.min(Math.abs(d), WALK * dt);
+    body.style.left = `${bx - 4}px`;
+    const fill = document.querySelector('#site .fill');
+    if (line.length) {
+      const w = line[0];
+      if (there) w.done += dt;          // no hands, no progress
+      fill.style.width = `${Math.min(1, w.done / w.of) * 100}%`;
+      if (w.done >= w.of) { line.shift(); byKey(w.key).level++; fill.style.width = '0'; draw(true); }
+    } else fill.style.width = '0';
+    // the bill's flight: to the site on a press, home on a hand-back
+    const f = document.getElementById('fly');
+    if (flyT >= 0) {
+      flyT += dt * 2.2;
+      if (flyT >= 1) { flyT = -1; f.style.display = 'none'; }
+      else {
+        const a = flyBack ? siteX() : 60, b = flyBack ? 60 : siteX();
+        const x = a + (b - a) * flyT, y = 20 + Math.sin(flyT * Math.PI) * -14 + 20;
+        f.style.display = 'block'; f.style.left = `${x}px`; f.style.top = `${y}px`;
+      }
+    }
+    // left alone, it presses things: twice the ladder, a house, now and then a hand-back
+    if (document.getElementById('auto').checked) {
+      autoT += dt;
+      if (autoT > 2.2) {
+        autoT = 0;
+        const roll = Math.random();
+        const pocket = byKey('pocket');
+        if (pocket.level >= pocket.top) pocket.level = 2;
+        if (byKey('house').level > 9) byKey('house').level = 3;
+        if (roll < .5) press(pocket);
+        else if (roll < .75) press(byKey('house'));
+        else if (roll < .85) press(byKey('quarry'));
+        else if (line.length > 1) handBack(line[line.length - 1].key);
+      }
+    }
+    draw(false);
+    requestAnimationFrame(frame);
+  }
+  bx = homeX();
+  draw(true);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
