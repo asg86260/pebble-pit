@@ -47,28 +47,29 @@ check that reaches it through the row, the click, or the walk.
 
 These close questions the design left open; they are the simplest reading.
 
-1. **The first station is free.** At the snatch the deep has no fighter
-   station. The pods board offers "build a station" for **the altar, the
-   armory and the spire** only, free the first time; a delver builds it,
-   the sqwife swims to it when it stands, and its rails offer that
-   station's starting class (Brawler, Ranger, Mage). Until then the
-   sqwife treads water by the pods and the click still punches.
-2. **More stations are bought on the pods board**, one row a kind, placed
-   at the next free floor slot, built by a delver. The bill is by **how
-   many stations stand already**, not by kind (`STATION_BILLS`, a written
-   table; the owner: a second of a kind costs the same). **The second
-   station opens every class** on every station (the owner: "Buying a
-   second station").
-3. **A station without a fighter does nothing.** A fighter slot puts a
-   body at the station that has a class and no fighter, oldest first;
-   the station's roster post moves a fighter between stations (`+`/`-`,
-   as posts do today), one a station. Stations may outnumber slots.
-4. **A fang** drops from the serpent's belly at each of the first three
-   phase breaks, sinks like a scale, and a gatherer carries it to the
-   crusher like a scale (`S.fangs`, a coin). **A fighter slot costs one
-   fang** on the pods board, and takes a spare deep body (a pod resident
-   not on a station): with no spare body the row says `needs a spare hand`.
-   Four fighters at most: the sqwife and three.
+1. **The floor, left to right** (the owner, 2026-09-28): the crusher, the
+   pods, then the stations in the order they are bought, each at the next
+   free floor slot; empty floor after the last.
+2. **The first station is free.** At the snatch the first slot shows a
+   **floating build button**. Pressing it offers **the altar, the armory
+   or the spire** (the starting classes Brawler, Ranger, Mage); a delver
+   builds the pick, and the sqwife swims to it when it stands. Until then
+   she treads water by the pods, and the click still punches.
+3. **A fang buys the next station, and the station brings its fighter.**
+   The serpent drops a fang at each of the first three phase breaks; it
+   sinks like a scale and a gatherer carries it to the crusher (`S.fangs`,
+   a coin). **Once a fang is held, a floating build button appears over
+   the next free slot**, drawn with the fang's mark, so it reads at a
+   glance that the fang pays for it. Pressing it offers the five kinds;
+   the fang is spent, a delver builds the station, and a pod resident
+   swims to it as its fighter. So stations and fighters are one and the
+   same: **four at most**, the first and three fangs. Building a station
+   is not sold on the pods board. **The second station opens every
+   class** (the owner: "Buying a second station"); a second of a kind is
+   no dearer than the first (both cost a fang).
+4. **With no spare pod resident**, the button still builds the station,
+   and it stands without a fighter until a pod resident is free, who then
+   swims to it. A station without a fighter does nothing.
 5. **The station's rungs are its own.** `S.stations[i].rung`, bought on
    that station's rails. The class chosen reads them. **Reset** refunds
    every rung bought at that station (the bills paid, from the station's
@@ -97,8 +98,7 @@ stations: [],     // SAVED. [{ id, kind, slot, built, cls, rung, paid, fighter }
                   //   slot: index into DEEP_SLOTS; built: false until its work lands
                   //   cls: null | class key; rung: 0..8; paid: [[coin, n], ...] summed bills for Reset
                   //   fighter: worker uid | null
-stationsBuilt: 0, // SAVED. how many stations ever stood built, for STATION_BILLS and the class unlock
-fightSlots: 1,    // SAVED. fighters allowed: 1 at the snatch, +1 per fang spent, max FIGHT_SLOTS_MAX
+stationsBuilt: 0, // SAVED. how many stations ever stood built, for the class unlock
 fangs: 0, seenFang: false,   // SAVED. the coin
 fangsDropped: 0,  // SAVED. breaks that have dropped theirs (a fang drops once per break, even across a reload)
 fangsLoose: [],   // SAVED_BY_HAND (the scales' saver owns it): fangs sinking or on the floor
@@ -135,15 +135,15 @@ export const stationById = id => S.stations.find(s => s.id === id)
 export const stationsBuilt = () => S.stations.filter(s => s.built)
 export const classOf = st => st.cls && CLASSES[st.cls]          // the CLASSES row, or null
 export const fighterAt = st => st.fighter && workerByUid(st.fighter)
-export const slotsFree = () => S.fightSlots - S.stations.filter(s => s.fighter).length
+export const nextSlot = () => /* the lowest DEEP_SLOTS index with no station */
+export const canBuild = () => S.stations.length === 0 || (S.fangs > 0 && S.stations.length < FIGHT_STATIONS_MAX)
 export const classesOpen = kind => (S.stationsBuilt >= 2 ? PAIRS[kind] : PAIRS[kind].filter(k => STARTERS.includes(k)))
-export function buildStation(kind)   // the pods-board row's buy: push {built:false}, queue the work
+export function buildStation(kind)   // the floating button's pick: spend a fang (the first is free), push {built:false}, queue the work
 export function stationLanded(id)    // the work's land hook: built = true, stationsBuilt++, seat()
-export function seat()               // fill free slots: a spare deep body -> oldest classed station with no fighter
+export function seat()               // a spare pod resident -> each built station with no fighter, oldest first
 export function moveFighter(id, dir) // the roster post's +/-: one fighter a station
 export function buyRung(id, cls)     // commit cls on the first rung, rung++, add the bill to paid
 export function resetStation(id)     // refund paid, rung 0, cls null (the fighter stays)
-export function spendFang()          // fightSlots++, seat()
 ```
 
 ### Classes (owner: FIGHT) -- `src/config/classes.js`, `src/deep/classes.js`
@@ -224,16 +224,18 @@ one change to `upgrades/tiers.js`, additive, owned by BOARD.
 `standOfStation(st)` in `place.js`. A station kind's drawing is `SPRITES[kind]`
 (the armory reuses `font`'s sprite under its new key). A built station is
 drawn at its slot; an unbuilt one as the build site's scaffold, as works
-are today. `FIGHT_STATIONS_MAX = DEEP_SLOTS.length`.
+are today. `FIGHT_STATIONS_MAX = 4`: the first station and three fangs.
 
 ## The boards (owner: BOARD)
 
-- **The pods board** gains, under the pod rows:
-  - **Build a station**: one row a kind, `site: 'deep'`, built by a delver
-    at the next free slot; only `FIRST_KINDS` before the first stands,
-    free the first time; after, all five at `STATION_BILLS[S.stationsBuilt]`.
-  - **Another fighter**: 1 fang, needs a spare deep body, up to
-    `FIGHT_SLOTS_MAX`.
+- **The floating build button** (BOARD, `src/deep/buildbutton.js`): a small
+  button standing over the next free floor slot, in the world, drawn with
+  the fang's mark and the count held; shown at the snatch (free, the three
+  starting kinds) and whenever a fang is held and a slot is free. Pressed,
+  it opens a small picker of the kinds it may build (one short line each:
+  the kind and its two classes); picking one spends the fang and queues
+  the work. It rides the deep's camera like the roster posts, and fades
+  in and out, never pops. The pods board sells pods only.
 - **A station's board** (one per built station, keyed by id: `registerBoard`
   takes the id) shows **the rails** (below) and, above them, the station's
   roster post (its fighter), and on any spire the star's two rows.
@@ -286,12 +288,15 @@ are the cards' own (`board.js` builders), so a rail reads as the boards do.
 
 `src/migrations/2026-09-28-party.js`, `SAVE_V` 7:
 
-- Every open old door, and the altar, becomes a built station of its kind at
-  its old spot's slot (`font` -> `armory`), classless, rung 0.
+- The altar and the open old doors become built stations of their kind
+  (`font` -> `armory`), classless, rung 0, in the floor's order, **at most
+  `1 + serpentStage`** (the first station and a fang a break); a door past
+  that is refunded with the rest.
 - **Every weapon ladder level is refunded**: the sum of its bills paid,
   added to the purse. Sigils, lances, grenades, beams are dropped.
-- `fightSlots = 1 + serpentStage` (capped), `fangsDropped = serpentStage`,
-  `fangs = 0` (the slots already stand for them).
+- `fangsDropped = serpentStage`, and `fangs` = the breaks past, less the
+  stations beyond the first that the old save already stands (at least 0),
+  so no fang is lost or doubled.
 - Weapon bodies become pod residents (gatherers); the sqwife becomes the
   fighter of the first station.
 - The migration says one line on load (`says`): "The deep was rebuilt:
@@ -307,7 +312,7 @@ comment naming the track.
 |---|---|---|
 | **CREW** | src/jobs.js, src/crew/jobs.js, src/crew/deep.js, src/crew/muster.js, src/crew/commute.js, src/staffing.js, src/levels.js, src/config/deepcrew.js, src/snatch.js, src/deep/party.js (new), src/roster.js | party.test.mjs (new), deep-crew, pods, two-crews, snatch |
 | **FIGHT** | src/deep/arms.js, src/deep/serpent.js, src/deep/rest.js, src/deep/classes.js (new), src/deep/statuses.js (new), src/config/deep.js, src/config/classes.js (new) | classes.test.mjs (new, one group a class), statuses.test.mjs (new), deep-arms, serpent, serpent-stun, serpent-numbers, deep-rest |
-| **BOARD** | src/stations.js, src/deep/rows.js, src/deep/rails.js (new), src/config/deepboard.js, src/config/rungs.js, src/deep/place.js, src/deep/sprites.js, src/works.js (DOWN_THERE, TICKS_AT only), src/upgrades/tiers.js (the field getter only), src/glyphs.js, ladders.html, glyphs.html, stations.html | rails.test.mjs (new), deep-board, deep-works, gates, test/shop-rows.mjs; a browser group `rails` in src/selftest/deep.js |
+| **BOARD** | src/stations.js, src/deep/rows.js, src/deep/rails.js (new), src/deep/buildbutton.js (new), src/config/deepboard.js, src/config/rungs.js, src/deep/place.js, src/deep/sprites.js, src/works.js (DOWN_THERE, TICKS_AT only), src/upgrades/tiers.js (the field getter only), src/glyphs.js, ladders.html, glyphs.html, stations.html | rails.test.mjs (new), deep-board, deep-works, gates, test/shop-rows.mjs; a browser group `rails` in src/selftest/deep.js |
 | **RENDER** | src/render/arms.js, src/render/deep.js, src/render/crew.js (deep bodies only), src/render/serpent.js, src/render/scales.js, src/config/deepdraw.js, src/deep/kits.js (new) | deep-view; shots of every scene below |
 | **STATE** | src/state.js, src/migrations/*, src/config/saves.js, src/crew/records.js, src/hooks.js, src/scenes.js, src/verify.js | persist-roundtrip, save-floor, party-migrate.test.mjs (new, from a real v6 save in test/fixtures/) |
 
@@ -328,17 +333,17 @@ up for the setup a check is not about. Scenes: `party-start` (just after
 the snatch, no station), `party-one` (a Brawler at rung 4), `party-four`
 (four fighters, rung 8, one of each of four classes), `party-bard` (a Bard
 and a Ranger, Anthem), `party-fang` (a fang sinking after a break),
-`party-rails` (the altar's board up, blank rails), and one scene a class at
+`party-rails` (the altar's board up, blank rails), `party-button` (a fang held, the button over the next slot), and one scene a class at
 rung 8 (`class-brawler` ... `class-bard`). The old weapon scenes are
 removed or rewritten onto classes.
 
 ## Checks (buy it like a player)
 
-- **party.test.mjs** (CREW): after the snatch the pods board offers three
-  station kinds; one is built free by a delver and the sqwife swims there;
-  a fang drops at a break, sinks, is carried, and buys a slot through the
-  row; a spare body takes the slot and swims to a classed station; `+`/`-`
-  moves a fighter; four fighters is the most.
+- **party.test.mjs** (CREW): after the snatch the floating button offers
+  three station kinds; one is built free by a delver and the sqwife swims
+  there; a fang drops at a break, sinks, is carried, and the button
+  appears; its button spends it on a station a delver builds, and a pod
+  resident swims there as its fighter; four stations is the most.
 - **classes.test.mjs** (FIGHT): for each class, bought through its rails'
   Buy to rung 4 and to rung 8, the move and the capstone happen (a
   Haymaker lands every 4th punch and stuns; an Aimed shot every 5th arrow,
@@ -353,8 +358,7 @@ removed or rewritten onto classes.
   weapon levels bought, a stage broken) loads: stations stand, the purse
   holds the refund, slots equal the stage plus one, no body lost, the reload
   check holds.
-- New `verify.js` rules (STATE): one fighter a station; fighters ≤
-  `fightSlots` ≤ `FIGHT_SLOTS_MAX`; a fighter's station exists and is built;
+- New `verify.js` rules (STATE): one fighter a station; stations ≤ `FIGHT_STATIONS_MAX`; a fighter's station exists and is built;
   `fangsDropped` ≤ stage; no fighter in the yard.
 - Every test file that hardcodes a retired job, row or flag is rewritten by
   its owner above; `test/shop-rows.mjs` lists every new row.
@@ -375,7 +379,7 @@ decide, and what you think is wrong with this document.
 
 ## Open, for the owner at sign-off
 
-1. **The numbers**: `STATION_BILLS`, the ten ladders, `CLICK_DMG`, the fang
+1. **The numbers**: the ten ladders, `CLICK_DMG`, the fang
    and slot costs, the heals and depths. First guesses go in; the ladder
    book and a play-through tune them.
 2. **Decided-here items 1-10** above: overrule any.
