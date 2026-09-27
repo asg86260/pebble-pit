@@ -154,11 +154,14 @@ export const TESTS = [
     };
 
     const bought = await press('carry');
-    // The row the yard is now building is committed, so pressing it again
-    // cannot go through: a truer refusal than an empty purse, since the money
-    // is there and the yard still says no.
-    const refused = await press('carry');
+    // Pressed again, the card queues the next rung behind the one being built,
+    // paid for now (DESIGN.md, "The same row, queued again").
+    const again = await press('carry');
     const place = await press('unlockfarm');
+    // A place is a one-off: with it in the works there is no next one to sell,
+    // so a second press goes nowhere. A truer refusal than an empty purse,
+    // since the money is there and the yard still says no.
+    const refused = await press('unlockfarm');
 
     await hoverAway();
     newRun();
@@ -167,14 +170,18 @@ export const TESTS = [
          bought ? `${bought.spent}` : 'no row'),
       ok(!!bought && bought.open === true, 'and the board stays up for the next press',
          `${bought && bought.open}`),
+      ok(!!again && again.spent > 0, 'pressed again, it queues the next rung and takes its money',
+         again ? `${again.spent} taken` : 'no row'),
+      ok(!!again && again.open === true, 'and the board stays up',
+         `${again && again.open}`),
+      ok(!!place && place.open === true, 'ordering a place leaves it up as well',
+         `${place && place.open}`),
       // Not `=== 0`: the crew are hauling while this runs, so the purse
       // creeps *up* under the press. What matters is that nothing was taken.
-      ok(!!refused && refused.spent <= 0, 'the rung being built is refused a second time',
+      ok(!!refused && refused.spent <= 0, 'the place being built is refused a second time',
          refused ? `${refused.spent} taken` : 'no row'),
       ok(!!refused && refused.open === true, 'and a press that bought nothing leaves the board up',
-         `${refused && refused.open}`),
-      ok(!!place && place.open === true, 'and ordering a place leaves it up as well',
-         `${place && place.open}`)
+         `${refused && refused.open}`)
     ];
   }],
 
