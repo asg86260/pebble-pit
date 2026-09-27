@@ -15347,44 +15347,16 @@ phase ends in a reward the player spends on a decision, not a rung.
 - **The star** stays the machine bought in sparks (sparks buy every machine),
   outside the party; it strikes whatever the party is fighting.
 
-### Five stations, three branches each
+### Five stations, a branching tree each
 
-A station is a fighting style; its board sells **three branches**, each a
-ladder built through `tierRows` with `named` bands and a written table in
-`LADDERS` (`LADDER` rungs, the coin order scales, then dust, then ore, then a
-spark on top). The branches are what make two fighters at the same station
-in two runs play differently, and what makes two fighters at different
-stations play together. Names and numbers below are the proposal; the ladder
-book settles the numbers.
-
-| station | style | branch | what it does | plays with |
-|---|---|---|---|---|
-| **altar** | fists: quick blows | *Brute* | heavier blows; a blow's stun lasts longer | anything that bleeds: a stun stops the heal under it |
-| | | *Flurry* | faster blows, each shaking extra scales loose | the economy: the party's rungs come sooner |
-| | | *Breaker* | the chips a blow bites stay open longer, and a chipped cell takes more from everyone | grenades' shrapnel, lances |
-| **well** | lance: a thrown lance that sticks and bleeds | *Barbed* | the bleed runs to the lengths either side | the splitting phase |
-| | | *Deep* | a lance bleeds longer, and harder while the serpent is stunned | Brute, Concussion |
-| | | *Harpoon* | a stuck lance pins its length: it cannot thrash or heal there | sigils, grenades on the pinned length |
-| **armory** | grenade: a burst in rings | *Shrapnel* | a burst chips every length it crosses | Breaker |
-| | | *Concussion* | a whole burst is one blow for the stun, and stuns bigger | Deep lance, Binding |
-| | | *Flare* | a burst lights the coil it crosses | the beam's Lantern, the fading phase |
-| **circle** | sigil: a circle under the coil that holds and crushes | *Binding* | a held length heals less, more circles at once | every bleed |
-| | | *Crushing* | a held length is crushed, and a crush is a blow | Brute's stun, Breaker's chips |
-| | | *Warding* | a stun lasts longer on a length over a circle | Concussion, Brute |
-| **spire** | beam: held damage; lights the coil | *Lantern* | a wider light; a lit length takes more from everyone | Flare, the fading phase |
-| | | *Curse* | the heal itself is cut, stacking with Binding | slow parties, the bleeds |
-| | | *Fork* | two beams, two lengths at once | the splitting phase |
-
-**A fighter specs into one branch.** A fighter at a station climbs one of its
-three branches; the other two show on the board, shut, with the fighter's
-name on the one taken. Re-speccing is buying the station's respec row, which
-hands back nothing -- the rungs are the station's kit and stay with it. (Open:
-see the calls.)
-
-**The spec belongs to the station.** The rungs bought are the station's kit,
-not the fighter's: a fighter who swims away leaves them, and whoever takes
-the station takes them up. So moving the sqwife off the altar does not throw
-away what the altar was bought, and the party can be reshuffled for a phase.
+**Every fighter starts as the same base fighter**; the station they swim to
+makes them what they are (the owner, 2026-09-26). Each station's tree -- a
+style at the root, three branches, a keystone at rung 4 and a capstone fork
+at rung 8, free respecs, the spec the station's -- and every branch, what it
+does and what it plays with, is detailed in `docs/serpent-branches.md`. The
+branches talk to each other only through statuses left on the serpent
+(Stunned, Chipped, Held, Lit, Bleeding, a heal cut), so fifteen branches are
+not a hundred special cases.
 
 ### Every style can win
 
@@ -15457,20 +15429,15 @@ C and D do not depend on the rest and are built first, on today's weapons.
    the fifteen branches; the defense table; the crews and door chain
    removed; the migration; the checks.
 
-### The calls for the owner
+### The calls, answered 2026-09-26
 
-1. **One branch a fighter, or points across all three?** Recommended: one,
-   with a respec row -- a spec is then a real identity. Points across all
-   three makes the best party the one that buys everything.
-2. **Whose is the spec: the station's or the fighter's?** Recommended: the
-   station's, so the party can be reshuffled for a phase without losing
-   what was bought. The fighter's makes each fighter a character to keep,
-   and moving one a loss.
-3. **Four fighters for five stations** (three fangs) -- or should the last
-   phase's break give a fifth, too late to use? Recommended: four, one
-   station always empty, so leaving one out is part of the build.
-4. **Do fighters fight on their own?** Recommended: yes, each on their own
-   clock, with the click on top as the sqwife's.
+1. **Spec:** a branching tree a station, one branch at a time, respecs free.
+2. **Whose:** the station's.
+3. **Four fighters** for five stations.
+4. **Fighters fight on their own**, the click on top.
+
+The owner asked for every branch detailed before anything is built:
+`docs/serpent-branches.md`, whose own open calls are at its end.
 
 ## The deep's bench (design, not built)
 

@@ -22,8 +22,10 @@ Open:
 each phase broken drops a fang that buys another fighter's slot (four at
 most, five stations); three branches a station, fifteen in all, built for
 synergies; no station order; blows burst scales and a heavy one stuns the
-heal (C + D of `docs/mocks/serpent-impact-2026-09-26.html`). Blocker: the
-owner's four calls at the end of the section. C + D can be built first.
+heal (C + D of `docs/mocks/serpent-impact-2026-09-26.html`). The owner's
+four calls answered 2026-09-26; every branch detailed in
+`docs/serpent-branches.md`. Blocker: the owner's read of that, and its three
+open calls. C + D can be built first.
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 
