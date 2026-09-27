@@ -295,3 +295,101 @@ registerClass({
       }) },
   ],
 });
+
+// --- the Assassin --------------------------------------------------------------------
+
+// She darts: up from the station fast, one stab, and straight back, every
+// stab its own trip -- the swordsman goes up and stays; the assassin is
+// never under the coil longer than the stab.
+const AX = HX + 3;                                   // the column her dagger goes in
+const dartLegs = stabs => stabs.flatMap(s => [[s - 0.25, s, 1], [s + 0.12, s + 0.45, 0]]);
+// The dagger: at rest, short and upright at her left; in a stab, up her
+// right side into the hide, a cell further at the instant it lands.
+function daggerRest(g, x, y, tone = WHITE) {
+  cell(g, x - 1, y + 2, GREYS[6]);
+  cell(g, x - 1, y + 1, tone); cell(g, x - 1, y, tone);
+}
+function daggerStab(g, x, y, deep, tone = WHITE) {
+  cell(g, x + 3, y, GREYS[6]);
+  for (let r = 1; r <= 2 + deep; r++) cell(g, x + 3, y - r, tone);
+}
+// The puncture: a short dark line up into the hide, `len` cells, closing up.
+function puncture(g, t, st, a, len) {
+  if (a < 0 || a > 1.2) return;
+  const tone = GREYS[[1, 2, 4, 6, 8][Math.min(4, Math.floor(a / 0.24))]];
+  const b = coilBottom(AX, t, st);
+  for (let i = 0; i < len; i++) cell(g, AX, b - i, tone);
+}
+function assassinScene(opts) {
+  const { stabs } = opts;
+  return {
+    body: false, dur: opts.dur,
+    state(t, api) { opts.state?.(t, api); },
+    draw(g, t, api) {
+      const st = api.st, x = HX, { y, moving } = tripY(t, st, dartLegs(stabs), 2);
+      if (moving) wake(g, t, x, y);
+      drawMe(g, api.cls, x, y, t);
+      const near = stabs.find(s => t >= s - 0.1 && t < s + 0.3);
+      const tone = opts.venom ? PURPLES[10] : WHITE;
+      if (near != null) daggerStab(g, x, y, t >= near && t < near + 0.1 ? 1 : 0, tone);
+      else daggerRest(g, x, y, tone);
+      if (opts.venom) {
+        // a drop of it gathering on the blade and falling, at rest or not
+        const p = (t % 1.1) / 1.1;
+        const [dx, dy] = near != null ? [x + 4, y - 1] : [x - 2, y + 1];
+        if (p > 0.5) cell(g, dx, dy + (p - 0.5) * 10, PURPLES[p < 0.8 ? 9 : 6]);
+      }
+      stabs.forEach((s, i) => {
+        const b = coilBottom(AX, t, st), k = opts.k(s, i);
+        burst(g, t, s, AX, b, k, 20 + i); chip(g, t, s, AX, b, k * 0.9, 20 + i);
+        puncture(g, t, st, t - s, opts.len ? opts.len(i) : 2);
+        opts.hit?.(g, t, st, s, t - s, i);
+      });
+    },
+  };
+}
+
+registerClass({
+  key: 'assassin', name: 'Assassin', station: 'well', group: 'blade',
+  look: 'a pointed hood that shades the face, one eye showing; a short dagger at the left, darting up to stab',
+  hat(g, x, y) {
+    rect(g, x - 1, y - 1, BODY + 2, 1, GREYS[6]);
+    cell(g, x, y - 2, GREYS[6]); cell(g, x + 1, y - 2, GREYS[7]);    // the hood's point
+    rect(g, x, y, BODY, 1, GREYS[4]);                                 // the face in its shadow
+    cell(g, x + 2, y, WHITE);                                         // the one eye
+  },
+  scenes: [
+    { name: 'Base', about: 'A stab every 1.5 s, darting up and back. x3 on a Stunned or Marked serpent: here another fighter stuns it, and the second stab lands big.',
+      ...assassinScene({
+        stabs: [1.0, 2.5, 4.0], dur: 5.4,
+        state(t, api) { api.stun(2.2, 1.5); },
+        k: (s, i) => (i === 1 ? 0.8 : 0.3),
+        len: i => (i === 1 ? 4 : 2),
+      }) },
+    { name: 'Execution', about: 'Each stab does more the deeper the wound: every stab here goes in further, the hole bigger, up to x2 at the break.',
+      ...assassinScene({
+        stabs: [0.8, 2.0, 3.2, 4.4], dur: 5.6,
+        k: (s, i) => [0.3, 0.5, 0.7, 1][i],
+        len: i => 2 + i,
+      }) },
+    { name: 'Venom', about: 'Each stab Poisons, a stack a stab: the blade is wet with it, and each stab sends it through the whole snake.',
+      ...assassinScene({
+        stabs: [1.0, 2.5, 4.0], dur: 5.4, venom: true,
+        state(t, api) { const n = count(t, [1.0, 2.5, 4.0]); if (n) api.status('poisoned', n / 10); },
+        k: () => 0.3,
+        hit(g, t, st, s, a) { if (a >= 0 && a < RUN_S) runAlong(g, t, st, AX, a, [PURPLES[11], PURPLES[9], PURPLES[7]]); },
+      }) },
+    { name: 'Shadow', about: 'Her stab Marks the serpent, and the Mark stays after: it runs out over the whole coil. Her next stabs land on the Mark, x3.',
+      ...assassinScene({
+        stabs: [1.0, 2.5, 4.0], dur: 5.4,
+        state(t, api) { if (t >= 1.0 + RUN_S) api.status('marked', 1); },
+        k: (s, i) => (i ? 0.8 : 0.3),
+        len: i => (i ? 4 : 2),
+        hit(g, t, st, s, a, i) {
+          if (i === 0 && a >= 0 && a < RUN_S) markArrive(g, t, st, AX, a);
+          // the stab that lands on the Mark: a ring closing on the spot
+          if (i > 0 && a >= 0 && a < 0.3) ring(g, AX, Math.round(coilY(AX, t, st)), Math.round(4 - a * 8), PURPLES[a < 0.15 ? 11 : 8]);
+        },
+      }) },
+  ],
+});
