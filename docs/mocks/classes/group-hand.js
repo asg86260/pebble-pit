@@ -102,16 +102,22 @@ function exposeWave(g, t, t0, hx, st) {
 }
 
 // --- the Brawler ---------------------------------------------------------------------
-// Strength: a flat cap with its peak forward, and two bare fists as big as
-// his head, hung either side of him. He swims up under the coil and swings
-// them straight up into it, one then the other.
-const FIST = 2;
-// A fist's column: left hangs two cells off the body, right one past it.
-const fistX = (x, side) => side < 0 ? x - FIST - 0 : x + BODY;
+// Strength: two small wrapped fists held up in a guard, one each side of
+// his head (the looks page's kit). He swims up under the coil and drives
+// them straight up into it, one then the other, the arm trailing under the
+// fist.
+const FIST = 1;
+// A fist is its wrap over its knuckles: a white row on top, the striking
+// face, over a grey one. `size` is its width; the haymaker's is two.
 function drawFist(g, fx, fy, size = FIST) {
-  rect(g, fx, fy, size, size, WHITE);
-  // the knuckles: a darker row along the striking face
-  rect(g, fx, fy, size, 1, GREYS[9]);
+  rect(g, fx, fy, size, 1, WHITE);
+  rect(g, fx, fy + 1, size, 1, GREYS[9]);
+}
+// The guard at rest: a fist each side, its wrap level with the head's top
+// row less one, so the pair frames the head.
+function drawGuard(g, x, y) {
+  drawFist(g, x - 1, y - 1);
+  drawFist(g, x + BODY, y - 1);
 }
 // A punch's reach at time t for one that lands at L: 0 rest, 1 full, -1 the
 // wind-up (fist drawn down).
@@ -123,25 +129,31 @@ function punchReach(t, L) {
   if (a < 0.1) return 1;
   return 1 - (a - 0.1) / 0.2;
 }
-// Both fists, the one punching extended up to the coil's underside with its
-// arm behind it. `punches` is a list of { at, side, size }.
-function drawFists(g, t, x, y, st, punches, rest0 = FIST) {
+// Both fists from the guard, the one punching driven straight up to the
+// coil's underside with its arm under it. `punches` is a list of
+// { at, side, size }; `frayed` hangs a loose end of wrap off each fist.
+function drawFists(g, t, x, y, st, punches, frayed = false) {
   for (const side of [-1, 1]) {
     const mine = punches.filter(p => p.side === side);
-    let reach = 0, size = rest0;
+    let reach = 0, size = FIST;
     for (const p of mine) { const r = punchReach(t, p.at); if (r !== 0) { reach = r; size = p.size || FIST; } }
     const fx = side < 0 ? x - size : x + BODY;
-    const rest = y + 1;
+    const rest = y - 1;
     let fy = rest;
     if (reach < 0) fy = rest + 1;
     else if (reach > 0) {
       const face = Math.max(coilBottom(fx, t, st), coilBottom(fx + size - 1, t, st)) + 1;
       fy = Math.round(rest + (face - rest) * reach);
     }
-    // the arm, from the shoulder to the fist, on the fist's inner column
+    // the arm, under the fist down to the shoulder, on the fist's inner column
     const armX = side < 0 ? x - 1 : x + BODY;
-    for (let r = fy + size; r < y + 1; r++) cell(g, armX, r, GREYS[8]);
+    for (let r = fy + 2; r < y; r++) cell(g, armX, r, GREYS[8]);
     drawFist(g, fx, fy, size);
+    // a wrap come loose, flapping a cell out and back off the fist's outside
+    if (frayed) {
+      const f = Math.floor(t * 8 + (side > 0 ? 1 : 0)) % 2;
+      cell(g, side < 0 ? fx - 1 : fx + size, fy + f, GREYS[10]);
+    }
   }
 }
 // Where a punch lands, for the burst: the middle of the fist's face.
@@ -150,7 +162,7 @@ function punchSpot(t, st, x, side, size = FIST) {
   return { cx: fx + (size - 1) / 2, cy: Math.max(coilBottom(fx, t, st), coilBottom(fx + size - 1, t, st)) };
 }
 
-const BR_GAP = 6;
+const BR_GAP = 4;
 // A trip up and a row of punches, then home: the shape every Brawler scene
 // shares. Returns the body's (x, y) for the frame.
 function brawlerAt(t, st, up0, up1, dn0, dn1, shake = 0) {
@@ -158,15 +170,16 @@ function brawlerAt(t, st, up0, up1, dn0, dn1, shake = 0) {
   const x = HOME_X + (shake ? (hash(Math.floor(t * 18)) < 0.5 ? -1 : 0) : 0);
   return { x, y };
 }
-function drawBrawler(g, t, api, at, punches, heavy = [], fist = FIST) {
+function drawBrawler(g, t, api, at, punches, heavy = [], frayed = false) {
   // the bite and the scales first, so the fist is seen in front of them
   for (const p of [...punches, ...heavy]) {
     const s = punchSpot(t, api.st, at.x, p.side, p.size || FIST);
     land(g, t, p.at, s.cx, s.cy, p.k || 0.3, Math.round(p.at * 10));
   }
   drawBody(g, at.x, at.y);
-  api.cls.hat(g, at.x, at.y, t);
-  drawFists(g, t, at.x, at.y, api.st, [...punches, ...heavy], fist);
+  // the fists are the kit: drawn here from the guard rather than by `hat`,
+  // so a punching fist leaves its place in the guard
+  drawFists(g, t, at.x, at.y, api.st, [...punches, ...heavy], frayed);
 }
 const alt = (times, k = 0.3) => times.map((at, i) => ({ at, side: i % 2 ? 1 : -1, k }));
 
@@ -177,13 +190,8 @@ const BRU = [1.0, 2.2, 3.4];
 
 registerClass({
   key: 'brawler', name: 'Brawler', station: 'altar', group: 'hand',
-  look: 'a flat cap, peak forward; two bare fists as big as his head',
-  hat(g, cx, cy) {
-    // the crown sits on the head, the peak juts a cell forward
-    rect(g, cx, cy - 1, BODY, 1, GREYS[8]);
-    rect(g, cx, cy - 2, 2, 1, GREYS[8]);
-    cell(g, cx + BODY, cy - 1, GREYS[9]);
-  },
+  look: 'two small wrapped fists held up in a guard, one each side of his head',
+  hat(g, cx, cy) { drawGuard(g, cx, cy); },
   scenes: [
     {
       name: 'Base', about: 'A heavy punch every 1.2 s: he swims up under the coil and swings, one fist then the other.',
@@ -204,7 +212,7 @@ registerClass({
         // the haymaker's wind-up: the body sinks two cells, then drives up
         const a = t - PUM_HAY;
         if (a > -0.5 && a < 0) at = { x: at.x, y: at.y + (a < -0.12 ? 2 : 0) };
-        const heavy = [{ at: PUM_HAY, side: 1, size: 3, k: 0.75 }];
+        const heavy = [{ at: PUM_HAY, side: 1, size: 2, k: 0.75 }];
         drawBrawler(g, t, api, at, alt(PUM_JABS), heavy);
         // the count to four: a pip a punch beside him, the fourth the haymaker
         const n = countTo([...PUM_JABS, PUM_HAY], t) % 4 || (t >= PUM_HAY && t < PUM_HAY + 0.6 ? 4 : 0);
@@ -212,30 +220,30 @@ registerClass({
           cell(g, at.x - 3, at.y + 2 - i, i < n ? (i === 3 ? WHITE : GREYS[9]) : GREYS[3]);
         // the blow rings the coil out from where it landed
         if (a >= 0 && a < 0.5) {
-          const s = punchSpot(t, st, at.x, 1, 3);
+          const s = punchSpot(t, st, at.x, 1, 2);
           ring(g, s.cx, s.cy, 1 + a * 14, a < 0.25 ? WHITE : GREYS[7], 2);
         }
       },
     },
     {
-      name: 'Rage', about: 'Each punch in a row hits 5% harder, to +60%: he steams, then shakes, and the blows grow.',
+      name: 'Rage', about: 'Each punch in a row hits 5% harder, to +60%: he steams, his wraps work loose, then he shakes, and the blows grow.',
       dur: 7.4, body: false,
       state() {},
       draw(g, t, api) {
         const rage = countTo(RAGE, t) / RAGE.length * (t < 6.4 ? 1 : 1 - along(t, 6.4, 7.2));
         const at = brawlerAt(t, api.st, 0.2, 0.8, 6.4, 7.1, rage >= 1);
-        // past half rage the fists swell a cell, and the blows with them
-        const big = i => i >= RAGE.length / 2 ? 3 : FIST;
-        const punches = RAGE.map((p, i) => ({ at: p, side: i % 2 ? 1 : -1, size: big(i), k: 0.25 + 0.4 * (i / (RAGE.length - 1)) }));
-        drawBrawler(g, t, api, at, punches, [], rage >= 0.5 ? 3 : FIST);
+        // the fists stay the kit's small ones; the blows grow, and past half
+        // rage the wraps come loose and flap
+        const punches = RAGE.map((p, i) => ({ at: p, side: i % 2 ? 1 : -1, k: 0.25 + 0.4 * (i / (RAGE.length - 1)) }));
+        drawBrawler(g, t, api, at, punches, [], rage >= 0.5);
         // steam off his head, more of it the longer the row: puffs rise off
-        // both sides of the cap and step down the tones as they go
+        // the crown between the fists and step down the tones as they go
         const puffs = Math.round(rage * 8);
         for (let i = 0; i < puffs; i++) {
-          const side = i % 2 ? at.x + BODY : at.x - 1;
+          const col = at.x + [0, 2, 1][i % 3];
           const rise = (t * 3 + hash(i + 3) * 4) % 4;
           const drift = rise > 2 ? (i % 2 ? 1 : -1) : 0;
-          cell(g, side + drift, at.y - 1 - rise, [WHITE, GREYS[9], GREYS[7], GREYS[5]][Math.floor(rise)]);
+          cell(g, col + drift, at.y - 1 - rise, [WHITE, GREYS[9], GREYS[7], GREYS[5]][Math.floor(rise)]);
         }
       },
     },
