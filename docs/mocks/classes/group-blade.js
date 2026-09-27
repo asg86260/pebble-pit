@@ -381,6 +381,16 @@ function assassinScene(opts) {
       const st = api.st, x = HX;
       const { y, moving } = tripY(t, st, dartLegs(stabs), reach(DAG_UP) - 1);
       if (moving) wake(g, t, x, y);
+      // the wounds first, so the blades that made them lie over them
+      stabs.forEach((s, i) => {
+        const k = opts.k(s, i), len = opts.len ? opts.len(i) : 2;
+        [DL, DR].forEach((cx, j) => {
+          const b = coilBottom(cx, t, st);
+          burst(g, t, s, cx, b, k, 20 + i * 2 + j); chip(g, t, s, cx, b, k * 0.9, 20 + i * 2 + j);
+          puncture(g, t, st, cx, t - s, len);
+        });
+        opts.hit?.(g, t, st, s, t - s, i);
+      });
       drawBody(g, x, y);
       const near = stabs.find(s => t >= s - 0.1 && t < s + 0.3);
       const tint = opts.venom ? VENOM : null;
@@ -392,15 +402,6 @@ function assassinScene(opts) {
         const p = (t % 1.1) / 1.1, gy = near != null ? y - 1 : y + 1;
         if (p > 0.5) for (const dx of [x - 3, x + 5]) cell(g, dx, gy + (p - 0.5) * 10, PURPLES[p < 0.8 ? 9 : 6]);
       }
-      stabs.forEach((s, i) => {
-        const k = opts.k(s, i), len = opts.len ? opts.len(i) : 2;
-        [DL, DR].forEach((cx, j) => {
-          const b = coilBottom(cx, t, st);
-          burst(g, t, s, cx, b, k, 20 + i * 2 + j); chip(g, t, s, cx, b, k * 0.9, 20 + i * 2 + j);
-          puncture(g, t, st, cx, t - s, len);
-        });
-        opts.hit?.(g, t, st, s, t - s, i);
-      });
     },
   };
 }
