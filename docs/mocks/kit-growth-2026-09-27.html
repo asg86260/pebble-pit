@@ -1533,8 +1533,10 @@ function mStaff(g, x, y, R, t, up = false, glow = 0, home = true) {
 }
 // A beam of cells from (ax, ay) to (bx, by), `w` cells wide (1 to 3), each
 // cell shimmering a step up and down the purples along its length; at three
-// wide its core is white. `fade` 0..1 steps it down the purples as it cuts off.
-function beam(g, ax, ay, bx, by, w, t, fade = 0) {
+// wide its core is white when `white` (the capstone's burn), else the
+// brightest purple with the edges a step down. `fade` 0..1 steps it down the
+// purples as it cuts off.
+function beam(g, ax, ay, bx, by, w, t, fade = 0, white = true) {
   const len = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / len, uy = (by - ay) / len;
   const offs = w >= 3 ? [-1, 0, 1] : w === 2 ? [0, 1] : [0], f = Math.floor(t * 14);
   const SH = [PURPLES[9], PURPLES[10], PURPLES[11]];
@@ -1543,7 +1545,9 @@ function beam(g, ax, ay, bx, by, w, t, fade = 0) {
     // widened across the grid, not across the slant, so the band has no holes
     const side = Math.abs(uy) > Math.abs(ux), cx = Math.round(ax + ux * i) + (side ? o : 0), cy = Math.round(ay + uy * i) + (side ? 0 : o), sh = (i + f + (o + 3)) % 3;
     const core = w >= 3 && o === 0;
-    cell(g, cx, cy, fade > 0 ? down(core ? 0 : 1) : core ? (sh === 0 ? PURPLES[11] : WHITE) : SH[sh]);
+    const lit = w < 3 ? SH[sh] : white ? (core ? (sh === 0 ? PURPLES[11] : WHITE) : SH[sh])
+              : core ? (sh === 0 ? PURPLES[10] : PURPLES[11]) : (sh === 0 ? PURPLES[9] : PURPLES[8]);
+    cell(g, cx, cy, fade > 0 ? down(core ? 0 : 1) : lit);
   }
 }
 const mage = {
@@ -1585,7 +1589,7 @@ const mage = {
     if (a >= B.flare && a < B.start + 0.06) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1], [-1, -1], [1, -1]]) cell(g, sx + dx * (Math.abs(dx) + Math.abs(dy) > 1 ? 1 : 1), oy + dy, Math.abs(dx) + Math.abs(dy) > 1 ? PURPLES[11] : WHITE);
     // the beam, held, then cut with a short fade
     const r = this.ramp(R, a), w = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1;
-    if (a >= B.start && a < end + 0.15) beam(g, sx, oy - 0.5, tx, hy, w, t, a >= end ? (a - end) / 0.15 : 0);
+    if (a >= B.start && a < end + 0.15) beam(g, sx, oy - 0.5, tx, hy, w, t, a >= end ? (a - end) / 0.15 : 0, R8(R));
     if (R8(R)) {
       const full = a >= B.start + 0.7 * H;
       if (full && a < end) {
