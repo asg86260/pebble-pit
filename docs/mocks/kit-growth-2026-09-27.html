@@ -60,9 +60,6 @@
     <div class="grp" id="smears"><span>smears</span></div>
     <div class="grp" id="classic"><span>classic</span></div></div>
 
-  <h2>Pick the rung-8 beads</h2>
-  <p class="dim">The Monk at rung 8: the arch as it is at rung 4, then three touches for the capstone, looping with classic on, all on one clock. The lit beads are the chi count.</p>
-  <div id="beadpick"></div>
 
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
@@ -333,8 +330,8 @@ const POSE = 0.08;
 // by the blade on the pike). The others stay in the code, as '' the old ones.
 // Also picked: B for the Whirlwind's ending (the blade planted point-down,
 // his weight settling), at rung 4 and rung 8's settle; A for the Monk's beads
-// (spaced beads in an arch). The rung-8 bead touch is still open ('' none).
-const PICKED = { hay: 'C', thrust: 'B', whirl: 'A', ease: 'B', beads: 'A', beads8: '' };
+// (spaced beads in an arch), and 4 for the rung-8 beads (the connected halo).
+const PICKED = { hay: 'C', thrust: 'B', whirl: 'A', ease: 'B', beads: 'A', beads8: '4' };
 let VAR = { ...PICKED };
 const EX = () => CLASSIC ? 1.7 : 1;
 // The world at the moment a fighter is drawn, so a smear can find the hide.
@@ -818,11 +815,13 @@ function roundBead(g, cx, cy, lit) {
 }
 function cord(g, ax, ay, bx, by) { line(g, ax - 0.5, ay - 0.5, bx - 0.5, by - 0.5, (cx, cy) => cell(g, cx, cy, GREYS[5])); }
 // The bead centers (and the cord's path) for an option, about the body at (x, y).
-function beadPath(v, x, y, R, t) {
+function beadPath(v, x, y, R, t, anim = null) {
   const n = 5, pts = [], path = [];
   if (v === 'A') {
-    const hx = x + 1.5, hy = y + 1, sw = Math.sin(t * 1.6) * 0.12;
-    const at = (deg, i) => { const an = deg * Math.PI / 180 + sw + Math.sin(t * 4.2 - i * 1.1) * 0.06; return [hx + 5 * Math.sin(an), hy - 5 * Math.cos(an)]; };
+    // on her own phase: the sway quickens into a palm and the arch draws in a little
+    const ph = anim ? anim.th : t, tg = anim ? anim.tight : 0, rad = 5 - 0.7 * tg;
+    const hx = x + 1.5, hy = y + 1, sw = Math.sin(ph * 1.6) * 0.12 * (1 - 0.5 * tg);
+    const at = (deg, i) => { const an = deg * Math.PI / 180 + sw + Math.sin(ph * 4.2 - i * 1.1) * 0.06 * (1 - 0.5 * tg); return [hx + rad * Math.sin(an), hy - rad * Math.cos(an)]; };
     for (let i = 0; i < n; i++) pts.push(at(-72 + i * 36, i));
     for (let d = -86; d <= 86; d += 8) path.push(at(d, (d + 72) / 36));
   } else if (v === 'B') {
@@ -853,18 +852,37 @@ function beadPath(v, x, y, R, t) {
 //     meeting, and turns slowly with the beads strung on it; the back half is
 //     a tone darker. On a full chi it tightens and its lit beads whiten.
 // `u` is the Monk's own clock, so the arch closes once when her turn begins.
-function haloV(g, x, y, R, t, litOf, full, u) {
-  const cx = x + 1.5, cy = y - 2.5, rx = full ? 3.6 : 4.2, ry = full ? 1.1 : 1.4, spin = t * 0.7;
+function haloV(g, x, y, R, t, litOf, full, anim) {
+  // its turn is the Monk's own (a hit-pause holds it), quickening into each
+  // palm and tightening at the peak; at rest it turns steadily
+  const u = anim ? anim.u : null, tg = anim ? anim.tight : full ? 1 : 0;
+  const cx = x + 1.5, cy = y - 2.5, rx = 4.2 - 0.6 * tg, ry = 1.4 - 0.3 * tg, spin = anim ? anim.th : t * MONK_SPIN;
   const ringAt = i => { const th = spin + i * Math.PI * 2 / 5; return [cx + rx * Math.cos(th), cy + ry * Math.sin(th), Math.sin(th) < 0]; };
   const k = u == null ? 1 : ease(clamp(u / 0.6, 0, 1));
   if (k < 1) {
     // the arch lifting and closing: each bead on its way from the arch to the ring
-    const { pts } = beadPath('A', x, y, R, t);
+    const { pts } = beadPath('A', x, y, R, t, anim);
     const at = pts.map((p, i) => { const r = ringAt(i); return [lerp(p[0], r[0], k), lerp(p[1], r[1], k)]; });
     for (let i = 1; i < 5; i++) cord(g, ...at[i - 1], ...at[i]);
     // the cord's ends meet over her head at the last of it
     if (k > 0.8) cord(g, ...at[4], ...at[0]);
     at.forEach(([bx0, by0], i) => roundBead(g, bx0, by0, litOf(i)));
+    return;
+  }
+  // the chi palm's peak, held: each bead blurs into a smear arc behind it round
+  // the ring, bright at the bead and stepping down the purples behind
+  if (anim && anim.smear) {
+    const SM = [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[8], PURPLES[7], PURPLES[6]];
+    for (const back of [true, false]) for (let i = 0; i < 5; i++) {
+      const th0 = spin + i * Math.PI * 2 / 5;
+      for (let j = SM.length - 1; j >= 0; j--) {
+        const th = th0 - j * 0.16, isBack = Math.sin(th) < 0;
+        if (isBack !== back) continue;
+        const qx = cx + rx * Math.cos(th), qy = cy + ry * Math.sin(th);
+        cell(g, qx - 0.5, qy - 0.5, back ? SM[Math.min(SM.length - 1, j + 2)] : SM[j]);
+        if (!j) cell(g, qx - 0.5, qy - 1.5, back ? PURPLES[9] : WHITE);
+      }
+    }
     return;
   }
   // the ring: its back half first, a tone darker, then the front over it
@@ -884,9 +902,9 @@ function haloV(g, x, y, R, t, litOf, full, u) {
     }
   }
 }
-function beadsV(g, v, x, y, R, t, litOf, full = false, u = null) {
+function beadsV(g, v, x, y, R, t, litOf, full = false, anim = null) {
   const touch = v === 'A' && R8(R) ? VAR.beads8 : '';
-  if (touch === '4') return haloV(g, x, y, R, t, litOf, full, u);
+  if (touch === '4') return haloV(g, x, y, R, t, litOf, full, anim);
   if (touch === '2') {
     // the halo: a flat ring over her head, turning, the near beads a tone brighter
     const hx = x + 1.5, hy = y - 2.5;
@@ -906,7 +924,7 @@ function beadsV(g, v, x, y, R, t, litOf, full = false, u = null) {
     for (let i = 1; i < path.length; i++) cord(g, ...path[i - 1], ...path[i]);
     ip.forEach(([cx, cy], i) => roundBead(g, cx, cy, litOf(i)));
   }
-  const { pts, path } = beadPath(v, x, y, R, t);
+  const { pts, path } = beadPath(v, x, y, R, t, anim);
   for (let i = 1; i < path.length; i++) cord(g, ...path[i - 1], ...path[i]);
   const pulse = Math.floor(t * 10) % 5;
   pts.forEach(([cx, cy], i) => {
@@ -920,10 +938,12 @@ function beadsV(g, v, x, y, R, t, litOf, full = false, u = null) {
   // her hand holding the mala
   if (v === 'B') { cell(g, x + 3, y, GREYS[8]); cell(g, x + 4, y, GREYS[8]); cell(g, x + 5, y - 0.5, GREYS[9]); }
 }
+// The halo's resting turn, radians a second.
+const MONK_SPIN = 1.1;
 const monk = {
   key: 'monk', name: 'Monk', at: 4, lift: 1,
   base: 'palms build chi; a chi palm stuns', move: 'chi fills twice as fast', cap: 'the chi palm stuns longer',
-  mark: 'two beads told round, not one', touch: 'still to pick (Pick the rung-8 beads)',
+  mark: 'two beads told round, not one', touch: 'the arch closes into a spinning halo',
   rest(g, x, y, R, t) {
     drawBody(g, x, y);
     if (!VAR.beads) return beads(g, x, y, R, t);
@@ -937,6 +957,27 @@ const monk = {
   kickMax: 0.75,
   hits(R, x) { return this.palms(R).map((p, i) => ({ at: p + 0.5, x: x + 1, k: i === this.chi(R) ? 0.7 : 0.3 })); },
   beats(R) { return this.palms(R); },
+  // Her beads' spin at `a` (the owner: "build up to the attack. instead of a
+  // linear speed"): the resting turn, climbing on an ease-in into each palm so
+  // it peaks at the release, then easing back out; the chi palm builds longer
+  // and peaks harder, and the ring draws in at a peak. `th` is the turn so far
+  // -- the speed summed over her clock, so a hit-pause holds it -- and `tight`
+  // how far the ring or arch has drawn in.
+  spin(R, a) {
+    const ps = this.palms(R), n = this.chi(R);
+    const at = u => {
+      let w = MONK_SPIN, tight = 0;
+      ps.forEach((p, i) => {
+        const big = i === n, L = big ? 0.5 : 0.3, D = big ? 0.5 : 0.35, pk = big ? 13 : 6, tk = big ? 1 : 0.4;
+        if (u >= p - L && u < p) { const q = (u - p + L) / L; w = Math.max(w, MONK_SPIN + (pk - MONK_SPIN) * q * q); tight = Math.max(tight, tk * q * q); }
+        else if (u >= p && u < p + D) { const v = 1 - (u - p) / D; w = Math.max(w, MONK_SPIN + (pk - MONK_SPIN) * v * v); tight = Math.max(tight, tk * v * v); }
+      });
+      return [w, tight];
+    };
+    let th = 0;
+    for (let u = 0; u < a; u += 0.01) th += at(u)[0] * Math.min(0.01, a - u);
+    return { th, tight: at(a)[1] };
+  },
   draw(g, t, a, api, R, x) {
     const ps = this.palms(R), n = this.chi(R);
     // sauced, he sinks into each palm, deeper for the chi palm, and rises out of it
@@ -950,7 +991,9 @@ const monk = {
     else {
       // the chi count on the beads: one lit a chi, the fifth as she gathers the chi palm
       const chiN = a >= ps[n] - 0.15 && a < ps[n] + 0.5 ? 5 : Math.min(4, R4(R) ? lit * 2 : lit);
-      beadsV(g, VAR.beads, x, y, R, t, i => i < chiN, chiN >= 5, a);
+      // the chi palm's peak, held as a smear round the ring: the pose before its release
+      const sp = this.spin(R, a), cp = ps[n];
+      beadsV(g, VAR.beads, x, y, R, t, i => i < chiN, chiN >= 5, { u: a, th: sp.th, tight: sp.tight, smear: CLASSIC && a >= cp - POSE - 1e-9 && a < cp - 1e-9 });
     }
     const spent = a >= ps[n] && a < ps[n] + 0.4;
     pips(g, x, y, R4(R) ? lit * 2 : lit, 4, spent ? 1 : 0);
@@ -1625,18 +1668,7 @@ function drawSlot(g, c, R, sx, t) {
   drawPlinthAt(g, x + 1, ROW_FLOOR);
   c.rest(g, x, y, R, t);
 }
-const strips = [], tiles = [], beadTiles = [];
-// Pick the rung-8 beads: the arch as it is, then three touches for the capstone.
-const BEAD8 = [['', 'the arch, as at rung 4'], ['1', '1 · Double strand'], ['2', '2 · Orbiting halo'], ['3', '3 · Charged beads'], ['4', '4 · Connected halo']];
-{
-  const row = el('div', { className: 'tiles' });
-  for (const [v, label] of BEAD8) {
-    const cv = el('canvas'); cv.width = TW * P; cv.height = TH * P;
-    row.append(el('div', { className: 'tile' }, [cv, el('span', { textContent: label })]));
-    beadTiles.push({ v, g: cv.getContext('2d') });
-  }
-  document.getElementById('beadpick').append(el('div', { className: 'easerow', id: 'beads-8' }, [el('h3', { textContent: 'Monk, rung 8' }), row]));
-}
+const strips = [], tiles = [];
 const host = document.getElementById('host');
 STATIONS.forEach(([where, ...pair]) => pair.forEach(c => {
   const lines = el('div', { className: 'lines' }, [
@@ -1706,7 +1738,6 @@ function paintAll(t) {
   for (const tl of tiles) paintTile(tl.g, tl.c, tl.R, t, tl.phase);
   // the pick tiles: classic on, their own option, one clock
   const keep = [CLASSIC, VAR];
-  for (const tl of beadTiles) { CLASSIC = true; VAR = { ...PICKED, beads8: tl.v }; paintTile(tl.g, monk, 8, t, 0); }
   [CLASSIC, VAR] = keep;
   paintPane(pane, t);
 }
