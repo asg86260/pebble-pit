@@ -35,10 +35,10 @@
   .names3 { display: grid; grid-template-columns: repeat(3, 78px); font-size: 10px; color: var(--dim); text-align: center; }
   .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
   .tile { display: grid; gap: 2px; justify-items: start; }
-  .tile canvas { width: 312px; max-width: 100%; height: auto; }
+  .tile canvas { width: 330px; max-width: 100%; height: auto; }
   .tile span { font-size: 11px; color: var(--dim); }
   @media (max-width: 760px) { .cls { grid-template-columns: 1fr; } .bar { position: static; }
-    .tiles { flex-wrap: nowrap; } .tile canvas { width: calc((100vw - 48px) / 3); } }
+    .tile canvas { width: calc((100vw - 72px) / 2); } }
 </style>
 </head>
 <body>
@@ -58,7 +58,7 @@
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
 
-  <h2>The ten: rung 0, 4 and 8</h2>
+  <h2>The ten: rung 0, 4 and 8, at rest and attacking</h2>
   <div id="host"></div>
 </div>
 <script>
@@ -166,8 +166,8 @@ function blow(g, t, t0, cx, s, k, id) { burst(g, t, t0, cx, cBot(cx, t, s), k, i
 
 // --- the statuses (the trimmed six on the serpent, two on fighters) -----------------
 const HALO = [[-2, 0], [-1, -1], [0, -1], [1, -1], [2, 0], [1, 1], [0, 1], [-1, 1]];
-function paintStunned(g, t, s) {
-  const hx = X0 + 3, hy = cTop(hx, t, s) - 3, lead = Math.floor(t * 14) % 8;
+function paintStunned(g, t, s, hx = X0 + 3) {
+  const hy = cTop(hx, t, s) - 3, lead = Math.floor(t * 14) % 8;
   HALO.forEach(([dx, dy], i) => { const b = (lead - i + 8) % 8; cell(g, hx + dx, hy + dy, b === 0 ? WHITE : b === 1 ? GREYS[9] : b === 2 ? GREYS[7] : GREYS[5]); });
 }
 function paintBleeding(g, t, s) {
@@ -405,7 +405,7 @@ function staffBack(g, x, y, R, t) {
   if (R8(R)) pike(g, x + 4, y + 1, 1, 0);
 }
 const martial = {
-  key: 'martial', name: 'Martial Artist', at: 6,
+  key: 'martial', name: 'Martial Artist', at: 6, tileAt: 13, buddy: true,
   base: 'quick thrusts charge a finisher', move: 'Flow: thrusts charge double', cap: 'the finisher Hastes the party',
   mark: 'a ribbon waving off the staff\'s end', touch: 'the staff a pike, a blade on its end',
   rest(g, x, y, R, t) { drawBody(g, x, y); staffBack(g, x, y, R, t); },
@@ -670,7 +670,7 @@ function mStaff(g, x, y, R, t, up = false, glow = 0, home = true) {
   if (home) stone(g, sx, top, R, t, up, glow);
 }
 const mage = {
-  key: 'mage', name: 'Mage', at: 5,
+  key: 'mage', name: 'Mage', at: 5, tileAt: 15,
   base: 'bolts that Light', move: 'Arcane lantern: the whole serpent Lit', cap: 'Lit takes more from everyone',
   mark: 'a cell orbiting the stone', touch: 'three cells orbiting',
   rest(g, x, y, R, t) { drawBody(g, x, y); mStaff(g, x, y, R, t); },
@@ -714,7 +714,7 @@ function flute(g, x, y, R) {
   cell(g, x + 5, y, p ? PURPLES[9] : GREYS[10]); cell(g, x + 6, y, R4(R) ? PURPLES[11] : GREYS[10]);
 }
 const bard = {
-  key: 'bard', name: 'Bard', at: 2,
+  key: 'bard', name: 'Bard', at: 2, tileAt: 11, buddy: true, loop: 6.6,
   base: 'sings: the party Inspired (no damage)', move: 'Anthem: Inspired doubles', cap: 'Inspired lingers after the song',
   mark: 'a purple tip on the flute', touch: 'the whole flute purple',
   rest(g, x, y, R, t) { drawBody(g, x, y); flute(g, x, y, R, t); },
@@ -784,7 +784,50 @@ function paintPane(g, T) {
 }
 
 // ================================================================================
-// The page: per class its lines, a 1x strip of rung 0, 4, 8, the same at 4x.
+// A tile's stage: one class alone at a station under a short stretch of the
+// same coil, playing its attack at one rung on a loop of its own. The world is
+// the pane's, cropped: the fighter stands at column WX, the tile shows TW
+// columns round it and the rows from TY0 down, so every blow, status and ring
+// is drawn by the same code as the pane. A class that buffs the party gets a
+// plain fighter at the tile's left edge to receive it.
+// ================================================================================
+const TW = 22, TY0 = 1, TH = FLOOR + 2, WX = 104;   // WX toward the tail, where the coil is slim
+function paintTile(g, c, R, T, phase) {
+  const at = c.tileAt || 9, x0 = WX - at;
+  const dur = c.loop || Math.max(c.len + 1.6, 4.6);
+  const t = T, a = ((T + phase) % dur + dur) % dur, end = c.len + LINGER;
+  const st = { still: null, statuses: {}, buffs: {} };
+  c.state(a, {
+    stun(from, len) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.stunned = 1; } },
+    hold(from, len, lv = 1) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.held = Math.max(st.statuses.held || 0, lv); } },
+    status(k, lv = 1) { if (a < end) st.statuses[k] = Math.max(st.statuses[k] || 0, lv); },
+    buff(k, lv = 1) { st.buffs[k] = Math.max(st.buffs[k] || 0, lv); },
+  }, R);
+  g.save();
+  g.translate(-x0 * P, -TY0 * P);
+  drawDeep(g, t);
+  drawPlinthAt(g, WX + 1, FLOOR);
+  drawCoil(g, t, st);
+  if (st.statuses.lit) litCells(g, t, st);
+  if (st.statuses.bleeding) paintBleeding(g, t, st);
+  if (st.statuses.held) paintHeld(g, t, st, st.statuses.held);
+  if (st.statuses.stunned) paintStunned(g, t, st, x0 + 4);
+  const others = [];
+  if (c.buddy) {
+    const bx = x0 + 1;
+    drawPlinthAt(g, bx + 1, FLOOR, 5); drawBody(g, bx, REST_Y);
+    others.push({ x: bx, y: REST_Y });
+    if (st.buffs.inspired) paintInspired(g, t, bx, REST_Y, st.buffs.inspired);
+    if (st.buffs.hasted) paintHasted(g, t, bx + 8, REST_Y);
+  }
+  if (a < c.len) c.draw(g, t, a, { st, others }, R, WX);
+  else c.rest(g, WX, REST_Y - liftOf(c, R), R, t);
+  g.restore();
+}
+
+// ================================================================================
+// The page: per class its lines, a 1x strip of rung 0, 4, 8 at rest, and a
+// tile a rung playing that rung's attack.
 // ================================================================================
 const SLOT = 13, SLOT_H = 12, ROW_FLOOR = 10, RUNGS = [0, 4, 8];
 const el = (tag, props = {}, kids = []) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
@@ -813,9 +856,10 @@ STATIONS.forEach(([where, ...pair]) => pair.forEach(c => {
   lines.append(el('div', { className: 'strip' }, [sc, el('div', { className: 'names3' }, RUNGS.map(r => el('span', { textContent: 'rung ' + r })))]));
   const tl = el('div', { className: 'tiles' });
   for (const R of RUNGS) {
-    const cv = el('canvas'); cv.width = SLOT * P; cv.height = SLOT_H * P;
-    tl.append(el('div', { className: 'tile' }, [cv, el('span', { textContent: `rung ${R}, 4x` })]));
-    tiles.push({ c, R, g: cv.getContext('2d') });
+    const cv = el('canvas'); cv.width = TW * P; cv.height = TH * P;
+    tl.append(el('div', { className: 'tile' }, [cv, el('span', { textContent: `rung ${R}: ${R === 0 ? 'base' : R === 4 ? c.move.split(':')[0] : 'capstone'}` })]));
+    // a stagger a tile, so the page's loops are not in step
+    tiles.push({ c, R, g: cv.getContext('2d'), phase: hash(tiles.length * 7 + 3) * 2.5 });
   }
   host.append(el('div', { className: 'cls', id: c.key }, [lines, tl]));
 }));
@@ -836,7 +880,7 @@ let playing = true, clock = 0, last = performance.now();
 document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
 function paintAll(t) {
   for (const s of strips) RUNGS.forEach((R, i) => drawSlot(s.g, s.c, R, i * SLOT, t));
-  for (const tl of tiles) drawSlot(tl.g, tl.c, tl.R, 0, t);
+  for (const tl of tiles) paintTile(tl.g, tl.c, tl.R, t, tl.phase);
   paintPane(pane, t);
 }
 // For shots: stand the page at a time; set the rung; a contact sheet of the pane.
