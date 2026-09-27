@@ -188,7 +188,11 @@ export function registerClass(c) { CLASSES.push(c); }
 export function frame(g, cls, scene, t) {
   const st = { stun: 0, stunAt: null, statuses: {}, buffs: {}, notes: [] };
   const probe = {
-    stun(from, len) { if (t >= from && t < from + len) { st.stun = from + len - t; st.stunAt = from; } },
+    // A stun is always marked: whichever class landed it, the stunned
+    // painter shows over the head while the coil shudders.
+    stun(from, len) {
+      if (t >= from && t < from + len) { st.stun = from + len - t; st.stunAt = from; st.statuses.stunned = 1; }
+    },
     status(key, level = 1) { if (level > 0) st.statuses[key] = Math.max(st.statuses[key] || 0, level); },
     buff(who, key, level = 1) { if (level > 0) (st.buffs[who] ||= {})[key] = level; },
   };

@@ -29,6 +29,13 @@
   .about { color: var(--dim); font-size: 12px; min-height: 3em; margin: 0; }
   .empty { color: var(--dim); font-size: 12px; border: 1px dashed var(--rule); padding: 10px; }
   .statuses { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+  .review { display: grid; gap: 6px; border-top: 1px dashed var(--rule); padding-top: 8px; }
+  .review .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .review textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 12px; background: var(--paper);
+                     color: var(--ink); border: 1px solid var(--rule); padding: 6px; resize: vertical; }
+  .review button[data-v="rework"][aria-pressed="true"] { background: var(--purple); border-color: var(--purple); color: #fff; }
+  .toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--ink); color: var(--paper);
+           padding: 6px 12px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -37,7 +44,8 @@
   <p class="note">A mock drawn from plain cells, not the game: the deep's tones, the game's square body, the P grid.
     Each class stands at its station (left plinth); a second fighter stands at another station (right) to show
     buffs. Tabs play the base attack and each branch's keystone. What it cannot show: the real coil's girth,
-    cracks and ribs, the game's camera, numbers, many fighters at once, and the real timings.</p>
+    cracks and ribs, the game's camera, numbers, many fighters at once, and the real timings. Under each card,
+    mark it Keep or Rework and leave a note; they are saved for Claude to read back.</p>
   <div class="bar">
     <button id="play" type="button">pause</button>
     <span id="clock">0.0 s</span>
@@ -62,7 +70,7 @@ const ORDER = ['brawler', 'martial', 'sword', 'assassin', 'sapper', 'ranger', 'h
 const EXPECT = { altar: ['brawler', 'martial'], well: ['sword', 'assassin'], armory: ['sapper', 'ranger'],
   circle: ['hexer', 'bard'], spire: ['mage', 'monk'] };
 
-const panes = [];
+const panes = [], reviews = [];
 let playing = true, clock = 0, last = performance.now();
 const host = document.getElementById('stations');
 for (const [key, label] of STATIONS) {
@@ -83,7 +91,7 @@ for (const [key, label] of STATIONS) {
       b.onclick = () => { pane.i = i; pane.t0 = clock; for (const x of tabs.children) x.setAttribute('aria-pressed', String(x === b)); };
       tabs.append(b);
     });
-    card.append(tabs, cv, about); grid.append(card); panes.push(pane);
+    card.append(tabs, cv, about); review(card, 'cls-' + cls.key, cls.name); grid.append(card); panes.push(pane);
   }
 }
 // Statuses, each on its own: serpent ones on a bare coil, fighter ones on a body.
@@ -92,7 +100,7 @@ const sPanes = Object.entries(STATUS).map(([k, st]) => {
   const card = document.createElement('div'); card.className = 'card';
   card.innerHTML = `<h3>${st.name || k}</h3><div class="station">on the ${st.on || 'serpent'}</div>`;
   const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P;
-  card.append(cv); sHost.append(card);
+  card.append(cv); review(card, 'st-' + k, st.name || k); sHost.append(card);
   return { k, st, g: cv.getContext('2d') };
 });
 if (!sPanes.length) sHost.innerHTML = '<div class="empty">none registered yet</div>';
@@ -101,7 +109,7 @@ document.getElementById('play').onclick = e => { playing = !playing; e.target.te
 function tick(now) {
   if (playing) clock += (now - last) / 1000;
   last = now;
-  document.getElementById('clock').textContent = clock.toFixed(1) + ' s';
+  const ck = document.getElementById('clock'); if (ck) ck.textContent = clock.toFixed(1) + ' s';
   for (const p of panes) {
     const s = p.cls.scenes[p.i];
     const t = (clock - p.t0) % s.dur;
@@ -122,6 +130,50 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
+
+// --- review: Keep / Rework and a note under each card, kept in the page's
+// shared store. Absent where the store is (a local file, the dev server):
+// the bench still plays.
+function review(card, id, title) {
+  const box = document.createElement('div'); box.className = 'review'; box.hidden = true;
+  const row = document.createElement('div'); row.className = 'row';
+  const btns = ['keep', 'rework'].map(v => {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v;
+    b.textContent = v === 'keep' ? 'Keep' : 'Rework'; b.setAttribute('aria-pressed', 'false'); row.append(b); return b;
+  });
+  const note = document.createElement('textarea'); note.rows = 2; note.id = 'note-' + id;
+  note.placeholder = 'Note on ' + title; note.setAttribute('aria-label', 'Note on ' + title);
+  box.append(row, note); card.append(box);
+  reviews.push({ id, title, box, btns, note, doc: {} });
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
+  document.body.append(t); setTimeout(() => t.remove(), 3000);
+}
+(async () => {
+  const db = window.claude ? await window.claude.use('db') : null;
+  if (!db) return;
+  const col = db.collection('anims');
+  const save = async (r, data) => {
+    try { await col.doc(r.id).set({ ...r.doc, title: r.title, ...data }); }
+    catch { toast('That did not save.'); }
+  };
+  for (const r of reviews) {
+    r.box.hidden = false;
+    for (const b of r.btns) b.onclick = () => save(r, { verdict: r.doc.verdict === b.dataset.v ? '' : b.dataset.v });
+    let timer;
+    r.note.oninput = () => { clearTimeout(timer); timer = setTimeout(() => save(r, { note: r.note.value }), 800); };
+    r.note.onblur = () => { clearTimeout(timer); if (r.note.value !== (r.doc.note || '')) save(r, { note: r.note.value }); };
+  }
+  col.onSnapshot(snap => {
+    const byId = new Map(snap.docs.map(d => [d.id, d.data()]));
+    for (const r of reviews) {
+      r.doc = byId.get(r.id) || {};
+      for (const b of r.btns) b.setAttribute('aria-pressed', String(r.doc.verdict === b.dataset.v));
+      if (document.activeElement !== r.note) r.note.value = r.doc.note || '';
+    }
+  }, () => {});
+})();
 </script>
 </body>
 </html>

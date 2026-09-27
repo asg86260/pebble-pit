@@ -373,11 +373,11 @@ registerClass({
   hat(g, cx, cy, t) {
     rect(g, cx, cy - 1, 3, 1, GREYS[9]);
     cell(g, cx + 1, cy - 2, GREYS[9]);
-    // the plume, back over the left (her song goes out to the right), nodding
+    // the plume, in her song's purple, back over the left (her song goes out to the right), nodding
     // to the beat
     const nod = Math.floor(t * 2) % 2;
-    cell(g, cx - 1, cy - 1 - nod, WHITE);
-    cell(g, cx - 2, cy - 2, nod ? GREYS[10] : WHITE);
+    cell(g, cx - 1, cy - 1 - nod, PURPLES[11]);
+    cell(g, cx - 2, cy - 2, nod ? PURPLES[9] : PURPLES[11]);
   },
   scenes: [
     { name: 'Base', dur: 6,

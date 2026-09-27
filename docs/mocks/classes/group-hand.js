@@ -355,8 +355,8 @@ registerClass({
   key: 'martial', name: 'Martial Artist', station: 'altar', group: 'hand',
   look: 'a white headband, its two tails streaming; small quick hands; five pips under her',
   hat(g, cx, cy, t) {
-    // a band a shade under the body's white, so it reads as cloth on a head
-    rect(g, cx, cy - 1, BODY, 1, GREYS[8]);
+    // a white band, where the swordsman's is grey, so the two headbands part
+    rect(g, cx, cy - 1, BODY, 1, WHITE);
     // the tails stream back off the knot and flutter a cell
     const f = Math.floor(t * 6) % 2;
     cell(g, cx - 1, cy - 1, WHITE);
