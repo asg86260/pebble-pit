@@ -4,8 +4,8 @@
 // plain cells through the harness, not the game.
 
 import {
-  P, FLOOR, GREYS, PURPLES, WHITE, INK, hash, clamp, steps,
-  cell, rect, line, ring,
+  P, FLOOR, STATION_X, GREYS, PURPLES, WHITE, INK, hash, clamp, steps,
+  cell, rect, line, ring, drawBody,
   coilY, coilTop, coilBottom, coilCells, COIL_X0, COIL_X1,
   burst, chip, registerStatus, registerClass,
 } from './harness.js';
@@ -162,109 +162,132 @@ function spread(g, t, s, at, fromX, paints, span = SPREAD_S) {
 }
 
 // --- the Hexer ------------------------------------------------------------------------
-// Horned hood, a wand. The hex is a small sigil of purple cells floated up to
-// the coil; where it lands it bites a little and its curse runs the length of
-// the coil both ways. The sigil's shape says the branch: a diamond for the
-// plain hex, the same dripping for Affliction, a ring for Binding, a cross
-// for Doom.
+// She holds nothing: a few small purple motes rise off her and fade down the
+// tones, and that is her whole kit (the looks page, 2026-09-27). The hex is
+// the motes let go at once: they gather over her head, then stream straight
+// up into the hide above her, where they set in the branch's sigil -- a
+// diamond for the plain hex, the same dripping for Affliction, a ring for
+// Binding, a cross for Doom -- bite a little, and the curse runs the length
+// of the coil both ways. While she hexes her motes are spent; after, they
+// rise off her again.
 
-const HEX_TX = 28;             // the column the hex lands on
-const HEX_FLY = 0.9;           // a hex's flight, seconds
-const HEX_WIND = 0.4;          // the wand's wind-up before it lets go
+const HEX_TX = STATION_X;      // the column the hex lands on: straight over her
+const HEX_FLY = 0.9;           // the stream, first mote off to last one in, seconds
+const HEX_WIND = 0.4;          // the motes gathering before they go
+const MOTE_FLY = 0.5, MOTE_N = 5;
+const MOTE_GAP = (HEX_FLY - MOTE_FLY) / (MOTE_N - 1);
+const MOTE_TONES = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
+const MOTE_COLS = [-1, 1, 0, -1, 1];
+const landOf = castAt => castAt + HEX_WIND + HEX_FLY;
 
-function wand(g, me, t, castAt) {
-  const a = t - castAt;
-  const hot = a >= 0 && a < HEX_WIND + 0.15;
-  cell(g, me.x + 3, me.y + 1, GREYS[7]);
-  cell(g, me.x + 4, me.y, GREYS[8]);
-  cell(g, me.x + 4, me.y - 1, hot ? WHITE : PURPLES[9]);
-  if (hot && a < HEX_WIND) {
-    const r = 1 + Math.floor((a / HEX_WIND) * 2);
-    ring(g, me.x + 4, me.y - 1, r, PURPLES[r === 1 ? 11 : 9]);
+// The resting kit, as the looks page draws it: four motes, each on its own
+// phase, climbing five rows off the top of her and stepping down the purples.
+// (x, top) is her middle column and top row.
+function motes(g, x, top, t) {
+  for (let i = 0; i < 4; i++) {
+    const p = (t / 2.2 + i / 4) % 1;
+    const dx = [-1, 1, 0, 2][i] - (p > 0.55 ? (i % 2 ? 0 : 1) : 0);
+    cell(g, x + dx - (i === 3 ? 2 : 0), top - 1 - Math.floor(p * 5), MOTE_TONES[Math.floor(p * 3.99)]);
   }
 }
 
-function sigil(g, x, y, shape, t) {
-  const spin = Math.floor(t * 8) % 2;
-  if (shape === 'ring') { ring(g, x, y, 1.5, PURPLES[11]); return; }
+// Her body and kit for a frame of a scene that hexes at each time in `casts`:
+// the resting motes, save from the cast until a beat after it lands, and the
+// gather over her head during the wind-up -- the motes drawn in close and
+// circling, brightening as they close.
+function hexer(g, me, t, casts) {
+  drawBody(g, me.x, me.y);
+  const x = me.x + 1;
+  if (!casts.some(c => t >= c && t < landOf(c) + 0.3)) motes(g, x, me.y, t);
+  for (const c of casts) {
+    const a = t - c;
+    if (a < 0 || a >= HEX_WIND) continue;
+    const k = a / HEX_WIND, r = 2 - Math.floor(k * 2);
+    for (let n = 0; n < MOTE_N; n++) {
+      const ang = t * 9 + n * Math.PI * 2 / MOTE_N;
+      cell(g, x + Math.cos(ang) * (r + 0.5), me.y - 2 - r + Math.sin(ang) * r * 0.6, k < 0.5 ? PURPLES[9] : PURPLES[11]);
+    }
+  }
+}
+
+function sigil(g, x, y, shape, tone = PURPLES[11]) {
+  if (shape === 'ring') { ring(g, x, y, 1.5, tone); return; }
   if (shape === 'cross') {
-    for (const d of [-1, 1]) { cell(g, x + d, y + d, PURPLES[11]); cell(g, x + d, y - d, PURPLES[11]); }
+    for (const d of [-1, 1]) { cell(g, x + d, y + d, tone); cell(g, x + d, y - d, tone); }
     cell(g, x, y, WHITE); return;
   }
-  const pts = spin ? [[0, -1], [1, 0], [0, 1], [-1, 0]] : [[-1, -1], [1, -1], [1, 1], [-1, 1]];
-  for (const [dx, dy] of pts) cell(g, x + dx, y + dy, PURPLES[11]);
+  for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) cell(g, x + dx, y + dy, tone);
   cell(g, x, y, shape === 'drip' ? PURPLES[9] : INK);
 }
 
-// One hex, cast at `castAt`: the wind-up, the flight with a trail, the bite
-// where it lands. Returns the landing time.
-function hex(g, t, api, castAt, shape) {
+// One hex, cast at `castAt`: the motes stream up off her a beat apart, each
+// closing on the landing column as it climbs, and set in the sigil on the
+// hide's underside; the last one in is the bite. `under` draws what the
+// scene lays on the coil as it lands (the curse's spread), so the sigil sits
+// over its front. Returns the landing time.
+function hex(g, t, api, castAt, shape, under) {
   const { me, st } = api;
   const go = castAt + HEX_WIND, land = go + HEX_FLY;
-  const tx = HEX_TX, ty = () => coilBottom(tx, land, st) + 1;
-  for (let k = 3; k >= 0; k--) {
-    const p = along(t - k * 0.06, go, HEX_FLY, me.x + 4, me.y - 2, tx, ty(), 2);
+  const tx = HEX_TX, hitY = coilBottom(tx, land, st);
+  for (let n = 0; n < MOTE_N; n++) {
+    const last = n === MOTE_N - 1;
+    const p = along(t, go + n * MOTE_GAP, MOTE_FLY, me.x + 1 + MOTE_COLS[n], me.y - 2,
+      tx + (last ? 0 : Math.sign(MOTE_COLS[n])), hitY + 1);
     if (!p) continue;
-    if (k === 0) sigil(g, p.x, p.y, shape, t);
-    else cell(g, p.x, p.y, PURPLES[[0, 8, 6, 4][k]]);
-    if (shape === 'drip' && k === 0) {
-      for (let d = 1; d <= 2; d++) {
-        const q = along(t - d * 0.12, go, HEX_FLY, me.x + 4, me.y - 2, tx, ty(), 2);
-        if (q) cell(g, q.x, q.y + 1 + d, PURPLES[d === 1 ? 9 : 6]);
-      }
+    cell(g, p.x, p.y, PURPLES[11]); cell(g, p.x, p.y + 1, PURPLES[7]);
+    // Affliction's motes drip as they climb: a drop shed off each, falling back
+    if (shape === 'drip') {
+      const d = Math.floor(p.u * 9) % 3;
+      cell(g, p.x, p.y + 2 + d, PURPLES[[8, 6, 4][d]]);
     }
   }
-  const cy = coilBottom(tx, land, st);
-  burst(g, t, land, tx, cy, 0.2, 7);
-  chip(g, t, land, tx, cy, 0.2, 7);
-  const a = t - land;
-  if (a >= 0 && a < 0.5) ring(g, tx, cy, 1 + Math.floor(a * 8), PURPLES[a < 0.25 ? 11 : 8]);
+  under?.(land);
+  // the sigil, set in the hide where they land, stepping down the purples
+  const a = t - land, cy = coilBottom(tx, t, st);
+  if (a >= 0 && a < 0.5) sigil(g, tx, cy, shape, MOTE_TONES[Math.floor(a / 0.5 * 3.99)]);
+  burst(g, t, land, tx, hitY, 0.2, 7);
+  chip(g, t, land, tx, hitY, 0.2, 7);
+  if (a >= 0 && a < 0.5) ring(g, tx, cy, 2 + Math.floor(a * 8), PURPLES[a < 0.25 ? 11 : 8], 2);
   return land;
 }
-const landOf = castAt => castAt + HEX_WIND + HEX_FLY;
 
 const HEX_LV = 0.35;          // Weakened from a hex, 10% cut
 registerClass({
   key: 'hexer', name: 'Hexer', station: 'circle', group: 'word',
-  look: 'a horned hood; a short wand, a sigil floated up to the coil',
-  hat(g, cx, cy) {
-    rect(g, cx, cy - 1, 3, 1, GREYS[7]);
-    cell(g, cx - 1, cy - 1, GREYS[9]); cell(g, cx + 3, cy - 1, GREYS[9]);
-    cell(g, cx - 1, cy - 2, WHITE); cell(g, cx + 3, cy - 2, WHITE);
-  },
+  look: 'nothing held: a few small purple motes rise off her and fade; the hex is the motes streaming up into the coil',
+  hat(g, cx, cy, t) { motes(g, cx + 1, cy, t); },
   scenes: [
-    { name: 'Base', dur: 5,
-      about: 'A hex every 5 s: a little damage where it lands, and the whole coil Weakened (heal cut 10%).',
+    { name: 'Base', dur: 5, body: false,
+      about: 'A hex every 5 s: her motes stream up into the coil, a little damage where they land, and the whole coil Weakened (heal cut 10%).',
       state(t, api) { if (t >= landOf(0.3) + SPREAD_S) api.status('weakened', HEX_LV); },
       draw(g, t, api) {
-        wand(g, api.me, t, 0.3);
-        const land = hex(g, t, api, 0.3, 'diamond');
-        spread(g, t, api.st, land, HEX_TX, [(g, t, s, a, b) => paintWeakened(g, t, s, HEX_LV, a, b)]);
+        hexer(g, api.me, t, [0.3]);
+        hex(g, t, api, 0.3, 'diamond', land =>
+          spread(g, t, api.st, land, HEX_TX, [(g, t, s, a, b) => paintWeakened(g, t, s, HEX_LV, a, b)]));
       } },
-    { name: 'Affliction', dur: 8,
-      about: 'Keystone: the hex Poisons as well, two stacks a hex; a second hex takes it to four.',
+    { name: 'Affliction', dur: 8, body: false,
+      about: 'Keystone: the hex Poisons as well, two stacks a hex -- the motes drip as they climb; a second hex takes it to four.',
       state(t, api) {
         if (t >= landOf(0.3) + SPREAD_S) { api.status('weakened', HEX_LV); api.status('poisoned', 0.2); }
         if (t >= landOf(4.3) + SPREAD_S) api.status('poisoned', 0.4);
       },
       draw(g, t, api) {
+        hexer(g, api.me, t, [0.3, 4.3]);
         for (const c of [0.3, 4.3]) {
-          wand(g, api.me, t, c);
-          const land = hex(g, t, api, c, 'drip');
           const lv = c < 1 ? 0.2 : 0.4;
-          spread(g, t, api.st, land, HEX_TX, [
+          hex(g, t, api, c, 'drip', land => spread(g, t, api.st, land, HEX_TX, [
             ...(c < 1 ? [(g, t, s, a, b) => paintWeakened(g, t, s, HEX_LV, a, b)] : []),
-            (g, t, s, a, b) => paintPoisoned(g, t, s, lv, a, b)]);
+            (g, t, s, a, b) => paintPoisoned(g, t, s, lv, a, b)]));
         }
       } },
-    { name: 'Binding', dur: 6,
-      about: 'Keystone: the hex draws a circle round the coil, and the coil is Held -- clasped and tethered, it cannot thrash or heal.',
+    { name: 'Binding', dur: 6, body: false,
+      about: 'Keystone: the motes set in a ring that draws a circle round the coil, and the coil is Held -- clasped and tethered, it cannot thrash or heal.',
       state(t, api) {
         const done = landOf(0.3) + 0.6 + SPREAD_S;
         if (t >= done) { api.status('held', 1); api.status('weakened', HEX_LV); }
       },
       draw(g, t, api) {
-        wand(g, api.me, t, 0.3);
+        hexer(g, api.me, t, [0.3]);
         const land = hex(g, t, api, 0.3, 'ring');
         const a = t - land, cy = Math.round(coilY(HEX_TX, t, api.st));
         // the circle, drawn round the coil a cell at a time, then fading down
@@ -274,15 +297,15 @@ registerClass({
           (g, t, s, a, b) => paintWeakened(g, t, s, HEX_LV, a, b),
           (g, t, s, a, b) => paintHeld(g, t, s, 1, a, b)]);
       } },
-    { name: 'Doom', dur: 6,
-      about: 'Keystone: the hex Marks the coil -- a death-mark stamped where it lands -- as well as Weakening it.',
+    { name: 'Doom', dur: 6, body: false,
+      about: 'Keystone: the motes set in a cross and Mark the coil -- a death-mark stamped where they land -- as well as Weakening it.',
       state(t, api) {
         const land = landOf(0.3);
         if (t >= land + 0.6) api.status('marked', 1);
         if (t >= land + 0.6 + SPREAD_S) api.status('weakened', HEX_LV);
       },
       draw(g, t, api) {
-        wand(g, api.me, t, 0.3);
+        hexer(g, api.me, t, [0.3]);
         const land = hex(g, t, api, 0.3, 'cross');
         const a = t - land, cy = Math.round(coilY(HEX_TX, t, api.st));
         // the mark stamped: a big cross in a ring that closes onto the spot
