@@ -222,9 +222,11 @@ Base: a charge thrown every 6 s; its burst hits every length it crosses.
   Stunned. *B:* a burst on a Held length ×2.
 - **Incendiary -- the fire.** *K:* the burst sets every length it crosses
   Burning. *A:* Burning spreads twice as fast. *B:* a Burning length is Lit.
-- **Minefield -- the trap.** *K:* charges are laid on the floor instead;
-  the coil sets them off as it sways over, each its own blow. *A:* a mine
-  set off by a thrash does ×3. *B:* each mine Exposes.
+- **Sticky Charge -- the saboteur's gift.** *K:* a charge is stuck to the hide
+  and ticks down; it blows as one blow, bigger the longer it was left,
+  and stuns. (Replaces Minefield, the owner 2026-09-27.) *A:* two charges
+  stuck at once, set off together. *B:* a charge blown on a stunned
+  serpent Exposes it.
 
 #### Ranger -- the shot. *(FE Archer/Sniper; DD Arbalest on Marks; WoW Hunter)*
 Base: an arrow every 0.8 s from far off: small blows that never miss.
