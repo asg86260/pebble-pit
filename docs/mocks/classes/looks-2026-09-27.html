@@ -254,7 +254,7 @@ const KIT = {
     ],
   },
   ranger: {
-    look: 'a bow twice his height, nothing else',
+    look: 'a bow twice his height at his side; he lifts it over his head, level, and shoots straight up',
     idle: { ox: 1, rows: [
       '....h..',
       '....gh.',
@@ -263,6 +263,46 @@ const KIT = {
       '###.gh.',
       '###.h..'] },
     tip: [4, 0],
+    // the shot, pose by pose: the bow lifted up his side, slid over his head,
+    // held level with the string down, drawn to his head, then let go
+    shot: {
+      lift: { ox: 1, rows: [
+        '....h..',
+        '....gh.',
+        '....g.h',
+        '....g.h',
+        '....gh.',
+        '###.h..',
+        '###....',
+        '###....'] },
+      over: { ox: 2, rows: [
+        '.......',
+        '...hhh.',
+        '..h...h',
+        '.hgggggh',
+        '........',
+        '.###....',
+        '.###....',
+        '.###....'] },
+      braced: { ox: 3, rows: [
+        '.......',
+        '..hhh..',
+        '.h...h.',
+        'hgggggh',
+        '.......',
+        '..###..',
+        '..###..',
+        '..###..'] },
+      drawn: { ox: 3, rows: [
+        '...w...',
+        '..hah..',
+        '.h.a.h.',
+        'hg.a.gh',
+        '..gdg..',
+        '..###..',
+        '..###..',
+        '..###..'] },
+    },
   },
   sapper: {
     look: 'a bundle of three charges under his arm, the fuse lit and sparking',
@@ -475,24 +515,31 @@ function drawFighter(g, dir, key, i, t) {
     }
     return;
   }
-  drawArt(g, S.idle, x, by, t);
+  // the ranger's shot: the bow goes up through its poses and comes back down
+  const R = key === 'ranger' && S.shot ? S.shot : null;
+  const pose = !R ? S.idle
+    : a < 0.12 ? R.lift : a < 0.24 ? R.over : a < 0.4 ? R.braced : a < 0.8 ? R.drawn
+    : a < 1.4 ? R.braced : a < 1.52 ? R.over : a < 1.64 ? R.lift : S.idle;
+  drawArt(g, pose, x, by, t);
   // the hexer's motes leave her while she hexes, and come back after
   if (S.fx && !(key === 'hexer' && a < 1.6)) S.fx(g, x, by, t);
   const tip = S.tip ? pointOf(S.idle, x, by, t, S.tip) : { x, y: by - 3 };
   if (key === 'ranger') {
-    // an arrow flown straight up from the bow's tip, then left standing in the hide
-    const hitY = cBot(tip.x, t) + 1, fly = 0.35;
-    if (a >= 0.1 && a < 0.1 + fly) {
-      const y = Math.round(lerp(tip.y - 1, hitY, along(a, 0.1, 0.1 + fly)));
-      cell(g, tip.x, y, WHITE); cell(g, tip.x, y + 1, GREYS[8]); cell(g, tip.x, y + 2, GREYS[9]);
-    } else if (a >= 0.1 + fly && a < 1.6) {
-      const f = along(a, 1.0, 1.6);
-      cell(g, tip.x, hitY, GREYS[[8, 7, 5, 3][Math.floor(f * 3.99)]]);
-      cell(g, tip.x, hitY + 1, GREYS[[9, 8, 6, 3][Math.floor(f * 3.99)]]);
+    // loosed from the drawn bow over his head, straight up, then left
+    // standing in the hide; the kit's arrow leaves from where it was nocked
+    const ax = R ? x : tip.x, from = R ? by - 8 : tip.y - 1;
+    const go = R ? 0.8 : 0.1, hitY = cBot(ax, t) + 1, fly = 0.25;
+    if (a >= go && a < go + fly) {
+      const y = Math.round(lerp(from, hitY, along(a, go, go + fly)));
+      cell(g, ax, y, WHITE); cell(g, ax, y + 1, GREYS[10]); cell(g, ax, y + 2, GREYS[9]);
+    } else if (a >= go + fly && a < go + 1.4) {
+      const f = along(a, go + 0.8, go + 1.4);
+      cell(g, ax, hitY, GREYS[[10, 8, 6, 3][Math.floor(f * 3.99)]]);
+      cell(g, ax, hitY + 1, GREYS[[9, 8, 6, 3][Math.floor(f * 3.99)]]);
     }
-    const t0 = t - (a - 0.1 - fly);
-    burst(g, t, t0, tip.x, hitY - 1, 0.25, i * 7);
-    chip(g, t, t0, tip.x, Math.round(cY(tip.x, t)), 0.25, i * 7);
+    const t0 = t - (a - go - fly);
+    burst(g, t, t0, ax, hitY - 1, 0.25, i * 7);
+    chip(g, t, t0, ax, Math.round(cY(ax, t)), 0.25, i * 7);
   } else if (key === 'sapper') {
     // a charge lobbed from the satchel, its fuse sparking, up into the coil
     const fly = 0.7, tx = x + 4, hitY = cBot(tx, t);
