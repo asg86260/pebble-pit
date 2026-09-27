@@ -16076,14 +16076,28 @@ The cloud can be late. It can never cost a yard.
 
 **The player is a sync code, not an account.** No email, no password, no
 login page: the game is a clicker, and an account form in front of it is a
-wall nobody climbs. Turning cloud saves on mints a code --
+wall nobody climbs. Turning cloud saves on mints a secret --
 `PEBBLE-7F3K-Q9WM-2HXD-R4TN` (twenty Crockford base-32 characters, a
-hundred bits) -- and the code *is* the identity and the key. Typing it on
-another device links that device to the same three slots. What it costs
-the player: a lost code is a lost cloud copy, with nobody to ask for it
-back. The local yards are untouched by that, so the loss is the mirror,
-not the game; the sheet says to keep the code somewhere, once, when it is
-made.
+hundred bits) -- and the secret *is* the identity and the key. Nobody
+types it. Each device keeps it in its own store, and a device joins by a
+pairing code (below), the way a TV joins a streaming account.
+
+**A pairing code is short because it dies.** Six characters can be read off
+one screen and typed on another, but six characters are about a billion
+codes: as the only key, a script guessing at random would land in
+*somebody's* yards once in every hundred thousand tries. As a pairing code
+it is safe. It is minted on demand, works once, and is gone after
+`CLOUD_PAIR_S` (600 s). So there are only ever a handful live against a
+billion, and guessing is capped per ip and for the whole worker. A code
+seen on a stream is dead ten minutes later.
+
+**The secret is also the recovery code.** A player who loses every device
+has no screen to pair from. So the sheet's cloud page shows the secret
+once, when it is minted, as the recovery code to write down, and again on
+request behind a *show* button. It is never on the title page. A lost
+recovery code on a lost last device is a lost cloud copy, with nobody to
+ask for it back; the local yards were already gone with the device, and
+nothing the cloud holds is worse off for it.
 
 **Off until asked.** Cloud saves are a switch on the settings sheet, off
 for every existing and new yard. Nothing is sent anywhere until the player
@@ -16125,7 +16139,9 @@ per slot, the `rev` it last pulled or pushed (its *base*).
 
 | route | what it does |
 |---|---|
-| `POST /vaults` | mints a code, stores its SHA-256, replies `{ code }` |
+| `POST /vaults` | mints a secret, stores its SHA-256, replies `{ code }` |
+| `POST /pairings` | for the bearer's vault: a six-character code, live `CLOUD_PAIR_S`; minting another kills the last |
+| `POST /pairings/claim` `{ pair }` | a live code: kills it and replies `{ code }` (the vault's secret); anything else `404` |
 | `GET /slots` | per slot: `{ rev, yardId, playedS, at }` or null |
 | `GET /slots/:n` | the blob |
 | `PUT /slots/:n` `If-Match: <rev>` | takes the blob if the slot's rev is still `<rev>` and replies `{ rev }`; otherwise `412` with the slot's meta |
@@ -16134,8 +16150,14 @@ per slot, the `rev` it last pulled or pushed (its *base*).
 The code rides in `Authorization: Bearer`, never in a URL. The worker
 keeps only the code's hash, so its database leaks no code. CORS is open, as
 the board's is: the game runs on itch's origin, on the desk and on
-localhost. A hundred bits are not guessed, so there is no lockout to
-design. What the worker refuses so that space and budget stay bounded is
+localhost. A hundred bits are not guessed, so the secret needs no lockout.
+The pairing code does: `CLOUD_PAIR_TRIES` (5) wrong claims an ip in ten
+minutes, and past `CLOUD_PAIR_FAILS_HOUR` (1,000) wrong claims across the
+whole worker, claiming stops for the hour. A botnet spreading its guesses
+over many ips meets the second cap, and a player meets neither. The worker
+stores a pairing code only as its hash, as the secret is stored, and
+sends the secret back only to a claim that names a live code. What the
+worker refuses so that space and budget stay bounded is
 its own section, "Fail-safes", below.
 
 ### The sync
@@ -16172,11 +16194,19 @@ took tells `cloud.js` the slot is dirty.
 
 ### Linking a device
 
-The sheet's cloud page: off, it offers *keep my yards in the cloud*
-(mints a code) and *link with a code*. On, it shows the code with *copy*,
-one status line (`in the cloud, 2 min ago` / `not in the cloud: offline`)
-and *stop* (forgets the code on this device; the cloud copy stays for the
-other devices).
+**The title page carries it.** A footnote under the three slots, on every
+visit: `cloud · off` before it is turned on, `cloud · in the cloud, 2 min
+ago · link a device` after. *Link a device* shows a fresh pairing code in
+the footnote's place (`K7Q-94M`, with the minutes it has left), and the
+footnote on the other device, with cloud off, offers *enter a code*. Its
+shape is a mock for the vote before it is built.
+
+**The sheet's cloud page** holds the rest. Off, it offers *keep my yards in
+the cloud* (mints the secret and shows it once as the recovery code) and
+*use a recovery code*. On, it shows the status line, *show recovery code*,
+*new recovery code* (mints a new secret for the same vault and signs out
+every other device, which pair again) and *stop* (forgets the secret on
+this device; the cloud copy stays for the other devices).
 
 Linking a device that already has yards is the one real decision in the
 feature. For each slot where both sides hold a yard with different
@@ -16284,7 +16314,8 @@ for a ceiling is visible before it arrives.
 
 `test/cloud-sync.test.mjs` (node, `fetch` stubbed by an in-memory worker):
 turned on through the sheet's row, a yard is pushed, and a second yard on a
-fresh store links by code and boots it; the higher `playedS` wins on both
+fresh store pairs by a six-character code and boots it; the recovery code
+links a store with no other device; the higher `playedS` wins on both
 sides; a `412` on a device that is behind stops its pushes and overwrites
 nothing; different `yardId`s never overwrite without the choice; a cleared
 slot stays cleared on the other device; a dead server boots the local yard
@@ -16297,7 +16328,8 @@ hour cap each stop pushing and leave the local save writing.
 under a quarter of `CLOUD_BLOB_MAX`, so a save format that grows trips a
 check long before a player trips the cap.
 `cloud/test/` runs the worker's routes against a local D1: the conditional
-PUT under two writers, hash-only storage, the bearer check, and every
+PUT under two writers, hash-only storage, the bearer check, a pairing code
+that is spent, expired or superseded answering `404`, both pairing caps, and every
 ceiling -- blob, store bytes, mints, per-slot floor, per-code and whole-worker
 day caps, and `CLOUD_PAUSED` answering before D1 is touched.
 `test/persist-roundtrip.test.mjs` covers the two new fields unasked.

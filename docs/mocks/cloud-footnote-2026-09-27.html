@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud Footnote Mock</title>
+<!-- A design mock (2026-09-27), drawn from plain shapes, not the game. The
+     owner's ask: the sync code "readily avail on the main screen somewhere. a
+     foot note or something" -- placement A, the title page. Three places for
+     the footnote on the landing page, each in its four states (off, on, a
+     pairing code up, entering a code). The yard behind the column is a grey
+     block. One plain script, no imports. -->
+<style>
+  :root {
+    --paper: #fff; --ink: #000; --ink-2: #333; --ink-4: #666; --ink-7: #aaa; --ink-9: #ececec;
+    --mono: ui-monospace, "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 12px/1.45 var(--mono); }
+  .page { max-width: 1480px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 14px; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 6px; }
+  .ask { color: var(--ink-4); margin: 0 0 12px; max-width: 90ch; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 16px; }
+  .opt > h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 4px; }
+  .opt > p { margin: 0 0 8px; color: var(--ink-2); }
+  .states { display: flex; gap: 6px; margin: 8px 0 0; flex-wrap: wrap; }
+  .states button { font: inherit; font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    background: var(--paper); border: 1px solid var(--ink); padding: 3px 8px; cursor: pointer; }
+  .states button.on { background: var(--ink); color: var(--paper); }
+
+  /* the landing page, small */
+  .scr { position: relative; height: 380px; border: 1px solid var(--ink); overflow: hidden; background: var(--paper); }
+  .yard { position: absolute; inset: 0; background:
+    linear-gradient(var(--paper) 0 62%, var(--ink-9) 62% 100%); }
+  .yard::after { content: ''; position: absolute; left: 58%; bottom: 38%; width: 84px; height: 60px; background: var(--ink-7); }
+  .col { position: absolute; left: 22px; top: 20px; display: flex; flex-direction: column; gap: 6px;
+    letter-spacing: .14em; text-transform: uppercase; font-size: 11px; }
+  .col .name { font-size: 22px; letter-spacing: .3em; margin-bottom: 2px; }
+  .col .line { text-transform: none; letter-spacing: .08em; color: var(--ink-2); font-size: 10px; margin-bottom: 8px; }
+  .col .b { border: 1px solid var(--ink); background: var(--paper); padding: 3px 10px; width: 17em; }
+  .col .b.play { background: var(--ink); color: var(--paper); }
+  .col .sub { font-size: 9px; color: var(--ink-2); letter-spacing: .1em; margin: -3px 0 2px 11px; text-transform: none; }
+  .foot { position: absolute; left: 22px; right: 12px; bottom: 10px; display: flex; justify-content: space-between;
+    font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); gap: 10px; }
+  .foot u, .note u { text-decoration: none; border-bottom: 1px solid var(--ink-2); cursor: pointer; }
+  .cloud { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .cloud .code { color: var(--ink); font-size: 13px; letter-spacing: .3em; }
+  .cloud input { font: inherit; font-size: 12px; letter-spacing: .3em; width: 8.5em; border: 1px solid var(--ink);
+    padding: 1px 4px; text-transform: uppercase; background: var(--paper); }
+  .cloud .box { border: 1px solid var(--ink); background: var(--paper); padding: 5px 8px; width: 17em; }
+  .cloud .row { display: flex; align-items: center; gap: 6px; }
+  .cloud .tick { display: inline-block; width: 6px; height: 6px; background: var(--ink); margin-right: 5px; vertical-align: 1px; }
+  .cloud .tick.off { background: none; border: 1px solid var(--ink-2); }
+  .left { display: flex; gap: 14px; align-items: baseline; }
+  .cant { margin-top: 16px; color: var(--ink-4); max-width: 90ch; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Cloud saves: the footnote on the title page</h1>
+  <p class="ask">Where the cloud line sits on the landing page, in its four states. Click the state buttons, or the underlined words inside a frame. A pairing code counts down from 10:00 (sped up here, ten times). Placement A was picked; these are three ways to do A.</p>
+
+  <div class="opts" id="opts"></div>
+
+  <p class="cant">A mock from plain shapes, not the game: the grey block stands in for the running yard, and the type is the landing page's type at a smaller size. It cannot show dark mode, the phone layout, or how the line reads over a busy yard. The code shown is made up, and a real one is new every time.</p>
+</div>
+<script>
+const OPTS = [
+  { key: 'a1', name: 'A1 · in the foot bar',
+    say: 'Bottom left, beside the build number, where the small print already is. Quietest; never pushes the menu.',
+    where: 'foot' },
+  { key: 'a2', name: 'A2 · a line under the menu',
+    say: 'Under settings, in the size of the line under play. Read every visit, with the menu it belongs to.',
+    where: 'col' },
+  { key: 'a3', name: 'A3 · a small card under the menu',
+    say: 'The same place as A2, but boxed like a button: the pairing code has room to stand large.',
+    where: 'card' }
+];
+const STATES = ['off', 'on', 'pairing', 'entering'];
+const CODE = 'K7Q-94M';
+const state = {}, left = {};
+for (const o of OPTS) { state[o.key] = 'on'; left[o.key] = 600; }
+
+function cloudHtml(k, boxed) {
+  const s = state[k];
+  const mm = Math.floor(left[k] / 60), ss = String(left[k] % 60).padStart(2, '0');
+  let h;
+  if (s === 'off') h = `<span class="tick off"></span>cloud · off · <u data-go="entering">enter a code</u>`;
+  if (s === 'on') h = `<span class="tick"></span>cloud · saved 2 min ago · <u data-go="pairing">link a device</u>`;
+  if (s === 'pairing') h = `<span class="row"><span>link code</span> <span class="code">${CODE}</span> <span>${mm}:${ss}</span> <u data-go="on">done</u></span>`;
+  if (s === 'entering') h = `<span class="row"><span>code</span> <input maxlength="7" placeholder="···-···" value="K7Q-9"> <u data-go="on">link</u> <u data-go="off">cancel</u></span>`;
+  return boxed ? `<div class="box">${h}</div>` : h;
+}
+
+function draw() {
+  const host = document.getElementById('opts');
+  host.innerHTML = OPTS.map(o => {
+    const cloud = cloudHtml(o.key, o.where === 'card');
+    const inCol = o.where !== 'foot' ? `<div class="cloud" style="margin-top:8px">${cloud}</div>` : '';
+    const inFoot = o.where === 'foot' ? `<span class="cloud">${cloud}</span>` : '';
+    return `<div class="opt" data-k="${o.key}">
+      <h2>${o.name}</h2><p>${o.say}</p>
+      <div class="scr"><div class="yard"></div>
+        <div class="col"><div class="name">PEBBLE<br>PIT</div><div class="line">a rock. a hole. a few people between them.</div>
+          <div class="b play">play</div><div class="sub">slot 1 · 42 min</div>
+          <div class="b">saves</div><div class="b">achievements</div><div class="b">settings</div>${inCol}</div>
+        <div class="foot"><span class="left"><span>v0.4.1</span>${inFoot}</span><span>itch · github</span></div>
+      </div>
+      <div class="states">${STATES.map(s => `<button data-set="${s}" class="${state[o.key] === s ? 'on' : ''}">${s}</button>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+document.addEventListener('click', e => {
+  const opt = e.target.closest('.opt'); if (!opt) return;
+  const k = opt.dataset.k, to = e.target.dataset.set || e.target.dataset.go;
+  if (!to) return;
+  state[k] = to; if (to === 'pairing') left[k] = 600;
+  draw();
+});
+setInterval(() => {
+  let dirty = false;
+  for (const o of OPTS) if (state[o.key] === 'pairing') {
+    left[o.key] = Math.max(0, left[o.key] - 10); dirty = true;
+    if (!left[o.key]) state[o.key] = 'on';
+  }
+  if (dirty) draw();
+}, 1000);
+draw();
+</script>
+</body>
+</html>
