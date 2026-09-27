@@ -131,6 +131,22 @@
   .tile .picks button { font: inherit; font-size: 11px; width: 26px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; padding: 0; line-height: 16px; }
   .tile .picks button.on { background: var(--ink); color: var(--paper); }
 
+  /* 2b: a fold is a row's height and ink going in four steps, never a pop. */
+  .fold { display: grid; grid-template-rows: 1fr; opacity: 1;
+    transition: grid-template-rows .2s steps(4, end), opacity .2s steps(4, end); }
+  .fold > div { min-height: 0; overflow: hidden; }
+  .fold.shut { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+  .capg { transition: opacity .2s steps(4, end); }
+  .capg.shut { opacity: 0; pointer-events: none; }
+  .still .fold, .still .capg { transition: none; }
+  @media (prefers-reduced-motion: reduce) { .fold, .capg { transition: none; } }
+  .resettree { font: inherit; text-transform: uppercase; letter-spacing: .08em; background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 4px 10px; cursor: pointer; }
+  .resettree:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+  .resettree:disabled { border-style: dashed; color: var(--ink-5); cursor: default; }
+  #o2b .panel { min-height: 0; }
+  .refund { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-4); font-size: 11px; }
+  .refund > span { display: inline-flex; align-items: center; gap: 3px; }
+
   @media (max-width: 480px) {
     .page { padding: 16px; }
     .opt { padding: 8px; }
@@ -175,6 +191,11 @@
     <section class="opt" id="o2">
       <h2>2 · Rails</h2>
       <p class="bargain"><b>Bargain:</b> six rows of pips that read left to right like the ladders do, and the effects always written out in the panel, not a hover; it costs the fork's picture (the classes are two headings, not a split), and on a phone the panel drops under the rails, so the effect is a glance down rather than beside.</p>
+      <div class="body"></div>
+    </section>
+    <section class="opt" id="o2b">
+      <h2>2b · Rails, collapsing</h2>
+      <p class="bargain"><b>Bargain:</b> once you choose, the rails fold down to the one path you took, so the board says what this fighter <i>is</i> and is the shortest of all at 400 px; it costs the standing menu of the paths not taken, which only <b>Reset tree</b> brings back (it refunds every rung and starts the tree blank), and a few frames of fold to build.</p>
       <div class="body"></div>
     </section>
     <section class="opt" id="o3">
@@ -689,6 +710,165 @@ document.addEventListener('click', function (ev) { if (!ev.target.closest('#o1 [
   document.getElementById('legend').innerHTML = rows.map(function (r) {
     return '<span><svg width="22" height="22" viewBox="-11 -11 22 22">' + nodeSVG(0, 0, r[1], r[0], r[1] === 8 ? 0.8 : 0.85) + '</svg>' + r[2] + '</span>';
   }).join('');
+})();
+
+// --- option 2b: rails that fold to the path you took ----------------------------------------
+// The whole rails are built once and never rebuilt, so a fold can move: a
+// class you did not pick and a branch you did not take fold shut, and the
+// capstone you did not pick fades off the fork. Reset tree refunds every
+// rung bought and unfolds the tree blank, so no depth is ever carried to a
+// path not taken and the rails never draw one.
+var SPRITE_BASE = SPRITES.brawler.map(function (r, i) { return i >= 14 ? r : r.replace(/g/g, '.'); });
+// The panel's one line a node: [keystone, capstone A, capstone B], each a
+// name and a few words.
+var SHORT = [
+  [['Haymaker', 'every 4th punch ×4, breaks ward'], ['Long stun', 'stuns last +50%'], ['Knockout', 'haymaker on a stun ×2, ends it']],
+  [['Rage', '+5% a punch in a row, to +60%'], ['Red mist', 'full rage Exposes'], ['War cry', 'full rage Inspires the party']],
+  [['Open up', 'every punch Exposes'], ['Spread', 'Exposed spreads to neighbors'], ['No ward', 'Exposed can’t be warded']],
+  [['Keen edge', '+25% crit, crit bleeds ×2'], ['Sure strike', 'crits on a stun always land'], ['Flow', 'each crit stacks Keen']],
+  [['Wide cut', 'hits the lengths either side'], ['Cyclone', 'every 3rd cut hits all'], ['Bloodwind', 'spreads Bleeding']],
+  [['The draw', '4 s draw, one blow ×1.5'], ['Stunning draw', 'stuns at half share'], ['Rallying draw', 'Inspires the party 6 s']]
+];
+var BASE_SHORT = ['heavy punch every 1.2 s', 'a bleeding cut every 1 s'];
+function shortLine(c, b, r, cap) {
+  var t = SHORT[c * 3 + b], br = CLASSES[c].branches[b];
+  var p = r === KEY ? t[0] : r === LADDER ? t[cap === 'B' ? 2 : 1] : [br.name + ' ' + r, rungText(br, r, cap)];
+  return '<b>' + p[0] + '</b>: ' + p[1];
+}
+// 2b's node states: nothing is reachable off the chosen path.
+function nodeState2(st, c, b, r, cap) {
+  var s = nodeState(st, c, b, r, cap);
+  return s === 'reach' ? 'open' : s === 'lit-other' ? 'open-on' : s;
+}
+function refundHTML(depth) {
+  var t = { scale: 0, dust: 0, shard: 0, spark: 0 };
+  for (var i = 0; i < depth; i++) for (var k in t) t[k] += BILL[k][i];
+  var s = '<span class="refund">refunded ';
+  s += '<span><i class="scale"></i>' + short(t.scale) + '</span>';
+  if (t.dust) s += '<span><i class="dust"></i>' + short(t.dust) + '</span>';
+  if (t.shard) s += '<span><i class="shard"></i>' + t.shard + '</span>';
+  if (t.spark) s += '<span><i class="spark"></i>' + t.spark + '</span>';
+  return s + '</span>';
+}
+function railSVG2(st, c, b, shut) {
+  var W = 214, H = 36, x0 = 9, gap = 23, y = H / 2;
+  var onB = c === st.cls && b === st.br;
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  var X = function (r) { return x0 + (r - 1) * gap; };
+  for (var r = 1; r < LADDER - 1; r++) {
+    var lit = onB && r + 1 <= st.depth;
+    s += '<line x1="' + X(r) + '" y1="' + y + '" x2="' + X(r + 1) + '" y2="' + y + '" stroke="' + (lit ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (lit ? 2 : 1) + '"/>';
+  }
+  for (r = 1; r < LADDER; r++) {
+    s += nodeSVG(X(r), y, r, nodeState2(st, c, b, r), r === KEY ? 1.15 : 1);
+    s += hitSVG(X(r), y, 12, dataAttr(c, b, r));
+  }
+  var fx = X(LADDER) + 6;
+  ['A', 'B'].forEach(function (cap, k) {
+    var fy = k ? y + 9 : y - 9;
+    var litF = onB && st.cap === cap && st.depth >= LADDER;
+    s += '<g class="capg' + (shut === cap ? ' shut' : '') + '" data-capg="' + cap + '">';
+    s += '<path d="M' + X(LADDER - 1) + ' ' + y + ' H' + (X(LADDER - 1) + 12) + ' V' + fy + ' H' + fx + '" fill="none" stroke="' + (litF ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (litF ? 2 : 1) + '"/>';
+    s += nodeSVG(fx, fy, LADDER, nodeState2(st, c, b, LADDER, cap), 1);
+    s += '<text x="' + (fx + 10) + '" y="' + (fy + 3) + '" font-size="9" fill="' + (onB ? 'var(--ink)' : 'var(--ink-5)') + '">' + cap + '</text>';
+    s += hitSVG(fx, fy, 9, dataAttr(c, b, LADDER, cap));
+    s += '</g>';
+  });
+  return s + '</svg>';
+}
+(function () {
+  var root = document.querySelector('#o2b .body');
+  var st = fresh();
+  var pinned = null;
+  var shutCap = {};   // the capstone each rail had folded, so a rebuilt rail starts where it was
+  var refunded = '';  // the last reset's bill, shown until the next click
+  var o = { id: 'o2b', st: st, root: root };
+  OPTS.push(o);
+  var h = '<div class="station"><canvas width="52" height="72" style="background:var(--deep-bg);padding:4px;width:60px;height:80px"></canvas><div class="who"></div></div>';
+  h += '<div class="rails"><div class="railset">';
+  CLASSES.forEach(function (cl, c) {
+    h += '<div class="fold" data-fc="' + c + '"><div><div class="cls"><button class="plate" data-act="class" data-c="' + c + '">' + cl.name + '</button></div>';
+    cl.branches.forEach(function (br, b) {
+      h += '<div class="fold" data-fc="' + c + '" data-fb="' + b + '"><div><div class="rail"><button class="bname" data-act="branch" data-c="' + c + '" data-b="' + b + '" title="' + br.what + '">' + br.name + '</button><span class="rsvg" data-c="' + c + '" data-b="' + b + '"></span></div></div></div>';
+    });
+    h += '</div></div>';
+  });
+  h += '</div><div class="panel"></div></div><div class="buyslot"></div>';
+  root.innerHTML = h;
+  root.classList.add('still');
+
+  function chosen() { return st.cls !== null; }
+  function headHTML() {
+    var line;
+    if (!chosen()) line = 'the sqwife · <b style="color:var(--ink)">unpromoted</b> · rung ' + st.depth + ' of ' + LADDER;
+    else {
+      var c = CLASSES[st.cls];
+      line = 'the sqwife · <b style="color:var(--ink)">' + c.name + '</b> · ' + (st.br === null ? 'no branch' : c.branches[st.br].name) + ' · rung ' + st.depth + ' of ' + LADDER + (st.br === null ? '' : st.cap ? ' · capstone ' + st.cap : ' · capstone not picked');
+    }
+    return '<div class="title">The altar</div><div class="line">' + line + '</div>';
+  }
+  function buyHTML2() {
+    var reset = '<button class="resettree" data-act="resettree"' + (chosen() || st.depth ? '' : ' disabled') + '>Reset tree</button>' + refunded;
+    if (st.br === null) return '<div class="buy"><button class="buybtn" disabled>' + (chosen() ? 'pick a branch' : 'pick a class') + '</button>' + reset + '</div>';
+    var b = CLASSES[st.cls].branches[st.br], btn;
+    if (st.depth >= LADDER) btn = '<button class="buybtn" disabled>climbed · 8 of 8</button>';
+    else if (st.depth + 1 === LADDER && !st.cap) btn = '<button class="buybtn" disabled>pick a capstone first</button>';
+    else btn = '<button class="buybtn" data-act="buy">buy ' + b.name + ' ' + (st.depth + 1) + ' ' + tagHTML(st.depth + 1) + '</button>';
+    return '<div class="buy">' + btn + reset + '</div>';
+  }
+  // One short line: the node's name and what it does, or the class's base.
+  function panel(k) {
+    k = k || pinned;
+    if (k) return '<div class="pd">' + shortLine(k.c, k.b, k.r, k.cap) + '</div>';
+    if (!chosen()) return '<div class="pd">Pick a class.</div>';
+    return '<div class="pd"><b>' + CLASSES[st.cls].name + '</b>: ' + BASE_SHORT[st.cls] + '</div>';
+  }
+  function draw() {
+    root.querySelector('.who').innerHTML = headHTML();
+    drawSprite(root.querySelector('.station canvas'), chosen() ? SPRITES[CLASSES[st.cls].id] : SPRITE_BASE, 4);
+    root.querySelectorAll('.fold[data-fc]').forEach(function (f) {
+      var c = +f.getAttribute('data-fc'), fb = f.getAttribute('data-fb');
+      var shut = fb === null ? (chosen() && c !== st.cls) : (chosen() && c === st.cls && st.br !== null && +fb !== st.br);
+      f.classList.toggle('shut', shut);
+    });
+    root.querySelectorAll('.plate').forEach(function (p) { p.classList.toggle('on', +p.getAttribute('data-c') === st.cls); });
+    root.querySelectorAll('.bname').forEach(function (p) { p.classList.toggle('on', +p.getAttribute('data-c') === st.cls && +p.getAttribute('data-b') === st.br); });
+    var later = [];
+    root.querySelectorAll('.rsvg').forEach(function (sp) {
+      var c = +sp.getAttribute('data-c'), b = +sp.getAttribute('data-b'), key = c + '-' + b;
+      var want = c === st.cls && b === st.br && st.cap ? (st.cap === 'A' ? 'B' : 'A') : null;
+      var was = shutCap[key] || null;
+      sp.innerHTML = railSVG2(st, c, b, was);
+      if (was !== want) later.push([sp, want]);
+      shutCap[key] = want;
+    });
+    // The rebuilt rail stands as it was for a frame, then its capstone folds.
+    if (later.length) requestAnimationFrame(function () { requestAnimationFrame(function () {
+      later.forEach(function (l) { l[0].querySelectorAll('.capg').forEach(function (g) { g.classList.toggle('shut', g.getAttribute('data-capg') === l[1]); }); });
+    }); });
+    root.querySelector('.panel').innerHTML = panel(null);
+    root.querySelector('.buyslot').innerHTML = buyHTML2();
+  }
+  function keyOf(n) { return { c: +n.getAttribute('data-c'), b: +n.getAttribute('data-b'), r: +n.getAttribute('data-r'), cap: n.getAttribute('data-cap') }; }
+  function nodeOf(t) { return t && t.closest ? t.closest('[data-r]') : null; }
+  root.addEventListener('mouseover', function (ev) { var n = nodeOf(ev.target); if (n) root.querySelector('.panel').innerHTML = panel(keyOf(n)); });
+  root.addEventListener('mouseout', function (ev) { var n = nodeOf(ev.target); if (n && !(ev.relatedTarget && n.contains(ev.relatedTarget))) root.querySelector('.panel').innerHTML = panel(null); });
+  root.addEventListener('click', function (ev) {
+    var el = ev.target.closest('[data-act],[data-cap],[data-r]');
+    if (!el || !root.contains(el) || el.disabled) return;
+    var a = el.getAttribute('data-act'), n = nodeOf(el);
+    refunded = '';
+    if (a === 'resettree') { refunded = st.depth ? refundHTML(st.depth) : ''; st.cls = null; st.br = null; st.cap = null; st.depth = 0; pinned = null; }
+    else if (a === 'buy') { if (st.br !== null && st.depth < LADDER && !(st.depth + 1 === LADDER && !st.cap)) st.depth++; }
+    else if (a === 'class') { if (st.cls !== +el.getAttribute('data-c')) { st.cls = +el.getAttribute('data-c'); st.br = null; st.cap = null; } }
+    else if (a === 'branch') { st.cls = +el.getAttribute('data-c'); st.br = +el.getAttribute('data-b'); }
+    else if (el.hasAttribute('data-cap')) { st.cls = +el.getAttribute('data-c'); st.br = +el.getAttribute('data-b'); st.cap = el.getAttribute('data-cap'); }
+    if (n) pinned = keyOf(n);
+    draw();
+  });
+  o.draw = draw;
+  draw();
+  requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.remove('still'); }); });
 })();
 
 window.__tree = OPTS;   // for the shots: __tree[i].st, __tree[i].draw()
