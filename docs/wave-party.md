@@ -78,8 +78,7 @@ These close questions the design left open; they are the simplest reading.
 6. **Before a class is taken the station's fighter does nothing** but
    stand guard; the first rung bought commits the class.
 7. **The star** stays the machine bought in sparks on the spire's board --
-   now "any spire's board" -- and lands on the belly, or on a Lit serpent
-   anywhere (no beams to follow any more).
+   now "any spire's board" -- and lands on the belly.
 8. **The Bard does no damage** and needs another fighter to buff; with no
    other fighter her song does nothing, and her rail says so in its line.
 9. **Every class wins alone except the Bard** (the owner). Each damage class
@@ -102,7 +101,7 @@ stationsBuilt: 0, // SAVED. how many stations ever stood built, for the class un
 fangs: 0, seenFang: false,   // SAVED. the coin
 fangsDropped: 0,  // SAVED. breaks that have dropped theirs (a fang drops once per break, even across a reload)
 fangsLoose: [],   // SAVED_BY_HAND (the scales' saver owns it): fangs sinking or on the floor
-statuses: {},     // EPHEMERAL. { bleed, exposed, held, lit, weakened }: each { until, k } (ms, 0..1)
+statuses: {},     // EPHEMERAL. { bleed, exposed, held, weakened }: each { until, k } (ms, 0..1)
 stationBoardOpen: null, // EPHEMERAL. the id of the station whose board is up
 ```
 
@@ -172,7 +171,7 @@ canon table, with their hit keys and the status each lays:
 | assassin | armory | stab, melee, 1.5 s; x3 on a stunned serpent | Execution: stabs x(1 + wound share), to x2 | x3 in the phase's last tenth | -- |
 | sapper | circle | thrown charge, ranged, 6 s | Sticky charge: stuck, ticks, one blow x3 that stuns | two stuck at once | Stunned, Exposed on the blow |
 | hexer | circle | hex, ranged, 5 s: Weakened (heal cut) | Binding: the serpent Held | Held takes +30% from blows | Weakened, Held |
-| mage | spire | bolt, ranged, 2 s: Lit | Arcane lantern: the whole serpent Lit | Lit takes +20% from everyone | Lit |
+| mage | spire | a held purple beam, ranged, ticks while held | the beam widens and ramps the longer she holds | the beam burns through (a growing chip, sparks) | -- |
 | bard | spire | song: other fighters Inspired (+10%) | Anthem: Inspired doubles | Inspired lingers 6 s | Inspired |
 
 Pips (the Martial Artist's combo, the Monk's chi, the Sapper's countdown if
@@ -192,8 +191,7 @@ longer and stronger of the two stands); `has(key)`, `level(key)`,
 `stepStatuses(c)` expires them. Effects, read in `strike` and `healNow`:
 **Bleeding** ticks damage; **Exposed** +25% from everything; **Held** no
 heal for its length and the coil holds its pose (the stun's `serpentStill`
-path); **Lit** full damage in the fading phase (replaces `FADE_UNLIT`'s
-beam test); **Weakened** heal x(1 - k), capped by `HEAL_CUT_MAX`. **Stunned**
+path); **Weakened** heal x(1 - k), capped by `HEAL_CUT_MAX`. **Stunned**
 stays the built stun (`S.serpentStun`), not a status entry. Amps add, then
 multiply once, capped at `AMP_MAX`. Fighter buffs: **Inspired** +10% (x2 at
 Anthem), **Hasted** +20% tempo.
@@ -203,7 +201,8 @@ each damage class half in one phase and whole in the rest: brawler [1, .5,
 1, 1] (the ward), sword [1, 1, .5, 1], monk [.5, 1, 1, 1], martial [1, .5, 1,
 1], ranger [1, 1, 1, .5], assassin [1, 1, .5, 1], sapper [1, 1, .5, 1],
 hexer [.5, 1, 1, 1], mage [1, 1, .5, 1], star [1, 1, 1, 1]. `FADE_UNLIT`
-rises to .5. The click stays `strike('punch', CLICK_DMG[...])` -- the
+and the fading phase's light rule go: nothing is Lit any more (the Mage's
+beam, 2026-09-28), and the phase's defense row carries its difficulty. The click stays `strike('punch', CLICK_DMG[...])` -- the
 owner: "Always a punch" -- with `punch` a row of its own and the click's
 damage a written table on the first station's rung (`CLICK_DMG`).
 
@@ -284,7 +283,7 @@ are the cards' own (`board.js` builders), so a rail reads as the boards do.
   squash and stretch. Travel stays smooth. The numbers (pose length, pause
   length, the 1.7) go in `config/deepdraw.js`.
 - **Statuses** on the whole serpent (the bench's painters for Bleeding,
-  Exposed, Held, Lit, Weakened) and on fighters (Inspired, Hasted); the
+  Exposed, Held, Weakened) and on fighters (Inspired, Hasted); the
   stun is the built ring.
 - **The fang**: a white fang of a few cells, sinking and carried like a
   scale; a mark on the counter card beside the scale's once seen.

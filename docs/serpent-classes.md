@@ -25,7 +25,8 @@ all stand.
 - **The tree**: one rail a class, two a station; it folds to the class
   bought, and the reset refunds it.
 - **Statuses trimmed** to what the ten moves use: Stunned, Bleeding,
-  Exposed, Held, Lit, Weakened on the serpent (all on the whole snake);
+  Exposed, Held, Weakened on the serpent (all on the whole snake; Lit
+  dropped with the Mage's beam, 2026-09-28);
   Inspired and Hasted on fighters. Poisoned, Burning, Marked and Keen go.
 - **No "whole coil" effects**: the serpent's lengths only matter to the
   splitting phase's heal, and a status or a blow is on the whole snake.
