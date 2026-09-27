@@ -113,6 +113,24 @@ Whether a second station of a kind costs more than the first is open.
 
 ---
 
+### How the tree is shown: rails (voted 2026-09-27)
+
+The station's board shows the **whole tree, always**: both classes, all six
+branches, every rung, the keystones and the capstone forks
+(`docs/mocks/tree-2026-09-27.html`, option 2, "Rails"). One row a branch,
+grouped under its class; eight pips along each row reading left to right,
+the keystone and the capstone fork as bigger nodes on the rail. A panel
+beside the rails writes out the effect of whatever is hovered or last
+tapped, so a phone, which has no hover, reads every effect; at phone width
+the panel drops under the rails. The rungs bought are lit along the chosen
+path; on the other paths the rungs within the station's depth show as
+reachable by a free respec, and the rest as not yet bought.
+
+**The reset is one control that resets the whole tree** (the owner: "Let's
+make the reset just a full tree reset. Nothing fancy"): class, branch and
+capstone go back to unchosen, for free. Picking a node on the rails is how
+a player respecs; the reset is only the way back to a blank tree.
+
 ## 3. The words the classes are written in
 
 On the serpent (or a length of it, a fifth of the coil):
