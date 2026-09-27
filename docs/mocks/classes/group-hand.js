@@ -272,44 +272,57 @@ registerClass({
 });
 
 // --- the Martial Artist -------------------------------------------------------------
-// Technique: a white headband with its two tails streaming behind her, and
-// small hands. She swims up under the coil and jabs, a thin fast streak a
-// strike, three a second; every strike lights a pip of the five under her,
-// and at five she crouches and launches her whole body into the coil.
-const MA_GAP = 5, PIPS = 5;
-function maHands(g, x, y, busy, guard) {
-  const hy = guard ? y : y + 1;
-  if (!busy.includes(-1)) cell(g, x - 1, hy, WHITE);
-  if (!busy.includes(1)) cell(g, x + BODY, hy, WHITE);
+// Technique: a bo staff, longer than she is wide, carried across her back
+// (the looks page's kit). She swims up under the coil with it stood on end
+// and thrusts it, the whole staff driven up two cells so its tip strikes, a
+// thrust a pip, three a second; at five pips she crouches, swings it flat
+// over her head and launches her whole body up, sweeping it along the hide.
+const MA_GAP = 6, PIPS = 5;
+const STAFF = 7;          // cells, end to end
+const TIP = 3;            // on end, the tip stands this many cells over her head
+// At rest, across her back: its ends out either side of the middle row.
+function staffBack(g, x, y) {
+  cell(g, x - 2, y + 1, GREYS[9]); cell(g, x - 1, y + 1, GREYS[8]);
+  cell(g, x + BODY, y + 1, GREYS[8]); cell(g, x + BODY + 1, y + 1, GREYS[9]);
 }
-// A jab landing at L from the hand on `side`: the hand shoots up as a streak
-// from the head to the coil's underside and pulls back as it fades.
-function jab(g, t, L, x, y, side, st, echo = false) {
-  const a = t - L;
-  if (a < -0.06 || a > 0.16) return false;
-  const col = side < 0 ? x - 1 : x + BODY;
-  const face = coilBottom(col, t, st) + 1;
-  const tip = a < 0 ? Math.round(y - 1 + (face - (y - 1)) * (1 + a / 0.06)) : face;
-  const shaft = a < 0.05 ? GREYS[8] : a < 0.1 ? GREYS[6] : GREYS[4];
-  for (let r = tip; r <= y; r++) cell(g, col, r, r === tip && a < 0.1 ? WHITE : shaft);
-  // Flow's double: an after-image a column out, a beat behind
-  if (echo && a > 0) for (let r = face; r <= y; r++) cell(g, col + side, r, a < 0.08 ? GREYS[7] : GREYS[4]);
-  return true;
+// On end through her middle column, its tip at row `tip`: drawn before the
+// body, so the body covers its middle. `hot` whitens the tip as it strikes.
+function staffUp(g, x, tip, hot = false) {
+  const cx = x + 1;
+  for (let r = tip; r < tip + STAFF; r++) cell(g, cx, r, r === tip || r === tip + STAFF - 1 ? GREYS[9] : GREYS[8]);
+  if (hot) cell(g, cx, tip, WHITE);
+}
+// Flat over her head on row `row`, both ends bright where they cap it. As
+// it strikes it is pressed into the hide's edge, so it is drawn dark there,
+// where a light one would vanish into the white.
+function staffOver(g, x, row, hot = false) {
+  for (let c = x - 2; c <= x + BODY + 1; c++)
+    cell(g, c, row, c === x - 2 || c === x + BODY + 1 ? GREYS[9] : hot ? GREYS[5] : GREYS[8]);
+}
+// A thrust landing at L: the staff's tip row at t, or null outside it. It
+// slides from the ready (TIP over the head) to the coil's underside and
+// back as it fades.
+function thrustTip(t, L, y, face) {
+  const a = t - L, ready = y - TIP;
+  if (a < -0.06 || a > 0.16) return null;
+  if (a < 0) return Math.round(ready + (face - ready) * (1 + a / 0.06));
+  if (a < 0.1) return face;
+  return Math.round(face + (ready - face) * ((a - 0.1) / 0.06));
 }
 function drawPips(g, x, y, n, flash) {
   for (let i = 0; i < PIPS; i++)
     cell(g, x - 1 + i, y + BODY + 1, flash ? (flash > 0 ? WHITE : GREYS[6]) : i < n ? WHITE : GREYS[3]);
 }
-// The finisher at F: crouch two cells, launch the body up into the coil,
-// hold, drop back to the hover. Returns the body's row, or null when the
-// finisher is not under way.
-function finisherY(t, F, hover, face) {
+// The finisher at F: crouch two cells, launch the body up until the staff
+// meets the coil (the body's row there is `top`), hold, drop back to the
+// hover. Returns the body's row, or null when the finisher is not under way.
+function finisherY(t, F, hover, top) {
   const a = t - F;
   if (a < -0.35 || a > 0.45) return null;
   if (a < -0.15) return hover + 2;
-  if (a < 0) return Math.round(hover + 2 + (face - hover - 2) * ease((a + 0.15) / 0.15));
-  if (a < 0.2) return face;
-  return Math.round(face + (hover - face) * ease((a - 0.2) / 0.25));
+  if (a < 0) return Math.round(hover + 2 + (top - hover - 2) * ease((a + 0.15) / 0.15));
+  if (a < 0.2) return top;
+  return Math.round(top + (hover - top) * ease((a - 0.2) / 0.25));
 }
 function launchTrail(g, t, F, x, y, from) {
   const a = t - F;
@@ -319,27 +332,55 @@ function launchTrail(g, t, F, x, y, from) {
     rect(g, x, r, BODY, 1, k < 0.3 ? GREYS[7] : k < 0.6 ? GREYS[5] : GREYS[3]);
   }
 }
+// The sweep's wake: from the middle of the staff out both ways along the
+// hide's underside, the struck edge whitening and stepping back down.
+function sweepWake(g, t, F, cx, st) {
+  const a = t - F;
+  if (a < 0 || a > 0.5) return;
+  const reach = 3 + along(a, 0, 0.1) * 5, fade = along(a, 0.12, 0.5);
+  const tone = GREYS[[11, 11, 10, 9, 7, 5][Math.floor(fade * 5.99)]];
+  // it starts past the staff's ends, the staff itself covering the middle
+  for (let dx = -8; dx <= 8; dx++)
+    if (Math.abs(dx) > 3 && Math.abs(dx) <= reach) cell(g, cx + dx, coilBottom(cx + dx, t, st), tone);
+}
 // One Martial Artist scene's whole drawing, off its timetable.
 //   jabs: [{ at, side }], fins: [finisher times], trip: [up0, up1, dn0, dn1],
-//   per: pips a jab lights, echo: Flow's after-image, k: the finisher's size.
-function drawMartial(g, t, api, { jabs, fins, trip, per = 1, echo = false, k = 0.65 }) {
+//   per: pips a jab lights, echo: Flow's after-image, k: the finisher's size,
+//   point: the finisher is a thrust (Pressure Points) rather than the sweep.
+function drawMartial(g, t, api, { jabs, fins, trip, per = 1, echo = false, k = 0.65, point = false }) {
   const st = api.st, x = HOME_X;
   const hover = tripY(t, st, MA_GAP, ...trip);
-  const face = coilBottom(STATION_X, t, st) + 1;
+  const face = coilBottom(x + 1, t, st) + 1;
+  // at contact the body sits under the staff: its tip on end at the
+  // underside, or flat along the hide's edge with the body right under it
+  const top = point ? face + TIP : face;
   let y = hover, fin = null;
-  for (const F of fins) { const fy = finisherY(t, F, hover, face); if (fy != null) { y = fy; fin = F; } }
+  for (const F of fins) { const fy = finisherY(t, F, hover, top); if (fy != null) { y = fy; fin = F; } }
   // the bite and the scales under everything she draws
-  for (const j of jabs) {
-    const col = j.side < 0 ? x - 1 : x + BODY;
-    land(g, t, j.at, col, coilBottom(col, t, st), 0.18, Math.round(j.at * 10));
-  }
+  for (const j of jabs) land(g, t, j.at, x + 1, face - 1, 0.18, Math.round(j.at * 10));
   for (const F of fins) land(g, t, F, x + 1, face - 1, k, Math.round(F * 10) + 50);
+  if (!point) for (const F of fins) sweepWake(g, t, F, x + 1, st);
   if (fin != null) launchTrail(g, t, fin, x, y, hover + 2);
+  // the staff: across her back on the swim, on end in the fight, flat over
+  // her head for the sweep
+  const fighting = t >= trip[1] && t < trip[2];
+  let tip = null, hot = false;
+  if (fin != null) {
+    if (point) { tip = y - TIP; hot = t >= fin && t < fin + 0.2; }
+  } else if (fighting) {
+    tip = y - TIP;
+    for (const j of jabs) {
+      const jt = thrustTip(t, j.at, y, face);
+      if (jt != null) { tip = jt; hot = t >= j.at && t < j.at + 0.1; }
+      // Flow's double: an after-image of the shaft a column out, a beat behind
+      const a = t - j.at;
+      if (echo && a > 0 && a < 0.16) for (let r = face; r < y; r++) cell(g, x + 1 + j.side, r, a < 0.08 ? GREYS[7] : GREYS[4]);
+    }
+  }
+  if (tip != null) staffUp(g, x, tip, hot);
   drawBody(g, x, y);
-  api.cls.hat(g, x, y, t);
-  const busy = [];
-  for (const j of jabs) if (jab(g, t, j.at, x, y, j.side, st, echo)) busy.push(j.side);
-  maHands(g, x, y, busy, false);
+  if (fin != null && !point) staffOver(g, x, y - 1, t >= fin && t < fin + 0.2);
+  else if (tip == null) staffBack(g, x, y);
   // the pips: jabs since the last finisher, `per` a jab, flashing as she crouches
   const lastF = lastOf(fins, t) ?? -1;
   const n = Math.min(PIPS, jabs.filter(j => j.at <= t && j.at > lastF).length * per);
@@ -351,7 +392,7 @@ const jabRow = (from, n, gap = 1 / 3) => Array.from({ length: n }, (_, i) => ({ 
 
 const MA_BASE = { jabs: jabRow(0.8, 5), fins: [2.75], trip: [0.1, 0.6, 3.5, 4.1] };
 const MA_FLOW = { jabs: [...jabRow(0.8, 3), ...jabRow(2.45, 3)], fins: [2.0, 3.65], trip: [0.1, 0.6, 4.3, 4.9], per: 2, echo: true };
-const MA_PP = { ...MA_BASE, k: 0.55 };
+const MA_PP = { ...MA_BASE, k: 0.55, point: true };
 const PP_F = MA_PP.fins[0];
 // Counter: the thrash's ripple leaves the belly at THRASH and she answers
 // the moment it reaches her.
@@ -360,31 +401,24 @@ const RIPPLE_REACH = Math.hypot(STATION_X - RIPPLE_X, (HOME_Y + 1) - 12) / RIPPL
 const COUNTER = THRASH + RIPPLE_REACH + 0.25;
 
 registerClass({
-  key: 'martial', name: 'Martial Artist', station: 'altar', group: 'hand',
-  look: 'a white headband, its two tails streaming; small quick hands; five pips under her',
-  hat(g, cx, cy, t) {
-    // a white band, where the swordsman's is grey, so the two headbands part
-    rect(g, cx, cy - 1, BODY, 1, WHITE);
-    // the tails stream back off the knot and flutter a cell
-    const f = Math.floor(t * 6) % 2;
-    cell(g, cx - 1, cy - 1, WHITE);
-    cell(g, cx - 2, cy - 1 + f, GREYS[10]);
-  },
+  key: 'martial', name: 'Martial Artist', station: 'well', group: 'hand',
+  look: 'a bo staff held across her back, longer than she is wide; she thrusts it and sweeps it; five pips under her',
+  hat(g, cx, cy) { staffBack(g, cx, cy); },
   scenes: [
     {
-      name: 'Base', about: 'Quick light strikes, three a second, each a pip; at five pips she launches herself into the coil, all five in one blow.',
+      name: 'Base', about: 'Quick thrusts of the staff, three a second, each a pip; at five pips she swings it over her head and launches herself into the coil, sweeping it along the hide: all five in one blow.',
       dur: 4.6, body: false,
       state() {},
       draw(g, t, api) { drawMartial(g, t, api, MA_BASE); },
     },
     {
-      name: 'Flow', about: 'Each strike counts double: two pips a jab, an after-image beside every hand, and the finisher twice as often.',
+      name: 'Flow', about: 'Each thrust counts double: two pips a thrust, an after-image of the staff beside every one, and the sweep twice as often.',
       dur: 5.4, body: false,
       state() {},
       draw(g, t, api) { drawMartial(g, t, api, MA_FLOW); },
     },
     {
-      name: 'Pressure Points', about: 'Her finisher is aimed: a sight closes on one point, and the blow Marks the whole coil.',
+      name: 'Pressure Points', about: 'Her finisher is aimed: a sight closes on one point, she launches the staff on end into it, and the blow Marks the whole coil.',
       dur: 4.6, body: false,
       state(t, api) { if (t >= PP_F) api.status('marked', 1); },
       draw(g, t, api) {
@@ -412,7 +446,7 @@ registerClass({
       },
     },
     {
-      name: 'Counter', about: 'She waits in guard. When the serpent thrashes, its ripple reaches her and she answers at once with a full finisher.',
+      name: 'Counter', about: 'She waits in guard, the staff grounded on end. When the serpent thrashes, its ripple reaches her and she answers at once with a full sweep.',
       dur: 4, body: false,
       state() {},
       draw(g, t, api) {
@@ -433,18 +467,22 @@ registerClass({
             }
           }
         }
-        // her answer: a straight dash from the station into the coil and back
-        const face = coilBottom(STATION_X, t, st) + 1;
+        // her answer: a straight dash from the station into the coil and
+        // back, the staff swung flat over her head on the way up
+        const face = coilBottom(x + 1, t, st) + 1, top = face;
         const c = t - COUNTER;
         let y = HOME_Y;
-        if (c > -0.25 && c < 0) y = Math.round(HOME_Y + (face - HOME_Y) * ease((c + 0.25) / 0.25));
-        else if (c >= 0 && c < 0.2) y = face;
-        else if (c >= 0.2 && c < 0.9) y = Math.round(face + (HOME_Y - face) * ease((c - 0.2) / 0.7));
+        if (c > -0.25 && c < 0) y = Math.round(HOME_Y + (top - HOME_Y) * ease((c + 0.25) / 0.25));
+        else if (c >= 0 && c < 0.2) y = top;
+        else if (c >= 0.2 && c < 0.9) y = Math.round(top + (HOME_Y - top) * ease((c - 0.2) / 0.7));
         land(g, t, COUNTER, x + 1, face - 1, 0.7, 77);
+        sweepWake(g, t, COUNTER, x + 1, st);
         if (c > -0.25 && c < 0.1) launchTrail(g, t, COUNTER, x, y, HOME_Y);
+        const out = c > -0.25 && c < 0.9;
+        // in guard the staff stands on end, grounded on the plinth
+        if (!out) staffUp(g, x, y - TIP);
         drawBody(g, x, y);
-        api.cls.hat(g, x, y, t);
-        maHands(g, x, y, [], y === HOME_Y);
+        if (out) staffOver(g, x, y - 1, c >= 0 && c < 0.2);
         // in guard the pips stand full; the counter spends them all, and
         // they fill again once she is home
         const n = c >= 0 && c < 1.4 ? Math.floor(Math.max(0, c - 0.9) / 0.1) : PIPS;
