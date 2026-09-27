@@ -123,13 +123,16 @@ the keystone and the capstone fork as bigger nodes on the rail. A panel
 beside the rails writes out the effect of whatever is hovered or last
 tapped, so a phone, which has no hover, reads every effect; at phone width
 the panel drops under the rails. The rungs bought are lit along the chosen
-path; on the other paths the rungs within the station's depth show as
-reachable by a free respec, and the rest as not yet bought.
+path.
 
-**The reset is one control that resets the whole tree** (the owner: "Let's
-make the reset just a full tree reset. Nothing fancy"): class, branch and
-capstone go back to unchosen, for free. Picking a node on the rails is how
-a player respecs; the reset is only the way back to a blank tree.
+**The reset is one control: it refunds the whole tree** (the owner: "Let's
+make the reset just a full tree reset. Nothing fancy", and "Just refund the
+spec tree and keep going"). Every rung bought on the station comes back,
+the depth goes to nothing, and the tree is blank again. **Hover and panel
+text is concise** (the owner, 2026-09-27): a node's name and what it does in
+a few words, nothing about the system. Whether the tree shows only the
+chosen path once decided ("if you made the decision, those branches go
+away") is being mocked as option 2b.
 
 ## 3. The words the classes are written in
 
