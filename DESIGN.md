@@ -16053,3 +16053,171 @@ yard putting up more for the air filter to argue with.
   lands on heaps or over the hole, the one janitor is away more than it is
   home; a second tender, or a roomba that finishes its claim before it
   heads home, are the two answers if that reads badly.
+
+## Cloud saves: a sync code and a worker (design, not built)
+
+A yard lives on one browser on one machine. Clearing site data, a new
+laptop, playing on itch at work and on the desk at home: each is a yard
+lost or a yard started over, and `save a copy` / `load a save` is a bug
+report's tool, not a player's (the same argument "Save slots" made). This
+puts a copy of every slot in the cloud and brings it back on any device
+the player links.
+
+### The bargain
+
+**The cloud is a mirror, not the store.** The yard reads its store as if
+it answered at once (`primeStore`, "The save is in IndexedDB"), and a
+network never does. So the local store stays exactly what it is -- the
+thing play reads and the autosave writes -- and the cloud is kept behind
+it: pulled once at boot, pushed in the background. A server that is down,
+a train with no signal, a worker over its free tier: each is a yard that
+plays and saves exactly as today and says `not in the cloud` on the sheet.
+The cloud can be late. It can never cost a yard.
+
+**The player is a sync code, not an account.** No email, no password, no
+login page: the game is a clicker, and an account form in front of it is a
+wall nobody climbs. Turning cloud saves on mints a code --
+`PEBBLE-7F3K-Q9WM-2HXD-R4TN` (twenty Crockford base-32 characters, a
+hundred bits) -- and the code *is* the identity and the key. Typing it on
+another device links that device to the same three slots. What it costs
+the player: a lost code is a lost cloud copy, with nobody to ask for it
+back. The local yards are untouched by that, so the loss is the mirror,
+not the game; the sheet says to keep the code somewhere, once, when it is
+made.
+
+**Off until asked.** Cloud saves are a switch on the settings sheet, off
+for every existing and new yard. Nothing is sent anywhere until the player
+turns it on, and the code is the only thing that ties a save to anyone.
+
+**Hosted, not on the owner's machine.** The board of times runs on the
+owner's machine behind a tunnel, which suits a leaderboard: down for an
+evening, nobody loses anything. A save mirror down for an evening is
+still safe by the first rule, but the point of it is being there when
+the laptop is not, so it goes on a Cloudflare Worker with D1 (SQLite).
+D1 gives a transaction for the one write that must be conditional (below),
+which KV's eventual consistency does not. At ~5 kb a gzipped slot and one
+push a minute of play, the free tier (100k writes a day) carries hundreds
+of players a day. The game still has no dependencies: the worker is its
+own package in `cloud/`, beside `server/`, with wrangler as that package's
+dev dependency.
+
+### What a slot carries
+
+Two new saved fields, both in `SAVED` (state.js):
+
+- `yardId` -- minted with a new game and never changed. Two copies of a
+  slot with the same `yardId` are the same yard at two points; different
+  ids are two yards, and nothing is ever merged or overwritten between
+  them without the player choosing.
+- `playedS` -- game seconds played, counted by the frame. The yard's
+  length, which is what "newer" means here. `savedAt` is a wall clock from
+  whichever machine wrote it and says nothing across two machines.
+
+A save from before them gets a fresh `yardId` and `playedS: 0` on load (a
+migration in `src/migrations/`), which is correct: it has never been in the
+cloud, so there is nothing to agree with.
+
+The worker keeps, per code and slot: the gzipped blob, its `yardId`, its
+`playedS` and a `rev` it bumps on every write it takes. The device keeps,
+per slot, the `rev` it last pulled or pushed (its *base*).
+
+### The worker
+
+| route | what it does |
+|---|---|
+| `POST /vaults` | mints a code, stores its SHA-256, replies `{ code }` |
+| `GET /slots` | per slot: `{ rev, yardId, playedS, at }` or null |
+| `GET /slots/:n` | the blob |
+| `PUT /slots/:n` `If-Match: <rev>` | takes the blob if the slot's rev is still `<rev>` and replies `{ rev }`; otherwise `412` with the slot's meta |
+| `DELETE /vaults/me` | forgets the code and every slot under it |
+
+The code rides in `Authorization: Bearer`, never in a URL. The worker
+keeps only the code's hash, so its database leaks no code. A blob over 1 MB
+is `413`; a code unseen for a year is swept. CORS is open, as the board's
+is: the game runs on itch's origin, on the desk and on localhost. A hundred
+bits are not guessed, so there is no lockout to design; a plain per-ip rate
+limit keeps the free tier from being spent by a script.
+
+### The sync
+
+`src/cloud.js` owns all of it. save.js gains one call out: a write that
+took tells `cloud.js` the slot is dirty.
+
+- **Boot.** After `primeStore` and before `restore`, `GET /slots` with a
+  timeout (`CLOUD_BOOT_MS`, 3 s). Per slot, against the local copy:
+  - same `yardId`, cloud's `playedS` higher: the cloud's is newer. It is
+    written into the local store, the local copy goes to `.prev`, and the
+    yard boots from it;
+  - same `yardId`, local's higher or equal: nothing now, and the next push
+    sends it;
+  - local empty: take the cloud's;
+  - cloud empty: push the local one;
+  - different `yardId`s: nothing is taken, and the sheet asks (see
+    "Linking a device").
+  A timeout boots the local yard and tries again in the background. The
+  boot never waits on the network longer than `CLOUD_BOOT_MS`.
+- **Play.** A dirty slot is pushed at most once every `CLOUD_PUSH_S` (60),
+  and once more on `pagehide` / `visibilitychange` (`fetch` with
+  `keepalive`) and on the desk's close. A `412` means the slot moved on
+  somewhere else since this device's base, and the rule is the boot's:
+  same yard with the cloud's `playedS` higher is another device ahead.
+  This device stops pushing, and the sheet says `this yard is newer on
+  another device` with *take it* (reload from the cloud) or *keep this
+  one* (push over it; the cloud's goes to `.prev`). That is the tab
+  guard's rule (`claimTab`) stretched across machines: two writers on one
+  yard is a question for the player, never a silent winner.
+- **A cleared slot** pushes an empty blob, not a deletion, so the other
+  device's next boot reads "cleared on purpose" and does not bring the
+  yard back. It is the desk's truncate-not-delete, for the same reason.
+
+### Linking a device
+
+The sheet's cloud page: off, it offers *keep my yards in the cloud*
+(mints a code) and *link with a code*. On, it shows the code with *copy*,
+one status line (`in the cloud, 2 min ago` / `not in the cloud: offline`)
+and *stop* (forgets the code on this device; the cloud copy stays for the
+other devices).
+
+Linking a device that already has yards is the one real decision in the
+feature. For each slot where both sides hold a yard with different
+`yardId`s, the sheet shows both, with the station count and playtime for
+each, and the player keeps one; the other goes to that slot's `.prev`, and
+`save a copy` still hands it out. Slots where one side is empty fill
+without asking.
+
+### What it must not break
+
+- *The local save's guarantees.* The atomic write, the last-good copy, the
+  broken-blob aside and the save floor stay as they are: a pulled blob
+  goes through `isSave` like any other before it is written anywhere, and
+  a cloud blob that will not read is never written over a local yard.
+- *The desk.* The same `cloud.js` runs in Electron. The desk reads and
+  writes through `window.desk` as now, and `cloud.js` only ever calls
+  save.js, so the bridge does not grow.
+- *The node yard and the checks.* `CLOUD_ON` in `config/cloud.js` and
+  `VITE_CLOUD_URL`, the `TIMES_ON` shape: an empty URL is a build with no
+  cloud, and `cloud.js` does nothing at all.
+- *Privacy.* No personal data goes up. The code is the only link from a
+  save to anyone, and *stop* plus `DELETE /vaults/me` forgets it.
+
+### Checks
+
+`test/cloud-sync.test.mjs` (node, `fetch` stubbed by an in-memory worker):
+turned on through the sheet's row, a yard is pushed, and a second yard on a
+fresh store links by code and boots it; the higher `playedS` wins on both
+sides; a `412` on a device that is behind stops its pushes and overwrites
+nothing; different `yardId`s never overwrite without the choice; a cleared
+slot stays cleared on the other device; a dead server boots the local yard
+inside `CLOUD_BOOT_MS`; a cloud blob that fails `isSave` is never written.
+`cloud/test/` runs the worker's routes against a local D1: the conditional
+PUT under two writers, hash-only storage, `413` and the bearer check.
+`test/persist-roundtrip.test.mjs` covers the two new fields unasked.
+
+### What the design still does not know
+
+- **itch login.** The desk's `itchKey()` could attach a code to an itch
+  account later, so a logged-in player never types one. That is a second
+  way to find the same vault and changes none of the above.
+- **Whether a minute is the right push.** At ~5 kb it is cheap. A player
+  who shuts the lid without a `pagehide` loses at most that minute from
+  the mirror, never from the yard.

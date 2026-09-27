@@ -1,5 +1,13 @@
 # Still to do
 
+## Cloud saves -- DESIGNED, AWAITING SIGN-OFF (2026-09-27)
+
+"Cloud saves: a sync code and a worker" in DESIGN.md: the local store stays
+what play reads; a Cloudflare Worker + D1 mirrors every slot under a
+hundred-bit sync code (no accounts), pulled at boot, pushed once a minute.
+Blocker: the owner's sign-off, and a Cloudflare account for the worker. No
+game code yet.
+
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 
 Built as `docs/wave-serpent.md`; "The serpent" at the end of DESIGN.md.
