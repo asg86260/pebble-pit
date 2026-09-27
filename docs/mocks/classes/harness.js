@@ -156,8 +156,11 @@ export function chip(g, t, t0, cx, cy, k = 0.3, id = 0) {
 // its scene -- never by recoloring the body.
 export const BODY = 3;
 export function drawBody(g, cx, cy) {
-  rect(g, cx, cy, BODY, BODY, GREYS[6]);
-  rect(g, cx + 0.34, cy + 0.34, BODY - 0.68, BODY - 0.68, WHITE);  // the edge is a third of a cell
+  // The edge is the game's two-pixel stroke, finer than a cell on purpose, so
+  // it is drawn in pixels: `rect` would round a third of a cell to nothing.
+  const x = Math.round(cx) * P, y = Math.round(cy) * P, w = BODY * P;
+  g.fillStyle = GREYS[6]; g.fillRect(x, y, w, w);
+  g.fillStyle = WHITE; g.fillRect(x + 2, y + 2, w - 4, w - 4);
 }
 
 // --- registries ------------------------------------------------------------------
