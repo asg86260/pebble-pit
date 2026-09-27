@@ -500,8 +500,10 @@ const BOW_DRAWN = { ox: 3, rows: [
 const LIFT_S = 0.12;                                  // each step of the lift, and of the lowering
 const FLY = 0.25;                                     // an arrow's flight, in seconds
 const NOCK = 0.2;                                     // the pull before each release
-// Arrows leave from over the drawn bow, at his middle, a cell over the nock.
-const launch = () => [SX, HY - 6];
+// Arrows leave from over the drawn bow, at his middle, a cell over the nock;
+// one aimed off to a side leaves a cell that way, so a fan opens off the bow
+// rather than out of one cell.
+const launch = (tx = SX) => [SX + Math.sign(tx - SX), HY - 6];
 // The bow's pose at t: lifted at `up`, lowered from `down`, and while it is
 // over his head, drawn when `pulling` says so.
 function bowPose(t, up, down, pulling) {
@@ -513,7 +515,7 @@ function bowPose(t, up, down, pulling) {
 // Where an arrow is `p` of the way along its flight: a straight line from
 // over the bow to the hide at column tx.
 function arrowPos(t, st, tx, p) {
-  const [lx, ly] = launch(), ty = coilBottom(tx, t, st) + 1;
+  const [lx, ly] = launch(tx), ty = coilBottom(tx, t, st) + 1;
   return [lerp(lx, tx, p), lerp(ly, ty, p)];
 }
 // One arrow shot at `t0` at column tx: its flight, its landing (a small
@@ -522,7 +524,7 @@ function arrow(g, t, st, t0, tx, o = {}) {
   const fly = o.fly ?? FLY, a = t - t0;
   if (a < 0) return;
   const head = o.head ?? WHITE;
-  const [lx, ly] = launch(), [ex, ey] = arrowPos(t, st, tx, 1);
+  const [lx, ly] = launch(tx), [ex, ey] = arrowPos(t, st, tx, 1);
   const d = Math.hypot(ex - lx, ey - ly) || 1, ux = (lx - ex) / d, uy = (ly - ey) / d;
   if (a < fly) {
     // the shaft lies along the way it is going, two cells behind the head
@@ -593,7 +595,9 @@ registerClass({
     { name: 'Volley', about: 'Arrows fly three at a time out of the bow over his head, fanning up: each comes down over a different length of the coil.',
       ...rangerScene({
         dur: 4.2,
-        shots: SHOTS.flatMap(s => [[s, SX - 8], [s, SX], [s, SX + 8]]),
+        // the coil hangs a few cells over the bow, so a fan wider than this
+        // flies flat rather than up
+        shots: SHOTS.flatMap(s => [[s, SX - 4], [s, SX], [s, SX + 4]]),
       }) },
     { name: 'Warden', about: 'Every arrow is a flare, its head lit on the drawn bow: it goes straight up, lands in a ring of the abyss\'s light, and the serpent is Lit -- the whole of it -- from the first one on.',
       ...rangerScene({
