@@ -503,8 +503,11 @@ function hbow(g, cx, sy, half, drawn, two = false) {
     if (!drawn || Math.abs(c) >= half - 1) cell(g, cx + c, sy, GREYS[9]);
     else if (c) cell(g, cx + c, sy + 1, GREYS[9]);
   }
+  // the aimed shot's two arrows are the abyss's, purple head to nock
   if (drawn) for (const ax of two ? [cx - 1, cx + 1] : [cx]) {
-    cell(g, ax, sy - 3, WHITE); for (let r = sy - 2; r <= sy; r++) cell(g, ax, r, GREYS[10]); cell(g, ax, sy + 1, GREYS[6]);
+    cell(g, ax, sy - 3, two ? PURPLES[11] : WHITE);
+    for (let r = sy - 2; r <= sy; r++) cell(g, ax, r, two ? PURPLES[9] : GREYS[10]);
+    cell(g, ax, sy + 1, two ? PURPLES[6] : GREYS[6]);
   }
 }
 function drawBow(g, pose, x, y, R, t, two = false) {
@@ -517,7 +520,7 @@ function drawBow(g, pose, x, y, R, t, two = false) {
 const ranger = {
   key: 'ranger', name: 'Ranger', at: 3,
   base: 'arrows from overhead', move: 'Aimed shot: every 5th arrow x5', cap: 'the aimed shot stuns',
-  mark: 'the bow a cell longer', touch: 'the bow longer again',
+  mark: 'the bow a cell longer; the aimed pair purple', touch: 'the bow longer again',
   rest(g, x, y, R, t) { drawBody(g, x, y); drawBow(g, 'rest', x, y, R, t); },
   len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
   state(a, api, R) { if (R8(R)) api.stun(this.aimed + 0.1, 1.5); },
@@ -541,10 +544,15 @@ const ranger = {
     for (const ar of arrows) {
       const d = a - ar.at, ax = ar.ax, ay = cBot(ax, t, s) + 1;
       if (d < 0) continue;
-      if (d < ar.fly) { const hy = lerp(ly, ay, d / ar.fly); cell(g, ax, hy, WHITE); cell(g, ax, hy + 1, GREYS[10]); cell(g, ax, hy + 2, GREYS[8]); continue; }
+      const pu = ar.aimed;
+      if (d < ar.fly) {
+        const hy = lerp(ly, ay, d / ar.fly);
+        cell(g, ax, hy, pu ? PURPLES[11] : WHITE); cell(g, ax, hy + 1, pu ? PURPLES[10] : GREYS[10]); cell(g, ax, hy + 2, pu ? PURPLES[8] : GREYS[8]);
+        continue;
+      }
       const since = d - ar.fly;
       blow(g, t, t - since, ax, s, ar.k, ar.id);
-      if (since < 0.9) { const tone = GREYS[since < 0.4 ? 9 : 6]; cell(g, ax, ay, tone); cell(g, ax, ay + 1, tone); }
+      if (since < 0.9) { const tone = pu ? PURPLES[since < 0.4 ? 9 : 6] : GREYS[since < 0.4 ? 9 : 6]; cell(g, ax, ay, tone); cell(g, ax, ay + 1, tone); }
     }
     if (aimed) { const since = a - aimed - 0.1; if (since >= 0 && since < 0.45) ring(g, lx, ty - 1, 1 + since * 14, since < 0.2 ? WHITE : GREYS[7], 2); }
   },
@@ -552,9 +560,10 @@ const ranger = {
 
 // --- Assassin: a dagger point-up in her fist -------------------------------------------------
 // One dagger at rung 0; the mark is the second, in the other fist; the touch
-// turns both tips the abyss's purple. She never leaves her place: a stab is
-// the dagger alone darting up to the hide and back, the two taking turns from
-// rung 4, and at rung 8 each spins as it goes.
+// turns both tips the abyss's purple. She floats up to get in reach, then
+// holds nearly still, a cell's give at each stab, while the dagger does the
+// travelling up to the hide and back: the two taking turns from rung 4, and
+// at rung 8 each spins as it goes.
 const blades = (x, R) => R4(R) ? [x - 2, x + 4] : [x + 4];
 // A dagger with its guard at (gx, gy), pointing `ang` radians from straight up.
 function dagger(g, gx, gy, R, ang = 0) {
@@ -573,7 +582,9 @@ const assassin = {
   len: 3.0, stabs: [0.6, 1.1, 1.6, 2.1], out: 0.2, back: 0.3,
   state() {},
   draw(g, t, a, api, R, x) {
-    const s = api.st, y = REST_Y, bs = blades(x, R);
+    const s = api.st, bs = blades(x, R), hover = maxBot([x - 2, x + 4], t, s) + 9;
+    let y = Math.round(lerp(REST_Y, hover, trip(a, 0.35, 2.45, this.len)));
+    if (this.stabs.some(p => a >= p - 0.05 && a < p + 0.1)) y -= 1;
     drawBody(g, x, y);
     // which blade each stab is: the one at rung 0, turn and turn about after
     const flying = new Map();
@@ -676,18 +687,21 @@ function motes(g, x, top, t, n = 1) {
     cell(g, x + dx, top - 1 - Math.floor(p * 5), MOTE_TONES[Math.floor(p * 3.99)]);
   }
 }
-// The book, open, its spine at (x + 1, by): the two pages lift at their outer
-// edges. `hot` whitens the pages while it casts.
+// The tome, closed, two rows deep: its spine down the left, a thick cover,
+// a clasp, and the page edges down the right glowing through the purples.
+// `hot` whitens the glow while it casts.
 const bookY = (y, t) => y - 4 - (Math.floor(t * 1.2) % 2);
 function book(g, x, by, t, hot = false) {
   const glow = hot ? WHITE : [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[10]][Math.floor(t * 3) % 4];
-  cell(g, x, by - 1, PURPLES[8]); cell(g, x + 2, by - 1, PURPLES[8]);
-  cell(g, x, by, glow); cell(g, x + 1, by, PURPLES[6]); cell(g, x + 2, by, glow);
+  cell(g, x, by - 1, PURPLES[6]); cell(g, x, by, PURPLES[6]);
+  cell(g, x + 1, by - 1, PURPLES[8]); cell(g, x + 2, by - 1, PURPLES[8]);
+  cell(g, x + 1, by, PURPLES[8]); cell(g, x + 2, by, hot ? WHITE : GREYS[9]);
+  cell(g, x + 3, by - 1, glow); cell(g, x + 3, by, glow);
 }
 const hexer = {
   key: 'hexer', name: 'Hexer', at: 4,
   base: 'hexes Weaken the serpent', move: 'Binding: the serpent is Held', cap: 'Held takes more from blows',
-  mark: 'a glowing book over her head', touch: 'floating a cell up; the hex bigger', lift: R => R8(R) ? 1 : 0,
+  mark: 'a glowing closed tome over her head', touch: 'floating a cell up; the hex bigger', lift: R => R8(R) ? 1 : 0,
   rest(g, x, y, R, t) {
     drawBody(g, x, y);
     if (R4(R)) { const by = bookY(y, t); book(g, x, by, t); motes(g, x + 1, by - 1, t); }
