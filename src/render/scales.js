@@ -8,20 +8,31 @@
 // and not a grain is that it flutters: turning as it sinks, it is seen
 // edge-on for a moment on its own clock, a sliver of a cell rather than a
 // cell.
+//
+// A scale over the crusher is going into its funnel or coming up out of it,
+// so it is drawn behind the furnace, before it stands: it drops out of sight
+// past the rim rather than sliding down the funnel's face.
 
 import { now } from '../clock.js';
 import { P } from '../config.js';
 import { shadeOf } from '../grid.js';
 import { S } from '../state.js';
+import { crusherRect } from '../deep/place.js';
 import { ctx } from './ctx.js';
 
 const EDGE = Math.max(1, Math.round(P / 3));   // a scale seen edge-on
 const FLUTTER_MS = 520;
 
-function drawFlutter(list) {
+function overCrusher(m, c) {
+  return c && m.x + P > c.x && m.x < c.x + c.w && m.y + P > c.y && m.y < c.y + c.h;
+}
+
+function drawFlutter(list, behind) {
   const t = now();
+  const c = S.snatched ? crusherRect() : null;
   for (let i = 0; i < list.length; i++) {
     const m = list[i];
+    if (overCrusher(m, c) !== behind) continue;
     const x = Math.round(m.x), y = Math.round(m.y);
     ctx.fillStyle = typeof m.s === 'number' ? shadeOf(m.s) : '#000';
     // each on its own phase, off where it is, so a shower does not flip in step
@@ -32,5 +43,6 @@ function drawFlutter(list) {
   ctx.fillStyle = '#000';
 }
 
-export const drawSinking = () => drawFlutter(S.sinking);
-export const drawLifting = () => drawFlutter(S.lifting);
+export const drawSinking = () => drawFlutter(S.sinking, false);
+export const drawLifting = () => drawFlutter(S.lifting, false);
+export const drawIntoCrusher = () => { drawFlutter(S.sinking, true); drawFlutter(S.lifting, true); };
