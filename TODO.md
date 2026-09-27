@@ -14,15 +14,16 @@ Open:
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
 - **The second half plays shallow** (the owner, 2026-09-26): answered by
-  "One fighter, chosen styles" (below).
+  "Fighters in slots" (below).
 
-## One fighter, chosen styles -- DESIGNED, AWAITING APPROVAL (2026-09-26)
+## Fighters in slots -- DESIGNED, AWAITING APPROVAL (2026-09-26)
 
-"One fighter, chosen styles" in DESIGN.md: the sqwife fights alone, five
-styles on the stations' boards, any order, each unlock dearer than the last,
-no defense a wall; blows burst scales and a heavy one stuns the heal (C + D of
-`docs/mocks/serpent-impact-2026-09-26.html`). Blocker: the owner's three calls
-at the end of the section. C + D can be built first, on today's weapons.
+"Fighters in slots" in DESIGN.md: one fighter a station, the sqwife first;
+each phase broken drops a fang that buys another fighter's slot (four at
+most, five stations); three branches a station, fifteen in all, built for
+synergies; no station order; blows burst scales and a heavy one stuns the
+heal (C + D of `docs/mocks/serpent-impact-2026-09-26.html`). Blocker: the
+owner's four calls at the end of the section. C + D can be built first.
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 

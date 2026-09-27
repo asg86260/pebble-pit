@@ -15296,104 +15296,104 @@ height. A scene, `deep-rest`, for the shot.
    slower answer when the work comes back. *Not answered; built as its own
    station's ground.*
 
-## One fighter, chosen styles: the serpent re-architected (design, not built)
+## Fighters in slots: the serpent re-architected (design, not built)
 
 *Asked 2026-09-26. The owner's words: the second half "is building stations
 and assigning workers, then just buying upgrades until you can defeat it. its
-just a bit boring." Then: blows should land harder (C + D of
-`docs/mocks/serpent-impact-2026-09-26.html`); "i dont want it to be a set
-station order. we should allow players to choose which attack style they want
-to spec into. and lets make it expensive to unlock a new attack style"; and
-"we dont buy more attackers, you buy upgrades for your one sqwife to attack
-harder". Calls answered the same day: every style can win; each unlock dearer
-than the last.*
+just a bit boring." Blows should land harder (C + D of
+`docs/mocks/serpent-impact-2026-09-26.html`). No set station order; players
+"choose which attack style they want to spec into". Then, revised the same
+day: "one attacker per station. you start with your sqwife, and can spec them
+into the diff areas. you can unlock another fighter slot and do the same for
+them. i would like to build 3 distinct branches for each type of fighter. to
+introduce diff synergies and fighitng styles. lets have it so when you get
+through a phase of the serpents health, it drops a new resource to buy a new
+slot for an attacker." Answered earlier the same day: every style can win.
+This replaces the first draft, "One fighter, chosen styles", whose
+dearer-each-time unlock is superseded by the slot.*
 
 ### The bargain
 
 The first half is a works: many bodies, logistics, the yard as a machine. The
-second half stops being a second works. **The sqwife is the only one who
-fights.** She went down after him; she is the one who gets him out. The
-player's decisions move from "who stands where" to **"what kind of fighter is
-she"**: which style she takes up first, how deep she goes into it, and whether
-the next style is worth what it costs. A style is a commitment because the
-second one is dear and the third dearer; a stage that is hard on her style is
-the moment the player asks whether to push through on her ladder or buy a way
-round it.
+second half is a **party**: a few named fighters, each one a choice. The
+player's questions move from "who stands where, how many" to **"which
+station does this fighter take, and which branch do they spec into"**. The
+party grows by one at every phase the player breaks, so the fight has a
+rhythm the old door chain only pretended to: break a phase, the serpent drops
+a fang, the fang is a new fighter, the new fighter is a new synergy aimed at
+the next phase.
 
-What it costs the player: the deep loses its crowd of fighters, which was the
-part that looked most like a battle. What it buys: every purchase in the deep
-is about her, a style is a build the player chose, and the fight is decided
-by choices rather than by a fixed door order.
+What it costs the player: the crowd of weapon crews, and the sense of a
+battle by numbers. What it buys: every purchase in the deep is about a
+fighter the player picked, a party is a build nobody else made, and each
+phase ends in a reward the player spends on a decision, not a rung.
 
-### What goes
+### The party
 
-- **The weapon crews.** No brawlers, lancers, grenadiers, scribes or warlocks.
-  Their jobs (`JOB.BRAWL`, `LANCE`, `GRENADE`, `SCRIBE`, `WARLOCK`) and their
-  `want` entries go, with their roster and kit rows.
-- **The door chain.** The well, armory, circle and spire no longer open one
-  after another on the stage (`after` and `needs` in `STATIONS` go for them).
-  Any style can be taken up at any stage.
-- **The counters.** `SERPENT_DEFENSE` stops being a lock (below).
+- **The sqwife is the first fighter.** At the snatch she is the only one,
+  and the player puts her at any of the five stations. There is no order.
+- **One fighter a station.** Five stations, and a fighter is whoever stands
+  at one. So a full party still leaves a station empty: which one is part of
+  the build.
+- **A fighter slot costs a fang.** Breaking a phase makes the serpent drop a
+  **fang** -- the one new coin past the scale, and the only one. It sinks to
+  the floor like a scale, and a gatherer carries it to the crusher, so it is
+  watched arriving. A fang buys one slot, on the pods' board: a body from the
+  pods takes up the slot and swims to the station the player picks. Four
+  phases, and the fourth frees him, so **three fangs, four fighters** at the
+  most -- one station always empty.
+- **Moving a fighter** is swimming them to another empty station. Their spec
+  does not go with them (below).
+- **The star** stays the machine bought in sparks (sparks buy every machine),
+  outside the party; it strikes whatever the party is fighting.
 
-### What stays
+### Five stations, three branches each
 
-- **The click.** A click is still a strike where it lands, in her current
-  style's first form (a punch while she fights with fists, a thrown lance
-  while she holds the lance), so the player's hand is her hand.
-- **The stations, as places.** The altar, the well, the armory, the circle
-  and the spire still stand on the floor. Each is where a style is kept: she
-  swims to it to take the style up and to change into it, and its board sells
-  that style's ladder. Nothing teleports: a change of style is her swimming
-  there and back.
-- **The deep's hands** gather scales to the crusher and build, and the pods
-  still grow them; with no fighters to feed, the pods' ladder is shortened to
-  what gathering and building need.
-- **The called star** stays a machine bought in sparks (sparks buy every
-  machine), outside the styles: it strikes whatever style she is in.
-- **The four defenses, the wound, the heal, the bar, the numbers**, as built.
+A station is a fighting style; its board sells **three branches**, each a
+ladder built through `tierRows` with `named` bands and a written table in
+`LADDERS` (`LADDER` rungs, the coin order scales, then dust, then ore, then a
+spark on top). The branches are what make two fighters at the same station
+in two runs play differently, and what makes two fighters at different
+stations play together. Names and numbers below are the proposal; the ladder
+book settles the numbers.
 
-### Her styles
-
-Five, each a ladder of its own on its station's board, built through
-`tierRows` with `named` bands and a written table in `LADDERS` (the house
-rule: `LADDER` rungs, the coin order scales, then dust, then ore, then a
-spark):
-
-| style | station | how it hurts | its bad stage | the last band's answer |
+| station | style | branch | what it does | plays with |
 |---|---|---|---|---|
-| **fists** | the altar | quick blows, each one a strike | warded | black-water fists: the ward stops glancing them |
-| **lance** | the well | a thrown lance that sticks and bleeds | splitting | a barbed lance: its bleed runs to the lengths either side |
-| **grenade** | the armory | a burst in rings, every length it crosses | fading | a flare: the burst lights the coil it hits |
-| **sigil** | the circle | a circle under the coil that holds it and crushes | bare | a wider circle: it holds while she draws the next |
-| **beam** | the spire | a held beam, damage while it lasts; lights, curses the heal | splitting | a forked beam: two lengths at once |
+| **altar** | fists: quick blows | *Brute* | heavier blows; a blow's stun lasts longer | anything that bleeds: a stun stops the heal under it |
+| | | *Flurry* | faster blows, each shaking extra scales loose | the economy: the party's rungs come sooner |
+| | | *Breaker* | the chips a blow bites stay open longer, and a chipped cell takes more from everyone | grenades' shrapnel, lances |
+| **well** | lance: a thrown lance that sticks and bleeds | *Barbed* | the bleed runs to the lengths either side | the splitting phase |
+| | | *Deep* | a lance bleeds longer, and harder while the serpent is stunned | Brute, Concussion |
+| | | *Harpoon* | a stuck lance pins its length: it cannot thrash or heal there | sigils, grenades on the pinned length |
+| **armory** | grenade: a burst in rings | *Shrapnel* | a burst chips every length it crosses | Breaker |
+| | | *Concussion* | a whole burst is one blow for the stun, and stuns bigger | Deep lance, Binding |
+| | | *Flare* | a burst lights the coil it crosses | the beam's Lantern, the fading phase |
+| **circle** | sigil: a circle under the coil that holds and crushes | *Binding* | a held length heals less, more circles at once | every bleed |
+| | | *Crushing* | a held length is crushed, and a crush is a blow | Brute's stun, Breaker's chips |
+| | | *Warding* | a stun lasts longer on a length over a circle | Concussion, Brute |
+| **spire** | beam: held damage; lights the coil | *Lantern* | a wider light; a lit length takes more from everyone | Flare, the fading phase |
+| | | *Curse* | the heal itself is cut, stacking with Binding | slow parties, the bleeds |
+| | | *Fork* | two beams, two lengths at once | the splitting phase |
 
-Her fighting is her own: she strikes on her own clock in the style she is in,
-and the click adds strikes on top. Her ladder's rungs are the style's numbers
-(damage, rate, the bleed's length, the burst's reach, the circle's hold).
+**A fighter specs into one branch.** A fighter at a station climbs one of its
+three branches; the other two show on the board, shut, with the fighter's
+name on the one taken. Re-speccing is buying the station's respec row, which
+hands back nothing -- the rungs are the station's kit and stay with it. (Open:
+see the calls.)
 
-**One style at a time.** She fights in one style, the one she last changed
-into. Owning two lets the player change her style for a stage that is hard
-on the first; changing costs the swim. (Open: see the calls.)
+**The spec belongs to the station.** The rungs bought are the station's kit,
+not the fighter's: a fighter who swims away leaves them, and whoever takes
+the station takes them up. So moving the sqwife off the altar does not throw
+away what the altar was bought, and the party can be reshuffled for a phase.
 
 ### Every style can win
 
-`SERPENT_DEFENSE` stays one table, a multiplier a style a stage, but no cell
-is a wall: a style's bad stage is **one half**, every other stage one, and
-the last band of its own ladder lifts its bad stage to one. So any single
-style finishes the fight on its own ladder; a second style is a way round a
-bad stage sooner, not a key. The fading stage's `FADE_UNLIT` rises to the
-same one half, so the beam is no longer the only way through the last stage;
-the beam and the flare still light the coil for the full blow.
-
-### Unlocking a style is dear, and dearer each time
-
-Fists are hers from the snatch. Any other style can be the next one, in any
-order, and the bill is the **number of the unlock**, not the style: the
-first style bought pays `STYLE_UNLOCK[0]`, the second `STYLE_UNLOCK[1]`, and
-so on -- a written table in `config/deepboard.js`, each bill about four times
-the last, in the deep's coin order (scales; then scales and dust; then scales,
-dust and ore; then with a spark). The unlock is a work on the station, built
-by the deep's builders, so buying a style is watched happening.
+`SERPENT_DEFENSE` stays one table, a multiplier a style a phase, and no cell
+is a wall: each style's bad phase is **one half**, every other phase one, and
+the branch named for that phase lifts it (Barbed and Fork for splitting,
+Flare and Lantern for fading, Brute's weight through the ward). The sqwife
+alone at any station breaks the first phase; the party is how the later ones
+go faster, not a key. `FADE_UNLIT` rises to the same one half.
 
 ### Blows land: the burst and the stun (voted C + D)
 
@@ -15416,41 +15416,61 @@ by the deep's builders, so buying a style is watched happening.
 
 C and D do not depend on the rest and are built first, on today's weapons.
 
+### What goes
+
+- **The weapon crews.** No brawlers, lancers, grenadiers, scribes or warlocks
+  as jobs with counts; `want` has one fighter a station instead of a crew.
+- **The door chain.** The well, armory, circle and spire stand from the
+  snatch, unbuilt; the first fighter sent to one waits while the deep's
+  builders put it up, for a bill in scales. `after` and `needs` go for them.
+- **The first draft's dearer-each-time unlock.** The fang is the gate.
+
+### What stays
+
+- **The click.** A click is a strike where it lands, and it is the sqwife's
+  style's: a punch while she is at the altar, a thrown lance at the well.
+- **The deep's hands** gather scales and fangs and build; the pods grow them
+  and sell the slot.
+- **The four phases, the wound, the heal, the bar, the numbers**, as built.
+
 ### Rules it must not break
 
-- Nothing teleports: she swims to a station to change style; the unlock is
-  built by a body.
-- Every ladder through `tierRows` and `LADDERS`; the unlock bills a written
-  table; the star's spark ladder unchanged.
-- **Old saves.** A save with the weapon stations open grants those styles
-  unlocked, free, and her style is the last one opened; bodies on removed
-  jobs are stood down to the idle pool; the stage and wound carry over. A
+- Nothing teleports: a fighter swims to a station; a fang sinks and is
+  carried; a station is built by a body.
+- Every ladder through `tierRows` and `LADDERS`; the star's spark ladder
+  unchanged.
+- **Old saves.** A save mid-fight grants a slot for each phase already
+  broken, puts the sqwife at the altar and one fighter at each other open
+  station until the slots run out, grants those stations' rungs as the
+  first branch's, and stands the old crews down to the idle pool. A
   migration file, as every era's.
-- Buy it like a player: the checks take up a style through its board, change
-  into it through the station, and win a stage in each style on its own
-  ladder.
+- Buy it like a player: the checks spend a fang on a slot through the pods'
+  board, send the fighter through the pointer, spec a branch through the
+  station's board, and break a phase with each station alone.
 
 ### Build order
 
-1. **C + D** on today's weapons: `render/serpent.js` (the chip), the scale
-   spray (`deep/scales.js`), the stun (`deep/serpent.js`, `S.serpentStun`,
-   saved), the bar's stun pip. Small, one sitting.
-2. **The re-architecture**, as a wave: the styles and her fighting, the
-   boards and the unlock table, the defense table, the crews and the door
-   chain removed, the migration, the checks.
+1. **C + D** on today's weapons: the chip (`render/serpent.js`), the scale
+   spray (`deep/scales.js`), the stun (`deep/serpent.js`, `S.serpentStun`),
+   the bar's stun pip. Small, one sitting.
+2. **The party**, as a wave: the fang and the slot; fighters at stations;
+   the fifteen branches; the defense table; the crews and door chain
+   removed; the migration; the checks.
 
 ### The calls for the owner
 
-1. **One style at a time, or all at once?** Recommended: one at a time, her
-   choice to change, the swim its cost -- it makes a second style a tool for a
-   stage rather than more damage. All at once makes each unlock simply more
-   damage and the choice of order matters less.
-2. **Does she fight on her own?** Recommended: yes, on her own clock, with
-   the click on top -- the game is an idler. If the click is to be the only
-   strike, the half becomes a clicker and every rung is a click's worth.
-3. **The deep's hands.** Recommended: keep gatherers and builders and the
-   pods, shortened. The alternative is her gathering too, and the deep has no
-   crew at all.
+1. **One branch a fighter, or points across all three?** Recommended: one,
+   with a respec row -- a spec is then a real identity. Points across all
+   three makes the best party the one that buys everything.
+2. **Whose is the spec: the station's or the fighter's?** Recommended: the
+   station's, so the party can be reshuffled for a phase without losing
+   what was bought. The fighter's makes each fighter a character to keep,
+   and moving one a loss.
+3. **Four fighters for five stations** (three fangs) -- or should the last
+   phase's break give a fifth, too late to use? Recommended: four, one
+   station always empty, so leaving one out is part of the build.
+4. **Do fighters fight on their own?** Recommended: yes, each on their own
+   clock, with the click on top as the sqwife's.
 
 ## The deep's bench (design, not built)
 
