@@ -37,6 +37,8 @@
   .tile { display: grid; gap: 2px; justify-items: start; }
   .tile canvas { width: 330px; max-width: 100%; height: auto; }
   .tile span { font-size: 11px; color: var(--dim); }
+  .easerow { padding-block: 8px; }
+  .easerow h3 { font-size: 13px; margin: 0 0 6px; }
   @media (max-width: 760px) { .cls { grid-template-columns: 1fr; } .bar { position: static; }
     .tile canvas { width: calc((100vw - 72px) / 2); } }
 </style>
@@ -57,6 +59,10 @@
     <div class="grp" id="sauce"><span>sauce</span></div>
     <div class="grp" id="smears"><span>smears</span></div>
     <div class="grp" id="classic"><span>classic</span></div></div>
+
+  <h2>Pick an ease-out</h2>
+  <p class="dim">The Whirlwind's ending after its last contact: today's beside three options, rung 4 then rung 8, looping with classic on, all on one clock.</p>
+  <div id="eases"></div>
 
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
@@ -325,7 +331,7 @@ const POSE = 0.08;
 // Whirlwind (one star, on the middle hit), B for the Martial Artist's thrust
 // smear (a tapered wedge, three cells at the point narrowing to one, longer
 // by the blade on the pike). The others stay in the code, as '' the old ones.
-const PICKED = { hay: 'C', thrust: 'B', whirl: 'A' };
+const PICKED = { hay: 'C', thrust: 'B', whirl: 'A', ease: '' };
 let VAR = { ...PICKED };
 const EX = () => CLASSIC ? 1.7 : 1;
 // The world at the moment a fighter is drawn, so a smear can find the hide.
@@ -647,11 +653,24 @@ const swordsman = {
       [S.c1, 0, 'in', 0.35], [S.c2, T, 'lin', 0.5], [S.c3, 2 * T, 'lin', 1.3]);
     if (!R8(R)) {
       // the drag: on another half turn, slowing, the blade dipping low; then home
-      K.push([2.15, 2 * T + Math.PI, 'out'], [2.45, 2 * T + Math.PI + 0.15, 'out'], [2.85, 3 * T + H, 'io']);
+      // the ending, still to pick (the owner: "the ease out is a bit wonky"):
+      //   '' the drag: on half a turn, dipping low, a stagger, then home;
+      //   A hold and return: on a quarter turn, held level at full extension, back home;
+      //   B plant: carried down in front of him, planted point-down, lifted back;
+      //   C overspin: a smooth extra half turn settling like a top, then home.
+      const E = { A: [[2.0, 2 * T + Math.PI / 2, 'out'], [2.2, 2 * T + Math.PI / 2, 'io'], [2.65, 2 * T + H, 'io']],
+                  B: [[2.1, 2 * T + Math.PI, 'out'], [2.3, 2 * T + Math.PI, 'io'], [2.75, 3 * T + H, 'io']],
+                  C: [[2.3, 2 * T + Math.PI, 'out'], [2.75, 3 * T + H, 'io']] }[VAR.ease];
+      K.push(...(E || [[2.15, 2 * T + Math.PI, 'out'], [2.45, 2 * T + Math.PI + 0.15, 'out'], [2.85, 3 * T + H, 'io']]));
       return K;
     }
     // rung 8: carried past, then the spin back, then the drag and home
-    K.push([1.9, 2 * T + 0.6, 'out'], [2.25, T, 'in', 0.9], [2.65, T - Math.PI, 'out'], [2.9, T - Math.PI - 0.15, 'out'], [3.25, T + H, 'io']);
+    K.push([1.9, 2 * T + 0.6, 'out'], [2.25, T, 'in', 0.9]);
+    // the settle after the spin back, turning the other way, by the same variants
+    const E8 = { A: [[2.5, T - Math.PI / 2, 'out'], [2.7, T - Math.PI / 2, 'io'], [3.15, T + H, 'io']],
+                 B: [[2.6, T - Math.PI, 'out'], [2.8, T - Math.PI, 'io'], [3.25, T + H, 'io']],
+                 C: [[2.8, T - Math.PI, 'out'], [3.25, H, 'io']] }[VAR.ease];
+    K.push(...(E8 || [[2.65, T - Math.PI, 'out'], [2.9, T - Math.PI - 0.15, 'out'], [3.25, T + H, 'io']]));
     return K;
   },
   contacts(R) { return this.track(R).filter(k => k[3]).map(k => ({ at: k[0], k: k[3] })); },
@@ -693,9 +712,13 @@ const swordsman = {
     if (spin) {
       // the build-up: he sinks two cells and holds the coil, then rises into the spin
       y += a < S.sink ? 0 : a < S.coiled ? 2 * ease((a - S.sink) / (S.coiled - S.sink)) : a < S.go ? 2 : a < S.go + 0.12 ? 2 * (1 - ease((a - S.go) / 0.12)) : 0;
-      // the stagger: momentum carries him a cell after the last contact, then he recovers
-      const u = a - last;
-      if (u > 0.05 && u < 1.1) bx += u < 0.3 ? ease((u - 0.05) / 0.25) : u < 0.7 ? 1 : 1 - ease((u - 0.7) / 0.4);
+      // the ending's body: '' the stagger, a cell of momentum then recovering;
+      // A leaning into the held finish by a cell; B his weight settling a cell
+      // as the blade plants; C nothing, the spin settles about him
+      const u = a - last, lean = R8(R) ? -1 : 1;
+      if (!VAR.ease && u > 0.05 && u < 1.1) bx += u < 0.3 ? ease((u - 0.05) / 0.25) : u < 0.7 ? 1 : 1 - ease((u - 0.7) / 0.4);
+      if (VAR.ease === 'A' && u > 0.05 && u < 0.95) bx += lean * (u < 0.27 ? ease((u - 0.05) / 0.22) : u < 0.5 ? 1 : 1 - ease((u - 0.5) / 0.45));
+      if (VAR.ease === 'B' && u > 0.2 && u < 1.0) y += u < 0.37 ? ease((u - 0.2) / 0.17) : u < 0.57 ? 1 : 1 - ease((u - 0.57) / 0.43);
     } else for (const c of cs) {
       // the cut: the body leans into the swing by a cell and settles
       const u = a - c;
@@ -1467,7 +1490,18 @@ function drawSlot(g, c, R, sx, t) {
   drawPlinthAt(g, x + 1, ROW_FLOOR);
   c.rest(g, x, y, R, t);
 }
-const strips = [], tiles = [];
+const strips = [], tiles = [], easeTiles = [];
+// Pick an ease-out: the Whirlwind's ending, today's and three options, at rung 4 and rung 8.
+const EASES = [['', "today's: the drag, dip and stagger"], ['A', 'A · Hold and return'], ['B', 'B · Plant'], ['C', 'C · Overspin']];
+for (const R of [4, 8]) {
+  const row = el('div', { className: 'tiles' });
+  for (const [v, label] of EASES) {
+    const cv = el('canvas'); cv.width = TW * P; cv.height = TH * P;
+    row.append(el('div', { className: 'tile' }, [cv, el('span', { textContent: label })]));
+    easeTiles.push({ R, v, g: cv.getContext('2d') });
+  }
+  document.getElementById('eases').append(el('div', { className: 'easerow', id: 'ease-' + R }, [el('h3', { textContent: `Whirlwind, rung ${R}` }), row]));
+}
 const host = document.getElementById('host');
 STATIONS.forEach(([where, ...pair]) => pair.forEach(c => {
   const lines = el('div', { className: 'lines' }, [
@@ -1535,6 +1569,10 @@ document.getElementById('play').onclick = e => { playing = !playing; e.target.te
 function paintAll(t) {
   for (const s of strips) RUNGS.forEach((R, i) => drawSlot(s.g, s.c, R, i * SLOT, t));
   for (const tl of tiles) paintTile(tl.g, tl.c, tl.R, t, tl.phase);
+  // the ease-out tiles: classic on, their own ending, one clock
+  const keep = [CLASSIC, VAR];
+  for (const tl of easeTiles) { CLASSIC = true; VAR = { ...PICKED, ease: tl.v }; paintTile(tl.g, swordsman, tl.R, t, 0); }
+  [CLASSIC, VAR] = keep;
   paintPane(pane, t);
 }
 // For shots: stand the page at a time; set the rung; a contact sheet of the pane.
