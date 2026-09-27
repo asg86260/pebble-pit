@@ -807,6 +807,11 @@ function beads(g, x, y, R, t, cast = false) {
 //   B hanging mala: a loop hanging from her right hand beside her.
 //   C around the neck: a loop hanging on her chest.
 // At rung 8 each gets a sixth bead on its own short cord, hanging free.
+// A bead a tone down, for the back half of the halo, read as behind her head.
+function backBead(g, cx, cy, lit) {
+  cell(g, cx - 1, cy - 1, lit ? PURPLES[9] : GREYS[8]); cell(g, cx, cy - 1, lit ? PURPLES[8] : GREYS[7]);
+  cell(g, cx - 1, cy, lit ? PURPLES[8] : GREYS[7]); cell(g, cx, cy, lit ? PURPLES[6] : GREYS[6]);
+}
 function roundBead(g, cx, cy, lit) {
   cell(g, cx - 1, cy - 1, lit ? PURPLES[11] : GREYS[10]); cell(g, cx, cy - 1, lit ? PURPLES[10] : GREYS[9]);
   cell(g, cx - 1, cy, lit ? PURPLES[10] : GREYS[9]); cell(g, cx, cy, lit ? PURPLES[8] : GREYS[7]);
@@ -843,8 +848,45 @@ function beadPath(v, x, y, R, t) {
 //   2 orbiting halo: the beads lift off the cord and slowly circle her head;
 //   3 charged beads: when chi is full the beads pulse brighter one after
 //     another round the arch, small purple motes rising off the lit ones.
-function beadsV(g, v, x, y, R, t, litOf, full = false) {
+//   4 connected halo (the owner: "what if we connected the orbiting halo"):
+//     the arch lifts and closes into a ring of cord over her head, its ends
+//     meeting, and turns slowly with the beads strung on it; the back half is
+//     a tone darker. On a full chi it tightens and its lit beads whiten.
+// `u` is the Monk's own clock, so the arch closes once when her turn begins.
+function haloV(g, x, y, R, t, litOf, full, u) {
+  const cx = x + 1.5, cy = y - 2.5, rx = full ? 3.6 : 4.2, ry = full ? 1.1 : 1.4, spin = t * 0.7;
+  const ringAt = i => { const th = spin + i * Math.PI * 2 / 5; return [cx + rx * Math.cos(th), cy + ry * Math.sin(th), Math.sin(th) < 0]; };
+  const k = u == null ? 1 : ease(clamp(u / 0.6, 0, 1));
+  if (k < 1) {
+    // the arch lifting and closing: each bead on its way from the arch to the ring
+    const { pts } = beadPath('A', x, y, R, t);
+    const at = pts.map((p, i) => { const r = ringAt(i); return [lerp(p[0], r[0], k), lerp(p[1], r[1], k)]; });
+    for (let i = 1; i < 5; i++) cord(g, ...at[i - 1], ...at[i]);
+    // the cord's ends meet over her head at the last of it
+    if (k > 0.8) cord(g, ...at[4], ...at[0]);
+    at.forEach(([bx0, by0], i) => roundBead(g, bx0, by0, litOf(i)));
+    return;
+  }
+  // the ring: its back half first, a tone darker, then the front over it
+  for (const back of [true, false]) {
+    for (let th = 0; th < Math.PI * 2; th += 0.2) {
+      const a1 = [cx + rx * Math.cos(th), cy + ry * Math.sin(th)], a2 = [cx + rx * Math.cos(th + 0.2), cy + ry * Math.sin(th + 0.2)];
+      if ((Math.sin(th + 0.1) < 0) === back) line(g, a1[0] - 0.5, a1[1] - 0.5, a2[0] - 0.5, a2[1] - 0.5, (qx, qy) => cell(g, qx, qy, back ? GREYS[3] : GREYS[5]));
+    }
+    for (let i = 0; i < 5; i++) {
+      const [bx0, by0, isBack] = ringAt(i);
+      if (isBack !== back) continue;
+      if (back) backBead(g, bx0, by0, litOf(i));
+      else {
+        roundBead(g, bx0, by0, litOf(i));
+        if (full && litOf(i)) cell(g, bx0 - 1, by0 - 1, WHITE);
+      }
+    }
+  }
+}
+function beadsV(g, v, x, y, R, t, litOf, full = false, u = null) {
   const touch = v === 'A' && R8(R) ? VAR.beads8 : '';
+  if (touch === '4') return haloV(g, x, y, R, t, litOf, full, u);
   if (touch === '2') {
     // the halo: a flat ring over her head, turning, the near beads a tone brighter
     const hx = x + 1.5, hy = y - 2.5;
@@ -908,7 +950,7 @@ const monk = {
     else {
       // the chi count on the beads: one lit a chi, the fifth as she gathers the chi palm
       const chiN = a >= ps[n] - 0.15 && a < ps[n] + 0.5 ? 5 : Math.min(4, R4(R) ? lit * 2 : lit);
-      beadsV(g, VAR.beads, x, y, R, t, i => i < chiN, chiN >= 5);
+      beadsV(g, VAR.beads, x, y, R, t, i => i < chiN, chiN >= 5, a);
     }
     const spent = a >= ps[n] && a < ps[n] + 0.4;
     pips(g, x, y, R4(R) ? lit * 2 : lit, 4, spent ? 1 : 0);
@@ -1585,7 +1627,7 @@ function drawSlot(g, c, R, sx, t) {
 }
 const strips = [], tiles = [], beadTiles = [];
 // Pick the rung-8 beads: the arch as it is, then three touches for the capstone.
-const BEAD8 = [['', 'the arch, as at rung 4'], ['1', '1 · Double strand'], ['2', '2 · Orbiting halo'], ['3', '3 · Charged beads']];
+const BEAD8 = [['', 'the arch, as at rung 4'], ['1', '1 · Double strand'], ['2', '2 · Orbiting halo'], ['3', '3 · Charged beads'], ['4', '4 · Connected halo']];
 {
   const row = el('div', { className: 'tiles' });
   for (const [v, label] of BEAD8) {
