@@ -13,76 +13,58 @@
   body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
   .wrap { max-width: 1360px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
   h1 { font-size: 20px; margin: 0 0 6px; }
-  h2 { font-size: 16px; margin: 36px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
-  h3 { font-size: 13px; margin: 18px 0 6px; color: var(--dim); font-weight: normal; }
+  h2 { font-size: 16px; margin: 32px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  h3 { font-size: 14px; margin: 0 0 4px; }
   p { max-width: 100ch; margin: 0 0 10px; }
   .dim { color: var(--dim); }
-  .chosen { font-weight: bold; }
   .bargain { max-width: 110ch; border-left: 3px solid var(--ink); padding: 2px 0 2px 10px; margin: 10px 0 14px; }
   canvas { image-rendering: pixelated; display: block; }
-  /* A strip shrinks to the window rather than scrolling. */
-  .strip canvas { width: 100%; max-width: 660px; height: auto; }
-  .names { display: grid; grid-template-columns: repeat(10, 1fr); max-width: 660px; font-size: 10px; color: var(--dim);
-           text-align: center; line-height: 1.25; }
-  .names span { overflow-wrap: anywhere; }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(264px, 1fr)); gap: 12px; }
-  .tile { display: grid; gap: 4px; justify-items: start; align-content: start; }
-  .tile canvas { width: 264px; max-width: 100%; height: auto; }
-  .tile span { font-size: 12px; }
-  .tile small { font-size: 11px; color: var(--dim); }
-  .pane canvas { width: 100%; max-width: 768px; height: auto; }
-  table { border-collapse: collapse; font-size: 12px; margin: 8px 0 4px; width: 100%; max-width: 1100px; }
-  th, td { text-align: left; vertical-align: top; padding: 5px 8px; border-bottom: 1px solid var(--rule); }
-  th { color: var(--dim); font-weight: normal; }
-  td b { font-weight: bold; }
-  .tablewrap { overflow-x: auto; }
-  /* At phone width a branch's row stacks, each cell under its own heading. */
-  @media (max-width: 640px) {
-    thead { display: none; }
-    tr { display: grid; border-bottom: 1px solid var(--rule); padding-block: 4px; }
-    td { border: 0; padding: 2px 0; }
-    td[data-h]::before { content: attr(data-h); display: block; color: var(--dim); }
-    .bar { position: static; }
-  }
   .bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; position: sticky; top: 0; background: var(--paper);
          padding-block: 8px; z-index: 2; border-bottom: 1px solid var(--rule); }
-  .grp { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+  .grp { display: flex; gap: 4px; align-items: center; }
   .grp > span { color: var(--dim); font-size: 12px; margin-right: 2px; }
-  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 8px; cursor: pointer; }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 9px; cursor: pointer; }
   button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .pane canvas { width: 100%; max-width: 1040px; height: auto; }
+  .cls { display: grid; grid-template-columns: minmax(0, 30ch) minmax(0, 1fr); gap: 8px 20px; padding-block: 14px;
+         border-bottom: 1px solid var(--rule); }
+  .lines { font-size: 12px; display: grid; gap: 3px; align-content: start; }
+  .lines b { font-weight: bold; }
+  .lines .k { color: var(--dim); }
+  .strip canvas { width: 234px; max-width: 100%; height: auto; margin-top: 8px; }
+  .names3 { display: grid; grid-template-columns: repeat(3, 78px); font-size: 10px; color: var(--dim); text-align: center; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tile { display: grid; gap: 2px; justify-items: start; }
+  .tile canvas { width: 312px; max-width: 100%; height: auto; }
+  .tile span { font-size: 11px; color: var(--dim); }
+  @media (max-width: 760px) { .cls { grid-template-columns: 1fr; } .bar { position: static; }
+    .tiles { flex-wrap: nowrap; } .tile canvas { width: calc((100vw - 48px) / 3); } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Kit Growth</h1>
-  <p class="chosen">1 + 3 chosen 2026-09-27.</p>
-  <p>The owner, 2026-09-27: "Do animations/kits change after upgrades? We should review that first." Today a
-    class's kit never changes across its eight rungs; only the keystone (rung 4) changes the attack, and the
-    capstones (rung 8) have no visuals. This page draws the chosen answer for the three starting classes, all nine
-    of their branches: <b>a small mark of the branch from the keystone on, and at rung 8 a touch for capstone A or B
-    that grows on that mark, with a small change to the attack.</b></p>
-  <p class="bargain"><b>Costs:</b> across all ten classes, 30 branch marks plus 60 capstone touches and 60 small attack
-    changes, 150 pieces, each one to three cells, and every attack pose has to carry its branch's pieces.
-    <b>Buys:</b> the two choices a player makes on a station, the branch and the capstone, each show on the fighter,
-    and the rungs that are only numbers add nothing.</p>
-  <p class="dim">A mock drawn from plain cells, not the game. It cannot show: the game's camera and zoom, so whether a
-    one-cell mark reads from across the real deep; the real coil (its girth, cracks and ribs) and the real attack
-    timings; four fighters and their statuses at once (the live pane runs one at a time, and a status stands only a
-    beat after its turn); the other seven classes, so the art count for them is an estimate; a respec taking a mark
-    off; rungs 1 to 3 and 5 to 7, which look as rung 0 and rung 4. The live pane is drawn at the game's scale and
-    shown doubled.</p>
+  <p><b>1 + 3 chosen 2026-09-27; one ladder a class since.</b> The kit grows twice: a mark at rung 4 (the signature
+    move), a touch at rung 8 (the capstone). Nothing between.</p>
+  <p class="bargain"><b>Costs:</b> 20 pieces across the ten, each one to three cells, carried through every attack pose.
+    <b>Buys:</b> a fighter shows its two big rungs at a glance, and the attack shows the move.</p>
+  <p class="dim">A mock from plain cells, not the game. It cannot show: the game's camera, whether one cell reads across
+    the real deep, the real coil and timings, four fighters at once (here ten, one at a time), or a refund taking the
+    pieces off.</p>
 
-  <div class="bar" id="bar">
-    <button id="play" type="button">pause</button><span id="clock" class="dim">0.0 s</span>
-  </div>
+  <div class="bar"><button id="play" type="button">pause</button><span id="clock" class="dim">0.0 s</span>
+    <div class="grp" id="rungs"><span>rung</span></div></div>
 
+  <h2>Live: the ten at five stations, each attacking in turn</h2>
+  <div class="pane"><canvas id="pane"></canvas></div>
+
+  <h2>The ten: rung 0, 4 and 8</h2>
   <div id="host"></div>
 </div>
 <script>
 'use strict';
 // ================================================================================
-// The shared ground, copied from docs/mocks/classes/harness.js: the deep's
-// tones, cells on the P grid, the coil, the body, the burst and the chip.
+// The shared ground, copied from docs/mocks/classes/harness.js and the looks page.
 // ================================================================================
 const P = 6;
 const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
@@ -95,72 +77,70 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, k) => a + (b - a) * k;
 const along = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
 const ease = k => k * k * (3 - 2 * k);
-
-function cell(g, cx, cy, tone) {
-  if (!tone) return;
-  g.fillStyle = tone;
-  g.fillRect(Math.round(cx) * P, Math.round(cy) * P, P, P);
-}
-function rect(g, cx, cy, w, h, tone) {
-  g.fillStyle = tone;
-  g.fillRect(Math.round(cx) * P, Math.round(cy) * P, Math.round(w) * P, Math.round(h) * P);
-}
+function cell(g, cx, cy, tone) { if (!tone) return; g.fillStyle = tone; g.fillRect(Math.round(cx) * P, Math.round(cy) * P, P, P); }
+function rect(g, cx, cy, w, h, tone) { g.fillStyle = tone; g.fillRect(Math.round(cx) * P, Math.round(cy) * P, Math.round(w) * P, Math.round(h) * P); }
 function line(g, ax, ay, bx, by, fn) {
   const n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay)));
   for (let i = 0; i <= n; i++) fn(ax + (bx - ax) * i / n, ay + (by - ay) * i / n, i, n);
 }
 function ring(g, cx, cy, r, tone, every = 1) {
-  const n = Math.max(8, Math.ceil(Math.PI * 2 * r));
-  const seen = new Set();
+  const n = Math.max(8, Math.ceil(Math.PI * 2 * r)), seen = new Set();
   for (let k = 0; k < n; k += every) {
-    const a = k / n * Math.PI * 2;
-    const x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r);
+    const a = k / n * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r);
     if (seen.has(x + ',' + y)) continue;
     seen.add(x + ',' + y); cell(g, x, y, tone);
   }
 }
-// The game's body: one square three cells wide, white with a two-pixel dark edge.
 const BODY = 3;
 function drawBody(g, cx, cy) {
   const x = Math.round(cx) * P, y = Math.round(cy) * P, w = BODY * P;
   g.fillStyle = GREYS[6]; g.fillRect(x, y, w, w);
   g.fillStyle = WHITE; g.fillRect(x + 2, y + 2, w - 4, w - 4);
 }
-function drawPlinthAt(g, cx, floor) {
-  rect(g, cx - 3, floor - 1, 7, 1, GREYS[5]);
-  rect(g, cx - 2, floor - 2, 5, 1, GREYS[4]);
+function drawPlinthAt(g, cx, floor, w = 7) {
+  rect(g, cx - Math.floor(w / 2), floor - 1, w, 1, GREYS[5]);
+  rect(g, cx - Math.floor(w / 2) + 1, floor - 2, w - 2, 1, GREYS[4]);
+}
+// A build-up's pips under a body (the harness's): `n` lit of `of`.
+function pips(g, x, y, n, of, flash = 0) {
+  const x0 = x + Math.floor((BODY - of) / 2);
+  for (let i = 0; i < of; i++) cell(g, x0 + i, y + BODY + 1, flash ? WHITE : i < n ? WHITE : GREYS[6]);
 }
 
-// --- the pane and its coil ---------------------------------------------------------
-const W = 64, H = 36, FLOOR = 31, COIL_X0 = 4, COIL_X1 = 60, BELLY = 34;
-const REST_Y = FLOOR - 2 - BODY;             // a body's top row on its plinth
+// --- the long pane and its coil ----------------------------------------------------
+const W = 130, H = 36, FLOOR = 31, X0 = 3, X1 = W - 4;
+const REST_Y = FLOOR - 2 - BODY;
 const sway = (cx, t) => 12 + 2.6 * Math.sin(cx * 0.09 + t * 0.6) + 1.1 * Math.sin(cx * 0.23 - t * 0.9);
 const girth = cx => {
-  if (cx < COIL_X0 || cx > COIL_X1) return 0;
-  const u = (cx - COIL_X0) / (COIL_X1 - COIL_X0);
-  return 1.4 + 1.9 * Math.sin(Math.PI * Math.min(1, u * 1.15)) + (Math.abs(cx - BELLY) < 5 ? 0.8 : 0);
+  if (cx < X0 || cx > X1) return 0;
+  const u = (cx - X0) / (X1 - X0);
+  return 1.4 + 1.9 * Math.sin(Math.PI * Math.min(1, u * 1.15)) + (Math.abs(cx - W * 0.55) < 6 ? 0.8 : 0);
 };
 // A stunned or Held coil holds still where it was.
-const coilY = (cx, t, s = {}) => sway(cx, s.stun > 0 && s.stunAt != null ? s.stunAt : t);
-const coilTop = (cx, t, s) => Math.round(coilY(cx, t, s) - girth(cx));
-const coilBottom = (cx, t, s) => Math.round(coilY(cx, t, s) + girth(cx));
+const cY = (cx, t, s = {}) => sway(cx, s.still != null ? s.still : t);
+const cTop = (cx, t, s) => Math.round(cY(cx, t, s) - girth(cx));
+const cBot = (cx, t, s) => Math.round(cY(cx, t, s) + girth(cx));
+const maxBot = (xs, t, s) => Math.max(...xs.map(c => cBot(c, t, s)));
 function drawDeep(g, t) {
   rect(g, 0, 0, W, H, GREYS[0]);
-  for (let i = 0; i < 26; i++) {
-    const x = (hash(i) * W + t * (0.3 + hash(i + 9) * 0.5)) % W;
-    const y = hash(i + 3) * FLOOR + Math.sin(t * 0.4 + i) * 0.8;
+  for (let i = 0; i < 44; i++) {
+    const x = (hash(i) * W + t * (0.3 + hash(i + 9) * 0.5)) % W, y = hash(i + 3) * FLOOR + Math.sin(t * 0.4 + i) * 0.8;
     cell(g, x, y, GREYS[2 + Math.floor(hash(i + 5) * 3)]);
   }
   rect(g, 0, FLOOR, W, H - FLOOR, GREYS[2]);
   for (let c = 0; c < W; c++) for (let r = FLOOR; r < H; r++)
     if (hash(c * 31 + r * 17) < 0.22) cell(g, c, r, GREYS[3 + Math.floor(hash(c + r * 7) * 2)]);
 }
-function drawCoil(g, t, s) {
-  for (let cx = COIL_X0; cx <= COIL_X1; cx++) {
-    const top = coilTop(cx, t, s), bot = coilBottom(cx, t, s), mid = Math.round(coilY(cx, t, s));
-    for (let cy = top; cy <= bot; cy++) cell(g, cx, cy, cy === bot ? GREYS[8] : cy === mid ? GREYS[10] : WHITE);
+function coilCells(t, s, fn) {
+  for (let cx = X0; cx <= X1; cx++) {
+    const top = cTop(cx, t, s), bot = cBot(cx, t, s), mid = Math.round(cY(cx, t, s));
+    for (let cy = top; cy <= bot; cy++) fn(cx, cy, cy === bot ? 'bottom' : cy === mid ? 'mid' : '');
   }
-  cell(g, COIL_X0 + 2, Math.round(coilY(COIL_X0 + 2, t, s)) - 1, INK);
+}
+function drawCoil(g, t, s) {
+  const dull = s.statuses.weakened;   // Weakened: the hide goes dull, a tone down
+  coilCells(t, s, (cx, cy, e) => cell(g, cx, cy, e === 'bottom' ? GREYS[8] : e === 'mid' ? (dull ? GREYS[7] : GREYS[10]) : dull ? GREYS[9] : WHITE));
+  cell(g, X0 + 2, Math.round(cY(X0 + 2, t, s)) - 1, INK);
 }
 // The voted C: scales spray off where a blow lands, and the hide is bitten there.
 function burst(g, t, t0, cx, cy, k = 0.3, id = 0) {
@@ -168,11 +148,9 @@ function burst(g, t, t0, cx, cy, k = 0.3, id = 0) {
   if (a < 0 || a > 3) return;
   const n = Math.round(3 + 12 * k * k);
   for (let i = 0; i < n; i++) {
-    const ang = -Math.PI * (0.15 + 0.7 * hash(id * 97 + i));
-    const sp = (8 + 12 * k) * (0.5 + hash(i + id));
+    const ang = -Math.PI * (0.15 + 0.7 * hash(id * 97 + i)), sp = (8 + 12 * k) * (0.5 + hash(i + id));
     const x = cx + Math.cos(ang) * sp * a, y = cy + Math.sin(ang) * sp * a + 8 * a * a;
-    if (y >= FLOOR) continue;
-    cell(g, x, y, GREYS[a < 1 ? 11 : a < 2 ? 9 : 7]);
+    if (y < FLOOR) cell(g, x, y, GREYS[a < 1 ? 11 : a < 2 ? 9 : 7]);
   }
 }
 function chip(g, t, t0, cx, cy, k = 0.3, id = 0) {
@@ -183,757 +161,644 @@ function chip(g, t, t0, cx, cy, k = 0.3, id = 0) {
     for (let y = Math.floor(cy - rad); y <= cy + rad; y++)
       if ((x - cx) ** 2 + (y - cy) ** 2 <= rad * rad && hash(x * 31 + y * 7 + id) < 0.8) cell(g, x, y, GREYS[1]);
 }
-function land(g, t, t0, cx, cy, k, id) { burst(g, t, t0, cx, cy, k, id); chip(g, t, t0, cx, Math.round(cy), k, id); }
+// A blow landing at column cx, on the belly: `t0` when it lands.
+function blow(g, t, t0, cx, s, k, id) { burst(g, t, t0, cx, cBot(cx, t, s), k, id); chip(g, t, t0, cx, Math.round(cY(cx, t, s)), k, id); }
 
-// ================================================================================
-// The statuses the attacks here leave, each over the whole coil (the owner's
-// call: a status covers the whole snake). Simplified from the group files.
-// ================================================================================
+// --- the statuses (the trimmed six on the serpent, two on fighters) -----------------
 const HALO = [[-2, 0], [-1, -1], [0, -1], [1, -1], [2, 0], [1, 1], [0, 1], [-1, 1]];
 function paintStunned(g, t, s) {
-  const hx = COIL_X0 + 3, hy = coilTop(hx, t, s) - 3, lead = Math.floor(t * 14) % 8;
-  HALO.forEach(([dx, dy], i) => {
-    const b = (lead - i + 8) % 8;
-    cell(g, hx + dx, hy + dy, b === 0 ? WHITE : b === 1 ? GREYS[9] : b === 2 ? GREYS[7] : GREYS[5]);
-  });
+  const hx = X0 + 3, hy = cTop(hx, t, s) - 3, lead = Math.floor(t * 14) % 8;
+  HALO.forEach(([dx, dy], i) => { const b = (lead - i + 8) % 8; cell(g, hx + dx, hy + dy, b === 0 ? WHITE : b === 1 ? GREYS[9] : b === 2 ? GREYS[7] : GREYS[5]); });
 }
-function exposedAt(g, t, s, cx) {
-  if ((cx - COIL_X0 - 2) % 4 !== 0 || cx > COIL_X1 - 1) return;
-  const top = coilTop(cx, t, s), bot = coilBottom(cx, t, s);
-  const up = hash(cx * 7 + Math.floor(t * 1.5 + hash(cx) * 3)) < 0.5 ? 1 : 2;
-  cell(g, cx, top, INK); cell(g, cx, top - up, GREYS[9]); cell(g, cx + 2, bot, INK);
-}
-function paintExposed(g, t, s) { for (let cx = COIL_X0; cx <= COIL_X1; cx++) exposedAt(g, t, s, cx); }
-// The tear that applies Exposed: a front runs both ways from the blow.
-const EXPOSE_RUN = 1.4;
-function exposeWave(g, t, t0, hx, s) {
-  const a = t - t0;
-  if (a < 0 || a > EXPOSE_RUN) return;
-  const d = a * 34;
-  for (let cx = COIL_X0; cx <= COIL_X1; cx++) {
-    const off = d - Math.abs(cx - hx);
-    if (off < 0) continue;
-    if (off > 5) { exposedAt(g, t, s, cx); continue; }
-    const top = coilTop(cx, t, s), bot = coilBottom(cx, t, s);
-    if (off < 1) { for (let cy = top; cy <= bot; cy++) cell(g, cx, cy, GREYS[5]); continue; }
-    cell(g, cx, top, INK); cell(g, cx, bot, INK);
-    cell(g, cx, top - (off < 3 ? 2 : 1), off < 3 ? WHITE : GREYS[8]);
+function paintBleeding(g, t, s) {
+  for (let i = 0; i < 9; i++) {
+    const cx = X0 + 4 + Math.floor(hash(i * 7 + 1) * (X1 - X0 - 8)), bot = cBot(cx, t, s);
+    cell(g, cx, bot, GREYS[5]);
+    const a = (t * 0.8 + hash(i * 3)) % 1;
+    cell(g, cx, bot + 1 + Math.floor(a * 4), GREYS[[9, 8, 6, 4][Math.floor(a * 4)]]);
   }
 }
-// Marked: a small purple chevron over the back every few lengths.
-function paintMarked(g, t, s) {
-  for (let cx = COIL_X0 + 5; cx <= COIL_X1 - 3; cx += 10) {
-    const top = coilTop(cx, t, s), on = (Math.floor(t * 2) + cx) % 3 !== 0;
-    cell(g, cx - 1, top - 3, on ? PURPLES[11] : PURPLES[8]); cell(g, cx + 1, top - 3, on ? PURPLES[11] : PURPLES[8]);
-    cell(g, cx, top - 2, PURPLES[11]);
+// Held: the circle's bands clasp the coil, each tethered to the floor.
+function paintHeld(g, t, s, lv) {
+  for (let cx = X0 + 5; cx <= X1 - 2; cx += 11) {
+    const top = cTop(cx, t, s), bot = cBot(cx, t, s);
+    for (let y = top - 1; y <= bot + 1; y++) cell(g, cx, y, y === top - 1 || y === bot + 1 ? (lv > 1 ? WHITE : PURPLES[11]) : PURPLES[9]);
+    for (const d of [-1, 1]) { cell(g, cx + d, top - 1, PURPLES[8]); cell(g, cx + d, bot + 1, PURPLES[8]); }
+    for (let y = bot + 3 + Math.floor(t * 4) % 3; y < FLOOR - 1; y += 3) cell(g, cx, y, PURPLES[6]);
   }
 }
-// Lit: the spine purple, a dotted line of light off the top and bottom.
-function litCells(g, t, s, x0 = COIL_X0, x1 = COIL_X1) {
-  const a = Math.max(COIL_X0, Math.round(x0)), b = Math.min(COIL_X1, Math.round(x1));
-  const creep = Math.floor(t * 3), run = COIL_X0 + ((t * 9) % (COIL_X1 - COIL_X0 + 16)) - 8;
+function litCells(g, t, s, x0 = X0, x1 = X1) {
+  const a = Math.max(X0, Math.round(x0)), b = Math.min(X1, Math.round(x1));
+  const creep = Math.floor(t * 3), run = X0 + ((t * 12) % (X1 - X0 + 16)) - 8;
   for (let cx = a; cx <= b; cx++) {
-    const top = coilTop(cx, t, s), bot = coilBottom(cx, t, s);
-    cell(g, cx, Math.round(coilY(cx, t, s)), PURPLES[9]);
-    const hot = Math.abs(cx - run) < 3;
+    const top = cTop(cx, t, s), bot = cBot(cx, t, s), hot = Math.abs(cx - run) < 3;
+    cell(g, cx, Math.round(cY(cx, t, s)), PURPLES[9]);
     if (hot || (cx + creep) % 2 === 0) cell(g, cx, top - 1, hot ? PURPLES[11] : PURPLES[8]);
     if (hot || (cx + creep) % 2 === 1) cell(g, cx, bot + 1, hot ? PURPLES[11] : PURPLES[6]);
   }
 }
-const LIT_STEP = 22;
-const litDone = (x0, t0) => t0 + (Math.max(x0 - COIL_X0, COIL_X1 - x0) + 1) / LIT_STEP;
+const LIT_STEP = 30;
 function lightFrom(g, t, t0, x0, s) {
-  if (t < t0 || t >= litDone(x0, t0)) return;
   const r = Math.floor((t - t0) * LIT_STEP);
+  if (t < t0 || r > Math.max(x0 - X0, X1 - x0)) return;
   litCells(g, t, s, x0 - r, x0 + r);
-  for (const fx of [x0 - r, x0 + r]) {
-    if (fx < COIL_X0 || fx > COIL_X1) continue;
-    cell(g, fx, coilTop(fx, t, s) - 1, PURPLES[11]); cell(g, fx, coilBottom(fx, t, s) + 1, PURPLES[11]);
+  for (const fx of [x0 - r, x0 + r]) if (fx >= X0 && fx <= X1) { cell(g, fx, cTop(fx, t, s) - 1, PURPLES[11]); cell(g, fx, cBot(fx, t, s) + 1, PURPLES[11]); }
+}
+const litDone = (x0, t0) => t0 + (Math.max(x0 - X0, X1 - x0) + 1) / LIT_STEP;
+function chevron(g, cx, cy, tone) { cell(g, cx, cy + 1, tone); cell(g, cx + 1, cy, tone); cell(g, cx + 2, cy + 1, tone); }
+function paintInspired(g, t, x, y, lv) {
+  const bob = Math.floor(t * 2.5) % 2;
+  chevron(g, x, y - 5 - bob, PURPLES[11]);
+  if (lv > 1) chevron(g, x, y - 8 - bob, PURPLES[9]);
+}
+function paintHasted(g, t, x, y) {
+  for (let r = 0; r < 3; r++) {
+    const a = (t * 3 + r * 0.37) % 1, sx = x - 2 - Math.floor(a * 4);
+    cell(g, sx, y + r, GREYS[[11, 10, 8, 6][Math.floor(a * 4)]]);
   }
 }
-// Burning: tongues off the back; `level` 2 is the thicker fire (Pyromancy A).
-function flames(g, t, s, level, x0 = COIL_X0, x1 = COIL_X1) {
-  const every = level > 1 ? 3 : 5;
-  for (let fx = COIL_X0 + 2; fx <= COIL_X1 - 2; fx += every) {
-    if (fx < x0 || fx > x1) continue;
-    const top = coilTop(fx, t, s);
-    const h = (level > 1 ? 2 : 1) + Math.round(2 * hash(Math.floor(t * 8) + fx));
-    for (let i = 1; i <= h; i++) cell(g, fx, top - i, i < h ? WHITE : GREYS[9]);
-    cell(g, fx + 1, top - 1, GREYS[10]);
-  }
-}
-const SPREAD = 26;
-const spreadDone = (x0, t0) => t0 + Math.max(x0 - COIL_X0, COIL_X1 - x0) / SPREAD;
-function catchFire(g, t, t0, x0, s, level) {
-  const a = t - t0;
-  if (a < 0 || t >= spreadDone(x0, t0)) return;
-  const r = a * SPREAD;
-  flames(g, t, s, level, x0 - r, x0 + r);
-  for (const side of [-1, 1]) {
-    const fx = Math.round(x0 + side * r);
-    if (fx < COIL_X0 || fx > COIL_X1) continue;
-    const top = coilTop(fx, t, s), h = 3 + Math.round(2 * hash(Math.floor(t * 8) + fx));
-    for (let i = 1; i <= h; i++) cell(g, fx, top - i, i < h ? WHITE : GREYS[9]);
-  }
-}
-// Held: a net laid over the back, dark on the white, while the coil holds still.
-function paintHeld(g, t, s) {
-  for (let cx = COIL_X0; cx <= COIL_X1; cx++) {
-    const top = coilTop(cx, t, s), bot = coilBottom(cx, t, s);
-    for (let cy = top; cy <= bot; cy++) if ((cx + cy) % 4 === 0 || (cx - cy + 400) % 4 === 0) cell(g, cx, cy, (cx + cy) % 8 === 0 ? GREYS[6] : GREYS[8]);
-  }
-}
-// Inspired, on a fighter: two purple cells rising off the shoulders.
-function paintInspired(g, t, x, y) {
-  const f = Math.floor(t * 4) % 2;
-  cell(g, x - 1, y - 1 - f, PURPLES[11]); cell(g, x + 3, y - 2 + f, PURPLES[11]);
-}
-const PAINT = [['lit', (g, t, s) => litCells(g, t, s)], ['burning', (g, t, s, lv) => flames(g, t, s, lv)],
-               ['exposed', paintExposed], ['marked', paintMarked], ['held', paintHeld], ['stunned', paintStunned]];
 
 // ================================================================================
-// The growth. A look is a class, a branch, a rung and a capstone. From rung 4
-// the branch's mark is on the kit; at rung 8 capstone A or B adds one touch,
-// grown on the mark, and changes the attack a little.
+// The ten. Each: its canon lines, its kit at rest for a rung (`rest`), and its
+// turn (`state` says what stands, `draw` the fighter and the blow). `a` is
+// seconds since the turn began; `R` the rung. The mark comes at 4, the touch
+// at 8; every piece is drawn where it rides the kit, so it goes with the blow.
 // ================================================================================
-const CLASSES = [
-  { key: 'brawler', name: 'Brawler', branches: ['Pummel', 'Rage', 'Bruiser'] },
-  { key: 'ranger', name: 'Ranger', branches: ['Marksman', 'Volley', 'Warden'] },
-  { key: 'mage', name: 'Mage', branches: ['Pyromancy', 'Storm', 'Arcane'] },
-];
-const flagsOf = (br, rung, cap) => ({ br, rung, key: rung >= 4, mark: rung >= 4 ? br : -1, cap: rung >= 8 ? cap : '' });
-const has = (F, b, c) => F.br === b && F.cap === c;
+const R4 = R => R >= 4, R8 = R => R >= 8;
+// A melee fighter's swim: 0 at the plinth, 1 under the coil.
+const trip = (a, up, back, len) => a < up ? ease(a / up) : a < back ? 1 : 1 - ease(clamp((a - back) / (len - back), 0, 1));
 
-// --- the Brawler: two small wrapped fists in a guard ------------------------------
-// A fist is a white wrap (its striking face) over a grey knuckle row. Every
-// growth piece hangs off the fist it belongs to, so it rides the punch.
-function bFist(g, fx, fy, size, side, F, t) {
-  const bru = F.mark === 2;
-  // Bruiser: the knuckles darken, the dark row now on top where it strikes
-  rect(g, fx, fy, size, 1, bru ? GREYS[6] : WHITE);
-  rect(g, fx, fy + 1, size, 1, bru ? WHITE : GREYS[9]);
-  const out = side < 0 ? fx - 1 : fx + size;
-  // Pummel: the wrap wound thicker, down over the wrist
-  if (F.mark === 0) rect(g, fx, fy + 2, size, 1, GREYS[10]);
-  // Rage: a wrap end come loose, flapping off the outside; B turns it purple
-  if (F.mark === 1) cell(g, out, fy + (Math.floor(t * 8 + (side > 0 ? 1 : 0)) % 2), has(F, 1, 'B') ? PURPLES[11] : GREYS[10]);
-  // Bruiser A: a torn scale kept, hung off each fist; B: spikes on the knuckles
-  if (has(F, 2, 'A')) cell(g, out, fy + 1, GREYS[9]);
-  if (has(F, 2, 'B')) for (let c = 0; c < size; c++) cell(g, fx + c, fy - 1, GREYS[8]);
+// --- Brawler: two small wrapped fists in a guard --------------------------------------
+function bFist(g, fx, fy, size, R) {
+  rect(g, fx, fy, size, 1, WHITE); rect(g, fx, fy + 1, size, 1, GREYS[9]);
+  if (R4(R)) rect(g, fx, fy + 2, size, 1, GREYS[10]);       // mark: the wrap wound down the wrist
 }
-// Over the head, carried with the body: Pummel A's stun star (a bright cell
-// running along three, the stun halo's language) and Rage A's steam.
-function bHead(g, x, y, F, t) {
-  if (has(F, 0, 'A')) { const lead = Math.floor(t * 6) % 3; for (let i = 0; i < 3; i++) cell(g, x + i, y - 2, i === lead ? WHITE : GREYS[7]); }
-  if (has(F, 1, 'A')) { const k = (t * 1.6) % 1; cell(g, x + 1 + (k > 0.6 ? 1 : 0), y - 2 - Math.floor(k * 3), [WHITE, GREYS[9], GREYS[6]][Math.floor(k * 3)]); }
-}
-const pummelFist = F => (has(F, 0, 'B') ? 2 : 1);
-function bRest(g, x, y, F, t) {
-  drawBody(g, x, y);
-  bFist(g, x - 1, y - 1, 1, -1, F, t);
-  bFist(g, x + 3, y - 1, pummelFist(F), 1, F, t);
-  bHead(g, x, y, F, t);
+// touch: a small halo over his head, a bright cell running round it (the stun's)
+function bHalo(g, x, y, R, t) {
+  if (!R8(R)) return;
+  const lead = Math.floor(t * 6) % 3;
+  [[0, -2], [1, -3], [2, -2]].forEach(([dx, dy], i) => cell(g, x + dx, y + dy, i === lead ? WHITE : GREYS[7]));
 }
 function punchReach(a, L) {
   const d = a - L;
   if (d < -0.24 || d > 0.3) return 0;
   if (d < -0.08) return -1;
   if (d < 0) return (d + 0.08) / 0.08;
-  if (d < 0.1) return 1;
-  return 1 - (d - 0.1) / 0.2;
+  return d < 0.1 ? 1 : 1 - (d - 0.1) / 0.2;
 }
-
-// --- the Ranger: a bow twice his height ----------------------------------------------
-// The bow's poses from the looks page, written in letters so each growth
-// piece has its own cell in every pose: L limb, T tip, S string, N the
-// Marksman's sight, M his capstone A bead, A shaft, W head, D nock, # body.
-// `bx` is the body's left column in the art.
-const BOW = {
-  rest: { bx: 0, rows: [
-    '....T..',
-    '....SL.',
-    '....SNL',
-    '###.SML',
-    '###.SL.',
-    '###.T..'] },
-  lift: { bx: 0, rows: [
-    '....T..',
-    '....SL.',
-    '....SNL',
-    '....SML',
-    '....SL.',
-    '###.T..',
-    '###....',
-    '###....'] },
-  over: { bx: 1, rows: [
-    '...LLL..',
-    '..LN.ML.',
-    '.TSSSSST',
-    '........',
-    '.###....',
-    '.###....',
-    '.###....'] },
-  braced: { bx: 2, rows: [
-    '..LLL..',
-    '.LN.ML.',
-    'TSSSSST',
-    '.......',
-    '..###..',
-    '..###..',
-    '..###..'] },
-  drawn: { bx: 2, rows: [
-    '...W...',
-    '..LAL..',
-    '.LNAML.',
-    'TS.A.ST',
-    '..SDS..',
-    '..###..',
-    '..###..',
-    '..###..'] },
-};
-function bowTone(ch, F) {
-  switch (ch) {
-    case 'L': return GREYS[8];
-    case 'T': return has(F, 0, 'B') ? WHITE : GREYS[8];          // Marksman B: white-capped tips
-    case 'S': return has(F, 2, 'B') ? PURPLES[9] : GREYS[9];      // Warden B: a purple string
-    case 'N': return F.mark === 0 ? WHITE : null;                 // Marksman: the sight pin
-    case 'M': return has(F, 0, 'A') ? PURPLES[11] : null;         // Marksman A: a purple bead under it
-    case 'A': return GREYS[10];
-    case 'D': return GREYS[6];
-    case 'W': return F.key && F.br === 2 ? PURPLES[11] : WHITE;   // Warden's keystone: a flare head
-  }
-  return null;
-}
-function drawBow(g, art, x, y, F) {
-  const x0 = x - art.bx, y0 = y + BODY - art.rows.length;
-  let body = false;
-  art.rows.forEach((row, r) => [...row].forEach((ch, c) => {
-    if (ch === '#') { body = true; return; }
-    if (ch !== '.') cell(g, x0 + c, y0 + r, bowTone(ch, F));
-  }));
-  return body;
-}
-// What his free hand carries at rest, and the net he wears: drawn by hand
-// because the Volley's arrows and the Warden's flare share a hand.
-function rHand(g, x, y, F, t, holding) {
-  if (holding && F.mark === 1) {
-    // Volley: a pair of arrows held point-up; A a flame at their heads, B barbs
-    // two arrows fanned out of one fist: one upright, one leaning out
-    cell(g, x - 1, y - 2, WHITE); cell(g, x - 1, y - 1, GREYS[8]); cell(g, x - 1, y, GREYS[8]);
-    cell(g, x - 3, y - 2, WHITE); cell(g, x - 2, y - 1, GREYS[8]);
-    if (has(F, 1, 'A')) {
-      const f = Math.floor(t * 7) % 4;
-      cell(g, f % 2 ? x - 1 : x - 3, y - 3, f === 3 ? WHITE : GREYS[10]);
-      if (f === 1) cell(g, x - 1, y - 4, GREYS[7]);
-      if (f === 2) cell(g, x - 3, y - 4, GREYS[7]);
+const brawler = {
+  key: 'brawler', name: 'Brawler', at: 4,
+  base: 'heavy punches', move: 'Haymaker: every 4th punch x4, stuns', cap: 'haymakers stun longer',
+  mark: 'the wraps wound down each wrist', touch: 'a small halo, a light running round it',
+  rest(g, x, y, R, t) { drawBody(g, x, y); bFist(g, x - 1, y - 1, 1, R); bFist(g, x + 3, y - 1, 1, R); bHalo(g, x, y, R, t); },
+  len: 3.0,
+  punches(R) {
+    const p = [[0.6, -1], [1.0, 1], [1.4, -1], [1.9, 1]].map(([at, side]) => ({ at, side, k: 0.3 }));
+    if (R4(R)) Object.assign(p[3], { size: 2, k: 0.75, hay: true });
+    return p;
+  },
+  state(a, api, R) { if (R4(R)) api.stun(1.9, R8(R) ? 2.6 : 1.5); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, ps = this.punches(R), hover = maxBot([x - 1, x + 4], t, s) + 4;
+    let y = Math.round(lerp(REST_Y, hover, trip(a, 0.4, 2.5, this.len)));
+    const hay = ps.find(p => p.hay);
+    if (hay && a > hay.at - 0.45 && a < hay.at - 0.12) y += 2;   // the wind-up
+    const spot = p => { const size = p.size || 1, fx = p.side < 0 ? x - size : x + BODY; return { fx, size, cx: fx + (size - 1) / 2 }; };
+    ps.forEach((p, i) => blow(g, t, t - (a - p.at), spot(p).cx, s, p.k, i + 1));
+    drawBody(g, x, y);
+    for (const side of [-1, 1]) {
+      let reach = 0, size = 1;
+      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at); if (r) { reach = r; size = p.size || 1; } }
+      const fx = side < 0 ? x - size : x + BODY, rest = y - 1;
+      let fy = reach < 0 ? rest + 1 : rest;
+      if (reach > 0) fy = Math.round(rest + (maxBot([fx, fx + size - 1], t, s) + 1 - rest) * reach);
+      for (let r = fy + 2; r < y; r++) cell(g, side < 0 ? x - 1 : x + BODY, r, GREYS[8]);
+      bFist(g, fx, fy, size, R);
     }
-    if (has(F, 1, 'B')) { cell(g, x - 4, y - 1, GREYS[9]); cell(g, x, y - 1, GREYS[9]); }
-  }
-  if (holding && F.mark === 2) { cell(g, x - 1, y - 1, PURPLES[11]); cell(g, x - 1, y, GREYS[8]); }
-  // Warden A: a net at the hip, worn, so it stays through the shot
-  if (has(F, 2, 'A')) { cell(g, x - 2, y + 1, GREYS[8]); cell(g, x - 1, y + 2, GREYS[8]); cell(g, x - 1, y + 1, GREYS[6]); cell(g, x - 2, y + 2, GREYS[6]); }
-}
-function rRest(g, x, y, F, t) {
-  drawBody(g, x, y); drawBow(g, BOW.rest, x, y, F); rHand(g, x, y, F, t, true);
-}
+    bHalo(g, x, y, R, t);
+    if (hay) {
+      const d = a - hay.at, cx = spot(hay).cx, cy = cBot(cx, t, s);
+      if (d >= 0 && d < 0.5) ring(g, cx, cy, 1 + d * 14, d < 0.25 ? WHITE : GREYS[7], 2);
+      if (R8(R) && d >= 0.35 && d < 0.85) ring(g, cx, cy, 1 + (d - 0.35) * 14, d < 0.6 ? GREYS[9] : GREYS[6], 2);
+    }
+  },
+};
 
-// --- the Mage: a staff with a purple stone in its claws --------------------------------
-// (x, y) the body's top-left; the staff stands a column to her left. `stoneAt`
-// is where the stone is when it is away (the Arcane's lantern); the stone's
-// pieces go with it.
-const ORBIT = Array.from({ length: 8 }, (_, k) => {
-  const a = k / 8 * Math.PI * 2;
-  return [Math.round(Math.cos(a) * 2.5), Math.round(0.5 + Math.sin(a) * 2.5)];
-});
-function stone(g, sx, top, F, t, up, glow) {
-  // Arcane A: the stone a cell bigger
-  if (has(F, 2, 'A')) cell(g, sx, top - 1, PURPLES[9]);
-  cell(g, sx, top + 1, up ? PURPLES[11] : PURPLES[9]);
-  // Pyromancy: the stone flickers like flame, a grey tongue over it
-  const f = Math.floor(t * 9);
-  if (F.mark === 0) {
-    cell(g, sx, top, glow > 0.66 || hash(f) < 0.4 ? WHITE : PURPLES[11]);
-    const j = hash(f + 7) < 0.25 ? -1 : hash(f + 7) > 0.8 ? 1 : 0;
-    cell(g, sx + j, top - 1, hash(f + 3) < 0.7 ? GREYS[10] : GREYS[8]);
-    if (hash(f + 5) < 0.3) cell(g, sx, top - 2, GREYS[7]);
-  } else cell(g, sx, top, glow > 0.66 ? WHITE : PURPLES[11]);
-  // Arcane: a small cell orbiting the stone
-  if (F.mark === 2) { const [dx, dy] = ORBIT[Math.floor(t * 5) % 8]; cell(g, sx + dx, top + dy, PURPLES[10]); }
+// --- Swordsman: a greatsword point-up at his side --------------------------------------
+// (bx, ty) the blade's column and its tip's row; the guard two rows under the blade.
+function sword(g, bx, ty, R, hot = false) {
+  cell(g, bx, ty, WHITE);
+  for (let r = ty + 1; r <= ty + 3; r++) cell(g, bx, r, hot ? WHITE : GREYS[10]);
+  if (R8(R)) for (let r = ty + 1; r <= ty + 3; r++) cell(g, bx + 1, r, GREYS[8]);   // touch: a second edge
+  for (let d = -1; d <= 1; d++) cell(g, bx + d, ty + 4, GREYS[8]);
+  if (R4(R)) { cell(g, bx - 2, ty + 4, GREYS[8]); cell(g, bx + 2, ty + 4, GREYS[8]); }  // mark: the guard wide
+  cell(g, bx, ty + 5, GREYS[6]);
 }
-function mStaff(g, x, y, F, t, up = false, glow = 0, home = true) {
+const swordsman = {
+  key: 'sword', name: 'Swordsman', at: 5,
+  base: 'cuts that bleed', move: 'Whirlwind: each cut hits wide', cap: 'every 3rd cut hits twice',
+  mark: 'the crossguard two cells wider', touch: 'a second edge down the blade',
+  rest(g, x, y, R, t) { drawBody(g, x, y); sword(g, x - 3, y - 4, R); cell(g, x - 3, y + 2, GREYS[9]); },
+  len: 3.0, cuts: [0.8, 1.4, 2.0],
+  state(a, api) { if (a >= 0.8) api.status('bleeding'); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, hover = maxBot([x, x + 2], t, s) + 7;
+    const k = trip(a, 0.4, 2.5, this.len), y = Math.round(lerp(REST_Y, hover, k));
+    drawBody(g, x, y);
+    // lifted over his head for the whole trip up, point to the hide
+    const up = k > 0.2;
+    if (up) sword(g, x + 1, y - 6, R, this.cuts.some(c => a >= c - 0.05 && a < c + 0.1));
+    else { sword(g, x - 3, y - 4, R); }
+    const cx0 = x + 1, reach = R4(R) ? 8 : 4;
+    this.cuts.forEach((c, i) => {
+      const passes = R8(R) && i === 2 ? [c, c + 0.25] : [c];
+      passes.forEach((p, j) => {
+        const d = a - p;
+        if (d >= 0 && d < 0.5) {
+          const kk = along(d, 0, 0.12), fade = along(d, 0.12, 0.5);
+          for (let dx = -reach; dx <= reach; dx++) {
+            const q = j ? (reach - dx) / (2 * reach) : (dx + reach) / (2 * reach);
+            if (q > kk) continue;
+            cell(g, cx0 + dx, cBot(cx0 + dx, t, s), GREYS[[11, 11, 10, 9, 7, 5][Math.floor(fade * 5.99)]]);
+          }
+        }
+        const spots = R4(R) ? [cx0 - 6, cx0, cx0 + 6] : [cx0];
+        spots.forEach((sx, n) => blow(g, t, t - d, sx, s, 0.35, i * 9 + j * 3 + n));
+      });
+    });
+  },
+};
+
+// --- Monk: a ring of prayer beads over him, floating a cell off the spire -----------------
+const BEADS = [[-2, -1], [-1, -2], [1, -2], [3, -2], [4, -1]];
+const TELL = [0, 1, 2, 3, 4, 3, 2, 1];
+function beads(g, x, y, R, t, cast = false) {
+  if (cast) { BEADS.forEach(([dx, dy]) => cell(g, x + dx, y + dy, PURPLES[11])); cell(g, x + 1 - 0, y - 2, PURPLES[11]); }
+  else {
+    const k = TELL[Math.floor(t * 3) % 8];
+    // mark: a second bead told round, the other way
+    BEADS.forEach(([dx, dy], i) => cell(g, x + dx, y + dy, i === k || (R4(R) && i === 4 - k) ? PURPLES[11] : GREYS[9]));
+  }
+  // touch: a tassel off the end bead
+  if (R8(R)) { cell(g, x + 4, y, GREYS[9]); cell(g, x + 4, y + 1, GREYS[7]); }
+}
+const monk = {
+  key: 'monk', name: 'Monk', at: 4, lift: 1,
+  base: 'palms build chi; a chi palm stuns', move: 'chi fills twice as fast', cap: 'the chi palm stuns longer',
+  mark: 'two beads told round, not one', touch: 'a tassel off the end bead',
+  rest(g, x, y, R, t) { drawBody(g, x, y); beads(g, x, y, R, t); },
+  len: 3.1,
+  palms(R) { return R4(R) ? [0.3, 0.8, 1.3, 2.0] : [0.3, 0.75, 1.2, 1.65, 2.2]; },
+  chi(R) { return R4(R) ? 2 : 4; },   // palms to a chi palm, the last of them the chi palm
+  state(a, api, R) { const p = this.palms(R), c = p[this.chi(R)]; api.stun(c + 0.5, R8(R) ? 2.6 : 1.4); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, y = REST_Y - 1, ps = this.palms(R), n = this.chi(R);
+    const casting = ps.some(p => a >= p && a < p + 0.5);
+    drawBody(g, x, y); beads(g, x, y, R, t, casting);
+    const lit = ps.filter((p, i) => i < n && a >= p).length % (n + 1);
+    const spent = a >= ps[n] && a < ps[n] + 0.4;
+    pips(g, x, y, R4(R) ? lit * 2 : lit, 4, spent ? 1 : 0);
+    ps.forEach((p, i) => {
+      const big = i === n, d = a - p, top = y - 2, hit = cBot(x + 1, t, s) + 1;
+      if (d >= 0 && d < 0.5) {
+        const k = d / 0.5, wy = Math.round(lerp(top - 1, hit, k)), half = (big ? 2 : 1) + Math.round(k * 2);
+        for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, wy, Math.abs(dx) === half ? PURPLES[8] : PURPLES[11]);
+      }
+      if (d >= 0.5 && d < 1.0) ring(g, x + 1, hit - 1, 1 + (d - 0.5) * (big ? 12 : 8), [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.floor((d - 0.5) / 0.125)], 2);
+      blow(g, t, t - (d - 0.5), x + 1, s, big ? 0.7 : 0.3, 40 + i);
+    });
+  },
+};
+
+// --- Martial Artist: a bo staff across her back -------------------------------------------
+// mark: a ribbon tied to one end, fluttering; touch: one on the other end too.
+function ribbon(g, ex, ey, dir, t, off = 0) {
+  const f = Math.floor(t * 7 + off) % 2;
+  cell(g, ex + dir, ey + f, GREYS[10]); cell(g, ex + 2 * dir, ey + 1 - f, GREYS[8]);
+}
+function staffBack(g, x, y, R, t) {
+  cell(g, x - 2, y + 1, GREYS[9]); cell(g, x - 1, y + 1, GREYS[8]); cell(g, x + 3, y + 1, GREYS[8]); cell(g, x + 4, y + 1, GREYS[9]);
+  if (R4(R)) ribbon(g, x + 4, y + 1, 1, t);
+  if (R8(R)) ribbon(g, x - 2, y + 1, -1, t, 1);
+}
+const martial = {
+  key: 'martial', name: 'Martial Artist', at: 5,
+  base: 'quick thrusts charge a finisher', move: 'Flow: thrusts charge double', cap: 'the finisher Hastes the party',
+  mark: 'a ribbon on the staff\'s end', touch: 'a ribbon on the other end',
+  rest(g, x, y, R, t) { drawBody(g, x, y); staffBack(g, x, y, R, t); },
+  len: 3.0,
+  plan(R) { return R4(R) ? { thrusts: [0.5, 0.8, 1.1], fin: 1.5, after: [2.0, 2.3], per: 2 } : { thrusts: [0.5, 0.75, 1.0, 1.25, 1.5], fin: 1.9, after: [], per: 1 }; },
+  state(a, api, R) { if (R8(R) && a >= this.plan(R).fin) api.buff('hasted'); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, pl = this.plan(R), hover = maxBot([x - 2, x + 4], t, s) + 6;
+    const y = Math.round(lerp(REST_Y, hover, trip(a, 0.35, 2.5, this.len)));
+    const all = [...pl.thrusts, ...pl.after];
+    const sweep = a >= pl.fin - 0.15 && a < pl.fin + 0.3;
+    const on = all.find(p => a >= p - 0.08 && a < p + 0.12);
+    drawBody(g, x, y);
+    if (sweep) {
+      // the finisher: flat over her head, pressed into the hide
+      const row = a >= pl.fin ? maxBot([x - 2, x + 4], t, s) + 1 : y - 1;
+      for (let c = x - 2; c <= x + 4; c++) cell(g, c, row, c === x - 2 || c === x + 4 ? WHITE : GREYS[8]);
+      if (R4(R)) ribbon(g, x + 4, row, 1, t);
+      if (R8(R)) ribbon(g, x - 2, row, -1, t, 1);
+    } else if (a > 0.3 && a < 2.5) {
+      // on end through her middle, the tip driven up to the hide on a thrust
+      const tip = on != null ? cBot(x + 1, t, s) + 1 : y - 3;
+      for (let r = tip; r < tip + 7; r++) cell(g, x + 1, r, r === tip ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
+      if (on != null && R4(R)) for (let r = tip + 1; r < tip + 5; r++) cell(g, x + 2, r, GREYS[6]);  // Flow's after-image
+      if (R4(R)) ribbon(g, x + 1, tip, 1, t);
+      if (R8(R)) ribbon(g, x + 1, tip + 6, -1, t, 1);
+      drawBody(g, x, y);
+    } else staffBack(g, x, y, R, t);
+    all.forEach((p, i) => blow(g, t, t - (a - p), x + 1, s, 0.18, 50 + i));
+    blow(g, t, t - (a - pl.fin), x + 1, s, 0.7, 59);
+    // the pips: thrusts since the last finisher
+    let n = 0;
+    for (const p of pl.thrusts) if (a >= p) n += pl.per;
+    if (a >= pl.fin) { n = 0; for (const p of pl.after) if (a >= p) n += pl.per; }
+    pips(g, x, y, Math.min(5, n), 5, sweep ? 1 : 0);
+  },
+};
+
+// --- Ranger: a bow twice his height ---------------------------------------------------------
+// The bow's poses in letters, so every piece keeps its cell in each: L limb,
+// T tip (touch: capped white), S string, N the sight pin (mark), A shaft, W
+// head, D nock. `bx` the body's left column in the art.
+const BOW = {
+  rest: { bx: 0, rows: ['....T..', '....SL.', '....SNL', '###.S.L', '###.SL.', '###.T..'] },
+  lift: { bx: 0, rows: ['....T..', '....SL.', '....SNL', '....S.L', '....SL.', '###.T..', '###....', '###....'] },
+  over: { bx: 1, rows: ['...LLL..', '..LN..L.', '.TSSSSST', '........', '.###....', '.###....', '.###....'] },
+  braced: { bx: 2, rows: ['..LLL..', '.LN..L.', 'TSSSSST', '.......', '..###..', '..###..', '..###..'] },
+  drawn: { bx: 2, rows: ['...W...', '..LAL..', '.LNA.L.', 'TS.A.ST', '..SDS..', '..###..', '..###..', '..###..'] },
+};
+function bowTone(ch, R) {
+  return { L: GREYS[8], T: R8(R) ? WHITE : GREYS[8], S: GREYS[9], N: R4(R) ? WHITE : null, A: GREYS[10], D: GREYS[6], W: WHITE }[ch];
+}
+function drawBow(g, art, x, y, R) {
+  const x0 = x - art.bx, y0 = y + BODY - art.rows.length;
+  art.rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.' && ch !== '#') cell(g, x0 + c, y0 + r, bowTone(ch, R)); }));
+}
+const ranger = {
+  key: 'ranger', name: 'Ranger', at: 3,
+  base: 'arrows from overhead', move: 'Aimed shot: every 5th arrow x5', cap: 'the aimed shot stuns',
+  mark: 'a white sight pin in the bow', touch: 'the bow\'s tips capped white',
+  rest(g, x, y, R) { drawBody(g, x, y); drawBow(g, BOW.rest, x, y, R); },
+  len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
+  state(a, api, R) { if (R8(R)) api.stun(this.aimed + 0.1, 1.5); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, y = REST_Y, aimed = R4(R) ? this.aimed : null;
+    const last = aimed || this.shots[3], up = 0.15, down = last + 0.35;
+    const pulling = this.shots.some(v => a >= v - 0.18 && a < v) || (aimed && a >= 1.9 && a < aimed);
+    const pose = a < up || a >= down + 0.24 ? BOW.rest : a < up + 0.12 || a >= down + 0.12 ? BOW.lift
+               : a < up + 0.24 || a >= down ? BOW.over : pulling ? BOW.drawn : BOW.braced;
+    drawBody(g, x, y); drawBow(g, pose, x, y, R);
+    const lx = x + 1, ly = y - 6, ty = cBot(lx, t, s) + 1;
+    if (aimed && a >= 1.95 && a < aimed) {
+      const tone = a > 2.25 ? GREYS[9] : GREYS[6];
+      for (let cy = ly - 1; cy > ty; cy -= 2) cell(g, lx, cy, tone);
+      ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - 1.95) * 5)), tone, 2);
+    }
+    const arrows = this.shots.map((v, i) => ({ at: v, k: 0.2, fly: 0.25, id: 60 + i }));
+    if (aimed) arrows.push({ at: aimed, k: 1, fly: 0.1, id: 69, aimed: true });
+    for (const ar of arrows) {
+      const d = a - ar.at;
+      if (d < 0) continue;
+      if (d < ar.fly) { const hy = lerp(ly, ty, d / ar.fly); cell(g, lx, hy, WHITE); cell(g, lx, hy + 1, GREYS[10]); cell(g, lx, hy + 2, GREYS[8]); continue; }
+      const since = d - ar.fly;
+      blow(g, t, t - since, lx, s, ar.k, ar.id);
+      if (since < 0.9) { const tone = GREYS[since < 0.4 ? 9 : 6]; cell(g, lx, ty, tone); cell(g, lx, ty + 1, tone); }
+      if (ar.aimed && since < 0.45) ring(g, lx, ty - 1, 1 + since * 14, since < 0.2 ? WHITE : GREYS[7], 2);
+    }
+  },
+};
+
+// --- Assassin: a dagger point-up in each fist -------------------------------------------------
+// (x, y) body; `ty` the tips' row. mark: a pale pommel under each grip;
+// touch: the tips go the abyss's purple.
+function daggers(g, x, ty, R) {
+  for (const bx of [x - 2, x + 4]) {
+    cell(g, bx, ty, R8(R) ? PURPLES[11] : WHITE);
+    cell(g, bx, ty + 1, GREYS[10]); cell(g, bx, ty + 2, GREYS[10]);
+    for (let d = -1; d <= 1; d++) cell(g, bx + d, ty + 3, GREYS[7]);
+    cell(g, bx, ty + 4, GREYS[8]);
+    if (R4(R)) cell(g, bx, ty + 5, GREYS[10]);
+  }
+}
+const assassin = {
+  key: 'assassin', name: 'Assassin', at: 5,
+  base: 'stabs, x3 on a stunned serpent', move: 'Execution: stabs grow with the wound', cap: 'x3 in the phase\'s last tenth',
+  mark: 'a pale pommel under each grip', touch: 'the dagger tips purple',
+  rest(g, x, y, R) { drawBody(g, x, y); daggers(g, x, y - 3, R); },
+  len: 3.0, stabs: [0.6, 1.1, 1.6, 2.1],
+  state() {},
+  draw(g, t, a, api, R, x) {
+    const s = api.st, hover = maxBot([x - 2, x + 4], t, s) + 7;
+    let y = Math.round(lerp(REST_Y, hover, trip(a, 0.3, 2.5, this.len)));
+    const on = this.stabs.find(p => a >= p - 0.06 && a < p + 0.12);
+    if (on != null) y -= 1;
+    drawBody(g, x, y); daggers(g, x, y - 5, R);
+    this.stabs.forEach((p, i) => {
+      const last = R8(R) && i === 3, k = last ? 1 : R4(R) ? 0.25 + i * 0.12 : 0.3;
+      for (const bx of [x - 2, x + 4]) blow(g, t, t - (a - p), bx, s, k, 70 + i * 2 + (bx > x ? 1 : 0));
+      const d = a - p;
+      if (last && d >= 0 && d < 0.3) ring(g, x + 1, Math.round(cY(x + 1, t, s)), Math.round(6 - d * 16), PURPLES[d < 0.15 ? 11 : 8]);
+    });
+  },
+};
+
+// --- Sapper: a bundle of three charges, the fuse sparking ---------------------------------
+function bundle(g, x, y, R, t) {
+  for (const c of [4, 5, 6]) for (const r of [0, 1, 2]) cell(g, x + c, y + r, r === 1 ? GREYS[6] : c === 5 ? GREYS[10] : GREYS[9]);
+  cell(g, x + 5, y - 1, GREYS[6]);
+  const k = Math.floor(t * 6) % 3;
+  cell(g, x + 4 + k, y - 2, k === 1 ? GREYS[9] : WHITE);
+  if (R4(R)) cell(g, x + 4, y - 1, Math.floor(t * 3) % 2 ? WHITE : GREYS[6]);      // mark: a countdown light
+  if (R8(R)) { cell(g, x - 1, y + 1, GREYS[9]); cell(g, x - 1, y + 2, GREYS[8]); }  // touch: a spare charge on his back
+}
+function charge(g, cx, cy, t, R, lit) {
+  rect(g, cx, cy, 2, 2, GREYS[8]); cell(g, cx + 1, cy, GREYS[9]);
+  if (lit) cell(g, cx, cy - 1, Math.floor(t * 6) % 2 ? WHITE : GREYS[6]);
+}
+const sapper = {
+  key: 'sapper', name: 'Sapper', at: 2,
+  base: 'thrown charges', move: 'Sticky charge: stuck, ticks down, one big stunning blow', cap: 'two charges at once',
+  mark: 'a countdown light on the bundle', touch: 'a spare charge on his back',
+  rest(g, x, y, R, t) { drawBody(g, x, y); bundle(g, x, y, R, t); },
+  len: 3.2, throwAt: 0.3, fly: 0.6, blowAt: 2.1,
+  targets(R, x) { return R8(R) ? [x - 1, x + 8] : [x + 4]; },
+  state(a, api, R) { if (R4(R)) api.stun(this.blowAt, 1.5); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, y = REST_Y;
+    drawBody(g, x, y); bundle(g, x, y, R, t);
+    this.targets(R, x).forEach((tx, i) => {
+      const t0 = this.throwAt + i * 0.15, d = a - t0, land = t0 + this.fly;
+      const hitY = cBot(tx, t, s) + 1;
+      if (d >= 0 && d < this.fly) {
+        const k = d / this.fly;
+        charge(g, Math.round(lerp(x + 5, tx, k)), Math.round(lerp(y, hitY, k) - 3 * Math.sin(Math.PI * k)), t, R, true);
+        return;
+      }
+      if (d < 0) return;
+      const boomAt = R4(R) ? this.blowAt : land;
+      // Sticky: stuck under the belly, its light ticking faster as it runs down
+      if (R4(R) && a < boomAt) {
+        charge(g, tx, hitY, t, R, false);
+        const rate = 3 + 8 * along(a, land, boomAt);
+        cell(g, tx, hitY + 2, Math.floor(t * rate) % 2 ? WHITE : GREYS[6]);
+      }
+      const e = a - boomAt, big = R4(R);
+      if (e >= 0 && e < 0.45) ring(g, tx, hitY - 1, 1 + e * (big ? 22 : 12), e < 0.15 ? WHITE : e < 0.3 ? GREYS[9] : GREYS[6]);
+      blow(g, t, t - e, tx, s, big ? 0.9 : 0.6, 80 + i);
+    });
+  },
+};
+
+// --- Hexer: nothing held, a few purple motes rising off her --------------------------------
+const MOTE_TONES = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
+function motes(g, x, top, t) {
+  for (let i = 0; i < 4; i++) {
+    const p = (t / 2.2 + i / 4) % 1, dx = [-1, 1, 0, 2][i] - (p > 0.55 ? (i % 2 ? 0 : 1) : 0);
+    cell(g, x + dx - (i === 3 ? 2 : 0), top - 1 - Math.floor(p * 5), MOTE_TONES[Math.floor(p * 3.99)]);
+  }
+}
+// mark: a purple band clasped round her middle, as the Held bands clasp the
+// coil; touch: its tethers, a cell down from each clasp.
+function hexBand(g, x, y, R) {
+  if (R4(R)) { cell(g, x - 1, y + 1, PURPLES[9]); cell(g, x + 3, y + 1, PURPLES[9]); }
+  if (R8(R)) { cell(g, x - 1, y + 2, PURPLES[7]); cell(g, x + 3, y + 2, PURPLES[7]); }
+}
+const hexer = {
+  key: 'hexer', name: 'Hexer', at: 4,
+  base: 'hexes Weaken the serpent', move: 'Binding: the serpent is Held', cap: 'Held takes more from blows',
+  mark: 'a purple band clasped round her', touch: 'the band\'s tethers',
+  rest(g, x, y, R, t) { drawBody(g, x, y); motes(g, x + 1, y, t); hexBand(g, x, y, R); },
+  len: 3.0, land: 1.3,
+  state(a, api, R) {
+    if (a >= this.land + 0.3) api.status('weakened');
+    if (R4(R)) api.hold(this.land + 0.3, 1.8, R8(R) && a >= 2.2 && a < 2.5 ? 2 : 1);
+  },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, y = REST_Y, tx = x + 1, hitY = cBot(tx, t, s);
+    drawBody(g, x, y); hexBand(g, x, y, R);
+    if (a >= 1.8) motes(g, tx, y, t);
+    for (let n = 0; n < 5; n++) {
+      const s0 = 0.3 + n * 0.1;
+      if (a < s0 || a >= s0 + 0.5) continue;
+      const cx = tx + [-1, 1, 0, -1, 1][n], cy = Math.round(lerp(y - 2, hitY + 1, (a - s0) / 0.5));
+      cell(g, cx, cy, PURPLES[11]); cell(g, cx, cy + 1, PURPLES[7]);
+    }
+    const e = a - this.land;
+    if (e >= 0 && e < 0.8) ring(g, tx, hitY, 1 + e * 8, MOTE_TONES[Math.floor(e / 0.2)], 2);
+    blow(g, t, t - e, tx, s, 0.15, 90);
+    // Held takes more: a blow on the held coil lands heavier
+    if (R8(R)) blow(g, t, t - (a - 2.2), tx + 6, s, 0.6, 91);
+  },
+};
+
+// --- Mage: a staff taller than her, a purple stone in its claws ---------------------------
+const ORBIT = Array.from({ length: 8 }, (_, k) => { const a = k / 8 * Math.PI * 2; return [Math.round(Math.cos(a) * 2.5), Math.round(0.5 + Math.sin(a) * 2.5)]; });
+// The stone at (sx, top): mark, a cell orbiting it; touch, the stone a cell bigger.
+function stone(g, sx, top, R, t, up, glow) {
+  if (R8(R)) cell(g, sx, top - 1, PURPLES[9]);
+  cell(g, sx, top + 1, up ? PURPLES[11] : PURPLES[9]);
+  cell(g, sx, top, glow > 0.66 ? WHITE : PURPLES[11]);
+  if (R4(R)) { const [dx, dy] = ORBIT[Math.floor(t * 5) % 8]; cell(g, sx + dx, top + dy, PURPLES[10]); }
+}
+function mStaff(g, x, y, R, t, up = false, glow = 0, home = true) {
   const sx = x - 1, lift = up ? 1 : 0, top = y - 3 - lift;
   for (let r = top + 2; r <= y + 2 - lift; r++) cell(g, sx, r, GREYS[8]);
-  // Storm B: a tally cut into the shaft, one for every bolt that stuns
-  if (has(F, 1, 'B')) { cell(g, sx, y - lift, GREYS[10]); cell(g, sx, y + 2 - lift, GREYS[10]); }
-  // Arcane B: a purple bead at the staff's foot
-  if (has(F, 2, 'B')) cell(g, sx, y + 2 - lift, PURPLES[10]);
   cell(g, sx - 1, top + 1, GREYS[8]); cell(g, sx + 1, top + 1, GREYS[8]);
-  // Storm A: the claws grow prongs, so the bolt forks further
-  if (has(F, 1, 'A')) { cell(g, sx - 1, top, GREYS[8]); cell(g, sx + 1, top, GREYS[8]); }
-  // Storm: a spark jumping claw to claw
-  if (F.mark === 1) {
-    const f = Math.floor(t * 7) % 4, py = top - (has(F, 1, 'A') ? 1 : 0);
-    cell(g, sx + (f % 2 ? 1 : -1), py, f === 2 ? GREYS[10] : WHITE);
-  }
-  // Pyromancy A: the claws catch
-  if (has(F, 0, 'A')) {
-    const f = Math.floor(t * 8);
-    for (const d of [-1, 1]) { cell(g, sx + d, top, hash(f + d) < 0.6 ? GREYS[10] : WHITE); if (hash(f * 3 + d) < 0.4) cell(g, sx + d, top - 1, GREYS[7]); }
-  }
-  // Pyromancy B: an ember drops off the stone and goes out
-  if (has(F, 0, 'B')) {
-    const k = (t / 1.3) % 1, ey = top + 1 + Math.floor(k * 6);
-    cell(g, sx - 1 - (k > 0.5 ? 1 : 0), ey, [WHITE, GREYS[9], GREYS[7], GREYS[5]][Math.floor(k * 4)]);
-  }
-  if (home) stone(g, sx, top, F, t, up, glow);
+  if (home) stone(g, sx, top, R, t, up, glow);
 }
-function mRest(g, x, y, F, t) { drawBody(g, x, y); mStaff(g, x, y, F, t); }
-const REST = { brawler: bRest, ranger: rRest, mage: mRest };
-
-// ================================================================================
-// The turns: each class's attack at the looked-for branch and rung, from `a`
-// seconds after its turn began. `state` says what stands on the coil; `draw`
-// draws the fighter and the blow.
-// ================================================================================
-const TURN_END = { brawler: 3.4, ranger: 3.4, mage: 4.2 };
-const LINGER = 1.0;                              // a status stands this long past its turn
-
-const TURNS = {
-  brawler: {
-    punches(F) {
-      if (F.key && F.br === 0) return [{ at: 0.8, side: -1 }, { at: 1.3, side: 1 },
-        { at: 2.1, side: 1, size: F.cap === 'B' ? 3 : 2, k: F.cap === 'B' ? 1 : 0.75, hay: true }];
-      if (F.key && F.br === 1) return Array.from({ length: 7 }, (_, i) => ({ at: 0.7 + i * 0.3, side: i % 2 ? 1 : -1, k: 0.25 + 0.4 * i / 6 }));
-      return [{ at: 0.8, side: -1 }, { at: 1.3, side: 1 }, { at: 2.1, side: -1 }];
-    },
-    state(a, api, F) {
-      const end = TURN_END.brawler + LINGER;
-      if (!F.key) return;
-      if (F.br === 0) api.stun(2.1, F.cap === 'A' ? 2.7 : 1.8);
-      if (F.br === 1 && F.cap === 'A' && a >= 2.2 + EXPOSE_RUN && a < end) api.status('exposed');
-      if (F.br === 1 && F.cap === 'B' && a >= 2.2 && a < end) api.buff('others', 'inspired');
-      if (F.br === 2 && a >= 0.8 + EXPOSE_RUN && a < end) api.status('exposed');
-    },
-    draw(g, t, a, api, F, x) {
-      const s = api.st;
-      if (a < 0 || a >= TURN_END.brawler) return bRest(g, x, REST_Y, F, t);
-      const maxBot = Math.max(...[x - 1, x, x + 1, x + 2, x + 3, x + 4].map(c => coilBottom(c, t, s)));
-      const hover = maxBot + 4;
-      let y = a < 0.5 ? Math.round(lerp(REST_Y, hover, ease(a / 0.5))) : a < 2.8 ? hover
-            : Math.round(lerp(hover, REST_Y, ease(clamp((a - 2.8) / 0.55, 0, 1))));
-      const ps = this.punches(F);
-      const hay = ps.find(p => p.hay);
-      if (hay && a > hay.at - 0.45 && a < hay.at - 0.12) y += 2;     // the haymaker's wind-up
-      const rage = F.key && F.br === 1 ? ps.filter(p => a >= p.at).length / ps.length : 0;
-      if (rage >= 1 && a < 2.8) x += hash(Math.floor(t * 18)) < 0.5 ? -1 : 0;
-      // the bites first, so the fist is seen in front of them
-      const spot = p => { const size = p.size || (p.side > 0 ? pummelFist(F) : 1), fx = p.side < 0 ? x - size : x + BODY;
-        return { cx: fx + (size - 1) / 2, cy: Math.max(coilBottom(fx, t, s), coilBottom(fx + size - 1, t, s)), fx, size }; };
-      ps.forEach((p, i) => { const sp = spot(p); land(g, t, t - (a - p.at), sp.cx, sp.cy, p.k || 0.3, i + 3); });
-      drawBody(g, x, y);
-      for (const side of [-1, 1]) {
-        let reach = 0, size = side > 0 ? pummelFist(F) : 1;
-        for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at); if (r !== 0) { reach = r; if (p.size) size = p.size; } }
-        const fx = side < 0 ? x - size : x + BODY, rest = y - 1;
-        let fy = rest;
-        if (reach < 0) fy = rest + 1;
-        else if (reach > 0) {
-          const face = Math.max(coilBottom(fx, t, s), coilBottom(fx + size - 1, t, s)) + 1;
-          fy = Math.round(rest + (face - rest) * reach);
-        }
-        const armX = side < 0 ? x - 1 : x + BODY;
-        for (let r = fy + 2; r < y; r++) cell(g, armX, r, GREYS[8]);
-        bFist(g, fx, fy, size, side, F, t);
+const mage = {
+  key: 'mage', name: 'Mage', at: 5,
+  base: 'bolts that Light', move: 'Arcane lantern: the whole serpent Lit', cap: 'Lit takes more from everyone',
+  mark: 'a small cell orbiting the stone', touch: 'the stone a cell bigger',
+  rest(g, x, y, R, t) { drawBody(g, x, y); mStaff(g, x, y, R, t); },
+  len: 3.4,
+  state(a, api, R) { if (a >= (R4(R) ? litDone(SPOT.mage - 12, 1.3) : 1.1)) api.status('lit'); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, y = REST_Y, sx = x - 1;
+    this.lx = x - 12;
+    if (!R4(R)) {
+      // the base bolt: a lift, a bright stone, one small bolt that Lights where it lands
+      const up = a >= 0.3 && a < 1.2;
+      drawBody(g, x, y); mStaff(g, x, y, R, t, up, up ? clamp((a - 0.3) / 0.3, 0, 1) : 0);
+      const tx = x - 5, ty = cBot(tx, t, s) + 1, d = a - 0.65;
+      if (d >= 0 && d < 0.45) {
+        const p = d / 0.45, at = q => [lerp(sx, tx, q), lerp(y - 5, ty, q)];
+        cell(g, ...at(Math.max(0, p - 0.14)), PURPLES[7]); cell(g, ...at(Math.max(0, p - 0.07)), PURPLES[10]); cell(g, ...at(p), WHITE);
       }
-      bHead(g, x, y, F, t);
-      // Rage's steam, the keystone's own: more the longer the row
-      if (rage > 0.3) for (let i = 0; i < Math.round(rage * 6); i++) {
-        const rise = (t * 3 + hash(i + 3) * 4) % 4;
-        cell(g, x + [0, 2, 1][i % 3] + (rise > 2 ? (i % 2 ? 1 : -1) : 0), y - 1 - rise, [WHITE, GREYS[9], GREYS[7], GREYS[5]][Math.floor(rise)]);
-      }
-      if (hay) {
-        const d = a - hay.at, sp = spot(hay);
-        if (d >= 0 && d < 0.5) ring(g, sp.cx, sp.cy, 1 + d * 14, d < 0.25 ? WHITE : GREYS[7], 2);
-        // Pummel A: the ring comes round a second time, the stun held longer
-        if (F.cap === 'A' && d >= 0.35 && d < 0.85) ring(g, sp.cx, sp.cy, 1 + (d - 0.35) * 14, d < 0.6 ? GREYS[9] : GREYS[6], 2);
-      }
-      if (F.key && F.br === 1 && F.cap === 'A') exposeWave(g, t, t - (a - 2.2), spot(ps[5]).cx, s);
-      if (F.key && F.br === 2) ps.forEach((p, i) => {
-        // Bruiser: the first punch tears the hide open; A every punch runs the tear again
-        if (i === 0 || F.cap === 'A') exposeWave(g, t, t - (a - p.at), spot(p).cx, s);
-        // B: every punch cuts a black notch right through the hide, where no ward holds
-        const d = a - p.at;
-        if (F.cap === 'B' && d >= 0 && d < 1.0) { const cx = Math.round(spot(p).cx); for (let cy = coilTop(cx, t, s); cy <= coilBottom(cx, t, s); cy++) cell(g, cx, cy, d < 0.6 ? INK : GREYS[5]); }
-      });
-    },
-  },
-
-  ranger: {
-    plan(F) {
-      if (F.key && F.br === 0) return { shots: [0.7, 1.3], aimed: 2.6 };
-      return { shots: [0.7, 1.3, 1.9] };
-    },
-    state(a, api, F) {
-      const end = TURN_END.ranger + LINGER;
-      if (!F.key) return;
-      if (F.br === 0 && F.cap === 'A' && a >= 2.7 && a < end) api.status('marked');
-      if (F.br === 0 && F.cap === 'B') api.stun(2.7, 1.5);
-      if (F.br === 1 && F.cap === 'A' && a >= 0.95 + 1.0 && a < end) api.status('burning', 1);
-      if (F.br === 1 && F.cap === 'B' && a >= 0.95 && a < end) api.status('exposed');
-      if (F.br === 2 && a >= litDone(STATION.ranger, 0.95) && a < end) api.status('lit');
-      if (F.br === 2 && F.cap === 'A') api.hold(2.15, 1.5);
-    },
-    draw(g, t, a, api, F, x) {
-      const s = api.st, y = REST_Y;
-      const { shots, aimed } = this.plan(F);
-      const last = aimed || shots[shots.length - 1], up = 0.15, down = last + 0.4;
-      const pulling = shots.some(v => a >= v - 0.2 && a < v) || (aimed && a >= 1.7 && a < aimed);
-      const pose = a < up || a >= down + 0.24 ? BOW.rest : a < up + 0.12 || a >= down + 0.12 ? BOW.lift
-                 : a < up + 0.24 || a >= down ? BOW.over : pulling ? BOW.drawn : BOW.braced;
-      drawBody(g, x, y);
-      drawBow(g, pose, x, y, F);
-      rHand(g, x, y, F, t, pose === BOW.rest || pose === BOW.lift);
-      if (a < 0) return;
-      const lx = x + 1, ly = y - 6;
-      const volley = F.key && F.br === 1, warden = F.key && F.br === 2;
-      // Marksman's sight: a dotted line up to the hide, a ring closing on the spot
-      if (aimed && a >= 1.8 && a < aimed) {
-        const ty = coilBottom(lx, t, s) + 1, tone = a > 2.3 ? GREYS[9] : GREYS[6];
-        for (let cy = ly - 1; cy > ty; cy -= 2) cell(g, lx, cy, tone);
-        ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - 1.8) * 3)), tone, 2);
-      }
-      const arrows = [];
-      shots.forEach((v, i) => {
-        const cols = volley ? [lx - 4, lx, lx + 4] : [lx];
-        cols.forEach((tx, j) => arrows.push({ at: v, tx, id: i * 3 + j, net: warden && F.cap === 'A' && i === 2 }));
-      });
-      if (aimed) arrows.push({ at: aimed, tx: lx, fly: 0.1, k: 1, id: 9, aimed: true });
-      for (const ar of arrows) {
-        const fly = ar.fly || 0.25, d = a - ar.at;
-        if (d < 0) continue;
-        const sx = ar.tx === lx ? lx : lx + Math.sign(ar.tx - lx), ty = coilBottom(ar.tx, t, s) + 1;
-        const head = warden ? PURPLES[11] : WHITE;
-        if (d < fly) {
-          const p = d / fly, hx = lerp(sx, ar.tx, p), hy = lerp(ly, ty, p);
-          const ux = Math.sign(sx - ar.tx) * 0.3;
-          cell(g, hx, hy, head); cell(g, hx + ux, hy + 1, GREYS[10]);
-          // Volley A: the arrows fly with fire at their tails
-          cell(g, hx + ux * 2, hy + 2, volley && F.cap === 'A' ? (Math.floor(t * 12) % 2 ? WHITE : GREYS[7]) : GREYS[8]);
-          if (ar.net && p > 0.3) { cell(g, hx - 1, hy + 1, GREYS[8]); cell(g, hx + 1, hy + 1, GREYS[8]); }
-          continue;
-        }
-        const since = d - fly, b = ty - 1;
-        land(g, t, t - since, ar.tx, b, ar.k || 0.2, ar.id);
-        if (since < 0.9) { const tone = GREYS[since < 0.4 ? 9 : since < 0.65 ? 7 : 4]; cell(g, ar.tx, b + 1, tone); cell(g, ar.tx, b + 2, tone); }
-        if (warden) {
-          // the flare: a ring of the abyss's light; B opens it twice as wide
-          const big = F.cap === 'B' ? 2 : 1;
-          if (since < 0.35 * big) ring(g, ar.tx, b, 1 + since * 12, PURPLES[since < 0.12 ? 11 : since < 0.24 * big ? 9 : 7], since < 0.2 ? 1 : 2);
-          if (since < 1.4) cell(g, ar.tx, b, Math.floor(t * 6) % 2 ? PURPLES[11] : PURPLES[9]);
-          if (ar.id === 0) lightFrom(g, t, t - since, ar.tx, s);
-          // A: the net opens over the length it lands on, then covers the coil
-          if (ar.net && since < 0.5) for (let dx = -Math.round(since * 12); dx <= Math.round(since * 12); dx++)
-            if ((dx + ar.tx) % 2 === 0) cell(g, ar.tx + dx, coilBottom(ar.tx + dx, t, s), GREYS[6]);
-        }
-        // Volley A: fire catches where the first volley lands and runs the coil
-        if (volley && F.cap === 'A' && ar.id < 3) catchFire(g, t, t - since, ar.tx, s, 1);
-        // Volley B: each arrow tears the hide open where it lands
-        if (volley && F.cap === 'B' && since < 0.3) for (let dd = -2; dd <= 2; dd++)
-          cell(g, ar.tx + dd, coilBottom(ar.tx + dd, t, s), (dd + Math.floor(since * 20)) % 2 ? INK : GREYS[9]);
-        if (ar.aimed && F.cap === 'A' && since < 0.3) ring(g, ar.tx, Math.round(coilY(ar.tx, t, s)), Math.round(4 - since * 8), PURPLES[since < 0.15 ? 11 : 8]);
-      }
-    },
-  },
-
-  mage: {
-    state(a, api, F) {
-      const end = TURN_END.mage + LINGER, L = 0.3 + 0.8;
-      if (!F.key) { if (a >= L && a < end) api.status('lit'); return; }
-      if (F.br === 0) {
-        if (a >= L && a < end) api.status('lit');
-        const out = F.cap === 'B' ? 3.6 : end;
-        if (a >= L + 1.2 && a < out) api.status('burning', F.cap === 'A' ? 2 : 1);
-      }
-      if (F.br === 1) { if (a >= L && a < end) api.status('lit'); if (F.cap === 'B') api.stun(L + 0.24 * (F.cap === 'A' ? 4 : 2), 1.5); }
-      if (F.br === 2 && a >= 1.5 + 2.4 && a < end) api.status('lit');
-    },
-    draw(g, t, a, api, F, x) {
-      const s = api.st, y = REST_Y, sx = x - 1;
-      if (a < 0 || a >= TURN_END.mage) return mRest(g, x, y, F, t);
-      const cast = (t0, tx, fire, id) => {
-        const leave = t0 + 0.35, L = leave + 0.45, d = a - leave, tip = { x: sx, y: y - 4 };
-        const ty = coilBottom(tx, t, s) + 1;
-        if (d >= 0 && d < 0.45) {
-          const p = d / 0.45, at = q => ({ x: lerp(tip.x, tx, q), y: lerp(tip.y - 1, ty, q) });
-          [fire ? GREYS[10] : PURPLES[10], fire ? GREYS[7] : PURPLES[7]].forEach((tone, i) => {
-            const c = at(Math.max(0, p - (i + 1) * 0.07)); cell(g, c.x, c.y + (fire && i ? (hash(Math.floor(t * 18) + i) < 0.5 ? -1 : 1) : 0), tone);
-          });
-          const c = at(p); cell(g, c.x, c.y, WHITE);
-          // Pyromancy A: the bolt trails a second flame
-          if (fire && F.cap === 'A') { const c2 = at(Math.max(0, p - 0.21)); cell(g, c2.x + 1, c2.y, GREYS[9]); }
-        }
-        land(g, t, t - (a - L), tx, ty - 1, 0.35, id);
-        return t - (a - L);
-      };
-      const isUp = starts => starts.some(v => a >= v && a < v + 0.9);
-      const glow = starts => { for (const v of starts) if (a >= v && a < v + 0.9) return clamp((a - v) / 0.3, 0, 1); return 0; };
-      if (!F.key) {
-        drawBody(g, x, y); mStaff(g, x, y, F, t, isUp([0.3]), glow([0.3]));
-        cast(0.3, x - 5, false, 11);
-        return;
-      }
-      if (F.br === 0) {
-        drawBody(g, x, y); mStaff(g, x, y, F, t, isUp([0.3, 1.6]), glow([0.3, 1.6]));
-        const t1 = cast(0.3, x - 5, true, 13);
-        catchFire(g, t, t1, x - 5, s, F.cap === 'A' ? 2 : 1);
-        cast(1.6, x + 3, true, 14);
-        // B: when the fire goes out, it bursts as a blow along the coil
-        if (F.cap === 'B') [16, 32, 48].forEach((bx, i) => {
-          const d = a - 3.6 - i * 0.08;
-          if (d >= 0 && d < 0.3) ring(g, bx, coilTop(bx, t, s), 1 + d * 10, d < 0.15 ? WHITE : GREYS[8], 2);
-          land(g, t, t - d, bx, coilTop(bx, t, s), 0.5, 30 + i);
-        });
-        return;
-      }
-      if (F.br === 1) {
-        // Storm: the bolt forks from the stone and jumps along the back; A jumps to every length
-        drawBody(g, x, y); mStaff(g, x, y, F, t, isUp([0.3]), glow([0.3]));
-        const hits = F.cap === 'A' ? [x - 5, x - 15, x - 25, x - 35, x - 45] : [x - 5, x - 17, x - 29];
-        const strike = 1.1;
-        let from = { x: sx, y: y - 5 };
-        hits.forEach((hx, i) => {
-          const at = strike + i * 0.24, hy = i ? coilTop(hx, t, s) - 1 : coilBottom(hx, t, s) + 1;
-          if (a >= at && a < at + 0.2) fork(g, t, from.x, from.y, hx, hy, i + 1, i ? 4 : 0);
-          land(g, t, t - (a - at), hx, i ? coilTop(hx, t, s) : coilBottom(hx, t, s), 0.35, 20 + i);
-          // B: the last jump stuns, a ring where it lands
-          const d = a - at;
-          if (F.cap === 'B' && i === hits.length - 1 && d >= 0 && d < 0.45) ring(g, hx, coilTop(hx, t, s), 1 + d * 12, d < 0.2 ? WHITE : GREYS[7], 2);
-          from = { x: hx, y: coilTop(hx, t, s) - 1 };
-        });
-        return;
-      }
-      // Arcane: the stone leaves the staff and hangs over the coil like a lantern
-      const LX = x - 9, ARC = { lift: 0.2, off: 0.5, there: 1.3, light: 1.5, back: 3.0, home: 3.7, down: 3.9 };
-      const upNow = a >= ARC.lift && a < ARC.down, away = a >= ARC.off && a < ARC.home;
-      drawBody(g, x, y); mStaff(g, x, y, F, t, upNow, upNow ? clamp((a - ARC.lift) / 0.3, 0, 1) : 0, !away);
-      lightFrom(g, t, t - (a - ARC.light), LX, s);
-      if (away) {
-        let k = 1;
-        if (a < ARC.there) k = ease((a - ARC.off) / (ARC.there - ARC.off));
-        else if (a >= ARC.back) k = 1 - ease((a - ARC.back) / (ARC.home - ARC.back));
-        const ly = Math.max(3, coilTop(LX, t, s) - 5);
-        const px = Math.round(lerp(sx, LX, k)), py = Math.round(lerp(y - 4, ly, k));
-        const open = a >= ARC.there && a < ARC.back ? Math.min(clamp((a - ARC.there) / 0.3, 0, 1), clamp((ARC.back - a) / 0.3, 0, 1)) : 0;
-        // A: the lantern's ring opens wider
-        if (open > 0) ring(g, px, py, open < 0.5 ? 1 : F.cap === 'A' ? 3 : 2, open < 0.5 ? PURPLES[7] : PURPLES[9]);
-        // B: a beam dropped from the lantern to the back
-        if (F.cap === 'B' && open >= 0.5) for (let cy = py + 3; cy < coilTop(px, t, s); cy += 1) if ((cy + Math.floor(t * 6)) % 2) cell(g, px, cy, PURPLES[8]);
-        stone(g, px, py - 1, F, t, true, 0);
-      }
-    },
+      blow(g, t, t - (a - 1.1), tx, s, 0.35, 100);
+      return;
+    }
+    // the lantern: the stone leaves the claws, hangs over the coil, lights it all
+    const LX = this.lx, A = { lift: 0.2, off: 0.5, there: 1.2, back: 2.5, home: 3.1, down: 3.3 };
+    const up = a >= A.lift && a < A.down, away = a >= A.off && a < A.home;
+    drawBody(g, x, y); mStaff(g, x, y, R, t, up, 0, !away);
+    lightFrom(g, t, t - (a - 1.3), LX, s);
+    if (!away) return;
+    const k = a < A.there ? ease((a - A.off) / (A.there - A.off)) : a < A.back ? 1 : 1 - ease((a - A.back) / (A.home - A.back));
+    const ly = Math.max(3, cTop(LX, t, s) - 5), px = Math.round(lerp(sx, LX, k)), py = Math.round(lerp(y - 4, ly, k));
+    const open = a >= A.there && a < A.back ? Math.min(clamp((a - A.there) / 0.3, 0, 1), clamp((A.back - a) / 0.3, 0, 1)) : 0;
+    // the capstone's lantern opens a ring wider
+    if (open > 0) ring(g, px, py, open < 0.5 ? 1 : R8(R) ? 3 : 2, open < 0.5 ? PURPLES[7] : PURPLES[9]);
+    stone(g, px, py - 1, R, t, true, 0);
   },
 };
-// A forked bolt, a white run with the abyss's purple at every other cell.
-function fork(g, t, ax, ay, bx, by, seed, bow = 0) {
-  const f = Math.floor(t * 24), len = Math.hypot(bx - ax, by - ay) || 1;
-  const n = Math.max(2, Math.round(len / 2.5)), nx = -(by - ay) / len, ny = (bx - ax) / len;
-  const pts = [{ x: ax, y: ay }];
-  for (let i = 1; i <= n; i++) {
-    const q = i / n, j = i === n ? 0 : (hash(seed * 17 + i * 5 + f) - 0.5) * 2.5;
-    pts.push({ x: lerp(ax, bx, q) + nx * j, y: lerp(ay, by, q) + ny * j - bow * Math.sin(Math.PI * q) });
-  }
-  for (let i = 1; i < pts.length; i++)
-    line(g, pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y, (cx, cy, k) => cell(g, cx, cy, (k + i + f) % 2 ? PURPLES[10] : WHITE));
+
+// --- Bard: a flute held sideways at her mouth -------------------------------------------------
+// mark: the flute's end flares into a bell; touch: a note that stays over her head.
+function flute(g, x, y, R, t) {
+  cell(g, x + 3, y, GREYS[10]); cell(g, x + 4, y, GREYS[6]); cell(g, x + 5, y, GREYS[10]); cell(g, x + 6, y, GREYS[10]);
+  if (R4(R)) { cell(g, x + 7, y - 1, GREYS[8]); cell(g, x + 7, y + 1, GREYS[8]); }
+  if (R8(R)) { const b = Math.floor(t * 1.5) % 2; cell(g, x + 1, y - 3 - b, PURPLES[9]); cell(g, x + 2, y - 4 - b, PURPLES[9]); }
 }
+const bard = {
+  key: 'bard', name: 'Bard', at: 2,
+  base: 'sings: the party Inspired (no damage)', move: 'Anthem: Inspired doubles', cap: 'Inspired lingers after the song',
+  mark: 'a bell flared at the flute\'s end', touch: 'a note that stays over her head',
+  rest(g, x, y, R, t) { drawBody(g, x, y); flute(g, x, y, R, t); },
+  len: 3.0,
+  state(a, api, R) { if (a >= 1.2 && a < (R8(R) ? 6 : 3.4)) api.buff('inspired', R4(R) ? 2 : 1); },
+  draw(g, t, a, api, R, x) {
+    const y = REST_Y;
+    drawBody(g, x, y); flute(g, x, y, R, t);
+    if (a > 2.6) return;
+    // notes rise off the flute and drift to the fighters, each to a station
+    const tip = [x + 7, y - 1];
+    api.others.forEach((o, n) => {
+      const s0 = 0.1 + (n % 5) * 0.12, k = along(a, s0, s0 + 1.2);
+      if (a < s0 || a >= s0 + 1.2) return;
+      const nx = Math.round(lerp(tip[0], o.x + 1, k)), ny = Math.round(lerp(tip[1], o.y - 3, k) - 8 * Math.sin(Math.PI * k));
+      cell(g, nx, ny, PURPLES[11]); cell(g, nx + 1, ny - 1, PURPLES[9]);
+    });
+  },
+};
 
 // ================================================================================
-// The live pane: the three at three stations under the coil, each attacking in turn.
+// Five stations, a pair each (section 2), and the turn order along them.
 // ================================================================================
-const STATION = { brawler: 12, ranger: 32, mage: 52 };
-const START = { brawler: 0.6, ranger: 4.6, mage: 8.8 };
-const LOOP = 14;
-const SEL = { br: { brawler: 0, ranger: 0, mage: 0 }, cap: { brawler: 'A', ranger: 'A', mage: 'A' }, rung: 8 };
+const STATIONS = [['the altar', brawler, swordsman], ['the well', monk, martial], ['the armory', ranger, assassin],
+                  ['the circle', hexer, sapper], ['the spire', mage, bard]];
+const ORDER = STATIONS.flatMap(([, a, b]) => [a, b]);
+const CENTER = i => 13 + i * 26;
+const SPOT = {};   // each class's body-left column in the pane
+STATIONS.forEach(([, a, b], i) => { SPOT[a.key] = CENTER(i) - 7; SPOT[b.key] = CENTER(i) + 4; });
+const GAP = 3.3, LOOP = ORDER.length * GAP + 1;
+const START = {};
+ORDER.forEach((c, i) => { START[c.key] = 0.5 + i * GAP; });
+const LINGER = 0.8;
+
+let RUNG = 8;
 function paintPane(g, T) {
   const t = T % LOOP;
-  const st = { stun: 0, stunAt: null, statuses: {}, buffs: {} };
-  const F = {}, A = {};
-  for (const c of CLASSES) { F[c.key] = flagsOf(SEL.br[c.key], SEL.rung, SEL.cap[c.key]); A[c.key] = t - START[c.key]; }
-  for (const c of CLASSES) {
-    const a = A[c.key];
+  const st = { still: null, statuses: {}, buffs: {} };
+  const A = {};
+  for (const c of ORDER) A[c.key] = ((t - START[c.key]) % LOOP + LOOP) % LOOP;
+  for (const c of ORDER) {
+    const a = A[c.key], end = c.len + LINGER;
     const api = {
-      stun(from, len) { if (a >= from && a < from + len) { st.stun = 1; st.stunAt = t - (a - from); st.statuses.stunned = 1; } },
-      hold(from, len) { if (a >= from && a < from + len) { st.stun = 1; st.stunAt = t - (a - from); st.statuses.held = 1; } },
-      status(k, lv = 1) { st.statuses[k] = Math.max(st.statuses[k] || 0, lv); },
-      buff(who, k) { for (const o of CLASSES) if (o.key !== c.key) (st.buffs[o.key] ||= {})[k] = 1; },
+      stun(from, len) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.stunned = 1; } },
+      hold(from, len, lv = 1) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.held = Math.max(st.statuses.held || 0, lv); } },
+      status(k, lv = 1) { if (a < end) st.statuses[k] = Math.max(st.statuses[k] || 0, lv); },
+      buff(k, lv = 1) { for (const o of ORDER) if (o !== c) (st.buffs[o.key] ||= {})[k] = Math.max(st.buffs[o.key]?.[k] || 0, lv); },
     };
-    TURNS[c.key].state(a, api, F[c.key]);
+    c.state(a, api, RUNG);
   }
   drawDeep(g, t);
-  for (const c of CLASSES) drawPlinthAt(g, STATION[c.key], FLOOR);
+  STATIONS.forEach((_, i) => drawPlinthAt(g, CENTER(i), FLOOR, 21));
   drawCoil(g, t, st);
-  for (const [k, fn] of PAINT) if (st.statuses[k]) fn(g, t, st, st.statuses[k]);
-  for (const c of CLASSES) {
-    TURNS[c.key].draw(g, t, A[c.key], { st }, F[c.key], STATION[c.key] - 1);
-    if (st.buffs[c.key]?.inspired) paintInspired(g, t, STATION[c.key] - 1, REST_Y);
+  if (st.statuses.lit) litCells(g, t, st);
+  if (st.statuses.bleeding) paintBleeding(g, t, st);
+  if (st.statuses.held) paintHeld(g, t, st, st.statuses.held);
+  if (st.statuses.stunned) paintStunned(g, t, st);
+  for (const c of ORDER) {
+    const x = SPOT[c.key], a = A[c.key];
+    const others = ORDER.filter(o => o !== c).map(o => ({ x: SPOT[o.key], y: REST_Y - (o.lift || 0) }));
+    if (a < c.len) c.draw(g, t, a, { st, others }, RUNG, x);
+    else c.rest(g, x, REST_Y - (c.lift || 0), RUNG, t);
+    const b = st.buffs[c.key] || {};
+    if (b.inspired) paintInspired(g, t, x, REST_Y - (c.lift || 0), b.inspired);
+    if (b.hasted) paintHasted(g, t, x, REST_Y - (c.lift || 0));
   }
 }
 
 // ================================================================================
-// The rest poses: a strip at the game's scale and the same at 4x. Ten looks a
-// class: rung 0, then for each branch rung 4, rung 8 A and rung 8 B.
+// The page: per class its lines, a 1x strip of rung 0, 4, 8, the same at 4x.
 // ================================================================================
-const SLOT = 11, SLOT_H = 12, ROW_FLOOR = 10;
-const BODY_AT = { brawler: 4, ranger: 4, mage: 5 };   // the body's left column in a slot
-function looksOf(c) {
-  const out = [{ label: 'rung 0', short: 'rung 0', F: flagsOf(0, 0, '') }];
-  c.branches.forEach((b, i) => {
-    out.push({ label: `${b} · rung 4`, short: `${b} 4`, F: flagsOf(i, 4, '') });
-    out.push({ label: `${b} · rung 8 · A`, short: `8 A`, F: flagsOf(i, 8, 'A') });
-    out.push({ label: `${b} · rung 8 · B`, short: `8 B`, F: flagsOf(i, 8, 'B') });
-  });
-  return out;
-}
-function drawSlotBack(g, sx, w) {
-  rect(g, sx, 0, w, SLOT_H, GREYS[0]);
-  rect(g, sx, ROW_FLOOR, w, SLOT_H - ROW_FLOOR, GREYS[2]);
-  for (let c = sx; c < sx + w; c++) for (let r = ROW_FLOOR; r < SLOT_H; r++)
-    if (hash(c * 31 + r * 17) < 0.22) cell(g, c, r, GREYS[3 + Math.floor(hash(c + r * 7) * 2)]);
-}
-function drawSlot(g, c, look, sx, t) {
-  const x = sx + BODY_AT[c.key], y = ROW_FLOOR - 2 - BODY;
-  drawPlinthAt(g, x + 1, ROW_FLOOR);
-  REST[c.key](g, x, y, look.F, t);
-}
-
-// What each branch shows, in words: the mark from rung 4, and each
-// capstone's line from docs/serpent-classes.md with its touch.
-const WORDS = {
-  Pummel: { k: 'every fourth punch is a haymaker ×4', mark: 'the wraps wound thicker, a pale cell down each wrist',
-    A: ['stuns you start last +50%', 'a stun star over his head, a bright cell running along three; the haymaker\'s ring comes round twice and the stun holds half again as long'],
-    B: ['a haymaker on a Stunned serpent does ×2 and ends the stun', 'the right fist two cells wide at rest; the haymaker\'s fist three wide, landing as big as a star'] },
-  Rage: { k: 'each punch in a row +5%, up to +60%', mark: 'a wrap end come loose, flapping off each fist',
-    A: ['at full rage, punches Expose', 'steam rising off his head; at full rage the last punches tear the hide open'],
-    B: ['at full rage, the party is Inspired', 'the loose wrap ends turn purple; at full rage the other fighters are Inspired'] },
-  Bruiser: { k: 'every punch Exposes', mark: 'the knuckles darken: a dark striking row over the white wrap',
-    A: ['Exposed spreads to the lengths either side', 'a torn scale hung off each fist; every punch runs the tear down the coil again'],
-    B: ['an Exposed length cannot be warded, for everyone', 'spikes on the knuckles; each punch cuts a black notch right through the hide'] },
-  Marksman: { k: 'every fifth arrow aimed, ×5', mark: 'a white sight pin in the bow\'s belly',
-    A: ['an aimed arrow Marks', 'a purple bead under the sight; the aimed arrow closes a purple ring and the coil is Marked'],
-    B: ['an aimed arrow stuns at half the share', 'the bow\'s tips capped white; the aimed arrow stuns'] },
-  Volley: { k: 'arrows three at a time over three lengths', mark: 'a pair of arrows held point-up in the free hand',
-    A: ['each arrow that hits a Burning length spreads it', 'a flame at the held arrows\' heads; the arrows fly with fire at their tails and the fire runs the coil'],
-    B: ['arrows Expose on a Stunned serpent', 'barbs on the held arrows; each arrow tears the hide where it lands'] },
-  Warden: { k: 'an arrow in a length Lights it', mark: 'a flare arrow in the free hand, its head purple, as the keystone\'s arrows are',
-    A: ['a net arrow every 10 s Holds a length', 'a net worn at the hip; the last arrow of the run is a net, and the coil is Held'],
-    B: ['Lit lengths take +20% from arrows and beams', 'a purple bowstring; each flare\'s ring opens twice as wide'] },
-  Pyromancy: { k: 'bolts set Burning', mark: 'the stone flickers like flame, a grey tongue over it',
-    A: ['Burning ticks ×2 on an Exposed length', 'the claws catch too; the bolt trails a second flame and the coil burns twice as thick'],
-    B: ['a Burning length\'s fire, when it ends, bursts as a blow', 'an ember drops off the stone now and then; when the fire goes out it bursts along the coil'] },
-  Storm: { k: 'a bolt jumps to two more lengths', mark: 'a spark jumping claw to claw',
-    A: ['a bolt on a Held length jumps to all of them', 'the claws grow prongs, the spark on their tips; the bolt jumps to five lengths'],
-    B: ['every tenth bolt stuns', 'two pale tally cuts on the shaft; the last jump stuns'] },
-  Arcane: { k: 'the stone sweeps the coil every 8 s: all Lit', mark: 'a small purple cell orbiting the stone, and going with it to the lantern',
-    A: ['Lit lengths take +15% from everything', 'the stone a cell bigger; the lantern\'s ring opens wider'],
-    B: ['Lit lengths heal half', 'a purple bead at the staff\'s foot; the lantern drops a beam onto the coil'] },
-};
-
-// ================================================================================
-// The page.
-// ================================================================================
-const strips = [], tiles = [];
-let pane = null;
-const host = document.getElementById('host');
-const headed = (td, h) => { td.dataset.h = h; return td; };
+const SLOT = 13, SLOT_H = 12, ROW_FLOOR = 10, RUNGS = [0, 4, 8];
 const el = (tag, props = {}, kids = []) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-
-// The live pane first, under its toggles, so the growth is seen moving.
-{
-  host.append(el('h2', { textContent: 'Live: the three at rung 8, each attacking in turn', id: 'live' }));
-  host.append(el('p', { className: 'dim', textContent: 'Brawler, Ranger, Mage at three stations under the coil. Pick each one\'s branch and capstone in the bar above; "rung" sets all three at once, so rung 4 shows the marks alone and rung 0 the kit as it is today. The game\'s scale, shown doubled.' }));
-  const cv = el('canvas'); cv.width = W * P; cv.height = H * P;
-  pane = cv.getContext('2d');
-  host.append(el('div', { className: 'pane' }, [cv]));
+function drawSlot(g, c, R, sx, t) {
+  rect(g, sx, 0, SLOT, SLOT_H, GREYS[0]);
+  rect(g, sx, ROW_FLOOR, SLOT, SLOT_H - ROW_FLOOR, GREYS[2]);
+  for (let col = sx; col < sx + SLOT; col++) for (let r = ROW_FLOOR; r < SLOT_H; r++)
+    if (hash(col * 31 + r * 17) < 0.22) cell(g, col, r, GREYS[3 + Math.floor(hash(col + r * 7) * 2)]);
+  const x = sx + c.at, y = ROW_FLOOR - 2 - BODY - (c.lift || 0);
+  drawPlinthAt(g, x + 1, ROW_FLOOR);
+  c.rest(g, x, y, R, t);
 }
-
-const bar = document.getElementById('bar');
-const buttons = [];
-function toggle(label, opts, get, set, grp) {
-  if (!grp) { grp = el('div', { className: 'grp' }); bar.append(grp); }
-  if (label) grp.append(el('span', { textContent: label }));
-  for (const [text, val] of opts) {
-    const b = el('button', { type: 'button', textContent: text });
-    b.onclick = () => { set(val); sync(); };
-    buttons.push({ b, on: () => get() === val });
-    grp.append(b);
+const strips = [], tiles = [];
+const host = document.getElementById('host');
+STATIONS.forEach(([where, ...pair]) => pair.forEach(c => {
+  const lines = el('div', { className: 'lines' }, [
+    el('h3', { textContent: c.name }), el('span', { className: 'k', textContent: where }),
+    el('div', {}, [el('b', { textContent: '0 ' }), document.createTextNode(c.base)]),
+    el('div', {}, [el('b', { textContent: '4 ' }), document.createTextNode(c.move)]),
+    el('div', { className: 'k', textContent: '  mark: ' + c.mark }),
+    el('div', {}, [el('b', { textContent: '8 ' }), document.createTextNode(c.cap)]),
+    el('div', { className: 'k', textContent: '  touch: ' + c.touch }),
+  ]);
+  const sc = el('canvas'); sc.width = SLOT * 3 * P; sc.height = SLOT_H * P;
+  strips.push({ c, g: sc.getContext('2d') });
+  lines.append(el('div', { className: 'strip' }, [sc, el('div', { className: 'names3' }, RUNGS.map(r => el('span', { textContent: 'rung ' + r })))]));
+  const tl = el('div', { className: 'tiles' });
+  for (const R of RUNGS) {
+    const cv = el('canvas'); cv.width = SLOT * P; cv.height = SLOT_H * P;
+    tl.append(el('div', { className: 'tile' }, [cv, el('span', { textContent: `rung ${R}, 4x` })]));
+    tiles.push({ c, R, g: cv.getContext('2d') });
   }
-  return grp;
-}
-function sync() { for (const { b, on } of buttons) b.setAttribute('aria-pressed', on() ? 'true' : 'false'); if (!playing) paintAll(clock); }
-for (const c of CLASSES) {
-  const grp = toggle(c.name, c.branches.map((b, i) => [b, i]), () => SEL.br[c.key], v => { SEL.br[c.key] = v; });
-  toggle('·', [['A', 'A'], ['B', 'B']], () => SEL.cap[c.key], v => { SEL.cap[c.key] = v; }, grp);
-}
-toggle('rung', [['0', 0], ['4', 4], ['8', 8]], () => SEL.rung, v => { SEL.rung = v; });
+  host.append(el('div', { className: 'cls', id: c.key }, [lines, tl]));
+}));
 
-for (const c of CLASSES) {
-  host.append(el('h2', { textContent: c.name, id: c.key }));
-  // the words
-  const tb = el('tbody');
-  c.branches.forEach(b => {
-    const w = WORDS[b];
-    tb.append(el('tr', {}, [
-      el('td', {}, [el('b', { textContent: b }), el('br'), el('span', { className: 'dim', textContent: 'K: ' + w.k })]),
-      headed(el('td', { textContent: w.mark }), 'rung 4: the mark'),
-      headed(el('td', {}, [el('i', { textContent: w.A[0] }), el('br'), document.createTextNode(w.A[1])]), 'rung 8 · A'),
-      headed(el('td', {}, [el('i', { textContent: w.B[0] }), el('br'), document.createTextNode(w.B[1])]), 'rung 8 · B'),
-    ]));
-  });
-  const th = el('tr', {}, ['branch', 'rung 4: the mark', 'rung 8 · A: the capstone, and its touch', 'rung 8 · B: the capstone, and its touch'].map(s => el('th', { textContent: s })));
-  host.append(el('div', { className: 'tablewrap' }, [el('table', {}, [el('thead', {}, [th]), tb])]));
-
-  const looks = looksOf(c);
-  host.append(el('h3', { textContent: 'At the game\'s scale (a cell is 6 px): rung 0, then each branch at rung 4, rung 8 A and rung 8 B' }));
-  const cv = el('canvas'); cv.width = SLOT * looks.length * P; cv.height = SLOT_H * P;
-  const names = el('div', { className: 'names' }, looks.map(l => el('span', { textContent: l.short })));
-  host.append(el('div', { className: 'strip' }, [cv, names]));
-  strips.push({ c, looks, g: cv.getContext('2d') });
-
-  host.append(el('h3', { textContent: 'At 4x' }));
-  const grid = el('div', { className: 'tiles' });
-  for (const l of looks) {
-    const tc = el('canvas'); tc.width = SLOT * P; tc.height = SLOT_H * P;
-    grid.append(el('div', { className: 'tile' }, [tc, el('span', { textContent: l.label })]));
-    tiles.push({ c, l, g: tc.getContext('2d') });
-  }
-  host.append(grid);
+const paneCv = document.getElementById('pane');
+paneCv.width = W * P; paneCv.height = H * P;
+const pane = paneCv.getContext('2d');
+const rungBtns = [];
+for (const R of RUNGS) {
+  const b = el('button', { type: 'button', textContent: String(R) });
+  b.onclick = () => { RUNG = R; syncRung(); };
+  rungBtns.push([b, R]);
+  document.getElementById('rungs').append(b);
 }
+function syncRung() { for (const [b, R] of rungBtns) b.setAttribute('aria-pressed', R === RUNG ? 'true' : 'false'); if (!playing) paintAll(clock); }
 
 let playing = true, clock = 0, last = performance.now();
 document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
 function paintAll(t) {
-  for (const s of strips) s.looks.forEach((l, i) => { drawSlotBack(s.g, i * SLOT, SLOT); drawSlot(s.g, s.c, l, i * SLOT, t); });
-  for (const tl of tiles) { drawSlotBack(tl.g, 0, SLOT); drawSlot(tl.g, tl.c, tl.l, 0, t); }
+  for (const s of strips) RUNGS.forEach((R, i) => drawSlot(s.g, s.c, R, i * SLOT, t));
+  for (const tl of tiles) drawSlot(tl.g, tl.c, tl.R, 0, t);
   paintPane(pane, t);
 }
-// For shots: stand the page at a time, and set the pane's looks.
+// For shots: stand the page at a time; set the rung; a contact sheet of the pane.
 window.__at = s => { clock = s; playing = false; document.getElementById('play').textContent = 'play'; paintAll(clock); return clock; };
-window.__sel = o => { Object.assign(SEL.br, o.br || {}); Object.assign(SEL.cap, o.cap || {}); if (o.rung != null) SEL.rung = o.rung; sync(); paintAll(clock); return SEL; };
-window.__test = () => 0;   // the headless shell waits for this name before it shoots
-// For shots: a contact sheet of the live pane at several moments, over the page.
-window.__sheet = (states, cols = 3) => {
-  const src = pane.canvas, w = src.width, h = src.height;
-  const sheet = el('canvas');
+window.__rung = R => { RUNG = R; syncRung(); paintAll(clock); return R; };
+window.__start = k => START[k];
+window.__test = () => 0;   // the headless shell waits for this name
+window.__sheet = (states, cols = 2, x0 = 0, w0 = W) => {
+  const sheet = el('canvas'), w = w0 * P, h = H * P;
   sheet.width = cols * w + (cols - 1) * 6; sheet.height = Math.ceil(states.length / cols) * (h + 6);
   const g = sheet.getContext('2d');
   g.fillStyle = '#888'; g.fillRect(0, 0, sheet.width, sheet.height);
-  states.forEach(([sel, at], i) => { __sel(sel); __at(at); g.drawImage(src, (i % cols) * (w + 6), Math.floor(i / cols) * (h + 6)); });
+  states.forEach(([R, at, cx0 = x0], i) => { __rung(R); __at(at); g.drawImage(paneCv, cx0 * P, 0, w, h, (i % cols) * (w + 6), Math.floor(i / cols) * (h + 6), w, h); });
   sheet.style.cssText = `position:fixed;left:0;top:0;z-index:99;width:${sheet.width}px`;
   document.body.append(sheet);
   return true;
 };
-sync();
+syncRung();
 function tick(now) {
-  if (playing) clock += (now - last) / 1000;
+  if (playing) clock += Math.max(0, now - last) / 1000;
   last = now;
   document.getElementById('clock').textContent = clock.toFixed(1) + ' s';
   paintAll(clock);
