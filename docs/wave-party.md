@@ -274,6 +274,15 @@ are the cards' own (`board.js` builders), so a rail reads as the boards do.
   cells at each position or angle ("the cells should stay intact and aligned
   correctly"). No smoothing, no sub-pixel. This is a deliberate exception to
   CLAUDE.md's "everything on the P grid", for the deep's fighters only.
+- **The attacks' feel is the kit growth page with all three toggles on**
+  (the owner, 2026-09-28: "the classic work is really good"): the sauce pass
+  (wind-up, hit-pause, follow-through, recoil, the coil's local give,
+  impact marks, easing), the smears, and the **classic pass** -- strikes
+  stepped in held poses of about 80 ms around contact (anticipation, a solid
+  held smear with a dark keyline where it crosses the hide, a two-pose held
+  impact star, follow-through), 1.7x key poses, speed lines, whole-cell
+  squash and stretch. Travel stays smooth. The numbers (pose length, pause
+  length, the 1.7) go in `config/deepdraw.js`.
 - **Statuses** on the whole serpent (the bench's painters for Bleeding,
   Exposed, Held, Lit, Weakened) and on fighters (Inspired, Hasted); the
   stun is the built ring.
