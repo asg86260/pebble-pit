@@ -54,7 +54,8 @@
 
   <div class="bar"><button id="play" type="button">pause</button><span id="clock" class="dim">0.0 s</span>
     <div class="grp" id="rungs"><span>rung</span></div>
-    <div class="grp" id="sauce"><span>sauce</span></div></div>
+    <div class="grp" id="sauce"><span>sauce</span></div>
+    <div class="grp" id="smears"><span>smears</span></div></div>
 
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
@@ -345,6 +346,38 @@ function sauceSparks(g, S, t, a, st) {
   for (const gr of S.groups) for (const h of gr.list) spark(g, t, t - (a - gr.real), h.x, cBot(Math.round(h.x), t, st) + 0.5, h.k);
 }
 
+// --- smears: the fast part of a swing (the owner, 2026-09-28) ---------------------------
+// For a frame or two at a swing's top speed -- never at rest, in the wind-up,
+// at contact or on recovery -- the weapon's rigid sprite gives way to a smear:
+// its own drawing of whole cells along the path the weapon sweeps, brightest
+// at the leading edge with the weapon's point at the front, stepping down the
+// greys behind. No blur, no alpha.
+let SMEAR = true;
+const inWin = (a, c, half = 0.0175) => a >= c - half && a < c + half;
+// The cells a turning weapon sweeps about a pivot cell (px, py) between the
+// angles `from` (behind) and `to` (leading), from radius r0 out to r1; with
+// `lead`, the weapon's own line at the leading angle from there out, so the
+// arc is a crescent off the blade rather than a solid wedge.
+function smearArc(g, px, py, from, to, r0, r1, tipTone = WHITE, lead = null) {
+  const seen = new Map(), n = Math.max(2, Math.ceil(Math.abs(to - from) * r1 * 1.5));
+  for (let i = 0; i <= n; i++) {
+    const q = i / n, an = lerp(to, from, q);
+    for (let r = r0; r <= r1; r++) {
+      const ox = Math.round(Math.sin(an) * r), oy = Math.round(-Math.cos(an) * r), key = ox + ',' + oy;
+      if (!seen.has(key)) seen.set(key, [ox, oy, q, r]);
+    }
+  }
+  for (const [ox, oy, q, r] of seen.values())
+    cell(g, px + ox, py + oy, q < 0.12 ? (r === r1 ? tipTone : GREYS[10]) : q < 0.4 ? GREYS[9] : q < 0.7 ? GREYS[7] : GREYS[5]);
+  if (lead != null) for (let r = lead; r < r0; r++) cell(g, px + Math.round(Math.sin(to) * r), py + Math.round(-Math.cos(to) * r), GREYS[10]);
+}
+// A straight streak: the point at (x, y), the cells behind it stepping down.
+const STREAK = [GREYS[10], GREYS[10], GREYS[9], GREYS[9], GREYS[8], GREYS[8], GREYS[7], GREYS[6], GREYS[5]];
+function streak(g, x, y, len, tipTone = WHITE) {
+  cell(g, x, y, tipTone);
+  for (let i = 1; i < len; i++) cell(g, x, y + i, STREAK[Math.min(STREAK.length - 1, Math.floor((i - 1) * STREAK.length / (len - 1)))]);
+}
+
 // A fighter's float off the plinth, which may come with a rung (the Hexer's).
 const liftOf = (c, R) => typeof c.lift === 'function' ? c.lift(R) : (c.lift || 0);
 // A melee fighter's swim: 0 at the plinth, 1 under the coil.
@@ -447,9 +480,13 @@ function swordSprite(R, from, tone) {
     for (let c = 0; c < 3; c++) cell(g, c, L + 1, GREYS[8]);
   });
 }
-function swungSword(g, px, py, ang, R, t, from, dir = 0) {
+// `behind`, when given, is the angle the blade held a moment ago: the frame
+// is a smear from there to `ang` instead of the sprite.
+function swungSword(g, px, py, ang, R, t, from, dir = 0, behind = null) {
   const cx = (px + 0.5) * P, cy = (py + 0.5) * P;
-  if (dir) [[0.45, GREYS[7]], [0.9, GREYS[5]]].forEach(([back, tone]) => blit(g, swordSprite(R, from, tone), cx, cy, ang - dir * back));
+  if (behind != null) { const tip = from + bladeLen(R) + 1; smearArc(g, px, py, behind, ang, tip - 2, tip, WHITE, from); return; }
+  // with smears off, the old ghost trail of darker blade copies
+  if (dir && !SMEAR) [[0.45, GREYS[7]], [0.9, GREYS[5]]].forEach(([back, tone]) => blit(g, swordSprite(R, from, tone), cx, cy, ang - dir * back));
   blit(g, swordSprite(R, from), cx, cy, ang);
   if (R8(R)) drift(g, ...swordAt(px, py, ang, from + 2), t, 1, 0.3);
 }
@@ -507,7 +544,12 @@ const swordsman = {
     const held = spin ? -0.7 : -1.2;
     let on = null, ang = null;
     for (const w of sw) { const an = this.angle(w, a, held); if (an != null) { on = w; ang = an; } }
-    if (on) swungSword(g, px, py, ang, R, t, from, a >= on.at && a < on.at + on.dur ? Math.sign(on.a1 - on.a0) : 0);
+    // a smear at top speed: just before the blade crosses the hide, and for a
+    // spin once more late in the turn, clear of the contact and its pause
+    const smear = SMEAR && on && Math.abs(a - on.hit) > 0.02
+      && (inWin(a, on.hit - 0.055) || (on.spin && inWin(a, on.at + on.dur - 0.06)));
+    if (on) swungSword(g, px, py, ang, R, t, from, a >= on.at && a < on.at + on.dur ? Math.sign(on.a1 - on.a0) : 0,
+                       smear ? this.angle(on, a - 0.05, held) : null);
     else swungSword(g, px, py, held, R, t, from);
   },
 };
@@ -626,7 +668,16 @@ const martial = {
     const sweep = a >= pl.fin - 0.15 && a < pl.fin + 0.3;
     const on = all.find(p => a >= p - 0.08 && a < p + 0.12);
     drawBody(g, x, y);
-    if (sweep) {
+    if (sweep && SMEAR && inWin(a, pl.fin - 0.0175)) {
+      // the finisher's smear: the staff's sweep from over her head up to the
+      // hide as one wide arc, the leading row bright, narrower and darker behind
+      const top = maxBot([x - 2, x + 4], t, s) + 1, rows = Math.max(2, Math.round(y - 1 - top) + 1);
+      for (let i = rows - 1; i >= 0; i--) {
+        const sh = Math.floor(i * 3 / rows), tone = i === 0 ? GREYS[10] : [GREYS[9], GREYS[7], GREYS[6], GREYS[5]][Math.min(3, Math.floor(i * 4 / rows))];
+        for (let c = x - 2 + sh; c <= x + 4 - sh; c++) cell(g, c, top + i, i === 0 && (c === x - 2 || c === x + 4) ? WHITE : tone);
+      }
+      if (R8(R)) pike(g, x + 4, top, 1, 0);
+    } else if (sweep) {
       // the finisher: flat over her head, pressed into the hide
       const row = a >= pl.fin ? maxBot([x - 2, x + 4], t, s) + 1 : y - 1;
       for (let c = x - 2; c <= x + 4; c++) cell(g, c, row, c === x - 2 || c === x + 4 ? WHITE : GREYS[8]);
@@ -637,8 +688,13 @@ const martial = {
       const blade = R8(R) ? 3 : 0, ht = cBot(x + 1, t, s) + 1 + blade;
       const st = SAUCE ? this.tipAt(a, all, y - 3, ht) : null;
       const tip = st != null ? st : on != null ? ht : y - 3;
-      for (let r = 0; r < 7; r++) cell(g, x + 1, tip + r, r === 0 && !blade ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
-      if (blade) pike(g, x + 1, tip, 0, -1);
+      // a thrust's smear, at top speed on the way up: a streak from the point down
+      const smear = SMEAR && all.some(p => SAUCE ? inWin(a - p, -0.028, 0.014) : inWin(a - p, -0.065, 0.015));
+      if (smear) streak(g, x + 1, tip - blade, 10 + blade);
+      else {
+        for (let r = 0; r < 7; r++) cell(g, x + 1, tip + r, r === 0 && !blade ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
+        if (blade) pike(g, x + 1, tip, 0, -1);
+      }
       if (on != null && R4(R)) for (let r = tip + 1; r < tip + 5; r++) cell(g, x + 2, r, GREYS[6]);  // Flow's after-image
       if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t);
       drawBody(g, x, y);
@@ -801,8 +857,13 @@ const assassin = {
         const k = d < this.out ? ease(d / this.out) : 1 - ease((d - this.out) / this.back);
         gy = lerp(home, top, k);
       }
-      const spins = R8(R) ? (d < this.out ? d / this.out : 1 + (d - this.out) / this.back) * Math.PI * 2 : 0;
-      dagger(g, bx, gy, R, spins);
+      const spinAt = d => R8(R) ? (d < this.out ? d / this.out : 1 + (d - this.out) / this.back) * Math.PI * 2 : 0;
+      const spins = spinAt(d);
+      // a smear at top speed on the way out, before the point reaches the hide
+      const smear = SMEAR && (SAUCE ? inWin(d - this.out, -0.0575) : inWin(d, 0.0975));
+      if (smear && R8(R)) smearArc(g, bx, gy, spinAt(d - 0.04), spins, 1, 3, PURPLES[11]);
+      else if (smear) streak(g, bx, gy - 3, 7, R8(R) ? PURPLES[11] : WHITE);
+      else dagger(g, bx, gy, R, spins);
     }
   },
 };
@@ -1185,6 +1246,15 @@ for (const [label, on] of [['on', true], ['off', false]]) {
 }
 function syncSauce() { for (const [b, on] of sauceBtns) b.setAttribute('aria-pressed', String(on === SAUCE)); if (!playing) paintAll(clock); }
 window.__sauce = on => { SAUCE = on; syncSauce(); paintAll(clock); return on; };
+const smearBtns = [];
+for (const [label, on] of [['on', true], ['off', false]]) {
+  const b = el('button', { type: 'button', textContent: label });
+  b.onclick = () => { SMEAR = on; syncSmear(); };
+  smearBtns.push([b, on]);
+  document.getElementById('smears').append(b);
+}
+function syncSmear() { for (const [b, on] of smearBtns) b.setAttribute('aria-pressed', String(on === SMEAR)); if (!playing) paintAll(clock); }
+window.__smear = on => { SMEAR = on; syncSmear(); paintAll(clock); return on; };
 function syncRung() { for (const [b, R] of rungBtns) b.setAttribute('aria-pressed', R === RUNG ? 'true' : 'false'); if (!playing) paintAll(clock); }
 
 let playing = true, clock = 0, last = performance.now();
@@ -1225,7 +1295,7 @@ window.__sheet = (states, cols = 2, x0 = 0, w0 = W) => {
   document.body.append(sheet);
   return true;
 };
-syncRung(); syncSauce();
+syncRung(); syncSauce(); syncSmear();
 function tick(now) {
   if (playing) clock += Math.max(0, now - last) / 1000;
   last = now;
