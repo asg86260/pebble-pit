@@ -7,7 +7,7 @@ import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, LADDER, ABYSS_AT } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
-import { workOn, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
+import { workOn, worksAt, abandonAt, start, stepWorks, SITES, ahead } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize, settleShack } from './world.js';
@@ -29,7 +29,7 @@ import { rebalance, assign as assignJob } from './staffing.js';
 import { kitCap } from './levels.js';
 import { buildShop, refresh, revealed } from './shop.js';
 import { machine, MACHINES } from './machines.js';
-import { UPGRADES, lodgers, SECTIONS, buy as buyRow, billOf, take, HOUSE_ROW } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, buy as buyRow, billOf, take, HOUSE_ROW, handBack } from './upgrades.js';
 import { rungOf, rungsOf, maxed } from './words.js';
 import { gainText } from './words.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
@@ -644,6 +644,17 @@ export const climbedBills = () => everyRow().map(u => {
   return { key: u.key, bills };
 });
 
+// The refund at the foot of a row's card (and its line on the queue card), by
+// the same function the strip calls: true when a copy came out of the line.
+export const handBackByKey = key => {
+  const u = everyRow().find(x => x.key === key);
+  if (!u) return false;
+  const had = ahead(u.key);
+  handBack(u);
+  buildShop();
+  return ahead(u.key) < had;
+};
+
 export const buyRowByKey = key => {
   const u = everyRow().find(x => x.key === key);
   if (!u) return false;
@@ -654,6 +665,7 @@ export const buyRowByKey = key => {
   const from = u.from ? u.from() : null;
   const showed = u.show();
   const wasOn = !!workOn(u.key);
+  const copies = ahead(u.key);
   // ...and a fifth: a decision row that stays on its board and goes dead --
   // the casino's let-go opens the floor and stands there grey until the hand
   // is settled, which is the one sign it fired.
@@ -666,6 +678,7 @@ export const buyRowByKey = key => {
       || (u.from && u.from() !== from)
       || (showed && !u.show())
       || (!wasOn && !!workOn(u.key))
+      || ahead(u.key) > copies
       || (!wasDead && !!u.dead?.());
 };
 
@@ -941,7 +954,7 @@ export const HANDLES = {
   // Pay a price through the very function every row's bill goes through, for
   // a check about *how* the payment is taken (the hole first, the rift after).
   __pay: take,
-  __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
+  __upgrades: upgrades, __buy: buyRowByKey, __handBack: handBackByKey, __pitProfile: pitProfile, __dig: dig,
   __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
   __tip: tip, __give: give, __finish: finishWorks, __everything: everything,
   __dustUnder: dustUnder,          // is a press here a sweep or a look about

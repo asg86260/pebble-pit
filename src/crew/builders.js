@@ -33,19 +33,19 @@ const sitesFor = w => (w.type === TYPE.DELVE ? busyDeepSites() : busyBuilderSite
 function siteFor(w) {
   const busy = sitesFor(w);
   if (w.site && busy.includes(w.site)
-      && onTheGo(w.site).some(x => x.key === w.workKey)) return w.site;
-  let pick = null, pickKey = null, fewest = Infinity;
+      && onTheGo(w.site).some(x => x.id === w.workId)) return w.site;
+  let pick = null, pickId = null, fewest = Infinity;
   for (const site of busy) {
     // Only what is being built: a work in line has nobody walking to it until
     // it reaches the front (`stepWorks` in works.js).
     for (const work of onTheGo(site)) {
       const n = S.workers.filter(o => o.type === w.type && o !== w
-                                   && o.site === site && o.workKey === work.key).length;
-      if (n < fewest) { fewest = n; pick = site; pickKey = work.key; }
+                                   && o.site === site && o.workId === work.id).length;
+      if (n < fewest) { fewest = n; pick = site; pickId = work.id; }
     }
   }
   w.site = pick;
-  w.workKey = pickKey;
+  w.workId = pickId;
   return pick;
 }
 
@@ -55,10 +55,10 @@ function siteFor(w) {
 const nearestIn = (box, x) => Math.max(box.x, Math.min(box.x + box.w - WORKER, x));
 
 // The box a builder's OWN work is on (`siteBox`, the same box the tape is
-// drawn round and the bar hangs over), by key, so two bodies on the yard each
+// drawn round and the bar hangs over), by the work's id, so two bodies on the yard each
 // stand at the thing they are putting up rather than both at the head work's.
 const ownBox = w =>
-  siteBox(w.site, worksAt(w.site).find(x => x.key === w.workKey) || null);
+  siteBox(w.site, worksAt(w.site).find(x => x.id === w.workId) || null);
 
 // The ground a builder's work stands on: the deep's floor for a site down
 // the shaft, the yard's otherwise.

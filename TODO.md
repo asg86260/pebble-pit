@@ -23,21 +23,6 @@ Open:
   the star's spot), stages that change behavior, a wound where you hit.
   Blocker: the owner's pick, then a design.
 
-## The same row, queued again -- DESIGNED, AWAITING THE VOTE (2026-09-26)
-
-"The same row, queued again" in DESIGN.md; mocks
-`docs/mocks/queue-repeats-2026-09-26.html` and
-`docs/mocks/queue-refund-2026-09-26.html`. Today a second press on a row
-whose work is on the go is refused and one whose work is in line hands it
-back, because the line is keyed by row. The owner answered the first calls
-(2026-09-26): "lets add a button at the bottom of the cards for refunding the
-latest purchase, clicking the card body will queue up another one, if
-affordable." So: the body queues the next copy at its own price, the refund
-button hands back the newest copy in the works, the queue card is a line a
-run with `×n`. Blocked on: the refund button's drawing (the refund mock), and
-whether a copy already being built is refundable (recommended: no, waiting
-copies only). A landed rung stays unrefundable.
-
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 
 "The deep's bench" in DESIGN.md; mocks `docs/mocks/deep-bench-2026-09-24.html`

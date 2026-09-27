@@ -759,6 +759,14 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(0, 1); window.__grant({ dust: 9000 });
                  window.__fast(2); window.__buy('carry'); window.__buy('auto'); window.__buy('haulcarry');
                  window.__fast(3); window.__look(st().benchX - 300); } },
+  // One row queued again (DESIGN.md, "The same row, queued again"): three
+  // rungs of the carry ladder and two houses, the bench's board open on the
+  // carry card with its refund strip, the queue card in the corner.
+  queuerepeat: { about: 'the bench', say: 'a row queued three times: the refund strip, the queue card a line a run', page: true,
+    run: () => { rich(); window.__fast(2);
+                 for (let i = 0; i < 3; i++) window.__buy('carry');
+                 window.__buy('house'); window.__buy('house');
+                 window.__fast(2); window.__board('bench'); } },
   // Deliberately not `__finish`ed: partway through is the only state the
   // rise, the tape and the hammer exist in.
   build: { about: 'the bench', say: 'a building half out of the ground',

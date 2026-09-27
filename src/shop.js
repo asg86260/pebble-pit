@@ -8,7 +8,8 @@ import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_
 import { drawGlyph, glyphFor, badgeFor, cellsOf, inheritGlyph } from './glyphs.js';
 import { ownsCamera } from './beats.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, lodgers, SECTIONS, buy, billOf, tintOf, canPay, building, inLine, lineAt } from './upgrades.js';
+import { UPGRADES, lodgers, SECTIONS, buy, billOf, tintOf, canPay, building, lineAt, again, full as spokenFor,
+         waitingOf, handBack } from './upgrades.js';
 import { rungOf, rungsOf, maxed, folds } from './words.js';
 import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js';
 import { takesTime, stalled, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
@@ -354,6 +355,22 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
         pin.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
         b.appendChild(pin);
       }
+      // The refund strip along the tile's foot (DESIGN.md, "The same row,
+      // queued again"): hands back the newest copy still waiting its turn.
+      // Its own tap, so a scroll that ends on it refunds nothing, and its
+      // click stops at it, so the card under it does not buy another.
+      if (shelf && takesTime(u) && !inSubmenu) {
+        const strip = document.createElement('i');
+        strip.className = 'refund';
+        strip.hidden = true;
+        onTap(strip, e => {
+          e.stopPropagation(); e.preventDefault();
+          tookLook();
+          handBack(u);
+          if (S.shopStale) buildShop();
+        });
+        b.appendChild(strip);
+      }
       // A card wears its description inline (`sayNote`); the crew submenu and a
       // shelf tile have no line for it, so the tip carries it. The goal card
       // keeps its sentence in place. A tile in line says nothing more than
@@ -415,6 +432,9 @@ const sayCount = (key, v) => typeof v === 'number' ? String(Math.round(shown('co
 const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; reworded = true; } };
 // A place in a line: the first waiting is `next`, the rest count from there.
 export const placeWord = n => (n <= 1 ? 'next' : ordinal(n));
+// Whether a row's oldest copy is still in line rather than being built: its
+// picture is a plan and its word is `queued` then.
+const firstWaits = u => lineAt(u) > roomAt(u.site);
 const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; reworded = true; } };
 const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
 const sayNote = (row, u) => { const n = row.querySelector('.note'); if (n && typeof u.note === 'function') say(n, u.note()); };
@@ -569,13 +589,24 @@ export function refresh(el, list, headcount) {
     // The work on this row, if the yard is building it or has it in line: the
     // picture and the tag are about the build then, not the offer.
     const mine = takesTime(u) ? workOn(u.key) : null;
+    // The refund strip at the foot: there while a copy is waiting its turn,
+    // counting them. While it stands the tile is never `disabled`, which would
+    // take the strip's press with it; `off` says "not for sale" instead.
+    const refunds = waitingOf(u);
+    const strip = row.querySelector('.refund');
+    if (strip) {
+      if (strip.hidden !== !refunds) strip.hidden = !refunds;
+      if (refunds) say(strip, `refund ×${refunds}`);
+      if (row.classList.contains('refunds') !== !!refunds) row.classList.toggle('refunds', !!refunds);
+    }
     const pic = row.querySelector('.pic');           // set on a shelf tile; the gain reads it below
     if (pic && mine) {
       // Drawn to the share done, in the stroke of the rung going up: the row's
       // `buy` has not run yet, so its bill is still this rung's. A row in
       // line is a plan: the outline and nothing in it.
       const rows = glyphFor(u.key);
-      wearGlyph(row, u.key, tintOf(u), '#000', inLine(u) ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), inLine(u) ? [] : handsFor(u.key));
+      const plan = firstWaits(u);
+      wearGlyph(row, u.key, tintOf(u), '#000', plan ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), plan ? [] : handsFor(u.key));
     } else if (pic) {
       const tint = tintOf(u);
       // A climbed ladder is drawn full: its bill clamps to the top band, so
@@ -612,11 +643,14 @@ export function refresh(el, list, headcount) {
       if (u.lead && ladder.dataset.lead !== u.lead) ladder.dataset.lead = u.lead;
     }
 
-    // A row the yard is building says so where the numbers go; a row in line
-    // says where it stands and stays pressable, because pressing it again is
-    // how it is handed back (DESIGN.md, "The queue").
+    // A row the yard is building, with nothing more of it to sell (a one-off,
+    // or a ladder spoken for to its top), says so where the numbers go, and
+    // a row whose oldest copy is in line says where it stands (DESIGN.md,
+    // "The queue"). A row that can take another copy stays an offer: its tag
+    // is the next copy's bill, and only its gain line says the yard is at it.
+    const more = mine && again(u) && !spokenFor(u);
     if (takesTime(u)) {
-      if (mine) {
+      if (mine && !more) {
         say(what, u.name);
         // The vocabulary is closed, and every word fits the tightest cell on
         // any board (`pinWidth` in board.js, the width check in
@@ -624,7 +658,7 @@ export function refresh(el, list, headcount) {
         // the builders' too, as the queue card reads it: a spare hand is not
         // always there to be had.
         row.classList.add('waiting');
-        const queued = inLine(u);
+        const queued = firstWaits(u);
         const stuck = !queued && stalled(u.site);
         // Two words about bodies: `building` while somebody is at it, `queued`
         // while nobody is. The tile says which by the rest of it.
@@ -637,17 +671,20 @@ export function refresh(el, list, headcount) {
         sayHTML(time, `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
         if (row.classList.contains('queued') !== !!queued) row.classList.toggle('queued', !!queued);
-        // Greyed while being built; live while it waits, so a press can pull
-        // it back out.
-        grey(row, !queued);
-        // Pressable but not on offer: `off` keeps the shelf's hover away.
+        // Greyed while being built, unless its strip has a copy to refund.
+        grey(row, !refunds);
+        // Not on offer: `off` keeps the shelf's hover away.
         row.classList.add('off');
         continue;
       }
     }
-    if (!waits && row.classList.contains('waiting')) row.classList.remove('waiting');
-    if (row.classList.contains('building')) row.classList.remove('building');
-    if (row.classList.contains('queued')) row.classList.remove('queued');
+    // An offer with copies in the works wears the state of its oldest copy
+    // on the tile's edge, as a row with nothing more to sell does.
+    const going = more && !firstWaits(u) && !stalled(u.site), inline = more && firstWaits(u);
+    if (!waits && !more && row.classList.contains('waiting')) row.classList.remove('waiting');
+    if (more && !row.classList.contains('waiting')) row.classList.add('waiting');
+    if (row.classList.contains('building') !== going) row.classList.toggle('building', going);
+    if (row.classList.contains('queued') !== !!inline) row.classList.toggle('queued', !!inline);
     if (row.classList.contains('locked') !== !!waits) row.classList.toggle('locked', !!waits);
 
 
@@ -672,13 +709,16 @@ export function refresh(el, list, headcount) {
     if (waits) row.classList.add('waiting');
     // On a shelf the gain is the number alone -- the name is the verb.
     const g = gainText(u);
-    sayHTML(gain, pic && u.does && g.startsWith(u.does + ' ') ? g.slice(u.does.length + 1) : g);
+    // While copies are in the works the gain line is theirs, in the same two
+    // words a row being built uses.
+    if (more) sayHTML(gain, going ? 'building' : 'queued');
+    else sayHTML(gain, pic && u.does && g.startsWith(u.does + ' ') ? g.slice(u.does.length + 1) : g);
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's decisions are the only ones: none costs anything, and the
     // number each is about is the pot.
     sayHTML(price, u.price ? u.price() : bill); sayHTML(time, u.price ? '' : clock);
     const off = u.price ? !!u.dead?.() : !!waits || !canPay(u);
-    grey(row, off);
+    grey(row, off && !refunds);
     // The hover, the lift and the lean key off `off`, never off `disabled`.
     row.classList.toggle('off', off);
   }

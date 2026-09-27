@@ -27,7 +27,7 @@ import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance } from './staffing.js';
 import { commutePace } from './levels.js';
 import { unitText } from './words.js';
-import { registerRows } from './works.js';
+import { registerRows, ahead } from './works.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { puff } from './puff.js';
 import { JOB, TYPE, YARD_JOBS } from './jobs.js';
@@ -577,9 +577,14 @@ export const APOTHECARY_UPGRADES = [
   {
     key: 'anotherpot', kind: 'place', site: 'apothecary',
     name: 'another pot', unit: 'pots',
-    from: () => S.apothPots,
-    to: () => S.apothPots + 1,
-    cost: () => Math.round(POT_COST * Math.pow(POT_RATE, S.apothPots - 1)),
+    // One more each press, each priced as the pot it will be; `cap` is how
+    // many more the floor has room for, which the copies paid for count
+    // against (`full` in upgrades.js).
+    repeats: true,
+    cap: () => APOTH_POTS_MAX - S.apothPots,
+    from: () => S.apothPots + ahead('anotherpot'),
+    to: () => S.apothPots + ahead('anotherpot') + 1,
+    cost: () => Math.round(POT_COST * Math.pow(POT_RATE, S.apothPots + ahead('anotherpot') - 1)),
     currency: 'dust',
     buy: () => { S.apothPots++; rebalance(); },
     // A second pot is for a craft with batches behind it, the same earned

@@ -10115,7 +10115,7 @@ is spare, an empty cut building nothing. A queue does not staff itself.
   The refund arcs *from* the site back to the bench -- `payTo` the other way,
   the same dust and the same flight -- so what was paid is seen coming back. A
   row on the go is committed, as today; its tooltip says so, once.
-- Duplicates: a rung row already in line cannot be pressed again (its next
+- Duplicates (superseded 2026-09-26 by "The same row, queued again"): a rung row already in line cannot be pressed again (its next
   rung is not for sale until this one lands); a repeatable row (a hat, a pot)
   can be queued as many times as you can pay for, and the card counts them.
 
@@ -10216,7 +10216,7 @@ build (`test/boards.test.mjs`), since the next row can be pressed. `refund`
 in pit.js is `bankDust` per grain -- one call a grain, the same as a hauler's
 tip -- with the payment's `S.paid` flight run the other way.
 
-## The same row, queued again (design, not built)
+## The same row, queued again (built)
 
 **The owner's word (2026-09-26):** "i want to be able to queue up multiple
 of the same item."
@@ -10314,34 +10314,25 @@ refunds the latest purchase; the card's body queues another.
 - **The body** is the buy, and only the buy: a press queues one more copy if
   the purse can pay the next one's bill, and does nothing otherwise. It never
   hands anything back, which is what a press on a waiting row does today.
-- **The refund button** hands back that row's **newest copy still in the
-  works** -- waiting or being built -- at the price it was paid, the bill
+- **The refund button** hands back that row's **newest copy still waiting
+  its turn** (call 5: the one being built is committed) at the price it was paid, the bill
   flying from the site to the pile as a pull-out does today. Newest, because
   the bill climbs a copy at a time: handing back the second of three rungs
   would leave the third priced as a third it no longer is. A rung that has
   already landed is not refundable; the button counts the works, not the
   ladder.
-- **The button is there only while the row has a copy in the works.** With
+- **The button is there only while the row has a copy waiting.** With
   none, the card is the card it is today -- no button, no empty strip -- so a
   plank of rows nobody has bought reads as it always has. A one-off (a door,
-  a machine) in the works shows only the button: its body has nothing more
-  to sell.
+  a machine) waiting shows only the button: its body has nothing more to
+  sell.
 - **The queue card keeps one line a run with `×n`** (call 2 as recommended;
   the answer does not touch it), and its waiting line keeps its press: the
   same hand-back as the card's button, the newest copy of that row. Two doors
   to one action, one on the board and one in the corner, as today.
 - **While a copy is in the works,** the card's gain line reads `building` or
   `queued` as today, the price tag shows the *next* copy's bill (the body is
-  for sale again), and the count of copies stands by the refund button.
-  Which drawing that takes is the mock's vote.
-
-What the answer changes that the survey above does not cover: a copy on the
-go was committed ("A row on the go is committed", "The queue"), and now it
-can be refunded while a builder is at it. For a rung nothing is drawn, so the
-builder walks off and the pips never fill. For a yard building half out of
-the ground, the risen part has to come down where it can be seen -- the rise
-run backward, the fence struck -- or a refund would make half a building
-vanish. See the open call below.
+  for sale again), and the count of waiting copies is on the refund strip.
 
 ### Why the old argument against it no longer holds
 
@@ -10404,22 +10395,58 @@ up another one, if affordable"):
    card, for the newest copy in the works; the queue card's waiting line
    keeps the same hand-back.
 
-Open:
+Then (the owner, 2026-09-26): "A, for the refund" -- the full-width strip.
+The rest went as recommended, with no word against:
 
-4. **The refund button's drawing** -- a strip along the card's foot, a small
-   tag under the price, or a count with a minus on it. The vote is
-   `docs/mocks/queue-refund-2026-09-26.html`.
-5. **A copy being built, refunded.** Taken as refundable (the brief's
-   "waiting or being built"), at its full price. The other choice keeps the
-   old rule: the one on the go is committed, and the button shows only while
-   a copy is *waiting*. Recommended: the old rule. It keeps a half-risen
-   building from having to fall down backward, keeps the builder's walk
-   meaning something, and the button still covers every copy behind the
-   front, which is what a mis-press queues.
-6. **A landed rung.** Not refundable, and recommended to stay so: a landed
-   rung has done its work (the yard has been hauling with it), a refund of it
-   would be a free trial of every rung, and the ladder's price climbs off the
-   landed level, so selling one back would have to walk the ladder down.
+4. **The refund button's drawing:** A, a strip the width of the card along
+   its foot, `REFUND ×n` in the title's capitals.
+5. **A copy being built:** committed, as the queue always had it. The strip
+   refunds and counts only copies still waiting, and is there only while
+   there is one.
+6. **A landed rung:** not refundable.
+
+### As built
+
+- **A work has an `id`**, one past the highest in the works (`nextId`), so a
+  save needs no counter; a save from before ids is given them on the read.
+  Every lookup that used to find the first work of a key now says which it
+  means: `workOn` the oldest copy, `worksOf` every copy, `ahead` how many,
+  `newestWaiting` the one a refund takes, `pullOut` that one. A builder is
+  sent to a work by its id (`workId`, crew/builders.js), and `handsOn` and
+  `bodiesOn` count by it, so two copies of one row are never one work to the
+  hands at them.
+- **Which rows repeat** is a property of the row, not a list: a row with a
+  `rung` (every ladder), or one that says `repeats` (another house, another
+  pod, another pot, the carts and the forklift). Everything else is a
+  one-off, refused while it is in the works. `full` is a ladder spoken for to
+  its top, or a count row's `cap` (the pots) used up, counting the copies
+  paid for. `forSale` is the one gate a press, the bench's dot and a
+  station's flag all ask; the flag also stays up for a row being built
+  there, as it did.
+- **Pricing the next copy.** `workFor` climbs by `rung + ahead`; `tierRows`
+  reads every offer off `next()` (landed plus ahead) and keeps the pips on
+  what has landed; the row families that price themselves off their own
+  state (the tower's rungs and hats, the machines' tuning, the balloon, the
+  kit and the forklift, the plots, the benches, the house, the pod, the pot,
+  the star) each add `ahead` of their own key. The bill is read before the
+  work starts and kept on it (`bill`), so a refund hands back what was paid.
+- **The card.** While a row with more to sell has copies in the works, its
+  gain line says `building` or `queued` and its tag is the next copy's bill
+  and time; a row with nothing more to sell reads as a row being built always
+  did. The strip is an element inside the tile with its own tap (tap.js), so
+  a scroll that ends on it refunds nothing and its click never reaches the
+  card; while it shows, the tile is never `disabled` (which would swallow
+  the strip's press) and `off` says it is not for sale. Its height is
+  `SHELF_REFUND`; the tile grows by it and the pin mark stands on it.
+- **The queue card** is a line a run of one row, `×n`, clocked to the last of
+  the run; a line with a copy waiting is a button that hands back the newest.
+- **On the yard,** a second house stands on the room after the first's
+  (`siteBox` and `nextHouseAt` count the houses ahead), and copies of one
+  row on the yard stack their bars over each other rather than drawing on
+  top of one another.
+- The card bench (`cards.html`) now loads shelf.css, as the game does, and
+  opens on a "queued again" board; the `queuerepeat` scene shows the strip
+  and the queue card in the game.
 
 ## The cut is worked in pockets (built)
 

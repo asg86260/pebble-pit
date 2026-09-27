@@ -24,6 +24,7 @@ feature lives in DESIGN.md.
 - The deep's crew no longer hangs still with nothing to do: a gatherer on a bare floor, a scribe whose circles are full and a wizard with nothing in reach stroll, float and hop about their station, and go straight to work from mid-air when called (test/deep-rest.test.mjs).
 - The fight is read in numbers: each blow's damage rises off the coil in a carved pixel face of its own, a lance's and a beam's bleed and a grenade's burst each say one sum, and the heal rises off the wound in purple as +N once a second (test/serpent-numbers.test.mjs).
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
+- A card pressed again queues another of the same -- the next rung, the next house -- paid on the press at its own price, and a refund strip along the card's foot hands back the newest one still waiting; the queue card shows a run as one line with its count (test/queue-repeats.test.mjs, src/selftest/boards.js).
 
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - The deep no longer drops to about 35 frames a second in Firefox on the light page (Firefox at 2560x1440 on the `deep` scene, PERF.md "The deep in Firefox").

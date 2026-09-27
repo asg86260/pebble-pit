@@ -13,7 +13,7 @@ import { offered } from './stations.js';
 import { rebalance } from './staffing.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
-import { registerRows, workOn, progressOf } from './works.js';
+import { registerRows, workOn, progressOf, ahead } from './works.js';
 import { TYPE, JOB } from './jobs.js';
 import { MACHINES, machine, buyMachine, canBuy, tuneRow } from './machines.js';
 import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
@@ -23,8 +23,9 @@ import { sphereUp } from './sphere.js';
 import { registerBoard } from './boardrows.js';
 
 // what the next hat costs, in each of the three things the yard makes
-export const wizCost = () => {
-  const up = Math.pow(WIZ_RATE, S.wizardHats);
+// `extra` is the hats already paid for and not yet made.
+export const wizCost = (extra = 0) => {
+  const up = Math.pow(WIZ_RATE, S.wizardHats + extra);
   return { dust: Math.round(WIZ_DUST * up),
            shards: Math.round(WIZ_SHARDS * up),
            spores: Math.round(WIZ_SPORES * up) };
@@ -116,8 +117,8 @@ export const TOWER_UPGRADES = [
     rung: () => S.wizSpeedLevel,
     from: () => 60000 / wizMs(),
     to: () => 60000 / (wizMs() / STEP),
-    bill: () => [['spark', Math.round(WIZ_SPEED_COST * Math.pow(WIZ_LADDER_RATE, S.wizSpeedLevel))],
-                 ['dust', Math.round(600 * Math.pow(WIZ_LADDER_RATE, S.wizSpeedLevel))]],
+    bill: () => [['spark', Math.round(WIZ_SPEED_COST * Math.pow(WIZ_LADDER_RATE, S.wizSpeedLevel + ahead('wizspeed')))],
+                 ['dust', Math.round(600 * Math.pow(WIZ_LADDER_RATE, S.wizSpeedLevel + ahead('wizspeed')))]],
     buy: () => { S.wizSpeedLevel++; },
     show: () => S.towerOpen && S.seenSpark && S.wizSpeedLevel < RUNGS
   },
@@ -132,8 +133,8 @@ export const TOWER_UPGRADES = [
     rung: () => S.wizPowerLevel,
     from: () => wizBite(),
     to: () => wizBite() + 1,
-    bill: () => [['spark', Math.round(WIZ_POWER_COST * Math.pow(WIZ_LADDER_RATE, S.wizPowerLevel))],
-                 ['dust', Math.round(900 * Math.pow(WIZ_LADDER_RATE, S.wizPowerLevel))]],
+    bill: () => [['spark', Math.round(WIZ_POWER_COST * Math.pow(WIZ_LADDER_RATE, S.wizPowerLevel + ahead('wizpower')))],
+                 ['dust', Math.round(900 * Math.pow(WIZ_LADDER_RATE, S.wizPowerLevel + ahead('wizpower')))]],
     buy: () => { S.wizPowerLevel++; },
     show: () => S.towerOpen && S.seenSpark && S.wizPowerLevel < RUNGS
   },
@@ -149,9 +150,9 @@ export const TOWER_UPGRADES = [
     // whoever the yard lends an empty station (`busyBuilderSites`).
     kind: 'rung', site: 'tower',
     work: () => WIZ_BREW_MS / 1000,
-    bill: () => { const c = wizCost();
+    bill: () => { const c = wizCost(ahead(TYPE.WIZARD));
                   return [['dust', c.dust], ['shard', c.shards], ['spore', c.spores]]; },
-    cost: () => wizCost().dust,
+    cost: () => wizCost(ahead(TYPE.WIZARD)).dust,
     buy: hatMade,
     // A set of three, like every station's kit, with pips and an end: the
     // sphere is gated on the set (`KIT` in kit.js).

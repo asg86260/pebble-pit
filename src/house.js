@@ -73,8 +73,10 @@ export function doorAt() {
 // `cubes` for one more than today's count, never mutates `S.crew` to peek: a
 // peek that forgot to put the count back is a hire that happened twice. The
 // first hire adds two rooms, and the spot offered is the later of the two.
-export function nextHouseAt() {
-  const rooms = cubes(roomsToday() + (S.crew > 0 ? 1 : 2));
+// `ahead` is the houses already paid for and not yet standing: a second one
+// queued goes up on the room after the first's.
+export function nextHouseAt(ahead = 0) {
+  const rooms = cubes(roomsToday() + (S.crew > 0 ? 1 : 2) + ahead);
   const added = rooms[rooms.length - 1];
   return added ? Math.round((added.x + HOUSE_CUBE / 2) / P) * P : houseCx();
 }

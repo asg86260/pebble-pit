@@ -224,8 +224,10 @@ export function drawWorkBars() {
     // hangs over its own thing; elsewhere the stack starts over what the
     // station has finished and not yet shown (`drawDoneMarks`).
     let stacked = doneAt(site).length;
-    for (const w of list) {
-      const lift = site === 'yard' ? 0 : stacked++;
+    for (const [i, w] of list.entries()) {
+      // On the yard, copies of one row (a second house) share ground with the
+      // first, so they stack over it as a station's line does.
+      const lift = site === 'yard' ? list.slice(0, i).filter(x => x.key === w.key).length : stacked++;
       const at = stackSlot(site, lift, w);
       if (!at) continue;
       if (site === 'yard' && risingPlaces().some(r => r.key === w.key)) {
