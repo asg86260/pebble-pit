@@ -122,12 +122,13 @@ export const setHands = fn => { handsHook = fn; };
 export const handsAt = site => Math.max(0, handsHook(site) | 0);
 
 // How many of them are at ONE work of the site's several: a builder is given
-// a work, not just a site. Null until crew.js wires it, in which case the site
-// total is shared out.
+// a work, not just a site, and named by the work's `id`, since a row queued
+// twice is two works under one key. Null until crew.js wires it, in which
+// case the site total is shared out.
 let handsOnHook = null;
 export const setHandsOn = fn => { handsOnHook = fn; };
-export const handsOn = (site, key) =>
-  handsOnHook ? Math.max(0, handsOnHook(site, key) | 0) : null;
+export const handsOn = (site, id) =>
+  handsOnHook ? Math.max(0, handsOnHook(site, id) | 0) : null;
 
 // A build starting makes spare hands into builders and a build landing makes
 // them spare again; both have to happen on the frame it changes or the site
@@ -174,16 +175,24 @@ export const SAVE = {
     // its row says today, so a work whose row has moved sites does not come
     // back blocking a site that is not there.
     S.works = {};
+    const seen = new Set();
     for (const [site, list] of Object.entries(s.works || {})) {
       if (!Array.isArray(list)) continue;
       for (const w of list) {
         if (!(w && w.key && rowFor(w.key) && w.of > 0)) continue;
         const home = rowFor(w.key).site || site;
         if (!SITES.includes(home)) continue;
+        // A save from before works had ids, or two that somehow share one,
+        // gets a fresh id; the bill is what a refund hands back, and a work
+        // saved without one is refunded at its row's bill today.
+        const id = Number.isInteger(w.id) && w.id > 0 && !seen.has(w.id) ? w.id : null;
+        if (id) seen.add(id);
         (S.works[home] ||= []).push({ key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
-                                      of: w.of, at: w.at ?? null });
+                                      of: w.of, at: w.at ?? null, id,
+                                      bill: Array.isArray(w.bill) ? w.bill : null });
       }
     }
+    for (const w of SITES.flatMap(worksAt)) if (!w.id) { w.id = nextId(); }
   },
   blank() {
     S.works = {};
@@ -198,9 +207,12 @@ export const SAVE = {
 // A row may carry its own `work: () => seconds` instead: the house has a rung
 // in all but name (how many rooms already stand) and no rung of its own to
 // read it off.
+//
+// A ladder's next copy is priced, and timed, at the rung it will be when it
+// lands: the rungs landed plus the copies already paid for (`ahead`).
 export const workFor = u =>
   u.work ? Math.round(u.work()) :
-  Math.round((WORK_BASE[u.kind] || 0) * Math.pow(WORK_STEP, u.rung ? u.rung() : 0));
+  Math.round((WORK_BASE[u.kind] || 0) * Math.pow(WORK_STEP, u.rung ? u.rung() + ahead(u.key) : 0));
 
 // A row with no `kind` is bought and had: the bench's own ladders, the
 // casino's decisions, a dial.
@@ -230,11 +242,13 @@ const YARD_ROW_SITE = {
 // is its station's (`stationBox`).
 const SITE_BOX = { lab: () => lab };
 
-// Every room the settlement will have once the one going up lands, the same
-// way `nextHouseAt` in house.js asks.
-const risingRooms = () => {
+// Every room the settlement will have once this house lands, the same way
+// `nextHouseAt` in house.js asks. `ahead` is how many houses are in the line
+// before it: a second house queued behind the first stands on the room after
+// the first's, not on the same one.
+const risingRooms = (ahead = 0) => {
   const today = S.crew > 0 ? S.crew + 1 : 0;
-  return houseRooms(today + (S.crew > 0 ? 1 : 2));
+  return houseRooms(today + (S.crew > 0 ? 1 : 2) + ahead);
 };
 let houseRooms = () => [];
 export const setRooms = fn => { houseRooms = fn; };
@@ -257,7 +271,8 @@ export function siteBox(site, which = null) {
   // The settlement grows a room at a time, so its ground is the rooms it will
   // have once this one lands, not the street reserved for all of them.
   if (w.key === 'house') {
-    const rooms = risingRooms();
+    const houses = worksAt('yard').filter(x => x.key === 'house');
+    const rooms = risingRooms(Math.max(0, houses.indexOf(w)));
     if (rooms.length) {
       const left = Math.min(...rooms.map(r => r.x));
       const right = Math.max(...rooms.map(r => r.x)) + HOUSE_CUBE;
@@ -290,33 +305,64 @@ export const onTheGo = site => worksAt(site).slice(0, roomAt(site));
 export const inLine = site => worksAt(site).slice(roomAt(site));
 // "The" work at a site, for callers asking about a site with room for one.
 export const workAt = site => worksAt(site)[0] || null;
-export const workOn = key => SITES.flatMap(worksAt).find(w => w && w.key === key) || null;
+// Every copy of one row in the works, oldest first: a row can be queued again
+// (DESIGN.md, "The same row, queued again"), so a key names a run of works
+// and each work is told apart by its `id`.
+export const worksOf = key => SITES.flatMap(worksAt).filter(w => w && w.key === key);
+// The oldest copy, the one nearest the front: what "is this row being built"
+// and "how far along is it" mean.
+export const workOn = key => worksOf(key)[0] || null;
+// How many copies are paid for and not yet landed. A row's next copy is
+// priced this many rungs above where its ladder stands.
+export const ahead = key => worksOf(key).length;
 export const busyAt = site => worksAt(site).length > 0;
-// The bodies on this work's patch right now, for the tile that bought it
-// (DESIGN.md, "A hand on the tile"). Read off the bodies each frame, so the
-// tile shows a hand only while the site has one.
-export const bodiesOn = key => S.workers.filter(w => w.jigAt != null && w.workKey === key);
-// Where a work stands in its site's list, counting the front as one, so the
-// first behind it is 2, which is what "2nd" in its tag means. Nought for a
-// work the site does not have.
+// The bodies on this row's patch right now, for the tile that bought it
+// (DESIGN.md, "A hand on the tile"): at any copy of it, by the work's id.
+// Read off the bodies each frame, so the tile shows a hand only while the
+// site has one.
+export const bodiesOn = key => {
+  const ids = new Set(worksOf(key).map(w => w.id));
+  return S.workers.filter(w => w.jigAt != null && ids.has(w.workId));
+};
+// Where a row's oldest copy stands in its site's list, counting the front as
+// one, so the first behind it is 2, which is what "2nd" in its tag means.
+// Nought for a row the site does not have.
 export const placeOf = (site, key) => worksAt(site).findIndex(w => w.key === key) + 1;
-export const waiting = (site, key) => placeOf(site, key) > roomAt(site);
+// The newest copy of a row that is still in line, not being built: the one a
+// refund takes. Null when every copy is on the go or there is none.
+export const newestWaiting = (site, key) => {
+  const list = worksAt(site);
+  for (let i = list.length - 1; i >= roomAt(site); i--) if (list[i].key === key) return list[i];
+  return null;
+};
+// Whether any copy of the row is waiting its turn.
+export const waiting = (site, key) => !!newestWaiting(site, key);
+// How many copies of the row are waiting their turn: what its refund strip
+// counts.
+export const waitingCount = (site, key) => inLine(site).filter(w => w.key === key).length;
+// A fresh id for a new work: one past the highest in the works, so ids are
+// unique for as long as the works that carry them, and a save needs no
+// counter of its own.
+export const nextId = () => SITES.flatMap(worksAt).reduce((m, w) => Math.max(m, w.id || 0), 0) + 1;
 // Only what says where a new work goes; nothing is greyed on it.
 export const fullAt = site => worksAt(site).length >= roomAt(site);
 
 // how far along it is, 0..1 -- for a bar over the site
 export const progressOf = w => (w && w.of > 0 ? Math.min(1, w.done / w.of) : 0);
-// One particular work's, for a site with several: each rising building is
-// clipped to ITS work's progress, not the head's.
+// A row's oldest copy's, for a caller that names the row rather than holding
+// the work.
 export const progressOfKey = (site, key) =>
   progressOf(worksAt(site).find(w => w.key === key) || null);
 
 // What is left of a work, in milliseconds. With nobody on it, the one-body
 // figure rather than forever: "never" reads as broken, and how long it would
 // take with somebody on it is the decision the number informs.
-export const leftAt = (site, key = null) => {
+// `which` is a work, or a row's key for its oldest copy, or nothing for the
+// front.
+export const leftAt = (site, which = null) => {
   const list = worksAt(site);
-  const w = key ? list.find(x => x.key === key) || list[0] : list[0];
+  const w = which && typeof which === 'object' ? which
+          : which ? list.find(x => x.key === which) || list[0] : list[0];
   if (!w) return 0;
   // At this site's own pace: a clock on a lab row that quoted the yard's plain
   // effort would be quoting somebody else's day.
@@ -339,10 +385,14 @@ function reserve(key) {
 
 // Start one, or put it in line if the site is already building as much as it
 // can.
-export function start(site, u, at) {
+// `bill` is what was paid for this copy, kept on the work so a refund hands
+// back exactly that: the row's own bill has moved on by the time a later copy
+// is pressed.
+export function start(site, u, at, bill = null) {
   if (!site) return false;
   const was = fullAt(site);
-  (S.works[site] ||= []).push({ key: u.key, done: 0, of: workFor(u), at: at ?? null });
+  (S.works[site] ||= []).push({ key: u.key, done: 0, of: workFor(u), at: at ?? null,
+                                id: nextId(), bill });
   // The ground is spoken for the moment it is paid for, not when the thing
   // lands: the walk is laid out in the order places were bought (`siteOrder`
   // in world.js), and a place not yet in that order was laid at the end of
@@ -356,15 +406,17 @@ export function start(site, u, at) {
   return true;
 }
 
-// Take a work out of the line, unbuilt. Only a waiting one: a work being built
-// has hands on it and is committed. What is handed back is the row's business
-// (`buy` in upgrades.js).
+// Take a row's newest waiting copy out of the line, unbuilt, and hand it to
+// the caller. Only a waiting one: a work being built has hands on it and is
+// committed. What is handed back is the row's business (`handBack` in
+// upgrades.js).
 export function pullOut(site, key) {
-  if (!waiting(site, key)) return false;
+  const w = newestWaiting(site, key);
+  if (!w) return null;
   const list = worksAt(site);
-  list.splice(list.findIndex(w => w.key === key), 1);
+  list.splice(list.indexOf(w), 1);
   staffHook();
-  return true;
+  return w;
 }
 
 // Put one down unfinished, with nothing built and nothing handed back. The lab
@@ -405,7 +457,7 @@ export function stepWorks(dt) {
     // walked.
     for (let i = going - 1; i >= 0; i--) {
       const w = list[i];
-      const own = manned ? handsOn(site, w.key) : null;
+      const own = manned ? handsOn(site, w.id) : null;
       const share = own != null ? Math.min(1, own) : each;
       if (share > 0) w.done += share * effort * (dt / 1000);
       // A work that is already through lands whether or not anybody is

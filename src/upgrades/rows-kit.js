@@ -7,6 +7,7 @@ import { tierRows, named } from './tiers.js';
 import { kitDisplaced, machineFor } from '../machines.js';
 import { shieldOpened } from '../shield.js';
 import { rebalance } from '../staffing.js';
+import { ahead } from '../works.js';
 import { syncWorkers } from '../crew.js';
 
 // The kit rows: a hat for the rock, a lamp for the cut, a brim for the plots, a
@@ -42,8 +43,10 @@ export const TRADES = [
 const OPEN = { rockhands: () => true, haulers: () => true,
                quarriers: () => S.quarryOpen, farmhands: () => S.farmOpen };
 
+// Counting the kit already paid for and not yet made (`ahead`), so a second
+// hat queued is priced as the second hat.
 export const tradeCost = t =>
-  Math.round(TRADE_COST * Math.pow(TRADE_RATE, stockOf(t.job)));
+  Math.round(TRADE_COST * Math.pow(TRADE_RATE, stockOf(t.job) + ahead(t.key)));
 
 // What is bought is the kit, and it stays at the station: whoever is sent
 // there next picks up whatever the last one put down. Three to a station
@@ -89,6 +92,8 @@ export const KIT_ROWS = TRADES.map(t => ({
   // The carts have no ceiling, so no pips and never `done`; the price is the
   // only thing that ever says stop.
   ...(ladder(t) ? { rung: () => taught(t), rungs: () => ceiling(t) } : {}),
+  // A trade with no ceiling (the carts) is a count: one more each press.
+  repeats: true,
   // Stays on the board when finished, even with finished rows folded away
   // (`folds`): the only place the game says how much kit the station owns.
   keep: true,
@@ -121,7 +126,9 @@ KIT_ROWS.push({
   from: lifts,
   to: () => lifts() + 1,
   keep: true,
-  bill: liftCost,
+  // A count like the carts: one more each press, priced as the lift it will be.
+  repeats: true,
+  bill: () => liftCost(lifts() + ahead('driver')),
   // It rolls off the stand at the bench (`syncWorkers` stands it up there).
   buy: () => { S[LIFT.trade] = lifts() + 1; syncWorkers(); },
   // The belt's gate: a full set of carts and both of the haulers' ladders

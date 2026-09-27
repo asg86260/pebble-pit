@@ -10115,7 +10115,7 @@ is spare, an empty cut building nothing. A queue does not staff itself.
   The refund arcs *from* the site back to the bench -- `payTo` the other way,
   the same dust and the same flight -- so what was paid is seen coming back. A
   row on the go is committed, as today; its tooltip says so, once.
-- Duplicates: a rung row already in line cannot be pressed again (its next
+- Duplicates (superseded 2026-09-26 by "The same row, queued again"): a rung row already in line cannot be pressed again (its next
   rung is not for sale until this one lands); a repeatable row (a hat, a pot)
   can be queued as many times as you can pay for, and the card counts them.
 
@@ -10215,6 +10215,238 @@ older check changed meaning. The flag over a station now stays up through a
 build (`test/boards.test.mjs`), since the next row can be pressed. `refund`
 in pit.js is `bankDust` per grain -- one call a grain, the same as a hauler's
 tip -- with the payment's `S.paid` flight run the other way.
+
+## The same row, queued again (built)
+
+**The owner's word (2026-09-26):** "i want to be able to queue up multiple
+of the same item."
+
+Mocks: `docs/mocks/queue-repeats-2026-09-26.html` (the queue card),
+`docs/mocks/queue-refund-2026-09-26.html` (the refund button on a card).
+
+**The owner's answer to the calls (2026-09-26):** "lets add a button at the
+bottom of the cards for refunding the latest purchase, clicking the card
+body will queue up another one, if affordable." Written into "Handing one
+back" and "The calls" below.
+
+### What a second press does today
+
+A site takes a line, but a row is in it at most once. Every lookup in the
+line is by row key and answers the first match (`workOn`, `placeOf`,
+`waiting`, `pullOut`, `progressOfKey`, `leftAt(site, key)`, `handsOn`,
+`bodiesOn` and a body's `workKey`; works.js lines 293-302, 311, 316-325,
+354-361), and `buy` (upgrades.js, the `inLine` branch and the `building`
+guard) turns a second press into one of two things:
+
+- **the work is on the go:** refused. `building(u)` returns false before a
+  coin is touched. The row is greyed and reads `building`.
+- **the work is in line:** handed back. The press pulls it out and the bill
+  comes home in full. The row stays live precisely so it can be pressed for
+  this (shop.js, the `takesTime` block: `grey(row, !queued)`).
+
+It is the same for every row that takes time -- a ladder rung, a count row
+(`house`, `pod`, `farmplot`, `anotherpot`, the cut's benches) and a one-off
+(`unlockquarry`, a machine). Measured through `__buy` in the node yard:
+`carry` pressed twice with carry on the go -- `false`, nothing paid; `speed`
+pressed twice with speed in line -- `false`, 100 dust handed back and the
+line one shorter; `house` pressed twice -- `false`, one house in the line.
+Rows that take no time (the casino's decisions) are bought and had on the
+press and never meet the queue.
+
+"The queue" says repeatable rows "can be queued as many times as you can
+pay for, and the card counts them". That was never built: the key lookups
+above cannot hold two of one. This section is the plan for it.
+
+### What "the same item" means
+
+Both readings the owner could mean come out of one rule, so the design
+takes both:
+
+- **a count row, again** -- a second house, a third pod, two more plots.
+  The row is the same row; the thing it adds is one more of the same.
+- **a ladder, a rung ahead** -- `a bigger pocket` 3 on the go, 4 and 5
+  behind it. The card is one row; the next press is its next rung.
+
+**The rule: pressing a row whose work is already in the works puts the next
+one in line**, priced as the next one. A count row's next copy is the next
+house's price; a ladder's next copy is the next rung's bill, band and all.
+A one-off has no next one: a press on its body while it is in the works buys
+nothing, as a rung row past its top is today, and its refund button is how
+it comes back.
+
+### What it costs
+
+- **Paid on the press, each copy at its own price.** As the queue already
+  is, and for the same reason: the spend is the decision. A row's bill is
+  read at the rung it *will* be when this press lands: `level()` plus the
+  copies already in the works. So a ladder's price climbs on the board as you
+  queue up it, exactly as it would have climbed if you had waited, and a
+  third house costs a third house's price. Nothing is cheaper for being
+  bought early.
+- **The ladder's gates count what is queued.** `maxed` counts the copies in
+  the works, so you cannot queue past a ladder's top; a band whose coin the
+  yard cannot get yet (`dead`) is dead for the rung that opens it, so you
+  cannot queue into a spark band before there are sparks. A `show` gate that
+  reads a landed fact (a chained row's `after`, the pot's `brews >= 5`) keeps
+  reading the landed fact: the next row in a chain appears when the last rung
+  *lands*, not when it is bought.
+- **Nothing teleports.** Each copy is its own work in `S.works[site]`, at
+  nought until it reaches the front, then walked to and built like any other.
+  A queued rung is not a faster rung. A house or a pod queued behind another
+  reserves its own ground on the press (the room after the one going up, not
+  the same room twice): `siteBox` for the yard's house and `nextHouseAt` read
+  the crew *plus the houses already in the works*, not the crew alone.
+- **Cannot afford the next one:** nothing happens, and the card says so the
+  way it already does for any row you cannot pay for (shelf.css, the
+  `:has(.tag .short)` rules): the title and the glyph's ink pale to grey,
+  the price tag goes dashed with the coin you are short of greyed and the
+  ones you have at full ink, the tile does not lift under the cursor (`off`),
+  and the press returns false out of `buy`'s `canPay` guard so the board stays
+  up. Kept as it is: the next copy's bill is simply the bill the tag shows. No
+  copy is ever queued unpaid, so there is no "waiting for coin" state and
+  nothing new on `S`.
+
+### Handing one back
+
+**The owner's answer (2026-09-26):** a button at the bottom of the card
+refunds the latest purchase; the card's body queues another.
+
+- **The body** is the buy, and only the buy: a press queues one more copy if
+  the purse can pay the next one's bill, and does nothing otherwise. It never
+  hands anything back, which is what a press on a waiting row does today.
+- **The refund button** hands back that row's **newest copy still waiting
+  its turn** (call 5: the one being built is committed) at the price it was paid, the bill
+  flying from the site to the pile as a pull-out does today. Newest, because
+  the bill climbs a copy at a time: handing back the second of three rungs
+  would leave the third priced as a third it no longer is. A rung that has
+  already landed is not refundable; the button counts the works, not the
+  ladder.
+- **The button is there only while the row has a copy waiting.** With
+  none, the card is the card it is today -- no button, no empty strip -- so a
+  plank of rows nobody has bought reads as it always has. A one-off (a door,
+  a machine) waiting shows only the button: its body has nothing more to
+  sell.
+- **The queue card keeps one line a run with `×n`** (call 2 as recommended;
+  the answer does not touch it), and its waiting line keeps its press: the
+  same hand-back as the card's button, the newest copy of that row. Two doors
+  to one action, one on the board and one in the corner, as today.
+- **While a copy is in the works,** the card's gain line reads `building` or
+  `queued` as today, the price tag shows the *next* copy's bill (the body is
+  for sale again), and the count of waiting copies is on the refund strip.
+
+### Why the old argument against it no longer holds
+
+Two passages argue against this, and both were written before the queue:
+
+> **One work per site.** ... A queue you fire and forget is not a decision
+> ("Time is a price", "The shape")
+
+> It is the same rule every site has, and it is what stops the opening from
+> being "queue five rungs and walk away" ("The bench takes time too")
+
+The queue overturned the first on 2026-09-12 in so many words ("The decision
+was never the *wait*; it was the *spend*"), and its line can already hold
+five rungs of five different ladders. Refusing the second rung of *one*
+ladder while taking one rung of five is not a rule about waiting; it is a
+side effect of the line being keyed by row. The one piece that still holds
+is the opening's lesson -- strength, watch it fitted, *then* swing -- and
+that is kept by the price: an opening purse pays for one rung, not five.
+
+### What it is not
+
+- Not a way to buy cheaper: every copy is priced at its own rung.
+- Not a faster build: one work on the go a site, as "Everything at once"
+  settled.
+- Not an order across rows: a repeat goes to the back of its site's line,
+  like any press.
+
+### What building it touches
+
+`works.js` (a work carries a serial so two of one key can be told apart;
+the key lookups ask for "the newest", "the front" or "this one"),
+`upgrades.js` (`buy` adds instead of refusing; `billOf`, `maxed` and the
+ladder's `level` read the pending count), `shop.js` and `shelf.css` (the row
+stays for sale while building; the refund button and its count, a second
+press target inside the tile's `button`, so it wants its own element and a
+`stopPropagation`), `queue.js` (the card's grouping and its
+hand-back), `house.js` and the pod row (ground for the nth house),
+`crew/builders.js` and `crew/muster.js` (`workKey` names a work, not a row).
+The save needs nothing new: `S.works` is already a list that could hold two
+of a key; the reader just stops collapsing them.
+
+Checked in `test/queue.test.mjs`, bought through `__buy`: a rung row pressed
+three times is three works, each bill the next rung's, landing in order and
+leaving the ladder three up; a house pressed twice raises two houses on two
+patches with no jump; the refund button (and the queue card's line) returns
+the newest bill to the grain, and a press on a card you cannot pay for leaves
+the purse and the line as they were; a ladder cannot be queued past its top or into a dead band; a
+save written with three of one row in line comes back with three.
+
+### The calls
+
+Answered (the owner, 2026-09-26: "lets add a button at the bottom of the
+cards for refunding the latest purchase, clicking the card body will queue
+up another one, if affordable"):
+
+1. **A row pressed while in the works.** The body queues one more if
+   affordable, else nothing; it never refunds.
+2. **The queue card.** One line a run with `×n`, as recommended.
+3. **Where a copy is handed back.** A refund button at the bottom of the
+   card, for the newest copy in the works; the queue card's waiting line
+   keeps the same hand-back.
+
+Then (the owner, 2026-09-26): "A, for the refund" -- the full-width strip.
+The rest went as recommended, with no word against:
+
+4. **The refund button's drawing:** A, a strip the width of the card along
+   its foot, `REFUND ×n` in the title's capitals.
+5. **A copy being built:** committed, as the queue always had it. The strip
+   refunds and counts only copies still waiting, and is there only while
+   there is one.
+6. **A landed rung:** not refundable.
+
+### As built
+
+- **A work has an `id`**, one past the highest in the works (`nextId`), so a
+  save needs no counter; a save from before ids is given them on the read.
+  Every lookup that used to find the first work of a key now says which it
+  means: `workOn` the oldest copy, `worksOf` every copy, `ahead` how many,
+  `newestWaiting` the one a refund takes, `pullOut` that one. A builder is
+  sent to a work by its id (`workId`, crew/builders.js), and `handsOn` and
+  `bodiesOn` count by it, so two copies of one row are never one work to the
+  hands at them.
+- **Which rows repeat** is a property of the row, not a list: a row with a
+  `rung` (every ladder), or one that says `repeats` (another house, another
+  pod, another pot, the carts and the forklift). Everything else is a
+  one-off, refused while it is in the works. `full` is a ladder spoken for to
+  its top, or a count row's `cap` (the pots) used up, counting the copies
+  paid for. `forSale` is the one gate a press, the bench's dot and a
+  station's flag all ask; the flag also stays up for a row being built
+  there, as it did.
+- **Pricing the next copy.** `workFor` climbs by `rung + ahead`; `tierRows`
+  reads every offer off `next()` (landed plus ahead) and keeps the pips on
+  what has landed; the row families that price themselves off their own
+  state (the tower's rungs and hats, the machines' tuning, the balloon, the
+  kit and the forklift, the plots, the benches, the house, the pod, the pot,
+  the star) each add `ahead` of their own key. The bill is read before the
+  work starts and kept on it (`bill`), so a refund hands back what was paid.
+- **The card.** While a row with more to sell has copies in the works, its
+  gain line says `building` or `queued` and its tag is the next copy's bill
+  and time; a row with nothing more to sell reads as a row being built always
+  did. The strip is an element inside the tile with its own tap (tap.js), so
+  a scroll that ends on it refunds nothing and its click never reaches the
+  card; while it shows, the tile is never `disabled` (which would swallow
+  the strip's press) and `off` says it is not for sale. Its height is
+  `SHELF_REFUND`; the tile grows by it and the pin mark stands on it.
+- **The queue card** is a line a run of one row, `×n`, clocked to the last of
+  the run; a line with a copy waiting is a button that hands back the newest.
+- **On the yard,** a second house stands on the room after the first's
+  (`siteBox` and `nextHouseAt` count the houses ahead), and copies of one
+  row on the yard stack their bars over each other rather than drawing on
+  top of one another.
+- The card bench (`cards.html`) now loads shelf.css, as the game does, and
+  opens on a "queued again" board; the `queuerepeat` scene shows the strip
+  and the queue card in the game.
 
 ## The cut is worked in pockets (built)
 

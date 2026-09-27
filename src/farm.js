@@ -28,7 +28,7 @@ import { critBoost, speedBoost, stronger } from './apothecary.js';
 import { at, put, topRow, colOf, bottomY } from './grid.js';
 import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
-import { registerRows } from './works.js';
+import { registerRows, ahead } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 import { registerBoard } from './boardrows.js';
 
@@ -296,8 +296,8 @@ export const FARM_UPGRADES = [
     // cut, so pricing them in shards is a row you cannot buy and cannot see
     // why. The cut keeps its spores, because the farm is standing by the time
     // you get there.
-    bill: () => [['dust', Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.plotLevel))],
-                 ['spore', Math.round(PLOT_SPORES * Math.pow(PLOT_RATE, S.plotLevel))]],
+    bill: () => [['dust', Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.plotLevel + ahead('farmplot')))],
+                 ['spore', Math.round(PLOT_SPORES * Math.pow(PLOT_RATE, S.plotLevel + ahead('farmplot')))]],
     buy: () => { S.plotLevel++; resite(); },
     show: () => S.farmOpen && plotCount() < FARM_PLOTS_MAX
   },

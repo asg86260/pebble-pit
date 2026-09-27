@@ -2,7 +2,7 @@
 // that shows only as much of each as has actually gone up. Plural: the yard
 // holds two builds at once, and each is clipped to ITS OWN work's progress.
 
-import { OPENS_PLACE, progressOfKey, rowFor, worksAt } from '../works.js';
+import { OPENS_PLACE, progressOf, rowFor, worksAt } from '../works.js';
 import { P } from '../config.js';
 import { ctx } from './ctx.js';
 
@@ -18,7 +18,7 @@ export function risingPlaces() {
     const row = rowFor(w.key);
     if (row?.kind !== 'building') continue;
     const place = row.raises || OPENS_PLACE[w.key] || (w.key === 'house' ? 'house' : null);
-    if (place) out.push({ place, key: w.key });
+    if (place) out.push({ place, key: w.key, w });
   }
   return out;
 }
@@ -42,7 +42,9 @@ export const rising = place => risingPlaces().some(r => r.place === place);
 export function withRise(place, x, bottom, w, h, fn) {
   const r = place && risingPlaces().find(o => o.place === place);
   if (!r) { fn(); return; }
-  const p = Math.max(0, Math.min(1, progressOfKey('yard', r.key)));
+  // The first work raising this place is the one going up; a copy queued
+  // behind it is at nought and has nothing to show yet.
+  const p = Math.max(0, Math.min(1, progressOf(r.w)));
   // on the lattice, so a cell is a cell
   const cols = Math.max(1, Math.round(w / P)), rows = Math.max(1, Math.round(h / P));
   const left = Math.round(x / P) * P, foot = Math.round(bottom / P) * P;

@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <title>cards</title>
 <link rel="stylesheet" href="/src/style.css">
+<!-- The boards are shelves in the game (main.js loads this beside style.css), so
+     a tile here wears the same rules as one on a board. -->
+<link rel="stylesheet" href="/src/shelf.css">
 <style>
   /* The page shell the boards expect, and nothing else: a card here is drawn by
      the same builder and the same stylesheet as one on the bench. */
@@ -78,6 +81,27 @@ const page = document.createElement('div'); page.className = 'page';
 page.innerHTML = '<div class="title">the bench</div><div class="rows"></div>';
 out.appendChild(page);
 mountRows(page.querySelector('.rows'), rows);
+
+// Rows queued again (DESIGN.md, "The same row, queued again"): a ladder with
+// one copy being built and two waiting, so its refund strip reads `×2`; a
+// one-off waiting behind it, whose strip reads `×1`; and a ladder the purse
+// cannot pay the next copy of, with a copy waiting.
+const queued = [
+  { ...ladder('qcarry', 'carry amount', 2, 'px', 'hold', 9, 11, [['dust', 90]]), site: 'bench' },
+  { key: 'qauto', kind: 'rung', site: 'bench', name: 'hold to mine', cost: () => 25, work: () => 5 },
+  { ...ladder('qpick', 'pick strength', 1, 'x', 'hit', 2, 3, [['dust', 99999]]), site: 'bench' },
+];
+S.works = { bench: [
+  { key: 'qcarry', done: 3, of: 8, id: 1 },
+  { key: 'qcarry', done: 0, of: 9, id: 2 },
+  { key: 'qcarry', done: 0, of: 10, id: 3 },
+  { key: 'qauto', done: 0, of: 5, id: 4 },
+  { key: 'qpick', done: 0, of: 5, id: 5 },
+] };
+const page2 = document.createElement('div'); page2.className = 'page';
+page2.innerHTML = '<div class="title">queued again</div><div class="rows"></div>';
+out.prepend(page2);
+mountRows(page2.querySelector('.rows'), queued);
 
 </script>
 </body>

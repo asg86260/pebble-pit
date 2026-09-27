@@ -86,6 +86,7 @@ export const SHELF_BADGE_HALO = 1;  // px of white round a badge's ink, cut out 
 export const SHELF_BADGE_CELL = 2;  // screen px a badge cell: finer than the drawing's, for a mark a third its size
 export const SHELF_BADGE_CELLS = 5; // cells a badge is square
 export const SHELF_PLANK = 5;       // px, the plank's thickness
+export const SHELF_REFUND = 18;     // px, the refund strip along a tile's foot: the tag's height, so it reads as one of the card's boxes
 export const SHELF_DOT = 6;         // px between dots: the held sheet's tile, one dot in six
 export const SHELF_HOVER_MS = 120;  // the plate and the lift easing in under the cursor
 export const SHELF_FLOAT_MS = 2400; // one turn of a lifted tile's drift, a one-pixel circle in eight stops

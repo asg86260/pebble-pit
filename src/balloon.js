@@ -43,7 +43,8 @@ export const CRAFT = [];
 export const craftCount = () => CRAFT.length;
 
 // What one more costs: a finite ladder in dust on the house's own board.
-export const craftCost = () => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, CRAFT.length));
+// `extra` is the craft already paid for and not yet moored.
+export const craftCost = (extra = 0) => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, CRAFT.length + extra));
 
 // Bought moored, with nobody in it, like every other station that sells the
 // room before the body.

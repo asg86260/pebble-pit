@@ -32,7 +32,7 @@ import { tuneRow } from './machines.js';
 import { MACHINE_TUNE, LADDER } from './config.js';
 import { rand } from './rng.js';
 import { tidyStep } from './tidy.js';
-import { registerRows } from './works.js';
+import { registerRows, ahead } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 import { registerBoard } from './boardrows.js';
 
@@ -892,7 +892,7 @@ export const QUARRY_UPGRADES = [
     rungs: () => QUARRY_BENCH_MAX - QUARRY_BENCH0,
     // A cut of the cut's own stone: the next bench comes out of what the
     // gang is already bringing up.
-    bill: () => [['shard', Math.round(BENCH_SHARDS * Math.pow(BENCH_RATE, S.benchLevel))]],
+    bill: () => [['shard', Math.round(BENCH_SHARDS * Math.pow(BENCH_RATE, S.benchLevel + ahead('quarrybench')))]],
     buy: () => { S.benchLevel++; resite(); },
     show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
   },

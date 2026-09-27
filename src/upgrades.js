@@ -11,7 +11,7 @@
 
 import { P, SHELF_INK } from './config.js';
 import { S } from './state.js';
-import { maxed } from './words.js';
+import { maxed, rungOf, rungsOf } from './words.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
@@ -19,7 +19,8 @@ import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HO
 import { spelled } from './tower.js';
 import { spendScales, shed } from './deep/scales.js';
 
-import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut } from './works.js';
+import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut,
+         ahead, newestWaiting, waitingCount, worksOf } from './works.js';
 import { nextHouseAt } from './house.js';
 import { DUST_PER } from './upgrades/price.js';
 import { hire } from './staffing.js';
@@ -64,19 +65,22 @@ export const chained = rows => {
 export const HOUSE_ROW = {
   key: 'house',
   name: 'another house',
-  kind: 'building', site: 'yard', at: () => nextHouseAt(),
+  kind: 'building', site: 'yard', at: () => nextHouseAt(ahead('house')),
+  // One more room each press, as many as you can pay for: each copy is priced
+  // and timed as the room it will be, counting the ones already paid for.
+  repeats: true,
   // Its own curve off how many rooms stand, because a `building` with no
   // `rung` would get one flat number from `workFor` for ever. Clamped at zero
   // so the body the intro hands you does not push the first bought house up
   // the curve.
   work: () => Math.min(HOUSE_WORK_MAX,
-    HOUSE_WORK0 * Math.pow(HOUSE_WORK_STEP, Math.max(0, S.crew - 1))),
-  from: () => S.crew,
-  to: () => S.crew + 1,
+    HOUSE_WORK0 * Math.pow(HOUSE_WORK_STEP, Math.max(0, S.crew + ahead('house') - 1))),
+  from: () => S.crew + ahead('house'),
+  to: () => S.crew + ahead('house') + 1,
   // Steeper than the ladders' rate on purpose: every body compounds the
   // income every ladder is priced against, so the crew is the one curve that
   // must outrun the shop's.
-  cost: () => Math.round(HOUSE_COST0 * Math.pow(HOUSE_RATE, Math.max(0, S.crew - 1))
+  cost: () => Math.round(HOUSE_COST0 * Math.pow(HOUSE_RATE, Math.max(0, S.crew + ahead('house') - 1))
                          * (spelled('thrift') ? SPELL_THRIFT : 1)),
   // The hire is the roster's; the sheet that sells it is rebuilt here, since
   // a work landing by itself asks nobody to.
@@ -139,10 +143,8 @@ export const openSections = () =>
     return u && u.show();
   })).map(sect => sect.title);
 
-// Something you could buy and actually press this second: a row bought and
-// waiting its turn is not one, since pressing it hands it back.
-export const canAfford = () =>
-  UPGRADES.some(u => !u.job && u.show() && !u.dead?.() && canPay(u) && !inLine(u));
+// Something you could buy and actually press this second.
+export const canAfford = () => UPGRADES.some(u => !u.job && forSale(u) && canPay(u));
 
 export const unseenSection = () =>
   openSections().some(title => !S.seenSects.includes(title));
@@ -190,7 +192,9 @@ export const billOf = u => {
   // first band asks no dust and names it so, or the line above would add it.
   bill = bill.filter(([, n]) => n !== 0);
   if (!takesTime(u)) return bill;
-  const on = workOn(u.key);
+  // A row that can take another copy is offering the next one, whose time is
+  // its own; a row that cannot is showing the one it has on.
+  const on = !again(u) && workOn(u.key);
   return [...bill, ['time', on ? leftAt(u.site, u.key) : workFor(u) * 1000]];
 };
 
@@ -208,12 +212,33 @@ export const tintOf = u => {
        : coins.includes('scale') ? SHELF_INK.scale : null;
 };
 
-// Being built, or bought and waiting its turn; only the second can be pressed
-// again to hand it back. A site takes a line, so no row is refused for what
-// its neighbor is doing.
+// In the works: being built, or bought and waiting its turn. A site takes a
+// line, so no row is refused for what its neighbor is doing.
 export const building = u => takesTime(u) && !!workOn(u.key);
+// Some copy of it is waiting its turn, so the card has one to refund.
 export const inLine = u => takesTime(u) && waiting(u.site, u.key);
+export const waitingOf = u => (takesTime(u) ? waitingCount(u.site, u.key) : 0);
 export const lineAt = u => placeOf(u.site, u.key);
+
+// A row that can be queued again while a copy is in the works: one that has
+// more of the same to sell -- a ladder (`rung`), or a count of a thing the
+// yard can have more of (`repeats`: another house, another pod). A one-off (a
+// door, a machine, a hat) has no next one (DESIGN.md, "The same row, queued
+// again").
+export const repeats = u => !!(u.rung || u.repeats);
+export const again = u => takesTime(u) && repeats(u);
+// Spoken for to the end, counting what is paid for and not landed: no copy
+// can be queued past a ladder's last rung, or past a count row's `cap` (how
+// many more it has room for).
+export const full = u => u.rung ? rungOf(u) + ahead(u.key) >= rungsOf(u)
+                       : u.cap ? ahead(u.key) >= u.cap() : false;
+
+// The one gate a press goes through, for the board's marks as well as `buy`:
+// offered, not waiting on a coin, not spoken for to its top, and not a
+// one-off already in the works.
+export const forSale = u =>
+  !u.dial && !u.price && !u.sign && u.show() && !u.dead?.() && !maxed(u) && !full(u)
+  && !(building(u) && !again(u));
 
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 
@@ -235,43 +260,53 @@ export function buy(u) {
     // hand.
     return false;
   }
-  // Pressing a row in line hands it back: the bill comes back in full and
-  // arcs from where it would have stood to the pile. Not a purchase.
-  if (inLine(u)) {
-    const box = siteBox(u.site, workOn(u.key));
-    const bill = billOf(u);
-    if (!pullOut(u.site, u.key)) return false;
-    const x = box ? box.x + box.w / 2 : S.cx, y = (box?.y ?? S.groundY) - P * 2;
-    // Scales go back into the water they came out of, and sink to the bed.
-    for (const [money, n] of bill) if (money === 'scale') shed(x, y, n);
-                                   else if (money !== 'time') refund(money, n, x, y);
-    S.shopStale = true;
-    return false;
-  }
-  if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return false;
-  if (building(u)) return false;
+  if (!forSale(u) || !canPay(u)) return false;
+  // The bill for THIS copy, read before the work is started: once it is in
+  // the line, the row prices the copy after it.
+  const bill = billOf(u).filter(([money]) => money !== 'time');
   // Past the bench, paying starts the yard building; the row's own `buy`
   // runs when the work lands. The work is started BEFORE the bill is taken:
   // a yard row's dust flies to the ground the thing goes up on, and that
   // ground does not exist until `start` reserves it. A start that comes to
   // nothing returns before a coin is touched.
-  if (takesTime(u) && !start(u.site, u, u.at?.())) return false;
+  if (takesTime(u) && !start(u.site, u, u.at?.(), bill)) return false;
 
   // What is spent flies to where it is going -- the row's own site, or the
   // box of the work just started -- and `payTo` is cleared straight after so
   // a spend with nobody's destination around it falls back to the bench.
-  const box = u.site === 'yard' ? siteBox('yard', workOn(u.key))
+  const box = u.site === 'yard' ? siteBox('yard', worksOf(u.key).at(-1) || null)
             : u.site           ? siteBox(u.site)
             : null;
   const to = box && { x: box.x + box.w / 2, y: (box.y ?? S.groundY) - P * 2 };
   if (to) payTo(to.x, to.y);
   // Nothing is taken until all of it can be (`canPay` above).
-  for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n, to);
+  for (const [money, n] of bill) take(money, n, to);
   payTo();
 
   if (!takesTime(u)) u.buy();
   S.shopStale = true;
   return true;
+}
+
+// Hand back a row's newest copy still waiting its turn, at what was paid for
+// it: the refund strip at the foot of its card and its line on the queue card
+// both come here. A copy being built is committed, and a landed rung is had.
+// Not a purchase, so it answers false as a press that bought nothing does.
+export function handBack(u) {
+  if (!takesTime(u)) return false;
+  const w = newestWaiting(u.site, u.key);
+  if (!w) return false;
+  // Where it would have stood, asked while it is still in the line.
+  const box = siteBox(u.site, w);
+  // A work saved before copies carried their bill is refunded at its row's.
+  const bill = w.bill || billOf(u).filter(([money]) => money !== 'time');
+  if (!pullOut(u.site, u.key)) return false;
+  const x = box ? box.x + box.w / 2 : S.cx, y = (box?.y ?? S.groundY) - P * 2;
+  // Scales go back into the water they came out of, and sink to the bed.
+  for (const [money, n] of bill) if (money === 'scale') shed(x, y, n);
+                                 else if (money !== 'time') refund(money, n, x, y);
+  S.shopStale = true;
+  return false;
 }
 
 registerBoard('bench', { rows: () => UPGRADES.filter(u => !u.board), sections: () => SECTIONS });

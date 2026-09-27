@@ -9,6 +9,7 @@
 import { S } from '../state.js';
 import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, WORK_BASE, WORK_STEP, rungDust } from '../config.js';
 import { DUST_PER, coinsOpen, coinNeeds } from './price.js';
+import { ahead } from '../works.js';
 
 // The coins each band adds, by the coin a ladder leads with: the yard's
 // ladders lead with dust, the deep's with scales (config/deepboard.js).
@@ -49,11 +50,15 @@ export function tierRows({ field, level: at, climb, unit, pct, does, value,
                            site, board, show, after, follows, keep, bands, lead = 'dust' }) {
   const rungs = TIER_BAND * bands.length;
   const level = at || (() => tierLevel(field, rungs));
+  // The rung the next copy will be: the landed ones plus those paid for and
+  // not yet fitted (DESIGN.md, "The same row, queued again"). Everything
+  // about the offer reads this; the pips (`rung`) read what has landed.
+  const next = () => level() + ahead(bands[0].key);
   const step = climb || (() => { S[field]++; });
 
   // One card, its pips in a group a band, the bill deepening as the groups
   // fill: the groups ARE the bands.
-  const bandAt = () => Math.min(bands.length - 1, Math.floor(Math.min(rungs - 1, level()) / TIER_BAND));
+  const bandAt = () => Math.min(bands.length - 1, Math.floor(Math.min(rungs - 1, next()) / TIER_BAND));
   const coinsAt = () => { const b = bands[bandAt()]; return b.coins || LEAD_BANDS[lead][bandAt()] || []; };
   // Every coin the next rung asks, the lead included: a scale is not a coin
   // the yard has from the first frame, as dust is.
@@ -68,19 +73,19 @@ export function tierRows({ field, level: at, climb, unit, pct, does, value,
     rung: () => Math.min(rungs, level()),
     rungs: () => rungs,
     group: TIER_BAND,
-    from: () => value(level()),
-    to: () => value(level() + 1),
+    from: () => value(next()),
+    to: () => value(next() + 1),
     // `billOf` only adds dust to a bill that names none, so naming it here is
     // what stops the conversion being done twice. A band of a scale ladder
     // that asks no dust names none at nought, which `billOf` leaves off.
     bill: () => {
-      const amount = rungDust(bands[0].key, level());
+      const amount = rungDust(bands[0].key, next());
       const coins = coinsAt();
       return [[lead, amount],
               ...coins.map(c => [c, Math.max(1, Math.round(amount * perDust(lead) / perDust(c)))]),
               ...(lead !== 'dust' && !coins.includes('dust') ? [['dust', 0]] : [])];
     },
-    work: () => Math.round(WORK_BASE.rung * Math.pow(WORK_STEP, level())),
+    work: () => Math.round(WORK_BASE.rung * Math.pow(WORK_STEP, next())),
     buy: () => { step(); after?.(); },
     // While the band's bill names a coin the yard cannot yet get, the card
     // stays (the rungs bought are on it), greyed, with its price up: `waits`
