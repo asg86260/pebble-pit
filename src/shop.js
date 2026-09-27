@@ -12,7 +12,7 @@ import { UPGRADES, lodgers, SECTIONS, buy, billOf, tintOf, canPay, building, lin
          waitingOf, handBack } from './upgrades.js';
 import { rungOf, rungsOf, maxed, folds } from './words.js';
 import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js';
-import { takesTime, stalled, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn } from './works.js';
+import { takesTime, stalled, rowFor, progressOf, leftAt, workOn, roomAt, bodiesOn, ahead } from './works.js';
 import { tookLook } from './world.js';
 import { FILTER_UPGRADES, FILTER_SECTIONS } from './filter.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
@@ -355,20 +355,30 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
         pin.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
         b.appendChild(pin);
       }
-      // The refund strip along the tile's foot (DESIGN.md, "The same row,
-      // queued again"): hands back the newest copy still waiting its turn.
-      // Its own tap, so a scroll that ends on it refunds nothing, and its
-      // click stops at it, so the card under it does not buy another.
+      // The strip along the tile's foot (DESIGN.md, "Refund and another"):
+      // one half hands back the newest copy still waiting its turn, the
+      // other buys the next, so the repeat the card's body also sells is a
+      // thing you can see. Each half its own tap, so a scroll that ends on it
+      // does nothing, and its click stops at it, so the card under it does
+      // not buy as well.
       if (shelf && takesTime(u) && !inSubmenu) {
         const strip = document.createElement('i');
-        strip.className = 'refund';
+        strip.className = 'strip';
         strip.hidden = true;
-        onTap(strip, e => {
-          e.stopPropagation(); e.preventDefault();
-          tookLook();
-          handBack(u);
-          if (S.shopStale) buildShop();
-        });
+        const half = (cls, act) => {
+          const h = document.createElement('i');
+          h.className = cls;
+          onTap(h, e => {
+            e.stopPropagation(); e.preventDefault();
+            tookLook();
+            act(u);
+            if (S.shopStale) buildShop();
+            tookLook();
+          });
+          strip.appendChild(h);
+        };
+        half('refund', handBack);
+        half('another', buy);
         b.appendChild(strip);
       }
       // A card wears its description inline (`sayNote`); the crew submenu and a
@@ -589,15 +599,24 @@ export function refresh(el, list, headcount) {
     // The work on this row, if the yard is building it or has it in line: the
     // picture and the tag are about the build then, not the offer.
     const mine = takesTime(u) ? workOn(u.key) : null;
-    // The refund strip at the foot: there while a copy is waiting its turn,
-    // counting them. While it stands the tile is never `disabled`, which would
-    // take the strip's press with it; `off` says "not for sale" instead.
+    // The strip at the foot: split while the row has copies in the works and
+    // another to sell, the refund half counting the copies waiting (`building`
+    // and dead while the only one is being built); the whole width is the
+    // refund once there is nothing more to sell, and only while a copy
+    // waits. While it stands the tile is never `disabled`, which would take
+    // the strip's press with it; `off` says "not for sale" instead.
     const refunds = waitingOf(u);
-    const strip = row.querySelector('.refund');
+    const more = mine && again(u) && !spokenFor(u);
+    const strip = row.querySelector('.strip');
+    const stands = !!strip && (more || !!(mine && refunds));
     if (strip) {
-      if (strip.hidden !== !refunds) strip.hidden = !refunds;
-      if (refunds) say(strip, `refund ×${refunds}`);
-      if (row.classList.contains('refunds') !== !!refunds) row.classList.toggle('refunds', !!refunds);
+      if (strip.hidden !== !stands) strip.hidden = !stands;
+      const back = strip.querySelector('.refund'), next = strip.querySelector('.another');
+      say(back, refunds ? `refund ×${refunds}` : 'building');
+      back.classList.toggle('dead', !refunds);
+      if (next.hidden !== !more) next.hidden = !more;
+      if (more) { say(next, '+ another'); next.classList.toggle('dead', !canPay(u)); }
+      if (row.classList.contains('stripped') !== stands) row.classList.toggle('stripped', stands);
     }
     const pic = row.querySelector('.pic');           // set on a shelf tile; the gain reads it below
     if (pic && mine) {
@@ -629,7 +648,9 @@ export function refresh(el, list, headcount) {
       // and their pitch was a letter-spacing tuned to one font, which on a
       // phone's font stacked them on top of each other. A box is the same
       // size in every font, and the stylesheet sets the pitch.
-      const pip = i => (i < at ? '<i class="on"></i>' : '<i></i>');
+      // The rungs paid for and not yet landed wear a dot in the ring.
+      const paid = u.rung ? at + ahead(u.key) : 0;
+      const pip = i => (i < at ? '<i class="on"></i>' : i < paid ? '<i class="q"></i>' : '<i></i>');
       const pips = u.rung ? Array.from({ length: of }, (_, i) => pip(i)) : [];
       // A banded ladder draws its pips a group a band, each an element so the
       // stylesheet can tint it in the band's coin. A ladder with no bands is
@@ -648,7 +669,6 @@ export function refresh(el, list, headcount) {
     // a row whose oldest copy is in line says where it stands (DESIGN.md,
     // "The queue"). A row that can take another copy stays an offer: its tag
     // is the next copy's bill, and only its gain line says the yard is at it.
-    const more = mine && again(u) && !spokenFor(u);
     if (takesTime(u)) {
       if (mine && !more) {
         say(what, u.name);
@@ -718,7 +738,7 @@ export function refresh(el, list, headcount) {
     // number each is about is the pot.
     sayHTML(price, u.price ? u.price() : bill); sayHTML(time, u.price ? '' : clock);
     const off = u.price ? !!u.dead?.() : !!waits || !canPay(u);
-    grey(row, off && !refunds);
+    grey(row, off && !stands);
     // The hover, the lift and the lean key off `off`, never off `disabled`.
     row.classList.toggle('off', off);
   }

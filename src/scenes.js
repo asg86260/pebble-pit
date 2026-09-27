@@ -793,7 +793,7 @@ export const SCENES = {
   // One row queued again (DESIGN.md, "The same row, queued again"): three
   // rungs of the carry ladder and two houses, the bench's board open on the
   // carry card with its refund strip, the queue card in the corner.
-  queuerepeat: { about: 'the bench', say: 'a row queued three times: the refund strip, the queue card a line a run', page: true,
+  queuerepeat: { about: 'the bench', say: 'a row queued three times: the refund and another strip, the dotted pips, the queue card a line a run', page: true,
     run: () => { rich(); window.__fast(2);
                  for (let i = 0; i < 3; i++) window.__buy('carry');
                  window.__buy('house'); window.__buy('house');

@@ -10448,6 +10448,41 @@ The rest went as recommended, with no word against:
   opens on a "queued again" board; the `queuerepeat` scene shows the strip
   and the queue card in the game.
 
+## Refund and another (built)
+
+**The owner's word (2026-09-27):** "its hard to tell that clicking the
+queued item will buy another one. maybe we split button the refund into
+refund/buy next?"
+
+Mocks: `docs/mocks/queue-split-2026-09-27.html` (five strips),
+`docs/mocks/queue-pips-2026-09-27.html` (five marks on the pips).
+
+**Voted:** A, the strip split in two halves, and "dont show No More though,
+just remove the split"; then "lets do an inner dot for queued".
+
+- **The strip stands while a row has a copy in the works and another to
+  sell**, not only while a copy waits: the one-copy case, the body's repeat
+  was invisible because there was no strip at all. Split in two:
+  `REFUND ×n` on the left, `+ ANOTHER` on the right.
+- **The refund half** counts the copies waiting and hands back the newest,
+  as "Handing one back" says. With only the copy being built, it reads
+  `building` and is dead (grey, no hover): that copy is committed.
+- **The another half** buys exactly as the body does (`buy`, the same
+  gates). It is pale while the purse cannot pay the next copy, as a short
+  tag is. The body keeps buying too: nothing a player already did changes.
+- **Nothing more to sell** (a one-off, a ladder spoken for to its top): no
+  split and no "no more"; the strip is the whole-width refund, and only
+  while a copy waits, as it was.
+- **The pips** dot every rung paid for and not yet landed: an empty ring
+  with a two-pixel square in its middle, in the band's color. Landed stays
+  filled. `ahead` is the count, so the dots and the strip read the same
+  works.
+
+Checked in `src/selftest/boards.js` ("the strip on a card buys another..."):
+one press shows the strip with `building` and `+ another`, the other half
+queues a second copy, both wear a dot, the refund half hands the waiting one
+back. The `queuerepeat` scene is the shot.
+
 ## The cut is worked in pockets (built)
 
 ### What is wrong

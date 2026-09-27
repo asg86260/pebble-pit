@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refund Buy Split</title>
+<style>
+  /* Light only on the cards, as the game's boards are: paper white, ink black. */
+  :root { --ink: #000; --paper: #fff; --grey: #666; --ink5: #8c8c8c; --page: #fff; --dim: #777; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --page: #111; --dim: #999; }
+  }
+  :root[data-theme="dark"] { --page: #111; --dim: #999; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--page); color: var(--ink);
+         font: 12px/1.4 ui-monospace, "Courier New", monospace; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body { color: #eee; } }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  h2 { font-size: 13px; margin: 0 0 2px; }
+  .note, .cap { color: var(--dim); margin: 0 0 10px; max-width: 980px; }
+  section { border-top: 1px solid var(--dim); padding: 12px 0 14px; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+
+  /* the yard strip: the purse, the site, the grains between them */
+  #yard { position: relative; width: 100%; max-width: 640px; height: 70px; background: var(--paper);
+          border: 1px solid var(--ink); color: var(--ink); overflow: hidden; }
+  #purse { position: absolute; left: 8px; top: 8px; border: 1px solid var(--ink); padding: 2px 6px; background: var(--paper); }
+  #purse i, .tag i.d { display: inline-block; width: 7px; height: 7px; background: var(--ink); margin-right: 4px; vertical-align: 0; }
+  #ground { position: absolute; left: 0; right: 0; bottom: 12px; border-top: 2px solid var(--ink); }
+  #site { position: absolute; right: 80px; bottom: 14px; width: 60px; height: 30px; border: 2px solid var(--ink); background: var(--paper); }
+  #site .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--ink); }
+  #builder { position: absolute; bottom: 14px; width: 6px; height: 12px; background: var(--ink); }
+  #grains { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  .grain { position: absolute; width: 4px; height: 4px; background: #000; }
+  #log { color: var(--dim); min-height: 1.4em; margin: 6px 0 0; }
+
+  /* the plank: the real shelf's numbers, read off the game (a slot is 140px,
+     a tile 141px tall on the bench, 1px edge, glyph 28px at 9px, name 10.2px
+     capitals at 38px, gain 12px grey at 56px, tag 18px high at 74px, the pin
+     mark 9px in the bottom-right corner) */
+  .plank { display: grid; grid-template-columns: repeat(3, 140px); background: var(--paper); color: var(--ink);
+           padding: 6px 6px 0; width: max-content; border-bottom: 3px solid var(--ink); }
+  .tile { position: relative; width: 140px; min-height: 141px; border: 1px solid transparent; background: var(--paper);
+          display: flex; flex-direction: column; align-items: center; padding: 8px 6px 8px; text-align: center;
+          transition: transform 120ms; user-select: none; }
+  .tile.building { border-color: var(--ink); transform: translateY(-2px); animation: sway 1.4s ease-in-out infinite; }
+  .tile.queued { border: 1px dashed var(--ink); }
+  .tile.flash { animation: shake 250ms; }
+  @keyframes sway { 0%,100% { transform: translate(0,-2px); } 50% { transform: translate(1px,-3px); } }
+  @keyframes shake { 0%,100% { transform: none; } 30% { transform: translateX(-2px); } 70% { transform: translateX(2px); } }
+  .glyph { width: 28px; height: 28px; border: 3px solid var(--ink); margin-top: 1px; position: relative; }
+  .glyph::after { content: ''; position: absolute; left: 6px; top: 6px; width: 10px; height: 10px; background: var(--ink); }
+  .what { font-size: 10.2px; letter-spacing: .08em; text-transform: uppercase; margin-top: 3px; line-height: 13px; }
+  .gain { color: var(--grey); margin-top: 5px; line-height: 13px; }
+  .tag { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--ink); padding: 0 6px; height: 18px; margin-top: 5px; }
+  .tag i.c { display: inline-block; width: 10px; height: 10px; border: 1px solid currentColor; border-radius: 50%; margin-right: 3px; vertical-align: -1px; }
+  .tile.short .what, .tile.short .gain { color: var(--ink5); }
+  .tile.short .glyph { border-color: var(--ink5); }
+  .tile.short .glyph::after { background: var(--ink5); }
+  .tile.short .tag { border-style: dashed; }
+  .tile.short .tag .d-amt { color: var(--ink5); }
+  .tile.done .tag { border-style: solid; }
+  .ladder { position: absolute; right: 5px; top: 13px; display: flex; flex-direction: column; gap: 3px; }
+  .ladder b { display: flex; flex-direction: column; gap: 2px; }
+  .ladder i { width: 5px; height: 5px; border: 1px solid var(--ink); border-radius: 50%; }
+  .ladder i.on { background: var(--ink); }
+  .ladder i.q { background: repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px 2px); }
+  .pinmark { position: absolute; right: 4px; bottom: 2px; width: 9px; height: 9px;
+             background: linear-gradient(var(--ink), var(--ink)) 4px 0 / 1px 9px no-repeat, linear-gradient(var(--ink), var(--ink)) 1px 0 / 7px 3px no-repeat; opacity: .35; }
+  .newc { position: absolute; top: 2px; left: 4px; border: 4px solid var(--ink); border-right-color: transparent; border-bottom-color: transparent; }
+
+  /* every option: a strip along the foot, 18px, the title's capitals */
+  .rf { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; border-top: 1px solid var(--ink);
+        background: var(--paper); display: flex; font-size: 10.2px; letter-spacing: .08em; text-transform: uppercase; line-height: 17px; }
+  .rf > button { flex: 1 1 0; height: 17px; line-height: 17px; white-space: nowrap; }
+  .rf > button + button, .rf > span + button, .rf > button + span { border-left: 1px solid var(--ink); }
+  .rf > button:hover { background: var(--ink); color: var(--paper); }
+  .rf > button.cant { color: var(--ink5); cursor: default; }
+  .rf > button.cant:hover { background: var(--paper); color: var(--ink5); }
+  .rf .coin { display: inline-block; width: 6px; height: 6px; background: currentColor; margin: 0 3px 0 4px; vertical-align: 0; }
+  .tile.has { padding-bottom: 26px; }
+  .tile.has .pinmark { bottom: 22px; }
+  /* C: the stepper -- minus, count, plus */
+  .optC .rf > button.pm { flex: 0 0 34px; font-size: 13px; letter-spacing: 0; }
+  .optC .rf > span.n { flex: 1 1 0; text-align: center; border-left: 1px solid var(--ink); }
+  /* inert body: the card does not lift or buy while it has a strip */
+  .inert .tile.has { cursor: default; }
+  .tag.plus::before { content: '+'; margin-right: -2px; font-weight: bold; }
+  .opts { display: flex; flex-direction: column; gap: 18px; }
+  .opt .lbl { font-weight: bold; margin: 0 0 4px; }
+  .opt .cap { font-size: 11px; margin: 6px 0 0; max-width: 460px; }
+  label { user-select: none; }
+</style>
+</head>
+<body>
+<h1>Refund / buy next, split</h1>
+<p class="note">A mock drawn from plain boxes, not the game. Today a card with a copy in the works has a
+<code>REFUND ×n</code> strip at its foot and the card's body silently queues one more -- the owner's note (2026-09-27):
+"its hard to tell that clicking the queued item will buy another one." Each option below splits or relabels the strip so
+the buy is a thing you can see. The cards are at the real shelf's size (140px slot, 141px tile, 18px strip). One model
+drives every plank, so pressing any of them moves all of them. <b>What it cannot show:</b> the real glyphs, fonts and
+pips, the hover tip and the tile's lift, a bill of several coins (B's buy half has room for one coin and a number --
+a two-coin bill would not fit in 70px), dust grain by grain from the real pile, the queue card, or a phone, where
+each half is 70 x 18 against the 44px touch rule.</p>
+<section>
+  <div id="yard"><div id="purse"></div><div id="ground"></div><div id="site"><div class="fill"></div></div><div id="builder"></div></div>
+  <div id="log"></div>
+  <p class="cap"><label><input type="checkbox" id="auto" checked> press things by itself</label> -- the purse fills slowly,
+  so now and then a card is short and a press on it does nothing (greyed title, dashed tag, a shake here only to show the
+  press was heard).</p>
+</section>
+
+<section class="opts">
+  <div class="opt optA"><div class="lbl">A -- two halves: refund | another</div><div class="plank" id="pA"></div>
+    <p class="cap"><code>REFUND ×2</code> on the left, <code>+ ANOTHER</code> on the right. The body keeps buying too (both do
+    the same thing), so nothing a player already does breaks; the half is there to say so. The price stays on the tag
+    above, which is already the next copy's bill.</p></div>
+  <div class="opt optB"><div class="lbl">B -- two halves, the buy half carries the price</div><div class="plank" id="pB"></div>
+    <p class="cap">The right half is <code>+ ▪40</code> -- the next copy's bill -- and goes grey when you cannot pay. The
+    tag above stops being a price and reads the build time only. The buy and its cost are one object; the catch is the
+    width, one coin and a number at most.</p></div>
+  <div class="opt optC"><div class="lbl">C -- a stepper: − ×2 +</div><div class="plank" id="pC"></div>
+    <p class="cap">Minus refunds the newest, plus queues one more, the count in the middle. The most familiar shape
+    (a quantity field); the count reads as "how many I have ordered". Each button is 34px wide -- the smallest targets here.</p></div>
+  <div class="opt optD inert"><div class="lbl">D -- as A, but the body stops buying</div><div class="plank" id="pD"></div>
+    <p class="cap">Same strip as A. Once a copy is in the works, a press on the body does nothing (it buys the first copy
+    only); every repeat goes through <code>+ ANOTHER</code>. No hidden action left on the card at all, at the price of
+    a smaller target for the repeat and one habit changed.</p></div>
+  <div class="opt optE"><div class="lbl">E -- no split: the tag says plus</div><div class="plank" id="pE"></div>
+    <p class="cap">The strip stays <code>REFUND ×2</code> as today; the price tag gains a <code>+</code> while a copy is in
+    the works, so the body is visibly "one more for this". The smallest change; the plus is small.</p></div>
+</section>
+
+<div id="grains"></div>
+
+<script>
+(() => {
+  const RATE = 9;                        // dust a second: slow enough to go short now and then
+  const LADDER = [10, 20, 30, 40, 60, 80, 100, 120, 150];
+  const rows = [
+    { key: 'pocket', name: 'carry amount', level: 3, top: 8, work: 4,
+      price: k => LADDER[k], gain: k => `${5 + k * 2} → ${7 + k * 2}` },
+    { key: 'house', name: 'another house', level: 4, top: 99, work: 6,
+      price: k => Math.round(30 * Math.pow(1.4, k - 3)), gain: k => `${k} → ${k + 1} crew` },
+    { key: 'quarry', name: 'the quarry', level: 0, top: 1, work: 8,
+      price: () => 90, gain: () => 'opens the cut' }
+  ];
+  const byKey = k => rows.find(r => r.key === k);
+  let dust = 90;
+  const line = [];                       // the site's works, oldest first: { key, paid, done, of }
+  const copies = r => line.filter(w => w.key === r.key).length;
+  const nextRung = r => r.level + copies(r);
+  const log = t => { document.getElementById('log').textContent = t; };
+
+  // --- what a press does ---
+  function body(r) {
+    const k = nextRung(r);
+    if (k >= r.top) { log(`${r.name}: nothing more to queue`); shake(r); return; }
+    const bill = r.price(k);
+    if (dust < bill) { log(`${r.name}: ${bill} dust asked, ${Math.floor(dust)} in the purse -- nothing happens`); shake(r); return; }
+    dust -= bill;
+    line.push({ key: r.key, paid: bill, done: 0, of: r.work });
+    grains(false, bill);
+    log(`${r.name}: ${copies(r) > 1 ? 'one more queued' : 'bought'}, ${bill} dust taken on the press`);
+    draw();
+  }
+  function refund(r) {
+    // the newest copy still waiting its turn; the front one is being built and committed
+    for (let i = line.length - 1; i >= 1; i--) {
+      if (line[i].key !== r.key) continue;
+      const w = line.splice(i, 1)[0];
+      dust += w.paid; grains(true, w.paid);
+      log(`${r.name}: newest copy refunded, ${w.paid} dust flies home`);
+      draw(); return;
+    }
+  }
+  function shake(r) {
+    document.querySelectorAll(`.tile[data-k="${r.key}"]`).forEach(t => {
+      t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash');
+    });
+  }
+
+  // --- grains: a handful of squares, purse to site on a buy, site to purse on a refund ---
+  const layer = document.getElementById('grains');
+  const flying = [];
+  function grains(back, amount) {
+    const p = document.getElementById('purse').getBoundingClientRect();
+    const s = document.getElementById('site').getBoundingClientRect();
+    const a = { x: p.left + 20, y: p.top + 8 }, b = { x: s.left + s.width / 2, y: s.top + 4 };
+    const n = Math.min(14, 3 + Math.round(amount / 10));
+    for (let i = 0; i < n; i++) {
+      const el = document.createElement('div'); el.className = 'grain'; layer.appendChild(el);
+      flying.push({ el, from: back ? b : a, to: back ? a : b, t: -i * 0.05, h: 30 + Math.random() * 25, jx: (Math.random() - .5) * 16 });
+    }
+  }
+
+  // --- drawing ---
+  const pipsOf = r => {
+    if (r.top > 8 || r.top === 1) return '';
+    let s = '<span class="ladder">';
+    for (let g = 0; g < 4; g++) {
+      s += '<b>';
+      for (let j = 0; j < 2; j++) { const i = g * 2 + j; s += `<i class="${i < r.level ? 'on' : i < nextRung(r) ? 'q' : ''}"></i>`; }
+      s += '</b>';
+    }
+    return s + '</span>';
+  };
+  function tile(r, opt) {
+    const n = copies(r), k = nextRung(r);
+    const front = line.length && line[0].key === r.key;
+    const done = k >= r.top;
+    const short = !done && dust < r.price(k);
+    const state = n ? (front ? 'building' : 'queued') : '';
+    const cls = ['tile', n && (opt !== 'E' || n - (front ? 1 : 0)) ? 'has' : '', state === 'building' ? 'building' : state === 'queued' ? 'queued' : '',
+                 short ? 'short' : '', done ? 'done' : ''].join(' ');
+    // the gain line says the state while a copy is in the works, as today
+    let gain = n ? state : r.gain(k);
+    const tag = done
+      ? `<span class="tag">${r.top === 1 && n ? 'bought' : 'done'}</span>`
+      : opt === 'B' && n
+        ? `<span class="tag"><span><i class="c"></i>${r.work}</span></span>`
+        : `<span class="tag${opt === 'E' && n ? ' plus' : ''}"><span><i class="d"></i><span class="d-amt">${r.price(k)}</span></span><span><i class="c"></i>${r.work}</span></span>`;
+    let rf = '';
+    const bill = done ? '' : r.price(k);
+    const cant = done || short ? ' cant' : '';
+    // waiting copies: all but the one at the front of the line, which is being built
+    const w = n - (front ? 1 : 0);
+    if (n) {
+      const refund = w ? `<button data-rf="${r.key}">refund ×${w}</button>` : `<button class="cant">building</button>`;
+      if (opt === 'A' || opt === 'D') rf = `<span class="rf">${refund}<button class="${cant}" data-buy="${r.key}">${done ? 'no more' : '+ another'}</button></span>`;
+      if (opt === 'B') rf = `<span class="rf">${refund}<button class="${cant}" data-buy="${r.key}">${done ? 'no more' : `+<i class="coin"></i>${bill}`}</button></span>`;
+      if (opt === 'C') rf = `<span class="rf"><button class="pm${w ? '' : ' cant'}" ${w ? `data-rf="${r.key}"` : ''} aria-label="refund one">−</button><span class="n">×${w}</span><button class="pm${cant}" data-buy="${r.key}" aria-label="one more">+</button></span>`;
+      if (opt === 'E' && w) rf = `<span class="rf">${refund}</span>`;
+    }
+    return `<div class="${cls}" data-k="${r.key}" role="button">${r.key === 'quarry' && !n && !done ? '<span class="newc"></span>' : ''}
+      <span class="glyph"></span><span class="what">${r.name}</span><span class="gain">${gain}</span>${tag}${rf}${pipsOf(r)}<span class="pinmark"></span></div>`;
+  }
+  let built = '';
+  function draw() {
+    document.getElementById('purse').innerHTML = `<i></i>${Math.floor(dust)}`;
+    const sig = line.map(w => w.key).join(',') + '|' + rows.map(r => r.level + ':' + (dust >= r.price(nextRung(r)) ? 1 : 0)).join(',');
+    if (sig === built) return;
+    built = sig;
+    for (const opt of ['A', 'B', 'C', 'D', 'E']) {
+      const p = document.getElementById('p' + opt);
+      p.innerHTML = rows.map(r => tile(r, opt)).join('');
+      p.querySelectorAll('.tile').forEach(t => t.addEventListener('click', e => {
+        const rfk = e.target.closest('[data-rf]');
+        if (rfk) { e.stopPropagation(); refund(byKey(rfk.dataset.rf)); return; }
+        const bk = e.target.closest('[data-buy]');
+        if (bk) { e.stopPropagation(); body(byKey(bk.dataset.buy)); return; }
+        if (opt === 'D' && copies(byKey(t.dataset.k))) { log('D: the body is quiet while a copy is in the works'); return; }
+        body(byKey(t.dataset.k));
+      }));
+    }
+  }
+
+  // --- the clock: one builder walks to the site and works the front of the line ---
+  const yard = document.getElementById('yard');
+  const bodyEl = document.getElementById('builder');
+  let bx = 30, last = performance.now(), autoT = 0;
+  function frame(t) {
+    const dt = Math.min(0.1, (t - last) / 1000); last = t;
+    dust += RATE * dt;
+    const site = document.getElementById('site');
+    const siteX = site.offsetLeft + site.offsetWidth / 2, homeX = 150;
+    const target = line.length ? siteX : homeX;
+    const d = target - bx, there = Math.abs(d) < 2;
+    if (!there) bx += Math.sign(d) * Math.min(Math.abs(d), 80 * dt);
+    bodyEl.style.left = `${bx - 3}px`;
+    const fill = site.querySelector('.fill');
+    if (line.length) {
+      const w = line[0];
+      if (there) w.done += dt;
+      fill.style.width = `${Math.min(1, w.done / w.of) * 100}%`;
+      if (w.done >= w.of) { line.shift(); byKey(w.key).level++; fill.style.width = '0'; log(`${byKey(w.key).name}: landed -- no longer refundable`); built = ''; }
+    }
+    for (let i = flying.length - 1; i >= 0; i--) {
+      const g = flying[i]; g.t += dt * 1.6;
+      if (g.t >= 1) { g.el.remove(); flying.splice(i, 1); continue; }
+      const u = Math.max(0, g.t);
+      g.el.style.opacity = g.t < 0 ? 0 : 1;
+      g.el.style.left = `${g.from.x + (g.to.x - g.from.x) * u + g.jx * Math.sin(u * Math.PI)}px`;
+      g.el.style.top = `${g.from.y + (g.to.y - g.from.y) * u - g.h * Math.sin(u * Math.PI)}px`;
+    }
+    if (document.getElementById('auto').checked) {
+      autoT += dt;
+      if (autoT > 1.8) {
+        autoT = 0;
+        const pocket = byKey('pocket'), house = byKey('house'), quarry = byKey('quarry');
+        if (pocket.level >= pocket.top && !copies(pocket)) pocket.level = 3;
+        if (house.level > 9 && !copies(house)) house.level = 4;
+        if (quarry.level >= 1 && !copies(quarry)) quarry.level = 0;
+        const roll = Math.random();
+        if (roll < .45) body(pocket);
+        else if (roll < .65) body(house);
+        else if (roll < .72) body(quarry);
+        else if (line.length > 1) refund(byKey(line[line.length - 1].key));
+      }
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+  draw();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

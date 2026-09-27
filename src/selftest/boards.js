@@ -1864,12 +1864,13 @@ export const TESTS = [
     ];
   }],
 
-  // DESIGN.md, "The same row, queued again": the card's body buys another
-  // copy, and the strip along its foot hands the newest waiting one back.
-  // The strip is pressed the way a pointer presses it -- down, up, click --
-  // since the card under it listens to the same press, and a strip whose
-  // click reached the card would buy a copy as it refunded one.
-  ['a card pressed twice queues two, and its refund strip hands the newest back', async () => {
+  // DESIGN.md, "Refund and another": the card's body buys another copy, and
+  // the strip along its foot splits into the refund of the newest waiting
+  // copy and a press that buys the next. Each half is pressed the way a
+  // pointer presses it -- down, up, click -- since the card under it listens
+  // to the same press, and a half whose click reached the card would buy a
+  // copy as well as doing its own thing.
+  ['the strip on a card buys another and hands the newest back, and the pips count what is paid for', async () => {
     newRun();
     await settle();
     window.__crew(3, 0);
@@ -1877,43 +1878,51 @@ export const TESTS = [
     run(20);                                    // `carry` is offered once a load has been carried
     await hoverBench();
     const card = () => shop().querySelector('button[data-key="carry"]');
+    const half = cls => card()?.querySelector(`.strip .${cls}`);
+    const shows = el => !!el && el.offsetParent !== null;
     const copies = () => (state().line?.bench || []).filter(w => w.key === 'carry').length;
+    const queuedPips = () => card()?.querySelectorAll('.ladder i.q').length ?? 0;
+    const press = el => {
+      const r = el.getBoundingClientRect();
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const at = { clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0, bubbles: true };
+      el.dispatchEvent(new PointerEvent('pointerdown', { ...at, buttons: 1 }));
+      el.dispatchEvent(new PointerEvent('pointerup', { ...at, buttons: 0 }));
+      el.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true }));
+    };
     const had = state().stored;
     card()?.click();
     await settle(0.1);
     const paidOne = had - state().stored;
-    const noStrip = card()?.querySelector('.refund')?.hidden !== false;
-    card()?.click();
+    const firstSays = shows(half('refund')) ? half('refund').textContent : '';
+    const offers = shows(half('another')) ? half('another').textContent : '';
+    if (half('another')) press(half('another'));
     await settle(0.1);
-    const two = copies();
-    const strip = card()?.querySelector('.refund');
-    const says = strip && !strip.hidden ? strip.textContent : '';
+    const two = copies(), pips = queuedPips();
+    const says = shows(half('refund')) ? half('refund').textContent : '';
     // Inside the card, along its foot: the strip's box against the card's.
+    const strip = card()?.querySelector('.strip');
     const c = card()?.getBoundingClientRect(), s = strip?.getBoundingClientRect();
     const inFoot = !!c && !!s && s.left >= c.left && s.right <= c.right && s.bottom <= c.bottom + 0.5
       && c.bottom - s.bottom <= 2 && s.width >= c.width - 4;
     const before = state().stored;
-    if (strip) {
-      const x = s.left + s.width / 2, y = s.top + s.height / 2;
-      const at = { clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0, bubbles: true };
-      strip.dispatchEvent(new PointerEvent('pointerdown', { ...at, buttons: 1 }));
-      strip.dispatchEvent(new PointerEvent('pointerup', { ...at, buttons: 0 }));
-      strip.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true }));
-    }
+    if (half('refund')) press(half('refund'));
     await settle(0.1);
     const back = state().stored - before;
     const one = copies();
-    const gone = card()?.querySelector('.refund')?.hidden !== false;
+    const after = shows(half('refund')) ? half('refund').textContent : '';
     window.__board(null);
     newRun();
     return [
-      ok(paidOne > 0 && noStrip, 'one press buys one copy, and with nothing waiting there is no strip', `${paidOne}`),
-      ok(two === 2, 'a second press on the card queues a second copy', `${two}`),
-      ok(/refund ×1/i.test(says), 'the strip counts the copy waiting', says),
-      ok(inFoot, 'and stands inside the card, along its foot',
+      ok(paidOne > 0 && /building/i.test(firstSays) && /another/i.test(offers),
+         'one press buys one copy, and the strip offers another beside a refund with nothing to hand back', `${paidOne} "${firstSays}" "${offers}"`),
+      ok(two === 2, 'the other half of the strip queues a second copy', `${two}`),
+      ok(pips === 2, 'and both copies paid for wear a dot on the pips', `${pips}`),
+      ok(/refund ×1/i.test(says), 'the refund half counts the copy waiting', says),
+      ok(inFoot, 'and the strip stands inside the card, along its foot',
          c && s ? `card ${c.left},${c.bottom} ${c.width} strip ${s.left},${s.bottom} ${s.width}` : 'no strip'),
-      ok(one === 1 && back > 0, 'pressing it hands the waiting copy back and buys nothing', `${one} left, ${back} back`),
-      ok(gone, 'and with nothing left waiting the strip goes'),
+      ok(one === 1 && back > 0, 'the refund half hands the waiting copy back and buys nothing', `${one} left, ${back} back`),
+      ok(/building/i.test(after), 'and with nothing left waiting it says the copy is being built', after),
     ];
   }],
 ];

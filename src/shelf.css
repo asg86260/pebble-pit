@@ -197,6 +197,9 @@
 .rows.shelves > .tile .ladder b { display: flex; flex-direction: column-reverse; gap: 2px; }
 .rows.shelves > .tile .ladder i { display: block; box-sizing: border-box; width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; }
 .rows.shelves > .tile .ladder i.on { background: currentColor; }
+/* A rung paid for and still in the works: a dot a third of the ring across,
+   in its middle. */
+.rows.shelves > .tile .ladder i.q { background: linear-gradient(currentColor, currentColor) center / 2px 2px no-repeat; }
 .rows.shelves > .tile .ladder b:nth-child(2) { color: #2e9e4b; }
 .rows.shelves > .tile .ladder b:nth-child(3) { color: #2f5fd0; }
 .rows.shelves > .tile .ladder b:nth-child(4) { color: #d93a25; }
@@ -322,15 +325,16 @@
 @media (hover: hover) {
   .rows.shelves > .tile:hover .pinmark { opacity: 1; }
 }
-/* The refund strip (DESIGN.md, "The same row, queued again"): the whole
-   width of the tile along its foot, in the title's capitals, there only while
-   a copy of the row is waiting its turn. The tile grows by the strip rather
-   than the strip covering the tag, and the pin mark stands on it. Inside the
-   tile's border, so a lifted plate carries it. */
-.rows.shelves > .tile .refund {
+/* The strip (DESIGN.md, "Refund and another"): the whole width of the tile
+   along its foot, in the title's capitals, split into the refund and the
+   next copy while the row has another to sell. The tile grows by the strip
+   rather than the strip covering the tag, and the pin mark stands on it.
+   Inside the tile's border, so a lifted plate carries it. */
+.rows.shelves > .tile .strip {
   position: absolute; left: 0; right: 0; bottom: 0;
   height: var(--shelf-refund, 18px);
   box-sizing: border-box;
+  display: flex;
   border-top: 1px solid var(--ink);
   background: var(--paper);
   color: var(--ink);
@@ -340,13 +344,17 @@
   letter-spacing: .08em;
   text-transform: uppercase;
   text-align: center;
-  cursor: pointer;
 }
-.rows.shelves > .tile .refund[hidden] { display: none; }
-.rows.shelves > .tile.refunds { padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
-.rows.shelves > .tile.refunds .pinmark { bottom: calc(var(--shelf-refund, 18px) + 2px); }
+.rows.shelves > .tile .strip[hidden], .rows.shelves > .tile .strip > [hidden] { display: none; }
+.rows.shelves > .tile .strip > i { flex: 1 1 0; min-width: 0; font-style: normal; white-space: nowrap; cursor: pointer; }
+.rows.shelves > .tile .strip > i + i { border-left: 1px solid var(--ink); }
+/* A half with nothing to do -- the refund while the only copy is being
+   built, the next copy while the purse is short -- pales as a short tag does. */
+.rows.shelves > .tile .strip > i.dead { color: var(--ink-5); cursor: default; }
+.rows.shelves > .tile.stripped { padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
+.rows.shelves > .tile.stripped .pinmark { bottom: calc(var(--shelf-refund, 18px) + 2px); }
 @media (hover: hover) {
-  .rows.shelves > .tile .refund:hover { background: var(--ink); color: var(--paper); }
+  .rows.shelves > .tile .strip > i:not(.dead):hover { background: var(--ink); color: var(--paper); }
 }
 /* The new-corner is top-LEFT on a tile: the pips stand down the right edge,
    and a notch over them read as the top of the ladder. */

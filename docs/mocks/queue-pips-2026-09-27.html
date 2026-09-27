@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Queued Pips</title>
+<style>
+  /* Light only on the cards, as the game's boards are: paper white, ink black. */
+  :root { --ink: #000; --paper: #fff; --grey: #666; --ink5: #8c8c8c; --page: #fff; --dim: #777; --text: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --page: #111; --dim: #999; --text: #eee; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --page: #111; --dim: #999; --text: #eee; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--page); color: var(--text);
+         font: 12px/1.4 ui-monospace, "Courier New", monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  .note, .cap { color: var(--dim); margin: 0 0 10px; max-width: 900px; }
+  section { border-top: 1px solid var(--dim); padding: 12px 0 14px; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+  #bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  #bar button { border: 1px solid var(--dim); padding: 2px 8px; }
+  #state { color: var(--dim); }
+
+  .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  .opt .lbl { font-weight: bold; margin: 0 0 6px; }
+  .opt .cap { font-size: 11px; margin: 6px 0 0; }
+  .pair { display: flex; gap: 14px; align-items: flex-start; background: var(--paper); color: var(--ink); padding: 6px; width: max-content; max-width: 100%; }
+
+  /* the tile, at the real shelf's size (140px slot, 6px pips, 2px pitch, 4px between bands) */
+  .tile { position: relative; width: 140px; min-height: 141px; border: 1px solid var(--ink); background: var(--paper);
+          display: flex; flex-direction: column; align-items: center; padding: 8px 6px 26px; text-align: center; cursor: pointer; }
+  .glyph { width: 28px; height: 28px; border: 3px solid var(--ink); margin-top: 1px; position: relative; }
+  .glyph::after { content: ''; position: absolute; left: 6px; top: 6px; width: 10px; height: 10px; background: var(--ink); }
+  .what { font-size: 10.2px; letter-spacing: .08em; text-transform: uppercase; margin-top: 3px; line-height: 13px; }
+  .gain { color: var(--grey); margin-top: 5px; line-height: 13px; }
+  .tag { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--ink); padding: 0 6px; height: 18px; margin-top: 5px; }
+  .tag i.d { display: inline-block; width: 7px; height: 7px; background: var(--ink); margin-right: 4px; }
+  .rf { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; border-top: 1px solid var(--ink); display: flex;
+        font-size: 10.2px; letter-spacing: .08em; text-transform: uppercase; line-height: 17px; }
+  .rf > button { flex: 1 1 0; height: 17px; white-space: nowrap; }
+  .rf > button + button { border-left: 1px solid var(--ink); }
+  .rf > button:hover { background: var(--ink); color: var(--paper); }
+  .rf > button.cant { color: var(--ink5); cursor: default; }
+  .rf > button.cant:hover { background: var(--paper); color: var(--ink5); }
+
+  .ladder { position: absolute; right: 4px; top: 12px; display: flex; flex-direction: column-reverse; align-items: center; gap: 4px; opacity: .78; }
+  .ladder b { display: flex; flex-direction: column-reverse; gap: 2px; }
+  .ladder i { display: block; width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; position: relative; overflow: hidden; }
+  .ladder i.on { background: currentColor; }
+  .ladder b:nth-child(2) { color: #2e9e4b; }
+  .ladder b:nth-child(3) { color: #2f5fd0; }
+  .ladder b:nth-child(4) { color: #d93a25; }
+
+  /* the zoomed column: the same markup, five times over */
+  .zoom { width: 44px; height: 170px; position: relative; flex: none; }
+  .zoom .ladder { position: absolute; right: auto; left: 3px; top: 0; transform: scale(5); transform-origin: top left; opacity: .78; }
+
+  /* 1: hatched -- three one-pixel stripes of the band's color */
+  .p1 .ladder i.q { background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 2px); }
+  /* 2: a dot in the ring */
+  .p2 .ladder i.q::after { content: ''; position: absolute; left: 1px; top: 1px; width: 2px; height: 2px; background: currentColor; }
+  /* 3: a ghost fill, the band's color at a third */
+  .p3 .ladder i.q::after { content: ''; position: absolute; inset: 0; background: currentColor; opacity: .35; }
+  /* 4: a slow climb -- the queued pips light one after another, foot to top, and go out together */
+  .p4 .ladder i.q::after { content: ''; position: absolute; inset: 0; background: currentColor; opacity: 0;
+                           animation: climb var(--cyc) steps(1) infinite; animation-delay: var(--d); }
+  @keyframes climb { 0% { opacity: 0; } 10% { opacity: 1; } 80% { opacity: 0; } }
+  /* 5: the one being built fills from its foot with the work done; the waiting ones carry a dot */
+  .p5 .ladder i.q::after { content: ''; position: absolute; left: 1px; top: 1px; width: 2px; height: 2px; background: currentColor; }
+  .p5 .ladder i.q.front::after { left: 0; top: auto; bottom: 0; width: 100%; height: var(--fill); }
+  @media (prefers-reduced-motion: reduce) { .p4 .ladder i.q::after { animation: none; opacity: .5; } }
+</style>
+</head>
+<body>
+<h1>Queued pips</h1>
+<p class="note">A mock drawn from plain boxes, not the game. The card is option A, as voted (2026-09-27): the strip splits
+<code>REFUND ×n | + ANOTHER</code> while a copy is in the works, and becomes the whole-width refund once the ladder has
+nothing more to sell (no <code>no more</code>). Each option below marks the rungs that are paid for and not yet landed on
+the pips; left is the tile at its real size, right the same pips five times over. All five share one yard: press a card,
+a strip half, or let it run. <b>What it cannot show:</b> the real tile's lift and hover (the pips go to full ink under the
+cursor), the game's pip tone on a phone screen, and a short kit ladder (fewer pips, same marks).</p>
+
+<section>
+  <div id="bar">
+    <label><input type="checkbox" id="auto" checked> press things by itself</label>
+    <button id="reset">start over</button>
+    <span id="state"></span>
+  </div>
+</section>
+
+<section class="opts" id="opts"></section>
+
+<script>
+(() => {
+  const TOP = 8, WORK = 5, BAND = 2;
+  const OPTS = [
+    ['p1', '1 -- hatched', 'Three one-pixel stripes of the band\'s color. Static; reads as "part way" and stays in the band\'s color.'],
+    ['p2', '2 -- a dot in the ring', 'An empty ring with a two-pixel dot. Static and the quietest; reads as "spoken for".'],
+    ['p3', '3 -- a ghost fill', 'The band\'s color at a third. Static; the plainest "not yet" at a glance, but nearest to a landed pip.'],
+    ['p4', '4 -- a slow climb', 'The queued pips light one after another, foot to top, and go out together. Moves, so a queued ladder is findable across a plank.'],
+    ['p5', '5 -- fills as it is built', 'The one being built fills from its foot with the work done; the ones behind it carry the dot. Shows the progress on the card itself.']
+  ];
+  let level, line, prog, dust;
+  const reset = () => { level = 2; line = 2; prog = 0; dust = 60; };
+  reset();
+  const price = k => [10, 20, 30, 40, 60, 80, 100, 120][k] ?? 999;
+  const log = t => { document.getElementById('state').textContent = t; };
+
+  function ladder() {
+    let s = '<span class="ladder">';
+    for (let g = 0; g < TOP / BAND; g++) {
+      s += '<b>';
+      for (let j = 0; j < BAND; j++) {
+        const i = g * BAND + j, q = i >= level && i < level + line, front = i === level && line;
+        const d = ((i - level) * 0.35).toFixed(2);
+        s += `<i class="${i < level ? 'on' : q ? 'q' + (front ? ' front' : '') : ''}" style="--d:${d}s;--cyc:${(line * 0.35 + 1.6).toFixed(2)}s;--fill:${Math.round(prog / WORK * 100)}%"></i>`;
+      }
+      s += '</b>';
+    }
+    return s + '</span>';
+  }
+  function tile() {
+    const k = level + line, full = k >= TOP, waiting = Math.max(0, line - 1);
+    const refund = waiting ? `<button data-rf>refund ×${waiting}</button>` : `<button class="cant">building</button>`;
+    let rf = '';
+    if (line) rf = full ? `<span class="rf">${waiting ? refund : '<button class="cant">building</button>'}</span>`
+                        : `<span class="rf">${refund}<button data-buy>+ another</button></span>`;
+    const tag = full ? '<span class="tag">done</span>' : `<span class="tag"><span><i class="d"></i>${price(k)}</span></span>`;
+    const gain = line ? 'building' : full ? '' : `${5 + k * 2} → ${7 + k * 2}`;
+    return `<div class="tile"><span class="glyph"></span><span class="what">carry amount</span><span class="gain">${gain}</span>${tag}${rf}${ladder()}</div>`;
+  }
+  const host = document.getElementById('opts');
+  let sig = '';
+  function draw(force) {
+    const s = `${level}|${line}|${Math.floor(prog * 4)}`;
+    if (s === sig && !force) return;
+    const animChanged = !sig || sig.split('|').slice(0, 2).join() !== s.split('|').slice(0, 2).join();
+    sig = s;
+    if (!host.children.length) {
+      host.innerHTML = OPTS.map(([c, l, cap]) => `<div class="opt ${c}"><div class="lbl">${l}</div><div class="pair"><div class="t"></div><div class="zoom"></div></div><p class="cap">${cap}</p></div>`).join('');
+    }
+    // Rebuilt only when the rungs change, so the climb's animation is not restarted every frame.
+    host.querySelectorAll('.opt').forEach(o => {
+      if (animChanged || !o.classList.contains('p4')) {
+        o.querySelector('.t').innerHTML = tile();
+        o.querySelector('.zoom').innerHTML = ladder();
+      }
+    });
+  }
+  function buy() {
+    if (level + line >= TOP) return;
+    line++; log(`queued rung ${level + line}`); draw(true);
+  }
+  function refund() { if (line > 1) { line--; log('newest copy refunded'); draw(true); } }
+  host.addEventListener('click', e => {
+    if (e.target.closest('[data-rf]')) return refund();
+    if (e.target.closest('.cant')) return;
+    if (e.target.closest('.tile')) buy();
+  });
+  document.getElementById('reset').onclick = () => { reset(); draw(true); };
+
+  let last = performance.now(), autoT = 0;
+  function frame(t) {
+    const dt = Math.min(0.1, (t - last) / 1000); last = t;
+    if (line) { prog += dt; if (prog >= WORK) { prog = 0; line--; level++; log(`rung ${level} landed`); } }
+    if (document.getElementById('auto').checked) {
+      autoT += dt;
+      if (autoT > 2.2) {
+        autoT = 0;
+        if (level >= TOP && !line) reset();
+        else if (Math.random() < .7) buy(); else refund();
+      }
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+  draw(true);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
