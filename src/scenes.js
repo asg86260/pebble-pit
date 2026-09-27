@@ -347,18 +347,18 @@ const deepScenes = {
       lookDeep(fist ? (fist.x + belly) / 2 : belly);
     } },
   // Blows land (DESIGN.md, "Blows land: the burst and the stun"). A star
-  // called and fallen onto the split coil, which stuns it: the coil held and
-  // shuddering, the bar's pip held open, no `+` off the belly. The split,
+  // called and fallen onto the split coil, which stuns it: the coil held, a
+  // ring running over its head, the bar's pip held open, no `+` off the belly. The split,
   // because a first star is deeper than the warded coil's whole depth and
   // breaks it, and a break ends a stun. The shot is a second on, well inside
   // the longest stun.
-  'deep-stun': { about: 'the deep', say: 'a star has stunned the coil: held still and shuddering, the heal stopped, the pip held open',
+  'deep-stun': { about: 'the deep', say: 'a star has stunned the coil: held still, a ring running over its head, the heal stopped, the pip held open',
     run: () => {
       deepYard({ stage: 2, wound: 1500, open: ['star'], crew: { brawlers: 2 } });
       S.starAt = 0;
       for (let i = 0; i < 60 * 20 && !(S.serpentStun > 0); i++) window.__fast(1 / 60);
-      const bite = S.serpentChips[S.serpentChips.length - 1];
-      lookDeep(coilAt(bite ? bite.u : bellySeg(), now()).x);
+      // On the head, where the ring stands, as serpent-head frames it.
+      lookDeep(coilAt(4, now()).x + S.viewW * 0.25);
     } },
   // Three blows just landed on the split coil, no stun left over so the
   // bites are read on a coil at its sway: a star's bite out of the top edge

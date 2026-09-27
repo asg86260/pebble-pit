@@ -150,9 +150,18 @@ export const CHIPS_MAX = 24;         // bites kept at once, however fast they co
 // SPRAY_FAN radians either side of straight out.
 export const SPRAY_GAIN = 2.5;
 export const SPRAY_FAN = 1.1;
-// A stunned coil holds still and shudders a cell, up and down, at this pace.
-export const STUN_SHAKE = P;
-export const STUN_SHAKE_MS = 70;
+// A stunned coil holds still, and a flat ring of cells stands over its head
+// (the owner's call, 2026-09-27, off the class bench): one bright cell runs
+// round it with a short tail fading behind, over a dim ring. The cells are
+// offsets in cells from the ring's middle, in the order the bright one runs.
+export const STUN_RING = [[-2, 0], [-1, -1], [0, -1], [1, -1], [2, 0], [1, 1], [0, 1], [-1, 1]];
+export const STUN_RING_UP = 6;       // cells from the head's top edge up to the ring's middle, clear of the crest
+export const STUN_RING_BACK = 1;     // and cells back along the body from the head's segment
+export const STUN_RING_STEP_MS = 70; // the bright cell moves on a cell this often
+// The tones, as rungs down from the ramp's white: the bright cell, its tail
+// behind it, and the rest of the ring.
+export const STUN_RING_TONES = [0, 1, 2];
+export const STUN_RING_DIM = 4;
 
 // --- the weapons -------------------------------------------------------------------
 export const LANCE_LEN = P * 8;      // a lance of black water
