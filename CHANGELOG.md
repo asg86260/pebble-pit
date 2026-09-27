@@ -47,6 +47,7 @@ feature lives in DESIGN.md.
 - Clouds no longer show below the ground line in a short window (play.html in a window 300px tall).
 - A rockhand who shoveled a mess on the far side of the pit walks back round the hole to the rock, instead of walking home across thin air (test/rockhand-home.test.mjs).
 - A worker you pick up no longer vanishes when carried down over the drowned pit or up past the deep's ceiling (src/selftest/crew.js).
+- The pause menu dims the yard behind it instead of washing it white, so the dark pit no longer glares (`node tools/look.mjs portal`, then escape).
 
 ## v0.4.1 — 2026-09-23
 

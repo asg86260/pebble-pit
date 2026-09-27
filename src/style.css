@@ -1029,17 +1029,15 @@ body.still #scroller { scroll-behavior: auto; }
    hangs off a building; this is neither, because the thing it is about is the
    whole window. Same ink, same type, same border as the boards -- it is a sheet
    like the others, just put in the middle. */
-/* The wash behind the held sheet: white at two thirds over the yard, with a
-   stipple of single dark cells on the six-pixel grid -- the yard seen through
-   a screen, not a grey fill. Under the sheet, over the boards. */
+/* The wash behind the held sheet: the yard dimmed, not washed out -- black
+   at two fifths with a stipple of single light cells on the six-pixel grid,
+   the yard seen through a screen rather than under a grey fill. Shade, not
+   ink, so the same on both pages: a paper wash turned the dark pit pale.
+   Under the sheet, over the boards. */
 .scrim {
   position: fixed; inset: 0; z-index: 11;
-  background-color: color-mix(in srgb, var(--paper) 66%, transparent);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.28'/%3E%3C/svg%3E");
-}
-/* the same stipple in the dark page's ink: a data URI cannot read a variable */
-html.dark .scrim {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.28'/%3E%3C/svg%3E");
+  background-color: rgb(0 0 0 / .4);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff' fill-opacity='.35'/%3E%3C/svg%3E");
 }
 /* The held sheet and its wash come up and go down as fades (fade.js puts
    `on` on after showing and takes it off ahead of hiding). Only those two:
