@@ -8,7 +8,7 @@
 import {
   FLOOR, STATION_X, BODY, GREYS, PURPLES, WHITE, hash, clamp, steps,
   cell, line, ring, coilY, coilTop, coilBottom, COIL_X0, COIL_X1,
-  burst, chip, drawBody, registerStatus, registerClass,
+  burst, chip, drawBody, pips, registerStatus, registerClass,
 } from './harness.js';
 
 // --- shared ground -----------------------------------------------------------------
@@ -296,16 +296,16 @@ registerClass({
           if (a >= 0 && a < RUN_S) runAlong(g, t, st, SX, a, BLEED);
         },
       }) },
-    { name: 'Iaido', about: 'He stops cutting and draws for 4 s -- the sword dark at his side, the meter at the other -- then one cut of all of it, x1.5: the blade laid out level, a line clean through the coil.',
+    { name: 'Iaido', about: 'He stops cutting and draws for 4 s -- the sword dark at his side, four pips filling under him -- then one cut of all of it, x1.5: the blade laid out level, a line clean through the coil.',
       ...swordScene({
         cuts: [4.8], dur: 6.4, legs: [...UP, [5.5, 6.2, 0]],
         stacks: t => (t >= 4.8 ? 3 : 0),
         pose(g, t, api, x, y, a) {
           if (t >= 0.8 && t < 4.7) {
-            // the draw: the blade held still and dark, the meter filling
+            // the draw: the blade held still and dark, the pips filling
             kit(g, SWORD_REST, x, y, { w: GREYS[6], a: GREYS[5] });
             const fill = steps((t - 0.8) / 3.8, 4) * 4;
-            for (let i = 0; i < 4; i++) cell(g, x + 4, y + 2 - i, i < fill ? (fill >= 4 && Math.floor(t * 8) % 2 ? WHITE : GREYS[9]) : GREYS[3]);
+            pips(g, x, y, fill, 4, fill >= 4 && Math.floor(t * 8) % 2 ? 1 : 0);
           } else if (t >= 4.7 && t < 5.3) {
             // the drawn cut: out of the rest and laid flat to his right, the
             // guard at his hand, the blade and its point level

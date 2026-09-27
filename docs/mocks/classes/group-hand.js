@@ -11,7 +11,7 @@
 import {
   P, FLOOR, STATION_X, BUDDY_X, BODY, GREYS, PURPLES, WHITE, INK, hash, clamp, steps,
   cell, rect, line, ring, coilY, coilTop, coilBottom, coilCells, COIL_X0, COIL_X1,
-  burst, chip, drawBody, registerStatus, registerClass,
+  burst, chip, drawBody, pips, registerStatus, registerClass,
 } from './harness.js';
 
 // --- shared motion ------------------------------------------------------------------
@@ -217,8 +217,7 @@ registerClass({
         drawBrawler(g, t, api, at, alt(PUM_JABS), heavy);
         // the count to four: a pip a punch beside him, the fourth the haymaker
         const n = countTo([...PUM_JABS, PUM_HAY], t) % 4 || (t >= PUM_HAY && t < PUM_HAY + 0.6 ? 4 : 0);
-        if (t < 5.4) for (let i = 0; i < 4; i++)
-          cell(g, at.x - 3, at.y + 2 - i, i < n ? (i === 3 ? WHITE : GREYS[9]) : GREYS[3]);
+        if (t < 5.4) pips(g, at.x, at.y, n, 4);
         // the blow rings the coil out from where it landed
         if (a >= 0 && a < 0.5) {
           const s = punchSpot(t, st, at.x, 1, 2);
@@ -310,10 +309,7 @@ function thrustTip(t, L, y, face) {
   if (a < 0.1) return face;
   return Math.round(face + (ready - face) * ((a - 0.1) / 0.06));
 }
-function drawPips(g, x, y, n, flash) {
-  for (let i = 0; i < PIPS; i++)
-    cell(g, x - 1 + i, y + BODY + 1, flash ? (flash > 0 ? WHITE : GREYS[6]) : i < n ? WHITE : GREYS[3]);
-}
+const drawPips = (g, x, y, n, flash) => pips(g, x, y, n, PIPS, flash);
 // The finisher at F: crouch two cells, launch the body up until the staff
 // meets the coil (the body's row there is `top`), hold, drop back to the
 // hover. Returns the body's row, or null when the finisher is not under way.

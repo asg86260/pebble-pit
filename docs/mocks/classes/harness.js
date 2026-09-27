@@ -163,6 +163,19 @@ export function drawBody(g, cx, cy) {
   g.fillStyle = WHITE; g.fillRect(x + 2, y + 2, w - 4, w - 4);
 }
 
+// --- pips ------------------------------------------------------------------------
+// Every build-up a class counts is a row of pips under its body, one cell
+// wide, centered on the square; an unlit pip is a grey step up from the
+// water so the count reads before it fills (the owner, 2026-09-27: "for the
+// progress bars/combo bars. lets do pips instead keep that same language").
+// `n` lit of `of`; `flash` > 0 the whole row white, < 0 dark, for the beat
+// a full row is spent.
+export function pips(g, x, y, n, of, flash = 0) {
+  const x0 = x + Math.floor((BODY - of) / 2);
+  for (let i = 0; i < of; i++)
+    cell(g, x0 + i, y + BODY + 1, flash ? (flash > 0 ? WHITE : GREYS[4]) : i < n ? WHITE : GREYS[6]);
+}
+
 // --- registries ------------------------------------------------------------------
 // A status is drawn by whoever owns it (docs/wave-class-anims.md), once, on
 // the whole serpent or on a fighter; every class that applies it shows it
