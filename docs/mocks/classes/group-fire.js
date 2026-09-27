@@ -441,22 +441,28 @@ registerClass({
 });
 
 // --- the Mage ------------------------------------------------------------------------
-// A pointed hat with a wide brim, in the abyss's purple,
-// and a staff with a purple stone that brightens as a spell gathers.
-function mageHat(g, cx, cy) {
-  rect(g, cx - 1, cy - 1, 5, 1, PURPLES[8]);
-  cell(g, cx + 1, cy - 2, PURPLES[10]);   // the point
+// Her kit is the looks page's (docs/mocks/classes/looks-2026-09-27.html): a
+// staff taller than she is, stood against her left side, with a purple stone
+// held in its claws at the top -- a bright cell over a dimmer one. To cast she
+// lifts it a cell and the stone goes bright through; every spell starts at the
+// stone and leaves from there. Because the staff moves, every Mage scene
+// draws its own body and kit (`body: false`); the `hat` is the staff at rest.
+//
+// The stone's top cell with the staff lifted: where every spell leaves from.
+const tipOf = me => ({ x: me.x - 1, y: me.y - 4 });
+// The staff beside the body whose top-left is (me.x, me.y). `up` lifts it a
+// cell for the cast; `glow` 0..1 is how gathered the spell is, and at the full
+// the stone's top goes white.
+function staff(g, me, up = false, glow = 0) {
+  const x = me.x - 1, top = me.y - 3 - (up ? 1 : 0);
+  for (let y = top + 2; y <= me.y + 2 - (up ? 1 : 0); y++) cell(g, x, y, GREYS[8]);
+  cell(g, x - 1, top + 1, GREYS[8]); cell(g, x + 1, top + 1, GREYS[8]);   // the claws
+  cell(g, x, top + 1, up ? PURPLES[11] : PURPLES[9]);
+  cell(g, x, top, glow > 0.66 ? WHITE : PURPLES[11]);
 }
-// The staff stands a cell clear of the body and rises past the hat, so its
-// stone is the highest thing on the plinth and a spell starts from it.
-const tipOf = me => ({ x: me.x + 4, y: me.y - 3 });
-// `glow` 0..1: how gathered the spell is.
-function staff(g, me, glow) {
-  const tip = tipOf(me);
-  for (let y = tip.y + 1; y <= me.y + 2; y++) cell(g, tip.x, y, GREYS[7]);
-  cell(g, tip.x, tip.y, glow > 0.66 ? WHITE : glow > 0.33 ? PURPLES[11] : PURPLES[9]);
-  if (glow > 0.66) { cell(g, tip.x - 1, tip.y, PURPLES[10]); cell(g, tip.x + 1, tip.y, PURPLES[10]); cell(g, tip.x, tip.y - 1, PURPLES[10]); }
-}
+function mageKit(g, cx, cy) { staff(g, { x: cx, y: cy }); }
+// A Mage scene's own fighter: the body and the staff, lifted or not.
+function mageAt(g, me, up, glow) { drawBody(g, me.x, me.y); staff(g, me, up, glow); }
 // A spell gathering at the staff's stone: a ring of cells that draws in.
 function gather(g, t, t0, len, me) {
   const a = t - t0;
@@ -465,6 +471,10 @@ function gather(g, t, t0, len, me) {
   ring(g, tip.x, tip.y, 1 + 3 * (1 - k), k < 0.5 ? PURPLES[7] : PURPLES[10], 2);
   return k;
 }
+// Whether the staff is up at `t`: from the start of each cast until a beat
+// after the bolt has left the stone.
+const UP = 0.5 + 0.55 + 0.15;
+const upAt = (t, starts, len = UP) => starts.some(t0 => t >= t0 && t < t0 + len);
 // A bolt of the abyss: a white head with a purple tail that ripples as it
 // goes, from the staff to (tx, the coil).
 function bolt(g, t, t0, fl, me, tx, s, fire = false) {
@@ -550,21 +560,23 @@ const STRIKE = 1.0;   // when the first fork lands
 
 registerClass({
   key: 'mage', name: 'Mage', station: 'spire', group: 'fire',
-  look: 'a pointed purple hat with a wide brim; a staff with a purple stone',
-  hat: mageHat,
+  look: 'a staff taller than her, a purple stone held in its claws',
+  hat: mageKit,
   scenes: [
     { name: 'Base', about: 'A bolt every 2 s, a blow; the bolt Lights the coil where it lands.', dur: 4,
+      body: false,
       state(t, api) { if (t >= litDone(26, 0.5 + CAST)) api.status('lit', 1); },
       draw(g, t, api) {
         const starts = [0.5, 2.5];
-        staff(g, api.me, glowAt(t, starts));
         for (const t0 of starts) gather(g, t, t0, 0.5, api.me);
+        mageAt(g, api.me, upAt(t, starts), glowAt(t, starts));
         const a = cast(g, t, api, { t0: 0.5, tx: 26, id: 11 });
         lightUp(g, t, a.tL, a.x, api.st);
         const b = cast(g, t, api, { t0: 2.5, tx: 38, id: 12 });
         lightUp(g, t, b.tL, b.x, api.st);
       } },
     { name: 'Pyromancy', about: 'Bolts set Burning, from where they land to the whole coil.', dur: 7,
+      body: false,
       state(t, api) {
         if (t >= litDone(30, 0.5 + CAST)) api.status('lit', 1);
         if (t >= spreadDone(30, 0.5 + CAST)) api.status('burning', 0.34);
@@ -572,8 +584,8 @@ registerClass({
       },
       draw(g, t, api) {
         const starts = [0.5, 3.5];
-        staff(g, api.me, glowAt(t, starts));
         for (const t0 of starts) gather(g, t, t0, 0.5, api.me);
+        mageAt(g, api.me, upAt(t, starts), glowAt(t, starts));
         const a = cast(g, t, api, { t0: 0.5, tx: 30, fire: true, id: 13, k: 0.45 });
         lightUp(g, t, a.tL, a.x, api.st);
         catchFire(g, t, a.tL, a.x, api.st, 0.34);
@@ -581,12 +593,13 @@ registerClass({
         catchFire(g, t, b.tL, b.x, api.st, 0.67);
       } },
     { name: 'Storm', about: 'A bolt jumps to two more lengths, each a blow.', dur: 3.5,
+      body: false,
       // the light goes on once the forks have gone, so the two do not talk over each other
       state(t, api) { if (t >= litDone(STORM[0].x, STRIKE + 0.5)) api.status('lit', 1); },
       draw(g, t, api) {
         const me = api.me, s = api.st, tip = tipOf(me);
-        staff(g, me, glowAt(t, [STRIKE - 0.5]));
         gather(g, t, STRIKE - 0.5, 0.5, me);
+        mageAt(g, me, upAt(t, [STRIKE - 0.5], 0.5 + 0.45), glowAt(t, [STRIKE - 0.5]));
         let from = { x: tip.x, y: tip.y };
         STORM.forEach((j, i) => {
           // the first fork strikes the belly; each jump comes down on the back
@@ -603,12 +616,13 @@ registerClass({
         lightUp(g, t, STRIKE + 0.5, STORM[0].x, s);
       } },
     { name: 'Arcane', about: 'Every 8 s the spire\'s light sweeps the whole coil, head to tail: all of it Lit.', dur: 6,
+      body: false,
       state(t, api) { if (t >= 3.4) api.status('lit', 1); },
       draw(g, t, api) {
         const me = api.me, s = api.st, tip = tipOf(me);
         const t0 = 0.8, t1 = 1.6, t2 = 3.4;   // gather, sweep from, sweep to
-        staff(g, me, t >= t0 && t < t2 ? 1 : 0);
         gather(g, t, t0, t1 - t0, me);
+        mageAt(g, me, t >= t0 && t < t2, t >= t0 + 0.5 && t < t2 ? 1 : 0);
         if (t < t1 || t >= t2) return;
         const xs = lerp(COIL_X0, COIL_X1, (t - t1) / (t2 - t1));
         litCells(g, t, s, COIL_X0, xs);
