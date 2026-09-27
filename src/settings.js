@@ -31,8 +31,10 @@ const boardName = document.getElementById('boardname');
 // of the pages it is on. Two fronts (`title`, where the boot stops, and
 // `main`, which escape brings up); behind them `record`, `slots` and
 // `settings`, written as the page is turned because the record grows behind
-// your back and the saves page reads the store. `hold` in input.js opens the
-// sheet on a front every time, or the resume button is sometimes not there.
+// your back and the saves page reads the store. A yard opened from the saves
+// page turns back to the front: the thing to do next is resume it. `hold` in
+// input.js opens the sheet on a front every time, or the resume button is
+// sometimes not there.
 export function showPane(name) {
   for (const el of sheet.querySelectorAll('[data-pane]')) el.hidden = !el.dataset.pane.split(' ').includes(name);
   paste.hidden = true;                          // folded; asked for again if wanted
@@ -43,7 +45,7 @@ export function showPane(name) {
   // and no name box.
   if (!timesOn()) { timesBtn.hidden = true; boardName.hidden = true; }
   if (name === 'record') showRecord(recordEl);
-  if (name === 'slots') showSlots(slotsEl, line => { said.textContent = line; }, switchSlot);
+  if (name === 'slots') showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); });
   if (name === 'times') showTimes(timesEl);
   if (name === 'settings') boardName.value = timesName();
 }
@@ -163,7 +165,7 @@ document.getElementById('loadsave').addEventListener('click', async () => {
   let raw = null;
   try { raw = await d.importFrom(); } catch {}
   if (raw == null) return;                       // cancelled: nothing to say
-  takeIn(raw);
+  if (takeIn(raw)) back();
 });
 
 // A throw out of the import is not a reason to stop the game: the yard the
@@ -188,8 +190,8 @@ document.getElementById('nevermind').addEventListener('click', () => {
 // reason is a paste that missed the end.
 document.getElementById('loadit').addEventListener('click', () => {
   if (takeIn(box.value)) {
-    paste.hidden = true;
     box.value = '';
+    back();
   }
 });
 

@@ -26,6 +26,7 @@ feature lives in DESIGN.md.
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
 - A card pressed again queues another of the same -- the next rung, the next house -- paid on the press at its own price, and a refund strip along the card's foot hands back the newest one still waiting; the queue card shows a run as one line with its count (test/queue-repeats.test.mjs, src/selftest/boards.js).
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy punch, grenade or star stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
+- Save a copy, load a save and reset progress are on the saves page now, and loading a yard turns the sheet back to the front (src/selftest/settings.js).
 
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - Scales tossed into the crusher drop into its funnel instead of sliding down in front of it (`node tools/look.mjs crusher`).

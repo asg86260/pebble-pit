@@ -52,10 +52,23 @@ try {
   <!-- the desk only: title.js gives it a pane when window.desk exists -->
   <button id="quit" type="button" hidden>exit to desktop</button>
 
-  <!-- the saves: three rows, the open one marked; picking one opens it, and
-       nothing else happens here because no yard is running -->
+  <!-- the saves: three rows, the open one marked; picking one opens it and
+       turns back to the front. The save going out and coming in, and the
+       reset, act on the open slot's blob -->
   <div class="word" data-pane="slots" hidden>saves</div>
   <div id="slots" class="slots" data-pane="slots" hidden></div>
+  <div class="pair" data-pane="slots" hidden>
+    <button id="savecopy" type="button">save a copy</button>
+    <button id="loadsave" type="button">load a save</button>
+  </div>
+  <div id="paste" class="paste" data-pane="slots" hidden>
+    <textarea id="pastebox" rows="6" spellcheck="false"></textarea>
+    <div class="pair">
+      <button id="loadit" type="button">load it</button>
+      <button id="nevermind" type="button">never mind</button>
+    </div>
+  </div>
+  <button id="reset" type="button" data-pane="slots" hidden>reset progress</button>
   <button id="slotsback" type="button" data-pane="slots" hidden>back</button>
 
   <!-- the record of the open yard, off its save -->
@@ -63,25 +76,12 @@ try {
   <div id="record" class="record" data-pane="record" hidden></div>
   <button id="recordback" type="button" data-pane="record" hidden>back</button>
 
-  <!-- the settings, as on the held sheet; the save going out and coming in
-       acts on the open slot's blob -->
+  <!-- the settings, as on the held sheet -->
   <div class="word" data-pane="settings" hidden>settings</div>
   <button id="motion" type="button" data-pane="settings" hidden>motion: full</button>
   <button id="dark" type="button" data-pane="settings" hidden>dark: off</button>
   <button id="sound" type="button" data-pane="settings" hidden>sound: on</button>
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden>
-  <div class="pair" data-pane="settings" hidden>
-    <button id="savecopy" type="button">save a copy</button>
-    <button id="loadsave" type="button">load a save</button>
-  </div>
-  <div id="paste" class="paste" data-pane="settings" hidden>
-    <textarea id="pastebox" rows="6" spellcheck="false"></textarea>
-    <div class="pair">
-      <button id="loadit" type="button">load it</button>
-      <button id="nevermind" type="button">never mind</button>
-    </div>
-  </div>
-  <button id="reset" type="button" data-pane="settings" hidden>reset progress</button>
   <button id="settingsback" type="button" data-pane="settings" hidden>back</button>
 
   <div id="said" class="said" data-pane="main slots settings"></div>

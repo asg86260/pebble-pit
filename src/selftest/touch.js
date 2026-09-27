@@ -241,7 +241,7 @@ export const TESTS = [
     await sleep(250);
     const held = document.getElementById('held');
     const open = state().paused && !held.hidden && held.classList.contains('bottom');
-    const rows = ['touch', 'motion', 'fullscreenrow', 'savecopy'].map(id => document.getElementById(id))
+    const rows = ['touch', 'motion', 'fullscreenrow', 'sound'].map(id => document.getElementById(id))
       .filter(el => el && !el.hidden && el.getBoundingClientRect().height > 0);
     const hr = held.getBoundingClientRect();
     const asSheet = Math.abs(hr.width - state().W) <= 2 && hr.bottom >= state().H - 1 && Math.abs(hr.top - state().H * SHEET_H) <= 2;
@@ -261,7 +261,7 @@ export const TESTS = [
       ok(deskHidden, 'on a desk there is no gear'),
       ok(present && corner, 'on a phone it stands in the top-right corner', `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}`),
       ok(open, 'a tap holds the yard with the settings up, as a sheet from the bottom'),
-      ok(rows.length >= 3 && rows.some(el => el.id === 'touch') && rows.some(el => el.id === 'savecopy'), 'with its rows showing', rows.map(e => e.id).join(' ')),
+      ok(rows.length >= 3 && rows.some(el => el.id === 'touch') && rows.some(el => el.id === 'sound'), 'with its rows showing', rows.map(e => e.id).join(' ')),
       ok(asSheet, 'the window\'s width, on the foot', `${Math.round(hr.width)}x${Math.round(hr.height)} at ${Math.round(hr.bottom)}`),
       ok(closed, 'and a drag down on the grip puts it away'),
     ];

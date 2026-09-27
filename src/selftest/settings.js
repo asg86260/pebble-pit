@@ -26,6 +26,9 @@ const press = async () => {
 const resume = () => document.getElementById('resume').click();
 // the settings are a page behind the front: one press to turn to it
 const settingsPage = () => document.getElementById('settingsbtn').click();
+// and the saves, with the save out and in and the reset under the rows
+const savesPage = () => document.getElementById('slotsbtn').click();
+const onFront = () => !document.getElementById('resume').hidden && document.getElementById('slots').hidden;
 const said = () => held().querySelector('.said').textContent;
 const motion = () => document.getElementById('motion');
 
@@ -120,11 +123,13 @@ export const TESTS = [
     row2.click();
     const fresh = state();
     const saidNew = said();
+    const frontAfterNew = onFront();
+    savesPage();
     const rows2 = rows().map(b => b.textContent);
     rows()[0].click();
     const backAgain = state();
     const saidBack = said();
-    document.getElementById('slotsback').click();
+    const frontAfterLoad = onFront();
     resume();
     await emptySlot2();
     localStorage.removeItem('boulder-clicker/v4/2.tab');
@@ -138,6 +143,8 @@ export const TESTS = [
          'the page reads the swap', JSON.stringify(rows2)),
       ok(backAgain.crew === crew && saidBack === 'loaded', 'and the first yard comes back',
          `${backAgain.crew} vs ${crew}, ${saidBack}`),
+      ok(frontAfterNew && frontAfterLoad, 'and each pick turns back to the front',
+         `${frontAfterNew}, ${frontAfterLoad}`),
     ];
   }],
 
@@ -209,9 +216,7 @@ export const TESTS = [
       ...(document.fullscreenEnabled || document.webkitFullscreenEnabled ? ['fullscreen: off'] : []),
       'sound: on',                            // the mute, which remembers -- see audio.js
       '',                                     // the volume: a slider has no words
-      'save a copy load a save',
       ...(timesOn() ? [''] : []),             // the name on the board: a box has no words
-      'reset progress',
       'back',
       version(),
     ];
@@ -273,7 +278,7 @@ export const TESTS = [
     run(5);
     persist();                                  // so there is a save to copy
     await press();
-    settingsPage();
+    savesPage();
     document.getElementById('savecopy').click();
     await sleep(100);
     const copied = said();
@@ -300,7 +305,7 @@ export const TESTS = [
     box.value = blob;
     document.getElementById('loadit').click();
     const loaded = said();
-    const folded = paste.hidden;
+    const folded = paste.hidden && onFront();
     resume();
     window.__crew(0, 0);
     return [
@@ -310,7 +315,7 @@ export const TESTS = [
          'a paste that is not a save is refused, and costs nothing',
          `${refused}, open ${stillOpen}, stored ${state().stored} vs ${stored}`),
       ok(blob.length > 0 && loaded === 'loaded' && folded,
-         'and the exported blob goes back in', `${loaded}, ${blob.length} chars`),
+         'and the exported blob goes back in, and the sheet turns to the front', `${loaded}, ${blob.length} chars`),
     ];
   }],
 
@@ -320,7 +325,7 @@ export const TESTS = [
     const onBench = board().querySelector('#reset');
     const btn = held().querySelector('#reset');
     await press();
-    settingsPage();
+    savesPage();
     btn.click();
     const armed = btn.classList.contains('armed') && btn.textContent === 'erase everything?';
     const flagged = !!S.resetArmed;

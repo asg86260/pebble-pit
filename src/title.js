@@ -51,8 +51,8 @@ if (timesOn()) {
   showTimes(document.getElementById('times'), opened()?.runId || null);
 }
 // Opening a slot here moves the pointer and nothing else: no yard is running
-// to swap.
-function pick(n) { setSlot(n); }
+// to swap. The page turns back to the front, where play says what it opens.
+function pick(n) { setSlot(n); showPane('main'); }
 
 document.getElementById('slotsbtn').addEventListener('click', () => showPane('slots'));
 document.getElementById('recordbtn').addEventListener('click', () => showPane('record'));
@@ -123,10 +123,9 @@ document.getElementById('loadit').addEventListener('click', () => {
   if (!isSave(s)) { say('that is not a save'); return; }
   savePrev(slotRaw(openSlot()));
   saveRaw(box.value);
-  paste.hidden = true;
   box.value = '';
+  showPane('main');
   say('loaded');
-  front();
 });
 
 // The reset, armed the way the sheet's is: one press asks, a second within
@@ -143,8 +142,8 @@ resetEl.addEventListener('click', () => {
   }
   disarm();
   clear();
+  showPane('main');
   say('erased');
-  front();
 });
 
 // The desk: a window with no menu bar needs a way out that is not a key.
