@@ -1,11 +1,12 @@
-// Track hand of docs/wave-class-anims.md: the altar's two classes (Brawler,
-// Martial Artist) and the spire's inward one (Monk), and the two serpent
-// statuses this track owns (Stunned, Exposed). A mock drawn from plain cells.
+// Track hand of docs/wave-class-anims.md: the Brawler (the altar), the
+// Martial Artist and the Monk (the well), and the two serpent statuses this
+// track owns (Stunned, Exposed). A mock drawn from plain cells.
 //
-// The three are told apart by how they reach the coil: the Brawler swims up
-// and swings big fists, the Martial Artist swims up and jabs fast off a pip
-// meter, the Monk never leaves her spire and pushes waves of the abyss up
-// from her palms, filling a ring of chi round herself.
+// Each is its kit, as the looks page draws it, and every blow comes out of
+// the kit: the Brawler swims up and drives his small wrapped fists into the
+// coil, the Martial Artist swims up and thrusts and sweeps her bo staff off
+// a pip meter, the Monk never leaves her station and pushes waves of the
+// abyss up off her string of prayer beads, lighting a bead a palm.
 
 import {
   P, FLOOR, STATION_X, BUDDY_X, BODY, GREYS, PURPLES, WHITE, INK, hash, clamp, steps,
@@ -493,45 +494,49 @@ registerClass({
 });
 
 // --- the Monk --------------------------------------------------------------------
-// The abyss inward: a shaved head and a topknot, floating a cell off her
-// spire in a ring of chi. She never leaves it. Her palm pushes a flat wave
-// of the abyss's purple up into the coil, and every palm that lands lights
-// a quarter of the ring; a full ring is spent on a chi palm, a wave twice
-// as wide that stuns.
+// The abyss inward: a string of five prayer beads arched over the head, one
+// purple bead told round them at rest (the looks page's kit), floating a
+// cell off the station. She never leaves it. The beads are her chi: every
+// palm that lands lights one purple, and with four lit she gathers the
+// fifth and spends the string on a chi palm, a wave twice as wide that
+// stuns. A palm is a flat wave of the abyss pushed up off the beads into
+// the coil.
 const MONK_FLOAT = HOME_Y - 1;
-const CHI_R = 3.2;
-// The ring's cells in order, clockwise from the top, so chi fills round it.
-const CHI_RING = (() => {
-  const out = [], seen = new Set();
-  for (let k = 0; k < 64; k++) {
-    const a = -Math.PI / 2 + k / 64 * Math.PI * 2;
-    const dx = Math.round(Math.cos(a) * CHI_R), dy = Math.round(Math.sin(a) * CHI_R);
-    if (!seen.has(dx + ',' + dy)) { seen.add(dx + ',' + dy); out.push([dx, dy]); }
-  }
-  return out;
-})();
-// Chi round the body at (x, y): lit cells bright purple, the rest a faint
-// ring. `spin` turns the whole ring (Windwalker's wind); `pull` draws the
-// lit cells in toward her as a chi palm gathers.
-function drawChi(g, x, y, chi, spin = 0, pull = 0) {
-  const n = CHI_RING.length, lit = Math.round(clamp(chi, 0, 1) * n);
-  const cx = x + 1, cy = y + 1;
-  for (let i = 0; i < n; i++) {
-    const [dx, dy] = CHI_RING[(i + spin) % n];
-    const on = i < lit;
-    const k = on ? 1 - pull * 0.6 : 1;
-    cell(g, cx + dx * k, cy + dy * k, on ? (pull > 0.5 ? WHITE : PURPLES[11]) : PURPLES[3]);
-  }
+// The five beads, left to right, from the body's top-left: an arch over the
+// head, its ends a row lower than its crown.
+const BEADS = [[-2, -1], [-1, -2], [1, -2], [3, -2], [4, -1]];
+// The told bead at rest walks out and back along the string.
+const TOLD = [0, 1, 2, 3, 4, 3, 2, 1];
+const told = t => TOLD[Math.floor(t * 3) % TOLD.length];
+function drawBeads(g, x, y, t) {
+  const k = told(t);
+  BEADS.forEach(([dx, dy], i) => cell(g, x + dx, y + dy, i === k ? PURPLES[11] : GREYS[9]));
 }
-// A palm launched at L: a flat wave `w` cells wide leaves her head and
-// rises to the coil's underside in TRAVEL seconds, a bright front with two
-// fading rows behind it; where it lands, a ring of purple opens on the hide.
+// The beads as a meter: `lit` of the five purple, the rest grey. `spin`
+// turns which beads are lit round the string (Windwalker's wind); `glow`
+// lights the dark ones a dim purple while a palm leaves, so the whole
+// string answers the push; `gather` flashes the full string as a chi palm
+// is drawn in.
+function drawChiBeads(g, x, y, lit, { spin = 0, glow = false, gather = 0, t = 0 } = {}) {
+  BEADS.forEach(([dx, dy], i) => {
+    const on = (i - spin + BEADS.length * 8) % BEADS.length < lit;
+    let tone = on ? PURPLES[11] : glow ? PURPLES[7] : GREYS[9];
+    if (gather > 0) tone = gather > 0.5 && Math.floor(t * 16) % 2 ? WHITE : PURPLES[11];
+    // drawn in a cell toward the crown as the chi palm gathers
+    const pull = gather > 0.5 ? 1 : 0;
+    cell(g, x + dx + (dx < 1 ? pull : dx > 1 ? -pull : 0), y + dy + (dy < -1 ? pull : 0), tone);
+  });
+}
+// A palm launched at L: a flat wave `w` cells wide leaves the crown of the
+// beads and rises to the coil's underside in TRAVEL seconds, a bright front
+// with two fading rows behind it; where it lands, a ring of purple opens on
+// the hide.
 const TRAVEL = 0.35;
 function palmWave(g, t, L, x, y, st, w = 3) {
   const a = t - L;
   if (a < 0 || a > TRAVEL + 0.5) return;
   const cx = x + 1, x0 = cx - Math.floor(w / 2);
-  const face = coilBottom(cx, t, st) + 1, from = y - 1;
+  const face = coilBottom(cx, t, st) + 1, from = y - 3;
   if (a <= TRAVEL) {
     const front = Math.round(from + (face - from) * (a / TRAVEL));
     rect(g, x0, front, w, 1, PURPLES[11]);
@@ -560,15 +565,15 @@ function drawMonk(g, t, api, { palms, chiPalms, per = 0.25, sit = null, spin = f
   let chi = palms.filter(L => L + TRAVEL <= t && L + TRAVEL > lastChi).length * per;
   if (sit && t >= sit[0]) chi += (t < sit[1] ? along(t, sit[0], sit[1]) : 1) * (1 - chi);
   const gather = chiPalms.find(L => t >= L - 0.3 && t < L + 0.05);
-  const pull = gather != null ? along(t, gather - 0.3, gather) : 0;
+  const pull = gather != null ? Math.max(0.01, along(t, gather - 0.3, gather)) : 0;
   if (chiPalms.some(L => t >= L + 0.05 && t < L + TRAVEL)) chi = 0;
-  drawChi(g, x, y, gather != null ? 1 : chi, spin ? Math.floor(t * 10) : 0, pull);
+  // four beads are the four palms; the fifth lights only as the chi palm
+  // gathers, so a full string is always the one about to be spent
+  const lit = Math.min(4, Math.round(clamp(chi, 0, 1) * 4));
+  const pushing = palms.some(L => t >= L - 0.1 && t < L + 0.15);
   drawBody(g, x, y);
-  api.cls.hat(g, x, y, t);
-  // her hands: at her sides, raised to push as a palm leaves
-  const pushing = [...palms, ...chiPalms].some(L => t >= L - 0.1 && t < L + 0.15);
-  const hy = sitting ? y + 2 : pushing ? y - 1 : y + 1;
-  cell(g, x - 1, hy, WHITE); cell(g, x + BODY, hy, WHITE);
+  if (lit === 0 && !pull && !pushing) drawBeads(g, x, y, t);
+  else drawChiBeads(g, x, y, lit, { spin: spin ? Math.floor(t * 6) : 0, glow: pushing, gather: pull, t });
   return { x, y };
 }
 
@@ -582,28 +587,24 @@ const CHI_STUN = 1.2;
 const chiStuns = (api, t, sc) => { for (const L of sc.chiPalms) stunFor(api, t, L + TRAVEL, CHI_STUN); };
 
 registerClass({
-  key: 'monk', name: 'Monk', station: 'spire', group: 'hand',
-  look: 'a topknot on a shaved head; floats a cell off the spire in a ring of purple chi',
-  hat(g, cx, cy) {
-    // the knot sits on a one-cell tie, so there is water under its corners
-    cell(g, cx + 1, cy - 1, GREYS[7]);
-    rect(g, cx, cy - 2, BODY, 1, GREYS[9]);
-  },
+  key: 'monk', name: 'Monk', station: 'well', group: 'hand',
+  look: 'a ring of prayer beads over the head, one purple bead told round; floats a cell off the well',
+  hat(g, cx, cy, t) { drawBeads(g, cx, cy, t); },
   scenes: [
     {
-      name: 'Base', about: 'A palm every second pushes a wave of the abyss into the coil and lights a quarter of her chi; a full ring is a chi palm that stuns.',
+      name: 'Base', about: 'A palm every second pushes a wave of the abyss up off her beads into the coil and lights a bead; four lit, she gathers the fifth and spends the string on a chi palm that stuns.',
       dur: 6, body: false,
       state(t, api) { chiStuns(api, t, MK_BASE); },
       draw(g, t, api) { drawMonk(g, t, api, MK_BASE); },
     },
     {
-      name: 'Windwalker', about: 'Chi fills twice as fast: half a ring a palm, the ring turning, a chi palm every third blow.',
+      name: 'Windwalker', about: 'Chi fills twice as fast: two beads a palm, the lit beads running round the string, a chi palm every third blow.',
       dur: 6, body: false,
       state(t, api) { chiStuns(api, t, MK_WIND); },
       draw(g, t, api) { drawMonk(g, t, api, MK_WIND); },
     },
     {
-      name: 'Stillness', about: 'Between palms she settles on the spire and breathes; slow rings rise off her, and while she sits the serpent is Weakened.',
+      name: 'Stillness', about: 'Between palms she settles on her station and breathes; the beads fill on their own, slow rings rise off her, and while she sits the serpent is Weakened.',
       dur: 6.6, body: false,
       state(t, api) {
         chiStuns(api, t, MK_STILL);
