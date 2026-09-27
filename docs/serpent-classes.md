@@ -376,9 +376,10 @@ shape:
 
 ## 7. Open for the owner
 
-0. **A Bard as the first fighter.** She does no damage and the fight starts
-   with only the sqwife. Her song buffing the click, or the Bard not offered
-   as the first class? (Asked 2026-09-27, open.)
+0. **The first fighter's classes** -- answered 2026-09-27: the sqwife picks
+   from **three: Brawler, Ranger, Mage**, one class of each of the altar,
+   the armory and the spire. **The Bard unlocks after the first fighter**,
+   so she never stands alone. When the other six unlock is open.
 
 1. **Ten classes on five stations, two a station** (above), or ten stations,
    or classes free of stations (the spec the fighter's, which undoes the
