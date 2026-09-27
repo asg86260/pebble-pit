@@ -138,8 +138,11 @@
   .fold.shut { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
   .capg { transition: opacity .2s steps(4, end); }
   .capg.shut { opacity: 0; pointer-events: none; }
-  .still .fold, .still .capg { transition: none; }
-  @media (prefers-reduced-motion: reduce) { .fold, .capg { transition: none; } }
+  /* 2b: viewing fades the rest to a light ink, in the same four steps. */
+  #o2b .cls, #o2b .rail, .capin { opacity: 1; transition: opacity .2s steps(4, end); }
+  #o2b .cls.dim, #o2b .rail.dim, .capin.dim { opacity: .25; }
+  .still .fold, .still .capg, .still .cls, .still .rail, .still .capin { transition: none; }
+  @media (prefers-reduced-motion: reduce) { .fold, .capg, #o2b .cls, #o2b .rail, .capin { transition: none; } }
   .resettree { font: inherit; text-transform: uppercase; letter-spacing: .08em; background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 4px 10px; cursor: pointer; }
   .resettree:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
   .resettree:disabled { border-style: dashed; color: var(--ink-5); cursor: default; }
@@ -195,7 +198,7 @@
     </section>
     <section class="opt" id="o2b">
       <h2>2b · Rails, collapsing</h2>
-      <p class="bargain"><b>Bargain:</b> once you choose, the rails fold down to the one path you took, so the board says what this fighter <i>is</i> and is the shortest of all at 400 px; it costs the standing menu of the paths not taken, which only <b>Reset tree</b> brings back (it refunds every rung and starts the tree blank), and a few frames of fold to build.</p>
+      <p class="bargain"><b>Bargain:</b> a tap only looks (the rest fades), and once you buy, the rails fold down to the one path you took, so the board says what this fighter <i>is</i> and is the shortest of all at 400 px; it costs the standing menu of the paths not taken, which only <b>Reset tree</b> brings back (it refunds every rung and starts the tree blank), and a few frames of fold to build.</p>
       <div class="body"></div>
     </section>
     <section class="opt" id="o3">
@@ -767,12 +770,14 @@ function railSVG2(st, c, b, shut) {
   ['A', 'B'].forEach(function (cap, k) {
     var fy = k ? y + 9 : y - 9;
     var litF = onB && st.cap === cap && st.depth >= LADDER;
-    s += '<g class="capg' + (shut === cap ? ' shut' : '') + '" data-capg="' + cap + '">';
+    // Two layers: the outer folds the arm away, the inner fades it while
+    // the other arm is being viewed.
+    s += '<g class="capg' + (shut === cap ? ' shut' : '') + '" data-capg="' + cap + '"><g class="capin" data-capin="' + cap + '">';
     s += '<path d="M' + X(LADDER - 1) + ' ' + y + ' H' + (X(LADDER - 1) + 12) + ' V' + fy + ' H' + fx + '" fill="none" stroke="' + (litF ? 'var(--ink)' : 'var(--ink-8)') + '" stroke-width="' + (litF ? 2 : 1) + '"/>';
     s += nodeSVG(fx, fy, LADDER, nodeState2(st, c, b, LADDER, cap), 1);
     s += '<text x="' + (fx + 10) + '" y="' + (fy + 3) + '" font-size="9" fill="' + (onB ? 'var(--ink)' : 'var(--ink-5)') + '">' + cap + '</text>';
     s += hitSVG(fx, fy, 9, dataAttr(c, b, LADDER, cap));
-    s += '</g>';
+    s += '</g></g>';
   });
   return s + '</svg>';
 }
@@ -807,21 +812,59 @@ function railSVG2(st, c, b, shut) {
     }
     return '<div class="title">The altar</div><div class="line">' + line + '</div>';
   }
+  // Looking is never choosing. A tap (or a hover) views a node and fades
+  // the rest; only a purchase commits, and only then does the rest fold.
+  // The rung Buy would buy: along the committed branch, or else the viewed
+  // one; at rung 8 with the committed capstone, or else the viewed arm.
+  function target() {
+    var v = pinned, path = null;
+    if (st.br !== null) path = { c: st.cls, b: st.br };
+    else if (v && v.kind !== 'class') path = { c: v.c, b: v.b };
+    if (!path || st.depth >= LADDER) return { path: path, r: st.depth + 1, cap: null };
+    var cap = st.cap || (v && v.cap && v.c === path.c && v.b === path.b ? v.cap : null);
+    return { path: path, r: st.depth + 1, cap: cap };
+  }
   function buyHTML2() {
     var reset = '<button class="resettree" data-act="resettree"' + (chosen() || st.depth ? '' : ' disabled') + '>Reset tree</button>' + refunded;
-    if (st.br === null) return '<div class="buy"><button class="buybtn" disabled>' + (chosen() ? 'pick a branch' : 'pick a class') + '</button>' + reset + '</div>';
-    var b = CLASSES[st.cls].branches[st.br], btn;
+    var t = target(), btn;
     if (st.depth >= LADDER) btn = '<button class="buybtn" disabled>climbed · 8 of 8</button>';
-    else if (st.depth + 1 === LADDER && !st.cap) btn = '<button class="buybtn" disabled>pick a capstone first</button>';
-    else btn = '<button class="buybtn" data-act="buy">buy ' + b.name + ' ' + (st.depth + 1) + ' ' + tagHTML(st.depth + 1) + '</button>';
+    else if (!t.path) btn = '<button class="buybtn" disabled>pick a branch</button>';
+    else if (t.r === LADDER && !t.cap) btn = '<button class="buybtn" disabled>pick a capstone</button>';
+    else btn = '<button class="buybtn" data-act="buy">Buy ' + CLASSES[t.path.c].branches[t.path.b].name + ' ' + t.r + (t.r === LADDER ? ' · ' + t.cap : '') + ' ' + tagHTML(t.r) + '</button>';
     return '<div class="buy">' + btn + reset + '</div>';
   }
+  function buy() {
+    var t = target();
+    if (!t.path || st.depth >= LADDER || (t.r === LADDER && !t.cap)) return;
+    if (st.cls !== t.path.c || st.br !== t.path.b) { st.cls = t.path.c; st.br = t.path.b; st.cap = null; }
+    if (t.r === LADDER) st.cap = t.cap;
+    st.depth++;
+  }
   // One short line: the node's name and what it does, or the class's base.
+  function lineOf(k) {
+    if (k.kind === 'class') return '<b>' + CLASSES[k.c].name + '</b>: ' + BASE_SHORT[k.c];
+    if (k.kind === 'branch') { var br = CLASSES[k.c].branches[k.b]; return '<b>' + br.name + '</b>: ' + br.what; }
+    return shortLine(k.c, k.b, k.r, k.cap);
+  }
   function panel(k) {
     k = k || pinned;
-    if (k) return '<div class="pd">' + shortLine(k.c, k.b, k.r, k.cap) + '</div>';
-    if (!chosen()) return '<div class="pd">Pick a class.</div>';
+    if (k) return '<div class="pd">' + lineOf(k) + '</div>';
+    if (!chosen()) return '<div class="pd">Pick a branch.</div>';
     return '<div class="pd"><b>' + CLASSES[st.cls].name + '</b>: ' + BASE_SHORT[st.cls] + '</div>';
+  }
+  // The fade: a viewed class dims the other class; a viewed branch or any
+  // node on it dims the other five rails; a viewed arm dims the other arm too.
+  function applyView(k) {
+    root.querySelectorAll('.plate').forEach(function (p) {
+      p.closest('.cls').classList.toggle('dim', !!k && +p.getAttribute('data-c') !== k.c);
+    });
+    root.querySelectorAll('.rail').forEach(function (rw) {
+      var sp = rw.querySelector('.rsvg'), c = +sp.getAttribute('data-c'), b = +sp.getAttribute('data-b');
+      rw.classList.toggle('dim', !!k && (k.kind === 'class' ? c !== k.c : !(c === k.c && b === k.b)));
+      rw.querySelectorAll('.capin').forEach(function (g) {
+        g.classList.toggle('dim', !!k && !!k.cap && c === k.c && b === k.b && g.getAttribute('data-capin') !== k.cap);
+      });
+    });
   }
   function draw() {
     root.querySelector('.who').innerHTML = headHTML();
@@ -846,25 +889,35 @@ function railSVG2(st, c, b, shut) {
     if (later.length) requestAnimationFrame(function () { requestAnimationFrame(function () {
       later.forEach(function (l) { l[0].querySelectorAll('.capg').forEach(function (g) { g.classList.toggle('shut', g.getAttribute('data-capg') === l[1]); }); });
     }); });
-    root.querySelector('.panel').innerHTML = panel(null);
-    root.querySelector('.buyslot').innerHTML = buyHTML2();
+    paint(null);
   }
-  function keyOf(n) { return { c: +n.getAttribute('data-c'), b: +n.getAttribute('data-b'), r: +n.getAttribute('data-r'), cap: n.getAttribute('data-cap') }; }
-  function nodeOf(t) { return t && t.closest ? t.closest('[data-r]') : null; }
-  root.addEventListener('mouseover', function (ev) { var n = nodeOf(ev.target); if (n) root.querySelector('.panel').innerHTML = panel(keyOf(n)); });
-  root.addEventListener('mouseout', function (ev) { var n = nodeOf(ev.target); if (n && !(ev.relatedTarget && n.contains(ev.relatedTarget))) root.querySelector('.panel').innerHTML = panel(null); });
+  // Anything that can be viewed: a rung, the keystone, a capstone arm, a
+  // class plate, a branch name.
+  var SHOWN = '[data-r],[data-act="class"],[data-act="branch"]';
+  function keyOf(n) {
+    var a = n.getAttribute('data-act');
+    return { kind: n.hasAttribute('data-r') ? 'node' : a, c: +n.getAttribute('data-c'), b: +n.getAttribute('data-b'), r: +n.getAttribute('data-r'), cap: n.getAttribute('data-cap') };
+  }
+  function same(a, b) { return !!a && !!b && a.kind === b.kind && a.c === b.c && a.b === b.b && a.r === b.r && a.cap === b.cap; }
+  function nodeOf(t) { return t && t.closest ? t.closest(SHOWN) : null; }
+  // A hover views for as long as it lasts; the tapped view stands under it.
+  function paint(k) {
+    root.querySelector('.panel').innerHTML = panel(k);
+    root.querySelector('.buyslot').innerHTML = buyHTML2();
+    applyView(k || pinned);
+  }
+  root.addEventListener('mouseover', function (ev) { var n = nodeOf(ev.target); if (n && root.contains(n)) paint(keyOf(n)); });
+  root.addEventListener('mouseout', function (ev) { var n = nodeOf(ev.target); if (n && !(ev.relatedTarget && n.contains(ev.relatedTarget))) paint(null); });
   root.addEventListener('click', function (ev) {
-    var el = ev.target.closest('[data-act],[data-cap],[data-r]');
-    if (!el || !root.contains(el) || el.disabled) return;
-    var a = el.getAttribute('data-act'), n = nodeOf(el);
-    refunded = '';
-    if (a === 'resettree') { refunded = st.depth ? refundHTML(st.depth) : ''; st.cls = null; st.br = null; st.cap = null; st.depth = 0; pinned = null; }
-    else if (a === 'buy') { if (st.br !== null && st.depth < LADDER && !(st.depth + 1 === LADDER && !st.cap)) st.depth++; }
-    else if (a === 'class') { if (st.cls !== +el.getAttribute('data-c')) { st.cls = +el.getAttribute('data-c'); st.br = null; st.cap = null; } }
-    else if (a === 'branch') { st.cls = +el.getAttribute('data-c'); st.br = +el.getAttribute('data-b'); }
-    else if (el.hasAttribute('data-cap')) { st.cls = +el.getAttribute('data-c'); st.br = +el.getAttribute('data-b'); st.cap = el.getAttribute('data-cap'); }
-    if (n) pinned = keyOf(n);
-    draw();
+    var el = ev.target.closest('[data-act="buy"],[data-act="resettree"],' + SHOWN);
+    if (el && el.disabled) return;
+    var a = el && el.getAttribute('data-act');
+    if (a === 'resettree') { refunded = st.depth ? refundHTML(st.depth) : ''; st.cls = null; st.br = null; st.cap = null; st.depth = 0; pinned = null; draw(); return; }
+    if (a === 'buy') { refunded = ''; buy(); draw(); return; }
+    // A tap views it; the same node again, or empty space, clears the view.
+    var k = el ? keyOf(el) : null;
+    pinned = k && !same(k, pinned) ? k : null;
+    paint(null);
   });
   o.draw = draw;
   draw();
