@@ -91,6 +91,19 @@ export const SERPENT_DEFENSE = {
   beam:    [1, 1, 1, 1],
   star:    [1, 1, 1, 1]
 };
+// A heavy blow stuns (DESIGN.md, "Blows land: the burst and the stun"): one
+// blow worth STUN_SHARE of the stage's depth or more seizes the coil and
+// stops the heal. A share rather than a number, measured against today's
+// weapons: a punch from its second rung stuns the bare coil (depth 60), a
+// grenade burst from its sixth rung the warded coil and from its eighth the
+// split one, and a star every stage -- the fading one where a wizard lights
+// it, or unlit from its last rung. Longer for a bigger blow, on the square
+// root of how many times over the share it was; a new stun keeps the longer
+// of the two, and none can start in the grace after one ends.
+export let STUN_SHARE = 0.03;        // a blow's share of the stage's depth that stuns
+export let STUN_BASE_S = 1.5;        // seconds a blow of exactly the share stuns for
+export let STUN_MAX_S = 5;           // and the longest any blow does
+export let STUN_GRACE_S = 4;         // seconds after a stun ends before another can start
 export const FADE_UNLIT = 0.1;       // stage four: what a hit on a coil no wizard has lit is worth
 export const SIGIL_HEAL_CUT = 0.12;  // the heal a drawn sigil takes off, each
 export const SIGIL_CUT_MAX = 0.8;    // and all of them together, at most
@@ -210,6 +223,14 @@ export const DEEP_KNOBS = [
   { key: 'SERPENT_WOUND_SCALE', label: 'serpent wound depths, x', min: 0.1, max: 5, step: 0.1,
     get: () => SERPENT_WOUND[0] / 60,
     set: v => { SERPENT_WOUND = [60, 900, 6000, 30000].map(d => Math.round(d * v)); } },
+  { key: 'STUN_SHARE', label: 'stun, share of the depth a blow needs', min: 0.005, max: 1, step: 0.005,
+    get: () => STUN_SHARE, set: v => { STUN_SHARE = v; } },
+  { key: 'STUN_BASE_S', label: 'stun, seconds at the share', min: 0.2, max: 10, step: 0.1,
+    get: () => STUN_BASE_S, set: v => { STUN_BASE_S = v; } },
+  { key: 'STUN_MAX_S', label: 'stun, seconds at most', min: 0.5, max: 20, step: 0.5,
+    get: () => STUN_MAX_S, set: v => { STUN_MAX_S = v; } },
+  { key: 'STUN_GRACE_S', label: 'stun, grace after one, s', min: 0, max: 20, step: 0.5,
+    get: () => STUN_GRACE_S, set: v => { STUN_GRACE_S = v; } },
   { key: 'DEEP_GRAV', label: 'deep gravity', min: 0.01, max: 0.3, step: 0.01,
     get: () => DEEP_GRAV, set: v => { DEEP_GRAV = v; } },
   { key: 'DEEP_DRAG', label: 'deep drag', min: 0.8, max: 1, step: 0.005,

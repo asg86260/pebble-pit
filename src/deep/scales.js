@@ -14,7 +14,7 @@ import { S, deepBed } from '../state.js';
 import { P, SHADES, DEEP_W, DEEP_BED_ROWS, DEEP_GRAV, DEEP_DRAG, DEEP_CURRENT,
          DEEP_CURRENT_MS, SCALE_KICK, SCALE_SHADE, SCALE_SPREAD, LIFT_PACE, LIFT_FLECKS,
          LIFT_STAGGER, SETTLE_BUDGET, DEEP_BED_BRIM, GATHER_TOSS_FRAMES, GATHER_TOSS_RISE, GATHER_TOSS_STAGGER,
-         CRUSH_HEAT, CRUSH_HEAT_KEEP } from '../config.js';
+         CRUSH_HEAT, CRUSH_HEAT_KEEP, SPRAY_GAIN, SPRAY_FAN } from '../config.js';
 import { put, addGrain, settleSome, recount, wakeGrid, topRow, surfaceY, colOf, shadeNear } from '../grid.js';
 import { makePainter } from '../painter.js';
 import { frames, now } from '../clock.js';
@@ -44,11 +44,21 @@ export function crush(n) {
   earned('scale', n);
 }
 
-// Loose `n` scales from (x, y): they sink, and lie where they land.
-export const shed = (x, y, n) => {
+// Loose `n` scales from (x, y): they sink, and lie where they land. A blow's
+// `spray` ({ dir, k }) sends them out of the edge it bit -- up for -1, down
+// for 1 -- in a fan, faster for a bigger blow (`k`, 0..1); without one they
+// drift off in a little cloud of their own, the way a held weapon bleeds them.
+export const shed = (x, y, n, spray = null) => {
   for (let i = 0; i < n; i++) {
-    S.sinking.push({ x, y, vx: (rand() * 2 - 1) * SCALE_KICK, vy: -rand() * SCALE_KICK,
-                     s: shadeNear(SCALE_SHADE, SCALE_SPREAD) });
+    let vx, vy;
+    if (spray) {
+      const a = spray.dir * Math.PI / 2 + (rand() * 2 - 1) * SPRAY_FAN;
+      const v = SCALE_KICK * (1 + SPRAY_GAIN * spray.k) * (0.4 + 0.6 * rand());
+      vx = Math.cos(a) * v; vy = Math.sin(a) * v;
+    } else {
+      vx = (rand() * 2 - 1) * SCALE_KICK; vy = -rand() * SCALE_KICK;
+    }
+    S.sinking.push({ x, y, vx, vy, s: shadeNear(SCALE_SHADE, SCALE_SPREAD) });
   }
 };
 

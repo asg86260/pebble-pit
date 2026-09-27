@@ -12,12 +12,15 @@
 //
 // The wound is read on the body: cracks out from the belly as far as it is
 // deep, and the gap at the belly breaking the cage of ribs the one it took is held in (DESIGN.md, "The serpent, redrawn").
+// A blow is read on it too: a bite out of the edge it came from, closing,
+// and a stunned coil shuddering a cell (DESIGN.md, "Blows land").
 
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          FADE_SEEN, BEAM_LIGHTS, WOUND_GAP, BOUND_BANDS, SIGIL_RX, BELLY_AT,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
-         SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W } from '../config.js';
+         SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
+         STUN_SHAKE, STUN_SHAKE_MS } from '../config.js';
 import { S } from '../state.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
@@ -80,6 +83,34 @@ function lay(t, x0, x1) {
   return { pts: pts.filter(p => p.x > x0 - reach && p.x < x1 + reach), alongAt };
 }
 
+// A stunned coil holds still but for this: a cell down, back, a cell up,
+// back, over and over.
+const SHUDDER = [0, 1, 0, -1];
+const shudder = t => S.serpentStun > 0 ? SHUDDER[Math.floor(t / STUN_SHAKE_MS) % SHUDDER.length] * STUN_SHAKE : 0;
+
+// The bites still open, each where it is along the body, the edge it is on
+// and how wide it still is: a blow's size gives its radius, and it closes
+// over CHIP_HEAL_S, slowly at first and then all at once, so a bite is read
+// as a bite for most of its life rather than as a shrinking dent.
+function bites(t, alongAt) {
+  const out = [];
+  for (const ch of S.serpentChips) {
+    const left = 1 - ((t - ch.at) / (CHIP_HEAL_S * 1000)) ** 2;
+    const rad = (CHIP_R[0] + (CHIP_R[1] - CHIP_R[0]) * ch.k) * P * left;
+    if (rad >= P / 2) out.push({ along: alongAt(ch.u), side: ch.side, rad, seed: Math.round(ch.at) });
+  }
+  return out;
+}
+// Whether a cell of the hide is bitten out: within a bite's radius of the
+// point on its edge, less a ragged few left standing.
+function bitten(list, along, across, r, aI, cI) {
+  for (const b of list) {
+    const da = along - b.along, dc = across - b.side * r;
+    if (da * da + dc * dc < b.rad * b.rad && seeth(aI + b.seed, cI) % 100 >= CHIP_RAGGED * 100) return true;
+  }
+  return false;
+}
+
 export function drawSerpent() {
   const t = now();
   const stage = S.serpentStage;
@@ -88,6 +119,9 @@ export function drawSerpent() {
   const wk = stage >= 4 ? 0 : woundK();
   const { pts, alongAt } = lay(t, x0, x1);
   if (!pts.length) return;
+  ctx.save();
+  ctx.translate(0, shudder(t));
+  const bit = bites(t, alongAt);
   const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
   const gap = held ? Math.round(wk * WOUND_GAP / P) * P : 0;
   const reach = wk * CRACK_REACH;
@@ -150,6 +184,7 @@ export function drawSerpent() {
       continue;
     }
     const aI = Math.round(along / P), cI = Math.round(across / P);
+    if (bit.length && bitten(bit, along, across, r, aI, cI)) continue;   // a bite: open water
     // The cage: inside the swell, pale, crossed by dark ribs he is seen
     // between. Pale because a body in the deep is dark with a light edge,
     // and on a dark inside he was a hole in a hole.
@@ -216,6 +251,7 @@ export function drawSerpent() {
     ctx.fillStyle = GREYS[2];
     for (const c of ribs) ctx.fillRect(c.x, c.y, P, P);
   }
+  ctx.restore();
   ctx.fillStyle = '#000';
 }
 
