@@ -90,22 +90,26 @@ Lessons that shape everything below:
   the class's three branches: keystone at rung 4, capstone fork at rung 8
 ```
 
-Five stations, two classes each, is the Fire Emblem fork on the deep's
-floor, and it keeps five buildings rather than ten:
+Five kinds of station, two classes each, is the Fire Emblem fork on the
+deep's floor. **The pairs are the owner's (2026-09-27)**; which building
+hosts which pair is a proposal:
 
 | station | what it is | its two classes |
 |---|---|---|
-| **the altar** | the empty hand | **Brawler** (strength) · **Martial Artist** (technique) |
-| **the well** | the blade | **Swordsman** · **Assassin** (Fire Emblem's own Myrmidon fork) |
-| **the armory** | the thrown and the shot | **Sapper** (explosives) · **Ranger** |
-| **the circle** | the word | **Hexer** (debuffs) · **Bard** (buffs the others) |
-| **the spire** | the abyss's power | **Mage** (outward) · **Monk** (inward) |
+| **the altar** | the front line | **Brawler** · **Swordsman** |
+| **the well** | the discipline | **Monk** · **Martial Artist** |
+| **the armory** | from afar and from the shadow | **Ranger** · **Assassin** |
+| **the circle** | the saboteurs | **Hexer** · **Sapper** |
+| **the spire** | the abyss's voice | **Mage** · **Bard** |
 
-One fighter a station, so a class chosen at a station shuts its twin out
-for the fight -- the promotion fork is a real choice -- and with four
-fighters one station stands empty. Respec is free: class, branch and
-capstone. The rungs are the station's, one ladder of eight, shared by both
-classes and all six branches.
+**A station can be built more than once** (the owner, 2026-09-27: "you can
+build more than one of the same, since they have diff branches"). Two
+altars can hold a Brawler and a Swordsman, or two Brawlers on two branches.
+One fighter a station still; four fighters at most. **Each station is its
+own** (the owner: "Each station is independent. Even if it's the same type
+of station"): its own ladder of eight, bought for that building, its own
+class, branch and capstone. Respec is free: class, branch and capstone.
+Whether a second station of a kind costs more than the first is open.
 
 ---
 
@@ -141,6 +145,10 @@ heal cuts add (capped). Ticks never stun and never crit.
 ---
 
 ## 4. The ten classes
+
+*The station headings below are the first draft's pairs; the owner re-paired
+the classes on 2026-09-27 (section 2). The classes and branches are
+unchanged.*
 
 Each: what it is, what it came from, its base attack, and three branches.
 *K* is the keystone (rung 4), *A* / *B* the capstone fork (rung 8). One line
@@ -340,6 +348,10 @@ shape:
 - *Ranger + Martial Artist, "Crossfire":* aimed arrows Charge her.
 
 ## 7. Open for the owner
+
+0. **A Bard as the first fighter.** She does no damage and the fight starts
+   with only the sqwife. Her song buffing the click, or the Bard not offered
+   as the first class? (Asked 2026-09-27, open.)
 
 1. **Ten classes on five stations, two a station** (above), or ten stations,
    or classes free of stations (the spec the fighter's, which undoes the
