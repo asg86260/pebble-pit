@@ -13,15 +13,16 @@ Open:
 - **Glyphs.** The fifteen deep rows and the hop's five arrows borrow
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.
-- **The second half plays shallow** (the owner, 2026-09-26): it is building
-  stations, assigning bodies and buying rungs until damage a second beats the
-  heal. The fight is one number, a stage is a multiplier swap in
-  `SERPENT_DEFENSE`, and the serpent never acts. Directions talked over, none
-  chosen: the serpent fights back (a lunge that knocks out a station, a body
-  swallowed to cut free), heal pulses or an exhale to time bursts into,
-  weapons that combine (a sigil held still for the lance, the light marking
-  the star's spot), stages that change behavior, a wound where you hit.
-  Blocker: the owner's pick, then a design.
+- **The second half plays shallow** (the owner, 2026-09-26): answered by
+  "One fighter, chosen styles" (below).
+
+## One fighter, chosen styles -- DESIGNED, AWAITING APPROVAL (2026-09-26)
+
+"One fighter, chosen styles" in DESIGN.md: the sqwife fights alone, five
+styles on the stations' boards, any order, each unlock dearer than the last,
+no defense a wall; blows burst scales and a heavy one stuns the heal (C + D of
+`docs/mocks/serpent-impact-2026-09-26.html`). Blocker: the owner's three calls
+at the end of the section. C + D can be built first, on today's weapons.
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 

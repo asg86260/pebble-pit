@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Hit Impact</title>
+<style>
+  :root { --ink: #000; --paper: #fff; --dim: #666; --rule: #000; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #111; --dim: #999; --rule: #555; }
+  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink);
+         font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.note { margin: 0 0 14px; color: var(--dim); max-width: 1080px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .opt { border-top: 1px solid var(--rule); padding: 8px 0 0; max-width: 100%; }
+  .opt h2 { font-size: 13px; margin: 0 0 2px; }
+  .opt .cap { color: var(--dim); margin: 0 0 8px; min-height: 5.6em; font-size: 12px; max-width: 480px; }
+  canvas { image-rendering: pixelated; display: block; border: 1px solid var(--rule); max-width: 100%; }
+  .bar { display: flex; gap: 10px; align-items: center; margin: 0 0 12px; flex-wrap: wrap; }
+  .bar input[type=range] { width: 360px; max-width: 60vw; }
+  button { font: inherit; font-size: 11px; background: none; color: var(--ink); border: 1px solid var(--rule);
+           padding: 2px 8px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Making a blow land: four ways the serpent could answer a hit</h1>
+<p class="note">A mock drawn from plain cells, not the game. The same scripted twenty seconds in every pane:
+brawler punches (small, often), a grenade's three bursts (medium), a called star (one huge blow), then punches again.
+Each blow is marked by a small white tick where it lands. In every pane the reaction scales with the damage, so a star
+reads as a star and a punch as a punch. No flash (cut before), no splats (the numbers stay as built). A, B and C are
+only the picture; D is also a rule: a heavy blow stuns the heal. What it cannot show: the real coil, girth, cracks and
+ribs, the numbers, the real weapons, or many weapons at once.</p>
+<div class="bar">
+  <button id="play">pause</button>
+  <input id="scrub" type="range" min="0" max="20" step="0.05" value="0">
+  <span id="clock">0.0 s</span>
+</div>
+<div class="grid" id="opts"></div>
+<script>
+const P = 6, CW = 80, CH = 36, LOOP = 20;
+const GREY = ['#000', '#1c1c21', '#333339', '#55555e', '#8b8b96', '#b4b4c0', '#fff'];
+const PURPLE = '#9b5de5';
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+
+// --- the blows ---------------------------------------------------------------------
+const hits = [];
+for (let t = 1; t < 6; t += 0.6) hits.push({ t, x: 22 + (hash(t) * 4 | 0), dmg: 6 });
+[[40, 0], [36, 0.15], [44, 0.15]].forEach(([x, d]) => hits.push({ t: 8 + d, x, dmg: 25 }));
+hits.push({ t: 12, x: 34, dmg: 60 });
+for (let t = 15; t < 19; t += 0.6) hits.push({ t, x: 50 + (hash(t) * 4 | 0), dmg: 6 });
+hits.forEach((h, i) => { h.id = i; h.k = Math.sqrt(h.dmg / 60); });   // 0.3 for a punch, 1 for the star
+const past = (t, back) => hits.filter(h => h.t <= t && t - h.t < back);
+
+const base = (x, t) => 17 + 3 * Math.sin(x * 0.09 + t * 0.6) + 1.2 * Math.sin(x * 0.23 - t * 0.9);
+const girth = x => { const u = (x - 6) / 68; return u < 0 || u > 1 ? 0 : 1.6 + 1.8 * Math.sin(Math.PI * Math.min(1, u * 1.2)); };
+
+function drawCoil(g, t, { off = () => 0, chip = () => false, jit = () => 0, dim = 1 } = {}) {
+  g.fillStyle = GREY[0]; g.fillRect(0, 0, CW * P, CH * P);
+  for (let c = 0; c < CW; c++) for (let r = 32; r < CH; r++)
+    if ((c * 7 + r * 13) % 5 === 0) { g.fillStyle = GREY[1]; g.fillRect(c * P, r * P, P, P); }
+  for (let c = 6; c <= 74; c++) {
+    const y = base(c, t) + off(c) + jit(c), th = girth(c);
+    const top = Math.round(y - th), bot = Math.round(y + th);
+    for (let r = top; r <= bot; r++) {
+      if (chip(c, r)) continue;
+      const tone = r === bot ? 4 : r === Math.round(y) ? 5 : 6;
+      g.fillStyle = GREY[Math.max(0, Math.round(tone * dim))]; g.fillRect(c * P, r * P, P, P);
+    }
+  }
+}
+function ticks(g, t, off = () => 0) {
+  for (const h of past(t, 0.25)) {
+    const y = Math.round(base(h.x, t) + off(h.x) - girth(h.x)) - 2;
+    g.fillStyle = GREY[6]; g.fillRect(h.x * P, y * P, P, P); g.fillRect(h.x * P, (y - 1) * P, P, P);
+  }
+}
+
+// A: a kink runs out both ways along the body from the blow
+const rippleOff = t => x => {
+  let d = 0;
+  for (const h of past(t, 2.5)) {
+    const a = t - h.t, amp = 3.2 * h.k * Math.exp(-a * 1.6), w = 2 + 2 * h.k;
+    for (const s of [-1, 1]) { const at = h.x + s * a * 22; d += amp * Math.exp(-((x - at) ** 2) / (w * w)); }
+    d += 2.5 * h.k * Math.exp(-a * 6) * Math.exp(-((x - h.x) ** 2) / 9);
+  }
+  return d;
+};
+// B: the body is shoved away from the blow and springs back, bending round it
+const recoilOff = t => x => {
+  let d = 0;
+  for (const h of past(t, 2)) {
+    const a = t - h.t, spring = Math.exp(-a * 3) * Math.cos(a * 11);
+    const reach = 6 + 18 * h.k;
+    d += 4 * h.k * spring * Math.exp(-((x - h.x) ** 2) / (reach * reach));
+  }
+  return d;
+};
+// C: scales burst off in a spray and the body is chipped where it was struck
+const chipAt = t => (c, r) => {
+  for (const h of past(t, 3)) {
+    const a = t - h.t, heal = Math.max(0, 1 - a / 3);
+    const rad = (0.8 + 2.2 * h.k) * heal;
+    const cy = Math.round(base(h.x, t) - girth(h.x));
+    if ((c - h.x) ** 2 + (r - cy) ** 2 < rad * rad && hash(c * 31 + r * 7 + h.id) < 0.8) return true;
+  }
+  return false;
+};
+function spray(g, t) {
+  for (const h of past(t, 3)) {
+    const a = t - h.t, n = Math.round(3 + 14 * h.k * h.k);
+    for (let i = 0; i < n; i++) {
+      const ang = -Math.PI * (0.15 + 0.7 * hash(h.id * 97 + i)), sp = (10 + 14 * h.k) * (0.5 + hash(i + h.id));
+      const x = h.x + Math.cos(ang) * sp * a, y = base(h.x, h.t) - girth(h.x) + Math.sin(ang) * sp * a + 9 * a * a;
+      if (y > 32) continue;
+      g.fillStyle = GREY[a < 1 ? 6 : a < 2 ? 5 : 4];
+      g.fillRect(Math.round(x) * P, Math.round(y) * P, P, P);
+    }
+  }
+}
+// D: a heavy blow stuns: the coil seizes and shudders, and the heal stops
+const STUN_FROM = 20;                 // damage in one blow that stuns
+const stunLeft = t => {
+  let s = 0;
+  for (const h of past(t, 4)) if (h.dmg >= STUN_FROM) s = Math.max(s, 0.8 + 2.4 * (h.dmg / 60) - (t - h.t));
+  return Math.max(0, s);
+};
+// the wound for D's bar, stepped from zero each loop
+const woundD = [];
+{
+  let w = 0, hi = 0;
+  for (let f = 0; f <= LOOP * 60; f++) {
+    const t = f / 60;
+    while (hi < hits.length && hits[hi].t <= t) w += hits[hi++].dmg;
+    if (stunLeft(t) <= 0) w = Math.max(0, w - 14 / 60);
+    woundD.push(Math.min(200, w));
+  }
+}
+
+const OPTS = [
+  { name: 'A -- the blow runs down the coil',
+    cap: 'A kink jumps at the blow and runs out along the body both ways, fading as it goes: a punch a ' +
+         'ripple, a star a wave that reaches the head and the tail. The coil already sways; this is the sway answering you.',
+    draw(g, t) { const off = rippleOff(t); drawCoil(g, t, { off }); ticks(g, t, off); } },
+  { name: 'B -- the body is knocked back',
+    cap: 'The coil is shoved away from the blow and springs back through a bounce or two, bending round the ' +
+         'point struck: a punch dents it, a star throws the whole middle of it down. Weight, not a wave.',
+    draw(g, t) { const off = recoilOff(t); drawCoil(g, t, { off }); ticks(g, t, off); } },
+  { name: 'C -- scales burst off, the hide chips',
+    cap: 'The scales a blow knocks loose leave in a burst, more and farther for a bigger blow, and the hide ' +
+         'is bitten where it landed, a hole that closes over three seconds. The scales are already the coin; this makes them fly.',
+    draw(g, t) { drawCoil(g, t, { chip: chipAt(t) }); spray(g, t); ticks(g, t); } },
+  { name: 'D -- a heavy blow stuns it (a rule, too)',
+    cap: 'A blow of ' + STUN_FROM + ' or more makes the serpent seize: the coil goes rigid and shudders a cell, and ' +
+         'the heal stops while it lasts, longer for a bigger blow. The bar shows the wound holding. Makes bursts ' +
+         'worth timing, not just totalling.',
+    draw(g, t, f) {
+      const s = stunLeft(t);
+      const shake = hash(Math.floor(t * 15)) < 0.5 ? -1 : 1;
+      const jit = s > 0 ? c => shake * Math.min(1, Math.abs(c - 34) < 30 ? 1 : 0) : () => 0;
+      drawCoil(g, s > 0 ? Math.floor(t * 2) / 2 - 0 : t, { jit, dim: s > 0 ? 0.85 : 1 });
+      ticks(g, t);
+      const W = 200, x0 = (CW * P - W) / 2, y0 = 10, k = 1 - woundD[f] / 200;
+      g.fillStyle = GREY[4]; g.fillRect(x0 - 1, y0 - 1, W + 2, 10);
+      g.fillStyle = GREY[0]; g.fillRect(x0, y0, W, 8);
+      g.fillStyle = GREY[6]; g.fillRect(x0, y0, Math.round(W * k), 8);
+      if (s > 0) { g.fillStyle = PURPLE; g.fillRect(x0 + W + 8, y0, 8, 8); g.fillStyle = GREY[0]; g.fillRect(x0 + W + 10, y0 + 2, 4, 4); }
+    } },
+];
+
+const panes = OPTS.map(o => {
+  const d = document.createElement('div'); d.className = 'opt';
+  d.innerHTML = `<h2>${o.name}</h2><p class="cap">${o.cap}</p>`;
+  const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P;
+  d.appendChild(cv); document.getElementById('opts').appendChild(d);
+  return { o, g: cv.getContext('2d') };
+});
+
+let t = 0, playing = true, last = performance.now();
+const scrub = document.getElementById('scrub');
+document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+scrub.oninput = () => { t = +scrub.value; };
+function frame(now) {
+  if (playing) t = (t + (now - last) / 1000) % LOOP;
+  last = now;
+  const f = Math.min(woundD.length - 1, Math.floor(t * 60));
+  scrub.value = t; document.getElementById('clock').textContent = `${t.toFixed(1)} s`;
+  for (const p of panes) p.o.draw(p.g, t, f);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
