@@ -249,24 +249,6 @@ function paintHeld(g, t, s, lv) {
     for (let y = bot + 3 + Math.floor(t * 4) % 3; y < FLOOR - 1; y += 3) cell(g, cx, y, PURPLES[6]);
   }
 }
-function litCells(g, t, s, x0 = X0, x1 = X1) {
-  const a = Math.max(X0, Math.round(x0)), b = Math.min(X1, Math.round(x1));
-  const creep = Math.floor(t * 3), run = X0 + ((t * 12) % (X1 - X0 + 16)) - 8;
-  for (let cx = a; cx <= b; cx++) {
-    const top = cTop(cx, t, s), bot = cBot(cx, t, s), hot = Math.abs(cx - run) < 3;
-    cell(g, cx, Math.round(cY(cx, t, s)), PURPLES[9]);
-    if (hot || (cx + creep) % 2 === 0) cell(g, cx, top - 1, hot ? PURPLES[11] : PURPLES[8]);
-    if (hot || (cx + creep) % 2 === 1) cell(g, cx, bot + 1, hot ? PURPLES[11] : PURPLES[6]);
-  }
-}
-const LIT_STEP = 30;
-function lightFrom(g, t, t0, x0, s) {
-  const r = Math.floor((t - t0) * LIT_STEP);
-  if (t < t0 || r > Math.max(x0 - X0, X1 - x0)) return;
-  litCells(g, t, s, x0 - r, x0 + r);
-  for (const fx of [x0 - r, x0 + r]) if (fx >= X0 && fx <= X1) { cell(g, fx, cTop(fx, t, s) - 1, PURPLES[11]); cell(g, fx, cBot(fx, t, s) + 1, PURPLES[11]); }
-}
-const litDone = (x0, t0) => t0 + (Math.max(x0 - X0, X1 - x0) + 1) / LIT_STEP;
 function chevron(g, cx, cy, tone) { cell(g, cx, cy + 1, tone); cell(g, cx + 1, cy, tone); cell(g, cx + 2, cy + 1, tone); }
 // Level 3 is the rung-8 song's: both chevrons the brightest purple, a white apex on each.
 function paintInspired(g, t, x, y, lv) {
@@ -414,6 +396,8 @@ function sauceOf(c, R, a, x) {
     // a hit may ask for a longer hold of its own (the Whirlwind's last)
     const own = Math.max(0, ...gr.list.map(h => h.pause || 0));
     gr.real = gr.at + shift; gr.pause = CLASSIC ? Math.max(own, (VAR.hay === 'C' && gr.list.some(h => h.kind === 'hay') ? 3 : 2) * POSE) : 0.04 + 0.08 * Math.min(1, gr.k) + (own ? 0.04 : 0);
+    // a beam's ticks land without holding her: the beam runs on through them
+    if (gr.list.every(h => h.noPause)) gr.pause = 0;
     if (aw == null && a < gr.real) aw = a - shift;
     else if (aw == null && a < gr.real + gr.pause) aw = gr.at;
     shift += gr.pause;
@@ -424,7 +408,7 @@ function sauceOf(c, R, a, x) {
   if (CLASSIC) {
     // round each strike (its contacts, and a caster's gather and release) the
     // clock steps in held poses, one of them landing on the contact itself
-    const beats = [...groups.map(gr => gr.at), ...(c.beats ? c.beats(R) : [])];
+    const beats = [...groups.filter(gr => gr.pause > 0).map(gr => gr.at), ...(c.beats ? c.beats(R) : [])];
     let best = null;
     for (const b of beats) if (Math.abs(aw - b) <= 0.32 && (best == null || Math.abs(aw - b) < Math.abs(aw - best))) best = b;
     // a class may step faster through a fast part (the Whirlwind's turns)
@@ -1547,16 +1531,83 @@ function mStaff(g, x, y, R, t, up = false, glow = 0, home = true) {
   cell(g, sx - 1, top + 1, GREYS[8]); cell(g, sx + 1, top + 1, GREYS[8]);
   if (home) stone(g, sx, top, R, t, up, glow);
 }
+// A beam of cells from (ax, ay) to (bx, by), `w` cells wide (1 to 3), each
+// cell shimmering a step up and down the purples along its length; at three
+// wide its core is white. `fade` 0..1 steps it down the purples as it cuts off.
+function beam(g, ax, ay, bx, by, w, t, fade = 0) {
+  const len = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / len, uy = (by - ay) / len;
+  const offs = w >= 3 ? [-1, 0, 1] : w === 2 ? [0, 1] : [0], f = Math.floor(t * 14);
+  const SH = [PURPLES[9], PURPLES[10], PURPLES[11]];
+  const down = k => [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.min(3, k + Math.floor(fade * 3.99))];
+  for (let i = 0; i <= Math.ceil(len); i++) for (const o of offs) {
+    // widened across the grid, not across the slant, so the band has no holes
+    const side = Math.abs(uy) > Math.abs(ux), cx = Math.round(ax + ux * i) + (side ? o : 0), cy = Math.round(ay + uy * i) + (side ? 0 : o), sh = (i + f + (o + 3)) % 3;
+    const core = w >= 3 && o === 0;
+    cell(g, cx, cy, fade > 0 ? down(core ? 0 : 1) : core ? (sh === 0 ? PURPLES[11] : WHITE) : SH[sh]);
+  }
+}
 const mage = {
   key: 'mage', name: 'Mage', at: 5, tileAt: 15,
-  base: 'bolts that Light', move: 'Arcane lantern: the whole serpent Lit', cap: 'Lit takes more from everyone',
+  base: 'channels a purple beam', move: 'the beam widens as she holds it', cap: 'the beam burns through',
   mark: 'a cell orbiting the stone', touch: 'three cells orbiting',
   rest(g, x, y, R, t) { drawBody(g, x, y); mStaff(g, x, y, R, t); },
   len: 3.4,
-  state(a, api, R) { if (a >= (R4(R) ? litDone(SPOT.mage - 12, 1.3) : 1.1)) api.status('lit'); },
-  hits(R, x) { return R4(R) ? [] : [{ at: 1.1, x: x - 5, k: 0.35 }]; },
-  beats(R) { return R4(R) ? [0.5, 1.3, 2.5] : [0.3, 0.65]; },
+  // The beam (the owner, 2026-09-28: "she becomes a beam mage"): the staff up,
+  // the stone gathering in a held pose, a held flare, then a steady beam
+  // from the stone into the coil, held, cut off with a short fade. From rung
+  // 4 it widens from one cell to three the longer she holds it; at rung 8 it
+  // burns through at full width.
+  BEAM: { lift: 0.2, gather: 0.3, flare: 0.55, start: 0.6 },
+  hold(R) { return R4(R) ? 2.0 : 1.5; },
+  // how far into its ramp the beam is, 0..1 (full width at 1)
+  ramp(R, a) { return clamp((a - this.BEAM.start) / (0.7 * this.hold(R)), 0, 1); },
+  // the ticks where the beam bites the hide, each a small spark and give
+  ticks(R) { const B = this.BEAM, out = []; for (let u = B.start + 0.075; u < B.start + this.hold(R); u += 0.15) out.push(u); return out; },
+  hits(R, x) {
+    return this.ticks(R).map(u => ({ at: u, x: x - 5, noPause: true,
+      k: R4(R) ? 0.15 + (R8(R) ? 0.45 : 0.3) * this.ramp(R, u) : 0.15 }));
+  },
+  // classic: the gather and the flare are held poses; the beam itself runs smooth
+  beats() { return [this.BEAM.gather, this.BEAM.flare]; },
+  poseStep(R, a) { return a >= this.BEAM.start ? 0.001 : POSE; },
+  state() {},
   draw(g, t, a, api, R, x) {
+    const B = this.BEAM, H = this.hold(R), end = B.start + H, s = api.st, sx = x - 1;
+    // sauced, she rises into the gather, and the beam's start pushes her down a little
+    let y = REST_Y - dip(a, B.gather + 0.2, 0.5, 0.25, 0.3);
+    if (SAUCE) { const u = a - B.start; if (u >= 0 && u < 0.25) y += 0.6 * (1 - u / 0.25); }
+    const up = a >= B.lift && a < end + 0.3, glow = up ? clamp((a - B.gather) / 0.25, 0, 1) : 0;
+    drawBody(g, x, y); mStaff(g, x, y, R, t, up, glow);
+    const oy = y - 4, tx = x - 5, hy = cBot(tx, t, s);
+    // the gather: a ring of the abyss closing on the stone
+    if (a >= B.gather && a < B.flare) ring(g, sx, oy + 0.5, 3.2 - 2.2 * (a - B.gather) / (B.flare - B.gather), a < B.gather + 0.15 ? PURPLES[8] : PURPLES[10]);
+    // the flare as the beam starts, held a pose
+    if (a >= B.flare && a < B.start + 0.06) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1], [-1, -1], [1, -1]]) cell(g, sx + dx * (Math.abs(dx) + Math.abs(dy) > 1 ? 1 : 1), oy + dy, Math.abs(dx) + Math.abs(dy) > 1 ? PURPLES[11] : WHITE);
+    // the beam, held, then cut with a short fade
+    const r = this.ramp(R, a), w = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1;
+    if (a >= B.start && a < end + 0.15) beam(g, sx, oy - 0.5, tx, hy, w, t, a >= end ? (a - end) / 0.15 : 0);
+    if (R8(R)) {
+      const full = a >= B.start + 0.7 * H;
+      if (full && a < end) {
+        // burning through: the hide bitten deeper while it holds, purple sparks spraying off it
+        const k = clamp((a - B.start - 0.7 * H) / (0.3 * H), 0, 1), rad = 0.9 + 1.4 * k;
+        for (let xx = Math.floor(tx - rad); xx <= tx + rad; xx++) for (let yy = Math.floor(hy - rad); yy <= hy; yy++)
+          if ((xx - tx) ** 2 + (yy - hy) ** 2 <= rad * rad) cell(g, xx, yy, GREYS[1]);
+        for (let j = 0; j < 7; j++) {
+          const age = (t * 2.2 + hash(j * 5)) % 1, ang = Math.PI * (0.15 + 0.7 * hash(j * 11 + 3));
+          cell(g, tx + Math.cos(ang) * age * 6, hy + 1 + Math.sin(ang) * age * 4 + age * age * 3, [PURPLES[11], PURPLES[10], PURPLES[8], PURPLES[6]][Math.floor(age * 3.99)]);
+        }
+      }
+      // the afterglow: a short purple line lingering along the hide where it burned
+      const u = a - end;
+      if (u >= 0 && u < 0.6) for (let dx = -3; dx <= 3; dx++) {
+        if (u > 0.3 && Math.abs(dx) % 2) continue;
+        cell(g, tx + dx, cBot(tx + dx, t, s), [PURPLES[11], PURPLES[9], PURPLES[7]][Math.min(2, Math.floor(u / 0.2 + Math.abs(dx) / 4))]);
+      }
+    }
+  },
+  // The bolt and the lantern the beam replaced, kept, not drawn.
+  oldDraw(g, t, a, api, R, x) {
     // sauced, she rises into the cast and settles as the bolt leaves
     const s = api.st, y = REST_Y - dip(a, R4(R) ? 0.5 : 0.65, 0.5, 0.3, 0.3), sx = x - 1;
     this.lx = x - 12;
@@ -1576,7 +1627,6 @@ const mage = {
     const LX = this.lx, A = { lift: 0.2, off: 0.5, there: 1.2, back: 2.5, home: 3.1, down: 3.3 };
     const up = a >= A.lift && a < A.down, away = a >= A.off && a < A.home;
     drawBody(g, x, y); mStaff(g, x, y, R, t, up, 0, !away);
-    lightFrom(g, t, t - (a - 1.3), LX, s);
     if (!away) return;
     const k = a < A.there ? ease((a - A.off) / (A.there - A.off)) : a < A.back ? 1 : 1 - ease((a - A.back) / (A.home - A.back));
     const ly = Math.max(3, cTop(LX, t, s) - 5), px = lerp(sx, LX, k), py = lerp(y - 4, ly, k);
@@ -1656,7 +1706,6 @@ function paintPane(g, T) {
   drawDeep(g, t);
   STATIONS.forEach((_, i) => drawPlinthAt(g, CENTER(i), FLOOR, 21));
   drawCoil(g, t, st);
-  if (st.statuses.lit) litCells(g, t, st);
   if (st.statuses.bleeding) paintBleeding(g, t, st);
   if (st.statuses.held) paintHeld(g, t, st, st.statuses.held);
   if (st.statuses.stunned) paintStunned(g, t, st);
@@ -1699,7 +1748,6 @@ function paintTile(g, c, R, T, phase) {
   drawDeep(g, t);
   drawPlinthAt(g, WX + 1, FLOOR);
   drawCoil(g, t, st);
-  if (st.statuses.lit) litCells(g, t, st);
   if (st.statuses.bleeding) paintBleeding(g, t, st);
   if (st.statuses.held) paintHeld(g, t, st, st.statuses.held);
   if (st.statuses.stunned) paintStunned(g, t, st, x0 + 4);
