@@ -37,6 +37,8 @@
   .tile { display: grid; gap: 2px; justify-items: start; }
   .tile canvas { width: 330px; max-width: 100%; height: auto; }
   .tile span { font-size: 11px; color: var(--dim); }
+  .fixrow { padding-block: 10px; border-bottom: 1px solid var(--rule); }
+  .fixrow h3 { font-size: 13px; margin: 0 0 6px; }
   @media (max-width: 760px) { .cls { grid-template-columns: 1fr; } .bar { position: static; }
     .tile canvas { width: calc((100vw - 72px) / 2); } }
 </style>
@@ -57,6 +59,10 @@
     <div class="grp" id="sauce"><span>sauce</span></div>
     <div class="grp" id="smears"><span>smears</span></div>
     <div class="grp" id="classic"><span>classic</span></div></div>
+
+  <h2>Pick a fix</h2>
+  <p class="dim">Three rough spots in the classic pass, each the current version beside its alternatives, looping with classic on.</p>
+  <div id="fixes"></div>
 
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
@@ -320,6 +326,8 @@ const dip = (a, at, depth, lead = 0.15, back = 0.2) => {
 // whole cell at contact. Travel away from a strike stays smooth.
 let CLASSIC = true;
 const POSE = 0.08;
+// Pick a fix: which alternative a tile is drawn with ('' the current one).
+let VAR = { hay: '', thrust: '', whirl: '' };
 const EX = () => CLASSIC ? 1.7 : 1;
 // The world at the moment a fighter is drawn, so a smear can find the hide.
 let CUR = { t: 0, s: {} };
@@ -364,17 +372,17 @@ function speed(g, cx, cy, n = 2, len = 3) {
 // The impact star, held two poses: first a bold star of cells at the contact
 // point, bright; then broken, its arms thrown a cell further out and dimmer.
 const ARMS = [[-1, 0, 1], [1, 0, 1], [0, 1, 1], [-1, 1, 0], [1, 1, 0], [-1, -1, 0], [1, -1, 0]];
-function star(g, t, t0, cx, cy, k) {
+function star(g, t, t0, cx, cy, k, o = {}) {
   const u = t - t0;
   if (u < 0 || u >= 2 * POSE) return;
   // the arms start two cells out, so the fist or blade at the middle reads on top
-  const L = 3 + Math.round(2 * k), broke = u >= POSE;
+  const L = o.len ?? 3 + Math.round(2 * k), broke = u >= POSE;
   for (const [dx, dy, main] of ARMS) {
-    const len = main ? L : L - 1;
+    const len = main ? L : Math.max(2, L - 1);
     for (let r = 2; r <= len; r++) {
       if (broke && r % 2 === 0) continue;
       const rr = broke ? r + 1 : r, x = cx + dx * rr, y = cy + dy * rr;
-      const tone = broke ? (r < len ? GREYS[9] : GREYS[7]) : r < len ? WHITE : GREYS[10];
+      const tone = o.tones ? o.tones[broke ? 1 : 0] : broke ? (r < len ? GREYS[9] : GREYS[7]) : r < len ? WHITE : GREYS[10];
       if (onHide(x, y)) cell(g, x, y + (dy < 0 ? 0 : 0), GREYS[3]); else cell(g, x, y, tone);
     }
   }
@@ -392,7 +400,7 @@ function sauceOf(c, R, a, x) {
   }
   let shift = 0, aw = null, kick = 0;
   for (const gr of groups) {
-    gr.real = gr.at + shift; gr.pause = CLASSIC ? 2 * POSE : 0.04 + 0.08 * Math.min(1, gr.k);
+    gr.real = gr.at + shift; gr.pause = CLASSIC ? (VAR.hay === 'C' && gr.list.some(h => h.kind === 'hay') ? 3 : 2) * POSE : 0.04 + 0.08 * Math.min(1, gr.k);
     if (aw == null && a < gr.real) aw = a - shift;
     else if (aw == null && a < gr.real + gr.pause) aw = gr.at;
     shift += gr.pause;
@@ -425,7 +433,16 @@ function sauceDents(S, t, a) { if (!SAUCE) return []; return S.groups.flatMap(gr
 function sauceSparks(g, S, t, a, st) {
   for (const gr of S.groups) for (const h of gr.list) {
     const t0 = t - (a - gr.real), cy = cBot(Math.round(h.x), t, st) + 1;
-    if (CLASSIC) star(g, t, t0, Math.round(h.x), cy, h.k); else spark(g, t, t0, h.x, cy - 0.5, h.k);
+    if (!CLASSIC) { spark(g, t, t0, h.x, cy - 0.5, h.k); continue; }
+    // the fix alternatives: the Haymaker's star (A small and dark, B none, C a
+    // pose late) and the Whirlwind's three (A the middle one, B small and dim, C none)
+    if (h.kind === 'hay' && VAR.hay === 'A') star(g, t, t0, Math.round(h.x), cy, h.k, { len: 2, tones: [GREYS[6], GREYS[5]] });
+    else if (h.kind === 'hay' && VAR.hay === 'B') continue;
+    else if (h.kind === 'hay' && VAR.hay === 'C') star(g, t, t0 + POSE, Math.round(h.x), cy, h.k);
+    else if (h.kind === 'whirl' && VAR.whirl === 'A') { if (h.mid) star(g, t, t0, Math.round(h.x), cy, h.k); }
+    else if (h.kind === 'whirl' && VAR.whirl === 'B') star(g, t, t0, Math.round(h.x), cy, h.k, { len: 2, tones: [GREYS[9], GREYS[7]] });
+    else if (h.kind === 'whirl' && VAR.whirl === 'C') continue;
+    else star(g, t, t0, Math.round(h.x), cy, h.k);
   }
 }
 // Is `a` the pose just before a contact at `at` (the smear), or one of the two
@@ -511,7 +528,7 @@ const brawler = {
   },
   state(a, api, R) { if (R4(R)) api.stun(1.9, R8(R) ? 2.6 : 1.5); },
   kickMax: 2,
-  hits(R, x) { return this.punches(R).map(p => { const fx = p.side < 0 ? x - p.size : x + BODY; return { at: p.at, x: fx + (p.size - 1) / 2, k: p.k }; }); },
+  hits(R, x) { return this.punches(R).map(p => { const fx = p.side < 0 ? x - p.size : x + BODY; return { at: p.at, x: fx + (p.size - 1) / 2, k: p.k, kind: p.hay ? 'hay' : '' }; }); },
   draw(g, t, a, api, R, x) {
     const s = api.st, ps = this.punches(R), hover = maxBot([x - 2, x + 5], t, s) + 5;
     let y = lerp(REST_Y, hover, trip(a, 0.4, 2.5, this.len)) + (api.kick || 0);
@@ -519,7 +536,7 @@ const brawler = {
     // the haymaker's wind-up: the body sinks, eased with the sauce
     if (hay) y += SAUCE ? dip(a, hay.at - 0.12, 2, 0.33, 0.1) : a > hay.at - 0.45 && a < hay.at - 0.12 ? 2 : 0;
     const spot = p => { const size = p.size || 1, fx = p.side < 0 ? x - size : x + BODY; return { fx, size, cx: fx + (size - 1) / 2 }; };
-    ps.forEach((p, i) => blow(g, t, t - (a - p.at), spot(p).cx, s, p.k, i + 1));
+    ps.forEach((p, i) => blow(g, t, t - (a - p.at), spot(p).cx, s, p.hay && VAR.hay === 'B' ? 1 : p.k, i + 1));
     drawBody(g, x, y);
     for (const side of [-1, 1]) {
       let reach = 0, size = bSize(R);
@@ -619,7 +636,7 @@ const swordsman = {
     return lerp(w.a1 + dir * 0.35 * EX(), home, ease((u - w.dur - 0.08) / 0.3));
   },
   kickMax: 1,
-  hits(R, x) { const px = x + 1; return this.swings(R).flatMap(w => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({ at: w.hit, x: sx, k: 0.35 }))); },
+  hits(R, x) { const px = x + 1; return this.swings(R).flatMap(w => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({ at: w.hit, x: sx, k: 0.35, kind: R4(R) ? 'whirl' : '', mid: sx === px }))); },
   state(a, api) { if (a >= 0.8) api.status('bleeding'); },
   draw(g, t, a, api, R, x) {
     const s = api.st, L = bladeLen(R), spin = R4(R);
@@ -805,8 +822,30 @@ const martial = {
       const cp = all.find(p => smearPose(a, p)), hp = all.find(p => holdPose(a, p));
       if (cp != null) {
         // classic: the pose before contact is a held streak from the hide down
-        boldStreak(g, x + 1, ht - blade, tip + 7);
-        speed(g, x + 1, ht + 1, 2, 3);
+        const top = ht - blade, bot = tip + 7;
+        if (VAR.thrust === 'A') {
+          // A: two cells wide, a white edge and a grey core
+          boldStreak(g, x + 1, top, bot);
+          for (let yy = top; yy <= bot; yy++) cell(g, x + 2, yy, yy === top ? GREYS[10] : GREYS[8]);
+          speed(g, x + 1.5, ht + 1, 2, 3);
+        } else if (VAR.thrust === 'B') {
+          // B: a tapered wedge, three cells at the point narrowing to one
+          const n = bot - top;
+          for (let yy = top; yy <= bot; yy++) {
+            const q = (yy - top) / Math.max(1, n), half = q < 0.3 ? 1 : 0;
+            for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, yy, yy === top ? WHITE : dx ? GREYS[9] : q < 0.5 ? GREYS[10] : GREYS[9]);
+          }
+          if (onHide(x + 1, top)) for (let dx = -1; dx <= 1; dx++) cell(g, x + 1 + dx, top - 1, GREYS[2]);
+        } else if (VAR.thrust === 'C') {
+          // C: the staff doubled, its ghost a cell behind, speed lines either side
+          for (let r = 0; r < 7; r++) cell(g, x + 1, ht + 1 + r, GREYS[6]);
+          for (let r = 0; r < 7; r++) cell(g, x + 1, ht + r, r === 0 && !blade ? WHITE : GREYS[8]);
+          if (blade) pike(g, x + 1, ht, 0, -1);
+          speed(g, x + 1, ht + 2, 2, 4);
+        } else {
+          boldStreak(g, x + 1, top, bot);
+          speed(g, x + 1, ht + 1, 2, 3);
+        }
       } else if (smear) streak(g, x + 1, tip - blade, 10 + blade);
       else {
         for (let r = 0; r < 7; r++) cell(g, x + 1, tip + r, r === 0 && !blade ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
@@ -1337,8 +1376,30 @@ function drawSlot(g, c, R, sx, t) {
   drawPlinthAt(g, x + 1, ROW_FLOOR);
   c.rest(g, x, y, R, t);
 }
-const strips = [], tiles = [];
+const strips = [], tiles = [], fixTiles = [];
 const host = document.getElementById('host');
+// Pick a fix: a row a rough spot, the current version then its alternatives,
+// all on one clock so the contacts land together.
+const FIXES = [
+  { name: '1 · Haymaker contact (reads as the star, not the fist)', c: 'brawler', key: 'hay', opts: [
+    ['', 'current: the full star'], ['A', 'A: a small dark-grey star behind the fist'],
+    ['B', 'B: no star; keyline, a bigger burst, speed lines'], ['C', 'C: the fist held a pose, then the star']] },
+  { name: '2 · Martial Artist thrust smear (1 cell, reads as a staff)', c: 'martial', key: 'thrust', opts: [
+    ['', 'current: a 1-cell streak'], ['A', 'A: 2 cells, white edge, grey core'],
+    ['B', 'B: a wedge, 3 cells at the point to 1'], ['C', 'C: a ghost staff behind, speed lines']] },
+  { name: '3 · Whirlwind (three stars at once, busy)', c: 'sword', key: 'whirl', opts: [
+    ['', 'current: three full stars'], ['A', 'A: one star, at the middle hit'],
+    ['B', 'B: three small dim stars'], ['C', 'C: no stars; the crescent and three chips']] },
+];
+for (const f of FIXES) {
+  const row = el('div', { className: 'tiles' });
+  for (const [v, label] of f.opts) {
+    const cv = el('canvas'); cv.width = TW * P; cv.height = TH * P;
+    row.append(el('div', { className: 'tile' }, [cv, el('span', { textContent: label })]));
+    fixTiles.push({ c: ORDER.find(o => o.key === f.c), key: f.key, v, g: cv.getContext('2d') });
+  }
+  document.getElementById('fixes').append(el('div', { className: 'fixrow', id: 'fix-' + f.key }, [el('h3', { textContent: f.name }), row]));
+}
 STATIONS.forEach(([where, ...pair]) => pair.forEach(c => {
   const lines = el('div', { className: 'lines' }, [
     el('h3', { textContent: c.name }), el('span', { className: 'k', textContent: where }),
@@ -1405,6 +1466,10 @@ document.getElementById('play').onclick = e => { playing = !playing; e.target.te
 function paintAll(t) {
   for (const s of strips) RUNGS.forEach((R, i) => drawSlot(s.g, s.c, R, i * SLOT, t));
   for (const tl of tiles) paintTile(tl.g, tl.c, tl.R, t, tl.phase);
+  // the fix tiles: classic on, their own variant, rung 4, one clock
+  const keep = [CLASSIC, VAR];
+  for (const tl of fixTiles) { CLASSIC = true; VAR = { [tl.key]: tl.v }; paintTile(tl.g, tl.c, 4, t, 0); }
+  [CLASSIC, VAR] = keep;
   paintPane(pane, t);
 }
 // For shots: stand the page at a time; set the rung; a contact sheet of the pane.
@@ -1419,9 +1484,13 @@ window.__tileSheet = (list, cols = 6) => {
   sheet.width = cols * (w + 4); sheet.height = Math.ceil(list.length / cols) * (h + 4);
   const g = sheet.getContext('2d');
   g.fillStyle = '#888'; g.fillRect(0, 0, sheet.width, sheet.height);
-  list.forEach(([k, R, a], i) => {
+  list.forEach(([k, R, a, v], i) => {
     const c = ORDER.find(o => o.key === k), cv = el('canvas'); cv.width = w; cv.height = h;
+    // an entry may name a fix alternative, drawn with classic on
+    const keep = [CLASSIC, VAR];
+    if (v) { CLASSIC = true; VAR = v; }
     paintTile(cv.getContext('2d'), c, R, a, 0);
+    [CLASSIC, VAR] = keep;
     g.drawImage(cv, (i % cols) * (w + 4), Math.floor(i / cols) * (h + 4));
   });
   sheet.style.cssText = `position:fixed;left:0;top:0;z-index:99;width:${sheet.width * 1.5}px;image-rendering:pixelated`;
