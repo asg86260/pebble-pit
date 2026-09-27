@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fighter Looks</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1360px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 40px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  h3 { font-size: 13px; margin: 18px 0 6px; color: var(--dim); font-weight: normal; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  ul.bargain { max-width: 110ch; padding-left: 18px; margin: 8px 0 12px; }
+  ul.bargain li { margin-bottom: 6px; }
+  canvas { image-rendering: pixelated; display: block; }
+  .strip { display: grid; grid-template-columns: 11ch auto; gap: 6px 12px; align-items: center; margin: 10px 0; }
+  .names { display: grid; grid-template-columns: repeat(10, 66px); font-size: 10px; color: var(--dim); text-align: center; }
+  .scroll { overflow-x: auto; max-width: 100%; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(264px, 1fr)); gap: 12px; }
+  .tile { display: grid; gap: 4px; justify-items: start; }
+  .tile span { font-size: 12px; }
+  .tile small { font-size: 11px; color: var(--dim); }
+  .pane canvas { width: 100%; max-width: 1320px; }
+  .bar { display: flex; gap: 10px; align-items: center; position: sticky; top: 0; background: var(--paper);
+         padding-block: 8px; z-index: 2; border-bottom: 1px solid var(--rule); }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Fighter Looks</h1>
+  <p>The owner, 2026-09-27: the hats "look just a bit wonky ... too much of a restraint design wise." Two directions
+    for telling ten classes apart without a hat, each drawn for all ten, so the vote is on a direction, not a sprite.
+    Directions 2 (silhouette) and 3 (little figures) were dropped before drawing, on the owner's word.</p>
+  <ul class="bargain">
+    <li><b>1 · Kit first.</b> Costs: a fighter is wider than its square (up to nine cells), every attack has to move
+      its kit, and a class read from across the deep rests on one or two grey pieces. Buys: the class is known from
+      its outline at the game's scale, the blow comes out of the thing it is struck with (the bow shoots, the staff
+      casts), and it stays the square on the P grid.</li>
+    <li><b>4 · Square plus emblem.</b> Costs: it is the one direction that leaves the P grid (the emblem is drawn in
+      two-pixel units, a third of a cell, the way the fight numbers are drawn in screen pixels); a 14-pixel emblem is
+      read when looked at, not at a glance; any dark mark on a white square is read as a face first; and the
+      outline says nothing, so ten fighters in a row are ten squares.
+      Buys: the square untouched and every fighter the same footprint, nothing to animate but the attack, and a
+      set of ten icons the boards and cards can use as they are.</li>
+  </ul>
+  <p class="dim">A mock drawn from plain cells, not the game. It cannot show: the game's camera and zoom, the real coil
+    (its girth, cracks and ribs), the yard's other bodies and their trade hats beside these, real attack timings,
+    numbers, statuses, or how either direction carries the branch looks (a keystone that changes the kit or the
+    emblem). The emblem's two-pixel units stay two pixels only at the 1x row; the live panes are drawn at the game's
+    scale and shown doubled.</p>
+
+  <div class="bar"><button id="play" type="button">pause</button><span id="clock">0.0 s</span></div>
+
+  <h2>Side by side, at the game's scale</h2>
+  <div class="scroll" id="compare"></div>
+
+  <div id="dirs"></div>
+</div>
+<script type="module">
+import { P, GREYS, PURPLES, WHITE, INK, hash, clamp, steps, cell, rect, line, ring, burst, chip, drawPlinth } from './harness.js';
+
+// --- the ten, in the brief's order --------------------------------------------------
+const CLASSES = [
+  ['brawler', 'Brawler'], ['martial', 'Martial Artist'], ['monk', 'Monk'], ['sword', 'Swordsman'],
+  ['assassin', 'Assassin'], ['ranger', 'Ranger'], ['sapper', 'Sapper'], ['mage', 'Mage'],
+  ['hexer', 'Hexer'], ['bard', 'Bard'],
+];
+
+// --- drawing an art --------------------------------------------------------------------
+// An art is rows of characters, the bottom row standing on the plinth. `ox` is
+// the column of the body's middle. Upper-case and '#' are worn: they join the
+// body, and the body's two-pixel dark edge runs only round the outside of
+// everything worn. Lower-case are held or loose: plain cells over the water.
+const TONE = {
+  '#': WHITE, G: GREYS[9], H: GREYS[8], M: GREYS[7], D: GREYS[6], K: GREYS[3], E: INK,
+  P: PURPLES[11], Q: PURPLES[9],
+  w: WHITE, a: GREYS[10], g: GREYS[9], h: GREYS[8], m: GREYS[7], d: GREYS[6], k: GREYS[4],
+  p: PURPLES[11], q: PURPLES[9], r: PURPLES[8],
+};
+const worn = ch => ch === '#' || (ch >= 'A' && ch <= 'Z');
+function drawArt(g, art, bx, by, t = 0) {
+  const rows = frameOf(art, t);
+  const x0 = bx - art.ox, y0 = by - rows.length + 1;
+  const at = (c, r) => (rows[r] && rows[r][c]) || '.';
+  const isW = (c, r) => worn(at(c, r));
+  for (let r = 0; r < rows.length; r++) for (let c = 0; c < rows[r].length; c++) {
+    const ch = rows[r][c];
+    if (ch === '.' || ch === ' ') continue;
+    const px = (x0 + c) * P, py = (y0 + r) * P;
+    if (ch !== '#') { g.fillStyle = TONE[ch] || '#f0f'; g.fillRect(px, py, P, P); continue; }
+    // the body's edge: a two-pixel stroke on each side that faces the water
+    const L = isW(c - 1, r) ? 0 : 2, R = isW(c + 1, r) ? 0 : 2, T = isW(c, r - 1) ? 0 : 2, B = isW(c, r + 1) ? 0 : 2;
+    g.fillStyle = GREYS[6]; g.fillRect(px, py, P, P);
+    g.fillStyle = WHITE; g.fillRect(px + L, py + T, P - L - R, P - T - B);
+    g.fillStyle = GREYS[6];
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]])
+      if (isW(c + dx, r) && isW(c, r + dy) && !isW(c + dx, r + dy))
+        g.fillRect(px + (dx < 0 ? 0 : P - 2), py + (dy < 0 ? 0 : P - 2), 2, 2);
+  }
+  if (art.emblem) drawEmblem(g, art, rows, x0, y0, t);
+  return { x0, y0, w: Math.max(...rows.map(s => s.length)), h: rows.length };
+}
+// An art may be one drawing or several, stepped through at `fps`.
+function frameOf(art, t) {
+  const f = art.frames;
+  if (!f) return art.rows;
+  const seq = art.seq || f.map((_, i) => i);
+  return f[seq[Math.floor(t * (art.fps || 4)) % seq.length]];
+}
+// The art's top row and the column of its first cell there: where a strike lands.
+function topOf(art, bx, by, t) {
+  const rows = frameOf(art, t);
+  const r = rows[0], c = [...r].findIndex(ch => ch !== '.');
+  return { x: bx - art.ox + c, y: by - rows.length + 1 };
+}
+// A point on an art, given in its own cells: the staff's stone, the bow's tip.
+function pointOf(art, bx, by, t, pt) {
+  const rows = frameOf(art, t);
+  return { x: bx - art.ox + pt[0], y: by - rows.length + 1 + pt[1] };
+}
+
+// --- the emblem (direction 4) ---------------------------------------------------------------
+// Seven units of two pixels across the square's white face: the face is
+// fourteen pixels inside the two-pixel edge, so seven units fill it exactly.
+const EU = 2;
+const ETONE = { x: GREYS[1], s: GREYS[6], p: PURPLES[8], q: PURPLES[10] };
+function drawEmblem(g, art, rows, x0, y0, t) {
+  let bc = -1, br = -1;
+  for (let r = 0; r < rows.length && br < 0; r++) { const c = rows[r].indexOf('#'); if (c >= 0) { bc = c; br = r; } }
+  const e = art.emblem, bits = e.frames ? e.frames[Math.floor(t * (e.fps || 2)) % e.frames.length] : e.rows;
+  const px = (x0 + bc) * P + 2, py = (y0 + br) * P + 2;
+  for (let j = 0; j < 7; j++) for (let i = 0; i < 7; i++) {
+    const ch = bits[j][i];
+    if (ch === '.') continue;
+    g.fillStyle = ETONE[ch]; g.fillRect(px + i * EU, py + j * EU, EU, EU);
+  }
+}
+
+// ================================================================================
+// Direction 1: kit first. The plain square, no hat; the class is the thing it
+// carries, two to four cells of it, beside or over the body.
+// ================================================================================
+// Frames built from a function of the step, so a swing or a wave is written once.
+const build = (w, h, n, fn) => Array.from({ length: n }, (_, k) => {
+  const g = Array.from({ length: h }, () => Array(w).fill('.'));
+  fn(g, k, (c, r, ch) => { if (g[r] && c >= 0 && c < w) g[r][c] = ch; });
+  return g.map(r => r.join(''));
+});
+const body3 = (put, c, r, ch = '#') => { for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) put(c + x, r + y, ch); };
+const KIT = {
+  brawler: {
+    look: 'two wrapped fists as big as his head, held up in a guard either side',
+    idle: { ox: 3, rows: [
+      'ww...ww',
+      'ww###ww',
+      'gg###gg',
+      '..###..'] },
+    jab: [
+      { ox: 3, rows: [
+        'ww.....',
+        'ww.....',
+        'gg...ww',
+        '.h###ww',
+        '..###gg',
+        '..###..'] },
+      { ox: 3, rows: [
+        '.....ww',
+        '.....ww',
+        'ww...gg',
+        'ww###h.',
+        'gg###..',
+        '..###..'] },
+    ],
+  },
+  martial: {
+    look: 'a pair of nunchaku, one stick in her fist, the other swung round on its chain',
+    // the held stick stands at column 4; the free one turns round the chain above it
+    idle: { ox: 1, frames: build(7, 5, 5, (g, k, put) => {
+      body3(put, 0, 2);
+      put(4, 3, 'a'); put(4, 4, 'a'); put(4, 2, 'd');
+      const at = [[[4, 1], [4, 0]], [[5, 1], [6, 0]], [[5, 2], [6, 2]], [[3, 1], [2, 0]], [[5, 3], [6, 4]]][k];
+      for (const [c, r] of at) put(c, r, 'a');
+    }), fps: 6, seq: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 2, 1, 0, 3, 0, 1] },
+    jab: [
+      { ox: 1, rows: [
+        '....a..',
+        '....a..',
+        '....d..',
+        '###.a..',
+        '###.a..',
+        '###....'] },
+      { ox: 1, rows: [
+        '..a....',
+        '...a...',
+        '....d..',
+        '###.a..',
+        '###.a..',
+        '###....'] },
+    ],
+  },
+  monk: {
+    look: 'a ring of prayer beads over him, one purple bead told round; he floats a cell off the spire',
+    idle: { ox: 3, fps: 3, frames: [0, 1, 2, 3, 4].map(k => {
+      const beads = [[0, 1], [1, 0], [3, 0], [5, 0], [6, 1]];
+      const rows = [[...'.......'], [...'.......'], [...'..###..'], [...'..###..'], [...'..###..'], [...'.......']];
+      beads.forEach(([c, r], i) => { rows[r][c] = i === k ? 'p' : 'g'; });
+      return rows.map(r => r.join(''));
+    }), seq: [0, 1, 2, 3, 4, 3, 2, 1] },
+    cast: { ox: 3, rows: [
+      '.p.p.p.',
+      'p.....p',
+      '..###..',
+      '..###..',
+      '..###..',
+      '.......'] },
+  },
+  sword: {
+    look: 'a greatsword taller than him, planted point-down at his side',
+    idle: { ox: 4, rows: [
+      '.g....',
+      '.d....',
+      'hhh...',
+      '.a....',
+      '.a.###',
+      '.a.###',
+      '.a.###'] },
+    jab: [
+      { ox: 2, rows: [
+        '..w..',
+        '..a..',
+        '..a..',
+        '.hhh.',
+        '..d..',
+        '.###.',
+        '.###.',
+        '.###.'] },
+    ],
+  },
+  assassin: {
+    look: 'a pair of daggers held point-down, one each side, and a dark mask over the eyes',
+    idle: { ox: 3, rows: [
+      'd.KKK.d',
+      'a.###.a',
+      'w.###.w'] },
+    jab: [
+      { ox: 3, rows: [
+        '......w',
+        '......a',
+        'd.KKK.d',
+        'a.###..',
+        'w.###..'] },
+    ],
+  },
+  ranger: {
+    look: 'a bow twice his height; a quiver on his back, the fletching over his shoulder',
+    idle: { ox: 2, rows: [
+      '.....h..',
+      'w....gh.',
+      'h....g.h',
+      'd###.g.h',
+      'd###.gh.',
+      'd###.h..'] },
+    tip: [5, 0],
+  },
+  sapper: {
+    look: 'a bundle of three charges under his arm, the fuse lit and sparking',
+    idle: { ox: 1, fps: 6, frames: build(7, 5, 3, (g, k, put) => {
+      body3(put, 0, 2);
+      for (const c of [4, 5, 6]) for (const r of [2, 3, 4]) put(c, r, r === 3 ? 'd' : c === 5 ? 'a' : 'g');
+      put(5, 1, 'd');
+      put(...[[4, 0], [5, 0], [6, 0]][k], k === 1 ? 'g' : 'w');
+    }), seq: [0, 1, 0, 2, 1] },
+    tip: [5, 2],
+  },
+  mage: {
+    look: 'a staff taller than her, a purple stone held in its claws',
+    idle: { ox: 3, rows: [
+      '.p...',
+      'hqh..',
+      '.h...',
+      '.h###',
+      '.h###',
+      '.h###'] },
+    cast: { ox: 3, rows: [
+      '.p...',
+      'hph..',
+      '.h...',
+      '.h...',
+      '.h###',
+      '.h###',
+      '..###'] },
+    tip: [1, 0],
+  },
+  hexer: {
+    look: 'a short wand held up, a purple thread trailing off its tip in a wave',
+    idle: { ox: 1, fps: 5, frames: build(7, 6, 4, (g, k, put) => {
+      body3(put, 0, 3);
+      put(3, 3, 'd'); put(4, 2, 'h'); put(5, 1, 'p');
+      for (let x = 0; x <= 4; x++) put(x, 1 + Math.round(Math.sin((4 - x) * 1.25 - k * Math.PI / 2)), 'q');
+    }) },
+    tip: [5, 1],
+  },
+  bard: {
+    look: 'a lute held up at her side, a note let go now and then',
+    idle: { ox: 1, rows: [
+      '....gg',
+      '....d.',
+      '....d.',
+      '###hhh',
+      '###hkh',
+      '###.h.'] },
+    tip: [4, 0],
+  },
+};
+
+// ================================================================================
+// Direction 4: square plus emblem. The plain square; the class is an emblem
+// on its face, in two-pixel units.
+// ================================================================================
+const SQ = ['###', '###', '###'];
+const EMB = {
+  brawler: { look: 'an impact star: the blow itself', rows: [
+    'x..x..x',
+    '.x.x.x.',
+    '..xxx..',
+    'xxxxxxx',
+    '..xxx..',
+    '.x.x.x.',
+    'x..x..x'] },
+  martial: { look: 'a belt, knotted, its tails flying', fps: 3, frames: [[
+    '.......',
+    '.......',
+    'xxxxxxx',
+    'xxx.xxx',
+    '..x.x..',
+    '.x...x.',
+    'x.....x'], [
+    '.......',
+    '.......',
+    'xxxxxxx',
+    'xxx.xxx',
+    '..x.x..',
+    '..x..x.',
+    '.x....x']] },
+  monk: { look: 'a ring of chi with its middle lit', fps: 2, frames: [[
+    '..ppp..',
+    '.p...p.',
+    'p.....p',
+    'p..q..p',
+    'p.....p',
+    '.p...p.',
+    '..p.p..'], [
+    '..ppp..',
+    '.p...p.',
+    'p.....p',
+    'p.qqq.p',
+    'p.....p',
+    '.p...p.',
+    '..p.p..']] },
+  sword: { look: 'a sword, point up and over', rows: [
+    '.....xx',
+    '....xxx',
+    '...xxx.',
+    'x.xxx..',
+    '.xxx...',
+    '.xx....',
+    'x..x...'] },
+  assassin: { look: 'a skull', rows: [
+    '.xxxxx.',
+    'xxxxxxx',
+    'x..x..x',
+    'xxxxxxx',
+    '.xx.xx.',
+    '.xxxxx.',
+    '.x.x.x.'] },
+  ranger: { look: 'an arrow, point up, fletched', rows: [
+    '...x...',
+    '..xxx..',
+    '.x.x.x.',
+    '...x...',
+    '...x...',
+    '..xxx..',
+    '.x.x.x.'] },
+  sapper: { look: 'a round charge, its fuse lit', fps: 4, frames: [[
+    '.....s.',
+    '....x.s',
+    '..xxx..',
+    '.xxxxx.',
+    'xxxxxxx',
+    '.xxxxx.',
+    '..xxx..'], [
+    '......s',
+    '....xs.',
+    '..xxx..',
+    '.xxxxx.',
+    'xxxxxxx',
+    '.xxxxx.',
+    '..xxx..']] },
+  mage: { look: 'a purple flame', fps: 3, frames: [[
+    '...p...',
+    '..pp...',
+    '..ppp..',
+    '.pp.pp.',
+    '.p...p.',
+    '.pp.pp.',
+    '..ppp..'], [
+    '....p..',
+    '...pp..',
+    '..ppp..',
+    '.pp.pp.',
+    '.p...p.',
+    '.pp.pp.',
+    '..ppp..']] },
+  hexer: { look: 'an eye with a purple iris, which blinks', fps: 2, frames: [[
+    '.......',
+    '..xxx..',
+    '.x.p.x.',
+    'x.ppp.x',
+    '.x.p.x.',
+    '..xxx..',
+    '.......'], [
+    '.......',
+    '..xxx..',
+    '.x.p.x.',
+    'x.ppp.x',
+    '.x.p.x.',
+    '..xxx..',
+    '.......'], [
+    '.......',
+    '.......',
+    '.......',
+    'xxxxxxx',
+    '.......',
+    '.......',
+    '.......']], seqNote: 'blink' },
+  bard: { look: 'a note', rows: [
+    '...xx..',
+    '...x.x.',
+    '...x..x',
+    '...x...',
+    '.xxx...',
+    'xxxx...',
+    '.xx....'] },
+};
+// the eye blinks once in a while rather than every other beat
+EMB.hexer.frames = [0, 0, 0, 0, 0, 0, 2, 0].map(i => EMB.hexer.frames[i]);
+const EMBLEM = {};
+for (const [k] of CLASSES) {
+  const e = EMB[k];
+  const emblem = e.frames ? { frames: e.frames, fps: e.fps } : { rows: e.rows };
+  EMBLEM[k] = {
+    look: e.look,
+    idle: { ox: 1, rows: SQ, emblem },
+    // a melee strike is the square itself, a cell higher: it butts the coil
+    jab: [{ ox: 1, rows: [...SQ, '...'], emblem }],
+    cast: { ox: 1, rows: SQ, emblem },
+  };
+}
+
+const DIRS = [
+  { key: 'kit', n: 1, name: 'Kit first', sprites: KIT,
+    about: 'The plain square, no hat. Each class carries two to four cells of kit beside or over it, and the attack comes out of that kit.' },
+  { key: 'emblem', n: 4, name: 'Square plus emblem', sprites: EMBLEM, finer: true,
+    about: 'The plain square, the class drawn on its white face as an emblem in two-pixel units -- off the P grid, the way the fight numbers are. The attacks are the same as direction 1\'s, but they leave the square itself: melee fighters butt the coil with it.' },
+];
+
+// ================================================================================
+// The rows: the ten standing on plinths at the game's scale, then at 4x.
+// ================================================================================
+const SLOT = 11, SLOT_H = 12, ROW_FLOOR = 10;   // cells; the plinth sits on the floor row
+function drawSlot(g, dir, key, sx, t) {
+  const base = sx + 5;
+  const art = dir.sprites[key].idle;
+  drawArt(g, art, base, ROW_FLOOR - 3, t);
+}
+function drawRowBack(g, w) {
+  rect(g, 0, 0, w, SLOT_H, GREYS[0]);
+  rect(g, 0, ROW_FLOOR, w, SLOT_H - ROW_FLOOR, GREYS[2]);
+  for (let c = 0; c < w; c++) for (let r = ROW_FLOOR; r < SLOT_H; r++)
+    if (hash(c * 31 + r * 17) < 0.22) cell(g, c, r, GREYS[3 + Math.floor(hash(c + r * 7) * 2)]);
+}
+function drawPlinthAt(g, cx, floor) {
+  rect(g, cx - 3, floor - 1, 7, 1, GREYS[5]);
+  rect(g, cx - 2, floor - 2, 5, 1, GREYS[4]);
+}
+const rows1 = [], tiles = [];
+function makeRow(dir) {
+  const cv = document.createElement('canvas');
+  cv.width = SLOT * 10 * P; cv.height = SLOT_H * P; cv.style.width = cv.width + 'px';
+  const names = document.createElement('div'); names.className = 'names';
+  for (const [, n] of CLASSES) { const s = document.createElement('span'); s.textContent = n; names.append(s); }
+  const box = document.createElement('div'); box.append(cv, names);
+  rows1.push({ dir, g: cv.getContext('2d') });
+  return box;
+}
+function paintRow(r, t) {
+  const g = r.g;
+  drawRowBack(g, SLOT * 10);
+  CLASSES.forEach(([k], i) => {
+    drawPlinthAt(g, i * SLOT + 5, ROW_FLOOR);
+    drawSlot(g, r.dir, k, i * SLOT, t);
+  });
+}
+
+// ================================================================================
+// The live pane: the ten at ten stations under one long coil, idling, each
+// attacking once in turn.
+// ================================================================================
+const W = 110, H = 36, FLOOR = 31, X0 = 3, X1 = W - 4;
+const sway = (cx, t) => 12 + 2.6 * Math.sin(cx * 0.09 + t * 0.6) + 1.1 * Math.sin(cx * 0.23 - t * 0.9);
+const girth = cx => {
+  if (cx < X0 || cx > X1) return 0;
+  const u = (cx - X0) / (X1 - X0);
+  return 1.4 + 1.9 * Math.sin(Math.PI * Math.min(1, u * 1.15)) + (Math.abs(cx - W * 0.55) < 6 ? 0.8 : 0);
+};
+const cY = (cx, t) => sway(cx, t);
+const cTop = (cx, t) => Math.round(cY(cx, t) - girth(cx));
+const cBot = (cx, t) => Math.round(cY(cx, t) + girth(cx));
+function drawWideDeep(g, t) {
+  rect(g, 0, 0, W, H, GREYS[0]);
+  for (let i = 0; i < 44; i++) {
+    const x = (hash(i) * W + t * (0.3 + hash(i + 9) * 0.5)) % W;
+    const y = hash(i + 3) * FLOOR + Math.sin(t * 0.4 + i) * 0.8;
+    cell(g, x, y, GREYS[2 + Math.floor(hash(i + 5) * 3)]);
+  }
+  rect(g, 0, FLOOR, W, H - FLOOR, GREYS[2]);
+  for (let c = 0; c < W; c++) for (let r = FLOOR; r < H; r++)
+    if (hash(c * 31 + r * 17) < 0.22) cell(g, c, r, GREYS[3 + Math.floor(hash(c + r * 7) * 2)]);
+}
+function drawWideCoil(g, t) {
+  for (let cx = X0; cx <= X1; cx++) {
+    const top = cTop(cx, t), bot = cBot(cx, t), mid = Math.round(cY(cx, t));
+    for (let cy = top; cy <= bot; cy++) cell(g, cx, cy, cy === bot ? GREYS[8] : cy === mid ? GREYS[10] : WHITE);
+  }
+  cell(g, X0 + 2, Math.round(cY(X0 + 2, t)) - 1, INK);
+}
+const STATIONS = CLASSES.map((_, i) => Math.round(9 + i * (W - 18) / 9));
+const REST = FLOOR - 3;                    // the bottom row of a fighter on its plinth
+const LOOP = 17, FIRST = 1, GAP = 1.4;     // seconds: one attack each, in turn
+const lerp = (a, b, k) => a + (b - a) * k;
+const along = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+
+// Each class's one attack, from `a` seconds after its turn began. A melee
+// fighter swims up under the coil, strikes and swims home; the rest strike
+// from the station.
+const MELEE = {
+  brawler: { up: 0.5, hits: [0.65, 1.05], k: 0.45, down: 0.6 },
+  martial: { up: 0.45, hits: [0.55, 0.75, 0.95], k: 0.2, down: 0.5 },
+  sword: { up: 0.5, hits: [0.75], k: 0.5, down: 0.6, slash: true },
+  assassin: { up: 0.25, hits: [0.4], k: 0.55, down: 0.3 },
+};
+function drawFighter(g, dir, key, i, t) {
+  const S = dir.sprites[key], x = STATIONS[i];
+  const a = ((t - FIRST - i * GAP) % LOOP + LOOP) % LOOP;
+  const m = MELEE[key];
+  if (m) {
+    const jabs = S.jab || [S.idle];
+    const hStrike = Math.max(...jabs.map(j => frameOf(j, t).length));
+    const end = m.hits[m.hits.length - 1] + 0.25;
+    const hover = cBot(x, t) + hStrike;
+    let by = REST;
+    if (a < m.up) by = Math.round(lerp(REST, hover, a / m.up));
+    else if (a < end) by = hover;
+    else if (a < end + m.down) by = Math.round(lerp(hover, REST, (a - end) / m.down));
+    let art = S.idle;
+    m.hits.forEach((h, n) => {
+      if (a >= h - 0.08 && a < h + 0.14) art = jabs[n % jabs.length];
+    });
+    // the blow lands where the art's top cell meets the coil
+    m.hits.forEach((h, n) => {
+      const j = jabs[n % jabs.length], tp = topOf(j, x, hover, t);
+      const t0 = t - (a - h);
+      burst(g, t, t0, tp.x, cBot(tp.x, t), m.k, i * 7 + n);
+      chip(g, t, t0, tp.x, Math.round(cY(tp.x, t)), m.k, i * 7 + n);
+      if (m.slash && a >= h && a < h + 0.5) {
+        const k = along(a, h, h + 0.12), fade = along(a, h + 0.12, h + 0.5);
+        for (let dx = -4; dx <= 4; dx++) {
+          if ((dx + 4) / 8 > k) continue;
+          const tone = GREYS[[11, 11, 10, 9, 7, 5][Math.floor(fade * 5.99)]];
+          cell(g, tp.x + dx, cBot(tp.x + dx, t) + (Math.abs(dx) > 2 ? 0 : 1) - 1, tone);
+        }
+      }
+    });
+    drawArt(g, art, x, by, t);
+    return;
+  }
+  // at the station
+  const by = key === 'monk' && dir.key === 'kit' ? REST : REST;
+  const tipOf = art => art.tip || S.tip ? pointOf(art, x, by, t, art.tip || S.tip) : topOf(art, x, by, t);
+  if (key === 'mage') {
+    const casting = a >= 0 && a < 1.3;
+    const art = casting && S.cast ? S.cast : S.idle;
+    drawArt(g, art, x, by, t);
+    const tip = S.tip ? pointOf(art, x, by, t, S.tip) : { x, y: by - 3 };
+    // gather: a ring of the abyss closing on the stone
+    if (a < 0.45) ring(g, tip.x, tip.y, 3.5 * (1 - a / 0.45) + 0.6, a < 0.3 ? PURPLES[9] : PURPLES[11]);
+    const t0 = t - (a - 0.45), tx = x - 3;
+    if (a >= 0.45 && a < 0.72) fork(g, t, tip.x, tip.y - 1, tx, cBot(tx, t) + 1, i);
+    if (a >= 0.45) {
+      burst(g, t, t0, tx, cBot(tx, t), 0.45, i * 7);
+      chip(g, t, t0, tx, Math.round(cY(tx, t)), 0.45, i * 7);
+    }
+    return;
+  }
+  if (key === 'monk') {
+    const casting = a >= 0 && a < 1.1;
+    const art = casting && S.cast ? S.cast : S.idle;
+    drawArt(g, art, x, by, t);
+    const top = topOf(art, x, by, t).y;
+    // the palm pushes a wave of the abyss up into the coil
+    if (a >= 0.2 && a < 0.9) {
+      const k = along(a, 0.2, 0.7), y = Math.round(lerp(top - 1, cBot(x, t) + 1, k));
+      const half = 1 + Math.round(k * 2);
+      for (let dx = -half; dx <= half; dx++) cell(g, x + dx, y, Math.abs(dx) === half ? PURPLES[8] : PURPLES[11]);
+      for (let dx = -half + 1; dx <= half - 1; dx++) cell(g, x + dx, y + 1, PURPLES[7]);
+    }
+    const t0 = t - (a - 0.7);
+    if (a >= 0.7) {
+      if (a < 1.2) ring(g, x, cBot(x, t), 1 + (a - 0.7) * 8, [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.floor((a - 0.7) / 0.125)], 2);
+      burst(g, t, t0, x, cBot(x, t), 0.35, i * 7);
+      chip(g, t, t0, x, Math.round(cY(x, t)), 0.35, i * 7);
+    }
+    return;
+  }
+  drawArt(g, S.idle, x, by, t);
+  const tip = S.tip ? pointOf(S.idle, x, by, t, S.tip) : { x, y: by - 3 };
+  if (key === 'ranger') {
+    // an arrow flown straight up from the bow's tip, then left standing in the hide
+    const hitY = cBot(tip.x, t) + 1, fly = 0.35;
+    if (a >= 0.1 && a < 0.1 + fly) {
+      const y = Math.round(lerp(tip.y - 1, hitY, along(a, 0.1, 0.1 + fly)));
+      cell(g, tip.x, y, WHITE); cell(g, tip.x, y + 1, GREYS[8]); cell(g, tip.x, y + 2, GREYS[9]);
+    } else if (a >= 0.1 + fly && a < 1.6) {
+      const f = along(a, 1.0, 1.6);
+      cell(g, tip.x, hitY, GREYS[[8, 7, 5, 3][Math.floor(f * 3.99)]]);
+      cell(g, tip.x, hitY + 1, GREYS[[9, 8, 6, 3][Math.floor(f * 3.99)]]);
+    }
+    const t0 = t - (a - 0.1 - fly);
+    burst(g, t, t0, tip.x, hitY - 1, 0.25, i * 7);
+    chip(g, t, t0, tip.x, Math.round(cY(tip.x, t)), 0.25, i * 7);
+  } else if (key === 'sapper') {
+    // a charge lobbed from the satchel, its fuse sparking, up into the coil
+    const fly = 0.7, tx = x + 4, hitY = cBot(tx, t);
+    if (a >= 0.1 && a < 0.1 + fly) {
+      const k = along(a, 0.1, 0.1 + fly);
+      const cx = Math.round(lerp(tip.x, tx, k));
+      const cy = Math.round(lerp(tip.y, hitY + 1, k) - 5 * Math.sin(Math.PI * k) * 0.4);
+      rect(g, cx, cy, 2, 2, GREYS[8]); cell(g, cx + 1, cy, GREYS[9]);
+      cell(g, cx + (Math.floor(t * 12) % 2 ? 2 : 1), cy - 1, Math.floor(t * 12) % 2 ? WHITE : GREYS[9]);
+    }
+    const t0 = t - (a - 0.1 - fly), e = a - 0.1 - fly;
+    if (e >= 0 && e < 0.4) ring(g, tx, hitY, 1 + e * 12, e < 0.15 ? WHITE : e < 0.28 ? GREYS[9] : GREYS[6]);
+    burst(g, t, t0, tx, hitY, 0.65, i * 7);
+    chip(g, t, t0, tx, Math.round(cY(tx, t)), 0.65, i * 7);
+  } else if (key === 'hexer') {
+    // a sigil floated up off the wand; it sets into the hide as a purple ripple
+    const fly = 0.8, tx = tip.x, hitY = cBot(tx, t);
+    if (a >= 0.1 && a < 0.1 + fly) {
+      const k = along(a, 0.1, 0.1 + fly);
+      const cx = tx, cy = Math.round(lerp(tip.y - 2, hitY + 2, k));
+      for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) cell(g, cx + dx, cy + dy, PURPLES[9]);
+      cell(g, cx, cy, Math.floor(t * 8) % 2 ? PURPLES[11] : PURPLES[8]);
+    }
+    const e = a - 0.1 - fly;
+    if (e >= 0 && e < 0.8) {
+      const r = 1 + e * 8;
+      ring(g, tx, hitY, r, [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.floor(e / 0.2)], 2);
+    }
+    const t0 = t - e;
+    burst(g, t, t0, tx, hitY, 0.15, i * 7);
+  } else if (key === 'bard') {
+    // she sings: notes rise off the lute and drift to the fighters either side
+    for (let n = 0; n < 4; n++) {
+      const s = 0.1 + n * 0.25, k = along(a, s, s + 1.2);
+      if (a < s || a >= s + 1.2) continue;
+      const to = n % 2 ? (i + 1 < 10 ? i + 1 : i - 2) : i - 1;
+      const dest = STATIONS[clamp(to, 0, 9)];
+      const nx = Math.round(lerp(tip.x, dest, k)), ny = Math.round(tip.y - 2 - 6 * Math.sin(Math.PI * k) + 3 * k);
+      cell(g, nx, ny, PURPLES[11]); cell(g, nx + 1, ny - 1, PURPLES[9]);
+    }
+  }
+  if (dir.key === 'kit' && key === 'bard') idleNote(g, t, tip, a);
+}
+// A bard at rest lets a note go now and then: it climbs and steps down the purples.
+function idleNote(g, t, tip, a) {
+  if (a < 2) return;
+  const p = (t % 2.4) / 2.4;
+  if (p > 0.7) return;
+  const k = p / 0.7, y = Math.round(tip.y - 1 - k * 5), x = tip.x + (k > 0.5 ? 1 : 0);
+  const tone = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.floor(k * 3.99)];
+  cell(g, x, y, tone); cell(g, x + 1, y - 1, tone);
+}
+// A forked bolt, white down its middle with the abyss at its side.
+function fork(g, t, ax, ay, bx, by, seed) {
+  const f = Math.floor(t * 24), len = Math.hypot(bx - ax, by - ay) || 1;
+  const n = Math.max(2, Math.round(len / 2.5)), nx = -(by - ay) / len, ny = (bx - ax) / len;
+  const pts = [{ x: ax, y: ay }];
+  for (let k = 1; k <= n; k++) {
+    const q = k / n, j = k === n ? 0 : (hash(seed * 17 + k * 5 + f) - 0.5) * 3;
+    pts.push({ x: lerp(ax, bx, q) + nx * j, y: lerp(ay, by, q) + ny * j });
+  }
+  for (const dx of [1, 0]) for (let k = 1; k < pts.length; k++)
+    line(g, pts[k - 1].x, pts[k - 1].y, pts[k].x, pts[k].y, null, (cx, cy) =>
+      cell(g, cx + dx, cy, dx ? PURPLES[9] : WHITE));
+}
+const panes = [];
+function makePane(dir) {
+  const cv = document.createElement('canvas'); cv.width = W * P; cv.height = H * P;
+  panes.push({ dir, g: cv.getContext('2d') });
+  const box = document.createElement('div'); box.className = 'pane'; box.append(cv);
+  return box;
+}
+function paintPane(p, t) {
+  const g = p.g;
+  drawWideDeep(g, t);
+  STATIONS.forEach(x => drawPlinth(g, x));
+  drawWideCoil(g, t);
+  CLASSES.forEach(([k], i) => drawFighter(g, p.dir, k, i, t));
+}
+
+// --- the page ------------------------------------------------------------------------------
+const compare = document.getElementById('compare');
+const strip = document.createElement('div'); strip.className = 'strip';
+for (const d of DIRS) {
+  const lab = document.createElement('div'); lab.textContent = `${d.n} · ${d.name}`;
+  strip.append(lab, makeRow(d));
+}
+compare.append(strip);
+const host = document.getElementById('dirs');
+for (const d of DIRS) {
+  const h = document.createElement('h2'); h.textContent = `${d.n} · ${d.name}`; h.id = d.key;
+  const about = document.createElement('p'); about.textContent = d.about;
+  const h1 = document.createElement('h3'); h1.textContent = 'At the game\'s scale (a cell is 6 px)';
+  const r1 = document.createElement('div'); r1.className = 'scroll'; r1.append(makeRow(d));
+  const h4 = document.createElement('h3'); h4.textContent = 'At 4x';
+  const grid = document.createElement('div'); grid.className = 'tiles';
+  for (const [k, n] of CLASSES) {
+    const tile = document.createElement('div'); tile.className = 'tile';
+    const cv = document.createElement('canvas'); cv.width = SLOT * P; cv.height = SLOT_H * P;
+    cv.style.width = cv.width * 4 + 'px';
+    const nm = document.createElement('span'); nm.textContent = n;
+    const lk = document.createElement('small'); lk.textContent = d.sprites[k].look;
+    tile.append(cv, nm, lk); grid.append(tile);
+    tiles.push({ dir: d, k, g: cv.getContext('2d') });
+  }
+  const hp = document.createElement('h3');
+  hp.textContent = 'Live: all ten at ten stations, idling, each attacking once in turn (the game\'s scale, shown doubled)';
+  host.append(h, about, h1, r1, h4, grid, hp, makePane(d));
+}
+
+let playing = true, clock = 0, last = performance.now();
+document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+// For shots: stand the page at a given time.
+window.__at = s => { clock = s; playing = false; paintAll(clock); return clock; };
+function paintAll(t) {
+  for (const r of rows1) paintRow(r, t);
+  for (const tl of tiles) {
+    drawRowBack(tl.g, SLOT); drawPlinthAt(tl.g, 5, ROW_FLOOR); drawSlot(tl.g, tl.dir, tl.k, 0, t);
+  }
+  for (const p of panes) paintPane(p, t % LOOP);
+}
+function tick(now) {
+  if (playing) clock += (now - last) / 1000;
+  last = now;
+  document.getElementById('clock').textContent = clock.toFixed(1) + ' s';
+  paintAll(clock);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
