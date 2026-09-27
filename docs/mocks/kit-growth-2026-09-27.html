@@ -61,10 +61,6 @@
     <div class="grp" id="classic"><span>classic</span></div></div>
 
 
-  <h2>Pick the tome</h2>
-  <p class="dim">The Hexer's tome: today's beside three options, at rung 4 then rung 8, looping with classic on, all on one clock.</p>
-  <div id="tomepick"></div>
-
   <h2>Live: the ten at five stations, each attacking in turn</h2>
   <div class="pane"><canvas id="pane"></canvas></div>
 
@@ -335,7 +331,7 @@ const POSE = 0.08;
 // Also picked: B for the Whirlwind's ending (the blade planted point-down,
 // his weight settling), at rung 4 and rung 8's settle; A for the Monk's beads
 // (spaced beads in an arch), and 4 for the rung-8 beads (the connected halo).
-const PICKED = { hay: 'C', thrust: 'B', whirl: 'A', ease: 'B', beads: 'A', beads8: '4', tome: '' };
+const PICKED = { hay: 'C', thrust: 'B', whirl: 'A', ease: 'B', beads: 'A', beads8: '4' };
 let VAR = { ...PICKED };
 const EX = () => CLASSIC ? 1.7 : 1;
 // The world at the moment a fighter is drawn, so a smear can find the hide.
@@ -1408,9 +1404,15 @@ const sapper = {
 };
 
 // --- Hexer: nothing held, a purple mote rising slowly off her ------------------------------
-// One mote at a time. From rung 4 a small book floats open over her head,
-// bobbing, its pages glowing through the purples, and the hex streams out of
-// it; at rung 8 she floats a cell off the plinth and the hex is bigger.
+// One mote at a time. From rung 4 a glyph hangs over her head (the owner,
+// 2026-09-28: "lets drop the tome, theres just not enough resolution. lets
+// make it a glyph instead that gets stroke traced before the attack goes
+// out"): before each hex it is written cell by cell along its stroke, a
+// white leading cell and the cells behind it settling into the purples; it
+// flares a held pose when the last stroke closes, the hex streams up out of
+// it, and it fades out down the purples. Between hexes a faint ghost of it
+// hangs there, so the rung's look reads at rest. At rung 8 an outer ring is
+// traced round it after the rune, she floats a cell up, and the hex is bigger.
 const MOTE_TONES = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
 function motes(g, x, top, t, n = 1) {
   for (let i = 0; i < n; i++) {
@@ -1418,99 +1420,92 @@ function motes(g, x, top, t, n = 1) {
     cell(g, x + dx, top - 1 - Math.floor(p * 5), MOTE_TONES[Math.floor(p * 3.99)]);
   }
 }
-// The tome, closed, two rows deep: its spine down the left, a thick cover,
-// a clasp, and the page edges down the right glowing through the purples.
-// `hot` whitens the glow while it casts.
-const bookY = (y, t) => y - 4 - (Math.floor(t * 1.2) % 2);
-function book(g, x, by, t, hot = false) {
-  const glow = hot ? WHITE : [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[10]][Math.floor(t * 3) % 4];
-  cell(g, x, by - 1, PURPLES[6]); cell(g, x, by, PURPLES[6]);
-  cell(g, x + 1, by - 1, PURPLES[8]); cell(g, x + 2, by - 1, PURPLES[8]);
-  cell(g, x + 1, by, PURPLES[8]); cell(g, x + 2, by, hot ? WHITE : GREYS[9]);
-  cell(g, x + 3, by - 1, glow); cell(g, x + 3, by, glow);
-}
-// The tome options, still to pick (the owner: "the tome still doesnt read
-// like a book"). Drawn from letters, bottom row on `by`, centered over her:
-// S the spine, C the dark cover, G the cover's top edge glowing through the
-// purples, W the white page block (w its shaded corner), K the clasp, R the
-// rune, . nothing. Rung 8's is a size bigger and a step brighter.
-//   A big closed tome, three-quarters on: the page block white along the
-//     bottom and fore edges, the cover over them, a thick spine and a clasp.
-//   B the same, flipping open into a V of white pages to cast, a page or two
-//     fluttering, the hex streaming out of the spread, then snapping shut.
-//   C A's shape with a purple rune on the cover that glows and flares on the
-//     cast, and a bookmark ribbon hanging out of the pages, swaying.
-const TOMES = {
-  A: [['SGGGG', 'SCCKW', 'SWWWw'], ['SGGGGG', 'SCCCKW', 'SCCCCW', 'SWWWWw']],
-  C: [['SGRGG', 'SRCRW', 'SWWWw'], ['SGGRGG', 'SCRCRW', 'SCCRCW', 'SWWWWw']],
-  open: [['W...W', 'CW.WC', '.CSC.'], ['W...W', 'WW.WW', 'CW.WC', '.CSC.']],
-};
-const tomeH = R => R8(R) ? 4 : 3;
-function tome(g, v, x, by, R, t, hot) {
-  const big = R8(R) ? 1 : 0, open = v === 'B' && hot;
-  const rows = open ? TOMES.open[big] : TOMES[v === 'C' ? 'C' : 'A'][big];
-  const w = rows[0].length, x0 = x + 1 - Math.floor(w / 2), y0 = by - rows.length + 1;
-  const ramp = big ? [PURPLES[11], PURPLES[11], PURPLES[10], PURPLES[11]] : [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[10]];
-  const glow = hot ? WHITE : ramp[Math.floor(t * 3) % 4];
-  const rune = hot ? WHITE : [PURPLES[9], PURPLES[10], PURPLES[11], PURPLES[10]][Math.floor(t * 2.5) % 4];
-  const TONE = { S: PURPLES[6], C: PURPLES[8], G: glow, W: WHITE, w: GREYS[10], K: GREYS[9], R: rune };
-  rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.') cell(g, x0 + c, y0 + r, TONE[ch]); }));
-  if (open) {
-    // a page or two fluttering up off the spread
-    const f = Math.floor(t * 10) % 3;
-    cell(g, x0 + 1 + (f === 1 ? 0 : 1), y0 - 1, f ? WHITE : GREYS[9]);
-    if (f === 2) cell(g, x0 + w - 2, y0 - 1, GREYS[10]);
+// The rune, 5 by 5, in stroke order: one continuous stroke (up the left leg,
+// down to a point in the middle, up and down the right leg), then the
+// crossing bar across both legs.
+const RUNE = [[0, 4], [0, 3], [0, 2], [0, 1], [0, 0], [1, 1], [2, 2], [3, 1], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4],
+              [1, 3], [2, 3], [3, 3]];
+// Rung 8's outer ring round the rune, in the order it is traced: from the top, clockwise.
+const RING8 = (() => {
+  const seen = new Set(), out = [];
+  for (let k = 0; k < 64; k++) {
+    const an = k / 64 * Math.PI * 2, c = [Math.round(2 + Math.sin(an) * 3.9), Math.round(2 - Math.cos(an) * 3.9)];
+    if (!seen.has(c + '')) { seen.add(c + ''); out.push(c); }
   }
-  if (v === 'C') {
-    // the bookmark ribbon, hanging out of the page block and swaying
-    const sw = Math.round(Math.sin(t * 2) * 0.6);
-    cell(g, x + 1, by + 1, PURPLES[9]); cell(g, x + 1 + sw, by + 2, PURPLES[7]);
-    if (big) cell(g, x + 1 + sw, by + 3, PURPLES[6]);
+  return out;
+})();
+const GLYPH_TRACE = 0.5, RING_TRACE = 0.3, FLARE = 0.12, FADE = 0.4;
+// The glyph's timings on her clock, by rung: when the trace starts, when it
+// closes, when the hex streams out, and when it lands.
+function glyphTimes(R) {
+  const t0 = 0.3, done = t0 + GLYPH_TRACE + (R8(R) ? RING_TRACE : 0), out = done + FLARE;
+  return { t0, done, out, land: out + 1.0 };
+}
+// The glyph over her head: its top-left cell at (gx, gy). `a` her clock, or
+// null at rest (the ghost).
+function glyph(g, gx, gy, R, a) {
+  const cells = R8(R) ? [...RUNE, ...RING8] : RUNE, T = glyphTimes(R), n = cells.length;
+  const ghost = PURPLES[5];
+  const draw = tone => cells.forEach(([cx, cy]) => cell(g, gx + cx, gy + cy, tone));
+  if (a == null || a < T.t0) return draw(ghost);
+  if (a < T.done) {
+    // the trace: the rune first, then (at rung 8) the ring, at its own pace
+    const runeN = RUNE.length, rp = clamp((a - T.t0) / GLYPH_TRACE, 0, 1), ringP = clamp((a - T.t0 - GLYPH_TRACE) / RING_TRACE, 0, 1);
+    const k = rp < 1 ? Math.floor(rp * runeN) : runeN + Math.floor(ringP * (n - runeN));
+    // the ghost under it, so the written cells read as filling it in
+    draw(ghost);
+    for (let i = 0; i < Math.min(k, n); i++) cell(g, gx + cells[i][0], gy + cells[i][1], k - i <= 2 ? PURPLES[11] : PURPLES[9]);
+    if (k < n) cell(g, gx + cells[k][0], gy + cells[k][1], WHITE);
+    return;
   }
+  // closed: a flare held a pose, lit while the hex streams, then fading
+  if (a < T.out) return draw(WHITE);
+  const f = a - T.out - 0.4;
+  if (f < 0) return draw(PURPLES[11]);
+  if (f < FADE) return draw([PURPLES[9], PURPLES[7], PURPLES[6]][Math.floor(f / FADE * 3)]);
+  draw(ghost);
 }
-// The book over her head, today's or an option; `top` is its top row.
-function drawTome(g, x, by, R, t, hot) {
-  if (!VAR.tome) { book(g, x, by, t, hot); return by - 1; }
-  tome(g, VAR.tome, x, by, R, t, hot);
-  return by - tomeH(R) + 1;
-}
+const glyphAt = (x, y, t) => [x - 1, y - 7 - (Math.floor(t * 1.2) % 2)];
 const hexer = {
   key: 'hexer', name: 'Hexer', at: 4,
   base: 'hexes Weaken the serpent', move: 'Binding: the serpent is Held', cap: 'Held takes more from blows',
-  mark: 'a glowing closed tome over her head', touch: 'floating a cell up; the hex bigger', lift: R => R8(R) ? 1 : 0,
+  mark: 'a purple glyph, traced before each hex', touch: 'a ring traced round the glyph; she floats a cell up', lift: R => R8(R) ? 1 : 0,
   rest(g, x, y, R, t) {
     drawBody(g, x, y);
-    if (R4(R)) { const by = bookY(y, t), top = drawTome(g, x, by, R, t); motes(g, x + 1, top, t); }
+    if (R4(R)) { const [gx, gy] = glyphAt(x, y, t); glyph(g, gx, gy, R, null); motes(g, x + 1, gy, t); }
     else motes(g, x + 1, y, t);
   },
-  len: 3.0, land: 1.3,
+  len: 3.4,
+  land(R) { return R4(R) ? glyphTimes(R).land : 1.3; },
   state(a, api, R) {
-    if (a >= this.land + 0.3) api.status('weakened');
-    if (R4(R)) api.hold(this.land + 0.3, 1.8, R8(R) && a >= 2.2 && a < 2.5 ? 2 : 1);
+    const L = this.land(R);
+    if (a >= L + 0.3) api.status('weakened');
+    if (R4(R)) api.hold(L + 0.3, 1.8, R8(R) && a >= L + 0.6 && a < L + 0.9 ? 2 : 1);
   },
-  hits(R, x) { const h = [{ at: this.land, x: x + 1, k: R8(R) ? 0.45 : 0.15 }]; if (R8(R)) h.push({ at: 2.2, x: x + 7, k: 0.6 }); return h; },
-  beats() { return [0.3]; },
+  hits(R, x) { const L = this.land(R), h = [{ at: L, x: x + 1, k: R8(R) ? 0.45 : 0.15 }]; if (R8(R)) h.push({ at: L + 0.6, x: x + 7, k: 0.6 }); return h; },
+  beats(R) { const T = glyphTimes(R); return R4(R) ? [T.t0, T.done] : [0.3]; },
   draw(g, t, a, api, R, x) {
     // sauced, she rises as she gathers the hex and settles as it goes
-    const s = api.st, y = REST_Y - liftOf(this, R) - dip(a, 0.3, 1, 0.25, 0.35), tx = x + 1, hitY = cBot(tx, t, s), big = R8(R);
+    const T = glyphTimes(R), start = R4(R) ? T.out : 0.3;
+    const s = api.st, y = REST_Y - liftOf(this, R) - dip(a, start, 1, 0.25, 0.35), tx = x + 1, hitY = cBot(tx, t, s), big = R8(R);
     drawBody(g, x, y);
-    // the hex leaves the book (her head, at rung 0) as a stream of motes
-    const by = bookY(y, t), top = R4(R) ? drawTome(g, x, by, R, t, a >= 0.2 && a < 0.9) : y - 2;
-    // an open tome casts from its spread, a closed one from its top
-    const from = R4(R) ? (VAR.tome === 'B' && a >= 0.2 && a < 0.9 ? top + 1 : top) : y - 2;
-    if (a >= 1.8) motes(g, tx, R4(R) ? top : y, t);
+    // the hex streams out of the glyph's middle (her head, at rung 0) as motes
+    const [gx, gy] = glyphAt(x, y, t);
+    if (R4(R)) glyph(g, gx, gy, R, a);
+    const from = R4(R) ? gy + 2 : y - 2;
+    if (a >= this.land(R) + 0.5) motes(g, tx, R4(R) ? gy : y, t);
     const n = big ? 9 : 5;
     for (let m = 0; m < n; m++) {
-      const s0 = 0.3 + m * 0.5 / n;
+      const s0 = start + m * 0.5 / n;
       if (a < s0 || a >= s0 + 0.5) continue;
       const cx = tx + [-1, 1, 0, -2, 2, -1, 1, 0, 0][m], cy = lerp(from, hitY + 1, SAUCE ? ((a - s0) / 0.5) ** 1.5 : (a - s0) / 0.5);
       cell(g, cx, cy, PURPLES[11]); cell(g, cx, cy + 1, PURPLES[7]);
     }
-    const e = a - this.land;
+    const L = this.land(R), e = a - L;
     if (e >= 0 && e < 0.8) ring(g, tx, hitY, 1 + e * (big ? 14 : 8), MOTE_TONES[Math.floor(e / 0.2)], 2);
     blow(g, t, t - e, tx, s, big ? 0.45 : 0.15, 90);
     // Held takes more: a blow on the held coil lands heavier
-    if (R8(R)) blow(g, t, t - (a - 2.2), tx + 6, s, 0.6, 91);
+    if (R8(R)) blow(g, t, t - (a - L - 0.6), tx + 6, s, 0.6, 91);
   },
 };
 
@@ -1707,7 +1702,7 @@ function paintTile(g, c, R, T, phase) {
 // The page: per class its lines, a 1x strip of rung 0, 4, 8 at rest, and a
 // tile a rung playing that rung's attack.
 // ================================================================================
-const SLOT = 14, SLOT_H = 12, ROW_FLOOR = 10, RUNGS = [0, 4, 8];
+const SLOT = 14, SLOT_H = 14, ROW_FLOOR = 12, RUNGS = [0, 4, 8];
 const el = (tag, props = {}, kids = []) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 function drawSlot(g, c, R, sx, t) {
   rect(g, sx, 0, SLOT, SLOT_H, GREYS[0]);
@@ -1718,18 +1713,7 @@ function drawSlot(g, c, R, sx, t) {
   drawPlinthAt(g, x + 1, ROW_FLOOR);
   c.rest(g, x, y, R, t);
 }
-const strips = [], tiles = [], tomeTiles = [];
-// Pick the tome: today's tome and three options, at rung 4 and rung 8.
-const TOMEOPTS = [['', "today's: the 4×2 tome"], ['A', 'A · Big closed tome'], ['B', 'B · Opens to cast'], ['C', 'C · Tome with a sigil']];
-for (const R of [4, 8]) {
-  const row = el('div', { className: 'tiles' });
-  for (const [v, label] of TOMEOPTS) {
-    const cv = el('canvas'); cv.width = TW * P; cv.height = TH * P;
-    row.append(el('div', { className: 'tile' }, [cv, el('span', { textContent: label })]));
-    tomeTiles.push({ R, v, g: cv.getContext('2d') });
-  }
-  document.getElementById('tomepick').append(el('div', { className: 'easerow', id: 'tome-' + R }, [el('h3', { textContent: `Hexer, rung ${R}` }), row]));
-}
+const strips = [], tiles = [];
 const host = document.getElementById('host');
 STATIONS.forEach(([where, ...pair]) => pair.forEach(c => {
   const lines = el('div', { className: 'lines' }, [
@@ -1797,14 +1781,6 @@ document.getElementById('play').onclick = e => { playing = !playing; e.target.te
 function paintAll(t) {
   for (const s of strips) RUNGS.forEach((R, i) => drawSlot(s.g, s.c, R, i * SLOT, t));
   for (const tl of tiles) paintTile(tl.g, tl.c, tl.R, t, tl.phase);
-  { // the pick tiles: classic on, their own option, one clock
-    const keep = [CLASSIC, VAR];
-    for (const tl of tomeTiles) { CLASSIC = true; VAR = { ...PICKED, tome: tl.v }; paintTile(tl.g, hexer, tl.R, t, 0); }
-    [CLASSIC, VAR] = keep;
-  }
-  // the pick tiles: classic on, their own option, one clock
-  const keep = [CLASSIC, VAR];
-  [CLASSIC, VAR] = keep;
   paintPane(pane, t);
 }
 // For shots: stand the page at a time; set the rung; a contact sheet of the pane.
