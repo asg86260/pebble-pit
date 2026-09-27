@@ -268,10 +268,12 @@ function lightFrom(g, t, t0, x0, s) {
 }
 const litDone = (x0, t0) => t0 + (Math.max(x0 - X0, X1 - x0) + 1) / LIT_STEP;
 function chevron(g, cx, cy, tone) { cell(g, cx, cy + 1, tone); cell(g, cx + 1, cy, tone); cell(g, cx + 2, cy + 1, tone); }
+// Level 3 is the rung-8 song's: both chevrons the brightest purple, a white apex on each.
 function paintInspired(g, t, x, y, lv) {
   const bob = Math.floor(t * 2.5) % 2;
   chevron(g, x, y - 5 - bob, PURPLES[11]);
-  if (lv > 1) chevron(g, x, y - 8 - bob, PURPLES[9]);
+  if (lv > 1) chevron(g, x, y - 8 - bob, lv > 2 ? PURPLES[11] : PURPLES[9]);
+  if (lv > 2) { cell(g, x + 1, y - 5 - bob, WHITE); cell(g, x + 1, y - 8 - bob, WHITE); }
 }
 function paintHasted(g, t, x, y) {
   for (let r = 0; r < 3; r++) {
@@ -364,17 +366,17 @@ function boldArc(g, px, py, from, to, r0, r1, lead, pal = PAL_GREY) {
 // A held streak: a thrust's travel from the point (x, top) down to `bottom`,
 // solid -- the point white, then bright, then one grey -- with a dark keyline
 // over the point if it sits on the hide.
-function boldStreak(g, x, top, bottom, tip = WHITE) {
+function boldStreak(g, x, top, bottom, tip = WHITE, purple = false) {
   if (onHide(x, top)) cell(g, x, top - 1, GREYS[2]);
   cell(g, x, top, tip);
-  for (let y = top + 1; y <= bottom; y++) cell(g, x, y, y - top < 3 ? GREYS[10] : GREYS[9]);
+  for (let y = top + 1; y <= bottom; y++) cell(g, x, y, y - top < 3 ? (purple ? PURPLES[10] : GREYS[10]) : purple ? PURPLES[8] : GREYS[9]);
 }
 // Speed lines: `n` short straight streaks of cells trailing (below) a fast
 // thing at column cx, row cy, a cell or two to its sides.
-function speed(g, cx, cy, n = 2, len = 3) {
-  const cols = [-1, 1, -2, 2];
+function speed(g, cx, cy, n = 2, len = 3, purple = false) {
+  const cols = [-1, 1, -2, 2], tones = purple ? [PURPLES[10], PURPLES[8], PURPLES[6]] : [GREYS[9], GREYS[7], GREYS[5]];
   for (let i = 0; i < n; i++) for (let j = 0; j < len; j++)
-    cell(g, cx + cols[i], cy + 1 + (i % 2) + j, j === 0 ? GREYS[9] : j === 1 ? GREYS[7] : GREYS[5]);
+    cell(g, cx + cols[i], cy + 1 + (i % 2) + j, tones[Math.min(2, j)]);
 }
 // The impact star, held two poses: first a bold star of cells at the contact
 // point, bright; then broken, its arms thrown a cell further out and dimmer.
@@ -389,7 +391,9 @@ function star(g, t, t0, cx, cy, k, o = {}) {
     for (let r = 2; r <= len; r++) {
       if (broke && r % 2 === 0) continue;
       const rr = broke ? r + 1 : r, x = cx + dx * rr, y = cy + dy * rr;
-      const tone = o.tones ? o.tones[broke ? 1 : 0] : broke ? (r < len ? GREYS[9] : GREYS[7]) : r < len ? WHITE : GREYS[10];
+      const tone = o.tones ? o.tones[broke ? 1 : 0]
+        : o.purple ? (broke ? (r < len ? PURPLES[9] : PURPLES[7]) : r < len ? PURPLES[11] : PURPLES[10])
+        : broke ? (r < len ? GREYS[9] : GREYS[7]) : r < len ? WHITE : GREYS[10];
       if (onHide(x, y)) cell(g, x, y + (dy < 0 ? 0 : 0), GREYS[3]); else cell(g, x, y, tone);
     }
   }
@@ -427,33 +431,36 @@ function sauceOf(c, R, a, x) {
     const step = c.poseStep ? c.poseStep(R, aw) : POSE;
     if (best != null) aw = best + Math.floor((aw - best) / step + 1e-9) * step;
   }
-  return { a: aw, kick: Math.min(c.kickMax ?? 0, kick), groups };
+  return { a: aw, kick: Math.min(c.kickMax ?? 0, kick), groups, R };
 }
 // The contact spark: a short star of cells jumping off the hit along the
 // hide and out from it, starting clear of the weapon so the blow stays
 // readable, stepping down the greys; more rays and longer for a bigger blow.
 const RAYS = [[-1, 0], [1, 0], [-1, 0.6], [1, 0.6], [-1, -0.5], [1, -0.5], [-0.5, 1], [0.5, 1]];
-function spark(g, t, t0, cx, cy, k) {
+function spark(g, t, t0, cx, cy, k, purple = false) {
   const u = t - t0, dur = 0.12 + 0.14 * k;
   if (u < 0 || u >= dur) return;
   const f = u / dur, r = 1.8 + f * (1 + 2 * k), n = k >= 0.6 ? 8 : k >= 0.3 ? 4 : 2;
-  for (let i = 0; i < n; i++) cell(g, cx + RAYS[i][0] * r, cy + RAYS[i][1] * r, f < 0.4 ? WHITE : f < 0.75 ? GREYS[9] : GREYS[6]);
+  const tone = purple ? (f < 0.4 ? PURPLES[11] : f < 0.75 ? PURPLES[9] : PURPLES[7]) : f < 0.4 ? WHITE : f < 0.75 ? GREYS[9] : GREYS[6];
+  for (let i = 0; i < n; i++) cell(g, cx + RAYS[i][0] * r, cy + RAYS[i][1] * r, tone);
 }
 // The sauce's world half, for one class: the dents it leaves and its sparks.
 function sauceDents(S, t, a) { if (!SAUCE) return []; return S.groups.flatMap(gr => gr.list.map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) }))); }
 function sauceSparks(g, S, t, a, st) {
   for (const gr of S.groups) for (const h of gr.list) {
     const t0 = t - (a - gr.real), cy = cBot(Math.round(h.x), t, st) + 1;
-    if (!CLASSIC) { spark(g, t, t0, h.x, cy - 0.5, h.k); continue; }
+    // at rung 8 every capstone contact is the abyss's: its star in the purples
+    const pu = R8(S.R ?? 0) && h.purple !== false, po = pu ? { purple: true } : {};
+    if (!CLASSIC) { spark(g, t, t0, h.x, cy - 0.5, h.k, pu); continue; }
     // the fix alternatives: the Haymaker's star (A small and dark, B none, C a
     // pose late) and the Whirlwind's three (A the middle one, B small and dim, C none)
     if (h.kind === 'hay' && VAR.hay === 'A') star(g, t, t0, Math.round(h.x), cy, h.k, { len: 2, tones: [GREYS[6], GREYS[5]] });
     else if (h.kind === 'hay' && VAR.hay === 'B') continue;
-    else if (h.kind === 'hay' && VAR.hay === 'C') star(g, t, t0 + POSE, Math.round(h.x), cy, h.k);
-    else if (h.kind === 'whirl' && VAR.whirl === 'A') { if (h.mid) star(g, t, t0, Math.round(h.x), cy, h.k); }
+    else if (h.kind === 'hay' && VAR.hay === 'C') star(g, t, t0 + POSE, Math.round(h.x), cy, h.k, po);
+    else if (h.kind === 'whirl' && VAR.whirl === 'A') { if (h.mid) star(g, t, t0, Math.round(h.x), cy, h.k, po); }
     else if (h.kind === 'whirl' && VAR.whirl === 'B') star(g, t, t0, Math.round(h.x), cy, h.k, { len: 2, tones: [GREYS[9], GREYS[7]] });
     else if (h.kind === 'whirl' && VAR.whirl === 'C') continue;
-    else star(g, t, t0, Math.round(h.x), cy, h.k);
+    else star(g, t, t0, Math.round(h.x), cy, h.k, po);
   }
 }
 // Is `a` the pose just before a contact at `at` (the smear), or one of the two
@@ -509,7 +516,7 @@ const bSize = R => R8(R) ? 2 : 1;
 function bFist(g, fx, fy, size, R, t, side) {
   if (!R4(R)) { rect(g, fx, fy, size, 1, GREYS[10]); return; }
   rect(g, fx, fy, size, 1, WHITE); rect(g, fx, fy + 1, size, 1, GREYS[9]);
-  if (R8(R)) drift(g, side < 0 ? fx : fx + size - 1, fy - 1, t, 1, side > 0 ? 0.5 : 0);
+  if (R8(R)) drift(g, side < 0 ? fx : fx + size - 1, fy - 1, t, 1, side > 0 ? 0.5 : 0, 3, 2.2, MOTES_P);
 }
 // A punch's reach at `a` for one landing at L: 1 at the hide, negative the
 // wind-up in cells. Sauced, it winds back `wind` cells (eased), drives in
@@ -1014,7 +1021,7 @@ const monk = {
 // (render/aura.js): walked out from its knot half a cell at a time, its
 // heading turned by one ripple that travels out to the loose end and grows
 // toward it. touch: the staff's other end a pike, a blade on it.
-function ribbon(g, ex, ey, dir, t, len = 4, seed = 0) {
+function ribbon(g, ex, ey, dir, t, len = 4, seed = 0, purple = false) {
   let px = 0, py = 0;
   for (let s = 0.5; s <= len; s += 0.5) {
     const rip = Math.sin((t / 1.3 - s * 0.75 / len) * Math.PI * 2 + seed * 7) * Math.pow(s / len, 1.2) * 1.2;
@@ -1022,7 +1029,7 @@ function ribbon(g, ex, ey, dir, t, len = 4, seed = 0) {
     px += Math.sin(th) * 0.5; py += Math.cos(th) * 0.5;
     const cx = Math.round(px), cy = Math.round(py);
     if (cx === 0 && cy === 0) continue;
-    cell(g, ex + dir * cx, ey + cy, s > len - 1 ? GREYS[8] : GREYS[10]);
+    cell(g, ex + dir * cx, ey + cy, purple ? (s > len - 1 ? PURPLES[8] : PURPLES[10]) : s > len - 1 ? GREYS[8] : GREYS[10]);
   }
 }
 // The pike's head off a staff end at (ex, ey), pointing (dx, dy): a
@@ -1030,11 +1037,12 @@ function ribbon(g, ex, ey, dir, t, len = 4, seed = 0) {
 function pike(g, ex, ey, dx, dy) {
   cell(g, ex + dx + dy, ey + dy + dx, GREYS[8]); cell(g, ex + dx - dy, ey + dy - dx, GREYS[8]);
   cell(g, ex + dx, ey + dy, GREYS[8]);
-  cell(g, ex + 2 * dx, ey + 2 * dy, GREYS[10]); cell(g, ex + 3 * dx, ey + 3 * dy, WHITE);
+  // the blade's tip is the abyss's purple (the pike is rung 8's)
+  cell(g, ex + 2 * dx, ey + 2 * dy, GREYS[10]); cell(g, ex + 3 * dx, ey + 3 * dy, PURPLES[11]);
 }
 function staffBack(g, x, y, R, t) {
   cell(g, x - 2, y + 1, GREYS[9]); cell(g, x - 1, y + 1, GREYS[8]); cell(g, x + 3, y + 1, GREYS[8]); cell(g, x + 4, y + 1, GREYS[9]);
-  if (R4(R)) ribbon(g, x - 2, y + 1, -1, t);
+  if (R4(R)) ribbon(g, x - 2, y + 1, -1, t, 4, 0, R8(R));
   if (R8(R)) pike(g, x + 4, y + 1, 1, 0);
 }
 const martial = {
@@ -1073,11 +1081,11 @@ const martial = {
       const top = maxBot([x - 2, x + 4], t, s) + 1, rows = Math.max(2, Math.round(y - 1 - top) + 1);
       for (let i = rows - 1; i >= 0; i--) {
         const sh = Math.floor(i * 3 / rows);
-        for (let c = x - 2 + sh; c <= x + 4 - sh; c++) cell(g, c, top + i, i === 0 ? WHITE : i === 1 ? GREYS[10] : GREYS[9]);
+        for (let c = x - 2 + sh; c <= x + 4 - sh; c++) cell(g, c, top + i, R8(R) ? (i === 0 ? PURPLES[11] : i === 1 ? PURPLES[10] : PURPLES[8]) : i === 0 ? WHITE : i === 1 ? GREYS[10] : GREYS[9]);
       }
       if (R8(R)) pike(g, x + 4, top, 1, 0);
       // the speed lines trail the staff's two ends, clear of her body
-      for (const ex of [x - 2, x + 4]) for (let j = 0; j < 3; j++) cell(g, ex, top + rows + j, j === 0 ? GREYS[9] : j === 1 ? GREYS[7] : GREYS[5]);
+      for (const ex of [x - 2, x + 4]) for (let j = 0; j < 3; j++) cell(g, ex, top + rows + j, R8(R) ? [PURPLES[10], PURPLES[8], PURPLES[6]][j] : j === 0 ? GREYS[9] : j === 1 ? GREYS[7] : GREYS[5]);
     } else if (sweep && SMEAR && !CLASSIC && inWin(a, pl.fin - 0.0175)) {
       // the finisher's smear: the staff's sweep from over her head up to the
       // hide as one wide arc, the leading row bright, narrower and darker behind
@@ -1091,7 +1099,7 @@ const martial = {
       // the finisher: flat over her head, pressed into the hide
       const row = a >= pl.fin ? maxBot([x - 2, x + 4], t, s) + 1 : y - 1;
       for (let c = x - 2; c <= x + 4; c++) cell(g, c, row, c === x - 2 || c === x + 4 ? WHITE : GREYS[8]);
-      if (R4(R)) ribbon(g, x - 2, row, -1, t);
+      if (R4(R)) ribbon(g, x - 2, row, -1, t, 4, 0, R8(R));
       if (R8(R)) pike(g, x + 4, row, 1, 0);
     } else if (a > 0.3 && a < 2.5) {
       // on end through her middle, the tip driven up to the hide on a thrust
@@ -1116,8 +1124,10 @@ const martial = {
             // three wide at the point (and down the pike's blade, which leads
             // at rung 8 and makes the wedge longer), then one
             const q = (yy - top) / Math.max(1, n), k = yy - top, half = k < 2 + blade ? 1 : 0;
-            const core = yy === top || (blade && k < blade) ? WHITE : q < 0.5 ? GREYS[10] : GREYS[9];
-            for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, yy, dx ? GREYS[9] : core);
+            // at rung 8 the wedge is the purples, bright at the point stepping down
+            const pu = R8(R);
+            const core = yy === top || (blade && k < blade) ? (pu ? PURPLES[11] : WHITE) : q < 0.5 ? (pu ? PURPLES[10] : GREYS[10]) : pu ? PURPLES[8] : GREYS[9];
+            for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, yy, dx ? (pu ? PURPLES[8] : GREYS[9]) : core);
           }
           if (onHide(x + 1, top)) for (let dx = -1; dx <= 1; dx++) cell(g, x + 1 + dx, top - 1, GREYS[2]);
         } else if (VAR.thrust === 'C') {
@@ -1147,7 +1157,7 @@ const martial = {
       // thrust: drawn under the body, only its waving tail poked out past her
       // edge, a cell or two popping in and out beside the staff. Over the
       // body, it streams out whole from where it is tied.
-      if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t);
+      if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t, 4, 0, R8(R));
     } else staffBack(g, x, y, R, t);
     all.forEach((p, i) => blow(g, t, t - (a - p), x + 1, s, 0.18, 50 + i));
     blow(g, t, t - (a - pl.fin), x + 1, s, 0.7, 59);
@@ -1205,7 +1215,7 @@ const ranger = {
   state(a, api, R) { if (R8(R)) api.stun(this.aimed + 0.1, 1.5); },
   beats(R) { return R4(R) ? [...this.shots, this.aimed] : [0.8]; },
   hits(R, x) {
-    const lx = x + 1, hs = (R4(R) ? this.shots : [0.8]).map(v => ({ at: v + 0.25, x: lx, k: 0.2 }));
+    const lx = x + 1, hs = (R4(R) ? this.shots : [0.8]).map(v => ({ at: v + 0.25, x: lx, k: 0.2, purple: false }));
     if (R4(R)) for (const dx of [-1, 1]) hs.push({ at: this.aimed + 0.1, x: lx + dx, k: 0.8 });
     return hs;
   },
@@ -1233,14 +1243,16 @@ const ranger = {
       if (d < ar.fly) {
         const hy = lerp(ly, ay, d / ar.fly);
         cell(g, ax, hy, pu ? PURPLES[11] : WHITE); cell(g, ax, hy + 1, pu ? PURPLES[10] : GREYS[10]); cell(g, ax, hy + 2, pu ? PURPLES[8] : GREYS[8]);
-        if (CLASSIC) speed(g, ax, hy + 1, 2, 3);
+        if (CLASSIC) speed(g, ax, hy + 1, 2, 3, pu && R8(R));
+        // rung 8's aimed arrows leave a short purple trail
+        if (pu && R8(R)) { cell(g, ax, hy + 3, PURPLES[7]); cell(g, ax, hy + 4, PURPLES[5]); }
         continue;
       }
       const since = d - ar.fly;
       blow(g, t, t - since, ax, s, ar.k, ar.id);
       if (since < 0.9) { const tone = pu ? PURPLES[since < 0.4 ? 9 : 6] : GREYS[since < 0.4 ? 9 : 6]; cell(g, ax, ay, tone); cell(g, ax, ay + 1, tone); }
     }
-    if (aimed) { const since = a - aimed - 0.1; if (since >= 0 && since < 0.45) ring(g, lx, ty - 1, 1 + since * 14, since < 0.2 ? WHITE : GREYS[7], 2); }
+    if (aimed) { const since = a - aimed - 0.1; if (since >= 0 && since < 0.45) ring(g, lx, ty - 1, 1 + since * 14, R8(R) ? (since < 0.2 ? PURPLES[11] : PURPLES[8]) : since < 0.2 ? WHITE : GREYS[7], 2); }
   },
 };
 
@@ -1315,9 +1327,9 @@ const assassin = {
       const smear = SMEAR && !CLASSIC && (SAUCE ? inWin(d - this.out, -0.0575) : inWin(d, 0.0975));
       if (CLASSIC && d - this.out >= -POSE - 1e-9 && d - this.out < -1e-9) {
         // classic: the pose before contact is a held streak from the hide down to her fist
-        boldStreak(g, bx, top - 3, gy + 1, R8(R) ? PURPLES[11] : WHITE);
-        speed(g, bx, gy, 2, 3);
-      } else if (smear && R8(R)) smearArc(g, bx, gy, spinAt(d - 0.04), spins, 1, 3, PURPLES[11]);
+        boldStreak(g, bx, top - 3, gy + 1, R8(R) ? PURPLES[11] : WHITE, R8(R));
+        speed(g, bx, gy, 2, 3, R8(R));
+      } else if (smear && R8(R)) smearArc(g, bx, gy, spinAt(d - 0.04), spins, 1, 3, PURPLES[11], null, PAL_PURPLE);
       else if (smear) streak(g, bx, gy - 3, 7, R8(R) ? PURPLES[11] : WHITE);
       else dagger(g, bx, gy, R, spins);
     }
@@ -1397,7 +1409,16 @@ const sapper = {
         cell(g, tx, hitY + 2, Math.floor(t * rate) % 2 ? WHITE : GREYS[6]);
       }
       const e = a - boomAt, big = R4(R);
-      if (e >= 0 && e < 0.45) ring(g, tx, hitY - 1, 1 + e * (big ? 22 : 12), e < 0.15 ? WHITE : e < 0.3 ? GREYS[9] : GREYS[6]);
+      // rung 8's two charges go off in the abyss's purple: the ring, a white
+      // core at the heart for a pose, and a spray of purple debris
+      const pu = R8(R);
+      if (e >= 0 && e < 0.45) ring(g, tx, hitY - 1, 1 + e * (big ? 22 : 12), pu ? (e < 0.15 ? PURPLES[11] : e < 0.3 ? PURPLES[9] : PURPLES[7]) : e < 0.15 ? WHITE : e < 0.3 ? GREYS[9] : GREYS[6]);
+      if (pu && e >= 0 && e < POSE) { cell(g, tx, hitY - 1, WHITE); cell(g, tx - 1, hitY - 1, PURPLES[11]); cell(g, tx + 1, hitY - 1, PURPLES[11]); cell(g, tx, hitY - 2, PURPLES[11]); }
+      if (pu && e >= 0 && e < 1.2) for (let j = 0; j < 10; j++) {
+        const ang = -Math.PI * (0.05 + 0.9 * hash(j * 13 + i)), sp = 14 * (0.5 + hash(j + 7 * i));
+        const dx = tx + Math.cos(ang) * sp * e, dy = hitY - 1 + Math.sin(ang) * sp * e + 9 * e * e;
+        if (dy < FLOOR) cell(g, dx, dy, PURPLES[[11, 10, 9, 7, 5][Math.min(4, Math.floor(e / 0.24))]]);
+      }
       blow(g, t, t - e, tx, s, big ? 0.9 : 0.6, 80 + i);
     });
   },
@@ -1561,7 +1582,7 @@ const mage = {
     const ly = Math.max(3, cTop(LX, t, s) - 5), px = lerp(sx, LX, k), py = lerp(y - 4, ly, k);
     const open = a >= A.there && a < A.back ? Math.min(clamp((a - A.there) / 0.3, 0, 1), clamp((A.back - a) / 0.3, 0, 1)) : 0;
     // the capstone's lantern opens a ring wider
-    if (open > 0) ring(g, px, py, open < 0.5 ? 1 : R8(R) ? 3 : 2, open < 0.5 ? PURPLES[7] : PURPLES[9]);
+    if (open > 0) ring(g, px, py, open < 0.5 ? 1 : R8(R) ? 3 : 2, R8(R) ? (open < 0.5 ? PURPLES[9] : PURPLES[11]) : open < 0.5 ? PURPLES[7] : PURPLES[9]);
     stone(g, px, py - 1, R, t, true, 0);
   },
 };
@@ -1580,7 +1601,7 @@ const bard = {
   rest(g, x, y, R, t) { drawBody(g, x, y); flute(g, x, y, R, t); },
   len: 3.0,
   beats() { return [0.1]; },
-  state(a, api, R) { if (a >= 1.2 && a < (R8(R) ? 6 : 3.4)) api.buff('inspired', R4(R) ? 2 : 1); },
+  state(a, api, R) { if (a >= 1.2 && a < (R8(R) ? 6 : 3.4)) api.buff('inspired', R8(R) ? 3 : R4(R) ? 2 : 1); },
   draw(g, t, a, api, R, x) {
     // sauced, she draws a breath before the song: a rise and a settle
     const y = REST_Y - dip(a, 0.1, 0.5, 0.25, 0.4);
