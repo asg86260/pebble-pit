@@ -10221,7 +10221,13 @@ tip -- with the payment's `S.paid` flight run the other way.
 **The owner's word (2026-09-26):** "i want to be able to queue up multiple
 of the same item."
 
-Mocks: `docs/mocks/queue-repeats-2026-09-26.html`.
+Mocks: `docs/mocks/queue-repeats-2026-09-26.html` (the queue card),
+`docs/mocks/queue-refund-2026-09-26.html` (the refund button on a card).
+
+**The owner's answer to the calls (2026-09-26):** "lets add a button at the
+bottom of the cards for refunding the latest purchase, clicking the card
+body will queue up another one, if affordable." Written into "Handing one
+back" and "The calls" below.
 
 ### What a second press does today
 
@@ -10264,8 +10270,9 @@ takes both:
 **The rule: pressing a row whose work is already in the works puts the next
 one in line**, priced as the next one. A count row's next copy is the next
 house's price; a ladder's next copy is the next rung's bill, band and all.
-A one-off has no next one: a second press is refused, as a rung row past its
-top is today (see the first call).
+A one-off has no next one: a press on its body while it is in the works buys
+nothing, as a rung row past its top is today, and its refund button is how
+it comes back.
 
 ### What it costs
 
@@ -10289,24 +10296,52 @@ top is today (see the first call).
   reserves its own ground on the press (the room after the one going up, not
   the same room twice): `siteBox` for the yard's house and `nextHouseAt` read
   the crew *plus the houses already in the works*, not the crew alone.
-- **Cannot afford the next one:** the row reads its price the way any row
-  you cannot pay for does, and the press buys nothing. No copy is ever queued
-  unpaid, so there is no "waiting for coin" state and nothing new on `S`.
+- **Cannot afford the next one:** nothing happens, and the card says so the
+  way it already does for any row you cannot pay for (shelf.css, the
+  `:has(.tag .short)` rules): the title and the glyph's ink pale to grey,
+  the price tag goes dashed with the coin you are short of greyed and the
+  ones you have at full ink, the tile does not lift under the cursor (`off`),
+  and the press returns false out of `buy`'s `canPay` guard so the board stays
+  up. Kept as it is: the next copy's bill is simply the bill the tag shows. No
+  copy is ever queued unpaid, so there is no "waiting for coin" state and
+  nothing new on `S`.
 
 ### Handing one back
 
-Pressing a row can no longer mean "hand it back", because pressing it means
-"one more". The hand-back moves to the queue card, which already has it: **a
-waiting line on the card is a button that hands back that row's newest
-copy**. Newest, not the one pressed, because the bill climbs a copy at a
-time: handing back the second of three rungs would leave the third priced as
-a third it no longer is. The dearest copy comes back at the price it was
-paid, dust and coins flying from the site to the pile as today.
+**The owner's answer (2026-09-26):** a button at the bottom of the card
+refunds the latest purchase; the card's body queues another.
 
-The board's row, while its work is in the works, reads `building` or
-`queued` in the gain line as today, with the count of copies in the tag
-(`×3`); the price cell shows the *next* copy's bill, live, since the row is
-for sale again.
+- **The body** is the buy, and only the buy: a press queues one more copy if
+  the purse can pay the next one's bill, and does nothing otherwise. It never
+  hands anything back, which is what a press on a waiting row does today.
+- **The refund button** hands back that row's **newest copy still in the
+  works** -- waiting or being built -- at the price it was paid, the bill
+  flying from the site to the pile as a pull-out does today. Newest, because
+  the bill climbs a copy at a time: handing back the second of three rungs
+  would leave the third priced as a third it no longer is. A rung that has
+  already landed is not refundable; the button counts the works, not the
+  ladder.
+- **The button is there only while the row has a copy in the works.** With
+  none, the card is the card it is today -- no button, no empty strip -- so a
+  plank of rows nobody has bought reads as it always has. A one-off (a door,
+  a machine) in the works shows only the button: its body has nothing more
+  to sell.
+- **The queue card keeps one line a run with `×n`** (call 2 as recommended;
+  the answer does not touch it), and its waiting line keeps its press: the
+  same hand-back as the card's button, the newest copy of that row. Two doors
+  to one action, one on the board and one in the corner, as today.
+- **While a copy is in the works,** the card's gain line reads `building` or
+  `queued` as today, the price tag shows the *next* copy's bill (the body is
+  for sale again), and the count of copies stands by the refund button.
+  Which drawing that takes is the mock's vote.
+
+What the answer changes that the survey above does not cover: a copy on the
+go was committed ("A row on the go is committed", "The queue"), and now it
+can be refunded while a builder is at it. For a rung nothing is drawn, so the
+builder walks off and the pips never fill. For a yard building half out of
+the ground, the risen part has to come down where it can be seen -- the rise
+run backward, the fence struck -- or a refund would make half a building
+vanish. See the open call below.
 
 ### Why the old argument against it no longer holds
 
@@ -10339,8 +10374,10 @@ that is kept by the price: an opening purse pays for one rung, not five.
 `works.js` (a work carries a serial so two of one key can be told apart;
 the key lookups ask for "the newest", "the front" or "this one"),
 `upgrades.js` (`buy` adds instead of refusing; `billOf`, `maxed` and the
-ladder's `level` read the pending count), `shop.js` (the row stays for sale
-while building; the `×n`), `queue.js` (the card's grouping and its
+ladder's `level` read the pending count), `shop.js` and `shelf.css` (the row
+stays for sale while building; the refund button and its count, a second
+press target inside the tile's `button`, so it wants its own element and a
+`stopPropagation`), `queue.js` (the card's grouping and its
 hand-back), `house.js` and the pod row (ground for the nth house),
 `crew/builders.js` and `crew/muster.js` (`workKey` names a work, not a row).
 The save needs nothing new: `S.works` is already a list that could hold two
@@ -10349,22 +10386,40 @@ of a key; the reader just stops collapsing them.
 Checked in `test/queue.test.mjs`, bought through `__buy`: a rung row pressed
 three times is three works, each bill the next rung's, landing in order and
 leaving the ladder three up; a house pressed twice raises two houses on two
-patches with no jump; handing back through the card returns the newest bill
-to the grain; a ladder cannot be queued past its top or into a dead band; a
+patches with no jump; the refund button (and the queue card's line) returns
+the newest bill to the grain, and a press on a card you cannot pay for leaves
+the purse and the line as they were; a ladder cannot be queued past its top or into a dead band; a
 save written with three of one row in line comes back with three.
 
 ### The calls
 
-1. **A one-off pressed again, or any row pressed while in line.** Refused
-   (recommended: the press means "one more", and the card is where anything
-   is handed back), or keep today's board-press refund for rows that cannot
-   repeat.
-2. **The card: one line a copy, or one line a run with `×n`.** Recommended:
-   one line a run -- the card is a glance, and five lines of `a bigger
-   pocket` is a list you read. The front line's pips are the copy being
-   built; its clock is to the last of the run landing.
-3. **Where a copy is handed back.** The card's line (recommended: it is
-   already built and works on a phone), or also a right-click on the row.
+Answered (the owner, 2026-09-26: "lets add a button at the bottom of the
+cards for refunding the latest purchase, clicking the card body will queue
+up another one, if affordable"):
+
+1. **A row pressed while in the works.** The body queues one more if
+   affordable, else nothing; it never refunds.
+2. **The queue card.** One line a run with `×n`, as recommended.
+3. **Where a copy is handed back.** A refund button at the bottom of the
+   card, for the newest copy in the works; the queue card's waiting line
+   keeps the same hand-back.
+
+Open:
+
+4. **The refund button's drawing** -- a strip along the card's foot, a small
+   tag under the price, or a count with a minus on it. The vote is
+   `docs/mocks/queue-refund-2026-09-26.html`.
+5. **A copy being built, refunded.** Taken as refundable (the brief's
+   "waiting or being built"), at its full price. The other choice keeps the
+   old rule: the one on the go is committed, and the button shows only while
+   a copy is *waiting*. Recommended: the old rule. It keeps a half-risen
+   building from having to fall down backward, keeps the builder's walk
+   meaning something, and the button still covers every copy behind the
+   front, which is what a mis-press queues.
+6. **A landed rung.** Not refundable, and recommended to stay so: a landed
+   rung has done its work (the yard has been hauling with it), a refund of it
+   would be a free trial of every rung, and the ladder's price climbs off the
+   landed level, so selling one back would have to walk the ladder down.
 
 ## The cut is worked in pockets (built)
 
