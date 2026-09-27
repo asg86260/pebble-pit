@@ -130,9 +130,13 @@ make the reset just a full tree reset. Nothing fancy", and "Just refund the
 spec tree and keep going"). Every rung bought on the station comes back,
 the depth goes to nothing, and the tree is blank again. **Hover and panel
 text is concise** (the owner, 2026-09-27): a node's name and what it does in
-a few words, nothing about the system. Whether the tree shows only the
-chosen path once decided ("if you made the decision, those branches go
-away") is being mocked as option 2b.
+a few words, nothing about the system. **The rails collapse to the path taken** (option 2b, voted 2026-09-27).
+A tap or hover on a class, branch or capstone arm only views it: its line
+shows and the other choices fade, but stay. Buying commits: the first rung
+bought on a blank tree takes the viewed class and branch, and the other
+class and branches fold away; buying rung 8 takes the viewed capstone and
+the other arm folds. The Buy button names what it buys (`Buy Pummel 8 ·
+B`). Reset tree refunds everything and unfolds the tree blank.
 
 ## 3. The words the classes are written in
 
