@@ -101,6 +101,45 @@ function drawPlinthAt(g, cx, floor, w = 7) {
   rect(g, cx - Math.floor(w / 2) + 1, floor - 2, w - 2, 1, GREYS[4]);
 }
 
+// A rigid sprite: its cell art drawn once, on the grid, into its own canvas,
+// and from then on only moved by whole pixels or turned whole about its
+// anchor -- never drawn again as new cells. Turning it is done by hand,
+// nearest pixel, so every cell stays one hard-edged square in its place on
+// the kit and no edge is blended. (ax, ay) is the anchor, in the sprite's pixels.
+const SPRITES = new Map();
+function sprite(key, wCells, hCells, ax, ay, paint) {
+  let s = SPRITES.get(key);
+  if (!s) {
+    const cv = document.createElement('canvas');
+    cv.width = wCells * P; cv.height = hCells * P;
+    const g = cv.getContext('2d');
+    paint(g);
+    s = { cv, ax, ay, w: cv.width, h: cv.height, data: g.getImageData(0, 0, cv.width, cv.height).data };
+    SPRITES.set(key, s);
+  }
+  return s;
+}
+const TURN = document.createElement('canvas'), TURN_G = TURN.getContext('2d');
+// Put the sprite's anchor at pixel (x, y), turned `ang` radians clockwise.
+function blit(g, s, x, y, ang = 0) {
+  g.imageSmoothingEnabled = false;
+  if (!ang) { g.drawImage(s.cv, Math.round(x - s.ax), Math.round(y - s.ay)); return; }
+  const r = Math.ceil(Math.hypot(Math.max(s.ax, s.w - s.ax), Math.max(s.ay, s.h - s.ay))) + 1, S = 2 * r;
+  const out = TURN_G.createImageData(S, S), c = Math.cos(ang), sn = Math.sin(ang);
+  for (let oy = 0; oy < S; oy++) for (let ox = 0; ox < S; ox++) {
+    const dx = ox - r + 0.5, dy = oy - r + 0.5;
+    const sx = Math.floor(c * dx + sn * dy + s.ax), sy = Math.floor(-sn * dx + c * dy + s.ay);
+    if (sx < 0 || sy < 0 || sx >= s.w || sy >= s.h) continue;
+    const i = (sy * s.w + sx) * 4;
+    if (!s.data[i + 3]) continue;
+    const o = (oy * S + ox) * 4;
+    out.data[o] = s.data[i]; out.data[o + 1] = s.data[i + 1]; out.data[o + 2] = s.data[i + 2]; out.data[o + 3] = 255;
+  }
+  if (TURN.width !== S || TURN.height !== S) { TURN.width = S; TURN.height = S; }
+  TURN_G.putImageData(out, 0, 0);
+  g.drawImage(TURN, Math.round(x) - r, Math.round(y) - r);
+}
+
 // --- the world and its coil -------------------------------------------------------------
 const W = 130, H = 36, FLOOR = 31, X0 = 3, X1 = W - 4;
 const REST_Y = FLOOR - 2 - BODY;
@@ -228,7 +267,28 @@ const brawler = {
 // grip, the guard across, four cells of blade, the point. Swinging, it leaves
 // a trail at the angles it has just passed, a step darker each.
 const BLADE = 4;
+// In the chosen way (mode 2) the sword is one rigid sprite: drawn upright
+// once, on the grid -- point, blade, guard, grip -- and turned whole about the
+// hand. Its trail is the same blade's outer cells, a step darker, turned to
+// the angles it has just passed.
+function swordSprite(from, tone) {
+  const tip = from + BLADE + 2;
+  return sprite('sword' + from + (tone || ''), 3, BLADE + 3, 1.5 * P, (tip + 0.5) * P, g => {
+    const m = MODE; MODE = 1;
+    if (tone) { for (let r = 0; r < 3; r++) cell(g, 1, r, tone); MODE = m; return; }
+    cell(g, 1, 0, WHITE);
+    for (let r = 1; r <= BLADE; r++) cell(g, 1, r, GREYS[10]);
+    for (let c = 0; c < 3; c++) cell(g, c, BLADE + 1, GREYS[8]);
+    cell(g, 1, BLADE + 2, GREYS[6]);
+    MODE = m;
+  });
+}
 function sword(g, px, py, ang, from, dir = 0) {
+  if (MODE === 2) {
+    if (dir) [[0.35, GREYS[7]], [1.05, GREYS[5]]].forEach(([back, tone]) => blit(g, swordSprite(from, tone), px * P, py * P, ang - dir * back));
+    blit(g, swordSprite(from), px * P, py * P, ang);
+    return;
+  }
   const st = KS(), at = (i, a2 = ang) => [px + Math.sin(a2) * i, py - Math.cos(a2) * i];
   const tip = from + BLADE + 2;
   if (dir) [[0.35, GREYS[7]], [0.7, GREYS[6]], [1.05, GREYS[5]]].forEach(([back, tone], n) => {
@@ -362,7 +422,7 @@ const CLASSES = [brawler, swordsman, assassin, ranger];
 const TW = 22, TY0 = 1, TH = FLOOR + 2 - TY0, WX = 104, DUR = 4.6;
 const COLUMNS = [
   { mode: 1, name: '1 · On the grid (today)', cost: 'Costs nothing; motion jumps a whole 6 px cell a step.' },
-  { mode: 2, name: '2 · Off-grid motion', cost: 'Costs a rule, not art: moving things sit at whole pixels, rests on the grid.' },
+  { mode: 2, name: '2 · Off-grid motion: chosen 2026-09-28', cost: 'A rule, not art: a moving kit is one rigid sprite, moved by whole pixels and turned whole; rests on the grid.' },
   { mode: 3, name: '3 · Half-cell', cost: 'Costs every kit and attack redrawn at 3 px, ten classes; two resolutions in one frame.' },
 ];
 function paintTile(g, c, mode, T) {
