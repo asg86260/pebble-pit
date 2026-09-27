@@ -1517,7 +1517,9 @@ const hexer = {
 // --- Mage: a staff taller than her, a purple stone in its claws ---------------------------
 const ORBIT = Array.from({ length: 8 }, (_, k) => { const a = k / 8 * Math.PI * 2; return [Math.round(Math.cos(a) * 2.5), Math.round(0.5 + Math.sin(a) * 2.5)]; });
 // The stone at (sx, top): mark, a cell orbiting it; touch, three orbiting.
-function stone(g, sx, top, R, t, up, glow) {
+function stone(g, sx, top, R, t, up, glow, spent = false) {
+  // spent after the finishing blow: the stone goes dark a beat before it relights
+  if (spent) { cell(g, sx, top + 1, PURPLES[5]); cell(g, sx, top, PURPLES[6]); return; }
   cell(g, sx, top + 1, up ? PURPLES[11] : PURPLES[9]);
   cell(g, sx, top, glow > 0.66 ? WHITE : PURPLES[11]);
   if (R4(R)) for (let i = 0; i < (R8(R) ? 3 : 1); i++) {
@@ -1525,29 +1527,46 @@ function stone(g, sx, top, R, t, up, glow) {
     cell(g, sx + dx, top + dy, i ? PURPLES[8] : PURPLES[10]);
   }
 }
-function mStaff(g, x, y, R, t, up = false, glow = 0, home = true) {
+function mStaff(g, x, y, R, t, up = false, glow = 0, home = true, spent = false) {
   const sx = x - 1, lift = up ? 1 : 0, top = y - 3 - lift;
   for (let r = top + 2; r <= y + 2 - lift; r++) cell(g, sx, r, GREYS[8]);
   cell(g, sx - 1, top + 1, GREYS[8]); cell(g, sx + 1, top + 1, GREYS[8]);
-  if (home) stone(g, sx, top, R, t, up, glow);
+  if (home) stone(g, sx, top, R, t, up, glow, spent);
 }
 // A beam of cells from (ax, ay) to (bx, by), `w` cells wide (1 to 3), each
 // cell shimmering a step up and down the purples along its length; at three
 // wide its core is white when `white` (the capstone's burn), else the
 // brightest purple with the edges a step down. `fade` 0..1 steps it down the
-// purples as it cuts off.
-function beam(g, ax, ay, bx, by, w, t, fade = 0, white = true) {
+// purples as it cuts off. `surge` is the breath before the blow: every cell a
+// step up. `from` 0..1 leaves the beam's first stretch out, the part the
+// finishing pulse has already run down.
+function beam(g, ax, ay, bx, by, w, t, fade = 0, white = true, surge = false, from = 0) {
   const len = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / len, uy = (by - ay) / len;
-  const offs = w >= 3 ? [-1, 0, 1] : w === 2 ? [0, 1] : [0], f = Math.floor(t * 14);
+  const offs = w >= 4 ? [-1, 0, 1, 2] : w >= 3 ? [-1, 0, 1] : w === 2 ? [0, 1] : [0], f = Math.floor(t * 14);
   const SH = [PURPLES[9], PURPLES[10], PURPLES[11]];
   const down = k => [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.min(3, k + Math.floor(fade * 3.99))];
-  for (let i = 0; i <= Math.ceil(len); i++) for (const o of offs) {
+  for (let i = Math.ceil(from * len); i <= Math.ceil(len); i++) for (const o of offs) {
     // widened across the grid, not across the slant, so the band has no holes
     const side = Math.abs(uy) > Math.abs(ux), cx = Math.round(ax + ux * i) + (side ? o : 0), cy = Math.round(ay + uy * i) + (side ? 0 : o), sh = (i + f + (o + 3)) % 3;
     const core = w >= 3 && o === 0;
     const lit = w < 3 ? SH[sh] : white ? (core ? (sh === 0 ? PURPLES[11] : WHITE) : SH[sh])
               : core ? (sh === 0 ? PURPLES[10] : PURPLES[11]) : (sh === 0 ? PURPLES[9] : PURPLES[8]);
-    cell(g, cx, cy, fade > 0 ? down(core ? 0 : 1) : lit);
+    const hot = core ? (white ? WHITE : PURPLES[11]) : sh === 0 ? PURPLES[10] : PURPLES[11];
+    cell(g, cx, cy, fade > 0 ? down(core ? 0 : 1) : surge ? hot : lit);
+  }
+}
+// The finishing pulse: a bright bead `n` cells long at `p` 0..1 of the way
+// from (ax, ay) to (bx, by), `w` cells across, white at its head.
+function bead(g, ax, ay, bx, by, p, w, n, white) {
+  const len = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / len, uy = (by - ay) / len, side = Math.abs(uy) > Math.abs(ux);
+  const offs = w >= 3 ? [-1, 0, 1] : w === 2 ? [0, 1] : [0], head = p * len;
+  for (let j = 0; j < n; j++) {
+    const i = head - j;
+    if (i < 0) break;
+    for (const o of offs) {
+      const cx = Math.round(ax + ux * i) + (side ? o : 0), cy = Math.round(ay + uy * i) + (side ? 0 : o);
+      cell(g, cx, cy, j === 0 && (white || o === 0) ? WHITE : j < 2 ? PURPLES[11] : PURPLES[10]);
+    }
   }
 }
 const mage = {
@@ -1555,55 +1574,94 @@ const mage = {
   base: 'channels a purple beam', move: 'the beam widens as she holds it', cap: 'the beam burns through',
   mark: 'a cell orbiting the stone', touch: 'three cells orbiting',
   rest(g, x, y, R, t) { drawBody(g, x, y); mStaff(g, x, y, R, t); },
-  len: 3.4,
+  len: 3.9,
   // The beam (the owner, 2026-09-28: "she becomes a beam mage"): the staff up,
   // the stone gathering in a held pose, a held flare, then a steady beam
-  // from the stone into the coil, held, cut off with a short fade. From rung
-  // 4 it widens from one cell to three the longer she holds it; at rung 8 it
-  // burns through at full width.
-  BEAM: { lift: 0.2, gather: 0.3, flare: 0.55, start: 0.6 },
+  // from the stone into the coil. From rung 4 it widens from one cell to
+  // three the longer she holds it; at rung 8 it burns through at full width.
+  // It ends on a finishing blow ("more impact and last blow at the end"): a
+  // surge a cell wider held a pose, then a pulse shooting down the beam that
+  // lands as a single real hit -- a pause, a star, a give, a burst -- and
+  // pushes her back; the stone is spent a beat, then relights.
+  BEAM: { lift: 0.2, gather: 0.3, flare: 0.55, start: 0.6, surge: 0.2, pulse: 0.16, spent: 0.5 },
   hold(R) { return R4(R) ? 2.0 : 1.5; },
+  end(R) { return this.BEAM.start + this.hold(R); },
+  // the finishing blow lands as the pulse reaches the hide
+  fin(R) { return this.end(R) + this.BEAM.pulse; },
+  blowK(R) { return R8(R) ? 1.3 : R4(R) ? 0.85 : 0.5; },
   // how far into its ramp the beam is, 0..1 (full width at 1)
   ramp(R, a) { return clamp((a - this.BEAM.start) / (0.7 * this.hold(R)), 0, 1); },
   // the ticks where the beam bites the hide, each a small spark and give
-  ticks(R) { const B = this.BEAM, out = []; for (let u = B.start + 0.075; u < B.start + this.hold(R); u += 0.15) out.push(u); return out; },
+  ticks(R) { const B = this.BEAM, out = []; for (let u = B.start + 0.075; u < this.end(R) - B.surge; u += 0.15) out.push(u); return out; },
   hits(R, x) {
-    return this.ticks(R).map(u => ({ at: u, x: x - 5, noPause: true,
-      k: R4(R) ? 0.15 + (R8(R) ? 0.45 : 0.3) * this.ramp(R, u) : 0.15 }));
+    return [...this.ticks(R).map(u => ({ at: u, x: x - 5, noPause: true,
+      k: R4(R) ? 0.15 + (R8(R) ? 0.45 : 0.3) * this.ramp(R, u) : 0.15 })),
+      // the finishing blow: a real hit, its pause the biggest at rung 8
+      { at: this.fin(R), x: x - 5, k: this.blowK(R), pause: R8(R) ? 0.24 : R4(R) ? 0.16 : 0.1 }];
   },
-  // classic: the gather and the flare are held poses; the beam itself runs smooth
-  beats() { return [this.BEAM.gather, this.BEAM.flare]; },
-  poseStep(R, a) { return a >= this.BEAM.start ? 0.001 : POSE; },
+  // classic: the gather, the flare and the surge are held poses; the beam
+  // itself runs smooth, and the pulse steps down it a pose at a time
+  beats(R) { return [this.BEAM.gather, this.BEAM.flare, this.end(R) - this.BEAM.surge]; },
+  poseStep(R, a) { return a >= this.BEAM.start && a < this.end(R) - this.BEAM.surge - 1e-9 ? 0.001 : POSE; },
   state() {},
   draw(g, t, a, api, R, x) {
-    const B = this.BEAM, H = this.hold(R), end = B.start + H, s = api.st, sx = x - 1;
+    const B = this.BEAM, H = this.hold(R), end = this.end(R), fin = this.fin(R), s = api.st, sx = x - 1;
+    const surge = a >= end - B.surge && a < end, u = a - fin, k = this.blowK(R);
     // sauced, she rises into the gather, and the beam's start pushes her down a little
-    let y = REST_Y - dip(a, B.gather + 0.2, 0.5, 0.25, 0.3);
-    if (SAUCE) { const u = a - B.start; if (u >= 0 && u < 0.25) y += 0.6 * (1 - u / 0.25); }
-    const up = a >= B.lift && a < end + 0.3, glow = up ? clamp((a - B.gather) / 0.25, 0, 1) : 0;
-    drawBody(g, x, y); mStaff(g, x, y, R, t, up, glow);
-    const oy = y - 4, tx = x - 5, hy = cBot(tx, t, s);
+    let y = REST_Y - dip(a, B.gather + 0.2, 0.5, 0.25, 0.3), staffUp = 0;
+    if (SAUCE) { const v = a - B.start; if (v >= 0 && v < 0.25) y += 0.6 * (1 - v / 0.25); }
+    // the release pushes her down a cell (and back one at rung 8) and kicks
+    // the staff up, then she settles
+    let bx = x;
+    if (u >= 0) {
+      const back = u < 0.1 ? 1 : 1 - ease(clamp((u - 0.1) / 0.3, 0, 1));
+      y += back; if (R8(R)) bx += Math.round(back); staffUp = u < 0.15 ? 1 : u < 0.3 ? 0.5 : 0;
+    }
+    const spent = u >= 0 && u < B.spent, up = a >= B.lift && a < fin + 0.3;
+    const glow = up && !spent ? clamp((a - B.gather) / 0.25, 0, 1) : 0;
+    drawBody(g, bx, Math.round(y));
+    mStaff(g, bx, Math.round(y - staffUp * 2), R, t, up, glow, true, spent);
+    const oy = Math.round(y - staffUp * 2) - 4, tx = x - 5, hy = cBot(tx, t, s);
+    // relit: a single flash back into the stone as the beat ends
+    if (u >= B.spent && u < B.spent + 0.08) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) cell(g, bx - 1 + dx, oy + (up ? 0 : 1) + dy, PURPLES[10]);
     // the gather: a ring of the abyss closing on the stone
     if (a >= B.gather && a < B.flare) ring(g, sx, oy + 0.5, 3.2 - 2.2 * (a - B.gather) / (B.flare - B.gather), a < B.gather + 0.15 ? PURPLES[8] : PURPLES[10]);
     // the flare as the beam starts, held a pose
-    if (a >= B.flare && a < B.start + 0.06) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1], [-1, -1], [1, -1]]) cell(g, sx + dx * (Math.abs(dx) + Math.abs(dy) > 1 ? 1 : 1), oy + dy, Math.abs(dx) + Math.abs(dy) > 1 ? PURPLES[11] : WHITE);
-    // the beam, held, then cut with a short fade
-    const r = this.ramp(R, a), w = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1;
-    if (a >= B.start && a < end + 0.15) beam(g, sx, oy - 0.5, tx, hy, w, t, a >= end ? (a - end) / 0.15 : 0, R8(R));
+    if (a >= B.flare && a < B.start + 0.06) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1], [-1, -1], [1, -1]]) cell(g, sx + dx, oy + dy, Math.abs(dx) + Math.abs(dy) > 1 ? PURPLES[11] : WHITE);
+    // the beam, held; in the surge a cell wider and a step brighter
+    const r = this.ramp(R, a), w0 = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1, w = w0 + (surge ? 1 : 0);
+    if (a >= B.start && a < end) beam(g, sx, oy - 0.5, tx, hy, w, t, 0, R8(R), surge);
+    if (surge) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) cell(g, sx + dx, oy + dy, WHITE);
+    // the pulse: the beam cut behind a bright bead shooting from stone to hide;
+    // at rung 8 the white core flares once more down the rest of it
+    if (a >= end && a < fin) {
+      const p = CLASSIC ? Math.min(1, (Math.floor((a - end) / POSE + 1e-9) + 1) / Math.ceil(B.pulse / POSE)) : (a - end) / B.pulse;
+      // what is left of the beam ahead of the bead dims, so the bead reads as the
+      // blow; at rung 8 its white core flares once more instead
+      beam(g, sx, oy - 0.5, tx, hy, w0, t, R8(R) ? 0 : 0.3, R8(R), R8(R), p);
+      bead(g, sx, oy - 0.5, tx, hy, p, R8(R) ? 3 : 2, R8(R) ? 5 : R4(R) ? 4 : 3, R8(R));
+    }
+    // the blow: the hide bitten, scales thrown; the star is the sauce's under
+    // classic, drawn here when classic is off
+    if (u >= 0) {
+      blow(g, t, t - u, tx, s, Math.min(1, k), 99);
+      if (!CLASSIC) star(g, t, t - u, tx, hy + 1, Math.min(1, k), R8(R) ? { purple: true } : {});
+      // the contact flash, a pose: a bar of cells across the hide where the pulse lands
+      if (u < POSE) for (let dx = -(1 + (R4(R) ? 1 : 0) + (R8(R) ? 1 : 0)); dx <= 1 + (R4(R) ? 1 : 0) + (R8(R) ? 1 : 0); dx++) cell(g, tx + dx, cBot(tx + dx, t, s), R8(R) ? (dx ? PURPLES[11] : WHITE) : WHITE);
+    }
     if (R8(R)) {
       const full = a >= B.start + 0.7 * H;
-      if (full && a < end) {
-        // burning through: the hide bitten deeper while it holds, purple sparks spraying off it
-        const k = clamp((a - B.start - 0.7 * H) / (0.3 * H), 0, 1), rad = 0.9 + 1.4 * k;
-        for (let xx = Math.floor(tx - rad); xx <= tx + rad; xx++) for (let yy = Math.floor(hy - rad); yy <= hy; yy++)
-          if ((xx - tx) ** 2 + (yy - hy) ** 2 <= rad * rad) cell(g, xx, yy, GREYS[1]);
-        for (let j = 0; j < 7; j++) {
-          const age = (t * 2.2 + hash(j * 5)) % 1, ang = Math.PI * (0.15 + 0.7 * hash(j * 11 + 3));
-          cell(g, tx + Math.cos(ang) * age * 6, hy + 1 + Math.sin(ang) * age * 4 + age * age * 3, [PURPLES[11], PURPLES[10], PURPLES[8], PURPLES[6]][Math.floor(age * 3.99)]);
-        }
+      // burning through: the hide bitten deeper while it holds, purple sparks
+      // spraying off it; the blow tears the bite wider, then it closes
+      const bite = full && a < end + B.pulse ? 0.9 + 1.4 * clamp((a - B.start - 0.7 * H) / (0.3 * H), 0, 1)
+        : u >= 0 && u < 0.7 ? 3.4 - 1.6 * ease(u / 0.7) : 0;
+      if (bite) for (let xx = Math.floor(tx - bite); xx <= tx + bite; xx++) for (let yy = Math.floor(hy - bite); yy <= hy; yy++)
+        if ((xx - tx) ** 2 + (yy - hy) ** 2 <= bite * bite) cell(g, xx, yy, GREYS[1]);
+      if (full && a < end) for (let j = 0; j < 7; j++) {
+        const age = (t * 2.2 + hash(j * 5)) % 1, ang = Math.PI * (0.15 + 0.7 * hash(j * 11 + 3));
+        cell(g, tx + Math.cos(ang) * age * 6, hy + 1 + Math.sin(ang) * age * 4 + age * age * 3, [PURPLES[11], PURPLES[10], PURPLES[8], PURPLES[6]][Math.floor(age * 3.99)]);
       }
       // the afterglow: a short purple line lingering along the hide where it burned
-      const u = a - end;
       if (u >= 0 && u < 0.6) for (let dx = -3; dx <= 3; dx++) {
         if (u > 0.3 && Math.abs(dx) % 2) continue;
         cell(g, tx + dx, cBot(tx + dx, t, s), [PURPLES[11], PURPLES[9], PURPLES[7]][Math.min(2, Math.floor(u / 0.2 + Math.abs(dx) / 4))]);
