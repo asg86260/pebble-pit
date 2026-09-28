@@ -1,237 +1,114 @@
-// The weapons made of the abyss, at work: each deep job's body, and what it
-// leaves in the water.
-//
-// Nothing strikes the serpent that a body did not bring, so the first check
-// is that a body not yet down there does nothing at all; the rest follow one
-// weapon each from the hand to the coil. The stations are opened by their
-// flags and, after that first check, the hands put on with `__deepCrew`: the doors and the roster are
-// the boards' and the crew's checks, and these are about what a body does
-// once it is standing at its station.
+// What the fighters put in the water (deep/arms.js): arrows, palm waves,
+// hexes and daggers flying straight to the hide, charges thrown on the
+// water's gravity, charges stuck to it. Nothing is in the water that a
+// fighter at work did not loose, so the first check is that a body not yet
+// down there looses nothing; the rest follow a shot from the hand to the
+// hide. Which class looses what, and what it does there, is
+// classes.test.mjs's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { WORKER, P, SERPENT_WOUND, SIGIL_HEAL_CUT, SPLIT_LENGTHS, COIL_SEGS,
-         STAR_EVERY_S, DEEP_KNOBS, rungValue } from '../src/config.js';
-import { lengthOf } from '../src/deep/arms.js';
-import { strike, healNow, litK, isLit } from '../src/deep/serpent.js';
-import { coilAt, spotX, deepFloor, deepTop, mouthX } from '../src/deep/place.js';
+import { WORKER, CLASSES, SERPENT_DEFENSE } from '../src/config.js';
+import { shots, loose } from '../src/deep/arms.js';
+import { rungWorth } from '../src/deep/classes.js';
+import { buyRung } from '../src/deep/party.js';
+import { coilAt, coilThick, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 
 const S = yard.S;
 
-const KINDS = {
-  brawler:   { job: 'brawlers',   open: null },
-  lancer:    { job: 'lancers',    open: 'wellOpen' },
-  grenadier: { job: 'grenadiers', open: 'fontOpen' },
-  scribe:    { job: 'scribes',    open: 'circleOpen' },
-  warlock:   { job: 'warlocks',   open: 'spireOpen' }
-};
-
-// A yard the serpent has come for, with the hands asked for at their
-// stations, `spare` more of the deep's own on no weapon, and nobody else in
-// the deep.
-function deepYard(counts = {}, spare = 0) {
+// The serpent come for, and a station of `kind` standing with `cls` bought
+// to `rung` on its rail. `walk`: its fighter is put on from the deep's spare
+// hands by the crusher, so it swims the floor to the station.
+function station(kind, cls, rung, walk = false) {
   window.__snatch({ played: true });
-  window.__serpent({ stage: 0, wound: 0 });
-  for (const k of Object.values(KINDS)) if (k.open) S[k.open] = true;
-  window.__crew(0, 12);
-  const want = { brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0 };
-  for (const [type, n] of Object.entries(counts)) want[KINDS[type].job] = n;
-  window.__deepCrew({ ...want, spare });
-}
-const bodies = type => S.workers.filter(w => w.type === type);
-const arrived = w => !w.walking && w.y + WORKER > deepTop();
-
-// Everything in the water, and the fight, read once a frame over `s` seconds.
-function watch(s, each = () => {}) {
-  const seen = { lances: 0, grenades: 0, rings: 0, beams: 0, sigils: 0, wound: 0, punched: 0 };
-  for (let f = 0; f < s * 60; f++) {
-    yard.fast(1 / 60);
-    seen.lances = Math.max(seen.lances, S.lances.length);
-    seen.grenades = Math.max(seen.grenades, S.grenades.length);
-    seen.rings = Math.max(seen.rings, S.rings.length);
-    seen.beams = Math.max(seen.beams, S.beams.length);
-    seen.sigils = Math.max(seen.sigils, S.sigils.length);
-    seen.wound = Math.max(seen.wound, S.serpentWound);
-    seen.punched = Math.max(seen.punched, ...bodies('brawler').map(w => w.punchAt || 0));
-    each(f);
-  }
-  return seen;
-}
-const everyKind = { brawler: 1, lancer: 1, grenadier: 1, scribe: 1, warlock: 1 };
-
-group('a body works only once it has arrived', async () => {
-  // Put on from the deep's own spare hands, waiting by the crusher, so each
-  // walks the floor to its station: nothing of theirs is in the water until
-  // they are standing at it.
-  deepYard({}, 2);
-  window.__assign('lancers', 1);
-  window.__assign('warlocks', 1);
-  // Each weapon against its own body: the lancer may be down and throwing
-  // while the wizard is still on the way.
-  const early = [];
-  const seen = { lancer: false, warlock: false };
-  watch(90, () => {
-    for (const t of Object.keys(seen)) if (bodies(t).some(arrived)) seen[t] = true;
-    if (!seen.lancer && S.lances.length) early.push(`lance at ${S.tick}`);
-    if (!seen.warlock && S.beams.length) early.push(`beam at ${S.tick}`);
-  });
-  const down = seen.lancer && seen.warlock;
-  deepYard(everyKind);
-  runUntil(() => Object.keys(everyKind).every(t => bodies(t).length && bodies(t).every(arrived)), 120);
-  const at = watch(30);
-  return [
-    ok(down, "a lancer and a wizard put on from the deep's spare hands walk to their stations"),
-    ok(early.length === 0, 'and nothing of theirs is in the water before they are in the deep', early.slice(0, 5).join(', ')),
-    ok(at.punched > 0, 'at its station a brawler punches'),
-    ok(at.lances > 0, 'a lancer throws'),
-    ok(at.grenades > 0 && at.rings > 0, 'a grenadier throws and the grenade bursts', JSON.stringify(at)),
-    ok(at.sigils > 0, 'a scribe draws a circle'),
-    ok(at.beams > 0, 'a wizard channels'),
-    ok(at.wound > 0, 'and the serpent is hurt', `${at.wound}`)
-  ];
-});
-
-// Follows one lance from the hand to where it dissolves: a save writes the
-// water down as nothing.
-group('a lance is carried up, sticks, bleeds and dissolves', async () => {
-  deepYard({ lancer: 1 });
-  const w = () => bodies('lancer')[0];
-  const held = runUntil(() => w() && w().holding, 30);
-  const floorY = deepFloor() - WORKER;
-  const carried = runUntil(() => S.lances.length > 0, 30);
-  const thrownFrom = S.lances.length ? S.lances[0].y0 : NaN;
-  const lance = S.lances[0];
-  const stuck = runUntil(() => lance.stuck, 5);
-  const woundAt = S.serpentWound;
-  run(2);
-  const onCoil = coilAt(lance.seg, now());
-  const riding = Math.abs(lance.x - onCoil.x) < 1 && Math.abs(lance.y - onCoil.y) < 1;
-  const bled = S.serpentWound - woundAt;
-  const hold = rungValue('lancehold', S.lanceholdLevel);
-  const t0 = now();
-  const gone = runUntil(() => !S.lances.includes(lance), hold + 5);
-  const lasted = (now() - t0) / 1000 + 2;
-  return [
-    ok(held, 'drawn at the well'),
-    ok(carried && thrownFrom < floorY - P * 10, 'and carried up off the floor before it is thrown',
-       `thrown from ${Math.round(floorY - thrownFrom)}px over the floor`),
-    ok(stuck, 'it sticks'),
-    ok(riding, 'and rides the coil where it stuck', `${Math.round(lance.x)},${Math.round(lance.y)} against ${onCoil.x},${onCoil.y}`),
-    ok(bled > 0, 'bleeding the serpent while it holds', `${bled}`),
-    ok(gone && Math.abs(lasted - hold) <= 1.5, 'and dissolves when its hold is up', `lasted about ${lasted.toFixed(1)}s of ${hold}`),
-    ok(runUntil(() => bodies('lancer')[0].holding, 30), 'and the lancer has gone back down for another')
-  ];
-}, { reload: false });
-
-// Follows each ring from its burst to its reach.
-group('a grenade\'s ring strikes each length of coil it crosses once', async () => {
-  deepYard({ grenadier: 1 });
-  window.__serpent({ stage: 2, wound: 0 });
-  // The split's heal off for the length of the check, so the wound is the
-  // sum of the blows and nothing else.
-  const knob = DEEP_KNOBS.find(k => k.key === 'SERPENT_HEAL_3');
-  const was = knob.get();
-  knob.set(0);
-  const rings = new Map();
-  const bad = [];
-  watch(40, () => {
-    for (const r of S.rings) if (!rings.has(r)) rings.set(r, S.serpentWound);
-    for (const [r, woundAt] of rings) {
-      if (S.rings.includes(r) || r.done) continue;
-      r.done = true;
-      if (new Set(r.hit).size !== r.hit.length) bad.push(`a ring hit a length twice: ${r.hit}`);
-      const dealt = S.serpentWound - woundAt;
-      const want = r.hit.length * rungValue('grenade', S.grenadeLevel);
-      if (Math.abs(dealt - want) > 1e-6 && S.rings.length === 0) bad.push(`a ring dealt ${dealt} for ${r.hit.length} lengths`);
-    }
-  });
-  // A burst on the join between two lengths reaches both, and each once.
-  const join = Math.round(COIL_SEGS / SPLIT_LENGTHS);
-  const p = coilAt(join, now());
-  const lengths = new Set([lengthOf(join - 1), lengthOf(join + 1)]);
-  S.rings.push({ x: p.x, y: p.y, at: now(), r: 0, hit: [] });
-  const laid = S.rings[S.rings.length - 1];
-  run(2);
-  knob.set(was);
-  return [
-    ok(rings.size >= 3, 'the grenadier threw and they burst', `${rings.size} rings`),
-    ok(bad.length === 0, 'every ring hit a length once and only once', bad.join('; ')),
-    ok(lengths.size === 2 && laid.hit.length === 2, 'and a burst across a join hits both lengths',
-       `hit ${laid.hit.join(', ')}`)
-  ];
-}, { reload: false });
-
-group('sigils cut the heal and are spent on the break', async () => {
-  deepYard({ scribe: 1 });
-  window.__serpent({ stage: 1, wound: 0 });
-  const bare = healNow();
-  const drawn = runUntil(() => S.sigils.length > 0, 60);
-  const held = healNow();
-  const most = rungValue('sigil', S.sigilLevel);
-  run(30);
-  const capped = S.sigils.length;
-  const p = coilAt(20, now());
-  strike('beam', SERPENT_WOUND[1], p.x, p.y);
-  run(1 / 60);
-  const spent = S.sigils.length;
-  const again = runUntil(() => S.sigils.length > 0, 60);
-  return [
-    ok(drawn, 'a scribe draws a circle on the floor'),
-    ok(Math.abs(held - bare * (1 - SIGIL_HEAL_CUT)) < 1e-9, 'and the heal is cut by it', `${bare} then ${held}`),
-    ok(capped === most, 'no more than the ladder holds', `${capped} of ${most}`),
-    ok(S.serpentStage === 2 && spent === 0, 'the break spends them', `stage ${S.serpentStage}, ${spent} left`),
-    ok(again, 'and the scribe draws again against the next')
-  ];
-});
-
-group('a wizard\'s beam lights the coil, and goes out with the wizard', async () => {
-  deepYard({ warlock: 1 });
   window.__serpent({ stage: 3, wound: 0 });
-  const unlit = litK();
-  const lit = runUntil(() => S.beams.length > 0, 60);
-  const beam = S.beams[0];
-  const k = litK(), onIt = isLit(beam.seg);
-  // The split's wound would close faster than one wizard opens it; what the
-  // beam does is read off the scales it knocks loose.
-  const shedAt = S.sinking.length + S.scales;
-  run(2);
-  const hurt = S.sinking.length + S.scales > shedAt;
-  const p = coilAt(S.beams[0].seg, now());
-  const punch = strike('punch', 100, p.x, p.y);
-  window.__deepCrew({ warlocks: 0 });
-  run(1 / 60);
-  const after = S.beams.length;
-  const dim = strike('punch', 100, p.x, p.y);
-  return [
-    ok(unlit === 0, 'no wizard, no light', `${unlit}`),
-    ok(lit && k > 0 && onIt, 'a wizard at the spire lights the coil it reaches', `${k}, ${onIt}`),
-    ok(hurt, 'and the beam does harm of its own'),
-    ok(punch > dim * 5, 'a blow on a lit coil lands where a blow on a dark one barely does', `${punch} lit, ${dim} dark`),
-    ok(after === 0, 'the beam is gone when the wizard is', `${after}`)
-  ];
-});
+  if (window.__party) window.__party({ stations: [{ kind, cls: null, rung: 0 }] });
+  else {
+    // until merge: a weapon crew's body stands in for the fighter, tied to
+    // its station by name (deep/arms.js routes its step to the fighter's).
+    window.__crew(0, 12);
+    window.__deepCrew({ brawlers: walk ? 0 : 1, spare: walk ? 1 : 0 });
+    if (walk) window.__assign('brawlers', 1);
+    const body = S.workers.find(w => w.type === 'brawler');
+    S.stations = [{ id: 's1', kind, slot: 0, built: true, cls: null, rung: 0, paid: [], fighter: body.name }];
+    S.stationsBuilt = 1;
+  }
+  const st = S.stations[0];
+  window.__grant({ dust: 1e6, scales: 5e4 });
+  while (st.rung < rung && buyRung(st.id, cls)) window.__finish();
+  if (st.rung < rung) { st.cls = cls; st.rung = rung; }   // until merge: the rails are BOARD's
+  return st;
+}
+const fighter = () => S.workers.find(w => w.station === 's1') || S.workers.find(w => w.name === S.stations[0].fighter);
+const arrived = w => w && !w.walking && w.y + WORKER > deepTop();
 
-// Follows one star from the yard's sky to the coil.
-group('a called star is seen falling in the yard before it lands in the deep', async () => {
-  deepYard({});
-  // The machine is the board's row; its flag is the setup here.
-  S.starOpen = true;
-  const phases = [];
-  let skyY = null, woundAt = null;
-  let landed = false;
-  for (let f = 0; f < 60 * 30 && !landed; f++) {
+// Follows one body from the crusher to its station: a reload stands it back
+// up at its post.
+group('a fighter looses nothing until it is down at its station', async () => {
+  station('armory', 'ranger', 1, true);
+  const early = [];
+  let down = false;
+  for (let f = 0; f < 60 * 60 && !(down && shots.length); f++) {
     yard.fast(1 / 60);
-    const s = S.starFall;
-    if (s && phases[phases.length - 1] !== s.phase) phases.push(s.phase);
-    if (s && s.phase === 'sky' && s.y < S.groundY) skyY = s.y;
-    if (s) woundAt = S.serpentWound;
-    landed = phases.length > 0 && !s;
+    if (arrived(fighter())) down = true;
+    if (!down && shots.length) early.push(`a shot at frame ${S.tick}`);
   }
   return [
-    ok(skyY != null, 'seen in the yard\'s sky', `${skyY} over ground ${S.groundY}`),
-    ok(phases.join(' ') === 'sky under deep', 'into the pit, under the surface, then down through the deep', phases.join(' ')),
-    ok(landed && (S.serpentStage > 0 || S.serpentWound > (woundAt || 0)), 'and it lands on the coil',
-       `stage ${S.serpentStage}, wound ${S.serpentWound}`),
-    ok(Math.abs(S.starAt - STAR_EVERY_S[0]) < 0.1, 'and the next is a wait away', `${S.starAt}`)
+    ok(down, 'the ranger swims to the armory'),
+    ok(early.length === 0, 'nothing of hers is in the water before she is there', early.slice(0, 3).join(', ')),
+    ok(shots.length > 0, 'and once she is, she shoots')
+  ];
+}, { reload: false });
+
+group('a straight shot never misses: it is on its segment when its flight is up', async () => {
+  station('armory', 'ranger', 1);
+  runUntil(() => shots.some(s => s.kind === 'arrow'), 30);
+  const arrow = shots.find(s => s.kind === 'arrow');
+  const woundAt = S.serpentWound;
+  let last = null;
+  for (let f = 0; f < 60 && shots.includes(arrow); f++) {
+    last = { x: arrow.x, y: arrow.y, seg: arrow.seg, t: now() };
+    yard.fast(1 / 60);
+  }
+  const p = last && coilAt(last.seg, last.t);
+  const v = rungWorth(CLASSES.ranger, 1) * SERPENT_DEFENSE.ranger[3];
+  return [
+    ok(arrow && arrow.arc > 0, 'an arrow flies on a bow', `${arrow && arrow.arc}`),
+    ok(!shots.includes(arrow), 'and lands', `${shots.length} in the water`),
+    ok(p && Math.hypot(p.x - last.x, p.y - last.y) < coilThick(last.seg), 'on the hide where its segment had swayed to',
+       p && `${Math.round(last.x)},${Math.round(last.y)} against ${p.x},${p.y}`),
+    ok(S.serpentWound >= woundAt + v - 1e-6 || S.serpentStage > 3, 'and strikes it', `${woundAt} then ${S.serpentWound}`)
+  ];
+}, { reload: false });
+
+group('a thrown charge falls on the water, goes off where it meets the coil, or where it is when lost', async () => {
+  station('circle', 'sapper', 1);
+  runUntil(() => shots.some(s => s.kind === 'charge'), 30);
+  const charge = shots.find(s => s.kind === 'charge');
+  let fell = false, vy = charge ? charge.vy : 0;
+  while (charge && shots.includes(charge)) { yard.fast(1 / 60); if (charge.vy > vy) fell = true; vy = charge.vy; }
+  const near = charge && Math.hypot(charge.x - coilAt(charge.seg, now()).x, charge.y - coilAt(charge.seg, now()).y);
+  // One thrown away from the coil altogether: it goes off all the same once
+  // it has been in the water twice its aimed time.
+  let went = 0;
+  const astray = loose({ kind: 'charge', by: fighter(), x: 0, y: deepTop() + 10, x0: 0, y0: deepTop() + 10, at: now(),
+                         fly: 200, seg: 0, vx: 0, vy: 0, land: () => { went++; } });
+  run(1);
+  return [
+    ok(fell, 'it sinks on the way', `${vy}`),
+    ok(charge && charge.reached && near <= coilThick(charge.seg) + 12, 'and goes off at the coil', `${near}`),
+    ok(went === 1 && !shots.includes(astray), 'a lost one goes off where it is, once', `${went}`)
+  ];
+}, { reload: false });
+
+group('the water is empty in a game before the snatch', async () => {
+  station('armory', 'ranger', 1);
+  runUntil(() => shots.length > 0, 30);
+  const had = shots.length;
+  window.__seed(20250830);
+  run(1 / 60);
+  return [
+    ok(had > 0, 'there were shots in the water'),
+    ok(shots.length === 0, 'and a new game has none', `${shots.length}`)
   ];
 }, { reload: false });

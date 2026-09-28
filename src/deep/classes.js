@@ -33,7 +33,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { P, WORKER, DEEP_W, COIL_SEGS, DOT_TICK_S, EXPOSED_AMP, CLASSES, MOVE_RUNG,
+import { P, WORKER, DEEP_W, COIL_SEGS, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
          CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, CLASS_LADDER_GUESS, SLOTS_GUESS,
          SWIM_PACE, DEEP_GRAV, LADDERS, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
