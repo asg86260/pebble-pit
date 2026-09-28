@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Station Choice Effects</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --faint: #9a9aa6; --rule: #d6d6de; --purple: #6f36c9; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --faint: #6c6c78; --rule: #2b2b33; --purple: #a979ef; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --faint: #6c6c78; --rule: #2b2b33; --purple: #a979ef; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 28px 0 10px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  .pair { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .board { width: 300px; max-width: 100%; background: var(--card); border: 1px solid var(--ink); padding: 10px; display: grid; gap: 6px; }
+  .who { font-weight: bold; font-size: 14px; }
+  .ask { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); font-weight: bold; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; text-align: left; font: inherit; background: var(--paper);
+         color: var(--ink); border: 1px solid var(--ink); padding: 6px 8px; cursor: pointer; }
+  .row:hover { outline: 2px solid var(--ink); }
+  .row.locked { border-style: dashed; color: var(--faint); cursor: default; }
+  .row .t { font-weight: bold; }
+  .row .tag { font-variant-numeric: tabular-nums; }
+  .row .s { grid-column: 1 / -1; font-size: 11px; color: var(--dim); }
+  .row.locked .s { color: var(--faint); }
+  /* A: lines */
+  .fx { grid-column: 1 / -1; display: grid; gap: 1px; font-size: 11px; margin-top: 3px; }
+  .fx .l { display: grid; grid-template-columns: 2.6em 1fr; }
+  .fx .n { color: var(--dim); }
+  .fx .n.cap { color: var(--purple); font-weight: bold; }
+  .fx b { font-weight: bold; }
+  .sub { grid-column: 1 / -1; font-size: 11px; font-weight: bold; margin-top: 4px; }
+  /* B: branches side by side */
+  .split { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 11px; }
+  .split > div { border-top: 1px solid var(--rule); padding-top: 3px; }
+  .split .nm { font-weight: bold; }
+  .split .m { color: var(--dim); }
+  .split .c { color: var(--purple); }
+  /* C: chips */
+  .chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; font-size: 11px; }
+  .chip { border: 1px solid var(--rule); padding: 0 5px; }
+  .chip.cap { border-color: var(--purple); color: var(--purple); }
+  .chip i { font-style: normal; color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Station Choice Effects</h1>
+  <p>Every choice on a station's board shows everything it leads to. On the pick (a built, unchosen plinth), each base
+    unit lists the two specialists it forks into and each one's move (rung 4) and capstone (rung 8). At the fork, each
+    specialist's row lists its move and capstone. Three layouts, all with the game's own wording.</p>
+  <p class="dim">A mock in plain HTML styled like the board, not the game's board. It cannot show: the pip tree over the
+    fork's rows, the bills' coin marks, a phone's narrower board, or the fade when a branch closes.</p>
+  <div id="host"></div>
+</div>
+<script>
+'use strict';
+const PAIRS = { altar: ['brawler', 'sword'], well: ['monk', 'martial'], armory: ['ranger', 'assassin'],
+                circle: ['hexer', 'sapper'], spire: ['mage', 'bard'] };
+const BASES = { altar: 'Fighter', well: 'Novice', armory: 'Scout', circle: 'Adept', spire: 'Apprentice' };
+const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',
+                    circle: 'Cast hexes', spire: 'Shoot beams' };
+const FIRST = ['altar', 'armory', 'spire'];
+const NAME = { brawler: 'Brawler', sword: 'Swordsman', monk: 'Monk', martial: 'Martial Artist', ranger: 'Ranger',
+               assassin: 'Assassin', hexer: 'Hexer', sapper: 'Sapper', mage: 'Mage', bard: 'Bard' };
+const WORDS = {
+  brawler:  { fork: 'Throw harder punches, learn combos, and stun', move: ['Combos', 'string punches together'], cap: ['Knockout', 'stun your enemy'] },
+  sword:    { fork: 'Master the sword', move: ['Whirlwind', 'strike all around'], cap: ['Weak points', 'inflict bleeding'] },
+  monk:     { fork: 'Focus your chi', move: ['Deep breath', 'build chi faster'], cap: ['Still water', 'stun your enemy'] },
+  martial:  { fork: 'Strike quicker and finish faster', move: ['Flourish', 'charge finishers faster'], cap: ['Rally', 'haste your party'] },
+  ranger:   { fork: 'Aim at weak points', move: ['Aimed shot', 'charge a powerful arrow'], cap: ['Pinning shot', 'pin your enemy'] },
+  assassin: { fork: 'Strike quick and precise', move: ['Execution', 'exploit its wounds'], cap: ['Serrated', 'inflict bleeding'] },
+  hexer:    { fork: 'Cast hexes that debuff', move: ['Wither', 'slow its healing'], cap: ['Binding', 'stop its healing, expose it'] },
+  sapper:   { fork: 'Learn explosives', move: ['Sticky bombs', 'stick and blow'], cap: ['Pair', 'throw two, stun your enemy'] },
+  mage:     { fork: 'Channel powerful beams', move: ['Widening', 'widen the beam'], cap: ['Thermite', 'burn through armor'] },
+  bard:     { fork: 'Inspire your party', move: ['Anthem', 'double the boost'], cap: ['Tempo', 'haste your party'] }
+};
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+// The effects of one specialist, in each layout.
+const LAYOUTS = {
+  A: {
+    name: 'A. Lines',
+    say: 'a line a rung under each choice: 4 the move, 8 the capstone, in purple',
+    cls: (c, withName) => (withName ? `<span class="sub">${NAME[c]}</span>` : '') +
+      `<span class="fx"><span class="l"><span class="n">4</span><span><b>${WORDS[c].move[0]}</b>: ${WORDS[c].move[1]}</span></span>` +
+      `<span class="l"><span class="n cap">8</span><span><b>${WORDS[c].cap[0]}</b>: ${WORDS[c].cap[1]}</span></span></span>`,
+    kind: k => PAIRS[k].map(c => LAYOUTS.A.cls(c, true)).join('')
+  },
+  B: {
+    name: 'B. Branches side by side',
+    say: 'on the pick, the two specialists in two columns, like the fork they lead to',
+    cls: c => `<span class="split" style="grid-template-columns:1fr"><div><div class="m"><b>${WORDS[c].move[0]}</b>: ${WORDS[c].move[1]}</div>` +
+      `<div class="c"><b>${WORDS[c].cap[0]}</b>: ${WORDS[c].cap[1]}</div></div></span>`,
+    kind: k => `<span class="split">${PAIRS[k].map(c => `<div><div class="nm">${NAME[c]}</div>` +
+      `<div class="m"><b>${WORDS[c].move[0]}</b>: ${WORDS[c].move[1]}</div>` +
+      `<div class="c"><b>${WORDS[c].cap[0]}</b>: ${WORDS[c].cap[1]}</div></div>`).join('')}</span>`
+  },
+  C: {
+    name: 'C. Chips',
+    say: 'each effect a small bordered chip; the capstone chip purple',
+    cls: (c, withName) => `<span class="chips">${withName ? `<span class="chip"><b>${NAME[c]}</b></span>` : ''}` +
+      `<span class="chip"><b>${WORDS[c].move[0]}</b> <i>${WORDS[c].move[1]}</i></span>` +
+      `<span class="chip cap"><b>${WORDS[c].cap[0]}</b> <i>${WORDS[c].cap[1]}</i></span></span>`,
+    kind: k => PAIRS[k].map(c => LAYOUTS.C.cls(c, true)).join('')
+  }
+};
+
+function pickBoard(L, first) {
+  const rows = Object.keys(PAIRS).map(k => {
+    const open = !first || FIRST.includes(k);
+    return `<div class="row${open ? '' : ' locked'}"><span class="t">${BASES[k]}</span><span class="tag"></span>` +
+      `<span class="s">${open ? BASE_DOES[k] : 'opens with a second station'}</span>${open ? L.kind(k) : ''}</div>`;
+  }).join('');
+  return `<div class="board"><div class="ask">Choose your fighter</div>${rows}</div>`;
+}
+function forkBoard(L) {
+  const rows = PAIRS.altar.map(c => `<div class="row"><span class="t">Become a ${NAME[c]}</span><span class="tag">▲ 1.2k ◆ 40</span>` +
+    `<span class="s">${WORDS[c].fork}</span>${L.cls(c, false)}</div>`).join('');
+  return `<div class="board"><div class="who">the Fighter</div><div class="dim" style="font-size:11px">(the pip tree sits here)</div>` +
+    `<div class="ask">Specialize</div>${rows}</div>`;
+}
+
+const host = document.getElementById('host');
+for (const L of Object.values(LAYOUTS)) {
+  host.insertAdjacentHTML('beforeend', `<h2>${esc(L.name)}</h2><p class="dim">${esc(L.say)}. Left: the first station's pick ` +
+    `(three open). Middle: a later pick (all five). Right: the Fighter's fork.</p>` +
+    `<div class="pair">${pickBoard(L, true)}${pickBoard(L, false)}${forkBoard(L)}</div>`);
+}
+</script>
+</body>
+</html>
