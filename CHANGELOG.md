@@ -54,6 +54,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+## v0.5.0 — 2026-09-28
+
 **New this release**
 - The cloud's buttons and what they answer sit in their own titled cloud saves box, and its stop button says stop cloud saves (src/selftest/cloud.js).
 - On a phone the corner's gear is a pause button, and it opens the paused menu rather than the settings (src/selftest/touch.js).
