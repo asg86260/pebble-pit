@@ -225,24 +225,24 @@ export const TESTS = [
     ];
   }],
 
-  ['the gear opens the settings as a sheet on a phone, and a drag down closes it', async () => {
+  ['the pause button holds the yard as a sheet on a phone, and a drag down closes it', async () => {
     window.__nocine();
     phone(false);
     await frames(2);
-    const deskHidden = document.getElementById('gear').hidden;
+    const deskHidden = document.getElementById('pause').hidden;
     phone(true);
     await frames(2);
-    const gear = document.getElementById('gear');
-    const present = !gear.hidden;
-    const r = gear.getBoundingClientRect();
+    const pause = document.getElementById('pause');
+    const present = !pause.hidden;
+    const r = pause.getBoundingClientRect();
     const corner = r.top < 80 && r.right > state().W - 120 && r.width >= 44;
-    await tap(gear);
+    await tap(pause);
     await frames(2);
     await sleep(250);
     const held = document.getElementById('held');
     const open = state().paused && !held.hidden && held.classList.contains('bottom');
-    const rows = ['touch', 'motion', 'fullscreenrow', 'sound'].map(id => document.getElementById(id))
-      .filter(el => el && !el.hidden && el.getBoundingClientRect().height > 0);
+    // the front page, as escape brings up: resume and the way to the settings
+    const front = ['resume', 'settingsbtn'].every(id => { const el = document.getElementById(id); return !el.hidden && el.getBoundingClientRect().height > 0; });
     const hr = held.getBoundingClientRect();
     const asSheet = Math.abs(hr.width - state().W) <= 2 && hr.bottom >= state().H - 1 && Math.abs(hr.top - state().H * SHEET_H) <= 2;
     // the grip dragged down past a third of the sheet
@@ -258,10 +258,10 @@ export const TESTS = [
     phone(false);
     await frames(2);
     return [
-      ok(deskHidden, 'on a desk there is no gear'),
+      ok(deskHidden, 'on a desk there is no pause button'),
       ok(present && corner, 'on a phone it stands in the top-right corner', `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}`),
-      ok(open, 'a tap holds the yard with the settings up, as a sheet from the bottom'),
-      ok(rows.length >= 3 && rows.some(el => el.id === 'touch') && rows.some(el => el.id === 'sound'), 'with its rows showing', rows.map(e => e.id).join(' ')),
+      ok(open, 'a tap holds the yard, as a sheet from the bottom'),
+      ok(front, 'on its front page, resume and settings showing'),
       ok(asSheet, 'the window\'s width, on the foot', `${Math.round(hr.width)}x${Math.round(hr.height)} at ${Math.round(hr.bottom)}`),
       ok(closed, 'and a drag down on the grip puts it away'),
     ];
@@ -395,9 +395,9 @@ export const TESTS = [
     ];
   }],
   ['the pinned card stands under the corner buttons, not over them', async () => {
-    // The gear is a phone's only way to the settings, and the story pins the
-    // goal card into the same corner by itself: a pin drawn at the top of the
-    // window covered the gear and the fullscreen button. The pin gives the
+    // The pause button is a phone's only way to the held sheet, and the story
+    // pins the goal card into the same corner by itself: a pin drawn at the
+    // top of the window covered it and the fullscreen button. The pin gives the
     // corner up by `--fs-room`, and only `.pin` may say where the corner is.
     newRun();
     await settle();
@@ -408,15 +408,15 @@ export const TESTS = [
     window.__build();
     await frames(30);
     const pin = document.getElementById('pin');
-    const gear = document.getElementById('gear');
+    const pause = document.getElementById('pause');
     const under = () => {
-      const p = pin.getBoundingClientRect(), g = gear.getBoundingClientRect();
+      const p = pin.getBoundingClientRect(), g = pause.getBoundingClientRect();
       return p.top >= g.bottom;
     };
     const out = [
       ok(!pin.hidden && pin.querySelector('button[data-key]'), 'a card is pinned in the corner'),
-      ok(!gear.hidden, 'and the gear is up on a phone'),
-      ok(under(), 'and the card stands under it', `pin ${Math.round(pin.getBoundingClientRect().top)} vs gear ${Math.round(gear.getBoundingClientRect().bottom)}`)
+      ok(!pause.hidden, 'and the pause button is up on a phone'),
+      ok(under(), 'and the card stands under it', `pin ${Math.round(pin.getBoundingClientRect().top)} vs pause ${Math.round(pause.getBoundingClientRect().bottom)}`)
     ];
     phone(false);
     return out;

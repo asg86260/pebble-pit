@@ -153,7 +153,7 @@ try {
 <div id="scrim" class="scrim" hidden></div>
 <div id="held" class="held" hidden>
   <!-- the handle, on a phone, where the held sheet is a sheet from the bottom
-       through the boards' own seat (sheet.js, gear.js) -->
+       through the boards' own seat (sheet.js, pause.js) -->
   <div id="heldhandle" class="handle" hidden><i class="grip"></i></div>
   <!-- One sheet, several pages, told apart by data-pane: a space-separated
        list of the pages an element is on. settings.js's showPane shows the
@@ -314,9 +314,9 @@ try {
   <!-- the whole screen, where the platform can go fullscreen at all
        (fullscreen.js) -->
   <button id="fullscreen" type="button" hidden><i class="frame"></i></button>
-  <!-- the gear, on a phone only: the way to the settings where there is
-       no escape key (gear.js) -->
-  <button id="gear" type="button" hidden><i class="cog"></i></button>
+  <!-- the pause button, on a phone only: the way to the held sheet where
+       there is no escape key (pause.js) -->
+  <button id="pause" type="button" hidden aria-label="pause"><i class="bars"></i></button>
   <!-- the crew drawn faint, so a late yard's crowd does not hide the
        buildings behind it (corner.js; render.js, a `dim` layer) -->
   <button id="crewfade" type="button" hidden><i class="body"></i></button>

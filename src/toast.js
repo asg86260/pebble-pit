@@ -93,10 +93,10 @@ function seatToast() {
   if (S.crew > 0) rects.push(houseRect());
   const onScreen = r => ({ x: (r.x - S.camX) * S.zoom, y: (r.y - S.camY) * S.zoom, w: r.w * S.zoom, h: r.h * S.zoom });
   const meets = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-  // and the two squares in the corner (fullscreen.js, gear.js), which are
+  // and the two squares in the corner (fullscreen.js, pause.js), which are
   // the page's, already on the glass
   const boxes = rects.map(onScreen);
-  for (const id of ['gear', 'fullscreen']) {
+  for (const id of ['pause', 'fullscreen']) {
     const b = document.getElementById(id);
     if (b && !b.hidden) { const r = b.getBoundingClientRect(); boxes.push({ x: r.left, y: r.top, w: r.width, h: r.height }); }
   }

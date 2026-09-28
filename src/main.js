@@ -22,7 +22,7 @@ import { TITLE_COLUMN, DEMO_HEAD_START_S, PICTURE_UP } from './config.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { refreshHop } from './hop.js';                     // and the two arrows in its mid sky
 import { refreshFullscreen } from './fullscreen.js';        // and the whole screen, where there is one to be had
-import { refreshGear, refreshHeldSeat } from './gear.js';    // and the way to the settings on a phone
+import { refreshPause, refreshHeldSeat } from './pause.js';  // and the pause button on a phone
 import { refreshCorner } from './corner.js';                // and the row they stand in, with the crew switch
 
 // The veil comes off one frame after the first, so the frame is painted under
@@ -97,7 +97,7 @@ function frame() {
     hud();
     refreshHop();
     refreshFullscreen();
-    refreshGear();
+    refreshPause();
     refreshCorner();
     refreshHeldSeat();
     fillQueue();

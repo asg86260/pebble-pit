@@ -1,32 +1,31 @@
-// The way to the settings on a phone. On a desk the held sheet is escape
-// away and nothing else summons it; a phone has no escape, so it gets a gear
-// in the sky's top-right corner beside the fullscreen button, the same
-// square in the same idiom, and a tap opens the held sheet on its settings
-// page. Held, on a phone, the sheet is a sheet from the bottom through the
-// same seat the boards use (sheet.js): the same handle and stops, the same
-// drag, the same pull past SHEET_DISMISS to put it away, and the wash above
-// it is the tap outside. `hold` in input.js is still the one flag; this
-// only reaches for it.
+// The way to the held sheet on a phone. On a desk the held sheet is escape
+// away and nothing else summons it; a phone has no escape, so it gets a pause
+// button in the sky's top-right corner beside the fullscreen button, the same
+// square in the same idiom, and a tap holds the yard with the sheet on its
+// front page, as escape does. Held, on a phone, the sheet is a sheet from the
+// bottom through the same seat the boards use (sheet.js): the same handle and
+// stops, the same drag, the same pull past SHEET_DISMISS to put it away, and
+// the wash above it is the tap outside. `hold` in input.js is still the one
+// flag; this only reaches for it.
 
 import { S } from './state.js';
 import { coarse } from './prefs.js';
 import { onTap } from './tap.js';
 import { hold } from './input.js';
-import { showPane } from './settings.js';
 import { sheetSeat } from './sheet.js';
 
-const gear = document.getElementById('gear');
+const pause = document.getElementById('pause');
 const held = document.getElementById('held');
 const scrim = document.getElementById('scrim');
 
 // Seated in the same task as it is shown, so the first frame it paints is
 // already the sheet from below and not the desk's card for a frame.
-onTap(gear, () => { hold(true); showPane('settings'); refreshHeldSeat(); });
+onTap(pause, () => { hold(true); refreshHeldSeat(); });
 
 // Seated every frame like the rest of the shell. Where it stands is the
 // corner's row (corner.js), beside the fullscreen button or in its spot.
-export function refreshGear() {
-  gear.hidden = !(coarse() && !S.paused);
+export function refreshPause() {
+  pause.hidden = !(coarse() && !S.paused);
 }
 
 // The held sheet's seat. The sheet is its own scroller, so it carries no

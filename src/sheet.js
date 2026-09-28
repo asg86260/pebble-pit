@@ -1,6 +1,6 @@
 // A sheet from the bottom, on a phone (DESIGN.md, "Boards as bottom
 // sheets"): the one mechanism for every sheet the phone has -- the boards'
-// panel (board.js) and the held sheet's settings (gear.js). The window's
+// panel (board.js) and the held sheet's settings (pause.js). The window's
 // width, standing on the foot, a handle on its top edge, the rows scrolling
 // within, and three stops and no free height: down (gone), the seat (its
 // top at SHEET_H of the window) and tall (SHEET_TALL) for a long board,
