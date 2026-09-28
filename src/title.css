@@ -9,12 +9,18 @@ body.title { overflow: hidden; }
   border: 0; background: var(--paper);
   pointer-events: none;                 /* the picture, not the game */
 }
+/* A length, so the column's ems are counted once, in the column's own
+   hand, and a slider or the record's smaller type gets the same width. */
+@property --col-w { syntax: '<length>'; inherits: true; initial-value: 0px; }
 .col {
   position: fixed; left: 0; top: 0; bottom: 0; width: 320px;   /* TITLE_COLUMN in config/view.js */
   padding: 34px 0 0 36px; box-sizing: border-box;
   display: flex; flex-direction: column; align-items: flex-start; gap: 7px;
   letter-spacing: .14em; text-transform: uppercase;
   overflow-y: auto;
+  /* The column's one width, border and padding included: every button,
+     pair, box and slider in it is this wide, so none stands past the rest. */
+  --col-w: 21em;
 }
 .col .gamename { font-size: 34px; letter-spacing: .34em; line-height: 1.1; margin-bottom: 4px; }
 .col .line { text-transform: none; letter-spacing: .1em; color: var(--ink-2); margin-bottom: 14px; max-width: 20em; }
@@ -22,7 +28,7 @@ body.title { overflow: hidden; }
 .col button {
   font: inherit; letter-spacing: .14em; text-transform: uppercase;
   color: var(--ink); background: var(--paper); border: 1px solid var(--ink);
-  padding: 5px 14px; cursor: pointer; text-align: left; width: 21em;
+  padding: 5px 14px; cursor: pointer; text-align: left; width: var(--col-w); box-sizing: border-box;
 }
 .col button:hover { color: var(--paper); background: var(--ink); }
 .col button.play { color: var(--paper); background: var(--ink); }
@@ -32,9 +38,9 @@ body.title { overflow: hidden; }
 .col .sub { font-size: 10px; color: var(--ink-2); letter-spacing: .1em; margin: -4px 0 4px 15px; }
 .col .said { font-size: 10px; color: var(--ink-2); letter-spacing: .1em; max-width: 24em; }
 .col .said:empty { display: none; }
-.col .pair { display: flex; gap: 10px; }
-.col .pair button { width: auto; }
-.col .paste { display: flex; flex-direction: column; gap: 7px; width: 21em; }
+.col .pair { display: flex; gap: 10px; width: var(--col-w); }
+.col .pair button { width: auto; flex: 1; min-width: 0; text-align: center; }
+.col .paste { display: flex; flex-direction: column; gap: 7px; width: var(--col-w); }
 .col textarea {
   font: inherit; letter-spacing: 0; text-transform: none;
   color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 4px; resize: none; outline: none;
@@ -44,7 +50,7 @@ body.title { overflow: hidden; }
 .col .slot.open { color: var(--paper); background: var(--ink); }
 .col .slot.armed { color: var(--paper); background: var(--ink); }
 /* the record's cards, one across in the column */
-.col .record { grid-template-columns: 1fr; width: 21em; max-width: none; max-height: 50vh; box-sizing: border-box; }
+.col .record { grid-template-columns: 1fr; width: var(--col-w); max-width: none; max-height: 50vh; box-sizing: border-box; }
 /* The board of times: a panel in the sky on the right, in the column's
    hand, standing the whole time the page is up. Under a narrow window it
    folds away rather than lying over the column. */
@@ -61,7 +67,7 @@ body.title { overflow: hidden; }
 .col #reset { border-style: dashed; opacity: .7; }
 .col #reset:hover, .col #reset.armed { opacity: 1; }
 .col #reset.armed { color: var(--paper); background: var(--ink); border-style: solid; }
-.col input[type=range] { width: 21em; }
+.col input[type=range] { width: var(--col-w); box-sizing: border-box; margin-left: 0; margin-right: 0; }
 /* the veil: white, over everything, up on play (title.js) */
 .veil { position: fixed; inset: 0; background: var(--paper); opacity: 0; pointer-events: none; transition: opacity .35s linear; z-index: 9; }
 .veil.up { opacity: 1; pointer-events: auto; }
@@ -108,5 +114,5 @@ body.still .veil { transition: none; }   /* motion: less: see style.css */
 .col .cloudsheet textarea { width: 100%; box-sizing: border-box; }
 .col .cloudsheet .again.armed { color: var(--paper); background: var(--ink); }
 .col .clash { flex-direction: column; gap: 4px; }
-.col .clash button { width: 21em; }
+.col .clash button { width: var(--col-w); }
 .col .clashes { gap: 12px; }
