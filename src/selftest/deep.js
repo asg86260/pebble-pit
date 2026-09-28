@@ -249,7 +249,7 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   const tip = rails().querySelector('.rl-tip');
   const said = !tip.hidden && tip.textContent;
   pip.dispatchEvent(new PointerEvent('pointerleave'));
-  for (let r = 1; r < FORK_RUNG; r++) { await tap(rowNamed('s1', `Fighter ${r}`)); await seat(); }
+  for (let r = 1; r < FORK_RUNG; r++) { await tap(rowNamed('s1', 'Fighter')); await seat(); }
   const base = st.cls === null && st.rung === FORK_RUNG - 1;
   const ask = rails().querySelector('.rl-ask')?.textContent || '';
   await tap(rowNamed('s1', 'Become a Swordsman'));
@@ -261,14 +261,14 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   await tap(rails().querySelector('.rl-reset'));
   await seat();
   const blanked = st.cls === null && st.rung === 0 && st.paid.length === 0;
-  const again = !rails().querySelector('.rl-arm.gone') && !!rowNamed('s1', 'Fighter 1');
+  const again = !rails().querySelector('.rl-arm.gone') && !!rowNamed('s1', 'Fighter');
   showPanel(null, true);
   return [
     ok(up, "the station's board is up", `${S.stationBoardOpen}`),
     ok(pips === 3 + 2 * 5, 'its tree: three pips, then five a branch', `${pips}`),
-    ok(said === 'Haymaker: every 4th punch x4, stuns', 'a hover on a pip says what it is', `${said}`),
+    ok(said === 'Haymaker: combos and stuns', 'a hover on a pip says what it is', `${said}`),
     ok(base, 'the rows climb the Fighter to the fork', JSON.stringify(st)),
-    ok(/choose a path/i.test(ask), 'where the board asks for a path', ask),
+    ok(ask === 'Specialize', 'where the board asks it to specialize', ask),
     ok(took, 'the Swordsman row takes the Swordsman, paid in scales', JSON.stringify(st)),
     ok(gone.join() === 'true,false', "and the Brawler's branch closes", gone.join()),
     ok(lit === FORK_RUNG, 'the pips climbed are lit', `${lit}`),

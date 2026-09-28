@@ -13,7 +13,7 @@
 // (src/selftest/deep.js).
 
 import { group, ok, yard } from './helpers.mjs';
-import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, rungDust } from '../src/config.js';
+import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, rungDust, rungValue } from '../src/config.js';
 import { railsOf, pressKind, pressBuy, pressReset } from '../src/deep/rails.js';
 import { classLadder, rungBill } from '../src/deep/rows.js';
 import { press } from '../src/deep/buildbutton.js';
@@ -50,9 +50,9 @@ group("an empty lot's board asks what goes up; a pick sends the builders", async
   const picked = pressKind(id, 'altar');
   const st = stationById(id);
   return [
-    ok(lot.lot && lot.ask === 'What goes up here?', 'the lot asks what goes up here', lot.ask),
+    ok(lot.lot && lot.ask === 'Choose your fighter', 'the lot asks which fighter', lot.ask),
     ok(JSON.stringify(open) === JSON.stringify(FIRST_KINDS), 'the first lot offers the three starting kinds', JSON.stringify(open)),
-    ok(altar.name === 'Fighter' && altar.sub.includes('Brawler or Swordsman'), 'each a base unit, saying what it forks into',
+    ok(altar.name === 'Fighter' && altar.sub === 'throws punches', 'each a base unit, saying what it does',
        `${altar.name}: ${altar.sub}`),
     ok(!shut, 'a kind not offered cannot be picked'),
     ok(picked && st.kind === 'altar' && !st.built, 'a pick names the station, and it is put up by hand', JSON.stringify(st))
@@ -73,7 +73,7 @@ group('the base unit climbs three rungs; the fork asks for a path and closes the
   const took = railsOf('s1');
   const arm = cls => took.tree.arms.find(a => a.cls === cls);
   return [
-    ok(blank.who === 'Fighter' && blank.rows.length === 1 && blank.rows[0].label === 'Fighter 1',
+    ok(blank.who === 'Fighter' && blank.rows.length === 1 && blank.rows[0].label === 'Fighter',
        'a new station is its base unit, one row to climb', JSON.stringify(blank.rows.map(r => r.label))),
     ok(tag.length === 1 && tag[0][0] === 'scale' && tag[0][1] === asked, "its tag is the ladder's first rung, scales alone",
        JSON.stringify(tag)),
@@ -86,7 +86,8 @@ group('the base unit climbs three rungs; the fork asks for a path and closes the
     ok(st.cls === 'sword' && st.rung === FORK_RUNG, 'the Swordsman row takes the Swordsman at rung 4', `${st.cls} ${st.rung}`),
     ok(arm('brawler').gone && !arm('sword').gone, 'and the other branch closes',
        JSON.stringify(took.tree.arms.map(a => [a.cls, a.gone]))),
-    ok(took.rows.length === 1 && took.rows[0].label === 'Swordsman 5', 'the row moves on up the same ladder', took.rows[0]?.label)
+    ok(took.rows.length === 1 && took.rows[0].label === 'Swordsman' && took.rows[0].sub === `${Math.round(rungValue('sword', 5))} dmg`,
+       'the row moves on up the same ladder', JSON.stringify(took.rows[0]))
   ];
 });
 
@@ -154,8 +155,8 @@ group('two stations of one kind keep a ladder each', async () => {
     ok(b.cls === null && b.rung === 1, 'the second climbed its Fighter one rung', `${b.cls} ${b.rung}`),
     ok(rungOf(a, 'brawler') === FORK_RUNG && rungOf(b, 'brawler') === 1, 'each ladder at its own rung',
        `${rungOf(a, 'brawler')} ${rungOf(b, 'brawler')}`),
-    ok(one.rows[0].label === 'Brawler 5' && two.rows[0].label === 'Fighter 2', 'each row climbs its own',
-       `${one.rows[0].label} / ${two.rows[0].label}`),
+    ok(one.rows[0].label === 'Brawler' && two.rows[0].label === 'Fighter' && one.rows[0].sub !== two.rows[0].sub,
+       'each row climbs its own', `${one.rows[0].label} ${one.rows[0].sub} / ${two.rows[0].label} ${two.rows[0].sub}`),
     ok(JSON.stringify(rungBill('s1', 'brawler')) !== JSON.stringify(rungBill('s2', null)),
        'and each is priced from its own rung', `${JSON.stringify(rungBill('s1', 'brawler'))} vs ${JSON.stringify(rungBill('s2', null))}`)
   ];
@@ -189,10 +190,10 @@ group('each pip says what it is, one short line', async () => {
   const opened = pipOf(4, 'bard');
   const lines = [base, move, cap, rung, locked, opened];
   return [
-    ok(/^Apprentice 2: /.test(base), 'a base rung names the base unit and its number', base),
-    ok(/^Widening: /.test(move), 'rung 4 names the move', move),
-    ok(/^Burn through: /.test(cap), 'rung 8 the capstone', cap),
-    ok(/^Mage 6: /.test(rung), 'another rung its number', rung),
+    ok(base === `Apprentice: ${rungValue('mage', 2)} dmg/s`, 'a base rung names the base unit and its number', base),
+    ok(move === 'Widening: a wider, hotter beam', 'rung 4 names the move', move),
+    ok(cap === 'Burn through: ignores armor', 'rung 8 the capstone', cap),
+    ok(rung === `Mage: ${Math.round(rungValue('mage', 6))} dmg/s`, 'another rung its number', rung),
     ok(/second station/.test(locked), 'a locked branch says when it opens', locked),
     ok(!/second station/.test(opened), 'and opens with a second station', opened),
     ok(lines.every(l => !l.includes('\n') && l.length < 60), 'each one short line', lines.join(' | '))
