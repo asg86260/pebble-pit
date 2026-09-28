@@ -31,13 +31,14 @@ import { mid, feet, swim, afloat } from './arms.js';
 const between = ([lo, hi]) => lo + rand() * (hi - lo);
 const ease = k => k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
 
-// A station's ground: DEEP_STAND_W about its middle, inside the deep. The
-// crusher's hands wait at its side (`tossX`), not in its middle, so their
-// ground is the same width run out from that side rather than across the
-// machine.
-export function restGround(key) {
-  const crusher = key === 'crusher';
-  const post = (crusher ? tossX() : spotX(key)) - WORKER / 2;
+// A station's ground: DEEP_STAND_W about its middle, inside the deep. `at` is
+// a key of DEEP_SPOTS, or the middle of a fighter's station as an x: the
+// party's stations stand at floor slots, not at named spots. The crusher's
+// hands wait at its side (`tossX`), not in its middle, so their ground is
+// the same width run out from that side rather than across the machine.
+export function restGround(at) {
+  const crusher = at === 'crusher';
+  const post = (crusher ? tossX() : typeof at === 'number' ? at : spotX(at)) - WORKER / 2;
   const lo = crusher ? crusherRect().x + CRUSHER_W : post - DEEP_STAND_W / 2;
   return {
     post,
@@ -99,10 +100,11 @@ function land(w) {
   spawnGrit(mid(w), deepFloor() - P, { n: DEEP_REST_SILT, floor: deepFloor() });
 }
 
-// One frame of a body at rest by station `key`. `pace` is the swim that takes
-// it back onto its ground if it is off it.
-export function rest(w, key, c, pace) {
-  const g = restGround(key);
+// One frame of a body at rest by station `at` (a key or an x, as
+// `restGround`). `pace` is the swim that takes it back onto its ground if it
+// is off it.
+export function rest(w, at, c, pace) {
+  const g = restGround(at);
   const t = c.now, f = frames();
   let r = w.lull;
   if (r && !(r.tick >= S.tick - 1)) r = null;

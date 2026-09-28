@@ -1,24 +1,24 @@
 // The serpent: its four defenses, the wound held open against its heal, and
-// the one door every weapon strikes it through.
+// the one door every fighter strikes it through.
 //
-// Damage is a rate, not a total. The wound is what the weapons have opened
+// Damage is a rate, not a total. The wound is what the fighters have opened
 // and the heal is what the serpent closes a second, so a strike slower than
-// the heal never gets anywhere and a stage breaks only when the yard can hold
-// the wound open to its depth (DESIGN.md, "The serpent is the rock"). The
-// fourth break is the belly, and after it the serpent stays, coiled and
+// the heal never gets anywhere and a stage breaks only when the party can
+// hold the wound open to its depth (DESIGN.md, "The serpent is the rock").
+// The fourth break is the belly, and after it the serpent stays, coiled and
 // healed, to be struck for its scales.
 //
-// Track SERPENT owns this file (docs/wave-serpent.md).
+// Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, FADE_UNLIT, SIGIL_HEAL_CUT,
-         SIGIL_CUT_MAX, CURSE_CUT_MAX, SCALE_PER_DMG, SCALE_HIT_MAX,
-         COIL_SEGS, BEAM_LIGHT, GRENADE_RING_S, NUM_HELD_S, NUM_HEAL_EVERY_S,
-         NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S, NUM_FOLD_R, STUN_SHARE, STUN_BASE_S,
-         STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX, rungValue } from '../config.js';
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DMG, SCALE_HIT_MAX,
+         NUM_HELD_S, NUM_HEAL_EVERY_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S, NUM_FOLD_R,
+         STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
+         CLICK_DMG } from '../config.js';
 import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
+import { ampOf, healLeft, has, clearStatuses } from './statuses.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
 // is struck on the last defense's column and has nothing left to heal.
@@ -26,117 +26,116 @@ const LAST = 3;
 const column = () => Math.min(LAST, S.serpentStage);
 const depth = () => S.serpentStage > LAST ? 0 : SERPENT_WOUND[S.serpentStage];
 
-// The coil is lit while any wizard's beam is on it (arms.js keeps `S.beams`
-// to the bodies channelling this frame).
-const lit = () => S.beams.length > 0;
-
-// What a blow did, kept a moment for the number over it (render/fightnums.js).
-// A weapon that hurts while it is held (the lance, the beam) would stand a
-// column of small numbers on the coil, so a body's ticks are summed into one
-// entry and said when its second is up (`shut`); a grenade's burst strikes
-// each length of a split coil once, and its lengths are summed into the one
-// number as they land. `from` is the thing doing it -- the lance, the ring,
-// the wizard. Stood over the coil's top edge where it landed, so the number
-// is not born inside the white hide.
-const HELD = new Set(['lance', 'beam']);
+// What a hit did, kept a moment for the number over it (render/fightnums.js).
+// Something that hurts while it is held (the beam, a bleed) would stand a
+// column of small numbers on the coil, so its ticks are summed on the thing
+// ticking (`from`) into one entry, said when its second is up (`shut`); the
+// spots of one blow that lands in several places (a whirlwind's cut) are
+// summed on the blow likewise. Stood over the coil's top edge where it
+// landed, so the number is not born inside the white hide.
 const topAt = (x, y, t) => {
   const seg = nearestSeg(x, y, t).seg;
   return coilAt(seg, t).y - coilThick(seg) / 2;
 };
-function keep(weapon, done, x, y, from) {
+function keep(weapon, done, x, y, from, held) {
   const t = now();
-  // Blows of one kind landing together on one place (a gang of brawlers
-  // swinging as one) are one number, or they print over each other.
+  // Blows of one kind landing together on one place are one number, or
+  // they print over each other.
   const was = from ? S.hits.find(h => h.key === from && t < h.fold)
     : S.hits.find(h => !h.key && h.weapon === weapon && t < h.fold && Math.abs(h.x - x) <= NUM_FOLD_R);
   if (was) {
     was.done += done;
-    // A held weapon's second is said where its last tick landed: the coil
-    // has swayed on under a lance in a second, and the sum stood where the
+    // A held thing's second is said where its last tick landed: the coil
+    // has swayed on under a beam in a second, and the sum stood where the
     // first tick was would hang off in the water.
-    if (HELD.has(weapon)) { was.x = x; was.y = topAt(x, y, t); }
+    if (held) { was.x = x; was.y = topAt(x, y, t); }
     return;
   }
-  const held = HELD.has(weapon);
   const shut = held ? t + NUM_HELD_S * 1000 : t;
-  const fold = held ? shut : t + (weapon === 'grenade' ? GRENADE_RING_S : NUM_FOLD_S) * 1000;
+  const fold = held ? shut : t + NUM_FOLD_S * 1000;
   S.hits.push({ at: t, shut, fold, x, y: topAt(x, y, t), done, weapon,
                 key: from || null, side: S.hits.length });
 }
 
 // How big a blow is, 0..1, on a log scale of what it did: the bite and the
-// spray are both read off it, so a punch chips and a star bursts.
+// spray are both read off it, so a punch chips and a sticky charge bursts.
 export const blowK = done => Math.max(0, Math.min(1, Math.log(Math.max(1, done)) / Math.log(BLOW_FULL)));
 
-// Which edge of the body a blow bites when the one striking has not said: a
-// star falls on the top, and everything else comes up from the floor.
-const EDGE = { star: -1 };
-
-// A heavy blow stuns (DESIGN.md, "Blows land: the burst and the stun"): a
-// blow worth STUN_SHARE of the stage's depth, longer the more it was worth.
-// A stun never stacks -- the longer of the two stands -- and none starts in
-// the grace after one has ended.
-function stun(blow) {
+// A stunning blow (DESIGN.md, "Blows land: the burst and the stun"): `k` is
+// the move's own stretch of it (a capstone's x1.5). It lasts STUN_BASE_S,
+// longer on the square root of how many times over STUN_SHARE of the stage's
+// depth the blow was, and never past STUN_MAX_S. `share` is a blow that
+// stuns only when it is worth the share (the Mage's finishing blow, which
+// "can stun"). A stun never stacks -- the longer of the two stands -- and
+// none starts in the grace after one has ended.
+function stun(blow, k, share) {
   const d = depth();
   if (!(d > 0)) return;
   const over = blow / (d * STUN_SHARE);
-  if (!(over >= 1)) return;
+  if (share && !(over >= 1)) return;
   if (!(S.serpentStun > 0) && S.serpentGrace > 0) return;
-  S.serpentStun = Math.max(S.serpentStun, Math.min(STUN_MAX_S, STUN_BASE_S * Math.sqrt(over)));
+  const s = Math.min(STUN_MAX_S, STUN_BASE_S * k * Math.sqrt(Math.max(1, over)));
+  S.serpentStun = Math.max(S.serpentStun, s);
   S.serpentGrace = 0;
 }
 
-// A hit: `weapon` is a key of SERPENT_DEFENSE, `dmg` what the weapon is
-// worth before the defense, (x, y) where it landed, `from` what struck it
-// when it strikes more than once (above), `side` the edge it bit (-1 the
-// top, 1 the underside; the weapon's own when not said). Returns the damage
-// done. A hit that did nothing sheds nothing: a glancing weapon is still a
-// weapon, but nothing is knocked loose by a blow that did not land. Before
-// the snatch there is no serpent to hit.
+// A hit: `weapon` is a key of SERPENT_DEFENSE, `dmg` what it is worth before
+// the defense, (x, y) where it landed, `from` what struck it when it strikes
+// more than once (a beam, a bleed, a blow landing at several spots), `side`
+// the edge it bit (-1 the top, 1 the underside, the default). `o`:
 //
-// A blow -- anything but a held weapon's tick -- bites the hide, bursts its
-// scales off that edge and may stun. A burst that strikes several lengths of
-// a split coil is one blow, summed on the thing that struck them. A held
-// weapon's ticks only bleed: its scales trickle off, and it never stuns
-// however big it is, which is what the burst styles buy over it.
-export function strike(weapon, dmg, x, y, from = null, side = 0) {
+//   tick     a held thing's tick, not a blow: it only bleeds scales, never
+//            bites the hide and never stuns, however big
+//   by       the fighter whose hit it is, for its Inspired
+//   stun     a stunning blow, and how far it stretches the stun (1 plain)
+//   share    it stuns only if it is worth STUN_SHARE of the depth
+//   through  the phase's half does not dim it (the Mage's capstone)
+//
+// Returns the damage done. A hit that did nothing sheds nothing. Before the
+// snatch there is no serpent to hit.
+export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   if (!S.snatched || !(dmg > 0)) return 0;
   const table = SERPENT_DEFENSE[weapon];
   if (!table) return 0;
-  let done = dmg * table[column()];
-  // Fading: a coil nobody has lit is barely there to hit. The beam is the
-  // light, so it is never the one dimmed.
-  if (S.serpentStage === LAST && weapon !== 'beam' && !lit()) done *= FADE_UNLIT;
+  const guard = o.through ? Math.max(1, table[column()]) : table[column()];
+  const done = dmg * guard * ampOf(!!o.tick, o.by);
   if (!(done > 0)) return 0;
   // Held at the stage's depth rather than over it: the break is the frame's
   // (`stepSerpent`), and a wound past its depth is a number nothing draws.
   if (S.serpentStage <= LAST) S.serpentWound = Math.min(depth(), S.serpentWound + done);
   const n = Math.min(SCALE_HIT_MAX, Math.max(1, Math.round(done * SCALE_PER_DMG)));
-  if (HELD.has(weapon)) shed(x, y, n);
+  if (o.tick) shed(x, y, n);
   else {
     const blow = from ? (from.dealt = (from.dealt || 0) + done) : done;
-    const t = now(), seg = nearestSeg(x, y, t).seg, edge = side || EDGE[weapon] || 1;
+    const t = now(), seg = nearestSeg(x, y, t).seg, edge = side || 1;
     const k = blowK(blow);
     S.serpentChips.push({ u: seg, side: edge, k, at: t });
     if (S.serpentChips.length > CHIPS_MAX) S.serpentChips.splice(0, S.serpentChips.length - CHIPS_MAX);
     // The scales leave the bitten edge, outward.
     shed(x, coilAt(seg, t).y + edge * coilThick(seg) / 2, n, { dir: edge, k });
-    stun(blow);
+    if (o.stun) stun(blow, o.stun, !!o.share);
   }
-  keep(weapon, done, x, y, from);
+  keep(weapon, done, x, y, from, !!o.tick);
   return done;
 }
 
+// What the click is worth: the first station's rung, so the hand grows with
+// the first fighter's ladder.
+export const clickDmg = () => {
+  const st = S.stations && S.stations[0];
+  return CLICK_DMG[Math.max(0, Math.min(CLICK_DMG.length - 1, (st && st.rung) || 0))];
+};
+
 // A click in the deep, in world coordinates: true if it was the serpent's.
 // It lands where the body is, not where the pointer is, so the scales come
-// off the coil.
+// off the coil. Always a punch.
 export function clickDeep(x, y) {
   if (!S.snatched) return false;
   const t = now();
   const near = nearestSeg(x, y, t);
   if (near.d > coilThick(near.seg)) return false;
   const p = coilAt(near.seg, t);
-  strike('punch', rungValue('punch', S.punchLevel), p.x, p.y, null, y < p.y ? -1 : 1);
+  strike('punch', clickDmg(), p.x, p.y, null, y < p.y ? -1 : 1);
   return true;
 }
 
@@ -146,49 +145,42 @@ export const woundK = () => {                          // the wound as a fractio
   return d > 0 ? Math.max(0, Math.min(1, S.serpentWound / d)) : 0;
 };
 
-// What the sigils take off the heal, 0..SIGIL_CUT_MAX, and the curse on top.
-const sigilCut = () => Math.min(SIGIL_CUT_MAX, S.sigils.length * SIGIL_HEAL_CUT);
-const curseCut = () => Math.min(CURSE_CUT_MAX, rungValue('curse', S.curseLevel) / 100);
+// The heal this frame, after Weakened, in wound a second.
+export const healNow = () => S.serpentStage > LAST ? 0 : SERPENT_HEAL[S.serpentStage] * healLeft();
 
-// The heal this frame, after sigils and the curse, in wound a second.
-export const healNow = () => S.serpentStage > LAST ? 0
-  : SERPENT_HEAL[S.serpentStage] * Math.max(0, 1 - sigilCut() - curseCut());
+// Nothing is lit and nothing is drawn on the floor any more; the dev handles
+// still read both. until merge
+export const litK = () => 0;
+export const boundK = () => 0;
 
-// Which segments a beam is on, and how much of the coil that is: the fading
-// coil is drawn at a low ink except where it is lit.
-export function isLit(i) {
-  for (const b of S.beams) if (Math.abs(b.seg - i) <= BEAM_LIGHT) return true;
-  return false;
+// Who hears a phase break: the fang's drop (CREW's party.js) and anything
+// else that answers one. Called with the stage just reached, 1..4, on the
+// frame the defense goes; the returned function stops the listening.
+const breakers = [];
+export function onBreak(fn) {
+  if (!breakers.includes(fn)) breakers.push(fn);
+  return () => { const i = breakers.indexOf(fn); if (i >= 0) breakers.splice(i, 1); };
 }
-export function litK() {
-  if (!S.beams.length) return 0;
-  let n = 0;
-  for (let i = 0; i < COIL_SEGS; i++) if (isLit(i)) n++;
-  return n / COIL_SEGS;
-}
-// How much of the coil the sigils hold still, 0..1: the share of the most
-// they can take off the heal.
-export const boundK = () => sigilCut() / SIGIL_CUT_MAX;
 
-// One frame of the fight: a wound the weapons held at its depth breaks the
+// One frame of the fight: a wound the fighters held at its depth breaks the
 // defense, and anything short of it closes at the heal -- unless the serpent
-// is stunned, when nothing closes and the coil's sway is held back by the
-// frame. The break is asked first, or the heal takes the last of the depth
-// back off the blow that reached it. The circles on the floor were drawn
-// against the defense they held, and go with it; a stun was measured
-// against it too, and goes with it.
+// is stunned or Held, when nothing closes and the coil's sway is held back
+// by the frame. The break is asked first, or the heal takes the last of the
+// depth back off the blow that reached it. What was laid on a defense was
+// laid against it, and goes with it: the stun and every status.
 export const stepSerpent = c => {
   forget(c.now);
   if (!S.snatched || S.serpentStage > LAST) { S.serpentStun = S.serpentGrace = 0; return; }
-  const held = S.serpentStun > 0, secs = c.dt / 1000;
-  if (held) {
-    S.serpentStill += c.dt;
+  const stunned = S.serpentStun > 0, secs = c.dt / 1000;
+  if (stunned) {
     S.serpentStun = Math.max(0, S.serpentStun - secs);
     if (!(S.serpentStun > 0)) S.serpentGrace = STUN_GRACE_S;
   } else if (S.serpentGrace > 0) S.serpentGrace = Math.max(0, S.serpentGrace - secs);
+  const still = stunned || has('held');
+  if (still) S.serpentStill += c.dt;
   const d = depth();
   if (S.serpentWound < d) {
-    if (held) return;
+    if (still) return;
     const was = S.serpentWound;
     S.serpentWound = Math.max(0, Math.min(d, S.serpentWound - healNow() * c.dt / 1000));
     tallyHeal(was - S.serpentWound, c.now);
@@ -196,9 +188,10 @@ export const stepSerpent = c => {
   }
   S.serpentStage++;
   S.serpentWound = 0;
-  S.sigils = [];
   S.serpentStun = S.serpentGrace = 0;
+  clearStatuses();
   if (S.serpentStage > LAST) S.serpentFreed = true;
+  for (const fn of breakers.slice()) fn(S.serpentStage);
 };
 
 // The numbers' list keeps itself: a hit goes once its number has faded; and
@@ -217,8 +210,8 @@ function forget(t) {
 
 // The heal says what it actually closed, once a second, off the wound at the
 // belly: the rate it could heal at says nothing while the wound is shut, and
-// a sigil or the curse reads as a smaller `+`. Less than a whole one is kept
-// for the next second rather than said as nothing.
+// Weakened reads as a smaller `+`. Less than a whole one is kept for the next
+// second rather than said as nothing.
 function tallyHeal(closed, t) {
   S.healSum += closed;
   if (!(S.healAt > 0) || S.healAt > t + NUM_HEAL_EVERY_S * 1000) S.healAt = t + NUM_HEAL_EVERY_S * 1000;
