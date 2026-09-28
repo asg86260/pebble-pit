@@ -116,10 +116,7 @@ export const WARD_AT = 0.55;         // how much of the shimmer's wave is lit
 // click, a lance and a ring all land on the body as drawn.
 export const SPLIT_WRITHE = P * 3;   // how far the thrash throws the body
 export const SPLIT_WRITHE_MS = 1900; // and how fast a ripple runs
-export const FADE_SEEN = 0.25;       // stage four: how much of the coil is seen where no beam lights it
-export const BEAM_LIGHTS = 5;        // segments either side of a beam's touch it lights
 export const WOUND_GAP = P * 6;      // the wound, wide open: a body's width and a cell of water each side
-export const BOUND_BANDS = 3;        // bands of sigil across a held length of coil
 // The wound read on the body (DESIGN.md, "The serpent, redrawn").
 export const CRACK_REACH = P * 34;   // how far the cracks run each way from the belly, at a wound about to break
 export const COIL_STEP = P / 2;      // how finely the body is laid along its curve
@@ -163,15 +160,6 @@ export const STUN_RING_STEP_MS = 70; // the bright cell moves on a cell this oft
 export const STUN_RING_TONES = [0, 1, 2];
 export const STUN_RING_DIM = 4;
 
-// --- the weapons -------------------------------------------------------------------
-export const LANCE_LEN = P * 8;      // a lance of black water
-export const RING_CELLS = 28;        // cells round a burst's ring, at its widest
-export const BEAM_MS = 700;          // one crest travelling the length of a beam
-export const BEAM_WAVE = 0.35;       // radians of the beam's interference a cell
-export const SIGIL_RX = P * 7;       // a sigil on the floor, across
-export const SIGIL_RY = P * 2;       // and seen edge-on
-export const STAR_TAIL = 7;          // cells of the called star's tail
-export const PUNCH_MS = 260;         // a brawler's fist out and back
 // The scrap the invert filter is tried on before the frame is turned over
 // with it (render/invert.js): big enough that Firefox puts it on the graphics
 // card as it does the window (smaller, it is drawn in software, where the
@@ -259,3 +247,55 @@ export const BAR_STUN = '#9b5de5';     // the defense's pip while a stun has sto
 export const BAR_STUN_RIM = 2;         // screen pixels, the ring's width
 export const BAR_TRAIL_HOLD_S = 0.5;  // the trail waits this long after the last blow
 export const BAR_TRAIL_RATE = 1;       // then drains at this share of the bar a second
+
+// --- track RENDER of docs/wave-party.md: the fighters, their kits and attacks ---------
+// The kit growth page's feel (docs/mocks/kit-growth-2026-09-27.html, all three
+// passes on). Each class's own turn -- when its blows land, how far a fist
+// winds back -- is its table in render/attacks.js, as the page wrote it; the
+// numbers every class shares are here.
+export const DRAW_POSE = 0.08;       // s, one held pose of the classic pass round a contact
+export const DRAW_KEY_EX = 1.7;      // how far the classic pass pushes a key pose (a wind-up, a pull back)
+export const DRAW_HOLDS = 2;         // poses a contact holds the fighter (the hit-pause)
+export const DRAW_HAY_HOLDS = 3;     // and the Haymaker's: the fist held a pose alone, then the star (the owner's C)
+export const DRAW_NEAR_BEAT = 0.32;  // s either side of a beat the clock steps in poses; smooth further off
+// The recoil after a heavy contact, in cells: [the contact's size from, cells].
+export const DRAW_KICK = [[1.2, 2], [0.7, 1.5], [0.45, 0.75]];
+// The still cells of a kit are one sprite a class and a rung, painted in a
+// box this many cells round the body's top-left corner (deep/kits.js).
+export const KIT_BOX = { left: 6, top: 7, w: 16, h: 11 };
+export const MOTE_PERIOD = 2.2;      // s a rung-8 mote takes to drift off a kit
+export const MOTE_RISE = 3;          // and cells it rises
+// The coil's give under a contact (render/serpent.js): pushed up over
+// DENT_RISE_S, springing back at DENT_DECAY an s, gone by DENT_S. Its width
+// and depth in cells are [base, per unit of the blow's size].
+export const DENT_S = 0.6;
+export const DENT_RISE_S = 0.05;
+export const DENT_DECAY = 9;
+export const DENT_W = [1.2, 2];
+export const DENT_DEPTH = [0.5, 1.6];
+// The statuses on the whole serpent (the class bench's painters).
+export const BLEED_DRIPS = 9;        // columns Bleeding drips off
+export const BLEED_DRIP_S = 1.25;    // s a drop takes to fall its four cells
+export const HELD_EVERY = 11;        // columns between Held's bands
+export const HELD_BRIGHT_RUNG = 8;   // a Hexer this high edges the bands in white: Held takes more
+export const EXPOSED_EVERY = 4;      // columns between Exposed's lifted scales
+export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settles
+// The fang (docs/wave-party.md): a white fang of a few cells, point down,
+// sinking and carried like a scale. '#' white, '+' a grey a step down.
+export const FANG_SPRITE = ['##+', '#+.', '#..'];
+// Its mark on the counter card, a pixel a character, as SCALE_MARK is.
+export const FANG_MARK = [
+  '#######',
+  '######.',
+  '#####..',
+  '####...',
+  '###....',
+  '##.....',
+  '#......',
+];
+// The scaffold over a station not yet built: posts this many bands tall,
+// the tape at head height.
+export const SCAFFOLD_BANDS = 5;
+// Until the floor slots land (track BOARD's config/deep.js), the slots here;
+// fractions of DEEP_W, as the spec writes them.
+export const DEEP_SLOTS_DRAWN = [0.335, 0.475, 0.62, 0.76, 0.9, 0.405, 0.69];

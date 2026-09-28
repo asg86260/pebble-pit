@@ -14,11 +14,12 @@
 // past the rim rather than sliding down the funnel's face.
 
 import { now } from '../clock.js';
-import { P } from '../config.js';
+import { P, FANG_SPRITE } from '../config.js';
 import { shadeOf } from '../grid.js';
 import { S } from '../state.js';
 import { crusherRect } from '../deep/place.js';
 import { ctx } from './ctx.js';
+import { GREYS } from './deeptones.js';
 
 const EDGE = Math.max(1, Math.round(P / 3));   // a scale seen edge-on
 const FLUTTER_MS = 520;
@@ -43,6 +44,25 @@ function drawFlutter(list, behind) {
   ctx.fillStyle = '#000';
 }
 
-export const drawSinking = () => drawFlutter(S.sinking, false);
+// The fang (docs/wave-party.md): a white fang of a few cells, point down,
+// dropped at a phase's break. It sinks and lies on the floor like a scale
+// (`S.fangsLoose`, kept by the scales' saver) and is carried like one
+// (render/deep.js, `drawSwimmers`). Heavier than a scale, it does not
+// flutter: it goes down point first, whole, a rigid few cells at whole
+// pixels. (x, y) is its top-left.
+const FANG_TONE = { '#': GREYS[GREYS.length - 1], '+': GREYS[GREYS.length - 3] };
+export function drawFang(x, y) {
+  FANG_SPRITE.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (!FANG_TONE[ch]) return;
+    ctx.fillStyle = FANG_TONE[ch];
+    ctx.fillRect(Math.round(x) + c * P, Math.round(y) + r * P, P, P);
+  }));
+  ctx.fillStyle = '#000';
+}
+
+export const drawSinking = () => {
+  drawFlutter(S.sinking, false);
+  for (const f of S.fangsLoose || []) drawFang(f.x, f.y);
+};
 export const drawLifting = () => drawFlutter(S.lifting, false);
 export const drawIntoCrusher = () => { drawFlutter(S.sinking, true); drawFlutter(S.lifting, true); };

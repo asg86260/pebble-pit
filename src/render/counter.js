@@ -3,7 +3,7 @@
 
 import { openBoardRect } from '../board.js';
 import { fmt } from '../words.js';
-import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK } from '../config.js';
+import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
@@ -35,10 +35,10 @@ function digits(n) {
 // The scale's mark, pixel for pixel the stylesheet's (SCALE_MARK in
 // config/deepboard.js): its ink laid on the card, whose white is its paper.
 // Centered in the MARK square the other coins stand in.
-function drawScale(g, x, y) {
-  const ox = x + Math.floor((MARK - SCALE_MARK[0].length) / 2);
-  const oy = y + Math.floor((MARK - SCALE_MARK.length) / 2);
-  SCALE_MARK.forEach((row, r) => {
+function drawScale(g, x, y, mark = SCALE_MARK) {
+  const ox = x + Math.floor((MARK - mark[0].length) / 2);
+  const oy = y + Math.floor((MARK - mark.length) / 2);
+  mark.forEach((row, r) => {
     for (let c = 0; c < row.length; c++) if (row[c] === '#') g.fillRect(ox + c, oy + r, 1, 1);
   });
 }
@@ -63,6 +63,8 @@ export function countLines() {
   // The deep's coin, last, as on the purse. Not a grain of the pit, so it has
   // no cell: its line carries the mark's own pixels instead.
   if (S.seenScale) lines.push({ cell: 'scale', text: digits(Math.round(shown('card:scale', S.scales))) });
+  // The fang, under the scale once one has been seen (track RENDER, docs/wave-party.md).
+  if (S.seenFang) lines.push({ cell: 'fang', text: digits(S.fangs) });
   return lines;
 }
 
@@ -168,6 +170,7 @@ export function drawCount() {
         const at = y - (lines.length - 1 - i) * ROW;
         if (!l.cell) g.fillRect(x, at - MARK, MARK, MARK);
         else if (l.cell === 'scale') drawScale(g, x, at - MARK);
+        else if (l.cell === 'fang') drawScale(g, x, at - MARK, FANG_MARK);
         else drawMark(l.cell, x + MARK / 2, at - MARK / 2, MARK, true, g);
       });
       markKey = key;

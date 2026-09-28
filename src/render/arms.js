@@ -1,190 +1,196 @@
-// The weapons made of the abyss, as they are seen: a brawler's fists, lances
-// of black water flying and stuck, grenades and the rings they burst into,
-// sigils on the floor and the lengths of coil they hold, the wizards' beams,
-// and the called star, falling through the yard's sky and then the deep's.
+// The fighters as they are seen (docs/wave-party.md, "The picture"): each at
+// its station, the plain square until its station has a class, and then its
+// kit (deep/kits.js) and its class's attack (render/attacks.js) on its own
+// clock; the buffs on a fighter, Inspired and Hasted; and what leaves a
+// fighter -- arrows, beams, charges, hexes, notes -- on the `shots` layer
+// over all of them.
 //
-// All in the abyss's own vocabulary (DESIGN.md, "The magic is the abyss's
-// own"): interference, ripples, cells on the lattice. No glow, no gradient:
-// a thing is brighter by being drawn on more of its cells, and it fades by
-// being drawn on fewer.
+// A fighter's clock is its turn: seconds since its attack began. The fight
+// keeps it (track FIGHT, deep/classes.js); this file only reads it, through
+// `turnOf`, and derives from it the hit-pauses and the held poses round each
+// contact (`sauceOf`), so the picture follows the sim's tempo while its
+// shapes and motion are the page's.
+//
+// In the abyss's vocabulary, as every weapon down here was: no glow, no
+// alpha, no flash of the frame; a thing is brighter by being drawn on more of
+// its cells.
 
 import { now } from '../clock.js';
-import { P, WORKER, LANCE_FLY, GRENADE_R, GRENADE_RING_S,
-         LANCE_LEN, RING_CELLS, BEAM_MS, BEAM_WAVE, SIGIL_RX, SIGIL_RY, STAR_TAIL, PUNCH_MS,
-         MAGIC_TONES } from '../config.js';
+import { P, DEEP_W, DEEP_SLOTS_DRAWN } from '../config.js';
 import { S } from '../state.js';
-import { coilAt, coilThick, nearestSeg, deepTop } from '../deep/place.js';
-import { TYPE } from '../jobs.js';
-import { abyssLine } from '../pit.js';
+import { fighterAt } from '../deep/party.js';
+import { deepFloor, deepX0 } from '../deep/place.js';
 import { ctx } from './ctx.js';
-import { GREYS, PURPLES, bedTop } from './deep.js';
 import { inTheDeep } from './crew.js';
-import { hash } from './flicker.js';
+import { GREYS, PURPLES, WHITE, BODY, R4, R8, hash, cell, body } from '../deep/kits.js';
+import { ATTACKS, REST, liftOf, loopOf, sauceOf, dentsOf, sparksOf } from './attacks.js';
+import { hideBot } from './serpent.js';
 
-const snap = v => Math.round(v / P) * P;
-const WHITE = GREYS.length - 1;
-const cell = (x, y, tone) => { ctx.fillStyle = tone; ctx.fillRect(snap(x), snap(y), P, P); };
+// The deep's bodies that fight: a pod resident seated at a station (the
+// type is CREW's, src/jobs.js).
+export const isFighter = w => w.type === 'fighter';   // TYPE.FIGHTER, until merge
 
-// Cells along a line, a cell apart, each handed its distance from the start.
-function along(ax, ay, bx, by, fn) {
-  const d = Math.hypot(bx - ax, by - ay);
-  const n = Math.max(1, Math.round(d / P));
-  for (let i = 0; i <= n; i++) fn(ax + (bx - ax) * i / n, ay + (by - ay) * i / n, i, n);
+// --- the sim's clocks, read ---------------------------------------------------------
+// until merge: FIGHT's per-body timers. The seam, as this file reads it:
+//   w.turnAt   world ms the current turn's clock started (the page's A0 = 0);
+//              null or absent between turns, while the fighter stands guard.
+//   w.fighting true while the body is at its post and striking.
+//   w.inspiredUntil, w.hastedUntil  world ms each buff runs to (the spec's).
+// Until FIGHT merges none of these is set, and each fighter runs the page's
+// own loop, phased by the body, so every class can be looked at.
+function turnOf(w, c, t) {
+  if (w.benchA != null) return w.benchA;                            // the scratch bench's stand-still
+  if ('turnAt' in w) return w.turnAt == null ? null : (t * 1000 - w.turnAt) / 1000;
+  const loop = loopOf(c);                                          // until merge
+  return (t + hash(idOf(w)) * loop) % loop;
+}
+const idOf = w => [...String(w.uid ?? w.id ?? '')].reduce((h, ch) => h * 31 + ch.charCodeAt(0), 7) % 9973;
+const striking = w => ('fighting' in w ? !!w.fighting : S.snatched);   // until merge
+
+// --- who is fighting, this frame ---------------------------------------------------
+// The scratch bench (dev only): stand-in bodies at the slots, so every class
+// can be shot before the crew seat real ones. Never saved, never stepped.
+const bench = [];
+function stationsNow() {
+  const out = [];
+  for (const st of S.stations || []) {
+    if (!st.built) continue;
+    // until merge: CREW's fighterAt resolves the uid; the body's own station field meanwhile
+    const w = fighterAt(st) || (S.workers || []).find(o => isFighter(o) && o.station === st.id);
+    if (w && !w.lifted && inTheDeep(w)) out.push({ w, st });
+  }
+  for (const b of bench) out.push(b);
+  return out;
 }
 
-// --- the fists --------------------------------------------------------------------
-// A brawler at the coil punches it: a fist out of the body toward the nearest
-// segment and back, on its own tempo, and a notch of ripple where it lands.
-export function drawPunches() {
-  const t = now();
-  for (const w of S.workers) {
-    if (w.type !== TYPE.BRAWL || !inTheDeep(w)) continue;
-    const cx = w.x + WORKER / 2, cy = w.y + WORKER / 2;
-    const near = nearestSeg(cx, cy, t);
-    if (near.d > coilThick(near.seg) + WORKER) continue;
-    const p = coilAt(near.seg, t);
-    const ph = ((t + hash(w.id ?? w.x) * PUNCH_MS) % PUNCH_MS) / PUNCH_MS;
-    const out = ph < 0.5 ? ph * 2 : (1 - ph) * 2;
-    const dx = p.x - cx, dy = p.y - cy, d = Math.hypot(dx, dy) || 1;
-    const reach = WORKER / 2 + P + out * P * 2;
-    // Drawn in the ordinary ink like the body it comes off: the deep's
-    // inversion makes both white.
-    cell(cx + dx / d * reach - P / 2, cy + dy / d * reach - P / 2, '#000');
-    if (out > 0.85) {
-      const hx = cx + dx / d * (reach + P), hy = cy + dy / d * (reach + P);
-      for (const [ox, oy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) cell(hx + ox * P, hy + oy * P, PURPLES[WHITE - 1]);
+let frame = { t: -1, list: [] };
+// Every fighter's turn worked out once a frame: the serpent's give and the
+// fighters' drawing read the same clock.
+function fighters(t) {
+  if (frame.t === t) return frame.list;
+  const list = [];
+  for (const { w, st } of stationsNow()) {
+    const key = st.cls && ATTACKS[st.cls] ? st.cls : null, R = st.rung || 0;
+    const x = Math.round(w.x) / P, restY = Math.round(w.y) / P;
+    const f = { w, st, key, R, x, restY, a: null, a0: null, sauce: null };
+    if (key && striking(w)) {
+      const c = ATTACKS[key], a0 = turnOf(w, c, t);
+      if (a0 != null && a0 < c.len + 0.8) { f.a0 = a0; f.sauce = sauceOf(c, R, a0, x); f.a = f.sauce.a; }
     }
+    list.push(f);
   }
-  ctx.fillStyle = '#000';
+  frame = { t, list };
+  return list;
 }
 
-// --- lances ---------------------------------------------------------------------
-// A shaft of black water: pale cells with a crest of the abyss's purple running
-// down it, and a white point. In the water it is where the thrower's arm sent it,
-// pointed at the segment it will stick in; stuck, it rides that segment as
-// the coil sways, point buried, and dissolves from the butt toward the point
-// over its last second and a half.
-export function drawLances() {
-  const t = now();
-  for (const l of S.lances) {
-    const target = l.seg != null ? coilAt(l.seg, t) : null;
-    const stuck = target && t >= l.at + LANCE_FLY * 1000;
-    // Stuck, its point is a cell into the underside of the coil and the
-    // shaft hangs out below, the way it came up from the floor.
-    const tipX = stuck ? target.x : l.x, tipY = stuck ? target.y + coilThick(l.seg) / 2 - P : l.y;
-    // in the water it points along its flight: from where it came, toward the coil
-    let dx = target ? target.x - l.x : 1, dy = target ? target.y - l.y : 0;
-    if (stuck) { dx = -0.35; dy = -1; }
-    const d = Math.hypot(dx, dy) || 1;
-    const ux = dx / d, uy = dy / d;
-    const left = l.until ? (l.until - t) / 1500 : 1;
-    const n = LANCE_LEN / P;
-    for (let i = 0; i < n; i++) {
-      // the butt goes first
-      if (left < 1 && (n - i) / n > left) continue;
-      const x = tipX - ux * i * P, y = tipY - uy * i * P;
-      const crest = Math.sin(i * 1.3 - t / 180) > 0.3;
-      cell(x, y, i === 0 ? GREYS[WHITE] : crest ? PURPLES[WHITE] : GREYS[10]);
-    }
-  }
-  ctx.fillStyle = '#000';
+// The coil's give under every contact of every fighter's turn (render/serpent.js).
+export function dentsNow(t) {
+  const out = [];
+  for (const f of fighters(t)) if (f.sauce) out.push(...dentsOf(f.sauce, t, f.a0));
+  return out;
+}
+// The highest rung any Hexer stands at: her capstone brightens Held.
+export function hexerRung() {
+  let r = -1;
+  for (const f of fighters(now() / 1000)) if (f.key === 'hexer') r = Math.max(r, f.R);
+  return r;
 }
 
-// --- grenades and their rings -----------------------------------------------------
-// A grenade is the surface's ripples held in a ball: a ring of purple cells
-// round a black middle, turning. It bursts into rings that walk out to
-// GRENADE_R and thin as they go, a lighter one lagging the first.
-export function drawGrenades() {
-  const t = now();
-  for (const g of S.grenades) {
-    const x = snap(g.x), y = snap(g.y);
-    const turn = Math.floor(t / 120) % 4;
-    const ring = [[0, -1], [1, 0], [0, 1], [-1, 0]];
-    ring.forEach(([ox, oy], i) => cell(x + ox * P, y + oy * P, PURPLES[i === turn ? WHITE : WHITE - 3]));
-    cell(x, y, GREYS[0]);
+// --- the buffs on a fighter ------------------------------------------------------------
+// Inspired: a chevron of the purples bobbing over the head; two at Anthem;
+// both the brightest with a white apex each at the capstone. Hasted: short
+// streaks running back off the body's side.
+function chevron(cx, cy, tone) { cell(ctx, cx, cy + 1, tone); cell(ctx, cx + 1, cy, tone); cell(ctx, cx + 2, cy + 1, tone); }
+function paintInspired(t, x, y, lv) {
+  const bob = Math.floor(t * 2.5) % 2;
+  chevron(x, y - 5 - bob, PURPLES[11]);
+  if (lv > 1) chevron(x, y - 8 - bob, lv > 2 ? PURPLES[11] : PURPLES[9]);
+  if (lv > 2) { cell(ctx, x + 1, y - 5 - bob, WHITE); cell(ctx, x + 1, y - 8 - bob, WHITE); }
+}
+function paintHasted(t, x, y) {
+  for (let r = 0; r < 3; r++) {
+    const a = (t * 3 + r * 0.37) % 1, sx = x - 2 - Math.floor(a * 4);
+    cell(ctx, sx, y + r, GREYS[[11, 10, 8, 6][Math.floor(a * 4)]]);
   }
-  for (const r of S.rings) {
-    const k = Math.min(1, (t - r.at) / (GRENADE_RING_S * 1000));
-    for (const [lag, ramp] of [[0, PURPLES], [0.25, GREYS]]) {
-      const kk = k - lag;
-      if (kk <= 0) continue;
-      const rad = kk * GRENADE_R;
-      const n = Math.max(6, Math.round(RING_CELLS * kk));
-      for (let i = 0; i < n; i++) {
-        // thinner the further it has gone
-        if (hash(i * 7.3 + r.at) < kk * 0.6) continue;
-        const a = i / n * Math.PI * 2 + kk;
-        cell(r.x + Math.cos(a) * rad, r.y + Math.sin(a) * rad, ramp[WHITE - (i % 3)]);
+}
+// until merge: the buffs as the page lays them, off the Bard's song and the
+// Martial Artist's capstone finisher, where the sim keeps none of its own.
+function buffsOf(f, list, t) {
+  const tms = t * 1000, w = f.w;
+  if ('inspiredUntil' in w || 'hastedUntil' in w) {
+    const bards = list.filter(o => o.key === 'bard').map(o => o.R);
+    const lv = bards.length ? (Math.max(...bards) >= 8 ? 3 : Math.max(...bards) >= 4 ? 2 : 1) : 1;
+    return { inspired: (w.inspiredUntil || 0) > tms ? lv : 0, hasted: (w.hastedUntil || 0) > tms };
+  }
+  let inspired = 0, hasted = false;
+  for (const o of list) {
+    if (o === f || o.a == null) continue;
+    if (o.key === 'bard' && o.a >= 1.2 && o.a < (R8(o.R) ? 6 : 3.4)) inspired = Math.max(inspired, R8(o.R) ? 3 : R4(o.R) ? 2 : 1);
+    if (o.key === 'martial' && R8(o.R) && o.a >= ATTACKS.martial.plan(o.R).fin) hasted = true;
+  }
+  return { inspired, hasted };
+}
+
+// --- the layers --------------------------------------------------------------------
+let shots = [];
+export function drawFighters() {
+  const t = now() / 1000, list = fighters(t);
+  shots = [];
+  for (const f of list) {
+    let at = [f.x, f.restY];
+    if (!f.key) body(f.x, f.restY);             // a base fighter: the plain square, standing guard
+    else {
+      const c = ATTACKS[f.key];
+      const api = {
+        restY: f.restY, kick: f.sauce ? f.sauce.kick : 0,
+        others: list.filter(o => o !== f).map(o => ({ x: o.x, y: o.restY - liftOf(o.key, o.R) })),
+        shot: fn => shots.push(fn),
+        at: (x, y) => { at = [x, y]; },
+      };
+      if (f.a != null && f.a < c.len) {
+        // the held star under the fighter, so the fist or blade reads on top of it
+        sparksOf(ctx, f.sauce, t, f.a0);
+        c.draw(ctx, t, f.a, api, f.R, f.x);
+      } else {
+        at = [f.x, f.restY - liftOf(f.key, f.R)];
+        REST[f.key](ctx, at[0], at[1], f.R, t);
       }
     }
+    const b = buffsOf(f, list, t);
+    if (b.inspired) paintInspired(t, at[0], at[1], b.inspired);
+    if (b.hasted) paintHasted(t, at[0], at[1]);
   }
   ctx.fillStyle = '#000';
 }
 
-// --- sigils -----------------------------------------------------------------------
-// A circle drawn on the floor, seen edge-on: a flat ring of purple cells
-// lying on the scales, marks inside it, and a thread of it rising to the
-// length of coil it holds.
-export function drawSigils() {
-  const t = now();
-  for (const s of S.sigils) {
-    const cx = snap(s.x), floor = bedTop(cx) - P;
-    const n = Math.round(SIGIL_RX * 2 / P) * 2;
-    for (let i = 0; i < n; i++) {
-      const a = i / n * Math.PI * 2;
-      const lit = Math.sin(a * 3 - t / 400) > 0.5;
-      cell(cx + Math.cos(a) * SIGIL_RX, floor - SIGIL_RY + Math.sin(a) * SIGIL_RY, PURPLES[lit ? WHITE : WHITE - 2]);
-    }
-    for (let m = -2; m <= 2; m += 2) cell(cx + m * P, floor - SIGIL_RY - (hash(cx + m) > 0.5 ? P : 0), GREYS[9]);
-    // the thread: every other cell, up to the underside of the coil
-    const seg = nearestSeg(cx, floor, t);
-    const p = coilAt(seg.seg, t);
-    for (let y = floor - SIGIL_RY * 2; y > p.y + coilThick(seg.seg) / 2 + P; y -= P * 2)
-      cell(cx, y, PURPLES[WHITE - 4]);
-  }
+export function drawShots() {
+  for (const fn of shots) fn();
+  shots = [];
   ctx.fillStyle = '#000';
 }
 
-// --- beams ------------------------------------------------------------------------
-// A wizard's beam: the interference drawn as a line, from the wizard to the
-// segment it lights, crests travelling down it toward the coil.
-export function drawBeams() {
-  const t = now();
-  for (const b of S.beams) {
-    const p = coilAt(b.seg, t);
-    along(b.x, b.y, p.x, p.y, (x, y, i) => {
-      const f = Math.sin(i * BEAM_WAVE - t / BEAM_MS * Math.PI * 2);
-      if (f > 0.35) cell(x, y, PURPLES[WHITE]);
-      else if (f > -0.3) cell(x, y, GREYS[8]);
+// --- the scratch bench (dev only) ------------------------------------------------------
+// `__kitBench([{ cls, rung, slot, a, gap }])` stands a stand-in fighter at
+// each slot, drawn and never stepped: `a` holds its turn's clock still at a
+// moment (for a shot beside the page at the same moment), `gap` stands it
+// that many cells under the coil's belly, as the fight swims a melee
+// fighter up. `__kitBench()` clears it. Until the party's scenes land
+// (track STATE), this is how the drawing is looked at.
+if (import.meta.env?.DEV) {
+  globalThis.__kitBench = (list = []) => {
+    bench.length = 0;
+    list.forEach((o, i) => {
+      const slot = o.slot ?? i, at = DEEP_SLOTS_DRAWN[slot % DEEP_SLOTS_DRAWN.length];
+      const cx = o.x != null ? o.x : Math.round((deepX0() + at * DEEP_W) / P) - 1;
+      const floor = Math.floor(deepFloor() / P);
+      const y = o.gap != null ? hideBot(cx) + o.gap : floor - BODY - (o.up || 0);
+      const w = { uid: 'bench' + i, x: cx * P, y: y * P, benchA: o.a ?? null };
+      bench.push({ w, st: { id: 'bench' + i, kind: o.kind || 'altar', built: true, cls: o.cls || null, rung: o.rung || 0 } });
     });
-  }
-  ctx.fillStyle = '#000';
-}
-
-// --- the called star --------------------------------------------------------------
-// A cross of cells with a tail straight up behind it, thinning. In the yard
-// it falls through the sky in the magic tones and goes into the pit; in the
-// deep it comes down through the underside of the surface onto the coil.
-function drawStarAt(x, y, core, tones) {
-  const cx = snap(x), cy = snap(y);
-  for (let i = 1; i <= STAR_TAIL; i++) {
-    if (hash(i + now() / 90) < i / STAR_TAIL) continue;
-    cell(cx, cy - i * P, tones[Math.min(tones.length - 1, i >> 1)]);
-  }
-  for (const [ox, oy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) cell(cx + ox * P, cy + oy * P, tones[0]);
-  cell(cx, cy, core);
-}
-
-export function drawStarYard() {
-  const s = S.starFall;
-  if (!s || s.y >= abyssLine()) return;
-  drawStarAt(s.x, s.y, '#fff', MAGIC_TONES);
-  ctx.fillStyle = '#000';
-}
-
-export function drawStarDeep() {
-  const s = S.starFall;
-  if (!s || s.y < deepTop()) return;
-  drawStarAt(s.x, s.y, GREYS[WHITE], [PURPLES[WHITE], PURPLES[WHITE - 1], PURPLES[WHITE - 2], PURPLES[WHITE - 3]]);
-  ctx.fillStyle = '#000';
+    frame.t = -1;
+    return bench.length;
+  };
+  // Where the bench's bodies stand and how the deep's camera frames them, for a crop.
+  globalThis.__kitView = () => ({ camX: S.camX, camY: S.camY, zoom: S.zoom, dpr: S.dpr, viewW: S.viewW, viewH: S.viewH,
+                                  cells: bench.map(b => ({ x: b.w.x / P, y: b.w.y / P, bot: hideBot(Math.round(b.w.x / P) + 1) })) });
 }
