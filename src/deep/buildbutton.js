@@ -90,7 +90,8 @@ function fillPicker(kinds, first) {
 // Every frame (a layer in render.js): shown or not, and where. A fade, not a
 // pop: `on` is the class the stylesheet fades on, and the element is never
 // hidden outright, so it can fade out from where it stood.
-let at = { x: null, y: null };
+let at = { x: null, y: null, px: null };
+const EDGE = 4;                          // px kept clear of the window's edge, as board.js keeps
 export function seatBuildButton() {
   if (!btn) make();
   const offer = buildOffer();
@@ -105,13 +106,17 @@ export function seatBuildButton() {
   fillPicker(offer.kinds, offer.first);
   // Centered over the slot, its foot BUILD_BUTTON_UP over the floor, in the
   // deep's camera, as `seatCall` seats the call to build the bench.
+  // Both kept inside the window, as every board is.
+  const inside = (x, w) => Math.round(Math.max(EDGE, Math.min(x, S.W - w - EDGE)));
   const w = btn.offsetWidth || 0;
-  const x = Math.round((slotX(offer.slot) - S.camX) * S.zoom - w / 2);
+  const mid = (slotX(offer.slot) - S.camX) * S.zoom;
+  const x = inside(mid - w / 2, w);
   const bottom = Math.round(S.H - (deepFloor() - BUILD_BUTTON_UP - S.camY) * S.zoom);
-  if (x !== at.x || bottom !== at.y) {
-    at = { x, y: bottom };
+  const px = inside(mid - (picker.offsetWidth || 0) / 2, picker.offsetWidth || 0);
+  if (x !== at.x || bottom !== at.y || px !== at.px) {
+    at = { x, y: bottom, px };
     btn.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
     // The picker stands on the button's head.
-    picker.style.transform = `translate3d(${x}px, ${-(bottom + (btn.offsetHeight || 0) + P)}px, 0)`;
+    picker.style.transform = `translate3d(${px}px, ${-(bottom + (btn.offsetHeight || 0) + P)}px, 0)`;
   }
 }

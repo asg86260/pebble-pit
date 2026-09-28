@@ -190,3 +190,66 @@ export const TESTS = [
     ];
   }]
 ];
+
+// --- anchor: RAILS (the party wave, track BOARD) ------------------------------------
+// A station's rails under a real pointer (deep/rails.js): a tap on a plate
+// views the class and fades the other; the Buy takes the class and the other
+// rail folds away, height and ink, over RAIL_FOLD_MS; Reset stands both again.
+// What each press does to the station is test/rails.test.mjs; this is the
+// press reaching it, and the fold being drawn.
+import { showPanel } from '../board.js';
+import { seatRails } from '../deep/rails.js';
+import { RAIL_FOLD_MS } from '../config.js';
+import { tap, sleep, raf } from './kit.js';
+
+const rails = () => document.querySelector('.rails[data-station="s1"]');
+const fold = cls => rails()?.querySelector(`.rl-fold[data-cls="${cls}"]`);
+const tall = cls => fold(cls)?.getBoundingClientRect().height || 0;
+const seat = async () => { seatRails(); await raf(); await raf(); seatRails(); };
+
+TESTS.push(['rails: a tap views, the buy takes the class and folds the other, Reset stands both again', async () => {
+  // until merge: `__party` (STATE) stands the station; here it is written onto
+  // S, an altar with both its classes open, and scales to spend.
+  S.stations = [{ id: 's1', kind: 'altar', slot: 0, built: true, cls: null, rung: 0, paid: [], fighter: null }];
+  S.stationsBuilt = 2;
+  window.__scales(9999);
+  showPanel('s1', true);
+  await seat();
+  const st = S.stations[0];
+  const up = !!rails() && S.stationBoardOpen === 's1';
+  const both = tall('brawler') > 0 && tall('sword') > 0;
+
+  await tap(rails().querySelector('.rl-plate[data-cls="brawler"]'));
+  await seat();
+  const faded = fold('sword').classList.contains('dim') && !fold('brawler').classList.contains('dim');
+  const blank = st.cls === null && st.rung === 0;
+  const says = rails().querySelector('.rl-buybtn .rl-what').textContent;
+
+  await tap(rails().querySelector('.rl-buybtn'));
+  // until merge: CREW's `buyRung` is a stub; the rung it will take, by hand.
+  if (!st.rung) Object.assign(st, { cls: 'brawler', rung: 1, paid: [['scale', 15]] });
+  await seat();
+  await sleep(RAIL_FOLD_MS + 100);
+  await seat();
+  const shut = fold('sword').classList.contains('shut') && tall('sword') < 1;
+  const kept = tall('brawler') > 0 && rails().querySelectorAll('.rl-fold[data-cls="brawler"] .rl-rail i.on').length === 1;
+
+  await tap(rails().querySelector('.rl-reset'));
+  // until merge: CREW's `resetStation` is a stub; the blank station, by hand.
+  if (st.rung) Object.assign(st, { cls: null, rung: 0, paid: [] });
+  await seat();
+  await sleep(RAIL_FOLD_MS + 100);
+  await seat();
+  const again = !fold('sword').classList.contains('shut') && tall('sword') > 0 && tall('brawler') > 0;
+  showPanel(null, true);
+  return [
+    ok(up, "the station's board is up with its rails", `${S.stationBoardOpen}`),
+    ok(both, 'both rails stand on a blank station', `${tall('brawler')} ${tall('sword')}`),
+    ok(faded, 'a tap on the Brawler fades the Swordsman'),
+    ok(blank, 'and takes nothing'),
+    ok(says === 'Buy Brawler 1', 'Buy names what it buys', says),
+    ok(shut, 'after the buy the Swordsman has folded away', `${tall('sword')}px`),
+    ok(kept, 'and the Brawler stands, its first pip lit'),
+    ok(again, 'Reset stands both rails again', `${tall('brawler')} ${tall('sword')}`)
+  ];
+}]);
