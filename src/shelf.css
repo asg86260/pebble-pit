@@ -733,6 +733,55 @@ html.dark .rails .rl-tree i.cap { color: #a979ef; }
   padding: 0; text-decoration: underline; cursor: pointer;
 }
 .rails .rl-reset:disabled { color: var(--ink-5); text-decoration: none; cursor: default; }
+/* What a choice leads to (voted E2, docs/mocks/station-effects-2-2026-09-28.html):
+   a specialist's move a square, its capstone a purple one, each with its
+   line; a status in a line bold, with its line on hover. */
+.rails .rl-fxs { grid-column: 1 / -1; grid-row: 3; display: grid; gap: 2px; margin-top: 3px; }
+.rails .rl-fx { display: grid; grid-template-columns: 12px 1fr; gap: 0 6px; align-items: start; font-size: 11px; }
+.rails .rl-fx i { display: block; box-sizing: border-box; width: 10px; height: 10px; margin-top: 2px; }
+.rails .rl-fx i.mv { border: 2px solid currentColor; }
+.rails .rl-fx i.cp { background: #6f36c9; }
+html.dark .rails .rl-fx i.cp { background: #a979ef; }
+.rails .rl-st { font-weight: bold; text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
+.rails .rl-fx.cap .rl-st { color: #6f36c9; }
+html.dark .rails .rl-fx.cap .rl-st { color: #a979ef; }
+@media (hover: hover) {
+  .rails .rl-row:hover:not(:disabled) .rl-st, .rails .rl-row:hover:not(:disabled) .rl-fx i.mv { color: var(--paper); }
+}
+.rails .rl-glyph { display: block; flex: none; }
+/* A root over its fork: its name centered, a stem, a crossbar that ends at
+   its branches, and the branches under it, each headed by its glyph. */
+.rails .rl-root { display: grid; justify-items: center; text-align: center; font-size: 12px; }
+.rails .rl-root span { font-size: 11px; color: var(--ink-4); }
+.rails .rl-stem { display: block; justify-self: center; width: 2px; height: 8px; background: currentColor; margin: -8px 0; }
+.rails .rl-cross { position: relative; height: 8px; margin-bottom: -8px; }
+.rails .rl-cross::before { content: ''; position: absolute; left: 25%; right: 25%; top: 0; height: 2px; background: currentColor; }
+.rails .rl-cross::after { content: ''; position: absolute; left: calc(25% - 1px); right: calc(25% - 1px); top: 0; height: 8px;
+                          border-left: 2px solid currentColor; border-right: 2px solid currentColor; }
+.rails .rl-brs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rails .rl-br { display: grid; gap: 3px; align-content: start; }
+.rails .rl-bn { display: flex; gap: 5px; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+/* The Recruit's own tree (voted R2, docs/mocks/recruit-choice-2026-09-28.html):
+   a crossbar to its five, the one looked at filled, the locked dashed; the
+   one looked at opened under them, with the button that buys it. */
+.rails .rl-rail { position: relative; height: 8px; margin-bottom: -8px; }
+.rails .rl-rail::before { content: ''; position: absolute; left: calc(50% / var(--n)); right: calc(50% / var(--n)); top: 0; height: 2px; background: currentColor; }
+.rails .rl-rail i { position: absolute; top: 0; width: 2px; height: 8px; margin-left: -1px; background: currentColor; }
+.rails .rl-five { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; }
+.rails .rl-node {
+  display: grid; justify-items: center; gap: 2px; font: inherit; font-size: 10px; text-align: center;
+  background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 3px 1px; cursor: pointer;
+}
+.rails .rl-node .rl-ic { display: flex; gap: 1px; }
+.rails .rl-node.on { background: var(--ink); color: var(--paper); }
+.rails .rl-node.locked { border-style: dashed; color: var(--ink-5); cursor: default; }
+.rails .rl-pick { display: grid; gap: 8px; border: 1px solid var(--ink); padding: 6px 8px; }
+/* The tree reads as the rows do, not as the board's headings, and never sets
+   the board's width: its lines wrap to what the rows have made it. */
+.rails .rl-root, .rails .rl-pick, .rails .rl-five { text-transform: none; letter-spacing: normal; }
+.rails .rl-five, .rails .rl-pick { width: 0; min-width: 100%; box-sizing: border-box; }
+.rails .rl-fx { white-space: normal; }
+.rails .rl-become { grid-template-columns: 1fr auto; }
 @media (prefers-reduced-motion: reduce) {
   .rails .rl-arm { transition: none; }
 }

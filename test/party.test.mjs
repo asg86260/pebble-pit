@@ -10,10 +10,11 @@ import { S } from '../src/state.js';
 import { P, WORKER, FIRST_KINDS, FIGHT_STATIONS_MAX, SERPENT_WOUND, FANG_BREAKS, FORK_RUNG } from '../src/config.js';
 import { belowYard } from '../src/route.js';
 import { deepPost } from '../src/crew/deep.js';
-import { stationById, fighterAt, classesOpen, stationMid, kindsOffered } from '../src/deep/party.js';
+import { stationById, fighterAt, classesOpen, stationMid, kindsOffered, keyOf } from '../src/deep/party.js';
 import { buildOffer, press } from '../src/deep/buildbutton.js';
-import { railsOf, pressKind } from '../src/deep/rails.js';
-import { pressBuild, climb, reset, flush } from './party-press.mjs';
+import { railsOf } from '../src/deep/rails.js';
+import { worksAt } from '../src/works.js';
+import { pressBuild, choose, climb, reset, flush } from './party-press.mjs';
 
 const her = () => S.workers.find(w => belowYard(w));
 const atPost = w => !!w && !w.walking && Math.abs(w.x - deepPost(w.type, w)) < 1;
@@ -46,31 +47,35 @@ function afterSnatch() {
 // at the stage's depth, and the serpent's own step turning the stage.
 const breakPhase = () => window.__serpent({ wound: SERPENT_WOUND[S.serpentStage] });
 
-group('after the snatch the first station is free, a delver builds it and the sqwife swims there', async () => {
+group('after the snatch the first station is free, a delver builds it and the sqwife swims there as its Recruit', async () => {
   afterSnatch();
   const offer = buildOffer();
   const could = offer.shown && offer.first;
   const name = her().name;
-  // The button lays a lot; its board asks what goes up there.
-  const lot = press();
-  const asked = railsOf(lot);
-  const offered = asked.kinds.filter(k => k.open).map(k => k.kind);
-  const built = pressKind(lot, 'altar');
-  const st = S.stations[0];
-  const second = pressBuild('armory');
+  // The button puts the station up at once: nothing is picked first.
+  const id = press();
+  const st = () => stationById(id);
+  const queued = st() && { kind: st().kind, built: st().built, fangs: S.fangs };
+  const second = pressBuild();
   const trip = follow(name, w => stationById('s1')?.built && w.type === 'fighter' && atPost(w));
   const w = S.workers.find(o => o.name === name);
+  // Standing, its Recruit's board asks what it becomes: the three starters.
+  const asked = railsOf(id);
+  const offered = asked?.recruit ? asked.kinds.filter(k => k.open).map(k => k.kind) : [];
+  const fought = keyOf(st());
+  const chose = choose(id, 'altar');
   return [
-    ok(could && asked.lot && JSON.stringify(offered) === JSON.stringify(FIRST_KINDS),
-       "the button lays a lot, and its board offers the three starting kinds", JSON.stringify(offered)),
-    ok(built && st && st.kind === 'altar' && !st.built && S.fangs === 0, 'one is picked, and it costs nothing',
-       JSON.stringify(st)),
+    ok(could && id && queued && queued.kind === null && !queued.built && queued.fangs === 0,
+       'the button puts the first station up at once, with nothing picked, for nothing', JSON.stringify(queued)),
     ok(!second && S.stations.length === 1, 'and with no fang held, nothing else can be built'),
     ok(trip.types.includes('delver'), 'she puts it up herself, as a delver', trip.types.join()),
     ok(trip.there && S.stationsBuilt === 1, 'it stands, and she swims to it as its fighter', JSON.stringify(trip)),
     ok(trip.jump < WORKER, 'a stroke at a time, never a jump', `${trip.jump.toFixed(1)}px`),
-    ok(w && fighterAt(stationById('s1')) === w && w.station === 's1' && belowYard(w),
-       'and she is the one the station names')
+    ok(w && fighterAt(st()) === w && w.station === 's1' && belowYard(w), 'and she is the one the station names'),
+    ok(fought === 'recruit' && asked?.recruit && JSON.stringify(offered) === JSON.stringify(FIRST_KINDS),
+       'a Recruit, whose board offers the three starting kinds', `${fought} ${JSON.stringify(offered)}`),
+    ok(chose && st().kind === 'altar' && st().rung === 1 && keyOf(st()) === 'brawler',
+       "rung 1 bought makes her the altar's Fighter", JSON.stringify(st()))
   ];
 });
 
@@ -95,9 +100,10 @@ group('a fang drops at a break, sinks, is carried to the crusher, and buys the n
   const counted = { fangs: S.fangs, seen: S.seenFang, loose: S.fangsLoose.length };
   const button = buildOffer().shown && kindsOffered().length === 5;
   const resident = S.workers.find(w => w.type === 'gatherer')?.name;
-  const bought = pressBuild('well');
+  const bought = pressBuild();
   const spent = S.fangs;
   const trip = follow(resident, w => stationById('s2')?.built && w.type === 'fighter' && atPost(w));
+  const chose = choose('s2', 'well');
   return [
     ok(dropped.stage === 1 && dropped.n === 1 && dropped.once === 1, 'the break drops one fang',
        JSON.stringify(dropped)),
@@ -105,11 +111,12 @@ group('a fang drops at a break, sinks, is carried to the crusher, and buys the n
     ok(held && carrier === 'gatherer', 'a gatherer picks it up', `${carrier}`),
     ok(counted.fangs === 1 && counted.seen && counted.loose === 0, 'and carries it to the crusher, where it counts',
        JSON.stringify(counted)),
-    ok(button, 'with a fang held, the button offers every kind'),
+    ok(button, 'with a fang held, the button stands, and every kind is on offer'),
     ok(bought && spent === 0, 'the fang buys the next station', `fangs ${spent}`),
     ok(trip.types.includes('delver') && trip.there, 'a delver builds it, and the pod resident swims there as its fighter',
        JSON.stringify(trip)),
-    ok(trip.jump < WORKER, 'a stroke at a time', `${trip.jump.toFixed(1)}px`)
+    ok(trip.jump < WORKER, 'a stroke at a time', `${trip.jump.toFixed(1)}px`),
+    ok(chose && stationById('s2').kind === 'well', 'and its Recruit becomes the Novice', JSON.stringify(stationById('s2')))
   ];
 });
 
@@ -216,9 +223,27 @@ group("a station climbs its base unit, forks at rung 4, and Reset hands it all b
     ok(took.cls === 'mage' && took.tree.arms.find(a => a.cls === 'bard').gone, 'the fork takes the Mage and closes the other branch'),
     ok(kept.cls === 'mage' && kept.rung === FORK_RUNG + 1 && kept.scales > 0, 'and the station keeps what was paid there',
        JSON.stringify({ kept, bills })),
-    ok(st.rung === 0 && st.cls === null && st.paid.length === 0, 'Reset blanks it'),
+    ok(st.rung === 0 && st.cls === null && st.kind === null && st.paid.length === 0, 'Reset blanks it, kind and all'),
     ok(flying && S.scales - purse === kept.scales, 'the scales are tossed back into the crusher',
        `${flying} ${S.scales - purse} of ${kept.scales}`),
-    ok(st.fighter === fighter && fighter, 'and the fighter stays, the base unit again')
+    ok(st.fighter === fighter && fighter && keyOf(st) === 'recruit', 'and the fighter stays, a Recruit again')
+  ];
+});
+
+// A save from before the build came first: a lot laid, its fang spent, its
+// kind never picked and no work queued to put it up. It is queued on the
+// frame after the load, and stands as a Recruit.
+group('an old save\'s unpicked lot is built, and stands as a Recruit', async () => {
+  afterSnatch();
+  S.stations = [{ id: 's1', kind: null, slot: 0, built: false, cls: null, rung: 0, paid: [], fighter: null }];
+  window.__reload();
+  run(1 / 60);
+  const queued = worksAt('s1').length;
+  window.__finish();
+  runUntil(() => fighterAt(stationById('s1')), 20);
+  const st = stationById('s1');
+  return [
+    ok(queued === 1, 'its build is queued', `${queued}`),
+    ok(st.built && keyOf(st) === 'recruit' && fighterAt(st), 'and it stands, a Recruit at it', JSON.stringify(st))
   ];
 });

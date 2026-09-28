@@ -19,10 +19,10 @@ const S = yard.S;
 
 // The party stood up by `__party`, one station a kind, each at the next
 // slot; `built: false` leaves the last one's work in line, as the build
-// button leaves it.
+// button leaves it, its kind to be picked once it stands.
 const stand = (kinds, built = true) => {
   window.__party({ stations: (built ? kinds : kinds.slice(0, -1)).map(kind => ({ kind })) });
-  if (!built) pressBuild(kinds.at(-1));
+  if (!built) pressBuild();
   return S.stations;
 };
 

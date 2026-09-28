@@ -35,7 +35,7 @@ group('a post stands under each station once it stands, keyed by its id', async 
   window.__crew(0, 3);
   window.__snatch({ played: true });
   const before = state().roster.filter(p => p.job === 'fighters').length;
-  pressBuild('altar');
+  pressBuild();
   const rising = !!post('station:s1');
   window.__finish();
   run(1);

@@ -14,7 +14,7 @@
 // doors may stand open in either order, so `after` is a list a row reads
 // and not a step in a chain.
 
-import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS, CLASSES, BASES } from './config.js';
+import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS, CLASSES, BASES, RECRUIT } from './config.js';
 import { S, bench, casino, filter, tower, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { houseRect } from './house.js';
@@ -52,7 +52,7 @@ export const KINDS = {
 };
 
 // Who stands at a station: its class, or below the fork its base unit.
-const whoOf = st => (st?.cls ? CLASSES[st.cls]?.name : BASES[st?.kind]) || null;
+const whoOf = st => (st?.cls ? CLASSES[st.cls]?.name : st?.kind ? BASES[st.kind] : st?.built ? RECRUIT.name : null) || null;
 
 const ORDINALS = ['', 'second', 'third', 'fourth'];
 
@@ -71,11 +71,10 @@ function partyRow(id) {
   return {
     key: id, party: true,
     // A station is called by its fighter (DESIGN.md, "A station is its
-    // fighter and a prop"). Two Fighters, or two empty lots, would be two
+    // fighter and a prop"). Two Fighters, or two Recruits, would be two
     // boards of one name, so a repeat is counted off the ids before it: "the
     // second Fighter".
     get name() {
-      if (st() && !st().kind) return 'an empty lot';
       const who = whoOf(st());
       const nth = PARTY_IDS.slice(0, PARTY_IDS.indexOf(id))
         .filter(o => whoOf(stationById(o)) === who).length;
@@ -83,13 +82,11 @@ function partyRow(id) {
       return nth ? `${art} ${ORDINALS[nth]} ${noun}` : `${art} ${noun}`;
     },
     get glyph() { return KINDS[st()?.kind]?.glyph || 'crate'; },
-    // Nothing to say until it has a kind: a lot's board is its own question.
-    get empty() { return st()?.kind ? 'nothing to learn yet' : ''; },
+    get empty() { return 'nothing to learn yet'; },
     // The fighter's post, under the station: one body at most (`moveFighter`).
     post: { key: `${id}job`, job: JOB.FIGHT, station: id },
-    // Open once it stands, and while it is an empty lot: the lot's board is
-    // where its kind is picked.
-    open: () => !!st() && (st().built || !st().kind),
+    // Open once it stands: a Recruit's board is where its kind is picked.
+    open: () => !!st() && st().built,
     // Its ground whether or not it has gone up yet: the build's scaffold
     // stands where the station will.
     stand: () => { const s = st(); return s ? standOfStation(s) : null; },

@@ -16470,7 +16470,7 @@ builders build: the scaffold goes up and the station is raised as that
 kind by bodies walking to it, as every station is. Nothing on the floor
 changes kind in place.
 
-### Built first, a recruit, then two choices (design, not built)
+### Built first, a recruit, then two choices (built, but the mark)
 
 The owner, 2026-09-28: "the fighter selection should happen after the
 station is built. not before", and then: "start every class as the same

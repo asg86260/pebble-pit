@@ -227,6 +227,30 @@ const brawler = {
   },
 };
 
+// --- the Recruit -------------------------------------------------------------------
+// Every station's first fighter (DESIGN.md, "Built first, a recruit, then two
+// choices", voted C): just the body, and one light punch. Up under the hide,
+// a fist of one cell driven in off the body's right, squashed against the
+// hide a pose, and gone again at rest: a square with nothing to carry.
+const recruit = {
+  len: 2.4, kickMax: 1, JAB: 1.0,
+  hits(R, x) { return [{ at: this.JAB, x: x + BODY, k: 0.2, kind: '' }]; },
+  draw(g, t, a, api, R, x) {
+    const y = swum(api, maxBot([x - 1, x + BODY]) + 5, trip(a, 0.4, 1.6, this.len)) + api.kick;
+    body(x, y);
+    api.at(x, y);
+    const reach = punchReach(a, this.JAB);
+    if (!reach) return;
+    const fx = x + BODY;
+    const fy = reach < 0 ? y - reach : y + (maxBot([fx, fx]) + 1 - y) * reach;
+    if (holdPose(a, this.JAB)) {
+      // squashed a cell wider against the hide, a dark keyline round it
+      rect(g, fx - 1, fy - 1, 4, 3, GREYS[2]);
+      rect(g, fx, fy, 2, 1, GREYS[10]);
+    } else cell(g, fx, fy, WHITE);
+  },
+};
+
 // --- the Swordsman ---------------------------------------------------------------
 // The blade's angle is a track of keys: [time, angle, how it gets there, and
 // for a contact its strength]. 'in' accelerates (a strike), 'out'
@@ -830,7 +854,7 @@ const bard = {
   },
 };
 
-export const ATTACKS = { brawler, sword: swordsman, monk, martial, ranger, assassin, sapper, hexer, mage, bard };
+export const ATTACKS = { recruit, brawler, sword: swordsman, monk, martial, ranger, assassin, sapper, hexer, mage, bard };
 
 // --- one move at a time --------------------------------------------------------------
 // The fight strikes one move at a time (deep/classes.js, `w.pose`), where the
@@ -847,6 +871,7 @@ const only = (c, o) => Object.assign(Object.create(c), o);
 // A moment on the page's posed clock, on its raw one: every hold before it added in.
 const realOf = (c, R, at) => at + groupsOf(c, R, 0).filter(o => o.at < at - 1e-6).reduce((n, o) => n + o.pause, 0);
 export const SEGMENTS = {
+  recruit() { return { c: recruit, from: recruit.JAB - 0.34, hit: recruit.JAB, to: recruit.JAB + 0.42 }; },
   brawler(move, R, o) {
     const hay = move === 'haymaker', size = bSize(R) + (hay ? 1 : 0);
     const c = only(brawler, { punches: () => [{ at: H, side: hay ? 1 : o.side, k: hay ? 0.75 : 0.3, size, hay }] });

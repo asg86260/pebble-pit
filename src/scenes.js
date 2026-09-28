@@ -24,6 +24,7 @@ import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, r
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
 import { buildStation, nextSlot } from './deep/party.js';
+import { lookAt } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
 import { lay } from './deep/statuses.js';
 import { worksAt, progressOf } from './works.js';
@@ -447,6 +448,30 @@ const deepScenes = {
       window.__scales(99999);
       lookDeep(spotX('pods'));
       window.__board('pods');
+    } },
+  // A station just built: its Recruit at work, and its board asking the first
+  // choice, the Recruit's own tree with the Scout looked at (voted R2).
+  'recruit-board': { about: 'the deep', say: 'a new station: its Recruit at work, its board asking which fighter it becomes',
+    run: () => {
+      deepYard({ stage: 1, run: 2, party: [{ kind: null }] });
+      window.__scales(99999);
+      lookAtStation(0);
+      lookAt(S.stations[0].id, 'armory');
+      window.__board(S.stations[0].id);
+    } },
+  // A Recruit's light punch, up under the coil over its new station.
+  'recruit': { about: 'the deep', say: 'a Recruit up under the coil, throwing its one light punch',
+    run: () => {
+      deepYard({ stage: 1, wound: 300, run: 3, party: [{ kind: null }] });
+      lookAtStation(0);
+    } },
+  // A Fighter at the fork: each specialist's row with its move and capstone.
+  'fork-board': { about: 'the deep', say: "the Fighter's board at the fork: each specialist's move and capstone, statuses named",
+    run: () => {
+      deepYard({ stage: 1, run: 2, party: [{ kind: 'altar', cls: null, rung: 3 }] });
+      window.__scales(99999);
+      lookAtStation(0);
+      window.__board(S.stations[0].id);
     } },
   // A station's board with a class taken: the rail climbed, the other folded.
   'armory-board': { about: 'the deep', say: 'the armory\'s board: a Ranger three rungs up her rail, the Assassin\'s folded away',

@@ -13,9 +13,9 @@
 import { S } from '../state.js';
 import { P, WORKER, DEEP_GRAV, DEEP_DRAG, LADDER, DEEP_SLOTS, PARTY_IDS,
          STATION_WORK_S, FANG_BREAKS, FANG_KICK } from '../config.js';
-import { CLASSES, PAIRS, FIRST_KINDS, NEEDS_COMPANY, FORK_RUNG, FIGHT_STATIONS_MAX } from '../config/classes.js';
+import { CLASSES, RECRUIT, PAIRS, FIRST_KINDS, NEEDS_COMPANY, FORK_RUNG, FIGHT_STATIONS_MAX } from '../config/classes.js';
 import { deepX0, deepX1, deepFloor, slotX, bellyAt, tossX, inHopper } from './place.js';
-import { start, registerRows } from '../works.js';
+import { start, registerRows, worksAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { frames, now } from '../clock.js';
 import { onBreak } from './serpent.js';
@@ -33,11 +33,12 @@ export const stationById = id => S.stations.find(s => s.id === id) || null;
 export const stationsBuilt = () => S.stations.filter(s => s.built);
 // The class a station fights as: the one taken at the fork, or below it the
 // base unit's, which is its pair's first (DESIGN.md, "A fighter branches at
-// rung 4"). An empty lot has none.
-export const keyOf = st => (st && (st.cls || (st.kind && PAIRS[st.kind]?.[0]))) || null;
-export const classOf = st => CLASSES[keyOf(st)] || null;
-// An empty lot: laid out by the build button, its kind not picked yet.
-export const isLot = st => !!st && !st.kind;
+// rung 4"); before rung 1 has picked a kind, the Recruit (DESIGN.md, "Built
+// first, a recruit, then two choices").
+export const keyOf = st => (st ? st.cls || (st.kind ? PAIRS[st.kind]?.[0] : 'recruit') : null) || null;
+export const classOf = st => { const k = keyOf(st); return k === 'recruit' ? RECRUIT : CLASSES[k] || null; };
+// A station standing with its Recruit, its first choice still to make.
+export const unchosen = st => !!st && st.built && !st.kind;
 // The fighter's body, if one has been bound to the station yet.
 export const fighterAt = st =>
   (st && st.fighter && S.workers.find(w => w.type === TYPE.FIGHTER && w.uid === st.fighter)) || null;
@@ -55,12 +56,11 @@ export const nextSlot = () => {
   return -1;
 };
 // The first station is free, from the snatch; every one after it takes a
-// fang, up to the most there can be. One lot at a time: the button waits
-// while a lot's kind is still to be picked.
-export const canBuild = () => !!S.snatched && nextSlot() >= 0 && !S.stations.some(isLot) &&
+// fang, up to the most there can be.
+export const canBuild = () => !!S.snatched && nextSlot() >= 0 &&
   (S.stations.length === 0 || (S.fangs > 0 && S.stations.length < FIGHT_STATIONS_MAX));
-// The kinds a lot may become: the first lot one of the three whose base
-// unit fights alone, every kind after it.
+// The kinds a Recruit may become at rung 1: until a station has a kind, one
+// of the three whose base unit fights alone; every kind after it.
 export const kindsOffered = () => (S.stations.some(st => st.kind) ? Object.keys(PAIRS) : FIRST_KINDS);
 // The classes a kind's fork offers: both, but a class that needs company
 // waits for a second station.
@@ -78,9 +78,9 @@ const newId = () => PARTY_IDS.find(id => !stationById(id)) || null;
 
 const stationRow = id => ({
   key: `station-${id}`, kind: 'building', site: id,
-  get name() { const st = stationById(id); return st?.kind ? `raise the ${st.kind}` : 'raise a station'; },
+  name: 'raise a station',
   work: () => STATION_WORK_S,
-  // Paid for in a fang, or nothing for the first, spent on the pick; the
+  // Paid for in a fang, or nothing for the first, spent on the press; the
   // work itself asks no coin, which the bar over it and its tint read.
   bill: () => [],
   buy: () => stationLanded(id)
@@ -89,39 +89,37 @@ const ROWS = PARTY_IDS.map(stationRow);
 registerRows(ROWS);
 
 // The floating button's press: a fang spent (the first station is free) and
-// an empty lot laid out at the next free slot. Its board picks what goes up
-// there (`pickKind`); nothing is built until then.
-export function layLot() {
+// the station's build queued at the next free slot at once, for a delver to
+// put up. Nothing is chosen until it stands: its Recruit fights there, and
+// rung 1 on its board picks the base unit.
+export function layStation() {
   if (!canBuild()) return null;
-  const slot = nextSlot(), id = newId();
-  if (!id) return null;
+  const slot = nextSlot(), id = newId(), row = ROWS.find(r => r.key === `station-${id}`);
+  if (!id || !row) return null;
   if (S.stations.length > 0) S.fangs--;
   S.stations = [...S.stations, { id, kind: null, slot, built: false, cls: null, rung: 0, paid: [], fighter: null }];
+  start(id, row, slotX(slot));
   S.shopStale = true;
   return id;
 }
-// A lot's kind picked on its board: written down, and its work queued there
-// for a delver to put up. Nothing stands until the work lands.
-export function pickKind(id, kind, any = false) {
-  const st = stationById(id), row = ROWS.find(r => r.key === `station-${id}`);
-  if (!isLot(st) || !row || !PAIRS[kind] || (!any && !kindsOffered().includes(kind))) return false;
-  st.kind = kind;
-  start(id, row, slotX(st.slot));
-  S.shopStale = true;
-  return true;
-}
-// Both at once: the scenes' way to put a station up as the player would.
-export function buildStation(kind) {
-  if (!kindsOffered().includes(kind)) return false;
-  const id = layLot();
-  return !!id && pickKind(id, kind);
-}
-// The same, of any kind: the setup hook's way (`__party`) to stand a first
-// station the first lot would not offer.
+// The scenes' way to put a station up as the player would.
+export const buildStation = () => !!layStation();
+// A station of `kind` put up without its rung 1 bought: the setup hook's way
+// (`__party`) to stand any base unit at rung 0, as an older save may.
 export function raiseStation(kind) {
   if (!PAIRS[kind]) return false;
-  const id = layLot();
-  return !!id && pickKind(id, kind, true);
+  const id = layStation();
+  if (!id) return false;
+  stationById(id).kind = kind;
+  return true;
+}
+// A lot laid by an older build and never picked has no work to put it up:
+// its fang is spent, so it is queued now and lands as a Recruit.
+export function raiseLots() {
+  for (const st of S.stations) {
+    const row = ROWS.find(r => r.key === `station-${st.id}`);
+    if (!st.built && !st.kind && row && !worksAt(st.id).length) start(st.id, row, slotX(st.slot));
+  }
 }
 
 // The work's land hook: it stands, and a spare hand swims over to it.
@@ -248,16 +246,22 @@ export function moveFighter(id, dir) {
 }
 
 // --- its ladder ---------------------------------------------------------------------
-// A rung bought on the station's board. Below the fork it is the base
-// unit's and names no class; the fork's rung takes `cls`, one the kind
-// offers and has open; above it `cls` is the class taken, or left out. The
+// A rung bought on the station's board. A Recruit's rung 1 takes `cls` as
+// the kind it becomes, one `kindsOffered` offers; below the fork a rung is
+// the base unit's and names no class; the fork's rung takes `cls`, one the
+// kind offers and has open; above it `cls` is the class taken, or left out. The
 // bill the board took is kept on the station, summed a coin, so a Reset hands
 // back exactly what was paid here and nothing of another station's.
 export function buyRung(id, cls, bill = []) {
   const st = stationById(id);
   if (!st || !st.built || st.rung >= LADDER) return false;
   const next = st.rung + 1;
-  if (next === FORK_RUNG) {
+  if (!st.kind) {
+    // the Recruit's rung: `cls` is the kind it becomes
+    if (!kindsOffered().includes(cls)) return false;
+    st.kind = cls;
+    cls = null;
+  } else if (next === FORK_RUNG) {
     if (!classesOpen(st.kind).includes(cls)) return false;
     st.cls = cls;
   } else if (next > FORK_RUNG && cls && cls !== st.cls) return false;
@@ -274,8 +278,8 @@ export function buyRung(id, cls, bill = []) {
 }
 
 // Reset: every bill paid at this station handed back, the rung to nought and
-// the class blank. The fighter stays, its station's base unit again, at rung
-// 0. Scales go back into the crusher.
+// the kind and the class blank. The fighter stays, a Recruit again. Scales go
+// back into the crusher.
 export function resetStation(id) {
   const st = stationById(id);
   if (!st) return false;
@@ -286,6 +290,7 @@ export function resetStation(id) {
   }
   st.paid = [];
   st.rung = 0;
+  st.kind = null;
   st.cls = null;
   S.shopStale = true;
   return true;
@@ -352,6 +357,7 @@ let listening = false;
 export function stepParty() {
   if (!listening) { onBreak(stage => dropFangs(stage)); listening = true; }
   if (!S.snatched) return;
+  raiseLots();
   sinkFangs();
 }
 

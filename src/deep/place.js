@@ -14,7 +14,7 @@ import { S, pit } from '../state.js';
 import { P, PLINTH_H, PLINTH_OVER, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
-         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL, LOT_W, LOT_H,
+         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
          WORKER, PROP_GAP, PROP_GAP_OF } from '../config.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
@@ -103,10 +103,7 @@ export function plinthRect(st) {
 // scaffold stands round and the works stack over: read off the prop the
 // station stands beside now, so it answers to the picture. A station still
 // going up has no class, so its scaffold stands round the crate's ground.
-// An empty lot has no fighter yet: its ground is the stakes' span.
-const lotAt = mid => ({ x: snap(mid - LOT_W / 2), y: deepFloor() - LOT_H, w: LOT_W, h: LOT_H });
 export function standOfStation(st) {
-  if (!st.kind) return lotAt(slotX(st.slot));
   const p = propRect(st), b = plinthRect(st), out = (PLINTH_H - 1) * b.step;
   const y = Math.min(p.y, postY());
   return { x: b.x - out, y, w: b.w + 2 * out, h: deepFloor() - y };

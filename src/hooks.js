@@ -1176,9 +1176,10 @@ HANDLES.__deepCrew = (o = {}) => {
 
 // --- wave party: STATE ---
 // A party stood up for the setup a check is not about (docs/wave-party.md):
-// `stations` in floor order, each `{ kind, cls, rung }`, on the slots named
-// in `slots` or the next free ones, and `fangs` held after. Each is built the
-// way the button builds one -- the pick, the work landed -- and seated from
+// `stations` in floor order, each `{ kind, cls, rung }` (`kind` null a
+// Recruit), on the slots named in `slots` or the next free ones, and `fangs`
+// held after. Each is built the way the button builds one -- the work
+// landed, the kind written as rung 1 would -- and seated from
 // the pods, the deep's crew grown by a resident a station so nobody comes off
 // the yard. The class and the rung are set, not bought: a check about the
 // rails buys them there, and a Reset of a hook's rungs refunds nothing.
@@ -1187,7 +1188,7 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
   if (S.stations.length + stations.length > FIGHT_STATIONS_MAX)
     throw new Error(`__party: ${S.stations.length + stations.length} stations, at most ${FIGHT_STATIONS_MAX}`);
   for (const o of stations)
-    if (!PAIRS[o.kind] || (o.cls != null && !PAIRS[o.kind].includes(o.cls)))
+    if ((o.kind != null && !PAIRS[o.kind]) || (o.cls != null && !PAIRS[o.kind]?.includes(o.cls)))
       throw new Error(`__party: no ${o.cls} at a ${o.kind}`);
   const short = stations.length - deepSpare();
   if (short > 0) { S.crew += short; S.deepCrew = (S.deepCrew || 0) + short; }
@@ -1197,13 +1198,16 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
     const had = S.stations.length;
     // The first is free and every one after takes a fang, as the button asks.
     if (had > 0) S.fangs++;
-    if (!party.raiseStation(o.kind)) throw new Error(`__party: the ${o.kind} could not be built`);
+    // `kind` null stands a Recruit, its first choice still to make.
+    if (!(o.kind == null ? party.buildStation() : party.raiseStation(o.kind)))
+      throw new Error(`__party: the ${o.kind ?? 'station'} could not be built`);
     const st = S.stations[had];
     finishWorks();
     if (slots && Number.isInteger(slots[i])) st.slot = slots[i];
     st.cls = o.cls ?? null;
-    // Below the fork a station has no class: its rungs are its base unit's.
-    st.rung = Math.max(0, Math.min(st.cls ? LADDER : FORK_RUNG - 1, o.rung | 0));
+    // Below the fork a station has no class: its rungs are its base unit's;
+    // a Recruit stands at rung 0.
+    st.rung = o.kind == null ? 0 : Math.max(0, Math.min(st.cls ? LADDER : FORK_RUNG - 1, o.rung | 0));
     if (st.cls && st.rung < FORK_RUNG) st.rung = FORK_RUNG;
   }
   S.fangs = Math.max(0, fangs | 0);

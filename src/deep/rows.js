@@ -87,6 +87,5 @@ for (const key of Object.keys(DEEP_ROWS))
 // first frame, empty until a station stands under it.
 const fighterHead = id => ({ title: 'the fighter', roster: true, keys: [],
                              heads: () => (stationById(id)?.fighter ? 1 : 0) });
-// An empty lot has no fighter yet, so no heading: its board is the question.
 for (const id of PARTY_IDS)
-  registerBoard(id, { rows: () => [], sections: () => (stationById(id)?.kind ? [fighterHead(id)] : []) });
+  registerBoard(id, { rows: () => [], sections: () => (stationById(id)?.built ? [fighterHead(id)] : []) });

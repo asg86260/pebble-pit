@@ -10,12 +10,13 @@
 // (party.test.mjs); that the rails fold and Reset refunds is BOARD's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { CLASSES, PAIRS, SERPENT_DEFENSE, STUN_MAX_S, HASTE, FORK_RUNG } from '../src/config.js';
+import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, STUN_MAX_S, HASTE, FORK_RUNG } from '../src/config.js';
 import { climb, reset, openEveryClass } from './party-press.mjs';
 import { shots } from '../src/deep/arms.js';
 import { coilAt } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 import { rungWorth, stationOf, stationX } from '../src/deep/classes.js';
+import { keyOf } from '../src/deep/party.js';
 import { has, level, hasted, inspiredK } from '../src/deep/statuses.js';
 
 const S = yard.S;
@@ -420,5 +421,30 @@ group('every fighter strikes the coil straight over its station', async () => {
   return [
     ok(over(off.brawler), "the Fighter's punches land over the altar", JSON.stringify(off.brawler)),
     ok(over(off.ranger), "the Scout's arrows land over the armory", JSON.stringify(off.ranger))
+  ];
+});
+
+// Every station's first fighter (DESIGN.md, "Built first, a recruit, then
+// two choices"): a Recruit punches lightly, as the hand does, straight over
+// its station, from the moment it stands and before rung 1 is bought.
+group('a Recruit fights at once: a light punch over its station', async () => {
+  window.__snatch({ played: true });
+  window.__serpent({ stage: 3, wound: 0 });
+  window.__party({ stations: [{ kind: null }] });
+  const st = S.stations[0];
+  const hits = new Set(S.hits), seen = [];
+  for (let f = 0; f < 8 * 60; f++) {
+    run(1 / 60);
+    for (const h of S.hits) if (!hits.has(h) && h.weapon !== 'heal') { hits.add(h); seen.push(h); }
+  }
+  const v = rungWorth(RECRUIT, 0) * SERPENT_DEFENSE.punch[3];
+  const step = Math.abs(coilAt(1, now()).x - coilAt(0, now()).x);
+  return [
+    ok(keyOf(st) === 'recruit' && fighterAt(0)?.goal === 'fight', 'the Recruit is at work', `${keyOf(st)} ${fighterAt(0)?.goal}`),
+    ok(seen.length >= 3 && seen.every(h => h.weapon === 'punch'), 'punching, again and again', seen.map(h => h.weapon).join()),
+    ok(seen.every(h => h.done > 0 && h.done < rungWorth(CLASSES.brawler, 0) * SERPENT_DEFENSE.brawler[3] + 1e-9 &&
+                       Math.abs(h.done / v - Math.round(h.done / v)) < 1e-6),
+       "each a share of the Brawler's first punch", `${seen.map(h => h.done.toFixed(2))} of ${v.toFixed(2)}`),
+    ok(seen.every(h => Math.abs(h.x - stationX(st)) <= step), 'over its station', seen.map(h => Math.round(h.x - stationX(st))).join())
   ];
 });

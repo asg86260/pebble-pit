@@ -9,17 +9,20 @@
 // fork one row a class, asked as "choose a path". Buying one closes the other
 // branch; Reset hands every rung back and stands the base unit again.
 //
-// An empty lot's board is the question before all that: what goes up here,
-// a base unit a row.
+// A Recruit's board is the question before all that (DESIGN.md, "Built
+// first, a recruit, then two choices"; voted R2): the Recruit's own tree, five
+// base units, the one looked at opened under them with the two specialists it
+// forks into and the button that buys rung 1. Every choice says what it leads
+// to (voted E2), its statuses named, bold, with a line on hover.
 //
-// The purchases go through the party (`buyRung`, `pickKind`,
-// `resetStation`); this file says what the player sees and what a press asks
+// The purchases go through the party (`buyRung`, `resetStation`); this file says what the player sees and what a press asks
 // for. The fade of a closed branch is the stylesheet's (shelf.css, `.rails`).
 
 import { S } from '../state.js';
-import { P, CLASSES, PAIRS, BASES, FORK_RUNG, MOVE_RUNG, CAPSTONE_RUNG, LADDER, RAIL_FOLD_MS, RAIL_FOLD_STEPS,
-         rungValue } from '../config.js';
-import { stationById, classesOpen, kindsOffered, keyOf, isLot, buyRung, pickKind, resetStation } from './party.js';
+import { P, CLASSES, RECRUIT, PAIRS, BASES, FORK_RUNG, MOVE_RUNG, CAPSTONE_RUNG, LADDER, RAIL_FOLD_MS, RAIL_FOLD_STEPS,
+         HASTE, EXPOSED_AMP, rungValue } from '../config.js';
+import { stationById, classesOpen, kindsOffered, unchosen, buyRung, resetStation } from './party.js';
+import { GLYPHS } from '../glyphs.js';
 import { rungBill, CLASS_UNIT } from './rows.js';
 import { take } from '../upgrades.js';
 import { payTo } from '../pit.js';
@@ -36,38 +39,58 @@ document.documentElement.style.setProperty?.('--rail-fold-ms', `${RAIL_FOLD_MS}m
 document.documentElement.style.setProperty?.('--rail-fold-steps', String(RAIL_FOLD_STEPS));
 
 // What a class says, in the owner's wording (2026-09-28): every choice an
-// imperative, every move and capstone a name and an imperative, the same
-// effect in the same words wherever it comes ("inflict bleeding"), the
-// serpent "your enemy". `fork` is the class's row at the fork.
+// imperative, every move and capstone a name and what it does, the serpent
+// "your enemy". A status is named in braces -- "applies {Bleed}" -- and the
+// board draws it bold with its hover line (`STATUS`). `fork` is the class's
+// line at the fork, and its glyph the weapon drawn over its branch.
 const WORDS = {
-  brawler:  { fork: 'Throw harder punches, learn combos, and stun',
-              move: ['Combos', 'string punches together'], cap: ['Knockout', 'stun your enemy'] },
+  brawler:  { fork: 'Throw harder punches, learn combos',
+              move: ['Combos', 'string punches together'], cap: ['Knockout', 'applies {Stun}'] },
   sword:    { fork: 'Master the sword',
-              move: ['Whirlwind', 'strike all around'], cap: ['Weak points', 'inflict bleeding'] },
+              move: ['Whirlwind', 'a heavier cut'], cap: ['Weak points', 'applies {Bleed}'] },
   monk:     { fork: 'Focus your chi',
-              move: ['Deep breath', 'build chi faster'], cap: ['Still water', 'stun your enemy'] },
+              move: ['Deep breath', 'build chi faster'], cap: ['Still water', 'applies {Stun}'] },
   martial:  { fork: 'Strike quicker and finish faster',
-              move: ['Flourish', 'charge finishers faster'], cap: ['Rally', 'haste your party'] },
+              move: ['Flourish', 'charge finishers faster'], cap: ['Rally', 'gives your party {Haste}'] },
   ranger:   { fork: 'Aim at weak points',
-              move: ['Aimed shot', 'charge a powerful arrow'], cap: ['Pinning shot', 'pin your enemy'] },
+              move: ['Aimed shot', 'charge a powerful arrow'], cap: ['Pinning shot', 'applies {Stun}'] },
   assassin: { fork: 'Strike quick and precise',
-              move: ['Execution', 'exploit its wounds'], cap: ['Serrated', 'inflict bleeding'] },
+              move: ['Execution', 'exploit its wounds'], cap: ['Serrated', 'applies {Bleed}'] },
   hexer:    { fork: 'Cast hexes that debuff',
-              move: ['Wither', 'slow its healing'], cap: ['Binding', 'stop its healing, expose it'] },
+              move: ['Wither', 'applies {Weakened}'], cap: ['Binding', 'applies {Held} and {Exposed}'] },
   sapper:   { fork: 'Learn explosives',
-              move: ['Sticky bombs', 'stick and blow'], cap: ['Pair', 'throw two, stun your enemy'] },
+              move: ['Sticky bombs', 'stick and blow'], cap: ['Pair', 'throw two, applies {Stun}'] },
   mage:     { fork: 'Channel powerful beams',
               move: ['Widening', 'widen the beam'], cap: ['Thermite', 'burn through armor'] },
-  bard:     { fork: 'Inspire your party',
-              move: ['Anthem', 'double the boost'], cap: ['Tempo', 'haste your party'] }
+  bard:     { fork: 'Give your party {Inspired}',
+              move: ['Anthem', 'doubles {Inspired}'], cap: ['Tempo', 'gives your party {Haste}'] }
 };
+const GLYPH = { brawler: 'fist', sword: 'blade', monk: 'bell', martial: 'staff', ranger: 'target',
+                assassin: 'dagger', hexer: 'rune', sapper: 'bomb', mage: 'beamwand', bard: 'lyre' };
+const pct = k => `${Math.round(k * 100)}%`;
+// What a status does, a line, its numbers read off the tables it is laid by.
+const STATUS = {
+  Stun: 'it holds still and stops healing, a moment',
+  Bleed: 'damage every second, a few seconds',
+  Haste: `attacks ${pct(HASTE)} more often`,
+  Weakened: `it heals ${pct(CLASSES.hexer.weaken.k)} slower`,
+  Held: 'it cannot heal',
+  Exposed: `it takes ${pct(EXPOSED_AMP)} more damage`,
+  Inspired: 'hits deal more damage'
+};
+const plain = t => t.replace(/\{(\w+)\}/g, '$1');
 const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',
                     circle: 'Cast hexes', spire: 'Shoot beams' };
+const RECRUIT_DOES = 'a light punch';
 // The Bard alone: nobody else is fighting, so her song does nothing.
 const ALONE = 'no one else to sing to';
 const LOCKED = 'opens with a second station';
 const FORK_ASK = 'Specialize';
-const LOT_ASK = 'Choose your fighter';
+const RECRUIT_ASK = 'Choose your fighter';
+
+// Which base unit a Recruit's board is looking at, a station: only looked at,
+// never bought, so nothing a save keeps (DESIGN.md, voted R2).
+const looking = new Map();
 
 // --- what the board says -----------------------------------------------------------
 // Whether any other fighter stands at a built station: the Bard's audience.
@@ -89,25 +112,31 @@ export function lineOf(id, cls, r) {
   const w = WORDS[cls], name = CLASSES[cls].name;
   if (!classesOpen(st.kind).includes(cls)) return `${name}: ${LOCKED}`;
   if (cls === 'bard' && !othersFight(id)) return `${name}: ${ALONE}`;
-  if (r === MOVE_RUNG) return `${w.move[0]}: ${w.move[1]}`;
-  if (r === CAPSTONE_RUNG) return `${w.cap[0]}: ${w.cap[1]}`;
+  if (r === MOVE_RUNG) return `${w.move[0]}: ${plain(w.move[1])}`;
+  if (r === CAPSTONE_RUNG) return `${w.cap[0]}: ${plain(w.cap[1])}`;
   return `${name}: ${worth(cls, r)}`;
 }
+// A specialist's branch: its name and glyph, its move and its capstone.
+const branchOf = cls => ({ cls, name: CLASSES[cls].name, glyph: GLYPH[cls], move: WORDS[cls].move, cap: WORDS[cls].cap });
 
-// The board of station `id`, as the player sees it this frame: the lot's
-// kinds, or the tree and the rows. What the checks read, in both tiers; the
-// page draws exactly this (`refresh`).
+// The board of station `id`, as the player sees it this frame: a Recruit's
+// first choice, or the tree and the rows. What the checks read, in both
+// tiers; the page draws exactly this (`refresh`).
 export function railsOf(id) {
   const st = stationById(id);
   if (!st) return null;
-  if (isLot(st)) {
+  if (unchosen(st)) {
+    // The Recruit's own tree (voted R2): five nodes, the one looked at open
+    // under them with its two specialists and the button that buys rung 1.
     const offered = kindsOffered();
+    const kinds = Object.keys(PAIRS).map(kind => ({ kind, name: BASES[kind], open: offered.includes(kind),
+                                                    does: BASE_DOES[kind], pair: PAIRS[kind].map(branchOf) }));
+    const sel = kinds.find(k => k.open && k.kind === looking.get(id)) || kinds.find(k => k.open);
+    const bill = sel ? rungBill(id, PAIRS[sel.kind][0]) : [];
     return {
-      id, lot: true, ask: LOT_ASK,
-      kinds: Object.keys(PAIRS).map(kind => ({
-        kind, name: BASES[kind], open: offered.includes(kind),
-        sub: offered.includes(kind) ? BASE_DOES[kind] : LOCKED
-      }))
+      id, recruit: true, ask: RECRUIT_ASK, who: RECRUIT.name, does: RECRUIT_DOES, kinds, looking: sel?.kind || null,
+      row: sel && { kind: sel.kind, label: `Become a ${sel.name}`, bill, can: bill.every(([m, n]) => purse(m) >= n) },
+      reset: { can: false }
     };
   }
   const open = classesOpen(st.kind), next = st.rung + 1;
@@ -122,7 +151,8 @@ export function railsOf(id) {
     for (let r = FORK_RUNG; r <= LADDER; r++) pips.push(pip(cls, r));
     return { cls, name: CLASSES[cls].name, gone: !!st.cls && st.cls !== cls, locked: !open.includes(cls), pips };
   });
-  // The rows: what can be bought next. At the fork, one a class.
+  // The rows: what can be bought next. At the fork, one a class, each with
+  // the move and the capstone it leads to.
   const row = (cls, label, sub, locked = false) => {
     const bill = locked ? [] : rungBill(id, cls);
     return { cls, label, sub, bill, locked,
@@ -135,42 +165,56 @@ export function railsOf(id) {
     ask = FORK_ASK;
     for (const cls of PAIRS[st.kind]) {
       const w = WORDS[cls], locked = !open.includes(cls);
-      rows.push(row(cls, `Become a ${CLASSES[cls].name}`, locked ? LOCKED : w.fork, locked));
+      rows.push({ ...row(cls, `Become a ${CLASSES[cls].name}`, locked ? LOCKED : w.fork, locked),
+                  branch: locked ? null : branchOf(cls) });
     }
   } else if (next <= LADDER) {
     const w = WORDS[st.cls], cap = next === CAPSTONE_RUNG;
     rows.push(row(st.cls, cap ? w.cap[0] : CLASSES[st.cls].name, cap ? w.cap[1] : worth(st.cls, next)));
   }
   return { id, lot: false, kind: st.kind, cls: st.cls, rung: st.rung, who: st.cls ? CLASSES[st.cls].name : BASES[st.kind],
-           tree: { base, arms }, ask, rows, top: st.rung >= LADDER, reset: { can: !!st.cls || st.rung > 0 } };
+           tree: { base, arms }, ask, rows, top: st.rung >= LADDER, reset: { can: !!st.kind } };
 }
 
 // --- the presses ----------------------------------------------------------------
-// A lot's row: its kind picked, and the builders sent to put it up.
-export function pressKind(id, kind) {
-  const r = railsOf(id);
-  if (!r?.lot || !r.kinds.find(k => k.kind === kind)?.open) return false;
-  return pickKind(id, kind);
-}
-// A row bought: the next rung, or at the fork the class `cls`. Paid here, as
-// a card's press pays (`buy` in upgrades.js), the coins flying to the
-// station; the party keeps the bill on the station so a Reset hands back
-// exactly this.
-export function pressBuy(id, cls = null) {
-  const r = railsOf(id);
-  const it = r && !r.lot && r.rows.find(o => (cls ? o.cls === cls : r.rows.length === 1));
-  if (!it || !it.can) return false;
+// A bill paid at station `id`, as a card's press pays (`buy` in upgrades.js):
+// the coins flying to the station.
+function pay(id, bill) {
   const g = standOfStation(stationById(id));
   const to = g && { x: g.x + g.w / 2, y: g.y - P * 2 };
   if (to) payTo(to.x, to.y);
-  for (const [money, n] of it.bill) take(money, n, to);
+  for (const [money, n] of bill) take(money, n, to);
   payTo();
+}
+// A Recruit's node pressed: only looked at.
+export function lookAt(id, kind) {
+  if (!railsOf(id)?.recruit || !PAIRS[kind]) return false;
+  looking.set(id, kind);
+  return true;
+}
+// A Recruit's rung 1 bought: it becomes the base unit of `kind`. The party
+// keeps the bill on the station so a Reset hands back exactly this.
+export function pressKind(id, kind) {
+  const r = railsOf(id);
+  if (!r?.recruit || !r.kinds.find(k => k.kind === kind)?.open) return false;
+  const bill = rungBill(id, PAIRS[kind][0]);
+  if (!bill.every(([m, n]) => purse(m) >= n)) return false;
+  pay(id, bill);
+  looking.delete(id);
+  return buyRung(id, kind, bill);
+}
+// A row bought: the next rung, or at the fork the class `cls`.
+export function pressBuy(id, cls = null) {
+  const r = railsOf(id);
+  const it = r && !r.recruit && r.rows.find(o => (cls ? o.cls === cls : r.rows.length === 1));
+  if (!it || !it.can) return false;
+  pay(id, it.bill);
   return buyRung(id, it.cls, it.bill);
 }
-// Reset: every rung back, the base unit stood again.
+// Reset: every rung back, the Recruit stood again.
 export function pressReset(id) {
   const r = railsOf(id);
-  if (!r || r.lot || !r.reset.can) return false;
+  if (!r || r.recruit || !r.reset.can) return false;
   return resetStation(id);
 }
 
@@ -187,6 +231,14 @@ const billHTML = bill => bill
   .slice().sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0]))
   .map(([m, n]) => `<span class="${purse(m) >= n ? 'have' : 'short'}">${MARK[m]} ${priceText(m, n)}</span>`).join('');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// A line with its statuses bold, each carrying its hover line.
+const say = t => esc(t).replace(/\{(\w+)\}/g, (_, k) => `<b class="rl-st" data-line="${esc(`${k}: ${STATUS[k]}`)}">${k}</b>`);
+// A glyph, drawn in the board's ink at `px` screen pixels a cell.
+const glyphHTML = (name, px = 2) => {
+  const rows = GLYPHS[name] || GLYPHS.crate;
+  const cells = rows.flatMap((r, y) => [...r].map((c, x) => (c === '#' ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : ''))).join('');
+  return `<svg class="rl-glyph" width="${8 * px}" height="${8 * px}" viewBox="0 0 8 8" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true">${cells}</svg>`;
+};
 
 const pipHTML = p => `<i class="${[p.big && 'big', p.cap && 'cap', p.on && 'on', p.next && 'next'].filter(Boolean).join(' ')}"` +
                      ` data-line="${esc(p.line)}"></i>`;
@@ -196,21 +248,42 @@ function treeHTML(r) {
   return `<div class="rl-tree"><span class="rl-base">${r.tree.base.map(pipHTML).join('')}</span>` +
          `<span class="rl-fork"></span><span class="rl-arms">${arms}</span></div>`;
 }
+// A specialist's move and capstone (voted E2): a square for rung 4, a purple
+// one for rung 8, each with its line.
+const effectsHTML = b => `<span class="rl-fx"><i class="mv"></i><span><b>${esc(b.move[0])}</b> ${say(b.move[1])}</span></span>` +
+                         `<span class="rl-fx cap"><i class="cp"></i><span><b>${esc(b.cap[0])}</b> ${say(b.cap[1])}</span></span>`;
+const branchHTML = b => `<div class="rl-br"><div class="rl-bn">${glyphHTML(b.glyph)}${esc(b.name)}</div>${effectsHTML(b)}</div>`;
+// A root over its fork: the name centered, a stem, and a crossbar that ends
+// at its branches.
+const rootHTML = (name, does) => `<div class="rl-root"><b>${esc(name)}</b><span>${say(does)}</span></div><i class="rl-stem"></i>`;
 const rowHTML = (o, attrs) => `<button type="button" class="rl-row" ${attrs}${o.can === false ? ' disabled' : ''}>` +
   (o.bill ? `<span class="rl-tag">${billHTML(o.bill)}</span>` : '') +
-  `<span class="rl-t">${esc(o.label)}</span><span class="rl-s">${esc(o.sub)}</span></button>`;
+  `<span class="rl-t">${esc(o.label)}</span><span class="rl-s">${say(o.sub)}</span>` +
+  (o.branch ? `<span class="rl-fxs">${effectsHTML(o.branch)}</span>` : '') + `</button>`;
+
+function recruitHTML(r) {
+  const n = r.kinds.length;
+  const ticks = r.kinds.map((_, i) => `<i style="left:${(i + 0.5) / n * 100}%"></i>`).join('');
+  const nodes = r.kinds.map(k => `<button type="button" class="rl-node${k.open ? '' : ' locked'}${k.kind === r.looking ? ' on' : ''}"` +
+    ` data-look="${k.kind}"${k.open ? '' : ' disabled'}><span class="rl-ic">${k.pair.map(b => glyphHTML(b.glyph, 1)).join('')}</span>${esc(k.name)}</button>`).join('');
+  const sel = r.kinds.find(k => k.kind === r.looking);
+  const pick = sel ? `<div class="rl-pick">${rootHTML(sel.name, sel.does)}<div class="rl-cross"></div>` +
+    `<div class="rl-brs">${sel.pair.map(branchHTML).join('')}</div>` +
+    `<button type="button" class="rl-row rl-become" data-kind="${sel.kind}"${r.row.can ? '' : ' disabled'}>` +
+    `<span class="rl-tag">${billHTML(r.row.bill)}</span><span class="rl-t">${esc(r.row.label)}</span></button></div>` : '';
+  return `<div class="rl-ask">${esc(r.ask)}</div>${rootHTML(r.who, r.does)}` +
+         `<div class="rl-rail" style="--n:${n}">${ticks}</div><div class="rl-five" style="--n:${n}">${nodes}</div>${pick}`;
+}
 
 function bodyHTML(r) {
-  if (r.lot)
-    return `<div class="rl-ask">${esc(r.ask)}</div>` +
-           r.kinds.map(k => rowHTML({ label: k.name, sub: k.sub, can: k.open }, `data-kind="${k.kind}"`)).join('');
+  if (r.recruit) return recruitHTML(r);
   return `<div class="rl-who">${esc(r.who)}</div>` + treeHTML(r) +
          (r.ask ? `<div class="rl-ask">${esc(r.ask)}</div>` : '') +
          r.rows.map(o => rowHTML(o, o.cls ? `data-cls="${o.cls}"` : '')).join('') +
          `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>reset – refunds everything</button>`;
 }
 
-// The hover line over a pip, and a tap's where a thumb has no hover.
+// The hover line over a pip or a status, and a tap's where a thumb has no hover.
 function showTip(m, pip) {
   const { tip, el } = m;
   if (!pip) { tip.hidden = true; return; }
@@ -223,13 +296,17 @@ function showTip(m, pip) {
 
 function wire(id, m) {
   const { body } = m;
+  for (const b of body.querySelectorAll('.rl-node[data-look]'))
+    onTap(b, () => { lookAt(id, b.dataset.look); refresh(id); });
   for (const b of body.querySelectorAll('.rl-row[data-kind]'))
     onTap(b, () => { pressKind(id, b.dataset.kind); refresh(id); });
   for (const b of body.querySelectorAll('.rl-row:not([data-kind])'))
     onTap(b, () => { pressBuy(id, b.dataset.cls || null); refresh(id); });
   const reset = body.querySelector('.rl-reset');
   if (reset) onTap(reset, () => { pressReset(id); refresh(id); });
-  for (const pip of body.querySelectorAll('.rl-tree i')) {
+  // A status's line is a hover's only: most sit inside a row a tap buys.
+  for (const pip of body.querySelectorAll('.rl-tree i, .rl-st')) {
+    if (coarse() && pip.classList.contains('rl-st')) continue;
     if (coarse()) onTap(pip, () => showTip(m, m.tip.hidden || m.tip.textContent !== pip.dataset.line ? pip : null));
     else {
       pip.addEventListener('pointerenter', () => showTip(m, pip));

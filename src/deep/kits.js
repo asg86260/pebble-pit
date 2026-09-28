@@ -484,6 +484,8 @@ export function flute(g, x, y, R) {
 // The body and its kit where it stands, (x, y) the body's top-left in world
 // cells: the still cells one rigid sprite, the living ones over it.
 export const REST = {
+  // the Recruit carries nothing: just the body (DESIGN.md, "Built first, a recruit")
+  recruit(g, x, y) { body(x, y); },
   brawler(g, x, y, R, t) {
     body(x, y);
     const z = bSize(R);

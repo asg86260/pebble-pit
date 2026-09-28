@@ -30,6 +30,12 @@ export const FIGHT_STATIONS_MAX = 4;
 //            drawing holds before the blow, and the blow lands at its end
 //   fly      seconds a thrown or shot thing is in the water
 export const MOVE_RUNG = 4, CAPSTONE_RUNG = 8;
+// Every station's first fighter, before rung 1 picks its base unit (DESIGN.md,
+// "Built first, a recruit, then two choices"): just the body, and a light
+// punch -- `worthK` of the Brawler's rung 0, struck as the hand's punch.
+// Not one of the ten: it has no ladder of its own and no fork.
+export const RECRUIT = { name: 'Recruit', ladder: 'brawler', worthK: 0.5, hit: 'punch', melee: true,
+                         every: 1.6, windup: 0.18 };
 // The rung that picks the class: the move's, so the fork brings the move.
 export const FORK_RUNG = MOVE_RUNG;
 export const CLASSES = {

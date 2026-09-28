@@ -12,13 +12,11 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
-## A station is built first, a Recruit, then two choices -- DESIGNED, AWAITING APPROVAL (2026-09-28)
+## The mark over a Recruit -- DESIGNED, NOT BUILT (2026-09-28)
 
-"Built first, a recruit, then two choices" in DESIGN.md: the button builds
-at once, a Recruit fights at the new station, rung 1 picks the base unit
-and rung 4 the specialist, the choices drawn as the E2 tree with statuses
-named. The Recruit (C) and the rung-1 board (R2) are voted. Blocker: the
-owner's go to build.
+"Built first, a recruit, then two choices" in DESIGN.md is built but for its
+mark: a mark over a station whose rung 1 is waiting, "choose a fighter" on
+hover, until it is bought. Blocker: a mock of its drawing, voted.
 
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 

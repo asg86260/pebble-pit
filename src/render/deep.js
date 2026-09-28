@@ -42,7 +42,7 @@ import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
-import { SCAFFOLD_BANDS, LOT_STAKE, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES } from '../config.js';
+import { SCAFFOLD_BANDS, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
 
@@ -343,15 +343,6 @@ function drawScaffold(stand) {
   for (let x = left + postW; x < right; x += P * 2) ctx.fillRect(x, deepFloor() - P * 3, P, 2);
 }
 
-// An empty lot: a stake at each end of its ground, waiting for its kind.
-function drawLot(stand) {
-  const top = deepFloor() - P * LOT_STAKE;
-  ctx.fillStyle = GREYS[9];
-  for (const x of [snap(stand.x), snap(stand.x + stand.w) - P]) ctx.fillRect(x, top, P, P * LOT_STAKE);
-  ctx.fillStyle = GREYS[6];
-  for (let x = snap(stand.x) + P * 2; x < snap(stand.x + stand.w) - P; x += P * 2) ctx.fillRect(x, top + P, P, 2);
-}
-
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
   if (S.snatched) drawCrusher();
@@ -362,8 +353,7 @@ export function drawDeepStations() {
     if (st.slot == null) continue;
     const stand = place.standOfStation(st);
     if (stand.x > x1 || stand.x + stand.w < x0) continue;
-    if (!st.kind) drawLot(stand);
-    else if (!st.built) drawScaffold(stand);
+    if (!st.built) drawScaffold(stand);
     else { drawPlinth(st); drawProp(st, t); }
   }
   ctx.imageSmoothingEnabled = smooth;

@@ -22,7 +22,7 @@
 // its cells.
 
 import { now } from '../clock.js';
-import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_S, CLASSES,
+import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_S, CLASSES, RECRUIT,
          IDLE_STEP_S, IDLE_HOP_S, IDLE_SETTLE_S } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { S } from '../state.js';
@@ -39,7 +39,8 @@ import { hideBot } from './serpent.js';
 
 // The deep's bodies that fight: a pod resident seated at a station.
 export const isFighter = w => w.type === TYPE.FIGHTER;
-const MELEE = new Set(['brawler', 'sword', 'martial']);
+const MELEE = new Set(['recruit', 'brawler', 'sword', 'martial']);
+const tableOf = key => (key === 'recruit' ? RECRUIT : CLASSES[key]);
 
 // --- who is fighting, this frame ---------------------------------------------------
 // The scratch bench (dev only): stand-in bodies at the slots, so every class
@@ -74,10 +75,10 @@ function memOf(w) {
 // and when its contact will be: its wind-up starts when it is due (`w.next`).
 function nextOf(key, w, p) {
   const full = w.pipsMax > 0 && (w.pips || 0) >= w.pipsMax, last = w.pipsMax > 0 && (w.pips || 0) === w.pipsMax - 1;
-  const move = { brawler: last ? 'haymaker' : 'punch', sword: p.move, monk: full ? 'chi' : 'palm',
+  const move = { recruit: 'jab', brawler: last ? 'haymaker' : 'punch', sword: p.move, monk: full ? 'chi' : 'palm',
                  martial: full ? 'finisher' : 'thrust', ranger: last ? 'aimed' : 'shoot', assassin: 'stab',
                  sapper: 'throw', hexer: 'hex', mage: p.move === 'beam' ? 'finish' : 'beam', bard: 'sing' }[key];
-  const windup = (move === 'beam' ? 0 : (w.windup ?? CLASSES[key].windup ?? 0)) * 1000;
+  const windup = (move === 'beam' ? 0 : (w.windup ?? tableOf(key).windup ?? 0)) * 1000;
   const due = key === 'mage' && p.move === 'beam' ? p.end : w.next;
   return due > p.at ? { move, hit: due + windup } : null;
 }
@@ -123,7 +124,7 @@ function pageOf(key, w, R, T) {
 function idleAt(key, s) {
   if (s == null || s < IDLE_SETTLE_S) return [0, 0];
   const u = s - IDLE_SETTLE_S, step = u % (IDLE_STEP_S * 2) < IDLE_STEP_S ? 0 : 1;
-  return [step, CLASSES[key].melee && u % IDLE_STEP_S < IDLE_HOP_S ? -1 : 0];
+  return [step, tableOf(key).melee && u % IDLE_STEP_S < IDLE_HOP_S ? -1 : 0];
 }
 
 // --- the scratch bench's loop ---------------------------------------------------------

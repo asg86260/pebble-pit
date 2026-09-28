@@ -14,7 +14,7 @@
 // a reload drops a swing in the air, as it drops a shot):
 //
 //   pose      the attack in hand: { move, at, hit, end, x, y, big, twice }.
-//             `move` names it ('punch' 'haymaker' 'cut' 'whirl' 'palm' 'chi'
+//             `move` names it ('jab' 'punch' 'haymaker' 'cut' 'whirl' 'palm' 'chi'
 //             'thrust' 'finisher' 'shoot' 'aimed' 'stab' 'throw' 'hex'
 //             'beam' 'finish' 'sing'); `at` the wind-up's start, `hit` its
 //             contact (a melee blow lands, a shot leaves the hand), `end`
@@ -48,8 +48,9 @@ const hasCap = st => st.rung >= CAPSTONE_RUNG;
 const hasMove = st => st.rung >= MOVE_RUNG;
 
 // What a rung of a class is worth: its LADDERS row, rung 0..8, a percent
-// read as a share for a class that says so.
-export const rungWorth = (cls, rung) => rungValue(cls.ladder, rung) / (cls.pct ? 100 : 1);
+// read as a share for a class that says so, and a share of it for the
+// Recruit, which borrows the Brawler's row (`worthK`).
+export const rungWorth = (cls, rung) => rungValue(cls.ladder, rung) / (cls.pct ? 100 : 1) * (cls.worthK ?? 1);
 
 // The fighter's station, and the middle of it on the floor.
 export const stationOf = w => (w && w.station ? stationById(w.station) : null);
@@ -133,6 +134,16 @@ function brawler(w, c, st, cls, v) {
   const big = hasMove(st) && w.count % hm.every === 0;
   w.pips = hasMove(st) ? w.count % hm.every : 0;
   swing(w, t, big ? 'haymaker' : 'punch', cls.windup, at.p, big);
+}
+
+// The Recruit: one light punch at a time, up under the coil over its station.
+function recruit(w, c, st, cls, v) {
+  const t = c.now, at = closeIn(w, st, t);
+  if (!at) return;
+  w.pipsMax = 0;
+  if (landing(w, t)) strike(cls.hit, v, at.p.x, at.p.y, null, 0, { by: w });
+  if (!due(w, t, cls.every)) return;
+  swing(w, t, 'jab', cls.windup, at.p);
 }
 
 // Cuts; from rung 4 each is a Whirlwind, x`whirl.x`, and from rung 8 every
@@ -368,7 +379,7 @@ function bard(w, c, st, cls, v) {
   }
 }
 
-const STEP = { brawler, sword, monk, martial, ranger, assassin, hexer, sapper, mage, bard };
+const STEP = { recruit, brawler, sword, monk, martial, ranger, assassin, hexer, sapper, mage, bard };
 
 // Every fighter body at a station, the one asking included.
 export const fighters = () => S.workers.filter(o => o.station && stationById(o.station));
@@ -378,8 +389,9 @@ export function stepFighter(w, c) {
   if (!working(w)) return;
   const st = stationOf(w);
   const cls = st && st.built !== false ? classOf(st) : null;
-  // A built station always has a class to fight as (its base unit's below
-  // the fork), and a fighter is only ever seated at a built one.
+  // A built station always has a class to fight as (the Recruit before rung
+  // 1, its base unit's below the fork), and a fighter is only ever seated at
+  // a built one.
   const step = cls && STEP[keyOf(st)];
   if (!step) return;
   // A gatherer sent over from its rest by the crusher leaves that lull behind.

@@ -224,6 +224,7 @@ export const TESTS = [
 // the press reaching it, and the tree being drawn.
 import { showPanel } from '../board.js';
 import { seatRails } from '../deep/rails.js';
+import { stationById } from '../deep/party.js';
 import { RAIL_FOLD_MS, FORK_RUNG } from '../config.js';
 import { tap, sleep, raf } from './kit.js';
 
@@ -231,7 +232,7 @@ const rails = id => document.querySelector(`.rails[data-station="${id || 's1'}"]
 const seat = async () => { seatRails(); await raf(); await raf(); seatRails(); };
 const rowNamed = (id, text) => [...(rails(id)?.querySelectorAll('.rl-row') || [])].find(b => b.querySelector('.rl-t').textContent === text);
 
-TESTS.push(['rails: the rows climb the base unit, the fork takes a class and closes the other branch, Reset stands it again', async () => {
+TESTS.push(['rails: the rows climb the base unit, the fork takes a class and closes the other branch, Reset stands the Recruit again', async () => {
   // An altar and a spire, and a purse for every band.
   window.__fullSites();
   window.__party({ stations: [{ kind: 'altar' }, { kind: 'spire' }] });
@@ -252,6 +253,12 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   for (let r = 1; r < FORK_RUNG; r++) { await tap(rowNamed('s1', 'Fighter')); await seat(); }
   const base = st.cls === null && st.rung === FORK_RUNG - 1;
   const ask = rails().querySelector('.rl-ask')?.textContent || '';
+  // each specialist's row names its capstone's status, bold, its line on hover
+  const stun = [...rails().querySelectorAll('.rl-row .rl-st')].find(b => b.textContent === 'Stun');
+  stun?.dispatchEvent(new PointerEvent('pointerenter'));
+  const stunSaid = !tip.hidden && tip.textContent;
+  stun?.dispatchEvent(new PointerEvent('pointerleave'));
+  const bold = stun && getComputedStyle(stun).fontWeight >= 700;
   await tap(rowNamed('s1', 'Become a Swordsman'));
   await seat();
   await sleep(RAIL_FOLD_MS + 100);
@@ -260,8 +267,9 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   const lit = rails().querySelectorAll('.rl-tree i.on').length;
   await tap(rails().querySelector('.rl-reset'));
   await seat();
-  const blanked = st.cls === null && st.rung === 0 && st.paid.length === 0;
-  const again = !rails().querySelector('.rl-arm.gone') && !!rowNamed('s1', 'Fighter');
+  const blanked = stationById('s1').cls === null && stationById('s1').kind === null && stationById('s1').rung === 0 &&
+                  stationById('s1').paid.length === 0;
+  const again = !!rails().querySelector('.rl-five') && !!rails().querySelector('.rl-become');
   showPanel(null, true);
   return [
     ok(up, "the station's board is up", `${S.stationBoardOpen}`),
@@ -269,48 +277,59 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
     ok(said === 'Combos: string punches together', 'a hover on a pip says what it is', `${said}`),
     ok(base, 'the rows climb the Fighter to the fork', JSON.stringify(st)),
     ok(ask === 'Specialize', 'where the board asks it to specialize', ask),
+    ok(bold && /^Stun: /.test(stunSaid || ''), "each row's status bold, its line on hover", `${stunSaid}`),
     ok(took, 'the Swordsman row takes the Swordsman, paid in scales', JSON.stringify(st)),
     ok(gone.join() === 'true,false', "and the Brawler's branch closes", gone.join()),
     ok(lit === FORK_RUNG, 'the pips climbed are lit', `${lit}`),
-    ok(blanked, 'Reset blanks the station'),
-    ok(again, 'and stands the whole tree and the Fighter again')
+    ok(blanked, 'Reset blanks the station, kind and all'),
+    ok(again, "and stands the Recruit's tree again")
   ];
 }]);
 
 // The floating build button under a real pointer (deep/buildbutton.js): at
-// the snatch it stands over the first slot; a tap lays an empty lot there
-// and opens its board, and a tap on a row there puts the station in the
-// deep's works.
-TESTS.push(['rails: the build button lays a lot, and its board picks the first station, free', async () => {
+// the snatch it stands over the first slot, and a tap puts the station up
+// there at once, free, nothing picked. Once it stands, its Recruit's board
+// (voted R2) offers the three starting kinds as nodes; a tap on one only
+// looks, and the button under it buys rung 1.
+TESTS.push(['rails: the build button puts the first station up, and its Recruit tree picks the fighter', async () => {
   window.__snatch({ played: true });
   window.__view('deep');
   await raf(); await raf();
   const btn = document.getElementById('buildbtn');
   const shown = !!btn && btn.classList.contains('on');
   await tap(btn);
-  await seat();
-  const lot = S.stations[0] && { ...S.stations[0] };
-  const open = S.stationBoardOpen === lot?.id;
-  const rows = [...(rails(lot?.id)?.querySelectorAll('.rl-row:not(:disabled)') || [])].map(b => b.dataset.kind);
-  await tap(rails(lot.id).querySelector('.rl-row[data-kind="armory"]'));
   await raf(); await raf();
-  const st = { ...S.stations[0] }, fangs = S.fangs;
-  showPanel(null, true);
-  await raf();
+  const queued = S.stations[0] && { ...S.stations[0] }, fangs = S.fangs;
   const gone = !btn.classList.contains('on');
-  // with three fangs held, the button asks one
   window.__finish();
+  window.__scales(99999);
+  window.__grant({ dust: 1e8 });
+  showPanel('s1', true);
+  await seat();
+  const nodes = [...(rails()?.querySelectorAll('.rl-node:not(:disabled)') || [])].map(b => b.dataset.look);
+  const firstLook = rails()?.querySelector('.rl-become .rl-t')?.textContent;
+  await tap(rails().querySelector('.rl-node[data-look="armory"]'));
+  await seat();
+  const looked = rails().querySelector('.rl-become .rl-t')?.textContent, stillRecruit = stationById('s1').kind === null;
+  const glyphs = rails().querySelectorAll('.rl-pick .rl-bn svg').length;
+  await tap(rails().querySelector('.rl-become'));
+  await seat();
+  const st = { ...stationById('s1') };
+  showPanel(null, true);
+  // with three fangs held, the button asks one
   S.fangs = 3;
   await raf(); await raf();
   const price = btn.querySelector('.count')?.textContent;
   return [
     ok(shown, 'the button stands at the snatch'),
-    ok(lot && lot.kind === null && open, "a tap lays an empty lot and opens its board", JSON.stringify(lot)),
-    ok(rows.join() === 'altar,armory,spire', 'which offers the three starting kinds', rows.join()),
-    ok(st && st.id === 's1' && st.kind === 'armory' && !st.built && fangs === 0,
-       'a pick puts the first station up, free', JSON.stringify(st)),
+    ok(queued && queued.id === 's1' && queued.kind === null && !queued.built && fangs === 0,
+       'a tap puts the first station up at once, free, with nothing picked', JSON.stringify(queued)),
     ok(gone, 'and the button goes, with no fang held'),
-    ok(price === '×1', 'with fangs held, it asks one of them', price)
+    ok(nodes.join() === 'altar,armory,spire', "once it stands, its Recruit's tree offers the three starting kinds", nodes.join()),
+    ok(firstLook === 'Become a Fighter' && looked === 'Become a Scout' && stillRecruit, 'a node only looks', `${firstLook} / ${looked}`),
+    ok(glyphs === 2, "the one looked at opens with its two specialists' glyphs", `${glyphs}`),
+    ok(st.kind === 'armory' && st.rung === 1, 'the button under it buys rung 1: a Scout', JSON.stringify(st)),
+    ok(price === '×1', 'with fangs held, the build button asks one of them', price)
   ];
 }]);
 
