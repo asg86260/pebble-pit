@@ -34,7 +34,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { P, WORKER, COIL_SEGS, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
+import { P, WORKER, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
          CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
@@ -106,7 +106,6 @@ function atPost(w, st, t) {
   const seg = nearestSeg(mid(w), w.y, t).seg;
   return { seg, p: coilAt(seg, t) };
 }
-const segNear = (seg, by) => Math.max(0, Math.min(COIL_SEGS - 1, Math.round(seg + by)));
 
 // A straight shot from (x, y) to the segment, landing `fly` seconds on.
 function shoot(w, kind, x, y, seg, t, fly, land, arc = 0) {
@@ -134,24 +133,17 @@ function brawler(w, c, st, cls, v) {
   swing(w, t, big ? 'haymaker' : 'punch', cls.windup, at.p, big);
 }
 
-// Cuts; from rung 4 each lands at three spots along the coil (the
-// whirlwind), and from rung 8 every 3rd cut lands twice, the second landing
-// leaving the serpent Bleeding. The spots of one cut are one blow, summed on it.
+// Cuts; from rung 4 each is a Whirlwind, x`whirl.x`, and from rung 8 every
+// 3rd cut lands twice, the second landing leaving the serpent Bleeding. A cut
+// lands where the blade meets the hide, once: the page's other turns are air.
 function sword(w, c, st, cls, v) {
   const t = c.now, at = closeIn(w, t);
   if (!at) return;
   w.pipsMax = 0;
   const hit = landing(w, t);
   if (hit) {
-    const wh = cls.whirl, wide = hasMove(st);
-    const spots = wide ? wh.spots : 1, each = v * (wide ? wh.x : 1);
-    const cut = {};
-    for (let n = 0; n < (hit.twice ? 2 : 1); n++) {
-      for (let i = 0; i < spots; i++) {
-        const q = coilAt(segNear(at.seg, (i - (spots - 1) / 2) * wh.spread), t);
-        strike(cls.hit, each, q.x, q.y, cut, 0, { by: w });
-      }
-    }
+    const dmg = v * (hasMove(st) ? cls.whirl.x : 1) * (hit.twice ? 2 : 1);
+    strike(cls.hit, dmg, at.p.x, at.p.y, null, 0, { by: w });
     if (hit.twice) lay('bleed', v * cls.bleed.dps, cls.bleed.s, at.seg, cls.hit);
   }
   if (!due(w, t, cls.every)) return;
@@ -264,7 +256,8 @@ function hexer(w, c, st, cls, v) {
 
 // Charges thrown on the water's gravity. From rung 4 a charge sticks to the
 // hide, ticks down and goes off as one blow, x3; from rung 8 two are thrown
-// at once, each at `pairX` of a lone one, go off together, and stun.
+// at once, each at `pairX` of a lone one, at the one spot, go off together,
+// and stun.
 function sapper(w, c, st, cls, v) {
   const t = c.now, at = atPost(w, st, t);
   if (!at) return;
@@ -275,8 +268,7 @@ function sapper(w, c, st, cls, v) {
     const each = v * (n > 1 ? cls.pairX : 1);
     const pair = { blowAt: 0 };
     for (let i = 0; i < n; i++) {
-      const seg = segNear(at.seg, (i - (n - 1) / 2) * cls.spread);
-      throwCharge(w, seg, t, cls, (s, q) => {
+      throwCharge(w, at.seg, t, cls, (s, q) => {
         if (sticky && s.reached) {
           s.stuck = true;
           s.stuckAt = now();

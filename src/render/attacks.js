@@ -595,7 +595,7 @@ const assassin = {
 // --- the Sapper --------------------------------------------------------------------
 const sapper = {
   len: 3.2, throwAt: 0.3, fly: 0.6, blowAt: 2.1,
-  targets(R, x) { return R8(R) ? [x - 1, x + 8] : [x + 4]; },
+  targets(R, x) { return R8(R) ? [x + 4, x + 4] : [x + 4]; },
   hits(R, x) { return this.targets(R, x).map((tx, i) => ({ at: R4(R) ? this.blowAt : this.throwAt + i * 0.15 + this.fly, x: tx, k: R4(R) ? 0.9 : 0.6 })); },
   beats() { return [this.throwAt]; },
   draw(g, t, a, api, R, x) {

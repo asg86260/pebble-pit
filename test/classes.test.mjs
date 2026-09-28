@@ -110,22 +110,31 @@ group('Brawler: punches break the bare coil; a haymaker every 4th from rung 4, s
 const done = (seen, weapon) => [...seen.hits.keys()].filter(h => h.weapon === weapon).map(h => h.done);
 const near = (a, b) => Math.abs(a - b) < 1e-6 * Math.max(1, Math.abs(b));
 
-group('Swordsman: the whirlwind lands each cut at three spots; at rung 8 every 3rd cut lands twice and bleeds', async () => {
+group('Swordsman: the whirlwind lands each cut x whirl.x at one spot; at rung 8 every 3rd cut lands twice and bleeds', async () => {
   const alone = breaksAlone('altar', 'sword');
   const cls = CLASSES.sword;
   window.__serpent({ stage: 0, wound: 0 });
   let bledEarly = false;
   const base = watch(3, 0, () => { bledEarly = bledEarly || has('bleed'); });
   window.__serpent({ stage: 3, wound: 0 });
+  // The most bites the hide took on one frame: a cut bites once, where the
+  // blade meets it.
+  const chips = new Set(S.serpentChips);
+  let bites = 0;
+  const bitten = () => {
+    const fresh = S.serpentChips.filter(c => !chips.has(c));
+    fresh.forEach(c => chips.add(c));
+    bites = Math.max(bites, fresh.length);
+  };
   // Windows counted in cuts, not seconds, so a retuned pace still sees enough.
-  const four = watch(6 * cls.every);
+  const four = watch(6 * cls.every, 0, bitten);
   const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.sword[3];
-  // A whirlwind's cut is one number: its three spots summed. The bleed's
-  // ticks are numbers of their own, far smaller.
+  // A whirlwind's cut is one number. The bleed's ticks are numbers of their
+  // own, far smaller.
   const cuts = done(four, 'sword').filter(d => d > v4);
   buyTo(0, 'sword', 8);
   let bled = false;
-  const eight = watch(8 * cls.every, 0, () => { bled = bled || has('bleed'); });
+  const eight = watch(8 * cls.every, 0, () => { bled = bled || has('bleed'); bitten(); });
   const twice = eight.poses.filter(p => p.twice).length, whirls = eight.poses.length;
   return [
     alone,
@@ -133,8 +142,9 @@ group('Swordsman: the whirlwind lands each cut at three spots; at rung 8 every 3
     // The first is the cut in hand when the rung was bought.
     ok(four.moves.length >= 4 && four.moves.slice(1).every(m => m === 'whirl'), 'at rung 4 every cut is a whirlwind',
        four.moves.join(' ')),
-    ok(cuts.length >= 3 && cuts.every(d => near(d, v4 * cls.whirl.spots * cls.whirl.x)),
-       'landing at three spots, summed', JSON.stringify(cuts.slice(0, 4))),
+    ok(cuts.length >= 3 && cuts.every(d => near(d, v4 * cls.whirl.x)),
+       'each one blow of whirl.x', JSON.stringify(cuts.slice(0, 4))),
+    ok(bites === 1, 'biting the hide in one spot, at rung 4 and at 8', `${bites} bites on one frame`),
     ok(twice >= 2 && Math.abs(twice - whirls / cls.capEvery) <= 1, 'at rung 8 every 3rd cut lands twice', `${twice} of ${whirls}`),
     ok(bled, 'and leaves the serpent Bleeding')
   ];
@@ -291,8 +301,12 @@ group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; a
   const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.sapper[3] * cls.stickyX;
   buyTo(0, 'sapper', 8);
   S.serpentGrace = 0;
-  let two = 0;
-  const eight = watch(10, 0, () => { two = Math.max(two, shots.filter(s => s.stuck).length); });
+  let two = 0, apart = 0;
+  const eight = watch(10, 0, () => {
+    const on = shots.filter(s => s.stuck);
+    two = Math.max(two, on.length);
+    if (on.length === 2) apart = Math.max(apart, Math.abs(on[0].seg - on[1].seg));
+  });
   // The pair go off as one blow, summed: each charge pairX of a lone one.
   const lone = rungWorth(cls, 8) * SERPENT_DEFENSE.sapper[3] * cls.stickyX;
   const pairBlows = done(eight, 'sapper');
@@ -303,6 +317,7 @@ group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; a
     ok(blows.some(d => near(d, v4)), 'and blows as one blow x3', JSON.stringify(blows)),
     ok(four.stuns === 0, 'and does not stun yet', `${four.stuns} stuns`),
     ok(two === 2, 'at rung 8 two are stuck at once', `${two}`),
+    ok(apart === 0, 'on the one spot', `${apart} segments apart`),
     ok(eight.stuns >= 1, 'and their blow stuns', `${eight.stuns} stuns`),
     ok(pairBlows.some(d => near(d, 2 * cls.pairX * lone)), 'each of the pair blows pairX of a lone charge',
        `${JSON.stringify(pairBlows)} vs ${2 * cls.pairX * lone}`)

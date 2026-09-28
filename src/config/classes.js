@@ -36,11 +36,11 @@ export const CLASSES = {
   // Heavy punches; every 4th a haymaker, x3; at the capstone the haymaker stuns.
   brawler:  { name: 'Brawler',        ladder: 'brawler',  hit: 'brawler',  melee: true,
               every: 1.2, windup: 0.18, haymaker: { every: 4, x: 3 }, capStun: 1 },
-  // Cuts; at rung 4 each cut lands at three spots, at 8 every 3rd twice, the
-  // second landing leaving the serpent Bleeding.
+  // Cuts; at rung 4 each cut is a Whirlwind, x`whirl.x`, at 8 every 3rd lands
+  // twice, the second landing leaving the serpent Bleeding.
   sword:    { name: 'Swordsman',      ladder: 'sword',    hit: 'sword',    melee: true,
               every: 1.6, windup: 0.14, bleed: { dps: 0.3, s: 3 },
-              whirl: { spots: 3, x: 0.6, spread: 4 }, capEvery: 3 },
+              whirl: { x: 1.8 }, capEvery: 3 },
   // A palm wave from afar; each fills chi, and a full row is a chi palm, x3, that
   // stuns at the capstone.
   monk:     { name: 'Monk',           ladder: 'monk',     hit: 'monk',     melee: false,
@@ -67,7 +67,7 @@ export const CLASSES = {
   // the pair hits for, of a lone charge, so two are not double.
   sapper:   { name: 'Sapper',         ladder: 'sapper',   hit: 'sapper',   melee: false,
               every: 6, windup: 0.4, fly: 1.6, fuse: 3, stickyX: 3, capCharges: 2,
-              pairX: 0.6, spread: 6 },
+              pairX: 0.6 },
   // A held purple beam, ticking while held, then one finishing blow.
   // At rung 4 it widens and ramps the longer she holds it; at 8 it burns through
   // (the phase's half does not dim it).
