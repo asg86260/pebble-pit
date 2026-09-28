@@ -7,7 +7,7 @@ deployed at `https://pebble-saves.graham-things.com` (Workers Free, D1
 `pebble-cloud`) and live-checked, the two-writer write included.
 `CLOUD_ON` is true and the release reads the `CLOUD_URL` repo variable, so
 the next release ships it. Every player opts in: nothing is sent until they
-press *keep my yards in the cloud* or enter a code.
+press *enable cloud syncing* or enter a code.
 Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.

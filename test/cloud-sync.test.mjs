@@ -118,7 +118,7 @@ async function linked(s = 10) {
   return { a, code };
 }
 
-group('keep my yards in the cloud pushes the open yard', async () => {
+group('enable cloud syncing pushes the open yard', async () => {
   const { code } = await linked();
   const r = row(1);
   return [

@@ -556,7 +556,7 @@ export function flush(nowMs = Date.now()) {
 // --- the buttons ------------------------------------------------------------------
 const recovery = f => (f ? showSecret(f.secret) : null);
 
-// *keep my yards in the cloud*: a new vault, and every yard here up at once.
+// *enable cloud syncing*: a new vault, and every yard here up at once.
 // Answers the recovery code, shown once, or null.
 export function startCloud() {
   if (!cloudReady()) return Promise.resolve(null);

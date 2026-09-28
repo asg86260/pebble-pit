@@ -16260,21 +16260,24 @@ took tells `cloud.js` the slot is dirty.
 
 ### Linking a device
 
-**The title page carries it.** A footnote in the foot bar, bottom left
-beside the build number, where the small print already is, on every
-visit: `cloud · off` before it is turned on, `cloud · in the cloud, 2 min
-ago · link a device` after. *Link a device* shows a fresh pairing code in
-the footnote's place (`K7Q-94M`, with the minutes it has left), and the
-footnote on the other device, with cloud off, offers *enter a code*.
-Voted 2026-09-27: A1 of `docs/mocks/cloud-footnote-2026-09-27.html`, over a
-line or a card under the menu. It never pushes the menu.
+**The title page carries the status.** A footnote in the foot bar, bottom
+left beside the build number, where the small print already is, on every
+visit: `cloud · off`, `cloud · saved 2 min ago`, and so on; its one link is
+*choose a yard* while two yards wait for an answer. Voted 2026-09-27: A1 of
+`docs/mocks/cloud-footnote-2026-09-27.html`. Until 2026-09-28 it also
+carried *link a device* and *enter a code*; those moved into the section.
 
-**The sheet's cloud page** holds the rest. Off, it offers *keep my yards in
-the cloud* (mints the secret and shows it once as the recovery code) and
-*use a recovery code*. On, it shows the status line, *show recovery code*,
-*new recovery code* (mints a new secret for the same vault and signs out
-every other device, which pair again) and *stop* (forgets the secret on
-this device; the cloud copy stays for the other devices).
+**The section holds every verb.** A boxed section headed *cloud saves* on the
+title's settings page and the held sheet's saves page (voted 2026-09-28: B
+of `docs/mocks/cloud-menu-2026-09-28.html`), everything in it the width of
+its inside. Off, it offers *enable cloud syncing* (mints the secret and
+shows it once as the recovery code), *enter a link code* and *use a
+recovery code*. On, it shows the status line, *link a device* (the pairing
+code, `K7Q-94M`, a size up, counting down its ten minutes until *done*),
+*show recovery code*, *new recovery code* (mints a new secret for the same
+vault and signs out every other device, which pair again) and *stop cloud
+saves* (forgets the secret on this device; the cloud copy stays for the
+other devices).
 
 Linking a device that already has yards is the one real decision in the
 feature. For each slot where both sides hold a yard with different

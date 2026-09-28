@@ -1167,6 +1167,12 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    so its buttons read as the cloud's and not the slots'. */
 .held .cloudsheet { border: 1px solid var(--ink); padding: 10px 12px; box-sizing: border-box; }
 .held .cloudsheet .head { letter-spacing: .25em; }
+.held .cloudsheet .pair-code { font-size: 18px; letter-spacing: .3em; }
+.held .cloudsheet input {
+  align-self: stretch; box-sizing: border-box;
+  font: inherit; letter-spacing: .3em; text-transform: uppercase; text-align: center;
+  color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 4px; outline: none;
+}
 .held textarea {
   align-self: stretch;
   font: inherit;

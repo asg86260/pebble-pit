@@ -111,19 +111,39 @@ const buttonIn = (el, text) => [...el.querySelectorAll('button')].find(b => b.te
 async function turnOn(d) {
   d.getElementById('settingsbtn').click();
   const block = d.getElementById('cloudsheet');
-  const b = buttonIn(block, 'keep my yards in the cloud');
+  const b = buttonIn(block, 'enable cloud syncing');
   if (!b) return false;
   b.click();
   return until(() => block.querySelector('.code'));
 }
 
-// A code typed into the foot bar's box, a key at a time as far as the box
+const block = d => d.getElementById('cloudsheet');
+const blockSays = d => block(d).querySelector('.small')?.textContent || '';
+
+// A code typed into the section's box, a key at a time as far as the box
 // can tell.
 function type(d, text) {
-  const box = foot(d).querySelector('input');
+  const box = block(d).querySelector('input');
   box.value = text;
   box.dispatchEvent(new Event('input', { bubbles: true }));
   return box.value;
+}
+
+// The settings page's section, opened the player's way, with its link box up.
+async function enterLinkCode(d) {
+  d.getElementById('settingsbtn').click();
+  await until(() => buttonIn(block(d), 'enter a link code'));
+  buttonIn(block(d), 'enter a link code').click();
+  return until(() => block(d).querySelector('input'));
+}
+
+// Whatever the section holds stands inside its border.
+function overflowing(el) {
+  const box = el.getBoundingClientRect();
+  return [...el.querySelectorAll('*')].filter(c => {
+    const r = c.getBoundingClientRect();
+    return r.width && (r.right > box.right + 0.5 || r.left < box.left - 0.5);
+  }).map(c => c.textContent.slice(0, 24));
 }
 
 export const TESTS = [
@@ -161,39 +181,40 @@ export const TESTS = [
       show = !!buttonIn(block, 'show recovery code');
     } finally { await done(); }
     return [
-      ok(shown && /^[0-9A-Z]{4}(-[0-9A-Z]{4}){2}$/.test(code), 'keep my yards in the cloud shows the recovery code', code),
+      ok(shown && /^[0-9A-Z]{4}(-[0-9A-Z]{4}){2}$/.test(code), 'enable cloud syncing shows the recovery code', code),
       ok(told && copy, 'with copy and the words to write it down', `told ${told} copy ${copy}`),
       ok(titled, 'under a cloud saves heading, its stop saying what it stops'),
       ok(!again && show, 'and once: the page turned again shows it only on asking', `again ${again} show ${show}`)
     ];
   }],
 
-  ['the cloud: link a device shows a code in the foot bar and it counts down', async () => {
+  ['the cloud: link a device is in the section, shows a code and counts it down', async () => {
     newRun();
     await settle();
     const stub = worker();
     const { d, done } = await landing(stub);
-    let before = '', code = '', t0 = '', t1 = '', back = '';
+    let line = '', footLink = true, code = '', t0 = '', t1 = '', away = false, spill = ['?'];
     try {
       await turnOn(d);
-      d.getElementById('settingsback').click();
-      await until(() => buttonIn(foot(d), 'link a device'));
-      before = footSays(d);
-      buttonIn(foot(d), 'link a device').click();
-      await until(() => foot(d).querySelector('.code'));
-      code = foot(d).querySelector('.code')?.textContent || '';
-      t0 = foot(d).querySelector('.count')?.textContent || '';
+      line = footSays(d);
+      footLink = !!buttonIn(foot(d), 'link a device');
+      buttonIn(block(d), 'link a device').click();
+      await until(() => block(d).querySelector('.pair-code'));
+      code = block(d).querySelector('.pair-code')?.textContent || '';
+      t0 = (block(d).querySelector('.count')?.textContent || '').replace(' left', '');
+      spill = overflowing(block(d));
       await sleep(1100);
-      t1 = foot(d).querySelector('.count')?.textContent || '';
-      buttonIn(foot(d), 'done')?.click();
-      back = footSays(d);
+      t1 = (block(d).querySelector('.count')?.textContent || '').replace(' left', '');
+      buttonIn(block(d), 'done')?.click();
+      away = !block(d).querySelector('.pair-code') && !!buttonIn(block(d), 'link a device');
     } finally { await done(); }
     const secs = t => { const m = /^(\d+):(\d\d)$/.exec(t); return m ? +m[1] * 60 + +m[2] : NaN; };
     return [
-      ok(/^cloud · saved .+ · link a device$/.test(before), 'on, the line says when the yards went up', before),
+      ok(/^cloud · saved /.test(line) && !footLink, 'the foot bar says when the yards went up, and only that', line),
       ok(code === 'K7Q-94M' && stub.calls.includes('POST /pairings'), 'link a device asks for a code and shows it', code),
       ok(secs(t0) <= 600 && secs(t0) > 590 && secs(t1) < secs(t0), 'and it counts down', `${t0} -> ${t1}`),
-      ok(/link a device$/.test(back), 'done puts it away', back)
+      ok(!spill.length, 'nothing in the section stands out past its border', JSON.stringify(spill)),
+      ok(away, 'done puts it away')
     ];
   }],
 
@@ -202,27 +223,28 @@ export const TESTS = [
     await settle();
     const stub = worker();
     const { d, done } = await landing(stub);
-    let off = '', typed = '', wrong = '', claims = 0, linked = '';
+    let off = '', typed = '', wrong = '', claims = 0, linked = false, spill = ['?'];
     try {
-      await until(() => buttonIn(foot(d), 'enter a code'));
+      await until(() => footSays(d));
       off = footSays(d);
-      buttonIn(foot(d), 'enter a code').click();
+      await enterLinkCode(d);
+      spill = overflowing(block(d));
       typed = type(d, 'k7q9o');
       type(d, 'zzzzzz');
-      buttonIn(foot(d), 'link').click();
+      buttonIn(block(d), 'link').click();
       await until(() => d.getElementById('said').textContent);
       wrong = d.getElementById('said').textContent;
       type(d, 'k7q94m');
-      buttonIn(foot(d), 'link').click();
-      await until(() => buttonIn(foot(d), 'link a device'));
+      buttonIn(block(d), 'link').click();
+      linked = await until(() => buttonIn(block(d), 'link a device'));
       claims = stub.calls.filter(c => c === 'POST /pairings/claim').length;
-      linked = footSays(d);
     } finally { await done(); }
     return [
-      ok(off === 'cloud · off · enter a code', 'off, the line offers a code', off),
+      ok(off === 'cloud · off', 'off, the foot bar says so and offers nothing', off),
+      ok(!spill.length, 'the box fits the section', JSON.stringify(spill)),
       ok(typed === 'K7Q-90', 'the box reads a code as it is typed', typed),
       ok(wrong === "that code didn't work", 'a bad code says so', wrong),
-      ok(claims === 2 && /link a device$/.test(linked), 'and a good one links', `${claims} claims, "${linked}"`)
+      ok(claims === 2 && !!linked, 'and a good one links', `${claims} claims`)
     ];
   }],
 
@@ -246,10 +268,9 @@ export const TESTS = [
     const { d, cloud, save, done } = await landing(stub);
     let rows = [], paneUp = false, left = -1, kept = '', front = false;
     try {
-      await until(() => buttonIn(foot(d), 'enter a code'));
-      buttonIn(foot(d), 'enter a code').click();
+      await enterLinkCode(d);
       type(d, PAIR);
-      buttonIn(foot(d), 'link').click();
+      buttonIn(block(d), 'link').click();
       const clashes = d.getElementById('clashes');
       paneUp = await until(() => !clashes.hidden && clashes.querySelector('.clash'));
       rows = [...clashes.querySelectorAll('.clash')].map(r => [...r.querySelectorAll('button')].map(b => b.textContent));
