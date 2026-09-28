@@ -65,7 +65,10 @@ const DEALT = ['breakers', 'carters', 'blasters', 'growers', 'farmhands',
                'stormLeft',
                // the scales are the deep's bed, counted off its cells on the
                // way in (deep/scales.js), which this check leaves empty
-               'scales'];
+               'scales',
+               // one a station with a fighter: dealt off `S.stations`, which
+               // this check fills with nonsense (docs/wave-party.md)
+               'fighters'];
 
 group('every plain field on the list survives a save and a load', async () => {
   const fields = SAVED.filter(k => !DEALT.includes(k));
@@ -221,5 +224,43 @@ group('a reset puts down what the save throws away', async () => {
   const kept = Object.keys(planted).filter(k => JSON.stringify(S[k]) === JSON.stringify(planted[k]));
   return [
     ok(kept.length === 0, 'nothing of the old yard stands through a reset', kept.join(', '))
+  ];
+});
+
+// --- wave party: STATE ---
+// A save from before the party (docs/wave-party.md, "Old saves"): no
+// migration, so the deep starts over at the snatch. The retired keys are not
+// fields any more and the loop reads only the list, so they are left lying in
+// the blob; a body on one of the five weapons comes back a pod resident where
+// it stood, and the deep's crew is the same bodies.
+const RETIRED_TYPES = ['brawler', 'lancer', 'grenadier', 'scribe', 'warlock'];
+group('a save from before the party loads, its weapon crews stood down to the pods', async () => {
+  window.__deepCrew({ spare: 3 });
+  yard.persist();
+  const KEY = 'boulder-clicker/v4';
+  const raw = JSON.parse(localStorage.getItem(KEY));
+  const RETIRED = { brawlers: 1, lancers: 1, grenadiers: 0, scribes: 0, warlocks: 1,
+                    wellOpen: true, fontOpen: true, circleOpen: false, spireOpen: true, starOpen: true,
+                    punchLevel: 3, brawlLevel: 2, lanceLevel: 1, lanceholdLevel: 1, grenadeLevel: 1,
+                    grenadepaceLevel: 1, sigilLevel: 1, beamLevel: 1, curseLevel: 1, starLevel: 2,
+                    sigils: [{ x: 5 }], starAt: 1234 };
+  Object.assign(raw, RETIRED);
+  const deep = raw.who.filter(k => k.deepHome);
+  const was = deep.map(k => [k.name, k.x, k.y]);
+  ['brawler', 'lancer', 'warlock'].forEach((type, i) => {
+    if (deep[i]) Object.assign(deep[i], { type, goal: 'swing', phase: 'wind' });
+  });
+  localStorage.setItem(KEY, JSON.stringify(raw));
+  yard.restore();
+  const kept = Object.keys(RETIRED).filter(k => k in S);
+  const armed = S.workers.filter(w => RETIRED_TYPES.includes(w.type));
+  const back = was.filter(([name, x, y]) =>
+    S.workers.some(w => w.name === name && w.deepHome && Math.abs(w.x - x) <= 1 && Math.abs(w.y - y) <= 1));
+  return [
+    ok(deep.length >= 3, 'the save had three of the deep\'s residents to arm', `${deep.length}`),
+    ok(kept.length === 0, 'no retired key is read back onto the yard', kept.join(', ')),
+    ok(armed.length === 0, 'and nobody is on a weapon', armed.map(w => `${w.name} ${w.type}`).join(', ')),
+    ok(back.length === was.length, 'every one of them is a pod resident, where it stood',
+       `${back.length} of ${was.length}`)
   ];
 });
