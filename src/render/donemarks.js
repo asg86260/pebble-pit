@@ -8,6 +8,9 @@ import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
 import { doneAt, rowFor } from '../works.js';
 import { buildingGlyph, stackSlot } from './bars.js';
+
+// The key a fighter's station's build goes by (deep/party.js, `stationRow`).
+const STATION_BUILD = 'station-';
 import { ctx } from './ctx.js';
 
 // The thing that finished stays where it stood in the stack over the station
@@ -101,9 +104,14 @@ export function drawDoneMarks() {
       if (at.cy + reach < S.camY || at.cy - reach > S.camY + S.viewH ||
           at.x + reach < S.camX || at.x - reach > S.camX + S.viewW) return;
       const u = rowFor(key);
-      buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u) : null);
+      // A fighter's station going up says only that it is done: its kind's
+      // glyph meant a building, and the station is its fighter now. The tick
+      // alone, twice the size, stands in the glyph's place.
+      const bare = key.startsWith(STATION_BUILD);
+      if (!bare) buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u) : null);
       ctx.save();
       ctx.translate(at.x - P / 2, at.cy - P / 2);   // five wide: half a cell puts it true
+      if (bare) { ctx.translate(-P / 2, -P / 2); ctx.scale(2, 2); }
       strokeCells(TICK, '#fff');
       fillCells(TICK, '#000');
       ctx.restore();
