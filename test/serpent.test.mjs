@@ -6,13 +6,12 @@
 // gets anywhere, a faster one does, and a stage breaks at its depth and not
 // before. The clicks go through `clickDeep`, the one door the pointer calls
 // in the deep, at the coil where it is on the frame; the stage-by-stage
-// checks strike with the beam, which every defense takes in full, so they are
-// about the depths and not about which weapon answers which stage.
+// checks strike with the punch, which every defense takes in full, so they
+// are about the depths and not about which class answers which stage.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, FADE_UNLIT, SIGIL_HEAL_CUT,
-         rungValue } from '../src/config.js';
-import { clickDeep, strike, healNow, woundK } from '../src/deep/serpent.js';
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES } from '../src/config.js';
+import { clickDeep, clickDmg, strike, healNow, woundK, onBreak } from '../src/deep/serpent.js';
 import { spendScales } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -44,7 +43,7 @@ group('the wound opens under clicks on the coil and closes when nothing strikes'
   run(3);
   const closing = S.serpentWound;
   run(10);
-  const punch = rungValue('punch', S.punchLevel);
+  const punch = clickDmg();
   return [
     ok(!missed && woundMissed === 0, 'a click on the floor is not a click on the serpent',
        `answered ${missed}, wound ${woundMissed}`),
@@ -56,9 +55,27 @@ group('the wound opens under clicks on the coil and closes when nothing strikes'
   ];
 });
 
+group("the click is always a punch, worth the first station's rung", async () => {
+  deepYard();
+  const bare = clickDmg();
+  // until merge: CREW's party stands the station; its rung is set here, as a
+  // rail's Buy would leave it.
+  S.stations = [{ id: 's1', kind: 'altar', slot: 0, built: true, cls: 'brawler', rung: 5, paid: [], fighter: null }];
+  const fifth = clickDmg();
+  clickBelly();
+  const said = S.hits.find(h => h.weapon === 'punch');
+  S.stations = [];
+  return [
+    ok(bare === CLICK_DMG[0], 'with no station, the first rung', `${bare}`),
+    ok(fifth === CLICK_DMG[5], "on the first station's fifth, the fifth", `${fifth}`),
+    ok(said && said.done === CLICK_DMG[5] * SERPENT_DEFENSE.punch[0], 'and it lands as a punch', JSON.stringify(said && said.done)),
+    ok(S.serpentStun === 0, 'which never stuns', `${S.serpentStun}`)
+  ];
+});
+
 group('a hand slower than the heal never opens it, a faster one breaks the stage', async () => {
   deepYard();
-  const heal = SERPENT_HEAL[0], punch = rungValue('punch', S.punchLevel);
+  const heal = SERPENT_HEAL[0], punch = clickDmg();
   // Slower: a punch every so often, half the heal a second.
   const slowEvery = Math.round(60 * punch / (heal / 2));
   let most = 0;
@@ -87,31 +104,32 @@ group('a hand slower than the heal never opens it, a faster one breaks the stage
   ];
 });
 
-group('each defense breaks at its depth, in order, and the fourth frees him', async () => {
+group('each defense breaks at its depth, in order, the fourth frees him, and every break is heard', async () => {
   deepYard();
-  const seen = [S.serpentStage], bad = [];
+  const seen = [S.serpentStage], bad = [], heard = [];
+  const stop = onBreak(stage => heard.push(stage));
   const at = () => coilAt(bellySeg(), now());
   for (let stage = 0; stage < 4; stage++) {
     const depth = SERPENT_WOUND[stage];
-    S.sigils = [{ x: spotX('circle'), slot: 0 }];
     // Short of the depth by a whole second's heal: the frame closes a little,
     // and the stage stands.
-    strike('beam', depth - SERPENT_HEAL[stage] * 2, at().x, at().y);
+    strike('punch', depth - SERPENT_HEAL[stage] * 2, at().x, at().y);
     frame();
     if (S.serpentStage !== stage) bad.push(`stage ${stage} broke short of its depth`);
-    strike('beam', depth, at().x, at().y);
+    strike('punch', depth, at().x, at().y);
     if (S.serpentWound > depth) bad.push(`stage ${stage}'s wound went past its depth`);
     frame();
     seen.push(S.serpentStage);
     if (S.serpentStage !== stage + 1) bad.push(`stage ${stage} did not break at its depth`);
     if (S.serpentWound !== 0) bad.push(`stage ${stage + 1} began with a wound of ${S.serpentWound}`);
-    if (S.sigils.length) bad.push(`the circles held against stage ${stage} outlived it`);
   }
   const inOrder = seen.every((s, i) => i === 0 || s === seen[i - 1] + 1);
   run(5);
+  stop();
   return [
     ok(bad.length === 0, 'every stage broke at its depth and not before', bad.join('; ')),
     ok(inOrder, 'one at a time, in order, never back', seen.join(' -> ')),
+    ok(heard.join(' ') === '1 2 3 4', 'and each break is heard once, with the stage it reached', heard.join(' ')),
     ok(S.serpentFreed && S.serpentStage === 4, 'and the fourth break opens the belly',
        `freed ${S.serpentFreed}, stage ${S.serpentStage}`),
     ok(S.serpentStage === 4 && S.serpentWound === 0 && healNow() === 0,
@@ -119,57 +137,23 @@ group('each defense breaks at its depth, in order, and the fourth frees him', as
   ];
 });
 
-group('the weapon that answers a stage does more than one that glances', async () => {
+group('every class that does damage takes half in one phase and the whole in the rest', async () => {
   deepYard();
-  window.__serpent({ stage: 1, wound: 0 });
-  const p = belly();
-  const punch = strike('punch', 100, p.x, p.y);
-  window.__serpent({ stage: 1, wound: 0 });
-  const lance = strike('lance', 100, p.x, p.y);
+  const bad = [];
+  for (const [key, cls] of Object.entries(CLASSES)) {
+    if (!cls.hit) continue;
+    const got = [];
+    for (let stage = 0; stage < 4; stage++) {
+      window.__serpent({ stage, wound: 0 });
+      const p = belly();
+      got.push(strike(cls.hit, 100, p.x, p.y) / 100);
+    }
+    if (got.filter(k => k === 0.5).length !== 1 || got.filter(k => k === 1).length !== 3) bad.push(`${key}: ${got}`);
+    if (got.some((k, i) => k !== SERPENT_DEFENSE[cls.hit][i])) bad.push(`${key} off its row: ${got}`);
+  }
   return [
-    ok(lance > punch * 2, 'against the wards a lance goes in and a punch glances',
-       `lance ${lance}, punch ${punch}`),
-    ok(punch === 100 * SERPENT_DEFENSE.punch[1] && lance === 100 * SERPENT_DEFENSE.lance[1],
-       'by the defense table', `${punch} and ${lance}`),
-    ok(punch > 0, 'and the glancing one still lands a little', `${punch}`)
-  ];
-});
-
-group('fading: a coil nobody lights is barely there to hit', async () => {
-  deepYard();
-  window.__serpent({ stage: 3, wound: 0 });
-  const p = belly();
-  S.beams = [];
-  const unlit = strike('punch', 100, p.x, p.y);
-  const beamUnlit = strike('beam', 100, p.x, p.y);
-  window.__serpent({ stage: 3, wound: 0 });
-  // A wizard's beam on the coil this frame, laid for the check: that a beam
-  // is laid by a wizard at the spire is deep-arms.test.mjs's.
-  S.beams = [{ x: p.x, y: deepFloor(), tx: p.x, ty: p.y, seg: bellySeg(), tick: S.tick }];
-  const lit = strike('punch', 100, p.x, p.y);
-  S.beams = [];
-  return [
-    ok(Math.abs(unlit - 100 * SERPENT_DEFENSE.punch[3] * FADE_UNLIT) < 1e-9,
-       'unlit, a punch is worth the fade of what it would be', `${unlit}`),
-    ok(Math.abs(lit - unlit / FADE_UNLIT) < 1e-9, 'lit, it is worth the whole of it', `${lit} against ${unlit}`),
-    ok(beamUnlit === 100 * SERPENT_DEFENSE.beam[3], 'and the beam is the light, never dimmed', `${beamUnlit}`)
-  ];
-});
-
-group('sigils and the curse cut the heal', async () => {
-  deepYard();
-  window.__serpent({ stage: 1, wound: 0 });
-  const bare = healNow();
-  S.sigils = [{ x: spotX('circle'), slot: 0 }, { x: spotX('circle'), slot: 1 }];
-  const held = healNow();
-  S.curseLevel = 2;
-  const cursed = healNow();
-  S.sigils = [];
-  S.curseLevel = 0;
-  return [
-    ok(Math.abs(held - bare * (1 - 2 * SIGIL_HEAL_CUT)) < 1e-9, 'two circles take their share off',
-       `${bare} then ${held}`),
-    ok(cursed < held, 'and the curse more on top', `${held} then ${cursed}`)
+    ok(bad.length === 0, 'by the defense table, with no wall', bad.join('; ')),
+    ok(!SERPENT_DEFENSE.star && !SERPENT_DEFENSE.beam && !SERPENT_DEFENSE.lance, 'and no weapon rows are left')
   ];
 });
 
@@ -179,7 +163,7 @@ group('a hit sheds scales, and they lie on the floor until they are crushed', as
   deepYard();
   const before = S.scales, bed = deepBed.n;
   const p = belly();
-  const done = strike('beam', 5, p.x, p.y);
+  const done = strike('punch', 5, p.x, p.y);
   const inWater = S.sinking.length, countedAtOnce = S.scales - before;
   const landed = runUntil(() => S.sinking.length === 0, 30);
   const nothing = strike('punch', 0, p.x, p.y);

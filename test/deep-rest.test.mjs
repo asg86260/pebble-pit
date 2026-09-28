@@ -4,11 +4,12 @@
 // does: a pod bought, its body gathering on a bare floor.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { P, WORKER, rungValue } from '../src/config.js';
+import { P, WORKER } from '../src/config.js';
 import { deepBed } from '../src/state.js';
 import { deepX0, deepX1 } from '../src/deep/place.js';
 import { feet } from '../src/deep/arms.js';
 import { restGround, restCeiling } from '../src/deep/rest.js';
+import { stationX } from '../src/deep/classes.js';
 import { bedX } from '../src/deep/scales.js';
 
 const S = yard.S;
@@ -32,7 +33,7 @@ function podBody() {
 // Found again every time: a reload (the harness's every five seconds, or a
 // check's own) stands up new bodies.
 const pod = () => S.workers.find(o => o.deepHome && o.type === 'gatherer');
-const scribe = () => S.workers.find(o => o.type === 'scribe');
+const guard = () => S.workers.find(o => o.station === 's1') || S.workers.find(o => o.name === S.stations[0].fighter);
 
 const upOff = h => {
   for (let f = 0; f < 60 * 120; f++) { frame(); if (pod().y < feet() - h) return true; }
@@ -121,27 +122,35 @@ group('a reload mid-float leaves it where it was, and it sinks from there', asyn
   ];
 });
 
-group('a scribe whose circles are full rests about the circle', async () => {
+// Its ground is its station's, wherever on the floor that stands: the rest
+// is asked of the station's middle, not of a named spot.
+group("a fighter whose station has no class yet stands guard, resting about the station's ground", async () => {
   window.__fullSites();
   window.__snatch({ played: true });
-  window.__crew(0, 4);
-  window.__deepCrew({ brawlers: 0, scribes: 1 });
-  const g = restGround('circle');
-  // The circles already drawn: the setup, not the thing this is about.
-  const want = rungValue('sigil', S.sigilLevel);
-  for (let i = 0; i < want; i++) S.sigils.push({ x: 0, slot: 900 + i });
-  runUntil(() => { const w = scribe(); return w.goal === 'rest' && w.x >= g.lo && w.x <= g.hi; }, 90);
-  let w = scribe();
+  if (window.__party) window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
+  else {
+    // until merge: a weapon crew's body stands in for the fighter (deep/arms.js)
+    window.__crew(0, 4);
+    window.__deepCrew({ brawlers: 1 });
+    const body = S.workers.find(w => w.type === 'brawler');
+    S.stations = [{ id: 's1', kind: 'altar', slot: 2, built: true, cls: null, rung: 0, paid: [], fighter: body.name }];
+    S.stationsBuilt = 1;
+  }
+  const g = restGround(stationX(S.stations[0]));
+  runUntil(() => { const w = guard(); return w.goal === 'guard' && w.x >= g.lo && w.x <= g.hi; }, 90);
+  let w = guard();
   let x0 = Infinity, x1 = -Infinity, off = 0;
   for (let f = 0; f < 60 * 40; f++) {
     frame();
-    w = scribe();
+    w = guard();
     x0 = Math.min(x0, w.x); x1 = Math.max(x1, w.x);
     if (w.y < feet() - P) off++;
   }
   return [
-    ok(w.goal === 'rest', 'the scribe is at rest', `goal ${w.goal}`),
+    ok(w.goal === 'guard', 'the fighter stands guard', `goal ${w.goal}`),
     ok(x1 - x0 > P * 2 || off > 0, 'and not dead still', `${Math.round(x0)}..${Math.round(x1)}, ${off} frames up`),
-    ok(x0 >= g.lo && x1 <= g.hi, "on the circle's ground", `${Math.round(x0)}..${Math.round(x1)} in ${Math.round(g.lo)}..${Math.round(g.hi)}`)
+    ok(x0 >= g.lo && x1 <= g.hi, "on its station's ground", `${Math.round(x0)}..${Math.round(x1)} in ${Math.round(g.lo)}..${Math.round(g.hi)}`),
+    ok(S.serpentWound === 0, 'and strikes nothing', `${S.serpentWound}`)
   ];
 });
+
