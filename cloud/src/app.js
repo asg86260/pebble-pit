@@ -342,10 +342,12 @@ async function route(request, env, now) {
 }
 
 // Whether a browser on this page may call: CLOUD_ORIGINS, where `*` stands
-// for one or more labels of a host or for any port.
+// for one or more labels of a host or for any port, and `#` for one number
+// of an address.
 const escape = s => s.replace(/[.+?^${}()|[\]\\]/g, ch => '\\' + ch);
 const pattern = p => new RegExp('^' + escape(p)
   .replace(/:\*$/, ':\\d+')
+  .replace(/#/g, '\\d{1,3}')
   .replace(/\*/g, '[a-z0-9-]+(\\.[a-z0-9-]+)*') + '$', 'i');
 const ORIGINS = CLOUD_ORIGINS.map(pattern);
 export const originAllowed = o => ORIGINS.some(re => re.test(o));

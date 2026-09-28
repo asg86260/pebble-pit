@@ -764,6 +764,7 @@ export function cloudWhy(otherwise) {
          : `too many tries; try again in ${Math.max(1, Math.ceil(r.retryS / 60))} min`;
   }
   if (r.status === 503) return 'the cloud is resting; try again later';
+  if (r.status === 403) return 'the cloud does not know this page';
   if (!r.status || r.status >= 500) return 'the cloud did not answer';
   return otherwise;
 }

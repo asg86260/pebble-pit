@@ -246,7 +246,8 @@ test('a browser on a page that is not the game\'s is refused before anything run
   const w = worker();
   const code = await w.mint();
   const before = w.counter.statements;
-  for (const origin of ['https://evil.com', 'https://itch.zone.evil.com', 'http://localhost.evil.com', 'https://graham-things.com.evil.com']) {
+  for (const origin of ['https://evil.com', 'https://itch.zone.evil.com', 'http://localhost.evil.com', 'https://graham-things.com.evil.com',
+                        'http://10.evil.com:80', 'http://10.0.0.42.evil.com:80']) {
     for (const [m, p] of [['OPTIONS', '/slots'], ['POST', '/vaults'], ['GET', '/slots'], ['POST', '/pairings/claim']]) {
       const r = await w.call(m, p, { secret: code, headers: { origin } });
       assert.equal(r.status, 403, `${origin} ${m} ${p}`);
@@ -255,7 +256,8 @@ test('a browser on a page that is not the game\'s is refused before anything run
   }
   assert.equal(w.counter.statements, before, 'not one statement ran');
   // The game's own pages, the desk's file pages and a dev server are let in.
-  for (const origin of ['https://html-classic.itch.zone', 'https://v6p9d9t4.ssl.hwcdn.net', 'null', 'http://localhost:5190', 'https://graham-things.com']) {
+  for (const origin of ['https://html-classic.itch.zone', 'https://v6p9d9t4.ssl.hwcdn.net', 'null', 'http://localhost:5190', 'https://graham-things.com',
+                        'http://10.0.0.42:5190', 'http://192.168.1.20:5183']) {
     const r = await w.call('GET', '/slots', { secret: code, headers: { origin } });
     assert.equal(r.status, 200, origin);
     assert.equal(r.headers.get('access-control-allow-origin'), origin);

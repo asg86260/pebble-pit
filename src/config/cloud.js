@@ -90,6 +90,10 @@ export const CLOUD_ORIGINS = [
   'https://*.itch.zone', 'https://*.hwcdn.net', 'https://*.itch.io',
   'https://graham-things.com', 'https://*.graham-things.com',
   'http://localhost:*', 'http://127.0.0.1:*',
+  // A dev server opened from a phone on the same network, by the PC's
+  // address: only reachable from inside that network. `#` is one number of
+  // an address, so a name like 10.example.com is not one of these.
+  'http://10.#.#.#:*', 'http://192.168.#.#:*', 'http://172.#.#.#:*',
   'null'
 ];
 
