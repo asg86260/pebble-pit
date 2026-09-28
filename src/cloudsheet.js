@@ -23,6 +23,8 @@ export const CLOUD_LOOK_MS = IDLE_MS;
 // `ok` carries its own time and is written below.
 const LINES = {
   off: 'cloud · off',
+  out: 'cloud · signed out',
+  refused: 'cloud · a save was refused',
   offline: 'cloud · not saved: offline',
   behind: 'cloud · newer on another device',
   newer: 'cloud · update to take the newer save',
@@ -113,7 +115,9 @@ function drawFoot() {
   // A build with no cloud has no line at all, and no gap where one would be.
   if (!ready) { el.replaceChildren(); el.hidden = true; entering = false; return; }
   el.hidden = false;
-  if (entering && st.state === 'off') {
+  // Signed out reads like off, with its own word: a code is the way back.
+  const unlinked = st.state === 'off' || st.state === 'out';
+  if (entering && unlinked) {
     if (!el.querySelector('input')) drawEntering(el);
     return;
   }
@@ -127,8 +131,8 @@ function drawFoot() {
     return;
   }
   const tick = node('span', st.state === 'ok' ? 'tick' : 'tick off');
-  if (st.state === 'off') {
-    el.replaceChildren(tick, `${LINES.off} · `, button('enter a code', () => { entering = true; drawFoot(); }, 'go'));
+  if (unlinked) {
+    el.replaceChildren(tick, `${LINES[st.state]} · `, button('enter a code', () => { entering = true; drawFoot(); }, 'go'));
   } else if (st.state === 'ok') {
     el.replaceChildren(tick, `${cloudLine(st, now)} · `, button('link a device', linkDevice, 'go'));
   } else if (st.state === 'conflict') {
@@ -205,7 +209,7 @@ function drawCloud(el, say, opts) {
   const st = cloudStatus();
   const done = line => { if (line) say(line); redrawAll(); opts.changed?.(); };
 
-  if (st.state === 'off') {
+  if (st.state === 'off' || st.state === 'out') {
     if (recovering) {
       const box = node('textarea');
       box.rows = 1;
@@ -222,6 +226,14 @@ function drawCloud(el, say, opts) {
       pair.append(button('use it', use), button('never mind', () => { recovering = false; drawCloud(el, say, opts); }));
       el.append(box, pair);
       box.focus();
+      return;
+    }
+    // Signed out: this device still holds its old code, so the ways on are a
+    // code from another device, the recovery code, or letting it go.
+    if (st.state === 'out') {
+      el.append(node('div', 'small', LINES.out),
+        button('use a recovery code', () => { recovering = true; say(''); drawCloud(el, say, opts); }),
+        button('stop', async () => { await stopCloud(); done('the cloud is off on this device'); }));
       return;
     }
     el.append(

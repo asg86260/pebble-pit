@@ -21,10 +21,11 @@ import { S } from './state.js';
 import { SLOTS, openSlot, slotRaw, writeSlot, savePrevOf, onSaved, isSave, cloudRaw, setCloudRaw } from './save.js';
 import { since } from './slots.js';
 import { SAVE_V } from './config/saves.js';
+import { migrate } from './migrations/index.js';
 import {
   CLOUD_URL, CLOUD_BOOT_MS, CLOUD_TIMEOUT_MS, CLOUD_PUSH_S, CLOUD_PUSH_FLOOR_S, CLOUD_PUSH_HOUR_MAX,
   CLOUD_BACKOFF_MAX_S, CLOUD_KEEPALIVE_MAX, CLOUD_BLOB_MAX, CLOUD_SECRET_LEN, CLOUD_PAIR_LEN,
-  CLOUD_ALPHABET, YARD_ID_LEN, CLOUD_SECRET_PREFIX
+  CLOUD_SECRET_PREFIX
 } from './config/cloud.js';
 
 // --- where the worker is ------------------------------------------------------
@@ -50,17 +51,6 @@ export function cloudReady() {
 }
 
 // --- codes --------------------------------------------------------------------
-function draw(n) {
-  const b = new Uint8Array(n);
-  try { crypto.getRandomValues(b); }
-  catch { for (let i = 0; i < n; i++) b[i] = Math.floor(Math.random() * 256); }
-  let s = '';
-  for (const x of b) s += CLOUD_ALPHABET[x & 31];
-  return s;
-}
-// A new yard's name (persist.js, and the migration for a yard from before).
-export const mintYardId = () => draw(YARD_ID_LEN);
-
 // A code as it was typed, as the worker reads it: the characters a hand
 // confuses folded together, the dashes and the prefix dropped. The prefix goes
 // before the fold, because PEBBLE has an L in it.
@@ -95,6 +85,7 @@ function fresh(playing = false) {
     playing,
     dirty: new Set(Array.from({ length: SLOTS }, (_, i) => i + 1)),
     due: {}, last: {},
+    tries: {},         // n -> 429s in a row, so a slot refused again and again slows down
     holdUntil: 0, wait: CLOUD_PUSH_S,
     sent: [], capped: false,
     stop: {},          // n -> 'big' | 'full' | 'behind' | 'newer'
@@ -102,6 +93,7 @@ function fresh(playing = false) {
     clash: new Map(),  // n -> { raw, s, rev }: two yards, the player to choose
     trouble: null,     // 'offline' | 'paused' | null, from the last call
     recheck: false,    // the boot's comparison has still to be made
+    out: false,        // the worker answered 401 this session (signOut)
     pair: null
   };
 }
@@ -169,9 +161,20 @@ function parse(raw) {
   if (!raw) return null;
   try { const s = JSON.parse(raw); return isSave(s) ? s : null; } catch { return null; }
 }
+// A slot as the store has it, brought up to today's shape first. `restore`
+// migrates only the yard it opens, so a slot nobody has opened since the
+// shape last changed is still in the old one -- with no `yardId`, which the
+// worker refuses. It is migrated here, once, and written back, exactly as
+// opening it would have; a copy from a newer build is left as it is.
 function local(n) {
-  const raw = slotRaw(n) || null;
-  return { raw, s: parse(raw) };
+  let raw = slotRaw(n) || null;
+  const s = parse(raw);
+  if (s && !(+s.saveV >= SAVE_V)) {
+    migrate(s);
+    raw = JSON.stringify(s);
+    writeSlot(n, raw);
+  }
+  return { raw, s };
 }
 // A copy as the saves page says a yard (slots.js, `slotLabels`), less the
 // slot's number: the conflict pane puts `this device` or `cloud` there.
@@ -193,12 +196,22 @@ async function fetchSlot(n, secret) {
 
 // What a refusal says about the cloud as a whole, for the status line.
 function note(r) {
-  if (r.status === 401) { forget(); return; }
+  if (r.status === 401) { signOut(); return; }
   session.trouble = !r.status || r.status >= 500 && r.status !== 503 ? 'offline'
                   : r.status === 429 || r.status === 503 ? 'paused' : session.trouble;
 }
-// The secret is dead: rotated away on another device, or the vault deleted.
-// This device is off again, and its yards are exactly as they were.
+// The worker does not know the secret: rotated away on another device, the
+// vault deleted -- or the worker itself briefly wrong about it. So the secret
+// is kept, not forgotten: this device stops calling and says it is signed
+// out, asks once more at its next boot (`agree`), and comes back by itself if
+// the worker answers then. Only the player's *stop* forgets it.
+function signOut() {
+  session.out = true;
+  session.trouble = null;
+  const f = facts();
+  if (f && !f.out) { f.out = true; keep(f); }
+}
+// *stop*: the secret gone from this device; its yards exactly as they were.
 function forget() {
   keep(null);
   session = fresh(session.playing);
@@ -303,11 +316,18 @@ async function take(n, m, f, ctx, here) {
 async function agree(f, ctx) {
   const r = await call('GET', '/slots', { secret: f.secret });
   if (ctx.late) return false;
-  if (r.status !== 200 || !Array.isArray(r.data?.slots)) { note(r); session.recheck = true; return false; }
+  if (r.status !== 200 || !Array.isArray(r.data?.slots)) {
+    note(r);
+    if (r.status !== 401) session.recheck = true;
+    return false;
+  }
+  // The worker knows the secret again: signed back in.
+  delete f.out;
+  session.out = false;
   for (let n = 1; n <= SLOTS; n++) await agreeSlot(n, r.data.slots[n - 1] || null, f, ctx);
   if (ctx.late) return false;
   if (!session.recheck) session.trouble = null;
-  if (facts()?.secret === f.secret) keep(f);
+  if (facts()?.secret === f.secret && !session.out) keep(f);
   return true;
 }
 
@@ -355,15 +375,20 @@ async function pushSlot(n, f, now, keepalive = false) {
     session.dirty.delete(n);
     return 'same';
   }
+  // The mark comes off before the awaits, not after: a write that lands while
+  // this push is in flight marks the slot again, and that mark has to outlive
+  // the answer. Every way out that did not push this copy puts it back.
+  session.dirty.delete(n);
+  const again = () => { session.dirty.add(n); };
   const body = here.raw ? await gzip(here.raw) : new Uint8Array(0);
   // Measured before it is sent: over the worker's cap is a save's size bug,
   // and the slot stays local rather than try.
-  if (body.length > CLOUD_BLOB_MAX) { session.stop[n] = 'big'; return 'skip'; }
-  if (keepalive && body.length >= CLOUD_KEEPALIVE_MAX) return 'skip';
+  if (body.length > CLOUD_BLOB_MAX) { session.stop[n] = 'big'; again(); return 'skip'; }
+  if (keepalive && body.length >= CLOUD_KEEPALIVE_MAX) { again(); return 'skip'; }
   // The hour's pushes: a healthy one is sixty and a few page hides, so past
   // the cap this session is looping, and stops.
   session.sent = session.sent.filter(t => now - t < 3600e3);
-  if (session.sent.length >= CLOUD_PUSH_HOUR_MAX) { session.capped = true; return 'hold'; }
+  if (session.sent.length >= CLOUD_PUSH_HOUR_MAX) { session.capped = true; again(); return 'hold'; }
   session.sent.push(now);
   session.last[n] = now;
   session.due[n] = now + CLOUD_PUSH_S * 1000;
@@ -376,7 +401,7 @@ async function pushSlot(n, f, now, keepalive = false) {
       'x-save-v': String(v)
     }
   });
-  if (facts()?.secret !== f.secret) return 'hold';        // stopped or rotated meanwhile
+  if (facts()?.secret !== f.secret) { again(); return 'hold'; }   // stopped or rotated meanwhile
   if (r.status === 200) {
     f.base[n] = +r.data?.rev || (f.base[n] || 0) + 1;
     f.pushed[n] = here.raw ? played : -1;
@@ -384,9 +409,10 @@ async function pushSlot(n, f, now, keepalive = false) {
     keep(f);
     session.wait = CLOUD_PUSH_S;
     session.trouble = null;
-    session.dirty.delete(n);
+    delete session.tries[n];
     return 'ok';
   }
+  again();
   if (r.status === 412) {
     const m = r.data?.slot || null;
     if (m && here.s && m.yardId === yard && +m.saveV <= SAVE_V) {
@@ -405,15 +431,29 @@ async function pushSlot(n, f, now, keepalive = false) {
   }
   if (r.status === 413) { session.stop[n] = 'big'; return 'next'; }
   if (r.status === 507) { session.stop[n] = 'full'; return 'next'; }
+  // Too soon for this slot (the floor, after another device's push) or this
+  // code's day: this slot waits, the others go on. The first refusal waits
+  // what the worker said, which for the floor is seconds; a slot refused
+  // again and again doubles from there, so no answer makes it hammer.
+  if (r.status === 429) {
+    const tries = session.tries[n] = (session.tries[n] || 0) + 1;
+    const doubled = tries > 1 ? Math.min(CLOUD_PUSH_S * 2 ** (tries - 1), CLOUD_BACKOFF_MAX_S) : 0;
+    session.due[n] = now + Math.max(1, r.retryS || 0, doubled) * 1000;
+    if (tries > 1 || (r.retryS || 0) > CLOUD_PUSH_FLOOR_S) session.trouble = 'paused';
+    return 'next';
+  }
+  if (r.status === 401) { note(r); return 'hold'; }
+  // Any other refusal is about this copy, not the cloud: sent again it would
+  // be refused again. The slot stops and the others go on.
+  if (r.status >= 400 && r.status < 500) { session.stop[n] = 'refused'; return 'next'; }
   note(r);
-  if (r.status === 401) return 'hold';
   backoff(now, r.retryS);
   return 'hold';
 }
 
 async function pumpNow(now, keepalive = false) {
   let f = facts();
-  if (!f || session.capped || now < session.holdUntil) return;
+  if (!f || f.out || session.out || session.capped || now < session.holdUntil) return;
   if (session.recheck && !keepalive) {
     session.recheck = false;
     if (!(await agree(f, { late: false }))) { backoff(now, 0); return; }
@@ -636,8 +676,8 @@ export function keepHere(n) {
 }
 
 // --- the line ---------------------------------------------------------------------
-// `state` is one of off, ok, offline, behind, newer, big, full, paused,
-// conflict: the one that asks something of the player first. `at` is the last
+// `state` is one of off, out, ok, offline, behind, newer, big, refused,
+// full, paused, conflict: the one that asks something of the player first. `at` is the last
 // push that took (wall ms); `pair` the live pairing code, `{ pair, expires }`.
 // `slot` is the slot *take it* and *keep this one* answer for (the first
 // another device is ahead on, which need not be the open one), and `behind`
@@ -648,11 +688,13 @@ export function cloudStatus() {
   const pair = session.pair && session.pair.expires > Date.now() ? session.pair : null;
   const stops = Object.values(session.stop);
   const behind = Object.keys(session.stop).filter(n => session.stop[n] === 'behind').map(Number);
-  const state = session.clash.size ? 'conflict'
+  const state = f.out || session.out ? 'out'
+              : session.clash.size ? 'conflict'
               : stops.includes('behind') ? 'behind'
               : stops.includes('newer') ? 'newer'
               : stops.includes('full') ? 'full'
               : stops.includes('big') ? 'big'
+              : stops.includes('refused') ? 'refused'
               : session.capped || session.trouble === 'paused' ? 'paused'
               : session.trouble === 'offline' ? 'offline'
               : 'ok';

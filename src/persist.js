@@ -43,7 +43,7 @@ import { seed, reseed, rngState, setRngState } from './rng.js';
 import { migrate } from './migrations/index.js';
 import { snapShown } from './tween.js';
 import { SAVE as DEEP_BED } from './deep/scales.js';
-import { mintYardId } from './cloud.js';
+import { mintYardId } from './yardid.js';
 
 // A pile is nearly all long runs of the same value, so store the runs
 // ("value x length"): a full pit comes out a few kilobytes.

@@ -16234,6 +16234,18 @@ took tells `cloud.js` the slot is dirty.
 - **A cleared slot** pushes an empty blob, not a deletion, so the other
   device's next boot reads "cleared on purpose" and does not bring the
   yard back. It is the desk's truncate-not-delete, for the same reason.
+- **A slot nobody has opened since the save's shape changed** is migrated
+  and written back before it is compared or pushed, as opening it would.
+  `restore` migrates only the yard it opens (review, 2026-09-28).
+- **A refusal is about one slot unless it says otherwise.** `429` waits
+  what it was told, then doubles for that slot alone; any other `4xx` but
+  `401` stops that slot (`cloud · a save was refused`); only `5xx`, `503`
+  and no answer back the whole session off.
+- **A `401` signs the device out; it does not forget the code.** It stops
+  calling, says `cloud · signed out`, and asks once more at its next boot,
+  coming back by itself if the worker knows the code again. A worker wrong
+  for a minute must not sign every device out for good. Only *stop*
+  forgets the code.
 
 ### Linking a device
 

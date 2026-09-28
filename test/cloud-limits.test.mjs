@@ -130,16 +130,17 @@ group('a yard that does not move sends nothing', async () => {
   ];
 });
 
-group('a 429 doubles the wait', async () => {
+group('a 429 waits as told once, then doubles', async () => {
   const t0 = await linked();
   refuse = () => answer(429, { retryS: 1 });
   const unsaved = await pumps(1000);
   const sent = w.puts.filter(p => p.at > t0);
   const g = gaps(sent);
   return [
-    ok(sent.length === 4, 'the refused client tries again, less and less often', `${sent.length}`),
-    ok(g[0] === 2 * CLOUD_PUSH_S && g[1] === 4 * CLOUD_PUSH_S && g[2] === 8 * CLOUD_PUSH_S,
-       'each wait double the last', g.join(', ')),
+    ok(sent.length === 5, 'the refused slot tries again, less and less often', `${sent.length}`),
+    ok(g[0] <= PUMP_S, 'the first wait is what the worker said', g.join(', ')),
+    ok(g[1] === 2 * CLOUD_PUSH_S && g[2] === 4 * CLOUD_PUSH_S && g[3] === 8 * CLOUD_PUSH_S,
+       'and each wait after it double the last', g.join(', ')),
     ok(cloud.cloudStatus().state === 'paused', 'the line says paused', cloud.cloudStatus().state),
     ok(!unsaved, 'while the yard saves as ever')
   ];

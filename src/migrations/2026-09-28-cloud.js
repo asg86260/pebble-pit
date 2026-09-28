@@ -3,7 +3,7 @@
 // are told apart and told which is newer. A save from before them gets a
 // fresh name and nought played, which is right: it has never been in the
 // cloud, so there is nothing for it to agree with.
-import { mintYardId } from '../cloud.js';
+import { mintYardId } from '../yardid.js';
 
 export default {
   since: '2026-09-28',

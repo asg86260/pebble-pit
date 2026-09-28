@@ -22,8 +22,8 @@ const { handle } = await import('../cloud/src/app.js');
 const { makeD1 } = await import('../cloud/test/d1.mjs');
 const cloud = await import('../src/cloud.js');
 const { persist, restore, bootYard, switchSlot } = await import('../src/persist.js');
-const { primeStore, storeSettled, setSlot, clear, slotRaw, loadPrevOf } = await import('../src/save.js');
-const { SAVE_V, CLOUD_BOOT_MS, CLOUD_PUSH_S, CLOUD_TIMEOUT_MS } = await import('../src/config.js');
+const { primeStore, storeSettled, setSlot, clear, slotRaw, loadPrevOf, writeSlot } = await import('../src/save.js');
+const { SAVE_V, CLOUD_BOOT_MS, CLOUD_PUSH_S, CLOUD_TIMEOUT_MS, CLOUD_PUSH_FLOOR_S } = await import('../src/config.js');
 
 const S = yard.S;
 const URL_ = 'https://cloud.test';
@@ -73,13 +73,16 @@ function wire() {
   const d1 = makeD1();
   w = { env: { DB: d1.DB, PAIR_PEPPER: 'test', STATS_TOKEN: 't' }, raw: d1.raw, calls: [] };
   cloud.setCloudUrl(URL_);
-  cloud.setCloudFetch(async (u, init = {}) => {
+  // Kept on `w`, so a check can answer one call in the worker's place and
+  // hand the rest through.
+  w.fetch = async (u, init = {}) => {
     const path = new URL(u).pathname;
     w.calls.push({ method: init.method || 'GET', path, at: Date.now() });
     const h = new Headers(init.headers || {});
     h.set('cf-connecting-ip', '203.0.113.7');
     return handle(new Request(u, { method: init.method, headers: h, body: init.body }), w.env, Date.now());
-  });
+  };
+  cloud.setCloudFetch(w.fetch);
 }
 const puts = n => w.calls.filter(c => c.method === 'PUT' && c.path === `/slots/${n}`).length;
 const row = n => w.raw.prepare('SELECT * FROM slots WHERE n = ?').get(n);
@@ -429,5 +432,132 @@ group('an old save gets a yardId and playedS 0 on load', async () => {
     ok(/^[0-9A-HJKMNP-TV-Z]{16}$/.test(id), 'it is given a name', id),
     ok(len === 0, 'and nought played', String(len)),
     ok(out.yardId === id && out.saveV === SAVE_V, 'and saves them')
+  ];
+});
+
+
+// --- what the review found (2026-09-28) -------------------------------------------
+// A refusal answered in the worker's place, logged like a real call.
+const refusal = (status, body) => (u, init = {}) => {
+  w.calls.push({ method: init.method || 'GET', path: new URL(u).pathname, at: Date.now() });
+  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+};
+
+group('a slot not opened since the update is brought up to today and pushed', async () => {
+  await linked();
+  const old = blobOf(slotRaw(1));
+  delete old.yardId;
+  delete old.playedS;
+  old.saveV = SAVE_V - 1;
+  writeSlot(2, JSON.stringify(old));
+  await storeSettled();
+  later(CLOUD_PUSH_S + 1);
+  await cloud.pump(Date.now());
+  const r2 = row(2);
+  const now2 = blobOf(slotRaw(2));
+  return [
+    ok(!!r2 && r2.yard_id.length > 0, 'the old slot reaches the cloud with a name', JSON.stringify(r2?.yard_id)),
+    ok(now2.saveV === SAVE_V && now2.yardId === r2?.yard_id, 'and is written back in today\'s shape, under the name it went up with'),
+    ok(cloud.cloudStatus().state === 'ok', 'the line is ok', cloud.cloudStatus().state)
+  ];
+});
+
+group('a refusal the client does not know stops that slot, and not the others', async () => {
+  await linked();
+  const bad = refusal(400, { error: 'bad headers' });
+  cloud.setCloudFetch((u, init = {}) =>
+    init.method === 'PUT' && new URL(u).pathname === '/slots/2' ? bad(u, init) : w.fetch(u, init));
+  const b = blobOf(slotRaw(1));
+  writeSlot(2, JSON.stringify({ ...b, yardId: 'two' }));
+  writeSlot(3, JSON.stringify({ ...b, yardId: 'three' }));
+  await storeSettled();
+  later(CLOUD_PUSH_S + 1);
+  await cloud.pump(Date.now());
+  const tried = puts(2);
+  later(CLOUD_PUSH_S * 10);
+  await cloud.pump(Date.now());
+  const state = cloud.cloudStatus().state;
+  cloud.setCloudFetch(w.fetch);
+  return [
+    ok(row(3)?.yard_id === 'three', 'the slot after it still goes up'),
+    ok(tried === 1 && puts(2) === 1, 'the refused slot is not sent again', `${tried}, ${puts(2)}`),
+    ok(state === 'refused', 'and the line says so', state)
+  ];
+});
+
+group('a save that lands while a push is in flight goes up next', async () => {
+  await linked();
+  const b = blobOf(slotRaw(1));
+  writeSlot(2, JSON.stringify({ ...b, yardId: 'two', playedS: 100 }));
+  await storeSettled();
+  let once = true;
+  cloud.setCloudFetch((u, init = {}) => {
+    if (once && init.method === 'PUT' && new URL(u).pathname === '/slots/2') {
+      once = false;
+      writeSlot(2, JSON.stringify({ ...b, yardId: 'two', playedS: 150 }));
+    }
+    return w.fetch(u, init);
+  });
+  later(CLOUD_PUSH_S + 1);
+  await cloud.pump(Date.now());
+  const first = row(2)?.played_s;
+  later(CLOUD_PUSH_S + 1);
+  await cloud.pump(Date.now());
+  cloud.setCloudFetch(w.fetch);
+  return [
+    ok(first === 100, 'the push in flight took the copy it read', String(first)),
+    ok(row(2)?.played_s === 150, 'and the write that landed meanwhile went up next', String(row(2)?.played_s))
+  ];
+});
+
+group('a 401 signs the device out but keeps its code, and it comes back when the worker knows it', async () => {
+  const { a } = await linked();
+  const code = cloud.recoveryCode();
+  cloud.setCloudFetch(refusal(401, { error: 'unknown code' }));
+  await playOn(5);
+  later(CLOUD_PUSH_S + 1);
+  await cloud.pump(Date.now());
+  const out = cloud.cloudStatus().state;
+  const kept = cloud.recoveryCode();
+  const n0 = w.calls.length;
+  await playOn(5);
+  later(CLOUD_PUSH_S + 1);
+  await cloud.pump(Date.now());
+  const quiet = w.calls.length === n0;
+  cloud.setCloudFetch(w.fetch);
+  await boot(a);
+  const back = cloud.cloudStatus().state;
+  await playOn(5);
+  later(CLOUD_PUSH_S + 1);
+  const before = puts(1);
+  await cloud.pump(Date.now());
+  return [
+    ok(out === 'out', 'the line says signed out', out),
+    ok(!!code && kept === code, 'and the code is still on this device'),
+    ok(quiet, 'which calls nothing more this session'),
+    ok(back === 'ok', 'at the next boot the worker knows it again, and it is back', back),
+    ok(puts(1) === before + 1, 'and pushing again', `${before} -> ${puts(1)}`)
+  ];
+});
+
+group('a push too soon after another device\'s waits for that slot alone', async () => {
+  await linked();
+  later(CLOUD_PUSH_S);
+  const ahead = aheadOf(slotRaw(1), 120);
+  await pushFrom(1, ahead, row(1).rev, { yardId: S.yardId, playedS: blobOf(ahead).playedS });
+  // Straight after it, this device has moved slot 1 and has a yard in slot 2.
+  await playOn(5);
+  writeSlot(2, JSON.stringify({ ...blobOf(slotRaw(1)), yardId: 'two' }));
+  await storeSettled();
+  await cloud.pump(Date.now());
+  const said = cloud.cloudStatus().state;
+  const twoUp = row(2)?.yard_id === 'two';
+  later(CLOUD_PUSH_FLOOR_S + 1);
+  await cloud.pump(Date.now());
+  const then = cloud.cloudStatus();
+  return [
+    ok(said !== 'paused', 'the floor is not a pause on the line', said),
+    ok(twoUp, 'the other slot went up in the same pass'),
+    ok(then.state === 'behind' && then.slot === 1, 'and past the floor, slot 1 learns it is behind', JSON.stringify(then))
   ];
 });
