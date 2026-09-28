@@ -49,7 +49,7 @@ group('a save with no build stamp is refused, kept, and offered back', async () 
     ok(fresh.crew === 0 && fresh.stored === 0 && fresh.beat.yard, 'the page boots a fresh game', `${fresh.crew} crew, ${fresh.stored} dust`),
     ok(said, 'and says the save it found would not read'),
     ok(stashed === raw, 'and has put the blob aside byte for byte', `${(stashed || '').length} of ${raw.length} bytes`),
-    ok(handed === raw, 'and save a copy hands that over, not the fresh game', `${handed.length} bytes`)
+    ok(handed === raw, 'and copy a save hands that over, not the fresh game', `${handed.length} bytes`)
   ];
 });
 

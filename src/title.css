@@ -61,7 +61,10 @@ body.title { overflow: hidden; }
 .col #reset { border-style: dashed; opacity: .7; }
 .col #reset:hover, .col #reset.armed { opacity: 1; }
 .col #reset.armed { color: var(--paper); background: var(--ink); border-style: solid; }
-.col input[type=range] { width: 21em; }
+/* The volume slider, the buttons' width: `em` is the element's own font
+   size, and a range input does not inherit the column's, so it measured
+   21em of the browser's default and stood past the buttons. */
+.col input[type=range] { font: inherit; width: 21em; margin: 0; box-sizing: border-box; }
 /* the veil: white, over everything, up on play (title.js) */
 .veil { position: fixed; inset: 0; background: var(--paper); opacity: 0; pointer-events: none; transition: opacity .35s linear; z-index: 9; }
 .veil.up { opacity: 1; pointer-events: auto; }

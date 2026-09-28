@@ -34,6 +34,7 @@ feature lives in DESIGN.md.
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
 - Save a copy, load a save and reset progress are on the saves page now, and loading a yard turns the sheet back to the front (src/selftest/settings.js).
 
+- The volume slider on the title's settings is the width of the buttons above it (src/selftest/settings.js).
 - Two of the deep's stations of one kind, or two empty lots, no longer share a board's name (src/selftest/stations.js).
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - Scales tossed into the crusher drop into its funnel instead of sliding down in front of it (`node tools/look.mjs crusher`).

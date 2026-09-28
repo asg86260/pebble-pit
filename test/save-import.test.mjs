@@ -131,9 +131,9 @@ group("the player's yard survives a round trip", async () => {
 // A save that will not read is not a first visit. `load` answered null for a
 // truncated blob exactly as for no blob, the opening began, and the interval
 // wrote a fresh game over the player's inside a second. The blob is put aside
-// now, the yard says so, and SAVE A COPY hands it over rather than the fresh
+// now, the yard says so, and COPY A SAVE hands it over rather than the fresh
 // game.
-group('a save that will not read is kept, and is what save a copy hands over', async () => {
+group('a save that will not read is kept, and is what copy a save hands over', async () => {
   const good = player();
   const cut = good.slice(0, Math.floor(good.length * 0.6));
   window.__reset(true);                          // nobody standing from the last group
@@ -152,7 +152,7 @@ group('a save that will not read is kept, and is what save a copy hands over', a
     ok(fresh.crew === 0 && fresh.beat.yard, 'the page boots a fresh game, as it must', `${fresh.crew} crew`),
     ok(said, 'but says the save it found would not read'),
     ok(stashed === cut, 'and has put the blob aside untouched', `${(stashed || '').length} of ${cut.length} bytes`),
-    ok(handed === cut, 'and save a copy hands that over, not the fresh game',
+    ok(handed === cut, 'and copy a save hands that over, not the fresh game',
        `${handed.length} bytes`)
   ];
 });
@@ -160,7 +160,7 @@ group('a save that will not read is kept, and is what save a copy hands over', a
 // A store that refuses the write: the game ran on unsaved with no word, and
 // SAVE A COPY read the stale store back. It says so now and hands over the
 // live yard.
-group('a store that will not take the save says so, and save a copy still works', async () => {
+group('a store that will not take the save says so, and copy a save still works', async () => {
   localStorage.setItem(KEY, player());
   yard.restore();
   run(5);
@@ -179,7 +179,7 @@ group('a store that will not take the save says so, and save a copy still works'
     ok(unsaved, 'the yard knows the store refused it'),
     ok(localStorage.getItem(KEY) === before, 'and the store is as it was'),
     ok(live.stored === state().stored && live.stored !== JSON.parse(before).stored,
-       'and save a copy hands over the yard as it stands, not the stale store',
+       'and copy a save hands over the yard as it stands, not the stale store',
        `${live.stored} vs store ${JSON.parse(before).stored}`)
   ];
 });

@@ -142,7 +142,7 @@ document.getElementById('savecopy').addEventListener('click', async () => {
 // about to be lost quietly. `hold` in input.js calls this.
 export function sayStore() {
   if (S.fellBack) said.textContent = 'the last save would not load; this is the one before it';
-  else if (S.broken) said.textContent = 'your last save could not be read. save a copy hands it over';
+  else if (S.broken) said.textContent = 'your last save could not be read. copy a save hands it over';
   else if (S.yielded) said.textContent = 'this yard is open in another tab; that one is being saved';
   else if (S.unsaved) said.textContent = unsavedLine();
   // Said once: the observer below clears it when the sheet goes down.
@@ -156,9 +156,9 @@ const mb = n => (n / 1048576).toFixed(1) + ' mb';
 const kb = n => Math.ceil(n / 1024) + ' kb';
 export function unsavedLine() {
   const t = storeTrouble();
-  if (t?.kind === 'blocked') return 'not saving: your browser blocks storage inside this page. save a copy still works';
-  if (t?.kind === 'full') return `not saving: this site's storage is full (${mb(t.used)} used, ${kb(t.ours)} of it ours). save a copy still works`;
-  return 'not saving: storage refused the save' + (t ? ' (' + t.name + ')' : '') + '. save a copy still works';
+  if (t?.kind === 'blocked') return 'not saving: your browser blocks storage inside this page. copy a save still works';
+  if (t?.kind === 'full') return `not saving: this site's storage is full (${mb(t.used)} used, ${kb(t.ours)} of it ours). copy a save still works`;
+  return 'not saving: storage refused the save' + (t ? ' (' + t.name + ')' : '') + '. copy a save still works';
 }
 
 // The paste box is asked for rather than always there.

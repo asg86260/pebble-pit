@@ -674,7 +674,7 @@ export function conflicts() {
 }
 
 // The player's answer to two yards in one slot. The one not kept goes to that
-// slot's `.prev`, where *save a copy* still hands it out. The slot is written
+// slot's `.prev`, where *copy a save* still hands it out. The slot is written
 // before the promise settles and nothing but microtasks lie between, so a
 // caller that `restore`s on the answer reads the copy chosen before any
 // autosave can put the running yard back over it.

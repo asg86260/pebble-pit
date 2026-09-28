@@ -64,7 +64,7 @@ export const TESTS = [
     f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
     const loaded = () => new Promise(r => f.addEventListener('load', r, { once: true }));
     document.body.appendChild(f);
-    let landed = false, label = '', rows = [], record = '', arrived = false, crewThere = 0, untouched = false;
+    let landed = false, label = '', rows = [], record = '', arrived = false, crewThere = 0, untouched = false, edges = '';
     try {
       f.src = 'index.html';
       await loaded();
@@ -77,6 +77,11 @@ export const TESTS = [
       d.getElementById('slotsbtn').click();
       rows = [...d.querySelectorAll('.slot')].map(b => b.textContent);
       d.getElementById('slotsback').click();
+      // The volume slider lines up with the buttons over it: its em is its own.
+      d.getElementById('settingsbtn').click();
+      const edge = el => { const r = el.getBoundingClientRect(); return `${Math.round(r.left)}-${Math.round(r.right)}`; };
+      edges = `${edge(d.querySelector('.col input[type=range]'))} vs ${edge(d.getElementById('motion'))}`;
+      d.getElementById('settingsback').click();
       untouched = slotRaw(1) === blob;          // before play: the game itself writes the slot
       d.getElementById('play').click();
       await loaded();
@@ -93,6 +98,7 @@ export const TESTS = [
       ok(rows.length === 3 && /^1 · rock \d+ · 4 crew/.test(rows[0]) && rows[1] === '2 · empty',
          'the saves rows read the slots', JSON.stringify(rows)),
       ok(/^achievements · \d+ of \d+$/.test(record), 'and the record has its count', record),
+      ok(/^(\d+-\d+) vs \1$/.test(edges), 'the volume slider is the buttons\' width', edges),
       ok(arrived && crewThere === 4, 'play opens play.html with the yard', `${arrived}, ${crewThere} crew`),
       ok(untouched, 'and nothing the landing page did wrote the slot'),
     ];
