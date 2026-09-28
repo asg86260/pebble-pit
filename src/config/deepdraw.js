@@ -306,3 +306,9 @@ export const FANG_SPRITE = ['###', '.#+', '.#.'];
 // The scaffold over a station not yet built: posts this many bands tall,
 // the tape at head height.
 export const SCAFFOLD_BANDS = 5;
+// An empty lot, laid out by the build button before its kind is picked: a
+// stake at each end LOT_W apart, LOT_STAKE cells tall, and between them the
+// ground the pointer opens its board on, LOT_H tall.
+export const LOT_W = 96;
+export const LOT_STAKE = 3;
+export const LOT_H = 24;

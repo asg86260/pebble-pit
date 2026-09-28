@@ -14,7 +14,7 @@ import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
-         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL } from '../config.js';
+         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL, LOT_W, LOT_H } from '../config.js';
 import { SPRITES } from './sprites.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -105,8 +105,10 @@ export const slotX = i => snap(deepX0() + DEEP_SLOTS[i] * DEEP_W);
 // A station's sprite and its ground, at its slot, in its kind's drawing. The
 // ground is the same for a station still going up: its scaffold stands where
 // it will.
-export const spriteRectOfStation = st => spriteAt(st.kind, slotX(st.slot));
-export const standOfStation = st => groundAt(st.kind, slotX(st.slot));
+// An empty lot has no kind to be drawn as: its ground is the stakes' span.
+const lotAt = mid => ({ x: snap(mid - LOT_W / 2), y: deepFloor() - LOT_H, w: LOT_W, h: LOT_H });
+export const spriteRectOfStation = st => (st.kind ? spriteAt(st.kind, slotX(st.slot)) : lotAt(slotX(st.slot)));
+export const standOfStation = st => (st.kind ? groundAt(st.kind, slotX(st.slot)) : lotAt(slotX(st.slot)));
 
 // The crusher at the deep's left end, standing on the floor, and the hopper
 // across its top: the purse's mouth (DESIGN.md, "The crusher"). A scale is

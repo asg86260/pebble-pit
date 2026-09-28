@@ -13,7 +13,7 @@
 import { S } from '../state.js';
 import { P, WORKER, DEEP_GRAV, DEEP_DRAG, LADDER, DEEP_SLOTS, PARTY_IDS,
          STATION_WORK_S, FANG_BREAKS, FANG_KICK } from '../config.js';
-import { CLASSES, PAIRS, STARTERS, FIRST_KINDS, FIGHT_STATIONS_MAX } from '../config/classes.js';
+import { CLASSES, PAIRS, FIRST_KINDS, NEEDS_COMPANY, FORK_RUNG, FIGHT_STATIONS_MAX } from '../config/classes.js';
 import { deepX0, deepX1, deepFloor, slotX, bellyAt, tossX, inHopper } from './place.js';
 import { start, registerRows } from '../works.js';
 import { TYPE } from '../jobs.js';
@@ -31,7 +31,13 @@ import { retask } from '../crew/commute.js';
 // --- the queries --------------------------------------------------------------------
 export const stationById = id => S.stations.find(s => s.id === id) || null;
 export const stationsBuilt = () => S.stations.filter(s => s.built);
-export const classOf = st => (st && st.cls && CLASSES[st.cls]) || null;
+// The class a station fights as: the one taken at the fork, or below it the
+// base unit's, which is its pair's first (DESIGN.md, "A fighter branches at
+// rung 4"). An empty lot has none.
+export const keyOf = st => (st && (st.cls || (st.kind && PAIRS[st.kind]?.[0]))) || null;
+export const classOf = st => CLASSES[keyOf(st)] || null;
+// An empty lot: laid out by the build button, its kind not picked yet.
+export const isLot = st => !!st && !st.kind;
 // The fighter's body, if one has been bound to the station yet.
 export const fighterAt = st =>
   (st && st.fighter && S.workers.find(w => w.type === TYPE.FIGHTER && w.uid === st.fighter)) || null;
@@ -49,15 +55,17 @@ export const nextSlot = () => {
   return -1;
 };
 // The first station is free, from the snatch; every one after it takes a
-// fang, up to the most there can be.
-export const canBuild = () => !!S.snatched && nextSlot() >= 0 &&
+// fang, up to the most there can be. One lot at a time: the button waits
+// while a lot's kind is still to be picked.
+export const canBuild = () => !!S.snatched && nextSlot() >= 0 && !S.stations.some(isLot) &&
   (S.stations.length === 0 || (S.fangs > 0 && S.stations.length < FIGHT_STATIONS_MAX));
-// The kinds the button may offer: the three whose classes are the starters
-// for the free first station, every kind after it.
-export const kindsOffered = () => (S.stations.length === 0 ? FIRST_KINDS : Object.keys(PAIRS));
-// A kind's classes the player may pick: the starters only, until a second station stands.
-export const classesOpen = kind => (S.stationsBuilt >= 2 ? PAIRS[kind] || []
-  : (PAIRS[kind] || []).filter(k => STARTERS.includes(k)));
+// The kinds a lot may become: the first lot one of the three whose base
+// unit fights alone, every kind after it.
+export const kindsOffered = () => (S.stations.some(st => st.kind) ? Object.keys(PAIRS) : FIRST_KINDS);
+// The classes a kind's fork offers: both, but a class that needs company
+// waits for a second station.
+export const classesOpen = kind => (PAIRS[kind] || [])
+  .filter(k => (S.stationsBuilt || 0) >= 2 || !NEEDS_COMPANY.includes(k));
 
 // --- building one -------------------------------------------------------------------
 // Ids are never reused, and a station is never taken down (a reset blanks
@@ -70,7 +78,7 @@ const newId = () => PARTY_IDS.find(id => !stationById(id)) || null;
 
 const stationRow = id => ({
   key: `station-${id}`, kind: 'building', site: id,
-  get name() { const st = stationById(id); return st ? `raise the ${st.kind}` : 'raise a station'; },
+  get name() { const st = stationById(id); return st?.kind ? `raise the ${st.kind}` : 'raise a station'; },
   work: () => STATION_WORK_S,
   // Paid for in a fang, or nothing for the first, spent on the pick; the
   // work itself asks no coin, which the bar over it and its tint read.
@@ -80,27 +88,40 @@ const stationRow = id => ({
 const ROWS = PARTY_IDS.map(stationRow);
 registerRows(ROWS);
 
-// The floating button's pick: a fang spent (the first station is free), the
-// station written down unbuilt at the next free slot, and its work queued
-// there for a delver to put up. Nothing stands until the work lands.
-export function buildStation(kind) {
-  if (!kindsOffered().includes(kind)) return false;
-  return raiseStation(kind);
-}
-// The same, of any kind: what the button's pick comes to once the kind is
-// allowed, and the setup hook's way (`__party`) to stand a first station
-// the button would not offer.
-export function raiseStation(kind) {
-  if (!canBuild() || !PAIRS[kind]) return false;
-  const slot = nextSlot();
-  const id = newId();
-  const row = ROWS.find(r => r.key === `station-${id}`);
-  if (!id || !row) return false;
+// The floating button's press: a fang spent (the first station is free) and
+// an empty lot laid out at the next free slot. Its board picks what goes up
+// there (`pickKind`); nothing is built until then.
+export function layLot() {
+  if (!canBuild()) return null;
+  const slot = nextSlot(), id = newId();
+  if (!id) return null;
   if (S.stations.length > 0) S.fangs--;
-  S.stations = [...S.stations, { id, kind, slot, built: false, cls: null, rung: 0, paid: [], fighter: null }];
-  start(id, row, slotX(slot));
+  S.stations = [...S.stations, { id, kind: null, slot, built: false, cls: null, rung: 0, paid: [], fighter: null }];
+  S.shopStale = true;
+  return id;
+}
+// A lot's kind picked on its board: written down, and its work queued there
+// for a delver to put up. Nothing stands until the work lands.
+export function pickKind(id, kind, any = false) {
+  const st = stationById(id), row = ROWS.find(r => r.key === `station-${id}`);
+  if (!isLot(st) || !row || !PAIRS[kind] || (!any && !kindsOffered().includes(kind))) return false;
+  st.kind = kind;
+  start(id, row, slotX(st.slot));
   S.shopStale = true;
   return true;
+}
+// Both at once: the scenes' way to put a station up as the player would.
+export function buildStation(kind) {
+  if (!kindsOffered().includes(kind)) return false;
+  const id = layLot();
+  return !!id && pickKind(id, kind);
+}
+// The same, of any kind: the setup hook's way (`__party`) to stand a first
+// station the first lot would not offer.
+export function raiseStation(kind) {
+  if (!PAIRS[kind]) return false;
+  const id = layLot();
+  return !!id && pickKind(id, kind, true);
 }
 
 // The work's land hook: it stands, and a spare hand swims over to it.
@@ -227,16 +248,20 @@ export function moveFighter(id, dir) {
 }
 
 // --- its ladder ---------------------------------------------------------------------
-// A rung bought on the station's rails: the first commits the class, and the
-// bill the rails took is kept on the station, summed a coin, so a Reset hands
+// A rung bought on the station's board. Below the fork it is the base
+// unit's and names no class; the fork's rung takes `cls`, one the kind
+// offers and has open; above it `cls` is the class taken, or left out. The
+// bill the board took is kept on the station, summed a coin, so a Reset hands
 // back exactly what was paid here and nothing of another station's.
 export function buyRung(id, cls, bill = []) {
   const st = stationById(id);
   if (!st || !st.built || st.rung >= LADDER) return false;
-  if (st.cls && st.cls !== cls) return false;
-  if (!classesOpen(st.kind).includes(cls)) return false;
-  st.cls = cls;
-  st.rung++;
+  const next = st.rung + 1;
+  if (next === FORK_RUNG) {
+    if (!classesOpen(st.kind).includes(cls)) return false;
+    st.cls = cls;
+  } else if (next > FORK_RUNG && cls && cls !== st.cls) return false;
+  st.rung = next;
   const paid = st.paid.map(([m, n]) => [m, n]);
   for (const [money, n] of bill) {
     if (!(n > 0) || money === 'time') continue;
@@ -249,8 +274,8 @@ export function buyRung(id, cls, bill = []) {
 }
 
 // Reset: every bill paid at this station handed back, the rung to nought and
-// the class blank. The fighter stays, a base fighter standing guard until a
-// class is bought again. Scales go back into the water they came out of.
+// the class blank. The fighter stays, its station's base unit again, at rung
+// 0. Scales go back into the water they came out of.
 export function resetStation(id) {
   const st = stationById(id);
   if (!st) return false;

@@ -1,6 +1,7 @@
 // The ten classes (docs/wave-party.md, "Classes"): one group a class. Each
-// is bought at its station the player's way -- the rails' Buy, rung by rung
-// -- and is followed at work: its base attack alone breaks the bare coil
+// is bought at its station the player's way -- the board's rows, rung by
+// rung, the class taken at the fork (DESIGN.md, "A fighter branches at rung
+// 4") -- and is followed at work: its attack alone breaks the bare coil
 // (every class but the Bard, who does no damage), its rung-4 move happens,
 // and its rung-8 capstone.
 //
@@ -9,7 +10,7 @@
 // (party.test.mjs); that the rails fold and Reset refunds is BOARD's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { CLASSES, SERPENT_DEFENSE, STUN_MAX_S, HASTE } from '../src/config.js';
+import { CLASSES, PAIRS, SERPENT_DEFENSE, STUN_MAX_S, HASTE, FORK_RUNG } from '../src/config.js';
 import { climb, reset, openEveryClass } from './party-press.mjs';
 import { shots } from '../src/deep/arms.js';
 import { rungWorth, stationOf, stationX } from '../src/deep/classes.js';
@@ -59,26 +60,27 @@ function watch(s, i = 0, each = () => {}) {
 }
 const count = (list, m) => list.filter(x => x === m).length;
 
-// Alone at rung 1, against the bare coil at its heal: broken inside `limit`.
+// Alone at its first rung -- 1 for the class its kind's base unit fights as,
+// the fork's for the other -- against the bare coil at its heal: broken
+// inside `limit`.
 function breaksAlone(kind, cls, limit = 120) {
   party([kind]);
-  buyTo(0, cls, 1);
+  const first = PAIRS[kind][0] === cls ? 1 : FORK_RUNG;
+  buyTo(0, cls, first);
   const broke = runUntil(() => S.serpentStage >= 1, limit);
-  return ok(broke, `a ${CLASSES[cls].name} alone at rung 1 breaks the bare coil`,
+  return ok(broke, `a ${CLASSES[cls].name} alone at rung ${first} breaks the bare coil`,
             `stage ${S.serpentStage}, wound ${S.serpentWound.toFixed(1)}`);
 }
 
-group('a fighter at a station with no class stands guard and strikes nothing', async () => {
+group("a station with no class fights as its base unit, its pair's first class", async () => {
   party(['altar']);
   const w = fighterAt(0);
-  run(10);
-  const guard = fighterAt(0);
-  const x = stationX(S.stations[0]);
+  const seen = watch(10);
   return [
     ok(w && stationOf(w) === S.stations[0], 'the fighter is tied to its station'),
-    ok(guard.goal === 'guard', 'and stands guard', guard.goal),
-    ok(Math.abs(guard.x + 3 - x) < 200, 'by its station', `${guard.x} for ${x}`),
-    ok(S.serpentWound === 0 && S.hits.every(h => h.weapon === 'heal'), 'and nothing is struck', `${S.serpentWound}`)
+    ok(S.stations[0].cls === null && S.stations[0].rung === 0, 'the station has taken no class'),
+    ok(seen.moves.includes('punch'), 'and its Fighter punches, as the Brawler does', seen.moves.join(' ')),
+    ok(S.serpentWound > 0, 'and wounds the serpent', `${S.serpentWound}`)
   ];
 });
 
@@ -113,10 +115,9 @@ group('Swordsman: cuts bleed; the whirlwind lands each cut at three spots, and e
   const alone = breaksAlone('altar', 'sword');
   const cls = CLASSES.sword;
   window.__serpent({ stage: 0, wound: 0 });
-  const base = watch(3);
-  const bled = has('bleed');
+  let bled = false;
+  const base = watch(3, 0, () => { bled = bled || has('bleed'); });
   window.__serpent({ stage: 3, wound: 0 });
-  buyTo(0, 'sword', 4);
   // Windows counted in cuts, not seconds, so a retuned pace still sees enough.
   const four = watch(6 * cls.every);
   const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.sword[3];
@@ -128,7 +129,7 @@ group('Swordsman: cuts bleed; the whirlwind lands each cut at three spots, and e
   const twice = eight.poses.filter(p => p.twice).length, whirls = eight.poses.length;
   return [
     alone,
-    ok(bled && base.moves.includes('cut'), 'a cut leaves the serpent Bleeding', base.moves.join(' ')),
+    ok(bled && base.moves.includes('whirl'), 'a cut leaves the serpent Bleeding', base.moves.join(' ')),
     // The first is the cut in hand when the rung was bought.
     ok(four.moves.length >= 4 && four.moves.slice(1).every(m => m === 'whirl'), 'at rung 4 every cut is a whirlwind',
        four.moves.join(' ')),
@@ -163,11 +164,12 @@ group('Monk: palm waves fill chi, a full row is a stunning chi palm; faster at 4
 
 group('Martial Artist: thrusts fill a row, a full row is a finisher; Flow fills it faster; at 8 it Hastes the party', async () => {
   const alone = breaksAlone('well', 'martial');
+  const pp = CLASSES.martial.pips;
   window.__serpent({ stage: 3, wound: 0 });
   const base = watch(4);
-  buyTo(0, 'martial', 4);
-  const four = watch(4);
   const fin = seen => count(seen.moves, 'finisher') / Math.max(1, seen.moves.length);
+  // A row without Flow is a finisher every max/fill + 1 moves; with it, sooner.
+  const plainShare = 1 / (pp.max / pp.fill + 1);
   const hastedAt4 = hasted(fighterAt(0));
   buyTo(0, 'martial', 8);
   let fast = false;
@@ -175,7 +177,8 @@ group('Martial Artist: thrusts fill a row, a full row is a finisher; Flow fills 
   return [
     alone,
     ok(count(base.moves, 'finisher') >= 1 && count(base.moves, 'thrust') >= 4, 'thrusts, then a finisher', base.moves.join(' ')),
-    ok(fin(four) > fin(base), 'at rung 4 the row fills in fewer thrusts', `${fin(base).toFixed(2)} then ${fin(four).toFixed(2)}`),
+    ok(fin(base) > plainShare + 0.02, 'Flow, hers from the fork, fills the row in fewer thrusts',
+       `${fin(base).toFixed(2)} of her moves finishers, ${plainShare.toFixed(2)} without it`),
     ok(!hastedAt4 && fast, 'at rung 8 a finisher Hastes her', `${hastedAt4} then ${fast}`)
   ];
 });
@@ -222,7 +225,6 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
   const stunned = () => { S.serpentStun = 3; S.serpentGrace = 0; };
   stunned();
   const onStun = done(watch(4, 0, stunned), 'assassin');
-  buyTo(0, 'assassin', 4);
   const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.assassin[3];
   window.__serpent({ stage: 3, wound: 0 });
   S.serpentStun = 0;
@@ -239,7 +241,10 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
     ok(base.shots.has('dagger') && hits.length >= 2, 'her daggers travel to the hide', [...base.shots].join(' ')),
     ok(drift < 1, 'while she holds nearly still', `${drift.toFixed(2)}px a frame at most`),
     ok(hits.every(d => near(d, plain)), 'a plain stab', JSON.stringify(hits)),
-    ok(onStun.length >= 1 && onStun.every(d => near(d, plain * cls.stunnedX)), 'x3 on a stunned serpent', JSON.stringify(onStun)),
+    // Execution is hers from the fork: each stab grows a little with the
+    // wound the last ones opened.
+    ok(onStun.length >= 1 && onStun.every(d => Math.abs(d / (plain * cls.stunnedX) - 1) < 0.02),
+       'x3 on a stunned serpent', JSON.stringify(onStun)),
     // Half the phase's depth open: x1.5, less the frame's heal before it lands.
     ok(shallow.length >= 1 && shallow.every(d => near(d, v4)) && deep.length >= 1
        && deep.every(d => Math.abs(d / (v4 * 1.5) - 1) < 1e-3),
@@ -324,23 +329,19 @@ group('Mage: a held beam ticks, then a finishing blow; it widens at 4 and burns 
 
 group('Bard: no damage; alone her song gives nothing; with another the Anthem doubles it and at 8 it lingers', async () => {
   party(['spire', 'armory']);
-  buyTo(0, 'bard', 1);
-  // The armory's fighter has no class yet and stands guard: the Bard sings
-  // to nobody who strikes.
-  run(6);
-  const quiet = S.serpentWound === 0 && S.hits.every(h => h.weapon === 'heal');
-  buyTo(1, 'ranger', 1);
-  window.__serpent({ stage: 3, wound: 0 });
-  const v = rungWorth(CLASSES.ranger, 1) * SERPENT_DEFENSE.ranger[3];
-  const song = done(watch(4, 1), 'ranger');
-  const k1 = rungWorth(CLASSES.bard, 1);
   buyTo(0, 'bard', 4);
+  // The Bard strikes nothing of her own: every hit is the armory's Scout's.
+  const hits = new Set(S.hits);
+  run(6);
+  const quiet = S.hits.filter(h => !hits.has(h) && h.weapon !== 'heal').every(h => h.weapon === 'ranger');
+  window.__serpent({ stage: 3, wound: 0 });
+  const v = rungWorth(CLASSES.ranger, 0) * SERPENT_DEFENSE.ranger[3];
   run(0.5);
   const anthem = done(watch(4, 1), 'ranger');
   const k4 = rungWorth(CLASSES.bard, 4) * CLASSES.bard.anthemX;
   buyTo(0, 'bard', 8);
   run(1);
-  // She stops: her station's class goes, and she stands guard.
+  // She stops: her station's class goes, and she is the spire's Apprentice again.
   reset(S.stations[0].id);
   run(3);
   const lingering = inspiredK(fighterAt(1)) > 0;
@@ -352,13 +353,11 @@ group('Bard: no damage; alone her song gives nothing; with another the Anthem do
   const arrows = (list, unit) => list.filter(d => near(d / unit, Math.round(d / unit))).length;
   return [
     ok(quiet, 'a Bard deals no damage of her own'),
-    ok(song.length >= 2 && arrows(song, v * (1 + k1)) === song.length, "another fighter's hits are Inspired",
-       JSON.stringify(song)),
-    ok(arrows(anthem, v * (1 + k4)) >= anthem.length - 1 && anthem.length >= 3, 'the Anthem doubles it', JSON.stringify(anthem)),
+    ok(arrows(anthem, v * (1 + k4)) >= anthem.length - 1 && anthem.length >= 3,
+       "another fighter's hits are Inspired, the Anthem's double", JSON.stringify(anthem)),
     ok(lingering && gone, 'at rung 8 it lingers after she stops, and then goes', `${lingering} ${gone}`)
   ];
 });
-
 group('a Bard alone gives nothing', async () => {
   party(['spire']);
   buyTo(0, 'bard', 8);

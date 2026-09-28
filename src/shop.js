@@ -222,6 +222,7 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
   for (const old of el.querySelectorAll('[data-dial]')) old._opts?.remove();
   el.textContent = '';
   if (!now) {                              // nothing to show: say so rather than nothing
+    if (!empty) return;                    // a board whose own part says it all (an empty lot's)
     const line = document.createElement('div');
     line.className = 'empty';
     line.textContent = empty;

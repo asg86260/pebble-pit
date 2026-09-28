@@ -1,26 +1,26 @@
-// A station's rails (docs/wave-party.md, "The rails"; option 2b of
-// docs/mocks/tree-2026-09-27.html, one rail a class).
+// A station's board (DESIGN.md, "A fighter branches at rung 4"; option D of
+// docs/mocks/branch-2026-09-28.html, the tree in the pips).
 //
-// The board of a station of the party is its fighter's heading and, under
-// it, the station's two classes: a plate each, one rail of eight pips each,
-// rung 4 and rung 8 bigger since each brings something (the class's move,
-// then its capstone). Looking is never choosing. A tap or a hover VIEWS a
-// class: its line comes up in the panel and the other rail fades, but stays.
-// Buying commits: the first rung bought on a blank station takes the class
-// viewed, and the other rail folds away. Reset hands every rung back and
-// unfolds the rails blank. A class the station cannot take yet
-// (`classesOpen`) is a plate with no rail, saying when it opens.
+// Over the board's rows, the station's ladder drawn as a tree of pips: the
+// base unit's three, branching into each of its two classes' five, rung 4
+// and rung 8 bigger, rung 8 purple. The pips are only looked at: a hover (or
+// a tap, where there is no hover) says what one is, a short line. What is
+// bought is the rows under them, the board's way: the next rung, or at the
+// fork one row a class, asked as "choose a path". Buying one closes the other
+// branch; Reset hands every rung back and stands the base unit again.
 //
-// The purchases go through the party (`buyRung`, `resetStation`); this file
-// only says what the player is looking at and what a press asks for. The
-// fold and the fade are the stylesheet's (shelf.css, `.rails`), stepped as
-// the cells are; the pips wear their band's coin as every ladder's do.
+// An empty lot's board is the question before all that: what goes up here,
+// a base unit a row.
+//
+// The purchases go through the party (`buyRung`, `pickKind`,
+// `resetStation`); this file says what the player sees and what a press asks
+// for. The fade of a closed branch is the stylesheet's (shelf.css, `.rails`).
 
 import { S } from '../state.js';
-import { P, CLASSES, PAIRS, MOVE_RUNG, CAPSTONE_RUNG, LADDER, TIER_BAND, RAIL_FOLD_MS, RAIL_FOLD_STEPS,
+import { P, CLASSES, PAIRS, BASES, FORK_RUNG, MOVE_RUNG, CAPSTONE_RUNG, LADDER, RAIL_FOLD_MS, RAIL_FOLD_STEPS,
          rungValue } from '../config.js';
-import { stationById, classesOpen, buyRung, resetStation } from './party.js';
-import { classLadder, rungBill, CLASS_UNIT } from './rows.js';
+import { stationById, classesOpen, kindsOffered, keyOf, isLot, buyRung, pickKind, resetStation } from './party.js';
+import { rungBill, CLASS_UNIT } from './rows.js';
 import { take } from '../upgrades.js';
 import { payTo } from '../pit.js';
 import { standOfStation } from './place.js';
@@ -31,14 +31,14 @@ import { onTap } from '../tap.js';
 import { coarse } from '../prefs.js';
 import { KINDS } from '../stations.js';
 
-// The fold's beat, handed to the stylesheet once, as board.js hands the pips'.
+// The fade's beat, handed to the stylesheet once, as board.js hands the pips'.
 document.documentElement.style.setProperty?.('--rail-fold-ms', `${RAIL_FOLD_MS}ms`);
 document.documentElement.style.setProperty?.('--rail-fold-steps', String(RAIL_FOLD_STEPS));
 
 // What a class does, a short line a thing (the owner, 2026-09-27: "a node's
 // name and what it does in a few words, nothing about the system"): its
 // base, its move at MOVE_RUNG, its capstone at CAPSTONE_RUNG, and what its
-// number is counted in. The Bard's line says when she has nobody to sing to.
+// number is counted in. A base unit says what it does in a word or two.
 const WORDS = {
   brawler:  { base: 'heavy punches', per: 'a punch',
               move: ['Haymaker', 'every 4th punch x4, stuns'], cap: ['Knockout', 'haymakers stun longer'] },
@@ -61,129 +61,121 @@ const WORDS = {
   bard:     { base: 'sings the others Inspired', per: 'Inspired',
               move: ['Anthem', 'Inspired doubles'], cap: ['Refrain', 'Inspired lingers after the song'] }
 };
+const BASE_DOES = { altar: 'punches', well: 'palms', armory: 'arrows', circle: 'hexes', spire: 'a beam' };
 // The Bard alone: nobody else is fighting, so her song does nothing.
 const ALONE = 'no one else to sing to';
+const LOCKED = 'opens with a second station';
+const FORK_ASK = 'Choose a path – buying one closes the other';
 
-// --- what is being looked at -----------------------------------------------------
-// A station's view: the class (and, off a pip, the rung) last tapped, and the
-// one under the pointer now, which wins while it lasts. The pointer's, not the
-// yard's: kept against the station's own record, so a new game or a reload,
-// which stand new records, opens the rails unviewed.
-const views = new WeakMap();             // station -> { tap, hover }, each { cls, r } or null
-const NONE = { tap: null, hover: null };
-const viewAt = id => {
-  const st = stationById(id);
-  if (!st) return { ...NONE };
-  if (!views.has(st)) views.set(st, { ...NONE });
-  return views.get(st);
-};
-export const viewing = id => { const v = viewAt(id); return v.hover || v.tap; };
-
-// A tap views a class, or a rung of it; the same one again puts the view away.
-// A class that cannot be taken yet cannot be viewed: it has no rail to view.
-export function view(id, cls, r = null) {
-  const st = stationById(id);
-  if (!st || (cls && !classesOpen(st.kind).includes(cls))) return false;
-  const v = viewAt(id);
-  const same = v.tap && v.tap.cls === cls && v.tap.r === r;
-  v.tap = cls && !same ? { cls, r } : null;
-  return true;
-}
-// The pointer over a plate or a pip, or off them (`cls` null).
-export function hover(id, cls, r = null) {
-  const st = stationById(id);
-  viewAt(id).hover = cls && st && classesOpen(st.kind).includes(cls) ? { cls, r } : null;
-}
-
-// --- what the rails say ---------------------------------------------------------
+// --- what the board says -----------------------------------------------------------
 // Whether any other fighter stands at a built station: the Bard's audience.
 const othersFight = id => S.stations.some(o => o.id !== id && o.built && o.fighter);
 
-// The one line for a class, or a rung of it: a name and what it does.
-export function lineOf(id, cls, r = null) {
+// A rung's number, in its class's unit: "22 dmg a punch".
+function worth(cls, r) {
+  const v = rungValue(cls, r), unit = CLASS_UNIT[cls];
+  const said = Number.isInteger(v) ? fmt(v) : v.toFixed(1);
+  return `${said}${unit === '%' ? '%' : ` ${unit}`} ${WORDS[cls].per}`;
+}
+// The one line for a pip: a name and what it does. `cls` null is the base
+// unit's rung, counted off its pair's first class.
+export function lineOf(id, cls, r) {
+  const st = stationById(id);
+  if (!st?.kind) return '';
+  if (!cls) return `${BASES[st.kind]} ${r}: ${worth(PAIRS[st.kind][0], r)}`;
   const w = WORDS[cls], name = CLASSES[cls].name;
+  if (!classesOpen(st.kind).includes(cls)) return `${name}: ${LOCKED}`;
   if (cls === 'bard' && !othersFight(id)) return `${name}: ${ALONE}`;
   if (r === MOVE_RUNG) return `${w.move[0]}: ${w.move[1]}`;
   if (r === CAPSTONE_RUNG) return `${w.cap[0]}: ${w.cap[1]}`;
-  if (r) {
-    const v = rungValue(cls, r), unit = CLASS_UNIT[cls];
-    const said = Number.isInteger(v) ? fmt(v) : v.toFixed(1);
-    return `${name} ${r}: ${said}${unit === '%' ? '%' : ` ${unit}`} ${w.per}`;
-  }
-  return `${name}: ${w.base}`;
+  return `${name} ${r}: ${worth(cls, r)}`;
 }
 
-// The rails of station `id`, as the player sees them this frame: a plate a
-// class, what Buy would buy, whether Reset has anything to hand back, and the
-// panel's line. What the checks read, in both tiers; the page draws exactly
-// this (`refresh`).
+// The board of station `id`, as the player sees it this frame: the lot's
+// kinds, or the tree and the rows. What the checks read, in both tiers; the
+// page draws exactly this (`refresh`).
 export function railsOf(id) {
   const st = stationById(id);
   if (!st) return null;
-  const open = classesOpen(st.kind);
-  const v = viewing(id);
-  const plates = (PAIRS[st.kind] || []).map(cls => ({
-    cls, name: CLASSES[cls].name,
-    locked: !open.includes(cls),
-    on: st.cls === cls,
-    // The other class goes once a class is taken; before that, the one not
-    // viewed fades.
-    folded: !!st.cls && st.cls !== cls,
-    dim: !st.cls && !!v && v.cls !== cls,
-    lit: st.cls === cls ? st.rung : 0
-  }));
-  // What Buy buys: the class taken, or on a blank station the class viewed.
-  const cls = st.cls || (v && open.includes(v.cls) ? v.cls : null);
-  const card = cls && classLadder(st, cls);
-  const at = cls && st.cls === cls ? st.rung : 0;
-  const top = at >= LADDER;
-  const bill = card && !top ? rungBill(id, cls) : [];
-  const buy = {
-    cls, rung: at + 1, bill, top,
-    label: !cls ? 'pick a class' : top ? `${CLASSES[cls].name} ${LADDER} of ${LADDER}` : `Buy ${CLASSES[cls].name} ${at + 1}`,
-    can: !!card && st.built && !top && !card.dead() && bill.every(([m, n]) => purse(m) >= n)
+  if (isLot(st)) {
+    const offered = kindsOffered();
+    return {
+      id, lot: true, ask: 'What goes up here?',
+      kinds: Object.keys(PAIRS).map(kind => ({
+        kind, name: BASES[kind], open: offered.includes(kind),
+        sub: offered.includes(kind) ? `${BASE_DOES[kind]} → ${PAIRS[kind].map(c => CLASSES[c].name).join(' or ')}` : LOCKED
+      }))
+    };
+  }
+  const open = classesOpen(st.kind), next = st.rung + 1;
+  const pip = (cls, r) => ({ r, on: st.rung >= r && (!cls || st.cls === cls),
+                             next: r === next && (!cls || !st.cls || st.cls === cls) && (!cls || open.includes(cls)),
+                             big: r === MOVE_RUNG || r === CAPSTONE_RUNG, cap: r === CAPSTONE_RUNG,
+                             line: lineOf(id, cls, r) });
+  const base = [];
+  for (let r = 1; r < FORK_RUNG; r++) base.push(pip(null, r));
+  const arms = PAIRS[st.kind].map(cls => {
+    const pips = [];
+    for (let r = FORK_RUNG; r <= LADDER; r++) pips.push(pip(cls, r));
+    return { cls, name: CLASSES[cls].name, gone: !!st.cls && st.cls !== cls, locked: !open.includes(cls), pips };
+  });
+  // The rows: what can be bought next. At the fork, one a class.
+  const row = (cls, label, sub, locked = false) => {
+    const bill = locked ? [] : rungBill(id, cls);
+    return { cls, label, sub, bill, locked,
+             can: !locked && st.built && bill.every(([m, n]) => purse(m) >= n) };
   };
-  // The line: what is viewed, else the class taken, else what to do.
-  const says = v ? lineOf(id, v.cls, v.r) : st.cls ? lineOf(id, st.cls) : 'pick a class';
-  return { id, kind: st.kind, cls: st.cls, rung: st.rung, plates, buy,
-           reset: { can: !!st.cls || st.rung > 0 }, line: says };
+  const rows = [];
+  let ask = null;
+  if (next < FORK_RUNG) rows.push(row(null, `${BASES[st.kind]} ${next}`, worth(PAIRS[st.kind][0], next)));
+  else if (next === FORK_RUNG) {
+    ask = FORK_ASK;
+    for (const cls of PAIRS[st.kind]) {
+      const w = WORDS[cls], locked = !open.includes(cls);
+      rows.push(row(cls, `Become a ${CLASSES[cls].name}`, locked ? LOCKED : `${w.base}. ${w.move[0]}: ${w.move[1]}`, locked));
+    }
+  } else if (next <= LADDER) {
+    const w = WORDS[st.cls], cap = next === CAPSTONE_RUNG;
+    rows.push(row(st.cls, cap ? w.cap[0] : `${CLASSES[st.cls].name} ${next}`, cap ? w.cap[1] : worth(st.cls, next)));
+  }
+  return { id, lot: false, kind: st.kind, cls: st.cls, rung: st.rung, who: st.cls ? CLASSES[st.cls].name : BASES[st.kind],
+           tree: { base, arms }, ask, rows, top: st.rung >= LADDER, reset: { can: !!st.cls || st.rung > 0 } };
 }
 
 // --- the presses ----------------------------------------------------------------
-// Buy: the next rung of the class taken, or the first of the class viewed,
-// which is what takes it. The party does the buying.
-export function pressBuy(id) {
+// A lot's row: its kind picked, and the builders sent to put it up.
+export function pressKind(id, kind) {
   const r = railsOf(id);
-  if (!r || !r.buy.can) return false;
-  // Paid here, as a card's press pays (`buy` in upgrades.js), the coins
-  // flying to the station; the party keeps the bill on the station so a
-  // Reset hands back exactly this.
-  const bill = r.buy.bill, g = standOfStation(stationById(id));
+  if (!r?.lot || !r.kinds.find(k => k.kind === kind)?.open) return false;
+  return pickKind(id, kind);
+}
+// A row bought: the next rung, or at the fork the class `cls`. Paid here, as
+// a card's press pays (`buy` in upgrades.js), the coins flying to the
+// station; the party keeps the bill on the station so a Reset hands back
+// exactly this.
+export function pressBuy(id, cls = null) {
+  const r = railsOf(id);
+  const it = r && !r.lot && r.rows.find(o => (cls ? o.cls === cls : r.rows.length === 1));
+  if (!it || !it.can) return false;
+  const g = standOfStation(stationById(id));
   const to = g && { x: g.x + g.w / 2, y: g.y - P * 2 };
   if (to) payTo(to.x, to.y);
-  for (const [money, n] of bill) take(money, n, to);
+  for (const [money, n] of it.bill) take(money, n, to);
   payTo();
-  const bought = buyRung(id, r.buy.cls, bill);
-  // The view has done its work once a class is taken: the rails now show it.
-  if (stationById(id)?.cls) viewAt(id).tap = null;
-  return bought;
+  return buyRung(id, it.cls, it.bill);
 }
-// Reset: every rung back, the class blank, the rails unfolded.
+// Reset: every rung back, the base unit stood again.
 export function pressReset(id) {
   const r = railsOf(id);
-  if (!r || !r.reset.can) return false;
-  resetStation(id);
-  const v = viewAt(id);
-  v.tap = v.hover = null;
-  return true;
+  if (!r || r.lot || !r.reset.can) return false;
+  return resetStation(id);
 }
 
 // --- the page ---------------------------------------------------------------------
-// The rails of each station, built once into its board's page, under the
-// fighter's heading, and filled every frame the board is up. Built for a
-// kind: a station's kind never changes, but the page can be made for an id
-// before a station stands under it.
-const mounted = new Map();                // id -> { el, kind }
+// The board's own part, under the fighter's heading, drawn afresh whenever
+// what it says changes (a rung, a bill, what can be afforded) and left alone
+// otherwise: this runs every frame the board is up.
+const mounted = new Map();                // id -> { el, body, tip, sig }
 
 // The bill as the cards write it: each coin its own cell, saying whether you
 // have it, in the order the yard hands them out (shop.js, `refresh`).
@@ -191,113 +183,102 @@ const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'core', 'spark'];
 const billHTML = bill => bill
   .slice().sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0]))
   .map(([m, n]) => `<span class="${purse(m) >= n ? 'have' : 'short'}">${MARK[m]} ${priceText(m, n)}</span>`).join('');
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
-// A rail: eight pips in a group a band, as a card's ladder is, so the
-// stylesheet tints each group in its band's coin; the move's and the
-// capstone's pips are bigger.
-const railHTML = () => {
-  let s = '<span class="rl-rail" data-lead="scale">';
-  for (let b = 0; b < LADDER / TIER_BAND; b++) {
-    s += '<b>';
-    for (let i = 0; i < TIER_BAND; i++) {
-      const r = b * TIER_BAND + i + 1;
-      s += `<i data-r="${r}"${r === MOVE_RUNG || r === CAPSTONE_RUNG ? ' class="big"' : ''}></i>`;
+const pipHTML = p => `<i class="${[p.big && 'big', p.cap && 'cap', p.on && 'on', p.next && 'next'].filter(Boolean).join(' ')}"` +
+                     ` data-line="${esc(p.line)}"></i>`;
+function treeHTML(r) {
+  const arms = r.tree.arms.map(a => `<span class="rl-arm${a.gone ? ' gone' : ''}${a.locked ? ' locked' : ''}">` +
+                                   a.pips.map(pipHTML).join('') + `<span class="rl-name">${esc(a.name)}</span></span>`).join('');
+  return `<div class="rl-tree"><span class="rl-base">${r.tree.base.map(pipHTML).join('')}</span>` +
+         `<span class="rl-fork"></span><span class="rl-arms">${arms}</span></div>`;
+}
+const rowHTML = (o, attrs) => `<button type="button" class="rl-row" ${attrs}${o.can === false ? ' disabled' : ''}>` +
+  (o.bill ? `<span class="rl-tag">${billHTML(o.bill)}</span>` : '') +
+  `<span class="rl-t">${esc(o.label)}</span><span class="rl-s">${esc(o.sub)}</span></button>`;
+
+function bodyHTML(r) {
+  if (r.lot)
+    return `<div class="rl-ask">${esc(r.ask)}</div>` +
+           r.kinds.map(k => rowHTML({ label: k.name, sub: k.sub, can: k.open }, `data-kind="${k.kind}"`)).join('');
+  return `<div class="rl-who">${esc(r.who)} · rung ${r.rung}</div>` + treeHTML(r) +
+         (r.ask ? `<div class="rl-ask">${esc(r.ask)}</div>` : '') +
+         r.rows.map(o => rowHTML(o, o.cls ? `data-cls="${o.cls}"` : '')).join('') +
+         (r.top ? '<div class="rl-top">top rung</div>' : '') +
+         `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>reset this station (refunds everything)</button>`;
+}
+
+// The hover line over a pip, and a tap's where a thumb has no hover.
+function showTip(m, pip) {
+  const { tip, el } = m;
+  if (!pip) { tip.hidden = true; return; }
+  tip.textContent = pip.dataset.line;
+  tip.hidden = false;
+  const a = el.getBoundingClientRect(), b = pip.getBoundingClientRect();
+  tip.style.left = `${Math.round(b.left - a.left + b.width / 2)}px`;
+  tip.style.top = `${Math.round(b.top - a.top)}px`;
+}
+
+function wire(id, m) {
+  const { body } = m;
+  for (const b of body.querySelectorAll('.rl-row[data-kind]'))
+    onTap(b, () => { pressKind(id, b.dataset.kind); refresh(id); });
+  for (const b of body.querySelectorAll('.rl-row:not([data-kind])'))
+    onTap(b, () => { pressBuy(id, b.dataset.cls || null); refresh(id); });
+  const reset = body.querySelector('.rl-reset');
+  if (reset) onTap(reset, () => { pressReset(id); refresh(id); });
+  for (const pip of body.querySelectorAll('.rl-tree i')) {
+    if (coarse()) onTap(pip, () => showTip(m, m.tip.hidden || m.tip.textContent !== pip.dataset.line ? pip : null));
+    else {
+      pip.addEventListener('pointerenter', () => showTip(m, pip));
+      pip.addEventListener('pointerleave', () => showTip(m, null));
     }
-    s += '</b>';
   }
-  return s + '</span>';
-};
+}
 
-function build(id, kind) {
+// Put the board's part into the station's page if it is not there, and say
+// whether it went in just now: the board then measures itself again.
+function mount(id) {
+  if (!stationById(id)) return false;
+  const had = mounted.get(id);
+  if (had && had.el.isConnected !== false) return false;
+  had?.el.remove?.();
   const el = document.createElement('div');
   el.className = 'rails';
   el.dataset.station = id;
-  let h = '<div class="rl-set">';
-  for (const cls of PAIRS[kind] || []) {
-    h += `<div class="rl-fold" data-cls="${cls}"><div><div class="rl-cls">` +
-         `<button type="button" class="rl-plate" data-cls="${cls}">${CLASSES[cls].name}</button>` +
-         '<span class="rl-lock">opens with a second station</span></div>' + railHTML() + '</div></div>';
-  }
-  h += '</div><div class="rl-panel"></div>' +
-       '<div class="rl-buy"><button type="button" class="rl-buybtn"><span class="rl-what"></span><span class="rl-tag"></span></button>' +
-       '<button type="button" class="rl-reset">Reset</button></div>';
-  el.innerHTML = h;
-  // A tap views; a hover views while it lasts (a thumb has no hover, and the
-  // tap is its way to look).
-  for (const plate of el.querySelectorAll('.rl-plate')) {
-    const cls = plate.dataset.cls;
-    onTap(plate, () => { view(id, cls); refresh(id); });
-    if (!coarse()) {
-      plate.addEventListener('pointerenter', () => { hover(id, cls); refresh(id); });
-      plate.addEventListener('pointerleave', () => { hover(id, null); refresh(id); });
-    }
-  }
-  for (const pip of el.querySelectorAll('.rl-rail i')) {
-    const cls = pip.closest('.rl-fold').dataset.cls, r = +pip.dataset.r;
-    onTap(pip, () => { view(id, cls, r); refresh(id); });
-    if (!coarse()) {
-      pip.addEventListener('pointerenter', () => { hover(id, cls, r); refresh(id); });
-      pip.addEventListener('pointerleave', () => { hover(id, null); refresh(id); });
-    }
-  }
-  onTap(el.querySelector('.rl-buybtn'), () => { pressBuy(id); refresh(id); });
-  onTap(el.querySelector('.rl-reset'), () => { pressReset(id); refresh(id); });
-  return el;
-}
-
-// Put the rails into the station's page if they are not there, and say
-// whether they went in just now: the board then measures itself again.
-function mount(id) {
-  const st = stationById(id);
-  if (!st) return false;
-  const had = mounted.get(id);
-  if (had && had.kind === st.kind && had.el.isConnected !== false) return false;
-  had?.el.remove?.();
-  const el = build(id, st.kind);
+  el.innerHTML = '<div class="rl-body"></div><div class="rl-tip" hidden></div>';
   const rows = shopOf(id);
   if (rows?.after) rows.after(el); else pageOf(id)?.appendChild(el);
-  mounted.set(id, { el, kind: st.kind });
+  mounted.set(id, { el, body: el.querySelector('.rl-body'), tip: el.querySelector('.rl-tip'), sig: '' });
   return true;
 }
 
-// Written only when it changes: this runs every frame the board is up.
-const put = (el, key, v) => { if (el[key] !== v) el[key] = v; };
-const mark = (el, cls, on) => { if (el.classList.contains(cls) !== on) el.classList.toggle(cls, on); };
-
 export function refresh(id) {
   const m = mounted.get(id), r = railsOf(id);
-  if (!m || !r) return;
-  const { el } = m;
-  for (const p of r.plates) {
-    const fold = el.querySelector(`.rl-fold[data-cls="${p.cls}"]`);
-    if (!fold) continue;
-    mark(fold, 'shut', p.folded);
-    mark(fold, 'dim', p.dim);
-    mark(fold, 'locked', p.locked);
-    mark(fold.querySelector('.rl-plate'), 'on', p.on);
-    put(fold.querySelector('.rl-plate'), 'disabled', p.locked);
-    for (const pip of fold.querySelectorAll('.rl-rail i')) mark(pip, 'on', +pip.dataset.r <= p.lit);
+  if (!m || !r) return false;
+  const html = bodyHTML(r);
+  let grew = false;
+  if (html !== m.sig) {
+    m.sig = html;
+    m.body.innerHTML = html;
+    m.tip.hidden = true;
+    wire(id, m);
+    grew = true;
   }
-  put(el.querySelector('.rl-panel'), 'textContent', r.line);
-  const btn = el.querySelector('.rl-buybtn');
-  put(btn.querySelector('.rl-what'), 'textContent', r.buy.label);
-  const tag = billHTML(r.buy.bill);
-  put(btn.querySelector('.rl-tag'), 'innerHTML', tag);
-  put(btn, 'disabled', !r.buy.can);
-  put(el.querySelector('.rl-reset'), 'disabled', !r.reset.can);
-  // The board's title is the kind's name: the page may have been made
-  // before the station stood (pages.js reads the row's name once).
+  // The board's title: the kind's name, or the lot's. The page may have been
+  // made before anything stood under the id (pages.js reads the row's name once).
   const title = pageOf(id)?.querySelector('.title');
-  const name = KINDS[r.kind]?.name;
+  const name = r.lot ? 'an empty lot' : KINDS[r.kind]?.name;
   if (title && name && title.dataset.name !== name) { title.dataset.name = name; title.textContent = name; }
+  return grew;
 }
 
-// Every frame (a layer in render.js): the open station's rails in its page,
-// and filled. A board that has just had its rails put in is measured again,
-// so it is seated for what it holds.
+// Every frame (a layer in render.js): the open station's board part in its
+// page, and filled. A board whose part has just gone in or changed its rows
+// is measured again, so it is seated for what it holds.
 export function seatRails() {
   const id = S.stationBoardOpen;
   if (!id || !stationById(id)) return;
-  if (mount(id)) remeasure();
-  refresh(id);
+  const put = mount(id);
+  if (refresh(id) || put) remeasure();
 }

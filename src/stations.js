@@ -70,6 +70,7 @@ function partyRow(id) {
     // Two of a kind, or two empty lots, would be two boards of one name, so a
     // repeat is counted off the ids before it: "the second altar".
     get name() {
+      if (st() && !st().kind) return 'an empty lot';
       const kind = st()?.kind;
       const [art, noun] = (KINDS[kind]?.name || 'a station').split(' ');
       const nth = PARTY_IDS.slice(0, PARTY_IDS.indexOf(id))
@@ -77,10 +78,13 @@ function partyRow(id) {
       return nth ? `${art} ${ORDINALS[nth]} ${noun}` : `${art} ${noun}`;
     },
     get glyph() { return KINDS[st()?.kind]?.glyph || 'crate'; },
-    empty: 'nothing to learn yet',
+    // Nothing to say until it has a kind: a lot's board is its own question.
+    get empty() { return st()?.kind ? 'nothing to learn yet' : ''; },
     // The fighter's post, under the station: one body at most (`moveFighter`).
     post: { key: `${id}job`, job: JOB.FIGHT, station: id },
-    open: () => !!st()?.built,
+    // Open once it stands, and while it is an empty lot: the lot's board is
+    // where its kind is picked.
+    open: () => !!st() && (st().built || !st().kind),
     // Its ground whether or not it has gone up yet: the build's scaffold
     // stands where the station will.
     stand: () => { const s = st(); return s ? standOfStation(s) : null; },

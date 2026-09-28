@@ -7,7 +7,7 @@
 // classes.test.mjs's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { WORKER, CLASSES, SERPENT_DEFENSE } from '../src/config.js';
+import { WORKER, CLASSES, SERPENT_DEFENSE, FORK_RUNG } from '../src/config.js';
 import { shots, loose } from '../src/deep/arms.js';
 import { rungWorth } from '../src/deep/classes.js';
 import { pressBuild, climb, openEveryClass } from './party-press.mjs';
@@ -74,7 +74,7 @@ group('a straight shot never misses: it is on its segment when its flight is up'
 }, { reload: false });
 
 group('a thrown charge falls on the water, goes off where it meets the coil, or where it is when lost', async () => {
-  station('circle', 'sapper', 1);
+  station('circle', 'sapper', FORK_RUNG);                    // the Sapper is taken at the fork
   runUntil(() => shots.some(s => s.kind === 'charge'), 30);
   const charge = shots.find(s => s.kind === 'charge');
   let fell = false, vy = charge ? charge.vy : 0;

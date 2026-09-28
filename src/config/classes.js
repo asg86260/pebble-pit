@@ -3,14 +3,19 @@
 // tempos and move numbers are first guesses for the ladder book.
 import { P } from './yard.js';
 
-// A station kind's two classes: the Fire Emblem fork on the deep's floor.
+// A station kind's two classes: the fork its fighter comes to at FORK_RUNG
+// (DESIGN.md, "A fighter branches at rung 4"). Below it the fighter is the
+// kind's base unit, `BASES`, fighting as the pair's first class does.
 export const PAIRS = {
   altar: ['brawler', 'sword'], well: ['monk', 'martial'], armory: ['ranger', 'assassin'],
   circle: ['hexer', 'sapper'], spire: ['mage', 'bard'],
 };
-// Before a second station stands, the first fighter is always a damage class.
-export const STARTERS = ['brawler', 'ranger', 'mage'];
+export const BASES = { altar: 'Fighter', well: 'Novice', armory: 'Scout', circle: 'Adept', spire: 'Apprentice' };
+// The first lot is one of these: each base unit does damage alone.
 export const FIRST_KINDS = ['altar', 'armory', 'spire'];
+// A class that does nothing with nobody beside it: its fork opens with a
+// second station.
+export const NEEDS_COMPANY = ['bard'];
 // The first station and a fang for each of the first three breaks.
 export const FIGHT_STATIONS_MAX = 4;
 
@@ -25,6 +30,8 @@ export const FIGHT_STATIONS_MAX = 4;
 //            drawing holds before the blow, and the blow lands at its end
 //   fly      seconds a thrown or shot thing is in the water
 export const MOVE_RUNG = 4, CAPSTONE_RUNG = 8;
+// The rung that picks the class: the move's, so the fork brings the move.
+export const FORK_RUNG = MOVE_RUNG;
 export const CLASSES = {
   // Heavy punches; every 4th a haymaker, x4, that stuns (longer at the capstone).
   brawler:  { name: 'Brawler',        ladder: 'brawler',  hit: 'brawler',  melee: true,

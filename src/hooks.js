@@ -5,7 +5,7 @@
 
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
-         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, LADDER, ABYSS_AT } from './config.js';
+         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, LADDER, FORK_RUNG, ABYSS_AT } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
 import { workOn, worksAt, abandonAt, start, stepWorks, SITES, ahead } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
@@ -1196,7 +1196,9 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
     finishWorks();
     if (slots && Number.isInteger(slots[i])) st.slot = slots[i];
     st.cls = o.cls ?? null;
-    st.rung = st.cls ? Math.max(0, Math.min(LADDER, o.rung | 0)) : 0;
+    // Below the fork a station has no class: its rungs are its base unit's.
+    st.rung = Math.max(0, Math.min(st.cls ? LADDER : FORK_RUNG - 1, o.rung | 0));
+    if (st.cls && st.rung < FORK_RUNG) st.rung = FORK_RUNG;
   }
   S.fangs = Math.max(0, fangs | 0);
   if (S.fangs) S.seenFang = true;

@@ -218,85 +218,88 @@ export const TESTS = [
 ];
 
 // --- anchor: RAILS (the party wave, track BOARD) ------------------------------------
-// A station's rails under a real pointer (deep/rails.js): a tap on a plate
-// views the class and fades the other; the Buy takes the class and the other
-// rail folds away, height and ink, over RAIL_FOLD_MS; Reset stands both again.
-// What each press does to the station is test/rails.test.mjs; this is the
-// press reaching it, and the fold being drawn.
+// A station's board under a real pointer (deep/rails.js): the pip tree with
+// a hover line, the rows the only things pressed, the fork a row a class, and
+// Reset. What each press does to the station is test/rails.test.mjs; this is
+// the press reaching it, and the tree being drawn.
 import { showPanel } from '../board.js';
 import { seatRails } from '../deep/rails.js';
-import { RAIL_FOLD_MS } from '../config.js';
+import { RAIL_FOLD_MS, FORK_RUNG } from '../config.js';
 import { tap, sleep, raf } from './kit.js';
 
-const rails = () => document.querySelector('.rails[data-station="s1"]');
-const fold = cls => rails()?.querySelector(`.rl-fold[data-cls="${cls}"]`);
-const tall = cls => fold(cls)?.getBoundingClientRect().height || 0;
+const rails = id => document.querySelector(`.rails[data-station="${id || 's1'}"]`);
 const seat = async () => { seatRails(); await raf(); await raf(); seatRails(); };
+const rowNamed = (id, text) => [...(rails(id)?.querySelectorAll('.rl-row') || [])].find(b => b.querySelector('.rl-t').textContent === text);
 
-TESTS.push(['rails: a tap views, the buy takes the class and folds the other, Reset stands both again', async () => {
-  // An altar and a spire, so both the altar's classes are open, and scales
-  // to spend.
+TESTS.push(['rails: the rows climb the base unit, the fork takes a class and closes the other branch, Reset stands it again', async () => {
+  // An altar and a spire, and a purse for every band.
+  window.__fullSites();
   window.__party({ stations: [{ kind: 'altar' }, { kind: 'spire' }] });
-  window.__scales(9999);
+  S.seenSpark = true;
+  window.__scales(99999);
+  window.__grant({ dust: 1e8, shards: 1e6, sparks: 1e5 });
   showPanel('s1', true);
   await seat();
   const st = S.stations[0];
   const up = !!rails() && S.stationBoardOpen === 's1';
-  const both = tall('brawler') > 0 && tall('sword') > 0;
-
-  await tap(rails().querySelector('.rl-plate[data-cls="brawler"]'));
-  await seat();
-  const faded = fold('sword').classList.contains('dim') && !fold('brawler').classList.contains('dim');
-  const blank = st.cls === null && st.rung === 0;
-  const says = rails().querySelector('.rl-buybtn .rl-what').textContent;
-
-  await tap(rails().querySelector('.rl-buybtn'));
-  const bought = st.cls === 'brawler' && st.rung === 1 && st.paid.some(([m, n]) => m === 'scale' && n > 0);
+  const pips = rails().querySelectorAll('.rl-tree i').length;
+  // A hover on a pip says what it is; pips are never pressed.
+  const pip = rails().querySelector('.rl-arm i.big');
+  pip.dispatchEvent(new PointerEvent('pointerenter'));
+  const tip = rails().querySelector('.rl-tip');
+  const said = !tip.hidden && tip.textContent;
+  pip.dispatchEvent(new PointerEvent('pointerleave'));
+  for (let r = 1; r < FORK_RUNG; r++) { await tap(rowNamed('s1', `Fighter ${r}`)); await seat(); }
+  const base = st.cls === null && st.rung === FORK_RUNG - 1;
+  const ask = rails().querySelector('.rl-ask')?.textContent || '';
+  await tap(rowNamed('s1', 'Become a Swordsman'));
   await seat();
   await sleep(RAIL_FOLD_MS + 100);
-  await seat();
-  const shut = fold('sword').classList.contains('shut') && tall('sword') < 1;
-  const kept = tall('brawler') > 0 && rails().querySelectorAll('.rl-fold[data-cls="brawler"] .rl-rail i.on').length === 1;
-
+  const took = st.cls === 'sword' && st.rung === FORK_RUNG && st.paid.some(([m, n]) => m === 'scale' && n > 0);
+  const gone = [...rails().querySelectorAll('.rl-arm')].map(a => a.classList.contains('gone'));
+  const lit = rails().querySelectorAll('.rl-tree i.on').length;
   await tap(rails().querySelector('.rl-reset'));
+  await seat();
   const blanked = st.cls === null && st.rung === 0 && st.paid.length === 0;
-  await seat();
-  await sleep(RAIL_FOLD_MS + 100);
-  await seat();
-  const again = !fold('sword').classList.contains('shut') && tall('sword') > 0 && tall('brawler') > 0;
+  const again = !rails().querySelector('.rl-arm.gone') && !!rowNamed('s1', 'Fighter 1');
   showPanel(null, true);
   return [
-    ok(up, "the station's board is up with its rails", `${S.stationBoardOpen}`),
-    ok(both, 'both rails stand on a blank station', `${tall('brawler')} ${tall('sword')}`),
-    ok(faded, 'a tap on the Brawler fades the Swordsman'),
-    ok(blank, 'and takes nothing'),
-    ok(says === 'Buy Brawler 1', 'Buy names what it buys', says),
-    ok(bought, 'the buy takes the Brawler, paid in scales', JSON.stringify(st)),
-    ok(shut, 'after the buy the Swordsman has folded away', `${tall('sword')}px`),
-    ok(kept, 'and the Brawler stands, its first pip lit'),
+    ok(up, "the station's board is up", `${S.stationBoardOpen}`),
+    ok(pips === 3 + 2 * 5, 'its tree: three pips, then five a branch', `${pips}`),
+    ok(said === 'Haymaker: every 4th punch x4, stuns', 'a hover on a pip says what it is', `${said}`),
+    ok(base, 'the rows climb the Fighter to the fork', JSON.stringify(st)),
+    ok(/choose a path/i.test(ask), 'where the board asks for a path', ask),
+    ok(took, 'the Swordsman row takes the Swordsman, paid in scales', JSON.stringify(st)),
+    ok(gone.join() === 'true,false', "and the Brawler's branch closes", gone.join()),
+    ok(lit === FORK_RUNG, 'the pips climbed are lit', `${lit}`),
     ok(blanked, 'Reset blanks the station'),
-    ok(again, 'Reset stands both rails again', `${tall('brawler')} ${tall('sword')}`)
+    ok(again, 'and stands the whole tree and the Fighter again')
   ];
 }]);
 
 // The floating build button under a real pointer (deep/buildbutton.js): at
-// the snatch it stands over the first slot; a tap opens its picker, a tap on
-// a kind puts the station in the deep's works.
-TESTS.push(['rails: the build button builds the first station, free, from its picker', async () => {
+// the snatch it stands over the first slot; a tap lays an empty lot there
+// and opens its board, and a tap on a row there puts the station in the
+// deep's works.
+TESTS.push(['rails: the build button lays a lot, and its board picks the first station, free', async () => {
   window.__snatch({ played: true });
   window.__view('deep');
   await raf(); await raf();
   const btn = document.getElementById('buildbtn');
   const shown = !!btn && btn.classList.contains('on');
   await tap(btn);
-  await raf();
-  const kinds = [...document.querySelectorAll('#buildpick.on .kind')].map(b => b.dataset.kind);
-  await tap(document.querySelector('#buildpick .kind[data-kind="armory"]'));
+  await seat();
+  const lot = S.stations[0] && { ...S.stations[0] };
+  const open = S.stationBoardOpen === lot?.id;
+  const rows = [...(rails(lot?.id)?.querySelectorAll('.rl-row:not(:disabled)') || [])].map(b => b.dataset.kind);
+  await tap(rails(lot.id).querySelector('.rl-row[data-kind="armory"]'));
   await raf(); await raf();
   const st = S.stations[0];
+  showPanel(null, true);
   return [
     ok(shown, 'the button stands at the snatch'),
-    ok(kinds.join() === 'altar,armory,spire', 'its picker offers the three starting kinds', kinds.join()),
+    ok(lot && lot.kind === null && open, "a tap lays an empty lot and opens its board", JSON.stringify(lot)),
+    ok(rows.join() === 'altar,armory,spire', 'which offers the three starting kinds', rows.join()),
     ok(st && st.id === 's1' && st.kind === 'armory' && !st.built && S.fangs === 0,
        'a pick puts the first station up, free', JSON.stringify(st)),
     ok(!btn.classList.contains('on'), 'and the button goes, with no fang held')

@@ -7,12 +7,12 @@
 // the floating build button and a rung on the station's rails.
 import { group, ok, run, runUntil } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { P, WORKER, FIRST_KINDS, FIGHT_STATIONS_MAX, SERPENT_WOUND, FANG_BREAKS } from '../src/config.js';
+import { P, WORKER, FIRST_KINDS, FIGHT_STATIONS_MAX, SERPENT_WOUND, FANG_BREAKS, FORK_RUNG } from '../src/config.js';
 import { belowYard } from '../src/route.js';
 import { deepPost } from '../src/crew/deep.js';
-import { stationById, fighterAt, classesOpen, stationMid } from '../src/deep/party.js';
-import { buildOffer } from '../src/deep/buildbutton.js';
-import { railsOf, view } from '../src/deep/rails.js';
+import { stationById, fighterAt, classesOpen, stationMid, kindsOffered } from '../src/deep/party.js';
+import { buildOffer, press } from '../src/deep/buildbutton.js';
+import { railsOf, pressKind } from '../src/deep/rails.js';
 import { pressBuild, climb, reset, flush } from './party-press.mjs';
 
 const her = () => S.workers.find(w => belowYard(w));
@@ -49,16 +49,20 @@ const breakPhase = () => window.__serpent({ wound: SERPENT_WOUND[S.serpentStage]
 group('after the snatch the first station is free, a delver builds it and the sqwife swims there', async () => {
   afterSnatch();
   const offer = buildOffer();
-  const offered = offer.kinds, could = offer.shown && offer.first;
+  const could = offer.shown && offer.first;
   const name = her().name;
-  const built = pressBuild('altar');
+  // The button lays a lot; its board asks what goes up there.
+  const lot = press();
+  const asked = railsOf(lot);
+  const offered = asked.kinds.filter(k => k.open).map(k => k.kind);
+  const built = pressKind(lot, 'altar');
   const st = S.stations[0];
   const second = pressBuild('armory');
   const trip = follow(name, w => stationById('s1')?.built && w.type === 'fighter' && atPost(w));
   const w = S.workers.find(o => o.name === name);
   return [
-    ok(JSON.stringify(offered) === JSON.stringify(FIRST_KINDS) && could,
-       'the button offers the three starting kinds', JSON.stringify(offered)),
+    ok(could && asked.lot && JSON.stringify(offered) === JSON.stringify(FIRST_KINDS),
+       "the button lays a lot, and its board offers the three starting kinds", JSON.stringify(offered)),
     ok(built && st && st.kind === 'altar' && !st.built && S.fangs === 0, 'one is picked, and it costs nothing',
        JSON.stringify(st)),
     ok(!second && S.stations.length === 1, 'and with no fang held, nothing else can be built'),
@@ -89,7 +93,7 @@ group('a fang drops at a break, sinks, is carried to the crusher, and buys the n
     if (g?.held) { held = true; carrier = S.workers.find(w => w.name === g.by)?.type; }
   }
   const counted = { fangs: S.fangs, seen: S.seenFang, loose: S.fangsLoose.length };
-  const button = buildOffer().shown && buildOffer().kinds.length === 5;
+  const button = buildOffer().shown && kindsOffered().length === 5;
   const resident = S.workers.find(w => w.type === 'gatherer')?.name;
   const bought = pressBuild('well');
   const spent = S.fangs;
@@ -128,14 +132,15 @@ group('with no gatherer, the fighter nearest a fang carries it to the crusher an
     const g = S.fangsLoose[0];
     if (g?.held && g.by === her) carried = true;
     if (!near(w)) left = true;
-    return S.fangs > 0 && near(w) && w.type === 'fighter';
+    // Back at work: its station's base unit fights from the start.
+    return S.fangs > 0 && w.type === 'fighter' && w.goal === 'fight';
   });
   const w = S.workers.find(o => o.name === her);
   return [
     ok(gatherers === 0, 'nobody gathers down there', `${gatherers}`),
     ok(carried && left, 'the fighter leaves its station and carries the fang', `${carried} ${left}`),
     ok(S.fangs === 1, 'to the crusher, where it counts', `${S.fangs}`),
-    ok(trip.there && w.station === 's1' && st.fighter === w.uid, 'and swims back to its own station', JSON.stringify(trip)),
+    ok(trip.there && w.station === 's1' && st.fighter === w.uid, 'and swims back to fight for its own station', JSON.stringify(trip)),
     ok(trip.jump < WORKER, 'a stroke at a time', `${trip.jump.toFixed(1)}px`)
   ];
 });
@@ -161,6 +166,8 @@ group('four stations is the most; a station with nobody spare stands empty until
   window.__finish();
   run(3);
   window.__party({ fangs: 5 });                      // three breaks' fangs, and more
+  // The spire's Apprentice fights meanwhile, and a break she makes drops a fang.
+  const dropped = S.fangsDropped;
   const built = ['altar', 'circle', 'well'].map(k => { const b = pressBuild(k); window.__finish(); return b; });
   const fifth = pressBuild('armory');
   run(3);
@@ -171,7 +178,8 @@ group('four stations is the most; a station with nobody spare stands empty until
   return [
     ok(built.every(Boolean) && S.stations.length === FIGHT_STATIONS_MAX, 'three fangs build three more',
        `${S.stations.length} stations`),
-    ok(!fifth && !buildOffer().shown && S.fangs === 2, 'and a fifth cannot be built, fang or no fang', `fangs ${S.fangs}`),
+    ok(!fifth && !buildOffer().shown && S.fangs === 2 + S.fangsDropped - dropped, 'and a fifth cannot be built, fang or no fang',
+       `fangs ${S.fangs}, ${S.fangsDropped - dropped} dropped`),
     ok(manned === 1, 'with only her down there, one station is manned', `${manned}`),
     ok(fighters.length === 2 && new Set(fighters.map(w => w.station)).size === 2,
        'the next hand free goes to an empty one', fighters.map(w => w.station).join()),
@@ -179,31 +187,34 @@ group('four stations is the most; a station with nobody spare stands empty until
   ];
 });
 
-group("a station's ladder commits its class on the first rung, and Reset hands it back", async () => {
+group("a station climbs its base unit, forks at rung 4, and Reset hands it all back", async () => {
   afterSnatch();
-  pressBuild('altar');
+  pressBuild('spire');
   window.__finish();
   run(3);
   flush();
-  const open = classesOpen('altar');
-  const locked = view('s1', 'sword');
-  view('s1', 'brawler');
-  const first = climb('s1', 'brawler', 1).rung === 1;
-  const other = railsOf('s1').plates.find(p => p.cls === 'sword');
-  climb('s1', 'brawler', 2);
+  const open = classesOpen('spire');
+  climb('s1', null, FORK_RUNG - 1);
   const st = stationById('s1');
+  const base = { cls: st.cls, rung: st.rung };
+  const fork = railsOf('s1');
+  climb('s1', 'mage', FORK_RUNG + 1);
+  const took = railsOf('s1');
   const bills = [...st.paid];
   const kept = { cls: st.cls, rung: st.rung, scales: (bills.find(([m]) => m === 'scale') || [])[1] || 0 };
   const sinking = S.sinking.length;
   const fighter = st.fighter;
   reset('s1');
   return [
-    ok(JSON.stringify(open) === '["brawler"]' && !locked, 'before a second station, the altar opens only the Brawler'),
-    ok(first && other.folded, 'the first rung commits the class', JSON.stringify(other)),
-    ok(kept.cls === 'brawler' && kept.rung === 2 && kept.scales > 0, 'and the station keeps what was paid there',
+    ok(JSON.stringify(open) === '["mage"]', 'before a second station, the spire forks only to the Mage', JSON.stringify(open)),
+    ok(base.cls === null && base.rung === FORK_RUNG - 1, 'the base unit climbs with no class', JSON.stringify(base)),
+    ok(fork.ask && fork.rows.length === 2 && fork.rows.find(r => r.cls === 'bard').locked,
+       'at the fork the board asks for a path, the Bard locked', JSON.stringify(fork.rows.map(r => [r.cls, r.locked]))),
+    ok(took.cls === 'mage' && took.tree.arms.find(a => a.cls === 'bard').gone, 'the fork takes the Mage and closes the other branch'),
+    ok(kept.cls === 'mage' && kept.rung === FORK_RUNG + 1 && kept.scales > 0, 'and the station keeps what was paid there',
        JSON.stringify({ kept, bills })),
     ok(st.rung === 0 && st.cls === null && st.paid.length === 0, 'Reset blanks it'),
     ok(S.sinking.length - sinking === kept.scales, 'the scales go back into the water', `${S.sinking.length - sinking}`),
-    ok(st.fighter === fighter && fighter, 'and the fighter stays, a base fighter')
+    ok(st.fighter === fighter && fighter, 'and the fighter stays, the base unit again')
   ];
 });

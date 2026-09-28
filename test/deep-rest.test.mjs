@@ -9,7 +9,6 @@ import { deepBed } from '../src/state.js';
 import { deepX0, deepX1 } from '../src/deep/place.js';
 import { feet } from '../src/deep/arms.js';
 import { restGround, restCeiling } from '../src/deep/rest.js';
-import { stationX } from '../src/deep/classes.js';
 import { bedX } from '../src/deep/scales.js';
 
 const S = yard.S;
@@ -33,7 +32,6 @@ function podBody() {
 // Found again every time: a reload (the harness's every five seconds, or a
 // check's own) stands up new bodies.
 const pod = () => S.workers.find(o => o.deepHome && o.type === 'gatherer');
-const guard = () => S.workers.find(o => o.station === 's1') || S.workers.find(o => o.name === S.stations[0].fighter);
 
 const upOff = h => {
   for (let f = 0; f < 60 * 120; f++) { frame(); if (pod().y < feet() - h) return true; }
@@ -119,30 +117,6 @@ group('a reload mid-float leaves it where it was, and it sinks from there', asyn
     ok(kept, 'and read back in the water where it was', `${Math.round(at.x)},${Math.round(at.y)} -> ${Math.round(b.x)},${Math.round(b.y)}`),
     ok(landed && rose === 0, 'then sank to the floor without rising', `landed ${landed}, ${rose} frames rising`),
     ok(jump < P, 'slowly, never a snap', `${jump.toFixed(2)}px in a frame at most`)
-  ];
-});
-
-// Its ground is its station's, wherever on the floor that stands: the rest
-// is asked of the station's middle, not of a named spot.
-group("a fighter whose station has no class yet stands guard, resting about the station's ground", async () => {
-  window.__fullSites();
-  window.__snatch({ played: true });
-  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
-  const g = restGround(stationX(S.stations[0]));
-  runUntil(() => { const w = guard(); return w.goal === 'guard' && w.x >= g.lo && w.x <= g.hi; }, 90);
-  let w = guard();
-  let x0 = Infinity, x1 = -Infinity, off = 0;
-  for (let f = 0; f < 60 * 40; f++) {
-    frame();
-    w = guard();
-    x0 = Math.min(x0, w.x); x1 = Math.max(x1, w.x);
-    if (w.y < feet() - P) off++;
-  }
-  return [
-    ok(w.goal === 'guard', 'the fighter stands guard', `goal ${w.goal}`),
-    ok(x1 - x0 > P * 2 || off > 0, 'and not dead still', `${Math.round(x0)}..${Math.round(x1)}, ${off} frames up`),
-    ok(x0 >= g.lo && x1 <= g.hi, "on its station's ground", `${Math.round(x0)}..${Math.round(x1)} in ${Math.round(g.lo)}..${Math.round(g.hi)}`),
-    ok(S.serpentWound === 0, 'and strikes nothing', `${S.serpentWound}`)
   ];
 });
 

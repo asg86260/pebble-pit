@@ -26,7 +26,7 @@ import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_
          IDLE_STEP_S, IDLE_HOP_S, IDLE_SETTLE_S } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { S } from '../state.js';
-import { fighterAt } from '../deep/party.js';
+import { fighterAt, keyOf } from '../deep/party.js';
 import * as fight from '../deep/arms.js';
 import { deepFloor, deepTop, deepX0, slotX } from '../deep/place.js';
 import { ctx } from './ctx.js';
@@ -143,7 +143,7 @@ function fighters(t) {
   if (frame.t === t) return frame.list;
   const list = [];
   for (const { w, st } of stationsNow()) {
-    const key = st.cls && ATTACKS[st.cls] ? st.cls : null, R = st.rung || 0;
+    const k = keyOf(st), key = k && ATTACKS[k] ? k : null, R = st.rung || 0;
     const x = Math.round(w.x) / P, restY = Math.round(w.y) / P;
     const f = { w, st, key, R, x, restY, a: null, a0: null, sauce: null, c: null, sim: 'pose' in w, dx: 0, dy: 0 };
     if (key && f.sim) {
