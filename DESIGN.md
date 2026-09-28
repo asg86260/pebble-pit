@@ -16503,8 +16503,12 @@ recruit stands at it, and the ladder asks the two choices as rungs.
   at the top, a stem to the fork, a crossbar ending at the two branches,
   each headed by its specialist's icon and name, a square for its move
   (rung 4) and a purple square for its capstone (rung 8), each with its
-  line. At rung 1 the five base units, each with that tree under it; how
-  the five sit on one board is mocked with the Recruit.
+  line. At rung 1, the Recruit's own tree (voted R2,
+  docs/mocks/recruit-choice-2026-09-28.html): the Recruit centered at the
+  top, a stem, a crossbar to five nodes -- each base unit's name over its
+  two specialists' icons, the locked ones dashed. The node picked opens
+  its E2 tree under the row, with "Become a ..." and rung 1's bill: the
+  purchase. Picking a node only looks; the button buys.
 - **Status effects are named.** A status in a line is its name, bold, with
   a one-line hover: "applies **Bleed**", not "inflict bleeding". Stun,
   Bleed, Haste, Weakened, Held, Exposed, Inspired (the lines are the
