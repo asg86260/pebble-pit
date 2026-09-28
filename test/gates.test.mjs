@@ -4,12 +4,14 @@
 // row with a predicate of its own is the old shape, and this is the check
 // that none has come back: every door's gate is `offered` of its own key and
 // nothing else, a door whose `after` is shut is not offered whatever `needs`
-// says, and the pointer finds every standing station by its ground.
+// says, and the pointer finds every standing station by its ground -- a
+// station of the party by its id, so two of a kind are two places.
 
 import { group, ok, run, yard } from './helpers.mjs';
 import { STATIONS, station, open, offered, standRect, stationAt } from '../src/stations.js';
 import { UPGRADES } from '../src/upgrades.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
+import { PARTY_IDS } from '../src/config.js';
 
 const S = () => yard.S;
 const keys = STATIONS.map(r => r.key);
@@ -62,7 +64,7 @@ group('every door row and every shield row is gated by offered and nothing else'
   same('with the grounds open');
   // and every door there is, the shields answered, so the retired side of
   // every gate is read too
-  for (const r of doors) S()[r.key + 'Open'] = true;
+  for (const r of doors) if (!r.party) S()[r.key + 'Open'] = true;
   S().seenBench = true; S().banked = 1;
   window.__answered(...shields.map(r => r.key));
   run(1);
@@ -118,10 +120,15 @@ group('the pointer finds every standing station by its ground, and nothing else'
   // Everything stands.
   window.__crew(2, 2, 1, 1);
   window.__shack();
-  for (const r of doors) if (r.key !== 'house' && r.key !== 'stats') S()[r.key + 'Open'] = true;
-  S().snatched = true;                           // the altar stands from the snatch, not a flag of its own
+  for (const r of doors) if (r.key !== 'house' && r.key !== 'stats' && !r.party) S()[r.key + 'Open'] = true;
+  S().snatched = true;                           // the crusher stands from the snatch, not a flag of its own
   S().pods = 1;                                  // and the pods from the first one bought
   S().seenBench = true; S().banked = 1;
+  // until merge: `__party` (STATE) stands the party; here its stations are
+  // written onto S, one to every id, two of them altars, each at its own slot.
+  const kinds = ['altar', 'armory', 'altar', 'spire'];
+  S().stations = PARTY_IDS.map((id, i) => ({ id, kind: kinds[i % kinds.length], slot: i, built: true,
+                                             cls: null, rung: 0, paid: [], fighter: null }));
   run(1);
   for (const r of doors) {
     const g = standRect(r.key);

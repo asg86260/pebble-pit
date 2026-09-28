@@ -47,18 +47,11 @@ const apothecary = () => { sites(); window.__buy('unlockapothecary'); window.__f
 // The deep: a yard with every site built, as a yard that has had the rescue
 // has, and the snatch played through (`{ played: true }` runs its beat out on
 // the yard's clock); then scales on the deep's floor, which the
-// flood before every press does not pour -- a bed holds a few thousand. The
-// stations past the altar are opened by their flags, and the serpent's stage
-// is set for the doors that wait on it.
+// flood before every press does not pour -- a bed holds a few thousand.
 const deep = (S, run) => {
   sites();
   window.__snatch({ played: true });
   window.__grant({ scales: 5000 });
-};
-const deepAt = (stage, ...open) => (S, run) => {
-  deep(S, run);
-  window.__serpent({ stage });
-  for (const k of open) S[k + 'Open'] = true;
 };
 export const ROWS = [
   // --- the bench --------------------------------------------------------------
@@ -170,26 +163,11 @@ export const ROWS = [
   { key: 'potency-brace', part: 2, reach: apothecary },
   { key: 'potency-strong', part: 2, reach: apothecary },
 
-  // --- the deep: the altar ----------------------------------------------------
-  { key: 'punch', part: 1, reach: deep },
-  { key: 'brawl', part: 1, reach: deep },
-  // Each door waits on the stage before the one its weapon answers.
-  { key: 'unlockwell', part: 1, reach: deepAt(1) },
-  { key: 'unlockfont', part: 1, reach: deepAt(2, 'well') },
-  { key: 'unlockcircle', part: 1, reach: deepAt(2, 'well') },
-  { key: 'unlockspire', part: 1, reach: deepAt(3, 'well', 'font', 'circle') },
+  // --- the deep: the pods -----------------------------------------------------
+  // The deep's one board of cards. A station of the party sells its ladders
+  // on its rails, not as rows (deep/rails.js, test/rails.test.mjs), and is
+  // bought from the floating button, not a board (deep/buildbutton.js).
   { key: 'pod', part: 1, reach: deep },
-
-  // --- the deep: the well, the armory, the circle, the spire -------------------
-  { key: 'lance', part: 2, reach: deepAt(1, 'well') },
-  { key: 'lancehold', part: 2, reach: deepAt(1, 'well') },
-  { key: 'grenade', part: 2, reach: deepAt(2, 'well', 'font') },
-  { key: 'grenadepace', part: 2, reach: deepAt(2, 'well', 'font') },
-  { key: 'sigil', part: 2, reach: deepAt(2, 'well', 'circle') },
-  { key: 'beam', part: 2, reach: deepAt(3, 'well', 'font', 'circle', 'spire') },
-  { key: 'curse', part: 2, reach: deepAt(3, 'well', 'font', 'circle', 'spire') },
-  { key: 'callstar', part: 2, reach: deepAt(3, 'well', 'font', 'circle', 'spire') },
-  { key: 'tunestar', part: 2, reach: deepAt(3, 'well', 'font', 'circle', 'spire', 'star') },
 
   // The casino has no board: its decisions are levers on the building and
   // heaps on the ground (levers.js, stakes.js), checked in casino.test.mjs.
