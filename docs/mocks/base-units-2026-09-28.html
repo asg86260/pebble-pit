@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Base Unit Animations</title>
+<style>
+:root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; } }
+:root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 20px; margin: 0 0 6px; }
+p { color: var(--dim); max-width: 90ch; margin: 0 0 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; }
+.card h3 { margin: 0; font-size: 14px; }
+.card h3 span { color: var(--dim); font-weight: 400; font-size: 12px; }
+canvas { width: 100%; image-rendering: pixelated; display: block; border: 1px solid var(--rule); }
+.about { color: var(--dim); font-size: 12px; margin: 0; min-height: 3em; }
+button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Base unit animations</h1>
+  <p>The five units a station stands before it forks at rung 4 (DESIGN.md, "The base unit"): each fights as its
+    pair's first class, so these are those classes' Base scenes from the class bench. A mock drawn from plain cells,
+    not the game; it cannot show the game's real coil, timings or camera. Compare the Scout to the game's.</p>
+  <button id="play" type="button">pause</button>
+  <div class="grid" id="grid" style="margin-top:12px"></div>
+</div>
+<script type="module">
+import { P, CW, CH, CLASSES, frame } from './classes/harness.js';
+import './classes/group-hand.js';
+import './classes/group-blade.js';
+import './classes/group-fire.js';
+import './classes/group-word.js';
+const UNITS = [['Fighter', 'altar', 'brawler'], ['Novice', 'well', 'monk'], ['Scout', 'armory', 'ranger'],
+               ['Adept', 'circle', 'hexer'], ['Apprentice', 'spire', 'mage']];
+const panes = [];
+for (const [name, st, key] of UNITS) {
+  const cls = CLASSES.find(c => c.key === key);
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<h3>${name} <span>the ${st}, fights as the ${cls?.name}</span></h3>`;
+  const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P;
+  const about = document.createElement('p'); about.className = 'about'; about.textContent = cls?.scenes[0].about || '';
+  card.append(cv, about); grid.append(card);
+  if (cls) panes.push({ cls, g: cv.getContext('2d'), scene: cls.scenes[0] });
+}
+let playing = true, clock = 0, last = performance.now();
+play.onclick = () => { playing = !playing; play.textContent = playing ? 'pause' : 'play'; };
+(function tick(now) {
+  if (playing) clock += (now - last) / 1000;
+  last = now;
+  for (const p of panes) frame(p.g, p.cls, p.scene, clock % p.scene.dur);
+  requestAnimationFrame(tick);
+})(performance.now());
+</script>
+</body>
+</html>
