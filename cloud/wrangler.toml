@@ -26,3 +26,8 @@ migrations_dir = "migrations"
 # The daily sweep, at an hour when nobody is near the day caps' midnight.
 [triggers]
 crons = ["17 3 * * *"]
+
+# Workers Logs (the dashboard's Observability tab): every refused request
+# logs one line -- its status, route and origin, never a code or an ip.
+[observability]
+enabled = true

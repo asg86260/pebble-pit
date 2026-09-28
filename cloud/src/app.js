@@ -12,11 +12,11 @@ import {
   CLOUD_DAY_WRITES, CLOUD_MINTS_IP_DAY, CLOUD_SECRET_LEN, CLOUD_PAIR_LEN,
   CLOUD_PAIR_S, CLOUD_PAIR_TRIES, CLOUD_PAIR_TRIES_S, CLOUD_PAIR_FAILS_HOUR,
   CLOUD_PAUSED_RETRY_S, CLOUD_YARD_ID_MAX, CLOUD_PAIR_DRAWS,
-  CLOUD_CODE_TRIES, CLOUD_CODE_TRIES_S, CLOUD_ORIGINS
+  CLOUD_CODE_TRIES, CLOUD_CODE_TRIES_S, CLOUD_ORIGINS, CLOUD_REFUSALS_COUNTED
 } from '../../src/config/cloud.js';
 import { SLOTS } from '../../src/config/saves.js';
 import { draw, normalSecret, normalPair, showSecret, showPair, sha256hex, seal, unseal, sameSecret } from './codes.js';
-import { SECOND_MS, HOUR_MS, utcDay, nextMidnight, hourOf, secondsUntil } from './clock.js';
+import { SECOND_MS, HOUR_MS, DAY_MS, utcDay, nextMidnight, hourOf, secondsUntil } from './clock.js';
 
 // A slot past SLOTS (config/saves.js, the game's own number) is a 404.
 export { SLOTS };
@@ -294,13 +294,20 @@ export async function statsOf(env, now) {
   const totals = await env.DB.prepare('SELECT * FROM totals WHERE id = 1').first();
   const vaults = await env.DB.prepare('SELECT COUNT(*) AS n FROM vaults').first('n');
   const day = utcDay(now);
+  const yesterday = utcDay(now - DAY_MS);
+  const { results } = await env.DB.prepare('SELECT day, status, n FROM refusals WHERE day IN (?, ?)')
+    .bind(day, yesterday).all();
+  // Refusals by status, today's and yesterday's; a count at the cap means
+  // "at least that many".
+  const by = d => Object.fromEntries(results.filter(r => r.day === d).map(r => [r.status, r.n]));
   return {
     day,
     writes: totals.day === day ? totals.writes : 0,
     capWrites: CLOUD_DAY_WRITES,
     bytes: totals.bytes,
     capBytes: CLOUD_BYTES_MAX,
-    vaults
+    vaults,
+    refused: { today: by(day), yesterday: by(yesterday), countedTo: CLOUD_REFUSALS_COUNTED }
   };
 }
 
@@ -354,16 +361,46 @@ export const originAllowed = o => ORIGINS.some(re => re.test(o));
 
 export async function handle(request, env, now = Date.now()) {
   // A browser says which page is calling. One on a page that is not the
-  // game's is refused before anything runs, preflight or not; a request with
-  // no Origin is not a browser's, and is left to the codes and the caps.
+  // game's is refused before anything else runs, preflight or not; a request
+  // with no Origin is not a browser's, and is left to the codes and the caps.
   const origin = request.headers.get('origin');
-  if (origin !== null && !originAllowed(origin)) return reply(403, { error: 'not from the game' });
-  const res = await answer(request, env, now);
-  if (origin !== null) {
-    res.headers.set('access-control-allow-origin', origin);
-    res.headers.set('vary', 'Origin');
+  let res;
+  if (origin !== null && !originAllowed(origin)) {
+    res = reply(403, { error: 'not from the game' });
+  } else {
+    res = await answer(request, env, now);
+    if (origin !== null) {
+      res.headers.set('access-control-allow-origin', origin);
+      res.headers.set('vary', 'Origin');
+    }
   }
+  // A paused worker touches nothing, its own counts included.
+  if (res.status >= 400 && res.status !== 412 && env.CLOUD_PAUSED !== '1') await noteRefusal(request, env, now, res.status, origin);
   return res;
+}
+
+// --- watching it ----------------------------------------------------------------
+// A refusal the players never report -- a page the worker does not know, a
+// cap met, a fault -- is only seen here. One log line for Workers Logs, and
+// one more on today's count for /stats. The line names the route with the
+// slot number folded away and the page it came from; never the code, never
+// the ip. A 412 is not a refusal but the sync working, and is not counted.
+const routeOf = request => {
+  const path = new URL(request.url).pathname.replace(/\/slots\/\d+$/, '/slots/n').slice(0, 40);
+  return `${request.method} ${path}`;
+};
+async function noteRefusal(request, env, now, status, origin) {
+  console.log(JSON.stringify({ refused: status, route: routeOf(request), origin }));
+  try {
+    // Counted up to CLOUD_REFUSALS_COUNTED and then left: an update whose
+    // WHERE fails writes no row, so a flood costs a bounded number of writes.
+    await env.DB.prepare(`INSERT INTO refusals (day, status, n) VALUES (?, ?, 1)
+        ON CONFLICT(day, status) DO UPDATE SET n = n + 1 WHERE n < ?`)
+      .bind(utcDay(now), status, CLOUD_REFUSALS_COUNTED).run();
+  } catch (err) {
+    // The count is for watching; it never costs a player the answer.
+    console.error('cloud: refusal count', err?.message || err);
+  }
 }
 
 async function answer(request, env, now) {

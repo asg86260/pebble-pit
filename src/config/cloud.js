@@ -121,3 +121,11 @@ export const CLOUD_YARD_ID_MAX = 64;
 // Draws of a pairing code before the worker gives up on a free one: a new
 // code collides with a live one about once in a hundred million.
 export const CLOUD_PAIR_DRAWS = 4;
+
+// --- watching it (2026-09-28) ---------------------------------------------------
+// Refused requests are counted a day and a status at a time for /stats, and
+// each count stops here: past it /stats reads "at least", and a flood of
+// bad requests has cost at most this many writes a status.
+export const CLOUD_REFUSALS_COUNTED = 1000;
+// Days of those counts kept; the daily sweep drops older ones.
+export const CLOUD_REFUSALS_KEEP_D = 30;

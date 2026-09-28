@@ -167,5 +167,5 @@ test('the cron sweeps the empty and the stale with their bytes, and the spent ro
   assert.equal((await w.call('GET', '/slots', { secret: live })).status, 200);
   assert.equal(w.row('SELECT bytes FROM totals').bytes, 100);
   assert.equal(w.rows('SELECT * FROM slots').length, 1);
-  assert.equal(s.line, `cloud: ${new Date(w.now).toISOString().slice(0, 10)} writes 0/${CLOUD_DAY_WRITES} bytes 100/${CLOUD_BYTES_MAX} vaults 1`);
+  assert.equal(s.line, `cloud: ${new Date(w.now).toISOString().slice(0, 10)} writes 0/${CLOUD_DAY_WRITES} bytes 100/${CLOUD_BYTES_MAX} vaults 1 refused none`);
 });

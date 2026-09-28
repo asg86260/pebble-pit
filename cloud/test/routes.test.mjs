@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { worker, bytes, dump, MIN, HOUR, DAY } from './kit.mjs';
 import { CLOUD_PUSH_FLOOR_S, CLOUD_BYTES_MAX, CLOUD_DAY_WRITES } from '../../src/config/cloud.js';
 import { sha256hex, normalSecret } from '../src/codes.js';
-import { CLOUD_CODE_TRIES, CLOUD_CODE_TRIES_S, CLOUD_PAIR_FAILS_HOUR } from '../../src/config/cloud.js';
+import { CLOUD_CODE_TRIES, CLOUD_CODE_TRIES_S, CLOUD_PAIR_FAILS_HOUR, CLOUD_REFUSALS_COUNTED } from '../../src/config/cloud.js';
 
 const SHOWN = /^[0-9A-HJKMNP-TV-Z]{4}(-[0-9A-HJKMNP-TV-Z]{4}){2}$/;
 const GAME = 'https://html-classic.itch.zone';
@@ -209,7 +209,9 @@ test('stats are the owner\'s only', async () => {
   assert.equal((await w.call('GET', '/stats', { secret: code })).status, 401);
   const s = await w.call('GET', '/stats', { secret: 'owner-token' });
   assert.equal(s.status, 200);
-  assert.deepEqual(s.json, { day: '2026-09-27', writes: 1, capWrites: CLOUD_DAY_WRITES, bytes: 64, capBytes: CLOUD_BYTES_MAX, vaults: 1 });
+  // The three refused asks above are today's only refusals.
+  assert.deepEqual(s.json, { day: '2026-09-27', writes: 1, capWrites: CLOUD_DAY_WRITES, bytes: 64, capBytes: CLOUD_BYTES_MAX, vaults: 1,
+                             refused: { today: { 401: 3 }, yesterday: {}, countedTo: CLOUD_REFUSALS_COUNTED } });
   w.tick(DAY);
   assert.equal((await w.call('GET', '/stats', { secret: 'owner-token' })).json.writes, 0);
   // A worker nobody gave a token has no stats, rather than stats for anyone.
@@ -242,19 +244,24 @@ test('CLOUD_PAUSED answers 503 with a day\'s wait before any statement runs', as
 });
 
 // --- the hardening (2026-09-28) ------------------------------------------------------
-test('a browser on a page that is not the game\'s is refused before anything runs', async () => {
+test('a browser on a page that is not the game\'s is refused before anything but its count runs', async () => {
   const w = worker();
   const code = await w.mint();
   const before = w.counter.statements;
+  let refusals = 0;
   for (const origin of ['https://evil.com', 'https://itch.zone.evil.com', 'http://localhost.evil.com', 'https://graham-things.com.evil.com',
                         'http://10.evil.com:80', 'http://10.0.0.42.evil.com:80']) {
     for (const [m, p] of [['OPTIONS', '/slots'], ['POST', '/vaults'], ['GET', '/slots'], ['POST', '/pairings/claim']]) {
       const r = await w.call(m, p, { secret: code, headers: { origin } });
       assert.equal(r.status, 403, `${origin} ${m} ${p}`);
       assert.equal(r.headers.get('access-control-allow-origin'), null);
+      refusals++;
     }
   }
-  assert.equal(w.counter.statements, before, 'not one statement ran');
+  // No vault, slot or limit is looked at: the one statement a refusal runs
+  // is the count /stats reads.
+  assert.equal(w.counter.statements - before, refusals, 'only its count ran');
+  assert.equal(w.row('SELECT n FROM refusals WHERE status = 403').n, refusals);
   // The game's own pages, the desk's file pages and a dev server are let in.
   for (const origin of ['https://html-classic.itch.zone', 'https://v6p9d9t4.ssl.hwcdn.net', 'null', 'http://localhost:5190', 'https://graham-things.com',
                         'http://10.0.0.42:5190', 'http://192.168.1.20:5183']) {
@@ -295,4 +302,47 @@ test('a worker with no pepper refuses rather than hash codes bare', async () => 
   console.error = err;
   assert.equal(r.status, 500);
   assert.equal(w.row('SELECT COUNT(*) AS n FROM vaults').n, 0);
+});
+
+// --- watching it (2026-09-28) ---------------------------------------------------------
+test('every refusal is one log line with its status, route and page, and never the code', async () => {
+  const w = worker();
+  const code = await w.mint();
+  const lines = [];
+  const log = console.log;
+  console.log = (...a) => { lines.push(a.join(' ')); };
+  try {
+    await w.call('GET', '/slots', { secret: '0000-0000-0000' });
+    await w.call('PUT', '/slots/2', { secret: code, body: bytes(10), headers: { 'if-match': '0' } });
+    await w.call('GET', '/slots', { headers: { origin: 'https://evil.com' } });
+    await w.call('GET', '/slots', { secret: code });
+  } finally { console.log = log; }
+  const said = lines.map(l => JSON.parse(l));
+  assert.deepEqual(said, [
+    { refused: 401, route: 'GET /slots', origin: null },
+    { refused: 400, route: 'PUT /slots/n', origin: null },
+    { refused: 403, route: 'GET /slots', origin: 'https://evil.com' }
+  ], 'three refusals, three lines, and the answered call none');
+  assert.ok(!lines.join('\n').includes(normalSecret(code)) && !lines.join('\n').includes('203.0.113'), 'no code and no ip in them');
+});
+
+test('refusals are counted by day and status for /stats, and stop counting at the cap', async () => {
+  const w = worker();
+  for (let i = 0; i < 3; i++) await w.call('GET', '/slots', { secret: '0000-0000-0000', ip: `198.51.100.${i}` });
+  await w.call('GET', '/nowhere');
+  w.raw.prepare('UPDATE refusals SET n = ? WHERE status = 404').run(CLOUD_REFUSALS_COUNTED);
+  await w.call('GET', '/nowhere');
+  const today = (await w.call('GET', '/stats', { secret: 'owner-token' })).json.refused.today;
+  assert.deepEqual(today, { 401: 3, 404: CLOUD_REFUSALS_COUNTED }, 'counted, and held at the cap');
+  w.tick(DAY);
+  const next = (await w.call('GET', '/stats', { secret: 'owner-token' })).json.refused;
+  assert.deepEqual(next.yesterday, { 401: 3, 404: CLOUD_REFUSALS_COUNTED }, 'yesterday is kept');
+  assert.deepEqual(next.today, {}, 'and today starts clean');
+});
+
+test('a paused worker counts nothing', async () => {
+  const w = worker({ paused: '1' });
+  const before = w.counter.statements;
+  await w.call('GET', '/slots', { secret: '0000-0000-0000' });
+  assert.equal(w.counter.statements, before);
 });
