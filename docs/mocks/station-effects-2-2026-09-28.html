@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Station Choice Effects 2</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --faint: #9a9aa6; --rule: #d6d6de; --purple: #6f36c9; --tipbg: #111116; --tipfg: #f5f5f7; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --faint: #6c6c78; --rule: #2b2b33; --purple: #a979ef; --tipbg: #ececf2; --tipfg: #0d0d10; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --faint: #6c6c78; --rule: #2b2b33; --purple: #a979ef; --tipbg: #ececf2; --tipfg: #0d0d10; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 28px 0 10px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  .pair { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .board { width: 320px; max-width: 100%; background: var(--card); border: 1px solid var(--ink); padding: 10px; display: grid; gap: 6px; }
+  .who { font-weight: bold; font-size: 14px; }
+  .ask { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); font-weight: bold; }
+  .row { display: grid; gap: 4px; text-align: left; font: inherit; background: var(--paper); color: var(--ink);
+         border: 1px solid var(--ink); padding: 6px 8px; cursor: pointer; }
+  .row.locked { border-style: dashed; color: var(--faint); cursor: default; }
+  .head { display: flex; justify-content: space-between; gap: 8px; }
+  .head .t { font-weight: bold; }
+  .s { font-size: 11px; color: var(--dim); }
+  .st { font-weight: bold; text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; color: var(--ink); }
+  .cap .st { color: var(--purple); }
+  #tip { position: fixed; pointer-events: none; background: var(--tipbg); color: var(--tipfg); font-size: 11px; padding: 2px 6px; display: none; z-index: 9; white-space: nowrap; }
+  canvas.px { image-rendering: pixelated; display: block; }
+  /* E: the tree */
+  .tree { display: grid; grid-template-columns: auto 1fr; gap: 0 6px; font-size: 11px; }
+  .tree svg { overflow: visible; }
+  .node { display: grid; grid-template-columns: 14px 1fr; gap: 0 6px; align-items: start; min-height: 22px; }
+  /* F: cards */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .card { border: 1px solid var(--rule); padding: 5px; display: grid; gap: 4px; align-content: start; }
+  .card .nm { font-weight: bold; font-size: 12px; display: flex; gap: 5px; align-items: center; }
+  .fx { display: grid; grid-template-columns: 16px 1fr; gap: 0 5px; align-items: start; font-size: 11px; }
+  .fx .rk { font-size: 10px; color: var(--dim); }
+  .fx.cap .rk { color: var(--purple); font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Station Choice Effects, round 2</h1>
+  <p>Two graphical takes on D (the two specialists side by side, their effects at the foot). The status effects are
+    named, bold and underlined -- "applies <b>Bleed</b>" rather than "inflict bleeding" -- and a hover on one says what
+    it does in a line. Hover any bold word below.</p>
+  <p class="dim">A mock in plain HTML and canvas pixels styled like the board, not the game's board. It cannot show:
+    the bills' coin marks, the pip tree as the game draws it, a phone's tap for the hover, or the fade when a branch
+    closes. The icons are stand-ins drawn here, not glyphs from the game's editor.</p>
+  <div id="host"></div>
+</div>
+<div id="tip"></div>
+<script>
+'use strict';
+const PAIRS = { altar: ['brawler', 'sword'], well: ['monk', 'martial'], armory: ['ranger', 'assassin'],
+                circle: ['hexer', 'sapper'], spire: ['mage', 'bard'] };
+const BASES = { altar: 'Fighter', well: 'Novice', armory: 'Scout', circle: 'Adept', spire: 'Apprentice' };
+const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',
+                    circle: 'Cast hexes', spire: 'Shoot beams' };
+const FIRST = ['altar', 'armory', 'spire'];
+const NAME = { brawler: 'Brawler', sword: 'Swordsman', monk: 'Monk', martial: 'Martial Artist', ranger: 'Ranger',
+               assassin: 'Assassin', hexer: 'Hexer', sapper: 'Sapper', mage: 'Mage', bard: 'Bard' };
+// {Name} is a status: bold, with its hover line.
+const WORDS = {
+  brawler:  { fork: 'Throw harder punches, learn combos', move: ['Combos', 'string punches together'], cap: ['Knockout', 'applies {Stun}'] },
+  sword:    { fork: 'Master the sword', move: ['Whirlwind', 'a heavier cut'], cap: ['Weak points', 'applies {Bleed}'] },
+  monk:     { fork: 'Focus your chi', move: ['Deep breath', 'build chi faster'], cap: ['Still water', 'applies {Stun}'] },
+  martial:  { fork: 'Strike quicker and finish faster', move: ['Flourish', 'charge finishers faster'], cap: ['Rally', 'gives your party {Haste}'] },
+  ranger:   { fork: 'Aim at weak points', move: ['Aimed shot', 'charge a powerful arrow'], cap: ['Pinning shot', 'applies {Stun}'] },
+  assassin: { fork: 'Strike quick and precise', move: ['Execution', 'exploit its wounds'], cap: ['Serrated', 'applies {Bleed}'] },
+  hexer:    { fork: 'Cast hexes that debuff', move: ['Wither', 'applies {Weakened}'], cap: ['Binding', 'applies {Held} and {Exposed}'] },
+  sapper:   { fork: 'Learn explosives', move: ['Sticky bombs', 'stick and blow'], cap: ['Pair', 'throw two, applies {Stun}'] },
+  mage:     { fork: 'Channel powerful beams', move: ['Widening', 'widen the beam'], cap: ['Thermite', 'burn through armor'] },
+  bard:     { fork: 'Give your party {Inspired}', move: ['Anthem', 'doubles {Inspired}'], cap: ['Tempo', 'gives your party {Haste}'] }
+};
+const STATUS = {
+  Stun: 'it holds still and stops healing, a moment',
+  Bleed: 'damage every second, a few seconds',
+  Haste: 'attacks 20% more often',
+  Weakened: 'it heals 30% slower',
+  Held: 'it cannot heal',
+  Exposed: 'it takes 25% more damage',
+  Inspired: 'hits deal more damage'
+};
+const say = t => t.replace(/\{(\w+)\}/g, (_, k) => `<span class="st" data-tip="${k}: ${STATUS[k]}">${k}</span>`);
+
+// --- the icons: 7x7 cells, '#' ink, '+' the purple ---------------------------------
+const ICON = {
+  brawler:  ['.......', '.####..', '#####..', '######.', '######.', '.#####.', '..###..'],
+  sword:    ['......#', '.....#.', '....#..', '.#.#...', '..#....', '.#.#...', '#......'],
+  monk:     ['...#...', '..###..', '.#...#.', '.#...#.', '.#...#.', '..###..', '.......'],
+  martial:  ['#......', '.#.....', '..#....', '...#...', '....#..', '.....#.', '......#'],
+  ranger:   ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
+  assassin: ['...#...', '...#...', '...#...', '...#...', '.#####.', '...#...', '...#...'],
+  hexer:    ['...#...', '..#.#..', '.#...#.', '#######', '.#...#.', '..#.#..', '...#...'],
+  sapper:   ['....#..', '...#...', '..###..', '.#####.', '.#####.', '.#####.', '..###..'],
+  mage:     ['..+....', '.+++...', '..+....', '...#...', '...#...', '...#...', '...#...'],
+  bard:     ['..###..', '..#.#..', '..#.#..', '..#.#..', '.##.##.', '###.###', '.#...#.']
+};
+function icon(key, px = 3) {
+  const rows = ICON[key], c = document.createElement('canvas');
+  c.width = 7 * px; c.height = 7 * px; c.className = 'px';
+  const g = c.getContext('2d'), ink = getComputedStyle(document.body).color, pu = getComputedStyle(document.documentElement).getPropertyValue('--purple');
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '.') return; g.fillStyle = ch === '+' ? pu : ink; g.fillRect(x * px, y * px, px, px); }));
+  return c.outerHTML.replace('<canvas', `<canvas data-icon="${key}" data-px="${px}"`);
+}
+// canvases lose their pixels through outerHTML: they are painted again once in the page
+function paintIcons() {
+  for (const c of document.querySelectorAll('canvas[data-icon]')) {
+    const px = +c.dataset.px, g = c.getContext('2d');
+    const ink = getComputedStyle(document.body).color, pu = getComputedStyle(document.documentElement).getPropertyValue('--purple');
+    ICON[c.dataset.icon].forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '.') return; g.fillStyle = ch === '+' ? pu : ink; g.fillRect(x * px, y * px, px, px); }));
+  }
+}
+
+// --- E: the tree ------------------------------------------------------------------
+// The base unit at the root, a fork, and each branch drawn down as pips: 4 the
+// move (a bigger pip), 8 the capstone (purple), each with its line beside it.
+function treeOf(kind) {
+  const [a, b] = PAIRS[kind];
+  const branch = c => `<div style="display:grid;gap:3px">
+      <div style="display:flex;gap:5px;align-items:center;font-weight:bold;font-size:12px">${icon(c)}${NAME[c]}</div>
+      <div class="node"><svg width="14" height="14"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <span><b>${WORDS[c].move[0]}</b> ${say(WORDS[c].move[1])}</span></div>
+      <div class="node cap"><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="var(--purple)"/></svg>
+        <span><b>${WORDS[c].cap[0]}</b> ${say(WORDS[c].cap[1])}</span></div>
+    </div>`;
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;padding-top:10px;border-top:2px solid var(--ink)">
+      <svg style="position:absolute;left:0;right:0;top:-2px;width:100%;height:10px" preserveAspectRatio="none" viewBox="0 0 100 10">
+        <line x1="25" y1="0" x2="25" y2="10" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        <line x1="75" y1="0" x2="75" y2="10" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+      ${branch(a)}${branch(b)}</div>`;
+}
+// --- F: cards with icons --------------------------------------------------------
+function cardsOf(kind) {
+  return `<div class="cards">${PAIRS[kind].map(cardOf).join('')}</div>`;
+}
+function cardOf(c) {
+  return `<div class="card"><div class="nm">${icon(c)}${NAME[c]}</div><div class="s">${say(WORDS[c].fork)}</div>
+    <div class="fx"><span class="rk">4</span><span><b>${WORDS[c].move[0]}</b> ${say(WORDS[c].move[1])}</span></div>
+    <div class="fx cap"><span class="rk">8</span><span><b>${WORDS[c].cap[0]}</b> ${say(WORDS[c].cap[1])}</span></div></div>`;
+}
+
+const LAYOUTS = [
+  { name: 'E. A tree', say: 'each base unit forks visibly into its two specialists; down each branch a square pip for the move and a purple one for the capstone, the line beside it', kind: treeOf,
+    fork: c => `<div style="display:grid;gap:3px">
+      <div class="node"><svg width="14" height="14"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/></svg><span><b>${WORDS[c].move[0]}</b> ${say(WORDS[c].move[1])}</span></div>
+      <div class="node cap"><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="var(--purple)"/></svg><span><b>${WORDS[c].cap[0]}</b> ${say(WORDS[c].cap[1])}</span></div></div>` },
+  { name: 'F. Cards with icons', say: 'each specialist a small card with an icon for its weapon, its line, and its rung 4 and rung 8 under it', kind: cardsOf,
+    fork: c => `<div class="fx"><span class="rk">4</span><span><b>${WORDS[c].move[0]}</b> ${say(WORDS[c].move[1])}</span></div>
+      <div class="fx cap"><span class="rk">8</span><span><b>${WORDS[c].cap[0]}</b> ${say(WORDS[c].cap[1])}</span></div>` }
+];
+
+function pickBoard(L, first) {
+  const rows = Object.keys(PAIRS).map(k => {
+    const open = !first || FIRST.includes(k);
+    return `<div class="row${open ? '' : ' locked'}"><div class="head"><span class="t">${BASES[k]}</span></div>` +
+      `<span class="s">${open ? BASE_DOES[k] : 'opens with a second station'}</span>${open ? L.kind(k) : ''}</div>`;
+  }).join('');
+  return `<div class="board"><div class="ask">Choose your fighter</div>${rows}</div>`;
+}
+function forkBoard(L) {
+  const rows = PAIRS.circle.map(c => `<div class="row"><div class="head"><span class="t" style="display:flex;gap:5px;align-items:center">${icon(c)}Become a ${NAME[c]}</span><span>▲ 1.2k ◆ 40</span></div>` +
+    `<span class="s">${say(WORDS[c].fork)}</span>${L.fork(c)}</div>`).join('');
+  return `<div class="board"><div class="who">the Adept</div><div class="dim" style="font-size:11px">(the pip tree sits here)</div>` +
+    `<div class="ask">Specialize</div>${rows}</div>`;
+}
+
+const host = document.getElementById('host');
+for (const L of LAYOUTS)
+  host.insertAdjacentHTML('beforeend', `<h2>${L.name}</h2><p class="dim">${L.say}. Left: the first station's pick. ` +
+    `Middle: a later pick, all five. Right: the Adept's fork (Hexer or Sapper).</p>` +
+    `<div class="pair">${pickBoard(L, true)}${pickBoard(L, false)}${forkBoard(L)}</div>`);
+paintIcons();
+
+// the hover line
+const tip = document.getElementById('tip');
+document.addEventListener('pointermove', e => {
+  const s = e.target.closest?.('.st');
+  if (!s) { tip.style.display = 'none'; return; }
+  tip.textContent = s.dataset.tip;
+  tip.style.display = 'block';
+  tip.style.left = Math.min(e.clientX + 10, innerWidth - tip.offsetWidth - 8) + 'px';
+  tip.style.top = e.clientY + 14 + 'px';
+});
+</script>
+</body>
+</html>
