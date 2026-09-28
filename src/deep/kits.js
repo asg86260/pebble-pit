@@ -20,7 +20,7 @@
 // Owned by track RENDER. Nothing here reads the sim: the class's attack
 // (render/attacks.js) says where each piece goes.
 
-import { P, WORKER, KIT_BOX, MOTE_PERIOD, MOTE_RISE } from '../config.js';
+import { P, WORKER, KIT_BOX, MOTE_PERIOD, MOTE_RISE, PIP_PX, PIP_RING, PIP_GAP } from '../config.js';
 import { GREYS, PURPLES } from '../render/deeptones.js';
 import { drawBody } from '../render/crew.js';
 import { MOVE_RUNG, CAPSTONE_RUNG } from '../config/classes.js';
@@ -58,11 +58,23 @@ export function ring(g, cx, cy, r, tone, every = 1) {
 // The body, the same square every body in the deep is, at a cell position.
 export const body = (cx, cy) => drawBody(Math.round(cx * P), Math.round(cy * P));
 // A build-up's pips under a body: `n` lit of `of`, all lit on a `flash`.
-// Spaced as the shop's are, a cell apart, so the row reads as pips and not
-// as a bar; a cell is the least the deep's zoom shows, so no ring inside one.
+// The shop's pips: a ring for one to come, a disc for a lit one, drawn in
+// screen pixels so the ring still reads when the deep is zoomed out.
 export function pips(g, x, y, n, of, flash = 0) {
-  const x0 = x + Math.floor((BODY - (of * 2 - 1)) / 2);
-  for (let i = 0; i < of; i++) cell(g, x0 + i * 2, y + BODY + 1, flash || i < n ? WHITE : GREYS[6]);
+  const m = g.getTransform(), d = globalThis.devicePixelRatio || 1;
+  const r = PIP_PX * d / 2, gap = PIP_GAP * d, w = of * r * 2 + (of - 1) * gap;
+  const cx = m.a * (x + BODY / 2) * P + m.e, top = m.d * (y + BODY + 1) * P + m.f;
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = g.strokeStyle = WHITE;
+  g.lineWidth = PIP_RING * d;
+  for (let i = 0; i < of; i++) {
+    const px = Math.round(cx - w / 2 + i * (r * 2 + gap) + r), py = Math.round(top + r);
+    g.beginPath();
+    if (flash || i < n) { g.arc(px, py, r, 0, Math.PI * 2); g.fill(); }
+    else { g.arc(px, py, r - g.lineWidth / 2, 0, Math.PI * 2); g.stroke(); }
+  }
+  g.restore();
 }
 
 // --- the rigid sprite ----------------------------------------------------------
