@@ -23,8 +23,9 @@ the real `handle` over `node:sqlite`; nothing needs installing.
 3. `npx wrangler d1 create pebble-cloud`; the id into `wrangler.toml`.
 4. `npx wrangler d1 migrations apply pebble-cloud --remote`.
 5. `npx wrangler secret put STATS_TOKEN` and `npx wrangler secret put
-   PAIR_PEPPER` (any long random string; changing it kills live pairings
-   and nothing else).
+   PAIR_PEPPER` (any long random string). **Never change the pepper**:
+   every stored code is hashed with it, so a new one signs every device
+   out, and players get back in only with their recovery codes.
 6. `npx wrangler deploy`; note the URL.
 7. `VITE_CLOUD_URL` set to it in the release workflow's environment, and
    `CLOUD_ON = true` in `src/config/cloud.js`, in one commit.

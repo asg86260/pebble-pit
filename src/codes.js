@@ -6,7 +6,7 @@
 // which every place the game or the worker runs has.
 
 import {
-  CLOUD_ALPHABET, CLOUD_SECRET_LEN, CLOUD_PAIR_LEN, CLOUD_SECRET_PREFIX,
+  CLOUD_ALPHABET, CLOUD_SECRET_LEN, CLOUD_PAIR_LEN,
   CLOUD_SECRET_GROUP, CLOUD_PAIR_GROUP
 } from './config/cloud.js';
 
@@ -21,14 +21,9 @@ export function draw(len) {
 }
 
 // What a player typed, as the characters it names: case, spaces and dashes
-// gone, the secret's prefix dropped, and the letters a hand confuses with
-// digits folded into them. The prefix goes before the fold, because PEBBLE
-// has an L in it.
+// gone, and the letters a hand confuses with digits folded into them.
 export function fold(code) {
-  let c = String(code ?? '').toUpperCase().replace(/[\s-]/g, '');
-  if (c.length === CLOUD_SECRET_PREFIX.length + CLOUD_SECRET_LEN && c.startsWith(CLOUD_SECRET_PREFIX))
-    c = c.slice(CLOUD_SECRET_PREFIX.length);
-  return c.replace(/O/g, '0').replace(/[IL]/g, '1');
+  return String(code ?? '').toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
 }
 
 const valid = (c, len) => c.length === len && [...c].every(ch => CLOUD_ALPHABET.includes(ch));
@@ -38,7 +33,7 @@ export function normalSecret(code) { const c = fold(code); return valid(c, CLOUD
 export function normalPair(code) { const c = fold(code); return valid(c, CLOUD_PAIR_LEN) ? c : null; }
 
 const groups = (c, n) => (c.match(new RegExp(`.{1,${n}}`, 'g')) || []).join('-');
-export const showSecret = c => `${CLOUD_SECRET_PREFIX}-${groups(c, CLOUD_SECRET_GROUP)}`;
+export const showSecret = c => groups(c, CLOUD_SECRET_GROUP);
 export const showPair = c => groups(c, CLOUD_PAIR_GROUP);
 
 // A pairing code as the box shows it while it is typed: only characters a

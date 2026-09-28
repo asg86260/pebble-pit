@@ -16120,8 +16120,9 @@ The cloud can be late. It can never cost a yard.
 **The player is a sync code, not an account.** No email, no password, no
 login page: the game is a clicker, and an account form in front of it is a
 wall nobody climbs. Turning cloud saves on mints a secret --
-`PEBBLE-7F3K-Q9WM-2HXD-R4TN` (twenty Crockford base-32 characters, a
-hundred bits) -- and the secret *is* the identity and the key. Nobody
+`7F3K-Q9WM-2HXD` (twelve Crockford base-32 characters, sixty bits; safe
+only with the pepper and the caps under "The worker") -- and the secret
+*is* the identity and the key. Nobody
 types it. Each device keeps it in its own store, and a device joins by a
 pairing code (below), the way a TV joins a streaming account.
 
@@ -16191,12 +16192,22 @@ per slot, the `rev` it last pulled or pushed (its *base*).
 | `DELETE /vaults/me` | forgets the code and every slot under it |
 
 The code rides in `Authorization: Bearer`, never in a URL. The worker
-keeps only the code's hash, so its database leaks no code. CORS is open, as
-the board's is: the game runs on itch's origin, on the desk and on
-localhost. A hundred bits are not guessed, so the secret needs no lockout.
-The pairing code does: `CLOUD_PAIR_TRIES` (5) wrong claims an ip in ten
-minutes, and past `CLOUD_PAIR_FAILS_HOUR` (1,000) wrong claims across the
-whole worker, claiming stops for the hour. A botnet spreading its guesses
+keeps only the code's hash with the pepper mixed in (`PAIR_PEPPER`), so
+its database alone leaks no code and cannot be searched for one; changing
+the pepper signs every device out. A browser is answered only on a page
+in `CLOUD_ORIGINS` -- itch's HTML hosts, the owner's domain, a dev server,
+and `null` for the desk's pages on disk -- and refused `403` on any other,
+before anything runs. That keeps other websites from using a player's
+browser; nothing can keep out a script, which sends no Origin, so the
+codes and the caps are what stand there. Nothing identifies "the game":
+any key built into it could be read out of it.
+
+Both codes are capped against guessing (hardened 2026-09-28, when the
+secret went from twenty characters to twelve). An ip offering
+`CLOUD_CODE_TRIES` (5) unknown secrets in ten minutes, or making
+`CLOUD_PAIR_TRIES` (5) wrong claims, is refused `429` without a lookup;
+past `CLOUD_PAIR_FAILS_HOUR` (1,000) wrong codes of either kind across the
+whole worker, every ip is, until the hour turns. A botnet spreading its guesses
 over many ips meets the second cap, and a player meets neither. The worker
 stores a pairing code only as its hash, as the secret is stored, and
 sends the secret back only to a claim that names a live code. What the

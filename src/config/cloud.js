@@ -51,8 +51,11 @@ export const CLOUD_VAULT_DAY_WRITES = 1500;
 // Pushes the whole worker takes a day. Three row writes each, so 75k of the
 // account's free 100k, the rest left for mints, sweeps and other workers.
 export const CLOUD_DAY_WRITES = 25000;
-// The secret, in Crockford base-32 characters: a hundred bits.
-export const CLOUD_SECRET_LEN = 20;
+// The secret, which is also the recovery code, in Crockford base-32
+// characters: sixty bits. Short enough to write down; safe because the worker
+// stores it only mixed with a pepper it alone holds, and wrong codes are
+// capped per ip and across the worker (CLOUD_CODE_TRIES, CLOUD_PAIR_FAILS_HOUR).
+export const CLOUD_SECRET_LEN = 12;
 // The pairing code: thirty bits, safe only because it dies.
 export const CLOUD_PAIR_LEN = 6;
 // How long a pairing code lives.
@@ -61,8 +64,14 @@ export const CLOUD_PAIR_S = 600;
 export const CLOUD_PAIR_TRIES = 5;
 export const CLOUD_PAIR_TRIES_S = 600;
 // ...and across the whole worker in an hour, which is what stops guesses
-// spread over many ips.
+// spread over many ips. Wrong codes of both kinds count against it: a
+// pairing code claimed and a secret offered as a bearer.
 export const CLOUD_PAIR_FAILS_HOUR = 1000;
+// Unknown secrets an ip may offer in CLOUD_CODE_TRIES_S before the worker
+// stops looking them up: a device signed out by a new recovery code offers
+// one a boot, a script guessing offers thousands.
+export const CLOUD_CODE_TRIES = 5;
+export const CLOUD_CODE_TRIES_S = 600;
 
 // --- wave-cloud SYNC: the client's own ------------------------------------
 // Crockford base 32: no I, L, O or U, so a code read off one screen is typed
@@ -71,9 +80,18 @@ export const CLOUD_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 // A yard's name, in the same characters: eighty bits, so no two yards ever
 // minted share one.
 export const YARD_ID_LEN = 16;
-// What the secret is shown behind, so a recovery code written on paper says
-// what it is for; dropped again on the way in.
-export const CLOUD_SECRET_PREFIX = 'PEBBLE';
+// The pages the worker answers a browser for, by the Origin the browser
+// sends: itch's HTML hosts, the owner's domain, a dev server, and `null`,
+// which is what the desk's pages loaded from disk send. A browser on any
+// other site is refused before anything runs. This keeps other websites
+// from using a player's browser; it cannot keep out a script, which sends
+// no Origin at all -- the codes and the caps are what stand there.
+export const CLOUD_ORIGINS = [
+  'https://*.itch.zone', 'https://*.hwcdn.net', 'https://*.itch.io',
+  'https://graham-things.com', 'https://*.graham-things.com',
+  'http://localhost:*', 'http://127.0.0.1:*',
+  'null'
+];
 
 // --- wave-cloud FACE: the foot bar and the sheet ---------------------------
 // The foot bar redraws on the second while a pairing code counts down...

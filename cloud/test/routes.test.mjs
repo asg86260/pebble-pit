@@ -4,20 +4,24 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { worker, bytes, dump, MIN, DAY } from './kit.mjs';
+import { worker, bytes, dump, MIN, HOUR, DAY } from './kit.mjs';
 import { CLOUD_PUSH_FLOOR_S, CLOUD_BYTES_MAX, CLOUD_DAY_WRITES } from '../../src/config/cloud.js';
 import { sha256hex, normalSecret } from '../src/codes.js';
+import { CLOUD_CODE_TRIES, CLOUD_CODE_TRIES_S, CLOUD_PAIR_FAILS_HOUR } from '../../src/config/cloud.js';
 
-const SHOWN = /^PEBBLE(-[0-9A-HJKMNP-TV-Z]{4}){5}$/;
+const SHOWN = /^[0-9A-HJKMNP-TV-Z]{4}(-[0-9A-HJKMNP-TV-Z]{4}){2}$/;
+const GAME = 'https://html-classic.itch.zone';
 const past = w => w.tick(CLOUD_PUSH_FLOOR_S * 1000 + 1);
 
-test('health answers, and every answer carries open CORS, a preflight included', async () => {
+test('health answers, and every answer to the game\'s page carries its CORS, a preflight included', async () => {
   const w = worker();
-  const h = await w.call('GET', '/health');
+  const h = await w.call('GET', '/health', { headers: { origin: GAME } });
   assert.equal(h.status, 200);
   assert.deepEqual(h.json, { ok: true });
-  for (const r of [h, await w.call('OPTIONS', '/slots/1'), await w.call('GET', '/slots'), await w.call('GET', '/nowhere')]) {
-    assert.equal(r.headers.get('access-control-allow-origin'), '*');
+  const from = { headers: { origin: GAME } };
+  for (const r of [h, await w.call('OPTIONS', '/slots/1', from), await w.call('GET', '/slots', from), await w.call('GET', '/nowhere', from)]) {
+    assert.equal(r.headers.get('access-control-allow-origin'), GAME);
+    assert.equal(r.headers.get('vary'), 'Origin');
     assert.equal(r.headers.get('access-control-allow-methods'), 'GET, POST, PUT, DELETE');
     assert.equal(r.headers.get('access-control-allow-headers'), 'authorization, content-type, if-match, x-yard-id, x-played-s, x-save-v');
   }
@@ -30,7 +34,8 @@ test('a minted vault is a shown secret, stored only as its hash, with three empt
   assert.equal(r.status, 201);
   assert.match(r.json.code, SHOWN);
   const raw = normalSecret(r.json.code);
-  assert.equal(w.row('SELECT hash FROM vaults').hash, await sha256hex(raw));
+  assert.equal(w.row('SELECT hash FROM vaults').hash, await sha256hex('pepper-a/vault/' + raw));
+  assert.notEqual(w.row('SELECT hash FROM vaults').hash, await sha256hex(raw));
   assert.ok(!dump(w.raw).includes(raw));
   const s = await w.call('GET', '/slots', { secret: r.json.code });
   assert.equal(s.status, 200);
@@ -46,9 +51,9 @@ test('the bearer is read loosely and checked strictly', async () => {
   assert.equal((await w.call('GET', '/slots', { secret: loose })).status, 200);
   assert.equal((await w.call('GET', '/slots', { secret: raw })).status, 200);
   assert.equal((await w.call('GET', '/slots')).status, 401);
-  assert.equal((await w.call('GET', '/slots', { secret: 'PEBBLE-0000-0000-0000-0000-0000' })).status, 401);
+  assert.equal((await w.call('GET', '/slots', { secret: '0000-0000-0000' })).status, 401);
   assert.equal((await w.call('GET', '/slots', { secret: 'nonsense' })).status, 401);
-  assert.equal((await w.call('PUT', '/slots/1', { secret: 'PEBBLE-0000-0000-0000-0000-0000', body: bytes(10) })).status, 401);
+  assert.equal((await w.call('PUT', '/slots/1', { secret: '0000-0000-0000', body: bytes(10) })).status, 401);
 });
 
 test('a push is read back: its meta on the list, its bytes as gzip with the rev', async () => {
@@ -157,7 +162,9 @@ test('seen moves at most once a UTC day', async () => {
   const before = w.counter.statements;
   w.tick(MIN);
   await w.call('GET', '/slots', { secret: code });
-  assert.equal(w.counter.statements - before, 2, 'the vault and its slots, no write');
+  // Two reads for the guessing caps (this ip, the worker's hour), then the
+  // vault and its slots: four reads, no write.
+  assert.equal(w.counter.statements - before, 4, 'the caps, the vault and its slots, no write');
   assert.equal(w.row('SELECT seen FROM vaults').seen, next);
 });
 
@@ -221,10 +228,10 @@ test('CLOUD_PAUSED answers 503 with a day\'s wait before any statement runs', as
     ['GET', '/stats']
   ];
   for (const [m, p] of calls) {
-    const r = await w.call(m, p, { secret: code, body: m === 'PUT' ? bytes(10) : undefined });
+    const r = await w.call(m, p, { secret: code, body: m === 'PUT' ? bytes(10) : undefined, headers: { origin: GAME } });
     assert.equal(r.status, 503, `${m} ${p}`);
     assert.equal(r.headers.get('retry-after'), '86400');
-    assert.equal(r.headers.get('access-control-allow-origin'), '*');
+    assert.equal(r.headers.get('access-control-allow-origin'), GAME);
   }
   // The preflight still passes, so a browser can read the 503 that follows.
   assert.equal((await w.call('OPTIONS', '/slots')).status, 204);
@@ -232,4 +239,58 @@ test('CLOUD_PAUSED answers 503 with a day\'s wait before any statement runs', as
   // Any other value is not the switch.
   w.env.CLOUD_PAUSED = '0';
   assert.equal((await w.call('GET', '/slots', { secret: code })).status, 200);
+});
+
+// --- the hardening (2026-09-28) ------------------------------------------------------
+test('a browser on a page that is not the game\'s is refused before anything runs', async () => {
+  const w = worker();
+  const code = await w.mint();
+  const before = w.counter.statements;
+  for (const origin of ['https://evil.com', 'https://itch.zone.evil.com', 'http://localhost.evil.com', 'https://graham-things.com.evil.com']) {
+    for (const [m, p] of [['OPTIONS', '/slots'], ['POST', '/vaults'], ['GET', '/slots'], ['POST', '/pairings/claim']]) {
+      const r = await w.call(m, p, { secret: code, headers: { origin } });
+      assert.equal(r.status, 403, `${origin} ${m} ${p}`);
+      assert.equal(r.headers.get('access-control-allow-origin'), null);
+    }
+  }
+  assert.equal(w.counter.statements, before, 'not one statement ran');
+  // The game's own pages, the desk's file pages and a dev server are let in.
+  for (const origin of ['https://html-classic.itch.zone', 'https://v6p9d9t4.ssl.hwcdn.net', 'null', 'http://localhost:5190', 'https://graham-things.com']) {
+    const r = await w.call('GET', '/slots', { secret: code, headers: { origin } });
+    assert.equal(r.status, 200, origin);
+    assert.equal(r.headers.get('access-control-allow-origin'), origin);
+  }
+});
+
+test('an ip offering unknown codes is stopped looking them up, even for a good one', async () => {
+  const w = worker();
+  const code = await w.mint();
+  for (let i = 0; i < CLOUD_CODE_TRIES; i++) {
+    assert.equal((await w.call('GET', '/slots', { secret: '0000-0000-000' + (i % 10) })).status, 401);
+  }
+  const held = await w.call('GET', '/slots', { secret: code });
+  assert.equal(held.status, 429, 'past the tries, even the right code waits');
+  assert.ok(held.json.retryS > 0 && held.json.retryS <= CLOUD_CODE_TRIES_S);
+  assert.equal((await w.call('GET', '/slots', { secret: code, ip: '198.51.100.1' })).status, 200, 'another ip is not held');
+  w.tick(CLOUD_CODE_TRIES_S * 1000 + 1);
+  assert.equal((await w.call('GET', '/slots', { secret: code })).status, 200, 'and the window passes');
+});
+
+test('wrong codes across the worker share the hour\'s cap with pairing claims', async () => {
+  const w = worker();
+  const code = await w.mint();
+  w.raw.prepare('UPDATE totals SET fail_hour = ?, fails = ?').run(Math.floor(w.now / HOUR), CLOUD_PAIR_FAILS_HOUR);
+  assert.equal((await w.call('GET', '/slots', { secret: code, ip: '198.51.100.2' })).status, 429);
+  assert.equal((await w.call('POST', '/pairings/claim', { body: { pair: 'AAA-AAA' }, ip: '198.51.100.3' })).status, 429);
+});
+
+test('a worker with no pepper refuses rather than hash codes bare', async () => {
+  const w = worker();
+  delete w.env.PAIR_PEPPER;
+  const err = console.error;
+  console.error = () => {};
+  const r = await w.call('POST', '/vaults');
+  console.error = err;
+  assert.equal(r.status, 500);
+  assert.equal(w.row('SELECT COUNT(*) AS n FROM vaults').n, 0);
 });

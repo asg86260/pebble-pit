@@ -122,7 +122,7 @@ group('keep my yards in the cloud pushes the open yard', async () => {
   const { code } = await linked();
   const r = row(1);
   return [
-    ok(/^PEBBLE(-[0-9A-HJKMNP-TV-Z]{4}){5}$/.test(code || ''), 'the recovery code is shown', String(code)),
+    ok(/^[0-9A-HJKMNP-TV-Z]{4}(-[0-9A-HJKMNP-TV-Z]{4}){2}$/.test(code || ''), 'the recovery code is shown', String(code)),
     ok(r && r.yard_id === S.yardId, 'slot 1 is in the cloud, this yard', r && r.yard_id),
     ok(r && r.played_s === Math.floor(S.playedS) && r.played_s > 0, 'at its length', `${r?.played_s} vs ${S.playedS}`),
     ok(puts(1) === 1 && puts(2) === 0, 'one push, and none for the empty slots', `${puts(1)}, ${puts(2)}`),
@@ -161,7 +161,7 @@ group('a recovery code links a store with no other device', async () => {
   const c = device();
   await pick(c);
   await cloud.cloudBoot();
-  const wrong = await cloud.useRecovery('PEBBLE-0000-0000-0000-0000-0000');
+  const wrong = await cloud.useRecovery('0000-0000-0000');
   const took = await cloud.useRecovery(code.toLowerCase());
   S.yielded = false;
   restore(); bootYard();

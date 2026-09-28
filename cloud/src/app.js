@@ -11,7 +11,8 @@ import {
   CLOUD_BLOB_MAX, CLOUD_BYTES_MAX, CLOUD_PUSH_FLOOR_S, CLOUD_VAULT_DAY_WRITES,
   CLOUD_DAY_WRITES, CLOUD_MINTS_IP_DAY, CLOUD_SECRET_LEN, CLOUD_PAIR_LEN,
   CLOUD_PAIR_S, CLOUD_PAIR_TRIES, CLOUD_PAIR_TRIES_S, CLOUD_PAIR_FAILS_HOUR,
-  CLOUD_PAUSED_RETRY_S, CLOUD_YARD_ID_MAX, CLOUD_PAIR_DRAWS
+  CLOUD_PAUSED_RETRY_S, CLOUD_YARD_ID_MAX, CLOUD_PAIR_DRAWS,
+  CLOUD_CODE_TRIES, CLOUD_CODE_TRIES_S, CLOUD_ORIGINS
 } from '../../src/config/cloud.js';
 import { SLOTS } from '../../src/config/saves.js';
 import { draw, normalSecret, normalPair, showSecret, showPair, sha256hex, seal, unseal, sameSecret } from './codes.js';
@@ -23,8 +24,9 @@ export { SLOTS };
 // Where a request comes from, for the rate limits only, and only ever hashed.
 const NO_IP = '0.0.0.0';
 
+// The origin itself is added by `handle`, echoed back only for a page on
+// CLOUD_ORIGINS.
 const CORS = {
-  'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE',
   'access-control-allow-headers': 'authorization, content-type, if-match, x-yard-id, x-played-s, x-save-v',
   // Without this a page on another origin cannot read the slot's rev or how
@@ -56,12 +58,47 @@ async function ipKey(kind, request, now) {
   return `${kind}:${await sha256hex(ip + utcDay(now))}`;
 }
 
+// What the database keeps of a secret: its hash with the pepper mixed in,
+// so a copy of the database alone cannot be searched for the codes, which
+// at sixty bits could be. Changing the pepper therefore signs every device
+// out -- as well as killing live pairings -- and is a last resort.
+async function vaultHash(env, secret) {
+  if (!env.PAIR_PEPPER) throw new Error('PAIR_PEPPER is not set');
+  return sha256hex(env.PAIR_PEPPER + '/vault/' + secret);
+}
+
 async function vaultOf(request, env) {
   const m = /^Bearer\s+(.+)$/i.exec(request.headers.get('authorization') || '');
   const secret = m && normalSecret(m[1]);
   if (!secret) return null;
-  const vault = await env.DB.prepare('SELECT * FROM vaults WHERE hash = ?').bind(await sha256hex(secret)).first();
+  const vault = await env.DB.prepare('SELECT * FROM vaults WHERE hash = ?').bind(await vaultHash(env, secret)).first();
   return vault && { vault, secret };
+}
+
+// A wrong code, of either kind: one more against this ip's tries in its
+// window, and one more against the worker's hour.
+function wrongCode(env, key, until, now) {
+  const hour = hourOf(now);
+  return env.DB.batch([
+    env.DB.prepare(`INSERT INTO limits (key, until, n) VALUES (?, ?, 1) ON CONFLICT(key) DO UPDATE SET
+        n = CASE WHEN until > ? THEN n + 1 ELSE 1 END, until = CASE WHEN until > ? THEN until ELSE ? END`)
+      .bind(key, until, now, now, until),
+    env.DB.prepare('UPDATE totals SET fails = CASE WHEN fail_hour = ? THEN fails + 1 ELSE 1 END, fail_hour = ? WHERE id = 1')
+      .bind(hour, hour)
+  ]);
+}
+
+// Whether this ip, or the worker as a whole, has had too many wrong codes
+// to look up another: the answer to give, or null to go on.
+async function tooManyWrong(env, key, tries, now) {
+  const lim = await env.DB.prepare('SELECT until, n FROM limits WHERE key = ?').bind(key).first();
+  if (lim && lim.until > now && lim.n >= tries) return retry(429, secondsUntil(lim.until, now));
+  const hour = hourOf(now);
+  const totals = await env.DB.prepare('SELECT fail_hour, fails FROM totals WHERE id = 1').first();
+  if (totals.fail_hour === hour && totals.fails >= CLOUD_PAIR_FAILS_HOUR) {
+    return retry(429, secondsUntil((hour + 1) * HOUR_MS, now));
+  }
+  return null;
 }
 
 // ---- routes ----------------------------------------------------------------
@@ -74,7 +111,7 @@ async function mintVault(request, env, now) {
   const until = nextMidnight(now);
   await env.DB.batch([
     env.DB.prepare('INSERT INTO vaults (id, hash, created, seen) VALUES (?, ?, ?, ?)')
-      .bind(crypto.randomUUID(), await sha256hex(secret), now, now),
+      .bind(crypto.randomUUID(), await vaultHash(env, secret), now, now),
     env.DB.prepare(`INSERT INTO limits (key, until, n) VALUES (?, ?, 1) ON CONFLICT(key) DO UPDATE SET
         n = CASE WHEN until > ? THEN n + 1 ELSE 1 END, until = CASE WHEN until > ? THEN until ELSE ? END`)
       .bind(key, until, now, now, until)
@@ -197,13 +234,8 @@ async function makePairing({ vault, secret }, env, now) {
 
 async function claimPairing(request, env, now) {
   const key = await ipKey('claim', request, now);
-  const lim = await env.DB.prepare('SELECT until, n FROM limits WHERE key = ?').bind(key).first();
-  if (lim && lim.until > now && lim.n >= CLOUD_PAIR_TRIES) return retry(429, secondsUntil(lim.until, now));
-  const hour = hourOf(now);
-  const totals = await env.DB.prepare('SELECT fail_hour, fails FROM totals WHERE id = 1').first();
-  if (totals.fail_hour === hour && totals.fails >= CLOUD_PAIR_FAILS_HOUR) {
-    return retry(429, secondsUntil((hour + 1) * HOUR_MS, now));
-  }
+  const held = await tooManyWrong(env, key, CLOUD_PAIR_TRIES, now);
+  if (held) return held;
 
   let asked = null;
   try { asked = (await request.json())?.pair; } catch { /* a body that is not JSON is a wrong claim */ }
@@ -220,14 +252,7 @@ async function claimPairing(request, env, now) {
     }
   }
 
-  const until = now + CLOUD_PAIR_TRIES_S * SECOND_MS;
-  await env.DB.batch([
-    env.DB.prepare(`INSERT INTO limits (key, until, n) VALUES (?, ?, 1) ON CONFLICT(key) DO UPDATE SET
-        n = CASE WHEN until > ? THEN n + 1 ELSE 1 END, until = CASE WHEN until > ? THEN until ELSE ? END`)
-      .bind(key, until, now, now, until),
-    env.DB.prepare('UPDATE totals SET fails = CASE WHEN fail_hour = ? THEN fails + 1 ELSE 1 END, fail_hour = ? WHERE id = 1')
-      .bind(hour, hour)
-  ]);
+  await wrongCode(env, key, now + CLOUD_PAIR_TRIES_S * SECOND_MS, now);
   return reply(404, { error: 'no such code' });
 }
 
@@ -236,7 +261,7 @@ async function rotateSecret({ vault }, env) {
   // A live pairing carries the old secret, which is about to stop working;
   // it goes with it, and the device that wanted it pairs again.
   await env.DB.batch([
-    env.DB.prepare('UPDATE vaults SET hash = ? WHERE id = ?').bind(await sha256hex(secret), vault.id),
+    env.DB.prepare('UPDATE vaults SET hash = ? WHERE id = ?').bind(await vaultHash(env, secret), vault.id),
     env.DB.prepare('DELETE FROM pairings WHERE vault = ?').bind(vault.id)
   ]);
   return reply(200, { code: showSecret(secret) });
@@ -302,12 +327,44 @@ async function route(request, env, now) {
   else if (m === 'DELETE' && path === '/vaults/me') handler = who => deleteVault(who, env);
   if (!handler) return reply(404, { error: 'no route' });
 
+  // A secret is looked up only for an ip that has not been guessing: past
+  // CLOUD_CODE_TRIES unknown ones in the window, or the worker's hour of
+  // wrong codes, it is refused without a lookup.
+  const key = await ipKey('code', request, now);
+  const held = await tooManyWrong(env, key, CLOUD_CODE_TRIES, now);
+  if (held) return held;
   const who = await vaultOf(request, env);
-  if (!who) return reply(401, { error: 'unknown code' });
+  if (!who) {
+    await wrongCode(env, key, now + CLOUD_CODE_TRIES_S * SECOND_MS, now);
+    return reply(401, { error: 'unknown code' });
+  }
   return handler(who);
 }
 
+// Whether a browser on this page may call: CLOUD_ORIGINS, where `*` stands
+// for one or more labels of a host or for any port.
+const escape = s => s.replace(/[.+?^${}()|[\]\\]/g, ch => '\\' + ch);
+const pattern = p => new RegExp('^' + escape(p)
+  .replace(/:\*$/, ':\\d+')
+  .replace(/\*/g, '[a-z0-9-]+(\\.[a-z0-9-]+)*') + '$', 'i');
+const ORIGINS = CLOUD_ORIGINS.map(pattern);
+export const originAllowed = o => ORIGINS.some(re => re.test(o));
+
 export async function handle(request, env, now = Date.now()) {
+  // A browser says which page is calling. One on a page that is not the
+  // game's is refused before anything runs, preflight or not; a request with
+  // no Origin is not a browser's, and is left to the codes and the caps.
+  const origin = request.headers.get('origin');
+  if (origin !== null && !originAllowed(origin)) return reply(403, { error: 'not from the game' });
+  const res = await answer(request, env, now);
+  if (origin !== null) {
+    res.headers.set('access-control-allow-origin', origin);
+    res.headers.set('vary', 'Origin');
+  }
+  return res;
+}
+
+async function answer(request, env, now) {
   // A preflight touches nothing and must pass even when paused: a browser
   // that fails the preflight never sees the 503 or its Retry-After.
   if (request.method === 'OPTIONS') return reply(204);

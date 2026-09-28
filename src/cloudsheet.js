@@ -206,7 +206,7 @@ function drawCloud(el, say, opts) {
       const box = node('textarea');
       box.rows = 1;
       box.spellcheck = false;
-      box.placeholder = 'PEBBLE-····-····-····-····-····';
+      box.placeholder = '····-····-····';
       box.setAttribute('aria-label', 'recovery code');
       const use = async () => {
         if (!(await useRecovery(box.value))) { say("that code didn't work"); return; }

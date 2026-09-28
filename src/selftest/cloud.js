@@ -15,7 +15,7 @@ import { persist, exportSave } from '../persist.js';
 import { storeSettled } from '../save.js';
 
 const WORKER = 'http://cloud.test';
-const SECRET = '7F3KQ9WM2HXDR4TN8ABC';
+const SECRET = '7F3KQ9WM2HXD';
 const PAIR = 'K7Q94M';
 
 const until = async (fn, tries = 60) => {
@@ -160,7 +160,7 @@ export const TESTS = [
       show = !!buttonIn(block, 'show recovery code');
     } finally { await done(); }
     return [
-      ok(shown && /^PEBBLE(-[0-9A-Z]{4}){5}$/.test(code), 'keep my yards in the cloud shows the recovery code', code),
+      ok(shown && /^[0-9A-Z]{4}(-[0-9A-Z]{4}){2}$/.test(code), 'keep my yards in the cloud shows the recovery code', code),
       ok(told && copy, 'with copy and the words to write it down', `told ${told} copy ${copy}`),
       ok(!again && show, 'and once: the page turned again shows it only on asking', `again ${again} show ${show}`)
     ];
