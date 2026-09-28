@@ -1,6 +1,7 @@
 // The ten classes at work: what the fighter at a station does, by the class
 // bought there (docs/wave-party.md, "Classes"; docs/serpent-classes.md
-// section 0). A station with no class has a base fighter, who stands guard.
+// section 0). Below the fork a station fights as its base unit, its pair's
+// first class (DESIGN.md, "A fighter branches at rung 4").
 //
 // Every class is one ladder: rungs raise its number (`rungWorth`, off the
 // class's LADDERS row), rung 4 gives its move and rung 8 its capstone. The
@@ -19,7 +20,7 @@
 //             contact (a melee blow lands, a shot leaves the hand), `end`
 //             the follow-through's end, all ms on the game's clock; (x, y)
 //             the point on the hide it is aimed at. `big` the heavy form,
-//             `twice` a cut that lands twice. Null standing guard.
+//             `twice` a cut that lands twice.
 //   struckAt  ms of the last contact: the impact's clock.
 //   pips      lit pips in the class's row, of `pipsMax` (0: no row).
 //   beam      the Mage's: { at, until, x, y, tx, ty, seg, width, burn }
@@ -41,7 +42,6 @@ import { slotX, coilAt, coilThick, nearestSeg } from './place.js';
 import { stationById, classOf, keyOf } from './party.js';
 import { mid, feet, working, swim, loose } from './arms.js';
 import { strike, woundK } from './serpent.js';
-import { rest } from './rest.js';
 import { lay, inspire, haste, tempo } from './statuses.js';
 
 const hasCap = st => st.rung >= CAPSTONE_RUNG;
@@ -379,23 +379,16 @@ const STEP = { brawler, sword, monk, martial, ranger, assassin, hexer, sapper, m
 // Every fighter body at a station, the one asking included.
 export const fighters = () => S.workers.filter(o => o.station && stationById(o.station));
 
-// A base fighter -- a station with no class yet, or none at all -- stands
-// guard: at rest about its station, doing nothing.
-function guard(w, st, c) {
-  w.goal = 'guard';
-  w.pose = null;
-  w.beam = null;
-  w.pips = w.pipsMax = 0;
-  rest(w, st ? stationX(st) : 'pods', c);
-}
-
 // One frame of a fighter at work, by its station's class.
 export function stepFighter(w, c) {
   if (!working(w)) return;
   const st = stationOf(w);
   const cls = st && st.built !== false ? classOf(st) : null;
+  // A built station always has a class to fight as (its base unit's below
+  // the fork), and a fighter is only ever seated at a built one.
   const step = cls && STEP[keyOf(st)];
-  if (!step) { guard(w, st, c); return; }
-  if (w.goal === 'guard' || w.goal === 'rest') w.lull = null;
+  if (!step) return;
+  // A gatherer sent over from its rest by the crusher leaves that lull behind.
+  if (w.goal === 'rest') w.lull = null;
   step(w, c, st, cls, rungWorth(cls, st.rung));
 }

@@ -38,8 +38,7 @@ The party is on main (docs/wave-party.md), with the branch at rung 4
 (DESIGN.md, "A fighter branches at rung 4"): a base unit a station forking
 into its two classes, the station picked on an empty lot's board. Open:
 whether rung 4's jump (a whole class at once) is too big a step in the
-ladder book; `guard` in deep/classes.js no longer has a caller in play
-(every built station fights), kept for a fighter with no station.
+ladder book.
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 

@@ -240,7 +240,7 @@ export function drawFighters() {
   ctx.clip();
   for (const f of list) {
     let at = [f.x + f.dx, f.restY + f.dy];
-    if (!f.key) body(f.x, f.restY);             // a base fighter: the plain square, standing guard
+    if (!f.key) body(f.x, f.restY);             // no class to draw: the plain square
     else if (f.c) {
       const w = f.w, beam = f.sim && w.beam;
       const api = {
