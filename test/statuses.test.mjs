@@ -176,11 +176,17 @@ group('Hasted swings a fifth more often, for as long as it lasts', async () => {
 // to a Held serpent.
 group('a Hexer at rung 8 Holds the serpent, and the heal stops while it does', async () => {
   window.__snatch({ played: true });
-  window.__serpent({ stage: 1, wound: 500 });
+  // A stage deep enough that no hex breaks it: a break clears every status.
+  window.__serpent({ stage: 2, wound: 500 });
   window.__party({ stations: [{ kind: 'circle', cls: null, rung: 0 }] });
   openEveryClass();
   climb(S.stations[0].id, 'hexer', 8);
-  const got = runUntil(() => has('held'), 30);
+  // Waited for a frame at a time, from a hold's first frame: `runUntil`
+  // steps a second at a time, and would count a hold from part-way in.
+  let wait = 0;
+  while (has('held') && wait < 30 * 60) { frame(); wait++; }
+  while (!has('held') && wait < 60 * 60) { frame(); wait++; }
+  const got = has('held');
   const wound = S.serpentWound;
   let closed = false, frames = 0;
   while (has('held') && frames < 600) { frame(); frames++; if (has('held') && S.serpentWound < wound - 1e-9) closed = true; }
