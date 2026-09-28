@@ -284,11 +284,10 @@ const swordsman = {
     return null;
   },
   hits(R, x) {
-    const px = x + 1, cs = this.contacts(R);
-    return cs.flatMap(({ at, k }) => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({
-      at, x: sx, k: sx === px ? k : Math.min(k, 0.5), kind: R4(R) ? 'whirl' : '', mid: sx === px,
+    return this.contacts(R).map(({ at, k }) => ({
+      at, x: x + 1, k, kind: R4(R) ? 'whirl' : '', mid: true,
       // the Whirlwind's last contact holds longest
-      pause: k >= 1.2 ? 0.2 : 0 })));
+      pause: k >= 1.2 ? 0.2 : 0 }));
   },
   draw(g, t, a, api, R, x) {
     const L = bladeLen(R), spin = R4(R), pal = R8(R) ? PAL_PURPLE : PAL_GREY;
