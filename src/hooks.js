@@ -60,6 +60,7 @@ import { verifyWorld, resetVerify } from './verify.js';
 import { JOB, TYPE, DEEP_JOBS } from './jobs.js';
 import { dustUnder, sweep, release } from './hands.js';
 import { setTimesUrl, postTime, bootTimes } from './times.js';
+import { setCloudUrl, setCloudFetch } from './cloud.js';
 import { surfaceY, colOf } from './grid.js';
 import { showWindow } from './modal.js';
 
@@ -973,6 +974,10 @@ export const HANDLES = {
   // The board of times: a check points the yard at a stub server, posts the
   // rescue the way the ending sheet's button does, and says when it boots.
   __timesUrl: setTimesUrl, __postTime: postTime, __bootTimes: bootTimes,
+  // Cloud saves: a check points the yard at a worker, and answers its calls
+  // itself (the node tier with the real `handle`, the browser group from a
+  // scripted list).
+  __cloudUrl: setCloudUrl, __cloudFetch: setCloudFetch,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,

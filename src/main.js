@@ -137,6 +137,7 @@ const demo = params.has('demo');
 // the game in the next tab stand aside and reload. Dev only, like the scenes
 // themselves: a build folds this to false and drops every branch under it.
 const bench = import.meta.env.DEV && params.has('bench');
+if (!demo && !bench) await cloudBoot();   // wave-cloud SYNC: the cloud's newer copies, before the yard is read
 if (demo) {
   document.body.classList.add('demo');
   veil.remove();
@@ -199,3 +200,15 @@ if (demo) requestAnimationFrame(() => requestAnimationFrame(() => {
 }));
 if (!demo) startTimes();
 if (!demo) unveil();
+
+// --- wave-cloud SYNC ---------------------------------------------------------
+import { cloudBoot, pump, flush } from './cloud.js';
+import { CLOUD_PUMP_MS } from './config.js';
+// The cloud is pushed behind the yard on its own clock, never the autosave's,
+// so no rate of saving becomes a rate of requests; and once more as the page
+// goes, after the autosave above has written. Inert where there is no cloud.
+if (!demo && !bench) {
+  setInterval(() => pump(Date.now()), CLOUD_PUMP_MS);
+  addEventListener('pagehide', () => flush());
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+}

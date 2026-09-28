@@ -499,6 +499,9 @@ const FIRST = new Set([RNG, VIEW, ROCK]);
 
 // Everything a save is, as one object.
 function blob() {
+  // A yard read from no save at all is named when it is first written, which
+  // for a first visit is its first autosave.
+  if (!S.yardId) S.yardId = mintYardId();
   const out = savedFields();
   STAMP.write(out);
   for (const o of SAVERS) if (o !== STAMP) o.write(out);
@@ -535,7 +538,6 @@ export function restore() {
     S.newerSave = null;             // no save, so no build to be newer than this one
     // The same one line as reading a save, so the two cannot drift apart.
     readSaved({});
-    newYardName();
     blankByHand();
     S.shownStored = 0; snapShown();
     for (const o of SAVERS) o.blank();

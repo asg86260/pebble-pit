@@ -188,6 +188,7 @@ if (reducedMotion()) document.body.classList.add('still');
 // it.
 const pictureUp = pictureDrawn();
 await primeStore();
+import { cloudBoot } from './cloud.js'; await cloudBoot();   // wave-cloud SYNC: the cloud's newer copies, before a yard is named
 showPane('main');
 await pictureUp;
 requestAnimationFrame(() => document.getElementById('veil').classList.remove('up'));

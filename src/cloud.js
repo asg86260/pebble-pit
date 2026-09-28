@@ -204,12 +204,11 @@ function forget() {
   session = fresh(session.playing);
 }
 
-// The page is running the open slot and the cloud has a newer copy of it the
-// player took: the yard stands aside (the autosave stops) and the page starts
-// again on the copy now in the store.
-function reboot() {
-  S.yielded = true;
-  try { globalThis.location?.reload?.(); } catch {}
+// The copy here is to go up over whatever the cloud holds, even one this
+// device once pushed at the same length: what is there now is not it.
+function owe(n, f) {
+  delete f.pushed[n];
+  session.dirty.add(n);
 }
 
 // --- the comparison (DESIGN.md, "The sync") --------------------------------------
@@ -225,7 +224,7 @@ async function agreeSlot(n, m, f, ctx) {
   // The cloud has never held this slot: whatever is here goes up.
   if (!m) {
     delete f.base[n];
-    if (here.s) session.dirty.add(n);
+    if (here.s) owe(n, f);
     return;
   }
   // A copy this build cannot read: neither taken nor pushed over.
@@ -244,7 +243,7 @@ async function agreeSlot(n, m, f, ctx) {
     }
     // Otherwise the yard here is the one to keep, and it goes up over the clear.
     f.base[n] = m.rev;
-    session.dirty.add(n);
+    if (here.s) owe(n, f);
     return;
   }
   if (!here.raw) {
@@ -262,20 +261,20 @@ async function agreeSlot(n, m, f, ctx) {
       return;
     }
     f.base[n] = m.rev;
-    session.dirty.add(n);
+    if (Math.floor(playedOf(here.s)) > +m.playedS) owe(n, f);
     return;
   }
   // Two yards. This device put its own new yard over the one they had agreed
   // on: it goes up. Otherwise the player chooses, and nothing is written until
   // they have.
-  if (agreed) { session.dirty.add(n); return; }
+  if (agreed) { owe(n, f); return; }
   const got = await fetchSlot(n, f.secret);
   if (ctx.late) return;
   if (!got) { session.recheck = true; return; }
   const s = parse(got.raw);
   // A cloud copy that will not read is not a yard to choose: the one here
   // stays and goes up over it.
-  if (!s) { f.base[n] = got.rev || m.rev; session.dirty.add(n); return; }
+  if (!s) { f.base[n] = got.rev || m.rev; owe(n, f); return; }
   session.clash.set(n, { raw: got.raw, s, rev: got.rev || m.rev });
 }
 
@@ -288,7 +287,7 @@ async function take(n, m, f, ctx, here) {
   const s = parse(got.raw);
   if (!s) {
     // Never written. A yard here goes up over the copy that would not read.
-    if (here.s) { f.base[n] = got.rev || m.rev; session.dirty.add(n); }
+    if (here.s) { f.base[n] = got.rev || m.rev; owe(n, f); }
     return false;
   }
   if (+s.saveV > SAVE_V) { session.stop[n] = 'newer'; return false; }
@@ -473,7 +472,7 @@ async function pushAll(now) {
   await pumpNow(now);
 }
 
-// *link a device*: a pairing code, live CLOUD_PAIR_S. `{ code, until }`, the
+// *link a device*: a pairing code, live CLOUD_PAIR_S. `{ pair, expires }`, the
 // code as shown and when it dies (wall ms), or null.
 export function makePair() {
   if (!cloudReady()) return Promise.resolve(null);
@@ -482,7 +481,7 @@ export function makePair() {
     if (!f) return null;
     const r = await call('POST', '/pairings', { secret: f.secret });
     if (r.status !== 200 || typeof r.data?.pair !== 'string') { note(r); return null; }
-    session.pair = { code: inGroups(normalize(r.data.pair), 3), until: Date.now() + (+r.data.expiresS || 0) * 1000 };
+    session.pair = { pair: inGroups(normalize(r.data.pair), 3), expires: Date.now() + (+r.data.expiresS || 0) * 1000 };
     return session.pair;
   });
 }
@@ -558,7 +557,10 @@ export function conflicts() {
 }
 
 // The player's answer to two yards in one slot. The one not kept goes to that
-// slot's `.prev`, where *save a copy* still hands it out.
+// slot's `.prev`, where *save a copy* still hands it out. The slot is written
+// before the promise settles and nothing but microtasks lie between, so a
+// caller that `restore`s on the answer reads the copy chosen before any
+// autosave can put the running yard back over it.
 export function choose(n, side) {
   if (!cloudReady()) return Promise.resolve(false);
   return serial(async () => {
@@ -574,19 +576,19 @@ export function choose(n, side) {
       f.pushed[n] = playedOf(c.s);
       keep(f);
       session.dirty.delete(n);
-      if (session.playing && n === openSlot()) reboot();
       return true;
     }
     savePrevOf(n, c.raw);
     f.base[n] = c.rev;
+    owe(n, f);
     keep(f);
-    session.dirty.add(n);
     session.due[n] = 0;
     return true;
   }).then(Boolean);
 }
 
-// *take it*: the newer copy another device pushed, over this one.
+// *take it*: the newer copy another device pushed, over this one; written as
+// `choose` writes, for the caller to `restore`.
 export function takeCloud(n) {
   if (!cloudReady()) return Promise.resolve(false);
   return serial(async () => {
@@ -610,7 +612,6 @@ export function takeCloud(n) {
     keep(f);
     delete session.stop[n]; delete session.ahead[n];
     session.dirty.delete(n);
-    if (session.playing && n === openSlot()) reboot();
     return true;
   }).then(Boolean);
 }
@@ -625,9 +626,9 @@ export function keepHere(n) {
     if (!got) return false;
     if (got.raw) savePrevOf(n, got.raw);
     f.base[n] = got.rev || session.ahead[n]?.rev || f.base[n];
+    owe(n, f);
     keep(f);
     delete session.stop[n]; delete session.ahead[n];
-    session.dirty.add(n);
     session.due[n] = 0;
     await pushSlot(n, f, Date.now());
     return true;
@@ -637,12 +638,14 @@ export function keepHere(n) {
 // --- the line ---------------------------------------------------------------------
 // `state` is one of off, ok, offline, behind, newer, big, full, paused,
 // conflict: the one that asks something of the player first. `at` is the last
-// push that took (wall ms); `pair` the live pairing code, `{ code, until }`.
-// `behind` names the slots another device is ahead on, for *take it*.
+// push that took (wall ms); `pair` the live pairing code, `{ pair, expires }`.
+// `slot` is the slot *take it* and *keep this one* answer for (the first
+// another device is ahead on, which need not be the open one), and `behind`
+// every such slot.
 export function cloudStatus() {
   const f = cloudReady() ? facts() : null;
-  if (!f) return { state: 'off', at: null, pair: null, behind: [] };
-  const pair = session.pair && session.pair.until > Date.now() ? session.pair : null;
+  if (!f) return { state: 'off', at: null, pair: null, slot: null, behind: [] };
+  const pair = session.pair && session.pair.expires > Date.now() ? session.pair : null;
   const stops = Object.values(session.stop);
   const behind = Object.keys(session.stop).filter(n => session.stop[n] === 'behind').map(Number);
   const state = session.clash.size ? 'conflict'
@@ -653,5 +656,5 @@ export function cloudStatus() {
               : session.capped || session.trouble === 'paused' ? 'paused'
               : session.trouble === 'offline' ? 'offline'
               : 'ok';
-  return { state, at: f.at, pair, behind };
+  return { state, at: f.at, pair, slot: behind[0] ?? null, behind };
 }
