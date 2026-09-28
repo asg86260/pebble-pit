@@ -2,11 +2,11 @@
 // "Codes"). Only WebCrypto, which a Worker and node both carry, so the
 // checks run the same bytes the deploy does.
 
-import { CLOUD_SECRET_LEN, CLOUD_PAIR_LEN } from '../../src/config/cloud.js';
+import { CLOUD_SECRET_LEN, CLOUD_PAIR_LEN, CLOUD_ALPHABET } from '../../src/config/cloud.js';
 
-// Crockford base 32: no I, L, O or U, so a code read off a screen cannot be
-// typed as a different one.
-export const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+// The game's alphabet (config/cloud.js), so the two ends cannot disagree on
+// what a code may hold.
+export const ALPHABET = CLOUD_ALPHABET;
 
 // The shown secret's prefix, and the size of the groups both codes are shown
 // in. Presentation only: the input side strips all of it.

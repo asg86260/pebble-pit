@@ -84,10 +84,17 @@ async function landing(stub) {
   if (stub) {
     cloud.setCloudUrl(WORKER);
     cloud.setCloudFetch(stub.fetch);
+    // Every check starts unlinked: a code an earlier run left in this
+    // origin's store would boot the page on, whatever the check expects.
+    await cloud.stopCloud();
+    await save.storeSettled();
     sheet.refreshCloud();
   }
   const done = async () => {
     try { if (stub) await cloud.stopCloud(); } catch {}
+    // The forgetting is a database write; a frame removed before it lands
+    // aborts it, and the next check's page would boot still linked.
+    try { await save.storeSettled(); } catch {}
     cloud.setCloudUrl('');
     cloud.setCloudFetch(null);
     f.remove();

@@ -11,13 +11,10 @@ import { cloudReady, startCloud, makePair, claimPair, useRecovery, rotate, stopC
 import { since } from './slots.js';
 import { openSlot } from './save.js';
 import { copyOut } from './copyout.js';
-import { CLOUD_PAIR_LEN } from './config.js';
+import { CLOUD_PAIR_LEN, CLOUD_ALPHABET, CLOUD_TICK_MS, CLOUD_IDLE_MS, CLOUD_ARM_MS } from './config.js';
 
-// The foot bar redraws on the second while a code is counting down, and
-// otherwise often enough that `saved 2 min ago` stays true at a glance: the
-// line is coarse, so a quarter of a minute is plenty and costs nothing.
-const TICK_MS = 1000;
-const IDLE_MS = 15000;
+const TICK_MS = CLOUD_TICK_MS;
+const IDLE_MS = CLOUD_IDLE_MS;
 // And how often the held sheet's page asks whether the cloud has news for
 // the player: the same slow beat.
 export const CLOUD_LOOK_MS = IDLE_MS;
@@ -43,11 +40,10 @@ export function cloudLine(st = cloudStatus(), now = Date.now()) {
 // has (docs/wave-cloud.md, "Codes"), applied as the player types so the box
 // never holds a character that could not be in a code, and the dash put in
 // where it is shown. Letters that read as digits become them.
-const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const HALF = CLOUD_PAIR_LEN / 2;
 export function typedPair(text) {
   const bare = [...String(text).toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1')]
-    .filter(c => CROCKFORD.includes(c)).join('').slice(0, CLOUD_PAIR_LEN);
+    .filter(c => CLOUD_ALPHABET.includes(c)).join('').slice(0, CLOUD_PAIR_LEN);
   return bare.length > HALF ? bare.slice(0, HALF) + '-' + bare.slice(HALF) : bare;
 }
 // The worker hands a pairing code back with its dash; one without is shown
@@ -252,11 +248,11 @@ function drawCloud(el, say, opts) {
     el.append(rows);
     drawClashes(rows, say, opts);
   }
-  // Another device is ahead on the open yard, and this one has stopped
-  // pushing it (docs/wave-cloud.md, "The sync"): take theirs, or push this
-  // one over it.
+  // Another device is ahead on a yard, and this one has stopped pushing it
+  // (docs/wave-cloud.md, "The sync"): take theirs, or push this one over it.
+  // Any slot can be the one behind, not only the open one.
   if (st.state === 'behind') {
-    const n = openSlot();
+    const n = st.slot ?? openSlot();
     const pair = node('div', 'pair');
     pair.append(
       button('take it', async () => { await takeCloud(n); opts.took?.(n, 'cloud'); done('taken'); }),
@@ -271,7 +267,7 @@ function drawCloud(el, say, opts) {
   // press asks and a second within four seconds does it.
   const again = button('new recovery code', async () => {
     if (!armed) {
-      armed = setTimeout(() => { armed = 0; again.classList.remove('armed'); again.textContent = 'new recovery code'; }, 4000);
+      armed = setTimeout(() => { armed = 0; again.classList.remove('armed'); again.textContent = 'new recovery code'; }, CLOUD_ARM_MS);
       again.classList.add('armed');
       again.textContent = 'sign out other devices?';
       return;
@@ -316,8 +312,8 @@ function drawClashes(el, say, opts) {
   for (const c of conflicts()) {
     const row = node('div', 'pair clash');
     row.dataset.slot = c.n;
-    row.append(button(`this device · ${c.here}`, () => pick(c.n, 'here'), 'here'),
-               button(`cloud · ${c.cloud}`, () => pick(c.n, 'cloud'), 'cloud'));
+    row.append(button(`this device · ${c.n} · ${c.here}`, () => pick(c.n, 'here'), 'here'),
+               button(`cloud · ${c.n} · ${c.cloud}`, () => pick(c.n, 'cloud'), 'cloud'));
     el.append(row);
   }
 }

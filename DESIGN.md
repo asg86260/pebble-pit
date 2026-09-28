@@ -16089,7 +16089,7 @@ yard putting up more for the air filter to argue with.
   home; a second tender, or a roomba that finishes its claim before it
   heads home, are the two answers if that reads badly.
 
-## Cloud saves: a sync code and a worker (design, not built)
+## Cloud saves: a sync code and a worker (built 2026-09-27, not deployed)
 
 A yard lives on one browser on one machine. Clearing site data, a new
 laptop, playing on itch at work and on the desk at home: each is a yard

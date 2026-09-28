@@ -1,17 +1,22 @@
 # Still to do
 
-## Cloud saves -- DESIGN SIGNED, SPEC WRITTEN (2026-09-27)
+## Cloud saves -- BUILT, NOT DEPLOYED (2026-09-27)
 
-"Cloud saves: a sync code and a worker" in DESIGN.md: the local store stays
-what play reads; a Cloudflare Worker + D1 mirrors every slot under a
-hundred-bit sync code (no accounts), pulled at boot, pushed once a minute.
-Every way it can grow has a ceiling ("Fail-safes"), and a free plan with
-no card behind it is the backstop. Devices pair by a six-character code
-that dies in ten minutes; the title page's footnote is voted (A1, the foot
-bar).
-Build spec: `docs/wave-cloud.md` (three tracks: WORKER, SYNC, FACE).
-Blocker: the owner's sign-off on its "Decided here"; the Cloudflare account
-is needed only to deploy, after the merge. No game code yet.
+Built as `docs/wave-cloud.md`; "Cloud saves" in DESIGN.md. `CLOUD_ON` is
+false, so no player sees it yet, and it has no CHANGELOG line until it is on.
+Open:
+- **Deploy.** The owner's Cloudflare account (Workers Free, no card), then
+  `cloud/README.md`'s steps; flip `CLOUD_ON` and set `VITE_CLOUD_URL` in
+  one commit, with the New-this-release line.
+- **Two writers on real D1.** The conditional slot write (`changes() = 1`
+  inside a batch) is proven on node:sqlite only; check it once on
+  `wrangler dev` or the first deploy.
+- **`flush()` on page hide is best effort.** The gzip is async, so a
+  closing page may end before the keepalive push is sent; a copy gzipped
+  ahead would make it dependable. The next boot pushes whatever it missed.
+- **The `behind` card and *take it* / *keep this one*** have node checks
+  but no browser check and have never been clicked by hand.
+- **A transient 429** (the floor, a code's day cap) reads `cloud · paused`.
 
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 

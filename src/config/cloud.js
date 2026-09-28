@@ -72,3 +72,12 @@ export const YARD_ID_LEN = 16;
 // What the secret is shown behind, so a recovery code written on paper says
 // what it is for; dropped again on the way in.
 export const CLOUD_SECRET_PREFIX = 'PEBBLE';
+
+// --- wave-cloud FACE: the foot bar and the sheet ---------------------------
+// The foot bar redraws on the second while a pairing code counts down...
+export const CLOUD_TICK_MS = 1000;
+// ...and otherwise often enough that `saved 2 min ago` stays true at a glance.
+export const CLOUD_IDLE_MS = 15000;
+// How long *new recovery code* stays armed after the first press: it signs
+// every other device out, so it asks twice, as the reset does.
+export const CLOUD_ARM_MS = 4000;
