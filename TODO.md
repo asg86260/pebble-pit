@@ -34,13 +34,14 @@ Open:
 - **The second half plays shallow** (the owner, 2026-09-26): answered by
   "Fighters in slots" (below).
 
-## Fighters in slots -- SPEC WRITTEN, AWAITING SIGN-OFF (2026-09-27)
+## Fighters in slots -- BUILT; THE BRANCH AT RUNG 4 DESIGNED (2026-09-28)
 
-The build spec is `docs/wave-party.md`: stations built in any order, one
-fighter a station, ten classes one ladder each (canon: section 0 of
-`docs/serpent-classes.md`), collapsing rails, fangs buy slots, migration v7
-by refund. C + D and the stun ring are built. Blocker: the owner's sign-off
-on the spec and its "Decided here" list.
+The party is on main (docs/wave-party.md). Next: DESIGN.md, "A fighter
+branches at rung 4" -- a base unit a station (Fighter, Novice, Scout,
+Adept, Apprentice) that forks into its two specialties at rung 4, and the
+station chosen on an empty lot's board rather than the build button's
+dropdown. Blocker: the owner's vote on the rails mock
+(docs/mocks/branch-2026-09-28.html).
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 
