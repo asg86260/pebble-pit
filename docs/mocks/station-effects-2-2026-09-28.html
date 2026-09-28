@@ -29,11 +29,22 @@
   .st { font-weight: bold; text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; color: var(--ink); }
   .cap .st { color: var(--purple); }
   #tip { position: fixed; pointer-events: none; background: var(--tipbg); color: var(--tipfg); font-size: 11px; padding: 2px 6px; display: none; z-index: 9; white-space: nowrap; }
-  canvas.px { image-rendering: pixelated; display: block; }
+  
   /* E: the tree */
   .tree { display: grid; grid-template-columns: auto 1fr; gap: 0 6px; font-size: 11px; }
   .tree svg { overflow: visible; }
   .node { display: grid; grid-template-columns: 14px 1fr; gap: 0 6px; align-items: start; min-height: 22px; }
+  /* E2: rooted */
+  .root { text-align: center; display: grid; justify-items: center; }
+  .root .rt { font-weight: bold; }
+  .stem { width: 2px; height: 8px; background: currentColor; justify-self: center; }
+  .fork2 { position: relative; height: 8px; }
+  .fork2 .bar { position: absolute; left: 25%; right: 25%; top: 0; height: 2px; background: currentColor; }
+  .fork2::before, .fork2::after { content: ''; position: absolute; top: 0; width: 2px; height: 8px; background: currentColor; }
+  .fork2::before { left: calc(25% - 1px); } .fork2::after { right: calc(25% - 1px); }
+  .brs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .br { display: grid; gap: 3px; align-content: start; }
+  .br .bn { display: flex; gap: 5px; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
   /* F: cards */
   .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .card { border: 1px solid var(--rule); padding: 5px; display: grid; gap: 4px; align-content: start; }
@@ -103,20 +114,12 @@ const ICON = {
   bard:     ['..###..', '..#.#..', '..#.#..', '..#.#..', '.##.##.', '###.###', '.#...#.']
 };
 function icon(key, px = 3) {
-  const rows = ICON[key], c = document.createElement('canvas');
-  c.width = 7 * px; c.height = 7 * px; c.className = 'px';
-  const g = c.getContext('2d'), ink = getComputedStyle(document.body).color, pu = getComputedStyle(document.documentElement).getPropertyValue('--purple');
-  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '.') return; g.fillStyle = ch === '+' ? pu : ink; g.fillRect(x * px, y * px, px, px); }));
-  return c.outerHTML.replace('<canvas', `<canvas data-icon="${key}" data-px="${px}"`);
+  // inline SVG in currentColor, so an icon follows the page's theme
+  const cells = ICON[key].flatMap((r, y) => [...r].map((ch, x) => ch === '.' ? '' :
+    `<rect x="${x}" y="${y}" width="1" height="1" fill="${ch === '+' ? 'var(--purple)' : 'currentColor'}"/>`)).join('');
+  return `<svg width="${7 * px}" height="${7 * px}" viewBox="0 0 7 7" shape-rendering="crispEdges" style="flex:none">${cells}</svg>`;
 }
-// canvases lose their pixels through outerHTML: they are painted again once in the page
-function paintIcons() {
-  for (const c of document.querySelectorAll('canvas[data-icon]')) {
-    const px = +c.dataset.px, g = c.getContext('2d');
-    const ink = getComputedStyle(document.body).color, pu = getComputedStyle(document.documentElement).getPropertyValue('--purple');
-    ICON[c.dataset.icon].forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '.') return; g.fillStyle = ch === '+' ? pu : ink; g.fillRect(x * px, y * px, px, px); }));
-  }
-}
+function paintIcons() {}
 
 // --- E: the tree ------------------------------------------------------------------
 // The base unit at the root, a fork, and each branch drawn down as pips: 4 the
@@ -136,6 +139,17 @@ function treeOf(kind) {
         <line x1="75" y1="0" x2="75" y2="10" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
       ${branch(a)}${branch(b)}</div>`;
 }
+// --- E2: the tree, rooted -----------------------------------------------------
+// The base unit centered at the top, a stem down from it to the fork, and a
+// crossbar that runs from the one branch to the other and no further.
+const moveNode = c => `<div class="node"><svg width="14" height="14"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/></svg><span><b>${WORDS[c].move[0]}</b> ${say(WORDS[c].move[1])}</span></div>`;
+const capNode = c => `<div class="node cap"><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="var(--purple)"/></svg><span><b>${WORDS[c].cap[0]}</b> ${say(WORDS[c].cap[1])}</span></div>`;
+function rooted(kind, open = true) {
+  const branch = c => `<div class="br"><div class="bn">${icon(c)}${NAME[c]}</div>${moveNode(c)}${capNode(c)}</div>`;
+  return `<div class="root${open ? '' : ' locked'}"><div class="rt">${BASES[kind]}</div><div class="s">${open ? BASE_DOES[kind] : 'opens with a second station'}</div></div>` +
+    (open ? `<div class="stem"></div><div class="fork2"><span class="bar"></span></div><div class="brs">${PAIRS[kind].map(branch).join('')}</div>` : '');
+}
+
 // --- F: cards with icons --------------------------------------------------------
 function cardsOf(kind) {
   return `<div class="cards">${PAIRS[kind].map(cardOf).join('')}</div>`;
@@ -147,6 +161,8 @@ function cardOf(c) {
 }
 
 const LAYOUTS = [
+  { name: 'E2. The tree, rooted (the owner’s refinement of E)', say: 'the base unit centered at the top, a stem down to the fork, the crossbar ending at the two branches, each branch headed by its specialist', rooted: true,
+    fork: c => `<div style="display:grid;gap:3px">${moveNode(c)}${capNode(c)}</div>` },
   { name: 'E. A tree', say: 'each base unit forks visibly into its two specialists; down each branch a square pip for the move and a purple one for the capstone, the line beside it', kind: treeOf,
     fork: c => `<div style="display:grid;gap:3px">
       <div class="node"><svg width="14" height="14"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/></svg><span><b>${WORDS[c].move[0]}</b> ${say(WORDS[c].move[1])}</span></div>
@@ -159,6 +175,7 @@ const LAYOUTS = [
 function pickBoard(L, first) {
   const rows = Object.keys(PAIRS).map(k => {
     const open = !first || FIRST.includes(k);
+    if (L.rooted) return `<div class="row${open ? '' : ' locked'}">${rooted(k, open)}</div>`;
     return `<div class="row${open ? '' : ' locked'}"><div class="head"><span class="t">${BASES[k]}</span></div>` +
       `<span class="s">${open ? BASE_DOES[k] : 'opens with a second station'}</span>${open ? L.kind(k) : ''}</div>`;
   }).join('');
