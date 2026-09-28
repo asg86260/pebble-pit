@@ -5,6 +5,10 @@ name = "pebble-cloud"
 main = "src/worker.js"
 compatibility_date = "2026-09-01"
 
+# Served on the owner's own domain, not workers.dev.
+workers_dev = false
+routes = [{ pattern = "pebble-saves.graham-things.com", custom_domain = true }]
+
 # The kill switch. `npx wrangler deploy --var CLOUD_PAUSED:1` answers every
 # route 503 with a day's Retry-After before D1 is touched.
 [vars]
@@ -15,7 +19,7 @@ CLOUD_PAUSED = "0"
 [[d1_databases]]
 binding = "DB"
 database_name = "pebble-cloud"
-database_id = "00000000-0000-0000-0000-000000000000" # from `npx wrangler d1 create pebble-cloud`
+database_id = "ee0968c5-8a6b-4fa3-acb6-7eee8cb4bf03"
 # The same files cloud/test/d1.mjs builds its database from.
 migrations_dir = "migrations"
 

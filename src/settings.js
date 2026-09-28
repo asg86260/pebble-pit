@@ -287,8 +287,9 @@ const cloudNote = document.createElement('button');
 cloudNote.type = 'button';
 cloudNote.className = 'toast';
 cloudNote.hidden = true;
-cloudNote.append(Object.assign(document.createElement('div'), { className: 'name', textContent: 'newer on another device' }),
-                 Object.assign(document.createElement('div'), { className: 'note', textContent: 'saves has the answer' }));
+// appendChild, not append: the node yard's page stand-in has only the one.
+cloudNote.appendChild(Object.assign(document.createElement('div'), { className: 'name', textContent: 'newer on another device' }));
+cloudNote.appendChild(Object.assign(document.createElement('div'), { className: 'note', textContent: 'saves has the answer' }));
 document.body.appendChild(cloudNote);
 let noteDown = 0;
 function dropCloudNote() {
@@ -302,6 +303,8 @@ cloudNote.addEventListener('click', () => {
   hold(true);
   showPane('slots');
 });
+// Unref'd where the timer is node's: the node yard loads this page's modules,
+// and a live interval would keep its test process from ever exiting.
 setInterval(() => {
   if (!cloudReady() || !cloudNoticeDue(cloudStatus().state)) return;
   cloudNote.classList.toggle('still', reducedMotion());
@@ -309,4 +312,4 @@ setInterval(() => {
   void cloudNote.offsetWidth;          // hidden off and up on in one pass would skip the slide
   cloudNote.classList.add('up');
   noteDown = setTimeout(dropCloudNote, TOAST_MS);
-}, CLOUD_LOOK_MS);
+}, CLOUD_LOOK_MS)?.unref?.();
