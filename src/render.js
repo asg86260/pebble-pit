@@ -53,7 +53,7 @@ import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
-import { drawPunches, drawLances, drawGrenades, drawSigils, drawBeams, drawStarYard, drawStarDeep } from './render/arms.js';
+import { drawFighters, drawShots } from './render/arms.js';   // track RENDER, docs/wave-party.md
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
 import { S } from './state.js';
 
@@ -197,14 +197,13 @@ const LAYERS = [
   { name: 'deep bed', draw: drawDeepBed },
   { name: 'into crusher', draw: drawIntoCrusher }, // behind the furnace, dropping into its funnel
   { name: 'deep stations', draw: drawDeepStations },
-  { name: 'sigils', draw: drawSigils },          // lying on the scales, under the coil they hold
-  { name: 'beams', draw: drawBeams },            // behind the coil they end on
   { name: 'serpent', draw: drawSerpent },
-  { name: 'lances', draw: drawLances },          // in front of the coil they are stuck in
-  { name: 'grenades', draw: drawGrenades },
-  { name: 'deep star', draw: drawStarDeep },
   { name: 'swimmers', draw: drawSwimmers },
-  { name: 'punches', draw: drawPunches },
+  // The fighters in front of the coil they strike and the swimmers passing,
+  // and what leaves them -- arrows, beams, charges, hexes, notes -- over all
+  // of the fighters (track RENDER, docs/wave-party.md).
+  { name: 'party', draw: drawFighters },
+  { name: 'shots', draw: drawShots },
   { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
   { name: 'lifting', draw: drawLifting },
   { name: 'deep arrow', draw: drawDeepArrow },   // the way up, under the deep's end of the portal
@@ -222,10 +221,8 @@ const LAYERS = [
   { name: 'says', draw: drawSays, dim: 1 },      // and what any of them stood about is saying
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
-  // The called star on its way down the yard's sky into the pit, in front of
-  // the smog it falls through; the serpent's head over the liquid it came
-  // out of, and the one it takes in its jaws, in front of the pair.
-  { name: 'star fall', draw: drawStarYard },
+  // The serpent's head over the liquid it came out of, and the one it takes
+  // in its jaws, in front of the pair.
   { name: 'snatch', draw: drawSnatch },
 
   // The rift bends what is behind it, so it must come after everything of the
@@ -281,8 +278,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'sigils', 'beams', 'serpent', 'lances', 'grenades', 'deep star', 'swimmers',
-                      'punches', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'serpent', 'swimmers', 'party', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
@@ -386,3 +382,13 @@ function drawRipples(rip) {
   ctx.restore();
   ctx.fillStyle = '#000';
 }
+
+// --- the party wave, track BOARD (docs/wave-party.md) -----------------------------
+// Two things that stand in the deep rather than on a board, seated every frame
+// after the picture, in whichever half is up: the open station's rails, laid
+// into its board and filled, and the floating button over the next free floor
+// slot. Page elements, not paint, and last, so the camera they are seated by
+// is the one the frame was drawn with.
+import { seatRails } from './deep/rails.js';
+import { seatBuildButton } from './deep/buildbutton.js';
+LAYERS.push({ name: 'rails', draw: seatRails }, { name: 'build button', draw: seatBuildButton });

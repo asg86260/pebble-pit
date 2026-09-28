@@ -10467,9 +10467,16 @@ just remove the split"; then "lets do an inner dot for queued".
 - **The refund half** counts the copies waiting and hands back the newest,
   as "Handing one back" says. With only the copy being built, it reads
   `building` and is dead (grey, no hover): that copy is committed.
-- **The another half** buys exactly as the body does (`buy`, the same
-  gates). It is pale while the purse cannot pay the next copy, as a short
-  tag is. The body keeps buying too: nothing a player already did changes.
+- **The another half** buys through `buy`, the same gates as the body.
+  It is pale while the purse cannot pay the next copy, as a short tag is.
+- **The body is quiet while the strip stands** (the owner, 2026-09-27: "lets
+  make the card have no click action. only the buy next and refund option
+  clickable"; the first copy is still bought on the body, where there is no
+  strip yet). The tile does not lift under the cursor then (`off`).
+- **The glyph being built** is drawn in the stroke of the bill paid for that
+  copy (`tintOf(u, work)`), on the tile and over the site: the row's own
+  bill is the next copy's, so a ladder queued into its spark band drew its
+  first rung in red.
 - **Nothing more to sell** (a one-off, a ladder spoken for to its top): no
   split and no "no more"; the strip is the whole-width refund, and only
   while a copy waits, as it was.
@@ -10479,9 +10486,10 @@ just remove the split"; then "lets do an inner dot for queued".
   works.
 
 Checked in `src/selftest/boards.js` ("the strip on a card buys another..."):
-one press shows the strip with `building` and `+ another`, the other half
-queues a second copy, both wear a dot, the refund half hands the waiting one
-back. The `queuerepeat` scene is the shot.
+one press shows the strip with `building` and `+ another`, a press on the
+body then buys nothing, the other half queues a second copy, both wear a dot, the refund half hands the waiting one
+back. The `queuerepeat` scene is the shot, and `queuetop` a ladder queued
+to its top with its first rung going up.
 
 ## The cut is worked in pockets (built)
 

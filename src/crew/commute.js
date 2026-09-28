@@ -63,8 +63,9 @@ function handStationX(type, w) {
   if (type === TYPE.WIZARD) return underMeteor();
   // A builder picks a site of its own and walks itself there (`stepBuilder`).
   if (type === TYPE.BUILD || type === TYPE.DELVE) return null;
-  // The deep's stations stand on its floor, under the drowned pit.
-  if (isDeepType(type)) return deepPost(type);
+  // The deep's stations stand on its floor, under the drowned pit; a
+  // fighter's is whichever station it was sent to (`w.station`).
+  if (isDeepType(type)) return deepPost(type, w);
   return null;
 }
 
@@ -84,6 +85,7 @@ export function settle(w) {
   const fresh = FACTORY(w.type);
   delete fresh.x;                  // where it is standing is where it walked to
   delete fresh.y;
+  delete fresh.uid;                // and it is the same body
   Object.assign(w, fresh);
   // Landed on a job of its own, it is nobody's loan any more. Only for a job
   // on the roster: a borrowed body's next stop is the build it was borrowed
@@ -112,7 +114,9 @@ export function settle(w) {
   w.tidyAt = null;
   w.foot = null;
   w.footAt = null;
-  w.phase = null;                  // a weapon's round in the deep (deep/arms.js)
+  w.phase = null;                  // a fighter's round in the deep
+  // A fighter's station is set before it is sent; any other job has none.
+  if (w.type !== TYPE.FIGHTER) delete w.station;
 }
 
 // --- the kit walk -------------------------------------------------------------

@@ -20,7 +20,7 @@ const press = (key, which) => { const p = state().roster.find(o => o.key === key
 // A yard the serpent has come for, nobody down there, a floor of loose scales.
 function floorOf(n) {
   window.__snatch({ played: true });
-  window.__deepCrew({ brawlers: 0 });
+  window.__deepCrew();
   window.__crew(0, 6);
   window.__looseScales(n);
 }

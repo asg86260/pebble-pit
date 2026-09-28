@@ -482,14 +482,12 @@ export const S = {
   // purse; the floor's loose scales are `deepBed`), and whether one ever has.
   scales: 0,
   seenScale: false,
-  // The deep's doors.
-  wellOpen: false, fontOpen: false, circleOpen: false, spireOpen: false, starOpen: false,
-  // The deep's jobs: bodies of the yard's crew, gone down the shaft.
-  brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0, gatherers: 0,
+  // The deep's jobs: bodies of the yard's crew, gone down the shaft. A
+  // fighter stands at a station (`stations` below), one a station; the other
+  // two are the deep's spare hands, lent to the scales and to its works.
+  fighters: 0,
+  gatherers: 0,
   delvers: 0,             // the deep's spare hands putting up the deep's works
-  // The deep's ladders (LADDERS in config/rungs.js) and the star's spark rungs.
-  punchLevel: 0, brawlLevel: 0, lanceLevel: 0, lanceholdLevel: 0, grenadeLevel: 0,
-  grenadepaceLevel: 0, sigilLevel: 0, beamLevel: 0, curseLevel: 0, starLevel: 0,
   pods: 0,                // the deep's houses: how many have been bought
   deepCrew: 0,            // how many of the crew are the deep's: the sqwife, and a body a pod
   portalOpen: false,      // the wizards' portal over the abyss stands: the player's way down
@@ -497,25 +495,29 @@ export const S = {
   portalPour: 0,          // how much of it the wizard has poured, 0..1, while it is being summoned
   crushes: [],            // the scales lately into the crusher, for its fire: { at, id }, newest last
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
-  sigils: [],             // the circles drawn on the floor: { x }, each held until the stage it was drawn for breaks
   // In the water, and so this session's: a reload finds them landed or gone.
   sinking: [],            // scales falling to the floor: { x, y, vx, vy, s }
   lifting: [],            // scales paid, rising off the bed to the station that took them
-  lances: [],             // a lance thrown or stuck: { x, y, at, seg, until }
-  grenades: [],           // a grenade in the water: { x, y, vx, vy }
-  rings: [],              // a burst's rings: { x, y, at }
-  beams: [],              // a wizard's beam, this frame: { x, y, seg }
   // What the fight has just done, for the numbers over it (render/fightnums.js):
-  // a blow, or a held weapon's second, or the heal's: { at, shut, x, y, done,
+  // a blow, or a held attack's second, or the heal's: { at, shut, x, y, done,
   // weapon, key, side }. A drawing, never a save.
   hits: [],
   healSum: 0,             // the wound the heal has closed since it last said so
   healAt: 0,              // when it next says so
-  starFall: null,         // the called star on its way: { x, y, at }
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
-  starAt: 0,              // when the next star is called
-  altarBoardOpen: false, wellBoardOpen: false, fontBoardOpen: false,
-  circleBoardOpen: false, spireBoardOpen: false, podsBoardOpen: false,
+  podsBoardOpen: false,
+
+  // The party (docs/wave-party.md): stations built on the deep's floor in any
+  // order, a fighter at each, a class and a ladder a station. `S.stations` is
+  // written by deep/party.js alone.
+  stations: [],           // [{ id, kind, slot, built, cls, rung, paid, fighter }]
+  stationsBuilt: 0,       // how many ever stood built: the second opens every class
+  fangs: 0,               // the coin a broken phase drops; one buys the next station
+  seenFang: false,
+  fangsDropped: 0,        // the breaks that have dropped theirs, so a reload drops none twice
+  fangsLoose: [],         // fangs sinking or lying on the floor, until a gatherer carries them
+  statuses: {},           // on the whole serpent: { bleed, exposed, held, weakened } -> { until, k }
+  stationBoardOpen: null, // the id of the station whose board is up
 
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
 };
@@ -632,8 +634,9 @@ export const SAVED = [
   // Reseated by the layout at boot; saved so the roundtrip test sees it.
   'noticeboard',
   // Derived by `rebalance` and re-derived on restore; saved like every other
-  // job count so the roundtrip is honest.
-  JOB.BUILD, JOB.DELVE,
+  // job count so the roundtrip is honest. `fighters` is JOB.FIGHT's count,
+  // one a station with a fighter (docs/wave-party.md).
+  JOB.BUILD, JOB.DELVE, JOB.FIGHT,
   // The record. `tally` is saved because who bit a rock half-mined when you
   // closed the tab is the whole question two of the feats ask.
   'won',
@@ -665,10 +668,9 @@ export const SAVED = [
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
   'serpentStun', 'serpentGrace', 'serpentStill',
-  'wellOpen', 'fontOpen', 'circleOpen', 'spireOpen', 'starOpen',
-  JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
-  'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
-  'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
+  JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
+  // The party (docs/wave-party.md).
+  'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',
   // The yard's name and length across devices (cloud.js).
   'yardId', 'playedS',
 ];
@@ -711,7 +713,7 @@ export const SAVED_BY_HAND = [
   'belt',                 // what is riding the belt, on the band or the scoop, as [x, shade] pairs
   'chips',                // and every grain in the air, as [x, y, vx, vy, shade, land]
   'lent',                 // the jobs the builders were borrowed from
-  'deepCrew',             // clamped on the way in against the deep's weapons and the spares
+  'deepCrew',             // clamped on the way in against the deep's fighters and the spares
   'haze',                 // rounded: a fraction of a mote is not worth the characters
   'rockSand',             // what is lying on the rock, a column at a time
   'pot',                  // the casino: what is on the table, and which plot it stands in...
@@ -820,10 +822,11 @@ export const EPHEMERAL = [
   // leaves it.
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
-  'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'lances', 'grenades', 'rings', 'beams',
+  'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting',
   'hits', 'healSum', 'healAt',
-  'starFall', 'deepMotes', 'crushes', 'heldScales', 'portalAt',
-  'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen', 'podsBoardOpen',
+  'deepMotes', 'crushes', 'heldScales', 'portalAt',
+  'podsBoardOpen',
+  'statuses', 'stationBoardOpen',
 ];
 
 // The sand grids, mutated in place and never reassigned. `p` is the size of

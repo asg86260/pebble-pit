@@ -235,7 +235,7 @@ export function drawWorkBars() {
         continue;
       }
       const row = rowFor(w.key);
-      buildingGlyph(at.x, at.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row) : null);
+      buildingGlyph(at.x, at.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null);
     }
   }
 }

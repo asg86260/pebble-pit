@@ -14,7 +14,8 @@ import { JOB_MACHINE, running } from './machines.js';
 import { assign, idle } from './staffing.js';
 import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
 import { KIT_MARK, TRADE_OF, liftsOf } from './kit.js';
-import { JOB } from './jobs.js';
+import { JOB, DEEP_JOBS } from './jobs.js';
+import { stationsBuilt, stationById, stationMid, canMoveIn, canMoveOut, moveFighter } from './deep/party.js';
 import { shown } from './tween.js';
 import { darkPage } from './ink.js';
 
@@ -58,7 +59,29 @@ function postOf(row) {
   };
 }
 let POSTS = null;
-const allPosts = () => (POSTS ||= STATIONS.filter(r => r.post).map(postOf));
+// The yard's posts are the station rows'; a row whose job is the deep's is
+// not one of them, since the deep's stations are the player's and stand
+// where they were put down.
+const yardPosts = () => (POSTS ||= STATIONS.filter(r => r.post && r.post.job && !DEEP_JOBS.includes(r.post.job))
+                                          .map(postOf));
+
+// The deep's: one post under each station standing, keyed by its id. A
+// station holds one fighter, so the count is nought or one, and the two
+// buttons move a fighter between stations (`moveFighter`) rather than
+// making or unmaking one.
+const partyPost = st => ({
+  key: `station:${st.id}`, job: JOB.FIGHT, station: st.id, kit: false, fixed: false, deep: true,
+  show: () => true,
+  at: () => stationMid(st),
+  y: () => deepFloor() + DEEP_POST_DOWN
+});
+const allPosts = () => [...yardPosts(), ...stationsBuilt().map(partyPost)];
+
+// How many stand at a post, and whether each of its buttons would do anything.
+const count = p => (p.station ? (stationById(p.station)?.fighter ? 1 : 0) : S[p.job]);
+const canLess = (p, n) => (p.station ? canMoveOut(p.station) : n > 0);
+const canMore = (p, spare) => (p.station ? canMoveIn(p.station) : spare > 0 && roomAt(p.job) > 0);
+const press = (p, d) => (p.station ? moveFighter(p.station, d) : assign(p.job, d));
 
 // Below the ground line, clear of the stopped-station triangle (seven cells
 // down and 2.6 tall) that hangs just under it. A post that says its own
@@ -162,8 +185,8 @@ export function rosterHit(x, y) {
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
-    if (inside(hit(b.less), x, y)) { assign(p.job, -1); S.shopStale = true; return true; }
-    if (inside(hit(b.more), x, y)) { assign(p.job, 1); S.shopStale = true; return true; }
+    if (inside(hit(b.less), x, y)) { press(p, -1); S.shopStale = true; return true; }
+    if (inside(hit(b.more), x, y)) { press(p, 1); S.shopStale = true; return true; }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
     // The machine's mark is not a button either (a machine is stopped by
     // taking its tender off, the `-` two rows up), but a click there is not a
@@ -182,7 +205,7 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) 
   const spare = idle();
   for (const p of posts()) {
     const b = boxes(p);
-    const n = S[p.job];
+    const n = count(p);
 
     // Only on the stations that have a machine standing.
     if (machineAt(p.job) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
@@ -196,8 +219,8 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) 
     if (p.job === JOB.WIZARD || (KIT_MARK[p.job] && !TRADE_OF[p.job])) {
       drawHat(b.badge.x, b.badge.y, KIT_MARK[p.job], true);
       if (p.fixed) continue;
-      button(ctx, b.less, '-', n > 0);
-      button(ctx, b.more, '+', spare > 0 && roomAt(p.job) > 0);
+      button(ctx, b.less, '-', canLess(p, n));
+      button(ctx, b.more, '+', canMore(p, spare));
       continue;
     }
 
@@ -219,10 +242,10 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) 
     if (p.fixed) continue;                       // carrying is read, not set
     // The hat belongs to the station, so the minus is live whenever there is
     // anybody there to take off.
-    button(ctx, b.less, '-', n > 0);
+    button(ctx, b.less, '-', canLess(p, n));
     // Pale when there is nobody spare to send or nowhere left to put one: the
     // way to send a fourth body down the quarry is to buy it a bench.
-    button(ctx, b.more, '+', spare > 0 && roomAt(p.job) > 0);
+    button(ctx, b.more, '+', canMore(p, spare));
   }
 }
 
@@ -260,7 +283,7 @@ export function drawRosterCounts(ctx, screenAt) {
     ctx.fillStyle = p.deep && !darkPage ? '#fff' : '#000';
     const b = boxes(p);
     const at = screenAt(b.num.x + b.num.w / 2, b.num.y);
-    ctx.fillText(String(Math.round(shown('roster:' + p.job, S[p.job]))), Math.round(at.x), Math.round(at.y));
+    ctx.fillText(String(Math.round(shown('roster:' + (p.station || p.job), count(p)))), Math.round(at.x), Math.round(at.y));
     // What the station owns, not what is being worn: the number says what is
     // waiting there for the next body you send. No second line where the
     // badge already wears the hat (see `drawRoster`).
@@ -290,13 +313,13 @@ export function rosterReport() {
   return posts().map(p => {
     const b = boxes(p);
     const H = hit(b.less);
-    return { key: p.key, job: p.job, n: S[p.job], hats: hats(p.job), worn: worn(p.job),
+    return { key: p.key, job: p.job, station: p.station || null, n: count(p), hats: hats(p.job), worn: worn(p.job),
              spareKit: spareKit(p.job), fixed: !!p.fixed, hitW: H.w, hitH: H.h,
-             room: Math.min(99, roomAt(p.job)),
+             room: p.station ? 1 - count(p) : Math.min(99, roomAt(p.job)),
              // What the station holds now (1 while a machine runs) and what it
              // would hold by hand; without both a check cannot tell a capped
              // station from a small one.
-             cap: capOf(p.job) === Infinity ? null : capOf(p.job),
+             cap: p.station ? 1 : capOf(p.job) === Infinity ? null : capOf(p.job),
              // Whether it is *working* is `n`, two fields up.
              machine: machineAt(p.job),
              run: (b => [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2])(boxes(p)),

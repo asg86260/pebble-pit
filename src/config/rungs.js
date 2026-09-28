@@ -66,19 +66,26 @@ export const LADDERS = {
   'potency-stew':   { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % quicker
   'potency-strong': { value: [25, 30, 35, 40, 45, 50, 55, 60, 70], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // % stronger
   'potency-brace':  { value: [8, 9, 10, 11, 12, 14, 15, 20, 25], dust: [1000, 1500, 2000, 2500, 3000, 4500, 6000, 9000] },  // points of crit
-  // --- the deep: the serpent's weapons -----------------------------------------
-  // The deep's ladders lead with scales, not dust: the `dust` column here is
-  // the scale a rung costs (`lead: 'scale'` in tierRows), and the bands add
-  // dust, ore and a spark on top of it (docs/wave-serpent.md).
-  punch:        { value: [1, 2, 3, 5, 8, 12, 18, 26, 40], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },            // damage a punch
-  brawl:        { value: [0.5, 0.7, 1, 1.3, 1.6, 2, 2.5, 3, 4], dust: [25, 50, 100, 200, 400, 700, 1200, 2000] },   // punches a second, a brawler
-  lance:        { value: [2, 3, 5, 8, 12, 18, 26, 40, 60], dust: [40, 80, 150, 300, 600, 1000, 1700, 2800] },       // bleed a second, a lance
-  lancehold:    { value: [4, 5, 6, 8, 10, 12, 15, 18, 22], dust: [40, 80, 150, 300, 600, 1000, 1700, 2800] },       // seconds a lance holds
-  grenade:      { value: [10, 15, 25, 40, 60, 90, 130, 190, 280], dust: [120, 240, 450, 900, 1600, 2800, 4500, 7000] }, // damage a length, a burst
-  grenadepace:  { value: [4, 5, 6, 8, 10, 12, 15, 18, 22], dust: [120, 240, 450, 900, 1600, 2800, 4500, 7000] },    // grenades a minute, a grenadier
-  sigil:        { value: [1, 2, 3, 4, 5, 6, 7, 8, 9], dust: [120, 240, 450, 900, 1600, 2800, 4500, 7000] },         // circles the floor holds
-  beam:         { value: [20, 30, 45, 65, 90, 130, 180, 250, 350], dust: [400, 800, 1500, 2800, 5000, 8000, 12000, 18000] }, // damage a second, a wizard
-  curse:        { value: [0, 5, 10, 15, 20, 25, 30, 35, 40], dust: [400, 800, 1500, 2800, 5000, 8000, 12000, 18000] }  // % off the heal
+  // --- the deep: the party's classes -------------------------------------------
+  // One ladder a class (docs/serpent-classes.md section 0), climbed on a
+  // station's rails: rung 4 brings the class's move, rung 8 its capstone, and
+  // every rung raises the number below. The deep's ladders lead with scales,
+  // not dust: the `dust` column here is the scale a rung costs (`lead:
+  // 'scale'` in tierRows), and the bands add dust, ore and a spark on top of
+  // it. First guesses for the ladder book: a damage class's value is its
+  // blow, sized so the classes deal about the same a second at the same rung
+  // -- about 3 at rung 0, so each breaks the bare coil alone -- and the Bard's
+  // is the share the other fighters' hits rise by while she sings, in percent.
+  brawler:  { value: [4, 6, 10, 14, 22, 34, 50, 77, 115], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a punch, every 1.2 s
+  sword:    { value: [3, 5, 8, 12, 18, 28, 42, 64, 96], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg a cut, every 1 s, and it bleeds
+  monk:     { value: [4, 6, 9, 13, 19, 29, 44, 66, 99], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a palm, every 1 s
+  martial:  { value: [1, 1.7, 2.7, 4, 6, 9.3, 14, 21, 32], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a thrust, three a second
+  ranger:   { value: [2.4, 4, 6.4, 9.6, 14, 22, 34, 51, 77], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg an arrow, every 0.8 s
+  assassin: { value: [4.5, 7.5, 12, 18, 27, 42, 63, 96, 144], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },        // dmg a stab, every 1.5 s
+  hexer:    { value: [20, 32, 50, 75, 110, 170, 250, 380, 570], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },     // dmg a hex, every 5 s
+  sapper:   { value: [18, 30, 48, 72, 108, 168, 252, 384, 576], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },   // dmg a charge, every 6 s
+  mage:     { value: [3, 5, 8, 12, 18, 28, 42, 64, 96], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a second, the beam held
+  bard:     { value: [10, 11, 12, 13, 14, 16, 18, 20, 22], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }       // % the others' hits rise, Inspired
 };
 
 // A ladder's value at a rung: the foot below nought, the top past the end. A

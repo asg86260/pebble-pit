@@ -26,32 +26,31 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
          DEEP_SURFACE, DEEP_WATER_DEPTH,
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
-         DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_CHURN, DEEP_CHURN_LIFE, DEEP_MOTES_MAX } from '../config.js';
+         DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_MOTES_MAX } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, podAt,
-         spriteRect, standOf, waterShift } from '../deep/place.js';
+         waterShift } from '../deep/place.js';
 import { paintAbyssField } from './abyssfield.js';
 import { abyssLine } from '../pit.js';
 import { SPRITES, CRUSHER_SPRITES } from '../deep/sprites.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
-import { raw, darkPage, turned } from '../ink.js';
+import { raw, darkPage } from '../ink.js';
 import { ctx } from './ctx.js';
 import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
+import * as place from '../deep/place.js';
+import { SCAFFOLD_BANDS } from '../config.js';
+import { TYPE } from '../jobs.js';
+import { GREYS, PURPLES, seen } from './deeptones.js';
+
+const isFighter = w => w.type === TYPE.FIGHTER;
 
 // --- the inverted palette ---------------------------------------------------------
-// A tone as it is to be seen, turned into what is drawn to get it. On the
-// light page, every channel flipped, which the difference flips back; on the
-// dark page, the lightness turned over with the hue kept, which the page's
-// own map turns back -- a channel flip there would come out the complement,
-// the purples green.
-const xor = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
-const flip = darkPage ? turned : xor;
-const seen = flip;
-export const GREYS = ABYSS_TONES.map(flip);         // the deep's grey ramp, black to white as seen
-export const PURPLES = ABYSS_MAGIC_TONES.map(flip); // and its purple one
+// A tone as it is to be seen, turned into what is drawn to get it (render/deeptones.js).
+const flip = seen;
+export { GREYS, PURPLES };
 const MOTE_TONES = Object.fromEntries(Object.entries(DEEP_MOTE_TINTS)
   .map(([k, v]) => [k, { tones: v.tones.map(flip), ink: v.ink }]));
 
@@ -139,13 +138,6 @@ export function bedTop(x) {
 // these are the tones their characters are seen in.
 const SPRITE_INK = {
   '#': seen('#ffffff'), '+': GREYS[9], '-': GREYS[6], 'o': seen('#000000'), '*': PURPLES[11]
-};
-
-// Which of them stands: the altar from the snatch, each other door once it
-// is open.
-const STANDS = {
-  altar: () => S.snatched, well: () => S.wellOpen, font: () => S.fontOpen,
-  circle: () => S.circleOpen, spire: () => S.spireOpen
 };
 
 // The dome over a station: walls from the floor to DOME_WALL above the
@@ -300,19 +292,29 @@ function drawPods() {
   }
 }
 
+// --- the party's stations, at their slots -----------------------------------------
+// The floor's slots (docs/wave-party.md): any kind at any slot, more than one
+// of a kind. A kind's drawing is `SPRITES[kind]`, and where it stands is
+// place.js's (`spriteRectOfStation`, `standOfStation`), the one answer the
+// pointer, the works and the roster read too.
+const snap = v => Math.round(v / P) * P;
+function placed(st) {
+  const rows = SPRITES[st.kind];
+  if (!rows || st.slot == null) return null;
+  return { rows, s: place.spriteRectOfStation(st), stand: place.standOfStation(st) };
+}
+
 // A station and its dome never change once they stand, so each is painted
 // once into an image of its own, a world pixel a pixel, and drawn from there:
 // several hundred cells a station were a fillRect each, every frame. Kept by
-// where it stands, so a station that moves (a resize, a sprite edited in the
-// station editor) is painted afresh.
+// the station and where it stands, so a station that moves (a resize, a
+// sprite edited in the station editor) is painted afresh.
 const painted = new Map();
-function stationImage(key) {
-  const rows = SPRITES[key];
-  const s = spriteRect(key), stand = standOf(key);
+function stationImage(key, rows, s, stand) {
   const r = (stand.w + DOME_PAD * 2) / 2;
   const x = stand.x - DOME_PAD, y = Math.round((stand.y - DOME_WALL - r) / P) * P - P;
   const w = stand.w + DOME_PAD * 2, h = deepFloor() - y;
-  const id = `${key}|${x}|${y}|${rows.join('')}`;
+  const id = `${x}|${y}|${rows.join('')}`;
   const had = painted.get(key);
   if (had && had.id === id) return had;
   const img = document.createElement('canvas');
@@ -333,17 +335,31 @@ function stationImage(key) {
   return out;
 }
 
+// A station not built yet stands as a building site does (render/buildsites.js):
+// a striped post each side of the ground it will stand on and the tape
+// between them at head height, until a delver's work lands.
+function drawScaffold(stand) {
+  const postW = P * 2, postH = P * SCAFFOLD_BANDS;
+  const left = snap(stand.x) - P * 3 - postW, right = snap(stand.x + stand.w) + P * 3;
+  const top = deepFloor() - postH;
+  ctx.fillStyle = GREYS[9];
+  for (const x of [left, right]) for (let i = 0; i < SCAFFOLD_BANDS; i += 2) ctx.fillRect(x, top + i * P, postW, P);
+  for (let x = left + postW; x < right; x += P * 2) ctx.fillRect(x, deepFloor() - P * 3, P, 2);
+}
+
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
   if (S.snatched) drawCrusher();
   drawPods();
   const smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  for (const key in SPRITES) {
-    if (!STANDS[key]()) continue;
-    const { x: left, w } = spriteRect(key);
-    if (left - DOME_PAD > x1 || left + w + DOME_PAD < x0) continue;
-    const p = stationImage(key);
+  for (const st of S.stations || []) {
+    const at = placed(st);
+    if (!at) continue;
+    const { rows, s, stand } = at;
+    if (s.x - DOME_PAD > x1 || s.x + s.w + DOME_PAD < x0) continue;
+    if (!st.built) { drawScaffold(stand); continue; }
+    const p = stationImage(st.id, rows, s, stand);
     ctx.drawImage(p.img, p.x, p.y);
   }
   ctx.imageSmoothingEnabled = smooth;
@@ -351,11 +367,10 @@ export function drawDeepStations() {
 }
 
 // --- the motes -------------------------------------------------------------------
-// Silt hanging in the water, flecks shed off the coil, the churn off a burst.
+// Silt hanging in the water, and flecks shed off the coil.
 // Drawing only: they are stepped here, on the frame's own clock, never by the
 // sim, and live on `S.deepMotes` so a reload starts the water afresh.
 let motesAt = 0, fleckOwed = 0;
-const burst = new WeakSet();
 
 const current = (y, t) => DEEP_CURRENT * Math.sin(t / DEEP_CURRENT_MS * Math.PI * 2 + y / (P * 40));
 
@@ -391,15 +406,6 @@ function stepMotes() {
       if (p.x >= x0 && p.x < x1 && list.length < DEEP_MOTES_MAX)
         mote('fleck', p.x + (Math.random() - 0.5) * P * 4, p.y + (Math.random() - 0.5) * P * 4,
              0, 0.1, DEEP_FLECK_LIFE * 1000);
-    }
-  }
-  // The churn off a burst: once per ring, thrown outward and slowing.
-  for (const r of S.rings) {
-    if (burst.has(r)) continue;
-    burst.add(r);
-    for (let i = 0; i < DEEP_CHURN && list.length < DEEP_MOTES_MAX; i++) {
-      const a = Math.random() * Math.PI * 2, v = 0.5 + Math.random() * 1.5;
-      mote('churn', r.x, r.y, Math.cos(a) * v, Math.sin(a) * v, DEEP_CHURN_LIFE * 1000 * (0.5 + Math.random() * 0.5));
     }
   }
   let n = 0;
@@ -449,9 +455,13 @@ export function drawSwimmers() {
   ctx.clip();
   for (const w of S.workers) {
     if (w.lifted || !inTheDeep(w)) continue;   // the one in your hand: `drawHeld`
+    // a fighter at a built station is the fighters' layer's (render/arms.js)
+    if (isFighter(w) && (S.stations || []).some(st => st.built && st.id === w.station)) continue;
     const x = Math.round(w.x), y = Math.round(w.y);
     drawBody(x, y);
-    // A gatherer's handful, overhead two abreast, each scale as it is.
+    // A gatherer's handful, overhead two abreast, each scale as it is. A
+    // fang in its arms is the fang's own to draw, over its head
+    // (render/scales.js).
     for (let i = 0; i < Math.min(w.carry || 0, 24); i++) {
       drawMark(w.load?.[i] || 1, x + (WORKER - P * 2) / 2 + (i % 2) * P + P / 2,
                y - P * (Math.floor(i / 2) + 1) + P / 2);

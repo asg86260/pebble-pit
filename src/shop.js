@@ -401,6 +401,10 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
       // lingered on it buys nothing, and a long press asks about the row
       // instead, which is what a hover did for a mouse.
       else onTap(b, () => {
+        // While the strip stands its halves are the only presses on the
+        // card: a body that also bought was a buy nobody could see
+        // (DESIGN.md, "Refund and another").
+        if (b.classList.contains('stripped')) return;
         tookLook();                            // anything the yard sent earlier
         buy(u);
         // The press answers on its own frame: the row it took goes, the next
@@ -625,7 +629,7 @@ export function refresh(el, list, headcount) {
       // line is a plan: the outline and nothing in it.
       const rows = glyphFor(u.key);
       const plan = firstWaits(u);
-      wearGlyph(row, u.key, tintOf(u), '#000', plan ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), plan ? [] : handsFor(u.key));
+      wearGlyph(row, u.key, tintOf(u, mine), '#000', plan ? 'plan' : Math.floor(progressOf(mine) * cellsOf(rows)), plan ? [] : handsFor(u.key));
     } else if (pic) {
       const tint = tintOf(u);
       // A climbed ladder is drawn full: its bill clamps to the top band, so
@@ -740,7 +744,8 @@ export function refresh(el, list, headcount) {
     const off = u.price ? !!u.dead?.() : !!waits || !canPay(u);
     grey(row, off && !stands);
     // The hover, the lift and the lean key off `off`, never off `disabled`.
-    row.classList.toggle('off', off);
+    // A card with its strip up is not pressed itself, so it does not lift.
+    row.classList.toggle('off', off || stands);
   }
   if (el.classList.contains('shelves')) phaseDots(el);
 }

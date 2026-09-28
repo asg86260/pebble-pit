@@ -51,7 +51,7 @@ group('going down puts the camera in the deep, and going up brings it back', asy
 // yard's.
 group('a hop keeps to the half on screen', async () => {
   deepYard();
-  S.wellOpen = S.fontOpen = true;
+  window.__party({ stations: [{ kind: 'altar' }, { kind: 'well' }] });
   const walk = () => {
     const seen = [];
     let at = S.worldW, to;
@@ -62,7 +62,7 @@ group('a hop keeps to the half on screen', async () => {
   const up = walk();
   window.__view('deep');
   const down = walk();
-  const DEEP = ['pods', 'altar', 'well', 'font'];
+  const DEEP = ['pods', 's1', 's2'];
   return [
     ok(up.length > 0 && !up.some(k => DEEP.includes(k)), 'from the yard, only the yard', up.join(', ')),
     ok(down.length === DEEP.length && down.every(k => DEEP.includes(k)), 'from the deep, only the deep', down.join(', '))

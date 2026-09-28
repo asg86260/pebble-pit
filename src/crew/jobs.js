@@ -44,9 +44,10 @@ import { newPurifier, stepPurifier } from '../filter.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
 import { quarryMuck, plotMuck } from '../smog.js';
-import { newBrawler, newLancer, newGrenadier, newScribe, newWarlock, newGatherer } from './deep.js';
+import { newFighter, newGatherer } from './deep.js';
+import { stepFighter } from '../deep/classes.js';
 import { stepGatherer } from '../deep/gather.js';
-import { stepBrawler, stepLancer, stepGrenadier, stepScribe, stepWarlock } from '../deep/arms.js';
+import { fightersOn, carryFang, fetchFang } from '../deep/party.js';
 
 export const JOBS = {
   [TYPE.ROCK]: {
@@ -121,39 +122,21 @@ export const JOBS = {
     step: { work: (w, c) => stepWizard(w, c.now) }
   },
 
-  // The deep's five (docs/wave-serpent.md): down the shaft, where nothing of
-  // the yard's reaches -- no mess, no door, no rock to dodge. What each does
-  // at its station is the weapon's (deep/arms.js).
-  [TYPE.BRAWL]: {
-    factory: newBrawler,
-    want: () => S.brawlers,
-    step: { work: (w, c) => stepBrawler(w, c) }
+  // The deep's fighters (docs/wave-party.md): down the shaft, where nothing
+  // of the yard's reaches -- no mess, no door, no rock to dodge. One a
+  // manned station; what each does there is its station's class, and a
+  // fang on the floor is fetched by the nearest when no gatherer is free.
+  [TYPE.FIGHTER]: {
+    factory: newFighter,
+    want: () => fightersOn(),
+    step: { work: (w, c) => fetchFang(w) || stepFighter(w, c) }
   },
-  [TYPE.LANCE]: {
-    factory: newLancer,
-    want: () => S.lancers,
-    step: { work: (w, c) => stepLancer(w, c) }
-  },
-  [TYPE.GRENADE]: {
-    factory: newGrenadier,
-    want: () => S.grenadiers,
-    step: { work: (w, c) => stepGrenadier(w, c) }
-  },
-  [TYPE.SCRIBE]: {
-    factory: newScribe,
-    want: () => S.scribes,
-    step: { work: (w, c) => stepScribe(w, c) }
-  },
-  [TYPE.WARLOCK]: {
-    factory: newWarlock,
-    want: () => S.warlocks,
-    step: { work: (w, c) => stepWarlock(w, c) }
-  },
-  // The deep's haulers: the floor's loose scales into the crusher.
+  // The deep's haulers: the floor's loose scales into the crusher, and a
+  // fang lying there before any of them.
   [TYPE.GATHER]: {
     factory: newGatherer,
     want: () => S.gatherers,
-    step: { work: (w, c) => stepGatherer(w, c) }
+    step: { work: (w, c) => carryFang(w) || stepGatherer(w, c) }
   },
 
   [TYPE.BUILD]: {
@@ -192,6 +175,19 @@ export const wanted = () => {
   return want;
 };
 
+// Who a body is, for anything that names one body rather than a count (a
+// station's fighter, deep/party.js): one past the highest any body or
+// station holds, so none is handed out twice. Saved with the body (`KEEPS`);
+// a body read back without one, or holding one another body read back
+// first, is given a new one by `syncWorkers` (`ownUids`).
+const uidNum = u => (typeof u === 'string' && u[0] === 'u' ? +u.slice(1) || 0 : 0);
+export const newUid = () => {
+  let m = 0;
+  for (const w of S.workers) m = Math.max(m, uidNum(w.uid));
+  for (const st of S.stations) m = Math.max(m, uidNum(st.fighter));
+  return `u${m + 1}`;
+};
+
 // Every body gets a rhythm of its own (`ph`, `sp`), handed out here where
 // every body is made: a factory that forgets them multiplies a position by
 // the sine of `undefined`, and a body at NaN is a body nowhere. The `?.()` is
@@ -201,6 +197,7 @@ export const FACTORY = type => {
   const made = {
     ph: rand() * Math.PI * 2,
     sp: 0.5 + rand() * 0.9,
+    uid: newUid(),
     ...(JOBS[type]?.factory() || {})
   };
   // And its feet on the ground under it, asked here once: a factory that

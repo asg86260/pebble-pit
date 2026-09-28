@@ -1,15 +1,17 @@
-// The deep's stations, as drawn: each a cell a character, in the tones they
-// are seen in: `#` the white of anything made, `+` and `-` its greys, `o` the
-// black water held in it, `*` the abyss's purple, `.` nothing. Each is its
-// weapon's shape: the altar a black bag hung off a gibbet, a tentacle up out
-// of the floor wound twice round it and curled over its top, the well a
-// trestle rack with four barbed lances stood up through its bar, their butts
-// in a trough of black water, the font a stone basin brimming with black
-// water, a purple thread rising off it to a grenade held over it and ripples
-// curling up both sides, the circle its own ring stood on edge, a white hoop
-// of black water with a purple star bound in it, on a plinth over the same
-// ring laid flat on the floor, the spire a black obelisk with purple runes
-// winding up it and a white crystal with a purple heart throwing rays on top.
+// The deep's stations, as drawn, one a kind: each a cell a character, in the
+// tones they are seen in: `#` the white of anything made, `+` and `-` its
+// greys, `o` the black water held in it, `*` the abyss's purple, `.` nothing.
+// The altar a black bag hung off a gibbet, a tentacle up out of the floor
+// wound twice round it and curled over its top, the well a trestle rack with
+// four barbed lances stood up through its bar, their butts in a trough of
+// black water, the armory a stone basin brimming with black water, a purple
+// thread rising off it to a grenade held over it and ripples curling up both
+// sides (the drawing the font had, under the kind's own key), the circle its
+// own ring stood on edge, a white hoop of black water with a purple star
+// bound in it, on a plinth over the same ring laid flat on the floor, the
+// spire a black obelisk with purple runes winding up it and a white crystal
+// with a purple heart throwing rays on top. Keyed by the kind, so two altars
+// are one drawing standing at two slots (`standOfStation` in place.js).
 //
 // A cell here is a cell on the screen: drawn at one to one, so what is
 // painted in the station editor (stations.html) is what the deep shows. A
@@ -62,7 +64,7 @@ export const SPRITES = {
     '#+oooooo*oo*oooooo-#',
     '####################'
   ],
-  font: [
+  armory: [
     '........####........',
     '.......#o**o#.......',
     '......-#*oo*#-......',

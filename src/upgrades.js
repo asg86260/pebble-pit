@@ -206,8 +206,10 @@ export const billOf = u => {
 // bill clamps to the top band), so a done row still shows what it took; the
 // row being greyed is what says done. The card and the mark over a station
 // that finished the row wear the same one.
-export const tintOf = u => {
-  const coins = billOf(u).map(([m]) => m);
+// A work is drawn in the stroke of the bill it was paid, kept on it: the
+// row's own bill is the next copy's once copies are queued.
+export const tintOf = (u, w = null) => {
+  const coins = (w?.bill || billOf(u)).map(([m]) => m);
   return coins.includes('spark') ? SHELF_INK.spark
        : coins.includes('shard') ? SHELF_INK.shard
        : coins.includes('spore') ? SHELF_INK.spore

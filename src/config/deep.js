@@ -1,6 +1,5 @@
 // --- the deep: the serpent's half ---------------------------------------------
-// The place under the drowned pit, the serpent in it, and the weapons made of
-// it. See "The serpent: the second half of the game" in DESIGN.md and
+// The place under the drowned pit, the serpent in it, and the fight. See "The serpent: the second half of the game" in DESIGN.md and
 // docs/wave-serpent.md. Every number here is a first guess: the heals and the
 // depths are the second half's `ABYSS_AT`, and they are tuned against the
 // first half's length once the whole half can be played.
@@ -81,33 +80,48 @@ export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this 
 // breaks the stage at its depth; the fourth depth is the belly.
 export let SERPENT_HEAL = [1, 6, 20, 60];           // wound a second it closes, a stage
 export let SERPENT_WOUND = [60, 900, 6000, 30000];  // the depth that breaks it, a stage
-// How hard each defense is on each weapon: a multiplier, a stage. The answer
-// to a stage is the big number in its column; a glancing weapon still lands a
-// little, so no station goes dead when the stage turns.
+// How hard each defense is on each hit: a multiplier, a phase. Every class
+// that does damage takes half in one phase and the whole in the rest, so no
+// class walls and none is the answer to everything (docs/wave-party.md). The
+// click is a punch of its own, whole in every phase.
 export const SERPENT_DEFENSE = {
-  punch:   [1, 0.15, 0.1, 0.05],
-  lance:   [1, 1, 0.3, 0.1],
-  grenade: [1, 0.5, 1, 0.1],
-  beam:    [1, 1, 1, 1],
-  star:    [1, 1, 1, 1]
+  punch:    [1, 1, 1, 1],
+  brawler:  [1, 0.5, 1, 1],
+  sword:    [1, 1, 0.5, 1],
+  monk:     [0.5, 1, 1, 1],
+  martial:  [1, 0.5, 1, 1],
+  ranger:   [1, 1, 1, 0.5],
+  assassin: [1, 1, 0.5, 1],
+  sapper:   [1, 1, 0.5, 1],
+  hexer:    [0.5, 1, 1, 1],
+  mage:     [1, 1, 0.5, 1]
 };
-// A heavy blow stuns (DESIGN.md, "Blows land: the burst and the stun"): one
-// blow worth STUN_SHARE of the stage's depth or more seizes the coil and
-// stops the heal. A share rather than a number, measured against today's
-// weapons: a punch from rung 1 stuns the bare coil (depth 60), a grenade
-// burst from rung 4 the warded coil and from rung 7 the split one, and a
-// star every stage -- the fading one where a wizard lights it, or unlit
-// from its last rung. Longer for a bigger blow, on the square
-// root of how many times over the share it was; a new stun keeps the longer
-// of the two, and none can start in the grace after one ends.
+// A stunning blow seizes the coil and stops the heal (DESIGN.md, "Blows land:
+// the burst and the stun"). Only the moves that stun do it -- the haymaker,
+// the chi palm, the aimed shot at its capstone, the sticky charge -- and the
+// Mage's finishing blow when it is worth STUN_SHARE of the phase's depth. A
+// stun lasts STUN_BASE_S, longer on the square root of how many times over
+// the share the blow was, up to STUN_MAX_S; a new stun keeps the longer of
+// the two, and none can start in the grace after one ends.
 export let STUN_SHARE = 0.03;        // a blow's share of the stage's depth that stuns
 export let STUN_BASE_S = 1.5;        // seconds a blow of exactly the share stuns for
 export let STUN_MAX_S = 5;           // and the longest any blow does
 export let STUN_GRACE_S = 4;         // seconds after a stun ends before another can start
-export const FADE_UNLIT = 0.1;       // stage four: what a hit on a coil no wizard has lit is worth
-export const SIGIL_HEAL_CUT = 0.12;  // the heal a drawn sigil takes off, each
-export const SIGIL_CUT_MAX = 0.8;    // and all of them together, at most
-export const CURSE_CUT_MAX = 0.6;    // the wizards' curse, at most, on top
+// The click in the deep is always a punch, worth this on the first station's
+// rung: the hand grows with the first fighter's ladder.
+export const CLICK_DMG = [1, 2, 3, 5, 8, 12, 18, 26, 40];
+
+// --- statuses ----------------------------------------------------------------------
+// Laid on the whole serpent (deep/statuses.js): Bleeding ticks, Exposed takes
+// more from everything, Held neither heals nor sways, Weakened heals less. On
+// a fighter: Inspired hits harder, Hasted swings sooner. What raises a hit --
+// Exposed, Held's share at the Hexer's capstone, Inspired -- is added up and
+// multiplied in once, at most AMP_MAX more; what cuts the heal, at most
+// HEAL_CUT_MAX of it.
+export const EXPOSED_AMP = 0.25;     // Exposed: this much more from everything
+export const AMP_MAX = 1;            // every amp together, at most
+export const HEAL_CUT_MAX = 0.6;     // every heal cut together, at most
+export const HASTE = 0.2;            // Hasted: this much more often
 
 // --- scales ------------------------------------------------------------------------
 // A hit knocks scales loose in proportion to what it did. They fall through
@@ -179,37 +193,12 @@ export const DEEP_REST_CROUCH_MS = [500, 1000];
 export const DEEP_REST_HEADROOM = P * 30;
 export const DEEP_REST_SILT = 4;                  // silt a landing kicks up
 
-// --- the weapons -------------------------------------------------------------------
-// What a rung buys is in LADDERS (config/rungs.js): punch, brawl, lance,
-// lancehold, grenade, grenadepace, sigil, beam, curse. These are the fixed
-// parts of each weapon.
-export const LANCE_DRAW_S = 2;       // seconds at the well to draw a lance
-export const LANCE_FLY = 0.6;        // seconds a thrown lance is in the water
-export const GRENADE_DRAW_S = 3;     // seconds at the armory to hold a grenade
-export const GRENADE_R = P * 14;     // a burst's rings reach this far
-export const GRENADE_RING_S = 0.8;   // and take this long to
-export const SIGIL_DRAW_S = 20;      // seconds a scribe takes to draw one circle
-export const BEAM_REACH = P * 140;   // how far a wizard's beam reaches from the spire
-// The weapons that hurt for as long as they are held -- a stuck lance, a beam
-// -- strike in ticks of this long, each tick a hit that sheds its own scales:
-// a hit a frame would shed a scale a frame whatever the damage was.
+// --- the fighters -------------------------------------------------------------------
+// The class numbers are in config/classes.js. What hurts for as long as it is
+// held -- the Mage's beam, a bleed -- strikes in ticks of this long, each tick
+// a hit that sheds its own scales: a hit a frame would shed a scale a frame
+// whatever the damage was.
 export const DOT_TICK_S = 0.5;
-export const PUNCH_REACH = P * 3;    // how close to a segment a brawler has to be to land one
-export const LANCE_THROW_R = P * 24; // a lancer throws from this far off the coil
-export const GRENADE_FLY_S = 1.6;    // a grenade's aimed time in the water, the armory to the coil
-export const SIGIL_GAP = P * 10;     // circles drawn this far apart, either side of the circle
-export const BEAM_LIGHT = 4;         // segments either side of where a beam touches that it lights
-// The called star: a machine, in sparks, with a short spark ladder of its own
-// (like MACHINE_TUNE_SPARKS). A star every STAR_EVERY_S[rung] seconds, doing
-// STAR_DMG[rung] where it lands.
-export const STAR_SPARKS = 400;                  // the machine
-export const STAR_TUNE_SPARKS = [600, 1000, 1600]; // its three rungs
-export const STAR_EVERY_S = [90, 70, 50, 35];
-export const STAR_DMG = [3000, 4500, 7000, 10000];
-export const STAR_FALL_S = 4;        // from the yard's sky to the surface
-export const STAR_SKY_H = P * 120;   // how high over the ground it is first seen
-export const STAR_UNDER_S = 0.8;     // under the surface, down the shaft, unseen
-export const STAR_DEEP_S = 1.5;      // from the deep's ceiling to the coil
 
 export const DEEP_KNOBS = [
   { key: 'SERPENT_HEAL_1', label: 'serpent heal, bare', min: 0, max: 20, step: 0.5,

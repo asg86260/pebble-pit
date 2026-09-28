@@ -104,9 +104,9 @@ const rowsOf = key => edits[key] || COMMITTED[key];
 const save = () => { localStorage.setItem(SPRITES_KEY, JSON.stringify(edits)); };
 
 let key = Object.keys(COMMITTED)[0], tone = '#';
-// A station is listed by the name the player reads, off the game frame once
-// it is up; the sprite key until then, and for a drawing no station owns.
-const shown = k => yard()?.__siteName?.(k)?.replace(/^the /, '') || k;
+// A drawing is listed by its kind, the name the player reads without its
+// article: a kind is a drawing, whichever station of the party stands in it.
+const shown = k => k;
 
 // --- the list and the tones -----------------------------------------------------
 const names = document.getElementById('names');
@@ -115,7 +115,7 @@ function list() {
     const b = document.createElement('button');
     b.textContent = shown(k);
     b.className = (k === key ? 'on ' : '') + (edits[k] ? 'edited' : '');
-    b.onclick = () => { key = k; draw(); lookAt(); };
+    b.onclick = () => { key = k; standKind(); draw(); lookAt(); };
     return b;
   }));
 }
@@ -296,12 +296,23 @@ function reloadGame() { frame.src = `./play.html?bench&t=${Date.now()}`; }
 frame.addEventListener('load', () => {
   const stand = () => {
     const w = yard();
-    if (!w?.__scene || !w.__reset || !w.__deepZoom) return setTimeout(stand, 50);
-    w.__scene('deep-all');
+    if (!w?.__scene || !w.__party || !w.__deepZoom) return setTimeout(stand, 50);
+    standKind();
     draw(); lookAt();
   };
   stand();
 });
+// The drawing being painted, standing as a station of the party: the deep
+// with one station up, of the kind being edited, at the first slot (`__party`
+// in hooks.js). A station is keyed by its id, not its kind, so the one it
+// stands is the one looked at.
+const STANDING = 's1';
+function standKind() {
+  const w = yard();
+  if (!w?.__party) return;
+  w.__scene('party-start');
+  w.__party({ stations: [{ kind: key }] });
+}
 // Pulled in on the station: the deep's floor stays on the frame's foot (the
 // game's own framing), and the zoom is the one at which the station's dome
 // fills DOME_SHARE of the frame's height or width, whichever is tighter. The
@@ -310,7 +321,7 @@ const DOME_SHARE = 1 / 2;
 function lookAt() {
   const w = yard();
   if (!w?.__siteBox || !w.__look || !w.__deepZoom) return;
-  const box = w.__siteBox(key);
+  const box = w.__siteBox(STANDING);
   if (!box) return;
   // the dome round the drawing, as drawDome lays it out
   const domeW = box.w + DOME_PAD * 2;

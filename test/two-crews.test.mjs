@@ -3,18 +3,18 @@
 // by its pods, builds its own works with its own hands, and nobody crosses
 // between the halves. The player's way down is the wizards' portal. Every
 // move here is made the player's way -- a row bought, a roster pressed, a
-// body picked up -- and the deep itself is set up with the hooks.
+// body picked up, a station off the floating build button -- and the deep
+// itself is set up with the hooks.
 
 import { group, ok, run, runUntil, state } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { WORKER } from '../src/config.js';
-import { rosterHit } from '../src/roster.js';
 import { belowYard } from '../src/route.js';
 import { deepFloor, deepTop } from '../src/deep/place.js';
 import { goDeep } from '../src/view.js';
+import { stationById } from '../src/deep/party.js';
+import { pressBuild } from './party-press.mjs';
 
-const post = key => state().roster.find(p => p.key === key);
-const press = (key, which) => { const p = post(key); return !!p && rosterHit(p[which][0], p[which][1]); };
 const below = () => S.workers.filter(w => belowYard(w));
 
 // A yard past the snatch: every site built, the sqwife gone after him.
@@ -38,7 +38,8 @@ group("after the snatch the deep's crew is the sqwife alone, and a yard hire sta
     if (below().some(w => !deep0.includes(w.name))) down++;
   }
   return [
-    ok(deep0.length === 1 && S.deepCrew === 1 && S.brawlers === 1, "the deep's one hand, at the altar", `${deep0.length} below`),
+    ok(deep0.length === 1 && S.deepCrew === 1 && S.fighters === 0 && below()[0].type === 'gatherer',
+       "the deep's one hand, spare until a station stands", `${deep0.length} below`),
     ok(S.pods === 1, 'living in the first pod', `pods ${S.pods}`),
     ok(bought, 'a room is bought'),
     ok(down === 0, 'and the new hand never goes down', `${down} frames with a stranger below`)
@@ -48,25 +49,30 @@ group("after the snatch the deep's crew is the sqwife alone, and a yard hire sta
 group("a pod is built by the deep's own hand, and its body is the deep's", async () => {
   twoCrews();
   runUntil(() => below().length === 1 && !below()[0].falling, 30);
+  const her = below()[0].name;
+  pressBuild('altar');
+  window.__finish();
+  runUntil(() => S.workers.find(w => w.name === her)?.type === 'fighter', 30);
   const yard = S.workers.filter(w => !belowYard(w)).map(w => w.name);
   window.__scales(99999);
   const bought = window.__buy('pod');
-  let delver = null, offAltar = false, yardDown = false;
+  let delver = null, offStation = false, yardDown = false;
   for (let f = 0; f < 60 * 240 && S.pods < 2; f++) {
     run(1 / 60);
     const d = S.workers.find(w => w.type === 'delver');
     if (d) delver = { name: d.name, below: belowYard(d) };
-    if (S.brawlers === 0) offAltar = true;
+    if (!stationById('s1').fighter) offStation = true;
     if (S.workers.some(w => yard.includes(w.name) && belowYard(w))) yardDown = true;
   }
   run(5);
+  const back = S.workers.find(w => w.name === her);
   return [
     ok(bought, 'the pods sell another pod'),
-    ok(delver && delver.below, 'a deep builder puts it up, down there', JSON.stringify(delver)),
-    ok(offAltar, 'with nobody spare, the sqwife leaves the altar to build it'),
+    ok(delver && delver.below && delver.name === her, 'a deep builder puts it up, down there', JSON.stringify(delver)),
+    ok(offStation, 'with nobody spare, the sqwife leaves her station to build it'),
     ok(!yardDown, "and none of the yard's hands went down"),
     ok(S.pods === 2 && S.deepCrew === 2 && below().length === 2, "the pod's body is the deep's", `pods ${S.pods}, deep ${S.deepCrew}`),
-    ok(S.brawlers === 1, 'and she is back at the altar', `brawlers ${S.brawlers}`)
+    ok(back.type === 'fighter' && back.station === 's1', 'and she is back at her station', `${back.type} ${back.station}`)
   ];
 });
 
@@ -96,7 +102,7 @@ group('a hand thrown in the deep sinks to its floor and stays down there', async
     ok(!left, 'it never came up out of the deep'),
     ok(jump < WORKER, 'it never jumped', `${jump.toFixed(1)}px in a frame`),
     ok(landed, "it came to rest on the deep's floor"),
-    ok(back.type === 'brawler' && belowYard(back), 'and it is still the altar\'s, down there')
+    ok(back.type === 'gatherer' && belowYard(back), "and it is still the deep's, down there", back.type)
   ];
 }, { reload: false });
 

@@ -1,24 +1,27 @@
 // Reading the fight: what the sim keeps for the numbers over the coil
-// (DESIGN.md, "Reading the fight"). A blow a body brought puts its damage in
-// the recent list, the list empties by itself, nothing of it is saved, a held
-// weapon says a second's sum and the heal says what it closed once a second.
-// Whether the digits look right is the scene's (`deep-numbers`), not this.
+// (DESIGN.md, "Reading the fight"). A blow a fighter brought puts its damage
+// in the recent list, the list empties by itself, nothing of it is saved, a
+// held beam says a second's sum and the heal says what it closed once a
+// second. Whether the digits look right is the scene's (`deep-numbers`), not
+// this.
 
 import { group, ok, yard } from './helpers.mjs';
 import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, NUM_HEAL_EVERY_S, SERPENT_DEFENSE,
-         SERPENT_HEAL, DOT_TICK_S, rungValue } from '../src/config.js';
+         SERPENT_HEAL, DOT_TICK_S, CLASSES } from '../src/config.js';
 import { EPHEMERAL } from '../src/state.js';
+import { climb, reset, openEveryClass } from './party-press.mjs';
+import { rungWorth } from '../src/deep/classes.js';
 
 const S = yard.S;
 
-// The serpent come for and the fight set, and `spare` of the deep's own
-// hands waiting on no weapon, so a weapon is manned the player's way: off the
-// roster (`__assign`), the body walking from the crusher to its station.
-function fight(spare = 1, stage = 0, wound = 0) {
+// The serpent come for and the fight set, and a station of `kind` with `cls`
+// bought on its rail to `rung`, its fighter at it.
+function fight(kind, cls, rung = 1, stage = 0, wound = 0) {
   window.__snatch({ played: true });
   window.__serpent({ stage, wound });
-  window.__crew(0, 12);
-  window.__deepCrew({ brawlers: 0, lancers: 0, grenadiers: 0, scribes: 0, warlocks: 0, spare });
+  window.__party({ stations: [{ kind, cls: null, rung: 0 }] });
+  openEveryClass();
+  return climb(S.stations[0].id, cls, rung);
 }
 // Frame by frame, and never through `run`: its reload every five seconds is
 // exactly the thing that throws the list away.
@@ -28,20 +31,19 @@ function frames(s, each = () => {}) {
 }
 const of = w => S.hits.filter(h => h.weapon === w);
 
-group('a punch puts its damage in the recent list, and the list empties by itself', async () => {
-  fight(1);
-  window.__assign('brawlers', 1);
+group("a Brawler's punch puts its damage in the recent list, and the list empties by itself", async () => {
+  const st = fight('altar', 'brawler', 1);
   let first = null;
-  frames(90, () => { first = of('punch')[0]; return !!first; });
-  const worth = rungValue('punch', S.punchLevel) * SERPENT_DEFENSE.punch[0];
+  frames(60, () => { first = of('brawler')[0]; return !!first; });
+  const worth = rungWorth(CLASSES.brawler, 1) * SERPENT_DEFENSE.brawler[0];
   const said = first && { done: first.done, x: first.x, y: first.y };
-  // The brawler off the coil, and the wound let heal shut: after that
+  // Her class taken back (a Reset), and the wound let heal shut: after that
   // nothing strikes and nothing closes, so the list has nothing to keep.
-  window.__assign('brawlers', -1);
+  reset(st.id);
   window.__serpent({ stage: 0, wound: 0 });
   frames(Math.max(NUM_LIFE_S, NUM_HEAL_LIFE_S) + 2 * NUM_HEAL_EVERY_S + 1);
   return [
-    ok(first, 'a brawler at the coil puts a punch in the recent hits'),
+    ok(first, 'a Brawler at the coil puts a punch in the recent hits'),
     ok(said && Math.abs(said.done - worth) < 1e-9, "the hit carries the blow's damage", JSON.stringify({ said, worth })),
     ok(said && Number.isFinite(said.x) && Number.isFinite(said.y), 'and where it landed'),
     ok(S.hits.length === 0, 'the list empties by itself once the numbers have faded',
@@ -50,9 +52,8 @@ group('a punch puts its damage in the recent list, and the list empties by itsel
 });
 
 group('the recent hits are never saved', async () => {
-  fight(1);
-  window.__assign('brawlers', 1);
-  const had = frames(90, () => S.hits.length > 0);
+  fight('altar', 'brawler', 1);
+  const had = frames(60, () => S.hits.length > 0);
   window.__reload();
   const raw = localStorage.getItem('boulder-clicker/v4') || '';
   return [
@@ -63,17 +64,17 @@ group('the recent hits are never saved', async () => {
   ];
 });
 
-group('a lance says its bleed once a second, not a number a tick', async () => {
-  fight(1);
-  window.__assign('lancers', 1);
+group("a Mage's beam says its ticks once a second, not a number a tick", async () => {
+  // The fading coil, whose depth one Mage never reaches: nothing breaks.
+  fight('spire', 'mage', 1, 3);
   const seen = new Map();
-  frames(60, () => { for (const h of of('lance')) seen.set(h, h.done); });
-  const tick = rungValue('lance', S.lanceLevel) * DOT_TICK_S * SERPENT_DEFENSE.lance[0];
+  frames(12, () => { for (const h of of('mage')) if (h.key) seen.set(h, h.done); });
+  const tick = rungWorth(CLASSES.mage, 1) * DOT_TICK_S * SERPENT_DEFENSE.mage[3];
   const per = NUM_HELD_S / DOT_TICK_S;                  // ticks in a said second
   const sums = [...seen.keys()].map(h => Math.round(h.done / tick));
   const full = sums.filter(n => n === per).length;
   return [
-    ok(seen.size > 2, 'a stuck lance is said, more than once', seen.size),
+    ok(seen.size > 2, 'a held beam is said, more than once', seen.size),
     ok([...seen.keys()].every(h => Math.abs(h.shut - h.at - NUM_HELD_S * 1000) < 1e-6),
        'each is said when its second is up'),
     ok(full >= sums.length / 2 && sums.every(n => n >= 1 && n <= per + 1),
@@ -82,9 +83,11 @@ group('a lance says its bleed once a second, not a number a tick', async () => {
 });
 
 group('the heal says what it closed, once a second, in its own entries', async () => {
-  // The ward's heal on a wound deep enough not to close in the watch, and no
-  // weapon on it: every entry is the heal's.
-  fight(0, 1, 400);
+  // The ward's heal on a wound deep enough not to close in the watch, and
+  // nobody fighting: every entry is the heal's.
+  window.__snatch({ played: true });
+  window.__serpent({ stage: 1, wound: 400 });
+  window.__deepCrew();
   const said = [];
   frames(6.5, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
   const gaps = said.slice(1).map((h, i) => Math.round(h.at - said[i].at));

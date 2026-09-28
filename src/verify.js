@@ -29,10 +29,11 @@ const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]))
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
 import { now } from './clock.js';
-import { JOB, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
+import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
-import { SERPENT_WOUND, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN } from './config.js';
+import { SERPENT_WOUND, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
+import { CALLED } from './deep/party.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor } from './deep/place.js';
@@ -472,20 +473,73 @@ export function verifyWorld() {
     const floor = deepFloor();
     for (const w of S.workers)
       if (w.y + WORKER > floor + 1 && !w.lifted)
-        fail("a body is under the deep's floor", `${who(w)} has its feet ${Math.round(w.y + WORKER - floor)}px under it`);
+        fail('a body is under the deep\'s floor', `${who(w)} has its feet ${Math.round(w.y + WORKER - floor)}px under it`);
     if (!(S.scales >= 0))
       fail('the crusher owes scales', `account ${S.scales}`);
-    // The deep's crew is the shaft's count, and its weapons are out of it
+    // The deep's crew is the shaft's count, and its fighters are out of it
     // (DESIGN.md, "The deep's crew is set at the shaft").
-    const weapons = DEEP_JOBS.reduce((n, j) => n + (S[j] || 0), 0);
-    if (weapons > (S.deepCrew || 0))
-      fail("the deep's weapons hold more than its crew", `${weapons} on weapons, ${S.deepCrew} down there`);
+    const fighting = DEEP_JOBS.reduce((n, j) => n + (S[j] || 0), 0);
+    if (fighting > (S.deepCrew || 0))
+      fail('the deep\'s fighters are more than its crew', `${fighting} fighting, ${S.deepCrew} down there`);
     const bodies = S.workers.filter(w => isDeepType(w.type)).length;
     if (bodies !== (S.deepCrew || 0))
-      fail("the bodies on the deep's jobs are not its crew", `${bodies} on them, ${S.deepCrew} down there`);
+      fail('the bodies on the deep\'s jobs are not its crew', `${bodies} on them, ${S.deepCrew} down there`);
     if (S.tick % LEDGER_EVERY === 0 && deepBed.grid && deepBed.n !== count(deepBed))
       fail('the bed has lost count of itself', `ledger says ${deepBed.n}, the cells say ${count(deepBed)}`);
   }
+
+  verifyParty();
+}
+
+// --- wave party: STATE -----------------------------------------------------------
+// The stations and their fighters (docs/wave-party.md). A station is built on
+// a free slot by the first pick or a fang, so there are never more than the
+// first and three fangs' worth; a fighter is seated only at a station that
+// stands, one a station, and a station holds one fighter; the serpent drops a
+// fang at each of its first breaks, so no more have dropped than breaks have
+// happened or than it has fangs to drop; and a fighter is the deep's, its
+// feet never in the yard. A station names its fighter by the body's uid, so
+// no two bodies share one, and a station manned on a call (`CALLED`) has its
+// body chosen on the same call: never so at the end of a frame. Exported so
+// a check can ask these alone of a party it stood up by hand.
+export function verifyParty() {
+  const stations = S.stations || [];
+  if (stations.length > FIGHT_STATIONS_MAX)
+    fail('more stations stand than the party holds', `${stations.length}, at most ${FIGHT_STATIONS_MAX}`);
+  const ids = new Set(), seated = new Map();
+  for (const st of stations) {
+    if (ids.has(st.id)) fail('two stations share a name', `${st.id}`);
+    ids.add(st.id);
+    if (st.fighter == null) continue;
+    if (st.fighter === CALLED) fail('a station is manned and nobody was sent to it', `${st.id} (${st.kind})`);
+    if (!st.built) fail('a fighter is seated at a station still going up', `${st.id} (${st.kind})`);
+    if (seated.has(st.fighter))
+      fail('one fighter is seated at two stations', `${st.fighter} at ${seated.get(st.fighter)} and ${st.id}`);
+    seated.set(st.fighter, st.id);
+  }
+  const uids = new Map();
+  for (const w of S.workers) {
+    if (w.uid == null) continue;
+    if (uids.has(w.uid)) fail('two bodies share a uid', `${uids.get(w.uid)} and ${who(w)}: ${w.uid}`);
+    uids.set(w.uid, who(w));
+  }
+  const at = new Map();
+  for (const w of S.workers) {
+    if (w.type !== TYPE.FIGHTER) continue;
+    const st = stations.find(s => s.id === w.station);
+    if (!st) fail('the station a fighter stands for does not exist', `${who(w)} stands for ${JSON.stringify(w.station)}`);
+    if (!st.built) fail('the station a fighter stands for is not built', `${who(w)} at ${st.id} (${st.kind})`);
+    if (at.has(st.id)) fail('two fighters stand at one station', `${at.get(st.id)} and ${who(w)} at ${st.id}`);
+    at.set(st.id, who(w));
+    if (st.fighter !== w.uid) fail('a fighter stands at a station that names another', `${who(w)} (${w.uid}) at ${st.id}, which names ${st.fighter}`);
+    // A body in the cursor's hand or falling is on its way, not standing.
+    if (!belowYard(w) && !w.lifted && !w.falling) fail('a fighter is in the yard', `${who(w)}`);
+  }
+  if (!Number.isInteger(S.fangs) || S.fangs < 0)
+    fail('the fangs are a count that is not a count', `${S.fangs}`);
+  if (!Number.isInteger(S.fangsDropped) || S.fangsDropped < 0 || S.fangsDropped > Math.min(S.serpentStage, FANG_BREAKS))
+    fail('more fangs have dropped than the serpent has had breaks',
+         `${S.fangsDropped} dropped, stage ${S.serpentStage}`);
 }
 
 // The last stage seen, for the rule that it never goes back. A new game, or a

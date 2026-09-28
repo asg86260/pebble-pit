@@ -78,8 +78,13 @@ These close questions the design left open; they are the simplest reading.
    again (the owner, 2026-09-28).
 6. **Before a class is taken the station's fighter does nothing** but
    stand guard; the first rung bought commits the class.
-7. **The star** stays the machine bought in sparks on the spire's board --
-   now "any spire's board" -- and lands on the belly.
+7. **Only the fighters do damage** (the owner, 2026-09-28: "the only
+   things doing damage now are the fighters. and drop the star"). **The
+   called star is removed** -- its rows, its machine, its fall through the
+   yard and the deep, `starOpen`, `starLevel`, `starAt`, `STAR_*` -- and no
+   station does damage but by its fighter. The deep's sparks sink is gone
+   with it; the rule that sparks buy every machine no longer has a machine
+   in the deep.
 8. **The Bard does no damage** and needs another fighter to buff; with no
    other fighter her song does nothing, and her rail says so in its line.
 9. **Every class wins alone except the Bard** (the owner). Each damage class
@@ -113,8 +118,8 @@ Retired from `S` (and from their lists): `brawlers lancers grenadiers scribes
 warlocks`, `wellOpen fontOpen circleOpen spireOpen`, the nine weapon levels
 (`punchLevel brawlLevel lanceLevel lanceholdLevel grenadeLevel
 grenadepaceLevel sigilLevel beamLevel curseLevel`), `sigils`, `lances`,
-`grenades`, `rings`, `beams`, the per-station `*BoardOpen` flags. `starOpen`
-and `starLevel` stay.
+`grenades`, `rings`, `beams`, the per-station `*BoardOpen` flags. `starOpen`,
+`starLevel`, `starAt` and the star's falls go too (item 7).
 
 ### One type, one job (owner: CREW)
 
@@ -182,7 +187,7 @@ under the body, lit white, unlit a grey step up from the water.
 station's class; a classless station's fighter holds guard) and the
 per-class steps, reusing `swim`, `working`, `strike`, `blowK`,
 `nearestSeg`, `coilAt`, `coilThick`, `rest`, the projectile loops of
-`arms.js` rewritten for arrows, bolts and charges, and `stepStar`.
+`arms.js` rewritten for arrows, beams and charges. `stepStar` is removed.
 
 ### Statuses (owner: FIGHT) -- `src/deep/statuses.js`
 
@@ -200,7 +205,7 @@ Anthem), **Hasted** +20% tempo.
 each damage class half in one phase and whole in the rest: brawler [1, .5,
 1, 1] (the ward), sword [1, 1, .5, 1], monk [.5, 1, 1, 1], martial [1, .5, 1,
 1], ranger [1, 1, 1, .5], assassin [1, 1, .5, 1], sapper [1, 1, .5, 1],
-hexer [.5, 1, 1, 1], mage [1, 1, .5, 1], star [1, 1, 1, 1]. `FADE_UNLIT`
+hexer [.5, 1, 1, 1], mage [1, 1, .5, 1] (no star row). `FADE_UNLIT`
 and the fading phase's light rule go: nothing is Lit any more (the Mage's
 beam, 2026-09-28), and the phase's defense row carries its difficulty. The click stays `strike('punch', CLICK_DMG[...])` -- the
 owner: "Always a punch" -- with `punch` a row of its own and the click's
@@ -237,7 +242,7 @@ are today. `FIGHT_STATIONS_MAX = 4`: the first station and three fangs.
   in and out, never pops. The pods board sells pods only.
 - **A station's board** (one per built station, keyed by id: `registerBoard`
   takes the id) shows **the rails** (below) and, above them, the station's
-  roster post (its fighter), and on any spire the star's two rows.
+  roster post (its fighter).
 - The old altar doors, weapon rows and the five weapon boards go.
 
 ### The rails (owner: BOARD) -- `src/deep/rails.js`, CSS in `shelf.css` (additive block)

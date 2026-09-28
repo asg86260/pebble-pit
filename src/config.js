@@ -48,6 +48,7 @@ export * from './config/deepcrew.js';
 export * from './config/deepdraw.js';
 export * from './config/deepboard.js';
 export * from './config/roomba.js';
+export * from './config/classes.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.

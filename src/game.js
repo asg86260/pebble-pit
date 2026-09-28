@@ -550,6 +550,13 @@ function fly(list, tx, ty) {
   }
 }
 
+// --- wave party: CREW ---
+// The party's own frame (deep/party.js): a fang dropped at a phase break, and
+// the fangs in the water sinking. Straight after the serpent's step, so a
+// break is seen on the frame it happens.
+import { stepParty } from './deep/party.js';
+STEPS.splice(STEPS.findIndex(s => s.name === 'serpent') + 1, 0, { name: 'party', step: c => stepParty(c) });
+
 // --- wave-cloud SYNC -------------------------------------------------------
 // The yard's length, a frame at a time: what "newer" means between two copies
 // of one yard on two devices (cloud.js). Not on a staged yard, which is

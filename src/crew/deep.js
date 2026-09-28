@@ -16,30 +16,31 @@ import { spotX, mouthX } from '../deep/place.js';
 import { belowYard, keepTo, stepRoute, ways } from '../route.js';
 import { commutePace } from '../levels.js';
 import { DOWN_THERE } from '../works.js';
+import { stationById, stationMid } from '../deep/party.js';
 
-// Which station of the deep each job stands at: the keys of `DEEP_SPOTS`.
+// Where each deep job with a fixed place stands: the keys of `DEEP_SPOTS`.
+// A fighter's place is its station's, which the player put down
+// (deep/party.js), so it is asked of the body rather than of the job.
 export const DEEP_STATION = Object.freeze({
-  [TYPE.BRAWL]: 'altar',
-  [TYPE.LANCE]: 'well',
-  [TYPE.GRENADE]: 'font',
-  [TYPE.SCRIBE]: 'circle',
-  [TYPE.WARLOCK]: 'spire',
   [TYPE.GATHER]: 'crusher'
 });
 
-// Where a body stands to work its station: in front of it, on the floor.
-export const deepPost = type => spotX(DEEP_STATION[type]) - WORKER / 2;
+// Where a body stands to work its station: in front of it, on the floor. A
+// fighter not yet given a station waits by the pods, where the deep's spare
+// hands live.
+export const deepPost = (type, w = null) => {
+  if (type !== TYPE.FIGHTER) return spotX(DEEP_STATION[type] || 'crusher') - WORKER / 2;
+  const st = w && stationById(w.station);
+  return (st ? stationMid(st) : spotX('pods')) - WORKER / 2;
+};
 
 // A body made from nothing on a deep job (a save read back, or a hook's
 // setup) is stood at its station, like every factory. `goal` starts empty so
-// the weapons (deep/arms.js) have a saved word to keep (`KEEPS`), and a body
-// that has just arrived starts from it.
+// the fighters have a saved word to keep (`KEEPS`), and a body that has just
+// arrived starts from it. No `station` or `uid` on a fighter's: `settle`
+// lays a factory's fields over the body, and those two are the body's own.
 const made = type => () => ({ type, x: deepPost(type), goal: null, phase: null });
-export const newBrawler = made(TYPE.BRAWL);
-export const newLancer = made(TYPE.LANCE);
-export const newGrenadier = made(TYPE.GRENADE);
-export const newScribe = made(TYPE.SCRIBE);
-export const newWarlock = made(TYPE.WARLOCK);
+export const newFighter = made(TYPE.FIGHTER);
 export const newGatherer = made(TYPE.GATHER);
 
 // A body on a yard job with its feet in the deep -- taken off the deep's

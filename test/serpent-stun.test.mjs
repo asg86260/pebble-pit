@@ -1,69 +1,95 @@
-// A heavy blow stuns (DESIGN.md, "Blows land: the burst and the stun"): one
-// blow worth STUN_SHARE of the stage's depth holds the coil still and stops
-// the heal, for longer the bigger it was, up to STUN_MAX_S. Only single
-// blows stun -- a punch, a grenade's burst, the star -- never a lance's or a
-// beam's held ticks; a new stun keeps the longer of the two; and none starts
-// in the grace after one ends.
+// A stunning blow (DESIGN.md, "Blows land: the burst and the stun") holds the
+// coil still and stops the heal. Only the moves that stun do it -- the
+// Brawler's haymaker, the chi palm, the aimed shot at its capstone, the
+// sticky charge -- for STUN_BASE_S, longer the more times over STUN_SHARE of
+// the stage's depth the blow was, up to STUN_MAX_S; the Mage's finishing
+// blow stuns only when it is worth the share. Never a tick; a new stun keeps
+// the longer of the two; none starts in the grace after one ends.
 //
-// The punch is bought on the altar's board and landed through `clickDeep`,
-// the pointer's door; the star is called and falls; the grenade is a
-// grenadier's. The rest strike through `strike`, the one door every weapon
-// uses, with a blow of a size worked out from the rule.
+// The first group reaches the stun the player's way, a Brawler bought to her
+// Haymaker; the rest strike through `strike`, the one door every hit uses,
+// with a blow of a size worked out from the rule.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_WOUND, STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S,
-         rungValue } from '../src/config.js';
+import { SERPENT_WOUND, SERPENT_DEFENSE, STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, CLASSES } from '../src/config.js';
+import { rungWorth } from '../src/deep/classes.js';
 import { clickDeep, strike } from '../src/deep/serpent.js';
+import { climb } from './party-press.mjs';
 import { coilAt, bellyAt, bellySeg } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 
 const S = yard.S;
 
-// A yard the serpent has come for, and nobody at a weapon: every blow in
-// these checks is the check's own.
+// A yard the serpent has come for, and nobody fighting: every blow in these
+// checks is the check's own.
 function deepYard(stage = 0) {
   window.__snatch({ played: true });
-  window.__deepCrew({ brawlers: 0 });
+  window.__deepCrew();
   window.__serpent({ stage, wound: 0 });
 }
 const frame = () => yard.fast(1 / 60);
 const belly = () => bellyAt(now());
-// The stun a blow of `done` is worth at the stage up, by the rule.
-const stunFor = done => Math.min(STUN_MAX_S, STUN_BASE_S * Math.sqrt(done / (SERPENT_WOUND[S.serpentStage] * STUN_SHARE)));
-// A blow worth `k` times the least that stuns the stage up, as a punch on
-// the bare coil (which takes a punch in full). Thirty of them is short of
-// the bare coil's depth, which a stunning blow must be: a blow that breaks
-// the stage ends its own stun on the next frame.
-const punchOf = k => SERPENT_WOUND[0] * STUN_SHARE * k;
-const punchAt = k => { const p = belly(); return strike('punch', punchOf(k), p.x, p.y); };
+// The stun a stunning blow of `done` is worth at the stage up, by the rule.
+const stunFor = done => Math.min(STUN_MAX_S,
+  STUN_BASE_S * Math.sqrt(Math.max(1, done / (SERPENT_WOUND[S.serpentStage] * STUN_SHARE))));
+// A stunning blow worth `k` times the share on the bare coil. Thirty of them
+// is short of the bare coil's depth, which a stunning blow must be: a blow
+// that breaks the stage ends its own stun on the next frame.
+const blowOf = k => SERPENT_WOUND[0] * STUN_SHARE * k;
+const stunAt = (k, o = { stun: 1 }) => { const p = belly(); return strike('brawler', blowOf(k), p.x, p.y, null, 0, o); };
 
-group('a bought punch clicked on the bare coil stuns it, and the heal stops for as long', async () => {
-  deepYard(0);
-  // Two rungs of punch strength, bought on the altar's board.
-  window.__grant({ scales: 1e5, dust: 1e6 });
-  let bought = 0;
-  for (let i = 0; i < 2; i++) if (window.__buy('punch')) { window.__finish(); run(0.2); bought++; }
-  window.__serpent({ stage: 0, wound: 0 });
-  const punch = rungValue('punch', S.punchLevel);
-  const p = belly();
-  const landed = clickDeep(p.x, p.y);
-  const wound = S.serpentWound, stun = S.serpentStun, want = stunFor(punch);
-  // Held for the stun's length, a frame short: nothing closes.
+group("a Brawler's haymaker stuns the ward, and the heal stops for as long", async () => {
+  deepYard(1);
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
+  climb(S.stations[0].id, 'brawler', 4);
+  window.__serpent({ stage: 1, wound: 0 });
+  let got = false;
+  for (let f = 0; f < 60 * 30 && !got; f++) { frame(); got = S.serpentStun > 0; }
+  const wound = S.serpentWound, stun = S.serpentStun;
+  const hay = rungWorth(CLASSES.brawler, 4) * CLASSES.brawler.haymaker.x * SERPENT_DEFENSE.brawler[1];
+  // Held for the stun's length, a frame short: nothing closes, though she
+  // punches on.
   let least = wound;
-  const frames = Math.floor(want * 60) - 1;
-  for (let f = 0; f < frames; f++) { frame(); least = Math.min(least, S.serpentWound); }
-  const heldTo = S.serpentWound;
-  run(1);
+  for (let f = 0; f < Math.floor(stun * 60) - 1; f++) { frame(); least = Math.min(least, S.serpentWound); }
   return [
-    ok(bought === 2 && S.punchLevel >= 2, 'two rungs of punch bought on the board', `bought ${bought}, level ${S.punchLevel}`),
-    ok(punch >= punchOf(1), 'a punch on the second rung is a stunning blow on the bare coil',
-       `${punch} against ${punchOf(1).toFixed(2)}`),
-    ok(landed && wound === punch, 'the click lands the punch', `wound ${wound}`),
-    ok(Math.abs(stun - want) < 1e-9, 'and stuns for the length the rule gives', `${stun} of ${want}`),
-    ok(least === wound && heldTo === wound, 'not a scrap of the wound closes while it lasts',
-       `${wound} then at least ${least}`),
-    ok(S.serpentStun === 0 && S.serpentWound < wound, 'and when it is over the heal takes up again',
-       `stun ${S.serpentStun}, wound ${S.serpentWound}`)
+    ok(got, 'a haymaker stuns the warded coil', `stun ${stun}`),
+    ok(Math.abs(stun - stunFor(hay)) < 1 / 30, 'for the length the rule gives', `${stun} of ${stunFor(hay)}`),
+    ok(least >= wound, 'and not a scrap of the wound closes while it lasts', `${wound} then at least ${least}`)
+  ];
+}, { reload: false });
+
+group('only a stunning blow stuns: never a click, a plain blow or a tick', async () => {
+  deepYard(0);
+  const p = belly();
+  for (let i = 0; i < 5; i++) clickDeep(p.x, p.y);
+  const clicked = S.serpentStun;
+  stunAt(10, {});
+  const plain = S.serpentStun;
+  stunAt(1000, { tick: true, stun: 1 });
+  const ticked = S.serpentStun;
+  window.__serpent({ stage: 0, wound: 0 });
+  stunAt(1);
+  return [
+    ok(clicked === 0, 'a click never stuns', `${clicked}`),
+    ok(plain === 0, 'nor a blow of ten times the share that is not a stunning move', `${plain}`),
+    ok(ticked === 0, 'nor a tick, however big', `${ticked}`),
+    ok(Math.abs(S.serpentStun - STUN_BASE_S) < 1e-9, 'where a stunning blow of the share does', `${S.serpentStun}`)
+  ];
+});
+
+group('a stunning blow short of the share still stuns; one that "can stun" does not', async () => {
+  deepYard(0);
+  stunAt(0.5);
+  const small = S.serpentStun;
+  window.__serpent({ stage: 0, wound: 0 });
+  S.serpentStun = S.serpentGrace = 0;
+  stunAt(0.5, { stun: 1, share: true });
+  const can = S.serpentStun;
+  stunAt(4, { stun: 1, share: true });
+  return [
+    ok(Math.abs(small - STUN_BASE_S) < 1e-9, 'a move that stuns stuns for the base', `${small}`),
+    ok(can === 0, "the Mage's finishing blow short of the share does not", `${can}`),
+    ok(Math.abs(S.serpentStun - stunFor(blowOf(4))) < 1e-9, 'and over it, it does', `${S.serpentStun}`)
   ];
 });
 
@@ -71,7 +97,7 @@ group('a stunned coil holds its pose, and sways on from it after', async () => {
   deepYard(0);
   const seg = bellySeg();
   const before = coilAt(seg, now());
-  punchAt(4);
+  stunAt(4);
   frame();
   const held = coilAt(seg, now());
   run(1);
@@ -89,60 +115,42 @@ group('a stunned coil holds its pose, and sways on from it after', async () => {
   ];
 });
 
-group('a lance or a beam never stuns, however big its tick', async () => {
-  deepYard(1);
-  const p = belly();
-  const huge = SERPENT_WOUND[1] * 10;
-  strike('lance', huge, p.x, p.y, {});
-  const afterLance = S.serpentStun;
-  frame();
-  window.__serpent({ stage: 1, wound: 0 });
-  strike('beam', huge, p.x, p.y, {});
-  const afterBeam = S.serpentStun;
-  frame();
-  window.__serpent({ stage: 1, wound: 0 });
-  // The same size as a blow does stun: it is the kind, not the number.
-  strike('star', huge / 20, p.x, p.y);
-  return [
-    ok(afterLance === 0, 'a lance tick deeper than the whole stage does not stun', `${afterLance}`),
-    ok(afterBeam === 0, 'nor does a beam tick', `${afterBeam}`),
-    ok(S.serpentStun > 0, 'where a star of a twentieth of it does', `${S.serpentStun}`)
-  ];
-});
-
 group('a stun never stacks: the longer of the two stands', async () => {
   deepYard(0);
-  // A blow worth the most, then two seconds of it gone.
-  punchAt(30);
+  stunAt(30);
   const most = S.serpentStun;
   run(2);
   const left = S.serpentStun;
-  // A smaller blow while stunned leaves the longer.
-  punchAt(1);
+  stunAt(1);
   const small = S.serpentStun;
-  // A blow worth more than what is left takes its own length, not the sum.
   const k = ((left + 0.5) / STUN_BASE_S) ** 2;
-  punchAt(k);
+  stunAt(k);
   const bigger = S.serpentStun;
+  const cap = { stun: CLASSES.brawler.capStun };
+  window.__serpent({ stage: 0, wound: 0 });
+  S.serpentStun = S.serpentGrace = 0;
+  stunAt(1, cap);
   return [
     ok(Math.abs(most - STUN_MAX_S) < 1e-9, 'the biggest blow stuns for the longest and no longer', `${most}`),
     ok(Math.abs(small - left) < 1e-9, 'a lesser blow while stunned adds nothing', `${left} then ${small}`),
     ok(Math.abs(bigger - (left + 0.5)) < 1e-6, 'a greater one sets its own length, not the two together',
-       `${left} left, then ${bigger}`)
+       `${left} left, then ${bigger}`),
+    ok(Math.abs(S.serpentStun - STUN_BASE_S * cap.stun) < 1e-9, "and a capstone's stun is the move's stretch of it",
+       `${S.serpentStun}`)
   ];
 });
 
 group('in the grace after a stun no new one starts', async () => {
   deepYard(0);
-  punchAt(1);
+  stunAt(1);
   const first = S.serpentStun;
   runUntil(() => S.serpentStun === 0, 10);
   const grace = S.serpentGrace;
-  punchAt(30);
+  stunAt(30);
   const inGrace = S.serpentStun;
   run(STUN_GRACE_S + 0.1);
   window.__serpent({ stage: 0, wound: 0 });
-  punchAt(1);
+  stunAt(1);
   return [
     ok(first > 0, 'the first blow stuns', `${first}`),
     ok(grace > 0 && grace <= STUN_GRACE_S, 'its end starts the grace', `${grace}`),
@@ -153,7 +161,7 @@ group('in the grace after a stun no new one starts', async () => {
 
 group('a stun and its held pose survive a reload', async () => {
   deepYard(0);
-  punchAt(30);
+  stunAt(30);
   run(1);
   const stun = S.serpentStun, wound = S.serpentWound, pose = coilAt(bellySeg(), now());
   window.__reload();
@@ -166,29 +174,5 @@ group('a stun and its held pose survive a reload', async () => {
        `${pose.x},${pose.y} then ${poseBack.x},${poseBack.y}`),
     ok(S.serpentWound === wound && S.serpentStun < back, 'and the heal is still stopped after it',
        `wound ${S.serpentWound}, stun ${S.serpentStun}`)
-  ];
-});
-
-group('a called star stuns the fading coil where a wizard lights it', async () => {
-  deepYard(3);
-  window.__deepCrew({ warlocks: 2 });
-  runUntil(() => S.beams.length > 0, 60);
-  // The machine is the board's row; its flag is the setup here.
-  S.starOpen = true;
-  S.starAt = 0;
-  let stunned = 0;
-  for (let f = 0; f < 60 * 20 && !stunned; f++) { frame(); if (S.serpentStun > 0) stunned = S.serpentStun; }
-  return [
-    ok(stunned > 0, 'the star lands and the fading coil seizes', `${stunned}`)
-  ];
-}, { reload: false });
-
-group("a grenadier's burst stuns the warded coil", async () => {
-  deepYard(1);
-  window.__deepCrew({ grenadiers: 1 });
-  window.__levels({ grenadeLevel: 6 });
-  const got = runUntil(() => S.serpentStun > 0, 60);
-  return [
-    ok(got, 'a burst of the seventh rung is a stunning blow on the ward', `stun ${S.serpentStun}, level ${S.grenadeLevel}`)
   ];
 });

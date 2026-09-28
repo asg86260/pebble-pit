@@ -10,7 +10,6 @@
 import { LADDER, rungValue, HAUL_SCOOP_MS } from './config.js';
 import { COMMUTE_PACE, HAUL_EMPTY, HOME_HURRY } from './config.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, SPELL_DRIVE } from './config.js';
-import { BRAWL_CAP, LANCE_CAP, GRENADE_CAP, SCRIBE_CAP, WARLOCK_CAP } from './config.js';
 import { S } from './state.js';
 import { craftCount } from './balloon.js';
 import { benches, plotCount } from './world.js';
@@ -102,13 +101,12 @@ const capOfBare = job =>
   job === JOB.WIZARD ? S.wizardHats :
   // Building is derived from the spares (`rebalance`), never assigned.
   job === JOB.BUILD ? 0 :
-  // The deep's stations hold nobody until their doors are open; the altar's
-  // stands from the snatch (docs/wave-serpent.md, "The crew's caps").
-  job === JOB.BRAWL ? (S.snatched ? BRAWL_CAP : 0) :
-  job === JOB.LANCE ? (S.wellOpen ? LANCE_CAP : 0) :
-  job === JOB.GRENADE ? (S.fontOpen ? GRENADE_CAP : 0) :
-  job === JOB.SCRIBE ? (S.circleOpen ? SCRIBE_CAP : 0) :
-  job === JOB.WARLOCK ? (S.spireOpen ? WARLOCK_CAP : 0) :
+  // One fighter a station, and a station holds nobody until it stands
+  // (docs/wave-party.md). Read off `S.stations` rather than through
+  // deep/party.js, which reads the works.
+  job === JOB.FIGHT ? S.stations.filter(st => st.built).length :
+  // The deep's spares are derived, like the yard's builders, never assigned.
+  job === JOB.GATHER || job === JOB.DELVE ? 0 :
   // The rock and the lip have no plan.
   Infinity;
 
@@ -119,7 +117,9 @@ const capOfBare = job =>
 // that runs itself holds nobody and takes no place from the station.
 export const capOf = job => { const m = machineFor(job); return m && !UNMANNED.has(JOB_MACHINE[job]) ? 1 : capOfBare(job); };
 
-export const roomAt = job => capOf(job) - S[job];
+// How many are on a job: its count, or for the fighters the stations manned.
+const onJob = job => (job === JOB.FIGHT ? S.stations.filter(st => st.fighter).length : S[job]);
+export const roomAt = job => capOf(job) - onJob(job);
 
 // What the station could hold by hand -- what a machine stands in for. The
 // rock has no floor plan, so its complement is `ROCK_GANG`; carrying is not a

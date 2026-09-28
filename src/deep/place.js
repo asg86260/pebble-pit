@@ -11,7 +11,7 @@
 // it.
 
 import { S, pit } from '../state.js';
-import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS,
+import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL } from '../config.js';
@@ -79,22 +79,34 @@ function inkOf(key) {
   return ink;
 }
 
-// Where a station's sprite is painted: its whole grid, standing on the floor,
-// with the DRAWING's middle on its spot rather than the grid's, so a blank
-// column more on one side of a sprite moves nothing.
-export function spriteRect(key) {
-  const rows = SPRITES[key], ink = inkOf(key);
+// Where a sprite is painted with its middle at `mid`: its whole grid,
+// standing on the floor, with the DRAWING's middle on the spot rather than
+// the grid's, so a blank column more on one side of a sprite moves nothing.
+function spriteAt(kind, mid) {
+  const rows = SPRITES[kind], ink = inkOf(kind);
   const w = rows[0].length * P, h = rows.length * P;
-  return { x: snap(spotX(key) - (ink.c0 + ink.cols / 2) * P), y: deepFloor() - h, w, h };
+  return { x: snap(mid - (ink.c0 + ink.cols / 2) * P), y: deepFloor() - h, w, h };
 }
-
-// The ground a station stands on: the station as drawn, so the pointer, the
-// fence round its door and the stack of works over it all answer to the
-// picture rather than to the dome round it.
-export function standOf(key) {
-  const s = spriteRect(key), ink = inkOf(key);
+// The ground under a sprite painted there: the station as drawn, so the
+// pointer, the fence round its door and the stack of works over it all
+// answer to the picture rather than to the dome round it.
+function groundAt(kind, mid) {
+  const s = spriteAt(kind, mid), ink = inkOf(kind);
   return { x: s.x + ink.c0 * P, y: s.y + ink.r0 * P, w: ink.cols * P, h: ink.rows * P };
 }
+export const spriteRect = key => spriteAt(key, spotX(key));
+export const standOf = key => groundAt(key, spotX(key));
+
+// --- the party's floor (docs/wave-party.md) ------------------------------------
+// A station stands at a floor slot, not at a spot of its kind's: a kind can
+// stand twice, and the floor fills in the order stations are bought. Slot
+// `i`'s middle, on the floor.
+export const slotX = i => snap(deepX0() + DEEP_SLOTS[i] * DEEP_W);
+// A station's sprite and its ground, at its slot, in its kind's drawing. The
+// ground is the same for a station still going up: its scaffold stands where
+// it will.
+export const spriteRectOfStation = st => spriteAt(st.kind, slotX(st.slot));
+export const standOfStation = st => groundAt(st.kind, slotX(st.slot));
 
 // The crusher at the deep's left end, standing on the floor, and the hopper
 // across its top: the purse's mouth (DESIGN.md, "The crusher"). A scale is

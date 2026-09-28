@@ -158,7 +158,10 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // before walks bodies off to a station the caller never mentioned.
   S.purifiers = 0;
   S.janitors = 0;
-  S.brawlers = 0; S.lancers = 0; S.grenadiers = 0; S.scribes = 0; S.warlocks = 0; S.deepCrew = 0;
+  // The deep's crew too, and with it every station's fighter: a station
+  // still naming a body the deal has stood down would call a stranger up.
+  S.fighters = 0; S.deepCrew = 0;
+  for (const st of S.stations) st.fighter = null;   // a setup's write: party.js has no stand-down to call
   // Every machine goes back in the box, for the same reason one level worse:
   // a machine left standing rewrites what the next `__crew(0, 0, 3)` is
   // allowed to mean.
@@ -259,11 +262,9 @@ export const kit = (o = {}) => {
 // first: the board can only send somebody to a station that is standing, and
 // a shut quarry or farm holds nobody (`capOfBare`), so without this the move
 // is refused.
-// The deep's places are its doors, and the altar's is the snatch; any of them
-// wants the pit drowned first, or there is no shaft to send anybody down.
-const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen',
-                   brawlers: 'snatched', lancers: 'wellOpen', grenadiers: 'fontOpen',
-                   scribes: 'circleOpen', warlocks: 'spireOpen' };
+// A deep job wants the pit drowned and the snatch behind it first, or there
+// is no shaft to send anybody down.
+const PLACE_OF = { quarriers: 'quarryOpen', farmhands: 'farmOpen' };
 export const assign = (job, d = 1) => {
   if (d > 0 && DEEP_JOBS.includes(job)) deepReady();
   if (d > 0 && PLACE_OF[job]) S[PLACE_OF[job]] = true;
@@ -299,10 +300,7 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
                    'powerLevel', 'riftLevel',
                    'critChanceLevel', 'critMultLevel', 'dosesLevel', 'lengthLevel',
-                   'tossSpeedLevel', 'tossReachLevel',
-                   // the deep's ladders and the star's rungs (docs/wave-serpent.md)
-                   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
-                   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel']) {
+                   'tossSpeedLevel', 'tossReachLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();
@@ -618,7 +616,7 @@ const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         ...FILTER_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,
-                        ...DEEP_UPGRADES,
+                        ...(deepRows.DEEP_UPGRADES || []),
                         // On the crew board, not the bench.
                         HOUSE_ROW];
 
@@ -1084,12 +1082,20 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 // that is not about getting there, and the rule that the stage never goes
 // back is told the setup is a new starting point.
 import { layScales, looseScales } from './deep/scales.js';
-import { healNow, woundK, litK, boundK } from './deep/serpent.js';
+import { healNow, woundK } from './deep/serpent.js';
+import { shots } from './deep/arms.js';
 import { forgetSerpent } from './verify.js';
+import { FANG_BREAKS } from './config.js';
 HANDLES.__serpent = ({ stage, wound } = {}) => {
   if (Number.isInteger(stage)) {
     S.serpentStage = Math.max(0, Math.min(4, stage));
     S.serpentFreed = S.serpentStage > 3;
+    // The breaks this stage says have happened have dropped their fangs: a
+    // fight set back takes them back, and one set forward skipped them, so
+    // the next break drops its own and not the ones before it.
+    S.fangsDropped = Math.min(S.serpentStage, FANG_BREAKS);
+    // and a fang still in the water from a break taken back goes with it.
+    if (S.fangsLoose.length > S.fangsDropped) S.fangsLoose = S.fangsLoose.slice(0, S.fangsDropped);
   }
   if (Number.isFinite(wound)) S.serpentWound = Math.max(0, wound);
   forgetSerpent();
@@ -1100,13 +1106,11 @@ HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(), heal: healNow(),
   freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
-  lit: litK(), bound: boundK(),
-  lances: S.lances.map(l => ({ x: l.x, y: l.y, seg: l.seg, stuck: l.stuck, until: l.until })),
-  grenades: S.grenades.map(g => ({ x: g.x, y: g.y })),
-  rings: S.rings.map(r => ({ x: r.x, y: r.y, r: r.r, hit: r.hit.slice() })),
-  beams: S.beams.map(b => ({ x: b.x, y: b.y, seg: b.seg })),
-  sigils: S.sigils.map(s => ({ x: s.x })),
-  starFall: S.starFall && { x: S.starFall.x, y: S.starFall.y, phase: S.starFall.phase }
+  statuses: JSON.parse(JSON.stringify(S.statuses)),
+  stations: S.stations.map(st => ({ ...st, paid: (st.paid || []).map(p => p.slice()) })),
+  fangs: S.fangs, fangsDropped: S.fangsDropped, fangsLoose: S.fangsLoose.length,
+  fangsAt: S.fangsLoose.map(f => ({ x: Math.round(f.x), y: Math.round(f.y), rest: f.rest, held: f.held, by: f.by })),
+  shots: shots.length
 });
 
 // --- wave serpent: CREW ---
@@ -1114,6 +1118,12 @@ HANDLES.__deepState = () => ({
 // (docs/wave-serpent.md). A check about the snatch itself reaches it the way
 // a player does: the rescue, the drowning, the sheet put down.
 import { markDone } from './beats.js';
+import { deepSpare } from './staffing.js';
+import { PAIRS, FIGHT_STATIONS_MAX } from './config.js';
+import * as party from './deep/party.js';
+import { settle } from './crew/commute.js';
+import { deepPost } from './crew/deep.js';
+import { feet as deepFeet } from './deep/arms.js';
 
 // The pit drowned and the snatch played, so the shaft is open and the altar
 // stands, with no beat owed: a deep job set up by a hook is not the story.
@@ -1145,34 +1155,73 @@ HANDLES.__snatch = (o = {}) => {
   return { snatched: S.snatched, done: S.beatsDone.includes('snatch') };
 };
 
-// The deep's gang, stood at their stations: the counts set outright, the
-// doors they need opened, and the crew grown by as many as were added so
-// nobody is taken off a yard job to make them. New bodies are made at their
-// stations (their factories stand them there); the walk down is a check of
-// its own.
-const DEEP_DOOR = { lancers: 'wellOpen', grenadiers: 'fontOpen', scribes: 'circleOpen', warlocks: 'spireOpen' };
+// The deep's crew grown by `spare` pod residents on no station, the snatch
+// behind it, and the whole crew grown by as many so nobody is taken off a
+// yard job to make them. A fighter is a party's (`__party`); the swim down
+// is a check of its own.
 HANDLES.__deepCrew = (o = {}) => {
   deepReady();
-  let more = 0;
-  for (const job of DEEP_JOBS) {
-    if (o[job] == null) continue;
-    const n = Math.max(0, o[job] | 0);
-    if (n > 0 && DEEP_DOOR[job]) S[DEEP_DOOR[job]] = true;
-    more += n - S[job];
-    S[job] = n;
-  }
-  // The deep's crew grows by as many as its weapons did, and by `spare`
-  // hands of its own on no weapon: the deep never takes from the yard.
   const spare = Math.max(0, o.spare | 0);
-  S.crew = Math.max(0, S.crew + more + spare);
-  S.deepCrew = Math.max(0, (S.deepCrew || 0) + more + spare);
+  S.crew = Math.max(0, S.crew + spare);
+  S.deepCrew = Math.max(0, (S.deepCrew || 0) + spare);
   rebalance(); syncWorkers(); buildShop();
-  return Object.fromEntries(DEEP_JOBS.map(j => [j, S[j]]));
+  return { deepCrew: S.deepCrew, spare: deepSpare() };
+};
+
+// --- wave party: STATE ---
+// A party stood up for the setup a check is not about (docs/wave-party.md):
+// `stations` in floor order, each `{ kind, cls, rung }`, on the slots named
+// in `slots` or the next free ones, and `fangs` held after. Each is built the
+// way the button builds one -- the pick, the work landed -- and seated from
+// the pods, the deep's crew grown by a resident a station so nobody comes off
+// the yard. The class and the rung are set, not bought: a check about the
+// rails buys them there, and a Reset of a hook's rungs refunds nothing.
+HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
+  deepReady();
+  if (S.stations.length + stations.length > FIGHT_STATIONS_MAX)
+    throw new Error(`__party: ${S.stations.length + stations.length} stations, at most ${FIGHT_STATIONS_MAX}`);
+  for (const o of stations)
+    if (!PAIRS[o.kind] || (o.cls != null && !PAIRS[o.kind].includes(o.cls)))
+      throw new Error(`__party: no ${o.cls} at a ${o.kind}`);
+  const short = stations.length - deepSpare();
+  if (short > 0) { S.crew += short; S.deepCrew = (S.deepCrew || 0) + short; }
+  rebalance(); syncWorkers();
+  const from = S.stations.length;
+  for (const [i, o] of stations.entries()) {
+    const had = S.stations.length;
+    // The first is free and every one after takes a fang, as the button asks.
+    if (had > 0) S.fangs++;
+    if (!party.raiseStation(o.kind)) throw new Error(`__party: the ${o.kind} could not be built`);
+    const st = S.stations[had];
+    finishWorks();
+    if (slots && Number.isInteger(slots[i])) st.slot = slots[i];
+    st.cls = o.cls ?? null;
+    st.rung = st.cls ? Math.max(0, Math.min(LADDER, o.rung | 0)) : 0;
+  }
+  S.fangs = Math.max(0, fangs | 0);
+  if (S.fangs) S.seenFang = true;
+  party.seat();
+  rebalance(); syncWorkers();
+  // Each new station's fighter stood at it, as a factory stands a body at its
+  // post: the swim over from the pods is a check of its own (party.test.mjs).
+  for (const st of S.stations.slice(from)) {
+    const w = party.fighterAt(st);
+    if (!w) continue;
+    settle(w);
+    w.x = deepPost(TYPE.FIGHTER, w);
+    w.y = deepFeet();
+  }
+  buildShop();
+  return S.stations.map(st => ({ id: st.id, kind: st.kind, slot: st.slot, cls: st.cls, rung: st.rung,
+                                 fighter: st.fighter }));
 };
 
 // --- wave serpent: BOARD ---
 // The deep's boards, for `boards()` and `everyRow()` above.
-import { DEEP_ROWS, DEEP_SECTIONS, DEEP_UPGRADES } from './deep/rows.js';
+// A namespace for the same reason as party.js's: the weapon boards are going
+// and a name BOARD retires must not unlink every hook.
+import * as deepRows from './deep/rows.js';
+const DEEP_ROWS = deepRows.DEEP_ROWS || {}, DEEP_SECTIONS = deepRows.DEEP_SECTIONS || {};
 
 // --- wave serpent: RENDER ---
 // Which half the camera is on, straight there with no glide: the setup a
