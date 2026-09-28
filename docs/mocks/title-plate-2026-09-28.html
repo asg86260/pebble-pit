@@ -1,0 +1,41 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Title plate mock</title>
+<style>
+  :root { --paper: #1f1f1f; --ink: #e0e0e0; --ink2: #b9b9b9; }
+  body { background: #111; color: var(--ink); font: 11px ui-monospace, "Courier New", monospace; margin: 16px; }
+  .note { max-width: 980px; margin: 0 0 14px; color: #ccc; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .opt h2 { font-size: 13px; margin: 0 0 4px; color: #fff; }
+  .opt p { margin: 0 0 8px; width: 300px; color: #bbb; min-height: 30px; }
+  .scene { position: relative; width: 300px; height: 260px; background: var(--paper); overflow: hidden; border: 1px solid #444; }
+  .cloud { position: absolute; height: 18px; background: #6a6a6a; box-shadow: 10px -8px 0 -2px #5a5a5a, 22px 2px 0 0 #7a7a7a; animation: drift 7s linear infinite; }
+  .c1 { top: 16px; width: 70px; } .c2 { top: 50px; width: 50px; animation-duration: 9s; animation-delay: -4s; } .c3 { top: 120px; width: 60px; animation-duration: 11s; animation-delay: -2s; }
+  @keyframes drift { from { left: -90px; } to { left: 320px; } }
+  .ground { position: absolute; left: 0; right: 0; top: 215px; bottom: 0; border-top: 1px solid var(--ink); background: repeating-linear-gradient(135deg, #262626 0 3px, #1f1f1f 3px 7px); }
+  .col { position: absolute; left: 18px; top: 14px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; text-transform: uppercase; letter-spacing: .14em; z-index: 2; }
+  .name { font-size: 20px; letter-spacing: .34em; line-height: 1.1; }
+  .line { text-transform: none; letter-spacing: .06em; color: var(--ink2); font-size: 9px; margin-bottom: 6px; }
+  .sub { font-size: 8px; color: var(--ink2); margin: -3px 0 2px 8px; }
+  .btn { width: 150px; box-sizing: border-box; border: 1px solid var(--ink); background: var(--paper); padding: 3px 8px; font-size: 9px; }
+  .btn.play { background: var(--ink); color: var(--paper); }
+  /* A: each line on its own plate */
+  .A .name, .A .line, .A .sub { background: var(--paper); padding: 1px 4px; margin-left: -4px; }
+  .A .sub { margin-left: 4px; }
+  /* B: one panel behind the column */
+  .B .col { background: var(--paper); border: 1px solid var(--ink); padding: 10px 12px; left: 10px; top: 8px; }
+  /* C: a band down the left, the sky not drawn there */
+  .C .band { position: absolute; left: 0; top: 0; bottom: 45px; width: 186px; background: var(--paper); border-right: 1px solid #555; z-index: 1; }
+</style>
+<p class="note"><b>Mock drawn from plain boxes, not the game.</b> The clouds drift through the column the way they do on the landing page. It can't show the real font, the demo yard or the fade-in. The buttons already have a solid fill today; each option is about the lines between them (the name, the tagline, the line under play).</p>
+<div class="row">
+  <div class="opt A"><h2>A · a plate under each line</h2><p>Every line of text gets a tight solid box; the sky still shows between them.</p>
+    <div class="scene"><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="ground"></div>
+      <div class="col"><div class="name">pebble<br>pit</div><div class="line">a rock. a hole. a few people<br>between them.</div><div class="btn play">play</div><div class="sub">rock 1 · 1 crew · 1 h ago</div><div class="btn">saves · 1 of 3</div><div class="btn">achievements · 1 of 49</div><div class="btn">settings</div></div></div></div>
+  <div class="opt B"><h2>B · one panel behind the menu</h2><p>The whole column sits on one bordered card, like the pause sheet in the game.</p>
+    <div class="scene"><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="ground"></div>
+      <div class="col"><div class="name">pebble<br>pit</div><div class="line">a rock. a hole. a few people<br>between them.</div><div class="btn play">play</div><div class="sub">rock 1 · 1 crew · 1 h ago</div><div class="btn">saves · 1 of 3</div><div class="btn">achievements · 1 of 49</div><div class="btn">settings</div></div></div></div>
+  <div class="opt C"><h2>C · a band down the left</h2><p>A solid strip the height of the sky behind the column; clouds pass behind it.</p>
+    <div class="scene"><div class="band"></div><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="ground"></div>
+      <div class="col"><div class="name">pebble<br>pit</div><div class="line">a rock. a hole. a few people<br>between them.</div><div class="btn play">play</div><div class="sub">rock 1 · 1 crew · 1 h ago</div><div class="btn">saves · 1 of 3</div><div class="btn">achievements · 1 of 49</div><div class="btn">settings</div></div></div></div>
+</div>
