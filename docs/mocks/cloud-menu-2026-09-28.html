@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud Menu Mock</title>
+<!-- A design mock (2026-09-28), drawn from plain shapes, not the game. The
+     owner's ask: "we should move the link a device action into the cloud
+     settings menus. also make sure cloud saves sections contains its menu
+     items. they are overflowing". Three ways to give the cloud a section of
+     its own, each on the title page's settings column and on the held
+     sheet's saves page, in four states. One plain script, no imports. -->
+<style>
+  :root { --paper: #fff; --ink: #000; --ink-2: #333; --ink-4: #666; --ink-7: #aaa; --ink-9: #ececec;
+          --mono: ui-monospace, "Courier New", monospace; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 12px/1.45 var(--mono); }
+  .page { max-width: 1500px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 14px; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 6px; }
+  .ask { color: var(--ink-4); margin: 0 0 12px; max-width: 95ch; }
+  .opt { margin: 0 0 22px; }
+  .opt > h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 4px; }
+  .opt > p { margin: 0 0 8px; color: var(--ink-2); max-width: 95ch; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .states { display: flex; gap: 6px; margin: 0 0 8px; }
+  .states button { font: inherit; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; background: var(--paper);
+    border: 1px solid var(--ink); padding: 3px 8px; cursor: pointer; }
+  .states button.on { background: var(--ink); color: var(--paper); }
+  .cap { font-size: 10px; color: var(--ink-4); letter-spacing: .1em; text-transform: uppercase; margin: 0 0 4px; }
+
+  /* the title column */
+  .col { width: 300px; min-height: 470px; border: 1px solid var(--ink-7); padding: 18px 20px; background:
+         linear-gradient(var(--paper) 0 70%, var(--ink-9) 70%); letter-spacing: .14em; text-transform: uppercase; font-size: 11px;
+         display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .word { font-size: 15px; letter-spacing: .3em; margin-bottom: 2px; }
+  .b { border: 1px solid var(--ink); background: var(--paper); padding: 3px 10px; width: 17.5em; cursor: pointer; }
+  .b.dash { border-style: dashed; color: var(--ink-4); }
+  .small { font-size: 9px; letter-spacing: .1em; color: var(--ink-2); max-width: 22em; }
+  .code { font-size: 15px; letter-spacing: .3em; }
+  .pair { display: flex; gap: 8px; }
+  .pair .b { width: auto; }
+  .group { border: 1px solid var(--ink); padding: 8px 9px 9px; width: 17.5em; display: flex; flex-direction: column; gap: 6px;
+           background: var(--paper); }
+  .group .b { width: 100%; }
+  .group .head { font-size: 10px; letter-spacing: .2em; display: flex; justify-content: space-between; }
+  .tick { display: inline-block; width: 6px; height: 6px; background: var(--ink); margin-right: 5px; vertical-align: 1px; }
+  .tick.off { background: none; border: 1px solid var(--ink-2); }
+
+  /* the held sheet */
+  .sheet { width: 330px; border: 1px solid var(--ink); padding: 12px 18px 14px; background: var(--paper);
+           letter-spacing: .14em; text-transform: uppercase; font-size: 11px; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .sheet .b { width: 100%; text-align: center; }
+  .sheet .group { width: 100%; }
+  .sheet .word { text-align: center; }
+  .sheet .pair { width: 100%; }
+  .sheet .pair .b { flex: 1; }
+  .cant { margin-top: 10px; color: var(--ink-4); max-width: 95ch; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Cloud saves: a section of its own, with link a device in it</h1>
+  <p class="ask">Each option drawn twice: the title page's settings column (left) and the held sheet's saves page in play (right). Click a state. In every option the bottom bar keeps only the status line (<code>cloud · saved 2 min ago</code>); <b>link a device</b> leaves it and lives in the section, where the code it shows counts down.</p>
+  <div id="opts"></div>
+  <p class="cant">A mock from plain shapes, not the game: the type is the game's at a smaller size, the yard is a grey band. It cannot show dark mode, the phone width, or the exact heights the real sheet has.</p>
+</div>
+<script>
+const OPTS = [
+  { key: 'a', name: 'A · its own page', say: 'Settings (and the saves page) carry one button, "cloud saves: on". It opens a page of its own, like achievements: the status, link a device, the recovery code, stop. The settings list stays as short as it was.' },
+  { key: 'b', name: 'B · a boxed group', say: 'The cloud sits in a bordered box headed "cloud saves", in place, under the other settings: everything it owns inside the box, nothing loose among the other buttons.' },
+  { key: 'c', name: 'C · a folded group', say: 'Like B, but folded to one line ("cloud saves · on ▸") until opened, so a player who never uses it sees one row; opened, it is B.' }
+];
+const STATES = ['off', 'on', 'linking', 'recovery'];
+const st = { a: 'on', b: 'on', c: 'on' }, open = { a: false, c: false };
+
+const btn = (t, cls = '') => `<div class="b ${cls}">${t}</div>`;
+function inner(s) {
+  if (s === 'off') return btn('keep my yards in the cloud') + btn('use a recovery code');
+  const line = `<div class="small"><span class="tick"></span>cloud · saved 2 min ago</div>`;
+  const link = s === 'linking'
+    ? `<div class="small">on the other device, enter</div><div class="code">K7Q-94M</div><div class="small">9:41 left</div>` + btn('done')
+    : btn('link a device');
+  const rec = s === 'recovery'
+    ? `<div class="code">7F3K-Q9WM-2HXD</div><div class="pair">${btn('copy')}${btn('hide')}</div><div class="small">write this down: it brings your yards back on a new device</div>`
+    : btn('show recovery code');
+  return line + link + rec + btn('new recovery code') + btn('stop', 'dash');
+}
+function cloud(o, s, where) {
+  if (o === 'a') {
+    if (!open.a) return btn(`cloud saves: ${s === 'off' ? 'off' : 'on'}`, 'go-a');
+    return `<div class="word">cloud saves</div>` + inner(s) + btn('back', 'go-a');
+  }
+  if (o === 'b') return `<div class="group"><div class="head"><span>cloud saves</span></div>${inner(s)}</div>`;
+  if (!open.c) return `<div class="group go-c" style="cursor:pointer"><div class="head"><span>cloud saves · ${s === 'off' ? 'off' : 'on'}</span><span>▸</span></div></div>`;
+  return `<div class="group"><div class="head go-c" style="cursor:pointer"><span>cloud saves</span><span>▾</span></div>${inner(s)}</div>`;
+}
+function title(o, s) {
+  const own = o === 'a' && open.a;
+  return `<div><div class="cap">title · settings</div><div class="col">
+    <div class="word">${own ? '' : 'settings'}</div>
+    ${own ? '' : btn('motion: full') + btn('dark: on') + btn('sound: on')}
+    ${cloud(o, s)}
+    ${own ? '' : btn('back')}</div></div>`;
+}
+function sheet(o, s) {
+  const own = o === 'a' && open.a;
+  return `<div><div class="cap">in play · saves</div><div class="sheet">
+    ${own ? '' : `<div class="word">saves</div>` + btn('1 · rock 3 · 6 crew · playing') + btn('2 · empty') + btn('3 · empty') +
+      `<div class="pair">${btn('save a copy')}${btn('load a save')}</div>`}
+    ${cloud(o, s)}
+    ${own ? '' : btn('reset progress', 'dash') + btn('back')}</div></div>`;
+}
+function draw() {
+  document.getElementById('opts').innerHTML = OPTS.map(o => `<div class="opt" data-k="${o.key}">
+    <h2>${o.name}</h2><p>${o.say}</p>
+    <div class="states">${STATES.map(s => `<button data-s="${s}" class="${st[o.key] === s ? 'on' : ''}">${s}</button>`).join('')}</div>
+    <div class="row">${title(o.key, st[o.key])}${sheet(o.key, st[o.key])}</div></div>`).join('');
+}
+document.addEventListener('click', e => {
+  const opt = e.target.closest('.opt'); if (!opt) return;
+  const k = opt.dataset.k;
+  if (e.target.dataset.s) { st[k] = e.target.dataset.s; if (k === 'a' || k === 'c') open[k] = true; }
+  if (e.target.closest('.go-a')) open.a = !open.a;
+  if (e.target.closest('.go-c')) open.c = !open.c;
+  draw();
+});
+draw();
+</script>
+</body>
+</html>
