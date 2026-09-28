@@ -60,6 +60,11 @@ jobs:
       - name: Board of times
         if: vars.TIMES_URL != ''
         run: echo "VITE_TIMES_URL=${{ vars.TIMES_URL }}" >> "$GITHUB_ENV"
+      # The cloud-save worker's address (cloud/README.md), the same way: a
+      # build with no CLOUD_URL variable has no cloud line and sends nothing.
+      - name: Cloud saves
+        if: vars.CLOUD_URL != ''
+        run: echo "VITE_CLOUD_URL=${{ vars.CLOUD_URL }}" >> "$GITHUB_ENV"
       # The signing variables are only exported when the secrets exist: an
       # unset secret is an empty string, and electron-builder reads an empty
       # CSC_LINK as a path to a certificate file that is not there.

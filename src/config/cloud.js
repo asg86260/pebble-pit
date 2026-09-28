@@ -4,8 +4,10 @@
 // so a ceiling is one fact, not two that can disagree.
 
 // The switch. Off, the build has no cloud: no line in the foot bar, no page
-// on the sheet, no request. Off until the owner has deployed the worker.
-export const CLOUD_ON = false;
+// on the sheet, no request. On since the worker was deployed (2026-09-28);
+// a build still has no cloud unless VITE_CLOUD_URL names the worker, and
+// each player still opts in on the sheet.
+export const CLOUD_ON = true;
 
 // Where the worker is. Empty means no cloud, which is the node yard, the
 // checks and any build nobody pointed at a worker. The node yard has no
