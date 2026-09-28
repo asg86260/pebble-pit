@@ -34,6 +34,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
 
+- The deep's build button shows its price, one fang, instead of how many fangs you hold (src/selftest/deep.js).
 - A Swordsman's blow dents and wounds the serpent once, in one place, on the turn that lands it (test/sword-dent.test.mjs, test/classes.test.mjs).
 - A Sapper's two charges stick and go off in one spot instead of two (test/classes.test.mjs).
 - Two of the deep's stations of one kind, or two empty lots, no longer share a board's name (src/selftest/stations.js).

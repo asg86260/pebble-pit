@@ -1,6 +1,6 @@
 // The floating build button (DESIGN.md, "Choosing the station on its
 // board"): a small button standing in the deep's water over the next free
-// floor slot, wearing the fang's mark and how many are held. It is how a
+// floor slot, wearing the fang's mark and its price, one. It is how a
 // station is bought: the first one free, at the snatch, and every one after
 // it for a fang, whenever a fang is held and a slot is free. Pressed, it lays
 // out an empty lot there (`layLot`) and opens the lot's board, where what
@@ -63,7 +63,8 @@ export function seatBuildButton() {
   const on = offer.shown && S.view === 'deep';
   btn.classList.toggle('on', on);
   if (!on) return;
-  const count = offer.first ? 'free' : `×${offer.fangs}`;
+  // the price, not the purse: the fangs held are on the counter card
+  const count = offer.first ? 'free' : '×1';
   const say = btn.querySelector('.count');
   if (say.textContent !== count) say.textContent = count;
   // Centered over the slot, its foot BUILD_BUTTON_UP over the floor, in the

@@ -294,15 +294,23 @@ TESTS.push(['rails: the build button lays a lot, and its board picks the first s
   const rows = [...(rails(lot?.id)?.querySelectorAll('.rl-row:not(:disabled)') || [])].map(b => b.dataset.kind);
   await tap(rails(lot.id).querySelector('.rl-row[data-kind="armory"]'));
   await raf(); await raf();
-  const st = S.stations[0];
+  const st = { ...S.stations[0] }, fangs = S.fangs;
   showPanel(null, true);
+  await raf();
+  const gone = !btn.classList.contains('on');
+  // with three fangs held, the button asks one
+  window.__finish();
+  S.fangs = 3;
+  await raf(); await raf();
+  const price = btn.querySelector('.count')?.textContent;
   return [
     ok(shown, 'the button stands at the snatch'),
     ok(lot && lot.kind === null && open, "a tap lays an empty lot and opens its board", JSON.stringify(lot)),
     ok(rows.join() === 'altar,armory,spire', 'which offers the three starting kinds', rows.join()),
-    ok(st && st.id === 's1' && st.kind === 'armory' && !st.built && S.fangs === 0,
+    ok(st && st.id === 's1' && st.kind === 'armory' && !st.built && fangs === 0,
        'a pick puts the first station up, free', JSON.stringify(st)),
-    ok(!btn.classList.contains('on'), 'and the button goes, with no fang held')
+    ok(gone, 'and the button goes, with no fang held'),
+    ok(price === '×1', 'with fangs held, it asks one of them', price)
   ];
 }]);
 
