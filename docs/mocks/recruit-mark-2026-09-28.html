@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Recruit's Mark</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 14px; }
+  .tile { display: grid; gap: 4px; position: relative; }
+  .tile canvas { width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--rule); background: #000; cursor: default; }
+  .tile b { font-size: 13px; }
+  .tile span { font-size: 12px; color: var(--dim); }
+  .tip { position: absolute; background: #111116; color: #f5f5f7; font-size: 11px; padding: 2px 7px; pointer-events: none; display: none; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The Recruit's mark</h1>
+  <p>A new station's first choice is waiting: its Recruit is fighting, and rung 1 has not been bought. A mark hangs over
+    the station until it is, saying "choose a fighter" on hover (hover a mark below). The Recruit is off up at the coil,
+    so the mark stands over the plinth, where the board opens. Four shapes, each bobbing a cell.</p>
+  <p class="dim">A mock drawn from plain cells on the game's 6 px grid and ramp, not the game. It cannot show: the
+    pile-full triangle or the build button near it, the camera's zoom, or the board opening under a click.</p>
+  <div class="tiles" id="tiles"></div>
+</div>
+<script>
+'use strict';
+const P = 6, COLS = 40, ROWS = 40;
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+               '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLE = '#9b5de5', PURPLE_DIM = '#5c2ba6';
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const near = (i, x, y, s = 1) => GREYS[Math.max(1, Math.min(11, i + Math.round((hash(x * 31 + y * 17) * 2 - 1) * s)))];
+const cell = (g, x, y, tone) => { g.fillStyle = tone; g.fillRect(x * P, y * P, P, P); };
+const FLOOR = ROWS - 3, TOP = FLOOR - 2;
+const CRATE = ['.S..S.', 'EEEEEE', 'EpppEE', 'EppEpE', 'EpEppE', 'EEEEEE'], CT = { E: 7, p: 5, S: 9 };
+const PROP_X = 12, POST = PROP_X + 6 + 5, MID = Math.round((PROP_X - 1 + POST + 4) / 2);   // the plinth's middle
+
+function scene(g) {
+  for (let y = FLOOR; y < ROWS; y++) for (let x = 0; x < COLS; x++) cell(g, x, y, near(3, x, y));
+  for (let i = 0; i < 30; i++) cell(g, Math.floor(hash(i * 3.1) * COLS), Math.floor(hash(i * 5.7) * (FLOOR - 2)), GREYS[2 + Math.floor(hash(i) * 3)]);
+  const L = PROP_X - 1, R = POST + 3;
+  for (let r = 0; r < 2; r++) for (let x = L - r; x <= R + r; x++)
+    cell(g, x, TOP + r, r === 0 ? near(9, x, r) : x === L - r || x === R + r ? near(8, x, r) : near(6, x, r));
+  CRATE.forEach((row, r) => [...row].forEach((c, col) => { if (c !== '.') cell(g, PROP_X + col, TOP - 6 + r, near(CT[c], col, r)); }));
+  // the coil above, and the Recruit up under it, off its post
+  for (let x = 0; x < COLS; x++) for (let r = 0; r < 4; r++) cell(g, x, 3 + Math.round(1.5 * Math.sin(x / 7)) + r, r === 0 ? GREYS[11] : r === 3 ? GREYS[8] : GREYS[10]);
+  const ry = 3 + Math.round(1.5 * Math.sin(POST / 7)) + 6;
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) cell(g, POST + c, ry + r, r === 0 ? GREYS[11] : GREYS[10]);
+}
+// Ink cells in `tone`, each empty cell touching one dark: the keyline.
+function inked(g, rows, x0, y0, tone) {
+  for (let r = -1; r <= rows.length; r++) for (let c = -1; c <= rows[0].length; c++) {
+    if (rows[r]?.[c] === '#') continue;
+    let touch = false;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (rows[r + dr]?.[c + dc] === '#') touch = true;
+    if (touch) cell(g, x0 + c, y0 + r, GREYS[2]);
+  }
+  rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') cell(g, x0 + c, y0 + r, tone); }));
+}
+const draw = (g, rows, x0, y0, tones) => rows.forEach((row, r) => [...row].forEach((ch, c) => { if (tones[ch]) cell(g, x0 + c, y0 + r, tones[ch]); }));
+
+// Each mark: its rows, drawn centered over the plinth at a height over the crate.
+const MARKS = [
+  { name: 'A. A question mark', say: 'a white "?" on a dark keyline, the thing the board asks',
+    draw(g, x, y) { inked(g, ['.###.', '#...#', '....#', '...#.', '..#..', '.....', '..#..'], x - 2, y, GREYS[11]); } },
+  { name: 'B. A purple diamond', say: 'the next-rung purple of the board’s pips, as a diamond: something is there to buy',
+    draw(g, x, y, t) {
+      const lit = Math.floor(t / 0.5) % 2;
+      draw(g, ['...k...', '..k+k..', '.k+#+k.', 'k+###+k', '.k+#+k.', '..k+k..', '...k...'], x - 3, y + 1, { k: GREYS[2], '+': lit ? PURPLE : PURPLE_DIM, '#': lit ? GREYS[11] : PURPLE });
+    } },
+  { name: 'C. A down arrow', say: 'a white chevron pointing at the station, the way a call to build points',
+    draw(g, x, y) { inked(g, ['#.....#', '##...##', '.##.##.', '..###..', '...#...'], x - 3, y + 2, GREYS[11]); } },
+  { name: 'D. Two empty glyph plates', say: 'the two specialists it could fork into, as dim outlines side by side: a choice still open',
+    draw(g, x, y) {
+      const plate = ['kkkkkk', 'k....k', 'k.##.k', 'k.##.k', 'k....k', 'kkkkkk'];
+      draw(g, plate, x - 7, y + 1, { k: GREYS[9], '#': GREYS[6] });
+      draw(g, plate, x + 1, y + 1, { k: GREYS[9], '#': GREYS[6] });
+    } },
+];
+
+const tiles = document.getElementById('tiles');
+const cans = MARKS.map(M => {
+  const d = document.createElement('div'); d.className = 'tile';
+  const c = document.createElement('canvas'); c.width = COLS * P; c.height = ROWS * P;
+  const b = document.createElement('b'); b.textContent = M.name;
+  const s = document.createElement('span'); s.textContent = M.say;
+  const tip = document.createElement('div'); tip.className = 'tip'; tip.textContent = 'choose a fighter';
+  d.append(c, b, s, tip); tiles.append(d);
+  // the hover: anywhere over the mark or the plinth
+  c.addEventListener('pointermove', e => {
+    const r = c.getBoundingClientRect(), cx = (e.clientX - r.left) / r.width * COLS, cy = (e.clientY - r.top) / r.height * ROWS;
+    const over = Math.abs(cx - MID) < 9 && cy > TOP - 18 && cy < FLOOR;
+    tip.style.display = over ? 'block' : 'none';
+    tip.style.left = `${e.clientX - d.getBoundingClientRect().left + 10}px`;
+    tip.style.top = `${e.clientY - d.getBoundingClientRect().top + 14}px`;
+  });
+  c.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
+  return c.getContext('2d');
+});
+function frame(ms) {
+  const t = ms / 1000, bob = Math.floor(t / 0.6) % 2;     // a cell up and down, held
+  cans.forEach((g, i) => {
+    g.fillStyle = '#000'; g.fillRect(0, 0, COLS * P, ROWS * P);
+    scene(g);
+    MARKS[i].draw(g, MID, TOP - 16 - bob, t);
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
