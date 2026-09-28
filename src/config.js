@@ -136,3 +136,6 @@ export * from './config/saves.js';
 
 // the board of times: the server, the ping and the floor
 export * from './config/times.js';
+
+// cloud saves (wave-cloud): the worker, its ceilings and the pairing code
+export * from './config/cloud.js';

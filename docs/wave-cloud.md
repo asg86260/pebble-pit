@@ -1,7 +1,6 @@
 # Wave: cloud saves -- a sync code, a pairing code and a worker
 
-**Status: DRAFT 2026-09-27, the design signed; awaiting the owner's sign-off
-on this spec's "Decided here". Once signed, this document is canon.
+**Status: SIGNED 2026-09-27 (design and spec). This document is canon.
 Subagents: do not redesign; implement.** Where a number, a name, a route or a status code is
 written here, use it. Where this document is silent, DESIGN.md "Cloud saves:
 a sync code and a worker" decides. If something turns out to be impossible,
@@ -219,7 +218,8 @@ at }`. Exports:
   per-slot stops for `413`, `507` and `412`-behind.
 - `flush()` -- the `pagehide` / desk-close push, keepalive under the cap.
 - `startCloud()`, `makePair()`, `claimPair(pair)`, `useRecovery(code)`,
-  `rotate()`, `stopCloud()` -- the buttons' verbs. The two that link run
+  `rotate()`, `stopCloud()`, `recoveryCode()` (the secret, shown as
+  `PEBBLE-...`, for *show recovery code*) -- the buttons' verbs. The two that link run
   `cloudBoot`'s comparison at once and fill `conflicts()`.
 - `conflicts()` -> `[{ n, here, cloud }]` (the two blobs' lines as
   `slotLabels` writes them) and `choose(n, 'here' | 'cloud')`.
