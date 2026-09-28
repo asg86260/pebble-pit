@@ -1,0 +1,160 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranged stand mock</title>
+<style>
+  :root { --page: #f4f4f4; --ink: #000; --soft: #555; --rule: #bbb; }
+  @media (prefers-color-scheme: dark) {
+    :root { --page: #111; --ink: #e0e0e0; --soft: #aaa; --rule: #444; }
+  }
+  body { background: var(--page); color: var(--ink); font: 12px ui-monospace, "Courier New", monospace; margin: 16px; }
+  h1 { font-size: 15px; margin: 0 0 6px; }
+  .note { max-width: 980px; margin: 0 0 16px; color: var(--soft); line-height: 1.5; }
+  .note b { color: var(--ink); }
+  .opt { margin: 0 0 22px; padding: 0 0 16px; border-bottom: 1px solid var(--rule); }
+  .opt h2 { font-size: 13px; margin: 0 0 3px; }
+  .opt p { margin: 0 0 8px; color: var(--soft); max-width: 900px; line-height: 1.45; }
+  .opt p b { color: var(--ink); font-weight: normal; }
+  .pics { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+  canvas { image-rendering: pixelated; display: block; max-width: 100%; }
+  .lab { color: var(--soft); font-size: 10px; margin-top: 3px; }
+</style>
+
+<h1>Where a ranged fighter stands at its station</h1>
+<p class="note"><b>A mock drawn from plain cells, not the game.</b> Each station is a grey dome with a white stand-in drawing
+  inside and its glyph at the top; each fighter is a 3x3 white square with its weapon beside it -- the Ranger's bow, the
+  Hexer's wand, the Mage's staff with its orb, the Sapper's charge on its fuse. Four stations side by side at the game's
+  spacing (the gap between two domes is about seven cells), and the Ranger's again at twice the size. It cannot show the
+  real station drawings, the fighters' kits or attacks, the heaps of silt that drift between the domes, or the walk up
+  to a new spot -- which, by the house rule, every one of these would need (nothing teleports).</p>
+
+<div id="opts"></div>
+
+<script>
+// Cells, the game's way: everything on a grid, flat tones, no alpha.
+var C = { water: '#000', floor: '#26262a', floorTop: '#3a3a40', dome: '#1c1c20', domeEdge: '#55555c',
+          white: '#fff', grey: '#9a9a9a', dark: '#333', purple: '#8c5ae0', purpleDim: '#5b2fa8', plinth: '#444' };
+var DOME_W = 22, WALL = 13, ROOF = 11, GAP = 7, SIDE = 5, FLOOR = 3, SKY = 12;
+var W = SIDE * 2 + 4 * DOME_W + 3 * GAP, H = SKY + WALL + ROOF + FLOOR;
+var FLOOR_Y = H - FLOOR;                           // the first row of floor; things stand on FLOOR_Y - 1
+
+function grid(cell, w, h) {
+  var c = document.createElement('canvas');
+  c.width = w * cell; c.height = h * cell;
+  var g = c.getContext('2d');
+  return { c: c, g: g, px: function (x, y, tone) { g.fillStyle = tone; g.fillRect(x * cell, y * cell, cell, cell); } };
+}
+
+// The dome: walls up WALL cells, a half-round roof of radius ROOF on them; a grey
+// edge a cell thick, dark inside.
+function dome(d, x0) {
+  var r = DOME_W / 2, cx = x0 + r - 0.5, springY = FLOOR_Y - WALL;
+  for (var y = springY - ROOF; y < FLOOR_Y; y++) for (var x = x0; x < x0 + DOME_W; x++) {
+    var inside, edge;
+    if (y >= springY) { inside = true; edge = x === x0 || x === x0 + DOME_W - 1; }
+    else {
+      var dy = springY - y, dx = x - cx, dist = Math.sqrt(dx * dx + dy * dy);
+      inside = dist <= r; edge = inside && dist > r - 1.2;
+    }
+    if (inside) d.px(x, y, edge ? C.domeEdge : C.dome);
+  }
+}
+// A stand-in for the station's drawing: a white foot along the floor, a grey
+// column, a white head. The foot is what today's fighter stands on.
+function drawing(d, mid) {
+  for (var x = mid - 6; x <= mid + 6; x++) d.px(x, FLOOR_Y - 1, C.white);
+  for (var x = mid - 4; x <= mid + 4; x++) d.px(x, FLOOR_Y - 2, C.white);
+  for (var y = FLOOR_Y - 9; y < FLOOR_Y - 2; y++) { d.px(mid - 1, y, C.grey); d.px(mid, y, C.white); d.px(mid + 1, y, C.grey); }
+  for (var x = mid - 5; x <= mid + 5; x++) d.px(x, FLOOR_Y - 10, C.white);
+  for (var y = FLOOR_Y - 14; y < FLOOR_Y - 10; y++) for (var x = mid - 2; x <= mid + 2; x++)
+    d.px(x, y, (x === mid - 2 || x === mid + 2 || y === FLOOR_Y - 14) ? C.white : C.purple);
+}
+// The station's glyph at the top of its dome.
+function glyph(d, mid) {
+  var y = FLOOR_Y - WALL - ROOF + 4;
+  [[0, 0], [1, 0], [-1, 1], [0, 1], [1, 1], [2, 1], [0, 2], [0, 3], [-1, 3]].forEach(function (p) { d.px(mid + p[0], y + p[1], C.white); });
+}
+// A fighter: a 3x3 white square with its feet on row `foot`, its left column
+// at x, and its weapon on the side away from the station's middle when it
+// has one (`face` +1 right, -1 left).
+function fighter(d, x, foot, kind, face) {
+  var top = foot - 2;
+  for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) d.px(x + i, top + j, C.white);
+  var hx = face > 0 ? x + 3 : x - 1, s = face;          // the column beside the hand
+  if (kind === 'ranger') {                              // a bow: a bent limb and a string
+    [[1, -2], [2, -1], [2, 0], [2, 1], [1, 2]].forEach(function (p) { d.px(hx + s * p[0], top + 1 + p[1], C.white); });
+    for (var k = -1; k <= 1; k++) d.px(hx + s * 0 + (s > 0 ? 0 : 0), top + 1 + k, C.grey);
+  } else if (kind === 'hexer') {                        // a wand held up at a slant, a purple tip
+    d.px(hx, top, C.grey); d.px(hx + s, top - 1, C.grey); d.px(hx + 2 * s, top - 2, C.purple); d.px(hx + 2 * s, top - 3, C.purpleDim);
+  } else if (kind === 'mage') {                         // a staff taller than her, an orb on it
+    for (var y = top - 3; y <= foot; y++) d.px(hx, y, C.grey);
+    d.px(hx, top - 5, C.purple); d.px(hx - 1, top - 4, C.purple); d.px(hx + 1, top - 4, C.purple); d.px(hx, top - 4, C.white); d.px(hx, top - 3, C.purple);
+  } else if (kind === 'sapper') {                       // a round charge in the hand, its fuse lit
+    d.px(hx, top + 1, C.grey); d.px(hx + s, top + 1, C.grey); d.px(hx, top + 2, C.grey); d.px(hx + s, top + 2, C.grey);
+    d.px(hx + s, top, C.white); d.px(hx + 2 * s, top - 1, C.purple);
+  }
+}
+// The first row of the dome's roof over columns x..x+2: where a body on it stands.
+function roofFoot(x0, x) {
+  var r = DOME_W / 2, cx = x0 + r - 0.5, springY = FLOOR_Y - WALL, best = FLOOR_Y;
+  for (var i = 0; i < 3; i++) for (var y = springY - ROOF; y < FLOOR_Y; y++) {
+    var dx = x + i - cx, dy = springY - y, inside = x + i >= x0 && x + i < x0 + DOME_W && (y >= springY || Math.sqrt(dx * dx + dy * dy) <= r);
+    if (inside) { best = Math.min(best, y); break; }
+  }
+  return best - 1;
+}
+// A small plinth: a dark block with a white top edge, `w` wide and `h` tall, its middle at mid.
+function plinth(d, mid, w, h) {
+  var x0 = mid - Math.floor(w / 2);
+  for (var y = FLOOR_Y - h; y < FLOOR_Y; y++) for (var x = x0; x < x0 + w; x++)
+    d.px(x, y, y === FLOOR_Y - h ? C.white : (x === x0 || x === x0 + w - 1) ? C.domeEdge : C.plinth);
+}
+
+// Where each option stands the fighter, given the dome's left edge and middle.
+var KINDS = ['ranger', 'hexer', 'mage', 'sapper'];
+var OPTIONS = [
+  { name: 'Today -- in the middle of the station, on its foot',
+    say: 'The body stands on the floor at the slot\'s middle (<code>deepPost</code>, <code>toPost</code>), in front of the station\'s drawing. <b>Costs:</b> the body and its weapon are drawn over the drawing\'s white foot and white column, so white lands on white and the weapon is lost; the station\'s own drawing is hidden behind the body.',
+    place: function (d, x0, mid, kind) { fighter(d, mid - 1, FLOOR_Y - 1, kind, 1); } },
+  { name: 'A -- on the dome\'s shoulder',
+    say: 'Perched on the dome\'s roof where it curves down toward the wall, on one side, the weapon against open water. <b>Costs:</b> the weapon hangs out over the gap between two domes -- the gap the in-between slots (the sixth and seventh) fill later, so there it reaches over the next station; a climb up and down the dome for every arrival; farther from the door than today.',
+    place: function (d, x0, mid, kind) { var x = x0 + DOME_W - 5; fighter(d, x, roofFoot(x0, x), kind, 1); } },
+  { name: 'B -- on a small plinth in front of the station',
+    say: 'A low block (five cells wide, four tall) at the station\'s foot lifts the body off the white foot, so the body and weapon are seen against the dome\'s dark inside. Stays at the station, in its middle. <b>Costs:</b> the plinth and the body cover the bottom third of the station\'s drawing; a new piece to draw for every station; a step up at arrival.',
+    place: function (d, x0, mid, kind) { plinth(d, mid, 5, 4); fighter(d, mid - 1, FLOOR_Y - 5, kind, 1); } },
+  { name: 'C -- on top of the dome',
+    say: 'Standing on the crown of the arch, the weapon against open water and closest to the coil it shoots at. Covers nothing of the station or its glyph. <b>Costs:</b> the longest climb, every arrival; the body reads as on the station rather than at it; it sits where the coil dips lowest and where the stack of works over a station is drawn, so the two would cross.',
+    place: function (d, x0, mid, kind) { fighter(d, mid - 1, roofFoot(x0, mid - 1), kind, 1); } }
+];
+
+function scene(opt, cell, only) {
+  var n = only == null ? 4 : 1, w = only == null ? W : SIDE + DOME_W + GAP;
+  var d = grid(cell, w, H);
+  d.g.fillStyle = C.water; d.g.fillRect(0, 0, d.c.width, d.c.height);
+  // a few motes on the water
+  var seed = 11;
+  function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  for (var i = 0; i < w * H / 30; i++) d.px(Math.floor(rnd() * w), Math.floor(rnd() * (FLOOR_Y - 1)), rnd() < 0.2 ? C.purpleDim : '#2c2c2c');
+  for (var y = FLOOR_Y; y < H; y++) for (var x = 0; x < w; x++) d.px(x, y, y === FLOOR_Y ? C.floorTop : C.floor);
+  for (var k = 0; k < n; k++) {
+    var x0 = SIDE + k * (DOME_W + GAP), mid = x0 + DOME_W / 2, kind = KINDS[only == null ? k : only];
+    dome(d, x0); drawing(d, mid); glyph(d, mid);
+    opt.place(d, x0, mid, kind);
+  }
+  return d.c;
+}
+
+var host = document.getElementById('opts');
+OPTIONS.forEach(function (o) {
+  var box = document.createElement('div'); box.className = 'opt';
+  box.innerHTML = '<h2>' + o.name + '</h2><p>' + o.say + '</p>';
+  var pics = document.createElement('div'); pics.className = 'pics';
+  var a = document.createElement('div'); a.appendChild(scene(o, 5));
+  a.insertAdjacentHTML('beforeend', '<div class="lab">Ranger, Hexer, Mage, Sapper, at the game\'s spacing</div>');
+  var b = document.createElement('div'); b.appendChild(scene(o, 10, 0));
+  b.insertAdjacentHTML('beforeend', '<div class="lab">the Ranger, twice the size</div>');
+  pics.appendChild(a); pics.appendChild(b);
+  box.appendChild(pics);
+  host.appendChild(box);
+});
+</script>
