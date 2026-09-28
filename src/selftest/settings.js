@@ -64,7 +64,7 @@ export const TESTS = [
     f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
     const loaded = () => new Promise(r => f.addEventListener('load', r, { once: true }));
     document.body.appendChild(f);
-    let landed = false, label = '', rows = [], record = '', arrived = false, crewThere = 0, untouched = false, edges = '';
+    let landed = false, label = '', rows = [], record = '', arrived = false, crewThere = 0, untouched = false, edges = [];
     try {
       f.src = 'index.html';
       await loaded();
@@ -76,11 +76,15 @@ export const TESTS = [
       record = d.getElementById('recordbtn').textContent;
       d.getElementById('slotsbtn').click();
       rows = [...d.querySelectorAll('.slot')].map(b => b.textContent);
+      // every control down the column, the saves page's pair and the
+      // settings page's slider among them, ends at one right edge
+      const rights = () => [...d.querySelectorAll('.col > :not([hidden])')]
+        .filter(el => el.matches('button, input, .pair, .slots, .paste, .record') && el.getBoundingClientRect().width)
+        .map(el => `${el.id || el.className} ${Math.round(el.getBoundingClientRect().right)}`);
+      edges.push(...rights());
       d.getElementById('slotsback').click();
-      // The volume slider lines up with the buttons over it: its em is its own.
       d.getElementById('settingsbtn').click();
-      const edge = el => { const r = el.getBoundingClientRect(); return `${Math.round(r.left)}-${Math.round(r.right)}`; };
-      edges = `${edge(d.querySelector('.col input[type=range]'))} vs ${edge(d.getElementById('motion'))}`;
+      edges.push(...rights());
       d.getElementById('settingsback').click();
       untouched = slotRaw(1) === blob;          // before play: the game itself writes the slot
       d.getElementById('play').click();
@@ -98,7 +102,8 @@ export const TESTS = [
       ok(rows.length === 3 && /^1 · rock \d+ · 4 crew/.test(rows[0]) && rows[1] === '2 · empty',
          'the saves rows read the slots', JSON.stringify(rows)),
       ok(/^achievements · \d+ of \d+$/.test(record), 'and the record has its count', record),
-      ok(/^(\d+-\d+) vs \1$/.test(edges), 'the volume slider is the buttons\' width', edges),
+      ok(edges.length > 4 && new Set(edges.map(e => e.split(' ').pop())).size === 1,
+         'every control in the column is one width', edges.join(', ')),
       ok(arrived && crewThere === 4, 'play opens play.html with the yard', `${arrived}, ${crewThere} crew`),
       ok(untouched, 'and nothing the landing page did wrote the slot'),
     ];

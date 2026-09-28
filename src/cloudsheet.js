@@ -123,11 +123,19 @@ let typing = null;
 let armed = 0;
 const tickers = new Map();   // el -> the countdown's timer, while a pairing code is up
 
+// The section's own reply line, under its heading: what a cloud button
+// answers is said where the button is, not at the foot of the page. Kept
+// here by section so a redraw after a verb draws the word it was told.
+const told = new Map();
+const lineOf = el => el.querySelector(':scope > .said');
+
 export function showCloud(el, say, opts = {}) {
   fresh = null;
   revealed = null;
   typing = null;
-  drawCloud(el, say, opts);
+  told.delete(el);
+  const tell = t => { told.set(el, t); const line = lineOf(el); if (line) line.textContent = t; };
+  drawCloud(el, tell, opts);
 }
 
 function drawCloud(el, say, opts) {
@@ -143,7 +151,7 @@ function drawCloud(el, say, opts) {
   if (!cloudReady()) { el.hidden = true; return; }
   // A section of its own, titled, so every button in it -- stop above all --
   // reads as being about the cloud and not about the slots over it.
-  el.append(node('div', 'head', 'cloud saves'));
+  el.append(node('div', 'head', 'cloud saves'), node('div', 'small said', told.get(el) || ''));
   const st = cloudStatus();
   const now = Date.now();
   const done = line => { if (line) say(line); redrawAll(); opts.changed?.(); };

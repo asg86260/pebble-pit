@@ -12,8 +12,9 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
-- The cloud's buttons sit in their own titled cloud saves box, and its stop button says stop cloud saves (src/selftest/cloud.js).
+- The cloud's buttons and what they answer sit in their own titled cloud saves box, and its stop button says stop cloud saves (src/selftest/cloud.js).
 - On a phone the corner's gear is a pause button, and it opens the paused menu rather than the settings (src/selftest/touch.js).
+- Raindrops kick up a little crown where they land (`node tools/look.mjs rain`).
 - Cloud saves, if you want them: turn them on in settings and your three save slots are kept in the cloud and brought back on any device you link with a six-character code (test/cloud-sync.test.mjs).
 - A station starts as a base unit (Fighter, Novice, Scout, Adept, Apprentice) that forks into one of its two classes at rung 4, and the build button lays an empty lot whose board picks what goes up (test/rails.test.mjs, src/selftest/deep.js).
 - Fighters sway a cell between attacks, and the melee ones hop as each step lands (`node tools/look.mjs party-four`).
@@ -34,7 +35,7 @@ feature lives in DESIGN.md.
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
 - Save a copy, load a save and reset progress are on the saves page now, and loading a yard turns the sheet back to the front (src/selftest/settings.js).
 
-- The volume slider on the title's settings is the width of the buttons above it (src/selftest/settings.js).
+- On the landing page, save a copy and load a save are as wide as the buttons around them, and so are the volume slider and the achievements list (src/selftest/settings.js).
 - Two of the deep's stations of one kind, or two empty lots, no longer share a board's name (src/selftest/stations.js).
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - Scales tossed into the crusher drop into its funnel instead of sliding down in front of it (`node tools/look.mjs crusher`).

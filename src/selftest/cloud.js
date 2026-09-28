@@ -232,8 +232,9 @@ export const TESTS = [
       typed = type(d, 'k7q9o');
       type(d, 'zzzzzz');
       buttonIn(block(d), 'link').click();
-      await until(() => d.getElementById('said').textContent);
-      wrong = d.getElementById('said').textContent;
+      const line = () => block(d).querySelector('.head + .said');
+      await until(() => line()?.textContent);
+      wrong = line()?.textContent || '';
       type(d, 'k7q94m');
       buttonIn(block(d), 'link').click();
       linked = await until(() => buttonIn(block(d), 'link a device'));
@@ -243,7 +244,7 @@ export const TESTS = [
       ok(off === 'cloud · off', 'off, the foot bar says so and offers nothing', off),
       ok(!spill.length, 'the box fits the section', JSON.stringify(spill)),
       ok(typed === 'K7Q-90', 'the box reads a code as it is typed', typed),
-      ok(wrong === "that code didn't work", 'a bad code says so', wrong),
+      ok(wrong === "that code didn't work", 'a bad code says so, under the section\'s heading', wrong),
       ok(claims === 2 && !!linked, 'and a good one links', `${claims} claims`)
     ];
   }],

@@ -1,5 +1,5 @@
 import { frames } from '../clock.js';
-import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, RAIN_SHEETS, RAIN_NEAR, RAIN_BEHIND_DROP, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, RAIN_SHEETS, RAIN_NEAR, RAIN_BEHIND_DROP, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand, stream } from '../rng.js';
 import { gust } from '../wind.js';
 import { S } from '../state.js';
@@ -372,11 +372,23 @@ export function stepDrops() {
       LEDGER.dirty++;
       if (d.mark && m[c] < MUCK_MAX) { m[c]++; LEDGER.laid++; }
     } else LEDGER.clean++;
+    SPLASHES.push({ c, y: rest, dirt: d.dirt, t: 0 });
     dead[i] = 1;
   }
   let w = 0;
   for (let r = 0; r < DROPS.length; r++) if (r >= n || !dead[r]) DROPS[w++] = DROPS[r];
   DROPS.length = w;
+}
+
+// Where the landing sheet came down, for as long as its crown is up: the
+// column, the surface it hit and the seconds since. Drawn and forgotten --
+// the landing itself was booked in `stepDrops`.
+export const SPLASHES = [];
+export function stepSplashes(secs) {
+  const life = RAIN_SPLASH.length * RAIN_SPLASH_HOLD_S;
+  let w = 0;
+  for (const s of SPLASHES) if ((s.t += secs) < life) SPLASHES[w++] = s;
+  SPLASHES.length = w;
 }
 
 // --- when it rains ------------------------------------------------------------------
@@ -406,7 +418,7 @@ export const dryTime = () => dryFor;
 // The water's and the lightning's streams go too: a new run's first shower is
 // `S.rains` 1 again, and a stream kept from the last run's is that run's weather.
 export const resetRain = () => {
-  dryFor = Infinity; pinned = null; wateredAt = -1; boltedAt = -1;
+  dryFor = Infinity; pinned = null; SPLASHES.length = 0; wateredAt = -1; boltedAt = -1;
   LEDGER.clean = LEDGER.dirty = LEDGER.laid = 0;
 };
 
