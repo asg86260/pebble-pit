@@ -4,12 +4,11 @@
 // through the queries at the top.
 //
 // A station is a record, not a body: `fighter` names the body standing at it
-// (a uid the body carries as `w.uid`, beside `w.station`), and whether it is
-// manned is decided here, at the level of counts, the way `rebalance` decides
-// how many carry. Which body answers is the crew's catch-up (`bindFighters`,
-// called from `syncWorkers`), so a station can be manned on a frame when no
-// body has been chosen yet, and a body read back from a save that forgot its
-// uid is matched again to the station it stands nearest.
+// by its uid (`w.uid`, every body's own, beside `w.station` on a fighter).
+// Whether it is manned is decided here, at the level of counts, the way
+// `rebalance` decides how many carry; which body answers is the crew's
+// catch-up (`bindFighters`, called from `syncWorkers`), so a station can be
+// manned (`CALLED`) on a call before a body is chosen for it.
 
 import { S } from '../state.js';
 import * as CFG from '../config.js';
@@ -125,16 +124,9 @@ export function stationLanded(id) {
 }
 
 // --- who stands at one ------------------------------------------------------------
-// A body's uid, handed out when a station is manned: one past the highest
-// any station or body carries, so a reload that kept the stations' and lost
-// the bodies' still never hands out one twice.
-const numOf = u => (typeof u === 'string' && u[0] === 'f' ? +u.slice(1) || 0 : 0);
-const newUid = () => {
-  let m = 0;
-  for (const s of S.stations) m = Math.max(m, numOf(s.fighter));
-  for (const w of S.workers) m = Math.max(m, numOf(w.uid));
-  return `f${m + 1}`;
-};
+// A station manned before a body has been chosen for it: `rebalance` decides
+// how many stand, and `syncWorkers` which ones, on the same call.
+export const CALLED = 'called';
 
 // Man up to `free` built stations with no fighter, oldest first; the count
 // level of `seat`, asked by `rebalance` with the deep's spare hands less the
@@ -144,7 +136,7 @@ export function seatUpTo(free) {
   for (const st of S.stations) {
     if (n >= free) break;
     if (!st.built || st.fighter) continue;
-    st.fighter = newUid();
+    st.fighter = CALLED;
     n++;
   }
   return n;
@@ -175,35 +167,35 @@ export function unseatNearest(xs) {
 }
 
 // Whether a fighter body is the one its station names.
-const bound = w => { const st = stationById(w.station); return !!st && st.fighter === w.uid && !!w.uid; };
+const bound = w => { const st = stationById(w.station); return !!st && !!w.uid && st.fighter === w.uid; };
+export const unbound = w => w.type === TYPE.FIGHTER && !bound(w);
+// A manned station nobody answers to yet: just manned, or a save whose
+// fighter is not among the bodies.
+const waiting = st => !!st.fighter && !fighterAt(st);
+const take = (st, w) => { st.fighter = w.uid; w.station = st.id; };
 
 // The crew's catch-up, before it counts heads: every manned station with no
-// body answering to it takes the unbound fighter nearest it. A body read
-// back without its uid is one of those, and it stands where it was, so the
-// nearest is the one that was there. What is left unbound is stood down.
+// body answering to it takes the unbound fighter nearest it, so a body that
+// is a fighter already keeps the place it stands at. What is left unbound
+// is stood down.
 export function bindFighters() {
-  const loose = S.workers.filter(w => w.type === TYPE.FIGHTER && !bound(w));
+  const loose = S.workers.filter(unbound);
   for (const st of S.stations) {
-    if (!st.fighter || fighterAt(st)) continue;
+    if (!waiting(st)) continue;
     let best = -1, dist = Infinity;
     loose.forEach((w, i) => { const d = Math.abs(mid(w) - stationMid(st)); if (d < dist) { dist = d; best = i; } });
     if (best < 0) break;
-    const [w] = loose.splice(best, 1);
-    w.uid = st.fighter;
-    w.station = st.id;
+    take(st, loose.splice(best, 1)[0]);
   }
-  return loose;
 }
-export const unbound = w => w.type === TYPE.FIGHTER && !bound(w);
 
 // A body about to become a fighter (stood down elsewhere, or made from
 // nothing) is given the first manned station with nobody answering to it,
 // before it is sent there: where it walks is read off `w.station`.
 export function bindNew(w) {
-  const st = S.stations.find(s => s.fighter && !fighterAt(s));
-  if (!st) return false;
-  w.uid = st.fighter;
-  w.station = st.id;
+  const st = S.stations.find(waiting);
+  if (!st || !w.uid) return false;
+  take(st, w);
   return true;
 }
 

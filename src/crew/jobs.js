@@ -173,6 +173,19 @@ export const wanted = () => {
   return want;
 };
 
+// Who a body is, for anything that names one body rather than a count (a
+// station's fighter, deep/party.js): one past the highest any body or
+// station holds, so none is handed out twice. Saved with the body (`KEEPS`);
+// a body read back without one, or holding one another body read back
+// first, is given a new one by `syncWorkers` (`ownUids`).
+const uidNum = u => (typeof u === 'string' && u[0] === 'u' ? +u.slice(1) || 0 : 0);
+export const newUid = () => {
+  let m = 0;
+  for (const w of S.workers) m = Math.max(m, uidNum(w.uid));
+  for (const st of S.stations) m = Math.max(m, uidNum(st.fighter));
+  return `u${m + 1}`;
+};
+
 // Every body gets a rhythm of its own (`ph`, `sp`), handed out here where
 // every body is made: a factory that forgets them multiplies a position by
 // the sine of `undefined`, and a body at NaN is a body nowhere. The `?.()` is
@@ -182,6 +195,7 @@ export const FACTORY = type => {
   const made = {
     ph: rand() * Math.PI * 2,
     sp: 0.5 + rand() * 0.9,
+    uid: newUid(),
     ...(JOBS[type]?.factory() || {})
   };
   // And its feet on the ground under it, asked here once: a factory that

@@ -17,7 +17,7 @@ import { now } from '../clock.js';
 import { newRecord } from './records.js';
 import { retask } from './commute.js';
 import { unbook } from './hole.js';
-import { FACTORY, TYPES, wanted } from './jobs.js';
+import { FACTORY, TYPES, wanted, newUid } from './jobs.js';
 import { syncLifts } from './lifts.js';
 import { syncRoombas } from './roomba.js';
 
@@ -54,6 +54,17 @@ setStaff(() => { rebalance(); syncWorkers(); });
 // live in: a deep resident on a yard job, or a yard body on a deep one.
 const away = (w, type = w.type) => !!w.deepHome !== isDeepType(type);
 
+// Every body its own uid (`newUid`): one read back from a save written
+// before bodies had them, or made by a factory while the list was being read
+// back and so blind to the uids later in it, is given a fresh one.
+function ownUids() {
+  const seen = new Set();
+  for (const w of S.workers) {
+    if (!w.uid || seen.has(w.uid)) w.uid = newUid();
+    seen.add(w.uid);
+  }
+}
+
 export function syncWorkers() {
   syncLifts();
   syncRoombas();
@@ -69,6 +80,7 @@ export function syncWorkers() {
   // considered last and therefore stood down first; before it, a body working
   // in the half it does not live in (DESIGN.md, "One crew, two homes"). The
   // kept keep the order they had, so nobody's slot moves for being chosen.
+  ownUids();
   // A fighter no manned station answers to (its station's fighter moved,
   // or lent to a build) is the one the fighters give up, so it goes last
   // with the loans: bound first (`bindFighters`), so a body read back
