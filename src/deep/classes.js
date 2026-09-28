@@ -201,7 +201,7 @@ function martial(w, c, st, cls, v) {
 }
 
 // Arrows from a bow held over the head, arcing up to the hide; from rung 4
-// every 5th is aimed, x5, and from rung 8 the aimed shot stuns.
+// every 5th is aimed, x2, and from rung 8 the aimed shot stuns.
 function ranger(w, c, st, cls, v) {
   const t = c.now, at = atPost(w, st, t);
   if (!at) return;
@@ -356,8 +356,8 @@ function burnChip(b, t) {
 }
 
 // Sings: every other fighter is Inspired while she does -- by her ladder's
-// share, doubled from rung 4 (the Anthem), lingering 6 s after from rung 8.
-// She does no damage, and alone her song gives nothing.
+// share, doubled from rung 4 (the Anthem) -- and from rung 8 Hasted too. She
+// does no damage, and alone her song gives nothing.
 function bard(w, c, st, cls, v) {
   const t = c.now;
   w.pipsMax = 0;
@@ -365,8 +365,12 @@ function bard(w, c, st, cls, v) {
   if (!toPost(w, st)) { w.goal = 'back'; w.pose = null; return; }
   w.goal = 'sing';
   if (!w.pose || w.pose.move !== 'sing') w.pose = { move: 'sing', at: t, hit: t, end: Infinity, x: mid(w), y: w.y, big: false, landed: true };
-  const k = v * (hasMove(st) ? cls.anthemX : 1), linger = hasCap(st) ? cls.capLinger : cls.linger;
-  for (const o of fighters()) if (o !== w) inspire(o, k, linger);
+  const k = v * (hasMove(st) ? cls.anthemX : 1);
+  for (const o of fighters()) {
+    if (o === w) continue;
+    inspire(o, k, cls.linger);
+    if (hasCap(st)) haste(o, cls.linger);
+  }
 }
 
 const STEP = { brawler, sword, monk, martial, ranger, assassin, hexer, sapper, mage, bard };

@@ -59,7 +59,7 @@ const WORDS = {
   mage:     { fork: 'Channel powerful beams',
               move: ['Widening', 'widen the beam'], cap: ['Thermite', 'burn through armor'] },
   bard:     { fork: 'Inspire your party',
-              move: ['Anthem', 'double the boost'], cap: ['Refrain', 'make it linger'] }
+              move: ['Anthem', 'double the boost'], cap: ['Tempo', 'haste your party'] }
 };
 const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',
                     circle: 'Cast hexes', spire: 'Shoot beams' };

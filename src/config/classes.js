@@ -33,9 +33,9 @@ export const MOVE_RUNG = 4, CAPSTONE_RUNG = 8;
 // The rung that picks the class: the move's, so the fork brings the move.
 export const FORK_RUNG = MOVE_RUNG;
 export const CLASSES = {
-  // Heavy punches; every 4th a haymaker, x4; at the capstone the haymaker stuns.
+  // Heavy punches; every 4th a haymaker, x3; at the capstone the haymaker stuns.
   brawler:  { name: 'Brawler',        ladder: 'brawler',  hit: 'brawler',  melee: true,
-              every: 1.2, windup: 0.18, haymaker: { every: 4, x: 4 }, capStun: 1 },
+              every: 1.2, windup: 0.18, haymaker: { every: 4, x: 3 }, capStun: 1 },
   // Cuts; at rung 4 each cut lands at three spots, at 8 every 3rd twice, the
   // second landing leaving the serpent Bleeding.
   sword:    { name: 'Swordsman',      ladder: 'sword',    hit: 'sword',    melee: true,
@@ -46,7 +46,7 @@ export const CLASSES = {
               every: 1, windup: 0.15, fly: 0.35, chi: { max: 5, fill: 1, moveFill: 2, x: 3 }, capStun: 1.5 },
   // Quick staff thrusts fill pips; a full row is one finisher blow.
   martial:  { name: 'Martial Artist', ladder: 'martial',  hit: 'martial',  melee: true,
-              every: 0.5, windup: 0.08, pips: { max: 5, fill: 1, moveFill: 2 }, finisherX: 1.5, capHaste: 3 },
+              every: 0.5, windup: 0.08, pips: { max: 5, fill: 1, moveFill: 2 }, finisherX: 1.5, capHaste: 1 },
   // Arrows loosed from a bow held over the head; every 5th aimed, x2, stunning at 8.
   ranger:   { name: 'Ranger',         ladder: 'ranger',   hit: 'ranger',   melee: false,
               every: 0.8, windup: 0.2, fly: 0.5, arc: P * 12, aimed: { every: 5, x: 2 }, capStun: 1 },
@@ -60,7 +60,7 @@ export const CLASSES = {
   // A hex bolt; at rung 4 it Weakens the heal, at 8 it stops the heal (Held)
   // and lays Exposed.
   hexer:    { name: 'Hexer',          ladder: 'hexer',    hit: 'hexer',    melee: false,
-              every: 5, windup: 0.3, fly: 0.6, weaken: { k: 0.3, s: 8 }, hold: 2, exposed: 4 },
+              every: 5, windup: 0.3, fly: 0.6, weaken: { k: 0.3, s: 8 }, hold: 2, exposed: 2 },
   // A thrown charge on the water's gravity; at rung 4 it sticks, ticks and blows
   // x3 and stuns; at 8 two stick at once.
   sapper:   { name: 'Sapper',         ladder: 'sapper',   hit: 'sapper',   melee: false,
@@ -70,11 +70,13 @@ export const CLASSES = {
   // At rung 4 it widens and ramps the longer she holds it; at 8 it burns through
   // (the phase's half does not dim it).
   mage:     { name: 'Mage',           ladder: 'mage',     hit: 'mage',     melee: false,
-              hold: 4, rest: 1.5, windup: 0.25, finishX: 3, rampMost: 2 },
-  // Sings; the other fighters are Inspired while she does. No damage of her own.
-  // Her ladder is written in percent (the rails say `%`); `pct` reads it as a share.
+              hold: 4, rest: 1.5, windup: 0.25, finishX: 3, rampMost: 1.5 },
+  // Sings; the other fighters are Inspired while she does, and at the capstone
+  // Hasted. No damage of her own. Her ladder is written in percent (the rails
+  // say `%`); `pct` reads it as a share. `linger` is how long either outlasts
+  // a frame of her song.
   bard:     { name: 'Bard',           ladder: 'bard',     hit: null,       melee: false, pct: true,
-              linger: 0.25, anthemX: 2, capLinger: 6 },
+              linger: 0.25, anthemX: 2 },
 };
 
 // How close a melee fighter's body has to be to the hide to land a blow.

@@ -152,12 +152,18 @@ group('Monk: palm waves fill chi, a full row is a stunning chi palm; faster at 4
   buyTo(0, 'monk', 8);
   S.serpentGrace = 0;
   const eight = watch(13);
-  const ratio = m => count(m.moves, 'chi') / Math.max(1, m.moves.length);
+  // The palms between two chi palms, each whole run a watch saw: the count a
+  // row takes, whatever the window's phase.
+  const gaps = m => {
+    const at = m.moves.map((v, i) => (v === 'chi' ? i : -1)).filter(i => i >= 0);
+    return at.slice(1).map((i, n) => i - at[n] - 1);
+  };
   return [
     alone,
     ok(base.shots.has('palm') && count(base.moves, 'chi') >= 1, 'palms fly from the well and a full row is a chi palm',
        base.moves.join(' ')),
-    ok(ratio(four) > ratio(base), 'at rung 4 chi fills twice as fast', `${ratio(base).toFixed(2)} then ${ratio(four).toFixed(2)}`),
+    ok(gaps(base).length && gaps(four).length && Math.max(...gaps(four)) < Math.min(...gaps(base)),
+       'at rung 4 chi fills twice as fast', `${gaps(base)} palms between chi palms, then ${gaps(four)}`),
     ok(four.stuns >= 1, 'a chi palm stuns', `${four.stuns}`),
     ok(eight.stunMost > stun4, 'and at rung 8 it stuns longer', `${stun4.toFixed(2)} then ${eight.stunMost.toFixed(2)}`)
   ];
@@ -325,7 +331,7 @@ group('Mage: a held beam ticks, then a finishing blow; it widens at 4 and burns 
   ];
 }, { reload: false });
 
-group('Bard: no damage; alone her song gives nothing; with another the Anthem doubles it and at 8 it lingers', async () => {
+group('Bard: no damage; with another the Anthem doubles her boost, and at 8 her song Hastes them too', async () => {
   party(['spire', 'armory']);
   buyTo(0, 'bard', 4);
   // The Bard strikes nothing of her own: every hit is the armory's Scout's.
@@ -337,14 +343,14 @@ group('Bard: no damage; alone her song gives nothing; with another the Anthem do
   run(0.5);
   const anthem = done(watch(4, 1), 'ranger');
   const k4 = rungWorth(CLASSES.bard, 4) * CLASSES.bard.anthemX;
+  const slowAt4 = !hasted(fighterAt(1));
   buyTo(0, 'bard', 8);
   run(1);
+  const quick = hasted(fighterAt(1));
   // She stops: her station's class goes, and she is the spire's Apprentice again.
   reset(S.stations[0].id);
-  run(3);
-  const lingering = inspiredK(fighterAt(1)) > 0;
-  run(4);
-  const gone = inspiredK(fighterAt(1)) === 0;
+  run(1);
+  const gone = !hasted(fighterAt(1)) && inspiredK(fighterAt(1)) === 0;
   // Two arrows landing close together are one number, so each is read as a
   // whole number of Inspired arrows; the first watch may start on an arrow
   // that was loosed before the rung.
@@ -353,7 +359,8 @@ group('Bard: no damage; alone her song gives nothing; with another the Anthem do
     ok(quiet, 'a Bard deals no damage of her own'),
     ok(arrows(anthem, v * (1 + k4)) >= anthem.length - 1 && anthem.length >= 3,
        "another fighter's hits are Inspired, the Anthem's double", JSON.stringify(anthem)),
-    ok(lingering && gone, 'at rung 8 it lingers after she stops, and then goes', `${lingering} ${gone}`)
+    ok(slowAt4 && quick, 'at rung 8 her song Hastes the others', `${slowAt4} ${quick}`),
+    ok(gone, 'and both go once she stops singing')
   ];
 });
 group('a Bard alone gives nothing', async () => {

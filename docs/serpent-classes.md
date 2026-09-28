@@ -33,7 +33,7 @@ all stand.
 
 | class | base | rung 4 | rung 8 |
 |---|---|---|---|
-| Brawler | heavy punches | **Combos**: every 4th punch is a haymaker, x4 | **Knockout**: the haymaker stuns |
+| Brawler | heavy punches | **Combos**: every 4th punch is a haymaker, x3 | **Knockout**: the haymaker stuns |
 | Swordsman | cuts | **Whirlwind**: each cut lands at three spots | **Weak points**: every 3rd cut lands twice, the second leaving Bleeding |
 | Monk | palms build chi; a chi palm stuns | **Deep breath**: chi fills twice as fast | **Still water**: the chi palm stuns longer |
 | Martial Artist | quick thrusts charge a finisher | **Flourish**: thrusts charge double | **Rally**: the finisher Hastes the party |
@@ -42,14 +42,18 @@ all stand.
 | Sapper | thrown charges | **Sticky bombs**: stuck, ticks down, one big stunning blow | **Pair**: two charges at once |
 | Hexer | hexes | **Wither**: hexes Weaken the heal | **Binding**: hexes stop the heal (Held) and lay Exposed |
 | Mage | a held beam, then a finishing blow | **Widening**: the beam widens and ramps | **Thermite**: the finishing blow ignores the phases' toughness |
-| Bard | sings: the party Inspired (no damage) | **Anthem**: Inspired doubles | **Refrain**: Inspired lingers after the song |
+| Bard | sings: the party Inspired (no damage) | **Anthem**: Inspired doubles | **Tempo**: her song Hastes the party too |
 
 The rungs as changed by the owner's notes on the wording audit
 (2026-09-28): the stun moved to the Brawler's capstone, the Swordsman's
 bleed to his, the Ranger's aimed shot to x2, the Assassin's capstone to a
 bleed, the Hexer's ladder to damage / Weaken / stop-the-heal-and-Expose,
 and the Sapper's charge no longer Exposes. Held stops the heal and nothing
-else.
+else. Then the tuning pass (same day): one damage curve for every class
+(`LADDERS`, about x1.5 a rung, x1.8 at the fork), the haymaker x3, the
+Mage's ramp x1.5, the Martial Artist's Haste 1 s, the Hexer's Exposed 2 s,
+and the Bard's capstone a party Haste (her linger never showed: she never
+stops singing).
 
 ---
 
