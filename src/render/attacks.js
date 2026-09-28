@@ -163,7 +163,7 @@ export function sauceOf(c, R, a, x) {
 }
 // The coil's give under this turn's contacts: where and how hard, and when
 // each landed, in world seconds (`t` now, `a` the raw clock).
-export const dentsOf = (S, t, a) => S.groups.flatMap(gr => gr.list.map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) })));
+export const dentsOf = (S, t, a) => S.groups.flatMap(gr => gr.list.filter(h => h.dent !== false).map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) })));
 // The held star at each contact, under the fighter so the fist or blade reads on top.
 export function sparksOf(g, S, t, a) {
   for (const gr of S.groups) for (const h of gr.list) {
@@ -286,6 +286,8 @@ const swordsman = {
   hits(R, x) {
     return this.contacts(R).map(({ at, k }) => ({
       at, x: x + 1, k, kind: R4(R) ? 'whirl' : '', mid: true,
+      // a move's other turns cut the air: only the one the blow lands on dents
+      dent: this.lands == null || at === this.lands,
       // the Whirlwind's last contact holds longest
       pause: k >= 1.2 ? 0.2 : 0 }));
   },
@@ -855,6 +857,7 @@ export const SEGMENTS = {
     }
     // the Whirlwind lands on its last turn, the biggest; the double on the spin back
     const c = only(swordsman, { twice: !!o.twice }), cs = c.contacts(R), last = cs[o.twice ? cs.length - 2 : cs.length - 1];
+    c.lands = last.at;
     return { c, from: swordsman.SPIN.sink, hit: realOf(c, R, last.at), to: realOf(c, R, o.twice ? 3.25 : 2.75) + 0.001 };
   },
   monk(move, R) {
