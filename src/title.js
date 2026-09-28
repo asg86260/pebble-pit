@@ -34,11 +34,16 @@ function showPane(name) {
   paste.hidden = true;
   say('');
   front();
-  if (name === 'slots') showSlots(document.getElementById('slots'), say, pick, false);
+  if (name === 'slots') {
+    showSlots(document.getElementById('slots'), say, pick, false);
+    // a yard taken from the cloud changes the rows over the section too
+    showCloud(document.getElementById('cloudsheet'), say, {
+      changed: () => { front(); showSlots(document.getElementById('slots'), say, pick, false); },
+      conflict: () => showPane('conflict') });
+  }
   if (name === 'record') { const s = opened(); showRecord(document.getElementById('record'), recordListOf(s?.won, s?.wonAt)); }
   if (name === 'settings') {
     sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume');
-    showCloud(document.getElementById('cloudsheet'), say, { changed: front, conflict: () => showPane('conflict') });
   }
   if (name === 'conflict') showConflicts(document.getElementById('clashes'), say, { done: () => showPane('main') });
 }

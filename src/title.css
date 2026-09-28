@@ -99,7 +99,7 @@ body.still .veil { transition: none; }   /* motion: less: see style.css */
   background: none; border: 0; border-bottom: 1px solid var(--ink-2); padding: 0; cursor: pointer;
 }
 .foot .cloud .go:hover { color: var(--ink); border-color: var(--ink); }
-/* and its section on the settings page (option B of
+/* and its section on the saves page (option B of
    docs/mocks/cloud-menu-2026-09-28.html), and the rows that ask which yard a
    slot keeps: each side a full button, one over the other. The section is
    the column's width, border and padding included, and everything in it

@@ -1,5 +1,5 @@
 // Cloud saves on the page (docs/wave-cloud.md, "The face" and "Checks"): the
-// line in the landing page's foot bar, the block on its settings page and
+// line in the landing page's foot bar, the block on its saves page and
 // the rows that ask which yard a slot keeps, each pressed the player's way.
 // The page cannot reach the worker's `handle`, so a scripted `fetch` answers
 // the contract's routes; the sync's own rules are the node tier's
@@ -107,9 +107,9 @@ const foot = d => d.getElementById('cloud');
 const footSays = d => foot(d).textContent.replace(/\s+/g, ' ').trim();
 const buttonIn = (el, text) => [...el.querySelectorAll('button')].find(b => b.textContent === text);
 
-// Turned on the player's way: the settings page's button.
+// Turned on the player's way: the saves page's button.
 async function turnOn(d) {
-  d.getElementById('settingsbtn').click();
+  d.getElementById('slotsbtn').click();
   const block = d.getElementById('cloudsheet');
   const b = buttonIn(block, 'enable cloud syncing');
   if (!b) return false;
@@ -129,9 +129,9 @@ function type(d, text) {
   return box.value;
 }
 
-// The settings page's section, opened the player's way, with its link box up.
+// The saves page's section, opened the player's way, with its link box up.
 async function enterLinkCode(d) {
-  d.getElementById('settingsbtn').click();
+  d.getElementById('slotsbtn').click();
   await until(() => buttonIn(block(d), 'enter a link code'));
   buttonIn(block(d), 'enter a link code').click();
   return until(() => block(d).querySelector('input'));
@@ -163,7 +163,7 @@ export const TESTS = [
     ];
   }],
 
-  ['the cloud: the settings page shows the recovery code once', async () => {
+  ['the cloud: the saves page shows the recovery code once', async () => {
     newRun();
     await settle();
     const { d, done } = await landing(worker());
@@ -175,8 +175,8 @@ export const TESTS = [
       told = block.textContent.includes('write this down: it brings your yards back on a new device');
       copy = !!buttonIn(block, 'copy');
       titled = block.querySelector('.head')?.textContent === 'cloud saves' && !!buttonIn(block, 'stop cloud saves');
-      d.getElementById('settingsback').click();
-      d.getElementById('settingsbtn').click();
+      d.getElementById('slotsback').click();
+      d.getElementById('slotsbtn').click();
       again = !!block.querySelector('.code');
       show = !!buttonIn(block, 'show recovery code');
     } finally { await done(); }

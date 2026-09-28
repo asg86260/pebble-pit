@@ -1,7 +1,7 @@
 // Cloud saves on the page (DESIGN.md, "Cloud saves: a sync code and a
 // worker"; docs/wave-cloud.md, "The face"). Three faces of one mirror: the
 // status line in the landing page's foot bar, the boxed section on the
-// settings pages that holds every verb (option B of
+// saves pages that holds every verb (option B of
 // docs/mocks/cloud-menu-2026-09-28.html), and the rows that ask which of two
 // yards a slot keeps. Nothing here talks to the worker. Every verb is
 // cloud.js's; this file draws what `cloudStatus` says and hands the buttons

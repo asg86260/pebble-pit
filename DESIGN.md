@@ -16268,7 +16268,8 @@ visit: `cloud · off`, `cloud · saved 2 min ago`, and so on; its one link is
 carried *link a device* and *enter a code*; those moved into the section.
 
 **The section holds every verb.** A boxed section headed *cloud saves* on the
-title's settings page and the held sheet's saves page (voted 2026-09-28: B
+title's saves page and the held sheet's (moved from the title's settings
+2026-09-28; voted 2026-09-28: B
 of `docs/mocks/cloud-menu-2026-09-28.html`), everything in it the width of
 its inside. Off, it offers *enable cloud syncing* (mints the secret and
 shows it once as the recovery code), *enter a link code* and *use a
