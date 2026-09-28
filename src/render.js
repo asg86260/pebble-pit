@@ -386,3 +386,13 @@ function drawRipples(rip) {
   ctx.restore();
   ctx.fillStyle = '#000';
 }
+
+// --- the party wave, track BOARD (docs/wave-party.md) -----------------------------
+// Two things that stand in the deep rather than on a board, seated every frame
+// after the picture, in whichever half is up: the open station's rails, laid
+// into its board and filled, and the floating button over the next free floor
+// slot. Page elements, not paint, and last, so the camera they are seated by
+// is the one the frame was drawn with.
+import { seatRails } from './deep/rails.js';
+import { seatBuildButton } from './deep/buildbutton.js';
+LAYERS.push({ name: 'rails', draw: seatRails }, { name: 'build button', draw: seatBuildButton });

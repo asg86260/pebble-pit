@@ -46,15 +46,20 @@ export const named = (key, name, n = LADDER_BANDS) =>
 //            the band's own. The bands are drawn as ONE card, every rung on it
 //            in a group a band (see `group` below); the first band's key and
 //            name are the card's.
+//
+// `field` may also be a pair, `{ get, set }`, for a ladder whose rung lives on
+// something other than `S`: a deep station's rung is on the station
+// (`S.stations[i].rung`), and a kind can stand twice, each with its own.
 export function tierRows({ field, level: at, climb, unit, pct, does, value,
                            site, board, show, after, follows, keep, bands, lead = 'dust' }) {
   const rungs = TIER_BAND * bands.length;
-  const level = at || (() => tierLevel(field, rungs));
+  const pair = field && typeof field === 'object' ? field : null;
+  const level = at || (pair ? () => Math.min(rungs, pair.get() || 0) : () => tierLevel(field, rungs));
   // The rung the next copy will be: the landed ones plus those paid for and
   // not yet fitted (DESIGN.md, "The same row, queued again"). Everything
   // about the offer reads this; the pips (`rung`) read what has landed.
   const next = () => level() + ahead(bands[0].key);
-  const step = climb || (() => { S[field]++; });
+  const step = climb || (pair ? () => { pair.set((pair.get() || 0) + 1); } : () => { S[field]++; });
 
   // One card, its pips in a group a band, the bill deepening as the groups
   // fill: the groups ARE the bands.

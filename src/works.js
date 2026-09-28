@@ -9,7 +9,7 @@
 // answer, how many pairs of hands are at a site this frame.
 
 import { S, bench, lab, filter, tower, shack, outhouse } from './state.js';
-import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
+import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT, PARTY_IDS } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
 
@@ -93,8 +93,9 @@ export const busyDeepSites = () =>
 // sphere's rungs, by its tender).
 export const UP_THERE = new Set(['sphere']);
 // And the sites under the drowned pit: built by the deep's own builders
-// (`busyDeepSites`, TYPE.DELVE), never by a hand from the yard.
-export const DOWN_THERE = new Set(['altar', 'well', 'font', 'circle', 'spire', 'pods', 'deep']);
+// (`busyDeepSites`, TYPE.DELVE), never by a hand from the yard -- the pods,
+// and every station of the party, by its id, since a kind can stand twice.
+export const DOWN_THERE = new Set(['pods', 'deep', ...PARTY_IDS]);
 
 // Where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`
@@ -492,13 +493,10 @@ export function stepWorks(dt) {
 // you are looking somewhere else, so every site leaves a tick over its
 // building until its board is read. The yard's own builds are the exception:
 // a building arriving is its own announcement, and the yard has no box to
-// center a tick on.
-// A door of the deep lands at the altar, whose board sold it, so its tick is
-// the altar's to show and the altar's board to clear.
-const TICKS_AT = { deep: 'altar' };
+// center a tick on. A station of the deep's party is its own site, by its id,
+// so its tick lands over the station that went up, and its own board clears it.
 export function workFinished(site, key) {
   if (site === 'yard') return;
-  site = TICKS_AT[site] || site;
   // Everything landed since the board was read, oldest first: the stack over
   // the station shows them all, ticked, in the order they landed. A fresh
   // array, as `markRowSeen` writes one, for the save.
