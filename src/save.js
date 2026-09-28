@@ -1,12 +1,13 @@
 import { S } from './state.js';
 import { openKv } from './idb.js';
+import { SLOTS } from './config/saves.js';
 
 // --- the slots (DESIGN.md, "Save slots and the title page") -------------------
 //
 // Three yards, one open at a time. Every key below is a function of which
 // slot is open: slot 1 is the bare keys, slot n the same keys under `/n`.
 // Which slot is open is a fact about the page, never on `S` or in a save.
-export const SLOTS = 3;
+export { SLOTS };
 const SLOT_KEY = 'boulder-clicker/slot';
 const BASE = 'boulder-clicker/v4';
 let slot = 1;

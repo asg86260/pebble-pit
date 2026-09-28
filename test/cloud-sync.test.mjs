@@ -561,3 +561,37 @@ group('a push too soon after another device\'s waits for that slot alone', async
     ok(then.state === 'behind' && then.slot === 1, 'and past the floor, slot 1 learns it is behind', JSON.stringify(then))
   ];
 });
+
+group('the page going away sends at once, not behind a push in flight', async () => {
+  await linked();
+  later(CLOUD_PUSH_S + 1);
+  await playOn(5);
+  await cloud.pump(Date.now());          // slot 1 up; due again in a minute
+  await playOn(5);
+  await cloud.pump(Date.now());          // not due: slot 1 is gzipped ahead instead
+  const played = blobOf(slotRaw(1)).playedS;
+  let release;
+  const held = new Promise(r => { release = r; });
+  const seen = [];
+  cloud.setCloudFetch(async (u, init = {}) => {
+    const path = new URL(u).pathname;
+    seen.push({ path, keepalive: !!init.keepalive });
+    if (init.method === 'PUT' && path === '/slots/2') await held;
+    return w.fetch(u, init);
+  });
+  writeSlot(2, JSON.stringify({ ...blobOf(slotRaw(1)), yardId: 'two' }));
+  await storeSettled();
+  const stuck = cloud.pump(Date.now());  // slot 2's push hangs on the wire
+  await new Promise(r => setImmediate(r));
+  later(CLOUD_PUSH_FLOOR_S + 1);
+  const hid = cloud.flush(Date.now());
+  const sentAtOnce = seen.some(c => c.path === '/slots/1' && c.keepalive);
+  release();
+  await stuck;
+  await hid;
+  cloud.setCloudFetch(w.fetch);
+  return [
+    ok(sentAtOnce, 'the hide sent slot 1 while slot 2 was still on the wire'),
+    ok(row(1).played_s === Math.floor(played), 'and it took', `${row(1).played_s} vs ${played}`)
+  ];
+});

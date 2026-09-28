@@ -1,23 +1,16 @@
 # Still to do
 
-## Cloud saves -- BUILT, WORKER LIVE, OFF IN THE GAME (2026-09-28)
+## Cloud saves -- BUILT AND ON, NOT YET RELEASED (2026-09-28)
 
 Built as `docs/wave-cloud.md`; "Cloud saves" in DESIGN.md. The worker is
 deployed at `https://pebble-saves.graham-things.com` (Workers Free, D1
 `pebble-cloud`) and live-checked, the two-writer write included.
-`CLOUD_ON` is still false, so no player sees it, and it has no CHANGELOG
-line until it is on. Every player opts in: nothing is sent until they press
-*keep my yards in the cloud* or enter a code.
+`CLOUD_ON` is true and the release reads the `CLOUD_URL` repo variable, so
+the next release ships it. Every player opts in: nothing is sent until they
+press *keep my yards in the cloud* or enter a code.
 Open:
-- **Turn it on.** `CLOUD_ON = true`, `VITE_CLOUD_URL` from a `CLOUD_URL`
-  repo variable in `release.yml`, and the New-this-release line, in one
-  commit.
-- **`flush()` on page hide is best effort.** The gzip is async, so a
-  closing page may end before the keepalive push is sent; a copy gzipped
-  ahead would make it dependable. The next boot pushes whatever it missed.
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
-- **A transient 429** (the floor, a code's day cap) reads `cloud · paused`.
 
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 

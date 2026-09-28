@@ -4,6 +4,11 @@
 // written, never otherwise (docs/saves.md).
 export const SAVE_V = 7;
 
+// Save slots: three yards, one open at a time (DESIGN.md, "Save slots"). Here
+// rather than in save.js so the cloud's worker, which cannot load save.js,
+// reads the same number.
+export const SLOTS = 3;
+
 // The floor: the day of the first public build, v0.1.1. A save with no
 // `build` stamp was written before it, has never been on a player's machine,
 // and is not read (docs/saves.md).

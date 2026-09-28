@@ -10,26 +10,15 @@
 import {
   CLOUD_BLOB_MAX, CLOUD_BYTES_MAX, CLOUD_PUSH_FLOOR_S, CLOUD_VAULT_DAY_WRITES,
   CLOUD_DAY_WRITES, CLOUD_MINTS_IP_DAY, CLOUD_SECRET_LEN, CLOUD_PAIR_LEN,
-  CLOUD_PAIR_S, CLOUD_PAIR_TRIES, CLOUD_PAIR_TRIES_S, CLOUD_PAIR_FAILS_HOUR
+  CLOUD_PAIR_S, CLOUD_PAIR_TRIES, CLOUD_PAIR_TRIES_S, CLOUD_PAIR_FAILS_HOUR,
+  CLOUD_PAUSED_RETRY_S, CLOUD_YARD_ID_MAX, CLOUD_PAIR_DRAWS
 } from '../../src/config/cloud.js';
-import { draw, normalSecret, normalPair, showSecret, showPair, sha256hex, seal, unseal } from './codes.js';
+import { SLOTS } from '../../src/config/saves.js';
+import { draw, normalSecret, normalPair, showSecret, showPair, sha256hex, seal, unseal, sameSecret } from './codes.js';
 import { SECOND_MS, HOUR_MS, utcDay, nextMidnight, hourOf, secondsUntil } from './clock.js';
 
-// The save slots the game has (SLOTS in src/save.js, which the worker cannot
-// import: it reads the browser's store at load). A slot past it is a 404.
-export const SLOTS = 3;
-
-// What the kill switch tells every client to wait: a day, long enough that
-// the whole install base backs off to its ceiling and stays there.
-const PAUSED_RETRY_S = 86400;
-
-// A yard's id is a short random string the game mints; this bounds a header
-// the worker stores, so a broken client cannot park a blob in it.
-const YARD_ID_MAX = 64;
-
-// A pairing code collides with a live one about once in a hundred million
-// mints; a few draws make that a certainty of success, not a loop.
-const PAIR_DRAWS = 4;
+// A slot past SLOTS (config/saves.js, the game's own number) is a 404.
+export { SLOTS };
 
 // Where a request comes from, for the rate limits only, and only ever hashed.
 const NO_IP = '0.0.0.0';
@@ -128,7 +117,7 @@ async function putSlot(request, { vault }, env, n, now) {
   const playedRaw = request.headers.get('x-played-s') ?? (cleared ? '0' : null);
   const playedS = playedRaw === null || playedRaw === '' ? NaN : +playedRaw;
   const saveV = count(request.headers.get('x-save-v') ?? (cleared ? '0' : null));
-  if (ifMatch === null || yardId === null || yardId.length > YARD_ID_MAX || (!cleared && !yardId)
+  if (ifMatch === null || yardId === null || yardId.length > CLOUD_YARD_ID_MAX || (!cleared && !yardId)
     || !Number.isFinite(playedS) || playedS < 0 || saveV === null) {
     return reply(400, { error: 'bad headers' });
   }
@@ -183,7 +172,7 @@ async function putSlot(request, { vault }, env, n, now) {
 }
 
 async function makePairing({ vault, secret }, env, now) {
-  for (let i = 0; i < PAIR_DRAWS; i++) {
+  for (let i = 0; i < CLOUD_PAIR_DRAWS; i++) {
     const pair = draw(CLOUD_PAIR_LEN);
     const hash = await sha256hex(env.PAIR_PEPPER + pair);
     const { wrapped, iv } = await seal(env.PAIR_PEPPER, pair, secret);
@@ -196,8 +185,11 @@ async function makePairing({ vault, secret }, env, now) {
           .bind(hash, vault.id, now + CLOUD_PAIR_S * SECOND_MS, blob(wrapped), blob(iv))
       ]);
       return reply(200, { pair: showPair(pair), expiresS: CLOUD_PAIR_S });
-    } catch {
-      // Another vault's live code has this hash; draw again.
+    } catch (err) {
+      // Another vault's live code has this hash: draw again. Anything else
+      // is the database in trouble, and goes to `handle`'s logged 500 rather
+      // than being dressed up as a collision.
+      if (!/UNIQUE/i.test(String(err?.message || err))) throw err;
     }
   }
   return reply(503, { error: 'try again' });
@@ -268,7 +260,7 @@ async function deleteVault({ vault }, env) {
 
 async function stats(request, env, now) {
   const token = /^Bearer\s+(.+)$/i.exec(request.headers.get('authorization') || '')?.[1];
-  if (!env.STATS_TOKEN || token !== env.STATS_TOKEN) return reply(401, { error: 'no' });
+  if (!env.STATS_TOKEN || !token || !(await sameSecret(token, env.STATS_TOKEN))) return reply(401, { error: 'no' });
   return reply(200, await statsOf(env, now));
 }
 
@@ -322,7 +314,7 @@ export async function handle(request, env, now = Date.now()) {
   // The kill switch answers before anything else, D1 included: it is what
   // the owner reaches for when D1 itself is the trouble.
   if (env.CLOUD_PAUSED === '1') {
-    return retry(503, PAUSED_RETRY_S, { 'retry-after': String(PAUSED_RETRY_S) });
+    return retry(503, CLOUD_PAUSED_RETRY_S, { 'retry-after': String(CLOUD_PAUSED_RETRY_S) });
   }
   try {
     return await route(request, env, now);

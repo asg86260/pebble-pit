@@ -83,3 +83,19 @@ export const CLOUD_IDLE_MS = 15000;
 // How long *new recovery code* stays armed after the first press: it signs
 // every other device out, so it asks twice, as the reset does.
 export const CLOUD_ARM_MS = 4000;
+
+// --- the review's numbers (2026-09-28): what the modules had written in ------
+// A code is shown in groups of this many, the secret and the pairing code.
+export const CLOUD_SECRET_GROUP = 4;
+export const CLOUD_PAIR_GROUP = 3;
+// The window CLOUD_PUSH_HOUR_MAX counts pushes over.
+export const CLOUD_PUSH_WINDOW_S = 3600;
+// What the kill switch tells every client to wait: a day, long enough that
+// every copy of the game out there backs off to its ceiling and stays there.
+export const CLOUD_PAUSED_RETRY_S = 86400;
+// The longest yard name the worker stores: a bound on a header it keeps, so
+// a broken client cannot park a blob in it. Four times YARD_ID_LEN.
+export const CLOUD_YARD_ID_MAX = 64;
+// Draws of a pairing code before the worker gives up on a free one: a new
+// code collides with a live one about once in a hundred million.
+export const CLOUD_PAIR_DRAWS = 4;

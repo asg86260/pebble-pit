@@ -118,3 +118,35 @@ test('past the worker\'s wrong claims for the hour, every ip is held until the h
   assert.equal((await claim(w, again, '172.16.0.1')).status, 200);
   assert.equal(w.row('SELECT fails FROM totals').fails, CLOUD_PAIR_FAILS_HOUR);
 });
+
+test('a database fault while minting a pairing is a logged 500, not a collision', async () => {
+  const w = worker();
+  const secret = await w.mint();
+  const batch = w.env.DB.batch;
+  let tries = 0;
+  w.env.DB.batch = async () => { tries++; throw new Error('D1_ERROR: network connection lost'); };
+  const err = console.error;
+  let logged = '';
+  console.error = (...a) => { logged += a.join(' '); };
+  const r = await w.call('POST', '/pairings', { secret });
+  console.error = err;
+  w.env.DB.batch = batch;
+  assert.equal(r.status, 500, 'the fault reaches handle');
+  assert.equal(tries, 1, 'and is not drawn again as if it were a clash');
+  assert.match(logged, /network connection lost/, 'and is logged');
+});
+
+test('a clash with a live pairing is drawn again', async () => {
+  const w = worker();
+  const secret = await w.mint();
+  const batch = w.env.DB.batch;
+  let tries = 0;
+  w.env.DB.batch = async list => {
+    if (++tries === 1) throw new Error('D1_ERROR: UNIQUE constraint failed: pairings.hash');
+    return batch(list);
+  };
+  const r = await w.call('POST', '/pairings', { secret });
+  w.env.DB.batch = batch;
+  assert.equal(r.status, 200);
+  assert.equal(tries, 2);
+});

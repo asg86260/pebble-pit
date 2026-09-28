@@ -24,9 +24,9 @@ import { SAVE_V } from './config/saves.js';
 import { migrate } from './migrations/index.js';
 import {
   CLOUD_URL, CLOUD_BOOT_MS, CLOUD_TIMEOUT_MS, CLOUD_PUSH_S, CLOUD_PUSH_FLOOR_S, CLOUD_PUSH_HOUR_MAX,
-  CLOUD_BACKOFF_MAX_S, CLOUD_KEEPALIVE_MAX, CLOUD_BLOB_MAX, CLOUD_SECRET_LEN, CLOUD_PAIR_LEN,
-  CLOUD_SECRET_PREFIX
+  CLOUD_BACKOFF_MAX_S, CLOUD_KEEPALIVE_MAX, CLOUD_BLOB_MAX, CLOUD_PUSH_WINDOW_S
 } from './config/cloud.js';
+import { fold, normalSecret, normalPair, showSecret, showPair } from './codes.js';
 
 // --- where the worker is ------------------------------------------------------
 // The checks point the yard at the real worker's `handle`, in-process, with
@@ -51,16 +51,8 @@ export function cloudReady() {
 }
 
 // --- codes --------------------------------------------------------------------
-// A code as it was typed, as the worker reads it: the characters a hand
-// confuses folded together, the dashes and the prefix dropped. The prefix goes
-// before the fold, because PEBBLE has an L in it.
-export function normalize(code) {
-  let c = String(code || '').toUpperCase().replace(/[\s-]/g, '');
-  if (c.length === CLOUD_SECRET_PREFIX.length + CLOUD_SECRET_LEN && c.startsWith(CLOUD_SECRET_PREFIX))
-    c = c.slice(CLOUD_SECRET_PREFIX.length);
-  return c.replace(/O/g, '0').replace(/[IL]/g, '1');
-}
-const inGroups = (c, n) => (c.match(new RegExp(`.{1,${n}}`, 'g')) || []).join('-');
+// A code as it was typed, as the worker reads it (codes.js).
+export const normalize = fold;
 
 // --- what this device knows -----------------------------------------------------
 function facts() {
@@ -85,7 +77,9 @@ function fresh(playing = false) {
     playing,
     dirty: new Set(Array.from({ length: SLOTS }, (_, i) => i + 1)),
     due: {}, last: {},
-    tries: {},         // n -> 429s in a row, so a slot refused again and again slows down
+    tries: {},
+    ready: {},         // n -> the slot gzipped ahead, for flush
+    inflight: {},      // n -> a push of it is on the wire         // n -> 429s in a row, so a slot refused again and again slows down
     holdUntil: 0, wait: CLOUD_PUSH_S,
     sent: [], capped: false,
     stop: {},          // n -> 'big' | 'full' | 'behind' | 'newer'
@@ -360,9 +354,25 @@ function backoff(now, retryS) {
   session.holdUntil = now + Math.max(session.wait, retryS || 0) * 1000;
 }
 
+// The hour's pushes, the page-hide ones among them: a healthy hour is sixty
+// and a few hides, so past the cap this session is looping, and stops.
+// Whether this push may go; counted if so.
+function spend(now) {
+  session.sent = session.sent.filter(t => now - t < CLOUD_PUSH_WINDOW_S * 1000);
+  if (session.sent.length >= CLOUD_PUSH_HOUR_MAX) { session.capped = true; return false; }
+  session.sent.push(now);
+  return true;
+}
+const putHeaders = (base, yard, played, v) => ({
+  'if-match': String(base),
+  'x-yard-id': yard,
+  'x-played-s': String(Math.max(0, Math.floor(played))),
+  'x-save-v': String(v)
+});
+
 // One slot up, if it has moved since the cloud and this device last agreed.
 // Answers 'hold' when nothing more should go this pass.
-async function pushSlot(n, f, now, keepalive = false) {
+async function pushSlot(n, f, now) {
   const here = local(n);
   let yard = '', played = -1, v = SAVE_V;
   if (here.raw) {
@@ -384,23 +394,15 @@ async function pushSlot(n, f, now, keepalive = false) {
   // Measured before it is sent: over the worker's cap is a save's size bug,
   // and the slot stays local rather than try.
   if (body.length > CLOUD_BLOB_MAX) { session.stop[n] = 'big'; again(); return 'skip'; }
-  if (keepalive && body.length >= CLOUD_KEEPALIVE_MAX) { again(); return 'skip'; }
-  // The hour's pushes: a healthy one is sixty and a few page hides, so past
-  // the cap this session is looping, and stops.
-  session.sent = session.sent.filter(t => now - t < 3600e3);
-  if (session.sent.length >= CLOUD_PUSH_HOUR_MAX) { session.capped = true; again(); return 'hold'; }
-  session.sent.push(now);
+  if (!spend(now)) { again(); return 'hold'; }
   session.last[n] = now;
   session.due[n] = now + CLOUD_PUSH_S * 1000;
+  session.inflight[n] = true;
   const r = await call('PUT', `/slots/${n}`, {
-    secret: f.secret, body, keepalive,
-    headers: {
-      'if-match': String(f.base[n] || 0),
-      'x-yard-id': yard,
-      'x-played-s': String(Math.max(0, Math.floor(played))),
-      'x-save-v': String(v)
-    }
+    secret: f.secret, body,
+    headers: putHeaders(f.base[n] || 0, yard, played, v)
   });
+  session.inflight[n] = false;
   if (facts()?.secret !== f.secret) { again(); return 'hold'; }   // stopped or rotated meanwhile
   if (r.status === 200) {
     f.base[n] = +r.data?.rev || (f.base[n] || 0) + 1;
@@ -451,22 +453,42 @@ async function pushSlot(n, f, now, keepalive = false) {
   return 'hold';
 }
 
-async function pumpNow(now, keepalive = false) {
+const waiting = n => session.dirty.has(n) && !session.stop[n] && !session.clash.has(n);
+
+async function pumpNow(now) {
   let f = facts();
   if (!f || f.out || session.out || session.capped || now < session.holdUntil) return;
-  if (session.recheck && !keepalive) {
+  if (session.recheck) {
     session.recheck = false;
     if (!(await agree(f, { late: false }))) { backoff(now, 0); return; }
     f = facts();
     if (!f) return;
   }
   for (let n = 1; n <= SLOTS; n++) {
-    if (!session.dirty.has(n) || session.stop[n] || session.clash.has(n)) continue;
-    if (keepalive ? now - (session.last[n] ?? -Infinity) < CLOUD_PUSH_FLOOR_S * 1000
-                  : now < (session.due[n] || 0)) continue;
-    if (await pushSlot(n, f, now, keepalive) === 'hold') break;
+    if (!waiting(n) || session.inflight[n] || now < (session.due[n] || 0)) continue;
+    if (await pushSlot(n, f, now) === 'hold') break;
     f = facts();
     if (!f) return;
+  }
+  await ready();
+}
+
+// Every slot still to go up, gzipped ahead, so the page going away can send
+// it at once (`flush`): a gzip is a promise, and a page that is closing does
+// not wait for one. Redone only when the slot has changed since.
+async function ready() {
+  for (let n = 1; n <= SLOTS; n++) {
+    if (!waiting(n)) { delete session.ready[n]; continue; }
+    const here = local(n);
+    if (session.ready[n]?.raw === (here.raw || '')) continue;
+    if (here.raw && !here.s) continue;
+    session.ready[n] = {
+      raw: here.raw || '',
+      body: here.raw ? await gzip(here.raw) : new Uint8Array(0),
+      yard: here.s ? String(here.s.yardId || '') : '',
+      played: here.s ? playedOf(here.s) : -1,
+      v: here.s && Number.isFinite(+here.s.saveV) ? +here.s.saveV : SAVE_V
+    };
   }
 }
 
@@ -479,17 +501,55 @@ export function pump(nowMs = Date.now()) {
   return serial(() => pumpNow(nowMs));
 }
 
-// The page going away (`pagehide`, a hidden tab, the desk's close): one more
-// push of anything moved, with `keepalive` so it outlives the page, which the
-// browser allows only under CLOUD_KEEPALIVE_MAX; a bigger one waits for the
-// next boot's.
+// The page going away (`pagehide`, a hidden tab, the desk's close): every
+// slot still to go up is sent now, from the copy `ready` gzipped on the last
+// pump, with `keepalive` so it outlives the page. Sent at once, not queued
+// behind whatever the chain is doing, because a closing page will not wait:
+// only the answer is handled in turn, if the page is still there to hear it.
+// A slot with a push already in flight is left to that push (two from one
+// base would refuse each other); one over CLOUD_KEEPALIVE_MAX, the browser's
+// cap, or inside the floor waits for the next boot, which pushes it anyway.
 export function flush(nowMs = Date.now()) {
   if (!cloudReady()) return Promise.resolve();
-  return serial(() => pumpNow(nowMs, true));
+  const f = facts();
+  if (!f || f.out || session.out || session.capped) return Promise.resolve();
+  const answers = [];
+  for (let n = 1; n <= SLOTS; n++) {
+    const r0 = session.ready[n];
+    if (!r0 || !waiting(n) || session.inflight[n]) continue;
+    if (r0.body.length >= CLOUD_KEEPALIVE_MAX) continue;
+    if (nowMs - (session.last[n] ?? -Infinity) < CLOUD_PUSH_FLOOR_S * 1000) continue;
+    if (r0.raw ? f.pushed[n] === r0.played : f.pushed[n] == null || f.pushed[n] === -1) continue;
+    if (!spend(nowMs)) break;
+    const base = f.base[n] || 0;
+    session.last[n] = nowMs;
+    session.inflight[n] = true;
+    const sent = call('PUT', `/slots/${n}`, {
+      secret: f.secret, body: r0.body, keepalive: true,
+      headers: putHeaders(base, r0.yard, r0.played, r0.v)
+    });
+    // The answer, if anyone is left to hear it: a push that took moves the
+    // base on, unless something else already has; anything else is the next
+    // pump's to sort out from the cloud's rev, as a 412 would be.
+    answers.push(serial(async () => {
+      const r = await sent;
+      session.inflight[n] = false;
+      const g = facts();
+      if (r.status !== 200 || !g || g.secret !== f.secret || (g.base[n] || 0) !== base) return;
+      g.base[n] = +r.data?.rev || base + 1;
+      g.pushed[n] = r0.raw ? r0.played : -1;
+      g.at = nowMs;
+      keep(g);
+      session.due[n] = nowMs + CLOUD_PUSH_S * 1000;
+      // Still the copy that went: nothing more to send for this slot.
+      if ((local(n).raw || '') === r0.raw) session.dirty.delete(n);
+    }));
+  }
+  return Promise.all(answers);
 }
 
 // --- the buttons ------------------------------------------------------------------
-const recovery = f => (f ? `${CLOUD_SECRET_PREFIX}-${inGroups(f.secret, 4)}` : null);
+const recovery = f => (f ? showSecret(f.secret) : null);
 
 // *keep my yards in the cloud*: a new vault, and every yard here up at once.
 // Answers the recovery code, shown once, or null.
@@ -500,7 +560,9 @@ export function startCloud() {
     if (had) return recovery(had);
     const r = await call('POST', '/vaults');
     if (r.status !== 201 || typeof r.data?.code !== 'string') { note(r); return null; }
-    const f = { secret: normalize(r.data.code), base: {}, pushed: {}, at: null };
+    const secret = normalSecret(r.data.code);
+    if (!secret) return null;
+    const f = { secret, base: {}, pushed: {}, at: null };
     keep(f);
     session = fresh(session.playing);
     if (await agree(f, { late: false })) await pushAll(Date.now());
@@ -521,7 +583,9 @@ export function makePair() {
     if (!f) return null;
     const r = await call('POST', '/pairings', { secret: f.secret });
     if (r.status !== 200 || typeof r.data?.pair !== 'string') { note(r); return null; }
-    session.pair = { pair: inGroups(normalize(r.data.pair), 3), expires: Date.now() + (+r.data.expiresS || 0) * 1000 };
+    const p = normalPair(r.data.pair);
+    if (!p) return null;
+    session.pair = { pair: showPair(p), expires: Date.now() + (+r.data.expiresS || 0) * 1000 };
     return session.pair;
   });
 }
@@ -539,20 +603,21 @@ async function link(secret) {
 // *enter a code*: the other device's pairing code. Whether it linked.
 export function claimPair(pair) {
   if (!cloudReady()) return Promise.resolve(false);
-  const p = normalize(pair);
-  if (p.length !== CLOUD_PAIR_LEN) return Promise.resolve(false);
+  const p = normalPair(pair);
+  if (!p) return Promise.resolve(false);
   return serial(async () => {
     const r = await call('POST', '/pairings/claim', { body: { pair: p } });
     if (r.status !== 200 || typeof r.data?.code !== 'string') { if (r.status !== 404) note(r); return false; }
-    return link(normalize(r.data.code));
+    const secret = normalSecret(r.data.code);
+    return secret ? link(secret) : false;
   }).then(Boolean);
 }
 
 // *use a recovery code*: the secret itself, from paper. Whether it linked.
 export function useRecovery(code) {
   if (!cloudReady()) return Promise.resolve(false);
-  const c = normalize(code);
-  if (c.length !== CLOUD_SECRET_LEN) return Promise.resolve(false);
+  const c = normalSecret(code);
+  if (!c) return Promise.resolve(false);
   return serial(async () => {
     const r = await call('GET', '/slots', { secret: c });
     if (r.status !== 200) { if (r.status !== 401) note(r); return false; }
@@ -569,7 +634,9 @@ export function rotate() {
     if (!f) return null;
     const r = await call('POST', '/vaults/me/rotate', { secret: f.secret });
     if (r.status !== 200 || typeof r.data?.code !== 'string') { note(r); return null; }
-    f.secret = normalize(r.data.code);
+    const secret = normalSecret(r.data.code);
+    if (!secret) return null;
+    f.secret = secret;
     keep(f);
     return recovery(f);
   });

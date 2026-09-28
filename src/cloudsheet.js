@@ -11,7 +11,9 @@ import { cloudReady, startCloud, makePair, claimPair, useRecovery, rotate, stopC
 import { since } from './slots.js';
 import { openSlot } from './save.js';
 import { copyOut } from './copyout.js';
-import { CLOUD_PAIR_LEN, CLOUD_ALPHABET, CLOUD_TICK_MS, CLOUD_IDLE_MS, CLOUD_ARM_MS } from './config.js';
+import { CLOUD_PAIR_LEN, CLOUD_TICK_MS, CLOUD_IDLE_MS, CLOUD_ARM_MS } from './config.js';
+import { typedPair } from './codes.js';
+export { typedPair };
 
 const TICK_MS = CLOUD_TICK_MS;
 const IDLE_MS = CLOUD_IDLE_MS;
@@ -38,16 +40,6 @@ export function cloudLine(st = cloudStatus(), now = Date.now()) {
   return LINES[st.state] || LINES.off;
 }
 
-// A pairing code as it is typed: the same forgiveness the worker's reading
-// has (docs/wave-cloud.md, "Codes"), applied as the player types so the box
-// never holds a character that could not be in a code, and the dash put in
-// where it is shown. Letters that read as digits become them.
-const HALF = CLOUD_PAIR_LEN / 2;
-export function typedPair(text) {
-  const bare = [...String(text).toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1')]
-    .filter(c => CLOUD_ALPHABET.includes(c)).join('').slice(0, CLOUD_PAIR_LEN);
-  return bare.length > HALF ? bare.slice(0, HALF) + '-' + bare.slice(HALF) : bare;
-}
 // The worker hands a pairing code back with its dash; one without is shown
 // the same way.
 const shownPair = code => typedPair(code);
