@@ -1,0 +1,13 @@
+{
+  "name": "pebble-cloud",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-concurrency=4 test/routes.test.mjs test/ceilings.test.mjs test/pairing.test.mjs",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

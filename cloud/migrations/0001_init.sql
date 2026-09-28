@@ -1,4 +1,5 @@
--- The cloud's whole database (docs/wave-cloud.md, "Schema"). A cleared slot
+-- The cloud's whole database (docs/wave-cloud.md, "Schema"), as wrangler's
+-- first migration; cloud/test/d1.mjs reads this same file. A cleared slot
 -- is a row with an empty body, never a deleted row.
 CREATE TABLE vaults  (id TEXT PRIMARY KEY, hash TEXT UNIQUE NOT NULL,
                       created INTEGER NOT NULL, seen INTEGER NOT NULL,
