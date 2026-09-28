@@ -16501,3 +16501,38 @@ until a second station stands; every other fork is open from the start.
 - Whether rung 4's jump (the whole specialty at once) is too big a step
   in the ladder book, now that the base unit's rungs are a specialty's
   first three.
+
+## A station is its fighter and a prop (design, approved 2026-09-28)
+
+The owner: the stations "don't make sense anymore" now that the fighters
+are the focus. The domes and their drawings retire. A station is its
+fighter, standing beside the thing its class trains with -- a prop, drawn
+on the floor behind and beside the fighter, never over it. Flags with
+icons and cloth patterns were tried and cut: a sign with no link to the
+fighter means nothing unless it is learned. The approved look is
+docs/mocks/station-props-2026-09-28.html (its `PROPS`, `MAT`, `R8_PARTS`
+and placement are the spec).
+
+- **The props.** Brawler a heavy bag on a gallows arm; Swordsman a sword
+  rack, one slot empty; Monk a bell in a frame over a mat; Martial Artist
+  a rack of staves; Ranger a straw target on a tripod; Assassin a sacking
+  dummy with a dagger in it; Hexer an iron pot on three legs; Sapper three
+  powder kegs; Mage a lectern with an open book; Bard a music stand. A base
+  unit (below the fork) has a crate, its gear still packed; at the fork the
+  crate is replaced by the class's prop.
+- **Rung 8.** Whole parts of the prop take the capstone's purple
+  (`R8_PARTS`), and its one accent cell is the brightest point.
+- **Tones.** A material is a short run of neighboring greys dealt a cell by
+  a hash, never one flat fill; nothing on a prop is brighter than GREYS[10],
+  so the kits' white weapons never land on a white prop.
+- **Placement.** The prop's right-hand column stands GAP cells short of the
+  fighter's body (5; the Swordsman 7, so his sword is not read as the
+  rack's third), its foot on the floor. The station's ground -- where the
+  pointer opens its board -- spans the prop and the fighter's post.
+- **The board.** Its title is the fighter's: "the Fighter", "the Brawler".
+- **Building.** The scaffold stays for the build; when it lands the crate
+  stands.
+- **Nothing teleports.** A prop changes at the fork and at rung 8 the way
+  a kit does: the purchase is instant (decided 2026-09-28) and the drawing
+  follows the station's record.
+
