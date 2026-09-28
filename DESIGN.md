@@ -16484,8 +16484,10 @@ recruit stands at it, and the ladder asks the two choices as rungs.
 - **Built: the recruit.** When the build lands the plinth stands with the
   crate on it, and a spare pod resident swims over and takes its post as a
   **Recruit**, rung 0 -- the one base class every station starts as. It
-  fights at once with a plain, weak attack of its own (mocked:
-  docs/mocks/recruit-2026-09-28.html), so no station stands idle.
+  fights at once, so no station stands idle. It is just the body, a plain
+  square with no kit, and its attack a light punch: it swims up under the
+  coil and throws one small fist, squashed against the hide a pose (voted C,
+  docs/mocks/recruit-2026-09-28.html).
 - **Rung 1, the first choice: a base unit.** The Recruit's board asks
   "Choose your fighter": Fighter, Novice, Scout, Adept or Apprentice (the
   first station the three that deal damage alone, as `FIRST_KINDS`).
