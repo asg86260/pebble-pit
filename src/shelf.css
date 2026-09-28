@@ -742,6 +742,27 @@ html.dark .rails .rl-tree i.cap { color: #a979ef; }
    the call to build the bench is (`#raise`). It fades in and out rather than
    popping: `on` is the class, and while it is off it is there, unseen and
    deaf to the pointer, so it can fade out from where it stood. */
-#buildbtn, @media (prefers-reduced-motion: reduce) {
+#buildbtn {
+  position: fixed; left: 0; top: auto; bottom: 0; z-index: 11;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity var(--build-fade-ms, 200ms) steps(4, end), visibility 0s linear var(--build-fade-ms, 200ms);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+  font: 12px ui-monospace, "Courier New", monospace; letter-spacing: .14em; text-transform: uppercase;
+  cursor: pointer; white-space: nowrap;
+}
+#buildbtn.on {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  transition: opacity var(--build-fade-ms, 200ms) steps(4, end), visibility 0s;
+}
+#buildbtn .fang {
+  display: inline-block; width: 9px; height: 9px; background: currentColor;
+  -webkit-mask: var(--fang-mark) 0 0 / 100% 100% no-repeat; mask: var(--fang-mark) 0 0 / 100% 100% no-repeat;
+}
+#buildbtn .count { font-weight: normal; }
+@media (hover: hover) {
+  #buildbtn:hover { background: var(--ink); color: var(--paper); }
+}
+@media (prefers-reduced-motion: reduce) {
   #buildbtn, #buildbtn.on { transition: none; }
 }
