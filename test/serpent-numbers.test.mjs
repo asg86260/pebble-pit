@@ -9,7 +9,7 @@ import { group, ok, yard } from './helpers.mjs';
 import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, NUM_HEAL_EVERY_S, SERPENT_DEFENSE,
          SERPENT_HEAL, DOT_TICK_S, CLASSES } from '../src/config.js';
 import { EPHEMERAL } from '../src/state.js';
-import { climb, reset, openEveryClass } from './party-press.mjs';
+import { climb, openEveryClass } from './party-press.mjs';
 import { rungWorth } from '../src/deep/classes.js';
 
 const S = yard.S;
@@ -32,22 +32,23 @@ function frames(s, each = () => {}) {
 const of = w => S.hits.filter(h => h.weapon === w);
 
 group("a Brawler's punch puts its damage in the recent list, and the list empties by itself", async () => {
-  const st = fight('altar', 'brawler', 1);
+  fight('altar', 'brawler', 1);
   let first = null;
   frames(60, () => { first = of('brawler')[0]; return !!first; });
   const worth = rungWorth(CLASSES.brawler, 1) * SERPENT_DEFENSE.brawler[0];
   const said = first && { done: first.done, x: first.x, y: first.y };
-  // Her class taken back (a Reset), and the wound let heal shut: after that
-  // nothing strikes and nothing closes, so the list has nothing to keep.
-  reset(st.id);
-  window.__serpent({ stage: 0, wound: 0 });
-  frames(Math.max(NUM_LIFE_S, NUM_HEAL_LIFE_S) + 2 * NUM_HEAL_EVERY_S + 1);
+  // Watched past every number's life: each hit leaves the list by itself.
+  // (The station goes on striking, its base unit or its class: a built
+  // station always fights, so the list is never empty for long.)
+  const life = Math.max(NUM_LIFE_S, NUM_HEAL_LIFE_S) + 2 * NUM_HEAL_EVERY_S + 1;
+  const had = new Set(S.hits);
+  frames(life);
   return [
     ok(first, 'a Brawler at the coil puts a punch in the recent hits'),
     ok(said && Math.abs(said.done - worth) < 1e-9, "the hit carries the blow's damage", JSON.stringify({ said, worth })),
     ok(said && Number.isFinite(said.x) && Number.isFinite(said.y), 'and where it landed'),
-    ok(S.hits.length === 0, 'the list empties by itself once the numbers have faded',
-       JSON.stringify(S.hits.map(h => h.weapon)))
+    ok(had.size > 0 && S.hits.every(h => !had.has(h)), 'every hit leaves the list by itself once its number has faded',
+       `${S.hits.filter(h => had.has(h)).length} of ${had.size} left`)
   ];
 });
 

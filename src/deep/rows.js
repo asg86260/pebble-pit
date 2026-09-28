@@ -11,7 +11,7 @@
 // stand twice, and each keeps its own ladder.
 
 import { S } from '../state.js';
-import { rungValue, POD_SCALES0, POD_RATE, PARTY_IDS, CLASSES } from '../config.js';
+import { rungValue, POD_SCALES0, POD_RATE, PARTY_IDS, CLASSES, PAIRS } from '../config.js';
 import { tierRows, named } from '../upgrades/tiers.js';
 import { hirePod } from '../staffing.js';
 import { registerRows, ahead } from '../works.js';
@@ -43,14 +43,15 @@ export const CLASS_UNIT = {
 };
 
 // One class's ladder at one station: the one card of it, through `tierRows`
-// like every ladder, with its rung on the station (`field` as a pair). The
-// rung is the station's while the station has taken this class, and nought
-// for the class it has not: a station climbs one ladder, and a class looked
-// at on a blank station is priced from its foot. Made afresh when asked, so
-// a station's record is read where it stands in `S.stations` now.
+// like every ladder, with its rung on the station (`field` as a pair). A
+// station climbs one ladder: below the fork it is its kind's, either class's
+// rungs the base unit's, so both are priced from where it stands; once a
+// class is taken the other is at its foot. Made afresh when asked, so a
+// station's record is read where it stands in `S.stations` now.
+const climbs = (st, cls) => (st.cls ? st.cls === cls : (PAIRS[st.kind] || []).includes(cls));
 export function classLadder(st, cls) {
   const [card] = tierRows({
-    field: { get: () => (st.cls === cls ? st.rung : 0), set: v => { st.rung = v; } },
+    field: { get: () => (climbs(st, cls) ? st.rung : 0), set: v => { st.rung = v; } },
     lead: 'scale',
     unit: CLASS_UNIT[cls],
     value: lvl => rungValue(cls, lvl),
@@ -64,6 +65,7 @@ export function classLadder(st, cls) {
 // show on Buy, take, and hand `buyRung` to add to the station's `paid`.
 export function rungBill(id, cls) {
   const st = stationById(id);
+  cls = cls || (st && st.kind && PAIRS[st.kind][0]);
   if (!st || !CLASSES[cls]) return [];
   return billOf(classLadder(st, cls)).filter(([m, n]) => m !== 'time' && n > 0);
 }
@@ -85,5 +87,6 @@ for (const key of Object.keys(DEEP_ROWS))
 // first frame, empty until a station stands under it.
 const fighterHead = id => ({ title: 'the fighter', roster: true, keys: [],
                              heads: () => (stationById(id)?.fighter ? 1 : 0) });
+// An empty lot has no fighter yet, so no heading: its board is the question.
 for (const id of PARTY_IDS)
-  registerBoard(id, { rows: () => [], sections: () => [fighterHead(id)] });
+  registerBoard(id, { rows: () => [], sections: () => (stationById(id)?.kind ? [fighterHead(id)] : []) });

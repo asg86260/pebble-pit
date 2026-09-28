@@ -35,14 +35,14 @@ Open:
 - **The second half plays shallow** (the owner, 2026-09-26): answered by
   "Fighters in slots" (below).
 
-## Fighters in slots -- BUILT; THE BRANCH AT RUNG 4 DESIGNED (2026-09-28)
+## Fighters in slots -- BUILT, TUNING OPEN (2026-09-28)
 
-The party is on main (docs/wave-party.md). Next: DESIGN.md, "A fighter
-branches at rung 4" -- a base unit a station (Fighter, Novice, Scout,
-Adept, Apprentice) that forks into its two specialties at rung 4, and the
-station chosen on an empty lot's board rather than the build button's
-dropdown. Blocker: the owner's vote on the rails mock
-(docs/mocks/branch-2026-09-28.html).
+The party is on main (docs/wave-party.md), with the branch at rung 4
+(DESIGN.md, "A fighter branches at rung 4"): a base unit a station forking
+into its two classes, the station picked on an empty lot's board. Open:
+whether rung 4's jump (a whole class at once) is too big a step in the
+ladder book; `guard` in deep/classes.js no longer has a caller in play
+(every built station fights), kept for a fighter with no station.
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 

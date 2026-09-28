@@ -6,215 +6,205 @@
 <title>Fighter Branch</title>
 <style>
 :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --faint: #9a9aa6; --rule: #d6d6de;
-  --blue: #2f5fd0; --red: #d93a25; --purple: #6f36c9; }
+  --purple: #6f36c9; --soft: #efe7fb; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b;
-  --dim: #a2a2ae; --faint: #6e6e79; --rule: #2b2b33; --blue: #6f95ff; --red: #ff6a55; --purple: #a979ef; color-scheme: dark; } }
+  --dim: #a2a2ae; --faint: #6e6e79; --rule: #2b2b33; --purple: #a979ef; --soft: #231637; color-scheme: dark; } }
 :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --faint: #6e6e79;
-  --rule: #2b2b33; --blue: #6f95ff; --red: #ff6a55; --purple: #a979ef; color-scheme: dark; }
+  --rule: #2b2b33; --purple: #a979ef; --soft: #231637; color-scheme: dark; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 13px/1.45 ui-monospace, Consolas, monospace; }
-.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
 h1 { font-size: 20px; margin: 0 0 6px; }
-h2 { font-size: 15px; margin: 30px 0 10px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
 p { max-width: 96ch; margin: 0 0 10px; }
 .dim { color: var(--dim); }
-.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 18px; align-items: start; }
-.board { background: var(--card); border: 1px solid var(--ink); padding: 10px 12px; display: grid; gap: 10px; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; align-items: start; margin-top: 16px; }
+.board { background: var(--card); border: 1px solid var(--ink); padding: 12px; display: grid; gap: 10px; }
 .board h3 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
-.board .sub { color: var(--dim); font-size: 12px; margin-top: -6px; }
-button { font: inherit; color: inherit; }
-/* the lot's choice: one plate a base unit */
-.units { display: grid; gap: 6px; }
-.unit { display: grid; grid-template-columns: 8em 1fr auto; gap: 8px; align-items: center; text-align: left;
-  background: transparent; border: 1px solid var(--ink); padding: 6px 8px; cursor: pointer; }
-.unit .k { color: var(--dim); font-size: 12px; }
-.unit .to { color: var(--faint); font-size: 11px; }
-.unit:disabled { border-style: dashed; color: var(--faint); cursor: default; }
-.unit:disabled .k { color: var(--faint); }
-@media (hover: hover) { .unit:hover:not(:disabled) { background: var(--ink); color: var(--paper); } .unit:hover:not(:disabled) .k, .unit:hover:not(:disabled) .to { color: var(--paper); } }
-/* pips: the shop's circles */
-i.p { display: inline-block; box-sizing: border-box; width: 10px; height: 10px; border: 1px solid currentColor; border-radius: 50%; cursor: pointer; vertical-align: middle; }
-i.p.big { width: 14px; height: 14px; border-width: 2px; }
+.who { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--dim); }
+.sq { width: 14px; height: 14px; background: var(--ink); display: inline-block; flex: none; }
+.ask { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--purple); font-weight: 600; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.btn { background: var(--card); border: 1.5px solid var(--ink); padding: 8px 10px; text-align: left; }
+.btn:disabled { border-style: dashed; color: var(--faint); cursor: default; }
+@media (hover: hover) { .btn:hover:not(:disabled) { background: var(--ink); color: var(--paper); } .btn:hover:not(:disabled) * { color: var(--paper) !important; } }
+.btn .t { font-weight: 600; display: block; }
+.btn .s { font-size: 12px; color: var(--dim); display: block; }
+.btn .price { font-size: 12px; float: right; }
+.stack { display: grid; gap: 8px; }
+.lot { display: grid; gap: 6px; }
+.small { font-size: 11px; color: var(--faint); background: none; border: none; padding: 0; text-decoration: underline; justify-self: start; }
+/* The tree, in pips: the base's three, then a branch to each specialty's five.
+   Pips are never clickable; hovering one says what it is. */
+.tree { display: grid; grid-template-columns: auto 18px auto; align-items: center; column-gap: 0; justify-content: start; padding: 2px 0; }
+.tree .base, .tree .arm { display: inline-flex; gap: 6px; align-items: center; }
+.tree .arms { display: grid; row-gap: 8px; grid-column: 3; }
+.tree .fork { grid-column: 2; align-self: stretch; position: relative; }
+.tree .fork::before { content: ''; position: absolute; left: 0; right: 50%; top: 50%; border-top: 1.5px solid var(--rule); }
+.tree .fork::after { content: ''; position: absolute; left: 50%; right: 0; top: 7px; bottom: 7px; border: 1.5px solid var(--rule); border-right: none; }
+.tree .arm { padding-left: 2px; }
+.tree .arm.gone { opacity: .25; }
+.tree .lbl { font-size: 11px; color: var(--dim); margin-left: 6px; }
+.tree .arm.gone .lbl { text-decoration: line-through; }
+i.p { display: block; box-sizing: border-box; width: 10px; height: 10px; border: 1px solid currentColor; border-radius: 50%; cursor: help; }
+i.p.big { width: 13px; height: 13px; border-width: 2px; }
+i.p.cap { color: var(--purple); }
 i.p.on { background: currentColor; }
-.b1, .b2 { color: var(--ink); } .b3 { color: var(--blue); } .b4 { color: var(--red); }
-.grp { display: inline-flex; gap: 6px; align-items: center; }
-.rail { display: inline-flex; gap: 10px; align-items: center; }
-.name { font-size: 12px; min-width: 9.5em; display: inline-block; }
-.name b { font-weight: 600; }
-.fade { opacity: .25; transition: opacity .2s steps(4, end); }
-.lane { transition: opacity .2s steps(4, end), max-height .24s steps(4, end); max-height: 60px; overflow: hidden; }
-.lane.folded { max-height: 0; opacity: 0; }
-/* layout A: the base rail on its own line, the two forks under it */
-.A .base { display: flex; align-items: center; gap: 10px; }
-.A .forks { display: grid; gap: 6px; padding-left: 16px; border-left: 2px solid var(--rule); margin-left: 6px; }
-.A .forks .lane { display: flex; align-items: center; gap: 10px; }
-/* layout B: one line, the base pips then a bracket holding both forks */
-.B .line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.B .br { display: grid; gap: 6px; border-left: 2px solid var(--rule); padding-left: 10px; }
-.B .br .lane { display: flex; align-items: center; gap: 10px; }
-.panel { border: 1px solid var(--ink); padding: 6px 8px; font-size: 12px; min-height: 2.9em; }
-.buy { display: flex; gap: 10px; flex-wrap: wrap; }
-.buy button { text-transform: uppercase; letter-spacing: .08em; background: var(--paper); border: 1px solid var(--ink); padding: 4px 10px; cursor: pointer; }
-.buy button:disabled { border-style: dashed; color: var(--faint); cursor: default; }
-.body { display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 12px; }
-.sq { width: 14px; height: 14px; background: var(--ink); display: inline-block; }
-.kit { font-size: 11px; color: var(--purple); }
+i.p.next { outline: 1.5px dotted var(--purple); outline-offset: 2px; }
+.tip { position: fixed; z-index: 5; pointer-events: none; background: var(--ink); color: var(--paper); font-size: 11px;
+  padding: 3px 7px; white-space: nowrap; transform: translate(-50%, calc(-100% - 8px)); }
+.tip[hidden] { display: none; }
 .vote { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 12px 0 0; }
-.vote button { padding: 5px 12px; border: 1px solid var(--ink); background: transparent; cursor: pointer; }
+.vote button { padding: 5px 12px; border: 1px solid var(--ink); background: transparent; }
 .vote button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
 .vote input { font: inherit; flex: 1 1 20em; padding: 5px 8px; border: 1px solid var(--rule); background: transparent; color: inherit; }
 .saved { font-size: 11px; color: var(--dim); min-height: 1em; }
-.toggle { display: inline-flex; gap: 6px; align-items: center; color: var(--dim); font-size: 12px; }
-@media (prefers-reduced-motion: reduce) { .fade, .lane { transition: none; } }
+.bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.bar button { padding: 4px 10px; border: 1px solid var(--ink); background: transparent; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Fighter Branch</h1>
-  <p>A station stands a base unit that climbs rungs 1&ndash;3, then forks at rung 4 into one of two specialties
-    (DESIGN.md, &ldquo;A fighter branches at rung 4&rdquo;). The fighter is chosen on the empty lot's board, not the
-    build button. Click a unit, then tap pips to view and Buy to climb. Two layouts for the fork.</p>
-  <p class="dim">A mock from plain HTML, not the game. It cannot show: the lot being built by bodies, the real board's
-    size and seat in the deep, the bills (every rung here is free), or the kit arriving on the fighter.</p>
-  <div class="vote" id="vote"><span>Layout:</span></div>
+  <p>Round 3: option D, with the pips drawn as the tree. The base unit's three pips branch into each specialty's
+    five. Hover a pip to see what it is. The rows under the tree are still the only things you can click. The next
+    rung you can buy has a dotted ring. Once a path is taken, the other branch fades.</p>
+  <p class="dim">A mock from plain HTML, not the game. It cannot show: the lot being built by bodies, the real bills
+    (the prices are placeholders and always affordable), or the kit arriving on the fighter. The left board starts at
+    an empty lot; the right one is already at the fork, for a side-by-side look.</p>
+  <div class="vote" id="vote"><span>Build it?</span></div>
   <div class="saved" id="saved"></div>
-
-  <h2>1 &middot; The empty lot's board</h2>
-  <p><label class="toggle"><input type="checkbox" id="first" checked> first lot (only the starters' stations)</label></p>
-  <div class="row"><div class="board" id="lot"></div></div>
-
-  <h2>2 &middot; The station's rails, two layouts</h2>
-  <div class="row">
-    <div><h3 class="dim" style="margin:0 0 6px">A &middot; fork under the base</h3><div class="board A" id="A"></div></div>
-    <div><h3 class="dim" style="margin:0 0 6px">B &middot; one line, a bracket</h3><div class="board B" id="B"></div></div>
-  </div>
+  <div class="bar"><button type="button" id="reset">start again</button>
+    <label class="dim"><input type="checkbox" id="first" checked> first lot</label></div>
+  <div class="opts"><div class="board" id="L"></div><div class="board" id="R"></div></div>
 </div>
+<div class="tip" id="tip" hidden></div>
 <script>
 var UNITS = [
-  { kind: 'altar', name: 'Fighter', does: 'punches', forks: [['Brawler', 'heavy punches', 'Haymaker', 'Knockout'], ['Swordsman', 'cuts that bleed', 'Whirlwind', 'Twin cut']] },
-  { kind: 'well', name: 'Novice', does: 'palms', forks: [['Monk', 'palms build chi', 'Deep breath', 'Still water'], ['Martial Artist', 'thrusts charge a finisher', 'Flow', 'Rally']] },
-  { kind: 'armory', name: 'Scout', does: 'arrows', forks: [['Ranger', 'arrows from overhead', 'Aimed shot', 'Pinning shot'], ['Assassin', 'stabs, x3 on a stunned serpent', 'Execution', 'Coup']] },
-  { kind: 'circle', name: 'Adept', does: 'hexes', forks: [['Hexer', 'hexes Weaken its heal', 'Binding', 'Bound fast'], ['Sapper', 'thrown charges', 'Sticky charge', 'Pair']] },
-  { kind: 'spire', name: 'Apprentice', does: 'a beam', forks: [['Mage', 'a held purple beam', 'Widening', 'Burn through'], ['Bard', 'sings the others Inspired', 'Anthem', 'Refrain']] },
+  { kind: 'altar', name: 'Fighter', does: 'punches', forks: [
+    { n: 'Brawler', d: 'heavy punches', m: 'Haymaker', md: 'every 4th punch x4, stuns', c: 'Knockout', cd: 'haymakers stun longer' },
+    { n: 'Swordsman', d: 'cuts that bleed', m: 'Whirlwind', md: 'each cut hits wide', c: 'Twin cut', cd: 'every 3rd cut hits twice' }] },
+  { kind: 'well', name: 'Novice', does: 'palms', forks: [
+    { n: 'Monk', d: 'palms build chi', m: 'Deep breath', md: 'chi fills twice as fast', c: 'Still water', cd: 'the chi palm stuns longer' },
+    { n: 'Martial Artist', d: 'thrusts charge a finisher', m: 'Flow', md: 'thrusts charge double', c: 'Rally', cd: 'the finisher Hastes the party' }] },
+  { kind: 'armory', name: 'Scout', does: 'arrows', forks: [
+    { n: 'Ranger', d: 'arrows from overhead', m: 'Aimed shot', md: 'every 5th arrow x5', c: 'Pinning shot', cd: 'the aimed shot stuns' },
+    { n: 'Assassin', d: 'stabs, x3 on a stunned serpent', m: 'Execution', md: 'stabs grow with the wound', c: 'Coup', cd: "x3 in the phase's last tenth" }] },
+  { kind: 'circle', name: 'Adept', does: 'hexes', forks: [
+    { n: 'Hexer', d: 'hexes Weaken its heal', m: 'Binding', md: 'the serpent is Held', c: 'Bound fast', cd: 'Held takes more from blows' },
+    { n: 'Sapper', d: 'thrown charges', m: 'Sticky charge', md: 'one big stunning blow', c: 'Pair', cd: 'two charges at once' }] },
+  { kind: 'spire', name: 'Apprentice', does: 'a beam', forks: [
+    { n: 'Mage', d: 'a held purple beam', m: 'Widening', md: 'the beam widens and ramps', c: 'Burn through', cd: 'the beam burns through' },
+    { n: 'Bard', d: 'sings the others Inspired', m: 'Anthem', md: 'Inspired doubles', c: 'Refrain', cd: 'Inspired lingers after the song' }] },
 ];
 var FIRST = ['altar', 'armory', 'spire'];
-var unit = UNITS[0];
+var PRICE = ['', '15', '30', '60', '120', '250', '500', '900', '1600'];
 function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
-var band = function (r) { return 'b' + Math.ceil(r / 2); };
-
-function drawLot() {
-  var lot = document.getElementById('lot'), first = document.getElementById('first').checked;
-  lot.replaceChildren(el('h3', '', 'An empty lot'), el('div', 'sub', 'what goes up here'));
-  var box = el('div', 'units');
-  UNITS.forEach(function (u) {
-    var b = el('button', 'unit'); b.type = 'button';
-    var open = !first || FIRST.indexOf(u.kind) >= 0;
-    b.disabled = !open;
-    b.append(el('span', '', u.name), el('span', 'k', open ? u.does : 'opens with a second station'), el('span', 'to', u.forks[0][0] + ' / ' + u.forks[1][0]));
-    b.onclick = function () { unit = u; states.A = fresh(); states.B = fresh(); drawRails(); };
-    box.append(b);
-  });
-  lot.append(box);
+function btn(t, s, price, fn) {
+  var b = el('button', 'btn'); b.type = 'button';
+  if (price) b.append(el('span', 'price', '■ ' + price));
+  b.append(el('span', 't', t)); if (s) b.append(el('span', 's', s));
+  b.onclick = fn; return b;
 }
-document.getElementById('first').onchange = function () { drawLot(); drawRails(); };
+var first = function () { return document.getElementById('first').checked; };
+var locked = function (u, i) { return first() && u.kind === 'spire' && i === 1; };
+var fresh = function () { return { unit: null, rung: 0, spec: null }; };
+var S = { L: fresh(), R: { unit: UNITS[0], rung: 3, spec: null } };
 
-var fresh = function () { return { rung: 0, spec: null, view: null }; };
-var states = { A: fresh(), B: fresh() };
-function bardLocked(i) { return document.getElementById('first').checked && unit.kind === 'spire' && i === 1; }
-
-function lineFor(s) {
-  var v = s.view;
-  if (v == null) return s.spec == null ? unit.name + ': ' + unit.does : unit.forks[s.spec][0] + ': ' + unit.forks[s.spec][1];
-  if (v.r <= 3) return unit.name + ', rung ' + v.r + ': ' + unit.does + ', harder';
-  var f = unit.forks[v.i];
-  if (bardLocked(v.i)) return f[0] + ': opens with a second station';
-  if (v.r === 4) return f[0] + ': ' + f[1] + '. ' + f[2];
-  if (v.r === 8) return f[0] + ', rung 8: ' + f[3];
-  return f[0] + ', rung ' + v.r + ': harder';
+// the hover line: name and what it does, a few words
+var tip = document.getElementById('tip');
+function hoverable(node, text) {
+  node.onmouseenter = function () { var r = node.getBoundingClientRect(); tip.textContent = text; tip.style.left = (r.left + r.width / 2) + 'px'; tip.style.top = r.top + 'px'; tip.hidden = false; };
+  node.onmouseleave = function () { tip.hidden = true; };
+  node.setAttribute('aria-label', text);
 }
-function pip(s, r, i, key) {
-  var p = el('i', 'p ' + band(r) + (r === 4 || r === 8 ? ' big' : ''));
-  var on = r <= 3 ? s.rung >= r : s.spec === i && s.rung >= r;
+function pipLine(u, r, f) {
+  if (!f) return u.name + ' ' + r + ': ' + u.does + ', harder';
+  if (r === 4) return f.n + ' 4: ' + f.m + ' – ' + f.md;
+  if (r === 8) return f.n + ' 8: ' + f.c + ' – ' + f.cd;
+  return f.n + ' ' + r + ': ' + f.d + ', harder';
+}
+function pip(s, r, i) {
+  var u = s.unit, f = i == null ? null : u.forks[i];
+  var p = el('i', 'p' + (r === 4 || r === 8 ? ' big' : '') + (r === 8 ? ' cap' : ''));
+  var on = i == null ? s.rung >= r : s.spec === i && s.rung >= r;
   if (on) p.classList.add('on');
-  p.title = r <= 3 ? unit.name + ' ' + r : unit.forks[i][0] + ' ' + r;
-  p.onclick = function () { s.view = { r: r, i: i }; drawRails(); };
+  var next = s.rung + 1 === r && (i == null || s.spec == null || s.spec === i) && !(i != null && locked(u, i));
+  if (next) p.classList.add('next');
+  hoverable(p, i != null && locked(u, i) ? f.n + ': opens with a second station' : pipLine(u, r, f));
   return p;
 }
-function baseRail(s, key) {
-  var g = el('span', 'rail');
-  var g1 = el('span', 'grp'); g1.append(pip(s, 1, null, key), pip(s, 2, null, key));
-  var g2 = el('span', 'grp'); g2.append(pip(s, 3, null, key));
-  g.append(g1, g2); return g;
+function tree(s) {
+  var u = s.unit, t = el('div', 'tree');
+  var base = el('span', 'base'); for (var r = 1; r <= 3; r++) base.append(pip(s, r, null));
+  var arms = el('div', 'arms');
+  u.forks.forEach(function (f, i) {
+    var a = el('span', 'arm' + (s.spec != null && s.spec !== i ? ' gone' : ''));
+    for (var r = 4; r <= 8; r++) a.append(pip(s, r, i));
+    a.append(el('span', 'lbl', f.n));
+    arms.append(a);
+  });
+  t.append(base, el('span', 'fork'), arms);
+  return t;
 }
-function forkRail(s, i, key) {
-  var g = el('span', 'rail');
-  var g2 = el('span', 'grp'); g2.append(pip(s, 4, i, key));
-  var g3 = el('span', 'grp'); g3.append(pip(s, 5, i, key), pip(s, 6, i, key));
-  var g4 = el('span', 'grp'); g4.append(pip(s, 7, i, key), pip(s, 8, i, key));
-  g.append(g2, g3, g4); return g;
+function who(s) {
+  var w = el('div', 'who'); w.append(el('span', 'sq'));
+  var f = s.spec != null ? s.unit.forks[s.spec] : null;
+  w.append(document.createTextNode((f ? f.n : s.unit.name) + ' · rung ' + s.rung));
+  return w;
 }
-function lane(s, i, key) {
-  var f = unit.forks[i], ln = el('div', 'lane');
-  var nm = el('span', 'name'); nm.append(el('b', '', f[0]));
-  nm.onclick = function () { s.view = { r: 4, i: i }; drawRails(); };
-  if (bardLocked(i)) { ln.append(nm, el('span', 'dim', 'opens with a second station')); }
-  else ln.append(nm, forkRail(s, i, key));
-  if (s.spec != null && s.spec !== i) ln.classList.add('folded');
-  else if (s.spec == null && s.view && s.view.r >= 4 && s.view.i !== i) ln.classList.add('fade');
-  return ln;
+function lot(key) {
+  var s = S[key], box = el('div', 'lot');
+  box.append(el('h3', '', 'An empty lot'), el('div', 'ask', 'What goes up here?'));
+  UNITS.forEach(function (u) {
+    var open = !first() || FIRST.indexOf(u.kind) >= 0;
+    var b = btn(u.name, open ? u.does + ' → ' + u.forks[0].n + ' or ' + u.forks[1].n : 'opens with a second station', null,
+      function () { s.unit = u; draw(); });
+    b.disabled = !open; box.append(b);
+  });
+  return box;
 }
-function nextBuy(s) {
-  if (s.rung < 3) return { r: s.rung + 1, i: null };
-  if (s.rung === 3) { var i = s.view && s.view.r >= 4 ? s.view.i : null; return i == null || bardLocked(i) ? null : { r: 4, i: i }; }
-  if (s.rung < 8) return { r: s.rung + 1, i: s.spec };
-  return null;
+function station(key, root) {
+  var s = S[key], u = s.unit;
+  root.append(el('h3', '', 'The ' + u.kind), who(s), tree(s));
+  var list = el('div', 'stack');
+  if (s.rung === 3 && s.spec == null) {
+    list.append(el('div', 'ask', 'Choose a path – buying one closes the other'));
+    u.forks.forEach(function (f, i) {
+      var b = btn('Become a ' + f.n, f.d + '. Rung 4: ' + f.m + ' – ' + f.md, PRICE[4], function () { s.spec = i; s.rung = 4; draw(); });
+      if (locked(u, i)) { b.disabled = true; b.querySelector('.s').textContent = 'opens with a second station'; }
+      list.append(b);
+    });
+  } else if (s.rung < 8) {
+    var next = s.rung + 1, f = s.spec != null ? u.forks[s.spec] : null;
+    var t = f ? (next === 8 ? f.c : f.n + ' rung ' + next) : u.name + ' rung ' + next;
+    var d = f ? (next === 8 ? f.cd : 'hits harder') : u.does + ', harder' + (next === 3 ? '; then choose a path' : '');
+    list.append(btn(t, d, PRICE[next], function () { s.rung = next; draw(); }));
+  } else list.append(el('div', 'dim', 'Top rung.'));
+  var r = el('button', 'small', 'reset this station (refunds everything)'); r.type = 'button';
+  r.onclick = function () { S[key] = { unit: u, rung: 0, spec: null }; draw(); };
+  root.append(list, r);
 }
-function controls(s, key) {
-  var nb = nextBuy(s), wrap = el('div', 'buy');
-  var buy = el('button', '', nb ? 'Buy rung ' + nb.r + (nb.r === 4 ? ' · ' + unit.forks[nb.i][0] : '') : s.rung === 3 ? 'Pick a fork to buy' : 'Top rung');
-  buy.type = 'button'; buy.disabled = !nb;
-  buy.onclick = function () { if (nb.r === 4) s.spec = nb.i; s.rung = nb.r; drawRails(); };
-  var reset = el('button', '', 'Reset'); reset.type = 'button'; reset.disabled = s.rung === 0;
-  reset.onclick = function () { states[key] = fresh(); drawRails(); };
-  wrap.append(buy, reset); return wrap;
-}
-function body(s) {
-  var b = el('div', 'body'); b.append(el('span', 'sq'));
-  b.append(document.createTextNode(s.spec == null ? unit.name + ', bare' : unit.forks[s.spec][0]));
-  if (s.spec != null) b.append(el('span', 'kit', s.rung >= 8 ? 'kit + mark + touch' : 'kit + mark'));
-  return b;
-}
-function drawRails() {
-  ['A', 'B'].forEach(function (key) {
-    var s = states[key], root = document.getElementById(key);
-    root.replaceChildren(el('h3', '', 'the ' + unit.kind), body(s));
-    var baseName = el('span', 'name'); baseName.append(el('b', '', unit.name));
-    if (s.spec == null && s.view && s.view.r >= 4) baseName.classList.add('fade');
-    if (key === 'A') {
-      var base = el('div', 'base'); base.append(baseName, baseRail(s, key));
-      var forks = el('div', 'forks'); forks.append(lane(s, 0, key), lane(s, 1, key));
-      root.append(base, forks);
-    } else {
-      var line = el('div', 'line'), br = el('div', 'br');
-      br.append(lane(s, 0, key), lane(s, 1, key));
-      line.append(baseName, baseRail(s, key), br);
-      root.append(line);
-    }
-    root.append(el('div', 'panel', lineFor(s)), controls(s, key));
+function draw() {
+  tip.hidden = true;
+  ['L', 'R'].forEach(function (key) {
+    var root = document.getElementById(key); root.replaceChildren();
+    if (!S[key].unit) root.append(lot(key)); else station(key, root);
   });
 }
-drawLot(); drawRails();
+document.getElementById('reset').onclick = function () { S = { L: fresh(), R: { unit: UNITS[0], rung: 3, spec: null } }; draw(); };
+document.getElementById('first').onchange = draw;
+draw();
 
 (function () {
   var vote = document.getElementById('vote'), flag = document.getElementById('saved');
-  var btns = ['A', 'B'].map(function (id) {
-    var b = el('button', '', id); b.type = 'button'; b.dataset.v = id; b.setAttribute('aria-pressed', 'false'); vote.append(b); return b;
+  var btns = [['yes', 'Yes, build it'], ['more', 'Another round']].map(function (o) {
+    var b = el('button', '', o[1]); b.type = 'button'; b.dataset.v = o[0]; b.setAttribute('aria-pressed', 'false'); vote.append(b); return b;
   });
   var note = el('input'); note.placeholder = 'Note'; note.setAttribute('aria-label', 'Note'); vote.append(note);
   var doc = {};
   (async function () {
     var db = window.claude ? await window.claude.use('db') : null;
     if (!db) { vote.hidden = true; return; }
-    var ref = db.collection('branch').doc('pick');
+    var ref = db.collection('branch').doc('pick3');
     function save(data) {
       flag.textContent = '…';
       ref.set(Object.assign({}, doc, data)).then(function () { flag.textContent = 'saved'; }, function () { flag.textContent = 'did not save'; });

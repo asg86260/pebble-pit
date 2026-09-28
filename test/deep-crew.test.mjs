@@ -49,7 +49,9 @@ group('a post stands under each station once it stands, keyed by its id', async 
 });
 
 group("- sends a station's fighter to one standing empty, + fetches it back, down there", async () => {
-  stations(['altar', 'armory']);
+  // Two whose base units shoot from their stations, so standing at the post
+  // is standing at work; a melee one is up at the hide.
+  stations(['armory', 'circle']);
   runUntil(() => fighters().length === 1 && atPost(fighters()[0]), 60);
   const yard = S.workers.filter(w => !belowYard(w)).map(w => w.name);
   const w = fighters()[0];

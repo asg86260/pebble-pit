@@ -38,7 +38,7 @@ import { P, WORKER, COIL_SEGS, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
 import { slotX, coilAt, coilThick, nearestSeg } from './place.js';
-import { stationById, classOf } from './party.js';
+import { stationById, classOf, keyOf } from './party.js';
 import { mid, feet, working, swim, loose } from './arms.js';
 import { strike, woundK } from './serpent.js';
 import { rest } from './rest.js';
@@ -387,7 +387,7 @@ export function stepFighter(w, c) {
   if (!working(w)) return;
   const st = stationOf(w);
   const cls = st && st.built !== false ? classOf(st) : null;
-  const step = cls && STEP[st.cls];
+  const step = cls && STEP[keyOf(st)];
   if (!step) { guard(w, st, c); return; }
   if (w.goal === 'guard' || w.goal === 'rest') w.lull = null;
   step(w, c, st, cls, rungWorth(cls, st.rung));

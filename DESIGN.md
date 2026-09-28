@@ -16389,7 +16389,7 @@ day caps, and `CLOUD_PAUSED` answering before D1 is touched.
   who shuts the lid without a `pagehide` loses at most that minute from
   the mirror, never from the yard.
 
-## A fighter branches at rung 4 (design, not built)
+## A fighter branches at rung 4 (built)
 
 The owner, 2026-09-28: "the upgrades feel a bit lame now." A station today
 takes its class on its first rung, and the next seven rungs are a number
@@ -16420,11 +16420,12 @@ it, and a rung 4 that changes what is on the floor rather than a number.
 It fights as its station's first specialty does at that rung -- the
 Fighter punches as the Brawler, the Novice palms as the Monk, the Scout
 shoots as the Ranger, the Adept hexes as the Hexer, the Apprentice holds
-the Mage's beam -- **bare**: no kit, the plain body. So nothing new is
-drawn or tuned for it: its ladder is rungs 0 to 3 of that specialty's
-`LADDERS` row, and its attack is that class's at rung 0 (no move). The kit
-arrives with the fork, the rung-4 mark with it, the rung-8 touch later,
-as the Kit Growth page has them.
+the Mage's beam. So nothing new is drawn or tuned for it: its ladder is
+rungs 0 to 3 of that specialty's `LADDERS` row, and its attack is that
+class's below its move. As built it carries that class's plain rung-0 kit
+-- the bow, the fists, the staff -- because the attack reads by what it is
+thrown with; the fork brings the chosen class's kit and its rung-4 mark,
+and the rung-8 touch comes later, as the Kit Growth page has them.
 
 A station stands its base unit from the moment it is built: a fighter
 seated there fights at rung 0 at once. (Today a station with no class
@@ -16442,13 +16443,16 @@ builders build: the scaffold goes up and the station is raised as that
 kind by bodies walking to it, as every station is. Nothing on the floor
 changes kind in place.
 
-### The rails
+### The board (voted D, docs/mocks/branch-2026-09-28.html)
 
-One short rail for the base unit -- rungs 1 to 3 -- which then splits into
-the two specialties' rails, rungs 4 to 8 each, 4 and 8 the bigger pips as
-now. Viewing and buying work as today: a tap views a specialty and fades
-the other; buying rung 4 commits it and folds the other away. Reset
-refunds the whole station and stands the base unit at rung 0.
+Over the rows, the ladder as a tree of pips: the base unit's three, a
+fork, each specialty's five, 4 and 8 the bigger, 8 purple. Pips are only
+looked at -- a hover (a tap on a phone) says what one is in a line -- and
+the rows under them are the only things pressed: the next rung, or at the
+fork "choose a path", a row a class. Buying one closes the other branch
+(faded, struck through). Reset refunds the whole station and stands the
+base unit at rung 0. The owner's first round, pressable pips and plates,
+was "hard to tell what is clickable and what decision to make".
 
 ### What stays locked
 

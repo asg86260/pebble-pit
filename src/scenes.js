@@ -20,10 +20,11 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
 import { buildStation, nextSlot } from './deep/party.js';
+import { press as pressBuildButton } from './deep/buildbutton.js';
 import { lay } from './deep/statuses.js';
 import { worksAt, progressOf } from './works.js';
 import { goDeep, goUp, poseGlide } from './view.js';
@@ -458,7 +459,7 @@ const deepScenes = {
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } },
   ...Object.fromEntries(KINDS.map(k => [`deep-${k}`, {
-    about: 'the deep', say: `the ${k} alone in the middle of the frame, under its dome, its fighter on guard`,
+    about: 'the deep', say: `the ${k} alone in the middle of the frame, under its dome, its base unit at work`,
     run: () => {
       deepYard({ stage: 1, wound: 300, party: [{ kind: k, cls: null, rung: 0 }] });
       lookDeep(slotAt(S.stations[0].slot));
@@ -527,13 +528,31 @@ const deepScenes = {
       const f = S.fangsLoose[0];
       lookDeep(f && Number.isFinite(f.x) ? f.x : coilAt(bellySeg(), now()).x);
     } },
-  // The altar's board up with no class taken: both rails drawn, blank.
-  'party-rails': { about: 'the deep', say: 'the altar\'s board with no class taken: two blank rails, Brawler and Swordsman',
+  // The altar's board up with no class taken: the pip tree, blank, over the
+  // Fighter's first row.
+  'party-rails': { about: 'the deep', say: 'the altar\'s board at rung 0: the pip tree over the Fighter\'s first row',
     run: () => {
       deepYard({ run: 2, party: [{ kind: 'altar', cls: null, rung: 0 }] });
       window.__scales(99999);
       lookAtStation(0);
       window.__board(S.stations[0].id);
+    } },
+  // The same board at the fork: the base unit's three pips lit, and a row a
+  // class under "choose a path".
+  'party-fork': { about: 'the deep', say: 'the altar\'s board at the fork: choose a path, Brawler or Swordsman',
+    run: () => {
+      deepYard({ run: 2, party: [{ kind: 'altar', cls: null, rung: FORK_RUNG - 1 }, { kind: 'spire', cls: null, rung: 0 }] });
+      window.__scales(99999);
+      lookAtStation(0);
+      window.__board(S.stations[0].id);
+    } },
+  // The build button pressed: an empty lot staked out at the first slot and
+  // its board asking what goes up there.
+  'party-lot': { about: 'the deep', say: 'an empty lot, its board asking what goes up there',
+    run: () => {
+      deepYard({ run: 2 });
+      lookDeep(slotAt(freeSlot()));
+      pressBuildButton();
     } },
   'party-button': { about: 'the deep', say: 'a fang held: the build button over the next free slot, wearing the fang\'s mark',
     run: () => { deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 }); lookDeep(slotAt(freeSlot())); } },

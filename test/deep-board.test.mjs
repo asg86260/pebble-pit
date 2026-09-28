@@ -78,11 +78,16 @@ group('no board of the deep sells a weapon, a door or the star', async () => {
 });
 
 group("a station's board is its fighter's heading, keyed by the station's id", async () => {
+  // One station standing: its id's board heads the fighter; an id with
+  // nothing under it yet (or an empty lot) has no fighter to head.
+  window.__snatch({ played: true });
+  window.__party({ stations: [{ kind: 'altar' }] });
   const boards = PARTY_IDS.map(id => boardOf(id));
   const heads = boards.map(b => b?.sections().map(s => s.title).join());
   return [
     ok(boards.every(b => b && b.rows().length === 0), 'every id has a board that sells no card'),
-    ok(heads.every(h => h === 'the fighter'), 'its one heading is the fighter', heads.join(' | '))
+    ok(heads[0] === 'the fighter' && heads.slice(1).every(h => h === ''),
+       "the standing station's one heading is the fighter, the others none", heads.join(' | '))
   ];
 });
 
