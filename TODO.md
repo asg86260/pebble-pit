@@ -12,6 +12,12 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
+## A station is built first, its fighter chosen after -- DESIGNED, AWAITING APPROVAL (2026-09-28)
+
+"Built first, chosen after" in DESIGN.md: the build button builds at once,
+a bare plinth with a mark stands until its board picks the base unit.
+Blocker: the owner's approval, then a mock of the mark.
+
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 
 Built as `docs/wave-serpent.md`; "The serpent" at the end of DESIGN.md.

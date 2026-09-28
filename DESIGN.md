@@ -16470,6 +16470,45 @@ builders build: the scaffold goes up and the station is raised as that
 kind by bodies walking to it, as every station is. Nothing on the floor
 changes kind in place.
 
+### Built first, chosen after (design, not built)
+
+The owner, 2026-09-28: "the fighter selection should happen after the
+station is built. not before." This replaces the empty lot above: nothing
+is picked until the station stands.
+
+- **The button.** Pressed, it spends the fang (the first station free, as
+  now) and queues the build at the next free slot at once. There is no lot
+  and no board to answer first: the scaffold goes up there, and the
+  delvers swim over and put it up as every build is put up.
+- **Built, unchosen: a bare plinth.** When the build lands the plinth
+  stands and nothing else -- no crate, no fighter. It is the size of a
+  base unit's (the crate's ground), so choosing never moves it. Nobody is
+  seated at it; it counts toward the four, and toward `NEEDS_COMPANY` only
+  once it is chosen.
+- **The mark.** A mark hangs over an unchosen plinth until it is chosen;
+  its hover line is "pick a fighter". The pointer on the plinth (or the
+  mark) opens its board, which is the lot's board of today: the base units
+  it may become, the three starters' on the first station, the five after.
+  The mark's drawing gets a mock before it is built.
+- **Choosing.** A row pressed writes the kind down: the crate stands on the
+  plinth, and a spare pod resident swims over from the pods and takes its
+  post as that base unit, at rung 0. The crate appearing is the purchase's
+  instant change, as a fork's prop is (decided 2026-09-28); the fighter
+  walks.
+- **What changes in the code.** `layLot` queues the build (`start`) and
+  `pickKind` no longer does; `stationLanded` seats nobody at a kindless
+  station (`seatUpTo` skips it); the ground and the plinth of a kindless
+  station are the crate's; the board's kind rows are offered on a built,
+  kindless station instead of an unbuilt one; `buildStation` and
+  `raiseStation` (the scenes' and `__party`'s) build then choose.
+- **Old saves.** A lot laid and not picked (kind null, no work queued) has
+  its build queued on load, since its fang is already spent; a station
+  picked and still going up keeps its kind and builds as it was.
+
+What it must not break: every station still stands through a build worked
+by bodies; the four-station cap and the one-fang price are unchanged; a
+reset still blanks the class and keeps the kind.
+
 ### The board (voted D, docs/mocks/branch-2026-09-28.html)
 
 Over the rows, the ladder as a tree of pips: the base unit's three, a
