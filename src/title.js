@@ -10,6 +10,7 @@ import { timesOn, showTimes } from './timesboard.js';
 import { pref, setPref, reducedMotion, dark } from './prefs.js';
 import { version } from './version.js';
 import { copyOut } from './copyout.js';
+import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
 import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
 
 const col = document.querySelector('.col');
@@ -35,7 +36,11 @@ function showPane(name) {
   front();
   if (name === 'slots') showSlots(document.getElementById('slots'), say, pick, false);
   if (name === 'record') { const s = opened(); showRecord(document.getElementById('record'), recordListOf(s?.won, s?.wonAt)); }
-  if (name === 'settings') { sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume'); }
+  if (name === 'settings') {
+    sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume');
+    showCloud(document.getElementById('cloudsheet'), say, { changed: front, conflict: () => showPane('conflict') });
+  }
+  if (name === 'conflict') showConflicts(document.getElementById('clashes'), say, { done: () => showPane('main') });
 }
 // The front's three lines that read the store.
 function front() {
@@ -57,7 +62,7 @@ function pick(n) { setSlot(n); showPane('main'); }
 document.getElementById('slotsbtn').addEventListener('click', () => showPane('slots'));
 document.getElementById('recordbtn').addEventListener('click', () => showPane('record'));
 document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
-for (const id of ['slotsback', 'recordback', 'settingsback']) document.getElementById(id).addEventListener('click', () => showPane('main'));
+for (const id of ['slotsback', 'recordback', 'settingsback', 'conflictback']) document.getElementById(id).addEventListener('click', () => showPane('main'));
 
 // Play waits for the store to take every write made here, and for the veil to
 // reach white: play.html comes up out of the same white (main.js), so the load
@@ -72,8 +77,9 @@ async function play() {
   location.href = 'play.html';
 }
 document.getElementById('play').addEventListener('click', play);
+// Not while typing: the paste box, and the cloud's code boxes.
 addEventListener('keydown', e => {
-  if (e.target === box) return;
+  if (e.target.closest?.('textarea, input')) return;
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); }
 });
 
@@ -190,5 +196,8 @@ const pictureUp = pictureDrawn();
 await primeStore();
 import { cloudBoot } from './cloud.js'; await cloudBoot();   // wave-cloud SYNC: the cloud's newer copies, before a yard is named
 showPane('main');
+// The cloud's line in the foot bar. After the store is read, since `ok`
+// says when the open slot last went up; a build with no cloud draws nothing.
+showFoot(document.getElementById('cloud'), say, { changed: front, conflict: () => showPane('conflict') });
 await pictureUp;
 requestAnimationFrame(() => document.getElementById('veil').classList.remove('up'));

@@ -195,3 +195,16 @@ export function noteCatch(ch) {
   t.caught = (t.caught | 0) + 1;
   if (t.caught >= t.throwOf) { t.throwOf = 0; earn('catchall'); }
 }
+
+// --- wave-cloud FACE ---------------------------------------------------------------
+// The cloud's one notice in play: this yard is newer on another device
+// (docs/wave-cloud.md, "The face"). Not a record entry -- nothing is earned
+// and nothing is saved -- so it stands outside the catalog. Due once each
+// time the yard falls behind, and due again only after it has caught up or
+// been answered, so a yard that stays behind is not told every beat.
+let cloudBehind = false;
+export function cloudNoticeDue(state) {
+  const due = state === 'behind' && !cloudBehind;
+  cloudBehind = state === 'behind';
+  return due;
+}

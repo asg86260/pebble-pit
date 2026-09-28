@@ -73,3 +73,32 @@ body.still .veil { transition: none; }   /* motion: less: see style.css */
 }
 .foot a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--ink-2); }
 .foot a:hover { color: var(--ink); border-color: var(--ink); }
+/* The cloud (cloudsheet.js; mock A1 of docs/mocks/cloud-footnote-2026-09-27.html):
+   a line in the foot bar beside the build, in the bar's own small print.
+   The square says the open yards are in the cloud; hollow, they are not.
+   A pairing code stands a size up so it can be read off from across a
+   room, and the box a code is typed into is the same size. */
+.foot .left { display: flex; gap: 14px; align-items: baseline; }
+.foot .cloud:empty { display: none; }
+.foot .cloud.row { display: inline-flex; align-items: center; gap: 6px; }
+.foot .cloud .tick { display: inline-block; width: 6px; height: 6px; background: var(--ink); margin-right: 5px; vertical-align: 1px; }
+.foot .cloud .tick.off { background: none; border: 1px solid var(--ink-2); box-sizing: border-box; }
+.foot .cloud .code { color: var(--ink); font-size: 14px; letter-spacing: .3em; }
+.foot .cloud input {
+  font: inherit; font-size: 13px; letter-spacing: .3em; width: 8.5em; text-transform: uppercase;
+  color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 1px 4px; outline: none;
+}
+.foot .cloud .go {
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit;
+  background: none; border: 0; border-bottom: 1px solid var(--ink-2); padding: 0; cursor: pointer;
+}
+.foot .cloud .go:hover { color: var(--ink); border-color: var(--ink); }
+/* and its block on the settings page, and the rows that ask which yard a
+   slot keeps: each side a full button, one over the other */
+.col .cloudsheet .small { font-size: 10px; color: var(--ink-2); letter-spacing: .1em; }
+.col .cloudsheet .code { font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
+.col .cloudsheet textarea { width: 100%; box-sizing: border-box; }
+.col .cloudsheet .again.armed { color: var(--paper); background: var(--ink); }
+.col .clash { flex-direction: column; gap: 4px; }
+.col .clash button { width: 21em; }
+.col .clashes { gap: 12px; }
