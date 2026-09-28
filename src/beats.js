@@ -26,7 +26,7 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startMeet, stepMeet, cutMeet, parted, stepPart, letGo,
          startRescue, stepRescue, cutRescue } from './intro.js';
 import { cameraCues, play, stepShot, release } from './cutscene.js';
-import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed } from './snatch.js';
+import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, serpentOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
 
@@ -96,12 +96,13 @@ export const BEATS = [
   // waits for the camera because the rock is still being set down as the
   // beat ends. The sheet stands until the player picks it up (ending.js);
   // putting it down is the skip, and the crew have their dance about it --
-  // unless the pit has drowned, when what comes next is the snatch.
+  // unless the pit has drowned and the half is on, when what comes next is
+  // the snatch.
   { key: 'ending', owns: 'sheet', next: null,
     when: () => S.rescued && !S.beat.yard && !S.beat.camera,
     enter: () => {},
     step: () => true,
-    skip: () => { if (S.rockhands > 0 && !S.drowned) S.danceUntil = now() + DANCE_MS; } },
+    skip: () => { if (S.rockhands > 0 && !(S.drowned && serpentOn())) S.danceUntil = now() + DANCE_MS; } },
 
   // --- the second half (snatch.js; docs/wave-serpent.md, "The story") -----
   // The serpent takes him: once the sqwife is out and the pit has drowned,

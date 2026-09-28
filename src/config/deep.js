@@ -5,6 +5,13 @@
 // first half's length once the whole half can be played.
 import { P } from './yard.js';
 
+// The switch for the whole half. Off, a released build's story ends where
+// 0.4.1's did: the rescue's sheet, the crew's dance, a drowned pit and no
+// snatch, so nothing below it is ever reached. A dev build and the node yard
+// play the half whatever this says (snatch.js, `serpentOn`), so work on it
+// goes on; `__serpent(false)` plays a released build's yard.
+export const SERPENT_ON = false;
+
 // --- where it is ---------------------------------------------------------------
 // The deep lies under the world, below the yard's bottom edge, so a body that
 // goes down the shaft has somewhere real to arrive and every position in it is

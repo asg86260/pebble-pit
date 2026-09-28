@@ -16,6 +16,10 @@ Open:
 
 Built as `docs/wave-serpent.md`; "The serpent" at the end of DESIGN.md.
 Open:
+- **Switched off in a release** (2026-09-28): `SERPENT_ON = false` in
+  src/config/deep.js; a dev build and the node yard still play it. Turning
+  it on is that line plus moving CHANGELOG.md's "Held back" lines under
+  Unreleased.
 - **The heals and depths are far too kind.** Measured with every door open:
   bare ladders and half the deep's caps free him in ~16 min, full ladders
   and full caps in 20 s. In play the doors gate each stage, so the length

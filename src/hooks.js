@@ -1123,6 +1123,7 @@ import { PAIRS, FIGHT_STATIONS_MAX } from './config.js';
 import * as party from './deep/party.js';
 import { settle } from './crew/commute.js';
 import { deepPost } from './crew/deep.js';
+import { forceSerpent } from './snatch.js';
 import { feet as deepFeet } from './deep/arms.js';
 
 // The pit drowned and the snatch played, so the shaft is open and the altar
@@ -1136,6 +1137,11 @@ function deepReady() {
     markDone('meet', 'part', 'rescue', 'ending', 'snatch');
   }
 }
+
+// The second half's switch, said for this yard: false plays a released
+// build's story with SERPENT_ON off, true a released build's with it on, and
+// null hands the question back to the build (snatch.js, `serpentOn`).
+HANDLES.__serpent = on => forceSerpent(on);
 
 // Both facts true -- torn and drowned, and the sqwife out with her sheet put
 // down, the reunion long behind her -- so the snatch is due: it plays from the next frame. A crew of two

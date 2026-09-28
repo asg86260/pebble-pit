@@ -28,7 +28,7 @@
 import { P, WORKER, COMMUTE_PACE, CORE_SIZE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_LOOK_MS, SNATCH_TAKE_MS, SNATCH_CLOSE_MS,
          SNATCH_HURRY, FREED_OPEN_MS, SNATCH_PORTAL_MS, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
-         DEEP_SURFACE } from './config.js';
+         DEEP_SURFACE, SERPENT_ON } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
 import { mouthX, bellyAt, deepTop } from './deep/place.js';
@@ -42,6 +42,15 @@ import { onYard } from './crew/body.js';
 import { TYPE, JOB_OF } from './jobs.js';
 import { beatDone } from './beats.js';
 
+// --- whether ---------------------------------------------------------------------
+// The half is played by a dev build and the node yard (which has no
+// `import.meta.env`), and by a released build only when the switch is on.
+// A check can say either way for itself.
+const DEV_BUILD = !import.meta.env || !!import.meta.env.DEV;
+let forced = null;
+export function serpentOn() { return forced ?? (SERPENT_ON || DEV_BUILD); }
+export function forceSerpent(on) { forced = on; }
+
 // --- when -------------------------------------------------------------------------
 // Both facts, the ending's sheet put down (the rescue's own beat and its
 // sheet come first when the rescue is the second fact, and the snatch takes
@@ -50,7 +59,7 @@ import { beatDone } from './beats.js';
 // Every function beats.js names is a declaration, not a const: beats.js reads
 // them at load and imports this file in a ring.
 export function snatchDue() {
-  return S.rescued && S.drowned && beatDone('ending') && !S.beat.camera;
+  return serpentOn() && S.rescued && S.drowned && beatDone('ending') && !S.beat.camera;
 }
 
 // Where each of the two stands at the edge: the one it takes nearest the

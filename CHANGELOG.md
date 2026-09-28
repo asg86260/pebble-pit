@@ -9,13 +9,13 @@ or why it happened -- that belongs in the commit. A release may open with a
 **New this release** list, a line a feature, no more; the reasoning behind a
 feature lives in DESIGN.md.
 
-## Unreleased
+## Held back: the second half
 
-**New this release**
-- The cloud's buttons and what they answer sit in their own titled cloud saves box, and its stop button says stop cloud saves (src/selftest/cloud.js).
-- On a phone the corner's gear is a pause button, and it opens the paused menu rather than the settings (src/selftest/touch.js).
-- Raindrops kick up a little crown where they land (`node tools/look.mjs rain`).
-- Cloud saves, if you want them: turn them on in settings and your three save slots are kept in the cloud and brought back on any device you link with a six-character code (test/cloud-sync.test.mjs).
+On main but switched off in a released build (`SERPENT_ON` in
+src/config/deep.js) until it is tuned. `npm run release` and the notes skip
+this section; the release that switches it on moves these under Unreleased.
+
+**New when it is on**
 - A station starts as a base unit (Fighter, Novice, Scout, Adept, Apprentice) that forks into one of its two classes at rung 4, and the build button lays an empty lot whose board picks what goes up (test/rails.test.mjs, src/selftest/deep.js).
 - Fighters sway a cell between attacks, and the melee ones hop as each step lands (`node tools/look.mjs party-four`).
 - The party: up to four stations built on the deep's floor, the first free and each after it for a fang the serpent drops at a break, each with a fighter of one of ten classes climbed on the station's rails, a move at rung 4 and a capstone at rung 8 (test/party.test.mjs, test/rails.test.mjs, test/classes.test.mjs).
@@ -27,22 +27,17 @@ feature lives in DESIGN.md.
 - The wizards' portal is a hole torn into the pit's wall, made of the abyss's own smoke and liquid, and its other end hangs in the deep: a click on it goes back up (src/selftest/deep.js).
 - A builder hammering in the deep stirs up silt that sinks back and settles on the floor (test/deep-works.test.mjs).
 - The pods have a board of their own that sells another pod, and the deep's stations stand further apart (test/pods.test.mjs, src/selftest/deep.js).
-- Roombas for the janitor's closet, up to three: they drive out to the poop and the rain's muck on the open yard and bring it home for the one janitor minding them to tip away, and they smoke (test/roomba.test.mjs).
 - The deep's crew no longer hangs still with nothing to do: a gatherer on a bare floor, a scribe whose circles are full and a wizard with nothing in reach stroll, float and hop about their station, and go straight to work from mid-air when called (test/deep-rest.test.mjs).
 - The fight is read in numbers: each blow's damage rises off the coil in a carved pixel face of its own, a lance's and a beam's bleed and a grenade's burst each say one sum, and the heal rises off the wound in purple as +N once a second (test/serpent-numbers.test.mjs).
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
-- A card pressed again queues another of the same -- the next rung, the next house -- paid on the press at its own price; a strip along the card's foot splits into a refund of the newest one still waiting and a button for another, the only presses on the card while it is up, and the card's pips dot every rung paid for and not yet landed; the queue card shows a run as one line with its count (test/queue-repeats.test.mjs, src/selftest/boards.js).
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
-- Save a copy, load a save and reset progress are on the saves page now, and loading a yard turns the sheet back to the front (src/selftest/settings.js).
 
-- On the landing page, copy a save and load a save are as wide as the buttons around them, and so are the volume slider and the achievements list (src/selftest/settings.js).
 - Two of the deep's stations of one kind, or two empty lots, no longer share a board's name (src/selftest/stations.js).
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - Scales tossed into the crusher drop into its funnel instead of sliding down in front of it (`node tools/look.mjs crusher`).
 - The call to build the bench no longer hangs over the deep (src/selftest/opening.js).
 - Lightning in the yard's storms no longer flashes over the deep (src/selftest/deep.js).
 - The deep no longer drops to about 35 frames a second in Firefox on the light page (Firefox at 2560x1440 on the `deep` scene, PERF.md "The deep in Firefox").
-- Firefox no longer drops the whole game, yard and deep alike, to about 20 frames a second after a reload in the deep with its crew at rest or a builder at work, and the endgame yard with the rift open draws in a fifth of the time it did there (Firefox at 2560x1440, reloaded into `deep-rest` then `yard`, PERF.md "Firefox after a reload").
 - Going between the yard and the deep through the portal no longer hitches: the ripple holds its frame rate in Firefox, and the first trip down no longer stalls (Firefox and Chrome at 2560x1440 on `portal`, PERF.md "The ripple in Firefox").
 - On a tall window the deep's water goes all the way up to the top of the screen, with no black band over it (src/selftest/deep.js).
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
@@ -55,6 +50,21 @@ feature lives in DESIGN.md.
 - A boulder landing in the yard no longer shakes the screen while you are in the deep (test/deep-view.test.mjs).
 - The deep's crew no longer shouts when a rock lands up in the yard (test/two-crews.test.mjs).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
+- The deep's build button is drawn as a button again, and fades in and out (`node tools/look.mjs party-button`).
+
+## Unreleased
+
+**New this release**
+- The cloud's buttons and what they answer sit in their own titled cloud saves box, and its stop button says stop cloud saves (src/selftest/cloud.js).
+- On a phone the corner's gear is a pause button, and it opens the paused menu rather than the settings (src/selftest/touch.js).
+- Raindrops kick up a little crown where they land (`node tools/look.mjs rain`).
+- Cloud saves, if you want them: turn them on in settings and your three save slots are kept in the cloud and brought back on any device you link with a six-character code (test/cloud-sync.test.mjs).
+- Roombas for the janitor's closet, up to three: they drive out to the poop and the rain's muck on the open yard and bring it home for the one janitor minding them to tip away, and they smoke (test/roomba.test.mjs).
+- A card pressed again queues another of the same -- the next rung, the next house -- paid on the press at its own price; a strip along the card's foot splits into a refund of the newest one still waiting and a button for another, the only presses on the card while it is up, and the card's pips dot every rung paid for and not yet landed; the queue card shows a run as one line with its count (test/queue-repeats.test.mjs, src/selftest/boards.js).
+- Save a copy, load a save and reset progress are on the saves page now, and loading a yard turns the sheet back to the front (src/selftest/settings.js).
+
+- On the landing page, copy a save and load a save are as wide as the buttons around them, and so are the volume slider and the achievements list (src/selftest/settings.js).
+- Firefox no longer drops the whole game, yard and deep alike, to about 20 frames a second after a reload in the deep with its crew at rest or a builder at work, and the endgame yard with the rift open draws in a fifth of the time it did there (Firefox at 2560x1440, reloaded into `deep-rest` then `yard`, PERF.md "Firefox after a reload").
 - Clouds no longer show below the ground line in a short window (play.html in a window 300px tall).
 - A rockhand who shoveled a mess on the far side of the pit walks back round the hole to the rock, instead of walking home across thin air (test/rockhand-home.test.mjs).
 - A worker you pick up no longer vanishes when carried down over the drowned pit or up past the deep's ceiling (src/selftest/crew.js).
