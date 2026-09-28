@@ -40,8 +40,8 @@
 <div class="wrap">
   <h1>Station Props</h1>
   <p>The domes go. Each fighter stands beside the thing its class trains with. A base unit has a plain crate, its gear
-    still packed; at the fork (rung 4) the crate becomes the class's prop, and at rung 8 the prop picks up a small
-    purple accent, as the kits do. Each tile plays the class's attack, then idles as the game does (a cell's sway, the
+    still packed; at the fork (rung 4) the crate becomes the class's prop, and at rung 8 whole parts of the prop turn
+    purple (round 2: more accent at the capstone). Each tile plays the class's attack, then idles as the game does (a cell's sway, the
     melee four hopping as each step lands).</p>
   <p class="dim">A mock built on the game's drawing code (the Kit Growth page's copy of the kits, attacks, idle, water
     and body), not the game itself. It cannot show: the coil where the game hangs it (this is the mock's short stretch),
@@ -1853,6 +1853,8 @@ const MAT = {
   A: [PURPLES[11], PURPLES[9]],               // the accent itself
 };
 const ACC = [PURPLES[11], PURPLES[10], PURPLES[11]];
+// a part in the capstone's purple: a step darker than the accent cell, so the '*' still reads as its brightest point
+const PART_ACC = [PURPLES[9], PURPLES[8], PURPLES[9]];
 const PROPS = {
   // a crate of the gear, still packed: boards, a frame, a brace and straw at the lid
   crate: { under: 'E', rows: [
@@ -1979,6 +1981,7 @@ function drawProp(g, k, right, floor, R, t) {
       if (R8(R)) { cell(g, x0 + c, floor - h + r, toneAt(ACC, c, r, seed)); continue; }
       ch = p.under;
     }
+    if (R8(R) && (R8_PARTS[k] || []).includes(ch)) { cell(g, x0 + c, floor - h + r, toneAt(PART_ACC, c, r, seed)); continue; }
     const m = MAT[ch];
     if (m) cell(g, x0 + c, floor - h + r, toneAt(m, c, r, seed));
   }
@@ -1990,6 +1993,12 @@ function drawProp(g, k, right, floor, R, t) {
     if (k2 < 1.2) cell(g, bx, top - 1 - Math.floor(k2 / 0.4), R8(R) ? PURPLES[9] : GREYS[5]);
   }
 }
+// At rung 8 whole parts of a prop take the capstone's purple, a material at a
+// time (the owner, 2026-09-28: more accent on the rung-8 props).
+const R8_PARTS = {
+  brawler: ['T', 'K'], sword: ['i', 'L'], monk: ['B'], martial: ['v'], ranger: ['r'],
+  assassin: ['r', 'M', 'I'], hexer: ['i'], sapper: ['I'], mage: ['k'], bard: ['k']
+};
 const PROP_OF = { brawler: 'brawler', sword: 'sword', monk: 'monk', martial: 'martial', ranger: 'ranger', assassin: 'assassin',
                   hexer: 'hexer', sapper: 'sapper', mage: 'mage', bard: 'bard' };
 
