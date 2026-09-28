@@ -51,6 +51,9 @@ const dip = (a, at, depth, lead = 0.15, back = 0.2) => {
 };
 // A melee fighter's swim: 0 where it stands, 1 under the coil.
 const trip = (a, up, back, len) => a < up ? ease(a / up) : a < back ? 1 : 1 - ease(clamp((a - back) / (len - back), 0, 1));
+// Where the body is drawn on its way up and back: the fight swims it itself
+// (`api.placed`), and then it is drawn where it is.
+const swum = (api, hover, k) => (api.placed ? api.restY : lerp(api.restY, hover, k));
 
 // --- the classic pass's drawings -----------------------------------------------
 const PAL_GREY = { lead: WHITE, body: GREYS[9], line: GREYS[10], ramp: [WHITE, GREYS[10], GREYS[9], GREYS[7], GREYS[5]] };
@@ -196,7 +199,7 @@ const brawler = {
   hits(R, x) { return this.punches(R).map(p => { const fx = p.side < 0 ? x - p.size : x + BODY; return { at: p.at, x: fx + (p.size - 1) / 2, k: p.k, kind: p.hay ? 'hay' : '' }; }); },
   draw(g, t, a, api, R, x) {
     const ps = this.punches(R), hover = maxBot([x - 2, x + 5]) + 5;
-    let y = lerp(api.restY, hover, trip(a, 0.4, 2.5, this.len)) + api.kick;
+    let y = swum(api, hover, trip(a, 0.4, 2.5, this.len)) + api.kick;
     const hay = ps.find(p => p.hay);
     // the haymaker's wind-up: the body sinks
     if (hay) y += dip(a, hay.at - 0.12, 2, 0.33, 0.1);
@@ -253,7 +256,7 @@ const swordsman = {
     const H = -0.7, B = -2.6, S = this.SPIN;
     K.push([S.sink, H, 'io'], [S.coiled, B, 'io'], [S.go, B, 'io'],
       [S.c1, 0, 'in', 0.35], [S.c2, T, 'lin', 0.5], [S.c3, 2 * T, 'lin', 1.3]);
-    if (!R8(R)) {
+    if (!(this.twice ?? R8(R))) {
       K.push([2.1, 2 * T + Math.PI, 'out'], [2.3, 2 * T + Math.PI, 'io'], [2.75, 3 * T + H, 'io']);
       return K;
     }
@@ -292,8 +295,8 @@ const swordsman = {
     // a cut pivots over his head; a spin about the body's middle, the blade clear of it
     const from = spin ? 2 : 1, reach = from + L + 1, tip = reach;
     const hover = maxBot([x - 1, x + 3]) + reach + (spin ? -1 : 0);
-    const k = trip(a, 0.4, 3.0, this.len), cs = this.contacts(R).map(c => c.at);
-    let y = lerp(api.restY, hover, k) + api.kick, bx = x;
+    const k = api.placed ? 1 : trip(a, 0.4, 3.0, this.len), cs = this.contacts(R).map(c => c.at);
+    let y = swum(api, hover, k) + api.kick, bx = x;
     const S = this.SPIN, last = cs[cs.length - 1];
     if (spin) {
       // the build-up: he sinks two cells and holds the coil, then rises into the spin
@@ -389,18 +392,18 @@ const monk = {
     let dy = 0;
     ps.forEach((p, i) => { dy += dip(a, p, i === n ? 1 : 0.5, 0.15, 0.25); });
     const y = api.restY - liftOf('monk', R) + Math.min(1, dy + api.kick);
-    const lit = ps.filter((p, i) => i < n && a >= p).length % (n + 1);
+    const lit = api.pips != null ? api.pips : ps.filter((p, i) => i < n && a >= p).length % (n + 1);
     body(x, y);
     api.at(x, y);
     // the chi count on the beads: one lit a chi, the fifth as she gathers the chi palm
-    const chiN = a >= ps[n] - 0.15 && a < ps[n] + 0.5 ? 5 : Math.min(4, R4(R) ? lit * 2 : lit);
+    const chiN = a >= ps[n] - 0.15 && a < ps[n] + 0.5 ? 5 : api.pips != null ? Math.min(5, lit) : Math.min(4, R4(R) ? lit * 2 : lit);
     // the chi palm's peak, held as a smear round the ring: the pose before its release
     const sp = this.spin(R, a), cp = ps[n];
     beads(g, x, y, R, t, i => i < chiN, chiN >= 5, { u: a, th: sp.th, tight: sp.tight, smear: a >= cp - POSE - 1e-9 && a < cp - 1e-9 });
     const spent = a >= ps[n] && a < ps[n] + 0.4;
-    pips(g, x, y, R4(R) ? lit * 2 : lit, 4, spent ? 1 : 0);
+    if (api.pips == null) pips(g, x, y, R4(R) ? lit * 2 : lit, 4, spent ? 1 : 0);
     // the palm's wave, rising off her to the hide, and its ring there
-    api.shot(() => ps.forEach((p, i) => {
+    if (!api.sim) api.shot(() => ps.forEach((p, i) => {
       const big = i === n, d = a - p, top = y - 2, hit = cBot(x + 1) + 1;
       if (d >= 0 && d < 0.5) {
         const k = (d / 0.5) ** 1.6, wy = lerp(top - 1, hit, k), half = (big ? 2 : 1) + Math.round(k * 2);
@@ -432,7 +435,7 @@ const martial = {
   draw(g, t, a, api, R, x) {
     const pl = this.plan(R), hover = maxBot([x - 2, x + 4]) + 6;
     // she sinks before the finisher
-    const y = lerp(api.restY, hover, trip(a, 0.35, 2.5, this.len)) + api.kick + dip(a, pl.fin - 0.15, 1.5, 0.2, 0.15);
+    const y = swum(api, hover, trip(a, 0.35, 2.5, this.len)) + api.kick + dip(a, pl.fin - 0.15, 1.5, 0.2, 0.15);
     const all = [...pl.thrusts, ...pl.after];
     const sweep = a >= pl.fin - 0.15 && a < pl.fin + 0.3;
     const on = all.find(p => a >= p - 0.08 && a < p + 0.12);
@@ -486,38 +489,40 @@ const martial = {
     let n = 0;
     for (const p of pl.thrusts) if (a >= p) n += pl.per;
     if (a >= pl.fin) { n = 0; for (const p of pl.after) if (a >= p) n += pl.per; }
-    pips(g, x, y, Math.min(5, n), 5, sweep ? 1 : 0);
+    if (api.pips == null) pips(g, x, y, Math.min(5, n), 5, sweep ? 1 : 0);
   },
 };
 
 // --- the Ranger ------------------------------------------------------------------
 const ranger = {
   len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
-  beats(R) { return R4(R) ? [...this.shots, this.aimed] : [0.8]; },
+  beats(R) { return this.only ? [...this.only.shots, ...(this.only.aimed ? [this.only.aimed] : [])] : R4(R) ? [...this.shots, this.aimed] : [0.8]; },
   hits(R, x) {
-    const lx = x + 1, hs = (R4(R) ? this.shots : [0.8]).map(v => ({ at: v + 0.25, x: lx, k: 0.2, purple: false }));
-    if (R4(R)) for (const dx of [-1, 1]) hs.push({ at: this.aimed + 0.1, x: lx + dx, k: 0.8 });
+    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [0.8], aimed = this.only ? this.only.aimed : R4(R) ? this.aimed : null;
+    const lx = x + 1, hs = shots.map(v => ({ at: v + 0.25, x: lx, k: 0.2, purple: false }));
+    if (aimed) for (const dx of [-1, 1]) hs.push({ at: aimed + 0.1, x: lx + dx, k: 0.8 });
     return hs;
   },
   draw(g, t, a, api, R, x) {
     // rung 0 shoots once; from rung 4 a run of arrows, then the aimed shot, two at once
-    const y = api.restY, aimed = R4(R) ? this.aimed : null;
-    const shots = R4(R) ? this.shots : [0.8];
+    const y = api.restY, aimed = this.only ? this.only.aimed : R4(R) ? this.aimed : null;
+    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [0.8];
     const last = aimed || shots[shots.length - 1], up = 0.15, down = last + 0.35;
-    const pulling = shots.some(v => a >= v - 0.18 && a < v) || (aimed && a >= 1.9 && a < aimed);
+    const pulling = shots.some(v => a >= v - 0.18 && a < v) || (aimed && a >= aimed - 0.55 && a < aimed);
     const pose = a < up || a >= down + 0.24 ? 'rest' : a < up + 0.12 || a >= down + 0.12 ? 'lift'
                : a < up + 0.24 || a >= down ? 'over' : pulling ? 'drawn' : 'braced';
     body(x, y);
     api.at(x, y);
-    drawBow(g, pose, x, y, R, aimed && a >= 1.9 && a < aimed);
+    drawBow(g, pose, x, y, R, aimed && a >= aimed - 0.55 && a < aimed);
     const lx = x + 1, ly = y - 6, ty = cBot(lx) + 1;
     api.shot(() => {
       // the aim: a dotted line up to the hide and a ring closing on the spot
-      if (aimed && a >= 1.95 && a < aimed) {
-        const tone = a > 2.25 ? GREYS[9] : GREYS[6];
+      if (aimed && a >= aimed - 0.5 && a < aimed) {
+        const tone = a > aimed - 0.2 ? GREYS[9] : GREYS[6];
         for (let cy = ly - 1; cy > ty; cy -= 2) cell(g, lx, cy, tone);
-        ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - 1.95) * 5)), tone, 2);
+        ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - aimed + 0.5) * 5)), tone, 2);
       }
+      if (api.sim) return;
       const arrows = shots.map(v => ({ at: v, fly: 0.25, ax: lx }));
       if (aimed) for (const dx of [-1, 1]) arrows.push({ at: aimed, fly: 0.1, aimed: true, ax: lx + dx });
       for (const ar of arrows) {
@@ -548,10 +553,10 @@ const ranger = {
 const assassin = {
   len: 3.0, stabs: [0.6, 1.1, 1.6, 2.1], out: 0.2, back: 0.3, kickMax: 1.5,
   stabK(R, i) { return R8(R) && i === 3 ? 1 : R4(R) ? 0.25 + i * 0.12 : 0.3; },
-  hits(R, x) { const bs = blades(x, R); return this.stabs.map((p, i) => ({ at: p, x: bs[i % bs.length], k: this.stabK(R, i) })); },
+  hits(R, x) { const bs = blades(x, R); return this.stabs.map((p, i) => ({ at: p, x: bs[(this.bladeI ?? i) % bs.length], k: this.stabK(R, this.bladeI != null ? 0 : i) })); },
   draw(g, t, a, api, R, x) {
     const bs = blades(x, R), hover = maxBot([x - 2, x + 4]) + 9;
-    let y = lerp(api.restY, hover, trip(a, 0.35, 2.45, this.len)) + api.kick;
+    let y = swum(api, hover, trip(a, 0.35, 2.45, this.len)) + api.kick;
     if (this.stabs.some(p => a >= p - 0.05 && a < p + 0.1)) y -= 1;
     body(x, y);
     api.at(x, y);
@@ -559,14 +564,16 @@ const assassin = {
     // the window opens a beat early for the dagger's pull back
     const flying = new Map();
     this.stabs.forEach((p, i) => {
-      const bx = bs[i % bs.length], d = a - p + this.out;
+      const bx = bs[(this.bladeI ?? i) % bs.length], d = a - p + this.out;
       if (d >= -0.12 && d < this.out + this.back) flying.set(bx, d);
       const e = a - p;
       if (R8(R) && i === 3 && e >= 0 && e < 0.3) ring(g, bx, cY(bx), Math.round(6 - e * 16), PURPLES[e < 0.15 ? 11 : 8]);
     });
     for (const bx of bs) {
       const home = y, d = flying.get(bx);
-      if (d == null) { dagger(g, bx, home, R); continue; }
+      // with the sim's own dagger in the water, the one in flight is its (render/arms.js)
+      if (api.sim && api.away && api.away(bx === bs[0] ? 0 : 1)) continue;
+      if (d == null || api.sim) { dagger(g, bx, home, R); continue; }
       // out fast, point first, to where its tip meets the belly; back slower:
       // pulled back a cell, then out accelerating, a little into the hide, eased home
       const top = cBot(bx) + 4, u = d - this.out;
@@ -600,9 +607,10 @@ const sapper = {
     const away = i => a >= this.throwAt + i * 0.15 && a < (R4(R) ? this.blowAt : this.throwAt + this.fly) + 0.5;
     body(x, y);
     api.at(x, y);
-    bundle(g, x, y, R, t, R8(R) ? { l: away(0), r: away(1) } : { r: away(0) });
+    const gone = api.sim && api.away ? i => api.away(i) : away;
+    bundle(g, x, y, R, t, R8(R) ? { l: gone(0), r: gone(1) } : { r: gone(0) });
     const floor = deepFloor() / P;
-    api.shot(() => ts.forEach((tx, i) => {
+    if (!api.sim) api.shot(() => ts.forEach((tx, i) => {
       const t0 = this.throwAt + i * 0.15, d = a - t0, land = t0 + this.fly;
       const hitY = cBot(tx) + 1;
       // at rung 8 the first charge leaves the left hand, the second the right
@@ -657,7 +665,7 @@ const hexer = {
     if (R4(R)) glyph(g, gx, gy, R, a);
     const from = R4(R) ? gy + 2 : y - 2;
     if (a >= this.land(R) + 0.5) motes(g, tx, R4(R) ? gy : y, t);
-    api.shot(() => {
+    if (!api.sim) api.shot(() => {
       const n = big ? 9 : 5;
       for (let m = 0; m < n; m++) {
         const s0 = start + m * 0.5 / n;
@@ -748,7 +756,7 @@ const mage = {
     body(bx, Math.round(y));
     api.at(bx, Math.round(y));
     mStaff(g, bx, Math.round(y - staffUp * 2), R, t, up, glow, true, spent);
-    const oy = Math.round(y - staffUp * 2) - 4, tx = x - 5, hy = cBot(tx);
+    const oy = Math.round(y - staffUp * 2) - 4, tx = api.aim ? Math.round(api.aim.x) : x - 5, hy = cBot(tx);
     // relit: a single flash back into the stone as the beat ends
     if (u >= B.spent && u < B.spent + 0.08) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) cell(g, bx - 1 + dx, oy + (up ? 0 : 1) + dy, PURPLES[10]);
     // the gather: a ring of the abyss closing on the stone
@@ -758,7 +766,7 @@ const mage = {
     if (surge) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) cell(g, sx + dx, oy + dy, WHITE);
     api.shot(() => {
       // the beam, held; in the surge a cell wider and a step brighter
-      const r = this.ramp(R, a), w0 = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1, w = w0 + (surge ? 1 : 0);
+      const r = api.width != null ? api.width : this.ramp(R, a), w0 = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1, w = w0 + (surge ? 1 : 0);
       if (a >= B.start && a < end) beam(g, sx, oy - 0.5, tx, hy, w, t, 0, R8(R), surge);
       // the pulse: the beam cut behind a bright bead shooting from stone to
       // hide; what is left ahead of it dims, and at rung 8 its white core
@@ -820,9 +828,73 @@ const bard = {
 };
 
 export const ATTACKS = { brawler, sword: swordsman, monk, martial, ranger, assassin, sapper, hexer, mage, bard };
+
+// --- one move at a time --------------------------------------------------------------
+// The fight strikes one move at a time (deep/classes.js, `w.pose`), where the
+// page plays a turn of several. A segment is one move's stretch of the
+// page: the class's own table cut to that move alone (`c`, the page's class
+// with its table swapped), and on the page's raw clock where its wind-up
+// starts (`from`, from a standing start; `mid`, from the fight's own stance
+// straight after another), where it strikes (`hit`: the contact, or the
+// release for what leaves the hand) and where its follow-through is back in
+// the fight's stance (`to`), or all the way to rest (`off`). The fight's
+// clock is bent onto it (render/arms.js).
+const H = 1.0;   // where a cut-down move's contact is put on the page's clock
+const only = (c, o) => Object.assign(Object.create(c), o);
+// A moment on the page's posed clock, on its raw one: every hold before it added in.
+const realOf = (c, R, at) => at + groupsOf(c, R, 0).filter(o => o.at < at - 1e-6).reduce((n, o) => n + o.pause, 0);
+export const SEGMENTS = {
+  brawler(move, R, o) {
+    const hay = move === 'haymaker', size = bSize(R) + (hay ? 1 : 0);
+    const c = only(brawler, { punches: () => [{ at: H, side: hay ? 1 : o.side, k: hay ? 0.75 : 0.3, size, hay }] });
+    return { c, from: H - (hay ? 0.45 : 0.34), hit: H, to: H + (hay ? (R8(R) ? 0.85 : 0.5) : 0.42) };
+  },
+  sword(move, R, o) {
+    if (move === 'cut') {
+      const c = only(swordsman, { track: () => [[H - 0.26, -1.2, 'io'], [H - 0.08, -2.5, 'io'], [H, 0, 'in', 0.45], [H + 0.12, 1.9, 'out'], [H + 0.34, -1.2, 'io']] });
+      return { c, from: H - 0.26, hit: H, to: H + 0.34 };
+    }
+    // the Whirlwind lands on its last turn, the biggest; the double on the spin back
+    const c = only(swordsman, { twice: !!o.twice }), cs = c.contacts(R), last = cs[o.twice ? cs.length - 2 : cs.length - 1];
+    return { c, from: swordsman.SPIN.sink, hit: realOf(c, R, last.at), to: realOf(c, R, o.twice ? 3.25 : 2.75) + 0.001 };
+  },
+  monk(move, R) {
+    const big = move === 'chi';
+    const c = only(monk, { palms: () => [H], chi: () => (big ? 0 : 1) });
+    return { c, from: H - (big ? 0.5 : 0.3), hit: H, to: H + 0.5 };
+  },
+  martial(move, R) {
+    const fin = move === 'finisher';
+    const c = only(martial, { plan: () => ({ thrusts: fin ? [] : [H], fin: fin ? H : 99, after: [], per: 1 }) });
+    return { c, from: H - (fin ? 0.35 : 0.2), hit: H, to: H + (fin ? 0.3 : 0.25) };
+  },
+  ranger(move, R) {
+    const aimed = move === 'aimed';
+    const c = only(ranger, { only: aimed ? { shots: [], aimed: H } : { shots: [H], aimed: null } });
+    return { c, from: aimed ? H - 0.55 : 0, mid: H - 0.55, hit: H, to: H + 0.34, off: H + 0.6 };
+  },
+  assassin(move, R, o) {
+    const c = only(assassin, { stabs: [H], bladeI: o.side > 0 ? 1 : 0 });
+    return { c, from: H - assassin.out - 0.12, hit: H - assassin.out, to: H + assassin.back };
+  },
+  sapper() { return { c: sapper, from: sapper.throwAt - 0.2, hit: sapper.throwAt, to: sapper.throwAt + 0.38 }; },
+  hexer(move, R) {
+    const T = glyphTimes(R), out = R4(R) ? T.out : 0.3;
+    return { c: hexer, from: R4(R) ? T.t0 : out - 0.25, hit: out, to: out + 0.9 };
+  },
+  mage(move, R) {
+    const B = mage.BEAM;
+    // the beam: gathered, flared, then held for as long as the sim holds it
+    if (move === 'beam') return { c: mage, from: B.lift, hit: B.start, to: mage.end(R) - B.surge, held: true };
+    return { c: mage, from: mage.end(R) - B.surge, hit: realOf(mage, R, mage.fin(R)), to: realOf(mage, R, mage.fin(R)) + B.spent + 0.1 };
+  },
+  bard() { return { c: bard, from: 0, hit: 0, to: bard.len, loop: true }; },
+};
 // How long a class's turn loops for, rest included, on the page.
 export const loopOf = c => c.loop || Math.max(c.len + 1.6, 4.6);
-export { REST, liftOf };
+export { REST, liftOf, MOTE_TONES };
+// The classic pass's pieces, for the shots the fight flies (render/arms.js).
+export { star as starAt, speed as speedLines, boldStreak as streakAt };
 
 // The contacts of a class's turn on its raw clock, the hit-pauses before
 // each summed in: when its blows land, for the sim to strike on (FIGHT).

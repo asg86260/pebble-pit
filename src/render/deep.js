@@ -42,8 +42,7 @@ import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
 import * as CFG from '../config.js';
-import { DEEP_W, DEEP_SLOTS_DRAWN, SCAFFOLD_BANDS, FANG_SPRITE } from '../config.js';
-import { drawFang } from './scales.js';
+import { DEEP_W, DEEP_SLOTS_DRAWN, SCAFFOLD_BANDS } from '../config.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
 
 const isFighter = w => w.type === 'fighter';   // TYPE.FIGHTER, until merge
@@ -482,15 +481,13 @@ export function drawSwimmers() {
     if (isFighter(w) && (S.stations || []).some(st => st.built && st.id === w.station)) continue;
     const x = Math.round(w.x), y = Math.round(w.y);
     drawBody(x, y);
-    // A gatherer's handful, overhead two abreast, each scale as it is; a
-    // fang carried rides on top of it, over the head.
-    const n = Math.min(w.carry || 0, 24);
-    for (let i = 0; i < n; i++) {
+    // A gatherer's handful, overhead two abreast, each scale as it is. A
+    // fang in its arms is the fang's own to draw, over its head
+    // (render/scales.js).
+    for (let i = 0; i < Math.min(w.carry || 0, 24); i++) {
       drawMark(w.load?.[i] || 1, x + (WORKER - P * 2) / 2 + (i % 2) * P + P / 2,
                y - P * (Math.floor(i / 2) + 1) + P / 2);
     }
-    // until merge: CREW names the carried fang; `w.fang` is this file's guess
-    if (w.fang) drawFang(x + (WORKER - FANG_SPRITE[0].length * P) / 2, y - P * (Math.ceil(n / 2) + FANG_SPRITE.length));
   }
   ctx.restore();
   ctx.fillStyle = '#000';

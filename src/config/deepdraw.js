@@ -255,6 +255,18 @@ export const DRAW_KEY_EX = 1.7;      // how far the classic pass pushes a key po
 export const DRAW_HOLDS = 2;         // poses a contact holds the fighter (the hit-pause)
 export const DRAW_HAY_HOLDS = 3;     // and the Haymaker's: the fist held a pose alone, then the star (the owner's C)
 export const DRAW_NEAR_BEAT = 0.32;  // s either side of a beat the clock steps in poses; smooth further off
+// A move straight after another begins from the fight's stance when the two
+// contacts are closer than DRAW_ROOM_S; further apart, from a standing start.
+// A fighter with no move due for DRAW_LOWER_S lowers what it holds up (the
+// Ranger's bow). A shot's landing -- its ring, its blast, the stuck arrow --
+// is drawn for LAND_FX_S at the most.
+export const DRAW_ROOM_S = 3;
+export const DRAW_LOWER_S = 2;
+export const LAND_FX_S = 1.3;
+// until merge: each class's wind-up (track FIGHT's config/classes.js), for
+// the move coming next.
+export const WINDUP_GUESS = { brawler: 0.18, sword: 0.14, monk: 0.15, martial: 0.08, ranger: 0.2,
+                              assassin: 0.12, hexer: 0.3, sapper: 0.4, mage: 0.25, bard: 0 };
 // The recoil after a heavy contact, in cells: [the contact's size from, cells].
 export const DRAW_KICK = [[1.2, 2], [0.7, 1.5], [0.45, 0.75]];
 // The still cells of a kit are one sprite a class and a rung, painted in a

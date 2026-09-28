@@ -46,23 +46,27 @@ function drawFlutter(list, behind) {
 
 // The fang (docs/wave-party.md): a white fang of a few cells, point down,
 // dropped at a phase's break. It sinks and lies on the floor like a scale
-// (`S.fangsLoose`, kept by the scales' saver) and is carried like one
-// (render/deep.js, `drawSwimmers`). Heavier than a scale, it does not
-// flutter: it goes down point first, whole, a rigid few cells at whole
-// pixels. (x, y) is its top-left.
+// and is carried like one, in a gatherer's arms over its head
+// (`S.fangsLoose`, deep/party.js: (x, y) its foot's middle). Heavier than a
+// scale, it does not flutter: it goes down whole, a rigid few cells at
+// whole pixels, and lying still it is on the cell grid.
 const FANG_TONE = { '#': GREYS[GREYS.length - 1], '+': GREYS[GREYS.length - 3] };
-export function drawFang(x, y) {
+const FANG_W = FANG_SPRITE[0].length * P, FANG_H = FANG_SPRITE.length * P;
+export function drawFang(f) {
+  let x = f.x - FANG_W / 2, y = f.y - FANG_H;
+  x = f.rest ? Math.round(x / P) * P : Math.round(x);
+  y = f.rest ? Math.round(y / P) * P : Math.round(y);
   FANG_SPRITE.forEach((row, r) => [...row].forEach((ch, c) => {
     if (!FANG_TONE[ch]) return;
     ctx.fillStyle = FANG_TONE[ch];
-    ctx.fillRect(Math.round(x) + c * P, Math.round(y) + r * P, P, P);
+    ctx.fillRect(x + c * P, y + r * P, P, P);
   }));
   ctx.fillStyle = '#000';
 }
 
 export const drawSinking = () => {
   drawFlutter(S.sinking, false);
-  for (const f of S.fangsLoose || []) drawFang(f.x, f.y);
+  for (const f of S.fangsLoose || []) drawFang(f);
 };
 export const drawLifting = () => drawFlutter(S.lifting, false);
 export const drawIntoCrusher = () => { drawFlutter(S.sinking, true); drawFlutter(S.lifting, true); };
