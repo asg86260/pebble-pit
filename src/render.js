@@ -257,7 +257,9 @@ const LAYERS = [
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
   { name: 'serpent bar', draw: drawSerpentBar, when: barShown },  // and in the deep, what the defense up has left
 
-  { name: 'flash', draw: drawFlash },            // a strike's instant: the whole finished frame, inverted
+  // A strike's instant, a dark pane over the finished frame. In screen pixels
+  // it would be shared with the deep, which is under water and has no sky.
+  { name: 'flash', draw: drawFlash, when: () => S.view !== 'deep' },
 
   { name: 'press', draw: pressFrame },           // and then the filter, over the finished frame
 ];

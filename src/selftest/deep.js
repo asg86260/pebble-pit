@@ -146,6 +146,32 @@ export const TESTS = [
     for (const w of up) w.say = null;
     return out;
   }],
+  // A strike is the yard's sky: its flash is a pane over the whole window, so
+  // it would dim the deep too. The same frame with the bolt and without it
+  // is the same picture in the deep and (the control) not in the yard.
+  ['deep: a strike\'s flash in the yard does not reach the deep', async () => {
+    deepYard();
+    window.__strike(9, 9);
+    const bolt = S.bolt;
+    const c = document.getElementById('c');
+    const frame = (view, lit) => {
+      const keep = S.view;
+      S.view = view;
+      S.bolt = lit ? bolt : null;
+      draw();
+      S.view = keep;
+      return c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    };
+    const differ = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++; return n; };
+    const deep = differ(frame('deep', true), frame('deep', false));
+    const yard = differ(frame('yard', true), frame('yard', false));
+    S.bolt = null;
+    return [
+      ok(!!bolt, 'a bolt was struck'),
+      ok(deep === 0, 'the deep is the same picture with the strike as without', `${deep} pixels`),
+      ok(yard > 0, 'and the yard is not', `${yard} pixels`)
+    ];
+  }],
   // The deep has no top on screen: a window taller than the deep looks up
   // past its ceiling, and the water goes on up there, stars and veil, rather
   // than a flat black band over it. The checks' window is short, so the
