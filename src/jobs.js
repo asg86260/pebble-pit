@@ -18,12 +18,9 @@ export const TYPE = Object.freeze({
   JANITOR: 'janitor',
   WIZARD:  'wizard',
   BUILD:   'builder',
-  // The deep's (docs/wave-serpent.md): the yard's crew, gone down the shaft.
-  BRAWL:   'brawler',
-  LANCE:   'lancer',
-  GRENADE: 'grenadier',
-  SCRIBE:  'scribe',
-  WARLOCK: 'warlock',
+  // The deep's (docs/wave-party.md): a fighter at a station the player built,
+  // and the hands that gather its floor.
+  FIGHTER: 'fighter',
   GATHER:  'gatherer',
   // The deep's own builders: its spare hands putting up its works, never the
   // yard's (DESIGN.md, "Two crews and a portal").
@@ -43,31 +40,31 @@ export const JOB = Object.freeze({
   JANITOR: 'janitors',
   WIZARD:  'wizards',
   BUILD:   'builders',
-  BRAWL:   'brawlers',
-  LANCE:   'lancers',
-  GRENADE: 'grenadiers',
-  SCRIBE:  'scribes',
-  WARLOCK: 'warlocks',
+  FIGHT:   'fighters',
   GATHER:  'gatherers',
   DELVE:   'delvers'
 });
 
 // The deep's jobs, apart: a body down the shaft is out of reach of anything in
-// the yard that walks out to the crew (a tonic, a notice for every post).
-export const DEEP_JOBS = Object.freeze([JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK]);
+// the yard that walks out to the crew (a tonic, a notice for every post). One
+// job: which station a fighter stands at, and what it does there, is the
+// station's (deep/party.js), not the job's.
+export const DEEP_JOBS = Object.freeze([JOB.FIGHT]);
 // The gatherers are not put on: they are haulers lent to the deep while scales
 // lie on its floor (`rebalance` in staffing.js), the way builders are lent to
 // a build. Down there all the same, so a deep type below.
 export const YARD_JOBS = Object.freeze(Object.values(JOB).filter(j => !DEEP_JOBS.includes(j) && j !== JOB.GATHER && j !== JOB.DELVE));
 
 // Built from the two tables rather than written a third time, so a job added
-// above cannot be forgotten here.
+// above cannot be forgotten here. Keyed alike but for the fighter, whose
+// body is a noun and whose job a verb.
+const JOB_KEY = k => (k === 'FIGHTER' ? 'FIGHT' : k);
 export const JOB_OF = Object.freeze(Object.fromEntries(
-  Object.keys(TYPE).map(k => [TYPE[k], JOB[k]])));
+  Object.keys(TYPE).map(k => [TYPE[k], JOB[JOB_KEY(k)]])));
 
 // And back: what to put a body on so that it is doing a given job.
 export const TYPE_OF = Object.freeze(Object.fromEntries(
-  Object.keys(TYPE).map(k => [JOB[k], TYPE[k]])));
+  Object.keys(TYPE).map(k => [JOB[JOB_KEY(k)], TYPE[k]])));
 
 // The deep's jobs as what a body IS, for the questions asked of a body rather
 // than of a count: which half of the works it belongs in.
@@ -79,5 +76,5 @@ export const isDeepType = type => DEEP_TYPES.includes(type);
 // them.
 const SAID = Object.freeze({ [JOB.ROCK]: 'diggers', [JOB.QUARRY]: 'miners', [JOB.FARM]: 'farmers',
                              [JOB.PURIFY]: 'air purifiers', [JOB.STIR]: 'apothecary',
-                             [JOB.WARLOCK]: 'abyssal wizards', [JOB.DELVE]: 'deep builders' });
+                             [JOB.DELVE]: 'deep builders' });
 export const jobSaid = job => SAID[job] || job || '';

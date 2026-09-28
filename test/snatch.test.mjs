@@ -61,7 +61,7 @@ group('drowned first: the rescue\'s sheet put down, and the serpent takes him, o
     if (S.snatch && S.snatch.carried) carried = true;
   }
   const after = S.crew;
-  const brawlers = S.workers.filter(w => w.type === 'brawler');
+  const hers = S.workers.filter(w => w.deepHome);
   // And never again: not on the next frames, not after a reload.
   window.__reload();
   run(3);
@@ -73,8 +73,9 @@ group('drowned first: the rescue\'s sheet put down, and the serpent takes him, o
     ok(crewDuring === before - 2, 'the two are off the crew while it plays', `${before} -> ${crewDuring}`),
     ok(sawHead && carried, 'something comes up out of the surface and takes one of them'),
     ok(S.snatched && after === before - 1, 'the crew is one fewer', `${before} -> ${after}`),
-    ok(brawlers.length === 1 && S.brawlers === 1, 'and the one left standing is the deep\'s first brawler',
-       `${brawlers.length} bodies, ${S.brawlers} on the books`),
+    ok(hers.length === 1 && hers[0].type === 'gatherer' && S.deepCrew === 1 && S.fighters === 0,
+       "and the one left standing is the deep's one hand, spare until its first station stands",
+       `${hers.length} bodies, ${hers[0]?.type}, ${S.fighters} fighting`),
     ok(done('snatch') === 1 && S.crew === after && S.beat.yard === null,
        'it plays once, and not again after a reload', `done ${done('snatch')}, crew ${S.crew}`)
   ];
@@ -128,8 +129,8 @@ group('a reload mid-snatch plays it again from the start, or past the take from 
     ok(closing.snatched && closing.crew === crew0 - 1,
        'read back past the take, he is gone and she is a hand', JSON.stringify(closing)),
     ok(resumed === 'close', 'and it finishes from the surface closing', `phase ${resumed}`),
-    ok(S.crew === crew0 - 1 && S.brawlers === 1 && done('snatch') === 1,
-       'the crew is one fewer once, however it was read', `crew ${crew0} -> ${S.crew}, brawlers ${S.brawlers}`)
+    ok(S.crew === crew0 - 1 && S.deepCrew === 1 && done('snatch') === 1,
+       'the crew is one fewer once, however it was read', `crew ${crew0} -> ${S.crew}, deep ${S.deepCrew}`)
   ];
 });
 
@@ -158,7 +159,7 @@ group('the portal opens, she leaps in as it closes, and she is the deep\'s one h
       if (b && b.under) under = true;
     }
   }
-  const name = S.workers.find(w => w.type === 'brawler')?.name;
+  const name = S.workers.find(w => w.deepHome)?.name;
   runUntil(() => name && !S.workers.find(o => o.name === name)?.falling, 30);
   const her = S.workers.find(o => o.name === name);
   const down = S.workers.filter(w => belowYard(w));
