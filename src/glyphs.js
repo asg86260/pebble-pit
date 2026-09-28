@@ -123,13 +123,10 @@ export const GLYPH_OF = {
   // the casino
   chip: ['chip', 'plus'], stakedust: ['chip', 'dust'], stakeshard: ['chip', 'ore'], stakespore: ['chip', 'crop'],
   letgo: ['lever'], bank: ['sack', 'dust'], ride: ['die'],
-  // the deep (docs/wave-serpent.md): borrowed drawings, standing in until the
-  // deep's own are drawn in the glyph editor
-  punch: ['swing'], brawl: ['swing', 'up'],
-  unlockwell: ['bucket'], unlockfont: ['bowl'], unlockcircle: ['wand'], unlockspire: ['tower'],
-  lance: ['bolt'], lancehold: ['bolt', 'plus'], grenade: ['chip'], grenadepace: ['chip', 'up'],
-  sigil: ['wand', 'plus'], beam: ['wand'], curse: ['cracked'],
-  callstar: ['star'], tunestar: ['star', 'plus'], pod: ['house'],
+  // the deep: the pods' one row. A station of the party sells its ladders on
+  // its rails, not as cards, and wears its kind's drawing (`KINDS` in
+  // stations.js)
+  pod: ['house'],
 };
 
 // A row's drawing: its own, else the drawing of the station that sells it

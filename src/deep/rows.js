@@ -1,74 +1,22 @@
-// What the deep's boards sell: the weapons' ladders, the doors, and the star.
+// What the deep's boards sell: the pods, and a ladder a class for each
+// station of the party (docs/wave-party.md).
 //
-// Six boards, one a station on the deep's floor, each the shape of a yard
-// station's: a roster heading for the bodies posted there, then what the
-// place sells. The pods have no post, so no heading. Every ladder goes through `tierRows` and leads with scales
-// (`lead: 'scale'`): scales alone, then scales and the yard's coins, a spark
-// at the top (DESIGN.md, "What the scale buys"). What a rung is worth and
-// what it costs is LADDERS in config/rungs.js; this file only says where each
-// ladder hangs.
-//
-// A rung is built at its station by the yard's builders, who go down the
-// shaft to it (`DOWN_THERE` in works.js): the site of every row here is the
-// station's key, or `deep` for a door, which goes up where its station will
-// stand.
+// The pods' board is a board like a yard station's: another pod, sold on it
+// and built there by the deep's builders. A station's board is the station's
+// fighter heading and its rails (deep/rails.js): the two classes the kind
+// offers, each one ladder of eight, climbed with scales and then the yard's
+// coins (`lead: 'scale'`). What a rung is worth and what it costs is LADDERS
+// in config/rungs.js, by the class's key; this file says how a ladder hangs
+// off a station. A station is keyed by its id, never its kind: a kind can
+// stand twice, and each keeps its own ladder.
 
 import { S } from '../state.js';
-import { rungValue, DOOR_BILLS, STAR_SPARKS, STAR_TUNE_SPARKS, STAR_EVERY_S, POD_SCALES0, POD_RATE } from '../config.js';
+import { rungValue, POD_SCALES0, POD_RATE, PARTY_IDS, CLASSES } from '../config.js';
 import { tierRows, named } from '../upgrades/tiers.js';
-import { staffDoor, hirePod } from '../staffing.js';
-import { open, offered } from '../stations.js';
+import { hirePod } from '../staffing.js';
 import { registerRows, ahead } from '../works.js';
-import { JOB, jobSaid } from '../jobs.js';
-import { spotX, standOf } from './place.js';
 import { registerBoard } from '../boardrows.js';
-
-// One weapon's ladder, on the board of the station that throws it. The level
-// field is the ladder's key and `Level` (state.js), and the rung's value is
-// read off the written table by the same key.
-const ladder = (key, name, station, o) => tierRows({
-  field: key + 'Level',
-  lead: 'scale',
-  value: lvl => rungValue(key, lvl),
-  site: station, board: station,
-  show: () => open(station),
-  bands: named(key, name),
-  ...o
-});
-
-// --- the altar: the fists, and every door ------------------------------------
-const PUNCH = ladder('punch', 'punch strength', 'altar', { unit: 'dmg', does: 'punch' });
-const BRAWL = ladder('brawl', 'punch pace', 'altar', { unit: '/s', pct: true, does: 'punch' });
-
-// A door, cut from the shape `site()` gives a yard door (upgrades/site.js),
-// with what differs in the deep: the bill is the doors table (DOOR_BILLS),
-// it is sold on the altar and goes up where its station will stand (`at`,
-// `box`), and the view does not glide to it, since the place it opens is on
-// the same floor as the board that sold it.
-const door = ({ key, name, blurb, note, job }) => ({
-  key: 'unlock' + key, name, blurb, note,
-  kind: 'building', site: 'deep', board: 'altar',
-  at: () => spotX(key), box: () => standOf(key),
-  bill: () => DOOR_BILLS[key],
-  buy: () => { S[key + 'Open'] = true; staffDoor(job); },
-  // The gate is the station's row (`after` and `needs` in stations.js).
-  show: () => offered(key)
-});
-
-const DOORS = [
-  door({ key: 'well', name: 'draw the well', job: JOB.LANCE,
-         blurb: 'lances that pierce wards',
-         note: () => 'a well of black water: lances drawn from it stick in the coil and bleed it' }),
-  door({ key: 'font', name: 'open the armory', job: JOB.GRENADE,
-         blurb: 'grenades that burst in rings',
-         note: () => 'the surface\'s ripples held in a ball: a burst hits every length it crosses' }),
-  door({ key: 'circle', name: 'mark the circle', job: JOB.SCRIBE,
-         blurb: 'sigils that hold the heal',
-         note: () => 'scribes draw circles under the coil, and every circle held cuts its heal' }),
-  door({ key: 'spire', name: 'raise the spire', job: JOB.WARLOCK,
-         blurb: 'wizards that light the coil',
-         note: () => 'a hand takes the robe and channels a beam that strikes the coil and lights it' })
-];
+import { stationById } from './party.js';
 
 // A pod: one more of the crew, living down here (DESIGN.md, "One crew, two
 // homes"). Sold on the pods' own board, as the yard's rooms are on the
@@ -85,85 +33,55 @@ const POD = {
   show: () => S.snatched
 };
 
-// --- the well, the armory, the circle -----------------------------------------
-const LANCE = ladder('lance', 'lance bleed', 'well', { unit: 'dmg/s', does: 'bleed' });
-const LANCEHOLD = ladder('lancehold', 'lance hold', 'well', { unit: 's', does: 'hold' });
-const GRENADE = ladder('grenade', 'grenade burst', 'font', { unit: 'dmg', does: 'burst' });
-const GRENADEPACE = ladder('grenadepace', 'grenade pace', 'font', { unit: '/min', pct: true, does: 'throw' });
-const SIGIL = ladder('sigil', 'sigil circles', 'circle', { unit: 'circles', does: 'hold' });
-
-// --- the spire, and the star -----------------------------------------------------
-const BEAM = ladder('beam', 'beam strength', 'spire', { unit: 'dmg/s', does: 'channel' });
-const CURSE = ladder('curse', 'curse the heal', 'spire', { unit: '%', does: 'curse' });
-
-// The deep's machine, bought in sparks by the rule that sparks buy every
-// machine. The dust beside the sparks is derived by `billOf`. Put up at the
-// spire by its wizards.
-const STAR = {
-  key: 'callstar', name: 'the called star',
-  kind: 'machine', site: 'spire', board: 'spire',
-  note: () => 'a star pulled down out of the sky, through the surface and onto the coil',
-  bill: () => [['spark', STAR_SPARKS]],
-  buy: () => { S.starOpen = true; },
-  show: () => open('spire') && !S.starOpen
+// --- a class's ladder, on a station ----------------------------------------------
+// What a class's number is called on its rails, a unit a class. The words a
+// rung says are in rails.js.
+export const CLASS_UNIT = {
+  brawler: 'dmg', sword: 'dmg', monk: 'dmg', martial: 'dmg', ranger: 'dmg',
+  assassin: 'dmg', hexer: 'dmg', sapper: 'dmg', mage: 'dmg/s', bard: '%'
 };
 
-// Its ladder: three rungs of red, like a yard machine's (`tuneRow` in
-// machines.js), each calling the star sooner. The bill is the rung you are on,
-// clamped at the top so a finished row still has a price to draw.
-const STAR_RUNGS = STAR_TUNE_SPARKS.length;
-const TUNESTAR = {
-  key: 'tunestar', name: 'star pace',
-  kind: 'rung', site: 'spire', board: 'spire',
-  unit: 's', does: 'a star every',
-  from: () => STAR_EVERY_S[Math.min(S.starLevel, STAR_RUNGS)],
-  to: () => STAR_EVERY_S[Math.min(S.starLevel + 1, STAR_RUNGS)],
-  note: () => 'the wizards call the star down sooner',
-  rung: () => Math.min(S.starLevel, STAR_RUNGS),
-  rungs: () => STAR_RUNGS,
-  bill: () => [['spark', STAR_TUNE_SPARKS[Math.min(S.starLevel + ahead('tunestar'), STAR_RUNGS - 1)]]],
-  buy: () => { S.starLevel++; },
-  show: () => !!S.starOpen
-};
+// One class's ladder at one station: the one card of it, through `tierRows`
+// like every ladder, with its rung on the station (`field` as a pair). The
+// rung is the station's while the station has taken this class, and nought
+// for the class it has not: a station climbs one ladder, and a class looked
+// at on a blank station is priced from its foot. Made afresh when asked, so
+// a station's record is read where it stands in `S.stations` now.
+export function classLadder(st, cls) {
+  const [card] = tierRows({
+    field: { get: () => (st.cls === cls ? st.rung : 0), set: v => { st.rung = v; } },
+    lead: 'scale',
+    unit: CLASS_UNIT[cls],
+    value: lvl => rungValue(cls, lvl),
+    show: () => true,
+    bands: named(cls, CLASSES[cls].name)
+  });
+  return card;
+}
+// What the next rung of `cls` at station `id` asks, as [coin, n] pairs with
+// no coin at nought: what `buyRung` takes and adds to the station's `paid`.
+export function rungBill(id, cls) {
+  const st = stationById(id);
+  if (!st || !CLASSES[cls]) return [];
+  return classLadder(st, cls).bill().filter(([, n]) => n > 0);
+}
 
 // --- the boards ------------------------------------------------------------------
-// Each station's rows, keyed by the station, for board.js and shop.js to draw
-// and hooks.js to reach.
-export const DEEP_ROWS = {
-  altar: [...PUNCH, ...BRAWL, ...DOORS],
-  pods: [POD],
-  well: [...LANCE, ...LANCEHOLD],
-  font: [...GRENADE, ...GRENADEPACE],
-  circle: [...SIGIL],
-  spire: [...BEAM, ...CURSE, STAR, TUNESTAR]
-};
+// The pods, by key, for board.js and shop.js to draw and hooks.js to reach.
+export const DEEP_ROWS = { pods: [POD] };
 export const DEEP_UPGRADES = Object.values(DEEP_ROWS).flat();
-
-// The job posted at each station, whose headcount the roster heading wears.
-export const DEEP_JOB_AT = { altar: JOB.BRAWL, well: JOB.LANCE, font: JOB.GRENADE,
-                             circle: JOB.SCRIBE, spire: JOB.WARLOCK };
-
-// The roster heading is the job as it is said, and is drawn with nothing
-// under it (`roster` in shop.js's `build`): the bodies are put on and taken
-// off at the posts on the floor, and the heading is where the board says how
-// many are down there.
-const roster = station => ({ title: jobSaid(DEEP_JOB_AT[station]), roster: true, keys: [],
-                             heads: () => S[DEEP_JOB_AT[station]] || 0 });
-
-export const DEEP_SECTIONS = {
-  altar: [roster('altar'),
-          { title: 'the fist', keys: ['punch', 'brawl'] },
-          { title: 'the deep', keys: DOORS.map(u => u.key) }],
-  pods: [{ title: 'the pods', keys: ['pod'] }],
-  well: [roster('well'), { title: 'the lance', keys: ['lance', 'lancehold'] }],
-  font: [roster('font'), { title: 'the grenade', keys: ['grenade', 'grenadepace'] }],
-  circle: [roster('circle'), { title: 'the circle', keys: ['sigil'] }],
-  spire: [roster('spire'),
-          { title: 'the spire', keys: ['beam', 'curse'] },
-          { title: 'the star', keys: ['callstar', 'tunestar'] }]
-};
+export const DEEP_SECTIONS = { pods: [{ title: 'the pods', keys: ['pod'] }] };
 
 // So a work coming back out of a save knows which row it belongs to.
 registerRows(DEEP_UPGRADES);
 for (const key of Object.keys(DEEP_ROWS))
   registerBoard(key, { rows: () => DEEP_ROWS[key], sections: () => DEEP_SECTIONS[key] });
+
+// A station's board: its fighter's heading, wearing the count of one or none
+// a roster heading wears, and nothing sold as a card -- the rails stand under
+// the heading, laid in by deep/rails.js. Every id has its board from the
+// first frame, empty until a station stands under it.
+const fighterHead = id => ({ title: 'the fighter', roster: true, keys: [],
+                             heads: () => (stationById(id)?.fighter ? 1 : 0) });
+for (const id of PARTY_IDS)
+  registerBoard(id, { rows: () => [], sections: () => [fighterHead(id)] });

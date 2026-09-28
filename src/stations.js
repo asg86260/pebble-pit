@@ -14,7 +14,7 @@
 // doors may stand open in either order, so `after` is a list a row reads
 // and not a step in a chain.
 
-import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW } from './config.js';
+import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS } from './config.js';
 import { S, bench, casino, filter, tower, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { houseRect } from './house.js';
@@ -24,7 +24,8 @@ import { beatDone } from './beats.js';
 import { MACHINES, running } from './machines.js';
 import { poopLeft } from './smog.js';
 import { canAfford } from './upgrades.js';
-import { standOf, crusherRect, podsRect } from './deep/place.js';
+import { standOfStation, crusherRect, podsRect } from './deep/place.js';
+import { stationById } from './deep/party.js';
 import { bedAtBrim } from './deep/scales.js';
 import { registerSites } from './works.js';
 import { JOB } from './jobs.js';
@@ -37,6 +38,53 @@ const nearly = n => S.stored >= n * UNLOCK_SHOW;
 // in cells: eight to either side and above, four below, unless a row says
 // otherwise in `reach`.
 const REACH = { left: 8, right: 8, up: 8, down: 4 };
+
+// The five kinds of station the party can build (docs/wave-party.md): what
+// each is called and drawn as on the shelf. The drawing on the floor is the
+// kind's sprite (`SPRITES` in deep/sprites.js); the two classes it offers are
+// `PAIRS` in config/classes.js.
+export const KINDS = {
+  altar:  { name: 'the altar',  glyph: 'swing' },
+  well:   { name: 'the well',   glyph: 'bucket' },
+  armory: { name: 'the armory', glyph: 'bowl' },
+  circle: { name: 'the circle', glyph: 'wand' },
+  spire:  { name: 'the spire',  glyph: 'tower' }
+};
+
+// One row for a station of the party, by its id. It stands once its build
+// has landed, at its slot, and whatever it is called and drawn as is its
+// kind's; until a station is bought under the id, the row is an empty lot
+// with nothing standing and nothing to say.
+//
+// Its board's flag is the one `S.stationBoardOpen` holds, an id: each row
+// reads and writes its own share of it through an accessor of its own name
+// (below), so the boards' one-flag-a-row loop (`settle` in board.js) and the
+// pointer's "is it already open" (input.js) read a station of the party as
+// they read any other, and two open at once is not a state the save can hold.
+function partyRow(id) {
+  const st = () => stationById(id);
+  return {
+    key: id, party: true,
+    get name() { return KINDS[st()?.kind]?.name || 'a station'; },
+    get glyph() { return KINDS[st()?.kind]?.glyph || 'crate'; },
+    empty: 'nothing to learn yet',
+    // The fighter's post, under the station: one body at most (`moveFighter`).
+    post: { key: `${id}job`, job: JOB.FIGHT, station: id },
+    open: () => !!st()?.built,
+    // Its ground whether or not it has gone up yet: the build's scaffold
+    // stands where the station will.
+    stand: () => { const s = st(); return s ? standOfStation(s) : null; },
+    board: `${id}BoardOpen`,
+    after: [], needs: () => false
+  };
+}
+for (const id of PARTY_IDS) {
+  Object.defineProperty(S, `${id}BoardOpen`, {
+    enumerable: false, configurable: true,
+    get: () => S.stationBoardOpen === id,
+    set: v => { if (v) S.stationBoardOpen = id; else if (S.stationBoardOpen === id) S.stationBoardOpen = null; }
+  });
+}
 
 // A row is the whole of a place. What it is called (`name`: the pointer's
 // label, the queue card's line, its board's title) and drawn as (`glyph`: the
@@ -145,16 +193,8 @@ export const STATIONS = [
     open: () => S.banked > 0, stand: () => S.noticeboard, board: 'statsBoardOpen',
     after: [], needs: () => false },
 
-  // The deep's stations, on its floor under the drowned pit
-  // (docs/wave-serpent.md). The altar stands from the snatch and nobody sells
-  // it; the rest are sold on it, each on the stage before the one its weapon
-  // answers, so the order is the order the serpent's defenses fall.
-  { key: 'altar', name: 'the altar', glyph: 'swing',
-    empty: 'nothing to strike with', post: { key: 'altarjob', job: JOB.BRAWL },
-    open: () => S.snatched, stand: () => standOf('altar'), board: 'altarBoardOpen',
-    after: [], needs: () => false },
-  // The crusher, the deep's purse, stands from the snatch like the altar. It
-  // sells nothing and nobody is put on it: its gatherers are lent haulers.
+  // The crusher, the deep's purse, stands from the snatch. It sells nothing
+  // and nobody is put on it: its gatherers are lent haulers.
   { key: 'crusher', name: 'the crusher', glyph: 'sack', open: () => S.snatched, stand: () => crusherRect(), board: null,
     after: [], needs: () => false,
     // Its pile is the floor: scales lying at the brim, the gathering behind.
@@ -164,24 +204,9 @@ export const STATIONS = [
   { key: 'pods', name: 'the pods', glyph: 'house', empty: 'nothing to build',
     open: () => S.pods > 0, stand: () => podsRect(), board: 'podsBoardOpen',
     after: [], needs: () => false },
-  { key: 'well', name: 'the well', glyph: 'bucket',
-    empty: 'the well is still', post: { key: 'welljob', job: JOB.LANCE },
-    open: () => S.wellOpen, stand: () => standOf('well'), board: 'wellBoardOpen',
-    after: ['altar'], needs: () => S.serpentStage >= 1 },
-  // The armory keeps its first name, `font`, as its key: the key is in saves
-  // (`fontOpen`, `fontBoardOpen`) and every row and sprite that finds it.
-  { key: 'font', name: 'the armory', glyph: 'bowl',
-    empty: 'the racks are bare', post: { key: 'fontjob', job: JOB.GRENADE },
-    open: () => S.fontOpen, stand: () => standOf('font'), board: 'fontBoardOpen',
-    after: ['well'], needs: () => S.serpentStage >= 2 },
-  { key: 'circle', name: 'the circle', glyph: 'wand',
-    empty: 'the floor is bare', post: { key: 'circlejob', job: JOB.SCRIBE },
-    open: () => S.circleOpen, stand: () => standOf('circle'), board: 'circleBoardOpen',
-    after: ['well'], needs: () => S.serpentStage >= 2 },
-  { key: 'spire', name: 'the spire', glyph: 'tower',
-    empty: 'the spire is dark', post: { key: 'spirejob', job: JOB.WARLOCK },
-    open: () => S.spireOpen, stand: () => standOf('spire'), board: 'spireBoardOpen',
-    after: ['font', 'circle'], needs: () => S.serpentStage >= 3 },
+  // The party's stations (docs/wave-party.md): a row an id, not a kind, since
+  // a kind can stand twice. Built from the floating button, in any order.
+  ...PARTY_IDS.map(partyRow),
 
   // The shields, each offered only once its predecessor has failed and the
   // place before it stands (DESIGN.md, "The shields are the spine"). A shield

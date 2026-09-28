@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- The deep's stations are built from a floating button over the next free spot on the floor, the first free and each after it for a fang, and each station's two classes are climbed on its rails: tap to look, buy to take, Reset to have it all back (test/rails.test.mjs, src/selftest/deep.js).
 - The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought with abyssal fists, lances, grenades, sigils, wizards and a called star; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
 - The serpent snatches him through a portal in the abyss and the sqwife leaps in after him; the deep is its own crew from then, grown by its pods and building its own works, the sqwife living in its first pod, and the portal a wizard flies out and summons in the middle of the pit -- clicked, or its arrow or the corner's square -- is the player's way down; the deep is seen under the yard's own sky, mostly water (test/two-crews.test.mjs, test/snatch.test.mjs).

@@ -87,7 +87,8 @@ import { QUARRY_UPGRADES } from './src/quarry.js';
 import { FARM_UPGRADES } from './src/farm.js';
 import { OUTHOUSE_UPGRADES } from './src/outhouse.js';
 import { APOTHECARY_UPGRADES } from './src/apothecary.js';
-import { DEEP_ROWS } from './src/deep/rows.js';
+import { DEEP_ROWS, classLadder } from './src/deep/rows.js';
+import { CLASSES } from './src/config/classes.js';
 import { DUST_PER } from './src/upgrades/price.js';
 import { LADDERS } from './src/config.js';
 
@@ -104,9 +105,17 @@ Object.assign(S, {
   towerOpen: true, shackOpen: true, outhouseOpen: true, casinoOpen: true,
   seenShard: true, seenSpore: true, seenCore: true, seenSpark: true, seenAir: true,
   brews: 9, autoMine: true, boulderNo: 3, introDone: true,
-  // and the deep, every station of it open and its star bought
-  snatched: true, seenScale: true, wellOpen: true, fontOpen: true, circleOpen: true, spireOpen: true,
-  starOpen: true
+  // and the deep
+  snatched: true, seenScale: true
+});
+
+// The party's ladders, a class each (docs/wave-party.md). A class's rung is
+// kept on the station that climbs it, so each is climbed here on a station
+// of its own that stands nowhere, set back to its foot after every climb.
+const bench = cls => ({ id: 'book', kind: null, cls, rung: 0, paid: [] });
+const CLASS_ROWS = Object.keys(CLASSES).map(cls => {
+  const st = bench(cls);
+  return { u: classLadder(st, cls), board: 'a station', reset: () => { st.rung = 0; } };
 });
 
 const ROWS = [
@@ -118,6 +127,7 @@ const ROWS = [
   ...FARM_UPGRADES.map(u => ({ u, board: 'farm' })),
   ...APOTHECARY_UPGRADES.map(u => ({ u, board: 'apothecary' })),
   ...Object.entries(DEEP_ROWS).flatMap(([board, list]) => list.map(u => ({ u, board }))),
+  ...CLASS_ROWS,
   { u: HOUSE_ROW, board: 'crew' }
 ].filter(({ u }) => u.rung && (u.bill || u.cost));
 
@@ -192,8 +202,9 @@ const cell = (r, u, key) => {
 function render() {
   const book = document.getElementById('book');
   book.innerHTML = '';
-  for (const { u, board } of ROWS) {
+  for (const { u, board, reset } of ROWS) {
     const rows = climb(u);
+    reset?.();
     const el = document.createElement('div');
     el.className = 'ladder';
     const rungs = Number.isFinite(rungsOf(u)) ? `${rungsOf(u)} rungs` : 'endless';
