@@ -49,6 +49,32 @@ export const TESTS = [
     ];
   }],
 
+  // The call is the yard's: from the deep there is no bench to point at. No
+  // player reaches the deep before the bench, but a staged yard (a scene, the
+  // scene bench) can, and the call pointed up at the yard over the water.
+  ['the call to build the bench stays up in the yard', async () => {
+    // A few frames for each, since the button is seated by the frame's hud.
+    const settle = async shown => {
+      for (let i = 0; i < 10 && raiseEl().hidden === shown; i++) await raf();
+      return !raiseEl().hidden;
+    };
+    window.__snatch({ played: true });       // the portal down, for the view
+    window.__give(100);
+    for (let i = 0; i < 30 && !state().benchCall; i++) await sleep(40);
+    const yardShown = await settle(true);
+    const went = window.__view('deep');
+    const deepShown = await settle(false);
+    window.__view('yard');
+    const backShown = await settle(true);
+    return [
+      ok(state().benchCall, 'the call is out'),
+      ok(yardShown, 'and stands in the yard'),
+      ok(went === 'deep', 'the view goes down', went),
+      ok(!deepShown, 'but not over the deep'),
+      ok(backShown, 'and is back on the way up')
+    ];
+  }],
+
   ['canvas covers the viewport', async () => {
     const c = canvas();
     const r = c.getBoundingClientRect();
