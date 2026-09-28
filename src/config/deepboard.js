@@ -32,20 +32,21 @@ export const SCALE_MARK = [
 ];
 
 // The fang as a mark, the scale's way: nine pixels square, ink `#`, paper
-// `.`, a blank outside the edge. A tooth hanging point down from its root,
-// hollow down the middle, so it reads as a white thing on the black water.
+// `.`, a blank outside the edge. A solid fang hanging from its root, its tip
+// hooked back as a snake's is (the owner's A, docs/mocks/fang-mark-2026-09-28.html):
+// a hollow tooth read as a triangle at nine pixels.
 // The floating build button wears it (deep/buildbutton.js); the counter's
 // card can lay the same pixels down beside the scale's.
 export const FANG_MARK = [
-  ' ####### ',
-  ' #.....# ',
-  ' #.....# ',
-  '  #...#  ',
-  '  #...#  ',
-  '   #.#   ',
-  '   #.#   ',
-  '    #    ',
-  '    #    '
+  ' #####   ',
+  ' ######  ',
+  '  #####  ',
+  '   ####  ',
+  '    ###  ',
+  '    ###  ',
+  '    ##   ',
+  '   ##    ',
+  '   #     '
 ];
 
 // A pod: scales, a steeper price each one, like the yard's rooms (HOUSE_RATE).
