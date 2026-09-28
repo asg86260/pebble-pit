@@ -39,6 +39,8 @@ export function cloudLine(st = cloudStatus(), now = Date.now()) {
   if (st.state === 'ok') return st.at ? `cloud · saved ${since(st.at, now)}` : 'cloud · on';
   return LINES[st.state] || LINES.off;
 }
+// Inside the block the heading already says whose line it is.
+const blockLine = (st, now) => cloudLine(st, now).replace(/^cloud · /, '');
 
 // The worker hands a pairing code back with its dash; one without is shown
 // the same way.
@@ -200,6 +202,9 @@ function drawCloud(el, say, opts) {
   // page is up, and a redraw from the foot bar must not bring it up on
   // another page.
   if (!cloudReady()) { el.hidden = true; return; }
+  // A section of its own, titled, so every button in it -- stop above all --
+  // reads as being about the cloud and not about the slots over it.
+  el.append(node('div', 'head', 'cloud saves'));
   const st = cloudStatus();
   const done = line => { if (line) say(line); redrawAll(); opts.changed?.(); };
 
@@ -225,9 +230,9 @@ function drawCloud(el, say, opts) {
     // Signed out: this device still holds its old code, so the ways on are a
     // code from another device, the recovery code, or letting it go.
     if (st.state === 'out') {
-      el.append(node('div', 'small', LINES.out),
+      el.append(node('div', 'small', blockLine(st)),
         button('use a recovery code', () => { recovering = true; say(''); drawCloud(el, say, opts); }),
-        button('stop', async () => { await stopCloud(); done('the cloud is off on this device'); }));
+        button('stop cloud saves', async () => { await stopCloud(); done('the cloud is off on this device'); }));
       return;
     }
     el.append(
@@ -241,7 +246,7 @@ function drawCloud(el, say, opts) {
     return;
   }
 
-  el.append(node('div', 'small', cloudLine(st)));
+  el.append(node('div', 'small', blockLine(st)));
   if (fresh || revealed) {
     const code = fresh || revealed;
     const pair = node('div', 'pair');
@@ -287,7 +292,7 @@ function drawCloud(el, say, opts) {
   }, 'again');
   clearTimeout(armed);
   armed = 0;
-  el.append(again, button('stop', async () => {
+  el.append(again, button('stop cloud saves', async () => {
     await stopCloud();
     fresh = revealed = null;
     done('the cloud is off on this device');

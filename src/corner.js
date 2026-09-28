@@ -71,7 +71,7 @@ function seatWay() {
 }
 
 // Seated every frame like the rest of the shell, after the squares that
-// decide for themselves (fullscreen.js, gear.js): gone while the game is
+// decide for themselves (fullscreen.js, pause.js): gone while the game is
 // held, since the sheet is up over the yard it would fade.
 let room = null;
 export function refreshCorner() {

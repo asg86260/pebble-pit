@@ -176,7 +176,7 @@ export const TESTS = [
     await settled();
     // the settings sheet, the very same gestures on its own handle
     const held = document.getElementById('held'), hh = document.getElementById('heldhandle');
-    tap(document.getElementById('gear'));
+    tap(document.getElementById('pause'));
     await sleep(40);
     const heldIn = await enterOf(held);
     await sleep(SHEET_MS + 60);
@@ -220,10 +220,11 @@ export const TESTS = [
     document.getElementById('resume').hidden = false;
     dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     await frames(2); await sleep(220);
-    // the phone: the gear
+    // the phone: the pause button, then the settings page
     phone(true);
     await frames(2);
-    await tap(document.getElementById('gear'));
+    await tap(document.getElementById('pause'));
+    document.getElementById('settingsbtn').click();
     await frames(2); await sleep(SHEET_MS + 60);
     const phonePitch = pitchOf();
     const heldGap = getComputedStyle(document.getElementById('held')).rowGap;

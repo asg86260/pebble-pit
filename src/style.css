@@ -59,9 +59,6 @@ html.dark {
   --paper: #1f1f1f; --ink: #e0e0e0;
   --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
 }
-/* The gear is a drawing inlined as SVG with its own black fill; on the dark
-   page it is turned to the ink. */
-html.dark #gear .cog { filter: invert(1) brightness(.878); }
 body :not(canvas):not(#scroller):not(#spacer):not(.handle) { touch-action: manipulation; }
 /* The scroller: the window, scrolled sideways by the platform (DESIGN.md,
    "Momentum scrolling"). The spacer inside it is as wide as the world at the
@@ -163,11 +160,11 @@ canvas {
 /* in fullscreen: the corners turned inward, which is a square in the middle */
 #fullscreen[data-on="1"] .frame { border-color: transparent; background: var(--ink); }
 #fullscreen[data-on="1"] .frame::before, #fullscreen[data-on="1"] .frame::after { display: none; }
-/* The gear (gear.js): the cog is a thirteen-cell pixel drawing at two
-   screen pixels a cell: a ring two cells thick, hollow, with eight teeth. */
-#gear .cog {
-  display: block; width: 26px; height: 26px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'%3E%3Cpath d='M5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM10 3h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM0 5h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM12 7h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1z'/%3E%3C/svg%3E") no-repeat center / 26px 26px;
+/* The pause button (pause.js): two bars the height of the fullscreen
+   frame, drawn as the side borders of an empty box so they take the ink. */
+#pause .bars {
+  display: block; width: 14px; height: 18px; box-sizing: border-box;
+  border-left: 5px solid var(--ink); border-right: 5px solid var(--ink);
 }
 /* The crew switch (corner.js): one body, three cells square at two screen
    pixels a cell, as the yard draws it -- at full ink, at the faded ink the
@@ -188,7 +185,7 @@ canvas {
 }
 #way[data-way="up"] .chevron { transform: rotate(180deg); }
 #crewfade[data-view="hide"] .body { height: 2px; margin-top: 16px; border: 0; background: var(--ink); }
-/* The held sheet as a sheet from the bottom, on a phone (gear.js, through
+/* The held sheet as a sheet from the bottom, on a phone (pause.js, through
    the boards' seat in sheet.js): the same box, handle and slide as a board
    (the .bottom rules below), scrolling inside itself. It moves as one thing
    and does not fade: the slide is the whole of its coming and going. The
@@ -1166,6 +1163,10 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    corner that stretched it would stretch everything. It folds away entirely
    when it is not asked for rather than leaving a gap. */
 .held .paste { display: flex; flex-direction: column; align-items: center; gap: 10px; align-self: stretch; }
+/* The cloud's block (cloudsheet.js): a boxed section under its own heading,
+   so its buttons read as the cloud's and not the slots'. */
+.held .cloudsheet { border: 1px solid var(--ink); padding: 10px 12px; box-sizing: border-box; }
+.held .cloudsheet .head { letter-spacing: .25em; }
 .held textarea {
   align-self: stretch;
   font: inherit;

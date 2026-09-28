@@ -95,6 +95,8 @@ body.still .veil { transition: none; }   /* motion: less: see style.css */
 .foot .cloud .go:hover { color: var(--ink); border-color: var(--ink); }
 /* and its block on the settings page, and the rows that ask which yard a
    slot keeps: each side a full button, one over the other */
+.col .cloudsheet { border: 1px solid var(--ink); padding: 10px 12px; box-sizing: border-box; }
+.col .cloudsheet .head { letter-spacing: .25em; }
 .col .cloudsheet .small { font-size: 10px; color: var(--ink-2); letter-spacing: .1em; }
 .col .cloudsheet .code { font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
 .col .cloudsheet textarea { width: 100%; box-sizing: border-box; }
