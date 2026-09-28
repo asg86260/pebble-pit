@@ -58,9 +58,11 @@ export function ring(g, cx, cy, r, tone, every = 1) {
 // The body, the same square every body in the deep is, at a cell position.
 export const body = (cx, cy) => drawBody(Math.round(cx * P), Math.round(cy * P));
 // A build-up's pips under a body: `n` lit of `of`, all lit on a `flash`.
+// Spaced as the shop's are, a cell apart, so the row reads as pips and not
+// as a bar; a cell is the least the deep's zoom shows, so no ring inside one.
 export function pips(g, x, y, n, of, flash = 0) {
-  const x0 = x + Math.floor((BODY - of) / 2);
-  for (let i = 0; i < of; i++) cell(g, x0 + i, y + BODY + 1, flash ? WHITE : i < n ? WHITE : GREYS[6]);
+  const x0 = x + Math.floor((BODY - (of * 2 - 1)) / 2);
+  for (let i = 0; i < of; i++) cell(g, x0 + i * 2, y + BODY + 1, flash || i < n ? WHITE : GREYS[6]);
 }
 
 // --- the rigid sprite ----------------------------------------------------------
