@@ -42,7 +42,9 @@ import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
-import { SCAFFOLD_BANDS, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES } from '../config.js';
+import { SCAFFOLD_BANDS, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, CHOOSE_MARK, CHOOSE_MARK_UP, CHOOSE_MARK_BOB_MS } from '../config.js';
+import { unchosen } from '../deep/party.js';
+import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
 
@@ -343,6 +345,37 @@ function drawScaffold(stand) {
   for (let x = left + postW; x < right; x += P * 2) ctx.fillRect(x, deepFloor() - P * 3, P, 2);
 }
 
+// The mark over a station whose Recruit waits on rung 1: where it hangs, its
+// top-left, centered over the station's ground and bobbing a held cell.
+const MARK_W = CHOOSE_MARK[0].length * P, MARK_H = CHOOSE_MARK.length * P;
+export function chooseMarkAt(st, t = now()) {
+  const g = place.standOfStation(st), bob = Math.floor(t / CHOOSE_MARK_BOB_MS) % 2;
+  return { x: snap(g.x + g.w / 2 - MARK_W / 2), y: g.y - (CHOOSE_MARK_UP + bob) * P - MARK_H, w: MARK_W, h: MARK_H };
+}
+// Whether a station wears it: its Recruit waiting, and the build's own done
+// check already read -- that one says it stands, and stays until its board
+// is opened; the two never stack on one station.
+const wearsMark = st => unchosen(st) && !doneAt(st.id).length;
+// The station whose mark the pointer (world x, y) is over, if any.
+export const overChooseMark = (x, y) => (S.stations || []).find(st => {
+  if (!wearsMark(st)) return false;
+  const m = chooseMarkAt(st);
+  return x >= m.x - P && x < m.x + m.w + P && y >= m.y - P && y < m.y + m.h + 2 * P;
+}) || null;
+// White on a dark keyline: every empty cell touching the ink, then the ink.
+function drawChooseMark(st) {
+  const m = chooseMarkAt(st), rows = CHOOSE_MARK, ink = (r, c) => rows[r]?.[c] === '#';
+  ctx.fillStyle = GREYS[2];
+  for (let r = -1; r <= rows.length; r++) for (let c = -1; c <= rows[0].length; c++) {
+    if (ink(r, c)) continue;
+    let touch = false;
+    for (let dr = -1; dr <= 1 && !touch; dr++) for (let dc = -1; dc <= 1; dc++) if (ink(r + dr, c + dc)) { touch = true; break; }
+    if (touch) ctx.fillRect(m.x + c * P, m.y + r * P, P, P);
+  }
+  ctx.fillStyle = GREYS[11];
+  rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') ctx.fillRect(m.x + c * P, m.y + r * P, P, P); }));
+}
+
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
   if (S.snatched) drawCrusher();
@@ -354,7 +387,7 @@ export function drawDeepStations() {
     const stand = place.standOfStation(st);
     if (stand.x > x1 || stand.x + stand.w < x0) continue;
     if (!st.built) drawScaffold(stand);
-    else { drawPlinth(st); drawProp(st, t); }
+    else { drawPlinth(st); drawProp(st, t); if (wearsMark(st)) drawChooseMark(st); }
   }
   ctx.imageSmoothingEnabled = smooth;
   ctx.fillStyle = '#000';

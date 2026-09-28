@@ -27,7 +27,7 @@ import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
 import { lay } from './deep/statuses.js';
-import { worksAt, progressOf } from './works.js';
+import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 
@@ -463,6 +463,14 @@ const deepScenes = {
   'recruit': { about: 'the deep', say: 'a Recruit up under the coil, throwing its one light punch',
     run: () => {
       deepYard({ stage: 1, wound: 300, run: 3, party: [{ kind: null }] });
+      lookAtStation(0);
+    } },
+  // The mark over a station whose Recruit waits on its first choice, the
+  // build's done check already read.
+  'recruit-mark': { about: 'the deep', say: "the chevron over a new station whose Recruit waits on its first choice",
+    run: () => {
+      deepYard({ stage: 1, wound: 300, run: 3, party: [{ kind: null }] });
+      markDoneSeen(S.stations[0].id);
       lookAtStation(0);
     } },
   // A Fighter at the fork: each specialist's row with its move and capstone.

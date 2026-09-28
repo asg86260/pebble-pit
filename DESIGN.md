@@ -16470,7 +16470,7 @@ builders build: the scaffold goes up and the station is raised as that
 kind by bodies walking to it, as every station is. Nothing on the floor
 changes kind in place.
 
-### Built first, a recruit, then two choices (built, but the mark)
+### Built first, a recruit, then two choices (built)
 
 The owner, 2026-09-28: "the fighter selection should happen after the
 station is built. not before", and then: "start every class as the same
@@ -16493,7 +16493,9 @@ recruit stands at it, and the ladder asks the two choices as rungs.
   first station the three that deal damage alone, as `FIRST_KINDS`).
   Bought like any rung, with rung 1's bill; buying one writes the
   station's kind. A mark hangs over a station whose rung 1 is waiting
-  ("choose a fighter"), until it is bought.
+  ("choose a fighter" on hover), until it is bought: a white chevron on a
+  dark keyline, bobbing a cell (voted C, docs/mocks/recruit-mark-2026-09-28.html).
+  It waits for the build's done check to be read, so the two never stack.
 - **Rung 4, the second choice: a specialist**, as now (`FORK_RUNG`); rung 8
   the capstone. The ladder stays eight rungs on one card: rung 0 the
   Recruit, 1 to 3 the base unit (the pick and two plain rungs), 4 to 8 the

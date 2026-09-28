@@ -12,13 +12,14 @@
 // bought where the player buys them, on the station's board (`pressBuy`).
 
 import { group, ok, yard } from './helpers.mjs';
-import { P, WORKER, DEEP_W, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF } from '../src/config.js';
-import { pressBuy } from '../src/deep/rails.js';
+import { P, WORKER, DEEP_W, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, CHOOSE_MARK } from '../src/config.js';
+import { pressBuy, pressKind } from '../src/deep/rails.js';
 import { stationById } from '../src/deep/party.js';
+import { doneAt, markDoneSeen } from '../src/works.js';
 import { slotX, deepX0, deepFloor, plinthTop, postY, standOfStation } from '../src/deep/place.js';
 import { PROPS, propCells } from '../src/deep/props.js';
 import { paintOn } from '../src/render/ctx.js';
-import { drawDeepStations } from '../src/render/deep.js';
+import { drawDeepStations, chooseMarkAt } from '../src/render/deep.js';
 import { GREYS, PURPLES } from '../src/render/deeptones.js';
 
 const S = yard.S;
@@ -37,15 +38,17 @@ function sheet() {
   const el = { width: 0, height: 0, cells, getContext: () => g };
   return { el, g, cells, draws };
 }
-// Everything the deep's stations layer draws this frame, over the whole floor.
-function drawn() {
+// Everything the deep's stations layer paints this frame, over the whole
+// floor: its cells, and the images it drew with where each went.
+function sheetOf() {
   S.camX = deepX0(); S.viewW = DEEP_W;
   const make = document.createElement;
   document.createElement = () => sheet().el;
   const out = sheet();
   try { paintOn(out.el, () => drawDeepStations()); } finally { document.createElement = make; }
-  return out.draws;
+  return out;
 }
+const drawn = () => sheetOf().draws;
 // The prop image drawn at station `st`'s place, as its cells, and where.
 function propOf(st) {
   const d = drawn().filter(o => o.img.cells && o.y + o.img.height === plinthTop())
@@ -97,5 +100,34 @@ group("a station stands beside a crate below the fork, its class's prop from it,
        'the plinth on the floor under the prop and the post', JSON.stringify(plinth)),
     ok(g.x <= plinth?.x && g.x + g.w >= plinth?.x + plinth?.w && g.y <= lit.y, "and the station's ground spans the plinth, the prop and the post",
        `${g.x}..${g.x + g.w} over ${plinth?.x}..${plinth?.x + plinth?.w}`)
+  ];
+});
+
+// A station whose Recruit still waits on its first choice wears the mark
+// (voted C): a white chevron over it, once the build's own done check has
+// been read (reading its board clears that), and gone once rung 1 is bought.
+group('a Recruit waiting on its first choice has the chevron over its station, until it is chosen', async () => {
+  window.__party({ stations: [{ kind: null }] });
+  const st = S.stations[0];
+  const inkAt = () => {
+    const out = sheetOf(), m = chooseMarkAt(st), cols = CHOOSE_MARK[0].length;
+    let n = 0;
+    CHOOSE_MARK.forEach((row, r) => [...row].forEach((ch, c) => {
+      if (ch === '#' && out.cells.get(`${m.x / P + c},${m.y / P + r}`) === GREYS[11]) n++;
+    }));
+    return { n, over: m.y + m.h <= standOfStation(st).y, cols };
+  };
+  const ticked = doneAt(st.id).length > 0 && inkAt().n;
+  markDoneSeen(st.id);
+  const before = inkAt();
+  window.__scales(99999);
+  window.__grant({ dust: 1e8 });
+  const chose = pressKind(st.id, 'altar');
+  const after = inkAt();
+  const want = CHOOSE_MARK.join('').split('').filter(c => c === '#').length;
+  return [
+    ok(ticked === 0, "none while the build's done check still stands", `${ticked}`),
+    ok(before.n === want && before.over, 'then the chevron is drawn whole, over the station', JSON.stringify(before)),
+    ok(chose && after.n === 0, 'and gone once the Recruit is chosen', JSON.stringify(after))
   ];
 });

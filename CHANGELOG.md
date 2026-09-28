@@ -17,6 +17,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
 - The build button puts a station up at once; a Recruit fights there with a light punch until rung 1 makes it a Fighter, Novice, Scout, Adept or Apprentice, and rung 4 forks it into one of two classes (test/rails.test.mjs, test/party.test.mjs, src/selftest/deep.js).
+- A new station whose Recruit is waiting on its first choice wears a chevron that says "choose a fighter" (test/props.test.mjs, src/selftest/deep.js).
 - A station's board shows where every choice leads: each base unit's two specialists, and each specialist's move and capstone, with status effects named and explained on hover (test/rails.test.mjs, src/selftest/deep.js).
 - Every station stands on a stepped stone plinth, off the deep's floor (test/props.test.mjs).
 - Every fighter attacks the serpent straight above its own station (test/classes.test.mjs).

@@ -20,6 +20,8 @@ import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
 import { station, stationAt, STATIONS } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
+import { overChooseMark, chooseMarkAt } from './render/deep.js';
+const CHOOSE_SAYS = 'choose a fighter';
 import { markedPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
@@ -502,6 +504,14 @@ function askedAbout(x, y, cx, cy) {
   for (const p of markedPiles()) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip(fullSays(p.key), pileMarkAt(p.key));
+    return true;
+  }
+
+  // A station whose Recruit still waits on its first choice says so.
+  const waiting = overChooseMark(x, y);
+  if (waiting) {
+    const m = chooseMarkAt(waiting);
+    showTip(CHOOSE_SAYS, { x: m.x + m.w / 2, y: m.y + m.h });
     return true;
   }
 

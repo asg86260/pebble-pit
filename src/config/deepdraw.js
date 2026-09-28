@@ -313,3 +313,10 @@ export const FANG_SPRITE = ['###', '.#+', '.#.'];
 // The scaffold over a station not yet built: posts this many bands tall,
 // the tape at head height.
 export const SCAFFOLD_BANDS = 5;
+// The mark over a station whose Recruit still waits on its first choice
+// (docs/mocks/recruit-mark-2026-09-28.html, voted C): a white chevron pointing
+// down at it on a dark keyline, CHOOSE_MARK_UP cells over the station's top,
+// bobbing a cell every CHOOSE_MARK_BOB_MS, held between.
+export const CHOOSE_MARK = ['#.....#', '##...##', '.##.##.', '..###..', '...#...'];
+export const CHOOSE_MARK_UP = 3;
+export const CHOOSE_MARK_BOB_MS = 600;

@@ -12,12 +12,6 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
-## The mark over a Recruit -- DESIGNED, NOT BUILT (2026-09-28)
-
-"Built first, a recruit, then two choices" in DESIGN.md is built but for its
-mark: a mark over a station whose rung 1 is waiting, "choose a fighter" on
-hover, until it is bought. Blocker: a mock of its drawing, voted.
-
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 
 Built as `docs/wave-serpent.md`; "The serpent" at the end of DESIGN.md.
