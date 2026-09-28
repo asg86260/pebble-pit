@@ -3,16 +3,24 @@
 // under the blade, at every rung; the other turns cut the air.
 
 import { group, ok } from './helpers.mjs';
-import { SEGMENTS, sauceOf, dentsOf } from '../src/render/attacks.js';
+import { ATTACKS, SEGMENTS, sauceOf, dentsOf } from '../src/render/attacks.js';
 
 group('a sword contact dents the coil once', () => {
   const out = [];
-  for (const R of [0, 4, 8]) for (const move of ['cut', 'whirl']) for (const twice of [false, true]) {
+  // below rung 4 the fight only ever cuts
+  for (const [R, move] of [[0, 'cut'], [4, 'cut'], [4, 'whirl'], [8, 'cut'], [8, 'whirl']]) for (const twice of [false, true]) {
     const sg = SEGMENTS.sword(move, R, { twice }), S = sauceOf(sg.c, R, sg.hit, 10);
     const dents = dentsOf(S, sg.hit, sg.hit);
     out.push(ok(dents.length === 1 && Math.abs(dents[0].t0 - sg.hit) < 1e-9,
       `rung ${R} ${move}${twice ? ' twice' : ''}: one dent, when the blow lands`,
       `dents at ${dents.map(d => d.t0.toFixed(2))}, the blow at ${sg.hit.toFixed(2)}`));
+  }
+  // and the whole page, which a fighter plays before its first swing: one
+  // dent a Whirlwind, on the turn that lands
+  for (const R of [4, 8]) {
+    const c = ATTACKS.sword, S = sauceOf(c, R, 0, 10);
+    const n = dentsOf(S, 0, 0).length;
+    out.push(ok(n === 1, `rung ${R} whole page: one dent`, `${n} dents`));
   }
   return out;
 });

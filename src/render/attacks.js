@@ -265,6 +265,8 @@ const swordsman = {
     return K;
   },
   contacts(R) { return this.track(R).filter(k => k[3]).map(k => ({ at: k[0], k: k[3] })); },
+  // the Whirlwind's turn the blow lands on: its last, or rung 8's before the spin back
+  lands(R) { const cs = this.contacts(R); return cs[Math.max(0, cs.length - ((this.twice ?? R8(R)) ? 2 : 1))]; },
   // slower through the build-up and the Plant, quicker with each turn, so
   // the pose rate rises through the spin
   poseStep(R, a) {
@@ -287,7 +289,7 @@ const swordsman = {
     return this.contacts(R).map(({ at, k }) => ({
       at, x: x + 1, k, kind: R4(R) ? 'whirl' : '', mid: true,
       // a move's other turns cut the air: only the one the blow lands on dents
-      dent: this.lands == null || at === this.lands,
+      dent: !R4(R) || at === this.lands(R).at,
       // the Whirlwind's last contact holds longest
       pause: k >= 1.2 ? 0.2 : 0 }));
   },
@@ -856,8 +858,7 @@ export const SEGMENTS = {
       return { c, from: H - 0.26, hit: H, to: H + 0.34 };
     }
     // the Whirlwind lands on its last turn, the biggest; the double on the spin back
-    const c = only(swordsman, { twice: !!o.twice }), cs = c.contacts(R), last = cs[o.twice ? cs.length - 2 : cs.length - 1];
-    c.lands = last.at;
+    const c = only(swordsman, { twice: !!o.twice }), last = c.lands(R);
     return { c, from: swordsman.SPIN.sink, hit: realOf(c, R, last.at), to: realOf(c, R, o.twice ? 3.25 : 2.75) + 0.001 };
   },
   monk(move, R) {
