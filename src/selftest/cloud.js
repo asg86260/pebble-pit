@@ -147,13 +147,14 @@ export const TESTS = [
     newRun();
     await settle();
     const { d, done } = await landing(worker());
-    let shown = false, code = '', told = false, copy = false, again = true, show = false;
+    let shown = false, code = '', told = false, copy = false, again = true, show = false, titled = false;
     try {
       shown = await turnOn(d);
       const block = d.getElementById('cloudsheet');
       code = block.querySelector('.code')?.textContent || '';
       told = block.textContent.includes('write this down: it brings your yards back on a new device');
       copy = !!buttonIn(block, 'copy');
+      titled = block.querySelector('.head')?.textContent === 'cloud saves' && !!buttonIn(block, 'stop cloud saves');
       d.getElementById('settingsback').click();
       d.getElementById('settingsbtn').click();
       again = !!block.querySelector('.code');
@@ -162,6 +163,7 @@ export const TESTS = [
     return [
       ok(shown && /^[0-9A-Z]{4}(-[0-9A-Z]{4}){2}$/.test(code), 'keep my yards in the cloud shows the recovery code', code),
       ok(told && copy, 'with copy and the words to write it down', `told ${told} copy ${copy}`),
+      ok(titled, 'under a cloud saves heading, its stop saying what it stops'),
       ok(!again && show, 'and once: the page turned again shows it only on asking', `again ${again} show ${show}`)
     ];
   }],

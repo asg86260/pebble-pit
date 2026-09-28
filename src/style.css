@@ -1163,6 +1163,10 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    corner that stretched it would stretch everything. It folds away entirely
    when it is not asked for rather than leaving a gap. */
 .held .paste { display: flex; flex-direction: column; align-items: center; gap: 10px; align-self: stretch; }
+/* The cloud's block (cloudsheet.js): a boxed section under its own heading,
+   so its buttons read as the cloud's and not the slots'. */
+.held .cloudsheet { border: 1px solid var(--ink); padding: 10px 12px; box-sizing: border-box; }
+.held .cloudsheet .head { letter-spacing: .25em; }
 .held textarea {
   align-self: stretch;
   font: inherit;
