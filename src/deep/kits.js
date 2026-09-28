@@ -59,16 +59,17 @@ export function ring(g, cx, cy, r, tone, every = 1) {
 export const body = (cx, cy) => drawBody(Math.round(cx * P), Math.round(cy * P));
 // A build-up's pips under a body: `n` lit of `of`, all lit on a `flash`.
 // The shop's pips: a ring for one to come, a disc for a lit one, drawn in
-// screen pixels so the ring still reads when the deep is zoomed out.
+// screen pixels so the ring still reads when the deep is zoomed out. The
+// last is purple: it is the big hit the row builds to.
 export function pips(g, x, y, n, of, flash = 0) {
   const m = g.getTransform(), d = globalThis.devicePixelRatio || 1;
   const r = PIP_PX * d / 2, gap = PIP_GAP * d, w = of * r * 2 + (of - 1) * gap;
   const cx = m.a * (x + BODY / 2) * P + m.e, top = m.d * (y + BODY + 1) * P + m.f;
   g.save();
   g.setTransform(1, 0, 0, 1, 0, 0);
-  g.fillStyle = g.strokeStyle = WHITE;
   g.lineWidth = PIP_RING * d;
   for (let i = 0; i < of; i++) {
+    g.fillStyle = g.strokeStyle = i === of - 1 ? PURPLES[11] : WHITE;
     const px = Math.round(cx - w / 2 + i * (r * 2 + gap) + r), py = Math.round(top + r);
     g.beginPath();
     if (flash || i < n) { g.arc(px, py, r, 0, Math.PI * 2); g.fill(); }
