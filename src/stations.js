@@ -51,6 +51,8 @@ export const KINDS = {
   spire:  { name: 'the spire',  glyph: 'tower' }
 };
 
+const ORDINALS = ['', 'second', 'third', 'fourth'];
+
 // One row for a station of the party, by its id. It stands once its build
 // has landed, at its slot, and whatever it is called and drawn as is its
 // kind's; until a station is bought under the id, the row is an empty lot
@@ -65,7 +67,15 @@ function partyRow(id) {
   const st = () => stationById(id);
   return {
     key: id, party: true,
-    get name() { return KINDS[st()?.kind]?.name || 'a station'; },
+    // Two of a kind, or two empty lots, would be two boards of one name, so a
+    // repeat is counted off the ids before it: "the second altar".
+    get name() {
+      const kind = st()?.kind;
+      const [art, noun] = (KINDS[kind]?.name || 'a station').split(' ');
+      const nth = PARTY_IDS.slice(0, PARTY_IDS.indexOf(id))
+        .filter(o => stationById(o)?.kind === kind).length;
+      return nth ? `${art} ${ORDINALS[nth]} ${noun}` : `${art} ${noun}`;
+    },
     get glyph() { return KINDS[st()?.kind]?.glyph || 'crate'; },
     empty: 'nothing to learn yet',
     // The fighter's post, under the station: one body at most (`moveFighter`).
