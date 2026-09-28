@@ -36,6 +36,7 @@ import { SERPENT_WOUND, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN } from './config.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor } from './deep/place.js';
+import { yardReads } from './persist.js';
 
 // The jobs the roster is made of, and the count on S that owns each: every
 // body type and its job, read off the one table (jobs.js) rather than kept
@@ -113,6 +114,7 @@ const who = w => `${w.name || w.type} (${w.type}) at ${Math.round(w.x)},${Math.r
 // carry over.
 export function resetVerify() {
   everOwned.clear();
+  playedWas = 0; playedReads = -1;
   forgetSerpent();
 }
 
@@ -120,6 +122,18 @@ export function resetVerify() {
 const BEAT_OWNS = new Map(BEATS.map(r => [r.key, r.owns]));
 
 export function verifyWorld() {
+  // --- rule 15: the yard's length only grows (wave-cloud SYNC) ---------------
+  // `playedS` is what "newer" means between two copies of one yard on two
+  // devices (cloud.js), so a frame that took it back, or made it no number,
+  // would have the cloud take the older copy over the newer. A load or a new
+  // game between two frames is another yard, or this one at another point.
+  if (!Number.isFinite(S.playedS) || S.playedS < 0)
+    fail('the yard has played for no length of time', `${S.playedS}`);
+  if (yardReads === playedReads && S.playedS < playedWas)
+    fail('the yard\'s length went back', `${playedWas} then ${S.playedS}`);
+  playedWas = S.playedS;
+  playedReads = yardReads;
+
   // --- rule 14: the water is water ------------------------------------------
   // A shower is clean drops with the washed sky among them, and only a drop
   // that was sky may leave a mark (`stepDrops`), so the muck the rain has laid
@@ -477,4 +491,6 @@ export function verifyWorld() {
 // The last stage seen, for the rule that it never goes back. A new game, or a
 // setup that sets the fight outright (`__serpent`), is a new start.
 let serpentWas = -1, woundWas = 0, stunWas = false;
+// The length on the frame before, and which reading of the yard it was of.
+let playedWas = 0, playedReads = -1;
 export function forgetSerpent() { serpentWas = -1; stunWas = false; }

@@ -61,3 +61,14 @@ export const CLOUD_PAIR_TRIES_S = 600;
 // ...and across the whole worker in an hour, which is what stops guesses
 // spread over many ips.
 export const CLOUD_PAIR_FAILS_HOUR = 1000;
+
+// --- wave-cloud SYNC: the client's own ------------------------------------
+// Crockford base 32: no I, L, O or U, so a code read off one screen is typed
+// on another without a guess between a one and an ell.
+export const CLOUD_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+// A yard's name, in the same characters: eighty bits, so no two yards ever
+// minted share one.
+export const YARD_ID_LEN = 16;
+// What the secret is shown behind, so a recovery code written on paper says
+// what it is for; dropped again on the way in.
+export const CLOUD_SECRET_PREFIX = 'PEBBLE';

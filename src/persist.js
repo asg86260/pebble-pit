@@ -43,6 +43,7 @@ import { seed, reseed, rngState, setRngState } from './rng.js';
 import { migrate } from './migrations/index.js';
 import { snapShown } from './tween.js';
 import { SAVE as DEEP_BED } from './deep/scales.js';
+import { mintYardId } from './cloud.js';
 
 // A pile is nearly all long runs of the same value, so store the runs
 // ("value x length"): a full pit comes out a few kilobytes.
@@ -504,7 +505,20 @@ function blob() {
   return out;
 }
 
+// How many times the yard has been read or started over: the verify rule that
+// `playedS` never goes back is about one frame and the next, and a load or a
+// new game in between is a different yard, or the same one at another point.
+export let yardReads = 0;
+
+// A new yard's name, from the browser's randomness rather than the seeded
+// chance (cloud.js): the one fact about a yard that no seed can give twice.
+function newYardName() {
+  S.yardId = mintYardId();
+  S.playedS = 0;
+}
+
 export function restore() {
+  yardReads++;
   const s = load();
   // The raw save is brought up to today's shape before a field of it is read
   // (src/migrations/); everything below reads today's shape and nothing else.
@@ -521,6 +535,7 @@ export function restore() {
     S.newerSave = null;             // no save, so no build to be newer than this one
     // The same one line as reading a save, so the two cannot drift apart.
     readSaved({});
+    newYardName();
     blankByHand();
     S.shownStored = 0; snapShown();
     for (const o of SAVERS) o.blank();
@@ -546,10 +561,12 @@ export function reset(fresh = true) {
   // A staged yard is nobody's (scenesheet.js, the demo): clearing the slot
   // under it would erase the player's yard to make room for a picture.
   if (!S.staged) clear();
+  yardReads++;
   S.runSeed = fresh ? reseed() : seed();
   // The same one line the "no save" arm of `restore` uses: a new game and a
   // game never played are the same yard.
   readSaved({});
+  newYardName();
   blankByHand();
   // ...and everything the save throws away, for the same reason: what was in
   // the air, on the belt, on the pegs or on the camera is the old yard's too.

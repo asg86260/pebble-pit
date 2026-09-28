@@ -31,8 +31,11 @@ let kv = null;              // the database, or null for localStorage
 const cache = new Map();    // every key of ours, as the database has them
 let dbTook = true;          // what the database said about the last write that has answered
 let pending = Promise.resolve();
+// The cloud's own facts (cloud.js): the secret and what each slot last agreed
+// with the cloud. Kept beside the slots, so it is read at boot as they are.
+const CLOUD_KEY = 'boulder-clicker/cloud';
 const OURS = () => {
-  const keys = [SLOT_KEY];
+  const keys = [SLOT_KEY, CLOUD_KEY];
   for (let n = 1; n <= SLOTS; n++) keys.push(keyOf(n), keyOf(n, '.prev'), keyOf(n, '.broken'));
   return keys;
 };
@@ -144,6 +147,14 @@ function readDesk(n = slot) {
   try { return desk().read(n) || {}; } catch { return {}; }
 }
 
+// Who hears that a slot was written (cloud.js, which marks it to be pushed):
+// told the slot's number after every write that took, and after a clear.
+const heard = [];
+export function onSaved(fn) { heard.push(fn); }
+function wrote(n) {
+  for (const fn of heard) { try { fn(n); } catch {} }
+}
+
 const store = {
   get() {
     const d = desk();
@@ -163,30 +174,42 @@ const store = {
   // Whether it was taken. On the desk the answer is the last one the disk
   // gave: one write behind, never silent.
   set(raw) {
-    const d = desk();
-    if (!d) return web.set(KEY(), raw);
-    held[slot] = raw;
-    try {
-      Promise.resolve(d.write(slot, raw)).then(ok => { diskTook = !!ok; }, () => { diskTook = false; });
-    } catch { diskTook = false; }
-    return diskTook;
+    return writeSlot(slot, raw);
   },
   // On the desk the file is truncated rather than deleted, so the store still
   // says a save was here once and the migration in `load` does not bring the
   // browser's copy back over a reset.
   remove() {
-    const d = desk();
-    if (!d) { web.remove(KEY()); return; }
-    store.set('');
+    writeSlot(slot, '');
   }
 };
+
+// Any slot's blob written, open or not: '' clears it (the web key removed, the
+// desk's file truncated, as `remove` always has). Whether it was taken, one
+// write behind as `set` says it.
+export function writeSlot(n, raw) {
+  const d = desk();
+  let took = true;
+  if (!d) {
+    if (raw) took = web.set(keyOf(n), raw);
+    else web.remove(keyOf(n));
+  } else {
+    held[n] = raw;
+    try {
+      Promise.resolve(d.write(n, raw)).then(ok => { diskTook = !!ok; }, () => { diskTook = false; });
+    } catch { diskTook = false; }
+    took = diskTook;
+  }
+  if (took) wrote(n);
+  return took;
+}
 
 // Any slot's blob, read without opening it; null for a slot that has never
 // held one or was cleared.
 export function slotRaw(n) {
   const d = desk();
   if (!d) return web.get(keyOf(n)) || null;
-  if (n === slot && slot in held) return held[slot] || null;
+  if (n in held) return held[n] || null;
   return readDesk(n).current || null;
 }
 
@@ -304,4 +327,19 @@ export function savePrev(raw) {
 
 export function loadPrev() {
   return web.get(PREV_KEY());
+}
+
+// Any slot's previous save, the way `savePrev` writes the open one's: where a
+// copy goes when the cloud's is taken over it, or it over the cloud's.
+export function savePrevOf(n, raw) {
+  if (raw == null) web.remove(keyOf(n, '.prev'));
+  else web.set(keyOf(n, '.prev'), raw);
+}
+export const loadPrevOf = n => web.get(keyOf(n, '.prev'));
+
+// The cloud's blob of facts, raw; cloud.js alone reads and writes it.
+export const cloudRaw = () => web.get(CLOUD_KEY);
+export function setCloudRaw(raw) {
+  if (raw == null) web.remove(CLOUD_KEY);
+  else web.set(CLOUD_KEY, raw);
 }

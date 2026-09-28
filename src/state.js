@@ -427,6 +427,16 @@ export const S = {
   // The seed this run was started from: drawn by `reset` in persist.js, saved
   // with the yard. The chance itself is in rng.js.
   runSeed: 0,
+  // Which yard this is, across every device it is carried to: minted with a
+  // new game from the browser's own randomness and never changed, so two
+  // copies of a slot with the same id are one yard at two points and two ids
+  // are two yards (cloud.js). Not the seeded chance: two runs of one seed
+  // would share it.
+  yardId: '',
+  // Game seconds played, counted by the frame: the yard's length, which is
+  // what "newer" means between two copies of it. `savedAt` is a wall clock
+  // from whichever machine wrote it and says nothing across two.
+  playedS: 0,
   // The sim changed what a board sells: the frame rebuilds every board once,
   // after `step` (main.js), and the hooks rebuild before a check reads one.
   shopStale: false,
@@ -659,6 +669,8 @@ export const SAVED = [
   JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
+  // The yard's name and length across devices (cloud.js).
+  'yardId', 'playedS',
 ];
 
 // Fields whose encode or decode is more than a copy: a run-length string, a

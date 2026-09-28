@@ -549,3 +549,9 @@ function fly(list, tx, ty) {
     m.y = m.y0 + (gy - m.y0) * e - Math.sin(e * Math.PI) * m.lift;
   }
 }
+
+// --- wave-cloud SYNC -------------------------------------------------------
+// The yard's length, a frame at a time: what "newer" means between two copies
+// of one yard on two devices (cloud.js). Not on a staged yard, which is
+// nobody's and is never written down.
+STEPS.push({ name: 'played', step: c => { if (!S.staged) S.playedS += Math.max(0, c.dt) / 1000; } });
