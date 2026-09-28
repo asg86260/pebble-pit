@@ -20,9 +20,13 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, STAR_DMG, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg } from './deep/place.js';
+// Namespaces, so an export BOARD or CREW has yet to write (`slotX`,
+// `nextSlot`) is `undefined` here rather than a module that will not link.
+import * as PLACE from './deep/place.js';
+import * as PARTY from './deep/party.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 
@@ -186,27 +190,32 @@ const shieldBuilt = kind => {
 };
 
 // --- the deep ---------------------------------------------------------------
-// The second half (docs/wave-serpent.md). Every scene stands the real deep up:
-// the snatch played through, the fight set at a stage, the doors and hands
-// asked for, and then the yard's clock run until the bodies have swum to their
-// work and the weapons are in the water. Nothing is drawn that the game did
-// not put there.
+// The second half (docs/wave-serpent.md, docs/wave-party.md). Every scene
+// stands the real deep up: the snatch played through, the fight set at a
+// stage, the party asked for (`__party`: its stations built, a fighter seated
+// at each, the class and rung set), and then the yard's clock run until the
+// fighters have swum to their work and their shots are in the water. Nothing
+// is drawn that the game did not put there.
 
-// A yard the serpent has come for: every site built, the snatch behind it, the
-// fight at `stage`, scales on the floor, the hands asked for, and the view.
-function deepYard({ stage = 0, wound = 0, open = [], crew = {}, scales = 400, loose = 0, view = 'deep', run = 20 } = {}) {
+// A yard the serpent has come for: every site built, the snatch behind it,
+// the sqwife back down there as the deep's one resident (`__crew` sends the
+// whole crew up top), `spare` residents more, the party, the fight at
+// `stage`, scales on the floor, and the view.
+function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scales = 400, loose = 0,
+                    view = 'deep', run = 20 } = {}) {
   rich();
   window.__fullSites();
   window.__snatch({ played: true });
   window.__crew(0, 4);
-  for (const k of open) S[k + 'Open'] = true;
-  window.__deepCrew({ brawlers: 1, ...crew });
+  window.__deepCrew({ spare: 1 + spare });
+  if (party.length || fangs) window.__party({ stations: party, fangs });
   window.__scales(scales);
   if (loose) window.__looseScales(loose);
   window.__serpent({ stage, wound });
   window.__view(view);
-  // Long enough to swim from the station to the coil. The hands may break
-  // the defense on the way, so the fight is set again once they are at it.
+  // Long enough to swim from the pods to the stations and the coil. The
+  // fighters may break the defense on the way, so the fight is set again
+  // once they are at it.
   window.__fast(run);
   window.__serpent({ stage, wound });
 }
@@ -214,9 +223,32 @@ function deepYard({ stage = 0, wound = 0, open = [], crew = {}, scales = 400, lo
 const lookDeep = x => window.__look(x - S.viewW / 2);
 const beltSeg = f => Math.round(f * (COIL_SEGS - 1));
 
-// The sqwife at the coil, a stage's look on the serpent.
-const stageScene = (stage, wound, open, crew = {}) => () => {
-  deepYard({ stage, wound, open, crew });
+// A floor slot's middle. BOARD's `slotX` reads DEEP_SLOTS; until it lands
+// every slot is the old altar's spot, so a shot is only off-center.
+const slotAt = i => (PLACE.slotX ? PLACE.slotX(i) : spotX('altar'));   // until merge
+// The lowest slot no station stands on, as the build button reads it.
+const freeSlot = () => {
+  const n = PARTY.nextSlot?.();
+  if (Number.isInteger(n) && n >= 0) return n;
+  const used = new Set(S.stations.map(st => st.slot));
+  let i = 0;
+  while (used.has(i)) i++;
+  return i;
+};
+// The station a class is sold at, off the pairs table.
+const KIND_OF = Object.fromEntries(Object.entries(PAIRS).flatMap(([kind, cs]) => cs.map(c => [c, kind])));
+// Where the fighter at a station is now, or its station while it has none.
+const lookAtStation = i => {
+  const st = S.stations[i];
+  if (!st) return lookDeep(slotAt(freeSlot()));
+  const w = S.workers.find(b => b.station === st.id);
+  lookDeep(w ? w.x : slotAt(st.slot));
+};
+const cast = (cls, rung = 8) => ({ kind: KIND_OF[cls], cls, rung });
+
+// A stage's look on the serpent, the party asked for at the coil.
+const stageScene = (stage, wound, stations = []) => () => {
+  deepYard({ stage, wound, party: stations });
   lookDeep(coilAt(bellySeg() - 4, now()).x);
 };
 
@@ -247,6 +279,11 @@ const glideAt = (to, k) => () => {
   poseGlide();
 };
 
+// The five station kinds, each alone at the first slot with a fighter on
+// guard and no class taken: the shot to crop when a station's drawing
+// changes. `deep-all` has four, the most a party holds.
+const KINDS = Object.keys(PAIRS);
+
 const deepScenes = {
   snatch: { about: 'the deep', say: 'the snatch: the serpent up out of the abyss at the shaft, him in its jaws',
     run: snatchAt('rise') },
@@ -271,11 +308,11 @@ const deepScenes = {
                  window.__wizardHat(1); window.__assign(JOB.WIZARD, 1); window.__view('yard');
                  window.__grant({ dust: 1e7 }); window.__fast(20); window.__buy('portal'); window.__fast(13); window.__look(portalX() - S.viewW / 2); } },
   // The wizards' portal, conjured and held open, the arrow over it.
-  portal: { about: 'the deep', say: "the wizards' portal held open over the abyss, the way down",
+  portal: { about: 'the deep', say: 'the wizards\' portal held open over the abyss, the way down',
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true });
                  window.__view('yard'); window.__look(portalX() - S.viewW / 2); } },
   // Its other end in the deep, hanging in the water, the arrow under it.
-  'deep-portal': { about: 'the deep', say: "the portal's deep end, the way back up to the yard",
+  'deep-portal': { about: 'the deep', say: 'the portal\'s deep end, the way back up to the yard',
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true }); window.__view('deep'); } },
   'glide-up-in': { about: 'the deep', say: "going up, a third in: the deep drawing back into its end of the portal",
     run: glideAt('yard', 0.35) },
@@ -294,174 +331,150 @@ const deepScenes = {
                  for (let i = 0; i < 600 && S.landAt === was; i++) window.__fast(1 / 60);
                  let n = 0;
                  for (const w of S.workers) if (w.y < S.worldH && n++ % 2) w.say = { mark: 'loo', until: now() + 60000 }; } },
-  // A fresh deep: the altar, the bed barely begun, the sqwife at the coil.
-  deep: { about: 'the deep', say: 'the deep, fresh: the sqwife at the coil, him in its belly', run: stageScene(0, 20, []) },
+  // A fresh deep: no station yet, the sqwife treading water by the pods.
+  deep: { about: 'the deep', say: 'the deep, fresh: no station yet, the sqwife treading water by the pods, him in its belly',
+    run: stageScene(0, 20) },
   // The glide between the halves, caught at a point of it (`glideAt`): just
   // past the turn going down is the deep's side of the hand-over, and the
   // same point going up is the yard's side, so the two shots should be one
   // picture of the liquid.
   'glide-down-turn': { about: 'the deep', say: 'going down, just past the turn: the deep over the liquid, barely faded in',
     run: glideAt('deep', 0.52) },
-  'glide-up-turn': { about: 'the deep', say: "going up, just past the turn: the pit's liquid from the yard's side",
+  'glide-up-turn': { about: 'the deep', say: 'going up, just past the turn: the pit\'s liquid from the yard\'s side',
     run: glideAt('yard', 0.52) },
   'glide-down-in': { about: 'the deep', say: 'going down, a quarter in: the camera shifting onto the abyss',
     run: glideAt('deep', 0.25) },
   'glide-down-fade': { about: 'the deep', say: 'going down, the deep fading in over the water as the camera opens out',
     run: glideAt('deep', 0.8) },
   // The ends of it: the head and its slim neck, and the long taper of the tail.
-  'serpent-head': { about: 'the deep', say: "the serpent's head and the neck behind it",
+  'serpent-head': { about: 'the deep', say: 'the serpent\'s head and the neck behind it',
     run: () => { deepYard({}); lookDeep(coilAt(4, now()).x + S.viewW * 0.25); } },
-  'serpent-tail': { about: 'the deep', say: "the serpent's tail, tapering to its tip",
+  'serpent-tail': { about: 'the deep', say: 'the serpent\'s tail, tapering to its tip',
     run: () => { deepYard({}); lookDeep(coilAt(COIL_SEGS - 8, now()).x); } },
-  'deep-wound': { about: 'the deep', say: 'the bare coil with the wound held most of the way open',
-    run: stageScene(0, 52, []) },
-  'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales, lances in it',
-    run: stageScene(1, 300, ['well'], { lancers: 3 }) },
-  'deep-split': { about: 'the deep', say: 'the third defense: the coil in lengths, grenades bursting, sigils drawn',
-    run: stageScene(2, 1500, ['well', 'font', 'circle'], { grenadiers: 2, scribes: 2 }) },
-  'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded but where a beam lights it',
-    run: stageScene(3, 8000, ['well', 'font', 'circle', 'spire'], { warlocks: 2 }) },
-  'deep-arms': { about: 'the deep', say: 'every weapon at work: fists, lances, grenades, sigils, beams, the star',
-    run: () => {
-      deepYard({ stage: 1, wound: 450, open: ['well', 'font', 'circle', 'spire', 'star'],
-                 crew: { brawlers: 2, lancers: 2, grenadiers: 2, scribes: 1, warlocks: 1 }, run: 30 });
-      // The star called now, so it is on its way down in the shot.
-      S.starAt = 0;
-      window.__fast(1.5);
-      lookDeep(coilAt(beltSeg(0.5), now()).x);
-    } },
+  // The four defenses, each with fighters of the classes that suit it.
+  'deep-wound': { about: 'the deep', say: 'the bare coil with the wound held most of the way open, a Brawler at it',
+    run: stageScene(0, 52, [cast('brawler', 1)]) },
+  'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales, a Ranger\'s arrows in it',
+    run: stageScene(1, 300, [cast('ranger', 4), cast('brawler', 2)]) },
+  'deep-split': { about: 'the deep', say: 'the third defense: the coil in lengths, a Sapper\'s charges bursting, a Hexer\'s hex on it',
+    run: stageScene(2, 1500, [cast('sapper', 4), cast('hexer', 4)]) },
+  'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',
+    run: stageScene(3, 8000, [cast('mage', 4), cast('monk', 4)]) },
   // Reading the fight: the numbers off the blows and the heal's purple `+`
-  // off the belly, mid-fight, with a lance's and a beam's second summed.
-  'deep-numbers': { about: 'the deep', say: "the fight's numbers: each blow's damage rising off the coil, the heal's +N in purple",
+  // off the belly, mid-fight, with a held beam's second summed.
+  'deep-numbers': { about: 'the deep', say: 'the fight\'s numbers: each blow\'s damage rising off the coil, the heal\'s +N in purple',
     run: () => {
-      deepYard({ stage: 1, wound: 450, open: ['well', 'font', 'spire'],
-                 crew: { brawlers: 3, lancers: 2, grenadiers: 1, warlocks: 1 }, run: 30 });
-      // A few rungs up, so a punch through the ward still says something.
-      Object.assign(S, { punchLevel: 6, brawlLevel: 6, lanceLevel: 4, grenadeLevel: 3, beamLevel: 2 });
+      deepYard({ stage: 1, wound: 450, run: 30,
+                 party: [cast('brawler', 6), cast('ranger', 4), cast('sapper', 3), cast('mage', 2)] });
       window.__fast(2);
       window.__serpent({ stage: 1, wound: 450 });
       // Between the fists and the belly, so a narrow window has both the
       // blows' white and the heal's purple.
-      const fist = S.hits.find(h => h.weapon === 'punch');
+      const fist = S.hits.find(h => h.weapon === 'brawler');
       const belly = coilAt(bellySeg(), now()).x;
       lookDeep(fist ? (fist.x + belly) / 2 : belly);
     } },
-  // Blows land (DESIGN.md, "Blows land: the burst and the stun"). A star
-  // called and fallen onto the split coil, which stuns it: the coil held, a
-  // ring running over its head, the bar's pip held open, no `+` off the belly. The split,
-  // because a first star is deeper than the warded coil's whole depth and
-  // breaks it, and a break ends a stun. The shot is a second on, well inside
-  // the longest stun.
-  'deep-stun': { about: 'the deep', say: 'a star has stunned the coil: held still, a ring running over its head, the heal stopped, the pip held open',
+  // Blows land (DESIGN.md, "Blows land: the burst and the stun"). A Ranger's
+  // aimed shot at rung 8 stuns: the coil held, a ring running over its head,
+  // the bar's pip held open, no `+` off the belly. The split coil, deep
+  // enough that the arrows before the fifth do not break it.
+  'deep-stun': { about: 'the deep', say: 'a Ranger\'s aimed shot has stunned the coil: held still, a ring over its head, the heal stopped',
     run: () => {
-      deepYard({ stage: 2, wound: 1500, open: ['star'], crew: { brawlers: 2 } });
-      S.starAt = 0;
-      for (let i = 0; i < 60 * 20 && !(S.serpentStun > 0); i++) window.__fast(1 / 60);
+      deepYard({ stage: 2, wound: 1500, party: [cast('ranger', 8)] });
+      for (let i = 0; i < 60 * 30 && !(S.serpentStun > 0); i++) window.__fast(1 / 60);
       // On the head, where the ring stands, as serpent-head frames it.
       lookDeep(coilAt(4, now()).x + S.viewW * 0.25);
     } },
   // Three blows just landed on the split coil, no stun left over so the
-  // bites are read on a coil at its sway: a star's bite out of the top edge
-  // with its scales bursting up, a grenade's burst from under, and a click
-  // on the top edge, the smallest.
-  'deep-chip': { about: 'the deep', say: "fresh bites out of the hide -- a star's, a grenade's, a click's -- and the scales bursting off them",
+  // bites are read on a coil at its sway: a Brawler's blow out of the top
+  // edge with its scales bursting up, a Sapper's charge from under, and a
+  // click on the top edge, the smallest.
+  'deep-chip': { about: 'the deep', say: 'fresh bites out of the hide -- a Brawler\'s, a Sapper\'s, a click\'s -- and the scales bursting off them',
     run: () => {
-      deepYard({ stage: 2, wound: 1500, open: ['well', 'font', 'circle'], crew: { brawlers: 0 } });
-      const t = now(), at = i => coilAt(bellySeg() + i, t);
-      const star = at(-9), burst = at(-3), fist = at(3);
-      strike('star', STAR_DMG[0], star.x, star.y);
-      strike('grenade', rungValue('grenade', 8), burst.x, burst.y, {});
-      S.punchLevel = 8;
+      deepYard({ stage: 2, wound: 1500, party: [cast('brawler', 8)] });
+      const t = now(), seg = i => coilAt(bellySeg() + i, t);
+      const blow = seg(-9), burst = seg(-3), fist = seg(3);
+      strike('brawler', rungValue('brawler', 8) * 4, blow.x, blow.y);
+      strike('sapper', rungValue('sapper', 8) * 3, burst.x, burst.y, {});
       clickDeep(fist.x, fist.y - P);
       S.serpentStun = S.serpentGrace = 0;
-      lookDeep(at(-3).x);
+      lookDeep(seg(-3).x);
     } },
   // The crusher at the deep's left end, haulers lent down to it carrying the
   // floor's scales and tossing them over the lip.
   crusher: { about: 'the deep', say: 'the crusher: gatherers tossing scales into the hopper, the fire burning up',
     run: () => {
-      deepYard({ crew: { brawlers: 2, spare: 3 }, loose: 900, run: 12 });
+      deepYard({ spare: 3, loose: 900, run: 12 });
       lookDeep(spotX('crusher') + S.viewW * 0.3);
     } },
   // The floor thick with scales and the gatherers at work on it.
   gathering: { about: 'the deep', say: 'gatherers scooping the floor\'s loose scales, loads overhead',
     run: () => {
-      deepYard({ crew: { brawlers: 2, spare: 3 }, loose: 2500, run: 6 });
-      lookDeep(spotX('altar'));
+      deepYard({ spare: 3, loose: 2500, run: 6 });
+      lookDeep(slotAt(0));
     } },
-  // The deep's crew at rest: six hands on no weapon by the crusher on a bare
-  // floor, strolling, floating and hopping about its ground (deep/rest.js).
-  // A still catches each in its own phase; shoot it again for others.
-  'deep-rest': { about: 'the deep', say: "the deep's crew at rest: gatherers on a bare floor, strolling, floating, hopping",
+  // The deep's crew at rest: six hands on no station by the crusher on a
+  // bare floor, strolling, floating and hopping about its ground
+  // (deep/rest.js). A still catches each in its own phase; shoot it again for
+  // others.
+  'deep-rest': { about: 'the deep', say: 'the deep\'s crew at rest: gatherers on a bare floor, strolling, floating, hopping',
     run: () => {
-      deepYard({ crew: { brawlers: 0, spare: 6 }, run: 30 });
+      deepYard({ spare: 6, run: 30 });
       lookDeep(spotX('crusher') + S.viewW * 0.35);
     } },
-  // The pods between the crusher and the altar, a stack of them, some of
+  // The pods between the crusher and the stations, a stack of them, some of
   // their people home.
-  pods: { about: 'the deep', say: "the pods: the deep's houses, stacked between the crusher and the altar",
+  pods: { about: 'the deep', say: 'the pods: the deep\'s houses, stacked between the crusher and the stations',
     run: () => {
-      deepYard({ open: ['well', 'font', 'circle', 'spire'], run: 2 });
+      deepYard({ run: 2 });
       for (let i = 0; i < 7; i++) { window.__scales(99999); window.__buy('pod'); window.__finish(); }
       window.__fast(4);
       lookDeep(spotX('pods') - S.viewW * 0.2);
     } },
   // The pods' own board up over them, the next pod priced in scales.
-  'pods-board': { about: 'the deep', say: "the pods' board: another pod, priced in scales",
+  'pods-board': { about: 'the deep', say: 'the pods\' board: another pod, priced in scales',
     run: () => {
       deepYard({ run: 2 });
       window.__scales(99999);
       lookDeep(spotX('pods'));
       window.__board('pods');
     } },
-  'armory-board': { about: 'the deep', say: "the armory's board: the grenadiers and their two ladders",
+  // A station's board with a class taken: the rail climbed, the other folded.
+  'armory-board': { about: 'the deep', say: 'the armory\'s board: a Ranger three rungs up her rail, the Assassin\'s folded away',
     run: () => {
-      deepYard({ stage: 2, open: ['well', 'font'], run: 2 });
+      deepYard({ stage: 1, run: 2, party: [cast('ranger', 3)] });
       window.__scales(99999);
-      lookDeep(spotX('font'));
-      window.__board('font');
+      lookAtStation(0);
+      window.__board(S.stations[0].id);
     } },
-  // Every station on the floor at once, the camera on the middle of them.
-  'deep-all': { about: 'the deep', say: 'the whole deep, every station standing',
+  // Every station the floor holds at once, the camera on the middle of them.
+  'deep-all': { about: 'the deep', say: 'the whole deep floor, four stations standing, a fighter at each',
     run: () => {
-      deepYard({ stage: 1, wound: 300, open: ['well', 'font', 'circle', 'spire'],
-                 crew: { brawlers: 1, lancers: 1, grenadiers: 1, scribes: 1, warlocks: 1 } });
-      lookDeep(spotX('font'));
+      deepYard({ stage: 1, wound: 300,
+                 party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
+      lookDeep((slotAt(0) + slotAt(3)) / 2);
     } },
-  // One station in the middle of the frame, the same yard as `deep-all`: the
-  // shot to crop when a station's drawing changes.
-  ...Object.fromEntries(['font', 'circle', 'spire'].map(k => [`deep-${k}`, {
-    about: 'the deep', say: `the ${k} alone in the middle of the frame, under its dome`,
+  ...Object.fromEntries(KINDS.map(k => [`deep-${k}`, {
+    about: 'the deep', say: `the ${k} alone in the middle of the frame, under its dome, its fighter on guard`,
     run: () => {
-      deepYard({ stage: 1, wound: 300, open: ['well', 'font', 'circle', 'spire'],
-                 crew: { brawlers: 1, lancers: 1, grenadiers: 1, scribes: 1, warlocks: 1 } });
-      lookDeep(spotX(k));
+      deepYard({ stage: 1, wound: 300, party: [{ kind: k, cls: null, rung: 0 }] });
+      lookDeep(slotAt(S.stations[0].slot));
     } }])),
-  // A line at the altar: the stack of glyphs over a station's dome, one going
-  // up and the rest in outline behind it.
-  'deep-queue': { about: 'the deep', say: 'the altar with a line of rungs stacked over it',
-    run: () => {
-      deepYard({ open: ['well'], run: 2 });
-      window.__scales(99999);
-      for (const k of ['punch', 'brawl', 'punch']) window.__buy(k);
-      window.__fast(3);
-      lookDeep(spotX('altar'));
-    } },
-  // A door going up down there: a builder down the shaft at the well, the
-  // silt off each blow sinking back to the floor.
-  'deep-build': { about: 'the deep', say: 'a builder hammering at the well, silt stirred up off each blow',
+  // A station going up down there: a delver at the first slot, the silt off
+  // each blow sinking back to the floor. The pick is the build button's.
+  'deep-build': { about: 'the deep', say: 'a delver hammering at the altar going up, silt stirred up off each blow',
     run: () => {
       deepYard({ stage: 1, run: 2 });
-      window.__buy('unlockwell');
-      for (let i = 0; i < 60 * 120 && !S.workers.some(w => w.type === TYPE.BUILD && w.jigAt != null
+      PARTY.buildStation?.('altar');
+      for (let i = 0; i < 60 * 120 && !S.workers.some(w => w.type === TYPE.DELVE && w.jigAt != null
                                                        && w.y > S.groundY); i++) window.__fast(1 / 60);
       window.__fast(1);
-      lookDeep(spotX('well'));
+      lookDeep(slotAt(0));
     } },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {
-      deepYard({ stage: 3, open: ['well', 'font', 'circle', 'spire'] });
+      deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
       window.__serpent({ stage: 4 });
       for (let i = 0; i < 60 * 30 && S.beat.yard !== 'freed'; i++) window.__fast(1 / 60);
       window.__fast(1.5);
@@ -480,7 +493,55 @@ const deepScenes = {
         const hold = () => { if (S.viewTo) { S.viewFade = 0.22; requestAnimationFrame(hold); } };
         hold();
       });
-    } }
+    } },
+
+  // --- wave party: STATE ---
+  // The party (docs/wave-party.md), each stood up by `__party` and run until
+  // the fighters are at work.
+  // Just after the snatch: no station, the build button over the first slot
+  // offering the three starting kinds, the sqwife treading water.
+  'party-start': { about: 'the deep', say: 'just after the snatch: no station yet, the build button over the first slot',
+    run: () => { deepYard({ run: 4 }); lookDeep(slotAt(freeSlot())); } },
+  'party-one': { about: 'the deep', say: 'one station: a Brawler at the altar, four rungs up, her Haymaker open',
+    run: () => { deepYard({ party: [cast('brawler', 4)] }); lookAtStation(0); } },
+  'party-four': { about: 'the deep', say: 'a full party: a Brawler, a Ranger, a Sapper and a Mage, each at rung 8',
+    run: () => {
+      deepYard({ stage: 1, wound: 300, run: 30,
+                 party: [cast('brawler'), cast('ranger'), cast('sapper'), cast('mage')] });
+      lookDeep((slotAt(0) + slotAt(3)) / 2);
+    } },
+  // Anthem is the Bard's rung 4; the Ranger is the fighter she lifts.
+  'party-bard': { about: 'the deep', say: 'a Bard singing her Anthem over a Ranger, the Ranger\'s shots Inspired',
+    run: () => { deepYard({ party: [cast('ranger', 4), cast('bard', 4)] }); lookAtStation(1); } },
+  // A phase broken for real by a fighter, and the fang it drops caught
+  // sinking before a gatherer carries it.
+  'party-fang': { about: 'the deep', say: 'a fang sinking through the water after a break',
+    run: () => {
+      deepYard({ party: [cast('brawler', 8)] });
+      window.__serpent({ stage: 0, wound: Math.max(0, SERPENT_WOUND[0] - 1) });
+      for (let i = 0; i < 60 * 60 && !S.fangsLoose.length; i++) window.__fast(1 / 60);
+      window.__fast(0.4);
+      const f = S.fangsLoose[0];
+      lookDeep(f && Number.isFinite(f.x) ? f.x : coilAt(bellySeg(), now()).x);
+    } },
+  // The altar's board up with no class taken: both rails drawn, blank.
+  'party-rails': { about: 'the deep', say: 'the altar\'s board with no class taken: two blank rails, Brawler and Swordsman',
+    run: () => {
+      deepYard({ run: 2, party: [{ kind: 'altar', cls: null, rung: 0 }] });
+      window.__scales(99999);
+      lookAtStation(0);
+      window.__board(S.stations[0].id);
+    } },
+  'party-button': { about: 'the deep', say: 'a fang held: the build button over the next free slot, wearing the fang\'s mark',
+    run: () => { deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 }); lookDeep(slotAt(freeSlot())); } },
+  // Each class at its capstone, alone but for the Bard, who needs somebody to
+  // sing to and gets a Brawler.
+  ...Object.fromEntries(Object.keys(CLASSES).map(cls => [`class-${cls}`, {
+    about: 'the deep', say: `a ${CLASSES[cls].name} at rung 8: the kit, the rung-4 mark, the rung-8 touch, the attack`,
+    run: () => {
+      deepYard({ stage: 1, wound: 300, party: cls === 'bard' ? [cast('bard'), cast('brawler')] : [cast(cls)] });
+      lookAtStation(0);
+    } }]))
 };
 
 export const SCENES = {

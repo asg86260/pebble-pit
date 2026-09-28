@@ -98,9 +98,22 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // that clears them puts the owner in the race for its
                       // hat (`ownerRacing`) that the stars had it sitting out
                       'dizzyFor', 'landedAt',
-                      // where a weapon of the deep is in its round, beside
-                      // `goal` (deep/arms.js)
-                      'phase'];
+                      // where a fighter is in its round, beside `goal`
+                      // (deep/classes.js); its pose and attack clocks are
+                      // left to start again, since a fighter's feet are
+                      // kept above and a blow is a moment
+                      'phase',
+                      // which station a fighter stands at, and the name
+                      // `S.stations[i].fighter` knows the body by: dropped,
+                      // a reload seats a stranger and the station's record
+                      // points at nobody (docs/wave-party.md)
+                      'station', 'uid'];
+
+// The five weapon crews a save from before the party may carry. No such
+// trade exists now; a body on one comes back a pod resident on the deep's
+// floor where it stood, and swims off from there like any other spare hand.
+// Its round is dropped with the weapon.
+const RETIRED_DEEP = new Set(['brawler', 'lancer', 'grenadier', 'scribe', 'warlock']);
 
 // Moments on a body's clock, kept as how far off they are because the clock
 // starts again with the page: written as `field - now()`, read back the
@@ -188,7 +201,12 @@ function restoreCrew(who, mouth = null) {
   S.workers = [];
   if (!Array.isArray(who)) return;
   const built = [];                            // saved place -> body, for the claims
-  for (const [i, k] of who.entries()) {
+  for (const [i, k0] of who.entries()) {
+    let k = k0;
+    if (k && RETIRED_DEEP.has(k.type)) {
+      k = { ...k, type: TYPE.GATHER, deepHome: true };
+      delete k.goal; delete k.phase;
+    }
     if (!k.type) continue;
     const made = FACTORY(k.type);
     if (!made.type) continue;                  // a trade this build does not have
