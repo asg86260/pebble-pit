@@ -22,7 +22,8 @@
 // its cells.
 
 import { now } from '../clock.js';
-import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_S, CLASSES } from '../config.js';
+import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_S, CLASSES,
+         IDLE_STEP_S, IDLE_HOP_S, IDLE_SETTLE_S } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { S } from '../state.js';
 import { fighterAt } from '../deep/party.js';
@@ -109,10 +110,20 @@ function pageOf(key, w, R, T) {
   const a = sg.hit + (T - p.hit) / 1000 / k;
   if (a <= sg.to) return { sg, a0: a };
   if (ng && T >= nx.hit - W / k * 1000) return { sg: ng, a0: Math.max(startOf(ng, p, nx.hit), ng.hit - (nx.hit - T) / 1000 / k) };
-  // between moves: the fight's stance, or back to rest once it is long idle
+  // between moves: the fight's stance, or back to rest once it is long idle;
+  // `idle` is the seconds since the follow-through settled
   if (w.goal !== 'fight' && w.goal !== 'sing') return null;
-  if (sg.off && (!nx || nx.hit - T > DRAW_LOWER_S * 1000)) return { sg, a0: Math.min(sg.off, sg.to + (T - p.hit - F * k * 1000) / 1000) };
-  return { sg, a0: sg.to };
+  const idle = (T - p.hit - F * k * 1000) / 1000;
+  if (sg.off && (!nx || nx.hit - T > DRAW_LOWER_S * 1000)) return { sg, a0: Math.min(sg.off, sg.to + idle), idle };
+  return { sg, a0: sg.to, idle };
+}
+
+// Where a fighter stands between two moves, in cells off its spot: a step
+// forward and one back, and a melee fighter's hop as each step lands.
+function idleAt(key, s) {
+  if (s == null || s < IDLE_SETTLE_S) return [0, 0];
+  const u = s - IDLE_SETTLE_S, step = u % (IDLE_STEP_S * 2) < IDLE_STEP_S ? 0 : 1;
+  return [step, CLASSES[key].melee && u % IDLE_STEP_S < IDLE_HOP_S ? -1 : 0];
 }
 
 // --- the scratch bench's loop ---------------------------------------------------------
@@ -134,10 +145,10 @@ function fighters(t) {
   for (const { w, st } of stationsNow()) {
     const key = st.cls && ATTACKS[st.cls] ? st.cls : null, R = st.rung || 0;
     const x = Math.round(w.x) / P, restY = Math.round(w.y) / P;
-    const f = { w, st, key, R, x, restY, a: null, a0: null, sauce: null, c: null, sim: 'pose' in w };
+    const f = { w, st, key, R, x, restY, a: null, a0: null, sauce: null, c: null, sim: 'pose' in w, dx: 0, dy: 0 };
     if (key && f.sim) {
       const pg = pageOf(key, w, R, t * 1000);
-      if (pg) { f.c = pg.sg.c; f.a0 = pg.a0; f.melee = MELEE.has(key) || pg.sg.c === ATTACKS.mage; }
+      if (pg) { f.c = pg.sg.c; f.a0 = pg.a0; f.melee = MELEE.has(key) || pg.sg.c === ATTACKS.mage; [f.dx, f.dy] = idleAt(key, pg.idle); }
     } else if (key && S.snatched) {
       const c = ATTACKS[key], a0 = loopClock(w, c, t);
       if (a0 < c.len + 0.8) { f.c = c; f.a0 = a0; f.melee = true; }
@@ -234,12 +245,12 @@ export function drawFighters() {
   ctx.rect(deepX0() - P * 16, cut, DEEP_W + P * 32, deepFloor() - cut + P * 8);
   ctx.clip();
   for (const f of list) {
-    let at = [f.x, f.restY];
+    let at = [f.x + f.dx, f.restY + f.dy];
     if (!f.key) body(f.x, f.restY);             // a base fighter: the plain square, standing guard
     else if (f.c) {
       const w = f.w, beam = f.sim && w.beam;
       const api = {
-        restY: f.restY, kick: f.sauce.kick, placed: f.sim, sim: f.sim,
+        restY: f.restY + f.dy, kick: f.sauce.kick, placed: f.sim, sim: f.sim,
         pips: f.sim && w.pipsMax > 0 ? w.pips || 0 : null,
         aim: beam ? { x: beam.tx / P, y: beam.ty / P } : f.sim && w.pose ? { x: w.pose.x / P, y: w.pose.y / P } : null,
         width: beam && R4(f.R) ? beam.width : null,
@@ -250,7 +261,7 @@ export function drawFighters() {
       };
       // the held star under the fighter, so the fist or blade reads on top of it
       if (f.melee) sparksOf(ctx, f.sauce, t, f.a0);
-      f.c.draw(ctx, t, f.a, api, f.R, f.x);
+      f.c.draw(ctx, t, f.a, api, f.R, f.x + f.dx);
     } else {
       at = [f.x, f.restY - liftOf(f.key, f.R)];
       REST[f.key](ctx, at[0], at[1], f.R, t);
