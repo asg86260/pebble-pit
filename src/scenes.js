@@ -872,6 +872,10 @@ export const SCENES = {
                  for (let i = 0; i < 3; i++) window.__buy('carry');
                  window.__buy('house'); window.__buy('house');
                  window.__fast(2); window.__board('bench'); } },
+  queuetop: { about: 'the bench', say: 'a ladder queued to its top, its first rung part built under a hand', page: true,
+    run: () => { rich(); S.autoToss = true; window.__fast(2);
+                 while (window.__buy('reach')) {}
+                 window.__fast(1.5); window.__board('bench'); } },
   // Deliberately not `__finish`ed: partway through is the only state the
   // rise, the tape and the hammer exist in.
   build: { about: 'the bench', say: 'a building half out of the ground',

@@ -351,7 +351,7 @@
 /* A half with nothing to do -- the refund while the only copy is being
    built, the next copy while the purse is short -- pales as a short tag does. */
 .rows.shelves > .tile .strip > i.dead { color: var(--ink-5); cursor: default; }
-.rows.shelves > .tile.stripped { padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
+.rows.shelves > .tile.stripped { cursor: default; padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
 .rows.shelves > .tile.stripped .pinmark { bottom: calc(var(--shelf-refund, 18px) + 2px); }
 @media (hover: hover) {
   .rows.shelves > .tile .strip > i:not(.dead):hover { background: var(--ink); color: var(--paper); }

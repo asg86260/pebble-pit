@@ -25,7 +25,7 @@ feature lives in DESIGN.md.
 - The deep's crew no longer hangs still with nothing to do: a gatherer on a bare floor, a scribe whose circles are full and a wizard with nothing in reach stroll, float and hop about their station, and go straight to work from mid-air when called (test/deep-rest.test.mjs).
 - The fight is read in numbers: each blow's damage rises off the coil in a carved pixel face of its own, a lance's and a beam's bleed and a grenade's burst each say one sum, and the heal rises off the wound in purple as +N once a second (test/serpent-numbers.test.mjs).
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
-- A card pressed again queues another of the same -- the next rung, the next house -- paid on the press at its own price; a strip along the card's foot splits into a refund of the newest one still waiting and a button for another, and the card's pips dot every rung paid for and not yet landed; the queue card shows a run as one line with its count (test/queue-repeats.test.mjs, src/selftest/boards.js).
+- A card pressed again queues another of the same -- the next rung, the next house -- paid on the press at its own price; a strip along the card's foot splits into a refund of the newest one still waiting and a button for another, the only presses on the card while it is up, and the card's pips dot every rung paid for and not yet landed; the queue card shows a run as one line with its count (test/queue-repeats.test.mjs, src/selftest/boards.js).
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
 - Save a copy, load a save and reset progress are on the saves page now, and loading a yard turns the sheet back to the front (src/selftest/settings.js).
 
@@ -50,6 +50,7 @@ feature lives in DESIGN.md.
 - A rockhand who shoveled a mess on the far side of the pit walks back round the hole to the rock, instead of walking home across thin air (test/rockhand-home.test.mjs).
 - A worker you pick up no longer vanishes when carried down over the drowned pit or up past the deep's ceiling (src/selftest/crew.js).
 - The pause menu dims the yard behind it instead of washing it white, so the dark pit no longer glares (`node tools/look.mjs portal`, then escape).
+- A card with rungs queued ahead draws the one being built in its own band's ink, not the red of the last rung queued (`node tools/look.mjs queuetop`).
 
 ## v0.4.1 — 2026-09-23
 

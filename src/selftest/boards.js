@@ -1896,6 +1896,10 @@ export const TESTS = [
     const paidOne = had - state().stored;
     const firstSays = shows(half('refund')) ? half('refund').textContent : '';
     const offers = shows(half('another')) ? half('another').textContent : '';
+    // With the strip up the body is not a press: only its halves are.
+    card()?.click();
+    await settle(0.1);
+    const bodyQuiet = copies() === 1;
     if (half('another')) press(half('another'));
     await settle(0.1);
     const two = copies(), pips = queuedPips();
@@ -1916,6 +1920,7 @@ export const TESTS = [
     return [
       ok(paidOne > 0 && /building/i.test(firstSays) && /another/i.test(offers),
          'one press buys one copy, and the strip offers another beside a refund with nothing to hand back', `${paidOne} "${firstSays}" "${offers}"`),
+      ok(bodyQuiet, 'a press on the card itself buys nothing while the strip is up'),
       ok(two === 2, 'the other half of the strip queues a second copy', `${two}`),
       ok(pips === 2, 'and both copies paid for wear a dot on the pips', `${pips}`),
       ok(/refund ×1/i.test(says), 'the refund half counts the copy waiting', says),

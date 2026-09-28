@@ -142,10 +142,10 @@ export const TESTS = [
     run(20);
     // Each press reports what it cost as well as what the board did, because
     // the rule is about the pair.
-    const press = async key => {
+    const press = async (key, part = '') => {
       await hoverBench();                    // stand at the bench (still there after a press)
       await sleep(250);
-      const b = document.querySelector(`#shop button[data-key="${key}"]`);
+      const b = document.querySelector(`#shop button[data-key="${key}"]${part}`);
       if (!b) return null;
       const before = state().stored;
       b.click();
@@ -154,9 +154,9 @@ export const TESTS = [
     };
 
     const bought = await press('carry');
-    // Pressed again, the card queues the next rung behind the one being built,
-    // paid for now (DESIGN.md, "The same row, queued again").
-    const again = await press('carry');
+    // Its strip's other half queues the next rung behind the one being built,
+    // paid for now (DESIGN.md, "Refund and another").
+    const again = await press('carry', ' .strip .another');
     const place = await press('unlockfarm');
     // A place is a one-off: with it in the works there is no next one to sell,
     // so a second press goes nowhere. A truer refusal than an empty purse,
@@ -170,7 +170,7 @@ export const TESTS = [
          bought ? `${bought.spent}` : 'no row'),
       ok(!!bought && bought.open === true, 'and the board stays up for the next press',
          `${bought && bought.open}`),
-      ok(!!again && again.spent > 0, 'pressed again, it queues the next rung and takes its money',
+      ok(!!again && again.spent > 0, 'the strip queues the next rung and takes its money',
          again ? `${again.spent} taken` : 'no row'),
       ok(!!again && again.open === true, 'and the board stays up',
          `${again && again.open}`),
