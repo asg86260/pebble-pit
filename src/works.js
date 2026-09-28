@@ -478,7 +478,7 @@ export function stepWorks(dt) {
       // HERE, on the frame the order changes: `layPiles` answers from a cached
       // key, so left for the next walk it was left for the next reload.
       reserve(w.key);
-      doneHook(site, w.key);
+      doneHook(site, w.key, w.bill);
       // The next in line is told it has started, exactly as if bought into an
       // empty site, and the builder this landing freed takes it (`siteFor` in
       // crew/builders.js).
@@ -495,12 +495,13 @@ export function stepWorks(dt) {
 // a building arriving is its own announcement, and the yard has no box to
 // center a tick on. A station of the deep's party is its own site, by its id,
 // so its tick lands over the station that went up, and its own board clears it.
-export function workFinished(site, key) {
+export function workFinished(site, key, bill = null) {
   if (site === 'yard') return;
   // Everything landed since the board was read, oldest first: the stack over
   // the station shows them all, ticked, in the order they landed. A fresh
   // array, as `markRowSeen` writes one, for the save.
   S.siteDone[site] = [...doneAt(site), key];
+  S.siteDoneBill[site] = [...doneBillsAt(site), Array.isArray(bill) ? bill : null];
   // The tile wears the turned-down corner of a card never seen until hovered
   // (`markRowSeen` in shop.js): the tick says a board has something, the
   // corner says which tile. A fresh array, as `markRowSeen` writes one: the
@@ -510,6 +511,12 @@ export function workFinished(site, key) {
 
 // What a site has finished and not yet shown, oldest first.
 export const doneAt = site => S.siteDone?.[site] || [];
+// What each of them was paid, index for index with `doneAt`; null where a
+// save from before it was kept has no bill to say.
+export const doneBillsAt = site => {
+  const b = S.siteDoneBill?.[site] || [];
+  return doneAt(site).map((_, i) => b[i] ?? null);
+};
 
 // what finished at a site, in the words the rows used
 export const doneName = site => {
@@ -521,4 +528,5 @@ export const doneName = site => {
 export function markDoneSeen(site) {
   if (!doneAt(site).length) return;
   delete S.siteDone[site];
+  delete S.siteDoneBill?.[site];
 }

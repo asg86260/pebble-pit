@@ -259,6 +259,9 @@ export const S = {
   // A finished work nobody has been to see yet, per site: the key of what
   // landed, kept until that station's board is read (drawDoneMarks).
   siteDone: {},
+  // What each of those marks was paid, index for index: the stroke it wears
+  // is its own rung's, and the row's bill has moved on to the next by then.
+  siteDoneBill: {},
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a
   // count; `haulers` is always the ones left over, never a job you hire into.
@@ -578,6 +581,7 @@ export const SAVED = [
   // A work that finished while you were away is still news when you come
   // back.
   'siteDone',
+  'siteDoneBill',
   'tendLevel',
   'cropLevel',            // and what one cut off a plot is worth
   // A plain number, so it belongs here and not on the by-hand list, where a
