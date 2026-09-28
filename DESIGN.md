@@ -16470,44 +16470,60 @@ builders build: the scaffold goes up and the station is raised as that
 kind by bodies walking to it, as every station is. Nothing on the floor
 changes kind in place.
 
-### Built first, chosen after (design, not built)
+### Built first, a recruit, then two choices (design, not built)
 
 The owner, 2026-09-28: "the fighter selection should happen after the
-station is built. not before." This replaces the empty lot above: nothing
-is picked until the station stands.
+station is built. not before", and then: "start every class as the same
+generic base class. and then branch into the existing base classes". This
+replaces the empty lot above. A station is built with no choice made, a
+recruit stands at it, and the ladder asks the two choices as rungs.
 
 - **The button.** Pressed, it spends the fang (the first station free, as
-  now) and queues the build at the next free slot at once. There is no lot
-  and no board to answer first: the scaffold goes up there, and the
-  delvers swim over and put it up as every build is put up.
-- **Built, unchosen: a bare plinth.** When the build lands the plinth
-  stands and nothing else -- no crate, no fighter. It is the size of a
-  base unit's (the crate's ground), so choosing never moves it. Nobody is
-  seated at it; it counts toward the four, and toward `NEEDS_COMPANY` only
-  once it is chosen.
-- **The mark.** A mark hangs over an unchosen plinth until it is chosen;
-  its hover line is "pick a fighter". The pointer on the plinth (or the
-  mark) opens its board, which is the lot's board of today: the base units
-  it may become, the three starters' on the first station, the five after.
-  The mark's drawing gets a mock before it is built.
-- **Choosing.** A row pressed writes the kind down: the crate stands on the
-  plinth, and a spare pod resident swims over from the pods and takes its
-  post as that base unit, at rung 0. The crate appearing is the purchase's
-  instant change, as a fork's prop is (decided 2026-09-28); the fighter
-  walks.
-- **What changes in the code.** `layLot` queues the build (`start`) and
-  `pickKind` no longer does; `stationLanded` seats nobody at a kindless
-  station (`seatUpTo` skips it); the ground and the plinth of a kindless
-  station are the crate's; the board's kind rows are offered on a built,
-  kindless station instead of an unbuilt one; `buildStation` and
-  `raiseStation` (the scenes' and `__party`'s) build then choose.
-- **Old saves.** A lot laid and not picked (kind null, no work queued) has
-  its build queued on load, since its fang is already spent; a station
-  picked and still going up keeps its kind and builds as it was.
+  now) and queues the build at the next free slot at once. No lot, no board
+  to answer first: the scaffold goes up and the delvers put it up.
+- **Built: the recruit.** When the build lands the plinth stands with the
+  crate on it, and a spare pod resident swims over and takes its post as a
+  **Recruit**, rung 0 -- the one base class every station starts as. It
+  fights at once with a plain, weak attack of its own (mocked:
+  docs/mocks/recruit-2026-09-28.html), so no station stands idle.
+- **Rung 1, the first choice: a base unit.** The Recruit's board asks
+  "Choose your fighter": Fighter, Novice, Scout, Adept or Apprentice (the
+  first station the three that deal damage alone, as `FIRST_KINDS`).
+  Bought like any rung, with rung 1's bill; buying one writes the
+  station's kind. A mark hangs over a station whose rung 1 is waiting
+  ("choose a fighter"), until it is bought.
+- **Rung 4, the second choice: a specialist**, as now (`FORK_RUNG`); rung 8
+  the capstone. The ladder stays eight rungs on one card: rung 0 the
+  Recruit, 1 to 3 the base unit (the pick and two plain rungs), 4 to 8 the
+  specialist.
+- **The board: the tree (voted E2, docs/mocks/station-effects-2-2026-09-28.html).**
+  A choice shows everything it leads to. At rung 4, the base unit centered
+  at the top, a stem to the fork, a crossbar ending at the two branches,
+  each headed by its specialist's icon and name, a square for its move
+  (rung 4) and a purple square for its capstone (rung 8), each with its
+  line. At rung 1 the five base units, each with that tree under it; how
+  the five sit on one board is mocked with the Recruit.
+- **Status effects are named.** A status in a line is its name, bold, with
+  a one-line hover: "applies **Bleed**", not "inflict bleeding". Stun,
+  Bleed, Haste, Weakened, Held, Exposed, Inspired (the lines are the
+  mock's). Wording fixed with it: the Whirlwind "a heavier cut" (it lands
+  in one spot); the Pinning shot "applies **Stun**", which is what it does.
+- **Reset** goes all the way back: the kind blanked, the Recruit at rung 0,
+  every bill handed back.
+- **Old saves.** A station keeps its kind, class and rung as they are. A lot
+  laid and not picked (kind null, no work queued) has its build queued on
+  load, its fang already spent; it lands as a Recruit.
+
+What changes in the code: `layLot` queues the build and there is no
+`pickKind`; a built station with no kind is manned (`seatUpTo` no longer
+waits on a kind) by a Recruit; rung 1 is a row a kind on the rails; the
+Recruit is a class of its own in the class table, kit and attack; `buildStation`
+and `raiseStation` (the scenes' and `__party`'s) build, then buy rung 1.
 
 What it must not break: every station still stands through a build worked
 by bodies; the four-station cap and the one-fang price are unchanged; a
-reset still blanks the class and keeps the kind.
+ladder is eight rungs, one card; nothing changes kind in place without a
+purchase, and the fighter who is there is the one who changes.
 
 ### The board (voted D, docs/mocks/branch-2026-09-28.html)
 
