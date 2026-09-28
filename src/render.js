@@ -202,7 +202,7 @@ const LAYERS = [
   // The fighters in front of the coil they strike and the swimmers passing,
   // and what leaves them -- arrows, beams, charges, hexes, notes -- over all
   // of the fighters (track RENDER, docs/wave-party.md).
-  { name: 'fighters', draw: drawFighters },
+  { name: 'party', draw: drawFighters },
   { name: 'shots', draw: drawShots },
   { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
   { name: 'lifting', draw: drawLifting },
@@ -278,7 +278,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'serpent', 'swimmers', 'fighters', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'serpent', 'swimmers', 'party', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

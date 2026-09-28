@@ -626,7 +626,7 @@ export const SAVED = [
   // Derived by `rebalance` and re-derived on restore; saved like every other
   // job count so the roundtrip is honest. `fighters` is JOB.FIGHT's count,
   // one a station with a fighter (docs/wave-party.md).
-  JOB.BUILD, JOB.DELVE, 'fighters',
+  JOB.BUILD, JOB.DELVE, JOB.FIGHT,
   // The record. `tally` is saved because who bit a rock half-mined when you
   // closed the tab is the whole question two of the feats ask.
   'won',
