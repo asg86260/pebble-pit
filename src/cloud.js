@@ -110,6 +110,9 @@ function serial(fn) {
 // One shape for every call: a timeout, and `{ status: 0 }` for anything that is
 // not an answer. A refusal's wait is read from `Retry-After` or the body's
 // `retryS`, whichever is longer.
+// The last refusal a button's call met, for the line that says why it did
+// not work (`cloudWhy`). Cleared as each button's call begins.
+let refusedLast = null;
 async function call(method, path, { secret, body, headers = {}, keepalive = false, bytes = false } = {}) {
   const ctl = typeof AbortController === 'function' ? new AbortController() : null;
   let timer = null;
@@ -128,6 +131,7 @@ async function call(method, path, { secret, body, headers = {}, keepalive = fals
     });
     const r = await Promise.race([go, late]);
     const out = { status: r.status, retryS: 0, data: null };
+    if (!r.ok) refusedLast = out;
     const after = +r.headers.get('retry-after');
     if (Number.isFinite(after) && after > 0) out.retryS = after;
     out.rev = +r.headers.get('x-rev') || 0;
@@ -136,7 +140,8 @@ async function call(method, path, { secret, body, headers = {}, keepalive = fals
     if (Number.isFinite(out.data?.retryS)) out.retryS = Math.max(out.retryS, out.data.retryS);
     return out;
   } catch {
-    return { status: 0, retryS: 0, data: null };
+    refusedLast = { status: 0, retryS: 0 };
+    return refusedLast;
   } finally {
     if (timer) clearTimeout(timer);
   }
@@ -555,6 +560,7 @@ const recovery = f => (f ? showSecret(f.secret) : null);
 // Answers the recovery code, shown once, or null.
 export function startCloud() {
   if (!cloudReady()) return Promise.resolve(null);
+  refusedLast = null;
   return serial(async () => {
     const had = facts();
     if (had) return recovery(had);
@@ -578,6 +584,7 @@ async function pushAll(now) {
 // code as shown and when it dies (wall ms), or null.
 export function makePair() {
   if (!cloudReady()) return Promise.resolve(null);
+  refusedLast = null;
   return serial(async () => {
     const f = facts();
     if (!f) return null;
@@ -603,6 +610,7 @@ async function link(secret) {
 // *enter a code*: the other device's pairing code. Whether it linked.
 export function claimPair(pair) {
   if (!cloudReady()) return Promise.resolve(false);
+  refusedLast = null;
   const p = normalPair(pair);
   if (!p) return Promise.resolve(false);
   return serial(async () => {
@@ -616,6 +624,7 @@ export function claimPair(pair) {
 // *use a recovery code*: the secret itself, from paper. Whether it linked.
 export function useRecovery(code) {
   if (!cloudReady()) return Promise.resolve(false);
+  refusedLast = null;
   const c = normalSecret(code);
   if (!c) return Promise.resolve(false);
   return serial(async () => {
@@ -629,6 +638,7 @@ export function useRecovery(code) {
 // signed out and pairs again. The new code, or null.
 export function rotate() {
   if (!cloudReady()) return Promise.resolve(null);
+  refusedLast = null;
   return serial(async () => {
     const f = facts();
     if (!f) return null;
@@ -740,6 +750,22 @@ export function keepHere(n) {
     await pushSlot(n, f, Date.now());
     return true;
   }).then(Boolean);
+}
+
+// Why the last button did not work, as one short line, or `otherwise` when
+// the cloud answered and simply said no (a wrong code). Too many tries is
+// told apart from a cloud that is down: a player who meets the daily cap
+// should wait for tomorrow, not wonder whether the servers are gone.
+export function cloudWhy(otherwise) {
+  const r = refusedLast;
+  if (!r) return otherwise;
+  if (r.status === 429) {
+    return r.retryS >= 3600 ? 'too many tries from here today; try tomorrow'
+         : `too many tries; try again in ${Math.max(1, Math.ceil(r.retryS / 60))} min`;
+  }
+  if (r.status === 503) return 'the cloud is resting; try again later';
+  if (!r.status || r.status >= 500) return 'the cloud did not answer';
+  return otherwise;
 }
 
 // --- the line ---------------------------------------------------------------------

@@ -6,7 +6,7 @@
 // says and hands the buttons to it, the way slots.js serves both the title
 // column and the held sheet.
 
-import { cloudReady, startCloud, makePair, claimPair, useRecovery, rotate, stopCloud,
+import { cloudWhy, cloudReady, startCloud, makePair, claimPair, useRecovery, rotate, stopCloud,
          conflicts, choose, takeCloud, keepHere, cloudStatus, recoveryCode } from './cloud.js';
 import { since } from './slots.js';
 import { openSlot } from './save.js';
@@ -137,7 +137,7 @@ function drawFoot() {
 async function linkDevice() {
   doneWith = null;
   await makePair();
-  if (!livePair(cloudStatus(), Date.now())) foot.say('the cloud did not answer');
+  if (!livePair(cloudStatus(), Date.now())) foot.say(cloudWhy('the cloud did not answer'));
   drawFoot();
 }
 
@@ -155,8 +155,10 @@ function drawEntering(el) {
   // counts against this ip's tries.
   const link = async () => {
     const code = typedPair(box.value);
-    if (code.replace('-', '').length < CLOUD_PAIR_LEN || !(await claimPair(code))) {
-      foot.say("that code didn't work");
+    const short = code.replace('-', '').length < CLOUD_PAIR_LEN;
+    if (short || !(await claimPair(code))) {
+      // A short code never reached the cloud, so the cloud has no why for it.
+      foot.say(short ? "that code didn't work" : cloudWhy("that code didn't work"));
       box.focus();
       return;
     }
@@ -209,7 +211,7 @@ function drawCloud(el, say, opts) {
       box.placeholder = '····-····-····';
       box.setAttribute('aria-label', 'recovery code');
       const use = async () => {
-        if (!(await useRecovery(box.value))) { say("that code didn't work"); return; }
+        if (!(await useRecovery(box.value))) { say(cloudWhy("that code didn't work")); return; }
         recovering = false;
         done('linked');
       };
@@ -233,7 +235,7 @@ function drawCloud(el, say, opts) {
         e.currentTarget.disabled = true;
         await startCloud();
         fresh = recoveryCode();
-        done(fresh ? '' : 'the cloud did not answer');
+        done(fresh ? '' : cloudWhy('the cloud did not answer'));
       }),
       button('use a recovery code', () => { recovering = true; say(''); drawCloud(el, say, opts); }));
     return;
@@ -281,7 +283,7 @@ function drawCloud(el, say, opts) {
     await rotate();
     fresh = recoveryCode();
     revealed = null;
-    done(fresh ? '' : 'the cloud did not answer');
+    done(fresh ? '' : cloudWhy('the cloud did not answer'));
   }, 'again');
   clearTimeout(armed);
   armed = 0;

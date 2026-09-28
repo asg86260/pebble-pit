@@ -595,3 +595,30 @@ group('the page going away sends at once, not behind a push in flight', async ()
     ok(row(1).played_s === Math.floor(played), 'and it took', `${row(1).played_s} vs ${played}`)
   ];
 });
+
+group('a button that did not work says why: the daily cap, a wait, a cloud that is down', async () => {
+  wire();
+  const a = device();
+  await played(a, 5);
+  await cloud.cloudBoot();
+  // The worker's own answer to a fourth new code today, from the real caps.
+  for (let i = 0; i < 3; i++) await handle(new Request(`${URL_}/vaults`, { method: 'POST', headers: { 'cf-connecting-ip': '203.0.113.7' } }), w.env, Date.now());
+  const capped = await cloud.startCloud();
+  const daily = cloud.cloudWhy('the cloud did not answer');
+  cloud.setCloudFetch(refusal(429, { retryS: 240 }));
+  const claimed = await cloud.claimPair('K7Q-94M');
+  const soon = cloud.cloudWhy("that code didn't work");
+  cloud.setCloudFetch(w.fetch);
+  const wrong = await cloud.claimPair('K7Q-94M');
+  const plain = cloud.cloudWhy("that code didn't work");
+  cloud.setCloudFetch(async () => { throw new Error('offline'); });
+  await cloud.startCloud();
+  const down = cloud.cloudWhy('fallback');
+  cloud.setCloudFetch(w.fetch);
+  return [
+    ok(capped === null && daily === 'too many tries from here today; try tomorrow', 'the daily cap says so', daily),
+    ok(claimed === false && soon === 'too many tries; try again in 4 min', 'a short wait says how long', soon),
+    ok(wrong === false && plain === "that code didn't work", 'a wrong code is just wrong', plain),
+    ok(down === 'the cloud did not answer', 'and a cloud that is down says that', down)
+  ];
+});
