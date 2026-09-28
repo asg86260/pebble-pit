@@ -8,16 +8,21 @@
 // paused worker answers before it touches the database.
 
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const SCHEMA = fileURLToPath(new URL('../schema.sql', import.meta.url));
+// The schema is the migrations wrangler applies, read in the order it applies
+// them, so the stand-in cannot drift from the database that is deployed.
+const MIGRATIONS = fileURLToPath(new URL('../migrations/', import.meta.url));
+const SCHEMA = readdirSync(MIGRATIONS).filter(f => f.endsWith('.sql')).sort()
+  .map(f => readFileSync(join(MIGRATIONS, f), 'utf8')).join(';\n');
 
 const plain = v => (v instanceof ArrayBuffer ? new Uint8Array(v) : v);
 
 export function makeD1() {
   const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(SCHEMA, 'utf8'));
+  db.exec(SCHEMA);
   const counter = { statements: 0 };
 
   function statement(sql, args = []) {

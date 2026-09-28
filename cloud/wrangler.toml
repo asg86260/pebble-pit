@@ -1,0 +1,24 @@
+# The cloud-save worker (docs/wave-cloud.md; README.md here for the deploy).
+# Workers Free plan, no card on file: past the free limits Cloudflare refuses
+# requests instead of billing for them.
+name = "pebble-cloud"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+# The kill switch. `npx wrangler deploy --var CLOUD_PAUSED:1` answers every
+# route 503 with a day's Retry-After before D1 is touched.
+[vars]
+CLOUD_PAUSED = "0"
+
+# STATS_TOKEN and PAIR_PEPPER are secrets: `npx wrangler secret put <name>`.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pebble-cloud"
+database_id = "00000000-0000-0000-0000-000000000000" # from `npx wrangler d1 create pebble-cloud`
+# The same files cloud/test/d1.mjs builds its database from.
+migrations_dir = "migrations"
+
+# The daily sweep, at an hour when nobody is near the day caps' midnight.
+[triggers]
+crons = ["17 3 * * *"]
