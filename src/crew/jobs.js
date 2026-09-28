@@ -44,9 +44,9 @@ import { newPurifier, stepPurifier } from '../filter.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
 import { quarryMuck, plotMuck } from '../smog.js';
-import { newBrawler, newLancer, newGrenadier, newScribe, newWarlock, newGatherer } from './deep.js';
+import { newFighter, newGatherer, guardStation } from './deep.js';
 import { stepGatherer } from '../deep/gather.js';
-import { stepBrawler, stepLancer, stepGrenadier, stepScribe, stepWarlock } from '../deep/arms.js';
+import { fightersOn, carryFang } from '../deep/party.js';
 
 export const JOBS = {
   [TYPE.ROCK]: {
@@ -121,39 +121,20 @@ export const JOBS = {
     step: { work: (w, c) => stepWizard(w, c.now) }
   },
 
-  // The deep's five (docs/wave-serpent.md): down the shaft, where nothing of
-  // the yard's reaches -- no mess, no door, no rock to dodge. What each does
-  // at its station is the weapon's (deep/arms.js).
-  [TYPE.BRAWL]: {
-    factory: newBrawler,
-    want: () => S.brawlers,
-    step: { work: (w, c) => stepBrawler(w, c) }
+  // The deep's fighters (docs/wave-party.md): down the shaft, where nothing
+  // of the yard's reaches -- no mess, no door, no rock to dodge. One a
+  // manned station; what each does there is its station's class.
+  [TYPE.FIGHTER]: {
+    factory: newFighter,
+    want: () => fightersOn(),
+    step: { work: (w, c) => guardStation(w, c) }
   },
-  [TYPE.LANCE]: {
-    factory: newLancer,
-    want: () => S.lancers,
-    step: { work: (w, c) => stepLancer(w, c) }
-  },
-  [TYPE.GRENADE]: {
-    factory: newGrenadier,
-    want: () => S.grenadiers,
-    step: { work: (w, c) => stepGrenadier(w, c) }
-  },
-  [TYPE.SCRIBE]: {
-    factory: newScribe,
-    want: () => S.scribes,
-    step: { work: (w, c) => stepScribe(w, c) }
-  },
-  [TYPE.WARLOCK]: {
-    factory: newWarlock,
-    want: () => S.warlocks,
-    step: { work: (w, c) => stepWarlock(w, c) }
-  },
-  // The deep's haulers: the floor's loose scales into the crusher.
+  // The deep's haulers: the floor's loose scales into the crusher, and a
+  // fang lying there before any of them.
   [TYPE.GATHER]: {
     factory: newGatherer,
     want: () => S.gatherers,
-    step: { work: (w, c) => stepGatherer(w, c) }
+    step: { work: (w, c) => carryFang(w) || stepGatherer(w, c) }
   },
 
   [TYPE.BUILD]: {

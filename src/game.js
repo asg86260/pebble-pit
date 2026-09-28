@@ -549,3 +549,10 @@ function fly(list, tx, ty) {
     m.y = m.y0 + (gy - m.y0) * e - Math.sin(e * Math.PI) * m.lift;
   }
 }
+
+// --- wave party: CREW ---
+// The party's own frame (deep/party.js): a fang dropped at a phase break, and
+// the fangs in the water sinking. Straight after the serpent's step, so a
+// break is seen on the frame it happens.
+import { stepParty } from './deep/party.js';
+STEPS.splice(STEPS.findIndex(s => s.name === 'serpent') + 1, 0, { name: 'party', step: c => stepParty(c) });

@@ -9,7 +9,9 @@ import { JOB_OF, hats, rockhandMs } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { KIT_JOBS } from '../kit.js';
 import { TYPE, TYPE_OF, DEEP_JOBS, isDeepType } from '../jobs.js';
-import { deepTop } from '../deep/place.js';
+import { deepTop, deepFloor } from '../deep/place.js';
+import { bindFighters, bindNew, unbound } from '../deep/party.js';
+import { deepPost } from './deep.js';
 import { belowYard } from '../route.js';
 import { now } from '../clock.js';
 import { newRecord } from './records.js';
@@ -67,9 +69,16 @@ export function syncWorkers() {
   // considered last and therefore stood down first; before it, a body working
   // in the half it does not live in (DESIGN.md, "One crew, two homes"). The
   // kept keep the order they had, so nobody's slot moves for being chosen.
-  const ordered = [...S.workers.filter(w => !w.lentFrom && !away(w)),
-                   ...S.workers.filter(w => !w.lentFrom && away(w)),
-                   ...S.workers.filter(w => w.lentFrom)];
+  // A fighter no manned station answers to (its station's fighter moved,
+  // or lent to a build) is the one the fighters give up, so it goes last
+  // with the loans: bound first (`bindFighters`), so a body read back
+  // without its uid is matched to the station it stands at before anybody
+  // is counted.
+  bindFighters();
+  const last = w => !!w.lentFrom || unbound(w);
+  const ordered = [...S.workers.filter(w => !last(w) && !away(w)),
+                   ...S.workers.filter(w => !last(w) && away(w)),
+                   ...S.workers.filter(last)];
   const kept = new Set();
   for (const w of ordered) (room[w.type]-- > 0 ? kept.add(w) : stood.push(w));
   keep.push(...S.workers.filter(w => kept.has(w)));
@@ -110,6 +119,13 @@ export function syncWorkers() {
       const home = stood.findIndex(w => !away(w, type));
       const spare = home >= 0 ? stood.splice(home, 1)[0] : stood.shift();
       const w = spare || Object.assign(FACTORY(type), newRecord());
+      // A fighter is sent to a station, so it is given the station before
+      // it is sent; one made from nothing is stood there, as every factory
+      // stands its body at its work.
+      if (type === TYPE.FIGHTER && bindNew(w) && !spare) {
+        w.x = deepPost(type, w);
+        w.y = deepFloor() - WORKER;
+      }
       if (spare) retask(spare, type);
       S.workers.push(w);
       joined.add(w);

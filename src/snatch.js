@@ -10,8 +10,8 @@
 // -- a whirlpool turning on the liquid -- and something comes up out of it a
 // cell a frame, takes the one nearer the water and goes back down. The
 // portal starts to close, and the one left standing runs and leaps into it
-// before it shuts: she is the deep's whole crew, a brawler at the altar,
-// sinking to its floor under the portal (DESIGN.md, "Two crews and a
+// before it shuts: she is the deep's whole crew, the first station's fighter
+// once it stands, sinking to its floor under the portal (DESIGN.md, "Two crews and a
 // portal"). Nobody else ever crosses.
 //
 // The freeing is the fourth defense broken (deep/serpent.js sets the flag):
@@ -181,7 +181,7 @@ export function stepSnatch(t) {
     s.headY = Math.min(surface + WORKER, s.headY + P * f);
     if (s.headY >= surface + WORKER) {
       S.snatched = true;               // the crew is one fewer: he is not given back
-      S.shopStale = true;              // the altar's board stands from here
+      S.shopStale = true;              // the deep's boards stand from here
       next('close');
     }
     return true;
@@ -208,9 +208,10 @@ export function stepSnatch(t) {
 
 // The one who leapt is one of the crew again, as the rescue's body was, and
 // the deep's whole crew: she comes down through the liquid under the portal
-// and sinks to the deep's floor (crew/falls.js, `sink`), and from there
-// walks to the altar to punch. She is the deep's first body, living in its
-// first pod, and the only one until another is built.
+// and sinks to the deep's floor (crew/falls.js, `sink`), and treads water
+// there until the first station stands, then swims to it as its fighter.
+// She is the deep's first body, living in its first pod, and the only one
+// until another is built.
 function giveBack() {
   const b = S.pair[0];
   const w = b?.body || (b && Object.assign(FACTORY(TYPE.HAUL), newRecord()));
@@ -220,11 +221,12 @@ function giveBack() {
   S.crew++;
   S.deepCrew = (S.deepCrew || 0) + 1;
   // Her home down there: the deep's first pod is hers, standing from the
-  // start, so the altar sells the second.
+  // start, so the pods sell the second.
   S.pods = Math.max(1, S.pods || 0);
-  S.brawlers = 1;
+  // A spare hand down there until a station stands for her: the first one
+  // is free, and she is its fighter once it does (`seatUpTo`, deep/party.js).
   rebalance();
-  retask(w, TYPE.BRAWL);
+  retask(w, TYPE.GATHER);
   w.say = null;
   w.x = mouthX() - WORKER / 2;
   w.y = deepTop() + DEEP_SURFACE + P * 2;

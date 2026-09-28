@@ -11,13 +11,22 @@ import { P } from './yard.js';
 // commute ladder hurries the shaft with everything else.
 export let SHAFT_PACE = 0.6;
 
-// --- how many each station of the deep holds ---------------------------------------
-// `capOfBare` in levels.js; each is nought until its door is open.
-export const BRAWL_CAP = 12;         // at the altar, from the snatch
-export const LANCE_CAP = 12;         // at the well
-export const GRENADE_CAP = 8;        // at the armory
-export const SCRIBE_CAP = 4;         // at the circle
-export const WARLOCK_CAP = 6;        // at the spire
+// --- the party (docs/wave-party.md) -----------------------------------------------
+// A station holds one fighter, so the fighters' cap is the stations standing
+// (`capOfBare` in levels.js); the most there can be is FIGHT_STATIONS_MAX.
+//
+// Worker-seconds a delver puts into a station before it stands: a building's
+// worth, like the doors of the deep it replaces.
+export const STATION_WORK_S = 45;
+// A fang drops at each of the serpent's first this-many phase breaks: the
+// first station is free, and each fang buys one more.
+export const FANG_BREAKS = 3;
+// A fang sinks like a scale (DEEP_GRAV, DEEP_DRAG), let go this far off the
+// coil's belly with a little sideways drift.
+export const FANG_KICK = 0.6;
+// Until track BOARD's `DEEP_SLOTS` lands in config/deep.js: its written list,
+// read only when that one is missing. TODO(merge): delete.
+export const PARTY_SLOTS_FALLBACK = [0.335, 0.475, 0.62, 0.76, 0.9, 0.405, 0.69];
 // The gatherers: the deep's crew on no weapon (`S.deepCrew`, set at the
 // shaft). They keep a hauler's load and pace (`haulCap`, `haulSpeed`), scoop
 // at GATHER_SCOOP, and wait by the crusher on a bare floor.
