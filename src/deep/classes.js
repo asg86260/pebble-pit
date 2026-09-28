@@ -115,8 +115,8 @@ function shoot(w, kind, x, y, seg, t, fly, land, arc = 0) {
 
 // --- the ten -------------------------------------------------------------------------
 
-// Heavy punches; from rung 4 every 4th is a haymaker, x4, that stuns, and
-// from rung 8 stuns longer.
+// Heavy punches; from rung 4 every 4th is a haymaker, x4, and from rung 8
+// the haymaker stuns.
 function brawler(w, c, st, cls, v) {
   const t = c.now, at = closeIn(w, t);
   if (!at) return;
@@ -125,7 +125,7 @@ function brawler(w, c, st, cls, v) {
   const hit = landing(w, t);
   if (hit) {
     strike(cls.hit, v * (hit.big ? hm.x : 1), at.p.x, at.p.y, null, 0,
-           { by: w, stun: hit.big ? (hasCap(st) ? cls.capStun : 1) : 0 });
+           { by: w, stun: hit.big && hasCap(st) ? cls.capStun : 0 });
   }
   if (!due(w, t, cls.every)) return;
   w.count = (w.count || 0) + 1;
@@ -134,9 +134,9 @@ function brawler(w, c, st, cls, v) {
   swing(w, t, big ? 'haymaker' : 'punch', cls.windup, at.p, big);
 }
 
-// Cuts that bleed; from rung 4 each lands at three spots along the coil
-// (the whirlwind), and from rung 8 every 3rd cut lands twice. The spots of
-// one cut are one blow, summed on it.
+// Cuts; from rung 4 each lands at three spots along the coil (the
+// whirlwind), and from rung 8 every 3rd cut lands twice, the second landing
+// leaving the serpent Bleeding. The spots of one cut are one blow, summed on it.
 function sword(w, c, st, cls, v) {
   const t = c.now, at = closeIn(w, t);
   if (!at) return;
@@ -152,7 +152,7 @@ function sword(w, c, st, cls, v) {
         strike(cls.hit, each, q.x, q.y, cut, 0, { by: w });
       }
     }
-    lay('bleed', v * cls.bleed.dps, cls.bleed.s, at.seg);
+    if (hit.twice) lay('bleed', v * cls.bleed.dps, cls.bleed.s, at.seg);
   }
   if (!due(w, t, cls.every)) return;
   w.count = (w.count || 0) + 1;
@@ -223,7 +223,7 @@ function ranger(w, c, st, cls, v) {
 // Daggers from close by: she comes in to a stand-off under the hide and
 // holds nearly still there while each dagger travels. x3 on a stunned
 // serpent; from rung 4 x(1 + the wound's share of the phase), to x2; from
-// rung 8 x3 in the phase's last tenth. Read when the dagger lands.
+// rung 8 each dagger leaves it Bleeding. Read when the dagger lands.
 function assassin(w, c, st, cls, v) {
   const t = c.now, at = closeIn(w, t, cls.standoff, cls.drift, cls.range);
   if (!at) return;
@@ -232,17 +232,17 @@ function assassin(w, c, st, cls, v) {
   if (hit) {
     shoot(w, 'dagger', mid(w), w.y, at.seg, t, cls.fly, (s, q) => {
       let x = S.serpentStun > 0 ? cls.stunnedX : 1;
-      let exec = hasMove(st) ? Math.min(cls.execMost, 1 + woundK()) : 1;
-      if (hasCap(st) && woundK() >= 1 - cls.cap.tail) exec = Math.max(exec, cls.cap.x);
+      const exec = hasMove(st) ? Math.min(cls.execMost, 1 + woundK()) : 1;
       strike(cls.hit, v * x * exec, q.x, q.y, null, 0, { by: w });
+      if (hasCap(st)) lay('bleed', v * cls.bleed.dps, cls.bleed.s, s.seg);
     });
   }
   if (!due(w, t, cls.every)) return;
   swing(w, t, 'stab', cls.windup, at.p);
 }
 
-// Hexes: a bolt that Weakens the heal; from rung 4 it Holds the serpent (no
-// heal, no sway), and from rung 8 a Held serpent takes more from blows.
+// Hexes: a bolt that strikes; from rung 4 it Weakens the heal, and from
+// rung 8 it stops the heal outright (Held) and lays Exposed.
 function hexer(w, c, st, cls, v) {
   const t = c.now, at = atPost(w, st, t);
   if (!at) return;
@@ -251,8 +251,11 @@ function hexer(w, c, st, cls, v) {
   if (hit) {
     shoot(w, 'hex', mid(w), w.y, at.seg, t, cls.fly, (s, q) => {
       strike(cls.hit, v, q.x, q.y, null, 0, { by: w });
-      lay('weakened', cls.weaken.k, cls.weaken.s, s.seg);
-      if (hasMove(st)) lay('held', hasCap(st) ? cls.capAmp : 0, cls.hold, s.seg);
+      if (hasMove(st)) lay('weakened', cls.weaken.k, cls.weaken.s, s.seg);
+      if (hasCap(st)) {
+        lay('held', 0, cls.hold, s.seg);
+        lay('exposed', EXPOSED_AMP, cls.exposed, s.seg);
+      }
     });
   }
   if (!due(w, t, cls.every)) return;
@@ -260,8 +263,8 @@ function hexer(w, c, st, cls, v) {
 }
 
 // Charges thrown on the water's gravity. From rung 4 a charge sticks to the
-// hide, ticks down and goes off as one blow, x3, that stuns and lays
-// Exposed; from rung 8 two are thrown at once and go off together.
+// hide, ticks down and goes off as one blow, x3, that stuns; from rung 8 two
+// are thrown at once and go off together.
 function sapper(w, c, st, cls, v) {
   const t = c.now, at = atPost(w, st, t);
   if (!at) return;
@@ -286,7 +289,6 @@ function sapper(w, c, st, cls, v) {
     }
     function blow(s, q) {
       strike(cls.hit, v * cls.stickyX, q.x, q.y, pair, 0, { by: w, stun: 1 });
-      lay('exposed', EXPOSED_AMP, cls.exposed, s.seg);
     }
   }
   if (!due(w, t, cls.every)) return;

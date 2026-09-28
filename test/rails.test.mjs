@@ -52,7 +52,7 @@ group("an empty lot's board asks what goes up; a pick sends the builders", async
   return [
     ok(lot.lot && lot.ask === 'Choose your fighter', 'the lot asks which fighter', lot.ask),
     ok(JSON.stringify(open) === JSON.stringify(FIRST_KINDS), 'the first lot offers the three starting kinds', JSON.stringify(open)),
-    ok(altar.name === 'Fighter' && altar.sub === 'throws punches', 'each a base unit, saying what it does',
+    ok(altar.name === 'Fighter' && altar.sub === 'Throw punches', 'each a base unit, saying what it does',
        `${altar.name}: ${altar.sub}`),
     ok(!shut, 'a kind not offered cannot be picked'),
     ok(picked && st.kind === 'altar' && !st.built, 'a pick names the station, and it is put up by hand', JSON.stringify(st))
@@ -191,8 +191,8 @@ group('each pip says what it is, one short line', async () => {
   const lines = [base, move, cap, rung, locked, opened];
   return [
     ok(base === `Apprentice: ${rungValue('mage', 2)} dmg/s`, 'a base rung names the base unit and its number', base),
-    ok(move === 'Widening: a wider, hotter beam', 'rung 4 names the move', move),
-    ok(cap === 'Burn through: ignores armor', 'rung 8 the capstone', cap),
+    ok(move === 'Widening: widen the beam', 'rung 4 names the move', move),
+    ok(cap === 'Thermite: burn through armor', 'rung 8 the capstone', cap),
     ok(rung === `Mage: ${Math.round(rungValue('mage', 6))} dmg/s`, 'another rung its number', rung),
     ok(/second station/.test(locked), 'a locked branch says when it opens', locked),
     ok(!/second station/.test(opened), 'and opens with a second station', opened),

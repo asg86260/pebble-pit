@@ -10,8 +10,7 @@
 //   bleed     ticks: `k` is its damage a second (the one status whose k is
 //             not a share), struck through the Swordsman's hit
 //   exposed   `k` more from everything
-//   held      no heal while it lasts, and the coil holds its pose; `k` more
-//             from blows (0 until the Hexer's capstone)
+//   held      no heal while it lasts (the Hexer's capstone)
 //   weakened  the heal cut by `k`
 //
 // On a fighter the two buffs live on the body, as fields no save keeps:
@@ -52,12 +51,10 @@ export const level = key => (has(key) ? on()[key].k : 0);
 // Everything gone at once: a phase that breaks takes what was laid on it.
 export const clearStatuses = () => { S.statuses = {}; };
 
-// What a hit is raised by: Exposed on everything, Held's share on a blow,
-// and the striker's own Inspired. Added, capped, and handed back as the one
-// multiplier.
+// What a hit is raised by: Exposed on everything, and the striker's own
+// Inspired. Added, capped, and handed back as the one multiplier.
 export function ampOf(tick, by) {
   let a = level('exposed');
-  if (!tick) a += level('held');
   if (by) a += inspiredK(by);
   return 1 + Math.min(AMP_MAX, a);
 }

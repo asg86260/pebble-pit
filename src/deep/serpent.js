@@ -159,8 +159,8 @@ export function onBreak(fn) {
 
 // One frame of the fight: a wound the fighters held at its depth breaks the
 // defense, and anything short of it closes at the heal -- unless the serpent
-// is stunned or Held, when nothing closes and the coil's sway is held back
-// by the frame. The break is asked first, or the heal takes the last of the
+// is stunned, when nothing closes and the coil's sway is held back by the
+// frame, or Held, when nothing closes. The break is asked first, or the heal takes the last of the
 // depth back off the blow that reached it. What was laid on a defense was
 // laid against it, and goes with it: the stun and every status.
 export const stepSerpent = c => {
@@ -171,11 +171,10 @@ export const stepSerpent = c => {
     S.serpentStun = Math.max(0, S.serpentStun - secs);
     if (!(S.serpentStun > 0)) S.serpentGrace = STUN_GRACE_S;
   } else if (S.serpentGrace > 0) S.serpentGrace = Math.max(0, S.serpentGrace - secs);
-  const still = stunned || has('held');
-  if (still) S.serpentStill += c.dt;
+  if (stunned) S.serpentStill += c.dt;
   const d = depth();
   if (S.serpentWound < d) {
-    if (still) return;
+    if (stunned || has('held')) return;
     const was = S.serpentWound;
     S.serpentWound = Math.max(0, Math.min(d, S.serpentWound - healNow() * c.dt / 1000));
     tallyHeal(was - S.serpentWound, c.now);

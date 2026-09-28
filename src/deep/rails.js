@@ -35,25 +35,34 @@ import { KINDS } from '../stations.js';
 document.documentElement.style.setProperty?.('--rail-fold-ms', `${RAIL_FOLD_MS}ms`);
 document.documentElement.style.setProperty?.('--rail-fold-steps', String(RAIL_FOLD_STEPS));
 
-// What a class does, in as few words as will do (the owner's wording pass,
-// 2026-09-28: a name and a few words, flavor over mechanics, no system
-// talk): its attack on the fork's row, and its move at MOVE_RUNG and
-// capstone at CAPSTONE_RUNG, each a name and a short line. A base unit says
-// what it does in a verb.
+// What a class says, in the owner's wording (2026-09-28): every choice an
+// imperative, every move and capstone a name and an imperative, the same
+// effect in the same words wherever it comes ("inflict bleeding"), the
+// serpent "your enemy". `fork` is the class's row at the fork.
 const WORDS = {
-  brawler:  { base: 'heavy punches', move: ['Haymaker', 'combos and stuns'], cap: ['Knockout', 'down for the count'] },
-  sword:    { base: 'cuts that bleed', move: ['Whirlwind', 'cuts all around'], cap: ['Twin cut', 'strikes twice'] },
-  monk:     { base: 'palms that build chi', move: ['Deep breath', 'chi builds faster'], cap: ['Still water', 'longer stuns'] },
-  martial:  { base: 'quick thrusts', move: ['Flow', 'faster finishers'], cap: ['Rally', 'hastes the party'] },
-  ranger:   { base: 'arrows from above', move: ['Aimed shot', 'a big shot'], cap: ['Pinning shot', 'pins it in place'] },
-  assassin: { base: 'daggers', move: ['Execution', 'hits the wounded harder'], cap: ['Coup', 'finishes it off'] },
-  hexer:    { base: 'hexes that weaken', move: ['Binding', 'holds it still'], cap: ['Bound fast', 'held takes more'] },
-  sapper:   { base: 'thrown charges', move: ['Sticky charge', 'sticks and blows'], cap: ['Pair', 'two at once'] },
-  mage:     { base: 'a held beam', move: ['Widening', 'a wider, hotter beam'], cap: ['Burn through', 'ignores armor'] },
-  bard:     { base: 'songs that inspire', move: ['Anthem', 'twice the boost'], cap: ['Refrain', 'the boost lingers'] }
+  brawler:  { fork: 'Throw harder punches, learn combos, and stun',
+              move: ['Combos', 'string punches together'], cap: ['Knockout', 'stun your enemy'] },
+  sword:    { fork: 'Master the sword',
+              move: ['Whirlwind', 'strike all around'], cap: ['Weak points', 'inflict bleeding'] },
+  monk:     { fork: 'Focus your chi',
+              move: ['Deep breath', 'build chi faster'], cap: ['Still water', 'stun for longer'] },
+  martial:  { fork: 'Strike quicker and finish faster',
+              move: ['Flourish', 'charge finishers faster'], cap: ['Rally', 'haste your party'] },
+  ranger:   { fork: 'Aim at weak points',
+              move: ['Aimed shot', 'charge a powerful arrow'], cap: ['Pinning shot', 'pin your enemy'] },
+  assassin: { fork: 'Strike quick and precise',
+              move: ['Execution', 'exploit its wounds'], cap: ['Serrated', 'inflict bleeding'] },
+  hexer:    { fork: 'Cast hexes that debuff',
+              move: ['Wither', 'slow its healing'], cap: ['Binding', 'stop its healing, expose it'] },
+  sapper:   { fork: 'Learn explosives',
+              move: ['Sticky bombs', 'stick and stun'], cap: ['Pair', 'throw two at once'] },
+  mage:     { fork: 'Channel powerful beams',
+              move: ['Widening', 'widen the beam'], cap: ['Thermite', 'burn through armor'] },
+  bard:     { fork: 'Inspire your party',
+              move: ['Anthem', 'double the boost'], cap: ['Refrain', 'make it linger'] }
 };
-const BASE_DOES = { altar: 'throws punches', well: 'martial arts', armory: 'shoots arrows', circle: 'casts hexes',
-                    spire: 'shoots beams' };
+const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',
+                    circle: 'Cast hexes', spire: 'Shoot beams' };
 // The Bard alone: nobody else is fighting, so her song does nothing.
 const ALONE = 'no one else to sing to';
 const LOCKED = 'opens with a second station';
@@ -126,7 +135,7 @@ export function railsOf(id) {
     ask = FORK_ASK;
     for (const cls of PAIRS[st.kind]) {
       const w = WORDS[cls], locked = !open.includes(cls);
-      rows.push(row(cls, `Become a ${CLASSES[cls].name}`, locked ? LOCKED : `${w.base} · ${w.move[0]}: ${w.move[1]}`, locked));
+      rows.push(row(cls, `Become a ${CLASSES[cls].name}`, locked ? LOCKED : w.fork, locked));
     }
   } else if (next <= LADDER) {
     const w = WORDS[st.cls], cap = next === CAPSTONE_RUNG;
@@ -198,7 +207,6 @@ function bodyHTML(r) {
   return `<div class="rl-who">${esc(r.who)}</div>` + treeHTML(r) +
          (r.ask ? `<div class="rl-ask">${esc(r.ask)}</div>` : '') +
          r.rows.map(o => rowHTML(o, o.cls ? `data-cls="${o.cls}"` : '')).join('') +
-         (r.top ? '<div class="rl-top">top rung</div>' : '') +
          `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>reset – refunds everything</button>`;
 }
 

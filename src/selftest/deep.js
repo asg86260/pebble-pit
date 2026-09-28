@@ -266,7 +266,7 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   return [
     ok(up, "the station's board is up", `${S.stationBoardOpen}`),
     ok(pips === 3 + 2 * 5, 'its tree: three pips, then five a branch', `${pips}`),
-    ok(said === 'Haymaker: combos and stuns', 'a hover on a pip says what it is', `${said}`),
+    ok(said === 'Combos: string punches together', 'a hover on a pip says what it is', `${said}`),
     ok(base, 'the rows climb the Fighter to the fork', JSON.stringify(st)),
     ok(ask === 'Specialize', 'where the board asks it to specialize', ask),
     ok(took, 'the Swordsman row takes the Swordsman, paid in scales', JSON.stringify(st)),
