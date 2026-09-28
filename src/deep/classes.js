@@ -38,7 +38,7 @@ import { P, WORKER, COIL_SEGS, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
          CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
-import { slotX, coilAt, coilThick, nearestSeg } from './place.js';
+import { slotX, postX, coilAt, coilThick, nearestSeg } from './place.js';
 import { stationById, classOf, keyOf } from './party.js';
 import { mid, feet, working, swim, loose } from './arms.js';
 import { strike, woundK } from './serpent.js';
@@ -54,7 +54,7 @@ export const rungWorth = (cls, rung) => rungValue(cls.ladder, rung) / (cls.pct ?
 // The fighter's station, and the middle of it on the floor.
 export const stationOf = w => (w && w.station ? stationById(w.station) : null);
 export const stationX = st => slotX(st.slot);
-const toPost = (w, st) => swim(w, stationX(st) - WORKER / 2, feet());
+const toPost = (w, st) => swim(w, postX(st), feet());
 
 // --- the rhythm of a swing ---------------------------------------------------------
 

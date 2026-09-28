@@ -14,8 +14,9 @@ import { S, pit } from '../state.js';
 import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
-         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL, LOT_W, LOT_H } from '../config.js';
-import { SPRITES } from './sprites.js';
+         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL, LOT_W, LOT_H,
+         WORKER, PROP_GAP, PROP_GAP_OF } from '../config.js';
+import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
 const snap = v => Math.round(v / P) * P;
@@ -63,52 +64,42 @@ export const waterShift = () => snap(abyssLine() - (deepTop() + DEEP_SURFACE));
 // A station's middle, on the floor.
 export const spotX = key => snap(deepX0() + DEEP_SPOTS[key] * DEEP_W);
 
-// The drawn cells' extent inside a sprite's grid. A sprite's blank rows and
-// columns are room for its dome, not part of the station.
-const inked = new Map();
-function inkOf(key) {
-  if (inked.has(key)) return inked.get(key);
-  const rows = SPRITES[key];
-  let c0 = rows[0].length, c1 = -1, r0 = rows.length, r1 = -1;
-  rows.forEach((row, r) => [...row].forEach((ch, c) => {
-    if (ch === '.') return;
-    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
-  }));
-  const ink = { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
-  inked.set(key, ink);
-  return ink;
-}
-
-// Where a sprite is painted with its middle at `mid`: its whole grid,
-// standing on the floor, with the DRAWING's middle on the spot rather than
-// the grid's, so a blank column more on one side of a sprite moves nothing.
-function spriteAt(kind, mid) {
-  const rows = SPRITES[kind], ink = inkOf(kind);
-  const w = rows[0].length * P, h = rows.length * P;
-  return { x: snap(mid - (ink.c0 + ink.cols / 2) * P), y: deepFloor() - h, w, h };
-}
-// The ground under a sprite painted there: the station as drawn, so the
-// pointer, the fence round its door and the stack of works over it all
-// answer to the picture rather than to the dome round it.
-function groundAt(kind, mid) {
-  const s = spriteAt(kind, mid), ink = inkOf(kind);
-  return { x: s.x + ink.c0 * P, y: s.y + ink.r0 * P, w: ink.cols * P, h: ink.rows * P };
-}
-export const spriteRect = key => spriteAt(key, spotX(key));
-export const standOf = key => groundAt(key, spotX(key));
-
 // --- the party's floor (docs/wave-party.md) ------------------------------------
 // A station stands at a floor slot, not at a spot of its kind's: a kind can
 // stand twice, and the floor fills in the order stations are bought. Slot
 // `i`'s middle, on the floor.
 export const slotX = i => snap(deepX0() + DEEP_SLOTS[i] * DEEP_W);
-// A station's sprite and its ground, at its slot, in its kind's drawing. The
-// ground is the same for a station still going up: its scaffold stands where
-// it will.
-// An empty lot has no kind to be drawn as: its ground is the stakes' span.
+// A station is its fighter and a prop (DESIGN.md, "A station is its fighter
+// and a prop"). The fighter's post: the left of its body, standing on the
+// floor over its slot's middle -- where it swims to (deep/classes.js) and
+// where it is stood when it is made (crew/deep.js). On the cell grid, as
+// everything at rest is: a body three cells wide cannot be centered on a
+// cell line, and half a cell off, the gap to its prop was never a whole
+// number of cells.
+export const postX = st => snap(slotX(st.slot) - WORKER / 2);
+// The prop, on the floor, its right-hand column PROP_GAP cells short of the
+// body's left column (PROP_GAP_OF where a class carries its kit further
+// off). Its own grid, top-left: a cell of the drawing is a cell here.
+export function propRect(st) {
+  const key = propKey(st), rows = PROPS[key].rows;
+  const right = postX(st) / P - (PROP_GAP_OF[st.cls] ?? PROP_GAP);
+  const w = rows[0].length * P, h = rows.length * P;
+  return { key, x: (right + 1) * P - w, y: deepFloor() - h, w, h };
+}
+// A station's ground: the prop and the fighter's post together, from the
+// prop's left column to the body's right edge and from the taller of the two
+// down to the floor. What the pointer opens its board on, the build's
+// scaffold stands round and the works stack over: read off the prop the
+// station stands beside now, so it answers to the picture. A station still
+// going up has no class, so its scaffold stands round the crate's ground.
+// An empty lot has no fighter yet: its ground is the stakes' span.
 const lotAt = mid => ({ x: snap(mid - LOT_W / 2), y: deepFloor() - LOT_H, w: LOT_W, h: LOT_H });
-export const spriteRectOfStation = st => (st.kind ? spriteAt(st.kind, slotX(st.slot)) : lotAt(slotX(st.slot)));
-export const standOfStation = st => (st.kind ? groundAt(st.kind, slotX(st.slot)) : lotAt(slotX(st.slot)));
+export function standOfStation(st) {
+  if (!st.kind) return lotAt(slotX(st.slot));
+  const p = propRect(st), right = postX(st) + WORKER;
+  const y = Math.min(p.y, deepFloor() - WORKER);
+  return { x: p.x, y, w: right - p.x, h: deepFloor() - y };
+}
 
 // The crusher at the deep's left end, standing on the floor, and the hopper
 // across its top: the purse's mouth (DESIGN.md, "The crusher"). A scale is

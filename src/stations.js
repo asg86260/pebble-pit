@@ -14,7 +14,7 @@
 // doors may stand open in either order, so `after` is a list a row reads
 // and not a step in a chain.
 
-import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS } from './config.js';
+import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS, CLASSES, BASES } from './config.js';
 import { S, bench, casino, filter, tower, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { houseRect } from './house.js';
@@ -40,16 +40,19 @@ const nearly = n => S.stored >= n * UNLOCK_SHOW;
 const REACH = { left: 8, right: 8, up: 8, down: 4 };
 
 // The five kinds of station the party can build (docs/wave-party.md): what
-// each is called and drawn as on the shelf. The drawing on the floor is the
-// kind's sprite (`SPRITES` in deep/sprites.js); the two classes it offers are
-// `PAIRS` in config/classes.js.
+// each is drawn as on the shelf. What a station is called is its fighter's
+// (`whoOf`); on the floor it is its fighter and a prop (deep/props.js); the
+// two classes it offers are `PAIRS` in config/classes.js.
 export const KINDS = {
-  altar:  { name: 'the altar',  glyph: 'swing' },
-  well:   { name: 'the well',   glyph: 'bucket' },
-  armory: { name: 'the armory', glyph: 'bowl' },
-  circle: { name: 'the circle', glyph: 'wand' },
-  spire:  { name: 'the spire',  glyph: 'tower' }
+  altar:  { glyph: 'swing' },
+  well:   { glyph: 'bucket' },
+  armory: { glyph: 'bowl' },
+  circle: { glyph: 'wand' },
+  spire:  { glyph: 'tower' }
 };
+
+// Who stands at a station: its class, or below the fork its base unit.
+const whoOf = st => (st?.cls ? CLASSES[st.cls]?.name : BASES[st?.kind]) || null;
 
 const ORDINALS = ['', 'second', 'third', 'fourth'];
 
@@ -67,14 +70,16 @@ function partyRow(id) {
   const st = () => stationById(id);
   return {
     key: id, party: true,
-    // Two of a kind, or two empty lots, would be two boards of one name, so a
-    // repeat is counted off the ids before it: "the second altar".
+    // A station is called by its fighter (DESIGN.md, "A station is its
+    // fighter and a prop"). Two Fighters, or two empty lots, would be two
+    // boards of one name, so a repeat is counted off the ids before it: "the
+    // second Fighter".
     get name() {
       if (st() && !st().kind) return 'an empty lot';
-      const kind = st()?.kind;
-      const [art, noun] = (KINDS[kind]?.name || 'a station').split(' ');
+      const who = whoOf(st());
       const nth = PARTY_IDS.slice(0, PARTY_IDS.indexOf(id))
-        .filter(o => stationById(o)?.kind === kind).length;
+        .filter(o => whoOf(stationById(o)) === who).length;
+      const [art, noun] = who ? ['the', who] : ['a', 'station'];
       return nth ? `${art} ${ORDINALS[nth]} ${noun}` : `${art} ${noun}`;
     },
     get glyph() { return KINDS[st()?.kind]?.glyph || 'crate'; },

@@ -29,7 +29,7 @@ import { pageOf, shopOf } from '../pages.js';
 import { remeasure } from '../board.js';
 import { onTap } from '../tap.js';
 import { coarse } from '../prefs.js';
-import { KINDS } from '../stations.js';
+import { station } from '../stations.js';
 
 // The fade's beat, handed to the stylesheet once, as board.js hands the pips'.
 document.documentElement.style.setProperty?.('--rail-fold-ms', `${RAIL_FOLD_MS}ms`);
@@ -267,10 +267,11 @@ export function refresh(id) {
     wire(id, m);
     grew = true;
   }
-  // The board's title: the kind's name, or the lot's. The page may have been
-  // made before anything stood under the id (pages.js reads the row's name once).
+  // The board's title: its row's name, the fighter's or the lot's. The page
+  // may have been made before anything stood under the id (pages.js reads
+  // the row's name once), and the name changes at the fork.
   const title = pageOf(id)?.querySelector('.title');
-  const name = r.lot ? 'an empty lot' : KINDS[r.kind]?.name;
+  const name = station(id)?.name;
   if (title && name && title.dataset.name !== name) { title.dataset.name = name; title.textContent = name; }
   return grew;
 }

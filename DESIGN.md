@@ -16502,7 +16502,7 @@ until a second station stands; every other fork is open from the start.
   in the ladder book, now that the base unit's rungs are a specialty's
   first three.
 
-## A station is its fighter and a prop (design, approved 2026-09-28)
+## A station is its fighter and a prop (built)
 
 The owner: the stations "don't make sense anymore" now that the fighters
 are the focus. The domes and their drawings retire. A station is its

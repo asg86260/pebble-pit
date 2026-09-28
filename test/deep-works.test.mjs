@@ -10,7 +10,6 @@ import { group, ok, yard } from './helpers.mjs';
 import { P, WORKER, SHELF_GLYPH_CELLS, PARTY_IDS } from '../src/config.js';
 import { STATIONS, KINDS, station } from '../src/stations.js';
 import { GLYPHS } from '../src/glyphs.js';
-import { SPRITES } from '../src/deep/sprites.js';
 import { deepTop, podsRect, standOfStation } from '../src/deep/place.js';
 import { progressOf, workAt, worksAt, DOWN_THERE, siteBox } from '../src/works.js';
 import { stackSlot } from '../src/render/bars.js';
@@ -63,12 +62,12 @@ group('every place with ground says its name and its drawing', async () => {
   // Every kind standing, so every station of the party has a kind to say.
   stand(['altar', 'well', 'armory', 'spire']);
   const bare = STATIONS.filter(r => r.stand && (!r.name || !GLYPHS[r.glyph])).map(r => r.key);
-  const kinds = Object.entries(KINDS).filter(([k, v]) => !v.name || !GLYPHS[v.glyph] || !SPRITES[k]).map(([k]) => k);
+  const kinds = Object.entries(KINDS).filter(([, v]) => !GLYPHS[v.glyph]).map(([k]) => k);
   const named = PARTY_IDS.map(id => station(id).name);
   return [
     ok(bare.length === 0, 'no station row is missing a name or a drawn glyph', bare.join(', ')),
-    ok(kinds.length === 0, 'every kind has a name, a glyph and a drawing on the floor', kinds.join(', ')),
-    ok(named.join() === 'the altar,the well,the armory,the spire', "a station of the party is called by its kind", named.join())
+    ok(kinds.length === 0, 'every kind has a glyph on the shelf', kinds.join(', ')),
+    ok(named.join() === 'the Fighter,the Novice,the Scout,the Apprentice', "a station of the party is called by its fighter", named.join())
   ];
 }, { reload: false });
 
@@ -77,15 +76,15 @@ group('a station of the party is a place by its id: two altars, two places', asy
   const ga = standOfStation(a), gb = standOfStation(b);
   const down = PARTY_IDS.every(id => DOWN_THERE.has(id));
   return [
-    ok(ga.w === gb.w && ga.h === gb.h, 'the two altars are one drawing', `${ga.w}x${ga.h} ${gb.w}x${gb.h}`),
+    ok(ga.w === gb.w && ga.h === gb.h, 'the two altars stand the same ground', `${ga.w}x${ga.h} ${gb.w}x${gb.h}`),
     ok(gb.x > ga.x + ga.w, 'standing at two slots, left to right', `${ga.x} ${gb.x}`),
     ok(siteBox('s1').x === ga.x && siteBox('s2').x === gb.x, 'each its own site for works'),
     ok(down, "and every station's works are the deep's builders'")
   ];
 }, { reload: false });
 
-// The stack over a deep station hangs off the station as drawn, not off the
-// dome round it or a flag the deep does not fly: the first glyph's foot is
+// The stack over a deep station hangs off the station as it stands, not off
+// a flag the deep does not fly: the first glyph's foot is
 // over the station's top, and closer to it than a glyph is tall.
 group('the works in line at a station of the party hang just over it', async () => {
   window.__fullSites();

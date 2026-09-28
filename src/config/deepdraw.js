@@ -19,12 +19,13 @@ export const RIPPLE_WARM_WAIT_MS = 1000; // the longest a pass waits for an idle
 // plus and minus, was hard to find.
 export const DEEP_FLOOR_MARGIN = P * 9;
 export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the floor
-// The stations are drawn cell for cell off their sprites, each under a lit
-// dome. The dome stands DOME_PAD out from the drawing either side, its walls
-// rise to DOME_WALL over the drawing's top, and the arch is a half circle
-// over that.
-export const DOME_PAD = P * 4;
-export const DOME_WALL = P * 4;
+// A station is its fighter and a prop (deep/props.js): the prop's right-hand
+// column stands PROP_GAP cells short of the fighter's body at its post, so a
+// kit carried at the body's left (the Monk's beads) has water between it and
+// the prop. The Swordsman carries his sword three cells off his body, so his
+// rack stands two more off, lest the sword be read as the rack's third.
+export const PROP_GAP = 5;
+export const PROP_GAP_OF = { sword: 7 };
 // The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
 // the door's inside is one heat field. A cell's heat is the base, raised by
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from

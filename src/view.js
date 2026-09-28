@@ -38,9 +38,9 @@ function deepZoom() {
   return Math.max(1, Math.floor(unit * k)) / unit;
 }
 
-// A zoom the deep is held at in place of its fit, for the station editor
-// (stations.html), which pulls in on the one station being painted: the deep
-// re-takes its zoom every frame, so a setZoom from outside lasts one frame.
+// A zoom the deep is held at in place of its fit, for a look pulled in on
+// one thing (`__deepZoom`): the deep re-takes its zoom every frame, so a
+// setZoom from outside lasts one frame.
 // Null lets go. Never saved, and nothing in the game sets it.
 let held = null;
 export const holdDeepZoom = k => { held = k; if (S.view === 'deep') setZoom(deepZoom()); };

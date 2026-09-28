@@ -12,11 +12,11 @@
 
 import { WORKER } from '../config.js';
 import { TYPE, isDeepType } from '../jobs.js';
-import { spotX, mouthX } from '../deep/place.js';
+import { spotX, mouthX, postX } from '../deep/place.js';
 import { belowYard, keepTo, stepRoute, ways } from '../route.js';
 import { commutePace } from '../levels.js';
 import { DOWN_THERE } from '../works.js';
-import { stationById, stationMid } from '../deep/party.js';
+import { stationById } from '../deep/party.js';
 
 // Where each deep job with a fixed place stands: the keys of `DEEP_SPOTS`.
 // A fighter's place is its station's, which the player put down
@@ -31,7 +31,7 @@ export const DEEP_STATION = Object.freeze({
 export const deepPost = (type, w = null) => {
   if (type !== TYPE.FIGHTER) return spotX(DEEP_STATION[type] || 'crusher') - WORKER / 2;
   const st = w && stationById(w.station);
-  return (st ? stationMid(st) : spotX('pods')) - WORKER / 2;
+  return st ? postX(st) : spotX('pods') - WORKER / 2;
 };
 
 // A body made from nothing on a deep job (a save read back, or a hook's

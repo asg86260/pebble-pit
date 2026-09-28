@@ -28,7 +28,7 @@ import { TYPE } from '../jobs.js';
 import { S } from '../state.js';
 import { fighterAt, keyOf } from '../deep/party.js';
 import * as fight from '../deep/arms.js';
-import { deepFloor, deepTop, deepX0, slotX } from '../deep/place.js';
+import { deepFloor, deepTop, deepX0, postX } from '../deep/place.js';
 import { ctx } from './ctx.js';
 import { inTheDeep } from './crew.js';
 import { GREYS, PURPLES, WHITE, BODY, R4, R8, hash, lerp, ease, cell, ring, body, pips, dagger, charge,
@@ -370,7 +370,7 @@ if (import.meta.env?.DEV) {
     bench.length = 0;
     list.forEach((o, i) => {
       const slot = o.slot ?? i;
-      const cx = o.x != null ? o.x : Math.round(slotX(slot) / P) - 1;
+      const cx = o.x != null ? o.x : postX({ slot }) / P;
       const floor = Math.floor(deepFloor() / P);
       const y = o.gap != null ? hideBot(cx) + o.gap : floor - BODY - (o.up || 0);
       const w = { uid: 'bench' + i, x: cx * P, y: y * P, benchA: o.a ?? null };

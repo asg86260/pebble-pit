@@ -9,7 +9,7 @@ import { countRect } from '../render/counter.js';
 import { portalNearEdge } from '../render/portal.js';
 import { S } from '../state.js';
 import { P, VIEW_GLIDE_S, PORTAL_RX } from '../config.js';
-import { mouthX, portalX, portalCircle, deepPortal, deepTop } from '../deep/place.js';
+import { mouthX, portalX, portalCircle, deepPortal, deepTop, deepFloor, propRect, postX } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { arrowBox } from '../render/shaftway.js';
 import { refreshCorner } from '../corner.js';
@@ -303,5 +303,37 @@ TESTS.push(['rails: the build button lays a lot, and its board picks the first s
     ok(st && st.id === 's1' && st.kind === 'armory' && !st.built && S.fangs === 0,
        'a pick puts the first station up, free', JSON.stringify(st)),
     ok(!btn.classList.contains('on'), 'and the button goes, with no fang held')
+  ];
+}]);
+
+// A station is its fighter and a prop (DESIGN.md): its ground spans the prop
+// and the fighter's post, so the pointer on either opens its board, and the
+// board says whose it is -- the fighter's, not the old building's.
+TESTS.push(['rails: the pointer on a station\'s prop or its fighter opens the board, titled by the fighter', async () => {
+  window.__fullSites();
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }, { kind: 'armory', cls: 'ranger', rung: 8 }] });
+  window.__view('deep');
+  run(VIEW_GLIDE_S + 0.5);
+  const seen = [];
+  for (const st of S.stations) {
+    const p = propRect(st), post = postX(st);
+    for (const [name, wx] of [['prop', p.x + p.w / 2], ['post', post + P]]) {
+      window.__look(wx - 400);
+      await sleep(120);
+      const [x, y] = onScreen(wx, deepFloor() - P * 2);
+      point('pointermove', x, y, 0);
+      await sleep(250);
+      await seat();
+      seen.push({ id: st.id, name, open: S.stationBoardOpen === st.id,
+                  title: document.querySelector(`#${st.id}board .title`)?.textContent.trim() });
+      await hoverAway();
+    }
+  }
+  const at = (id, name) => seen.find(o => o.id === id && o.name === name);
+  return [
+    ok(seen.every(o => o.open), 'the pointer on the prop and on the post opens the board',
+       seen.map(o => `${o.id} ${o.name} ${o.open}`).join(', ')),
+    ok(at('s1', 'prop')?.title === 'the Fighter', "a base unit's board is the Fighter's", at('s1', 'prop')?.title),
+    ok(at('s2', 'post')?.title === 'the Ranger', "a class's board is its fighter's", at('s2', 'post')?.title)
   ];
 }]);

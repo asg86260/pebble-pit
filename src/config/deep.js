@@ -25,8 +25,8 @@ export const DEEP_MOUTH = P * 40;    // the shaft, in from the pit's near lip: w
 // its left edge. The altar is the deep's bench: punching, and the doors. The
 // pods stand between the crusher and the altar (the owner's call,
 // 2026-09-23), clear of the gatherers' toss at the crusher's side. Past the
-// crusher they stand an even step apart, each step wider than a dome and the
-// ground its crew stands on (DEEP_STAND_W) together, and the spire's dome is
+// crusher they stand an even step apart, each step wider than a station and
+// the ground its crew stands on (DEEP_STAND_W) together, and the spire is
 // still well inside the deep's right end.
 export const DEEP_SPOTS = { crusher: 0.05, pods: 0.19, altar: 0.335, well: 0.475, font: 0.62, circle: 0.76, spire: 0.9 };
 // The pods: the deep's houses, a capsule a body, stacked POD_COLS abreast from
@@ -36,7 +36,7 @@ export const POD_H = P * 5;
 export const POD_GAP = P;
 export const POD_COLS = 4;
 // How far either side of a station's middle a body working it may stand.
-// The station's own ground is its drawing (`standOf` in deep/place.js).
+// The station's own ground is its prop and its post (`standOfStation` in deep/place.js).
 export const DEEP_STAND_W = P * 30;
 
 // --- the crusher ------------------------------------------------------------------

@@ -274,10 +274,15 @@ const glideAt = (to, k) => () => {
   poseGlide();
 };
 
-// The five station kinds, each alone at the first slot with a fighter on
-// guard and no class taken: the shot to crop when a station's drawing
-// changes. `deep-all` has four, the most a party holds.
-const KINDS = Object.keys(PAIRS);
+// Every prop on the floor (deep/props.js), four stations a scene, the most a
+// party holds: a base unit's crate beside classes at rung 4 and rung 8, so
+// one shot holds a prop plain and lit and the crate beside them. The serpent
+// is left unwounded at the first stage so the ranged stay at their posts.
+const PROP_SCENES = {
+  'party-props-a': [{ kind: 'altar', cls: null, rung: 0 }, cast('brawler', 4), cast('sword', 8), cast('monk', 8)],
+  'party-props-b': [cast('martial', 4), cast('ranger', 8), cast('assassin', 8), cast('hexer', 8)],
+  'party-props-c': [cast('sapper', 8), cast('mage', 8), cast('bard', 8), cast('hexer', 4)]
+};
 
 const deepScenes = {
   snatch: { about: 'the deep', say: 'the snatch: the serpent up out of the abyss at the shaft, him in its jaws',
@@ -458,11 +463,11 @@ const deepScenes = {
                  party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } },
-  ...Object.fromEntries(KINDS.map(k => [`deep-${k}`, {
-    about: 'the deep', say: `the ${k} alone in the middle of the frame, under its dome, its base unit at work`,
+  ...Object.fromEntries(Object.entries(PROP_SCENES).map(([name, party]) => [name, {
+    about: 'the deep', say: `four stations' props: ${party.map(o => (o.cls || 'crate') + ' ' + o.rung).join(', ')}`,
     run: () => {
-      deepYard({ stage: 1, wound: 300, party: [{ kind: k, cls: null, rung: 0 }] });
-      lookDeep(slotAt(S.stations[0].slot));
+      deepYard({ stage: 0, run: 4, party });
+      lookDeep((slotAt(0) + slotAt(3)) / 2);
     } }])),
   // A station going up down there: a delver at the first slot, the silt off
   // each blow sinking back to the floor. The pick is the build button's.

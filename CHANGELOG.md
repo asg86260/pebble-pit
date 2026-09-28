@@ -18,6 +18,7 @@ this section; the release that switches it on moves these under Unreleased.
 **New when it is on**
 - A station starts as a base unit (Fighter, Novice, Scout, Adept, Apprentice) that forks into one of its two classes at rung 4, and the build button lays an empty lot whose board picks what goes up (test/rails.test.mjs, src/selftest/deep.js).
 - Fighters sway a cell between attacks, and the melee ones hop as each step lands (`node tools/look.mjs party-four`).
+- A station is its fighter beside a prop instead of a building under a dome: a crate below the fork, the class's own from it, its parts purple at rung 8, and its board named for the fighter (test/props.test.mjs, src/selftest/deep.js).
 - The party: up to four stations built on the deep's floor, the first free and each after it for a fang the serpent drops at a break, each with a fighter of one of ten classes climbed on the station's rails, a move at rung 4 and a capstone at rung 8 (test/party.test.mjs, test/rails.test.mjs, test/classes.test.mjs).
 - The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought by the party's fighters; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
@@ -42,7 +43,6 @@ this section; the release that switches it on moves these under Unreleased.
 - On a tall window the deep's water goes all the way up to the top of the screen, with no black band over it (src/selftest/deep.js).
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).
-- The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
 - A worker thrown in the deep sinks to the deep's floor and stays down there, instead of landing on the yard's ground (test/deep-shaft.test.mjs).
 - The counts card keeps clear of the wizards' portal instead of covering it (src/selftest/deep.js).
 - The deep draws its water, serpent, stations and floor as a few images a frame instead of thousands of cells, so it no longer drops to a crawl on a large screen (scene deep-all).
