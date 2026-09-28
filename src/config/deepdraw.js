@@ -92,20 +92,17 @@ export const SHAFT_ARROW_MS = 1600;
 
 // --- its motes ---------------------------------------------------------------------
 // The deep's own kinds, the way the sky's are SMOG_TINTS: silt hanging, flecks
-// shed off the serpent, the churn off a burst. A kind is its tones (dark to
+// shed off the serpent. A kind is its tones (dark to
 // light, as they will be seen on the black) and an `ink`, the weight it is
 // drawn at. Motes are drawing only (render/deep.js steps them).
 export const DEEP_MOTE_TINTS = {
   silt:  { tones: ['#26262c', '#333339', '#42424a', '#55555e'], ink: 0.8 },
-  fleck: { tones: ['#8b8b96', '#b4b4c0', '#6e6e78', '#9b9ba6'], ink: 1 },
-  churn: { tones: ['#5c2ba6', '#6a2fbe', '#4e2090', '#9b5de5'], ink: 1 }
+  fleck: { tones: ['#8b8b96', '#b4b4c0', '#6e6e78', '#9b9ba6'], ink: 1 }
 };
 export const DEEP_SILT = 150;        // silt motes hanging in a window of the deep
 export const DEEP_SILT_SINK = 0.04;  // px a frame the silt settles, against the current's push
 export const DEEP_FLECK_EVERY = 0.35; // seconds between flecks off a swaying coil
 export const DEEP_FLECK_LIFE = 7;    // seconds a fleck drifts before it is gone
-export const DEEP_CHURN = 22;        // motes thrown off a burst
-export const DEEP_CHURN_LIFE = 2.5;  // seconds they churn
 export const DEEP_MOTES_MAX = 400;   // however much is going on
 
 // --- the serpent -------------------------------------------------------------------
@@ -281,17 +278,18 @@ export const HELD_BRIGHT_RUNG = 8;   // a Hexer this high edges the bands in whi
 export const EXPOSED_EVERY = 4;      // columns between Exposed's lifted scales
 export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settles
 // The fang (docs/wave-party.md): a white fang of a few cells, point down,
-// sinking and carried like a scale. '#' white, '+' a grey a step down.
-export const FANG_SPRITE = ['##+', '#+.', '#..'];
+// sinking and carried like a scale: a root three cells across narrowing to
+// its point. '#' white, '+' a grey a step down.
+export const FANG_SPRITE = ['###', '.#+', '.#.'];
 // Its mark on the counter card, a pixel a character, as SCALE_MARK is.
 export const FANG_MARK = [
   '#######',
-  '######.',
-  '#####..',
-  '####...',
-  '###....',
-  '##.....',
-  '#......',
+  '#######',
+  '.#####.',
+  '.#####.',
+  '..###..',
+  '..###..',
+  '...#...',
 ];
 // The scaffold over a station not yet built: posts this many bands tall,
 // the tape at head height.

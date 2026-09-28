@@ -390,7 +390,7 @@ export function drawDeepStations() {
 }
 
 // --- the motes -------------------------------------------------------------------
-// Silt hanging in the water, flecks shed off the coil, the churn off a burst.
+// Silt hanging in the water, and flecks shed off the coil.
 // Drawing only: they are stepped here, on the frame's own clock, never by the
 // sim, and live on `S.deepMotes` so a reload starts the water afresh.
 let motesAt = 0, fleckOwed = 0;

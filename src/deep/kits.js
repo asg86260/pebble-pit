@@ -139,7 +139,7 @@ function bFistCells(g, fx, fy, size, R) {
 }
 export function bFist(g, fx, fy, size, R, t, side) {
   bFistCells(g, fx, fy, size, R);
-  if (R8(R) && R4(R)) drift(g, side < 0 ? fx : fx + size - 1, fy - 1, t, 1, side > 0 ? 0.5 : 0, MOTE_RISE, MOTE_PERIOD, MOTES_P);
+  if (R8(R)) drift(g, side < 0 ? fx : fx + size - 1, fy - 1, t, 1, side > 0 ? 0.5 : 0, MOTE_RISE, MOTE_PERIOD, MOTES_P);
 }
 
 // --- the Swordsman: a greatsword point-up at his side ---------------------------

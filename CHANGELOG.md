@@ -27,6 +27,7 @@ feature lives in DESIGN.md.
 - A card pressed again queues another of the same -- the next rung, the next house -- paid on the press at its own price; a strip along the card's foot splits into a refund of the newest one still waiting and a button for another, and the card's pips dot every rung paid for and not yet landed; the queue card shows a run as one line with its count (test/queue-repeats.test.mjs, src/selftest/boards.js).
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy punch, grenade or star stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
 - Save a copy, load a save and reset progress are on the saves page now, and loading a yard turns the sheet back to the front (src/selftest/settings.js).
+- Each fighter wears its class's kit and strikes as the owner drew it, a mark growing at rung 4 and a touch of the abyss's purple at rung 8; the serpent gives under the blows and wears Bleeding, Held, Exposed and Weakened, and a fang dropped at a break sinks and is carried like a scale (`node tools/look.mjs class-brawler`).
 
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - Scales tossed into the crusher drop into its funnel instead of sliding down in front of it (`node tools/look.mjs crusher`).

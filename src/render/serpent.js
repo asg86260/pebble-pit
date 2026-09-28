@@ -13,7 +13,9 @@
 // The wound is read on the body: cracks out from the belly as far as it is
 // deep, and the gap at the belly breaking the cage of ribs the one it took is held in (DESIGN.md, "The serpent, redrawn").
 // A blow is read on it too: a bite out of the edge it came from, closing,
-// and a ring running over a stunned coil's head (DESIGN.md, "Blows land").
+// the hide giving under it a beat, and a ring running over a stunned coil's
+// head (DESIGN.md, "Blows land"); and what the fighters have laid on it, the
+// statuses, over the whole of it (docs/wave-party.md, "The picture").
 
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
