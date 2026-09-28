@@ -357,6 +357,8 @@ const deepScenes = {
     run: stageScene(0, 52, [cast('brawler', 1)]) },
   'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales, a Ranger\'s arrows in it',
     run: stageScene(1, 300, [cast('ranger', 4), cast('brawler', 2)]) },
+  'deep-scout': { about: 'the deep', say: 'the Scout, the armory base unit at rung 0, shooting its arrow',
+    run: () => { deepYard({ stage: 1, wound: 300, party: [cast('ranger', 0)] }); lookAtStation(0); } },
   'deep-split': { about: 'the deep', say: 'the third defense: the coil in lengths, a Sapper\'s charges bursting, a Hexer\'s hex on it',
     run: stageScene(2, 1500, [cast('sapper', 4), cast('hexer', 4)]) },
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',

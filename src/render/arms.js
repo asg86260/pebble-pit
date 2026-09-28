@@ -287,7 +287,7 @@ export function drawShots() {
   const t = now(), R = s => stationOfBody(s.by)?.rung || 0;
   // what the fight has in the water, each as the page draws it
   for (const s of inWater()) {
-    const x = Math.round(s.x / P - 0.5), bot = hideBot(x) + 1, y = Math.min(s.y / P, bot), r = R(s);
+    const x = Math.round(s.x / P - 0.5), bot = hideBot(x) + 1, y = Math.max(s.y / P, bot), r = R(s);
     const k = s.fly ? Math.min(1, (t - s.at) / s.fly) : 0;
     if (s.kind === 'arrow' || s.kind === 'aimed') {
       const pu = s.kind === 'aimed';
@@ -303,13 +303,13 @@ export function drawShots() {
       for (let m = 0; m < n; m++) {
         const q = Math.max(0, k - m * 0.5 / n) ** 1.5;
         if (q <= 0) continue;
-        const cx = lerp(x0, x, q) + [-1, 1, 0, -2, 2, -1, 1, 0, 0][m], cy = Math.min(lerp(y0, y, q), bot);
+        const cx = lerp(x0, x, q) + [-1, 1, 0, -2, 2, -1, 1, 0, 0][m], cy = Math.max(lerp(y0, y, q), bot);
         cell(ctx, cx, cy, PURPLES[11]); cell(ctx, cx, cy + 1, PURPLES[7]);
       }
     } else if (s.kind === 'dagger') {
       // point first up to the hide, spinning whole at the capstone; the pose
       // before it bites, a held streak down to where it left her
-      const gy = Math.min(y, bot + 3);
+      const gy = Math.max(y, bot + 3);
       if (s.fly && s.at + s.fly - t < DRAW_POSE * 1000) {
         streakAt(ctx, x, gy - 3, Math.max(gy + 1, s.y0 / P), R8(r) ? PURPLES[11] : WHITE, R8(r));
         speedLines(ctx, x, gy, 2, 3, R8(r));
