@@ -507,6 +507,18 @@ export const S = {
   altarBoardOpen: false, wellBoardOpen: false, fontBoardOpen: false,
   circleBoardOpen: false, spireBoardOpen: false, podsBoardOpen: false,
 
+  // The party (docs/wave-party.md): stations built on the deep's floor in any
+  // order, a fighter at each, a class and a ladder a station. `S.stations` is
+  // written by deep/party.js alone.
+  stations: [],           // [{ id, kind, slot, built, cls, rung, paid, fighter }]
+  stationsBuilt: 0,       // how many ever stood built: the second opens every class
+  fangs: 0,               // the coin a broken phase drops; one buys the next station
+  seenFang: false,
+  fangsDropped: 0,        // the breaks that have dropped theirs, so a reload drops none twice
+  fangsLoose: [],         // fangs sinking or lying on the floor, until a gatherer carries them
+  statuses: {},           // on the whole serpent: { bleed, exposed, held, weakened } -> { until, k }
+  stationBoardOpen: null, // the id of the station whose board is up
+
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
 };
 
@@ -659,6 +671,8 @@ export const SAVED = [
   JOB.BRAWL, JOB.LANCE, JOB.GRENADE, JOB.SCRIBE, JOB.WARLOCK, JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   'punchLevel', 'brawlLevel', 'lanceLevel', 'lanceholdLevel', 'grenadeLevel',
   'grenadepaceLevel', 'sigilLevel', 'beamLevel', 'curseLevel', 'starLevel', 'sigils', 'starAt',
+  // The party (docs/wave-party.md).
+  'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',
 ];
 
 // Fields whose encode or decode is more than a copy: a run-length string, a
@@ -812,6 +826,7 @@ export const EPHEMERAL = [
   'hits', 'healSum', 'healAt',
   'starFall', 'deepMotes', 'crushes', 'heldScales', 'portalAt',
   'altarBoardOpen', 'wellBoardOpen', 'fontBoardOpen', 'circleBoardOpen', 'spireBoardOpen', 'podsBoardOpen',
+  'statuses', 'stationBoardOpen',
 ];
 
 // The sand grids, mutated in place and never reassigned. `p` is the size of
