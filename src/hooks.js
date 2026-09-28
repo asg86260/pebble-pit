@@ -1089,6 +1089,8 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
     // fight set back takes them back, and one set forward skipped them, so
     // the next break drops its own and not the ones before it.
     S.fangsDropped = Math.min(S.serpentStage, FANG_BREAKS);
+    // and a fang still in the water from a break taken back goes with it.
+    if (S.fangsLoose.length > S.fangsDropped) S.fangsLoose = S.fangsLoose.slice(0, S.fangsDropped);
   }
   if (Number.isFinite(wound)) S.serpentWound = Math.max(0, wound);
   forgetSerpent();
@@ -1102,6 +1104,7 @@ HANDLES.__deepState = () => ({
   statuses: JSON.parse(JSON.stringify(S.statuses)),
   stations: S.stations.map(st => ({ ...st, paid: (st.paid || []).map(p => p.slice()) })),
   fangs: S.fangs, fangsDropped: S.fangsDropped, fangsLoose: S.fangsLoose.length,
+  fangsAt: S.fangsLoose.map(f => ({ x: Math.round(f.x), y: Math.round(f.y), rest: f.rest, held: f.held, by: f.by })),
   shots: shots.length
 });
 

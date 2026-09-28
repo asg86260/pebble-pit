@@ -208,6 +208,9 @@ function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scal
   window.__crew(0, 4);
   window.__deepCrew({ spare: 1 + spare });
   if (party.length || fangs) window.__party({ stations: party, fangs });
+  // A gatherer by the crusher with a party standing, so a fang a break drops
+  // is carried by its own hand and no fighter leaves its work in the shot.
+  if (party.length) window.__deepCrew({ spare: 1 });
   window.__scales(scales);
   if (loose) window.__looseScales(loose);
   window.__serpent({ stage, wound });

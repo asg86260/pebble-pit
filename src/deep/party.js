@@ -72,6 +72,9 @@ const stationRow = id => ({
   key: `station-${id}`, kind: 'building', site: id,
   get name() { const st = stationById(id); return st ? `raise the ${st.kind}` : 'raise a station'; },
   work: () => STATION_WORK_S,
+  // Paid for in a fang, or nothing for the first, spent on the pick; the
+  // work itself asks no coin, which the bar over it and its tint read.
+  bill: () => [],
   buy: () => stationLanded(id)
 });
 const ROWS = PARTY_IDS.map(stationRow);
