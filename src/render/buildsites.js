@@ -1,7 +1,7 @@
 // A site with work on it looks like a building site: barriers, tape, and the
 // chips off the builder's hammer.
 
-import { P, INVERT_PROBE } from '../config.js';
+import { P, INVERT_PROBE, PARTY_IDS } from '../config.js';
 import { S } from '../state.js';
 import { SITES, rowFor, siteBox, worksAt } from '../works.js';
 import { ctx } from './ctx.js';
@@ -35,8 +35,12 @@ const construction = site =>
 // The site sheds no dust of its own on purpose: a haze off the foot of a
 // building reads as the ground smoldering. What says building site is the
 // barriers, the tape and the chips off each blow (`workJig` in crew.js).
+// A station of the party going up draws its own scaffold in the deep's tones
+// (`drawDeepStations`, render/deep.js), so it is not fenced a second time
+// here; its site keeps its box for the builder, the bar and the roster.
+const OWN_SCAFFOLD = new Set(PARTY_IDS);
 export function drawBuildSites() {
-  for (const site of SITES) for (const work of construction(site)) {
+  for (const site of SITES) for (const work of OWN_SCAFFOLD.has(site) ? [] : construction(site)) {
     const foot = siteBox(site, work);
     if (!foot) continue;
 

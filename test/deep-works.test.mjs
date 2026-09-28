@@ -12,16 +12,18 @@ import { STATIONS, KINDS, station } from '../src/stations.js';
 import { GLYPHS } from '../src/glyphs.js';
 import { SPRITES } from '../src/deep/sprites.js';
 import { deepTop, podsRect, standOfStation } from '../src/deep/place.js';
-import { progressOf, workAt, worksAt, start, DOWN_THERE, siteBox } from '../src/works.js';
+import { progressOf, workAt, worksAt, DOWN_THERE, siteBox } from '../src/works.js';
 import { stackSlot } from '../src/render/bars.js';
+import { pressBuild } from './party-press.mjs';
 
 const S = yard.S;
 
-// until merge: `__party` (STATE) stands the party; until then its stations
-// are written onto S by hand, one a kind, each at the next slot.
+// The party stood up by `__party`, one station a kind, each at the next
+// slot; `built: false` leaves the last one's work in line, as the build
+// button leaves it.
 const stand = (kinds, built = true) => {
-  S.stations = kinds.map((kind, i) => ({ id: PARTY_IDS[i], kind, slot: i, built,
-                                         cls: null, rung: 0, paid: [], fighter: null }));
+  window.__party({ stations: (built ? kinds : kinds.slice(0, -1)).map(kind => ({ kind })) });
+  if (!built) pressBuild(kinds.at(-1));
   return S.stations;
 };
 
@@ -88,8 +90,7 @@ group('a station of the party is a place by its id: two altars, two places', asy
 group('the works in line at a station of the party hang just over it', async () => {
   window.__fullSites();
   const [st] = stand(['spire'], false);
-  // until merge: the build `buildStation` (CREW) queues, put in line by hand.
-  const queued = start('s1', { key: 'raise-s1', kind: 'building', work: () => 30 });
+  const queued = !st.built;
   const top = standOfStation(st).y;
   const at = stackSlot('s1', 0, worksAt('s1')[0]);
   const foot = at && at.cy + SHELF_GLYPH_CELLS / 2 * P;

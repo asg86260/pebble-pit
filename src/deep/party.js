@@ -11,16 +11,14 @@
 // manned (`CALLED`) on a call before a body is chosen for it.
 
 import { S } from '../state.js';
-import * as CFG from '../config.js';
-import { P, WORKER, DEEP_W, DEEP_GRAV, DEEP_DRAG, LADDER,
-         STATION_WORK_S, FANG_BREAKS, FANG_KICK, PARTY_SLOTS_FALLBACK } from '../config.js';
+import { P, WORKER, DEEP_GRAV, DEEP_DRAG, LADDER, DEEP_SLOTS, PARTY_IDS,
+         STATION_WORK_S, FANG_BREAKS, FANG_KICK } from '../config.js';
 import { CLASSES, PAIRS, STARTERS, FIRST_KINDS, FIGHT_STATIONS_MAX } from '../config/classes.js';
-import * as place from './place.js';
-import { deepX0, deepX1, deepFloor, spotX, standOf, bellyAt, tossX, inHopper } from './place.js';
-import { SPRITES } from './sprites.js';
+import { deepX0, deepX1, deepFloor, slotX, bellyAt, tossX, inHopper } from './place.js';
 import { start, registerRows } from '../works.js';
 import { TYPE } from '../jobs.js';
-import { frames } from '../clock.js';
+import { frames, now } from '../clock.js';
+import { onBreak } from './serpent.js';
 import { rand } from '../rng.js';
 import { refund } from '../pit.js';
 import { shed } from './scales.js';
@@ -29,8 +27,6 @@ import { haulSpeed } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { syncWorkers } from '../crew/muster.js';
 import { retask } from '../crew/commute.js';
-
-const snap = v => Math.round(v / P) * P;
 
 // --- the queries --------------------------------------------------------------------
 export const stationById = id => S.stations.find(s => s.id === id) || null;
@@ -43,18 +39,13 @@ export const fighterAt = st =>
 // every other job's.
 export const fightersOn = () => S.stations.filter(s => s.fighter).length;
 
-// The floor's slots, left to right as the player buys them. BOARD's list and
-// `slotX` when they are there. TODO(merge): read `DEEP_SLOTS` and `slotX`
-// straight, and drop the fallback.
-const slots = () => CFG.DEEP_SLOTS || PARTY_SLOTS_FALLBACK;
-export const slotAt = i => (place.slotX ? place.slotX(i) : snap(deepX0() + slots()[i] * DEEP_W));
-// A station's middle on the floor.
-export const stationMid = st => slotAt(st.slot);
+// A station's middle on the floor: its slot's.
+export const stationMid = st => slotX(st.slot);
 
 // The lowest floor slot with no station on it, or -1 when the floor is full.
 export const nextSlot = () => {
   const taken = new Set(S.stations.map(s => s.slot));
-  for (let i = 0; i < slots().length; i++) if (!taken.has(i)) return i;
+  for (let i = 0; i < DEEP_SLOTS.length; i++) if (!taken.has(i)) return i;
   return -1;
 };
 // The first station is free, from the snatch; every one after it takes a
@@ -71,44 +62,40 @@ export const classesOpen = kind => (S.stationsBuilt >= 2 ? PAIRS[kind] || []
 // --- building one -------------------------------------------------------------------
 // Ids are never reused, and a station is never taken down (a reset blanks
 // its class and keeps it standing), so the ids there can ever be are
-// s1..sMAX, and each has its work's row from the start: a work read back
-// from a save finds its row (`rowFor`) before anything has been bought.
-const idOf = n => `s${n}`;
-const newId = () => idOf(S.stations.reduce((m, s) => Math.max(m, +s.id.slice(1) || 0), 0) + 1);
-
-// The ground a station stands on: BOARD's `standOfStation` when it is there,
-// and until then the kind's drawing moved to its slot (the armory wears the
-// font's). TODO(merge): `place.standOfStation` only.
-const spriteKey = kind => (SPRITES[kind] ? kind : kind === 'armory' ? 'font' : 'altar');
-export function stationBox(st) {
-  if (!st) return null;
-  if (place.standOfStation) return place.standOfStation(st);
-  const k = spriteKey(st.kind), b = standOf(k);
-  return { ...b, x: b.x + stationMid(st) - spotX(k) };
-}
+// `PARTY_IDS`, minted in order; each is its own row in the station table
+// (stations.js) -- a board, a roster post, a site -- and its build is worked
+// at that site, so its work finds its row (`rowFor`) out of a save before
+// anything has been bought.
+const newId = () => PARTY_IDS.find(id => !stationById(id)) || null;
 
 const stationRow = id => ({
-  key: `station-${id}`, kind: 'building', site: 'deep',
+  key: `station-${id}`, kind: 'building', site: id,
   get name() { const st = stationById(id); return st ? `raise the ${st.kind}` : 'raise a station'; },
   work: () => STATION_WORK_S,
-  box: () => stationBox(stationById(id)),
   buy: () => stationLanded(id)
 });
-const ROWS = Array.from({ length: FIGHT_STATIONS_MAX }, (_, i) => stationRow(idOf(i + 1)));
+const ROWS = PARTY_IDS.map(stationRow);
 registerRows(ROWS);
 
 // The floating button's pick: a fang spent (the first station is free), the
 // station written down unbuilt at the next free slot, and its work queued
 // there for a delver to put up. Nothing stands until the work lands.
 export function buildStation(kind) {
-  if (!canBuild() || !kindsOffered().includes(kind)) return false;
+  if (!kindsOffered().includes(kind)) return false;
+  return raiseStation(kind);
+}
+// The same, of any kind: what the button's pick comes to once the kind is
+// allowed, and the setup hook's way (`__party`) to stand a first station
+// the button would not offer.
+export function raiseStation(kind) {
+  if (!canBuild() || !PAIRS[kind]) return false;
   const slot = nextSlot();
   const id = newId();
   const row = ROWS.find(r => r.key === `station-${id}`);
-  if (!row) return false;
+  if (!id || !row) return false;
   if (S.stations.length > 0) S.fangs--;
   S.stations = [...S.stations, { id, kind, slot, built: false, cls: null, rung: 0, paid: [], fighter: null }];
-  start('deep', row, slotAt(slot));
+  start(id, row, slotX(slot));
   S.shopStale = true;
   return true;
 }
@@ -287,10 +274,11 @@ export function resetStation(id) {
 // one's arms. The claim is saved with the fang rather than on the body, so a
 // reload finds the same hand carrying it.
 //
-// TODO(merge): FIGHT's phase-break export, when there is one. Until then the
-// break is read as the stage rising, asked here once a frame.
-function dropFangs(t) {
-  const due = Math.min(FANG_BREAKS, S.serpentStage | 0);
+// Heard from the serpent's own break (`onBreak`), with the stage it reached;
+// `fangsDropped` is the guard, so a break heard twice, or one a hook set the
+// stage past, drops nothing it has dropped already.
+function dropFangs(stage, t = now()) {
+  const due = Math.min(FANG_BREAKS, stage | 0);
   if (S.fangsDropped >= due) return;
   const add = [];
   while (S.fangsDropped < due) {
@@ -312,10 +300,11 @@ function crushFang(f) {
 function sinkFangs() {
   const f = frames();
   const lo = deepX0() + P, hi = deepX1() - P;
-  const hands = new Set(S.workers.filter(w => w.type === TYPE.GATHER).map(w => w.name));
+  const hands = new Set(S.workers.filter(w => w.type === TYPE.GATHER || w.type === TYPE.FIGHTER).map(w => w.name));
   for (const g of [...S.fangsLoose]) {
-    // A claim nobody answers any more -- the hand stood down, or put on a
-    // station -- is let go where it is, and a fang let go sinks again.
+    // A claim nobody answers any more -- the hand stood down, or moved to a
+    // job that does not carry -- is let go where it is, and a fang let go
+    // sinks again.
     if (g.by && !hands.has(g.by)) { g.by = null; if (g.held) { g.held = false; g.rest = false; } }
     if (g.held || g.rest) continue;
     g.vx *= Math.pow(DEEP_DRAG, f);
@@ -328,9 +317,13 @@ function sinkFangs() {
   }
 }
 
-export function stepParty(c) {
+// Listening starts on the first frame, not at load: serpent.js is read
+// before this file on some import orders and after it on others, and asked
+// while it is still being read it has no list to hand the listener to.
+let listening = false;
+export function stepParty() {
+  if (!listening) { onBreak(stage => dropFangs(stage)); listening = true; }
   if (!S.snatched) return;
-  dropFangs(c.now);
   sinkFangs();
 }
 
@@ -362,4 +355,30 @@ export function carryFang(w) {
   crushFang(g);
   w.goal = 'seek';
   return true;
+}
+
+// With no gatherer to fetch it, a fang on the floor is fetched by the
+// fighter nearest it (the owner, 2026-09-28): it leaves its station for the
+// errand, carries the fang to the crusher, and swims back to its work. A
+// gatherer with scales in its arms takes the fang once they are in, so any
+// gatherer down there is enough to leave the fighters at their work. True
+// while this fighter is on the errand, which is the whole of its frame.
+const claimed = w => S.fangsLoose.some(f => f.by === w.name);
+const freeGatherer = () => S.workers.some(o => o.type === TYPE.GATHER && working(o));
+export function fetchFang(w) {
+  if (!claimed(w)) {
+    const g = S.fangsLoose.find(f => f.rest && !f.by);
+    if (!g || !working(w) || freeGatherer()) return false;
+    let best = null, dist = Infinity;
+    for (const o of S.workers) {
+      if (o.type !== TYPE.FIGHTER || !working(o) || claimed(o)) continue;
+      const d = Math.hypot(mid(o) - g.x, o.y - g.y);
+      if (d < dist) { dist = d; best = o; }
+    }
+    if (best !== w) return false;
+  }
+  // Nothing in its hands but the fang: the swing in the air and the beam go.
+  w.pose = null;
+  w.beam = null;
+  return carryFang(w);
 }

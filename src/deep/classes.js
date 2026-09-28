@@ -33,36 +33,27 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { P, WORKER, DEEP_W, COIL_SEGS, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
-         CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, CLASS_LADDER_GUESS, SLOTS_GUESS,
-         SWIM_PACE, DEEP_GRAV, LADDERS, rungValue } from '../config.js';
+import { P, WORKER, COIL_SEGS, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
+         CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
-import * as place from './place.js';
-import { deepX0, coilAt, coilThick, nearestSeg } from './place.js';
+import { slotX, coilAt, coilThick, nearestSeg } from './place.js';
 import { stationById, classOf } from './party.js';
 import { mid, feet, working, swim, loose } from './arms.js';
 import { strike, woundK } from './serpent.js';
 import { rest } from './rest.js';
 import { lay, inspire, haste, tempo } from './statuses.js';
 
-const snap = v => Math.round(v / P) * P;
 const hasCap = st => st.rung >= CAPSTONE_RUNG;
 const hasMove = st => st.rung >= MOVE_RUNG;
 
-// What a rung of a class is worth: its LADDERS row, rung 0..8.
-export function rungWorth(cls, rung) {
-  if (LADDERS[cls.ladder]) return rungValue(cls.ladder, rung);
-  const g = CLASS_LADDER_GUESS[cls.ladder];                      // until merge
-  return g[Math.max(0, Math.min(g.length - 1, rung | 0))];
-}
+// What a rung of a class is worth: its LADDERS row, rung 0..8, a percent
+// read as a share for a class that says so.
+export const rungWorth = (cls, rung) => rungValue(cls.ladder, rung) / (cls.pct ? 100 : 1);
 
 // The fighter's station, and the middle of it on the floor.
 export const stationOf = w => (w && w.station ? stationById(w.station) : null);
-export function stationX(st) {
-  if (typeof place.slotX === 'function') return place.slotX(st.slot);
-  return snap(deepX0() + (SLOTS_GUESS[st.slot] ?? SLOTS_GUESS[0]) * DEEP_W);  // until merge
-}
+export const stationX = st => slotX(st.slot);
 const toPost = (w, st) => swim(w, stationX(st) - WORKER / 2, feet());
 
 // --- the rhythm of a swing ---------------------------------------------------------

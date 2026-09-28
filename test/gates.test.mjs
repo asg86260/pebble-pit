@@ -11,7 +11,6 @@ import { group, ok, run, yard } from './helpers.mjs';
 import { STATIONS, station, open, offered, standRect, stationAt } from '../src/stations.js';
 import { UPGRADES } from '../src/upgrades.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
-import { PARTY_IDS } from '../src/config.js';
 
 const S = () => yard.S;
 const keys = STATIONS.map(r => r.key);
@@ -124,11 +123,8 @@ group('the pointer finds every standing station by its ground, and nothing else'
   S().snatched = true;                           // the crusher stands from the snatch, not a flag of its own
   S().pods = 1;                                  // and the pods from the first one bought
   S().seenBench = true; S().banked = 1;
-  // until merge: `__party` (STATE) stands the party; here its stations are
-  // written onto S, one to every id, two of them altars, each at its own slot.
-  const kinds = ['altar', 'armory', 'altar', 'spire'];
-  S().stations = PARTY_IDS.map((id, i) => ({ id, kind: kinds[i % kinds.length], slot: i, built: true,
-                                             cls: null, rung: 0, paid: [], fighter: null }));
+  // The party, one station to every id, two of them altars, each at its own slot.
+  window.__party({ stations: ['altar', 'armory', 'altar', 'spire'].map(kind => ({ kind })) });
   run(1);
   for (const r of doors) {
     const g = standRect(r.key);

@@ -62,7 +62,8 @@ export const CLASSES = {
   mage:     { name: 'Mage',           ladder: 'mage',     hit: 'mage',     melee: false,
               hold: 4, rest: 1.5, windup: 0.25, finishX: 3, rampMost: 2 },
   // Sings; the other fighters are Inspired while she does. No damage of her own.
-  bard:     { name: 'Bard',           ladder: 'bard',     hit: null,       melee: false,
+  // Her ladder is written in percent (the rails say `%`); `pct` reads it as a share.
+  bard:     { name: 'Bard',           ladder: 'bard',     hit: null,       melee: false, pct: true,
               linger: 0.25, anthemX: 2, capLinger: 6 },
 };
 
@@ -71,26 +72,3 @@ export const MELEE_REACH = P * 3;
 // How far after its contact a swing's follow-through runs, a share of the
 // wind-up: the drawing's recoil, and nothing lands in it.
 export const FOLLOW_K = 1.2;
-
-// Until BOARD's ladders land (config/rungs.js keys each class by name), what a
-// rung of each is worth, rung 0 to 8: a hit's damage (the Mage's a second,
-// the Bard's the Inspired share). Read only where LADDERS has no row for the
-// class. A damage a second of about 3, 5, 8, 12, 18, 28, 42, 64, 96 at each
-// class's own tempo, so every class breaks the bare coil alone at rung 0.
-// And until BOARD's floor slots land (`DEEP_SLOTS`, `slotX` in place.js),
-// where each slot stands, a fraction of DEEP_W: the spec's own list.
-// until merge
-export const SLOTS_GUESS = [0.335, 0.475, 0.62, 0.76, 0.9, 0.405, 0.69];
-// until merge
-export const CLASS_LADDER_GUESS = {
-  brawler:  [4, 6, 10, 14, 22, 34, 50, 77, 115],
-  sword:    [3, 5, 8, 12, 18, 28, 42, 64, 96],
-  monk:     [4, 6, 9, 13, 19, 29, 44, 66, 99],
-  martial:  [1, 1.7, 2.7, 4, 6, 9.3, 14, 21, 32],
-  ranger:   [2.4, 4, 6.4, 9.6, 14, 22, 34, 51, 77],
-  assassin: [4.5, 7.5, 12, 18, 27, 42, 63, 96, 144],
-  hexer:    [20, 32, 50, 75, 110, 170, 250, 380, 570],
-  sapper:   [18, 30, 48, 72, 108, 168, 252, 384, 576],
-  mage:     [3, 5, 8, 12, 18, 28, 42, 64, 96],
-  bard:     [0.1, 0.11, 0.12, 0.13, 0.14, 0.16, 0.18, 0.2, 0.22],
-};

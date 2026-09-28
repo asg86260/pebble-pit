@@ -44,9 +44,10 @@ import { newPurifier, stepPurifier } from '../filter.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
 import { quarryMuck, plotMuck } from '../smog.js';
-import { newFighter, newGatherer, guardStation } from './deep.js';
+import { newFighter, newGatherer } from './deep.js';
+import { stepFighter } from '../deep/classes.js';
 import { stepGatherer } from '../deep/gather.js';
-import { fightersOn, carryFang } from '../deep/party.js';
+import { fightersOn, carryFang, fetchFang } from '../deep/party.js';
 
 export const JOBS = {
   [TYPE.ROCK]: {
@@ -123,11 +124,12 @@ export const JOBS = {
 
   // The deep's fighters (docs/wave-party.md): down the shaft, where nothing
   // of the yard's reaches -- no mess, no door, no rock to dodge. One a
-  // manned station; what each does there is its station's class.
+  // manned station; what each does there is its station's class, and a
+  // fang on the floor is fetched by the nearest when no gatherer is free.
   [TYPE.FIGHTER]: {
     factory: newFighter,
     want: () => fightersOn(),
-    step: { work: (w, c) => guardStation(w, c) }
+    step: { work: (w, c) => fetchFang(w) || stepFighter(w, c) }
   },
   // The deep's haulers: the floor's loose scales into the crusher, and a
   // fang lying there before any of them.

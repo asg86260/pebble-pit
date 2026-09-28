@@ -24,9 +24,6 @@ export const FANG_BREAKS = 3;
 // A fang sinks like a scale (DEEP_GRAV, DEEP_DRAG), let go this far off the
 // coil's belly with a little sideways drift.
 export const FANG_KICK = 0.6;
-// Until track BOARD's `DEEP_SLOTS` lands in config/deep.js: its written list,
-// read only when that one is missing. TODO(merge): delete.
-export const PARTY_SLOTS_FALLBACK = [0.335, 0.475, 0.62, 0.76, 0.9, 0.405, 0.69];
 // The gatherers: the deep's crew on no weapon (`S.deepCrew`, set at the
 // shaft). They keep a hauler's load and pace (`haulCap`, `haulSpeed`), scoop
 // at GATHER_SCOOP, and wait by the crusher on a bare floor.

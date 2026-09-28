@@ -17,7 +17,6 @@ import { frames } from '../clock.js';
 import { commutePace } from '../levels.js';
 import { deepTop, deepFloor, inDeep, coilAt, coilThick, nearestSeg } from './place.js';
 import { stepStatuses } from './statuses.js';
-import { stepFighter } from './classes.js';
 
 // --- a body in the water ----------------------------------------------------------
 
@@ -121,20 +120,3 @@ export const stepArms = c => {
   stepStatuses(c);
   stepShots(c.now);
 };
-
-// The five weapon crews' steps, routed to the fighter's: a body of one of the
-// retired weapon jobs, tied to a station that names it, fights as that
-// station's fighter. CREW's JOBS registry steps TYPE.FIGHTER with
-// `stepFighter` directly, and these go with the five rows. until merge
-const tied = w => {
-  if (!S.stations.some(s => s.id === w.station)) {
-    const st = S.stations.find(s => s.fighter === w.name || s.fighter === w.uid);
-    w.station = st ? st.id : null;
-  }
-  return w;
-};
-export function stepBrawler(w, c) { stepFighter(tied(w), c); }
-export function stepLancer(w, c) { stepFighter(tied(w), c); }
-export function stepGrenadier(w, c) { stepFighter(tied(w), c); }
-export function stepScribe(w, c) { stepFighter(tied(w), c); }
-export function stepWarlock(w, c) { stepFighter(tied(w), c); }

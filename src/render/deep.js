@@ -41,11 +41,11 @@ import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
-import * as CFG from '../config.js';
-import { DEEP_W, DEEP_SLOTS_DRAWN, SCAFFOLD_BANDS } from '../config.js';
+import { SCAFFOLD_BANDS } from '../config.js';
+import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
 
-const isFighter = w => w.type === 'fighter';   // TYPE.FIGHTER, until merge
+const isFighter = w => w.type === TYPE.FIGHTER;
 
 // --- the inverted palette ---------------------------------------------------------
 // A tone as it is to be seen, turned into what is drawn to get it (render/deeptones.js).
@@ -294,36 +294,14 @@ function drawPods() {
 
 // --- the party's stations, at their slots -----------------------------------------
 // The floor's slots (docs/wave-party.md): any kind at any slot, more than one
-// of a kind. A kind's drawing is `SPRITES[kind]`; the armory wears the old
-// font's until its own lands. The place of a slot and of the station on it
-// is track BOARD's (deep/place.js, `slotX`, `standOfStation`); until merge
-// it is worked out here the way `spriteRect` works out the old spots, the
-// DRAWING's middle on the slot.
-const spriteOf = kind => SPRITES[kind] || (kind === 'armory' ? SPRITES.font : null);   // until merge
+// of a kind. A kind's drawing is `SPRITES[kind]`, and where it stands is
+// place.js's (`spriteRectOfStation`, `standOfStation`), the one answer the
+// pointer, the works and the roster read too.
 const snap = v => Math.round(v / P) * P;
-const slotMid = i => (place.slotX ? place.slotX(i)                                         // until merge
-  : snap(deepX0() + (CFG.DEEP_SLOTS || DEEP_SLOTS_DRAWN)[i] * DEEP_W));
-const inkOf = new Map();
-function inked(rows) {
-  const id = rows.join('|');
-  if (inkOf.has(id)) return inkOf.get(id);
-  let c0 = rows[0].length, c1 = -1, r0 = rows.length, r1 = -1;
-  rows.forEach((row, r) => [...row].forEach((ch, c) => {
-    if (ch === '.') return;
-    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
-  }));
-  const ink = { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
-  inkOf.set(id, ink);
-  return ink;
-}
-// The sprite's whole grid standing on the floor at a slot, and the station
-// as drawn inside it.
 function placed(st) {
-  const rows = spriteOf(st.kind);
+  const rows = SPRITES[st.kind];
   if (!rows || st.slot == null) return null;
-  const ink = inked(rows), w = rows[0].length * P, h = rows.length * P;
-  const s = { x: snap(slotMid(st.slot) - (ink.c0 + ink.cols / 2) * P), y: deepFloor() - h, w, h };
-  return { rows, s, stand: { x: s.x + ink.c0 * P, y: s.y + ink.r0 * P, w: ink.cols * P, h: ink.rows * P } };
+  return { rows, s: place.spriteRectOfStation(st), stand: place.standOfStation(st) };
 }
 
 // A station and its dome never change once they stand, so each is painted

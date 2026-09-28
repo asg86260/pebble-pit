@@ -488,7 +488,6 @@ export const S = {
   // In the water, and so this session's: a reload finds them landed or gone.
   sinking: [],            // scales falling to the floor: { x, y, vx, vy, s }
   lifting: [],            // scales paid, rising off the bed to the station that took them
-  shots: [],              // the fighters' arrows, bolts and charges in the water (the `shots` layer)
   // What the fight has just done, for the numbers over it (render/fightnums.js):
   // a blow, or a held attack's second, or the heal's: { at, shut, x, y, done,
   // weapon, key, side }. A drawing, never a save.
@@ -811,7 +810,7 @@ export const EPHEMERAL = [
   // leaves it.
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
-  'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting', 'shots',
+  'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting',
   'hits', 'healSum', 'healAt',
   'deepMotes', 'crushes', 'heldScales', 'portalAt',
   'podsBoardOpen',

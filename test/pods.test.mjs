@@ -1,13 +1,13 @@
 // One crew, two homes (DESIGN.md, "One crew, two homes: pods in the deep").
 // A pod is bought in scales and adds a body who lives down there; a station's
 // fighter is one of the deep's residents, never a yard hand; and a gatherer
-// stood down with a load drops it in the deep, not in the yard. Lines marked
-// `// until merge` stand in for the floating build button (track BOARD).
+// stood down with a load drops it in the deep, not in the yard. A station is
+// bought off the floating build button.
 
 import { group, ok, yard, run, runUntil, state } from './helpers.mjs';
 import { WORKER } from '../src/config.js';
 import { deepTop, podAt } from '../src/deep/place.js';
-import { buildStation } from '../src/deep/party.js';
+import { pressBuild } from './party-press.mjs';
 
 const S = yard.S;
 const residents = () => S.workers.filter(w => w.deepHome);
@@ -49,8 +49,8 @@ group("a station's fighter is one of the deep's residents, never a yard hand", a
   for (let i = 0; i < 2; i++) { window.__buy('pod'); window.__finish(); }
   run(1);
   const yard0 = S.workers.filter(w => !w.deepHome).map(w => w.name);
-  S.fangs = 1;                                       // until merge: a break's fang
-  const built = [buildStation('altar'), buildStation('armory')];   // until merge: the button
+  window.__party({ fangs: 1 });                      // a break's fang
+  const built = [pressBuild('altar'), pressBuild('armory')];
   window.__finish();
   runUntil(() => S.workers.filter(w => w.type === 'fighter' && !w.walking).length === 2, 60);
   const fighters = S.workers.filter(w => w.type === 'fighter');
@@ -74,7 +74,7 @@ group('a gatherer stood down with a load drops it in the deep', async () => {
   const dust = S.chips.length, water = S.sinking.length;
   // A station to build: a gatherer is stood down where it is, load and all,
   // and goes to put it up empty-handed.
-  buildStation('altar');                             // until merge: the button
+  pressBuild('altar');
   const stood = was - gathering().length;
   return [
     ok(loads > 1, 'the gatherers had loads', `${loads}`),

@@ -200,17 +200,6 @@ export const DEEP_REST_SILT = 4;                  // silt a landing kicks up
 // whatever the damage was.
 export const DOT_TICK_S = 0.5;
 
-// Retired with the five weapons and the called star, and still imported by
-// files other tracks of the party wave own (render/arms.js, deep/rows.js,
-// scenes.js). Nothing of this track reads them. until merge
-export const LANCE_FLY = 0.6;
-export const GRENADE_R = P * 14;
-export const GRENADE_RING_S = 0.8;
-export const STAR_SPARKS = 400;
-export const STAR_TUNE_SPARKS = [600, 1000, 1600];
-export const STAR_EVERY_S = [90, 70, 50, 35];
-export const STAR_DMG = [3000, 4500, 7000, 10000];
-
 export const DEEP_KNOBS = [
   { key: 'SERPENT_HEAL_1', label: 'serpent heal, bare', min: 0, max: 20, step: 0.5,
     get: () => SERPENT_HEAL[0], set: v => { SERPENT_HEAL = [v, ...SERPENT_HEAL.slice(1)]; } },

@@ -4,16 +4,16 @@
 // its `-` sends that fighter to a station standing empty and its `+` fetches
 // one over, and nobody from the yard is ever sent. The deep itself (the pit
 // drowned, the snatch behind it) and the stations standing are set up with
-// the hooks and the party's own calls, because they are not what these checks
-// are about; lines marked `// until merge` stand in for the floating build
-// button (track BOARD).
+// the hooks, because they are not what these checks are about; a station is
+// bought off the floating build button.
 import { group, ok, state, run, runUntil } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { P, WORKER } from '../src/config.js';
 import { rosterHit } from '../src/roster.js';
 import { belowYard } from '../src/route.js';
 import { deepPost } from '../src/crew/deep.js';
-import { buildStation, stationById } from '../src/deep/party.js';
+import { stationById } from '../src/deep/party.js';
+import { pressBuild } from './party-press.mjs';
 
 const post = key => state().roster.find(p => p.key === key);
 const press = (key, which) => { const p = post(key); return !!p && rosterHit(p[which][0], p[which][1]); };
@@ -26,8 +26,8 @@ function stations(kinds, spare = 0) {
   window.__crew(0, 3);
   window.__snatch({ played: true });
   if (spare) window.__deepCrew({ spare });
-  S.fangs = kinds.length - 1;                       // until merge: the breaks' fangs
-  for (const k of kinds) { buildStation(k); window.__finish(); }   // until merge: the button
+  window.__party({ fangs: kinds.length - 1 });      // the breaks' fangs
+  for (const k of kinds) { pressBuild(k); window.__finish(); }
   run(1);
 }
 
@@ -35,7 +35,7 @@ group('a post stands under each station once it stands, keyed by its id', async 
   window.__crew(0, 3);
   window.__snatch({ played: true });
   const before = state().roster.filter(p => p.job === 'fighters').length;
-  buildStation('altar');                            // until merge: the button
+  pressBuild('altar');
   const rising = !!post('station:s1');
   window.__finish();
   run(1);

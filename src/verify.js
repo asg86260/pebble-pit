@@ -32,7 +32,8 @@ import { now } from './clock.js';
 import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
-import { SERPENT_WOUND, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX } from './config.js';
+import { SERPENT_WOUND, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
+import { CALLED } from './deep/party.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor } from './deep/place.js';
@@ -481,10 +482,12 @@ export function verifyWorld() {
 // a free slot by the first pick or a fang, so there are never more than the
 // first and three fangs' worth; a fighter is seated only at a station that
 // stands, one a station, and a station holds one fighter; the serpent drops a
-// fang at a break, so no more have dropped than breaks have happened; and a
-// fighter is the deep's, its feet never in the yard. Exported so a check can
-// ask these alone of a party it stood up by hand.
-const FIGHTER = TYPE.FIGHTER || 'fighter';     // until merge: CREW adds TYPE.FIGHTER
+// fang at each of its first breaks, so no more have dropped than breaks have
+// happened or than it has fangs to drop; and a fighter is the deep's, its
+// feet never in the yard. A station names its fighter by the body's uid, so
+// no two bodies share one, and a station manned on a call (`CALLED`) has its
+// body chosen on the same call: never so at the end of a frame. Exported so
+// a check can ask these alone of a party it stood up by hand.
 export function verifyParty() {
   const stations = S.stations || [];
   if (stations.length > FIGHT_STATIONS_MAX)
@@ -494,25 +497,33 @@ export function verifyParty() {
     if (ids.has(st.id)) fail('two stations share a name', `${st.id}`);
     ids.add(st.id);
     if (st.fighter == null) continue;
+    if (st.fighter === CALLED) fail('a station is manned and nobody was sent to it', `${st.id} (${st.kind})`);
     if (!st.built) fail('a fighter is seated at a station still going up', `${st.id} (${st.kind})`);
     if (seated.has(st.fighter))
       fail('one fighter is seated at two stations', `${st.fighter} at ${seated.get(st.fighter)} and ${st.id}`);
     seated.set(st.fighter, st.id);
   }
+  const uids = new Map();
+  for (const w of S.workers) {
+    if (w.uid == null) continue;
+    if (uids.has(w.uid)) fail('two bodies share a uid', `${uids.get(w.uid)} and ${who(w)}: ${w.uid}`);
+    uids.set(w.uid, who(w));
+  }
   const at = new Map();
   for (const w of S.workers) {
-    if (w.type !== FIGHTER) continue;
+    if (w.type !== TYPE.FIGHTER) continue;
     const st = stations.find(s => s.id === w.station);
     if (!st) fail('the station a fighter stands for does not exist', `${who(w)} stands for ${JSON.stringify(w.station)}`);
     if (!st.built) fail('the station a fighter stands for is not built', `${who(w)} at ${st.id} (${st.kind})`);
     if (at.has(st.id)) fail('two fighters stand at one station', `${at.get(st.id)} and ${who(w)} at ${st.id}`);
     at.set(st.id, who(w));
+    if (st.fighter !== w.uid) fail('a fighter stands at a station that names another', `${who(w)} (${w.uid}) at ${st.id}, which names ${st.fighter}`);
     // A body in the cursor's hand or falling is on its way, not standing.
     if (!belowYard(w) && !w.lifted && !w.falling) fail('a fighter is in the yard', `${who(w)}`);
   }
   if (!Number.isInteger(S.fangs) || S.fangs < 0)
     fail('the fangs are a count that is not a count', `${S.fangs}`);
-  if (!Number.isInteger(S.fangsDropped) || S.fangsDropped < 0 || S.fangsDropped > S.serpentStage)
+  if (!Number.isInteger(S.fangsDropped) || S.fangsDropped < 0 || S.fangsDropped > Math.min(S.serpentStage, FANG_BREAKS))
     fail('more fangs have dropped than the serpent has had breaks',
          `${S.fangsDropped} dropped, stage ${S.serpentStage}`);
 }

@@ -9,7 +9,7 @@ import { group, ok, yard } from './helpers.mjs';
 import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, NUM_HEAL_EVERY_S, SERPENT_DEFENSE,
          SERPENT_HEAL, DOT_TICK_S, CLASSES } from '../src/config.js';
 import { EPHEMERAL } from '../src/state.js';
-import { buyRung, resetStation } from '../src/deep/party.js';
+import { climb, reset, openEveryClass } from './party-press.mjs';
 import { rungWorth } from '../src/deep/classes.js';
 
 const S = yard.S;
@@ -19,20 +19,9 @@ const S = yard.S;
 function fight(kind, cls, rung = 1, stage = 0, wound = 0) {
   window.__snatch({ played: true });
   window.__serpent({ stage, wound });
-  if (window.__party) window.__party({ stations: [{ kind, cls: null, rung: 0 }] });
-  else {
-    // until merge: a weapon crew's body stands in for the fighter (deep/arms.js)
-    window.__crew(0, 12);
-    window.__deepCrew({ brawlers: 1 });
-    const body = S.workers.find(w => w.type === 'brawler');
-    S.stations = [{ id: 's1', kind, slot: 0, built: true, cls: null, rung: 0, paid: [], fighter: body.name }];
-    S.stationsBuilt = 1;
-  }
-  const st = S.stations[0];
-  window.__grant({ dust: 1e6, scales: 5e4 });
-  while (st.rung < rung && buyRung(st.id, cls)) window.__finish();
-  if (st.rung < rung) { st.cls = cls; st.rung = rung; }   // until merge: the rails are BOARD's
-  return st;
+  window.__party({ stations: [{ kind, cls: null, rung: 0 }] });
+  openEveryClass();
+  return climb(S.stations[0].id, cls, rung);
 }
 // Frame by frame, and never through `run`: its reload every five seconds is
 // exactly the thing that throws the list away.
@@ -50,8 +39,7 @@ group("a Brawler's punch puts its damage in the recent list, and the list emptie
   const said = first && { done: first.done, x: first.x, y: first.y };
   // Her class taken back (a Reset), and the wound let heal shut: after that
   // nothing strikes and nothing closes, so the list has nothing to keep.
-  resetStation(st.id);
-  st.cls = null;                     // until merge: CREW's resetStation is a stub on this branch
+  reset(st.id);
   window.__serpent({ stage: 0, wound: 0 });
   frames(Math.max(NUM_LIFE_S, NUM_HEAL_LIFE_S) + 2 * NUM_HEAL_EVERY_S + 1);
   return [
@@ -99,7 +87,7 @@ group('the heal says what it closed, once a second, in its own entries', async (
   // nobody fighting: every entry is the heal's.
   window.__snatch({ played: true });
   window.__serpent({ stage: 1, wound: 400 });
-  window.__deepCrew({ brawlers: 0 });
+  window.__deepCrew();
   const said = [];
   frames(6.5, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
   const gaps = said.slice(1).map((h, i) => Math.round(h.at - said[i].at));

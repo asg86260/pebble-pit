@@ -20,7 +20,7 @@ const frame = () => run(1 / 60);
 function podBody() {
   window.__fullSites();
   window.__snatch({ played: true });
-  window.__deepCrew({ brawlers: 0 });
+  window.__deepCrew();
   window.__crew(0, 4);
   window.__scales(1000);
   window.__buy('pod');
@@ -127,15 +127,7 @@ group('a reload mid-float leaves it where it was, and it sinks from there', asyn
 group("a fighter whose station has no class yet stands guard, resting about the station's ground", async () => {
   window.__fullSites();
   window.__snatch({ played: true });
-  if (window.__party) window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
-  else {
-    // until merge: a weapon crew's body stands in for the fighter (deep/arms.js)
-    window.__crew(0, 4);
-    window.__deepCrew({ brawlers: 1 });
-    const body = S.workers.find(w => w.type === 'brawler');
-    S.stations = [{ id: 's1', kind: 'altar', slot: 2, built: true, cls: null, rung: 0, paid: [], fighter: body.name }];
-    S.stationsBuilt = 1;
-  }
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
   const g = restGround(stationX(S.stations[0]));
   runUntil(() => { const w = guard(); return w.goal === 'guard' && w.x >= g.lo && w.x <= g.hi; }, 90);
   let w = guard();

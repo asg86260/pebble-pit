@@ -17,11 +17,13 @@
 // the cells are; the pips wear their band's coin as every ladder's do.
 
 import { S } from '../state.js';
-import { CLASSES, PAIRS, MOVE_RUNG, CAPSTONE_RUNG, LADDER, TIER_BAND, RAIL_FOLD_MS, RAIL_FOLD_STEPS,
+import { P, CLASSES, PAIRS, MOVE_RUNG, CAPSTONE_RUNG, LADDER, TIER_BAND, RAIL_FOLD_MS, RAIL_FOLD_STEPS,
          rungValue } from '../config.js';
 import { stationById, classesOpen, buyRung, resetStation } from './party.js';
-import { classLadder, CLASS_UNIT } from './rows.js';
-import { canPay, billOf } from '../upgrades.js';
+import { classLadder, rungBill, CLASS_UNIT } from './rows.js';
+import { take } from '../upgrades.js';
+import { payTo } from '../pit.js';
+import { standOfStation } from './place.js';
 import { MARK, purse, priceText, fmt } from '../words.js';
 import { pageOf, shopOf } from '../pages.js';
 import { remeasure } from '../board.js';
@@ -135,11 +137,11 @@ export function railsOf(id) {
   const card = cls && classLadder(st, cls);
   const at = cls && st.cls === cls ? st.rung : 0;
   const top = at >= LADDER;
-  const bill = card && !top ? billOf(card).filter(([m]) => m !== 'time') : [];
+  const bill = card && !top ? rungBill(id, cls) : [];
   const buy = {
     cls, rung: at + 1, bill, top,
     label: !cls ? 'pick a class' : top ? `${CLASSES[cls].name} ${LADDER} of ${LADDER}` : `Buy ${CLASSES[cls].name} ${at + 1}`,
-    can: !!card && !top && !card.dead() && canPay(card)
+    can: !!card && st.built && !top && !card.dead() && bill.every(([m, n]) => purse(m) >= n)
   };
   // The line: what is viewed, else the class taken, else what to do.
   const says = v ? lineOf(id, v.cls, v.r) : st.cls ? lineOf(id, st.cls) : 'pick a class';
@@ -153,7 +155,15 @@ export function railsOf(id) {
 export function pressBuy(id) {
   const r = railsOf(id);
   if (!r || !r.buy.can) return false;
-  const bought = buyRung(id, r.buy.cls);
+  // Paid here, as a card's press pays (`buy` in upgrades.js), the coins
+  // flying to the station; the party keeps the bill on the station so a
+  // Reset hands back exactly this.
+  const bill = r.buy.bill, g = standOfStation(stationById(id));
+  const to = g && { x: g.x + g.w / 2, y: g.y - P * 2 };
+  if (to) payTo(to.x, to.y);
+  for (const [money, n] of bill) take(money, n, to);
+  payTo();
+  const bought = buyRung(id, r.buy.cls, bill);
   // The view has done its work once a class is taken: the rails now show it.
   if (stationById(id)?.cls) viewAt(id).tap = null;
   return bought;

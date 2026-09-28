@@ -14,7 +14,7 @@ import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { SERPENT_WOUND, SERPENT_DEFENSE, STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, CLASSES } from '../src/config.js';
 import { rungWorth } from '../src/deep/classes.js';
 import { clickDeep, strike } from '../src/deep/serpent.js';
-import { buyRung } from '../src/deep/party.js';
+import { climb } from './party-press.mjs';
 import { coilAt, bellyAt, bellySeg } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 
@@ -24,7 +24,7 @@ const S = yard.S;
 // checks is the check's own.
 function deepYard(stage = 0) {
   window.__snatch({ played: true });
-  window.__deepCrew({ brawlers: 0 });
+  window.__deepCrew();
   window.__serpent({ stage, wound: 0 });
 }
 const frame = () => yard.fast(1 / 60);
@@ -40,19 +40,8 @@ const stunAt = (k, o = { stun: 1 }) => { const p = belly(); return strike('brawl
 
 group("a Brawler's haymaker stuns the ward, and the heal stops for as long", async () => {
   deepYard(1);
-  if (window.__party) window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
-  else {
-    // until merge: a weapon crew's body stands in for the fighter (deep/arms.js)
-    window.__crew(0, 12);
-    window.__deepCrew({ brawlers: 1 });
-    const body = S.workers.find(w => w.type === 'brawler');
-    S.stations = [{ id: 's1', kind: 'altar', slot: 0, built: true, cls: null, rung: 0, paid: [], fighter: body.name }];
-    S.stationsBuilt = 1;
-  }
-  const st = S.stations[0];
-  window.__grant({ dust: 1e6, scales: 5e4 });
-  while (st.rung < 4 && buyRung(st.id, 'brawler')) window.__finish();
-  if (st.rung < 4) { st.cls = 'brawler'; st.rung = 4; }   // until merge: the rails are BOARD's
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
+  climb(S.stations[0].id, 'brawler', 4);
   window.__serpent({ stage: 1, wound: 0 });
   let got = false;
   for (let f = 0; f < 60 * 30 && !got; f++) { frame(); got = S.serpentStun > 0; }

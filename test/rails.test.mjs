@@ -7,7 +7,7 @@
 // not open says so until a second station stands; and two stations of one
 // kind keep a ladder each.
 //
-// The stations are stood up on `S` directly: the setup these checks are not
+// The stations are stood up by `__party`: the setup these checks are not
 // about. The pointer's own presses are the browser group `rails`
 // (src/selftest/deep.js).
 
@@ -16,15 +16,14 @@ import { LADDER, CLASSES, PAIRS, rungDust } from '../src/config.js';
 import { railsOf, view, hover, pressBuy, pressReset, viewing } from '../src/deep/rails.js';
 import { classLadder, rungBill } from '../src/deep/rows.js';
 import { purse } from '../src/words.js';
+import { pressBuild, openEveryClass } from './party-press.mjs';
 
 const S = yard.S;
 
-// until merge: `__party` (STATE) stands a party up; until then the stations
-// are written onto S by hand, built, one a kind, at the next slots.
+// A party stood up after the snatch, built, one station a kind, at the next
+// slots, with nothing bought on any rail.
 const stand = (...kinds) => {
-  S.stations = kinds.map((kind, i) => ({ id: `s${i + 1}`, kind, slot: i, built: true,
-                                         cls: null, rung: 0, paid: [], fighter: null }));
-  S.stationsBuilt = kinds.length;
+  window.__party({ stations: kinds.map(kind => ({ kind, cls: null, rung: 0 })) });
   return S.stations;
 };
 // A purse to spend: scales on the crusher and every coin the bands add.
@@ -32,38 +31,9 @@ const flush = () => {
   window.__scales(99999);
   window.__grant({ dust: 1e8, shards: 1e6, sparks: 1e5 });
 };
-// until merge: CREW's `buyRung` and `resetStation` are stubs in the skeleton.
-// Where the stub left the station as it was, what the party will do is done
-// here instead, from the party's own words (docs/wave-party.md, "The party
-// module"); once CREW lands, the station has already moved and these do
-// nothing.
-const boughtByHand = (st, cls) => {
-  const bill = rungBill(st.id, cls);
-  st.cls = cls; st.rung++;
-  st.paid = [...st.paid, ...bill];
-  for (const [coin, n] of bill) {
-    if (coin === 'scale') S.scales -= n; else if (coin === 'dust') S.stored -= n;
-    else if (coin === 'shard') S.shards -= n; else if (coin === 'spark') S.sparks -= n;
-  }
-};
-const resetByHand = st => {
-  for (const [coin, n] of st.paid) {
-    if (coin === 'scale') S.scales += n; else if (coin === 'dust') S.stored += n;
-    else if (coin === 'shard') S.shards += n; else if (coin === 'spark') S.sparks += n;
-  }
-  Object.assign(st, { cls: null, rung: 0, paid: [] });
-};
-// The Buy and the Reset, pressed; where the stub moved nothing, by hand.
-const buy = st => {
-  const was = st.rung, cls = railsOf(st.id).buy.cls;
-  pressBuy(st.id);
-  if (st.rung === was && cls) boughtByHand(st, cls);            // until merge
-};
-const reset = st => {
-  const was = st.rung;
-  pressReset(st.id);
-  if (st.rung === was && was > 0) resetByHand(st);               // until merge
-};
+// The Buy and the Reset, pressed.
+const buy = st => pressBuy(st.id);
+const reset = st => pressReset(st.id);
 const wallet = () => ({ scale: purse('scale'), dust: purse('dust'), shard: purse('shard'), spark: purse('spark') });
 
 group('viewing a class takes nothing; the first rung bought takes it and folds the other', async () => {
@@ -105,14 +75,20 @@ group('Reset hands back exactly what was paid and unfolds the rails', async () =
   for (let i = 0; i < 3; i++) buy(st);
   const spent = wallet();
   const climbed = st.rung;
+  const sinking = S.sinking.length;
   reset(st);
   const after = wallet();
   const back = railsOf('s1');
+  // Scales go back into the water they were lifted out of and sink to the
+  // bed; every other coin comes home at once.
+  const coins = w => ({ dust: w.dust, shard: w.shard, spark: w.spark });
   return [
     ok(climbed === 3 && spent.scale < before.scale, 'three rungs of the ranger were bought, in scales',
        `rung ${climbed}, ${before.scale} -> ${spent.scale}`),
-    ok(JSON.stringify(after) === JSON.stringify(before), 'Reset gives every coin back',
+    ok(JSON.stringify(coins(after)) === JSON.stringify(coins(before)), 'Reset gives every coin back',
        `${JSON.stringify(before)} -> ${JSON.stringify(after)}`),
+    ok(S.sinking.length - sinking === before.scale - spent.scale, 'and every scale back into the water',
+       `${S.sinking.length - sinking} of ${before.scale - spent.scale}`),
     ok(st.cls === null && st.rung === 0, 'the station is blank again', `${st.cls} ${st.rung}`),
     ok(back.plates.every(p => !p.folded && !p.on && !p.lit), 'and both rails stand unfolded', JSON.stringify(back.plates)),
     ok(!back.reset.can, 'with nothing left for Reset to do')
@@ -121,13 +97,13 @@ group('Reset hands back exactly what was paid and unfolds the rails', async () =
 
 group('a locked class says it opens with a second station, and opens with it', async () => {
   const [st] = stand('altar');
-  S.stationsBuilt = 1;
   const one = railsOf('s1');
   const sword = one.plates.find(p => p.cls === 'sword');
   const viewed = view('s1', 'sword'), seen = viewing('s1');
-  // until merge: the second station lands through `stationLanded` (CREW).
-  S.stations.push({ id: 's2', kind: 'well', slot: 1, built: true, cls: null, rung: 0, paid: [], fighter: null });
-  S.stationsBuilt = 2;
+  // A second station, bought off the build button with a break's fang.
+  window.__party({ fangs: 1 });
+  pressBuild('well');
+  window.__finish();
   const two = railsOf('s1');
   view('s1', 'sword');
   const buy = railsOf('s1').buy;
@@ -177,7 +153,7 @@ group('every class has a ladder of eight, priced in scales at its foot', async (
 
 group('the panel is one line: the class, a rung, the move, the capstone', async () => {
   stand('spire');
-  S.stationsBuilt = 2;
+  openEveryClass();
   hover('s1', 'mage', 4);
   const move = railsOf('s1').line;
   hover('s1', 'mage', 8);

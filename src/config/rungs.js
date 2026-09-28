@@ -74,18 +74,18 @@ export const LADDERS = {
   // 'scale'` in tierRows), and the bands add dust, ore and a spark on top of
   // it. First guesses for the ladder book: a damage class's value is its
   // blow, sized so the classes deal about the same a second at the same rung
-  // (a Sapper's charge every six seconds is six Monk palms); the Bard's is the
-  // share the other fighters' hits rise by while she sings.
-  brawler:  { value: [1, 2, 5, 8, 14, 24, 42, 72, 120], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a punch, every 1.2 s
-  sword:    { value: [1, 2, 3, 6, 10, 16, 28, 48, 80], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg a cut, every 1 s, and it bleeds
-  monk:     { value: [1, 2, 4, 7, 12, 20, 35, 60, 100], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a palm, every 1 s
-  martial:  { value: [0.4, 0.7, 1.3, 2.3, 4, 6.5, 12, 20, 33], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a thrust, three a second
-  ranger:   { value: [1, 2, 3, 6, 10, 16, 28, 48, 80], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg an arrow, every 0.8 s
-  assassin: { value: [1, 3, 5, 9, 15, 25, 45, 75, 125], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },        // dmg a stab, every 1.5 s
-  hexer:    { value: [3, 6, 12, 20, 35, 60, 100, 180, 300], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },     // dmg a hex, every 5 s
-  sapper:   { value: [6, 12, 24, 42, 72, 120, 210, 360, 600], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },   // dmg a charge, every 6 s
-  mage:     { value: [1, 2, 4, 7, 12, 20, 35, 60, 100], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a second, the beam held
-  bard:     { value: [10, 12, 14, 16, 18, 20, 22, 25, 30], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }       // % the others' hits rise, Inspired
+  // -- about 3 at rung 0, so each breaks the bare coil alone -- and the Bard's
+  // is the share the other fighters' hits rise by while she sings, in percent.
+  brawler:  { value: [4, 6, 10, 14, 22, 34, 50, 77, 115], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a punch, every 1.2 s
+  sword:    { value: [3, 5, 8, 12, 18, 28, 42, 64, 96], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg a cut, every 1 s, and it bleeds
+  monk:     { value: [4, 6, 9, 13, 19, 29, 44, 66, 99], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a palm, every 1 s
+  martial:  { value: [1, 1.7, 2.7, 4, 6, 9.3, 14, 21, 32], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a thrust, three a second
+  ranger:   { value: [2.4, 4, 6.4, 9.6, 14, 22, 34, 51, 77], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg an arrow, every 0.8 s
+  assassin: { value: [4.5, 7.5, 12, 18, 27, 42, 63, 96, 144], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },        // dmg a stab, every 1.5 s
+  hexer:    { value: [20, 32, 50, 75, 110, 170, 250, 380, 570], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },     // dmg a hex, every 5 s
+  sapper:   { value: [18, 30, 48, 72, 108, 168, 252, 384, 576], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },   // dmg a charge, every 6 s
+  mage:     { value: [3, 5, 8, 12, 18, 28, 42, 64, 96], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a second, the beam held
+  bard:     { value: [10, 11, 12, 13, 14, 16, 18, 20, 22], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }       // % the others' hits rise, Inspired
 };
 
 // A ladder's value at a rung: the foot below nought, the top past the end. A

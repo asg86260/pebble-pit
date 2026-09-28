@@ -10,7 +10,7 @@
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { CLASSES, SERPENT_DEFENSE, STUN_MAX_S, HASTE } from '../src/config.js';
-import { buyRung } from '../src/deep/party.js';
+import { climb, reset, openEveryClass } from './party-press.mjs';
 import { shots } from '../src/deep/arms.js';
 import { rungWorth, stationOf, stationX } from '../src/deep/classes.js';
 import { has, level, hasted, inspiredK } from '../src/deep/statuses.js';
@@ -18,38 +18,23 @@ import { has, level, hasted, inspiredK } from '../src/deep/statuses.js';
 const S = yard.S;
 
 // A party stood up after the snatch: a station of each kind asked for, built,
-// with a fighter at it, and nobody else in the deep striking.
+// with a fighter at it, and nobody else in the deep striking. Every class is
+// open, as a second station opens them: which one stands alone is the check.
+// A gatherer stands by the crusher, so the fang a break drops is carried by
+// a hand of its own and no fighter leaves its work to fetch it.
 function party(kinds) {
   window.__snatch({ played: true });
   window.__serpent({ stage: 0, wound: 0 });
-  if (window.__party) {
-    window.__party({ stations: kinds.map(kind => ({ kind, cls: null, rung: 0 })) });
-    return;
-  }
-  // until merge: there is no fighter type and no `__party` on this branch,
-  // so a weapon crew's bodies stand in, tied to their stations by name
-  // (deep/arms.js routes their steps to the fighter's).
-  window.__crew(0, 12);
-  window.__deepCrew({ brawlers: kinds.length });
-  const bodies = S.workers.filter(w => w.type === 'brawler');
-  S.stations = kinds.map((kind, i) => ({ id: `s${i + 1}`, kind, slot: i, built: true, cls: null,
-                                         rung: 0, paid: [], fighter: bodies[i].name }));
-  S.stationsBuilt = kinds.length;
+  window.__party({ stations: kinds.map(kind => ({ kind, cls: null, rung: 0 })) });
+  window.__deepCrew({ spare: 1 });
+  openEveryClass();
 }
 
-// Climb station `i`'s rail for `cls` to rung `n`, the Buy pressed a rung at
+// Climb station `i`'s rail for `cls` to rung `n`: its Buy pressed a rung at
 // a time, with the coin to pay for it.
-function buyTo(i, cls, n) {
-  const st = S.stations[i];
-  window.__grant({ dust: 1e6, scales: 5e4 });
-  while (st.rung < n && buyRung(st.id, cls)) window.__finish();
-  // until merge: BOARD's rails and CREW's buyRung are stubs on this branch.
-  if (st.rung < n) { st.cls = cls; st.rung = n; }
-  return st;
-}
+const buyTo = (i, cls, n) => climb(S.stations[i].id, cls, n);
 
-const fighterAt = i => S.workers.find(w => w.station === S.stations[i].id)
-  || S.workers.find(w => w.name === S.stations[i].fighter);
+const fighterAt = i => S.workers.find(w => w.station === S.stations[i].id);
 
 // Frame by frame for `s` seconds: every pose a fighter starts, every stun,
 // every hit of each kind, and the stage.
@@ -355,7 +340,7 @@ group('Bard: no damage; alone her song gives nothing; with another the Anthem do
   buyTo(0, 'bard', 8);
   run(1);
   // She stops: her station's class goes, and she stands guard.
-  S.stations[0].cls = null; // until merge: CREW's resetStation is a stub on this branch
+  reset(S.stations[0].id);
   run(3);
   const lingering = inspiredK(fighterAt(1)) > 0;
   run(4);

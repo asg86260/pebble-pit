@@ -1078,14 +1078,17 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 // back is told the setup is a new starting point.
 import { layScales, looseScales } from './deep/scales.js';
 import { healNow, woundK } from './deep/serpent.js';
+import { shots } from './deep/arms.js';
 import { forgetSerpent } from './verify.js';
+import { FANG_BREAKS } from './config.js';
 HANDLES.__serpent = ({ stage, wound } = {}) => {
   if (Number.isInteger(stage)) {
     S.serpentStage = Math.max(0, Math.min(4, stage));
     S.serpentFreed = S.serpentStage > 3;
-    // A fight set back is a new start: the breaks that dropped a fang are
-    // the ones this stage says have happened.
-    S.fangsDropped = Math.min(S.fangsDropped, S.serpentStage);
+    // The breaks this stage says have happened have dropped their fangs: a
+    // fight set back takes them back, and one set forward skipped them, so
+    // the next break drops its own and not the ones before it.
+    S.fangsDropped = Math.min(S.serpentStage, FANG_BREAKS);
   }
   if (Number.isFinite(wound)) S.serpentWound = Math.max(0, wound);
   forgetSerpent();
@@ -1099,7 +1102,7 @@ HANDLES.__deepState = () => ({
   statuses: JSON.parse(JSON.stringify(S.statuses)),
   stations: S.stations.map(st => ({ ...st, paid: (st.paid || []).map(p => p.slice()) })),
   fangs: S.fangs, fangsDropped: S.fangsDropped, fangsLoose: S.fangsLoose.length,
-  shots: S.shots.length
+  shots: shots.length
 });
 
 // --- wave serpent: CREW ---
@@ -1109,9 +1112,10 @@ HANDLES.__deepState = () => ({
 import { markDone } from './beats.js';
 import { deepSpare } from './staffing.js';
 import { PAIRS, FIGHT_STATIONS_MAX } from './config.js';
-// A namespace, so a party.js export CREW has yet to write is `undefined`
-// here rather than a module that will not link.
 import * as party from './deep/party.js';
+import { settle } from './crew/commute.js';
+import { deepPost } from './crew/deep.js';
+import { feet as deepFeet } from './deep/arms.js';
 
 // The pit drowned and the snatch played, so the shaft is open and the altar
 // stands, with no beat owed: a deep job set up by a hook is not the story.
@@ -1174,33 +1178,32 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
   const short = stations.length - deepSpare();
   if (short > 0) { S.crew += short; S.deepCrew = (S.deepCrew || 0) + short; }
   rebalance(); syncWorkers();
+  const from = S.stations.length;
   for (const [i, o] of stations.entries()) {
     const had = S.stations.length;
     // The first is free and every one after takes a fang, as the button asks.
     if (had > 0) S.fangs++;
-    party.buildStation?.(o.kind);
-    let st = S.stations.length > had ? S.stations[had] : null;
-    if (st) finishWorks();
-    else {
-      // until merge: party.js's stubs build nothing, so the station is
-      // written standing, on the next free slot, under a name never used.
-      if (had > 0) S.fangs--;
-      const used = new Set(S.stations.map(x => x.slot));
-      let slot = 0;
-      while (used.has(slot)) slot++;
-      const n = S.stations.reduce((m, x) => Math.max(m, +String(x.id).slice(1) || 0), 0) + 1;
-      st = { id: 's' + n, kind: o.kind, slot, built: true, cls: null, rung: 0, paid: [], fighter: null };
-      S.stations.push(st);
-      S.stationsBuilt++;
-    }
+    if (!party.raiseStation(o.kind)) throw new Error(`__party: the ${o.kind} could not be built`);
+    const st = S.stations[had];
+    finishWorks();
     if (slots && Number.isInteger(slots[i])) st.slot = slots[i];
     st.cls = o.cls ?? null;
     st.rung = st.cls ? Math.max(0, Math.min(LADDER, o.rung | 0)) : 0;
   }
   S.fangs = Math.max(0, fangs | 0);
   if (S.fangs) S.seenFang = true;
-  party.seat?.();
-  rebalance(); syncWorkers(); buildShop();
+  party.seat();
+  rebalance(); syncWorkers();
+  // Each new station's fighter stood at it, as a factory stands a body at its
+  // post: the swim over from the pods is a check of its own (party.test.mjs).
+  for (const st of S.stations.slice(from)) {
+    const w = party.fighterAt(st);
+    if (!w) continue;
+    settle(w);
+    w.x = deepPost(TYPE.FIGHTER, w);
+    w.y = deepFeet();
+  }
+  buildShop();
   return S.stations.map(st => ({ id: st.id, kind: st.kind, slot: st.slot, cls: st.cls, rung: st.rung,
                                  fighter: st.fighter }));
 };

@@ -3,8 +3,8 @@
 // by its pods, builds its own works with its own hands, and nobody crosses
 // between the halves. The player's way down is the wizards' portal. Every
 // move here is made the player's way -- a row bought, a roster pressed, a
-// body picked up -- and the deep itself is set up with the hooks. Lines
-// marked `// until merge` stand in for the floating build button (BOARD).
+// body picked up, a station off the floating build button -- and the deep
+// itself is set up with the hooks.
 
 import { group, ok, run, runUntil, state } from './helpers.mjs';
 import { S } from '../src/state.js';
@@ -12,7 +12,8 @@ import { WORKER } from '../src/config.js';
 import { belowYard } from '../src/route.js';
 import { deepFloor, deepTop } from '../src/deep/place.js';
 import { goDeep } from '../src/view.js';
-import { buildStation, stationById } from '../src/deep/party.js';
+import { stationById } from '../src/deep/party.js';
+import { pressBuild } from './party-press.mjs';
 
 const below = () => S.workers.filter(w => belowYard(w));
 
@@ -49,7 +50,7 @@ group("a pod is built by the deep's own hand, and its body is the deep's", async
   twoCrews();
   runUntil(() => below().length === 1 && !below()[0].falling, 30);
   const her = below()[0].name;
-  buildStation('altar');                    // until merge: the floating button, the first station free
+  pressBuild('altar');
   window.__finish();
   runUntil(() => S.workers.find(w => w.name === her)?.type === 'fighter', 30);
   const yard = S.workers.filter(w => !belowYard(w)).map(w => w.name);

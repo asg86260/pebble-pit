@@ -3,16 +3,17 @@
 // at a phase break, sinks, is carried to the crusher, and buys the next
 // station, whose fighter is a pod resident who swims there; four stations is
 // the most. The snatch and the deep's spare hands are set up with the hooks,
-// because they are not what these checks are about. Lines marked
-// `// until merge` stand in for another track's piece (the floating build
-// button is BOARD's, the rails too) and go the player's way at integration.
+// because they are not what these checks are about; a station is bought off
+// the floating build button and a rung on the station's rails.
 import { group, ok, run, runUntil } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { WORKER, FIRST_KINDS, FIGHT_STATIONS_MAX, SERPENT_WOUND, FANG_BREAKS } from '../src/config.js';
+import { P, WORKER, FIRST_KINDS, FIGHT_STATIONS_MAX, SERPENT_WOUND, FANG_BREAKS } from '../src/config.js';
 import { belowYard } from '../src/route.js';
 import { deepPost } from '../src/crew/deep.js';
-import { buildStation, canBuild, kindsOffered, stationById, fighterAt, buyRung, resetStation,
-         classesOpen } from '../src/deep/party.js';
+import { stationById, fighterAt, classesOpen, stationMid } from '../src/deep/party.js';
+import { buildOffer } from '../src/deep/buildbutton.js';
+import { railsOf, view } from '../src/deep/rails.js';
+import { pressBuild, climb, reset, flush } from './party-press.mjs';
 
 const her = () => S.workers.find(w => belowYard(w));
 const atPost = w => !!w && !w.walking && Math.abs(w.x - deepPost(w.type, w)) < 1;
@@ -47,12 +48,12 @@ const breakPhase = () => window.__serpent({ wound: SERPENT_WOUND[S.serpentStage]
 
 group('after the snatch the first station is free, a delver builds it and the sqwife swims there', async () => {
   afterSnatch();
-  const offered = kindsOffered();
-  const could = canBuild();                          // until merge: the floating button showing
+  const offer = buildOffer();
+  const offered = offer.kinds, could = offer.shown && offer.first;
   const name = her().name;
-  const built = buildStation('altar');               // until merge: the button's pick
+  const built = pressBuild('altar');
   const st = S.stations[0];
-  const second = buildStation('armory');
+  const second = pressBuild('armory');
   const trip = follow(name, w => stationById('s1')?.built && w.type === 'fighter' && atPost(w));
   const w = S.workers.find(o => o.name === name);
   return [
@@ -71,7 +72,7 @@ group('after the snatch the first station is free, a delver builds it and the sq
 
 group('a fang drops at a break, sinks, is carried to the crusher, and buys the next station', async () => {
   afterSnatch();
-  buildStation('altar');                             // until merge: the button's pick
+  pressBuild('altar');
   window.__finish();
   run(3);
   window.__deepCrew({ spare: 1 });                   // a pod resident, gathering
@@ -88,9 +89,9 @@ group('a fang drops at a break, sinks, is carried to the crusher, and buys the n
     if (g?.held) { held = true; carrier = S.workers.find(w => w.name === g.by)?.type; }
   }
   const counted = { fangs: S.fangs, seen: S.seenFang, loose: S.fangsLoose.length };
-  const button = canBuild() && kindsOffered().length === 5;  // until merge: the button, drawn with the fang's mark
+  const button = buildOffer().shown && buildOffer().kinds.length === 5;
   const resident = S.workers.find(w => w.type === 'gatherer')?.name;
-  const bought = buildStation('well');               // until merge: the button's pick
+  const bought = pressBuild('well');
   const spent = S.fangs;
   const trip = follow(resident, w => stationById('s2')?.built && w.type === 'fighter' && atPost(w));
   return [
@@ -104,6 +105,37 @@ group('a fang drops at a break, sinks, is carried to the crusher, and buys the n
     ok(bought && spent === 0, 'the fang buys the next station', `fangs ${spent}`),
     ok(trip.types.includes('delver') && trip.there, 'a delver builds it, and the pod resident swims there as its fighter',
        JSON.stringify(trip)),
+    ok(trip.jump < WORKER, 'a stroke at a time', `${trip.jump.toFixed(1)}px`)
+  ];
+});
+
+// The owner, 2026-09-28: with no gatherer down there, the fighter nearest
+// the fang leaves its station for it, carries it to the crusher, and swims
+// back to its work.
+group('with no gatherer, the fighter nearest a fang carries it to the crusher and swims back', async () => {
+  afterSnatch();
+  pressBuild('altar');
+  window.__finish();
+  const st = stationById('s1');
+  const near = w => Math.abs(w.x + WORKER / 2 - stationMid(st)) < P * 12;
+  runUntil(() => fighterAt(st) && near(fighterAt(st)), 30);
+  const her = fighterAt(st).name;
+  const gatherers = S.workers.filter(w => w.type === 'gatherer').length;
+  breakPhase();
+  run(1 / 60);
+  let carried = false, left = false;
+  const trip = follow(her, w => {
+    const g = S.fangsLoose[0];
+    if (g?.held && g.by === her) carried = true;
+    if (!near(w)) left = true;
+    return S.fangs > 0 && near(w) && w.type === 'fighter';
+  });
+  const w = S.workers.find(o => o.name === her);
+  return [
+    ok(gatherers === 0, 'nobody gathers down there', `${gatherers}`),
+    ok(carried && left, 'the fighter leaves its station and carries the fang', `${carried} ${left}`),
+    ok(S.fangs === 1, 'to the crusher, where it counts', `${S.fangs}`),
+    ok(trip.there && w.station === 's1' && st.fighter === w.uid, 'and swims back to its own station', JSON.stringify(trip)),
     ok(trip.jump < WORKER, 'a stroke at a time', `${trip.jump.toFixed(1)}px`)
   ];
 });
@@ -125,12 +157,12 @@ group('a break drops its fang once, across a reload', async () => {
 
 group('four stations is the most; a station with nobody spare stands empty until one is', async () => {
   afterSnatch();
-  buildStation('spire');                             // until merge: the button's pick
+  pressBuild('spire');
   window.__finish();
   run(3);
-  S.fangs = 5;                                       // until merge: three breaks' fangs, and more
-  const built = ['altar', 'circle', 'well'].map(k => { const b = buildStation(k); window.__finish(); return b; });
-  const fifth = buildStation('armory');
+  window.__party({ fangs: 5 });                      // three breaks' fangs, and more
+  const built = ['altar', 'circle', 'well'].map(k => { const b = pressBuild(k); window.__finish(); return b; });
+  const fifth = pressBuild('armory');
   run(3);
   const manned = S.stations.filter(st => st.fighter).length;
   window.__deepCrew({ spare: 1 });                   // a pod resident comes free
@@ -139,7 +171,7 @@ group('four stations is the most; a station with nobody spare stands empty until
   return [
     ok(built.every(Boolean) && S.stations.length === FIGHT_STATIONS_MAX, 'three fangs build three more',
        `${S.stations.length} stations`),
-    ok(!fifth && !canBuild() && S.fangs === 2, 'and a fifth cannot be built, fang or no fang', `fangs ${S.fangs}`),
+    ok(!fifth && !buildOffer().shown && S.fangs === 2, 'and a fifth cannot be built, fang or no fang', `fangs ${S.fangs}`),
     ok(manned === 1, 'with only her down there, one station is manned', `${manned}`),
     ok(fighters.length === 2 && new Set(fighters.map(w => w.station)).size === 2,
        'the next hand free goes to an empty one', fighters.map(w => w.station).join()),
@@ -149,26 +181,29 @@ group('four stations is the most; a station with nobody spare stands empty until
 
 group("a station's ladder commits its class on the first rung, and Reset hands it back", async () => {
   afterSnatch();
-  buildStation('altar');                             // until merge: the button's pick
+  pressBuild('altar');
   window.__finish();
   run(3);
+  flush();
   const open = classesOpen('altar');
-  const locked = buyRung('s1', 'sword', [['scale', 5]]);
-  const first = buyRung('s1', 'brawler', [['scale', 5]]);   // until merge: the rails' Buy
-  const other = buyRung('s1', 'ranger', [['scale', 5]]);
-  buyRung('s1', 'brawler', [['scale', 7], ['dust', 3]]);
+  const locked = view('s1', 'sword');
+  view('s1', 'brawler');
+  const first = climb('s1', 'brawler', 1).rung === 1;
+  const other = railsOf('s1').plates.find(p => p.cls === 'sword');
+  climb('s1', 'brawler', 2);
   const st = stationById('s1');
-  const kept = { cls: st.cls, rung: st.rung, paid: JSON.stringify(st.paid) };
+  const bills = [...st.paid];
+  const kept = { cls: st.cls, rung: st.rung, scales: (bills.find(([m]) => m === 'scale') || [])[1] || 0 };
   const sinking = S.sinking.length;
   const fighter = st.fighter;
-  resetStation('s1');                                // until merge: the rails' Reset
+  reset('s1');
   return [
     ok(JSON.stringify(open) === '["brawler"]' && !locked, 'before a second station, the altar opens only the Brawler'),
-    ok(first && !other, 'the first rung commits the class'),
-    ok(kept.cls === 'brawler' && kept.rung === 2 && kept.paid === '[["scale",12],["dust",3]]',
-       'and the station keeps what was paid there', JSON.stringify(kept)),
+    ok(first && other.folded, 'the first rung commits the class', JSON.stringify(other)),
+    ok(kept.cls === 'brawler' && kept.rung === 2 && kept.scales > 0, 'and the station keeps what was paid there',
+       JSON.stringify({ kept, bills })),
     ok(st.rung === 0 && st.cls === null && st.paid.length === 0, 'Reset blanks it'),
-    ok(S.sinking.length - sinking === 12, 'the scales go back into the water', `${S.sinking.length - sinking}`),
+    ok(S.sinking.length - sinking === kept.scales, 'the scales go back into the water', `${S.sinking.length - sinking}`),
     ok(st.fighter === fighter && fighter, 'and the fighter stays, a base fighter')
   ];
 });

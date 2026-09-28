@@ -15,6 +15,7 @@ import { clickDeep, clickDmg, strike, healNow, woundK, onBreak } from '../src/de
 import { spendScales } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
+import { climb } from './party-press.mjs';
 
 const S = yard.S;
 const { deepBed } = await import('../src/state.js');
@@ -24,7 +25,7 @@ const { deepBed } = await import('../src/state.js');
 // first job is taken off it, so every blow in these checks is the check's own.
 function deepYard() {
   window.__snatch({ played: true });
-  window.__deepCrew({ brawlers: 0 });
+  window.__deepCrew();
   window.__serpent({ stage: 0, wound: 0 });
 }
 
@@ -58,13 +59,11 @@ group('the wound opens under clicks on the coil and closes when nothing strikes'
 group("the click is always a punch, worth the first station's rung", async () => {
   deepYard();
   const bare = clickDmg();
-  // until merge: CREW's party stands the station; its rung is set here, as a
-  // rail's Buy would leave it.
-  S.stations = [{ id: 's1', kind: 'altar', slot: 0, built: true, cls: 'brawler', rung: 5, paid: [], fighter: null }];
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
+  climb(S.stations[0].id, 'brawler', 5);
   const fifth = clickDmg();
   clickBelly();
   const said = S.hits.find(h => h.weapon === 'punch');
-  S.stations = [];
   return [
     ok(bare === CLICK_DMG[0], 'with no station, the first rung', `${bare}`),
     ok(fifth === CLICK_DMG[5], "on the first station's fifth, the fifth", `${fifth}`),

@@ -16,6 +16,7 @@ import { tierRows, named } from '../upgrades/tiers.js';
 import { hirePod } from '../staffing.js';
 import { registerRows, ahead } from '../works.js';
 import { registerBoard } from '../boardrows.js';
+import { billOf } from '../upgrades.js';
 import { stationById } from './party.js';
 
 // A pod: one more of the crew, living down here (DESIGN.md, "One crew, two
@@ -59,11 +60,12 @@ export function classLadder(st, cls) {
   return card;
 }
 // What the next rung of `cls` at station `id` asks, as [coin, n] pairs with
-// no coin at nought: what `buyRung` takes and adds to the station's `paid`.
+// no coin at nought and no time (a rung is had on the press): what the rails
+// show on Buy, take, and hand `buyRung` to add to the station's `paid`.
 export function rungBill(id, cls) {
   const st = stationById(id);
   if (!st || !CLASSES[cls]) return [];
-  return classLadder(st, cls).bill().filter(([, n]) => n > 0);
+  return billOf(classLadder(st, cls)).filter(([m, n]) => m !== 'time' && n > 0);
 }
 
 // --- the boards ------------------------------------------------------------------

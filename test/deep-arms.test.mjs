@@ -10,36 +10,28 @@ import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { WORKER, CLASSES, SERPENT_DEFENSE } from '../src/config.js';
 import { shots, loose } from '../src/deep/arms.js';
 import { rungWorth } from '../src/deep/classes.js';
-import { buyRung } from '../src/deep/party.js';
+import { pressBuild, climb, openEveryClass } from './party-press.mjs';
 import { coilAt, coilThick, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 
 const S = yard.S;
 
 // The serpent come for, and a station of `kind` standing with `cls` bought
-// to `rung` on its rail. `walk`: its fighter is put on from the deep's spare
-// hands by the crusher, so it swims the floor to the station.
+// to `rung` on its rail. `walk`: the station is bought off the build button
+// with a pod resident spare, so its fighter swims the floor to it; otherwise
+// `__party` stands it with its fighter there.
 function station(kind, cls, rung, walk = false) {
   window.__snatch({ played: true });
   window.__serpent({ stage: 3, wound: 0 });
-  if (window.__party) window.__party({ stations: [{ kind, cls: null, rung: 0 }] });
-  else {
-    // until merge: a weapon crew's body stands in for the fighter, tied to
-    // its station by name (deep/arms.js routes its step to the fighter's).
-    window.__crew(0, 12);
-    window.__deepCrew({ brawlers: walk ? 0 : 1, spare: walk ? 1 : 0 });
-    if (walk) window.__assign('brawlers', 1);
-    const body = S.workers.find(w => w.type === 'brawler');
-    S.stations = [{ id: 's1', kind, slot: 0, built: true, cls: null, rung: 0, paid: [], fighter: body.name }];
-    S.stationsBuilt = 1;
-  }
-  const st = S.stations[0];
-  window.__grant({ dust: 1e6, scales: 5e4 });
-  while (st.rung < rung && buyRung(st.id, cls)) window.__finish();
-  if (st.rung < rung) { st.cls = cls; st.rung = rung; }   // until merge: the rails are BOARD's
-  return st;
+  if (walk) {
+    window.__deepCrew({ spare: 1 });
+    pressBuild(kind);
+    window.__finish();
+  } else window.__party({ stations: [{ kind, cls: null, rung: 0 }] });
+  openEveryClass();
+  return climb(S.stations[0].id, cls, rung);
 }
-const fighter = () => S.workers.find(w => w.station === 's1') || S.workers.find(w => w.name === S.stations[0].fighter);
+const fighter = () => S.workers.find(w => w.station === 's1');
 const arrived = w => w && !w.walking && w.y + WORKER > deepTop();
 
 // Follows one body from the crusher to its station: a reload stands it back

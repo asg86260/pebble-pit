@@ -11,7 +11,7 @@ import { SERPENT_HEAL, SERPENT_DEFENSE, EXPOSED_AMP, AMP_MAX, HEAL_CUT_MAX, HAST
          CLASSES } from '../src/config.js';
 import { strike, healNow } from '../src/deep/serpent.js';
 import { lay, has, level, ampOf, inspire, haste, tempo } from '../src/deep/statuses.js';
-import { buyRung } from '../src/deep/party.js';
+import { climb, openEveryClass } from './party-press.mjs';
 import { bellyAt, bellySeg, coilAt } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 
@@ -20,7 +20,7 @@ const S = yard.S;
 // A yard the serpent has come for, nobody striking: every hit is the check's.
 function deepYard(stage = 1) {
   window.__snatch({ played: true });
-  window.__deepCrew({ brawlers: 0 });
+  window.__deepCrew();
   window.__serpent({ stage, wound: 0 });
 }
 const frame = () => yard.fast(1 / 60);
@@ -160,19 +160,9 @@ group('Hasted swings a fifth more often, for as long as it lasts', async () => {
 group('a Hexer at rung 4 Holds the serpent, and the heal stops while it does', async () => {
   window.__snatch({ played: true });
   window.__serpent({ stage: 1, wound: 500 });
-  if (window.__party) window.__party({ stations: [{ kind: 'circle', cls: null, rung: 0 }] });
-  else {
-    // until merge: a weapon crew's body stands in for the fighter (deep/arms.js)
-    window.__crew(0, 12);
-    window.__deepCrew({ brawlers: 1 });
-    const body = S.workers.find(w => w.type === 'brawler');
-    S.stations = [{ id: 's1', kind: 'circle', slot: 0, built: true, cls: null, rung: 0, paid: [], fighter: body.name }];
-    S.stationsBuilt = 1;
-  }
-  const st = S.stations[0];
-  window.__grant({ dust: 1e6, scales: 5e4 });
-  while (st.rung < 4 && buyRung(st.id, 'hexer')) window.__finish();
-  if (st.rung < 4) { st.cls = 'hexer'; st.rung = 4; }  // until merge: the rails are BOARD's
+  window.__party({ stations: [{ kind: 'circle', cls: null, rung: 0 }] });
+  openEveryClass();
+  climb(S.stations[0].id, 'hexer', 4);
   const got = runUntil(() => has('held'), 30);
   const wound = S.serpentWound;
   let closed = false, frames = 0;

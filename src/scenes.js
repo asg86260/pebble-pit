@@ -22,11 +22,10 @@ import { dropMs } from './rock.js';
 import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
-import { mouthX, portalX, spotX, coilAt, bellySeg } from './deep/place.js';
-// Namespaces, so an export BOARD or CREW has yet to write (`slotX`,
-// `nextSlot`) is `undefined` here rather than a module that will not link.
-import * as PLACE from './deep/place.js';
-import * as PARTY from './deep/party.js';
+import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
+import { buildStation, nextSlot } from './deep/party.js';
+import { lay } from './deep/statuses.js';
+import { worksAt, progressOf } from './works.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 
@@ -223,18 +222,10 @@ function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scal
 const lookDeep = x => window.__look(x - S.viewW / 2);
 const beltSeg = f => Math.round(f * (COIL_SEGS - 1));
 
-// A floor slot's middle. BOARD's `slotX` reads DEEP_SLOTS; until it lands
-// every slot is the old altar's spot, so a shot is only off-center.
-const slotAt = i => (PLACE.slotX ? PLACE.slotX(i) : spotX('altar'));   // until merge
-// The lowest slot no station stands on, as the build button reads it.
-const freeSlot = () => {
-  const n = PARTY.nextSlot?.();
-  if (Number.isInteger(n) && n >= 0) return n;
-  const used = new Set(S.stations.map(st => st.slot));
-  let i = 0;
-  while (used.has(i)) i++;
-  return i;
-};
+// A floor slot's middle, and the lowest slot no station stands on, as the
+// build button reads it.
+const slotAt = slotX;
+const freeSlot = () => Math.max(0, nextSlot());
 // The station a class is sold at, off the pairs table.
 const KIND_OF = Object.fromEntries(Object.entries(PAIRS).flatMap(([kind, cs]) => cs.map(c => [c, kind])));
 // Where the fighter at a station is now, or its station while it has none.
@@ -465,7 +456,7 @@ const deepScenes = {
   'deep-build': { about: 'the deep', say: 'a delver hammering at the altar going up, silt stirred up off each blow',
     run: () => {
       deepYard({ stage: 1, run: 2 });
-      PARTY.buildStation?.('altar');
+      buildStation('altar');
       for (let i = 0; i < 60 * 120 && !S.workers.some(w => w.type === TYPE.DELVE && w.jigAt != null
                                                        && w.y > S.groundY); i++) window.__fast(1 / 60);
       window.__fast(1);
@@ -534,6 +525,25 @@ const deepScenes = {
     } },
   'party-button': { about: 'the deep', say: 'a fang held: the build button over the next free slot, wearing the fang\'s mark',
     run: () => { deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 }); lookDeep(slotAt(freeSlot())); } },
+  // Every status the serpent can wear, at once: a Swordsman's Bleeding, a
+  // Sapper's Exposed, a Hexer's Weakened and Held, laid long so the shot
+  // catches all four whatever the fighters' timing.
+  'party-statuses': { about: 'the deep', say: 'the serpent wearing all four statuses at once: Bleeding, Exposed, Held, Weakened',
+    run: () => {
+      deepYard({ stage: 2, wound: 1500, party: [cast('sword', 4), cast('sapper', 4), cast('hexer', 8)] });
+      for (const [key, k] of [['bleed', 0.5], ['exposed', 0.25], ['held', 1], ['weakened', 0.3]]) lay(key, k, 30);
+      lookDeep(coilAt(bellySeg() - 4, now()).x);
+    } },
+  // A station going up, half built: its scaffold at the second slot, the
+  // delver at it, a Brawler fighting at the first.
+  'party-scaffold': { about: 'the deep', say: 'a station mid-build: its scaffold at the next slot, a delver at work on it',
+    run: () => {
+      deepYard({ stage: 1, wound: 300, run: 4, party: [cast('brawler', 2)], fangs: 1 });
+      buildStation('spire');
+      const w = () => worksAt(S.stations[1]?.id)[0];
+      for (let i = 0; i < 60 * 180 && !(w() && progressOf(w()) >= 0.5); i++) window.__fast(1 / 60);
+      lookDeep(slotAt(S.stations[1].slot));
+    } },
   // Each class at its capstone, alone but for the Bard, who needs somebody to
   // sing to and gets a Brawler.
   ...Object.fromEntries(Object.keys(CLASSES).map(cls => [`class-${cls}`, {

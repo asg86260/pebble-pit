@@ -22,12 +22,12 @@
 // its cells.
 
 import { now } from '../clock.js';
-import { P, DEEP_W, DEEP_SURFACE, DEEP_SLOTS_DRAWN, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S,
-         WINDUP_GUESS, LAND_FX_S } from '../config.js';
+import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_S, CLASSES } from '../config.js';
+import { TYPE } from '../jobs.js';
 import { S } from '../state.js';
 import { fighterAt } from '../deep/party.js';
 import * as fight from '../deep/arms.js';
-import { deepFloor, deepTop, deepX0 } from '../deep/place.js';
+import { deepFloor, deepTop, deepX0, slotX } from '../deep/place.js';
 import { ctx } from './ctx.js';
 import { inTheDeep } from './crew.js';
 import { GREYS, PURPLES, WHITE, BODY, R4, R8, hash, lerp, ease, cell, ring, body, pips, dagger, charge,
@@ -37,7 +37,7 @@ import { ATTACKS, SEGMENTS, REST, liftOf, loopOf, sauceOf, dentsOf, sparksOf, st
 import { hideBot } from './serpent.js';
 
 // The deep's bodies that fight: a pod resident seated at a station.
-export const isFighter = w => w.type === 'fighter';   // TYPE.FIGHTER, until merge
+export const isFighter = w => w.type === TYPE.FIGHTER;
 const MELEE = new Set(['brawler', 'sword', 'martial']);
 
 // --- who is fighting, this frame ---------------------------------------------------
@@ -48,7 +48,7 @@ function stationsNow() {
   const out = [];
   for (const st of S.stations || []) {
     if (!st.built) continue;
-    const w = fighterAt(st) || (S.workers || []).find(o => isFighter(o) && o.station === st.id);   // until merge
+    const w = fighterAt(st);
     if (w && !w.lifted && inTheDeep(w)) out.push({ w, st });
   }
   for (const b of bench) out.push(b);
@@ -76,7 +76,7 @@ function nextOf(key, w, p) {
   const move = { brawler: last ? 'haymaker' : 'punch', sword: p.move, monk: full ? 'chi' : 'palm',
                  martial: full ? 'finisher' : 'thrust', ranger: last ? 'aimed' : 'shoot', assassin: 'stab',
                  sapper: 'throw', hexer: 'hex', mage: p.move === 'beam' ? 'finish' : 'beam', bard: 'sing' }[key];
-  const windup = (move === 'beam' ? 0 : (w.windup ?? WINDUP_GUESS[key])) * 1000;   // until merge: the class's own
+  const windup = (move === 'beam' ? 0 : (w.windup ?? CLASSES[key].windup ?? 0)) * 1000;
   const due = key === 'mage' && p.move === 'beam' ? p.end : w.next;
   return due > p.at ? { move, hit: due + windup } : null;
 }
@@ -115,8 +115,8 @@ function pageOf(key, w, R, T) {
   return { sg, a0: sg.to };
 }
 
-// --- until merge: the page's own loop -----------------------------------------------
-// Before the fight's clocks land, each fighter plays the page's turn on a
+// --- the scratch bench's loop ---------------------------------------------------------
+// The bench's bodies are never stepped, so each plays the page's turn on a
 // loop of its own, phased by the body, so every class can be looked at.
 const idOf = w => [...String(w.uid ?? w.id ?? '')].reduce((h, ch) => h * 31 + ch.charCodeAt(0), 7) % 9973;
 function loopClock(w, c, t) {
@@ -139,7 +139,7 @@ function fighters(t) {
       const pg = pageOf(key, w, R, t * 1000);
       if (pg) { f.c = pg.sg.c; f.a0 = pg.a0; f.melee = MELEE.has(key) || pg.sg.c === ATTACKS.mage; }
     } else if (key && S.snatched) {
-      const c = ATTACKS[key], a0 = loopClock(w, c, t);                // until merge
+      const c = ATTACKS[key], a0 = loopClock(w, c, t);
       if (a0 < c.len + 0.8) { f.c = c; f.a0 = a0; f.melee = true; }
     }
     // the Mage's ticks and her blow land where her beam does, five cells off her on the page
@@ -364,8 +364,8 @@ if (import.meta.env?.DEV) {
   globalThis.__kitBench = (list = []) => {
     bench.length = 0;
     list.forEach((o, i) => {
-      const slot = o.slot ?? i, at = DEEP_SLOTS_DRAWN[slot % DEEP_SLOTS_DRAWN.length];
-      const cx = o.x != null ? o.x : Math.round((deepX0() + at * DEEP_W) / P) - 1;
+      const slot = o.slot ?? i;
+      const cx = o.x != null ? o.x : Math.round(slotX(slot) / P) - 1;
       const floor = Math.floor(deepFloor() / P);
       const y = o.gap != null ? hideBot(cx) + o.gap : floor - BODY - (o.up || 0);
       const w = { uid: 'bench' + i, x: cx * P, y: y * P, benchA: o.a ?? null };

@@ -263,10 +263,6 @@ export const DRAW_NEAR_BEAT = 0.32;  // s either side of a beat the clock steps 
 export const DRAW_ROOM_S = 3;
 export const DRAW_LOWER_S = 2;
 export const LAND_FX_S = 1.3;
-// until merge: each class's wind-up (track FIGHT's config/classes.js), for
-// the move coming next.
-export const WINDUP_GUESS = { brawler: 0.18, sword: 0.14, monk: 0.15, martial: 0.08, ranger: 0.2,
-                              assassin: 0.12, hexer: 0.3, sapper: 0.4, mage: 0.25, bard: 0 };
 // The recoil after a heavy contact, in cells: [the contact's size from, cells].
 export const DRAW_KICK = [[1.2, 2], [0.7, 1.5], [0.45, 0.75]];
 // The still cells of a kit are one sprite a class and a rung, painted in a
@@ -293,19 +289,7 @@ export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settle
 // sinking and carried like a scale: a root three cells across narrowing to
 // its point. '#' white, '+' a grey a step down.
 export const FANG_SPRITE = ['###', '.#+', '.#.'];
-// Its mark on the counter card, a pixel a character, as SCALE_MARK is.
-export const FANG_MARK = [
-  '#######',
-  '#######',
-  '.#####.',
-  '.#####.',
-  '..###..',
-  '..###..',
-  '...#...',
-];
+// Its mark on the counter card and the build button is FANG_MARK (config/deepboard.js).
 // The scaffold over a station not yet built: posts this many bands tall,
 // the tape at head height.
 export const SCAFFOLD_BANDS = 5;
-// Until the floor slots land (track BOARD's config/deep.js), the slots here;
-// fractions of DEEP_W, as the spec writes them.
-export const DEEP_SLOTS_DRAWN = [0.335, 0.475, 0.62, 0.76, 0.9, 0.405, 0.69];

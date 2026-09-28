@@ -148,11 +148,6 @@ export const woundK = () => {                          // the wound as a fractio
 // The heal this frame, after Weakened, in wound a second.
 export const healNow = () => S.serpentStage > LAST ? 0 : SERPENT_HEAL[S.serpentStage] * healLeft();
 
-// Nothing is lit and nothing is drawn on the floor any more; the dev handles
-// still read both. until merge
-export const litK = () => 0;
-export const boundK = () => 0;
-
 // Who hears a phase break: the fang's drop (CREW's party.js) and anything
 // else that answers one. Called with the stage just reached, 1..4, on the
 // frame the defense goes; the returned function stops the listening.

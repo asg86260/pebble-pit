@@ -17,7 +17,6 @@ import { belowYard, keepTo, stepRoute, ways } from '../route.js';
 import { commutePace } from '../levels.js';
 import { DOWN_THERE } from '../works.js';
 import { stationById, stationMid } from '../deep/party.js';
-import { swim, working, feet } from '../deep/arms.js';
 
 // Where each deep job with a fixed place stands: the keys of `DEEP_SPOTS`.
 // A fighter's place is its station's, which the player put down
@@ -43,14 +42,6 @@ export const deepPost = (type, w = null) => {
 const made = type => () => ({ type, x: deepPost(type), goal: null, phase: null });
 export const newFighter = made(TYPE.FIGHTER);
 export const newGatherer = made(TYPE.GATHER);
-
-// A fighter's frame until the classes are wired in: it holds the floor in
-// front of its station, whatever its class.
-// TODO(merge): FIGHT's `stepFighter` (deep/classes.js) in the JOBS row.
-export function guardStation(w) {
-  if (!working(w)) return;
-  swim(w, deepPost(TYPE.FIGHTER, w), feet());
-}
 
 // A body on a yard job with its feet in the deep -- taken off the deep's
 // roster, or the one who came out of the belly -- goes back up before it does

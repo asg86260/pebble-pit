@@ -208,10 +208,9 @@ const tall = cls => fold(cls)?.getBoundingClientRect().height || 0;
 const seat = async () => { seatRails(); await raf(); await raf(); seatRails(); };
 
 TESTS.push(['rails: a tap views, the buy takes the class and folds the other, Reset stands both again', async () => {
-  // until merge: `__party` (STATE) stands the station; here it is written onto
-  // S, an altar with both its classes open, and scales to spend.
-  S.stations = [{ id: 's1', kind: 'altar', slot: 0, built: true, cls: null, rung: 0, paid: [], fighter: null }];
-  S.stationsBuilt = 2;
+  // An altar and a spire, so both the altar's classes are open, and scales
+  // to spend.
+  window.__party({ stations: [{ kind: 'altar' }, { kind: 'spire' }] });
   window.__scales(9999);
   showPanel('s1', true);
   await seat();
@@ -226,8 +225,7 @@ TESTS.push(['rails: a tap views, the buy takes the class and folds the other, Re
   const says = rails().querySelector('.rl-buybtn .rl-what').textContent;
 
   await tap(rails().querySelector('.rl-buybtn'));
-  // until merge: CREW's `buyRung` is a stub; the rung it will take, by hand.
-  if (!st.rung) Object.assign(st, { cls: 'brawler', rung: 1, paid: [['scale', 15]] });
+  const bought = st.cls === 'brawler' && st.rung === 1 && st.paid.some(([m, n]) => m === 'scale' && n > 0);
   await seat();
   await sleep(RAIL_FOLD_MS + 100);
   await seat();
@@ -235,8 +233,7 @@ TESTS.push(['rails: a tap views, the buy takes the class and folds the other, Re
   const kept = tall('brawler') > 0 && rails().querySelectorAll('.rl-fold[data-cls="brawler"] .rl-rail i.on').length === 1;
 
   await tap(rails().querySelector('.rl-reset'));
-  // until merge: CREW's `resetStation` is a stub; the blank station, by hand.
-  if (st.rung) Object.assign(st, { cls: null, rung: 0, paid: [] });
+  const blanked = st.cls === null && st.rung === 0 && st.paid.length === 0;
   await seat();
   await sleep(RAIL_FOLD_MS + 100);
   await seat();
@@ -248,8 +245,34 @@ TESTS.push(['rails: a tap views, the buy takes the class and folds the other, Re
     ok(faded, 'a tap on the Brawler fades the Swordsman'),
     ok(blank, 'and takes nothing'),
     ok(says === 'Buy Brawler 1', 'Buy names what it buys', says),
+    ok(bought, 'the buy takes the Brawler, paid in scales', JSON.stringify(st)),
     ok(shut, 'after the buy the Swordsman has folded away', `${tall('sword')}px`),
     ok(kept, 'and the Brawler stands, its first pip lit'),
+    ok(blanked, 'Reset blanks the station'),
     ok(again, 'Reset stands both rails again', `${tall('brawler')} ${tall('sword')}`)
+  ];
+}]);
+
+// The floating build button under a real pointer (deep/buildbutton.js): at
+// the snatch it stands over the first slot; a tap opens its picker, a tap on
+// a kind puts the station in the deep's works.
+TESTS.push(['rails: the build button builds the first station, free, from its picker', async () => {
+  window.__snatch({ played: true });
+  window.__view('deep');
+  await raf(); await raf();
+  const btn = document.getElementById('buildbtn');
+  const shown = !!btn && btn.classList.contains('on');
+  await tap(btn);
+  await raf();
+  const kinds = [...document.querySelectorAll('#buildpick.on .kind')].map(b => b.dataset.kind);
+  await tap(document.querySelector('#buildpick .kind[data-kind="armory"]'));
+  await raf(); await raf();
+  const st = S.stations[0];
+  return [
+    ok(shown, 'the button stands at the snatch'),
+    ok(kinds.join() === 'altar,armory,spire', 'its picker offers the three starting kinds', kinds.join()),
+    ok(st && st.id === 's1' && st.kind === 'armory' && !st.built && S.fangs === 0,
+       'a pick puts the first station up, free', JSON.stringify(st)),
+    ok(!btn.classList.contains('on'), 'and the button goes, with no fang held')
   ];
 }]);
