@@ -2,12 +2,12 @@
 // leaves behind.
 
 import { now } from '../clock.js';
-import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
+import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
-import { DROPS, EMBERS, GOING, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
+import { DROPS, EMBERS, GOING, SPLASHES, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
 import { CLOUD_LAYERS } from '../config.js';
-import { paled } from '../weather.js';
+import { paled, towardPage } from '../weather.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
 import { screenAt } from './frame.js';
@@ -324,8 +324,35 @@ export function drawRainBack() {
 // And the sheet that does, in front of them: the rain that was here before
 // the sky had a back to it.
 export function drawRain() {
-  if (!DROPS.length) return;
-  sheetRain(RAIN_NEAR, gust() * RAIN_LEAN);
+  if (DROPS.length) sheetRain(RAIN_NEAR, gust() * RAIN_LEAN);
+  if (SPLASHES.length) drawSplashes();
+}
+
+// The crowns, one fill per frame of the crown per kind: every splash on the
+// same frame is the same tone, so a pour is six fills however hard it comes.
+// Worked out on the first draw: weather.js is still loading when this file is.
+let SPLASH_TONES = null;
+function drawSplashes() {
+  SPLASH_TONES ??= [RAIN_WATER_TONE, MUCK_GREY].map(tone =>
+    RAIN_SPLASH.map(([, , pale]) => towardPage(tone, pale)));
+  for (let dirt = 0; dirt < 2; dirt++) {
+    for (let f = 0; f < RAIN_SPLASH.length; f++) {
+      const [out, up] = RAIN_SPLASH[f];
+      let any = false;
+      ctx.beginPath();
+      for (const s of SPLASHES) {
+        if (!!s.dirt !== !!dirt || Math.floor(s.t / RAIN_SPLASH_HOLD_S) !== f) continue;
+        if (!onScreen(s.c * P)) continue;
+        any = true;
+        const y = s.y - (up + 1) * P;
+        ctx.rect((s.c - out) * P, y, P, P);
+        ctx.rect((s.c + out) * P, y, P, P);
+      }
+      if (!any) continue;
+      ctx.fillStyle = SPLASH_TONES[dirt][f];
+      ctx.fill();
+    }
+  }
 }
 
 // The bolt: black, full for the first half of its life and fading through the

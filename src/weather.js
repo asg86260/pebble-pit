@@ -135,6 +135,12 @@ export const paled = (tone, far) => {
   const c = mix(hex(tone), PAGE, f);
   return `rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`;
 };
+// A tone taken a share of the way to the page, for a fade that is a fact
+// about the thing rather than about its depth.
+export const towardPage = (tone, k) => {
+  const c = mix(hex(tone), PAGE, k);
+  return `rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`;
+};
 // One cloud's colors this frame, crown to base: CLOUD_TONES steps between the
 // two part colors, every step then faded toward the page by the cloud's depth
 // -- the air takes the same share off every tone, so a far cloud's shades are

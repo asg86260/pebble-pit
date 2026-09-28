@@ -37,7 +37,7 @@ export function skyKindCounts() {
 import { stirSmoke } from './smog/draught.js';
 import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave as rebuildSky } from './smog/sky.js';
 import { airRate, pullCraft, stepClods } from './smog/craft.js';
-import { dryTime, forceStrike, LEDGER, markSky, nextDue, pinHeft, pour, remarkSky, rollHeft, stepBolt, stepDrops, stepEmbers, EMBERS,
+import { dryTime, forceStrike, LEDGER, markSky, nextDue, pinHeft, pour, remarkSky, rollHeft, stepBolt, stepDrops, stepEmbers, stepSplashes, EMBERS, SPLASHES,
          stepFront, stepGoing, stepStorm } from './smog/rain.js';
 import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
          muckAtCol, muckCols, muckFloor, muckFor, muckLeft, nearestMuck, nearestOpenMess, onOpenYard,
@@ -146,7 +146,7 @@ export { murk, SKY, DROPS, CLODS, GOING, STACK, bandTop, bandLow, raining,
          balloonPull, airRate, climbing,
          foul, puffStack, stirSmoke,
          moteX, moteY, clearSky, fillSky, cloudR,
-         dryTime, forceStrike, EMBERS, LEDGER, pinHeft,
+         dryTime, forceStrike, EMBERS, SPLASHES, LEDGER, pinHeft,
          MESS, MUCK_ELBOW, colAt, messAt, muckCols, poopCols, muckFloor,
          muckAtCol, muckLeft, poopLeft, muckFor, yardMuck, yardMuckFor,
          nearestMuck, nearestOpenMess, onOpenYard, rockMuck, quarryMuck, plotMuck, buried, retally,
@@ -190,6 +190,7 @@ export function stepSmog(dt) {
   if (raining()) reckon();
   stepGoing(secs);
   stepStack(secs);
+  stepSplashes(secs);
   stepDrops();
   stepBolt(secs);
   stepEmbers(secs);

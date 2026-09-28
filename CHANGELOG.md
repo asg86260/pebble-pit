@@ -14,6 +14,7 @@ feature lives in DESIGN.md.
 **New this release**
 - The cloud's buttons and what they answer sit in their own titled cloud saves box, and its stop button says stop cloud saves (src/selftest/cloud.js).
 - On a phone the corner's gear is a pause button, and it opens the paused menu rather than the settings (src/selftest/touch.js).
+- Raindrops kick up a little crown where they land (`node tools/look.mjs rain`).
 - Cloud saves, if you want them: turn them on in settings and your three save slots are kept in the cloud and brought back on any device you link with a six-character code (test/cloud-sync.test.mjs).
 - A station starts as a base unit (Fighter, Novice, Scout, Adept, Apprentice) that forks into one of its two classes at rung 4, and the build button lays an empty lot whose board picks what goes up (test/rails.test.mjs, src/selftest/deep.js).
 - Fighters sway a cell between attacks, and the melee ones hop as each step lands (`node tools/look.mjs party-four`).

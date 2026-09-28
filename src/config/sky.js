@@ -163,6 +163,11 @@ export let RAIN_LEAN = 2.2;
 // nearest: short fine flecks far off, long coarse strokes close in.
 export const RAIN_DASH_MIN = 2;
 export const RAIN_DASH_MAX = 5;
+// The crown a landing drop kicks up: held frames, each a cell either side of
+// the column it came down in -- [cells out, cells up off the ground, share
+// toward the page] -- mirrored, so it rises, spreads, settles and is gone.
+export const RAIN_SPLASH = [[1, 1, 0], [2, 1, 0.2], [2, 0, 0.5]];
+export const RAIN_SPLASH_HOLD_S = 1 / 12;
 
 // --- how deep the rain is -----------------------------------------------------
 // The rain falls from the sheet it came out of. `sheet` indexes CLOUD_LAYERS,
