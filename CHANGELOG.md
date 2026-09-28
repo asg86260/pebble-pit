@@ -54,6 +54,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+## v0.5.1 — 2026-09-28
+
 - The landing page's menu stands on a card of its own, so the clouds no longer drift through the name and the lines between its buttons (`GAME=.../index.html node tools/headless.mjs --shot`).
 
 ## v0.5.0 — 2026-09-28
