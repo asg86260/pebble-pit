@@ -12,7 +12,7 @@
 // about. The pointer's own presses are the browser group `rails`
 // (src/selftest/deep.js).
 
-import { group, ok, yard } from './helpers.mjs';
+import { group, ok, yard, runUntil } from './helpers.mjs';
 import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, rungDust, rungValue } from '../src/config.js';
 import { railsOf, pressKind, pressBuy, pressReset } from '../src/deep/rails.js';
 import { classLadder, rungBill } from '../src/deep/rows.js';
@@ -99,20 +99,22 @@ group('Reset hands back exactly what was paid and stands the base unit again', a
   buy(st, 'ranger');
   const spent = wallet();
   const climbed = st.rung;
-  const sinking = S.sinking.length;
   reset(st);
   const after = wallet();
+  const tossed = S.sinking.some(g => g.back);
+  runUntil(() => !S.sinking.some(g => g.back), 20);
+  const home = wallet();
   const back = railsOf('s1');
-  // Scales go back into the water they were lifted out of and sink to the
-  // bed; every other coin comes home at once.
+  // Scales are tossed back into the crusher and counted as they land; every
+  // other coin comes home at once.
   const coins = w => ({ dust: w.dust, shard: w.shard, spark: w.spark });
   return [
     ok(climbed === FORK_RUNG && spent.scale < before.scale, 'the Scout and then the Ranger were climbed, in scales',
        `rung ${climbed}, ${before.scale} -> ${spent.scale}`),
     ok(JSON.stringify(coins(after)) === JSON.stringify(coins(before)), 'Reset gives every coin back',
        `${JSON.stringify(before)} -> ${JSON.stringify(after)}`),
-    ok(S.sinking.length - sinking === before.scale - spent.scale, 'and every scale back into the water',
-       `${S.sinking.length - sinking} of ${before.scale - spent.scale}`),
+    ok(tossed && after.scale === spent.scale && home.scale === before.scale, 'and every scale tossed back into the crusher',
+       `${spent.scale} -> ${after.scale} -> ${home.scale} of ${before.scale}`),
     ok(st.cls === null && st.rung === 0 && back.who === 'Scout', 'the station is its base unit again',
        `${st.cls} ${st.rung} ${back.who}`),
     ok(back.tree.arms.every(a => !a.gone) && back.tree.base.every(p => !p.on), 'with the whole tree open',

@@ -202,9 +202,12 @@ group("a station climbs its base unit, forks at rung 4, and Reset hands it all b
   const took = railsOf('s1');
   const bills = [...st.paid];
   const kept = { cls: st.cls, rung: st.rung, scales: (bills.find(([m]) => m === 'scale') || [])[1] || 0 };
-  const sinking = S.sinking.length;
+  const purse = S.scales;
   const fighter = st.fighter;
   reset('s1');
+  // Nothing teleports: the purse fills as the tossed scales land in the crusher.
+  const flying = S.scales === purse && S.sinking.some(g => g.back);
+  runUntil(() => !S.sinking.some(g => g.back), 20);
   return [
     ok(JSON.stringify(open) === '["mage"]', 'before a second station, the spire forks only to the Mage', JSON.stringify(open)),
     ok(base.cls === null && base.rung === FORK_RUNG - 1, 'the base unit climbs with no class', JSON.stringify(base)),
@@ -214,7 +217,8 @@ group("a station climbs its base unit, forks at rung 4, and Reset hands it all b
     ok(kept.cls === 'mage' && kept.rung === FORK_RUNG + 1 && kept.scales > 0, 'and the station keeps what was paid there',
        JSON.stringify({ kept, bills })),
     ok(st.rung === 0 && st.cls === null && st.paid.length === 0, 'Reset blanks it'),
-    ok(S.sinking.length - sinking === kept.scales, 'the scales go back into the water', `${S.sinking.length - sinking}`),
+    ok(flying && S.scales - purse === kept.scales, 'the scales are tossed back into the crusher',
+       `${flying} ${S.scales - purse} of ${kept.scales}`),
     ok(st.fighter === fighter && fighter, 'and the fighter stays, the base unit again')
   ];
 });

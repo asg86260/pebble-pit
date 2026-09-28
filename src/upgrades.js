@@ -17,7 +17,7 @@ import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
 
 import { spelled } from './tower.js';
-import { spendScales, shed } from './deep/scales.js';
+import { spendScales, refundScales } from './deep/scales.js';
 
 import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut,
          ahead, newestWaiting, waitingCount, worksOf } from './works.js';
@@ -306,8 +306,8 @@ export function handBack(u) {
   const bill = w.bill || billOf(u).filter(([money]) => money !== 'time');
   if (!pullOut(u.site, u.key)) return false;
   const x = box ? box.x + box.w / 2 : S.cx, y = (box?.y ?? S.groundY) - P * 2;
-  // Scales go back into the water they came out of, and sink to the bed.
-  for (const [money, n] of bill) if (money === 'scale') shed(x, y, n);
+  // Scales go back into the crusher.
+  for (const [money, n] of bill) if (money === 'scale') refundScales(n, x, y);
                                  else if (money !== 'time') refund(money, n, x, y);
   S.shopStale = true;
   return false;

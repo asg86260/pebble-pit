@@ -21,7 +21,7 @@ import { frames, now } from '../clock.js';
 import { onBreak } from './serpent.js';
 import { rand } from '../rng.js';
 import { refund } from '../pit.js';
-import { shed } from './scales.js';
+import { refundScales } from './scales.js';
 import { swim, working, feet, mid } from './arms.js';
 import { haulSpeed } from '../levels.js';
 import { rebalance } from '../staffing.js';
@@ -275,13 +275,13 @@ export function buyRung(id, cls, bill = []) {
 
 // Reset: every bill paid at this station handed back, the rung to nought and
 // the class blank. The fighter stays, its station's base unit again, at rung
-// 0. Scales go back into the water they came out of.
+// 0. Scales go back into the crusher.
 export function resetStation(id) {
   const st = stationById(id);
   if (!st) return false;
   const x = stationMid(st), y = deepFloor() - P * 8;
   for (const [money, n] of st.paid) {
-    if (money === 'scale') shed(x, y, n);
+    if (money === 'scale') refundScales(n, x, y);
     else refund(money, n, x, y);
   }
   st.paid = [];

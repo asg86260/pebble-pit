@@ -30,8 +30,9 @@ export const current = t => DEEP_CURRENT * Math.sin(2 * Math.PI * t / DEEP_CURRE
 // writes it up. `crushes` is for the drawing: each landing warms the fire
 // and spits its own sparks, so each keeps its moment (and a number for its
 // sparks' throw), forgotten once it has burned out or been crowded off.
+// A refund coming home is the player's own, not income.
 let crushed = 0;
-export function crush(n) {
+export function crush(n, income = true) {
   if (!(n > 0)) return;
   S.scales += n;
   S.seenScale = true;
@@ -41,7 +42,7 @@ export function crush(n) {
   let drop = Math.max(0, list.length - CRUSH_HEAT_KEEP);
   while (drop < list.length && list[drop].at < gone) drop++;
   if (drop) list.splice(0, drop);
-  earned('scale', n);
+  if (income) earned('scale', n);
 }
 
 // Loose `n` scales from (x, y): they sink, and lie where they land. A blow's
@@ -151,6 +152,22 @@ export function tossIn(x, y, shades) {
   });
 }
 
+// A bill in scales handed back (a station's reset, a waiting copy's refund):
+// the payment's picture the other way. At most LIFT_FLECKS scales are tossed
+// from (x, y) into the hopper, each carrying its share of `n`, and the purse
+// takes them back as they land.
+export function refundScales(n, x, y) {
+  n = Math.floor(n);
+  if (!(n > 0)) return;
+  const shown = Math.min(n, LIFT_FLECKS), h = hopperRect();
+  for (let i = 0; i < shown; i++) {
+    const v = Math.floor(n / shown) + (i < n % shown ? 1 : 0);
+    S.sinking.push({ x, y, x0: x, y0: y, tx: h.x + h.w / 2 + (rand() - 0.5) * (h.w - P * 4),
+                     ty: h.y + h.h + P * 2, arc: 0, wait: i * GATHER_TOSS_STAGGER, v, back: true,
+                     s: shadeNear(SCALE_SHADE, SCALE_SPREAD) });
+  }
+}
+
 // Pay `n` scales out of the crusher: the account goes down, and a stream of
 // flecks standing for them rises out of the hopper and drifts to (toX, toY).
 // True if the purse held them.
@@ -207,7 +224,7 @@ export const stepScales = c => {
       g.arc = Math.min(1, g.arc + f / GATHER_TOSS_FRAMES);
       g.x = g.x0 + (g.tx - g.x0) * g.arc;
       g.y = g.y0 + (g.ty - g.y0) * g.arc - Math.sin(Math.PI * g.arc) * (GATHER_TOSS_RISE + Math.max(0, g.y0 - g.ty));
-      if (g.arc >= 1) { crush(1); continue; }
+      if (g.arc >= 1) { crush(g.v || 1, !g.back); continue; }
       sink[keep++] = g;
       continue;
     }
@@ -247,7 +264,9 @@ export const stepScales = c => {
 
 // On the save the bed is the height of every column: every cell is a scale,
 // and the speckle is dealt again on the way back in from a stream of its own,
-// so a reload does not move the game's chance on.
+// so a reload does not move the game's chance on. A refund still in the air
+// is owed to the purse, and a reload finds it landed.
+const owed = () => S.sinking.reduce((n, g) => n + (g.back ? g.v : 0), 0);
 export const SAVE = {
   fields: ['deepBed'],
   write(out) {
@@ -259,9 +278,11 @@ export const SAVE = {
         heights[c] = n;
       }
     }
-    out.deepBed = { cols: deepBed.cols, heights };
+    out.deepBed = { cols: deepBed.cols, heights, owed: owed() };
   },
   read(s) {
+    S.sinking = S.sinking.filter(g => !g.back);
+    if (s.deepBed && s.deepBed.owed > 0) crush(s.deepBed.owed, false);
     if (!deepBed.grid) return;
     deepBed.grid.fill(0);
     const sv = s.deepBed;
