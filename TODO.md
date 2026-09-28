@@ -1,16 +1,17 @@
 # Still to do
 
-## Cloud saves -- BUILT, NOT DEPLOYED (2026-09-27)
+## Cloud saves -- BUILT, WORKER LIVE, OFF IN THE GAME (2026-09-28)
 
-Built as `docs/wave-cloud.md`; "Cloud saves" in DESIGN.md. `CLOUD_ON` is
-false, so no player sees it yet, and it has no CHANGELOG line until it is on.
+Built as `docs/wave-cloud.md`; "Cloud saves" in DESIGN.md. The worker is
+deployed at `https://pebble-saves.graham-things.com` (Workers Free, D1
+`pebble-cloud`) and live-checked, the two-writer write included.
+`CLOUD_ON` is still false, so no player sees it, and it has no CHANGELOG
+line until it is on. Every player opts in: nothing is sent until they press
+*keep my yards in the cloud* or enter a code.
 Open:
-- **Deploy.** The owner's Cloudflare account (Workers Free, no card), then
-  `cloud/README.md`'s steps; flip `CLOUD_ON` and set `VITE_CLOUD_URL` in
-  one commit, with the New-this-release line.
-- **Two writers on real D1.** The conditional slot write (`changes() = 1`
-  inside a batch) is proven on node:sqlite only; check it once on
-  `wrangler dev` or the first deploy.
+- **Turn it on.** `CLOUD_ON = true`, `VITE_CLOUD_URL` from a `CLOUD_URL`
+  repo variable in `release.yml`, and the New-this-release line, in one
+  commit.
 - **`flush()` on page hide is best effort.** The gzip is async, so a
   closing page may end before the keepalive push is sent; a copy gzipped
   ahead would make it dependable. The next boot pushes whatever it missed.
