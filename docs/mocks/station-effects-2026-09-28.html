@@ -46,6 +46,8 @@
   .chip { border: 1px solid var(--rule); padding: 0 5px; }
   .chip.cap { border-color: var(--purple); color: var(--purple); }
   .chip i { font-style: normal; color: var(--dim); }
+  .stack { display: flex; flex-direction: column; gap: 2px; }
+  .chips.col { flex-direction: column; align-items: stretch; margin-top: auto; padding-top: 4px; }
 </style>
 </head>
 <body>
@@ -109,6 +111,16 @@ const LAYOUTS = {
       `<span class="chip cap"><b>${WORDS[c].cap[0]}</b> <i>${WORDS[c].cap[1]}</i></span></span>`,
     kind: k => PAIRS[k].map(c => LAYOUTS.C.cls(c, true)).join('')
   }
+  ,
+  D: {
+    name: 'D. Branches side by side, the effects chipped at the foot (the owner’s B + C)',
+    say: 'the two specialists in columns as in B, each column ending in its move and capstone as chips; at the fork the same chips at the foot of each row',
+    chip: c => `<span class="chips col"><span class="chip"><b>${WORDS[c].move[0]}</b> <i>${WORDS[c].move[1]}</i></span>` +
+      `<span class="chip cap"><b>${WORDS[c].cap[0]}</b> <i>${WORDS[c].cap[1]}</i></span></span>`,
+    cls: c => LAYOUTS.D.chip(c),
+    kind: k => `<span class="split">${PAIRS[k].map(c => `<div class="stack"><div class="nm">${NAME[c]}</div>` +
+      `<div class="m">${WORDS[c].fork}</div>${LAYOUTS.D.chip(c)}</div>`).join('')}</span>`
+  }
 };
 
 function pickBoard(L, first) {
@@ -127,7 +139,7 @@ function forkBoard(L) {
 }
 
 const host = document.getElementById('host');
-for (const L of Object.values(LAYOUTS)) {
+for (const L of [LAYOUTS.D, LAYOUTS.A, LAYOUTS.B, LAYOUTS.C]) {
   host.insertAdjacentHTML('beforeend', `<h2>${esc(L.name)}</h2><p class="dim">${esc(L.say)}. Left: the first station's pick ` +
     `(three open). Middle: a later pick (all five). Right: the Fighter's fork.</p>` +
     `<div class="pair">${pickBoard(L, true)}${pickBoard(L, false)}${forkBoard(L)}</div>`);
