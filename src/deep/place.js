@@ -227,6 +227,16 @@ export const bellyAt = t => coilAt(bellySeg(), t);
 
 // The segment nearest a point, and how far it is: the one question a click, a
 // lance and a grenade all ask of the body.
+// The segment straight over x: the coil is laid along x, so it crosses a
+// column once, and the segment nearest in x is the one there.
+export function segAbove(x, t) {
+  let best = 0, d = Infinity;
+  for (let i = 0; i < COIL_SEGS; i++) {
+    const e = Math.abs(coilAt(i, t).x - x);
+    if (e < d) { d = e; best = i; }
+  }
+  return best;
+}
 export function nearestSeg(x, y, t) {
   let best = 0, d = Infinity;
   for (let i = 0; i < COIL_SEGS; i++) {

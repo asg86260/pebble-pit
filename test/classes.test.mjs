@@ -13,6 +13,8 @@ import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { CLASSES, PAIRS, SERPENT_DEFENSE, STUN_MAX_S, HASTE, FORK_RUNG } from '../src/config.js';
 import { climb, reset, openEveryClass } from './party-press.mjs';
 import { shots } from '../src/deep/arms.js';
+import { coilAt } from '../src/deep/place.js';
+import { now } from '../src/clock.js';
 import { rungWorth, stationOf, stationX } from '../src/deep/classes.js';
 import { has, level, hasted, inspiredK } from '../src/deep/statuses.js';
 
@@ -373,13 +375,15 @@ group('Bard: no damage; with another the Anthem doubles her boost, and at 8 her 
   reset(S.stations[0].id);
   run(1);
   const gone = !hasted(fighterAt(1)) && inspiredK(fighterAt(1)) === 0;
-  // Two arrows landing close together are one number, so each is read as a
-  // whole number of Inspired arrows; the first watch may start on an arrow
-  // that was loosed before the rung.
-  const arrows = (list, unit) => list.filter(d => near(d / unit, Math.round(d / unit))).length;
+  // Arrows landing together on the one spot over the station are one
+  // number, so each is read as a whole number of Inspired arrows, and at
+  // most one plain one: the first watch may start on an arrow loosed before
+  // the rung, folded in with the next.
+  const whole = (d, unit) => d > 0 && near(d / unit, Math.round(d / unit));
+  const arrows = (list, unit) => list.filter(d => whole(d, unit) || whole(d - v, unit)).length;
   return [
     ok(quiet, 'a Bard deals no damage of her own'),
-    ok(arrows(anthem, v * (1 + k4)) >= anthem.length - 1 && anthem.length >= 3,
+    ok(arrows(anthem, v * (1 + k4)) >= anthem.length - 1 && anthem.length >= 2,
        "another fighter's hits are Inspired, the Anthem's double", JSON.stringify(anthem)),
     ok(slowAt4 && quick, 'at rung 8 her song Hastes the others', `${slowAt4} ${quick}`),
     ok(gone, 'and both go once she stops singing')
@@ -393,5 +397,28 @@ group('a Bard alone gives nothing', async () => {
     ok(fighterAt(0).goal === 'sing', 'she sings', fighterAt(0).goal),
     ok(S.serpentWound === 0 && !S.workers.some(w => inspiredK(w) > 0), 'to nobody, and nothing is struck',
        `${S.serpentWound}`)
+  ];
+});
+
+// Every fighter strikes the coil straight over its own station: a melee
+// fighter rises to it and a ranged one shoots straight up, however far the
+// sway has carried the rest of the body.
+group('every fighter strikes the coil straight over its station', async () => {
+  party(['altar', 'armory']);
+  window.__serpent({ stage: 3, wound: 0 });
+  const hits = new Set(S.hits);
+  const off = { brawler: [], ranger: [] };
+  const step = Math.abs(coilAt(1, now()).x - coilAt(0, now()).x);
+  for (let f = 0; f < 8 * 60; f++) {
+    run(1 / 60);
+    for (const h of S.hits) if (!hits.has(h) && off[h.weapon]) {
+      hits.add(h);
+      off[h.weapon].push(Math.round(h.x - stationX(S.stations[h.weapon === 'brawler' ? 0 : 1])));
+    }
+  }
+  const over = list => list.length >= 2 && list.every(d => Math.abs(d) <= step);
+  return [
+    ok(over(off.brawler), "the Fighter's punches land over the altar", JSON.stringify(off.brawler)),
+    ok(over(off.ranger), "the Scout's arrows land over the armory", JSON.stringify(off.ranger))
   ];
 });

@@ -38,7 +38,7 @@ import { P, WORKER, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
          CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
-import { slotX, postX, coilAt, coilThick, nearestSeg } from './place.js';
+import { slotX, postX, coilAt, coilThick, segAbove } from './place.js';
 import { stationById, classOf, keyOf } from './party.js';
 import { mid, feet, working, swim, loose } from './arms.js';
 import { strike, woundK } from './serpent.js';
@@ -85,12 +85,14 @@ function landing(w, t) {
 
 // --- where a fighter stands ----------------------------------------------------------
 
-// Melee: up under the segment over it, hanging at `off` under the hide, and
+// Every fighter strikes the coil straight over its station, wherever the
+// sway has carried the rest of it.
+// Melee: up under that segment, hanging at `off` under the hide, and
 // following its sway -- at `slow` of the swim once within `range` of that
 // spot, which for the Assassin is nearly still. Null while it is still on
 // the way up.
-function closeIn(w, t, off = 0, slow = 1, range = MELEE_REACH) {
-  const seg = nearestSeg(mid(w), w.y, t).seg;
+function closeIn(w, st, t, off = 0, slow = 1, range = MELEE_REACH) {
+  const seg = segAbove(stationX(st), t);
   const p = coilAt(seg, t);
   const reach = coilThick(seg) / 2 + off;
   const far = Math.hypot(p.x - mid(w), p.y + reach - w.y) > range;
@@ -103,7 +105,7 @@ function closeIn(w, t, off = 0, slow = 1, range = MELEE_REACH) {
 function atPost(w, st, t) {
   if (!toPost(w, st)) { w.goal = 'back'; return null; }
   w.goal = 'fight';
-  const seg = nearestSeg(mid(w), w.y, t).seg;
+  const seg = segAbove(stationX(st), t);
   return { seg, p: coilAt(seg, t) };
 }
 
@@ -117,7 +119,7 @@ function shoot(w, kind, x, y, seg, t, fly, land, arc = 0) {
 // Heavy punches; from rung 4 every 4th is a haymaker, x4, and from rung 8
 // the haymaker stuns.
 function brawler(w, c, st, cls, v) {
-  const t = c.now, at = closeIn(w, t);
+  const t = c.now, at = closeIn(w, st, t);
   if (!at) return;
   const hm = cls.haymaker;
   w.pipsMax = hasMove(st) ? hm.every : 0;
@@ -137,7 +139,7 @@ function brawler(w, c, st, cls, v) {
 // 3rd cut lands twice, the second landing leaving the serpent Bleeding. A cut
 // lands where the blade meets the hide, once: the page's other turns are air.
 function sword(w, c, st, cls, v) {
-  const t = c.now, at = closeIn(w, t);
+  const t = c.now, at = closeIn(w, st, t);
   if (!at) return;
   w.pipsMax = 0;
   const hit = landing(w, t);
@@ -176,7 +178,7 @@ function monk(w, c, st, cls, v) {
 // a finisher, a blow of the row's thrusts together; from rung 8 the
 // finisher Hastes the whole party.
 function martial(w, c, st, cls, v) {
-  const t = c.now, at = closeIn(w, t);
+  const t = c.now, at = closeIn(w, st, t);
   if (!at) return;
   const pp = cls.pips;
   w.pipsMax = pp.max;
@@ -217,7 +219,7 @@ function ranger(w, c, st, cls, v) {
 // serpent; from rung 4 x(1 + the wound's share of the phase), to x2; from
 // rung 8 each dagger leaves it Bleeding. Read when the dagger lands.
 function assassin(w, c, st, cls, v) {
-  const t = c.now, at = closeIn(w, t, cls.standoff, cls.drift, cls.range);
+  const t = c.now, at = closeIn(w, st, t, cls.standoff, cls.drift, cls.range);
   if (!at) return;
   w.pipsMax = 0;
   const hit = landing(w, t);
