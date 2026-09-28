@@ -10,7 +10,7 @@ import { now } from '../src/clock.js';
 const rescued = () => { S.rescued = true; S.buried = false; };
 
 group('with the serpent switched off, a drowned yard\'s story ends at the dance', async () => {
-  window.__serpent(false);
+  window.__serpentOn(false);
   try {
     window.__crew(2, 2);
     run(1);
@@ -31,5 +31,5 @@ group('with the serpent switched off, a drowned yard\'s story ends at the dance'
          'and nothing comes up out of the water', `beat ${S.beat.yard}`),
       ok(S.crew === before, 'the crew is whole', `${before} -> ${S.crew}`),
     ];
-  } finally { window.__serpent(null); }
+  } finally { window.__serpentOn(null); }
 });

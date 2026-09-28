@@ -9,7 +9,7 @@ import { P } from './yard.js';
 // 0.4.1's did: the rescue's sheet, the crew's dance, a drowned pit and no
 // snatch, so nothing below it is ever reached. A dev build and the node yard
 // play the half whatever this says (snatch.js, `serpentOn`), so work on it
-// goes on; `__serpent(false)` plays a released build's yard.
+// goes on; `__serpentOn(false)` plays a released build's yard.
 export const SERPENT_ON = false;
 
 // --- where it is ---------------------------------------------------------------
