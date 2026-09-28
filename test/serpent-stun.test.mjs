@@ -1,7 +1,7 @@
 // A stunning blow (DESIGN.md, "Blows land: the burst and the stun") holds the
 // coil still and stops the heal. Only the moves that stun do it -- the
-// Brawler's haymaker, the chi palm, the aimed shot at its capstone, the
-// sticky charge -- for STUN_BASE_S, longer the more times over STUN_SHARE of
+// Brawler's haymaker and the aimed shot at their capstones, the chi palm,
+// the sticky charge -- for STUN_BASE_S, longer the more times over STUN_SHARE of
 // the stage's depth the blow was, up to STUN_MAX_S; the Mage's finishing
 // blow stuns only when it is worth the share. Never a tick; a new stun keeps
 // the longer of the two; none starts in the grace after one ends.
@@ -38,15 +38,15 @@ const stunFor = done => Math.min(STUN_MAX_S,
 const blowOf = k => SERPENT_WOUND[0] * STUN_SHARE * k;
 const stunAt = (k, o = { stun: 1 }) => { const p = belly(); return strike('brawler', blowOf(k), p.x, p.y, null, 0, o); };
 
-group("a Brawler's haymaker stuns the ward, and the heal stops for as long", async () => {
+group("a Brawler's haymaker, at her capstone, stuns the ward, and the heal stops for as long", async () => {
   deepYard(1);
   window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
-  climb(S.stations[0].id, 'brawler', 4);
+  climb(S.stations[0].id, 'brawler', 8);
   window.__serpent({ stage: 1, wound: 0 });
   let got = false;
   for (let f = 0; f < 60 * 30 && !got; f++) { frame(); got = S.serpentStun > 0; }
   const wound = S.serpentWound, stun = S.serpentStun;
-  const hay = rungWorth(CLASSES.brawler, 4) * CLASSES.brawler.haymaker.x * SERPENT_DEFENSE.brawler[1];
+  const hay = rungWorth(CLASSES.brawler, 8) * CLASSES.brawler.haymaker.x * SERPENT_DEFENSE.brawler[1];
   // Held for the stun's length, a frame short: nothing closes, though she
   // punches on.
   let least = wound;
@@ -77,20 +77,10 @@ group('only a stunning blow stuns: never a click, a plain blow or a tick', async
   ];
 });
 
-group('a stunning blow short of the share still stuns; one that "can stun" does not', async () => {
+group('a stunning blow short of the share still stuns, for the base', async () => {
   deepYard(0);
   stunAt(0.5);
-  const small = S.serpentStun;
-  window.__serpent({ stage: 0, wound: 0 });
-  S.serpentStun = S.serpentGrace = 0;
-  stunAt(0.5, { stun: 1, share: true });
-  const can = S.serpentStun;
-  stunAt(4, { stun: 1, share: true });
-  return [
-    ok(Math.abs(small - STUN_BASE_S) < 1e-9, 'a move that stuns stuns for the base', `${small}`),
-    ok(can === 0, "the Mage's finishing blow short of the share does not", `${can}`),
-    ok(Math.abs(S.serpentStun - stunFor(blowOf(4))) < 1e-9, 'and over it, it does', `${S.serpentStun}`)
-  ];
+  return [ok(Math.abs(S.serpentStun - STUN_BASE_S) < 1e-9, 'a move that stuns stuns for the base', `${S.serpentStun}`)];
 });
 
 group('a stunned coil holds its pose, and sways on from it after', async () => {

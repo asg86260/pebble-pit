@@ -35,60 +35,63 @@ import { KINDS } from '../stations.js';
 document.documentElement.style.setProperty?.('--rail-fold-ms', `${RAIL_FOLD_MS}ms`);
 document.documentElement.style.setProperty?.('--rail-fold-steps', String(RAIL_FOLD_STEPS));
 
-// What a class does, a short line a thing (the owner, 2026-09-27: "a node's
-// name and what it does in a few words, nothing about the system"): its
-// base, its move at MOVE_RUNG, its capstone at CAPSTONE_RUNG, and what its
-// number is counted in. A base unit says what it does in a word or two.
+// What a class says, in the owner's wording (2026-09-28): every choice an
+// imperative, every move and capstone a name and an imperative, the same
+// effect in the same words wherever it comes ("inflict bleeding"), the
+// serpent "your enemy". `fork` is the class's row at the fork.
 const WORDS = {
-  brawler:  { base: 'heavy punches', per: 'a punch',
-              move: ['Haymaker', 'every 4th punch x4, stuns'], cap: ['Knockout', 'haymakers stun longer'] },
-  sword:    { base: 'cuts that bleed', per: 'a cut',
-              move: ['Whirlwind', 'each cut hits wide'], cap: ['Twin cut', 'every 3rd cut hits twice'] },
-  monk:     { base: 'palms build chi; a chi palm stuns', per: 'a palm',
-              move: ['Deep breath', 'chi fills twice as fast'], cap: ['Still water', 'the chi palm stuns longer'] },
-  martial:  { base: 'quick thrusts charge a finisher', per: 'a thrust',
-              move: ['Flow', 'thrusts charge double'], cap: ['Rally', 'the finisher Hastes the party'] },
-  ranger:   { base: 'arrows from overhead', per: 'an arrow',
-              move: ['Aimed shot', 'every 5th arrow x5'], cap: ['Pinning shot', 'the aimed shot stuns'] },
-  assassin: { base: 'stabs, x3 on a stunned serpent', per: 'a stab',
-              move: ['Execution', 'stabs grow with the wound'], cap: ['Coup', "x3 in the phase's last tenth"] },
-  hexer:    { base: 'hexes Weaken its heal', per: 'a hex',
-              move: ['Binding', 'the serpent is Held'], cap: ['Bound fast', 'Held takes more from blows'] },
-  sapper:   { base: 'thrown charges', per: 'a charge',
-              move: ['Sticky charge', 'one big stunning blow'], cap: ['Pair', 'two charges at once'] },
-  mage:     { base: 'a held purple beam', per: 'held',
-              move: ['Widening', 'the beam widens and ramps'], cap: ['Burn through', 'the beam burns through'] },
-  bard:     { base: 'sings the others Inspired', per: 'Inspired',
-              move: ['Anthem', 'Inspired doubles'], cap: ['Refrain', 'Inspired lingers after the song'] }
+  brawler:  { fork: 'Throw harder punches, learn combos, and stun',
+              move: ['Combos', 'string punches together'], cap: ['Knockout', 'stun your enemy'] },
+  sword:    { fork: 'Master the sword',
+              move: ['Whirlwind', 'strike all around'], cap: ['Weak points', 'inflict bleeding'] },
+  monk:     { fork: 'Focus your chi',
+              move: ['Deep breath', 'build chi faster'], cap: ['Still water', 'stun your enemy'] },
+  martial:  { fork: 'Strike quicker and finish faster',
+              move: ['Flourish', 'charge finishers faster'], cap: ['Rally', 'haste your party'] },
+  ranger:   { fork: 'Aim at weak points',
+              move: ['Aimed shot', 'charge a powerful arrow'], cap: ['Pinning shot', 'pin your enemy'] },
+  assassin: { fork: 'Strike quick and precise',
+              move: ['Execution', 'exploit its wounds'], cap: ['Serrated', 'inflict bleeding'] },
+  hexer:    { fork: 'Cast hexes that debuff',
+              move: ['Wither', 'slow its healing'], cap: ['Binding', 'stop its healing, expose it'] },
+  sapper:   { fork: 'Learn explosives',
+              move: ['Sticky bombs', 'stick and blow'], cap: ['Pair', 'throw two, stun your enemy'] },
+  mage:     { fork: 'Channel powerful beams',
+              move: ['Widening', 'widen the beam'], cap: ['Thermite', 'burn through armor'] },
+  bard:     { fork: 'Inspire your party',
+              move: ['Anthem', 'double the boost'], cap: ['Tempo', 'haste your party'] }
 };
-const BASE_DOES = { altar: 'punches', well: 'palms', armory: 'arrows', circle: 'hexes', spire: 'a beam' };
+const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',
+                    circle: 'Cast hexes', spire: 'Shoot beams' };
 // The Bard alone: nobody else is fighting, so her song does nothing.
 const ALONE = 'no one else to sing to';
 const LOCKED = 'opens with a second station';
-const FORK_ASK = 'Choose a path – buying one closes the other';
+const FORK_ASK = 'Specialize';
+const LOT_ASK = 'Choose your fighter';
 
 // --- what the board says -----------------------------------------------------------
 // Whether any other fighter stands at a built station: the Bard's audience.
 const othersFight = id => S.stations.some(o => o.id !== id && o.built && o.fighter);
 
-// A rung's number, in its class's unit: "22 dmg a punch".
+// A rung's number, in its class's unit: "50 dmg", "+18%". Whole from ten
+// up, where a tenth is noise; a tenth below it, where it is a third of it.
 function worth(cls, r) {
   const v = rungValue(cls, r), unit = CLASS_UNIT[cls];
-  const said = Number.isInteger(v) ? fmt(v) : v.toFixed(1);
-  return `${said}${unit === '%' ? '%' : ` ${unit}`} ${WORDS[cls].per}`;
+  const said = Number.isInteger(v) || v >= 10 ? fmt(Math.round(v)) : v.toFixed(1);
+  return unit === '%' ? `+${said}%` : `${said} ${unit}`;
 }
 // The one line for a pip: a name and what it does. `cls` null is the base
 // unit's rung, counted off its pair's first class.
 export function lineOf(id, cls, r) {
   const st = stationById(id);
   if (!st?.kind) return '';
-  if (!cls) return `${BASES[st.kind]} ${r}: ${worth(PAIRS[st.kind][0], r)}`;
+  if (!cls) return `${BASES[st.kind]}: ${worth(PAIRS[st.kind][0], r)}`;
   const w = WORDS[cls], name = CLASSES[cls].name;
   if (!classesOpen(st.kind).includes(cls)) return `${name}: ${LOCKED}`;
   if (cls === 'bard' && !othersFight(id)) return `${name}: ${ALONE}`;
   if (r === MOVE_RUNG) return `${w.move[0]}: ${w.move[1]}`;
   if (r === CAPSTONE_RUNG) return `${w.cap[0]}: ${w.cap[1]}`;
-  return `${name} ${r}: ${worth(cls, r)}`;
+  return `${name}: ${worth(cls, r)}`;
 }
 
 // The board of station `id`, as the player sees it this frame: the lot's
@@ -100,10 +103,10 @@ export function railsOf(id) {
   if (isLot(st)) {
     const offered = kindsOffered();
     return {
-      id, lot: true, ask: 'What goes up here?',
+      id, lot: true, ask: LOT_ASK,
       kinds: Object.keys(PAIRS).map(kind => ({
         kind, name: BASES[kind], open: offered.includes(kind),
-        sub: offered.includes(kind) ? `${BASE_DOES[kind]} → ${PAIRS[kind].map(c => CLASSES[c].name).join(' or ')}` : LOCKED
+        sub: offered.includes(kind) ? BASE_DOES[kind] : LOCKED
       }))
     };
   }
@@ -127,16 +130,16 @@ export function railsOf(id) {
   };
   const rows = [];
   let ask = null;
-  if (next < FORK_RUNG) rows.push(row(null, `${BASES[st.kind]} ${next}`, worth(PAIRS[st.kind][0], next)));
+  if (next < FORK_RUNG) rows.push(row(null, BASES[st.kind], worth(PAIRS[st.kind][0], next)));
   else if (next === FORK_RUNG) {
     ask = FORK_ASK;
     for (const cls of PAIRS[st.kind]) {
       const w = WORDS[cls], locked = !open.includes(cls);
-      rows.push(row(cls, `Become a ${CLASSES[cls].name}`, locked ? LOCKED : `${w.base}. ${w.move[0]}: ${w.move[1]}`, locked));
+      rows.push(row(cls, `Become a ${CLASSES[cls].name}`, locked ? LOCKED : w.fork, locked));
     }
   } else if (next <= LADDER) {
     const w = WORDS[st.cls], cap = next === CAPSTONE_RUNG;
-    rows.push(row(st.cls, cap ? w.cap[0] : `${CLASSES[st.cls].name} ${next}`, cap ? w.cap[1] : worth(st.cls, next)));
+    rows.push(row(st.cls, cap ? w.cap[0] : CLASSES[st.cls].name, cap ? w.cap[1] : worth(st.cls, next)));
   }
   return { id, lot: false, kind: st.kind, cls: st.cls, rung: st.rung, who: st.cls ? CLASSES[st.cls].name : BASES[st.kind],
            tree: { base, arms }, ask, rows, top: st.rung >= LADDER, reset: { can: !!st.cls || st.rung > 0 } };
@@ -201,11 +204,10 @@ function bodyHTML(r) {
   if (r.lot)
     return `<div class="rl-ask">${esc(r.ask)}</div>` +
            r.kinds.map(k => rowHTML({ label: k.name, sub: k.sub, can: k.open }, `data-kind="${k.kind}"`)).join('');
-  return `<div class="rl-who">${esc(r.who)} · rung ${r.rung}</div>` + treeHTML(r) +
+  return `<div class="rl-who">${esc(r.who)}</div>` + treeHTML(r) +
          (r.ask ? `<div class="rl-ask">${esc(r.ask)}</div>` : '') +
          r.rows.map(o => rowHTML(o, o.cls ? `data-cls="${o.cls}"` : '')).join('') +
-         (r.top ? '<div class="rl-top">top rung</div>' : '') +
-         `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>reset this station (refunds everything)</button>`;
+         `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>reset – refunds everything</button>`;
 }
 
 // The hover line over a pip, and a tap's where a thumb has no hover.

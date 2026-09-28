@@ -191,12 +191,6 @@ export function dentsNow(t) {
   for (const l of landed) out.push({ x: l.x / P, k: landK(l), t0: l.at / 1000 });
   return out;
 }
-// The highest rung any Hexer stands at: her capstone brightens Held.
-export function hexerRung() {
-  let r = -1;
-  for (const f of fighters(now() / 1000)) if (f.key === 'hexer') r = Math.max(r, f.R);
-  return r;
-}
 
 // --- the buffs on a fighter ------------------------------------------------------------
 // Inspired: a chevron of the purples bobbing over the head; two at Anthem;

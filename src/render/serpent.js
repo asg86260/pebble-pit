@@ -20,13 +20,13 @@
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          WOUND_GAP, BELLY_AT, DENT_S, DENT_RISE_S, DENT_DECAY, DENT_W, DENT_DEPTH,
-         BLEED_DRIPS, BLEED_DRIP_S, HELD_EVERY, HELD_BRIGHT_RUNG, EXPOSED_EVERY, EXPOSED_LIFT_HZ,
+         BLEED_DRIPS, BLEED_DRIP_S, HELD_EVERY, EXPOSED_EVERY, EXPOSED_LIFT_HZ,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM } from '../config.js';
 import { S } from '../state.js';
-import { coilLine, coilThick, mouthX, deepFloor } from '../deep/place.js';
+import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -34,7 +34,7 @@ import { GREYS, PURPLES, deepWindow } from './deep.js';
 import { drawBody } from './crew.js';
 import { swellAt } from './cores.js';
 import { cellImage } from './cellimage.js';
-import { dentsNow, hexerRung } from './arms.js';
+import { dentsNow } from './arms.js';
 
 const coil = cellImage();
 
@@ -333,14 +333,13 @@ function drawStatuses(t) {
     }
   }
   if (has('held')) {
-    // the bands, each tethered to the floor by a thread of cells running down
-    const bright = hexerRung() >= HELD_BRIGHT_RUNG, floor = Math.floor(deepFloor() / P);
+    // the bands round the hide, riding it as it sways: its healing is bound,
+    // not its body (the owner's A, docs/mocks/held-2026-09-28.html)
     for (let i = 5; i < n - 2; i += HELD_EVERY) {
       if (!on(i)) continue;
       const c = hide.c0 + i, tp = hide.top[i], bt = hide.bot[i];
-      for (let r = tp - 1; r <= bt + 1; r++) put(c, r, r === tp - 1 || r === bt + 1 ? (bright ? GREYS[WHITE] : PURPLES[11]) : PURPLES[9]);
+      for (let r = tp - 1; r <= bt + 1; r++) put(c, r, r === tp - 1 || r === bt + 1 ? PURPLES[11] : PURPLES[9]);
       for (const d of [-1, 1]) { put(c + d, tp - 1, PURPLES[8]); put(c + d, bt + 1, PURPLES[8]); }
-      for (let r = bt + 3 + Math.floor(t * 4) % 3; r < floor - 1; r += 3) put(c, r, PURPLES[6]);
     }
   }
   if (has('exposed')) {

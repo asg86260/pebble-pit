@@ -97,12 +97,12 @@ export const SERPENT_DEFENSE = {
   mage:     [1, 1, 0.5, 1]
 };
 // A stunning blow seizes the coil and stops the heal (DESIGN.md, "Blows land:
-// the burst and the stun"). Only the moves that stun do it -- the haymaker,
-// the chi palm, the aimed shot at its capstone, the sticky charge -- and the
-// Mage's finishing blow when it is worth STUN_SHARE of the phase's depth. A
-// stun lasts STUN_BASE_S, longer on the square root of how many times over
-// the share the blow was, up to STUN_MAX_S; a new stun keeps the longer of
-// the two, and none can start in the grace after one ends.
+// the burst and the stun"). Only a capstone stuns -- the Brawler's haymaker,
+// the Monk's chi palm, the Ranger's aimed shot and the Sapper's pair of
+// charges, each from rung 8. A stun lasts STUN_BASE_S, longer on the square
+// root of how many times over the share the blow was, up to STUN_MAX_S; a new
+// stun keeps the longer of the two, and none can start in the grace after one
+// ends.
 export let STUN_SHARE = 0.03;        // a blow's share of the stage's depth that stuns
 export let STUN_BASE_S = 1.5;        // seconds a blow of exactly the share stuns for
 export let STUN_MAX_S = 5;           // and the longest any blow does

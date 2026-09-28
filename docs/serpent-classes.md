@@ -33,16 +33,29 @@ all stand.
 
 | class | base | rung 4 | rung 8 |
 |---|---|---|---|
-| Brawler | heavy punches | **Haymaker**: every 4th punch x4, stuns | haymakers stun longer |
-| Swordsman | cuts that bleed | **Whirlwind**: each cut hits wide | every 3rd cut hits twice |
-| Monk | palms build chi; a chi palm stuns | chi fills twice as fast | the chi palm stuns longer |
-| Martial Artist | quick thrusts charge a finisher | **Flow**: thrusts charge double | the finisher Hastes the party |
-| Ranger | arrows from overhead | **Aimed shot**: every 5th arrow x5 | the aimed shot stuns |
-| Assassin | stabs, x3 on a stunned serpent | **Execution**: stabs grow with the wound | x3 in the phase's last tenth |
-| Sapper | thrown charges | **Sticky charge**: stuck, ticks down, one big stunning blow | two charges at once |
-| Hexer | hexes Weaken the serpent | **Binding**: the serpent is Held | Held takes more from blows |
-| Mage | bolts that Light | **Arcane lantern**: the whole serpent Lit | Lit takes more from everyone |
-| Bard | sings: the party Inspired (no damage) | **Anthem**: Inspired doubles | Inspired lingers after the song |
+| Brawler | heavy punches | **Combos**: every 4th punch is a haymaker, x3 | **Knockout**: the haymaker stuns |
+| Swordsman | cuts | **Whirlwind**: each cut lands at three spots | **Weak points**: every 3rd cut lands twice, the second leaving Bleeding |
+| Monk | palms build chi; a full row is a chi palm, x3 | **Deep breath**: chi fills twice as fast | **Still water**: the chi palm stuns |
+| Martial Artist | quick thrusts charge a finisher | **Flourish**: thrusts charge double | **Rally**: the finisher Hastes the party |
+| Ranger | arrows from overhead | **Aimed shot**: every 5th arrow x2 | **Pinning shot**: the aimed shot stuns |
+| Assassin | daggers, x3 on a stunned serpent | **Execution**: daggers grow with the wound | **Serrated**: daggers leave Bleeding |
+| Sapper | thrown charges | **Sticky bombs**: stuck, ticks down, one big blow | **Pair**: two charges at once, and they stun |
+| Hexer | hexes | **Wither**: hexes Weaken the heal | **Binding**: hexes stop the heal (Held) and lay Exposed |
+| Mage | a held beam, then a finishing blow (never stuns) | **Widening**: the beam widens and ramps | **Thermite**: the finishing blow ignores the phases' toughness |
+| Bard | sings: the party Inspired (no damage) | **Anthem**: Inspired doubles | **Tempo**: her song Hastes the party too |
+
+The rungs as changed by the owner's notes on the wording audit
+(2026-09-28): the stun moved to the Brawler's capstone, the Swordsman's
+bleed to his, the Ranger's aimed shot to x2, the Assassin's capstone to a
+bleed, the Hexer's ladder to damage / Weaken / stop-the-heal-and-Expose,
+and the Sapper's charge no longer Exposes. Held stops the heal and nothing
+else. Then the tuning pass (same day): one damage curve for every class
+(`LADDERS`, about x1.5 a rung, x1.8 at the fork), the haymaker x3, the
+Mage's ramp x1.5, the Martial Artist's Haste 1 s, the Hexer's Exposed 2 s,
+and the Bard's capstone a party Haste (her linger never showed: she never
+stops singing). Then: a stun is a capstone -- the Brawler, Monk, Ranger and
+Sapper stun from rung 8 and nobody earlier, the Mage never -- and two
+fighters' bleeds add up, each ticking under its own hit.
 
 ---
 

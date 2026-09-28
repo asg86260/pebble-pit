@@ -72,20 +72,24 @@ export const LADDERS = {
   // every rung raises the number below. The deep's ladders lead with scales,
   // not dust: the `dust` column here is the scale a rung costs (`lead:
   // 'scale'` in tierRows), and the bands add dust, ore and a spark on top of
-  // it. First guesses for the ladder book: a damage class's value is its
-  // blow, sized so the classes deal about the same a second at the same rung
-  // -- about 3 at rung 0, so each breaks the bare coil alone -- and the Bard's
-  // is the share the other fighters' hits rise by while she sings, in percent.
-  brawler:  { value: [4, 6, 10, 14, 22, 34, 50, 77, 115], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a punch, every 1.2 s
-  sword:    { value: [4.8, 8, 12.8, 19.2, 28.8, 44.8, 67.2, 102.4, 153.6], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a cut, every 1.6 s, and it bleeds
-  monk:     { value: [4, 6, 9, 13, 19, 29, 44, 66, 99], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a palm, every 1 s
-  martial:  { value: [1.5, 2.6, 4.1, 6, 9, 14, 21, 31.5, 48], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a thrust, every 0.5 s
-  ranger:   { value: [2.4, 4, 6.4, 9.6, 14, 22, 34, 51, 77], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg an arrow, every 0.8 s
-  assassin: { value: [4.5, 7.5, 12, 18, 27, 42, 63, 96, 144], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },        // dmg a stab, every 1.5 s
-  hexer:    { value: [20, 32, 50, 75, 110, 170, 250, 380, 570], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },     // dmg a hex, every 5 s
-  sapper:   { value: [18, 30, 48, 72, 108, 168, 252, 384, 576], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },   // dmg a charge, every 6 s
-  mage:     { value: [3, 5, 8, 12, 18, 28, 42, 64, 96], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a second, the beam held
-  bard:     { value: [10, 11, 12, 13, 14, 16, 18, 20, 22], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }       // % the others' hits rise, Inspired
+  // it. A damage class's value is its blow, sized (2026-09-28) so every class
+  // deals one curve a second -- about 4, 6.5, 10, 15 below the fork, 27 at
+  // it, 170 at the capstone, a rung about x1.5 and the fork x1.8 -- less a
+  // share for what it lays on top (a stun, Exposed, a party Haste). Rungs 0-3
+  // of a pair's second class are never fought with (the base unit is the
+  // first's) and only continue the curve. The Bard's is the share the others'
+  // hits rise by while she sings, in percent, nearly flat: it rides their
+  // climb.
+  brawler:  { value: [4.8, 7.8, 12, 18, 21.5, 33, 50, 80, 136], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },   // dmg a punch, every 1.2 s
+  sword:    { value: [3.6, 5.8, 8.9, 13.5, 24, 36.5, 56, 89, 101], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },   // dmg a cut, every 1.6 s
+  monk:     { value: [3, 4.9, 7.6, 11, 18, 27, 42, 67, 113], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },  // dmg a palm, every 1 s
+  martial:  { value: [0.8, 1.2, 1.9, 2.9, 5.1, 7.8, 12, 19, 20.5], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a thrust, every 0.5 s
+  ranger:   { value: [3.2, 5.2, 8, 12, 18, 27.5, 42, 67, 113], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },     // dmg an arrow, every 0.8 s
+  assassin: { value: [4.2, 6.8, 10.5, 15.5, 28, 43, 66, 104, 135], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a stab, every 1.5 s
+  hexer:    { value: [20, 32.5, 50, 75, 128, 195, 300, 475, 595], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a hex, every 5 s
+  sapper:   { value: [7.2, 11.5, 18, 27, 54, 82, 126, 200, 205], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a charge, every 6 s
+  mage:     { value: [3.1, 5.1, 7.9, 12, 15.5, 23.5, 36, 57, 87], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a second, the beam held
+  bard:     { value: [10, 11, 12, 13, 15, 15.5, 16, 16.5, 17], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }   // % the others' hits rise, Inspired
 };
 
 // A ladder's value at a rung: the foot below nought, the top past the end. A

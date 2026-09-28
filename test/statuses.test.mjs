@@ -45,6 +45,24 @@ group('Bleeding ticks the wound open, a tick at a time, and never stuns', async 
   ];
 });
 
+group("two fighters' bleeds add up, each ticking on its own", async () => {
+  deepYard(1);
+  lay('bleed', 10, 3, bellySeg(), 'sword');
+  lay('bleed', 6, 3, bellySeg(), 'assassin');
+  const both = level('bleed');
+  lay('bleed', 4, 3, bellySeg(), 'sword');         // a weaker cut of the same source refreshes it
+  const kept = level('bleed');
+  let most = 0;
+  for (let f = 0; f < 60 * 4; f++) { frame(); most = Math.max(most, S.serpentWound); }
+  const cut = 10 * 3 * SERPENT_DEFENSE.sword[1] + 6 * 3 * SERPENT_DEFENSE.assassin[1];
+  return [
+    ok(both === 16, 'two sources add up', `${both}`),
+    ok(kept === 16, 'and a source laid again keeps the stronger of its own', `${kept}`),
+    ok(most <= cut + 1e-6 && most >= cut - SERPENT_HEAL[1] * 3 - 1e-6, 'both tick the wound open', `${most.toFixed(2)} of ${cut}`),
+    ok(!has('bleed'), 'and both run out')
+  ];
+});
+
 group('Exposed: a quarter more from everything, blows and ticks alike', async () => {
   deepYard(0);
   const bare = hit();
@@ -58,7 +76,7 @@ group('Exposed: a quarter more from everything, blows and ticks alike', async ()
   ];
 });
 
-group('Held: no heal while it lasts, and the coil holds its pose', async () => {
+group('Held: no heal while it lasts, and the coil sways on', async () => {
   deepYard(1);
   window.__serpent({ stage: 1, wound: 400 });
   lay('held', 0, 2, bellySeg());
@@ -75,20 +93,20 @@ group('Held: no heal while it lasts, and the coil holds its pose', async () => {
   const after = coilAt(bellySeg(), now());
   return [
     ok(least === 400, 'nothing of the wound closes', `${least}`),
-    ok(!moved, 'the coil does not sway', `${pose.x},${pose.y}`),
+    ok(moved, 'the coil sways all the while: Held stops the heal, not the body', `${pose.x},${pose.y}`),
     ok(!has('held') && S.serpentWound < 400, 'and once it is over the heal takes up again', `${S.serpentWound}`),
     ok(after.x !== pose.x || after.y !== pose.y, 'and the coil sways on'),
     ok(S.serpentGrace === 0, 'a hold is not a stun: no grace follows it', `${S.serpentGrace}`)
   ];
 });
 
-group('Held takes its share more from blows, never from ticks', async () => {
+group('Held raises nothing: a blow and a tick land as they are', async () => {
   deepYard(0);
   lay('held', 0.3, 5);
   const blow = hit(), tick = hit(100, { tick: true });
   return [
-    ok(near(blow, 100 * 1.3), 'a blow', `${blow}`),
-    ok(near(tick, 100), 'not a tick', `${tick}`)
+    ok(near(blow, 100), 'a blow', `${blow}`),
+    ok(near(tick, 100), 'a tick', `${tick}`)
   ];
 });
 
@@ -126,7 +144,6 @@ group('amps add, then multiply once, capped', async () => {
   deepYard(0);
   const w = {};                   // a fighter's body, as far as its buffs go
   lay('exposed', EXPOSED_AMP, 5);
-  lay('held', 0.3, 5);
   const two = ampOf(false, null);
   inspire(w, 0.2, 5);
   const three = ampOf(false, w);
@@ -134,8 +151,8 @@ group('amps add, then multiply once, capped', async () => {
   const capped = ampOf(false, w);
   const dealt = hit(100, { by: w });
   return [
-    ok(near(two, 1 + EXPOSED_AMP + 0.3), 'Exposed and Held add', `${two}`),
-    ok(near(three, 1 + EXPOSED_AMP + 0.3 + 0.2), 'and Inspired adds with them', `${three}`),
+    ok(near(two, 1 + EXPOSED_AMP), 'Exposed raises it', `${two}`),
+    ok(near(three, 1 + EXPOSED_AMP + 0.2), 'and Inspired adds with it', `${three}`),
     ok(near(capped, 1 + AMP_MAX) && near(dealt, 100 * (1 + AMP_MAX)), 'and all of them at most AMP_MAX more',
        `${capped}, ${dealt}`)
   ];
@@ -155,14 +172,14 @@ group('Hasted swings a fifth more often, for as long as it lasts', async () => {
   ];
 });
 
-// A Hexer at the circle, her Binding bought on its rail: the player's way to
-// a Held serpent.
-group('a Hexer at rung 4 Holds the serpent, and the heal stops while it does', async () => {
+// A Hexer at the circle, her capstone bought on her board: the player's way
+// to a Held serpent.
+group('a Hexer at rung 8 Holds the serpent, and the heal stops while it does', async () => {
   window.__snatch({ played: true });
   window.__serpent({ stage: 1, wound: 500 });
   window.__party({ stations: [{ kind: 'circle', cls: null, rung: 0 }] });
   openEveryClass();
-  climb(S.stations[0].id, 'hexer', 4);
+  climb(S.stations[0].id, 'hexer', 8);
   const got = runUntil(() => has('held'), 30);
   const wound = S.serpentWound;
   let closed = false, frames = 0;

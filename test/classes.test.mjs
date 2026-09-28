@@ -84,7 +84,7 @@ group("a station with no class fights as its base unit, its pair's first class",
   ];
 });
 
-group('Brawler: punches break the bare coil; a haymaker every 4th stuns, longer at rung 8', async () => {
+group('Brawler: punches break the bare coil; a haymaker every 4th from rung 4, stunning from rung 8', async () => {
   const alone = breaksAlone('altar', 'brawler');
   // Against the fading coil, where no haymaker is worth more than the
   // share: every stun is the move's own length, not stretched by its size.
@@ -92,7 +92,6 @@ group('Brawler: punches break the bare coil; a haymaker every 4th stuns, longer 
   buyTo(0, 'brawler', 4);
   const four = watch(12);
   const hay = count(four.moves, 'haymaker'), punch = count(four.moves, 'punch');
-  const stun4 = four.stunMost;
   window.__serpent({ stage: 3, wound: 0 });
   buyTo(0, 'brawler', 8);
   S.serpentGrace = 0;
@@ -101,9 +100,9 @@ group('Brawler: punches break the bare coil; a haymaker every 4th stuns, longer 
     alone,
     ok(hay >= 2 && punch >= 3 * hay - 3 && punch <= 3 * hay + 3, 'at rung 4 every 4th punch is a haymaker',
        four.moves.join(' ')),
-    ok(four.stuns >= 1, 'and a haymaker stuns', `${four.stuns} stuns`),
-    ok(eight.stunMost > stun4 && eight.stunMost <= STUN_MAX_S, 'at rung 8 the haymaker stuns longer',
-       `${stun4.toFixed(2)} then ${eight.stunMost.toFixed(2)}`)
+    ok(four.stuns === 0, 'which does not stun yet', `${four.stuns} stuns`),
+    ok(eight.stuns >= 1 && eight.stunMost <= STUN_MAX_S, 'at rung 8 the haymaker stuns',
+       `${eight.stuns} stuns, ${eight.stunMost.toFixed(2)} s at most`)
   ];
 });
 
@@ -111,12 +110,12 @@ group('Brawler: punches break the bare coil; a haymaker every 4th stuns, longer 
 const done = (seen, weapon) => [...seen.hits.keys()].filter(h => h.weapon === weapon).map(h => h.done);
 const near = (a, b) => Math.abs(a - b) < 1e-6 * Math.max(1, Math.abs(b));
 
-group('Swordsman: cuts bleed; the whirlwind lands each cut at three spots, and every 3rd twice at rung 8', async () => {
+group('Swordsman: the whirlwind lands each cut at three spots; at rung 8 every 3rd cut lands twice and bleeds', async () => {
   const alone = breaksAlone('altar', 'sword');
   const cls = CLASSES.sword;
   window.__serpent({ stage: 0, wound: 0 });
-  let bled = false;
-  const base = watch(3, 0, () => { bled = bled || has('bleed'); });
+  let bledEarly = false;
+  const base = watch(3, 0, () => { bledEarly = bledEarly || has('bleed'); });
   window.__serpent({ stage: 3, wound: 0 });
   // Windows counted in cuts, not seconds, so a retuned pace still sees enough.
   const four = watch(6 * cls.every);
@@ -125,40 +124,47 @@ group('Swordsman: cuts bleed; the whirlwind lands each cut at three spots, and e
   // ticks are numbers of their own, far smaller.
   const cuts = done(four, 'sword').filter(d => d > v4);
   buyTo(0, 'sword', 8);
-  const eight = watch(8 * cls.every);
+  let bled = false;
+  const eight = watch(8 * cls.every, 0, () => { bled = bled || has('bleed'); });
   const twice = eight.poses.filter(p => p.twice).length, whirls = eight.poses.length;
   return [
     alone,
-    ok(bled && base.moves.includes('whirl'), 'a cut leaves the serpent Bleeding', base.moves.join(' ')),
+    ok(!bledEarly && base.moves.includes('whirl'), 'below rung 8 a cut does not bleed', base.moves.join(' ')),
     // The first is the cut in hand when the rung was bought.
     ok(four.moves.length >= 4 && four.moves.slice(1).every(m => m === 'whirl'), 'at rung 4 every cut is a whirlwind',
        four.moves.join(' ')),
     ok(cuts.length >= 3 && cuts.every(d => near(d, v4 * cls.whirl.spots * cls.whirl.x)),
        'landing at three spots, summed', JSON.stringify(cuts.slice(0, 4))),
-    ok(twice >= 2 && Math.abs(twice - whirls / cls.capEvery) <= 1, 'at rung 8 every 3rd cut lands twice', `${twice} of ${whirls}`)
+    ok(twice >= 2 && Math.abs(twice - whirls / cls.capEvery) <= 1, 'at rung 8 every 3rd cut lands twice', `${twice} of ${whirls}`),
+    ok(bled, 'and leaves the serpent Bleeding')
   ];
 });
 
 // Follows the chi row, which fills across more than five seconds and which
 // no save keeps.
-group('Monk: palm waves fill chi, a full row is a stunning chi palm; faster at 4, longer at 8', async () => {
+group('Monk: palm waves fill chi, a full row is a chi palm; faster at 4, stunning at 8', async () => {
   const alone = breaksAlone('well', 'monk', 150);
   window.__serpent({ stage: 3, wound: 0 });
   const base = watch(13);
   buyTo(0, 'monk', 4);
   const four = watch(13);
-  const stun4 = four.stunMost;
   buyTo(0, 'monk', 8);
   S.serpentGrace = 0;
   const eight = watch(13);
-  const ratio = m => count(m.moves, 'chi') / Math.max(1, m.moves.length);
+  // The palms between two chi palms, each whole run a watch saw: the count a
+  // row takes, whatever the window's phase.
+  const gaps = m => {
+    const at = m.moves.map((v, i) => (v === 'chi' ? i : -1)).filter(i => i >= 0);
+    return at.slice(1).map((i, n) => i - at[n] - 1);
+  };
   return [
     alone,
     ok(base.shots.has('palm') && count(base.moves, 'chi') >= 1, 'palms fly from the well and a full row is a chi palm',
        base.moves.join(' ')),
-    ok(ratio(four) > ratio(base), 'at rung 4 chi fills twice as fast', `${ratio(base).toFixed(2)} then ${ratio(four).toFixed(2)}`),
-    ok(four.stuns >= 1, 'a chi palm stuns', `${four.stuns}`),
-    ok(eight.stunMost > stun4, 'and at rung 8 it stuns longer', `${stun4.toFixed(2)} then ${eight.stunMost.toFixed(2)}`)
+    ok(gaps(base).length && gaps(four).length && Math.max(...gaps(four)) < Math.min(...gaps(base)),
+       'at rung 4 chi fills twice as fast', `${gaps(base)} palms between chi palms, then ${gaps(four)}`),
+    ok(four.stuns === 0, 'a chi palm does not stun yet', `${four.stuns}`),
+    ok(eight.stuns >= 1, 'at rung 8 it stuns', `${eight.stuns} stuns`)
   ];
 }, { reload: false });
 
@@ -234,8 +240,8 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
   const shallow = done(watch(4, 0, at(0)), 'assassin');
   const deep = done(watch(4, 0, at(15000)), 'assassin');
   buyTo(0, 'assassin', 8);
-  const v8 = rungWorth(cls, 8) * SERPENT_DEFENSE.assassin[3];
-  const tail = done(watch(4, 0, at(28000)), 'assassin');
+  let bled = false;
+  watch(4, 0, () => { at(0)(); bled = bled || has('bleed'); });
   return [
     alone,
     ok(base.shots.has('dagger') && hits.length >= 2, 'her daggers travel to the hide', [...base.shots].join(' ')),
@@ -249,54 +255,52 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
     ok(shallow.length >= 1 && shallow.every(d => near(d, v4)) && deep.length >= 1
        && deep.every(d => Math.abs(d / (v4 * 1.5) - 1) < 1e-3),
        'at rung 4 stabs grow with the wound', `${JSON.stringify(shallow)} then ${JSON.stringify(deep)}`),
-    ok(tail.length >= 1 && tail.every(d => near(d, v8 * cls.cap.x)), 'at rung 8 x3 in the last tenth', JSON.stringify(tail))
+    ok(bled, 'at rung 8 her daggers leave the serpent Bleeding')
   ];
 });
 
-group('Hexer: a hex Weakens the heal; Binding Holds at 4; Held takes more from blows at 8', async () => {
+group('Hexer: a hex strikes; it Weakens the heal from rung 4; from rung 8 it stops the heal and Exposes', async () => {
   const alone = breaksAlone('circle', 'hexer');
   const cls = CLASSES.hexer;
   window.__serpent({ stage: 1, wound: 0 });
-  let weak = 0, heldEarly = false;
-  const base = watch(6, 0, () => { weak = Math.max(weak, level('weakened')); if (has('held')) heldEarly = true; });
+  let weakEarly = false;
+  const base = watch(6, 0, () => { if (has('weakened') || has('held') || has('exposed')) weakEarly = true; });
   buyTo(0, 'hexer', 4);
-  let held = false, heldK = -1;
-  watch(6, 0, () => { if (has('held')) { held = true; heldK = level('held'); } });
+  let weak = 0, heldAt4 = false;
+  watch(6, 0, () => { weak = Math.max(weak, level('weakened')); if (has('held')) heldAt4 = true; });
   buyTo(0, 'hexer', 8);
-  let capK = -1;
-  watch(6, 0, () => { if (has('held')) capK = level('held'); });
+  let held = false, exposed = false;
+  watch(6, 0, () => { if (has('held')) held = true; if (has('exposed')) exposed = true; });
   return [
     alone,
-    ok(base.shots.has('hex') && weak === cls.weaken.k, 'a hex bolt Weakens the serpent', `${weak}`),
-    ok(!heldEarly, 'below rung 4 it Holds nothing'),
-    ok(held && heldK === 0, 'at rung 4 the serpent is Held', `${held} ${heldK}`),
-    ok(capK === cls.capAmp, 'at rung 8 Held takes more from blows', `${capK}`)
+    ok(base.shots.has('hex') && !weakEarly, 'a base hex strikes and lays nothing', `${[...base.shots]}`),
+    ok(weak === cls.weaken.k && !heldAt4, 'at rung 4 it Weakens the heal', `${weak} ${heldAt4}`),
+    ok(held && exposed, 'at rung 8 it stops the heal and Exposes', `${held} ${exposed}`)
   ];
 });
 
-group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3, stunning and Exposing; at 8 two at once', async () => {
+group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; at 8 two at once, and they stun', async () => {
   const alone = breaksAlone('circle', 'sapper');
   const cls = CLASSES.sapper;
   window.__serpent({ stage: 3, wound: 0 });
   const base = watch(8);
   buyTo(0, 'sapper', 4);
-  let stuck = 0, exposed = false;
-  const four = watch(14, 0, () => { stuck = Math.max(stuck, shots.filter(s => s.stuck).length); if (has('exposed')) exposed = true; });
+  let stuck = 0;
+  const four = watch(14, 0, () => { stuck = Math.max(stuck, shots.filter(s => s.stuck).length); });
   const blows = done(four, 'sapper');
   const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.sapper[3] * cls.stickyX;
   buyTo(0, 'sapper', 8);
   S.serpentGrace = 0;
   let two = 0;
-  watch(10, 0, () => { two = Math.max(two, shots.filter(s => s.stuck).length); });
+  const eight = watch(10, 0, () => { two = Math.max(two, shots.filter(s => s.stuck).length); });
   return [
     alone,
     ok(base.shots.has('charge') && base.moves.includes('throw'), 'a charge is thrown', [...base.shots].join(' ')),
     ok(stuck === 1, 'at rung 4 it sticks to the hide', `${stuck}`),
-    // The first blow lands before its own Exposed; a later one on an
-    // Exposed serpent is a quarter more.
     ok(blows.some(d => near(d, v4)), 'and blows as one blow x3', JSON.stringify(blows)),
-    ok(four.stuns >= 1 && exposed, 'that stuns and Exposes', `${four.stuns} stuns, exposed ${exposed}`),
-    ok(two === 2, 'at rung 8 two are stuck at once', `${two}`)
+    ok(four.stuns === 0, 'and does not stun yet', `${four.stuns} stuns`),
+    ok(two === 2, 'at rung 8 two are stuck at once', `${two}`),
+    ok(eight.stuns >= 1, 'and their blow stuns', `${eight.stuns} stuns`)
   ];
 });
 
@@ -316,18 +320,20 @@ group('Mage: a held beam ticks, then a finishing blow; it widens at 4 and burns 
   const half = Math.max(...tick(watch(6)));
   buyTo(0, 'mage', 8);
   let burn = 0;
-  const through = Math.max(...tick(watch(6, 0, () => { const b = fighterAt(0).beam; if (b) burn = Math.max(burn, b.burn); })));
+  const eight = watch(6, 0, () => { const b = fighterAt(0).beam; if (b) burn = Math.max(burn, b.burn); });
+  const through = Math.max(...tick(eight));
   const grew = rungWorth(cls, 8) / rungWorth(cls, 4);
   return [
     alone,
     ok(beamed && count(base.moves, 'finish') >= 1, 'she holds a beam and ends it on a finishing blow', base.moves.join(' ')),
     ok(widest > 0.9, 'at rung 4 the beam widens as she holds it', `${widest}`),
     ok(through > half * grew * 1.8 && burn > 0.9, 'at rung 8 it burns through the phase that halves it',
-       `${half.toFixed(1)} then ${through.toFixed(1)}, burn ${burn}`)
+       `${half.toFixed(1)} then ${through.toFixed(1)}, burn ${burn}`),
+    ok(eight.stuns === 0 && base.stuns === 0, 'and she stuns nothing', `${base.stuns} then ${eight.stuns}`)
   ];
 }, { reload: false });
 
-group('Bard: no damage; alone her song gives nothing; with another the Anthem doubles it and at 8 it lingers', async () => {
+group('Bard: no damage; with another the Anthem doubles her boost, and at 8 her song Hastes them too', async () => {
   party(['spire', 'armory']);
   buyTo(0, 'bard', 4);
   // The Bard strikes nothing of her own: every hit is the armory's Scout's.
@@ -339,14 +345,14 @@ group('Bard: no damage; alone her song gives nothing; with another the Anthem do
   run(0.5);
   const anthem = done(watch(4, 1), 'ranger');
   const k4 = rungWorth(CLASSES.bard, 4) * CLASSES.bard.anthemX;
+  const slowAt4 = !hasted(fighterAt(1));
   buyTo(0, 'bard', 8);
   run(1);
+  const quick = hasted(fighterAt(1));
   // She stops: her station's class goes, and she is the spire's Apprentice again.
   reset(S.stations[0].id);
-  run(3);
-  const lingering = inspiredK(fighterAt(1)) > 0;
-  run(4);
-  const gone = inspiredK(fighterAt(1)) === 0;
+  run(1);
+  const gone = !hasted(fighterAt(1)) && inspiredK(fighterAt(1)) === 0;
   // Two arrows landing close together are one number, so each is read as a
   // whole number of Inspired arrows; the first watch may start on an arrow
   // that was loosed before the rung.
@@ -355,7 +361,8 @@ group('Bard: no damage; alone her song gives nothing; with another the Anthem do
     ok(quiet, 'a Bard deals no damage of her own'),
     ok(arrows(anthem, v * (1 + k4)) >= anthem.length - 1 && anthem.length >= 3,
        "another fighter's hits are Inspired, the Anthem's double", JSON.stringify(anthem)),
-    ok(lingering && gone, 'at rung 8 it lingers after she stops, and then goes', `${lingering} ${gone}`)
+    ok(slowAt4 && quick, 'at rung 8 her song Hastes the others', `${slowAt4} ${quick}`),
+    ok(gone, 'and both go once she stops singing')
   ];
 });
 group('a Bard alone gives nothing', async () => {

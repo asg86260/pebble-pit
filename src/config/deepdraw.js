@@ -295,7 +295,6 @@ export const DENT_DEPTH = [0.5, 1.6];
 export const BLEED_DRIPS = 9;        // columns Bleeding drips off
 export const BLEED_DRIP_S = 1.25;    // s a drop takes to fall its four cells
 export const HELD_EVERY = 11;        // columns between Held's bands
-export const HELD_BRIGHT_RUNG = 8;   // a Hexer this high edges the bands in white: Held takes more
 export const EXPOSED_EVERY = 4;      // columns between Exposed's lifted scales
 export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settles
 // The fang (docs/wave-party.md): a white fang of a few cells, point down,
