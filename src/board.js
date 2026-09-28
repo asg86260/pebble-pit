@@ -296,12 +296,13 @@ let callSize = { w: 0, h: 0 };
 const CALL_TEXT = raiseEl.textContent;
 let callAt = { x: null, y: null };
 
-// Hidden while a board is up (its z-index assumes that never overlaps) and
-// while a cutscene has the yard. When the bench's ground is off the window
+// Hidden while a board is up (its z-index assumes that never overlaps), while
+// a cutscene has the yard, and while the view is in the deep, where there is
+// no bench to point at. When the bench's ground is off the window
 // (a narrow window opens on the rock) it stays at the edge nearest the bench
 // and says which way; pressing it turns the view there too (`raiseBench`).
 export function seatCall() {
-  if (!callOut() || !panelEl.hidden || cutsceneRunning()) {
+  if (!callOut() || !panelEl.hidden || cutsceneRunning() || S.view === 'deep') {
     if (!raiseEl.hidden) { raiseEl.hidden = true; callAt = { x: null, y: null }; }
     return;
   }

@@ -401,6 +401,15 @@ const deepScenes = {
       deepYard({ spare: 3, loose: 900, run: 12 });
       lookDeep(spotX('crusher') + S.viewW * 0.3);
     } },
+  // A storm over the yard and a strike at its flash while the view is in the
+  // deep: under the water none of it shows.
+  'deep-storm': { about: 'the deep', say: 'the deep while the yard has a storm and a strike: no rain, no flash',
+    run: () => {
+      deepYard({});
+      untilRaining();
+      window.__fast(14);
+      window.__strike(9, 9);
+    } },
   // The floor thick with scales and the gatherers at work on it.
   gathering: { about: 'the deep', say: 'gatherers scooping the floor\'s loose scales, loads overhead',
     run: () => {

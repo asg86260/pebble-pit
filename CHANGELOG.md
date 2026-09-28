@@ -12,6 +12,7 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
+- Fighters sway a cell between attacks, and the melee ones hop as each step lands (`node tools/look.mjs party-four`).
 - The party: up to four stations built on the deep's floor, the first free and each after it for a fang the serpent drops at a break, each with a fighter of one of ten classes climbed on the station's rails, a move at rung 4 and a capstone at rung 8 (test/party.test.mjs, test/rails.test.mjs, test/classes.test.mjs).
 - The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought by the party's fighters; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
@@ -32,6 +33,8 @@ feature lives in DESIGN.md.
 - Two of the deep's stations of one kind, or two empty lots, no longer share a board's name (src/selftest/stations.js).
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - Scales tossed into the crusher drop into its funnel instead of sliding down in front of it (`node tools/look.mjs crusher`).
+- The call to build the bench no longer hangs over the deep (src/selftest/opening.js).
+- Lightning in the yard's storms no longer flashes over the deep (src/selftest/deep.js).
 - The deep no longer drops to about 35 frames a second in Firefox on the light page (Firefox at 2560x1440 on the `deep` scene, PERF.md "The deep in Firefox").
 - Firefox no longer drops the whole game, yard and deep alike, to about 20 frames a second after a reload in the deep with its crew at rest or a builder at work, and the endgame yard with the rift open draws in a fifth of the time it did there (Firefox at 2560x1440, reloaded into `deep-rest` then `yard`, PERF.md "Firefox after a reload").
 - Going between the yard and the deep through the portal no longer hitches: the ripple holds its frame rate in Firefox, and the first trip down no longer stalls (Firefox and Chrome at 2560x1440 on `portal`, PERF.md "The ripple in Firefox").

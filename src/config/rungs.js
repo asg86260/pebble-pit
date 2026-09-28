@@ -77,9 +77,9 @@ export const LADDERS = {
   // -- about 3 at rung 0, so each breaks the bare coil alone -- and the Bard's
   // is the share the other fighters' hits rise by while she sings, in percent.
   brawler:  { value: [4, 6, 10, 14, 22, 34, 50, 77, 115], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a punch, every 1.2 s
-  sword:    { value: [3, 5, 8, 12, 18, 28, 42, 64, 96], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg a cut, every 1 s, and it bleeds
+  sword:    { value: [4.8, 8, 12.8, 19.2, 28.8, 44.8, 67.2, 102.4, 153.6], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a cut, every 1.6 s, and it bleeds
   monk:     { value: [4, 6, 9, 13, 19, 29, 44, 66, 99], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },         // dmg a palm, every 1 s
-  martial:  { value: [1, 1.7, 2.7, 4, 6, 9.3, 14, 21, 32], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a thrust, three a second
+  martial:  { value: [1.5, 2.6, 4.1, 6, 9, 14, 21, 31.5, 48], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a thrust, every 0.5 s
   ranger:   { value: [2.4, 4, 6.4, 9.6, 14, 22, 34, 51, 77], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },          // dmg an arrow, every 0.8 s
   assassin: { value: [4.5, 7.5, 12, 18, 27, 42, 63, 96, 144], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },        // dmg a stab, every 1.5 s
   hexer:    { value: [20, 32, 50, 75, 110, 170, 250, 380, 570], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },     // dmg a hex, every 5 s

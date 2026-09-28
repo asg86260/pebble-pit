@@ -263,6 +263,19 @@ export const DRAW_NEAR_BEAT = 0.32;  // s either side of a beat the clock steps 
 export const DRAW_ROOM_S = 3;
 export const DRAW_LOWER_S = 2;
 export const LAND_FX_S = 1.3;
+// Between two moves a fighter sways a cell forward and back, IDLE_STEP_S a
+// step, and a melee fighter hops a cell for IDLE_HOP_S as each step lands
+// (the owner's G, docs/mocks/idle-2026-09-28.html). It starts IDLE_SETTLE_S
+// after the follow-through has settled.
+export const IDLE_STEP_S = 0.8;
+export const IDLE_HOP_S = 0.16;
+export const IDLE_SETTLE_S = 0.35;
+// A fighter's pips are the shop's (shelf.css, `.ladder i`): a circle PIP_PX
+// across in screen pixels, its ring PIP_RING thick, PIP_GAP apart, drawn at
+// the page's size whatever the deep's zoom.
+export const PIP_PX = 6;
+export const PIP_RING = 1;
+export const PIP_GAP = 2;
 // The recoil after a heavy contact, in cells: [the contact's size from, cells].
 export const DRAW_KICK = [[1.2, 2], [0.7, 1.5], [0.45, 0.75]];
 // The still cells of a kit are one sprite a class and a rung, painted in a

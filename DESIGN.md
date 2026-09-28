@@ -16388,3 +16388,85 @@ day caps, and `CLOUD_PAUSED` answering before D1 is touched.
 - **Whether a minute is the right push.** At ~5 kb it is cheap. A player
   who shuts the lid without a `pagehide` loses at most that minute from
   the mirror, never from the yard.
+
+## A fighter branches at rung 4 (design, not built)
+
+The owner, 2026-09-28: "the upgrades feel a bit lame now." A station today
+takes its class on its first rung, and the next seven rungs are a number
+going up with two moments in them (the move at 4, the capstone at 8). The
+choice that matters happens before anything has been learned about the
+fight. This moves the choice to the middle of the ladder, where the
+player has watched a fighter work and knows what the party is short of.
+
+### The bargain
+
+Every station stands a **base unit** first, and climbs rungs 1 to 3 as
+that unit. **Rung 4 is the fork**: buying it picks one of the station's
+two specialties, and that rung brings the specialty's kit, its attack and
+its move at once. Rungs 5 to 8 are the specialty's, with the capstone at 8.
+It costs the player nothing new; it buys a decision with information behind
+it, and a rung 4 that changes what is on the floor rather than a number.
+
+| station | base unit  | forks into               |
+|---------|------------|--------------------------|
+| altar   | Fighter    | Brawler / Swordsman      |
+| well    | Novice     | Monk / Martial Artist    |
+| armory  | Scout      | Ranger / Assassin        |
+| circle  | Adept      | Hexer / Sapper           |
+| spire   | Apprentice | Mage / Bard              |
+
+### The base unit
+
+It fights as its station's first specialty does at that rung -- the
+Fighter punches as the Brawler, the Novice palms as the Monk, the Scout
+shoots as the Ranger, the Adept hexes as the Hexer, the Apprentice holds
+the Mage's beam -- **bare**: no kit, the plain body. So nothing new is
+drawn or tuned for it: its ladder is rungs 0 to 3 of that specialty's
+`LADDERS` row, and its attack is that class's at rung 0 (no move). The kit
+arrives with the fork, the rung-4 mark with it, the rung-8 touch later,
+as the Kit Growth page has them.
+
+A station stands its base unit from the moment it is built: a fighter
+seated there fights at rung 0 at once. (Today a station with no class
+stands a base fighter who "strikes nothing"; that state goes.)
+
+### Choosing the station on its board
+
+The owner, 2026-09-28: the fighter choice "should happen in the station
+menu, not the floating button as a dropdown". The build button keeps its
+place over the next free slot, and pressing it lays out **an empty lot**
+there (a fang spent, as now). The lot has a board like any station's; on
+it, the base units it may become (the five, or on the first lot the three
+starters' stations: Fighter, Scout, Apprentice). Picking one is what the
+builders build: the scaffold goes up and the station is raised as that
+kind by bodies walking to it, as every station is. Nothing on the floor
+changes kind in place.
+
+### The rails
+
+One short rail for the base unit -- rungs 1 to 3 -- which then splits into
+the two specialties' rails, rungs 4 to 8 each, 4 and 8 the bigger pips as
+now. Viewing and buying work as today: a tap views a specialty and fades
+the other; buying rung 4 commits it and folds the other away. Reset
+refunds the whole station and stands the base unit at rung 0.
+
+### What stays locked
+
+The Bard does nothing alone, so the spire's fork offers only the Mage
+until a second station stands; every other fork is open from the start.
+(Today's `STARTERS` rule becomes that one exception.)
+
+### What it must not break
+
+- **Nothing teleports**: the lot is built by bodies; a fork changes the
+  kit on the fighter who is there, not the station.
+- **A ladder is eight rungs, one card**: still eight, still one rail set a
+  station; the base unit's rungs are the first three of the eight.
+- **Hover text is concise**: the base unit's line is its attack in a few
+  words ("punches", "palms", "arrows", "hexes", "a beam").
+
+### Open
+
+- Whether rung 4's jump (the whole specialty at once) is too big a step
+  in the ladder book, now that the base unit's rungs are a specialty's
+  first three.

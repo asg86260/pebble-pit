@@ -117,13 +117,14 @@ group('Swordsman: cuts bleed; the whirlwind lands each cut at three spots, and e
   const bled = has('bleed');
   window.__serpent({ stage: 3, wound: 0 });
   buyTo(0, 'sword', 4);
-  const four = watch(6);
+  // Windows counted in cuts, not seconds, so a retuned pace still sees enough.
+  const four = watch(6 * cls.every);
   const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.sword[3];
   // A whirlwind's cut is one number: its three spots summed. The bleed's
   // ticks are numbers of their own, far smaller.
   const cuts = done(four, 'sword').filter(d => d > v4);
   buyTo(0, 'sword', 8);
-  const eight = watch(8);
+  const eight = watch(8 * cls.every);
   const twice = eight.poses.filter(p => p.twice).length, whirls = eight.poses.length;
   return [
     alone,

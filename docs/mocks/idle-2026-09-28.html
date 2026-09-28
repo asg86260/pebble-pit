@@ -1,0 +1,1942 @@
+<title>Fighter Idle</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1360px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 32px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  h3 { font-size: 14px; margin: 0 0 4px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  .bargain { max-width: 110ch; border-left: 3px solid var(--ink); padding: 2px 0 2px 10px; margin: 10px 0 14px; }
+  canvas { image-rendering: pixelated; display: block; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; position: sticky; top: 0; background: var(--paper);
+         padding-block: 8px; z-index: 2; border-bottom: 1px solid var(--rule); }
+  .grp { display: flex; gap: 4px; align-items: center; }
+  .grp > span { color: var(--dim); font-size: 12px; margin-right: 2px; }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 9px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .pane canvas { width: 100%; max-width: 1040px; height: auto; }
+  .cls { display: grid; grid-template-columns: minmax(0, 30ch) minmax(0, 1fr); gap: 8px 20px; padding-block: 14px;
+         border-bottom: 1px solid var(--rule); }
+  .lines { font-size: 12px; display: grid; gap: 3px; align-content: start; }
+  .lines b { font-weight: bold; }
+  .lines .k { color: var(--dim); }
+  .strip canvas { width: 252px; max-width: 100%; height: auto; margin-top: 8px; }
+  .names3 { display: grid; grid-template-columns: repeat(3, 84px); font-size: 10px; color: var(--dim); text-align: center; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tile { display: grid; gap: 2px; justify-items: start; }
+  .tile canvas { width: 330px; max-width: 100%; height: auto; }
+  .tile span { font-size: 11px; color: var(--dim); }
+  .easerow { padding-block: 8px; }
+  .easerow h3 { font-size: 13px; margin: 0 0 6px; }
+  @media (max-width: 760px) { .cls { grid-template-columns: 1fr; } .bar { position: static; }
+    .tile canvas { width: calc((100vw - 72px) / 2); } }
+  .grid { display: grid; grid-template-columns: 9em repeat(3, max-content); gap: 10px 14px; align-items: center; overflow-x: auto; margin-top: 12px; }
+  .grid .hd { font-size: 12px; color: var(--dim); }
+  .grid .hd b { color: var(--ink); font-size: 14px; display: block; }
+  .grid .nm { font-size: 13px; }
+  .grid canvas { border: 1px solid var(--rule); width: 132px; height: auto; }
+  .vote { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 12px 0 0; }
+  .vote button { font: inherit; font-size: 13px; padding: 5px 12px; border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; }
+  .vote button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .vote input { font: inherit; font-size: 13px; flex: 1 1 20em; padding: 5px 8px; border: 1px solid var(--rule); background: transparent; color: inherit; }
+  .saved { font-size: 11px; color: var(--dim); min-height: 1em; }
+</style>
+<div class="wrap">
+  <h1>Fighter Idle</h1>
+  <p>Each tile plays its attack, then stands between attacks for about three seconds. Three mixes of Sway and On their toes (A to D were the first round). Each moves
+    the whole fighter a cell at a time in held poses, with the kit carried rigid.</p>
+  <p class="dim">A mock from the Kit Growth page's cells, not the game. It cannot show: the kit moving apart from the
+    body (the rest drawing is one piece here), the game's real gaps between attacks, or four fighters side by side.</p>
+  <div class="bar"><button id="play" type="button">pause</button><span id="clock" class="dim">0.0 s</span>
+    <div class="grp" id="rungs"><span>rung</span></div></div>
+  <div class="vote" id="vote"><span>Pick:</span></div>
+  <div class="saved" id="saved"></div>
+  <div class="grid" id="host"></div>
+</div>
+<script>
+'use strict';
+// ================================================================================
+// The shared ground, copied from docs/mocks/classes/harness.js and the looks page.
+// ================================================================================
+const P = 6;
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+               '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                 '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const WHITE = GREYS[11], INK = GREYS[0];
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const along = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+const ease = k => k * k * (3 - 2 * k);
+// Off-grid motion (chosen 2026-09-28, docs/mocks/grid-2026-09-28.html): a cell is
+// placed at whole pixels, so a thing in motion slides a pixel at a time; at
+// rest every position is a whole cell, so everything sits on the grid. A kit
+// that moves is one rigid sprite: its cells move together, never re-drawn.
+function cell(g, cx, cy, tone) { if (!tone) return; g.fillStyle = tone; g.fillRect(Math.round(cx * P), Math.round(cy * P), P, P); }
+function rect(g, cx, cy, w, h, tone) { g.fillStyle = tone; g.fillRect(Math.round(cx * P), Math.round(cy * P), Math.round(w) * P, Math.round(h) * P); }
+function line(g, ax, ay, bx, by, fn) {
+  const n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay)));
+  for (let i = 0; i <= n; i++) fn(ax + (bx - ax) * i / n, ay + (by - ay) * i / n, i, n);
+}
+function ring(g, cx, cy, r, tone, every = 1) {
+  const n = Math.max(8, Math.ceil(Math.PI * 2 * r)), seen = new Set();
+  for (let k = 0; k < n; k += every) {
+    const a = k / n * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r);
+    if (seen.has(x + ',' + y)) continue;
+    seen.add(x + ',' + y); cell(g, x, y, tone);
+  }
+}
+const BODY = 3;
+function drawBody(g, cx, cy) {
+  const x = Math.round(cx * P), y = Math.round(cy * P), w = BODY * P;
+  g.fillStyle = GREYS[6]; g.fillRect(x, y, w, w);
+  g.fillStyle = WHITE; g.fillRect(x + 2, y + 2, w - 4, w - 4);
+}
+function drawPlinthAt(g, cx, floor, w = 7) {
+  rect(g, cx - Math.floor(w / 2), floor - 1, w, 1, GREYS[5]);
+  rect(g, cx - Math.floor(w / 2) + 1, floor - 2, w - 2, 1, GREYS[4]);
+}
+// A build-up's pips under a body (the harness's): `n` lit of `of`.
+function pips(g, x, y, n, of, flash = 0) {
+  const x0 = x + Math.floor((BODY - of) / 2);
+  for (let i = 0; i < of; i++) cell(g, x0 + i, y + BODY + 1, flash ? WHITE : i < n ? WHITE : GREYS[6]);
+}
+
+// A rigid sprite: its cell art drawn once, on the grid, into its own canvas,
+// and from then on only moved by whole pixels or turned whole about its
+// anchor -- never drawn again as new cells. Turning it is done by hand,
+// nearest pixel, so every cell stays one hard-edged square in its place on
+// the kit and no edge is blended. (ax, ay) is the anchor, in the sprite's pixels.
+const SPRITES = new Map();
+function sprite(key, wCells, hCells, ax, ay, paint) {
+  let s = SPRITES.get(key);
+  if (!s) {
+    const cv = document.createElement('canvas');
+    cv.width = wCells * P; cv.height = hCells * P;
+    const g = cv.getContext('2d');
+    paint(g);
+    s = { cv, ax, ay, w: cv.width, h: cv.height, data: g.getImageData(0, 0, cv.width, cv.height).data };
+    SPRITES.set(key, s);
+  }
+  return s;
+}
+const TURN = document.createElement('canvas'), TURN_G = TURN.getContext('2d');
+// Put the sprite's anchor at pixel (x, y), turned `ang` radians clockwise.
+function blit(g, s, x, y, ang = 0) {
+  g.imageSmoothingEnabled = false;
+  if (!ang) { g.drawImage(s.cv, Math.round(x - s.ax), Math.round(y - s.ay)); return; }
+  const r = Math.ceil(Math.hypot(Math.max(s.ax, s.w - s.ax), Math.max(s.ay, s.h - s.ay))) + 1, S = 2 * r;
+  const out = TURN_G.createImageData(S, S), c = Math.cos(ang), sn = Math.sin(ang);
+  for (let oy = 0; oy < S; oy++) for (let ox = 0; ox < S; ox++) {
+    const dx = ox - r + 0.5, dy = oy - r + 0.5;
+    const sx = Math.floor(c * dx + sn * dy + s.ax), sy = Math.floor(-sn * dx + c * dy + s.ay);
+    if (sx < 0 || sy < 0 || sx >= s.w || sy >= s.h) continue;
+    const i = (sy * s.w + sx) * 4;
+    if (!s.data[i + 3]) continue;
+    const o = (oy * S + ox) * 4;
+    out.data[o] = s.data[i]; out.data[o + 1] = s.data[i + 1]; out.data[o + 2] = s.data[i + 2]; out.data[o + 3] = 255;
+  }
+  if (TURN.width !== S || TURN.height !== S) { TURN.width = S; TURN.height = S; }
+  TURN_G.putImageData(out, 0, 0);
+  g.drawImage(TURN, Math.round(x) - r, Math.round(y) - r);
+}
+
+// --- the long pane and its coil ----------------------------------------------------
+const W = 130, H = 36, FLOOR = 31, X0 = 3, X1 = W - 4;
+const REST_Y = FLOOR - 2 - BODY;
+const sway = (cx, t) => 12 + 2.6 * Math.sin(cx * 0.09 + t * 0.6) + 1.1 * Math.sin(cx * 0.23 - t * 0.9);
+const girth = cx => {
+  if (cx < X0 || cx > X1) return 0;
+  const u = (cx - X0) / (X1 - X0);
+  return 1.4 + 1.9 * Math.sin(Math.PI * Math.min(1, u * 1.15)) + (Math.abs(cx - W * 0.55) < 6 ? 0.8 : 0);
+};
+// A stunned or Held coil holds still where it was.
+const cY = (cx, t, s = {}) => sway(cx, s.still != null ? s.still : t) + (s.dents ? dentAt(cx, t, s.dents) : 0);
+// The coil answers a blow: the hide round the hit is pushed up a beat and
+// springs back, over a few columns either side, deeper and wider for a
+// bigger blow. It never overshoots, so nothing shudders, even under a stun.
+function dentAt(cx, t, dents) {
+  let off = 0;
+  for (const d of dents) {
+    const u = t - d.t0;
+    if (u < 0 || u > 0.6) continue;
+    const w = 1.2 + 2 * d.k, fall = Math.exp(-((cx - d.x) ** 2) / (2 * w * w));
+    off -= (0.5 + 1.6 * d.k) * fall * (u < 0.05 ? u / 0.05 : Math.exp(-(u - 0.05) * 9));
+  }
+  return off;
+}
+const cTop = (cx, t, s) => Math.round(cY(cx, t, s) - girth(cx));
+const cBot = (cx, t, s) => Math.round(cY(cx, t, s) + girth(cx));
+const maxBot = (xs, t, s) => Math.max(...xs.map(c => cBot(c, t, s)));
+function drawDeep(g, t) {
+  rect(g, 0, 0, W, H, GREYS[0]);
+  for (let i = 0; i < 44; i++) {
+    const x = (hash(i) * W + t * (0.3 + hash(i + 9) * 0.5)) % W, y = hash(i + 3) * FLOOR + Math.sin(t * 0.4 + i) * 0.8;
+    cell(g, Math.round(x), Math.round(y), GREYS[2 + Math.floor(hash(i + 5) * 3)]);
+  }
+  rect(g, 0, FLOOR, W, H - FLOOR, GREYS[2]);
+  for (let c = 0; c < W; c++) for (let r = FLOOR; r < H; r++)
+    if (hash(c * 31 + r * 17) < 0.22) cell(g, c, r, GREYS[3 + Math.floor(hash(c + r * 7) * 2)]);
+}
+function coilCells(t, s, fn) {
+  for (let cx = X0; cx <= X1; cx++) {
+    const top = cTop(cx, t, s), bot = cBot(cx, t, s), mid = Math.round(cY(cx, t, s));
+    for (let cy = top; cy <= bot; cy++) fn(cx, cy, cy === bot ? 'bottom' : cy === mid ? 'mid' : '');
+  }
+}
+function drawCoil(g, t, s) {
+  const dull = s.statuses.weakened;   // Weakened: the hide goes dull, a tone down
+  coilCells(t, s, (cx, cy, e) => cell(g, cx, cy, e === 'bottom' ? GREYS[8] : e === 'mid' ? (dull ? GREYS[7] : GREYS[10]) : dull ? GREYS[9] : WHITE));
+  cell(g, X0 + 2, Math.round(cY(X0 + 2, t, s)) - 1, INK);
+}
+// The voted C: scales spray off where a blow lands, and the hide is bitten there.
+function burst(g, t, t0, cx, cy, k = 0.3, id = 0) {
+  const a = t - t0;
+  if (a < 0 || a > 3) return;
+  const n = Math.round(3 + 12 * k * k);
+  for (let i = 0; i < n; i++) {
+    const ang = -Math.PI * (0.15 + 0.7 * hash(id * 97 + i)), sp = (8 + 12 * k) * (0.5 + hash(i + id));
+    const x = cx + Math.cos(ang) * sp * a, y = cy + Math.sin(ang) * sp * a + 8 * a * a;
+    if (y < FLOOR) cell(g, x, y, GREYS[a < 1 ? 11 : a < 2 ? 9 : 7]);
+  }
+}
+function chip(g, t, t0, cx, cy, k = 0.3, id = 0) {
+  const a = t - t0;
+  if (a < 0 || a > 2.5) return;
+  const rad = (0.8 + 2 * k) * (1 - a / 2.5);
+  for (let x = Math.floor(cx - rad); x <= cx + rad; x++)
+    for (let y = Math.floor(cy - rad); y <= cy + rad; y++)
+      if ((x - cx) ** 2 + (y - cy) ** 2 <= rad * rad && hash(x * 31 + y * 7 + id) < 0.8) cell(g, x, y, GREYS[1]);
+}
+// A blow landing at column cx, on the belly: `t0` when it lands.
+function blow(g, t, t0, cx, s, k, id) { burst(g, t, t0, cx, cBot(cx, t, s), k, id); chip(g, t, t0, cx, Math.round(cY(cx, t, s)), k, id); }
+
+// --- the statuses (the trimmed six on the serpent, two on fighters) -----------------
+const HALO = [[-2, 0], [-1, -1], [0, -1], [1, -1], [2, 0], [1, 1], [0, 1], [-1, 1]];
+function paintStunned(g, t, s, hx = X0 + 3) {
+  const hy = cTop(hx, t, s) - 3, lead = Math.floor(t * 14) % 8;
+  HALO.forEach(([dx, dy], i) => { const b = (lead - i + 8) % 8; cell(g, hx + dx, hy + dy, b === 0 ? WHITE : b === 1 ? GREYS[9] : b === 2 ? GREYS[7] : GREYS[5]); });
+}
+function paintBleeding(g, t, s) {
+  for (let i = 0; i < 9; i++) {
+    const cx = X0 + 4 + Math.floor(hash(i * 7 + 1) * (X1 - X0 - 8)), bot = cBot(cx, t, s);
+    cell(g, cx, bot, GREYS[5]);
+    const a = (t * 0.8 + hash(i * 3)) % 1;
+    cell(g, cx, bot + 1 + Math.floor(a * 4), GREYS[[9, 8, 6, 4][Math.floor(a * 4)]]);
+  }
+}
+// Held: the circle's bands clasp the coil, each tethered to the floor.
+function paintHeld(g, t, s, lv) {
+  for (let cx = X0 + 5; cx <= X1 - 2; cx += 11) {
+    const top = cTop(cx, t, s), bot = cBot(cx, t, s);
+    for (let y = top - 1; y <= bot + 1; y++) cell(g, cx, y, y === top - 1 || y === bot + 1 ? (lv > 1 ? WHITE : PURPLES[11]) : PURPLES[9]);
+    for (const d of [-1, 1]) { cell(g, cx + d, top - 1, PURPLES[8]); cell(g, cx + d, bot + 1, PURPLES[8]); }
+    for (let y = bot + 3 + Math.floor(t * 4) % 3; y < FLOOR - 1; y += 3) cell(g, cx, y, PURPLES[6]);
+  }
+}
+function chevron(g, cx, cy, tone) { cell(g, cx, cy + 1, tone); cell(g, cx + 1, cy, tone); cell(g, cx + 2, cy + 1, tone); }
+// Level 3 is the rung-8 song's: both chevrons the brightest purple, a white apex on each.
+function paintInspired(g, t, x, y, lv) {
+  const bob = Math.floor(t * 2.5) % 2;
+  chevron(g, x, y - 5 - bob, PURPLES[11]);
+  if (lv > 1) chevron(g, x, y - 8 - bob, lv > 2 ? PURPLES[11] : PURPLES[9]);
+  if (lv > 2) { cell(g, x + 1, y - 5 - bob, WHITE); cell(g, x + 1, y - 8 - bob, WHITE); }
+}
+function paintHasted(g, t, x, y) {
+  for (let r = 0; r < 3; r++) {
+    const a = (t * 3 + r * 0.37) % 1, sx = x - 2 - Math.floor(a * 4);
+    cell(g, sx, y + r, GREYS[[11, 10, 8, 6][Math.floor(a * 4)]]);
+  }
+}
+
+// ================================================================================
+// The ten. Each: its canon lines, its kit at rest for a rung (`rest`), and its
+// turn (`state` says what stands, `draw` the fighter and the blow). `a` is
+// seconds since the turn began; `R` the rung. The mark comes at 4, the touch
+// at 8; every piece is drawn where it rides the kit, so it goes with the blow.
+// ================================================================================
+const R4 = R => R >= 4, R8 = R => R >= 8;
+// Particles: a few single cells drifting up off a point, stepping down the
+// tones as they rise, slow, so a rung-8 fighter reads as more and not busy.
+const DRIFT = [GREYS[10], GREYS[8], GREYS[6], GREYS[4]];
+function drift(g, cx, cy, t, n = 1, seed = 0, rise = 3, period = 2.2, tones = DRIFT) {
+  for (let i = 0; i < n; i++) {
+    const p = (t / period + i / n + seed) % 1;
+    const dx = Math.round(Math.sin(p * 5 + i * 2 + seed * 9) * 0.7);
+    cell(g, cx + dx, cy - Math.floor(p * rise), tones[Math.floor(p * tones.length)]);
+  }
+}
+// --- sauce: weight on the blows (the owner, 2026-09-28) ---------------------------------
+// With it on, every blow winds up, eases in, lands with a beat's hit-pause
+// (the fighter frozen, the world going on), carries a little past and eases
+// home; a heavy one kicks its fighter back a cell or two; the coil gives
+// where it is hit; and a short star of cells jumps off the contact point.
+let SAUCE = true;
+// A wind-up and its settle: nothing until `lead` before `at`, easing out to
+// `depth` by `at`, then easing back over `back`.
+const dip = (a, at, depth, lead = 0.15, back = 0.2) => {
+  if (!SAUCE) return 0;
+  const u = a - at;
+  if (u < -lead || u > back) return 0;
+  depth *= EX();
+  return u < 0 ? depth * ease((u + lead) / lead) : depth * (1 - ease(u / back));
+};
+
+// --- classic: held key poses (the owner, 2026-09-28) -------------------------------------
+// "Some of that classic pixel art sauce." Around every strike the fighter's
+// clock steps in poses of POSE seconds rather than running smooth, so each
+// strike reads as held drawings: the wind-up, a bold smear, the contact held
+// two poses with an impact star that breaks up on the second, the follow-
+// through and the recovery. The key poses are pushed further (EX), fast
+// things trail speed lines, and a fist or a staff tip squashes or stretches a
+// whole cell at contact. Travel away from a strike stays smooth.
+let CLASSIC = true;
+const POSE = 0.08;
+// The fix alternatives in force, all picked by the owner (2026-09-28): C for
+// the Haymaker (the fist held a pose alone, then the star), A for the
+// Whirlwind (one star, on the middle hit), B for the Martial Artist's thrust
+// smear (a tapered wedge, three cells at the point narrowing to one, longer
+// by the blade on the pike). The others stay in the code, as '' the old ones.
+// Also picked: B for the Whirlwind's ending (the blade planted point-down,
+// his weight settling), at rung 4 and rung 8's settle; A for the Monk's beads
+// (spaced beads in an arch), and 4 for the rung-8 beads (the connected halo).
+const PICKED = { hay: 'C', thrust: 'B', whirl: 'A', ease: 'B', beads: 'A', beads8: '4' };
+let VAR = { ...PICKED };
+const EX = () => CLASSIC ? 1.7 : 1;
+// The world at the moment a fighter is drawn, so a smear can find the hide.
+let CUR = { t: 0, s: {} };
+const onHide = (cx, cy) => { const x = Math.round(cx), y = Math.round(cy); return y >= cTop(x, CUR.t, CUR.s) && y <= cBot(x, CUR.t, CUR.s); };
+// A held smear: the cells a turning weapon sweeps from `from` to `to` about the
+// pivot cell (px, py), radius r0 to r1 -- solid, the leading edge white, a
+// step of grey inside; where the leading edge crosses the white hide, a dark
+// keyline one cell ahead keeps it from vanishing.
+const PAL_GREY = { lead: WHITE, body: GREYS[9], line: GREYS[10], ramp: [WHITE, GREYS[10], GREYS[9], GREYS[7], GREYS[5]] };
+const PAL_PURPLE = { lead: PURPLES[11], body: PURPLES[8], line: PURPLES[10], ramp: [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[7], PURPLES[5]] };
+function boldArc(g, px, py, from, to, r0, r1, lead, pal = PAL_GREY) {
+  const seen = new Map(), n = Math.max(3, Math.ceil(Math.abs(to - from) * r1 * 1.6)), dir = Math.sign(to - from) || 1;
+  for (let i = 0; i <= n; i++) {
+    const q = i / n, an = lerp(to, from, q);
+    for (let r = r0; r <= r1; r++) {
+      const ox = Math.round(Math.sin(an) * r), oy = Math.round(-Math.cos(an) * r), key = ox + ',' + oy;
+      if (!seen.has(key)) seen.set(key, [ox, oy, q]);
+    }
+  }
+  for (const [ox, oy, q] of seen.values()) {
+    if (q < 0.1 && onHide(px + ox, py + oy)) {
+      const ka = to + dir * 0.9 / r1, r = Math.hypot(ox, oy);
+      cell(g, px + Math.round(Math.sin(ka) * r), py + Math.round(-Math.cos(ka) * r), GREYS[2]);
+    }
+    cell(g, px + ox, py + oy, q < 0.1 ? pal.lead : pal.body);
+  }
+  for (let r = lead; r < r0; r++) cell(g, px + Math.round(Math.sin(to) * r), py + Math.round(-Math.cos(to) * r), pal.line);
+}
+// A held streak: a thrust's travel from the point (x, top) down to `bottom`,
+// solid -- the point white, then bright, then one grey -- with a dark keyline
+// over the point if it sits on the hide.
+function boldStreak(g, x, top, bottom, tip = WHITE, purple = false) {
+  if (onHide(x, top)) cell(g, x, top - 1, GREYS[2]);
+  cell(g, x, top, tip);
+  for (let y = top + 1; y <= bottom; y++) cell(g, x, y, y - top < 3 ? (purple ? PURPLES[10] : GREYS[10]) : purple ? PURPLES[8] : GREYS[9]);
+}
+// Speed lines: `n` short straight streaks of cells trailing (below) a fast
+// thing at column cx, row cy, a cell or two to its sides.
+function speed(g, cx, cy, n = 2, len = 3, purple = false) {
+  const cols = [-1, 1, -2, 2], tones = purple ? [PURPLES[10], PURPLES[8], PURPLES[6]] : [GREYS[9], GREYS[7], GREYS[5]];
+  for (let i = 0; i < n; i++) for (let j = 0; j < len; j++)
+    cell(g, cx + cols[i], cy + 1 + (i % 2) + j, tones[Math.min(2, j)]);
+}
+// The impact star, held two poses: first a bold star of cells at the contact
+// point, bright; then broken, its arms thrown a cell further out and dimmer.
+const ARMS = [[-1, 0, 1], [1, 0, 1], [0, 1, 1], [-1, 1, 0], [1, 1, 0], [-1, -1, 0], [1, -1, 0]];
+function star(g, t, t0, cx, cy, k, o = {}) {
+  const u = t - t0;
+  if (u < 0 || u >= 2 * POSE) return;
+  // the arms start two cells out, so the fist or blade at the middle reads on top
+  const L = o.len ?? 3 + Math.round(2 * k), broke = u >= POSE;
+  for (const [dx, dy, main] of ARMS) {
+    const len = main ? L : Math.max(2, L - 1);
+    for (let r = 2; r <= len; r++) {
+      if (broke && r % 2 === 0) continue;
+      const rr = broke ? r + 1 : r, x = cx + dx * rr, y = cy + dy * rr;
+      const tone = o.tones ? o.tones[broke ? 1 : 0]
+        : o.purple ? (broke ? (r < len ? PURPLES[9] : PURPLES[7]) : r < len ? PURPLES[11] : PURPLES[10])
+        : broke ? (r < len ? GREYS[9] : GREYS[7]) : r < len ? WHITE : GREYS[10];
+      if (onHide(x, y)) cell(g, x, y + (dy < 0 ? 0 : 0), GREYS[3]); else cell(g, x, y, tone);
+    }
+  }
+}
+// A class's clock under the sauce. Each contact (`hits`, on the fighter's own
+// clock) holds the fighter still for 40-120 ms by its size, so the fighter's
+// clock `a` runs behind the world's; the contacts' real times place the
+// coil's dents and the sparks. `kick` is the recoil after a heavy one, in cells.
+function sauceOf(c, R, a, x) {
+  if (!SAUCE && !CLASSIC) return { a, kick: 0, groups: [] };
+  const groups = [];
+  for (const h of (c.hits ? c.hits(R, x) : []).sort((p, q) => p.at - q.at)) {
+    const gr = groups.find(gr => Math.abs(gr.at - h.at) < 1e-6);
+    if (gr) { gr.k = Math.max(gr.k, h.k); gr.list.push(h); } else groups.push({ at: h.at, k: h.k, list: [h] });
+  }
+  let shift = 0, aw = null, kick = 0;
+  for (const gr of groups) {
+    // a hit may ask for a longer hold of its own (the Whirlwind's last)
+    const own = Math.max(0, ...gr.list.map(h => h.pause || 0));
+    gr.real = gr.at + shift; gr.pause = CLASSIC ? Math.max(own, (VAR.hay === 'C' && gr.list.some(h => h.kind === 'hay') ? 3 : 2) * POSE) : 0.04 + 0.08 * Math.min(1, gr.k) + (own ? 0.04 : 0);
+    // a beam's ticks land without holding her: the beam runs on through them
+    if (gr.list.every(h => h.noPause)) gr.pause = 0;
+    if (aw == null && a < gr.real) aw = a - shift;
+    else if (aw == null && a < gr.real + gr.pause) aw = gr.at;
+    shift += gr.pause;
+    const u = a - gr.real - gr.pause, amt = gr.k >= 1.2 ? 2 : gr.k >= 0.7 ? 1.5 : gr.k >= 0.45 ? 0.75 : 0;
+    if (SAUCE && amt && u >= 0 && u < 0.5) kick += amt * (u < 0.05 ? u / 0.05 : 1 - ease((u - 0.05) / 0.45));
+  }
+  if (aw == null) aw = a - shift;
+  if (CLASSIC) {
+    // round each strike (its contacts, and a caster's gather and release) the
+    // clock steps in held poses, one of them landing on the contact itself
+    const beats = [...groups.filter(gr => gr.pause > 0).map(gr => gr.at), ...(c.beats ? c.beats(R) : [])];
+    let best = null;
+    for (const b of beats) if (Math.abs(aw - b) <= 0.32 && (best == null || Math.abs(aw - b) < Math.abs(aw - best))) best = b;
+    // a class may step faster through a fast part (the Whirlwind's turns)
+    const step = c.poseStep ? c.poseStep(R, aw) : POSE;
+    if (best != null) aw = best + Math.floor((aw - best) / step + 1e-9) * step;
+  }
+  return { a: aw, kick: Math.min(c.kickMax ?? 0, kick), groups, R };
+}
+// The contact spark: a short star of cells jumping off the hit along the
+// hide and out from it, starting clear of the weapon so the blow stays
+// readable, stepping down the greys; more rays and longer for a bigger blow.
+const RAYS = [[-1, 0], [1, 0], [-1, 0.6], [1, 0.6], [-1, -0.5], [1, -0.5], [-0.5, 1], [0.5, 1]];
+function spark(g, t, t0, cx, cy, k, purple = false) {
+  const u = t - t0, dur = 0.12 + 0.14 * k;
+  if (u < 0 || u >= dur) return;
+  const f = u / dur, r = 1.8 + f * (1 + 2 * k), n = k >= 0.6 ? 8 : k >= 0.3 ? 4 : 2;
+  const tone = purple ? (f < 0.4 ? PURPLES[11] : f < 0.75 ? PURPLES[9] : PURPLES[7]) : f < 0.4 ? WHITE : f < 0.75 ? GREYS[9] : GREYS[6];
+  for (let i = 0; i < n; i++) cell(g, cx + RAYS[i][0] * r, cy + RAYS[i][1] * r, tone);
+}
+// The sauce's world half, for one class: the dents it leaves and its sparks.
+function sauceDents(S, t, a) { if (!SAUCE) return []; return S.groups.flatMap(gr => gr.list.map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) }))); }
+function sauceSparks(g, S, t, a, st) {
+  for (const gr of S.groups) for (const h of gr.list) {
+    const t0 = t - (a - gr.real), cy = cBot(Math.round(h.x), t, st) + 1;
+    // at rung 8 every capstone contact is the abyss's: its star in the purples
+    const pu = R8(S.R ?? 0) && h.purple !== false, po = pu ? { purple: true } : {};
+    if (!CLASSIC) { spark(g, t, t0, h.x, cy - 0.5, h.k, pu); continue; }
+    // the fix alternatives: the Haymaker's star (A small and dark, B none, C a
+    // pose late) and the Whirlwind's three (A the middle one, B small and dim, C none)
+    if (h.kind === 'hay' && VAR.hay === 'A') star(g, t, t0, Math.round(h.x), cy, h.k, { len: 2, tones: [GREYS[6], GREYS[5]] });
+    else if (h.kind === 'hay' && VAR.hay === 'B') continue;
+    else if (h.kind === 'hay' && VAR.hay === 'C') star(g, t, t0 + POSE, Math.round(h.x), cy, h.k, po);
+    else if (h.kind === 'whirl' && VAR.whirl === 'A') { if (h.mid) star(g, t, t0, Math.round(h.x), cy, h.k, po); }
+    else if (h.kind === 'whirl' && VAR.whirl === 'B') star(g, t, t0, Math.round(h.x), cy, h.k, { len: 2, tones: [GREYS[9], GREYS[7]] });
+    else if (h.kind === 'whirl' && VAR.whirl === 'C') continue;
+    else star(g, t, t0, Math.round(h.x), cy, h.k, po);
+  }
+}
+// Is `a` the pose just before a contact at `at` (the smear), or one of the two
+// contact poses (the hold)?
+const smearPose = (a, at) => CLASSIC && a >= at - POSE - 1e-9 && a < at - 1e-9;
+const holdPose = (a, at) => CLASSIC && Math.abs(a - at) < 1e-6;
+
+// --- smears: the fast part of a swing (the owner, 2026-09-28) ---------------------------
+// For a frame or two at a swing's top speed -- never at rest, in the wind-up,
+// at contact or on recovery -- the weapon's rigid sprite gives way to a smear:
+// its own drawing of whole cells along the path the weapon sweeps, brightest
+// at the leading edge with the weapon's point at the front, stepping down the
+// greys behind. No blur, no alpha. Under classic these give way to classic's
+// own held smear pose: on the posed clock a 35 ms window could catch a whole
+// held pose, a stray smear hanging beside the weapon.
+let SMEAR = true;
+const inWin = (a, c, half = 0.0175) => a >= c - half && a < c + half;
+// The cells a turning weapon sweeps about a pivot cell (px, py) between the
+// angles `from` (behind) and `to` (leading), from radius r0 out to r1; with
+// `lead`, the weapon's own line at the leading angle from there out, so the
+// arc is a crescent off the blade rather than a solid wedge.
+function smearArc(g, px, py, from, to, r0, r1, tipTone = WHITE, lead = null, pal = PAL_GREY) {
+  const seen = new Map(), n = Math.max(2, Math.ceil(Math.abs(to - from) * r1 * 1.5));
+  for (let i = 0; i <= n; i++) {
+    const q = i / n, an = lerp(to, from, q);
+    for (let r = r0; r <= r1; r++) {
+      const ox = Math.round(Math.sin(an) * r), oy = Math.round(-Math.cos(an) * r), key = ox + ',' + oy;
+      if (!seen.has(key)) seen.set(key, [ox, oy, q, r]);
+    }
+  }
+  for (const [ox, oy, q, r] of seen.values())
+    cell(g, px + ox, py + oy, q < 0.12 ? (r === r1 ? (pal === PAL_GREY ? tipTone : pal.ramp[0]) : pal.ramp[1]) : q < 0.4 ? pal.ramp[2] : q < 0.7 ? pal.ramp[3] : pal.ramp[4]);
+  if (lead != null) for (let r = lead; r < r0; r++) cell(g, px + Math.round(Math.sin(to) * r), py + Math.round(-Math.cos(to) * r), pal.ramp[1]);
+}
+// A straight streak: the point at (x, y), the cells behind it stepping down.
+const STREAK = [GREYS[10], GREYS[10], GREYS[9], GREYS[9], GREYS[8], GREYS[8], GREYS[7], GREYS[6], GREYS[5]];
+function streak(g, x, y, len, tipTone = WHITE) {
+  cell(g, x, y, tipTone);
+  for (let i = 1; i < len; i++) cell(g, x, y + i, STREAK[Math.min(STREAK.length - 1, Math.floor((i - 1) * STREAK.length / (len - 1)))]);
+}
+
+// A fighter's float off the plinth, which may come with a rung (the Hexer's).
+const liftOf = (c, R) => typeof c.lift === 'function' ? c.lift(R) : (c.lift || 0);
+// A melee fighter's swim: 0 at the plinth, 1 under the coil.
+const trip = (a, up, back, len) => a < up ? ease(a / up) : a < back ? 1 : 1 - ease(clamp((a - back) / (len - back), 0, 1));
+
+// --- Brawler: two fists floating beside him -------------------------------------------------
+// No arms: the fists float level with the top of the body and fly out to hit
+// and back. Bare at rung 0, a pale knuckle cell; wrapped from rung 4, a white
+// wrap over the knuckles; at rung 8 the wrapped fists a cell wider, a mote
+// drifting off each.
+const bSize = R => R8(R) ? 2 : 1;
+function bFist(g, fx, fy, size, R, t, side) {
+  if (!R4(R)) { rect(g, fx, fy, size, 1, GREYS[10]); return; }
+  rect(g, fx, fy, size, 1, WHITE); rect(g, fx, fy + 1, size, 1, GREYS[9]);
+  if (R8(R)) drift(g, side < 0 ? fx : fx + size - 1, fy - 1, t, 1, side > 0 ? 0.5 : 0, 3, 2.2, MOTES_P);
+}
+// A punch's reach at `a` for one landing at L: 1 at the hide, negative the
+// wind-up in cells. Sauced, it winds back `wind` cells (eased), drives in
+// accelerating, carries a little past the hide and eases home.
+function punchReach(a, L, wind = 1) {
+  const d = a - L;
+  if (SAUCE) {
+    if (d < -0.34 || d > 0.42) return 0;
+    if (d < -0.1) return -wind * ease((d + 0.34) / 0.24);
+    if (d < 0) return lerp(-wind, 1, ((d + 0.1) / 0.1) ** 2);
+    if (d < 0.07) return 1 + 0.2 * Math.sin(Math.PI * d / 0.07);
+    return 1 - ease((d - 0.07) / 0.35);
+  }
+  if (d < -0.24 || d > 0.3) return 0;
+  if (d < -0.08) return -1;
+  if (d < 0) return (d + 0.08) / 0.08;
+  return d < 0.1 ? 1 : 1 - (d - 0.1) / 0.2;
+}
+const brawler = {
+  key: 'brawler', name: 'Brawler', at: 4,
+  base: 'heavy punches', move: 'Haymaker: every 4th punch x4, stuns', cap: 'haymakers stun longer',
+  mark: 'the bare fists wrapped', touch: 'bigger wrapped fists, a mote off each',
+  rest(g, x, y, R, t) { drawBody(g, x, y); const z = bSize(R); bFist(g, x - z, y, z, R, t, -1); bFist(g, x + 3, y, z, R, t, 1); },
+  len: 3.0,
+  punches(R) {
+    const p = [[0.6, -1], [1.0, 1], [1.4, -1], [1.9, 1]].map(([at, side]) => ({ at, side, k: 0.3, size: bSize(R) }));
+    if (R4(R)) Object.assign(p[3], { size: bSize(R) + 1, k: 0.75, hay: true });
+    return p;
+  },
+  state(a, api, R) { if (R4(R)) api.stun(1.9, R8(R) ? 2.6 : 1.5); },
+  kickMax: 2,
+  hits(R, x) { return this.punches(R).map(p => { const fx = p.side < 0 ? x - p.size : x + BODY; return { at: p.at, x: fx + (p.size - 1) / 2, k: p.k, kind: p.hay ? 'hay' : '' }; }); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, ps = this.punches(R), hover = maxBot([x - 2, x + 5], t, s) + 5;
+    let y = lerp(REST_Y, hover, trip(a, 0.4, 2.5, this.len)) + (api.kick || 0);
+    const hay = ps.find(p => p.hay);
+    // the haymaker's wind-up: the body sinks, eased with the sauce
+    if (hay) y += SAUCE ? dip(a, hay.at - 0.12, 2, 0.33, 0.1) : a > hay.at - 0.45 && a < hay.at - 0.12 ? 2 : 0;
+    const spot = p => { const size = p.size || 1, fx = p.side < 0 ? x - size : x + BODY; return { fx, size, cx: fx + (size - 1) / 2 }; };
+    ps.forEach((p, i) => blow(g, t, t - (a - p.at), spot(p).cx, s, p.hay && VAR.hay === 'B' ? 1 : p.k, i + 1));
+    drawBody(g, x, y);
+    for (const side of [-1, 1]) {
+      let reach = 0, size = bSize(R);
+      let held = null;
+      for (const p of ps.filter(p => p.side === side)) { const r = punchReach(a, p.at, (p.hay ? 2 : 1) * EX()); if (r) { reach = r; size = p.size; if (holdPose(a, p.at)) held = p; } }
+      const fx = side < 0 ? x - size : x + BODY, rest = y;
+      let fy = reach < 0 ? rest - reach : rest;
+      if (reach > 0) fy = rest + (maxBot([fx, fx + size - 1], t, s) + 1 - rest) * reach;
+      if (held) {
+        // classic contact: the fist squashed a cell wider and a cell shorter
+        // against the hide; the haymaker trails speed lines
+        // (a dark keyline round it, so it reads against the white of the hide)
+        rect(g, fx - (side < 0 ? 1 : 0) - 1, fy - 1, size + 3, 3, GREYS[2]);
+        rect(g, fx - (side < 0 ? 1 : 0), fy, size + 1, 1, R4(R) ? WHITE : GREYS[10]);
+        if (held.hay) speed(g, fx + size / 2 - 0.5, fy, 4, 3);
+      } else bFist(g, fx, fy, size, R, t, side);
+    }
+    if (hay) {
+      const d = a - hay.at, cx = spot(hay).cx, cy = cBot(cx, t, s);
+      if (d >= 0 && d < 0.5) ring(g, cx, cy, 1 + d * 14, d < 0.25 ? WHITE : GREYS[7], 2);
+      if (R8(R) && d >= 0.35 && d < 0.85) ring(g, cx, cy, 1 + (d - 0.35) * 14, d < 0.6 ? GREYS[9] : GREYS[6], 2);
+    }
+  },
+};
+
+// --- Swordsman: a greatsword point-up at his side --------------------------------------
+// (bx, gy) the blade's column and the grip's row: the guard over the grip, the
+// blade over the guard -- three cells, four from rung 4 -- the point on top.
+// At rung 8 a mote drifts off either side of the blade.
+const bladeLen = R => R4(R) ? 4 : 3;
+function sword(g, bx, gy, R, t) {
+  const L = bladeLen(R), ty = gy - 2 - L;
+  cell(g, bx, ty, WHITE);
+  for (let r = ty + 1; r <= ty + L; r++) cell(g, bx, r, GREYS[10]);
+  for (let d = -1; d <= 1; d++) cell(g, bx + d, gy - 1, GREYS[8]);
+  cell(g, bx, gy, GREYS[6]);
+  if (R8(R)) { drift(g, bx - 1, ty + 2, t, 1, 0, 3, 2.2, MOTES_P); drift(g, bx + 1, ty + 3, t, 1, 0.5, 3, 2.2, MOTES_P); }
+}
+const MOTES_P = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
+// The sword swung about a pivot (px, py), at `ang` radians from straight up,
+// clockwise: the guard `from` cells out, then the blade, the point last.
+// Behind it the swing leaves a short trail, its outer cells a step darker
+// each, at the angles it has just passed (`dir` the way it turns).
+// It is one rigid sprite, drawn upright once -- point, blade, guard -- and
+// turned whole about the hand; its trail is the blade's outer cells, a step
+// darker, turned to the angles just passed.
+const swordAt = (px, py, ang, i) => [px + Math.sin(ang) * i, py - Math.cos(ang) * i];
+function swordSprite(R, from, tone) {
+  const L = bladeLen(R), tip = from + L + 1;
+  return sprite(`sword${L}.${from}.${tone || ''}`, 3, L + 2, 1.5 * P, (tip + 0.5) * P, g => {
+    if (tone) { for (let r = 0; r < 3; r++) cell(g, 1, r, tone); return; }
+    cell(g, 1, 0, WHITE);
+    for (let r = 1; r <= L; r++) cell(g, 1, r, GREYS[10]);
+    for (let c = 0; c < 3; c++) cell(g, c, L + 1, GREYS[8]);
+  });
+}
+// `behind`, when given, is the angle the blade held a moment ago: the frame
+// is a smear from there to `ang` instead of the sprite.
+function swungSword(g, px, py, ang, R, t, from, dir = 0, behind = null) {
+  const cx = (px + 0.5) * P, cy = (py + 0.5) * P;
+  if (behind != null) { const tip = from + bladeLen(R) + 1; smearArc(g, px, py, behind, ang, tip - 2, tip, WHITE, from, R8(R) ? PAL_PURPLE : PAL_GREY); return; }
+  // with smears off, the old ghost trail of darker blade copies
+  if (dir && !SMEAR) [[0.45, GREYS[7]], [0.9, GREYS[5]]].forEach(([back, tone]) => blit(g, swordSprite(R, from, tone), cx, cy, ang - dir * back));
+  blit(g, swordSprite(R, from), cx, cy, ang);
+  if (R8(R)) { drift(g, ...swordAt(px, py, ang, from + 2), t, 1, 0.3, 3, 2.2, MOTES_P); drift(g, ...swordAt(px, py, ang, from + 4), t, 1, 0.8, 3, 2.2, MOTES_P); }
+}
+const swordsman = {
+  key: 'sword', name: 'Swordsman', at: 5,
+  base: 'cuts that bleed', move: 'Whirlwind: each cut hits wide', cap: 'every 3rd cut hits twice',
+  mark: 'the blade a cell longer', touch: 'purple motes and purple smears off the blade',
+  rest(g, x, y, R, t) { drawBody(g, x, y); sword(g, x - 3, y + 1, R, t); cell(g, x - 3, y + 2, GREYS[9]); },
+  len: 3.4,
+  // The blade's angle is a track of keys: [time, angle, how the blade gets
+  // there, and for a contact its strength]. 'in' accelerates (a strike),
+  // 'out' decelerates (a carry), 'io' eases both ends, 'lin' holds its speed.
+  // A contact is always at a whole turn, the blade straight up into the hide.
+  //   Rung 0, the cut: a held wind-up cocked far back over the shoulder, a
+  //   strike into the hide, a follow-through well past, then home.
+  //   Rung 4, the Whirlwind, the heaviest thing on the page (the owner,
+  //   2026-09-28: "it should feel the heaviest. theres no build up or ease
+  //   out"): he sinks two cells with the blade drawn far back and low behind
+  //   him and holds the strain; then three turns, each faster than the last,
+  //   a contact at the top of each, the last the biggest; then the blade
+  //   drags on another half turn and dips low, he staggers, and only then
+  //   comes home.
+  //   Rung 8: the same Whirlwind, its last turn carrying straight into a
+  //   spin back (the third cut hits twice), the drag and stagger after that.
+  HELD: [-1.2, -0.7],
+  SPIN: { sink: 0.5, coiled: 0.7, go: 0.95, c1: 1.23, c2: 1.53, c3: 1.73 },
+  track(R) {
+    const T = Math.PI * 2, K = [];
+    if (!R4(R)) {
+      const H = -1.2, W = -2.5;
+      for (const c of [0.8, 1.4, 2.0]) K.push([c - 0.26, H, 'io'], [c - 0.08, W, 'io'], [c, 0, 'in', 0.45], [c + 0.12, 1.9, 'out'], [c + 0.34, H, 'io']);
+      return K;
+    }
+    const H = -0.7, B = -2.6, S = this.SPIN;
+    // the build-up: drawn far back and low behind him, and held
+    K.push([S.sink, H, 'io'], [S.coiled, B, 'io'], [S.go, B, 'io'],
+      // three turns, faster each: the first from the coil, the next two whole
+      [S.c1, 0, 'in', 0.35], [S.c2, T, 'lin', 0.5], [S.c3, 2 * T, 'lin', 1.3]);
+    if (!R8(R)) {
+      // the drag: on another half turn, slowing, the blade dipping low; then home
+      // the ending, still to pick (the owner: "the ease out is a bit wonky"):
+      //   '' the drag: on half a turn, dipping low, a stagger, then home;
+      //   A hold and return: on a quarter turn, held level at full extension, back home;
+      //   B plant: carried down in front of him, planted point-down, lifted back;
+      //   C overspin: a smooth extra half turn settling like a top, then home.
+      const E = { A: [[2.0, 2 * T + Math.PI / 2, 'out'], [2.2, 2 * T + Math.PI / 2, 'io'], [2.65, 2 * T + H, 'io']],
+                  B: [[2.1, 2 * T + Math.PI, 'out'], [2.3, 2 * T + Math.PI, 'io'], [2.75, 3 * T + H, 'io']],
+                  C: [[2.3, 2 * T + Math.PI, 'out'], [2.75, 3 * T + H, 'io']] }[VAR.ease];
+      K.push(...(E || [[2.15, 2 * T + Math.PI, 'out'], [2.45, 2 * T + Math.PI + 0.15, 'out'], [2.85, 3 * T + H, 'io']]));
+      return K;
+    }
+    // rung 8: carried past, then the spin back, then the drag and home
+    K.push([1.9, 2 * T + 0.6, 'out'], [2.25, T, 'in', 0.9]);
+    // the settle after the spin back, turning the other way, by the same variants
+    const E8 = { A: [[2.5, T - Math.PI / 2, 'out'], [2.7, T - Math.PI / 2, 'io'], [3.15, T + H, 'io']],
+                 B: [[2.6, T - Math.PI, 'out'], [2.8, T - Math.PI, 'io'], [3.25, T + H, 'io']],
+                 C: [[2.8, T - Math.PI, 'out'], [3.25, H, 'io']] }[VAR.ease];
+    K.push(...(E8 || [[2.65, T - Math.PI, 'out'], [2.9, T - Math.PI - 0.15, 'out'], [3.25, T + H, 'io']]));
+    return K;
+  },
+  contacts(R) { return this.track(R).filter(k => k[3]).map(k => ({ at: k[0], k: k[3] })); },
+  // The pose step under classic: slower through the build-up and the drag,
+  // quicker with each turn, so the pose rate rises through the spin.
+  poseStep(R, a) {
+    if (!R4(R)) return POSE;
+    const S = this.SPIN;
+    return a < S.go ? 0.1 : a < S.c1 ? 0.07 : a < S.c2 ? 0.055 : a < S.c3 ? 0.04 : 0.09;
+  },
+  angle(R, a) {
+    const K = this.track(R);
+    if (a < K[0][0] || a >= K[K.length - 1][0]) return null;
+    for (let i = 1; i < K.length; i++) {
+      const [t1, a1, e] = K[i], [t0, a0] = K[i - 1];
+      if (a >= t1) continue;
+      const u = (a - t0) / (t1 - t0);
+      return lerp(a0, a1, e === 'in' ? u * u : e === 'out' ? 1 - (1 - u) * (1 - u) : e === 'lin' ? u : ease(u));
+    }
+    return null;
+  },
+  kickMax: 2,
+  hits(R, x) {
+    const px = x + 1, cs = this.contacts(R);
+    return cs.flatMap(({ at, k }) => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({
+      at, x: sx, k: sx === px ? k : Math.min(k, 0.5), kind: R4(R) ? 'whirl' : '', mid: sx === px,
+      // the Whirlwind's last contact holds longest
+      pause: k >= 1.2 ? 0.2 : 0 })));
+  },
+  state(a, api) { if (a >= 0.8) api.status('bleeding'); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, L = bladeLen(R), spin = R4(R), pal = R8(R) ? PAL_PURPLE : PAL_GREY;
+    // a cut pivots over his head; a spin about the body's middle, the blade clear of it
+    const from = spin ? 2 : 1, reach = from + L + 1, tip = reach;
+    const hover = maxBot([x - 1, x + 3], t, s) + reach + (spin ? -1 : 0);
+    const k = trip(a, 0.4, 3.0, this.len), cs = this.contacts(R).map(c => c.at);
+    let y = lerp(REST_Y, hover, k) + (api.kick || 0), bx = x;
+    const S = this.SPIN, last = cs[cs.length - 1];
+    if (spin) {
+      // the build-up: he sinks two cells and holds the coil, then rises into the spin
+      y += a < S.sink ? 0 : a < S.coiled ? 2 * ease((a - S.sink) / (S.coiled - S.sink)) : a < S.go ? 2 : a < S.go + 0.12 ? 2 * (1 - ease((a - S.go) / 0.12)) : 0;
+      // the ending's body: '' the stagger, a cell of momentum then recovering;
+      // A leaning into the held finish by a cell; B his weight settling a cell
+      // as the blade plants; C nothing, the spin settles about him
+      const u = a - last, lean = R8(R) ? -1 : 1;
+      if (!VAR.ease && u > 0.05 && u < 1.1) bx += u < 0.3 ? ease((u - 0.05) / 0.25) : u < 0.7 ? 1 : 1 - ease((u - 0.7) / 0.4);
+      if (VAR.ease === 'A' && u > 0.05 && u < 0.95) bx += lean * (u < 0.27 ? ease((u - 0.05) / 0.22) : u < 0.5 ? 1 : 1 - ease((u - 0.5) / 0.45));
+      if (VAR.ease === 'B' && u > 0.2 && u < 1.0) y += u < 0.37 ? ease((u - 0.2) / 0.17) : u < 0.57 ? 1 : 1 - ease((u - 0.57) / 0.43);
+    } else for (const c of cs) {
+      // the cut: the body leans into the swing by a cell and settles
+      const u = a - c;
+      if (u > -0.08 && u < 0.34) bx += u < 0 ? ease((u + 0.08) / 0.08) : u < 0.14 ? 1 : 1 - ease((u - 0.14) / 0.2);
+    }
+    const px = bx + 1, py = spin ? y + 1 : y - 1;
+    drawBody(g, bx, y);
+    this.contacts(R).forEach(({ at: c, k: kk }, i) => (spin ? [px - 6, px, px + 6] : [px]).forEach((sx, n) => blow(g, t, t - (a - c), sx, s, n === 1 || !spin ? Math.min(1, kk) : 0.35, i * 9 + n)));
+    if (k < 0.2) { sword(g, bx - 3, y + 1, R, t); return; }
+    const held = this.HELD[spin ? 1 : 0], at = a0 => this.angle(R, a0) ?? held;
+    let ang = at(a);
+    // the strain of the coil: the blade trembles a little, and dust puffs off his feet
+    if (spin && a >= S.coiled && a < S.go) {
+      ang += Math.floor(a / 0.08) % 2 ? 0.07 : -0.07;
+      const f = (a - S.coiled) / (S.go - S.coiled);
+      for (const side of [-1, 1]) {
+        const dx = side < 0 ? bx - 1 - Math.floor(f * 2) : bx + BODY + Math.floor(f * 2);
+        cell(g, dx, y + 2 - Math.floor(f * 2), f < 0.5 ? GREYS[7] : GREYS[5]);
+      }
+    }
+    // rung 8's combo trails the blade the whole way: a dim arc behind its point
+    if (R8(R) && this.angle(R, a) != null) {
+      const back = at(a - 0.12), dir = Math.sign(ang - back);
+      if (Math.abs(ang - back) > 0.2) for (let q = 0.15; q <= 1; q += 0.1) {
+        const an = lerp(ang - dir * 0.15, back, q);
+        for (const r of [tip, tip - 1]) cell(g, px + Math.round(Math.sin(an) * r), py + Math.round(-Math.cos(an) * r), q < 0.5 ? pal.ramp[3] : pal.ramp[4]);
+      }
+    }
+    // the fastest turn: a thin ring of smear most of the way round, a gap
+    // behind the blade, with the blade itself on it
+    const fast = spin && a > S.c2 && a < S.c3 && (CLASSIC || SMEAR);
+    const pre = cs.find(c => smearPose(a, c));
+    if (fast) {
+      boldArc(g, px, py, ang - 2 * Math.PI + 1.0, ang, tip - 1, tip, tip - 1, pal);
+      swungSword(g, px, py, ang, R, t, from, 1);
+    } else if (pre != null) {
+      // where the blade was two and a half poses back, brought round to within
+      // a turn behind where it bites, kept to a crescent
+      const to = at(pre), sgn = Math.sign(to - at(pre - 0.02)) || 1, T = 2 * Math.PI;
+      let span = ((sgn * (to - at(pre - 2.5 * POSE))) % T + T) % T;
+      if (span < 0.3) span = 1.4;
+      const back = to - sgn * Math.min(span, 2.4);
+      boldArc(g, px, py, back, to, tip - 2, tip, from, pal);
+      for (const [dA, r0] of [[0.25, tip], [0.45, tip - 2]]) for (let j = 0; j < 2; j++) {
+        const an = back - sgn * (dA + j * 0.12);
+        cell(g, px + Math.round(Math.sin(an) * r0), py + Math.round(-Math.cos(an) * r0), j ? pal.ramp[4] : pal.ramp[3]);
+      }
+    } else {
+      // the smooth clock's short smear, just before each contact
+      const smear = SMEAR && !CLASSIC && cs.some(c => inWin(a, c - 0.035));
+      const moving = this.angle(R, a) != null && Math.abs(at(a) - at(a - 0.03)) > 0.05;
+      swungSword(g, px, py, ang, R, t, from, moving ? Math.sign(at(a) - at(a - 0.03)) : 0, smear ? at(a - 0.05) : null);
+    }
+  },
+};
+
+// --- Monk: a ring of prayer beads over him, floating a cell off the spire -----------------
+// The string sways as cloth does in the wind: one ripple travels along it,
+// end to end, and lifts each bead a cell or so in its turn, so the lit beads
+// still read in their places. At rung 8 the wind is stronger and a sixth
+// bead streams off the end.
+const BEADS = [[-2, -1], [-1, -2], [1, -2], [3, -2], [4, -1]];
+const TELL = [0, 1, 2, 3, 4, 3, 2, 1];
+function beadAt(i, R, t) {
+  const amp = R8(R) ? 1.3 : 0.8, ph = t * 4.2 - i * 1.1;
+  const [bx, by] = i < 5 ? BEADS[i] : [5 + Math.round(Math.sin(ph) * 0.6), 0];
+  return [bx + Math.round(Math.sin(ph + 1.4) * amp * 0.5), by + Math.round(Math.sin(ph) * amp)];
+}
+function beads(g, x, y, R, t, cast = false) {
+  const k = TELL[Math.floor(t * 3) % 8], n = R8(R) ? 6 : 5;
+  for (let i = 0; i < n; i++) {
+    const [dx, dy] = beadAt(i, R, t);
+    // mark: a second bead told round, the other way
+    const lit = cast || i === k || (R4(R) && i === 4 - k);
+    cell(g, x + dx, y + dy, lit ? PURPLES[11] : i === 5 ? GREYS[7] : GREYS[9]);
+  }
+}
+// The bead options, still to pick (the owner: "it looks cool but its hard to
+// read as beads"). Each bead is a round two-by-two, lit in the purples or
+// unlit in the greys, its top-left cell the highlight, on a one-cell dark
+// cord, with a clear gap to the next; every option sways gently.
+//   A spaced beads: five arched over her head.
+//   B hanging mala: a loop hanging from her right hand beside her.
+//   C around the neck: a loop hanging on her chest.
+// At rung 8 each gets a sixth bead on its own short cord, hanging free.
+// A bead a tone down, for the back half of the halo, read as behind her head.
+function backBead(g, cx, cy, lit) {
+  cell(g, cx - 1, cy - 1, lit ? PURPLES[9] : GREYS[8]); cell(g, cx, cy - 1, lit ? PURPLES[8] : GREYS[7]);
+  cell(g, cx - 1, cy, lit ? PURPLES[8] : GREYS[7]); cell(g, cx, cy, lit ? PURPLES[6] : GREYS[6]);
+}
+function roundBead(g, cx, cy, lit) {
+  cell(g, cx - 1, cy - 1, lit ? PURPLES[11] : GREYS[10]); cell(g, cx, cy - 1, lit ? PURPLES[10] : GREYS[9]);
+  cell(g, cx - 1, cy, lit ? PURPLES[10] : GREYS[9]); cell(g, cx, cy, lit ? PURPLES[8] : GREYS[7]);
+}
+function cord(g, ax, ay, bx, by) { line(g, ax - 0.5, ay - 0.5, bx - 0.5, by - 0.5, (cx, cy) => cell(g, cx, cy, GREYS[5])); }
+// The bead centers (and the cord's path) for an option, about the body at (x, y).
+function beadPath(v, x, y, R, t, anim = null) {
+  const n = 5, pts = [], path = [];
+  if (v === 'A') {
+    // on her own phase: the sway quickens into a palm and the arch draws in a little
+    const ph = anim ? anim.th : t, tg = anim ? anim.tight : 0, rad = 5 - 0.7 * tg;
+    const hx = x + 1.5, hy = y + 1, sw = Math.sin(ph * 1.6) * 0.12 * (1 - 0.5 * tg);
+    const at = (deg, i) => { const an = deg * Math.PI / 180 + sw + Math.sin(ph * 4.2 - i * 1.1) * 0.06 * (1 - 0.5 * tg); return [hx + rad * Math.sin(an), hy - rad * Math.cos(an)]; };
+    for (let i = 0; i < n; i++) pts.push(at(-72 + i * 36, i));
+    for (let d = -86; d <= 86; d += 8) path.push(at(d, (d + 72) / 36));
+  } else if (v === 'B') {
+    // from her right hand, a teardrop loop swinging a little about the hand
+    const hx = x + 5.5, hy = y, th = Math.sin(t * 2.2) * 0.22;
+    const at = u => { const a = u * Math.PI * 2, lx = 1.9 * Math.sin(a), ly = 2.6 * (1 - Math.cos(a));
+      return [hx + 0.5 + lx * Math.cos(th) - ly * Math.sin(th), hy + lx * Math.sin(th) + ly * Math.cos(th)]; };
+    for (let i = 0; i < n; i++) pts.push(at(0.12 + i * 0.19));
+    for (let u = 0; u <= 1.001; u += 0.05) path.push(at(u));
+    if (R8(R)) { const [bx0, by0] = at(0.5); path.push([bx0 + th * 2, by0 + 1.5]); pts.push([bx0 + th * 4, by0 + 3]); }
+  } else {
+    // round her neck: a loop from shoulder to shoulder hanging on her chest, swinging
+    const sw = Math.sin(t * 2) * 0.6;
+    const at = u => { const d = Math.sin(Math.PI * u); return [lerp(x - 1.5, x + 4.5, u) + sw * d, y + 0.2 + 4.3 * d]; };
+    for (let i = 0; i < n; i++) pts.push(at(0.08 + i * 0.21));
+    for (let u = 0; u <= 1.001; u += 0.05) path.push(at(u));
+    if (R8(R)) { const [bx0, by0] = at(0.5); path.push([bx0 + sw * 0.5, by0 + 1.5]); pts.push([bx0 + sw, by0 + 3]); }
+  }
+  return { pts, path };
+}
+// The rung-8 touches on the arch, still to pick:
+//   1 double strand: a second, smaller arch inside the first, swaying out of step;
+//   2 orbiting halo: the beads lift off the cord and slowly circle her head;
+//   3 charged beads: when chi is full the beads pulse brighter one after
+//     another round the arch, small purple motes rising off the lit ones.
+//   4 connected halo (the owner: "what if we connected the orbiting halo"):
+//     the arch lifts and closes into a ring of cord over her head, its ends
+//     meeting, and turns slowly with the beads strung on it; the back half is
+//     a tone darker. On a full chi it tightens and its lit beads whiten.
+// `u` is the Monk's own clock, so the arch closes once when her turn begins.
+function haloV(g, x, y, R, t, litOf, full, anim) {
+  // its turn is the Monk's own (a hit-pause holds it), quickening into each
+  // palm and tightening at the peak; at rest it turns steadily
+  const u = anim ? anim.u : null, tg = anim ? anim.tight : full ? 1 : 0;
+  const cx = x + 1.5, cy = y - 2.5, rx = 4.2 - 0.6 * tg, ry = 1.4 - 0.3 * tg, spin = anim ? anim.th : t * MONK_SPIN;
+  const ringAt = i => { const th = spin + i * Math.PI * 2 / 5; return [cx + rx * Math.cos(th), cy + ry * Math.sin(th), Math.sin(th) < 0]; };
+  const k = u == null ? 1 : ease(clamp(u / 0.6, 0, 1));
+  if (k < 1) {
+    // the arch lifting and closing: each bead on its way from the arch to the ring
+    const { pts } = beadPath('A', x, y, R, t, anim);
+    const at = pts.map((p, i) => { const r = ringAt(i); return [lerp(p[0], r[0], k), lerp(p[1], r[1], k)]; });
+    for (let i = 1; i < 5; i++) cord(g, ...at[i - 1], ...at[i]);
+    // the cord's ends meet over her head at the last of it
+    if (k > 0.8) cord(g, ...at[4], ...at[0]);
+    at.forEach(([bx0, by0], i) => roundBead(g, bx0, by0, litOf(i)));
+    return;
+  }
+  // the chi palm's peak, held: each bead blurs into a smear arc behind it round
+  // the ring, bright at the bead and stepping down the purples behind
+  if (anim && anim.smear) {
+    const SM = [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[8], PURPLES[7], PURPLES[6]];
+    for (const back of [true, false]) for (let i = 0; i < 5; i++) {
+      const th0 = spin + i * Math.PI * 2 / 5;
+      for (let j = SM.length - 1; j >= 0; j--) {
+        const th = th0 - j * 0.16, isBack = Math.sin(th) < 0;
+        if (isBack !== back) continue;
+        const qx = cx + rx * Math.cos(th), qy = cy + ry * Math.sin(th);
+        cell(g, qx - 0.5, qy - 0.5, back ? SM[Math.min(SM.length - 1, j + 2)] : SM[j]);
+        if (!j) cell(g, qx - 0.5, qy - 1.5, back ? PURPLES[9] : WHITE);
+      }
+    }
+    return;
+  }
+  // the ring: its back half first, a tone darker, then the front over it
+  for (const back of [true, false]) {
+    for (let th = 0; th < Math.PI * 2; th += 0.2) {
+      const a1 = [cx + rx * Math.cos(th), cy + ry * Math.sin(th)], a2 = [cx + rx * Math.cos(th + 0.2), cy + ry * Math.sin(th + 0.2)];
+      if ((Math.sin(th + 0.1) < 0) === back) line(g, a1[0] - 0.5, a1[1] - 0.5, a2[0] - 0.5, a2[1] - 0.5, (qx, qy) => cell(g, qx, qy, back ? GREYS[3] : GREYS[5]));
+    }
+    for (let i = 0; i < 5; i++) {
+      const [bx0, by0, isBack] = ringAt(i);
+      if (isBack !== back) continue;
+      if (back) backBead(g, bx0, by0, litOf(i));
+      else {
+        roundBead(g, bx0, by0, litOf(i));
+        if (full && litOf(i)) cell(g, bx0 - 1, by0 - 1, WHITE);
+      }
+    }
+  }
+}
+function beadsV(g, v, x, y, R, t, litOf, full = false, anim = null) {
+  const touch = v === 'A' && R8(R) ? VAR.beads8 : '';
+  if (touch === '4') return haloV(g, x, y, R, t, litOf, full, anim);
+  if (touch === '2') {
+    // the halo: a flat ring over her head, turning, the near beads a tone brighter
+    const hx = x + 1.5, hy = y - 2.5;
+    for (let i = 0; i < 5; i++) {
+      const an = t * 0.9 + i * Math.PI * 2 / 5, bx0 = hx + 4.2 * Math.cos(an), by0 = hy + 1.4 * Math.sin(an);
+      roundBead(g, bx0, by0, litOf(i));
+    }
+    return;
+  }
+  if (touch === '1') {
+    // the inner strand, a little out of step with the outer
+    const hx = x + 1.5, hy = y + 1, sw = Math.sin(t * 1.6 + 1.3) * 0.14;
+    const at = (deg, i) => { const an = deg * Math.PI / 180 + sw + Math.sin(t * 4.2 - i * 1.1 + 0.8) * 0.05; return [hx + 3.4 * Math.sin(an), hy - 3.4 * Math.cos(an)]; };
+    const ip = [], path = [];
+    for (let d = -80; d <= 80; d += 10) path.push(at(d, (d + 54) / 36));
+    for (let i = 0; i < 4; i++) ip.push(at(-54 + i * 36, i));
+    for (let i = 1; i < path.length; i++) cord(g, ...path[i - 1], ...path[i]);
+    ip.forEach(([cx, cy], i) => roundBead(g, cx, cy, litOf(i)));
+  }
+  const { pts, path } = beadPath(v, x, y, R, t, anim);
+  for (let i = 1; i < path.length; i++) cord(g, ...path[i - 1], ...path[i]);
+  const pulse = Math.floor(t * 10) % 5;
+  pts.forEach(([cx, cy], i) => {
+    roundBead(g, cx, cy, litOf(i));
+    if (touch === '3' && full) {
+      // the pulse runs round the arch: one bead at a time whitened at its heart
+      if (i === pulse) { cell(g, cx - 1, cy - 1, WHITE); cell(g, cx, cy - 1, PURPLES[11]); cell(g, cx - 1, cy, PURPLES[11]); }
+      drift(g, cx - 0.5, cy - 1.5, t, 1, i * 0.2, 3, 1.4, MOTE_TONES);
+    }
+  });
+  // her hand holding the mala
+  if (v === 'B') { cell(g, x + 3, y, GREYS[8]); cell(g, x + 4, y, GREYS[8]); cell(g, x + 5, y - 0.5, GREYS[9]); }
+}
+// The halo's resting turn, radians a second.
+const MONK_SPIN = 1.1;
+const monk = {
+  key: 'monk', name: 'Monk', at: 4, lift: 1,
+  base: 'palms build chi; a chi palm stuns', move: 'chi fills twice as fast', cap: 'the chi palm stuns longer',
+  mark: 'two beads told round, not one', touch: 'the arch closes into a spinning halo',
+  rest(g, x, y, R, t) {
+    drawBody(g, x, y);
+    if (!VAR.beads) return beads(g, x, y, R, t);
+    const k = TELL[Math.floor(t * 3) % 8];
+    beadsV(g, VAR.beads, x, y, R, t, i => i === k || (R4(R) && i === 4 - k));
+  },
+  len: 3.1,
+  palms(R) { return R4(R) ? [0.3, 0.8, 1.3, 2.0] : [0.3, 0.75, 1.2, 1.65, 2.2]; },
+  chi(R) { return R4(R) ? 2 : 4; },   // palms to a chi palm, the last of them the chi palm
+  state(a, api, R) { const p = this.palms(R), c = p[this.chi(R)]; api.stun(c + 0.5, R8(R) ? 2.6 : 1.4); },
+  kickMax: 0.75,
+  hits(R, x) { return this.palms(R).map((p, i) => ({ at: p + 0.5, x: x + 1, k: i === this.chi(R) ? 0.7 : 0.3 })); },
+  beats(R) { return this.palms(R); },
+  // Her beads' spin at `a` (the owner: "build up to the attack. instead of a
+  // linear speed"): the resting turn, climbing on an ease-in into each palm so
+  // it peaks at the release, then easing back out; the chi palm builds longer
+  // and peaks harder, and the ring draws in at a peak. `th` is the turn so far
+  // -- the speed summed over her clock, so a hit-pause holds it -- and `tight`
+  // how far the ring or arch has drawn in.
+  spin(R, a) {
+    const ps = this.palms(R), n = this.chi(R);
+    const at = u => {
+      let w = MONK_SPIN, tight = 0;
+      ps.forEach((p, i) => {
+        const big = i === n, L = big ? 0.5 : 0.3, D = big ? 0.5 : 0.35, pk = big ? 13 : 6, tk = big ? 1 : 0.4;
+        if (u >= p - L && u < p) { const q = (u - p + L) / L; w = Math.max(w, MONK_SPIN + (pk - MONK_SPIN) * q * q); tight = Math.max(tight, tk * q * q); }
+        else if (u >= p && u < p + D) { const v = 1 - (u - p) / D; w = Math.max(w, MONK_SPIN + (pk - MONK_SPIN) * v * v); tight = Math.max(tight, tk * v * v); }
+      });
+      return [w, tight];
+    };
+    let th = 0;
+    for (let u = 0; u < a; u += 0.01) th += at(u)[0] * Math.min(0.01, a - u);
+    return { th, tight: at(a)[1] };
+  },
+  draw(g, t, a, api, R, x) {
+    const ps = this.palms(R), n = this.chi(R);
+    // sauced, he sinks into each palm, deeper for the chi palm, and rises out of it
+    let dy = 0;
+    ps.forEach((p, i) => { dy += dip(a, p, i === n ? 1 : 0.5, 0.15, 0.25); });
+    const s = api.st, y = REST_Y - 1 + Math.min(1, dy + (api.kick || 0));
+    const casting = ps.some(p => a >= p && a < p + 0.5);
+    const lit = ps.filter((p, i) => i < n && a >= p).length % (n + 1);
+    drawBody(g, x, y);
+    if (!VAR.beads) beads(g, x, y, R, t, casting);
+    else {
+      // the chi count on the beads: one lit a chi, the fifth as she gathers the chi palm
+      const chiN = a >= ps[n] - 0.15 && a < ps[n] + 0.5 ? 5 : Math.min(4, R4(R) ? lit * 2 : lit);
+      // the chi palm's peak, held as a smear round the ring: the pose before its release
+      const sp = this.spin(R, a), cp = ps[n];
+      beadsV(g, VAR.beads, x, y, R, t, i => i < chiN, chiN >= 5, { u: a, th: sp.th, tight: sp.tight, smear: CLASSIC && a >= cp - POSE - 1e-9 && a < cp - 1e-9 });
+    }
+    const spent = a >= ps[n] && a < ps[n] + 0.4;
+    pips(g, x, y, R4(R) ? lit * 2 : lit, 4, spent ? 1 : 0);
+    ps.forEach((p, i) => {
+      const big = i === n, d = a - p, top = y - 2, hit = cBot(x + 1, t, s) + 1;
+      if (d >= 0 && d < 0.5) {
+        const k = SAUCE ? (d / 0.5) ** 1.6 : d / 0.5, wy = lerp(top - 1, hit, k), half = (big ? 2 : 1) + Math.round(k * 2);
+        for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, wy, Math.abs(dx) === half ? PURPLES[8] : PURPLES[11]);
+      }
+      if (d >= 0.5 && d < 1.0) ring(g, x + 1, hit - 1, 1 + (d - 0.5) * (big ? 12 : 8), [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.floor((d - 0.5) / 0.125)], 2);
+      blow(g, t, t - (d - 0.5), x + 1, s, big ? 0.7 : 0.3, 40 + i);
+    });
+  },
+};
+
+// --- Martial Artist: a bo staff across her back -------------------------------------------
+// mark: a ribbon off the staff's end, waved as the shop flags are
+// (render/aura.js): walked out from its knot half a cell at a time, its
+// heading turned by one ripple that travels out to the loose end and grows
+// toward it. touch: the staff's other end a pike, a blade on it.
+function ribbon(g, ex, ey, dir, t, len = 4, seed = 0, purple = false) {
+  let px = 0, py = 0;
+  for (let s = 0.5; s <= len; s += 0.5) {
+    const rip = Math.sin((t / 1.3 - s * 0.75 / len) * Math.PI * 2 + seed * 7) * Math.pow(s / len, 1.2) * 1.2;
+    const th = Math.PI / 2 * 0.5 + rip;
+    px += Math.sin(th) * 0.5; py += Math.cos(th) * 0.5;
+    const cx = Math.round(px), cy = Math.round(py);
+    if (cx === 0 && cy === 0) continue;
+    cell(g, ex + dir * cx, ey + cy, purple ? (s > len - 1 ? PURPLES[8] : PURPLES[10]) : s > len - 1 ? GREYS[8] : GREYS[10]);
+  }
+}
+// The pike's head off a staff end at (ex, ey), pointing (dx, dy): a
+// crossguard across the join, then the blade.
+function pike(g, ex, ey, dx, dy) {
+  cell(g, ex + dx + dy, ey + dy + dx, GREYS[8]); cell(g, ex + dx - dy, ey + dy - dx, GREYS[8]);
+  cell(g, ex + dx, ey + dy, GREYS[8]);
+  // the blade's tip is the abyss's purple (the pike is rung 8's)
+  cell(g, ex + 2 * dx, ey + 2 * dy, GREYS[10]); cell(g, ex + 3 * dx, ey + 3 * dy, PURPLES[11]);
+}
+function staffBack(g, x, y, R, t) {
+  cell(g, x - 2, y + 1, GREYS[9]); cell(g, x - 1, y + 1, GREYS[8]); cell(g, x + 3, y + 1, GREYS[8]); cell(g, x + 4, y + 1, GREYS[9]);
+  if (R4(R)) ribbon(g, x - 2, y + 1, -1, t, 4, 0, R8(R));
+  if (R8(R)) pike(g, x + 4, y + 1, 1, 0);
+}
+const martial = {
+  key: 'martial', name: 'Martial Artist', at: 6, tileAt: 13, buddy: true,
+  base: 'quick thrusts charge a finisher', move: 'Flow: thrusts charge double', cap: 'the finisher Hastes the party',
+  mark: 'a ribbon waving off the staff\'s end', touch: 'the staff a pike: crossguard and blade',
+  rest(g, x, y, R, t) { drawBody(g, x, y); staffBack(g, x, y, R, t); },
+  len: 3.0,
+  plan(R) { return R4(R) ? { thrusts: [0.5, 0.8, 1.1], fin: 1.5, after: [2.0, 2.3], per: 2 } : { thrusts: [0.5, 0.75, 1.0, 1.25, 1.5], fin: 1.9, after: [], per: 1 }; },
+  state(a, api, R) { if (R8(R) && a >= this.plan(R).fin) api.buff('hasted'); },
+  kickMax: 1.5,
+  hits(R, x) { const pl = this.plan(R); return [...pl.thrusts, ...pl.after].map(p => ({ at: p, x: x + 1, k: 0.18 })).concat([{ at: pl.fin, x: x + 1, k: 0.7 }]); },
+  // Sauced, a thrust's tip: pulled down a cell, driven up accelerating, a
+  // little into the hide, then eased home. Null outside every thrust.
+  tipAt(a, all, rt, ht) {
+    for (const p of all) {
+      const u = a - p;
+      if (u < -0.2 || u >= 0.25) continue;
+      if (u < -0.08) return rt + EX() * ease((u + 0.2) / 0.12);
+      if (u < 0) return lerp(rt + EX(), ht, ((u + 0.08) / 0.08) ** 2);
+      if (u < 0.05) return ht - 0.4 * Math.sin(Math.PI * u / 0.05);
+      return lerp(ht, rt, ease((u - 0.05) / 0.2));
+    }
+    return null;
+  },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, pl = this.plan(R), hover = maxBot([x - 2, x + 4], t, s) + 6;
+    // she sinks before the finisher, sauced
+    const y = lerp(REST_Y, hover, trip(a, 0.35, 2.5, this.len)) + (api.kick || 0) + dip(a, pl.fin - 0.15, 1.5, 0.2, 0.15);
+    const all = [...pl.thrusts, ...pl.after];
+    const sweep = a >= pl.fin - 0.15 && a < pl.fin + 0.3;
+    const on = all.find(p => a >= p - 0.08 && a < p + 0.12);
+    drawBody(g, x, y);
+    if (sweep && smearPose(a, pl.fin)) {
+      // classic: the finisher's sweep held as one wide bold arc up to the hide
+      const top = maxBot([x - 2, x + 4], t, s) + 1, rows = Math.max(2, Math.round(y - 1 - top) + 1);
+      for (let i = rows - 1; i >= 0; i--) {
+        const sh = Math.floor(i * 3 / rows);
+        for (let c = x - 2 + sh; c <= x + 4 - sh; c++) cell(g, c, top + i, R8(R) ? (i === 0 ? PURPLES[11] : i === 1 ? PURPLES[10] : PURPLES[8]) : i === 0 ? WHITE : i === 1 ? GREYS[10] : GREYS[9]);
+      }
+      if (R8(R)) pike(g, x + 4, top, 1, 0);
+      // the speed lines trail the staff's two ends, clear of her body
+      for (const ex of [x - 2, x + 4]) for (let j = 0; j < 3; j++) cell(g, ex, top + rows + j, R8(R) ? [PURPLES[10], PURPLES[8], PURPLES[6]][j] : j === 0 ? GREYS[9] : j === 1 ? GREYS[7] : GREYS[5]);
+    } else if (sweep && SMEAR && !CLASSIC && inWin(a, pl.fin - 0.0175)) {
+      // the finisher's smear: the staff's sweep from over her head up to the
+      // hide as one wide arc, the leading row bright, narrower and darker behind
+      const top = maxBot([x - 2, x + 4], t, s) + 1, rows = Math.max(2, Math.round(y - 1 - top) + 1);
+      for (let i = rows - 1; i >= 0; i--) {
+        const sh = Math.floor(i * 3 / rows), tone = i === 0 ? GREYS[10] : [GREYS[9], GREYS[7], GREYS[6], GREYS[5]][Math.min(3, Math.floor(i * 4 / rows))];
+        for (let c = x - 2 + sh; c <= x + 4 - sh; c++) cell(g, c, top + i, i === 0 && (c === x - 2 || c === x + 4) ? WHITE : tone);
+      }
+      if (R8(R)) pike(g, x + 4, top, 1, 0);
+    } else if (sweep) {
+      // the finisher: flat over her head, pressed into the hide
+      const row = a >= pl.fin ? maxBot([x - 2, x + 4], t, s) + 1 : y - 1;
+      for (let c = x - 2; c <= x + 4; c++) cell(g, c, row, c === x - 2 || c === x + 4 ? WHITE : GREYS[8]);
+      if (R4(R)) ribbon(g, x - 2, row, -1, t, 4, 0, R8(R));
+      if (R8(R)) pike(g, x + 4, row, 1, 0);
+    } else if (a > 0.3 && a < 2.5) {
+      // on end through her middle, the tip driven up to the hide on a thrust
+      const blade = R8(R) ? 3 : 0, ht = cBot(x + 1, t, s) + 1 + blade;
+      const st = SAUCE ? this.tipAt(a, all, y - 3, ht) : null;
+      const tip = st != null ? st : on != null ? ht : y - 3;
+      // a thrust's smear, at top speed on the way up: a streak from the point down
+      const smear = SMEAR && !CLASSIC && all.some(p => SAUCE ? inWin(a - p, -0.028, 0.014) : inWin(a - p, -0.065, 0.015));
+      const cp = all.find(p => smearPose(a, p)), hp = all.find(p => holdPose(a, p));
+      if (cp != null) {
+        // classic: the pose before contact is a held streak from the hide down
+        const top = ht - blade, bot = tip + 7;
+        if (VAR.thrust === 'A') {
+          // A: two cells wide, a white edge and a grey core
+          boldStreak(g, x + 1, top, bot);
+          for (let yy = top; yy <= bot; yy++) cell(g, x + 2, yy, yy === top ? GREYS[10] : GREYS[8]);
+          speed(g, x + 1.5, ht + 2, 2, 3);
+        } else if (VAR.thrust === 'B') {
+          // B: a tapered wedge, three cells at the point narrowing to one
+          const n = bot - top;
+          for (let yy = top; yy <= bot; yy++) {
+            // three wide at the point (and down the pike's blade, which leads
+            // at rung 8 and makes the wedge longer), then one
+            const q = (yy - top) / Math.max(1, n), k = yy - top, half = k < 2 + blade ? 1 : 0;
+            // at rung 8 the wedge is the purples, bright at the point stepping down
+            const pu = R8(R);
+            const core = yy === top || (blade && k < blade) ? (pu ? PURPLES[11] : WHITE) : q < 0.5 ? (pu ? PURPLES[10] : GREYS[10]) : pu ? PURPLES[8] : GREYS[9];
+            for (let dx = -half; dx <= half; dx++) cell(g, x + 1 + dx, yy, dx ? (pu ? PURPLES[8] : GREYS[9]) : core);
+          }
+          if (onHide(x + 1, top)) for (let dx = -1; dx <= 1; dx++) cell(g, x + 1 + dx, top - 1, GREYS[2]);
+        } else if (VAR.thrust === 'C') {
+          // C: the staff doubled, its ghost a cell behind, speed lines either side
+          for (let r = 0; r < 7; r++) cell(g, x + 1, ht + 1 + r, GREYS[6]);
+          for (let r = 0; r < 7; r++) cell(g, x + 1, ht + r, r === 0 && !blade ? WHITE : GREYS[8]);
+          if (blade) pike(g, x + 1, ht, 0, -1);
+          speed(g, x + 1, ht + 2, 2, 4);
+        } else {
+          boldStreak(g, x + 1, top, bot);
+          speed(g, x + 1, ht + 2, 2, 3);
+        }
+      } else if (smear) streak(g, x + 1, tip - blade, 10 + blade);
+      else {
+        for (let r = 0; r < 7; r++) cell(g, x + 1, tip + r, r === 0 && !blade ? (on != null ? WHITE : GREYS[9]) : GREYS[8]);
+        if (blade) pike(g, x + 1, tip, 0, -1);
+        // classic contact: the tip stretched a cell longer into the hide
+        if (hp != null) cell(g, x + 1, tip - blade - 1, WHITE);
+      }
+      // Flow's after-image: a dark staff beside the real one while the tip is
+      // at the hide. Classic has its own smear and speed lines, and there the
+      // column hung beside a staff that had already left the hide (the clock
+      // is posed but the window was not), so it is the smooth clock's only.
+      if (!CLASSIC && on != null && R4(R) && Math.abs(tip - ht) < 0.5) for (let r = tip + 1; r < tip + 5; r++) cell(g, x + 2, r, GREYS[6]);
+      drawBody(g, x, y);
+      // the ribbon is tied to the staff's foot, which is inside her body on a
+      // thrust: drawn under the body, only its waving tail poked out past her
+      // edge, a cell or two popping in and out beside the staff. Over the
+      // body, it streams out whole from where it is tied.
+      if (R4(R)) ribbon(g, x + 1, tip + 6, -1, t, 4, 0, R8(R));
+    } else staffBack(g, x, y, R, t);
+    all.forEach((p, i) => blow(g, t, t - (a - p), x + 1, s, 0.18, 50 + i));
+    blow(g, t, t - (a - pl.fin), x + 1, s, 0.7, 59);
+    // the pips: thrusts since the last finisher
+    let n = 0;
+    for (const p of pl.thrusts) if (a >= p) n += pl.per;
+    if (a >= pl.fin) { n = 0; for (const p of pl.after) if (a >= p) n += pl.per; }
+    pips(g, x, y, Math.min(5, n), 5, sweep ? 1 : 0);
+  },
+};
+
+// --- Ranger: a bow twice his height ---------------------------------------------------------
+// The bow drawn from its span, so a longer one is the same bow: the string
+// straight between the tips, the limb bellied two cells off it at the middle.
+// It is a cell longer at rung 4, two at rung 8.
+const bowGrow = R => R8(R) ? 2 : R4(R) ? 1 : 0;
+function vbow(g, sx, top, bot) {
+  const n = bot - top;
+  for (let r = top; r <= bot; r++) {
+    const off = Math.round(2 * Math.sin(Math.PI * (r - top) / n));
+    cell(g, sx, r, off ? GREYS[9] : GREYS[8]);
+    if (off) cell(g, sx + off, r, GREYS[8]);
+  }
+}
+// Level over his head, string row sy, limb up; drawn, the string is pulled
+// down to the nock under an arrow standing on it.
+function hbow(g, cx, sy, half, drawn, two = false) {
+  for (let c = -half; c <= half; c++) {
+    const off = Math.round(2 * Math.sin(Math.PI * (c + half) / (2 * half)));
+    if (!off) { cell(g, cx + c, sy, GREYS[8]); continue; }
+    if (!(drawn && c === 0)) cell(g, cx + c, sy - off, GREYS[8]);
+    if (!drawn || Math.abs(c) >= half - 1) cell(g, cx + c, sy, GREYS[9]);
+    else if (c) cell(g, cx + c, sy + 1, GREYS[9]);
+  }
+  // the aimed shot's two arrows are the abyss's, purple head to nock
+  if (drawn) for (const ax of two ? [cx - 1, cx + 1] : [cx]) {
+    cell(g, ax, sy - 3, two ? PURPLES[11] : WHITE);
+    for (let r = sy - 2; r <= sy; r++) cell(g, ax, r, two ? PURPLES[9] : GREYS[10]);
+    cell(g, ax, sy + 1, two ? PURPLES[6] : GREYS[6]);
+  }
+}
+function drawBow(g, pose, x, y, R, t, two = false) {
+  const e = bowGrow(R), half = 3 + e;
+  if (pose === 'rest' || pose === 'lift') {
+    const bot = pose === 'rest' ? y + 2 : y;
+    vbow(g, x + 4, bot - 5 - e, bot);
+  } else hbow(g, pose === 'over' ? x + 3 : x + 1, y - 2, half, pose === 'drawn', two);
+}
+const ranger = {
+  key: 'ranger', name: 'Ranger', at: 3,
+  base: 'arrows from overhead', move: 'Aimed shot: every 5th arrow x5', cap: 'the aimed shot stuns',
+  mark: 'the bow a cell longer; the aimed pair purple', touch: 'the bow longer again',
+  rest(g, x, y, R, t) { drawBody(g, x, y); drawBow(g, 'rest', x, y, R, t); },
+  len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
+  state(a, api, R) { if (R8(R)) api.stun(this.aimed + 0.1, 1.5); },
+  beats(R) { return R4(R) ? [...this.shots, this.aimed] : [0.8]; },
+  hits(R, x) {
+    const lx = x + 1, hs = (R4(R) ? this.shots : [0.8]).map(v => ({ at: v + 0.25, x: lx, k: 0.2, purple: false }));
+    if (R4(R)) for (const dx of [-1, 1]) hs.push({ at: this.aimed + 0.1, x: lx + dx, k: 0.8 });
+    return hs;
+  },
+  draw(g, t, a, api, R, x) {
+    // rung 0 shoots once; from rung 4 a run of arrows, then the aimed shot, two at once
+    const s = api.st, y = REST_Y, aimed = R4(R) ? this.aimed : null;
+    const shots = R4(R) ? this.shots : [0.8];
+    const last = aimed || shots[shots.length - 1], up = 0.15, down = last + 0.35;
+    const pulling = shots.some(v => a >= v - 0.18 && a < v) || (aimed && a >= 1.9 && a < aimed);
+    const pose = a < up || a >= down + 0.24 ? 'rest' : a < up + 0.12 || a >= down + 0.12 ? 'lift'
+               : a < up + 0.24 || a >= down ? 'over' : pulling ? 'drawn' : 'braced';
+    drawBody(g, x, y); drawBow(g, pose, x, y, R, t, aimed && a >= 1.9 && a < aimed);
+    const lx = x + 1, ly = y - 6, ty = cBot(lx, t, s) + 1;
+    if (aimed && a >= 1.95 && a < aimed) {
+      const tone = a > 2.25 ? GREYS[9] : GREYS[6];
+      for (let cy = ly - 1; cy > ty; cy -= 2) cell(g, lx, cy, tone);
+      ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - 1.95) * 5)), tone, 2);
+    }
+    const arrows = shots.map((v, i) => ({ at: v, k: 0.2, fly: 0.25, id: 60 + i, ax: lx }));
+    if (aimed) for (const dx of [-1, 1]) arrows.push({ at: aimed, k: 0.8, fly: 0.1, id: 68 + dx, aimed: true, ax: lx + dx });
+    for (const ar of arrows) {
+      const d = a - ar.at, ax = ar.ax, ay = cBot(ax, t, s) + 1;
+      if (d < 0) continue;
+      const pu = ar.aimed;
+      if (d < ar.fly) {
+        const hy = lerp(ly, ay, d / ar.fly);
+        cell(g, ax, hy, pu ? PURPLES[11] : WHITE); cell(g, ax, hy + 1, pu ? PURPLES[10] : GREYS[10]); cell(g, ax, hy + 2, pu ? PURPLES[8] : GREYS[8]);
+        if (CLASSIC) speed(g, ax, hy + 1, 2, 3, pu && R8(R));
+        // rung 8's aimed arrows leave a short purple trail
+        if (pu && R8(R)) { cell(g, ax, hy + 3, PURPLES[7]); cell(g, ax, hy + 4, PURPLES[5]); }
+        continue;
+      }
+      const since = d - ar.fly;
+      blow(g, t, t - since, ax, s, ar.k, ar.id);
+      if (since < 0.9) { const tone = pu ? PURPLES[since < 0.4 ? 9 : 6] : GREYS[since < 0.4 ? 9 : 6]; cell(g, ax, ay, tone); cell(g, ax, ay + 1, tone); }
+    }
+    if (aimed) { const since = a - aimed - 0.1; if (since >= 0 && since < 0.45) ring(g, lx, ty - 1, 1 + since * 14, R8(R) ? (since < 0.2 ? PURPLES[11] : PURPLES[8]) : since < 0.2 ? WHITE : GREYS[7], 2); }
+  },
+};
+
+// --- Assassin: a dagger point-up in her fist -------------------------------------------------
+// One dagger at rung 0; the mark is the second, in the other fist; the touch
+// turns both tips the abyss's purple. She floats up to get in reach, then
+// holds nearly still, a cell's give at each stab, while the dagger does the
+// travelling up to the hide and back: the two taking turns from rung 4, and
+// at rung 8 each spins as it goes.
+const blades = (x, R) => R4(R) ? [x - 2, x + 4] : [x + 4];
+// A dagger with its guard at (gx, gy), pointing `ang` radians from straight up.
+function dagger(g, gx, gy, R, ang = 0) {
+  if (ang) {
+    // spinning, it is one rigid sprite turned whole about its guard
+    const spr = sprite('dagger' + (R8(R) ? 8 : 0), 3, 5, 1.5 * P, 3.5 * P, sg => dagger(sg, 1, 3, R));
+    blit(g, spr, (gx + 0.5) * P, (gy + 0.5) * P, ang);
+    return;
+  }
+  const ux = Math.sin(ang), uy = -Math.cos(ang);
+  cell(g, gx + ux * 3, gy + uy * 3, R8(R) ? PURPLES[11] : WHITE);
+  cell(g, gx + ux * 2, gy + uy * 2, GREYS[10]); cell(g, gx + ux, gy + uy, GREYS[10]);
+  cell(g, gx, gy, GREYS[7]); cell(g, gx - uy, gy + ux, GREYS[7]); cell(g, gx + uy, gy - ux, GREYS[7]);
+  cell(g, gx - ux, gy - uy, GREYS[8]);
+}
+function daggers(g, x, ty, R) { for (const bx of blades(x, R)) dagger(g, bx, ty + 3, R); }
+const assassin = {
+  key: 'assassin', name: 'Assassin', at: 5,
+  base: 'stabs, x3 on a stunned serpent', move: 'Execution: stabs grow with the wound', cap: 'x3 in the phase\'s last tenth',
+  mark: 'a second dagger', touch: 'the dagger tips purple, spinning as they go',
+  rest(g, x, y, R) { drawBody(g, x, y); daggers(g, x, y - 3, R); },
+  len: 3.0, stabs: [0.6, 1.1, 1.6, 2.1], out: 0.2, back: 0.3,
+  state() {},
+  kickMax: 1.5,
+  stabK(R, i) { return R8(R) && i === 3 ? 1 : R4(R) ? 0.25 + i * 0.12 : 0.3; },
+  hits(R, x) { const bs = blades(x, R); return this.stabs.map((p, i) => ({ at: p, x: bs[i % bs.length], k: this.stabK(R, i) })); },
+  draw(g, t, a, api, R, x) {
+    const s = api.st, bs = blades(x, R), hover = maxBot([x - 2, x + 4], t, s) + 9;
+    let y = lerp(REST_Y, hover, trip(a, 0.35, 2.45, this.len)) + (api.kick || 0);
+    if (this.stabs.some(p => a >= p - 0.05 && a < p + 0.1)) y -= 1;
+    drawBody(g, x, y);
+    // which blade each stab is: the one at rung 0, turn and turn about after
+    const flying = new Map();
+    this.stabs.forEach((p, i) => {
+      const bx = bs[i % bs.length], d = a - p + this.out;
+      // sauced, the window opens a beat early for the dagger's pull back
+      if (d >= (SAUCE ? -0.12 : 0) && d < this.out + this.back) flying.set(bx, d);
+      const last = R8(R) && i === 3, k = last ? 1 : R4(R) ? 0.25 + i * 0.12 : 0.3;
+      blow(g, t, t - (a - p), bx, s, k, 70 + i);
+      const e = a - p;
+      if (last && e >= 0 && e < 0.3) ring(g, bx, Math.round(cY(bx, t, s)), Math.round(6 - e * 16), PURPLES[e < 0.15 ? 11 : 8]);
+    });
+    for (const bx of bs) {
+      const home = y, d = flying.get(bx);
+      if (d == null) { dagger(g, bx, home, R); continue; }
+      // out fast, point first, to where its tip meets the belly; back slower
+      const top = cBot(bx, t, s) + 4;
+      let gy;
+      if (SAUCE) {
+        // pulled back a cell, then out accelerating, a little into the hide, eased home
+        const u = d - this.out;
+        gy = u < -this.out ? home + EX() * ease((d + 0.12) / 0.12)
+           : u < 0 ? lerp(home + EX(), top, ((u + this.out) / this.out) ** 2)
+           : u < 0.05 ? top - 0.5 * Math.sin(Math.PI * u / 0.05)
+           : lerp(top, home, ease((u - 0.05) / (this.back - 0.05)));
+      } else {
+        const k = d < this.out ? ease(d / this.out) : 1 - ease((d - this.out) / this.back);
+        gy = lerp(home, top, k);
+      }
+      const spinAt = d => R8(R) ? (d < this.out ? d / this.out : 1 + (d - this.out) / this.back) * Math.PI * 2 : 0;
+      const spins = spinAt(d);
+      // a smear at top speed on the way out, before the point reaches the hide
+      const smear = SMEAR && !CLASSIC && (SAUCE ? inWin(d - this.out, -0.0575) : inWin(d, 0.0975));
+      if (CLASSIC && d - this.out >= -POSE - 1e-9 && d - this.out < -1e-9) {
+        // classic: the pose before contact is a held streak from the hide down to her fist
+        boldStreak(g, bx, top - 3, gy + 1, R8(R) ? PURPLES[11] : WHITE, R8(R));
+        speed(g, bx, gy, 2, 3, R8(R));
+      } else if (smear && R8(R)) smearArc(g, bx, gy, spinAt(d - 0.04), spins, 1, 3, PURPLES[11], null, PAL_PURPLE);
+      else if (smear) streak(g, bx, gy - 3, 7, R8(R) ? PURPLES[11] : WHITE);
+      else dagger(g, bx, gy, R, spins);
+    }
+  },
+};
+
+// --- Sapper: a bomb under his arm, the fuse sparking ----------------------------------------
+// A fuse: one cell standing up off the top at (fx, fy), the spark on its tip,
+// leaning out and flickering.
+function fuse(g, fx, fy, dir, t) {
+  cell(g, fx, fy, GREYS[7]);
+  const k = Math.floor(t * 6) % 3;
+  cell(g, fx + (k === 2 ? 0 : dir), fy - 1, k === 1 ? GREYS[9] : WHITE);
+}
+// Rung 0: a round bomb, two cells across, lit from its top corner.
+function bomb(g, bx, by, t) {
+  cell(g, bx, by, GREYS[10]); cell(g, bx + 1, by, GREYS[8]); cell(g, bx, by + 1, GREYS[8]); cell(g, bx + 1, by + 1, GREYS[7]);
+  fuse(g, bx + 1, by - 1, 1, t);
+}
+// Rung 4: the sticky charge, a flat slab three across; rung 8 holds two.
+function slab(g, bx, by, dir, t) {
+  const c0 = dir > 0 ? bx : bx - 2;
+  for (let c = 0; c < 3; c++) { cell(g, c0 + c, by, c === 1 ? GREYS[10] : GREYS[9]); cell(g, c0 + c, by + 1, c === 1 ? GREYS[6] : GREYS[7]); }
+  fuse(g, c0 + 1, by - 1, dir, t);
+}
+// `gone` names the hands whose charge is away, thrown and not yet back.
+function bundle(g, x, y, R, t, gone = {}) {
+  if (!R4(R)) return gone.r || bomb(g, x + 4, y + 1, t);
+  if (!gone.r) slab(g, x + 4, y + 1, 1, t);
+  if (R8(R) && !gone.l) slab(g, x - 2, y + 1, -1, t);
+}
+function charge(g, cx, cy, t, R, lit) {
+  if (!R4(R)) { cell(g, cx, cy, GREYS[10]); cell(g, cx + 1, cy, GREYS[8]); cell(g, cx, cy + 1, GREYS[8]); cell(g, cx + 1, cy + 1, GREYS[7]); }
+  else { for (let c = 0; c < 3; c++) { cell(g, cx - 1 + c, cy, c === 1 ? GREYS[10] : GREYS[9]); cell(g, cx - 1 + c, cy + 1, c === 1 ? GREYS[6] : GREYS[7]); } }
+  if (lit) cell(g, cx + 1, cy - 1, Math.floor(t * 6) % 2 ? WHITE : GREYS[9]);
+}
+const sapper = {
+  key: 'sapper', name: 'Sapper', at: 5,
+  base: 'thrown charges', move: 'Sticky charge: stuck, ticks down, one big stunning blow', cap: 'two charges at once',
+  mark: 'the bomb a sticky charge', touch: 'two charges, one in each hand',
+  rest(g, x, y, R, t) { drawBody(g, x, y); bundle(g, x, y, R, t); },
+  len: 3.2, throwAt: 0.3, fly: 0.6, blowAt: 2.1,
+  targets(R, x) { return R8(R) ? [x - 1, x + 8] : [x + 4]; },
+  state(a, api, R) { if (R4(R)) api.stun(this.blowAt, 1.5); },
+  hits(R, x) { return this.targets(R, x).map((tx, i) => ({ at: R4(R) ? this.blowAt : this.throwAt + i * 0.15 + this.fly, x: tx, k: R4(R) ? 0.9 : 0.6 })); },
+  beats() { return [this.throwAt]; },
+  draw(g, t, a, api, R, x) {
+    // sauced, he leans back before the throw, swings through it and settles;
+    // the charges still go where they were aimed
+    const ts = this.targets(R, x);
+    if (SAUCE) {
+      const u = a - this.throwAt;
+      x += u >= -0.2 && u < 0 ? -ease((u + 0.2) / 0.2) : u >= 0 && u < 0.08 ? lerp(-1, 0.5, u / 0.08) : u >= 0.08 && u < 0.38 ? 0.5 * (1 - ease((u - 0.08) / 0.3)) : 0;
+    }
+    const s = api.st, y = REST_Y;
+    // a charge is gone from its hand from the throw until a beat after the blow
+    const away = i => a >= this.throwAt + i * 0.15 && a < (R4(R) ? this.blowAt : this.throwAt + this.fly) + 0.5;
+    drawBody(g, x, y); bundle(g, x, y, R, t, R8(R) ? { l: away(0), r: away(1) } : { r: away(0) });
+    ts.forEach((tx, i) => {
+      const t0 = this.throwAt + i * 0.15, d = a - t0, land = t0 + this.fly;
+      const hitY = cBot(tx, t, s) + 1;
+      // at rung 8 the first charge leaves the left hand, the second the right
+      const fromX = R8(R) && i === 0 ? x - 3 : x + 5;
+      if (d >= 0 && d < this.fly) {
+        const k = d / this.fly;
+        charge(g, lerp(fromX, tx, k), lerp(y + 1, hitY, k) - 3 * Math.sin(Math.PI * k), t, R, true);
+        return;
+      }
+      if (d < 0) return;
+      const boomAt = R4(R) ? this.blowAt : land;
+      // Sticky: stuck under the belly, its light ticking faster as it runs down
+      if (R4(R) && a < boomAt) {
+        // classic: squashed flat for the pose it sticks, then its own shape
+        if (CLASSIC && a < land + POSE) rect(g, tx - 1.5, hitY, 4, 1, GREYS[9]);
+        else charge(g, tx, hitY, t, R, false);
+        const rate = 3 + 8 * along(a, land, boomAt);
+        cell(g, tx, hitY + 2, Math.floor(t * rate) % 2 ? WHITE : GREYS[6]);
+      }
+      const e = a - boomAt, big = R4(R);
+      // rung 8's two charges go off in the abyss's purple: the ring, a white
+      // core at the heart for a pose, and a spray of purple debris
+      const pu = R8(R);
+      if (e >= 0 && e < 0.45) ring(g, tx, hitY - 1, 1 + e * (big ? 22 : 12), pu ? (e < 0.15 ? PURPLES[11] : e < 0.3 ? PURPLES[9] : PURPLES[7]) : e < 0.15 ? WHITE : e < 0.3 ? GREYS[9] : GREYS[6]);
+      if (pu && e >= 0 && e < POSE) { cell(g, tx, hitY - 1, WHITE); cell(g, tx - 1, hitY - 1, PURPLES[11]); cell(g, tx + 1, hitY - 1, PURPLES[11]); cell(g, tx, hitY - 2, PURPLES[11]); }
+      if (pu && e >= 0 && e < 1.2) for (let j = 0; j < 10; j++) {
+        const ang = -Math.PI * (0.05 + 0.9 * hash(j * 13 + i)), sp = 14 * (0.5 + hash(j + 7 * i));
+        const dx = tx + Math.cos(ang) * sp * e, dy = hitY - 1 + Math.sin(ang) * sp * e + 9 * e * e;
+        if (dy < FLOOR) cell(g, dx, dy, PURPLES[[11, 10, 9, 7, 5][Math.min(4, Math.floor(e / 0.24))]]);
+      }
+      blow(g, t, t - e, tx, s, big ? 0.9 : 0.6, 80 + i);
+    });
+  },
+};
+
+// --- Hexer: nothing held, a purple mote rising slowly off her ------------------------------
+// One mote at a time. From rung 4 a glyph hangs over her head (the owner,
+// 2026-09-28: "lets drop the tome, theres just not enough resolution. lets
+// make it a glyph instead that gets stroke traced before the attack goes
+// out"): before each hex it is written cell by cell along its stroke, a
+// white leading cell and the cells behind it settling into the purples; it
+// flares a held pose when the last stroke closes, the hex streams up out of
+// it, and it fades out down the purples. Between hexes a faint ghost of it
+// hangs there, so the rung's look reads at rest. At rung 8 an outer ring is
+// traced round it after the rune, she floats a cell up, and the hex is bigger.
+const MOTE_TONES = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
+function motes(g, x, top, t, n = 1) {
+  for (let i = 0; i < n; i++) {
+    const p = (t / 3.2 + i / n) % 1, dx = Math.round(Math.sin(p * 6 + i * 2.1) * 1.2);
+    cell(g, x + dx, top - 1 - Math.floor(p * 5), MOTE_TONES[Math.floor(p * 3.99)]);
+  }
+}
+// The rune, 5 by 5, in stroke order: one continuous stroke (up the left leg,
+// down to a point in the middle, up and down the right leg), then the
+// crossing bar across both legs.
+const RUNE = [[0, 4], [0, 3], [0, 2], [0, 1], [0, 0], [1, 1], [2, 2], [3, 1], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4],
+              [1, 3], [2, 3], [3, 3]];
+// Rung 8's outer ring round the rune, in the order it is traced: from the top, clockwise.
+const RING8 = (() => {
+  const seen = new Set(), out = [];
+  for (let k = 0; k < 64; k++) {
+    const an = k / 64 * Math.PI * 2, c = [Math.round(2 + Math.sin(an) * 3.9), Math.round(2 - Math.cos(an) * 3.9)];
+    if (!seen.has(c + '')) { seen.add(c + ''); out.push(c); }
+  }
+  return out;
+})();
+const GLYPH_TRACE = 0.5, RING_TRACE = 0.3, FLARE = 0.12, FADE = 0.4;
+// The glyph's timings on her clock, by rung: when the trace starts, when it
+// closes, when the hex streams out, and when it lands.
+function glyphTimes(R) {
+  const t0 = 0.3, done = t0 + GLYPH_TRACE + (R8(R) ? RING_TRACE : 0), out = done + FLARE;
+  return { t0, done, out, land: out + 1.0 };
+}
+// The glyph over her head: its top-left cell at (gx, gy). `a` her clock, or
+// null at rest (the ghost).
+function glyph(g, gx, gy, R, a) {
+  const cells = R8(R) ? [...RUNE, ...RING8] : RUNE, T = glyphTimes(R), n = cells.length;
+  const ghost = PURPLES[5];
+  const draw = tone => cells.forEach(([cx, cy]) => cell(g, gx + cx, gy + cy, tone));
+  if (a == null || a < T.t0) return draw(ghost);
+  if (a < T.done) {
+    // the trace: the rune first, then (at rung 8) the ring, at its own pace
+    const runeN = RUNE.length, rp = clamp((a - T.t0) / GLYPH_TRACE, 0, 1), ringP = clamp((a - T.t0 - GLYPH_TRACE) / RING_TRACE, 0, 1);
+    const k = rp < 1 ? Math.floor(rp * runeN) : runeN + Math.floor(ringP * (n - runeN));
+    // the ghost under it, so the written cells read as filling it in
+    draw(ghost);
+    for (let i = 0; i < Math.min(k, n); i++) cell(g, gx + cells[i][0], gy + cells[i][1], k - i <= 2 ? PURPLES[11] : PURPLES[9]);
+    if (k < n) cell(g, gx + cells[k][0], gy + cells[k][1], WHITE);
+    return;
+  }
+  // closed: a flare held a pose, lit while the hex streams, then fading
+  if (a < T.out) return draw(WHITE);
+  const f = a - T.out - 0.4;
+  if (f < 0) return draw(PURPLES[11]);
+  if (f < FADE) return draw([PURPLES[9], PURPLES[7], PURPLES[6]][Math.floor(f / FADE * 3)]);
+  draw(ghost);
+}
+const glyphAt = (x, y, t) => [x - 1, y - 7 - (Math.floor(t * 1.2) % 2)];
+const hexer = {
+  key: 'hexer', name: 'Hexer', at: 4,
+  base: 'hexes Weaken the serpent', move: 'Binding: the serpent is Held', cap: 'Held takes more from blows',
+  mark: 'a purple glyph, traced before each hex', touch: 'a ring traced round the glyph; she floats a cell up', lift: R => R8(R) ? 1 : 0,
+  rest(g, x, y, R, t) {
+    drawBody(g, x, y);
+    if (R4(R)) { const [gx, gy] = glyphAt(x, y, t); glyph(g, gx, gy, R, null); motes(g, x + 1, gy, t); }
+    else motes(g, x + 1, y, t);
+  },
+  len: 3.4,
+  land(R) { return R4(R) ? glyphTimes(R).land : 1.3; },
+  state(a, api, R) {
+    const L = this.land(R);
+    if (a >= L + 0.3) api.status('weakened');
+    if (R4(R)) api.hold(L + 0.3, 1.8, R8(R) && a >= L + 0.6 && a < L + 0.9 ? 2 : 1);
+  },
+  hits(R, x) { const L = this.land(R), h = [{ at: L, x: x + 1, k: R8(R) ? 0.45 : 0.15 }]; if (R8(R)) h.push({ at: L + 0.6, x: x + 7, k: 0.6 }); return h; },
+  beats(R) { const T = glyphTimes(R); return R4(R) ? [T.t0, T.done] : [0.3]; },
+  draw(g, t, a, api, R, x) {
+    // sauced, she rises as she gathers the hex and settles as it goes
+    const T = glyphTimes(R), start = R4(R) ? T.out : 0.3;
+    const s = api.st, y = REST_Y - liftOf(this, R) - dip(a, start, 1, 0.25, 0.35), tx = x + 1, hitY = cBot(tx, t, s), big = R8(R);
+    drawBody(g, x, y);
+    // the hex streams out of the glyph's middle (her head, at rung 0) as motes
+    const [gx, gy] = glyphAt(x, y, t);
+    if (R4(R)) glyph(g, gx, gy, R, a);
+    const from = R4(R) ? gy + 2 : y - 2;
+    if (a >= this.land(R) + 0.5) motes(g, tx, R4(R) ? gy : y, t);
+    const n = big ? 9 : 5;
+    for (let m = 0; m < n; m++) {
+      const s0 = start + m * 0.5 / n;
+      if (a < s0 || a >= s0 + 0.5) continue;
+      const cx = tx + [-1, 1, 0, -2, 2, -1, 1, 0, 0][m], cy = lerp(from, hitY + 1, SAUCE ? ((a - s0) / 0.5) ** 1.5 : (a - s0) / 0.5);
+      cell(g, cx, cy, PURPLES[11]); cell(g, cx, cy + 1, PURPLES[7]);
+    }
+    const L = this.land(R), e = a - L;
+    if (e >= 0 && e < 0.8) ring(g, tx, hitY, 1 + e * (big ? 14 : 8), MOTE_TONES[Math.floor(e / 0.2)], 2);
+    blow(g, t, t - e, tx, s, big ? 0.45 : 0.15, 90);
+    // Held takes more: a blow on the held coil lands heavier
+    if (R8(R)) blow(g, t, t - (a - L - 0.6), tx + 6, s, 0.6, 91);
+  },
+};
+
+// --- Mage: a staff taller than her, a purple stone in its claws ---------------------------
+const ORBIT = Array.from({ length: 8 }, (_, k) => { const a = k / 8 * Math.PI * 2; return [Math.round(Math.cos(a) * 2.5), Math.round(0.5 + Math.sin(a) * 2.5)]; });
+// The stone at (sx, top): mark, a cell orbiting it; touch, three orbiting.
+function stone(g, sx, top, R, t, up, glow, spent = false) {
+  // spent after the finishing blow: the stone goes dark a beat before it relights
+  if (spent) { cell(g, sx, top + 1, PURPLES[5]); cell(g, sx, top, PURPLES[6]); return; }
+  cell(g, sx, top + 1, up ? PURPLES[11] : PURPLES[9]);
+  cell(g, sx, top, glow > 0.66 ? WHITE : PURPLES[11]);
+  if (R4(R)) for (let i = 0; i < (R8(R) ? 3 : 1); i++) {
+    const [dx, dy] = ORBIT[(Math.floor(t * 5) + i * 3) % 8];
+    cell(g, sx + dx, top + dy, i ? PURPLES[8] : PURPLES[10]);
+  }
+}
+function mStaff(g, x, y, R, t, up = false, glow = 0, home = true, spent = false) {
+  const sx = x - 1, lift = up ? 1 : 0, top = y - 3 - lift;
+  for (let r = top + 2; r <= y + 2 - lift; r++) cell(g, sx, r, GREYS[8]);
+  cell(g, sx - 1, top + 1, GREYS[8]); cell(g, sx + 1, top + 1, GREYS[8]);
+  if (home) stone(g, sx, top, R, t, up, glow, spent);
+}
+// A beam of cells from (ax, ay) to (bx, by), `w` cells wide (1 to 3), each
+// cell shimmering a step up and down the purples along its length; at three
+// wide its core is white when `white` (the capstone's burn), else the
+// brightest purple with the edges a step down. `fade` 0..1 steps it down the
+// purples as it cuts off. `surge` is the breath before the blow: every cell a
+// step up. `from` 0..1 leaves the beam's first stretch out, the part the
+// finishing pulse has already run down.
+function beam(g, ax, ay, bx, by, w, t, fade = 0, white = true, surge = false, from = 0) {
+  const len = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / len, uy = (by - ay) / len;
+  const offs = w >= 4 ? [-1, 0, 1, 2] : w >= 3 ? [-1, 0, 1] : w === 2 ? [0, 1] : [0], f = Math.floor(t * 14);
+  const SH = [PURPLES[9], PURPLES[10], PURPLES[11]];
+  const down = k => [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]][Math.min(3, k + Math.floor(fade * 3.99))];
+  for (let i = Math.ceil(from * len); i <= Math.ceil(len); i++) for (const o of offs) {
+    // widened across the grid, not across the slant, so the band has no holes
+    const side = Math.abs(uy) > Math.abs(ux), cx = Math.round(ax + ux * i) + (side ? o : 0), cy = Math.round(ay + uy * i) + (side ? 0 : o), sh = (i + f + (o + 3)) % 3;
+    const core = w >= 3 && o === 0;
+    const lit = w < 3 ? SH[sh] : white ? (core ? (sh === 0 ? PURPLES[11] : WHITE) : SH[sh])
+              : core ? (sh === 0 ? PURPLES[10] : PURPLES[11]) : (sh === 0 ? PURPLES[9] : PURPLES[8]);
+    const hot = core ? (white ? WHITE : PURPLES[11]) : sh === 0 ? PURPLES[10] : PURPLES[11];
+    cell(g, cx, cy, fade > 0 ? down(core ? 0 : 1) : surge ? hot : lit);
+  }
+}
+// The finishing pulse: a bright bead `n` cells long at `p` 0..1 of the way
+// from (ax, ay) to (bx, by), `w` cells across, white at its head.
+function bead(g, ax, ay, bx, by, p, w, n, white) {
+  const len = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / len, uy = (by - ay) / len, side = Math.abs(uy) > Math.abs(ux);
+  const offs = w >= 3 ? [-1, 0, 1] : w === 2 ? [0, 1] : [0], head = p * len;
+  for (let j = 0; j < n; j++) {
+    const i = head - j;
+    if (i < 0) break;
+    for (const o of offs) {
+      const cx = Math.round(ax + ux * i) + (side ? o : 0), cy = Math.round(ay + uy * i) + (side ? 0 : o);
+      cell(g, cx, cy, j === 0 && (white || o === 0) ? WHITE : j < 2 ? PURPLES[11] : PURPLES[10]);
+    }
+  }
+}
+const mage = {
+  key: 'mage', name: 'Mage', at: 5, tileAt: 15,
+  base: 'channels a purple beam', move: 'the beam widens as she holds it', cap: 'the beam burns through',
+  mark: 'a cell orbiting the stone', touch: 'three cells orbiting',
+  rest(g, x, y, R, t) { drawBody(g, x, y); mStaff(g, x, y, R, t); },
+  len: 3.9,
+  // The beam (the owner, 2026-09-28: "she becomes a beam mage"): the staff up,
+  // the stone gathering in a held pose, a held flare, then a steady beam
+  // from the stone into the coil. From rung 4 it widens from one cell to
+  // three the longer she holds it; at rung 8 it burns through at full width.
+  // It ends on a finishing blow ("more impact and last blow at the end"): a
+  // surge a cell wider held a pose, then a pulse shooting down the beam that
+  // lands as a single real hit -- a pause, a star, a give, a burst -- and
+  // pushes her back; the stone is spent a beat, then relights.
+  BEAM: { lift: 0.2, gather: 0.3, flare: 0.55, start: 0.6, surge: 0.2, pulse: 0.16, spent: 0.5 },
+  hold(R) { return R4(R) ? 2.0 : 1.5; },
+  end(R) { return this.BEAM.start + this.hold(R); },
+  // the finishing blow lands as the pulse reaches the hide
+  fin(R) { return this.end(R) + this.BEAM.pulse; },
+  blowK(R) { return R8(R) ? 1.3 : R4(R) ? 0.85 : 0.5; },
+  // how far into its ramp the beam is, 0..1 (full width at 1)
+  ramp(R, a) { return clamp((a - this.BEAM.start) / (0.7 * this.hold(R)), 0, 1); },
+  // the ticks where the beam bites the hide, each a small spark and give
+  ticks(R) { const B = this.BEAM, out = []; for (let u = B.start + 0.075; u < this.end(R) - B.surge; u += 0.15) out.push(u); return out; },
+  hits(R, x) {
+    return [...this.ticks(R).map(u => ({ at: u, x: x - 5, noPause: true,
+      k: R4(R) ? 0.15 + (R8(R) ? 0.45 : 0.3) * this.ramp(R, u) : 0.15 })),
+      // the finishing blow: a real hit, its pause the biggest at rung 8
+      { at: this.fin(R), x: x - 5, k: this.blowK(R), pause: R8(R) ? 0.24 : R4(R) ? 0.16 : 0.1 }];
+  },
+  // classic: the gather, the flare and the surge are held poses; the beam
+  // itself runs smooth, and the pulse steps down it a pose at a time
+  beats(R) { return [this.BEAM.gather, this.BEAM.flare, this.end(R) - this.BEAM.surge]; },
+  poseStep(R, a) { return a >= this.BEAM.start && a < this.end(R) - this.BEAM.surge - 1e-9 ? 0.001 : POSE; },
+  state() {},
+  draw(g, t, a, api, R, x) {
+    const B = this.BEAM, H = this.hold(R), end = this.end(R), fin = this.fin(R), s = api.st, sx = x - 1;
+    const surge = a >= end - B.surge && a < end, u = a - fin, k = this.blowK(R);
+    // sauced, she rises into the gather, and the beam's start pushes her down a little
+    let y = REST_Y - dip(a, B.gather + 0.2, 0.5, 0.25, 0.3), staffUp = 0;
+    if (SAUCE) { const v = a - B.start; if (v >= 0 && v < 0.25) y += 0.6 * (1 - v / 0.25); }
+    // the release pushes her down a cell (and back one at rung 8) and kicks
+    // the staff up, then she settles
+    let bx = x;
+    if (u >= 0) {
+      const back = u < 0.1 ? 1 : 1 - ease(clamp((u - 0.1) / 0.3, 0, 1));
+      y += back; if (R8(R)) bx += Math.round(back); staffUp = u < 0.15 ? 1 : u < 0.3 ? 0.5 : 0;
+    }
+    const spent = u >= 0 && u < B.spent, up = a >= B.lift && a < fin + 0.3;
+    const glow = up && !spent ? clamp((a - B.gather) / 0.25, 0, 1) : 0;
+    drawBody(g, bx, Math.round(y));
+    mStaff(g, bx, Math.round(y - staffUp * 2), R, t, up, glow, true, spent);
+    const oy = Math.round(y - staffUp * 2) - 4, tx = x - 5, hy = cBot(tx, t, s);
+    // relit: a single flash back into the stone as the beat ends
+    if (u >= B.spent && u < B.spent + 0.08) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) cell(g, bx - 1 + dx, oy + (up ? 0 : 1) + dy, PURPLES[10]);
+    // the gather: a ring of the abyss closing on the stone
+    if (a >= B.gather && a < B.flare) ring(g, sx, oy + 0.5, 3.2 - 2.2 * (a - B.gather) / (B.flare - B.gather), a < B.gather + 0.15 ? PURPLES[8] : PURPLES[10]);
+    // the flare as the beam starts, held a pose
+    if (a >= B.flare && a < B.start + 0.06) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1], [-1, -1], [1, -1]]) cell(g, sx + dx, oy + dy, Math.abs(dx) + Math.abs(dy) > 1 ? PURPLES[11] : WHITE);
+    // the beam, held; in the surge a cell wider and a step brighter
+    const r = this.ramp(R, a), w0 = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1, w = w0 + (surge ? 1 : 0);
+    if (a >= B.start && a < end) beam(g, sx, oy - 0.5, tx, hy, w, t, 0, R8(R), surge);
+    if (surge) for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) cell(g, sx + dx, oy + dy, WHITE);
+    // the pulse: the beam cut behind a bright bead shooting from stone to hide;
+    // at rung 8 the white core flares once more down the rest of it
+    if (a >= end && a < fin) {
+      const p = CLASSIC ? Math.min(1, (Math.floor((a - end) / POSE + 1e-9) + 1) / Math.ceil(B.pulse / POSE)) : (a - end) / B.pulse;
+      // what is left of the beam ahead of the bead dims, so the bead reads as the
+      // blow; at rung 8 its white core flares once more instead
+      beam(g, sx, oy - 0.5, tx, hy, w0, t, R8(R) ? 0 : 0.3, R8(R), R8(R), p);
+      bead(g, sx, oy - 0.5, tx, hy, p, R8(R) ? 3 : 2, R8(R) ? 5 : R4(R) ? 4 : 3, R8(R));
+    }
+    // the blow: the hide bitten, scales thrown; the star is the sauce's under
+    // classic, drawn here when classic is off
+    if (u >= 0) {
+      blow(g, t, t - u, tx, s, Math.min(1, k), 99);
+      if (!CLASSIC) star(g, t, t - u, tx, hy + 1, Math.min(1, k), R8(R) ? { purple: true } : {});
+      // the contact flash, a pose: a bar of cells across the hide where the pulse lands
+      if (u < POSE) for (let dx = -(1 + (R4(R) ? 1 : 0) + (R8(R) ? 1 : 0)); dx <= 1 + (R4(R) ? 1 : 0) + (R8(R) ? 1 : 0); dx++) cell(g, tx + dx, cBot(tx + dx, t, s), R8(R) ? (dx ? PURPLES[11] : WHITE) : WHITE);
+    }
+    if (R8(R)) {
+      const full = a >= B.start + 0.7 * H;
+      // burning through: the hide bitten deeper while it holds, purple sparks
+      // spraying off it; the blow tears the bite wider, then it closes
+      const bite = full && a < end + B.pulse ? 0.9 + 1.4 * clamp((a - B.start - 0.7 * H) / (0.3 * H), 0, 1)
+        : u >= 0 && u < 0.7 ? 3.4 - 1.6 * ease(u / 0.7) : 0;
+      if (bite) for (let xx = Math.floor(tx - bite); xx <= tx + bite; xx++) for (let yy = Math.floor(hy - bite); yy <= hy; yy++)
+        if ((xx - tx) ** 2 + (yy - hy) ** 2 <= bite * bite) cell(g, xx, yy, GREYS[1]);
+      if (full && a < end) for (let j = 0; j < 7; j++) {
+        const age = (t * 2.2 + hash(j * 5)) % 1, ang = Math.PI * (0.15 + 0.7 * hash(j * 11 + 3));
+        cell(g, tx + Math.cos(ang) * age * 6, hy + 1 + Math.sin(ang) * age * 4 + age * age * 3, [PURPLES[11], PURPLES[10], PURPLES[8], PURPLES[6]][Math.floor(age * 3.99)]);
+      }
+      // the afterglow: a short purple line lingering along the hide where it burned
+      if (u >= 0 && u < 0.6) for (let dx = -3; dx <= 3; dx++) {
+        if (u > 0.3 && Math.abs(dx) % 2) continue;
+        cell(g, tx + dx, cBot(tx + dx, t, s), [PURPLES[11], PURPLES[9], PURPLES[7]][Math.min(2, Math.floor(u / 0.2 + Math.abs(dx) / 4))]);
+      }
+    }
+  },
+  // The bolt and the lantern the beam replaced, kept, not drawn.
+  oldDraw(g, t, a, api, R, x) {
+    // sauced, she rises into the cast and settles as the bolt leaves
+    const s = api.st, y = REST_Y - dip(a, R4(R) ? 0.5 : 0.65, 0.5, 0.3, 0.3), sx = x - 1;
+    this.lx = x - 12;
+    if (!R4(R)) {
+      // the base bolt: a lift, a bright stone, one small bolt that Lights where it lands
+      const up = a >= 0.3 && a < 1.2;
+      drawBody(g, x, y); mStaff(g, x, y, R, t, up, up ? clamp((a - 0.3) / 0.3, 0, 1) : 0);
+      const tx = x - 5, ty = cBot(tx, t, s) + 1, d = a - 0.65;
+      if (d >= 0 && d < 0.45) {
+        const p = d / 0.45, at = q => [lerp(sx, tx, q), lerp(y - 5, ty, q)];
+        cell(g, ...at(Math.max(0, p - 0.14)), PURPLES[7]); cell(g, ...at(Math.max(0, p - 0.07)), PURPLES[10]); cell(g, ...at(p), WHITE);
+      }
+      blow(g, t, t - (a - 1.1), tx, s, 0.35, 100);
+      return;
+    }
+    // the lantern: the stone leaves the claws, hangs over the coil, lights it all
+    const LX = this.lx, A = { lift: 0.2, off: 0.5, there: 1.2, back: 2.5, home: 3.1, down: 3.3 };
+    const up = a >= A.lift && a < A.down, away = a >= A.off && a < A.home;
+    drawBody(g, x, y); mStaff(g, x, y, R, t, up, 0, !away);
+    if (!away) return;
+    const k = a < A.there ? ease((a - A.off) / (A.there - A.off)) : a < A.back ? 1 : 1 - ease((a - A.back) / (A.home - A.back));
+    const ly = Math.max(3, cTop(LX, t, s) - 5), px = lerp(sx, LX, k), py = lerp(y - 4, ly, k);
+    const open = a >= A.there && a < A.back ? Math.min(clamp((a - A.there) / 0.3, 0, 1), clamp((A.back - a) / 0.3, 0, 1)) : 0;
+    // the capstone's lantern opens a ring wider
+    if (open > 0) ring(g, px, py, open < 0.5 ? 1 : R8(R) ? 3 : 2, R8(R) ? (open < 0.5 ? PURPLES[9] : PURPLES[11]) : open < 0.5 ? PURPLES[7] : PURPLES[9]);
+    stone(g, px, py - 1, R, t, true, 0);
+  },
+};
+
+// --- Bard: a flute held sideways at her mouth -------------------------------------------------
+// mark: a purple tip on the flute; touch: the whole flute purple.
+function flute(g, x, y, R) {
+  const p = R8(R);
+  cell(g, x + 3, y, p ? PURPLES[9] : GREYS[10]); cell(g, x + 4, y, p ? PURPLES[6] : GREYS[6]);
+  cell(g, x + 5, y, p ? PURPLES[9] : GREYS[10]); cell(g, x + 6, y, R4(R) ? PURPLES[11] : GREYS[10]);
+}
+const bard = {
+  key: 'bard', name: 'Bard', at: 2, tileAt: 11, buddy: true, loop: 6.6,
+  base: 'sings: the party Inspired (no damage)', move: 'Anthem: Inspired doubles', cap: 'Inspired lingers after the song',
+  mark: 'a purple tip on the flute', touch: 'the whole flute purple',
+  rest(g, x, y, R, t) { drawBody(g, x, y); flute(g, x, y, R, t); },
+  len: 3.0,
+  beats() { return [0.1]; },
+  state(a, api, R) { if (a >= 1.2 && a < (R8(R) ? 6 : 3.4)) api.buff('inspired', R8(R) ? 3 : R4(R) ? 2 : 1); },
+  draw(g, t, a, api, R, x) {
+    // sauced, she draws a breath before the song: a rise and a settle
+    const y = REST_Y - dip(a, 0.1, 0.5, 0.25, 0.4);
+    drawBody(g, x, y); flute(g, x, y, R, t);
+    if (a > 2.6) return;
+    // notes rise off the flute and drift to the fighters, each to a station
+    const tip = [x + 6, y - 1];
+    api.others.forEach((o, n) => {
+      const s0 = 0.1 + (n % 5) * 0.12, k = along(a, s0, s0 + 1.2);
+      if (a < s0 || a >= s0 + 1.2) return;
+      const nx = lerp(tip[0], o.x + 1, k), ny = lerp(tip[1], o.y - 3, k) - 8 * Math.sin(Math.PI * k);
+      cell(g, nx, ny, PURPLES[11]); cell(g, nx + 1, ny - 1, PURPLES[9]);
+    });
+  },
+};
+
+// ================================================================================
+// Five stations, a pair each (section 2), and the turn order along them.
+// ================================================================================
+const STATIONS = [['the altar', brawler, swordsman], ['the well', monk, martial], ['the armory', ranger, assassin],
+                  ['the circle', hexer, sapper], ['the spire', mage, bard]];
+const ORDER = STATIONS.flatMap(([, a, b]) => [a, b]);
+const CENTER = i => 13 + i * 26;
+const SPOT = {};   // each class's body-left column in the pane
+STATIONS.forEach(([, a, b], i) => { SPOT[a.key] = CENTER(i) - 7; SPOT[b.key] = CENTER(i) + 4; });
+const GAP = 3.3, LOOP = ORDER.length * GAP + 1;
+const START = {};
+ORDER.forEach((c, i) => { START[c.key] = 0.5 + i * GAP; });
+const LINGER = 0.8;
+
+let RUNG = 8;
+function paintPane(g, T) {
+  const t = T % LOOP;
+  const st = { still: null, statuses: {}, buffs: {}, dents: [] };
+  const A = {}, A0 = {}, SA = {};
+  for (const c of ORDER) {
+    A0[c.key] = ((t - START[c.key]) % LOOP + LOOP) % LOOP;
+    SA[c.key] = sauceOf(c, RUNG, A0[c.key], SPOT[c.key]);
+    A[c.key] = SA[c.key].a;
+    st.dents.push(...sauceDents(SA[c.key], t, A0[c.key]));
+  }
+  for (const c of ORDER) {
+    const a = A[c.key], end = c.len + LINGER;
+    const api = {
+      stun(from, len) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.stunned = 1; } },
+      hold(from, len, lv = 1) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.held = Math.max(st.statuses.held || 0, lv); } },
+      status(k, lv = 1) { if (a < end) st.statuses[k] = Math.max(st.statuses[k] || 0, lv); },
+      buff(k, lv = 1) { for (const o of ORDER) if (o !== c) (st.buffs[o.key] ||= {})[k] = Math.max(st.buffs[o.key]?.[k] || 0, lv); },
+    };
+    c.state(a, api, RUNG);
+  }
+  drawDeep(g, t);
+  STATIONS.forEach((_, i) => drawPlinthAt(g, CENTER(i), FLOOR, 21));
+  drawCoil(g, t, st);
+  if (st.statuses.bleeding) paintBleeding(g, t, st);
+  if (st.statuses.held) paintHeld(g, t, st, st.statuses.held);
+  if (st.statuses.stunned) paintStunned(g, t, st);
+  for (const c of ORDER) {
+    const x = SPOT[c.key], a = A[c.key];
+    const others = ORDER.filter(o => o !== c).map(o => ({ x: SPOT[o.key], y: REST_Y - liftOf(o, RUNG) }));
+    CUR = { t, s: st };
+    sauceSparks(g, SA[c.key], t, A0[c.key], st);
+    if (a < c.len) c.draw(g, t, a, { st, others, kick: SA[c.key].kick }, RUNG, x);
+    else c.rest(g, x, REST_Y - liftOf(c, RUNG), RUNG, t);
+    const b = st.buffs[c.key] || {};
+    if (b.inspired) paintInspired(g, t, x, REST_Y - liftOf(c, RUNG), b.inspired);
+    if (b.hasted) paintHasted(g, t, x, REST_Y - liftOf(c, RUNG));
+  }
+}
+
+// ================================================================================
+// A tile's stage: one class alone at a station under a short stretch of the
+// same coil, playing its attack at one rung on a loop of its own. The world is
+// the pane's, cropped: the fighter stands at column WX, the tile shows TW
+// columns round it and the rows from TY0 down, so every blow, status and ring
+// is drawn by the same code as the pane. A class that buffs the party gets a
+// plain fighter at the tile's left edge to receive it.
+// ================================================================================
+const TW = 22, TY0 = 1, TH = FLOOR + 2, WX = 104;   // WX toward the tail, where the coil is slim
+function paintTile(g, c, R, T, phase) {
+  const at = c.tileAt || 9, x0 = WX - at;
+  const dur = c.loop || Math.max(c.len + 1.6, 4.6);
+  const t = T, a0 = ((T + phase) % dur + dur) % dur, end = c.len + LINGER;
+  const S = sauceOf(c, R, a0, WX), a = S.a;
+  const st = { still: null, statuses: {}, buffs: {}, dents: sauceDents(S, t, a0) };
+  c.state(a, {
+    stun(from, len) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.stunned = 1; } },
+    hold(from, len, lv = 1) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.held = Math.max(st.statuses.held || 0, lv); } },
+    status(k, lv = 1) { if (a < end) st.statuses[k] = Math.max(st.statuses[k] || 0, lv); },
+    buff(k, lv = 1) { st.buffs[k] = Math.max(st.buffs[k] || 0, lv); },
+  }, R);
+  g.save();
+  g.translate(-x0 * P, -TY0 * P);
+  drawDeep(g, t);
+  drawPlinthAt(g, WX + 1, FLOOR);
+  drawCoil(g, t, st);
+  if (st.statuses.bleeding) paintBleeding(g, t, st);
+  if (st.statuses.held) paintHeld(g, t, st, st.statuses.held);
+  if (st.statuses.stunned) paintStunned(g, t, st, x0 + 4);
+  const others = [];
+  if (c.buddy) {
+    const bx = x0 + 1;
+    drawPlinthAt(g, bx + 1, FLOOR, 5); drawBody(g, bx, REST_Y);
+    others.push({ x: bx, y: REST_Y });
+    if (st.buffs.inspired) paintInspired(g, t, bx, REST_Y, st.buffs.inspired);
+    if (st.buffs.hasted) paintHasted(g, t, bx + 8, REST_Y);
+  }
+  CUR = { t, s: st };
+  // the impact under the weapon, so the fist or blade reads on top of it
+  sauceSparks(g, S, t, a0, st);
+  if (a < c.len) c.draw(g, t, a, { st, others, kick: S.kick }, R, WX);
+  else c.rest(g, WX, REST_Y - liftOf(c, R), R, t);
+  g.restore();
+}
+
+// ================================================================================
+// The idle: where the whole fighter stands, in cells, `s` seconds after its
+// attack ended. Every option is held poses on whole cells.
+// ================================================================================
+const MELEE_K = new Set(['brawler', 'sword', 'martial', 'assassin']);
+const idHop = s => (s % 0.5) < 0.16 ? -1 : 0, idBreathe = s => (s % 1.6) < 0.7 ? -1 : 0, idSway = s => (s % 1.6) < 0.8 ? 0 : 1;
+const OPTIONS = [
+  { id: 'E', name: 'Split by kind', say: 'melee hop in place; casters sway',
+    at(c, s) { return MELEE_K.has(c.key) ? [0, idHop(s)] : [idSway(s), 0]; } },
+  { id: 'F', name: 'Hop and sway', say: 'melee hop while swaying; casters sway and breathe',
+    at(c, s) { return MELEE_K.has(c.key) ? [idSway(s), idHop(s)] : [idSway(s), idBreathe(s)]; } },
+  { id: 'G', name: 'Hop on the step', say: 'all sway; melee hop once as each step lands',
+    at(c, s) { const k = s % 0.8; return [idSway(s), MELEE_K.has(c.key) && k < 0.16 ? -1 : 0]; } },
+];
+const IDLE = 3.2;
+function paintIdle(g, c, R, T, phase, opt) {
+  const at = c.tileAt || 9, x0 = WX - at;
+  const end = c.len + LINGER, dur = end + IDLE;
+  const t = T, a0 = ((T + phase) % dur + dur) % dur;
+  const S = sauceOf(c, R, Math.min(a0, end), WX), a = S.a;
+  const st = { still: null, statuses: {}, buffs: {}, dents: a0 < end ? sauceDents(S, t, a0) : [] };
+  if (a0 < end) c.state(a, {
+    stun(from, len) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.stunned = 1; } },
+    hold(from, len, lv = 1) { if (a >= from && a < from + len) { st.still = t - (a - from); st.statuses.held = Math.max(st.statuses.held || 0, lv); } },
+    status(k, lv = 1) { if (a < end) st.statuses[k] = Math.max(st.statuses[k] || 0, lv); },
+    buff(k, lv = 1) { st.buffs[k] = Math.max(st.buffs[k] || 0, lv); },
+  }, R);
+  g.save();
+  g.translate(-x0 * P, -TY0 * P);
+  drawDeep(g, t);
+  drawPlinthAt(g, WX + 1, FLOOR);
+  drawCoil(g, t, st);
+  if (st.statuses.bleeding) paintBleeding(g, t, st);
+  if (st.statuses.held) paintHeld(g, t, st, st.statuses.held);
+  if (st.statuses.stunned) paintStunned(g, t, st, x0 + 4);
+  const others = [];
+  if (c.buddy) {
+    const bx = x0 + 1;
+    drawPlinthAt(g, bx + 1, FLOOR, 5); drawBody(g, bx, REST_Y);
+    others.push({ x: bx, y: REST_Y });
+    if (st.buffs.inspired) paintInspired(g, t, bx, REST_Y, st.buffs.inspired);
+  }
+  CUR = { t, s: st };
+  if (a0 < c.len) { sauceSparks(g, S, t, a0, st); c.draw(g, t, a, { st, others, kick: S.kick }, R, WX); }
+  else {
+    // the idle starts a beat after the attack has settled
+    const s = a0 - c.len, d = s < 0.35 ? [0, 0] : opt.at(c, s - 0.35);
+    c.rest(g, WX + d[0], REST_Y - liftOf(c, R) + d[1], R, t);
+  }
+  g.restore();
+}
+
+const el = (tag, props = {}, kids = []) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const host = document.getElementById('host');
+host.append(el('div'));
+for (const o of OPTIONS) host.append(el('div', { className: 'hd' }, [el('b', { textContent: o.id + '  ' + o.name }), document.createTextNode(o.say)]));
+const tiles = [];
+STATIONS.forEach(([, ...pair]) => pair.forEach(c => {
+  host.append(el('div', { className: 'nm', textContent: c.name }));
+  // one phase a class, the same across the four, so a row compares like with like
+  const phase = hash(tiles.length * 7 + 3) * 2.5;
+  for (const o of OPTIONS) {
+    const cv = el('canvas'); cv.width = TW * P; cv.height = TH * P;
+    host.append(cv);
+    tiles.push({ c, o, phase, g: cv.getContext('2d') });
+  }
+}));
+const rungBtns = [];
+for (const R of [0, 4, 8]) {
+  const b = el('button', { type: 'button', textContent: String(R) });
+  b.onclick = () => { RUNG = R; syncRung(); };
+  rungBtns.push([b, R]);
+  document.getElementById('rungs').append(b);
+}
+function syncRung() { for (const [b, R] of rungBtns) b.setAttribute('aria-pressed', String(R === RUNG)); }
+let playing = true, clock = 0, last = performance.now();
+document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+function paintAll(t) { for (const tl of tiles) paintIdle(tl.g, tl.c, RUNG, t, tl.phase, tl.o); }
+window.__at = s => { clock = s; playing = false; paintAll(clock); return clock; };
+window.__test = () => 0;
+syncRung();
+function tick(now) {
+  if (playing) clock += Math.max(0, now - last) / 1000;
+  last = now;
+  document.getElementById('clock').textContent = clock.toFixed(1) + ' s';
+  paintAll(clock);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+<script>
+// The pick, kept in the page's shared store so Claude reads it back.
+(function () {
+  var vote = document.getElementById('vote'), flag = document.getElementById('saved');
+  var btns = ['E', 'F', 'G'].map(function (id) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = id; b.dataset.v = id;
+    b.setAttribute('aria-pressed', 'false'); vote.append(b); return b;
+  });
+  var note = document.createElement('input'); note.placeholder = 'Note'; note.setAttribute('aria-label', 'Note');
+  vote.append(note);
+  var doc = {};
+  (async function () {
+    var db = window.claude ? await window.claude.use('db') : null;
+    if (!db) { vote.hidden = true; return; }
+    var ref = db.collection('idle').doc('pick');
+    function save(data) {
+      flag.textContent = '…';
+      ref.set(Object.assign({}, doc, data)).then(function () { flag.textContent = 'saved'; }, function () { flag.textContent = 'did not save'; });
+    }
+    btns.forEach(function (b) { b.onclick = function () { save({ choice: doc.choice === b.dataset.v ? '' : b.dataset.v }); }; });
+    var t; note.oninput = function () { clearTimeout(t); t = setTimeout(function () { save({ note: note.value }); }, 700); };
+    ref.onSnapshot(function (d) {
+      doc = (d && d.data && d.data()) || {};
+      btns.forEach(function (b) { b.setAttribute('aria-pressed', String(doc.choice === b.dataset.v)); });
+      if (document.activeElement !== note) note.value = doc.note || '';
+    }, function () {});
+  })();
+})();
+</script>

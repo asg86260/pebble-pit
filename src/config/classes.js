@@ -31,14 +31,14 @@ export const CLASSES = {
               every: 1.2, windup: 0.18, haymaker: { every: 4, x: 4 }, capStun: 1.5 },
   // Cuts that bleed; at rung 4 each cut lands at three spots, at 8 every 3rd twice.
   sword:    { name: 'Swordsman',      ladder: 'sword',    hit: 'sword',    melee: true,
-              every: 1, windup: 0.14, bleed: { dps: 0.3, s: 3 },
+              every: 1.6, windup: 0.14, bleed: { dps: 0.3, s: 3 },
               whirl: { spots: 3, x: 0.6, spread: 4 }, capEvery: 3 },
   // A palm wave from afar; each fills chi, and a full row is a chi palm that stuns.
   monk:     { name: 'Monk',           ladder: 'monk',     hit: 'monk',     melee: false,
               every: 1, windup: 0.15, fly: 0.35, chi: { max: 5, fill: 1, moveFill: 2, x: 3 }, capStun: 1.5 },
   // Quick staff thrusts fill pips; a full row is one finisher blow.
   martial:  { name: 'Martial Artist', ladder: 'martial',  hit: 'martial',  melee: true,
-              every: 1 / 3, windup: 0.08, pips: { max: 5, fill: 1, moveFill: 2 }, finisherX: 1.5, capHaste: 3 },
+              every: 0.5, windup: 0.08, pips: { max: 5, fill: 1, moveFill: 2 }, finisherX: 1.5, capHaste: 3 },
   // Arrows loosed from a bow held over the head; every 5th aimed, x5, stunning at 8.
   ranger:   { name: 'Ranger',         ladder: 'ranger',   hit: 'ranger',   melee: false,
               every: 0.8, windup: 0.2, fly: 0.5, arc: P * 12, aimed: { every: 5, x: 5 }, capStun: 1 },
