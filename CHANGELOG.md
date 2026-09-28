@@ -12,8 +12,8 @@ feature lives in DESIGN.md.
 ## Unreleased
 
 **New this release**
-- The deep's stations are built from a floating button over the next free spot on the floor, the first free and each after it for a fang, and each station's two classes are climbed on its rails: tap to look, buy to take, Reset to have it all back (test/rails.test.mjs, src/selftest/deep.js).
-- The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought with abyssal fists, lances, grenades, sigils, wizards and a called star; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
+- The party: up to four stations built on the deep's floor, the first free and each after it for a fang the serpent drops at a break, each with a fighter of one of ten classes climbed on the station's rails, a move at rung 4 and a capstone at rung 8 (test/party.test.mjs, test/rails.test.mjs, test/classes.test.mjs).
+- The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought by the party's fighters; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
 - The serpent snatches him through a portal in the abyss and the sqwife leaps in after him; the deep is its own crew from then, grown by its pods and building its own works, the sqwife living in its first pod, and the portal a wizard flies out and summons in the middle of the pit -- clicked, or its arrow or the corner's square -- is the player's way down; the deep is seen under the yard's own sky, mostly water (test/two-crews.test.mjs, test/snatch.test.mjs).
 - A square in the corner and an arrow at the shaft take you between the yard and the deep (test/deep-shaft.test.mjs).
@@ -26,9 +26,8 @@ feature lives in DESIGN.md.
 - The fight is read in numbers: each blow's damage rises off the coil in a carved pixel face of its own, a lance's and a beam's bleed and a grenade's burst each say one sum, and the heal rises off the wound in purple as +N once a second (test/serpent-numbers.test.mjs).
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
 - A card pressed again queues another of the same -- the next rung, the next house -- paid on the press at its own price; a strip along the card's foot splits into a refund of the newest one still waiting and a button for another, and the card's pips dot every rung paid for and not yet landed; the queue card shows a run as one line with its count (test/queue-repeats.test.mjs, src/selftest/boards.js).
-- Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy punch, grenade or star stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
+- Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
 - Save a copy, load a save and reset progress are on the saves page now, and loading a yard turns the sheet back to the front (src/selftest/settings.js).
-- The serpent is fought by ten classes, a fighter at each station: each class hits in its own way, gains its move at rung 4 and its capstone at rung 8, and leaves Bleeding, Exposed, Held or Weakened on the serpent or Inspired and Hasted on the party; each takes half in one phase, and the click is always a punch (test/classes.test.mjs, test/statuses.test.mjs).
 
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - Scales tossed into the crusher drop into its funnel instead of sliding down in front of it (`node tools/look.mjs crusher`).
