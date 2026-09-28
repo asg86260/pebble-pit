@@ -142,13 +142,12 @@ group('Swordsman: the whirlwind lands each cut at three spots; at rung 8 every 3
 
 // Follows the chi row, which fills across more than five seconds and which
 // no save keeps.
-group('Monk: palm waves fill chi, a full row is a stunning chi palm; faster at 4, longer at 8', async () => {
+group('Monk: palm waves fill chi, a full row is a chi palm; faster at 4, stunning at 8', async () => {
   const alone = breaksAlone('well', 'monk', 150);
   window.__serpent({ stage: 3, wound: 0 });
   const base = watch(13);
   buyTo(0, 'monk', 4);
   const four = watch(13);
-  const stun4 = four.stunMost;
   buyTo(0, 'monk', 8);
   S.serpentGrace = 0;
   const eight = watch(13);
@@ -164,8 +163,8 @@ group('Monk: palm waves fill chi, a full row is a stunning chi palm; faster at 4
        base.moves.join(' ')),
     ok(gaps(base).length && gaps(four).length && Math.max(...gaps(four)) < Math.min(...gaps(base)),
        'at rung 4 chi fills twice as fast', `${gaps(base)} palms between chi palms, then ${gaps(four)}`),
-    ok(four.stuns >= 1, 'a chi palm stuns', `${four.stuns}`),
-    ok(eight.stunMost > stun4, 'and at rung 8 it stuns longer', `${stun4.toFixed(2)} then ${eight.stunMost.toFixed(2)}`)
+    ok(four.stuns === 0, 'a chi palm does not stun yet', `${four.stuns}`),
+    ok(eight.stuns >= 1, 'at rung 8 it stuns', `${eight.stuns} stuns`)
   ];
 }, { reload: false });
 
@@ -280,7 +279,7 @@ group('Hexer: a hex strikes; it Weakens the heal from rung 4; from rung 8 it sto
   ];
 });
 
-group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3 and stuns; at 8 two at once', async () => {
+group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; at 8 two at once, and they stun', async () => {
   const alone = breaksAlone('circle', 'sapper');
   const cls = CLASSES.sapper;
   window.__serpent({ stage: 3, wound: 0 });
@@ -293,14 +292,15 @@ group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3 an
   buyTo(0, 'sapper', 8);
   S.serpentGrace = 0;
   let two = 0;
-  watch(10, 0, () => { two = Math.max(two, shots.filter(s => s.stuck).length); });
+  const eight = watch(10, 0, () => { two = Math.max(two, shots.filter(s => s.stuck).length); });
   return [
     alone,
     ok(base.shots.has('charge') && base.moves.includes('throw'), 'a charge is thrown', [...base.shots].join(' ')),
     ok(stuck === 1, 'at rung 4 it sticks to the hide', `${stuck}`),
     ok(blows.some(d => near(d, v4)), 'and blows as one blow x3', JSON.stringify(blows)),
-    ok(four.stuns >= 1, 'that stuns', `${four.stuns} stuns`),
-    ok(two === 2, 'at rung 8 two are stuck at once', `${two}`)
+    ok(four.stuns === 0, 'and does not stun yet', `${four.stuns} stuns`),
+    ok(two === 2, 'at rung 8 two are stuck at once', `${two}`),
+    ok(eight.stuns >= 1, 'and their blow stuns', `${eight.stuns} stuns`)
   ];
 });
 
@@ -320,14 +320,16 @@ group('Mage: a held beam ticks, then a finishing blow; it widens at 4 and burns 
   const half = Math.max(...tick(watch(6)));
   buyTo(0, 'mage', 8);
   let burn = 0;
-  const through = Math.max(...tick(watch(6, 0, () => { const b = fighterAt(0).beam; if (b) burn = Math.max(burn, b.burn); })));
+  const eight = watch(6, 0, () => { const b = fighterAt(0).beam; if (b) burn = Math.max(burn, b.burn); });
+  const through = Math.max(...tick(eight));
   const grew = rungWorth(cls, 8) / rungWorth(cls, 4);
   return [
     alone,
     ok(beamed && count(base.moves, 'finish') >= 1, 'she holds a beam and ends it on a finishing blow', base.moves.join(' ')),
     ok(widest > 0.9, 'at rung 4 the beam widens as she holds it', `${widest}`),
     ok(through > half * grew * 1.8 && burn > 0.9, 'at rung 8 it burns through the phase that halves it',
-       `${half.toFixed(1)} then ${through.toFixed(1)}, burn ${burn}`)
+       `${half.toFixed(1)} then ${through.toFixed(1)}, burn ${burn}`),
+    ok(eight.stuns === 0 && base.stuns === 0, 'and she stuns nothing', `${base.stuns} then ${eight.stuns}`)
   ];
 }, { reload: false });
 

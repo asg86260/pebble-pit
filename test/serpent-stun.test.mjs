@@ -77,20 +77,10 @@ group('only a stunning blow stuns: never a click, a plain blow or a tick', async
   ];
 });
 
-group('a stunning blow short of the share still stuns; one that "can stun" does not', async () => {
+group('a stunning blow short of the share still stuns, for the base', async () => {
   deepYard(0);
   stunAt(0.5);
-  const small = S.serpentStun;
-  window.__serpent({ stage: 0, wound: 0 });
-  S.serpentStun = S.serpentGrace = 0;
-  stunAt(0.5, { stun: 1, share: true });
-  const can = S.serpentStun;
-  stunAt(4, { stun: 1, share: true });
-  return [
-    ok(Math.abs(small - STUN_BASE_S) < 1e-9, 'a move that stuns stuns for the base', `${small}`),
-    ok(can === 0, "the Mage's finishing blow short of the share does not", `${can}`),
-    ok(Math.abs(S.serpentStun - stunFor(blowOf(4))) < 1e-9, 'and over it, it does', `${S.serpentStun}`)
-  ];
+  return [ok(Math.abs(S.serpentStun - STUN_BASE_S) < 1e-9, 'a move that stuns stuns for the base', `${S.serpentStun}`)];
 });
 
 group('a stunned coil holds its pose, and sways on from it after', async () => {

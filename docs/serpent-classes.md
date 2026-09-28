@@ -35,13 +35,13 @@ all stand.
 |---|---|---|---|
 | Brawler | heavy punches | **Combos**: every 4th punch is a haymaker, x3 | **Knockout**: the haymaker stuns |
 | Swordsman | cuts | **Whirlwind**: each cut lands at three spots | **Weak points**: every 3rd cut lands twice, the second leaving Bleeding |
-| Monk | palms build chi; a chi palm stuns | **Deep breath**: chi fills twice as fast | **Still water**: the chi palm stuns longer |
+| Monk | palms build chi; a full row is a chi palm, x3 | **Deep breath**: chi fills twice as fast | **Still water**: the chi palm stuns |
 | Martial Artist | quick thrusts charge a finisher | **Flourish**: thrusts charge double | **Rally**: the finisher Hastes the party |
 | Ranger | arrows from overhead | **Aimed shot**: every 5th arrow x2 | **Pinning shot**: the aimed shot stuns |
 | Assassin | daggers, x3 on a stunned serpent | **Execution**: daggers grow with the wound | **Serrated**: daggers leave Bleeding |
-| Sapper | thrown charges | **Sticky bombs**: stuck, ticks down, one big stunning blow | **Pair**: two charges at once |
+| Sapper | thrown charges | **Sticky bombs**: stuck, ticks down, one big blow | **Pair**: two charges at once, and they stun |
 | Hexer | hexes | **Wither**: hexes Weaken the heal | **Binding**: hexes stop the heal (Held) and lay Exposed |
-| Mage | a held beam, then a finishing blow | **Widening**: the beam widens and ramps | **Thermite**: the finishing blow ignores the phases' toughness |
+| Mage | a held beam, then a finishing blow (never stuns) | **Widening**: the beam widens and ramps | **Thermite**: the finishing blow ignores the phases' toughness |
 | Bard | sings: the party Inspired (no damage) | **Anthem**: Inspired doubles | **Tempo**: her song Hastes the party too |
 
 The rungs as changed by the owner's notes on the wording audit
@@ -53,7 +53,9 @@ else. Then the tuning pass (same day): one damage curve for every class
 (`LADDERS`, about x1.5 a rung, x1.8 at the fork), the haymaker x3, the
 Mage's ramp x1.5, the Martial Artist's Haste 1 s, the Hexer's Exposed 2 s,
 and the Bard's capstone a party Haste (her linger never showed: she never
-stops singing).
+stops singing). Then: a stun is a capstone -- the Brawler, Monk, Ranger and
+Sapper stun from rung 8 and nobody earlier, the Mage never -- and two
+fighters' bleeds add up, each ticking under its own hit.
 
 ---
 

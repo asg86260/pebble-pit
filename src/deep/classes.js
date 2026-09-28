@@ -152,7 +152,7 @@ function sword(w, c, st, cls, v) {
         strike(cls.hit, each, q.x, q.y, cut, 0, { by: w });
       }
     }
-    if (hit.twice) lay('bleed', v * cls.bleed.dps, cls.bleed.s, at.seg);
+    if (hit.twice) lay('bleed', v * cls.bleed.dps, cls.bleed.s, at.seg, cls.hit);
   }
   if (!due(w, t, cls.every)) return;
   w.count = (w.count || 0) + 1;
@@ -161,7 +161,7 @@ function sword(w, c, st, cls, v) {
 }
 
 // Palm waves from the well; each fills chi (twice as fast from rung 4), and
-// a full row is a chi palm, x3, that stuns (longer from rung 8).
+// a full row is a chi palm, x3, that stuns from rung 8.
 function monk(w, c, st, cls, v) {
   const t = c.now, at = atPost(w, st, t);
   if (!at) return;
@@ -170,7 +170,7 @@ function monk(w, c, st, cls, v) {
   w.pips = Math.min(chi.max, w.pips || 0);
   const hit = landing(w, t);
   if (hit) {
-    const big = hit.big, stun = big ? (hasCap(st) ? cls.capStun : 1) : 0;
+    const big = hit.big, stun = big && hasCap(st) ? cls.capStun : 0;
     shoot(w, big ? 'chi' : 'palm', mid(w), w.y, at.seg, t, cls.fly, (s, q) =>
       strike(cls.hit, v * (big ? chi.x : 1), q.x, q.y, null, 0, { by: w, stun }));
   }
@@ -234,7 +234,7 @@ function assassin(w, c, st, cls, v) {
       let x = S.serpentStun > 0 ? cls.stunnedX : 1;
       const exec = hasMove(st) ? Math.min(cls.execMost, 1 + woundK()) : 1;
       strike(cls.hit, v * x * exec, q.x, q.y, null, 0, { by: w });
-      if (hasCap(st)) lay('bleed', v * cls.bleed.dps, cls.bleed.s, s.seg);
+      if (hasCap(st)) lay('bleed', v * cls.bleed.dps, cls.bleed.s, s.seg, cls.hit);
     });
   }
   if (!due(w, t, cls.every)) return;
@@ -263,8 +263,8 @@ function hexer(w, c, st, cls, v) {
 }
 
 // Charges thrown on the water's gravity. From rung 4 a charge sticks to the
-// hide, ticks down and goes off as one blow, x3, that stuns; from rung 8 two
-// are thrown at once and go off together.
+// hide, ticks down and goes off as one blow, x3; from rung 8 two are thrown
+// at once, go off together, and stun.
 function sapper(w, c, st, cls, v) {
   const t = c.now, at = atPost(w, st, t);
   if (!at) return;
@@ -288,7 +288,7 @@ function sapper(w, c, st, cls, v) {
       });
     }
     function blow(s, q) {
-      strike(cls.hit, v * cls.stickyX, q.x, q.y, pair, 0, { by: w, stun: 1 });
+      strike(cls.hit, v * cls.stickyX, q.x, q.y, pair, 0, { by: w, stun: hasCap(st) ? 1 : 0 });
     }
   }
   if (!due(w, t, cls.every)) return;
@@ -306,7 +306,7 @@ function throwCharge(w, seg, t, cls, land) {
 }
 
 // A held purple beam: it ticks while she holds it, then she winds one
-// finishing blow, which stuns if it is worth the stun's share; then a rest.
+// finishing blow; then a rest. She stuns nothing.
 // From rung 4 the beam widens and its ticks ramp the longer it is held (the
 // finisher with them); from rung 8 it burns through: the phase's half does
 // not dim it, and the hide under it chips open wider as it is held.
@@ -319,7 +319,7 @@ function mage(w, c, st, cls, v) {
   if (hit && hit.move === 'finish') {
     const q = coilAt(hit.seg, t);
     strike(cls.hit, v * cls.finishX * (hit.ramp || 1), q.x, q.y, null, 0,
-           { by: w, stun: 1, share: true, through: hasCap(st) });
+           { by: w, through: hasCap(st) });
   }
   if (!b) {
     if (!due(w, t, cls.hold + cls.rest)) { w.goal = w.pose && t < w.pose.end ? 'fight' : 'rest'; return; }

@@ -45,6 +45,24 @@ group('Bleeding ticks the wound open, a tick at a time, and never stuns', async 
   ];
 });
 
+group("two fighters' bleeds add up, each ticking on its own", async () => {
+  deepYard(1);
+  lay('bleed', 10, 3, bellySeg(), 'sword');
+  lay('bleed', 6, 3, bellySeg(), 'assassin');
+  const both = level('bleed');
+  lay('bleed', 4, 3, bellySeg(), 'sword');         // a weaker cut of the same source refreshes it
+  const kept = level('bleed');
+  let most = 0;
+  for (let f = 0; f < 60 * 4; f++) { frame(); most = Math.max(most, S.serpentWound); }
+  const cut = 10 * 3 * SERPENT_DEFENSE.sword[1] + 6 * 3 * SERPENT_DEFENSE.assassin[1];
+  return [
+    ok(both === 16, 'two sources add up', `${both}`),
+    ok(kept === 16, 'and a source laid again keeps the stronger of its own', `${kept}`),
+    ok(most <= cut + 1e-6 && most >= cut - SERPENT_HEAL[1] * 3 - 1e-6, 'both tick the wound open', `${most.toFixed(2)} of ${cut}`),
+    ok(!has('bleed'), 'and both run out')
+  ];
+});
+
 group('Exposed: a quarter more from everything, blows and ticks alike', async () => {
   deepYard(0);
   const bare = hit();
