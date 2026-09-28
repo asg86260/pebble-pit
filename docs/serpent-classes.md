@@ -246,7 +246,7 @@ at 5 she spends it on a finisher, a blow of all five together.
 ### The well
 
 #### Swordsman -- the blade. *(FE Swordmaster: crits; FFT Samurai: drawn spirit)*
-Base: a cut every 1 s that leaves a short Bleed. Blows that bleed.
+Base: a cut every 1.6 s that leaves a short Bleed. Blows that bleed.
 
 - **Swordmaster -- crits.** *K:* +25% crit; a crit's bleed is doubled.
   *A:* crits on a Stunned serpent always land. *B:* each crit makes her
