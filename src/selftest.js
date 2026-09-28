@@ -33,6 +33,7 @@ import { TESTS as touch } from './selftest/touch.js';
 import { TESTS as sheet } from './selftest/sheet.js';
 import { TESTS as times } from './selftest/times.js';
 import { TESTS as deep } from './selftest/deep.js';   // wave serpent: RENDER
+import { TESTS as cloud } from './selftest/cloud.js';   // wave-cloud FACE
 
 // Every group there is, in file order.
 const TESTS = [
@@ -57,6 +58,7 @@ const TESTS = [
   ...sheet,
   ...times,
   ...deep,
+  ...cloud,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says

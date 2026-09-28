@@ -82,16 +82,27 @@ try {
   <button id="dark" type="button" data-pane="settings" hidden>dark: off</button>
   <button id="sound" type="button" data-pane="settings" hidden>sound: on</button>
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden>
+  <!-- the cloud's block, as on the held sheet's saves page (cloudsheet.js);
+       a build with no cloud leaves it hidden -->
+  <div id="cloudsheet" class="paste cloudsheet" data-pane="settings" hidden></div>
   <button id="settingsback" type="button" data-pane="settings" hidden>back</button>
 
-  <div id="said" class="said" data-pane="main slots settings"></div>
+  <!-- two yards in one slot, one here and one in the cloud: the player
+       keeps one (cloudsheet.js, `showConflicts`) -->
+  <div class="word" data-pane="conflict" hidden>choose a yard</div>
+  <div id="clashes" class="slots clashes" data-pane="conflict" hidden></div>
+  <button id="conflictback" type="button" data-pane="conflict" hidden>back</button>
+
+  <div id="said" class="said" data-pane="main slots settings conflict"></div>
 </div>
 <!-- the way in (title.js, `play`): the page goes white before play.html is
      asked for, so the load gap between the two is the end of one fade and
      the start of the next rather than a cut -->
 <div id="veil" class="veil up"></div>
 <div class="foot">
-  <span id="build"></span>
+  <!-- the build and the cloud's line beside it (cloudsheet.js, `showFoot`;
+       DESIGN.md, "Linking a device") -->
+  <span class="left"><span id="build"></span><span id="cloud" class="cloud" hidden></span></span>
   <span id="links"><a href="https://cameldash.itch.io/pebble-pit" target="_blank" rel="noopener">itch</a> &middot; <a href="https://github.com/asg86260/pebble-pit" target="_blank" rel="noopener">github</a></span>
 </div>
 <script type="module" src="./src/title.js"></script>

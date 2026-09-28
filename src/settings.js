@@ -4,14 +4,20 @@
 
 import { pref, setPref, reducedMotion, coarse, dark } from './prefs.js';
 import { version } from './version.js';
-import { exportSave, importSave, persist, switchSlot } from './persist.js';
+import { exportSave, importSave, persist, switchSlot, restore, bootYard } from './persist.js';
 import { S } from './state.js';
-import { storeTrouble, storeSettled } from './save.js';
-import { VEIL_MS, LIGHT_PAPER, DARK_PAPER } from './config.js';
+import { storeTrouble, storeSettled, openSlot } from './save.js';
+import { VEIL_MS, LIGHT_PAPER, DARK_PAPER, TOAST_MS } from './config.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
 import { showTimes, timesLabel, timesOn, timesName, setTimesName } from './times.js';
 import { copyOut } from './copyout.js';
+import { showCloud, CLOUD_LOOK_MS } from './cloudsheet.js';
+import { cloudReady, cloudStatus } from './cloud.js';
+import { cloudNoticeDue } from './notices.js';
+// input.js imports this file; `hold` is a declaration, so it is there to
+// call however the ring is entered.
+import { hold } from './input.js';
 export { copyOut };
 
 const sheet = document.getElementById('held');
@@ -26,6 +32,7 @@ const slotsEl = document.getElementById('slots');
 const timesBtn = document.getElementById('timesbtn');
 const timesEl = document.getElementById('times');
 const boardName = document.getElementById('boardname');
+const cloudEl = document.getElementById('cloudsheet');
 
 // The sheet's pages: every child carries `data-pane`, a space-separated list
 // of the pages it is on. Two fronts (`title`, where the boot stops, and
@@ -45,7 +52,10 @@ export function showPane(name) {
   // and no name box.
   if (!timesOn()) { timesBtn.hidden = true; boardName.hidden = true; }
   if (name === 'record') showRecord(recordEl);
-  if (name === 'slots') showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); });
+  if (name === 'slots') {
+    showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); });
+    showCloud(cloudEl, line => { said.textContent = line; }, { took: tookCloud });
+  }
   if (name === 'times') showTimes(timesEl);
   if (name === 'settings') boardName.value = timesName();
 }
@@ -255,3 +265,48 @@ if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
 saySound();
 volumeEl.value = pref('volume');
+
+// --- the cloud, in play (docs/wave-cloud.md, "The face") -------------------------
+// The open yard taken from the cloud is in the store, not on the glass: the
+// standing yard is read back from it the way a slot switch reads one, and
+// without the persist first that `switchSlot` makes, which would write the
+// yard being replaced over the one just taken.
+function tookCloud(n, side) {
+  if (side !== 'cloud' || n !== openSlot()) return;
+  restore();
+  bootYard();
+  back();
+}
+
+// Another device is ahead on this yard: said once, as a card at the top edge
+// in the toast's own shape, and pressing it opens the saves page, where the
+// answer is. Not the toast itself, which says only the record's notices and
+// opens the record. Asked on the foot bar's slow beat: the yard plays on
+// either way, so a few seconds late is nothing.
+const cloudNote = document.createElement('button');
+cloudNote.type = 'button';
+cloudNote.className = 'toast';
+cloudNote.hidden = true;
+cloudNote.append(Object.assign(document.createElement('div'), { className: 'name', textContent: 'newer on another device' }),
+                 Object.assign(document.createElement('div'), { className: 'note', textContent: 'saves has the answer' }));
+document.body.appendChild(cloudNote);
+let noteDown = 0;
+function dropCloudNote() {
+  clearTimeout(noteDown);
+  cloudNote.classList.remove('up');
+  if (cloudNote.classList.contains('still')) cloudNote.hidden = true;
+}
+cloudNote.addEventListener('transitionend', () => { if (!cloudNote.classList.contains('up')) cloudNote.hidden = true; });
+cloudNote.addEventListener('click', () => {
+  dropCloudNote();
+  hold(true);
+  showPane('slots');
+});
+setInterval(() => {
+  if (!cloudReady() || !cloudNoticeDue(cloudStatus().state)) return;
+  cloudNote.classList.toggle('still', reducedMotion());
+  cloudNote.hidden = false;
+  void cloudNote.offsetWidth;          // hidden off and up on in one pass would skip the slide
+  cloudNote.classList.add('up');
+  noteDown = setTimeout(dropCloudNote, TOAST_MS);
+}, CLOUD_LOOK_MS);
