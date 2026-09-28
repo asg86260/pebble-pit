@@ -1,9 +1,10 @@
 // A station is its fighter and a prop (DESIGN.md, "A station is its fighter
 // and a prop"): below the fork a crate of the gear, still packed; at the
 // fork the class's own prop; from rung 8 its parts in the capstone's purple.
-// The prop stands on the floor, its right-hand column PROP_GAP cells short
-// of the fighter's body at its post (PROP_GAP_OF for the Swordsman), and the
-// station's ground spans the prop and the post.
+// The prop stands on the station's plinth, its right-hand column PROP_GAP
+// cells short of the fighter's body at its post (PROP_GAP_OF for the
+// Swordsman), the plinth under both on the floor, and the station's ground
+// spans the plinth, the prop and the post.
 //
 // Read off the drawing itself: the deep's stations are painted onto a sheet
 // that keeps every cell it is handed (`paintOn`), so what is checked is what
@@ -14,7 +15,7 @@ import { group, ok, yard } from './helpers.mjs';
 import { P, WORKER, DEEP_W, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF } from '../src/config.js';
 import { pressBuy } from '../src/deep/rails.js';
 import { stationById } from '../src/deep/party.js';
-import { slotX, deepX0, deepFloor, standOfStation } from '../src/deep/place.js';
+import { slotX, deepX0, deepFloor, plinthTop, postY, standOfStation } from '../src/deep/place.js';
 import { PROPS, propCells } from '../src/deep/props.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawDeepStations } from '../src/render/deep.js';
@@ -47,9 +48,15 @@ function drawn() {
 }
 // The prop image drawn at station `st`'s place, as its cells, and where.
 function propOf(st) {
-  const d = drawn().filter(o => o.img.cells && o.y + o.img.height === deepFloor())
+  const d = drawn().filter(o => o.img.cells && o.y + o.img.height === plinthTop())
     .find(o => o.x < slotX(st.slot) && o.x > slotX(st.slot) - P * 30);
   return d && { x: d.x, y: d.y, w: d.img.width, cells: d.img.cells };
+}
+// The plinth drawn under station `st`: the image on the floor round its slot.
+function plinthOf(st) {
+  const d = drawn().filter(o => o.img.cells && o.y + o.img.height === deepFloor())
+    .find(o => o.x < slotX(st.slot) && o.x + o.img.width > slotX(st.slot));
+  return d && { x: d.x, y: d.y, w: d.img.width };
 }
 // The prop `key`'s cells, as the drawing of it should hold them.
 const want = (key, lit) => new Map(propCells(key, lit)
@@ -71,7 +78,7 @@ group("a station stands beside a crate below the fork, its class's prop from it,
   const rack = propOf(stationById(st.id));
   while (stationById(st.id).rung < LADDER && pressBuy(st.id)) { /* climb */ }
   const top = stationById(st.id);
-  const lit = propOf(top);
+  const lit = propOf(top), plinth = plinthOf(top);
   const g = standOfStation(top), post = bodyCol(top) * P;
   const right = p => (p.x + p.w) / P - 1;
   return [
@@ -85,8 +92,10 @@ group("a station stands beside a crate below the fork, its class's prop from it,
        rack && `${right(rack)} vs ${bodyCol(st)}`),
     ok(top.rung === LADDER && lit && same(lit.cells, want('sword', true)) && purple(lit.cells) > 2,
        'at rung 8 its parts are purple', lit && `rung ${top.rung}, ${purple(lit.cells)} purple cells`),
-    ok(lit && lit.y === deepFloor() - PROPS.sword.rows.length * P, 'standing on the floor'),
-    ok(g.x === lit.x && g.x + g.w >= post + WORKER && g.y <= lit.y, "and the station's ground spans the prop and the post",
-       `${g.x}..${g.x + g.w} over ${lit.x}..${post + WORKER}`)
+    ok(lit && plinthTop() < deepFloor() && lit.y === plinthTop() - PROPS.sword.rows.length * P, 'standing on its plinth, off the floor'),
+    ok(plinth && lit && plinth.y === plinthTop() && plinth.x < lit.x && plinth.x + plinth.w > post + WORKER,
+       'the plinth on the floor under the prop and the post', JSON.stringify(plinth)),
+    ok(g.x <= plinth?.x && g.x + g.w >= plinth?.x + plinth?.w && g.y <= lit.y, "and the station's ground spans the plinth, the prop and the post",
+       `${g.x}..${g.x + g.w} over ${plinth?.x}..${plinth?.x + plinth?.w}`)
   ];
 });

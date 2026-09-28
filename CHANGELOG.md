@@ -17,6 +17,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
 - A station starts as a base unit (Fighter, Novice, Scout, Adept, Apprentice) that forks into one of its two classes at rung 4, and the build button lays an empty lot whose board picks what goes up (test/rails.test.mjs, src/selftest/deep.js).
+- Every station stands on a stepped stone plinth, off the deep's floor (test/props.test.mjs).
 - Every fighter attacks the serpent straight above its own station (test/classes.test.mjs).
 - Scales handed back by a station's Reset or a refund are tossed back into the crusher instead of dropped in the water (test/rails.test.mjs, test/crusher.test.mjs).
 - Fighters sway a cell between attacks, and the melee ones hop as each step lands (`node tools/look.mjs party-four`).

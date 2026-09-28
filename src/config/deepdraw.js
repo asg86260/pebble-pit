@@ -26,6 +26,13 @@ export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the
 // rack stands two more off, lest the sword be read as the rack's third.
 export const PROP_GAP = 5;
 export const PROP_GAP_OF = { sword: 7 };
+// Every station stands on a stepped stone plinth, prop and fighter together,
+// off the floor (docs/mocks/station-platform-2026-09-28.html, B): this many
+// cells high, a cell further out each course down, and reaching this many
+// cells past the prop and the body at its top.
+export const PLINTH_H = 2;
+export const PLINTH_OVER = 1;
+export const PLINTH_TONES = { top: [9, 8, 9], end: [8, 7], body: [6, 5, 6, 7] };   // GREYS indices, one picked a cell
 // The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
 // the door's inside is one heat field. A cell's heat is the base, raised by
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from

@@ -9,7 +9,7 @@ import { JOB_OF, hats, rockhandMs } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { KIT_JOBS } from '../kit.js';
 import { TYPE, TYPE_OF, DEEP_JOBS, isDeepType } from '../jobs.js';
-import { deepTop, deepFloor } from '../deep/place.js';
+import { deepTop, postY } from '../deep/place.js';
 import { bindFighters, bindNew, unbound } from '../deep/party.js';
 import { deepPost } from './deep.js';
 import { belowYard } from '../route.js';
@@ -136,7 +136,7 @@ export function syncWorkers() {
       // stands its body at its work.
       if (type === TYPE.FIGHTER && bindNew(w) && !spare) {
         w.x = deepPost(type, w);
-        w.y = deepFloor() - WORKER;
+        w.y = postY();
       }
       if (spare) retask(spare, type);
       S.workers.push(w);

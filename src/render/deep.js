@@ -42,7 +42,7 @@ import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
-import { SCAFFOLD_BANDS, LOT_STAKE, CAPSTONE_RUNG } from '../config.js';
+import { SCAFFOLD_BANDS, LOT_STAKE, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
 
@@ -293,6 +293,34 @@ function propImage(key, lit) {
   return img;
 }
 
+// The plinth under a station (`plinthRect`): a lit top course, its ends a
+// step brighter than the stone between, every cell a tone of its own. The
+// same for every station of one width, so painted once a width.
+const plinths = new Map();
+function plinthImage(b) {
+  const cols = b.w / P, steps = b.step / P, id = `${cols}|${steps}`;
+  let img = plinths.get(id);
+  if (img) return img;
+  const across = cols + 2 * steps * (PLINTH_H - 1);
+  img = document.createElement('canvas');
+  img.width = across * P; img.height = PLINTH_H * P;
+  const g = img.getContext('2d');
+  for (let r = 0; r < PLINTH_H; r++) {
+    const l = steps * (PLINTH_H - 1 - r), n = cols + 2 * steps * r;
+    for (let c = 0; c < n; c++) {
+      const ramp = r === 0 ? PLINTH_TONES.top : c === 0 || c === n - 1 ? PLINTH_TONES.end : PLINTH_TONES.body;
+      g.fillStyle = GREYS[ramp[Math.floor(hash((l + c) * 7 + r * 131) * ramp.length)]];
+      g.fillRect((l + c) * P, r * P, P, P);
+    }
+  }
+  plinths.set(id, img);
+  return img;
+}
+function drawPlinth(st) {
+  const b = place.plinthRect(st);
+  ctx.drawImage(plinthImage(b), b.x - b.step * (PLINTH_H - 1), b.y);
+}
+
 function drawProp(st, t) {
   const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG;
   ctx.drawImage(propImage(p.key, lit), p.x, p.y);
@@ -336,7 +364,7 @@ export function drawDeepStations() {
     if (stand.x > x1 || stand.x + stand.w < x0) continue;
     if (!st.kind) drawLot(stand);
     else if (!st.built) drawScaffold(stand);
-    else drawProp(st, t);
+    else { drawPlinth(st); drawProp(st, t); }
   }
   ctx.imageSmoothingEnabled = smooth;
   ctx.fillStyle = '#000';

@@ -1124,7 +1124,7 @@ import * as party from './deep/party.js';
 import { settle } from './crew/commute.js';
 import { deepPost } from './crew/deep.js';
 import { forceSerpent } from './snatch.js';
-import { feet as deepFeet } from './deep/arms.js';
+import { postY } from './deep/place.js';
 
 // The pit drowned and the snatch played, so the shaft is open and the altar
 // stands, with no beat owed: a deep job set up by a hook is not the story.
@@ -1217,7 +1217,7 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
     if (!w) continue;
     settle(w);
     w.x = deepPost(TYPE.FIGHTER, w);
-    w.y = deepFeet();
+    w.y = postY();
   }
   buildShop();
   return S.stations.map(st => ({ id: st.id, kind: st.kind, slot: st.slot, cls: st.cls, rung: st.rung,

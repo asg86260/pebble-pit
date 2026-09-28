@@ -11,7 +11,7 @@
 // it.
 
 import { S, pit } from '../state.js';
-import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
+import { P, PLINTH_H, PLINTH_OVER, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL, LOT_W, LOT_H,
@@ -77,6 +77,10 @@ export const slotX = i => snap(deepX0() + DEEP_SLOTS[i] * DEEP_W);
 // cell line, and half a cell off, the gap to its prop was never a whole
 // number of cells.
 export const postX = st => snap(slotX(st.slot) - WORKER / 2);
+// The top of the plinth a station stands on (PLINTH_H), and the fighter's
+// post on it: where its body's top is, stood there.
+export const plinthTop = () => deepFloor() - PLINTH_H * P;
+export const postY = () => plinthTop() - WORKER;
 // The prop, on the floor, its right-hand column PROP_GAP cells short of the
 // body's left column (PROP_GAP_OF where a class carries its kit further
 // off). Its own grid, top-left: a cell of the drawing is a cell here.
@@ -84,7 +88,14 @@ export function propRect(st) {
   const key = propKey(st), rows = PROPS[key].rows;
   const right = postX(st) / P - (PROP_GAP_OF[st.cls] ?? PROP_GAP);
   const w = rows[0].length * P, h = rows.length * P;
-  return { key, x: (right + 1) * P - w, y: deepFloor() - h, w, h };
+  return { key, x: (right + 1) * P - w, y: plinthTop() - h, w, h };
+}
+// The plinth: its top course from PLINTH_OVER cells left of the prop to as
+// far right of the body, each course under it a cell wider at both ends.
+// `x`, `w` are the top course's; `step` how much each course down gains a side.
+export function plinthRect(st) {
+  const x = propRect(st).x - PLINTH_OVER * P, right = postX(st) + WORKER + PLINTH_OVER * P;
+  return { x, y: plinthTop(), w: right - x, h: PLINTH_H * P, step: P };
 }
 // A station's ground: the prop and the fighter's post together, from the
 // prop's left column to the body's right edge and from the taller of the two
@@ -96,9 +107,9 @@ export function propRect(st) {
 const lotAt = mid => ({ x: snap(mid - LOT_W / 2), y: deepFloor() - LOT_H, w: LOT_W, h: LOT_H });
 export function standOfStation(st) {
   if (!st.kind) return lotAt(slotX(st.slot));
-  const p = propRect(st), right = postX(st) + WORKER;
-  const y = Math.min(p.y, deepFloor() - WORKER);
-  return { x: p.x, y, w: right - p.x, h: deepFloor() - y };
+  const p = propRect(st), b = plinthRect(st), out = (PLINTH_H - 1) * b.step;
+  const y = Math.min(p.y, postY());
+  return { x: b.x - out, y, w: b.w + 2 * out, h: deepFloor() - y };
 }
 
 // The crusher at the deep's left end, standing on the floor, and the hopper

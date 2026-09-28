@@ -16527,8 +16527,14 @@ and placement are the spec).
   so the kits' white weapons never land on a white prop.
 - **Placement.** The prop's right-hand column stands GAP cells short of the
   fighter's body (5; the Swordsman 7, so his sword is not read as the
-  rack's third), its foot on the floor. The station's ground -- where the
-  pointer opens its board -- spans the prop and the fighter's post.
+  rack's third), its foot on the station's plinth. The station's ground --
+  where the pointer opens its board -- spans the plinth, the prop and the
+  fighter's post.
+- **The plinth.** Prop and fighter stand together on a stepped stone plinth
+  off the floor (docs/mocks/station-platform-2026-09-28.html, B): PLINTH_H
+  cells high, a cell past the prop and the body at its top and a cell wider
+  each course down. The fighter's post is on it, so it swims back up onto
+  it between fights; it stands when the build lands, with the prop.
 - **The board.** Its title is the fighter's: "the Fighter", "the Brawler".
 - **Building.** The scaffold stays for the build; when it lands the crate
   stands.
