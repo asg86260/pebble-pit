@@ -1,10 +1,10 @@
 // The gatherers: yard haulers lent to the deep while scales lie on its floor
 // (`rebalance` in staffing.js; DESIGN.md, "The crusher"). A scale on the
 // floor is not money; a gatherer makes it so. It works the floor the way a
-// yard hauler works dust, with a yard hauler's load and pace: to the richest
-// stretch of the bed for the trip, scooping up to its load, then across to
-// the crusher's side to toss the load up over the lip, and a scale is
-// counted as it lands in the hopper (`tossIn`, deep/scales.js).
+// yard hauler works dust, with a yard hauler's load and pace: to the
+// stretch of the bed that banks the most for the swim (`nextStretch`),
+// scooping up to its load, then across to the crusher's side to toss the
+// load up over the lip, and a scale is counted as it lands in the hopper (`tossIn`, deep/scales.js).
 //
 // What it carries is `w.load` (the shades) and `w.carry` (how many), the two
 // fields a yard body's load is already saved in (`KEEPS`), so a reload finds
@@ -15,7 +15,7 @@ import { P, WORKER, GATHER_SCOOP } from '../config.js';
 import { haulCap, haulSpeed } from '../levels.js';
 import { topRow } from '../grid.js';
 import { tossX } from './place.js';
-import { scoop, richestNear, bedX, tossIn } from './scales.js';
+import { scoop, nextStretch, bedX, tossIn } from './scales.js';
 import { mid, feet, working, swim } from './arms.js';
 import { rest } from './rest.js';
 
@@ -48,7 +48,7 @@ export const stepGatherer = (w, c) => {
   }
   // The stretch it was working gave out, or it has none: pick again.
   if (!(w.col >= 0) || w.col >= deepBed.cols || topRow(deepBed, w.col) < 0) {
-    w.col = richestNear(mid(w));
+    w.col = nextStretch(mid(w), cap - w.carry, tossX(), REACH);
     w.owed = 0;
     if (w.col < 0) return;
   }

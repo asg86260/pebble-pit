@@ -60,6 +60,7 @@ this section; the release that switches it on moves these under Unreleased.
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 - The deep's build button is drawn as a button again, and fades in and out (`node tools/look.mjs party-button`).
 - The Scout's arrows, the Assassin's daggers and the Hexer's bolts are seen flying up to the serpent, not stuck against it the whole way (`node tools/look.mjs deep-scout`).
+- Gatherers work the scales lying nearest the crusher first instead of swimming across the deep to the tallest heap (test/gather.test.mjs).
 
 ## Unreleased
 

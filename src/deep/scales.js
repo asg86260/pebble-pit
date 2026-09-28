@@ -105,16 +105,26 @@ export function scoop(x, n, reach) {
   return got;
 }
 
-// The column of the bed a gatherer should work next from x: the most scales
-// for the swim, how deep and how near both counting. -1 on a bare floor.
-export function richestNear(x) {
+// The column of the bed a gatherer should work next from x, with room for
+// `want` more in its arms and its load bound for `drop`: the most scales
+// banked for the swim. A stretch is worth what lies within `reach` of it, up
+// to the load, and costs the swim there and on to the crusher; the best
+// worth over cost wins, so a near stretch holding a load beats a tall heap
+// across the deep. -1 on a bare floor.
+export function nextStretch(x, want, drop, reach) {
   if (!deepBed.grid || !deepBed.n) return -1;
-  const home = colOf(deepBed, x);
-  let best = -1, score = -Infinity;
+  const span = Math.max(0, Math.round(reach / P));
+  const lying = new Array(deepBed.cols);
+  for (let c = 0; c < deepBed.cols; c++) lying[c] = topRow(deepBed, c) + 1;
+  let best = -1, score = -Infinity, near = 0;
+  for (let c = Math.max(0, -span); c <= Math.min(deepBed.cols - 1, span - 1); c++) near += lying[c];
   for (let c = 0; c < deepBed.cols; c++) {
-    const h = topRow(deepBed, c) + 1;
-    if (!h) continue;
-    const v = h * 8 - Math.abs(c - home) * 0.25;
+    // The running sum of the stretch's columns, [c - span, c + span].
+    if (c + span < deepBed.cols) near += lying[c + span];
+    if (c - span - 1 >= 0) near -= lying[c - span - 1];
+    if (!lying[c]) continue;
+    const at = bedX(c);
+    const v = Math.min(want, near) / (Math.abs(at - x) + Math.abs(at - drop) + P);
     if (v > score) { score = v; best = c; }
   }
   return best;
