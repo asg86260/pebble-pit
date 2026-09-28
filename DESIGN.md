@@ -16605,3 +16605,57 @@ and placement are the spec).
   a kit does: the purchase is instant (decided 2026-09-28) and the drawing
   follows the station's record.
 
+
+## The deep is paced by its purse (design, not built)
+
+**The bargain.** The fight from the snatch to the freeing takes about an
+hour with a party that is bought into, and the time goes where it goes on
+the surface: between one station and the next, and between one rung and
+the next, each waiting on scales in the crusher. A stage breaks when a
+purchase makes it breakable, not after a long stretch of holding the wound
+open with nothing to buy.
+
+**Where it stands (measured 2026-09-28).** With the numbers as written the
+whole fight is under three minutes when every scale shed is banked
+(`node tools/node/deep-pace.mjs`). It is not banked: four gatherers at the
+hauler's first rungs crush about 4 a second off a thick floor, falling to 2
+as the near piles run out, while the party sheds 4 to 10 times that. The
+scales pile up, the fighters stall at rungs 4 to 6, and the deep is paced
+by the walk to the crusher rather than by anything the player chose.
+
+**The model.** `tools/node/deep-pace.mjs` reads the ladders, the classes and
+the serpent's table out of config and plays the fight a second at a time:
+the wound against the heal, the banked purse against the cheapest next
+rung, a station more at each break. `--gather n` is the banked rate,
+`--solve a,b,c,d` gives back the depths that break at those minutes. It
+leaves out the dust, ore and spark on a bill, the build time, the fang's
+carry, stuns, statuses and the Bard, so its breaks are the earliest the
+purse allows.
+
+**The order of the work.** Every number below rests on the banked rate, so
+it is settled first.
+
+1. **The gatherers.** `richestNear` weighs a column's height at 8 and its
+   distance at a quarter, so a gatherer swims to the tallest heap wherever
+   it is. It takes the nearest stretch worth a full load instead. Whether
+   the gatherers keep the hauler's two ladders (`haulCap`, `haulSpeed`) or
+   get their own on a deep board is the owner's call, mock and vote first.
+2. **The banked rate is measured**, in the `gathering` scene, and written
+   down here as the rate the depths are solved at.
+3. **The depths and heals.** Solved at that rate for breaks at about 8, 22,
+   40 and 60 minutes. At 4 a second that is about 35k / 140k / 360k / 560k
+   against 60 / 900 / 6000 / 30000 now; the party at each break stands at
+   rung 7, then 7-7, 8-8-7, and 8-8-8-8. A stage's heal is set so a party
+   two rungs short of the one that breaks it cannot hold the wound open, so
+   the heal is what makes the next rung the thing to wait for.
+4. **The rung bills.** As written a station's ladder is 3,475 scales and the
+   first is bought out by minute 14. The deep's bills get steeper, so the
+   later rungs are the long waits.
+5. **The shed cap.** `SCALE_HIT_MAX` is 12 a hit, so a class's shed is flat
+   from rung 3 or 4 while its damage climbs to rung 8: the Hexer and the
+   Sapper shed about 2 a second at any rung. A rung should pay in scales
+   too; the cap climbs with the rung or goes.
+
+**What it must not break.** Every scale is carried to the crusher by a body
+(nothing teleports). Every ladder stays a written table in `LADDERS`. The
+numbers land in config, and the model reads them from there.

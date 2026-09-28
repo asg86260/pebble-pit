@@ -12,6 +12,15 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
+## The deep is paced by its purse -- DESIGNED, AWAITING THE VOTE (2026-09-28)
+
+"The deep is paced by its purse" in DESIGN.md; the model is
+`tools/node/deep-pace.mjs`. The fight is under three minutes as written and
+gatherers bank a tenth of what the party sheds. Blocked on the owner's calls:
+(a) the gatherers keep the hauler's ladders or get their own; (b) breaks at
+about 8 / 22 / 40 / 60 minutes; (c) the shed cap climbing with the rung or
+going. No game code yet.
+
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 
 Built as `docs/wave-serpent.md`; "The serpent" at the end of DESIGN.md.
