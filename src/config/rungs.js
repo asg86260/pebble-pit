@@ -87,7 +87,7 @@ export const LADDERS = {
   ranger:   { value: [3.2, 5.2, 8, 12, 18, 27.5, 42, 67, 113], dust: [15, 30, 60, 120, 250, 500, 900, 1600] },     // dmg an arrow, every 0.8 s
   assassin: { value: [4.2, 6.8, 10.5, 15.5, 28, 43, 66, 104, 135], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a stab, every 1.5 s
   hexer:    { value: [20, 32.5, 50, 75, 128, 195, 300, 475, 595], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a hex, every 5 s
-  sapper:   { value: [7.2, 11.5, 18, 27, 54, 82, 126, 200, 205], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a charge, every 6 s
+  sapper:   { value: [7.2, 11.5, 18, 27, 54, 82, 126, 200, 283], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a charge, every 6 s
   mage:     { value: [3.1, 5.1, 7.9, 12, 15.5, 23.5, 36, 57, 87], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }, // dmg a second, the beam held
   bard:     { value: [10, 11, 12, 13, 15, 15.5, 16, 16.5, 17], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }   // % the others' hits rise, Inspired
 };

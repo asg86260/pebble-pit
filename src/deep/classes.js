@@ -264,7 +264,7 @@ function hexer(w, c, st, cls, v) {
 
 // Charges thrown on the water's gravity. From rung 4 a charge sticks to the
 // hide, ticks down and goes off as one blow, x3; from rung 8 two are thrown
-// at once, go off together, and stun.
+// at once, each at `pairX` of a lone one, go off together, and stun.
 function sapper(w, c, st, cls, v) {
   const t = c.now, at = atPost(w, st, t);
   if (!at) return;
@@ -272,6 +272,7 @@ function sapper(w, c, st, cls, v) {
   const hit = landing(w, t);
   if (hit) {
     const n = hasCap(st) ? cls.capCharges : 1, sticky = hasMove(st);
+    const each = v * (n > 1 ? cls.pairX : 1);
     const pair = { blowAt: 0 };
     for (let i = 0; i < n; i++) {
       const seg = segNear(at.seg, (i - (n - 1) / 2) * cls.spread);
@@ -284,11 +285,11 @@ function sapper(w, c, st, cls, v) {
           s.land = blow;
           return 'stuck';
         }
-        strike(cls.hit, v, q.x, q.y, null, 0, { by: w });
+        strike(cls.hit, each, q.x, q.y, null, 0, { by: w });
       });
     }
     function blow(s, q) {
-      strike(cls.hit, v * cls.stickyX, q.x, q.y, pair, 0, { by: w, stun: hasCap(st) ? 1 : 0 });
+      strike(cls.hit, each * cls.stickyX, q.x, q.y, pair, 0, { by: w, stun: hasCap(st) ? 1 : 0 });
     }
   }
   if (!due(w, t, cls.every)) return;

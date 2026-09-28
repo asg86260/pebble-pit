@@ -279,7 +279,7 @@ group('Hexer: a hex strikes; it Weakens the heal from rung 4; from rung 8 it sto
   ];
 });
 
-group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; at 8 two at once, and they stun', async () => {
+group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; at 8 two at once, each pairX, and they stun', async () => {
   const alone = breaksAlone('circle', 'sapper');
   const cls = CLASSES.sapper;
   window.__serpent({ stage: 3, wound: 0 });
@@ -293,6 +293,9 @@ group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; a
   S.serpentGrace = 0;
   let two = 0;
   const eight = watch(10, 0, () => { two = Math.max(two, shots.filter(s => s.stuck).length); });
+  // The pair go off as one blow, summed: each charge pairX of a lone one.
+  const lone = rungWorth(cls, 8) * SERPENT_DEFENSE.sapper[3] * cls.stickyX;
+  const pairBlows = done(eight, 'sapper');
   return [
     alone,
     ok(base.shots.has('charge') && base.moves.includes('throw'), 'a charge is thrown', [...base.shots].join(' ')),
@@ -300,7 +303,9 @@ group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; a
     ok(blows.some(d => near(d, v4)), 'and blows as one blow x3', JSON.stringify(blows)),
     ok(four.stuns === 0, 'and does not stun yet', `${four.stuns} stuns`),
     ok(two === 2, 'at rung 8 two are stuck at once', `${two}`),
-    ok(eight.stuns >= 1, 'and their blow stuns', `${eight.stuns} stuns`)
+    ok(eight.stuns >= 1, 'and their blow stuns', `${eight.stuns} stuns`),
+    ok(pairBlows.some(d => near(d, 2 * cls.pairX * lone)), 'each of the pair blows pairX of a lone charge',
+       `${JSON.stringify(pairBlows)} vs ${2 * cls.pairX * lone}`)
   ];
 });
 

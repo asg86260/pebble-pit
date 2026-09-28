@@ -63,10 +63,11 @@ export const CLASSES = {
   hexer:    { name: 'Hexer',          ladder: 'hexer',    hit: 'hexer',    melee: false,
               every: 5, windup: 0.3, fly: 0.6, weaken: { k: 0.3, s: 8 }, hold: 2, exposed: 2 },
   // A thrown charge on the water's gravity; at rung 4 it sticks, ticks and blows
-  // x3; at 8 two stick at once and their blow stuns.
+  // x3; at 8 two stick at once and their blow stuns. `pairX` is what each of
+  // the pair hits for, of a lone charge, so two are not double.
   sapper:   { name: 'Sapper',         ladder: 'sapper',   hit: 'sapper',   melee: false,
               every: 6, windup: 0.4, fly: 1.6, fuse: 3, stickyX: 3, capCharges: 2,
-              spread: 6 },
+              pairX: 0.6, spread: 6 },
   // A held purple beam, ticking while held, then one finishing blow.
   // At rung 4 it widens and ramps the longer she holds it; at 8 it burns through
   // (the phase's half does not dim it).
