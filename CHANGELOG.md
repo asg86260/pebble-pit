@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- Each phase past the first has a mechanic, warned ahead and answered by a class: the warded phase surges its heal until a stun spends it, the split lashes the melee fighters off the hide unless a Hexer holds it, and the fading sinks into the abyss out of reach (test/phase-mechanics.test.mjs).
 - The build button puts a station up at once; a Recruit fights there with a light punch until rung 1 makes it a Fighter, Novice, Scout, Adept or Apprentice, and rung 4 forks it into one of two classes (test/rails.test.mjs, test/party.test.mjs, src/selftest/deep.js).
 - A new station whose Recruit is waiting on its first choice wears a chevron that says "choose a fighter" (test/props.test.mjs, src/selftest/deep.js).
 - A station's board shows where every choice leads: each base unit's two specialists, and each specialist's move and capstone, with status effects named and explained on hover (test/rails.test.mjs, src/selftest/deep.js).

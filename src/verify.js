@@ -32,7 +32,7 @@ import { now } from './clock.js';
 import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
-import { SERPENT_WOUND, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
+import { SERPENT_WOUND, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
 import { CALLED } from './deep/party.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
@@ -458,6 +458,10 @@ export function verifyWorld() {
       fail('the serpent healed while it was stunned', `wound ${woundWas} then ${S.serpentWound} in stage ${stage}`);
     if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)
       fail('the stun is outside its bounds', `${S.serpentStun}s, at most ${STUN_MAX_S}`);
+    // The phase's mechanic (deep/phases.js) is somewhere in its turn.
+    const mech = stage <= 3 && !S.serpentFreed ? MECHANICS[stage] : null;
+    if (!(S.mechAt >= 0) || (mech && S.mechAt >= mech.every))
+      fail('the turn of the phase is outside itself', `${S.mechAt}s of ${mech ? mech.every : '-'}`);
     serpentWas = stage;
     woundWas = S.serpentWound;
     stunWas = S.serpentStun > 0;

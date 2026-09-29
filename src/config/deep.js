@@ -213,6 +213,41 @@ export const DEEP_REST_SILT = 4;                  // silt a landing kicks up
 // whatever the damage was.
 export const DOT_TICK_S = 0.5;
 
+// --- a phase's mechanic (DESIGN.md, "A phase has a mechanic and a class answers it") ---
+// One a phase past the first, on the phase's own clock: calm, then its
+// warning, then the thing itself, then round again, `every` seconds a turn.
+// Seconds throughout.
+//
+//   surge  the heal times `x` for `last`; a stun in the warning or in it spends it
+//   lash   a wave runs head to tail in `last` and throws off the melee
+//          fighters at the hide, dazed `daze` where they land; the Hexer's
+//          Held in the warning stops it
+//   sink   he dims into the abyss for `last`, in and out over `fade`;
+//          nothing strikes him past half gone, and the heal runs
+export const MECHANICS = [
+  null,
+  { kind: 'surge', every: 45, warn: 3, last: 6, x: 3 },
+  { kind: 'lash', every: 30, warn: 1.5, last: 1.1, daze: 3 },
+  { kind: 'sink', every: 40, warn: 1, last: 8, fade: 1 }
+];
+// The lash's shape: the coil draws up to this share of its sway in the
+// warning, over `LASH_TAUT_S`, and the tail lifts; then a bump this deep and
+// this wide (a share of the body) runs down it.
+export const LASH_TAUT = 0.8;
+export const LASH_TAUT_S = 0.6;
+export const LASH_LIFT = P * 12;       // the tail's tip, raised at the height of the warning
+export const LASH_H = P * 14;          // the bump, down off the line
+export const LASH_W = 0.05;            // its half width, a share of the body head to tail
+// A lashed fighter is thrown this hard, px a frame: down, and out to a side.
+export const LASH_THROW = [1.6, 2.2];
+// The surge's throb over the belly, and the sink's: how far out the ring
+// stands, cells, and its beat; how dim the coil goes under; the warning's flicker.
+export const THROB_R = 4;
+export const THROB_HZ = 2.5;
+export const SINK_DIM = 0.85;
+export const SINK_WARN_DIM = 0.3;
+export const SINK_VEIL_EVERY = 3;      // a veil cell every this many cells along the body
+
 export const DEEP_KNOBS = [
   { key: 'SERPENT_HEAL_1', label: 'serpent heal, bare', min: 0, max: 300, step: 1,
     get: () => SERPENT_HEAL[0], set: v => { SERPENT_HEAL = [v, ...SERPENT_HEAL.slice(1)]; } },
@@ -225,6 +260,8 @@ export const DEEP_KNOBS = [
   { key: 'SERPENT_WOUND_SCALE', label: 'serpent wound depths, x', min: 0.1, max: 5, step: 0.1,
     get: () => SERPENT_WOUND[0] / SERPENT_DEPTHS[0],
     set: v => { SERPENT_WOUND = SERPENT_DEPTHS.map(d => Math.round(d * v)); } },
+  ...MECHANICS.filter(Boolean).map(m => ({ key: `MECH_${m.kind.toUpperCase()}_EVERY`, label: `${m.kind}, every s`,
+    min: 5, max: 180, step: 1, get: () => m.every, set: v => { m.every = v; } })),
   { key: 'STUN_SHARE', label: 'stun, share of the depth a blow needs', min: 0.005, max: 1, step: 0.005,
     get: () => STUN_SHARE, set: v => { STUN_SHARE = v; } },
   { key: 'STUN_BASE_S', label: 'stun, seconds at the share', min: 0.2, max: 10, step: 0.1,

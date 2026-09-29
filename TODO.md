@@ -12,13 +12,20 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
-## A phase has a mechanic and a class answers it -- DESIGNED, AWAITING THE VOTE (2026-09-28)
+## A phase has a mechanic and a class answers it -- BUILT, TUNING OPEN (2026-09-28)
 
-"A phase has a mechanic and a class answers it" in DESIGN.md; mock
-`docs/mocks/serpent-phases-2026-09-28.html`. The surge (warded), the lash
-(split), the sink (fading), each warned and each answered by a class.
-Blocked on the owner's vote: the four as mocked, or changes; and whether the
-wound's floor or the fighters' debuffs join them. No game code yet.
+"A phase has a mechanic and a class answers it" in DESIGN.md. The surge,
+the lash and the sink, each warned and answered. Open:
+- **Nobody has watched a whole turn in play.** Scenes `phase-surge`,
+  `phase-surging`, `phase-taut`, `phase-lash`, `phase-sink`; the periods are
+  on the dev panel.
+- **The answers are capstones**, so the warded phase's surge is mostly
+  unanswered at the pace the model plays. A rung-4 answer, or a later
+  surge, if that reads as unfair.
+- **A melee party without answers runs to about two hours**
+  (`node tools/node/deep-pace.mjs --gather 4 --party sword,assassin,sapper,hexer`).
+- **The lash's bump reads as a dip** at the belly's girth; a deeper
+  `LASH_H` if it wants to read as a whip.
 
 ## The deep is paced by its purse -- BUILT, TUNING OPEN (2026-09-28)
 

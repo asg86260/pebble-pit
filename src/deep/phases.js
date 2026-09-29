@@ -1,0 +1,73 @@
+// A phase's mechanic: past the first, each defense does one thing to the
+// party on a clock of its own, warned ahead, and one class answers it
+// (DESIGN.md, "A phase has a mechanic and a class answers it"). The surge
+// heals triple and a stun spends it; the lash throws the melee fighters off
+// the hide and the Hexer's Held stops it; the sink takes him into the abyss
+// where nothing reaches him, and a burst banked before it is the answer.
+//
+// `S.mechAt` is the seconds into the phase's turn and `S.mechSkip` whether
+// this turn's mechanic was answered; both are saved, so a reload lands in the
+// same beat. The heal reads `surgeK`, a strike reads `sunk`, the coil's line
+// reads `lashK` and `tautK`, a melee fighter reads `lashHits`, and the
+// drawing reads the parts.
+
+import { S } from '../state.js';
+import { MECHANICS, LASH_TAUT_S, LASH_W } from '../config.js';
+import { has } from './statuses.js';
+
+const LAST = 3;
+export const mechOf = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? MECHANICS[S.serpentStage] : null);
+
+// Where the turn is: 'calm', 'warn' or 'on', and how far through that part,
+// 0..1. The mechanic comes at the end of its turn, so a phase opens calm.
+export function part() {
+  const m = mechOf();
+  if (!m) return { part: 'calm', k: 0, m };
+  const on = m.every - m.last, warn = on - m.warn, t = S.mechAt;
+  if (t < warn) return { part: 'calm', k: t / warn, m };
+  if (t < on) return { part: 'warn', k: (t - warn) / m.warn, m };
+  return { part: 'on', k: (t - on) / m.last, m };
+}
+const live = kind => { const p = part(); return p.m && p.m.kind === kind && !S.mechSkip ? p : null; };
+
+// The heal's multiple this frame.
+export const surgeK = () => { const p = live('surge'); return p && p.part === 'on' ? p.m.x : 1; };
+
+// How far into the abyss he is, 0..1: in over `fade`, held, out over `fade`.
+export function sinkK() {
+  const p = live('sink');
+  if (!p || p.part !== 'on') return 0;
+  const s = p.k * p.m.last;
+  return Math.max(0, Math.min(1, s / p.m.fade, (p.m.last - s) / p.m.fade));
+}
+// Past half gone, nothing strikes him.
+export const sunk = () => sinkK() >= 0.5;
+
+// The lash along the body, head 0 to tail 1, while it runs; null otherwise.
+export const lashK = () => { const p = live('lash'); return p && p.part === 'on' ? p.k : null; };
+// How far drawn up the coil is, 0..1: up over LASH_TAUT_S of the warning,
+// held, and let go as the lash runs out.
+export function tautK() {
+  const p = live('lash');
+  if (!p || p.part === 'calm') return 0;
+  if (p.part === 'on') return 1 - p.k;
+  return Math.min(1, p.k * p.m.warn / LASH_TAUT_S);
+}
+// Whether the lash is on a body at `k` along the body this frame.
+export const lashHits = k => { const at = lashK(); return at != null && Math.abs(k - at) < LASH_W; };
+
+// One frame of the turn. The answers are asked here: a stun in the surge's
+// warning or in it spends that surge, and Held in the lash's warning stops
+// that lash. A new turn is unanswered again.
+export function stepMechanic(c) {
+  const m = mechOf();
+  if (!m) { S.mechAt = 0; S.mechSkip = false; return; }
+  S.mechAt += c.dt / 1000;
+  if (S.mechAt >= m.every) { S.mechAt %= m.every; S.mechSkip = false; }
+  const p = part();
+  if (m.kind === 'surge' && p.part !== 'calm' && S.serpentStun > 0) S.mechSkip = true;
+  if (m.kind === 'lash' && p.part === 'warn' && has('held')) S.mechSkip = true;
+}
+
+// A phase broken: the next opens at the top of its turn.
+export function resetMechanic() { S.mechAt = 0; S.mechSkip = false; }

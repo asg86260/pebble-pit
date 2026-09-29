@@ -19,6 +19,7 @@ import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, healLeft, has, clearStatuses } from './statuses.js';
+import { stepMechanic, resetMechanic, surgeK, sunk } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
 // is struck on the last defense's column and has nothing left to heal.
@@ -88,9 +89,10 @@ function stun(blow, k) {
 //   through  the phase's half does not dim it (the Mage's capstone)
 //
 // Returns the damage done. A hit that did nothing sheds nothing. Before the
-// snatch there is no serpent to hit.
+// snatch there is no serpent to hit, and while he is sunk nothing reaches him.
 export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   if (!S.snatched || !(dmg > 0)) return 0;
+  if (sunk()) return 0;                          // in the abyss, out of reach (deep/phases.js)
   const table = SERPENT_DEFENSE[weapon];
   if (!table) return 0;
   const guard = o.through ? Math.max(1, table[column()]) : table[column()];
@@ -141,8 +143,8 @@ export const woundK = () => {                          // the wound as a fractio
   return d > 0 ? Math.max(0, Math.min(1, S.serpentWound / d)) : 0;
 };
 
-// The heal this frame, after Weakened, in wound a second.
-export const healNow = () => S.serpentStage > LAST ? 0 : SERPENT_HEAL[S.serpentStage] * healLeft();
+// The heal this frame, after Weakened and the surge, in wound a second.
+export const healNow = () => S.serpentStage > LAST ? 0 : SERPENT_HEAL[S.serpentStage] * healLeft() * surgeK();
 
 // Who hears a phase break: the fang's drop (CREW's party.js) and anything
 // else that answers one. Called with the stage just reached, 1..4, on the
@@ -168,6 +170,7 @@ export const stepSerpent = c => {
     if (!(S.serpentStun > 0)) S.serpentGrace = STUN_GRACE_S;
   } else if (S.serpentGrace > 0) S.serpentGrace = Math.max(0, S.serpentGrace - secs);
   if (stunned) S.serpentStill += c.dt;
+  stepMechanic(c);
   const d = depth();
   if (S.serpentWound < d) {
     if (stunned || has('held')) return;
@@ -180,6 +183,7 @@ export const stepSerpent = c => {
   S.serpentWound = 0;
   S.serpentStun = S.serpentGrace = 0;
   clearStatuses();
+  resetMechanic();
   if (S.serpentStage > LAST) S.serpentFreed = true;
   for (const fn of breakers.slice()) fn(S.serpentStage);
 };

@@ -4,8 +4,8 @@
 // goes down the shaft arrives somewhere real, and every position in the deep
 // is an ordinary world position that the route, the camera and the drawing
 // all read the same way. Nothing here moves on its own except the serpent's
-// body, which is a function of the clock and of the sway its stuns have held
-// back (`serpentStill`, saved).
+// body, which is a function of the clock, of the sway its stuns have held
+// back (`serpentStill`, saved) and of its phase's lash (deep/phases.js).
 //
 // Track SERPENT owns this file (docs/wave-serpent.md); every other track reads
 // it.
@@ -15,7 +15,8 @@ import { P, PLINTH_H, PLINTH_OVER, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DE
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
-         WORKER, PROP_GAP, PROP_GAP_OF } from '../config.js';
+         WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W } from '../config.js';
+import { tautK, lashK } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -154,19 +155,27 @@ export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 // reader comes through `coilLine`, which turns the clock into the coil's.
 // `waveLine(t)` is the line at one instant, everything but x worked out
 // once: the walk below asks it for thousands of points a frame.
+// The lash (deep/phases.js) bends it too: drawn up in the warning, its sway
+// cut and its tail lifted, then a bump run down it head to tail.
 const waveLine = t => {
   const x0 = coilX0(), span = coilSpan(), base = deepTop() + COIL_Y * DEEP_H;
   const split = S.serpentStage === 2 && !S.serpentFreed;
+  const taut = tautK(), lash = lashK();
+  const amp = COIL_AMP * (1 - LASH_TAUT * taut);
   return x => {
     const k = (x - x0) / span;
-    let y = base + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
+    let y = base + amp * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
     if (split) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
+    if (taut && k > COIL_TAIL_FROM) y -= taut * LASH_LIFT * (k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM);
+    if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
     return y;
   };
 };
 const waveY = (x, t) => waveLine(t)(x);
 const coilX0 = () => deepX0() + COIL_X0 * DEEP_W;
 const coilSpan = () => (COIL_X1 - COIL_X0) * DEEP_W;
+// How far along the body x is, head 0 to tail 1: what the lash is laid on.
+export const coilK = x => (x - coilX0()) / coilSpan();
 
 // The line walked once a frame: x at every step of arc length along it,
 // so a segment's place is a lookup. Keyed on the clock and the stage, the
@@ -174,7 +183,7 @@ const coilSpan = () => (COIL_X1 - COIL_X0) * DEEP_W;
 const STEP = 2;                           // px of arc a table entry
 let walked = null;
 function walk(t) {
-  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}`;
+  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}|${tautK()}|${lashK()}`;
   if (walked?.key === key) return walked;
   const xs = [coilX0()];
   const wave = waveLine(t);

@@ -15,7 +15,9 @@
 // A blow is read on it too: a bite out of the edge it came from, closing,
 // the hide giving under it a beat, and a ring running over a stunned coil's
 // head (DESIGN.md, "Blows land"); and what the fighters have laid on it, the
-// statuses, over the whole of it (docs/wave-party.md, "The picture").
+// statuses, over the whole of it (docs/wave-party.md, "The picture"); and
+// its phase's mechanic, the surge's throb and the sink's fade under the
+// abyss's veil (deep/phases.js).
 
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
@@ -24,10 +26,11 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
-         STUN_RING_DIM } from '../config.js';
+         STUN_RING_DIM, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY } from '../config.js';
 import { S } from '../state.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
+import { part, sinkK } from '../deep/phases.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
@@ -271,6 +274,9 @@ export function drawSerpent() {
     if (Math.abs(along - headA - P) < P / 2 && Math.abs(across + r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
     coil.put(i, ramp[rung]);
   }
+  // Sinking into the abyss the whole of him dims, and flickers dim in the
+  // warning (deep/phases.js).
+  ctx.globalAlpha = 1 - dimOf(t);
   coil.draw(ctx, minX, minY);
   hide = { c0, top, bot };
   // The crest: a fin of the abyss's purple standing up off the head and
@@ -306,7 +312,58 @@ export function drawSerpent() {
   for (const p of pts) if (Math.abs(p.along - ringA) < P && (!head || Math.abs(p.along - ringA) < Math.abs(head.along - ringA))) head = p;
   drawStatuses(t / 1000);
   drawStunRing(t, head);
+  ctx.globalAlpha = 1;
+  drawVeil(t, pts);
+  let belly = pts[0];
+  for (const p of pts) if (Math.abs(p.along - bellyA) < Math.abs(belly.along - bellyA)) belly = p;
+  if (Math.abs(belly.along - bellyA) < BELLY_LEN) drawThrob(t, belly);
   ctx.fillStyle = '#000';
+}
+
+// --- a phase's mechanic, as drawn ----------------------------------------------
+// The sink's dimming: how far under he is, and in its warning a flicker.
+function dimOf(t) {
+  const p = part();
+  if (p.m?.kind !== 'sink' || S.mechSkip) return 0;
+  if (p.part === 'warn') return SINK_WARN_DIM * (0.5 + 0.5 * Math.sin(t / 1000 * Math.PI * 2 * THROB_HZ));
+  return sinkK() * SINK_DIM;
+}
+// The abyss's veil flowing over him while he is under: purple cells along
+// the body, wandering across it, as bright as he is gone.
+function drawVeil(t, pts) {
+  const k = sinkK();
+  if (!(k > 0)) return;
+  ctx.globalAlpha = k;
+  let last = -Infinity;
+  for (const p of pts) {
+    if (p.along - last < P * SINK_VEIL_EVERY) continue;
+    last = p.along;
+    const i = Math.round(p.along / P);
+    const across = Math.sin(p.along / (P * 2.5) + t / 400) * p.r;
+    ctx.fillStyle = PURPLES[WHITE - 1 - (i % 3)];
+    ctx.fillRect(snap(p.x + p.nx * across - P / 2), snap(p.y + p.ny * across - P / 2), P, P);
+  }
+  ctx.globalAlpha = 1;
+}
+// The surge's throb: a ring of the abyss's purple round the belly, beating
+// in the warning and held while it heals.
+function drawThrob(t, b) {
+  const p = part();
+  if (p.m?.kind !== 'surge' || S.mechSkip || p.part === 'calm') return;
+  const beat = p.part === 'warn' ? 0.5 + 0.5 * Math.sin(t / 1000 * Math.PI * 2 * THROB_HZ) : 1;
+  const r = b.r + (THROB_R - 1 + beat) * P;
+  const n = Math.max(12, Math.round(r * 2 * Math.PI / P));
+  ctx.globalAlpha = 0.4 + 0.6 * beat;
+  ctx.fillStyle = PURPLES[WHITE - 1];
+  const seen = new Set();
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2;
+    const x = snap(b.x + Math.cos(a) * r * 1.4 - P / 2), y = snap(b.y + Math.sin(a) * r - P / 2);
+    if (seen.has(x * 1e5 + y)) continue;
+    seen.add(x * 1e5 + y);
+    ctx.fillRect(x, y, P, P);
+  }
+  ctx.globalAlpha = 1;
 }
 
 // --- the statuses on the whole serpent ------------------------------------------

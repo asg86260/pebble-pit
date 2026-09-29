@@ -476,6 +476,10 @@ export const S = {
   serpentStun: 0,
   serpentGrace: 0,
   serpentStill: 0,
+  // The phase's mechanic (deep/phases.js): seconds into its turn, and whether
+  // this turn's was answered.
+  mechAt: 0,
+  mechSkip: false,
   // The bites single blows took out of the hide, closing: { u, side, k, at },
   // `u` the segment, `side` -1 the top edge and 1 the underside, `k` how big
   // the blow was 0..1 (render/serpent.js).
@@ -671,7 +675,7 @@ export const SAVED = [
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip',
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).
   'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',

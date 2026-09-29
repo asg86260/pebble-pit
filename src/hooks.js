@@ -1085,6 +1085,7 @@ import { layScales, looseScales } from './deep/scales.js';
 import { healNow, woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
 import { forgetSerpent } from './verify.js';
+import { resetMechanic, part as phasePart } from './deep/phases.js';
 import { FANG_BREAKS } from './config.js';
 HANDLES.__serpent = ({ stage, wound } = {}) => {
   if (Number.isInteger(stage)) {
@@ -1096,6 +1097,7 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
     S.fangsDropped = Math.min(S.serpentStage, FANG_BREAKS);
     // and a fang still in the water from a break taken back goes with it.
     if (S.fangsLoose.length > S.fangsDropped) S.fangsLoose = S.fangsLoose.slice(0, S.fangsDropped);
+    resetMechanic();                    // a stage set opens calm, as a break's does
   }
   if (Number.isFinite(wound)) S.serpentWound = Math.max(0, wound);
   forgetSerpent();
@@ -1106,6 +1108,7 @@ HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(), heal: healNow(),
   freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
+  mech: { at: S.mechAt, skip: S.mechSkip, ...phasePart() },
   statuses: JSON.parse(JSON.stringify(S.statuses)),
   stations: S.stations.map(st => ({ ...st, paid: (st.paid || []).map(p => p.slice()) })),
   fangs: S.fangs, fangsDropped: S.fangsDropped, fangsLoose: S.fangsLoose.length,

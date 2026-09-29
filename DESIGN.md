@@ -16663,7 +16663,7 @@ it is settled first.
 (nothing teleports). Every ladder stays a written table in `LADDERS`. The
 numbers land in config, and the model reads them from there.
 
-## A phase has a mechanic and a class answers it (design, not built)
+## A phase has a mechanic and a class answers it (built)
 
 **The bargain.** Past the first, each phase does one thing to the party,
 warned ahead, and one class answers it. What sets the phases apart now is
@@ -16697,6 +16697,18 @@ docs/mocks/serpent-phases-2026-09-28.html.
   model (`tools/node/deep-pace.mjs`, a mechanic as a share of uptime for a
   party without its answer), so the hour stays an hour for a party that has
   the answer and runs somewhat longer for one that does not.
+
+**As built (2026-09-28).** `src/deep/phases.js` keeps the turn
+(`S.mechAt`, `S.mechSkip`, saved); the heal reads `surgeK`, `strike` reads
+`sunk`, the coil's line reads the lash (deep/place.js), and a lashed fighter
+is thrown the way the hand throws a body (crew/falls.js), landing dizzy.
+The numbers did not need solving again: the model with the mechanics
+unanswered frees him at 67 minutes and answered at 60. Two things it shows:
+- **The answers come late.** A stun and Held are capstones (rung 8), and the
+  party stands at rung 7 through most of the warded phase, so in that phase
+  the surge is mostly unanswered.
+- **A melee party pays the most.** Sword, Assassin, Sapper and Hexer, taking
+  half in the split and lashed there, run to about two hours unanswered.
 
 **Considered and not proposed:**
 - **A timed full heal** (break it in N minutes or the wound resets). With

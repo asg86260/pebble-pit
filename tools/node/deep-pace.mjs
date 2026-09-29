@@ -10,7 +10,12 @@
 //   node tools/node/deep-pace.mjs --party sword,assassin,sapper,hexer
 //   node tools/node/deep-pace.mjs --depths 9000,73000,191000,350000 --heals 65,86,176,238
 //   node tools/node/deep-pace.mjs --table            # a class's damage and shed, rung by rung
+//   node tools/node/deep-pace.mjs --answered         # every phase's mechanic answered
 //
+// Each phase's mechanic (deep/phases.js) is played unanswered -- the surge
+// triples the heal, the lash takes the melee fighters off the hide for its
+// length, the fall, the daze and the swim back (`LASH_OUT_S`), the sink takes
+// every blow for as long as he is past half gone -- unless `--answered`.
 // What it leaves out: the dust, ore and spark on a rung's bill, the rung's
 // build time, the fang's sink and carry, stuns, statuses and the Bard. So a
 // break here is the earliest the purse and the damage allow.
@@ -18,12 +23,31 @@
 import { LADDERS } from '../../src/config/rungs.js';
 import { CLASSES } from '../../src/config/classes.js';
 import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DMG,
-         CLICK_DMG } from '../../src/config/deep.js';
+         CLICK_DMG, MECHANICS } from '../../src/config/deep.js';
 
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const party = (arg('--party') || 'brawler,ranger,mage,monk').split(',');
 const gather = arg('--gather') ? +arg('--gather') : Infinity;
 const clicks = +(arg('--clicks') || 2);          // punches a second from the hand
+const answered = process.argv.includes('--answered');
+// Seconds a lashed fighter is off the hide past the lash itself: the sink to
+// the floor and the swim back up, a guess, besides the daze.
+const LASH_FALL_SWIM_S = 4;
+
+// What the phase's mechanic does in second `s` of the phase: the heal's
+// multiple, the melee fighters' share still fighting, everyone's share.
+function mechanic(st, s) {
+  const m = MECHANICS[st];
+  if (!m || answered) return { heal: 1, melee: 1, all: 1 };
+  const t = s % m.every, on = m.every - m.last;
+  if (m.kind === 'surge') return { heal: t >= on ? m.x : 1, melee: 1, all: 1 };
+  if (m.kind === 'lash') {
+    const out = m.last + m.daze + LASH_FALL_SWIM_S;
+    return { heal: 1, melee: t >= on || t < out - m.last ? 0 : 1, all: 1 };
+  }
+  const under = t >= on + m.fade / 2 && t < m.every - m.fade / 2;
+  return { heal: 1, melee: 1, all: under ? 0 : 1 };
+}
 
 // What a class's move adds to its plain hit on average, from rung 4 and from
 // rung 8: a guess read off each class's row in config/classes.js (a haymaker
@@ -41,15 +65,18 @@ const cost = (c, r) => LADDERS[c].dust[r];
 // A second at a time. `depth` is the four depths; `ends`, if given, fixes the
 // minute each stage breaks and the depth is read off instead.
 function fight(depth, ends, heal = SERPENT_HEAL) {
-  let st = 0, wound = 0, purse = 0, loose = 0, stood = 1;
+  let st = 0, wound = 0, purse = 0, loose = 0, stood = 1, from = 0;
   const rung = party.map(() => 0), made = [0, 0, 0, 0], at = [];
   for (let t = 0; st < 4 && t < 86400 * 3; t++) {
-    let d = clicks * CLICK_DMG[rung[0]], y = d * SCALE_PER_DMG;
-    for (let i = 0; i < stood; i++) { d += dps(party[i], rung[i], st); y += shed(party[i], rung[i], st); }
+    const mk = mechanic(st, t - from);
+    let d = clicks * CLICK_DMG[rung[0]] * mk.all;
+    for (let i = 0; i < stood; i++) d += dps(party[i], rung[i], st) * mk.all * (CLASSES[party[i]].melee ? mk.melee : 1);
+    const y = d * SCALE_PER_DMG;
     loose += y;
     const g = Math.min(loose, gather); loose -= g; purse += g;
-    made[st] += Math.max(0, d - heal[st]);
-    wound = Math.max(0, wound + d - heal[st]);
+    const h = heal[st] * mk.heal;
+    made[st] += Math.max(0, d - h);
+    wound = Math.max(0, wound + d - h);
     for (;;) {                                   // the cheapest rung standing, while the purse holds it
       let b = -1, bc = Infinity;
       for (let i = 0; i < stood; i++) if (rung[i] < 8 && cost(party[i], rung[i]) < bc) { bc = cost(party[i], rung[i]); b = i; }
@@ -57,7 +84,7 @@ function fight(depth, ends, heal = SERPENT_HEAL) {
       purse -= bc; rung[b]++;
     }
     const broke = ends ? t + 1 >= ends[st] * 60 : wound >= depth[st];
-    if (broke) { at.push({ min: (t + 1) / 60, rung: rung.slice(0, stood), rungs: rung.slice(0, stood).join('') }); st++; wound = 0; stood = Math.min(party.length, stood + 1); }
+    if (broke) { at.push({ min: (t + 1) / 60, rung: rung.slice(0, stood), rungs: rung.slice(0, stood).join('') }); st++; wound = 0; from = t + 1; stood = Math.min(party.length, stood + 1); }
   }
   return { at, made, loose };
 }

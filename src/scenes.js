@@ -20,7 +20,7 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
 import { buildStation, nextSlot } from './deep/party.js';
@@ -249,6 +249,20 @@ const stageScene = (stage, wound, stations = []) => () => {
   lookDeep(coilAt(bellySeg() - 4, now()).x);
 };
 
+// The lash is a second long, shorter than a shot takes, so its moment is
+// held on the page's frames for a few seconds (as the glide's is, below).
+const mechScene = (stage, into, stations, seg = null, pin = false) => () => {
+  stageScene(stage, 0.3, stations)();
+  const m = MECHANICS[stage];
+  S.mechAt = m.every - m.last - Math.max(0, into) - 0.05;
+  window.__fast(Math.max(0, -into) + 0.05);
+  if (seg != null) lookDeep(coilAt(seg, now()).x);
+  if (!pin) return;
+  const at = S.mechAt, until = performance.now() + 4000;
+  const hold = () => { if (performance.now() < until && S.serpentStage === stage) { S.mechAt = at; requestAnimationFrame(hold); } };
+  hold();
+};
+
 // The snatch as it plays: both facts true, and the clock run until the beat
 // reaches the phase named. The shot tool runs a second more after a scene,
 // and the take is shorter than that, so the scene stops at the start of the
@@ -364,6 +378,18 @@ const deepScenes = {
     run: stageScene(2, 0.25, [cast('sapper', 4), cast('hexer', 4)]) },
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',
     run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
+  // A phase's mechanic (deep/phases.js) caught at its moment: the turn set
+  // `into` seconds short of the thing itself (negative: that far into it).
+  'phase-surge': { about: 'the deep', say: 'the surge warning in the warded phase: the belly throbbing purple',
+    run: mechScene(1, 1.5, [cast('ranger', 4), cast('brawler', 4)]) },
+  'phase-surging': { about: 'the deep', say: 'the surge itself: the ring held round the belly, the heal tripled',
+    run: mechScene(1, -2, [cast('ranger', 4), cast('brawler', 4)]) },
+  'phase-taut': { about: 'the deep', say: 'the warning before the lash: the coil drawn up, its tail lifted',
+    run: mechScene(2, 0.3, [cast('brawler', 8), cast('sword', 8)], COIL_SEGS - 8, true) },
+  'phase-lash': { about: 'the deep', say: 'the lash running down the coil, melee fighters thrown off it',
+    run: mechScene(2, -0.6, [cast('brawler', 8), cast('sword', 8)], Math.round(COIL_SEGS * 0.55), true) },
+  'phase-sink': { about: 'the deep', say: 'the sink in the fading phase: the coil dimmed into the abyss under its veil',
+    run: mechScene(3, -3, [cast('mage', 4), cast('monk', 4)]) },
   // Reading the fight: the numbers off the blows and the heal's purple `+`
   // off the belly, mid-fight, with a held beam's second summed.
   'deep-numbers': { about: 'the deep', say: 'the fight\'s numbers: each blow\'s damage rising off the coil, the heal\'s +N in purple',
