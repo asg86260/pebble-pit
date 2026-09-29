@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- A status's hover line on a station's board is shown whole even past the board's edge, and a status named in an effect stays on its line (`node tools/look.mjs recruit-board`).
 - A station's board reads in full black, and each effect's description sits on the line under its name (`node tools/look.mjs recruit-board`).
 - The Recruit's board is as wide as its five choices need, so none of their names spill out of their boxes (`node tools/look.mjs recruit-board`).
 - The serpent flinches from a blow: the stretch of body round it is thrown up as one piece and settles, instead of a dent that sprang back past with a bulge running off it (`node tools/look.mjs deep-wound`).

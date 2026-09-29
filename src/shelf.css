@@ -709,11 +709,13 @@ html.dark .rails .rl-tree i.cap { color: #a979ef; }
 .rails .rl-tree i.on { background: currentColor; }
 .rails .rl-tree i.next { outline: 1px dotted #6f36c9; outline-offset: 2px; }
 /* The hover line over a pip. */
-.rails .rl-tip {
-  position: absolute; z-index: 2; pointer-events: none; transform: translate(-50%, calc(-100% - 6px));
-  background: var(--ink); color: var(--paper); font-size: var(--rl-text); padding: 2px 7px; white-space: nowrap;
+/* The hover line: on the page, over the boards, placed and kept on the glass
+   by deep/rails.js (`showTip`), in the board's face and size. */
+.rl-tip {
+  position: fixed; z-index: 21; pointer-events: none;
+  background: var(--ink); color: var(--paper); padding: 2px 7px; white-space: nowrap;
 }
-.rails .rl-tip[hidden] { display: none; }
+.rl-tip[hidden] { display: none; }
 /* A row: what it is, a line of what it does, its bill in the corner. */
 .rails .rl-row {
   display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; text-align: left;
@@ -787,7 +789,7 @@ html.dark .rails .rl-fx.cap .rl-st { color: #a979ef; }
 .rails .rl-pick { width: 0; min-width: 100%; box-sizing: border-box; }
 .rails .rl-fx { white-space: normal; }
 /* an effect's name, and what it does on the line under it */
-.rails .rl-fx b { display: block; }
+.rails .rl-fx .rl-fn { display: block; }
 .rails .rl-become { grid-template-columns: 1fr auto; }
 @media (prefers-reduced-motion: reduce) {
   .rails .rl-arm { transition: none; }

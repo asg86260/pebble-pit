@@ -250,8 +250,8 @@ function treeHTML(r) {
 }
 // A specialist's move and capstone (voted E2): a square for rung 4, a purple
 // one for rung 8, each with its line.
-const effectsHTML = b => `<span class="rl-fx"><i class="mv"></i><span><b>${esc(b.move[0])}</b> ${say(b.move[1])}</span></span>` +
-                         `<span class="rl-fx cap"><i class="cp"></i><span><b>${esc(b.cap[0])}</b> ${say(b.cap[1])}</span></span>`;
+const effectsHTML = b => `<span class="rl-fx"><i class="mv"></i><span><b class="rl-fn">${esc(b.move[0])}</b> ${say(b.move[1])}</span></span>` +
+                         `<span class="rl-fx cap"><i class="cp"></i><span><b class="rl-fn">${esc(b.cap[0])}</b> ${say(b.cap[1])}</span></span>`;
 const branchHTML = b => `<div class="rl-br"><div class="rl-bn">${glyphHTML(b.glyph)}${esc(b.name)}</div>${effectsHTML(b)}</div>`;
 // A root over its fork: the name centered, a stem, and a crossbar that ends
 // at its branches.
@@ -284,14 +284,24 @@ function bodyHTML(r) {
 }
 
 // The hover line over a pip or a status, and a tap's where a thumb has no hover.
+// It stands on the page, not in the board: the board's sheet clips whatever
+// reaches past its edge, and a status near the edge had its line cut off. Over
+// the thing it is about, centered, kept on the glass; under it where there is
+// no room above. In the board's own face and size.
+const TIP_GAP = 6, TIP_EDGE = 4;
 function showTip(m, pip) {
   const { tip, el } = m;
   if (!pip) { tip.hidden = true; return; }
+  const cs = getComputedStyle(el);
+  tip.style.fontFamily = cs.fontFamily;
+  tip.style.fontSize = cs.getPropertyValue('--rl-text');
   tip.textContent = pip.dataset.line;
   tip.hidden = false;
-  const a = el.getBoundingClientRect(), b = pip.getBoundingClientRect();
-  tip.style.left = `${Math.round(b.left - a.left + b.width / 2)}px`;
-  tip.style.top = `${Math.round(b.top - a.top)}px`;
+  const b = pip.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+  const left = Math.max(TIP_EDGE, Math.min(b.left + b.width / 2 - w / 2, innerWidth - w - TIP_EDGE));
+  const top = b.top - h - TIP_GAP >= TIP_EDGE ? b.top - h - TIP_GAP : b.bottom + TIP_GAP;
+  tip.style.left = `${Math.round(left)}px`;
+  tip.style.top = `${Math.round(top)}px`;
 }
 
 function wire(id, m) {
@@ -325,10 +335,15 @@ function mount(id) {
   const el = document.createElement('div');
   el.className = 'rails';
   el.dataset.station = id;
-  el.innerHTML = '<div class="rl-body"></div><div class="rl-tip" hidden></div>';
+  el.innerHTML = '<div class="rl-body"></div>';
   const rows = shopOf(id);
   if (rows?.after) rows.after(el); else pageOf(id)?.appendChild(el);
-  mounted.set(id, { el, body: el.querySelector('.rl-body'), tip: el.querySelector('.rl-tip'), sig: '' });
+  had?.tip?.remove?.();
+  const tip = document.createElement('div');
+  tip.className = 'rl-tip';
+  tip.hidden = true;
+  document.body.appendChild(tip);
+  mounted.set(id, { el, body: el.querySelector('.rl-body'), tip, sig: '' });
   return true;
 }
 
@@ -358,6 +373,9 @@ export function refresh(id) {
 // is measured again, so it is seated for what it holds.
 export function seatRails() {
   const id = S.stationBoardOpen;
+  // A hover line stands on the page, not in its board: when a board closes
+  // under the pointer its line goes with it.
+  for (const [k, m] of mounted) if (k !== id && !m.tip.hidden) m.tip.hidden = true;
   if (!id || !stationById(id)) return;
   const put = mount(id);
   if (refresh(id) || put) remeasure();
