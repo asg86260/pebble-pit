@@ -12369,11 +12369,16 @@ never will be.
 It comes up from the bottom over `SHEET_MS` and goes down the same way --
 `fade.js`'s sheet-up-and-down is already this motion for the held sheet and
 is reused, with `translate3d` on the y axis instead of opacity. It goes
-down on: a drag on the handle past `SHEET_DISMISS` (a third of its height),
+down on: a drag on the handle let go nearest gone (below),
 a tap on the yard above it (as now), the station scrolling out of the
 window (as now, through `pan()`), and a hop. Dragging the handle *up* past
 its seat makes it tall (`SHEET_TALL`, 0.9 of the window) for a long board,
 and back down to its seat before dismissing; three stops, no free height.
+Let go, it goes to the stop nearest where it would coast -- the finger's
+speed over its last `SHEET_FLING_MS`, coasted out with UIKit's decay
+(`SHEET_DECAY`) -- out of all three, so a flick from tall closes it and a
+slow drag stays where it was placed; past tall it rubber-bands
+(`SHEET_RUBBER`).
 The desk keeps its popover, `place()` and all: the sheet is a second seat
 in board.js chosen by `coarse()`, not a rewrite of the first, so the two
 share `showPanel`, `settle`, the linger, the pinned card and every row.
@@ -12396,15 +12401,16 @@ same rows. The popover is not touched on a desk.
   has no way down but a tap on the yard.
 
 **The knobs** (`config/touch.js`): `SHEET_H` (0.55), `SHEET_TALL` (0.9),
-`SHEET_DISMISS` (0.33 of its height), `SHEET_MS` (220 ms; 0 under reduced
-motion), `SHEET_HANDLE` (the bar: 36 by 4 px). **Files:** `board.js` (the
+`SHEET_FLING_MS` (80), `SHEET_DECAY` (0.998), `SHEET_RUBBER` (0.55),
+`SHEET_MS` (500 ms on `SHEET_EASE`; 0 under reduced motion), `SHEET_HANDLE` (the bar: 36 by 4 px). **Files:** `board.js` (the
 second seat, the handle's drag through `tap.js`'s press tracking, the crew
 list as a page), `style.css` (`#panel.sheet` and the handle), `play.html`
 (the handle element in `#panel`), the purse's seat inside the sheet
 (`pinWidth` reads `--sheet-room` as the window's width). **Check:** browser
 tier, `selftest/sheet.js` (new): under a coarse pointer the panel's rect is
-full width with its top at `SHEET_H`; a synthetic drag on the handle past
-`SHEET_DISMISS` closes it and one past the seat makes it `SHEET_TALL`; the
+full width with its top at `SHEET_H`; a flick down on the handle closes
+it, a slow drag to just past the seat settles there, and one up past the
+seat makes it `SHEET_TALL`; the
 purse is inside the panel's rect; the crew list opens inside the sheet and
 never outside the window; and the desk's `boardFit` and `seatBoard`
 readings are unchanged with `coarse()` false. The look is a shot: a

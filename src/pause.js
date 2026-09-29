@@ -4,7 +4,7 @@
 // square in the same idiom, and a tap holds the yard with the sheet on its
 // front page, as escape does. Held, on a phone, the sheet is a sheet from the
 // bottom through the same seat the boards use (sheet.js): the same handle and
-// stops, the same drag, the same pull past SHEET_DISMISS to put it away, and
+// stops, the same drag, the same pull or flick down to put it away, and
 // the wash above it is the tap outside. `hold` in input.js is still the one
 // flag; this only reaches for it.
 
@@ -38,6 +38,7 @@ const seat = sheetSeat(held, {
   open: () => held.classList.contains('on'),
   dismiss: () => hold(false),
   rail: false,
+  backdrop: scrim,
 });
 export const heldSheet = () => seat.stop();
 

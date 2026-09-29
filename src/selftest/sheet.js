@@ -8,9 +8,9 @@
 
 import { sleep, state, ok, run, raf, haveBench, settle, asScreen, openCrewList, hoverStation, touch, tap } from './kit.js';
 import { workOn } from '../works.js';
-import { SHEET_H, SHEET_TALL, SHEET_DISMISS, SHEET_MS, SHEET_RAIL_W } from '../config.js';
+import { SHEET_H, SHEET_TALL, SHEET_MS, SHEET_RAIL_W } from '../config.js';
 import { S } from '../state.js';
-import { sheetRail } from '../board.js';
+import { sheetRail, sheetStop } from '../board.js';
 
 // The list of rows inside the sheet, the thing that scrolls.
 const list = () => panel().querySelector(':scope > .sheet:not(.flyout)');
@@ -67,6 +67,33 @@ async function stroke(from, to) {
 
 const rect = () => panel().getBoundingClientRect();
 
+// A finger on the handle that can be moved, held still and lifted, each move
+// made in its own moment, so the speed the sheet reads off the last moves is
+// the speed the check moved at: `dy` over `ms`, a step a frame or so.
+function finger(el = handle()) {
+  const r = el.getBoundingClientRect();
+  const x = r.left + r.width / 2;
+  let y = r.top + r.height / 2;
+  const ev = (type, buttons = 1) => el.dispatchEvent(new PointerEvent(type, {
+    clientX: x, clientY: y, pointerId: 11, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true }));
+  ev('pointerdown');
+  return {
+    async move(dy, ms) {
+      const n = Math.max(3, Math.round(ms / 16)), y0 = y;
+      for (let i = 1; i <= n; i++) { await sleep(ms / n); y = y0 + dy * i / n; ev('pointermove'); }
+    },
+    async up() { ev('pointerup', 0); await settled(); },
+  };
+}
+// A flick: quick, lifted while still moving. A slow drag: slow, and the
+// finger still a moment before it lifts, as a thumb that has placed the sheet.
+const flick = async (dy, el) => { const f = finger(el); await f.move(dy, 48); await f.up(); };
+const slow = async (dy, el) => { const f = finger(el); await f.move(dy, 800); await sleep(150); await f.up(); };
+const shownNow = () => sheetStop()?.height ?? 0;
+// How much shows at the seat; and the way down from tall to just past it.
+const seatPx = () => Math.round(state().H * (1 - SHEET_H));
+const pastSeat = () => Math.round(state().H * SHEET_TALL) - seatPx() + 30;
+
 export const TESTS = [
   ['on a phone a board is a sheet from the bottom, dragged between three stops', async () => {
     window.__nocine();
@@ -88,12 +115,12 @@ export const TESTS = [
     await dragHandle(-120);
     const r1 = rect();
     const tall = Math.abs(r1.height - s.H * SHEET_TALL) <= 2;
-    // down a little: back to the seat, not gone
-    await dragHandle(r1.height * SHEET_DISMISS + 20);
+    // slowly down to just past the seat: back at the seat, not gone
+    await slow(pastSeat());
     const r2 = rect();
     const backToSeat = !panel().hidden && Math.abs(r2.top - s.H * SHEET_H) <= 2;
-    // and down past a third from the seat: gone
-    await dragHandle(r2.height * SHEET_DISMISS + 20);
+    // and flicked down from the seat: gone
+    await flick(120);
     const gone = panel().hidden;
     phone(false);
     await frames(2);
@@ -104,8 +131,49 @@ export const TESTS = [
       ok(named === 'the bench', 'the board\'s name beside the grip', named),
       ok(purseInside, 'the purse lies inside it'),
       ok(tall, 'dragged up past its seat it is tall', `${Math.round(r1.height)} vs ${Math.round(s.H * SHEET_TALL)}`),
-      ok(backToSeat, 'dragged down a third from tall it is back at the seat', `top ${Math.round(r2.top)}`),
-      ok(gone, 'and down a third from the seat it is gone'),
+      ok(backToSeat, 'dragged slowly from tall to just past the seat it is back at the seat', `top ${Math.round(r2.top)}`),
+      ok(gone, 'and flicked down from the seat it is gone'),
+    ];
+  }],
+
+  ['let go, the sheet goes to the stop nearest where it would coast: a flick from tall closes, a slow drag past the seat stays', async () => {
+    window.__nocine();
+    await haveBench();
+    phone(true);
+    const reopen = async () => { window.__board(null); await settled(); window.__board('bench'); await settled(); };
+    await reopen();
+    const seatH = shownNow(), tallH = Math.round(state().H * SHEET_TALL);
+    // a flick up from the seat: tall
+    await flick(-80);
+    const flickUp = { tall: !!sheetStop()?.tall, h: shownNow() };
+    // slowly down from tall to just past the seat: the seat, not gone
+    await slow(tallH - (seatH - 30));
+    const slowPast = { hidden: panel().hidden, h: shownNow() };
+    // a flick down from tall, shorter than the way to the seat: gone
+    await reopen(); await flick(-80);
+    await flick(150);
+    const flickDown = panel().hidden;
+    // slowly down from tall to nearly the foot: gone
+    await reopen(); await flick(-80);
+    await slow(tallH - 40);
+    const nearFoot = panel().hidden;
+    // up past tall: it follows less than the finger, and springs back
+    await reopen(); await flick(-80);
+    const f = finger();
+    await f.move(-200, 400);
+    const over = shownNow();
+    await f.up();
+    const back = shownNow();
+    window.__board(null);
+    phone(false);
+    await frames(2);
+    return [
+      ok(flickUp.tall && Math.abs(flickUp.h - tallH) <= 2, 'a flick up from the seat is tall', `${flickUp.h} vs ${tallH}`),
+      ok(!slowPast.hidden && Math.abs(slowPast.h - seatH) <= 2, 'a slow drag from tall to just past the seat settles at the seat', `hidden ${slowPast.hidden}, ${slowPast.h} vs ${seatH}`),
+      ok(flickDown, 'a flick down from tall closes it'),
+      ok(nearFoot, 'a slow drag from tall nearly to the foot closes it'),
+      ok(over > tallH + 10 && over < tallH + 160, 'dragged up past tall it resists the finger', `${over} for 200 px past ${tallH}`),
+      ok(Math.abs(back - tallH) <= 2, 'and springs back to tall', `${back}`),
     ];
   }],
 
@@ -157,6 +225,7 @@ export const TESTS = [
   ['the settings sheet is a sheet like the boards\': the same gesture reaches the same stops', async () => {
     window.__nocine();
     await haveBench();
+    await settled();                  // a sheet the last check put away is all the way down
     phone(true);
     // the way in, a frame at a time: the y of the computed transform for the
     // first twenty frames after each is opened
@@ -170,7 +239,7 @@ export const TESTS = [
     const seatBoard = tf();
     await dragHandle(-160);
     const tallBoard = tf();
-    await dragHandle(rect().height * SHEET_DISMISS + 30);
+    await slow(pastSeat());
     const backBoard = tf();
     window.__board(null);
     await settled();
@@ -190,18 +259,18 @@ export const TESTS = [
     const same = n >= 8 && bi.slice(0, n).every((y, i) => Math.abs(y - hi[i]) <= 8);
     await dragHandle(-160, hh);
     const tallHeld = held.style.transform;
-    await dragHandle(held.getBoundingClientRect().height * SHEET_DISMISS + 30, hh);
+    await slow(pastSeat(), hh);
     const backHeld = held.style.transform;
-    // and pulled down past a third from the seat, it goes -- slid off, no fade
-    await dragHandle(held.getBoundingClientRect().height * SHEET_DISMISS + 30, hh);
+    // and flicked down from the seat, it goes -- slid off, no fade
+    await flick(120, hh);
     const gone = held.hidden && !state().paused;
     phone(false);
     await frames(2);
     return [
       ok(seatBoard === seatHeld, 'both sheets stand at the same seat', `${seatBoard} vs ${seatHeld}`),
       ok(tallBoard === tallHeld && tallBoard !== seatBoard, 'dragged up, both reach the same tall stop', `${tallBoard} vs ${tallHeld}`),
-      ok(backBoard === backHeld && backBoard === seatBoard, 'and dragged down a third, both come back to the seat', `${backBoard} vs ${backHeld}`),
-      ok(gone, 'and from the seat the same pull puts the settings away'),
+      ok(backBoard === backHeld && backBoard === seatBoard, 'and dragged slowly down past the seat, both come back to it', `${backBoard} vs ${backHeld}`),
+      ok(gone, 'and from the seat the same flick puts the settings away'),
       ok(slid && same, 'and both come in the same way, from below the foot up to the seat, frame for frame',
          `board ${boardIn.join(' ')} | settings ${heldIn.join(' ')}`),
     ];
@@ -228,7 +297,7 @@ export const TESTS = [
     await frames(2); await sleep(SHEET_MS + 60);
     const phonePitch = pitchOf();
     const heldGap = getComputedStyle(document.getElementById('held')).rowGap;
-    await dragHandle(document.getElementById('held').getBoundingClientRect().height * SHEET_DISMISS + 30, document.getElementById('heldhandle'));
+    await flick(120, document.getElementById('heldhandle'));
     phone(false);
     await frames(2);
     return [
@@ -283,7 +352,7 @@ export const TESTS = [
     const stayed = !panel().hidden && el.scrollTop === 0;
     const tf = panel().style.transform;
     // a second touch, begun with the list at its top, pulls the sheet
-    const took2 = await pullList(rect().height * SHEET_DISMISS + 30);
+    const took2 = await pullList(seatPx() * 3 / 4);
     const gone = panel().hidden;
     phone(false);
     await frames(2);
@@ -308,12 +377,12 @@ export const TESTS = [
     // scrolled a little: a pull is the list's, and the sheet stays
     el.scrollTop = 40;
     await raf();
-    const took1 = await pullList(rect().height * SHEET_DISMISS + 30);
+    const took1 = await pullList(seatPx() * 3 / 4);
     const stayed = !panel().hidden;
     // back at the top: the same pull is the sheet's, through its stops
     el.scrollTop = 0;
     await raf();
-    const took2 = await pullList(rect().height * SHEET_DISMISS + 30);
+    const took2 = await pullList(seatPx() * 3 / 4);
     const gone = panel().hidden;
     phone(false);
     await frames(2);

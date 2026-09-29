@@ -1742,7 +1742,11 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   border-top: 2px solid var(--ink);
   /* One transition, on the move to a stop: the box never changes size, so
      only the transform ever eases, and never under a finger. */
-  transition: transform var(--sheet-ms, 220ms) cubic-bezier(.22, .61, .36, 1);
+  transition: transform var(--sheet-ms) var(--sheet-ease);
+  /* Paper below the foot, the box's own height of it: pulled up past tall
+     the box lifts off the foot (the rubber band, sheet.js), and this is what
+     shows under it rather than the yard. */
+  box-shadow: 0 var(--sheet-box, 0px) 0 0 var(--paper);
 }
 #panel.bottom { align-items: stretch; overflow: hidden; gap: 0; }
 #panel.bottom.dragging, #held.bottom.dragging, body.still #panel.bottom, body.still #held.bottom { transition: none; }

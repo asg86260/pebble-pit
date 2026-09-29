@@ -6,7 +6,7 @@
 // ahead of the hide. Both are safe to call every frame. Under motion: less
 // (body.still) the fade is nought and the hide is immediate.
 
-import { SHEET_FADE_MS } from './config.js';
+import { SHEET_FADE_MS, SHEET_MS } from './config.js';
 
 const going = new WeakMap();   // element -> the timer that will hide it
 
@@ -23,5 +23,8 @@ export function fadeOut(el) {
   if (el.hidden || !el.classList.contains('on')) return;
   el.classList.remove('on');
   if (document.body.classList.contains('still')) { el.hidden = true; return; }
-  going.set(el, setTimeout(() => { going.delete(el); if (!el.classList.contains('on')) el.hidden = true; }, SHEET_FADE_MS));
+  // A sheet from the bottom (sheet.js) goes by sliding, not fading, and is
+  // hidden only once the slide is down.
+  const ms = el.classList.contains('bottom') ? SHEET_MS : SHEET_FADE_MS;
+  going.set(el, setTimeout(() => { going.delete(el); if (!el.classList.contains('on')) el.hidden = true; }, ms));
 }
