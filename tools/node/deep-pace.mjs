@@ -22,7 +22,7 @@
 
 import { LADDERS } from '../../src/config/rungs.js';
 import { CLASSES } from '../../src/config/classes.js';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DECADE,
+import { SERPENT_HEAL, SERPENT_WOUND, DAMAGE_KIND, RESISTS, RESIST_K, SCALE_PER_DECADE,
          CLICK_DMG, MECHANICS } from '../../src/config/deep.js';
 
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
@@ -56,7 +56,13 @@ const MOVE = { brawler: [1.5, 1.5], sword: [1.8, 2.4], monk: [1.5, 1.5], martial
                ranger: [1.2, 1.2], assassin: [1, 1], hexer: [1, 1], sapper: [2.2, 2.6], mage: [1.25, 1.5] };
 const tempo = c => (c === 'mage' ? 1 : CLASSES[c].every);   // the beam's ladder is already a second's
 const moveK = (c, r) => (r >= 8 ? MOVE[c][1] : r >= 4 ? MOVE[c][0] : 1);
-const hit = (c, r, st) => LADDERS[c].value[r] * SERPENT_DEFENSE[c][st] * moveK(c, r);
+// A phase's resist on a class, over the phase: the fading's two turns
+// averaged, since it spends as long in each.
+const guard = (c, st) => {
+  const r = RESISTS[st];
+  return r.length ? r.reduce((g, k) => g + (DAMAGE_KIND[c] === k ? RESIST_K : 1), 0) / r.length : 1;
+};
+const hit = (c, r, st) => LADDERS[c].value[r] * guard(c, st) * moveK(c, r);
 const dps = (c, r, st) => hit(c, r, st) / tempo(c);
 // Scales shed a second: a hit sheds a few more for each tenfold of its
 // damage (`scalesOf` in src/deep/serpent.js).

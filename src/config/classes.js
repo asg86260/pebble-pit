@@ -20,7 +20,7 @@ export const NEEDS_COMPANY = ['bard'];
 export const FIGHT_STATIONS_MAX = 4;
 
 // One row a class: name, ladder key (in LADDERS), the hit key (in
-// SERPENT_DEFENSE), melee or not, and its tempo and move numbers. What a rung
+// DAMAGE_KIND), melee or not, and its tempo and move numbers. What a rung
 // is worth -- a hit's damage, the beam's damage a second, the Bard's Inspired
 // share -- is the class's ladder; everything here is the shape of the attack
 // around that number. Times are seconds unless named `_ms`.

@@ -10,7 +10,7 @@
 // are about the depths and not about which class answers which stage.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES } from '../src/config.js';
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K } from '../src/config.js';
 import { clickDeep, clickDmg, strike, healNow, woundK, onBreak, scalesOf } from '../src/deep/serpent.js';
 import { spendScales } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
@@ -139,7 +139,7 @@ group('each defense breaks at its depth, in order, the fourth frees him, and eve
   ];
 });
 
-group('every class that does damage takes half in one phase and the whole in the rest', async () => {
+group('a hit is halved in the phase that resists its kind, and whole in the rest', async () => {
   deepYard();
   const bad = [];
   for (const [key, cls] of Object.entries(CLASSES)) {
@@ -150,12 +150,12 @@ group('every class that does damage takes half in one phase and the whole in the
       const p = belly();
       got.push(strike(cls.hit, 100, p.x, p.y) / 100);
     }
-    if (got.filter(k => k === 0.5).length !== 1 || got.filter(k => k === 1).length !== 3) bad.push(`${key}: ${got}`);
-    if (got.some((k, i) => k !== SERPENT_DEFENSE[cls.hit][i])) bad.push(`${key} off its row: ${got}`);
+    const want = RESISTS.map(r => (r[0] === DAMAGE_KIND[cls.hit] ? RESIST_K : 1));
+    if (got.some((k, i) => k !== want[i])) bad.push(`${key} (${DAMAGE_KIND[cls.hit]}): ${got}`);
   }
   return [
-    ok(bad.length === 0, 'by the defense table, with no wall', bad.join('; ')),
-    ok(!SERPENT_DEFENSE.star && !SERPENT_DEFENSE.beam && !SERPENT_DEFENSE.lance, 'and no weapon rows are left')
+    ok(bad.length === 0, 'by its kind, the fading as it opens', bad.join('; ')),
+    ok(!('star' in DAMAGE_KIND) && !('beam' in DAMAGE_KIND) && !('lance' in DAMAGE_KIND), 'and no weapon rows are left')
   ];
 });
 

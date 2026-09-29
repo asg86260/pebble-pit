@@ -126,6 +126,15 @@ export const DEEP_MOTES_MAX = 400;   // however much is going on
 // --- the serpent -------------------------------------------------------------------
 export const WARD_MS = 2600;         // one pass of the ward's shimmer along the scales
 export const WARD_AT = 0.55;         // how much of the shimmer's wave is lit
+// The physical resist's plates (the owner's A, docs/mocks/serpent-resists-2026-09-29.html):
+// a band across the hide every PLATE_EVERY cells along it, PLATE_W wide, its
+// body PLATE_TONE rungs down from white and its top edge PLATE_EDGE. The
+// coming resist flickers in at RESIST_FLICKER_HZ before the fading's switch.
+export const PLATE_EVERY = 6;
+export const PLATE_W = 2;
+export const PLATE_TONE = 6;
+export const PLATE_EDGE = 2;
+export const RESIST_FLICKER_HZ = 4;
 // Splitting: the coil stays whole and thrashes, a ripple a length running
 // down it on top of the sway. place.js lays it into the centerline, so a
 // click, a lance and a ring all land on the body as drawn.

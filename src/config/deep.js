@@ -85,31 +85,35 @@ export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this 
 // --- the fight ---------------------------------------------------------------------
 // Four defenses, one a stage. The wound is held open against the heal and
 // breaks the stage at its depth; the fourth depth is the belly. Solved by
-// `tools/node/deep-pace.mjs --gather 4 --solve 8,22,40,60 --heals 8`
+// `tools/node/deep-pace.mjs --gather 4 --answered --solve 8,22,40,60 --heals 8`
 // (DESIGN.md, "The deep is paced by its purse"). The first heal is one the
 // first fighter out-hits alone two or three rungs up, so the first stage
 // starts slow and then gives; every later heal is what the party does two
 // rungs short of where it stands at the break. A depth is what the party
 // opens against its heal by the minute it breaks.
-export let SERPENT_HEAL = [8, 86, 176, 238];                  // wound a second it closes, a stage
-export const SERPENT_DEPTHS = [32000, 73000, 191000, 350000]; // the depth that breaks it, a stage
+export let SERPENT_HEAL = [8, 107, 128, 211];                 // wound a second it closes, a stage
+export const SERPENT_DEPTHS = [30000, 91000, 143000, 322000]; // the depth that breaks it, a stage
 export let SERPENT_WOUND = SERPENT_DEPTHS.slice();           // and as the dev panel has scaled it
-// How hard each defense is on each hit: a multiplier, a phase. Every class
-// that does damage takes half in one phase and the whole in the rest, so no
-// class walls and none is the answer to everything (docs/wave-party.md). The
-// click is a punch of its own, whole in every phase.
-export const SERPENT_DEFENSE = {
-  punch:    [1, 1, 1, 1],
-  brawler:  [1, 0.5, 1, 1],
-  sword:    [1, 1, 0.5, 1],
-  monk:     [0.5, 1, 1, 1],
-  martial:  [1, 0.5, 1, 1],
-  ranger:   [1, 1, 1, 0.5],
-  assassin: [1, 1, 0.5, 1],
-  sapper:   [1, 1, 0.5, 1],
-  hexer:    [0.5, 1, 1, 1],
-  mage:     [1, 1, 0.5, 1]
+// Resists (DESIGN.md, "Resists: magic in the ward, physical in the split,
+// both in the fading"). Every hit is one kind of damage, and a phase resists
+// a kind: a resisted hit does RESIST_K of itself. The bare phase resists
+// nothing; the fading takes the two in turn, RESIST_TURN_S each, the coming
+// one showing on the hide RESIST_WARN_S before it (deep/phases.js). The click
+// is a punch, of no kind, whole in every phase.
+export const DAMAGE_KIND = {
+  punch: null,
+  brawler: 'physical', sword: 'physical', martial: 'physical', assassin: 'physical', ranger: 'physical',
+  monk: 'magic', hexer: 'magic', mage: 'magic',
+  sapper: 'explosive'
 };
+export const RESISTS = [[], ['magic'], ['physical'], ['magic', 'physical']];
+export const RESIST_K = 0.5;
+export const RESIST_TURN_S = 20;
+export const RESIST_WARN_S = 1;
+// Each hit's multiple a phase, the fading's as it opens: the table the checks
+// and the model read. What a hit takes this frame is `guardOf` (deep/phases.js).
+export const SERPENT_DEFENSE = Object.fromEntries(Object.entries(DAMAGE_KIND).map(([hit, kind]) =>
+  [hit, RESISTS.map(r => (kind && r[0] === kind ? RESIST_K : 1))]));
 // A stunning blow seizes the coil and stops the heal (DESIGN.md, "Blows land:
 // the burst and the stun"). Only a capstone stuns -- the Brawler's haymaker,
 // the Monk's chi palm, the Ranger's aimed shot and the Sapper's pair of

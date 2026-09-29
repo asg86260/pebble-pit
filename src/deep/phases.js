@@ -5,6 +5,9 @@
 // the hide and the Hexer's Held stops it; the sink takes him into the abyss
 // where nothing reaches him, and a burst banked before it is the answer.
 //
+// Its resist is here too: the kind of damage it halves, which in the fading
+// changes on a turn of its own (`resistNow`, `guardOf`).
+//
 // `S.mechAt` is the seconds into the phase's turn and `S.mechSkip` whether
 // this turn's mechanic was answered; both are saved, so a reload lands in the
 // same beat. The heal reads `surgeK`, a strike reads `sunk`, the coil's line
@@ -12,7 +15,7 @@
 // drawing reads the parts.
 
 import { S } from '../state.js';
-import { MECHANICS, LASH_TAUT_S, LASH_W } from '../config.js';
+import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S } from '../config.js';
 import { has } from './statuses.js';
 
 const LAST = 3;
@@ -61,6 +64,7 @@ export const lashHits = k => { const at = lashK(); return at != null && Math.abs
 // that lash. A new turn is unanswered again.
 export function stepMechanic(c) {
   const m = mechOf();
+  S.phaseAt = (S.phaseAt || 0) + c.dt / 1000;
   if (!m) { S.mechAt = 0; S.mechSkip = false; return; }
   S.mechAt += c.dt / 1000;
   if (S.mechAt >= m.every) { S.mechAt %= m.every; S.mechSkip = false; }
@@ -70,4 +74,27 @@ export function stepMechanic(c) {
 }
 
 // A phase broken: the next opens at the top of its turn.
-export function resetMechanic() { S.mechAt = 0; S.mechSkip = false; }
+export function resetMechanic() { S.mechAt = 0; S.mechSkip = false; S.phaseAt = 0; }
+
+// --- the resist ------------------------------------------------------------------
+// The kind of damage the phase up resists, and in the fading, which of its two
+// is up: they take turns on `S.phaseAt`, the seconds into the phase (saved).
+const resists = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? RESISTS[S.serpentStage] : []);
+export function resistNow() {
+  const r = resists();
+  return r.length ? r[Math.floor(S.phaseAt / RESIST_TURN_S) % r.length] : null;
+}
+// The one coming in the last RESIST_WARN_S of a turn, for the hide to show
+// ahead; null when nothing is about to change.
+export function resistNext() {
+  const r = resists();
+  if (r.length < 2 || S.phaseAt % RESIST_TURN_S < RESIST_TURN_S - RESIST_WARN_S) return null;
+  return r[(Math.floor(S.phaseAt / RESIST_TURN_S) + 1) % r.length];
+}
+// What a hit of `weapon` is worth this frame, of itself; undefined for a
+// weapon the serpent does not know.
+export function guardOf(weapon) {
+  if (!(weapon in DAMAGE_KIND)) return undefined;
+  const kind = DAMAGE_KIND[weapon];
+  return kind && kind === resistNow() ? RESIST_K : 1;
+}

@@ -16734,7 +16734,7 @@ unanswered frees him at 67 minutes and answered at 60. Two things it shows:
   Bard's song clearing them. A good job for the Bard; kept for a later pass
   so the first four each have one answer to learn.
 
-## Resists: magic in the ward, physical in the split, both in the fading (design, not built)
+## Resists: magic in the ward, physical in the split, both in the fading (built)
 
 **The bargain.** A class's weak phase stops being a line in a table and
 becomes a kind of damage the player can see resisted. Every class deals one
@@ -16768,4 +16768,11 @@ learn to have a diverse party). Mock: docs/mocks/serpent-resists-2026-09-29.html
   standard party (Brawler, Ranger, Mage, Monk) has two of its four halved in
   both the warded phase and the split, where it had one.
 
-Open for the vote: A or B for the physical look.
+**As built (2026-09-29).** The owner picked A, the plates. `DAMAGE_KIND`,
+`RESISTS` and `RESIST_K` in config/deep.js; `SERPENT_DEFENSE` is derived
+from them (the fading's column as it opens). `guardOf` in deep/phases.js
+is what a hit takes this frame, on `S.phaseAt` (saved). Solved again with
+the mechanics answered: heals 8 / 107 / 128 / 211, depths 30k / 91k / 143k
+/ 322k. Every party the model tries frees him in 60 to 67 minutes
+answered and 67 to 80 unanswered; the slowest phase is now a magic-heavy
+party's warded one.

@@ -26,11 +26,11 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
-         STUN_RING_DIM, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY } from '../config.js';
+         STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY } from '../config.js';
 import { S } from '../state.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext } from '../deep/phases.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
@@ -185,6 +185,11 @@ export function drawSerpent() {
   // Weakened: the hide goes dull, a tone down (the class bench's painter).
   const dull = has('weakened');
   const wardPh = t / WARD_MS * Math.PI * 2;
+  // The resist up shows on the hide: the ward's purple shimmer for magic,
+  // plates for physical; the coming one flickers in before the fading's
+  // switch (deep/phases.js).
+  const coming = resistNext();
+  const shown = coming && Math.floor(t / 1000 * RESIST_FLICKER_HZ * 2) % 2 ? coming : resistNow();
 
   // The belly swells round him while he is in it.
   if (held) for (const p of pts) {
@@ -262,9 +267,11 @@ export function drawSerpent() {
              : Math.abs(across) < P / 2 ? WHITE - 2
              : across > P * 0.9 ? WHITE - 1
              : WHITE;
-    if (stage === 1 && Math.sin(aI * 0.45 + cI * 1.1 - wardPh) > WARD_AT) {
+    if (shown === 'magic' && Math.sin(aI * 0.45 + cI * 1.1 - wardPh) > WARD_AT) {
       ramp = PURPLES; rung = WHITE - (seeth(aI, cI) % 3);
     }
+    if (shown === 'physical' && ((aI % PLATE_EVERY) + PLATE_EVERY) % PLATE_EVERY < PLATE_W)
+      rung = across < -r + P ? WHITE - PLATE_EDGE : WHITE - PLATE_TONE;
     if (dull && ramp === GREYS && rung > WHITE - 3) rung -= 2;
     // The cracks: two, wandering across the body, out from the belly as far
     // as the wound is deep; near black at the wound, greyer at their tips.

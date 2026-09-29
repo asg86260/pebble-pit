@@ -11,7 +11,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DECADE,
+import { SERPENT_HEAL, SERPENT_WOUND, SCALE_PER_DECADE,
          NUM_HELD_S, NUM_HEAL_EVERY_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
@@ -19,12 +19,11 @@ import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, healLeft, has, clearStatuses } from './statuses.js';
-import { stepMechanic, resetMechanic, surgeK, sunk } from './phases.js';
+import { stepMechanic, resetMechanic, surgeK, sunk, guardOf } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
-// is struck on the last defense's column and has nothing left to heal.
+// resists nothing and has nothing left to heal.
 const LAST = 3;
-const column = () => Math.min(LAST, S.serpentStage);
 const depth = () => S.serpentStage > LAST ? 0 : SERPENT_WOUND[S.serpentStage];
 
 // What a hit did, kept a moment for the number over it (render/fightnums.js).
@@ -75,8 +74,8 @@ function stun(blow, k) {
   S.serpentGrace = 0;
 }
 
-// A hit: `weapon` is a key of SERPENT_DEFENSE, `dmg` what it is worth before
-// the defense, (x, y) where it landed, `from` what struck it when it strikes
+// A hit: `weapon` is a key of DAMAGE_KIND, `dmg` what it is worth before
+// the phase's resist (`guardOf`), (x, y) where it landed, `from` what struck it when it strikes
 // more than once (a beam, a bleed, a blow landing at several spots), `side`
 // the edge it bit (-1 the top, 1 the underside, the default). `o`:
 //
@@ -91,9 +90,9 @@ function stun(blow, k) {
 export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   if (!S.snatched || !(dmg > 0)) return 0;
   if (sunk()) return 0;                          // in the abyss, out of reach (deep/phases.js)
-  const table = SERPENT_DEFENSE[weapon];
-  if (!table) return 0;
-  const guard = o.through ? Math.max(1, table[column()]) : table[column()];
+  const kept = guardOf(weapon);
+  if (kept === undefined) return 0;
+  const guard = o.through ? Math.max(1, kept) : kept;
   const done = dmg * guard * ampOf(!!o.tick, o.by);
   if (!(done > 0)) return 0;
   // Held at the stage's depth rather than over it: the break is the frame's

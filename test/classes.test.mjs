@@ -344,8 +344,8 @@ group('Mage: a held beam ticks, then a finishing blow; it widens at 4 and burns 
   buyTo(0, 'mage', 4);
   let widest = 0;
   watch(8, 0, () => { const b = fighterAt(0).beam; if (b) widest = Math.max(widest, b.width); });
-  // The split, where a Mage is halved -- until her beam burns through.
-  window.__serpent({ stage: 2, wound: 0 });
+  // The warded phase, which resists magic -- until her beam burns through.
+  window.__serpent({ stage: 1, wound: 0 });
   const tick = seen => [...seen.hits.keys()].filter(h => h.weapon === 'mage' && h.key).map(h => h.done);
   const half = Math.max(...tick(watch(6)));
   buyTo(0, 'mage', 8);

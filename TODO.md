@@ -12,12 +12,11 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
-## Resists: magic in the ward, physical in the split -- DESIGNED, AWAITING THE VOTE (2026-09-29)
+## Resists: magic in the ward, physical in the split -- BUILT (2026-09-29)
 
 "Resists: magic in the ward, physical in the split, both in the fading" in
-DESIGN.md; mock `docs/mocks/serpent-resists-2026-09-29.html`. Blocked on the
-owner's pick of the physical look (A plates or B raised scales). No game
-code yet.
+DESIGN.md. Open: nobody has watched the fading switch in play (the plates
+flicker in `RESIST_WARN_S` before it).
 
 ## A phase has a mechanic and a class answers it -- BUILT, TUNING OPEN (2026-09-28)
 

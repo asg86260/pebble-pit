@@ -131,7 +131,7 @@ group('a status laid again keeps the longer and the stronger; a break takes them
   const kept = { until: S.statuses.weakened.until, k: level('weakened') };
   lay('exposed', EXPOSED_AMP, 30);
   const p = belly();
-  strike('mage', SERPENT_WOUND[1], p.x, p.y);
+  strike('punch', SERPENT_WOUND[1], p.x, p.y);   // a punch, which no phase resists
   frame();
   return [
     ok(kept.until === long && kept.k === 0.4, 'the longer and the stronger stand', JSON.stringify(kept)),
