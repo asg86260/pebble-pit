@@ -27,8 +27,8 @@ group('a sword contact dents the coil once', () => {
 
 // A held beam bites the hide every tick, a stream and not a string of blows:
 // the Mage is never knocked back by a tick, and
-// every tick's give is marked a stream's (render/serpent.js presses it in and
-// nothing more).
+// every tick's give is marked a stream's (render/serpent.js leaves the body
+// be under it; only the finishing blow makes it flinch).
 group("a beam's ticks neither knock the Mage back nor spring the coil", () => {
   const out = [];
   for (const R of [0, 4, 8]) {

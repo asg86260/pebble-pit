@@ -21,7 +21,7 @@
 
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
-         WOUND_GAP, BELLY_AT, DENT_S, DENT_STEPS, DENT_W, DENT_DEPTH, DENT_RUN, DENT_RUN_REACH, DENT_RUN_BIG,
+         WOUND_GAP, BELLY_AT, DENT_REACH, DENT_LIFT, DENT_BIG, DENT_CORE, DENT_STEPS,
          BLEED_DRIPS, BLEED_DRIP_S, HELD_EVERY, EXPOSED_EVERY, EXPOSED_LIFT_HZ,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
@@ -82,26 +82,24 @@ function lay(t, x0, x1) {
   return { pts: shown, alongAt };
 }
 
-// The coil answers a blow: the hide round the hit is driven in whole cells and
-// held, then a beat past where it was and a beat short before it rests, over
-// a few columns either side, deeper and wider for a bigger blow; and a bulge
-// runs out from it both ways along the body. Held steps, never a shudder: each
-// pose is a whole cell and holds (DENT_STEPS). Cells, from the fighters'
-// contacts (render/arms.js); drawing only, the sim's coil does not move.
+// The body flinches from a blow, as a body does: the stretch of it round the
+// hit is thrown up as one piece, a cell or two, held, half down, and at rest
+// (DENT_STEPS) -- the middle of the stretch whole, its ends half as far. Held
+// steps, whole cells, never a shudder; where two blows overlap the bigger
+// lift stands. A stream's ticks (the beam) leave it be. Cells, from the
+// fighters' contacts (render/arms.js); drawing only, the sim's coil does not
+// move.
 const stepOf = u => { for (const [until, k] of DENT_STEPS) if (u < until) return k; return 0; };
+const DENT_S = DENT_STEPS[DENT_STEPS.length - 1][0];
 function dentAt(cx, t, dents) {
   let off = 0;
   for (const d of dents) {
     const u = t - d.t0;
-    if (u < 0 || u > DENT_S) continue;
-    const w = DENT_W[0] + DENT_W[1] * d.k, fall = Math.exp(-((cx - d.x) ** 2) / (2 * w * w));
-    // a stream's tick (the beam) only presses: it neither springs back past
-    // nor runs a bulge, or a held beam would set the whole coil jumping
-    const k = d.stream ? (u < DENT_STEPS[0][0] ? DENT_STEPS[0][1] : 0) : stepOf(u);
-    off -= Math.round((DENT_DEPTH[0] + DENT_DEPTH[1] * d.k) * fall * k);
-    if (d.stream) continue;
-    const r = u * DENT_RUN, far = Math.abs(cx - d.x);
-    if (r < DENT_RUN_REACH && Math.abs(far - r) < 1.5) off -= d.k > DENT_RUN_BIG ? 2 : 1;
+    if (d.stream || u < 0 || u >= DENT_S) continue;
+    const big = d.k > DENT_BIG ? 1 : 0, reach = DENT_REACH[big], far = Math.abs(cx - d.x);
+    if (far > reach) continue;
+    const lift = Math.round(DENT_LIFT[big] * stepOf(u) * (far <= reach * DENT_CORE ? 1 : 0.5) + 0.01);
+    off = Math.min(off, -lift);
   }
   return off;
 }

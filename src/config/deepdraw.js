@@ -377,20 +377,18 @@ export const DRAW_KICK_BACK_S = 0.2;
 export const KIT_BOX = { left: 6, top: 7, w: 16, h: 11 };
 export const MOTE_PERIOD = 2.2;      // s a rung-8 mote takes to drift off a kit
 export const MOTE_RISE = 3;          // and cells it rises
-// The coil gives under a contact (render/serpent.js; the owner's pick of
-// docs/mocks/blow-heft-2026-09-28.html): driven in whole cells and held there,
-// then a beat past where it was and a beat short, then at rest -- DENT_STEPS,
-// [until, share of the depth], in held poses. Its width and depth in cells
-// are [base, per unit of the blow's size]. A bulge runs out from the blow
-// both ways along the body at DENT_RUN cells a second for DENT_RUN_REACH
-// cells, a cell high, two past DENT_RUN_BIG. Gone by DENT_S.
-export const DENT_S = 0.9;
-export const DENT_STEPS = [[0.16, 1], [0.24, -0.4], [0.32, 0.2]];
-export const DENT_W = [1.2, 2];
-export const DENT_DEPTH = [1.4, 2];
-export const DENT_RUN = 40;
-export const DENT_RUN_REACH = 14;
-export const DENT_RUN_BIG = 0.7;
+// The body flinches from a blow (render/serpent.js; the owner's C of
+// docs/mocks/coil-give-2026-09-28.html): the stretch of it round the blow,
+// DENT_REACH cells either way, is thrown up DENT_LIFT cells as one piece --
+// the inner DENT_CORE of it whole, the rest half as far -- held, then half
+// down, then at rest (DENT_STEPS, [until, share], in held poses). A blow past
+// DENT_BIG is the second of each pair. A stream's ticks (the beam) do not
+// move it.
+export const DENT_REACH = [9, 14];
+export const DENT_LIFT = [1, 2];
+export const DENT_BIG = 0.7;
+export const DENT_CORE = 0.6;
+export const DENT_STEPS = [[0.16, 1], [0.28, 0.5]];
 // The statuses on the whole serpent (the class bench's painters).
 export const BLEED_DRIPS = 9;        // columns Bleeding drips off
 export const BLEED_DRIP_S = 1.25;    // s a drop takes to fall its four cells
