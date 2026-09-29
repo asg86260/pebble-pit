@@ -1,0 +1,279 @@
+<title>Fight Number Sauce</title>
+<style>
+/* Layout: two rows of panes, the blows' numbers over the heal's, each pane the
+   same stretch of coil taking the same hits, so the only difference is how
+   the numbers move. Panes are the deep, black in either theme. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 13px; margin: 8px 0 0; text-transform: uppercase; letter-spacing: .08em; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h3 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Fight Number Sauce</h1>
+    <p>The same hits on the same stretch of coil in every pane: small blows, an aimed shot, a heavy charge that stuns.
+      The game's own carved font, two screen pixels a font pixel. Every move is held poses and stepped fades: no shake
+      and no flash. A mock drawn from plain shapes, not the game: one fighter's worth of hits, no camera, no second
+      number stacking on the first.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <h2>The blows</h2>
+  <div class="grid" id="blows"></div>
+  <h2>The heal</h2>
+  <div class="grid" id="heals"></div>
+</div>
+
+<script>
+(() => {
+  const W = 180, H = 150;           // screen pixels a pane
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                   '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+  const FONT = {
+    '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'], '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+    '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'], '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+    '4': ['#..#', '#..#', '####', '...#', '...#', '...#'], '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+    '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'], '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+    '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'], '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.'],
+    '+': ['....', '.#..', '###.', '.#..', '....', '....'],
+  };
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const step = (v, n) => Math.round(v / n) * n;
+
+  // A number's width at `px` screen pixels a font pixel, a font pixel between glyphs.
+  const widthOf = (str, px) => str.length * 5 * px - px;
+  // Draw `str` with its bottom-left at (x, y): the drop a font pixel under, the
+  // face over it, `outline` a keyline a font pixel round both.
+  function num(g, str, x, y, px, face, drop, o = {}) {
+    const top = Math.round(y - 7 * px), left = Math.round(x);
+    const paint = (dx, dy, tone, only) => {
+      g.fillStyle = tone;
+      [...str].forEach((ch, i) => {
+        if (only && !only(i)) return;
+        FONT[ch].forEach((row, r) => { for (let c = 0; c < 4; c++) if (row[c] === '#')
+          g.fillRect(left + (i * 5 + c) * px + dx, top + (r + (o.bob ? o.bob(i) : 0)) * px + dy, px, px); });
+      });
+    };
+    if (o.outline) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 2], [-1, 1], [1, 1]]) paint(dx * px, dy * px, o.outline, o.only);
+    paint(0, px, drop, o.only);
+    paint(0, 0, face, o.only);
+  }
+  // Stepped opacity: in fast, held, out over the last share, never a jump bigger than an eighth.
+  const fadeK = (age, life, out = 0.5) => {
+    const k = age < 0.08 ? age / 0.08 : age > life * (1 - out) ? (life - age) / (life * out) : 1;
+    return Math.round(clamp(k, 0, 1) * 8) / 8;
+  };
+
+  // --- the stretch of coil -------------------------------------------------------------
+  const coilMid = (x, t) => 70 + 5 * Math.sin(x * 0.03 + t * 0.6);
+  const GIRTH = 14;
+  function scene(g, t) {
+    g.fillStyle = GREYS[0]; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 20; i++) { g.fillStyle = GREYS[2 + (i % 3)]; g.fillRect(Math.round((hash(i) * W + t * 3) % W), Math.round(hash(i + 7) * H), 2, 2); }
+    for (let x = 0; x < W; x += 3) {
+      const m = coilMid(x, t), top = Math.round((m - GIRTH) / 3) * 3, bot = Math.round((m + GIRTH) / 3) * 3;
+      for (let y = top; y <= bot; y += 3) {
+        g.fillStyle = y === bot ? GREYS[8] : Math.abs(y - m) < 2 ? GREYS[10] : '#e8e8ee';
+        g.fillRect(x, y, 3, 3);
+      }
+    }
+  }
+  const topAt = (x, t) => coilMid(x, t) - GIRTH;
+  const botAt = (x, t) => coilMid(x, t) + GIRTH;
+
+  // --- what lands in a loop ------------------------------------------------------------
+  const LOOP = 4.6;
+  const HITS = [
+    { at: 0.2, x: 40, n: 12 }, { at: 0.7, x: 62, n: 9 }, { at: 1.1, x: 88, n: 14 },
+    { at: 1.6, x: 110, n: 54, big: 1 }, { at: 2.4, x: 76, n: 186, big: 2 },
+    { at: 3.2, x: 132, n: 11 }, { at: 3.6, x: 52, n: 13 },
+  ];
+  const HEALS = [{ at: 0.4, n: 6 }, { at: 1.6, n: 7 }, { at: 2.8, n: 21 }, { at: 4.0, n: 6 }];
+  const BELLY = 96;
+  const kOf = n => clamp(Math.log(n) / Math.log(200), 0, 1);    // the game's blowK, a blow's size 0..1
+  const live = (list, t, life) => list.map((h, i) => ({ ...h, i, age: ((t - h.at) % LOOP + LOOP) % LOOP })).filter(h => h.age < life);
+
+  // --- the blows -----------------------------------------------------------------------
+  const BLOWS = [
+    { name: 'Now', about: 'As the game draws them: one size, set a little off the hit, climbing straight up at a steady rate, fading out.',
+      draw(g, t) {
+        for (const h of live(HITS, t, 1.3)) {
+          const s = String(h.n), px = 2, k = fadeK(h.age, 1.3);
+          if (!k) continue;
+          g.globalAlpha = k;
+          num(g, s, h.x + (hash(h.i) - 0.5) * 12 - widthOf(s, px) / 2, topAt(h.x, t) - 6 - Math.floor(h.age * 14), px, '#ffffff', GREYS[6]);
+        }
+      } },
+    { name: 'A · Stamp', about: 'Sized by the blow: small, a step up, the biggest two steps. Each lands a size too big for one held pose, then sits down; it jumps up fast, hangs, then fades. A stunning blow keeps a dark keyline.',
+      draw(g, t) {
+        for (const h of live(HITS, t, 1.4)) {
+          const s = String(h.n), k = kOf(h.n), tier = k > 0.9 ? 4 : k > 0.65 ? 3 : 2;
+          const px = h.age < 0.07 ? tier + 1 : tier;
+          const u = clamp(h.age / 0.35, 0, 1), lift = step(22 * (1 - (1 - u) ** 3), 2);
+          const a = fadeK(h.age, 1.4, 0.35);
+          if (!a) continue;
+          g.globalAlpha = a;
+          num(g, s, h.x - widthOf(s, px) / 2, topAt(h.x, t) - 4 - lift, px, '#ffffff', GREYS[6], { outline: h.big === 2 ? GREYS[1] : null });
+        }
+      } },
+    { name: 'B · Kick', about: 'Knocked off the hide: each flies up and away from the hit in an arc, holds at the top of it a beat, drops a little and fades. The big ones leave two held speed lines under them as they go.',
+      draw(g, t) {
+        for (const h of live(HITS, t, 1.3)) {
+          const s = String(h.n), k = kOf(h.n), px = k > 0.65 ? 3 : 2, dir = h.i % 2 ? 1 : -1;
+          // the flight on a stepped clock, frozen at its top for a beat
+          const apex = 0.22, hold = 0.14;
+          const tt = h.age < apex ? h.age : h.age < apex + hold ? apex : h.age - hold;
+          const vy = -110 - 40 * k, grav = 500;
+          const x = h.x + dir * (26 + 20 * k) * tt, y = topAt(h.x, t) - 2 + vy * tt + grav * tt * tt / 2;
+          const a = fadeK(h.age, 1.3, 0.4);
+          if (!a) continue;
+          g.globalAlpha = a;
+          const lx = step(x, 2) - widthOf(s, px) / 2, ly = step(y, 2);
+          if (k > 0.65 && h.age < apex) {
+            g.fillStyle = GREYS[8];
+            for (const d of [-4, 0, 4]) g.fillRect(lx + widthOf(s, px) / 2 + d * px / 2, ly + 4, px, 8);
+          }
+          num(g, s, lx, ly, px, '#ffffff', GREYS[6]);
+        }
+      } },
+    { name: 'C · Tally', about: 'Counted up: the digits roll from nothing to the blow in four held steps, then a ring of dots marks it done and it climbs off. The big ones hang in square brackets.',
+      draw(g, t) {
+        for (const h of live(HITS, t, 1.4)) {
+          const k = kOf(h.n), px = k > 0.65 ? 3 : 2, s = String(h.n);
+          const q = Math.min(4, Math.floor(h.age / 0.045));
+          const shown = String(Math.max(1, Math.round(h.n * q / 4))).padStart(s.length, '0').slice(-s.length);
+          const rise = h.age < 0.25 ? 0 : step((h.age - 0.25) * 16, 2);
+          const a = fadeK(h.age, 1.4, 0.4);
+          if (!a) continue;
+          g.globalAlpha = a;
+          const w = widthOf(s, px), x = h.x - w / 2, y = topAt(h.x, t) - 6 - rise;
+          num(g, q < 4 ? shown : s, x, y, px, q < 4 ? GREYS[10] : '#ffffff', GREYS[6]);
+          if (q === 4 && h.age < 0.28) {
+            g.fillStyle = '#ffffff';
+            for (const [dx, dy] of [[-4, -4], [w + 2, -4], [-4, -8 * px], [w + 2, -8 * px], [w / 2, -9 * px], [w / 2, 3]]) g.fillRect(Math.round(x + dx), Math.round(y + dy), 2, 2);
+          }
+          if (h.big) {
+            g.fillStyle = GREYS[9];
+            for (const [bx, dir] of [[x - 3 * px, 1], [x + w + 2 * px, -1]]) {
+              g.fillRect(bx, y - 7 * px, px, 8 * px);
+              g.fillRect(bx + (dir > 0 ? 0 : -px), y - 7 * px, 2 * px, px); g.fillRect(bx + (dir > 0 ? 0 : -px), y, 2 * px, px);
+            }
+          }
+        }
+      } },
+  ];
+
+  // --- the heal ------------------------------------------------------------------------
+  const side = h => BELLY + (h.i % 2 ? 14 : -14);
+  const HEALERS = [
+    { name: 'Now', about: 'As the game draws it: the heal summed and shown under the belly, alternating sides, climbing and fading in purple.',
+      draw(g, t) {
+        for (const h of live(HEALS, t, 1.6)) {
+          const s = '+' + h.n, px = 2, a = fadeK(h.age, 1.6);
+          if (!a) continue;
+          g.globalAlpha = a;
+          num(g, s, side(h) - widthOf(s, px) / 2, botAt(BELLY, t) + 22 - Math.floor(h.age * 14), px, PURPLES[11], PURPLES[5]);
+        }
+      } },
+    { name: 'H1 · Seep', about: 'Out of the hide: the number comes up through the coil’s underside a row at a time, then drifts off slow, a short trail of purple motes left under it.',
+      draw(g, t) {
+        for (const h of live(HEALS, t, 1.8)) {
+          const s = '+' + h.n, px = 2, w = widthOf(s, px), x = side(h) - w / 2;
+          const edge = botAt(BELLY, t), rows = Math.min(7, Math.floor(h.age / 0.04));
+          const y = edge + 16 + 7 * px - rows * px * 2 - (h.age > 0.3 ? step((h.age - 0.3) * 10, 2) : 0);
+          const a = fadeK(h.age, 1.8, 0.4);
+          if (!a) continue;
+          g.globalAlpha = a;
+          g.save(); g.beginPath(); g.rect(0, edge, W, H); g.clip();
+          num(g, s, x, y, px, PURPLES[11], PURPLES[5]);
+          g.restore();
+          for (let m = 0; m < 4; m++) {
+            const my = y + 6 + m * 5 + step(Math.sin(t * 3 + m) * 2, 2);
+            if (my > edge && h.age > 0.3) { g.fillStyle = PURPLES[9 - m * 2]; g.fillRect(Math.round(x + w / 2 + (m % 2 ? 2 : -2)), Math.round(my), 2, 2); }
+          }
+        }
+      } },
+    { name: 'H2 · Wave', about: 'A slow swell runs along the digits in held steps, the plus first; it fades through the purples, bright to dark, instead of through see-through.',
+      draw(g, t) {
+        for (const h of live(HEALS, t, 1.8)) {
+          const s = '+' + h.n, px = 2, w = widthOf(s, px);
+          const y = botAt(BELLY, t) + 26 - step(h.age * 12, 2);
+          const f = Math.floor(clamp(h.age - 0.9, 0, 0.9) / 0.9 * 5);
+          if (f >= 5) continue;
+          const face = [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[7], PURPLES[5]][f];
+          const bob = i => Math.round(Math.sin(h.age * 7 - i * 0.9));
+          g.globalAlpha = h.age < 0.08 ? 0.5 : 1;
+          num(g, s, side(h) - w / 2, y, px, face, PURPLES[Math.max(2, 5 - f)], { bob });
+        }
+      } },
+    { name: 'H3 · Gather', about: 'Drawn in: purple motes come off the coil and close on the spot, and the number is there when they meet; then it climbs and fades.',
+      draw(g, t) {
+        for (const h of live(HEALS, t, 1.9)) {
+          const s = '+' + h.n, px = 2, w = widthOf(s, px), cx = side(h), cy = botAt(BELLY, t) + 20;
+          if (h.age < 0.32) {
+            const u = h.age / 0.32;
+            for (let m = 0; m < 10; m++) {
+              const a0 = hash(m + h.i * 11) * Math.PI * 2, r = 26 * (1 - u) + 2;
+              g.globalAlpha = 1; g.fillStyle = PURPLES[u < 0.5 ? 8 : 11];
+              g.fillRect(step(cx + Math.cos(a0) * r, 2), step(cy - 6 + Math.sin(a0) * r * 0.6, 2), 2, 2);
+            }
+            continue;
+          }
+          const age = h.age - 0.32, a = fadeK(age + 0.08, 1.58, 0.45);
+          if (!a) continue;
+          g.globalAlpha = a;
+          num(g, s, cx - w / 2, cy - step(age * 14, 2), px, PURPLES[11], PURPLES[5]);
+        }
+      } },
+  ];
+
+  const panes = [];
+  for (const [host, list] of [['blows', BLOWS], ['heals', HEALERS]]) {
+    for (const o of list) {
+      const card = document.createElement('div'); card.className = 'card';
+      const h = document.createElement('h3'); h.textContent = o.name;
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.setAttribute('aria-label', o.name);
+      const p = document.createElement('p'); p.textContent = o.about;
+      card.append(h, cv, p); document.getElementById(host).append(card);
+      panes.push({ o, g: cv.getContext('2d') });
+    }
+  }
+  let playing = true, speed = 1, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  (function tick(now) {
+    if (playing) clock += (now - last) / 1000 * speed;
+    last = now;
+    for (const { o, g } of panes) { g.globalAlpha = 1; scene(g, clock); o.draw(g, clock); g.globalAlpha = 1; }
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>
