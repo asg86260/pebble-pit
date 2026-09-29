@@ -83,6 +83,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- A queued card's refund and another keep a solid edge instead of the card's dashed one (`node tools/look.mjs queue`).
 - A board no longer opens with its title bar under the notice card at the top of the window, when it fits below the card (`node tools/look.mjs recruit-board`).
 
 - The ticked glyph over a station after a rung lands wears that rung's color, not the next rung's (test/landed-unread.test.mjs).

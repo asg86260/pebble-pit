@@ -424,6 +424,9 @@
    across the plank and not only from its tag. It is the one tile on a
    plank that is neither for sale nor being made. */
 .rows.shelves > button.tile.queued { border: 1px dashed var(--ink); }
+/* ...but its refund and another are still buttons: the strip keeps a solid
+   edge of its own, laid over the dashes along the tile's foot. */
+.rows.shelves > button.tile.queued .strip { left: -1px; right: -1px; bottom: -1px; border: 1px solid var(--ink); }
 /* Only a tile you can pay for lifts. `off` is set by the builder on every
    row you cannot pay for right now -- short of a coin, climbed, waiting,
    building, queued -- so the hover never depends on the button's own
