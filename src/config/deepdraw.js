@@ -305,6 +305,11 @@ export const BAR_CHIP_OPEN_S = 0.3;
 export const BAR_CHIP_POSE_S = 0.08;
 export const BAR_CHIP_FALL = { side: 18, down: 20, grav: 90 };   // screen pixels a second, and a second a second
 export const BAR_CHIP = '#b4b4c0';      // the notch's first pose, and the chip after its first (white, as the fill)
+// And the bar is knocked down by it, the whole of it and its pips, for
+// BAR_KNOCK_S: BAR_KNOCK screen pixels, BAR_KNOCK_BIG for a blow past NUM_KICK_BIG.
+export const BAR_KNOCK = 4;
+export const BAR_KNOCK_BIG = 8;
+export const BAR_KNOCK_S = 0.16;
 
 // --- track RENDER of docs/wave-party.md: the fighters, their kits and attacks ---------
 // The kit growth page's feel (docs/mocks/kit-growth-2026-09-27.html, all three
@@ -359,21 +364,33 @@ export const IDLE_SETTLE_S = 0.35;
 export const PIP_PX = 6;
 export const PIP_RING = 1;
 export const PIP_GAP = 2;
-// The recoil after a heavy contact, in cells: [the contact's size from, cells].
-export const DRAW_KICK = [[1.2, 2], [0.7, 1.5], [0.45, 0.75]];
+// The fighter takes every blow it lands (docs/mocks/blow-heft-2026-09-28.html,
+// the owner's pick): knocked back off the hide the moment the hit-pause lets
+// go, in whole cells by the contact's size ([size from, cells]), held there
+// DRAW_KICK_HOLD_S, then back a cell at a time over DRAW_KICK_BACK_S. A class's
+// `kickMax` caps it.
+export const DRAW_KICK = [[0.7, 2], [0.4, 1.5], [0.1, 1]];
+export const DRAW_KICK_HOLD_S = 0.12;
+export const DRAW_KICK_BACK_S = 0.2;
 // The still cells of a kit are one sprite a class and a rung, painted in a
 // box this many cells round the body's top-left corner (deep/kits.js).
 export const KIT_BOX = { left: 6, top: 7, w: 16, h: 11 };
 export const MOTE_PERIOD = 2.2;      // s a rung-8 mote takes to drift off a kit
 export const MOTE_RISE = 3;          // and cells it rises
-// The coil's give under a contact (render/serpent.js): pushed up over
-// DENT_RISE_S, springing back at DENT_DECAY an s, gone by DENT_S. Its width
-// and depth in cells are [base, per unit of the blow's size].
-export const DENT_S = 0.6;
-export const DENT_RISE_S = 0.05;
-export const DENT_DECAY = 9;
+// The coil gives under a contact (render/serpent.js; the owner's pick of
+// docs/mocks/blow-heft-2026-09-28.html): driven in whole cells and held there,
+// then a beat past where it was and a beat short, then at rest -- DENT_STEPS,
+// [until, share of the depth], in held poses. Its width and depth in cells
+// are [base, per unit of the blow's size]. A bulge runs out from the blow
+// both ways along the body at DENT_RUN cells a second for DENT_RUN_REACH
+// cells, a cell high, two past DENT_RUN_BIG. Gone by DENT_S.
+export const DENT_S = 0.9;
+export const DENT_STEPS = [[0.16, 1], [0.24, -0.4], [0.32, 0.2]];
 export const DENT_W = [1.2, 2];
-export const DENT_DEPTH = [0.5, 1.6];
+export const DENT_DEPTH = [1.4, 2];
+export const DENT_RUN = 40;
+export const DENT_RUN_REACH = 14;
+export const DENT_RUN_BIG = 0.7;
 // The statuses on the whole serpent (the class bench's painters).
 export const BLEED_DRIPS = 9;        // columns Bleeding drips off
 export const BLEED_DRIP_S = 1.25;    // s a drop takes to fall its four cells

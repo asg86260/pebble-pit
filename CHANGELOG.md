@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- Blows land with weight: the serpent's hide is driven in and springs back past with a bulge running along it, the fighter is knocked back off every blow, and the bar is knocked down as each number lands (`node tools/look.mjs deep-wound`).
 - Each blow that lands in the serpent's bar knocks a chip out of the end of its fill, so even a small blow shows (`node tools/look.mjs deep-numbers`).
 - The serpent's bar is bigger and hangs just over the serpent, the portal moved up for it, and every damage and heal number flies into the bar before it moves (`node tools/look.mjs deep-numbers`).
 - A fighter thrown off the serpent by its lash sees stars all the way down, not only once it lands (`node tools/look.mjs phase-lash`).

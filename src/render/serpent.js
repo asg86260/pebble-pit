@@ -21,7 +21,7 @@
 
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
-         WOUND_GAP, BELLY_AT, DENT_S, DENT_RISE_S, DENT_DECAY, DENT_W, DENT_DEPTH,
+         WOUND_GAP, BELLY_AT, DENT_S, DENT_STEPS, DENT_W, DENT_DEPTH, DENT_RUN, DENT_RUN_REACH, DENT_RUN_BIG,
          BLEED_DRIPS, BLEED_DRIP_S, HELD_EVERY, EXPOSED_EVERY, EXPOSED_LIFT_HZ,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
@@ -82,18 +82,22 @@ function lay(t, x0, x1) {
   return { pts: shown, alongAt };
 }
 
-// The coil answers a blow (the kit growth page's sauce): the hide round the
-// hit is pushed up a beat and springs back, over a few columns either side,
-// deeper and wider for a bigger blow. It never overshoots, so nothing
-// shudders, even under a stun. Cells, from the fighters' contacts
-// (render/arms.js); drawing only, the sim's coil does not move.
+// The coil answers a blow: the hide round the hit is driven in whole cells and
+// held, then a beat past where it was and a beat short before it rests, over
+// a few columns either side, deeper and wider for a bigger blow; and a bulge
+// runs out from it both ways along the body. Held steps, never a shudder: each
+// pose is a whole cell and holds (DENT_STEPS). Cells, from the fighters'
+// contacts (render/arms.js); drawing only, the sim's coil does not move.
+const stepOf = u => { for (const [until, k] of DENT_STEPS) if (u < until) return k; return 0; };
 function dentAt(cx, t, dents) {
   let off = 0;
   for (const d of dents) {
     const u = t - d.t0;
     if (u < 0 || u > DENT_S) continue;
     const w = DENT_W[0] + DENT_W[1] * d.k, fall = Math.exp(-((cx - d.x) ** 2) / (2 * w * w));
-    off -= (DENT_DEPTH[0] + DENT_DEPTH[1] * d.k) * fall * (u < DENT_RISE_S ? u / DENT_RISE_S : Math.exp(-(u - DENT_RISE_S) * DENT_DECAY));
+    off -= Math.round((DENT_DEPTH[0] + DENT_DEPTH[1] * d.k) * fall * stepOf(u));
+    const r = u * DENT_RUN, far = Math.abs(cx - d.x);
+    if (r < DENT_RUN_REACH && Math.abs(far - r) < 1.5) off -= d.k > DENT_RUN_BIG ? 2 : 1;
   }
   return off;
 }

@@ -25,7 +25,7 @@
 //
 // Owned by track RENDER.
 
-import { P, DRAW_POSE, DRAW_KEY_EX, DRAW_NEAR_BEAT, DRAW_HAY_HOLDS, DRAW_HOLDS, DRAW_KICK,
+import { P, DRAW_POSE, DRAW_KEY_EX, DRAW_NEAR_BEAT, DRAW_HAY_HOLDS, DRAW_HOLDS, DRAW_KICK, DRAW_KICK_HOLD_S, DRAW_KICK_BACK_S,
          RANGER_BEATS, RANGER_AIM_HOLD, RANGER_LIFT_S, RANGER_SMEAR_S } from '../config.js';
 import { deepFloor } from '../deep/place.js';
 import {
@@ -151,8 +151,10 @@ export function sauceOf(c, R, a, x) {
     const shift = gr.real - gr.at;
     if (aw == null && a < gr.real) aw = a - shift;
     else if (aw == null && a < gr.real + gr.pause) aw = gr.at;
+    // knocked back off the hide as the hit-pause lets go, held, then back a cell at a time
     const u = a - gr.real - gr.pause, amt = DRAW_KICK.find(([k]) => gr.k >= k)?.[1] || 0;
-    if (amt && u >= 0 && u < 0.5) kick += amt * (u < 0.05 ? u / 0.05 : 1 - ease((u - 0.05) / 0.45));
+    if (amt && u >= 0 && u < DRAW_KICK_HOLD_S + DRAW_KICK_BACK_S)
+      kick += u < DRAW_KICK_HOLD_S ? amt : Math.ceil(amt * (1 - (u - DRAW_KICK_HOLD_S) / DRAW_KICK_BACK_S));
   }
   if (aw == null) aw = a - (groups.length ? groups[groups.length - 1].real + groups[groups.length - 1].pause - groups[groups.length - 1].at : 0);
   const beats = [...groups.filter(gr => gr.pause > 0).map(gr => gr.at), ...(c.beats ? c.beats(R) : [])];

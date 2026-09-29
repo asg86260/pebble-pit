@@ -14,7 +14,7 @@ import { owedWound, landsAt } from './barflight.js';
 import { blowK } from '../deep/serpent.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
          BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
-         BAR_CHIP_MIN, BAR_CHIP_MAX, BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP,
+         BAR_CHIP_MIN, BAR_CHIP_MAX, BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG,
          SERPENT_WOUND } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
@@ -53,7 +53,15 @@ export function drawSerpentBar() {
   if (low > left) low = left;
 
   const pips = SERPENT_WOUND.length;
-  const { x, y } = barRect();
+  const { x, y: rest } = barRect();
+  // knocked down by the blows landing in it, held a pose
+  let knock = 0;
+  for (const h of S.hits) {
+    if (h.weapon === 'heal') continue;
+    const a = (t - landsAt(h)) / 1000;
+    if (a >= 0 && a < BAR_KNOCK_S) knock = Math.max(knock, blowK(h.done) > NUM_KICK_BIG ? BAR_KNOCK_BIG : BAR_KNOCK);
+  }
+  const y = rest + knock;
   const fill = (c, fx, fy, w, h) => { ctx.fillStyle = seen(c); ctx.fillRect(fx, fy, w, h); };
   const len = k => Math.round(BAR_W * k);
   ctx.save();
