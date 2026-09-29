@@ -86,6 +86,9 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+**New this release**
+- The pictures over a station of what it is building and what is in line drift gently, the way a lifted shop tile does.
+
 - Houses bought several at once each show their own progress bar, instead of an empty one covering the house being built (test/queue-repeats.test.mjs).
 - A queued card's refund and another keep a solid edge instead of the card's dashed one (`node tools/look.mjs queue`).
 - A board no longer opens with its title bar under the notice card at the top of the window, when it fits below the card (`node tools/look.mjs recruit-board`).

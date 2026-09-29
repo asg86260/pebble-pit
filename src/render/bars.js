@@ -1,6 +1,7 @@
 // The progress bar, and where each site's bar hangs.
 
-import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
+import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK, BUILD_DRIFT, SHELF_FLOAT_MS, SHELF_FLOAT_SPREAD } from '../config.js';
+import { now } from '../clock.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, filter, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
@@ -107,13 +108,14 @@ export function barSpot(site, w = null) {
 // with the fill. The same picture on the tile and over the station, so a
 // glance at either says what is coming.
 const EDGE = P / 6;                      // the outline's stroke, one yard pixel
-export function buildingGlyph(cx, cy, rows, at, tint = null) {
+export function buildingGlyph(cx, cy, rows, at, tint = null, dx = 0, dy = 0) {
   const g = glyphPlan(rows);
   const up = Math.floor(at * g.laid.length);
   const d = g.at[up] ||= drawnAt(g, up);
   // Centred on the ink, not the box: a drawing off to one side of its grid
   // (the shovel, the lamp) would otherwise hang beside the station.
-  const x0 = Math.round(cx / P - g.mid) * P, y0 = cy - (CELLS * P) / 2;
+  // The drift (`dx`, `dy`) goes on after, or the centering would snap it off.
+  const x0 = Math.round(cx / P - g.mid) * P + dx, y0 = cy - (CELLS * P) / 2 + dy;
   if (tint && up) paintRects(d.stroke, tint, x0, y0);
   paintRects(d.ink, '#000', x0, y0);
   paintRects(d.ghost, BUILD_GHOST_INK, x0, y0);
@@ -247,7 +249,23 @@ export function drawWorkBars() {
     for (const { w, bar: b, glyph } of workSpots(site)) {
       if (b) { bar(b.x, b.y, progressOf(w)); continue; }
       const row = rowFor(w.key);
-      buildingGlyph(glyph.x, glyph.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null);
+      const [dx, dy] = drift(site + w.key);
+      buildingGlyph(glyph.x, glyph.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null, dx, dy);
     }
   }
+}
+
+// The shop tile's drift (shelf.css, `shelf-sway-*`), in whole yard pixels:
+// each axis two sines summed, one on the glyph's own clock and one at an
+// incommensurate multiple of it, so the path never repeats. The rate, the
+// direction and the phase are hashed off the site and the row, so a stack
+// never breathes in unison.
+function drift(name) {
+  let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const rate = 1 + ((h % 1000) / 1000 * 2 - 1) * SHELF_FLOAT_SPREAD;
+  const dir = (h >> 10) & 1 ? -1 : 1;
+  const p = dir * now() / (SHELF_FLOAT_MS * rate) + ((h >> 11) % 1000) / 1000;
+  const wave = k => Math.sin(Math.PI * 2 * p * k);
+  return [Math.round(BUILD_DRIFT * (wave(1) - wave(1 / 1.618))),
+          Math.round(BUILD_DRIFT * (-wave(1) - wave(1 / 0.73)))];
 }

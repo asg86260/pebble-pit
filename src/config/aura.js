@@ -54,6 +54,10 @@ export const OFFER_WAVE_INK = 0.35;  // the darkest the ring ever is
 // not up yet is an outline in this gray, lighter than the card's ghost so it
 // sits back from the black that is there.
 export const BUILD_GHOST_INK = '#bdbdbd';
+// And it drifts while it waits and while it goes up, the shop tile's drift
+// (SHELF_FLOAT_MS) at the yard's scale: this many yard pixels a wave, two
+// waves summed an axis.
+export const BUILD_DRIFT = 2;
 
 // While the board behind a flying flag holds a row you have never seen, the
 // tip keeps sending rings: the opening ring over again, several in flight at
