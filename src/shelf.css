@@ -770,19 +770,21 @@ html.dark .rails .rl-fx.cap .rl-st { color: #a979ef; }
 .rails .rl-rail { position: relative; height: 8px; margin-bottom: -8px; }
 .rails .rl-rail::before { content: ''; position: absolute; left: calc(50% / var(--n)); right: calc(50% / var(--n)); top: 0; height: 2px; background: currentColor; }
 .rails .rl-rail i { position: absolute; top: 0; width: 2px; height: 8px; margin-left: -1px; background: currentColor; }
-.rails .rl-five { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; }
+/* Each of the five as wide as its name at least, shared out evenly past that. */
+.rails .rl-five { display: grid; grid-template-columns: repeat(var(--n), minmax(max-content, 1fr)); gap: 2px; }
 .rails .rl-node {
   display: grid; justify-items: center; gap: 2px; font: inherit; font-size: var(--rl-tiny); text-align: center;
-  background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 3px 1px; cursor: pointer;
+  background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 3px 4px; cursor: pointer;
 }
 .rails .rl-node .rl-ic { display: flex; gap: 1px; }
 .rails .rl-node.on { background: var(--ink); color: var(--paper); }
 .rails .rl-node.locked { border-style: dashed; color: var(--ink-5); cursor: default; }
 .rails .rl-pick { display: grid; gap: 8px; border: 1px solid var(--ink); padding: 6px 8px; }
-/* The tree reads as the rows do, not as the board's headings, and never sets
-   the board's width: its lines wrap to what the rows have made it. */
+/* The tree reads as the rows do, not as the board's headings. Its prose never
+   sets the board's width -- it wraps to what the rest has made it -- but the
+   five choices do: a name cut off in its box cannot be read at all. */
 .rails .rl-root, .rails .rl-pick, .rails .rl-five { text-transform: none; letter-spacing: normal; }
-.rails .rl-five, .rails .rl-pick { width: 0; min-width: 100%; box-sizing: border-box; }
+.rails .rl-pick { width: 0; min-width: 100%; box-sizing: border-box; }
 .rails .rl-fx { white-space: normal; }
 .rails .rl-become { grid-template-columns: 1fr auto; }
 @media (prefers-reduced-motion: reduce) {
