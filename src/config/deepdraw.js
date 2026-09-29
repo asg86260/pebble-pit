@@ -271,6 +271,28 @@ export const DRAW_NEAR_BEAT = 0.32;  // s either side of a beat the clock steps 
 export const DRAW_ROOM_S = 3;
 export const DRAW_LOWER_S = 2;
 export const LAND_FX_S = 1.3;
+// The Ranger's shot, a held pose a beat (the owner's A,
+// docs/mocks/ranger-draw-2026-09-28.html): from the hip, nocked, drawn in two
+// steps as the limbs bend and he sinks, held full with the strain showing,
+// loosed with the string snapped up past the stave, a recoil, a settle. Each
+// beat is [start, seconds from the release; the pose]: `lift` rows the bow
+// sits over its place (minus is higher), `bend` how far its limbs bow up,
+// `pull` the string's cells down to the nock (-1 snapped up), `sink` the
+// body's cells down. The last beat ends the shot, back to the braced stance.
+export const RANGER_BEATS = [
+  [-0.76, { arrow: 'hip',    bend: 2, pull: 0 }],
+  [-0.62, { arrow: 'nocked', bend: 2, pull: 0 }],
+  [-0.50, { arrow: 'nocked', bend: 2, pull: 1 }],
+  [-0.42, { arrow: 'nocked', bend: 3, pull: 2, sink: 1 }],
+  [-0.34, { arrow: 'nocked', bend: 3, pull: 3, sink: 1, strain: true }],
+  [0,     { lift: -1, bend: 1, pull: -1, loose: true }],
+  [0.07,  { lift: -1, bend: 2, pull: 0 }],
+  [0.23,  { bend: 2, pull: 0 }],
+  [0.37,  null],
+];
+export const RANGER_AIM_HOLD = 0.3;  // s the aimed shot holds its full draw past a plain one's
+export const RANGER_LIFT_S = 0.12;   // s each step of lifting the bow over his head, and of lowering it
+export const RANGER_SMEAR_S = 0.07;  // s the loosed arrow's held streak stands behind it
 // Between two moves a fighter sways a cell forward and back, IDLE_STEP_S a
 // step, and a melee fighter hops a cell for IDLE_HOP_S as each step lands
 // (the owner's G, docs/mocks/idle-2026-09-28.html). It starts IDLE_SETTLE_S

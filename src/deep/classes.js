@@ -217,7 +217,7 @@ function ranger(w, c, st, cls, v) {
   const hit = landing(w, t);
   if (hit) {
     const big = hit.big, stun = big && hasCap(st) ? cls.capStun : 0;
-    shoot(w, big ? 'aimed' : 'arrow', mid(w), w.y - P * 2, at.seg, t, cls.fly, (s, q) =>
+    shoot(w, big ? 'aimed' : 'arrow', mid(w), w.y - P * 6, at.seg, t, cls.fly, (s, q) =>
       strike(cls.hit, v * (big ? am.x : 1), q.x, q.y, null, 0, { by: w, stun }), cls.arc);
   }
   if (!due(w, t, cls.every)) return;

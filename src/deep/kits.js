@@ -344,6 +344,41 @@ export function drawBow(g, pose, x, y, R, two = false) {
   } else hbow(g, pose === 'over' ? x + 3 : x + 1, y - 2, half, pose === 'drawn', two);
 }
 
+// The shot's bow (RANGER_BEATS): level over his head at column cx, the stave
+// bowed `bend` cells up at the middle between its tips on the string row sy,
+// the string from the tips to the nock `pull` cells under that row -- over
+// it, snapped up past the stave, on the loose. The bow hand holds the near tip.
+export function stepBow(g, cx, sy, R, bend, pull) {
+  const half = 3 + bowGrow(R);
+  for (let c = -half; c <= half; c++) cell(g, cx + c, sy - Math.round(bend * (1 - (c / half) ** 2)), c ? GREYS[8] : GREYS[6]);
+  for (const s of [-1, 1]) line(cx + s * half, sy, cx, sy + pull, (lx, ly) => cell(g, lx, ly, GREYS[9]));
+  cell(g, cx - half, sy + 1, WHITE);
+}
+// An arrow on the string, point up, its nock at (x, ny) under the draw hand:
+// the head six cells up, clear of the stave. The aimed shot's two are the
+// abyss's, a column either side.
+export function nocked(g, x, ny, two = false) {
+  for (const ax of two ? [x - 1, x + 1] : [x]) {
+    cell(g, ax, ny - 6, two ? PURPLES[11] : WHITE);
+    for (let r = ny - 5; r < ny; r++) cell(g, ax, r, two ? PURPLES[9] : GREYS[10]);
+  }
+  if (two) { cell(g, x - 2, ny, PURPLES[6]); cell(g, x + 2, ny, PURPLES[6]); }
+  else { cell(g, x - 1, ny, GREYS[7]); cell(g, x + 1, ny, GREYS[7]); }
+  cell(g, x + (two ? 0 : 1), ny, WHITE);
+}
+// An arrow taken flat from his hip in his right hand, point out.
+export function hipArrow(g, x, y) {
+  cell(g, x, y - 1, GREYS[7]); cell(g, x, y + 1, GREYS[7]);
+  for (let c = 1; c <= 3; c++) cell(g, x + c, y, GREYS[10]);
+  cell(g, x + 4, y, WHITE);
+  cell(g, x, y, WHITE);
+}
+// The full draw's strain: a short dark tick off each shoulder, held still.
+export function strainTicks(g, x, y) {
+  cell(g, x - 1, y, GREYS[6]); cell(g, x + BODY, y, GREYS[6]);
+  cell(g, x - 2, y - 1, GREYS[5]); cell(g, x + BODY + 1, y - 1, GREYS[5]);
+}
+
 // --- the Assassin: a dagger point-up in her fist ---------------------------------
 // One dagger at rung 0; the mark is the second, in the other fist; the
 // touch turns both tips the abyss's purple, and they spin as they go.

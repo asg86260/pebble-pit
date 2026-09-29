@@ -25,12 +25,13 @@
 //
 // Owned by track RENDER.
 
-import { P, DRAW_POSE, DRAW_KEY_EX, DRAW_NEAR_BEAT, DRAW_HAY_HOLDS, DRAW_HOLDS, DRAW_KICK } from '../config.js';
+import { P, DRAW_POSE, DRAW_KEY_EX, DRAW_NEAR_BEAT, DRAW_HAY_HOLDS, DRAW_HOLDS, DRAW_KICK,
+         RANGER_BEATS, RANGER_AIM_HOLD, RANGER_LIFT_S, RANGER_SMEAR_S } from '../config.js';
 import { deepFloor } from '../deep/place.js';
 import {
   GREYS, PURPLES, WHITE, BODY, R4, R8, hash, clamp, lerp, along, ease, cell, rect, ring, body, pips, blit,
   MOTES_P, MOTE_TONES, drift, bSize, bFist, bladeLen, sword, swordSprite, swordAt, TELL, MONK_SPIN, beads,
-  ribbon, pike, staffBack, drawBow, blades, dagger, bundle, charge, motes, glyph, glyphTimes, glyphAt,
+  ribbon, pike, staffBack, drawBow, stepBow, nocked, hipArrow, strainTicks, blades, dagger, bundle, charge, motes, glyph, glyphTimes, glyphAt,
   stone, mStaff, flute, REST, liftOf,
 } from '../deep/kits.js';
 import { hideTop, hideBot, hideMid, onHide } from './serpent.js';
@@ -521,11 +522,29 @@ const martial = {
 };
 
 // --- the Ranger ------------------------------------------------------------------
+// Each shot is held poses a beat (RANGER_BEATS): the arrow from his hip,
+// nocked, drawn in two steps, held full, loosed, a recoil and a settle. The
+// aimed shot holds its full draw RANGER_AIM_HOLD longer, a sight on the hide.
+const FULL_BEAT = RANGER_BEATS.find(([, p]) => p && p.strain);
+const FULL_AT = -FULL_BEAT[0];
+const SHOT_END = RANGER_BEATS[RANGER_BEATS.length - 1][0];
+const BRACED = { bend: 2, pull: 0 };
+// Seconds from a shot's first beat to its release.
+const shotLead = hold => -RANGER_BEATS[0][0] + hold;
+// The pose `d` seconds from a release; null outside that shot.
+function rangerBeat(d, hold) {
+  if (d < 0 && d >= -FULL_AT - hold) return FULL_BEAT[1];
+  const u = d < 0 ? d + hold : d;
+  if (u < RANGER_BEATS[0][0]) return null;
+  let pose = null;
+  for (const [at, p] of RANGER_BEATS) { if (u >= at) pose = p; else break; }
+  return pose;
+}
 const ranger = {
-  len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
-  beats(R) { return this.only ? [...this.only.shots, ...(this.only.aimed ? [this.only.aimed] : [])] : R4(R) ? [...this.shots, this.aimed] : [0.8]; },
+  len: 5.6, shots: [1.1, 1.9, 2.7, 3.5], aimed: 4.7,
+  beats(R) { return this.only ? [...this.only.shots, ...(this.only.aimed ? [this.only.aimed] : [])] : R4(R) ? [...this.shots, this.aimed] : [1.1]; },
   hits(R, x) {
-    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [0.8], aimed = this.only ? this.only.aimed : R4(R) ? this.aimed : null;
+    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [1.1], aimed = this.only ? this.only.aimed : R4(R) ? this.aimed : null;
     const lx = x + 1, hs = shots.map(v => ({ at: v + 0.25, x: lx, k: 0.2, purple: false }));
     if (aimed) for (const dx of [-1, 1]) hs.push({ at: aimed + 0.1, x: lx + dx, k: 0.8 });
     return hs;
@@ -533,21 +552,40 @@ const ranger = {
   draw(g, t, a, api, R, x) {
     // rung 0 shoots once; from rung 4 a run of arrows, then the aimed shot, two at once
     const y = api.restY, aimed = this.only ? this.only.aimed : R4(R) ? this.aimed : null;
-    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [0.8];
-    const last = aimed || shots[shots.length - 1], up = 0.15, down = last + 0.35;
-    const pulling = shots.some(v => a >= v - 0.18 && a < v) || (aimed && a >= aimed - 0.55 && a < aimed);
-    const pose = a < up || a >= down + 0.24 ? 'rest' : a < up + 0.12 || a >= down + 0.12 ? 'lift'
-               : a < up + 0.24 || a >= down ? 'over' : pulling ? 'drawn' : 'braced';
-    body(x, y);
+    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [1.1];
+    const rel = [...shots.map(v => ({ v, hold: 0 })), ...(aimed ? [{ v: aimed, hold: RANGER_AIM_HOLD, two: true }] : [])];
+    const L = RANGER_LIFT_S, up = rel[0].v - shotLead(rel[0].hold) - 2 * L, down = rel[rel.length - 1].v + SHOT_END;
     api.at(x, y);
-    drawBow(g, pose, x, y, R, aimed && a >= aimed - 0.55 && a < aimed);
+    if (a < up + 2 * L || a >= down) {
+      // lifting the bow over his head, or lowering it after the last shot
+      body(x, y);
+      if (a < up || a >= down + 2 * L) drawBow(g, 'rest', x, y, R);
+      else if (a < up + L || a >= down + L) drawBow(g, 'lift', x, y, R);
+      else stepBow(g, x + 2, y - 3, R, 2, 0);
+    } else {
+      // the shot whose first beat has come, the latest of them
+      let cur = null;
+      for (const r of rel) if (a >= r.v - shotLead(r.hold)) cur = r;
+      const p = (cur && rangerBeat(a - cur.v, cur.hold)) || BRACED, sink = p.sink || 0;
+      const cx = x + 1, sy = y - 4 + (p.lift || 0) + sink;
+      body(x, y + sink);
+      stepBow(g, cx, sy, R, p.bend, p.pull);
+      if (p.arrow === 'nocked') nocked(g, cx, sy + p.pull, !!cur.two);
+      else if (p.arrow === 'hip') hipArrow(g, x + 3, y + 1 + sink);
+      else cell(g, cx + 2, sy + 3, WHITE);
+      if (p.strain) strainTicks(g, x, y + sink);
+      // the loose: a held streak up off the string where the arrow went
+      if (p.loose && a - cur.v < RANGER_SMEAR_S)
+        for (const ax of cur.two ? [cx - 1, cx + 1] : [cx])
+          for (let r = y - 9; r <= y - 2; r++) cell(g, ax, r, r < y - 4 ? (cur.two ? PURPLES[11] : WHITE) : GREYS[8]);
+    }
     const lx = x + 1, ly = y - 6, ty = cBot(lx) + 1;
     api.shot(() => {
       // the aim: a dotted line up to the hide and a ring closing on the spot
-      if (aimed && a >= aimed - 0.5 && a < aimed) {
+      if (aimed && a >= aimed - FULL_AT - RANGER_AIM_HOLD && a < aimed) {
         const tone = a > aimed - 0.2 ? GREYS[9] : GREYS[6];
         for (let cy = ly - 1; cy > ty; cy -= 2) cell(g, lx, cy, tone);
-        ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - aimed + 0.5) * 5)), tone, 2);
+        ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - aimed + FULL_AT + RANGER_AIM_HOLD) * 5)), tone, 2);
       }
       if (api.sim) return;
       const arrows = shots.map(v => ({ at: v, fly: 0.25, ax: lx }));
@@ -897,9 +935,11 @@ export const SEGMENTS = {
     return { c, from: H - (fin ? 0.35 : 0.2), hit: H, to: H + (fin ? 0.3 : 0.25) };
   },
   ranger(move, R) {
-    const aimed = move === 'aimed';
-    const c = only(ranger, { only: aimed ? { shots: [], aimed: H } : { shots: [H], aimed: null } });
-    return { c, from: aimed ? H - 0.55 : 0, mid: H - 0.55, hit: H, to: H + 0.34, off: H + 0.6 };
+    // its own release point, late enough that a standing start lifts the bow first
+    const aimed = move === 'aimed', hold = aimed ? RANGER_AIM_HOLD : 0, RH = shotLead(RANGER_AIM_HOLD) + 2 * RANGER_LIFT_S;
+    const c = only(ranger, { only: aimed ? { shots: [], aimed: RH } : { shots: [RH], aimed: null } });
+    return { c, from: RH - shotLead(hold) - 2 * RANGER_LIFT_S, mid: RH - shotLead(hold), hit: RH,
+             to: RH + SHOT_END - 0.01, off: RH + SHOT_END + 2 * RANGER_LIFT_S + 0.01 };
   },
   assassin(move, R, o) {
     const c = only(assassin, { stabs: [H], bladeI: o.side > 0 ? 1 : 0 });
