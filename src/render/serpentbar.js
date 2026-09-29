@@ -11,10 +11,11 @@ import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
 import { coilCeiling } from '../deep/place.js';
 import { owedWound, landsAt } from './barflight.js';
+import { drawFoeStatuses } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
          BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
-         BAR_CHIP_MIN, BAR_CHIP_MAX, BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG,
+         BAR_CHIP_MIN, BAR_CHIP_MAX, BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
          SERPENT_WOUND } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
@@ -98,5 +99,7 @@ export function drawSerpentBar() {
     const cw = flat ? w : Math.ceil(w / 2), ch = flat ? half : Math.ceil(w / 2);
     fill(lit ? BAR_LEFT : BAR_CHIP, Math.round(cx - cw / 2), Math.round(cy + (h.side % 2 ? 0 : half)), cw, ch);
   }
+  // what the fighters have laid on the serpent, in a row under the bar
+  drawFoeStatuses(x, y + BAR_H + STATUS_GAP + 1);
   ctx.restore();
 }

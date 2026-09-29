@@ -52,6 +52,7 @@ import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
 import { drawFightNumbers } from './render/fightnums.js';
+import { drawStationStatuses } from './render/statusicons.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
 import { drawFighters, drawShots } from './render/arms.js';   // track RENDER, docs/wave-party.md
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
@@ -241,6 +242,7 @@ const LAYERS = [
   // fades against the picture actually behind it, whichever way the deep was
   // turned (render/fightnums.js). Still in the world, for the deep's camera.
   { name: 'fight numbers', draw: drawFightNumbers },
+  { name: 'status posts', draw: drawStationStatuses },   // and what is on each fighter, up a post at its station
   { name: 'world:done', draw: leaveWorld },
 
   { name: 'air near', draw: drawAirNear },       // the nearest dust passes in front of the yard, not behind it
@@ -270,7 +272,7 @@ export { LAYERS };
 // and not read: the layers a player reads off the picture are left out of it.
 const READING = new Set(['offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
-                         'stock count', 'pot labels', 'counter', 'fight numbers', 'serpent bar']);
+                         'stock count', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
 let picture = false;
 export const asPicture = on => { picture = on; };
 
@@ -281,7 +283,7 @@ export const asPicture = on => { picture = on; };
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
                       'serpent', 'swimmers', 'party', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
-                      'fight numbers']);
+                      'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves, each cut to its own (`PINNED`).

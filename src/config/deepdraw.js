@@ -310,6 +310,50 @@ export const BAR_CHIP = '#b4b4c0';      // the notch's first pose, and the chip 
 export const BAR_KNOCK = 4;
 export const BAR_KNOCK_BIG = 8;
 export const BAR_KNOCK_S = 0.16;
+// The statuses as icons (render/statusicons.js; the owner's A and 3 of
+// docs/mocks/status-icons-2026-09-28.html): a five-by-five drawing each,
+// STATUS_PX screen pixels a pixel, on a dark tile in a rim -- the serpent's
+// in the heal's purple, a fighter's in white, Dazed with the serpent's --
+// and a timer of STATUS_STEPS steps under it. The serpent's in a row
+// STATUS_GAP under its bar; a fighter's up a post STATUS_POST_OUT right of
+// its station, standing STATUS_POST_FOOT over the floor. A status renewed by
+// more than STATUS_RENEW_MS starts its timer again.
+export const STATUS_ICONS = {
+  stun:     { rows: ['#.#.#', '.###.', '##.##', '.###.', '#.#.#'], foe: true },
+  bleed:    { rows: ['..#..', '.###.', '#####', '#####', '.###.'], foe: true },
+  weakened: { rows: ['..#..', '..#..', '#.#.#', '.###.', '..#..'], foe: true },
+  held:     { rows: ['.###.', '#...#', '#####', '##.##', '#####'], foe: true },
+  exposed:  { rows: ['#...#', '.#.#.', '..#..', '.#.#.', '#...#'], foe: true },
+  haste:    { rows: ['#.#..', '.#.#.', '..#.#', '.#.#.', '#.#..'] },
+  inspired: { rows: ['..##.', '..#.#', '..#..', '.##..', '###..'] },
+  dazed:    { rows: ['#.#..', '.....', '..#.#', '.....', '#.#..'], foe: true },
+  // the serpent's own, a phase's mechanic (deep/phases.js): the heal surging,
+  // the lash, the sink
+  surge:    { rows: ['..#..', '..#..', '#####', '..#..', '..#..'], own: true },
+  lash:     { rows: ['...##', '..#..', '.#...', '#....', '#....'], own: true },
+  sink:     { rows: ['#####', '.....', '.###.', '.....', '..#..'], own: true },
+};
+// A mechanic's tile while it is warned: its rim blinking between these in held
+// steps, STATUS_WARN_HZ a second. Answered, it is struck through for the rest
+// of its turn.
+export const STATUS_WARN_HZ = 4;
+export const STATUS_WARN_RIM = ['#ffffff', '#42424a'];
+export const STATUS_STRUCK = '#9b5de5';
+export const STATUS_PX = 2;
+export const STATUS_GAP = 5;
+export const STATUS_STEPS = 5;
+export const STATUS_RENEW_MS = 5;
+export const STATUS_POST_OUT = 4;
+export const STATUS_POST_FOOT = 2;
+export const STATUS_TILE = '#0a0a0c';
+export const STATUS_RIM = '#8b8b96';
+export const STATUS_FOE = '#9b5de5';
+export const STATUS_FACE = '#ffffff';
+export const STATUS_TIMER = '#ffffff';
+export const STATUS_SPENT = '#333339';
+export const STATUS_POST = '#6e6e78';
+// Bleeding's count of sources in a tile's corner, three by four.
+export const STATUS_COUNT = { 2: ['##.', '..#', '.#.', '###'], 3: ['##.', '.##', '..#', '##.'], 4: ['#.#', '###', '..#', '..#'] };
 
 // --- track RENDER of docs/wave-party.md: the fighters, their kits and attacks ---------
 // The kit growth page's feel (docs/mocks/kit-growth-2026-09-27.html, all three
