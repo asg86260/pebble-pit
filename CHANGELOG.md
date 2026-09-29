@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- A blow's number is knocked off the serpent in an arc, bigger and with speed lines for a heavy blow, and the heal's number swells along its digits and fades through the purples (`node tools/look.mjs deep-numbers`).
 - A low dark dome stands behind every deep station, so the scales heaped on the floor sit behind it and the fighter reads against dark (`node tools/look.mjs party-four`).
 - Each phase past the first has a mechanic, warned ahead and answered by a class: the warded phase surges its heal until a stun spends it, the split lashes the melee fighters off the hide unless a Hexer holds it, and the fading sinks into the abyss out of reach (test/phase-mechanics.test.mjs).
 - The Ranger loads each shot: an arrow from the hip, nocked, drawn in two steps as he strains and sinks, held, then loosed with the string snapping and a held recoil (`node tools/look.mjs party-four`).

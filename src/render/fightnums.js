@@ -12,9 +12,11 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
-import { NUM_FONT, NUM_FONT_PX, NUM_FACE, NUM_DROP, NUM_HEAL, NUM_HEAL_DROP, NUM_LIFE_S,
-         NUM_HEAL_LIFE_S, NUM_IN_S, NUM_STEPS, NUM_RISE, NUM_LIFT, NUM_JITTER, NUM_HEAL_SIDE,
-         NUM_HEAL_DROP_BY } from '../config.js';
+import { blowK } from '../deep/serpent.js';
+import { NUM_FONT, NUM_FONT_PX, NUM_FACE, NUM_DROP, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_IN_S, NUM_OUT, NUM_STEPS,
+         NUM_LIFT, NUM_KICK_UP, NUM_KICK_UP_K, NUM_KICK_SIDE, NUM_KICK_SIDE_K, NUM_KICK_GRAV, NUM_KICK_HOLD_S,
+         NUM_KICK_BIG, NUM_KICK_LINE, NUM_KICK_LINE_H, NUM_HEAL_SIDE, NUM_HEAL_DROP_BY, NUM_HEAL_RISE,
+         NUM_HEAL_SWELL, NUM_HEAL_SWELL_LAG, NUM_HEAL_FADE, NUM_HEAL_FACES, NUM_HEAL_DROPS } from '../config.js';
 
 const CHARS = Object.keys(NUM_FONT);
 const GW = NUM_FONT['0'][0].length, GH = NUM_FONT['0'].length;
@@ -23,15 +25,18 @@ const GW = NUM_FONT['0'][0].length, GH = NUM_FONT['0'].length;
 // deep there is drawn turned so the map brings it back: the numbers too.
 const seen = c => darkPage ? turned(c) : c;
 
-// One small sheet of every glyph, a row a face (the blow's, the heal's), each
-// glyph whole with its drop line under it: a number is a drawImage a glyph.
-// Kept until a font pixel is a different number of device pixels.
-let atlas = null, atlasPx = 0;
-function glyphs(px) {
-  if (atlas && atlasPx === px) return atlas;
-  const c = document.createElement('canvas');
+// A small sheet of every glyph in one face on its drop line, at `px` device
+// pixels a font pixel: a number is a drawImage a glyph. One sheet a size and
+// a face, kept until a font pixel is a different number of device pixels.
+let sheets = new Map(), sheetsPx = 0;
+function sheetOf(px, face, drop) {
+  if (sheetsPx !== px) { sheets = new Map(); sheetsPx = px; }
+  const id = `${px}|${face}|${drop}`;
+  let c = sheets.get(id);
+  if (c) return c;
+  c = document.createElement('canvas');
   c.width = CHARS.length * GW * px;
-  c.height = 2 * (GH + 1) * px;
+  c.height = (GH + 1) * px;
   const g = c.getContext('2d');
   const paint = (ch, ox, oy, tone) => {
     g.fillStyle = tone;
@@ -39,26 +44,39 @@ function glyphs(px) {
       for (let i = 0; i < GW; i++) if (row[i] === '#') g.fillRect(ox + i * px, oy + r * px, px, px);
     });
   };
-  [[NUM_FACE, NUM_DROP], [NUM_HEAL, NUM_HEAL_DROP]].forEach(([face, drop], row) => {
-    const oy = row * (GH + 1) * px;
-    CHARS.forEach((ch, i) => {
-      paint(ch, i * GW * px, oy + px, seen(drop));   // the drop, a font pixel under
-      paint(ch, i * GW * px, oy, seen(face));        // and the face over it
-    });
+  CHARS.forEach((ch, i) => {
+    paint(ch, i * GW * px, px, seen(drop));   // the drop, a font pixel under
+    paint(ch, i * GW * px, 0, seen(face));    // and the face over it
   });
-  atlas = c; atlasPx = px;
+  sheets.set(id, c);
   return c;
 }
+// `str` with its bottom-left at (left, bottom) in device pixels; `bob(i)`
+// lifts glyph i by whole font pixels.
+function write(sheet, str, px, left, bottom, bob) {
+  const w1 = (GW + 1) * px, h = (GH + 1) * px;
+  for (let i = 0; i < str.length; i++) {
+    const at = CHARS.indexOf(str[i]) * GW * px;
+    ctx.drawImage(sheet, at, 0, GW * px, h, left + i * w1, bottom - h - (bob ? bob(i) * px : 0), GW * px, h);
+  }
+}
+const widthOf = (str, px) => str.length * (GW + 1) * px - px;
 
 // A number's opacity over its life, in whole steps, so it passes through the
-// tones of whatever is behind it: in quickly, held, out over its last half.
+// tones of whatever is behind it: in quickly, held, out over its last share.
 function lifeK(age, life) {
-  const k = age < NUM_IN_S ? age / NUM_IN_S : age > life / 2 ? (life - age) / (life / 2) : 1;
+  const k = age < NUM_IN_S ? age / NUM_IN_S : age > life * (1 - NUM_OUT) ? (life - age) / (life * NUM_OUT) : 1;
   return Math.round(Math.max(0, Math.min(1, k)) * NUM_STEPS) / NUM_STEPS;
 }
 
-// The same small shove either way for the same hit, frame after frame.
-const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+// Where a blow's number is `age` seconds after it was knocked off, in screen
+// pixels off where it left: its flight on the clock, the clock stopped
+// NUM_KICK_HOLD_S at the top of the arc. And whether it is still going up.
+function kick(age, k, dir) {
+  const up = NUM_KICK_UP + NUM_KICK_UP_K * k, top = up / NUM_KICK_GRAV;
+  const tt = age < top ? age : age < top + NUM_KICK_HOLD_S ? top : age - NUM_KICK_HOLD_S;
+  return { dx: dir * (NUM_KICK_SIDE + NUM_KICK_SIDE_K * k) * tt, dy: -up * tt + NUM_KICK_GRAV * tt * tt / 2, rising: age < top };
+}
 
 export function drawFightNumbers() {
   if (!S.hits.length) return;
@@ -67,31 +85,43 @@ export function drawFightNumbers() {
   // where the deep's camera puts it, in device pixels.
   const m = ctx.getTransform();
   const u = S.dpr;                                   // device pixels a screen pixel
-  const px = Math.max(1, Math.round(NUM_FONT_PX * u));
-  const sheet = glyphs(px);
-  const w1 = (GW + 1) * px, h = (GH + 1) * px;
+  const px = Math.max(1, Math.round(NUM_FONT_PX * u)), big = px + Math.max(1, Math.round(u));
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   for (const hit of S.hits) {
     if (t < hit.shut) continue;                      // a held weapon's second, still being summed
     const heal = hit.weapon === 'heal';
     const age = (t - hit.shut) / 1000, life = heal ? NUM_HEAL_LIFE_S : NUM_LIFE_S;
-    const k = lifeK(age, life);
     const n = Math.round(hit.done);
-    if (k <= 0 || n < 1) continue;
-    const str = heal ? '+' + n : String(n);
-    const rise = Math.floor(age * NUM_RISE) * u;
+    if (age >= life || n < 1) continue;
     const wx = m.a * hit.x + m.e, wy = m.d * hit.y + m.f;
-    const sx = heal ? wx + (hit.side % 2 ? NUM_HEAL_SIDE : -NUM_HEAL_SIDE) * u
-                    : wx + (hash(hit.side + hit.at) - 0.5) * 2 * NUM_JITTER * u;
-    const bottom = heal ? wy + NUM_HEAL_DROP_BY * u - rise : wy - NUM_LIFT * u - rise;
-    const left = Math.round(sx - (str.length * w1 - px) / 2), top = Math.round(bottom - h);
-    const row = heal ? h : 0;
-    ctx.globalAlpha = k;
-    for (let i = 0; i < str.length; i++) {
-      const at = CHARS.indexOf(str[i]) * GW * px;
-      ctx.drawImage(sheet, at, row, GW * px, h, left + i * w1, top, GW * px, h);
+    if (heal) {
+      // under the belly, climbing in whole font pixels, a swell running along it
+      const str = '+' + n, f = Math.min(NUM_HEAL_FACES.length - 1,
+        Math.floor(Math.max(0, age / life - NUM_HEAL_FADE) / (1 - NUM_HEAL_FADE) * NUM_HEAL_FACES.length));
+      const sx = wx + (hit.side % 2 ? NUM_HEAL_SIDE : -NUM_HEAL_SIDE) * u;
+      const rise = Math.round(age * NUM_HEAL_RISE * u / px) * px;
+      ctx.globalAlpha = age < NUM_IN_S ? 0.5 : 1;
+      write(sheetOf(px, NUM_HEAL_FACES[f], NUM_HEAL_DROPS[f]), str, px, Math.round(sx - widthOf(str, px) / 2),
+            Math.round(wy + NUM_HEAL_DROP_BY * u - rise),
+            i => Math.round(Math.sin(age * NUM_HEAL_SWELL - i * NUM_HEAL_SWELL_LAG)));
+      continue;
     }
+    const a = lifeK(age, life);
+    if (a <= 0) continue;
+    // knocked off the hide, away from the hit, turn and turn about
+    const k = blowK(hit.done), size = k > NUM_KICK_BIG ? big : px, str = String(n);
+    const f = kick(age, k, hit.side % 2 ? 1 : -1);
+    const left = Math.round((wx + f.dx * u) / size) * size - Math.round(widthOf(str, size) / 2);
+    const bottom = Math.round((wy - NUM_LIFT * u + f.dy * u) / size) * size;
+    ctx.globalAlpha = a;
+    if (size === big && f.rising) {
+      // held speed lines under a big one on its way up
+      ctx.fillStyle = seen(NUM_KICK_LINE);
+      const mid = left + Math.round(widthOf(str, size) / 2);
+      for (const d of [-2, 0, 2]) ctx.fillRect(mid + d * size, bottom + 2 * size, size, NUM_KICK_LINE_H * u);
+    }
+    write(sheetOf(size, NUM_FACE, NUM_DROP), str, size, left, bottom);
   }
   ctx.restore();
 }

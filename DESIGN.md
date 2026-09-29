@@ -15223,6 +15223,8 @@ already has but does not keep:
    bar; drawn instead as the wound, it grows with damage and the heal eats it.
    Either way it replaces "still no bar" in "The serpent, redrawn".
 
+The numbers move (docs/mocks/fight-numbers-2026-09-28.html, the owner's B and H2): a blow's number is knocked off the hide in an arc away from the hit, turn and turn about, held a beat at its top and dropping as it fades, higher and wider the bigger the blow, and past NUM_KICK_BIG a font pixel bigger with held speed lines under it; the heal's climbs slow while a swell runs along its digits, the plus first, and fades down a ramp of purples instead of going see-through. Held steps throughout: no shake and no flash.
+
 ### The serpent's bar (built 2026-09-26)
 
 *The owner's call, 2026-09-26: B of four mocked,

@@ -220,27 +220,49 @@ export const NUM_FONT_PX = 2;        // screen pixels a font pixel
 // the finished deep, not turned over with it.
 export const NUM_FACE = '#ffffff';   // a blow: white
 export const NUM_DROP = '#42424a';   // on a grey drop line
-export const NUM_HEAL = '#9b5de5';   // the heal: the abyss's purple
-export const NUM_HEAL_DROP = '#2d1d47'; // on a dark purple drop
 export const NUM_LIFE_S = 1.3;       // a blow's number, in and out
-export const NUM_HEAL_LIFE_S = 1.6;  // the heal's, a little longer
-export const NUM_IN_S = 0.12;        // faded in over this; out over the last half of its life
+export const NUM_HEAL_LIFE_S = 1.8;  // the heal's, a little longer
+export const NUM_IN_S = 0.08;        // faded in over this
+export const NUM_OUT = 0.4;          // and out over this share of its life, at the end
 export const NUM_STEPS = 8;          // the fade in whole steps of opacity: never a jump bigger than one
-export const NUM_RISE = 14;          // screen pixels a second a number climbs
-export const NUM_LIFT = 6;           // screen pixels over the coil's top edge it starts
-export const NUM_JITTER = 6;         // screen pixels either way a blow's number is set off its hit
-export const NUM_HEAL_SIDE = 14;     // screen pixels either side of the belly the heal alternates
-export const NUM_HEAL_DROP_BY = 22;  // and under the coil's bottom edge it starts
+export const NUM_LIFT = 2;           // screen pixels over the coil's top edge a blow's number leaves from
+// A blow's number is knocked off the hide (docs/mocks/fight-numbers-2026-09-28.html,
+// B): up and away from the hit, the side turn and turn about, on its own
+// gravity, held a beat at the top of its arc, then dropping as it fades. A
+// bigger blow (`blowK`, 0..1) flies higher and wider; past NUM_KICK_BIG it
+// is a font pixel bigger and leaves held speed lines under it on the way up.
+// Screen pixels, and screen pixels a second.
+export const NUM_KICK_UP = 110;
+export const NUM_KICK_UP_K = 40;
+export const NUM_KICK_SIDE = 26;
+export const NUM_KICK_SIDE_K = 20;
+export const NUM_KICK_GRAV = 500;
+export const NUM_KICK_HOLD_S = 0.14;
+export const NUM_KICK_BIG = 0.5;
+export const NUM_KICK_LINE = '#6e6e78';
+export const NUM_KICK_LINE_H = 8;
+// The heal's number (B's partner, H2): under the belly, the side turn and turn
+// about, climbing slow while a swell runs along its digits a font pixel up and
+// down in held steps, the plus first; from NUM_HEAL_FADE of its life it fades
+// down this ramp of purples, bright to dark, instead of going see-through.
+export const NUM_HEAL_SIDE = 14;     // screen pixels either side of the belly
+export const NUM_HEAL_DROP_BY = 26;  // and under the coil's bottom edge it starts
+export const NUM_HEAL_RISE = 12;     // screen pixels a second it climbs
+export const NUM_HEAL_SWELL = 7;     // how fast the swell runs, radians a second
+export const NUM_HEAL_SWELL_LAG = 0.9; // and how far behind each digit is the one before, radians
+export const NUM_HEAL_FADE = 0.5;
+export const NUM_HEAL_FACES = ['#9b5de5', '#6a2fbe', '#5c2ba6', '#412465', '#2d1d47'];
+export const NUM_HEAL_DROPS = ['#2d1d47', '#241739', '#1b112c', '#130b20', '#130b20'];
 // What the sim keeps for them (deep/serpent.js): a weapon that hurts while it
 // is held (the lance, the beam) says its sum once this often, a body at a
 // time; the heal says what it actually closed once this often.
 export const NUM_HELD_S = 1;
 export const NUM_HEAL_EVERY_S = 1;
-// Blows of one kind landing this near each other before the last one's number
-// has risen clear of its own height are summed into it: three brawlers
-// swinging as one, or one swinging faster than its numbers climb, print a
-// running sum and not a smear of digits over digits.
-export const NUM_FOLD_S = (NUM_FONT['0'].length + 1) * NUM_FONT_PX / NUM_RISE;
+// Blows of one kind landing this near each other while the last one's number
+// is still in the air are summed into it: three brawlers swinging as one, or
+// one swinging faster than its numbers fly, print a running sum and not a
+// spray of digits over digits.
+export const NUM_FOLD_S = 1;
 export const NUM_FOLD_R = P * 4;
 
 // --- the serpent's bar: what is left of the defense up -------------------------------
