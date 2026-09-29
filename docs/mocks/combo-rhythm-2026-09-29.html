@@ -1,0 +1,186 @@
+<title>Combo Rhythm</title>
+<style>
+/* Layout: a row a rhythm, a Brawler and a Martial Artist side by side in
+   each, a beat timeline under every pane. Panes are the deep, black in either
+   theme; the chrome follows the viewer. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 14px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 13px; margin: 10px 0 0; text-transform: uppercase; letter-spacing: .08em; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row { display: grid; gap: 6px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h3 { margin: 0; font-size: 12px; color: var(--dim); font-weight: 600; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+.nums { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Combo Rhythm</h1>
+    <p>How a fighter's attacks are spaced. Every rhythm keeps the same damage a second as now, so the fight's balance
+      is untouched: the hits inside a string come a little quicker to pay for the breather after it. Under each pane,
+      the beat timeline: a tick a hit, a tall tick the big one, grey where the fighter rests. A mock drawn from plain
+      cells, not the game: one fighter, no numbers, the coil a plain band.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div id="rows"></div>
+</div>
+
+<script>
+(() => {
+  const P = 6, CW = 44, CH = 30, FLOOR = 27, TL = 5;   // timeline rows under the pane
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                   '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+  const WHITE = GREYS[11];
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const cell = (g, x, y, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, P, P); };
+  const rect = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, Math.round(w) * P, Math.round(h) * P); };
+
+  // --- the two classes, as the game has them -----------------------------------------------
+  // `every` seconds a hit now; a combo bar of `bar` pips ending in the big one.
+  const CLASSES = {
+    brawler: { name: 'Brawler', every: 1.2, bar: 4, big: 'haymaker' },
+    martial: { name: 'Martial Artist', every: 0.5, bar: 5, big: 'finisher' },
+  };
+  // --- the rhythms: from a class, a loop of hits { at, big } and rests [from, to] ----------
+  // Each keeps the average: N hits in the loop's length = N * every.
+  const RHYTHMS = [
+    { name: 'Now', about: 'An even beat, every hit the same distance from the last, the big one on the bar’s last pip.',
+      make(c) { const hits = []; for (let i = 0; i < c.bar * 2; i++) hits.push({ at: i * c.every, big: (i + 1) % c.bar === 0 }); return { hits, rests: [], len: c.bar * 2 * c.every }; } },
+    { name: 'A · Strings of three', about: 'Three quick hits, a held reset back to guard, a breath, then the next three. The bar still fills a pip a hit and its big one lands where it falls.',
+      make(c) {
+        const n = c.bar * 3, len = n * c.every, gap = c.every * 0.55, str = 3, strings = n / str;
+        const rest = (len - strings * (str - 1) * gap) / strings;
+        const hits = [], rests = []; let t = 0, k = 0;
+        for (let s = 0; s < strings; s++) { for (let i = 0; i < str; i++) { hits.push({ at: t, big: (++k) % c.bar === 0 }); if (i < str - 1) t += gap; } rests.push([t + 0.15, t + rest]); t += rest; }
+        return { hits, rests, len };
+      } },
+    { name: 'B · The bar is the string', about: 'The combo bar sets the rhythm: its pips come quick and even, the big one lands on the last with a held beat before it, then a long rest while the bar empties. No bar, no string.',
+      make(c) {
+        const len = c.bar * c.every, gap = c.every * 0.55, hold = c.every * 0.35;
+        const hits = [], rests = []; let t = 0;
+        for (let i = 0; i < c.bar; i++) { hits.push({ at: t, big: i === c.bar - 1 }); t += i === c.bar - 2 ? gap + hold : gap; }
+        const last = hits[hits.length - 1].at;
+        rests.push([last + 0.2, len]);
+        return { hits, rests, len };
+      } },
+    { name: 'C · One-two, and the big one', about: 'Pairs with a short breath between them, and a long rest after the big one: 1-2 . 1-2 . BIG ... ; the finisher is the loudest beat and the quiet after it the longest.',
+      make(c) {
+        const len = c.bar * c.every, pairGap = c.every * 0.4, breath = c.every * 0.9;
+        const hits = [], rests = []; let t = 0, k = 0;
+        while (k < c.bar - 1) {
+          hits.push({ at: t, big: false }); k++;
+          if (k < c.bar - 1) { t += pairGap; hits.push({ at: t, big: false }); k++; }
+          rests.push([t + 0.12, t + breath]); t += breath;
+        }
+        hits.push({ at: t, big: true });
+        rests.push([t + 0.2, len]);
+        return { hits, rests, len };
+      } },
+  ];
+
+  // --- drawing ------------------------------------------------------------------------------
+  const sway = (x, t) => 7 + 1.2 * Math.sin(x * 0.12 + t * 0.7);
+  const hideAt = (x, t) => Math.round(sway(x, t)) + 3;
+  function body(g, x, y) {
+    g.fillStyle = GREYS[6]; g.fillRect(x * P, y * P, 3 * P, 3 * P);
+    g.fillStyle = WHITE; g.fillRect(x * P + 2, y * P + 2, 3 * P - 4, 3 * P - 4);
+  }
+  function pane(g, t, cls, rh) {
+    const { hits, rests, len } = rh.plan;
+    const u = t % len;
+    g.fillStyle = GREYS[0]; g.fillRect(0, 0, CW * P, (CH + TL) * P);
+    for (let i = 0; i < 16; i++) cell(g, (hash(i) * CW + t * 0.5) % CW, hash(i + 3) * FLOOR, GREYS[2 + Math.floor(hash(i + 5) * 3)]);
+    for (let x = 0; x < CW; x++) { const m = Math.round(sway(x, t)); for (let y = m - 3; y <= m + 3; y++) cell(g, x, y, y === m + 3 ? GREYS[8] : y === m ? GREYS[10] : WHITE); }
+    rect(g, 0, FLOOR, CW, CH - FLOOR, GREYS[2]);
+    // the fighter hangs under the hide at x
+    const X = 21, hang = hideAt(X, t) + 5;
+    const near = hits.map(h => ({ ...h, d: u - h.at })).filter(h => h.d > -0.2 && h.d < 0.3).sort((a, b) => Math.abs(a.d) - Math.abs(b.d))[0];
+    const resting = rests.some(([a, b]) => u >= a && u < b);
+    let y = hang, fy = hang - 1, star = null;
+    if (near) {
+      const d = near.d, big = near.big;
+      if (d < -0.1) y = hang + (big ? 2 : 1);                 // the wind-up, held
+      else if (d < 0) { fy = hang - 2; }
+      else if (d < 0.1) { fy = hideAt(X, t) + 1; star = near; } // contact, held
+      else if (d < 0.2) y = hang + (big ? 2 : 1);              // knocked back
+    } else if (resting) {
+      // the reset: back to guard, a breath -- down a cell and up, held steps
+      y = hang + (Math.floor(u / 0.25) % 2);
+      fy = hang + 1;
+    }
+    body(g, X - 1, y);
+    if (fy < y) { cell(g, X, fy, WHITE); for (let r = fy + 1; r < y; r++) cell(g, X, r, GREYS[8]); }
+    else { cell(g, X - 2, y + 1, WHITE); cell(g, X + 2, y + 1, WHITE); }   // fists down at guard
+    if (star) {
+      const sy = hideAt(X, t) + 1, r = star.big ? 3 : 2;
+      for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, 1], [0, -1]]) cell(g, X + dx, sy + dy, WHITE);
+      for (let i = 1; i <= r; i++) for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) cell(g, X + dx * i, sy + dy * i, i === r ? GREYS[9] : WHITE);
+    }
+    // the pip bar under the body: lit a pip a hit, spent on the big one
+    const done = hits.filter(h => h.at <= u + 1e-6);
+    const lastBig = [...done].reverse().findIndex(h => h.big);
+    const sinceBig = lastBig < 0 ? done.length : lastBig;
+    const lit = sinceBig % cls.bar;
+    const x0 = X - Math.floor(cls.bar / 2);
+    for (let i = 0; i < cls.bar; i++) cell(g, x0 + i, y + 4, i < lit ? WHITE : GREYS[6]);
+    // the beat timeline: the loop across the pane, a playhead, ticks, rests grey
+    const ty = CH + 1, sx = k => 2 + (CW - 4) * (k / len);
+    rect(g, 0, CH, CW, TL, GREYS[1]);
+    for (const [a, b] of rests) rect(g, sx(a), ty + 1, Math.max(1, sx(b) - sx(a)), 2, GREYS[4]);
+    for (const h of hits) { const x = Math.round(sx(h.at)); rect(g, x, h.big ? ty : ty + 1, 1, h.big ? 3 : 2, h.big ? PURPLES[11] : WHITE); }
+    rect(g, Math.round(sx(u)), ty - 1, 1, 5, GREYS[9]);
+  }
+
+  const host = document.getElementById('rows'), panes = [];
+  for (const rh of RHYTHMS) {
+    const row = document.createElement('div'); row.className = 'row';
+    const h = document.createElement('h2'); h.textContent = rh.name;
+    const p = document.createElement('p'); p.textContent = rh.about;
+    const pair = document.createElement('div'); pair.className = 'pair';
+    for (const [k, cls] of Object.entries(CLASSES)) {
+      const plan = rh.make(cls);
+      const card = document.createElement('div'); card.className = 'card';
+      const h3 = document.createElement('h3'); h3.textContent = cls.name;
+      const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = (CH + TL) * P; cv.setAttribute('aria-label', `${cls.name}, ${rh.name}`);
+      const n = document.createElement('div'); n.className = 'nums';
+      n.textContent = `${plan.hits.length} hits in ${plan.len.toFixed(1)} s: ${(plan.hits.length / plan.len).toFixed(2)} a second (now ${(1 / cls.every).toFixed(2)})`;
+      card.append(h3, cv, n); pair.append(card);
+      panes.push({ g: cv.getContext('2d'), cls, rh: { plan } });
+    }
+    row.append(h, p, pair); host.append(row);
+  }
+  let playing = true, speed = 1, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  (function tick(now) {
+    if (playing) clock += (now - last) / 1000 * speed;
+    last = now;
+    for (const p of panes) pane(p.g, clock, p.cls, p.rh);
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>
