@@ -291,6 +291,20 @@ export const BAR_STUN = '#9b5de5';     // the defense's pip while a stun has sto
 export const BAR_STUN_RIM = 2;         // screen pixels, the ring's width
 export const BAR_TRAIL_HOLD_S = 0.5;  // the trail waits this long after the last blow
 export const BAR_TRAIL_RATE = 1;       // then drains at this share of the bar a second
+// A blow landing in the bar knocks a chip out of the end of its fill
+// (docs/mocks/bar-chip-2026-09-28.html, the owner's A): a blow is a tenth of
+// a percent of a defense, under a pixel of the bar, so the chip says it
+// landed. The notch is half the bar high, top and bottom turn about, between
+// BAR_CHIP_MIN and BAR_CHIP_MAX screen pixels wide by the blow's size, lit
+// for a pose and open for BAR_CHIP_OPEN_S; the chip falls out of it, turning
+// over a pose at a time, for BAR_CHIP_S.
+export const BAR_CHIP_MIN = 4;
+export const BAR_CHIP_MAX = 12;
+export const BAR_CHIP_S = 0.6;
+export const BAR_CHIP_OPEN_S = 0.3;
+export const BAR_CHIP_POSE_S = 0.08;
+export const BAR_CHIP_FALL = { side: 18, down: 20, grav: 90 };   // screen pixels a second, and a second a second
+export const BAR_CHIP = '#b4b4c0';      // the notch's first pose, and the chip after its first (white, as the fill)
 
 // --- track RENDER of docs/wave-party.md: the fighters, their kits and attacks ---------
 // The kit growth page's feel (docs/mocks/kit-growth-2026-09-27.html, all three
