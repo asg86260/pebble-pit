@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The Mage's beam pools in a ball of energy where it meets the serpent, and every status icon says what it is on hover (`node tools/look.mjs deep-fading`).
 - The serpent's statuses and its phase's surge, lash or sink show as icons under its bar, each with a timer, and a fighter's own statuses stand up a post beside its station (`node tools/look.mjs deep-stun`).
 - Every fighter's moves and capstones say what they do in two or three words, and the status hovers are a few words each (`node tools/look.mjs recruit-board`).
 - A status's hover line on a station's board is shown whole even past the board's edge, and a status named in an effect stays on its line (`node tools/look.mjs recruit-board`).

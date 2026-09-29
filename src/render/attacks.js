@@ -26,7 +26,7 @@
 // Owned by track RENDER.
 
 import { P, DRAW_POSE, DRAW_KEY_EX, DRAW_NEAR_BEAT, DRAW_HAY_HOLDS, DRAW_HOLDS, DRAW_KICK, DRAW_KICK_HOLD_S, DRAW_KICK_BACK_S,
-         RANGER_BEATS, RANGER_AIM_HOLD, RANGER_LIFT_S, RANGER_SMEAR_S } from '../config.js';
+         RANGER_BEATS, RANGER_AIM_HOLD, RANGER_LIFT_S, RANGER_SMEAR_S, BEAM_POOL } from '../config.js';
 import { deepFloor } from '../deep/place.js';
 import {
   GREYS, PURPLES, WHITE, BODY, R4, R8, hash, clamp, lerp, along, ease, cell, rect, ring, body, pips, blit,
@@ -770,6 +770,22 @@ function beam(g, ax, ay, bx, by, w, t, fade = 0, white = true, surge = false, fr
     cell(g, cx, cy, fade > 0 ? down(core ? 0 : 1) : surge ? hot : lit);
   }
 }
+// Where the beam meets the hide (the owner's C of docs/mocks/beam-ball-2026-09-28.html):
+// a ball of it pooled flat on the underside, wider than tall and wider as the
+// beam widens, white in the middle; a ring of motes turning round it a step a
+// pose.
+function pool(g, x, y, w, t) {
+  const hw = BEAM_POOL.half[w >= 3 ? 1 : 0];
+  for (let dx = -hw; dx <= hw; dx++) {
+    cell(g, x + dx, y, Math.abs(dx) < hw - 1 ? WHITE : PURPLES[11]);
+    if (Math.abs(dx) < hw) cell(g, x + dx, y + 1, PURPLES[Math.abs(dx) < 2 ? 11 : 9]);
+  }
+  const turn = Math.floor(t / POSE) * BEAM_POOL.turn;
+  for (let i = 0; i < BEAM_POOL.motes; i++) {
+    const ang = turn + i * Math.PI * 2 / BEAM_POOL.motes;
+    cell(g, Math.round(x + Math.cos(ang) * (hw + BEAM_POOL.out)), Math.round(y + 1 + Math.sin(ang) * BEAM_POOL.out), PURPLES[i % 2 ? 9 : 11]);
+  }
+}
 // The finishing pulse: a bright bead `n` cells long at `p` 0..1 of the way
 // from (ax, ay) to (bx, by), `w` cells across, white at its head.
 function bead(g, ax, ay, bx, by, p, w, n, white) {
@@ -836,7 +852,7 @@ const mage = {
     api.shot(() => {
       // the beam, held; in the surge a cell wider and a step brighter
       const r = api.width != null ? api.width : this.ramp(R, a), w0 = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1, w = w0 + (surge ? 1 : 0);
-      if (a >= B.start && a < end) beam(g, sx, oy - 0.5, tx, hy, w, t, 0, R8(R), surge);
+      if (a >= B.start && a < end) { beam(g, sx, oy - 0.5, tx, hy, w, t, 0, R8(R), surge); pool(g, tx, hy, w, t); }
       // the pulse: the beam cut behind a bright bead shooting from stone to
       // hide; what is left ahead of it dims, and at rung 8 its white core
       // flares once more instead

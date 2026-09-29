@@ -14,11 +14,28 @@ import { darkPage, turned } from '../ink.js';
 import { inspiredK, hasted } from '../deep/statuses.js';
 import { standOfStation, deepFloor } from '../deep/place.js';
 import { part } from '../deep/phases.js';
+import { statusLine } from '../deep/rails.js';
 import { STATUS_ICONS, STATUS_PX, STATUS_GAP, STATUS_STEPS, STATUS_RENEW_MS, STATUS_TILE, STATUS_RIM,
          STATUS_FOE, STATUS_FACE, STATUS_TIMER, STATUS_SPENT, STATUS_POST, STATUS_POST_OUT, STATUS_POST_FOOT,
-         STATUS_COUNT, STATUS_WARN_HZ, STATUS_WARN_RIM, STATUS_STRUCK } from '../config.js';
+         STATUS_COUNT, STATUS_WARN_HZ, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS } from '../config.js';
 
 const seen = c => darkPage ? turned(c) : c;
+
+// Where each tile stood this frame, in screen pixels, and what its hover says:
+// the pointer asks `statusAt` (input.js). The bar's row and the posts, apart.
+let barTiles = [], postTiles = [];
+export function statusAt(cx, cy) {
+  for (const r of [...barTiles, ...postTiles]) if (cx >= r.x - 1 && cx <= r.x + r.w + 1 && cy >= r.y - 1 && cy <= r.y + r.h + 4) return r;
+  return null;
+}
+// A tile's hover: its name and what it does. A phase's mechanic says too
+// whether it is coming, on, or stopped.
+function saysOf(key, n = 0, mech = null) {
+  if (mech) return STATUS_SAYS[key][mech.struck ? 'stopped' : mech.warn ? 'coming' : 'on'].replace('{x}', mech.x);
+  if (key === 'dazed') return STATUS_SAYS.dazed;
+  const line = statusLine(key);
+  return n > 1 ? line.replace(':', ` x${n}:`) : line;
+}
 
 // How much of a status is left, 0..1, and when it first came on, by `id`: a
 // status's full span is from when it was laid, or last renewed, to its end.
@@ -72,7 +89,8 @@ function foeStatuses(t) {
 // The row under the serpent's bar, from its left end, in screen pixels (the
 // bar's own transform, render/serpentbar.js).
 export function drawFoeStatuses(x, y) {
-  const t = now();
+  const t = now(), s = tileW();
+  barTiles = [];
   // first the serpent's own, the phase's mechanic: warned, its rim blinking
   // and its timer the time until it comes on; on, its timer what is left;
   // answered, struck through; then a step, and what the fighters have laid
@@ -80,9 +98,13 @@ export function drawFoeStatuses(x, y) {
   if (p.m && p.part !== 'calm') {
     const warn = p.part === 'warn';
     const rim = warn ? STATUS_WARN_RIM[Math.floor(t / 1000 * STATUS_WARN_HZ) % 2] : null;
+    barTiles.push({ x, y, w: s, h: s, text: saysOf(p.m.kind, 0, { warn, struck: S.mechSkip, x: p.m.x }) });
     x += tile(p.m.kind, x, y, 1 - p.k, 0, { rim, struck: S.mechSkip }) + STATUS_GAP * 2;
   }
-  for (const s of foeStatuses(t)) x += tile(s.key, x, y, s.k, s.n) + STATUS_GAP;
+  for (const o of foeStatuses(t)) {
+    barTiles.push({ x, y, w: s, h: s, text: saysOf(o.key, o.n) });
+    x += tile(o.key, x, y, o.k, o.n) + STATUS_GAP;
+  }
 }
 
 // --- on the fighters ----------------------------------------------------------------------
@@ -99,6 +121,7 @@ function ownStatuses(w, t) {
 // nearest the floor. Drawn in the world's pass, over the finished deep: the
 // station's place read through the deep's camera.
 export function drawStationStatuses() {
+  postTiles = [];
   if (S.view !== 'deep' || !S.snatched) return;
   const t = now(), m = ctx.getTransform(), u = S.dpr;
   const posts = [];
@@ -118,7 +141,11 @@ export function drawStationStatuses() {
   for (const p of posts) {
     ctx.fillStyle = seen(STATUS_POST);
     ctx.fillRect(Math.round(p.x), Math.round(p.foot - p.list.length * rise - 2), 2, Math.round(p.list.length * rise + 2));
-    p.list.forEach((s0, i) => tile(s0.key, p.x + 4, p.foot - (i + 1) * rise, s0.k));
+    p.list.forEach((s0, i) => {
+      const ty = p.foot - (i + 1) * rise;
+      postTiles.push({ x: p.x + 4, y: ty, w: s, h: s, text: saysOf(s0.key) });
+      tile(s0.key, p.x + 4, ty, s0.k);
+    });
   }
   ctx.restore();
 }

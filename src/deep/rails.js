@@ -79,6 +79,10 @@ const STATUS = {
   Exposed: `takes ${pct(EXPOSED_AMP)} more damage`,
   Inspired: 'hits harder'
 };
+// The same line for a status's icon (render/statusicons.js), by the icon's key.
+const ICON_STATUS = { stun: 'Stun', bleed: 'Bleed', weakened: 'Weakened', held: 'Held', exposed: 'Exposed',
+                      haste: 'Haste', inspired: 'Inspired' };
+export const statusLine = key => (ICON_STATUS[key] ? `${ICON_STATUS[key]}: ${STATUS[ICON_STATUS[key]]}` : null);
 const plain = t => t.replace(/\{(\w+)\}/g, '$1');
 const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',
                     circle: 'Cast hexes', spire: 'Shoot beams' };

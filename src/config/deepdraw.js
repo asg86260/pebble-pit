@@ -339,6 +339,14 @@ export const STATUS_ICONS = {
 export const STATUS_WARN_HZ = 4;
 export const STATUS_WARN_RIM = ['#ffffff', '#42424a'];
 export const STATUS_STRUCK = '#9b5de5';
+// What a mechanic's tile and a dazed fighter's say on hover; the statuses' own
+// lines are the boards' (deep/rails.js, `statusLine`).
+export const STATUS_SAYS = {
+  surge: { coming: 'Surge coming: a stun stops it', on: 'Surge: heals {x}x faster', stopped: 'Surge: stopped' },
+  lash:  { coming: 'Lash coming: Held stops it', on: 'Lash: throws off melee fighters', stopped: 'Lash: stopped' },
+  sink:  { coming: 'Sink coming: land a burst first', on: 'Sink: out of reach', stopped: 'Sink: answered' },
+  dazed: 'Dazed: thrown off, seeing stars',
+};
 export const STATUS_PX = 2;
 export const STATUS_GAP = 5;
 export const STATUS_STEPS = 5;
@@ -394,7 +402,11 @@ export const RANGER_BEATS = [
 ];
 export const RANGER_AIM_HOLD = 0.3;  // s the aimed shot holds its full draw past a plain one's
 export const RANGER_LIFT_S = 0.12;   // s each step of lifting the bow over his head, and of lowering it
-export const RANGER_SMEAR_S = 0.07;  // s the loosed arrow's held streak stands behind it
+export const RANGER_SMEAR_S = 0.07;
+// The Mage's beam pooled on the hide where it meets it (render/attacks.js,
+// `pool`): half as wide as [a narrow beam, a wide one] in cells, and `motes`
+// turning `turn` radians a pose, `out` cells off its edge.
+export const BEAM_POOL = { half: [2, 3], motes: 5, turn: 0.5, out: 1.5 };  // s the loosed arrow's held streak stands behind it
 // Between two moves a fighter sways a cell forward and back, IDLE_STEP_S a
 // step, and a melee fighter hops a cell for IDLE_HOP_S as each step lands
 // (the owner's G, docs/mocks/idle-2026-09-28.html). It starts IDLE_SETTLE_S

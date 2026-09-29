@@ -20,6 +20,7 @@ import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
 import { station, stationAt, STATIONS } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
+import { statusAt } from './render/statusicons.js';
 import { overChooseMark, chooseMarkAt } from './render/deep.js';
 const CHOOSE_SAYS = 'choose a fighter';
 import { markedPiles, fullSays } from './render/pilemarks.js';
@@ -522,6 +523,12 @@ function askedAbout(x, y, cx, cy) {
   }
   // A board over the same spot has nothing to add to.
   if (overOpenBoard(cx, cy)) { showTipAt(null); return false; }
+  // A status's icon, under the serpent's bar or up a station's post.
+  const icon = cx != null && statusAt(cx, cy);
+  if (icon) {
+    showTipAt(icon.text, icon.x + icon.w / 2, icon.y + icon.h + 8, true);
+    return true;
+  }
   // The air filter's gauge: the band the needle is in and which way it is
   // going. How full and how fast are the books' business.
   if (inRect(dialRect(), x, y)) {
