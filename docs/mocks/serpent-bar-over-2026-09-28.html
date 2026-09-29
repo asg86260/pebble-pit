@@ -1,0 +1,233 @@
+<title>Serpent Bar Overhead</title>
+<style>
+/* Layout: three wide panes stacked in a grid, the same fight in each; only
+   where the bar sits and how big it is changes. Panes are the deep, black in
+   either theme; the chrome follows the viewer. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Bar Overhead</h1>
+    <p>The bar bigger and moved down from the top of the glass to just over the serpent, the portal moved up to make
+      room. Every blow's number is knocked off the hide as now, then flies up into the bar, and only when it lands
+      does the bar drop: a grey trail where it was, draining after a beat. The heal's number swells and flies in the
+      same way, growing purple back onto the end. A mock drawn from plain shapes, not the game: no camera, one
+      stretch of coil, three fighters' worth of blows, the four defense pips as squares.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+(() => {
+  const W = 400, H = 250;
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                   '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+  const FONT = {
+    '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'], '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+    '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'], '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+    '4': ['#..#', '#..#', '####', '...#', '...#', '...#'], '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+    '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'], '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+    '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'], '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.'],
+    '+': ['....', '.#..', '###.', '.#..', '....', '....'],
+  };
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const step = (v, n = 2) => Math.round(v / n) * n;
+  const ease = u => u * u;                 // a fall into the bar, quickening
+  const widthOf = (s, px) => s.length * 5 * px - px;
+  function num(g, s, x, y, px, face, drop, bob) {
+    const top = Math.round(y - 7 * px), left = Math.round(x);
+    for (const [dy, tone] of [[px, drop], [0, face]]) {
+      g.fillStyle = tone;
+      [...s].forEach((ch, i) => FONT[ch].forEach((row, r) => { for (let c = 0; c < 4; c++) if (row[c] === '#')
+        g.fillRect(left + (i * 5 + c) * px, top + (r + (bob ? bob(i) : 0)) * px + dy, px, px); }));
+    }
+  }
+
+  // --- the deep: the portal moved up, the coil, three fighters under it --------------
+  const coilMid = (x, t) => 150 + 10 * Math.sin(x * 0.018 + t * 0.6) + 4 * Math.sin(x * 0.05 - t * 0.9);
+  const GIRTH = 16;
+  const topAt = (x, t) => coilMid(x, t) - GIRTH, botAt = (x, t) => coilMid(x, t) + GIRTH;
+  function deep(g, t) {
+    g.fillStyle = GREYS[0]; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 40; i++) { g.fillStyle = hash(i + 2) < 0.2 ? PURPLES[7] : GREYS[2 + (i % 3)]; g.fillRect(step((hash(i) * W + t * 4) % W, 3), step(hash(i + 7) * H, 3), 3, 3); }
+    // the portal, a ring of the abyss's purple, moved up to clear the bar
+    const px = 300, py = 34, r = 26;
+    for (let a = 0; a < 64; a++) {
+      const ang = a / 64 * Math.PI * 2, rr = r + (hash(a) < 0.3 ? 3 : 0);
+      g.fillStyle = hash(a + Math.floor(t * 3)) < 0.35 ? PURPLES[11] : PURPLES[7];
+      g.fillRect(step(px + Math.cos(ang) * rr, 3), step(py + Math.sin(ang) * rr * 0.9, 3), 3, 3);
+    }
+    g.fillStyle = WHITE_; g.fillRect(px - 6, py + 30, 12, 3); g.fillRect(px - 3, py + 27, 6, 3);
+    for (let x = 0; x < W; x += 3) {
+      const m = coilMid(x, t), top = step(m - GIRTH, 3), bot = step(m + GIRTH, 3);
+      for (let y = top; y <= bot; y += 3) {
+        const band = Math.floor((x + y * 0.6 - t * 4) / 12) % 3 === 0;
+        g.fillStyle = y === bot ? GREYS[8] : band ? PURPLES[9] : Math.abs(y - m) < 3 ? GREYS[10] : '#ececf2';
+        g.fillRect(x, y, 3, 3);
+      }
+    }
+    g.fillStyle = GREYS[3]; g.fillRect(0, H - 18, W, 18);
+    for (const fx of FIGHTERS) { g.fillStyle = GREYS[6]; g.fillRect(fx - 6, H - 30, 12, 12); g.fillStyle = '#fff'; g.fillRect(fx - 4, H - 28, 8, 8); }
+  }
+  const WHITE_ = '#ffffff';
+  const FIGHTERS = [90, 190, 290];
+
+  // --- the fight, on a loop -----------------------------------------------------------
+  const HP = 1200, LOOP = 9;
+  const BLOWS = [];
+  for (let i = 0, t = 0.3; t < LOOP - 1.5; i++) {
+    const f = i % 3, big = i % 7 === 5;
+    BLOWS.push({ at: t, x: FIGHTERS[f] + (hash(i) - 0.5) * 20, n: big ? 120 + Math.round(hash(i + 3) * 60) : 12 + Math.round(hash(i + 1) * 14), big, i });
+    t += 0.28 + hash(i + 9) * 0.3;
+  }
+  const HEALS = [1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1].map((at, i) => ({ at, n: 18 + (i % 3) * 3, i, heal: true }));
+  const BELLY = 200;
+  const KICK = 0.36, HOLD = 0.14, IN = 0.26;   // the kick and its hold, then the flight into the bar
+
+  // Where each option's bar is at `t`: {x, y, w, h}, and its pips beside it.
+  function kickPos(b, t) {
+    const age = t - b.at, k = clamp(Math.log(b.n) / Math.log(3000), 0, 1), dir = b.i % 2 ? 1 : -1;
+    const up = 110 + 40 * k, top = up / 500, tt = age < top ? age : age < top + HOLD ? top : top;
+    return { x: b.x + dir * (26 + 20 * k) * tt, y: topAt(b.x, b.at) - 2 - up * tt + 250 * tt * tt };
+  }
+  // A number's flight: kicked, held, then quickening into the bar at the fill's end.
+  function flight(b, t, bar, fill) {
+    const age = t - b.at, k = b.heal ? 0 : clamp(Math.log(b.n) / Math.log(3000), 0, 1);
+    const up = 110 + 40 * k, top = up / 500, leave = b.heal ? 0.7 : top + HOLD;
+    let p;
+    if (b.heal) {
+      const side = BELLY + (b.i % 2 ? 16 : -16);
+      p = { x: side, y: botAt(BELLY, b.at) + 26 - age * 12 };
+    } else p = kickPos(b, t);
+    if (age < leave) return { ...p, landed: false, flying: false };
+    const from = b.heal ? { x: BELLY + (b.i % 2 ? 16 : -16), y: botAt(BELLY, b.at) + 26 - leave * 12 } : kickPos(b, b.at + leave);
+    const u = (age - leave) / IN;
+    const to = { x: bar.x + bar.w * fill, y: bar.y + bar.h / 2 };
+    if (u >= 1) return { ...to, landed: true, since: age - leave - IN };
+    return { x: from.x + (to.x - from.x) * ease(u), y: from.y + (to.y - from.y) * ease(u), landed: false, flying: true };
+  }
+  // What the bar shows at `t`: only what has landed has taken effect.
+  function landedBy(t, bar) {
+    let left = HP, events = [];
+    const all = [...BLOWS, ...HEALS].sort((a, b) => a.at - b.at);
+    // resolve in landing order, each flying to the fill as it stood when it left
+    const lands = all.map(b => {
+      const k = b.heal ? 0 : clamp(Math.log(b.n) / Math.log(3000), 0, 1);
+      const leave = b.heal ? 0.7 : (110 + 40 * k) / 500 + HOLD;
+      return { b, at: b.at + leave + IN };
+    }).sort((a, b) => a.at - b.at);
+    // the trail holds where the bar stood half a second after a blow, then
+    // drains at a third of the bar a second down to what is left
+    let trail = HP, lastHit = -9, healedFrom = HP;
+    const trailAt = (at, lf) => at - lastHit < 0.5 ? trail : Math.max(lf, trail - (at - lastHit - 0.5) * HP / 3);
+    for (const l of lands) {
+      if (l.at > t) break;
+      if (l.b.heal) left = Math.min(HP, left + l.b.n);
+      else { trail = Math.max(trailAt(l.at, left), left); left = Math.max(0, left - l.b.n); lastHit = l.at; healedFrom = left; }
+    }
+    const shownTrail = trailAt(t, left);
+    return { fill: left / HP, trail: shownTrail / HP, healedFrom: Math.min(healedFrom, left) / HP, lands };
+  }
+
+  function drawBar(g, bar, s, pips = true) {
+    const { x, y, w, h } = bar;
+    g.fillStyle = GREYS[9]; g.fillRect(x - 1, y - 1, w + 2, h + 2);
+    g.fillStyle = GREYS[0]; g.fillRect(x, y, w, h);
+    g.fillStyle = GREYS[7]; g.fillRect(x, y, Math.round(w * s.trail), h);
+    g.fillStyle = '#ffffff'; g.fillRect(x, y, Math.round(w * s.healedFrom), h);
+    g.fillStyle = PURPLES[11]; g.fillRect(x + Math.round(w * s.healedFrom), y, Math.round(w * (s.fill - s.healedFrom)), h);
+    if (!pips) return;
+    for (let i = 0; i < 4; i++) {
+      const px = x + w + 8 + i * (h + 6);
+      g.fillStyle = GREYS[9]; g.fillRect(px - 1, y - 1, h + 2, h + 2);
+      g.fillStyle = i === 0 ? '#ffffff' : GREYS[7]; g.fillRect(px, y, h, h);
+    }
+  }
+  function drawNumbers(g, t, bar, s) {
+    const fillNow = s.fill;
+    for (const b of [...BLOWS, ...HEALS]) {
+      const age = t - b.at;
+      if (age < 0) continue;
+      const f = flight(b, t, bar, fillNow);
+      if (f.landed) {
+        // a bite out of the bar's end where it went in: held grit, a pose or two
+        if (f.since < 0.12) {
+          g.fillStyle = b.heal ? PURPLES[11] : '#ffffff';
+          for (const [dx, dy] of [[-4, -5], [3, -6], [-1, bar.h + 2], [5, bar.h + 3]]) g.fillRect(step(f.x + dx), step(bar.y + dy), 2, 2);
+        }
+        continue;
+      }
+      const s0 = b.heal ? '+' + b.n : String(b.n), px = !b.heal && b.big ? 3 : 2;
+      if (b.heal) {
+        const bob = i => Math.round(Math.sin(age * 7 - i * 0.9));
+        num(g, s0, step(f.x) - widthOf(s0, px) / 2, step(f.y), px, PURPLES[11], PURPLES[5], f.flying ? null : bob);
+      } else num(g, s0, step(f.x) - widthOf(s0, px) / 2, step(f.y), px, '#ffffff', GREYS[6]);
+    }
+  }
+
+  const OPTIONS = [
+    { name: 'A · A band over the coil', about: 'Twice as tall and half as long again, held still just over the coil’s highest point on the glass, centered, the pips after it.',
+      bar: t => ({ x: 70, y: 84, w: 220, h: 14 }) },
+    { name: 'B · Riding the belly', about: 'The same bar hung over the belly and swaying with it, like a name over a head: it goes where the serpent goes.',
+      bar: t => ({ x: BELLY - 110, y: step(topAt(BELLY, t) - 28), w: 220, h: 14 }) },
+    { name: 'C · The whole width', about: 'A long thin band nearly the width of the glass, just over the coil: the longest bar, so a small blow still takes a visible bite.',
+      bar: t => ({ x: 16, y: 86, w: W - 32 - 4 * 16, h: 10 }) },
+  ];
+  const grid = document.getElementById('grid'), panes = [];
+  for (const o of OPTIONS) {
+    const card = document.createElement('div'); card.className = 'card';
+    const h = document.createElement('h2'); h.textContent = o.name;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.setAttribute('aria-label', o.name);
+    const p = document.createElement('p'); p.textContent = o.about;
+    card.append(h, cv, p); grid.append(card);
+    panes.push({ o, g: cv.getContext('2d') });
+  }
+  let playing = true, speed = 1, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  (function tick(now) {
+    if (playing) clock += (now - last) / 1000 * speed;
+    last = now;
+    const t = clock % LOOP;
+    for (const { o, g } of panes) {
+      deep(g, t);
+      const bar = o.bar(t), s = landedBy(t, bar);
+      drawBar(g, bar, s);
+      drawNumbers(g, t, bar, s);
+    }
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>
