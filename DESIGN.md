@@ -15283,6 +15283,8 @@ floor from backing up the yard's piles.
 **Nothing teleports.** A gatherer stood down with a load drops it as scales
 into the water where it is, never as dust in the yard.
 
+Moved and grown (docs/mocks/serpent-bar-over-2026-09-28.html, the owner's A): the bar is 400 by 14 screen pixels, held still just over the highest the coil ever sways rather than at the top of the glass, the deep's portal moved up to make room. Every number goes into it: a blow's once it has held at the top of its kick, the heal's once it has swelled a moment, each falling in to the end of the fill. The bar takes a number's effect only when it lands, so it shows the sim's wound less the blows still in the air and plus the heals still on their way (render/barflight.js); the sim is not delayed, only the picture of it.
+
 ### The deep's crew is set at the shaft (built, then superseded)
 
 *Superseded the same day by "Two crews and a portal": nobody crosses between

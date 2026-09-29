@@ -226,6 +226,15 @@ export function coilLine(u, t) {
   const x = xs[i] + (xs[i + 1] - xs[i]) * f;
   return { x, y: waveY(x, t) };
 }
+// The highest the body's top edge ever reaches as it sways: the line's highest
+// swing, the writhe of the split lengths on top of it, and the thickest half.
+// What the serpent's bar is held over.
+export function coilCeiling() {
+  let thick = 0;
+  for (let u = 0; u < COIL_SEGS; u++) thick = Math.max(thick, coilThick(u));
+  const writhe = S.serpentStage === 2 && !S.serpentFreed ? SPLIT_WRITHE : 0;
+  return deepTop() + COIL_Y * DEEP_H - COIL_AMP - writhe - thick / 2;
+}
 // Segment `i`, on the cell grid.
 export function coilAt(i, t) {
   const p = coilLine(i, t);

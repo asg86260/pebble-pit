@@ -98,7 +98,7 @@ export const SHAFT_ARROW_DOWN = P * 2;
 // so the camera that opens on it (view.js) shows it in the middle of the
 // window however much of the deep the window holds (the owner's call).
 export const DEEP_PORTAL_R = P * 15;
-export const DEEP_PORTAL_DOWN = P;
+export const DEEP_PORTAL_DOWN = -P * 3;   // up a little, clear of the serpent's bar
 export const DEEP_PORTAL_AT = 0.5;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
@@ -251,6 +251,13 @@ export const NUM_HEAL_RISE = 12;     // screen pixels a second it climbs
 export const NUM_HEAL_SWELL = 7;     // how fast the swell runs, radians a second
 export const NUM_HEAL_SWELL_LAG = 0.9; // and how far behind each digit is the one before, radians
 export const NUM_HEAL_FADE = 0.5;
+// Every number then goes into the serpent's bar (render/barflight.js): a
+// blow's once it has held at the top of its arc, the heal's NUM_HEAL_LEAVE_S
+// after it is said, each falling in over NUM_BAR_IN_S to the end of the fill,
+// where a few grains fly off it for NUM_BAR_BITE_S as it lands.
+export const NUM_HEAL_LEAVE_S = 0.7;
+export const NUM_BAR_IN_S = 0.26;
+export const NUM_BAR_BITE_S = 0.12;
 export const NUM_HEAL_FACES = ['#9b5de5', '#6a2fbe', '#5c2ba6', '#412465', '#2d1d47'];
 export const NUM_HEAL_DROPS = ['#2d1d47', '#241739', '#1b112c', '#130b20', '#130b20'];
 // What the sim keeps for them (deep/serpent.js): a weapon that hurts while it
@@ -263,13 +270,16 @@ export const NUM_HEAL_EVERY_S = 1;
 export const NUM_FOLD_S = 1;
 
 // --- the serpent's bar: what is left of the defense up -------------------------------
-// DESIGN.md, "The serpent's bar" (option B of four mocked). In screen pixels,
-// top-center of the glass, like the counter: full at a closed wound, empty at
-// the break. Tones as seen, over the finished deep.
-export const BAR_W = 240;              // screen pixels, the bar's length
-export const BAR_H = 8;                // and its height
-export const BAR_TOP = 12;             // from the top of the glass
-export const BAR_PIP = 8;              // a defense's pip, square, after the bar
+// DESIGN.md, "The serpent's bar" (option B of four mocked, then the owner's A
+// of docs/mocks/serpent-bar-over-2026-09-28.html). In screen pixels, centered
+// on the glass and held still BAR_GAP over the highest the coil's top edge
+// ever sways: full at a closed wound, empty at the break. Tones as seen, over
+// the finished deep.
+export const BAR_W = 400;              // screen pixels, the bar's length
+export const BAR_H = 14;               // and its height
+export const BAR_GAP = 10;             // over the coil's highest reach
+export const BAR_TOP = 12;             // and never nearer the top of the glass than this
+export const BAR_PIP = 14;             // a defense's pip, square, after the bar
 export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to pip
 export const BAR_EDGE = '#8b8b96';     // a one-pixel rim round the bar and each pip
 export const BAR_TRACK = '#000000';    // the empty of it

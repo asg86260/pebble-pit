@@ -9,8 +9,9 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
-import { woundK } from '../deep/serpent.js';
-import { BAR_W, BAR_H, BAR_TOP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
+import { coilCeiling } from '../deep/place.js';
+import { owedWound } from './barflight.js';
+import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
          BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
          SERPENT_WOUND } from '../config.js';
 
@@ -21,8 +22,22 @@ let stage = -1, was = 1, trail = 1, low = 1, hitAt = 0, then = 0;
 
 export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage < SERPENT_WOUND.length;
 
+// Where the bar stands on the glass, in screen pixels: centered with its pips,
+// held still just over the highest the coil ever sways.
+export function barRect() {
+  const whole = BAR_W + SERPENT_WOUND.length * (BAR_PIP + BAR_PIP_GAP);
+  const over = (coilCeiling() - S.camY) * S.zoom - BAR_GAP - BAR_H;
+  return { x: Math.round((S.W - whole) / 2), y: Math.round(Math.max(BAR_TOP, over)), w: BAR_W, h: BAR_H };
+}
+// What the bar shows of the defense up, 0..1: the wound as the numbers that
+// have landed in it say, not yet as the sim has it (render/barflight.js).
+export function barLeft(t) {
+  const d = SERPENT_WOUND[Math.min(S.serpentStage, SERPENT_WOUND.length - 1)];
+  return d > 0 ? 1 - Math.max(0, Math.min(1, (S.serpentWound + owedWound(t)) / d)) : 1;
+}
+
 export function drawSerpentBar() {
-  const t = now(), left = 1 - woundK();
+  const t = now(), left = barLeft(t);
   // A new defense starts full, with nothing to remember.
   if (S.serpentStage !== stage) { stage = S.serpentStage; was = trail = low = left; hitAt = t; }
   const dt = Math.max(0, (t - then) / 1000);
@@ -36,8 +51,7 @@ export function drawSerpentBar() {
   if (low > left) low = left;
 
   const pips = SERPENT_WOUND.length;
-  const whole = BAR_W + pips * (BAR_PIP + BAR_PIP_GAP);
-  const x = Math.round((S.W - whole) / 2), y = BAR_TOP;
+  const { x, y } = barRect();
   const fill = (c, fx, fy, w, h) => { ctx.fillStyle = seen(c); ctx.fillRect(fx, fy, w, h); };
   const len = k => Math.round(BAR_W * k);
   ctx.save();
