@@ -8,7 +8,7 @@
 import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         RIFT_GULP, RIFT_SHAKE, RIFT_G, RIFT_G_MIN, RIFT_EAT, RIFT_SWING,
-        ABYSS_DOWN, findKind, someFind } from './config.js';
+        ABYSS_DOWN, REFUND_FLECKS, findKind, someFind } from './config.js';
 import { S, pit, rift } from './state.js';
 import { at, put, addGrain, grainsIn, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
          surfaceY, colOf, topRow } from './grid.js';
@@ -192,28 +192,36 @@ export function throughRift(x, shade, n = 1, income = true) {
 }
 
 // A bill handed back (`pullOut` in works.js, `buy` in upgrades.js): the
-// payment's own picture the other way. The grains go back in the hole now,
-// one `bankDust` each, and are shown arcing from the station (`x`, `y`) to
-// the pile on `S.paid`, the flight `fly` in game.js already steps. What the
-// hole will not take is not owed.
+// payment's own picture the other way. At most REFUND_FLECKS grains are tossed
+// from the station (`x`, `y`) into the hole on `S.paid`, the flight `fly` in
+// game.js already steps, each carrying its share of `n`, and the pile takes
+// them as they land (`landRefund`).
 const CELL_OF = { dust: 1, core: CORE_CELL, shard: SHARD_CELL, spore: SPORE_CELL, spark: SPARK_CELL };
 export function refund(money, n, x, y) {
   const cell = CELL_OF[money];
-  if (!cell || !n) return 0;
-  let got = 0;
-  for (let i = 0; i < n; i++) {
-    const shade = money === 'dust' ? 1 + Math.floor(rand() * 4) : someFind(cell);
-    // A bill handed back is the player's own coin coming home, not income.
-    if (!bankDust(pit.x + rand() * Math.min(700, pit.w), shade, 1, false)) break;
-    got++;
-    if (S.paid.length >= SHOWN) continue;
+  n = Math.floor(n);
+  if (!cell || !(n > 0)) return 0;
+  const shown = Math.min(n, REFUND_FLECKS);
+  for (let i = 0; i < shown; i++) {
     S.paid.push({ x0: x, y0: y, x, y,
                   t: -rand() * 0.5, rate: 0.012 + rand() * 0.01,
                   lift: 60 + rand() * 90,
                   tx: pit.x + rand() * Math.min(700, pit.w), ty: S.groundY - P * 2,
-                  s: shade });
+                  s: money === 'dust' ? 1 + Math.floor(rand() * 4) : someFind(cell),
+                  back: money, v: Math.floor(n / shown) + (i < n % shown ? 1 : 0) });
   }
-  return got;
+  return n;
+}
+
+// A refunded grain come down on the pile: its share goes in the hole, and is
+// the player's own coin coming home, not income.
+export const landRefund = m => bankDust(m.tx, m.s, m.v, false);
+
+// What is still in the air, by coin: owed to the pile, so a reload lands it.
+function refundOwed() {
+  const owed = {};
+  for (const m of S.paid) if (m.back) owed[m.back] = (owed[m.back] || 0) + m.v;
+  return owed;
 }
 
 // The speed a grain enters the drain with: whatever it had, plus a sideways
@@ -662,10 +670,11 @@ export function seedPitCores() {
 // this, because how much belongs in the hole depends on how much is already
 // through.
 export const SAVE = {
-  fields: ['rift', 'riftHeld'],
+  fields: ['rift', 'riftHeld', 'refundOwed'],
   write(out) {
     out.rift = S.rift;
     out.riftHeld = S.riftHeld;
+    out.refundOwed = refundOwed();
   },
   read(s) {
     // Clamped to the counter: a rift holding more than you own leaves
@@ -678,6 +687,12 @@ export const SAVE = {
       S.riftHeld[k] = Math.max(0, Math.min(Math.round(+(s.riftHeld?.[k]) || 0), S[k] || 0));
     rehomeDust();
     seedPitCores();
+    // A refund in the air when the page closed is the pile's on the way in.
+    S.paid = S.paid.filter(m => !m.back);
+    for (const [money, n] of Object.entries(s.refundOwed || {})) {
+      const cell = CELL_OF[money];
+      if (cell && n > 0) bankDust(pit.x, money === 'dust' ? 1 : someFind(cell), Math.floor(n), false);
+    }
   },
   blank() {
     // A new yard has no hole in the air in it, and nothing standing on the

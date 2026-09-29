@@ -15,7 +15,7 @@ import { stepBreaks } from './break.js';
 import { at, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, tickGrid } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack, quarryShed, farmShed } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
-import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine } from './pit.js';
+import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine, landRefund } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { stepBeats } from './beats.js';
 import { wireCut } from './quarry.js';
@@ -536,12 +536,13 @@ function fly(list, tx, ty) {
   for (let i = list.length - 1; i >= 0; i--) {
     const m = list[i];
     m.t += m.rate * f;
-    if (m.t >= 1) { list.splice(i, 1); continue; }
+    if (m.t >= 1) { if (m.back) landRefund(m); list.splice(i, 1); continue; }
     if (m.t <= 0) continue;
 
     // A grain flies to the station that sold the row it paid for (stamped on
     // the grain at `lift`, see `payTo` in pit.js) and falls back to the
-    // bench (`tx`/`ty`) for a spend with no destination.
+    // bench (`tx`/`ty`) for a spend with no destination. A refund's grain
+    // (`back`) flies the other way, into the hole, and is banked on landing.
     const gx = m.tx != null ? m.tx : tx;
     const gy = m.ty != null ? m.ty : ty;
     const e = m.t * m.t * (3 - 2 * m.t);           // ease in and out

@@ -125,7 +125,7 @@ group('a bill handed back is not income', async () => {
 
   refund('shard', 500, 0, 0);
   refund('dust', 5000, 0, 0);
-  run(1);
+  run(3);
 
   return [
     ok(yard.S.shards >= had + 500, 'the ore came back to the purse', `${had} -> ${yard.S.shards}`),

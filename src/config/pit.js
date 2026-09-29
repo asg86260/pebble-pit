@@ -34,3 +34,7 @@ export const PIT_KNOBS = [
   { key: 'LOOSE_DEEP', label: 'scatter depth', min: 1, max: 12, step: 1,
     get: () => LOOSE_DEEP, set: v => { LOOSE_DEEP = v; } }
 ];
+
+// A bill handed back is tossed into the hole as at most this many grains in
+// the air, each carrying its share, so a refund of thousands is one toss.
+export const REFUND_FLECKS = 40;

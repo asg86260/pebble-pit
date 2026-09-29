@@ -96,7 +96,7 @@ export const S = {
   chips: [],              // knocked loose, still flying
   belt: [],               // on the belt's scoop, climbing from the ground to the band
   beltRun: 0,             // how far the band has run since it last shifted its load a cell
-  paid: [],               // flying out of the pit to the bench, on the way to being spent
+  paid: [],               // flying out of the pit to the bench, on the way to being spent, and refunds flying back in
   gulped: [],             // and out of the pit into the abyss, diving to its surface
   ripples: [],            // where the liquid just ate one: { x, at }, briefly drawn
   motes: [],              // the load drifting round the cursor
@@ -757,6 +757,7 @@ export const SAVED_BY_HAND = [
   // Not fields on S: the grids, the sky, the chance and the craft.
   'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
   'deepBed',              // the scales on the deep's floor, a plot like the pit (deep/scales.js)
+  'refundOwed',           // a bill handed back still in the air, by coin, landed on the way in (pit.js)
 ];
 
 // And everything else: this session's own, deliberately thrown away on a

@@ -83,7 +83,7 @@ group('a refund on a row in line pulls it out and hands the bill back', async ()
   // The card's refund strip, by the path it calls (`handBack`). A press on
   // the card itself would queue another rung (test/queue-repeats.test.mjs).
   const pulled = window.__handBack('pick');
-  run(0.25);
+  run(3);
   const list = at('bench').map(w => w.key);
   return [
     ok(paid > 0, 'the pick was paid for', `${paid}`),
@@ -92,6 +92,24 @@ group('a refund on a row in line pulls it out and hands the bill back', async ()
     ok(purse() === before, 'with the whole bill back in the pile', `${before} -> ${purse()}`),
   ];
 });
+
+// The bill is tossed back into the hole and the pile takes it as it lands; a
+// refund still in the air when the page closes is landed by the reload, once.
+group('a refund lands in the hole, and one in the air survives a reload', async () => {
+  setUp();
+  window.__buy('carry');
+  const before = purse();
+  window.__buy('pick');
+  run(0.25);
+  window.__handBack('pick');
+  const flying = yard.S.paid.filter(m => m.back).length, early = purse();
+  window.__cold();
+  return [
+    ok(flying > 0 && early < before, 'it is in the air, not yet in the pile', `${flying} flying, ${early} of ${before}`),
+    ok(purse() === before && !yard.S.paid.some(m => m.back), 'and the reload lands it all, once',
+       `${before} -> ${purse()}`),
+  ];
+}, { reload: false });
 
 group('the one being built is committed: nothing hands it back', async () => {
   setUp();

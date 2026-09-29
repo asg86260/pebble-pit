@@ -60,7 +60,7 @@ group('the refund hands back the newest waiting copy, at what it cost', async ()
   window.__buy('carry');
   run(0.25);
   const back = window.__handBack('carry');
-  run(0.25);
+  run(3);
   const list = at('bench').map(w => w.key);
   const next = dustOf('carry');
   return [
