@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- A station's board reads in full black, and each effect's description sits on the line under its name (`node tools/look.mjs recruit-board`).
 - The Recruit's board is as wide as its five choices need, so none of their names spill out of their boxes (`node tools/look.mjs recruit-board`).
 - The serpent flinches from a blow: the stretch of body round it is thrown up as one piece and settles, instead of a dent that sprang back past with a bulge running off it (`node tools/look.mjs deep-wound`).
 - An arrow dents the serpent the moment it reaches the hide instead of sitting against it first, and a held beam presses the hide steadily instead of setting the coil springing on every tick (test/deep-arms.test.mjs, test/sword-dent.test.mjs).
@@ -77,6 +78,8 @@ this section; the release that switches it on moves these under Unreleased.
 - Gatherers work the scales lying nearest the crusher first instead of swimming across the deep to the tallest heap (test/gather.test.mjs).
 
 ## Unreleased
+
+- A board no longer opens with its title bar under the notice card at the top of the window, when it fits below the card (`node tools/look.mjs recruit-board`).
 
 - The ticked glyph over a station after a rung lands wears that rung's color, not the next rung's (test/landed-unread.test.mjs).
 
