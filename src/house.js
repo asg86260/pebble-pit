@@ -1,6 +1,6 @@
 // Somewhere for the crew to come from: a room per body, with the door a new
 // hire walks out of. One block, the same width on every storey. Nothing here
-// can be clicked or opened, and it holds no state of its own: `S.crew` says
+// can be clicked or opened, and it holds no state of its own: `housed` says
 // everything, and every wobble is worked out from a room's number, never from
 // anything random.
 
@@ -42,7 +42,15 @@ const courseWide = () => HOUSE_COLS;
 // that has had its opening and has nobody in it (the checks get there; the
 // game does not) has no house.
 export const roomsToday = () =>
-  S.crew > 0 ? S.crew + 1 : (beatDone('show') ? 0 : 2);
+  housed() > 0 ? housed() + 1 : (beatDone('show') ? 0 : 2);
+
+// The yard's crew: the deep's live in its pods and never come up
+// (DESIGN.md, "Two crews and a portal"), so they have no room here.
+export const housed = () => Math.max(0, S.crew - (S.deepCrew || 0));
+
+// Every room the settlement will have once the house going up lands, and
+// `ahead` more queued behind it. The first hire adds two rooms.
+export const roomsAfter = (ahead = 0) => cubes(roomsToday() + (housed() > 0 ? 1 : 2) + ahead);
 
 export function cubes(nOverride) {
   const n = nOverride != null ? nOverride : roomsToday();
@@ -72,11 +80,11 @@ export function doorAt() {
 // Where the *next* hire's room will stand, for a builder to walk to. Asks
 // `cubes` for one more than today's count, never mutates `S.crew` to peek: a
 // peek that forgot to put the count back is a hire that happened twice. The
-// first hire adds two rooms, and the spot offered is the later of the two.
-// `ahead` is the houses already paid for and not yet standing: a second one
-// queued goes up on the room after the first's.
+// spot offered is the last room `roomsAfter` adds. `ahead` is the houses
+// already paid for and not yet standing: a second one queued goes up on the
+// room after the first's.
 export function nextHouseAt(ahead = 0) {
-  const rooms = cubes(roomsToday() + (S.crew > 0 ? 1 : 2) + ahead);
+  const rooms = roomsAfter(ahead);
   const added = rooms[rooms.length - 1];
   return added ? Math.round((added.x + HOUSE_CUBE / 2) / P) * P : houseCx();
 }

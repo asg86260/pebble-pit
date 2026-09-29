@@ -243,16 +243,12 @@ const YARD_ROW_SITE = {
 // is its station's (`stationBox`).
 const SITE_BOX = { lab: () => lab };
 
-// Every room the settlement will have once this house lands, the same way
-// `nextHouseAt` in house.js asks. `ahead` is how many houses are in the line
-// before it: a second house queued behind the first stands on the room after
-// the first's, not on the same one.
-const risingRooms = (ahead = 0) => {
-  const today = S.crew > 0 ? S.crew + 1 : 0;
-  return houseRooms(today + (S.crew > 0 ? 1 : 2) + ahead);
-};
-let houseRooms = () => [];
-export const setRooms = fn => { houseRooms = fn; };
+// Every room the settlement will have once this house lands (`roomsAfter` in
+// house.js, handed in). `ahead` is how many houses are in the line before
+// it: a second house queued behind the first stands on the room after the
+// first's, not on the same one.
+let risingRooms = () => [];
+export const setRooms = fn => { risingRooms = fn; };
 
 // `which` names one particular work on a yard holding several: the fence, the
 // bar and the builder for the SECOND thing going up must stand on the second

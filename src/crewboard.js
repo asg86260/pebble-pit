@@ -5,7 +5,7 @@
 
 import { S } from './state.js';
 import { inBasket } from './balloon.js';
-import { houseRect } from './house.js';
+import { houseRect, housed } from './house.js';
 import { JOB_OF as JOBS_AT } from './levels.js';
 import { HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
@@ -25,7 +25,7 @@ const AT = { rockhands: 'on the rock', haulers: 'at the pit', quarriers: 'in the
 
 const WHERE = { lifted: 'in your hand', falling: 'in mid-air', home: 'at home',
                 basket: 'up in a balloon', yard: 'in the yard',
-                resting: 'on a break', walking: 'on the way' };
+                resting: 'on a break', walking: 'on the way', deep: 'in the deep' };
 // Every place a body can be said to be, so the crew window can make its
 // column as wide as the longest of them (`fitCrewColumn` in shop.js).
 export const WHERE_WORDS = [...Object.values(WHERE), ...Object.values(AT)];
@@ -33,6 +33,7 @@ export const WHERE_WORDS = [...Object.values(WHERE), ...Object.values(AT)];
 export function whereIs(w) {
   if (w.lifted) return WHERE.lifted;
   if (w.falling) return WHERE.falling;
+  if (w.deepHome) return WHERE.deep;
   if (w.inside) return WHERE.home;
   // Up in a balloon is not standing anywhere: a body you cannot see in the
   // yard is a body the board has to account for.
@@ -124,7 +125,7 @@ const CREW_ROW = {
   // and a window that came up on a pass of the pointer would be in the way.
   buy: () => showWindow('crew'),
   opens: true,
-  price: () => String(S.crew),
+  price: () => String(housed()),
   dead: () => false,
   show: () => true,
   from: null,
@@ -137,8 +138,13 @@ const CREW_ROW = {
 export const crewList = () => people();
 
 export const crewListSections = () => [
-  { title: 'the crew', keys: S.workers.map((_, i) => `who${i}`) }
-];
+  { title: 'the yard', keys: whoIn(false) },
+  { title: 'the deep', keys: whoIn(true) }
+].filter(sect => sect.keys.length);
+
+// The two crews never cross (DESIGN.md, "Two crews and a portal"), so the
+// list keeps them apart, and a heading with nobody under it is dropped.
+const whoIn = deep => S.workers.flatMap((w, i) => !!w.deepHome === deep ? [`who${i}`] : []);
 
 // One row per body, in the order they were taken on, so the name you are
 // looking for stays put. Where the price would go it says where the body is.

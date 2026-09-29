@@ -21,7 +21,7 @@ import { spendScales, refundScales } from './deep/scales.js';
 
 import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut,
          ahead, newestWaiting, waitingCount, worksOf } from './works.js';
-import { nextHouseAt } from './house.js';
+import { nextHouseAt, housed } from './house.js';
 import { DUST_PER } from './upgrades/price.js';
 import { hire } from './staffing.js';
 import { purse } from './words.js';
@@ -75,8 +75,8 @@ export const HOUSE_ROW = {
   // the curve.
   work: () => Math.min(HOUSE_WORK_MAX,
     HOUSE_WORK0 * Math.pow(HOUSE_WORK_STEP, Math.max(0, S.crew + ahead('house') - 1))),
-  from: () => S.crew + ahead('house'),
-  to: () => S.crew + ahead('house') + 1,
+  from: () => housed() + ahead('house'),
+  to: () => housed() + ahead('house') + 1,
   // Steeper than the ladders' rate on purpose: every body compounds the
   // income every ladder is priced against, so the crew is the one curve that
   // must outrun the shop's.

@@ -1,8 +1,7 @@
 // The settlement, and the one room of it still going up.
 
 import { HOUSE_CUBE } from '../config.js';
-import { drawHouses, cubes as houseCubes, roomsToday } from '../house.js';
-import { S } from '../state.js';
+import { drawHouses, roomsAfter } from '../house.js';
 import { ctx } from './ctx.js';
 import { rising as risingAt, withRise } from './rise.js';
 
@@ -16,9 +15,7 @@ export function drawSettlement() {
 // way `nextHouseAt` in house.js asks. `houseFoot` and `risingRoom` must not
 // disagree about which room is going up, so there is one place that works it
 // out.
-export const roomsIncludingRising = () => {
-  return houseCubes(roomsToday() + (S.crew > 0 ? 1 : 2));
-};
+export const roomsIncludingRising = () => roomsAfter();
 
 // The room a hire is currently building: the one `kind: 'building'` work with
 // no entry in `OPENS_PLACE`, because what it raises is not a place but the

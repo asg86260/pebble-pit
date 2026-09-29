@@ -14,6 +14,10 @@ import { deepFloor, deepTop } from '../src/deep/place.js';
 import { goDeep } from '../src/view.js';
 import { stationById } from '../src/deep/party.js';
 import { pressBuild } from './party-press.mjs';
+import { readFileSync } from 'node:fs';
+import { yard as nodeYard } from './helpers.mjs';
+import { roomsToday } from '../src/house.js';
+import { crewListSections } from '../src/crewboard.js';
 
 const below = () => S.workers.filter(w => belowYard(w));
 
@@ -54,6 +58,7 @@ group("a pod is built by the deep's own hand, and its body is the deep's", async
   window.__finish();
   runUntil(() => S.workers.find(w => w.name === her)?.type === 'fighter', 30);
   const yard = S.workers.filter(w => !belowYard(w)).map(w => w.name);
+  const rooms = roomsToday();
   window.__scales(99999);
   const bought = window.__buy('pod');
   let delver = null, offStation = false, yardDown = false;
@@ -72,9 +77,30 @@ group("a pod is built by the deep's own hand, and its body is the deep's", async
     ok(offStation, 'with nobody spare, the sqwife leaves her station to build it'),
     ok(!yardDown, "and none of the yard's hands went down"),
     ok(S.pods === 2 && S.deepCrew === 2 && below().length === 2, "the pod's body is the deep's", `pods ${S.pods}, deep ${S.deepCrew}`),
-    ok(back.type === 'fighter' && back.station === 's1', 'and she is back at her station', `${back.type} ${back.station}`)
+    ok(back.type === 'fighter' && back.station === 's1', 'and she is back at her station', `${back.type} ${back.station}`),
+    ok(roomsToday() === rooms, 'and no room goes up in the yard for it', `${rooms} -> ${roomsToday()}`)
   ];
 });
+
+// A player's yard with twenty pods: thirty-one crew, twenty-one of them the
+// deep's. The house stood a room for every one of them, so the yard read as
+// thirty-odd homes and nine faces.
+group("the yard's house has a room for the yard's crew only, and the list keeps the two apart", async () => {
+  localStorage.setItem('boulder-clicker/v4',
+    readFileSync(new URL('./fixtures/two-crews.json', import.meta.url), 'utf8'));
+  nodeYard.restore();
+  run(1);
+  const up = S.workers.filter(w => !w.deepHome).length, down = S.workers.filter(w => w.deepHome).length;
+  const lists = Object.fromEntries(crewListSections().map(x => [x.title, x.keys.length]));
+  const row = window.__upgrades().find(u => u.key === 'house');
+  return [
+    ok(S.crew === 31 && S.deepCrew === 21 && up === 10 && down === 21, 'ten in the yard, twenty-one in the deep',
+       `crew ${S.crew}, deep ${S.deepCrew}, bodies ${up} up ${down} down`),
+    ok(roomsToday() === up + 1, 'a room a yard body, and the door', `${roomsToday()} rooms`),
+    ok(lists['the yard'] === up && lists['the deep'] === down, 'the crew list under two headings', JSON.stringify(lists)),
+    ok(!row || row.from() === up + 1, "and the house row counts the yard's, with the one going up", `${row && row.from()}`)
+  ];
+}, { reload: false });
 
 // A body thrown in the deep sinks there (crew/falls.js, `sink`): it never
 // jumps, never leaves the deep, lands on the deep's floor and goes back to

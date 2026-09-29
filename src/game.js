@@ -30,7 +30,7 @@ import { workFinished } from './works.js';
 import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';
 import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
-import { cubes as houseCubes } from './house.js';
+import { roomsAfter } from './house.js';
 import { sampleBooks } from './income.js';
 import { stepAudio, sfx } from './audio.js';
 
@@ -43,7 +43,7 @@ setDone(workFinished);
 // and where a station stands, for a body walking over to help at one
 setFoot(stationFoot);
 // and the settlement's rooms, so a build there is fenced round what will stand
-setRooms(houseCubes);
+setRooms(roomsAfter);
 // and the sheds the quarry's, the farm's and the apothecary's works are done at
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
