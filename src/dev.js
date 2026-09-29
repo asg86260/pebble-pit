@@ -136,6 +136,12 @@ line('boulder', box => {
   button(box, 'sweep', () => window.__clearFloor());
 });
 
+line('serpent', box => {
+  // The wound closed to nothing in the phase he is in: the same hook the
+  // checks set a fight with, which tells the rules the wound was set.
+  button(box, 'full health', () => window.__serpent({ wound: 0 }));
+});
+
 line('run on', box => {
   for (const s of [1, 5, 30]) button(box, `${s}s`, () => window.__fast(s));
 });
