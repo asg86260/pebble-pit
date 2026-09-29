@@ -103,6 +103,13 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // left to start again, since a fighter's feet are
                       // kept above and a blow is a moment
                       'phase',
+                      // and how far into its combo it is: the hits it has
+                      // struck, its bar, and the string's banked rest
+                      // (deep/classes.js, `beat`), or a refresh starts the
+                      // string over and the big hit lands late
+                      'count', 'pips', 'combo',
+                      // how much more an Inspired fighter hits for, with its moment below
+                      'inspiredK',
                       // which station a fighter stands at, and the name
                       // `S.stations[i].fighter` knows the body by: dropped,
                       // a reload seats a stranger and the station's record
@@ -121,7 +128,10 @@ const RETIRED_DEEP = new Set(['brawler', 'lancer', 'grenadier', 'scribe', 'warlo
 // every body a free swing.
 const MOMENTS = ['brkAt', 'idleSince', 'looAt',
                  'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'sweepAt', 'propAt',
-                 'dizzyUntil'];
+                 'dizzyUntil',
+                 // a fighter's buffs, or a refresh strips a Haste or an Inspired
+                 // the frame after it was given (deep/statuses.js)
+                 'hastedUntil', 'inspiredUntil'];
 const momentsOf = w => {
   const out = {};
   for (const k of MOMENTS) if (Number.isFinite(w[k]) && w[k] > 0) out[k] = Math.round(w[k] - now());

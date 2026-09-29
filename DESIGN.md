@@ -16782,3 +16782,21 @@ the mechanics answered: heals 8 / 107 / 128 / 211, depths 30k / 91k / 143k
 / 322k. Every party the model tries frees him in 60 to 67 minutes
 answered and 67 to 80 unanswered; the slowest phase is now a magic-heavy
 party's warded one.
+
+## A fighter's combo (built 2026-09-29)
+
+The owner: the attacks "string into each other with no breathing room". A fighter now fights in its own rhythm (docs/mocks/combo-classes-2026-09-29.html, approved as drawn): a string of quick hits, a reset, a rest, and again.
+
+| class | rhythm |
+|---|---|
+| Recruit | jab-jab, rest |
+| Brawler | jab-jab-cross, a held beat, the haymaker, a long rest (below rung 4, jab-jab-cross and rest) |
+| Swordsman | cut and the return stroke, a long held guard |
+| Monk | even palms a breath apart, a longer breath before the chi palm, a still rest |
+| Martial Artist | a flurry of thrusts, a beat, the finisher, a long reset |
+| Ranger | three quick shots and a reload; from rung 4, then a long draw for the aimed shot and a breath |
+| Assassin | a double tap, a long wait |
+
+The Hexer, Sapper, Mage and Bard already breathe, and keep their beat.
+
+**The bargain: the rhythm never changes the damage a second.** Each quick gap in a string is a share of the class's `every` and banks the time it saves; the rest after the big hit (or after the string's last, where there is no combo bar) is a whole `every` and everything banked. So the average is exactly the even beat's, whatever the rung does to how many hits a bar takes -- Flow filling the Martial Artist's in fewer is paid for in the same rest. The rhythm is `rhythm` on each class (config/classes.js), stepped by `beat` in deep/classes.js; the fighter's place in its combo (`count`, `pips`, `combo`) is saved with the body, so a refresh does not start the string over.

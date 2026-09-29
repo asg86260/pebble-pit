@@ -70,6 +70,27 @@ function due(w, t, every) {
   w.next = t + tempo(w, every) * 1000;
   return true;
 }
+// The class's combo (`rhythm`, config/classes.js; DESIGN.md, "A fighter's
+// combo"): once a swing is chosen, when the next one is due. The quick hits
+// of a string come a share of `every` apart and bank what each saves; the one
+// before a big hit waits `pre`; the big hit, or the last of a string where
+// there is no bar to fill, is followed by the rest -- a whole `every` and
+// everything banked -- so the fighter resets, breathes, and comes again at
+// the same damage a second as an even beat. `bar` is whether a big hit is
+// what ends the string; `big` this swing's, `nextBig` the next's.
+function beat(w, t, cls, big, nextBig, bar) {
+  const r = cls.rhythm;
+  if (!r) return;
+  const c = w.combo || (w.combo = { n: 0, bank: 0 });
+  c.n++;
+  let gap;
+  if (big || (!bar && r.string && c.n >= r.string)) { gap = 1 + c.bank; c.n = 0; c.bank = 0; }
+  else {
+    gap = nextBig && r.pre ? r.pre : r.gaps[(c.n - 1) % r.gaps.length];
+    c.bank += 1 - gap;
+  }
+  w.next = t + tempo(w, gap * cls.every) * 1000;
+}
 // A swing begun: the wind-up runs to its contact, then the follow-through.
 function swing(w, t, move, windup, p, big = false) {
   const hit = t + windup * 1000;
@@ -135,6 +156,7 @@ function brawler(w, c, st, cls, v) {
   w.count = (w.count || 0) + 1;
   const big = hasMove(st) && w.count % hm.every === 0;
   w.pips = hasMove(st) ? w.count % hm.every : 0;
+  beat(w, t, cls, big, hasMove(st) && (w.count + 1) % hm.every === 0, hasMove(st));
   swing(w, t, big ? 'haymaker' : 'punch', cls.windup, at.p, big);
 }
 
@@ -145,6 +167,7 @@ function recruit(w, c, st, cls, v) {
   w.pipsMax = 0;
   if (landing(w, t)) strike(cls.hit, v, at.p.x, at.p.y, null, 0, { by: w });
   if (!due(w, t, cls.every)) return;
+  beat(w, t, cls, false, false, false);
   swing(w, t, 'jab', cls.windup, at.p);
 }
 
@@ -163,6 +186,7 @@ function sword(w, c, st, cls, v) {
   }
   if (!due(w, t, cls.every)) return;
   w.count = (w.count || 0) + 1;
+  beat(w, t, cls, false, false, false);
   const p = swing(w, t, hasMove(st) ? 'whirl' : 'cut', cls.windup, at.p);
   p.twice = hasCap(st) && w.count % cls.capEvery === 0;
 }
@@ -184,6 +208,7 @@ function monk(w, c, st, cls, v) {
   if (!due(w, t, cls.every)) return;
   const big = w.pips >= chi.max;
   w.pips = big ? 0 : Math.min(chi.max, w.pips + (hasMove(st) ? chi.moveFill : chi.fill));
+  beat(w, t, cls, big, w.pips >= chi.max, true);
   swing(w, t, big ? 'chi' : 'palm', cls.windup, at.p, big);
 }
 
@@ -204,6 +229,7 @@ function martial(w, c, st, cls, v) {
   if (!due(w, t, cls.every)) return;
   const big = w.pips >= pp.max;
   w.pips = big ? 0 : Math.min(pp.max, w.pips + (hasMove(st) ? pp.moveFill : pp.fill));
+  beat(w, t, cls, big, w.pips >= pp.max, true);
   swing(w, t, big ? 'finisher' : 'thrust', cls.windup, at.p, big);
 }
 
@@ -224,6 +250,7 @@ function ranger(w, c, st, cls, v) {
   w.count = (w.count || 0) + 1;
   const big = hasMove(st) && w.count % am.every === 0;
   w.pips = hasMove(st) ? w.count % am.every : 0;
+  beat(w, t, cls, big, hasMove(st) && (w.count + 1) % am.every === 0, hasMove(st));
   swing(w, t, big ? 'aimed' : 'shoot', cls.windup, at.p, big);
 }
 
@@ -245,6 +272,7 @@ function assassin(w, c, st, cls, v) {
     });
   }
   if (!due(w, t, cls.every)) return;
+  beat(w, t, cls, false, false, false);
   swing(w, t, 'stab', cls.windup, at.p);
 }
 
