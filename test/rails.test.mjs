@@ -117,17 +117,17 @@ group('Reset hands back exactly what was paid and stands the Recruit again', asy
   reset(st);
   const after = wallet();
   const tossed = S.sinking.some(g => g.back);
-  runUntil(() => !S.sinking.some(g => g.back), 20);
+  runUntil(() => !S.sinking.some(g => g.back) && !S.paid.some(m => m.back), 20);
   const home = wallet();
   const back = railsOf('s1');
-  // Scales are tossed back into the crusher and counted as they land; every
-  // other coin comes home at once.
+  // Scales are tossed back into the crusher and every other coin into the
+  // pit, each counted as it lands.
   const coins = w => ({ dust: w.dust, shard: w.shard, spark: w.spark });
   return [
     ok(climbed === FORK_RUNG && spent.scale < before.scale, 'the Scout and then the Ranger were climbed, in scales',
        `rung ${climbed}, ${before.scale} -> ${spent.scale}`),
-    ok(JSON.stringify(coins(after)) === JSON.stringify(coins(before)), 'Reset gives every coin back',
-       `${JSON.stringify(before)} -> ${JSON.stringify(after)}`),
+    ok(JSON.stringify(coins(home)) === JSON.stringify(coins(before)), 'Reset gives every coin back',
+       `${JSON.stringify(before)} -> ${JSON.stringify(home)}`),
     ok(tossed && after.scale === spent.scale && home.scale === before.scale, 'and every scale tossed back into the crusher',
        `${spent.scale} -> ${after.scale} -> ${home.scale} of ${before.scale}`),
     ok(st.kind === null && st.cls === null && st.rung === 0 && back.recruit && back.who === 'Recruit',
