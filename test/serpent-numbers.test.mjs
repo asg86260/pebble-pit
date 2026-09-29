@@ -52,6 +52,27 @@ group("a Brawler's punch puts its damage in the recent list, and the list emptie
   ];
 });
 
+// Every blow is its own splat: a Martial Artist's thrusts land half a second
+// apart on one spot, faster than a number is gone, and none is summed into
+// the one before.
+group('each blow is a number of its own, never summed into the last', async () => {
+  fight('well', 'martial', 4);
+  const seen = new Set();
+  frames(12, () => { for (const h of of('martial')) seen.add(h); });
+  const worth = rungWorth(CLASSES.martial, 4) * SERPENT_DEFENSE.martial[0];
+  const list = [...seen].sort((a, b) => a.at - b.at);
+  // a thrust says one thrust; the finisher its own blow, the biggest there is
+  const fin = Math.max(...list.map(h => h.done));
+  const close = list.slice(1).filter((h, i) => h.at - list[i].at < NUM_LIFE_S * 1000).length;
+  return [
+    ok(list.length >= 6, 'the thrusts are said', list.length),
+    ok(close >= 3, "and several land while the last one's number is still up", close),
+    ok(list.every(h => Math.abs(h.done - worth) < 1e-9 || h.done === fin) && list.filter(h => Math.abs(h.done - worth) < 1e-9).length >= 6,
+       'each thrust says one thrust, never a sum of two',
+       JSON.stringify(list.map(h => +h.done.toFixed(2))))
+  ];
+});
+
 group('the recent hits are never saved', async () => {
   fight('altar', 'brawler', 1);
   const had = frames(60, () => S.hits.length > 0);

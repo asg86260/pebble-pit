@@ -15152,11 +15152,10 @@ pixel rounded to whole device pixels; white on a `#42424a` drop, the heal
 - *The sim's list:* `S.hits` (ephemeral), filled by `strike()` and by the
   heal. A held weapon's ticks are summed per body (the lance, the wizard)
   and said when its second is up, where the last tick landed; a grenade's
-  lengths into its ring's one number as they land; and blows of one kind
-  landing within four cells of each other are summed until the last
-  one's number has risen clear of its own height (`NUM_FOLD_S`, derived
-  from the font and `NUM_RISE`), so a gang of brawlers or one fast one
-  prints a running sum and not digits over digits. The heal says what it
+  lengths into its ring's one number as they land. Every other blow is
+  a splat of its own, however many land together (the owner, 2026-09-28:
+  "each hit should be a separate hit splat"); the kick throws them apart,
+  turn and turn about, so they do not print over each other. The heal says what it
   actually closed each second, off the belly, alternating sides.
 - *Under one:* a sum that rounds to nothing is not drawn, so a punch
   glancing off the ward at the first rung says nothing.

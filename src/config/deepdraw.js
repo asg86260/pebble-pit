@@ -258,12 +258,9 @@ export const NUM_HEAL_DROPS = ['#2d1d47', '#241739', '#1b112c', '#130b20', '#130
 // time; the heal says what it actually closed once this often.
 export const NUM_HELD_S = 1;
 export const NUM_HEAL_EVERY_S = 1;
-// Blows of one kind landing this near each other while the last one's number
-// is still in the air are summed into it: three brawlers swinging as one, or
-// one swinging faster than its numbers fly, print a running sum and not a
-// spray of digits over digits.
+// The spots of one blow that lands in several places (a whirlwind's cut)
+// landing within this of its first are summed into its one number.
 export const NUM_FOLD_S = 1;
-export const NUM_FOLD_R = P * 4;
 
 // --- the serpent's bar: what is left of the defense up -------------------------------
 // DESIGN.md, "The serpent's bar" (option B of four mocked). In screen pixels,

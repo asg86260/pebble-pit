@@ -12,7 +12,7 @@
 
 import { S } from '../state.js';
 import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DECADE,
-         NUM_HELD_S, NUM_HEAL_EVERY_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S, NUM_FOLD_R,
+         NUM_HELD_S, NUM_HEAL_EVERY_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
 import { now } from '../clock.js';
@@ -28,11 +28,12 @@ const column = () => Math.min(LAST, S.serpentStage);
 const depth = () => S.serpentStage > LAST ? 0 : SERPENT_WOUND[S.serpentStage];
 
 // What a hit did, kept a moment for the number over it (render/fightnums.js).
-// Something that hurts while it is held (the beam, a bleed) would stand a
-// column of small numbers on the coil, so its ticks are summed on the thing
-// ticking (`from`) into one entry, said when its second is up (`shut`); the
-// spots of one blow that lands in several places (a whirlwind's cut) are
-// summed on the blow likewise. Stood over the coil's top edge where it
+// Every blow is its own number, however many land together. Something that
+// hurts while it is held (the beam, a bleed) is not a blow but a stream, and
+// would stand a column of small numbers on the coil, so its ticks are summed
+// on the thing ticking (`from`) into one entry, said when its second is up
+// (`shut`); the spots of one blow that lands in several places (a
+// whirlwind's cut) are summed on the blow likewise, being one blow. Stood over the coil's top edge where it
 // landed, so the number is not born inside the white hide.
 const topAt = (x, y, t) => {
   const seg = nearestSeg(x, y, t).seg;
@@ -40,10 +41,7 @@ const topAt = (x, y, t) => {
 };
 function keep(weapon, done, x, y, from, held) {
   const t = now();
-  // Blows of one kind landing together on one place are one number, or
-  // they print over each other.
-  const was = from ? S.hits.find(h => h.key === from && t < h.fold)
-    : S.hits.find(h => !h.key && h.weapon === weapon && t < h.fold && Math.abs(h.x - x) <= NUM_FOLD_R);
+  const was = from && S.hits.find(h => h.key === from && t < h.fold);
   if (was) {
     was.done += done;
     // A held thing's second is said where its last tick landed: the coil
