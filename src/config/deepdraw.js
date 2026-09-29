@@ -98,7 +98,7 @@ export const SHAFT_ARROW_DOWN = P * 2;
 // so the camera that opens on it (view.js) shows it in the middle of the
 // window however much of the deep the window holds (the owner's call).
 export const DEEP_PORTAL_R = P * 15;
-export const DEEP_PORTAL_DOWN = -P * 3;   // up a little, clear of the serpent's bar
+export const DEEP_PORTAL_DOWN = -P;   // up a cell, clear of the serpent's bar and still under the roof
 export const DEEP_PORTAL_AT = 0.5;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
