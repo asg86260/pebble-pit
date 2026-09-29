@@ -39,44 +39,45 @@ document.documentElement.style.setProperty?.('--rail-fold-ms', `${RAIL_FOLD_MS}m
 document.documentElement.style.setProperty?.('--rail-fold-steps', String(RAIL_FOLD_STEPS));
 
 // What a class says, in the owner's wording (2026-09-28): every choice an
-// imperative, every move and capstone a name and what it does, the serpent
-// "your enemy". A status is named in braces -- "applies {Bleed}" -- and the
-// board draws it bold with its hover line (`STATUS`). `fork` is the class's
+// imperative, every move and capstone a name and what it does in two or three
+// words (shortened the same day), the serpent "your enemy". A status is named
+// in braces -- "{Bleed}" -- and the board draws it bold with its hover line
+// (`STATUS`), which says the rest. `fork` is the class's
 // line at the fork, and its glyph the weapon drawn over its branch.
 const WORDS = {
   brawler:  { fork: 'Throw harder punches, learn combos',
-              move: ['Combos', 'string punches together'], cap: ['Knockout', 'applies {Stun}'] },
+              move: ['Combos', 'chain punches'], cap: ['Knockout', '{Stun}'] },
   sword:    { fork: 'Master the sword',
-              move: ['Whirlwind', 'a heavier cut'], cap: ['Weak points', 'applies {Bleed}'] },
+              move: ['Whirlwind', 'heavier cut'], cap: ['Weak points', '{Bleed}'] },
   monk:     { fork: 'Focus your chi',
-              move: ['Deep breath', 'build chi faster'], cap: ['Still water', 'applies {Stun}'] },
+              move: ['Deep breath', 'faster chi'], cap: ['Still water', '{Stun}'] },
   martial:  { fork: 'Strike quicker and finish faster',
-              move: ['Flourish', 'charge finishers faster'], cap: ['Rally', 'gives your party {Haste}'] },
+              move: ['Flourish', 'faster finishers'], cap: ['Rally', 'party {Haste}'] },
   ranger:   { fork: 'Aim at weak points',
-              move: ['Aimed shot', 'charge a powerful arrow'], cap: ['Pinning shot', 'applies {Stun}'] },
+              move: ['Aimed shot', 'charged arrow'], cap: ['Pinning shot', '{Stun}'] },
   assassin: { fork: 'Strike quick and precise',
-              move: ['Execution', 'exploit its wounds'], cap: ['Serrated', 'applies {Bleed}'] },
+              move: ['Execution', 'punish wounds'], cap: ['Serrated', '{Bleed}'] },
   hexer:    { fork: 'Cast hexes that debuff',
-              move: ['Wither', 'applies {Weakened}'], cap: ['Binding', 'applies {Held} and {Exposed}'] },
+              move: ['Wither', '{Weakened}'], cap: ['Binding', '{Held}, {Exposed}'] },
   sapper:   { fork: 'Learn explosives',
-              move: ['Sticky bombs', 'stick and blow'], cap: ['Pair', 'throw two, applies {Stun}'] },
+              move: ['Sticky bombs', 'stick, then blow'], cap: ['Pair', 'two bombs, {Stun}'] },
   mage:     { fork: 'Channel powerful beams',
-              move: ['Widening', 'widen the beam'], cap: ['Thermite', 'burn through armor'] },
+              move: ['Widening', 'wider beam'], cap: ['Thermite', 'burns armor'] },
   bard:     { fork: 'Give your party {Inspired}',
-              move: ['Anthem', 'doubles {Inspired}'], cap: ['Tempo', 'gives your party {Haste}'] }
+              move: ['Anthem', 'double {Inspired}'], cap: ['Tempo', 'party {Haste}'] }
 };
 const GLYPH = { brawler: 'fist', sword: 'blade', monk: 'bell', martial: 'staff', ranger: 'target',
                 assassin: 'dagger', hexer: 'rune', sapper: 'bomb', mage: 'beamwand', bard: 'lyre' };
 const pct = k => `${Math.round(k * 100)}%`;
 // What a status does, a line, its numbers read off the tables it is laid by.
 const STATUS = {
-  Stun: 'it holds still and stops healing, a moment',
-  Bleed: 'damage every second, a few seconds',
-  Haste: `attacks ${pct(HASTE)} more often`,
-  Weakened: `it heals ${pct(CLASSES.hexer.weaken.k)} slower`,
-  Held: 'it cannot heal',
-  Exposed: `it takes ${pct(EXPOSED_AMP)} more damage`,
-  Inspired: 'hits deal more damage'
+  Stun: 'holds still, stops healing',
+  Bleed: 'damage over time',
+  Haste: `attacks ${pct(HASTE)} faster`,
+  Weakened: `heals ${pct(CLASSES.hexer.weaken.k)} slower`,
+  Held: 'cannot heal',
+  Exposed: `takes ${pct(EXPOSED_AMP)} more damage`,
+  Inspired: 'hits harder'
 };
 const plain = t => t.replace(/\{(\w+)\}/g, '$1');
 const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',

@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- Every fighter's moves and capstones say what they do in two or three words, and the status hovers are a few words each (`node tools/look.mjs recruit-board`).
 - A status's hover line on a station's board is shown whole even past the board's edge, and a status named in an effect stays on its line (`node tools/look.mjs recruit-board`).
 - A station's board reads in full black, and each effect's description sits on the line under its name (`node tools/look.mjs recruit-board`).
 - The Recruit's board is as wide as its five choices need, so none of their names spill out of their boxes (`node tools/look.mjs recruit-board`).

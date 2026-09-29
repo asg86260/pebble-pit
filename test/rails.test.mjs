@@ -208,8 +208,8 @@ group('each pip says what it is, one short line', async () => {
   const lines = [base, move, cap, rung, locked, opened];
   return [
     ok(base === `Apprentice: ${rungValue('mage', 2)} dmg/s`, 'a base rung names the base unit and its number', base),
-    ok(move === 'Widening: widen the beam', 'rung 4 names the move', move),
-    ok(cap === 'Thermite: burn through armor', 'rung 8 the capstone', cap),
+    ok(move === 'Widening: wider beam', 'rung 4 names the move', move),
+    ok(cap === 'Thermite: burns armor', 'rung 8 the capstone', cap),
     ok(rung === `Mage: ${Math.round(rungValue('mage', 6))} dmg/s`, 'another rung its number', rung),
     ok(/second station/.test(locked), 'a locked branch says when it opens', locked),
     ok(!/second station/.test(opened), 'and opens with a second station', opened),
@@ -230,9 +230,9 @@ group("at the fork each specialist's row shows its move and its capstone, status
   return [
     ok(rows.length === 2 && rows.every(r => r.branch && r.branch.move[0] && r.branch.cap[0]), 'both rows carry a branch',
        JSON.stringify(rows.map(r => r.branch))),
-    ok(by('brawler').cap[1] === 'applies {Stun}' && by('sword').cap[1] === 'applies {Bleed}',
+    ok(by('brawler').cap[1] === '{Stun}' && by('sword').cap[1] === '{Bleed}',
        'the capstones name their statuses', `${by('brawler').cap[1]} / ${by('sword').cap[1]}`),
-    ok(hexer && hexer.move[1] === 'applies {Weakened}' && hexer.cap[1] === 'applies {Held} and {Exposed}',
+    ok(hexer && hexer.move[1] === '{Weakened}' && hexer.cap[1] === '{Held}, {Exposed}',
        "the Hexer's move and capstone name theirs", JSON.stringify(hexer))
   ];
 });
