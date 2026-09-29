@@ -231,13 +231,13 @@ export function drawKitCounts(screenAt) {
 // conversation. Everything stands a clear cell above the head so it never
 // touches the load a worker is carrying.
 
-function drawSay(w) {
+function drawSay(w, say) {
   const x = Math.round(w.x) + WORKER / 2;
   const top = Math.round(w.y) - P * 2;
   ctx.fillStyle = '#000';
 
   // the same heart the opening uses: the same thing said, so the same shape
-  if (w.say.mark === 'heart') {
+  if (say.mark === 'heart') {
     for (let r = 0; r < HEART.length; r++)
       for (let c = 0; c < 5; c++)
         if (HEART[r][c] === '1')
@@ -245,8 +245,8 @@ function drawSay(w) {
     return;
   }
 
-  if (w.say.mark === 'dots') {
-    const n = w.say.n || 2;
+  if (say.mark === 'dots') {
+    const n = say.n || 2;
     for (let i = 0; i < n; i++)
       ctx.fillRect(Math.round(x - (n * P) / 2 + i * P), top - P, P - 1, P - 1);
     return;
@@ -254,7 +254,7 @@ function drawSay(w) {
 
   // Stars, two cells going round the head rather than a fixed pair, so a body
   // seeing them is plainly still spinning.
-  if (w.say.mark === 'dizzy') {
+  if (say.mark === 'dizzy') {
     const t = now() / 160;
     for (const off of [0, Math.PI]) {
       const a = t + off;
@@ -264,7 +264,7 @@ function drawSay(w) {
     return;
   }
 
-  if (w.say.mark === 'loo') {
+  if (say.mark === 'loo') {
     ctx.fillStyle = MUCK_TONE;
     ctx.fillRect(Math.round(x - P * 1.5), top - P, P * 3, P);
     ctx.fillRect(Math.round(x - P * 0.5), top - P * 2, P, P);
@@ -274,7 +274,7 @@ function drawSay(w) {
 
   // Stink risers, the comic-strip smell mark, off the patch the body has just
   // refused to step in. They alternate their middle cell so the pair wafts.
-  if (w.say.mark === 'yuck') {
+  if (say.mark === 'yuck') {
     const wave = Math.floor(now() / 240) % 2 ? P : -P;
     for (const sx of [-P, P]) {
       const cx = Math.round(x + sx - P / 2);
@@ -288,7 +288,7 @@ function drawSay(w) {
   // A body held still under the cursor asks what you want of it. Drawn in
   // half-cell strokes (still whole pixels) because the smallest legible question
   // mark on the P grid stands over the head like a sign.
-  if (w.say.mark === '?') {
+  if (say.mark === '?') {
     const u = P / 2;
     const x0 = Math.round(x - P);
     const y0 = top - u * 7;
@@ -301,7 +301,7 @@ function drawSay(w) {
     return;
   }
 
-  if (w.say.mark === 'note') {
+  if (say.mark === 'note') {
     // a head and a stem: the smallest thing that is unmistakably a note
     ctx.fillRect(Math.round(x - P), top - P, P, P);
     ctx.fillRect(Math.round(x), top - P * 2, P - 2, P + 1);
@@ -333,10 +333,16 @@ export function drawPointed() {
   }
 }
 
+// A body shaken loose -- thrown off the coil by the lash, or dropped by the
+// pointer -- sees stars all the way down, not only once it lands: the fall
+// leaves it dizzy (`dizzyFor`, crew/falls.js) and the stars are that.
+const FALLING_DIZZY = { mark: 'dizzy' };
+
 export function drawSays() {
   for (const w of S.workers) {
-    if (!w.say || underground(w) || atHome(w)) continue;
-    drawSay(w);
+    const say = w.say || (w.falling && w.dizzyFor ? FALLING_DIZZY : null);
+    if (!say || underground(w) || atHome(w)) continue;
+    drawSay(w, say);
   }
   ctx.fillStyle = '#000';
 }
