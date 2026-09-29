@@ -801,6 +801,11 @@ export const SCENES = {
   house: { about: 'the crew', say: 'the house, several storeys up',
     run: () => { window.__reset(); window.__crew(6, 5, 5, 4); window.__fast(2);
                  window.__look(st().houses.door - 400); } },
+  // Three bought at once: one going up, two in line behind it, each with a bar.
+  housequeue: { about: 'the crew', say: 'three houses bought at once, the first going up',
+    run: () => { window.__reset(); window.__crew(3, 2, 2, 1); window.__grant({ dust: RICH_DUST });
+                 window.__buy('house'); window.__buy('house'); window.__buy('house');
+                 window.__fast(20); window.__look(st().houses.door - 400); } },
   // Hovered for real, since the mark comes off `pointermove` in pointer.js.
   // In a frame, not now: the runner turns a second of clock after a scene and
   // the hold is only nine hundred milliseconds, so a hover sent from here

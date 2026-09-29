@@ -340,7 +340,7 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
       // A readout (`u.read`) and the pinned card do not answer the cursor;
       // nor does any tile under a thumb, which has no cursor to answer
       // (DESIGN.md, "A tap buys": a hover a phone can see is a tap it eats).
-      if (shelf) { b.classList.add('tile'); if (!u.read && el !== pinEl && !coarse()) leanToCursor(b, u.key); }
+      if (shelf) { b.classList.add('tile'); swayOf(b, u.key); if (!u.read && el !== pinEl && !coarse()) leanToCursor(b); }
       // The goal card wears its section's title as a sign on its own frame
       // (shelf.css), since the goal heading itself is not drawn on a shelf.
       if (sect.goal) { b.classList.add('goal'); b.dataset.sign = sect.title; }
@@ -751,13 +751,18 @@ export function refresh(el, list, headcount) {
   if (el.classList.contains('shelves')) phaseDots(el);
 }
 
-// A lifted tile leans toward the cursor, up to SHELF_FOLLOW px at the edge, in
-// whole pixels so the dots stay on their grid. It drifts at a rate and in a
-// direction hashed off the row's key, so a plank never breathes in unison.
-function leanToCursor(b, key) {
+// A tile and its picture drift at a rate and in a direction hashed off the
+// row's key, so a plank never breathes in unison. Every tile, readouts and
+// touch screens included, since every picture drifts.
+function swayOf(b, key) {
   let h = 0; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   b.style.setProperty('--sway-rate', String(1 + ((h % 1000) / 1000 * 2 - 1) * SHELF_FLOAT_SPREAD));
   b.style.setProperty('--sway-dir', (h >> 10) & 1 ? 'reverse' : 'normal');
+}
+
+// A lifted tile leans toward the cursor, up to SHELF_FOLLOW px at the edge, in
+// whole pixels so the dots stay on their grid.
+function leanToCursor(b) {
   b.addEventListener('pointermove', e => {
     // a tile you cannot pay for, or that is not for sale, does not lean
     if (b.disabled || b.classList.contains('off') || b.classList.contains('stat')) return;

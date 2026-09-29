@@ -36,6 +36,7 @@ export function bar(cx, cy, at) {
 // so a station that is resited or grows takes its bar with it and a bar cannot
 // end up inside the building it is about.
 const BAR_CLEAR = P * 7;                 // how far above the top of a thing it floats
+const BAR_STEP = P * 4;                  // a bar's depth and a cell, between stacked bars
 
 // The spire: the main shaft, without the turret off the right-hand side, since
 // a bar centered on the tower's full rect lands right of the point. The top is
@@ -213,29 +214,40 @@ export function stackSlot(site, slot, w = null) {
   return { x, y, cy: y - (CELLS / 2 - 1.5) * P - slot * P * (CELLS + 2) };
 }
 
+// Where each of a site's works hangs, and as what: a bar over a construction,
+// the thing itself over anything else. One list for the drawing and for the
+// check that no two of them are laid over each other.
+export function workSpots(site) {
+  const out = [];
+  // The whole list, the line included: a work in line is at nought, so it
+  // hangs as the outline alone over the one being built, and the stack is
+  // what the station has been paid for.
+  const list = worksAt(site);
+  // One a work. On the yard each work stands on its own ground, so each
+  // hangs over its own thing; elsewhere the stack starts over what the
+  // station has finished and not yet shown (`drawDoneMarks`).
+  let stacked = doneAt(site).length;
+  for (const [i, w] of list.entries()) {
+    // On the yard, copies of one row (a second house) share ground with the
+    // first, so they stack over it as a station's line does.
+    const lift = site === 'yard' ? list.slice(0, i).filter(x => x.key === w.key).length : stacked++;
+    const at = stackSlot(site, lift, w);
+    if (!at) continue;
+    // A bar is shallower than a glyph, so a copy's stands a bar and a cell
+    // over the one before rather than a glyph's height: drawn at the foot,
+    // the copy in line (empty) was laid over the one filling.
+    if (site === 'yard' && risingPlaces().some(r => r.key === w.key)) out.push({ w, bar: { x: at.x, y: at.y - lift * BAR_STEP } });
+    else out.push({ w, glyph: { x: at.x, cy: at.cy } });
+  }
+  return out;
+}
+
 export function drawWorkBars() {
   for (const site of SITES) {
-    // The whole list, the line included: a work in line is at nought, so it
-    // hangs as the outline alone over the one being built, and the stack is
-    // what the station has been paid for.
-    const list = worksAt(site);
-    if (!list.length) continue;
-    // One a work. On the yard each work stands on its own ground, so each
-    // hangs over its own thing; elsewhere the stack starts over what the
-    // station has finished and not yet shown (`drawDoneMarks`).
-    let stacked = doneAt(site).length;
-    for (const [i, w] of list.entries()) {
-      // On the yard, copies of one row (a second house) share ground with the
-      // first, so they stack over it as a station's line does.
-      const lift = site === 'yard' ? list.slice(0, i).filter(x => x.key === w.key).length : stacked++;
-      const at = stackSlot(site, lift, w);
-      if (!at) continue;
-      if (site === 'yard' && risingPlaces().some(r => r.key === w.key)) {
-        bar(at.x, at.y, progressOf(w));
-        continue;
-      }
+    for (const { w, bar: b, glyph } of workSpots(site)) {
+      if (b) { bar(b.x, b.y, progressOf(w)); continue; }
       const row = rowFor(w.key);
-      buildingGlyph(at.x, at.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null);
+      buildingGlyph(glyph.x, glyph.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null);
     }
   }
 }

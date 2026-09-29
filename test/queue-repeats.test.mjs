@@ -10,7 +10,8 @@
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 import { billOf } from '../src/upgrades.js';
 import { siteBox, worksAt } from '../src/works.js';
-import { LADDER } from '../src/config.js';
+import { LADDER, P } from '../src/config.js';
+import { workSpots } from '../src/render/bars.js';
 
 const at = site => (state().line || {})[site] || [];
 const purse = () => state().stored;
@@ -183,5 +184,21 @@ group('copies in line come back from a save as themselves', async () => {
        'two copies of carry and a toss between, told apart by their ids', was.join(' ')),
     ok(now.join(' ') === was.join(' '), 'the same three after the reload', `${was.join(' ')} -> ${now.join(' ')}`),
     ok(back === true, 'and the newest can still be handed back', `${back}`),
+  ];
+});
+
+// Houses bought three at once each hang a bar over the settlement, and the
+// copies in line (empty) must not be laid over the one filling: all of them
+// were drawn at the first's foot, and the last, empty, was the one on top.
+group('houses in line hang their bars apart, not over the one filling', async () => {
+  setUp(1e7);
+  window.__buy('house'); window.__buy('house'); window.__buy('house');
+  run(5);
+  const bars = workSpots('yard').filter(s => s.bar).map(s => s.bar);
+  const w = P * 14, h = P * 3;
+  const clash = bars.some((a, i) => bars.slice(i + 1).some(b => Math.abs(a.x - b.x) < w && Math.abs(a.y - b.y) < h));
+  return [
+    ok(bars.length === 3, 'a bar a house', `${bars.length}`),
+    ok(!clash, 'no two bars overlap', JSON.stringify(bars)),
   ];
 });
