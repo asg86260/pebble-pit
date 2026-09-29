@@ -16721,6 +16721,8 @@ unanswered frees him at 67 minutes and answered at 60. Two things it shows:
   the surge is mostly unanswered.
 - **A melee party pays the most.** Sword, Assassin, Sapper and Hexer, taking
   half in the split and lashed there, run to about two hours unanswered.
+  Decided (the owner, 2026-09-29): that stands; the fight teaches a
+  diverse party, and a lopsided one is meant to be slow.
 
 **Considered and not proposed:**
 - **A timed full heal** (break it in N minutes or the wound resets). With

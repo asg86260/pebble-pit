@@ -22,8 +22,6 @@ the lash and the sink, each warned and answered. Open:
 - **The answers are capstones**, so the warded phase's surge is mostly
   unanswered at the pace the model plays. A rung-4 answer, or a later
   surge, if that reads as unfair.
-- **A melee party without answers runs to about two hours**
-  (`node tools/node/deep-pace.mjs --gather 4 --party sword,assassin,sapper,hexer`).
 - **The lash's bump reads as a dip** at the belly's girth; a deeper
   `LASH_H` if it wants to read as a whip.
 
