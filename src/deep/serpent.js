@@ -11,7 +11,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DMG,
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DECADE,
          NUM_HELD_S, NUM_HEAL_EVERY_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S, NUM_FOLD_R,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
@@ -101,7 +101,7 @@ export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   // Held at the stage's depth rather than over it: the break is the frame's
   // (`stepSerpent`), and a wound past its depth is a number nothing draws.
   if (S.serpentStage <= LAST) S.serpentWound = Math.min(depth(), S.serpentWound + done);
-  const n = Math.max(1, Math.round(done * SCALE_PER_DMG));
+  const n = scalesOf(done);
   if (o.tick) shed(x, y, n);
   else {
     const blow = from ? (from.dealt = (from.dealt || 0) + done) : done;
@@ -116,6 +116,9 @@ export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   keep(weapon, done, x, y, from, !!o.tick);
   return done;
 }
+
+// The scales a hit of `done` knocks loose.
+export const scalesOf = done => Math.max(1, Math.round(SCALE_PER_DECADE * Math.log10(done)));
 
 // What the click is worth: the first station's rung, so the hand grows with
 // the first fighter's ladder.

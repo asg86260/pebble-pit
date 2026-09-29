@@ -22,7 +22,7 @@
 
 import { LADDERS } from '../../src/config/rungs.js';
 import { CLASSES } from '../../src/config/classes.js';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DMG,
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DECADE,
          CLICK_DMG, MECHANICS } from '../../src/config/deep.js';
 
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
@@ -58,8 +58,10 @@ const tempo = c => (c === 'mage' ? 1 : CLASSES[c].every);   // the beam's ladder
 const moveK = (c, r) => (r >= 8 ? MOVE[c][1] : r >= 4 ? MOVE[c][0] : 1);
 const hit = (c, r, st) => LADDERS[c].value[r] * SERPENT_DEFENSE[c][st] * moveK(c, r);
 const dps = (c, r, st) => hit(c, r, st) / tempo(c);
-// Scales shed a second: a hit sheds its damage.
-const shed = (c, r, st) => dps(c, r, st) * SCALE_PER_DMG;
+// Scales shed a second: a hit sheds a few more for each tenfold of its
+// damage (`scalesOf` in src/deep/serpent.js).
+const scalesOf = d => Math.max(1, Math.round(SCALE_PER_DECADE * Math.log10(d)));
+const shed = (c, r, st) => scalesOf(hit(c, r, st)) / tempo(c);
 const cost = (c, r) => LADDERS[c].dust[r];
 
 // A second at a time. `depth` is the four depths; `ends`, if given, fixes the
@@ -69,9 +71,11 @@ function fight(depth, ends, heal = SERPENT_HEAL) {
   const rung = party.map(() => 0), made = [0, 0, 0, 0], at = [];
   for (let t = 0; st < 4 && t < 86400 * 3; t++) {
     const mk = mechanic(st, t - from);
-    let d = clicks * CLICK_DMG[rung[0]] * mk.all;
-    for (let i = 0; i < stood; i++) d += dps(party[i], rung[i], st) * mk.all * (CLASSES[party[i]].melee ? mk.melee : 1);
-    const y = d * SCALE_PER_DMG;
+    let d = clicks * CLICK_DMG[rung[0]] * mk.all, y = clicks * scalesOf(CLICK_DMG[rung[0]]) * mk.all;
+    for (let i = 0; i < stood; i++) {
+      const k = mk.all * (CLASSES[party[i]].melee ? mk.melee : 1);
+      d += dps(party[i], rung[i], st) * k; y += shed(party[i], rung[i], st) * k;
+    }
     loose += y;
     const g = Math.min(loose, gather); loose -= g; purse += g;
     const h = heal[st] * mk.heal;

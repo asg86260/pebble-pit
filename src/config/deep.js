@@ -138,10 +138,13 @@ export const HEAL_CUT_MAX = 0.6;     // every heal cut together, at most
 export const HASTE = 0.2;            // Hasted: this much more often
 
 // --- scales ------------------------------------------------------------------------
-// A hit knocks scales loose in proportion to what it did. They fall through
-// the water on the deep's own gravity and settle on its floor, which is the
-// deep's purse: a scale is counted when it lands, like a grain in the pit.
-export const SCALE_PER_DMG = 1;      // scales a unit of damage sheds
+// A hit knocks scales loose by the size of what it did, a few more for each
+// tenfold of its damage rather than one a unit: the party's damage grows a
+// hundredfold over the fight and the gatherers' carry does not, so a shed
+// that followed the damage buried the floor. They fall through the water on
+// the deep's own gravity and settle on its floor, which is the deep's purse:
+// a scale is counted when it lands, like a grain in the pit.
+export const SCALE_PER_DECADE = 1.5; // scales a hit sheds for each tenfold of its damage, one at least
 export const DUST_PER_SCALE = 10;    // what a scale is worth against dust (DUST_PER in upgrades/price.js)
 export const DEEP_BED_ROWS = 40;     // the floor's plot of scales: this many cells deep at most
 export const DEEP_BED_BRIM = 4;      // rows short of that the floor counts as full (the pile-full mark)

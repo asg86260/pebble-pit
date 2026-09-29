@@ -16655,9 +16655,14 @@ it is settled first.
    or 9 minutes.
 4. **The rung bills stay.** Four ladders are 13,900 scales, and an hour at
    4 a second banks 14,400: the bills as written already spend the hour.
-5. **The shed cap goes** (the owner, 2026-09-28). A hit sheds its damage;
-   only the room left on the bed limits what is let go, since a scale with
-   nowhere to lie is lost to the dark anyway.
+5. **The shed follows the log of the damage** (the owner, 2026-09-28). A
+   hit that shed its damage let a rung-8 party loose about 500 a second
+   against the gatherers' 4, burying the floor. A hit sheds
+   `SCALE_PER_DECADE` (1.5) a tenfold of its damage, one at least: 1 for a
+   first-rung punch, 3 at a hundred, 4 at five hundred, so a full party
+   sheds about 12 to 16 a second. With the phases' mechanics in, banked
+   without limit the model frees him at 50 minutes, and at 4 a second at
+   68, so the gatherers are still the pace but the floor is not a flood.
 
 **What it must not break.** Every scale is carried to the crusher by a body
 (nothing teleports). Every ladder stays a written table in `LADDERS`. The

@@ -11,7 +11,7 @@
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES } from '../src/config.js';
-import { clickDeep, clickDmg, strike, healNow, woundK, onBreak } from '../src/deep/serpent.js';
+import { clickDeep, clickDmg, strike, healNow, woundK, onBreak, scalesOf } from '../src/deep/serpent.js';
 import { spendScales } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -165,14 +165,15 @@ group('a hit sheds scales, and they lie on the floor until they are crushed', as
   deepYard();
   const before = S.scales, bed = deepBed.n;
   const p = belly();
-  const done = strike('punch', 5, p.x, p.y);
+  const done = strike('punch', 500, p.x, p.y);
   const inWater = S.sinking.length, countedAtOnce = S.scales - before;
   const landed = runUntil(() => S.sinking.length === 0, 30);
   const nothing = strike('punch', 0, p.x, p.y);
   return [
-    ok(done === 5 && inWater === 5, 'five done, five knocked loose', `${done} done, ${inWater} in the water`),
+    ok(done === 500 && inWater === scalesOf(500) && inWater > scalesOf(5) && inWater < 10,
+       'a big blow knocks a few more loose than a small one, not one a unit of damage', `${done} done, ${inWater} in the water`),
     ok(countedAtOnce === 0, 'and none counted in the water', `${countedAtOnce}`),
-    ok(landed && deepBed.n - bed === 5, 'all five lying on the bed once they land', `${deepBed.n - bed}`),
+    ok(landed && deepBed.n - bed === inWater, 'all of them lying on the bed once they land', `${deepBed.n - bed}`),
     ok(S.scales === before, 'and none of them is money until it is crushed', `${S.scales - before}`),
     ok(nothing === 0 && S.sinking.length === 0, 'a blow that did nothing sheds nothing', `${S.sinking.length}`)
   ];

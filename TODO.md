@@ -36,6 +36,9 @@ the lash and the sink, each warned and answered. Open:
   banked, two clicks a second, and each class's move worth a guessed
   multiple of its hit (`MOVE` in the tool). Bills in dust, ore and sparks,
   build time and the fang's carry are left out.
+- **The shed is the log of the damage** (`SCALE_PER_DECADE`, 2026-09-28):
+  a full party sheds 12 to 16 a second against the gatherers' 4 to 5, down
+  from about 500. Nobody has watched a rung-8 party's floor with it.
 - **The banked rate is the load-bearing guess.** Four gatherers bank about
   5 a second off a thick floor, falling to 3; 3 a second makes it 71
   minutes, 5 makes it 52.

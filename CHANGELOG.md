@@ -24,7 +24,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Every station stands on a stepped stone plinth, off the deep's floor (test/props.test.mjs).
 - Every fighter attacks the serpent straight above its own station (test/classes.test.mjs).
 - Scales handed back by a station's Reset or a refund are tossed back into the crusher instead of dropped in the water (test/rails.test.mjs, test/crusher.test.mjs).
-- The serpent's fight takes about an hour: the first fighter out-hits the first heal a few rungs up, each stage after waits on the party's next rungs, and a hit sheds all the scales it is worth (test/serpent.test.mjs).
+- The serpent's fight takes about an hour: the first fighter out-hits the first heal a few rungs up, each stage after waits on the party's next rungs, and a bigger hit sheds a few more scales than a small one (test/serpent.test.mjs).
 - Fighters sway a cell between attacks, and the melee ones hop as each step lands (`node tools/look.mjs party-four`).
 - A station is its fighter beside a prop instead of a building under a dome: a crate below the fork, the class's own from it, its parts purple at rung 8, and its board named for the fighter (test/props.test.mjs, src/selftest/deep.js).
 - The party: up to four stations built on the deep's floor, the first free and each after it for a fang the serpent drops at a break, each with a fighter of one of ten classes climbed on the station's rails, a move at rung 4 and a capstone at rung 8 (test/party.test.mjs, test/rails.test.mjs, test/classes.test.mjs).
@@ -41,6 +41,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
 
+- The serpent no longer sheds more scales than the gatherers can ever carry to the crusher (test/serpent.test.mjs).
 - The deep's build button shows its price, one fang, instead of how many fangs you hold (src/selftest/deep.js).
 - A Swordsman's blow dents and wounds the serpent once, in one place, on the turn that lands it (test/sword-dent.test.mjs, test/classes.test.mjs).
 - A Sapper's two charges stick and go off in one spot instead of two (test/classes.test.mjs).
