@@ -1911,7 +1911,7 @@ export const TESTS = [
       && c.bottom - s.bottom <= 2 && s.width >= c.width - 4;
     const before = state().stored;
     if (half('refund')) press(half('refund'));
-    await settle(0.1);
+    await settle(3);                            // the bill is tossed to the hole and banked as it lands
     const back = state().stored - before;
     const one = copies();
     const after = shows(half('refund')) ? half('refund').textContent : '';

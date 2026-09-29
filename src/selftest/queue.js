@@ -69,7 +69,7 @@ export const TESTS = [
     const wait = card().querySelector('button.wait');
     const front = card().querySelector('button.front');
     if (wait) wait.click();
-    run(0.1);
+    run(3);                                     // the bill is tossed to the hole and banked as it lands
     await raf(); await raf();
     const left = names();
     const back = state().stored;

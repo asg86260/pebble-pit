@@ -467,6 +467,15 @@ export const TESTS = [
     phone(false);
     window.__board('bench');
     await settle(0.6);
+    // A board stands under the notice card while one is up (place() in board.js),
+    // and a different notice is a different height: both seatings are read with
+    // the card off the glass, so this measures the popover and not the card.
+    const noCard = async () => {
+      document.getElementById('toast')?.classList.remove('up');
+      window.__placeBoard();
+      await frames(1);
+    };
+    await noCard();
     const fitBefore = window.__boardFit();
     const rBefore = rect();
     // a phone for a moment, and back
@@ -475,7 +484,7 @@ export const TESTS = [
     const asSheet = panel().classList.contains('bottom');
     phone(false);
     await settled();
-    window.__placeBoard();
+    await noCard();
     await settle(0.3);
     const fitAfter = window.__boardFit();
     const rAfter = rect();

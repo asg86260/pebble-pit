@@ -248,7 +248,8 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   // A hover on a pip says what it is; pips are never pressed.
   const pip = rails().querySelector('.rl-arm i.big');
   pip.dispatchEvent(new PointerEvent('pointerenter'));
-  const tip = rails().querySelector('.rl-tip');
+  // The hover line stands on the page, not in the board (a sheet clips its own edge).
+  const tip = [...document.querySelectorAll('.rl-tip')].pop();   // the newest mount is the open board's
   const said = !tip.hidden && tip.textContent;
   pip.dispatchEvent(new PointerEvent('pointerleave'));
   for (let r = 1; r < FORK_RUNG; r++) { await tap(rowNamed('s1', 'Fighter')); await seat(); }
