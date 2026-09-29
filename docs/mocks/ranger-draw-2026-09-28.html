@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranger Draw</title>
+<style>
+:root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; } }
+:root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 20px; margin: 0 0 6px; }
+p { color: var(--dim); max-width: 92ch; margin: 0 0 12px; }
+.bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0 14px; }
+button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; }
+.card h3 { margin: 0; font-size: 14px; }
+canvas { width: 100%; image-rendering: pixelated; display: block; border: 1px solid var(--rule); }
+.about { color: var(--dim); font-size: 12px; margin: 0; }
+.beats { font-size: 11px; color: var(--dim); margin: 0; }
+.beats b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The Ranger's draw: three options</h1>
+  <p>Each shot as held poses: load, draw in steps, a held strain, the loose with a smear, a held recoil. No shake and
+    no flash, per the classic feel. A mock drawn from plain cells on the class bench, not the game: it cannot show the
+    game's coil, camera or real timing. In the game a Ranger shoots every 0.8 s, so each option's windup (listed under it)
+    would mean a longer windup in <code>config/classes.js</code> or a slower cadence. Use slow motion to read the held frames.</p>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+    <button data-speed="0.12" aria-pressed="false" type="button">0.12x</button>
+    <span id="clock" class="beats"></span>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script type="module">
+import { P, CW, CH, FLOOR, STATION_X, BODY, GREYS, PURPLES, WHITE, cell, line, ring, coilBottom,
+         burst, chip, drawBody, frame, CLASSES } from './classes/harness.js';
+import './classes/group-blade.js';
+
+const HX = STATION_X - 1, HY = FLOOR - 2 - BODY, SX = HX + 1;
+const FLY = 0.25;
+
+// --- the kit, parametric ---------------------------------------------------------
+// The bow held level over his head: its stave's ends at (SX +- half, by), its
+// arc bowed up `bend` cells in the middle; the string from the ends to the
+// nock, `pull` cells under the stave (negative: snapped up past it).
+function bow(g, by, bend, pull, half = 3) {
+  const tone = GREYS[8];
+  // the stave: a flat arc of cells, the grip darker
+  for (let dx = -half; dx <= half; dx++) {
+    const k = 1 - (dx / half) ** 2;
+    cell(g, SX + dx, by - Math.round(bend * k), Math.abs(dx) <= 0 ? GREYS[6] : tone);
+  }
+  const ny = by + pull;
+  line(g, SX - half, by, SX, ny, GREYS[9], (x, y) => cell(g, x, y, GREYS[9]));
+  line(g, SX + half, by, SX, ny, GREYS[9], (x, y) => cell(g, x, y, GREYS[9]));
+}
+// The bow at his side, stood on end, before it is lifted.
+function bowSide(g, dy = 0) {
+  const x = HX + 4, y0 = HY - 3 + dy;
+  for (let i = 0; i < 6; i++) cell(g, x + (i === 0 || i === 5 ? 0 : i === 1 || i === 4 ? 1 : 2) - 1, y0 + i, GREYS[8]);
+  line(g, x - 1, y0, x - 1, y0 + 5, GREYS[9], (a, b) => cell(g, a, b, GREYS[9]));
+}
+// An arrow standing point-up with its nock at (x, y): the head six cells up,
+// clear over the stave, the shaft under it, the fletch either side of the nock.
+function arrowUp(g, x, y, lit = false) {
+  cell(g, x, y - 6, lit ? PURPLES[11] : WHITE);
+  for (let i = 1; i <= 5; i++) cell(g, x, y - i, GREYS[10]);
+  cell(g, x - 1, y, GREYS[7]); cell(g, x + 1, y, GREYS[7]);
+}
+// An arrow lying flat in the hand, point toward `dir`.
+function arrowFlat(g, x, y, dir = 1) {
+  for (let i = 0; i < 4; i++) cell(g, x + i * dir, y, GREYS[10]);
+  cell(g, x + 4 * dir, y, WHITE);
+  cell(g, x - dir, y - 1, GREYS[7]); cell(g, x - dir, y + 1, GREYS[7]);
+}
+const hand = (g, x, y) => cell(g, x, y, GREYS[11]);
+// Strain: two short dark ticks off the body's shoulders, held, not shaking.
+function strain(g, y) { cell(g, HX - 1, y, GREYS[6]); cell(g, HX + BODY, y, GREYS[6]); cell(g, HX - 2, y - 1, GREYS[5]); cell(g, HX + BODY + 1, y - 1, GREYS[5]); }
+// A quiver on his back: a slanted tube behind the left shoulder, fletches out the top.
+function quiver(g, dy, full = true) {
+  cell(g, HX - 1, HY + 1 + dy, GREYS[5]); cell(g, HX - 1, HY + dy, GREYS[5]); cell(g, HX, HY - 1 + dy, GREYS[5]);
+  if (full) { cell(g, HX, HY - 2 + dy, GREYS[7]); cell(g, HX + 1, HY - 2 + dy, GREYS[7]); }
+}
+
+// --- the flight and the landing (the voted chip and burst) -----------------------
+function flight(g, t, st, t0, ny, o = {}) {
+  const a = t - t0;
+  if (a < 0) return;
+  const ty = coilBottom(SX, t, st) + 1, y0 = ny - 6;
+  if (a < FLY) {
+    const hy = y0 + (ty - y0) * (a / FLY);
+    // the smear: a held streak from the bow up to the head for the first beat
+    if (a < (o.smear ?? 0.07)) for (let y = Math.round(hy) + 1; y < ny; y++) cell(g, SX, y, y < hy + 3 ? WHITE : GREYS[8]);
+    cell(g, SX, hy, o.lit ? PURPLES[11] : WHITE); cell(g, SX, hy + 1, GREYS[10]); cell(g, SX, hy + 2, GREYS[8]);
+    return;
+  }
+  const b = coilBottom(SX, t, st), since = a - FLY;
+  burst(g, t, t0 + FLY, SX, b, o.k ?? 0.2, Math.round(t0 * 10));
+  chip(g, t, t0 + FLY, SX, b, o.k ?? 0.2, Math.round(t0 * 10));
+  if (since < 0.9) { const tone = GREYS[since < 0.4 ? 9 : since < 0.65 ? 7 : 4]; cell(g, SX, b + 1, tone); cell(g, SX, b + 2, tone); }
+  if (o.ring && since < 0.3) ring(g, SX, b, 1 + since * 12, since < 0.12 ? WHITE : GREYS[7], 2);
+}
+
+// --- the timeline -----------------------------------------------------------------
+// A shot is a list of held poses, [name, seconds]; `draw` knows each pose. A
+// scene is: lift, the shots back to back, lower. Every pose is held whole --
+// nothing is tweened except the arrow in the water.
+function scene(o) {
+  const lift = [['side', 0.35], ['lift', 0.1], ['over', 0.12]];
+  const lower = [['over', 0.3], ['lift', 0.1], ['side', 0.4]];
+  const steps = [...lift];
+  const shotAt = [];
+  for (let i = 0; i < o.shots; i++) {
+    for (const [name, s] of o.beats) {
+      if (name === 'loose') shotAt.push(steps.reduce((n, [, d]) => n + d, 0));
+      steps.push([name, s]);
+    }
+  }
+  steps.push(...lower);
+  const dur = steps.reduce((n, [, d]) => n + d, 0) + 0.3;
+  const windup = o.beats.slice(0, o.beats.findIndex(([n]) => n === 'loose')).reduce((n, [, d]) => n + d, 0);
+  return {
+    body: false, dur, windup, shotAt,
+    draw(g, t, api) {
+      let at = 0, pose = 'side';
+      for (const [name, s] of steps) { if (t < at + s) { pose = name; break; } at += s; pose = 'side'; }
+      const k = o.poses[pose] || o.poses.over;
+      const sink = k.sink || 0;
+      o.back?.(g, pose, sink);
+      drawBody(g, HX, HY + sink);
+      k.draw(g, sink);
+      if (k.strain) strain(g, HY + sink);
+      for (const s0 of shotAt) flight(g, t, api.st, s0, o.nockY(sink), o.fly || {});
+    },
+  };
+}
+
+// Where each option's stave sits: three rows over his head.
+const BY = HY - 3;
+const common = {
+  side: { draw: (g, s) => bowSide(g, s) },
+  lift: { draw: (g, s) => { bowSide(g, s - 2); } },
+  over: { draw: (g, s) => { bow(g, BY + s, 2, 0); hand(g, SX - 3, BY + 1 + s); hand(g, SX + 3, BY + 1 + s); } },
+};
+
+// A: the stepped draw. The hand comes up from his hip with the arrow flat,
+// turns it up onto the string, draws it down in two steps as the limbs bend
+// deeper and he sinks a cell, holds the full draw, looses -- the string
+// snapped up past the stave for a beat -- and holds the recoil before resetting.
+const A = scene({
+  shots: 3,
+  beats: [['fetch', 0.14], ['nock', 0.12], ['draw1', 0.08], ['draw2', 0.08], ['full', 0.34], ['loose', 0.07], ['recoil', 0.16], ['settle', 0.14]],
+  nockY: s => BY + 3 + s,
+  poses: {
+    ...common,
+    fetch: { draw: (g, s) => { bow(g, BY + s, 2, 0); hand(g, SX - 3, BY + 1 + s); arrowFlat(g, HX + 4, HY + 1 + s, -1); hand(g, HX + 4, HY + 1 + s); } },
+    nock:  { draw: (g, s) => { bow(g, BY + s, 2, 0); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 0 + s); hand(g, SX + 1, BY + 0 + s); } },
+    draw1: { draw: (g, s) => { bow(g, BY + s, 2, 1); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 1 + s); hand(g, SX + 1, BY + 1 + s); } },
+    draw2: { sink: 1, draw: (g, s) => { bow(g, BY + s, 3, 2); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 2 + s); hand(g, SX + 1, BY + 2 + s); } },
+    full:  { sink: 1, strain: true, draw: (g, s) => { bow(g, BY + s, 3, 3); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 3 + s); hand(g, SX + 1, BY + 3 + s); } },
+    loose: { draw: (g, s) => { bow(g, BY - 1, 1, -1); hand(g, SX - 3, BY); hand(g, SX + 2, BY + 3); } },
+    recoil:{ draw: (g, s) => { bow(g, BY - 1, 2, 0); hand(g, SX - 3, BY); hand(g, SX + 3, BY + 3); } },
+    settle:{ draw: (g, s) => { bow(g, BY, 2, 0); hand(g, SX - 3, BY + 1); hand(g, SX + 3, BY + 2); } },
+  },
+});
+
+// B: the quiver. A quiver on his back; the hand goes over his shoulder, draws
+// an arrow up and out, carries it over his head onto the string, then the same
+// stepped draw with a longer hold, the head catching a white glint on its last
+// beat -- the tell that it is about to go.
+const B = scene({
+  shots: 3,
+  back: (g, pose, s) => quiver(g, s, !['reach', 'pluck'].includes(pose)),
+  beats: [['reach', 0.12], ['pluck', 0.12], ['carry', 0.1], ['nock', 0.1], ['draw1', 0.07], ['draw2', 0.07], ['full', 0.3], ['glint', 0.12], ['loose', 0.07], ['recoil', 0.18]],
+  nockY: s => BY + 3 + s,
+  poses: {
+    ...common,
+    reach: { draw: (g, s) => { bow(g, BY + s, 2, 0); hand(g, SX - 3, BY + 1 + s); hand(g, HX, HY - 2 + s); } },
+    pluck: { draw: (g, s) => { bow(g, BY + s, 2, 0); hand(g, SX - 3, BY + 1 + s); for (let i = 0; i < 4; i++) cell(g, HX - 1 + i, HY - 3 - i + s, GREYS[10]); cell(g, HX + 3, HY - 7 + s, WHITE); hand(g, HX, HY - 3 + s); } },
+    carry: { draw: (g, s) => { bow(g, BY + s, 2, 0); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX + 1, BY - 1 + s); hand(g, SX + 2, BY - 1 + s); } },
+    nock:  { draw: (g, s) => { bow(g, BY + s, 2, 0); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 0 + s); hand(g, SX + 1, BY + 0 + s); } },
+    draw1: { draw: (g, s) => { bow(g, BY + s, 2, 1); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 1 + s); hand(g, SX + 1, BY + 1 + s); } },
+    draw2: { sink: 1, draw: (g, s) => { bow(g, BY + s, 3, 2); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 2 + s); hand(g, SX + 1, BY + 2 + s); } },
+    full:  { sink: 1, strain: true, draw: (g, s) => { bow(g, BY + s, 3, 3); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 3 + s); hand(g, SX + 1, BY + 3 + s); } },
+    glint: { sink: 1, strain: true, draw: (g, s) => { bow(g, BY + s, 3, 3); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 3 + s); hand(g, SX + 1, BY + 3 + s); cell(g, SX - 1, BY + s - 1, WHITE); cell(g, SX + 1, BY + s - 1, WHITE); } },
+    loose: { draw: (g, s) => { bow(g, BY - 1, 1, -1); hand(g, SX - 3, BY); hand(g, SX + 2, BY + 3); } },
+    recoil:{ draw: (g, s) => { bow(g, BY - 1, 2, 0); hand(g, SX - 3, BY); hand(g, SX + 3, BY + 3); } },
+  },
+  fly: { smear: 0.09 },
+});
+
+// C: the heave. No fetch shown -- the arrow is on the string as the bow comes
+// up -- but the draw is heavy: the bow comes down toward his head as his arms
+// bend, the limbs bend deepest, he sinks a cell and holds it long. The loose
+// throws the bow up two cells over its rest, the string twangs in two held
+// frames either side, and the smear runs the whole way to the hide.
+const C = scene({
+  shots: 3,
+  beats: [['nock', 0.12], ['draw1', 0.1], ['draw2', 0.1], ['full', 0.5], ['loose', 0.06], ['twangL', 0.07], ['twangR', 0.07], ['recoil', 0.14], ['settle', 0.12]],
+  nockY: s => BY + 3 + s,
+  poses: {
+    ...common,
+    nock:  { draw: (g, s) => { bow(g, BY + s, 2, 0); hand(g, SX - 3, BY + 1 + s); arrowUp(g, SX, BY + 0 + s); hand(g, SX + 1, BY + 0 + s); } },
+    draw1: { draw: (g, s) => { bow(g, BY + 1 + s, 2, 1); hand(g, SX - 3, BY + 2 + s); arrowUp(g, SX, BY + 2 + s); hand(g, SX + 1, BY + 2 + s); } },
+    draw2: { sink: 1, draw: (g, s) => { bow(g, BY + 1 + s, 3, 2, 4); hand(g, SX - 4, BY + 2 + s); arrowUp(g, SX, BY + 3 + s); hand(g, SX + 1, BY + 3 + s); } },
+    full:  { sink: 1, strain: true, draw: (g, s) => { bow(g, BY + 1 + s, 3, 2, 4); hand(g, SX - 4, BY + 2 + s); arrowUp(g, SX, BY + 3 + s, true); hand(g, SX + 1, BY + 3 + s); } },
+    loose: { draw: (g, s) => { bow(g, BY - 2, 1, -1); hand(g, SX - 3, BY - 1); hand(g, SX + 2, BY + 2); } },
+    twangL:{ draw: (g, s) => { bow(g, BY - 2, 2, 0); cell(g, SX - 1, BY - 1, GREYS[9]); hand(g, SX - 3, BY - 1); hand(g, SX + 3, BY + 2); } },
+    twangR:{ draw: (g, s) => { bow(g, BY - 1, 2, 0); cell(g, SX + 1, BY, GREYS[9]); hand(g, SX - 3, BY); hand(g, SX + 3, BY + 2); } },
+    recoil:{ draw: (g, s) => { bow(g, BY - 1, 2, 0); hand(g, SX - 3, BY); hand(g, SX + 3, BY + 2); } },
+    settle:{ draw: (g, s) => { bow(g, BY, 2, 0); hand(g, SX - 3, BY + 1); hand(g, SX + 3, BY + 1); } },
+  },
+  fly: { smear: FLY, k: 0.3, ring: true, lit: true },
+});
+
+const cur = CLASSES.find(c => c.key === 'ranger');
+const OPTIONS = [
+  { name: 'Now', about: 'The bench\'s Ranger today: the bow lifted, the string drawn in one pose, the arrow gone.', cls: cur, scene: cur.scenes[0] },
+  { name: 'A · Stepped draw', about: 'Fetch from the hip, nock, draw in two steps as the limbs bend and he sinks a cell, hold with strain ticks, loose with the string snapped up and a smear, held recoil.', scene: A },
+  { name: 'B · The quiver', about: 'A quiver on his back: over the shoulder, pluck, carry it up, nock; the same stepped draw with a longer hold and a white glint on the stave before the loose.', scene: B },
+  { name: 'C · The heave', about: 'Arrow already on the string; a heavy draw that pulls the bow down to his head, the head lit purple through a long hold; the bow thrown up on the loose, the string twanging in two held frames, the smear all the way to the hide.', scene: C },
+];
+const grid = document.getElementById('grid'), panes = [];
+for (const o of OPTIONS) {
+  const card = document.createElement('div'); card.className = 'card';
+  const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P;
+  const w = o.scene.windup != null ? `windup before the loose: <b>${o.scene.windup.toFixed(2)} s</b> (the game has 0.20 s)` : 'windup: 0.20 s';
+  card.innerHTML = `<h3>${o.name}</h3>`;
+  const about = document.createElement('p'); about.className = 'about'; about.textContent = o.about;
+  const beats = document.createElement('p'); beats.className = 'beats'; beats.innerHTML = w;
+  card.append(cv, about, beats); grid.append(card);
+  panes.push({ o, g: cv.getContext('2d'), cls: o.cls || { key: 'ranger' } });
+}
+let playing = true, speed = 1, clock = 0, last = performance.now();
+// Stand every pane at one moment, paused, to read a single held pose.
+window.standAt = t => { playing = false; clock = t; };
+document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+  speed = +b.dataset.speed;
+  for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+};
+(function tick(now) {
+  if (playing) clock += (now - last) / 1000 * speed;
+  last = now;
+  for (const p of panes) frame(p.g, p.cls, p.o.scene, clock % p.o.scene.dur);
+  requestAnimationFrame(tick);
+})(performance.now());
+</script>
+</body>
+</html>
