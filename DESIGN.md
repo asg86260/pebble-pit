@@ -16662,3 +16662,48 @@ it is settled first.
 **What it must not break.** Every scale is carried to the crusher by a body
 (nothing teleports). Every ladder stays a written table in `LADDERS`. The
 numbers land in config, and the model reads them from there.
+
+## A phase has a mechanic and a class answers it (design, not built)
+
+**The bargain.** Past the first, each phase does one thing to the party,
+warned ahead, and one class answers it. What sets the phases apart now is
+their heal, their depth and the classes they halve, so the fight plays the
+same four times at bigger numbers. A mechanic makes the party's make-up the
+decision: a party with the answer loses little, one without it pays in
+time. Nothing walls; every mechanic only costs uptime. Mock:
+docs/mocks/serpent-phases-2026-09-28.html.
+
+| phase | the mechanic | its warning | the answer |
+|---|---|---|---|
+| 1 bare | none: the wound against the heal | -- | -- |
+| 2 warded | **the surge**: the heal x3 for 6 s, every 45 s | the belly throbs purple 3 s | a stun in the warning spends the surge (the capstone stuns: Brawler, Monk, Ranger, Sapper) |
+| 3 split | **the lash**: a wave runs down the coil and throws off every melee fighter at the hide, every 30 s | the coil draws taut and the tail lifts, 1.5 s | the Hexer's Held in the warning: no lash |
+| 4 fading | **the sink**: he dims into the abyss for 8 s; nothing hits him and the heal runs | the dark gathers round him, 1 s | a burst banked before he sinks (the Assassin's execution, the Mage's finishing blow, a sticky charge) |
+
+- **The numbers are first guesses** (config, one block, on the dev panel):
+  the period, the warning, the length and the surge's multiple each.
+- **Nothing teleports.** A lashed fighter is thrown, sinks to the floor in
+  the deep's water (`SINK_PULL`), lies dazed `LASH_DAZE_S` and swims back
+  to its post. The sink is a full fade into the dark and out, the abyss's
+  veil flowing over the coil (render/serpent.js), never a pop.
+- **A warning is always drawn** on the coil, in the held-pose register
+  (animation feel: classic): a throb, a draw-up, the dark gathering. The
+  counts card's status line may say it in words.
+- **Stuns and Held already stop the heal**, so the surge's answer is the
+  built stun landing in the warning (`serpentStun`) and the lash's is the
+  built Held (`statuses.js`); only the sink asks something new of a class,
+  and only of the timing of what it already does.
+- **The heals and depths are solved again** once the mechanics are in the
+  model (`tools/node/deep-pace.mjs`, a mechanic as a share of uptime for a
+  party without its answer), so the hour stays an hour for a party that has
+  the answer and runs somewhat longer for one that does not.
+
+**Considered and not proposed:**
+- **A timed full heal** (break it in N minutes or the wound resets). With
+  the fight paced by the purse, a party a rung short would lose all it had
+  opened and wait again: a wall, not a fight. The softer form is a floor:
+  the wound never closes past the last quarter it reached. Open if a phase
+  wants more pressure.
+- **Debuffs on the fighters** (Slowed, Blinded so shots miss), with the
+  Bard's song clearing them. A good job for the Bard; kept for a later pass
+  so the first four each have one answer to learn.

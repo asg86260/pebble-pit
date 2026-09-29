@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Phase Mechanics</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; --purple: #6f36c9; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; --purple: #a979ef; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; --purple: #a979ef; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 16px; margin-top: 18px; }
+  .panel { background: var(--card); border: 1px solid var(--ink); padding: 10px; display: grid; gap: 6px; }
+  .panel h2 { font-size: 14px; margin: 0; }
+  .panel .say { font-size: 12px; color: var(--dim); min-height: 3.6em; }
+  canvas { width: 100%; height: auto; image-rendering: pixelated; background: #000; display: block; }
+  label { font-size: 12px; display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  .status { font-size: 12px; font-weight: bold; min-height: 1.4em; }
+  .status.hot { color: var(--purple); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Serpent Phase Mechanics</h1>
+  <p>One mechanic per phase, each answered by a class, so which fighters you picked matters. Phase 1 has none: it
+    teaches the wound against the heal. Tick a panel's box to see its answer land.</p>
+  <p>In each panel the white bar at the top is the wound, the purple + numbers are the heal, and the white numbers are hits.
+    Squares on plinths are fighters. Melee fighters (solid) fight at the hide, and ranged ones (outlined) shoot from
+    their plinth.</p>
+  <p class="dim">A mock drawn from plain shapes, not the game. Time runs about four times fast, one cycle every ten
+    seconds; in the game each mechanic comes round every 30 to 45 seconds. It cannot show the real coil's drawing, the
+    kits, sound, the stun's held sway on every body, or how the numbers feel over an hour.</p>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+// Cells of 4 px on a 96 x 58 grid: the game's P grid, shrunk.
+const C = 4, W = 96, H = 58, FLOOR = 52, CYCLE = 10;
+const GREY = ['#2a2a2e', '#55555c', '#8a8a92', '#b8b8c0', '#e8e8ee'];
+const PURPLE = '#a979ef', WHITE = '#f4f4f8';
+
+const PHASES = [
+  { key: 'bare', title: '1 · Bare — no mechanic',
+    say: 'The first phase has no mechanic, only the wound against the heal. The first fighter starts under the heal and gets past it a few rungs up.',
+    answer: null },
+  { key: 'surge', title: '2 · Warded — the heal surge',
+    say: 'Every ~45 s his belly throbs for 3 s, then he heals at triple rate for 6 s. A stun cancels the surge and spends it.',
+    answer: 'a Brawler’s haymaker stuns in the warning' },
+  { key: 'lash', title: '3 · Split — the lash',
+    say: 'Every ~30 s the coil draws taut for 1.5 s, then a lash runs down it and throws off every melee fighter at the hide. Each sinks to the floor, lies dazed 3 s, and swims back up. Ranged fighters are untouched.',
+    answer: 'a Hexer’s hex Holds him in the warning' },
+  { key: 'sink', title: '4 · Fading — the sink',
+    say: 'Every ~40 s he dims into the abyss for 8 s. Nothing can hit him down there, and the heal keeps running. He fades out and back in, never pops.',
+    answer: 'a burst lands just before he sinks' },
+];
+
+function makePanel(ph) {
+  const el = document.createElement('div');
+  el.className = 'panel';
+  el.innerHTML = `<h2>${ph.title}</h2><div class="say">${ph.say}</div>
+    <canvas width="${W * C}" height="${H * C}"></canvas>
+    <div class="status"></div>
+    ${ph.answer ? `<label><input type="checkbox"> with the answer: ${ph.answer}</label>` : ''}`;
+  document.getElementById('grid').appendChild(el);
+  const s = {
+    ph, el, ctx: el.querySelector('canvas').getContext('2d'), statusEl: el.querySelector('.status'),
+    box: el.querySelector('input'), t: 0, sway: 0, wound: 0.35, nums: [], shots: [], healTick: 0,
+    fighters: [
+      { home: 26, melee: true }, { home: 50, melee: true }, { home: 76, melee: false },
+    ].map(f => ({ ...f, x: f.home, y: f.melee ? 0 : FLOOR - 6, state: 'fight', cd: Math.random(), vx: 0, vy: 0, timer: 0 })),
+  };
+  s.fighters.forEach(f => { if (f.melee) f.y = hideY(s, f.x) + 3; });
+  return s;
+}
+
+// The coil's centerline at column x: a sway on its own clock, or a lash
+// running along it, or drawn taut in a warning.
+function coilY(s, x, t = s.sway) {
+  const u = (x - 6) / 84;
+  let amp = 3.5 * (s.taut != null ? 1 - s.taut : 1);
+  let y = 22 + amp * Math.sin(2 * Math.PI * (u * 2 + t / 3));
+  if (s.lashAt != null) {                                  // a bump running head to tail
+    const d = u - s.lashAt;
+    y += 10 * Math.exp(-d * d / 0.004);
+  }
+  if (s.taut != null && u > 0.8) y -= s.taut * (u - 0.8) * 40; // the tail lifts in the warning
+  return y;
+}
+const thick = x => { const u = (x - 6) / 84; return u < 0.06 ? 7 : u > 0.75 ? Math.max(2, 6 - (u - 0.75) * 16) : 6; };
+const hideY = (s, x) => coilY(s, x) + thick(x) / 2;
+
+function num(s, x, y, txt, color, big = false) { s.nums.push({ x, y, txt, color, age: 0, big }); }
+
+function step(s, dt) {
+  s.t += dt;
+  const c = s.t % CYCLE, on = s.box && s.box.checked, ph = s.ph.key;
+  const prevC = (s.t - dt) % CYCLE;
+  const crossed = at => prevC < at && c >= at;             // this frame passed moment `at` of the cycle
+  let healK = 1, frozen = false, hittable = true, status = 'fighting: the wound against the heal', hot = false;
+  s.taut = null; s.lashAt = null; s.alpha = 1; s.throb = 0;
+
+  if (ph === 'surge') {
+    if (crossed(6.2) && on) { s.stunUntil = s.t + 3.3; num(s, 26, coilY(s, 26) - 6, '48 ×3', WHITE, true); }
+    const stunned = s.stunUntil > s.t, spent = on && c >= 6.2;
+    if (stunned) { frozen = true; healK = 0; status = c >= 8 ? 'stunned: the surge is spent' : 'stunned in the warning'; }
+    else if (c >= 5 && c < 8 && !spent) { s.throb = (Math.sin(s.t * 14) + 1) / 2; status = 'the belly throbs: a surge is coming'; hot = true; }
+    else if (c >= 8 && !spent) { healK = 3; status = 'SURGE: the heal ×3'; hot = true; }
+  }
+  if (ph === 'lash') {
+    if (crossed(5.3) && on) { s.holdUntil = s.t + 3; s.shots.push({ x: 76, y: FLOOR - 6, tx: 76, age: 0, hex: true }); }
+    const held = s.holdUntil > s.t;
+    if (held) { frozen = true; healK = 0; status = 'Held: the lash never comes'; }
+    else if (c >= 5 && c < 6.5) { s.taut = Math.min(1, (c - 5) / 0.6); status = 'the coil draws taut: a lash is coming'; hot = true; }
+    else if (c >= 6.5 && c < 7.6) {
+      s.lashAt = (c - 6.5) / 1.1; status = 'the lash: melee fighters thrown off'; hot = true;
+      for (const f of s.fighters) if (f.melee && f.state === 'fight' && Math.abs((f.x - 6) / 84 - s.lashAt) < 0.05) {
+        f.state = 'flung'; f.vx = (Math.random() - 0.5) * 20; f.vy = 18;
+      }
+    }
+  }
+  if (ph === 'sink') {
+    if (crossed(5.6) && on) { num(s, 50, coilY(s, 50) - 7, '480', WHITE, true); s.wound = Math.min(0.95, s.wound + 0.22); }
+    if (c >= 5 && c < 6) { status = 'the dark gathers round him: he is about to sink'; hot = true; s.throb = (Math.sin(s.t * 10) + 1) / 4; }
+    if (c >= 6 && c < 9.2) {
+      const k = c < 7 ? c - 6 : c < 8.2 ? 1 : 1 - (c - 8.2);
+      s.alpha = 1 - 0.85 * k; hittable = k < 0.5;
+      status = hittable ? 'rising back out of the abyss' : 'in the abyss: nothing reaches him, he heals'; hot = !hittable;
+    }
+  }
+
+  if (!frozen) s.sway += dt;
+  // The heal, said once a second.
+  s.wound = Math.max(0, s.wound - 0.022 * healK * dt);
+  s.healTick += dt;
+  if (s.healTick >= 1) { s.healTick -= 1; if (healK > 0) num(s, 60, hideY(s, 60) + 4, '+' + Math.round(22 * healK), PURPLE, healK > 1); }
+
+  for (const f of s.fighters) {
+    if (f.state === 'fight') {
+      if (f.melee) f.y += (hideY(s, f.x) + 1 - f.y) * Math.min(1, dt * 8);
+      f.cd -= dt;
+      if (f.cd <= 0) {
+        f.cd = f.melee ? 1.2 : 0.8;
+        if (f.melee) { if (hittable) hit(s, f.x, 3); }
+        else s.shots.push({ x: f.x, y: f.y, tx: f.x, age: 0 });
+      }
+    } else if (f.state === 'flung') {
+      f.vy -= 30 * dt; f.x += f.vx * dt; f.y += Math.max(f.vy, 6) * dt;
+      if (f.y >= FLOOR - 4) { f.y = FLOOR - 4; f.state = 'dazed'; f.timer = 3; }
+    } else if (f.state === 'dazed') {
+      f.timer -= dt; if (f.timer <= 0) f.state = 'swim';
+    } else if (f.state === 'swim') {
+      const tx = f.home, ty = hideY(s, f.home) + 1, dx = tx - f.x, dy = ty - f.y, d = Math.hypot(dx, dy);
+      if (d < 0.6) f.state = 'fight'; else { const v = Math.min(d, 22 * dt); f.x += dx / d * v; f.y += dy / d * v; }
+    }
+  }
+  for (const sh of s.shots) {
+    sh.age += dt; sh.y -= 40 * dt;
+    if (!sh.done && sh.y <= hideY(s, sh.x)) {
+      sh.done = true;
+      if (sh.hex) num(s, sh.x, coilY(s, sh.x) - 6, 'Held', PURPLE, true);
+      else if (hittable) hit(s, sh.x, 2); else sh.miss = true;
+    }
+  }
+  s.shots = s.shots.filter(sh => !sh.done || (sh.miss && sh.age < 1.5));
+  for (const n of s.nums) { n.age += dt; n.y -= 3 * dt; }
+  s.nums = s.nums.filter(n => n.age < 1.1);
+  s.statusEl.textContent = status;
+  s.statusEl.classList.toggle('hot', hot);
+}
+
+function hit(s, x, d) {
+  s.wound = Math.min(0.95, s.wound + d * 0.0045);
+  num(s, x + (Math.random() - 0.5) * 4, coilY(s, x) - 5, String(d * 8), WHITE);
+}
+
+function draw(s) {
+  const g = s.ctx;
+  const cell = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x) * C, Math.round(y) * C, C, C); };
+  g.fillStyle = '#000'; g.fillRect(0, 0, W * C, H * C);
+  // Motes in the water, a tone each, drifting.
+  for (let i = 0; i < 70; i++) {
+    const x = (i * 37.3 + s.t * (0.6 + (i % 5) * 0.2)) % W, y = (i * 53.7) % (FLOOR - 2);
+    cell(x, y, GREY[i % 3]);
+  }
+  // The floor, and the plinths.
+  for (let x = 0; x < W; x++) for (let y = FLOOR; y < H; y++) cell(x, y, GREY[(x * 7 + y * 3) % 5 < 2 ? 0 : 1]);
+  for (const f of s.fighters) for (let dx = -3; dx <= 3; dx++) for (let dy = 1; dy <= 2; dy++) cell(f.home + dx, FLOOR - dy, GREY[dy === 2 ? 2 : 1]);
+  // The coil, dimmed into the abyss by `alpha`, with the veil over it when it is under.
+  g.globalAlpha = s.alpha;
+  for (let x = 6; x <= 90; x++) {
+    const y = coilY(s, x), t = thick(x);
+    for (let k = 0; k < t; k++) {
+      const tone = k === 0 ? 4 : k === t - 1 ? 2 : 3 - (((x + k) * 13) % 7 === 0 ? 1 : 0);
+      cell(x, y - t / 2 + k, GREY[tone]);
+    }
+  }
+  g.globalAlpha = 1;
+  if (s.alpha < 0.9) {
+    g.globalAlpha = (1 - s.alpha) * 0.9;
+    for (let x = 4; x <= 92; x += 1) {
+      const y = coilY(s, x) + Math.sin(x * 0.4 + s.t * 5) * 3;
+      if ((x + Math.floor(s.t * 8)) % 3) cell(x, y, PURPLE);
+    }
+    g.globalAlpha = 1;
+  }
+  // The belly throbbing before a surge, or the dark gathering before a sink.
+  if (s.throb > 0) {
+    g.globalAlpha = s.throb;
+    const bx = 56, by = coilY(s, 56);
+    for (let a = 0; a < 28; a++) { const r = 6 + s.throb * 3; cell(bx + Math.cos(a / 28 * 6.283) * r * 1.6, by + Math.sin(a / 28 * 6.283) * r * 0.7, PURPLE); }
+    g.globalAlpha = 1;
+  }
+  // The fighters.
+  for (const f of s.fighters) {
+    const lying = f.state === 'dazed';
+    const w = lying ? 4 : 3, h = lying ? 2 : 4;
+    for (let dx = 0; dx < w; dx++) for (let dy = 0; dy < h; dy++) {
+      const edge = dx === 0 || dy === 0 || dx === w - 1 || dy === h - 1;
+      if (f.melee || edge) cell(f.x - 1 + dx, f.y - h + dy + (lying ? 2 : 0), f.melee ? WHITE : GREY[3]);
+    }
+    if (lying && Math.floor(s.t * 3) % 2) cell(f.x + 1, f.y - 3, GREY[3]);   // a dazed blink over it
+  }
+  for (const sh of s.shots) if (!sh.done || sh.miss) {
+    g.globalAlpha = sh.miss ? Math.max(0, 1 - sh.age) : 1;
+    cell(sh.x, sh.y, sh.hex ? PURPLE : WHITE); cell(sh.x, sh.y + 1, sh.hex ? PURPLE : GREY[2]);
+    g.globalAlpha = 1;
+  }
+  // Numbers over the coil.
+  for (const n of s.nums) {
+    g.globalAlpha = Math.min(1, 2 * (1.1 - n.age));
+    g.fillStyle = n.color; g.font = `bold ${n.big ? 22 : 16}px ui-monospace, Consolas, monospace`;
+    g.fillText(n.txt, n.x * C - 10, n.y * C);
+    g.globalAlpha = 1;
+  }
+  // The wound bar.
+  g.strokeStyle = WHITE; g.lineWidth = 2; g.strokeRect(8, 8, W * C - 16, 12);
+  g.fillStyle = WHITE; g.fillRect(11, 11, (W * C - 22) * s.wound, 6);
+}
+
+const panels = PHASES.map(makePanel);
+let last = performance.now();
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  for (const s of panels) { step(s, still ? dt / 4 : dt); draw(s); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
