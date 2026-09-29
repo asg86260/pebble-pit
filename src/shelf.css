@@ -493,19 +493,6 @@
 @keyframes shelf-sway-x2 { 0% { --sway-x2: 0px; } 25% { --sway-x2: -1px; } 50% { --sway-x2: 0px; } 75% { --sway-x2: 1px; } 100% { --sway-x2: 0px; } }
 @keyframes shelf-sway-y2 { 0% { --sway-y2: 0px; } 25% { --sway-y2: -1px; } 50% { --sway-y2: 0px; } 75% { --sway-y2: 1px; } 100% { --sway-y2: 0px; } }
 body.still .rows.shelves > button.tile { transition: none; animation: none; }
-/* The picture drifts on its own, at rest or lifted: the tile's drift, on the
-   anchor rather than the canvas, since a tile being built swaps its canvas
-   every frame its hands move and each swap would start the loop over. Offset
-   by part of a turn so a lifted tile's picture does not move in step with its
-   plate. */
-.rows.shelves > .tile .pic {
-  transform: translate(calc(var(--sway-x) + var(--sway-x2)), calc(var(--sway-y) + var(--sway-y2)));
-  animation: shelf-sway-x  calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * -0.37) infinite var(--sway-dir, normal),
-             shelf-sway-y  calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1)) ease-in-out calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * -0.37) infinite var(--sway-dir, normal),
-             shelf-sway-x2 calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * 1.618) ease-in-out calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * -0.37) infinite var(--sway-dir, normal),
-             shelf-sway-y2 calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * 0.73) ease-in-out calc(var(--shelf-float-ms, 1200ms) * var(--sway-rate, 1) * -0.37) infinite var(--sway-dir, normal);
-}
-body.still .rows.shelves > .tile .pic { animation: none; }
 
 /* A job row or a dial: the same tile with a count between two buttons, or a
    picker, standing where the tag would. */
