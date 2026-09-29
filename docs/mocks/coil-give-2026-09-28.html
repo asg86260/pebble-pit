@@ -1,0 +1,230 @@
+<title>Coil Give</title>
+<style>
+/* Layout: one pane per way the coil answers a blow, the same blows in each:
+   a Brawler's punches and haymaker, a Ranger's arrows, a Mage's held beam.
+   Panes are the deep, black in either theme; the chrome follows the viewer. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Coil Give</h1>
+    <p>How the serpent's body answers a blow, five ways. In every pane: a Brawler under the coil punching, every third
+      a haymaker; a Ranger's arrows, each landing the moment it reaches the hide; a Mage's beam held on the coil, a
+      stream that only ever presses. The fighters' knock-back is on in all of them. A mock drawn from plain cells, not
+      the game: one stretch of coil, no bar, no numbers.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+(() => {
+  const P = 6, CW = 64, CH = 32, FLOOR = 29;
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                   '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+  const WHITE = GREYS[11];
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const cell = (g, x, y, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, P, P); };
+  const rect = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, Math.round(w) * P, Math.round(h) * P); };
+
+  // --- the blows in a loop -----------------------------------------------------------------
+  const BX = 14, RX = 32, MX = 50, LOOP = 4.8;
+  const BLOWS = [
+    { at: 0.5, x: BX, k: 0.3, who: 'b' }, { at: 1.3, x: BX, k: 0.3, who: 'b' }, { at: 2.3, x: BX, k: 0.9, who: 'b', big: true },
+    { at: 3.3, x: BX, k: 0.3, who: 'b' },
+    { at: 0.9, x: RX, k: 0.2, who: 'r' }, { at: 1.7, x: RX, k: 0.2, who: 'r' }, { at: 2.7, x: RX, k: 0.2, who: 'r' }, { at: 3.9, x: RX, k: 0.2, who: 'r' },
+  ];
+  const BEAM = { from: 1.0, to: 3.2, fin: 3.36 };   // held, ticking every 0.15 s, then the finishing blow
+  for (let u = BEAM.from + 0.075; u < BEAM.to; u += 0.15) BLOWS.push({ at: u, x: MX, k: 0.2, who: 'm', stream: true });
+  BLOWS.push({ at: BEAM.fin, x: MX, k: 0.6, who: 'm' });
+
+  const sway = (x, t) => 9 + 1.6 * Math.sin(x * 0.1 + t * 0.7);
+  const GIRTH = 3;
+  const stepAt = (u, steps) => { for (const [until, k] of steps) if (u < until) return k; return 0; };
+
+  // --- the five answers: each a function of the column and the time, in cells, + is down ----
+  const GIVES = [
+    { name: 'Now', about: 'As built: driven in two cells (three for a haymaker) and held, a beat past where it was, a beat short, rest; a bulge runs out both ways. The beam’s ticks only press.',
+      give(x, t) {
+        let y = 0;
+        for (const b of BLOWS) {
+          const u = t - b.at; if (u < 0 || u > 0.9) continue;
+          const depth = 1.4 + 2 * b.k, near = Math.exp(-((x - b.x) ** 2) / (2 * (1.2 + 2 * b.k) ** 2));
+          const k = b.stream ? (u < 0.16 ? 1 : 0) : stepAt(u, [[0.16, 1], [0.24, -0.4], [0.32, 0.2]]);
+          y -= Math.round(depth * near * k);
+          if (b.stream) continue;
+          const r = u * 40;
+          if (r < 14 && Math.abs(Math.abs(x - b.x) - r) < 1.5) y -= b.k > 0.7 ? 2 : 1;
+        }
+        return y;
+      } },
+    { name: 'A · Press and let go', about: 'Driven in and held two poses, then back a cell a pose to rest: no spring past it, no bulge. The weight is all in the hold.',
+      give(x, t) {
+        let y = 0;
+        for (const b of BLOWS) {
+          const u = t - b.at; if (u < 0 || u > 0.5) continue;
+          const depth = Math.round(1.4 + 2 * b.k), near = Math.exp(-((x - b.x) ** 2) / (2 * (1.2 + 2 * b.k) ** 2));
+          const k = b.stream ? (u < 0.16 ? 1 : 0) : u < 0.16 ? 1 : Math.max(0, 1 - Math.floor((u - 0.16) / 0.08 + 1) / depth);
+          y -= Math.round(depth * near * k);
+        }
+        return y;
+      } },
+    { name: 'B · A wave down the body', about: 'No pit at all: the blow lifts the hide a cell where it lands and the lift runs off along the body both ways, slowing and dying out, like a rope struck. A haymaker’s is two cells and runs further.',
+      give(x, t) {
+        let y = 0;
+        for (const b of BLOWS) {
+          if (b.stream) continue;
+          const u = t - b.at; if (u < 0 || u > 1) continue;
+          const r = 22 * Math.sqrt(u) , reach = b.k > 0.7 ? 20 : 12, far = Math.abs(x - b.x);
+          if (r < reach && Math.abs(far - r) < 2) y -= b.k > 0.7 && r < reach * 0.6 ? 2 : 1;
+        }
+        return y;
+      } },
+    { name: 'C · The body flinches', about: 'A broad stretch of the body round the blow is thrown up a cell (two for a haymaker) as one piece, held, and settles a pose later, as if the serpent flinched from it.',
+      give(x, t) {
+        let y = 0;
+        for (const b of BLOWS) {
+          if (b.stream) continue;
+          const u = t - b.at; if (u < 0 || u > 0.4) continue;
+          const reach = b.k > 0.7 ? 14 : 9, far = Math.abs(x - b.x);
+          if (far > reach) continue;
+          const lift = b.k > 0.7 ? 2 : 1, k = u < 0.16 ? 1 : u < 0.28 ? 0.5 : 0;
+          y = Math.min(y, -Math.round(lift * k * (far < reach * 0.6 ? 1 : 0.5) + 0.01));
+        }
+        return y;
+      } },
+    { name: 'D · A pit and a flinch', about: 'Both at once: a small pit driven in right under the blow, held, and the stretch round it thrown up a cell with it (the haymaker two), then all of it back at once. No spring past rest, no running bulge.',
+      give(x, t) {
+        let y = 0;
+        for (const b of BLOWS) {
+          const u = t - b.at; if (u < 0 || u > 0.4) continue;
+          const far = Math.abs(x - b.x);
+          if (b.stream) { if (u < 0.16 && far < 2) y -= 1; continue; }
+          const big = b.k > 0.7, pit = far < (big ? 2 : 1.5), reach = big ? 12 : 8;
+          if (pit && u < 0.2) y -= big ? 3 : 2;
+          else if (far <= reach && u < 0.24) y -= big ? 2 : 1;
+        }
+        return y;
+      } },
+  ];
+
+  // --- drawing ------------------------------------------------------------------------------
+  function coil(g, t, give) {
+    for (let x = 0; x < CW; x++) {
+      const dy = give(x, t), m = Math.round(sway(x, t)), top = m - GIRTH, bot = m + GIRTH;
+      for (let y = top; y <= bot; y++) {
+        const band = Math.floor((x + y - t * 3) / 5) % 3 === 0;
+        cell(g, x, y + dy, y === bot ? GREYS[8] : band ? PURPLES[9] : y === m ? GREYS[10] : WHITE);
+      }
+    }
+  }
+  const botAt = (x, t, give) => Math.round(sway(x, t)) + GIRTH + give(x, t);
+  function body(g, x, y) {
+    g.fillStyle = GREYS[6]; g.fillRect(Math.round(x) * P, Math.round(y) * P, 3 * P, 3 * P);
+    g.fillStyle = WHITE; g.fillRect(Math.round(x) * P + 2, Math.round(y) * P + 2, 3 * P - 4, 3 * P - 4);
+  }
+  function star(g, t, b, give) {
+    const u = t - b.at; if (u < 0 || u >= 0.16 || b.stream) return;
+    const y = botAt(b.x, b.at, give) + 1, r = b.big ? 3 : 2;
+    if (u < 0.08) { for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, 1], [0, -1]]) cell(g, b.x + dx, y + dy, WHITE);
+      for (let i = 1; i <= r; i++) for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) cell(g, b.x + dx * i, y + dy * i, i === r ? GREYS[10] : WHITE); }
+    else for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r]]) cell(g, b.x + dx, y + dy, GREYS[9]);
+  }
+  function brawler(g, t, give) {
+    const hang = Math.round(sway(BX, t)) + GIRTH + 4;
+    let y = hang, fy = hang - 1, near = null;
+    for (const b of BLOWS) if (b.who === 'b' && t >= b.at - 0.3 && t < b.at + 0.5) near = b;
+    if (near) {
+      const a = t - near.at;
+      if (a < -0.12) y = hang + 1;
+      else if (a < 0) fy = hang - 2;
+      else if (a < 0.16) fy = botAt(BX, near.at, give) + 1;
+      else if (a < 0.28) y = hang + (near.big ? 2 : 1);
+      else if (a < 0.38) y = hang + 1;
+    }
+    body(g, BX - 1, y);
+    cell(g, BX, fy, WHITE); for (let r = fy + 1; r < y; r++) cell(g, BX, r, GREYS[8]);
+  }
+  function ranger(g, t, give) {
+    const y = FLOOR - 3;
+    body(g, RX - 1, y);
+    for (let c = -3; c <= 3; c++) { cell(g, RX + c, y - 3 - Math.round(2 * (1 - (c / 3) ** 2)), GREYS[8]); cell(g, RX + c, y - 3, GREYS[9]); }
+    for (const b of BLOWS) {
+      if (b.who !== 'r') continue;
+      // the arrow flies to the hide's underside and lands the moment it gets there
+      const a = t - (b.at - 0.3); if (a < 0 || a >= 0.3) continue;
+      const hy = (y - 4) + (botAt(RX, t, () => 0) + 1 - (y - 4)) * (a / 0.3);
+      cell(g, RX, hy, WHITE); cell(g, RX, hy + 1, GREYS[10]); cell(g, RX, hy + 2, GREYS[8]);
+    }
+  }
+  function mage(g, t, give) {
+    const y = FLOOR - 3;
+    body(g, MX - 1, y);
+    if (t >= BEAM.from - 0.1 && t < BEAM.to) {
+      const top = botAt(MX, t, give) + 1;
+      for (let r = top; r < y - 1; r++) { cell(g, MX, r, WHITE); cell(g, MX - 1, r, PURPLES[11]); cell(g, MX + 1, r, PURPLES[11]); }
+    }
+    const u = t - BEAM.to;
+    if (u >= 0 && u < BEAM.fin - BEAM.to) { const r = y - 2 - (y - 2 - botAt(MX, t, give)) * (u / (BEAM.fin - BEAM.to)); rect(g, MX - 1, r, 3, 2, WHITE); }
+  }
+
+  const grid = document.getElementById('grid'), panes = [];
+  for (const o of GIVES) {
+    const card = document.createElement('div'); card.className = 'card';
+    const h = document.createElement('h2'); h.textContent = o.name;
+    const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P; cv.setAttribute('aria-label', o.name);
+    const p = document.createElement('p'); p.textContent = o.about;
+    card.append(h, cv, p); grid.append(card);
+    panes.push({ o, g: cv.getContext('2d') });
+  }
+  let playing = true, speed = 1, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  (function tick(now) {
+    if (playing) clock += (now - last) / 1000 * speed;
+    last = now;
+    const t = clock % LOOP;
+    for (const { o, g } of panes) {
+      const give = (x, tt) => o.give(x, tt);
+      g.fillStyle = GREYS[0]; g.fillRect(0, 0, CW * P, CH * P);
+      for (let i = 0; i < 24; i++) cell(g, (hash(i) * CW + t * 0.5) % CW, hash(i + 3) * FLOOR, GREYS[2 + Math.floor(hash(i + 5) * 3)]);
+      rect(g, 0, FLOOR, CW, CH - FLOOR, GREYS[2]);
+      coil(g, t, give);
+      for (const b of BLOWS) star(g, t, b, give);
+      brawler(g, t, give); ranger(g, t, give); mage(g, t, give);
+    }
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>
