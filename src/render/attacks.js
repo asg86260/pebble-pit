@@ -151,8 +151,10 @@ export function sauceOf(c, R, a, x) {
     const shift = gr.real - gr.at;
     if (aw == null && a < gr.real) aw = a - shift;
     else if (aw == null && a < gr.real + gr.pause) aw = gr.at;
-    // knocked back off the hide as the hit-pause lets go, held, then back a cell at a time
-    const u = a - gr.real - gr.pause, amt = DRAW_KICK.find(([k]) => gr.k >= k)?.[1] || 0;
+    // knocked back off the hide as the hit-pause lets go, held, then back a
+    // cell at a time; a stream's ticks (the beam) do not knock
+    const stream = gr.list.every(h => h.noPause);
+    const u = a - gr.real - gr.pause, amt = stream ? 0 : DRAW_KICK.find(([k]) => gr.k >= k)?.[1] || 0;
     if (amt && u >= 0 && u < DRAW_KICK_HOLD_S + DRAW_KICK_BACK_S)
       kick += u < DRAW_KICK_HOLD_S ? amt : Math.ceil(amt * (1 - (u - DRAW_KICK_HOLD_S) / DRAW_KICK_BACK_S));
   }
@@ -166,7 +168,7 @@ export function sauceOf(c, R, a, x) {
 }
 // The coil's give under this turn's contacts: where and how hard, and when
 // each landed, in world seconds (`t` now, `a` the raw clock).
-export const dentsOf = (S, t, a) => S.groups.flatMap(gr => gr.list.filter(h => h.dent !== false).map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) })));
+export const dentsOf = (S, t, a) => S.groups.flatMap(gr => gr.list.filter(h => h.dent !== false).map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real), stream: !!h.noPause })));
 // The held star at each contact, under the fighter so the fist or blade reads on top.
 export function sparksOf(g, S, t, a) {
   for (const gr of S.groups) for (const h of gr.list) {

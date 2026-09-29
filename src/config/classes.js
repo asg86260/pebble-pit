@@ -56,7 +56,7 @@ export const CLASSES = {
               every: 0.5, windup: 0.08, pips: { max: 5, fill: 1, moveFill: 2 }, finisherX: 1.5, capHaste: 1 },
   // Arrows loosed from a bow held over the head; every 5th aimed, x2, stunning at 8.
   ranger:   { name: 'Ranger',         ladder: 'ranger',   hit: 'ranger',   melee: false,
-              every: 0.8, windup: 0.2, fly: 0.5, arc: P * 12, aimed: { every: 5, x: 2 }, capStun: 1 },
+              every: 0.8, windup: 0.2, fly: 0.5, aimed: { every: 5, x: 2 }, capStun: 1 },
   // Daggers from close by: she comes in to `standoff` under the hide and,
   // once within `range` of that spot, drifts after the sway at `drift` of a
   // swim -- nearly still -- while each dagger travels. At the capstone each

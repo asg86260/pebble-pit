@@ -24,3 +24,20 @@ group('a sword contact dents the coil once', () => {
   }
   return out;
 });
+
+// A held beam bites the hide every tick, a stream and not a string of blows:
+// the Mage is never knocked back by a tick, and
+// every tick's give is marked a stream's (render/serpent.js presses it in and
+// nothing more).
+group("a beam's ticks neither knock the Mage back nor spring the coil", () => {
+  const out = [];
+  for (const R of [0, 4, 8]) {
+    const c = ATTACKS.mage, B = c.BEAM, kicks = [];
+    for (let a = B.start; a < c.end(R) - B.surge; a += 0.01) kicks.push(sauceOf(c, R, a, 10).kick);
+    const dents = dentsOf(sauceOf(c, R, 0, 10), 0, 0);
+    out.push(ok(kicks.every(k => k === 0), `rung ${R}: no knock while the beam is held`, `${Math.max(...kicks)} cells at most`),
+             ok(dents.filter(d => !d.stream).length === 1 && dents.filter(d => d.stream).length > 3,
+                `rung ${R}: one blow's give, and the rest a stream's`, `${dents.filter(d => d.stream).length} ticks`));
+  }
+  return out;
+});

@@ -95,7 +95,11 @@ function dentAt(cx, t, dents) {
     const u = t - d.t0;
     if (u < 0 || u > DENT_S) continue;
     const w = DENT_W[0] + DENT_W[1] * d.k, fall = Math.exp(-((cx - d.x) ** 2) / (2 * w * w));
-    off -= Math.round((DENT_DEPTH[0] + DENT_DEPTH[1] * d.k) * fall * stepOf(u));
+    // a stream's tick (the beam) only presses: it neither springs back past
+    // nor runs a bulge, or a held beam would set the whole coil jumping
+    const k = d.stream ? (u < DENT_STEPS[0][0] ? DENT_STEPS[0][1] : 0) : stepOf(u);
+    off -= Math.round((DENT_DEPTH[0] + DENT_DEPTH[1] * d.k) * fall * k);
+    if (d.stream) continue;
     const r = u * DENT_RUN, far = Math.abs(cx - d.x);
     if (r < DENT_RUN_REACH && Math.abs(far - r) < 1.5) off -= d.k > DENT_RUN_BIG ? 2 : 1;
   }
