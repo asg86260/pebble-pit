@@ -87,7 +87,7 @@ group('the heal says what it closed, once a second, in its own entries', async (
   // The ward's heal on a wound deep enough not to close in the watch, and
   // nobody fighting: every entry is the heal's.
   window.__snatch({ played: true });
-  window.__serpent({ stage: 1, wound: 400 });
+  window.__serpent({ stage: 1, wound: SERPENT_HEAL[1] * 10 });
   window.__deepCrew();
   const said = [];
   frames(6.5, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
@@ -97,8 +97,9 @@ group('the heal says what it closed, once a second, in its own entries', async (
     ok(said.length >= 5 && said.length <= 7, 'about one a second', said.length),
     ok(gaps.every(g => Math.abs(g - NUM_HEAL_EVERY_S * 1000) <= 20), 'a second apart', JSON.stringify(gaps)),
     // The first second is on the heal's own clock, begun before the ward was
-    // set, so it is part of one; every one after is whole.
-    ok(said.slice(1).every(h => Math.abs(h.done - each) < 0.5), "each the wound the heal closed in its second",
+    // set, so it is part of one; every one after is whole, give or take the
+    // one frame's heal a second's edge can fall either side of.
+    ok(said.slice(1).every(h => Math.abs(h.done - each) <= SERPENT_HEAL[1] / 60 + 1e-6), "each the wound the heal closed in its second",
        JSON.stringify(said.map(h => h.done.toFixed(2)))),
     ok(S.hits.every(h => h.weapon === 'heal'), 'and nothing else struck')
   ];

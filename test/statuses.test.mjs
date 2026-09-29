@@ -7,7 +7,7 @@
 // lay Held the player's way.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_HEAL, SERPENT_DEFENSE, EXPOSED_AMP, AMP_MAX, HEAL_CUT_MAX, HASTE,
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, EXPOSED_AMP, AMP_MAX, HEAL_CUT_MAX, HASTE,
          CLASSES } from '../src/config.js';
 import { strike, healNow } from '../src/deep/serpent.js';
 import { lay, has, level, ampOf, inspire, haste, tempo } from '../src/deep/statuses.js';
@@ -131,7 +131,7 @@ group('a status laid again keeps the longer and the stronger; a break takes them
   const kept = { until: S.statuses.weakened.until, k: level('weakened') };
   lay('exposed', EXPOSED_AMP, 30);
   const p = belly();
-  strike('mage', 900, p.x, p.y);
+  strike('mage', SERPENT_WOUND[1], p.x, p.y);
   frame();
   return [
     ok(kept.until === long && kept.k === 0.4, 'the longer and the stronger stand', JSON.stringify(kept)),

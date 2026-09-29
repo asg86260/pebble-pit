@@ -84,9 +84,16 @@ export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this 
 
 // --- the fight ---------------------------------------------------------------------
 // Four defenses, one a stage. The wound is held open against the heal and
-// breaks the stage at its depth; the fourth depth is the belly.
-export let SERPENT_HEAL = [1, 6, 20, 60];           // wound a second it closes, a stage
-export let SERPENT_WOUND = [60, 900, 6000, 30000];  // the depth that breaks it, a stage
+// breaks the stage at its depth; the fourth depth is the belly. Solved by
+// `tools/node/deep-pace.mjs --gather 4 --solve 8,22,40,60 --heals 8`
+// (DESIGN.md, "The deep is paced by its purse"). The first heal is one the
+// first fighter out-hits alone two or three rungs up, so the first stage
+// starts slow and then gives; every later heal is what the party does two
+// rungs short of where it stands at the break. A depth is what the party
+// opens against its heal by the minute it breaks.
+export let SERPENT_HEAL = [8, 86, 176, 238];                  // wound a second it closes, a stage
+export const SERPENT_DEPTHS = [32000, 73000, 191000, 350000]; // the depth that breaks it, a stage
+export let SERPENT_WOUND = SERPENT_DEPTHS.slice();           // and as the dev panel has scaled it
 // How hard each defense is on each hit: a multiplier, a phase. Every class
 // that does damage takes half in one phase and the whole in the rest, so no
 // class walls and none is the answer to everything (docs/wave-party.md). The
@@ -135,7 +142,6 @@ export const HASTE = 0.2;            // Hasted: this much more often
 // the water on the deep's own gravity and settle on its floor, which is the
 // deep's purse: a scale is counted when it lands, like a grain in the pit.
 export const SCALE_PER_DMG = 1;      // scales a unit of damage sheds
-export const SCALE_HIT_MAX = 12;     // and at most this many off one hit, the rest counted as they land nearby
 export const DUST_PER_SCALE = 10;    // what a scale is worth against dust (DUST_PER in upgrades/price.js)
 export const DEEP_BED_ROWS = 40;     // the floor's plot of scales: this many cells deep at most
 export const DEEP_BED_BRIM = 4;      // rows short of that the floor counts as full (the pile-full mark)
@@ -208,17 +214,17 @@ export const DEEP_REST_SILT = 4;                  // silt a landing kicks up
 export const DOT_TICK_S = 0.5;
 
 export const DEEP_KNOBS = [
-  { key: 'SERPENT_HEAL_1', label: 'serpent heal, bare', min: 0, max: 20, step: 0.5,
+  { key: 'SERPENT_HEAL_1', label: 'serpent heal, bare', min: 0, max: 300, step: 1,
     get: () => SERPENT_HEAL[0], set: v => { SERPENT_HEAL = [v, ...SERPENT_HEAL.slice(1)]; } },
-  { key: 'SERPENT_HEAL_2', label: 'serpent heal, warded', min: 0, max: 100, step: 1,
+  { key: 'SERPENT_HEAL_2', label: 'serpent heal, warded', min: 0, max: 400, step: 1,
     get: () => SERPENT_HEAL[1], set: v => { SERPENT_HEAL = [SERPENT_HEAL[0], v, ...SERPENT_HEAL.slice(2)]; } },
-  { key: 'SERPENT_HEAL_3', label: 'serpent heal, split', min: 0, max: 300, step: 5,
+  { key: 'SERPENT_HEAL_3', label: 'serpent heal, split', min: 0, max: 800, step: 5,
     get: () => SERPENT_HEAL[2], set: v => { SERPENT_HEAL = [...SERPENT_HEAL.slice(0, 2), v, SERPENT_HEAL[3]]; } },
   { key: 'SERPENT_HEAL_4', label: 'serpent heal, fading', min: 0, max: 1000, step: 10,
     get: () => SERPENT_HEAL[3], set: v => { SERPENT_HEAL = [...SERPENT_HEAL.slice(0, 3), v]; } },
   { key: 'SERPENT_WOUND_SCALE', label: 'serpent wound depths, x', min: 0.1, max: 5, step: 0.1,
-    get: () => SERPENT_WOUND[0] / 60,
-    set: v => { SERPENT_WOUND = [60, 900, 6000, 30000].map(d => Math.round(d * v)); } },
+    get: () => SERPENT_WOUND[0] / SERPENT_DEPTHS[0],
+    set: v => { SERPENT_WOUND = SERPENT_DEPTHS.map(d => Math.round(d * v)); } },
   { key: 'STUN_SHARE', label: 'stun, share of the depth a blow needs', min: 0.005, max: 1, step: 0.005,
     get: () => STUN_SHARE, set: v => { STUN_SHARE = v; } },
   { key: 'STUN_BASE_S', label: 'stun, seconds at the share', min: 0.2, max: 10, step: 0.1,

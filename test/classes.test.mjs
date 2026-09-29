@@ -1,7 +1,7 @@
 // The ten classes (docs/wave-party.md, "Classes"): one group a class. Each
 // is bought at its station the player's way -- the board's rows, rung by
 // rung, the class taken at the fork (DESIGN.md, "A fighter branches at rung
-// 4") -- and is followed at work: its attack alone breaks the bare coil
+// 4") -- and is followed at work: its attack alone opens the bare coil
 // (every class but the Bard, who does no damage), its rung-4 move happens,
 // and its rung-8 capstone.
 //
@@ -10,14 +10,14 @@
 // (party.test.mjs); that the rails fold and Reset refunds is BOARD's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, STUN_MAX_S, HASTE, FORK_RUNG } from '../src/config.js';
+import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG } from '../src/config.js';
 import { climb, reset, openEveryClass } from './party-press.mjs';
 import { shots } from '../src/deep/arms.js';
 import { coilAt } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 import { rungWorth, stationOf, stationX } from '../src/deep/classes.js';
 import { keyOf } from '../src/deep/party.js';
-import { has, level, hasted, inspiredK } from '../src/deep/statuses.js';
+import { has, level, hasted, inspiredK, lay, clearStatuses } from '../src/deep/statuses.js';
 
 const S = yard.S;
 
@@ -64,20 +64,26 @@ function watch(s, i = 0, each = () => {}) {
 const count = (list, m) => list.filter(x => x === m).length;
 
 // Alone at its first rung -- 1 for the class its kind's base unit fights as,
-// the fork's for the other -- against the bare coil at its heal: broken
-// inside `limit`.
-function breaksAlone(kind, cls, limit = 120) {
+// the fork's for the other -- its attack opens the bare coil. The heal is
+// held off: at its first rung no fighter alone out-hits the heal, which is
+// the pacing (DESIGN.md, "The deep is paced by its purse",
+// tools/node/deep-pace.mjs), and this is about the attack landing.
+function breaksAlone(kind, cls, s = 20) {
   party([kind]);
   const first = PAIRS[kind][0] === cls ? 1 : FORK_RUNG;
   buyTo(0, cls, first);
-  const broke = runUntil(() => S.serpentStage >= 1, limit);
-  return ok(broke, `a ${CLASSES[cls].name} alone at rung ${first} breaks the bare coil`,
+  lay('held', 1, s + 1);
+  run(s);
+  const opened = ok(S.serpentWound > 0 || S.serpentStage >= 1, `a ${CLASSES[cls].name} alone at rung ${first} opens the bare coil`,
             `stage ${S.serpentStage}, wound ${S.serpentWound.toFixed(1)}`);
+  clearStatuses();                      // the hold was the setup's, not the class's
+  return opened;
 }
 
 group("a station with no class fights as its base unit, its pair's first class", async () => {
   party(['altar']);
   const w = fighterAt(0);
+  lay('held', 1, 11);                   // its punches are under the heal; see `breaksAlone`
   const seen = watch(10);
   return [
     ok(w && stationOf(w) === S.stations[0], 'the fighter is tied to its station'),
@@ -185,7 +191,8 @@ group('Martial Artist: thrusts fill a row, a full row is a finisher; Flow fills 
   const alone = breaksAlone('well', 'martial');
   const pp = CLASSES.martial.pips;
   window.__serpent({ stage: 3, wound: 0 });
-  const base = watch(4);
+  // Several rows long, so where the watch starts in a row cannot tip the share.
+  const base = watch(8);
   const fin = seen => count(seen.moves, 'finisher') / Math.max(1, seen.moves.length);
   // A row without Flow is a finisher every max/fill + 1 moves; with it, sooner.
   const plainShare = 1 / (pp.max / pp.fill + 1);
@@ -251,7 +258,7 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
   // frame of it.
   const at = wound => { const set = () => { S.serpentWound = wound; }; set(); return set; };
   const shallow = done(watch(4, 0, at(0)), 'assassin');
-  const deep = done(watch(4, 0, at(15000)), 'assassin');
+  const deep = done(watch(4, 0, at(SERPENT_WOUND[3] / 2)), 'assassin');
   buyTo(0, 'assassin', 8);
   let bled = false;
   watch(4, 0, () => { at(0)(); bled = bled || has('bleed'); });

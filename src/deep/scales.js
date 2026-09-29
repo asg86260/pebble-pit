@@ -49,7 +49,11 @@ export function crush(n, income = true) {
 // `spray` ({ dir, k }) sends them out of the edge it bit -- up for -1, down
 // for 1 -- in a fan, faster for a bigger blow (`k`, 0..1); without one they
 // drift off in a little cloud of their own, the way a held weapon bleeds them.
+// No more are let go than the bed has room for, counting those already in
+// the water: past that a scale has nowhere to lie and is lost to the dark
+// (`stepScales`), so it would be a fall drawn for nothing.
 export const shed = (x, y, n, spray = null) => {
+  if (deepBed.grid) n = Math.min(n, deepBed.cols * deepBed.rows - deepBed.n - S.sinking.length);
   for (let i = 0; i < n; i++) {
     let vx, vy;
     if (spray) {

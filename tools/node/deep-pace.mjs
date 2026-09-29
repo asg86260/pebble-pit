@@ -6,7 +6,9 @@
 //   node tools/node/deep-pace.mjs                    # the breaks, config as written
 //   node tools/node/deep-pace.mjs --gather 4         # at a banked rate, scales a second
 //   node tools/node/deep-pace.mjs --solve 8,22,40,60 # the depths that break at these minutes
+//   node tools/node/deep-pace.mjs --solve 8,22,40,60 --heals 8   # a heal given, the rest solved
 //   node tools/node/deep-pace.mjs --party sword,assassin,sapper,hexer
+//   node tools/node/deep-pace.mjs --depths 9000,73000,191000,350000 --heals 65,86,176,238
 //   node tools/node/deep-pace.mjs --table            # a class's damage and shed, rung by rung
 //
 // What it leaves out: the dust, ore and spark on a rung's bill, the rung's
@@ -15,7 +17,7 @@
 
 import { LADDERS } from '../../src/config/rungs.js';
 import { CLASSES } from '../../src/config/classes.js';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DMG, SCALE_HIT_MAX,
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DMG,
          CLICK_DMG } from '../../src/config/deep.js';
 
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
@@ -32,13 +34,13 @@ const tempo = c => (c === 'mage' ? 1 : CLASSES[c].every);   // the beam's ladder
 const moveK = (c, r) => (r >= 8 ? MOVE[c][1] : r >= 4 ? MOVE[c][0] : 1);
 const hit = (c, r, st) => LADDERS[c].value[r] * SERPENT_DEFENSE[c][st] * moveK(c, r);
 const dps = (c, r, st) => hit(c, r, st) / tempo(c);
-// Scales shed a second: a hit sheds its damage, but no more than the cap.
-const shed = (c, r, st) => dps(c, r, st) * Math.min(1, SCALE_HIT_MAX / (hit(c, r, st) * SCALE_PER_DMG)) * SCALE_PER_DMG;
+// Scales shed a second: a hit sheds its damage.
+const shed = (c, r, st) => dps(c, r, st) * SCALE_PER_DMG;
 const cost = (c, r) => LADDERS[c].dust[r];
 
 // A second at a time. `depth` is the four depths; `ends`, if given, fixes the
 // minute each stage breaks and the depth is read off instead.
-function fight(depth, ends) {
+function fight(depth, ends, heal = SERPENT_HEAL) {
   let st = 0, wound = 0, purse = 0, loose = 0, stood = 1;
   const rung = party.map(() => 0), made = [0, 0, 0, 0], at = [];
   for (let t = 0; st < 4 && t < 86400 * 3; t++) {
@@ -46,8 +48,8 @@ function fight(depth, ends) {
     for (let i = 0; i < stood; i++) { d += dps(party[i], rung[i], st); y += shed(party[i], rung[i], st); }
     loose += y;
     const g = Math.min(loose, gather); loose -= g; purse += g;
-    made[st] += Math.max(0, d - SERPENT_HEAL[st]);
-    wound = Math.max(0, wound + d - SERPENT_HEAL[st]);
+    made[st] += Math.max(0, d - heal[st]);
+    wound = Math.max(0, wound + d - heal[st]);
     for (;;) {                                   // the cheapest rung standing, while the purse holds it
       let b = -1, bc = Infinity;
       for (let i = 0; i < stood; i++) if (rung[i] < 8 && cost(party[i], rung[i]) < bc) { bc = cost(party[i], rung[i]); b = i; }
@@ -55,7 +57,7 @@ function fight(depth, ends) {
       purse -= bc; rung[b]++;
     }
     const broke = ends ? t + 1 >= ends[st] * 60 : wound >= depth[st];
-    if (broke) { at.push({ min: (t + 1) / 60, rungs: rung.slice(0, stood).join('') }); st++; wound = 0; stood = Math.min(party.length, stood + 1); }
+    if (broke) { at.push({ min: (t + 1) / 60, rung: rung.slice(0, stood), rungs: rung.slice(0, stood).join('') }); st++; wound = 0; stood = Math.min(party.length, stood + 1); }
   }
   return { at, made, loose };
 }
@@ -67,13 +69,24 @@ if (process.argv.includes('--table')) {
   console.log('\nscales shed a second, by rung');
   for (const c of Object.keys(MOVE)) console.log(c.padEnd(9), LADDERS[c].value.map((_, r) => shed(c, r, 0).toFixed(1).padStart(7)).join(''));
 } else if (arg('--solve')) {
+  // The rungs bought by each break hang on the purse alone, so they are read
+  // first; a stage's heal is what the party two rungs short of them does, so
+  // the last two rungs are the ones that open the wound; and the depth is
+  // what the party opens against that heal by the minute it breaks.
   const ends = arg('--solve').split(',').map(Number);
-  const r = fight(null, ends);
+  const short = rung => Math.max(0, rung - 2);
+  const given = arg('--heals') ? arg('--heals').split(',').map(Number) : [];
+  const heal = fight(null, ends).at.map(({ rung }, st) => given[st] > 0 ? given[st] :
+    Math.round(clicks * CLICK_DMG[short(rung[0])] + rung.reduce((h, r, i) => h + dps(party[i], short(r), st), 0)));
+  const r = fight(null, ends, heal);
   console.log(`party ${party.join('+')}, banked ${gather}/s, breaks at ${ends.join(' / ')} min`);
+  console.log('heals ', heal.join(' / '));
   console.log('depths', r.made.map(x => Math.round(x / 1000) + 'k').join(' / '));
   console.log('rungs at each break', r.at.map(a => a.rungs).join('  '));
 } else {
-  const r = fight(SERPENT_WOUND);
+  // `--depths` and `--heals` try numbers before they go in config.
+  const list = (k, dflt) => (arg(k) ? arg(k).split(',').map(Number) : dflt);
+  const r = fight(list('--depths', SERPENT_WOUND), null, list('--heals', SERPENT_HEAL));
   console.log(`party ${party.join('+')}, banked ${gather}/s`);
   for (const [i, a] of r.at.entries()) console.log(`stage ${i + 1} breaks at ${min(a.min)} min, rungs ${a.rungs}`);
   console.log(`left loose on the floor: ${Math.round(r.loose)}`);

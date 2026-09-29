@@ -12,14 +12,21 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
-## The deep is paced by its purse -- DESIGNED, AWAITING THE VOTE (2026-09-28)
+## The deep is paced by its purse -- BUILT, TUNING OPEN (2026-09-28)
 
 "The deep is paced by its purse" in DESIGN.md; the model is
-`tools/node/deep-pace.mjs`. The fight is under three minutes as written and
-gatherers bank a tenth of what the party sheds. Blocked on the owner's calls:
-(a) the gatherers keep the hauler's ladders or get their own; (b) breaks at
-about 8 / 22 / 40 / 60 minutes; (c) the shed cap climbing with the rung or
-going. No game code yet.
+`tools/node/deep-pace.mjs`. Heals 8 / 86 / 176 / 238, depths 32k / 73k /
+191k / 350k, the shed cap gone, gatherers taking the nearest load. Open:
+- **Nobody has played it.** The hour is the model's: 4 scales a second
+  banked, two clicks a second, and each class's move worth a guessed
+  multiple of its hit (`MOVE` in the tool). Bills in dust, ore and sparks,
+  build time and the fang's carry are left out.
+- **The banked rate is the load-bearing guess.** Four gatherers bank about
+  5 a second off a thick floor, falling to 3; 3 a second makes it 71
+  minutes, 5 makes it 52.
+- **A party halved in one stage walls there.** Sword, Assassin and Sapper
+  all take half in the split; that party reaches the fourth stage at 50
+  minutes and frees him at 70.
 
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 
@@ -29,12 +36,6 @@ Open:
   src/config/deep.js; a dev build and the node yard still play it. Turning
   it on is that line plus moving CHANGELOG.md's "Held back" lines under
   Unreleased.
-- **The heals and depths are far too kind.** Measured with every door open:
-  bare ladders and half the deep's caps free him in ~16 min, full ladders
-  and full caps in 20 s. In play the doors gate each stage, so the length
-  is mostly the scales a door and a rung cost; tune `SERPENT_HEAL`,
-  `SERPENT_WOUND`, the doors' bills and `SCALE_PER_DMG` together against
-  the first half's length (the dev panel has the heals and a depth scale).
 - **Glyphs.** The fifteen deep rows and the hop's five arrows borrow
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
 - **The sheet before the snatch** still says it is the end of the story.

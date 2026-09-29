@@ -11,7 +11,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DMG, SCALE_HIT_MAX,
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, SCALE_PER_DMG,
          NUM_HELD_S, NUM_HEAL_EVERY_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S, NUM_FOLD_R,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
@@ -99,7 +99,7 @@ export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   // Held at the stage's depth rather than over it: the break is the frame's
   // (`stepSerpent`), and a wound past its depth is a number nothing draws.
   if (S.serpentStage <= LAST) S.serpentWound = Math.min(depth(), S.serpentWound + done);
-  const n = Math.min(SCALE_HIT_MAX, Math.max(1, Math.round(done * SCALE_PER_DMG)));
+  const n = Math.max(1, Math.round(done * SCALE_PER_DMG));
   if (o.tick) shed(x, y, n);
   else {
     const blow = from ? (from.dealt = (from.dealt || 0) + done) : done;

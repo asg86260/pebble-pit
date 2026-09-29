@@ -39,17 +39,18 @@ group('the wound opens under clicks on the coil and closes when nothing strikes'
   const p = belly();
   const missed = clickDeep(p.x, deepFloor() - 2);
   const woundMissed = S.serpentWound;
-  for (let i = 0; i < 10; i++) clickBelly();
+  // Enough clicks at once that three seconds of the heal cannot close them.
+  const punch = clickDmg(), clicks = Math.ceil(SERPENT_HEAL[0] * 6 / punch);
+  for (let i = 0; i < clicks; i++) clickBelly();
   const opened = S.serpentWound;
   run(3);
   const closing = S.serpentWound;
   run(10);
-  const punch = clickDmg();
   return [
     ok(!missed && woundMissed === 0, 'a click on the floor is not a click on the serpent',
        `answered ${missed}, wound ${woundMissed}`),
-    ok(Math.abs(opened - 10 * punch) < 1e-9, 'ten clicks on the coil open it ten punches deep',
-       `wound ${opened}, a punch ${punch}`),
+    ok(Math.abs(opened - clicks * punch) < 1e-9, 'each click on the coil opens it a punch deeper',
+       `wound ${opened}, ${clicks} punches of ${punch}`),
     ok(closing < opened && closing > 0, 'and it closes at the heal', `${opened} then ${closing} three seconds on`),
     ok(S.serpentWound === 0, 'and left alone it closes altogether', `${S.serpentWound}`),
     ok(S.serpentStage === 0, 'and nothing broke', `stage ${S.serpentStage}`)
@@ -84,11 +85,13 @@ group('a hand slower than the heal never opens it, a faster one breaks the stage
     most = Math.max(most, S.serpentWound);
   }
   const slowStage = S.serpentStage;
-  // Faster: four times the heal a second, until the depth.
-  const fastEvery = Math.max(1, Math.round(60 * punch / (heal * 4)));
+  // Faster: four times the heal a second, or enough to reach the depth in a
+  // minute if that is more, until the depth -- several clicks a frame when a
+  // punch is small against either.
+  const fastEach = Math.ceil(Math.max(heal * 4, SERPENT_WOUND[0] / 60) / (punch * 60));
   let frames = 0;
   while (S.serpentStage === 0 && frames < 60 * 120) {
-    if (frames % fastEvery === 0) clickBelly();
+    for (let i = 0; i < fastEach; i++) clickBelly();
     frame();
     frames++;
   }
@@ -97,7 +100,7 @@ group('a hand slower than the heal never opens it, a faster one breaks the stage
        `deepest ${most.toFixed(2)}, a punch ${punch}`),
     ok(slowStage === 0, 'and the stage stands', `stage ${slowStage}`),
     ok(S.serpentStage === 1, 'over the heal it opens to the depth and breaks', `stage ${S.serpentStage} after ${frames} frames`),
-    ok(frames / 60 >= SERPENT_WOUND[0] / (heal * 4),
+    ok(frames / 60 >= SERPENT_WOUND[0] / (fastEach * punch * 60),
        'and no sooner than the depth over the rate allows',
        `${(frames / 60).toFixed(1)}s against a depth of ${SERPENT_WOUND[0]}`)
   ];

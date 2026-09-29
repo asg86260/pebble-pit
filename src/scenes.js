@@ -201,7 +201,8 @@ const shieldBuilt = kind => {
 // A yard the serpent has come for: every site built, the snatch behind it,
 // the sqwife back down there as the deep's one resident (`__crew` sends the
 // whole crew up top), `spare` residents more, the party, the fight at
-// `stage`, scales on the floor, and the view.
+// `stage` with its wound held at `wound`, a share of its depth, scales on
+// the floor, and the view.
 function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scales = 400, loose = 0,
                     view = 'deep', run = 20 } = {}) {
   rich();
@@ -215,13 +216,13 @@ function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scal
   if (party.length) window.__deepCrew({ spare: 1 });
   window.__scales(scales);
   if (loose) window.__looseScales(loose);
-  window.__serpent({ stage, wound });
+  window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
   window.__view(view);
   // Long enough to swim from the pods to the stations and the coil. The
   // fighters may break the defense on the way, so the fight is set again
   // once they are at it.
   window.__fast(run);
-  window.__serpent({ stage, wound });
+  window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
 }
 
 const lookDeep = x => window.__look(x - S.viewW / 2);
@@ -334,7 +335,7 @@ const deepScenes = {
                  for (const w of S.workers) if (w.y < S.worldH && n++ % 2) w.say = { mark: 'loo', until: now() + 60000 }; } },
   // A fresh deep: no station yet, the sqwife treading water by the pods.
   deep: { about: 'the deep', say: 'the deep, fresh: no station yet, the sqwife treading water by the pods, him in its belly',
-    run: stageScene(0, 20) },
+    run: stageScene(0, 0.33) },
   // The glide between the halves, caught at a point of it (`glideAt`): just
   // past the turn going down is the deep's side of the hand-over, and the
   // same point going up is the yard's side, so the two shots should be one
@@ -354,23 +355,23 @@ const deepScenes = {
     run: () => { deepYard({}); lookDeep(coilAt(COIL_SEGS - 8, now()).x); } },
   // The four defenses, each with fighters of the classes that suit it.
   'deep-wound': { about: 'the deep', say: 'the bare coil with the wound held most of the way open, a Brawler at it',
-    run: stageScene(0, 52, [cast('brawler', 1)]) },
+    run: stageScene(0, 0.87, [cast('brawler', 1)]) },
   'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales, a Ranger\'s arrows in it',
-    run: stageScene(1, 300, [cast('ranger', 4), cast('brawler', 2)]) },
+    run: stageScene(1, 0.33, [cast('ranger', 4), cast('brawler', 2)]) },
   'deep-scout': { about: 'the deep', say: 'the Scout, the armory base unit at rung 0, shooting its arrow',
-    run: () => { deepYard({ stage: 1, wound: 300, party: [cast('ranger', 0)] }); lookAtStation(0); } },
+    run: () => { deepYard({ stage: 1, wound: 0.33, party: [cast('ranger', 0)] }); lookAtStation(0); } },
   'deep-split': { about: 'the deep', say: 'the third defense: the coil in lengths, a Sapper\'s charges bursting, a Hexer\'s hex on it',
-    run: stageScene(2, 1500, [cast('sapper', 4), cast('hexer', 4)]) },
+    run: stageScene(2, 0.25, [cast('sapper', 4), cast('hexer', 4)]) },
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',
-    run: stageScene(3, 8000, [cast('mage', 4), cast('monk', 4)]) },
+    run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
   // Reading the fight: the numbers off the blows and the heal's purple `+`
   // off the belly, mid-fight, with a held beam's second summed.
   'deep-numbers': { about: 'the deep', say: 'the fight\'s numbers: each blow\'s damage rising off the coil, the heal\'s +N in purple',
     run: () => {
-      deepYard({ stage: 1, wound: 450, run: 30,
+      deepYard({ stage: 1, wound: 0.5, run: 30,
                  party: [cast('brawler', 6), cast('ranger', 4), cast('sapper', 3), cast('mage', 2)] });
       window.__fast(2);
-      window.__serpent({ stage: 1, wound: 450 });
+      window.__serpent({ stage: 1, wound: 0.5 * SERPENT_WOUND[1] });
       // Between the fists and the belly, so a narrow window has both the
       // blows' white and the heal's purple.
       const fist = S.hits.find(h => h.weapon === 'brawler');
@@ -383,7 +384,7 @@ const deepScenes = {
   // enough that the arrows before the fifth do not break it.
   'deep-stun': { about: 'the deep', say: 'a Ranger\'s aimed shot has stunned the coil: held still, a ring over its head, the heal stopped',
     run: () => {
-      deepYard({ stage: 2, wound: 1500, party: [cast('ranger', 8)] });
+      deepYard({ stage: 2, wound: 0.25, party: [cast('ranger', 8)] });
       for (let i = 0; i < 60 * 30 && !(S.serpentStun > 0); i++) window.__fast(1 / 60);
       // On the head, where the ring stands, as serpent-head frames it.
       lookDeep(coilAt(4, now()).x + S.viewW * 0.25);
@@ -394,7 +395,7 @@ const deepScenes = {
   // click on the top edge, the smallest.
   'deep-chip': { about: 'the deep', say: 'fresh bites out of the hide -- a Brawler\'s, a Sapper\'s, a click\'s -- and the scales bursting off them',
     run: () => {
-      deepYard({ stage: 2, wound: 1500, party: [cast('brawler', 8)] });
+      deepYard({ stage: 2, wound: 0.25, party: [cast('brawler', 8)] });
       const t = now(), seg = i => coilAt(bellySeg() + i, t);
       const blow = seg(-9), burst = seg(-3), fist = seg(3);
       strike('brawler', rungValue('brawler', 8) * 4, blow.x, blow.y);
@@ -464,14 +465,14 @@ const deepScenes = {
   // A Recruit's light punch, up under the coil over its new station.
   'recruit': { about: 'the deep', say: 'a Recruit up under the coil, throwing its one light punch',
     run: () => {
-      deepYard({ stage: 1, wound: 300, run: 3, party: [{ kind: null }] });
+      deepYard({ stage: 1, wound: 0.33, run: 3, party: [{ kind: null }] });
       lookAtStation(0);
     } },
   // The mark over a station whose Recruit waits on its first choice, the
   // build's done check already read.
   'recruit-mark': { about: 'the deep', say: "the chevron over a new station whose Recruit waits on its first choice",
     run: () => {
-      deepYard({ stage: 1, wound: 300, run: 3, party: [{ kind: null }] });
+      deepYard({ stage: 1, wound: 0.33, run: 3, party: [{ kind: null }] });
       markDoneSeen(S.stations[0].id);
       lookAtStation(0);
     } },
@@ -494,7 +495,7 @@ const deepScenes = {
   // Every station the floor holds at once, the camera on the middle of them.
   'deep-all': { about: 'the deep', say: 'the whole deep floor, four stations standing, a fighter at each',
     run: () => {
-      deepYard({ stage: 1, wound: 300,
+      deepYard({ stage: 1, wound: 0.33,
                  party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } },
@@ -550,7 +551,7 @@ const deepScenes = {
     run: () => { deepYard({ party: [cast('brawler', 4)] }); lookAtStation(0); } },
   'party-four': { about: 'the deep', say: 'a full party: a Brawler, a Ranger, a Sapper and a Mage, each at rung 8',
     run: () => {
-      deepYard({ stage: 1, wound: 300, run: 30,
+      deepYard({ stage: 1, wound: 0.33, run: 30,
                  party: [cast('brawler'), cast('ranger'), cast('sapper'), cast('mage')] });
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } },
@@ -601,7 +602,7 @@ const deepScenes = {
   // catches all four whatever the fighters' timing.
   'party-statuses': { about: 'the deep', say: 'the serpent wearing all four statuses at once: Bleeding, Exposed, Held, Weakened',
     run: () => {
-      deepYard({ stage: 2, wound: 1500, party: [cast('sword', 4), cast('sapper', 4), cast('hexer', 8)] });
+      deepYard({ stage: 2, wound: 0.25, party: [cast('sword', 4), cast('sapper', 4), cast('hexer', 8)] });
       for (const [key, k] of [['bleed', 0.5], ['exposed', 0.25], ['held', 1], ['weakened', 0.3]]) lay(key, k, 30);
       lookDeep(coilAt(bellySeg() - 4, now()).x);
     } },
@@ -609,7 +610,7 @@ const deepScenes = {
   // delver at it, a Brawler fighting at the first.
   'party-scaffold': { about: 'the deep', say: 'a station mid-build: its scaffold at the next slot, a delver at work on it',
     run: () => {
-      deepYard({ stage: 1, wound: 300, run: 4, party: [cast('brawler', 2)], fangs: 1 });
+      deepYard({ stage: 1, wound: 0.33, run: 4, party: [cast('brawler', 2)], fangs: 1 });
       buildStation('spire');
       const w = () => worksAt(S.stations[1]?.id)[0];
       for (let i = 0; i < 60 * 180 && !(w() && progressOf(w()) >= 0.5); i++) window.__fast(1 / 60);
@@ -620,7 +621,7 @@ const deepScenes = {
   ...Object.fromEntries(Object.keys(CLASSES).map(cls => [`class-${cls}`, {
     about: 'the deep', say: `a ${CLASSES[cls].name} at rung 8: the kit, the rung-4 mark, the rung-8 touch, the attack`,
     run: () => {
-      deepYard({ stage: 1, wound: 300, party: cls === 'bard' ? [cast('bard'), cast('brawler')] : [cast(cls)] });
+      deepYard({ stage: 1, wound: 0.33, party: cls === 'bard' ? [cast('bard'), cast('brawler')] : [cast(cls)] });
       lookAtStation(0);
     } }]))
 };

@@ -16606,7 +16606,7 @@ and placement are the spec).
   follows the station's record.
 
 
-## The deep is paced by its purse (design, not built)
+## The deep is paced by its purse (built)
 
 **The bargain.** The fight from the snatch to the freeing takes about an
 hour with a party that is bought into, and the time goes where it goes on
@@ -16637,24 +16637,27 @@ it is settled first.
 
 1. **The gatherers.** `richestNear` weighs a column's height at 8 and its
    distance at a quarter, so a gatherer swims to the tallest heap wherever
-   it is. It takes the nearest stretch worth a full load instead. Whether
-   the gatherers keep the hauler's two ladders (`haulCap`, `haulSpeed`) or
-   get their own on a deep board is the owner's call, mock and vote first.
+   it is. It takes the stretch that banks the most for the swim instead
+   (built 2026-09-28: 328 crushed in a minute against 238). The gatherers
+   keep the hauler's load and pace (the owner, 2026-09-28).
 2. **The banked rate is measured**, in the `gathering` scene, and written
    down here as the rate the depths are solved at.
 3. **The depths and heals.** Solved at that rate for breaks at about 8, 22,
    40 and 60 minutes. At 4 a second that is about 35k / 140k / 360k / 560k
    against 60 / 900 / 6000 / 30000 now; the party at each break stands at
-   rung 7, then 7-7, 8-8-7, and 8-8-8-8. A stage's heal is set so a party
-   two rungs short of the one that breaks it cannot hold the wound open, so
-   the heal is what makes the next rung the thing to wait for.
-4. **The rung bills.** As written a station's ladder is 3,475 scales and the
-   first is bought out by minute 14. The deep's bills get steeper, so the
-   later rungs are the long waits.
-5. **The shed cap.** `SCALE_HIT_MAX` is 12 a hit, so a class's shed is flat
-   from rung 3 or 4 while its damage climbs to rung 8: the Hexer and the
-   Sapper shed about 2 a second at any rung. A rung should pay in scales
-   too; the cap climbs with the rung or goes.
+   rung 7, then 7-7, 8-8-7, and 8-8-8-8. The first stage's heal is one the
+   first fighter out-hits alone two or three rungs up (the owner: it starts
+   slow and after a few upgrades out-hits the heal); every later stage's
+   heal is set so a party two rungs short of the one that breaks it cannot
+   hold the wound open, so the heal is what makes the next rung the thing
+   to wait for. Built 2026-09-28 as heals 8 / 86 / 176 / 238 and depths
+   32k / 73k / 191k / 350k; every first class breaks the first stage at 8
+   or 9 minutes.
+4. **The rung bills stay.** Four ladders are 13,900 scales, and an hour at
+   4 a second banks 14,400: the bills as written already spend the hour.
+5. **The shed cap goes** (the owner, 2026-09-28). A hit sheds its damage;
+   only the room left on the bed limits what is let go, since a scale with
+   nowhere to lie is lost to the dark anyway.
 
 **What it must not break.** Every scale is carried to the crusher by a body
 (nothing teleports). Every ladder stays a written table in `LADDERS`. The
