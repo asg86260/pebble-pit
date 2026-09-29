@@ -12,6 +12,13 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
+## Resists: magic in the ward, physical in the split -- DESIGNED, AWAITING THE VOTE (2026-09-29)
+
+"Resists: magic in the ward, physical in the split, both in the fading" in
+DESIGN.md; mock `docs/mocks/serpent-resists-2026-09-29.html`. Blocked on the
+owner's pick of the physical look (A plates or B raised scales). No game
+code yet.
+
 ## A phase has a mechanic and a class answers it -- BUILT, TUNING OPEN (2026-09-28)
 
 "A phase has a mechanic and a class answers it" in DESIGN.md. The surge,

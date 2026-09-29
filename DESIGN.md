@@ -16733,3 +16733,39 @@ unanswered frees him at 67 minutes and answered at 60. Two things it shows:
 - **Debuffs on the fighters** (Slowed, Blinded so shots miss), with the
   Bard's song clearing them. A good job for the Bard; kept for a later pass
   so the first four each have one answer to learn.
+
+## Resists: magic in the ward, physical in the split, both in the fading (design, not built)
+
+**The bargain.** A class's weak phase stops being a line in a table and
+becomes a kind of damage the player can see resisted. Every class deals one
+of three kinds; the warded phase resists magic, the split resists physical,
+and the fading phase switches between the two every ~20 s, warned a beat
+ahead. A party of one kind has a phase that halves all of it; a diverse one
+always has somebody at full strength (the owner, 2026-09-29: players should
+learn to have a diverse party). Mock: docs/mocks/serpent-resists-2026-09-29.html.
+
+| kind | classes | resisted in |
+|---|---|---|
+| physical | Brawler, Swordsman, Martial Artist, Assassin, Ranger | the split; the fading, half the time |
+| magic | Mage, Hexer, Monk (the chi palm is a wave of energy) | the warded; the fading, half the time |
+| explosive | Sapper | never |
+| the click | a punch | never, as now |
+
+- **A resisted hit does half**, the way a class's weak phase does now.
+  `SERPENT_DEFENSE`'s per-class rows give way to a kind a class and a
+  resist a phase; the bare phase resists nothing. The Mage's capstone still
+  burns through.
+- **Explosive has no phase of its own** (the owner's call over an
+  explosive-resist split, which would have slowed the Sapper alone). The
+  fading phase switches between the two resist phases, not three.
+- **The hide says which is up.** Magic is the ward's purple shimmer, as the
+  warded phase is drawn now. Physical is new: A, dark plates in bands across
+  the hide, or B, scales standing up off its top edge. In the fading phase
+  the coming look flickers in for a second before the switch.
+- **Nothing else moves.** The mechanics (surge, lash, sink) stay; the resist
+  is the phase's defense, the mechanic its move.
+- **The heals and depths are solved again** once the table is in: the
+  standard party (Brawler, Ranger, Mage, Monk) has two of its four halved in
+  both the warded phase and the split, where it had one.
+
+Open for the vote: A or B for the physical look.
