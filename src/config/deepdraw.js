@@ -33,6 +33,16 @@ export const PROP_GAP_OF = { sword: 7 };
 export const PLINTH_H = 2;
 export const PLINTH_OVER = 1;
 export const PLINTH_TONES = { top: [9, 8, 9], end: [8, 7], body: [6, 5, 6, 7] };   // GREYS indices, one picked a cell
+// A low dome behind every built station (docs/mocks/station-backdrop-2026-09-28.html,
+// B), so the bed of scales heaped on the floor sits behind it and a grey kit
+// reads on dark: its walls rise DOME_WALL cells over the fighter's head
+// before the arch springs, and it spans the station's ground and the widest
+// kit held out from the fighter's middle (DOME_REACH: the rung-8 bow's tip
+// and the hand on it), DOME_PAD cells more either side.
+export const DOME_WALL = 2;
+export const DOME_REACH = 6;
+export const DOME_PAD = 1;
+export const DOME_TONES = { inside: [2, 3], rim: [5, 6] };   // GREYS indices, one picked a cell
 // The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
 // the door's inside is one heat field. A cell's heat is the base, raised by
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from

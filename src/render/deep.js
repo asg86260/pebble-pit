@@ -42,7 +42,7 @@ import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
-import { SCAFFOLD_BANDS, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, CHOOSE_MARK, CHOOSE_MARK_UP, CHOOSE_MARK_BOB_MS } from '../config.js';
+import { SCAFFOLD_BANDS, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, DOME_TONES, CHOOSE_MARK, CHOOSE_MARK_UP, CHOOSE_MARK_BOB_MS } from '../config.js';
 import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
@@ -318,6 +318,38 @@ function plinthImage(b) {
   plinths.set(id, img);
   return img;
 }
+// The low dome behind a built station (`domeRect`): a shade above the water
+// inside, its rim a shade above that, every cell a tone of its own. The same
+// for every dome of one size, so painted once a size.
+const domes = new Map();
+function domeImage(w, wall) {
+  const id = `${w}|${wall}`;
+  let img = domes.get(id);
+  if (img) return img;
+  const cols = w / P, r = cols / 2, rows = Math.ceil(r) + wall;
+  const inside = (c, y) => {
+    if (c < 0 || c >= cols || y < 0 || y >= rows) return false;
+    if (y >= rows - wall) return true;
+    const dx = c + 0.5 - r, dy = y + 0.5 - (rows - wall);
+    return dx * dx + dy * dy <= r * r;
+  };
+  img = document.createElement('canvas');
+  img.width = w; img.height = rows * P;
+  const g = img.getContext('2d');
+  for (let y = 0; y < rows; y++) for (let c = 0; c < cols; c++) {
+    if (!inside(c, y)) continue;
+    const ramp = !inside(c - 1, y) || !inside(c + 1, y) || !inside(c, y - 1) ? DOME_TONES.rim : DOME_TONES.inside;
+    g.fillStyle = GREYS[ramp[Math.floor(hash(c * 13 + y * 29) * ramp.length)]];
+    g.fillRect(c * P, y * P, P, P);
+  }
+  domes.set(id, img);
+  return img;
+}
+function drawDome(st) {
+  const d = place.domeRect(st), wall = (deepFloor() - d.spring) / P, img = domeImage(d.w, wall);
+  ctx.drawImage(img, d.x, deepFloor() - img.height);
+}
+
 function drawPlinth(st) {
   const b = place.plinthRect(st);
   ctx.drawImage(plinthImage(b), b.x - b.step * (PLINTH_H - 1), b.y);
@@ -382,6 +414,12 @@ export function drawDeepStations() {
   drawPods();
   const smooth = ctx.imageSmoothingEnabled, t = now() / 1000;
   ctx.imageSmoothingEnabled = false;
+  // every dome first, so no station's dome is over its neighbor's prop
+  for (const st of S.stations || []) {
+    if (st.slot == null || !st.built) continue;
+    const d = place.domeRect(st);
+    if (d.x <= x1 && d.x + d.w >= x0) drawDome(st);
+  }
   for (const st of S.stations || []) {
     if (st.slot == null) continue;
     const stand = place.standOfStation(st);

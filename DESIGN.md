@@ -16576,6 +16576,8 @@ fighter means nothing unless it is learned. The approved look is
 docs/mocks/station-props-2026-09-28.html (its `PROPS`, `MAT`, `R8_PARTS`
 and placement are the spec).
 
+A low dome came back behind every built station (docs/mocks/station-backdrop-2026-09-28.html, B): the bed of scales heaps up behind the stations, and a grey kit -- the Ranger's bow above all -- was lost against it. The dome is only a dark ground behind the fighter and its prop, two cells of wall over his head and an arch, not a building: the station is still its fighter and its prop.
+
 - **The props.** Brawler a heavy bag on a gallows arm; Swordsman a sword
   rack, one slot empty; Monk a bell in a frame over a mat; Martial Artist
   a rack of staves; Ranger a straw target on a tripod; Assassin a sacking

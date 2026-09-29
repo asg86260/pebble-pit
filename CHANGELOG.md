@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- A low dark dome stands behind every deep station, so the scales heaped on the floor sit behind it and the fighter reads against dark (`node tools/look.mjs party-four`).
 - Each phase past the first has a mechanic, warned ahead and answered by a class: the warded phase surges its heal until a stun spends it, the split lashes the melee fighters off the hide unless a Hexer holds it, and the fading sinks into the abyss out of reach (test/phase-mechanics.test.mjs).
 - The Ranger loads each shot: an arrow from the hip, nocked, drawn in two steps as he strains and sinks, held, then loosed with the string snapping and a held recoil (`node tools/look.mjs party-four`).
 - The build button puts a station up at once; a Recruit fights there with a light punch until rung 1 makes it a Fighter, Novice, Scout, Adept or Apprentice, and rung 4 forks it into one of two classes (test/rails.test.mjs, test/party.test.mjs, src/selftest/deep.js).

@@ -12,7 +12,7 @@
 // bought where the player buys them, on the station's board (`pressBuy`).
 
 import { group, ok, yard } from './helpers.mjs';
-import { P, WORKER, DEEP_W, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, CHOOSE_MARK } from '../src/config.js';
+import { P, WORKER, DEEP_W, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, CHOOSE_MARK, PLINTH_H } from '../src/config.js';
 import { pressBuy, pressKind } from '../src/deep/rails.js';
 import { stationById } from '../src/deep/party.js';
 import { doneAt, markDoneSeen } from '../src/works.js';
@@ -55,11 +55,17 @@ function propOf(st) {
     .find(o => o.x < slotX(st.slot) && o.x > slotX(st.slot) - P * 30);
   return d && { x: d.x, y: d.y, w: d.img.width, cells: d.img.cells };
 }
-// The plinth drawn under station `st`: the image on the floor round its slot.
+// What is drawn on the floor round station `st`'s slot, and its place in the
+// order: the plinth is PLINTH_H cells high, the dome behind it taller.
+const onFloor = st => drawn().map((o, i) => ({ ...o, i }))
+  .filter(o => o.img.cells && o.y + o.img.height === deepFloor() && o.x < slotX(st.slot) && o.x + o.img.width > slotX(st.slot));
 function plinthOf(st) {
-  const d = drawn().filter(o => o.img.cells && o.y + o.img.height === deepFloor())
-    .find(o => o.x < slotX(st.slot) && o.x + o.img.width > slotX(st.slot));
-  return d && { x: d.x, y: d.y, w: d.img.width };
+  const d = onFloor(st).find(o => o.img.height === PLINTH_H * P);
+  return d && { x: d.x, y: d.y, w: d.img.width, i: d.i };
+}
+function domeOf(st) {
+  const d = onFloor(st).find(o => o.img.height > PLINTH_H * P);
+  return d && { x: d.x, y: d.y, w: d.img.width, i: d.i };
 }
 // The prop `key`'s cells, as the drawing of it should hold them.
 const want = (key, lit) => new Map(propCells(key, lit)
@@ -81,7 +87,7 @@ group("a station stands beside a crate below the fork, its class's prop from it,
   const rack = propOf(stationById(st.id));
   while (stationById(st.id).rung < LADDER && pressBuy(st.id)) { /* climb */ }
   const top = stationById(st.id);
-  const lit = propOf(top), plinth = plinthOf(top);
+  const lit = propOf(top), plinth = plinthOf(top), dome = domeOf(top);
   const g = standOfStation(top), post = bodyCol(top) * P;
   const right = p => (p.x + p.w) / P - 1;
   return [
@@ -99,7 +105,9 @@ group("a station stands beside a crate below the fork, its class's prop from it,
     ok(plinth && lit && plinth.y === plinthTop() && plinth.x < lit.x && plinth.x + plinth.w > post + WORKER,
        'the plinth on the floor under the prop and the post', JSON.stringify(plinth)),
     ok(g.x <= plinth?.x && g.x + g.w >= plinth?.x + plinth?.w && g.y <= lit.y, "and the station's ground spans the plinth, the prop and the post",
-       `${g.x}..${g.x + g.w} over ${plinth?.x}..${plinth?.x + plinth?.w}`)
+       `${g.x}..${g.x + g.w} over ${plinth?.x}..${plinth?.x + plinth?.w}`),
+    ok(dome && plinth && dome.i < plinth.i && dome.x < g.x && dome.x + dome.w > g.x + g.w && dome.y < postY() - WORKER,
+       "a low dome stands behind it all, wider than its ground and over the fighter's head", JSON.stringify(dome))
   ];
 });
 

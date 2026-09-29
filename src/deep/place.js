@@ -11,7 +11,7 @@
 // it.
 
 import { S, pit } from '../state.js';
-import { P, PLINTH_H, PLINTH_OVER, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
+import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
@@ -108,6 +108,15 @@ export function standOfStation(st) {
   const p = propRect(st), b = plinthRect(st), out = (PLINTH_H - 1) * b.step;
   const y = Math.min(p.y, postY());
   return { x: b.x - out, y, w: b.w + 2 * out, h: deepFloor() - y };
+}
+// The low dome behind a station: from the floor to `spring`, where its arch
+// starts, and a half circle over that as wide as the dome. Spans the ground
+// and the fighter's reach, so a bow held level over the head is inside it.
+export function domeRect(st) {
+  const s = standOfStation(st), mid = postX(st) + WORKER / 2;
+  const x = snap(Math.min(s.x, mid - DOME_REACH * P) - DOME_PAD * P);
+  const right = snap(Math.max(s.x + s.w, mid + DOME_REACH * P) + DOME_PAD * P);
+  return { x, w: right - x, spring: postY() - DOME_WALL * P };
 }
 
 // The crusher at the deep's left end, standing on the floor, and the hopper
