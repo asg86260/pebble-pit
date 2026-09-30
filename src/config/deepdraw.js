@@ -314,8 +314,10 @@ export const BAR_CHIP_OPEN_S = 0.3;
 export const BAR_CHIP_POSE_S = 0.08;
 export const BAR_CHIP_FALL = { side: 18, down: 20, grav: 90 };   // screen pixels a second, and a second a second
 export const BAR_CHIP = '#b4b4c0';      // the notch's first pose, and the chip after its first (white, as the fill)
-// And the bar is knocked down by it, the whole of it and its pips, for
-// BAR_KNOCK_S: BAR_KNOCK screen pixels, BAR_KNOCK_BIG for a blow past NUM_KICK_BIG.
+// And the bar recoils from it, the whole of it and its pips, up and away from
+// the number that went into its underside: BAR_KNOCK screen pixels
+// (BAR_KNOCK_BIG for a blow past NUM_KICK_BIG) for half of BAR_KNOCK_S, half
+// that for the other half, then home.
 export const BAR_KNOCK = 4;
 export const BAR_KNOCK_BIG = 8;
 export const BAR_KNOCK_S = 0.16;

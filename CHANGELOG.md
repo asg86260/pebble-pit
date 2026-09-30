@@ -26,7 +26,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The Recruit's board is as wide as its five choices need, so none of their names spill out of their boxes (`node tools/look.mjs recruit-board`).
 - The serpent flinches from a blow: the stretch of body round it is thrown up as one piece and settles, instead of a dent that sprang back past with a bulge running off it (`node tools/look.mjs deep-wound`).
 - An arrow dents the serpent the moment it reaches the hide instead of sitting against it first, and a held beam presses the hide steadily instead of setting the coil springing on every tick (test/deep-arms.test.mjs, test/sword-dent.test.mjs).
-- Blows land with weight: the serpent's hide is driven in and springs back past with a bulge running along it, the fighter is knocked back off every blow, and the bar is knocked down as each number lands (`node tools/look.mjs deep-wound`).
+- Blows land with weight: the serpent's hide is driven in and springs back past with a bulge running along it, the fighter is knocked back off every blow, and the bar recoils up as each number goes into it (`node tools/look.mjs deep-wound`).
 - Each blow that lands in the serpent's bar knocks a chip out of the end of its fill, so even a small blow shows (`node tools/look.mjs deep-numbers`).
 - The serpent's bar is bigger and hangs just over the serpent, the portal moved up for it, and every damage and heal number flies into the bar before it moves (`node tools/look.mjs deep-numbers`).
 - A fighter thrown off the serpent by its lash sees stars all the way down, not only once it lands (`node tools/look.mjs phase-lash`).

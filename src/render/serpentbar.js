@@ -55,14 +55,17 @@ export function drawSerpentBar() {
 
   const pips = SERPENT_WOUND.length;
   const { x, y: rest } = barRect();
-  // knocked down by the blows landing in it, held a pose
+  // The number went in from underneath, so the bar recoils up: two held
+  // poses, the full knock and then half of it.
   let knock = 0;
   for (const h of S.hits) {
     if (h.weapon === 'heal') continue;
     const a = (t - landsAt(h)) / 1000;
-    if (a >= 0 && a < BAR_KNOCK_S) knock = Math.max(knock, blowK(h.done) > NUM_KICK_BIG ? BAR_KNOCK_BIG : BAR_KNOCK);
+    if (a < 0 || a >= BAR_KNOCK_S) continue;
+    const full = blowK(h.done) > NUM_KICK_BIG ? BAR_KNOCK_BIG : BAR_KNOCK;
+    knock = Math.max(knock, a < BAR_KNOCK_S / 2 ? full : full / 2);
   }
-  const y = rest + knock;
+  const y = rest - knock;
   const fill = (c, fx, fy, w, h) => { ctx.fillStyle = seen(c); ctx.fillRect(fx, fy, w, h); };
   const len = k => Math.round(BAR_W * k);
   ctx.save();

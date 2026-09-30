@@ -1,0 +1,114 @@
+<title>Serpent Bar Knock</title>
+<style>
+/* Layout: one pane per direction the bar can be knocked, the same blows in
+   each; the pane is a strip of deep round the bar, black in either theme. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Bar Knock</h1>
+    <p>The blow's number is knocked off the hide, held, and goes up into the underside of the bar. The bar should recoil
+      as it goes in, away from it, and the health should answer. Each pane is the same two blows, one small and one big,
+      with a different answer in the fill. A mock drawn from plain shapes, not the game: the coil is a block, the bar has no pips or
+      statuses, and the bar's knock amounts are the game's (4, and 8 for a big blow); the health resets each loop.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+(() => {
+  const W = 240, H = 170, BW = 150, BH = 8, BX = 45, REST = 30, HIDE = 118;
+  const LOOP = 3.6, HITS = [{ at: 0.3, big: false }, { at: 1.7, big: true }];
+  const RISE = 0.25, HOLD = 0.1, IN = 0.25, LAND = RISE + HOLD + IN, POSE = 0.08;
+  const DROP = b => b ? 0.22 : 0.08;
+  // per pane: how the bar moves, and how its health answers, `a` seconds after the number lands
+  const bar = {
+    down: (a, big) => a < 0.16 ? big ? 8 : 4 : 0,
+    up2: (a, big) => a < POSE ? (big ? -8 : -4) : a < POSE * 2 ? (big ? -4 : -2) : 0,
+  };
+  const WAYS = [
+    { name: 'As built', note: 'The number goes up into the bar, the bar is knocked down, a chip drops out of the fill.', dy: bar.down, health: 'chip' },
+    { name: '1: recoil up, chip', note: 'The bar is knocked up as the number goes in, in two poses. The fill answers with the chip, as built.', dy: bar.up2, health: 'chip' },
+    { name: '2: recoil up, stretch lit', note: 'The stretch of health the blow took stays as a solid light block for two poses, then goes dark.', dy: bar.up2, health: 'lit' },
+    { name: '3: recoil up, fill kicks back', note: 'The fill drops two cells past where it ends up and springs back, held poses, as the bar comes down.', dy: bar.up2, health: 'spring' },
+  ];
+  const rect = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+  const panes = WAYS.map(w => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${w.name}</h2><canvas width="${W}" height="${H}"></canvas><p>${w.note}</p>`;
+    document.getElementById('grid').appendChild(card);
+    return { w, g: card.querySelector('canvas').getContext('2d') };
+  });
+  function draw(p, t) {
+    const g = p.g, u = t % LOOP;
+    rect(g, 0, 0, W, H, '#000');
+    rect(g, 30, HIDE, 180, H - HIDE, '#26262c'); rect(g, 30, HIDE, 180, 3, '#42424a');
+    let dy = 0, left = 1, lit = null, chip = null, spring = 0;
+    for (const h of HITS) {
+      const a = u - h.at, k = a - LAND;
+      if (a < 0) continue;
+      // the number: knocked up off the hide, held, then up into the bar's underside
+      if (k < 0) {
+        const top = HIDE - (h.big ? 52 : 40), bot = REST + BH + 2;
+        const ny = a < RISE ? HIDE - (HIDE - top) * Math.sin(a / RISE * Math.PI / 2)
+                 : a < RISE + HOLD ? top : top - (top - bot) * Math.pow((a - RISE - HOLD) / IN, 2);
+        rect(g, 116, ny, h.big ? 14 : 8, h.big ? 10 : 6, '#b4b4c0');
+      } else {
+        dy += p.w.dy(k, h.big);
+        left -= DROP(h.big);
+        const to = BX + BW * left, w = h.big ? 12 : 6;
+        if (p.w.health === 'chip' && k < 0.6) chip = { k, to, w, big: h.big };
+        if (p.w.health === 'lit' && k < POSE * 2) lit = { to, w: BW * DROP(h.big) };
+        if (p.w.health === 'spring' && k < POSE * 3) spring = Math.max(spring, k < POSE ? 2 : k < POSE * 2 ? 1 : 0.0001) * (h.big ? 1.5 : 1);
+      }
+    }
+    const y = REST + dy, end = BX + BW * left - Math.round(spring) * 3;
+    rect(g, BX - 1, y - 1, BW + 2, BH + 2, '#000'); rect(g, BX - 1, y - 1, BW + 2, 1, '#8b8b96');
+    rect(g, BX, y, BW, BH, '#1c1c21');
+    rect(g, BX, y, end - BX, BH, '#ffffff');
+    if (lit) rect(g, lit.to, y, lit.w, BH, '#ffffff');
+    if (chip) {
+      const c = chip;
+      if (c.k < 0.3) rect(g, c.to - c.w, y, c.w, BH / 2, c.k < POSE ? '#b4b4c0' : '#1c1c21');
+      rect(g, c.to - c.w / 2 + 18 * c.k - 2, y + 20 * c.k + 90 * c.k * c.k, c.w / 2 + 2, BH / 2, c.k < POSE ? '#8b8b96' : '#b4b4c0');
+    }
+    rect(g, 4, REST, 8, 1, '#6a2fbe'); rect(g, 4, REST + BH, 8, 1, '#6a2fbe');
+  }
+  let t = 0, last = performance.now(), speed = 1, run = true;
+  const frame = n => { const d = Math.min(0.05, (n - last) / 1000); last = n; if (run) t += d * speed;
+    panes.forEach(p => draw(p, t)); requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+  const play = document.getElementById('play');
+  play.onclick = () => { run = !run; play.textContent = run ? 'pause' : 'play'; };
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', o === b));
+  });
+})();
+</script>
