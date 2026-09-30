@@ -16889,3 +16889,62 @@ break").
 - **The bar** is as built: it takes a heal when its number lands in it
   (`barflight.js`), so it shows the old wound until the lump's number goes in.
 - **The heal number's colors and size** stay as built.
+
+## The story's objectives (design, not built)
+
+Asked for by the owner, 2026-09-30, with three calls made: one pinned line at
+the top left, nothing for finishing one but the next line, and words only --
+the line says what, never where. Mock: `docs/mocks/objectives-2026-09-30.html`.
+
+### The bargain
+
+The story already has its beats (beats.js) but nothing tells a player what the
+next one is waiting on, and the second half is waiting on things a player has
+no reason to guess: that the wizards are the way down, that the portal is a
+row on their board. One line, always on screen, says the next step of the
+story in a few words. It costs a line of screen and nothing else: no reward,
+no marker, no new rule. It is read off facts the save already has, so an old
+save opens on the right line.
+
+### The line, step by step
+
+Each is the first whose fact is not yet true; the line shows it until it is.
+
+| # | the line | done when |
+|---|---|---|
+| 1 | dig out the rock | the first rock is dead (`boulderNo > 1` or the `meet` beat done) |
+| 2 | the rocks keep falling | the second rock has landed |
+| 3 | build the props | the props stand (the first shield) |
+| 4 | string the net | the net stands |
+| 5 | raise the arch | the arch stands |
+| 6 | raise the dome | the dome stands |
+| 7 | save the sqwife | `rescued` |
+| 8 | ask the wizards how to get down | after the snatch: the tower's board opened once |
+| 9 | buy the portal | `portalOpen` |
+| 10 | free your sqhusband from the serpent's belly | `serpentFreed` |
+
+After the last, no line. With the second half switched off the list ends at 7.
+
+### What it must not break
+
+- **Words only** (the owner's call and "Hover text concise"): a few words, the
+  thing to do, never how or where, never a remark.
+- **Read, never stored.** Every row is a predicate over saved facts, like the
+  notices (notices.js); nothing new goes on `S` but, if needed, the one flag
+  that the tower's board was opened after the snatch (SAVED).
+- **No beat waits on it.** It follows the story; the story never follows it.
+
+### Open
+
+- **Between the rescue and the snatch** the pit may not have drowned yet, and
+  the snatch waits on it. A line for that step ("drown the pit"? "feed the
+  rift"?) or nothing until it happens.
+- **"The rocks keep falling"** is a thing that happens rather than a thing to
+  do; it could stand as the line only while the second rock is coming, or be
+  folded into step 3.
+- **The shields' order** is the door chain's (`after` in stations.js); the
+  table above assumes props, net, arch, dome.
+- **The tower may not stand** at the snatch in a fast game; step 8 then reads
+  "build the wizards' tower" first.
+- **The ending sheet** still says the story is over; with the half on it
+  should say what comes next, or the snatch simply follows it.
