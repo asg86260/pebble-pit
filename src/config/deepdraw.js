@@ -361,8 +361,8 @@ export const STATUS_SAYS = {
   lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming: Held stops it', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
   sink:  { coming: 'Sink coming: land a burst first', on: 'Sink: out of reach', stopped: 'Sink: answered' },
   dazed: 'Dazed: thrown off, seeing stars',
-  ward: 'Ward: magic does half',
-  plates: 'Plates: physical does half',
+  ward: 'Ward: magic damage cut in half',
+  plates: 'Plates: phys damage cut in half',
 };
 export const STATUS_PX = 3;
 export const STATUS_GAP = 5;
