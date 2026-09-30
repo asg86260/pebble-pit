@@ -183,6 +183,8 @@ const waveLine = t => {
 const waveY = (x, t) => waveLine(t)(x);
 const coilX0 = () => deepX0() + COIL_X0 * DEEP_W;
 const coilSpan = () => (COIL_X1 - COIL_X0) * DEEP_W;
+// Where the body runs, head to tail, across the deep.
+export const coilEnds = () => ({ x0: coilX0(), x1: coilX0() + coilSpan() });
 // How far along the body x is, head 0 to tail 1: what the lash is laid on.
 export const coilK = x => (x - coilX0()) / coilSpan();
 

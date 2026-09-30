@@ -9,7 +9,7 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
-import { coilCeiling } from '../deep/place.js';
+import { coilCeiling, coilEnds } from '../deep/place.js';
 import { owedWound, landsAt } from './barflight.js';
 import { drawFoeStatuses } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
@@ -25,15 +25,21 @@ let stage = -1, was = 1, trail = 1, low = 1, hitAt = 0, then = 0;
 
 export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage < SERPENT_WOUND.length;
 
-// Where the bar stands on the glass, in screen pixels: centered with its pips,
-// held still just over the highest the coil ever sways.
+// Where the bar stands on the glass, in screen pixels: centered with its pips
+// over the stretch of the coil on the glass, so with open water beside the
+// head it stands over the serpent and not over the water, and held still
+// just over the highest the coil ever sways.
 export function barRect() {
   const whole = BAR_W + SERPENT_WOUND.length * (BAR_PIP + BAR_PIP_GAP);
   // The row of status tiles hangs under the bar, so the gap to the coil is
   // measured from the bottom of the row, whether or not it has a tile in it.
   const row = STATUS_GAP + 1 + 5 * STATUS_PX + 4 + 4;
   const over = (coilCeiling() - S.camY) * S.zoom - BAR_GAP - row - BAR_H;
-  return { x: Math.round((S.W - whole) / 2), y: Math.round(Math.max(BAR_TOP, over)), w: BAR_W, h: BAR_H };
+  const { x0, x1 } = coilEnds(), toScreen = x => (x - S.camX) * S.zoom;
+  const a = Math.max(0, toScreen(x0)), b = Math.min(S.W, toScreen(x1));
+  const mid = b > a ? (a + b) / 2 : S.W / 2;
+  const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
+  return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP, over)), w: BAR_W, h: BAR_H };
 }
 // What the bar shows of the defense up, 0..1: the wound as the numbers that
 // have landed in it say, not yet as the sim has it (render/barflight.js).
