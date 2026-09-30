@@ -13,8 +13,8 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { coilLine } from '../deep/place.js';
-import { mealNow, kindOf, BITE_BEFORE } from '../deep/meals.js';
-import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_SWIM_CELLS } from '../config.js';
+import { mealNow, kindOf, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
+import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_SWIM_CELLS, MEAL_HINGE, MEAL_SQUEEZE } from '../config.js';
 
 // The mock's tones, on the deep's own ramps.
 const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
@@ -160,7 +160,16 @@ export function drawFish() {
   const bob = t2 => Math.round(sp.bob(t2) * settle * (1 - s * 0.5));
   const col0 = mouthCol - Math.round(frontBehind(sp, toLand)), row0 = mouthRow + bob(t);
   const paint = (c, r, tone) => { ctx.fillStyle = tone; ctx.fillRect(Math.round(c) * P, Math.round(r) * P, P, P); };
-  const put = (x, y, tone) => { const c = Math.round(col0 - x); if (c > mouthCol + 1) return; paint(c, Math.round(row0 + y), tone); };
+  // Going in it is squeezed toward the mouth's line, and a cell past the tip
+  // shows only between the jaws: it is cut by the jaw lines the head is
+  // drawn on (`jawGap`), and the head covers the rest of it.
+  const open = jawOpen(toLand), gulp = Math.max(0, Math.min(1, (BITE_BEFORE - toLand) / MEAL_GULP_S));
+  const squeeze = 1 - (1 - MEAL_SQUEEZE) * gulp;
+  const put = (x, y, tone) => {
+    const c = Math.round(col0 - x), r = Math.round(row0 + y * squeeze), d = c - mouthCol;
+    if (d >= 0 && (d >= MEAL_HINGE || Math.abs(r - mouthRow) >= jawGap(d, open))) return;
+    paint(c, r, tone);
+  };
   // what it sheds, behind it
   for (let k = 1; k <= 10; k++) {
     const back = frontBehind(sp, toLand + k * 0.07), ck = mouthCol - back - sp.L * 0.4, fade = 1 - k / 11, rk = row0 + bob(t - k * 0.07);

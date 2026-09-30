@@ -16857,9 +16857,13 @@ break").
   wide from a beat before the creature arrives, shut as the gulp ends. The
   swallow is a smooth swelling of the neck that runs from the head to the belly
   and scales with the creature's length.
-- The heal aura the owner asked for is answered by this: a lump landing at the
-  belly is the one moment the hide shows it (the mock's purple ring running out
-  from the belly), so the three aura options are not built.
+- The eating, redone (the owner's A with B's crosses,
+  `docs/mocks/heal-eat-2026-09-30.html`): the jaws swing apart from a hinge
+  `MEAL_HINGE` cells back, the head drawn wider by the gap and each half pushed
+  off the mouth's line; the creature is squeezed as it goes in and shows only
+  between the jaw lines (`jawGap`, shared by both). The swim is 2.8 s, the gulp
+  0.8, the swallow 2.4: the lump runs down the neck dark through the hide. On
+  landing purple crosses rise off the body, nearest the belly first.
 - With the serpent's head at `COIL_X0 = 0.28` there is open water to its left
   for the swim.
 

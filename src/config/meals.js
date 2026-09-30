@@ -11,25 +11,34 @@ export let MEAL_MAX_S = 12;
 // and the swallow runs to the belly, where the bank lands. The three add to
 // less than MEAL_MIN_S, so a creature is never in the water before the last
 // meal has landed.
-export const MEAL_SWIM_S = 3.4;
-export const MEAL_GULP_S = 0.55;
-export const MEAL_SWALLOW_S = 0.85;
+export const MEAL_SWIM_S = 2.8;
+export const MEAL_GULP_S = 0.8;
+export const MEAL_SWALLOW_S = 2.4;
 // How far behind the mouth a creature starts its swim, in cells, and how much
 // of the wait to the next meal it may start in.
 export const MEAL_SWIM_CELLS = 44;
-// The jaws start to open this long before the creature is at the mouth, and
-// how wide they go, in cells at the tip.
-export const MEAL_JAW_LEAD_S = 0.9;
+// The jaws (the owner's A, docs/mocks/heal-eat-2026-09-30.html): hinged this
+// many cells back from the tip, they swing apart until each stands MEAL_GAPE
+// cells off the mouth's line at the tip, starting this long before the
+// creature is at the mouth; they shut as it is all in.
+export const MEAL_JAW_LEAD_S = 0.7;
 export const MEAL_JAW_OPEN_S = 0.5;
-export const MEAL_GAPE = 2.4;
+export const MEAL_JAW_SHUT_S = 0.25;
+export const MEAL_GAPE = 5;
+export const MEAL_HINGE = 10;
+// A creature is squeezed to this share of its height by the time it is in.
+export const MEAL_SQUEEZE = 0.55;
 // The swallow's swelling on the neck: its half length in cells and how far it
 // stands off the hide, for a creature of length 1; a longer one swells more.
 export const MEAL_SWELL_LEN = 2.6;
-export const MEAL_SWELL = 1.6;
-// The heal landing at the belly: a ring of purple running out along the hide
-// and gone in this long.
-export const MEAL_RING_S = 1.3;
-export const MEAL_RING_REACH = 42;
+export const MEAL_SWELL = 2.4;
+// The heal landing (the owner's pick, B's crosses): purple crosses lift off
+// the length of the body, the nearest the belly first, each rising
+// MEAL_CROSS_RISE cells over MEAL_CROSS_S as it fades; gone in MEAL_AURA_S.
+export const MEAL_AURA_S = 1.8;
+export const MEAL_CROSSES = 60;
+export const MEAL_CROSS_S = 0.6;
+export const MEAL_CROSS_RISE = 8;
 
 export const MEAL_KNOBS = [
   { key: 'MEAL_MIN_S', label: 'meal wait, at least s', min: 4.9, max: 20, step: 0.5,

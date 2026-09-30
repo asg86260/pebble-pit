@@ -27,9 +27,9 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
-         MEAL_SWALLOW_S, MEAL_JAW_LEAD_S, MEAL_JAW_OPEN_S, MEAL_GAPE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_RING_S, MEAL_RING_REACH } from '../config.js';
+         MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE } from '../config.js';
 import { S } from '../state.js';
-import { mealNow, kindOf, BITE_BEFORE } from '../deep/meals.js';
+import { mealNow, kindOf, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, KINDS } from './fish.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
@@ -199,18 +199,25 @@ export function drawSerpent() {
     const d = Math.abs(p.along - bellyA);
     if (d < BELLY_LEN) p.r += BELLY_BULGE * Math.sqrt(1 - (d / BELLY_LEN) ** 2);
   }
-  // A meal: the jaws hinge open for the creature, shut on it, and its swallow
-  // is a swelling that runs from the head to the belly, fatter for a longer one.
+  // A meal (the owner's A, docs/mocks/heal-eat-2026-09-30.html): the jaws
+  // swing apart from their hinge for the creature and shut on it, and its
+  // swallow is a lump that runs from the head to the belly, fatter for a
+  // longer one, the creature dark through the hide. The jaws are the head
+  // drawn wider by the gap (`jawGap`), each half pushed off the mouth's line.
   const meal = held && S.view === 'deep' ? mealNow() : null;
   const open = meal ? jawOpen(meal.toLand) : 0;
+  let lumpAt = null, lumpLen = 0;
   if (meal && meal.toLand >= 0 && meal.toLand < MEAL_SWALLOW_S) {
-    const a = 1 - meal.toLand / MEAL_SWALLOW_S, at = headA + (a * a * (3 - 2 * a)) * (bellyA - headA);
-    const swell = MEAL_SWELL * P * (0.5 + lengthOfKind(kindOf(meal.n, KINDS)) / 24), len = MEAL_SWELL_LEN * P;
+    const a = 1 - meal.toLand / MEAL_SWALLOW_S;
+    lumpAt = headA + (a * a * (3 - 2 * a)) * (bellyA - headA);
+    lumpLen = MEAL_SWELL_LEN * P * (0.7 + lengthOfKind(kindOf(meal.n, KINDS)) / 30);
+    const swell = MEAL_SWELL * P * (0.5 + lengthOfKind(kindOf(meal.n, KINDS)) / 24);
     for (const p of pts) {
-      const d = Math.abs(p.along - at);
-      if (d < len) p.r += swell * Math.sqrt(1 - (d / len) ** 2);
+      const d = Math.abs(p.along - lumpAt);
+      if (d < lumpLen) p.r += swell * Math.sqrt(1 - (d / lumpLen) ** 2);
     }
   }
+  if (open > 0) for (const p of pts) p.r += jawGap(p.along / P, open) * P;
 
   // Each cell takes the sample nearest it. On flat arrays over the coil's box, and
   // painted into one image (`coil`): a map of cell objects and a fillRect a
@@ -257,13 +264,24 @@ export function drawSerpent() {
     const p = pts[own[i]];
     const x = minX + (i % cols) * P, y = minY + Math.floor(i / cols) * P;
     const dx = x + P / 2 - p.x, dy = y + P / 2 - p.y;
-    const dist = best[i], r = p.r;
-    const along = p.along + dx * p.tx + dy * p.ty, across = dx * p.nx + dy * p.ny;
+    const dist = best[i];
+    let r = p.r;
+    const along = p.along + dx * p.tx + dy * p.ty;
+    let across = dx * p.nx + dy * p.ny;
     const da = along - bellyA;
     if (gap && Math.abs(da) < gap / 2) continue;                 // the wound: open water
     if (dist > r) continue;
-    // the gape: a wedge cut out of the front of the head, wide at the tip
-    if (open > 0 && along < headA + P * 5 && Math.abs(across) < open * MEAL_GAPE * P * Math.max(0, 1 - (along - (headA - SNOUT)) / (SNOUT + P * 5))) continue;
+    // The jaws apart: between them open water, where the creature going in
+    // shows; outside, each half of the head as it was, pushed off the line.
+    const g = open > 0 ? jawGap(along / P, open) * P : 0;
+    let tooth = false;
+    if (g > 0) {
+      if (Math.abs(across) < g) continue;
+      tooth = Math.abs(across) - g < P;
+      across -= Math.sign(across) * g;
+      r -= g;
+      if (Math.abs(across) > r) continue;
+    }
     const aI = Math.round(along / P), cI = Math.round(across / P);
     if (bit.length && bitten(bit, along, across, r, aI, cI)) continue;   // a bite: open water
     // The cage: inside the swell, pale, crossed by dark ribs he is seen
@@ -299,8 +317,11 @@ export function drawSerpent() {
         ramp = GREYS; rung = 1 + Math.round(3 * Math.abs(da) / reach);
       }
     }
+    // Teeth along the open jaws' edges, and the lump dark through the hide.
+    if (tooth && (aI & 1) === 0 && along < (MEAL_HINGE - 1) * P) { ramp = GREYS; rung = WHITE; }
+    if (lumpAt != null && Math.abs(along - lumpAt) < lumpLen * 0.6 && Math.abs(across) < P * 1.6) { ramp = GREYS; rung = 2; }
     // The snout's jaw, a line through it, and the eye behind it.
-    if (along < headA && Math.abs(across) < P / 2) { ramp = GREYS; rung = 0; }
+    if (!g && along < headA && Math.abs(across) < P / 2) { ramp = GREYS; rung = 0; }
     if (Math.abs(along - headA - P) < P / 2 && Math.abs(across + r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
     coil.put(i, ramp[rung]);
   }
@@ -342,7 +363,7 @@ export function drawSerpent() {
   for (const p of pts) if (Math.abs(p.along - ringA) < P && (!head || Math.abs(p.along - ringA) < Math.abs(head.along - ringA))) head = p;
   drawStatuses(t / 1000);
   drawStunRing(t, head);
-  if (held) drawMealRing(t, pts, bellyA);
+  if (held) drawMealCrosses(t, pts, bellyA);
   ctx.globalAlpha = 1;
   drawVeil(t, pts);
   let belly = pts[0];
@@ -351,33 +372,23 @@ export function drawSerpent() {
   ctx.fillStyle = '#000';
 }
 
-// How wide the jaws are, 0..1: open from a beat before the creature is at the
-// mouth, held while it goes in, shut as its swallow starts.
-function jawOpen(toLand) {
-  const from = BITE_BEFORE + MEAL_JAW_LEAD_S, shut = MEAL_SWALLOW_S;
-  if (toLand > from || toLand < shut) return 0;
-  const opening = Math.min(1, (from - toLand) / MEAL_JAW_OPEN_S), closing = Math.min(1, (toLand - shut) / 0.25);
-  const k = Math.min(opening, closing);
-  return k * k * (3 - 2 * k);
-}
-
-// The lump landing at the belly: a ring of purple running out along both edges
-// of the hide, brightest at its front, gone in MEAL_RING_S.
-function drawMealRing(t, pts, bellyA) {
-  const a = (t - S.mealLandedAt) / (MEAL_RING_S * 1000);
-  if (!(S.mealLandedAt > 0) || a < 0 || a >= 1) return;
-  const front = a * MEAL_RING_REACH * P, seen = new Set();
-  for (const p of pts) {
-    const d = front - Math.abs(p.along - bellyA);
-    if (d < 0 || d > P * 5) continue;
-    const tone = PURPLES[Math.max(1, WHITE - Math.floor(d / P) - Math.floor(a * 3))];
-    for (const side of [-1, 1]) {
-      const x = snap(p.x + side * p.nx * (p.r + P / 2) - P / 2), y = snap(p.y + side * p.ny * (p.r + P / 2) - P / 2), key = x * 1e5 + y;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      ctx.fillStyle = tone;
-      ctx.fillRect(x, y, P, P);
-    }
+// The heal landing (the owner's pick): purple crosses lift off the length of
+// the body, the nearest the belly first, each rising and fading.
+const unit = k => { const x = Math.sin(k * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+function drawMealCrosses(t, pts, bellyA) {
+  const a = (t - S.mealLandedAt) / 1000;
+  if (!(S.mealLandedAt > 0) || a < 0 || a >= MEAL_AURA_S || !pts.length) return;
+  const first = pts[0].along, span = pts[pts.length - 1].along - first, seed = Math.round(S.mealLandedAt);
+  for (let k = 0; k < MEAL_CROSSES; k++) {
+    const along = first + unit(seed + k * 3) * span;
+    const delay = unit(seed + k * 5) * 0.4 + Math.abs(along - bellyA) / (span || 1) * (MEAL_AURA_S - MEAL_CROSS_S - 0.4);
+    const b = (a - delay) / MEAL_CROSS_S;
+    if (b < 0 || b >= 1) continue;
+    let p = pts[0];
+    for (const q of pts) if (Math.abs(q.along - along) < Math.abs(p.along - along)) p = q;
+    const x = snap(p.x - p.nx * p.r), y = snap(p.y - p.ny * p.r) - (2 + Math.floor(b * MEAL_CROSS_RISE)) * P;
+    ctx.fillStyle = PURPLES[Math.max(2, WHITE - Math.floor(b * 7))];
+    for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) ctx.fillRect(x + dx * P, y + dy * P, P, P);
   }
 }
 

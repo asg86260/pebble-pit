@@ -261,6 +261,11 @@ const mealScene = (kind, to, atBelly = false) => () => {
   S.mealT = cycleS(n) - to - 1;
   S.healBank = 300;
   lookDeep(atBelly ? coilAt(bellySeg() - 6, now()).x : coilAt(0, now()).x - 150);
+  // A meal's moments are quicker than a shot takes, so the clock is held on
+  // the page's frames for a few seconds once the second of yard has run.
+  const at = S.mealT + 1, until = performance.now() + 4000;
+  const hold = () => { if (performance.now() < until && S.meal === n) { if (S.mealT > at) S.mealT = at; requestAnimationFrame(hold); } };
+  requestAnimationFrame(hold);
 };
 
 // The lash is a second long, shorter than a shot takes, so its moment is
@@ -393,13 +398,15 @@ const deepScenes = {
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',
     run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
   'meal-swim': { about: 'the deep', say: 'a Skull fish swimming in from the left to the serpent, its jaws opening',
-    run: mealScene(3, 2.6) },
+    run: mealScene(3, 4.4) },
   'meal-bite': { about: 'the deep', say: 'a Wandering eye at the jaws, wide open',
-    run: mealScene(4, 1.9) },
+    run: mealScene(4, 3.3) },
+  'meal-gulp': { about: 'the deep', say: 'a Skull fish half into the jaws, cut by their lines',
+    run: mealScene(3, 2.75) },
   'meal-swallow': { about: 'the deep', say: 'the swallow running down the neck after a Many-mouthed blob',
-    run: mealScene(6, 0.55, true) },
-  'meal-land': { about: 'the deep', say: 'the lump landing at the belly, a purple ring and the number said',
-    run: mealScene(0, -0.1, true) },
+    run: mealScene(6, 1.2, true) },
+  'meal-land': { about: 'the deep', say: 'the lump landed at the belly, purple crosses rising off the body',
+    run: mealScene(0, -0.6, true) },
   // A phase's mechanic (deep/phases.js) caught at its moment: the turn set
   // `into` seconds short of the thing itself (negative: that far into it).
   'phase-surge': { about: 'the deep', say: 'the surge warning in the warded phase: the belly throbbing purple',

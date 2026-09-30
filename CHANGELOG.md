@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The serpent's jaws swing wide open for a creature and it goes in between them, its lump travels slowly down the neck, and purple crosses rise off the body when the heal lands (`node tools/look.mjs meal-gulp`).
 - The serpent's bar centers over the stretch of serpent on screen instead of the middle of the window (`node tools/look.mjs meal-swim`).
 - The serpent eats to heal: eight abyss creatures swim in from the left, one a meal every 6 to 12 seconds, and the heal it banked lands in one lump as the swallow reaches its belly, at the same rate as before (test/meals.test.mjs, `node tools/look.mjs meal-swim`).
 - A melee fighter hopping up to the hide is thrown off by the lash like one at it (test/phase-mechanics.test.mjs).
