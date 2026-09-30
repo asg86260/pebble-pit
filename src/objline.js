@@ -7,12 +7,14 @@ import { S } from './state.js';
 import { objective } from './objectives.js';
 
 const el = document.getElementById('objective');
-const say = el.querySelector('.say');
+// The node yard's page is a stand-in with no line on it: nothing to seat.
+const say = el?.querySelector?.('.say') ?? null;
 const STRIKE_MS = 1000;
 
 let shown = null, leaving = 0;
 
 export function seatObjective(t) {
+  if (!say) return;
   const want = objective();
   // Off while a beat has the yard, the camera or a sheet: the story is being told.
   const hide = (!want && !shown) || !!(S.beat.yard || S.beat.camera || S.beat.sheet);
