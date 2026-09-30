@@ -62,7 +62,7 @@ export const DEEP_THROW = 0.25;
 // A chain of segments across the deep, swaying on its own clock: nothing in the
 // deep is still. `coilAt` in deep/place.js is the one reader.
 export const COIL_SEGS = 56;         // segments, head to tail
-export const COIL_X0 = 0.06;         // the head's end, a fraction of DEEP_W
+export const COIL_X0 = 0.28;         // the head's end, a fraction of DEEP_W
 export const COIL_X1 = 0.94;         // the tail's end
 export const COIL_Y = 0.58;          // its centerline, a fraction of DEEP_H down from the ceiling
 export const COIL_AMP = P * 9;       // how far it swings either side of that
