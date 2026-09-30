@@ -5,6 +5,17 @@ import { sleep, state, ok, canvas, point, onScreen, hoverBench, run, runUntil, r
          pressRaise, raiseEl, haveRock, asScreen, shop } from './kit.js';
 
 export const TESTS = [
+  // The story's line (objectives.js, objline.js) is up from the first frame
+  // of a fresh game, top left, and asks for the rock.
+  ['the line of the story asks for the rock, top left, from the start', async () => {
+    await raf(); await raf();
+    const el = document.getElementById('objective'), r = el.getBoundingClientRect();
+    const say = el.querySelector('.say').textContent;
+    return [
+      ok(!el.hidden && say === 'dig out the rock', 'the line is up and asks for the rock', `hidden ${el.hidden}, "${say}"`),
+      ok(r.left < 40 && r.top < 40 && r.width > 0, 'pinned top left', JSON.stringify({ x: r.left, y: r.top, w: r.width }))
+    ];
+  }],
   // First, on the fresh game the suite resets to: the bench only arrives
   // once, and nothing after here would ever see it missing.
   ['the bench arrives when there is something to buy', async () => {

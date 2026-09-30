@@ -1892,3 +1892,25 @@ html.dark .modal {
 /* The column's floor is the longest place a body can be, measured by
    `fitCrewColumn` in shop.js; 22ch until it has been. */
 #modalcrew .rows { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--crew-col, 22ch)), 1fr)); }
+
+/* The story's next step (objline.js; the owner's C of
+   docs/mocks/objectives-2026-09-30.html): a small grey "next" over the line.
+   Finished, the line is struck through and fades, and the next comes up under
+   the label. White in the deep, where the page behind it is dark. */
+#objective {
+  position: fixed;
+  left: 14px; top: 12px;
+  z-index: 9;
+  display: grid;
+  gap: 1px;
+  font: 12px ui-monospace, "Courier New", monospace;
+  color: var(--ink);
+  pointer-events: none;
+  /* wraps before the notice card, which stands centered at the top */
+  max-width: max(120px, calc(50vw - 150px));
+}
+#objective .next { font-size: 10px; letter-spacing: .08em; color: #8b8b96; }
+#objective .say { transition: opacity .6s ease .35s; }
+#objective .say.done { text-decoration: line-through; text-decoration-thickness: 2px; opacity: 0; }
+#objective .say.in { opacity: 0; }
+#objective.deep { color: #fff; }

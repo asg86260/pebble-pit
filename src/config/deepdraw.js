@@ -98,7 +98,7 @@ export const SHAFT_ARROW_DOWN = P * 2;
 // so the camera that opens on it (view.js) shows it in the middle of the
 // window however much of the deep the window holds (the owner's call).
 export const DEEP_PORTAL_R = P * 15;
-export const DEEP_PORTAL_DOWN = -P * 4;   // up four cells, clear of the serpent's bar and still under the roof
+export const DEEP_PORTAL_DOWN = -P * 2;   // up two cells: its top on the surface, clear of the serpent's bar and still under the roof
 export const DEEP_PORTAL_AT = 0.5;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
@@ -199,6 +199,16 @@ export const INVERT_PROBE_SIDE = 16;
 export const SNATCH_HEAD_W = P * 16;
 export const SNATCH_HEAD_H = P * 9;
 export const SNATCH_NECK_W = P * 7;
+// The deep's head on it (the owner's 2, docs/mocks/objectives-2026-09-30.html):
+// the neck leans out toward the plank as it rises, SNATCH_LEAN at the head,
+// and draws back once it has him; the jaws hinge SNATCH_HINGE cells back from
+// the snout and part SNATCH_GAPE cells at the tip; the crest in the abyss's
+// purples, as seen in the yard.
+export const SNATCH_LEAN = P * 10;
+export const SNATCH_HINGE = 10;
+export const SNATCH_GAPE = 4;
+export const SNATCH_CREST = ['#6a2fbe', '#9b5de5'];
+export const SNATCH_HIDE = ['#000', '#1c1c21', '#26262c', '#6e6e78'];   // edge, hide, the lattice, the brow
 
 export const DEEP_DRAW_KNOBS = [
   { key: 'VIEW_GLIDE_S', label: 'deep glide, s', min: 0.2, max: 5, step: 0.1,

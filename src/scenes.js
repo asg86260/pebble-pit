@@ -286,11 +286,22 @@ const mechScene = (stage, into, stations, seg = null, pin = false) => () => {
 // reaches the phase named. The shot tool runs a second more after a scene,
 // and the take is shorter than that, so the scene stops at the start of the
 // phase before the one to be seen.
-const snatchAt = phase => () => {
+const snatchAt = (phase, into = 0, pin = false) => () => {
   rich();
   window.__fullSites();
   window.__snatch();
   for (let i = 0; i < 60 * 60 && S.snatch?.phase !== phase; i++) window.__fast(1 / 60);
+  for (let i = 0; i < into; i++) window.__fast(1 / 60);
+  // A rise is sixteen frames and a take a beat, quicker than a shot is
+  // taken, so the moment is held on the page's frames for a few seconds.
+  if (!pin) return;
+  const sn = S.snatch, y = sn?.headY, carried = sn?.carried, until = performance.now() + 4000;
+  const hold = () => {
+    if (!sn || S.snatch !== sn || performance.now() > until) return;
+    sn.at = now(); sn.headY = y; sn.phase = phase; sn.carried = carried;
+    requestAnimationFrame(hold);
+  };
+  requestAnimationFrame(hold);
 };
 
 // A glide caught at `k` of the way and held there (`poseGlide`): the first
@@ -321,9 +332,9 @@ const PROP_SCENES = {
 
 const deepScenes = {
   snatch: { about: 'the deep', say: 'the snatch: the serpent up out of the abyss at the shaft, him in its jaws',
-    run: snatchAt('rise') },
+    run: snatchAt('rise', 13, true) },
   'snatch-take': { about: 'the deep', say: 'the snatch: the serpent going back under with him',
-    run: snatchAt('take') },
+    run: snatchAt('take', 0, true) },
   // The portal in the abyss's surface (DESIGN.md, "Two crews and a portal"):
   // opening before the head comes up, and closing as she leaps in after him.
   'snatch-portal': { about: 'the deep', say: 'the snatch: the whirlpool opening in the surface',

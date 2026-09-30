@@ -24,7 +24,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          WOUND_GAP, BELLY_AT, DENT_REACH, DENT_LIFT, DENT_BIG, DENT_CORE, DENT_STEPS,
          BLEED_DRIPS, BLEED_DRIP_S, HELD_EVERY, EXPOSED_EVERY, EXPOSED_LIFT_HZ,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
-         SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
+         SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, SNATCH_LEAN, SNATCH_HINGE, SNATCH_GAPE, SNATCH_CREST, SNATCH_HIDE, SNATCH_RISE, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE } from '../config.js';
@@ -497,46 +497,56 @@ export function drawSnatch() {
   const mx = mouthX();
   const surface = snap(abyssLine() + swellAt(Math.round(mx / P), t));
   if (sn.headY >= surface) return;
-  // the scales of it, in the yard's greys: the same lattice the coil wears
-  const scale = (c, r) => ((c + (r % 2) * 2) % 4 === 0 ? '#3a3a3a' : '#000');
+  const [EDGE, HIDE, LATTICE, BROW] = SNATCH_HIDE;
+  const k = Math.max(0, Math.min(1, (surface - sn.headY) / SNATCH_RISE));   // how far up
+  const ease = x => x * x * (3 - 2 * x);
+  // It leans out toward the plank as it comes up and draws back with him; the
+  // jaws part as it reaches the top and shut on him.
+  const lean = (sn.carried ? 0.35 : 1) * ease(k);
+  const open = sn.carried ? 0 : ease(Math.max(0, Math.min(1, k * 1.6 - 0.6)));
   const sway = Math.round(Math.sin(t / 700)) * P;
-  const cols = SNATCH_HEAD_W / P, rows = SNATCH_HEAD_H / P, mid = Math.floor(rows / 2);
-  // The head stands on the neck and reaches out over the plank, toward
-  // whoever is at the edge of it.
-  const nx = snap(mx - SNATCH_NECK_W / 2) + sway;
-  const hx = nx + SNATCH_NECK_W - SNATCH_HEAD_W, hy = snap(sn.headY);
+  const cols = SNATCH_HEAD_W / P, rows = SNATCH_HEAD_H / P, mid = Math.floor(rows / 2), neckC = SNATCH_NECK_W / P;
+  const hy = snap(sn.headY), neckTop = hy + (mid + 1) * P;
+  const baseX = snap(mx - SNATCH_NECK_W / 2) + sway;
+  const nxAt = y => baseX - snap(lean * SNATCH_LEAN * Math.sin(Math.max(0, Math.min(1, (surface - y) / Math.max(P, surface - neckTop))) * Math.PI / 2));
+  const cell = (x, y, tone) => { ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
   ctx.save();
   ctx.beginPath();
-  ctx.rect(hx - WORKER * 2, hy - WORKER * 2, SNATCH_HEAD_W + WORKER * 4, surface - hy + WORKER * 2);
+  ctx.rect(baseX - SNATCH_LEAN - SNATCH_HEAD_W - WORKER * 2, hy - P * 8, SNATCH_LEAN + SNATCH_HEAD_W + SNATCH_NECK_W + WORKER * 4, surface - hy + P * 8);
   ctx.clip();
-  for (let y = hy + SNATCH_HEAD_H; y < surface + P; y += P) {
-    for (let x = nx; x < nx + SNATCH_NECK_W; x += P) {
-      ctx.fillStyle = scale(x / P, y / P);
-      ctx.fillRect(x, y, P, P);
+  // The neck, row by row up the curve, the crest down its back.
+  for (let y = neckTop; y < surface + P; y += P) {
+    const x0 = nxAt(y);
+    for (let c = 0; c < neckC; c++)
+      cell(x0 + c * P, y, c === 0 || c === neckC - 1 ? EDGE : ((c + y / P) % 3 ? HIDE : LATTICE));
+    if ((y / P) % 2 === 0) cell(x0 + neckC * P, y, SNATCH_CREST[(y / P) % 4 ? 0 : 1]);
+  }
+  // The head: a snout reaching toward the plank, the jaws hinged behind the
+  // eye, each half pushed off the mouth's line by the gap, teeth on their edges.
+  const hx = nxAt(neckTop) + SNATCH_NECK_W - SNATCH_HEAD_W;
+  const gapAt = c => (c < SNATCH_HINGE ? Math.round(open * SNATCH_GAPE * (1 - c / SNATCH_HINGE)) : 0);
+  for (let c = 0; c < cols; c++) {
+    const half = Math.round(2 + (c / (cols - 1)) * (mid - 2)), gap = gapAt(c);
+    for (let r = -half; r <= half; r++) {
+      if (open > 0 && r === 0 && c < SNATCH_HINGE) continue;
+      const shift = r < 0 ? -gap : r > 0 ? gap : 0;
+      let tone = Math.abs(r) === half ? EDGE : r === -half + 1 ? BROW : ((c + r) % 3 ? HIDE : LATTICE);
+      if (open > 0.2 && c < SNATCH_HINGE - 1 && c % 2 === 0 && Math.abs(r) === 1) tone = '#fff';
+      if (!open && r === 0 && c < 6) tone = EDGE;
+      cell(hx + c * P, hy + (mid + r + shift) * P, tone);
+    }
+    if (c > 5 && c % 2 === 0) {
+      const tall = c % 4 ? 2 : 3;
+      for (let j = 1; j <= tall; j++) cell(hx + c * P, hy + (mid - half - gap - j) * P, SNATCH_CREST[c % 4 ? 0 : 1]);
     }
   }
-  // The jaws: a wedge open at the snout, running back into the head, shut
-  // to a line round him once it has him.
-  const open = sn.carried ? 0.5 : 2.5, depth = cols * 0.55;
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (c < depth && Math.abs(r - mid) < open * (1 - c / depth) + 0.5) continue;
-      if ((r === 0 || r === rows - 1) && (c === 0 || c === cols - 1)) continue;   // rounded
-      ctx.fillStyle = scale(c, r);
-      ctx.fillRect(hx + c * P, hy + r * P, P, P);
-    }
-  }
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(hx + Math.round(cols * 0.62) * P, hy + P * 2, P, P);          // the eye
-  if (!sn.carried) {
-    ctx.fillRect(hx + P, hy + (mid - 2) * P, P, P);                          // and its fangs
-    ctx.fillRect(hx + P, hy + (mid + 2) * P, P, P);
-  }
+  const eyeC = Math.round(cols * 0.62);
+  cell(hx + eyeC * P, hy + (mid - 2 - gapAt(eyeC)) * P, '#fff');
   if (sn.carried) drawBody(hx - WORKER / 2, hy + mid * P + P / 2 - WORKER / 2);
   ctx.restore();
   // the surface broken either side of the neck
   ctx.fillStyle = '#fff';
-  ctx.fillRect(nx - P * 2, surface, P, P);
-  ctx.fillRect(nx + SNATCH_NECK_W + P, surface, P, P);
+  ctx.fillRect(baseX - P * 2, surface, P, P);
+  ctx.fillRect(baseX + SNATCH_NECK_W + P, surface, P, P);
   ctx.fillStyle = '#000';
 }

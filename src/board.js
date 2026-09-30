@@ -5,6 +5,7 @@ import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SL
          SHEET_MS, SCALE_MARK } from './config.js';
 import { fmt } from './words.js';
 import { S, bench } from './state.js';
+import { seatObjective } from './objline.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
 import { crewRows } from './crewboard.js';
 import { UPGRADES, lodgers, markSectionsSeen, canPay, forSale, building } from './upgrades.js';
@@ -541,6 +542,9 @@ export function showPanel(want, now = false) {
 // What actually moves the board, once it is settled where it is going.
 function settle(want) {
   if (want === at) return;
+  // The wizards' board looked at after the snatch moves the story's line on
+  // (objectives.js): it is the way down.
+  if (want === 'tower' && S.snatched) S.askedWizards = true;
   shutOpts();                  // and a board swapped for another takes its lists with it
   const wasAt = at;
   at = want;
@@ -720,5 +724,6 @@ export function hud() {
   // row after seating could hang off the top of a short window.
   placeBoard();
   seatCall();
+  seatObjective(performance.now());
 }
 

@@ -1,16 +1,10 @@
 # Still to do
 
-## The story's objectives -- DESIGNED, AWAITING THE VOTE (2026-09-30)
+## The story's objectives -- BUILT (2026-09-30)
 
-"The story's objectives" in DESIGN.md; mock `docs/mocks/objectives-2026-09-30.html`.
-One pinned line, words only, no reward. Open: the line between the rescue and
-the snatch, "the rocks keep falling", the shields' order, a missing tower.
-
-## The snatch's head is the old drawing (2026-09-30)
-
-The head that comes up out of the pit (`drawSnatch`, render/serpent.js) is
-the blocky one from before the serpent was redrawn: no snout, crest, eye or
-hinged jaws. Mocked beside the objectives; no code yet.
+"The story's objectives" in DESIGN.md. Open: the ending sheet still says the
+story is over when the second half follows it; nobody has read the line
+through a whole game.
 
 ## The serpent eats to heal -- BUILT (2026-09-30)
 

@@ -16890,11 +16890,16 @@ break").
   (`barflight.js`), so it shows the old wound until the lump's number goes in.
 - **The heal number's colors and size** stay as built.
 
-## The story's objectives (design, not built)
+## The story's objectives (built 2026-09-30)
 
 Asked for by the owner, 2026-09-30, with three calls made: one pinned line at
 the top left, nothing for finishing one but the next line, and words only --
-the line says what, never where. Mock: `docs/mocks/objectives-2026-09-30.html`.
+the line says what, never where. Mock: `docs/mocks/objectives-2026-09-30.html`;
+the owner picked C (a grey "next" over the line, struck through and faded when
+done). Built with the open calls below taken at their defaults: a "drown the
+pit" line, "the rocks keep falling" as its own step, "build the wizards' tower"
+when it does not stand. Every step's fact implies the ones before it, so the
+line never steps back on a save that skipped one (objectives.js).
 
 ### The bargain
 

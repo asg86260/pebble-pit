@@ -16,6 +16,9 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The serpent that comes up out of the pit has the deep's head: snout, purple crest and hinged jaws that open wide and shut on him, on a neck that leans out toward the plank (`node tools/look.mjs snatch`).
+- The story's line carries on into the second half: drown the pit, ask the wizards how to get down, buy the portal, free your sqhusband (test/objectives.test.mjs).
+- The deep's portal no longer pokes up through the water's surface, so a click on the roof is not a way up (src/selftest/deep.js).
 - The serpent's jaws swing wide open for a creature and it goes in between them, its lump travels slowly down the neck, and purple crosses rise off the body when the heal lands (`node tools/look.mjs meal-gulp`).
 - The serpent's bar centers over the stretch of serpent on screen instead of the middle of the window (`node tools/look.mjs meal-swim`).
 - The serpent eats to heal: eight abyss creatures swim in from the left, one a meal every 6 to 12 seconds, and the heal it banked lands in one lump as the swallow reaches its belly, at the same rate as before (test/meals.test.mjs, `node tools/look.mjs meal-swim`).
@@ -97,6 +100,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 - A Hasted or Inspired fighter keeps its buff through a reload (test/classes.test.mjs).
 **New this release**
+- A line at the top left says the story's next step, from digging out the rock to saving the sqwife.
 - The pictures over a station of what it is building and what is in line drift gently, the way a lifted shop tile does.
 
 - Houses bought several at once each show their own progress bar, instead of an empty one covering the house being built (test/queue-repeats.test.mjs).
