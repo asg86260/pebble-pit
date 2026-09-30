@@ -13,11 +13,11 @@ import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
 import { inspiredK, hasted } from '../deep/statuses.js';
 import { standOfStation, deepFloor } from '../deep/place.js';
-import { part } from '../deep/phases.js';
+import { part, resistNow, resistNext } from '../deep/phases.js';
 import { statusLine } from '../deep/rails.js';
 import { STATUS_ICONS, STATUS_PX, STATUS_GAP, STATUS_STEPS, STATUS_RENEW_MS, STATUS_TILE, STATUS_RIM,
          STATUS_FOE, STATUS_FACE, STATUS_TIMER, STATUS_SPENT, STATUS_POST, STATUS_POST_OUT, STATUS_POST_FOOT,
-         STATUS_COUNT, STATUS_WARN_HZ, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS } from '../config.js';
+         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS } from '../config.js';
 
 const seen = c => darkPage ? turned(c) : c;
 
@@ -32,7 +32,7 @@ export function statusAt(cx, cy) {
 // whether it is coming, on, or stopped.
 function saysOf(key, n = 0, mech = null) {
   if (mech) return STATUS_SAYS[key][mech.struck ? 'stopped' : mech.warn ? 'coming' : 'on'].replace('{x}', mech.x);
-  if (key === 'dazed') return STATUS_SAYS.dazed;
+  if (key === 'dazed' || key === 'ward' || key === 'plates') return STATUS_SAYS[key];
   const line = statusLine(key);
   return n > 1 ? line.replace(':', ` x${n}:`) : line;
 }
@@ -99,7 +99,16 @@ export function drawFoeStatuses(x, y) {
     const warn = p.part === 'warn';
     const rim = warn ? STATUS_WARN_RIM[Math.floor(t / 1000 * STATUS_WARN_HZ) % 2] : null;
     barTiles.push({ x, y, w: s, h: s, text: saysOf(p.m.kind, 0, { warn, struck: S.mechSkip, x: p.m.x }) });
-    x += tile(p.m.kind, x, y, 1 - p.k, 0, { rim, struck: S.mechSkip }) + STATUS_GAP * 2;
+    x += tile(p.m.kind, x, y, 1 - p.k, 0, { rim, struck: S.mechSkip }) + STATUS_GAP;
+  }
+  // then the resist the phase stands in, beside the debuffs: in the fading it
+  // is the one up, its timer the turn, its rim blinking as the other comes in
+  const kind = resistNow();
+  if (kind) {
+    const key = kind === 'magic' ? 'ward' : 'plates';
+    const turn = resistNext() ? STATUS_WARN_RIM[Math.floor(t / 1000 * STATUS_WARN_HZ) % 2] : null;
+    barTiles.push({ x, y, w: s, h: s, text: saysOf(key) });
+    x += tile(key, x, y, S.serpentStage === 3 ? 1 - (S.phaseAt % RESIST_TURN_S) / RESIST_TURN_S : 1, 0, { rim: turn }) + STATUS_GAP;
   }
   for (const o of foeStatuses(t)) {
     barTiles.push({ x, y, w: s, h: s, text: saysOf(o.key, o.n) });

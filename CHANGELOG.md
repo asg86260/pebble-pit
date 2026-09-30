@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The serpent's ward and plates show as tiles beside its debuffs under the bar, the fading's turning from one to the other with its rim blinking ahead (`node tools/look.mjs deep-fading`).
 - Every fighter attacks in its own combo -- a quick string, a reset and a rest -- at the same damage a second as before (test/combo.test.mjs).
 - Every class deals physical, magic or explosive damage: the warded phase resists magic under its purple ward, the split resists physical under plates, and the fading switches between the two (test/resists.test.mjs).
 - The Mage's beam pools in a ball of energy where it meets the serpent, and every status icon says what it is on hover (`node tools/look.mjs deep-fading`).

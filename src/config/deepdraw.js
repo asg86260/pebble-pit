@@ -343,6 +343,10 @@ export const STATUS_ICONS = {
   surge:    { rows: ['..#..', '..#..', '#####', '..#..', '..#..'], own: true },
   lash:     { rows: ['...##', '..#..', '.#...', '#....', '#....'], own: true },
   sink:     { rows: ['#####', '.....', '.###.', '.....', '..#..'], own: true },
+  // and the phase's standing resist (the owner's B, docs/mocks/status-resists-2026-09-30.html):
+  // the ward halves magic, the plates halve physical
+  ward:     { rows: ['..#..', '#.#.#', '.###.', '#.#.#', '..#..'], own: true },
+  plates:   { rows: ['.###.', '#####', '#####', '.###.', '..#..'], own: true },
 };
 // A mechanic's tile while it is warned: its rim blinking between these in held
 // steps, STATUS_WARN_HZ a second. Answered, it is struck through for the rest
@@ -357,6 +361,8 @@ export const STATUS_SAYS = {
   lash:  { coming: 'Lash coming: Held stops it', on: 'Lash: throws off melee fighters', stopped: 'Lash: stopped' },
   sink:  { coming: 'Sink coming: land a burst first', on: 'Sink: out of reach', stopped: 'Sink: answered' },
   dazed: 'Dazed: thrown off, seeing stars',
+  ward: 'Ward: magic does half',
+  plates: 'Plates: physical does half',
 };
 export const STATUS_PX = 2;
 export const STATUS_GAP = 5;
