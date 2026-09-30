@@ -28,7 +28,7 @@ export const STEPS = [
   { key: 'drown', say: 'drown the pit', when: serpentOn, done: () => (!!S.drowned && !!S.rescued) || !!S.snatched },
   { key: 'snatch', say: '', when: serpentOn, done: () => !!S.snatched },
   { key: 'tower', say: 'build the wizards\' tower', when: serpentOn, done: () => !!S.snatched && (!!S.towerOpen || !!S.portalOpen) },
-  { key: 'wizards', say: 'ask the wizards how to get down', when: serpentOn,
+  { key: 'ask', say: 'ask the wizards how to get down', when: serpentOn,
     done: () => !!S.snatched && (!!S.askedWizards || S.portalPour > 0 || !!S.portalOpen) },
   { key: 'portal', say: 'buy the portal', when: serpentOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
   { key: 'free', say: 'free your sqhusband from the serpent\'s belly', when: serpentOn, done: () => !!S.serpentFreed },

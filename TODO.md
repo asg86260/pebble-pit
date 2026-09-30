@@ -2,8 +2,7 @@
 
 ## The story's objectives -- BUILT (2026-09-30)
 
-"The story's objectives" in DESIGN.md. Open: the ending sheet still says the
-story is over when the second half follows it; nobody has read the line
+"The story's objectives" in DESIGN.md. Open: nobody has read the line
 through a whole game.
 
 ## The serpent eats to heal -- BUILT (2026-09-30)
@@ -75,7 +74,6 @@ Open:
   Unreleased.
 - **Glyphs.** The fifteen deep rows and the hop's five arrows borrow
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
-- **The sheet before the snatch** still says it is the end of the story.
 - **The second half plays shallow** (the owner, 2026-09-26): answered by
   "Fighters in slots" (below).
 

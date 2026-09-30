@@ -13,6 +13,7 @@ import { sayClock } from './stats.js';
 import { now } from './clock.js';
 import { beatRunning, skipBeat } from './beats.js';
 import { timesOn, timesName, postTime, sayRank, BOARD_DOWN } from './times.js';
+import { serpentOn } from './snatch.js';
 
 const sheet = document.getElementById('saved');
 const savedIn = document.getElementById('savedin');
@@ -25,7 +26,15 @@ export function syncEnding() {
     sheet.hidden = !up;
     // The clock stopped when they walked out (`stepUnder`), so this is the
     // same number the books read.
-    if (up) { savedIn.textContent = sayClock(S.buriedMs); offerPost(); }
+    if (up) {
+      savedIn.textContent = sayClock(S.buriedMs);
+      offerPost();
+      // With the second half on, the snatch follows this sheet: it says the
+      // story goes on rather than that it is over.
+      const on = serpentOn();
+      for (const el of sheet.querySelectorAll('.endonly')) el.hidden = on;
+      for (const el of sheet.querySelectorAll('.goeson')) el.hidden = !on;
+    }
     else posted = false;                    // the next story's sheet gets its own line
   }
   // The second half's end, the same way: up while its beat has the sheet.

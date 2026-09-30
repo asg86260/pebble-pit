@@ -268,8 +268,11 @@ try {
   </div>
   <div id="timessaid" class="small"></div>
   <div class="rule"></div>
-  <div class="why">that's the end of the story. the yard is yours &mdash; feel free to keep playing.</div>
-  <div class="why">thank you!</div>
+  <!-- With the second half on the story goes on (the snatch comes next), so
+       these two lines are swapped for the one after them (ending.js). -->
+  <div class="why endonly">that's the end of the story. the yard is yours &mdash; feel free to keep playing.</div>
+  <div class="why endonly">thank you!</div>
+  <div class="why goeson" hidden>but the story isn't over. something stirs in the drowned pit.</div>
   <button id="keepplaying" type="button">keep playing</button>
 </div>
 
@@ -277,7 +280,10 @@ try {
      handled in ending.js the way #saved is. -->
 <div id="freed" class="held" hidden>
   <div class="word">you did it</div>
-  <div class="why">you saved your sqhusband.</div>
+  <div class="why">you saved your sqhusband from the serpent's belly.</div>
+  <div class="rule"></div>
+  <div class="why">that's the end of the story. the yard and the deep are yours &mdash; feel free to keep playing.</div>
+  <div class="why">thank you!</div>
   <button id="freedkeep" type="button">keep playing</button>
 </div>
 
