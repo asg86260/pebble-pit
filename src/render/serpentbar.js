@@ -15,7 +15,7 @@ import { drawFoeStatuses } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
          BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
-         BAR_CHIP_MIN, BAR_CHIP_MAX, BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
+         BAR_CHIP_MIN, BAR_CHIP_MAX, BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP, STATUS_PX,
          SERPENT_WOUND } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
@@ -29,7 +29,10 @@ export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage 
 // held still just over the highest the coil ever sways.
 export function barRect() {
   const whole = BAR_W + SERPENT_WOUND.length * (BAR_PIP + BAR_PIP_GAP);
-  const over = (coilCeiling() - S.camY) * S.zoom - BAR_GAP - BAR_H;
+  // The row of status tiles hangs under the bar, so the gap to the coil is
+  // measured from the bottom of the row, whether or not it has a tile in it.
+  const row = STATUS_GAP + 1 + 5 * STATUS_PX + 4 + 4;
+  const over = (coilCeiling() - S.camY) * S.zoom - BAR_GAP - row - BAR_H;
   return { x: Math.round((S.W - whole) / 2), y: Math.round(Math.max(BAR_TOP, over)), w: BAR_W, h: BAR_H };
 }
 // What the bar shows of the defense up, 0..1: the wound as the numbers that

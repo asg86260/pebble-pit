@@ -98,7 +98,7 @@ export const SHAFT_ARROW_DOWN = P * 2;
 // so the camera that opens on it (view.js) shows it in the middle of the
 // window however much of the deep the window holds (the owner's call).
 export const DEEP_PORTAL_R = P * 15;
-export const DEEP_PORTAL_DOWN = -P;   // up a cell, clear of the serpent's bar and still under the roof
+export const DEEP_PORTAL_DOWN = -P * 4;   // up four cells, clear of the serpent's bar and still under the roof
 export const DEEP_PORTAL_AT = 0.5;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
@@ -286,7 +286,7 @@ export const NUM_FOLD_S = 1;
 // the finished deep.
 export const BAR_W = 400;              // screen pixels, the bar's length
 export const BAR_H = 14;               // and its height
-export const BAR_GAP = 10;             // over the coil's highest reach
+export const BAR_GAP = 14;             // over the coil's highest reach, from the bottom of the status row
 export const BAR_TOP = 12;             // and never nearer the top of the glass than this
 export const BAR_PIP = 14;             // a defense's pip, square, after the bar
 export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to pip

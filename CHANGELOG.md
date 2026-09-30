@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The serpent rides lower in the deep, with more room between it, the bar and the portal (`node tools/look.mjs deep-fading`).
 - The lash's tile stays under the serpent's bar all through its phase and says it stuns melee attackers, and the status badges are half again as big (`node tools/look.mjs deep-stun`).
 - The serpent's ward and plates show as tiles beside its debuffs under the bar, the fading's turning from one to the other with its rim blinking ahead (`node tools/look.mjs deep-fading`).
 - Every fighter attacks in its own combo -- a quick string, a reset and a rest -- at the same damage a second as before (test/combo.test.mjs).
