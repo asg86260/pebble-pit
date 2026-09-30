@@ -51,6 +51,7 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
 import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
+import { drawFish } from './render/fish.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawStationStatuses } from './render/statusicons.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
@@ -198,6 +199,7 @@ const LAYERS = [
   { name: 'deep bed', draw: drawDeepBed },
   { name: 'into crusher', draw: drawIntoCrusher }, // behind the furnace, dropping into its funnel
   { name: 'deep stations', draw: drawDeepStations },
+  { name: 'deep fish', draw: drawFish },   // what the serpent eats, in front of the water and behind its head
   { name: 'serpent', draw: drawSerpent },
   { name: 'swimmers', draw: drawSwimmers },
   // The fighters in front of the coil they strike and the swimmers passing,
@@ -282,7 +284,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'serpent', 'swimmers', 'party', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'deep fish', 'serpent', 'swimmers', 'party', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

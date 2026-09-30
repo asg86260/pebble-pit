@@ -1,4 +1,4 @@
-// The serpent: its four defenses, the wound held open against its heal, and
+// The serpent: its four defenses, the wound held open against its heal (banked and landed by the meals, `deep/meals.js`), and
 // the one door every fighter strikes it through.
 //
 // Damage is a rate, not a total. The wound is what the fighters have opened
@@ -12,13 +12,14 @@
 
 import { S } from '../state.js';
 import { SERPENT_HEAL, SERPENT_WOUND, SCALE_PER_DECADE,
-         NUM_HELD_S, NUM_HEAL_EVERY_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
+         NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
 import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, healLeft, has, clearStatuses } from './statuses.js';
+import { cycleS } from './meals.js';
 import { stepMechanic, resetMechanic, surgeK, sunk, guardOf } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
@@ -172,15 +173,11 @@ export const stepSerpent = c => {
   if (stunned) S.serpentStill += c.dt;
   stepMechanic(c);
   const d = depth();
-  if (S.serpentWound < d) {
-    if (stunned || has('held')) return;
-    const was = S.serpentWound;
-    S.serpentWound = Math.max(0, Math.min(d, S.serpentWound - healNow() * c.dt / 1000));
-    tallyHeal(was - S.serpentWound, c.now);
-    return;
-  }
+  if (S.serpentWound < d) { stepMeal(c, stunned || has('held')); return; }
   S.serpentStage++;
   S.serpentWound = 0;
+  S.healBank = S.mealT = 0;                 // a new defense starts hungry, on a new creature
+  S.meal++;
   S.serpentStun = S.serpentGrace = 0;
   clearStatuses();
   resetMechanic();
@@ -202,19 +199,24 @@ function forget(t) {
   S.hits.length = n;
 }
 
-// The heal says what it actually closed, once a second, off the wound at the
-// belly: the rate it could heal at says nothing while the wound is shut, and
-// Weakened reads as a smaller `+`. Less than a whole one is kept for the next
-// second rather than said as nothing.
-function tallyHeal(closed, t) {
-  S.healSum += closed;
-  if (!(S.healAt > 0) || S.healAt > t + NUM_HEAL_EVERY_S * 1000) S.healAt = t + NUM_HEAL_EVERY_S * 1000;
-  if (t < S.healAt) return;
-  S.healAt += NUM_HEAL_EVERY_S * 1000;
-  if (S.healAt <= t) S.healAt = t + NUM_HEAL_EVERY_S * 1000;
-  if (Math.round(S.healSum) < 1) return;
-  const p = bellyAt(t), seg = bellySeg();
-  S.hits.push({ at: t, shut: t, fold: t, x: p.x, y: p.y + coilThick(seg) / 2, done: S.healSum,
-                weapon: 'heal', key: null, side: Math.round(t / (NUM_HEAL_EVERY_S * 1000)) });
-  S.healSum = 0;
+// The heal is banked as it accrues (stopped, as it always was, by a stun or
+// Held) and closes the wound in one lump when the meal lands: the serpent
+// swallows what swam in, and the lump goes in at the belly. The clock runs
+// whatever is on the serpent, so a creature comes either way; only the bank
+// is what the stun and Held stop. A lump under a whole one is not said.
+function stepMeal(c, stopped) {
+  if (!stopped) S.healBank += healNow() * c.dt / 1000;
+  S.mealT += c.dt / 1000;
+  const cycle = cycleS(S.meal);
+  if (S.mealT < cycle) return;
+  S.mealT -= cycle;
+  S.meal++;
+  const closed = Math.min(S.healBank, S.serpentWound);
+  S.healBank = 0;
+  S.serpentWound -= closed;
+  S.mealLandedAt = c.now;
+  if (Math.round(closed) < 1) return;
+  const p = bellyAt(c.now), seg = bellySeg();
+  S.hits.push({ at: c.now, shut: c.now, fold: c.now, x: p.x, y: p.y + coilThick(seg) / 2, done: closed,
+                weapon: 'heal', key: null, side: S.meal });
 }

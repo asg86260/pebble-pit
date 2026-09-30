@@ -437,7 +437,7 @@ export function stepFighter(w, c) {
   // The lash (deep/phases.js) throws a melee fighter off the hide as it
   // passes: it sinks through the water, lies dazed where it lands, and swims
   // back up (crew/falls.js, the thrown body's own way down).
-  if (cls.melee && w.goal === 'fight' && lashHits(coilK(mid(w)))) { lashOff(w); return; }
+  if (cls.melee && (w.goal === 'fight' || w.goal === 'rise') && lashHits(coilK(mid(w)))) { lashOff(w); return; }
   // A gatherer sent over from its rest by the crusher leaves that lull behind.
   if (w.goal === 'rest') w.lull = null;
   step(w, c, st, cls, rungWorth(cls, st.rung));

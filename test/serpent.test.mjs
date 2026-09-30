@@ -10,7 +10,7 @@
 // are about the depths and not about which class answers which stage.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K } from '../src/config.js';
+import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K, MEAL_MIN_S, MEAL_MAX_S } from '../src/config.js';
 import { clickDeep, clickDmg, strike, healNow, woundK, onBreak, scalesOf } from '../src/deep/serpent.js';
 import { spendScales } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
@@ -45,14 +45,14 @@ group('the wound opens under clicks on the coil and closes when nothing strikes'
   const opened = S.serpentWound;
   run(3);
   const closing = S.serpentWound;
-  run(10);
+  run(MEAL_MAX_S + 1);
   return [
     ok(!missed && woundMissed === 0, 'a click on the floor is not a click on the serpent',
        `answered ${missed}, wound ${woundMissed}`),
     ok(Math.abs(opened - clicks * punch) < 1e-9, 'each click on the coil opens it a punch deeper',
        `wound ${opened}, ${clicks} punches of ${punch}`),
-    ok(closing < opened && closing > 0, 'and it closes at the heal', `${opened} then ${closing} three seconds on`),
-    ok(S.serpentWound === 0, 'and left alone it closes altogether', `${S.serpentWound}`),
+    ok(closing === opened && 3 < MEAL_MIN_S, 'and nothing closes between meals', `${opened} then ${closing} three seconds on`),
+    ok(S.serpentWound === 0, 'and left alone the next meal closes it altogether', `${S.serpentWound}`),
     ok(S.serpentStage === 0, 'and nothing broke', `stage ${S.serpentStage}`)
   ];
 });
@@ -96,8 +96,8 @@ group('a hand slower than the heal never opens it, a faster one breaks the stage
     frames++;
   }
   return [
-    ok(most <= punch + 1e-9, 'under the heal the wound is never more than the last blow',
-       `deepest ${most.toFixed(2)}, a punch ${punch}`),
+    ok(most <= heal / 2 * MEAL_MAX_S + 2 * punch, 'under the heal the wound is never more than the blows of one wait between meals',
+       `deepest ${most.toFixed(2)}, a wait of ${MEAL_MAX_S}s at half the heal ${heal / 2 * MEAL_MAX_S}`),
     ok(slowStage === 0, 'and the stage stands', `stage ${slowStage}`),
     ok(S.serpentStage === 1, 'over the heal it opens to the depth and breaks', `stage ${S.serpentStage} after ${frames} frames`),
     ok(frames / 60 >= SERPENT_WOUND[0] / (fastEach * punch * 60),
@@ -202,14 +202,16 @@ group('a cold reload in the split comes back split, wounded and with its scales'
   deepYard();
   window.__serpent({ stage: 2, wound: 1234 });
   window.__scales(37);
+  S.healBank = 321; S.meal = 5; S.mealT = 2.5;
   window.__cold();
-  const back = { stage: S.serpentStage, wound: S.serpentWound, scales: S.scales };
-  run(1);
+  const back = { stage: S.serpentStage, wound: S.serpentWound, scales: S.scales, bank: S.healBank, meal: S.meal, at: S.mealT };
+  run(MEAL_MAX_S + 1);
   return [
     ok(back.stage === 2, 'the stage', `${back.stage}`),
     ok(back.wound === 1234, 'the wound', `${back.wound}`),
     ok(back.scales === 37, 'and the crushed scales', `${back.scales}`),
-    ok(woundK() > 0 && S.serpentWound < 1234, 'and the fight goes on from there', `${S.serpentWound}`),
+    ok(back.bank === 321 && back.meal === 5 && back.at === 2.5, 'and the meal where it was, the bank and the creature', `${back.bank} ${back.meal} ${back.at}`),
+    ok(S.serpentWound < 1234, 'and the fight goes on from there', `${S.serpentWound}`),
     ok(deepTop() < deepFloor(), 'the deep is where it was')
   ];
 });

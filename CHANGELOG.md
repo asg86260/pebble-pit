@@ -16,6 +16,8 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The serpent eats to heal: eight abyss creatures swim in from the left, one a meal every 6 to 12 seconds, and the heal it banked lands in one lump as the swallow reaches its belly, at the same rate as before (test/meals.test.mjs, `node tools/look.mjs meal-swim`).
+- A melee fighter hopping up to the hide is thrown off by the lash like one at it (test/phase-mechanics.test.mjs).
 - The serpent is shorter: its head hangs just past the first fighter, leaving open water to its left (`node tools/look.mjs party-four`).
 - The serpent rides lower in the deep, with more room between it, the bar and the portal (`node tools/look.mjs deep-fading`).
 - The lash's tile stays under the serpent's bar all through its phase and says it stuns melee attackers, and the status badges are half again as big (`node tools/look.mjs deep-stun`).

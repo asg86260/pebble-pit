@@ -271,9 +271,8 @@ export const NUM_HEAL_FACES = ['#9b5de5', '#6a2fbe', '#5c2ba6', '#412465', '#2d1
 export const NUM_HEAL_DROPS = ['#2d1d47', '#241739', '#1b112c', '#130b20', '#130b20'];
 // What the sim keeps for them (deep/serpent.js): a weapon that hurts while it
 // is held (the lance, the beam) says its sum once this often, a body at a
-// time; the heal says what it actually closed once this often.
+// time; the heal says what it closed once a meal (config/meals.js).
 export const NUM_HELD_S = 1;
-export const NUM_HEAL_EVERY_S = 1;
 // The spots of one blow that lands in several places (a whirlwind's cut)
 // landing within this of its first are summed into its one number.
 export const NUM_FOLD_S = 1;

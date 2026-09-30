@@ -14,6 +14,7 @@
 import { WORKER } from './config.js';
 import { S, pit, floor, cut, band } from './state.js';
 import { P } from './config.js';
+import { cycleS } from './deep/meals.js';
 import { ways, wayAt, standTop, WORKINGS, belowYard } from './route.js';
 import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
@@ -453,9 +454,16 @@ export function verifyWorld() {
       fail('the serpent\'s defense went back', `stage ${serpentWas} then ${stage}`);
     // A stunned serpent does not heal: a wound that was stunned at the end
     // of the last frame is no shallower at the end of this one, unless the
-    // stage broke under it. And no stun is longer than the longest.
-    if (stunWas && stage === serpentWas && S.serpentWound < woundWas - 1e-9)
+    // stage broke under it or a meal landed, which closes what was banked
+    // before the stun (the stun stops the bank filling, not the meal). And no
+    // stun is longer than the longest.
+    if (stunWas && stage === serpentWas && S.meal === mealWas && S.serpentWound < woundWas - 1e-9)
       fail('the serpent healed while it was stunned', `wound ${woundWas} then ${S.serpentWound} in stage ${stage}`);
+    // The meal: a bank that is never under nought, a clock inside its wait.
+    if (!(S.healBank >= 0)) fail('the heal bank is under nothing', `${S.healBank}`);
+    if (!(S.mealT >= 0) || (S.serpentWound < depth && S.mealT > cycleS(S.meal) + 1e-9 + 1))
+      fail('the meal clock is outside its wait', `${S.mealT}s of ${cycleS(S.meal)}`);
+    mealWas = S.meal;
     if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)
       fail('the stun is outside its bounds', `${S.serpentStun}s, at most ${STUN_MAX_S}`);
     // The phase's mechanic (deep/phases.js) is somewhere in its turn.
@@ -548,7 +556,7 @@ export function verifyParty() {
 
 // The last stage seen, for the rule that it never goes back. A new game, or a
 // setup that sets the fight outright (`__serpent`), is a new start.
-let serpentWas = -1, woundWas = 0, stunWas = false;
+let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;
 // The length on the frame before, and which reading of the yard it was of.
 let playedWas = 0, playedReads = -1;
-export function forgetSerpent() { serpentWas = -1; stunWas = false; }
+export function forgetSerpent() { serpentWas = -1; stunWas = false; mealWas = S.meal; }

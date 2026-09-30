@@ -8,7 +8,7 @@
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, EXPOSED_AMP, AMP_MAX, HEAL_CUT_MAX, HASTE,
-         CLASSES } from '../src/config.js';
+         CLASSES, MEAL_MAX_S } from '../src/config.js';
 import { strike, healNow } from '../src/deep/serpent.js';
 import { lay, has, level, ampOf, inspire, haste, tempo } from '../src/deep/statuses.js';
 import { climb, openEveryClass } from './party-press.mjs';
@@ -79,6 +79,7 @@ group('Exposed: a quarter more from everything, blows and ticks alike', async ()
 group('Held: no heal while it lasts, and the coil sways on', async () => {
   deepYard(1);
   window.__serpent({ stage: 1, wound: 400 });
+  S.mealT = 0;                         // the next meal is far off: a lump landing is not what Held stops
   lay('held', 0, 2, bellySeg());
   frame();
   const pose = coilAt(bellySeg(), now());
@@ -89,7 +90,7 @@ group('Held: no heal while it lasts, and the coil sways on', async () => {
     const p = coilAt(bellySeg(), now());
     if (p.x !== pose.x || p.y !== pose.y) moved = true;
   }
-  run(3);
+  run(MEAL_MAX_S + 1);
   const after = coilAt(bellySeg(), now());
   return [
     ok(least === 400, 'nothing of the wound closes', `${least}`),

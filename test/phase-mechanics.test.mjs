@@ -27,8 +27,10 @@ function atStage(stage, into) {
   S.mechAt = m.every - m.last - into;
   return m;
 }
-// The wound the heal closes over `s` seconds, nobody striking.
-const closes = s => { const was = S.serpentWound; run(s); return was - S.serpentWound; };
+// What the heal accrues over `s` seconds, nobody striking: the bank and the
+// wound a meal landing has closed of it, so a meal in the span changes nothing.
+const healed = () => S.healBank - S.serpentWound;
+const closes = s => { const was = healed(); run(s); return healed() - was; };
 
 group('the surge heals triple in its turn, and a stun in the warning spends it', async () => {
   const m = atStage(1, 0);

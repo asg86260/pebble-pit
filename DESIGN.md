@@ -16801,7 +16801,7 @@ The Hexer, Sapper, Mage and Bard already breathe, and keep their beat.
 
 **The bargain: the rhythm never changes the damage a second.** Each quick gap in a string is a share of the class's `every` and banks the time it saves; the rest after the big hit (or after the string's last, where there is no combo bar) is a whole `every` and everything banked. So the average is exactly the even beat's, whatever the rung does to how many hits a bar takes -- Flow filling the Martial Artist's in fewer is paid for in the same rest. The rhythm is `rhythm` on each class (config/classes.js), stepped by `beat` in deep/classes.js; the fighter's place in its combo (`count`, `pips`, `combo`) is saved with the body, so a refresh does not start the string over.
 
-## The serpent eats to heal (design, not built)
+## The serpent eats to heal (built 2026-09-30)
 
 Approved by the owner in mocks, 2026-09-30: `docs/mocks/heal-fish-2026-09-30.html`
 (A, one fish a meal) and `docs/mocks/heal-bestiary-2026-09-30.html` (the eight
@@ -16882,7 +16882,6 @@ break").
   meal lands the break a lump early, but with the wait unpredictable it can only
   gamble on it, and the creature in the water is the tell. That is the one
   balance change.
-- **The bar.** The bar takes a heal only when it lands (`barflight.js`), which
-  is now the meal's own landing, so `owedWound` for a heal goes away; a blow's
-  still works as it does.
+- **The bar** is as built: it takes a heal when its number lands in it
+  (`barflight.js`), so it shows the old wound until the lump's number goes in.
 - **The heal number's colors and size** stay as built.

@@ -49,12 +49,13 @@ group("a Brawler's haymaker, at her capstone, stuns the ward, and the heal stops
   const hay = rungWorth(CLASSES.brawler, 8) * CLASSES.brawler.haymaker.x * SERPENT_DEFENSE.brawler[1];
   // Held for the stun's length, a frame short: nothing closes, though she
   // punches on.
-  let least = wound;
-  for (let f = 0; f < Math.floor(stun * 60) - 1; f++) { frame(); least = Math.min(least, S.serpentWound); }
+  let most = S.healBank;
+  const bank = S.healBank;
+  for (let f = 0; f < Math.floor(stun * 60) - 1; f++) { frame(); most = Math.max(most, S.healBank); }
   return [
     ok(got, 'a haymaker stuns the warded coil', `stun ${stun}`),
     ok(Math.abs(stun - stunFor(hay)) < 1 / 30, 'for the length the rule gives', `${stun} of ${stunFor(hay)}`),
-    ok(least >= wound, 'and not a scrap of the wound closes while it lasts', `${wound} then at least ${least}`)
+    ok(most <= bank + 1e-9, 'and not a scrap of the heal banks while it lasts', `${bank} then at most ${most}`)
   ];
 }, { reload: false });
 

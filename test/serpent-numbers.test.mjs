@@ -6,7 +6,7 @@
 // this.
 
 import { group, ok, yard } from './helpers.mjs';
-import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, NUM_HEAL_EVERY_S, SERPENT_DEFENSE,
+import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, MEAL_MIN_S, MEAL_MAX_S, SERPENT_DEFENSE,
          SERPENT_HEAL, DOT_TICK_S, CLASSES } from '../src/config.js';
 import { EPHEMERAL } from '../src/state.js';
 import { climb, openEveryClass } from './party-press.mjs';
@@ -40,7 +40,7 @@ group("a Brawler's punch puts its damage in the recent list, and the list emptie
   // Watched past every number's life: each hit leaves the list by itself.
   // (The station goes on striking, its base unit or its class: a built
   // station always fights, so the list is never empty for long.)
-  const life = Math.max(NUM_LIFE_S, NUM_HEAL_LIFE_S) + 2 * NUM_HEAL_EVERY_S + 1;
+  const life = Math.max(NUM_LIFE_S, NUM_HEAL_LIFE_S) + 3;
   const had = new Set(S.hits);
   frames(life);
   return [
@@ -80,9 +80,9 @@ group('the recent hits are never saved', async () => {
   const raw = localStorage.getItem('boulder-clicker/v4') || '';
   return [
     ok(had, 'there were hits to lose'),
-    ok(['hits', 'healSum', 'healAt'].every(k => EPHEMERAL.includes(k)), 'the fields are ephemeral'),
+    ok(['hits', 'mealLandedAt'].every(k => EPHEMERAL.includes(k)), 'the fields are ephemeral'),
     ok(raw.length > 0 && raw.includes('"serpentWound"'), 'a save was written', raw.length),
-    ok(!/"(hits|healSum|healAt)"/.test(raw), 'and it carries none of them')
+    ok(!/"(hits|mealLandedAt)"/.test(raw), 'and it carries none of them')
   ];
 });
 
@@ -104,24 +104,20 @@ group("a Mage's beam says its ticks once a second, not a number a tick", async (
   ];
 });
 
-group('the heal says what it closed, once a second, in its own entries', async () => {
-  // The ward's heal on a wound deep enough not to close in the watch, and
-  // nobody fighting: every entry is the heal's.
+group('the heal says what a meal closed, once a meal, in its own entry', async () => {
+  // The bare phase on a wound deep enough not to close in the watch, and
+  // nobody fighting: every entry is the heal's, one for each meal that lands.
   window.__snatch({ played: true });
-  window.__serpent({ stage: 1, wound: SERPENT_HEAL[1] * 10 });
+  window.__serpent({ stage: 0, wound: SERPENT_HEAL[0] * 100 });
   window.__deepCrew();
   const said = [];
-  frames(6.5, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
-  const gaps = said.slice(1).map((h, i) => Math.round(h.at - said[i].at));
-  const each = SERPENT_HEAL[1] * NUM_HEAL_EVERY_S;
+  frames(MEAL_MAX_S * 2 + 1, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
+  const gaps = said.slice(1).map((h, i) => (h.at - said[i].at) / 1000);
   return [
-    ok(said.length >= 5 && said.length <= 7, 'about one a second', said.length),
-    ok(gaps.every(g => Math.abs(g - NUM_HEAL_EVERY_S * 1000) <= 20), 'a second apart', JSON.stringify(gaps)),
-    // The first second is on the heal's own clock, begun before the ward was
-    // set, so it is part of one; every one after is whole, give or take the
-    // one frame's heal a second's edge can fall either side of.
-    ok(said.slice(1).every(h => Math.abs(h.done - each) <= SERPENT_HEAL[1] / 60 + 1e-6), "each the wound the heal closed in its second",
-       JSON.stringify(said.map(h => h.done.toFixed(2)))),
+    ok(said.length >= 2 && said.length <= 4, 'a number a meal, not one a second', said.length),
+    ok(gaps.every(g => g >= MEAL_MIN_S - 0.05 && g <= MEAL_MAX_S + 0.05), 'six to twelve seconds apart', JSON.stringify(gaps)),
+    ok(said.slice(1).every((h, i) => Math.abs(h.done - SERPENT_HEAL[0] * gaps[i]) <= SERPENT_HEAL[0] / 30 + 1e-6),
+       'each the wound the heal banked in the wait before it', JSON.stringify(said.map(h => h.done.toFixed(2)))),
     ok(S.hits.every(h => h.weapon === 'heal'), 'and nothing else struck')
   ];
 });

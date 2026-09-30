@@ -1107,6 +1107,7 @@ HANDLES.__scales = n => layScales(n);                 // crushed: a purse to spe
 HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for the gatherers
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(), heal: healNow(),
+  meal: { n: S.meal, t: S.mealT, bank: S.healBank },
   freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
   mech: { at: S.mechAt, skip: S.mechSkip, ...phasePart() },
   statuses: JSON.parse(JSON.stringify(S.statuses)),

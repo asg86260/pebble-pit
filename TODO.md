@@ -1,11 +1,13 @@
 # Still to do
 
-## The serpent eats to heal -- DESIGNED, NOT BUILT (2026-09-30)
+## The serpent eats to heal -- BUILT (2026-09-30)
 
 "The serpent eats to heal" in DESIGN.md; mocks `docs/mocks/heal-fish-2026-09-30.html`
-and `docs/mocks/heal-bestiary-2026-09-30.html`, approved. Interval 6-12 s, chosen fresh a meal (the owner, 2026-09-30). Waiting on the
-owner's sign-off. Open: the break can be gambled to land just before a meal, a
-lump early.
+and `docs/mocks/heal-bestiary-2026-09-30.html`. Meals 6-12 s apart, chosen
+fresh; scenes `meal-swim`, `meal-bite`, `meal-swallow`, `meal-land`. Open:
+- **Nobody has watched it in play.** The jaws' gape and the swallow's swell
+  are small at the game's scale; the creatures are the mock's, not retouched.
+- **The break can be gambled** to land just before a meal, a lump early.
 
 ## Cloud saves -- BUILT AND ON, NOT YET RELEASED (2026-09-28)
 

@@ -26,8 +26,11 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
-         STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY } from '../config.js';
+         STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
+         MEAL_SWALLOW_S, MEAL_JAW_LEAD_S, MEAL_JAW_OPEN_S, MEAL_GAPE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_RING_S, MEAL_RING_REACH } from '../config.js';
 import { S } from '../state.js';
+import { mealNow, kindOf, BITE_BEFORE } from '../deep/meals.js';
+import { lengthOfKind, KINDS } from './fish.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
 import { part, sinkK, resistNow, resistNext } from '../deep/phases.js';
@@ -196,6 +199,18 @@ export function drawSerpent() {
     const d = Math.abs(p.along - bellyA);
     if (d < BELLY_LEN) p.r += BELLY_BULGE * Math.sqrt(1 - (d / BELLY_LEN) ** 2);
   }
+  // A meal: the jaws hinge open for the creature, shut on it, and its swallow
+  // is a swelling that runs from the head to the belly, fatter for a longer one.
+  const meal = held && S.view === 'deep' ? mealNow() : null;
+  const open = meal ? jawOpen(meal.toLand) : 0;
+  if (meal && meal.toLand >= 0 && meal.toLand < MEAL_SWALLOW_S) {
+    const a = 1 - meal.toLand / MEAL_SWALLOW_S, at = headA + (a * a * (3 - 2 * a)) * (bellyA - headA);
+    const swell = MEAL_SWELL * P * (0.5 + lengthOfKind(kindOf(meal.n, KINDS)) / 24), len = MEAL_SWELL_LEN * P;
+    for (const p of pts) {
+      const d = Math.abs(p.along - at);
+      if (d < len) p.r += swell * Math.sqrt(1 - (d / len) ** 2);
+    }
+  }
 
   // Each cell takes the sample nearest it. On flat arrays over the coil's box, and
   // painted into one image (`coil`): a map of cell objects and a fillRect a
@@ -247,6 +262,8 @@ export function drawSerpent() {
     const da = along - bellyA;
     if (gap && Math.abs(da) < gap / 2) continue;                 // the wound: open water
     if (dist > r) continue;
+    // the gape: a wedge cut out of the front of the head, wide at the tip
+    if (open > 0 && along < headA + P * 5 && Math.abs(across) < open * MEAL_GAPE * P * Math.max(0, 1 - (along - (headA - SNOUT)) / (SNOUT + P * 5))) continue;
     const aI = Math.round(along / P), cI = Math.round(across / P);
     if (bit.length && bitten(bit, along, across, r, aI, cI)) continue;   // a bite: open water
     // The cage: inside the swell, pale, crossed by dark ribs he is seen
@@ -325,12 +342,43 @@ export function drawSerpent() {
   for (const p of pts) if (Math.abs(p.along - ringA) < P && (!head || Math.abs(p.along - ringA) < Math.abs(head.along - ringA))) head = p;
   drawStatuses(t / 1000);
   drawStunRing(t, head);
+  if (held) drawMealRing(t, pts, bellyA);
   ctx.globalAlpha = 1;
   drawVeil(t, pts);
   let belly = pts[0];
   for (const p of pts) if (Math.abs(p.along - bellyA) < Math.abs(belly.along - bellyA)) belly = p;
   if (Math.abs(belly.along - bellyA) < BELLY_LEN) drawThrob(t, belly);
   ctx.fillStyle = '#000';
+}
+
+// How wide the jaws are, 0..1: open from a beat before the creature is at the
+// mouth, held while it goes in, shut as its swallow starts.
+function jawOpen(toLand) {
+  const from = BITE_BEFORE + MEAL_JAW_LEAD_S, shut = MEAL_SWALLOW_S;
+  if (toLand > from || toLand < shut) return 0;
+  const opening = Math.min(1, (from - toLand) / MEAL_JAW_OPEN_S), closing = Math.min(1, (toLand - shut) / 0.25);
+  const k = Math.min(opening, closing);
+  return k * k * (3 - 2 * k);
+}
+
+// The lump landing at the belly: a ring of purple running out along both edges
+// of the hide, brightest at its front, gone in MEAL_RING_S.
+function drawMealRing(t, pts, bellyA) {
+  const a = (t - S.mealLandedAt) / (MEAL_RING_S * 1000);
+  if (!(S.mealLandedAt > 0) || a < 0 || a >= 1) return;
+  const front = a * MEAL_RING_REACH * P, seen = new Set();
+  for (const p of pts) {
+    const d = front - Math.abs(p.along - bellyA);
+    if (d < 0 || d > P * 5) continue;
+    const tone = PURPLES[Math.max(1, WHITE - Math.floor(d / P) - Math.floor(a * 3))];
+    for (const side of [-1, 1]) {
+      const x = snap(p.x + side * p.nx * (p.r + P / 2) - P / 2), y = snap(p.y + side * p.ny * (p.r + P / 2) - P / 2), key = x * 1e5 + y;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      ctx.fillStyle = tone;
+      ctx.fillRect(x, y, P, P);
+    }
+  }
 }
 
 // --- a phase's mechanic, as drawn ----------------------------------------------

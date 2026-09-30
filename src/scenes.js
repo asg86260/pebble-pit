@@ -23,6 +23,8 @@ import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
+import { cycleS, kindOf } from './deep/meals.js';
+import { KINDS } from './render/fish.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
@@ -249,6 +251,18 @@ const stageScene = (stage, wound, stations = []) => () => {
   lookDeep(coilAt(bellySeg() - 4, now()).x);
 };
 
+// A meal caught at its moment: creature number `kind` of the eight, the
+// landing `to` seconds off (a second of the yard runs before the shot).
+const mealScene = (kind, to, atBelly = false) => () => {
+  deepYard({ stage: 1, wound: 0.4, party: [cast('ranger', 0)] });
+  let n = 0;
+  while (kindOf(n, KINDS) !== kind) n++;
+  S.meal = n;
+  S.mealT = cycleS(n) - to - 1;
+  S.healBank = 300;
+  lookDeep(atBelly ? coilAt(bellySeg() - 6, now()).x : coilAt(0, now()).x - 150);
+};
+
 // The lash is a second long, shorter than a shot takes, so its moment is
 // held on the page's frames for a few seconds (as the glide's is, below).
 const mechScene = (stage, into, stations, seg = null, pin = false) => () => {
@@ -378,6 +392,14 @@ const deepScenes = {
     run: stageScene(2, 0.25, [cast('sapper', 4), cast('hexer', 4)]) },
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',
     run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
+  'meal-swim': { about: 'the deep', say: 'a Skull fish swimming in from the left to the serpent, its jaws opening',
+    run: mealScene(3, 2.6) },
+  'meal-bite': { about: 'the deep', say: 'a Wandering eye at the jaws, wide open',
+    run: mealScene(4, 1.9) },
+  'meal-swallow': { about: 'the deep', say: 'the swallow running down the neck after a Many-mouthed blob',
+    run: mealScene(6, 0.55, true) },
+  'meal-land': { about: 'the deep', say: 'the lump landing at the belly, a purple ring and the number said',
+    run: mealScene(0, -0.1, true) },
   // A phase's mechanic (deep/phases.js) caught at its moment: the turn set
   // `into` seconds short of the thing itself (negative: that far into it).
   'phase-surge': { about: 'the deep', say: 'the surge warning in the warded phase: the belly throbbing purple',

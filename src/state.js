@@ -510,8 +510,10 @@ export const S = {
   // a blow, or a held attack's second, or the heal's: { at, shut, x, y, done,
   // weapon, key, side }. A drawing, never a save.
   hits: [],
-  healSum: 0,             // the wound the heal has closed since it last said so
-  healAt: 0,              // when it next says so
+  healBank: 0,            // the wound the heal has accrued since the last meal, closed when the next lands
+  meal: 0,                // the meals the serpent has had: which creature is next, and how long it waits
+  mealT: 0,               // seconds since the last meal landed
+  mealLandedAt: 0,        // when the last one landed, on the game's clock, for the ring at the belly (drawn only)
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
   podsBoardOpen: false,
 
@@ -676,7 +678,7 @@ export const SAVED = [
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'healBank', 'meal', 'mealT',
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).
   'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',
@@ -833,7 +835,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting',
-  'hits', 'healSum', 'healAt',
+  'hits', 'mealLandedAt',
   'deepMotes', 'crushes', 'heldScales', 'portalAt',
   'podsBoardOpen',
   'statuses', 'stationBoardOpen',

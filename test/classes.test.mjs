@@ -241,6 +241,7 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
   runUntil(() => fighterAt(0).goal === 'fight', 30);
   let drift = 0, px = fighterAt(0).x, py = fighterAt(0).y;
   const base = watch(5, 0, () => {
+    S.serpentWound = 0;               // a stab is plain on a shut wound; the heal only lands between meals now
     const w = fighterAt(0);
     drift = Math.max(drift, Math.hypot(w.x - px, w.y - py));
     px = w.x; py = w.y;
