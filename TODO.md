@@ -1,5 +1,12 @@
 # Still to do
 
+## The serpent eats to heal -- DESIGNED, NOT BUILT (2026-09-30)
+
+"The serpent eats to heal" in DESIGN.md; mocks `docs/mocks/heal-fish-2026-09-30.html`
+and `docs/mocks/heal-bestiary-2026-09-30.html`, approved. Waiting on the owner's
+sign-off on the design and on the interval (6 s suggested). Open: the break can
+be timed to land just before a meal, a lump early.
+
 ## Cloud saves -- BUILT AND ON, NOT YET RELEASED (2026-09-28)
 
 Built as `docs/wave-cloud.md`; "Cloud saves" in DESIGN.md. The worker is

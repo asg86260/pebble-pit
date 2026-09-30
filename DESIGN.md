@@ -16800,3 +16800,87 @@ The owner: the attacks "string into each other with no breathing room". A fighte
 The Hexer, Sapper, Mage and Bard already breathe, and keep their beat.
 
 **The bargain: the rhythm never changes the damage a second.** Each quick gap in a string is a share of the class's `every` and banks the time it saves; the rest after the big hit (or after the string's last, where there is no combo bar) is a whole `every` and everything banked. So the average is exactly the even beat's, whatever the rung does to how many hits a bar takes -- Flow filling the Martial Artist's in fewer is paid for in the same rest. The rhythm is `rhythm` on each class (config/classes.js), stepped by `beat` in deep/classes.js; the fighter's place in its combo (`count`, `pips`, `combo`) is saved with the body, so a refresh does not start the string over.
+
+## The serpent eats to heal (design, not built)
+
+Approved by the owner in mocks, 2026-09-30: `docs/mocks/heal-fish-2026-09-30.html`
+(A, one fish a meal) and `docs/mocks/heal-bestiary-2026-09-30.html` (the eight
+creatures, as drawn there).
+
+### The bargain
+
+The heal is a trickle today (`healNow`, wound a second), and its purple number
+is a report of the last second of it. It reads as nothing: no cause, no
+moment. It becomes a meal. The serpent's heal is **banked** as it accrues and
+lands in **one lump** when the serpent swallows a creature that has swum in
+from the left edge of the deep. The total a second is unchanged (`SERPENT_HEAL`
+is still the number that means what it says); only when it arrives changes.
+
+What the player gets is a beat to read: a creature in the water, the jaws
+opening, a swallow running down the neck, the wound closing in one step and one
+number. What it costs is one thing that can be gamed (see "What it must not
+break").
+
+### The rules
+
+- **The bank.** `healNow()` (after Weakened, the surge, Held and the stun, as
+  now) accrues into `S.healBank` instead of closing the wound. Stopped by a stun
+  or Held, it stops accruing, exactly as the heal stops today.
+- **The meal.** Every `MEAL_EVERY_S` (suggested 6) the serpent's next creature
+  reaches its mouth. A meal is `MEAL_SWIM_S` in from the left edge (3.4),
+  `MEAL_GULP_S` going in the mouth (0.55), `MEAL_SWALLOW_S` down the neck to
+  the belly (0.85); when the swallow reaches the belly the bank closes the wound
+  and the heal's number is said there. The sim strikes the wound at that
+  moment, not before: the picture is the sim.
+- **Nothing interrupts it.** A stun or Held while a creature is in the water
+  changes only what is in the bank; the meal comes anyway, and a lump under one
+  is not said (the existing round-to-one rule).
+- **The creature never changes the heal.** Eight species (`config/fish.js`,
+  a written table: lantern angler, ribbon eel, glass jelly, skull fish,
+  wandering eye, spiral drifter, many-mouthed blob, toothed ring), each a
+  length, a path, a bob, a trail and a drawing. A big one is a longer gulp and a
+  fatter swallow; the same lump.
+- **Which one.** A saved meal counter and the phase pick it, `hash(meal) % 8`,
+  so a reload lands the same creature on the same beat and a yard can be checked
+  frame by frame.
+- **The surge** fills the bank three times as fast, so its meals are three times
+  as big; it does not bring them faster. The warning and the throb stay.
+
+### The picture
+
+- `render/fish.js` draws the creature from its local frame, cell by cell, over
+  the water and behind the serpent's head; it enters at the deep's left edge and
+  is clipped at the serpent's face while it goes in, so it is *eaten*, not
+  faded. The drawings are the mock's, ported verbatim.
+- The serpent's head is a wedge with hinged jaws (`render/serpent.js`): open
+  wide from a beat before the creature arrives, shut as the gulp ends. The
+  swallow is a smooth swelling of the neck that runs from the head to the belly
+  and scales with the creature's length.
+- The heal aura the owner asked for is answered by this: a lump landing at the
+  belly is the one moment the hide shows it (the mock's purple ring running out
+  from the belly), so the three aura options are not built.
+- With the serpent's head at `COIL_X0 = 0.28` there is open water to its left
+  for the swim.
+
+### What it must not break
+
+- **Nothing teleports.** The creature is in the water and swims to the mouth,
+  and the swallow is a swelling that travels. The number is said where the
+  swallow lands.
+- **The average heal.** Over any whole number of meals the wound closes by
+  exactly what the old trickle closed; a test asserts it.
+- **The break.** The break is asked first, before the lump, as the heal is asked
+  after it today (`serpent.js`, the frame's order).
+- **A save mid-swim.** The meal counter, its phase and the bank are saved; a
+  reload puts the creature back where it was.
+
+### Open
+
+- **The interval.** 6 s means a lump is six seconds of heal, and that a party
+  which times its burst to end just before a meal lands the break a lump early
+  (up to `MEAL_EVERY_S` of heal). That is the one balance change. A shorter
+  interval shrinks it; a longer one makes each meal bigger and rarer.
+- **The bar.** The bar takes a heal only when it lands (`barflight.js`), which
+  is now the meal's own landing, so `owedWound` for a heal goes away; a blow's
+  still works as it does.
+- **The heal number's colors and size** stay as built.
