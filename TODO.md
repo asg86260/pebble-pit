@@ -3,9 +3,9 @@
 ## The serpent eats to heal -- DESIGNED, NOT BUILT (2026-09-30)
 
 "The serpent eats to heal" in DESIGN.md; mocks `docs/mocks/heal-fish-2026-09-30.html`
-and `docs/mocks/heal-bestiary-2026-09-30.html`, approved. Waiting on the owner's
-sign-off on the design and on the interval (6 s suggested). Open: the break can
-be timed to land just before a meal, a lump early.
+and `docs/mocks/heal-bestiary-2026-09-30.html`, approved. Interval 6-12 s, chosen fresh a meal (the owner, 2026-09-30). Waiting on the
+owner's sign-off. Open: the break can be gambled to land just before a meal, a
+lump early.
 
 ## Cloud saves -- BUILT AND ON, NOT YET RELEASED (2026-09-28)
 

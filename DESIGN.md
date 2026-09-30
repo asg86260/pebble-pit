@@ -16826,8 +16826,9 @@ break").
 - **The bank.** `healNow()` (after Weakened, the surge, Held and the stun, as
   now) accrues into `S.healBank` instead of closing the wound. Stopped by a stun
   or Held, it stops accruing, exactly as the heal stops today.
-- **The meal.** Every `MEAL_EVERY_S` (suggested 6) the serpent's next creature
-  reaches its mouth. A meal is `MEAL_SWIM_S` in from the left edge (3.4),
+- **The meal.** Every `MEAL_EVERY_S` seconds, a span of 6 to 12 chosen
+  afresh each meal (`hash(meal)` between the two ends, so it is not on a clock
+  a player can count), the serpent's next creature reaches its mouth. A meal is `MEAL_SWIM_S` in from the left edge (3.4),
   `MEAL_GULP_S` going in the mouth (0.55), `MEAL_SWALLOW_S` down the neck to
   the belly (0.85); when the swallow reaches the belly the bank closes the wound
   and the heal's number is said there. The sim strikes the wound at that
@@ -16840,9 +16841,9 @@ break").
   wandering eye, spiral drifter, many-mouthed blob, toothed ring), each a
   length, a path, a bob, a trail and a drawing. A big one is a longer gulp and a
   fatter swallow; the same lump.
-- **Which one.** A saved meal counter and the phase pick it, `hash(meal) % 8`,
-  so a reload lands the same creature on the same beat and a yard can be checked
-  frame by frame.
+- **Which one, and when.** A saved meal counter picks both the creature,
+  `hash(meal) % 8`, and the wait to the next, so a reload lands the same
+  creature on the same beat and a yard can be checked frame by frame.
 - **The surge** fills the bank three times as fast, so its meals are three times
   as big; it does not bring them faster. The warning and the throb stay.
 
@@ -16876,10 +16877,11 @@ break").
 
 ### Open
 
-- **The interval.** 6 s means a lump is six seconds of heal, and that a party
-  which times its burst to end just before a meal lands the break a lump early
-  (up to `MEAL_EVERY_S` of heal). That is the one balance change. A shorter
-  interval shrinks it; a longer one makes each meal bigger and rarer.
+- **The interval** is 6 to 12 s, mean 9: a lump is nine seconds of heal on
+  average and twelve at most. A party that times its burst to end just before a
+  meal lands the break a lump early, but with the wait unpredictable it can only
+  gamble on it, and the creature in the water is the tell. That is the one
+  balance change.
 - **The bar.** The bar takes a heal only when it lands (`barflight.js`), which
   is now the meal's own landing, so `owedWound` for a heal goes away; a blow's
   still works as it does.
