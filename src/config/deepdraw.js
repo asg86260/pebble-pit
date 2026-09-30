@@ -358,13 +358,13 @@ export const STATUS_STRUCK = '#9b5de5';
 // lines are the boards' (deep/rails.js, `statusLine`).
 export const STATUS_SAYS = {
   surge: { coming: 'Surge coming: a stun stops it', on: 'Surge: heals {x}x faster', stopped: 'Surge: stopped' },
-  lash:  { coming: 'Lash coming: Held stops it', on: 'Lash: throws off melee fighters', stopped: 'Lash: stopped' },
+  lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming: Held stops it', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
   sink:  { coming: 'Sink coming: land a burst first', on: 'Sink: out of reach', stopped: 'Sink: answered' },
   dazed: 'Dazed: thrown off, seeing stars',
   ward: 'Ward: magic does half',
   plates: 'Plates: physical does half',
 };
-export const STATUS_PX = 2;
+export const STATUS_PX = 3;
 export const STATUS_GAP = 5;
 export const STATUS_STEPS = 5;
 export const STATUS_RENEW_MS = 5;

@@ -31,7 +31,7 @@ export function statusAt(cx, cy) {
 // A tile's hover: its name and what it does. A phase's mechanic says too
 // whether it is coming, on, or stopped.
 function saysOf(key, n = 0, mech = null) {
-  if (mech) return STATUS_SAYS[key][mech.struck ? 'stopped' : mech.warn ? 'coming' : 'on'].replace('{x}', mech.x);
+  if (mech) return STATUS_SAYS[key][mech.struck ? 'stopped' : mech.warn ? 'coming' : mech.calm ? 'calm' : 'on'].replace('{x}', mech.x);
   if (key === 'dazed' || key === 'ward' || key === 'plates') return STATUS_SAYS[key];
   const line = statusLine(key);
   return n > 1 ? line.replace(':', ` x${n}:`) : line;
@@ -94,12 +94,14 @@ export function drawFoeStatuses(x, y) {
   // first the serpent's own, the phase's mechanic: warned, its rim blinking
   // and its timer the time until it comes on; on, its timer what is left;
   // answered, struck through; then a step, and what the fighters have laid
+  // The lash stays up all phase, whether or not it is coming: the melee
+  // fighters have to plan round it.
   const p = part();
-  if (p.m && p.part !== 'calm') {
-    const warn = p.part === 'warn';
+  if (p.m && (p.part !== 'calm' || p.m.kind === 'lash')) {
+    const warn = p.part === 'warn', calm = p.part === 'calm';
     const rim = warn ? STATUS_WARN_RIM[Math.floor(t / 1000 * STATUS_WARN_HZ) % 2] : null;
-    barTiles.push({ x, y, w: s, h: s, text: saysOf(p.m.kind, 0, { warn, struck: S.mechSkip, x: p.m.x }) });
-    x += tile(p.m.kind, x, y, 1 - p.k, 0, { rim, struck: S.mechSkip }) + STATUS_GAP;
+    barTiles.push({ x, y, w: s, h: s, text: saysOf(p.m.kind, 0, { warn, calm, struck: S.mechSkip, x: p.m.x }) });
+    x += tile(p.m.kind, x, y, calm ? 1 : 1 - p.k, 0, { rim, struck: S.mechSkip }) + STATUS_GAP;
   }
   // then the resist the phase stands in, beside the debuffs: in the fading it
   // is the one up, its timer the turn, its rim blinking as the other comes in
