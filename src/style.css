@@ -1914,3 +1914,7 @@ html.dark .modal {
 #objective .say.done { text-decoration: line-through; text-decoration-thickness: 2px; opacity: 0; }
 #objective .say.in { opacity: 0; }
 #objective.deep { color: #fff; }
+
+/* The rescue's sheet leaving with the second half on (ending.js): it rises
+   and fades as the snatch begins. */
+#saved.leaving { opacity: 0; translate: 0 -40px; transition: opacity 1.2s ease, translate 1.2s ease; pointer-events: none; }

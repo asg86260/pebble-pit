@@ -123,3 +123,9 @@ export const DEEP_CREW_KNOBS = [
   { key: 'SHAFT_PACE', label: 'shaft pace, x', min: 0.1, max: 3, step: 0.1,
     get: () => SHAFT_PACE, set: v => { SHAFT_PACE = v; } }
 ];
+
+// The rescue's sheet with the second half on (DESIGN.md, "From the rescue
+// straight into the snatch"; the owner's A): no button; it stands this long,
+// then rises and fades over RESCUE_SHEET_LEAVE_S as the snatch begins.
+export const RESCUE_SHEET_HOLD_S = 2;
+export const RESCUE_SHEET_LEAVE_S = 1.2;

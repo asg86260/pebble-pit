@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The rescue's sheet has no button with the second half on: it stands a beat, rises and fades, and the camera pulls in on the plank as the snatch plays (test/serpent-flag.test.mjs).
 - The rescue's sheet says the story isn't over when the second half follows it, and the sheet for freeing him says it is the end (src/selftest/times.js).
 - The serpent that comes up out of the pit has the deep's head: snout, purple crest and hinged jaws that open wide and shut on him, on a neck that leans out toward the plank (`node tools/look.mjs snatch`).
 - The story's line carries on into the second half: drown the pit, ask the wizards how to get down, buy the portal, free your sqhusband (test/objectives.test.mjs).

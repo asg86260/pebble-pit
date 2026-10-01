@@ -16954,7 +16954,7 @@ After the last, no line. With the second half switched off the list ends at 7.
 - **The ending sheet** still says the story is over; with the half on it
   should say what comes next, or the snatch simply follows it.
 
-## From the rescue straight into the snatch (design, not built)
+## From the rescue straight into the snatch (built 2026-09-30)
 
 Asked for by the owner, 2026-09-30. With the second half on, the rescue is
 no longer an ending: the sheet says so, waits a beat, and gets out of the way,
@@ -16963,10 +16963,12 @@ and the story carries straight on into the snatch.
 ### The sequence
 
 1. The rescue's sheet comes up, as now, but with **no button**.
-2. It stands `RESCUE_SHEET_HOLD_S` (a beat or two), then **fades and floats
-   away** (the mock's pick).
+2. It stands `RESCUE_SHEET_HOLD_S` (a beat or two), then **rises and fades**
+   (the owner's A, `docs/mocks/rescue-to-snatch-2026-09-30.html`).
 3. As it goes, the camera moves in on the plank over the abyss, where the
-   sqhusband and the sqwife walk out (the snatch's `walk` phase, as now).
+   sqhusband and the sqwife walk out: the snatch's own pan, and a camera beat
+   (`snatchcam`, cutscene.js) pulled in `CUT_SNATCH_ZOOM` for as long as the
+   snatch runs.
 4. The snatch plays as built.
 5. When it is over the story's line comes up with its next step, the
    wizards (objectives.js; the words are the owner's, on the words page).
@@ -16985,9 +16987,9 @@ With the half off the sheet is the end of the story and keeps its button.
 
 ### Open
 
-- **The pit not yet drowned** at the rescue: the snatch waits on it. Either the
-  sheet keeps its button and the story waits as now (the snatch plays when the
-  pit drowns), or the sheet floats away anyway and the line says what is next.
+- **The pit not yet drowned** at the rescue (the owner, 2026-09-30: likely
+  never, but possible): the sheet floats away anyway and the line says what is
+  next; the snatch plays when the pit drowns.
 - **The pair** are the two crew nearest the mouth today; the game does not
   track which body is the sqwife or the sqhusband. Following the two by name
   is a bigger change (a record on the body, kept through saves).

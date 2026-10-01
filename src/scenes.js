@@ -696,6 +696,8 @@ const rescueSheet = on => () => {
   window.__reset();
   window.__crew(2, 1);
   window.__serpentOn(on);
+  // drowned, so with the half on the snatch follows the sheet
+  if (on) window.__rift();
   S.rescued = true; S.buried = false; S.buriedMs = 20 * 60 * 1000;
 };
 

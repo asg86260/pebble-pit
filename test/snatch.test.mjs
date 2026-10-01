@@ -102,7 +102,7 @@ group('rescued first: the drowning\'s scene plays through, then the snatch', asy
     ok(early === null, 'nothing is taken before the pit has drowned', `yard ${early}`),
     ok(scene === 'drown' && during !== 'snatch', 'the drowning\'s scene plays first, alone',
        `camera ${scene}, yard ${during}`),
-    ok(after.yard === 'snatch' && after.drownDone && after.camera === null,
+    ok(after.yard === 'snatch' && after.drownDone && after.camera !== 'drown',
        'and the snatch follows once it has finished', JSON.stringify(after)),
     ok(S.snatched && done('snatch') === 1, 'and plays through, once')
   ];

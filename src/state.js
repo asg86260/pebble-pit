@@ -510,6 +510,7 @@ export const S = {
   // a blow, or a held attack's second, or the heal's: { at, shut, x, y, done,
   // weapon, key, side }. A drawing, never a save.
   hits: [],
+  endingAt: 0,            // when the rescue's sheet came up, for its hold before the snatch (ephemeral)
   askedWizards: false,    // the wizards' board looked at since the snatch: the story's line moves on
   healBank: 0,            // the wound the heal has accrued since the last meal, closed when the next lands
   meal: 0,                // the meals the serpent has had: which creature is next, and how long it waits
@@ -836,7 +837,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting',
-  'hits', 'mealLandedAt',
+  'hits', 'mealLandedAt', 'endingAt',
   'deepMotes', 'crushes', 'heldScales', 'portalAt',
   'podsBoardOpen',
   'statuses', 'stationBoardOpen',

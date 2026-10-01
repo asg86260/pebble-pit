@@ -134,14 +134,17 @@ export const TESTS = [
       await raf();
       const sheet = document.getElementById('saved');
       const text = [...sheet.querySelectorAll('.why')].filter(el => !el.hidden).map(el => el.textContent).join(' ');
+      const button = !document.getElementById('keepplaying').hidden;
       window.__skipBeat('sheet');
-      return text;
+      return { text, button };
     };
     try {
       const on = await said(true), off = await said(false);
       return [
-        ok(/isn't over/.test(on) && !/end of the story/.test(on), 'with the half on it says the story goes on', on),
-        ok(/end of the story/.test(off) && !/isn't over/.test(off), 'with it off it says the story is over', off)
+        ok(/isn't over/.test(on.text) && !/end of the story/.test(on.text), 'with the half on it says the story goes on', on.text),
+        ok(!on.button, 'and has no button: it goes by itself'),
+        ok(/end of the story/.test(off.text) && !/isn't over/.test(off.text), 'with it off it says the story is over', off.text),
+        ok(off.button, 'and keeps its button')
       ];
     } finally { window.__serpentOn(null); }
   }],
