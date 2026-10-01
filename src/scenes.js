@@ -692,6 +692,13 @@ const deepScenes = {
     } }]))
 };
 
+const rescueSheet = on => () => {
+  window.__reset();
+  window.__crew(2, 1);
+  window.__serpentOn(on);
+  S.rescued = true; S.buried = false; S.buriedMs = 20 * 60 * 1000;
+};
+
 export const SCENES = {
   // --- the story --------------------------------------------------------------
   opening: { about: 'the story', say: 'the intro, from the top',
@@ -700,6 +707,12 @@ export const SCENES = {
     run: () => window.__reset(true) },
   reunion: { about: 'the story', say: 'the first rock mined out, and somebody comes over',
     run: () => { window.__reset(); window.__crew(1, 0); window.__give(50); window.__next(); } },
+  // The rescue's sheet, as the story leaves it: the sqwife out after twenty
+  // minutes under, with the second half following it or not (ending.js).
+  'rescue-sheet': { about: 'the story', say: 'the rescue sheet, with the second half on: the story goes on',
+    run: rescueSheet(true) },
+  'rescue-sheet-off': { about: 'the story', say: 'the rescue sheet, with the second half off: the end of the story',
+    run: rescueSheet(false) },
   digging: { about: 'the story', say: 'between rocks, somebody digging at the one in the ground',
     run: () => { window.__reset(); window.__crew(3, 1); window.__jump(3); window.__next(); window.__fast(1.2); window.__look(S.cx - S.viewW / 2); } },
   landing: { about: 'the story', say: 'the second rock coming down on a yard with a crew',

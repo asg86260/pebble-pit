@@ -17,6 +17,7 @@ import { serpentOn } from './snatch.js';
 
 const sheet = document.getElementById('saved');
 const savedIn = document.getElementById('savedin');
+const endOnly = [...sheet.querySelectorAll('.endonly')], goesOn = [...sheet.querySelectorAll('.goeson')];
 
 const due = () => beatRunning('ending') && !S.paused && !S.fatal;
 
@@ -29,13 +30,15 @@ export function syncEnding() {
     if (up) {
       savedIn.textContent = sayClock(S.buriedMs);
       offerPost();
-      // With the second half on, the snatch follows this sheet: it says the
-      // story goes on rather than that it is over.
-      const on = serpentOn();
-      for (const el of sheet.querySelectorAll('.endonly')) el.hidden = on;
-      for (const el of sheet.querySelectorAll('.goeson')) el.hidden = !on;
     }
     else posted = false;                    // the next story's sheet gets its own line
+  }
+  // With the second half on, the snatch follows this sheet: it says the
+  // story goes on rather than that it is over.
+  if (up) {
+    const on = serpentOn();
+    for (const el of endOnly) el.hidden = on;
+    for (const el of goesOn) el.hidden = !on;
   }
   // The second half's end, the same way: up while its beat has the sheet.
   const freedUp = beatRunning('freedsheet') && !S.paused && !S.fatal;
