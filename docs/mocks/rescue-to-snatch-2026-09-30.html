@@ -1,0 +1,128 @@
+<title>Rescue Into Snatch</title>
+<style>
+/* Layout: one pane per way the rescue's card leaves, the same sequence in
+   each: the card, its beat, it goes, the camera moves in on the plank, the
+   pair walk out, the serpent comes up, the story's line comes back. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 13px; margin: 0; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; }
+</style>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Rescue Into Snatch</h1>
+    <p>With the second half on: the rescue's card comes up with no button, holds two seconds, then leaves while the
+      camera moves in on the plank over the abyss. The pair walk out, the serpent comes up and takes him, and the
+      story's line comes back with its next step. Each pane is a different way for the card to leave. A mock drawn
+      from plain shapes, not the game: the card's words are grey bars (the words are yours), the serpent is a
+      silhouette, and the loop is shortened.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+(() => {
+  const W = 380, H = 240, LOOP = 10, HOLD = 2.0, LEAVE = 1.2;
+  const PUR = ['#6a2fbe', '#9b5de5', '#2d1d47'];
+  const ease = x => x * x * (3 - 2 * x);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const WAYS = [
+    { name: 'A: rise and fade', note: 'The card drifts straight up a little way and fades out, smoothly, as the camera starts to move.',
+      card(g, k, x, y) { g.globalAlpha = 1 - k; drawCard(g, x, y - k * 40); g.globalAlpha = 1; } },
+    { name: 'B: float off up and away, in held steps', note: 'The card lifts and drifts up and to the side in held pixel steps, tilting a little, and fades in steps as it goes, like a sheet caught by the wind.',
+      card(g, k, x, y) { const s = Math.floor(k * 6) / 6; g.globalAlpha = 1 - s; g.save(); g.translate(x + s * 60, y - s * 90); g.rotate(-s * 0.18); drawCard(g, 0, 0); g.restore(); g.globalAlpha = 1; } },
+    { name: 'C: lift away in rows', note: 'The card comes apart into its rows, top first, each lifting and fading in turn, so it peels away upward.',
+      card(g, k, x, y) {
+        const rows = 8, h = 64 / rows;
+        for (let i = 0; i < rows; i++) {
+          const ki = clamp(k * 1.8 - i * 0.1, 0, 1);
+          g.save(); g.globalAlpha = 1 - ki; g.beginPath(); g.rect(x - 2, y + i * h - 2 - ki * 50, 132, h + (i === rows - 1 ? 4 : 0)); g.clip();
+          drawCard(g, x, y - ki * 50); g.restore();
+        }
+        g.globalAlpha = 1;
+      } },
+  ];
+  // the card: a black-rimmed white sheet with grey bars where the words go, and no button
+  function drawCard(g, x, y) {
+    g.fillStyle = '#000'; g.fillRect(x - 2, y - 2, 134, 68);
+    g.fillStyle = '#fff'; g.fillRect(x, y, 130, 64);
+    g.fillStyle = '#8b8b96'; g.fillRect(x + 40, y + 10, 50, 5); g.fillRect(x + 18, y + 24, 94, 4);
+    g.fillStyle = '#c9c9d1'; g.fillRect(x + 30, y + 34, 70, 1); g.fillRect(x + 14, y + 42, 102, 4); g.fillRect(x + 30, y + 50, 70, 4);
+  }
+  function scene(g, t, way) {
+    const u = t % LOOP;
+    // the camera: from the whole yard to the plank, starting as the card goes
+    const cam = ease(clamp((u - HOLD) / 2.2, 0, 1)), zoom = 1 + cam * 0.9, fx = 260, fy = 150;
+    g.fillStyle = '#f4f4f2'; g.fillRect(0, 0, W, H);
+    g.save();
+    g.translate(W / 2, H / 2); g.scale(zoom, zoom); g.translate(-(W / 2 + (fx - W / 2) * cam), -(H / 2 + (fy - H / 2) * cam));
+    // the yard, the pit and its liquid, the plank reaching over it
+    g.fillStyle = '#000'; g.fillRect(0, 160, 200, 80); g.fillRect(0, 158, 260, 3);
+    g.fillStyle = PUR[2]; g.fillRect(200, 166, 180, 74);
+    g.fillStyle = '#000'; g.fillRect(200, 157, 70, 3);
+    // the rock and the crew, far off in the yard
+    g.fillRect(40, 120, 50, 40); for (const x of [100, 112, 130]) g.fillRect(x, 148, 6, 10);
+    // the pair walking out along the plank
+    const walk = clamp((u - HOLD - 0.6) / 2, 0, 1), taken = u > 7.2;
+    const p1 = 150 + walk * 110, p2 = 140 + walk * 100;
+    g.fillRect(p2, 147, 6, 10); if (!taken) g.fillRect(p1, 147, 6, 10);
+    // the serpent: up out of the liquid, takes the nearer one, back under
+    const rise = u < 6.2 ? 0 : u < 7.2 ? ease((u - 6.2)) : u < 8.2 ? 1 : 1 - ease(clamp(u - 8.2, 0, 1));
+    if (rise > 0) {
+      g.fillStyle = '#111'; const top = 166 - rise * 40;
+      g.fillRect(282, top + 8, 12, 166 - top); g.fillRect(262, top, 30, 12);
+      g.fillStyle = PUR[0]; for (let i = 0; i < 4; i++) g.fillRect(284 + i * 3, top - 3 - (i % 2) * 2, 2, 3 + (i % 2) * 2);
+      g.fillStyle = '#fff'; g.fillRect(286, top + 3, 2, 2);
+    }
+    g.restore();
+    // the card, on the window, not the world
+    const leave = clamp((u - HOLD) / LEAVE, 0, 1);
+    if (u < HOLD + LEAVE) way.card(g, leave, 125, 70);
+    // the story's line, back once the snatch is over
+    const back = clamp((u - 8.6) / 0.6, 0, 1);
+    if (back > 0) {
+      g.globalAlpha = back; g.fillStyle = '#8b8b96'; g.fillRect(10, 10, 22, 3);
+      g.fillStyle = '#000'; g.fillRect(10, 17, 120, 5); g.globalAlpha = 1;
+    }
+  }
+  const panes = WAYS.map(way => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${way.name}</h2><canvas width="${W}" height="${H}"></canvas><p>${way.note}</p>`;
+    document.getElementById('grid').appendChild(card);
+    return { way, g: card.querySelector('canvas').getContext('2d') };
+  });
+  let t = 0, last = performance.now(), speed = 1, run = true;
+  window.__setT = v => { t = v; run = false; };
+  const frame = n => { requestAnimationFrame(frame);
+    const d = Math.max(0, Math.min(0.05, (n - last) / 1000)); last = n; if (run) t += d * speed;
+    panes.forEach(p => scene(p.g, t, p.way)); };
+  requestAnimationFrame(frame);
+  const play = document.getElementById('play');
+  play.onclick = () => { run = !run; play.textContent = run ? 'pause' : 'play'; };
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', o === b));
+  });
+})();
+</script>
