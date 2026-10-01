@@ -18,7 +18,7 @@ import { RESCUE_SHEET_LEAVE_S } from './config.js';
 
 const sheet = document.getElementById('saved');
 const savedIn = document.getElementById('savedin');
-const endOnly = [...sheet.querySelectorAll('.endonly')], goesOn = [...sheet.querySelectorAll('.goeson')];
+const endOnly = [...sheet.querySelectorAll('.endonly')];
 const keepPlaying = document.getElementById('keepplaying');
 // With the half on the sheet has no button and floats away as its beat ends
 // (beats.js): it stays up, leaving, for RESCUE_SHEET_LEAVE_S after.
@@ -49,7 +49,6 @@ export function syncEnding() {
     const on = serpentOn();
     keepPlaying.hidden = on;
     for (const el of endOnly) el.hidden = on;
-    for (const el of goesOn) el.hidden = !on;
   }
   // The second half's end, the same way: up while its beat has the sheet.
   const freedUp = beatRunning('freedsheet') && !S.paused && !S.fatal;

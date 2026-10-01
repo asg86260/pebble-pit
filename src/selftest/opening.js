@@ -12,7 +12,7 @@ export const TESTS = [
     const el = document.getElementById('objective'), r = el.getBoundingClientRect();
     const say = el.querySelector('.say').textContent;
     return [
-      ok(!el.hidden && say === 'dig out the rock', 'the line is up and asks for the rock', `hidden ${el.hidden}, "${say}"`),
+      ok(!el.hidden && say === 'dig the boulder to save your sqwife!', 'the line is up and asks for the rock', `hidden ${el.hidden}, "${say}"`),
       ok(r.left < 40 && r.top < 40 && r.width > 0, 'pinned top left', JSON.stringify({ x: r.left, y: r.top, w: r.width }))
     ];
   }],

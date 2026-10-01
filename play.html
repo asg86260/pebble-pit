@@ -257,8 +257,8 @@ try {
      goes on behind it, because nothing here stops for a rock -- and the one
      button puts it down. See ending.js. -->
 <div id="saved" class="held" hidden>
-  <div class="word">you did it</div>
-  <div class="why">you saved your sqwife. it took <span id="savedin"></span>.</div>
+  <div class="word">It's over!</div>
+  <div class="why">you saved your sqwife in <span id="savedin"></span>!</div>
   <!-- The board of times: the one line the network is allowed on. A name
        box the first time, then the post; the reply is your rank or the
        board's refusal, in the same line. See times.js. -->
@@ -267,22 +267,20 @@ try {
     <button id="timesgo" type="button">post it</button>
   </div>
   <div id="timessaid" class="small"></div>
-  <div class="rule"></div>
   <!-- With the second half on the story goes on (the snatch comes next), so
-       these two lines are swapped for the one after them (ending.js). -->
-  <div class="why endonly">that's the end of the story. the yard is yours &mdash; feel free to keep playing.</div>
-  <div class="why endonly">thank you!</div>
-  <div class="why goeson" hidden>but the story isn't over. something stirs in the drowned pit.</div>
+       the thanks is only on the sheet that ends it (ending.js). -->
+  <div class="rule endonly"></div>
+  <div class="why endonly">thank you for playing!</div>
   <button id="keepplaying" type="button">keep playing</button>
 </div>
 
 <!-- The second half's end: the sqhusband out of the serpent (snatch.js),
      handled in ending.js the way #saved is. -->
 <div id="freed" class="held" hidden>
-  <div class="word">you did it</div>
+  <div class="word">ok now its over</div>
   <div class="why">you saved your sqhusband from the serpent's belly.</div>
   <div class="rule"></div>
-  <div class="why">that's the end of the story. the yard and the deep are yours &mdash; feel free to keep playing.</div>
+  <div class="why">that's the end, feel free to keep slaying the serpent and farming on the surface!</div>
   <div class="why">thank you!</div>
   <button id="freedkeep" type="button">keep playing</button>
 </div>

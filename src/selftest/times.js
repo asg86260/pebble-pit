@@ -141,9 +141,9 @@ export const TESTS = [
     try {
       const on = await said(true), off = await said(false);
       return [
-        ok(/isn't over/.test(on.text) && !/end of the story/.test(on.text), 'with the half on it says the story goes on', on.text),
+        ok(!/thank you for playing/.test(on.text), 'with the half on there is no thanks: the story goes on', on.text),
         ok(!on.button, 'and has no button: it goes by itself'),
-        ok(/end of the story/.test(off.text) && !/isn't over/.test(off.text), 'with it off it says the story is over', off.text),
+        ok(/thank you for playing/.test(off.text), 'with it off it thanks you for playing', off.text),
         ok(off.button, 'and keeps its button')
       ];
     } finally { window.__serpentOn(null); }

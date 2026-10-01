@@ -16,12 +16,12 @@ import { beatDone } from './beats.js';
 // it has one, is whether the step is part of this story at all. The first
 // step not done is the line.
 export const STEPS = [
-  { key: 'rock', say: 'dig out the rock', done: () => S.boulderNo > 1 || beatDone('meet') },
-  { key: 'falling', say: 'the rocks keep falling', done: () => S.boulderNo > 1 },
-  { key: 'props', say: 'build the props', done: () => shieldDone('props') || S.rescued },
-  { key: 'net', say: 'string the net', done: () => shieldDone('net') || S.rescued },
-  { key: 'arch', say: 'raise the arch', done: () => shieldDone('arch') || S.rescued },
-  { key: 'dome', say: 'raise the dome', done: () => shieldDone('dome') || S.rescued },
+  { key: 'rock', say: 'dig the boulder to save your sqwife!', done: () => S.boulderNo > 1 || beatDone('meet') },
+  { key: 'falling', say: 'try to dig the boulder again!', done: () => S.boulderNo > 1 },
+  { key: 'props', say: 'maybe building a wooden roof will stop the next boulder?', done: () => shieldDone('props') || S.rescued },
+  { key: 'net', say: 'nope, try catching the boulder and slowing it down', done: () => shieldDone('net') || S.rescued },
+  { key: 'arch', say: "lets try building an arch from the mined ore and stone. surely that's sturdy enough.", done: () => shieldDone('arch') || S.rescued },
+  { key: 'dome', say: 'out of options, lets see if the wizards can help.', done: () => shieldDone('dome') || S.rescued },
   { key: 'rescue', say: 'save the sqwife', done: () => !!S.rescued },
   // The second half: the snatch waits on the pit drowning, then the way down
   // is the wizards', and the portal is a row on their board.
