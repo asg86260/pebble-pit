@@ -16996,3 +16996,29 @@ With the half off the sheet is the end of the story and keeps its button.
 - **The board of times'** name box is on this sheet. It is switched off
   (`TIMES_ON` false); turning it back on needs the button, or a hold that waits
   for the name.
+
+## Quests under the story's line (design, not built)
+
+Asked for by the owner, 2026-09-30, with three calls made: a quest is a
+**checklist under the main line**, any main step may carry one, and finishing
+one gives nothing. The words and which steps carry which quests are the
+owner's, written on the objectives page
+(https://claude.ai/artifact/9EysEv2o1CpUBNUFiztbP6); the first is the intro
+under "dig the boulder": break a piece off with a click, pick up a pebble, toss
+it into the pit.
+
+### The rules
+
+- While a main step is the line, its quest shows under it as a short list, a
+  line an item, each struck through as its fact comes true, in any order. When
+  every item is done the list goes; the main line stays until its own fact.
+- A main step that finishes before its quest does takes the quest with it: the
+  quest is help for that step, not a gate on it.
+- Every item is a fact the save already holds, or a small new one that is
+  saved (a piece knocked off by hand, a pebble picked up): nothing is a counter
+  that a reload could lose.
+
+### Open
+
+- The facts for the intro's first two items need a saved flag each.
+- How the list sits beside the notice card on a narrow window.
