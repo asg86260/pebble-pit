@@ -13,10 +13,13 @@ import { now } from '../src/clock.js';
 const S = yard.S;
 const frame = () => yard.fast(1 / 60);
 
+// The meal's clock set back to the top of a wait, so each check counts from a
+// fresh one whatever the setup ran.
 function deepYard(stage = 0, wound = 0) {
   window.__snatch({ played: true });
   window.__deepCrew();
   window.__serpent({ stage, wound });
+  S.mealT = 0; S.healBank = 0;
 }
 
 group('the wait is 6 to 12 seconds, differs meal to meal, and is the same every time it is asked', async () => {

@@ -1157,9 +1157,10 @@ HANDLES.__snatch = (o = {}) => {
   S.buried = false;
   markDone('meet', 'part', 'rescue', 'ending');
   if (S.crew < 2) { S.crew = 2; rebalance(); syncWorkers(); }
+  // Played out for a setup, the snatch has no camera shot: a check reads a
+  // camera standing where the setup left it, not one easing back out.
+  if (o.played) markDone('snatchcam');
   if (o.played) for (let f = 0; f < 60 * 120 && !S.beatsDone.includes('snatch'); f++) fast(1 / 60);
-  // and its camera let go and settled, so a check reads a camera standing still
-  if (o.played) for (let f = 0; f < 60 * 10 && (S.beat.camera || S.shot); f++) fast(1 / 60);
   // A setup played past the snatch can go down: the portal is conjured with
   // it, unless the check is about the portal (`portal: false`).
   if (o.played && o.portal !== false) S.portalOpen = true;
