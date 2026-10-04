@@ -321,7 +321,7 @@ export const setVerify = (on = true) => { verifying = !!on; resetVerify(); retur
 // turned by hand, so a check gets the same answer every time. `hz` is the
 // rate to pretend the machine is drawing at; thirty and a hundred and twenty
 // should do the same amount of yard per second, and this is how to ask.
-// A scene's moment held against the frames a caller runs after it (`__hold`):
+// A scene's moment held against the frames a caller runs after it (`__holdShot`):
 // the shot tool runs a second of the yard after every scene, and a moment
 // shorter than that is gone before the picture is taken. Wall clock, so it
 // lets go on its own.
@@ -933,7 +933,7 @@ export const waysNow = () => {
 // suites spread; a hook in one suite and not the other fails a check in a way
 // that has nothing to do with what it is checking.
 export const HANDLES = {
-  __hold: (ms = 4000) => { heldUntil = performance.now() + ms; },   // `fast` above
+  __holdShot: (ms = 4000) => { heldUntil = performance.now() + ms; },   // `fast` above
   // a window (modal.js) by kind, or null to close it
   __window: kind => showWindow(kind),
   __clearFloor: clearFloor, __pile: pile, __jump: jump,
@@ -949,7 +949,7 @@ export const HANDLES = {
   // (crit.js).
   __crit: forceCrit,
   __toss: toss, __take: takeFromPile, __place: placeBody,
-  __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
+  __abandon: abandon, __reset: (...a) => { heldUntil = 0; return newGame(...a); }, __seed: seedGame, __reload: reload,
   __slot: switchSlot,
   __machine: machineSet, __fullSites: fullSites, __machineGates: machineGates,
   __swing: swing, __cold: coldReload,

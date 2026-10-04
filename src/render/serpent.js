@@ -28,13 +28,14 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
-         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE } from '../config.js';
+         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
 import { coilLine, coilThick, mouthX, deepFloor } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA } from '../deep/phases.js';
+import { freedBody } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
@@ -189,8 +190,12 @@ function drawCoil() {
   const { x0, x1 } = deepWindow();
   const held = !S.serpentFreed && stage < 4;
   const wk = stage >= 4 ? 0 : woundK();
-  const { pts, alongAt } = lay(t, x0, x1);
+  const { pts: laid, alongAt } = lay(t, x0, x1);
   hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) };
+  // Down after the kill he comes apart tail first, and gathers again head
+  // first (deep/phases.js): only what is whole is drawn; the rest is motes.
+  const pts = laid.filter(wholeAt);
+  drawKillMotes(t, laid);
   if (!pts.length) return;
   const bit = bites(t, alongAt);
   const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
@@ -429,6 +434,49 @@ function drawVeil(t, pts) {
   }
   ctx.globalAlpha = 1;
 }
+// --- the kill ---------------------------------------------------------------------
+// Whether the hide at a laid point is whole: not yet come apart (the tail goes
+// first), or gathered again (the head comes first).
+const kOf = p => p.u / (COIL_SEGS - 1);
+function wholeAt(p) {
+  const back = reformK();
+  if (back != null) return kOf(p) < back || back >= 1;
+  const apart = apartK();
+  return apart <= 0 || kOf(p) < 1 - apart;
+}
+// The motes: off the hide as it comes apart, up and dimming; and drawing in
+// over where it is about to gather.
+function drawKillMotes(t, laid) {
+  const back = reformK(), apart = apartK();
+  if (back == null && !(apart > 0)) return;
+  for (let i = 0; i < laid.length; i += 3) {
+    const p = laid[i], k = kOf(p), seed = Math.round(p.along / P);
+    if (back != null) {
+      const near = (k - back) / 0.3;
+      if (back >= 1 || near < 0 || near > 1) continue;
+      const x = snap(p.x + (unit(seed) - 0.5) * P * 10 * near), y = snap(p.y - p.r - near * P * 8);
+      ctx.fillStyle = PURPLES[WHITE - 1 - Math.floor(near * 3)];
+      ctx.fillRect(x, y, P, P);
+      continue;
+    }
+    const age = (apart - (1 - k)) * KILL.apart;
+    if (age < 0 || age > KILL_MOTE_S) continue;
+    const up = Math.floor(age * KILL_MOTE_RISE);
+    for (let n = 0; n < 2; n++) {
+      const x = snap(p.x + (unit(seed * 3 + n) - 0.5) * P * 6 * (age + 0.3));
+      const y = snap(p.y - p.r * unit(seed + n)) - (up + n * 2) * P;
+      ctx.fillStyle = PURPLES[WHITE - 1 - Math.min(6, Math.floor(age / KILL_MOTE_S * 7))];
+      ctx.fillRect(x, y, P, P);
+    }
+  }
+}
+// Him, out and walking to her, and hopping when he gets there.
+export function drawFreed() {
+  const b = S.view === 'deep' ? freedBody() : null;
+  if (!b) return;
+  drawBody(snap(b.x), snap(b.y));
+}
+
 // The dive's bubbles: up off the floor where he went under, while he is
 // under, climbing a held cell at a time and gone at BREAK_BUBBLE_RISE.
 function drawBubbles(pts) {

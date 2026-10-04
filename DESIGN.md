@@ -17034,6 +17034,30 @@ not what it can do over the heal.
   need the owner's words for the move now that it Exposes, and Exposed's hover
   line stays as is (player copy is the owner's).
 
+## The kill: limp, then apart (built 2026-10-04)
+
+The owner's B and D, together (mock "Serpent Kill: Limp and Apart",
+2026-10-04). The fourth break was a flag: the cage went, the coil went plain
+and he dropped out under the sheet. It is now the fight's ending, played out:
+
+- **The last blow** lands (`KILL.last`), and the deep's frame closes on the
+  belly, `KILL_ZOOM` in, the floor kept at its foot (`killFrame`, view.js).
+- **Limp** (`KILL.limp`): the sway dies and the coil sinks in
+  `KILL_LIMP_STEPS` held steps until it lies on the floor (deep/place.js).
+- **Apart** (`KILL.apart`): lying there its hide comes apart into the abyss's
+  motes, tail first, each up and dimming over `KILL_MOTE_S`. Nothing strikes
+  him while he is down or gone.
+- **Out**: he is on the floor where the belly was and walks to her (the first
+  station's fighter, or another of the deep's own) at `KILL_WALK_PX_S`; they
+  hop for `KILL_CHEER_S`; the frame pulls back over `KILL_OUT_S`. He is one of
+  the deep's crew where he stands, and the sheet comes up.
+- **Back**: the sheet put down, the motes gather into the serpent head first
+  over `KILL_REFORM_S`, and it swims again, to be slain at leisure.
+
+The kill's clock (`S.freedAt`), his walk and the gathering (`S.reformAt`) are
+saved, so a reload picks it up where it was; a skip plays it out at once. A
+save freed before this has no clock and keeps its serpent as it was.
+
 ## The story's objectives (built 2026-09-30)
 
 Asked for by the owner, 2026-09-30, with three calls made: one pinned line at

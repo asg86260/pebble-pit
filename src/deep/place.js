@@ -17,7 +17,7 @@ import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DE
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
          WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
          BREAK_DIVE_OVER, BREAK_ROAR_H } from '../config.js';
-import { tautK, lashK, diveK, roarK, renewed } from './phases.js';
+import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -173,7 +173,9 @@ const waveLine = t => {
   // The dive takes his highest edge past the floor, out of sight.
   const dive = diveK(), drop = dive ? dive * (deepFloor() - coilCeiling() + BREAK_DIVE_OVER) : 0, roar = roarK();
   const taut = tautK(), lash = lashK();
-  const amp = COIL_AMP * (1 - LASH_TAUT * taut);
+  // The kill: the sway dying, and the line sunk until the body lies on the floor.
+  const lie = killDrop() * (deepFloor() - base - COIL_GIRTH / 2);
+  const amp = COIL_AMP * (1 - LASH_TAUT * taut) * killSway();
   return x => {
     const k = (x - x0) / span;
     let y = base + amp * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
@@ -181,7 +183,7 @@ const waveLine = t => {
     if (taut && k > COIL_TAIL_FROM) y -= taut * LASH_LIFT * (k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM);
     if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
     if (roar != null) y -= BREAK_ROAR_H * Math.exp(-((k - roar) ** 2) / (LASH_W * LASH_W));
-    y += drop;
+    y += drop + lie;
     return y;
   };
 };
@@ -199,7 +201,7 @@ export const coilK = x => (x - coilX0()) / coilSpan();
 const STEP = 2;                           // px of arc a table entry
 let walked = null;
 function walk(t) {
-  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}|${tautK()}|${lashK()}|${diveK()}|${roarK()}`;
+  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}|${tautK()}|${lashK()}|${diveK()}|${roarK()}|${killSway()}|${killDrop()}`;
   if (walked?.key === key) return walked;
   const xs = [coilX0()];
   const wave = waveLine(t);

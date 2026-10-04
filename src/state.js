@@ -482,6 +482,9 @@ export const S = {
   mechSkip: false,
   phaseAt: 0,             // seconds into the phase, for the fading's turns of resist
   breakT: null,           // seconds into a phase's break while it plays (deep/phases.js), null otherwise
+  // The kill (snatch.js): when the fourth break landed, where he walks from
+  // and to once he is out, and when the serpent began to gather itself again.
+  freedAt: null, freedFrom: null, freedTo: null, reformAt: null,
   // The bites single blows took out of the hide, closing: { u, side, k, at },
   // `u` the segment, `side` -1 the top edge and 1 the underside, `k` how big
   // the blow was 0..1 (render/serpent.js).
@@ -683,7 +686,7 @@ export const SAVED = [
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'askedWizards', 'handChipped',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'askedWizards', 'handChipped',
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).
   'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',

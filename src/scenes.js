@@ -20,7 +20,7 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, FREED_OPEN_MS, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
 import { nextMeal, turned, windowS } from './deep/meals.js';
@@ -311,8 +311,8 @@ const snatchAt = (phase, into = 0, pin = false) => () => {
   for (let i = 0; i < into; i++) window.__fast(1 / 60);
   // A rise is sixteen frames and a take a beat, quicker than a shot is
   // taken, so the moment is held on the page's frames for a few seconds.
-  if (!pin) { window.__hold(); return; }
-  window.__hold();
+  if (!pin) { window.__holdShot(); return; }
+  window.__holdShot();
   const sn = S.snatch, y = sn?.headY, carried = sn?.carried, until = performance.now() + 4000;
   const hold = () => {
     if (!sn || S.snatch !== sn || performance.now() > until) return;
@@ -320,6 +320,21 @@ const snatchAt = (phase, into = 0, pin = false) => () => {
     requestAnimationFrame(hold);
   };
   requestAnimationFrame(hold);
+};
+
+// The kill caught `a` seconds after the fourth break (or, with null, half
+// way through gathering itself again after the sheet), held for the shot.
+const killAt = a => () => {
+  deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
+  window.__serpent({ stage: 3, wound: SERPENT_WOUND[3] });
+  window.__fast(1 / 60);
+  if (a == null) {
+    for (let i = 0; i < 60 * 40 && S.beat.sheet !== 'freedsheet'; i++) window.__fast(1 / 60);
+    window.__skipBeat('sheet');
+    window.__fast(KILL_REFORM_S * 0.5);
+  } else window.__fast(a);
+  lookDeep(coilAt(bellySeg(), now()).x);
+  window.__holdShot();
 };
 
 // A glide caught at `k` of the way and held there (`poseGlide`): the first
@@ -624,24 +639,11 @@ const deepScenes = {
       window.__fast(1);
       lookDeep(slotAt(0));
     } },
-  // The fourth break as it happens: the belly opening, then him out of it,
-  // each held for the shot.
-  'deep-kill': { about: 'the deep', say: 'the fourth break, the moment it lands: the belly opening',
-    run: () => {
-      deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
-      window.__serpent({ stage: 3, wound: SERPENT_WOUND[3] });
-      window.__fast(0.3);
-      lookDeep(coilAt(bellySeg(), now()).x);
-      window.__hold();
-    } },
-  'deep-kill-out': { about: 'the deep', say: 'the fourth break: him out of the belly, falling free',
-    run: () => {
-      deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
-      window.__serpent({ stage: 3, wound: SERPENT_WOUND[3] });
-      window.__fast(FREED_OPEN_MS / 1000 + 0.4);
-      lookDeep(coilAt(bellySeg(), now()).x);
-      window.__hold();
-    } },
+  // The kill as it plays (snatch.js, config KILL), each moment held for the shot.
+  'deep-kill': { about: 'the deep', say: 'the kill: the serpent limp, sinking to the floor', run: killAt(KILL.last + KILL.limp * 0.6) },
+  'deep-kill-apart': { about: 'the deep', say: 'the kill: the hide coming apart into motes, tail first', run: killAt(KILL.last + KILL.limp + KILL.apart * 0.5) },
+  'deep-kill-out': { about: 'the deep', say: 'the kill: him out on the floor, walking to her', run: killAt(KILL.last + KILL.limp + KILL.apart + 1) },
+  'deep-kill-reform': { about: 'the deep', say: 'after the kill: the serpent gathering itself again, head first', run: killAt(null) },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {

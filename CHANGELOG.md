@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- Freeing the sqhusband plays out: the serpent goes limp, sinks to the floor and comes apart into motes, he walks out to her, and after the sheet the serpent gathers itself again (test/snatch.test.mjs).
 - Each serpent phase is a window: break the defense before it eats, or the meal heals it to full; stuns and Held stop the window, and the phases are far shallower (test/meals.test.mjs).
 - The Hexer's Wither now Exposes the serpent, so it takes more damage; Weakened is gone (test/classes.test.mjs).
 - Buying a fighter's rung closes the board and plays its level-up: it stops fighting and rises as a purple-hearted blaze twists up round it and ends in a burst of embers; the next rung waits until it has (test/classes.test.mjs).

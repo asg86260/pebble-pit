@@ -15,8 +15,9 @@
 // drawing reads the parts.
 
 import { S } from '../state.js';
+import { now } from '../clock.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
-         BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR } from '../config.js';
+         BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S } from '../config.js';
 import { has } from './statuses.js';
 
 const LAST = 3;
@@ -139,6 +140,29 @@ export function stepBreak(c) {
 // The resist the old phase had, for the hide not yet renewed.
 const oldResist = () => (RESISTS[S.serpentStage - 1] || [])[0] || null;
 export const resistAt = k => (renewed(k) ? resistNow() : oldResist());
+
+// --- the kill (snatch.js plays it; config KILL) -------------------------------------
+// Seconds since the fourth break, while the serpent is down and not yet
+// gathering itself again; null otherwise.
+const clamp01 = v => Math.max(0, Math.min(1, v));
+export const killA = () => (S.serpentFreed && S.freedAt != null && S.reformAt == null ? (now() - S.freedAt) / 1000 : null);
+// How much of the sway is left as he goes limp, 1..0.
+export function killSway() {
+  const a = killA();
+  return a == null ? 1 : 1 - clamp01((a - KILL.last) / (KILL.limp * 0.6));
+}
+// How far down to the floor he has sunk, 0..1, in held steps.
+export function killDrop() {
+  const a = killA();
+  return a == null ? 0 : Math.ceil(clamp01((a - KILL.last) / KILL.limp) * KILL_LIMP_STEPS) / KILL_LIMP_STEPS;
+}
+// How much of him has come apart, tail first, 0..1.
+export function apartK() {
+  const a = killA();
+  return a == null ? 0 : clamp01((a - KILL.last - KILL.limp) / KILL.apart);
+}
+// How much of him has gathered again, head first, 0..1; null when he is not.
+export const reformK = () => (S.reformAt == null ? null : clamp01((now() - S.reformAt) / 1000 / KILL_REFORM_S));
 
 // A phase broken: the next opens at the top of its turn.
 export function resetMechanic() { S.mechAt = 0; S.mechSkip = false; S.phaseAt = 0; }

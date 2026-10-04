@@ -20,7 +20,7 @@ import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned } from './meals.js';
-import { stepMechanic, resetMechanic, surgeK, sunk, guardOf, breaking, stepBreak } from './phases.js';
+import { stepMechanic, resetMechanic, surgeK, sunk, guardOf, breaking, stepBreak, killA } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
 // resists nothing and has nothing left to heal.
@@ -90,7 +90,7 @@ function stun(blow, k) {
 // snatch there is no serpent to hit, and while he is sunk nothing reaches him.
 export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   if (!S.snatched || !(dmg > 0)) return 0;
-  if (sunk() || breaking()) return 0;            // in the abyss or breaking, out of reach (deep/phases.js)
+  if (sunk() || breaking() || killA() != null) return 0;   // in the abyss, breaking, or down and gone (deep/phases.js)
   const kept = guardOf(weapon);
   if (kept === undefined) return 0;
   const guard = o.through ? Math.max(1, kept) : kept;
@@ -183,7 +183,7 @@ export const stepSerpent = c => {
   S.serpentStun = S.serpentGrace = 0;
   clearStatuses();
   resetMechanic();
-  if (S.serpentStage > LAST) S.serpentFreed = true;
+  if (S.serpentStage > LAST) { S.serpentFreed = true; S.freedAt = c.now; }
   else S.breakT = 0;
   for (const fn of breakers.slice()) fn(S.serpentStage);
 };

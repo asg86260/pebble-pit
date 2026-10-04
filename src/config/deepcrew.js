@@ -116,8 +116,26 @@ export const PORTAL_BILL = [['dust', 120000], ['shard', 2500], ['spore', 5000], 
 export const SNATCH_HURRY = 4;
 
 // --- the freeing -----------------------------------------------------------------------
-// The fourth defense broken: the belly opens and he comes out of it.
-export const FREED_OPEN_MS = 2400;     // the belly opening before he is out
+// The fourth defense broken (the owner's B and D, docs mock 2026-10-04,
+// "Serpent Kill: Limp and Apart"): the last blow lands; the sway dies and the
+// serpent sinks to the floor in KILL_LIMP_STEPS held steps; lying there its
+// hide comes apart into the abyss's motes from the tail up, leaving him on
+// the floor where the belly was; he walks to her at KILL_WALK_PX_S and they
+// cheer; the camera, in on the belly since the last blow, pulls back; the
+// sheet. Put down, the motes gather back into the serpent head first over
+// KILL_REFORM_S. Seconds.
+export const KILL = { last: 0.6, limp: 2.4, apart: 2.4 };
+export const KILL_LIMP_STEPS = 4;
+export const KILL_WALK_PX_S = P * 8;
+export const KILL_CHEER_S = 1.4;
+export const KILL_HOP_S = 0.25;        // a hop up and down, a beat each, while they cheer
+export const KILL_ZOOM = 0.35;         // how much closer the deep's frame comes in
+export const KILL_IN_S = 0.8;
+export const KILL_OUT_S = 1;
+export const KILL_GLIDE = 0.12;        // the share of the way to the belly the frame moves a frame
+export const KILL_MOTE_S = 1.5;        // a mote off the coming-apart hide, up and gone
+export const KILL_MOTE_RISE = 8;       // cells a second it climbs
+export const KILL_REFORM_S = 2.2;
 
 export const DEEP_CREW_KNOBS = [
   { key: 'SHAFT_PACE', label: 'shaft pace, x', min: 0.1, max: 3, step: 0.1,

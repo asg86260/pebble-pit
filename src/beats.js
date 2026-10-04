@@ -26,7 +26,7 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startMeet, stepMeet, cutMeet, parted, stepPart, letGo,
          startRescue, stepRescue, cutRescue } from './intro.js';
 import { cameraCues, play, stepShot, release } from './cutscene.js';
-import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, serpentOn } from './snatch.js';
+import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
 
@@ -117,17 +117,17 @@ export const BEATS = [
   // And the camera pulled in on the plank while it plays (cutscene.js).
   { key: 'snatchcam', owns: 'camera', next: null,
     when: () => S.beat.yard === 'snatch', enter: () => play('snatchcam'), step: stepShot, skip: release },
-  // The fourth defense broken: the belly opens and he comes out. A skip
-  // opens it the rest of the way; he still comes out and swims.
+  // The fourth defense broken: the kill, and him out and back with her
+  // (snatch.js). A skip plays it out at once.
   { key: 'freed', owns: 'yard', next: null,
-    when: () => S.serpentFreed, enter: startFreed, step: stepFreed,
-    skip: () => { S.introAt = -Infinity; return false; } },
+    when: () => S.serpentFreed, enter: startFreed, step: stepFreed, skip: cutFreed },
   // And the sheet that says so, stood until it is put down (ending.js).
   { key: 'freedsheet', owns: 'sheet', next: null,
     when: () => beatDone('freed') && !S.beat.yard && !S.beat.camera,
     enter: () => {},
     step: () => true,
-    skip: () => {} },
+    // Put down, the serpent gathers itself again (render/serpent.js).
+    skip: t => { S.reformAt = t; } },
 ];
 
 const ROW = new Map(BEATS.map(r => [r.key, r]));
