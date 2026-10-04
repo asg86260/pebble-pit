@@ -10,11 +10,11 @@
 // (party.test.mjs); that the rails fold and Reset refunds is BOARD's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG, LEVELUP_S, LEVELUP_BURST_S, EXPOSED_AMP } from '../src/config.js';
+import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG, WORKER, LEVELUP_S, LEVELUP_BURST_S, EXPOSED_AMP } from '../src/config.js';
 import { climb, reset, openEveryClass, flush } from './party-press.mjs';
 import { pressBuy } from '../src/deep/rails.js';
 import { shots } from '../src/deep/arms.js';
-import { coilAt } from '../src/deep/place.js';
+import { coilAt, deepFloor } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 import { rungWorth, stationOf, stationX } from '../src/deep/classes.js';
 import { keyOf, levelingUp } from '../src/deep/party.js';
@@ -97,6 +97,19 @@ group('a fighter stops fighting while its level-up plays, and fights again after
     ok(blows(during) === 0 && during.moves.length === 0, 'and while the level-up plays it lands nothing and starts no move',
        `${blows(during)} blows, ${during.moves.join(' ')}`),
     ok(blows(after) > 0, 'and after, it fights again', `${blows(after)} blows`)
+  ];
+});
+
+group('a fighter up at the hide, hovered, is held where it is, not stood on the floor', async () => {
+  party(['altar']);
+  runUntil(() => fighterAt(0)?.goal === 'fight', 30);
+  const w = fighterAt(0), y0 = w.y;
+  // what a cursor resting on a body does to it (input.js)
+  w.pauseUntil = now() + 1000;
+  run(0.5);
+  return [
+    ok(y0 < deepFloor() - WORKER * 2, 'it was up in the water at the hide', `${y0} against the floor ${deepFloor()}`),
+    ok(Math.abs(fighterAt(0).y - y0) < 1, 'and hovered it stays there', `${y0} then ${fighterAt(0).y}`)
   ];
 });
 

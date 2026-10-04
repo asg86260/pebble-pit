@@ -166,8 +166,10 @@ const STAGES = [
     w.say = { mark: '?', until: w.pauseUntil };
     // Standing on whatever is under it now: a hold that only returns true
     // leaves the body at the height it had when the hold began, and the gang
-    // take the columns under it. Every hold stands its body every frame.
-    w.y = stand(w);
+    // take the columns under it. Every hold stands its body every frame. In
+    // the deep a body is in the water, a fighter up at the hide as like as
+    // not, and is held where it is.
+    if (!belowYard(w)) w.y = stand(w);
     return true;
   },
 
