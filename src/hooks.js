@@ -1107,6 +1107,15 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
     // and a fang still in the water from a break taken back goes with it.
     if (S.fangsLoose.length > S.fangsDropped) S.fangsLoose = S.fangsLoose.slice(0, S.fangsDropped);
     resetMechanic();                    // a stage set opens calm, as a break's does
+    // A fight set back before the kill has not had it: the kill, his walk,
+    // the gathering again and their beats are forgotten, so the next fourth
+    // break plays all of it (snatch.js).
+    if (S.serpentStage <= 3) {
+      S.freedAt = S.freedFrom = S.freedTo = S.reformAt = S.breakT = null;
+      S.beatsDone = S.beatsDone.filter(k => k !== 'freed' && k !== 'freedsheet');
+      if (S.beat.yard === 'freed') S.beat.yard = null;
+      if (S.beat.sheet === 'freedsheet') S.beat.sheet = null;
+    }
   }
   if (Number.isFinite(wound)) S.serpentWound = Math.max(0, wound);
   forgetSerpent();

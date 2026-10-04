@@ -237,3 +237,29 @@ group('the fourth break: limp to the floor, apart, him out to her, and the serpe
     ok(reformK() === 1 && killDrop() === 0, 'put down, the serpent gathers itself whole again', `${reformK()} ${killDrop()}`)
   ];
 });
+
+// A fight set back after the kill (the dev hook, `__serpent`) has not had it:
+// the next fourth break plays the kill and the meeting again.
+group('set back after the kill, the next fourth break plays it all again', async () => {
+  window.__snatch({ played: true });
+  window.__deepCrew({ spare: 1 });
+  window.__serpent({ stage: 3, wound: 0 });
+  const hit = () => { const p = bellyAt(now()); strike('punch', SERPENT_WOUND[3], p.x, p.y); };
+  hit();
+  runUntil(() => S.beat.sheet === 'freedsheet', 30);
+  window.__skipBeat('sheet');
+  run(KILL_REFORM_S + 0.5);
+  const crew = S.crew;
+  window.__serpent({ stage: 3, wound: 0 });
+  hit();
+  run(0.1);
+  const again = S.beat.yard, stage = S.serpentStage, beats = S.beatsDone.filter(k => k.startsWith('freed')).join();
+  run(KILL.last + KILL.limp + 0.1);
+  const lying = killDrop();
+  runUntil(() => S.beat.sheet === 'freedsheet', 30);
+  return [
+    ok(again === 'freed', 'the kill plays again', `${again} stage ${stage} done ${beats}`),
+    ok(lying === 1, 'he goes limp to the floor again', `${lying}`),
+    ok(S.beat.sheet === 'freedsheet' && S.crew === crew + 1, 'and the meeting and the sheet come again', `${S.beat.sheet} crew ${crew} then ${S.crew}`)
+  ];
+});
