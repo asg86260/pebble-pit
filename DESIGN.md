@@ -17072,10 +17072,13 @@ the owner's A, with a manual answer added.
 
 ### The bargain
 
-The fifth defense is the **constrict**: every so often a loop of the coil
-drops onto a station and wraps it, and that station's fighter does nothing
-while it is wrapped. The party frees it the slow way, by striking the loop, or
-the player frees it at once by picking the fighter up out of the loop. It
+The fifth defense is the **constrict**, a spell (the owner's B, mock
+"Serpent Bind Spells", 2026-10-04): every so often the serpent casts at a
+station, a stream of the abyss's motes from its eye to the fighter, and an
+orb of purple closes round the fighter and lifts it off its post, turning
+slowly. A fighter in the orb does nothing. The party frees it the slow way, by
+cracking the orb with their blows, or the player frees it at once by picking
+the fighter up out of it. It
 costs a party uptime it cannot afford in a short window, and it gives the
 player's hand something to do in the last fight, the way the click and the
 pebbles do in the yard.
@@ -17089,16 +17092,18 @@ pebbles do in the yard.
 - **Window and depth:** a window of `SERPENT_WINDOW[4]` (first guess 18 s) and
   a depth solved with `deep-pace.mjs` for four fighters.
 - **The turn** (`MECHANICS[4]`, the way the lash and the sink have theirs):
-  every `every` seconds (first guess 24), a warning of `warn` (1.5 s): a loop
-  lifts off the coil over its target, the station whose fighter has dealt the
-  most this phase. Then the loop drops and wraps the station.
-- **Wrapped:** the fighter does nothing, and stays where it is. The loop has
-  hit points, `CONSTRICT_HP` of the phase's depth (first guess 15%). While a
-  loop is out, every blow lands on the loop first and the defense takes nothing
-  until the loop is struck off. It lets go on its own after `last` (12 s).
-- **The manual answer:** the wrapped fighter can be picked up as a body can in
-  the yard (the right button; on a phone, a long press). Lifted out of the
-  loop, it is free at once and the loop recoils into the coil. Dropped, it
+  every `every` seconds (first guess 24), a warning of `warn` (1.5 s): the
+  serpent's eye lights and the motes stream to its target, the station whose
+  fighter has dealt the most this phase. Then the orb closes round the fighter
+  and lifts it a few cells off its post.
+- **In the orb:** the fighter does nothing. The orb has hit points,
+  `CONSTRICT_HP` of the phase's depth (first guess 15%), its own bar over the
+  station; while an orb is up, every blow lands on the orb first and the
+  defense takes nothing until it is cracked open. It lets go on its own after
+  `last` (12 s), fading out.
+- **The manual answer:** the fighter in the orb can be picked up as a body can
+  in the yard (the right button; on a phone, a long press). Pulled out through
+  the orb's wall, it is free at once and the orb bursts into motes. Dropped, it
   swims back to its post and fights. Picking up any other body in the deep
   stays as it is today.
 - **The break into it** is a roar, as for the split and the fading. **The
@@ -17106,10 +17111,10 @@ pebbles do in the yard.
 
 ### What it must not break
 
-- **Nothing teleports.** The loop is the coil bending down to the station and
-  back, and a lifted fighter is carried, not moved.
+- **Nothing teleports.** The orb lifts its fighter and sets it down, the motes
+  travel from the eye, and a lifted fighter is carried, not moved.
 - **Saves:** the loop's turn and its hit points are saved with the phase
-  (`S.mechAt`, a new `S.loopHp`). A save past the fading plays phase 5 before
+  (`S.mechAt`, a new `S.orbHp`). A save past the fading plays phase 5 before
   the kill; a save already freed is unchanged.
 - **The checks** read the stage numbers in several places (`< 4`, `> 3`,
   `LAST`); every one moves to the new count.
@@ -17117,7 +17122,7 @@ pebbles do in the yard.
 ### The owner's words needed
 
 - The constrict's status lines: its badge's hover while it is coming, while a
-  station is wrapped, and when it is struck off.
+  fighter is in the orb, and when the orb is broken.
 
 ## The story's objectives (built 2026-09-30)
 
