@@ -86,8 +86,10 @@ export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this 
 // window"): the party has SERPENT_WINDOW seconds of it, then the serpent eats
 // the next creature to reach its mouth and heals to full. A depth is about
 // what the party should do in one window. First guesses; the dev panel has both.
-export let SERPENT_WINDOW = [40, 32, 26, 20];                // seconds a phase gives before it eats
-export const SERPENT_DEPTHS = [4300, 9400, 6700, 5100];    // the depth that breaks it, a stage (tools/node/deep-pace.mjs --solve)
+export let SERPENT_WINDOW = [40, 32, 26, 20, 18];            // seconds a phase gives before it eats
+export const SERPENT_DEPTHS = [4300, 9400, 6700, 5100, 9000];  // the depth that breaks it, a stage (tools/node/deep-pace.mjs --solve)
+// How many defenses there are; the stage past the last is the kill.
+export const SERPENT_PHASES = SERPENT_DEPTHS.length;
 export let SERPENT_WOUND = SERPENT_DEPTHS.slice();           // and as the dev panel has scaled it
 // Resists (DESIGN.md, "Resists: magic in the ward, physical in the split,
 // both in the fading"). Every hit is one kind of damage, and a phase resists
@@ -101,7 +103,7 @@ export const DAMAGE_KIND = {
   monk: 'magic', hexer: 'magic', mage: 'magic',
   sapper: 'explosive'
 };
-export const RESISTS = [[], ['magic'], ['physical'], ['magic', 'physical']];
+export const RESISTS = [[], ['magic'], ['physical'], ['magic', 'physical'], []];
 export const RESIST_K = 0.5;
 export const RESIST_TURN_S = 20;
 export const RESIST_WARN_S = 1;
@@ -224,12 +226,26 @@ export const DOT_TICK_S = 0.5;
 //          Held in the warning stops it
 //   sink   he dims into the abyss for `last`, in and out over `fade`;
 //          nothing strikes him past half gone, and the heal runs
+//   orb    an orb round the strongest station's fighter for `last`, `hp` of
+//          the depth; blows crack it first, and a fighter lifted out is free
 export const MECHANICS = [
   null,
   null,
   { kind: 'lash', every: 30, warn: 1.5, last: 1.1, daze: 3 },
-  { kind: 'sink', every: 40, warn: 1, last: 8, fade: 1 }
+  { kind: 'sink', every: 40, warn: 1, last: 8, fade: 1 },
+  { kind: 'orb', every: 24, warn: 1.5, last: 12, hp: 0.15 }
 ];
+// The constrict's orb (DESIGN.md, "A fifth phase: the constrict"): the comb
+// lights head first through the warning; bolts jag from its tips to the
+// strongest station's fighter for ORB_BOLT_S; an orb ORB_R cells across closes
+// round it and lifts it ORB_LIFT cells, a cell every ORB_LIFT_STEP seconds;
+// broken, it bursts into motes over ORB_BURST_S.
+export const ORB_BOLT_S = 0.5;
+export const ORB_BOLTS = 3;
+export const ORB_R = 5;
+export const ORB_LIFT = 3;
+export const ORB_LIFT_STEP = 0.1;
+export const ORB_BURST_S = 0.6;
 // The lash's shape: the coil draws up to this share of its sway in the
 // warning, over `LASH_TAUT_S`, and the tail lifts; then a bump this deep and
 // this wide (a share of the body) runs down it.
@@ -276,6 +292,8 @@ export const DEEP_KNOBS = [
     get: () => SERPENT_WINDOW[2], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 2 ? v : w)); } },
   { key: 'SERPENT_WINDOW_4', label: 'serpent window, fading', min: 5, max: 120, step: 1,
     get: () => SERPENT_WINDOW[3], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 3 ? v : w)); } },
+  { key: 'SERPENT_WINDOW_5', label: 'serpent window, orb', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[4], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 4 ? v : w)); } },
   { key: 'SERPENT_WOUND_SCALE', label: 'serpent wound depths, x', min: 0.1, max: 5, step: 0.1,
     get: () => SERPENT_WOUND[0] / SERPENT_DEPTHS[0],
     set: v => { SERPENT_WOUND = SERPENT_DEPTHS.map(d => Math.round(d * v)); } },

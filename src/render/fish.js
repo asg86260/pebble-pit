@@ -16,7 +16,7 @@ import { coilLine } from '../deep/place.js';
 import { mealNow, nearAt, nearAll, eatenBefore, nowS, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_SWIM_CELLS, MEAL_HINGE, MEAL_SQUEEZE,
          FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED,
-         FLOW_NEAR_BAND, FLOW_KINDS, DEEP_H, COIL_Y } from '../config.js';
+         FLOW_NEAR_BAND, FLOW_KINDS, DEEP_H, COIL_Y, SERPENT_PHASES } from '../config.js';
 import { deepTop, deepFloor, deepX0, deepX1 } from '../deep/place.js';
 
 // The mock's tones, on the deep's own ramps.
@@ -154,7 +154,7 @@ let lastMeal = { n: -1, kind: 0 };
 export const mealKind = n => (n === lastMeal.n ? lastMeal.kind : mealNow().kind);
 
 export function drawFish() {
-  if (S.view !== 'deep' || !S.snatched || S.serpentFreed || S.serpentStage > 3) return;
+  if (S.view !== 'deep' || !S.snatched || S.serpentFreed || S.serpentStage >= SERPENT_PHASES) return;
   const meal = mealNow(), { toLand } = meal;
   lastMeal = { n: meal.n, kind: meal.kind };
   if (toLand > BITE_BEFORE + MEAL_SWIM_S || toLand < MEAL_SWALLOW_S) return;
@@ -261,7 +261,7 @@ export function drawFishFar() {
 export function drawFishNear() {
   if (S.view !== 'deep' || !S.snatched) return;
   const t = nowS(), gone = eatenBefore(t);
-  const meal = S.serpentFreed || S.serpentStage > 3 ? null : mealNow(t);
+  const meal = S.serpentFreed || S.serpentStage >= SERPENT_PHASES ? null : mealNow(t);
   if (meal && meal.toLand <= BITE_BEFORE + MEAL_SWIM_S) gone.add(meal.i);
   for (const c of nearAll(t)) {
     if (gone.has(c.i)) continue;

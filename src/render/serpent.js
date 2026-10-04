@@ -28,13 +28,14 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
-         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS } from '../config.js';
+         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
+         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
 import { coilLine, coilThick, mouthX, deepFloor, bellyAt } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, killFreeA } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, killFreeA, orbOn, orbLift } from '../deep/phases.js';
 import { freedBody } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -190,7 +191,7 @@ function drawCoil() {
   const { x0, x1 } = deepWindow();
   // He is in the cage until the kill's coming apart reaches the belly.
   const held = cradled();
-  const wk = stage >= 4 ? 0 : woundK();
+  const wk = stage >= SERPENT_PHASES ? 0 : woundK();
   const { pts: laid, alongAt } = lay(t, x0, x1);
   hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) };
   // Down after the kill he comes apart tail first, and gathers again head
@@ -351,8 +352,11 @@ function drawCoil() {
   // running back along the neck, spikes a cell apart, every other one a cell
   // taller, shortening to nothing at its end. Stood on the body's top edge
   // across the body, so it rides the bends with the rest.
+  // Through the constrict's warning it lights up head first, and holds lit
+  // while the bolts leave it (`drawOrb`), which start from its tips.
   const crestFrom = headA - SNOUT / 2, crestTo = headA + CREST_LEN;
-  const spiked = new Set();
+  const spiked = new Set(), lit = combLit(t);
+  crestTips = [];
   for (const p of pts) {
     if (p.along < crestFrom || p.along > crestTo) continue;
     const j = Math.round((p.along - crestFrom) / P);
@@ -360,11 +364,13 @@ function drawCoil() {
     spiked.add(j);
     const left = 1 - (p.along - crestFrom) / (crestTo - crestFrom);
     const tall = Math.max(1, Math.round((j % 4 === 0 ? CREST_H : CREST_H - 1) * Math.min(1, left * 1.6)));
+    const on = 1 - left < lit, flick = Math.floor(t / 1000 * 12 + j) % 4 < 2;
     for (let m = 1; m <= tall; m++) {
       const d = p.r - P / 2 + m * P;
-      ctx.fillStyle = PURPLES[WHITE - 1 - (j % 2)];
+      ctx.fillStyle = on ? (m === tall ? GREYS[WHITE] : flick ? PURPLES[WHITE] : PURPLES[WHITE - 1]) : PURPLES[WHITE - 1 - (j % 2)];
       ctx.fillRect(snap(p.x - p.nx * d - P / 2), snap(p.y - p.ny * d - P / 2), P, P);
     }
+    if (on) crestTips.push({ x: p.x - p.nx * (p.r + tall * P), y: p.y - p.ny * (p.r + tall * P) });
   }
   // Him, whole in the cage, and the ribs over him: the wound's gap has
   // already taken the ribs it crossed.
@@ -432,6 +438,76 @@ function drawVeil(t, pts) {
   }
   ctx.globalAlpha = 1;
 }
+// --- the constrict's orb --------------------------------------------------------------
+// How much of the comb is lit, head first, 0..1: through the orb's warning,
+// and held while the bolts fly.
+let crestTips = [];
+function combLit(t) {
+  const p = part();
+  if (p.m?.kind !== 'orb' || S.mechSkip && !orbOn()) return 0;
+  if (p.part === 'warn') return p.k;
+  const o = orbOn();
+  return o && t - o.at < ORB_BOLT_S * 1000 ? 1 : 0;
+}
+// The orb's fighter, where it hangs.
+function orbBody(id) {
+  const w = S.workers.find(o => o.station === id);
+  if (!w) return null;
+  const st = S.stations.find(s => s.id === id);
+  return { x: w.x + WORKER / 2, y: w.y + WORKER / 2 - orbLift(st) * P };
+}
+// The bolts off the lit comb to it, held two frames a shape; the orb turning
+// round it, with what is left of it over its head; and its burst when it goes.
+export function drawOrb() {
+  if (S.view !== 'deep') return;
+  const t = now(), o = orbOn();
+  if (o) {
+    const c = orbBody(o.st);
+    if (!c) return;
+    const age = (t - o.at) / 1000;
+    if (age < ORB_BOLT_S && crestTips.length) {
+      const shape = Math.floor(age * 6);
+      for (let n = 0; n < ORB_BOLTS; n++) {
+        const from = crestTips[(n * 5 + shape * 3) % crestTips.length];
+        let x = from.x, y = from.y;
+        for (let s = 1; s <= 14; s++) {
+          const u = s / 14;
+          const nx = from.x + (c.x - from.x) * u + (unit(n * 31 + s + shape * 7) - 0.5) * P * 4 * (1 - u);
+          const ny = from.y + (c.y - from.y) * u;
+          ctx.fillStyle = s % 3 ? PURPLES[WHITE] : GREYS[WHITE];
+          for (let q = 0; q <= 2; q++) ctx.fillRect(snap(x + (nx - x) * q / 2), snap(y + (ny - y) * q / 2), P, P);
+          x = nx; y = ny;
+        }
+      }
+    }
+    // the orb, closing over the first beat of it, turning
+    const r = Math.min(ORB_R, 1 + age * 20) * P, turn = Math.floor(t / 1000 * 8) / 8 * 0.6;
+    const dots = Math.max(16, Math.round(r * 2 * Math.PI / P));
+    for (let n = 0; n < dots; n++) {
+      const th = n / dots * Math.PI * 2 + turn;
+      ctx.fillStyle = n % 4 === 0 ? PURPLES[WHITE] : PURPLES[WHITE - 2];
+      ctx.fillRect(snap(c.x + Math.cos(th) * r - P / 2), snap(c.y + Math.sin(th) * r * 0.9 - P / 2), P, P);
+    }
+    // what is left of it, over its head
+    const bw = ORB_R * 2 + 2, by = snap(c.y - r - P * 3), bx = snap(c.x) - Math.floor(bw / 2) * P;
+    for (let i = 0; i < bw; i++) {
+      ctx.fillStyle = i < Math.round(bw * o.hp / o.max) ? PURPLES[WHITE - 1] : PURPLES[WHITE - 7];
+      ctx.fillRect(bx + i * P, by, P, P);
+    }
+  }
+  const b = S.orbBurst;
+  if (b && t - b.at < ORB_BURST_S * 1000) {
+    const c = orbBody(b.st);
+    if (!c) return;
+    const k = (t - b.at) / 1000 / ORB_BURST_S, r = (ORB_R + Math.floor(k * 6) * 1.5) * P;
+    for (let n = 0; n < 16; n++) {
+      const th = n / 16 * Math.PI * 2;
+      ctx.fillStyle = PURPLES[WHITE - 1 - Math.min(6, Math.floor(k * 7))];
+      ctx.fillRect(snap(c.x + Math.cos(th) * r - P / 2), snap(c.y + Math.sin(th) * r * 0.9 - P / 2), P, P);
+    }
+  }
+}
+
 // --- the kill ---------------------------------------------------------------------
 // Whether the hide at a laid point is whole: not yet come apart (the tail goes
 // first), or gathered again (the head comes first).

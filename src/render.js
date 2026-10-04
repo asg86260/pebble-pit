@@ -50,7 +50,7 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
          drawSwimmers, drawDeepInvert } from './render/deep.js';
 import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
-import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed } from './render/serpent.js';
+import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb } from './render/serpent.js';
 import { drawFish, drawFishFar, drawFishNear } from './render/fish.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawStationStatuses } from './render/statusicons.js';
@@ -212,6 +212,7 @@ const LAYERS = [
   { name: 'level-up back', draw: drawLevelUpBack },   // the blaze's turns behind the fighter
   { name: 'party', draw: drawFighters },
   { name: 'freed', draw: drawFreed },   // him out of the serpent, walking to her
+  { name: 'orb', draw: drawOrb },       // the constrict's bolts and orb round a fighter
   { name: 'level-up front', draw: drawLevelUpFront },
   { name: 'shots', draw: drawShots },
   { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
@@ -291,7 +292,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'deep fish', 'deep stream far', 'deep stream near', 'serpent', 'serpent diving', 'swimmers', 'level-up back', 'party', 'freed', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'deep fish', 'deep stream far', 'deep stream near', 'serpent', 'serpent diving', 'swimmers', 'level-up back', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

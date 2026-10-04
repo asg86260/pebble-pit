@@ -16,10 +16,11 @@
 import { S } from '../state.js';
 import { now } from '../clock.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
-         BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT } from '../config.js';
+         BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT,
+         SERPENT_PHASES, SERPENT_WOUND, ORB_LIFT, ORB_LIFT_STEP } from '../config.js';
 import { has } from './statuses.js';
 
-const LAST = 3;
+const LAST = SERPENT_PHASES - 1;
 export const mechOf = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? MECHANICS[S.serpentStage] : null);
 
 // Where the turn is: 'calm', 'warn' or 'on', and how far through that part,
@@ -68,6 +69,50 @@ export function stepMechanic(c) {
   if (S.mechAt >= m.every) { S.mechAt %= m.every; S.mechSkip = false; }
   const p = part();
   if (m.kind === 'lash' && p.part === 'warn' && has('held')) S.mechSkip = true;
+  if (m.kind === 'orb') stepOrb(p);
+}
+
+// --- the orb (the constrict) -----------------------------------------------------------
+// On its turn the serpent casts an orb round the strongest station's fighter
+// (the highest rung, the first slot of those), unless this turn's was broken
+// already. It holds until it is cracked, the fighter is lifted out of it, or
+// its turn runs out.
+export const orbOn = () => (S.orb && S.orb.hp > 0 && S.serpentStage === LAST && !S.serpentFreed ? S.orb : null);
+function stepOrb(p) {
+  if (p.part === 'on' && !S.orb && !S.mechSkip) {
+    const manned = S.stations.filter(st => st.built && st.fighter);
+    if (!manned.length) return;
+    const st = manned.reduce((b, o) => ((o.rung || 0) > (b.rung || 0) ? o : b));
+    const hp = p.m.hp * SERPENT_WOUND[S.serpentStage];
+    S.orb = { st: st.id, hp, max: hp, at: now() };
+  }
+  if (S.orb && p.part !== 'on') breakOrb();
+}
+// Broken -- cracked, lifted out of, or its turn over: it bursts, and the turn
+// is answered.
+export function breakOrb() {
+  if (!S.orb) return;
+  S.orbBurst = { st: S.orb.st, at: now() };
+  S.orb = null;
+  S.mechSkip = true;
+}
+// Blows land on the orb first: what is left of `done` after it, and whether
+// there was an orb to take it.
+export function hitOrb(done) {
+  const o = orbOn();
+  if (!o) return done;
+  const took = Math.min(o.hp, done);
+  o.hp -= took;
+  if (o.hp <= 0) breakOrb();
+  return 0;
+}
+// Whether this body is the one in the orb.
+export const inOrb = w => { const o = orbOn(); return !!o && !!w && w.station === o.st; };
+// How many cells the orb has lifted its fighter, a step at a time.
+export function orbLift(st) {
+  const o = orbOn();
+  if (!o || !st || o.st !== st.id) return 0;
+  return Math.min(ORB_LIFT, Math.floor((now() - o.at) / 1000 / ORB_LIFT_STEP));
 }
 
 // --- a phase's break -------------------------------------------------------------
@@ -160,7 +205,7 @@ export function apartK() {
 // him go; and whether he is still held in it (the cage drawn round him).
 export const killFreeA = () => KILL.last + KILL.limp + (1 - BELLY_AT) * KILL.apart;
 export const cradled = () => {
-  if (!S.serpentFreed) return S.serpentStage < 4;
+  if (!S.serpentFreed) return S.serpentStage < SERPENT_PHASES;
   const a = killA();
   return a != null && a < killFreeA();
 };

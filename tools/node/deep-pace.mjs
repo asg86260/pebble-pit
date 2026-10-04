@@ -51,6 +51,9 @@ function mechanic(st, s) {
     const out = m.last + m.daze + LASH_FALL_SWIM_S;
     return { heal: 1, melee: t >= on || t < out - m.last ? 0 : 1, all: 1 };
   }
+  // the orb: from its cast, the strongest fighter down and blows on the orb
+  // (`orbAt`: the second of its turn it closes, so the loop can charge it)
+  if (m.kind === 'orb') return { heal: 1, melee: 1, all: 1, orb: t >= on, orbAt: t === on };
   const under = t >= on + m.fade / 2 && t < m.every - m.fade / 2;
   return { heal: 1, melee: 1, all: under ? 0 : 1 };
 }
@@ -81,16 +84,22 @@ const cost = (c, r) => LADDERS[c].dust[r];
 // the last window before it, a share of it.
 function fight(depth, ends, windows = SERPENT_WINDOW) {
   let st = 0, wound = 0, purse = 0, loose = 0, stood = 1, from = 0, win = 0;
-  const rung = party.map(() => 0), made = [0, 0, 0, 0], at = [], last = [];
-  for (let t = 0; st < 4 && t < 86400 * 3; t++) {
+  const rung = party.map(() => 0), made = SERPENT_WOUND.map(() => 0), at = [], last = [];
+  let orbLeft = 0;
+  for (let t = 0; st < SERPENT_WOUND.length && t < 86400 * 3; t++) {
     const mk = mechanic(st, t - from);
     let d = clicks * CLICK_DMG[rung[0]] * mk.all, y = clicks * scalesOf(CLICK_DMG[rung[0]]) * mk.all;
+    if (mk.orbAt) orbLeft = MECHANICS[st].hp * (depth ? depth[st] : 0);
+    // the strongest fighter in the orb while it holds, the highest rung
+    const held = mk.orb && orbLeft > 0 ? rung.slice(0, stood).indexOf(Math.max(...rung.slice(0, stood))) : -1;
     for (let i = 0; i < stood; i++) {
+      if (i === held) continue;
       const k = mk.all * (CLASSES[party[i]].melee ? mk.melee : 1);
       d += dps(party[i], rung[i], st) * k; y += shed(party[i], rung[i], st) * k;
     }
     loose += y;
     const g = Math.min(loose, gather); loose -= g; purse += g;
+    if (orbLeft > 0 && mk.orb) { const took = Math.min(orbLeft, d); orbLeft -= took; d -= took; }
     wound += d;
     last.push(d); if (last.length > windows[st]) last.shift();
     win += mk.heal;

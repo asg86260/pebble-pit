@@ -16,7 +16,7 @@
 
 import { now } from '../clock.js';
 import { CRUSH_FIRE, CRUSH_STIR, CRUSH_HEAT, CRUSH_SPARKS, CRUSH_SPARK_MS,
-         CRUSH_SPARK } from '../config.js';
+         CRUSH_SPARK, SERPENT_PHASES } from '../config.js';
 import { invertByFilter } from './invert.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
@@ -463,7 +463,7 @@ function stepMotes() {
     silt++;
   }
   // A fleck off a swaying coil every so often, at a segment the window holds.
-  if (S.serpentStage < 4 || S.serpentFreed) {
+  if (S.serpentStage < SERPENT_PHASES || S.serpentFreed) {
     fleckOwed += dt / 1000;
     while (fleckOwed > DEEP_FLECK_EVERY) {
       fleckOwed -= DEEP_FLECK_EVERY;

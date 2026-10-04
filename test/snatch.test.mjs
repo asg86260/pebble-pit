@@ -14,7 +14,8 @@ import { now } from '../src/clock.js';
 import { commutePace } from '../src/levels.js';
 import { belowYard } from '../src/route.js';
 import { mouthX, deepFloor, bellyAt, bellySeg, coilAt, coilThick } from '../src/deep/place.js';
-import { SERPENT_WOUND, KILL, KILL_REFORM_S } from '../src/config.js';
+import { SERPENT_WOUND, SERPENT_PHASES, KILL, KILL_REFORM_S } from '../src/config.js';
+const LAST = SERPENT_PHASES - 1;
 import { strike } from '../src/deep/serpent.js';
 import { killDrop, apartK, reformK } from '../src/deep/phases.js';
 import { freedBody } from '../src/snatch.js';
@@ -183,7 +184,7 @@ group("the freeing gives the deep one more hand, and he stays down there", async
   window.__snatch({ played: true });
   const had = new Set(S.workers.map(w => w.name));
   const crew0 = S.crew, deep0 = S.deepCrew;
-  S.serpentStage = 4;                    // the fourth defense broken (deep/serpent.js)
+  S.serpentStage = SERPENT_PHASES;       // the last defense broken (deep/serpent.js)
   S.serpentFreed = true;
   run(1 / 60);
   const opening = S.beat.yard;
@@ -213,10 +214,10 @@ group("the freeing gives the deep one more hand, and he stays down there", async
 group('the fourth break: limp to the floor, apart, him out to her, and the serpent back after the sheet', async () => {
   window.__snatch({ played: true });
   window.__deepCrew({ spare: 1 });
-  window.__serpent({ stage: 3, wound: 0 });
+  window.__serpent({ stage: LAST, wound: 0 });
   const crew0 = S.crew;
   const p = bellyAt(now());
-  strike('punch', SERPENT_WOUND[3], p.x, p.y);
+  strike('punch', SERPENT_WOUND[LAST], p.x, p.y);
   run(KILL.last + KILL.limp + 0.1);
   const lying = killDrop(), seg = bellySeg(), low = coilAt(seg, now()).y + coilThick(seg) / 2;
   const hit = strike('punch', 100, p.x, p.y);
@@ -243,14 +244,14 @@ group('the fourth break: limp to the floor, apart, him out to her, and the serpe
 group('set back after the kill, the next fourth break plays it all again', async () => {
   window.__snatch({ played: true });
   window.__deepCrew({ spare: 1 });
-  window.__serpent({ stage: 3, wound: 0 });
-  const hit = () => { const p = bellyAt(now()); strike('punch', SERPENT_WOUND[3], p.x, p.y); };
+  window.__serpent({ stage: LAST, wound: 0 });
+  const hit = () => { const p = bellyAt(now()); strike('punch', SERPENT_WOUND[LAST], p.x, p.y); };
   hit();
   runUntil(() => S.beat.sheet === 'freedsheet', 30);
   window.__skipBeat('sheet');
   run(KILL_REFORM_S + 0.5);
   const crew = S.crew;
-  window.__serpent({ stage: 3, wound: 0 });
+  window.__serpent({ stage: LAST, wound: 0 });
   hit();
   run(0.1);
   const again = S.beat.yard, stage = S.serpentStage, beats = S.beatsDone.filter(k => k.startsWith('freed')).join();
@@ -269,10 +270,10 @@ group('set back after the kill, the next fourth break plays it all again', async
 group('after the kill the fighters stop and go back to their posts', async () => {
   window.__snatch({ played: true });
   window.__party({ stations: [{ kind: 'altar', cls: 'brawler', rung: 8 }] });
-  window.__serpent({ stage: 3, wound: 0 });
+  window.__serpent({ stage: LAST, wound: 0 });
   runUntil(() => S.workers.some(w => w.station && w.goal === 'fight'), 30);
   const p = bellyAt(now());
-  strike('punch', SERPENT_WOUND[3], p.x, p.y);
+  strike('punch', SERPENT_WOUND[LAST], p.x, p.y);
   run(0.1);
   const seen = new Set(S.hits);
   run(KILL.last + KILL.limp + KILL.apart + 3);

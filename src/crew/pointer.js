@@ -13,6 +13,7 @@ import { assignDrop } from './assign.js';
 import { load } from './hole.js';
 import { earn } from '../notices.js';
 import { crewView } from '../prefs.js';
+import { inOrb, breakOrb } from '../deep/phases.js';
 
 // --- picking somebody up ------------------------------------------------------
 export function workerAt(x, y) {
@@ -44,6 +45,8 @@ export function hoverAt(x, y) {
 
 export function lift(w) {
   if (!w) return false;
+  // Lifted out of the constrict's orb: free at once, and the orb bursts.
+  if (inOrb(w)) breakOrb();
   for (const o of S.workers) o.lifted = false;
   w.lifted = true;
   earn('lifted');

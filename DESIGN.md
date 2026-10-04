@@ -17061,7 +17061,7 @@ The kill's clock (`S.freedAt`), his walk and the gathering (`S.reformAt`) are
 saved, so a reload picks it up where it was; a skip plays it out at once. A
 save freed before this has no clock and keeps its serpent as it was.
 
-## A fifth phase: the constrict (design, not built)
+## A fifth phase: the constrict (built 2026-10-04)
 
 Asked by the owner, 2026-10-04: beating the serpent should take all four
 fighters. The fourth station arrives with the third break's fang, at the start
@@ -17093,16 +17093,18 @@ pebbles do in the yard.
   a depth solved with `deep-pace.mjs` for four fighters.
 - **The turn** (`MECHANICS[4]`, the way the lash and the sink have theirs):
   every `every` seconds (first guess 24), a warning of `warn` (1.5 s): the
-  serpent's eye lights and the motes stream to its target, the station whose
-  fighter has dealt the most this phase. Then the orb closes round the fighter
-  and lifts it a few cells off its post.
+  serpent's comb lights up head first (the owner's call, mock "Serpent Orb
+  Cast"), and then purple bolts jag from its lit tips to the target (the
+  owner's A), the station with the highest rung, the first slot of those.
+  The orb closes round that fighter and lifts it a few cells.
 - **In the orb:** the fighter does nothing. The orb has hit points,
   `CONSTRICT_HP` of the phase's depth (first guess 15%), its own bar over the
   station; while an orb is up, every blow lands on the orb first and the
   defense takes nothing until it is cracked open. It lets go on its own after
   `last` (12 s), fading out.
-- **The manual answer:** the fighter in the orb can be picked up as a body can
-  in the yard (the right button; on a phone, a long press). Pulled out through
+- **The manual answer:** the fighter in the orb can be picked up, as any body
+  can (the right button; on a phone, a long press; bodies in the deep could
+  already be). Pulled out through
   the orb's wall, it is free at once and the orb bursts into motes. Dropped, it
   swims back to its post and fights. Picking up any other body in the deep
   stays as it is today.
@@ -17119,10 +17121,22 @@ pebbles do in the yard.
 - **The checks** read the stage numbers in several places (`< 4`, `> 3`,
   `LAST`); every one moves to the new count.
 
+### As built (2026-10-04)
+
+- `SERPENT_PHASES` (config/deep.js) is the number of defenses, five; the kill
+  is the stage past the last. A save already freed is moved to stage 5 (the
+  migration `2026-10-04-fifth-phase.js`, `SAVE_V` 9).
+- Depth 9,000 in an 18 s window (`deep-pace.mjs --solve`, four fighters, the
+  orb in the model); `MECHANICS[4]` is `{ every: 24, warn: 1.5, last: 12, hp: 0.15 }`.
+- `S.orb` (saved) is `{ st, hp, max, at }`; `test/orb.test.mjs` covers the
+  cast, the blows on it, the lift and the timeout. Scenes `phase-orb-cast`,
+  `phase-orb`.
+
 ### The owner's words needed
 
 - The constrict's status lines: its badge's hover while it is coming, while a
-  fighter is in the orb, and when the orb is broken.
+  fighter is in the orb, and when the orb is broken. Blank until they come
+  (`STATUS_SAYS.orb`, config/deepdraw.js).
 
 ## The story's objectives (built 2026-09-30)
 

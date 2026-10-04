@@ -347,6 +347,7 @@ export const STATUS_ICONS = {
   // the lash, the sink
   lash:     { rows: ['...##', '..#..', '.#...', '#....', '#....'], own: true },
   sink:     { rows: ['#####', '.....', '.###.', '.....', '..#..'], own: true },
+  orb:      { rows: ['.###.', '#...#', '#.#.#', '#...#', '.###.'], own: true },
   // and the phase's standing resist (the owner's B, docs/mocks/status-resists-2026-09-30.html):
   // the ward halves magic, the plates halve physical
   ward:     { rows: ['..#..', '#.#.#', '.###.', '#.#.#', '..#..'], own: true },
@@ -363,6 +364,8 @@ export const STATUS_STRUCK = '#9b5de5';
 export const STATUS_SAYS = {
   lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming: Held stops it', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
   sink:  { coming: 'Sink coming: land a burst first', on: 'Sink: out of reach', stopped: 'Sink: answered' },
+  // the owner's words to come (DESIGN.md, "A fifth phase: the constrict")
+  orb:   { coming: '', on: '', stopped: '' },
   dazed: 'Dazed: thrown off, seeing stars',
   ward: 'Ward: magic damage cut in half',
   plates: 'Plates: phys damage cut in half',

@@ -33,7 +33,7 @@ import { now } from './clock.js';
 import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
-import { SERPENT_WOUND, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
+import { SERPENT_WOUND, SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
 import { CALLED } from './deep/party.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
@@ -445,9 +445,9 @@ export function verifyWorld() {
   // else, counted in two places for the reason the ledgers are.
   {
     const stage = S.serpentStage;
-    if (!Number.isInteger(stage) || stage < 0 || stage > 4)
+    if (!Number.isInteger(stage) || stage < 0 || stage > SERPENT_PHASES)
       fail('the serpent is in a stage it does not have', `${stage}`);
-    const depth = stage > 3 ? 0 : SERPENT_WOUND[stage];
+    const depth = stage >= SERPENT_PHASES ? 0 : SERPENT_WOUND[stage];
     if (!(S.serpentWound >= 0) || S.serpentWound > depth)
       fail('the wound is outside its stage', `wound ${S.serpentWound} in stage ${stage}, depth ${depth}`);
     if (stage < serpentWas)
@@ -460,19 +460,19 @@ export function verifyWorld() {
     if (stunWas && stage === serpentWas && S.meal === mealWas && S.serpentWound < woundWas - 1e-9)
       fail('the serpent healed while it was stunned', `wound ${woundWas} then ${S.serpentWound} in stage ${stage}`);
     // The meal: a bank that is never under nought, a clock inside its wait.
-    if (!(S.mealT >= 0) || (S.serpentWound < depth && S.snatched && stage <= 3 && mealNow().toLand < -1))
+    if (!(S.mealT >= 0) || (S.serpentWound < depth && S.snatched && stage < SERPENT_PHASES && mealNow().toLand < -1))
       fail('the meal clock is outside its wait', `${S.mealT}s since the last, the next ${mealNow().toLand}s off`);
     mealWas = S.meal;
     if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)
       fail('the stun is outside its bounds', `${S.serpentStun}s, at most ${STUN_MAX_S}`);
     // The phase's mechanic (deep/phases.js) is somewhere in its turn.
-    const mech = stage <= 3 && !S.serpentFreed ? MECHANICS[stage] : null;
+    const mech = stage < SERPENT_PHASES && !S.serpentFreed ? MECHANICS[stage] : null;
     if (!(S.mechAt >= 0) || (mech && S.mechAt >= mech.every))
       fail('the turn of the phase is outside itself', `${S.mechAt}s of ${mech ? mech.every : '-'}`);
     serpentWas = stage;
     woundWas = S.serpentWound;
     stunWas = S.serpentStun > 0;
-    if (S.serpentFreed !== (stage > 3))
+    if (S.serpentFreed !== (stage >= SERPENT_PHASES))
       fail('he is freed and the belly is not open, or the other way round', `freed ${S.serpentFreed}, stage ${stage}`);
     if (!S.snatched) {
       const top = deepTop();

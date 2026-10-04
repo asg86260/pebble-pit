@@ -1095,11 +1095,12 @@ import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
 import { forgetSerpent } from './verify.js';
 import { resetMechanic, part as phasePart } from './deep/phases.js';
-import { FANG_BREAKS } from './config.js';
+import { FANG_BREAKS, SERPENT_PHASES } from './config.js';
 HANDLES.__serpent = ({ stage, wound } = {}) => {
   if (Number.isInteger(stage)) {
-    S.serpentStage = Math.max(0, Math.min(4, stage));
-    S.serpentFreed = S.serpentStage > 3;
+    S.serpentStage = Math.max(0, Math.min(SERPENT_PHASES, stage));
+    S.serpentFreed = S.serpentStage >= SERPENT_PHASES;
+    S.orb = null;
     // The breaks this stage says have happened have dropped their fangs: a
     // fight set back takes them back, and one set forward skipped them, so
     // the next break drops its own and not the ones before it.
@@ -1110,7 +1111,7 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
     // A fight set back before the kill has not had it: the kill, his walk,
     // the gathering again and their beats are forgotten, so the next fourth
     // break plays all of it (snatch.js).
-    if (S.serpentStage <= 3) {
+    if (S.serpentStage < SERPENT_PHASES) {
       S.freedAt = S.freedFrom = S.freedTo = S.reformAt = S.breakT = null;
       S.beatsDone = S.beatsDone.filter(k => k !== 'freed' && k !== 'freedsheet');
       if (S.beat.yard === 'freed') S.beat.yard = null;

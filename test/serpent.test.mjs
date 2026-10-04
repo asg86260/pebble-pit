@@ -10,7 +10,7 @@
 // are about the depths and not about which class answers which stage.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_WINDOW, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K } from '../src/config.js';
+import { SERPENT_WINDOW, SERPENT_PHASES, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K } from '../src/config.js';
 import { clickDeep, clickDmg, strike, woundK, onBreak, scalesOf } from '../src/deep/serpent.js';
 import { breaking } from '../src/deep/phases.js';
 import { spendScales } from '../src/deep/scales.js';
@@ -104,12 +104,12 @@ group('a hand too slow for the window never breaks it, a fast one does inside on
   ];
 });
 
-group('each defense breaks at its depth, in order, the fourth frees him, and every break is heard', async () => {
+group('each defense breaks at its depth, in order, the last frees him, and every break is heard', async () => {
   deepYard();
   const seen = [S.serpentStage], bad = [], heard = [];
   const stop = onBreak(stage => heard.push(stage));
   const at = () => coilAt(bellySeg(), now());
-  for (let stage = 0; stage < 4; stage++) {
+  for (let stage = 0; stage < SERPENT_PHASES; stage++) {
     const depth = SERPENT_WOUND[stage];
     // A point short of the depth: the stage stands.
     strike('punch', depth - 1, at().x, at().y);
@@ -123,7 +123,7 @@ group('each defense breaks at its depth, in order, the fourth frees him, and eve
     if (S.serpentWound !== 0) bad.push(`stage ${stage + 1} began with a wound of ${S.serpentWound}`);
     // A break plays before the next defense can be touched: a blow in it
     // does nothing.
-    if (stage < 3) {
+    if (stage < SERPENT_PHASES - 1) {
       if (!breaking()) bad.push(`stage ${stage + 1} opened without a break`);
       if (strike('punch', depth, at().x, at().y) !== 0) bad.push(`a blow landed in the break into stage ${stage + 1}`);
       runUntil(() => !breaking(), 10);
@@ -135,10 +135,10 @@ group('each defense breaks at its depth, in order, the fourth frees him, and eve
   return [
     ok(bad.length === 0, 'every stage broke at its depth and not before', bad.join('; ')),
     ok(inOrder, 'one at a time, in order, never back', seen.join(' -> ')),
-    ok(heard.join(' ') === '1 2 3 4', 'and each break is heard once, with the stage it reached', heard.join(' ')),
-    ok(S.serpentFreed && S.serpentStage === 4, 'and the fourth break opens the belly',
+    ok(heard.join(' ') === Array.from({ length: SERPENT_PHASES }, (_, i) => i + 1).join(' '), 'and each break is heard once, with the stage it reached', heard.join(' ')),
+    ok(S.serpentFreed && S.serpentStage === SERPENT_PHASES, 'and the last break opens the belly',
        `freed ${S.serpentFreed}, stage ${S.serpentStage}`),
-    ok(S.serpentStage === 4 && S.serpentWound === 0,
+    ok(S.serpentStage === SERPENT_PHASES && S.serpentWound === 0,
        'after which nothing goes back', `stage ${S.serpentStage}, wound ${S.serpentWound}`)
   ];
 });
@@ -149,7 +149,7 @@ group('a hit is halved in the phase that resists its kind, and whole in the rest
   for (const [key, cls] of Object.entries(CLASSES)) {
     if (!cls.hit) continue;
     const got = [];
-    for (let stage = 0; stage < 4; stage++) {
+    for (let stage = 0; stage < SERPENT_PHASES; stage++) {
       window.__serpent({ stage, wound: 0 });
       const p = belly();
       got.push(strike(cls.hit, 100, p.x, p.y) / 100);

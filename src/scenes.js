@@ -20,7 +20,7 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
 import { nextMeal, turned, windowS } from './deep/meals.js';
@@ -299,6 +299,12 @@ const breakScene = (stage, at, stations) => () => {
   hold();
 };
 
+// The constrict's orb in frame: the strongest station's fighter.
+const lookAtOrb = () => {
+  const w = S.orb && S.workers.find(o => o.station === S.orb.st);
+  if (w) lookDeep(w.x);
+};
+
 // The snatch as it plays: both facts true, and the clock run until the beat
 // reaches the phase named. The shot tool runs a second more after a scene,
 // and the take is shorter than that, so the scene stops at the start of the
@@ -325,8 +331,8 @@ const snatchAt = (phase, into = 0, pin = false) => () => {
 // The kill caught `a` seconds after the fourth break (or, with null, half
 // way through gathering itself again after the sheet), held for the shot.
 const killAt = a => () => {
-  deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
-  window.__serpent({ stage: 3, wound: SERPENT_WOUND[3] });
+  deepYard({ stage: SERPENT_PHASES - 1, party: [cast('brawler', 8), cast('mage', 8)] });
+  window.__serpent({ stage: SERPENT_PHASES - 1, wound: SERPENT_WOUND[SERPENT_PHASES - 1] });
   window.__fast(1 / 60);
   if (a == null) {
     for (let i = 0; i < 60 * 40 && S.beat.sheet !== 'freedsheet'; i++) window.__fast(1 / 60);
@@ -481,6 +487,10 @@ const deepScenes = {
       const w = S.workers.find(o => o.uid === st.fighter);
       if (w) lookDeep(w.x);
     } },
+  'phase-orb-cast': { about: 'the deep', say: 'the constrict: the comb lit, the bolts leaving it for the strongest fighter',
+    run: () => { mechScene(4, -0.2, [cast('brawler', 8), cast('ranger', 6), cast('mage', 4), cast('monk', 2)])(); lookAtOrb(); } },
+  'phase-orb': { about: 'the deep', say: 'the constrict: a fighter held in the orb, its bar over its head',
+    run: () => { mechScene(4, -2, [cast('brawler', 8), cast('ranger', 6), cast('mage', 4), cast('monk', 2)])(); lookAtOrb(); } },
   'phase-sink': { about: 'the deep', say: 'the sink in the fading phase: the coil dimmed into the abyss under its veil',
     run: mechScene(3, -3, [cast('mage', 4), cast('monk', 4)]) },
   // Reading the fight: the numbers off the blows and the heal's purple `+`
@@ -644,8 +654,8 @@ const deepScenes = {
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {
-      deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
-      window.__serpent({ stage: 4 });
+      deepYard({ stage: SERPENT_PHASES - 1, party: [cast('brawler', 8), cast('mage', 8)] });
+      window.__serpent({ stage: SERPENT_PHASES });
       for (let i = 0; i < 60 * 30 && S.beat.yard !== 'freed'; i++) window.__fast(1 / 60);
       window.__fast(1.5);
       lookDeep(coilAt(bellySeg(), now()).x);

@@ -39,7 +39,7 @@ import { P, WORKER, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG, BREAK_ROAR_DAZE,
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
 import { slotX, postX, postY, coilAt, coilThick, segAbove, coilK, deepFloor } from './place.js';
-import { lashHits, mechOf, roarHits, killA } from './phases.js';
+import { lashHits, mechOf, roarHits, killA, inOrb } from './phases.js';
 import { rand } from '../rng.js';
 import { stationById, classOf, keyOf, levelingUp } from './party.js';
 import { mid, working, swim, loose } from './arms.js';
@@ -438,6 +438,8 @@ export function stepFighter(w, c) {
   if (!step) return;
   // Its level-up playing (deep/party.js), it stops where it is and fights no more until it has.
   if (levelingUp(st)) { w.pose = null; w.beam = null; return; }
+  // Held in the constrict's orb, it does nothing.
+  if (inOrb(w)) { w.pose = null; w.beam = null; return; }
   // The serpent down after the kill, and gone, there is nothing to fight: back
   // to its post until it has gathered itself again.
   if (killA() != null) { w.pose = null; w.beam = null; w.goal = 'back'; toPost(w, st); return; }

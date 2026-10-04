@@ -11,7 +11,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_WOUND, SCALE_PER_DECADE, SCALE_BASE,
+import { SERPENT_WOUND, SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
@@ -20,11 +20,11 @@ import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned } from './meals.js';
-import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA } from './phases.js';
+import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
 // resists nothing and has nothing left to heal.
-const LAST = 3;
+const LAST = SERPENT_PHASES - 1;
 const depth = () => S.serpentStage > LAST ? 0 : SERPENT_WOUND[S.serpentStage];
 
 // What a hit did, kept a moment for the number over it (render/fightnums.js).
@@ -98,7 +98,9 @@ export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   if (!(done > 0)) return 0;
   // Held at the stage's depth rather than over it: the break is the frame's
   // (`stepSerpent`), and a wound past its depth is a number nothing draws.
-  if (S.serpentStage <= LAST) S.serpentWound = Math.min(depth(), S.serpentWound + done);
+  // The constrict's orb takes the blows first (deep/phases.js).
+  const through = hitOrb(done);
+  if (S.serpentStage <= LAST) S.serpentWound = Math.min(depth(), S.serpentWound + through);
   const n = scalesOf(done);
   if (o.tick) shed(x, y, n);
   else {

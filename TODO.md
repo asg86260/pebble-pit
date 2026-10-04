@@ -1,10 +1,11 @@
 # Still to do
 
-## A fifth phase: the constrict -- DESIGNED, AWAITING APPROVAL (2026-10-04)
+## A fifth phase: the constrict -- BUILT (2026-10-04)
 
-"A fifth phase: the constrict" in DESIGN.md: after the fading, the serpent casts an
-orb round a station's fighter; the party cracks it, or the player lifts the fighter out.
-Blocked on the owner's approval and the constrict's status words.
+"A fifth phase: the constrict" in DESIGN.md. Open:
+- **The badge's three hover lines** are blank, waiting on the owner's words
+  (`STATUS_SAYS.orb`).
+- **Nobody has played it.** Depth 9,000 and the orb's 15% are the model's.
 
 ## The serpent heals whole: a phase is a window -- BUILT (2026-10-04)
 

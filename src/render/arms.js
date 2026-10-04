@@ -27,6 +27,7 @@ import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_
 import { TYPE } from '../jobs.js';
 import { S } from '../state.js';
 import { fighterAt, keyOf, riseOf } from '../deep/party.js';
+import { orbLift } from '../deep/phases.js';
 import * as fight from '../deep/arms.js';
 import { deepFloor, deepTop, deepX0, postX } from '../deep/place.js';
 import { ctx } from './ctx.js';
@@ -145,7 +146,7 @@ function fighters(t) {
   const list = [];
   for (const { w, st } of stationsNow()) {
     const k = keyOf(st), key = k && ATTACKS[k] ? k : null, R = st.rung || 0;
-    const x = Math.round(w.x) / P, restY = Math.round(w.y) / P - riseOf(st);   // lifted by a level-up
+    const x = Math.round(w.x) / P, restY = Math.round(w.y) / P - riseOf(st) - orbLift(st);   // lifted by a level-up, or the orb
     const f = { w, st, key, R, x, restY, a: null, a0: null, sauce: null, c: null, sim: 'pose' in w, dx: 0, dy: 0 };
     if (key && f.sim) {
       const pg = pageOf(key, w, R, t * 1000);
