@@ -53,11 +53,11 @@ export const MEAL_KNOBS = [
 // a second), how much of the camera's pan they follow, and what share of the
 // stream each depth is. One sets off every FLOW_EVERY_S on average, from off
 // the glass. A giant crosses far behind everything every FLOW_GIANT_S.
-export const FLOW_EVERY_S = 2.2;
+export const FLOW_EVERY_S = 5;
 export const FLOW_CELL = [0.35, 0.55, 0.85];
-export const FLOW_SPEED = [14, 26, 42];
+export const FLOW_SPEED = [5, 9, 14];
 export const FLOW_PARALLAX = [0.25, 0.55, 0.85];
 export const FLOW_SHARE = [0.45, 0.35, 0.2];
 export const FLOW_MARGIN = 160;       // screen pixels off the glass a crossing starts and ends
-export const FLOW_GIANT_S = 60;
-export const FLOW_GIANT_SPEED = 9;
+export const FLOW_GIANT_S = 150;
+export const FLOW_GIANT_SPEED = 4;
