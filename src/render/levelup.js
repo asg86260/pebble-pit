@@ -11,7 +11,7 @@ import { S } from '../state.js';
 import { now } from '../clock.js';
 import { P, WORKER, LEVELUP_S, LEVELUP_FPS, LEVELUP_TONGUES, LEVELUP_TURNS, LEVELUP_SPIN, LEVELUP_R,
          LEVELUP_H, LEVELUP_TONGUE, LEVELUP_IN, LEVELUP_FLARE, LEVELUP_BURST_S, LEVELUP_BURST_STEPS,
-         LEVELUP_BURST_OUT, LEVELUP_BURST_RISE } from '../config.js';
+         LEVELUP_BURST_OUT, LEVELUP_BURST_RISE, LEVELUP_EMBER } from '../config.js';
 import { fighterAt, levelingUp, riseOf } from '../deep/party.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
@@ -65,9 +65,11 @@ function blaze(front) {
         continue;
       }
       // the burst: each tongue's tip flown out along its own turn, a held step at a time
+      // an ember a block of cells, the smaller size for its last half
       const out = r + step * LEVELUP_BURST_OUT * P, q = step / LEVELUP_BURST_STEPS + (i % 3) * 0.1;
-      put(cx + Math.cos(turn) * out, foot - (s * LEVELUP_H + step * LEVELUP_BURST_RISE) * P,
-          embers[Math.min(embers.length - 1, Math.floor(q * embers.length))]);
+      const size = LEVELUP_EMBER[step < LEVELUP_BURST_STEPS / 2 ? 0 : 1], tone = embers[Math.min(embers.length - 1, Math.floor(q * embers.length))];
+      const ex = cx + Math.cos(turn) * out, ey = foot - (s * LEVELUP_H + step * LEVELUP_BURST_RISE) * P;
+      for (let u = 0; u < size; u++) for (let v = 0; v < size; v++) put(ex + u * P, ey - v * P, tone);
     }
   }
 }

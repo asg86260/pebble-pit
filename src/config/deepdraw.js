@@ -515,6 +515,7 @@ export const LEVELUP_BURST_S = 0.6;
 export const LEVELUP_BURST_STEPS = 6;
 export const LEVELUP_BURST_OUT = 1.6;
 export const LEVELUP_BURST_RISE = 1.2;
+export const LEVELUP_EMBER = [2, 1];   // an ember's cells square, flown out and then cooled to the last steps
 
 // While the level-up plays the fighter stops fighting and rises LEVELUP_RISE
 // cells off where it stood, a cell every LEVELUP_RISE_STEP seconds, holds, and
