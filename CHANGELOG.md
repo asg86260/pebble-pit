@@ -83,6 +83,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The fight is read in numbers: each blow's damage rises off the coil in a carved pixel face of its own, a lance's and a beam's bleed and a grenade's burst each say one sum, and the heal rises off the wound in purple as +N once a second (test/serpent-numbers.test.mjs).
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
+- Fighters at the serpent's hide are no longer dragged under the deep's floor when it dives or lies down (test/party.test.mjs).
 
 - The serpent no longer sheds more scales than the gatherers can ever carry to the crusher (test/serpent.test.mjs).
 - The deep's build button shows its price, one fang, instead of how many fangs you hold (src/selftest/deep.js).
