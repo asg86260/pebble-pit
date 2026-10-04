@@ -29,7 +29,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, EYE_AT, EYE_DOWN, EYE_BLINK_S, EYE_BLINK_STEP,
-         EYE_MOTES, EYE_MOTE_FPS, EYE_MOTE_RISE, EYE_MOTE_DRIFT, EYE_MOTE_LIFE } from '../config.js';
+         EYE_MOTE_FPS, EYE_FLARE_EVERY, EYE_FLARE_LEN, EYE_FLARE_MOTES, EYE_MOTE_RISE } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
@@ -426,45 +426,49 @@ function drawVeil(t, pts) {
   ctx.globalAlpha = 1;
 }
 // --- the eye ------------------------------------------------------------------------
-// The brow bump (the owner's pick, 2026-10-04): a raised bump breaking the
-// head's top line, a purple slit eye in it. Laid square on the grid at the
-// eye's place on the body, not turned with it: a sprite. The lid covers the
-// iris row's eye tones.
-//   M the hide's edge, L its light, D the socket, y the iris, k the slit
+// The brow bump, alert (the owner's pick, 2026-10-04): a raised bump breaking
+// the head's top line, a two-row purple slit eye in it with a white glint.
+// Laid along the body, a column a step along it and a row a step across it,
+// so it turns with the head; the lid covers the iris rows' eye tones.
+//   M the hide's edge, L its light, D the socket, y the iris, k the slit, W the glint
 const EYE = ['..MMMM..',
              '.MLLLLM.',
-             'MLDDDDLM',
+             'MLMMMMLM',
+             '.DyWkyD.',
              '.DyykyD.',
              '..DDDD..'];
-const EYE_IRIS = 3, EYE_MID = 4;          // the iris row, and the column the eye centers on
-const eyeTone = ch => ({ M: GREYS[WHITE - 3], L: GREYS[WHITE - 1], D: GREYS[WHITE - 6], y: PURPLES[WHITE], k: GREYS[0] })[ch];
+const EYE_IRIS = 4, EYE_MID = 4;          // the lower iris row, and the column the eye centers on
+const EYE_SEEN = /[ykW]/;
+const eyeTone = ch => ({ M: GREYS[WHITE - 3], L: GREYS[WHITE - 1], D: GREYS[WHITE - 6], y: PURPLES[WHITE],
+                         k: GREYS[0], W: GREYS[WHITE] })[ch];
 const MOTE_TONES = () => [PURPLES[WHITE], PURPLES[WHITE - 1], PURPLES[WHITE - 3], PURPLES[WHITE - 5]];
 function drawEye(t, pts, headA) {
   const at = headA + EYE_AT;
   let p = pts[0];
   for (const q of pts) if (Math.abs(q.along - at) < Math.abs(p.along - at)) p = q;
   if (Math.abs(p.along - at) > P * 2) return;          // the head is off the glass
-  // `r` already stands wider by the top jaw's gap, so the eye lifts with it
-  const d = p.r - EYE_DOWN * P;
-  const cx = snap(p.x - p.nx * d) / P, cy = snap(p.y - p.ny * d) / P;
-  const x0 = cx - EYE_MID, y0 = cy - EYE_IRIS;
+  // `r` already stands wider by the top jaw's gap, so the eye lifts with it.
+  // Down the body is `n`, along it toward the tail is `t`.
+  const d = p.r - EYE_DOWN * P, ox = p.x - p.nx * d, oy = p.y - p.ny * d;
+  const at2 = (i, j) => [snap(ox + p.tx * (i - EYE_MID) * P + p.nx * (j - EYE_IRIS) * P - P / 2),
+                         snap(oy + p.ty * (i - EYE_MID) * P + p.ny * (j - EYE_IRIS) * P - P / 2)];
   // The blink: the lid down over the iris and back, a held step each way.
-  const b = (t / 1000) % EYE_BLINK_S, shut = b < EYE_BLINK_STEP * 3;
+  const shut = (t / 1000) % EYE_BLINK_S < EYE_BLINK_STEP * 3;
   EYE.forEach((row, j) => [...row].forEach((ch, i) => {
     if (ch === '.') return;
-    ctx.fillStyle = shut && j === EYE_IRIS && (ch === 'y' || ch === 'k') ? eyeTone('M') : eyeTone(ch);
-    ctx.fillRect((x0 + i) * P, (y0 + j) * P, P, P);
+    const [x, y] = at2(i, j);
+    ctx.fillStyle = shut && EYE_SEEN.test(ch) ? eyeTone('M') : eyeTone(ch);
+    ctx.fillRect(x, y, P, P);
   }));
-  // The motes, off the top of the bump, each from a column across the eye.
-  const f = Math.floor(t / 1000 * EYE_MOTE_FPS), tones = MOTE_TONES();
-  const from = EYE[EYE_IRIS].indexOf('y'), span = EYE[EYE_IRIS].lastIndexOf('y') - from + 1;
-  for (let n = 0; n < EYE_MOTES; n++) {
-    const stagger = Math.round(n * EYE_MOTE_LIFE / EYE_MOTES);
-    const age = (f + stagger) % EYE_MOTE_LIFE, life = Math.floor((f + stagger) / EYE_MOTE_LIFE);
-    const col = from + Math.floor(unit(life * 13 + n * 7) * span);
-    const x = x0 + col + Math.round(age * EYE_MOTE_DRIFT), y = y0 - 1 - Math.floor(age / EYE_MOTE_RISE);
-    ctx.fillStyle = tones[Math.min(tones.length - 1, Math.floor(age / (EYE_MOTE_LIFE / tones.length)))];
-    ctx.fillRect(x * P, y * P, P, P);
+  // The flare: a short burst off the bump's top every so often, spread across
+  // the eye, up and back along the neck.
+  const f = Math.floor(t / 1000 * EYE_MOTE_FPS), age = f % EYE_FLARE_EVERY;
+  if (age >= EYE_FLARE_LEN) return;
+  const tones = MOTE_TONES(), from = EYE[EYE_IRIS].indexOf('y');
+  for (let n = 0; n < EYE_FLARE_MOTES; n++) {
+    const [x, y] = at2(from + n + age * (0.2 + n * 0.15), -1 - (n === 1 ? 1 : 0));
+    ctx.fillStyle = tones[Math.min(tones.length - 1, Math.floor(age / (EYE_FLARE_LEN / tones.length)))];
+    ctx.fillRect(snap(x), snap(y - Math.floor(age / EYE_MOTE_RISE) * P), P, P);
   }
 }
 

@@ -16,7 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
-- The serpent's eye sits in a raised brow bump, blinks, and has purple motes rising off it (`node tools/look.mjs serpent-head`).
+- The serpent's eye sits in a raised brow bump that turns with its head, blinks, and now and then flares purple motes (`node tools/look.mjs serpent-head`).
 - Buying a fighter's rung closes the board and plays its level-up, a purple-hearted blaze twisting up round it; the next rung waits until it has burned out (test/rails.test.mjs).
 - The serpent's first defense breaks into a dive: it fades into the abyss and comes back up warded, the bar refilling and its four phase boxes showing for the first time (`node tools/look.mjs break-rise`).
 - Every later break is a roar: jaws wide, a bump running down the body with the new hide behind it, throwing off the fighters it passes (`node tools/look.mjs break-roar`).
