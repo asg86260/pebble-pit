@@ -510,21 +510,20 @@ export const LEVELUP_IN = 0.35;
 export const LEVELUP_OUT = 0.3;
 export const LEVELUP_EMBERS = 4;
 
-// The serpent's eye (the owner's brow bump, alert, with a flare; 2026-10-04):
-// a raised bump that breaks the head's top line, a two-row purple slit eye in
-// it with a glint, laid along the body so it turns as the head does; its
-// lower iris row EYE_DOWN cells under the top edge, EYE_AT back of the head's
-// segment. It blinks every EYE_BLINK_S or so, the lid down and up a held
-// EYE_BLINK_STEP at a time. Every EYE_FLARE_EVERY frames (at EYE_MOTE_FPS) a
-// short burst of EYE_FLARE_MOTES motes of the abyss's purple leaps off the
-// bump's top, spread across the eye, for EYE_FLARE_LEN frames: up a cell every
-// EYE_MOTE_RISE frames, back along the neck, dimming down the ramp.
+// The serpent's eye (the owner's brow bump, 2026-10-04): a raised bump that
+// breaks the head's top line, a purple slit eye in it, the eye a cell back of
+// the head's segment with its row EYE_DOWN cells under the top edge. It blinks
+// every EYE_BLINK_S or so, the lid down and up a held EYE_BLINK_STEP at a
+// time. Motes of the abyss's purple lift off it, EYE_MOTES at once, each from
+// somewhere across the eye's width: held frames at EYE_MOTE_FPS, a cell up
+// every EYE_MOTE_RISE frames and EYE_MOTE_DRIFT cells a frame back along the
+// neck, gone after EYE_MOTE_LIFE frames, dimming down the ramp as they go.
 export const EYE_AT = P;
-export const EYE_DOWN = 2;
+export const EYE_DOWN = 1.5;
 export const EYE_BLINK_S = 4.5;
 export const EYE_BLINK_STEP = 0.07;
+export const EYE_MOTES = 6;
 export const EYE_MOTE_FPS = 10;
-export const EYE_FLARE_EVERY = 40;
-export const EYE_FLARE_LEN = 10;
-export const EYE_FLARE_MOTES = 3;
-export const EYE_MOTE_RISE = 1.2;
+export const EYE_MOTE_RISE = 2;
+export const EYE_MOTE_DRIFT = 0.35;
+export const EYE_MOTE_LIFE = 24;
