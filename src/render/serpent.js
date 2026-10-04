@@ -28,7 +28,8 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
-         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE } from '../config.js';
+         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, EYE_AT, EYE_DOWN, EYE_BLINK_S, EYE_BLINK_STEP,
+         EYE_MOTES, EYE_MOTE_FPS, EYE_MOTE_RISE, EYE_MOTE_DRIFT, EYE_MOTE_LIFE } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
@@ -324,9 +325,8 @@ export function drawSerpent() {
     // Teeth along the open jaws' edges, and the lump dark through the hide.
     if (tooth && (aI & 1) === 0 && along < (MEAL_HINGE - 1) * P) { ramp = GREYS; rung = WHITE; }
     if (lumpAt != null && Math.abs(along - lumpAt) < lumpLen * 0.6 && Math.abs(across) < P * 1.6) { ramp = GREYS; rung = 2; }
-    // The snout's jaw, a line through it, and the eye behind it.
+    // The snout's jaw, a line through it; the eye is drawn over the hide after.
     if (!g && along < headA && Math.abs(across) < P / 2) { ramp = GREYS; rung = 0; }
-    if (Math.abs(along - headA - P) < P / 2 && Math.abs(across + r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
     coil.put(i, ramp[rung]);
   }
   // Sinking into the abyss the whole of him dims, and flickers dim in the
@@ -338,7 +338,8 @@ export function drawSerpent() {
   // running back along the neck, spikes a cell apart, every other one a cell
   // taller, shortening to nothing at its end. Stood on the body's top edge
   // across the body, so it rides the bends with the rest.
-  const crestFrom = headA - SNOUT / 2, crestTo = headA + CREST_LEN;
+  // It starts behind the eye's bump (drawEye), which breaks the line ahead of it.
+  const crestFrom = headA + EYE_AT + P * 4, crestTo = headA + CREST_LEN;
   const spiked = new Set();
   for (const p of pts) {
     if (p.along < crestFrom || p.along > crestTo) continue;
@@ -353,6 +354,7 @@ export function drawSerpent() {
       ctx.fillRect(snap(p.x - p.nx * d - P / 2), snap(p.y - p.ny * d - P / 2), P, P);
     }
   }
+  drawEye(t, pts, headA);
   // Him, whole in the cage, and the ribs over him: the wound's gap has
   // already taken the ribs it crossed.
   if (held) {
@@ -423,6 +425,49 @@ function drawVeil(t, pts) {
   }
   ctx.globalAlpha = 1;
 }
+// --- the eye ------------------------------------------------------------------------
+// The brow bump (the owner's pick, 2026-10-04): a raised bump breaking the
+// head's top line, a purple slit eye in it. Laid square on the grid at the
+// eye's place on the body, not turned with it: a sprite. The lid covers the
+// iris row's eye tones.
+//   M the hide's edge, L its light, D the socket, y the iris, k the slit
+const EYE = ['..MMMM..',
+             '.MLLLLM.',
+             'MLDDDDLM',
+             '.DyykyD.',
+             '..DDDD..'];
+const EYE_IRIS = 3, EYE_MID = 4;          // the iris row, and the column the eye centers on
+const eyeTone = ch => ({ M: GREYS[WHITE - 3], L: GREYS[WHITE - 1], D: GREYS[WHITE - 6], y: PURPLES[WHITE], k: GREYS[0] })[ch];
+const MOTE_TONES = () => [PURPLES[WHITE], PURPLES[WHITE - 1], PURPLES[WHITE - 3], PURPLES[WHITE - 5]];
+function drawEye(t, pts, headA) {
+  const at = headA + EYE_AT;
+  let p = pts[0];
+  for (const q of pts) if (Math.abs(q.along - at) < Math.abs(p.along - at)) p = q;
+  if (Math.abs(p.along - at) > P * 2) return;          // the head is off the glass
+  // `r` already stands wider by the top jaw's gap, so the eye lifts with it
+  const d = p.r - EYE_DOWN * P;
+  const cx = snap(p.x - p.nx * d) / P, cy = snap(p.y - p.ny * d) / P;
+  const x0 = cx - EYE_MID, y0 = cy - EYE_IRIS;
+  // The blink: the lid down over the iris and back, a held step each way.
+  const b = (t / 1000) % EYE_BLINK_S, shut = b < EYE_BLINK_STEP * 3;
+  EYE.forEach((row, j) => [...row].forEach((ch, i) => {
+    if (ch === '.') return;
+    ctx.fillStyle = shut && j === EYE_IRIS && (ch === 'y' || ch === 'k') ? eyeTone('M') : eyeTone(ch);
+    ctx.fillRect((x0 + i) * P, (y0 + j) * P, P, P);
+  }));
+  // The motes, off the top of the bump, each from a column across the eye.
+  const f = Math.floor(t / 1000 * EYE_MOTE_FPS), tones = MOTE_TONES();
+  const from = EYE[EYE_IRIS].indexOf('y'), span = EYE[EYE_IRIS].lastIndexOf('y') - from + 1;
+  for (let n = 0; n < EYE_MOTES; n++) {
+    const stagger = Math.round(n * EYE_MOTE_LIFE / EYE_MOTES);
+    const age = (f + stagger) % EYE_MOTE_LIFE, life = Math.floor((f + stagger) / EYE_MOTE_LIFE);
+    const col = from + Math.floor(unit(life * 13 + n * 7) * span);
+    const x = x0 + col + Math.round(age * EYE_MOTE_DRIFT), y = y0 - 1 - Math.floor(age / EYE_MOTE_RISE);
+    ctx.fillStyle = tones[Math.min(tones.length - 1, Math.floor(age / (EYE_MOTE_LIFE / tones.length)))];
+    ctx.fillRect(x * P, y * P, P, P);
+  }
+}
+
 // The dive's bubbles: off the top of the body while he is under, climbing a
 // held cell at a time and gone at BREAK_BUBBLE_RISE.
 function drawBubbles(pts) {
