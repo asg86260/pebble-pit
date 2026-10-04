@@ -17047,9 +17047,12 @@ and he dropped out under the sheet. It is now the fight's ending, played out:
 - **Apart** (`KILL.apart`): lying there its hide comes apart into the abyss's
   motes, tail first, each up and dimming over `KILL_MOTE_S`. Nothing strikes
   him while he is down or gone.
-- **Out**: he is on the floor where the belly was and walks to her (the first
-  station's fighter, or another of the deep's own) at `KILL_WALK_PX_S`; they
-  hop for `KILL_CHEER_S`; the frame pulls back over `KILL_OUT_S`. He is one of
+- **Out**: he is held in the cage until the coming apart reaches the belly,
+  then drops to the floor where it was; he walks to her (the first station's
+  fighter, or another of the deep's own) at `KILL_WALK_PX_S`, in
+  `KILL_WALK_MAX_S` at most; they hop for `KILL_CHEER_S`; the frame pulls back
+  over `KILL_OUT_S`. The frame is on the belly as he goes limp, follows the
+  coming apart in from the tail to the belly, then follows him to her. He is one of
   the deep's crew where he stands, and the sheet comes up.
 - **Back**: the sheet put down, the motes gather into the serpent head first
   over `KILL_REFORM_S`, and it swims again, to be slain at leisure.

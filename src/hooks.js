@@ -934,6 +934,9 @@ export const waysNow = () => {
 // that has nothing to do with what it is checking.
 export const HANDLES = {
   __holdShot: (ms = 4000) => { heldUntil = performance.now() + ms; },   // `fast` above
+  // The page's own frames held off the yard, so a capture steps it with
+  // `__fast` alone and every frame is the time it asked for.
+  __still: (on = true) => { S.still = !!on; },
   // a window (modal.js) by kind, or null to close it
   __window: kind => showWindow(kind),
   __clearFloor: clearFloor, __pile: pile, __jump: jump,

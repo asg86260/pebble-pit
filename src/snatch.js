@@ -27,11 +27,11 @@
 
 import { P, WORKER, COMMUTE_PACE, CORE_SIZE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_LOOK_MS, SNATCH_TAKE_MS, SNATCH_CLOSE_MS,
-         SNATCH_HURRY, SNATCH_PORTAL_MS, KILL, KILL_WALK_PX_S, KILL_CHEER_S, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
+         SNATCH_HURRY, SNATCH_PORTAL_MS, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
          DEEP_SURFACE, SERPENT_ON } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
-import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1 } from './deep/place.js';
+import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine } from './deep/place.js';
 import { killFrame } from './view.js';
 import { now } from './clock.js';
 import { abyssLine } from './pit.js';
@@ -278,21 +278,34 @@ function herX(from) {
 }
 // Where he is, once out: walking from the belly to her, then hopping as they
 // cheer. Null before he is out, or once the beat is over.
+// How long his walk to her takes.
+const walkS = () => Math.min(KILL_WALK_MAX_S, Math.abs(S.freedTo - S.freedFrom) / KILL_WALK_PX_S);
 export function freedBody(t = now()) {
   if (!beatRunning('freed') || S.freedFrom == null) return null;
   const a = (t - S.freedAt) / 1000 - outAt();
-  const walk = Math.abs(S.freedTo - S.freedFrom) / KILL_WALK_PX_S;
+  const walk = walkS();
   const k = walk > 0 ? Math.min(1, a / walk) : 1, cheer = a - walk;
   const hop = cheer >= 0 && cheer < KILL_CHEER_S && Math.floor(cheer / KILL_HOP_S) % 2 === 0;
   return { x: S.freedFrom + (S.freedTo - S.freedFrom) * k, y: deepFloor() - WORKER - (hop ? P : 0), cheering: cheer >= 0 };
 }
+// Where the frame looks while he is down: on the belly as he goes limp; then
+// after the coming apart as it runs in from the tail, until it reaches the
+// belly and lets him go.
+function lookAtKill(t, a) {
+  const belly = bellyAt(t).x;
+  const apart = (a - KILL.last - KILL.limp) / KILL.apart;
+  if (apart <= 0 || apart >= 1) return belly;
+  const front = coilLine((1 - apart) * (COIL_SEGS - 1), t).x;
+  return Math.max(front, belly);
+}
 export function stepFreed(t) {
   const a = (t - S.freedAt) / 1000;
   const zin = ease((a - KILL.last) / KILL_IN_S);
-  if (a < outAt()) { killFrame(zin, bellyAt(t).x); return true; }
+  if (a < outAt()) { killFrame(zin, lookAtKill(t, a)); return true; }
   if (S.freedFrom == null) { S.freedFrom = bellyAt(t).x - WORKER / 2; S.freedTo = herX(S.freedFrom); }
-  const end = outAt() + Math.abs(S.freedTo - S.freedFrom) / KILL_WALK_PX_S + KILL_CHEER_S;
-  killFrame(zin * (1 - ease((a - end) / KILL_OUT_S)), (S.freedFrom + S.freedTo) / 2 + WORKER / 2);
+  // The frame follows him to her.
+  const end = outAt() + walkS() + KILL_CHEER_S, him = freedBody(t);
+  killFrame(zin * (1 - ease((a - end) / KILL_OUT_S)), (him ? him.x : S.freedTo) + WORKER / 2);
   if (a < end + KILL_OUT_S) return true;
   const w = Object.assign(FACTORY(TYPE.GATHER), newRecord());
   w.x = S.freedTo;

@@ -38,7 +38,7 @@ import { P, WORKER, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG, BREAK_ROAR_DAZE,
          CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, LASH_THROW, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
-import { slotX, postX, postY, coilAt, coilThick, segAbove, coilK } from './place.js';
+import { slotX, postX, postY, coilAt, coilThick, segAbove, coilK, deepFloor } from './place.js';
 import { lashHits, mechOf, roarHits } from './phases.js';
 import { rand } from '../rng.js';
 import { stationById, classOf, keyOf, levelingUp } from './party.js';
@@ -118,9 +118,11 @@ function landing(w, t) {
 function closeIn(w, st, t, off = 0, slow = 1, range = MELEE_REACH) {
   const seg = segAbove(stationX(st), t);
   const p = coilAt(seg, t);
-  const reach = coilThick(seg) / 2 + off;
-  const far = Math.hypot(p.x - mid(w), p.y + reach - w.y) > range;
-  const there = swim(w, p.x - WORKER / 2, p.y + reach, commutePace() * SWIM_PACE * (far ? 1 : slow));
+  // Under the hide, but never under the floor: the coil goes down past it in
+  // the first break's dive and lies on it in the kill.
+  const y = Math.min(p.y + coilThick(seg) / 2 + off, deepFloor() - WORKER);
+  const far = Math.hypot(p.x - mid(w), y - w.y) > range;
+  const there = swim(w, p.x - WORKER / 2, y, commutePace() * SWIM_PACE * (far ? 1 : slow));
   if (!there && far) { w.goal = 'rise'; return null; }
   w.goal = 'fight';
   return { seg, p };

@@ -346,6 +346,7 @@ export const S = {
   mouse: { x: 0, y: 0 },
   mining: false,
   paused: false,          // the whole yard held still, on the space bar
+  still: false,           // the page's own frames not stepping the yard: a dev capture steps it itself (`__still`)
   houseBoardOpen: false,  // and the block, with what you can put up on it
   modal: null,            // which window is open over the yard, by kind (modal.js), or none
   quarryBoardOpen: false,
@@ -778,6 +779,7 @@ export const SAVED_BY_HAND = [
 // beginning for. Named rather than assumed, so that adding a field and not
 // thinking about it is a failing test.
 export const EPHEMERAL = [
+  'still',
   // A bite out of the serpent's hide closes in seconds; a reload finds it closed.
   'serpentChips',
   // What the store said about this page (persist.js, save.js).

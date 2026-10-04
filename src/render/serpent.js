@@ -28,13 +28,13 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
-         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE } from '../config.js';
+         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
-import { coilLine, coilThick, mouthX, deepFloor } from '../deep/place.js';
+import { coilLine, coilThick, mouthX, deepFloor, bellyAt } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, killFreeA } from '../deep/phases.js';
 import { freedBody } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -188,7 +188,8 @@ function drawCoil() {
   const t = now();
   const stage = S.serpentStage;
   const { x0, x1 } = deepWindow();
-  const held = !S.serpentFreed && stage < 4;
+  // He is in the cage until the kill's coming apart reaches the belly.
+  const held = cradled();
   const wk = stage >= 4 ? 0 : woundK();
   const { pts: laid, alongAt } = lay(t, x0, x1);
   hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) };
@@ -470,11 +471,17 @@ function drawKillMotes(t, laid) {
     }
   }
 }
-// Him, out and walking to her, and hopping when he gets there.
+// Him, let go where the belly was and dropping to the floor, then out and
+// walking to her, and hopping when he gets there.
 export function drawFreed() {
-  const b = S.view === 'deep' ? freedBody() : null;
-  if (!b) return;
-  drawBody(snap(b.x), snap(b.y));
+  if (S.view !== 'deep') return;
+  const b = freedBody();
+  if (b) { drawBody(snap(b.x), snap(b.y)); return; }
+  const a = killA(), free = killFreeA();
+  if (a == null || a < free) return;
+  const at = bellyAt(now()), floor = deepFloor() - WORKER;
+  const k = Math.min(1, Math.ceil((a - free) / KILL_DROP_S * KILL_DROP_STEPS) / KILL_DROP_STEPS);
+  drawBody(snap(at.x) - WORKER / 2, snap(at.y - WORKER / 2 + (floor - at.y + WORKER / 2) * k));
 }
 
 // The dive's bubbles: up off the floor where he went under, while he is

@@ -17,7 +17,7 @@
 import { S } from '../state.js';
 import { now } from '../clock.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
-         BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S } from '../config.js';
+         BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT } from '../config.js';
 import { has } from './statuses.js';
 
 const LAST = 3;
@@ -161,6 +161,14 @@ export function apartK() {
   const a = killA();
   return a == null ? 0 : clamp01((a - KILL.last - KILL.limp) / KILL.apart);
 }
+// When, in seconds of the kill, the coming apart reaches the belly and lets
+// him go; and whether he is still held in it (the cage drawn round him).
+export const killFreeA = () => KILL.last + KILL.limp + (1 - BELLY_AT) * KILL.apart;
+export const cradled = () => {
+  if (!S.serpentFreed) return S.serpentStage < 4;
+  const a = killA();
+  return a != null && a < killFreeA();
+};
 // How much of him has gathered again, head first, 0..1; null when he is not.
 export const reformK = () => (S.reformAt == null ? null : clamp01((now() - S.reformAt) / 1000 / KILL_REFORM_S));
 

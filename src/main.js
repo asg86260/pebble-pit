@@ -79,14 +79,14 @@ const heldSheet = document.getElementById('held');
 const scrim = document.getElementById('scrim');
 function frame() {
   try {
-    tick(S.paused);
+    tick(S.paused || S.still);
     // the sheet and its wash, kept in step with the flag as fades
     (S.paused ? fadeIn : fadeOut)(heldSheet);
     (S.paused ? fadeIn : fadeOut)(scrim);
     syncEnding();
     stepPan();                                // the keys and the wheel: a held yard pans too
     const t0 = mark();
-    if (!S.paused && !(demo && reducedMotion())) step();
+    if (!S.paused && !S.still && !(demo && reducedMotion())) step();
     // The boards, once, for whatever the step changed on them: a core landing,
     // a first drag, a hand settled. The sim raises the flag and nothing else;
     // the draw below reads boards that are already right.

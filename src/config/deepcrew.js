@@ -126,16 +126,21 @@ export const SNATCH_HURRY = 4;
 // KILL_REFORM_S. Seconds.
 export const KILL = { last: 0.6, limp: 2.4, apart: 2.4 };
 export const KILL_LIMP_STEPS = 4;
-export const KILL_WALK_PX_S = P * 8;
+export const KILL_WALK_PX_S = P * 18;
+export const KILL_WALK_MAX_S = 3;     // and never longer than this: across the whole deep he hurries
 export const KILL_CHEER_S = 1.4;
 export const KILL_HOP_S = 0.25;        // a hop up and down, a beat each, while they cheer
-export const KILL_ZOOM = 0.35;         // how much closer the deep's frame comes in
+export const KILL_ZOOM = 0.7;          // how much closer the deep's frame comes in
 export const KILL_IN_S = 0.8;
 export const KILL_OUT_S = 1;
 export const KILL_GLIDE = 0.12;        // the share of the way to the belly the frame moves a frame
 export const KILL_MOTE_S = 1.5;        // a mote off the coming-apart hide, up and gone
 export const KILL_MOTE_RISE = 8;       // cells a second it climbs
 export const KILL_REFORM_S = 2.2;
+// Let go where the belly was, he drops to the floor in KILL_DROP_STEPS held
+// steps over KILL_DROP_S.
+export const KILL_DROP_S = 0.4;
+export const KILL_DROP_STEPS = 3;
 
 export const DEEP_CREW_KNOBS = [
   { key: 'SHAFT_PACE', label: 'shaft pace, x', min: 0.1, max: 3, step: 0.1,

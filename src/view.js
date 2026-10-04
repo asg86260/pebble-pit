@@ -33,10 +33,12 @@ const yardZoom = () => CELL / P;
 // never rounded back up past the window.
 function deepZoom() {
   const need = DEEP_H - DEEP_SURFACE - P * 2 + DEEP_FLOOR_MARGIN;
-  const k = held ?? Math.min(1, S.H / (need * yardZoom()));
+  const k = (held ?? Math.min(1, S.H / (need * yardZoom()))) * (1 + KILL_ZOOM * killIn);
   const unit = CELL * S.dpr;
   return Math.max(1, Math.floor(unit * k)) / unit;
 }
+// How far the kill has the deep's frame pulled in, 0..1 (`killFrame`).
+let killIn = 0;
 
 // A zoom the deep is held at in place of its fit, for a look pulled in on
 // one thing (`__deepZoom`): the deep re-takes its zoom every frame, so a
@@ -70,16 +72,15 @@ export function deepCamera() {
   return { zoom, viewW, viewH, camX, camY: deepFloor() + DEEP_FLOOR_MARGIN - viewH };
 }
 
-// The kill's frame (snatch.js): the deep's own, closer by `k` of KILL_ZOOM,
-// glided over `x`, the floor kept at the foot of it. `k` 0 is the deep's frame.
+// The kill's frame (snatch.js): the deep's own, closer by `k` of KILL_ZOOM
+// (held in `deepZoom`, which the deep re-takes every frame), glided over `x`;
+// the floor stays at the foot of it (`clampCam`). `k` 0 is the deep's frame.
 export function killFrame(k, x) {
+  killIn = k;
   if (S.view !== 'deep') return;
-  const base = deepCamera(), zoom = base.zoom * (1 + KILL_ZOOM * k);
-  S.zoom = zoom;
-  S.viewW = S.W / zoom;
-  S.viewH = S.H / zoom;
-  S.camY = deepFloor() + DEEP_FLOOR_MARGIN - S.viewH;
+  setZoom(deepZoom());
   S.camX += (x - S.viewW / 2 - S.camX) * KILL_GLIDE;
+  clampCam();
 }
 
 // A glide held where it is, for a scene that wants a shot of its middle
