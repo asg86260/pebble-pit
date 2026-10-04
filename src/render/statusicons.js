@@ -31,7 +31,7 @@ export function statusAt(cx, cy) {
 // A tile's hover: its name and what it does. A phase's mechanic says too
 // whether it is coming, on, or stopped.
 function saysOf(key, n = 0, mech = null) {
-  if (mech) return STATUS_SAYS[key][mech.struck ? 'stopped' : mech.warn ? 'coming' : mech.calm ? 'calm' : 'on'].replace('{x}', mech.x);
+  if (mech) return (STATUS_SAYS[key][mech.struck ? 'stopped' : mech.warn ? 'coming' : mech.calm ? 'calm' : 'on'] ?? '').replace('{x}', mech.x);
   if (key === 'dazed' || key === 'ward' || key === 'plates') return STATUS_SAYS[key];
   const line = statusLine(key);
   return n > 1 ? line.replace(':', ` x${n}:`) : line;
