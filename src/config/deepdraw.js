@@ -509,21 +509,3 @@ export const LEVELUP_TONGUE = [2, 4];
 export const LEVELUP_IN = 0.35;
 export const LEVELUP_OUT = 0.3;
 export const LEVELUP_EMBERS = 4;
-
-// The serpent's eye (the owner's brow bump, 2026-10-04): a raised bump that
-// breaks the head's top line, a purple slit eye in it, the eye a cell back of
-// the head's segment with its row EYE_DOWN cells under the top edge. It blinks
-// every EYE_BLINK_S or so, the lid down and up a held EYE_BLINK_STEP at a
-// time. Motes of the abyss's purple lift off it, EYE_MOTES at once, each from
-// somewhere across the eye's width: held frames at EYE_MOTE_FPS, a cell up
-// every EYE_MOTE_RISE frames and EYE_MOTE_DRIFT cells a frame back along the
-// neck, gone after EYE_MOTE_LIFE frames, dimming down the ramp as they go.
-export const EYE_AT = P;
-export const EYE_DOWN = 1.5;
-export const EYE_BLINK_S = 4.5;
-export const EYE_BLINK_STEP = 0.07;
-export const EYE_MOTES = 6;
-export const EYE_MOTE_FPS = 10;
-export const EYE_MOTE_RISE = 2;
-export const EYE_MOTE_DRIFT = 0.35;
-export const EYE_MOTE_LIFE = 24;
