@@ -19,7 +19,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Each serpent phase is a window: break the defense before it eats, or the meal heals it to full; stuns and Held stop the window, and the phases are far shallower (test/meals.test.mjs).
 - The Hexer's Wither now Exposes the serpent, so it takes more damage; Weakened is gone (test/classes.test.mjs).
 - Buying a fighter's rung closes the board and plays its level-up: it stops fighting and rises as a purple-hearted blaze twists up round it and ends in a burst of embers; the next rung waits until it has (test/classes.test.mjs).
-- The serpent's first defense breaks into a dive: it fades into the abyss and comes back up warded, the bar refilling and its four phase boxes showing for the first time (`node tools/look.mjs break-rise`).
+- The serpent's first defense breaks into a dive: it goes down out of sight under the floor and comes back up warded, the bar refilling and its four phase boxes showing for the first time (`node tools/look.mjs break-rise`).
 - Every later break is a roar: jaws wide, a bump running down the body with the new hide behind it, throwing off the fighters it passes (`node tools/look.mjs break-roar`).
 - A meal eaten while the serpent is stunned or Held no longer heals it (test/statuses.test.mjs).
 - A fighter's later rungs ask the deep's own price in dust, ore and sparks, sized for a yard that has reached the abyss (test/deep-board.test.mjs).

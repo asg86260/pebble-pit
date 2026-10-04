@@ -248,16 +248,18 @@ export const SINK_WARN_DIM = 0.3;
 export const SINK_VEIL_EVERY = 3;      // a veil cell every this many cells along the body
 
 // --- a phase's break (the owner's vote, 2026-10-04) ---------------------------------
-// The first break is a dive: he fades into the abyss over `in`, out of reach,
-// stays under for `under` and comes back up over `out` in the next phase's
-// hide, the bar refilling as he rises and its phase boxes shown from then on.
+// The first break is a dive (the owner's B): he goes down out of sight below
+// the deep's floor over `in`, in BREAK_DIVE_STEPS held steps, stays under for
+// `under` while bubbles rise off the floor, and comes back up over `out` in
+// the next phase's hide, the bar refilling as he rises and its phase boxes shown from then on.
 // The later ones are a roar: the jaws stand wide over `gape`, a bump runs up
 // off the line head to tail over `run`, the new hide behind it and the bar
 // filling with it, and the jaws shut over `shut`. The bump throws off the
 // melee fighters it passes, dazed BREAK_ROAR_DAZE. Nothing reaches him while
 // either plays, and nothing heals. Seconds.
 export const BREAK_DIVE = { in: 1, under: 1.2, out: 1 };
-export const BREAK_DIVE_DROP = P * 3;  // how far down he sinks as he goes
+export const BREAK_DIVE_STEPS = 4;     // the held steps down, and back up
+export const BREAK_DIVE_OVER = P * 4;  // how far past the floor his top edge goes
 export const BREAK_BUBBLES = 9;        // bubbles off the body while he is under
 export const BREAK_BUBBLE_RISE = 14;   // cells a bubble climbs before it is gone
 export const BREAK_ROAR = { gape: 0.4, run: 1.6, shut: 0.4 };

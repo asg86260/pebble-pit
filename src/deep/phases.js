@@ -16,7 +16,7 @@
 
 import { S } from '../state.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
-         BREAK_DIVE, BREAK_ROAR } from '../config.js';
+         BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR } from '../config.js';
 import { has } from './statuses.js';
 
 const LAST = 3;
@@ -37,11 +37,10 @@ const live = kind => { const p = part(); return p.m && p.m.kind === kind && !S.m
 // The heal's multiple this frame.
 export const surgeK = () => { const p = live('surge'); return p && p.part === 'on' ? p.m.x : 1; };
 
-// How far into the abyss he is, 0..1: in over `fade`, held, out over `fade`;
-// the first break's dive takes him the same way.
+// How far into the abyss he is, 0..1: in over `fade`, held, out over `fade`.
 export function sinkK() {
   const p = live('sink');
-  if (!p || p.part !== 'on') return diveK();
+  if (!p || p.part !== 'on') return 0;
   const s = p.k * p.m.last;
   return Math.max(0, Math.min(1, s / p.m.fade, (p.m.last - s) / p.m.fade));
 }
@@ -85,11 +84,13 @@ export const breakKind = () => (S.breakT == null || !S.snatched || S.serpentFree
                                : S.serpentStage === 1 ? 'dive' : 'roar');
 export const breakLen = () => { const k = breakKind(); return k ? lenOf(k === 'dive' ? BREAK_DIVE : BREAK_ROAR) : 0; };
 export const breaking = () => !!breakKind();
-// How far under the dive has him, 0..1.
+// How far down the dive has him, 0..1, in held steps: a step taken as soon as
+// each part of the way down begins.
 export function diveK() {
   if (breakKind() !== 'dive') return 0;
   const b = BREAK_DIVE, s = S.breakT;
-  return Math.max(0, Math.min(1, s / b.in, (lenOf(b) - s) / b.out));
+  const k = Math.max(0, Math.min(1, s / b.in, (lenOf(b) - s) / b.out));
+  return Math.ceil(k * BREAK_DIVE_STEPS) / BREAK_DIVE_STEPS;
 }
 // Whether the dive is past its bottom, on the way back up.
 export const rising = () => breakKind() === 'dive' && S.breakT >= BREAK_DIVE.in + BREAK_DIVE.under;

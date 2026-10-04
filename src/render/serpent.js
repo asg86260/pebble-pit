@@ -32,7 +32,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
-import { coilLine, coilThick, mouthX } from '../deep/place.js';
+import { coilLine, coilThick, mouthX, deepFloor } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
 import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape } from '../deep/phases.js';
 import { abyssLine } from '../pit.js';
@@ -173,7 +173,14 @@ function bitten(list, along, across, r, aI, cI) {
   return false;
 }
 
+// Diving, he goes under the deep's floor: everything of him below it is cut.
 export function drawSerpent() {
+  const diving = breakKind() === 'dive';
+  if (diving) { ctx.save(); ctx.beginPath(); ctx.rect(-1e6, -1e6, 2e6, deepFloor() + 1e6); ctx.clip(); }
+  drawCoil();
+  if (diving) ctx.restore();
+}
+function drawCoil() {
   const t = now();
   const stage = S.serpentStage;
   const { x0, x1 } = deepWindow();
@@ -398,7 +405,6 @@ function drawMealCrosses(t, pts, bellyA) {
 // The sink's dimming: how far under he is, and in its warning a flicker.
 function dimOf(t) {
   const p = part();
-  if (breakKind() === 'dive') return sinkK() * SINK_DIM;   // the first break's dive goes the same way
   if (p.m?.kind !== 'sink' || S.mechSkip) return 0;
   if (p.part === 'warn') return SINK_WARN_DIM * (0.5 + 0.5 * Math.sin(t / 1000 * Math.PI * 2 * THROB_HZ));
   return sinkK() * SINK_DIM;
@@ -420,8 +426,8 @@ function drawVeil(t, pts) {
   }
   ctx.globalAlpha = 1;
 }
-// The dive's bubbles: off the top of the body while he is under, climbing a
-// held cell at a time and gone at BREAK_BUBBLE_RISE.
+// The dive's bubbles: up off the floor where he went under, while he is
+// under, climbing a held cell at a time and gone at BREAK_BUBBLE_RISE.
 function drawBubbles(pts) {
   if (breakKind() !== 'dive' || !pts.length) return;
   const b = BREAK_DIVE, from = b.in / 2, over = b.under + b.in / 2;
@@ -432,7 +438,7 @@ function drawBubbles(pts) {
     if (age < 0 || up >= BREAK_BUBBLE_RISE) continue;
     const p = pts[Math.floor(unit(n * 7 + 1) * (pts.length - 1))];
     const drift = Math.round(Math.sin(up * 0.9 + n) * 0.6);
-    ctx.fillRect(snap(p.x) + drift * P, snap(p.y - p.r) - (up + 1) * P, P, P);
+    ctx.fillRect(snap(p.x) + drift * P, snap(Math.min(p.y - p.r, deepFloor())) - (up + 1) * P, P, P);
   }
 }
 // The surge's throb: a ring of the abyss's purple round the belly, beating

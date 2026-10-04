@@ -16,7 +16,7 @@ import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DE
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
          WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
-         BREAK_DIVE_DROP, BREAK_ROAR_H } from '../config.js';
+         BREAK_DIVE_OVER, BREAK_ROAR_H } from '../config.js';
 import { tautK, lashK, diveK, roarK, renewed } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
@@ -170,7 +170,9 @@ export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 const waveLine = t => {
   const x0 = coilX0(), span = coilSpan(), base = deepTop() + COIL_Y * DEEP_H;
   const split = S.serpentStage === 2 && !S.serpentFreed;
-  const taut = tautK(), lash = lashK(), drop = diveK() * BREAK_DIVE_DROP, roar = roarK();
+  // The dive takes his highest edge past the floor, out of sight.
+  const dive = diveK(), drop = dive ? dive * (deepFloor() - coilCeiling() + BREAK_DIVE_OVER) : 0, roar = roarK();
+  const taut = tautK(), lash = lashK();
   const amp = COIL_AMP * (1 - LASH_TAUT * taut);
   return x => {
     const k = (x - x0) / span;
