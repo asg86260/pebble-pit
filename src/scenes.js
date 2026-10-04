@@ -20,7 +20,7 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, FREED_OPEN_MS, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
 import { nextMeal, turned, windowS } from './deep/meals.js';
@@ -220,11 +220,13 @@ function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scal
   if (loose) window.__looseScales(loose);
   window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
   window.__view(view);
-  // Long enough to swim from the pods to the stations and the coil. The
-  // fighters may break the defense on the way, so the fight is set again
-  // once they are at it.
-  window.__fast(run);
-  window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
+  // Long enough to swim from the pods to the stations and the coil. A party
+  // at its top rungs breaks a defense in seconds, so the fight is set again
+  // every half second on the way, and once more when they are at it.
+  for (let s = 0; s < run; s += 0.5) {
+    window.__fast(Math.min(0.5, run - s));
+    window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
+  }
 }
 
 const lookDeep = x => window.__look(x - S.viewW / 2);
@@ -309,7 +311,8 @@ const snatchAt = (phase, into = 0, pin = false) => () => {
   for (let i = 0; i < into; i++) window.__fast(1 / 60);
   // A rise is sixteen frames and a take a beat, quicker than a shot is
   // taken, so the moment is held on the page's frames for a few seconds.
-  if (!pin) return;
+  if (!pin) { window.__hold(); return; }
+  window.__hold();
   const sn = S.snatch, y = sn?.headY, carried = sn?.carried, until = performance.now() + 4000;
   const hold = () => {
     if (!sn || S.snatch !== sn || performance.now() > until) return;
@@ -620,6 +623,24 @@ const deepScenes = {
                                                        && w.y > S.groundY); i++) window.__fast(1 / 60);
       window.__fast(1);
       lookDeep(slotAt(0));
+    } },
+  // The fourth break as it happens: the belly opening, then him out of it,
+  // each held for the shot.
+  'deep-kill': { about: 'the deep', say: 'the fourth break, the moment it lands: the belly opening',
+    run: () => {
+      deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
+      window.__serpent({ stage: 3, wound: SERPENT_WOUND[3] });
+      window.__fast(0.3);
+      lookDeep(coilAt(bellySeg(), now()).x);
+      window.__hold();
+    } },
+  'deep-kill-out': { about: 'the deep', say: 'the fourth break: him out of the belly, falling free',
+    run: () => {
+      deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
+      window.__serpent({ stage: 3, wound: SERPENT_WOUND[3] });
+      window.__fast(FREED_OPEN_MS / 1000 + 0.4);
+      lookDeep(coilAt(bellySeg(), now()).x);
+      window.__hold();
     } },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',

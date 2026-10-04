@@ -321,12 +321,17 @@ export const setVerify = (on = true) => { verifying = !!on; resetVerify(); retur
 // turned by hand, so a check gets the same answer every time. `hz` is the
 // rate to pretend the machine is drawing at; thirty and a hundred and twenty
 // should do the same amount of yard per second, and this is how to ask.
+// A scene's moment held against the frames a caller runs after it (`__hold`):
+// the shot tool runs a second of the yard after every scene, and a moment
+// shorter than that is gone before the picture is taken. Wall clock, so it
+// lets go on its own.
+let heldUntil = 0;
 export const fast = (seconds = 1, hz = 60) => {
   const frames = Math.max(1, Math.round(seconds * hz));
   const ms = 1000 / hz;
   for (let i = 0; i < frames; i++) {
     // The same shape as a real frame, held included.
-    if (S.paused) continue;
+    if (S.paused || performance.now() < heldUntil) continue;
     advance(ms);
     step();
     // Throws on the frame a rule breaks, so the report names the frame.
@@ -928,6 +933,7 @@ export const waysNow = () => {
 // suites spread; a hook in one suite and not the other fails a check in a way
 // that has nothing to do with what it is checking.
 export const HANDLES = {
+  __hold: (ms = 4000) => { heldUntil = performance.now() + ms; },   // `fast` above
   // a window (modal.js) by kind, or null to close it
   __window: kind => showWindow(kind),
   __clearFloor: clearFloor, __pile: pile, __jump: jump,
