@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- A fighter's later rungs ask the deep's own price in dust, ore and sparks, sized for a yard that has reached the abyss (test/deep-board.test.mjs).
 - A blow knocks only its own sliver off the serpent's health bar, not a fixed chunk (`node tools/look.mjs deep-numbers`).
 - The serpent eats a creature out of the passing stream, the one swimming its own way into the mouth when a meal is due, instead of one that dashes in only to be eaten (test/meals.test.mjs).
 - The deep has a steady stream of creatures crossing it at three depths, with a giant now and then far behind; every one comes in from off the screen, the serpent's meals included, and none trails a line of dots (`node tools/look.mjs party-four`).

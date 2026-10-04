@@ -10,6 +10,16 @@ import { FIGHT_STATIONS_MAX } from './classes.js';
 // built with `lead: 'scale'` (upgrades/tiers.js). The purse crosses over, so
 // the yard's coins are the deep's second and third.
 export const SCALE_BAND_COINS = [[], ['dust'], ['dust', 'shard'], ['dust', 'shard', 'spark']];
+// What each rung of a deep ladder asks in the yard's coins, a rung at a time,
+// written rather than converted from its scales: a yard that has reached the
+// abyss holds millions of dust, so a scale's worth in dust is a bill nobody
+// notices. Every fighter's ladder pays the same; a coin is asked from the
+// band SCALE_BAND_COINS first names it in.
+export const SCALE_RUNG_COINS = {
+  dust:  [0, 0, 100e3, 300e3, 1e6, 3e6, 10e6, 30e6],
+  shard: [0, 0, 0, 0, 1e3, 3e3, 10e3, 30e3],
+  spark: [0, 0, 0, 0, 0, 0, 1e3, 3e3]
+};
 
 // The scale as a mark: nine pixels square, ink `#` and paper `.`, a blank
 // outside the edge. A square with its foot rounded in, and a crescent hanging

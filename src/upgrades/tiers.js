@@ -7,7 +7,7 @@
 // written a rung at a time in config/rungs.js.
 
 import { S } from '../state.js';
-import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, WORK_BASE, WORK_STEP, rungDust } from '../config.js';
+import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, SCALE_RUNG_COINS, WORK_BASE, WORK_STEP, rungDust } from '../config.js';
 import { DUST_PER, coinsOpen, coinNeeds } from './price.js';
 import { ahead } from '../works.js';
 
@@ -17,6 +17,11 @@ const LEAD_BANDS = { dust: BAND_COINS, scale: SCALE_BAND_COINS };
 // What a coin is worth in dust, dust itself included, for turning the lead
 // coin's amount into a band coin's.
 const perDust = c => (c === 'dust' ? 1 : DUST_PER[c]);
+// A band coin's amount on rung `lvl`: the deep's are written
+// (SCALE_RUNG_COINS), the yard's are the lead's amount at the coins' rates.
+const bandCoin = (lead, c, amount, lvl) => lead === 'scale'
+  ? Math.max(1, SCALE_RUNG_COINS[c][Math.min(lvl, SCALE_RUNG_COINS[c].length - 1)])
+  : Math.max(1, Math.round(amount * perDust(lead) / perDust(c)));
 
 // Clamped on read: a save from a longer ladder may hold any level, and it
 // reads as a finished ladder rather than a rung nothing can draw.
@@ -40,7 +45,8 @@ export const named = (key, name, n = LADDER_BANDS) =>
 //            upgrades.js keeps every card off the board until that row is done
 //   lead     the coin the ladder's written table (the `dust` column of
 //            LADDERS) is paid in: 'dust' for the yard, 'scale' for the deep.
-//            The band coins are the lead's amount at the coins' rates
+//            The band coins are the lead's amount at the coins' rates, or
+//            for the deep its own written table (SCALE_RUNG_COINS)
 //   bands    one line a band: a key, a name, optionally the coins the bill
 //            adds (the lead's band coins by position otherwise) and a gate of
 //            the band's own. The bands are drawn as ONE card, every rung on it
@@ -84,10 +90,10 @@ export function tierRows({ field, level: at, climb, unit, pct, does, value,
     // what stops the conversion being done twice. A band of a scale ladder
     // that asks no dust names none at nought, which `billOf` leaves off.
     bill: () => {
-      const amount = rungDust(bands[0].key, next());
+      const lvl = next(), amount = rungDust(bands[0].key, lvl);
       const coins = coinsAt();
       return [[lead, amount],
-              ...coins.map(c => [c, Math.max(1, Math.round(amount * perDust(lead) / perDust(c)))]),
+              ...coins.map(c => [c, bandCoin(lead, c, amount, lvl)]),
               ...(lead !== 'dust' && !coins.includes('dust') ? [['dust', 0]] : [])];
     },
     work: () => Math.round(WORK_BASE.rung * Math.pow(WORK_STEP, next())),

@@ -15,7 +15,7 @@
 // test/rails.test.mjs.
 
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { TIER_BAND, rungDust, DUST_PER_SCALE, PARTY_IDS } from '../src/config.js';
+import { TIER_BAND, rungDust, SCALE_RUNG_COINS, PARTY_IDS } from '../src/config.js';
 import { countLines } from '../src/render/counter.js';
 import { purseCoins } from '../src/board.js';
 import { boardOf } from '../src/boardrows.js';
@@ -101,7 +101,7 @@ group("the second band of a station's ladder adds the yard's dust to the scales"
   return [
     ok(foot.length === 1 && coin(foot, 'scale') === rungDust('brawler', 0), 'the first band is scales alone', JSON.stringify(foot)),
     ok(coin(bill, 'scale') === scale, 'the second band still leads with scales', JSON.stringify(bill)),
-    ok(coin(bill, 'dust') === scale * DUST_PER_SCALE, "and adds dust at the scale's rate", JSON.stringify(bill)),
+    ok(coin(bill, 'dust') === SCALE_RUNG_COINS.dust[TIER_BAND], "and adds the deep's own written dust", JSON.stringify(bill)),
     ok(!bill.some(([m]) => m === 'shard' || m === 'spark'), 'and nothing past it yet', JSON.stringify(bill))
   ];
 });
