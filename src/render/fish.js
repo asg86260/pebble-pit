@@ -13,11 +13,11 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { coilLine } from '../deep/place.js';
-import { mealNow, kindOf, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
+import { mealNow, kindOf, cycleS, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_SWIM_CELLS, MEAL_HINGE, MEAL_SQUEEZE,
          FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED,
          FLOW_NEAR_EVERY_S, FLOW_NEAR_SPEED, FLOW_NEAR_OUT, FLOW_NEAR_BAND, DEEP_W, DEEP_H, COIL_Y } from '../config.js';
-import { deepTop, deepFloor, deepX0 } from '../deep/place.js';
+import { deepTop, deepFloor, deepX0, deepX1 } from '../deep/place.js';
 
 // The mock's tones, on the deep's own ramps.
 const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
@@ -148,7 +148,9 @@ export const KINDS = SP.length;
 // meal reads it to take one that is passing. A crossing a schedule, off a
 // seed, one every FLOW_NEAR_EVERY_S, either way.
 const nearSpan = () => DEEP_W + FLOW_NEAR_OUT * 2;
-function nearAt(i, t) {
+const NEAR_AHEAD = () => nearSpan() / (FLOW_NEAR_SPEED * 0.8);
+function nearAt(i, now0) {
+  const t = now0 + NEAR_AHEAD();
   const at = i * FLOW_NEAR_EVERY_S + unit(i * 41) * FLOW_NEAR_EVERY_S;
   const dir = unit(i * 43) < 0.5 ? 1 : -1;
   const speed = FLOW_NEAR_SPEED * (0.8 + unit(i * 47) * 0.4);
@@ -160,10 +162,10 @@ function nearAt(i, t) {
            x: dir > 0 ? x0 + run : x0 + nearSpan() - run,
            y: mid - FLOW_NEAR_BAND * (0.2 + unit(i * 59)) + Math.sin((t - at) * 1.3 + at) * P * 2 };
 }
-function nearAll(t) {
-  const out = [], last = Math.floor(t / FLOW_NEAR_EVERY_S);
+function nearAll(now0) {
+  const t = now0 + NEAR_AHEAD(), out = [], last = Math.floor(t / FLOW_NEAR_EVERY_S);
   const first = Math.max(0, last - Math.ceil(nearSpan() / (FLOW_NEAR_SPEED * 0.8) / FLOW_NEAR_EVERY_S) - 1);
-  for (let i = first; i <= last; i++) { const c = nearAt(i, t); if (c) out.push(c); }
+  for (let i = first; i <= last; i++) { const c = nearAt(i, now0); if (c) out.push(c); }
   return out;
 }
 
@@ -176,7 +178,18 @@ const taken = new Map();          // meal number -> the creature it took
 const eaten = new Set();          // and every one taken, by its number in the stream
 function mealCreature(n, toLand, mouthX, mouthY) {
   if (taken.has(n)) return taken.get(n);
-  const tTurn = now() / 1000 - (BITE_BEFORE + MEAL_SWIM_S - toLand);
+  // A page just loaded has forgotten what the meals before this one took:
+  // they are worked out again, oldest first, so none swims on out of a belly.
+  if (!taken.size) {
+    let landed = now() / 1000 - S.mealT;
+    const back = [];
+    for (let k = n - 1; k >= Math.max(0, n - 30); k--) { back.push([k, landed]); landed -= cycleS(k); }
+    for (const [k, l] of back.reverse()) pickFor(k, l - (BITE_BEFORE + MEAL_SWIM_S), mouthX, mouthY);
+  }
+  return pickFor(n, now() / 1000 - (BITE_BEFORE + MEAL_SWIM_S - toLand), mouthX, mouthY);
+}
+function pickFor(n, tTurn, mouthX, mouthY) {
+  if (taken.has(n)) return taken.get(n);
   const all = nearAll(tTurn).filter(c => !eaten.has(c.i));
   const coming = all.filter(c => c.dir > 0 && c.x < mouthX);
   const pick = (coming.length ? coming : all).sort((a, b) =>
@@ -185,6 +198,8 @@ function mealCreature(n, toLand, mouthX, mouthY) {
                  : { i: -1, kind: kindOf(n, SP.length), x: mouthX - MEAL_SWIM_CELLS * P, y: mouthY, dir: 1 };
   taken.set(n, c);
   if (c.i >= 0) eaten.add(c.i);
+  // and the ones long since out of the water are forgotten
+  if (eaten.size > 100) for (const i of eaten) if (i < c.i - 60) eaten.delete(i);
   for (const k of taken.keys()) if (k < n - 4) taken.delete(k);
   return c;
 }
@@ -238,19 +253,27 @@ function onGlass(draw) {
 // The water's band on the glass, top to bottom.
 const water = () => ({ top: (deepTop() - S.camY) * S.zoom, bottom: (deepFloor() - S.camY) * S.zoom });
 
-function crossings(want, t) {
-  const span = S.W + FLOW_MARGIN * 2, out = [];
-  const longest = span / (Math.min(...FLOW_SPEED) * 0.8);
-  for (let i = Math.max(0, Math.floor((t - longest) / FLOW_EVERY_S) - 1); i <= Math.floor(t / FLOW_EVERY_S); i++) {
+// Each depth's track runs, on its own sliding plane, from off the glass with
+// the camera at the deep's left end to off the glass with it at the right:
+// whatever the view, a crossing starts and ends out of sight. The schedule
+// runs a whole crossing ahead of the clock, so the water is full from the
+// first frame.
+function track(d) {
+  const z = S.zoom * FLOW_PARALLAX[d];
+  return { from: deepX0() * z - FLOW_MARGIN, to: Math.max(deepX0(), deepX1() - S.viewW) * z + S.W + FLOW_MARGIN };
+}
+const AHEAD = () => (Math.max(...[0, 1].map(d => track(d).to - track(d).from)) / (Math.min(...FLOW_SPEED) * 0.8));
+function crossings(want, now0) {
+  const out = [], ahead = AHEAD(), t = now0 + ahead;
+  for (let i = Math.max(0, Math.floor((t - ahead) / FLOW_EVERY_S) - 1); i <= Math.floor(t / FLOW_EVERY_S); i++) {
     const at = i * FLOW_EVERY_S + unit(i * 31) * FLOW_EVERY_S;
     const d = depthOf(unit(i * 5));
     if (!want(d) || at > t) continue;
+    const { from, to } = track(d), span = to - from;
     const dir = unit(i * 7) < 0.5 ? 1 : -1, speed = FLOW_SPEED[d] * (0.8 + unit(i * 19) * 0.4);
     const run = (t - at) * speed;
     if (run > span) continue;
-    // the pan, slid by the depth's share and kept inside one crossing's span
-    const pan = (S.camX * S.zoom * FLOW_PARALLAX[d]) % span;
-    const x = (((dir > 0 ? run : span - run) - pan) % span + span) % span - FLOW_MARGIN;
+    const x = (dir > 0 ? from + run : to - run) - S.camX * S.zoom * FLOW_PARALLAX[d];
     out.push({ d, dir, x, at, kind: Math.floor(unit(i * 13) * SP.length), y: unit(i * 17) });
   }
   return out;
