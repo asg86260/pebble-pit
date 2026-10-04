@@ -19,7 +19,7 @@ import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, healLeft, has, clearStatuses } from './statuses.js';
-import { cycleS } from './meals.js';
+import { nextMeal } from './meals.js';
 import { stepMechanic, resetMechanic, surgeK, sunk, guardOf } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
@@ -207,9 +207,10 @@ function forget(t) {
 function stepMeal(c, stopped) {
   if (!stopped) S.healBank += healNow() * c.dt / 1000;
   S.mealT += c.dt / 1000;
-  const cycle = cycleS(S.meal);
-  if (S.mealT < cycle) return;
-  S.mealT -= cycle;
+  // the creature the meal is, at the mouth and swallowed: it lands now
+  const clock = c.now / 1000, meal = nextMeal(clock - S.mealT);
+  if (clock < meal.land) return;
+  S.mealT = Math.max(0, clock - meal.land);
   S.meal++;
   const closed = Math.min(S.healBank, S.serpentWound);
   S.healBank = 0;

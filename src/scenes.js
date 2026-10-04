@@ -23,7 +23,7 @@ import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
-import { cycleS, kindOf } from './deep/meals.js';
+import { mealNow } from './deep/meals.js';
 import { KINDS } from './render/fish.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
@@ -255,10 +255,15 @@ const stageScene = (stage, wound, stations = []) => () => {
 // landing `to` seconds off (a second of the yard runs before the shot).
 const mealScene = (kind, to, atBelly = false) => () => {
   deepYard({ stage: 1, wound: 0.4, party: [cast('ranger', 0)] });
-  let n = 0;
-  while (kindOf(n, KINDS) !== kind) n++;
-  S.meal = n;
-  S.mealT = cycleS(n) - to - 1;
+  // the time since the last meal that puts the next one `to` seconds off
+  // once the scene's second has run (the creature is whichever swims up)
+  let n = 0, best = 0, off = Infinity;
+  for (let m = 0; m < 40; m += 0.05) {
+    S.mealT = m;
+    const d = Math.abs(mealNow().toLand - 1 - to);
+    if (d < off) { off = d; best = m; }
+  }
+  S.mealT = best;
   S.healBank = 300;
   lookDeep(atBelly ? coilAt(bellySeg() - 6, now()).x : coilAt(0, now()).x - 150);
   // A meal's moments are quicker than a shot takes, so the clock is held on

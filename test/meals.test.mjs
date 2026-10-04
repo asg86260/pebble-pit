@@ -5,7 +5,7 @@
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { SERPENT_HEAL, SERPENT_WOUND, MEAL_MIN_S, MEAL_MAX_S } from '../src/config.js';
-import { cycleS, kindOf } from '../src/deep/meals.js';
+import { nextMeal } from '../src/deep/meals.js';
 import { strike } from '../src/deep/serpent.js';
 import { bellyAt } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -22,14 +22,18 @@ function deepYard(stage = 0, wound = 0) {
   S.mealT = 0; S.healBank = 0;
 }
 
-group('the wait is 6 to 12 seconds, differs meal to meal, and is the same every time it is asked', async () => {
-  const waits = Array.from({ length: 60 }, (_, n) => cycleS(n));
-  const kinds = new Set(Array.from({ length: 60 }, (_, n) => kindOf(n, 8)));
+group('meals come as creatures reach the mouth: never sooner than the shortest wait, never past the ceiling', async () => {
+  // forty meals in a row off one landing, as the clock alone would give them
+  const waits = [], kinds = new Set(), eaten = new Set();
+  let land = 1000;
+  for (let k = 0; k < 40; k++) { const m = nextMeal(land); waits.push(m.land - land); kinds.add(m.kind); eaten.add(m.i); land = m.land; }
+  const mean = waits.reduce((a, b) => a + b, 0) / waits.length;
   return [
-    ok(waits.every(w => w >= MEAL_MIN_S && w <= MEAL_MAX_S), 'every wait is inside the two ends', `${Math.min(...waits)}..${Math.max(...waits)}`),
-    ok(Math.max(...waits) - Math.min(...waits) > 3, 'and they are not on a clock', `${Math.min(...waits)}..${Math.max(...waits)}`),
-    ok(waits.every((w, n) => cycleS(n) === w) && kindOf(7, 8) === kindOf(7, 8), 'the same meal asks the same answer'),
-    ok(kinds.size === 8, 'and every one of the eight comes', `${kinds.size} of 8`)
+    ok(waits.every(w => w >= MEAL_MIN_S - 1e-9 && w <= MEAL_MAX_S), 'every wait is between the shortest and the ceiling', `${Math.min(...waits).toFixed(1)}..${Math.max(...waits).toFixed(1)}`),
+    ok(mean >= 7 && mean <= 13, 'about every nine seconds on average', mean.toFixed(1)),
+    ok(eaten.size === 40, 'each meal a different creature', `${eaten.size}`),
+    ok(kinds.size >= 6, 'and most of the eight come', `${kinds.size} of 8`),
+    ok(nextMeal(1000).i === nextMeal(1000).i, 'the same landing asks the same answer')
   ];
 });
 
@@ -37,7 +41,7 @@ group('the heal waits in the bank and the wound closes in one step when the meal
   deepYard(1, SERPENT_WOUND[1] / 2);
   const start = S.serpentWound, at = S.meal;
   let steps = 0, biggest = 0, was = S.serpentWound, bankAtLand = 0, bankWas = 0;
-  for (let f = 0; f < 60 * 14 && S.meal === at; f++) {
+  for (let f = 0; f < 60 * (MEAL_MAX_S + 2) && S.meal === at; f++) {
     bankWas = S.healBank;
     frame();
     const drop = was - S.serpentWound;
@@ -45,7 +49,7 @@ group('the heal waits in the bank and the wound closes in one step when the meal
     was = S.serpentWound;
   }
   return [
-    ok(S.meal === at + 1, 'a meal lands inside twelve seconds', `meal ${at} then ${S.meal}`),
+    ok(S.meal === at + 1, 'a meal lands inside the ceiling', `meal ${at} then ${S.meal}`),
     ok(steps === 1, 'the wound closes in one frame, not a trickle', `${steps} frames closed it`),
     ok(Math.abs(biggest - bankAtLand) < SERPENT_HEAL[1] / 30, 'by the whole of the bank', `closed ${biggest.toFixed(1)}, banked ${bankAtLand.toFixed(1)}`),
     ok(S.healBank < SERPENT_HEAL[1] / 30, 'which is empty after', `${S.healBank}`),

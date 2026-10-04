@@ -6,7 +6,7 @@
 // The wait from one meal to the next, chosen afresh each meal between the
 // two so it is not a clock a player can count.
 export let MEAL_MIN_S = 6;
-export let MEAL_MAX_S = 12;
+export let MEAL_MAX_S = 20;   // a ceiling the stream keeps under, not a clock: meals come as creatures do
 // A meal, back from its landing: the creature swims in, goes in the mouth,
 // and the swallow runs to the belly, where the bank lands. The three add to
 // less than MEAL_MIN_S, so a creature is never in the water before the last
@@ -67,7 +67,10 @@ export const FLOW_GIANT_SPEED = 6;
 // FLOW_NEAR_SPEED world pixels a second, somewhere in the FLOW_NEAR_BAND over
 // the coil's middle. Dense enough that one is always near the mouth when a
 // meal is due.
-export const FLOW_NEAR_EVERY_S = 10;
-export const FLOW_NEAR_SPEED = 20;
+export const FLOW_NEAR_EVERY_S = 6;
+export const FLOW_NEAR_SPEED = 24;
+export const FLOW_NEAR_AWAY = 4;       // every this-many-th swims away from the mouth
+export const FLOW_NEAR_JITTER = 0.4;   // how far a start strays from its slot
+export const FLOW_KINDS = 8;           // the creatures render/fish.js draws
 export const FLOW_NEAR_OUT = 200;
 export const FLOW_NEAR_BAND = 150;

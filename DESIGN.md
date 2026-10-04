@@ -16856,10 +16856,14 @@ break").
   Every crossing starts and ends off the glass. No creature trails anything.
 - The near ones swim the world, end to end of the deep and in from beyond its
   walls, a fixed schedule off the clock; a meal takes one of them (the owner,
-  2026-10-04: no creature spawned to be eaten). When a meal's swim begins the
-  nearest one heading for the mouth turns off its path and swims into the
-  jaws; the stream is dense enough (`FLOW_NEAR_EVERY_S`) that one is always
-  near. The meal clock is unchanged: 6 to 12 seconds.
+  2026-10-04: no creature spawned to be eaten, none dashing). A meal is the
+  first creature heading for the mouth to reach it once `MEAL_MIN_S` has
+  passed since the last landed: it keeps its own path and pace the whole way,
+  and only its height drifts to the mouth's over the last `MEAL_SWIM_S`. The
+  sim reads the same schedule (deep/meals.js, `nextMeal`), so the meal clock
+  is the stream's: every fourth creature swims away and the rest come a slot
+  apart, so meals land about every nine seconds, never under six and under a
+  ceiling of `MEAL_MAX_S`.
 - `render/fish.js` draws the creature from its local frame, cell by cell, over
   the water and behind the serpent's head; it enters at the deep's left edge and
   is clipped at the serpent's face while it goes in, so it is *eaten*, not

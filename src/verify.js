@@ -14,7 +14,7 @@
 import { WORKER } from './config.js';
 import { S, pit, floor, cut, band } from './state.js';
 import { P } from './config.js';
-import { cycleS } from './deep/meals.js';
+import { mealNow } from './deep/meals.js';
 import { ways, wayAt, standTop, WORKINGS, belowYard } from './route.js';
 import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
@@ -461,8 +461,8 @@ export function verifyWorld() {
       fail('the serpent healed while it was stunned', `wound ${woundWas} then ${S.serpentWound} in stage ${stage}`);
     // The meal: a bank that is never under nought, a clock inside its wait.
     if (!(S.healBank >= 0)) fail('the heal bank is under nothing', `${S.healBank}`);
-    if (!(S.mealT >= 0) || (S.serpentWound < depth && S.mealT > cycleS(S.meal) + 1e-9 + 1))
-      fail('the meal clock is outside its wait', `${S.mealT}s of ${cycleS(S.meal)}`);
+    if (!(S.mealT >= 0) || (S.serpentWound < depth && S.snatched && stage <= 3 && mealNow().toLand < -1))
+      fail('the meal clock is outside its wait', `${S.mealT}s since the last, the next ${mealNow().toLand}s off`);
     mealWas = S.meal;
     if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)
       fail('the stun is outside its bounds', `${S.serpentStun}s, at most ${STUN_MAX_S}`);
