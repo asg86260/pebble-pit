@@ -16,7 +16,7 @@
 // the hide giving under it a beat, and a ring running over a stunned coil's
 // head (DESIGN.md, "Blows land"); and what the fighters have laid on it, the
 // statuses, over the whole of it (docs/wave-party.md, "The picture"); and
-// its phase's mechanic, the surge's throb and the sink's fade under the
+// its phase's mechanic, the lash and the sink's fade under the
 // abyss's veil (deep/phases.js).
 
 import { now } from '../clock.js';
@@ -26,7 +26,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, SNATCH_LEAN, SNATCH_HINGE, SNATCH_GAPE, SNATCH_CREST, SNATCH_HIDE, SNATCH_RISE, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
-         STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
+         STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS } from '../config.js';
 import { S } from '../state.js';
@@ -384,9 +384,6 @@ function drawCoil() {
   ctx.globalAlpha = 1;
   drawVeil(t, pts);
   drawBubbles(pts);
-  let belly = pts[0];
-  for (const p of pts) if (Math.abs(p.along - bellyA) < Math.abs(belly.along - bellyA)) belly = p;
-  if (Math.abs(belly.along - bellyA) < BELLY_LEN) drawThrob(t, belly);
   ctx.fillStyle = '#000';
 }
 
@@ -498,26 +495,6 @@ function drawBubbles(pts) {
     const drift = Math.round(Math.sin(up * 0.9 + n) * 0.6);
     ctx.fillRect(snap(p.x) + drift * P, snap(Math.min(p.y - p.r, deepFloor())) - (up + 1) * P, P, P);
   }
-}
-// The surge's throb: a ring of the abyss's purple round the belly, beating
-// in the warning and held while it heals.
-function drawThrob(t, b) {
-  const p = part();
-  if (p.m?.kind !== 'surge' || S.mechSkip || p.part === 'calm') return;
-  const beat = p.part === 'warn' ? 0.5 + 0.5 * Math.sin(t / 1000 * Math.PI * 2 * THROB_HZ) : 1;
-  const r = b.r + (THROB_R - 1 + beat) * P;
-  const n = Math.max(12, Math.round(r * 2 * Math.PI / P));
-  ctx.globalAlpha = 0.4 + 0.6 * beat;
-  ctx.fillStyle = PURPLES[WHITE - 1];
-  const seen = new Set();
-  for (let i = 0; i < n; i++) {
-    const a = i / n * Math.PI * 2;
-    const x = snap(b.x + Math.cos(a) * r * 1.4 - P / 2), y = snap(b.y + Math.sin(a) * r - P / 2);
-    if (seen.has(x * 1e5 + y)) continue;
-    seen.add(x * 1e5 + y);
-    ctx.fillRect(x, y, P, P);
-  }
-  ctx.globalAlpha = 1;
 }
 
 // --- the statuses on the whole serpent ------------------------------------------

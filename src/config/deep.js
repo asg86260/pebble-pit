@@ -216,9 +216,9 @@ export const DOT_TICK_S = 0.5;
 // --- a phase's mechanic (DESIGN.md, "A phase has a mechanic and a class answers it") ---
 // One a phase past the first, on the phase's own clock: calm, then its
 // warning, then the thing itself, then round again, `every` seconds a turn.
-// Seconds throughout.
+// Seconds throughout. The warded phase has none (the owner dropped its
+// surge, 2026-10-04): its resist is its whole difference.
 //
-//   surge  the heal times `x` for `last`; a stun in the warning or in it spends it
 //   lash   a wave runs head to tail in `last` and throws off the melee
 //          fighters at the hide, dazed `daze` where they land; the Hexer's
 //          Held in the warning stops it
@@ -226,7 +226,7 @@ export const DOT_TICK_S = 0.5;
 //          nothing strikes him past half gone, and the heal runs
 export const MECHANICS = [
   null,
-  { kind: 'surge', every: 45, warn: 3, last: 6, x: 3 },
+  null,
   { kind: 'lash', every: 30, warn: 1.5, last: 1.1, daze: 3 },
   { kind: 'sink', every: 40, warn: 1, last: 8, fade: 1 }
 ];
@@ -240,9 +240,8 @@ export const LASH_H = P * 14;          // the bump, down off the line
 export const LASH_W = 0.05;            // its half width, a share of the body head to tail
 // A lashed fighter is thrown this hard, px a frame: down, and out to a side.
 export const LASH_THROW = [1.6, 2.2];
-// The surge's throb over the belly, and the sink's: how far out the ring
-// stands, cells, and its beat; how dim the coil goes under; the warning's flicker.
-export const THROB_R = 4;
+// The sink's: the beat of its warning's flicker, how dim the coil goes under,
+// and how dim the flicker takes it.
 export const THROB_HZ = 2.5;
 export const SINK_DIM = 0.85;
 export const SINK_WARN_DIM = 0.3;

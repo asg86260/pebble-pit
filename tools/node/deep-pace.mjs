@@ -14,8 +14,7 @@
 //   node tools/node/deep-pace.mjs --table            # a class's damage and shed, rung by rung
 //   node tools/node/deep-pace.mjs --answered         # every phase's mechanic answered
 //
-// Each phase's mechanic (deep/phases.js) is played unanswered -- the surge
-// runs the window triple, the lash takes the melee fighters off the hide for its
+// Each phase's mechanic (deep/phases.js) is played unanswered -- the lash takes the melee fighters off the hide for its
 // length, the fall, the daze and the swim back (`LASH_OUT_S`), the sink takes
 // every blow for as long as he is past half gone -- unless `--answered`.
 // What it leaves out: the dust, ore and spark on a rung's bill, the rung's
@@ -48,7 +47,6 @@ function mechanic(st, s) {
   const m = MECHANICS[st];
   if (!m || answered) return { heal: 1, melee: 1, all: 1 };
   const t = s % m.every, on = m.every - m.last;
-  if (m.kind === 'surge') return { heal: t >= on ? m.x : 1, melee: 1, all: 1 };
   if (m.kind === 'lash') {
     const out = m.last + m.daze + LASH_FALL_SWIM_S;
     return { heal: 1, melee: t >= on || t < out - m.last ? 0 : 1, all: 1 };

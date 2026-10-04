@@ -16694,7 +16694,7 @@ docs/mocks/serpent-phases-2026-09-28.html.
 | phase | the mechanic | its warning | the answer |
 |---|---|---|---|
 | 1 bare | none: the wound against the heal | -- | -- |
-| 2 warded | **the surge**: the heal x3 for 6 s, every 45 s | the belly throbs purple 3 s | a stun in the warning spends the surge (the capstone stuns: Brawler, Monk, Ranger, Sapper) |
+| 2 warded | none since 2026-10-04 (the owner dropped the surge): its magic resist is its whole difference | -- | -- |
 | 3 split | **the lash**: a wave runs down the coil and throws off every melee fighter at the hide, every 30 s | the coil draws taut and the tail lifts, 1.5 s | the Hexer's Held in the warning: no lash |
 | 4 fading | **the sink**: he dims into the abyss for 8 s; nothing hits him and the heal runs | the dark gathers round him, 1 s | a burst banked before he sinks (the Assassin's execution, the Mage's finishing blow, a sticky charge) |
 

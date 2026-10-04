@@ -1,8 +1,7 @@
 // A phase's mechanic and the class that answers it (DESIGN.md, "A phase has
-// a mechanic and a class answers it"): the surge runs the window triple and a
-// stun in its warning spends it; the lash throws the melee fighters off the
-// hide and Held in its warning stops it; the sink takes him out of reach and
-// the window runs. The turn is set with `S.mechAt` as the setup; the answers are laid
+// a mechanic and a class answers it"): the lash throws the melee fighters off
+// the hide and Held in its warning stops it; the sink takes him out of reach
+// and the window runs. The warded phase has none. The turn is set with `S.mechAt` as the setup; the answers are laid
 // through the doors the classes lay them through (`strike` with a stun,
 // `lay('held')`).
 
@@ -31,29 +30,6 @@ function atStage(stage, into) {
 // How much of the window runs in `s` seconds.
 const runs = s => { const was = S.mealT; run(s); return S.mealT - was; };
 
-group('the surge runs the window triple in its turn, and a stun in the warning spends it', async () => {
-  const m = atStage(1, 0);
-  S.mechAt = m.every - m.last - m.warn - 2;            // two seconds of calm left
-  const calm = runs(1);
-  runUntil(() => part().part === 'on', 10);
-  run(0.5);
-  const surging = runs(1);
-  // The next turn, answered: a stunning blow in the warning.
-  S.mechAt = m.every - m.last - m.warn / 2;
-  const p = bellyAt(now());
-  strike('brawler', SERPENT_WOUND[1] / 4, p.x, p.y, null, 1, { stun: 1 });
-  const stunned = S.serpentStun > 0;
-  runUntil(() => !(S.serpentStun > 0), 10);
-  const inOn = part().part === 'on';
-  const spent = runs(0.5);
-  return [
-    ok(Math.abs(calm - 1) < 0.05, 'calm, the window runs a second a second', `${calm.toFixed(2)}`),
-    ok(Math.abs(surging / calm - m.x) < 0.1, 'in the surge it runs triple', `${surging.toFixed(2)} against ${calm.toFixed(2)}`),
-    ok(stunned, 'a blow the size of a haymaker stuns him in the warning'),
-    ok(inOn && Math.abs(spent / 0.5 - 1) < 0.1,
-       'and once the stun is off the surge is spent: the plain rate', `on ${inOn}, ${(spent / 0.5).toFixed(2)} a second`)
-  ];
-});
 
 // A Brawler at the hide, the lash `into` seconds off.
 async function brawlerAt(into) {
@@ -111,12 +87,12 @@ group('sunk, nothing strikes him and the window runs; risen, blows land again', 
 });
 
 group('a break opens the next phase calm', async () => {
-  atStage(1, 1);
+  atStage(2, 1);
   const p = bellyAt(now());
-  strike('punch', SERPENT_WOUND[1], p.x, p.y);
+  strike('punch', SERPENT_WOUND[2], p.x, p.y);
   frame();
   return [
-    ok(S.serpentStage === 2, 'the phase broke', `${S.serpentStage}`),
+    ok(S.serpentStage === 3, 'the phase broke', `${S.serpentStage}`),
     ok(S.mechAt < 0.1 && part().part === 'calm', 'and the next opens at the top of its turn', `${S.mechAt}`),
     ok(S.mealT < 0.1, 'on a fresh window', `${S.mealT}`)
   ];

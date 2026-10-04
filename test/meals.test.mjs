@@ -1,12 +1,12 @@
 // The serpent heals whole (DESIGN.md, "The serpent heals whole: a phase is a
 // window"): each phase gives the party a window, and when it has run the
 // serpent eats the next creature to reach its mouth and the wound closes
-// whole. A stun or Held stops the window, the surge runs it fast, and a
+// whole. A stun or Held stops the window, and a
 // creature already turned for the mouth is eaten whatever the window does.
 // Setup is the serpent's own (test/serpent.test.mjs).
 
 import { group, ok, yard, run } from './helpers.mjs';
-import { SERPENT_WOUND, SERPENT_WINDOW, MECHANICS } from '../src/config.js';
+import { SERPENT_WOUND, SERPENT_WINDOW } from '../src/config.js';
 import { nextMeal } from '../src/deep/meals.js';
 import { strike } from '../src/deep/serpent.js';
 import { lay } from '../src/deep/statuses.js';
@@ -80,15 +80,6 @@ group('a stun stops the window, and Held does too', async () => {
   ];
 });
 
-group('the surge runs the window fast', async () => {
-  deepYard(1, 0);
-  const m = MECHANICS[1];
-  S.mechAt = m.every - m.last + 0.5;            // in the surge, its warning gone by
-  const t0 = S.mealT;
-  run(2);
-  const ran = S.mealT - t0;
-  return [ok(Math.abs(ran - 2 * m.x) < 0.2, `two seconds of the surge are ${m.x} times as much of the window`, `${ran.toFixed(2)}s`)];
-});
 
 group('a creature already turned for the mouth is eaten, stun or no stun', async () => {
   deepYard(0, SERPENT_WOUND[0] / 2);

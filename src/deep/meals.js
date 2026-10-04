@@ -71,7 +71,7 @@ export function nearAll(clock) {
 // (SERPENT_WINDOW) has run since the last one landed. It swims its own path at
 // its own pace all the way; only its height drifts to the mouth's over the
 // last MEAL_SWIM_S. Once it has turned for the mouth it is the meal
-// (`S.mealI`), whatever the window does after: a stun or the surge moves the
+// (`S.mealI`), whatever the window does after: a stun or Held moves the
 // window, never a creature already swimming in.
 export const mouthX = () => coilEnds().x0 - SNOUT;
 // When creature `i`'s front reaches the mouth, on the clock; null if it is

@@ -20,7 +20,7 @@ import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned } from './meals.js';
-import { stepMechanic, resetMechanic, surgeK, sunk, guardOf, breaking, stepBreak, killA } from './phases.js';
+import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
 // resists nothing and has nothing left to heal.
@@ -144,8 +144,6 @@ export const woundK = () => {                          // the wound as a fractio
   return d > 0 ? Math.max(0, Math.min(1, S.serpentWound / d)) : 0;
 };
 
-// The heal this frame, after Weakened and the surge, in wound a second.
-
 // Who hears a phase break: the fang's drop (CREW's party.js) and anything
 // else that answers one. Called with the stage just reached, 1..4, on the
 // frame the defense goes; the returned function stops the listening.
@@ -208,10 +206,10 @@ function forget(t) {
 // whatever is on the serpent, so a creature comes either way; only the bank
 // is what the stun and Held stop. A lump under a whole one is not said.
 function stepMeal(c, stopped) {
-  // The window's clock: stopped by a stun or Held, run fast by the surge, and
-  // let be once the creature has turned for the mouth.
+  // The window's clock: stopped by a stun or Held, and let be once the
+  // creature has turned for the mouth.
   const clock = c.now / 1000;
-  if (S.mealI == null) S.mealT += (stopped ? 0 : surgeK()) * c.dt / 1000;
+  if (S.mealI == null) S.mealT += (stopped ? 0 : 1) * c.dt / 1000;
   else S.mealT += c.dt / 1000;
   const meal = mealNow(clock);
   if (S.mealI == null && turned(meal.toLand)) S.mealI = meal.i;

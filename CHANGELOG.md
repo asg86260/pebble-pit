@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The serpent's warded phase no longer surges: its magic resist is the whole of it.
 - Small hits on the serpent shed more scales: two more on every hit.
 - Freeing the sqhusband plays out: the serpent goes limp, sinks to the floor and comes apart into motes, he walks out to her, and after the sheet the serpent gathers itself again (test/snatch.test.mjs).
 - Each serpent phase is a window: break the defense before it eats, or the meal heals it to full; stuns and Held stop the window, and the phases are far shallower (test/meals.test.mjs).

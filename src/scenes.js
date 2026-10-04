@@ -453,10 +453,6 @@ const deepScenes = {
     run: mealScene(0, -0.6, true) },
   // A phase's mechanic (deep/phases.js) caught at its moment: the turn set
   // `into` seconds short of the thing itself (negative: that far into it).
-  'phase-surge': { about: 'the deep', say: 'the surge warning in the warded phase: the belly throbbing purple',
-    run: mechScene(1, 1.5, [cast('ranger', 4), cast('brawler', 4)]) },
-  'phase-surging': { about: 'the deep', say: 'the surge itself: the ring held round the belly, the heal tripled',
-    run: mechScene(1, -2, [cast('ranger', 4), cast('brawler', 4)]) },
   'phase-taut': { about: 'the deep', say: 'the warning before the lash: the coil drawn up, its tail lifted',
     run: mechScene(2, 0.3, [cast('brawler', 8), cast('sword', 8)], COIL_SEGS - 8, true) },
   'phase-lash': { about: 'the deep', say: 'the lash running down the coil, melee fighters thrown off it',

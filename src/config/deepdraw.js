@@ -345,7 +345,6 @@ export const STATUS_ICONS = {
   dazed:    { rows: ['#.#..', '.....', '..#.#', '.....', '#.#..'], foe: true },
   // the serpent's own, a phase's mechanic (deep/phases.js): the heal surging,
   // the lash, the sink
-  surge:    { rows: ['..#..', '..#..', '#####', '..#..', '..#..'], own: true },
   lash:     { rows: ['...##', '..#..', '.#...', '#....', '#....'], own: true },
   sink:     { rows: ['#####', '.....', '.###.', '.....', '..#..'], own: true },
   // and the phase's standing resist (the owner's B, docs/mocks/status-resists-2026-09-30.html):
@@ -362,7 +361,6 @@ export const STATUS_STRUCK = '#9b5de5';
 // What a mechanic's tile and a dazed fighter's say on hover; the statuses' own
 // lines are the boards' (deep/rails.js, `statusLine`).
 export const STATUS_SAYS = {
-  surge: { coming: 'Surge coming: a stun stops it', on: 'Surge: heals {x}x faster', stopped: 'Surge: stopped' },
   lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming: Held stops it', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
   sink:  { coming: 'Sink coming: land a burst first', on: 'Sink: out of reach', stopped: 'Sink: answered' },
   dazed: 'Dazed: thrown off, seeing stars',

@@ -1,8 +1,7 @@
-// A phase's mechanic: past the first, each defense does one thing to the
-// party on a clock of its own, warned ahead, and one class answers it
-// (DESIGN.md, "A phase has a mechanic and a class answers it"). The surge
-// heals triple and a stun spends it; the lash throws the melee fighters off
-// the hide and the Hexer's Held stops it; the sink takes him into the abyss
+// A phase's mechanic: the split and the fading each do one thing to the party
+// on a clock of its own, warned ahead, and one class answers it (DESIGN.md,
+// "A phase has a mechanic and a class answers it"). The lash throws the melee
+// fighters off the hide and the Hexer's Held stops it; the sink takes him into the abyss
 // where nothing reaches him, and a burst banked before it is the answer.
 //
 // Its resist is here too: the kind of damage it halves, which in the fading
@@ -10,7 +9,7 @@
 //
 // `S.mechAt` is the seconds into the phase's turn and `S.mechSkip` whether
 // this turn's mechanic was answered; both are saved, so a reload lands in the
-// same beat. The heal reads `surgeK`, a strike reads `sunk`, the coil's line
+// same beat. A strike reads `sunk`, the coil's line
 // reads `lashK` and `tautK`, a melee fighter reads `lashHits`, and the
 // drawing reads the parts.
 
@@ -35,8 +34,6 @@ export function part() {
 }
 const live = kind => { const p = part(); return p.m && p.m.kind === kind && !S.mechSkip ? p : null; };
 
-// The heal's multiple this frame.
-export const surgeK = () => { const p = live('surge'); return p && p.part === 'on' ? p.m.x : 1; };
 
 // How far into the abyss he is, 0..1: in over `fade`, held, out over `fade`.
 export function sinkK() {
@@ -61,9 +58,8 @@ export function tautK() {
 // Whether the lash is on a body at `k` along the body this frame.
 export const lashHits = k => { const at = lashK(); return at != null && Math.abs(k - at) < LASH_W; };
 
-// One frame of the turn. The answers are asked here: a stun in the surge's
-// warning or in it spends that surge, and Held in the lash's warning stops
-// that lash. A new turn is unanswered again.
+// One frame of the turn. The answer is asked here: Held in the lash's
+// warning stops that lash. A new turn is unanswered again.
 export function stepMechanic(c) {
   const m = mechOf();
   S.phaseAt = (S.phaseAt || 0) + c.dt / 1000;
@@ -71,7 +67,6 @@ export function stepMechanic(c) {
   S.mechAt += c.dt / 1000;
   if (S.mechAt >= m.every) { S.mechAt %= m.every; S.mechSkip = false; }
   const p = part();
-  if (m.kind === 'surge' && p.part !== 'calm' && S.serpentStun > 0) S.mechSkip = true;
   if (m.kind === 'lash' && p.part === 'warn' && has('held')) S.mechSkip = true;
 }
 
