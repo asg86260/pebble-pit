@@ -640,6 +640,7 @@ const deepScenes = {
       lookDeep(slotAt(0));
     } },
   // The kill as it plays (snatch.js, config KILL), each moment held for the shot.
+  'deep-kill-start': { about: 'the deep', say: 'the kill: the last blow, just landed', run: killAt(0.05) },
   'deep-kill': { about: 'the deep', say: 'the kill: the serpent limp, sinking to the floor', run: killAt(KILL.last + KILL.limp * 0.6) },
   'deep-kill-apart': { about: 'the deep', say: 'the kill: the hide coming apart into motes, tail first', run: killAt(KILL.last + KILL.limp + KILL.apart * 0.5) },
   'deep-kill-out': { about: 'the deep', say: 'the kill: him out on the floor, walking to her', run: killAt(KILL.last + KILL.limp + KILL.apart + 1) },
