@@ -16,13 +16,19 @@ import { beatDone } from './beats.js';
 // it has one, is whether the step is part of this story at all. The first
 // step not done is the line.
 export const STEPS = [
-  { key: 'rock', say: 'dig the boulder to save your sqwife!', done: () => S.boulderNo > 1 || beatDone('meet') },
+  { key: 'rock', say: 'dig the boulder to save your sqwife!', done: () => S.boulderNo > 1 || beatDone('meet'),
+    // the intro's quest (DESIGN.md, "Quests under the story's line")
+    quest: [
+      { key: 'chip', say: 'mine the boulder', done: () => !!S.handChipped },
+      { key: 'pickup', say: 'grab a pebble', done: () => !!S.seenDrag },
+      { key: 'toss', say: 'toss the pebble into the pit', done: () => S.banked > 0 },
+    ] },
   { key: 'falling', say: 'try to dig the boulder again!', done: () => S.boulderNo > 1 },
   { key: 'props', say: 'maybe building a wooden roof will stop the next boulder?', done: () => shieldDone('props') || S.rescued },
   { key: 'net', say: 'nope, try catching the boulder and slowing it down', done: () => shieldDone('net') || S.rescued },
   { key: 'arch', say: "lets try building an arch from the mined ore and stone. surely that's sturdy enough.", done: () => shieldDone('arch') || S.rescued },
   { key: 'dome', say: 'out of options, lets see if the wizards can help.', done: () => shieldDone('dome') || S.rescued },
-  { key: 'rescue', say: 'save the sqwife', done: () => !!S.rescued },
+  { key: 'rescue', say: 'save your sqwife', done: () => !!S.rescued },
   // The second half: the snatch waits on the pit drowning, then the way down
   // is the wizards', and the portal is a row on their board.
   { key: 'drown', say: 'drown the pit', when: serpentOn, done: () => (!!S.drowned && !!S.rescued) || !!S.snatched },
@@ -30,7 +36,7 @@ export const STEPS = [
   { key: 'tower', say: 'build the wizards\' tower', when: serpentOn, done: () => !!S.snatched && (!!S.towerOpen || !!S.portalOpen) },
   { key: 'ask', say: 'ask the wizards how to get down', when: serpentOn,
     done: () => !!S.snatched && (!!S.askedWizards || S.portalPour > 0 || !!S.portalOpen) },
-  { key: 'portal', say: 'buy the portal', when: serpentOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
+  { key: 'portal', say: "conjure a portal to the abyss, what's down there?", when: serpentOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
   { key: 'free', say: 'free your sqhusband from the serpent\'s belly', when: serpentOn, done: () => !!S.serpentFreed },
 ];
 
@@ -45,4 +51,13 @@ export function objective() {
   live.forEach((s, i) => { if (s.done()) from = i + 1; });
   const next = live[from];
   return next && next.say ? next : null;
+}
+
+// The quest under the step the line is on, item by item with whether each is
+// done, or null when the step has none or every item is done.
+export function questNow() {
+  const step = objective();
+  if (!step || !step.quest) return null;
+  const items = step.quest.map(q => ({ key: q.key, say: q.say, done: !!q.done() }));
+  return items.every(i => i.done) ? null : items;
 }

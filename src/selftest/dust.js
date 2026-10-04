@@ -5,6 +5,23 @@ import { sleep, state, ok, point, onScreen, boulderWorld, hoverBench, run, runUn
   bankCore, buy } from './kit.js';
 
 export const TESTS = [
+  // The intro quest's first item (objectives.js) is ticked by a click on the
+  // rock itself, the way a player mines it.
+  ['clicking the rock ticks the first quest item under the line', async () => {
+    haveRock();
+    const items = () => [...document.querySelectorAll('#objective .quest li')];
+    run(0.1); await new Promise(r => requestAnimationFrame(r));
+    const before = items().map(li => li.className === 'done');
+    const b = boulderWorld();
+    const [x, y] = onScreen(b.x, b.y);
+    point('pointerdown', x, y); point('pointerup', x, y);
+    run(0.1); await new Promise(r => requestAnimationFrame(r));
+    const after = items().map(li => li.className === 'done');
+    return [
+      ok(before.length === 3 && before[0] === false, 'the line carries three items, the first not done', JSON.stringify(before)),
+      ok(after[0] === true, 'and a click on the rock ticks it', JSON.stringify(after))
+    ];
+  }],
   ['mining leaves dust on the ground', async () => {
     haveRock();                                // something to swing at
     const before = state().floor;

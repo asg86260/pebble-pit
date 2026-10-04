@@ -511,6 +511,7 @@ export const S = {
   // weapon, key, side }. A drawing, never a save.
   hits: [],
   endingAt: 0,            // when the rescue's sheet came up, for its hold before the snatch (ephemeral)
+  handChipped: false,     // a piece knocked off a rock by your own click: the intro quest's first item
   askedWizards: false,    // the wizards' board looked at since the snatch: the story's line moves on
   healBank: 0,            // the wound the heal has accrued since the last meal, closed when the next lands
   meal: 0,                // the meals the serpent has had: which creature is next, and how long it waits
@@ -680,7 +681,7 @@ export const SAVED = [
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'healBank', 'meal', 'mealT', 'askedWizards',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'healBank', 'meal', 'mealT', 'askedWizards', 'handChipped',
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).
   'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',

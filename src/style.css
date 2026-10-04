@@ -1918,3 +1918,10 @@ html.dark .modal {
 /* The rescue's sheet leaving with the second half on (ending.js): it rises
    and fades as the snatch begins. */
 #saved.leaving { opacity: 0; translate: 0 -40px; transition: opacity 1.2s ease, translate 1.2s ease; pointer-events: none; }
+
+/* The step's quest (objline.js): a short checklist under the line, an item
+   struck through as it is done; the list goes when every item is. */
+#objective .quest { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 1px; font-size: 11px; }
+#objective .quest li::before { content: "□ "; }
+#objective .quest li.done { text-decoration: line-through; opacity: .55; }
+#objective .quest li.done::before { content: "■ "; }

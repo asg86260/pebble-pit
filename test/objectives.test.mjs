@@ -55,3 +55,22 @@ group('a save that finished the first half opens on the way down, or on nothing 
     ];
   } finally { window.__serpentOn(null); }
 }, { reload: false });
+
+group('the intro quest under the rock ticks off its three items, then goes', async () => {
+  const { questNow } = await import('../src/objectives.js');
+  const items = () => (questNow() || []).map(i => `${i.key}:${i.done ? 1 : 0}`).join(' ');
+  // a player's first moments: nothing swept, mined or banked yet (the node
+  // yard skips the opening as a played yard, which counts as having swept)
+  S.seenDrag = false; S.handChipped = false; S.banked = 0;
+  const fresh = items();
+  S.handChipped = true;
+  const chipped = items();
+  S.seenDrag = true;
+  S.banked = 1;
+  const all = questNow();
+  return [
+    ok(fresh === 'chip:0 pickup:0 toss:0', 'a fresh game shows all three, none done', fresh),
+    ok(chipped === 'chip:1 pickup:0 toss:0', 'mining a piece off ticks the first', chipped),
+    ok(all === null && line() === 'rock', 'all three done, the list goes and the line stays on the rock', `${JSON.stringify(all)} ${line()}`)
+  ];
+});

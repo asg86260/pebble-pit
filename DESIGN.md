@@ -16997,7 +16997,7 @@ With the half off the sheet is the end of the story and keeps its button.
   (`TIMES_ON` false); turning it back on needs the button, or a hold that waits
   for the name.
 
-## Quests under the story's line (design, not built)
+## Quests under the story's line (built 2026-10-03)
 
 Asked for by the owner, 2026-09-30, with three calls made: a quest is a
 **checklist under the main line**, any main step may carry one, and finishing
@@ -17020,5 +17020,6 @@ it into the pit.
 
 ### Open
 
-- The facts for the intro's first two items need a saved flag each.
+- "Grab a pebble" reads `seenDrag` (dust swept up by hand), "mine the boulder"
+  a new saved `handChipped` set by a click on the rock, "toss" `banked`.
 - How the list sits beside the notice card on a narrow window.

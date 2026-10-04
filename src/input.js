@@ -189,6 +189,7 @@ canvas.addEventListener('pointerdown', e => {
     // a rock is worked from the top down.
     const at = topOfRock(p.x) || p;
     knockOff(at.x, at.y, undefined, false);   // your own hands: no smoke
+    S.handChipped = true;
     S.mining = S.autoMine;                      // holding only mines once unlocked
     S.nextHit = now() + MINE_DELAY;
     try { canvas.setPointerCapture(e.pointerId); } catch {}
