@@ -4,8 +4,8 @@
 
 "The serpent heals whole: a phase is a window" in DESIGN.md. Each phase is a
 fixed window (40/32/26/20 s, no countdown shown); its meal heals to full.
-Stuns and Held pause it, the surge runs it fast, Weakened makes the meal heal
-part of the way. Depths re-solved by deep-pace.mjs for one window's burst.
+Stuns and Held pause it, the surge runs it fast, Weakened becomes a damage
+amp (smaller than Exposed's). Depths re-solved by deep-pace.mjs for one window's burst.
 Blocked on the owner's approval of the design, and on the owner's words for
 Weakened's hover line.
 

@@ -16964,10 +16964,13 @@ not what it can do over the heal.
   window clock runs at `SURGE_X` (3) times speed, so it eats sooner. Its
   warning and its answer stay: a stun in the warning spends it, and during the
   surge a stun still pauses the clock outright.
-- **Weakened (the Hexer from rung 4)** becomes **a meal that heals part of the
-  way back**: the swallow closes `1 - k` of the wound rather than all of it
-  (k the Weakened level, capped at `HEAL_CUT_MAX` as now). A weakened meal
-  leaves a dent the next window starts from.
+- **Weakened (the Hexer from rung 4)** becomes **the serpent takes more
+  damage** (the owner, 2026-10-04): an amp of `WEAKEN_AMP` (first guess 0.15)
+  while it lasts, on the same path as Exposed's (`ampOf`): amps add, are
+  applied once, and are capped at `AMP_MAX`. Exposed (rung 8, 0.25) stays the
+  bigger of the two, so the Hexer's ladder still climbs. The heal cut and
+  `HEAL_CUT_MAX` go; the class table's `weaken: { k, s }` keeps its seconds
+  and its `k` becomes the amp.
 - **The sink (phase 4)** is unchanged: nothing hits him while he is under,
   and the window keeps running. It costs uptime out of a short window, which
   is why the bursts that land before he goes under are its answer.
@@ -16996,7 +16999,8 @@ not what it can do over the heal.
 - **The checks.** `verify.js`'s meal rule still holds (a meal is never overdue
   past its window). `test/meals.test.mjs` loses the bank and the average-heal
   check. It gains: a meal heals to full; a stun or Held pauses the window; the
-  surge shortens it; Weakened leaves a dent. Each check is reached by striking
+  surge shortens it. `test/statuses.test.mjs`: Weakened amps a blow, and
+  Weakened with Exposed is capped. Each check is reached by striking
   and buying, as a player does.
 
 ### Open
@@ -17005,7 +17009,8 @@ not what it can do over the heal.
   capstones for the window's last seconds bursts best. That is the intended
   skill here, not an exploit.
 - **The Weakened hover line** says the heal is cut. It will need the owner's
-  words for "the meal heals less" (player copy is the owner's).
+  words for "takes more damage", and Weakened and Exposed then say nearly the
+  same thing (player copy is the owner's).
 
 ## The story's objectives (built 2026-09-30)
 
