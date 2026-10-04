@@ -460,7 +460,6 @@ export function verifyWorld() {
     if (stunWas && stage === serpentWas && S.meal === mealWas && S.serpentWound < woundWas - 1e-9)
       fail('the serpent healed while it was stunned', `wound ${woundWas} then ${S.serpentWound} in stage ${stage}`);
     // The meal: a bank that is never under nought, a clock inside its wait.
-    if (!(S.healBank >= 0)) fail('the heal bank is under nothing', `${S.healBank}`);
     if (!(S.mealT >= 0) || (S.serpentWound < depth && S.snatched && stage <= 3 && mealNow().toLand < -1))
       fail('the meal clock is outside its wait', `${S.mealT}s since the last, the next ${mealNow().toLand}s off`);
     mealWas = S.meal;

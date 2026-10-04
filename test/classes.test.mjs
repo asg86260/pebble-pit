@@ -10,7 +10,7 @@
 // (party.test.mjs); that the rails fold and Reset refunds is BOARD's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG, LEVELUP_S, LEVELUP_BURST_S } from '../src/config.js';
+import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG, LEVELUP_S, LEVELUP_BURST_S, EXPOSED_AMP } from '../src/config.js';
 import { climb, reset, openEveryClass, flush } from './party-press.mjs';
 import { pressBuy } from '../src/deep/rails.js';
 import { shots } from '../src/deep/arms.js';
@@ -261,7 +261,7 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
   runUntil(() => fighterAt(0).goal === 'fight', 30);
   let drift = 0, px = fighterAt(0).x, py = fighterAt(0).y;
   const base = watch(5, 0, () => {
-    S.serpentWound = 0;               // a stab is plain on a shut wound; the heal only lands between meals now
+    S.serpentWound = 0;               // a stab is plain on a shut wound
     const w = fighterAt(0);
     drift = Math.max(drift, Math.hypot(w.x - px, w.y - py));
     px = w.x; py = w.y;
@@ -288,11 +288,11 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
     ok(base.shots.has('dagger') && hits.length >= 2, 'her daggers travel to the hide', [...base.shots].join(' ')),
     ok(drift < 1, 'while she holds nearly still', `${drift.toFixed(2)}px a frame at most`),
     ok(hits.every(d => near(d, plain)), 'a plain stab', JSON.stringify(hits)),
-    // Execution is hers from the fork: each stab grows a little with the
-    // wound the last ones opened.
-    ok(onStun.length >= 1 && onStun.every(d => Math.abs(d / (plain * cls.stunnedX) - 1) < 0.02),
+    // The first stab only: Execution is hers from the fork, so each after it
+    // grows with the wound the last ones opened.
+    ok(onStun.length >= 1 && Math.abs(onStun[0] / (plain * cls.stunnedX) - 1) < 0.02,
        'x3 on a stunned serpent', JSON.stringify(onStun)),
-    // Half the phase's depth open: x1.5, less the frame's heal before it lands.
+    // Half the phase's depth open: x1.5.
     ok(shallow.length >= 1 && shallow.every(d => near(d, v4)) && deep.length >= 1
        && deep.every(d => Math.abs(d / (v4 * 1.5) - 1) < 1e-3),
        'at rung 4 stabs grow with the wound', `${JSON.stringify(shallow)} then ${JSON.stringify(deep)}`),
@@ -300,23 +300,22 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
   ];
 });
 
-group('Hexer: a hex strikes; it Weakens the heal from rung 4; from rung 8 it stops the heal and Exposes', async () => {
+group('Hexer: a hex strikes; it Exposes the serpent from rung 4; from rung 8 harder, and it stops the window', async () => {
   const alone = breaksAlone('circle', 'hexer');
-  const cls = CLASSES.hexer;
   window.__serpent({ stage: 1, wound: 0 });
-  let weakEarly = false;
-  const base = watch(6, 0, () => { if (has('weakened') || has('held') || has('exposed')) weakEarly = true; });
+  let early = false;
+  const base = watch(6, 0, () => { if (has('held') || has('exposed')) early = true; });
   buyTo(0, 'hexer', 4);
-  let weak = 0, heldAt4 = false;
-  watch(6, 0, () => { weak = Math.max(weak, level('weakened')); if (has('held')) heldAt4 = true; });
+  let at4 = 0, heldAt4 = false;
+  watch(6, 0, () => { at4 = Math.max(at4, level('exposed')); if (has('held')) heldAt4 = true; });
   buyTo(0, 'hexer', 8);
-  let held = false, exposed = false;
-  watch(6, 0, () => { if (has('held')) held = true; if (has('exposed')) exposed = true; });
+  let held = false, at8 = 0;
+  watch(6, 0, () => { if (has('held')) held = true; at8 = Math.max(at8, level('exposed')); });
   return [
     alone,
-    ok(base.shots.has('hex') && !weakEarly, 'a base hex strikes and lays nothing', `${[...base.shots]}`),
-    ok(weak === cls.weaken.k && !heldAt4, 'at rung 4 it Weakens the heal', `${weak} ${heldAt4}`),
-    ok(held && exposed, 'at rung 8 it stops the heal and Exposes', `${held} ${exposed}`)
+    ok(base.shots.has('hex') && !early, 'a base hex strikes and lays nothing', `${[...base.shots]}`),
+    ok(at4 === EXPOSED_AMP[0] && !heldAt4, 'at rung 4 it Exposes the serpent', `${at4} ${heldAt4}`),
+    ok(held && at8 === EXPOSED_AMP[1], 'at rung 8 it Holds him and Exposes him harder', `${held} ${at8}`)
   ];
 });
 

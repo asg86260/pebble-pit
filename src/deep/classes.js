@@ -286,10 +286,11 @@ function hexer(w, c, st, cls, v) {
   if (hit) {
     shoot(w, 'hex', mid(w), w.y, at.seg, t, cls.fly, (s, q) => {
       strike(cls.hit, v, q.x, q.y, null, 0, { by: w });
-      if (hasMove(st)) lay('weakened', cls.weaken.k, cls.weaken.s, s.seg);
+      // Exposed from the move, harder from the capstone; the stronger stands (`lay`).
+      if (hasMove(st)) lay('exposed', EXPOSED_AMP[0], cls.expose, s.seg);
       if (hasCap(st)) {
         lay('held', 0, cls.hold, s.seg);
-        lay('exposed', EXPOSED_AMP, cls.exposed, s.seg);
+        lay('exposed', EXPOSED_AMP[1], cls.exposed, s.seg);
       }
     });
   }

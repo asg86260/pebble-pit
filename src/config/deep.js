@@ -82,17 +82,12 @@ export const COIL_TIP = 0.25;        // the tip, a share of the girth
 export const BELLY_AT = 0.58;        // where he is held, a fraction of the way from head to tail
 export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this many lengths
 
-// --- the fight ---------------------------------------------------------------------
-// Four defenses, one a stage. The wound is held open against the heal and
-// breaks the stage at its depth; the fourth depth is the belly. Solved by
-// `tools/node/deep-pace.mjs --gather 4 --answered --solve 8,22,40,60 --heals 8`
-// (DESIGN.md, "The deep is paced by its purse"). The first heal is one the
-// first fighter out-hits alone two or three rungs up, so the first stage
-// starts slow and then gives; every later heal is what the party does two
-// rungs short of where it stands at the break. A depth is what the party
-// opens against its heal by the minute it breaks.
-export let SERPENT_HEAL = [8, 107, 128, 211];                 // wound a second it closes, a stage
-export const SERPENT_DEPTHS = [30000, 91000, 143000, 322000]; // the depth that breaks it, a stage
+// A phase is a window (DESIGN.md, "The serpent heals whole: a phase is a
+// window"): the party has SERPENT_WINDOW seconds of it, then the serpent eats
+// the next creature to reach its mouth and heals to full. A depth is about
+// what the party should do in one window. First guesses; the dev panel has both.
+export let SERPENT_WINDOW = [40, 32, 26, 20];                // seconds a phase gives before it eats
+export const SERPENT_DEPTHS = [4300, 9400, 6700, 5100];    // the depth that breaks it, a stage (tools/node/deep-pace.mjs --solve)
 export let SERPENT_WOUND = SERPENT_DEPTHS.slice();           // and as the dev panel has scaled it
 // Resists (DESIGN.md, "Resists: magic in the ward, physical in the split,
 // both in the fading"). Every hit is one kind of damage, and a phase resists
@@ -131,14 +126,11 @@ export const CLICK_DMG = [1, 2, 3, 5, 8, 12, 18, 26, 40];
 
 // --- statuses ----------------------------------------------------------------------
 // Laid on the whole serpent (deep/statuses.js): Bleeding ticks, Exposed takes
-// more from everything, Held neither heals nor sways, Weakened heals less. On
-// a fighter: Inspired hits harder, Hasted swings sooner. What raises a hit --
-// Exposed, Held's share at the Hexer's capstone, Inspired -- is added up and
-// multiplied in once, at most AMP_MAX more; what cuts the heal, at most
-// HEAL_CUT_MAX of it.
-export const EXPOSED_AMP = 0.25;     // Exposed: this much more from everything
-export const AMP_MAX = 1;            // every amp together, at most
-export const HEAL_CUT_MAX = 0.6;     // every heal cut together, at most
+// more from everything, Held neither eats nor sways. On a fighter: Inspired
+// hits harder, Hasted swings sooner. What raises a hit -- Exposed, Inspired --
+// is added up and multiplied in once, at most AMP_MAX more.
+export const EXPOSED_AMP = [0.15, 0.25];   // Exposed, this much more from everything: the Hexer's move, its capstone
+export const AMP_MAX = 1;                  // every amp together, at most
 export const HASTE = 0.2;            // Hasted: this much more often
 
 // --- scales ------------------------------------------------------------------------
@@ -274,14 +266,14 @@ export const BREAK_ROAR_DAZE = 0.6;
 export const BREAK_FILL_STEPS = 8;     // the bar refills in this many held steps
 
 export const DEEP_KNOBS = [
-  { key: 'SERPENT_HEAL_1', label: 'serpent heal, bare', min: 0, max: 300, step: 1,
-    get: () => SERPENT_HEAL[0], set: v => { SERPENT_HEAL = [v, ...SERPENT_HEAL.slice(1)]; } },
-  { key: 'SERPENT_HEAL_2', label: 'serpent heal, warded', min: 0, max: 400, step: 1,
-    get: () => SERPENT_HEAL[1], set: v => { SERPENT_HEAL = [SERPENT_HEAL[0], v, ...SERPENT_HEAL.slice(2)]; } },
-  { key: 'SERPENT_HEAL_3', label: 'serpent heal, split', min: 0, max: 800, step: 5,
-    get: () => SERPENT_HEAL[2], set: v => { SERPENT_HEAL = [...SERPENT_HEAL.slice(0, 2), v, SERPENT_HEAL[3]]; } },
-  { key: 'SERPENT_HEAL_4', label: 'serpent heal, fading', min: 0, max: 1000, step: 10,
-    get: () => SERPENT_HEAL[3], set: v => { SERPENT_HEAL = [...SERPENT_HEAL.slice(0, 3), v]; } },
+  { key: 'SERPENT_WINDOW_1', label: 'serpent window, bare', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[0], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 0 ? v : w)); } },
+  { key: 'SERPENT_WINDOW_2', label: 'serpent window, warded', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[1], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 1 ? v : w)); } },
+  { key: 'SERPENT_WINDOW_3', label: 'serpent window, split', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[2], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 2 ? v : w)); } },
+  { key: 'SERPENT_WINDOW_4', label: 'serpent window, fading', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[3], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 3 ? v : w)); } },
   { key: 'SERPENT_WOUND_SCALE', label: 'serpent wound depths, x', min: 0.1, max: 5, step: 0.1,
     get: () => SERPENT_WOUND[0] / SERPENT_DEPTHS[0],
     set: v => { SERPENT_WOUND = SERPENT_DEPTHS.map(d => Math.round(d * v)); } },

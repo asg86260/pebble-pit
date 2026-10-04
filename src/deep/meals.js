@@ -2,10 +2,10 @@
 // stream of creatures, and which of them a meal is and when. All of it is read
 // off the game clock and the time since the last meal landed (`S.mealT`), so a
 // reload lands the same creature on the same beat and a check can be made
-// frame by frame. The heal itself is banked and landed in `deep/serpent.js`.
+// frame by frame. The heal itself lands in `deep/serpent.js`.
 
 import { S } from '../state.js';
-import { MEAL_MIN_S, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_JAW_LEAD_S, MEAL_JAW_OPEN_S,
+import { SERPENT_WINDOW, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_JAW_LEAD_S, MEAL_JAW_OPEN_S,
          MEAL_JAW_SHUT_S, MEAL_GAPE, MEAL_HINGE, SNOUT, DEEP_W, FLOW_NEAR_EVERY_S, FLOW_NEAR_SPEED,
          FLOW_NEAR_OUT, FLOW_NEAR_AWAY, FLOW_NEAR_JITTER, FLOW_KINDS } from '../config.js';
 import { now } from '../clock.js';
@@ -67,9 +67,12 @@ export function nearAll(clock) {
 
 // --- the meals ------------------------------------------------------------------
 // The serpent eats out of the stream (the owner, 2026-10-04): a meal is the
-// first creature heading for the mouth to reach it once MEAL_MIN_S has passed
-// since the last one landed. It swims its own path at its own pace all the
-// way; only its height drifts to the mouth's over the last MEAL_SWIM_S.
+// first creature heading for the mouth to reach it once the phase's window
+// (SERPENT_WINDOW) has run since the last one landed. It swims its own path at
+// its own pace all the way; only its height drifts to the mouth's over the
+// last MEAL_SWIM_S. Once it has turned for the mouth it is the meal
+// (`S.mealI`), whatever the window does after: a stun or the surge moves the
+// window, never a creature already swimming in.
 export const mouthX = () => coilEnds().x0 - SNOUT;
 // When creature `i`'s front reaches the mouth, on the clock; null if it is
 // swimming the other way.
@@ -77,10 +80,12 @@ function biteOf(i) {
   if (dirOf(i) < 0) return null;
   return startOf(i) + (mouthX() - (deepX0() - FLOW_NEAR_OUT)) / speedOf(i) - AHEAD();
 }
-// The meal after a landing at `lastLand`: which creature, its kind, when it
-// bites and when the meal lands.
-export function nextMeal(lastLand) {
-  const after = lastLand + MEAL_MIN_S - BITE_BEFORE;
+export const windowS = () => SERPENT_WINDOW[Math.max(0, Math.min(SERPENT_WINDOW.length - 1, S.serpentStage))];
+const mealOf = i => { const b = biteOf(i); return { i, bite: b, land: b + BITE_BEFORE, kind: Math.floor(unit(i * 53) * FLOW_KINDS) }; };
+// The meal after a landing at `lastLand`, biting no sooner than `floor`: which
+// creature, its kind, when it bites and when the meal lands.
+export function nextMeal(lastLand, floor = -Infinity) {
+  const after = Math.max(lastLand + windowS() - BITE_BEFORE, floor);
   const reach = (mouthX() - (deepX0() - FLOW_NEAR_OUT)) / FLOW_NEAR_SPEED;
   const guess = Math.floor((after + AHEAD() - reach) / FLOW_NEAR_EVERY_S);
   let best = null;
@@ -89,30 +94,20 @@ export function nextMeal(lastLand) {
     if (b == null || b < after) continue;
     if (!best || b < best.bite) best = { i, bite: b };
   }
-  return { i: best.i, bite: best.bite, land: best.bite + BITE_BEFORE, kind: Math.floor(unit(best.i * 53) * FLOW_KINDS) };
+  return mealOf(best.i);
 }
 // Where the meal is, by the game clock: the creature, and the seconds before
 // it lands (the creature is at the mouth at BITE_BEFORE, all in it at
 // MEAL_SWALLOW_S, the swallow at the belly at 0).
 export function mealNow(clock = nowS()) {
-  const m = nextMeal(clock - S.mealT);
+  // the creature turned for the mouth; else the next, from those not yet near enough to
+  const m = S.mealI != null ? mealOf(S.mealI) : nextMeal(clock - S.mealT, clock + MEAL_SWIM_S - TURN_SLACK);
   return { n: S.meal, i: m.i, kind: m.kind, toLand: m.land - clock };
 }
-// The meals that landed before the last one, back as far as a creature could
-// still be in the water: the stream does not draw them.
-export function eatenBefore(clock = nowS()) {
-  const last = clock - S.mealT, out = new Set();
-  let land = last - AHEAD() * 1.2;
-  for (let k = 0; k < 200; k++) {
-    const m = nextMeal(land);
-    if (m.land > last + 0.05) break;
-    out.add(m.i);
-    land = m.land;
-  }
-  // and the last one itself, by when it landed
-  for (let i = Math.max(0, Math.floor((last + AHEAD()) / FLOW_NEAR_EVERY_S) - 40); i <= Math.floor((last + AHEAD()) / FLOW_NEAR_EVERY_S) + 2; i++) {
-    const b = biteOf(i);
-    if (b != null && Math.abs(b + BITE_BEFORE - last) < 0.05) out.add(i);
-  }
-  return out;
-}
+// A frame's grace on the turn, so the creature the window picks is still the
+// one that turns on the frame it comes in reach.
+const TURN_SLACK = 0.25;
+// Whether the meal has turned for the mouth: it is in its swim.
+export const turned = toLand => toLand <= BITE_BEFORE + MEAL_SWIM_S;
+// The creatures eaten lately (`S.eaten`, saved): the stream does not draw them.
+export const eatenBefore = () => new Set(S.eaten || []);

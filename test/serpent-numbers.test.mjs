@@ -6,8 +6,8 @@
 // this.
 
 import { group, ok, yard } from './helpers.mjs';
-import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, MEAL_MIN_S, MEAL_MAX_S, SERPENT_DEFENSE,
-         SERPENT_HEAL, DOT_TICK_S, CLASSES } from '../src/config.js';
+import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, SERPENT_DEFENSE, SERPENT_WINDOW,
+         DOT_TICK_S, CLASSES } from '../src/config.js';
 import { EPHEMERAL } from '../src/state.js';
 import { climb, openEveryClass } from './party-press.mjs';
 import { rungWorth } from '../src/deep/classes.js';
@@ -105,19 +105,17 @@ group("a Mage's beam says its ticks once a second, not a number a tick", async (
 });
 
 group('the heal says what a meal closed, once a meal, in its own entry', async () => {
-  // The bare phase on a wound deep enough not to close in the watch, and
-  // nobody fighting: every entry is the heal's, one for each meal that lands.
+  // The bare phase, wounded and a fresh window, nobody fighting: the one
+  // entry is the meal's, the whole wound.
   window.__snatch({ played: true });
-  window.__serpent({ stage: 0, wound: SERPENT_HEAL[0] * 100 });
+  window.__serpent({ stage: 0, wound: 1234 });
   window.__deepCrew();
+  S.mealT = 0; S.mealI = null;
   const said = [];
-  frames(MEAL_MAX_S * 2 + 1, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
-  const gaps = said.slice(1).map((h, i) => (h.at - said[i].at) / 1000);
+  frames(SERPENT_WINDOW[0] * 2 + 50, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
   return [
-    ok(said.length >= 2 && said.length <= 4, 'a number a meal, not one a second', said.length),
-    ok(gaps.every(g => g >= MEAL_MIN_S - 0.05 && g <= MEAL_MAX_S + 0.05), 'six to twelve seconds apart', JSON.stringify(gaps)),
-    ok(said.slice(1).every((h, i) => Math.abs(h.done - SERPENT_HEAL[0] * gaps[i]) <= SERPENT_HEAL[0] / 30 + 1e-6),
-       'each the wound the heal banked in the wait before it', JSON.stringify(said.map(h => h.done.toFixed(2)))),
+    ok(said.length === 1, 'a number for the meal, and none for the meals after with nothing to close', said.length),
+    ok(said[0] && Math.abs(said[0].done - 1234) < 1e-6, 'the whole wound', JSON.stringify(said.map(h => h.done))),
     ok(S.hits.every(h => h.weapon === 'heal'), 'and nothing else struck')
   ];
 });

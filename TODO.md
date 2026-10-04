@@ -1,13 +1,12 @@
 # Still to do
 
-## The serpent heals whole: a phase is a window -- DESIGNED, AWAITING APPROVAL (2026-10-04)
+## The serpent heals whole: a phase is a window -- BUILT (2026-10-04)
 
-"The serpent heals whole: a phase is a window" in DESIGN.md. Each phase is a
-fixed window (40/32/26/20 s, no countdown shown); its meal heals to full.
-Stuns and Held pause it, the surge runs it fast, Weakened folds into Exposed
-(the Hexer Exposes from rung 4, harder from 8). Depths re-solved by deep-pace.mjs for one window's burst.
-Blocked on the owner's approval of the design, and on the owner's words for
-the Hexer's move line.
+"The serpent heals whole: a phase is a window" in DESIGN.md. Open:
+- **Nobody has played it.** Depths 4300 / 9400 / 6700 / 5100 are deep-pace's
+  for a four-fighter party; tune them in play.
+- **The meal scenes** commit their creature and run on; the shot no longer
+  pins the moment once it has turned.
 
 ## The story's objectives -- BUILT (2026-09-30)
 

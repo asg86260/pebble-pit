@@ -38,7 +38,7 @@ const stunFor = done => Math.min(STUN_MAX_S,
 const blowOf = k => SERPENT_WOUND[0] * STUN_SHARE * k;
 const stunAt = (k, o = { stun: 1 }) => { const p = belly(); return strike('brawler', blowOf(k), p.x, p.y, null, 0, o); };
 
-group("a Brawler's haymaker, at her capstone, stuns the ward, and the heal stops for as long", async () => {
+group("a Brawler's haymaker, at her capstone, stuns the ward, and the window stops for as long", async () => {
   deepYard(1);
   window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
   climb(S.stations[0].id, 'brawler', 8);
@@ -47,15 +47,15 @@ group("a Brawler's haymaker, at her capstone, stuns the ward, and the heal stops
   for (let f = 0; f < 60 * 30 && !got; f++) { frame(); got = S.serpentStun > 0; }
   const wound = S.serpentWound, stun = S.serpentStun;
   const hay = rungWorth(CLASSES.brawler, 8) * CLASSES.brawler.haymaker.x * SERPENT_DEFENSE.brawler[1];
-  // Held for the stun's length, a frame short: nothing closes, though she
-  // punches on.
-  let most = S.healBank;
-  const bank = S.healBank;
-  for (let f = 0; f < Math.floor(stun * 60) - 1; f++) { frame(); most = Math.max(most, S.healBank); }
+  // Held for the stun's length, a frame short: the window does not run,
+  // though she punches on (unless a creature had already turned for the mouth).
+  const t0 = S.mealT, turnedAt = S.mealI;
+  for (let f = 0; f < Math.floor(stun * 60) - 1; f++) frame();
+  const ran = S.mealT - t0;
   return [
     ok(got, 'a haymaker stuns the warded coil', `stun ${stun}`),
     ok(Math.abs(stun - stunFor(hay)) < 1 / 30, 'for the length the rule gives', `${stun} of ${stunFor(hay)}`),
-    ok(most <= bank + 1e-9, 'and not a scrap of the heal banks while it lasts', `${bank} then at most ${most}`)
+    ok(turnedAt != null || ran < 1e-9, 'and the window stands still while it lasts', `${ran}s ran`)
   ];
 }, { reload: false });
 

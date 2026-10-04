@@ -16,6 +16,8 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- Each serpent phase is a window: break the defense before it eats, or the meal heals it to full; stuns and Held stop the window, and the phases are far shallower (test/meals.test.mjs).
+- The Hexer's Wither now Exposes the serpent, so it takes more damage; Weakened is gone (test/classes.test.mjs).
 - Buying a fighter's rung closes the board and plays its level-up: it stops fighting and rises as a purple-hearted blaze twists up round it and ends in a burst of embers; the next rung waits until it has (test/classes.test.mjs).
 - The serpent's first defense breaks into a dive: it fades into the abyss and comes back up warded, the bar refilling and its four phase boxes showing for the first time (`node tools/look.mjs break-rise`).
 - Every later break is a roar: jaws wide, a bump running down the body with the new hide behind it, throwing off the fighters it passes (`node tools/look.mjs break-roar`).

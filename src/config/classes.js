@@ -74,10 +74,10 @@ export const CLASSES = {
   assassin: { name: 'Assassin',       ladder: 'assassin', hit: 'assassin', melee: true,
               every: 1.5, windup: 0.12, fly: 0.22, standoff: P * 7, range: P * 20, drift: 0.1,
               stunnedX: 3, execMost: 2, bleed: { dps: 0.3, s: 3 }, rhythm: { gaps: [0.35], string: 2 } },
-  // A hex bolt; at rung 4 it Weakens the heal, at 8 it stops the heal (Held)
+  // A hex bolt; at rung 4 it Exposes the serpent, at 8 harder, and stops its window (Held)
   // and lays Exposed.
   hexer:    { name: 'Hexer',          ladder: 'hexer',    hit: 'hexer',    melee: false,
-              every: 5, windup: 0.3, fly: 0.6, weaken: { k: 0.3, s: 8 }, hold: 2, exposed: 2 },
+              every: 5, windup: 0.3, fly: 0.6, expose: 8, hold: 2, exposed: 2 },
   // A thrown charge on the water's gravity; at rung 4 it sticks, ticks and blows
   // x3; at 8 two stick at once and their blow stuns. `pairX` is what each of
   // the pair hits for, of a lone charge, so two are not double.

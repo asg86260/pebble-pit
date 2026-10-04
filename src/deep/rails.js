@@ -58,7 +58,7 @@ const WORDS = {
   assassin: { fork: 'Strike quick and precise',
               move: ['Execution', 'punish wounds'], cap: ['Serrated', '{Bleed}'] },
   hexer:    { fork: 'Cast hexes that debuff',
-              move: ['Wither', '{Weakened}'], cap: ['Binding', '{Held}, {Exposed}'] },
+              move: ['Wither', 'serpent takes more damage'], cap: ['Binding', '{Held}, {Exposed}'] },
   sapper:   { fork: 'Learn explosives',
               move: ['Sticky bombs', 'stick, then blow'], cap: ['Pair', 'two bombs, {Stun}'] },
   mage:     { fork: 'Channel powerful beams',
@@ -74,13 +74,12 @@ const STATUS = {
   Stun: 'holds still, stops healing',
   Bleed: 'damage over time',
   Haste: `attacks ${pct(HASTE)} faster`,
-  Weakened: `heals ${pct(CLASSES.hexer.weaken.k)} slower`,
   Held: 'cannot heal',
-  Exposed: `takes ${pct(EXPOSED_AMP)} more damage`,
+  Exposed: `takes ${pct(EXPOSED_AMP[0])}-${pct(EXPOSED_AMP[1])} more damage`,
   Inspired: 'hits harder'
 };
 // The same line for a status's icon (render/statusicons.js), by the icon's key.
-const ICON_STATUS = { stun: 'Stun', bleed: 'Bleed', weakened: 'Weakened', held: 'Held', exposed: 'Exposed',
+const ICON_STATUS = { stun: 'Stun', bleed: 'Bleed', held: 'Held', exposed: 'Exposed',
                       haste: 'Haste', inspired: 'Inspired' };
 export const statusLine = key => (ICON_STATUS[key] ? `${ICON_STATUS[key]}: ${STATUS[ICON_STATUS[key]]}` : null);
 const plain = t => t.replace(/\{(\w+)\}/g, '$1');

@@ -1,95 +1,116 @@
-// The serpent eats to heal (DESIGN.md, "The serpent eats to heal"): its heal
-// is banked as it accrues and lands in one lump when a meal lands, every 6 to
-// 12 seconds, chosen fresh each meal. The average is what it always was; only
-// the arrival changed. Setup is the serpent's own (test/serpent.test.mjs).
+// The serpent heals whole (DESIGN.md, "The serpent heals whole: a phase is a
+// window"): each phase gives the party a window, and when it has run the
+// serpent eats the next creature to reach its mouth and the wound closes
+// whole. A stun or Held stops the window, the surge runs it fast, and a
+// creature already turned for the mouth is eaten whatever the window does.
+// Setup is the serpent's own (test/serpent.test.mjs).
 
-import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_HEAL, SERPENT_WOUND, MEAL_MIN_S, MEAL_MAX_S } from '../src/config.js';
+import { group, ok, yard, run } from './helpers.mjs';
+import { SERPENT_WOUND, SERPENT_WINDOW, MECHANICS } from '../src/config.js';
 import { nextMeal } from '../src/deep/meals.js';
 import { strike } from '../src/deep/serpent.js';
+import { lay } from '../src/deep/statuses.js';
 import { bellyAt } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 
 const S = yard.S;
 const frame = () => yard.fast(1 / 60);
 
-// The meal's clock set back to the top of a wait, so each check counts from a
-// fresh one whatever the setup ran.
+// A fresh window at `stage`, the wound set.
 function deepYard(stage = 0, wound = 0) {
   window.__snatch({ played: true });
   window.__deepCrew();
   window.__serpent({ stage, wound });
-  S.mealT = 0; S.healBank = 0;
+  S.mealT = 0; S.mealI = null; S.breakT = null;
 }
+const stunNow = () => { const p = bellyAt(now()); strike('brawler', 1, p.x, p.y, null, 1, { stun: 1 }); };
 
-group('meals come as creatures reach the mouth: never sooner than the shortest wait, never past the ceiling', async () => {
-  // forty meals in a row off one landing, as the clock alone would give them
-  const waits = [], kinds = new Set(), eaten = new Set();
-  let land = 1000;
-  for (let k = 0; k < 40; k++) { const m = nextMeal(land); waits.push(m.land - land); kinds.add(m.kind); eaten.add(m.i); land = m.land; }
-  const mean = waits.reduce((a, b) => a + b, 0) / waits.length;
+group('a meal comes once the window has run: each phase its own, shorter as the fight goes on', async () => {
+  const bad = [];
+  for (let stage = 0; stage < 4; stage++) {
+    deepYard(stage, 0);
+    let land = 1000;
+    for (let k = 0; k < 20; k++) {
+      const m = nextMeal(land), wait = m.land - land;
+      if (wait < SERPENT_WINDOW[stage] - 1e-9 || wait > SERPENT_WINDOW[stage] + 40) bad.push(`stage ${stage}: ${wait.toFixed(1)}`);
+      land = m.land;
+    }
+  }
   return [
-    ok(waits.every(w => w >= MEAL_MIN_S - 1e-9 && w <= MEAL_MAX_S), 'every wait is between the shortest and the ceiling', `${Math.min(...waits).toFixed(1)}..${Math.max(...waits).toFixed(1)}`),
-    ok(mean >= 8 && mean <= 18, 'about every thirteen seconds on average', mean.toFixed(1)),
-    ok(eaten.size === 40, 'each meal a different creature', `${eaten.size}`),
-    ok(kinds.size >= 6, 'and most of the eight come', `${kinds.size} of 8`),
-    ok(nextMeal(1000).i === nextMeal(1000).i, 'the same landing asks the same answer')
+    ok(bad.length === 0, 'every meal waits out its phase\'s window, and not much longer', bad.slice(0, 4).join('; ')),
+    ok(SERPENT_WINDOW.every((w, i) => i === 0 || w < SERPENT_WINDOW[i - 1]), 'and each window is shorter than the last', SERPENT_WINDOW.join(' '))
   ];
 });
 
-group('the heal waits in the bank and the wound closes in one step when the meal lands', async () => {
+group('when the meal lands the wound closes whole, in one step, and says so', async () => {
   deepYard(1, SERPENT_WOUND[1] / 2);
-  const start = S.serpentWound, at = S.meal;
-  let steps = 0, biggest = 0, was = S.serpentWound, bankAtLand = 0, bankWas = 0;
-  for (let f = 0; f < 60 * (MEAL_MAX_S + 2) && S.meal === at; f++) {
-    bankWas = S.healBank;
+  const at = S.meal;
+  let steps = 0, closed = 0, was = S.serpentWound;
+  for (let f = 0; f < 60 * (SERPENT_WINDOW[1] + 45) && S.meal === at; f++) {
     frame();
-    const drop = was - S.serpentWound;
-    if (drop > 1e-9) { steps++; biggest = Math.max(biggest, drop); bankAtLand = bankWas; }
+    if (was - S.serpentWound > 1e-9) { steps++; closed = was - S.serpentWound; }
     was = S.serpentWound;
   }
   return [
-    ok(S.meal === at + 1, 'a meal lands inside the ceiling', `meal ${at} then ${S.meal}`),
-    ok(steps === 1, 'the wound closes in one frame, not a trickle', `${steps} frames closed it`),
-    ok(Math.abs(biggest - bankAtLand) < SERPENT_HEAL[1] / 30, 'by the whole of the bank', `closed ${biggest.toFixed(1)}, banked ${bankAtLand.toFixed(1)}`),
-    ok(S.healBank < SERPENT_HEAL[1] / 30, 'which is empty after', `${S.healBank}`),
-    ok(start - S.serpentWound > SERPENT_HEAL[1] * MEAL_MIN_S * 0.9, 'and it is at least the wait\'s worth of the heal', `${start - S.serpentWound}`),
-    ok(S.hits.some(h => h.weapon === 'heal' && h.done > 0), 'and the heal says so once, at the belly')
+    ok(S.meal === at + 1, 'a meal lands', `meal ${at} then ${S.meal}`),
+    ok(S.mealT < 1, 'just now, at the end of the window', `${S.mealT}`),
+    ok(steps === 1 && S.serpentWound === 0, 'the wound closes whole, in one frame', `${steps} frames, ${S.serpentWound} left`),
+    ok(Math.abs(closed - SERPENT_WOUND[1] / 2) < 1, 'by all of it', `${closed}`),
+    ok(S.hits.some(h => h.weapon === 'heal' && Math.abs(h.done - closed) < 1e-6), 'and the heal says so once, at the belly')
   ];
 });
 
-group('over any run the wound closes by what the trickle closed, less what is still banked', async () => {
-  // the bare phase, which has no surge to change the rate
-  deepYard(0, SERPENT_WOUND[0] * 0.9);
-  const start = S.serpentWound, banked = S.healBank, secs = 70;
-  run(secs);
-  const closed = start - S.serpentWound + S.healBank - banked;
-  const owed = SERPENT_HEAL[0] * secs;
-  return [ok(Math.abs(closed - owed) < 1, 'the total is the rate over the time', `${closed.toFixed(1)} against ${owed.toFixed(1)}`)];
-});
-
-group('a stun stops the bank filling, and a meal lands all the same', async () => {
-  deepYard(1, SERPENT_WOUND[1] / 2);
-  const p = bellyAt(now());
-  strike('brawler', SERPENT_WOUND[1] / 4, p.x, p.y, null, 1, { stun: 1 });
-  const stunned = S.serpentStun > 0, bank = S.healBank, at = S.meal;
-  let most = bank;
-  while (S.serpentStun > 0) { frame(); most = Math.max(most, S.healBank); }
+group('a stun stops the window, and Held does too', async () => {
+  deepYard(0, SERPENT_WOUND[0] / 2);
+  run(2);
+  stunNow();
+  const stunned = S.serpentStun > 0, t0 = S.mealT;
+  while (S.serpentStun > 0) frame();
+  const stunHeld = S.mealT - t0;
+  deepYard(0, SERPENT_WOUND[0] / 2);
+  run(2);
+  lay('held', 0, 3);
+  const t1 = S.mealT;
+  run(2.5);
+  const heldHeld = S.mealT - t1;
   return [
     ok(stunned, 'the blow stuns him'),
-    ok(most <= bank + 1e-9, 'the bank does not fill while it lasts', `${bank} then ${most}`),
-    ok(S.mealT > 0 || S.meal > at, 'but the clock runs and a creature comes', `${S.mealT}`)
+    ok(stunHeld < 1e-9, 'the window stands still while he is stunned', `${stunHeld}`),
+    ok(heldHeld < 1e-9, 'and while he is Held', `${heldHeld}`)
   ];
 });
 
-group('a break starts the next defense hungry, on a new creature', async () => {
+group('the surge runs the window fast', async () => {
+  deepYard(1, 0);
+  const m = MECHANICS[1];
+  S.mechAt = m.every - m.last + 0.5;            // in the surge, its warning gone by
+  const t0 = S.mealT;
+  run(2);
+  const ran = S.mealT - t0;
+  return [ok(Math.abs(ran - 2 * m.x) < 0.2, `two seconds of the surge are ${m.x} times as much of the window`, `${ran.toFixed(2)}s`)];
+});
+
+group('a creature already turned for the mouth is eaten, stun or no stun', async () => {
+  deepYard(0, SERPENT_WOUND[0] / 2);
+  let f = 0;
+  while (S.mealI == null && f++ < 60 * (SERPENT_WINDOW[0] + 45)) frame();
+  const turnedTo = S.mealI, at = S.meal;
+  stunNow();
+  while (S.meal === at && f++ < 60 * 120) frame();
+  return [
+    ok(turnedTo != null, 'a creature turns for the mouth', `${turnedTo}`),
+    ok(S.meal === at + 1 && S.eaten.includes(turnedTo), 'and that creature is the one eaten, though he was stunned', `${S.eaten.slice(-3)}`)
+  ];
+});
+
+group('a break opens the next defense on a fresh window', async () => {
   deepYard(0, 0);
-  run(4);
-  const bank = S.healBank, at = S.meal;
+  run(6);
+  const ran = S.mealT;
   window.__serpent({ stage: 0, wound: SERPENT_WOUND[0] });
   run(0.1);
   return [
-    ok(bank > 0, 'there was a bank', `${bank}`),
-    ok(S.serpentStage === 1 && S.healBank < bank && S.meal === at + 1, 'a break empties it and moves the meal on', `stage ${S.serpentStage}, bank ${S.healBank}, meal ${S.meal}`)
+    ok(ran > 5, 'the window had been running', `${ran}`),
+    ok(S.serpentStage === 1 && S.mealT < 0.5, 'a break starts the next one from nothing', `stage ${S.serpentStage}, ${S.mealT}s in`)
   ];
 });

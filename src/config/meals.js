@@ -1,16 +1,12 @@
-// The serpent eats to heal (DESIGN.md, "The serpent eats to heal"): its heal
-// is banked as it accrues and lands in one lump when it swallows a creature
-// that has swum in from the left. Times are seconds; the creatures
+// The serpent eats to heal (DESIGN.md, "The serpent heals whole: a phase is a
+// window"): when a phase's window has run, it swallows the next creature to
+// reach its mouth and heals to full. Times are seconds; the creatures
 // themselves are drawn in render/fish.js.
 
-// The wait from one meal to the next, chosen afresh each meal between the
-// two so it is not a clock a player can count.
-export let MEAL_MIN_S = 6;
-export let MEAL_MAX_S = 30;   // a ceiling the stream keeps under, not a clock: meals come as creatures do
 // A meal, back from its landing: the creature swims in, goes in the mouth,
-// and the swallow runs to the belly, where the bank lands. The three add to
-// less than MEAL_MIN_S, so a creature is never in the water before the last
-// meal has landed.
+// and the swallow runs to the belly, where the heal lands. The three add to
+// less than the shortest window (SERPENT_WINDOW), so a creature is never
+// swimming in before the last meal has landed.
 export const MEAL_SWIM_S = 2.8;
 export const MEAL_GULP_S = 0.8;
 export const MEAL_SWALLOW_S = 2.4;
@@ -40,12 +36,8 @@ export const MEAL_CROSSES = 60;
 export const MEAL_CROSS_S = 0.6;
 export const MEAL_CROSS_RISE = 8;
 
-export const MEAL_KNOBS = [
-  { key: 'MEAL_MIN_S', label: 'meal wait, at least s', min: 4.9, max: 20, step: 0.5,
-    get: () => MEAL_MIN_S, set: v => { MEAL_MIN_S = Math.min(v, MEAL_MAX_S); } },
-  { key: 'MEAL_MAX_S', label: 'meal wait, at most s', min: 4.9, max: 30, step: 0.5,
-    get: () => MEAL_MAX_S, set: v => { MEAL_MAX_S = Math.max(v, MEAL_MIN_S); } },
-];
+// The meal's knobs are the windows' (SERPENT_WINDOW, config/deep.js).
+export const MEAL_KNOBS = [];
 
 // The deep's stream (the owner's C, docs/mocks/deep-flow-2026-10-03.html): the
 // eight creatures crossing the glass both ways at three depths, far to near --

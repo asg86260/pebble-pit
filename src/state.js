@@ -514,7 +514,8 @@ export const S = {
   endingAt: 0,            // when the rescue's sheet came up, for its hold before the snatch (ephemeral)
   handChipped: false,     // a piece knocked off a rock by your own click: the intro quest's first item
   askedWizards: false,    // the wizards' board looked at since the snatch: the story's line moves on
-  healBank: 0,            // the wound the heal has accrued since the last meal, closed when the next lands
+  mealI: null,            // the creature the next meal is, once it has turned for the mouth (deep/meals.js)
+  eaten: [],              // the last creatures eaten, which the stream does not draw again
   meal: 0,                // the meals the serpent has had: which creature is next, and how long it waits
   mealT: 0,               // seconds since the last meal landed
   mealLandedAt: 0,        // when the last one landed, on the game's clock, for the ring at the belly (drawn only)
@@ -530,7 +531,7 @@ export const S = {
   seenFang: false,
   fangsDropped: 0,        // the breaks that have dropped theirs, so a reload drops none twice
   fangsLoose: [],         // fangs sinking or lying on the floor, until a gatherer carries them
-  statuses: {},           // on the whole serpent: { bleed, exposed, held, weakened } -> { until, k }
+  statuses: {},           // on the whole serpent: { bleed, exposed, held } -> { until, k }
   stationBoardOpen: null, // the id of the station whose board is up
 
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
@@ -682,7 +683,7 @@ export const SAVED = [
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'healBank', 'meal', 'mealT', 'askedWizards', 'handChipped',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'askedWizards', 'handChipped',
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).
   'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',

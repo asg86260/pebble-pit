@@ -11,15 +11,15 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_HEAL, SERPENT_WOUND, SCALE_PER_DECADE,
+import { SERPENT_WOUND, SCALE_PER_DECADE,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
 import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
-import { ampOf, healLeft, has, clearStatuses } from './statuses.js';
-import { nextMeal } from './meals.js';
+import { ampOf, has, clearStatuses } from './statuses.js';
+import { mealNow, turned } from './meals.js';
 import { stepMechanic, resetMechanic, surgeK, sunk, guardOf, breaking, stepBreak } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
@@ -145,7 +145,6 @@ export const woundK = () => {                          // the wound as a fractio
 };
 
 // The heal this frame, after Weakened and the surge, in wound a second.
-export const healNow = () => S.serpentStage > LAST ? 0 : SERPENT_HEAL[S.serpentStage] * healLeft() * surgeK();
 
 // Who hears a phase break: the fang's drop (CREW's party.js) and anything
 // else that answers one. Called with the stage just reached, 1..4, on the
@@ -173,13 +172,13 @@ export const stepSerpent = c => {
   if (stunned) S.serpentStill += c.dt;
   // A break playing holds everything else: no turn, no heal, no meal; the
   // meal's clock runs on so the next one is a wait after the break began.
-  if (stepBreak(c)) { S.mealT += c.dt / 1000; return; }
+  if (stepBreak(c)) { landTurned(c); return; }
   stepMechanic(c);
   const d = depth();
   if (S.serpentWound < d) { stepMeal(c, stunned || has('held')); return; }
   S.serpentStage++;
   S.serpentWound = 0;
-  S.healBank = S.mealT = 0;                 // a new defense starts hungry, on a new creature
+  S.mealT = 0;                              // a new defense opens a new window
   S.meal++;
   S.serpentStun = S.serpentGrace = 0;
   clearStatuses();
@@ -209,22 +208,36 @@ function forget(t) {
 // whatever is on the serpent, so a creature comes either way; only the bank
 // is what the stun and Held stop. A lump under a whole one is not said.
 function stepMeal(c, stopped) {
-  if (!stopped) S.healBank += healNow() * c.dt / 1000;
-  S.mealT += c.dt / 1000;
-  // the creature the meal is, at the mouth and swallowed: it lands now
-  const clock = c.now / 1000, meal = nextMeal(clock - S.mealT);
-  if (clock < meal.land) return;
-  S.mealT = Math.max(0, clock - meal.land);
+  // The window's clock: stopped by a stun or Held, run fast by the surge, and
+  // let be once the creature has turned for the mouth.
+  const clock = c.now / 1000;
+  if (S.mealI == null) S.mealT += (stopped ? 0 : surgeK()) * c.dt / 1000;
+  else S.mealT += c.dt / 1000;
+  const meal = mealNow(clock);
+  if (S.mealI == null && turned(meal.toLand)) S.mealI = meal.i;
+  if (meal.toLand <= 0) land(c, meal, true);
+}
+// A creature that turned for the mouth before a break is still eaten, during
+// it: the new defense is whole already, so it closes nothing.
+function landTurned(c) {
+  if (S.mealI == null) return;
+  const meal = mealNow(c.now / 1000);
+  if (meal.toLand <= 0) land(c, meal, false);
+}
+// The swallow at the belly: the wound closed whole (DESIGN.md, "The serpent
+// heals whole"), and the number said where it lands.
+function land(c, meal, heals) {
+  S.mealT = Math.max(0, -meal.toLand);
   S.meal++;
-  // Stunned or Held, nothing closes: the creature is eaten, and the heal it
-  // would have landed waits for the next one.
-  if (stopped) return;
-  const closed = Math.min(S.healBank, S.serpentWound);
-  S.healBank = 0;
-  S.serpentWound -= closed;
+  S.eaten = [...(S.eaten || []), meal.i].slice(-EATEN_KEPT);
+  S.mealI = null;
   S.mealLandedAt = c.now;
+  const closed = heals ? S.serpentWound : 0;
+  S.serpentWound -= closed;
   if (Math.round(closed) < 1) return;
   const p = bellyAt(c.now), seg = bellySeg();
   S.hits.push({ at: c.now, shut: c.now, fold: c.now, x: p.x, y: p.y + coilThick(seg) / 2, done: closed,
                 weapon: 'heal', key: null, side: S.meal });
 }
+// How many eaten creatures are remembered: more than can be in the water at once.
+const EATEN_KEPT = 12;

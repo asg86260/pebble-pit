@@ -33,8 +33,9 @@ import weather from './2026-09-20-weather.js';
 import airFilter from './2026-09-22-air-filter.js';
 import crusher from './2026-09-23-crusher.js';
 import cloud from './2026-09-28-cloud.js';
+import wholeHeal from './2026-10-04-whole-heal.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

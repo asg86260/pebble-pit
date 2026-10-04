@@ -23,7 +23,7 @@ import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
-import { mealNow } from './deep/meals.js';
+import { nextMeal, turned, windowS } from './deep/meals.js';
 import { KINDS } from './render/fish.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
@@ -257,14 +257,15 @@ const mealScene = (kind, to, atBelly = false) => () => {
   deepYard({ stage: 1, wound: 0.4, party: [cast('ranger', 0)] });
   // the time since the last meal that puts the next one `to` seconds off
   // once the scene's second has run (the creature is whichever swims up)
-  let n = 0, best = 0, off = Infinity;
-  for (let m = 0; m < 40; m += 0.05) {
-    S.mealT = m;
-    const d = Math.abs(mealNow().toLand - 1 - to);
-    if (d < off) { off = d; best = m; }
+  // (a meal already turned for the mouth is the sim's to keep, so it is set so)
+  let n = 0, best = null, off = Infinity;
+  const clock = now() / 1000;
+  for (let m = 0; m < windowS() + 30; m += 0.05) {
+    const meal = nextMeal(clock - m), d = Math.abs(meal.land - clock - 1 - to);
+    if (d < off) { off = d; best = { m, meal }; }
   }
-  S.mealT = best;
-  S.healBank = 300;
+  S.mealT = best.m;
+  S.mealI = turned(best.meal.land - clock) ? best.meal.i : null;
   lookDeep(atBelly ? coilAt(bellySeg() - 6, now()).x : coilAt(0, now()).x - 150);
   // A meal's moments are quicker than a shot takes, so the clock is held on
   // the page's frames for a few seconds once the second of yard has run.
@@ -704,10 +705,10 @@ const deepScenes = {
   // Every status the serpent can wear, at once: a Swordsman's Bleeding, a
   // Sapper's Exposed, a Hexer's Weakened and Held, laid long so the shot
   // catches all four whatever the fighters' timing.
-  'party-statuses': { about: 'the deep', say: 'the serpent wearing all four statuses at once: Bleeding, Exposed, Held, Weakened',
+  'party-statuses': { about: 'the deep', say: 'the serpent wearing every status at once: Bleeding, Exposed, Held',
     run: () => {
       deepYard({ stage: 2, wound: 0.25, party: [cast('sword', 4), cast('sapper', 4), cast('hexer', 8)] });
-      for (const [key, k] of [['bleed', 0.5], ['exposed', 0.25], ['held', 1], ['weakened', 0.3]]) lay(key, k, 30);
+      for (const [key, k] of [['bleed', 0.5], ['exposed', 0.25], ['held', 1]]) lay(key, k, 30);
       lookDeep(coilAt(bellySeg() - 4, now()).x);
     } },
   // A station going up, half built: its scaffold at the second slot, the

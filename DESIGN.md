@@ -16905,7 +16905,7 @@ break").
   (`barflight.js`), so it shows the old wound until the lump's number goes in.
 - **The heal number's colors and size** stay as built.
 
-## The serpent heals whole: a phase is a window (design, not built)
+## The serpent heals whole: a phase is a window (built 2026-10-04)
 
 Asked by the owner, 2026-10-04. Supersedes the heal half of "The serpent eats
 to heal": the meals, the stream and the eating stay as drawn; what a meal
@@ -17004,8 +17004,29 @@ not what it can do over the heal.
   smaller amp and at 8 at the bigger, a stronger lay replacing a weaker. Each check is reached by striking
   and buying, as a player does.
 
+### As built (2026-10-04)
+
+- `SERPENT_WINDOW` (config/deep.js) is 40 / 32 / 26 / 20 s, four dev-panel
+  knobs; `MEAL_MIN_S`, `MEAL_MAX_S`, `SERPENT_HEAL`, the bank and
+  `HEAL_CUT_MAX` are gone, and a migration (`2026-10-04-whole-heal.js`,
+  `SAVE_V` 8) drops a save's bank and its Weakened.
+- **The turned creature.** Once the meal is in its swim it is kept on the
+  serpent (`S.mealI`, saved), so a stun, Held or the surge moves the window
+  but never a creature already swimming in; one chosen afresh is never one
+  already in its swim (`mealNow`'s floor). The creatures eaten are a saved
+  list (`S.eaten`), not worked out again from the windows.
+- **Depths** are `tools/node/deep-pace.mjs --solve 8,22,40,60` with the default
+  party, rounded: **4300 / 9400 / 6700 / 5100**. The quarter-of-today guess
+  walled at phase 2: four fighters at full rungs cannot do 23,000 in a 32 s
+  window. They fall after phase 2 because the windows shorten and the
+  resists bite; the model's party is four, and a bigger one breaks sooner.
+
 ### Open
 
+- **Nobody has played it.** The depths are a model's, for four fighters; a
+  real party is often bigger.
+- **The meal scenes** (`meal-swim` .. `meal-land`) commit their creature and
+  then run on the clock: the hold no longer pins a moment once it has turned.
 - **The window can be gamed** the way the lumps could: a party that holds its
   capstones for the window's last seconds bursts best. That is the intended
   skill here, not an exploit.

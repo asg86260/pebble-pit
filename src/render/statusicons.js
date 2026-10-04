@@ -78,7 +78,7 @@ const tileW = () => 5 * STATUS_PX + 4;
 function foeStatuses(t) {
   const out = [];
   if (S.serpentStun > 0) out.push({ key: 'stun', until: t + S.serpentStun * 1000 });
-  for (const key of ['bleed', 'weakened', 'exposed', 'held']) {
+  for (const key of ['bleed', 'exposed', 'held']) {
     const e = S.statuses?.[key];
     if (!e || !(t < e.until)) continue;
     const n = key === 'bleed' ? Object.values(e.src || {}).filter(b => t < b.until).length : 0;

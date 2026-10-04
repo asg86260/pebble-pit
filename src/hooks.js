@@ -1082,7 +1082,7 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 // that is not about getting there, and the rule that the stage never goes
 // back is told the setup is a new starting point.
 import { layScales, looseScales } from './deep/scales.js';
-import { healNow, woundK } from './deep/serpent.js';
+import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
 import { forgetSerpent } from './verify.js';
 import { resetMechanic, part as phasePart } from './deep/phases.js';
@@ -1107,8 +1107,8 @@ HANDLES.__scales = n => layScales(n);                 // crushed: a purse to spe
 HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for the gatherers
 HANDLES.__setScales = n => { S.scales = Math.max(0, Math.floor(n || 0)); return S.scales; };   // the crushed purse, set outright
 HANDLES.__deepState = () => ({
-  stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(), heal: healNow(),
-  meal: { n: S.meal, t: S.mealT, bank: S.healBank },
+  stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(),
+  meal: { n: S.meal, t: S.mealT, i: S.mealI },
   freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
   mech: { at: S.mechAt, skip: S.mechSkip, ...phasePart() },
   statuses: JSON.parse(JSON.stringify(S.statuses)),

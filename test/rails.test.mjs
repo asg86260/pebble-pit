@@ -252,7 +252,7 @@ group("at the fork each specialist's row shows its move and its capstone, status
        JSON.stringify(rows.map(r => r.branch))),
     ok(by('brawler').cap[1] === '{Stun}' && by('sword').cap[1] === '{Bleed}',
        'the capstones name their statuses', `${by('brawler').cap[1]} / ${by('sword').cap[1]}`),
-    ok(hexer && hexer.move[1] === '{Weakened}' && hexer.cap[1] === '{Held}, {Exposed}',
+    ok(hexer && hexer.move[1] === 'serpent takes more damage' && hexer.cap[1] === '{Held}, {Exposed}',
        "the Hexer's move and capstone name theirs", JSON.stringify(hexer))
   ];
 });

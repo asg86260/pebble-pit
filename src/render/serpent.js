@@ -186,8 +186,6 @@ export function drawSerpent() {
   const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
   const gap = held ? Math.round(wk * WOUND_GAP / P) * P : 0;
   const reach = wk * CRACK_REACH;
-  // Weakened: the hide goes dull, a tone down (the class bench's painter).
-  const dull = has('weakened');
   const wardPh = t / WARD_MS * Math.PI * 2;
   // The resist up shows on the hide: the ward's purple shimmer for magic,
   // plates for physical; the coming one flickers in before the fading's
@@ -311,7 +309,6 @@ export function drawSerpent() {
     }
     if (shown === 'physical' && ((aI % PLATE_EVERY) + PLATE_EVERY) % PLATE_EVERY < PLATE_W)
       rung = across < -r + P ? WHITE - PLATE_EDGE : WHITE - PLATE_TONE;
-    if (dull && ramp === GREYS && rung > WHITE - 3) rung -= 2;
     // The cracks: two, wandering across the body, out from the belly as far
     // as the wound is deep; near black at the wound, greyer at their tips.
     if (reach > 0 && Math.abs(da) < reach) {
@@ -462,7 +459,7 @@ function drawThrob(t, b) {
 // --- the statuses on the whole serpent ------------------------------------------
 // The class bench's painters (docs/mocks/classes), laid over the coil as
 // drawn: Bleeding drips off the belly, Held clasps it in the circle's bands,
-// Exposed lifts a scale every few columns; Weakened is the dull hide above.
+// Exposed lifts a scale every few columns.
 // A stunned coil only holds still under its ring. Read off `S.statuses`,
 // which the fight keeps (deep/statuses.js).
 const has = key => { const s = S.statuses?.[key]; return !!s && s.until > now(); };
