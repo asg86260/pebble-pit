@@ -1,5 +1,14 @@
 # Still to do
 
+## The serpent heals whole: a phase is a window -- DESIGNED, AWAITING APPROVAL (2026-10-04)
+
+"The serpent heals whole: a phase is a window" in DESIGN.md. Each phase is a
+fixed window (40/32/26/20 s, no countdown shown); its meal heals to full.
+Stuns and Held pause it, the surge runs it fast, Weakened makes the meal heal
+part of the way. Depths re-solved by deep-pace.mjs for one window's burst.
+Blocked on the owner's approval of the design, and on the owner's words for
+Weakened's hover line.
+
 ## The story's objectives -- BUILT (2026-09-30)
 
 "The story's objectives" in DESIGN.md. Open: nobody has read the line

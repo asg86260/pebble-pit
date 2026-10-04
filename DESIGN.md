@@ -16905,6 +16905,108 @@ break").
   (`barflight.js`), so it shows the old wound until the lump's number goes in.
 - **The heal number's colors and size** stay as built.
 
+## The serpent heals whole: a phase is a window (design, not built)
+
+Asked by the owner, 2026-10-04. Supersedes the heal half of "The serpent eats
+to heal": the meals, the stream and the eating stay as drawn; what a meal
+does changes.
+
+### The bargain
+
+Today a phase is a damage-per-second check. The heal trickles into a bank and
+lands in lumps, and a party breaks the defense once it out-hits the heal. The
+player cannot see the check. They watch a bar creep down, and a party a little
+under the heal never gets anywhere, which looks like the game stalling rather
+than a wall.
+
+It becomes a **window**. Each phase gives the party a fixed stretch of the
+serpent's attention. When it runs out, the serpent eats a creature and
+**heals to full**. Break the defense inside the window, or start that defense
+over. The wall is now one the player can see: a creature swims in, and the
+bar goes back to full. The answer is a bigger burst, not a slower grind.
+
+The cost: a party just short of the burst gets the same "nothing happens" as
+before, but now it is a visible reset rather than a creep. The depths come
+down a long way, because a defense is now what a party can do in one window,
+not what it can do over the heal.
+
+### The rules
+
+- **The window.** Each phase has a length, `SERPENT_WINDOW` (a written table
+  a phase, first guesses 40 / 32 / 26 / 20 s; shorter as the fight goes on).
+  Its clock is `S.mealT`, as now: seconds since the last meal landed, or since
+  the phase opened.
+- **No countdown is shown.** The fish swimming in is the cue (the owner,
+  2026-10-04). The bar has no timer and the page has no number.
+- **The meal ends it.** The window has run out when `S.mealT` reaches the
+  phase's length. The meal is then the next creature of the near stream heading
+  for the mouth: `nextMeal` as now, with `MEAL_MIN_S` replaced by the phase's
+  window. So a window is its length plus however long that creature takes to
+  arrive (the stream brings one every several seconds). The creature is
+  already swimming when the window ends; nothing is spawned for it.
+- **The meal heals to full.** When the swallow lands, the wound is closed
+  completely: `S.serpentWound = 0`. The bank, `SERPENT_HEAL` and `healNow`
+  go. The heal's number says what it closed, purple, where the swallow lands,
+  as now.
+- **Stuns and Held pause the window.** A stunned or Held serpent cannot eat:
+  `S.mealT` does not advance while either holds (it does advance today), so
+  the party gets that time back. A creature already in the mouth when a stun
+  lands is still swallowed; the window just ends later.
+- **The break is asked first,** before the meal, as now: a defense broken on
+  the frame the meal lands is broken, and a new phase opens with a fresh window.
+- **A break resets the window.** The new phase starts at `S.mealT = 0`, and
+  the phase-break animation plays first (the dive and the roar). The window
+  clock does not run during the break.
+
+### The mechanics that worked on the heal
+
+- **The surge (phase 2)** becomes **the window running fast**: for its 6 s the
+  window clock runs at `SURGE_X` (3) times speed, so it eats sooner. Its
+  warning and its answer stay: a stun in the warning spends it, and during the
+  surge a stun still pauses the clock outright.
+- **Weakened (the Hexer from rung 4)** becomes **a meal that heals part of the
+  way back**: the swallow closes `1 - k` of the wound rather than all of it
+  (k the Weakened level, capped at `HEAL_CUT_MAX` as now). A weakened meal
+  leaves a dent the next window starts from.
+- **The sink (phase 4)** is unchanged: nothing hits him while he is under,
+  and the window keeps running. It costs uptime out of a short window, which
+  is why the bursts that land before he goes under are its answer.
+- **The lash (phase 3)** is unchanged.
+
+### The numbers
+
+- **Depths come down** to what the expected party does in one window, about
+  70% of its burst over the window at the rungs it should have by then. The
+  heal table goes. `tools/node/deep-pace.mjs` is re-solved for "the party's
+  damage over one window" in place of "the party's DPS over the heal", and the
+  new `SERPENT_DEPTHS` come from it. The dev panel's knobs become the window
+  a phase and the depth scale.
+- **First guess before the model runs:** each depth at roughly a quarter of
+  today's, so that the first party a player can field breaks the bare defense
+  in two or three windows.
+
+### What it must not break
+
+- **Nothing teleports.** The full heal is the bar going back up and the hide's
+  wound closing, as the lump does today. A heal from near-empty is a big
+  number, said once.
+- **A reload mid-window** resumes the same window: `S.mealT` and the meal
+  counter are already saved; the bank is dropped from the save (a migration
+  file, the save floor's way).
+- **The checks.** `verify.js`'s meal rule still holds (a meal is never overdue
+  past its window). `test/meals.test.mjs` loses the bank and the average-heal
+  check. It gains: a meal heals to full; a stun or Held pauses the window; the
+  surge shortens it; Weakened leaves a dent. Each check is reached by striking
+  and buying, as a player does.
+
+### Open
+
+- **The window can be gamed** the way the lumps could: a party that holds its
+  capstones for the window's last seconds bursts best. That is the intended
+  skill here, not an exploit.
+- **The Weakened hover line** says the heal is cut. It will need the owner's
+  words for "the meal heals less" (player copy is the owner's).
+
 ## The story's objectives (built 2026-09-30)
 
 Asked for by the owner, 2026-09-30, with three calls made: one pinned line at
