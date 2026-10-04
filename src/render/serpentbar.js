@@ -15,7 +15,7 @@ import { drawFoeStatuses } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
          BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
-         BAR_CHIP_MIN, BAR_CHIP_MAX, BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP, STATUS_PX,
+         BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP, STATUS_PX,
          SERPENT_WOUND } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
@@ -96,20 +96,23 @@ export function drawSerpentBar() {
       fill(BAR_TRACK, px + BAR_STUN_RIM, py + BAR_STUN_RIM, BAR_PIP - BAR_STUN_RIM * 2, BAR_PIP - BAR_STUN_RIM * 2);
     }
   }
-  // Every blow that has landed lately knocks a chip out of the fill's end.
+  // Every blow that has landed lately knocks a sliver out of the fill's end.
+  const depthUp = SERPENT_WOUND[Math.min(S.serpentStage, SERPENT_WOUND.length - 1)] || 1;
   const end = x + len(left);
   for (const h of S.hits) {
     if (h.weapon === 'heal') continue;
     const a = (t - landsAt(h)) / 1000;
     if (a < 0 || a >= BAR_CHIP_S) continue;
-    const w = Math.round(BAR_CHIP_MIN + blowK(h.done) * (BAR_CHIP_MAX - BAR_CHIP_MIN)), half = BAR_H / 2;
+    // The sliver the blow took: its share of the defense, the bar's whole
+    // height, a pixel at the least.
+    const w = Math.max(1, Math.round(BAR_W * h.done / depthUp));
     const lit = a < BAR_CHIP_POSE_S, dir = h.side % 2 ? 1 : -1;
-    if (a < BAR_CHIP_OPEN_S) fill(lit ? BAR_CHIP : BAR_TRACK, end - w, h.side % 2 ? y : y + half, w, half);
-    // the chip, out of the notch and down past the bar, turned over a pose at a time
+    if (a < BAR_CHIP_OPEN_S) fill(lit ? BAR_CHIP : BAR_TRACK, end - w, y, w, BAR_H);
+    // and it, out of the notch and down past the bar, turned over a pose at a time
     const flat = Math.floor(a / BAR_CHIP_POSE_S) % 2 === 0;
     const cx = end - w / 2 + dir * BAR_CHIP_FALL.side * a, cy = y + BAR_CHIP_FALL.down * a + BAR_CHIP_FALL.grav * a * a;
-    const cw = flat ? w : Math.ceil(w / 2), ch = flat ? half : Math.ceil(w / 2);
-    fill(lit ? BAR_LEFT : BAR_CHIP, Math.round(cx - cw / 2), Math.round(cy + (h.side % 2 ? 0 : half)), cw, ch);
+    const cw = flat ? w : BAR_H, ch = flat ? BAR_H : w;
+    fill(lit ? BAR_LEFT : BAR_CHIP, Math.round(cx - cw / 2), Math.round(cy), cw, ch);
   }
   // what the fighters have laid on the serpent, in a row under the bar
   drawFoeStatuses(x, y + BAR_H + STATUS_GAP + 1);
