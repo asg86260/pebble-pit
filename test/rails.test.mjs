@@ -14,7 +14,7 @@
 // (src/selftest/deep.js).
 
 import { group, ok, yard, runUntil } from './helpers.mjs';
-import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, LEVELUP_S, rungDust, rungValue } from '../src/config.js';
+import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, LEVELUP_S, LEVELUP_BURST_S, rungDust, rungValue } from '../src/config.js';
 import { railsOf, lookAt, pressKind, pressBuy, pressReset } from '../src/deep/rails.js';
 import { classLadder, rungBill } from '../src/deep/rows.js';
 import { stationById, levelingUp } from '../src/deep/party.js';
@@ -122,7 +122,7 @@ group("a rung's level-up holds the station's next rung back until it has played"
   return [
     ok(first && started, 'a rung bought starts its level-up', `${first} ${started}`),
     ok(!during && !again && held === 1, 'and while it plays the next row is shut and a press buys nothing', `${during} ${again} rung ${held}`),
-    ok(after && then && st().rung === 2, `after ${LEVELUP_S}s the row opens again`, `${after} ${then} rung ${st().rung}`)
+    ok(after && then && st().rung === 2, `after ${LEVELUP_S + LEVELUP_BURST_S}s the row opens again`, `${after} ${then} rung ${st().rung}`)
   ];
 });
 

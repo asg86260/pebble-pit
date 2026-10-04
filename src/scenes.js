@@ -20,7 +20,7 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
 import { mealNow } from './deep/meals.js';
@@ -453,6 +453,15 @@ const deepScenes = {
       stageScene(0, 0.3, [cast('ranger', 3), cast('brawler', 3)])();
       const st = S.stations[0], until = performance.now() + 4000;
       const hold = () => { if (performance.now() < until) { st.lvlAt = now() - 700; requestAnimationFrame(hold); } };
+      hold();
+      const w = S.workers.find(o => o.uid === st.fighter);
+      if (w) lookDeep(w.x);
+    } },
+  'level-up-burst': { about: 'the deep', say: "the level-up's end: the corkscrew's tongues flown out as embers",
+    run: () => {
+      stageScene(0, 0.3, [cast('ranger', 3), cast('brawler', 3)])();
+      const st = S.stations[0], until = performance.now() + 4000;
+      const hold = () => { if (performance.now() < until) { st.lvlAt = now() - (LEVELUP_S + LEVELUP_BURST_S * 0.35) * 1000; requestAnimationFrame(hold); } };
       hold();
       const w = S.workers.find(o => o.uid === st.fighter);
       if (w) lookDeep(w.x);
