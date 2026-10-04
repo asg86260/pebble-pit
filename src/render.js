@@ -51,7 +51,7 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
 import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSnatch } from './render/serpent.js';
-import { drawFish } from './render/fish.js';
+import { drawFish, drawFishFar, drawFishNear } from './render/fish.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawStationStatuses } from './render/statusicons.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
@@ -191,6 +191,7 @@ const LAYERS = [
   // post stands on the deep's floor like any other.
   { name: 'deep water', draw: drawDeepWater },
   { name: 'deep motes', draw: drawDeepMotes },
+  { name: 'deep stream far', draw: drawFishFar },   // the giant and the far and middle crossings, behind all of it
   { name: 'deep portal', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
   { name: 'deep floor', draw: drawDeepFloor },
   // The scales, then the stations standing in front of them: the bed can
@@ -201,6 +202,7 @@ const LAYERS = [
   { name: 'deep stations', draw: drawDeepStations },
   { name: 'deep fish', draw: drawFish },   // what the serpent eats, in front of the water and behind its head
   { name: 'serpent', draw: drawSerpent },
+  { name: 'deep stream near', draw: drawFishNear },   // the near crossings, in front of the serpent
   { name: 'swimmers', draw: drawSwimmers },
   // The fighters in front of the coil they strike and the swimmers passing,
   // and what leaves them -- arrows, beams, charges, hexes, notes -- over all
@@ -284,7 +286,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'deep fish', 'serpent', 'swimmers', 'party', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'deep fish', 'deep stream far', 'deep stream near', 'serpent', 'swimmers', 'party', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

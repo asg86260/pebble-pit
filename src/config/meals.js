@@ -16,7 +16,7 @@ export const MEAL_GULP_S = 0.8;
 export const MEAL_SWALLOW_S = 2.4;
 // How far behind the mouth a creature starts its swim, in cells, and how much
 // of the wait to the next meal it may start in.
-export const MEAL_SWIM_CELLS = 44;
+export const MEAL_SWIM_CELLS = 44;   // at least: it starts off the glass if the glass reaches further
 // The jaws (the owner's A, docs/mocks/heal-eat-2026-09-30.html): hinged this
 // many cells back from the tip, they swing apart until each stands MEAL_GAPE
 // cells off the mouth's line at the tip, starting this long before the
@@ -46,3 +46,18 @@ export const MEAL_KNOBS = [
   { key: 'MEAL_MAX_S', label: 'meal wait, at most s', min: 4.9, max: 30, step: 0.5,
     get: () => MEAL_MAX_S, set: v => { MEAL_MAX_S = Math.max(v, MEAL_MIN_S); } },
 ];
+
+// The deep's stream (the owner's C, docs/mocks/deep-flow-2026-10-03.html): the
+// eight creatures crossing the glass both ways at three depths, far to near --
+// how big a cell is against the deep's own, how fast they cross (screen pixels
+// a second), how much of the camera's pan they follow, and what share of the
+// stream each depth is. One sets off every FLOW_EVERY_S on average, from off
+// the glass. A giant crosses far behind everything every FLOW_GIANT_S.
+export const FLOW_EVERY_S = 2.2;
+export const FLOW_CELL = [0.35, 0.55, 0.85];
+export const FLOW_SPEED = [14, 26, 42];
+export const FLOW_PARALLAX = [0.25, 0.55, 0.85];
+export const FLOW_SHARE = [0.45, 0.35, 0.2];
+export const FLOW_MARGIN = 160;       // screen pixels off the glass a crossing starts and ends
+export const FLOW_GIANT_S = 60;
+export const FLOW_GIANT_SPEED = 9;

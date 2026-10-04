@@ -16849,6 +16849,12 @@ break").
 
 ### The picture
 
+- The stream (the owner's C, `docs/mocks/deep-flow-2026-10-03.html`): the eight
+  cross the glass both ways at three depths -- far as flat dark silhouettes,
+  middle dimmed, near as drawn and in front of the serpent -- with a giant far
+  behind every `FLOW_GIANT_S`, each depth sliding with its share of the pan.
+  Every crossing starts and ends off the glass; the meal's creature sets off
+  off the glass too. No creature trails anything.
 - `render/fish.js` draws the creature from its local frame, cell by cell, over
   the water and behind the serpent's head; it enters at the deep's left edge and
   is clipped at the serpent's face while it goes in, so it is *eaten*, not

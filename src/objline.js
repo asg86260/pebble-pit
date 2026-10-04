@@ -25,7 +25,7 @@ export function seatObjective(t) {
   const key = want ? want.key : null;
   if (shown && key !== shown.key) {
     // the one done: struck through and faded, then the next
-    if (!leaving) { leaving = t + STRIKE_MS; say.classList.add('done'); }
+    if (!leaving) { leaving = t + STRIKE_MS; say.classList.add('done'); if (list) { list.hidden = true; listed = ''; } }
     if (t < leaving) return;
     leaving = 0;
     say.classList.remove('done');
