@@ -263,3 +263,23 @@ group('set back after the kill, the next fourth break plays it all again', async
     ok(S.beat.sheet === 'freedsheet' && S.crew === crew + 1, 'and the meeting and the sheet come again', `${S.beat.sheet} crew ${crew} then ${S.crew}`)
   ];
 });
+
+// Down and gone after the kill there is nothing to fight: the party stops and
+// goes back to its posts until the serpent has gathered itself again.
+group('after the kill the fighters stop and go back to their posts', async () => {
+  window.__snatch({ played: true });
+  window.__party({ stations: [{ kind: 'altar', cls: 'brawler', rung: 8 }] });
+  window.__serpent({ stage: 3, wound: 0 });
+  runUntil(() => S.workers.some(w => w.station && w.goal === 'fight'), 30);
+  const p = bellyAt(now());
+  strike('punch', SERPENT_WOUND[3], p.x, p.y);
+  run(0.1);
+  const seen = new Set(S.hits);
+  run(KILL.last + KILL.limp + KILL.apart + 3);
+  const blows = S.hits.filter(h => !seen.has(h) && h.weapon !== 'heal' && h.weapon !== 'punch').length;
+  const w = S.workers.find(o => o.station);
+  return [
+    ok(blows === 0, 'no blow lands on him down or gone', `${blows}`),
+    ok(w && w.goal === 'back' && Math.abs(w.y + WORKER - deepFloor()) <= P * 12, 'the fighter has gone back down to its post', `${w && w.goal} at ${w && Math.round(w.y)}`)
+  ];
+});

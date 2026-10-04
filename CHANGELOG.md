@@ -87,6 +87,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
 - Fighters at the serpent's hide are no longer dragged under the deep's floor when it dives or lies down (test/party.test.mjs).
 - Hovering a fighter up at the serpent no longer drops it to the deep's floor (test/classes.test.mjs).
+- After the serpent's death the fighters stop attacking it and go back to their posts, the motes fade away instead of hanging in the water, and the head comes apart with the rest (test/snatch.test.mjs).
 
 - The serpent no longer sheds more scales than the gatherers can ever carry to the crusher (test/serpent.test.mjs).
 - The deep's build button shows its price, one fang, instead of how many fangs you hold (src/selftest/deep.js).

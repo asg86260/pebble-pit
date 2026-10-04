@@ -435,12 +435,13 @@ function drawVeil(t, pts) {
 // --- the kill ---------------------------------------------------------------------
 // Whether the hide at a laid point is whole: not yet come apart (the tail goes
 // first), or gathered again (the head comes first).
-const kOf = p => p.u / (COIL_SEGS - 1);
+// The snout's points lie before the head's first segment: they count as the head.
+const kOf = p => Math.max(0, p.u / (COIL_SEGS - 1));
 function wholeAt(p) {
   const back = reformK();
   if (back != null) return kOf(p) < back || back >= 1;
   const apart = apartK();
-  return apart <= 0 || kOf(p) < 1 - apart;
+  return apart <= 0 || (apart < 1 && kOf(p) < 1 - apart);
 }
 // The motes: off the hide as it comes apart, up and dimming; and drawing in
 // over where it is about to gather.
@@ -457,7 +458,8 @@ function drawKillMotes(t, laid) {
       ctx.fillRect(x, y, P, P);
       continue;
     }
-    const age = (apart - (1 - k)) * KILL.apart;
+    // on the kill's own clock, so they run out after the coming apart has
+    const age = killA() - (KILL.last + KILL.limp + (1 - k) * KILL.apart);
     if (age < 0 || age > KILL_MOTE_S) continue;
     const up = Math.floor(age * KILL_MOTE_RISE);
     for (let n = 0; n < 2; n++) {
