@@ -1,0 +1,266 @@
+<title>Deep Creature Flow</title>
+<style>
+/* Layout: one pane per way of drawing depth, the same deep in each: a stream
+   of creatures crossing at three depths, all from off the glass, and the
+   serpent taking one now and then. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 13px; margin: 0; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Deep Creature Flow</h1>
+    <p>A steady stream of the eight creatures crosses the deep, both ways, at three depths: far, middle and near.
+      Every one enters from off the glass and leaves off the other side; none appears in the water. Now and then the
+      serpent takes a near one, which turns from its path to the mouth and is eaten. No trails behind any creature.
+      Each pane draws depth a different way. A mock drawn from plain shapes, not the game: the serpent is a straight
+      band with simplified jaws; the meals come every 6 to 12 seconds as in the game.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+(() => {
+  const W = 640, H = 300;
+  const PUR = ['#130b20', '#1b112c', '#241739', '#2d1d47', '#412465', '#5c2ba6', '#6a2fbe', '#9b5de5', '#c9a7f5'];
+  const GREY = ['#26262c', '#42424a', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const ease = x => x * x * (3 - 2 * x);
+  const ell = (put, cx, cy, rx, ry, tone) => {
+    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++)
+      for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) {
+        const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+        if (d <= 1) put(x, y, tone(x, y, d));
+      }
+  };
+  const SP = [
+    { name: 'Lantern angler', L: 18, trail: 'motes', bob: t => Math.sin(t * 2.4) * 1.6,
+      note: 'Fat dark body, a lower jaw that snaps, a tail that flicks, and a lure on a curving stalk whose bulb pulses; the lure sheds motes of light.',
+      draw(put, t) {
+        const flick = Math.sin(t * 9), jaw = Math.sin(t * 6) > 0.3 ? 1 : 0;
+        ell(put, 6.5, 0, 6, 3.2, (x, y, d) => y > 1 ? GREY[1] : d > 0.7 ? GREY[3] : GREY[2]);
+        for (let x = 0; x <= 4; x++) put(x, 2 + jaw, GREY[1]);
+        for (const x of [0, 2, 4]) put(x, 1, GREY[5]);
+        for (let i = 0; i < 4; i++) { put(11 + i, Math.round(flick * i * 0.4) - 1, GREY[2]); put(11 + i, Math.round(flick * i * 0.4) + 1, GREY[1]); }
+        put(12, Math.round(flick * 1.6), GREY[2]);
+        put(8, -4, GREY[1]); put(9, -4, GREY[1]);
+        put(4, -1, GREY[5]); put(3, -1, GREY[0]);
+        const bulb = PUR[6 + Math.round(Math.sin(t * 5) + 1)];
+        for (const [x, y] of [[9, -3], [8, -4], [6, -5], [4, -6], [2, -6], [1, -5]]) put(x, y, GREY[1]);
+        put(0, -5, bulb); put(0, -4, bulb); put(-1, -5, PUR[8]); put(-1, -4, bulb);
+      } },
+    { name: 'Ribbon eel', L: 26, trail: 'ink', bob: t => 0,
+      note: 'A long thin body swimming in a travelling wave, a pale belly stripe, dorsal frills and a small toothed head; a faint ink of purple hangs where it has been.',
+      draw(put, t) {
+        for (let i = 0; i < 26; i++) {
+          const amp = 0.6 + i * 0.09, yy = Math.round(Math.sin(i / 2.4 - t * 7) * Math.min(2.6, amp)), th = i < 3 ? 2 : i < 18 ? 1.5 : 1;
+          put(i, yy, PUR[i < 3 ? 7 : 6]);
+          if (th >= 1.5) put(i, yy + 1, PUR[i % 4 < 2 ? 8 : 7]);
+          if (i > 3 && i < 21 && i % 2 === 0) put(i, yy - 1, PUR[4]);
+          if (i < 3) put(i, yy - 1, PUR[6]);
+        }
+        put(1, Math.round(Math.sin(1 / 2.4 - t * 7) * 0.7) - 1, GREY[5]);
+        put(-1, Math.round(Math.sin(-t * 7) * 0.6), GREY[5]);
+      } },
+    { name: 'Glass jelly', L: 18, trail: 'bubbles', bob: t => Math.sin(t * 1.5) * 3,
+      note: 'A glassy bell that squeezes and relaxes as it swims, with purple glow in it, trailing long tendrils that lag behind the pulse.',
+      draw(put, t) {
+        const pulse = Math.sin(t * 3.2), rx = 5 + pulse * 0.8, ry = 4 - pulse * 0.9;
+        for (let x = 0; x <= 6; x++) {
+          const w = ry * Math.sqrt(Math.max(0, 1 - ((rx - x) / rx) ** 2));
+          for (let y = -Math.round(w); y <= Math.round(w); y++)
+            put(x, y, Math.abs(y) >= Math.round(w) || x === 0 ? GREY[5] : GREY[3 + ((x + y) & 1)]);
+        }
+        for (let j = 0; j < 3; j++) put(2 + j * 1.5, Math.round(Math.sin(t * 3 + j * 2) * 1.4), PUR[Math.sin(t * 4 + j * 2.1) > 0 ? 8 : 6]);
+        for (let j = -2; j <= 2; j++)
+          for (let x = 7; x < 18; x++) put(x, Math.round(j * 0.9 + Math.sin((x - 7) / 1.6 - t * 4 + j) * (0.6 + (x - 7) * 0.12)), (x + j) % 3 ? GREY[2] : GREY[1]);
+        for (let x = 7; x < 12; x++) for (const o of [-1, 1]) put(x, o + Math.round(Math.sin(x - t * 3)), PUR[5]);
+      } },
+    { name: 'Skull fish', L: 20, trail: 'none', bob: t => Math.sin(t * 0.9) * 1,
+      note: 'A cranium with a great socket, a jaw that chatters, a ribcage and a backbone that sways to a forked tail; plain bone, and the biggest bite.',
+      draw(put, t) {
+        const chat = Math.sin(t * 11) > 0 ? 1 : 0, sway = x => Math.round(Math.sin(x / 3.2 - t * 5) * 1.2);
+        ell(put, 4.5, -0.5, 4.3, 3.6, (x, y, d) => d > 0.72 ? GREY[5] : GREY[4]);
+        for (let x = 0; x <= 2; x++) { put(x, 0, GREY[4]); put(x, 1, GREY[4]); }
+        ell(put, 3.6, -1, 1.7, 1.6, () => GREY[0]);
+        put(3, -1, GREY[5]);
+        for (const x of [0, 1, 2, 3, 4]) put(x, 2, x % 2 ? GREY[5] : GREY[2]);
+        for (let x = 0; x <= 5; x++) { put(x, 3 + chat, GREY[3]); if (x % 2 === 0) put(x, 2 + chat, GREY[5]); }
+        for (let x = 7; x < 20; x++) put(x, sway(x), x % 2 ? GREY[4] : GREY[3]);
+        for (let x = 8; x <= 14; x += 2) for (const o of [-2, -1, 1, 2]) put(x, sway(x) + o, o === -1 || o === 1 ? GREY[3] : GREY[2]);
+        for (const o of [-2, -1, 1, 2]) put(19 + (Math.abs(o) === 2 ? 1 : 0), sway(19) + o, GREY[3]);
+      } },
+    { name: 'Wandering eye', L: 22, trail: 'sparks', bob: t => Math.sin(t * 2.6) * 2,
+      note: 'A bloodshot eyeball whose iris keeps looking at the mouth, a heavy lid that blinks now and then, and its optic nerve streaming behind it.',
+      draw(put, t) {
+        const blink = (t % 1.7) < 0.22 ? (t % 1.7) / 0.22 : 0, lid = Math.round(Math.sin(blink * Math.PI) * 7);
+        ell(put, 4, 0, 4.2, 4.2, (x, y, d) => d > 0.8 ? GREY[3] : GREY[5]);
+        ell(put, 2.4, 0, 2.2, 2.2, () => PUR[8]);
+        ell(put, 2.4, 0, 1.4, 1.4, () => PUR[6]);
+        ell(put, 2.2, 0, 0.7, 0.7, () => '#000');
+        put(3, -1, GREY[5]);
+        for (const [x, y] of [[6, -2], [7, 0], [6, 2], [5, -3]]) put(x, y, PUR[4]);
+        for (let y = -5; y < -5 + lid; y++) for (let x = -1; x <= 9; x++) if (((x - 4) / 4.6) ** 2 + (y / 4.6) ** 2 <= 1) put(x, y, GREY[2]);
+        for (let i = 0; i < 16; i++) put(8 + i, Math.round(Math.sin(i / 2 - t * 5) * (0.8 + i * 0.1)), PUR[Math.max(1, 6 - (i >> 2))]);
+      } },
+    { name: 'Spiral drifter', L: 12, trail: 'bubbles', bob: t => Math.sin(t * 1.8) * 1.5,
+      note: 'A whorled shell that turns as it goes, a soft body with two feelers reaching out of its front, and a string of bubbles rising behind.',
+      draw(put, t) {
+        const rot = t * 2.6;
+        ell(put, 7, 0, 4.6, 4.6, (x, y, d) => {
+          const r = Math.hypot(x - 7, y), ang = Math.atan2(y, x - 7) - rot;
+          const turn = ((ang / (Math.PI * 2) + r / 1.7) % 1 + 1) % 1;
+          return d > 0.8 ? GREY[5] : turn < 0.35 ? GREY[1] : turn < 0.7 ? GREY[3] : GREY[4];
+        });
+        ell(put, 1.6, 1, 2.6, 1.6, () => PUR[5]);
+        ell(put, 1.2, 1, 1.4, 0.8, () => PUR[6]);
+        const w = Math.sin(t * 5);
+        put(-1, -1 + Math.round(w), PUR[7]); put(-2, -2 + Math.round(w * 1.5), PUR[6]);
+        put(-1, 2 - Math.round(w), PUR[7]); put(-2, 3 - Math.round(w * 1.5), PUR[6]);
+        put(1, 0, GREY[5]);
+      } },
+    { name: 'Many-mouthed blob', L: 16, trail: 'motes', bob: t => Math.sin(t * 2.2) * 2,
+      note: 'A heaving purple mass of overlapping lobes, its skin dotted with little mouths that open and shut out of step, and a fringe of cilia.',
+      draw(put, t) {
+        const lobes = [[7, 0, 4.4 + Math.sin(t * 3) * 0.7, 3.6], [3.5, -1, 3 + Math.sin(t * 4 + 1) * 0.6, 2.8], [10.5, 1, 3.2 + Math.sin(t * 3.5 + 2) * 0.6, 3], [6, 2.4, 2.6 + Math.sin(t * 5 + 3) * 0.5, 2.4]];
+        const inside = (x, y) => lobes.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1);
+        for (let x = -1; x < 16; x++) for (let y = -6; y <= 6; y++) {
+          if (!inside(x, y)) continue;
+          const rim = !inside(x + 1, y) || !inside(x - 1, y) || !inside(x, y + 1) || !inside(x, y - 1);
+          put(x, y, rim ? PUR[7] : PUR[4 + ((x * 3 + y * 5) & 1) + (hash(x * 7 + y) > 0.8 ? 1 : 0)]);
+        }
+        [[3, 0, 0], [7, -2, 1.7], [9, 2, 3.1], [5, 3, 4.4], [12, 0, 5.2]].forEach(([x, y, ph]) => {
+          const open = Math.max(0, Math.sin(t * 3 + ph)) * 1.4;
+          if (open > 0.3) { put(x, y, '#000'); if (open > 0.8) put(x, y + 1, '#000'); put(x + 1, y, GREY[5]); }
+        });
+        for (let x = 0; x < 15; x += 2) if (hash(x + Math.floor(t * 6)) > 0.5) { put(x, -5 - (hash(x) > 0.5 ? 1 : 0), PUR[6]); put(x, 5 + (hash(x + 3) > 0.5 ? 1 : 0), PUR[6]); }
+      } },
+    { name: 'Toothed ring', L: 10, trail: 'flicker', bob: t => 0,
+      note: 'A wheel of teeth around a black throat, an outer ring and an inner one turning against each other; it comes in fast, straight, and hard.',
+      draw(put, t) {
+        ell(put, 5, 0, 5.2, 5.2, (x, y, d) => d > 0.72 ? GREY[3] : d > 0.32 ? GREY[2] : '#000');
+        for (let i = 0; i < 12; i++) { const a = t * 5 + i * Math.PI / 6; put(5 + Math.cos(a) * 5.6, Math.sin(a) * 5.6, GREY[5]); }
+        for (let i = 0; i < 8; i++) { const a = -t * 7 + i * Math.PI / 4; put(5 + Math.cos(a) * 2.6, Math.sin(a) * 2.6, GREY[4]); }
+        put(5, 0, GREY[0]);
+      } },
+  ];
+
+  // --- the three depths: cell size, speed in px a second, the band of water ---
+  const DEPTHS = [
+    { cell: 2, speed: 14, y0: 30, y1: 150 },
+    { cell: 3, speed: 26, y0: 50, y1: 230 },
+    { cell: 5, speed: 42, y0: 120, y1: 270 },
+  ];
+  const darken = (c, k) => {
+    if (c[0] !== '#') return c;
+    const n = parseInt(c.slice(1), 16), f = v => Math.round(v * k);
+    return `rgb(${f(n >> 16 & 255)},${f(n >> 8 & 255)},${f(n & 255)})`;
+  };
+  const WAYS = [
+    { name: 'A: far ones as silhouettes', note: 'Near creatures as drawn. The middle ones dimmed to half; the far ones one flat dark purple, small and slow, like shapes deep behind the glass.',
+      tone: (d, c) => d === 2 ? c : d === 1 ? darken(c, 0.5) : PUR[3] },
+    { name: 'B: fading into the dark', note: 'Every depth in its own colors, darker the further back in two even steps, so the far ones are faint but still themselves.',
+      tone: (d, c) => d === 2 ? c : darken(c, d === 1 ? 0.55 : 0.25) },
+    { name: 'C: silhouettes, and the odd giant', note: 'As A, and once in a while something huge and very dark crosses far behind everything, slowly.',
+      tone: (d, c) => d === 2 ? c : d === 1 ? darken(c, 0.5) : PUR[3], giants: true },
+  ];
+
+  // --- the stream: a fixed schedule from a seed, so every pane shows the same water ---
+  const SPAN = 400;
+  const stream = [];
+  for (let i = 0, t = 0; t < SPAN; i++) {
+    t += 0.7 + hash(i * 11) * 1.6;
+    const h = hash(i * 5), d = h < 0.45 ? 0 : h < 0.8 ? 1 : 2, dir = hash(i * 7) < 0.5 ? 1 : -1, D = DEPTHS[d];
+    stream.push({ at: t, d, dir, kind: Math.floor(hash(i * 13) * SP.length), y: D.y0 + hash(i * 17) * (D.y1 - D.y0), speed: D.speed * (0.8 + hash(i * 19) * 0.4) });
+  }
+  const HEAD = { x: 230, y: 214 };
+  const meals = [];
+  for (let i = 0, t = 4; t < SPAN; i++) { meals.push({ at: t, kind: Math.floor(hash(i * 23 + 5) * SP.length) }); t += 6 + hash(i * 29) * 6; }
+  const SWIM = 4.0, GULP = 0.8;
+
+  function drawCreature(g, sp, x, y, cell, dir, tone, t, clipX) {
+    const put = (cx, cy, c) => {
+      const px = x - dir * cx * cell, py = y + cy * cell;
+      if (clipX != null && px > clipX) return;
+      g.fillStyle = tone(c);
+      g.fillRect(Math.round(px / cell) * cell, Math.round(py / cell) * cell, cell, cell);
+    };
+    sp.draw(put, t);
+  }
+  function draw(g, way, t) {
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 40; i++) { g.fillStyle = PUR[1 + (i % 3)]; g.fillRect((hash(i) * W + t * 3 * (1 + i % 3)) % W, hash(i * 3) * H, 2, 2); }
+    const u = t % SPAN;
+    if (way.giants) {
+      const gx = -340 + ((u % 60) / 60) * (W + 680);
+      g.fillStyle = '#0b0614';
+      for (let i = 0; i < 40; i++) { const r = 34 * Math.sin(Math.PI * i / 40); g.fillRect(gx + i * 8, 70 - r * 0.6, 8, r * 1.2 + 6); }
+    }
+    const live = d => stream.filter(s => s.d === d && u >= s.at).forEach(s => {
+      const x = s.dir > 0 ? -60 + (u - s.at) * s.speed : W + 60 - (u - s.at) * s.speed;
+      if (x < -120 || x > W + 120) return;
+      const yy = s.y + Math.sin((u - s.at) * 1.3 + s.at) * 6;
+      drawCreature(g, SP[s.kind], x, yy, DEPTHS[d].cell, s.dir, c => way.tone(d, c), t + s.at);
+    });
+    live(0); live(1);
+    const meal = meals.find(m => u >= m.at && u < m.at + SWIM + GULP);
+    const open = meal ? Math.min(1, Math.max(0, (u - meal.at - SWIM + 0.8) / 0.5)) * (u > meal.at + SWIM + GULP - 0.25 ? Math.max(0, (meal.at + SWIM + GULP - u) / 0.25) : 1) : 0;
+    for (let x = HEAD.x; x < W; x += 6) {
+      const k = x - HEAD.x, half = 18 - (k < 30 ? (30 - k) * 0.2 : 0), gap = k < 50 ? open * 20 * (1 - k / 50) : 0;
+      for (let y = -half; y <= half; y += 6) {
+        if (Math.abs(y) < gap) continue;
+        g.fillStyle = Math.abs(y) > half - 6 ? GREY[5] : GREY[2 + ((x / 6 + y / 6) & 1)];
+        g.fillRect(x, Math.round((HEAD.y + y + Math.sign(y || 1) * gap * 0.5) / 6) * 6, 6, 6);
+      }
+    }
+    g.fillStyle = GREY[5]; g.fillRect(HEAD.x + 18, HEAD.y - 12, 6, 6);
+    if (meal) {
+      const a = Math.min(1, (u - meal.at) / SWIM), gulp = Math.max(0, (u - meal.at - SWIM) / GULP);
+      const x = -60 + ease(a) * (HEAD.x + 60) + gulp * 40, y = 120 + (HEAD.y - 120) * ease(Math.max(0, (a - 0.4) / 0.6));
+      drawCreature(g, SP[meal.kind], x, y, 5, 1, c => c, t, HEAD.x + 4);
+    }
+    live(2);
+  }
+  const panes = WAYS.map(way => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${way.name}</h2><canvas width="${W}" height="${H}"></canvas><p>${way.note}</p>`;
+    document.getElementById('grid').appendChild(card);
+    return { way, g: card.querySelector('canvas').getContext('2d') };
+  });
+  let t = 30, last = performance.now(), speed = 1, run = true;
+  window.__setT = v => { t = v; run = false; };
+  const frame = n => { requestAnimationFrame(frame);
+    const d = Math.max(0, Math.min(0.05, (n - last) / 1000)); last = n; if (run) t += d * speed;
+    panes.forEach(p => draw(p.g, p.way, t)); };
+  requestAnimationFrame(frame);
+  const play = document.getElementById('play');
+  play.onclick = () => { run = !run; play.textContent = run ? 'pause' : 'play'; };
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', o === b));
+  });
+
+})();
+</script>
