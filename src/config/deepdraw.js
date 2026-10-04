@@ -489,3 +489,23 @@ export const SCAFFOLD_BANDS = 5;
 export const CHOOSE_MARK = ['#.....#', '##...##', '.##.##.', '..###..', '...#...'];
 export const CHOOSE_MARK_UP = 3;
 export const CHOOSE_MARK_BOB_MS = 600;
+
+// A fighter's level-up (render/levelup.js; the owner's vote, 2026-10-04): one
+// strand of flame tongues corkscrews up round the body for LEVELUP_S, and the
+// station's Buy stands closed until it has. A strand of LEVELUP_TONGUES,
+// LEVELUP_TURNS round, turning LEVELUP_SPIN radians a second at LEVELUP_FPS
+// held frames; its reach out from the body's middle from foot to top, in
+// cells; how high it climbs, cells over the feet; a tongue's cells at the foot
+// and the top. It lights from the feet up over the first LEVELUP_IN of it and
+// burns out from the feet up over the last LEVELUP_OUT, embers off the top.
+export const LEVELUP_S = 1.6;
+export const LEVELUP_FPS = 12;
+export const LEVELUP_TONGUES = 24;
+export const LEVELUP_TURNS = 2;
+export const LEVELUP_SPIN = 7;
+export const LEVELUP_R = [2.5, 5];
+export const LEVELUP_H = 12;
+export const LEVELUP_TONGUE = [2, 4];
+export const LEVELUP_IN = 0.35;
+export const LEVELUP_OUT = 0.3;
+export const LEVELUP_EMBERS = 4;

@@ -46,7 +46,10 @@ export function climb(id, cls, n) {
   const st = stationById(id);
   if (!st) return null;
   flush();
-  while (st.rung < n && pressBuy(id, st.rung + 1 === FORK_RUNG ? cls : null)) flush();
+  // Each rung's level-up holds the next press back for LEVELUP_S
+  // (test/rails.test.mjs is about that wait); a climb is not, so it lets each
+  // one go rather than running the yard on through all of them.
+  while (st.rung < n && pressBuy(id, st.rung + 1 === FORK_RUNG ? cls : null)) { st.lvlAt = null; flush(); }
   return st;
 }
 

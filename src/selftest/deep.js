@@ -224,13 +224,20 @@ export const TESTS = [
 // the press reaching it, and the tree being drawn.
 import { showPanel } from '../board.js';
 import { seatRails } from '../deep/rails.js';
-import { stationById } from '../deep/party.js';
+import { stationById, levelingUp } from '../deep/party.js';
 import { chooseMarkAt } from '../render/deep.js';
 import { RAIL_FOLD_MS, FORK_RUNG } from '../config.js';
 import { tap, sleep, raf } from './kit.js';
 
 const rails = id => document.querySelector(`.rails[data-station="${id || 's1'}"]`);
 const seat = async () => { seatRails(); await raf(); await raf(); seatRails(); };
+// A rung bought shuts the board for the fighter's level-up: the player waits
+// it out and opens the board again.
+const reopen = async id => {
+  for (let i = 0; i < 60 && levelingUp(stationById(id)); i++) { window.__fast(0.1); await raf(); }
+  showPanel(id, true);
+  await seat();
+};
 const rowNamed = (id, text) => [...(rails(id)?.querySelectorAll('.rl-row') || [])].find(b => b.querySelector('.rl-t').textContent === text);
 
 TESTS.push(['rails: the rows climb the base unit, the fork takes a class and closes the other branch, Reset stands the Recruit again', async () => {
@@ -252,7 +259,11 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   const tip = [...document.querySelectorAll('.rl-tip')].pop();   // the newest mount is the open board's
   const said = !tip.hidden && tip.textContent;
   pip.dispatchEvent(new PointerEvent('pointerleave'));
-  for (let r = 1; r < FORK_RUNG; r++) { await tap(rowNamed('s1', 'Fighter')); await seat(); }
+  await tap(rowNamed('s1', 'Fighter'));
+  await raf();
+  const shut = S.stationBoardOpen !== 's1' && levelingUp(stationById('s1'));
+  await reopen('s1');
+  for (let r = 2; r < FORK_RUNG; r++) { await tap(rowNamed('s1', 'Fighter')); await reopen('s1'); }
   const base = st.cls === null && st.rung === FORK_RUNG - 1;
   const ask = rails().querySelector('.rl-ask')?.textContent || '';
   // each specialist's row names its capstone's status, bold, its line on hover
@@ -262,7 +273,7 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   stun?.dispatchEvent(new PointerEvent('pointerleave'));
   const bold = stun && getComputedStyle(stun).fontWeight >= 700;
   await tap(rowNamed('s1', 'Become a Swordsman'));
-  await seat();
+  await reopen('s1');
   await sleep(RAIL_FOLD_MS + 100);
   const took = st.cls === 'sword' && st.rung === FORK_RUNG && st.paid.some(([m, n]) => m === 'scale' && n > 0);
   const gone = [...rails().querySelectorAll('.rl-arm')].map(a => a.classList.contains('gone'));
@@ -277,6 +288,7 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
     ok(up, "the station's board is up", `${S.stationBoardOpen}`),
     ok(pips === 3 + 2 * 5, 'its tree: three pips, then five a branch', `${pips}`),
     ok(said === 'Combos: chain punches', 'a hover on a pip says what it is', `${said}`),
+    ok(shut, "a rung bought shuts the board while the fighter's level-up plays", `${S.stationBoardOpen}`),
     ok(base, 'the rows climb the Fighter to the fork', JSON.stringify(st)),
     ok(ask === 'Specialize', 'where the board asks it to specialize', ask),
     ok(bold && /^Stun: /.test(stunSaid || ''), "each row's status bold, its line on hover", `${stunSaid}`),

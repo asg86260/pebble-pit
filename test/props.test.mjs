@@ -81,11 +81,14 @@ group("a station stands beside a crate below the fork, its class's prop from it,
   window.__grant({ dust: 1e8, shards: 1e6, sparks: 1e5 });
   const st = S.stations[0];
   const crate = propOf(st);
-  for (let r = 1; r < FORK_RUNG; r++) pressBuy(st.id);
+  // A rung's level-up holds the next press back (test/rails.test.mjs); the
+  // climb here lets each one go.
+  const buy = (cls = null) => { const got = pressBuy(st.id, cls); stationById(st.id).lvlAt = null; return got; };
+  for (let r = 1; r < FORK_RUNG; r++) buy();
   const packed = propOf(stationById(st.id));
-  pressBuy(st.id, 'sword');
+  buy('sword');
   const rack = propOf(stationById(st.id));
-  while (stationById(st.id).rung < LADDER && pressBuy(st.id)) { /* climb */ }
+  while (stationById(st.id).rung < LADDER && buy()) { /* climb */ }
   const top = stationById(st.id);
   const lit = propOf(top), plinth = plinthOf(top), dome = domeOf(top);
   const g = standOfStation(top), post = bodyCol(top) * P;

@@ -448,6 +448,15 @@ const deepScenes = {
     run: breakScene(1, 2.9, [cast('brawler', 4), cast('ranger', 4)]) },
   'break-roar': { about: 'the deep', say: 'a later break: jaws wide, the bump halfway down, the new hide behind it',
     run: breakScene(2, 1.2, [cast('brawler', 8), cast('sword', 8)]) },
+  'level-up': { about: 'the deep', say: 'a fighter just bought a rung: the abyssal corkscrew climbing round it',
+    run: () => {
+      stageScene(0, 0.3, [cast('ranger', 3), cast('brawler', 3)])();
+      const st = S.stations[0], until = performance.now() + 4000;
+      const hold = () => { if (performance.now() < until) { st.lvlAt = now() - 700; requestAnimationFrame(hold); } };
+      hold();
+      const w = S.workers.find(o => o.uid === st.fighter);
+      if (w) lookDeep(w.x);
+    } },
   'phase-sink': { about: 'the deep', say: 'the sink in the fading phase: the coil dimmed into the abyss under its veil',
     run: mechScene(3, -3, [cast('mage', 4), cast('monk', 4)]) },
   // Reading the fight: the numbers off the blows and the heal's purple `+`

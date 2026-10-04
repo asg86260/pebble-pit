@@ -21,7 +21,7 @@
 import { S } from '../state.js';
 import { P, CLASSES, RECRUIT, PAIRS, BASES, FORK_RUNG, MOVE_RUNG, CAPSTONE_RUNG, LADDER, RAIL_FOLD_MS, RAIL_FOLD_STEPS,
          HASTE, EXPOSED_AMP, rungValue } from '../config.js';
-import { stationById, classesOpen, kindsOffered, unchosen, buyRung, resetStation } from './party.js';
+import { stationById, classesOpen, kindsOffered, unchosen, buyRung, resetStation, levelingUp } from './party.js';
 import { GLYPHS } from '../glyphs.js';
 import { rungBill, CLASS_UNIT } from './rows.js';
 import { take } from '../upgrades.js';
@@ -29,7 +29,7 @@ import { payTo } from '../pit.js';
 import { standOfStation } from './place.js';
 import { MARK, purse, priceText, fmt } from '../words.js';
 import { pageOf, shopOf } from '../pages.js';
-import { remeasure } from '../board.js';
+import { remeasure, showPanel } from '../board.js';
 import { onTap } from '../tap.js';
 import { coarse } from '../prefs.js';
 import { station } from '../stations.js';
@@ -140,7 +140,7 @@ export function railsOf(id) {
     const bill = sel ? rungBill(id, PAIRS[sel.kind][0]) : [];
     return {
       id, recruit: true, ask: RECRUIT_ASK, who: RECRUIT.name, does: RECRUIT_DOES, kinds, looking: sel?.kind || null,
-      row: sel && { kind: sel.kind, label: `Become a ${sel.name}`, bill, can: bill.every(([m, n]) => purse(m) >= n) },
+      row: sel && { kind: sel.kind, label: `Become a ${sel.name}`, bill, can: !levelingUp(st) && bill.every(([m, n]) => purse(m) >= n) },
       reset: { can: false }
     };
   }
@@ -161,7 +161,7 @@ export function railsOf(id) {
   const row = (cls, label, sub, locked = false) => {
     const bill = locked ? [] : rungBill(id, cls);
     return { cls, label, sub, bill, locked,
-             can: !locked && st.built && bill.every(([m, n]) => purse(m) >= n) };
+             can: !locked && st.built && !levelingUp(st) && bill.every(([m, n]) => purse(m) >= n) };
   };
   const rows = [];
   let ask = null;
@@ -314,9 +314,10 @@ function wire(id, m) {
   for (const b of body.querySelectorAll('.rl-node[data-look]'))
     onTap(b, () => { lookAt(id, b.dataset.look); refresh(id); });
   for (const b of body.querySelectorAll('.rl-row[data-kind]'))
-    onTap(b, () => { pressKind(id, b.dataset.kind); refresh(id); });
+    onTap(b, () => { if (pressKind(id, b.dataset.kind)) showPanel(null, true); else refresh(id); });
   for (const b of body.querySelectorAll('.rl-row:not([data-kind])'))
-    onTap(b, () => { pressBuy(id, b.dataset.cls || null); refresh(id); });
+    // A rung bought shuts the sheet, so the fighter's level-up is seen.
+    onTap(b, () => { if (pressBuy(id, b.dataset.cls || null)) showPanel(null, true); else refresh(id); });
   const reset = body.querySelector('.rl-reset');
   if (reset) onTap(reset, () => { pressReset(id); refresh(id); });
   // A status's line is a hover's only: most sit inside a row a tap buys.

@@ -14,10 +14,10 @@
 // (src/selftest/deep.js).
 
 import { group, ok, yard, runUntil } from './helpers.mjs';
-import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, rungDust, rungValue } from '../src/config.js';
+import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, LEVELUP_S, rungDust, rungValue } from '../src/config.js';
 import { railsOf, lookAt, pressKind, pressBuy, pressReset } from '../src/deep/rails.js';
 import { classLadder, rungBill } from '../src/deep/rows.js';
-import { stationById } from '../src/deep/party.js';
+import { stationById, levelingUp } from '../src/deep/party.js';
 import { purse } from '../src/words.js';
 import { pressBuild } from './party-press.mjs';
 
@@ -34,8 +34,10 @@ const flush = () => {
   window.__scales(99999);
   window.__grant({ dust: 1e8, shards: 1e6, sparks: 1e5 });
 };
-// A rung's row, and the Reset, pressed.
-const buy = (st, cls = null) => pressBuy(st.id, cls);
+// A rung's row, and the Reset, pressed. Each rung's level-up holds the next
+// press back (the group below is about that wait); these are not, so a rung
+// bought lets its level-up go.
+const buy = (st, cls = null) => { const got = pressBuy(st.id, cls); st.lvlAt = null; return got; };
 const reset = st => pressReset(st.id);
 const climbBase = st => { for (let r = 1; r < FORK_RUNG; r++) buy(st); };
 const wallet = () => ({ scale: purse('scale'), dust: purse('dust'), shard: purse('shard'), spark: purse('spark') });
@@ -103,6 +105,24 @@ group('the base unit climbs three rungs; the fork asks for a path and closes the
        JSON.stringify(took.tree.arms.map(a => [a.cls, a.gone]))),
     ok(took.rows.length === 1 && took.rows[0].label === 'Swordsman' && took.rows[0].sub === `${Math.round(rungValue('sword', 5))} dmg`,
        'the row moves on up the same ladder', JSON.stringify(took.rows[0]))
+  ];
+});
+
+group("a rung's level-up holds the station's next rung back until it has played", async () => {
+  const [{ id }] = stand('altar');
+  flush();
+  // Read fresh each time: the yard is saved and read back as it runs.
+  const st = () => stationById(id);
+  const first = pressBuy(id), started = st().lvlAt != null;
+  const during = railsOf(id).rows[0].can, again = pressBuy(id);
+  const held = st().rung;
+  runUntil(() => !levelingUp(st()), 5);
+  flush();
+  const after = railsOf(id).rows[0].can, then = pressBuy(id);
+  return [
+    ok(first && started, 'a rung bought starts its level-up', `${first} ${started}`),
+    ok(!during && !again && held === 1, 'and while it plays the next row is shut and a press buys nothing', `${during} ${again} rung ${held}`),
+    ok(after && then && st().rung === 2, `after ${LEVELUP_S}s the row opens again`, `${after} ${then} rung ${st().rung}`)
   ];
 });
 
