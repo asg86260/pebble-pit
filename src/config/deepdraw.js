@@ -362,8 +362,8 @@ export const STATUS_STRUCK = '#9b5de5';
 // What a mechanic's tile and a dazed fighter's say on hover; the statuses' own
 // lines are the boards' (deep/rails.js, `statusLine`).
 export const STATUS_SAYS = {
-  lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming: Held stops it', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
-  sink:  { coming: 'Sink coming: land a burst first', on: 'Sink: out of reach', stopped: 'Sink: answered' },
+  lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
+  sink:  { coming: 'Sink coming', on: 'Sink: out of reach', stopped: 'Sink: answered' },
   // the owner's words to come (DESIGN.md, "A fifth phase: the constrict")
   orb:   { coming: '', on: '', stopped: '' },
   dazed: 'Dazed: thrown off, seeing stars',
