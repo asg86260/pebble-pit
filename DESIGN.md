@@ -17061,6 +17061,64 @@ The kill's clock (`S.freedAt`), his walk and the gathering (`S.reformAt`) are
 saved, so a reload picks it up where it was; a skip plays it out at once. A
 save freed before this has no clock and keeps its serpent as it was.
 
+## A fifth phase: the constrict (design, not built)
+
+Asked by the owner, 2026-10-04: beating the serpent should take all four
+fighters. The fourth station arrives with the third break's fang, at the start
+of the fading, and the fading was the last defense, so a party of four fought
+one phase at most. A fifth phase after the fading is the fight that four are
+needed for. Fangs stay at the first three breaks. Mock: "Serpent Phase Five",
+the owner's A, with a manual answer added.
+
+### The bargain
+
+The fifth defense is the **constrict**: every so often a loop of the coil
+drops onto a station and wraps it, and that station's fighter does nothing
+while it is wrapped. The party frees it the slow way, by striking the loop, or
+the player frees it at once by picking the fighter up out of the loop. It
+costs a party uptime it cannot afford in a short window, and it gives the
+player's hand something to do in the last fight, the way the click and the
+pebbles do in the yard.
+
+### The rules
+
+- **Order:** bare, warded, split, fading, **constrict**, then the kill. The
+  stage numbers move up one: the kill is stage 5. Five phase boxes on the bar;
+  the first stays hidden until the dive, as now.
+- **Resist:** none. The constrict is the test.
+- **Window and depth:** a window of `SERPENT_WINDOW[4]` (first guess 18 s) and
+  a depth solved with `deep-pace.mjs` for four fighters.
+- **The turn** (`MECHANICS[4]`, the way the lash and the sink have theirs):
+  every `every` seconds (first guess 24), a warning of `warn` (1.5 s): a loop
+  lifts off the coil over its target, the station whose fighter has dealt the
+  most this phase. Then the loop drops and wraps the station.
+- **Wrapped:** the fighter does nothing, and stays where it is. The loop has
+  hit points, `CONSTRICT_HP` of the phase's depth (first guess 15%). While a
+  loop is out, every blow lands on the loop first and the defense takes nothing
+  until the loop is struck off. It lets go on its own after `last` (12 s).
+- **The manual answer:** the wrapped fighter can be picked up as a body can in
+  the yard (the right button; on a phone, a long press). Lifted out of the
+  loop, it is free at once and the loop recoils into the coil. Dropped, it
+  swims back to its post and fights. Picking up any other body in the deep
+  stays as it is today.
+- **The break into it** is a roar, as for the split and the fading. **The
+  break out of it** is the kill.
+
+### What it must not break
+
+- **Nothing teleports.** The loop is the coil bending down to the station and
+  back, and a lifted fighter is carried, not moved.
+- **Saves:** the loop's turn and its hit points are saved with the phase
+  (`S.mechAt`, a new `S.loopHp`). A save past the fading plays phase 5 before
+  the kill; a save already freed is unchanged.
+- **The checks** read the stage numbers in several places (`< 4`, `> 3`,
+  `LAST`); every one moves to the new count.
+
+### The owner's words needed
+
+- The constrict's status lines: its badge's hover while it is coming, while a
+  station is wrapped, and when it is struck off.
+
 ## The story's objectives (built 2026-09-30)
 
 Asked for by the owner, 2026-09-30, with three calls made: one pinned line at

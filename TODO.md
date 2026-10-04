@@ -1,5 +1,11 @@
 # Still to do
 
+## A fifth phase: the constrict -- DESIGNED, AWAITING APPROVAL (2026-10-04)
+
+"A fifth phase: the constrict" in DESIGN.md: after the fading, a loop wraps a
+station; the party strikes it off, or the player lifts the fighter out.
+Blocked on the owner's approval and the constrict's status words.
+
 ## The serpent heals whole: a phase is a window -- BUILT (2026-10-04)
 
 "The serpent heals whole: a phase is a window" in DESIGN.md. Open:
