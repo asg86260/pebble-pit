@@ -16964,13 +16964,14 @@ not what it can do over the heal.
   window clock runs at `SURGE_X` (3) times speed, so it eats sooner. Its
   warning and its answer stay: a stun in the warning spends it, and during the
   surge a stun still pauses the clock outright.
-- **Weakened (the Hexer from rung 4)** becomes **the serpent takes more
-  damage** (the owner, 2026-10-04): an amp of `WEAKEN_AMP` (first guess 0.15)
-  while it lasts, on the same path as Exposed's (`ampOf`): amps add, are
-  applied once, and are capped at `AMP_MAX`. Exposed (rung 8, 0.25) stays the
-  bigger of the two, so the Hexer's ladder still climbs. The heal cut and
-  `HEAL_CUT_MAX` go; the class table's `weaken: { k, s }` keeps its seconds
-  and its `k` becomes the amp.
+- **Weakened and Exposed become one status** (the owner, 2026-10-04): with no
+  heal to cut, Weakened folds into Exposed, **the serpent takes more damage**.
+  Only the Hexer lays either today. Its hex lays Exposed from rung 4 (its
+  move) at `EXPOSED_AMP[0]` (first guess 0.15) and from rung 8 (its capstone)
+  at `EXPOSED_AMP[1]` (0.25, today's), with Held as now. A stronger lay
+  replaces a weaker one; the amp goes through `ampOf` and is capped at
+  `AMP_MAX` as now. `weakened`, its icon, its dull hide, the heal cut and
+  `HEAL_CUT_MAX` all go; a save holding a Weakened status drops it on load.
 - **The sink (phase 4)** is unchanged: nothing hits him while he is under,
   and the window keeps running. It costs uptime out of a short window, which
   is why the bursts that land before he goes under are its answer.
@@ -16999,8 +17000,8 @@ not what it can do over the heal.
 - **The checks.** `verify.js`'s meal rule still holds (a meal is never overdue
   past its window). `test/meals.test.mjs` loses the bank and the average-heal
   check. It gains: a meal heals to full; a stun or Held pauses the window; the
-  surge shortens it. `test/statuses.test.mjs`: Weakened amps a blow, and
-  Weakened with Exposed is capped. Each check is reached by striking
+  surge shortens it. `test/statuses.test.mjs`: the Hexer at 4 Exposes at the
+  smaller amp and at 8 at the bigger, a stronger lay replacing a weaker. Each check is reached by striking
   and buying, as a player does.
 
 ### Open
@@ -17008,9 +17009,9 @@ not what it can do over the heal.
 - **The window can be gamed** the way the lumps could: a party that holds its
   capstones for the window's last seconds bursts best. That is the intended
   skill here, not an exploit.
-- **The Weakened hover line** says the heal is cut. It will need the owner's
-  words for "takes more damage", and Weakened and Exposed then say nearly the
-  same thing (player copy is the owner's).
+- **The Hexer's words.** Its move line names {Weakened}, which goes. It will
+  need the owner's words for the move now that it Exposes, and Exposed's hover
+  line stays as is (player copy is the owner's).
 
 ## The story's objectives (built 2026-09-30)
 
