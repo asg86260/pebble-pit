@@ -141,6 +141,7 @@ export const HASTE = 0.2;            // Hasted: this much more often
 // the deep's own gravity and settle on its floor, which is the deep's purse:
 // a scale is counted when it lands, like a grain in the pit.
 export const SCALE_PER_DECADE = 1.5; // scales a hit sheds for each tenfold of its damage, one at least
+export const SCALE_BASE = 2;         // and this many more on every hit, so a small one sheds a handful
 export const DUST_PER_SCALE = 10;    // what a scale is worth against dust (DUST_PER in upgrades/price.js)
 export const DEEP_BED_ROWS = 40;     // the floor's plot of scales: this many cells deep at most
 export const DEEP_BED_BRIM = 4;      // rows short of that the floor counts as full (the pile-full mark)

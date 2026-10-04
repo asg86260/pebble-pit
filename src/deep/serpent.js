@@ -11,7 +11,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_WOUND, SCALE_PER_DECADE,
+import { SERPENT_WOUND, SCALE_PER_DECADE, SCALE_BASE,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
@@ -116,7 +116,7 @@ export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
 }
 
 // The scales a hit of `done` knocks loose.
-export const scalesOf = done => Math.max(1, Math.round(SCALE_PER_DECADE * Math.log10(done)));
+export const scalesOf = done => Math.max(1, Math.round(SCALE_BASE + SCALE_PER_DECADE * Math.log10(done)));
 
 // What the click is worth: the first station's rung, so the hand grows with
 // the first fighter's ladder.

@@ -24,7 +24,7 @@
 
 import { LADDERS } from '../../src/config/rungs.js';
 import { CLASSES } from '../../src/config/classes.js';
-import { SERPENT_WINDOW, SERPENT_WOUND, DAMAGE_KIND, RESISTS, RESIST_K, SCALE_PER_DECADE,
+import { SERPENT_WINDOW, SERPENT_WOUND, DAMAGE_KIND, RESISTS, RESIST_K, SCALE_PER_DECADE, SCALE_BASE,
          CLICK_DMG, MECHANICS } from '../../src/config/deep.js';
 
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
@@ -74,7 +74,7 @@ const hit = (c, r, st) => LADDERS[c].value[r] * guard(c, st) * moveK(c, r);
 const dps = (c, r, st) => hit(c, r, st) / tempo(c);
 // Scales shed a second: a hit sheds a few more for each tenfold of its
 // damage (`scalesOf` in src/deep/serpent.js).
-const scalesOf = d => Math.max(1, Math.round(SCALE_PER_DECADE * Math.log10(d)));
+const scalesOf = d => Math.max(1, Math.round(SCALE_BASE + SCALE_PER_DECADE * Math.log10(d)));
 const shed = (c, r, st) => scalesOf(hit(c, r, st)) / tempo(c);
 const cost = (c, r) => LADDERS[c].dust[r];
 
