@@ -10,13 +10,14 @@
 // (party.test.mjs); that the rails fold and Reset refunds is BOARD's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG } from '../src/config.js';
-import { climb, reset, openEveryClass } from './party-press.mjs';
+import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG, LEVELUP_S, LEVELUP_BURST_S } from '../src/config.js';
+import { climb, reset, openEveryClass, flush } from './party-press.mjs';
+import { pressBuy } from '../src/deep/rails.js';
 import { shots } from '../src/deep/arms.js';
 import { coilAt } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 import { rungWorth, stationOf, stationX } from '../src/deep/classes.js';
-import { keyOf } from '../src/deep/party.js';
+import { keyOf, levelingUp } from '../src/deep/party.js';
 import { has, level, hasted, inspiredK, lay, clearStatuses } from '../src/deep/statuses.js';
 
 const S = yard.S;
@@ -79,6 +80,25 @@ function breaksAlone(kind, cls, s = 20) {
   clearStatuses();                      // the hold was the setup's, not the class's
   return opened;
 }
+
+group('a fighter stops fighting while its level-up plays, and fights again after', async () => {
+  party(['altar']);
+  lay('held', 1, 30);                   // the heal held off: this is about the blows
+  const before = watch(4);
+  flush();
+  const bought = pressBuy(S.stations[0].id);
+  const during = watch(LEVELUP_S + LEVELUP_BURST_S - 0.1, 0, () => !levelingUp(S.stations[0]));
+  const after = watch(6);
+  clearStatuses();
+  const blows = seen => [...seen.hits.keys()].filter(h => h.weapon !== 'heal').length;
+  return [
+    ok(blows(before) > 0, 'it was fighting', `${blows(before)} blows`),
+    ok(bought, 'a rung bought on its rails'),
+    ok(blows(during) === 0 && during.moves.length === 0, 'and while the level-up plays it lands nothing and starts no move',
+       `${blows(during)} blows, ${during.moves.join(' ')}`),
+    ok(blows(after) > 0, 'and after, it fights again', `${blows(after)} blows`)
+  ];
+});
 
 group("a station with no class fights as its base unit, its pair's first class", async () => {
   party(['altar']);

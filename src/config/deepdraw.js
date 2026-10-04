@@ -515,3 +515,9 @@ export const LEVELUP_BURST_S = 0.6;
 export const LEVELUP_BURST_STEPS = 6;
 export const LEVELUP_BURST_OUT = 1.6;
 export const LEVELUP_BURST_RISE = 1.2;
+
+// While the level-up plays the fighter stops fighting and rises LEVELUP_RISE
+// cells off where it stood, a cell every LEVELUP_RISE_STEP seconds, holds, and
+// settles back the same way to land as the burst ends (deep/party.js `riseOf`).
+export const LEVELUP_RISE = 2;
+export const LEVELUP_RISE_STEP = 0.12;

@@ -12,7 +12,7 @@ import { now } from '../clock.js';
 import { P, WORKER, LEVELUP_S, LEVELUP_FPS, LEVELUP_TONGUES, LEVELUP_TURNS, LEVELUP_SPIN, LEVELUP_R,
          LEVELUP_H, LEVELUP_TONGUE, LEVELUP_IN, LEVELUP_FLARE, LEVELUP_BURST_S, LEVELUP_BURST_STEPS,
          LEVELUP_BURST_OUT, LEVELUP_BURST_RISE } from '../config.js';
-import { fighterAt, levelingUp } from '../deep/party.js';
+import { fighterAt, levelingUp, riseOf } from '../deep/party.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { hash } from './flicker.js';
@@ -52,7 +52,7 @@ function blaze(front) {
     const top = Math.min(1, k / LEVELUP_IN), tall = k > 1 - LEVELUP_FLARE ? 2 : 1;
     const b = k < 1 ? -1 : (a - LEVELUP_S) / LEVELUP_BURST_S;
     const step = Math.floor(b * LEVELUP_BURST_STEPS), embers = EMBER();
-    const cx = w.x + WORKER / 2, foot = w.y + WORKER, ramp = front ? FRONT() : BACK();
+    const cx = w.x + WORKER / 2, foot = w.y + WORKER - riseOf(st) * P, ramp = front ? FRONT() : BACK();
     for (let i = 0; i < LEVELUP_TONGUES; i++) {
       const s = i / LEVELUP_TONGUES;
       if (s > top) continue;

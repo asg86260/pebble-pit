@@ -11,7 +11,7 @@
 // manned (`CALLED`) on a call before a body is chosen for it.
 
 import { S } from '../state.js';
-import { LEVELUP_S, LEVELUP_BURST_S } from '../config.js';
+import { LEVELUP_S, LEVELUP_BURST_S, LEVELUP_RISE, LEVELUP_RISE_STEP } from '../config.js';
 import { P, WORKER, DEEP_GRAV, DEEP_DRAG, LADDER, DEEP_SLOTS, PARTY_IDS,
          STATION_WORK_S, FANG_BREAKS, FANG_KICK } from '../config.js';
 import { CLASSES, RECRUIT, PAIRS, FIRST_KINDS, NEEDS_COMPANY, FORK_RUNG, FIGHT_STATIONS_MAX } from '../config/classes.js';
@@ -43,6 +43,14 @@ export const unchosen = st => !!st && st.built && !st.kind;
 // The fighter's body, if one has been bound to the station yet.
 // Whether a station's level-up is still playing: its Buy waits for it.
 export const levelingUp = st => !!st && st.lvlAt != null && now() - st.lvlAt < (LEVELUP_S + LEVELUP_BURST_S) * 1000 && now() >= st.lvlAt;
+// How many cells the fighter stands raised by its level-up: up a held step at
+// a time, held, and down again to land as it ends. Drawing reads it; where
+// the body is in the yard does not change.
+export function riseOf(st) {
+  if (!levelingUp(st)) return 0;
+  const a = (now() - st.lvlAt) / 1000, left = LEVELUP_S + LEVELUP_BURST_S - a;
+  return Math.min(LEVELUP_RISE, Math.floor(a / LEVELUP_RISE_STEP), Math.floor(left / LEVELUP_RISE_STEP));
+}
 export const fighterAt = st =>
   (st && st.fighter && S.workers.find(w => w.type === TYPE.FIGHTER && w.uid === st.fighter)) || null;
 // How many stations are manned: the fighters' count, the way `S.<job>` is

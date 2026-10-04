@@ -41,7 +41,7 @@ import { now } from '../clock.js';
 import { slotX, postX, postY, coilAt, coilThick, segAbove, coilK } from './place.js';
 import { lashHits, mechOf, roarHits } from './phases.js';
 import { rand } from '../rng.js';
-import { stationById, classOf, keyOf } from './party.js';
+import { stationById, classOf, keyOf, levelingUp } from './party.js';
 import { mid, working, swim, loose } from './arms.js';
 import { strike, woundK } from './serpent.js';
 import { lay, inspire, haste, tempo } from './statuses.js';
@@ -433,6 +433,8 @@ export function stepFighter(w, c) {
   // a built one.
   const step = cls && STEP[keyOf(st)];
   if (!step) return;
+  // Its level-up playing (deep/party.js), it stops where it is and fights no more until it has.
+  if (levelingUp(st)) { w.pose = null; w.beam = null; return; }
   // The lash (deep/phases.js) throws a melee fighter off the hide as it
   // passes: it sinks through the water, lies dazed where it lands, and swims
   // back up (crew/falls.js, the thrown body's own way down).
