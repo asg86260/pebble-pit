@@ -59,5 +59,5 @@ export const FLOW_SPEED = [5, 9, 14];
 export const FLOW_PARALLAX = [0.25, 0.55, 0.85];
 export const FLOW_SHARE = [0.45, 0.35, 0.2];
 export const FLOW_MARGIN = 160;       // screen pixels off the glass a crossing starts and ends
-export const FLOW_GIANT_S = 150;
-export const FLOW_GIANT_SPEED = 4;
+export const FLOW_GIANT_S = 300;   // longer than its crossing (the glass and twice the margin, at FLOW_GIANT_SPEED)
+export const FLOW_GIANT_SPEED = 6;
