@@ -1105,6 +1105,7 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
 };
 HANDLES.__scales = n => layScales(n);                 // crushed: a purse to spend
 HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for the gatherers
+HANDLES.__setScales = n => { S.scales = Math.max(0, Math.floor(n || 0)); return S.scales; };   // the crushed purse, set outright
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(), heal: healNow(),
   meal: { n: S.meal, t: S.mealT, bank: S.healBank },
