@@ -1,7 +1,7 @@
 // The story's line on the page (objectives.js says which step it is). Read
 // every frame from the yard, so a save restored after load shows its own line;
-// a step finished is struck through and fades before the next comes up, so the
-// line never changes under the eye without saying so.
+// a step finished is struck through and its card goes before the next comes
+// up, so the line never changes under the eye without saying so.
 
 import { S } from './state.js';
 import { objective, questNow } from './objectives.js';
@@ -25,10 +25,11 @@ export function seatObjective(t) {
   const key = want ? want.key : null;
   if (shown && key !== shown.key) {
     // the one done: struck through and faded, then the next
-    if (!leaving) { leaving = t + STRIKE_MS; say.classList.add('done'); if (list) { list.hidden = true; listed = ''; } }
+    if (!leaving) { leaving = t + STRIKE_MS; say.classList.add('done'); el.classList.add('going'); if (list) { list.hidden = true; listed = ''; } }
     if (t < leaving) return;
     leaving = 0;
     say.classList.remove('done');
+    el.classList.remove('going');
     shown = null;
   }
   if (!shown && want) {

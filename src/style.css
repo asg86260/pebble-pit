@@ -1893,27 +1893,38 @@ html.dark .modal {
    `fitCrewColumn` in shop.js; 22ch until it has been. */
 #modalcrew .rows { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--crew-col, 22ch)), 1fr)); }
 
-/* The story's next step (objline.js; the owner's C of
-   docs/mocks/objectives-2026-09-30.html): a small grey "next" over the line.
-   Finished, the line is struck through and fades, and the next comes up under
-   the label. White in the deep, where the page behind it is dark. */
+/* The story's next step (objline.js), on a card (the owner's B, 2026-10-04):
+   paper with a heavy ink edge, "next" a filed tab on its top edge, and a hard
+   one-cell shadow. Finished, the line is struck through, then the card rises
+   and fades, and comes back with the next step. Inked the other way in the
+   deep, where the page behind it is dark. */
 #objective {
   position: fixed;
-  left: 14px; top: 12px;
+  left: 14px; top: 26px;
   z-index: 9;
   display: grid;
   gap: 1px;
+  padding: 8px 12px 9px;
   font: 12px ui-monospace, "Courier New", monospace;
   color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink-7);
   pointer-events: none;
   /* wraps before the notice card, which stands centered at the top */
   max-width: max(120px, calc(50vw - 150px));
+  transition: opacity .35s ease, translate .35s ease;
 }
-#objective .next { font-size: 10px; letter-spacing: .08em; color: #8b8b96; }
-#objective .say { transition: opacity .6s ease .35s; }
-#objective .say.done { text-decoration: line-through; text-decoration-thickness: 2px; opacity: 0; }
+#objective .next { position: absolute; top: -14px; left: -2px; padding: 0 8px; line-height: 14px;
+                   font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+                   background: var(--ink); color: var(--paper); }
+#objective .say { transition: opacity .35s ease; }
+#objective .say.done { text-decoration: line-through; text-decoration-thickness: 2px; }
 #objective .say.in { opacity: 0; }
-#objective.deep { color: #fff; }
+/* the step done: the strike stands a beat, then the card goes */
+#objective.going { opacity: 0; translate: 0 -8px; transition: opacity .35s ease .55s, translate .35s ease .55s; }
+#objective.deep { --paper: #000; --ink: #fff; --ink-7: #5f5f66; }
+@media (prefers-reduced-motion: reduce) { #objective, #objective.going { transition: none; translate: none; } }
 
 /* The rescue's sheet leaving with the second half on (ending.js): it rises
    and fades as the snatch begins. */

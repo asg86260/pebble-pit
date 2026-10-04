@@ -110,7 +110,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 - A Hasted or Inspired fighter keeps its buff through a reload (test/classes.test.mjs).
 **New this release**
-- A line at the top left says the story's next step, from digging out the rock to saving the sqwife.
+- A card at the top left says the story's next step, from digging out the rock to saving the sqwife.
 - The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.
 - The pictures over a station of what it is building and what is in line drift gently, the way a lifted shop tile does.
 
