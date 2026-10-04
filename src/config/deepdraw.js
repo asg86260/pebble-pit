@@ -363,7 +363,7 @@ export const STATUS_STRUCK = '#9b5de5';
 // lines are the boards' (deep/rails.js, `statusLine`).
 export const STATUS_SAYS = {
   lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
-  sink:  { coming: 'Sink coming', on: 'Sink: out of reach', stopped: 'Sink: answered' },
+  sink:  { coming: 'Cloak coming', on: 'Cloak: out of reach', stopped: 'Cloak: answered' },   // the owner calls it the cloak
   // the owner's words to come (DESIGN.md, "A fifth phase: the constrict")
   orb:   { coming: '', on: '', stopped: '' },
   dazed: 'Dazed: thrown off, seeing stars',
