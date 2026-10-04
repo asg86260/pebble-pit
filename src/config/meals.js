@@ -57,7 +57,17 @@ export const FLOW_EVERY_S = 5;
 export const FLOW_CELL = [0.35, 0.55, 0.85];
 export const FLOW_SPEED = [5, 9, 14];
 export const FLOW_PARALLAX = [0.25, 0.55, 0.85];
-export const FLOW_SHARE = [0.45, 0.35, 0.2];
+export const FLOW_SHARE = [0.55, 0.45, 0];   // the near depth is the world's stream, below
 export const FLOW_MARGIN = 160;       // screen pixels off the glass a crossing starts and ends
 export const FLOW_GIANT_S = 300;   // longer than its crossing (the glass and twice the margin, at FLOW_GIANT_SPEED)
 export const FLOW_GIANT_SPEED = 6;
+// The near creatures swim the world, not the glass, so the serpent can take
+// one that is passing (DESIGN.md, "The serpent eats to heal"): one sets off
+// every FLOW_NEAR_EVERY_S from FLOW_NEAR_OUT beyond a wall of the deep, at
+// FLOW_NEAR_SPEED world pixels a second, somewhere in the FLOW_NEAR_BAND over
+// the coil's middle. Dense enough that one is always near the mouth when a
+// meal is due.
+export const FLOW_NEAR_EVERY_S = 10;
+export const FLOW_NEAR_SPEED = 20;
+export const FLOW_NEAR_OUT = 200;
+export const FLOW_NEAR_BAND = 150;

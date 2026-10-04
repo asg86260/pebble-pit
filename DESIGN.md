@@ -16853,8 +16853,13 @@ break").
   cross the glass both ways at three depths -- far as flat dark silhouettes,
   middle dimmed, near as drawn and in front of the serpent -- with a giant far
   behind every `FLOW_GIANT_S`, each depth sliding with its share of the pan.
-  Every crossing starts and ends off the glass; the meal's creature sets off
-  off the glass too. No creature trails anything.
+  Every crossing starts and ends off the glass. No creature trails anything.
+- The near ones swim the world, end to end of the deep and in from beyond its
+  walls, a fixed schedule off the clock; a meal takes one of them (the owner,
+  2026-10-04: no creature spawned to be eaten). When a meal's swim begins the
+  nearest one heading for the mouth turns off its path and swims into the
+  jaws; the stream is dense enough (`FLOW_NEAR_EVERY_S`) that one is always
+  near. The meal clock is unchanged: 6 to 12 seconds.
 - `render/fish.js` draws the creature from its local frame, cell by cell, over
   the water and behind the serpent's head; it enters at the deep's left edge and
   is clipped at the serpent's face while it goes in, so it is *eaten*, not

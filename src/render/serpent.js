@@ -29,8 +29,8 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE } from '../config.js';
 import { S } from '../state.js';
-import { mealNow, kindOf, jawOpen, jawGap } from '../deep/meals.js';
-import { lengthOfKind, KINDS } from './fish.js';
+import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
+import { lengthOfKind, mealKind } from './fish.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
 import { part, sinkK, resistNow, resistNext } from '../deep/phases.js';
@@ -210,8 +210,8 @@ export function drawSerpent() {
   if (meal && meal.toLand >= 0 && meal.toLand < MEAL_SWALLOW_S) {
     const a = 1 - meal.toLand / MEAL_SWALLOW_S;
     lumpAt = headA + (a * a * (3 - 2 * a)) * (bellyA - headA);
-    lumpLen = MEAL_SWELL_LEN * P * (0.7 + lengthOfKind(kindOf(meal.n, KINDS)) / 30);
-    const swell = MEAL_SWELL * P * (0.5 + lengthOfKind(kindOf(meal.n, KINDS)) / 24);
+    lumpLen = MEAL_SWELL_LEN * P * (0.7 + lengthOfKind(mealKind(meal.n)) / 30);
+    const swell = MEAL_SWELL * P * (0.5 + lengthOfKind(mealKind(meal.n)) / 24);
     for (const p of pts) {
       const d = Math.abs(p.along - lumpAt);
       if (d < lumpLen) p.r += swell * Math.sqrt(1 - (d / lumpLen) ** 2);

@@ -15,8 +15,9 @@ import { GREYS, PURPLES } from './deeptones.js';
 import { coilLine } from '../deep/place.js';
 import { mealNow, kindOf, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_SWIM_CELLS, MEAL_HINGE, MEAL_SQUEEZE,
-         FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED } from '../config.js';
-import { deepTop, deepFloor } from '../deep/place.js';
+         FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED,
+         FLOW_NEAR_EVERY_S, FLOW_NEAR_SPEED, FLOW_NEAR_OUT, FLOW_NEAR_BAND, DEEP_W, DEEP_H, COIL_Y } from '../config.js';
+import { deepTop, deepFloor, deepX0 } from '../deep/place.js';
 
 // The mock's tones, on the deep's own ramps.
 const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
@@ -141,49 +142,77 @@ const SP = [
 export const lengthOfKind = k => SP[k].L;
 export const KINDS = SP.length;
 
-// The creature's front tip, in cells behind the mouth: in from `from` cells
-// behind over the swim, pulled into the mouth over the gulp.
-function frontBehind(sp, toLand, from) {
-  const atMouth = MEAL_GULP_S + MEAL_SWALLOW_S;
-  const s = Math.max(0, Math.min(1, 1 - (toLand - atMouth) / MEAL_SWIM_S)), e = Math.pow(s, 1.25);
-  const gulp = Math.max(0, Math.min(1, (atMouth - toLand) / MEAL_GULP_S));
-  return from * (1 - e) - gulp * (sp.L + 1);
+// --- the near stream, in the world -------------------------------------------------
+// The near creatures swim the deep itself, end to end and in from beyond its
+// walls, so where each one is at a moment is a fact of the clock alone: the
+// meal reads it to take one that is passing. A crossing a schedule, off a
+// seed, one every FLOW_NEAR_EVERY_S, either way.
+const nearSpan = () => DEEP_W + FLOW_NEAR_OUT * 2;
+function nearAt(i, t) {
+  const at = i * FLOW_NEAR_EVERY_S + unit(i * 41) * FLOW_NEAR_EVERY_S;
+  const dir = unit(i * 43) < 0.5 ? 1 : -1;
+  const speed = FLOW_NEAR_SPEED * (0.8 + unit(i * 47) * 0.4);
+  const run = (t - at) * speed;
+  if (t < at || run > nearSpan()) return null;
+  const x0 = deepX0() - FLOW_NEAR_OUT;
+  const mid = deepTop() + COIL_Y * DEEP_H;
+  return { i, at, dir, kind: Math.floor(unit(i * 53) * SP.length), speed,
+           x: dir > 0 ? x0 + run : x0 + nearSpan() - run,
+           y: mid - FLOW_NEAR_BAND * (0.2 + unit(i * 59)) + Math.sin((t - at) * 1.3 + at) * P * 2 };
 }
-// Where each meal set off, fixed the first time it is drawn so a pan in the
-// middle of its swim does not move it: off the left of the glass, or
-// MEAL_SWIM_CELLS behind the mouth if the glass reaches further than that.
-const setOff = new Map();
-function fromOf(n, sp, mouthCol) {
-  if (!setOff.has(n)) {
-    const glass = Math.floor((S.camX - FLOW_MARGIN / S.zoom) / P);
-    setOff.clear();
-    setOff.set(n, Math.max(MEAL_SWIM_CELLS + sp.L, mouthCol - glass + sp.L));
-  }
-  return setOff.get(n);
+function nearAll(t) {
+  const out = [], last = Math.floor(t / FLOW_NEAR_EVERY_S);
+  const first = Math.max(0, last - Math.ceil(nearSpan() / (FLOW_NEAR_SPEED * 0.8) / FLOW_NEAR_EVERY_S) - 1);
+  for (let i = first; i <= last; i++) { const c = nearAt(i, t); if (c) out.push(c); }
+  return out;
 }
+
+// --- the meal: one of them, taken ----------------------------------------------
+// When a meal's swim begins (MEAL_SWIM_S before the bite), the near creature
+// heading for the mouth that is nearest it turns off its path and swims into
+// the jaws. Which one is a fact of the clock too; it is remembered so the
+// stream no longer draws it, there or after.
+const taken = new Map();          // meal number -> the creature it took
+const eaten = new Set();          // and every one taken, by its number in the stream
+function mealCreature(n, toLand, mouthX, mouthY) {
+  if (taken.has(n)) return taken.get(n);
+  const tTurn = now() / 1000 - (BITE_BEFORE + MEAL_SWIM_S - toLand);
+  const all = nearAll(tTurn).filter(c => !eaten.has(c.i));
+  const coming = all.filter(c => c.dir > 0 && c.x < mouthX);
+  const pick = (coming.length ? coming : all).sort((a, b) =>
+    Math.hypot(a.x - mouthX, a.y - mouthY) - Math.hypot(b.x - mouthX, b.y - mouthY))[0];
+  const c = pick ? { i: pick.i, kind: pick.kind, x: pick.x, y: pick.y, dir: pick.dir }
+                 : { i: -1, kind: kindOf(n, SP.length), x: mouthX - MEAL_SWIM_CELLS * P, y: mouthY, dir: 1 };
+  taken.set(n, c);
+  if (c.i >= 0) eaten.add(c.i);
+  for (const k of taken.keys()) if (k < n - 4) taken.delete(k);
+  return c;
+}
+// Which creature meal `n` is, for the swallow's size (render/serpent.js).
+export const mealKind = n => (taken.get(n)?.kind ?? kindOf(n, SP.length));
 
 export function drawFish() {
   if (S.view !== 'deep' || !S.snatched || S.serpentFreed || S.serpentStage > 3) return;
   const { n, toLand } = mealNow();
   if (toLand > BITE_BEFORE + MEAL_SWIM_S || toLand < MEAL_SWALLOW_S) return;
-  const sp = SP[kindOf(n, SP.length)], t = now() / 1000;
-  const head = coilLine(0, now());
+  const t = now() / 1000, head = coilLine(0, now());
   const mouthCol = Math.floor((head.x - SNOUT) / P), mouthRow = Math.round(head.y / P);
-  const s = Math.max(0, Math.min(1, 1 - (toLand - BITE_BEFORE) / MEAL_SWIM_S));
-  const settle = 1 - ease(Math.max(0, (s - 0.7) / 0.3));
-  const bob = t2 => Math.round(sp.bob(t2) * settle * (1 - s * 0.5));
-  const from = fromOf(n, sp, mouthCol);
-  const col0 = mouthCol - Math.round(frontBehind(sp, toLand, from)), row0 = mouthRow + bob(t);
-  const paint = (c, r, tone) => { ctx.fillStyle = tone; ctx.fillRect(Math.round(c) * P, Math.round(r) * P, P, P); };
+  const c = mealCreature(n, toLand, mouthCol * P, mouthRow * P);
+  const sp = SP[c.kind];
+  // From where it turned, facing the mouth, to the tip of the jaws; then in.
+  const s = Math.max(0, Math.min(1, 1 - (toLand - BITE_BEFORE) / MEAL_SWIM_S)), e = ease(s);
+  const gulp = Math.max(0, Math.min(1, (BITE_BEFORE - toLand) / MEAL_GULP_S));
+  const col0 = Math.round(c.x / P + (mouthCol - c.x / P) * e + gulp * (sp.L + 1));
+  const row0 = Math.round(c.y / P + (mouthRow - c.y / P) * e);
+  const paint = (cc, r, tone) => { ctx.fillStyle = tone; ctx.fillRect(Math.round(cc) * P, Math.round(r) * P, P, P); };
   // Going in it is squeezed toward the mouth's line, and a cell past the tip
   // shows only between the jaws: it is cut by the jaw lines the head is
   // drawn on (`jawGap`), and the head covers the rest of it.
-  const open = jawOpen(toLand), gulp = Math.max(0, Math.min(1, (BITE_BEFORE - toLand) / MEAL_GULP_S));
-  const squeeze = 1 - (1 - MEAL_SQUEEZE) * gulp;
+  const open = jawOpen(toLand), squeeze = 1 - (1 - MEAL_SQUEEZE) * gulp;
   const put = (x, y, tone) => {
-    const c = Math.round(col0 - x), r = Math.round(row0 + y * squeeze), d = c - mouthCol;
+    const cc = Math.round(col0 - x), r = Math.round(row0 + y * squeeze), d = cc - mouthCol;
     if (d >= 0 && (d >= MEAL_HINGE || Math.abs(r - mouthRow) >= jawGap(d, open))) return;
-    paint(c, r, tone);
+    paint(cc, r, tone);
   };
   sp.draw(put, t);
 }
@@ -254,7 +283,17 @@ export function drawFishFar() {
     for (const c of crossings(d => d < 2, t)) drawCrossing(c, t);
   });
 }
-// In front of the serpent: the near crossings.
+// In front of the serpent: the near creatures, in the world, but the ones a
+// meal has taken.
 export function drawFishNear() {
-  onGlass(() => { const t = now() / 1000; for (const c of crossings(d => d === 2, t)) drawCrossing(c, t); });
+  if (S.view !== 'deep' || !S.snatched) return;
+  const t = now() / 1000;
+  for (const c of nearAll(t)) {
+    if (eaten.has(c.i)) continue;
+    const sp = SP[c.kind], row = Math.round(c.y / P);
+    sp.draw((x, y, tone) => {
+      ctx.fillStyle = tone;
+      ctx.fillRect(Math.round(c.x / P - c.dir * x) * P, (row + y) * P, P, P);
+    }, t + c.at);
+  }
 }
