@@ -16862,7 +16862,7 @@ break").
   and only its height drifts to the mouth's over the last `MEAL_SWIM_S`. The
   sim reads the same schedule (deep/meals.js, `nextMeal`), so the meal clock
   is the stream's: every fourth creature swims away and the rest come a slot
-  apart, so meals land about every nine seconds, never under six and under a
+  apart, so meals land about every thirteen seconds, never under six and under a
   ceiling of `MEAL_MAX_S`.
 - `render/fish.js` draws the creature from its local frame, cell by cell, over
   the water and behind the serpent's head; it enters at the deep's left edge and

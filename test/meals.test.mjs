@@ -30,7 +30,7 @@ group('meals come as creatures reach the mouth: never sooner than the shortest w
   const mean = waits.reduce((a, b) => a + b, 0) / waits.length;
   return [
     ok(waits.every(w => w >= MEAL_MIN_S - 1e-9 && w <= MEAL_MAX_S), 'every wait is between the shortest and the ceiling', `${Math.min(...waits).toFixed(1)}..${Math.max(...waits).toFixed(1)}`),
-    ok(mean >= 7 && mean <= 13, 'about every nine seconds on average', mean.toFixed(1)),
+    ok(mean >= 8 && mean <= 18, 'about every thirteen seconds on average', mean.toFixed(1)),
     ok(eaten.size === 40, 'each meal a different creature', `${eaten.size}`),
     ok(kinds.size >= 6, 'and most of the eight come', `${kinds.size} of 8`),
     ok(nextMeal(1000).i === nextMeal(1000).i, 'the same landing asks the same answer')
