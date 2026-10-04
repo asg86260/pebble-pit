@@ -27,13 +27,14 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, SNATCH_LEAN, SNATCH_HINGE, SNATCH_GAPE, SNATCH_CREST, SNATCH_HIDE, SNATCH_RISE, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_R, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
-         MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE } from '../config.js';
+         MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
+         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
 import { coilLine, coilThick, mouthX } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape } from '../deep/phases.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
@@ -192,7 +193,9 @@ export function drawSerpent() {
   // plates for physical; the coming one flickers in before the fading's
   // switch (deep/phases.js).
   const coming = resistNext();
-  const shown = coming && Math.floor(t / 1000 * RESIST_FLICKER_HZ * 2) % 2 ? coming : resistNow();
+  // A break shows the old hide where it has not yet been renewed (deep/phases.js).
+  const shownNow = coming && Math.floor(t / 1000 * RESIST_FLICKER_HZ * 2) % 2 ? coming : resistNow();
+  const renewing = breaking();
 
   // The belly swells round him while he is in it.
   if (held) for (const p of pts) {
@@ -205,7 +208,7 @@ export function drawSerpent() {
   // longer one, the creature dark through the hide. The jaws are the head
   // drawn wider by the gap (`jawGap`), each half pushed off the mouth's line.
   const meal = held && S.view === 'deep' ? mealNow() : null;
-  const open = meal ? jawOpen(meal.toLand) : 0;
+  const open = Math.max(meal ? jawOpen(meal.toLand) : 0, roarGape());   // and a break's roar
   let lumpAt = null, lumpLen = 0;
   if (meal && meal.toLand >= 0 && meal.toLand < MEAL_SWALLOW_S) {
     const a = 1 - meal.toLand / MEAL_SWALLOW_S;
@@ -283,6 +286,7 @@ export function drawSerpent() {
       if (Math.abs(across) > r) continue;
     }
     const aI = Math.round(along / P), cI = Math.round(across / P);
+    const shown = renewing ? resistAt(p.u / (COIL_SEGS - 1)) : shownNow;
     if (bit.length && bitten(bit, along, across, r, aI, cI)) continue;   // a bite: open water
     // The cage: inside the swell, pale, crossed by dark ribs he is seen
     // between. Pale because a body in the deep is dark with a light edge,
@@ -366,6 +370,7 @@ export function drawSerpent() {
   if (held) drawMealCrosses(t, pts, bellyA);
   ctx.globalAlpha = 1;
   drawVeil(t, pts);
+  drawBubbles(pts);
   let belly = pts[0];
   for (const p of pts) if (Math.abs(p.along - bellyA) < Math.abs(belly.along - bellyA)) belly = p;
   if (Math.abs(belly.along - bellyA) < BELLY_LEN) drawThrob(t, belly);
@@ -396,6 +401,7 @@ function drawMealCrosses(t, pts, bellyA) {
 // The sink's dimming: how far under he is, and in its warning a flicker.
 function dimOf(t) {
   const p = part();
+  if (breakKind() === 'dive') return sinkK() * SINK_DIM;   // the first break's dive goes the same way
   if (p.m?.kind !== 'sink' || S.mechSkip) return 0;
   if (p.part === 'warn') return SINK_WARN_DIM * (0.5 + 0.5 * Math.sin(t / 1000 * Math.PI * 2 * THROB_HZ));
   return sinkK() * SINK_DIM;
@@ -416,6 +422,21 @@ function drawVeil(t, pts) {
     ctx.fillRect(snap(p.x + p.nx * across - P / 2), snap(p.y + p.ny * across - P / 2), P, P);
   }
   ctx.globalAlpha = 1;
+}
+// The dive's bubbles: off the top of the body while he is under, climbing a
+// held cell at a time and gone at BREAK_BUBBLE_RISE.
+function drawBubbles(pts) {
+  if (breakKind() !== 'dive' || !pts.length) return;
+  const b = BREAK_DIVE, from = b.in / 2, over = b.under + b.in / 2;
+  ctx.fillStyle = GREYS[WHITE - 2];
+  for (let n = 0; n < BREAK_BUBBLES; n++) {
+    const age = S.breakT - (from + n / BREAK_BUBBLES * over);
+    const up = Math.floor(age * BREAK_BUBBLE_RISE / (over / 2));
+    if (age < 0 || up >= BREAK_BUBBLE_RISE) continue;
+    const p = pts[Math.floor(unit(n * 7 + 1) * (pts.length - 1))];
+    const drift = Math.round(Math.sin(up * 0.9 + n) * 0.6);
+    ctx.fillRect(snap(p.x) + drift * P, snap(p.y - p.r) - (up + 1) * P, P, P);
+  }
 }
 // The surge's throb: a ring of the abyss's purple round the belly, beating
 // in the warning and held while it heals.

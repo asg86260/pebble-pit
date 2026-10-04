@@ -34,12 +34,12 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { P, WORKER, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
+import { P, WORKER, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG, BREAK_ROAR_DAZE,
          CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, LASH_THROW, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
 import { slotX, postX, postY, coilAt, coilThick, segAbove, coilK } from './place.js';
-import { lashHits, mechOf } from './phases.js';
+import { lashHits, mechOf, roarHits } from './phases.js';
 import { rand } from '../rng.js';
 import { stationById, classOf, keyOf } from './party.js';
 import { mid, working, swim, loose } from './arms.js';
@@ -409,14 +409,13 @@ function bard(w, c, st, cls, v) {
   }
 }
 
-function lashOff(w) {
-  const m = mechOf();
+function lashOff(w, daze) {
   w.pose = null;
   w.goal = null;
   w.falling = true;
   w.vx = (rand() < 0.5 ? -1 : 1) * LASH_THROW[0];
   w.vy = LASH_THROW[1];
-  w.dizzyFor = m.daze * 1000;
+  w.dizzyFor = daze * 1000;
 }
 
 const STEP = { recruit, brawler, sword, monk, martial, ranger, assassin, hexer, sapper, mage, bard };
@@ -437,7 +436,9 @@ export function stepFighter(w, c) {
   // The lash (deep/phases.js) throws a melee fighter off the hide as it
   // passes: it sinks through the water, lies dazed where it lands, and swims
   // back up (crew/falls.js, the thrown body's own way down).
-  if (cls.melee && (w.goal === 'fight' || w.goal === 'rise') && lashHits(coilK(mid(w)))) { lashOff(w); return; }
+  if (cls.melee && (w.goal === 'fight' || w.goal === 'rise') && lashHits(coilK(mid(w)))) { lashOff(w, mechOf().daze); return; }
+  // and so does a break's roar, more gently.
+  if (cls.melee && (w.goal === 'fight' || w.goal === 'rise') && roarHits(coilK(mid(w)))) { lashOff(w, BREAK_ROAR_DAZE); return; }
   // A gatherer sent over from its rest by the crusher leaves that lull behind.
   if (w.goal === 'rest') w.lull = null;
   step(w, c, st, cls, rungWorth(cls, st.rung));

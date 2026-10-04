@@ -287,6 +287,15 @@ const mechScene = (stage, into, stations, seg = null, pin = false) => () => {
   hold();
 };
 
+// A phase's break, held `at` seconds in (deep/phases.js).
+const breakScene = (stage, at, stations) => () => {
+  stageScene(stage, 0, stations)();
+  S.breakT = at;
+  const until = performance.now() + 4000;
+  const hold = () => { if (performance.now() < until && S.serpentStage === stage) { S.breakT = at; requestAnimationFrame(hold); } };
+  hold();
+};
+
 // The snatch as it plays: both facts true, and the clock run until the beat
 // reaches the phase named. The shot tool runs a second more after a scene,
 // and the take is shorter than that, so the scene stops at the start of the
@@ -433,6 +442,12 @@ const deepScenes = {
     run: mechScene(2, 0.3, [cast('brawler', 8), cast('sword', 8)], COIL_SEGS - 8, true) },
   'phase-lash': { about: 'the deep', say: 'the lash running down the coil, melee fighters thrown off it',
     run: mechScene(2, -0.6, [cast('brawler', 8), cast('sword', 8)], Math.round(COIL_SEGS * 0.55), true) },
+  'break-dive': { about: 'the deep', say: 'the first break: the coil under in the abyss, bubbles rising off it',
+    run: breakScene(1, 1.6, [cast('brawler', 4), cast('ranger', 4)]) },
+  'break-rise': { about: 'the deep', say: 'back up from the first break in the ward: the bar refilling, the phase boxes coming up',
+    run: breakScene(1, 2.9, [cast('brawler', 4), cast('ranger', 4)]) },
+  'break-roar': { about: 'the deep', say: 'a later break: jaws wide, the bump halfway down, the new hide behind it',
+    run: breakScene(2, 1.2, [cast('brawler', 8), cast('sword', 8)]) },
   'phase-sink': { about: 'the deep', say: 'the sink in the fading phase: the coil dimmed into the abyss under its veil',
     run: mechScene(3, -3, [cast('mage', 4), cast('monk', 4)]) },
   // Reading the fight: the numbers off the blows and the heal's purple `+`

@@ -12,6 +12,7 @@
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K, MEAL_MIN_S, MEAL_MAX_S } from '../src/config.js';
 import { clickDeep, clickDmg, strike, healNow, woundK, onBreak, scalesOf } from '../src/deep/serpent.js';
+import { breaking } from '../src/deep/phases.js';
 import { spendScales } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -124,6 +125,13 @@ group('each defense breaks at its depth, in order, the fourth frees him, and eve
     seen.push(S.serpentStage);
     if (S.serpentStage !== stage + 1) bad.push(`stage ${stage} did not break at its depth`);
     if (S.serpentWound !== 0) bad.push(`stage ${stage + 1} began with a wound of ${S.serpentWound}`);
+    // A break plays before the next defense can be touched: a blow in it
+    // does nothing.
+    if (stage < 3) {
+      if (!breaking()) bad.push(`stage ${stage + 1} opened without a break`);
+      if (strike('punch', depth, at().x, at().y) !== 0) bad.push(`a blow landed in the break into stage ${stage + 1}`);
+      runUntil(() => !breaking(), 10);
+    }
   }
   const inOrder = seen.every((s, i) => i === 0 || s === seen[i - 1] + 1);
   run(5);

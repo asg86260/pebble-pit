@@ -15,8 +15,9 @@ import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DE
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
-         WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W } from '../config.js';
-import { tautK, lashK } from './phases.js';
+         WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
+         BREAK_DIVE_DROP, BREAK_ROAR_H } from '../config.js';
+import { tautK, lashK, diveK, roarK, renewed } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -169,14 +170,16 @@ export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 const waveLine = t => {
   const x0 = coilX0(), span = coilSpan(), base = deepTop() + COIL_Y * DEEP_H;
   const split = S.serpentStage === 2 && !S.serpentFreed;
-  const taut = tautK(), lash = lashK();
+  const taut = tautK(), lash = lashK(), drop = diveK() * BREAK_DIVE_DROP, roar = roarK();
   const amp = COIL_AMP * (1 - LASH_TAUT * taut);
   return x => {
     const k = (x - x0) / span;
     let y = base + amp * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
-    if (split) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
+    if (split && renewed(k)) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
     if (taut && k > COIL_TAIL_FROM) y -= taut * LASH_LIFT * (k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM);
     if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
+    if (roar != null) y -= BREAK_ROAR_H * Math.exp(-((k - roar) ** 2) / (LASH_W * LASH_W));
+    y += drop;
     return y;
   };
 };
@@ -194,7 +197,7 @@ export const coilK = x => (x - coilX0()) / coilSpan();
 const STEP = 2;                           // px of arc a table entry
 let walked = null;
 function walk(t) {
-  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}|${tautK()}|${lashK()}`;
+  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}|${tautK()}|${lashK()}|${diveK()}|${roarK()}`;
   if (walked?.key === key) return walked;
   const xs = [coilX0()];
   const wave = waveLine(t);

@@ -13,10 +13,11 @@ import { coilCeiling, coilEnds } from '../deep/place.js';
 import { owedWound, landsAt } from './barflight.js';
 import { drawFoeStatuses } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
+import { breakKind, breakFill, rising } from '../deep/phases.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
          BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
          BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP, STATUS_PX,
-         SERPENT_WOUND } from '../config.js';
+         SERPENT_WOUND, BREAK_FILL_STEPS } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
@@ -49,7 +50,8 @@ export function barLeft(t) {
 }
 
 export function drawSerpentBar() {
-  const t = now(), left = barLeft(t);
+  // A break refills the bar in held steps as it plays (deep/phases.js).
+  const t = now(), left = Math.min(barLeft(t), breakFill(BREAK_FILL_STEPS));
   // A new defense starts full, with nothing to remember.
   if (S.serpentStage !== stage) { stage = S.serpentStage; was = trail = low = left; hitAt = t; }
   const dt = Math.max(0, (t - then) / 1000);
@@ -84,7 +86,11 @@ export function drawSerpentBar() {
   fill(BAR_TRAIL, x, y, len(trail), BAR_H);
   fill(BAR_HEALED, x, y, len(left), BAR_H);
   fill(BAR_LEFT, x, y, len(Math.min(low, left)), BAR_H);
-  for (let s = 0; s < pips; s++) {
+  // The phase boxes: none on the first defense, which is the only one the
+  // player knows of; they come up one by one as he rises from the first break.
+  const boxes = S.serpentStage === 0 ? 0
+              : breakKind() === 'dive' ? (rising() ? Math.round(breakFill(pips) * pips) : 0) : pips;
+  for (let s = 0; s < boxes; s++) {
     const px = x + BAR_W + BAR_PIP_GAP + s * (BAR_PIP + BAR_PIP_GAP);
     const py = y + Math.round((BAR_H - BAR_PIP) / 2);
     fill(BAR_EDGE, px - 1, py - 1, BAR_PIP + 2, BAR_PIP + 2);
