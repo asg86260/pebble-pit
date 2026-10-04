@@ -50,7 +50,7 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
          drawSwimmers, drawDeepInvert } from './render/deep.js';
 import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
-import { drawSerpent, drawSnatch } from './render/serpent.js';
+import { drawSerpent, drawSerpentDiving, drawSnatch } from './render/serpent.js';
 import { drawFish, drawFishFar, drawFishNear } from './render/fish.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawStationStatuses } from './render/statusicons.js';
@@ -195,6 +195,7 @@ const LAYERS = [
   { name: 'deep stream far', draw: drawFishFar },   // the giant and the far and middle crossings, behind all of it
   { name: 'deep portal', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
   { name: 'deep floor', draw: drawDeepFloor },
+  { name: 'serpent diving', draw: drawSerpentDiving },   // the first break's dive, behind the stations and the bed
   // The scales, then the stations standing in front of them: the bed can
   // heap forty cells deep, and a station buried in its own coin could not
   // be found to be paid at.
@@ -289,7 +290,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'deep fish', 'deep stream far', 'deep stream near', 'serpent', 'swimmers', 'level-up back', 'party', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'deep fish', 'deep stream far', 'deep stream near', 'serpent', 'serpent diving', 'swimmers', 'level-up back', 'party', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

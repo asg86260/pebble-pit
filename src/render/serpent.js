@@ -173,12 +173,15 @@ function bitten(list, along, across, r, aI, cI) {
   return false;
 }
 
-// Diving, he goes under the deep's floor: everything of him below it is cut.
-export function drawSerpent() {
-  const diving = breakKind() === 'dive';
-  if (diving) { ctx.save(); ctx.beginPath(); ctx.rect(-1e6, -1e6, 2e6, deepFloor() + 1e6); ctx.clip(); }
+// In front of the stations, but diving behind them (`drawSerpentDiving`,
+// earlier in the layers) and under the deep's floor: everything of him below
+// it is cut.
+export function drawSerpent() { if (breakKind() !== 'dive') drawCoil(); }
+export function drawSerpentDiving() {
+  if (breakKind() !== 'dive') return;
+  ctx.save(); ctx.beginPath(); ctx.rect(-1e6, -1e6, 2e6, deepFloor() + 1e6); ctx.clip();
   drawCoil();
-  if (diving) ctx.restore();
+  ctx.restore();
 }
 function drawCoil() {
   const t = now();
