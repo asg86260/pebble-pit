@@ -11,7 +11,7 @@ import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
 import { coilCeiling, coilEnds } from '../deep/place.js';
 import { owedWound, landsAt } from './barflight.js';
-import { drawFoeStatuses } from './statusicons.js';
+import { drawFoeStatuses, statusRowH } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
 import { breakKind, breakFill, rising } from '../deep/phases.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
@@ -32,15 +32,15 @@ export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage 
 // just over the highest the coil ever sways.
 export function barRect() {
   const whole = BAR_W + SERPENT_WOUND.length * (BAR_PIP + BAR_PIP_GAP);
-  // The row of status tiles hangs under the bar, so the gap to the coil is
-  // measured from the bottom of the row, whether or not it has a tile in it.
-  const row = STATUS_GAP + 1 + 5 * STATUS_PX + 4 + 4;
-  const over = (coilCeiling() - S.camY) * S.zoom - BAR_GAP - row - BAR_H;
+  // The row of statuses stands over the bar (render/statusicons.js), so the
+  // bar keeps room above it for the row, whether or not it has a status in it.
+  const row = statusRowH() + STATUS_GAP;
+  const over = (coilCeiling() - S.camY) * S.zoom - BAR_GAP - BAR_H;
   const { x0, x1 } = coilEnds(), toScreen = x => (x - S.camX) * S.zoom;
   const a = Math.max(0, toScreen(x0)), b = Math.min(S.W, toScreen(x1));
   const mid = b > a ? (a + b) / 2 : S.W / 2;
   const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
-  return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP, over)), w: BAR_W, h: BAR_H };
+  return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w: BAR_W, h: BAR_H };
 }
 // What the bar shows of the defense up, 0..1: the wound as the numbers that
 // have landed in it say, not yet as the sim has it (render/barflight.js).
@@ -121,6 +121,6 @@ export function drawSerpentBar() {
     fill(lit ? BAR_LEFT : BAR_CHIP, Math.round(cx - cw / 2), Math.round(cy), cw, ch);
   }
   // what the fighters have laid on the serpent, in a row under the bar
-  drawFoeStatuses(x, y + BAR_H + STATUS_GAP + 1);
+  drawFoeStatuses(x, rest - statusRowH() - STATUS_GAP);
   ctx.restore();
 }

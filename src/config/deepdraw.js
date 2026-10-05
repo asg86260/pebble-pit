@@ -372,6 +372,11 @@ export const STATUS_SAYS = {
   plates: 'Plates: phys damage cut in half',
 };
 export const STATUS_PX = 3;
+// Over the serpent's bar (the owner's B, 2026-10-04): the tiles twice the
+// size, each named under it in STATUS_LABEL_PX type, a column each.
+export const STATUS_BAR_PX = 6;
+export const STATUS_LABEL_PX = 11;
+export const STATUS_LABEL_GAP = 3;
 export const STATUS_GAP = 5;
 export const STATUS_STEPS = 5;
 export const STATUS_RENEW_MS = 5;

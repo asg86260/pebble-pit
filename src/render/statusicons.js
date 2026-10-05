@@ -17,7 +17,7 @@ import { part, resistNow, resistNext, inOrb, orbOn } from '../deep/phases.js';
 import { statusLine } from '../deep/rails.js';
 import { STATUS_ICONS, STATUS_PX, STATUS_GAP, STATUS_STEPS, STATUS_RENEW_MS, STATUS_TILE, STATUS_RIM,
          STATUS_FOE, STATUS_FACE, STATUS_TIMER, STATUS_SPENT, STATUS_POST, STATUS_POST_OUT, STATUS_POST_FOOT,
-         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, MECHANICS } from '../config.js';
+         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, MECHANICS, STATUS_BAR_PX, STATUS_LABEL_PX, STATUS_LABEL_GAP } from '../config.js';
 
 const seen = c => darkPage ? turned(c) : c;
 
@@ -53,7 +53,7 @@ function spanOf(id, until, t) {
 // One tile at (x, y), its top-left, in screen pixels: the icon on dark in its
 // rim, the timer under it, a count in its corner. Returns its width.
 function tile(key, x, y, k, n = 0, o = {}) {
-  const px = STATUS_PX, s = 5 * px + 4, ic = STATUS_ICONS[key];
+  const px = o.px || STATUS_PX, s = 5 * px + 4, ic = STATUS_ICONS[key];
   const fill = (c, fx, fy, w, h) => { ctx.fillStyle = seen(c); ctx.fillRect(Math.round(fx), Math.round(fy), Math.round(w), Math.round(h)); };
   fill(o.rim || (ic.foe ? STATUS_FOE : STATUS_RIM), x - 1, y - 1, s + 2, s + 2);
   fill(STATUS_TILE, x, y, s, s);
@@ -86,36 +86,49 @@ function foeStatuses(t) {
   }
   return out.map(s => ({ ...s, ...spanOf('foe:' + s.key, s.until, t) })).sort((a, b) => a.first - b.first);
 }
-// The row under the serpent's bar, from its left end, in screen pixels (the
-// bar's own transform, render/serpentbar.js).
+// The row over the serpent's bar, from its left end, its top at `y`, in screen
+// pixels (the bar's own transform, render/serpentbar.js): a column a status,
+// the tile and its name under it.
+const barTileW = () => 5 * STATUS_BAR_PX + 4;
+export const statusRowH = () => barTileW() + 4 + STATUS_LABEL_GAP + STATUS_LABEL_PX;
+// A status's name off its hover line: what comes before its colon, less "coming".
+const labelOf = text => (text || '').split(':')[0].replace(/ coming$/, '');
 export function drawFoeStatuses(x, y) {
-  const t = now(), s = tileW();
+  const t = now(), s = barTileW();
   barTiles = [];
+  ctx.font = `${STATUS_LABEL_PX}px ui-monospace, "Courier New", monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const column = (key, text, k, n, o = {}) => {
+    const label = labelOf(text), w = Math.max(s, Math.ceil(ctx.measureText(label).width));
+    const tx = x + Math.round((w - s) / 2);
+    barTiles.push({ x: tx, y, w: s, h: s, text });
+    tile(key, tx, y, k, n, { ...o, px: STATUS_BAR_PX });
+    ctx.fillStyle = seen(STATUS_FACE);
+    ctx.fillText(label, x + w / 2, y + s + 4 + STATUS_LABEL_GAP);
+    x += w + STATUS_GAP * 2;
+  };
   // first the serpent's own, the phase's mechanic: warned, its rim blinking
   // and its timer the time until it comes on; on, its timer what is left;
-  // answered, struck through; then a step, and what the fighters have laid
-  // The lash stays up all phase, whether or not it is coming: the melee
-  // fighters have to plan round it.
+  // answered, struck through. The lash stays up all phase, whether or not it
+  // is coming: the melee fighters have to plan round it.
   const p = part();
   if (p.m && (p.part !== 'calm' || p.m.kind === 'lash')) {
     const warn = p.part === 'warn', calm = p.part === 'calm';
     const rim = warn ? STATUS_WARN_RIM[Math.floor(t / 1000 * STATUS_WARN_HZ) % 2] : null;
-    barTiles.push({ x, y, w: s, h: s, text: saysOf(p.m.kind, 0, { warn, calm, struck: S.mechSkip, x: p.m.x }) });
-    x += tile(p.m.kind, x, y, calm ? 1 : 1 - p.k, 0, { rim, struck: S.mechSkip }) + STATUS_GAP;
+    column(p.m.kind, saysOf(p.m.kind, 0, { warn, calm, struck: S.mechSkip, x: p.m.x }), calm ? 1 : 1 - p.k, 0, { rim, struck: S.mechSkip });
   }
-  // then the resist the phase stands in, beside the debuffs: in the fading it
-  // is the one up, its timer the turn, its rim blinking as the other comes in
+  // then the resist the phase stands in: in the fading it is the one up, its
+  // timer the turn, its rim blinking as the other comes in
   const kind = resistNow();
   if (kind) {
     const key = kind === 'magic' ? 'ward' : 'plates';
     const turn = resistNext() ? STATUS_WARN_RIM[Math.floor(t / 1000 * STATUS_WARN_HZ) % 2] : null;
-    barTiles.push({ x, y, w: s, h: s, text: saysOf(key) });
-    x += tile(key, x, y, S.serpentStage === 3 ? 1 - (S.phaseAt % RESIST_TURN_S) / RESIST_TURN_S : 1, 0, { rim: turn }) + STATUS_GAP;
+    column(key, saysOf(key), S.serpentStage === 3 ? 1 - (S.phaseAt % RESIST_TURN_S) / RESIST_TURN_S : 1, 0, { rim: turn });
   }
-  for (const o of foeStatuses(t)) {
-    barTiles.push({ x, y, w: s, h: s, text: saysOf(o.key, o.n) });
-    x += tile(o.key, x, y, o.k, o.n) + STATUS_GAP;
-  }
+  for (const o of foeStatuses(t)) column(o.key, saysOf(o.key, o.n), o.k, o.n);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 }
 
 // --- on the fighters ----------------------------------------------------------------------
