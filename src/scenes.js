@@ -487,6 +487,9 @@ const deepScenes = {
       const w = S.workers.find(o => o.uid === st.fighter);
       if (w) lookDeep(w.x);
     } },
+  'phase-orb-warn': { about: 'the deep', say: 'the constrict coming: two seconds before the cast, the strongest fighter in frame',
+    run: () => { mechScene(4, 2, [cast('brawler', 8), cast('ranger', 6), cast('mage', 4), cast('monk', 2)])();
+                 const w = S.workers.find(o => o.station === S.stations[0].id); if (w) lookDeep(w.x); } },
   'phase-orb-cast': { about: 'the deep', say: 'the constrict: the comb lit, the bolts leaving it for the strongest fighter',
     run: () => { mechScene(4, -0.2, [cast('brawler', 8), cast('ranger', 6), cast('mage', 4), cast('monk', 2)])(); lookAtOrb(); } },
   'phase-orb': { about: 'the deep', say: 'the constrict: a fighter held in the orb, its bar over its head',
