@@ -11,7 +11,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_WOUND, SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE,
+import { SERPENT_WOUND, SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_X, P, WORKER,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG } from '../config.js';
@@ -20,7 +20,7 @@ import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned } from './meals.js';
-import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb } from './phases.js';
+import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbLift } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
 // resists nothing and has nothing left to heal.
@@ -133,6 +133,12 @@ export const clickDmg = () => {
 export function clickDeep(x, y) {
   if (!S.snatched) return false;
   const t = now();
+  // On the constrict's orb, a punch several times over (deep/phases.js).
+  const orb = orbOn(), w = orb && S.workers.find(o => o.station === orb.st);
+  if (w) {
+    const st = S.stations.find(s => s.id === orb.st), cx = w.x + WORKER / 2, cy = w.y + WORKER / 2 - orbLift(st) * P;
+    if (Math.hypot(x - cx, y - cy) <= ORB_R * P) { strike('punch', clickDmg() * ORB_CLICK_X, cx, cy); return true; }
+  }
   const near = nearestSeg(x, y, t);
   if (near.d > coilThick(near.seg)) return false;
   const p = coilAt(near.seg, t);

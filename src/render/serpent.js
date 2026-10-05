@@ -29,7 +29,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
-         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S } from '../config.js';
+         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
@@ -494,6 +494,10 @@ export function drawOrb() {
       ctx.fillStyle = i < Math.round(bw * o.hp / o.max) ? PURPLES[WHITE - 1] : PURPLES[WHITE - 7];
       ctx.fillRect(bx + i * P, by, P, P);
     }
+    // and an arrow over that, bobbing, pointing at it: it can be clicked
+    const bob = Math.floor(t / 1000 / ORB_ARROW_S) % 2 ? ORB_ARROW_UP : 0, ay = by - (5 + bob) * P, ax = snap(c.x) - 2 * P;
+    ctx.fillStyle = GREYS[WHITE];
+    for (const [dx, dy] of [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [3, 1], [2, 2]]) ctx.fillRect(ax + dx * P, ay + dy * P, P, P);
   }
   const b = S.orbBurst;
   if (b && t - b.at < ORB_BURST_S * 1000) {

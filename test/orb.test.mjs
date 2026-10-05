@@ -4,9 +4,9 @@
 // fighter out breaks it at once; and it lets go when its turn runs out.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { MECHANICS, SERPENT_PHASES, SERPENT_WOUND } from '../src/config.js';
-import { strike } from '../src/deep/serpent.js';
-import { orbOn, inOrb, part } from '../src/deep/phases.js';
+import { MECHANICS, SERPENT_PHASES, SERPENT_WOUND, ORB_CLICK_X, WORKER, P } from '../src/config.js';
+import { strike, clickDeep, clickDmg } from '../src/deep/serpent.js';
+import { orbOn, inOrb, part, orbLift } from '../src/deep/phases.js';
 import { lift, drop } from '../src/crew/pointer.js';
 import { bellyAt } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -71,4 +71,13 @@ group('left alone, the orb lets go when its turn runs out', async () => {
   const had = !!orbOn();
   runUntil(() => part().part !== 'on', M.last + 2);
   return [ok(had && !orbOn(), 'gone at the end of its turn', `${had} ${JSON.stringify(S.orb)}`)];
+});
+
+group('a click on the orb cracks it harder than a punch', async () => {
+  const id = party(0.05);
+  run(0.1);
+  const o = orbOn(), w = body(id), st = S.stations.find(s => s.id === id);
+  const hp = o.hp;
+  const took = clickDeep(w.x + WORKER / 2, w.y + WORKER / 2 - orbLift(st) * P);
+  return [ok(took && Math.abs((hp - o.hp) - clickDmg() * ORB_CLICK_X) < 1e-6, `a click on it takes ${ORB_CLICK_X} punches' worth`, `${hp} then ${o.hp}`)];
 });

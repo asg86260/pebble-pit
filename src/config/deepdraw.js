@@ -343,6 +343,7 @@ export const STATUS_ICONS = {
   haste:    { rows: ['#.#..', '.#.#.', '..#.#', '.#.#.', '#.#..'] },
   inspired: { rows: ['..##.', '..#.#', '..#..', '.##..', '###..'] },
   dazed:    { rows: ['#.#..', '.....', '..#.#', '.....', '#.#..'], foe: true },
+  constricted: { rows: ['.###.', '#...#', '#.#.#', '#...#', '.###.'], foe: true },
   // the serpent's own, a phase's mechanic (deep/phases.js): the heal surging,
   // the lash, the sink
   lash:     { rows: ['...##', '..#..', '.#...', '#....', '#....'], own: true },
@@ -366,6 +367,7 @@ export const STATUS_SAYS = {
   sink:  { coming: 'Cloak coming', on: 'Cloak: out of reach' },   // the owner calls it the cloak; nothing answers it
   orb:   { coming: 'Constrict coming', on: 'Constrict', stopped: 'Constrict' },   // the owner's name for it
   dazed: 'Dazed: thrown off, seeing stars',
+  constricted: 'Constricted',   // the owner's
   ward: 'Ward: magic damage cut in half',
   plates: 'Plates: phys damage cut in half',
 };

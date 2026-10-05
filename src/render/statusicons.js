@@ -13,11 +13,11 @@ import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
 import { inspiredK, hasted } from '../deep/statuses.js';
 import { standOfStation, deepFloor } from '../deep/place.js';
-import { part, resistNow, resistNext } from '../deep/phases.js';
+import { part, resistNow, resistNext, inOrb, orbOn } from '../deep/phases.js';
 import { statusLine } from '../deep/rails.js';
 import { STATUS_ICONS, STATUS_PX, STATUS_GAP, STATUS_STEPS, STATUS_RENEW_MS, STATUS_TILE, STATUS_RIM,
          STATUS_FOE, STATUS_FACE, STATUS_TIMER, STATUS_SPENT, STATUS_POST, STATUS_POST_OUT, STATUS_POST_FOOT,
-         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS } from '../config.js';
+         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, MECHANICS } from '../config.js';
 
 const seen = c => darkPage ? turned(c) : c;
 
@@ -32,7 +32,7 @@ export function statusAt(cx, cy) {
 // whether it is coming, on, or stopped.
 function saysOf(key, n = 0, mech = null) {
   if (mech) return (STATUS_SAYS[key][mech.struck ? 'stopped' : mech.warn ? 'coming' : mech.calm ? 'calm' : 'on'] ?? '').replace('{x}', mech.x);
-  if (key === 'dazed' || key === 'ward' || key === 'plates') return STATUS_SAYS[key];
+  if (key === 'dazed' || key === 'ward' || key === 'plates' || key === 'constricted') return STATUS_SAYS[key];
   const line = statusLine(key);
   return n > 1 ? line.replace(':', ` x${n}:`) : line;
 }
@@ -124,6 +124,8 @@ function ownStatuses(w, t) {
   const out = [];
   if (hasted(w)) out.push({ key: 'haste', until: w.hastedUntil });
   if (inspiredK(w) > 0) out.push({ key: 'inspired', until: w.inspiredUntil });
+  const orb = inOrb(w) && orbOn();
+  if (orb) out.push({ key: 'constricted', until: orb.at + MECHANICS[S.serpentStage].last * 1000 });
   if (w.dizzyUntil > t) out.push({ key: 'dazed', until: w.dizzyUntil });
   else if (w.falling && w.dizzyFor) out.push({ key: 'dazed', until: t + w.dizzyFor });
   return out.map(s => ({ ...s, ...spanOf(`${w.uid ?? w.id}:${s.key}`, s.until, t) })).sort((a, b) => a.first - b.first);

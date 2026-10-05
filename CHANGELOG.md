@@ -16,7 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
-- The serpent has a fifth phase: its comb lights up and bolts lock the strongest fighter in an orb; break the orb, or pick the fighter out of it.
+- The serpent has a fifth phase: its comb lights up and bolts lock the strongest fighter in an orb; break the orb (a click on it hits harder), or pick the fighter out of it.
 - The serpent's warded phase no longer surges: its magic resist is the whole of it.
 - Small hits on the serpent shed more scales: two more on every hit.
 - Freeing the sqhusband plays out: the serpent goes limp, sinks to the floor and comes apart into motes, he walks out to her, and after the sheet the serpent gathers itself again (test/snatch.test.mjs).
