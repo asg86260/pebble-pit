@@ -279,6 +279,132 @@ for (; t < LIMIT; t++) {
   }
 }
 
+// --- the deep, played (`--fight`) ----------------------------------------------
+// On past the portal to the serpent's end: the build button pressed whenever
+// it stands, each Recruit made the next kind of `PLAN` and forked to its
+// class, the cheapest affordable rung bought, a pod when the scales allow,
+// the serpent punched `--dcps` times a second and the orb answered by
+// `--orb` (lift: picked up after a second; click: punched; none: waited
+// out). Every rule in verify.js is watched; a broken one is printed once and
+// the run goes on.
+if (process.argv.includes('--fight') && said.has('deep')) await fight();
+async function fight() {
+  const { buildOffer, press } = await import('../../src/deep/buildbutton.js');
+  const { railsOf, pressKind, pressBuy } = await import('../../src/deep/rails.js');
+  const { clickDeep } = await import('../../src/deep/serpent.js');
+  const { orbOn, breaking } = await import('../../src/deep/phases.js');
+  const { bellyAt } = await import('../../src/deep/place.js');
+  const { now } = await import('../../src/clock.js');
+  const { lift, drop } = await import('../../src/crew/pointer.js');
+  const { PAIRS, P } = await import('../../src/config.js');
+  const { sweep, release } = await import('../../src/hands.js');
+  const { hopperRect, deepFloor } = await import('../../src/deep/place.js');
+  const { bedNear } = await import('../../src/deep/scales.js');
+  const { deepBed } = await import('../../src/state.js');
+  const HAND = +arg('hand', 10);       // seconds between the hand's sweeps of the bed, 0 never
+  let swept = 0;
+  const YARDBUY = process.argv.includes('--yardbuy');
+  const DCPS = +arg('dcps', 2), ORB = arg('orb', 'lift'), FHOURS = +arg('fhours', 4);
+  const PLAN = (arg('party', 'altar:brawler,armory:ranger,spire:mage,circle:hexer')).split(',').map(s => s.split(':'));
+  console.log(`\nthe fight: ${DCPS} punches/s, orb ${ORB}, party ${PLAN.map(p => p.join(':')).join(' ')}`);
+  g.__verify(true);
+  const broke = new Map();
+  const step = s => {
+    try { yard.fast(s); }
+    catch (e) {
+      const rule = String(e.message).split(':')[0];
+      if (!broke.has(rule)) console.log(`${hms(t).padStart(8)}  RULE BROKEN  ${e.message}`);
+      broke.set(rule, (broke.get(rule) || 0) + 1);
+    }
+  };
+  const t0 = t, stageAt = [t];
+  let stage = S.serpentStage, heals = 0, mealWas = S.meal, woundMax = 0, orbs = 0, orbAnswered = 0, liftAt = null;
+  const kinds = new Map();               // station id -> [kind, cls]
+  for (; t < t0 + FHOURS * 3600; t++) {
+    // the hand: punches spread through the second
+    const per = Math.max(1, DCPS);
+    for (let i = 0; i < per; i++) {
+      const o = orbOn();
+      if (o && ORB === 'click') {
+        const w = S.workers.find(x => x.station === o.st);
+        if (w) clickDeep(w.x + 3, w.y);
+      } else if (DCPS > 0 && !breaking()) { const p = bellyAt(now()); clickDeep(p.x, p.y); }
+      step(1 / per);
+    }
+    // the orb, answered
+    const o = orbOn();
+    if (o && o.at !== liftAt) {
+      if (liftAt == null || o.at !== liftAt) orbs++;
+      liftAt = o.at;
+    }
+    if (o && ORB === 'lift' && now() - o.at > 1000) {
+      const w = S.workers.find(x => x.station === o.st);
+      if (w) { lift(w); step(1 / 60); drop(w); orbAnswered++; }
+    }
+    // the hand: a drag along the bed, let go over the hopper
+    if (HAND > 0 && (t - t0) % HAND === 0) {
+      const h = hopperRect(), y = deepFloor() - P;
+      for (let x = deepBed.x; x < deepBed.x + deepBed.cols * P; x += P * 2) {
+        if (!bedNear(x, y, P * 3)) continue;
+        const was = S.heldScales || 0;
+        sweep(x, y);
+        if ((S.heldScales || 0) === was && was > 0) break;
+      }
+      if (S.heldScales) { swept += S.heldScales; release(h.x + h.w / 2, h.y - P * 6); }
+    }
+    // the meals
+    if (S.meal !== mealWas) { mealWas = S.meal; heals++; }
+    woundMax = Math.max(woundMax, S.serpentWound);
+    // the build button, and each Recruit made what the plan says
+    if (buildOffer().shown && S.stations.length < PLAN.length) {
+      const id = press();
+      if (id) { kinds.set(id, PLAN[S.stations.length - 1]); console.log(`${hms(t).padStart(8)}  station ${S.stations.length} laid`); }
+    }
+    let boughtOne = true;
+    for (let guard = 0; boughtOne && guard < 8; guard++) {
+      boughtOne = false;
+      const sts = [...S.stations].filter(s => s.built).sort((a, b) => a.rung - b.rung);
+      for (const st of sts) {
+        const [kind, cls] = kinds.get(st.id) || PLAN[0];
+        const r = railsOf(st.id);
+        if (!r) continue;
+        if (r.recruit) { if (pressKind(st.id, kind)) { boughtOne = true; console.log(`${hms(t).padStart(8)}  station ${st.id} becomes ${kind}`); } continue; }
+        const want = r.rows.length > 1 ? (PAIRS[kind].includes(cls) ? cls : r.rows[0].cls) : null;
+        if (pressBuy(st.id, want)) { boughtOne = true; if (st.rung === 8 || st.rung === 4) console.log(`${hms(t).padStart(8)}  station ${st.id} ${st.cls || st.kind} rung ${st.rung}`); }
+      }
+    }
+    if (t % 5 === 0) {
+      const pod = g.__rows().find(r => r.key === 'pod' && r.shown && !r.done);
+      const fighting = S.stations.length;
+      if (pod && !pending().has('pod') && (S.deepCrew || 0) < fighting + 4 && affords(pod.bill, bal())) g.__buy('pod');
+    }
+    // the yard goes on above: its crew, and its rows only with `--yardbuy`
+    // (they spend the dust the rungs' bands ask for)
+    if (YARDBUY && t % 2 === 0) shop();
+    if (t % 10 === 0) staff();
+    if (S.serpentStage !== stage) {
+      console.log(`${hms(t).padStart(8)}  BREAK ${stage} -> ${S.serpentStage} after ${hms(t - stageAt.at(-1))} (${heals} meals, deepest wound ${Math.round(woundMax)}, orbs ${orbs}/${orbAnswered} answered) party ${S.stations.map(s => `${s.cls || s.kind || 'recruit'}@${s.rung}`).join(' ')}`);
+      stage = S.serpentStage; stageAt.push(t); heals = 0; woundMax = 0;
+    }
+    if (S.serpentFreed && !said.has('freed')) mark('freed', `FREED: the serpent's end, ${hms(t - t0)} after the portal`);
+    if (said.has('freed') && t - stageAt.at(-1) > 120) break;
+    if ((t - t0) % +arg('fsay', 600) === 0) {
+      const deep = S.workers.filter(w => /fight|gather|build/.test(w.type));
+      const goals = {};
+      for (const w of deep) goals[`${w.type}:${w.goal || ''}`] = (goals[`${w.type}:${w.goal || ''}`] || 0) + 1;
+      const works = Object.entries(S.works || {}).filter(([, v]) => v && v.length).map(([k, v]) => `${k}:${v.map(w => w && w.key).join('+')}`).join(' ');
+      console.log(`${hms(t).padStart(8)}  .. stations ${JSON.stringify(S.stations.map(s => ({ id: s.id, built: s.built, kind: s.kind, f: !!s.fighter })))} works ${works} deep bodies ${deep.length} ${JSON.stringify(goals)} loose fangs ${S.fangsLoose.length} scales ${Math.round(S.scales)} swept ${swept} bed ${deepBed.n} sinking ${S.sinking.length} hits ${S.hits?.length ?? "-"}`);
+    }
+    if (t % EVERY === 0) {
+      console.log(`${hms(t).padStart(8)}  .. stage ${S.serpentStage} wound ${Math.round(S.serpentWound)} scales ${Math.round(S.scales)} fangs ${S.fangs} crew ${S.deepCrew}/${S.crew} `
+        + `party ${S.stations.map(s => `${s.cls || s.kind || 'recruit'}@${s.rung}`).join(' ')} dust ${Math.round(S.stored)} shard ${Math.round(S.shards)} spark ${Math.round(S.sparks)} [${Math.round((Date.now() - wall0) / 1000)}s wall]`);
+      keep();
+    }
+  }
+  if (!S.serpentFreed) console.log(`NOT FREED in ${FHOURS} h: stage ${S.serpentStage}, wound ${Math.round(S.serpentWound)}`);
+  console.log('rules broken: ' + (broke.size ? [...broke].map(([k, n]) => `${k} x${n}`).join('; ') : 'none'));
+}
+
 console.log('');
 console.log(`ended at ${hms(t)} game, ${Math.round((Date.now() - wall0) / 1000)} s wall; ${clicks} swings`);
 console.log(`rescued in (sheet clock, S.buriedMs): ${S.rescued ? hms(S.buriedMs / 1000) : 'not rescued'}`);

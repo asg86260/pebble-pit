@@ -12,6 +12,11 @@
 "The serpent heals whole: a phase is a window" in DESIGN.md. Open:
 - **Nobody has played it.** Depths 4300 / 9400 / 6700 / 5100 are deep-pace's
   for a four-fighter party; tune them in play.
+- **The driven run** (`speedrun.mjs --fight --hand 2`, 2026-10-06, yard
+  buying off): freed 1:45 after the portal; breaks at 31 / 58 / 7 / 2 / 7
+  minutes, the whole party at rung 6. Dust is the only gate -- rung 7's
+  10M never came, and 65k scales lay unspent at the end. The second phase
+  is the wall; the third and fourth fall almost at once.
 - **The meal scenes** commit their creature and run on; the shot no longer
   pins the moment once it has turned.
 

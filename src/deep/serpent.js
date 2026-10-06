@@ -146,7 +146,7 @@ export function clickDeep(x, y) {
   return true;
 }
 
-export const stageOf = () => S.serpentStage;           // 0..3 the defense up, 4 freed
+export const stageOf = () => S.serpentStage;           // 0..LAST the defense up, past it freed
 export const woundK = () => {                          // the wound as a fraction of the stage's depth
   const d = depth();
   return d > 0 ? Math.max(0, Math.min(1, S.serpentWound / d)) : 0;
