@@ -60,7 +60,9 @@ export const FANG_MARK = [
 ];
 
 // A pod: scales, a steeper price each one, like the yard's rooms (HOUSE_RATE).
-export const POD_SCALES0 = 150;
+// The foot is the first pod bought, past the sqwife's: cheap, since only the
+// hand gathers until it stands.
+export const POD_SCALES0 = 10;
 export const POD_RATE = 1.3;
 
 // --- the party's floor (docs/wave-party.md, "Floor slots") -------------------

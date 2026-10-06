@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The deep's first pod costs 10 scales, and each after it a third more.
 - The serpent's statuses stand over its bar, twice the size, each with its name under it.
 - The serpent has a fifth phase: its comb lights up and bolts lock the strongest fighter in an orb; break the orb (a click on it hits harder), or pick the fighter out of it.
 - The serpent's warded phase no longer surges: its magic resist is the whole of it.

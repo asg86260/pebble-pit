@@ -29,7 +29,8 @@ const POD = {
   repeats: true,
   from: () => S.crew + ahead('pod'), to: () => S.crew + ahead('pod') + 1,
   // Scales alone: naming no dust at nought would have `billOf` add its worth.
-  bill: () => [['scale', Math.round(POD_SCALES0 * Math.pow(POD_RATE, (S.pods || 0) + ahead('pod')))], ['dust', 0]],
+  // The sqwife's pod stands from the snatch, so the first one sold is the foot.
+  bill: () => [['scale', Math.round(POD_SCALES0 * Math.pow(POD_RATE, Math.max(0, (S.pods || 0) - 1) + ahead('pod')))], ['dust', 0]],
   buy: () => { hirePod(); S.shopStale = true; },
   show: () => S.snatched
 };
