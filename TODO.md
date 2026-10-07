@@ -5,11 +5,13 @@
 "The serpent hardens against its strongest foes" in DESIGN.md. Open:
 - **The barrier's flare sits under where the charge hit the hide**: the
   Sapper's charge still flies to the hide, not to the barrier under it.
-- **The depths, measured again with these resists** (2026-10-07): 5970 /
-  5760 / 8400 / 8520 / 13340. Unforced, four parties still free him in 71
-  minutes, but the second phase falls in 3 to 4 minutes for three of them
-  (the second station's cheap first rungs) and the fading then runs 34 to
-  38: the spread is when damage arrives, not its kind.
+- **A fang's station's first four rungs ask 500k dust each**
+  (`FANG_RUNG_DUST`, 2026-10-07), and the depths measured again on it:
+  5970 / 5070 / 5560 / 5670 / 9210. Unforced, four parties free him in 71
+  to 94 minutes; of their twenty phases fifteen run 12 to 25 minutes. Left:
+  a party whose first fighter reached rung 7 in a long first phase breaks
+  the second in 3 minutes (its depth is under the first's, since the
+  second resists that fighter), and one party's last two run 28 and 23.
 
 ## A fifth phase: the constrict -- BUILT (2026-10-04)
 

@@ -15,11 +15,12 @@
 // test/rails.test.mjs.
 
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { TIER_BAND, rungDust, SCALE_RUNG_COINS, PARTY_IDS } from '../src/config.js';
+import { TIER_BAND, rungDust, SCALE_RUNG_COINS, PARTY_IDS, FANG_RUNGS, FANG_RUNG_DUST } from '../src/config.js';
+import { pressBuild, climb, flush } from './party-press.mjs';
 import { countLines } from '../src/render/counter.js';
 import { purseCoins } from '../src/board.js';
 import { boardOf } from '../src/boardrows.js';
-import { classLadder, DEEP_ROWS } from '../src/deep/rows.js';
+import { classLadder, rungBill, DEEP_ROWS } from '../src/deep/rows.js';
 
 const S = yard.S;
 const row = key => window.__rows().find(r => r.key === key);
@@ -118,5 +119,23 @@ group('the scales are on the counter and in the purse', async () => {
     ok(!before, 'no scale is shown before the yard has seen one'),
     ok(line && line.text === String(S.scales), 'the counter carries the scales', line ? line.text : 'no line'),
     ok(purse && purse[1] === S.scales, 'and so does the purse', purse ? String(purse[1]) : 'no coin')
+  ];
+});
+
+group("a fang's station asks the yard's dust from its first rung; the free one does not", async () => {
+  // Bought the player's way: the free station, then the fang's, off the button.
+  window.__snatch({ played: true });
+  flush();
+  pressBuild('altar');
+  S.fangs++;
+  pressBuild('armory');
+  const [free, fanged] = S.stations;
+  const freeBill = rungBill(free.id, 'brawler'), fangBill = rungBill(fanged.id, 'ranger');
+  climb(fanged.id, 'ranger', FANG_RUNGS);
+  const past = rungBill(fanged.id, 'ranger');
+  return [
+    ok(!freeBill.some(([m]) => m === 'dust'), 'the free station climbs on scales alone at first', JSON.stringify(freeBill)),
+    ok(coin(fangBill, 'dust') === FANG_RUNG_DUST, "the fang's station asks FANG_RUNG_DUST on its first rungs", JSON.stringify(fangBill)),
+    ok(coin(past, 'dust') === SCALE_RUNG_COINS.dust[FANG_RUNGS], 'and the written table past them', JSON.stringify(past))
   ];
 });

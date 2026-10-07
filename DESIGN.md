@@ -17314,3 +17314,16 @@ every fourth, flaring white then pale purple where it soaks up a charge
 tile says "Barrier: absorbs explosive damage" (the owner's). Scene
 `deep-barrier`; `deep-warded` and `deep-split` now stand the Mage and a
 Brawler highest, so they still show the ward and the plates.
+
+## A fang's station climbs from the party's dust (built 2026-10-07)
+
+The owner, after the driven runs: "price the new station's first rungs
+higher". A station bought with a fang joined a party already climbing, and
+its first rungs -- scales alone, which pile up by the thousand down there --
+landed in a minute or two, so the phase it joined broke almost at once and
+the next one waited. Now a fang's station asks at least `FANG_RUNG_DUST`
+(500k) dust for each of its first `FANG_RUNGS` (4) rungs, about fourteen
+minutes of a yard at the abyss; the free first station keeps the written
+table, so the deep's opening still climbs on the sqwife's swept scales.
+The depths are measured again on it (`speedrun.mjs --fight --paced 17.5`).
+

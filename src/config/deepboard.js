@@ -24,6 +24,13 @@ export const SCALE_RUNG_COINS = {
   spark: [0, 0, 0, 0, 0, 0, 1e3, 3e3]
 };
 
+// A station bought with a fang joins a party already climbing: its first
+// FANG_RUNGS rungs ask at least FANG_RUNG_DUST dust each, so it reaches the
+// party over minutes instead of breaking the phase it joins at once (the
+// driven runs, 2026-10-07). The free first station keeps the table above.
+export const FANG_RUNGS = 4;
+export const FANG_RUNG_DUST = 500e3;
+
 // The scale as a mark: nine pixels square, ink `#` and paper `.`, a blank
 // outside the edge. A square with its foot rounded in, and a crescent hanging
 // from its top edge -- the rim of the scale lying over it -- so it reads as

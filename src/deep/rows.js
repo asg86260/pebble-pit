@@ -11,7 +11,7 @@
 // stand twice, and each keeps its own ladder.
 
 import { S } from '../state.js';
-import { rungValue, POD_SCALES0, POD_RATE, PARTY_IDS, CLASSES, PAIRS } from '../config.js';
+import { rungValue, POD_SCALES0, POD_RATE, PARTY_IDS, CLASSES, PAIRS, FANG_RUNGS, FANG_RUNG_DUST } from '../config.js';
 import { tierRows, named } from '../upgrades/tiers.js';
 import { hirePod } from '../staffing.js';
 import { registerRows, ahead } from '../works.js';
@@ -59,6 +59,18 @@ export function classLadder(st, cls) {
     show: () => true,
     bands: named(cls, CLASSES[cls].name)
   });
+  // A fang's station pays at least FANG_RUNG_DUST for each of its first rungs.
+  if (S.stations.indexOf(st) > 0) {
+    const written = card.bill;
+    card.bill = () => {
+      const b = written();
+      if ((st.rung || 0) >= FANG_RUNGS) return b;
+      const d = b.find(([m]) => m === 'dust');
+      if (d) d[1] = Math.max(d[1], FANG_RUNG_DUST);
+      else b.push(['dust', FANG_RUNG_DUST]);
+      return b;
+    };
+  }
   return card;
 }
 // What the next rung of `cls` at station `id` asks, as [coin, n] pairs with

@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- A station bought with a fang asks the yard's dust for its first rungs, so a new fighter climbs over minutes instead of all at once.
 - When the serpent resists explosive it floats a magic barrier under its body that soaks up the Sapper's charges.
 - The serpent's warded phase, split and fading resist whatever your highest-rung fighters deal, explosive included, instead of fixed kinds.
 - The deep's first pod costs 10 scales, and each after it a third more.
