@@ -17272,82 +17272,73 @@ it into the pit.
   a new saved `handChipped` set by a click on the rock, "toss" `banked`.
 - How the list sits beside the notice card on a narrow window.
 
-## The serpent sizes itself to the party (design, not built)
+## The serpent hardens against its strongest foes (design, not built)
 
 Asked for by the owner, 2026-10-07, after the driven runs: "what if the
-serpent reacted to the party comp", then "1 with 2". With the written depths
-a phase lasts from 1 to 38 minutes depending on the party: it ends at the
-first rung or station that clears its depth, and a station's cheap first
-rungs clear one almost at once. The target is 15 to 20 minutes a phase for
-any party.
+serpent reacted to the party comp". A first draft sized each phase's depth
+to the party; the owner turned that down ("i dont really want the serpent to
+change health") and kept the other half: the resists follow the party's
+strongest members.
 
-**The bargain.** Each phase is set against the party that walks into it: as
-deep as that party can wound in one window, and a share again. Breaking it
-means growing that share, whatever the party is made of. And the serpent
-hardens against what hurts it most: the warded phase and the split each
-resist whichever of magic and physical did more of the party's damage. The
-player gives up "a strong party walks through": a phase asks the same growth
-of every party. What stays is that every rung bought in a phase counts in
-it -- the depth is fixed the moment the phase begins and never moves after.
+**The bargain.** Today the warded phase resists magic and the split
+physical, whoever is fighting: a party of two magic fighters waits an hour
+in the warded phase and walks through the split. Instead the serpent
+hardens against whoever is hurting it most. The player cannot pile
+everything into one class and coast; a party leaning on one fighter feels
+each phase push back on that fighter, and the others carry it through.
+Depths, windows and the heal stay as written.
 
 ### The rules
 
-- **The first phase keeps its written depth** (`SERPENT_DEPTHS[0]`): there
-  is no party yet to measure, only the sqwife at the free station.
-- **Every later depth is set at the break**, on the frame the phase begins,
-  and saved (`S.serpentDepth`), so a reload finds the same bar:
-
-  depth = `SERPENT_GROW[stage]` x (the party's best window of the last
-  three in the phase just broken, each kind's damage taken at the new
-  phase's resist) x (stations standing / stations that dealt it)
-
-  - **A window's damage is counted whole**, by kind, from every blow and
-    tick as it lands -- not the wound, which stops at the depth, so the
-    window that broke the last phase would read as no more than its depth.
-    The click counts as a punch, as now.
-  - **The new station counts at the party's average.** The fang's station
-    is laid at the break and has dealt nothing; counting it as an average
-    fighter is what stops its cheap first rungs breaking the phase in two
-    minutes. A station still a Recruit counts the same.
-  - **The mechanic is in the margin, not the measure.** `SERPENT_GROW` is a
-    number a phase (1.4 a first guess), so a phase whose turn costs the
-    party time (the lash, the cloak, the orb) can ask a little less.
-- **The resist follows the party.** At the break into the warded phase and
-  into the split, the phase resists whichever of magic and physical did more
-  of the last three windows' damage; on a tie, or a party of neither, the
-  written one (`RESISTS`). Explosive is never resisted, as the owner ruled
-  for the Sapper. The fading keeps switching between both; the constrict
-  resists nothing. The hide already shows either look (the ward, the
-  plates), so nothing new is drawn.
-- **Nothing else moves.** Windows, meals, the heal to full, stuns, Held, the
-  mechanics, the fangs and the kill are as built.
+- **Each phase's resist is chosen at its break**, on the frame it begins,
+  and saved (`S.resist`), so a reload finds the same hide.
+- **The strongest fighter is the one that dealt the most** in the phase
+  just broken, counted whole from every blow and tick as it lands (not the
+  wound, which stops at the depth). A station still a Recruit punches, and
+  a punch is of no kind.
+- **The warded phase and the split** each resist the strongest fighter's
+  kind. Two phases in a row may resist the same kind: the serpent answers
+  the party, not a rota.
+- **The fading** switches between the kinds of the two strongest fighters
+  of different kinds, as it switches between magic and physical now; with
+  only one kind in the party it holds that one.
+- **The first phase and the constrict resist nothing**, as now.
+- **Explosive** is not a kind the serpent resists (the owner's call for the
+  Sapper, 2026-09-29): a Sapper at the top is passed over for the strongest
+  fighter of another kind. On a party with no magic or physical fighter, the
+  phase falls back on its written resist (`RESISTS`).
+- **The hide already shows both looks** (the ward, the plates), so nothing
+  new is drawn; the resist tile under the bar names which.
 
 ### What it must not break
 
-- **A depth never moves inside a phase.** A rung bought mid-phase is the
-  player's progress; a depth that followed it would be a treadmill.
-- **The bar reads as before**: the fill is the wound over this phase's
-  depth, wherever the depth came from.
-- **Old saves**: a save mid-fight has no `S.serpentDepth`; a migration sets
-  it from the written table for the stage it is on (`SAVE_V` up one).
+- **A resist never changes inside a phase** except the fading's turns: the
+  choice is made once, at the break.
+- **Depths stay written.** Once this is in, they are measured again with
+  `speedrun.mjs --fight --paced 17.5` over the eight parties, since a phase
+  will now always resist somebody that matters.
+- **Old saves**: a save mid-fight has no `S.resist`; it reads the written
+  `RESISTS` for its stage until the next break. No migration.
 
 ### What it costs
 
-- `S.serpentDepth` (saved), the window's damage by kind (saved, so a reload
-  mid-window measures the same), `SERPENT_GROW` in config/deep.js with a
-  dev-panel knob, a migration.
-- `depth()` in deep/serpent.js reads `S.serpentDepth`; `resists()` reads the
-  phase's chosen kind for the warded phase and the split.
-- `tools/node/speedrun.mjs --fight` measures it: the eight parties of
-  2026-10-07, every phase 15 to 20 minutes, `SERPENT_GROW` tuned per phase
-  until they are.
+- Damage dealt this phase, by fighter (saved, a number a station), and
+  `S.resist` (saved).
+- `resists()` in deep/phases.js reads `S.resist` for the warded phase, the
+  split and the fading, else the written table.
+- A node check: a party led by a Mage meets a warded phase resisting magic,
+  and one led by a Ranger meets it resisting physical.
+
+### What it does not fix
+
+The driven runs' other spread -- a phase falling in two minutes when the
+next station's cheap first rungs land just short of its depth -- is about
+when damage arrives, not its kind. This leaves it as it is.
 
 ### The owner's calls
 
-1. **Does a stronger party still finish sooner?** As written, no: every
-   party is asked the same growth. A cap on the depth, or a smaller margin
-   for a party already past the median, would keep some of that. Proposed:
-   no cap; the margin alone, tuned in the sim.
-2. **Does the bar say the serpent has sized itself to you?** Proposed:
-   nothing new -- the resist already shows on the hide. Any words are the
-   owner's to write.
+1. **Strongest by damage dealt in the last phase**, as written, or by rung
+   (the highest rung's fighter)? Damage reads what is actually hurting it;
+   rung is easier to plan around.
+2. **A Sapper at the top**: passed over as written, or does the serpent
+   resist explosive too when the Sapper leads?

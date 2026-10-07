@@ -1,12 +1,11 @@
 # Still to do
 
-## The serpent sizes itself to the party -- DESIGNED, AWAITING SIGN-OFF (2026-10-07)
+## The serpent hardens against its strongest foes -- DESIGNED, AWAITING SIGN-OFF (2026-10-07)
 
-"The serpent sizes itself to the party" in DESIGN.md: each phase past the
-first set at the break from the party's best window, with the new station
-counted at the average, and the warded phase and the split resisting the
-party's leading kind. Blocked on the owner's two calls at the end of the
-section. No game code yet.
+"The serpent hardens against its strongest foes" in DESIGN.md: depths stay
+written; the warded phase, the split and the fading resist the kinds of the
+fighters that dealt the most in the phase before. Blocked on the owner's two
+calls at the end of the section. No game code yet.
 
 ## A fifth phase: the constrict -- BUILT (2026-10-04)
 
