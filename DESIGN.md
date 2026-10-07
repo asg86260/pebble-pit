@@ -17271,3 +17271,83 @@ it into the pit.
 - "Grab a pebble" reads `seenDrag` (dust swept up by hand), "mine the boulder"
   a new saved `handChipped` set by a click on the rock, "toss" `banked`.
 - How the list sits beside the notice card on a narrow window.
+
+## The serpent sizes itself to the party (design, not built)
+
+Asked for by the owner, 2026-10-07, after the driven runs: "what if the
+serpent reacted to the party comp", then "1 with 2". With the written depths
+a phase lasts from 1 to 38 minutes depending on the party: it ends at the
+first rung or station that clears its depth, and a station's cheap first
+rungs clear one almost at once. The target is 15 to 20 minutes a phase for
+any party.
+
+**The bargain.** Each phase is set against the party that walks into it: as
+deep as that party can wound in one window, and a share again. Breaking it
+means growing that share, whatever the party is made of. And the serpent
+hardens against what hurts it most: the warded phase and the split each
+resist whichever of magic and physical did more of the party's damage. The
+player gives up "a strong party walks through": a phase asks the same growth
+of every party. What stays is that every rung bought in a phase counts in
+it -- the depth is fixed the moment the phase begins and never moves after.
+
+### The rules
+
+- **The first phase keeps its written depth** (`SERPENT_DEPTHS[0]`): there
+  is no party yet to measure, only the sqwife at the free station.
+- **Every later depth is set at the break**, on the frame the phase begins,
+  and saved (`S.serpentDepth`), so a reload finds the same bar:
+
+  depth = `SERPENT_GROW[stage]` x (the party's best window of the last
+  three in the phase just broken, each kind's damage taken at the new
+  phase's resist) x (stations standing / stations that dealt it)
+
+  - **A window's damage is counted whole**, by kind, from every blow and
+    tick as it lands -- not the wound, which stops at the depth, so the
+    window that broke the last phase would read as no more than its depth.
+    The click counts as a punch, as now.
+  - **The new station counts at the party's average.** The fang's station
+    is laid at the break and has dealt nothing; counting it as an average
+    fighter is what stops its cheap first rungs breaking the phase in two
+    minutes. A station still a Recruit counts the same.
+  - **The mechanic is in the margin, not the measure.** `SERPENT_GROW` is a
+    number a phase (1.4 a first guess), so a phase whose turn costs the
+    party time (the lash, the cloak, the orb) can ask a little less.
+- **The resist follows the party.** At the break into the warded phase and
+  into the split, the phase resists whichever of magic and physical did more
+  of the last three windows' damage; on a tie, or a party of neither, the
+  written one (`RESISTS`). Explosive is never resisted, as the owner ruled
+  for the Sapper. The fading keeps switching between both; the constrict
+  resists nothing. The hide already shows either look (the ward, the
+  plates), so nothing new is drawn.
+- **Nothing else moves.** Windows, meals, the heal to full, stuns, Held, the
+  mechanics, the fangs and the kill are as built.
+
+### What it must not break
+
+- **A depth never moves inside a phase.** A rung bought mid-phase is the
+  player's progress; a depth that followed it would be a treadmill.
+- **The bar reads as before**: the fill is the wound over this phase's
+  depth, wherever the depth came from.
+- **Old saves**: a save mid-fight has no `S.serpentDepth`; a migration sets
+  it from the written table for the stage it is on (`SAVE_V` up one).
+
+### What it costs
+
+- `S.serpentDepth` (saved), the window's damage by kind (saved, so a reload
+  mid-window measures the same), `SERPENT_GROW` in config/deep.js with a
+  dev-panel knob, a migration.
+- `depth()` in deep/serpent.js reads `S.serpentDepth`; `resists()` reads the
+  phase's chosen kind for the warded phase and the split.
+- `tools/node/speedrun.mjs --fight` measures it: the eight parties of
+  2026-10-07, every phase 15 to 20 minutes, `SERPENT_GROW` tuned per phase
+  until they are.
+
+### The owner's calls
+
+1. **Does a stronger party still finish sooner?** As written, no: every
+   party is asked the same growth. A cap on the depth, or a smaller margin
+   for a party already past the median, would keep some of that. Proposed:
+   no cap; the margin alone, tuned in the sim.
+2. **Does the bar say the serpent has sized itself to you?** Proposed:
+   nothing new -- the resist already shows on the hide. Any words are the
+   owner's to write.
