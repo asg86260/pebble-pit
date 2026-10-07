@@ -14,9 +14,12 @@ export const SCALE_BAND_COINS = [[], ['dust'], ['dust', 'shard'], ['dust', 'shar
 // written rather than converted from its scales: a yard that has reached the
 // abyss holds millions of dust, so a scale's worth in dust is a bill nobody
 // notices. Every fighter's ladder pays the same; a coin is asked from the
-// band SCALE_BAND_COINS first names it in.
+// band SCALE_BAND_COINS first names it in. The dust climbs gently: a yard at
+// the abyss banks about 145k a minute, so a four-station party buys a rung
+// every few minutes and stands near rung 7 when he is freed, and its damage
+// grows a step at a time rather than in jumps an hour apart.
 export const SCALE_RUNG_COINS = {
-  dust:  [0, 0, 100e3, 300e3, 1e6, 3e6, 10e6, 30e6],
+  dust:  [0, 0, 100e3, 250e3, 500e3, 900e3, 1.5e6, 2.5e6],
   shard: [0, 0, 0, 0, 1e3, 3e3, 10e3, 30e3],
   spark: [0, 0, 0, 0, 0, 0, 1e3, 3e3]
 };

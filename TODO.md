@@ -13,14 +13,14 @@
 - **Nobody has played it.** Depths 4300 / 9400 / 6700 / 5100 are deep-pace's
   for a four-fighter party; tune them in play.
 - **The driven runs** (`speedrun.mjs --fight --hand 2`, 2026-10-07, yard
-  buying off). Depths set from `--paced 17.5` over eight parties, the
-  strongest and weakest dropped, the median best window. Unforced, four
-  parties free him 63 to 71 minutes after the portal, but a phase lasts 1
-  to 39 minutes: the party's damage is a step a rung, and a rung comes when
-  the yard's dust allows (rung 5 at about 12 minutes, rung 6 at 30, rung 7's
-  10M never), so a phase ends at the first rung or station that clears its
-  depth. Even phases want the rungs' dust spaced to land one every 15 to 20
-  minutes, not only the depths. Scales are never the gate.
+  buying off). The rungs' dust climbs gently now (100k to 2.5M, the yard
+  banking about 145k a minute), and the depths are the median party's best
+  window 17.5 minutes into each phase (`--paced 17.5`, eight parties, the
+  strongest and weakest dropped). Unforced, four parties all free him about
+  71 minutes after the portal; the Mage-first party's phases run 15 / 14 /
+  14 / 17 / 12 minutes, but a phase still falls in 2 to 4 minutes when the
+  next station's first cheap rungs land just short of its depth, and the
+  cloak's phase then runs 28 to 38.
 - **The meal scenes** commit their creature and run on; the shot no longer
   pins the moment once it has turned.
 
