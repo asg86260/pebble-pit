@@ -29,7 +29,8 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
-         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP } from '../config.js';
+         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP,
+         BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
@@ -456,6 +457,37 @@ function orbBody(id) {
   const st = S.stations.find(s => s.id === id);
   return { x: w.x + WORKER / 2, y: w.y + WORKER / 2 - orbLift(st) * P };
 }
+// The explosive resist's barrier: a row of floating cells under the coil's
+// underside, following it, a column of cells to each cell of the deep it
+// spans; the coming resist flickers it in before the fading's switch, as the
+// hide's looks do. A bomb it soaked up flares the cells under it.
+export function drawBarrier() {
+  if (S.view !== 'deep' || !S.snatched || S.serpentFreed || breaking()) return;
+  const t = now(), coming = resistNext();
+  const shown = coming && Math.floor(t / 1000 * RESIST_FLICKER_HZ * 2) % 2 ? coming : resistNow();
+  if (shown !== 'explosive') return;
+  // the underside, lowest at each column of cells
+  const under = new Map();
+  for (let u = 0; u <= COIL_SEGS - 1; u += 0.25) {
+    const p = coilLine(u, t), cx = Math.round(p.x / P), y = p.y + coilThick(u) / 2;
+    if (!(under.get(cx) >= y)) under.set(cx, y);
+  }
+  for (const [cx, y] of under) {
+    const k = ((cx % BARRIER_EVERY) + BARRIER_EVERY) % BARRIER_EVERY;
+    if (k === BARRIER_EVERY - 1) continue;
+    let ink = k === 1 ? PURPLES[WHITE] : PURPLES[WHITE - 2];
+    for (const h of S.barrierHits) {
+      const age = t - h.at;
+      if (age < 0 || age >= BARRIER_FLARE_MS || Math.abs(Math.round(h.x / P) - cx) > BARRIER_FLARE_W) continue;
+      ink = age < BARRIER_FLARE_MS * 0.4 ? GREYS[WHITE] : PURPLES[WHITE - 1];
+    }
+    ctx.fillStyle = ink;
+    const by = snap(y) + BARRIER_GAP * P;
+    ctx.fillRect(cx * P, by, P, P);
+    if (k === 1) { ctx.fillRect(cx * P, by - P, P, P); ctx.fillRect(cx * P, by + P, P, P); }
+  }
+}
+
 // The bolts off the lit comb to it, held two frames a shape; the orb turning
 // round it, with what is left of it over its head; and its burst when it goes.
 export function drawOrb() {

@@ -495,6 +495,7 @@ export const S = {
   // `u` the segment, `side` -1 the top edge and 1 the underside, `k` how big
   // the blow was 0..1 (render/serpent.js).
   serpentChips: [],
+  barrierHits: [],        // explosives the barrier soaked up lately, for its flare: { x, at } (drawn only)
   snatch: null,           // the snatch beat's own state while it plays (snatch.js)
   // The deep's coin: every scale crushed and not yet spent (the crusher is the
   // purse; the floor's loose scales are `deepBed`), and whether one ever has.
@@ -787,7 +788,7 @@ export const EPHEMERAL = [
   'orbBurst',
   'still',
   // A bite out of the serpent's hide closes in seconds; a reload finds it closed.
-  'serpentChips',
+  'serpentChips', 'barrierHits',
   // What the store said about this page (persist.js, save.js).
   'unsaved', 'yielded', 'broken',
   'fellBack', 'newerSave',

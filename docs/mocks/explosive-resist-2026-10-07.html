@@ -1,0 +1,270 @@
+<meta charset="utf-8">
+<title>Explosive Resist Looks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* layout: a strip of the serpent's hide a panel, the two built looks first as reference, then the four candidates; the tiles in a row below */
+:root {
+  --bg: #050506; --panel: #0d0d10; --line: #26262c; --fg: #e8e8ec; --dim: #8b8b96; --purple: #9b5de5;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--mono); padding-inline: 16px; padding-block: 24px 48px; }
+main { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: .02em; }
+h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--dim); margin: 0; }
+p { margin: 0; max-width: 70ch; color: var(--dim); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; min-width: 0; }
+figure.ref { opacity: .8; }
+figcaption b { color: var(--fg); font-weight: 600; }
+figcaption { color: var(--dim); font-size: 13px; }
+canvas { width: 100%; max-width: 100%; image-rendering: pixelated; display: block; background: #000; }
+.tiles { display: flex; flex-wrap: wrap; gap: 16px; }
+.tile { display: grid; justify-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; min-width: 96px; }
+.tile canvas { width: 60px; height: 60px; }
+.tile span { font-size: 12px; color: var(--dim); }
+.tile b { font-size: 13px; }
+.note { border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>The serpent's explosive resist</h1>
+    <p>When a Sapper is the highest-rung fighter, the serpent now resists explosive damage. The ward and the plates show magic and physical; explosive needs a look on the hide and a tile over the bar. Pick one look, on the hide or as a barrier under it, and a tile.</p>
+  </header>
+
+  <section style="display:grid;gap:12px">
+    <h2>Built, for reference</h2>
+    <div class="grid" id="refs"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Explosive, on the hide</h2>
+    <div class="grid" id="opts"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Or: a barrier below it that soaks up the bombs</h2>
+    <p>The hide stays as it is; a magic barrier hangs under the serpent, and the Sapper's bombs burst on it instead of the hide.</p>
+    <div class="grid" id="barriers"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Its tile over the bar</h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <p class="note">Drawn from plain cells, not the game: the coil here is a flat sine with no head, tail, chips or fighters, the bombs fly straight up rather than from a Sapper's station, and the tile labels are placeholders. The tile's name and hover line are yours to write.</p>
+</main>
+<script>
+const C = 4, W = 80, H = 30;               // cell size in px, cells across and down
+const HIDE = ['#d9d9d9', '#c4c4c8', '#b0b0b6', '#9c9ca4'];
+const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// The coil: its centerline row for a body column, swaying slowly.
+const mid = (ax, t) => Math.round(H / 2 + 5 * Math.sin(ax / 13 - t * 0.7));
+const THICK = 3;                           // rows above and below the centerline
+
+const OPTS = [
+  ['ward', 'Ward', 'magic: a purple shimmer runs along the scales', true],
+  ['plates', 'Plates', 'physical: dark bands across the hide', true],
+  ['ash', 'A · Ash crust', 'patches of grey soot on the hide, flakes lifting off its top in held steps'],
+  ['spines', 'B · Spines', 'scales stand up off both edges, rising and settling in held steps'],
+  ['slick', 'C · Slick', 'the hide goes dark and wet, a bright sheen sliding along it, drips falling off its belly'],
+  ['crackle', 'D · Crackle', 'a static web of dark cracks over the hide, like a cooled shell'],
+];
+
+function cellFill(kind, ax, cy, t, top) {
+  // cy: -THICK..THICK across the body; top: the edge row
+  let c = cy === -THICK ? '#ffffff' : HIDE[Math.floor(hash(ax, cy + 9) * HIDE.length)];
+  if (hash(ax * 3, cy) > 0.96) c = '#7d4bc4';                 // the hide's own purple flecks
+  if (kind === 'ward' && Math.sin(ax * 0.45 + cy * 1.1 - t * 2.4) > 0.55) c = '#9b5de5';
+  if (kind === 'plates' && ((ax % 6) + 6) % 6 < 2) c = cy === -THICK ? '#8b8b96' : '#4a4a52';
+  if (kind === 'ash') {
+    const blot = hash(ax >> 1, (cy + 9) >> 1);
+    if (blot < 0.34) c = blot < 0.14 ? '#3a3a42' : '#5c5c66';
+  }
+  if (kind === 'slick') {
+    c = cy === -THICK ? '#6e6e78' : ['#4a4a52', '#3e3e46', '#55555e'][Math.floor(hash(ax, cy + 9) * 3)];
+    const run = (((ax - Math.floor(t * 10)) % 26) + 26) % 26;
+    if (cy === -THICK + 1 && run < 6) c = '#ffffff';
+    if (cy === -THICK && run < 3) c = '#bdbdbd';
+  }
+  if (kind === 'crackle') {
+    const k = ((ax % 9) + 9) % 9, wob = Math.floor(hash(Math.floor(ax / 9), 3) * 3) - 1;
+    const lane = (cy + THICK + wob + 7) % 3;
+    if ((k === 0 && cy > -THICK) || (k === 4 + (cy & 1) && lane === 0) || (cy === 0 && hash(ax, 77) > 0.7)) c = '#26262c';
+  }
+  return c;
+}
+
+function drawPanel(g, kind, t) {
+  g.fillStyle = '#000'; g.fillRect(0, 0, W * C, H * C);
+  for (let x = 0; x < W; x++) {
+    const m = mid(x, t);
+    for (let cy = -THICK; cy <= THICK; cy++) {
+      g.fillStyle = cellFill(kind, x, cy, t);
+      g.fillRect(x * C, (m + cy) * C, C, C);
+    }
+    // spines: every third column a scale stands off each edge
+    if (kind === 'spines' && x % 3 === 0) {
+      const up = 1 + (Math.floor(t * 3 + hash(x, 5) * 4) % 3 === 0 ? 1 : 0) + (hash(x, 6) > 0.6 ? 1 : 0);
+      g.fillStyle = '#ffffff';
+      for (let i = 1; i <= up; i++) g.fillRect(x * C, (m - THICK - i) * C, C, C);
+      g.fillStyle = '#9c9ca4';
+      for (let i = 1; i <= Math.max(1, up - 1); i++) g.fillRect(x * C, (m + THICK + i) * C, C, C);
+    }
+  }
+  // ash: flakes leaving the top edge, rising a cell a step and greying out
+  if (kind === 'ash') {
+    for (let f = 0; f < 14; f++) {
+      const period = 2.4, born = hash(f, 11) * period, age = ((t - born) % period + period) % period;
+      const x = Math.floor(hash(f, 12) * W), steps = Math.floor(age * 4);
+      if (steps > 7) continue;
+      g.fillStyle = steps < 3 ? '#8b8b96' : steps < 6 ? '#5c5c66' : '#33333a';
+      g.fillRect(x * C, (mid(x, t) - THICK - 1 - steps) * C, C, C);
+    }
+  }
+  // slick: drips off the belly, falling in held steps
+  if (kind === 'slick') {
+    for (let f = 0; f < 8; f++) {
+      const period = 1.8, born = hash(f, 21) * period, age = ((t - born) % period + period) % period;
+      const x = Math.floor(hash(f, 22) * W), steps = Math.floor(age * 6);
+      if (steps > 9) continue;
+      g.fillStyle = steps < 4 ? '#6e6e78' : '#3e3e46';
+      g.fillRect(x * C, (mid(x, t) + THICK + 1 + steps) * C, C, C);
+    }
+  }
+}
+
+const panels = [];
+for (const [kind, name, cap, ref] of OPTS) {
+  const f = document.createElement('figure');
+  if (ref) f.className = 'ref';
+  const cv = document.createElement('canvas');
+  cv.width = W * C; cv.height = H * C;
+  const fc = document.createElement('figcaption');
+  fc.innerHTML = `<b>${name}</b> — ${cap}`;
+  f.append(cv, fc);
+  document.getElementById(ref ? 'refs' : 'opts').append(f);
+  panels.push([cv.getContext('2d'), kind]);
+}
+
+// --- the tiles: 5 by 5 on the dark tile, purple ink, as the bar's are drawn ---------
+const TILES = [
+  ['Ward', 'built', ['..#..', '#.#.#', '.###.', '#.#.#', '..#..'], true],
+  ['Plates', 'built', ['.###.', '#####', '#####', '.###.', '..#..'], true],
+  ['1 · Burst', 'a blast held in', ['#.#.#', '.###.', '##.##', '.###.', '#.#.#']],
+  ['2 · Shell', 'a cracked shell', ['.###.', '#.#.#', '##.##', '#.#.#', '.###.']],
+  ['3 · Snuffed', 'a flame under a lid', ['#####', '.....', '..#..', '.###.', '.###.']],
+  ['4 · Barrier', 'a line under a blast', ['#.#.#', '.###.', '..#..', '.....', '#####']],
+];
+for (const [name, say, rows, ref] of TILES) {
+  const d = document.createElement('div');
+  d.className = 'tile';
+  if (ref) d.style.opacity = .75;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 60;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#0a0a0c'; g.fillRect(0, 0, 60, 60);
+  g.strokeStyle = '#8b8b96'; g.lineWidth = 4; g.strokeRect(2, 2, 56, 56);
+  g.fillStyle = '#9b5de5';
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') g.fillRect(10 + x * 8, 10 + y * 8, 8, 8); }));
+  d.innerHTML = `<b>${name}</b><span>${say}</span>`;
+  d.prepend(cv);
+  document.getElementById('tiles').append(d);
+}
+
+// --- the barrier: under the belly, the Sapper's bombs bursting on it -------------
+const BARS = [
+  ['membrane', 'E · Membrane', 'a purple skin two cells under the belly, following the coil; a bomb lights a ring that runs along it'],
+  ['hex', 'F · Hex plates', 'floating purple cells under the body, the one a bomb strikes flaring and fading'],
+  ['band', 'G · Rune band', 'a flat glowing band held under the whole serpent, a column of light rising where a bomb lands'],
+];
+const BAR_GAP = 2;
+const barY = (kind, x, t) => kind === 'band' ? H - 6 : mid(x, t) + THICK + 1 + BAR_GAP;
+const BOMB_PERIOD = 2.2;
+// a bomb's flight: from the floor up to the barrier, then its burst
+function bombs(t) {
+  const out = [];
+  for (let b = 0; b < 2; b++) {
+    const born = b * BOMB_PERIOD / 2, age = ((t - born) % BOMB_PERIOD + BOMB_PERIOD) % BOMB_PERIOD;
+    const n = Math.floor((t - born) / BOMB_PERIOD);
+    const x = 12 + Math.floor(hash(n, b + 31) * (W - 24));
+    out.push({ x, age });
+  }
+  return out;
+}
+function drawBarrier(g, kind, t) {
+  drawPanel(g, 'none', t);
+  const hits = bombs(t);
+  const FLY = 0.6;
+  for (let x = 0; x < W; x++) {
+    const y = barY(kind, x, t);
+    // the light a nearby burst throws on this column of the barrier
+    let lit = 0;
+    for (const h of hits) {
+      if (h.age < FLY) continue;
+      const since = h.age - FLY, d = Math.abs(x - h.x);
+      if (kind === 'membrane' && Math.abs(d - Math.floor(since * 24)) <= 1 && since < 1.2) lit = 2;
+      if (kind === 'hex' && Math.floor(x / 4) === Math.floor(h.x / 4) && since < 0.9) lit = since < 0.4 ? 2 : 1;
+      if (kind === 'band' && d <= 1 && since < 0.8) lit = 2;
+    }
+    if (kind === 'membrane') {
+      const on = Math.sin(x * 0.6 - t * 3) > 0.2;
+      g.fillStyle = lit === 2 ? '#ffffff' : on ? '#9b5de5' : '#5a3591';
+      g.fillRect(x * C, y * C, C, C);
+    }
+    if (kind === 'hex') {
+      const k = x % 4;
+      if (k === 3) continue;
+      g.fillStyle = lit === 2 ? '#ffffff' : lit === 1 ? '#c9a6f5' : '#6a3fae';
+      g.fillRect(x * C, y * C, C, C);
+      if (k === 1) { g.fillRect(x * C, (y - 1) * C, C, C); g.fillRect(x * C, (y + 1) * C, C, C); }
+    }
+    if (kind === 'band') {
+      const on = (x + Math.floor(t * 4)) % 5 === 0;
+      g.fillStyle = on ? '#c9a6f5' : '#6a3fae';
+      g.fillRect(x * C, y * C, C, C);
+      g.fillStyle = '#2e1a4d';
+      g.fillRect(x * C, (y + 1) * C, C, C);
+      if (lit) {
+        g.fillStyle = '#9b5de5';
+        for (let r = 1; r < 6; r++) if ((r + Math.floor(t * 12)) % 2) g.fillRect(x * C, (y - r) * C, C, C);
+      }
+    }
+  }
+  // the bombs: up from the floor in held steps, then a small burst that sinks into the barrier
+  for (const h of hits) {
+    const y0 = H - 1, y1 = barY(kind, h.x, t) + 1;
+    if (h.age < FLY) {
+      const y = Math.round(y0 + (y1 - y0) * (h.age / FLY));
+      g.fillStyle = '#ffffff'; g.fillRect(h.x * C, y * C, C, C);
+      g.fillStyle = '#8b8b96'; g.fillRect(h.x * C, (y + 1) * C, C, C);
+    } else if (h.age < FLY + 0.35) {
+      const r = h.age < FLY + 0.15 ? 1 : 2;
+      g.fillStyle = h.age < FLY + 0.15 ? '#ffffff' : '#8b8b96';
+      for (const [dx, dy] of [[-r, 0], [r, 0], [0, r], [-r, r], [r, r]]) g.fillRect((h.x + dx) * C, (y1 + dy) * C, C, C);
+    }
+  }
+}
+const barPanels = [];
+for (const [kind, name, cap] of BARS) {
+  const f = document.createElement('figure');
+  const cv = document.createElement('canvas');
+  cv.width = W * C; cv.height = H * C;
+  const fc = document.createElement('figcaption');
+  fc.innerHTML = `<b>${name}</b> — ${cap}`;
+  f.append(cv, fc);
+  document.getElementById('barriers').append(f);
+  barPanels.push([cv.getContext('2d'), kind]);
+}
+
+const frame = ms => {
+  const t = Math.floor(ms / 1000 * 12) / 12;            // held at twelve steps a second
+  for (const [g, kind] of panels) drawPanel(g, kind, t);
+  for (const [g, kind] of barPanels) drawBarrier(g, kind, t);
+  if (!still) requestAnimationFrame(frame);
+};
+requestAnimationFrame(frame);
+</script>

@@ -3,8 +3,8 @@
 ## The serpent hardens against its strongest foes -- BUILT (2026-10-07)
 
 "The serpent hardens against its strongest foes" in DESIGN.md. Open:
-- **The explosive resist has no look**: no hide drawing and no tile under
-  the bar, waiting on a mock and the owner's vote, and its tile's line.
+- **The barrier's flare sits under where the charge hit the hide**: the
+  Sapper's charge still flies to the hide, not to the barrier under it.
 - **The depths** were measured with the written resists; measure them again
   (`speedrun.mjs --fight --paced 17.5`, eight parties).
 

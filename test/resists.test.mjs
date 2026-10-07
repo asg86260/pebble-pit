@@ -80,12 +80,15 @@ group('a Sapper on top brings an explosive resist; the fading takes the top two 
   window.__party({ stations: [{ kind: 'altar', cls: 'brawler', rung: 4 }, { kind: 'circle', cls: 'sapper', rung: 7 },
                               { kind: 'spire', cls: 'mage', rung: 5 }] });
   const broke = breakInto(2);
+  const hits0 = S.barrierHits.length;
   const split = resistNow(), sapper = hitWith('sapper');
+  const soaked = S.barrierHits.length > hits0;
   const fading = breakInto(3);
   const turns = new Set();
   for (let i = 0; i < 4; i++) { turns.add(resistNow()); run(RESIST_TURN_S); }
   return [
     ok(broke && split === 'explosive' && sapper === RESIST_K, 'the split resists explosive, the Sapper at half', `${split} ${sapper}`),
+    ok(soaked, 'and the barrier marks where it soaked the charge up, for its flare', `${soaked}`),
     ok(fading && [...turns].sort().join() === 'explosive,magic', 'the fading turns between the Sapper and the Mage', [...turns].join())
   ];
 });

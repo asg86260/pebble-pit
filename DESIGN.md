@@ -17306,6 +17306,11 @@ whoever stands highest. Depths, windows and the heal stay as written.
 
 `chooseResist` / `settleResist` in deep/phases.js, called at the break in
 deep/serpent.js; checks in test/resists.test.mjs. The ward and the plates
-draw as before. **Open: the explosive resist has no look yet** -- no hide
-drawing and no tile under the bar until the owner votes on one, and its
-tile's line is the owner's to write.
+draw as before. **The explosive resist is a barrier** (the owner's F and
+tile 1 of docs/mocks/explosive-resist-2026-10-07.html): not a look on the
+hide but a row of floating purple cells under the coil's underside, a cross
+every fourth, flaring white then pale purple where it soaks up a charge
+(`drawBarrier`, render/serpent.js; `BARRIER_*` in config/deepdraw.js). Its
+tile says "Barrier: absorbs explosive damage" (the owner's). Scene
+`deep-barrier`; `deep-warded` and `deep-split` now stand the Mage and a
+Brawler highest, so they still show the ward and the plates.

@@ -135,6 +135,15 @@ export const PLATE_W = 2;
 export const PLATE_TONE = 6;
 export const PLATE_EDGE = 2;
 export const RESIST_FLICKER_HZ = 4;
+// The explosive resist is a barrier under the body, not a look on the hide:
+// a row of floating cells BARRIER_GAP cells under the coil's underside, three
+// lit of every BARRIER_EVERY, the middle one a cross. A bomb that it soaks up
+// flares the cells under it white, then light purple, over BARRIER_FLARE_MS,
+// BARRIER_FLARE_W cells either side.
+export const BARRIER_GAP = 3;
+export const BARRIER_EVERY = 4;
+export const BARRIER_FLARE_MS = 900;
+export const BARRIER_FLARE_W = 2;
 // Splitting: the coil stays whole and thrashes, a ripple a length running
 // down it on top of the sway. place.js lays it into the centerline, so a
 // click, a lance and a ring all land on the body as drawn.
@@ -353,6 +362,8 @@ export const STATUS_ICONS = {
   // the ward halves magic, the plates halve physical
   ward:     { rows: ['..#..', '#.#.#', '.###.', '#.#.#', '..#..'], own: true },
   plates:   { rows: ['.###.', '#####', '#####', '.###.', '..#..'], own: true },
+  // and the barrier under it soaks up explosives (the owner's F and 1, docs/mocks/explosive-resist-2026-10-07.html)
+  barrier:  { rows: ['#.#.#', '.###.', '##.##', '.###.', '#.#.#'], own: true },
 };
 // A mechanic's tile while it is warned: its rim blinking between these in held
 // steps, STATUS_WARN_HZ a second. Answered, it is struck through for the rest
@@ -368,6 +379,7 @@ export const STATUS_SAYS = {
   orb:   { coming: 'Constrict coming', on: 'Constrict', stopped: 'Constrict' },   // the owner's name for it
   dazed: 'Dazed: thrown off, seeing stars',
   constricted: 'Constricted',   // the owner's
+  barrier: 'Barrier: absorbs explosive damage',   // the owner's
   ward: 'Ward: magic damage cut in half',
   plates: 'Plates: phys damage cut in half',
 };

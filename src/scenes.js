@@ -440,11 +440,13 @@ const deepScenes = {
   'deep-wound': { about: 'the deep', say: 'the bare coil with the wound held most of the way open, a Brawler at it',
     run: stageScene(0, 0.87, [cast('brawler', 1)]) },
   'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales, a Ranger\'s arrows in it',
-    run: stageScene(1, 0.33, [cast('ranger', 4), cast('brawler', 2)]) },
+    run: stageScene(1, 0.33, [cast('ranger', 2), cast('mage', 4)]) },        // the Mage the highest: it resists magic
   'deep-scout': { about: 'the deep', say: 'the Scout, the armory base unit at rung 0, shooting its arrow',
     run: () => { deepYard({ stage: 1, wound: 0.33, party: [cast('ranger', 0)] }); lookAtStation(0); } },
   'deep-split': { about: 'the deep', say: 'the third defense: the coil in lengths, a Sapper\'s charges bursting, a Hexer\'s hex on it',
-    run: stageScene(2, 0.25, [cast('sapper', 4), cast('hexer', 4)]) },
+    run: stageScene(2, 0.25, [cast('sapper', 4), cast('hexer', 4), cast('brawler', 6)]) },   // the Brawler the highest: plates
+  'deep-barrier': { about: 'the deep', say: 'the barrier under the coil soaking up a Sapper\'s charges, the Sapper the highest rung',
+    run: stageScene(2, 0.25, [cast('sapper', 6), cast('hexer', 4)]) },
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',
     run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
   'meal-swim': { about: 'the deep', say: 'a Skull fish swimming in from the left to the serpent, its jaws opening',

@@ -36,7 +36,7 @@ function saysOf(key, n = 0, mech = null) {
     // calm, a mechanic without a line of its own says what it does
     return (says[state] ?? says.on ?? '').replace('{x}', mech.x);
   }
-  if (key === 'dazed' || key === 'ward' || key === 'plates' || key === 'constricted') return STATUS_SAYS[key];
+  if (key === 'dazed' || key === 'ward' || key === 'plates' || key === 'barrier' || key === 'constricted') return STATUS_SAYS[key];
   const line = statusLine(key);
   return n > 1 ? line.replace(':', ` x${n}:`) : line;
 }
@@ -100,14 +100,20 @@ const labelOf = text => (text || '').split(':')[0].replace(/ coming$/, '');
 export function drawFoeStatuses(x, y) {
   const t = now(), s = barTileW();
   barTiles = [];
-  ctx.font = `${STATUS_LABEL_PX}px ui-monospace, "Courier New", monospace`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
+  // The label's type is set again for each column: a tile draws its timer in
+  // its own, and a label measured in one and drawn in the other overlaps.
+  const labelType = () => {
+    ctx.font = `${STATUS_LABEL_PX}px ui-monospace, "Courier New", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+  };
   const column = (key, text, k, n, o = {}) => {
+    labelType();
     const label = labelOf(text), w = Math.max(s, Math.ceil(ctx.measureText(label).width));
     const tx = x + Math.round((w - s) / 2);
     barTiles.push({ x: tx, y, w: s, h: s, text });
     tile(key, tx, y, k, n, { ...o, px: STATUS_BAR_PX });
+    labelType();
     ctx.fillStyle = seen(STATUS_FACE);
     ctx.fillText(label, x + w / 2, y + s + 4 + STATUS_LABEL_GAP);
     x += w + STATUS_GAP * 2;
@@ -123,7 +129,6 @@ export function drawFoeStatuses(x, y) {
   }
   // then the resist the phase stands in: in the fading it is the one up, its
   // timer the turn, its rim blinking as the other comes in
-  // (the explosive resist has no tile of its own yet: it waits on its drawing)
   const kind = resistNow(), key = RESIST_TILE[kind];
   if (key) {
     const turn = resistNext() ? STATUS_WARN_RIM[Math.floor(t / 1000 * STATUS_WARN_HZ) % 2] : null;
@@ -135,7 +140,7 @@ export function drawFoeStatuses(x, y) {
 }
 
 // The tile a resist kind shows as.
-const RESIST_TILE = { magic: 'ward', physical: 'plates' };
+const RESIST_TILE = { magic: 'ward', physical: 'plates', explosive: 'barrier' };
 
 // --- on the fighters ----------------------------------------------------------------------
 // What is on a fighter now: its buffs, and dazed while it is thrown and seeing stars.

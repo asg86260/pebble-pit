@@ -14,7 +14,7 @@ import { S } from '../state.js';
 import { SERPENT_WOUND, SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_X, P, WORKER,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
-         CLICK_DMG } from '../config.js';
+         CLICK_DMG, DAMAGE_KIND, BARRIER_FLARE_MS } from '../config.js';
 import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
@@ -94,6 +94,12 @@ export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   const kept = guardOf(weapon);
   if (kept === undefined) return 0;
   const guard = o.through ? Math.max(1, kept) : kept;
+  // An explosive the barrier soaks up flares it where it burst (render/serpent.js).
+  if (guard < 1 && DAMAGE_KIND[weapon] === 'explosive') {
+    const t = now();
+    S.barrierHits = S.barrierHits.filter(h => t - h.at < BARRIER_FLARE_MS);
+    S.barrierHits.push({ x, at: t });
+  }
   const done = dmg * guard * ampOf(!!o.tick, o.by);
   if (!(done > 0)) return 0;
   // Held at the stage's depth rather than over it: the break is the frame's
