@@ -85,9 +85,12 @@ export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this 
 // A phase is a window (DESIGN.md, "The serpent heals whole: a phase is a
 // window"): the party has SERPENT_WINDOW seconds of it, then the serpent eats
 // the next creature to reach its mouth and heals to full. A depth is about
-// what the party should do in one window. First guesses; the dev panel has both.
+// what the party should do in one window: the median party's best window
+// 17.5 minutes into the phase, of eight parties less the strongest and the
+// weakest (`speedrun.mjs --fight --paced 17.5`), so a phase takes 15 to 20
+// minutes. The dev panel has both.
 export let SERPENT_WINDOW = [40, 32, 26, 20, 18];            // seconds a phase gives before it eats
-export const SERPENT_DEPTHS = [4300, 9400, 6700, 5100, 9000];  // the depth that breaks it, a stage (tools/node/deep-pace.mjs --solve)
+export const SERPENT_DEPTHS = [3900, 4850, 5700, 5500, 7500];  // the depth that breaks it, a stage
 // How many defenses there are; the stage past the last is the kill.
 export const SERPENT_PHASES = SERPENT_DEPTHS.length;
 export let SERPENT_WOUND = SERPENT_DEPTHS.slice();           // and as the dev panel has scaled it

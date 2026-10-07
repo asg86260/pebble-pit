@@ -304,6 +304,16 @@ async function fight() {
   const HAND = +arg('hand', 10);       // seconds between the hand's sweeps of the bed, 0 never
   let swept = 0;
   const YARDBUY = process.argv.includes('--yardbuy');
+  const UNTIL = +arg('until', 99);     // stop once the serpent reaches this stage
+  // `--paced M`: every phase is broken at M minutes, the depths made too deep
+  // to reach before then, and each window's deepest wound is printed at the
+  // break -- what this party can do in one window, at that point in the fight.
+  const PACED = +arg('paced', 0) * 60;
+  const { TUNABLE, SERPENT_WOUND, SERPENT_WINDOW } = await import('../../src/config.js');
+  const depthScale = TUNABLE.find(k => k.key === 'SERPENT_WOUND_SCALE');
+  if (PACED) depthScale.set(20);
+  let windowPeak = 0;
+  const peaks = [];                    // [seconds into the phase, deepest wound] a window
   const DCPS = +arg('dcps', 2), ORB = arg('orb', 'lift'), FHOURS = +arg('fhours', 4);
   const PLAN = (arg('party', 'altar:brawler,armory:ranger,spire:mage,circle:hexer')).split(',').map(s => s.split(':'));
   console.log(`\nthe fight: ${DCPS} punches/s, orb ${ORB}, party ${PLAN.map(p => p.join(':')).join(' ')}`);
@@ -353,7 +363,16 @@ async function fight() {
       if (S.heldScales) { swept += S.heldScales; release(h.x + h.w / 2, h.y - P * 6); }
     }
     // the meals
-    if (S.meal !== mealWas) { mealWas = S.meal; heals++; }
+    windowPeak = Math.max(windowPeak, S.serpentWound);
+    if (S.meal !== mealWas) { mealWas = S.meal; heals++; peaks.push([t - stageAt.at(-1), Math.round(windowPeak)]); windowPeak = 0; }
+    if (PACED && t - stageAt.at(-1) >= PACED && S.serpentStage < SERPENT_WOUND.length && !breaking()) {
+      const late = peaks.filter(([at]) => at >= PACED - 180).map(([, w]) => w);
+      const win = (await import('../../src/config.js')).SERPENT_WINDOW[S.serpentStage];
+      console.log(`PACE ${JSON.stringify({ stage: S.serpentStage, window: win, last3min: late, best: Math.max(0, ...late),
+        party: S.stations.map(s => `${s.cls || s.kind || 'recruit'}@${s.rung}`) })}`);
+      S.serpentWound = (await import('../../src/config.js')).SERPENT_WOUND[S.serpentStage];   // the break, let fall on its own frame
+      peaks.length = 0; windowPeak = 0;
+    }
     woundMax = Math.max(woundMax, S.serpentWound);
     // the build button, and each Recruit made what the plan says
     if (buildOffer().shown && S.stations.length < PLAN.length) {
@@ -384,8 +403,9 @@ async function fight() {
     if (t % 10 === 0) staff();
     if (S.serpentStage !== stage) {
       console.log(`${hms(t).padStart(8)}  BREAK ${stage} -> ${S.serpentStage} after ${hms(t - stageAt.at(-1))} (${heals} meals, deepest wound ${Math.round(woundMax)}, orbs ${orbs}/${orbAnswered} answered) party ${S.stations.map(s => `${s.cls || s.kind || 'recruit'}@${s.rung}`).join(' ')}`);
-      stage = S.serpentStage; stageAt.push(t); heals = 0; woundMax = 0;
+      stage = S.serpentStage; stageAt.push(t); heals = 0; woundMax = 0; peaks.length = 0; windowPeak = 0;
     }
+    if (S.serpentStage >= UNTIL) break;
     if (S.serpentFreed && !said.has('freed')) mark('freed', `FREED: the serpent's end, ${hms(t - t0)} after the portal`);
     if (said.has('freed') && t - stageAt.at(-1) > 120) break;
     if ((t - t0) % +arg('fsay', 600) === 0) {
