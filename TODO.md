@@ -5,8 +5,11 @@
 "The serpent hardens against its strongest foes" in DESIGN.md. Open:
 - **The barrier's flare sits under where the charge hit the hide**: the
   Sapper's charge still flies to the hide, not to the barrier under it.
-- **The depths** were measured with the written resists; measure them again
-  (`speedrun.mjs --fight --paced 17.5`, eight parties).
+- **The depths, measured again with these resists** (2026-10-07): 5970 /
+  5760 / 8400 / 8520 / 13340. Unforced, four parties still free him in 71
+  minutes, but the second phase falls in 3 to 4 minutes for three of them
+  (the second station's cheap first rungs) and the fading then runs 34 to
+  38: the spread is when damage arrives, not its kind.
 
 ## A fifth phase: the constrict -- BUILT (2026-10-04)
 

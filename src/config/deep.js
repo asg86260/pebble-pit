@@ -90,7 +90,7 @@ export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this 
 // weakest (`speedrun.mjs --fight --paced 17.5`), so a phase takes 15 to 20
 // minutes. The dev panel has both.
 export let SERPENT_WINDOW = [40, 32, 26, 20, 18];            // seconds a phase gives before it eats
-export const SERPENT_DEPTHS = [5970, 7470, 8820, 8610, 13280];  // the depth that breaks it, a stage
+export const SERPENT_DEPTHS = [5970, 5760, 8400, 8520, 13340];  // the depth that breaks it, a stage
 // How many defenses there are; the stage past the last is the kill.
 export const SERPENT_PHASES = SERPENT_DEPTHS.length;
 export let SERPENT_WOUND = SERPENT_DEPTHS.slice();           // and as the dev panel has scaled it
