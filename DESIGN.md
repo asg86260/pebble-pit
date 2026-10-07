@@ -17272,73 +17272,40 @@ it into the pit.
   a new saved `handChipped` set by a click on the rock, "toss" `banked`.
 - How the list sits beside the notice card on a narrow window.
 
-## The serpent hardens against its strongest foes (design, not built)
+## The serpent hardens against its strongest foes (built 2026-10-07)
 
 Asked for by the owner, 2026-10-07, after the driven runs: "what if the
 serpent reacted to the party comp". A first draft sized each phase's depth
 to the party; the owner turned that down ("i dont really want the serpent to
 change health") and kept the other half: the resists follow the party's
-strongest members.
+strongest members -- the highest rung, and the Sapper's explosive resisted
+like the rest (the owner's two calls, the same day).
 
-**The bargain.** Today the warded phase resists magic and the split
-physical, whoever is fighting: a party of two magic fighters waits an hour
-in the warded phase and walks through the split. Instead the serpent
-hardens against whoever is hurting it most. The player cannot pile
-everything into one class and coast; a party leaning on one fighter feels
-each phase push back on that fighter, and the others carry it through.
-Depths, windows and the heal stay as written.
+**The bargain.** The warded phase resisted magic and the split physical,
+whoever was fighting: a party of two magic fighters waited an hour in the
+warded phase and walked through the split. Now the serpent hardens against
+whoever stands highest. Depths, windows and the heal stay as written.
 
 ### The rules
 
 - **Each phase's resist is chosen at its break**, on the frame it begins,
-  and saved (`S.resist`), so a reload finds the same hide.
-- **The strongest fighter is the one that dealt the most** in the phase
-  just broken, counted whole from every blow and tick as it lands (not the
-  wound, which stops at the depth). A station still a Recruit punches, and
-  a punch is of no kind.
+  and saved (`S.resistBy`, a stage's kinds), so a reload finds the same hide;
+  it never changes inside the phase, whoever climbs.
+- **The strongest fighter is the highest rung**, a tie going to the older
+  station. A Recruit (a punch) and the Bard deal no kind and are passed over.
 - **The warded phase and the split** each resist the strongest fighter's
-  kind. Two phases in a row may resist the same kind: the serpent answers
-  the party, not a rota.
-- **The fading** switches between the kinds of the two strongest fighters
-  of different kinds, as it switches between magic and physical now; with
-  only one kind in the party it holds that one.
-- **The first phase and the constrict resist nothing**, as now.
-- **Explosive** is not a kind the serpent resists (the owner's call for the
-  Sapper, 2026-09-29): a Sapper at the top is passed over for the strongest
-  fighter of another kind. On a party with no magic or physical fighter, the
-  phase falls back on its written resist (`RESISTS`).
-- **The hide already shows both looks** (the ward, the plates), so nothing
-  new is drawn; the resist tile under the bar names which.
+  kind, magic, physical or explosive. Two phases in a row may resist the
+  same one.
+- **The fading** switches between the kinds of the two strongest fighters of
+  different kinds; a party of one kind holds that one.
+- **The first phase and the constrict resist nothing**, as before; a party
+  with no kind at all falls back on the written `RESISTS`.
+- A dev jump (`__serpent`) chooses as a break into that stage would.
 
-### What it must not break
+### As built
 
-- **A resist never changes inside a phase** except the fading's turns: the
-  choice is made once, at the break.
-- **Depths stay written.** Once this is in, they are measured again with
-  `speedrun.mjs --fight --paced 17.5` over the eight parties, since a phase
-  will now always resist somebody that matters.
-- **Old saves**: a save mid-fight has no `S.resist`; it reads the written
-  `RESISTS` for its stage until the next break. No migration.
-
-### What it costs
-
-- Damage dealt this phase, by fighter (saved, a number a station), and
-  `S.resist` (saved).
-- `resists()` in deep/phases.js reads `S.resist` for the warded phase, the
-  split and the fading, else the written table.
-- A node check: a party led by a Mage meets a warded phase resisting magic,
-  and one led by a Ranger meets it resisting physical.
-
-### What it does not fix
-
-The driven runs' other spread -- a phase falling in two minutes when the
-next station's cheap first rungs land just short of its depth -- is about
-when damage arrives, not its kind. This leaves it as it is.
-
-### The owner's calls
-
-1. **Strongest by damage dealt in the last phase**, as written, or by rung
-   (the highest rung's fighter)? Damage reads what is actually hurting it;
-   rung is easier to plan around.
-2. **A Sapper at the top**: passed over as written, or does the serpent
-   resist explosive too when the Sapper leads?
+`chooseResist` / `settleResist` in deep/phases.js, called at the break in
+deep/serpent.js; checks in test/resists.test.mjs. The ward and the plates
+draw as before. **Open: the explosive resist has no look yet** -- no hide
+drawing and no tile under the bar until the owner votes on one, and its
+tile's line is the owner's to write.

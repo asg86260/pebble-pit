@@ -469,6 +469,7 @@ export const S = {
   serpentStage: 0,
   serpentWound: 0,
   serpentFreed: false,
+  resistBy: {},           // stage -> the kinds it resists, chosen at its break from the party (deep/phases.js)
   // A heavy blow's stun: seconds of it left (the heal stops while there
   // are), and seconds of the grace after one in which no new one can start.
   // `serpentStill` is the ms of sway the stuns have held back: the coil's
@@ -690,7 +691,7 @@ export const SAVED = [
   'coreBuried',           // whether this rock still owes you its core
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
-  'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
+  'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'resistBy', 'scales', 'seenScale',
   'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).

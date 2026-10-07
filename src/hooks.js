@@ -1094,7 +1094,7 @@ import { layScales, looseScales } from './deep/scales.js';
 import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
 import { forgetSerpent } from './verify.js';
-import { resetMechanic, part as phasePart } from './deep/phases.js';
+import { resetMechanic, settleResist, part as phasePart } from './deep/phases.js';
 import { FANG_BREAKS, SERPENT_PHASES } from './config.js';
 HANDLES.__serpent = ({ stage, wound } = {}) => {
   if (Number.isInteger(stage)) {
@@ -1108,6 +1108,10 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
     // and a fang still in the water from a break taken back goes with it.
     if (S.fangsLoose.length > S.fangsDropped) S.fangsLoose = S.fangsLoose.slice(0, S.fangsDropped);
     resetMechanic();                    // a stage set opens calm, as a break's does
+    // and resists as a break into it would, from the party standing now;
+    // the stages after it choose again when they are reached
+    S.resistBy = Object.fromEntries(Object.entries(S.resistBy || {}).filter(([k]) => +k < S.serpentStage));
+    settleResist(S.serpentStage);
     // A fight set back before the kill has not had it: the kill, his walk,
     // the gathering again and their beats are forgotten, so the next fourth
     // break plays all of it (snatch.js).

@@ -18,6 +18,7 @@ import { now } from '../clock.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
          BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT,
          SERPENT_PHASES, SERPENT_WOUND, ORB_LIFT, ORB_LIFT_STEP } from '../config.js';
+import { CLASSES, PAIRS } from '../config/classes.js';
 import { has } from './statuses.js';
 
 const LAST = SERPENT_PHASES - 1;
@@ -178,7 +179,7 @@ export function stepBreak(c) {
   return true;
 }
 // The resist the old phase had, for the hide not yet renewed.
-const oldResist = () => (RESISTS[S.serpentStage - 1] || [])[0] || null;
+const oldResist = () => resistsOf(S.serpentStage - 1)[0] || null;
 export const resistAt = k => (renewed(k) ? resistNow() : oldResist());
 
 // --- the kill (snatch.js plays it; config KILL) -------------------------------------
@@ -216,9 +217,37 @@ export const reformK = () => (S.reformAt == null ? null : clamp01((now() - S.ref
 export function resetMechanic() { S.mechAt = 0; S.mechSkip = false; S.phaseAt = 0; }
 
 // --- the resist ------------------------------------------------------------------
+// The serpent hardens against its strongest fighters (DESIGN.md, "The serpent
+// hardens against its strongest foes"): at each break a phase that resists
+// anything resists the kinds of the party's highest-rung fighters -- one kind,
+// or in the fading the first two -- chosen once and saved in `S.resistBy`.
+// A tie on the rung goes to the older station. A fighter dealing no kind (the
+// Recruit's punch, the Bard) is passed over; a party with none falls back on
+// the written table.
+const kindOf = st => {
+  const key = st.cls || (st.kind ? PAIRS[st.kind]?.[0] : null);
+  return (key && DAMAGE_KIND[CLASSES[key]?.hit]) || null;
+};
+export function chooseResist(stage) {
+  const want = (RESISTS[stage] || []).length;
+  if (!want) return [];
+  const kinds = [];
+  // stable: equal rungs keep the stations' order, oldest first
+  for (const st of [...S.stations].sort((a, b) => b.rung - a.rung)) {
+    const k = kindOf(st);
+    if (k && !kinds.includes(k)) kinds.push(k);
+  }
+  return kinds.length ? kinds.slice(0, want) : RESISTS[stage].slice();
+}
+// Chosen at the break into `stage` (deep/serpent.js), and by a dev jump.
+export function settleResist(stage) {
+  if (stage > LAST) return;
+  S.resistBy = { ...(S.resistBy || {}), [stage]: chooseResist(stage) };
+}
+const resistsOf = stage => S.resistBy?.[stage] || RESISTS[stage] || [];
 // The kind of damage the phase up resists, and in the fading, which of its two
 // is up: they take turns on `S.phaseAt`, the seconds into the phase (saved).
-const resists = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? RESISTS[S.serpentStage] : []);
+const resists = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? resistsOf(S.serpentStage) : []);
 export function resistNow() {
   const r = resists();
   return r.length ? r[Math.floor(S.phaseAt / RESIST_TURN_S) % r.length] : null;

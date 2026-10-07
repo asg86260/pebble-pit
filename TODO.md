@@ -1,11 +1,12 @@
 # Still to do
 
-## The serpent hardens against its strongest foes -- DESIGNED, AWAITING SIGN-OFF (2026-10-07)
+## The serpent hardens against its strongest foes -- BUILT (2026-10-07)
 
-"The serpent hardens against its strongest foes" in DESIGN.md: depths stay
-written; the warded phase, the split and the fading resist the kinds of the
-fighters that dealt the most in the phase before. Blocked on the owner's two
-calls at the end of the section. No game code yet.
+"The serpent hardens against its strongest foes" in DESIGN.md. Open:
+- **The explosive resist has no look**: no hide drawing and no tile under
+  the bar, waiting on a mock and the owner's vote, and its tile's line.
+- **The depths** were measured with the written resists; measure them again
+  (`speedrun.mjs --fight --paced 17.5`, eight parties).
 
 ## A fifth phase: the constrict -- BUILT (2026-10-04)
 

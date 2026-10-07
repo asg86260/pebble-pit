@@ -20,7 +20,7 @@ import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned } from './meals.js';
-import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbLift } from './phases.js';
+import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbLift, settleResist } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
 // resists nothing and has nothing left to heal.
@@ -189,6 +189,7 @@ export const stepSerpent = c => {
   S.serpentStun = S.serpentGrace = 0;
   clearStatuses();
   resetMechanic();
+  settleResist(S.serpentStage);
   if (S.serpentStage > LAST) { S.serpentFreed = true; S.freedAt = c.now; }
   else S.breakT = 0;
   for (const fn of breakers.slice()) fn(S.serpentStage);

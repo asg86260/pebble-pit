@@ -4,7 +4,7 @@
 // saved, so a reload lands in the same one.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { RESIST_K, RESIST_TURN_S, RESIST_WARN_S, CLASSES } from '../src/config.js';
+import { RESIST_K, RESIST_TURN_S, RESIST_WARN_S, CLASSES, SERPENT_WOUND } from '../src/config.js';
 import { strike } from '../src/deep/serpent.js';
 import { resistNow, resistNext } from '../src/deep/phases.js';
 import { bellyAt } from '../src/deep/place.js';
@@ -41,5 +41,51 @@ group('the fading takes magic and physical in turn, the coming one shown ahead',
     ok(warned === 'physical', 'physical is shown coming in the last beat of the turn', `${warned}`),
     ok(second === 'physical' && mage1 === 1 && brawler1 === RESIST_K, 'then it resists physical', `${second} ${mage1} ${brawler1}`),
     ok(resistNow() === 'magic', 'and magic again after that')
+  ];
+});
+
+// --- the serpent hardens against its strongest foes ----------------------------------
+// (DESIGN.md, "The serpent hardens against its strongest foes"): at each break a
+// phase resists the kinds of the party's highest-rung fighters, chosen once.
+// The party is setup (`__party`); the break is the party's blows reaching
+// the depth (`strike`), the way a fight breaks it.
+const breakInto = stage => {
+  window.__serpent({ stage: stage - 1, wound: 0 });
+  runUntil(() => !S.breakT, 30);
+  S.serpentWound = SERPENT_WOUND[stage - 1] - 1;
+  const p = bellyAt(now());
+  strike('punch', 50, p.x, p.y);
+  runUntil(() => S.serpentStage === stage, 2);
+  runUntil(() => S.breakT == null, 30);            // the dive or the roar plays out
+  return S.serpentStage === stage;
+};
+
+group('the warded phase resists the highest-rung fighter, and holds it all phase', async () => {
+  window.__snatch({ played: true });
+  window.__party({ stations: [{ kind: 'spire', cls: 'mage', rung: 3 }, { kind: 'altar', cls: 'brawler', rung: 6 }] });
+  const broke = breakInto(1);
+  const kind = resistNow(), brawler = hitWith('brawler'), mage = hitWith('mage');
+  // the Mage climbs past the Brawler mid-phase; the hide does not change
+  S.stations[0].rung = 8;
+  run(5);
+  return [
+    ok(broke, 'the blows broke the bare phase'),
+    ok(kind === 'physical' && brawler === RESIST_K && mage === 1, 'it resists the Brawler, the highest rung', `${kind} ${brawler} ${mage}`),
+    ok(resistNow() === 'physical', 'and keeps that for the phase, whoever climbs', resistNow())
+  ];
+});
+
+group('a Sapper on top brings an explosive resist; the fading takes the top two kinds', async () => {
+  window.__snatch({ played: true });
+  window.__party({ stations: [{ kind: 'altar', cls: 'brawler', rung: 4 }, { kind: 'circle', cls: 'sapper', rung: 7 },
+                              { kind: 'spire', cls: 'mage', rung: 5 }] });
+  const broke = breakInto(2);
+  const split = resistNow(), sapper = hitWith('sapper');
+  const fading = breakInto(3);
+  const turns = new Set();
+  for (let i = 0; i < 4; i++) { turns.add(resistNow()); run(RESIST_TURN_S); }
+  return [
+    ok(broke && split === 'explosive' && sapper === RESIST_K, 'the split resists explosive, the Sapper at half', `${split} ${sapper}`),
+    ok(fading && [...turns].sort().join() === 'explosive,magic', 'the fading turns between the Sapper and the Mage', [...turns].join())
   ];
 });

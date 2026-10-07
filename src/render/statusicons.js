@@ -123,9 +123,9 @@ export function drawFoeStatuses(x, y) {
   }
   // then the resist the phase stands in: in the fading it is the one up, its
   // timer the turn, its rim blinking as the other comes in
-  const kind = resistNow();
-  if (kind) {
-    const key = kind === 'magic' ? 'ward' : 'plates';
+  // (the explosive resist has no tile of its own yet: it waits on its drawing)
+  const kind = resistNow(), key = RESIST_TILE[kind];
+  if (key) {
     const turn = resistNext() ? STATUS_WARN_RIM[Math.floor(t / 1000 * STATUS_WARN_HZ) % 2] : null;
     column(key, saysOf(key), S.serpentStage === 3 ? 1 - (S.phaseAt % RESIST_TURN_S) / RESIST_TURN_S : 1, 0, { rim: turn });
   }
@@ -133,6 +133,9 @@ export function drawFoeStatuses(x, y) {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
 }
+
+// The tile a resist kind shows as.
+const RESIST_TILE = { magic: 'ward', physical: 'plates' };
 
 // --- on the fighters ----------------------------------------------------------------------
 // What is on a fighter now: its buffs, and dazed while it is thrown and seeing stars.
