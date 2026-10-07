@@ -110,10 +110,6 @@ export const RESISTS = [[], ['magic'], ['physical'], ['magic', 'physical'], []];
 export const RESIST_K = 0.5;
 export const RESIST_TURN_S = 20;
 export const RESIST_WARN_S = 1;
-// Each hit's multiple a phase, the fading's as it opens: the table the checks
-// and the model read. What a hit takes this frame is `guardOf` (deep/phases.js).
-export const SERPENT_DEFENSE = Object.fromEntries(Object.entries(DAMAGE_KIND).map(([hit, kind]) =>
-  [hit, RESISTS.map(r => (kind && r[0] === kind ? RESIST_K : 1))]));
 // A stunning blow seizes the coil and stops the heal (DESIGN.md, "Blows land:
 // the burst and the stun"). Only a capstone stuns -- the Brawler's haymaker,
 // the Monk's chi palm, the Ranger's aimed shot and the Sapper's pair of

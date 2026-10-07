@@ -11,7 +11,8 @@
 // with a blow of a size worked out from the rule.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_WOUND, SERPENT_DEFENSE, STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, CLASSES } from '../src/config.js';
+import { guardOf } from '../src/deep/phases.js';
+import { SERPENT_WOUND, STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, CLASSES } from '../src/config.js';
 import { rungWorth } from '../src/deep/classes.js';
 import { clickDeep, strike } from '../src/deep/serpent.js';
 import { climb } from './party-press.mjs';
@@ -46,7 +47,7 @@ group("a Brawler's haymaker, at her capstone, stuns the ward, and the window sto
   let got = false;
   for (let f = 0; f < 60 * 30 && !got; f++) { frame(); got = S.serpentStun > 0; }
   const wound = S.serpentWound, stun = S.serpentStun;
-  const hay = rungWorth(CLASSES.brawler, 8) * CLASSES.brawler.haymaker.x * SERPENT_DEFENSE.brawler[1];
+  const hay = rungWorth(CLASSES.brawler, 8) * CLASSES.brawler.haymaker.x * guardOf('brawler');
   // Held for the stun's length, a frame short: the window does not run,
   // though she punches on (unless a creature had already turned for the mouth).
   const t0 = S.mealT, turnedAt = S.mealI;

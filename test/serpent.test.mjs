@@ -10,9 +10,9 @@
 // are about the depths and not about which class answers which stage.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_WINDOW, SERPENT_PHASES, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K } from '../src/config.js';
+import { SERPENT_WINDOW, SERPENT_PHASES, SERPENT_WOUND, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K } from '../src/config.js';
 import { clickDeep, clickDmg, strike, woundK, onBreak, scalesOf } from '../src/deep/serpent.js';
-import { breaking } from '../src/deep/phases.js';
+import { breaking, guardOf } from '../src/deep/phases.js';
 import { spendScales } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -69,7 +69,7 @@ group("the click is always a punch, worth the first station's rung", async () =>
   return [
     ok(bare === CLICK_DMG[0], 'with no station, the first rung', `${bare}`),
     ok(fifth === CLICK_DMG[5], "on the first station's fifth, the fifth", `${fifth}`),
-    ok(said && said.done === CLICK_DMG[5] * SERPENT_DEFENSE.punch[0], 'and it lands as a punch', JSON.stringify(said && said.done)),
+    ok(said && said.done === CLICK_DMG[5] * guardOf('punch'), 'and it lands as a punch', JSON.stringify(said && said.done)),
     ok(S.serpentStun === 0, 'which never stuns', `${S.serpentStun}`)
   ];
 });

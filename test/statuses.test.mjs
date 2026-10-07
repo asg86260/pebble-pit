@@ -7,7 +7,8 @@
 // lay Held the player's way.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_WINDOW, SERPENT_WOUND, SERPENT_DEFENSE, EXPOSED_AMP, AMP_MAX, HASTE, CLASSES } from '../src/config.js';
+import { guardOf } from '../src/deep/phases.js';
+import { SERPENT_WINDOW, SERPENT_WOUND, EXPOSED_AMP, AMP_MAX, HASTE, CLASSES } from '../src/config.js';
 import { strike } from '../src/deep/serpent.js';
 import { lay, has, level, ampOf, inspire, haste, tempo } from '../src/deep/statuses.js';
 import { climb, openEveryClass } from './party-press.mjs';
@@ -34,7 +35,7 @@ group('Bleeding ticks the wound open, a tick at a time, and never stuns', async 
   const chips = S.serpentChips.length;
   let most = 0;
   for (let f = 0; f < 60 * 4; f++) { frame(); most = Math.max(most, S.serpentWound); }
-  const cut = SERPENT_DEFENSE.sword[1];
+  const cut = guardOf('sword');
   return [
     ok(most > 0, 'the wound opens under it', `${most}`),
     // Three seconds of ten a second: nothing closes inside the window.
@@ -54,7 +55,7 @@ group("two fighters' bleeds add up, each ticking on its own", async () => {
   const kept = level('bleed');
   let most = 0;
   for (let f = 0; f < 60 * 4; f++) { frame(); most = Math.max(most, S.serpentWound); }
-  const cut = 10 * 3 * SERPENT_DEFENSE.sword[1] + 6 * 3 * SERPENT_DEFENSE.assassin[1];
+  const cut = 10 * 3 * guardOf('sword') + 6 * 3 * guardOf('assassin');
   return [
     ok(both === 16, 'two sources add up', `${both}`),
     ok(kept === 16, 'and a source laid again keeps the stronger of its own', `${kept}`),

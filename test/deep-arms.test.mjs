@@ -7,7 +7,8 @@
 // classes.test.mjs's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { WORKER, CLASSES, SERPENT_DEFENSE, FORK_RUNG } from '../src/config.js';
+import { guardOf } from '../src/deep/phases.js';
+import { WORKER, CLASSES, FORK_RUNG } from '../src/config.js';
 import { shots, loose } from '../src/deep/arms.js';
 import { rungWorth } from '../src/deep/classes.js';
 import { pressBuild, climb, openEveryClass } from './party-press.mjs';
@@ -63,7 +64,7 @@ group('a straight shot never misses: it is on its segment when its flight is up'
     yard.fast(1 / 60);
   }
   const p = last && coilAt(last.seg, last.t);
-  const v = rungWorth(CLASSES.ranger, 1) * SERPENT_DEFENSE.ranger[3];
+  const v = rungWorth(CLASSES.ranger, 1) * guardOf('ranger');
   return [
     ok(arrow && arrow.arc === 0, 'an arrow flies straight, on no bow', `${arrow && arrow.arc}`),
     ok(!shots.includes(arrow), 'and lands', `${shots.length} in the water`),

@@ -6,7 +6,8 @@
 // this.
 
 import { group, ok, yard } from './helpers.mjs';
-import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, SERPENT_DEFENSE, SERPENT_WINDOW,
+import { guardOf } from '../src/deep/phases.js';
+import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, SERPENT_WINDOW,
          DOT_TICK_S, CLASSES } from '../src/config.js';
 import { EPHEMERAL } from '../src/state.js';
 import { climb, openEveryClass } from './party-press.mjs';
@@ -35,7 +36,7 @@ group("a Brawler's punch puts its damage in the recent list, and the list emptie
   fight('altar', 'brawler', 1);
   let first = null;
   frames(60, () => { first = of('brawler')[0]; return !!first; });
-  const worth = rungWorth(CLASSES.brawler, 1) * SERPENT_DEFENSE.brawler[0];
+  const worth = rungWorth(CLASSES.brawler, 1) * guardOf('brawler');
   const said = first && { done: first.done, x: first.x, y: first.y };
   // Watched past every number's life: each hit leaves the list by itself.
   // (The station goes on striking, its base unit or its class: a built
@@ -59,7 +60,7 @@ group('each blow is a number of its own, never summed into the last', async () =
   fight('well', 'martial', 4);
   const seen = new Set();
   frames(12, () => { for (const h of of('martial')) seen.add(h); });
-  const worth = rungWorth(CLASSES.martial, 4) * SERPENT_DEFENSE.martial[0];
+  const worth = rungWorth(CLASSES.martial, 4) * guardOf('martial');
   const list = [...seen].sort((a, b) => a.at - b.at);
   // a thrust says one thrust; the finisher its own blow, the biggest there is
   const fin = Math.max(...list.map(h => h.done));
@@ -91,7 +92,7 @@ group("a Mage's beam says its ticks once a second, not a number a tick", async (
   fight('spire', 'mage', 1, 3);
   const seen = new Map();
   frames(12, () => { for (const h of of('mage')) if (h.key) seen.set(h, h.done); });
-  const tick = rungWorth(CLASSES.mage, 1) * DOT_TICK_S * SERPENT_DEFENSE.mage[3];
+  const tick = rungWorth(CLASSES.mage, 1) * DOT_TICK_S * guardOf('mage');
   const per = NUM_HELD_S / DOT_TICK_S;                  // ticks in a said second
   const sums = [...seen.keys()].map(h => Math.round(h.done / tick));
   const full = sums.filter(n => n === per).length;

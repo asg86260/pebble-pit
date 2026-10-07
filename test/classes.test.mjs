@@ -10,7 +10,8 @@
 // (party.test.mjs); that the rails fold and Reset refunds is BOARD's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { CLASSES, RECRUIT, PAIRS, SERPENT_DEFENSE, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG, WORKER, LEVELUP_S, LEVELUP_BURST_S, EXPOSED_AMP } from '../src/config.js';
+import { guardOf } from '../src/deep/phases.js';
+import { CLASSES, RECRUIT, PAIRS, SERPENT_WOUND, STUN_MAX_S, HASTE, FORK_RUNG, WORKER, LEVELUP_S, LEVELUP_BURST_S, EXPOSED_AMP } from '../src/config.js';
 import { climb, reset, openEveryClass, flush } from './party-press.mjs';
 import { pressBuy } from '../src/deep/rails.js';
 import { shots } from '../src/deep/arms.js';
@@ -170,7 +171,7 @@ group('Swordsman: the whirlwind lands each cut x whirl.x at one spot; at rung 8 
   };
   // Windows counted in cuts, not seconds, so a retuned pace still sees enough.
   const four = watch(6 * cls.every, 0, bitten);
-  const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.sword[3];
+  const v4 = rungWorth(cls, 4) * guardOf('sword');
   // A whirlwind's cut is one number. The bleed's ticks are numbers of their
   // own, far smaller.
   const cuts = done(four, 'sword').filter(d => d > v4);
@@ -279,13 +280,13 @@ group('Assassin: daggers travel while she holds still; x3 on a stunned coil; Exe
     drift = Math.max(drift, Math.hypot(w.x - px, w.y - py));
     px = w.x; py = w.y;
   });
-  const plain = rungWorth(cls, S.stations[0].rung) * SERPENT_DEFENSE.assassin[3];
+  const plain = rungWorth(cls, S.stations[0].rung) * guardOf('assassin');
   const hits = done(base, 'assassin');
   // A stunned serpent, held so for the watch: the stun is the setup here.
   const stunned = () => { S.serpentStun = 3; S.serpentGrace = 0; };
   stunned();
   const onStun = done(watch(4, 0, stunned), 'assassin');
-  const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.assassin[3];
+  const v4 = rungWorth(cls, 4) * guardOf('assassin');
   window.__serpent({ stage: 3, wound: 0 });
   S.serpentStun = 0;
   // The wound held where each check wants it, before the watch and on every
@@ -341,7 +342,7 @@ group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; a
   let stuck = 0;
   const four = watch(14, 0, () => { stuck = Math.max(stuck, shots.filter(s => s.stuck).length); });
   const blows = done(four, 'sapper');
-  const v4 = rungWorth(cls, 4) * SERPENT_DEFENSE.sapper[3] * cls.stickyX;
+  const v4 = rungWorth(cls, 4) * guardOf('sapper') * cls.stickyX;
   buyTo(0, 'sapper', 8);
   S.serpentGrace = 0;
   let two = 0, apart = 0;
@@ -351,7 +352,7 @@ group('Sapper: thrown charges burst; at 4 a charge sticks, ticks and blows x3; a
     if (on.length === 2) apart = Math.max(apart, Math.abs(on[0].seg - on[1].seg));
   });
   // The pair go off as one blow, summed: each charge pairX of a lone one.
-  const lone = rungWorth(cls, 8) * SERPENT_DEFENSE.sapper[3] * cls.stickyX;
+  const lone = rungWorth(cls, 8) * guardOf('sapper') * cls.stickyX;
   const pairBlows = done(eight, 'sapper');
   return [
     alone,
@@ -404,7 +405,7 @@ group('Bard: no damage; with another the Anthem doubles her boost, and at 8 her 
   run(6);
   const quiet = S.hits.filter(h => !hits.has(h) && h.weapon !== 'heal').every(h => h.weapon === 'ranger');
   window.__serpent({ stage: 3, wound: 0 });
-  const v = rungWorth(CLASSES.ranger, 0) * SERPENT_DEFENSE.ranger[3];
+  const v = rungWorth(CLASSES.ranger, 0) * guardOf('ranger');
   run(0.5);
   const anthem = done(watch(4, 1), 'ranger');
   const k4 = rungWorth(CLASSES.bard, 4) * CLASSES.bard.anthemX;
@@ -477,12 +478,12 @@ group('a Recruit fights at once: a light punch over its station', async () => {
     run(1 / 60);
     for (const h of S.hits) if (!hits.has(h) && h.weapon !== 'heal') { hits.add(h); seen.push(h); }
   }
-  const v = rungWorth(RECRUIT, 0) * SERPENT_DEFENSE.punch[3];
+  const v = rungWorth(RECRUIT, 0) * guardOf('punch');
   const step = Math.abs(coilAt(1, now()).x - coilAt(0, now()).x);
   return [
     ok(keyOf(st) === 'recruit' && fighterAt(0)?.goal === 'fight', 'the Recruit is at work', `${keyOf(st)} ${fighterAt(0)?.goal}`),
     ok(seen.length >= 3 && seen.every(h => h.weapon === 'punch'), 'punching, again and again', seen.map(h => h.weapon).join()),
-    ok(seen.every(h => h.done > 0 && h.done < rungWorth(CLASSES.brawler, 0) * SERPENT_DEFENSE.brawler[3] + 1e-9 &&
+    ok(seen.every(h => h.done > 0 && h.done < rungWorth(CLASSES.brawler, 0) * guardOf('brawler') + 1e-9 &&
                        Math.abs(h.done / v - Math.round(h.done / v)) < 1e-6),
        "each a share of the Brawler's first punch", `${seen.map(h => h.done.toFixed(2))} of ${v.toFixed(2)}`),
     ok(seen.every(h => Math.abs(h.x - stationX(st)) <= step), 'over its station', seen.map(h => Math.round(h.x - stationX(st))).join())
