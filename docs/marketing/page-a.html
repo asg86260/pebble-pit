@@ -1,0 +1,122 @@
+<meta charset="utf-8">
+<title>Pebble Pit, page A</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Mock A: the itch page, play first. Plain shapes; the grey boxes are where
+   real captures go. DRAFT copy, see copy.md. */
+:root {
+  --paper: #fff; --ink: #000; --ink-2: #333; --ink-4: #666; --ink-7: #aaa; --ink-8: #cfcfcf;
+  --mono: ui-monospace, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-7: #5f5f5f; --ink-8: #434343;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-7: #5f5f5f; --ink-8: #434343;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 14px/1.5 var(--mono); }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px 48px; }
+.mocknote { font-size: 11px; color: var(--ink-4); border-bottom: 2px solid var(--ink); padding: 8px 0; margin-bottom: 24px; }
+.banner { border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: 28px 16px; text-align: center; margin-bottom: 28px; }
+.banner h1 { margin: 0; font-size: clamp(22px, 6vw, 40px); letter-spacing: .3em; font-weight: 700; }
+.banner p { margin: 8px 0 0; color: var(--ink-2); letter-spacing: .08em; }
+.slot { border: 2px dashed var(--ink-4); background: repeating-linear-gradient(45deg, transparent 0 6px, var(--ink-8) 6px 7px);
+  display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; color: var(--ink-2); font-size: 12px; }
+.slot b { display: block; color: var(--ink); font-size: 13px; margin-bottom: 4px; letter-spacing: .1em; }
+.embed { aspect-ratio: 16 / 10; position: relative; margin-bottom: 8px; }
+.play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin-top: 48px;
+  border: 2px solid var(--ink); background: var(--paper); box-shadow: 6px 6px 0 var(--ink); padding: 10px 24px;
+  font: inherit; letter-spacing: .2em; color: var(--ink); }
+.cap { font-size: 11px; color: var(--ink-4); margin: 0 0 28px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; }
+@media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+h2 { font-size: 13px; letter-spacing: .2em; text-transform: uppercase; border-bottom: 2px solid var(--ink); padding-bottom: 4px; margin: 28px 0 12px; }
+.lede { font-size: 16px; margin: 0 0 12px; }
+ul.facts { list-style: none; padding: 0; margin: 0; }
+ul.facts li { padding: 8px 0 8px 22px; border-bottom: 1px solid var(--ink-8); position: relative; }
+ul.facts li::before { content: ""; position: absolute; left: 0; top: 14px; width: 8px; height: 8px; background: var(--ink); }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.shots .slot { aspect-ratio: 16 / 10; }
+.card { border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: 14px; margin-bottom: 24px; }
+.card .price { font-size: 18px; margin: 0 0 10px; }
+.btn { display: block; border: 2px solid var(--ink); text-align: center; padding: 8px; margin-top: 8px; color: var(--ink); text-decoration: none; letter-spacing: .1em; }
+.btn.solid { background: var(--ink); color: var(--paper); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+td { padding: 6px 0; border-bottom: 1px solid var(--ink-8); vertical-align: top; }
+td:first-child { color: var(--ink-4); width: 40%; padding-right: 8px; }
+.ph { background: var(--ink); color: var(--paper); padding: 0 4px; }
+.taglines { font-size: 12px; color: var(--ink-2); }
+.taglines li { margin: 4px 0; }
+</style>
+
+<div class="wrap">
+  <div class="mocknote">MOCK A -- itch.io, play first. Drawn from plain shapes, not the game; copy is DRAFT. It cannot show itch's own chrome (theme colors, comments, the real embed).</div>
+
+  <header class="banner">
+    <h1>PEBBLE PIT</h1>
+    <p>A rock. A hole. A few people between them.</p>
+  </header>
+
+  <div class="slot embed">
+    <div><b>GAME EMBED / HERO GIF</b>The opening dig: the first body swings at the rock, carries two grains the length of the yard and tips them into the hole. 1280 x 800, click to start.</div>
+    <span class="play">RUN GAME</span>
+  </div>
+  <p class="cap">Click once to start: sound and keys wake on the first click.</p>
+
+  <div class="cols">
+    <main>
+      <p class="lede">A boulder falls on your sqwife, and you start digging.</p>
+      <p>Every pixel you knock off the rock is a grain of dust, and every grain has to be carried to the pit. Spend it on a crew who mine, haul and build where you can see them: nobody teleports, and a station with nobody standing in it does nothing. Black and white, on a six-pixel grid, with no music -- only the sound of the yard.</p>
+
+      <h2>What it is</h2>
+      <ul class="facts">
+        <li><b>Nothing teleports.</b> Every worker walks to every job and carries what it moves.</li>
+        <li><b>A crew of people.</b> Each worker has a name, an age and a record of what they have shifted.</li>
+        <li><b>Pick them up.</b> Drop a worker across the yard; they walk back to work.</li>
+        <li><b>They take breaks.</b> Idle hands smoke, sing and talk -- never while there is work.</li>
+        <li><b>Six grays, one grid.</b> A light page and a dark one, and a reduced-motion switch.</li>
+      </ul>
+
+      <h2>Things to know</h2>
+      <ul class="facts">
+        <li><b>Nothing happens while it is closed.</b> The yard runs while you watch it.</li>
+        <li><b>No fail state.</b> Nothing is taken away for walking off.</li>
+        <li><b>Your save lives in this browser.</b> It autosaves every second; <i>save a copy</i> on the pause sheet takes it with you.</li>
+      </ul>
+
+      <h2>Screenshots</h2>
+      <div class="shots">
+        <div class="slot"><div><b>STILL 1</b>Two squares on bare ground, a heart between them (itch/shot-opening.png)</div></div>
+        <div class="slot"><div><b>STILL 2</b>A crew on the first rock, a hauler at the pit's lip (itch/shot-crew.png)</div></div>
+        <div class="slot"><div><b>STILL 3</b>The bench board open, a card mid-climb</div></div>
+        <div class="slot"><div><b>STILL 4</b>A break: two workers talking in dots, one smoking</div></div>
+      </div>
+    </main>
+
+    <aside>
+      <div class="card">
+        <p class="price"><span class="ph">[PRICE]</span></p>
+        <a class="btn solid" href="#">Download</a>
+        <a class="btn" href="#">Play in browser</a>
+      </div>
+      <table>
+        <tr><td>Status</td><td>Released (1.0)</td></tr>
+        <tr><td>Platforms</td><td>HTML5, Windows, macOS, Linux</td></tr>
+        <tr><td>Inputs</td><td>Mouse, touchscreen</td></tr>
+        <tr><td>Accessibility</td><td>Reduced motion, dark page, mute and volume</td></tr>
+        <tr><td>Author</td><td>Andrew Graham</td></tr>
+        <tr><td>Tags</td><td>clicker, idle, incremental, pixel-art, black-and-white</td></tr>
+      </table>
+      <h2>Tagline options</h2>
+      <ol class="taglines">
+        <li>A rock. A hole. A few people between them.</li>
+        <li>Somebody is under the rock. Start digging.</li>
+        <li>A clicker where you can watch every number happen.</li>
+      </ol>
+    </aside>
+  </div>
+</div>

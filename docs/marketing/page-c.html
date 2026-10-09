@@ -1,0 +1,89 @@
+<meta charset="utf-8">
+<title>Pebble Pit, page C</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Mock C: letterpress. One narrow column, set like the game's title page --
+   wide-tracked capitals, rules, one picture. DRAFT copy, see copy.md. */
+:root {
+  --paper: #fff; --ink: #000; --ink-2: #333; --ink-4: #666; --ink-8: #cfcfcf;
+  --mono: ui-monospace, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-8: #434343; }
+}
+:root[data-theme="dark"] { --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-8: #434343; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 14px/1.6 var(--mono); }
+.col { max-width: 560px; margin: 0 auto; padding: 0 16px 64px; }
+.mocknote { font-size: 11px; color: var(--ink-4); border-bottom: 1px solid var(--ink-8); padding: 8px 0; margin-bottom: 56px; }
+.mark { width: 36px; height: 36px; margin: 0 auto 20px; position: relative; }
+.mark i { position: absolute; background: var(--ink); }
+h1 { text-align: center; font-size: clamp(22px, 7vw, 34px); letter-spacing: .34em; margin: 0 0 6px; padding-left: .34em; font-weight: 400; }
+.word { text-align: center; letter-spacing: .3em; font-size: 12px; color: var(--ink-2); margin: 0 0 40px; padding-left: .3em; }
+.rule { border: 0; border-top: 2px solid var(--ink); margin: 32px 0; }
+.rule.thin { border-top: 1px solid var(--ink-8); }
+.slot { border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); aspect-ratio: 4 / 3;
+  background: repeating-linear-gradient(45deg, transparent 0 6px, var(--ink-8) 6px 7px);
+  display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; font-size: 12px; color: var(--ink-2); }
+.slot b { display: block; color: var(--ink); margin-bottom: 4px; letter-spacing: .1em; }
+.lines p { margin: 0 0 14px; }
+.lines p:first-child { font-size: 17px; }
+dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 20px; }
+dt { letter-spacing: .15em; font-size: 11px; color: var(--ink-4); padding: 8px 0; border-top: 1px solid var(--ink-8); text-transform: uppercase; }
+dd { margin: 0; padding: 7px 0; border-top: 1px solid var(--ink-8); }
+@media (max-width: 420px) { dl { grid-template-columns: minmax(0, 1fr); } dt { padding-bottom: 0; } dd { border-top: 0; } }
+.cta { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 8px; }
+.cta a { border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: 8px 20px; text-decoration: none; color: var(--ink); letter-spacing: .2em; font-size: 12px; }
+.cta a.solid { background: var(--ink); color: var(--paper); }
+.foot { text-align: center; font-size: 11px; color: var(--ink-4); letter-spacing: .1em; margin-top: 40px; }
+.ph { background: var(--ink); color: var(--paper); padding: 0 4px; }
+.alts { font-size: 11px; color: var(--ink-4); }
+</style>
+
+<div class="col">
+  <div class="mocknote">MOCK C -- letterpress, after the game's own title page. Plain shapes, not the game; copy is DRAFT. One picture only, so the picture has to be the opening dig.</div>
+
+  <!-- the icon: a rock on its line, in three blocks -->
+  <div class="mark" aria-hidden="true">
+    <i style="left:6px; top:12px; width:24px; height:18px"></i>
+    <i style="left:12px; top:6px; width:12px; height:6px"></i>
+    <i style="left:0; top:30px; width:36px; height:6px"></i>
+  </div>
+  <h1>PEBBLE PIT</h1>
+  <p class="word">SOMEBODY IS UNDER THE ROCK</p>
+
+  <div class="slot"><div><b>THE ONE GIF</b>The opening dig, held close: the body at the rock, two grains carried the length of the yard and tipped into the hole.</div></div>
+
+  <hr class="rule">
+
+  <div class="lines">
+    <p>A boulder falls on your sqwife, and you start digging.</p>
+    <p>Every pixel off the rock is a grain of dust. Every grain is carried to the pit. The pit pays for a crew.</p>
+    <p>Nobody teleports. Every worker walks to every job, and a station with nobody in it does nothing.</p>
+  </div>
+
+  <hr class="rule thin">
+
+  <dl>
+    <dt>Crew</dt><dd>Each worker has a name, an age and a record. Pick one up; they walk back.</dd>
+    <dt>Breaks</dt><dd>With nothing to do, they smoke, sing and talk.</dd>
+    <dt>Look</dt><dd>Six grays, a six-pixel grid, a light page and a dark one.</dd>
+    <dt>Sound</dt><dd>No music. The yard.</dd>
+    <dt>Pace</dt><dd>No fail state. No offline progress. Autosaves every second.</dd>
+    <dt>Plays on</dt><dd>Browser and phone, Windows, macOS, Linux</dd>
+    <dt>Price</dt><dd><span class="ph">[PRICE]</span></dd>
+  </dl>
+
+  <hr class="rule">
+
+  <div class="cta">
+    <a class="solid" href="#">PLAY</a>
+    <a href="#">DOWNLOAD</a>
+  </div>
+
+  <p class="foot">1.0 &middot; ANDREW GRAHAM</p>
+
+  <hr class="rule thin">
+  <p class="alts">Other taglines to try under the title: "A rock. A hole. A few people between them." / "A clicker where you can watch every number happen."</p>
+</div>

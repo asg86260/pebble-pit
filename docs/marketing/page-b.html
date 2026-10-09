@@ -1,0 +1,131 @@
+<meta charset="utf-8">
+<title>Pebble Pit, page B</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Mock B: a Steam-shaped page -- media and capsule side by side, then the
+   about, then requirements by OS. DRAFT copy, see copy.md. */
+:root {
+  --paper: #fff; --ink: #000; --ink-2: #333; --ink-4: #666; --ink-7: #aaa; --ink-8: #cfcfcf;
+  --mono: ui-monospace, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-7: #5f5f5f; --ink-8: #434343;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-7: #5f5f5f; --ink-8: #434343;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px 48px; }
+.mocknote { font-size: 11px; color: var(--ink-4); border-bottom: 2px solid var(--ink); padding: 8px 0; margin-bottom: 16px; }
+.crumbs { font-size: 11px; color: var(--ink-4); letter-spacing: .1em; }
+h1 { font-size: clamp(20px, 5vw, 28px); letter-spacing: .25em; margin: 4px 0 16px; }
+.slot { border: 2px dashed var(--ink-4); background: repeating-linear-gradient(45deg, transparent 0 6px, var(--ink-8) 6px 7px);
+  display: flex; align-items: center; justify-content: center; text-align: center; padding: 12px; color: var(--ink-2); font-size: 12px; }
+.slot b { display: block; color: var(--ink); margin-bottom: 4px; letter-spacing: .1em; }
+.top { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 760px) { .top { grid-template-columns: minmax(0, 1fr); } }
+.media .main { aspect-ratio: 16 / 9; }
+.strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+.strip .slot { aspect-ratio: 16 / 9; padding: 2px; font-size: 9px; }
+.strip .slot.on { border: 2px solid var(--ink); }
+.capsule { aspect-ratio: 460 / 215; margin-bottom: 10px; }
+.short { margin: 0 0 12px; }
+.meta { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
+.meta td { padding: 3px 0; }
+.meta td:first-child { color: var(--ink-4); width: 42%; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tags span { border: 2px solid var(--ink); padding: 0 6px; font-size: 11px; }
+.buy { border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  justify-content: space-between; padding: 14px 16px; margin: 32px 0 8px; }
+.buy h3 { margin: 0; font-size: 15px; letter-spacing: .05em; }
+.buy .act { display: flex; align-items: stretch; border: 2px solid var(--ink); }
+.buy .act span { padding: 6px 12px; }
+.buy .act .go { background: var(--ink); color: var(--paper); letter-spacing: .1em; }
+.lower { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 32px; }
+@media (max-width: 760px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+h2 { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; border-bottom: 2px solid var(--ink); padding-bottom: 4px; margin: 28px 0 12px; }
+h4 { margin: 18px 0 4px; font-size: 13px; }
+.about p { margin: 0 0 10px; }
+.about .slot { aspect-ratio: 16 / 6; margin: 10px 0 4px; }
+.sys { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-size: 12px; }
+.sys div { border-top: 2px solid var(--ink); padding-top: 6px; }
+.sys b { letter-spacing: .1em; }
+.side .box { border: 2px solid var(--ink); padding: 10px; margin-bottom: 16px; font-size: 12px; }
+.side .box b { display: block; letter-spacing: .1em; margin-bottom: 4px; }
+.ph { background: var(--ink); color: var(--paper); padding: 0 4px; }
+</style>
+
+<div class="wrap">
+  <div class="mocknote">MOCK B -- Steam-shaped. Drawn from plain shapes, not the game; copy is DRAFT. Steam's own page is dark blue and fixed in layout; this only borrows the order of its sections.</div>
+  <div class="crumbs">ALL GAMES &gt; SIMULATION &gt; PEBBLE PIT</div>
+  <h1>PEBBLE PIT</h1>
+
+  <div class="top">
+    <div class="media">
+      <div class="slot main"><div><b>TRAILER / HERO GIF</b>The opening dig, then the view pulling back on the first crew carrying dust across the yard. No HUD counters past dust.</div></div>
+      <div class="strip">
+        <div class="slot on">opening</div>
+        <div class="slot">crew carrying</div>
+        <div class="slot">bench board</div>
+        <div class="slot">the farm</div>
+        <div class="slot">dark page</div>
+      </div>
+    </div>
+    <div>
+      <div class="slot capsule"><div><b>CAPSULE 460 x 215</b>Title over the first rock, one worker on it, the pit's lip at the right</div></div>
+      <p class="short">A boulder falls on your sqwife. Dig, carry the dust to the pit, and hire a crew who mine, haul and build in plain sight. Nobody teleports.</p>
+      <table class="meta">
+        <tr><td>RELEASE</td><td><span class="ph">[1.0 DATE]</span></td></tr>
+        <tr><td>DEVELOPER</td><td>Andrew Graham</td></tr>
+        <tr><td>PUBLISHER</td><td>Andrew Graham</td></tr>
+      </table>
+      <div class="tags"><span>Clicker</span><span>Incremental</span><span>Pixel Graphics</span><span>Black and White</span><span>Singleplayer</span></div>
+    </div>
+  </div>
+
+  <div class="buy">
+    <h3>Get Pebble Pit</h3>
+    <div class="act"><span class="ph">[PRICE]</span><span class="go">ADD</span></div>
+  </div>
+
+  <div class="lower">
+    <div class="about">
+      <h2>About this game</h2>
+      <p>A boulder falls on your sqwife, and you start digging.</p>
+      <p>Every pixel you knock off the rock is a grain of dust, and every grain has to be carried to the pit. Spend it on a crew who mine, haul and build where you can see them.</p>
+
+      <h4>Nothing teleports</h4>
+      <p>Every worker walks to every job and carries what it moves. A station with nobody standing in it does nothing.</p>
+      <div class="slot"><div><b>GIF</b>A hauler sweeping dust off the ground and tipping it into the pit</div></div>
+
+      <h4>A crew of people</h4>
+      <p>Each worker has a name, an age and a record of what they have shifted. Pick one up and drop them across the yard; they walk back to work. With nothing to do, they smoke, sing and talk.</p>
+      <div class="slot"><div><b>GIF</b>A break: two workers turned to each other, dots going back and forth</div></div>
+
+      <h4>Black and white</h4>
+      <p>Six grays on a six-pixel grid, a light page and a dark one, and no music -- only the sound of the yard.</p>
+
+      <h4>Played at your pace</h4>
+      <p>No fail state and no offline progress: the yard runs while you watch it. It autosaves every second, and a save can be copied out and loaded back.</p>
+
+      <h2>System requirements</h2>
+      <div class="sys">
+        <div><b>WINDOWS</b><br>OS: <span class="ph">[min]</span><br>Storage: <span class="ph">[size]</span></div>
+        <div><b>MACOS</b><br>OS: <span class="ph">[min]</span><br>Storage: <span class="ph">[size]</span></div>
+        <div><b>LINUX</b><br>AppImage, 64-bit<br>Storage: <span class="ph">[size]</span></div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <h2>Details</h2>
+      <div class="box"><b>SINGLE-PLAYER</b>Mouse or touch. Keyboard for the pause sheet and full screen.</div>
+      <div class="box"><b>ALSO IN A BROWSER</b>The same game plays on its itch page, phones included.</div>
+      <div class="box"><b>LANGUAGES</b>English</div>
+      <div class="box"><b>SETTINGS</b>Reduced motion, dark page, mute, volume.</div>
+    </aside>
+  </div>
+</div>
