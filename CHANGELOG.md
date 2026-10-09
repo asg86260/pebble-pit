@@ -142,6 +142,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A board no longer opens with its title bar under the notice card at the top of the window, when it fits below the card (`node tools/look.mjs recruit-board`).
 - On a phone, a flick or a long drag down from a sheet at full height closes it instead of stopping at the short height (src/selftest/sheet.js).
 - The ticked glyph over a station after a rung lands wears that rung's color, not the next rung's (test/landed-unread.test.mjs).
+- After a refresh mid-build, the building's shop tile no longer sprays chips over its picture every frame, and the builder rests between bursts again (test/build-reload.test.mjs).
 
 ## v0.5.2 — 2026-09-28
 

@@ -88,6 +88,11 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // the dance it is in the middle of, so a refresh mid-hop
                       // lands the hop (`moveAt` is a moment, below)
                       'jigAt', 'jigDir', 'jigRate', 'jigBeat', 'jigDown', 'move', 'moveFrom', 'moveBeats', 'foot', 'footAt',
+                      // and a builder's burst with it (`workJig`): `jigAt`
+                      // back skips the jig's start, so a count of blows left
+                      // behind is NaN for good -- the burst never ends, and
+                      // the board's tile throws chips every frame it "changes"
+                      'hits', 'hitsWanted', 'shiftTo',
                       // the mess it is on and where it planted its shovel, or
                       // a janitor against a fouling crew never wins
                       'muckAt', 'shovelAt',
@@ -127,7 +132,7 @@ const RETIRED_DEEP = new Set(['brawler', 'lancer', 'grenadier', 'scribe', 'warlo
 // reverse. The work's own clocks are in here too, or every refresh hands
 // every body a free swing.
 const MOMENTS = ['brkAt', 'idleSince', 'looAt',
-                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'sweepAt', 'propAt',
+                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'restUntil', 'sweepAt', 'propAt',
                  'dizzyUntil',
                  // a fighter's buffs, or a refresh strips a Haste or an Inspired
                  // the frame after it was given (deep/statuses.js)
