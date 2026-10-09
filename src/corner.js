@@ -10,7 +10,7 @@
 // you reach for while watching, not a setting you make once. A preference
 // (prefs.js, `crewView`), so it outlasts the run.
 
-import { FS_SIZE, FS_INSET, CREW_FADE } from './config.js';
+import { FS_SIZE, CREW_FADE } from './config.js';
 import { S } from './state.js';
 import { CREW_VIEWS, crewView, setPref } from './prefs.js';
 import { onTap } from './tap.js';
@@ -82,5 +82,5 @@ export function refreshCorner() {
   const any = [...row.children].some(b => !b.hidden);
   if (any === room) return;
   room = any;
-  document.documentElement.style.setProperty('--fs-room', any ? `${FS_SIZE + FS_INSET}px` : '0px');
+  document.documentElement.style.setProperty('--fs-room', any ? `calc(${FS_SIZE}px + var(--gap))` : '0px');
 }
