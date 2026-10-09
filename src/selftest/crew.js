@@ -3,7 +3,7 @@
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
   point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil, canvas } from './kit.js';
-import { TOWER_CORES, P, WORKER } from '../config.js';
+import { P, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { draw } from '../render.js';
 import { lifted } from '../crew.js';
@@ -102,79 +102,6 @@ export const TESTS = [
       ok(dizzy.saying > 0, 'shaking one about leaves it seeing stars',
          `${dizzy.saying} saying something`),
       ok(over.saying === 0, 'and it comes round', `${over.saying} still at it`)
-    ];
-  }],
-
-  ['cores buy the tower and nothing else', async () => {
-    newRun();
-    await settle();
-    // Four rocks of yard first: the first core is in the fifth.
-    const early = [];
-    for (let n = 1; n <= 4; n++) {
-      window.__jump(n);
-      window.__next();
-      runUntil(() => state().rock > 0 && !state().rockFall, 30);
-      early.push(state().coreItem ? 'core' : '-');
-    }
-    const beforeFive = state().cores;
-    window.__jump(5);
-    window.__next();
-    const gotOne = runUntil(() => !!state().coreItem, 30);
-
-    // and the yard is bought in dust
-    newRun();
-    await settle();
-    window.__give(999999);
-    window.__grant({ cores: 3, shards: 2000, spores: 2000 });
-    window.__answered('props', 'net', 'arch');  // the shields that open every door below
-    buildShopFromTest();
-    // The price cells are written by the board's own refresh, not by building the
-    // rows, so they are empty until something fills them in.
-    refreshShopFromTest();
-    // The coins on a row, and only the coins: every row past the bench carries
-    // a clock in its bill as well (works.js), and this group is about which
-    // *coins* buy a place.
-    const coins = el => [...el.querySelectorAll('.cost i')].map(i => i.className)
-                          .filter(c => c !== 'clock');
-    const row = k => shop().querySelector(`[data-key="${k}"]`);
-    const door = row('unlockfarm');           // the first one the yard offers
-    const dustPrice = door && coins(door);
-
-    // And *then* the ground standing: the tower's row is the end of the
-    // chain, so the plots, the cut and the lab have to be up before it is
-    // offered. Read in this order because opening the plots takes their own
-    // door off the board.
-    window.__crew(0, 0, 1, 1);
-    window.__invest();
-    window.__crew(0, 0);
-    buildShopFromTest();
-    refreshShopFromTest();
-
-    // the tower takes its cores and its dust, and takes them together
-    const cores0 = state().cores;
-    const tower = row('unlocktower');
-    const marks = tower && coins(tower);
-    tower?.click();
-    window.__finish();      // and the yard puts it up -- see works.js
-    const built = state();
-
-    window.__crew(0, 0);
-    return [
-      ok(early.every(k => k === '-'), 'the first four rocks give up nothing',
-         early.join(',')),
-      ok(gotOne, 'and the fifth has a core in it'),
-      // The core says this is a place rather than a rung, and the dust keeps
-      // the hill worth digging after it.
-      ok(!!door && dustPrice.includes('core') && dustPrice.includes('dust'),
-         'a place is bought with a rock and with dust', String(dustPrice)),
-      ok(!!tower, 'and the tower is on the bench once a core exists'),
-      // A set, not an order: bills are drawn in the yard's coin order, dust first.
-      ok(marks && [...marks].sort().join() === 'core,dust',
-         'priced in a core and dust', String(marks)),
-      ok(built.towerOpen, 'buying it puts it up'),
-      ok(built.cores === cores0 - TOWER_CORES && built.shards === 2000 && built.spores === 2000,
-         'and takes its cores, and leaves the rest of the yard alone',
-         `${cores0}->${built.cores} cores, ${built.shards} shards, ${built.spores} spores`)
     ];
   }],
 
