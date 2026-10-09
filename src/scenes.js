@@ -30,6 +30,7 @@ import { lookAt } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
 import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
+import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 
@@ -51,6 +52,15 @@ const RICH_DUST = 90000;
 const rich = () => {
   window.__reset(); window.__crew(3, 3, 5, 7); window.__machineGates();
   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: RICH_DUST });
+};
+
+// The quarry bought with nothing else open past the farm, eight seconds into
+// going up: one builder at it, and its tile on the bench.
+const quarryGoingUp = () => {
+  window.__reset(); window.__crew(4); S.quarryOpen = false; S.farmOpen = true;
+  window.__answered('props', 'net');
+  window.__grant({ dust: 99999, shards: 999, spores: 9999, sparks: 999 });
+  window.__buy('unlockquarry'); window.__fast(8);
 };
 
 // Holding the camera on a spot against whatever pans it (a meteor called down
@@ -1118,6 +1128,15 @@ export const SCENES = {
                  window.__buy('quarrybench'); window.__fast(6); window.__look(st().quarryX - 480); } },
   buildboard: { about: 'the bench', say: 'a row read while its work is on the go',
     run: () => { rich(); window.__buy('jaw'); window.__fast(30); window.__board('quarry'); } },
+  // A place going up, read on the bench's own tile: the glyph rising with the
+  // hand beside it throwing its chips.
+  buildtile: { about: 'the bench', say: 'the quarry tile on the bench while the quarry goes up',
+    run: () => { quarryGoingUp(); window.__board('bench'); } },
+  // The crew written down and read back mid-build, the way a refresh does it:
+  // the builder comes back to its hammer, and the tile's hand with it.
+  buildtilereload: { about: 'the bench', say: 'the quarry tile after a refresh mid-build',
+    run: () => { quarryGoingUp(); const o = {}; CREW_SAVE.write(o); CREW_SAVE.read(o);
+                 window.__fast(1); window.__board('bench'); } },
   // The whole crew is stood down after the work has some cells up: a station
   // with no gang is helped by a lent builder, so standing down the quarriers
   // alone stalls it only for the length of a walk.
