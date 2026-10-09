@@ -17360,3 +17360,61 @@ Voted B of docs/mocks/help-call-2026-10-08.html: one bang, two, three, a
 breath, and again, a step each `HELP_BANG_MS`, over the one in the ground
 for the whole of `meet`, in place of the hearts.
 
+## The barriers are the gates; cores go (design, not built)
+
+The owner, 2026-10-09: "im not sure we even need cores anymore? we could
+just have the barriers be the gates instead of cores".
+
+**What a core is today.** From rock 5 every rock mined out drops one core,
+which you pick up by hand and toss in the pit (`core.js`, the core item,
+`heldCore`). Cores are spent in exactly five places: the farm (1), the
+quarry (1), the apothecary (1), the tower (2) and the dome (25). Seeing the
+first core (`seenCore`) is also what lets the farm, the quarry and the tower
+appear at all. So in practice a core is a clock -- one a rock -- and the
+dome's 25 are the first half's longest wait.
+
+**The bargain.** The shields already are the story's spine: props, net,
+arch, dome, each failing under a rock. Let each failure be what opens the
+next place, so the yard grows because the story moved, not because a coin
+piled up. The player gives up the core's small hand job (picking it up,
+tossing it in) and the dome's wait on rocks; they gain a yard whose every
+new place is explained by the rock that just broke through.
+
+### The rules
+
+- **Each barrier that fails opens the next place** (`after` in
+  src/stations.js), replacing `seenCore` and the core in its bill:
+
+  | fails | opens | in its bill today |
+  |---|---|---|
+  | the props | the farm | 1 core, 600 dust |
+  | the net | the quarry | 1 core, dust |
+  | the arch | the tower | 2 cores, dust |
+
+  The chain still holds: the net needs the farm standing, the arch the
+  quarry, the dome the tower. The apothecary keeps its own gate (the first
+  crop) and loses its core.
+- **The dome is bought in the other four coins**: dust, ore, crops and
+  sparks, as it is now less its 25 cores.
+- **Cores go entirely**: no core in the rock, no core item, the counter's
+  core line, the rift's held cores, the board's core purse and the dev
+  button. Rocks no longer pause to give one up.
+- **Old saves**: a migration drops `cores` and `seenCore`; a place already
+  open stays open, and a place whose barrier has already failed is offered.
+
+### What it must not break
+
+- **Nothing teleports**: a place still appears as an offer and is built by
+  hand as now; only its gate and its bill change.
+- **The opening**: the first rock's beat waited on its core being out of the
+  way (`meet`); with no core it waits only on the rock.
+
+### The owner's calls
+
+1. **The table above**: props open the farm, the net the quarry, the arch
+   the tower? Or another order.
+2. **The dome's bill without cores**: as it stands less the cores (proposed),
+   or more of another coin to keep its wait.
+3. **The achievement "something was inside it"** (bank a core): retired, or
+   given to the first barrier failing.
+

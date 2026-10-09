@@ -1,5 +1,10 @@
 # Still to do
 
+## The barriers are the gates; cores go -- DESIGNED, AWAITING SIGN-OFF (2026-10-09)
+
+"The barriers are the gates; cores go" in DESIGN.md. Blocked on the owner's
+three calls at the end of the section. No game code yet.
+
 ## The serpent hardens against its strongest foes -- BUILT (2026-10-07)
 
 "The serpent hardens against its strongest foes" in DESIGN.md. Open:
