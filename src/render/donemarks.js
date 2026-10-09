@@ -7,7 +7,7 @@ import { glyphFor } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
 import { doneAt, doneBillsAt, rowFor } from '../works.js';
-import { buildingGlyph, stackSlot } from './bars.js';
+import { buildingGlyph, stackSlot, drift } from './bars.js';
 
 // The key a fighter's station's build goes by (deep/party.js, `stationRow`).
 const STATION_BUILD = 'station-';
@@ -111,9 +111,12 @@ export function drawDoneMarks() {
       const bare = key.startsWith(STATION_BUILD);
       // In the stroke of the rung that landed, off what it was paid: the row's
       // own bill is the next rung's by now.
-      if (!bare) buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u, bills[i] ? { bill: bills[i] } : null) : null);
+      // Swaying on as it did while it was building: the same drift, by the
+      // same name, so finishing does not stop it still.
+      const [dx, dy] = drift(site + key);
+      if (!bare) buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u, bills[i] ? { bill: bills[i] } : null) : null, dx, dy);
       ctx.save();
-      ctx.translate(at.x - P / 2, at.cy - P / 2);   // five wide: half a cell puts it true
+      ctx.translate(at.x - P / 2 + dx, at.cy - P / 2 + dy);   // five wide: half a cell puts it true
       if (bare) { ctx.translate(-P / 2, -P / 2); ctx.scale(2, 2); }
       strokeCells(TICK, '#fff');
       fillCells(TICK, '#000');

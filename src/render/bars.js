@@ -260,7 +260,7 @@ export function drawWorkBars() {
 // incommensurate multiple of it, so the path never repeats. The rate, the
 // direction and the phase are hashed off the site and the row, so a stack
 // never breathes in unison.
-function drift(name) {
+export function drift(name) {
   let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const rate = 1 + ((h % 1000) / 1000 * 2 - 1) * SHELF_FLOAT_SPREAD;
   const dir = (h >> 10) & 1 ? -1 : 1;
