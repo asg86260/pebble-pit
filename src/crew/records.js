@@ -132,7 +132,7 @@ const RETIRED_DEEP = new Set(['brawler', 'lancer', 'grenadier', 'scribe', 'warlo
 // reverse. The work's own clocks are in here too, or every refresh hands
 // every body a free swing.
 const MOMENTS = ['brkAt', 'idleSince', 'looAt',
-                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'restUntil', 'sweepAt', 'propAt',
+                 'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'sweepAt', 'propAt',
                  'dizzyUntil',
                  // a fighter's buffs, or a refresh strips a Haste or an Inspired
                  // the frame after it was given (deep/statuses.js)
