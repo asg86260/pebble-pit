@@ -122,6 +122,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- "It never rains but it pours" is earned when a shower of muck has finished falling, not when the clouds start to gather, and never for clean rain (test/notices.test.mjs).
 - Starting a new game no longer leaves the old crew's dust on the new ground (test/new-game.test.mjs).
 - A Hasted or Inspired fighter keeps its buff through a reload (test/classes.test.mjs).
 **New this release**

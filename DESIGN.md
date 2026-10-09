@@ -9581,7 +9581,7 @@ six are event hooks and only the rain is a predicate.
 | come here you | pick a worker up | `lift` |
 | turn out your pockets | shake a full load out of a worker | the body came up carrying `load(w)` and `shedLoad` empties it |
 | hats off | shake the hat off a worker | `flingHat` |
-| it never rains but it pours | stand through a muck rain | `rains >= 1` |
+| it never rains but it pours | stand through a muck rain | a shower that rained muck has ended (`tally.muckRains`) |
 
 The whole-lot notice was asked for as *five birds from one group*, and a lot
 is two to four birds (`BIRD_FLOCK`), so the number cannot happen. The whole

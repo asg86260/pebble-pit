@@ -307,13 +307,25 @@ group('a load that was not full when it came up is not the feat', async () => {
   ];
 });
 
-group('the first muck rain is noticed', async () => {
+group('a muck rain is noticed when it has rained down, not when the clouds gather', async () => {
   const before = hasNotice('muckrain');
   const rained = await makeItRain();
+  const whileFalling = hasNotice('muckrain');
+  const over = runUntil(() => !state().smog.raining, 300);
   await run(1);
   return [
     ok(!before, 'a dry yard has not stood through one'),
-    ok(rained, 'the sky broke'),
-    ok(hasNotice('muckrain'), 'and the rain is on the record')
+    ok(rained && !whileFalling, 'the sky broke, and nothing is on the record while it falls'),
+    ok(over && hasNotice('muckrain'), 'stood through to its end, the rain is on the record')
   ];
+});
+
+group('a shower of clean water is not a muck rain', async () => {
+  window.__air({ haze: 0 });
+  window.__front(1);
+  const rained = runUntil(() => state().smog.raining, 120);
+  const over = rained && runUntil(() => !state().smog.raining, 300);
+  await run(1);
+  return [ok(rained && over && !hasNotice('muckrain'), 'a clean sky rains water, and nothing is on the record',
+             `${rained} ${over} ${hasNotice('muckrain')}`)];
 });
