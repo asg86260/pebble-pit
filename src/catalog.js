@@ -71,5 +71,6 @@ export const CATALOG = [
   { key: 'lifted', name: 'come here you', note: 'pick a worker up' },
   { key: 'shookload', name: 'turn out your pockets', note: 'shake a full load out of a worker' },
   { key: 'hatoff', name: 'hats off', note: 'shake the hat off a worker' },
+  { key: 'dizzy', name: 'shaken baby syndrome', note: 'shake a worker dizzy' },   // the owner's
   { key: 'muckrain', name: 'it never rains but it pours', note: 'stand through a muck rain' }
 ];

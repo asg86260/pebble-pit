@@ -40,13 +40,13 @@ group('the catalog is what the design approved', async () => {
   const hooks = NOTICES.filter(n => !n.when).map(n => n.key);
 
   return [
-    ok(NOTICES.length === 49, 'forty-nine notices, as approved', String(NOTICES.length)),
+    ok(NOTICES.length === 50, 'fifty notices, as approved', String(NOTICES.length)),
     ok(!dupes.length, 'every key is its own', dupes.map(n => n.key).join(',')),
     ok(!noName.length, 'every notice has a name', noName.map(n => n.key).join(',')),
     // The note says what you did. A blank one is the one failure mode that
     // reads as finished on the board and tells the player nothing.
     ok(!noNote.length, 'and a note saying what you did', noNote.map(n => n.key).join(',')),
-    ok(hooks.length === 12, 'twelve are earned by an event rather than a fact', hooks.join(','))
+    ok(hooks.length === 13, 'thirteen are earned by an event rather than a fact', hooks.join(','))
   ];
 });
 
@@ -304,6 +304,21 @@ group('a load that was not full when it came up is not the feat', async () => {
   return [
     ok(w.carry === 0, 'it was shaken empty', String(w.carry)),
     ok(!hasNotice('shookload'), 'but a part load is not a full one')
+  ];
+});
+
+group('a worker shaken and let go comes down dizzy, and that is a notice', async () => {
+  window.__crew(2, 0);
+  await run(2);
+  const w = S.workers[0];
+  const before = hasNotice('dizzy');
+  lift(w);
+  for (let i = 0; i < SHAKE_TURNS * 4; i++) shakeHeld(w, i % 2 ? 6 : -6);
+  drop(w);
+  runUntil(() => !w.falling, 10);
+  return [
+    ok(!before, 'nobody is dizzy in a fresh yard'),
+    ok((w.dizzyUntil || 0) > 0 && hasNotice('dizzy'), 'shaken dizzy, it is on the record', `${w.dizzyUntil} ${hasNotice('dizzy')}`)
   ];
 });
 

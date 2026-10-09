@@ -94,6 +94,7 @@ export function drop(w) {
   // shaking is one dizzy spell however long you keep hold of it.
   if (w.shook >= SHAKE_TURNS) {
     w.dizzyFor = DIZZY_MS;
+    earn('dizzy');
     // Whatever is still in its hands (most of it was shaken out already) goes
     // on the ground where it lands, never into the pit: it was never banked.
     w.spill = w.carry || 0;

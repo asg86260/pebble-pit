@@ -122,19 +122,19 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
-- "It never rains but it pours" is earned when a shower of muck has finished falling, not when the clouds start to gather, and never for clean rain (test/notices.test.mjs).
-- Starting a new game no longer leaves the old crew's dust on the new ground (test/new-game.test.mjs).
-- A Hasted or Inspired fighter keeps its buff through a reload (test/classes.test.mjs).
 **New this release**
+- An achievement for shaking a worker dizzy.
 - A card at the top left says the story's next step, from digging out the rock to saving the sqwife.
 - The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.
 - The pictures over a station of what it is building and what is in line drift gently, the way a lifted shop tile does.
 
+- "It never rains but it pours" is earned when a shower of muck has finished falling, not when the clouds start to gather, and never for clean rain (test/notices.test.mjs).
+- Starting a new game no longer leaves the old crew's dust on the new ground (test/new-game.test.mjs).
+- A Hasted or Inspired fighter keeps its buff through a reload (test/classes.test.mjs).
 - Houses bought several at once each show their own progress bar, instead of an empty one covering the house being built (test/queue-repeats.test.mjs).
 - A queued card's refund and another keep a solid edge instead of the card's dashed one (`node tools/look.mjs queue`).
 - A board no longer opens with its title bar under the notice card at the top of the window, when it fits below the card (`node tools/look.mjs recruit-board`).
 - On a phone, a flick or a long drag down from a sheet at full height closes it instead of stopping at the short height (src/selftest/sheet.js).
-
 - The ticked glyph over a station after a rung lands wears that rung's color, not the next rung's (test/landed-unread.test.mjs).
 
 ## v0.5.2 — 2026-09-28
