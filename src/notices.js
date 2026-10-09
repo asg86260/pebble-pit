@@ -58,7 +58,6 @@ const WHEN = {
   firstgrain: () => S.banked > 0,
   firstrock: () => S.boulderNo >= 2,
   gotout: () => S.rescued,
-  firstcore: () => S.seenCore,
   firsthire: () => S.crew >= 2,
   firstshard: () => S.seenShard,
   firstspore: () => S.seenSpore,

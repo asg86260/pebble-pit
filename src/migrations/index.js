@@ -35,8 +35,9 @@ import crusher from './2026-09-23-crusher.js';
 import cloud from './2026-09-28-cloud.js';
 import wholeHeal from './2026-10-04-whole-heal.js';
 import fifthPhase from './2026-10-04-fifth-phase.js';
+import noCores from './2026-10-09-no-cores.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

@@ -19,7 +19,7 @@ import { drawBuildSites, drawGrit, drawSilt } from './render/buildsites.js';
 import { drawYardArrow, drawDeepArrow } from './render/shaftway.js';
 import { drawPortal, drawDeepPortal } from './render/portal.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
-import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
+import { drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
@@ -77,7 +77,7 @@ export { drawShack } from './render/shack.js';
 export { drawFilter } from './render/filter.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 export { drawSky } from './render/sky.js';
-export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } from './render/cores.js';
+export { drawCoreAt, drawPaid, drawAbyss, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller } from './render/machines.js';
 export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';
@@ -112,7 +112,6 @@ const LAYERS = [
   { name: 'air', draw: drawAir },
 
   { name: 'world', draw: enterWorld },
-  { name: 'core behind', draw: drawCoreBehind },
   { name: 'ground line', draw: drawGroundLine },
   { name: 'ground texture', draw: drawGroundTexture },
   // The offer flags go down before every building: each pole runs to the
@@ -174,7 +173,6 @@ const LAYERS = [
   { name: 'shaft arrow', draw: drawYardArrow },  // and over it, the way down
 
   { name: 'paid', draw: drawPaid },
-  { name: 'core', draw: drawCore },
   { name: 'pile marks', draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
   { name: 'auras', draw: drawAuras },            // the hold-a-body ring; offers fly flags, painted far earlier
   { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way

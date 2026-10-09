@@ -204,59 +204,6 @@ group('a refresh mid-dig does not empty the seam', async () => {
   ];
 });
 
-// Whether the rock still owes you its core is a fact the save carries
-// (`coreBuried`), not one worked out again on the way back in: a core in a
-// hauler's hands is neither lying on the ground nor on the cursor, and a
-// guess that only knew those two places came back saying the rock still owed
-// one, and `stepCore` dropped a second on the next frame.
-//
-// The save is built rather than played into, and it is worth saying why. The
-// next rock is put up the moment the core is *clear*, and a core in somebody's
-// hands counts as clear -- so in a running yard the rock is almost always back
-// before a hauler has hold of one. Forty rock deaths on the player's own save
-// never once produced this moment. What it is really about is what a save means:
-// so a real save is taken at the moment the rock dies, and the one thing that
-// cannot be played into -- the core being in a pair of hands rather than on the
-// ground -- is moved across in the save itself.
-group('a refresh does not hand you a second core', async () => {
-  const S = yard.S;
-  const KEY = 'boulder-clicker/v4';
-
-  window.__seed(20250830);
-  window.__crew(2, 6);
-  window.__jump(5);                          // the first rock with a core in it
-  run(2);
-  window.__next();                           // the last of it goes, the core drops
-  // A frame at a time: the next rock is in the air within a second of the
-  // last (ROCK_GAP_MS), and a whole-second stride lands past it with the rock
-  // alive again -- which is not the moment this save is about.
-  for (let i = 0; i < 20 * 60 && !(S.coreItem && S.coreItem.rest); i++) run(1 / 60);
-  window.__reload();                         // and that moment is written down
-
-  const sv = JSON.parse(localStorage.getItem(KEY));
-  sv.core = null;                            // the core is not on the ground...
-  sv.coreLoose = false;
-  sv.who.find(w => w.type === 'hauler').hasCore = true;   // ...it is being carried
-  localStorage.setItem(KEY, JSON.stringify(sv));
-
-  S.coreItem = null;                         // what a freshly loaded page has
-  S.heldCore = false;
-  yard.restore();
-
-  const carried = S.workers.filter(w => w.hasCore).length;
-  const buried = S.coreBuried, alive = boulderAlive();
-  const was = S.cores;
-  run(12);
-  const cores = S.cores - was + S.workers.filter(w => w.hasCore).length + (S.coreItem ? 1 : 0);
-
-  return [
-    ok(carried === 1 && !alive, 'the save comes back with the rock dead and the core in hand',
-       `${carried} carrying, rock ${alive ? 'alive' : 'dead'}`),
-    ok(!buried, 'and does not say the rock still owes a core', `coreBuried ${buried}`),
-    ok(cores === 1, 'so it gives one core out of one rock', `${cores} cores`)
-  ];
-});
-
 // A tonic is a thing you paid crop and a reagent for, and it runs on a clock. A
 // refresh used to drink it: the dose lived on the body and the body's record did
 // not carry it, so everybody came back sober however much of the buff was left.

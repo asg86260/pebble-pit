@@ -22,7 +22,6 @@ export const CATALOG = [
   { key: 'firstgrain', name: "makin' money", note: 'throw a pebble into the pit' },
   { key: 'firstrock', name: 'better keep digging', note: 'clear the first rock' },
   { key: 'gotout', name: 'you saved your sqwife', note: 'no more rocks, you did it.' },
-  { key: 'firstcore', name: 'something was inside it', note: 'bank a core out of a broken rock' },
   { key: 'firsthire', name: "you've constructed additional pylons", note: 'build another house' },
   { key: 'firstshard', name: 'the first ore', note: 'bring ore up out of the quarry' },
   { key: 'firstspore', name: 'cultivation', note: 'grow your first crop' },

@@ -1,9 +1,11 @@
 # Still to do
 
-## The barriers are the gates; cores go -- DESIGNED, AWAITING SIGN-OFF (2026-10-09)
+## The barriers are the gates; cores go -- BUILT (2026-10-09)
 
-"The barriers are the gates; cores go" in DESIGN.md. Blocked on the owner's
-three calls at the end of the section. No game code yet.
+"The barriers are the gates; cores go" in DESIGN.md. Open: the core's own
+code is dormant (nothing makes a core) -- the hand's pickup, a body carrying
+one, `drawCoreGlow`, the rift's held cores, the counter's and boards' core
+lines, `S.cores`/`seenCore` -- and wants a grep-survey-then-delete.
 
 ## The serpent hardens against its strongest foes -- BUILT (2026-10-07)
 

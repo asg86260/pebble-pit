@@ -48,7 +48,7 @@ export const ARCH_CATCH_SHAKE = 6;  // world pixels the catch throws the view
 // else on every board put together. The last shield is the whole works'
 // answer to the sky, and it costs the whole works. `test/shield.test.mjs`
 // holds this against every row on every board, climbed.
-export const DOME_BILL = [['core', 25], ['dust', 250000], ['shard', 5000],
+export const DOME_BILL = [['dust', 250000], ['shard', 5000],
                           ['spore', 10000], ['spark', 5000]];
 export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run through
 // Wizard-seconds of pouring, the same shape as a star's summoning: one body in

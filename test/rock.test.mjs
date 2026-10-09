@@ -387,34 +387,6 @@ group('the first rock is worth a moment, and only the first', async () => {
   ];
 });
 
-// A core sits at the foot of the rock, not partway up it. Pinned to a fraction
-// of the rock's full height it ended up hanging in the air over a worn one --
-// the gang take the rock down from the top, so the last of it is a low mound.
-group('the core sits at the foot of the rock', async () => {
-    run(0.4);
-  window.__crew(0, 0);
-  window.__clearFloor();
-  window.__jump(5);                            // the first rock with a core in it
-  run(1);
-  const s = state();
-  const foot = s.rockFoot;
-  const home = s.coreHome;
-
-  // and it comes out of the last of the rock rather than out of the air
-  window.__next();
-  runUntil(() => state().coreItem && state().coreItem.rest, 60);
-  const loose = state();
-  window.__clearFloor();
-  return [
-    ok(home && Math.abs(home.y + 18 - foot) <= 2,
-       'it stands on the foot of the rock itself',
-       `core bottom ${home && home.y + 18}, rock foot ${foot}`),
-    ok(home && Math.abs(home.x + 9 - s.rockX) <= 3,
-       'in the middle of it', `${home && home.x + 9} vs ${s.rockX}`),
-    ok(!!loose.coreItem, 'and it drops out when the last of the rock goes')
-  ];
-});
-
 // The game used to start with a rock already sitting there and a cursor to hit
 // it with, and nothing said why. It starts before the rock now: two squares on
 // the bare ground, and then one of them is under it. Everything after that is

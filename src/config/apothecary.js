@@ -10,7 +10,6 @@ import { P } from './yard.js';
 // is: a core, because a place costs a core, and less dust than the lab because
 // it stands earlier.
 export const APOTHECARY_H = P * 15;    // room for the fat belly, the bail handle and steam
-export const APOTHECARY_CORES = 1;     // a place costs a core
 export const APOTHECARY_DUST = 900;    // and dust, a shade above the plots it follows
 
 // What one batch of each tonic costs. Crop on every recipe, plus the coin the

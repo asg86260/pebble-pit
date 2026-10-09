@@ -77,9 +77,9 @@ group('every door row and every shield row is gated by offered and nothing else'
 // about, so it is hooks and facts on S; the reading is the row on the board.
 const MEET = {
   casino: () => { S().boulderNo = 2; },
-  quarry: () => { window.__grant({ cores: 3 }); },
+  quarry: () => { window.__answered('props', 'net'); },     // the net failed opens it
   apothecary: () => { window.__grant({ spores: 3 }); },
-  tower: () => { window.__grant({ cores: 3 }); },
+  tower: () => { window.__answered('props', 'net', 'arch'); },   // the arch failed opens it
   net: () => {},
   arch: () => {},
   dome: () => { S().wizardHats = 1; }

@@ -3,7 +3,7 @@
 // rift and the abyss the drowned pit holds.
 
 import { now } from '../clock.js';
-import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
+import { CORE_SIZE, P, MAGIC_TONES,
          ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_SWELL_MS2, ABYSS_SWELL_MS3,
          ABYSS_SWELL_K1, ABYSS_SWELL_K2, ABYSS_SWELL_K3,
          ABYSS_SWELL_W1, ABYSS_SWELL_W2, ABYSS_SWELL_W3,
@@ -122,24 +122,6 @@ export function drawRockSand() {
       drawMark(s[k], left + c * P + P / 2, top + (s.length - 1 - k) * P + P / 2);
   }
   ctx.fillStyle = '#000';
-}
-
-// Buried in the rock: drawn first so the boulder covers it until you dig it
-// out. Only once the boulder is *there*: a rock still falling covers nothing.
-export function drawCoreBehind() {
-  if (S.heldCore || S.coreItem || !boulderAlive() || S.rockFall > 0) return;
-  // Cores start at CORE_FROM. `coreBuried` is set on every rock and means
-  // "this one still has something to give up", so drawing off it shows a core
-  // in rocks that will never yield one.
-  if (S.boulderNo < CORE_FROM) return;
-  const h = coreHome();
-  drawCoreAt(h.x, h.y, true);          // still in the rock: nothing spills onto the ground
-}
-
-// out in the world: on the cursor or lying on the ground
-export function drawCore() {
-  if (S.heldCore) drawCoreAt(S.mouse.x - CORE_SIZE / 2, S.mouse.y - CORE_SIZE / 2);
-  else if (S.coreItem) drawCoreAt(S.coreItem.x, S.coreItem.y);
 }
 
 // The grains in the air on the way out of the pile, drawn as whatever they are.

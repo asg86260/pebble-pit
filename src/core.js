@@ -1,6 +1,6 @@
 // The core buried in each rock: how it comes loose, and how it is banked.
 
-import { P, WORKER, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS, CORE_FROM, ROCK_GAP_MS } from './config.js';
+import { P, WORKER, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS, ROCK_GAP_MS } from './config.js';
 import { S, pit } from './state.js';
 import { noteRockCleared } from './notices.js';
 import { addGrain } from './grid.js';
@@ -103,8 +103,7 @@ export function stepCore() {
   // and the next rock came down the same frame on a crew that had not been
   // told to move.
   if (S.coreBuried && !boulderAlive()) {
-    if (S.boulderNo >= CORE_FROM) dropCore();
-    else S.coreBuried = false;
+    S.coreBuried = false;
     // The dance is for the first rock only (the rescue has its own). No
     // dancers, no dance: five seconds of standing about is most of the early
     // game.

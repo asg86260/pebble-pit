@@ -146,14 +146,15 @@ export const STATIONS = [
     open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
     reach: { right: 1 },
     after: ['farm'],
-    needs: () => S.seenCore },
+    // the net failing opens it (DESIGN.md, "The barriers are the gates")
+    needs: () => shieldDone('net') },
   { key: 'farm', name: 'the farm', glyph: 'furrow',
     empty: 'the ground is all broken', post: { key: 'farmjob', job: JOB.FARM, kit: true },
     open: () => S.farmOpen, stand: () => farmShed(), board: 'farmBoardOpen',
     after: [],
     // Sticky: `nearly` reads the dust in the hole, and as a plain `show` the
-    // door came and went every time you spent.
-    needs: () => S.seenCore && nearly(FARM_DUST), sticky: true },
+    // door came and went every time you spent. The props failing opens it.
+    needs: () => shieldDone('props') && nearly(FARM_DUST), sticky: true },
   // The hut, not the plot: a pot answers to its own picker (potpick.js), and
   // a pointer near a cauldron must not throw the shop menu over it.
   { key: 'apothecary', name: 'the apothecary', glyph: 'pot',
@@ -165,7 +166,8 @@ export const STATIONS = [
     empty: 'nothing stirs in here yet', post: { key: 'skyjob', job: JOB.WIZARD, kit: true, show: () => S.meteorOpen },
     open: () => S.towerOpen, stand: () => tower, board: 'towerBoardOpen',
     after: ['quarry'],
-    needs: () => S.seenCore },
+    // the arch failing opens it
+    needs: () => shieldDone('arch') },
   // The hut stands on ground the rock's own reach covers, so it is asked
   // before the rock in input.js's cascade.
   { key: 'shack', name: 'the shack', glyph: 'hut',

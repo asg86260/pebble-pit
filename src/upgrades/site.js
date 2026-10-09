@@ -8,12 +8,10 @@ import { station, open, offered } from '../stations.js';
 // they load, and a helper declared in the file loading them would still be in
 // its dead zone.
 //
-// A place costs a core *and* dust: the core says this is a place rather than
-// a rung, and the dust keeps the rock worth digging after it. `key` is the
-// station's row in stations.js; the gate is that row's `after` and `needs`,
-// read through `offered`, and the row here says only what it costs and what
-// buying does.
-export const site = ({ key, name, note, blurb, cores, dust, more, at, job, then }) => ({
+// A place costs dust; what opens it is the barrier before it failing (the
+// station's row in stations.js: its `after` and `needs`, read through
+// `offered`). The row here says only what it costs and what buying does.
+export const site = ({ key, name, note, blurb, dust, more, at, job, then }) => ({
   key: 'unlock' + key, name,
   // What the place is for, where a ladder row prints its gain: one line of a
   // slot, since the line does not wrap. The note is the longer say, on the tip.
@@ -22,8 +20,8 @@ export const site = ({ key, name, note, blurb, cores, dust, more, at, job, then 
   // A building like the rest: the yard's spare hands put it up, and the view
   // does not glide to it until it is standing.
   kind: 'building', site: 'yard', at,
-  // `more` is any further coin a door asks alongside the core and the dust.
-  bill: () => [['core', cores], ['dust', dust], ...(more || [])],
+  // `more` is any further coin a door asks alongside the dust.
+  bill: () => [['dust', dust], ...(more || [])],
   // `job` is the trade worked there; the door opens with one spare body sent
   // over (`staffDoor`). `then` is anything else the door does on opening.
   buy: () => { S[key + 'Open'] = true; lookAt(at()); if (job) staffDoor(job); if (then) then(); },

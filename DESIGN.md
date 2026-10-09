@@ -17360,7 +17360,7 @@ Voted B of docs/mocks/help-call-2026-10-08.html: one bang, two, three, a
 breath, and again, a step each `HELP_BANG_MS`, over the one in the ground
 for the whole of `meet`, in place of the hearts.
 
-## The barriers are the gates; cores go (design, not built)
+## The barriers are the gates; cores go (built 2026-10-09)
 
 The owner, 2026-10-09: "im not sure we even need cores anymore? we could
 just have the barriers be the gates instead of cores".
@@ -17409,12 +17409,14 @@ new place is explained by the rock that just broke through.
 - **The opening**: the first rock's beat waited on its core being out of the
   way (`meet`); with no core it waits only on the rock.
 
-### The owner's calls
+### As built
 
-1. **The table above**: props open the farm, the net the quarry, the arch
-   the tower? Or another order.
-2. **The dome's bill without cores**: as it stands less the cores (proposed),
-   or more of another coin to keep its wait.
-3. **The achievement "something was inside it"** (bank a core): retired, or
-   given to the first barrier failing.
+The owner's calls: the table as written, the dome as it stood less its
+cores, the achievement "something was inside it" retired. Gates in
+src/stations.js (`shieldDone`), bills in upgrades/site.js and rows-tower.js,
+`DOME_BILL`; no rock gives up a core (core.js) and none is drawn in one;
+migration `2026-10-09-no-cores` (`SAVE_V` 10). Checks: test/door-chain,
+test/shield, test/gates, test/wave3-economy. Open: the core's own code -- the
+item in the hand, a body carrying one, the rift's held cores, the counter's
+line -- is dormant (nothing makes a core) and wants deleting.
 

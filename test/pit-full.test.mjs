@@ -104,34 +104,6 @@ group('a find is banked through the rift when the hole is full', async () => {
   ];
 });
 
-// Same rule, and the case where getting it wrong costs the most: a core is one
-// a rock, for ever, and one the hole swallowed would be a rock done twice.
-group('a core goes in through the rift like anything else', async () => {
-    run(0.4);
-  window.__crew(2, 2);
-  window.__give(200000);
-  runUntil(() => state().riftOpen, 60);
-  // onto a rock that actually has a core in it: the first four have none
-  window.__jump(5);
-  window.__next();                             // the last of the rock goes
-  runUntil(() => state().coreItem?.rest, 40);
-  const banked = runUntil(() => state().cores === 1, 60);
-  const after = state();
-  window.__crew(0, 0);
-  window.__clearFloor();
-  return [
-    // A core used to sit on the ground until you dug room for it -- the one
-    // thing the hole would not take and the most expensive thing to be wrong
-    // about. A hole that has collapsed takes it, because it takes everything.
-    ok(banked && after.cores === 1, 'a core is banked with the hole full',
-       `${after.cores} cores`),
-    ok(!after.coreItem, 'and is not left lying about',
-       JSON.stringify(after.coreItem)),
-    ok(after.riftHeld.cores <= after.cores, 'the rift accounts for it if it took it',
-       `${after.riftHeld.cores} of ${after.cores} through`)
-  ];
-});
-
 // The hole never turns a hauler away. It used to: the crew booked their trips
 // against the room the COUNT said was left, and the count credits a few cells
 // at the heap's shoulders the pile's own search never fills. So a hole a few
