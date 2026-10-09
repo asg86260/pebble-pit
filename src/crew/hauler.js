@@ -388,9 +388,9 @@ export function haulerWork(w, c) {
   } else if (w.goal === 'dump') {
     // Home along the ground, and everything on the way comes too, column by
     // column; full hands walk straight to the lip. Nothing here turns it
-    // round: what is behind it is the next trip's. The column is found before the hole is asked, because a booking made
-    // here is held to the lip and a body walking to tip should not hold room
-    // it will not use.
+    // round: what is behind it is the next trip's. The column is found
+    // before the hole is asked, because a booking made here is held to the
+    // lip and a body walking to tip should not hold room it will not use.
     const tip = tipSpot(w, now);
     const target = tip.x;
     let stride = Math.min(drive(w) * frames(), Math.abs(target - w.x));
