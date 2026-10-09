@@ -30,7 +30,10 @@ export const TESTS = [
       const s = state();
       const [wx, wy] = s.workerPos[0].split(':')[1].split(',').map(Number);
       const [sx, sy] = onScreen(wx, wy);
+      // The right button held looks at the crew; the left going down with it
+      // (a chord: a move, not a press) takes the body under the hand.
       point('pointerdown', sx, sy, 2, 2);
+      point('pointermove', sx, sy, 3, 0);
       return { wx, sx, sy, who: state().lifted };
     };
     // Where it came to rest, not where it walked to afterward: a body picks
@@ -52,9 +55,9 @@ export const TESTS = [
     // stretch a real sleep into a stale throw or a lapsed shaking.
     const a = grab();
     run(1 / 60);
-    for (let i = 1; i <= 5; i++) { point('pointermove', a.sx, a.sy - i * 40, 2); run(1 / 60); }
+    for (let i = 1; i <= 5; i++) { point('pointermove', a.sx, a.sy - i * 40, 3); run(1 / 60); }
     run(11 / 60);                                // the climb is not the throw
-    for (let i = 1; i <= 6; i++) { run(1 / 60); point('pointermove', a.sx + i * 20, a.sy - 200, 2); }
+    for (let i = 1; i <= 6; i++) { run(1 / 60); point('pointermove', a.sx + i * 20, a.sy - 200, 3); }
     point('pointerup', a.sx + 140, a.sy - 200, 0);
     const thrown = posOf(a.who);
     const landedAt = landed(a.who);
@@ -64,7 +67,7 @@ export const TESTS = [
     run(3);
     const b = grab();
     run(1 / 60);
-    for (let i = 1; i <= 5; i++) { point('pointermove', b.sx, b.sy - i * 40, 2); run(1 / 60); }
+    for (let i = 1; i <= 5; i++) { point('pointermove', b.sx, b.sy - i * 40, 3); run(1 / 60); }
     run(11 / 60);                                // stood still before letting go
     point('pointerup', b.sx, b.sy - 200, 0);
     const still = posOf(b.who);
@@ -79,7 +82,7 @@ export const TESTS = [
     // direction, so SHAKE_TURNS + 3 clears the bar with margin. Written as a
     // number it silently stops being a shaking the day the threshold moves.
     const waggles = (await import('../config.js')).SHAKE_TURNS + 3;
-    for (let i = 0; i < waggles; i++) { point('pointermove', c.sx + (i % 2 ? 26 : -26), c.sy, 2); run(2 / 60); }
+    for (let i = 0; i < waggles; i++) { point('pointermove', c.sx + (i % 2 ? 26 : -26), c.sy, 3); run(2 / 60); }
     point('pointerup', c.sx, c.sy, 0);
     run(0.6);
     const dizzy = state();

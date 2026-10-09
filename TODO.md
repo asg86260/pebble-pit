@@ -1,5 +1,14 @@
 # Still to do
 
+## The toast over a tall settlement -- OPEN (2026-10-09)
+
+The browser group "a notice stands clear of a building that reaches into the
+sky" (src/selftest/touch.js) fails: the card is 400px wide in an 800px window
+and `seatToast` (toast.js) finds no room to either side of the house, so it
+stays over it. Not yet known whether the spacing pass, the cores going (a
+different first notice) or neither changed it; `seatToast` also still
+assumes the card's top is 12px where the stylesheet now says `--edge`.
+
 ## The barriers are the gates; cores go -- BUILT (2026-10-09)
 
 "The barriers are the gates; cores go" in DESIGN.md.
