@@ -285,7 +285,10 @@ canvas.addEventListener('pointermove', e => {
 
 export function endDrag(e) {
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
-  if (!(e.buttons & 2)) S.crewSight = null;     // the right button let go
+  if (!(e.buttons & 2) && S.crewSight != null) {  // the right button let go
+    S.crewSight = null;
+    if (S.mouse) setCursor(S.mouse.x, S.mouse.y);
+  }
   // the arm let go, wherever the pointer has got to
   releaseArm();
   const up = lifted();
@@ -316,6 +319,11 @@ export function endDrag(e) {
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 addEventListener('pointerup', endDrag);          // catch releases outside the canvas
+// The cursor answers a press or a release where it happens, not on the next
+// move: a hand closes the moment a button goes down. After the handlers above
+// have said what the press was.
+for (const type of ['pointerdown', 'pointerup'])
+  canvas.addEventListener(type, () => { if (S.mouse) setCursor(S.mouse.x, S.mouse.y); });
 addEventListener('blur', () => {
   S.crewSight = null;
   down.clear();
@@ -566,6 +574,10 @@ function askedAbout(x, y, cx, cy) {
 const CURSORS = [
   // carrying something: the hand is closed
   [() => S.heldCore || S.dragging || lifted(), 'grabbing'],
+  // the right button held, looking at the crew: the hand open, ready to take
+  // one, and closed while the left is down too (the owner, 2026-10-09)
+  [() => S.crewSight != null && S.mining, 'grabbing'],
+  [() => S.crewSight != null, 'grab'],
   // a core lying about is the one thing here you pick up yourself
   [(x, y) => overCore(x, y), 'grab'],
   // the counts under a station, and the places with a board on them

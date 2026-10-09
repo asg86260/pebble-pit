@@ -17344,8 +17344,11 @@ docs/mocks/crew-sight-2026-10-08.html (ghosted buildings).
 - A body under the cursor, while held, moves on `HOVER_SLOW` of the frames
   (a share owed and paid, so evenly) for `HOVER_SLOW_MS` after the cursor
   last touched it. A plain hover does nothing to a body.
-- Open: the deep is not veiled; the open/closed hand cursor is mocked
-  separately.
+- The cursor is the browser's own open hand (`grab`) while it is held, and
+  its closed one (`grabbing`) with the left button down too or a body in
+  hand (the owner, 2026-10-09: "just use the browser grab and grabbed
+  cursors"; the drawn hands of docs/mocks were not used).
+- Open: the deep is not veiled, and a phone has no way in.
 
 ## The buried one yells for help (built 2026-10-08)
 
