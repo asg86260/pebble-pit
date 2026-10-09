@@ -123,6 +123,8 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Hold the right button to see the crew: the yard fades back, every worker is ringed, and the one under the cursor slows down so it can be picked up. Hovering no longer stops a worker.
+- After the first rock, the one still buried yells for help.
 - An achievement for shaking a worker dizzy.
 - A card at the top left says the story's next step, from digging out the rock to saving the sqwife.
 - The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.

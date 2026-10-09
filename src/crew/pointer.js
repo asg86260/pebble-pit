@@ -3,7 +3,7 @@
 // were doing from wherever you left them.
 
 import { now } from '../clock.js';
-import { DIZZY_MS, HOVER_PAUSE_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
+import { DIZZY_MS, HOVER_SLOW_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
 import { bell, spawnChip } from '../dust.js';
 import { throwVel } from '../hands.js';
 import { underground } from '../quarry.js';
@@ -34,12 +34,12 @@ export function workerAt(x, y) {
 
 export const lifted = () => S.workers.find(w => w.lifted) || null;
 
-// The cursor resting on a body holds it still, so its card is read off
-// somebody standing. The stamp is refreshed on every pointermove, so the pause
-// outlives the hover by HOVER_PAUSE_MS and no more; `keepOf` drops it on save.
+// With the right button held (`S.crewSight`), the body under the cursor walks
+// slow, so it can be caught. The stamp is refreshed on every pointermove, so
+// the slow outlives the hover by HOVER_SLOW_MS and no more.
 export function hoverAt(x, y) {
   const w = workerAt(x, y);
-  if (w && !w.lifted) w.pauseUntil = now() + HOVER_PAUSE_MS;
+  if (w && !w.lifted && S.crewSight != null) w.slowUntil = now() + HOVER_SLOW_MS;
   return w;
 }
 

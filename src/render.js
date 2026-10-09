@@ -23,7 +23,7 @@ import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand }
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
-         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld } from './render/crew.js';
+         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { deepTop } from './deep/place.js';
@@ -225,6 +225,7 @@ const LAYERS = [
   // stack over a station on the deep's floor was inside its own dome.
   { name: 'work bars', draw: drawWorkBars },     // and whatever else the yard is putting up
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
+  { name: 'sight veil', draw: drawSightVeil },   // the right button held: the yard behind the crew veiled pale
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines

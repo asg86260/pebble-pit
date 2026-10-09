@@ -17328,3 +17328,29 @@ minutes of a yard at the abyss; the free first station keeps the written
 table, so the deep's opening still climbs on the sqwife's swept scales.
 The depths are measured again on it (`speedrun.mjs --fight --paced 17.5`).
 
+## Holding the right button looks at the crew (built 2026-10-08)
+
+The owner: the hover's question mark goes, and holding the right button
+fades the buildings and picks out the workers, slowing the one under the
+cursor "instead of stopping them for a full second or two". Voted A of
+docs/mocks/crew-sight-2026-10-08.html (ghosted buildings).
+
+- A right press on a body lifts it, as before; anywhere else, held, it sets
+  `S.crewSight` (thrown away on a reload) until it is let go.
+- Everything behind the crew's plane is veiled pale (`drawSightVeil`, the
+  layer `sight veil` just before the roster's bodies), `SIGHT_VEIL` of white
+  stepping in over `SIGHT_IN_MS`; each body in the yard wears a ring a cell
+  out.
+- A body under the cursor, while held, moves on `HOVER_SLOW` of the frames
+  (a share owed and paid, so evenly) for `HOVER_SLOW_MS` after the cursor
+  last touched it. A plain hover does nothing to a body.
+- Open: the deep is not veiled; the open/closed hand cursor is mocked
+  separately.
+
+## The buried one yells for help (built 2026-10-08)
+
+The owner: in the first rock's scene, "the sqwife should be yelling for help".
+Voted B of docs/mocks/help-call-2026-10-08.html: one bang, two, three, a
+breath, and again, a step each `HELP_BANG_MS`, over the one in the ground
+for the whole of `meet`, in place of the hearts.
+

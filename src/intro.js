@@ -15,7 +15,7 @@
 // const, because beats.js reads them at load and imports this file in a ring.
 
 import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
-         INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL,
+         INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL, HELP_BANG_MS, HELP_BANGS,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS,
          COMMUTE_PACE, ROCK_CLEAR,
@@ -263,12 +263,10 @@ export function stepMeet(t) {
   // the dance reads this to know when the yard stops watching, and a horizon
   // re-armed every frame is not one a hop can be planned against.
   S.danceUntil = S.introAt + MEET_MS;
-  // The one in the ground says the other thing; the one digging has its
-  // hands full.
-  if (t >= (S.introSaid || 0)) {
-    S.introSaid = t + INTRO_BEAT * 1.4;
-    S.buriedSay = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
-  }
+  // The one in the ground yells for help, louder and louder, the whole
+  // scene; the one digging has its hands full.
+  const n = Math.floor((t - S.introAt) / HELP_BANG_MS) % (HELP_BANGS + 1);
+  S.buriedSay = { mark: 'bang', n, until: t + HELP_BANG_MS };
   return t - S.introAt < MEET_MS;
 }
 

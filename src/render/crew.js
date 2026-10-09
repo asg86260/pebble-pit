@@ -4,7 +4,7 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -285,22 +285,6 @@ function drawSay(w, say) {
     return;
   }
 
-  // A body held still under the cursor asks what you want of it. Drawn in
-  // half-cell strokes (still whole pixels) because the smallest legible question
-  // mark on the P grid stands over the head like a sign.
-  if (say.mark === '?') {
-    const u = P / 2;
-    const x0 = Math.round(x - P);
-    const y0 = top - u * 7;
-    ctx.fillRect(x0 + u, y0, u * 2, u);          // the top of the hook
-    ctx.fillRect(x0, y0 + u, u, u);              // its left shoulder
-    ctx.fillRect(x0 + u * 3, y0 + u, u, u * 2);  // and its right side, coming down
-    ctx.fillRect(x0 + u * 2, y0 + u * 3, u, u);  // the curve back in
-    ctx.fillRect(x0 + u, y0 + u * 4, u, u);      // the stem it lands on
-    ctx.fillRect(x0 + u, y0 + u * 6, u, u);      // and the dot, one gap under
-    return;
-  }
-
   if (say.mark === 'note') {
     // a head and a stem: the smallest thing that is unmistakably a note
     ctx.fillRect(Math.round(x - P), top - P, P, P);
@@ -370,9 +354,12 @@ function drawSaying(x, y, say) {
   }
 
   if (say.mark === 'bang') {
-    // a bar and a dot under it
-    ctx.fillRect(Math.round(mid - P / 2), top - P * 4, P, P * 3);
-    ctx.fillRect(Math.round(mid - P / 2), top, P, P);
+    // a bar and a dot under it; a call for help is several, a gap between
+    const n = say.n ?? 1, x0 = Math.round(mid - P / 2 - (n - 1) * P);
+    for (let i = 0; i < n; i++) {
+      ctx.fillRect(x0 + i * P * 2, top - P * 4, P, P * 3);
+      ctx.fillRect(x0 + i * P * 2, top, P, P);
+    }
     return;
   }
 
@@ -512,6 +499,32 @@ function underSurface(w) {
   return w.y + WORKER > line ? line : null;
 }
 
+// Each body ringed a cell out while the right button looks at the crew, so it
+// stands out of the veil behind it (`drawSightVeil`).
+function ring(w) {
+  ctx.fillStyle = '#000';
+  const x = Math.round(w.x), y = Math.round(w.y);
+  ctx.fillRect(x - P, y - P, WORKER + P * 2, P);
+  ctx.fillRect(x - P, y + WORKER, WORKER + P * 2, P);
+  ctx.fillRect(x - P, y, P, WORKER);
+  ctx.fillRect(x + WORKER, y, P, WORKER);
+}
+
+// Holding the right button: what is behind the crew's plane veiled pale, in
+// held steps as it comes in (config SIGHT_*). Over the yard's view, before
+// the crew are drawn.
+export function drawSightVeil() {
+  if (S.crewSight == null) return;
+  const k = Math.min(1, (now() - S.crewSight) / SIGHT_IN_MS);
+  const step = Math.ceil(k * SIGHT_STEPS) / SIGHT_STEPS;
+  if (!(step > 0)) return;
+  ctx.save();
+  ctx.globalAlpha = SIGHT_VEIL * step;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(S.camX - P, S.camY - P, S.viewW + P * 2, S.viewH + P * 2);
+  ctx.restore();
+}
+
 export function drawWorkers() {
   const t0 = now();
   for (const w of S.workers) {
@@ -520,6 +533,7 @@ export function drawWorkers() {
     // reason to skip it here. A body in a balloon's basket is drawn by the
     // balloon, wherever in the sky it is (render/balloon.js).
     if (w.lifted || underground(w) || atHome(w) || inBasket(w) || inTheDeep(w)) continue;
+    if (S.crewSight != null && underSurface(w) == null) ring(w);
     const sunk = underSurface(w);
     if (sunk != null) {
       if (w.y >= sunk) continue;

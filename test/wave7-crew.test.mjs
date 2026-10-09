@@ -7,7 +7,7 @@
 
 import { group, ok, state, run, runUntil, yard, P, WORKER } from './helpers.mjs';
 import { dropMuckAt, poopCols, muckFloor, colAt } from '../src/smog.js';
-import { GROSS_MS, HOVER_PAUSE_MS } from '../src/config.js';
+import { GROSS_MS, HOVER_SLOW, HOVER_SLOW_MS } from '../src/config.js';
 import { whatIsAt } from '../src/input.js';
 import { OUTHOUSE_SECTIONS } from '../src/outhouse.js';
 import { OUTHOUSE_ROWS } from '../src/upgrades/rows-outhouse.js';
@@ -151,28 +151,31 @@ group('a hovered body says who it is, how old, and what it is doing -- and no mo
   ];
 });
 
-// --- item 18: hover holds a body still ------------------------------------------
-group('the cursor resting on a body holds it where it stands, asking ?', async () => {
+// --- the right button held: a hovered body walks slow ---------------------------
+// (DESIGN.md, "Holding the right button looks at the crew"). The held button is
+// set as the pointer sets it (input.js has no DOM here); the hover is the
+// pointermove's own hit-test.
+group('a hovered body walks on as ever; with the right button held it walks slow', async () => {
   window.__crew(2, 2);
   run(2);
-  // whoever is out in the yard, hovered where it stands -- the same hit-test
-  // the pointer makes, so this is the pointermove path minus the DOM event
-  const w = S.workers.find(o => !o.inside && !o.aloft);
-  const hit = hoverAt(w.x + WORKER / 2, w.y + WORKER / 2);
-  const x0 = w.x, carried = w.carry || 0, claim = w.claim;
-  run(0.4);                                     // well inside the pause
-  const held = Math.abs(w.x - x0) < 1;
-  const asks = w.say && w.say.mark === '?';
-  // the cursor moves off, and the pause lapses rather than being cleared
-  run(HOVER_PAUSE_MS / 1000 + 0.5);
-  const dropped = (w.carry || 0) < carried;
-  const claimBroken = claim >= 0 && w.claim !== claim && w.pauseUntil > now();
+  const w = S.workers.find(o => !o.inside && !o.aloft && o.goal);
+  const at = () => hoverAt(w.x + WORKER / 2, w.y + WORKER / 2);
+  // a plain hover: nothing
+  const plain = at();
+  const unstamped = !(w.slowUntil > now());
+  // held: the stamp, and the body moves on a share of the frames
+  S.crewSight = now();
+  let moved = 0, frames = 0;
+  for (let f = 0; f < 60; f++) { at(); const x = w.x; run(1 / 60); frames++; if (Math.abs(w.x - x) > 0.01) moved++; }
+  const carried = w.carry || 0;
+  S.crewSight = null;
+  run(HOVER_SLOW_MS / 1000 + 0.2);
   return [
-    ok(hit === w, 'the hit-test finds the body under the cursor'),
-    ok(w.pauseUntil > 0, 'and stamps the pause on it'),
-    ok(held, 'the body stands still while the pause holds', `${w.x - x0}px`),
-    ok(asks, 'and asks ? over its head', w.say && w.say.mark),
-    ok(!(w.pauseUntil > now()), 'the pause lapses once the cursor is gone'),
-    ok(!dropped && !claimBroken, 'and nothing was dropped and no claim broken')
+    ok(plain === w && unstamped, 'the hit-test finds the body, and a plain hover does nothing to it'),
+    ok(moved > 0 && moved <= Math.ceil(frames * HOVER_SLOW) + 1, 'held, it moves on its share of the frames, not none',
+       `${moved} of ${frames}`),
+    ok(!(w.slowUntil > now()), 'the slow lapses once the button is let go'),
+    ok(!w.say || w.say.mark !== '?', 'and nothing asks ? over its head', w.say && w.say.mark),
+    ok((w.carry || 0) >= carried, 'and nothing was dropped')
   ];
 });

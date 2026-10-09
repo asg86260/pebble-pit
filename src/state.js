@@ -63,6 +63,7 @@ export const S = {
   buried: false,          // somebody is under it, and still alive
   rescued: false,         // and, once the dome held one off them, they got out
   rescueTo: 0,            // where they are walking to while they do
+  crewSight: null,        // when the right button went down off a body, held: the crew looked at (input.js)
   buriedSay: null,
   buriedSayAt: 0,
   // How far out of the ground it has been dug, nought to one; every rock that
@@ -802,7 +803,7 @@ export const EPHEMERAL = [
   'rockTops', 'tick', 'floorGrains', 'floorMarks', 'piles', 'pileCount', 'pileFull',
   'peakRow',
   // The opening, while it is running.
-  'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
+  'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt', 'crewSight',
   'introThrew', 'skipHeldAt', 'introCut',
   'timesAsked',           // once a boot is once a page
   // Only read for the spread a rock does on arriving.

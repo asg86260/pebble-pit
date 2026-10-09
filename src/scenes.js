@@ -935,20 +935,14 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 2, 2, 1); window.__grant({ dust: RICH_DUST });
                  window.__buy('house'); window.__buy('house'); window.__buy('house');
                  window.__fast(20); window.__look(st().houses.door - 400); } },
-  // Hovered for real, since the mark comes off `pointermove` in pointer.js.
-  // In a frame, not now: the runner turns a second of clock after a scene and
-  // the hold is only nine hundred milliseconds, so a hover sent from here
-  // would have lapsed by the shot.
-  asking: { about: 'the crew', say: 'a body hovered, saying its question mark', page: true,
+  // The right button held over the yard (input.js sets `crewSight` on the
+  // press): the yard veiled pale behind the crew, each body ringed.
+  'crew-sight': { about: 'the crew', say: 'the right button held: the yard veiled behind the crew, each body ringed',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
                  window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
                  window.__fast(20);
-                 requestAnimationFrame(() => {
-                   const d = st().crewDetail[0].split('|');
-                   const wx = Number(d[2]), wy = Number(d[7].slice(1));
-                   window.__look(wx - 400 / st().zoom);
-                   hover(wx, wy);
-                 }); } },
+                 S.crewSight = 0;
+                 window.__holdShot(); } },
   // A smaller crew than `rich`'s: the rich yard fills every plot, and a full
   // station is exactly the one that must not ring.
   assign: { about: 'the crew', say: 'a body held over the farm, the ring on',

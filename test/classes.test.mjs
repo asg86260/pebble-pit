@@ -101,16 +101,16 @@ group('a fighter stops fighting while its level-up plays, and fights again after
   ];
 });
 
-group('a fighter up at the hide, hovered, is held where it is, not stood on the floor', async () => {
+group('a fighter up at the hide, hovered, stays up in the water, not stood on the floor', async () => {
   party(['altar']);
   runUntil(() => fighterAt(0)?.goal === 'fight', 30);
   const w = fighterAt(0), y0 = w.y;
-  // what a cursor resting on a body does to it (input.js)
-  w.pauseUntil = now() + 1000;
+  // what the cursor does to a body with the right button held (input.js)
+  w.slowUntil = now() + 1000;
   run(0.5);
   return [
     ok(y0 < deepFloor() - WORKER * 2, 'it was up in the water at the hide', `${y0} against the floor ${deepFloor()}`),
-    ok(Math.abs(fighterAt(0).y - y0) < 1, 'and hovered it stays there', `${y0} then ${fighterAt(0).y}`)
+    ok(fighterAt(0).y < deepFloor() - WORKER * 2, 'and hovered it stays up in the water, not stood on the floor', `${y0} then ${fighterAt(0).y}`)
   ];
 });
 

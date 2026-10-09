@@ -138,17 +138,26 @@ export const CREW_KNOBS = [
 // gridlock into a queue of retching statues.
 export let GROSS_MS = 1200;           // how long the stop lasts
 export let GROSS_COOLDOWN_MS = 8000;  // before the same body minds again
-// Hovering the cursor over a body holds it still, so the card over its head is
-// read off somebody standing. Refreshed while hovered, so it is really "this
-// long after the cursor leaves".
-export let HOVER_PAUSE_MS = 900;
+// Holding the right button looks at the crew (the owner's A, 2026-10-08,
+// docs/mocks/crew-sight-2026-10-08.html): everything behind the crew's plane
+// is veiled pale, SIGHT_VEIL of white over it, coming in over SIGHT_IN_MS in
+// SIGHT_STEPS held steps, and each body wears a ring a cell out. A body under
+// the cursor walks at HOVER_SLOW of its pace, for HOVER_SLOW_MS after the
+// cursor was last on it.
+export let HOVER_SLOW = 0.4;
+export let HOVER_SLOW_MS = 300;
+export const SIGHT_VEIL = 0.7;
+export const SIGHT_IN_MS = 400;
+export const SIGHT_STEPS = 4;
 CREW_KNOBS.push(
   { key: 'GROSS_MS', label: 'yuck stop', min: 200, max: 5000, step: 100,
     get: () => GROSS_MS, set: v => { GROSS_MS = v; } },
   { key: 'GROSS_COOLDOWN_MS', label: 'yuck cooldown', min: 1000, max: 60000, step: 500,
     get: () => GROSS_COOLDOWN_MS, set: v => { GROSS_COOLDOWN_MS = v; } },
-  { key: 'HOVER_PAUSE_MS', label: 'hover hold', min: 100, max: 5000, step: 100,
-    get: () => HOVER_PAUSE_MS, set: v => { HOVER_PAUSE_MS = v; } });
+  { key: 'HOVER_SLOW', label: 'hover slow, pace', min: 0.1, max: 1, step: 0.05,
+    get: () => HOVER_SLOW, set: v => { HOVER_SLOW = v; } },
+  { key: 'HOVER_SLOW_MS', label: 'hover slow, after', min: 50, max: 2000, step: 50,
+    get: () => HOVER_SLOW_MS, set: v => { HOVER_SLOW_MS = v; } });
 
 // --- the faded crew -----------------------------------------------------------
 // The corner's crew switch set to fade (prefs.js, `crewView`): how much of the ink a

@@ -144,6 +144,9 @@ canvas.addEventListener('pointerdown', e => {
       try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
+    // Off a body, held, it looks at the crew until it is let go.
+    S.crewSight = now();
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
   down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
@@ -245,8 +248,9 @@ canvas.addEventListener('pointermove', e => {
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
   if (e.pointerType !== 'touch') {
-    // a body under the cursor stands still while it is looked at; the stage
-    // in crew/step.js does the rest
+    // with the right button held, a body under the cursor walks slow; the
+    // stage in crew/step.js does the rest
+    if (S.crewSight != null && !(e.buttons & 2)) S.crewSight = null;
     hoverAt(S.mouse.x, S.mouse.y);
     potHover(S.mouse.x, S.mouse.y);
     // The table's order settles which wins where two patches overlap.
@@ -281,6 +285,7 @@ canvas.addEventListener('pointermove', e => {
 
 export function endDrag(e) {
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
+  if (!(e.buttons & 2)) S.crewSight = null;     // the right button let go
   // the arm let go, wherever the pointer has got to
   releaseArm();
   const up = lifted();
@@ -312,6 +317,7 @@ canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 addEventListener('pointerup', endDrag);          // catch releases outside the canvas
 addEventListener('blur', () => {
+  S.crewSight = null;
   down.clear();
   panning = null;
   wheelPan = null;
