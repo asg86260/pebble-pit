@@ -1304,10 +1304,20 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    clipped names, and a card that sizes to what is on it is the honest size.
    It fades rather than pops: `off` is the faded state, and `hidden` only ever
    holds the very first frame. */
-.queue {
+#topleft {
   position: fixed;
   left: calc(8px + env(safe-area-inset-left, 0px)); top: calc(8px + env(safe-area-inset-top, 0px));
   z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* room over the objective card for its "next" tab, and under it for its shadow */
+  gap: 14px;
+  pointer-events: none;
+}
+#topleft > #objective:not([hidden]) { margin: 18px 0 0 6px; }
+.queue {
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
   width: max-content;
@@ -1899,9 +1909,7 @@ html.dark .modal {
    and fades, and comes back with the next step. Inked the other way in the
    deep, where the page behind it is dark. */
 #objective {
-  position: fixed;
-  left: 14px; top: 26px;
-  z-index: 9;
+  position: relative;
   display: grid;
   gap: 1px;
   padding: 8px 12px 9px;

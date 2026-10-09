@@ -128,6 +128,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.
 - The pictures over a station of what it is building and what is in line drift gently, the way a lifted shop tile does.
 
+- The queue of builds sits under the story's card in the top-left corner instead of on top of it (src/selftest/queue.js).
 - "It never rains but it pours" is earned when a shower of muck has finished falling, not when the clouds start to gather, and never for clean rain (test/notices.test.mjs).
 - Starting a new game no longer leaves the old crew's dust on the new ground (test/new-game.test.mjs).
 - A Hasted or Inspired fighter keeps its buff through a reload (test/classes.test.mjs).
