@@ -122,6 +122,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- Starting a new game no longer leaves the old crew's dust on the new ground (test/new-game.test.mjs).
 - A Hasted or Inspired fighter keeps its buff through a reload (test/classes.test.mjs).
 **New this release**
 - A card at the top left says the story's next step, from digging out the rock to saving the sqwife.

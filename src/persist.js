@@ -580,6 +580,9 @@ export function reset(fresh = true) {
   resetWeather();                  // a new run is a new sky, clouds and birds both
   S.boulderNo = 1;                 // the rock's blank builds it
   for (const o of SAVERS) o.blank();
+  // The old crew walk off with empty hands: what they carried is the old
+  // yard's, and dropped as they are stood down it lands on the new ground.
+  for (const w of S.workers) { w.carry = 0; w.load = []; w.hasCore = false; }
   syncWorkers();                   // the crew walks out, every count being nought
   resetRates();
   resetBooks();
