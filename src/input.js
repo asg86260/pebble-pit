@@ -149,6 +149,16 @@ canvas.addEventListener('pointerdown', e => {
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
+  // With the right button held, the left takes the body under the hand.
+  if (e.button === 0 && S.crewSight != null) {
+    const p = pos(e);
+    const w = workerAt(p.x, p.y);
+    if (w) {
+      lift(w);
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      return;
+    }
+  }
   down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
                           at: now(), kind: e.pointerType });
   // A second finger while a sweep is on: the pair look about through the

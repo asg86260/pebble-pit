@@ -695,7 +695,11 @@ export function refresh(el, list, headcount) {
         sayHTML(price, '');
         sayHTML(time, `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
-        if (row.classList.contains('queued') !== !!queued) row.classList.toggle('queued', !!queued);
+        // The tile wears what the word says: `queued` in line or with nobody
+        // there yet (a hand still walking over), so its edge is the dashes
+        // and its strip keeps a solid one.
+        const waiting = !!queued || stuck;
+        if (row.classList.contains('queued') !== waiting) row.classList.toggle('queued', waiting);
         // Greyed while being built, unless its strip has a copy to refund.
         grey(row, !refunds);
         // Not on offer: `off` keeps the shelf's hover away.
@@ -705,7 +709,7 @@ export function refresh(el, list, headcount) {
     }
     // An offer with copies in the works wears the state of its oldest copy
     // on the tile's edge, as a row with nothing more to sell does.
-    const going = more && !firstWaits(u) && !stalled(u.site), inline = more && firstWaits(u);
+    const going = more && !firstWaits(u) && !stalled(u.site), inline = more && !going;
     if (!waits && !more && row.classList.contains('waiting')) row.classList.remove('waiting');
     if (more && !row.classList.contains('waiting')) row.classList.add('waiting');
     if (row.classList.contains('building') !== going) row.classList.toggle('building', going);

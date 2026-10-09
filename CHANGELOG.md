@@ -123,13 +123,14 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- Hold the right button to see the crew: the yard fades back, every worker is ringed, the cursor turns into an open hand, and the one under it slows down so it can be picked up. Hovering no longer stops a worker.
+- Hold the right button to see the crew: the yard fades back, every worker is ringed, the cursor turns into an open hand, and the one under it slows down; a left click picks it up. Hovering no longer stops a worker.
 - After the first rock, the one still buried yells for help.
 - An achievement for shaking a worker dizzy.
 - A card at the top left says the story's next step, from digging out the rock to saving the sqwife.
 - The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 
+- A card being built with nobody at it yet, a hand still walking over, wears the queued edge, and its refund and another keep their border (src/selftest/queue.js).
 - The queue of builds sits under the story's card in the top-left corner instead of on top of it (src/selftest/queue.js).
 - "It never rains but it pours" is earned when a shower of muck has finished falling, not when the clouds start to gather, and never for clean rain (test/notices.test.mjs).
 - Starting a new game no longer leaves the old crew's dust on the new ground (test/new-game.test.mjs).

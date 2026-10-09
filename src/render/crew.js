@@ -4,7 +4,7 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -499,15 +499,17 @@ function underSurface(w) {
   return w.y + WORKER > line ? line : null;
 }
 
-// Each body ringed a cell out while the right button looks at the crew, so it
-// stands out of the veil behind it (`drawSightVeil`).
+// Each body ringed while the right button looks at the crew, so it stands out
+// of the veil behind it (`drawSightVeil`): a SIGHT_RING line a SIGHT_GAP clear
+// of its own edge.
 function ring(w) {
   ctx.fillStyle = '#000';
-  const x = Math.round(w.x), y = Math.round(w.y);
-  ctx.fillRect(x - P, y - P, WORKER + P * 2, P);
-  ctx.fillRect(x - P, y + WORKER, WORKER + P * 2, P);
-  ctx.fillRect(x - P, y, P, WORKER);
-  ctx.fillRect(x + WORKER, y, P, WORKER);
+  const x = Math.round(w.x) - SIGHT_GAP - SIGHT_RING, y = Math.round(w.y) - SIGHT_GAP - SIGHT_RING;
+  const s = WORKER + (SIGHT_GAP + SIGHT_RING) * 2;
+  ctx.fillRect(x, y, s, SIGHT_RING);
+  ctx.fillRect(x, y + s - SIGHT_RING, s, SIGHT_RING);
+  ctx.fillRect(x, y, SIGHT_RING, s);
+  ctx.fillRect(x + s - SIGHT_RING, y, SIGHT_RING, s);
 }
 
 // Holding the right button: what is behind the crew's plane veiled pale, in
