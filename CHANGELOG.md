@@ -123,7 +123,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- Hold the right button to see the crew: the yard fades back, every worker is ringed, the cursor turns into an open hand, and the one under it slows down; a left click picks it up. Hovering no longer stops a worker.
+- Hold the right button to see the crew: the yard fades back, every worker is ringed, the cursor turns into an open hand, and the one under it slows down. Holding the left button as well picks a worker up, for as long as both are held; the right button alone no longer lifts anybody. Hovering no longer stops a worker.
 - After the first rock, the one still buried yells for help.
 - An achievement for shaking a worker dizzy.
 - A card at the top left says the story's next step, from digging out the rock to saving the sqwife.

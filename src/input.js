@@ -129,27 +129,22 @@ canvas.addEventListener('pointerdown', e => {
   // while the camera is being handed back lands on whatever is under it.
   if (skipCutscene()) return;
   wheelOwed = 0;                             // a hand on the yard takes the view from the wheel
-  // The middle button looks around and the right button lifts (`lift`);
+  // The middle button looks around and the right button looks at the crew;
   // neither can mean any of the things the left button means.
   if (e.button === 1) {
     wheelPan = e.clientX;
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
+  // The right button, held, looks at the crew until it is let go; it lifts
+  // nobody by itself (the owner, 2026-10-09).
   if (e.button === 2) {
-    const p = pos(e);
-    const w = workerAt(p.x, p.y);
-    if (w) {
-      lift(w);
-      try { canvas.setPointerCapture(e.pointerId); } catch {}
-      return;
-    }
-    // Off a body, held, it looks at the crew until it is let go.
     S.crewSight = now();
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
-  // With the right button held, the left takes the body under the hand.
+  // With the right button held, the left takes the body under the hand, for
+  // as long as both are down.
   if (e.button === 0 && S.crewSight != null) {
     const p = pos(e);
     const w = workerAt(p.x, p.y);
@@ -225,6 +220,15 @@ canvas.addEventListener('pointermove', e => {
   const held = down.get(e.pointerId);
   if (held) { held.x = e.clientX; held.y = e.clientY; }
 
+  // A second button pressed while one is already down arrives as a move,
+  // not a press (Pointer Events: a chord): the left going down with the
+  // right held takes the body under the hand.
+  if (S.crewSight != null && e.button === 0 && (e.buttons & 3) === 3 && !lifted()) {
+    const p = pos(e);
+    const w = workerAt(p.x, p.y);
+    if (w) { S.mouse = p; lift(w); setCursor(p.x, p.y); return; }
+  }
+
   if (wheelPan !== null) {                   // middle button: drag the view along
     pan((wheelPan - e.clientX) / S.zoom);
     wheelPan = e.clientX;
@@ -286,7 +290,7 @@ canvas.addEventListener('pointermove', e => {
     if (wasWx != null) shakeHeld(up, S.mouse.x - wasWx);
     up.x = S.mouse.x - WORKER / 2;
     up.y = S.mouse.y - WORKER / 2;
-    if (!(e.buttons & 2)) drop(up);            // the button let go somewhere else
+    if ((e.buttons & 3) !== 3) drop(up);       // either button let go somewhere else
     return;
   }
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }

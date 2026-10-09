@@ -17335,8 +17335,11 @@ fades the buildings and picks out the workers, slowing the one under the
 cursor "instead of stopping them for a full second or two". Voted A of
 docs/mocks/crew-sight-2026-10-08.html (ghosted buildings).
 
-- A right press on a body lifts it, as before; anywhere else, held, it sets
-  `S.crewSight` (thrown away on a reload) until it is let go.
+- The right button, held, sets `S.crewSight` (thrown away on a reload)
+  until it is let go, and lifts nobody by itself. With it held, the left
+  button down on a body lifts it, and it is dropped when either is let go
+  (the owner, 2026-10-09). A mouse sends the second button of a chord as a
+  move, not a press, so the lift is read in pointermove.
 - Everything behind the crew's plane is veiled pale (`drawSightVeil`, the
   layer `sight veil` just before the roster's bodies), `SIGHT_VEIL` of white
   stepping in over `SIGHT_IN_MS`; each body in the yard wears a ring a cell
