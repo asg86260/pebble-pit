@@ -318,7 +318,7 @@ group('a young hole skims the pile it hangs over, and the pile stands under it',
 // spending reaches into the rift only once the pile has none.
 group('the hole swallows the coins too, and they are still yours', async () => {
   readyYard();
-  window.__grant({ shards: 300, spores: 300, cores: 4 });
+  window.__grant({ shards: 300, spores: 300 });
   window.__rift();
   // Measured from *after* the hole is seeded, not from before it. A full hole
   // cannot hold every coin you own, so some are through the rift before a

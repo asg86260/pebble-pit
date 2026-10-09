@@ -30,7 +30,7 @@
 //           same length (wall time is the slowest single file)
 
 const grantAll = () =>
-  window.__grant({ dust: 1e9, shards: 1e7, spores: 1e7, cores: 1e5, sparks: 1e6 });
+  window.__grant({ dust: 1e9, shards: 1e7, spores: 1e7, sparks: 1e6 });
 const crew = () => { window.__crew(3, 6, 3, 3); };
 // Hands at the rock and the pit only: `__crew` given quarriers or farmhands
 // opens their grounds, which pre-empts the doors that sell them.

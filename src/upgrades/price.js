@@ -5,7 +5,7 @@
 // upgrades.js) and find itself uninitialized. Re-exported from upgrades.js.
 
 import { S } from '../state.js';
-import { DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE, DUST_PER_SCALE } from '../config.js';
+import { DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_SCALE } from '../config.js';
 
 // Half again a rung, so the top of a ladder is about six times the bottom. A
 // ladder with an end does not need the price to be the wall. `rate` is the
@@ -16,7 +16,7 @@ export const rungCost = (first, lvl, rate = RUNG_RATE) => Math.round(first * Mat
 // Set against the spark by how hard each coin is to come by (DUST_PER_SPARK in
 // config). The scale is the deep's coin, set against dust like the rest, so
 // a bill in scales converts to the yard's coins by the same rule.
-export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: DUST_PER_SPORE, core: DUST_PER_CORE,
+export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: DUST_PER_SPORE,
                           scale: DUST_PER_SCALE };
 
 // Where each coin comes from, and whether that place exists yet: a bill in a
@@ -28,7 +28,6 @@ export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: D
 const COIN_FROM = {
   spore: { open: () => !!S.farmOpen,   needs: 'needs crops' },
   shard: { open: () => !!S.quarryOpen, needs: 'needs a quarry' },
-  core:  { open: () => !!S.seenCore,   needs: 'needs a core' },
   spark: { open: () => !!S.seenSpark,  needs: 'needs a spark' },
   // The serpent's, and there is none to be had until it has taken him.
   scale: { open: () => !!S.snatched,   needs: 'needs a scale' }

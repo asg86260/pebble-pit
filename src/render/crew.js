@@ -10,7 +10,6 @@ import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
 import { garage, hasGarage, doorX, inGarage } from '../crew/lifts.js';
 import { underground } from '../quarry.js';
-import { drawCoreGlow } from '../render/cores.js';
 import { hash } from './flicker.js';
 import { shadeOf } from '../grid.js';
 import { drawRoster, kitStands } from '../roster.js';
@@ -21,7 +20,7 @@ import { deepTop } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { drawRunSwitch } from './machines.js';
-import { drawCircle, drawMark } from './marks.js';
+import { drawMark } from './marks.js';
 import { withRise } from './rise.js';
 import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
@@ -462,7 +461,7 @@ const PLAIN = { lunge: 0 };
 const LEAN = 0.5;
 
 // The forklifts: the truck and nobody on it, its load on the forks four
-// abreast, a core riding on top of the load. Not crew, so not faded with them
+// abreast. Not crew, so not faded with them
 // (the crew switch in the corner is about people).
 export function drawForklifts() {
   for (const w of S.lifts || []) {
@@ -477,12 +476,6 @@ export function drawForklifts() {
                lift.forkTop - P * (Math.floor(i / LIFT_ABREAST) + 1) + P / 2);
     }
     ctx.fillStyle = '#000';
-    if (w.hasCore) {
-      const cx = lift.forkX + LIFT_FORK / 2;
-      const cy = lift.forkTop - P * (Math.ceil(n / LIFT_ABREAST) + 2);
-      drawCoreGlow(cx, cy);
-      drawCircle(cx, cy, P * 1.2);
-    }
   }
 }
 
@@ -611,7 +604,7 @@ function drawWorker(w, t0) {
       ctx.fillStyle = '#000';
     }
 
-    if (!w.carry && !w.hasCore) return;
+    if (!w.carry) return;
 
     // What it brought up, over its head, as the thing itself.
     if (look.load === 'shard') { drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2); return; }
@@ -628,15 +621,6 @@ function drawWorker(w, t0) {
                top - P * (Math.floor(i / abreast) + 1) + P / 2);
     }
     ctx.fillStyle = '#000';
-    if (w.hasCore) {
-      const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
-      const cx = x + WORKER / 2, cy = y - P * (stack + 2);
-      // A carried core gives off the same waves one on the ground does. Drawn
-      // straight rather than through `drawCoreAt` because the disc riding a
-      // body is a different size from the one on the ground.
-      drawCoreGlow(cx, cy);
-      drawCircle(cx, cy, P * 1.2);
-    }
   }
 }
 

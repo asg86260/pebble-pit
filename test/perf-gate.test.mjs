@@ -116,7 +116,7 @@ const verdict = (label, { worst, ceiling, over }) => (console.log(
 // starts.
 group('the busy yard does a frame of work a frame', async () => {
   window.__fullSites();
-  window.__grant({ shards: 500, spores: 500, cores: 20, sparks: 200 });
+  window.__grant({ shards: 500, spores: 500, sparks: 200 });
   window.__crew(4, 4, 3, 3);
   window.__fast(10);
   window.__verify(false);

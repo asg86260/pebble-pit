@@ -5,7 +5,7 @@
 // (once that is bought), and anything still in the air can be caught on the
 // way past.
 
-import { P, BRUSH, CORE_SIZE, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW } from './config.js';
+import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY, topRow } from './grid.js';
 import { spawnChip, aim, bell } from './dust.js';
@@ -68,13 +68,6 @@ function* brushCells(mx, my, radius = BRUSH) {
   }
 }
 
-// A loose core under the cursor, the one thing in this yard you handle
-// yourself.
-export const overCore = (mx, my) =>
-  !!S.coreItem && !S.heldCore &&
-  Math.abs(S.coreItem.x + CORE_SIZE / 2 - mx) < CORE_SIZE &&
-  Math.abs(S.coreItem.y + CORE_SIZE / 2 - my) < CORE_SIZE;
-
 // Whether a sweep here would find anything, at the same reach `sweep` uses,
 // without taking it. A finger on a phone asks it once, on the press, to tell
 // a sweep from a look about (DESIGN.md, "One finger looks about").
@@ -82,7 +75,6 @@ export const overCore = (mx, my) =>
 // default, or a finger's reach (input.js, `fingerReach`).
 export function dustUnder(mx, my, radius = BRUSH) {
   if (inDeep(mx, my)) return bedNear(mx, my, radius * P);
-  if (overCore(mx, my)) return true;
   for (const _ of brushCells(mx, my, radius)) return true;
   return false;
 }
@@ -92,14 +84,6 @@ export function sweep(mx, my) {
   // throws is thrown into the water (DESIGN.md, "The crusher"). Where the
   // pointer is in the world decides it, not which half is on the screen.
   if (inDeep(mx, my)) { sweepScales(mx, my); return; }
-  // a loose core on the ground is picked up by hand, no capacity needed
-  if (S.coreItem && !S.heldCore &&
-      Math.abs(S.coreItem.x + CORE_SIZE / 2 - mx) < CORE_SIZE &&
-      Math.abs(S.coreItem.y + CORE_SIZE / 2 - my) < CORE_SIZE) {
-    S.coreItem = null;
-    S.heldCore = true;
-  }
-
   let room = capacity() - S.held;
   if (room <= 0) return;
 
@@ -142,10 +126,6 @@ export function release(x, y) {
     S.heldScales = 0;
     S.motes = [];
     return;
-  }
-  if (S.heldCore) {
-    S.heldCore = false;
-    S.coreItem = { x: x - CORE_SIZE / 2, y: y - CORE_SIZE / 2, vx, vy, rest: false };
   }
   if (!S.held) return;
   // The juggling notice is for the biggest hand there is: a level-0 hand is

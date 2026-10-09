@@ -15,7 +15,7 @@ import { S } from '../src/state.js';
 
 const rich = () => {
   window.__crew(2, 2);
-  window.__grant({ cores: 9, dust: 90000, shards: 900, spores: 900, sparks: 500 });
+  window.__grant({ dust: 90000, shards: 900, spores: 900, sparks: 500 });
   // This group wants any building to put up, and the outhouse's gate is the
   // loosest left in the game once a mess has been seen.
   S.farmOpen = true;

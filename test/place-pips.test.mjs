@@ -20,7 +20,7 @@ group('the shovel and plot rows climb a ladder of their own', async () => {
   // Two quarriers and one farmhand: exactly the room a fresh cut and a fresh
   // farm come with, so `__crew` opens neither a bench nor a plot deeper.
   window.__crew(2, 3, 2, 1);
-  window.__grant({ cores: 9, dust: 200000, spores: 20000, shards: 20000 });
+  window.__grant({ dust: 200000, spores: 20000, shards: 20000 });
   run(1);
   const bench = rowOf('quarrybench'), plot = rowOf('farmplot');
   const benchFirst = { at: rungOf(bench), of: rungsOf(bench), work: workFor(bench) };

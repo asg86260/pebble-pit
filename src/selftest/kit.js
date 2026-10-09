@@ -197,39 +197,6 @@ export function haveRock() {
   }, 30);
 }
 
-// bank one core the long way round: finish the rock, wait for the core to roll
-// clear of it, carry it, throw it in
-export async function bankCore() {
-  // The first four rocks have no core (CORE_FROM), so this works the rock
-  // that has the first of them, and puts the yard back on the rock it found
-  // afterward: rock five is a good deal bigger than rock one.
-  const wasRock = state().boulderNo;
-  const jumped = wasRock < 5;
-  if (jumped) window.__jump(5);
-  window.__next();                             // the last of the rock goes
-  // Turned by hand rather than waited out: the core rolls clear on the game's
-  // own clock.
-  runUntil(() => state().coreItem?.rest, 10);
-  const k = state().coreItem;
-  if (!k) return false;
-
-  const [kx, ky] = onScreen(k.x + 9, k.y + 9);
-  point('pointerdown', kx, ky);
-  run(0.1);
-  const s = state();
-  const [tx, ty] = onScreen(s.pitX + s.pitW * 0.2, s.groundY - 120);
-  for (let i = 1; i <= 8; i++) {
-    point('pointermove', kx + (tx - kx) * i / 8, ky + (ty - ky) * i / 8);
-    run(1 / 60);
-  }
-  run(0.2);
-  point('pointerup', tx, ty);
-  const done = runUntil(() => !state().coreItem && !state().heldCore, 20);
-  if (jumped) window.__jump(wasRock);          // and the yard back on the rock it was on
-  haveRock();
-  return done;
-}
-
 // A roster: click the less or the more under the station itself, through the
 // real pointer path rather than calling assign() behind the yard's back.
 export const put = async (key, which) => {

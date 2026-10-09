@@ -5,7 +5,7 @@
 // against `step` in node with no browser anywhere. The words are the words these
 // checks were written with in the browser suite; what changed is where they run.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, P, WORKER } from './helpers.mjs';
 
 // A hole you can throw across has a back to it. The toss off the lip was a
 // fixed spray, which was fine while the pit ran two windows to the right and

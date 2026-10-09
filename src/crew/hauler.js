@@ -1,15 +1,14 @@
 // Carrying, which is the job with no station: the dust is wherever it fell, so
 // somebody put on it is already at work. The longest job file because a hauler
 // is the body the yard's own furniture happens to: the hole it tips into, the
-// lip it may not walk over, the books it holds room in, and the loose core
-// nobody else will pick up.
+// lip it may not walk over, and the books it holds room in.
 
-import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER,
+import { P, WORKER, HAUL_EMPTY, HOME_AFTER,
          LIFT_FOUL, LIFT_PUFF_CELLS } from '../config.js';
 import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf, ageAt } from '../grid.js';
 import { walkY, rockLeft } from '../world.js';
-import { ways, wayAt, wayOver, standTop, rockTop, keepTo, stepRoute } from '../route.js';
+import { ways, wayAt, wayOver, standTop, rockTop } from '../route.js';
 import { spawnChip, bell, aim, beltRunning, beltFrom, beltReach, bandY } from '../dust.js';
 import { holeLanding } from '../pit.js';
 import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
@@ -199,11 +198,10 @@ function liftSmoke(w) {
 // stands. Not at the tail itself: that is buried in the hill, where the
 // band catches the rock's spoil coming down, and a load tipped from there
 // lands on the rock. Two cells past the rock's foot, so the body stands off
-// the hill. A core still goes to the lip: it is lobbed onto the pile and
-// counted when it touches it (`stepCore`).
+// the hill.
 function tipSpot(w, now) {
   const lip = pit.x - WORKER;
-  if (w.hasCore || !beltRunning(now)) return { x: lip, belt: false };
+  if (!beltRunning(now)) return { x: lip, belt: false };
   const foot = Math.max(beltFrom(), rockLeft() + S.gw * P + P * 2);
   return { x: Math.min(lip, Math.max(w.x, foot - WORKER / 2)), belt: true };
 }
@@ -226,7 +224,7 @@ export function haulerWork(w, c) {
   // The patch it is going for is the same claim `takeMess` makes, made here
   // so the trip down the hole is made against it too: one patch, one body.
   // A forklift does not shovel: muck, the hole and the cut are the haulers'.
-  if (!w.vehicle && !w.carry && !w.hasCore) {
+  if (!w.vehicle && !w.carry) {
     // Cleared and re-picked a frame apart, since the frame's set still
     // carries this body's own elbows -- and "a frame apart" has to hold across
     // the whole frame, or `takeMess` further down picks against those elbows
@@ -241,7 +239,7 @@ export function haulerWork(w, c) {
       w.muckAt = pick == null ? null : Math.floor(pick / P);
     }
   }
-  const patch = !w.vehicle && !w.carry && !w.hasCore && muckFor(w) > 0 && w.muckAt != null
+  const patch = !w.vehicle && !w.carry && muckFor(w) > 0 && w.muckAt != null
     ? w.muckAt * P + P / 2 : null;
 
   // In the hole, over the hole, or on the ground beyond it: one question --
@@ -298,35 +296,9 @@ export function haulerWork(w, c) {
   // dance away before it walks off, or it carries the hop on to the next thing.
   if (w.jigAt != null && S.rockFall <= 0) stopJig(w);
 
-  // A loose core first, then dust, then tip it all over the ledge.
-  if ((w.goal === 'seek' || w.goal === 'idle') &&
-      S.coreItem && S.coreItem.rest && !S.heldCore && !w.hasCore &&
-      (!S.coreTaker || S.coreTaker === w) && bookRoom(w, 1) > 0) {
-    S.coreTaker = w;
-    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
-    const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
-    const pace = drive(w) * HAUL_EMPTY;
-    // A route, not a straight line: the core rests at the foot of the rock
-    // and the next rock lands on the same spot, so a straight walk from the
-    // far side goes through the hill at ground level.
-    if (Math.abs(target - w.x) >= P * 2) {
-      if (!keepTo(w, target, wayOver(target, all))) { S.coreTaker = null; return; }
-      if (stepRoute(w, pace)) return;
-      w.route = null;
-    }
-    if (Math.abs(target - w.x) < P * 2) {
-      S.coreItem = null;
-      S.coreTaker = null;
-      w.hasCore = true;
-      tookOne(w);                            // a core is a grain of the hole too
-      w.goal = 'dump';
-    }
-    return;
-  }
-
   // The lip, and everybody stops at it. A route never offers a leg across
   // the opening (`ways`); the clamp is for the walks this file does by hand
-  // (a stroll, a step toward a core, a nudge at an elbow), which know nothing
+  // (a stroll, a nudge at an elbow), which know nothing
   // of ways. Which side is not remembered: it is the side the body stands on.
   if (!w.route) {
     if (here.key === 'past') { if (w.x < pit.x + pit.w) w.x = pit.x + pit.w; }
@@ -352,7 +324,7 @@ export function haulerWork(w, c) {
   // ladder trip working. One column, one hauler (`nearestCutDust`), never
   // more hands sent down than there are grains lying loose, and only for
   // empty hands with nothing claimed, so it never steals a load.
-  if (!w.vehicle && (w.goal === 'seek' || w.goal === 'idle') && w.claim < 0 && !w.carry && !w.hasCore &&
+  if (!w.vehicle && (w.goal === 'seek' || w.goal === 'idle') && w.claim < 0 && !w.carry &&
       w.cutClaim == null && cut.n - (cut.rock || 0) > cutTaken.size && bookRoom(w) > 0) {
     const pick = nearestCutDust(w.x + WORKER / 2, cutTaken);
     // Acted on the same frame it is found, or a floor column picked below
@@ -416,14 +388,13 @@ export function haulerWork(w, c) {
   } else if (w.goal === 'dump') {
     // Home along the ground, and everything on the way comes too, column by
     // column; full hands walk straight to the lip. Nothing here turns it
-    // round: what is behind it is the next trip's. A core goes straight in.
-    // The column is found before the hole is asked, because a booking made
+    // round: what is behind it is the next trip's. The column is found before the hole is asked, because a booking made
     // here is held to the lip and a body walking to tip should not hold room
     // it will not use.
     const tip = tipSpot(w, now);
     const target = tip.x;
     let stride = Math.min(drive(w) * frames(), Math.abs(target - w.x));
-    if (!w.hasCore && w.carry < load(w)) {
+    if (w.carry < load(w)) {
       const c = underfoot(w, stride);
       const under = c >= 0 && floor.x + c * P <= w.x + WORKER;
       if (under && roomToTake(w)) {
@@ -444,15 +415,6 @@ export function haulerWork(w, c) {
       // starts inside the hill.
       const from = w.x + WORKER / 2, up = (tip.belt ? w.y : S.groundY - WORKER) - P;
       const above = S.groundY - WORKER - P - up;         // how far over the ground line the hands are
-      const far = pit.x + Math.max(P, pit.w - P * 2);
-      if (w.hasCore) {
-        // Lobbed to a fixed peak on the same `aim` everything else is thrown
-        // on. Not banked here: `stepCore` counts it when it touches the pile.
-        const land = Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
-        const v = aim(from, up, land, CORE_SIZE, CORE_LOB_H);
-        S.coreItem = { x: from - CORE_SIZE / 2, y: up, vx: v.vx, vy: v.vy, rest: false };
-        w.hasCore = false;
-      }
       for (let i = 0; i < w.carry; i++) {
         // Onto the band, or onto the pile or into the drain (`holeLanding`
         // in pit.js).

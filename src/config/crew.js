@@ -24,7 +24,6 @@ export const LOO_MUCK = 2;       // and how much is left behind
 export let SPOIL_POP = 3.2;    // how hard a grain comes off, before the scatter
 export let SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
 export const BRUSH = 3;          // sweep radius, in cells
-export const CORE_SIZE = P * 3;  // a core is a square this big
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
 export const TOSS_DELAY = 260;   // and before a held hand starts throwing (hold to toss)
 export const TOSS_NEAR = P * 20;  // how far either side a held hand reaches for a grain, and how far off a pile's end it still works the pile

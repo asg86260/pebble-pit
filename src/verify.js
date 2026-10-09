@@ -20,11 +20,11 @@ import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf, liftsOf } from './kit.js';
 import { count, countDust } from './grid.js';
-import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
+import { SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
 
 // The same table `HELD` in pit.js is built from, written here rather than
 // imported because this file must not trust the code it is checking.
-const COIN_CELLS = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
+const COIN_CELLS = [[SHARD_CELL, 'shards'],
                     [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
 const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]));
 import { yardLeft } from './world.js';
@@ -395,13 +395,13 @@ export function verifyWorld() {
 
     // --- rule 8: the coins are in the hole or through the rift ------------------
     // What you own is what is lying in the hole plus what has gone through,
-    // for every coin the hole takes. One walk for all four.
+    // for every coin the hole takes. One walk for all three.
     if (pit.grid) {
       const held = S.riftHeld || {};
-      const inPile = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+      const inPile = { shards: 0, spores: 0, sparks: 0 };
       for (const v of pit.grid) {
         if (!v) continue;
-        const key = COIN_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
+        const key = COIN_OF[findKind(v)];
         if (key) inPile[key]++;
       }
       for (const [, key] of COIN_CELLS) {

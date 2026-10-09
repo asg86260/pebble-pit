@@ -194,14 +194,6 @@ export const TESTS = [
     const bench = at(s0.benchX + 20, s0.groundY - 30);
     const minus = at(r.less[0], r.less[1]);
 
-    // a rock that has a core in it, which the first four do not
-    window.__jump(5);
-    window.__next();
-    // until there is one, not for a fixed wait that lands either side of it
-    runUntil(() => !!state().coreItem, 30);
-    const k = state().coreItem;
-    const core = k ? at(k.x + 9, k.y + 9) : null;
-
     // and a mark that would tell you why something has stopped
     window.__give(100000);
     run(2);
@@ -225,7 +217,6 @@ export const TESTS = [
          'so a near miss still lands on it'),
       ok(at((r.less[0] + r.more[0]) / 2, r.less[1]) !== 'pointer',
          'and the count between them is still not a button'),
-      ok(core === 'grab', 'a loose core is a thing to pick up', `${core}`),
       // The hole cannot stop anything (the first grain it refuses tears the
       // rift), so it carries no mark and no help cursor. The stations still
       // carry their marks; the stations group hovers one for the tooltip half.

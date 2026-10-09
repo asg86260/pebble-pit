@@ -20,7 +20,7 @@ const of = type => S().workers.filter(w => w.type === type);
 function standTwoPots() {
   window.__reset();
   window.__crew(3, 3, 3, 1);                     // diggers, haulers, quarriers, a farmhand
-  window.__grant({ cores: 3, dust: 40000, spores: 4000, shards: 800 });
+  window.__grant({ dust: 40000, spores: 4000, shards: 800 });
   run(1);
   window.__buy('unlockapothecary');
   window.__finish();

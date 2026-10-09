@@ -1,9 +1,8 @@
-// Track B (crew) -- feedback3.md. Four items, three about a body's own
+// Track B (crew) -- feedback3.md. Three items, two about a body's own
 // behaviour and one about a real bug:
 //
 //   B1  one builder to a job, not three
 //   B2  a builder at a busy site works rather than stands (a hammer now)
-//   B3  a core banked off the lip is lobbed, not dropped
 //   B4  a janitor is not starved of its own mess by a crowd on the shared kind
 //
 // B5, the mouth-crossing fix, has its own test file (muck-reach.test.mjs) and
@@ -12,7 +11,7 @@
 import { group, ok, state, run, runUntil, buyBuilt } from './helpers.mjs';
 import { yard } from './helpers.mjs';
 import { BUILD_HAMMER_MS, BUILD_HAMMER_H, BUILD_HITS_MAX, BUILD_REST_MS,
-         CORE_LOB_H, P, WORKER } from '../src/config.js';
+         P, WORKER } from '../src/config.js';
 import { bench } from '../src/state.js';
 
 group('one builder to a bench rung, not a gang of three', async () => {
@@ -151,55 +150,6 @@ group('the bench rung still finishes at the same rate, swing or no swing', async
     ok(Math.abs(secsFast - secsFramed) <= 2,
        'the same work, watched a second at a time or a frame at a time',
        `${secsFast}s vs ${secsFramed}s`)
-  ];
-});
-
-group('a core off the lip is lobbed, not dropped', async () => {
-  window.__reset();
-  window.__crew(0, 1);
-  // The opening rock is still in the air on the frame after a reset, and the
-  // whole yard stops for one -- see the celebrate stage in crew.js. A body
-  // waiting out a fall is not tipping anything, and this check is about the arc
-  // rather than about who is allowed to throw when. So the fall lands first.
-  runUntil(() => yard.S.rockFall === 0, 5);
-  const w = yard.S.workers.find(o => o.type === 'hauler');
-
-  // Handed a core and walked right up to the lip, so the very next frame is
-  // the toss.
-  w.carry = 0; w.load = []; w.hasCore = true; w.goal = 'dump';
-  w.x = yard.pit.x - WORKER - 0.4;
-  yard.S.coreItem = null;
-  yard.S.cores = 0;
-
-  run(1 / 60);
-  const thrown = yard.S.coreItem;
-  const bankedOnRelease = yard.S.cores;
-
-  // The peak of the arc: keep stepping while it climbs (vy negative) and stop
-  // the frame it turns to come back down.
-  let peak = thrown ? thrown.y : null;
-  let frames = 0;
-  while (yard.S.coreItem && yard.S.coreItem.vy < 0 && frames < 600) {
-    run(1 / 60);
-    if (yard.S.coreItem) peak = Math.min(peak, yard.S.coreItem.y);
-    frames++;
-  }
-  const groundY = state().groundY;
-  const landed = runUntil(() => !yard.S.coreItem, 30);
-  window.__crew(0, 0);
-
-  return [
-    ok(!w.hasCore, 'the hands are empty the moment it is thrown', `${w.hasCore}`),
-    ok(!!thrown, 'and something is now in the air', `${thrown}`),
-    ok(bankedOnRelease === 0, 'not banked on the way out of the hand', `${bankedOnRelease}`),
-    // "About ninety": the arc is thrown from hand height, a body's height above
-    // the ground already, so the peak is asked for within a body and a half of
-    // the number rather than to the pixel.
-    ok(peak != null && Math.abs((groundY - peak) - CORE_LOB_H) < WORKER * 1.5,
-       'the arc peaks about ninety world pixels above the lip',
-       `${peak == null ? 'never left the ground' : (groundY - peak).toFixed(0)}px`),
-    ok(landed, 'and it comes down'),
-    ok(state().cores === 1, 'banked when it lands, not before', `${state().cores}`)
   ];
 });
 

@@ -2,7 +2,7 @@
 // grain gets wherever it is, the triangle, the diamond, the ring cell and the
 // disc.
 
-import { CORE_CELL, FIND_COLOR, MARK_SIZE, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, findKind } from '../config.js';
+import { FIND_COLOR, MARK_SIZE, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, findKind } from '../config.js';
 import { isDust, shadeOf } from '../grid.js';
 import { ctx } from './ctx.js';
 
@@ -90,16 +90,7 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false, g = ctx) {
   const h = size / 2;
   g.fillStyle = tones ? tones[Math.min(2, v - findKind(v))] : '#000';
   const kind = findKind(v) || v;
-  if (v === CORE_CELL) {
-    const lw = Math.max(1, size / 4);
-    g.beginPath();
-    g.arc(x, y, Math.max(0.5, h - lw / 2), 0, Math.PI * 2);
-    g.fillStyle = '#fff';
-    g.fill();
-    g.lineWidth = lw;
-    g.strokeStyle = '#000';
-    g.stroke();
-  } else if (kind === SHARD_CELL) {
+  if (kind === SHARD_CELL) {
     g.beginPath();
     g.moveTo(x, y - h);
     g.lineTo(x + h, y + h);
@@ -144,13 +135,4 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false, g = ctx) {
 // make a ring read as slipped off whatever it is coming out of.
 export function cell(x, y) {
   ctx.rect(Math.round((x - P / 2) / P) * P, Math.round((y - P / 2) / P) * P, P, P);
-}
-
-// A core: a solid disc, not a ring. Hollow reads as an outline of a thing
-// rather than the thing.
-export function drawCircle(cxp, cyp, r) {
-  ctx.beginPath();
-  ctx.arc(cxp, cyp, r, 0, Math.PI * 2);
-  ctx.fillStyle = '#000';
-  ctx.fill();
 }

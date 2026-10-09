@@ -54,8 +54,6 @@ const YOU_REACH = tierRows({
 });
 
 // --- what a swing takes ---------------------------------------------------
-// Never priced in cores: a core opens places, and a core spent on a bigger
-// bite was a core not spent on somewhere to send anybody.
 const YOU_PICK = tierRows({
   field: 'pickLevel',
   unit: 'px', does: 'per swing',

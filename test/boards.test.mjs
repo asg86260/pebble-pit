@@ -65,7 +65,7 @@ group('a row no section names is still drawn', async () => {
   window.__reset();
   openSites();
   window.__invest();
-  window.__grant({ shards: 400, spores: 400, cores: 9 });
+  window.__grant({ shards: 400, spores: 400 });
   window.__tip(20000);
   window.__crew(1, 0);                          // the shack's rows want a crew
 
@@ -188,7 +188,7 @@ group('a row that has been revealed stays revealed', async () => {
   // Rich, dirty and raining: everything a two-way gate could be waiting on is
   // true at once, so the widest set of rows any of them would reveal is on the
   // boards to be counted.
-  window.__grant({ dust: 200000, cores: 40, stone: 2000, shards: 2000, spores: 2000, sparks: 2000 });
+  window.__grant({ dust: 200000, stone: 2000, shards: 2000, spores: 2000, sparks: 2000 });
   window.__crew(4, 3, 0, 0, 2);
   window.__air({ rains: 3 });
   window.__poopSet(() => 40);
@@ -228,7 +228,7 @@ group('a row that has been revealed stays revealed', async () => {
 group('a flag stays up while the site it sells from is building', async () => {
   window.__reset();
   window.__machineGates();
-  window.__grant({ dust: 5e6, shards: 5000, spores: 5000, sparks: 5000, cores: 500 });
+  window.__grant({ dust: 5e6, shards: 5000, spores: 5000, sparks: 5000 });
   run(1);
   const before = state().offers.includes('quarry');
   const bought = window.__buy('jaw');

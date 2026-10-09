@@ -380,7 +380,6 @@ export const brewCost = key => (BREW_BILL[key] || []).map(line => [...line]);
 const held = money =>
   money === 'shard' ? S.shards :
   money === 'spore' ? S.spores :
-  money === 'core' ? S.cores :
   money === 'spark' ? S.sparks : S.stored;
 
 // Also the picker's question: a brew the purse cannot cover is off the list.

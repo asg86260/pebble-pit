@@ -181,7 +181,7 @@ export const TESTS = [
     window.__nocine();
     window.__crew(3, 3, 5, 7);
     window.__fullSites();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 90000 });
     run(0.5);
     phone(true);
     window.__board('bench');
@@ -333,7 +333,7 @@ export const TESTS = [
     window.__nocine();
     window.__crew(3, 3, 5, 7);
     window.__fullSites();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 90000 });
     run(0.5);
     phone(true);
     window.__board('bench');
@@ -366,7 +366,7 @@ export const TESTS = [
     window.__nocine();
     window.__crew(3, 3, 5, 7);
     window.__fullSites();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 90000 });
     run(0.5);
     phone(true);
     window.__board('shack');
@@ -398,7 +398,7 @@ export const TESTS = [
     window.__nocine();
     window.__crew(3, 3, 5, 7);
     window.__fullSites();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 90000 });
     run(0.5);
     const out = { long: null, fits: null };
     await asScreen(390, 844, 3, async () => {
@@ -503,7 +503,7 @@ export const TESTS = [
     window.__nocine();
     window.__crew(3, 3, 5, 7);
     window.__fullSites();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 90000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 90000 });
     window.__levels({ carryLevel: 3, speedLevel: 5, haulCarryLevel: 4, quarryPaceLevel: 5, tendLevel: 3 });
     run(0.5);
     const bad = [], seen = [];

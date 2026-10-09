@@ -81,7 +81,7 @@ const legWay = w =>
 // hands: those are things it carried here, not fields of the job.
 export function settle(w) {
   const hat = w.trained, of = w.kitOf;
-  const carry = w.carry || 0, load = w.load || [], core = !!w.hasCore;
+  const carry = w.carry || 0, load = w.load || [];
   const fresh = FACTORY(w.type);
   delete fresh.x;                  // where it is standing is where it walked to
   delete fresh.y;
@@ -96,7 +96,6 @@ export function settle(w) {
   w.kitOf = of;
   w.carry = carry;
   w.load = load;
-  w.hasCore = core;
   // Not part way through anything any more. `Object.assign` cannot touch a
   // field the new factory has never heard of, so every scrap of the old job's
   // half-finished errand rides along invisibly unless it is cleared here: the

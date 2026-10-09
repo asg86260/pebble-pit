@@ -98,7 +98,6 @@ group('the air over a site is the colour of what comes out of it', async () => {
     run(4);
   const yard = state();                        // nothing open: a grey yard
 
-  window.__grant({ cores: 8 });
   window.__crew(0, 0, 2, 0);                   // opens the quarry, and works it
   window.__look(state().quarryX - 100);
   run(20);

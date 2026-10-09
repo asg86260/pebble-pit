@@ -6,7 +6,7 @@
 // lists the sizes a grain may be drawn at.
 
 import { P, WORKER, PIT_W_MAX,
-        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         RIFT_GULP, RIFT_SHAKE, RIFT_G, RIFT_G_MIN, RIFT_EAT, RIFT_SWING,
         ABYSS_DOWN, REFUND_FLECKS, findKind, someFind } from './config.js';
 import { S, pit, rift } from './state.js';
@@ -119,7 +119,7 @@ export function wirePit() {
   // nothing at either end: the hole fills first, so a pile above the ground
   // line always means the hole under it is full, and it heaps from the
   // middle so it tapers to nothing at the lip. Whether the heap is unlocked
-  // is a question about the *pile* (`pit.n`), not the counter: a core takes
+  // is a question about the *pile* (`pit.n`), not the counter: a find takes
   // a cell and is not dust, so by the counter the heap unlocked one grain
   // late and the crew stood throwing dust at a brim with nowhere under it.
   pit.holeCap = pit.cols * (pitDepth() / pit.p);
@@ -180,8 +180,7 @@ export function throughRift(x, shade, n = 1, income = true) {
     coin = 'dust';
   } else {
     const kind = findKind(shade);
-    if (shade === CORE_CELL || kind === CORE_CELL) { S.cores += n; S.seenCore = true; held.cores += n; coin = 'core'; }
-    else if (kind === SHARD_CELL) { S.shards += n; S.seenShard = true; held.shards += n; coin = 'shard'; }
+    if (kind === SHARD_CELL) { S.shards += n; S.seenShard = true; held.shards += n; coin = 'shard'; }
     else if (kind === SPORE_CELL) { S.spores += n; S.seenSpore = true; held.spores += n; coin = 'spore'; }
     else if (kind === SPARK_CELL) { S.sparks += n; S.seenSpark = true; held.sparks += n; coin = 'spark'; }
     else return false;              // nothing this hole knows how to hold
@@ -196,7 +195,7 @@ export function throughRift(x, shade, n = 1, income = true) {
 // from the station (`x`, `y`) into the hole on `S.paid`, the flight `fly` in
 // game.js already steps, each carrying its share of `n`, and the pile takes
 // them as they land (`landRefund`).
-const CELL_OF = { dust: 1, core: CORE_CELL, shard: SHARD_CELL, spore: SPORE_CELL, spark: SPARK_CELL };
+const CELL_OF = { dust: 1, shard: SHARD_CELL, spore: SPORE_CELL, spark: SPARK_CELL };
 export function refund(money, n, x, y) {
   const cell = CELL_OF[money];
   n = Math.floor(n);
@@ -544,7 +543,7 @@ export function swallow(n, show, everywhere, within = Infinity) {
   // which reaches this file for `swallow`.
   const got = lift(take, S.gulped, v => !!v, v => {
     if (isDust(v)) { dust++; return; }
-    const key = HELD_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
+    const key = HELD_OF[findKind(v)];
     if (key) held[key]++;
     // The grains go to the disc's UNDERSIDE, not its middle: measured from
     // the middle, a bigger disc sits its attractor higher, the distances to
@@ -595,18 +594,18 @@ export function rehomeDust() {
 
 // The pile shows exactly what you still hold of everything that is not
 // dust: topped up after a resize or a reload, taken out when spent. Every
-// coin the hole holds is reconciled the same way, or the pile shows four of
-// the five things you own.
-const HELD = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
+// coin the hole holds is reconciled the same way, or the pile shows three of
+// the four things you own.
+const HELD = [[SHARD_CELL, 'shards'],
               [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
 
-// The same table read the other way, derived so a fifth coin is one line.
+// The same table read the other way, derived so a fourth find is one line.
 const HELD_OF = Object.fromEntries(HELD.map(([cell, key]) => [cell, key]));
 
 // What the rift is holding of each, never undefined: a save from before it
 // existed has none.
 export function riftHeld() {
-  if (!S.riftHeld) S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+  if (!S.riftHeld) S.riftHeld = { shards: 0, spores: 0, sparks: 0 };
   return S.riftHeld;
 }
 
@@ -619,7 +618,7 @@ export function seedPitCores() {
   const held = riftHeld();
   for (const [cell, key] of HELD) {
     let have = 0;
-    for (const v of pit.grid) if (v === cell || (cell !== CORE_CELL && findKind(v) === cell)) have++;
+    for (const v of pit.grid) if (findKind(v) === cell) have++;
     const want = heldInHole(key);
     // Near the lip, where the dust is and where you can see them. Each find
     // is aimed at its own spot along the lip; when that column has no room
@@ -646,7 +645,7 @@ export function seedPitCores() {
       // The tone is rolled before the column is found: the roll is a draw on
       // the yard's one generator, and a seeded run that drew one fewer here
       // would be a different run from that frame on.
-      const tone = cell === CORE_CELL ? cell : someFind(cell);
+      const tone = someFind(cell);
       let c = Math.floor((0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * lip);
       if (!hasRoom(c)) c = nextRoom();
       if (c < 0 || !addGrain(pit, pit.x + (c + 0.5) * pit.p, null, tone)) break;
@@ -682,8 +681,8 @@ export const SAVE = {
     S.riftGulp = 0; S.riftShake = 0;     // a save comes back after the tearing, never in it
     S.rift = Math.max(0, Math.min(Math.round(+s.rift || 0), S.stored));
     // The coins through it, clamped to their own counters the same way.
-    S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
-    for (const k of ['cores', 'shards', 'spores', 'sparks'])
+    S.riftHeld = { shards: 0, spores: 0, sparks: 0 };
+    for (const k of ['shards', 'spores', 'sparks'])
       S.riftHeld[k] = Math.max(0, Math.min(Math.round(+(s.riftHeld?.[k]) || 0), S[k] || 0));
     rehomeDust();
     seedPitCores();
@@ -699,7 +698,7 @@ export const SAVE = {
     // other side of one. An event is not a state (state.js).
     S.riftGulp = 0; S.riftShake = 0;
     S.rift = 0;
-    S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+    S.riftHeld = { shards: 0, spores: 0, sparks: 0 };
     setPitGrain();
   }
 };
@@ -707,13 +706,13 @@ export const SAVE = {
 // Lift cells of one kind out of the pile, topmost first, and say how many
 // were there. What it could not find is through the rift, and `take` in
 // upgrades.js pays the rest out of there.
-export function takeCoreCells(n, cell = CORE_CELL) {
+export function takeCoreCells(n, cell) {
   let got = 0;
   for (let r = pit.rows - 1; r >= 0 && n > 0; r--) {
     for (let c = 0; c < pit.cols && n > 0; c++) {
       const v = at(pit, c, r);
       // by kind, not by tone: a shard is a shard whichever blue it happens to be
-      if (v === cell || (cell !== CORE_CELL && findKind(v) === cell)) {
+      if (findKind(v) === cell) {
         put(pit, c, r, 0);
         n--;
         got++;

@@ -4,7 +4,7 @@
 // import in node). Nothing here changes anything.
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
-         CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
+         SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, casino, filter, table, tray, tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
@@ -28,7 +28,6 @@ import { rockLeft, bridgeSpan, groundAt, benches, plotCount, openingCamX, plotSl
 import { rockFootY, dropZone, depthOf } from './rock.js';
 import { pitCapacity, pitDepth, pitFull } from './pit.js';
 import { quarryFace, quarryShape, ladder, seamShards, dugShare, quarryDone } from './quarry.js';
-import { coreHome } from './core.js';
 import { rates } from './stats.js';
 import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
@@ -225,8 +224,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   stored: S.stored,
   held: S.held,
 
-  // Cores and shards, banked and loose.
-  cores: S.cores,
+  // Shards, banked and loose.
   shards: S.shards,
   seenShard: S.seenShard,
   seenAir: S.seenAir,
@@ -404,13 +402,13 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   casinoX: Math.round(casino.x),
 
   // What is lying on the floor waiting to be found.
-  finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
+  finds: S.floorMarks.map(m => ({ [SHARD_CELL]: 'shard',
     [SPORE_CELL]: 'spore' })[findKind(m.v) || m.v]),
   // By the cell they are in, not the middle of the mark drawn on it.
   findAll: S.floorMarks.map(m =>
     `${Math.round(m.x - P / 2)},${Math.round(S.groundY - m.y - P / 2)}`),
   findCells: S.floorMarks.map(m => ({ v: m.v, x: Math.round(m.x - P / 2),
-    kind: ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard', [SPORE_CELL]: 'spore'
+    kind: ({ [SHARD_CELL]: 'shard', [SPORE_CELL]: 'spore'
     })[findKind(m.v) || m.v] })),
 
   // Who is walking somewhere, and how fast a hauler goes.
@@ -467,7 +465,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   rock: S.boulder.flat().reduce((a, b) => a + b, 0),
 
   // What the player has been shown at least once.
-  seenCore: S.seenCore,
   seenBench: S.seenBench,
   seenSects: [...S.seenSects],
   benchMark: benchMark(),
@@ -505,11 +502,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   idle: idle(),
   roster: rosterReport(),
   openCamX: Math.round(openingCamX()),
-
-  // The core: carried, loose, or home.
-  heldCore: S.heldCore,
-  coreHome: (h => ({ x: Math.round(h.x), y: Math.round(h.y) }))(coreHome()),
-  coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest },
 
   // The upgrades, by rung.
   pickLevel: S.pickLevel,
@@ -605,7 +597,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // has on its forks.
   drivers: S.drivers || 0,
   lifts: (S.lifts || []).map(w => ({ x: Math.round(w.x), carry: w.carry || 0, goal: w.goal,
-                                     core: !!w.hasCore, inside: !!w.inside })),
+                                     inside: !!w.inside })),
   // The roombas: owned, and each one in the yard, where it is, what it is
   // doing and what is in its bin.
   roombas: S.roombas || 0,

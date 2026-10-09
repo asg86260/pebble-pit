@@ -48,7 +48,7 @@ group('a rung bought through the row is the next rung on the same call', async (
 group('a work that lands by itself is on the boards the next frame', async () => {
   window.__crew(3, 6);
   window.__answered('props');
-  window.__grant({ dust: 1e9, shards: 1e7, spores: 1e7, cores: 1e5, sparks: 1e6 });
+  window.__grant({ dust: 1e9, shards: 1e7, spores: 1e7, sparks: 1e6 });
   run(1);
   const door = window.__rows().find(r => r.key === 'unlockfarm');
   const pressed = window.__buy('unlockfarm');

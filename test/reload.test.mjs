@@ -215,7 +215,7 @@ group('a refresh mid-dig does not empty the seam', async () => {
 group("a refresh does not drink the crew's tonic", async () => {
   window.__reset();
   window.__crew(0, 1, 0, 2);
-  window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+  window.__grant({ dust: 8000, spores: 3000, shards: 300 });
   window.__buy('unlockfarm'); window.__finish();
   window.__buy('unlockapothecary'); window.__finish();
   window.__pot('stew');

@@ -6,7 +6,7 @@
 // hole is the slowest thing any check does, and node runs files side by side --
 // so the slow ones are worth keeping together and out of everybody's way.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, P, WORKER } from './helpers.mjs';
 
 group('filling the pit stops at what the hole holds', async () => {
   window.__dig();
@@ -152,7 +152,7 @@ group('a full hole collapses rather than stopping the yard', async () => {
   window.__reset();
   window.__crew(3, 6, 3, 3);
   window.__fullSites();
-  window.__grant({ sparks: 99, shards: 99, spores: 99, cores: 9 });
+  window.__grant({ sparks: 99, shards: 99, spores: 99 });
   window.__give(999999);                     // far more than the hole can hold
   run(20);
 

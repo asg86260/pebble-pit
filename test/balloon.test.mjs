@@ -13,7 +13,7 @@ import { CRAFT } from '../src/balloon.js';
 const rich = () => {
   window.__reset();
   window.__crew(0, 3);
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
   window.__air({ open: true });
   run(2);
@@ -254,7 +254,7 @@ group('a balloon rider is dosed: the craft comes down for the vial and goes back
   rich();
   openSites();
   window.__crew(0, 3);
-  window.__grant({ cores: 3, dust: 20000, spores: 2000 });
+  window.__grant({ dust: 20000, spores: 2000 });
   run(1);
   window.__buy('unlockapothecary');
   window.__finish();

@@ -16,7 +16,7 @@ import { LADDER, TIER_OWN, TIER_BAND } from '../src/config.js';
 const shown = key => !!window.__rows().find(r => r.key === key && r.shown);
 // Sparks too: the research card is priced in them, and a card is off the board
 // until every coin on its bill has a source (see coinsOpen in upgrades/price.js).
-const rich = () => window.__grant({ dust: 900000, shards: 9000, spores: 9000, cores: 90, sparks: 900 });
+const rich = () => window.__grant({ dust: 900000, shards: 9000, spores: 9000, sparks: 900 });
 
 group('a ladder is one card that fills, and says done at the top', async () => {
   window.__reset();

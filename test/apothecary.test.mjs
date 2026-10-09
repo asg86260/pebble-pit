@@ -21,7 +21,7 @@ function standApothecary() {
   openSites();                                 // the plots are broken
   window.__crew(1, 3, 0, 1);                   // a rockhand, spare hands, a farmhand to buff
   // Sparks too: the bracing tonic is priced in them.
-  window.__grant({ cores: 3, dust: 20000, spores: 2000, shards: 400, sparks: 200 });
+  window.__grant({ dust: 20000, spores: 2000, shards: 400, sparks: 200 });
   run(1);
   const started = window.__buy('unlockapothecary');
   window.__finish();
@@ -50,7 +50,7 @@ group('the apothecary opens after the plots are broken', async () => {
 group('and it will not open before the farm does', async () => {
   window.__reset();
   window.__crew(1, 2);
-  window.__grant({ cores: 3, dust: 20000, spores: 2000 });
+  window.__grant({ dust: 20000, spores: 2000 });
   run(1);
   const before = window.__buy('unlockapothecary');   // no farm yet
   return [

@@ -1,12 +1,9 @@
 // The ground line, the hole in it and what is lying in the hole.
 
-import { CORE_CELL, CORE_SIZE, GROUND_INK, GROUND_TEXTURE, GROUND_TILE, P } from '../config.js';
-import { at, bottomY } from '../grid.js';
-import { heldInHole, pitDepth } from '../pit.js';
+import { GROUND_INK, GROUND_TEXTURE, GROUND_TILE, P } from '../config.js';
+import { pitDepth } from '../pit.js';
 import { S, floor, pit } from '../state.js';
-import { drawCoreGlow } from './cores.js';
 import { ctx } from './ctx.js';
-import { drawMark } from './marks.js';
 
 // The ground runs up to the lip and picks up again past the far wall. Drawn
 // before the rock, so the couple of cells the rock sinks below the line read
@@ -80,55 +77,6 @@ export function drawPitOutline() {
 
 export function drawPit() {
   pit.painter.paint(ctx, pit.x, pit.y, pit.w, pit.h);
-  drawPitCores();
-}
-
-// Everything in the pile that is not dust. A core in the pile is drawn at the
-// size a core is everywhere else: a six-pixel ring in a plot of gray speckle
-// is a grain that happens to be pale.
-//
-// Where the cores in the pile were last found. Searching every cell of the
-// hole is forty-three thousand reads a frame, so the cells they were found in
-// are checked first: the pile never holds more cores than the count says
-// (`seedPitCores`, and every spend takes the cell out with the count), so if
-// every kept cell still holds a core those are all of them. Anything else
-// fails the check and the pile is searched again that frame; a list shorter
-// than the count (a dev hook's granted core) fails the first test next frame.
-let coreCells = [];
-
-export function drawPitCores() {
-  // What is *in the hole*, not what you own: a core through the rift is not
-  // in the pile to be found, and asking for it would search the whole hole
-  // every frame.
-  const want = heldInHole('cores');
-  if (!want) return;
-  let kept = coreCells.length === want * 2;
-  for (let i = 0; kept && i < coreCells.length; i += 2)
-    kept = coreCells[i] < pit.cols && coreCells[i + 1] < pit.rows &&
-           at(pit, coreCells[i], coreCells[i + 1]) === CORE_CELL;   // a re-dug hole is a new one
-  if (!kept) {
-    coreCells = [];
-    let left = want;
-    for (let r = 0; r < pit.rows && left; r++) {
-      for (let c = 0; c < pit.cols && left; c++) {
-        // only cores: everything else in the pile is painted with the dust
-        if (at(pit, c, r) !== CORE_CELL) continue;
-        coreCells.push(c, r);
-        left--;
-      }
-    }
-  }
-  const pad = CORE_SIZE / 2 + 1;
-  for (let i = 0; i < coreCells.length; i += 2) {
-    const x = pit.x + coreCells[i] * pit.p, y = bottomY(pit) - (coreCells[i + 1] + 1) * pit.p;
-    const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
-    const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
-    // It does not stop giving off what it gives off because you put it
-    // somewhere.
-    drawCoreGlow(cx, cy);
-    drawMark(CORE_CELL, cx, cy, CORE_SIZE, true);
-  }
-  ctx.fillStyle = '#000';
 }
 
 // the ground, through its own painter for the same reason as the pit: an

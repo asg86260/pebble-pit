@@ -43,7 +43,7 @@ export function relieve(w, now) {
   // held out with it.
   if (MOVE_KEYS.includes(w.move)) return false;
   // Finish what you are holding, and there is nowhere to go from the sky.
-  if (w.inside || inWorking(w) || w.aloft || w.carry || w.hasCore) return false;
+  if (w.inside || inWorking(w) || w.aloft || w.carry) return false;
   // Only while working: a body that stopped on its way in would leave something
   // for the ones already indoors to come back out for, and the yard never
   // settles.

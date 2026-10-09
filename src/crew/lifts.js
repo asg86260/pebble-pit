@@ -48,7 +48,6 @@ export function syncLifts() {
     const w = S.lifts.pop();
     for (let i = 0; i < (w.carry || 0); i++)
       spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
-    if (S.coreTaker === w) S.coreTaker = null;
     unbook(w);
   }
 }
@@ -86,7 +85,7 @@ export const SAVE = {
   write(out) {
     out.lifts = (S.lifts || []).map(w => ({ x: Math.round(w.x), face: w.face || 1,
                                             carry: w.carry || 0, load: w.load || [],
-                                            core: !!w.hasCore, stored: w.stored || 0,
+                                            stored: w.stored || 0,
                                             inside: !!w.inside }));
   },
   read(s) {
@@ -97,10 +96,9 @@ export const SAVE = {
       w.face = k.face || 1;
       w.carry = k.carry | 0;
       w.load = Array.isArray(k.load) ? k.load.slice(0, w.carry) : [];
-      w.hasCore = !!k.core;
       w.stored = k.stored | 0;
-      w.inside = !!k.inside && !w.carry && !w.hasCore;
-      if (!w.inside) w.goal = w.carry || w.hasCore ? 'dump' : 'seek';
+      w.inside = !!k.inside && !w.carry;
+      if (!w.inside) w.goal = w.carry ? 'dump' : 'seek';
       S.lifts.push(w);
     }
     syncLifts();

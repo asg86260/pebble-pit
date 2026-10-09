@@ -50,7 +50,7 @@ test('every bill carries dust', () => {
   // in the state they were written for rather than in a fresh yard where half
   // of them are still hidden.
   window.__fullSites();
-  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 99 });
+  window.__grant({ sparks: 9999, shards: 9999, spores: 9999 });
 
   const bad = [];
   let checked = 0;

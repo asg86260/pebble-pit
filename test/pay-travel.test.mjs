@@ -10,7 +10,7 @@ import { apothHut } from '../src/apothecary.js';
 function stand() {
   window.__reset();
   window.__crew(0, 1, 0, 1);
-  window.__grant({ cores: 5, dust: 40000, spores: 3000, shards: 300 });
+  window.__grant({ dust: 40000, spores: 3000, shards: 300 });
   window.__buy('unlockfarm'); window.__finish();
   window.__buy('unlockapothecary'); window.__finish();
 }
@@ -63,7 +63,7 @@ group('a bench row still pays to the bench', async () => {
 // the money.
 group('a new building pays to the ground it is going up on', async () => {
   window.__crew(1, 1);
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
   const benchX = centre(yard.bench);
   yard.S.paid = [];

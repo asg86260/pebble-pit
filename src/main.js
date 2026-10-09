@@ -87,7 +87,7 @@ function frame() {
     stepPan();                                // the keys and the wheel: a held yard pans too
     const t0 = mark();
     if (!S.paused && !S.still && !(demo && reducedMotion())) step();
-    // The boards, once, for whatever the step changed on them: a core landing,
+    // The boards, once, for whatever the step changed on them: a first find landing,
     // a first drag, a hand settled. The sim raises the flag and nothing else;
     // the draw below reads boards that are already right.
     if (S.shopStale) { S.shopStale = false; buildShop(); }

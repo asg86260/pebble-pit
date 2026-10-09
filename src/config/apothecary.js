@@ -7,8 +7,7 @@ import { P } from './yard.js';
 // "The apothecary".
 //
 // It opens shortly after the plots are broken, so it is priced the way the farm
-// is: a core, because a place costs a core, and less dust than the lab because
-// it stands earlier.
+// is: dust, and less of it than the lab because it stands earlier.
 export const APOTHECARY_H = P * 15;    // room for the fat belly, the bail handle and steam
 export const APOTHECARY_DUST = 900;    // and dust, a shade above the plots it follows
 

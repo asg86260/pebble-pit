@@ -125,7 +125,7 @@ export const FILTER_SECTIONS = [
   { title: 'equipment', keys: ['power', 'balloonspeed', 'balloon', 'recycler'] }
 ];
 
-// Dust, like every other building: a core buys the one thing nothing else can.
+// Dust, like every other building.
 export const filterCost = () => FILTER_DUST;
 
 // So a work coming back out of a save knows which row it belongs to

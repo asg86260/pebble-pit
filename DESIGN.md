@@ -17416,7 +17416,10 @@ cores, the achievement "something was inside it" retired. Gates in
 src/stations.js (`shieldDone`), bills in upgrades/site.js and rows-tower.js,
 `DOME_BILL`; no rock gives up a core (core.js) and none is drawn in one;
 migration `2026-10-09-no-cores` (`SAVE_V` 10). Checks: test/door-chain,
-test/shield, test/gates, test/wave3-economy. Open: the core's own code -- the
-item in the hand, a body carrying one, the rift's held cores, the counter's
-line -- is dormant (nothing makes a core) and wants deleting.
+test/shield, test/gates, test/wave3-economy. The core's own code went after
+it: the item in the hand, a body carrying one, the glow, the rift's held
+cores, the counter's and boards' lines, `S.cores`/`seenCore`. `coreBuried`
+keeps its saved name and now means only "this rock is not yet finished
+with", and the cell value the core had stays unused so saved finds read the
+same.
 

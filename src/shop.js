@@ -165,7 +165,7 @@ addEventListener('pointerdown', e => {
 const PIC = '<span class="pic"></span>';
 // The scale first: on a deep board it is the coin the ladder is written in,
 // and the yard's coins are what the later bands add to it.
-const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'core', 'spark'];
+const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'spark'];
 const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
   '<span class="step">' +
   '<button type="button" class="less">-</button>' +

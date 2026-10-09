@@ -6,11 +6,8 @@ export default {
   v: 10,
   says: 'cores are gone; the barriers open the places',
   apply(s) {
-    s.cores = 0;
-    s.seenCore = false;
-    s.heldCore = false;
-    s.coreItem = null;
+    for (const k of ['cores', 'seenCore', 'heldCore', 'coreItem', 'core', 'coreLoose']) delete s[k];
     if (Array.isArray(s.won)) s.won = s.won.filter(k => k !== 'firstcore');
-    if (s.riftHeld) s.riftHeld.cores = 0;
+    if (s.riftHeld) delete s.riftHeld.cores;
   }
 };

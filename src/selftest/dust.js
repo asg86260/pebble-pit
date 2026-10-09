@@ -1,8 +1,8 @@
-// Dust as money: mined, thrown in, spent, counted, and the core banked.
+// Dust as money: mined, thrown in, spent and counted.
 
 import { rungDust } from '../config.js';
 import { sleep, state, ok, point, onScreen, boulderWorld, hoverBench, run, runUntil, haveRock,
-  bankCore, buy } from './kit.js';
+  buy } from './kit.js';
 
 export const TESTS = [
   // The intro quest's first item (objectives.js) is ticked by a click on the
@@ -87,17 +87,6 @@ export const TESTS = [
          `${before} -> ${mid} -> ${settled.shown}`),
       ok(settled.shown === settled.stored, 'and lands on the number',
          `${settled.shown} vs ${settled.stored}`)
-    ];
-  }],
-
-  ['a core can be carried and banked', async () => {
-    const before = state().cores;
-    const banked = await bankCore();
-    const after = state();
-    return [
-      ok(banked, 'the core reaches the pit'),
-      ok(after.cores === before + 1, 'and is counted', `${before} -> ${after.cores}`),
-      ok(after.seenCore, 'core rows are unlocked in the shop')
     ];
   }],
 ];

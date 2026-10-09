@@ -4,12 +4,12 @@
 // else's module.
 
 import { closeWindow } from './modal.js';
-import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
+import { P, MINE_DELAY, WORKER, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt, lockScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
-import { sweep, release, track, overCore, dustUnder } from './hands.js';
+import { sweep, release, track, dustUnder } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
 import { stirSmoke, airReadout } from './smog.js';
@@ -388,7 +388,6 @@ function cellAt(b, wx, wy) {
 
 function cellLabel(v) {
   if (!v) return null;
-  if (v === CORE_CELL) return 'core';
   const k = findKind(v);
   if (k === SHARD_CELL) return 'ore';
   if (k === SPORE_CELL) return 'crop';
@@ -477,7 +476,6 @@ export function whatIsAt(x, y) {
     if (onCoil(x, y)) return 'the serpent';
     return null;
   }
-  if (overCore(x, y)) return 'core';
   const grain = cellLabel(cellAt(floor, x, y) || cellAt(pit, x, y));
   if (grain) return grain;
   if (S.crew >= 1 && inRect(houseRect(), x, y)) return 'house';
@@ -587,13 +585,11 @@ function askedAbout(x, y, cx, cy) {
 // because the ground state of this game is aiming at a rock.
 const CURSORS = [
   // carrying something: the hand is closed
-  [() => S.heldCore || S.dragging || lifted(), 'grabbing'],
+  [() => S.dragging || lifted(), 'grabbing'],
   // the right button held, looking at the crew: the hand open, ready to take
   // one, and closed while the left is down too (the owner, 2026-10-09)
   [() => S.crewSight != null && S.mining, 'grabbing'],
   [() => S.crewSight != null, 'grab'],
-  // a core lying about is the one thing here you pick up yourself
-  [(x, y) => overCore(x, y), 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit

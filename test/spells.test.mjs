@@ -16,7 +16,7 @@ const spells = () => ['spelldrive', 'spellluck', 'spellgmo', 'spellthrift', 'spe
 function standTower() {
   window.__reset();
   window.__crew(3, 3, 0, 3);                     // the farm open, the quarry not
-  window.__grant({ cores: 30, dust: 900000, spores: 90000, shards: 90000, sparks: 900 });
+  window.__grant({ dust: 900000, spores: 90000, shards: 90000, sparks: 900 });
   window.__meteor();                             // the tower stands, a spark seen
   run(1);
 }

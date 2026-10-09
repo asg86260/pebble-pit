@@ -69,7 +69,7 @@ group('a dose bought before tabbing out is still live after', async () => {
   window.__reset();
   openSites();
   window.__crew(1, 3, 0, 1);
-  window.__grant({ cores: 3, dust: 20000, spores: 2000, shards: 400 });
+  window.__grant({ dust: 20000, spores: 2000, shards: 400 });
   run(1);
   const bought = window.__buy('unlockapothecary');
   window.__finish();

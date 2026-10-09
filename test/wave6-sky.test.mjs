@@ -45,7 +45,7 @@ group('buying a pot re-walks the yard rather than spending reserved ground', asy
   window.__crew(3, 3, 3, 3);
   openSites();
   window.__fullSites();
-  window.__grant({ dust: 99999, shards: 9999, spores: 99999, sparks: 999, cores: 9 });
+  window.__grant({ dust: 99999, shards: 9999, spores: 99999, sparks: 999 });
   const opened = buyNow('unlockapothecary');
   run(1);
   // The second pot reveals after batches have landed (the grind pass); this

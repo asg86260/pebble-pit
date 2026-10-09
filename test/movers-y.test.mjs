@@ -52,7 +52,7 @@ group(`a tender climbs up onto the ${key} rather than appearing on it`, async ()
   openSites();
   window.__fullSites();
   window.__crew(...crew);
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
   run(8);                                     // at work on the station
   const bought = key === 'ram' ? buyNow(key) : (window.__machine(key, { bought: true }), true);
@@ -73,7 +73,7 @@ group(`a tender climbs up onto the ${key} rather than appearing on it`, async ()
 group('a rider climbs into the basket rather than appearing in it', async () => {
   window.__reset();
   window.__crew(0, 3);
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
   window.__air({ open: true });
   run(2);
