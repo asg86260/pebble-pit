@@ -1923,7 +1923,7 @@ export const TESTS = [
       ok(bodyQuiet, 'a press on the card itself buys nothing while the strip is up'),
       ok(two === 2, 'the other half of the strip queues a second copy', `${two}`),
       ok(pips === 2, 'and both copies paid for wear a dot on the pips', `${pips}`),
-      ok(/refund ×1/i.test(says), 'the refund half counts the copy waiting', says),
+      ok(/cancel ×1/i.test(says), 'the cancel half counts the copy waiting', says),
       ok(inFoot, 'and the strip stands inside the card, along its foot',
          c && s ? `card ${c.left},${c.bottom} ${c.width} strip ${s.left},${s.bottom} ${s.width}` : 'no strip'),
       ok(one === 1 && back > 0, 'the refund half hands the waiting copy back and buys nothing', `${one} left, ${back} back`),

@@ -617,7 +617,7 @@ export function refresh(el, list, headcount) {
     if (strip) {
       if (strip.hidden !== !stands) strip.hidden = !stands;
       const back = strip.querySelector('.refund'), next = strip.querySelector('.another');
-      say(back, refunds ? `refund ×${refunds}` : 'building');
+      say(back, refunds ? `cancel ×${refunds}` : 'building');   // the owner's word, 2026-10-09
       back.classList.toggle('dead', !refunds);
       if (next.hidden !== !more) next.hidden = !more;
       if (more) { say(next, '+ another'); next.classList.toggle('dead', !canPay(u)); }
