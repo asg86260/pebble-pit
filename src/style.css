@@ -54,7 +54,27 @@ html, body {
 :root {
   --paper: #fff; --ink: #000;
   --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf;
+  /* The page's spacing, written once so a new element inherits it rather than
+     guessing its own. Every element pinned to an edge or a corner of the
+     glass stands --edge in from it (plus the safe area); things stacked
+     against each other keep --gap between them; and a box is padded in one
+     of three sizes -- small for tags, tips and hover lines, medium for the
+     floating cards and buttons, large for the held sheet. Each size has its
+     two halves named too, for a box whose rows carry the side padding. */
+  --edge: 8px;
+  --gap: 8px;
+  --pad-s-y: 3px;  --pad-s-x: 6px;  --pad-s: var(--pad-s-y) var(--pad-s-x);
+  --pad-m-y: 8px;  --pad-m-x: 12px; --pad-m: var(--pad-m-y) var(--pad-m-x);
+  --pad-l-y: 14px; --pad-l-x: 24px; --pad-l: var(--pad-l-y) var(--pad-l-x);
+  /* Every card that floats over the yard casts the same hard one-cell shadow,
+     down and right, in the palest gray (the counter on the canvas draws the
+     same one: FLOAT_SHADOW in config/view.js). */
+  --shadow-off: 6px;
 }
+/* Declared again wherever --ink-7 is: a custom property resolves its var()s
+   where it is declared, so one inherited from the root would keep the root's
+   gray on a card that inks itself the other way. */
+:root, #objective.deep { --float-shadow: var(--shadow-off) var(--shadow-off) 0 var(--ink-7); }
 html.dark {
   --paper: #1f1f1f; --ink: #e0e0e0;
   --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
@@ -121,8 +141,8 @@ canvas {
   font: 12px ui-monospace, "Courier New", monospace;
   cursor: pointer;
 }
-#hop button.left { left: calc(var(--hop-inset) + env(safe-area-inset-left, 0px)); }
-#hop button.right { right: calc(var(--hop-inset) + env(safe-area-inset-right, 0px)); }
+#hop button.left { left: calc(var(--edge) + env(safe-area-inset-left, 0px)); }
+#hop button.right { right: calc(var(--edge) + env(safe-area-inset-right, 0px)); }
 #hop .pic { display: block; line-height: 0; }
 /* The corner (corner.js): the hop's squares in a row in the sky's top-right,
    inside the safe area, laid right to left. The row is a flex box so a
@@ -130,10 +150,10 @@ canvas {
    where. */
 #corner {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + var(--fs-inset));
-  right: calc(env(safe-area-inset-right, 0px) + var(--fs-inset));
+  top: calc(env(safe-area-inset-top, 0px) + var(--edge));
+  right: calc(env(safe-area-inset-right, 0px) + var(--edge));
   z-index: 4;
-  display: flex; flex-direction: row-reverse; gap: var(--fs-inset);
+  display: flex; flex-direction: row-reverse; gap: var(--gap);
 }
 #corner > button {
   width: var(--fs-size); height: var(--fs-size);
@@ -142,6 +162,7 @@ canvas {
   border: 2px solid var(--ink);
   box-sizing: border-box;
   padding: 0;
+  box-shadow: var(--float-shadow);
   cursor: pointer;
 }
 /* The fullscreen button's glyph (fullscreen.js): a frame with the corners
@@ -195,12 +216,12 @@ canvas {
   transform: none;
   max-height: none; overflow-y: auto; overscroll-behavior: contain;
   align-items: center;
-  padding: 6px 26px calc(14px + var(--sheet-hidden, 0px) + env(safe-area-inset-bottom, 0px));
+  padding: 6px var(--pad-l-x) calc(var(--pad-l-y) + var(--sheet-hidden, 0px) + env(safe-area-inset-bottom, 0px));
   opacity: 1;
   scrollbar-width: none;
 }
 #held.bottom::-webkit-scrollbar { display: none; }
-#held.bottom .handle { align-self: stretch; margin: 0 -26px 4px; }
+#held.bottom .handle { align-self: stretch; margin: 0 calc(-1 * var(--pad-l-x)) 4px; }
 /* a glyph is a canvas too, and the yard-window rule above is undone for it */
 #hop .pic canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block; background: none; cursor: inherit; image-rendering: pixelated; }
 /* Under motion: less the coast is still the platform's -- it is not a glide
@@ -523,12 +544,13 @@ body.still #scroller { scroll-behavior: auto; }
   position: fixed;
   /* under the corner's row where there is one (corner.js writes --fs-room),
      and inside the safe area */
-  right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(8px + env(safe-area-inset-top, 0px) + var(--fs-room, 0px));
+  right: calc(var(--edge) + env(safe-area-inset-right, 0px)); top: calc(var(--edge) + env(safe-area-inset-top, 0px) + var(--fs-room, 0px));
   z-index: 9;
   display: block;
   width: var(--card-w);
-  max-width: calc(100vw - 16px);
+  max-width: calc(100vw - 2 * var(--edge));
   background: var(--paper);
+  box-shadow: var(--float-shadow);
 }
 .pin .sect { display: none; }
 .pin button { width: 100%; border: 3px double var(--ink); }
@@ -1060,7 +1082,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 14px 26px;
+  padding: var(--pad-l);
   background: var(--paper);
   border: 1px solid var(--ink);
   font: 12px ui-monospace, "Courier New", monospace;
@@ -1102,7 +1124,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .toast {
   position: fixed;
   z-index: 11;
-  left: 50%; top: 12px;
+  left: 50%; top: calc(var(--edge) + env(safe-area-inset-top, 0px));
   /* --toast-dx: how far off center it stands to clear a building (toast.js) */
   transform: translate(calc(-50% + var(--toast-dx, 0px)), -24px);
   opacity: 0;
@@ -1110,9 +1132,10 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 9px 20px 8px;
+  padding: var(--pad-m);
   max-width: 80vw;
   background: var(--ink);
+  box-shadow: var(--float-shadow);
   border: 1px solid var(--paper);
   outline: 1px solid var(--ink);
   font: 12px ui-monospace, "Courier New", monospace;
@@ -1306,24 +1329,31 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    holds the very first frame. */
 #topleft {
   position: fixed;
-  left: calc(8px + env(safe-area-inset-left, 0px)); top: calc(8px + env(safe-area-inset-top, 0px));
+  left: calc(var(--edge) + env(safe-area-inset-left, 0px)); top: calc(var(--edge) + env(safe-area-inset-top, 0px));
   z-index: 9;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  /* room over the objective card for its "next" tab, and under it for its shadow */
-  gap: 14px;
+  /* the gap past the objective card's shadow (the room over it for its tab is
+     its own margin, below) */
+  gap: calc(var(--shadow-off) + var(--gap));
   pointer-events: none;
 }
-#topleft > #objective:not([hidden]) { margin: 18px 0 0 6px; }
+/* Its "next" tab stands proud of its top edge, so the card comes down by the
+   tab's height (less the border it overlaps) to put the tab at the edge. */
+#topleft > #objective:not([hidden]) { margin: calc(var(--tab-h) - 2px) 0 0 0; }
 .queue {
   pointer-events: auto;
   display: flex;
   flex-direction: column;
   width: max-content;
-  padding: 4px 0;
+  /* the card's top and bottom here, its sides on the rows, so a hovered row
+     inverts edge to edge; less the row's own pixel, so the words stand
+     --pad-m in from the edge */
+  padding: calc(var(--pad-m-y) - 1px) 0;
   background: var(--paper);
-  border: 1px solid var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: var(--float-shadow);
   font: 12px/1.5 ui-monospace, "Courier New", monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -1335,7 +1365,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   display: flex;
   gap: 6px;
   align-items: baseline;
-  padding: 1px 6px;
+  padding: 1px var(--pad-m-x);
   font: inherit;
   letter-spacing: inherit;
   text-transform: inherit;
@@ -1372,7 +1402,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
      thing it must never be is behind that board -- and at a lower layer, a note
      with nowhere to stand did not overlap the menu, it disappeared into it. */
   z-index: 20;
-  padding: 3px 6px;
+  padding: var(--pad-s);
   background: var(--paper);
   border: 1px solid var(--ink);
   font: 12px ui-monospace, "Courier New", monospace;
@@ -1460,9 +1490,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
    under `vite dev`. Backtick opens and closes it. */
 #dev {
   position: fixed;
-  right: 4px; top: 4px;
+  right: var(--edge); top: var(--edge);
   z-index: 4;
-  max-height: calc(100dvh - 8px);
+  max-height: calc(100dvh - 2 * var(--edge));
   overflow-y: auto;
   padding: 5px 7px;
   background: var(--paper);
@@ -1641,10 +1671,11 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   position: fixed;
   left: 0; top: auto; bottom: 0;
   z-index: 11;
-  padding: 10px 14px;
+  padding: var(--pad-m);
   background: var(--ink);
   color: var(--paper);
   border: 2px solid var(--ink);
+  box-shadow: var(--float-shadow);
   font: 12px ui-monospace, "Courier New", monospace;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -1839,9 +1870,10 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 .skip {
   position: fixed;
   z-index: 11;
-  left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  left: 50%; bottom: calc(var(--edge) + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
-  padding: 6px 14px 5px;
+  padding: var(--pad-m);
+  box-shadow: var(--float-shadow);
   background: var(--ink);
   border: 1px solid var(--paper);
   outline: 1px solid var(--ink);
@@ -1873,10 +1905,11 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   display: flex; flex-direction: column;
   box-sizing: border-box;
   max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
-  padding: 8px 12px 12px;
+  padding: var(--pad-m);
   background-color: var(--paper);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
   border: 2px solid var(--ink);
+  box-shadow: var(--float-shadow);
   color: var(--ink);
   font: 12px ui-monospace, "Courier New", monospace;
 }
@@ -1912,18 +1945,19 @@ html.dark .modal {
   position: relative;
   display: grid;
   gap: 1px;
-  padding: 8px 12px 9px;
+  padding: var(--pad-m);
+  --tab-h: 14px;
   font: 12px ui-monospace, "Courier New", monospace;
   color: var(--ink);
   background: var(--paper);
   border: 2px solid var(--ink);
-  box-shadow: 6px 6px 0 var(--ink-7);
+  box-shadow: var(--float-shadow);
   pointer-events: none;
   /* wraps before the notice card, which stands centered at the top */
   max-width: max(120px, calc(50vw - 150px));
   transition: opacity .35s ease, translate .35s ease;
 }
-#objective .next { position: absolute; top: -14px; left: -2px; padding: 0 8px; line-height: 14px;
+#objective .next { position: absolute; top: calc(-1 * var(--tab-h)); left: -2px; padding: 0 8px; line-height: var(--tab-h);
                    font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
                    background: var(--ink); color: var(--paper); }
 #objective .say { transition: opacity .35s ease; }

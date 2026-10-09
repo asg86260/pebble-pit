@@ -10,7 +10,7 @@
 // rather than on the press, since the escape key and the system's own
 // gestures leave fullscreen without asking us.
 
-import { FS_SIZE, FS_INSET } from './config.js';
+import { FS_SIZE } from './config.js';
 import { S } from './state.js';
 import { onTap } from './tap.js';
 
@@ -38,7 +38,6 @@ export function toggleFullscreen() {
 const button = doc?.getElementById('fullscreen');
 const rowEl = doc?.getElementById('fullscreenrow');
 root?.style.setProperty?.('--fs-size', `${FS_SIZE}px`);
-root?.style.setProperty?.('--fs-inset', `${FS_INSET}px`);
 
 // Two ways to say the same state, and the word says what pressing does.
 function dress() {

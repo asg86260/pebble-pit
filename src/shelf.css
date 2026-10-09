@@ -650,7 +650,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   position: fixed; left: auto;
   box-sizing: border-box;
   width: calc(var(--shelf-slot, 140px) + 2 * var(--sheet-pad-x, 8px) + 2 * var(--sheet-border, 2px));
-  max-width: calc(100vw - 16px);
+  max-width: calc(100vw - 2 * var(--edge));
   margin: 0;
   padding: 4px var(--sheet-pad-x, 8px) 0;
   border: var(--sheet-border, 2px) solid var(--ink);
@@ -716,7 +716,7 @@ html.dark .rails .rl-tree i.cap { color: #a979ef; }
    by deep/rails.js (`showTip`), in the board's face and size. */
 .rl-tip {
   position: fixed; z-index: 21; pointer-events: none;
-  background: var(--ink); color: var(--paper); padding: 2px 7px; white-space: nowrap;
+  background: var(--ink); color: var(--paper); padding: var(--pad-s); white-space: nowrap;
 }
 .rl-tip[hidden] { display: none; }
 /* A row: what it is, a line of what it does, its bill in the corner. */
@@ -808,7 +808,8 @@ html.dark .rails .rl-fx.cap .rl-st { color: #a979ef; }
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity var(--build-fade-ms, 200ms) steps(4, end), visibility 0s linear var(--build-fade-ms, 200ms);
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 10px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+  padding: var(--pad-m); background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+  box-shadow: var(--float-shadow);
   font: 12px ui-monospace, "Courier New", monospace; letter-spacing: .14em; text-transform: uppercase;
   cursor: pointer; white-space: nowrap;
 }

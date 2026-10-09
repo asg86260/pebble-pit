@@ -22,12 +22,10 @@ export const THUMB = 28;             // px; a fingertip's half-width
 // height, since a phone has no fixed one.
 export const HOP_Y = 0.42;           // below the purse and the pin, above the call to build the bench and the counter
 export const HOP_SIZE = 48;          // px, eight cells; a thumb's target
-export const HOP_INSET = 6;          // px in from the edge
 
 // The fullscreen button, top-right in the sky (fullscreen.js): the hop's
-// square, the hop's inset, inside the safe area.
+// square, the page's --edge in (style.css), inside the safe area.
 export const FS_SIZE = 44;
-export const FS_INSET = 6;
 
 // A board as a sheet from the bottom, on a phone only. Its top edge at this
 // share of the window down, so the ground line and the station stay in the

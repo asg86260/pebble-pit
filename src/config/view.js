@@ -92,6 +92,11 @@ export const VEIL_MS = 350;
 // and how long the held sheet and its wash take to come up and go down
 // (fade.js; style.css fades #held and #scrim in the same time)
 export const SHEET_FADE_MS = 180;
+// The hard shadow every floating card casts, down and right, in screen
+// pixels, and its gray: the page's --shadow-off and --ink-7 (style.css), for
+// the one card drawn on the canvas rather than the page (render/counter.js).
+export const FLOAT_SHADOW = 6;
+export const FLOAT_SHADOW_INK = '#aaa';
 // The most the landing page waits for its picture (the demo frame's first
 // drawn frame) before lifting its veil regardless: a frame that will not come
 // must not hold the page white.
