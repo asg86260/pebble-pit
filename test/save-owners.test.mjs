@@ -22,7 +22,7 @@ const S = yard.S;
 
 // The names a blob spells differently from the field on S they hold; the
 // same table persist-roundtrip.test.mjs keeps.
-const ALIAS = { workers: ['who'], coreItem: ['core', 'coreLoose'],
+const ALIAS = { workers: ['who'],
                 danceUntil: ['danceLeft'], nextBoulderAt: ['nextBoulderIn'] };
 const spelledAs = k => ALIAS[k] || [k];
 
@@ -31,7 +31,7 @@ const spelledAs = k => ALIAS[k] || [k];
 // through their rows and built by the crew.
 function richYard() {
   window.__fullSites();
-  window.__grant({ shards: 900, spores: 900, cores: 9, sparks: 300 });
+  window.__grant({ shards: 900, spores: 900, sparks: 300 });
   window.__give(60000);
   window.__crew(4, 4, 3, 3);
   window.__kit({ breakers: 4, carters: 4, blasters: 3, growers: 3 });

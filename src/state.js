@@ -79,7 +79,7 @@ export const S = {
   timePending: null,
   timesAsked: 0,          // which of the two the board has been asked this boot
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
-  coreBuried: true,       // this rock still has its core inside it
+  coreBuried: true,       // this rock is not yet finished with (a name from when it held a core)
   rockFall: 0,            // world pixels a new rock still has to come down
   landAt: 0,              // when the last one hit, for the spread it does on arriving
   rockFallV: 0,           // how fast it is coming
@@ -90,7 +90,7 @@ export const S = {
   // shield.js, so rock.js can ask without knowing that shields exist.
   rockHeld: false,
   danceUntil: 0,          // the crew are celebrating the last one until this moment
-  nextBoulderAt: 0,       // backstop, in case a core never falls clear
+  nextBoulderAt: 0,       // backstop, in case the footprint never clears
   peakRow: 0,             // the highest standing rock, recomputed each frame
 
   // --- dust in the air and on the cursor ---
@@ -133,15 +133,8 @@ export const S = {
   riftShake: 0,
   // What is through it that is not dust, by kind, because the pile shows each
   // counter *less* what is through (`seedPitCores` in pit.js).
-  riftHeld: { cores: 0, shards: 0, spores: 0, sparks: 0 },
+  riftHeld: { shards: 0, spores: 0, sparks: 0 },
   hideDone: false,        // whether finished ladders are folded off the boards
-
-  // --- cores ---
-  cores: 0,
-  seenCore: false,        // nothing about cores is shown until one is banked
-  coreItem: null,         // a core loose in the world
-  heldCore: false,        // carrying one on the cursor
-  coreTaker: null,        // the worker that has claimed a loose one
 
   // --- what you have bought ---
   // The kit each station owns; whoever is standing there wears it
@@ -569,7 +562,6 @@ export const SAVED = [
   'speedLevel',
   'autoMine',
   'autoToss', 'tossSpeedLevel', 'tossReachLevel',
-  'cores',
   'seenBench', 'seenDrag',
   'seenSects',
   'seenRows',
@@ -687,10 +679,10 @@ export const SAVED = [
   'rockhandSpeedLevel', 'rockhandPickLevel',
   'quarryOpen', 'quarryPaceLevel', 'benchLevel', 'plotLevel',
   'quarryOwed',           // how much of the seam is still in the cut; goes with `quarryCells`
-  'seenCore', 'seenShard', 'seenSpore', 'seenSpark',
+  'seenShard', 'seenSpore', 'seenSpark',
   'looPosts',
   'roombas',              // the count; where each one is is crew/roomba.js's
-  'coreBuried',           // whether this rock still owes you its core
+  'coreBuried',           // whether this rock is not yet finished with
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'resistBy', 'scales', 'seenScale',
@@ -714,7 +706,6 @@ export const SAVED = [
 export const SAVED_BY_HAND = [
   'runSeed',              // the run's name, and the stream it is partway through
   'camX',                 // rounded out, and read back once, into `camWas`
-  'coreItem',             // a core loose in the world: a spot, or the fact of one
   'workers',              // saved as `who`: a name and a record apiece, not four counts
   'lifts',                // saved by crew/lifts.js: where each is and what is on its forks
   'roombaBots',           // saved by crew/roomba.js: where each roomba is and what is in its bin
@@ -820,7 +811,6 @@ export const EPHEMERAL = [
   // The tearing of the rift is an event, and the cutscene watching it a
   // camera.
   'riftGulp', 'riftShake', 'shot',
-  'heldCore', 'coreTaker',
   'smoke', 'grit', 'smokeAt', 'houseSmokeAt', 'shutters', 'shutterAt', 'shutterN',
   'shocks', 'shockMotes',
   'skyShown', 'flashAt',

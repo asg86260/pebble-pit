@@ -63,11 +63,11 @@ import { S } from './state.js';
 // The drawing side's public surface: the rest of the game imports every one of
 // these from render.js and has no business knowing which file each is in.
 export { canvas, ctx } from './render/ctx.js';
-export { cell, drawCircle, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
+export { cell, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
 export { risingPlaces, rising, withRise } from './render/rise.js';
 export { bar, barSpot, drawWorkBars } from './render/bars.js';
 export { drawBuildSites, drawGrit } from './render/buildsites.js';
-export { drawGrid, drawGroundLine, drawPit, drawPitCores, drawPitOutline } from './render/ground.js';
+export { drawGrid, drawGroundLine, drawPit, drawPitOutline } from './render/ground.js';
 export { drawDoneMarks, doneMarkAt, overDoneMark } from './render/donemarks.js';
 export { drawCursor } from './render/cursor.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
@@ -77,7 +77,7 @@ export { drawShack } from './render/shack.js';
 export { drawFilter } from './render/filter.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 export { drawSky } from './render/sky.js';
-export { drawCoreAt, drawPaid, drawAbyss, drawRift } from './render/cores.js';
+export { drawPaid, drawAbyss, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller } from './render/machines.js';
 export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';

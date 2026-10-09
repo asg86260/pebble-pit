@@ -24,7 +24,7 @@ function tornYard() {
   window.__crew(3, 6, 2, 2);
   window.__fullSites();
   window.__meteor();
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__give(60000);                 // more than the hole holds: it tears
 }
 

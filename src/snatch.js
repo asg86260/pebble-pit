@@ -25,7 +25,7 @@
 // saved; a reload plays the beat again from the start, or, past the take,
 // from the surface closing (`startSnatch`).
 
-import { P, WORKER, COMMUTE_PACE, CORE_SIZE, INTRO_BEAT,
+import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_LOOK_MS, SNATCH_TAKE_MS, SNATCH_CLOSE_MS,
          SNATCH_HURRY, SNATCH_PORTAL_MS, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
          DEEP_SURFACE, SERPENT_ON } from './config.js';
@@ -86,13 +86,8 @@ function takeOff(n) {
   for (const w of took) {
     for (let i = 0; i < (w.carry || 0); i++)
       spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
-    if (w.hasCore) {
-      S.coreItem = { x: w.x, y: S.groundY - CORE_SIZE, vx: 0, vy: -1, rest: false };
-      if (S.coreTaker === w) S.coreTaker = null;
-    }
     w.carry = 0;
     w.load = [];
-    w.hasCore = false;
     w.claim = -1;
     unbook(w);
     const job = JOB_OF[w.type];

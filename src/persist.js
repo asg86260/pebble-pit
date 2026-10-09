@@ -33,7 +33,6 @@ import { SAVE as LIFTS } from './crew/lifts.js';
 import { SAVE as ROOMBAS } from './crew/roomba.js';
 import { SAVE as STAFF } from './staffing.js';
 import { SAVE as TOWER } from './tower.js';
-import { SAVE as CORE } from './core.js';
 import { SAVE as DANCE } from './crew/dance.js';
 import { SAVE as FARM } from './farm.js';
 import { resetRates } from './stats.js';
@@ -445,7 +444,6 @@ export const SAVERS = [
   VIEW,
   ROCK,
   STAMP,
-  CORE,
   DANCE,
   // Before the deal: a restored machine changes what its station's cap
   // *is*, and a rebalance against the old cap leaves five bodies at a cut
@@ -582,7 +580,7 @@ export function reset(fresh = true) {
   for (const o of SAVERS) o.blank();
   // The old crew walk off with empty hands: what they carried is the old
   // yard's, and dropped as they are stood down it lands on the new ground.
-  for (const w of S.workers) { w.carry = 0; w.load = []; w.hasCore = false; }
+  for (const w of S.workers) { w.carry = 0; w.load = []; }
   syncWorkers();                   // the crew walks out, every count being nought
   resetRates();
   resetBooks();

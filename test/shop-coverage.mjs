@@ -52,7 +52,7 @@ export function cover(part) {
 
       // The coins are the setup, never the subject: what is checked is that the
       // press fires and what it bought is kept, not that the yard can afford it.
-      if (!row.purse) window.__grant({ dust: 1e9, shards: 1e7, spores: 1e7, cores: 1e5, sparks: 1e6 });
+      if (!row.purse) window.__grant({ dust: 1e9, shards: 1e7, spores: 1e7, sparks: 1e6 });
       const pressed = window.__buy(row.key);
       const bought = row.fired ? row.fired(S) : pressed;
       window.__finish();

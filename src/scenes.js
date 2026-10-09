@@ -51,7 +51,7 @@ const st = () => window.__state();
 const RICH_DUST = 90000;
 const rich = () => {
   window.__reset(); window.__crew(3, 3, 5, 7); window.__machineGates();
-  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: RICH_DUST });
+  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: RICH_DUST });
 };
 
 // The quarry bought with nothing else open past the farm, eight seconds into
@@ -850,7 +850,7 @@ export const SCENES = {
                  window.__finish(); window.__jump(8); window.__fast(6); window.__look(st().shackX - 400); } },
   // Both ends of the rock's growth: the walk leaves the hut exactly the room
   // `rockSize` needs and no more. Jumped and then run, because `rich` leaves
-  // the first rock still falling and nine cores tearing the rift.
+  // the first rock still falling and its grant tearing the rift.
   shackrock: { about: 'the rock', say: 'the shack against rock one',
     run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__jump(1);
                  window.__fast(6); window.__look(st().shackX - 200); } },
@@ -909,13 +909,6 @@ export const SCENES = {
                  const x = st().rockLeftX;
                  for (let d = -260; d < 260; d += 12) window.__pile(x + d, 60);
                  window.__fast(4); window.__look(st().rockLeftX - 340); } },
-  // The core is the one thing drawn from a snapped middle rather than a
-  // corner, so it is where being half a cell out shows. Centered on the core
-  // itself: at the zoom this wants, a landmark near it is off the crop.
-  core: { about: 'the rock', say: 'a core, and the glow around it',
-    run: () => { rich(); window.__drop(); window.__fast(3);
-                 const c = st().coreItem || { x: st().coreHome.x };
-                 window.__look(c.x - window.innerWidth / 2); } },
   // The roll is forced on and the rockhands left to work: the runner gives
   // every scene a second before the shot and a ring is over in a third of
   // one, so the yard has to be making crits while the picture is taken.
@@ -1148,7 +1141,7 @@ export const SCENES = {
   // camera overrides `__look` for every frame after.
   flag: { about: 'the bench', say: 'the offer flag up over the bench',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                  window.__fast(2); window.__look(4930); } },
   // The mast slides out over FLAG_RAISE_MS and the cloth runs up it over
   // FLAG_HOIST_MS. The grant has to land after the runner's own second of
@@ -1158,14 +1151,14 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__fast(2); window.__look(4930);
                  requestAnimationFrame(() => {
-                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                    window.__fast(0.3);
                  }); } },
   flaghoist: { about: 'the bench', say: 'the flag halfway up its mast', page: true,
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__fast(2); window.__look(4930);
                  requestAnimationFrame(() => {
-                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                    window.__fast(0.95);
                  }); } },
   // Nothing else frames both sheds, and the whole question about a shack is
@@ -1183,14 +1176,14 @@ export const SCENES = {
                  window.__look(st().farmShed.x - 60); } },
   donemark: { about: 'the bench', say: "a finished work's glyph, ticked, at the foot of the shed's stack",
     run: () => { window.__reset(); window.__crew(3, 3);
-                 window.__grant({ dust: 99999, shards: 99, spores: 9999, cores: 9 });
+                 window.__grant({ dust: 99999, shards: 99, spores: 9999 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockquarry'); window.__finish();
                  window.__buy('quarrybench'); window.__finish(); window.__fast(2);
                  window.__look(st().quarryX - 300); } },
   donestack: { about: 'the bench', say: 'two rungs landed and ticked, one going up over them, one in line',
     run: () => { window.__reset(); window.__crew(3, 3);
-                 window.__grant({ dust: 99999, shards: 999, spores: 9999, cores: 9 });
+                 window.__grant({ dust: 99999, shards: 999, spores: 9999 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockquarry'); window.__finish();
                  window.__buy('quarrybench'); window.__finish();
@@ -1205,7 +1198,7 @@ export const SCENES = {
   notices2: { about: 'the bench', say: 'the noticeboard on a yard that has done a lot',
     run: () => { window.__reset(); window.__crew(1); window.__jump(30); window.__grant({ dust: RICH_DUST }); window.__fast(6);
                  window.__look(st().noticesX - 440); window.__fast(6); } },
-  // The opening lands a core and a hire within its first seconds, so a yard
+  // The opening lands a notice and a hire within its first seconds, so a yard
   // just started has a toast up by the shot.
   toast: { about: 'the bench', say: "a notice's card said out loud at the top edge",
     run: () => { window.__reset(); window.__crew(1); window.__fast(2); } },
@@ -1257,11 +1250,11 @@ export const SCENES = {
   // both rows away.
   quarryboardmid: { about: 'the cut', say: "the cut's board, a bench taken out and three to go",
     run: () => { window.__reset(); window.__crew(2, 3, 3, 3);
-                 window.__grant({ cores: 9, dust: 90000, spores: 999, shards: 999 });
+                 window.__grant({ dust: 90000, spores: 999, shards: 999 });
                  window.__board('quarry'); } },
   farmboardmid: { about: 'the plots', say: "the plots' board, two plots broken and four to go",
     run: () => { window.__reset(); window.__crew(2, 3, 3, 3);
-                 window.__grant({ cores: 9, dust: 90000, spores: 999, shards: 999 });
+                 window.__grant({ dust: 90000, spores: 999, shards: 999 });
                  window.__board('farm'); } },
   farmboard: { about: 'the plots', say: "the plots' board",
     run: () => { rich(); window.__board('farm'); } },
@@ -1280,7 +1273,7 @@ export const SCENES = {
   // steam exists in.
   apothecary: { about: 'the apothecary', say: 'a pot on the boil, a stirrer at it',
     run: () => { window.__reset(); window.__crew(0, 1, 0, 2);
-                 window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+                 window.__grant({ dust: 8000, spores: 3000, shards: 300 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__pot('stew'); window.__assign(JOB.STIR, 1); window.__fast(16);
@@ -1288,7 +1281,7 @@ export const SCENES = {
   // The site's bar hangs over the hut, not over the middle of the plot.
   apothbar: { about: 'the apothecary', say: 'a rung on the go, the bar over the hut',
     run: () => { window.__reset(); window.__crew(0, 1, 0, 2);
-                 window.__grant({ cores: 3, dust: 60000, spores: 3000, shards: 300 });
+                 window.__grant({ dust: 60000, spores: 3000, shards: 300 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__buy('brewdoses'); window.__fast(4); window.__look(st().apothecaryX - 300); } },
@@ -1296,7 +1289,7 @@ export const SCENES = {
   // would otherwise be out dealing is stood at the hut under the bar.
   potwork: { about: 'the apothecary', say: 'a keeper claimed to the hut for another pot',
     run: () => { window.__reset(); window.__crew(2, 4, 0, 3);
-                 window.__grant({ cores: 3, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5); window.__assign(JOB.STIR, 1); window.__pot('stew'); window.__fast(40);
@@ -1306,7 +1299,7 @@ export const SCENES = {
   // the steam.
   potbars: { about: 'the apothecary', say: 'four pots boiling, bars up, up close',
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5);
@@ -1320,7 +1313,7 @@ export const SCENES = {
   // side by side.
   apothpots: { about: 'the apothecary', say: 'the whole building at its widest',
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5);
@@ -1337,7 +1330,7 @@ export const SCENES = {
   // plank can stand (`drawShelves` in render/apothecary.js).
   apothshelf: { about: 'the apothecary', say: 'the rack of stock, pots cold',
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5);
@@ -1348,7 +1341,7 @@ export const SCENES = {
                  window.__fast(3); window.__look(st().apothecaryX - 320); } },
   apothboard: { about: 'the apothecary', say: "the apothecary's board",
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__look(st().apothecaryX - 320); window.__board('apothecary'); } },
@@ -1357,7 +1350,7 @@ export const SCENES = {
   // covers it.
   apothpick: { about: 'the apothecary', say: 'the picker open at the second pot', page: true,
     run: () => { window.__reset(); window.__crew(1, 4, 1, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5);
@@ -1369,7 +1362,7 @@ export const SCENES = {
   // The "for" section lists the trades that stand and none that do not.
   apothpickone: { about: 'the apothecary', say: 'the picker at a pot before the quarry: rockhands and farmhands, nobody else', page: true,
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);   // no quarrier: the cut stays shut
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__pot('stew', 0);
@@ -1380,7 +1373,7 @@ export const SCENES = {
   // The props have fallen, which is what opens the rock's kit.
   hatbar: { about: 'the kit', say: 'a helmet being made, the bar over the shack',
     run: () => { window.__reset(); window.__crew(3, 3); window.__jump(PROP_FROM);
-                 window.__give(3000); window.__grant({ shards: 99, cores: 9 });
+                 window.__give(3000); window.__grant({ shards: 99 });
                  S.shieldsDone = ['props']; window.__shack();
                  window.__buy('breaker'); window.__fast(4); window.__look(st().shackX - 200); } },
   // The four boards the kit is sold on.
@@ -1506,11 +1499,11 @@ export const SCENES = {
   // is a shot of a lull. Compare the pair side by side.
   gustR: { about: 'the house and the sky', say: 'the wind at its strongest, blowing right',
     run: () => { window.__seed(1); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                  window.__air({ haze: 2100 }); window.__fast(64.5); window.__look(st().rockLeftX - 300); } },
   gustL: { about: 'the house and the sky', say: 'the wind at its strongest, blowing left',
     run: () => { window.__seed(1); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                  window.__air({ haze: 2100 }); window.__fast(50); window.__look(st().rockLeftX - 300); } },
 
   // --- the tower --------------------------------------------------------------
@@ -1630,7 +1623,7 @@ export const SCENES = {
   // that had already had the moment.
   tear: { about: 'the pit and the rift', say: 'the hole giving way',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999 });
                  window.__meteor(); window.__give(60000); window.__fast(0.5); window.__look(st().pitX - 300); } },
   rift: { about: 'the pit and the rift', say: 'the rift, torn and fed',
     run: () => { rich(); window.__meteor(); window.__rift(); window.__give(60000); window.__give(12000);

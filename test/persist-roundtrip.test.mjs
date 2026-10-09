@@ -117,11 +117,11 @@ group('every field on S is accounted for', async () => {
   const missing = Object.keys(S).filter(k => !seen.has(k));
   const twice = all.filter((k, i) => all.indexOf(k) !== i);
 
-  // The three keys a save spells differently from the field it holds. Every
+  // The key a save spells differently from the field it holds. Every
   // other name in the two saved lists is the field's own.
   // ...and the two moments of the beat between rocks, written as distances
   // (`danceLeft`, `nextBoulderIn`) the way a body's moments are.
-  const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem',
+  const ALIAS = { who: 'workers',
                   danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt' };
   yard.persist();
   const written = Object.keys(JSON.parse(localStorage.getItem('boulder-clicker/v4')));

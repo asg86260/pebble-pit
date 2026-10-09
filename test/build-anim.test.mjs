@@ -107,7 +107,7 @@ group('a builder works across the whole zone it is fencing', async () => {
   // land, and a finished building has no builder standing at it to look at.
   window.__crew(1, 1);
   quickCrew();
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
   S.seenMess = true;
   window.__buy('unlockouthouse');
@@ -155,7 +155,7 @@ group('a builder works across the whole zone it is fencing', async () => {
 group('a builder walks between its patches rather than appearing at them', async () => {
   window.__crew(1, 1);
   quickCrew();
-  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
   S.seenMess = true;
   window.__buy('unlockouthouse');

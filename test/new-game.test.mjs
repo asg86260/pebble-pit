@@ -19,7 +19,6 @@ group('a reset leaves no dust behind: the old crew walk off with empty hands', a
   run(3);
   return [
     ok(carrying && held > 0, 'the old crew had dust in hand', `${held}`),
-    ok(floor.n === 0 && S.chips.length === 0, 'and none of it is on the new ground or in the air', `floor ${floor.n}, chips ${S.chips.length}`),
-    ok(!S.coreItem, 'nor a core', JSON.stringify(S.coreItem))
+    ok(floor.n === 0 && S.chips.length === 0, 'and none of it is on the new ground or in the air', `floor ${floor.n}, chips ${S.chips.length}`)
   ];
 });

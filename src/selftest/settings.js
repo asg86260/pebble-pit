@@ -375,8 +375,8 @@ export const TESTS = [
     await raf();
     const card = toastUp();
     // The opening lands a notice or two of its own before the grain (the
-    // core the door throws, the first hire), so what is up is whichever
-    // landed first, and the grain's turn comes in the line.
+    // first hire), so what is up is whichever landed first, and the grain's
+    // turn comes in the line.
     const first = Object.entries(S.wonAt).sort((a, b) => a[1] - b[1])[0]?.[0];
     const said = first && noticeFor(first);
     run(TOAST_MS / 1000 + 0.1);

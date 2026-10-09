@@ -222,33 +222,6 @@ export function openSites() {
   window.__levels({ benchLevel: 0, plotLevel: 0 });
 }
 
-// A core out of the rock and into the hole. The browser suite does this with the
-// pointer, because there it is also a check that a core can be picked up and
-// thrown; here it is only ever a check's way of getting a core into the pile, so
-// the core is let go over the mouth and the game does the rest -- the same fall,
-// the same landing, the same `bankCore` in core.js.
-export function bankCore() {
-  // Not every rock has one. The first four are rock and nothing else -- see
-  // CORE_FROM in config.js -- so a check that wants a core works the rock that
-  // has the first of them rather than whichever one it happens to be on.
-  // and it puts the yard back on the rock it found afterwards: rock five is a
-  // good deal bigger than rock one, and leaving the yard on it hands every check
-  // after this one a different-sized boulder to reason about
-  const wasRock = state().boulderNo;
-  const jumped = wasRock < 5;
-  if (jumped) window.__jump(5);
-  const restore = () => { if (jumped) window.__jump(wasRock); };
-  window.__next();                             // the last of the rock goes
-  runUntil(() => state().coreItem?.rest || state().cores > 0, 20);
-  if (state().cores > 0) { restore(); return true; }
-  if (!state().coreItem) { restore(); return false; }
-  yard.S.coreItem = { x: yard.pit.x + 40, y: yard.S.groundY - 240, vx: 0, vy: 0, rest: false };
-  const done = runUntil(() => !state().coreItem, 20);
-  restore();
-  haveRock();                                  // and the next rock comes down
-  return done;
-}
-
 // Where the ground is at some x -- and, down in the quarry, where the quarry's own
 // benched floor is. They are two different answers: `groundAt` is the surface a
 // body walks along up top, and the quarry is a hole in that surface.

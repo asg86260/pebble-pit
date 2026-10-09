@@ -42,7 +42,6 @@ export const fmt = n => {
 
 export const MARK = {
   dust: '<i class="dust"></i>',
-  core: '<i class="core"></i>',
   shard: '<i class="shard"></i>',
   spore: '<i class="spore"></i>',
   spark: '<i class="spark"></i>',
@@ -54,7 +53,6 @@ export const MARK = {
 // is never the reason a row is out of reach.
 export const purse = money =>
   money === 'time' ? Infinity :
-  money === 'core' ? S.cores :
   money === 'shard' ? S.shards :
   money === 'spore' ? S.spores :
   money === 'spark' ? S.sparks :

@@ -30,9 +30,8 @@ const rowOf = key => [...FARM_UPGRADES, ...QUARRY_UPGRADES].find(u => u.key === 
 
 // Enough of every coin to climb a whole ladder. Rung one is dust, rung two adds
 // the ground's own coin, rung three the other ground's and rung four everything
-// -- so a check that wants to reach the top has to be able to pay all five.
-const rich = () => window.__grant({ dust: 400000, shards: 9000, spores: 40000,
-                                    cores: 400, sparks: 9000 });
+// -- so a check that wants to reach the top has to be able to pay all four.
+const rich = () => window.__grant({ dust: 400000, shards: 9000, spores: 40000, sparks: 9000 });
 
 const coinsOf = key => (window.__rows().find(r => r.key === key)?.bill || [])
                           .map(([m]) => m).filter(m => m !== 'time').sort().join();

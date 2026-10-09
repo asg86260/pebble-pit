@@ -22,7 +22,7 @@
 //     shown is bought, cheapest first, when every coin it shares with the goal
 //     either stays covered after the purchase or costs no more than `--frac`
 //     (0.1) of the goal's price in that coin; never while the same row is
-//     still waiting to be built, and never spending the dome's 27 cores.
+//     still waiting to be built.
 //     The casino is never touched.
 //   - It staffs every open station to its room through the roster's + (`__assign`),
 //     wizards first and the rock last, keeping `--haul` of the yard's crew
@@ -92,7 +92,6 @@ const FACTS = [
   ['apoth', () => S.apothecaryOpen, 'the apothecary opens'],
   ['shack', () => S.shackOpen, 'the shack opens'],
   ['filter', () => S.filterOpen, 'the air filter stands'],
-  ['core', () => S.cores > 0, 'first core banked'],
   ['spore', () => S.spores > 0, 'first spore'],
   ['shard', () => S.shards > 0, 'first shard'],
   ['hat', () => S.wizardHats > 0, 'first wizard hat'],
@@ -132,21 +131,17 @@ const STORY = ['props', 'unlockfarm', 'net', 'unlockquarry', 'arch', 'unlocktowe
 const NEVER = new Set(['unlockcasino', 'potkeep', 'askwizards']);
 // and the idle bot buys nothing for hands it never uses
 if (CPS === 0) for (const k of ['auto', 'speed', 'pick', 'autotoss', 'toss', 'reach']) NEVER.add(k);
-const bal = () => ({ dust: S.stored, core: S.cores, shard: S.shards, spore: S.spores,
+const bal = () => ({ dust: S.stored, shard: S.shards, spore: S.spores,
                      spark: S.sparks, scale: S.scales });
 const coins = bill => bill.filter(([m]) => m !== 'time');
 const affords = (bill, b) => coins(bill).every(([m, n]) => (b[m] ?? 0) >= n);
 const pending = () => new Set(Object.values(S.works || {}).flat().filter(Boolean).map(w => w.key));
-const weight = bill => coins(bill).reduce((a, [m, n]) => a + n * (m === 'dust' ? 1 : m === 'core' ? 5000 : 20), 0);
+const weight = bill => coins(bill).reduce((a, [m, n]) => a + n * (m === 'dust' ? 1 : 20), 0);
 const bought = {};
-// the dome's 25 and the tower's 2, while the dome is still to come
-const CORE_KEEP_ALL = 27;
-let CORE_KEEP = CORE_KEEP_ALL;
 let goalKey = null;
 const covered = {};
 
 function shop() {
-  CORE_KEEP = S.shieldsDone.includes('dome') ? 0 : CORE_KEEP_ALL;
   let rows = g.__rows().filter(r => r.shown && !r.done && !NEVER.has(r.key));
   const building = pending();
   // the goal: the first story row on a board and not yet on its way
@@ -178,8 +173,6 @@ function shop() {
     // A coin the goal also wants is spent freely while the goal's share of it
     // is already in the purse after, and otherwise only in small change.
     if (coins(r.bill).some(([m, n]) => need[m] && b[m] - n < need[m] && n > FRAC * need[m])) continue;
-    // and the dome's cores are kept back: they come one a rock
-    if (coins(r.bill).some(([m, n]) => m === 'core' && S.cores - n < CORE_KEEP)) continue;
     if (g.__buy(r.key)) bought[r.key] = (bought[r.key] || 0) + 1;
   }
 }
@@ -273,7 +266,7 @@ for (; t < LIMIT; t++) {
   if (t % EVERY === 0 && t > 0) {
     keep();
     const b = bal();
-    console.log(`${hms(t).padStart(8)}  .. rock#${S.boulderNo} (${S.boulder.flat().reduce((a, c) => a + c, 0)} px) crew ${S.crew} (rock ${S.rockhands}, carry ${S.haulers}) dust ${Math.round(b.dust)} core ${b.core} `
+    console.log(`${hms(t).padStart(8)}  .. rock#${S.boulderNo} (${S.boulder.flat().reduce((a, c) => a + c, 0)} px) crew ${S.crew} (rock ${S.rockhands}, carry ${S.haulers}) dust ${Math.round(b.dust)} `
       + `shard ${Math.round(b.shard)} spore ${Math.round(b.spore)} spark ${Math.round(b.spark)} `
       + `wiz ${S.wizards}/${S.wizardHats} sky ${S.meteorOpen ? 'open' : 'shut'} ate ${Math.round(S.riftAte || 0)} goal ${goalKey} [${Math.round((Date.now() - wall0) / 1000)}s wall]`);
   }

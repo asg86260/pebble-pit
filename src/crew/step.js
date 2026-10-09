@@ -344,7 +344,6 @@ export function updateWorkers(now, dt) {
       if ((w.claim >= from && w.claim <= to) || across) w.claim = -1;
     }
   }
-  if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   stepKit();                        // and anybody with kit to go and fetch or put back
 
   // Where everybody was standing when the frame began, for `faceTravel`.

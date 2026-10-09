@@ -439,7 +439,7 @@ group('the dome holds the rescue rock, sets it down, and then fades out', async 
   return [
     ok(!before, 'the dome is not offered until the machine has failed too'),
     ok(!noFlyers, 'nor until somebody can fly'),
-    ok(offered && bought, 'and is bought from the tower, in cores'),
+    ok(offered && bought, 'and is bought from the tower'),
     ok(nobodyCarries, 'nothing of it is carried across the yard'),
     ok(cast && poured, 'the wizards ring it and pour it up', `laid ${state().shieldsDone}`),
     ok(noGroundWork, 'and no work of it ever touches the ground'),

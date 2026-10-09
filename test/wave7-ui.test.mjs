@@ -29,7 +29,7 @@ group('the pickaxe ladder is whole-pixel rungs off its list, bought like a playe
 
   // Every coin, so the last rung -- the spark's, like every ladder's -- is
   // within reach; the check is about the rungs, not the bill.
-  window.__grant({ shards: 20000, spores: 20000, cores: 9, sparks: 5000 });
+  window.__grant({ shards: 20000, spores: 20000, sparks: 5000 });
   out.push(ok(rockhandBite(0) === ROCKHAND_PX[0], 'level 0 bites the foot of its list', `${rockhandBite(0)}`));
   for (let lvl = 0; lvl < LADDER; lvl++) {
     const before = rockhandBite();
@@ -54,7 +54,7 @@ group('no crit-power rung reads "a -> a", bought rung by rung', async () => {
   // in dust -- the one three-rung ladder that is, being the strongest rung on
   // the bench -- so the purse has to hold all three or the row is out of reach
   // and the ladder reads as broken rather than as unaffordable.
-  window.__grant({ shards: 20000, spores: 50000, cores: 9, sparks: 5000 });
+  window.__grant({ shards: 20000, spores: 50000, sparks: 5000 });
   // ...and the card is off the board until both grounds stand -- a bill naming
   // a coin the yard cannot get is a card the yard does not draw (coinsOpen).
   window.__crew(0, 0, 1, 1);

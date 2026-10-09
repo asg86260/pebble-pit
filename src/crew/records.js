@@ -56,7 +56,7 @@ export const newRecord = () => ({
 // upgrades.js).
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 'tidied',
                       'at', 'trained', 'kitOf', 'x', 'y',
-                      'carry', 'load', 'hasCore', 'goal', 'lentFrom',
+                      'carry', 'load', 'goal', 'lentFrom',
                       // a body that lives in the deep's pods, not the yard's rooms
                       'deepHome',
                       // the doses in a stirrer's arms, or a stirrer saved on a

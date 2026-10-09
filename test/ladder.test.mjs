@@ -33,7 +33,7 @@ group('a ladder has an end, and says where you are on it', async () => {
   window.__invest();                         // the grounds stand: rungs past three are priced in their coins
   window.__crew(1, 0);
   window.__give(2000000);
-  window.__grant({ shards: 40000, spores: 40000, cores: 9, sparks: 4000 });   // every coin: the last rung is the spark's
+  window.__grant({ shards: 40000, spores: 40000, sparks: 4000 });   // every coin: the last rung is the spark's
 
   const start = state().carryLevel;
   // The whole ladder over three cards, then a card's worth of presses that
@@ -56,7 +56,7 @@ group('a rate ladder ends exactly on the floor it always had', async () => {
   window.__invest();                         // the grounds stand: rungs past three are priced in their coins
   window.__crew(1, 0);
   window.__give(2000000);
-  window.__grant({ shards: 40000, spores: 40000, cores: 9, sparks: 4000 });
+  window.__grant({ shards: 40000, spores: 40000, sparks: 4000 });
   // the swing row is not offered until the swinging is automatic, which is the
   // row above it on the same board
   buyBuilt('auto');
@@ -79,7 +79,7 @@ group('the first card is dust alone, and the cards after it add the coins the ya
   window.__crew(1, 0);
   window.__give(2000000);
   buyBuilt('auto');
-  window.__grant({ shards: 5000, spores: 5000, cores: 9, sparks: 500 });
+  window.__grant({ shards: 5000, spores: 5000, sparks: 500 });
   const bill = key => window.__rows().find(r => r.key === key)?.bill || [];
   const coins = key => bill(key).map(([c]) => c).filter(c => c !== 'time').sort().join();
 

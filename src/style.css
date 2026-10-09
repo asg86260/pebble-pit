@@ -556,10 +556,10 @@ body.still #scroller { scroll-behavior: auto; }
 .pin button { width: 100%; border: 3px double var(--ink); }
 .pin button .gain:empty { display: none; }
 /* The same marks the game draws in the yard, in the same colours: a grain of
-   dust, a core, a shard, a spore. The board and the world speak one alphabet,
+   dust, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching
    pile up. */
-.dust, .core, .shard, .spore, .spark, .scale, .clock {
+.dust, .shard, .spore, .spark, .scale, .clock {
   display: inline-block;
   vertical-align: baseline;
 }
@@ -606,11 +606,6 @@ body.still #scroller { scroll-behavior: auto; }
 /* and the hour hand: short, out to nine, through the same pixel */
 .clock::before { left: 2px; top: 4px; width: 3px; height: 1px; }
 .dust { width: 7px; height: 7px; background: currentColor; }
-.core {
-  width: 8px; height: 8px;
-  border: 1.5px solid currentColor;
-  border-radius: 50%;
-}
 /* a shard: the mark that means the quarry */
 .shard {
   display: inline-block;

@@ -1,7 +1,7 @@
 // The rock: how it comes down, where it stands, what it leaves behind, and the
 // beat the crew get when it is finished.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, yard, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, yard, P, WORKER } from './helpers.mjs';
 // The dance's own numbers, for the celebration group below: what a jump clears,
 // the pace that reads as a fault, and the two the beat is derived from. Read
 // rather than retyped, so the check moves with the dial instead of pinning it.

@@ -17,7 +17,6 @@ import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
 import { SKY, DROPS, fillSky, forceStrike, pinHeft, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
-import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS, WORKER } from './config.js';
 import { seatRift } from './rift.js';
@@ -127,7 +126,7 @@ export const pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, b
 
 // The hut is settled rather than left to scoot: it walks out one rock at a
 // time, and a jump is many rocks in one frame.
-export const jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); settleShack(); };
+export const jump = n => { S.boulderNo = n; makeBoulder(); settleShack(); };
 
 export const preview = n => {
   const keep = S.boulderNo;
@@ -140,8 +139,6 @@ export const preview = n => {
 };
 
 export const next = () => { clearBoulder(); S.chips = []; };
-
-export const drop = () => { dropCore(); };
 
 // A flock now. Clears whatever was still up there first, so a check gets that
 // flock and not the leavings of the last one.
@@ -181,7 +178,6 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   if (f > 0) S.farmOpen = true;
   resite();
   rebalance();                                      // and the rest carry dust
-  if (S.crew) S.seenCore = true;
   syncWorkers(); buildShop();
 };
 
@@ -219,7 +215,6 @@ export const openMeteor = () => {
   S.towerOpen = true;
   S.meteorOpen = true;
   S.skyShown = true;
-  S.seenCore = true;
   makeMeteor();
   buildShop();
 };
@@ -488,7 +483,6 @@ export const invest = () => {
 export const grant = (o = {}) => {              // shards and spores, for looking at things
   if (o.shards) { S.shards += o.shards; S.seenShard = true; }
   if (o.spores) { S.spores += o.spores; S.seenSpore = true; }
-  if (o.cores) { S.cores += o.cores; S.seenCore = true; }
   if (o.sparks) { S.sparks += o.sparks; S.seenSpark = true; }
   // Scales lie on the deep's floor, not in the hole, and are counted by the
   // bed: laid there by the serpent's own handle.
@@ -496,14 +490,14 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   // Every counter is a *pile*, not a number: the coin you own is the coin
   // lying in the hole, so the cells move with the counter. `seedPitCores`
   // lays down what the hole will take and sends the rest through the rift.
-  if (o.shards || o.spores || o.cores || o.sparks) seedPitCores();
+  if (o.shards || o.spores || o.sparks) seedPitCores();
   // Dust through `give`, for the same reason, and whatever the hole will not
   // take through the rift, where it goes in play: a check about an endless
   // ladder needs more dust than a hole holds.
   if (o.dust) {
     // Only as many grains as the hole could take are offered: `give` banks
     // one at a time, so a million is a million tries on a full hole. Room in
-    // the *pile*, not the dust account, since a granted core takes a cell.
+    // the *pile*, not the dust account, since a granted find takes a cell.
     // The pile's own answer is the last word (the count credits a few cells
     // the search cannot fill), and a refusal tears the rift for real, with
     // the cutscene over every scene on a rich yard; a grant is a handout, so
@@ -940,7 +934,7 @@ export const HANDLES = {
   // a window (modal.js) by kind, or null to close it
   __window: kind => showWindow(kind),
   __clearFloor: clearFloor, __pile: pile, __jump: jump,
-  __preview: preview, __next: next, __drop: drop,
+  __preview: preview, __next: next,
   __birds: birds, __crew: crew, __kit: kit,
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,

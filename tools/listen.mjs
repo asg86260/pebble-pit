@@ -50,7 +50,6 @@ const STRIKES = [
   ['boulder-land', 'boulder-land', {}],
   ['machine-beat', 'machine-beat', {}],
   ['pit-land', 'pit-land', {}],
-  ['core-bank', 'core-bank', {}],
   ['meteor-call', 'meteor-call', {}],
   ['bolt-throw', 'bolt-throw', {}],
   ['bolt-strike', 'bolt-strike', {}],

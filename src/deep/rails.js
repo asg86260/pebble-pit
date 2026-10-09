@@ -230,7 +230,7 @@ const mounted = new Map();                // id -> { el, body, tip, sig }
 
 // The bill as the cards write it: each coin its own cell, saying whether you
 // have it, in the order the yard hands them out (shop.js, `refresh`).
-const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'core', 'spark'];
+const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'spark'];
 const billHTML = bill => bill
   .slice().sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0]))
   .map(([m, n]) => `<span class="${purse(m) >= n ? 'have' : 'short'}">${MARK[m]} ${priceText(m, n)}</span>`).join('');

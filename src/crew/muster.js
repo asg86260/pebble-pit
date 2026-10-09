@@ -1,7 +1,7 @@
 // The crew, kept to the counts: who the yard has, who it is short of, and who is
 // actually standing at a site rather than merely assigned to one.
 
-import { WORKER, CORE_SIZE } from '../config.js';
+import { WORKER } from '../config.js';
 import { S } from '../state.js';
 import { spawnChip, bell } from '../dust.js';
 import { setHands, setHandsOn, setStaff, onTheGo, builderManned, SITE_JOB } from '../works.js';
@@ -104,15 +104,10 @@ export function syncWorkers() {
       for (let i = 0; i < (w.carry || 0); i++)
         spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
     }
-    if (w.hasCore) {
-      S.coreItem = { x: w.x, y: S.groundY - CORE_SIZE, vx: 0, vy: -1, rest: false };
-      if (S.coreTaker === w) S.coreTaker = null;
-    }
     // hands empty and nothing claimed, so whatever it does next it starts with
     // nothing on it
     w.carry = 0;
     w.load = [];
-    w.hasCore = false;
     w.claim = -1;
     unbook(w);                     // and the room it had booked goes back
   }

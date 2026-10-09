@@ -13,7 +13,7 @@ import { P, SHELF_INK } from './config.js';
 import { S } from './state.js';
 import { maxed, rungOf, rungsOf } from './words.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
-import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
+import { SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
 
 import { spelled } from './tower.js';
@@ -169,7 +169,6 @@ export function take(money, n, to = null) {
   if (!n) return;
   if (money === 'scale') { spendScales(n, to?.x ?? S.cx, to?.y ?? S.groundY); return; }
   if (money === 'dust') spend(n);
-  else if (money === 'core') { S.cores -= n; spendHeld(n, CORE_CELL); }
   else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (money === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
   else if (money === 'spark') { S.sparks -= n; spendHeld(n, SPARK_CELL); }

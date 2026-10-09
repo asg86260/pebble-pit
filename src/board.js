@@ -633,7 +633,6 @@ function fill(which) {
 // met.
 const PURSE = [
   ['dust', () => true, () => S.stored],
-  ['core', () => S.seenCore, () => S.cores],
   ['shard', () => S.seenShard, () => S.shards],
   ['spore', () => S.seenSpore, () => S.spores],
   ['spark', () => S.seenSpark, () => S.sparks],

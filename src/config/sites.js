@@ -45,7 +45,7 @@ export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
 //             house is the exception: its spout is on the left wall, so a strip
 //             laid the usual way round would put the heap inside the building.
 //
-// In yard order, walking LEFT from the rock, which is the order the cores open
+// In yard order, walking LEFT from the rock, which is the order the barriers open
 // them in. Adding a station is a row: its spot is reserved from the moment the
 // table names it, whether or not it has been bought.
 // One gap between every pair of neighboring sites, and it is BARE ground:

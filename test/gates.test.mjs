@@ -58,7 +58,7 @@ group('every door row and every shield row is gated by offered and nothing else'
   same('on a fresh yard');
   window.__fullSites();
   window.__crew(2, 2, 1, 1);
-  window.__grant({ cores: 30, dust: 900000, spores: 90000, shards: 90000 });
+  window.__grant({ dust: 900000, spores: 90000, shards: 90000 });
   run(1);
   same('with the grounds open');
   // and every door there is, the shields answered, so the retired side of
