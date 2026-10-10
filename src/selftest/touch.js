@@ -8,7 +8,7 @@
 // A phone is stood up with `__coarse(true)`, which forces `coarse()` without
 // writing the preference, and every group puts it back.
 
-import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle } from './kit.js';
+import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle, cardShows } from './kit.js';
 import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, SHEET_MS, PROP_FROM, THUMB, BRUSH, P } from '../config.js';
 import { S } from '../state.js';
 import { purse } from '../words.js';
@@ -185,7 +185,7 @@ export const TESTS = [
     // (works.js): bought once and kept, never twice.
     const once = purse('dust') < had && purse('dust') === low && !!workOn('auto');
     // and every tappable thing on the page says so to the platform
-    const auto_ = [...document.querySelectorAll('button, #scroller, #handle, .panel, .held, #pin, #queue, .toast')]
+    const auto_ = [...document.querySelectorAll('button, #scroller, #handle, .panel, .held, #queue, .toast')]
       .filter(el => el.offsetParent !== null || el.id === 'scroller')
       .map(el => [el.id || el.className, getComputedStyle(el).touchAction])
       .filter(([, a]) => !/manipulation|pan-x|pan-y|none/.test(a));
@@ -394,29 +394,31 @@ export const TESTS = [
       ok(seen.join(' ') === 'show fade hide show', 'each tap is a step round the three, and the glyph says which', seen.join(' ')),
     ];
   }],
-  ['the pinned card stands under the corner buttons, not over them', async () => {
-    // The pause button is a phone's only way to the held sheet, and the story
-    // pins the goal card into the same corner by itself: a pin drawn at the
-    // top of the window covered it and the fullscreen button. The pin gives the
-    // corner up by `--fs-room`, and only `.pin` may say where the corner is.
+  ['the story\'s card and its buy stand clear of the corner buttons on a phone', async () => {
+    // The pause button is a phone's only way to the held sheet. The story's
+    // card sells the shield on offer (objbarrier.js), the tallest it gets,
+    // and it must not reach the corner's squares.
     newRun();
     await settle();
     phone(true);
     window.__crew(2, 1);
-    window.__jump(PROP_FROM);                   // the goal card pins itself once the first rock is down
+    window.__jump(PROP_FROM);                   // the props are on offer once the first rock is down
     window.__give(200);
     window.__build();
     await frames(30);
-    const pin = document.getElementById('pin');
+    await cardShows('props', 'offer');
+    const card = document.getElementById('objective');
+    const buy = card.querySelector('.barrier button.buy');
     const pause = document.getElementById('pause');
-    const under = () => {
-      const p = pin.getBoundingClientRect(), g = pause.getBoundingClientRect();
-      return p.top >= g.bottom;
-    };
+    const squares = [...document.querySelectorAll('#corner > button')].filter(b => !b.hidden);
+    const meet = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    const cr = card.getBoundingClientRect();
+    const hits = squares.filter(b => meet(cr, b.getBoundingClientRect())).map(b => b.id);
     const out = [
-      ok(!pin.hidden && pin.querySelector('button[data-key]'), 'a card is pinned in the corner'),
+      ok(!card.hidden && !!buy, 'the card sells the props on a phone'),
       ok(!pause.hidden, 'and the pause button is up on a phone'),
-      ok(under(), 'and the card stands under it', `pin ${Math.round(pin.getBoundingClientRect().top)} vs pause ${Math.round(pause.getBoundingClientRect().bottom)}`)
+      ok(hits.length === 0, 'and the card stands clear of the corner squares', hits.join(', ')),
+      ok(!!buy && /manipulation/.test(getComputedStyle(buy).touchAction), 'and its buy refuses the double-tap zoom', buy ? getComputedStyle(buy).touchAction : 'none')
     ];
     phone(false);
     return out;

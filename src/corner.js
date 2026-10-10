@@ -1,7 +1,6 @@
 // The corner: the row of squares in the sky's top-right (play.html,
 // `#corner`) and the crew switch that stands in it. The row lays itself out
-// right to left, so this file does not say who stands where; it says only
-// whether the row holds anything, for the pin under it to give the corner up.
+// right to left, so this file does not say who stands where.
 //
 // The crew switch draws the bodies at full ink, faint, or not at all
 // (render.js, a `dim` layer), a press a step round the three, so an endgame
@@ -10,14 +9,13 @@
 // you reach for while watching, not a setting you make once. A preference
 // (prefs.js, `crewView`), so it outlasts the run.
 
-import { FS_SIZE, CREW_FADE } from './config.js';
+import { CREW_FADE } from './config.js';
 import { S } from './state.js';
 import { CREW_VIEWS, crewView, setPref } from './prefs.js';
 import { onTap } from './tap.js';
 import { showTipAt } from './board.js';
 import { goDeep, goUp, gliding } from './view.js';
 
-const row = document.getElementById('corner');
 const crew = document.getElementById('crewfade');
 const way = document.getElementById('way');
 
@@ -73,14 +71,9 @@ function seatWay() {
 // Seated every frame like the rest of the shell, after the squares that
 // decide for themselves (fullscreen.js, pause.js): gone while the game is
 // held, since the sheet is up over the yard it would fade.
-let room = null;
 export function refreshCorner() {
   crew.hidden = S.paused;
   seatWay();
   if (crew.hidden && noting) { noting = false; showTipAt(null); }
   crew.style.setProperty('--crew-fade', CREW_FADE);
-  const any = [...row.children].some(b => !b.hidden);
-  if (any === room) return;
-  room = any;
-  document.documentElement.style.setProperty('--fs-room', any ? `calc(${FS_SIZE}px + var(--gap))` : '0px');
 }

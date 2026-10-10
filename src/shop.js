@@ -6,9 +6,8 @@
 import { S } from './state.js';
 import { P, SHELF_INK, SHELF_DOT, SHELF_FLOAT_SPREAD, SHELF_FOLLOW, SHELF_GLYPH_CELL, SHELF_HAND_CELLS, SHELF_HAND_FADE, GRIT_MOTES, GRIT_SPREAD, GRIT_RISE, GRIT_GRAV, GRIT_LIFE } from './config.js';
 import { drawGlyph, glyphFor, badgeFor, cellsOf, inheritGlyph } from './glyphs.js';
-import { ownsCamera } from './beats.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, lodgers, SECTIONS, buy, billOf, tintOf, canPay, building, lineAt, again, full as spokenFor,
+import { UPGRADES, lodgers, buy, billOf, tintOf, canPay, building, lineAt, again, full as spokenFor,
          waitingOf, handBack } from './upgrades.js';
 import { rungOf, rungsOf, maxed, folds } from './words.js';
 import { MARK, gainText, purse, priceText, leftText, ordinal } from './words.js';
@@ -18,7 +17,7 @@ import { FILTER_UPGRADES, FILTER_SECTIONS } from './filter.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
-import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
+import './tower.js';
 import { STATS_UPGRADES, STATS_SECTIONS, BOOK_ROWS, BOOK_SECTIONS } from './stats.js';
 import { windowFor } from './modal.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
@@ -42,7 +41,6 @@ inheritGlyph(key => {
 });
 
 const shopEl = document.getElementById('shop');
-const pinEl = document.getElementById('pin');
 const crewEl = document.getElementById('crewshop');
 const crewListEl = document.getElementById('crewlistrows');
 const statsEl = document.getElementById('statsshop');
@@ -165,7 +163,32 @@ addEventListener('pointerdown', e => {
 const PIC = '<span class="pic"></span>';
 // The scale first: on a deep board it is the coin the ladder is written in,
 // and the yard's coins are what the later bands add to it.
-const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'spark'];
+export const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'spark'];
+
+// A row's price tag as the board writes it: the coins, each its own cell
+// saying whether you have it ("you are short of something" is not "you are
+// short of *this*"), in the order the yard hands them out whatever order the
+// row wrote its bill in, and the clock apart. The story's card wears the
+// same tag on its buy (objbarrier.js), so the two cannot disagree.
+export function tagOf(u, full = billOf(u)) {
+  const said = ([money, n]) =>
+    `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`;
+  const bill = full.filter(([m]) => m !== 'time')
+    .sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0])).map(said).join('');
+  const clock = full.filter(([m]) => m === 'time').map(said).join('');
+  return { bill, clock };
+}
+
+// A press on a row, wherever the row is drawn: the tile, its strip, the
+// story's card. The press answers on its own frame -- the row it took goes,
+// the next rung comes, before the finger is off it -- and any look the yard
+// sent before or because of it is spent.
+export function pressRow(u, act = buy) {
+  tookLook();
+  act(u);
+  if (S.shopStale) buildShop();
+  tookLook();
+}
 const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
   '<span class="step">' +
   '<button type="button" class="less">-</button>' +
@@ -191,7 +214,7 @@ export const boardReworded = () => { const was = reworded; reworded = false; ret
 function build(el, list, sections, empty, heads, ledgerBoard = false) {
   const inSubmenu = el === crewListEl;
   // The shelf (DESIGN.md, "The shelf"): a section is a plank and a row a thing
-  // standing on it. The crew submenu and the pin keep the cards; the books are
+  // standing on it. The crew submenu keeps the cards; the books are
   // a ledger, a line a reading, laid out by the stylesheet on the card markup.
   const ledger = ledgerBoard || LEDGERS.includes(el);
   const shelf = !inSubmenu && !ledger;
@@ -337,25 +360,13 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
         : '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
           '<span class="gain"></span><span class="time"></span><span class="cost"></span>' +
           (u.note && !inSubmenu ? '<span class="note"></span>' : '');
-      // A readout (`u.read`) and the pinned card do not answer the cursor;
-      // nor does any tile under a thumb, which has no cursor to answer
+      // A readout (`u.read`) does not answer the cursor; nor does any tile
+      // under a thumb, which has no cursor to answer
       // (DESIGN.md, "A tap buys": a hover a phone can see is a tap it eats).
-      if (shelf) { b.classList.add('tile'); if (!u.read && el !== pinEl && !coarse()) leanToCursor(b, u.key); }
+      if (shelf) { b.classList.add('tile'); if (!u.read && !coarse()) leanToCursor(b, u.key); }
       // The goal card wears its section's title as a sign on its own frame
       // (shelf.css), since the goal heading itself is not drawn on a shelf.
       if (sect.goal) { b.classList.add('goal'); b.dataset.sign = sect.title; }
-      // The pushpin in the card's corner (`fillPin`). Not a press on the card,
-      // so the press is stopped here. A readout has nothing to wait for and a
-      // signpost has no price, so neither carries one.
-      if (!u.read && !u.sign && !inSubmenu) {
-        const pin = document.createElement('i');
-        pin.className = 'pinmark';
-        pin.title = 'pin this card to the corner';
-        const press = e => { e.stopPropagation(); e.preventDefault(); togglePin(u.key); };
-        pin.addEventListener('pointerdown', press);
-        pin.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
-        b.appendChild(pin);
-      }
       // The strip along the tile's foot (DESIGN.md, "Refund and another"):
       // one half hands back the newest copy still waiting its turn, the
       // other buys the next, so the repeat the card's body also sells is a
@@ -371,10 +382,7 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
           h.className = cls;
           onTap(h, e => {
             e.stopPropagation(); e.preventDefault();
-            tookLook();
-            act(u);
-            if (S.shopStale) buildShop();
-            tookLook();
+            pressRow(u, act);
           });
           strip.appendChild(h);
         };
@@ -406,12 +414,7 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
         // card: a body that also bought was a buy nobody could see
         // (DESIGN.md, "Refund and another").
         if (b.classList.contains('stripped')) return;
-        tookLook();                            // anything the yard sent earlier
-        buy(u);
-        // The press answers on its own frame: the row it took goes, the next
-        // rung comes, before the finger is off the board.
-        if (S.shopStale) buildShop();
-        tookLook();                            // and whatever this purchase sent
+        pressRow(u);
       }, { long: say });
       // A row with something behind it is a door. One with `over` opens it on
       // the way in as well as on the press, which is wired on the row itself
@@ -495,10 +498,8 @@ function wearGlyph(row, key, tint, ink, built = null, hands = []) {
 // steps off; a body that has left stays on the tile's list until it has faded,
 // throwing nothing.
 //
-// Stepped on the game's clock, not once a call: the pinned tile and the open
-// board can both be showing the one site, and a display faster than sixty
-// asks more often, and either used to run the chips and the fade that much
-// faster. A second ask on the same instant gets the same poses back.
+// Stepped on the game's clock, not once a call: a display faster than sixty
+// asks more often, and used to run the chips and the fade that much faster. A second ask on the same instant gets the same poses back.
 const hits = new WeakMap();
 const SCALE = SHELF_GLYPH_CELL / P;
 const seen = new Map();                        // key -> Map(body -> on)
@@ -581,21 +582,13 @@ export function refresh(el, list, headcount) {
     }
     const u = list.find(x => x.key === row.dataset.key);
     if (!u) continue;
-    row.classList.toggle('pinned', S.pinned === u.key);
     sayNote(row, u);
-    // Each coin of the bill is its own cell and says whether you have it: "you
-    // are short of something" is not "you are short of *this*". The price is
-    // not run through the tweener: a price only changes when the next rung is
-    // up, and a number counting from the old bill to the new read as the thing
-    // you had just bought going up under you.
-    const said = ([money, n]) =>
-      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`;
+    // The price (`tagOf`) is not run through the tweener: a price only
+    // changes when the next rung is up, and a number counting from the old
+    // bill to the new read as the thing you had just bought going up under
+    // you.
     const full = billOf(u);
-    // The coins in the order the yard hands them out, whatever order the row
-    // wrote its bill in.
-    const bill = full.filter(([m]) => m !== 'time')
-      .sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0])).map(said).join('');
-    const clock = full.filter(([m]) => m === 'time').map(said).join('');
+    const { bill, clock } = tagOf(u, full);
     // By class, never by position: a shelf tile and a card lay the cells out
     // differently.
     const gain = row.querySelector('.gain'), time = row.querySelector('.time'), price = row.querySelector('.cost');
@@ -916,56 +909,5 @@ export function mountRows(el, rows, title = 'the bench', sections = null) {
   build(el, list, sections || [{ title, keys: list.map(u => u.key) }], '', null);
   refresh(el, list, null);
 }
-
-// --- the pin ------------------------------------------------------------------
-// One card in the corner of the game, the same row through the same builder
-// as the board's, so the two cannot disagree. One at a time; it comes down by
-// itself when the row retires. `S.pinned` is the saved key; a key no build
-// knows reads as nothing pinned.
-//
-// The goal pins itself when a shield row arrives and the corner is empty,
-// once: going up in the corner is being seen (`markRowSeen`), and a seen
-// shield does not climb back into a corner you emptied. The player's pin wins.
-export const togglePin = key => {
-  S.pinned = S.pinned === key ? null : key;
-};
-
-// Where a goal can stand: the bench's sky, and the tower's dome. The bench's
-// pins the frame it arrives; a station's waits until you have opened that
-// board, because the bench's sign sends you to the tower, and a dome pinned
-// from the yard would spare you the walk it is there to make you take.
-const GOALS = [
-  { rows: UPGRADES, sections: SECTIONS, when: () => true },
-  { rows: TOWER_UPGRADES, sections: TOWER_SECTIONS, when: () => S.towerBoardOpen }
-];
-
-const goalRow = () => {
-  for (const { rows, sections, when } of GOALS) {
-    const goal = sections.find(s => s.goal);
-    if (!goal || !when()) continue;
-    const u = rows.find(u => goal.keys.includes(u.key) && !u.sign && revealed(u)
-                             && !S.seenRows.includes(u.key));
-    if (u) return u;
-  }
-  return null;
-};
-
-export function fillPin() {
-  if (!pinEl) return;
-  let u = S.pinned ? rowFor(S.pinned) : null;
-  if (u && !(revealed(u) && !maxed(u))) { u = null; S.pinned = null; }
-  // Not while a scene has the camera: the next shield's row arrives on the
-  // frame the last one breaks, mid-cutscene.
-  if (!u && !ownsCamera()) {
-    u = goalRow();
-    if (u) { S.pinned = u.key; markRowSeen(u); }
-  }
-  pinEl.hidden = !u;
-  if (!u) { built.delete(pinEl); return; }
-  build(pinEl, [u], [{ title: '', keys: [u.key] }], '', null);
-  refresh(pinEl, [u], null);
-}
-
-
 
 export { UPGRADES, QUARRY_UPGRADES, FARM_UPGRADES };

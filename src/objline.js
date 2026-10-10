@@ -5,6 +5,7 @@
 
 import { S } from './state.js';
 import { objective, questNow } from './objectives.js';
+import { seatBarrier } from './objbarrier.js';
 
 const el = document.getElementById('objective');
 // The node yard's page is a stand-in with no line on it: nothing to seat.
@@ -40,6 +41,7 @@ export function seatObjective(t) {
   }
   if (!want && !shown) el.hidden = true;
   seatQuest(want);
+  seatBarrier(want && shown && want.key === shown.key ? want : null, t);
 }
 
 // The quest under the line: drawn again only when an item's state changes.

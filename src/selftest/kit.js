@@ -49,6 +49,24 @@ export async function settle(seconds = 0.4) {
   await raf();
   await raf();
 }
+// The story's card come to rest selling `key` in `mode` (objbarrier.js), or
+// false after `ms`. Its strike and its fades are the page's, on the wall
+// clock, so this waits on frames rather than turning the game: the yard is
+// not what is being waited for.
+export async function cardShows(key, mode, ms = 4000) {
+  const t0 = performance.now();
+  const card = document.getElementById('objective');
+  const at = () => { const b = card?.querySelector('.barrier');
+    return !!b && !card.hidden && !card.classList.contains('going') && !b.hidden && !b.classList.contains('swap')
+      && b.dataset.key === key && b.dataset.mode === mode; };
+  while (!at() && performance.now() - t0 < ms) await raf();
+  // and long enough for the fade in to finish, so a press lands on a button
+  // the pointer can see
+  const t1 = performance.now();
+  while (performance.now() - t1 < 400) await raf();
+  return at();
+}
+
 let STATED = 0, STATES = 0;
 export const state = () => { const t = performance.now(); const v = window.__state(); STATED += performance.now() - t; STATES++; return v; };
 export { fmt } from '../words.js';   // the very function the boards write with, so the two cannot drift

@@ -252,7 +252,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
                         sag: +(S.shield.sag || 0).toFixed(2),
                         strain: +(S.shield.strain || 0).toFixed(2) },
   shieldsDone: [...S.shieldsDone],
-  pinned: S.pinned,                 // the card in the corner, or null
   rockHeld: S.rockHeld,
 
   // The casino: the stake in the hopper, the handful on the pegs, the bins,

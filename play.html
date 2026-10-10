@@ -285,9 +285,6 @@ try {
   <button id="freedkeep" type="button">keep playing</button>
 </div>
 
-<!-- The pin: the one card you chose to keep in the corner, top-right, with its
-     live price. Filled by `fillPin` in shop.js; absent when nothing is pinned. -->
-<div id="pin" class="pin rows" hidden></div>
 <div id="tip" hidden></div>
 
 <!-- The call to build the bench: the one thing you can press that is not on a
@@ -299,13 +296,14 @@ try {
 <button id="raise" type="button" hidden>build the bench</button>
 
 <!-- The story's next step, one line pinned top left (objline.js; DESIGN.md,
-     "The story's objectives"). Words only: what, never where. -->
+     "The story's objectives"). Words only: what, never where. On a shield
+     step the card also sells the shield (`.barrier`, objbarrier.js). -->
 <!-- The top-left corner is one column (#topleft): the story's step, and under it
      the queue card, what is building and what waits behind it, one name a
      line (queue.js; absent when nothing is on the go). Two cards each pinned
      to the corner stood on top of each other. -->
 <div id="topleft">
-<div id="objective" aria-live="polite" hidden><span class="next">next</span><span class="say"></span><ul class="quest" hidden></ul></div>
+<div id="objective" aria-live="polite" hidden><span class="next">next</span><span class="say"></span><ul class="quest" hidden></ul><div class="barrier" hidden></div></div>
 <div id="queue" class="queue off" hidden></div>
 </div>
 

@@ -2,7 +2,7 @@
 // where a board seats itself.
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
-  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
+  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows } from './kit.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 
 // The ink standing in the band of sky over a station, where nothing else
@@ -1588,18 +1588,6 @@ export const TESTS = [
     // the swing runs on the frame clock: watch a few frames
     const feet = new Set();
     for (let i = 0; i < 24; i++) { window.__fast(1 / 60); await raf(); feet.add(read('jaw').foot); }
-    // Pinned as well as on the open board, the site is asked for twice a
-    // frame: both tiles show the one pose, not the second a step further on.
-    const pinMark = () => tile('jaw')?.querySelector('.pinmark');
-    pinMark()?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    const pinPose = () => document.querySelector(`#pin [data-key="jaw"] .pic`)?.dataset.tint;
-    let twins = 0, apart = [];
-    for (let i = 0; i < 24; i++) {
-      window.__fast(1 / 60); await raf();
-      const a = tile('jaw')?.querySelector('.pic')?.dataset.tint, b = pinPose();
-      if (a && a === b) twins++; else apart.push(`${a} vs ${b}`);
-    }
-    pinMark()?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     // some cells up, then nobody at the site: the hand fades out over
     // SHELF_HAND_FADE frames of the game clock, and the cells hold
     await settle(8);
@@ -1639,7 +1627,6 @@ export const TESTS = [
       ok(bare.w === 28 && pressed.hand === 0, 'a tile for sale, and one just pressed, has no hand on it', `${bare.w}px wide; ${pressed.hand} hand pixels after the press`),
       ok(state().jigging >= 0 && arrived.hand > 0 && arrived.w > bare.w, `a hand is on the tile once a body is on the patch (${at}s)`, `${arrived.hand} pixels, ${arrived.w}px wide`),
       ok(feet.size > 1, 'and it moves with the swing', `feet at rows ${[...feet].join('/')}`),
-      ok(twins === 24, 'pinned and on the board, the hand and its chips are one pose', `${twins}/24 alike; ${apart[0] || ''}`),
       ok(queuedSaid === 'queued' && queued.hand === 0 && queued.w === 28, 'a row in line draws no hand', `${queuedSaid}: ${queued.hand} pixels, ${queued.w}px`),
       ok(leaving.hand > 0 && leaving.w > 28, 'when the body steps off, the hand is still fading on the tile', `${leaving.hand} pixels, ${leaving.w}px`),
       ok(alone.hand === 0 && alone.w === 28, 'and with nobody at the site there is nobody on the tile', `${alone.hand} pixels, ${alone.w}px`),
@@ -1769,58 +1756,112 @@ export const TESTS = [
     ];
   }],
 
-  // The shield on offer pins itself while it is news, and the player's pin
-  // wins over it (DESIGN.md, "The shields are the spine").
-  ['a pinned card stands in the corner, buys, and comes down when the row goes', async () => {
+  // The shield on offer is sold on the story's card (objbarrier.js): its
+  // bill a coin a line, ticking as each is met, and a buy that is the bench
+  // row's own press; bought, a bar and the strip's cancel. Only the two
+  // buttons take the pointer: the rest of the card is the yard under it.
+  ['the shield on offer is sold on the story\'s card: a bill that ticks, a buy, a bar and a cancel', async () => {
     newRun();
     await settle();
     window.__crew(2, 1);
-    window.__jump(PROP_FROM);                   // the timber is on offer once the first rock is down
+    window.__jump(4);                           // the timber is on offer once the first rock is down
     window.__give(200);
     window.__build();
-    const corner = () => document.getElementById('pin');
-    const card = () => corner().querySelector('button[data-key]');
-    await settle(0.2);
-    // The story pins itself: nothing was pinned, so the goal is in the corner,
-    // dashed, because two hundred is not four hundred.
-    const goalUp = !corner().hidden && card()?.dataset.key === 'props';
-    const short = !!card()?.querySelector('.cost .short');
+    await settle(0.6);
+    const shown = await cardShows('props', 'offer');
+    const card = document.getElementById('objective');
+    const block = () => card.querySelector('.barrier');
+    const firstSays = `${block()?.dataset.key}:${block()?.dataset.mode}`;
+    const dust = () => block()?.querySelector('.bill li[data-money="dust"]');
+    const buyBtn = () => block()?.querySelector('button.buy');
+    const cancel = () => block()?.querySelector('button.cancel');
+    // a mouse press, down, up and the click, as tap.js wants one
+    const press = el => {
+      const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const ev = (type, buttons) => el.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 1,
+        isPrimary: true, button: 0, buttons, bubbles: true, cancelable: true }));
+      ev('pointerdown', 1); ev('pointerup', 0);
+      el.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true, cancelable: true }));
+    };
+    const hitAt = el => { const r = el.getBoundingClientRect(); return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); };
+    const offer = shown;
+    const words = !!block()?.querySelector('.name')?.textContent && !!block()?.querySelector('.note')?.textContent;
+    const unticked = !!dust() && !dust().classList.contains('done');
+    const dim = buyBtn()?.disabled === true;
+    // the line and the bill are click-through; the buy is not
+    const say = card.querySelector('.say'), sr = say.getBoundingClientRect();
+    const under = document.elementFromPoint(sr.left + 4, sr.top + sr.height / 2);
+    const lineThrough = !!under && !card.contains(under);
+    const billThrough = !!dust() && !card.contains(hitAt(dust()));
+    const buyTakes = !!buyBtn() && buyBtn().contains(hitAt(buyBtn()));
 
-    // Pin over it from the bench: the pushpin on a card puts that card in the
-    // corner and takes the goal down, and the bench's own card wears the mark.
-    await hoverBench();
-    const carry = shop().querySelector('button[data-key="carry"]');
-    carry?.querySelector('.pinmark')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    await settle(0.2);
-    const overGoal = card()?.dataset.key === 'carry' && state().pinned === 'carry';
-    const marked = carry?.classList.contains('pinned');
-    // ...and the press on the pin was not a press on the card
-    const notBought = state().carryLevel === 0;
-
-    // The corner buys: the card is the row, so pressing it is the purchase.
-    await hoverAway();
-    window.__give(400);
-    await settle(0.2);
-    const solid = !card()?.querySelector('.cost .short');
-    card()?.click();
-    const bought = runUntil(() => state().carryLevel > 0, 30);
-    // A ladder's card stays -- there is a next rung -- so it is still pinned;
-    // pinning it again takes it down and the corner empties, and the goal
-    // does not come back into it, because it has been looked at.
-    await settle(0.2);
-    const stayed = state().pinned === 'carry' && !corner().hidden;
-    card()?.querySelector('.pinmark')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    await settle(0.2);
-    const down = state().pinned === null && corner().hidden;
-
+    // Enough dust, and the line ticks and the buy lights. A house goes up
+    // first so the timber waits its turn behind it, which is what a cancel
+    // can hand back.
+    // Not past what the pit holds: a pit filled over its brim tears, and
+    // the tear's scene takes the card off the screen.
+    window.__give(20000);
+    window.__buy('house');
+    await settle(0.6);
+    const ticked = !!dust()?.classList.contains('done');
+    const lit = buyBtn()?.disabled === false;
+    const had = state().stored;
+    const litSays = `${dust()?.textContent}; buy ${buyBtn()?.disabled ? 'dim' : 'lit'}; card ${card.hidden ? 'hidden' : 'up'}`;
+    if (buyBtn()) press(buyBtn());
+    await settle(0.8);
+    const paid = state().stored < had;
+    const queued = (state().line.yard || []).some(w => w.key === 'props');
+    window.__board('bench');
+    await settle(0.3);
+    const benchSays = shop().querySelector('button[data-key="props"] .gain')?.textContent || '';
+    window.__board(null);
+    await settle(0.3);
+    const bar = await cardShows('props', 'build') && !!block()?.querySelector('.bar i');
+    const cancelSays = cancel()?.textContent || '';
+    const cancelTakes = !!cancel() && cancel().classList.contains('on') && cancel().contains(hitAt(cancel()));
+    const before = state().stored;
+    if (cancel()) press(cancel());
+    await settle(3);
+    const handedBack = !(state().line.yard || []).some(w => w.key === 'props') && state().stored > before;
+    const back = await cardShows('props', 'offer') && !!dust();
+    window.__crew(0, 0);
+    newRun();
     return [
-      ok(goalUp, 'the shield on offer pins itself into the corner', card()?.dataset.key),
-      ok(short, 'and reads short of what it costs'),
-      ok(overGoal && marked, 'a pushpin on the bench pins that card over it', state().pinned),
-      ok(notBought, 'without buying it'),
-      ok(solid && bought, 'the corner card buys when it can be paid for'),
-      ok(stayed, 'a ladder stays pinned for its next rung'),
-      ok(down, 'and its pushpin takes it down again, leaving the corner empty')
+      ok(offer && words, "the props are on offer on the story's card, named and described", firstSays),
+      ok(unticked && dim, 'short of the dust, its line is unticked and the buy dimmed'),
+      ok(lineThrough && billThrough, 'the card is click-through to the yard', `${under?.id || under?.tagName}`),
+      ok(buyTakes, 'but its buy takes the pointer'),
+      ok(ticked && lit, 'with the dust the line ticks and the buy lights', litSays),
+      ok(paid && queued, 'the card\'s buy queues the props, as the bench does', JSON.stringify(state().line.yard)),
+      ok(benchSays === 'queued', 'and the bench\'s own tile says queued', benchSays),
+      ok(bar && /^cancel ×1$/.test(cancelSays) && cancelTakes, 'bought, the card shows the bar and the cancel', cancelSays),
+      ok(handedBack && back, 'the cancel hands the bill back and the checklist returns'),
+    ];
+  }],
+
+  // The dome's bill is the longest a shield has: four coins and a clock, and
+  // every line of it has to read whole at the card's narrowest.
+  ['the dome on offer reads whole on the story\'s card, four coins and a clock', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1, 0, 0, 0, 1);
+    window.__jump(4);
+    window.__answered('props', 'net', 'arch');
+    window.__meteor();
+    window.__build();
+    await settle(0.6);
+    await cardShows('dome', 'offer');
+    const block = document.querySelector('#objective .barrier');
+    const lines = [...(block?.querySelectorAll('.bill li') || [])];
+    const coins = lines.filter(li => li.dataset.money).length;
+    const clipped = lines.filter(li => li.scrollWidth > li.clientWidth + 1).length;
+    const card = document.getElementById('objective').getBoundingClientRect();
+    const btn = block?.querySelector('button.buy')?.getBoundingClientRect();
+    const inside = !!btn && btn.right <= card.right && btn.left >= card.left;
+    return [
+      ok(block?.dataset.key === 'dome' && block?.dataset.mode === 'offer', "the dome is on offer on the story's card", block?.dataset.key),
+      ok(coins === 4 && lines.length === 5, 'its bill is four coins and a clock', `${coins} coins, ${lines.length} lines`),
+      ok(clipped === 0 && inside, 'and none of it runs out of the card', `${clipped} clipped`),
     ];
   }],
 
@@ -1875,43 +1916,6 @@ export const TESTS = [
       ok(seen, 'and under the cursor its sentence is still a different color from the card', said),
       ok(stripW > 0 && stripW < cardW / 2, 'a queued shield offers a cancel a button wide, not a bar across the card', `${stripW} of ${cardW}`),
       ok(clear, 'and the cancel stands clear of the sentence', sb ? `strip ${Math.round(sb.left)},${Math.round(sb.top)}-${Math.round(sb.bottom)}` : 'none'),
-    ];
-  }],
-
-  // The dome is the tower's goal, and it waits for the tower to be opened: the
-  // bench's sign sends you to the wizards, and a dome pinned from the yard
-  // would spare you that walk.
-  ['the dome pins itself once the tower is opened, not before', async () => {
-    newRun();
-    await settle();
-    window.__crew(2, 1, 0, 0, 0, 1);
-    window.__jump(4);
-    window.__answered('props', 'net', 'arch');
-    window.__meteor();
-    window.__build();
-    const corner = () => document.getElementById('pin');
-    const card = () => corner().querySelector('button[data-key]');
-    await settle(0.2);
-    // The dome is on offer, but nobody has been up to see it.
-    const offered = state().offered?.dome ?? true;
-    const notYet = corner().hidden && state().pinned === null;
-
-    window.__board('tower');
-    await settle(0.2);
-    const goalCard = document.querySelector('#towershop button[data-key="dome"]');
-    const wide = goalCard?.classList.contains('goal');
-    const pinned = !corner().hidden && card()?.dataset.key === 'dome' && state().pinned === 'dome';
-
-    // Closing the board leaves it up: going into the corner was being seen.
-    window.__board(null);
-    await settle(0.2);
-    const stays = !corner().hidden && state().pinned === 'dome';
-
-    return [
-      ok(offered && notYet, 'the dome on offer does not pin from the yard', state().pinned),
-      ok(wide, "it is the goal card on the tower's board"),
-      ok(pinned, 'and opening the tower pins it into the corner', card()?.dataset.key),
-      ok(stays, 'where it stays once the board is closed')
     ];
   }],
 
