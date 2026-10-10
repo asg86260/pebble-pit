@@ -123,6 +123,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- A controls page on the settings sheet lists the mouse buttons and what each does.
 - Cores are gone: each barrier that falls opens the next place instead -- the props the farm, the net the quarry, the arch the tower -- and the dome is paid without them.
 - A queued shop item's "refund" now reads "cancel".
 - Hold the right button to see the crew: the yard fades back, every worker is ringed, the cursor turns into an open hand, and the one under it slows down. Holding the left button as well picks a worker up, for as long as both are held; the right button alone no longer lifts anybody. Hovering no longer stops a worker.

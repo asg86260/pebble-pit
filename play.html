@@ -234,6 +234,18 @@ try {
   <!-- the name the board of times shows for this player; a preference, like
        the mute, so it survives a reset -->
   <input id="boardname" type="text" maxlength="20" placeholder="name on the board" spellcheck="false" autocomplete="off" data-pane="settings" hidden>
+  <button id="controlsbtn" type="button" data-pane="settings" hidden>controls</button>
+  <!-- the controls page: input on the left, what it does on the right -->
+  <div class="word" data-pane="controls" hidden>controls</div>
+  <div id="controlslist" class="controls" data-pane="controls" hidden>
+    <span>left click</span><span>interact</span>
+    <span>right click</span><span>focus workers</span>
+    <span>right click + left click</span><span>pick up workers</span>
+    <span>middle click</span><span>move camera</span>
+    <span>scroll wheel</span><span>move camera</span>
+    <span>← → / a d</span><span>move camera</span>
+  </div>
+  <button id="controlsback" type="button" data-pane="controls" hidden>back</button>
   <!-- the sheet's one-line reply, on every page that has something to say -->
   <div class="said" data-pane="main slots settings"></div>
   <button id="settingsback" type="button" data-pane="settings" hidden>back</button>
