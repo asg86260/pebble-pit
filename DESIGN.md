@@ -17457,9 +17457,13 @@ save is ever written by two clouds.
   already uses). If Steam is not running or the API will not start, the
   build plays on its disk saves and says nothing -- it never falls back to
   our cloud.
-- **The demo**: `demo` stops the story at the chosen beat (proposed: the arch
-  failing, about the first hour) with an end card pointing to the full
-  game's store page, in place of the next objective. The demo is its own
+- **The demo**: `demo` stops the story at the farm (the owner, 2026-10-10:
+  "the farm being the last building to buy, excluding apoth"). The farm is
+  the last place the demo sells; the apothecary is not offered in it. The
+  story runs on to the net, and when the net fails -- the beat that would
+  open the quarry -- an end card points to the full game's store page in
+  place of the next objective. About 30 minutes at the bot's pace, the
+  length the marketing advice asks of a demo. The demo is its own
   Steam app, so its cloud is its own; on first launch the full game looks
   for a demo save on the same machine and offers to carry it on.
 
@@ -17477,9 +17481,7 @@ save is ever written by two clouds.
 
 ### The owner's calls
 
-1. **The demo's end**: the arch failing (proposed), the tower standing, or
-   another beat.
-2. **The native dependency**: `steamworks.js` in the shell, accepted?
-3. **Achievements**: map the game's own achievements to Steam's now, since
-   the SDK is in anyway, or later.
+The owner's calls so far: the demo ends at the farm (above);
+`steamworks.js` in the shell is accepted. Open: map the game's own
+achievements to Steam's now, since the SDK is in anyway, or later.
 
