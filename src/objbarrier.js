@@ -2,8 +2,8 @@
 // line is a shield step, the card under it sells that step's row. On offer it
 // is the row's glyph, name and note, its bill as a checklist a coin a line,
 // each line ticking as its coin is met, and a buy wearing the row's own price
-// tag; bought, it is one bar of the build and the cancel the bench's strip
-// offers. Every press goes through the row (`pressRow` in shop.js), so the
+// tag; bought, it is the cancel the bench's strip
+// offers (the build's progress is the queue card's, under it). Every press goes through the row (`pressRow` in shop.js), so the
 // queue, the builders walking over, the bench's own tile and every cost rule
 // are the one mechanism they are on the board.
 //
@@ -12,12 +12,11 @@
 
 import { S } from './state.js';
 import { OBJ_SWAP_MS } from './config.js';
-import { rowFor, takesTime, workOn, progressOf } from './works.js';
+import { rowFor, takesTime, workOn } from './works.js';
 import { billOf, canPay, forSale, handBack, waitingOf, tintOf } from './upgrades.js';
 import { MARK, purse, priceText } from './words.js';
 import { drawGlyph, glyphFor, badgeFor } from './glyphs.js';
 import { tagOf, pressRow, COIN_ORDER } from './shop.js';
-import { domeAt } from './shield.js';
 import { onTap } from './tap.js';
 
 const box = document.getElementById('objective')?.querySelector?.('.barrier') ?? null;
@@ -30,11 +29,6 @@ function modeOf(u) {
   if (takesTime(u) && workOn(u.key)) return 'build';
   return u.show() ? 'offer' : null;
 }
-
-// How far along the build is: the builders' labor while it is a work, then
-// the shield's own count (a carried one arrives whole; the dome's is the
-// wizards' pour).
-const progress = u => (S.shield && S.shield.kind === u.key ? domeAt() : progressOf(workOn(u.key)));
 
 // Written only when what it says changes, as the board's cells are.
 const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; } };
@@ -81,17 +75,13 @@ function draw(u, mode) {
   if (mode === 'build') {
     const track = document.createElement('div');
     track.className = 'track';
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    const fill = document.createElement('i');
-    bar.appendChild(fill);
     const cancel = document.createElement('button');
     cancel.type = 'button';
     cancel.className = 'cancel';
     onTap(cancel, () => pressRow(u, handBack));
-    track.append(bar, cancel);
+    track.appendChild(cancel);
     box.appendChild(track);
-    return { fill, cancel };
+    return { cancel };
   }
 
   if (u.note) {
@@ -123,8 +113,6 @@ function draw(u, mode) {
 
 function update(u, mode) {
   if (mode === 'build') {
-    const pct = `${Math.round(progress(u) * 1000) / 10}%`;
-    if (parts.fill.style.width !== pct) parts.fill.style.width = pct;
     // The bench strip's word and its count: the copies still waiting their
     // turn, which are the ones a cancel can hand back.
     const n = waitingOf(u);

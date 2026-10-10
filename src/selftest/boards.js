@@ -1758,9 +1758,9 @@ export const TESTS = [
 
   // The shield on offer is sold on the story's card (objbarrier.js): its
   // bill a coin a line, ticking as each is met, and a buy that is the bench
-  // row's own press; bought, a bar and the strip's cancel. Only the two
+  // row's own press; bought, the strip's cancel and no bar (the queue card under it has the progress). Only the two
   // buttons take the pointer: the rest of the card is the yard under it.
-  ['the shield on offer is sold on the story\'s card: a bill that ticks, a buy, a bar and a cancel', async () => {
+  ['the shield on offer is sold on the story\'s card: a bill that ticks, a buy, and a cancel, no bar', async () => {
     newRun();
     await settle();
     window.__crew(2, 1);
@@ -1818,7 +1818,7 @@ export const TESTS = [
     const benchSays = shop().querySelector('button[data-key="props"] .gain')?.textContent || '';
     window.__board(null);
     await settle(0.3);
-    const bar = await cardShows('props', 'build') && !!block()?.querySelector('.bar i');
+    const bar = await cardShows('props', 'build') && !block()?.querySelector('.bar');
     const cancelSays = cancel()?.textContent || '';
     const cancelTakes = !!cancel() && cancel().classList.contains('on') && cancel().contains(hitAt(cancel()));
     const before = state().stored;
@@ -1836,7 +1836,7 @@ export const TESTS = [
       ok(upWhenLit && ticked && lit, 'with the dust the card stays up, the line ticks and the buy lights', litSays),
       ok(paid && queued, 'the card\'s buy queues the props, as the bench does', JSON.stringify(state().line.yard)),
       ok(benchSays === 'queued', 'and the bench\'s own tile says queued', benchSays),
-      ok(bar && /^cancel ×1$/.test(cancelSays) && cancelTakes, 'bought, the card shows the bar and the cancel', cancelSays),
+      ok(bar && /^cancel ×1$/.test(cancelSays) && cancelTakes, 'bought, the card shows the cancel and no bar', cancelSays),
       ok(handedBack && back, 'the cancel hands the bill back and the checklist returns'),
     ];
   }],
