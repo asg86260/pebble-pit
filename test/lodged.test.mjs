@@ -19,6 +19,7 @@ group('between rocks nobody digs: there is no time to', () => {
   window.__crew(3, 1);
   window.__jump(3);                            // past the first rock, whose finish is the reunion
   checks.push(ok(state().buried && !state().buriedVisible, 'under a rock, out of sight, to start'));
+  checks.push(ok(state().buriedShown, 'but drawn: she is behind the rock, so it shows where its cells are gone'));
 
   window.__next();                             // the rock is off
   const seen = runUntil(() => state().buriedVisible, 10);

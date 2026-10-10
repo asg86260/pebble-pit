@@ -6,7 +6,7 @@ import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP } from '../config.js';
 import { atHome } from '../crew.js';
-import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
+import { buriedAt, buriedShown, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
 import { garage, hasGarage, doorX, inGarage } from '../crew/lifts.js';
 import { underground } from '../quarry.js';
@@ -387,10 +387,17 @@ export function drawIntro() {
     if (b.say) drawSaying(x, y, b.say);
   }
 
-  if (!buriedVisible()) return;
+  if (!buriedVisible() || !S.buriedSay) return;
   const at = buriedAt();
-  const depth = drawLodged(at.x, at.y, buriedOut());
-  if (S.buriedSay) drawSaying(at.x, at.y + depth, S.buriedSay);
+  drawSaying(at.x, at.y + Math.round(BURIED_SUNK_C * (1 - buriedOut())) * P, S.buriedSay);
+}
+
+// The one in the ground, before the rock is painted, so the rock's cells stand
+// in front of it.
+export function drawBuried() {
+  if (!buriedShown()) return;
+  const at = buriedAt();
+  drawLodged(at.x, at.y, buriedOut());
 }
 
 // The one in the ground: the same square, stood with its feet where anybody's

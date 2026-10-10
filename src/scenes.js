@@ -19,6 +19,8 @@ import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
+import { buriedAt } from './intro.js';
+import { rockLeft } from './world.js';
 import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
@@ -854,6 +856,13 @@ export const SCENES = {
   shack: { about: 'the rock', say: 'the shack beside a big rock, the ram parked',
     run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__buy('ram');
                  window.__finish(); window.__jump(8); window.__fast(6); window.__look(st().shackX - 400); } },
+  // Mined away over her drop spot but not finished: she is behind the rock
+  // and shows exactly where its cells are gone.
+  rockhalf: { about: 'the rock', say: 'the rock mined away over the one buried, the rest standing',
+    run: () => { window.__reset(); window.__crew(3, 1); window.__jump(3); window.__fast(1);
+                 const at = buriedAt(), g = Math.floor((at.x - rockLeft()) / P);
+                 for (const row of S.boulder) for (let x = g - 3; x <= g + 5; x++) if (x >= 0 && x < row.length && x !== g + 1) row[x] = 0;
+                 window.__fast(0.2); window.__look(S.cx - S.viewW / 2); window.__holdShot(); } },
   // Both ends of the rock's growth: the walk leaves the hut exactly the room
   // `rockSize` needs and no more. Jumped and then run, because `rich` leaves
   // the first rock still falling and its grant tearing the rift.

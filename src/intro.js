@@ -594,6 +594,11 @@ export const buriedVisible = () =>
   S.buried && !beatRunning('fall') &&
   (S.rockFall > 0 || !S.boulder.some(row => row.some(v => v)));
 
+// Drawn whenever it is in the ground at all, under the rock: the rock's cells
+// cover it where they stand and it shows through where they are gone. Only the
+// opening's own fall is left out, while the body is still stood there.
+export const buriedShown = () => S.buried && !beatRunning('fall');
+
 // Where the square lives: the spot every rock lands on. It cannot move.
 export function buriedAt() {
   const x = Math.round((S.cx - WORKER / 2) / P) * P;
