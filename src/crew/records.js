@@ -49,14 +49,15 @@ export const newRecord = () => ({
 
 // The fields that are *this body* and what it is in the middle of; everything
 // else is rebuilt by the factory. A load is dust already dug, and a save that
-// drops it throws it away. `goal` names a state, not a plan: the claims that
-// go with one are re-picked every frame and deliberately not saved, and a
-// body rebuilt as `goal: 'to'` on the floor of the cut climbs out and back
-// down. `lentFrom` is the loan, saved with the body it is on (`rebalance` in
+// drops it throws it away. `goal` names a state, not a plan, and a body
+// rebuilt as `goal: 'to'` on the floor of the cut climbs out and back down.
+// A carter's `claim` is the exception among the claims: it is kept until the
+// column is bare, and a trip whose target is gone with hands not full is the
+// turn for home, so dropped by a refresh it leaves the rest of the heap lying. `lentFrom` is the loan, saved with the body it is on (`rebalance` in
 // upgrades.js).
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 'tidied',
                       'at', 'trained', 'kitOf', 'x', 'y',
-                      'carry', 'load', 'goal', 'lentFrom',
+                      'carry', 'load', 'goal', 'claim', 'lentFrom',
                       // a body that lives in the deep's pods, not the yard's rooms
                       'deepHome',
                       // the doses in a stirrer's arms, or a stirrer saved on a
