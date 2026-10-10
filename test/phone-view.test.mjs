@@ -7,7 +7,8 @@
 // The same checks pass trivially on a desk, which is why they are stood at a
 // phone.
 import { group, ok, state, run, runUntil, openSites, SEED, yard, WORKER } from './helpers.mjs';
-import { PROP_FROM, NET_COST, ARCH_COST } from '../src/config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, P, shieldWidth } from '../src/config.js';
+import { rockWidthAt } from '../src/rock.js';
 
 // A portrait phone, as the page reports it. `__seed` lays the world out again
 // through `resize`, which reads the window from the document, so the size is
@@ -28,12 +29,19 @@ const inView = (x, w) => {
 };
 
 // The arch is the widest shield short of the dome and the check is about the
-// width, so it is the one stood up. The same yard cutscene.test.mjs stands.
+// width, so it is the one stood up. The same yard cutscene.test.mjs stands,
+// from the first rock whose arch is wider than the yard-zoom view: the props
+// open early now, and the arch over an early rock fits a phone without the
+// pull-out this is about. Rocks only grow, so the arch over the rock the net
+// and props leave standing is wider still.
+const YARD_ZOOM = 0.833;
+let archFrom = PROP_FROM;
+while (shieldWidth('arch', rockWidthAt(archFrom) * P) <= PHONE.W / YARD_ZOOM) archFrom++;
 group("a shield's answer is framed whole at a phone's width", async () => {
   phone();
   window.__reset();
   window.__crew(2, 1);
-  window.__jump(PROP_FROM);
+  window.__jump(archFrom);
   window.__give(40000);
   window.__grant({ shards: ARCH_COST * 2, spores: NET_COST * 2 });
   run(1);
@@ -64,7 +72,7 @@ group("a shield's answer is framed whole at a phone's width", async () => {
       if (frames - started >= 30) {
         zoomIn ??= s.zoom;
         if (!inView(span.x, span.w)) out++;
-        if (span.w > PHONE.W / 0.833) narrow = true;
+        if (span.w > PHONE.W / YARD_ZOOM) narrow = true;
       }
     }
     if (started && !s.beat.camera) break;
@@ -73,7 +81,7 @@ group("a shield's answer is framed whole at a phone's width", async () => {
     ok(started != null, 'the scene runs', `${started}`),
     ok(narrow, 'and the span is wider than the yard-zoom view, so the framing has to give',
        `span ${span.w}, window ${PHONE.W}`),
-    ok(zoomIn != null && zoomIn < 0.833, 'the view pulls out rather than in',
+    ok(zoomIn != null && zoomIn < YARD_ZOOM, 'the view pulls out rather than in',
        `zoom ${zoomIn}`),
     ok(out === 0, 'and the whole span is in the frame for the whole scene',
        `${out} frames with a foot off the edge`),
