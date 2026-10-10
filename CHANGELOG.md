@@ -54,6 +54,9 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+**New this release**
+- The props can be built after the first rock.
+
 ## v0.5.2 — 2026-09-28
 
 - On the landing page, cloud saves are on the saves page with your slots, as they are in the game, instead of under settings (src/selftest/cloud.js).

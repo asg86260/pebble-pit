@@ -9,7 +9,7 @@
 // writing the preference, and every group puts it back.
 
 import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle } from './kit.js';
-import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, THUMB, BRUSH, P } from '../config.js';
+import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, THUMB, BRUSH, P, PROP_FROM } from '../config.js';
 import { S } from '../state.js';
 import { purse } from '../words.js';
 import { workOn } from '../works.js';
@@ -403,7 +403,7 @@ export const TESTS = [
     await settle();
     phone(true);
     window.__crew(2, 1);
-    window.__jump(4);                           // the goal card pins itself from the fourth rock
+    window.__jump(PROP_FROM);                   // the goal card pins itself once the first rock is down
     window.__give(200);
     window.__build();
     await frames(30);

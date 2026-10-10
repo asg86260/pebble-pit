@@ -21,7 +21,7 @@ export const NET_WORK = 20;
 export const ARCH_WORK = 70;
 
 // The props: timber, and the rock does not even slow down for it.
-export const PROP_FROM = 4;         // rocks fallen before the yard thinks to look up
+export const PROP_FROM = 2;         // boulderNo starts at 1 and counts up as a rock falls clear, so 2 is the first rock done
 export const PROP_COST = 400;       // dust for the timber
 export const PROP_PLANKS = 12;      // trips from the bench; one plank arrives per walk
 

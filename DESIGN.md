@@ -12610,7 +12610,7 @@ stand today:
 | door | after | needs |
 |---|---|---|
 | bench | -- | something affordable (`canAfford`, raise.js) |
-| props (shield) | the opening | `boulderNo >= PROP_FROM` |
+| props (shield) | the opening | `boulderNo >= PROP_FROM` (2: the first rock is down) |
 | farm | props | a core seen, `nearly(FARM_DUST)`; sticky |
 | net (shield) | farm | -- |
 | quarry | net | a core seen |
