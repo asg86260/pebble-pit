@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Muck Warning Mock</title>
+<style>
+:root {
+  --paper: #fff; --ink: #000; --ink-4: #666; --flag: #b00000;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --flag: #e05050; }
+}
+:root[data-theme="dark"] { --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --flag: #e05050; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.5 ui-monospace, "Courier New", monospace; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 18px; margin: 0 0 8px; letter-spacing: .08em; text-transform: uppercase; }
+.note { border: 1px solid var(--ink); padding: 10px 14px; margin: 0 0 20px; }
+.note p { margin: 0 0 6px; } .note p:last-child { margin: 0; }
+.confirm { color: var(--flag); }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+figure { margin: 0; min-width: 0; }
+canvas { display: block; width: 100%; height: auto; border: 1px solid var(--ink); image-rendering: pixelated; background: #fff; }
+figcaption h2 { font-size: 15px; margin: 10px 0 4px; }
+figcaption p { margin: 0 0 6px; color: var(--ink-4); }
+footer { margin-top: 24px; color: var(--ink-4); }
+</style>
+</head>
+<body>
+<main>
+<h1>Muck warning: three options</h1>
+<div class="note">
+  <p>This is a mock drawn from plain shapes, not the game. It cannot show the real sky, the real worker sprites, the real muck rain, or how the tag sits against a zoomed or phone-sized yard. The muck color is the real <code>MUCK_TONE</code> (#7a6047); the tag copies the black <code>.toast</code> / <code>.skip</code> style. Each loop: muck rains down, the indicator fades in, a worker walks to each patch and shovels it, the indicator fades out when the last is gone.</p>
+  <p class="confirm">The owner's line, to confirm: &ldquo;workers are cleaning it up&rdquo;. No other player text is written here; anything else is a [bracketed placeholder].</p>
+</div>
+<div class="grid">
+  <figure><canvas id="a" width="480" height="300"></canvas>
+    <figcaption><h2>A. Black tag</h2><p>Top-center black tag, warning triangle and the line. Fades in with the first muck, fades out with the last.</p></figcaption></figure>
+  <figure><canvas id="b" width="480" height="300"></canvas>
+    <figcaption><h2>B. Tag with a count</h2><p>The same tag plus the number of muck cells left, ticking down as they are swept.</p></figcaption></figure>
+  <figure><canvas id="c" width="480" height="300"></canvas>
+    <figcaption><h2>C. Triangle only</h2><p>Just the pile-full style triangle top-center; the line appears on hover or tap (the demo hovers partway through).</p></figcaption></figure>
+</div>
+<footer>Not shown: the indicator must never say workers are cleaning when nobody can; that is a rule for the build, not something a drawing can show. [placeholder: text if no worker can reach the muck]</footer>
+</main>
+<script>
+(() => {
+const P = 6, W = 480, H = 300, GROUND = 204;
+const MUCK = '#7a6047';
+const LINE = 'workers are cleaning it up';
+const smooth = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+const mono = '10px ui-monospace, "Courier New", monospace';
+
+// muck cells: column (in P cells), level in the stack, land time
+const CELLS = [[14,0,1.4],[15,0,1.9],[15,1,2.6],[20,0,2.1],[21,0,2.9],[33,0,1.7],[33,1,3.1],[34,0,3.4]];
+const TOTAL = 24;
+const SHOVEL = 0.9;
+const SPEED = 54;
+
+function hash(n) { n = Math.imul(n, 2654435761) >>> 0; return (n % 1000) / 1000; }
+
+function sky(ctx) {
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 40; i++) {
+    const x = Math.floor(hash(i * 3 + 1) * (W / P)) * P, y = Math.floor(hash(i * 3 + 2) * (GROUND / P - 6)) * P + 48;
+    ctx.fillStyle = '#e3e3e3'; ctx.fillRect(x, y, P, P);
+  }
+  ctx.fillStyle = '#000'; ctx.fillRect(0, GROUND, W, 2);
+  ctx.fillStyle = '#ececec';
+  for (let y = GROUND + 6; y < H; y += P) for (let x = ((y / P) % 2) * P; x < W; x += P * 2) ctx.fillRect(x, y, P, P);
+}
+function corner(ctx) {
+  for (let i = 0; i < 3; i++) {
+    const x = W - 12 - (3 - i) * 24;
+    ctx.fillStyle = '#fff'; ctx.fillRect(x, 12, 18, 18);
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, 13, 16, 16);
+  }
+}
+function buildings(ctx) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(396, GROUND - 36, 24, 36); ctx.fillRect(402, GROUND - 48, 12, 12);
+  ctx.fillStyle = '#fff'; ctx.fillRect(402, GROUND - 18, 12, 18);
+}
+function worker(ctx, x, pose) {
+  const y = GROUND - 18;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x + 3, y, 6, 6);
+  ctx.fillRect(x + 3, y + 6, 6, 6);
+  if (pose === 'a') { ctx.fillRect(x + 3, y + 12, 3, 6); ctx.fillRect(x + 6, y + 12, 3, 4); }
+  else if (pose === 'b') { ctx.fillRect(x + 3, y + 12, 3, 4); ctx.fillRect(x + 6, y + 12, 3, 6); }
+  else { ctx.fillRect(x + 3, y + 12, 6, 6); }
+  if (pose === 'up') { ctx.fillRect(x + 9, y + 6, 3, 3); ctx.fillRect(x + 12, y, 3, 12); }
+  if (pose === 'down') { ctx.fillRect(x + 9, y + 9, 3, 3); ctx.fillRect(x + 12, y + 12, 6, 6); }
+}
+function drop(ctx, x, y, a) {
+  ctx.globalAlpha = a; ctx.fillStyle = MUCK; ctx.fillRect(x + 2, y, 2, 6); ctx.globalAlpha = 1;
+}
+function cellFill(ctx, c, lv, a) {
+  const x = c * P, y = GROUND - (lv + 1) * P;
+  ctx.globalAlpha = a;
+  ctx.fillStyle = MUCK; ctx.fillRect(x, y, P, P);
+  ctx.fillStyle = hash(c * 7 + lv) > .5 ? 'rgba(0,0,0,.18)' : 'rgba(255,255,255,.16)';
+  ctx.fillRect(x, y, P, P);
+  ctx.globalAlpha = 1;
+}
+// a hollow warning triangle, a bar and a dot inside, like the pile-full mark
+function triangle(ctx, cx, cy, r, color) {
+  ctx.fillStyle = color;
+  const top = cy - r, bot = cy + r, h = bot - top;
+  for (let y = top; y < bot; y += 2) {
+    const half = (y - top) / h * r;
+    ctx.fillRect(Math.round(cx - half), y, 2, 2);
+    ctx.fillRect(Math.round(cx + half) - 2, y, 2, 2);
+  }
+  ctx.fillRect(Math.round(cx - r), bot - 2, Math.round(2 * r), 2);
+  ctx.fillRect(cx - 1, top + h * 0.38, 2, h * 0.28);
+  ctx.fillRect(cx - 1, top + h * 0.74, 2, 2);
+}
+function tag(ctx, cx, y, text, a, withTri, count) {
+  ctx.font = mono;
+  const tw = ctx.measureText(text).width;
+  const cnt = count != null ? String(count) : '';
+  const cw = cnt ? ctx.measureText('00').width + 16 : 0;
+  const w = Math.round(tw + (withTri ? 24 : 0) + cw + 24), h = 26;
+  const x = Math.round(cx - w / 2);
+  ctx.globalAlpha = a;
+  ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+  let tx = x + 12;
+  ctx.textBaseline = 'middle';
+  if (withTri) { triangle(ctx, tx + 6, y + 14, 8, '#fff'); tx += 20; }
+  ctx.fillStyle = '#fff';
+  ctx.fillText(text, tx, y + h / 2 + 1);
+  if (cnt) {
+    const nx = x + w - cw;
+    ctx.fillRect(nx, y + 6, 1, h - 12);
+    ctx.textAlign = 'right';
+    ctx.fillText(cnt, x + w - 12, y + h / 2 + 1);
+    ctx.textAlign = 'left';
+  }
+  ctx.globalAlpha = 1;
+}
+function cursor(ctx, x, y) {
+  ctx.fillStyle = '#000';
+  for (let i = 0; i < 6; i++) ctx.fillRect(x, y + i * 2, 2 + i * 2, 2);
+  ctx.fillRect(x + 2, y + 12, 4, 4);
+  ctx.fillStyle = '#fff'; ctx.fillRect(x + 2, y + 4, 2, 4);
+}
+
+function run(id, kind) {
+  const cv = document.getElementById(id), ctx = cv.getContext('2d');
+  let last = performance.now();
+  let sim;
+  function reset() {
+    sim = { t: 0, x: 30, pose: 'a', beat: 0, target: null, work: 0, removed: [], gone: [], hoverAt: -1 };
+  }
+  reset();
+  const landed = t => CELLS.map((c, i) => ({ c: c[0], lv: c[1], land: c[2], i })).filter(o => t >= o.land);
+  function step(dt) {
+    sim.t += dt;
+    if (sim.t > TOTAL) { reset(); return; }
+    if (sim.t < 2.6) return;
+    const left = landed(sim.t).filter(o => !sim.removed.includes(o.i));
+    if (sim.target == null) {
+      sim.work = 0;
+      if (left.length) {
+        left.sort((a, b) => Math.abs(a.c * P - sim.x) - Math.abs(b.c * P - sim.x) || b.lv - a.lv);
+        const col = left[0].c;
+        sim.target = left.filter(o => o.c === col).sort((a, b) => b.lv - a.lv)[0];
+      }
+    }
+    if (!sim.target) { sim.pose = 'a'; return; }
+    const dest = sim.target.c * P - 15;
+    if (Math.abs(dest - sim.x) > 2) {
+      sim.x += Math.sign(dest - sim.x) * Math.min(SPEED * dt, Math.abs(dest - sim.x));
+      sim.beat += dt; sim.pose = (Math.floor(sim.beat / 0.22) % 2) ? 'a' : 'b';
+    } else {
+      sim.work += dt;
+      sim.pose = (Math.floor(sim.work / 0.3) % 2) ? 'down' : 'up';
+      if (sim.work >= SHOVEL) {
+        sim.removed.push(sim.target.i); sim.gone[sim.target.i] = sim.t; sim.target = null; sim.work = 0;
+        if (kind === 'c' && sim.removed.length === 3) sim.hoverAt = sim.t;
+      }
+    }
+  }
+  // ?t=7 freezes the loop at 7 seconds, for a still shot
+  const freeze = +new URLSearchParams(location.search).get('t') || 0;
+  if (freeze) for (let i = 0; i < freeze * 30; i++) step(1 / 30);
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!freeze) step(dt);
+    const t = sim.t;
+    sky(ctx); buildings(ctx);
+    let live = 0;
+    CELLS.forEach((o, i) => {
+      const [c, lv, land] = o;
+      if (t >= land - 0.5 && t < land) drop(ctx, c * P, 20 + (t - (land - 0.5)) / 0.5 * (GROUND - (lv + 1) * P - 20), .9);
+      if (t >= land) {
+        let a = Math.min(1, (t - land) / 0.25 + .3);
+        if (sim.removed.includes(i)) a = Math.max(0, 1 - (t - sim.gone[i]) / 0.3); else live++;
+        if (a > 0) cellFill(ctx, c, lv, a);
+      }
+    });
+    worker(ctx, Math.round(sim.x / P) * P, sim.pose);
+    corner(ctx);
+    const first = CELLS[0][2];
+    const lastGone = sim.removed.length === CELLS.length ? Math.max(...sim.gone.filter(v => v != null)) : null;
+    let a = smooth((t - first) / 0.5);
+    if (lastGone != null) a = Math.min(a, 1 - smooth((t - lastGone - 0.3) / 0.6));
+    if (a > 0) {
+      if (kind === 'a') tag(ctx, W / 2, 14, LINE, a, true);
+      if (kind === 'b') tag(ctx, W / 2, 14, LINE, a, true, live);
+      if (kind === 'c') {
+        const dh = t - sim.hoverAt;
+        const hv = sim.hoverAt >= 0 && dh < 3.4 ? smooth(dh / 0.3) * (1 - smooth((dh - 2.8) / 0.5)) : 0;
+        ctx.globalAlpha = a; triangle(ctx, W / 2, 28, 15.6, '#000'); ctx.globalAlpha = 1;
+        if (hv > 0) { tag(ctx, W / 2, 52, LINE, hv * a, false); ctx.globalAlpha = hv; cursor(ctx, W / 2 + 4, 30); ctx.globalAlpha = 1; }
+      }
+    }
+    if (!freeze) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+run('a', 'a'); run('b', 'b'); run('c', 'c');
+})();
+</script>
+</body>
+</html>
