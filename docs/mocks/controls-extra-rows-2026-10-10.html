@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controls Extra Rows</title>
+<style>
+:root {
+  --paper: #fff; --ink: #000; --ink-2: #333; --ink-4: #666; --ink-8: #cfcfcf;
+  --bg: #e9e9e9; --note: #fff8c4; --note-ink: #333;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #c8c8c8; --ink-4: #999; --ink-8: #444;
+    --bg: #111; --note: #3a3510; --note-ink: #e0e0e0;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #c8c8c8; --ink-4: #999; --ink-8: #444;
+  --bg: #111; --note: #3a3510; --note-ink: #e0e0e0;
+}
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 14px/1.45 system-ui, sans-serif; padding: 16px; max-width: 1000px; margin: 0 auto; box-sizing: border-box; }
+h1 { font-size: 20px; margin: 4px 0 8px; }
+.top { background: var(--note); color: var(--note-ink); padding: 10px 12px; border-left: 4px solid var(--ink); margin-bottom: 20px; }
+section { margin: 0 0 36px; }
+h2 { font-size: 16px; margin: 0 0 4px; }
+.what { margin: 0 0 12px; color: var(--ink-2); }
+.stage { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.cap { font-size: 12px; color: var(--ink-4); margin: 0 0 4px; }
+.fig { max-width: 100%; }
+.mark { font-size: 12px; color: var(--ink-2); margin-top: 8px; max-width: 420px; }
+
+/* the real card, copied from style.css (.held, .held .word, .held button, .held .controls) */
+.held {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 14px 24px; background: var(--paper); border: 1px solid var(--ink);
+  font: 12px ui-monospace, "Courier New", monospace; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink); box-sizing: border-box; width: max-content; max-width: 100%;
+}
+.held .word { font-size: 17px; letter-spacing: .3em; }
+.held button {
+  font: inherit; letter-spacing: .14em; text-transform: uppercase; color: var(--ink);
+  background: none; border: 1px solid var(--ink); padding: 4px 14px; cursor: default;
+  align-self: stretch; box-sizing: border-box;
+}
+.held .controls { display: grid; grid-template-columns: max-content max-content; gap: 8px 20px; max-width: 100%; text-align: left; }
+.held .controls > :nth-child(odd) { text-align: right; }
+.new { outline: 2px dashed var(--ink); outline-offset: 3px; }
+.ph { color: var(--ink-4); }
+/* the phone card: the real one stacks each pair at 520px and under */
+.phone .held .controls { grid-template-columns: max-content; gap: 0; text-align: center; white-space: nowrap; letter-spacing: .04em; }
+.phone .held .controls > :nth-child(odd) { text-align: center; }
+.phone .held .controls > :nth-child(even) { margin-bottom: 10px; }
+.phone { width: 375px; max-width: 100%; box-sizing: border-box; border: 8px solid var(--ink); border-radius: 22px; padding: 18px 8px; background: var(--ink-8); display: flex; justify-content: center; }
+.phone .held { width: auto; }
+
+/* the landing column (title.css .col) */
+.col {
+  padding: 14px 16px 16px; box-sizing: border-box; background: var(--paper); border: 1px solid var(--ink);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 7px;
+  font: 12px ui-monospace, "Courier New", monospace; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink); --col-w: 21em; width: calc(var(--col-w) + 34px); max-width: 100%;
+}
+.col .gamename { font-size: 34px; letter-spacing: .34em; line-height: 1.1; margin-bottom: 4px; }
+.col .line { text-transform: none; letter-spacing: .1em; color: var(--ink-2); margin-bottom: 14px; max-width: 20em; }
+.col .word { font-size: 17px; letter-spacing: .3em; margin-bottom: 4px; }
+.col button {
+  font: inherit; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--ink); padding: 5px 14px; cursor: default; text-align: left; width: var(--col-w); box-sizing: border-box; max-width: 100%;
+}
+.col .slider { width: var(--col-w); max-width: 100%; height: 2px; background: var(--ink); position: relative; margin: 8px 0; }
+.col .slider::after { content: ""; position: absolute; right: 0; top: -6px; width: 8px; height: 14px; background: var(--ink); }
+.col .controls { display: grid; grid-template-columns: max-content max-content; gap: 8px 20px; text-align: left; }
+.col .controls > :nth-child(odd) { text-align: right; }
+.col.wide { width: max-content; }
+.col.wide button { width: auto; align-self: stretch; }
+.arrow { align-self: center; font-size: 28px; color: var(--ink-4); }
+</style>
+</head>
+<body>
+<h1>Controls page: three candidates</h1>
+<div class="top"><b>This is a mock from plain HTML, not the game.</b> Fonts, sizes, capitals and spacing are copied from the real controls page, but nothing here is clickable and no yard is behind it. A dashed outline marks what is new. Grey words in [brackets] are placeholders: I have not written any player text, the words are yours.</div>
+
+<section>
+  <h2>1. The 1 – 9 row</h2>
+  <p class="what">The number keys on the keyboard jump the camera to a place: 1 goes to the rock, 2 to 9 go to the buildings, right to left (src/input.js:743, 795-812). This is the controls page with one extra row for them.</p>
+  <div class="fig">
+    <div class="held">
+      <div class="word">controls</div>
+      <div class="controls">
+        <span>left click</span><span>interact</span>
+        <span>right click</span><span>focus workers</span>
+        <span>right click + left click</span><span>pick up workers</span>
+        <span>middle click</span><span>move camera</span>
+        <span>scroll wheel</span><span>move camera</span>
+        <span>← → / a d</span><span>move camera</span>
+        <span class="new">1 – 9</span><span class="new ph">[jump to a place]</span>
+      </div>
+      <button>back</button>
+    </div>
+    <p class="mark">Your words go where the grey bracket is. "1 – 9" is the input as it would be written.</p>
+  </div>
+</section>
+
+<section>
+  <h2>2. Phone rows</h2>
+  <p class="what">What the controls page would show when the touch setting is on, in place of the mouse rows. Phones cannot focus or pick up workers at all: those are the right mouse button only (src/input.js:141), so those two rows are simply gone. Each pair stacks, input over action, as the real page does on a narrow screen.</p>
+  <div class="stage">
+    <div class="phone"><div class="held">
+      <div class="word">controls</div>
+      <div class="controls">
+        <span>tap</span><span>interact</span>
+        <span>drag on dust</span><span class="ph">[sweep]</span>
+        <span>drag elsewhere</span><span>move camera</span>
+        <span>two fingers while sweeping</span><span>move camera</span>
+      </div>
+      <button>back</button>
+    </div></div>
+    <div style="max-width:420px">
+      <p class="cap">What each row is in the code</p>
+      <ul class="mark" style="padding-left:18px;margin:0">
+        <li><b>tap</b>: a tap at a building opens or shuts its board, a tap on the rock hits it (input.js:314-324, 192).</li>
+        <li><b>drag on dust</b>: a finger that lands on dust sweeps for its whole length (input.js:210, 643-673).</li>
+        <li><b>drag elsewhere</b>: a finger off the dust scrolls the yard, with the phone's own momentum (input.js:63-72, 208-211).</li>
+        <li><b>two fingers while sweeping</b>: a second finger turns the pair into a camera pan (input.js:158-162). With no sweep going, two fingers also scroll.</li>
+        <li><b>no keyboard row</b>: a phone has no 1 – 9 or arrows, so those rows are gone too.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>3. The landing page</h2>
+  <p class="what">The landing page has its own settings sheet, a column on the left. Today it has no controls button. Left: that sheet with a controls row added. Right: the same page opened from it, the same list as in the game.</p>
+  <div class="stage">
+    <div class="fig">
+      <p class="cap">Landing page, settings</p>
+      <div class="col">
+        <div class="gamename">pebble<br>pit</div>
+        <div class="line">a rock. a hole. a few people between them.</div>
+        <div class="word">settings</div>
+        <button>motion: full</button>
+        <button>dark: off</button>
+        <button>sound: on</button>
+        <div class="slider"></div>
+        <button class="new">controls</button>
+        <button>back</button>
+      </div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="fig">
+      <p class="cap">Landing page, controls opened</p>
+      <div class="col wide">
+        <div class="gamename">pebble<br>pit</div>
+        <div class="line">a rock. a hole. a few people between them.</div>
+        <div class="word">controls</div>
+        <div class="controls">
+          <span>left click</span><span>interact</span>
+          <span>right click</span><span>focus workers</span>
+          <span>right click + left click</span><span>pick up workers</span>
+          <span>middle click</span><span>move camera</span>
+          <span>scroll wheel</span><span>move camera</span>
+          <span>← → / a d</span><span>move camera</span>
+        </div>
+        <button>back</button>
+      </div>
+    </div>
+  </div>
+  <p class="mark">The real column is a fixed 21em wide and the controls list is wider than that, so on this page the column would have to grow for it (drawn that way here).</p>
+</section>
+</body>
+</html>
