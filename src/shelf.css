@@ -585,12 +585,12 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 /* The strip on a card this wide would be a bar across the whole sheet, and it
    stood over the sentence. Here it is a refund button the size of its words,
    at the foot's right under the price, at the height every strip has. */
-.rows.shelves > .tile.goal .strip {
+.rows.shelves > button.tile.goal .strip {
   left: auto; right: 12px; bottom: 6px;
   width: max-content;
   border: 1px solid var(--ink);
 }
-.rows.shelves > .tile.goal .strip > i { flex: 0 0 auto; padding: 0 10px; }
+.rows.shelves > button.tile.goal .strip > i { flex: 0 0 auto; padding: 0 10px; }
 
 /* --- the books: a ledger ----------------------------------------------------
    The notice board's readings are not for sale, so they are not things on a

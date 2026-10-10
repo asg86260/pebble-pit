@@ -1860,6 +1860,11 @@ export const TESTS = [
     const strip = goal?.querySelector('.strip');
     const stripW = strip ? strip.getBoundingClientRect().width : -1;
     const cardW = goal ? goal.getBoundingClientRect().width : 0;
+    const sb = strip?.getBoundingClientRect();
+    // A line at a time: the sentence's box is a rectangle, but its last line is short.
+    const lines = note ? (() => { const r = document.createRange(); r.selectNodeContents(note); return [...r.getClientRects()]; })() : [];
+    const hit = sb && lines.some(l => sb.top < l.bottom && sb.bottom > l.top && sb.left < l.right && sb.right > l.left);
+    const clear = !!sb && lines.length > 0 && !hit;
     const said = note ? `${ink(note)} on ${getComputedStyle(goal).backgroundColor}` : 'none';
     goal?.classList.remove('__hov');
     probe.remove();
@@ -1869,6 +1874,7 @@ export const TESTS = [
       ok(rest, 'the goal card reads at rest', said),
       ok(seen, 'and under the cursor its sentence is still a different color from the card', said),
       ok(stripW > 0 && stripW < cardW / 2, 'a queued shield offers a cancel a button wide, not a bar across the card', `${stripW} of ${cardW}`),
+      ok(clear, 'and the cancel stands clear of the sentence', sb ? `strip ${Math.round(sb.left)},${Math.round(sb.top)}-${Math.round(sb.bottom)}` : 'none'),
     ];
   }],
 
