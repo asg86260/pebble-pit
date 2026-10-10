@@ -54,6 +54,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- Workers mining the rock put up a third of the dust motes they did, and the motes thin out gradually instead of vanishing at the end (test/wave7-sky.test.mjs).
+
 ## v0.5.2 — 2026-09-28
 
 - On the landing page, cloud saves are on the saves page with your slots, as they are in the game, instead of under settings (src/selftest/cloud.js).

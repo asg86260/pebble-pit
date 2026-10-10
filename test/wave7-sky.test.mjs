@@ -150,3 +150,25 @@ group('wave7 A3: a rained-on yard never doubles a claim (the player\'s route)', 
   checks.push(ok(!doubled, 'no two shovelling bodies ever hold one column', doubled || ''));
   return checks;
 });
+
+// --- a swing's dust is light, and leaves by fading -------------------------------
+group('a hand swing puts up two motes, and each leaves by fading, never in a step', () => {
+  const checks = [];
+  const before = SKY.length;
+  for (let i = 0; i < 100; i++) foul(4, 900, yard.S.groundY - 60, 'dust');
+  const born = SKY.slice(before);
+  checks.push(ok(born.length >= 150 && born.length <= 250,
+    'a swing of four grains is two motes, not six', `${born.length} motes in a hundred swings`));
+  const m = born[0];
+  let last = 0, worst = 0, peak = 0;
+  for (let i = 0; i < 12 * 60 && m.up; i++) {
+    run(1 / 60);
+    peak = Math.max(peak, m.fade);
+    if (peak >= 1) worst = Math.max(worst, last - m.fade);
+    last = m.fade;
+  }
+  checks.push(ok(peak === 1, 'it came up to full weight', `peak ${peak}`));
+  checks.push(ok(worst < 0.02, 'and went out by a step of under two per cent a frame',
+    `largest drop ${worst.toFixed(4)}`));
+  return checks;
+});
