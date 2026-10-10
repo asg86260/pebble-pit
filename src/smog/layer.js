@@ -5,6 +5,7 @@ import { dugTopY } from '../quarry.js';
 import { boulderAlive, rockTopY } from '../rock.js';
 import { SOLID, footing, solidNear } from '../route.js';
 import { S, farm, floor, pit, quarry } from '../state.js';
+import { DROPS, raining } from './band.js';
 import { overPitMouth, rockLeft } from '../world.js';
 
 // --- the layer -----------------------------------------------------------------------
@@ -62,9 +63,31 @@ export function slideLayers(shift) {
 export const muckCols = () => cols('muck');
 export const poopCols = () => cols('poop');
 
+// Whether the weather's muck may be gone after yet. Not while a storm is
+// still putting it down: a shovel in a downpour is a shovel against the sky,
+// and the clear-up is meant to be what the yard does once the weather has
+// passed (DESIGN.md, "Muck waits for the storm"). Open again once the last
+// dirty drop has landed, not when the pour's clock runs out: `S.raining`
+// goes false with the tail still in the air, and a body sent out on that
+// frame shovels under the last of it. The brew before the drizzle is still
+// dry, so the last storm's muck is fair game until the first drop.
+//
+// One question, asked by every claimant through `mayShift`, so a hauler, a
+// shovel and a roomba cannot disagree about it. Memoized on the frame: the
+// drops are thousands and every body asks.
+let openAt = -1, openWas = true;
+export function muckOpen() {
+  if (openAt === S.tick) return openWas;
+  openAt = S.tick;
+  openWas = !raining() && !DROPS.some(d => d.dirt);
+  return openWas;
+}
+// a kind the weather put down, held to the storm's end
+const kindOpen = kind => MESS[kind].theirs || muckOpen();
+
 // The whole of the ownership rule, asked of the kind rather than re-derived
-// at every call site.
-const mayShift = (hand, kind) => !MESS[kind].theirs || !!(hand && hand.type === TYPE.JANITOR);
+// at every call site: whose it is, and whether the weather has finished with it.
+const mayShift = (hand, kind) => kindOpen(kind) && (!MESS[kind].theirs || !!(hand && hand.type === TYPE.JANITOR));
 
 // What this pair of hands may shift, its own post first and the weather after.
 const shiftable = hand => KINDS.filter(k => mayShift(hand, k))
@@ -415,13 +438,18 @@ export function onOpenYard(c) {
 // The nearest open-yard column with mess in it, of either kind, that no one
 // has claimed, or null. `taken(c)` is the claim books' question; the claim
 // itself is the caller's to book.
+// What a roomba may take off a column now: every kind the weather is done with.
+export const openMessAt = c => KINDS.reduce((n, k) => n + (kindOpen(k) ? cols(k)[c] || 0 : 0), 0);
+// and whether a kind is one of those, for the roomba's own sucking
+export { kindOpen };
+
 export function nearestOpenMess(wx, taken) {
   if (!tally().yard) return null;
   const home = colAt(wx);
   const n = floor.cols;
   for (let d = 0; d < n; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c < 0 || c >= n || !messAt(c) || taken(c) || !onOpenYard(c)) continue;
+      if (c < 0 || c >= n || !openMessAt(c) || taken(c) || !onOpenYard(c)) continue;
       return c;
     }
     if (home - d < 0 && home + d >= n) break;

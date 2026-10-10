@@ -126,6 +126,10 @@ export const S = {
   // zoom }. Never saved; the beat's name is (`beat`), and a reload takes the
   // shot again over the event as it now stands (cutscene.js).
   shot: null,
+  // The first muck's scene while it plays, and the one of the rock's gang it
+  // sent for the patch (firstmuck.js). Neither is saved: the beat's name is.
+  muckScene: null,
+  muckPull: null,
   // The tearing while it happens: seconds of the gulp left, and a knock
   // waiting to be spent on the view. Neither is saved; an event is a moment,
   // not a state.
@@ -775,6 +779,7 @@ export const SAVED_BY_HAND = [
 export const EPHEMERAL = [
   'orbBurst',
   'still',
+  'muckScene', 'muckPull',  // the first muck's scene and its sent body; the beat's name is saved
   // A bite out of the serpent's hide closes in seconds; a reload finds it closed.
   'serpentChips', 'barrierHits',
   // What the store said about this page (persist.js, save.js).

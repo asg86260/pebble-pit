@@ -21,7 +21,9 @@
 import { P, CELL, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
          CUT_SHIELD_ZOOM, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S,
          CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_IN_S, CUT_OUT_S, CUT_GLIDE,
-         CUT_SNATCH_ZOOM, CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S } from './config.js';
+         CUT_SNATCH_ZOOM, CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S,
+         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, CUT_MUCK_GROUND } from './config.js';
+import { muckZoom, muckSpot, muckOver } from './firstmuck.js';
 import { mouthX } from './deep/place.js';
 import { S, rift, pit } from './state.js';
 import { setZoom, clampCam, lockScroller } from './world.js';
@@ -40,6 +42,10 @@ const SCENES = {
   // The snatch: on the edge of the plank, for as long as the beat runs.
   snatchcam: { s: CUT_SNATCH_MAX_S, zoom: CUT_SNATCH_ZOOM, spot: () => mouthX(), tail: CUT_SNATCH_TAIL_S,
                over: () => !beatRunning('snatch') },
+  // The first muck: wide on the patch, the walker coming in from the open side,
+  // over once the patch is clear and faded (firstmuck.js).
+  firstmuck: { s: CUT_MUCK_MAX_S, zoom: muckZoom, spot: muckSpot, tail: CUT_MUCK_TAIL_S,
+               ground: CUT_MUCK_GROUND, over: () => muckOver() },
 };
 // A shield's answer has no length of its own, so the scene ends on the fact
 // (the shield gone, or a held rock set down) plus a tail to see the wreck fly.

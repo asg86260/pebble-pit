@@ -25,7 +25,7 @@ import { JOB, TYPE } from '../jobs.js';
 import { frames, now } from '../clock.js';
 import { commutePace, machineRate } from '../levels.js';
 import { machine } from '../machines.js';
-import { foul, puffStack, nearestOpenMess, onOpenYard, messAt, muckCols, poopCols,
+import { foul, puffStack, nearestOpenMess, onOpenYard, messAt, openMessAt, kindOpen, muckCols, poopCols,
          colAt, dropMuckAt, MUCK_ELBOW } from '../smog.js';
 import { inWorking } from '../route.js';
 import { sfx } from '../audio.js';
@@ -100,7 +100,8 @@ function under(x) {
 // Where a roomba parks to work column `c`: centered over it, on a whole cell.
 const parkOver = c => Math.round((c * P + P / 2 - RW / 2) / P) * P;
 // Whether there is anything under a roomba parked over `c` that it may take.
-const leftUnder = c => under(parkOver(c)).some(k => messAt(k) > 0 && onOpenYard(k));
+// Only what the weather is done with: muck under a storm waits like the shovels do.
+const leftUnder = c => under(parkOver(c)).some(k => openMessAt(k) > 0 && onOpenYard(k));
 
 // How many columns either side of its patch a roomba reserves in the books: its
 // own half-width, and a body's elbow past that, so nobody shovels under it.
@@ -146,6 +147,7 @@ function suck(r) {
     if (r.owed < 1 || binOf(r) >= ROOMBA_BIN) break;
     if (!onOpenYard(c)) continue;
     for (const [layer, kind] of [[poop, 'poop'], [muck, 'muck']]) {
+      if (!kindOpen(kind)) continue;
       while (layer[c] > 0 && r.owed >= 1 && binOf(r) < ROOMBA_BIN) {
         fleck(c * P + P / 2, S.groundY - (messAt(c) - 0.5) * P, m.x, m.y, ROOMBA_SUCK_FLY_MS, 0);
         layer[c]--;

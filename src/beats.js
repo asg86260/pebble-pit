@@ -29,6 +29,7 @@ import { cameraCues, play, stepShot, release } from './cutscene.js';
 import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
+import { firstMuckDue, startFirstMuck } from './firstmuck.js';
 
 const OWNERS = ['yard', 'camera', 'sheet'];
 
@@ -90,6 +91,12 @@ export const BEATS = [
     when: shieldFalls('arch'), enter: () => play('arch'), step: stepShot, skip: release },
   { key: 'dome', owns: 'camera', next: null,
     when: shieldFalls('dome'), enter: () => play('dome'), step: stepShot, skip: release },
+
+  // --- the first muck (firstmuck.js) -------------------------------------
+  // After the first storm that left muck, the first body to go for it.
+  { key: 'firstmuck', owns: 'camera', next: null,
+    when: () => firstMuckDue(),
+    enter: () => { startFirstMuck(); play('firstmuck'); }, step: stepShot, skip: release },
 
   // --- the end of the story -----------------------------------------------
   // Once the rescue's beat is over and the newcomer is one of the crew. It

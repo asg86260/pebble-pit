@@ -17,6 +17,7 @@ import { swingFor } from './tenders.js';
 import { across, stand } from './body.js';
 import { unbook } from './hole.js';
 import { roombasOf } from './roomba.js';
+import { posing } from '../firstmuck.js';
 
 // Nobody shovels inside anybody, but only when two are genuinely standing in
 // each other: the claims already keep them four columns apart, and a wider
@@ -193,6 +194,8 @@ export function takeMess(w, c) {
   const push = w.shovelAt - w.x;
   if (Math.abs(push) >= P) w.x += Math.sign(push) * Math.floor(Math.abs(push) / P) * P;
   w.y = climbTo(w, feetOn(on, w.x));
+  // Stood at the first muck while its scene asks what it is (firstmuck.js).
+  if (posing(w, now)) { w.resting = false; return true; }
   if (now >= (w.sweepAt || 0)) {
     sweepMuckAt(w.x + WORKER / 2, 1, w);
     w.lunge = 1;

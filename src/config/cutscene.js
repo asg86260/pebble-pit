@@ -41,3 +41,23 @@ export const CUT_IN_S = 0.5;
 // pressed: a tap is the accident of a hand resting on the keyboard. Measured
 // on the game's clock, so it does not run down while the yard is held.
 export const SKIP_HOLD_MS = 700;
+
+// The first muck (DESIGN.md, "The first muck's scene"): the first body to go
+// for the weather's muck after the first storm that left any, watched on its
+// last stretch, asking what it is ("?"), not liking it (the yuck), and
+// shovelling it up. Short on purpose: the walk in frame is the last
+// CUT_MUCK_NEAR cells and every hold below is a beat, not a pause.
+export const CUT_MUCK_NEAR = 40;      // cells off its patch when the camera goes to the body
+export const CUT_MUCK_CELLS = 90;     // cells across the frame: the wide shot, the worker seen crossing
+export const CUT_MUCK_ZOOM_MAX = 3;   // and never closer than this, however wide the window
+export const CUT_MUCK_LEAD = 0.25;    // the patch sits this share of the frame off center, away from the walker
+export const CUT_MUCK_GROUND = 0.72;  // the ground line this far down the frame
+export const CUT_MUCK_ASK_S = 0.9;    // the "?" over its head, stood at the patch
+export const CUT_MUCK_YUCK_S = 1.1;   // then the yuck
+export const CUT_MUCK_FADE_S = 0.4;   // a shovelled cell going, in CUT_MUCK_FADE_STEPS held steps
+export const CUT_MUCK_FADE_STEPS = 4;
+export const CUT_MUCK_TAIL_S = 0.2;   // after the patch is clear and faded, before letting go
+export const CUT_MUCK_MAX_S = 10;     // a ceiling, never the design
+// Nobody whose job it is has gone for it this long after the storm: one of
+// the gang is sent off the rock for the one patch, and walks back after.
+export const CUT_MUCK_WAIT_S = 1.5;

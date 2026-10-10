@@ -230,6 +230,8 @@ export function drawKitCounts(screenAt) {
 // conversation. Everything stands a clear cell above the head so it never
 // touches the load a worker is carrying.
 
+const ASK = ['111', '001', '011', '000', '010'];
+
 function drawSay(w, say) {
   const x = Math.round(w.x) + WORKER / 2;
   const top = Math.round(w.y) - P * 2;
@@ -281,6 +283,15 @@ function drawSay(w, say) {
       ctx.fillRect(cx + wave * (sx > 0 ? 1 : -1), top - P * 2, P - 1, P - 1);
       ctx.fillRect(cx, top - P * 3, P - 1, P - 1);
     }
+    return;
+  }
+
+  // A question mark, five cells tall: the first muck's body asking what it
+  // has been sent to (firstmuck.js).
+  if (say.mark === 'ask') {
+    for (let r = 0; r < ASK.length; r++)
+      for (let c = 0; c < 3; c++)
+        if (ASK[r][c] === '1') ctx.fillRect(Math.round(x - P * 1.5 + c * P), top - P * 5 + r * P, P, P);
     return;
   }
 

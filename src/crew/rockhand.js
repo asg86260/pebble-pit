@@ -145,8 +145,9 @@ export function rockhandWork(w, c) {
 
 // A mess on the rock comes before the rock, or a face nobody is mining stays
 // under muck for good. Its own site and not the whole yard, unless its pile
-// is full and there is nothing else for it to do.
-export const rockhandMess = () => rockMuck() > 0 || S.pileFull.rock;
+// is full and there is nothing else for it to do. Or the one body the first
+// muck's scene sent off the rock, until its patch is clear (firstmuck.js).
+export const rockhandMess = w => rockMuck() > 0 || S.pileFull.rock || (w && S.muckPull === w.uid);
 
 // A rockhand carries no goal of its own, so the shovel's is put down with the
 // shovel. And a full pile sends the gang to the whole yard's mess, past the
