@@ -3,7 +3,7 @@
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
-import { TIER_OWN, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
+import { TIER_OWN, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 
 // The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -1778,7 +1778,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(2, 1);
-    window.__jump(4);                           // the timber is on offer from the fourth rock
+    window.__jump(PROP_FROM);                   // the timber is on offer once the first rock is down
     window.__give(200);
     window.__build();
     const corner = () => document.getElementById('pin');

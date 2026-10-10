@@ -54,6 +54,9 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+**New this release**
+- The props can be built after the first rock.
+
 - Workers mining the rock put up a third of the dust motes they did, and the motes thin out gradually instead of vanishing at the end (test/wave7-sky.test.mjs).
 
 ## v0.5.2 — 2026-09-28
