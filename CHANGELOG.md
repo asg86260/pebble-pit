@@ -58,6 +58,8 @@ this section; the release that switches it on moves these under Unreleased.
 - The props can be built after the first rock.
 
 - Workers mining the rock put up a third of the dust motes they did, and the motes thin out gradually instead of vanishing at the end (test/wave7-sky.test.mjs).
+- The cancel on a queued barrier is a small button instead of a bar across the whole card, and it no longer covers the description (src/selftest/boards.js).
+- Hovering a queued barrier keeps its description instead of fading it out (src/selftest/boards.js).
 
 ## v0.5.2 — 2026-09-28
 
