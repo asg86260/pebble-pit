@@ -54,6 +54,9 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- The cancel on a queued barrier is a small button instead of a bar across the whole card, and it no longer covers the description (src/selftest/boards.js).
+- Hovering a queued barrier keeps its description instead of fading it out (src/selftest/boards.js).
+
 ## v0.5.2 — 2026-09-28
 
 - On the landing page, cloud saves are on the saves page with your slots, as they are in the game, instead of under settings (src/selftest/cloud.js).

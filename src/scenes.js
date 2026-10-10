@@ -1440,6 +1440,9 @@ export const SCENES = {
   // the rock meeting the shield rather than the dance before it.
   shieldrow: { about: 'the shields', say: "the bench's board with a shield on offer", page: true,
     run: () => { shieldYard(); window.__board('bench'); } },
+  shieldbuilding: { about: 'the shields', say: "the bench's board with the first shield ordered and waiting its turn, with the strip to cancel it", page: true,
+    run: () => { shieldYard(); S.quarryOpen = S.farmOpen = S.towerOpen = S.meteorOpen = true;
+                 window.__buy('house'); window.__buy('props'); window.__fast(2); window.__board('bench'); } },
   ...Object.fromEntries(SHIELD_ORDER.flatMap(k => [
     [k, { about: 'the shields', say: `the ${k}, built`, run: () => shieldBuilt(k) }],
     // Built through once so the yard is right, then finished a second time
