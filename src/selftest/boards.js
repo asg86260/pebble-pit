@@ -1867,6 +1867,48 @@ export const TESTS = [
     ];
   }],
 
+  // A place step has no line of its own: the card is the farm's row alone,
+  // and its buy is the bench's own press. Bought, the story moves on to the net.
+  ['the farm is sold on the story\'s card with no line over it, and buying it moves the step on to the net', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1);
+    window.__jump(4);
+    window.__give(20000);
+    window.__answered('props');
+    window.__build();
+    await settle(0.6);
+    const shown = await cardShows('unlockfarm', 'offer');
+    const card = document.getElementById('objective');
+    const block = () => card.querySelector('.barrier');
+    const buyBtn = () => block()?.querySelector('button.buy');
+    const noLine = card.querySelector('.say')?.hidden === true;
+    const words = !!block()?.querySelector('.name')?.textContent && !!block()?.querySelector('.note')?.textContent;
+    const lit = buyBtn()?.disabled === false;
+    const btn = buyBtn();
+    if (btn) {
+      const r = btn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const ev = (type, buttons) => btn.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 1,
+        isPrimary: true, button: 0, buttons, bubbles: true, cancelable: true }));
+      ev('pointerdown', 1); ev('pointerup', 0);
+      btn.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true, cancelable: true }));
+    }
+    await settle(0.6);
+    const queued = (state().line.yard || []).some(w => w.key === 'unlockfarm');
+    window.__finish();
+    await settle(0.6);
+    const net = await cardShows('net', 'offer');
+    const line = card.querySelector('.say')?.textContent || '';
+    window.__crew(0, 0);
+    newRun();
+    return [
+      ok(shown && words, "the farm is on offer on the story's card, named and described", `${block()?.dataset.key}`),
+      ok(noLine, 'with no line over it'),
+      ok(lit && queued, "its buy queues the farm, as the bench's does", JSON.stringify(state().line.yard)),
+      ok(net && line !== '', 'the farm standing, the card moves on to the net and its line', line),
+    ];
+  }],
+
   // A browser page cannot be handed a real :hover, so the hover is stood up
   // the way the cascade would see it: every stylesheet rule that names
   // `:hover` is copied with a class in its place, and the class is put on the

@@ -9,6 +9,7 @@ import { S } from './state.js';
 import { shieldDone } from './shield.js';
 import { serpentOn } from './snatch.js';
 import { beatDone } from './beats.js';
+import { open, offered } from './stations.js';
 
 // In the order they come. `done` is the fact that finishes a step, and it
 // must imply every step before it (a fact that can come early, like the pit
@@ -26,8 +27,15 @@ export const STEPS = [
     ] },
   { key: 'falling', say: 'try to dig the boulder again!', done: () => S.boulderNo > 1 },
   { key: 'props', row: 'props', say: 'maybe building a wooden roof will stop the next boulder?', done: () => shieldDone('props') || S.rescued },
+  // A place step (no line of its own): the barrier that just fell opened the
+  // next place, so the card sells it before the next barrier. It is done when
+  // the place stands (or the barrier after it has fallen), so a place already
+  // open is skipped.
+  { key: 'farm', row: 'unlockfarm', place: 'farm', say: '', done: () => open('farm') || shieldDone('net') || !!S.rescued },
   { key: 'net', row: 'net', say: 'nope, try catching the boulder and slowing it down', done: () => shieldDone('net') || S.rescued },
+  { key: 'quarry', row: 'unlockquarry', place: 'quarry', say: '', done: () => open('quarry') || shieldDone('arch') || !!S.rescued },
   { key: 'arch', row: 'arch', say: "lets try building an arch from the mined ore and stone. surely that's sturdy enough.", done: () => shieldDone('arch') || S.rescued },
+  { key: 'buytower', row: 'unlocktower', place: 'tower', say: '', done: () => open('tower') || shieldDone('dome') || !!S.rescued },
   { key: 'dome', row: 'dome', say: 'out of options, lets see if the wizards can help.', done: () => shieldDone('dome') || S.rescued },
   { key: 'rescue', say: 'save your sqwife', done: () => !!S.rescued },
   // The second half: the snatch waits on the pit drowning, then the way down
@@ -45,13 +53,15 @@ export const STEPS = [
 // the last one done, so a later fact always stands for the steps before it (a
 // sqwife out means the shields are behind you, whatever this save recorded of
 // them). The snatch has no line: nothing the player does starts it, so while
-// it is due the line is empty rather than a thing to do.
+// it is due the line is empty rather than a thing to do. A place step has no
+// line either, only its row, and it is the step only while the bench would
+// offer that place (the door's own gate), so the card is never an empty box.
 export function objective() {
   const live = STEPS.filter(s => !s.when || s.when());
   let from = 0;
   live.forEach((s, i) => { if (s.done()) from = i + 1; });
   const next = live[from];
-  return next && next.say ? next : null;
+  return next && (next.say || (next.place && offered(next.place))) ? next : null;
 }
 
 // The quest under the step the line is on, item by item with whether each is

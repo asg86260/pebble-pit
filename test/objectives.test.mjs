@@ -13,7 +13,7 @@ group('a fresh game asks for the rock first, and the line follows the story', as
   const fresh = line();
   S.boulderNo = 2;
   const second = line();
-  S.shieldsDone = ['props'];
+  S.shieldsDone = ['props']; S.farmOpen = true;
   const net = line();
   S.shieldsDone = ['props', 'net', 'arch', 'dome'];
   const sqwife = line();
@@ -72,5 +72,42 @@ group('the intro quest under the rock ticks off its three items, then goes', asy
     ok(fresh === 'chip:0 pickup:0 toss:0', 'a fresh game shows all three, none done', fresh),
     ok(chipped === 'chip:1 pickup:0 toss:0', 'mining a piece off ticks the first', chipped),
     ok(all === null && line() === 'rock', 'all three done, the list goes and the line stays on the rock', `${JSON.stringify(all)} ${line()}`)
+  ];
+});
+
+group('each fallen barrier asks for the place it opened before the next barrier', async () => {
+  const fresh = () => { S.shieldsDone = []; S.farmOpen = false; S.quarryOpen = false; S.towerOpen = false; S.rescued = false; S.boulderNo = 2; };
+  fresh();
+  window.__give(2000);
+  const first = line();
+  window.__answered('props');
+  const farm = line();
+  window.__buy('unlockfarm');
+  window.__finish();
+  const net = line();
+  // the farm already open when the props fall: straight to the net
+  fresh();
+  S.farmOpen = true;
+  window.__answered('props');
+  const skipped = line();
+  window.__answered('net');
+  const quarry = line();
+  window.__give(20000); window.__buy('unlockquarry');
+  window.__finish();
+  const arch = line();
+  window.__answered('arch');
+  const tower = line();
+  window.__give(20000); window.__buy('unlocktower');
+  window.__finish();
+  const dome = line();
+  return [
+    ok(first === 'props', 'the props first', first),
+    ok(farm === 'farm', 'props down, farm unbought: buy the farm', farm),
+    ok(net === 'net', 'the farm bought: the net', net),
+    ok(skipped === 'net', 'the farm already open: straight to the net', skipped),
+    ok(quarry === 'quarry', 'net down, quarry unbought: the quarry, not the arch', quarry),
+    ok(arch === 'arch', 'the quarry bought: the arch', arch),
+    ok(tower === 'buytower', 'arch down, tower unbought: the tower', tower),
+    ok(dome === 'dome', 'the tower bought: the dome', dome)
   ];
 });
