@@ -1841,9 +1841,9 @@ export const TESTS = [
     ];
   }],
 
-  // The dome's bill is the longest a shield has: four coins and a clock, and
+  // The dome's bill is the longest a shield has: four coins (the work's time is not a line), and
   // every line of it has to read whole at the card's narrowest.
-  ['the dome on offer reads whole on the story\'s card, four coins and a clock', async () => {
+  ['the dome on offer reads whole on the story\'s card, four coins', async () => {
     newRun();
     await settle();
     window.__crew(2, 1, 0, 0, 0, 1);
@@ -1862,7 +1862,7 @@ export const TESTS = [
     const inside = !!btn && btn.right <= card.right && btn.left >= card.left;
     return [
       ok(block?.dataset.key === 'dome' && block?.dataset.mode === 'offer', "the dome is on offer on the story's card", block?.dataset.key),
-      ok(coins === 4 && lines.length === 5, 'its bill is four coins and a clock', `${coins} coins, ${lines.length} lines`),
+      ok(coins === 4 && lines.length === 4, 'its bill is four coins, no clock', `${coins} coins, ${lines.length} lines`),
       ok(clipped === 0 && inside, 'and none of it runs out of the card', `${clipped} clipped`),
     ];
   }],

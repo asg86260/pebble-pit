@@ -61,7 +61,7 @@ export function seatBarrier(step, t) {
   if (parts) update(u, mode);
 }
 
-// The coins in the order the yard hands them out, and the clock last.
+// The coins in the order the yard hands them out.
 const coinsOf = u => billOf(u).filter(([m]) => m !== 'time')
   .sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0]));
 
@@ -110,15 +110,7 @@ function draw(u, mode) {
     list.appendChild(li);
     lines.push(li);
   }
-  // The clock is a line of its own with no box: time is never what you are
-  // short of (`purse`).
-  let clock = null;
-  if (billOf(u).some(([m]) => m === 'time')) {
-    clock = document.createElement('li');
-    clock.className = 'time';
-    clock.innerHTML = `<i class="box"></i>${MARK.time}<span class="num"></span>`;
-    list.appendChild(clock);
-  }
+  // The coins only: the work's time is not a line here (the owner, 2026-10-10).
   box.appendChild(list);
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -126,7 +118,7 @@ function draw(u, mode) {
   btn.innerHTML = '<span class="cost"></span>';
   onTap(btn, () => pressRow(u));
   box.appendChild(btn);
-  return { lines, clock, btn, cost: btn.firstChild };
+  return { lines, btn, cost: btn.firstChild };
 }
 
 function update(u, mode) {
@@ -148,7 +140,6 @@ function update(u, mode) {
     li.classList.toggle('done', have >= need);
     say(li.lastChild, `${priceText(li.dataset.money, Math.min(have, need))} / ${priceText(li.dataset.money, need)}`);
   }
-  if (parts.clock) say(parts.clock.lastChild, priceText('time', bill.find(([m]) => m === 'time')[1]));
   sayHTML(parts.cost, tagOf(u, bill).bill);
   const off = !forSale(u) || !canPay(u);
   if (parts.btn.disabled !== off) parts.btn.disabled = off;

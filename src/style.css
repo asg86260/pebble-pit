@@ -1978,21 +1978,24 @@ html.dark .modal {
                                    margin: 0 !important; background: none; image-rendering: pixelated; flex: none; }
 #objective .barrier .name { text-transform: uppercase; letter-spacing: .08em; font-weight: bold; }
 #objective .barrier .note { color: var(--ink-2); }
-#objective .barrier .bill { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 1px; }
-#objective .barrier .bill li { display: flex; align-items: center; gap: 4px; white-space: nowrap; transition: opacity 1s ease; }
-#objective .barrier .bill li.done { opacity: .55; }
-#objective .barrier .bill .num { margin-left: auto; padding-left: 6px; font-variant-numeric: tabular-nums; }
+/* the bill as one small table against the card's right edge: box, mark, the
+   numbers right-aligned in their own column, so each line reads across (the
+   owner, 2026-10-10: across the card's width they were too far apart) */
+#objective .barrier .bill { list-style: none; margin: 2px 0 0; padding: 0; display: grid; grid-template-columns: auto auto auto;
+                            justify-content: end; align-items: center; column-gap: 4px; row-gap: 1px; }
+#objective .barrier .bill li { display: contents; white-space: nowrap; }
+#objective .barrier .bill li > * { transition: opacity 1s ease; }
+#objective .barrier .bill li.done > * { opacity: .55; }
+#objective .barrier .bill .num { text-align: right; padding-left: 2px; font-variant-numeric: tabular-nums; }
 #objective .barrier .bill .box { position: relative; flex: none; width: 7px; height: 7px; border: 1px solid currentColor; }
 #objective .barrier .bill .box::after { content: ''; position: absolute; inset: 1px; background: currentColor; opacity: 0; transition: opacity 1s ease; }
 #objective .barrier .bill li.done .box::after { opacity: 1; }
-/* the clock is never short, so its line has no box to tick, only the room */
-#objective .barrier .bill li.time .box { visibility: hidden; }
 #objective .barrier button { pointer-events: auto; font: inherit; color: var(--ink); background: var(--paper); cursor: pointer;
                              transition: opacity .35s ease, border-color 1s ease, color 1s ease; }
 #objective .barrier .buy { margin-top: 4px; padding: 2px 6px; border: 3px double var(--ink); }
 #objective .barrier .buy .cost { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; }
 #objective .barrier .buy .cost > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-#objective .barrier .buy:disabled { cursor: default; border: 3px dashed var(--ink-5); color: var(--ink-5); }
+#objective .barrier .buy:disabled { cursor: default; border-color: var(--ink-5); color: var(--ink-5); }
 #objective .barrier .buy .short { color: var(--ink-5); }
 #objective .barrier .track { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
 #objective .barrier .bar { position: relative; flex: 1; min-width: 40px; height: 8px; border: 2px solid var(--ink); }

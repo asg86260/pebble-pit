@@ -1741,8 +1741,8 @@ export const SCENES = {
   propsrising: { about: 'the shields', say: "the props going up: the card's bar part filled",
     run: () => { cardYard(2000); window.__buy('props'); window.__fast(12); } },
   // The dome on offer: the three before it have failed and the tower stands,
-  // so the story's card sells it, four coins and a clock, two of them met.
-  domeoffer: { about: 'the shields', say: "the dome on offer on the story's card, four coins and a clock",
+  // so the story's card sells it, four coins, two of them met.
+  domeoffer: { about: 'the shields', say: "the dome on offer on the story's card, four coins",
     run: () => { cardYard(20000); window.__crew(2, 1, 0, 0, 0, 1);
                  window.__answered('props', 'net', 'arch'); window.__meteor();
                  const half = Object.fromEntries(DOME_BILL.filter(([m]) => m !== 'dust').map(([m, n], k) => [m + 's', k ? n / 2 : n]));
