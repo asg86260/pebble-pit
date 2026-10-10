@@ -7,8 +7,7 @@
 // Where they stand is worked out every frame from what is already on the
 // glass rather than kept in a table: centered at the top edge, under the
 // toast while a notice is up, and under whichever corner card -- the story's
-// line and its queue, the corner squares, the pinned row under them -- the
-// row would otherwise sit on.
+// line and its queue, the corner squares -- the row would otherwise sit on.
 // A card coming or going changes the row's width, and the cards that stay
 // glide to their new seats (style.css) instead of jumping.
 
@@ -23,7 +22,6 @@ const holder = document.getElementById('messtags');
 const toast = document.getElementById('toast');
 const topleft = document.getElementById('topleft');
 const corner = document.getElementById('corner');
-const pin = document.getElementById('pin');
 
 const tags = [...holder.querySelectorAll('.messtag')].map(el =>
   ({ el, kind: el.dataset.kind, n: el.querySelector('.n'), said: null, up: false, at: '' }));
@@ -65,7 +63,6 @@ function furniture() {
   };
   if (topleft) for (const el of topleft.children) add(el);
   if (corner) for (const el of corner.children) add(el);
-  add(pin);
   return out;
 }
 
