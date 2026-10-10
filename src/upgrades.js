@@ -123,7 +123,7 @@ export const lodgers = board => UPGRADES.filter(u => u.board === board);
 // those are the one group that cannot be sold at the place they belong to --
 // the place is what they buy.
 export const SECTIONS = [
-  { title: 'the sky', goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
+  { title: 'saving your sqwife', goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
   { title: 'you', keys: ['carry', 'autotoss', 'toss', 'reach', 'auto', 'speed', 'pick'] },
   { title: 'lucky swings', keys: ['critchance', 'critmult'] },
   { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'carter', 'driver', 'liftload', 'liftpace', 'belt'] },
