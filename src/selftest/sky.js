@@ -1,15 +1,17 @@
 // The sky: the air filter and the reading that is not a button.
 
 import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy, sleep, point, onScreen, hoverAway, raf } from './kit.js';
-import { LOO_EVERY } from '../config.js';
+import { LOO_EVERY, MESS_TAG_CAP } from '../config.js';
 
+// What a card says for a figure: the figure, or the cap and a plus past it.
+const says = n => (n > MESS_TAG_CAP ? `${MESS_TAG_CAP}+` : String(n));
 // A mess tag as the player sees it (messtags.js): up and faded in, the count
 // it says, and where its middle stands.
 const tagOf = kind => {
   const el = document.querySelector(`#messtags .messtag[data-kind="${kind}"]`);
   const r = el.hidden ? null : el.getBoundingClientRect();
   return { on: !el.hidden && el.classList.contains('on') && getComputedStyle(el).opacity === '1',
-           gone: el.hidden, n: Number(el.querySelector('.n').textContent),
+           gone: el.hidden, n: el.querySelector('.n').textContent,
            mid: r ? Math.round(r.left + r.width / 2) : null, top: r ? Math.round(r.top) : null };
 };
 // The page's frames until a thing is so, for a fade or a glide to finish.
@@ -133,7 +135,7 @@ export const TESTS = [
     await settle(0);
     // every frame of the fade, the figure it had, never nought
     let saidNought = false;
-    const muckGone = await framesUntil(() => { const t = tagOf('muck'); if (!t.gone && t.n === 0) saidNought = true; return t.gone; });
+    const muckGone = await framesUntil(() => { const t = tagOf('muck'); if (!t.gone && t.n === '0') saidNought = true; return t.gone; });
     await framesUntil(() => false, 25);   // and the glide to the middle
     const alone = tagOf('poop');
 
@@ -144,8 +146,9 @@ export const TESTS = [
     return [
       ok(clean.every(t => t.gone), 'a clean yard has no tag up', JSON.stringify(clean)),
       ok(muckUp && laid > 0, 'a storm lays muck and the muck tag fades in', `${muckUp}, ${laid} cells`),
-      ok(muck.n === state().smog.mess.muck || muck.n === laid, 'saying how many cells are down', `${muck.n} vs ${laid}`),
-      ok(poopUp && both[1].n === dropped, "the crew's poop gets its own tag, with its own count", `${poopUp}, ${both[1].n} vs ${dropped}`),
+      ok(muck.n === says(laid), 'saying how many cells are down', `${muck.n} vs ${laid}`),
+      ok(laid > MESS_TAG_CAP && muck.n === `${MESS_TAG_CAP}+`, "a whole storm's worth reads as the cap and a plus", `${muck.n} for ${laid}`),
+      ok(poopUp && both[1].n === says(dropped), "the crew's poop gets its own tag, with its own count", `${poopUp}, ${both[1].n} vs ${dropped}`),
       ok(both[0].mid < mid && both[1].mid > mid && both[0].top === both[1].top,
          'the two stand side by side about the middle', JSON.stringify(both)),
       ok(wasHeld && heldGone && heldBack, 'held, the tags go, and come back with the game', `${wasHeld}, ${heldGone}, ${heldBack}`),

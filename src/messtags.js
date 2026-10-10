@@ -17,6 +17,7 @@ import { messCounts } from './smog.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { gliding } from './view.js';
 import { cutsceneRunning } from './cutscene.js';
+import { MESS_TAG_CAP } from './config.js';
 
 const holder = document.getElementById('messtags');
 const toast = document.getElementById('toast');
@@ -44,7 +45,10 @@ export function stepMessTags() {
     const n = counts ? counts[t.kind] | 0 : 0;
     // written only when it changes, so a still count is a still card; and
     // never nought, so a card fading out says the last figure it had
-    if (n > 0 && n !== t.said) { t.said = n; t.n.textContent = String(n); }
+    if (n > 0 && n !== t.said) {
+      t.said = n;
+      t.n.textContent = n > MESS_TAG_CAP ? `${MESS_TAG_CAP}+` : String(n);
+    }
     t.up = n > 0;
     if (!t.up) fadeOut(t.el);
   }
