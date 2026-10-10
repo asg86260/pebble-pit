@@ -1338,8 +1338,11 @@ group('a grain rides the belt rather than being thrown over it', async () => {
     if (s.beltX.length) seen.push(s.beltX[0]);
   }
   // and it all arrives: waited on, not timed, since how fast the ground
-  // clears is the hauler's pace as well as the belt's
-  runUntil(() => state().floor === 0 && state().belt === 0, 30);
+  // clears is the hauler's pace as well as the belt's. The limit is a backstop
+  // well past the one hauler's two-a-trip pace, and the check says whether the
+  // wait ended or ran out: run out, the band is read at whatever instant that
+  // was, and holds a load in transit about half the time.
+  const cleared = runUntil(() => state().floor === 0 && state().belt === 0, 90);
   const after = state();
   window.__crew(0, 0);
 
@@ -1349,6 +1352,7 @@ group('a grain rides the belt rather than being thrown over it', async () => {
     ok(onBand > 0, 'and some of it is on the band, being carried', `${onBand} loads`),
     ok(moved, 'and what is on the band is moving along it',
        seen.slice(0, 6).join(' -> ')),
+    ok(cleared, 'the ground clears', `${after.floor} grains still down`),
     ok(after.belt === 0, 'the band empties when the ground does', `${after.belt} left on it`),
     ok(after.stored > before.stored, 'and the hole has it', `${before.stored} -> ${after.stored}`),
     ok(after.floor < before.floor, 'and the ground has not',
