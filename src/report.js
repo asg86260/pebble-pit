@@ -34,7 +34,7 @@ import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport, doorAt } from './house.js';
 import { pot, pouring, letting, holding, potAt, tableWant, shownMult, hopperN, pourRate, payLeft, canDrop, payingBin } from './casino.js';
-import { buriedVisible } from './intro.js';
+import { buriedShown, buriedVisible } from './intro.js';
 import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
@@ -238,6 +238,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   doorX: Math.round(doorAt().x),
   buried: S.buried,
   buriedVisible: buriedVisible(),
+  buriedShown: buriedShown(),
   buriedDug: S.buriedDug,
   buriedMs: S.buriedMs,
   runId: S.runId,                      // the board of times' name for this run

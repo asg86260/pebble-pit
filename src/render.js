@@ -22,7 +22,7 @@ import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/ca
 import { drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
-import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
+import { drawBench, drawDroppedHats, drawBuried, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
@@ -83,7 +83,7 @@ export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller } from './rende
 export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';
 export { drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
-export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
+export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawBuried, drawIntro, drawKitStands,
          drawPointed, drawSays, drawWorkers } from './render/crew.js';
 
 // --- the painting order -------------------------------------------------------
@@ -142,6 +142,7 @@ const LAYERS = [
   { name: 'smoke', draw: drawSmoke },
   { name: 'dose motes', draw: drawDoseMotes, dim: 1 }, // the tonic trailing off a body, at the smoke's depth
 
+  { name: 'buried', draw: drawBuried },          // the one under the rock, which stands in front of her
   { name: 'rock', draw: drawRock },
   // After the rock, because a shield stands over it; before the crew, who walk
   // in front of everything.
