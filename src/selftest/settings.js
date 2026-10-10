@@ -266,7 +266,8 @@ export const TESTS = [
       ok(page[0] === 'controls' && page.length === 3 && page[2] === 'back', 'the page has its word and back', JSON.stringify(page)),
       ok(settingsGone, 'and the settings are not on it'),
       ok(list.join('|') === ['left click', 'interact', 'right click', 'focus workers',
-        'right click + left click', 'pick up workers', 'middle click', 'move camera'].join('|'),
+        'right click + left click', 'pick up workers', 'middle click', 'move camera',
+        'scroll wheel', 'move camera', '← → / a d', 'move camera'].join('|'),
         'four rows, input then action, in order', JSON.stringify(list)),
       ok(backOnSettings, 'back turns to the settings'),
     ];
