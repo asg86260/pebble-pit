@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>First Muck Cutscene</title>
+<style>
+  :root {
+    --bg: #f6f6f4;
+    --panel: #ffffff;
+    --ink: #111111;
+    --muted: #5c5c5c;
+    --rule: #d6d6d6;
+    --accent: #7a6047;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141414; --panel: #1d1d1d; --ink: #ececec; --muted: #a2a2a2;
+      --rule: #333333; --accent: #b0906f; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141414; --panel: #1d1d1d; --ink: #ececec; --muted: #a2a2a2;
+    --rule: #333333; --accent: #b0906f; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 14px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    padding: 20px 16px 40px; overflow-x: hidden;
+  }
+  header, main, footer { max-width: 1280px; margin: 0 auto; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  .note { color: var(--muted); margin: 0 0 6px; max-width: 80ch; }
+  .note b { color: var(--ink); }
+  .chain { margin: 12px 0 18px; padding: 10px 12px; border: 1px solid var(--rule);
+           background: var(--panel); max-width: 100ch; }
+  .chain ol { margin: 4px 0 0; padding-left: 22px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .opt { background: var(--panel); border: 1px solid var(--rule); padding: 12px; min-width: 0; }
+  .opt h2 { font-size: 15px; margin: 0 0 4px; }
+  .opt .dur { color: var(--accent); font-weight: bold; }
+  .opt p { margin: 4px 0; }
+  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated;
+           border: 1px solid var(--rule); margin: 8px 0 4px; background: #fff; }
+  .beat { min-height: 2.9em; color: var(--ink); }
+  .beat span { color: var(--muted); }
+  .meta { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule);
+          margin-top: 8px; padding-top: 6px; }
+  .meta b { color: var(--ink); }
+  footer { margin-top: 20px; color: var(--muted); max-width: 100ch; }
+  footer li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>First muck: a cutscene, three ways</h1>
+  <p class="note"><b>This is a mock drawn from plain shapes, not the game.</b> It cannot show the real
+  camera, the real cloud and rain drawing, the real crew sprites, timing at the real pace (a front
+  brews for 40 s; it is squeezed here), or how the yard around the shot keeps moving. Colors are the
+  game's own: ink, rock greys, cloud and storm greys, the grey water, and the brown of the dust and
+  the muck (<code>MUCK_TONE</code>, <code>SMOG_TINTS.dust</code>).</p>
+  <div class="chain">
+    <b>What actually happens, in order (all three tell this, no invented steps):</b>
+    <ol>
+      <li>A rockhand's swing puts up a faint brown dust puff (later, the machines' stacks put up soot).</li>
+      <li>It climbs and settles into the sky; the clouds darken by what is up there.</li>
+      <li>A front brews (the clouds swell), then rains: grey water, and among it brown drops, one per marked mote.</li>
+      <li>A brown drop that lands lays a cell of muck on whatever it hit.</li>
+      <li>On the rock, the cut or the plots, muck eats the swings first; on open ground a hauler walks over and shovels it.</li>
+    </ol>
+  </div>
+</header>
+<main class="grid" id="grid"></main>
+<footer>
+  <ul>
+    <li>Captions are placeholders in brackets. The words are the owner's.</li>
+    <li>In the game the yard never pauses for a cutscene and any click (or a held space) skips it; the mock loops.</li>
+    <li>Cells fade out over held frames here where the game takes a shoveled cell away in one go.</li>
+  </ul>
+</footer>
+
+<script>
+"use strict";
+// --- palette: the game's own tones ---------------------------------------
+const INK = "#111111", WHITE = "#ffffff";
+const ROCK_CRUST = "#6a6a6a", ROCK = "#151515";
+const GROUND = "#f2f2f2", HATCH = "#e3e3e3";
+const WATER = "#a4a4a4";
+const MUCK = "#7a6047", MUCK_SKIN = "#57402c";
+const DUST = ["#5c4224", "#6b4d28", "#503a20", "#644626"];
+const CLOUD = ["#dadada", "#cacace", "#b8b8c0", "#a6a6b0"];
+const CLOUD_UNDER = ["#c6c6c6", "#a2a2aa", "#7e7e8a", "#62626e"];
+const HOUSE_WIN = "#9a9a9a";
+
+// --- the world, in 6px cells ----------------------------------------------
+const CW = 360, CH = 240;           // canvas backing pixels
+const WW = 120, WH = 80;            // world in cells
+const GY = 70;                      // ground line
+const ROCK_L = 18, ROCK_R = 46, ROCK_C = 32, ROCK_HT = 14;
+const RH_X = 47;                    // the rockhand's left edge
+const HOUSE_X = 84;
+const FPS = 12;                     // held poses: sprites step at twelve a second
+const LOOP_REST = 0.8;
+
+const hash = (n) => { n = (n ^ 61) ^ (n >>> 16); n = n + (n << 3); n = n ^ (n >>> 4);
+  n = Math.imul(n, 0x27d4eb2d); n = n ^ (n >>> 15); return (n >>> 0) / 4294967296; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const ease = (k) => 1 - Math.pow(1 - clamp(k, 0, 1), 3);
+const smooth = (k) => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
+const lerp = (a, b, k) => a + (b - a) * k;
+const step = (t) => Math.floor(t * FPS) / FPS;
+const fade4 = (k) => Math.round(clamp(k, 0, 1) * 4) / 4;   // alpha in four held steps
+
+const rockH = (x) => {
+  if (x < ROCK_L || x > ROCK_R) return 0;
+  const d = (x + 0.5 - ROCK_C) / (ROCK_C - ROCK_L + 0.5);
+  return Math.round(ROCK_HT * Math.sqrt(Math.max(0, 1 - d * d)));
+};
+const surf = (x) => GY - rockH(x);
+
+// --- a view: world cells to screen pixels, rounded per edge so no seams ------
+function view(ctx, cam) {
+  const z = cam.z;
+  const ox = cam.cx - CW / (2 * z), oy = cam.cy - CH / (2 * z);
+  const sx = (x) => Math.round((x - ox) * z), sy = (y) => Math.round((y - oy) * z);
+  return {
+    z, ox, oy, sx, sy,
+    cell(x, y, w, h, color, a = 1) {
+      if (a <= 0) return;
+      const x0 = sx(x), y0 = sy(y), x1 = sx(x + w), y1 = sy(y + h);
+      if (x1 <= 0 || y1 <= 0 || x0 >= CW || y0 >= CH) return;
+      ctx.globalAlpha = a; ctx.fillStyle = color;
+      ctx.fillRect(x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0));
+      ctx.globalAlpha = 1;
+    }
+  };
+}
+
+// --- the furniture -----------------------------------------------------------
+function drawGround(v) {
+  const x0 = Math.floor(v.ox) - 1, x1 = Math.ceil(v.ox + CW / v.z) + 1;
+  v.cell(x0, GY, x1 - x0, 20, GROUND);
+  for (let x = x0; x < x1; x++) for (let y = GY + 1; y < GY + 20; y++)
+    if (((x - y) % 4 + 4) % 4 === 0) v.cell(x, y, 1, 1, HATCH);
+  // the ground line: a hairline, not a cell
+  v.cell(x0, GY, x1 - x0, Math.max(1, Math.round(v.z / 3)) / v.z, INK);
+}
+function drawRock(v, bite = 0) {
+  for (let x = ROCK_L; x <= ROCK_R; x++) {
+    const h = rockH(x); if (!h) continue;
+    const top = GY - h;
+    v.cell(x, top, 1, 2, ROCK_CRUST);
+    if (h > 2) v.cell(x, top + 2, 1, h - 2, ROCK);
+  }
+  // a nick the swings have taken out of the flank
+  if (bite) v.cell(ROCK_R - 1, GY - 3, 1, 1, ROCK_CRUST);
+}
+function drawHouse(v) {
+  const x = HOUSE_X;
+  v.cell(x, GY - 7, 18, 1, INK);
+  v.cell(x + 1, GY - 6, 16, 6, INK);
+  v.cell(x + 2, GY - 5, 3, 5, WHITE);               // the doorway
+  for (let i = 0; i < 3; i++) v.cell(x + 7 + i * 3, GY - 5, 2, 2, HOUSE_WIN);
+  v.cell(x + 5, GY - 13, 1, 6, INK);                // the flag
+  v.cell(x + 6, GY - 13, 3, 2, INK);
+  v.cell(x + 7, GY - 11, 2, 1, INK);
+}
+// a body: an outlined square, three cells
+function drawBody(v, bx, pose, face = -1) {
+  const by = GY - 3;
+  v.cell(bx, by, 3, 3, INK);
+  const inset = Math.max(1, Math.round(v.z / 3)) / v.z;
+  v.cell(bx + inset, by + inset, 3 - 2 * inset, 3 - 2 * inset, WHITE);
+  const fx = face < 0 ? bx - 1 : bx + 3, d = face < 0 ? -1 : 1;
+  if (pose === "up") {            // pick raised
+    v.cell(fx, by - 1, 1, 1, INK); v.cell(fx + d, by - 2, 1, 1, INK);
+    v.cell(fx + 2 * d, by - 2, 1, 1, INK); v.cell(fx + d, by - 3, 1, 1, INK);
+  } else if (pose === "down") {   // pick in
+    v.cell(fx, by + 1, 1, 1, INK); v.cell(fx + d, by + 1, 1, 1, INK);
+    v.cell(fx + d, by + 2, 1, 1, INK); v.cell(fx + d, by, 1, 1, INK);
+  } else if (pose === "shovelA") {
+    v.cell(fx, by + 1, 1, 1, INK); v.cell(fx + d, by + 2, 2, 1, INK);
+  } else if (pose === "shovelB") {
+    v.cell(fx, by, 1, 1, INK); v.cell(fx + d, by - 1, 1, 1, INK); v.cell(fx + 2 * d, by - 1, 1, 1, INK);
+  }
+}
+
+// --- the rockhand's swing and its dust ---------------------------------------
+const SWING = 0.75;               // a stroke
+const strikeOf = (t) => Math.floor(t / SWING);
+const swingPose = (t) => ((t % SWING) < 0.5 ? "up" : "down");
+const STRIKE_X = RH_X - 1.5, STRIKE_Y = GY - 2;
+const RISE = 12;                  // cells a second a puff climbs
+function drawPuffs(v, t, from, to, ceil = 22) {
+  // three specks off every strike in [from, to), climbing and leaning, gone
+  // into the sky where the band is
+  const k0 = Math.ceil(from / SWING), k1 = Math.floor(Math.min(t, to) / SWING);
+  for (let k = k0; k <= k1; k++) {
+    const born = k * SWING + 0.5;
+    if (born > t || born >= to) continue;
+    const age = t - born;
+    for (let j = 0; j < 3; j++) {
+      const n = k * 7 + j;
+      const y = STRIKE_Y - age * RISE * (0.8 + 0.4 * hash(n));
+      const x = STRIKE_X + (hash(n + 3) - 0.5) * 4 + age * (0.6 + hash(n + 9)) + Math.sin(age * 2 + n) * 0.7;
+      const a = y < ceil + 6 ? fade4((y - ceil) / 6) : 1;
+      if (a <= 0) continue;
+      v.cell(Math.round(x), Math.round(y), 1, 1, DUST[n % 4], a);
+    }
+  }
+}
+
+// --- the cloud ---------------------------------------------------------------
+function drawCloud(v, cx, cy, swell, murk) {
+  const blobs = [[-9, 1, 5], [-2, -2, 7], [6, -1, 6], [12, 1, 4], [2, 2, 6]];
+  const s = 1 + swell * 0.35;
+  const m = Math.round(clamp(murk, 0, 1) * 3);
+  const xs = Math.floor(cx - 20 * s), xe = Math.ceil(cx + 20 * s);
+  const ys = Math.floor(cy - 10 * s), ye = Math.ceil(cy + 6 * s);
+  const inside = (x, y) => blobs.some(([bx, by, r]) => {
+    const dx = (x + 0.5 - (cx + bx * s)), dy = (y + 0.5 - (cy + by * s)) * 1.25;
+    return dx * dx + dy * dy <= (r * s) * (r * s);
+  });
+  for (let x = xs; x <= xe; x++) for (let y = ys; y <= ye; y++) {
+    if (!inside(x, y)) continue;
+    const under = !inside(x, y + 2);
+    const tones = under ? CLOUD_UNDER : CLOUD;
+    // per-cell variation: a neighbor tone now and then, never a flat fill
+    const tone = tones[clamp(m - (hash(x * 131 + y * 7) < 0.25 ? 1 : 0), 0, 3)];
+    v.cell(x, y, 1, 1, tone);
+  }
+  return { bottom: cy + 5 * s, left: cx - 16 * s, right: cx + 16 * s };
+}
+
+// --- rain --------------------------------------------------------------------
+const FALL = 26;                  // cells a second
+function drawRain(v, t, start, end, cl, rate = 16) {
+  if (t < start) return;
+  const n0 = 0, n1 = Math.floor((Math.min(t, end) - start) * rate);
+  for (let i = n0; i <= n1; i++) {
+    const t0 = start + i / rate;
+    const y = cl.bottom + (t - t0) * FALL;
+    if (y > GY || t0 > t) continue;
+    const x = lerp(cl.left, cl.right, hash(i * 17 + 5)) + (y - cl.bottom) * 0.12;
+    v.cell(Math.round(x), Math.round(y) - 3, 1, 3, WATER);
+  }
+}
+// scripted brown drops: [x at the cloud, time it leaves, landing x]
+function dirtyDrop(d, cl) {
+  const land = d.t0 + (GY - cl.bottom) / FALL;
+  return { ...d, land, x: (y) => d.x + (y - cl.bottom) * 0.12, landX: Math.round(d.x + (GY - cl.bottom) * 0.12) };
+}
+function drawDirty(v, t, drops, cl) {
+  for (const d of drops) {
+    if (t < d.t0 || t >= d.land) continue;
+    const y = cl.bottom + (t - d.t0) * FALL;
+    v.cell(Math.round(d.x(y)), Math.round(y) - 3, 1, 3, MUCK);
+  }
+}
+// muck cells: each lands at a time and may be taken at a time (faded out
+// over held frames in the mock)
+function drawMuck(v, t, cells) {
+  for (const c of cells) {
+    if (t < c.at) continue;
+    const a = c.gone != null ? fade4(1 - (t - c.gone) / 0.3) : 1;
+    if (a <= 0) continue;
+    const y = (c.onRock ? surf(c.x) : GY) - 1;
+    v.cell(c.x, y, 1, 1, MUCK, a);
+    v.cell(c.x, y, 1, 1 / 3, MUCK_SKIN, a);
+  }
+}
+
+// --- an overlay: a dotted trace, revealed dot by dot ----------------------------
+function drawTrace(v, pts, k, a) {
+  if (a <= 0) return;
+  let total = 0; const segs = [];
+  for (let i = 1; i < pts.length; i++) {
+    const L = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    segs.push(L); total += L;
+  }
+  const shown = total * k;
+  for (let d = 0; d <= shown; d += 2.5) {
+    let rem = d, i = 0;
+    while (i < segs.length - 1 && rem > segs[i]) { rem -= segs[i]; i++; }
+    const f = rem / segs[i];
+    const x = lerp(pts[i][0], pts[i + 1][0], f), y = lerp(pts[i][1], pts[i + 1][1], f);
+    v.cell(Math.round(x), Math.round(y), 1, 1, INK, a);
+  }
+}
+function drawTicks(v, x, y, w, h, a) {
+  if (a <= 0) return;
+  const c = (px, py) => v.cell(px, py, 1, 1, INK, a);
+  c(x - 1, y - 1); c(x, y - 1); c(x - 1, y);
+  c(x + w, y - 1); c(x + w - 1, y - 1); c(x + w, y);
+}
+
+// --- a caption card: the page, the owner's words -------------------------------
+function drawCard(ctx, text, a) {
+  if (a <= 0) return;
+  ctx.globalAlpha = a;
+  ctx.fillStyle = WHITE; ctx.fillRect(0, 0, CW, CH);
+  ctx.fillStyle = INK;
+  ctx.font = "13px ui-monospace, Consolas, monospace";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const words = text.split(" "), lines = []; let line = "";
+  for (const w of words) {
+    const tryL = line ? line + " " + w : w;
+    if (ctx.measureText(tryL).width > CW - 60 && line) { lines.push(line); line = w; } else line = tryL;
+  }
+  lines.push(line);
+  lines.forEach((l, i) => ctx.fillText(l, CW / 2, CH / 2 + (i - (lines.length - 1) / 2) * 18));
+  ctx.globalAlpha = 1;
+}
+
+// --- camera keyframes: eased segments ---------------------------------------
+function camAt(t, keys) {
+  if (t <= keys[0].t) return keys[0];
+  for (let i = 1; i < keys.length; i++) {
+    const a = keys[i - 1], b = keys[i];
+    if (t <= b.t) {
+      const k = (b.e || ease)((t - a.t) / (b.t - a.t));
+      return { cx: lerp(a.cx, b.cx, k), cy: lerp(a.cy, b.cy, k), z: lerp(a.z, b.z, k) };
+    }
+  }
+  return keys[keys.length - 1];
+}
+const WIDE = { cx: 60, cy: 40, z: 3 };
+
+// =============================================================================
+// A · Follow the dust
+// =============================================================================
+const A = (() => {
+  const CL = { cx: 54, cy: 16 };
+  const RAIN_AT = 6.0;
+  const FOLLOW_PUFF = 1.0 + 0.5 - 0.5;      // a strike's puff born at 1.25
+  const cl0 = { bottom: CL.cy + 5 * 1.35, left: CL.cx - 16 * 1.35, right: CL.cx + 16 * 1.35 };
+  const drops = [
+    { x: 54, t0: 6.6 }, { x: 57, t0: 7.4 }, { x: 52, t0: 7.9 }, { x: 58, t0: 8.3 }
+  ].map((d) => dirtyDrop(d, cl0));
+  const lead = drops[0];
+  const HAUL_GO = lead.land + 0.2, HAUL_FROM = HOUSE_X + 3, PACE = 13;
+  const muckXs = drops.map((d) => d.landX);
+  const firstMuck = Math.min(...muckXs), lastMuck = Math.max(...muckXs);
+  const HAUL_AT = lastMuck + 2;              // stands to the right, faces left
+  const ARRIVE = HAUL_GO + (HAUL_FROM - HAUL_AT) / PACE;
+  const cells = drops.map((d) => ({ x: d.landX, at: d.land, gone: null }))
+    .sort((p, q) => q.x - p.x);
+  cells.forEach((c, i) => { c.gone = ARRIVE + 0.35 * (i + 1); });
+  const DONE = ARRIVE + 0.35 * (cells.length + 1);
+  const OUT = DONE + 0.2, END = OUT + 1.5;
+  const LOOP = END + LOOP_REST;
+  // the puff the camera rides: born on the strike at 1.25
+  const puffY = (t) => STRIKE_Y - Math.max(0, t - 1.25) * RISE;
+
+  function cam(t) {
+    if (t < 1.25) return camAt(t, [{ ...WIDE, t: 0 }, { cx: 50, cy: 60, z: 6, t: 1.25 }]);
+    if (t < 4.2) {
+      const y = Math.max(CL.cy + 4, puffY(t));
+      const k = smooth((t - 1.25) / 2.95);
+      return { cx: lerp(50, CL.cx, k), cy: Math.min(60, y + 4), z: lerp(6, 4.5, k) };
+    }
+    if (t < RAIN_AT + 0.6) return { cx: CL.cx, cy: CL.cy + 4, z: 4.5 };
+    if (t < lead.land) {
+      const y = cl0.bottom + (t - lead.t0) * FALL;
+      const k = smooth((t - RAIN_AT - 0.6) / 0.6);
+      return { cx: lerp(CL.cx, lead.x(y), k), cy: lerp(CL.cy + 4, clamp(y, CL.cy + 4, 62), k), z: lerp(4.5, 6, k) };
+    }
+    const base = { cx: lead.landX, cy: 62, z: 6 };
+    if (t < OUT) {
+      const k = ease((t - lead.land - 1.0) / 1.6);
+      return { cx: lerp(base.cx, (firstMuck + HAUL_FROM) / 2 - 8, k), cy: lerp(62, 58, k), z: lerp(6, 4.2, k) };
+    }
+    const from = { cx: (firstMuck + HAUL_FROM) / 2 - 8, cy: 58, z: 4.2 };
+    const k = ease((t - OUT) / 1.5);
+    return { cx: from.cx, cy: lerp(from.cy, WIDE.cy, k), z: lerp(from.z, WIDE.z, k) };
+  }
+  const beats = [
+    [0, "glides in on a rockhand at the rock"],
+    [1.25, "rides one puff of the swing's dust up the sky"],
+    [4.2, "holds on the cloud as the front swells"],
+    [RAIN_AT, "rain: grey water, and one brown drop the camera rides down"],
+    [lead.land, "it lands: the first cell of muck. More follow it"],
+    [lead.land + 1.0, "pulls back as a hauler walks out from the house"],
+    [ARRIVE, "the hauler shovels it away"],
+    [OUT, "lets go: the zoom eases out, the seat stays"],
+    [END, "(the yard, as you left it)"]
+  ];
+  function draw(ctx, tt) {
+    const t = step(tt);
+    const v = view(ctx, cam(tt));
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, CW, CH);
+    const swell = smooth((t - 3.5) / 2.5), murk = 0.35 + 0.65 * smooth((t - 3.0) / 3.0);
+    drawCloud(v, CL.cx, CL.cy, swell, murk);
+    const cl = { ...cl0 };
+    drawRain(v, t, RAIN_AT, 99, cl);
+    drawDirty(v, t, drops, cl);
+    drawPuffs(v, t, 0, 99, CL.cy + 3);
+    drawGround(v); drawRock(v, 1); drawHouse(v);
+    drawMuck(v, t, cells);
+    drawBody(v, RH_X, swingPose(t));
+    // the hauler: idle at the door, walks, shovels
+    let hx = HAUL_FROM, pose = "stand";
+    if (t >= HAUL_GO) hx = Math.max(HAUL_AT, Math.round(HAUL_FROM - (t - HAUL_GO) * PACE));
+    if (t >= ARRIVE && t < DONE) pose = (Math.floor((t - ARRIVE) / 0.175) % 2) ? "shovelB" : "shovelA";
+    drawBody(v, hx, pose, -1);
+  }
+  return {
+    name: "A · Follow the dust",
+    dur: Math.round(END) + " s",
+    desc: "Wordless. The camera goes in on a swing, rides one puff of its dust up into the cloud, rides one brown drop down, holds on the muck it lays, and watches a hauler come and shovel it.",
+    reuses: "play/stepShot's glide, pull-in and let-go (CUT_IN_S, CUT_OUT_S, CUT_GLIDE); a moving spot like the tearing's; click and held-space skip; the yard keeps running.",
+    fresh: "a scene that is several shots (today a scene is one spot and one zoom); a seat aimed at the sky (camLockY today always holds the ground line low); a spot that follows one mote, then one drop; a trigger a few seconds before the first marked front's first drop, so the swing is on screen before the rain.",
+    LOOP, draw, beats, still: 9.6
+  };
+})();
+
+// =============================================================================
+// B · Land, then trace it back
+// =============================================================================
+const B = (() => {
+  const CL = { cx: 58, cy: 16 };
+  const cl0 = { bottom: CL.cy + 5 * 1.35, left: CL.cx - 16 * 1.35, right: CL.cx + 16 * 1.35 };
+  const drops = [{ x: 59, t0: -0.6 }, { x: 62, t0: 2.2 }, { x: 57, t0: 3.0 }].map((d) => dirtyDrop(d, cl0));
+  const M = drops[0].landX;
+  const TRACE_AT = 3.2, TRACE_END = 6.0, HOLD_END = 7.4, FADE_END = 8.0;
+  const HAUL_GO = 7.4, HAUL_FROM = HOUSE_X + 3, PACE = 13;
+  const HAUL_AT = Math.max(...drops.map((d) => d.landX)) + 2;
+  const ARRIVE = HAUL_GO + (HAUL_FROM - HAUL_AT) / PACE;
+  const cells = drops.map((d) => ({ x: d.landX, at: d.land })).sort((p, q) => q.x - p.x);
+  cells.forEach((c, i) => { c.gone = ARRIVE + 0.35 * (i + 1); });
+  const DONE = ARRIVE + 0.35 * (cells.length + 1);
+  const OUT = DONE + 0.2, END = OUT + 1.5, LOOP = END + LOOP_REST;
+  const trace = [[M + 0.5, GY - 2], [M - 1, cl0.bottom + 1], [CL.cx - 6, cl0.bottom - 2],
+                 [STRIKE_X - 0.5, 34], [STRIKE_X, GY - 6]];
+  const cam = (t) => camAt(t, [
+    { ...WIDE, t: 0 }, { ...WIDE, t: drops[0].land + 0.3 },
+    { cx: M, cy: 60, z: 7, t: 2.6 }, { cx: M, cy: 60, z: 7, t: TRACE_AT },
+    { cx: 54, cy: 44, z: 3.6, t: 4.6 }, { cx: 54, cy: 44, z: 3.6, t: FADE_END },
+    { cx: 68, cy: 58, z: 4.6, t: ARRIVE }, { cx: 68, cy: 58, z: 4.6, t: OUT },
+    { cx: 68, cy: WIDE.cy, z: 3, t: END }
+  ]);
+  const beats = [
+    [0, "the yard in the rain, the camera where the player left it"],
+    [drops[0].land, "the first brown drop lands: the first muck"],
+    [drops[0].land + 0.3, "pulls in on the muck and holds"],
+    [TRACE_AT, "a dotted line walks up to the cloud and back down to the swing"],
+    [TRACE_END, "held: muck, cloud, the swing that put it there"],
+    [HOLD_END, "the trace fades out fully; a hauler walks out"],
+    [ARRIVE, "the hauler shovels it away"],
+    [OUT, "lets go"],
+    [END, "(the yard)"]
+  ];
+  function draw(ctx, tt) {
+    const t = step(tt);
+    const v = view(ctx, cam(tt));
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, CW, CH);
+    drawCloud(v, CL.cx, CL.cy, 1, 1);
+    const rainEnd = 9.5;
+    drawRain(v, t, -4, rainEnd, cl0, 12);
+    drawDirty(v, t, drops, cl0);
+    drawPuffs(v, t, -2, 99, CL.cy + 3);
+    drawGround(v); drawRock(v, 1); drawHouse(v);
+    drawMuck(v, t, cells);
+    drawBody(v, RH_X, swingPose(t));
+    const k = clamp((t - TRACE_AT) / (TRACE_END - TRACE_AT), 0, 1);
+    const a = t < HOLD_END ? 1 : fade4(1 - (t - HOLD_END) / (FADE_END - HOLD_END));
+    if (t >= TRACE_AT) drawTrace(v, trace, k, a);
+    if (t >= TRACE_END - 0.3) drawTicks(v, RH_X - 4, GY - 7, 9, 7, a);
+    let hx = HAUL_FROM, pose = "stand";
+    if (t >= HAUL_GO) hx = Math.max(HAUL_AT, Math.round(HAUL_FROM - (t - HAUL_GO) * PACE));
+    if (t >= ARRIVE && t < DONE) pose = (Math.floor((t - ARRIVE) / 0.175) % 2) ? "shovelB" : "shovelA";
+    drawBody(v, hx, pose, -1);
+  }
+  return {
+    name: "B · Land, then trace it back",
+    dur: Math.round(END - drops[0].land) + " s",
+    desc: "Wordless. The first brown drop lands; the camera pulls in on the muck, then out as a dotted line walks from it up to the cloud and back down to the swing that dirtied the sky. Held, faded out fully, then the hauler comes.",
+    reuses: "a one-spot scene, exactly play/stepShot with its in and out eases; an edge cue like the gulp (the first dirty drop laid) as the trigger; skip and the running yard as today.",
+    fresh: "a drawing over the yard during a scene (the dotted trace and the corner ticks); and where it points: a mote carries its kind (dust or soot) but not where it was born, so the trace would go to the nearest live source of that kind.",
+    LOOP, draw, beats, still: 6.6
+  };
+})();
+
+// =============================================================================
+// C · Three shots, three cards
+// =============================================================================
+const C = (() => {
+  const CL = { cx: 40, cy: 16 };
+  const cl0 = { bottom: CL.cy + 5 * 1.35, left: CL.cx - 16 * 1.35, right: CL.cx + 16 * 1.35 };
+  const F = 0.4;                                   // a full fade to the page, or back
+  const S1 = [0.4, 3.2], K1 = [3.2, 5.2], S2 = [5.2, 8.4], K2 = [8.4, 10.4], S3 = [10.4, 14.0], K3 = [14.0, 16.0];
+  const END = 16.4, LOOP = END + LOOP_REST;
+  const CARDS = [
+    [K1, "[caption: where muck comes from — owner's words]"],
+    [K2, "[caption: what the rain brings down — owner's words]"],
+    [K3, "[caption: what it costs, who clears it — owner's words]"]
+  ];
+  // shot 3: muck lying on the rock's flank, the swings spent on it first
+  const rockMuck = [44, 43, 42, 41, 40, 39].map((x, i) => ({ x, at: -1, onRock: true, gone: S3[0] + 0.9 + i * SWING }));
+  const drops = [];
+  for (let i = 0; i < 6; i++) drops.push(dirtyDrop({ x: CL.cx - 12 + hash(i + 40) * 24, t0: S2[0] + 0.3 + i * 0.45 }, cl0));
+  function cam(t) {
+    if (t < S1[1] + F) return camAt(t, [{ ...WIDE, t: 0 }, { cx: 47, cy: 59, z: 6, t: S1[0] }, { cx: 48, cy: 56, z: 6, t: S1[1] }]);
+    if (t < S2[1] + F) return { cx: CL.cx + 4, cy: 36, z: 3.6 };
+    if (t < END) return { cx: 44, cy: 59, z: 7 };
+    return { cx: 44, cy: 59, z: 7 };
+  }
+  const beats = [
+    [0, "cut: close on a rockhand swinging, its dust climbing out of frame"],
+    [K1[0], "card one, over a full fade to the page"],
+    [S2[0], "cut: the dark cloud raining, brown drops among the grey"],
+    [K2[0], "card two"],
+    [S3[0], "cut: muck lying on the rock; the swings go into it first"],
+    [K3[0], "card three, then back to the yard where the player was"]
+  ];
+  function draw(ctx, tt) {
+    const t = step(tt);
+    const v = view(ctx, cam(tt));
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, CW, CH);
+    drawCloud(v, CL.cx, CL.cy, 1, t > S1[1] ? 1 : 0.5);
+    if (t >= S2[0] - F && t < S3[0]) { drawRain(v, t, S2[0] - 2, 99, cl0, 18); drawDirty(v, t, drops, cl0); }
+    drawPuffs(v, t, 0, 99, CL.cy + 4);
+    drawGround(v); drawRock(v, t >= S3[0] + 0.9 + 4 * SWING ? 1 : 0); drawHouse(v);
+    if (t >= S3[0] - F) drawMuck(v, t, rockMuck);
+    drawBody(v, RH_X, swingPose(t));
+    // the cards: a full fade to the page, the words, a full fade back
+    let card = 0;
+    for (const [[a, b], text] of CARDS) {
+      const k = t < a || t > b ? 0 : Math.min(1, (t - a) / F, (b - t) / F);
+      if (k > 0) { drawCard(ctx, text, fade4(k)); card = 1; }
+    }
+    if (t >= END - F) drawCard(ctx, "", 0);
+  }
+  return {
+    name: "C · Three shots, three cards",
+    dur: "16 s",
+    desc: "A swing and its dust; a card; the dark cloud raining brown among the grey; a card; muck lying on the rock, eating the rockhand's swings before the stone; a card. Cuts through a full fade to the page, no glides.",
+    reuses: "the pull-in and the seat, set per shot; click and held-space skip; the yard keeps running behind the cards.",
+    fresh: "words on screen in a cutscene (none has any today); a card layer drawn over the yard; cuts between shots. DESIGN.md's cutscene section rules out letterbox bars, so the cards are the whole page instead.",
+    LOOP, draw, beats, still: 12.0
+  };
+})();
+
+// --- the page ----------------------------------------------------------------
+const OPTS = [A, B, C];
+const grid = document.getElementById("grid");
+const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const panels = OPTS.map((o) => {
+  const el = document.createElement("section");
+  el.className = "opt";
+  el.innerHTML =
+    "<h2>" + o.name + " <span class=\"dur\">~" + o.dur + "</span></h2>" +
+    "<p>" + o.desc + "</p>" +
+    "<canvas width=\"" + CW + "\" height=\"" + CH + "\"></canvas>" +
+    "<div class=\"beat\"></div>" +
+    "<div class=\"meta\"><p><b>Reuses:</b> " + o.reuses + "</p><p><b>New:</b> " + o.fresh + "</p></div>";
+  grid.appendChild(el);
+  const cv = el.querySelector("canvas"), ctx = cv.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  return { o, ctx, beat: el.querySelector(".beat") };
+});
+// ?t=6.5 holds every panel at that second, for checking a moment
+const held = parseFloat(new URLSearchParams(location.search).get("t"));
+function frame(now) {
+  for (const p of panels) {
+    const t = reduced ? p.o.still : !isNaN(held) ? held % p.o.LOOP : (now / 1000) % p.o.LOOP;
+    p.o.draw(p.ctx, t);
+    let label = p.o.beats[0][1];
+    for (const [bt, s] of p.o.beats) if (t >= bt) label = s;
+    const txt = "<span>" + t.toFixed(1) + " s</span> · " + label;
+    if (p.beat.innerHTML !== txt) p.beat.innerHTML = txt;
+  }
+  if (!reduced) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
