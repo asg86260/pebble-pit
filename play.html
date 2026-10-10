@@ -129,6 +129,14 @@ try {
      bar that fills under the words for as long as space is held. See
      skiphint.js. -->
 <button id="skip" class="skip" type="button" hidden><span class="bar"></span><span class="say">hold space to skip</span></button>
+<!-- The mess tags: up at the top edge while mess lies on the ground, one a
+     kind, with how many cells of it are left. The triangle is the pile-full
+     mark's own drawing (warning() in render/pilemarks.js) at a radius of one.
+     See messtags.js. -->
+<div id="messtags" class="messtags">
+  <div class="messtag" data-kind="muck" hidden><svg class="warn" viewBox="-1.1 -1.1 2.2 2" aria-hidden="true"><path class="tri" d="M0 -1L1 .8L-1 .8Z"/><rect class="sign" x="-.125" y="-.25" width=".25" height=".4"/><rect class="sign" x="-.125" y=".35" width=".25" height=".25"/></svg><span class="say">muck</span><span class="n"></span></div>
+  <div class="messtag" data-kind="poop" hidden><svg class="warn" viewBox="-1.1 -1.1 2.2 2" aria-hidden="true"><path class="tri" d="M0 -1L1 .8L-1 .8Z"/><rect class="sign" x="-.125" y="-.25" width=".25" height=".4"/><rect class="sign" x="-.125" y=".35" width=".25" height=".25"/></svg><span class="say">poop</span><span class="n"></span></div>
+</div>
 <!-- the wash behind the held sheet: the yard, dimmed and stippled, so the
      sheet reads as over something rather than pasted on it. The frame keeps
      it in step with the sheet (main.js). -->

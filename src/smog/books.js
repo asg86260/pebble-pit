@@ -1,7 +1,7 @@
 import { P, RAIN_FIRST_S, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
 import { S } from '../state.js';
 import { CLODS, DROPS, SKY, STACK, climbing, raining, resetDrift } from './band.js';
-import { cols, muckCols, muckLeft, plotMuck, poopLeft, quarryMuck, rockMuck, yardMuck } from './layer.js';
+import { cols, muckCols, messCounts, muckLeft, plotMuck, poopLeft, quarryMuck, rockMuck, yardMuck } from './layer.js';
 import { EMBERS, LEDGER, dryFor, resetRain, stormLen } from './rain.js';
 import { clearSky, cloudR, moteX, moteY } from './sky.js';
 import { spread } from './vents.js';
@@ -143,6 +143,8 @@ export function smogReport() {
                    yard: yardMuck(), all: muckLeft(),
                    cols: muckCols().filter(Boolean).length },
            poop: poopLeft(),
+           // what the tags over the yard count, a figure a kind (messtags.js)
+           mess: messCounts(),
            ...airReadout() };
 }
 

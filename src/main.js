@@ -42,6 +42,7 @@ import { syncEnding } from './ending.js';   // the sheet at the end of the story
 import { startTimes } from './times.js';    // and the board of times' ping, on wall time
 import { stepToast } from './toast.js';    // a notice said out loud as it lands
 import { stepSkipHint } from './skiphint.js';   // the hint under a scene, and its bar
+import { stepMessTags } from './messtags.js';   // a card at the top edge while mess is down
 import { tick } from './clock.js';
 
 // The layout is the game's; the measuring is the page's; this is the one line
@@ -104,6 +105,7 @@ function frame() {
     fillPin();
     stepToast();
     stepSkipHint();
+    stepMessTags();
     const t3 = mark();
     if (DEV) record(t0, t1, t2, t3);
   } catch (e) {

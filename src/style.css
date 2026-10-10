@@ -1886,6 +1886,44 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 .skip .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--paper); }
 .skip .say { position: relative; mix-blend-mode: difference; }
 
+/* The mess tags (messtags.js): the skip hint's black card at the top edge, a
+   card a kind of mess. The holder is a point at the top center; each card
+   stands off it by a `translate` the script works out from the cards' own
+   widths, so when one goes the other glides to the middle rather than
+   jumping there. Under the boards and the toast, never over a sheet. */
+.messtags {
+  position: fixed;
+  z-index: 9;
+  left: 50%; top: calc(var(--edge) + env(safe-area-inset-top, 0px));
+  width: 0; height: 0;
+  pointer-events: none;
+}
+.messtag {
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: center; gap: 6px;
+  padding: calc(var(--pad-m-y) - 2px) var(--pad-m-x);
+  white-space: nowrap;
+  box-shadow: var(--float-shadow);
+  background: var(--ink);
+  border: 1px solid var(--paper);
+  outline: 1px solid var(--ink);
+  font: 12px ui-monospace, "Courier New", monospace;
+  color: var(--paper);
+  opacity: 0;
+  /* the skip hint's fade (SHEET_FADE_MS in config/view.js), and the toast's
+     ease for the glide */
+  transition: opacity .18s linear, translate .3s cubic-bezier(.22, .61, .36, 1);
+}
+.messtag.on { opacity: 1; }
+body.still .messtag { transition: none; }
+.messtag .warn { width: 14px; height: 13px; flex: none; }
+/* the pile mark's paper and ink, the right way round on the black card */
+.messtag .tri { fill: var(--paper); stroke: var(--ink); stroke-width: .17; }   /* r / 6, as drawTriangle */
+.messtag .sign { fill: var(--ink); }
+/* the count, behind a hairline, wide enough for two figures so the card
+   does not breathe with every cell swept */
+.messtag .n { min-width: 2ch; padding-left: 6px; border-left: 1px solid var(--ink-7); text-align: right; }
+
 /* --- the window (modal.js) ------------------------------------------------------
    Larger reading, opened off a board: centered over a wash of its own, under
    the held sheet's (the held sheet and its wash come later in the page at the
