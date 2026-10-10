@@ -1,0 +1,96 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controls Page Simpler</title>
+<style>
+:root {
+  --paper: #fff; --ink: #000; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf;
+  --wash: #ececec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343; --wash: #151515; }
+}
+:root[data-theme="dark"] { --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343; --wash: #151515; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--wash); color: var(--ink); overflow-x: hidden; }
+body { font: 12px/1.4 ui-monospace, "Courier New", monospace; padding: 16px; }
+.wrap { max-width: 1000px; margin: 0 auto; }
+h1 { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 8px; }
+.note { border: 1px dashed var(--ink-5); padding: 8px 12px; margin: 0 0 18px; color: var(--ink-4); max-width: 80em; }
+.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (max-width: 800px) { .opts { grid-template-columns: minmax(0, 1fr); } }
+.opt { background: var(--paper); border: 1px solid var(--ink); padding: 12px; min-width: 0; }
+.opt h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 4px; }
+.opt p.cap { margin: 0 0 12px; color: var(--ink-4); }
+.flow { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.arrow { font-size: 11px; color: var(--ink-4); letter-spacing: .1em; text-transform: uppercase; text-align: center; }
+
+.sheet {
+  width: 100%; max-width: 330px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 14px 20px; background: var(--paper); border: 1px solid var(--ink);
+  letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 0 0 6px var(--wash), 0 0 0 7px var(--ink-8);
+}
+.sheet.wide { max-width: 100%; }
+.sheet .word { font-size: 17px; letter-spacing: .3em; }
+.sheet .small { font-size: 10px; }
+.sheet button {
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--ink); padding: 4px 8px; width: 100%; cursor: default;
+}
+.sheet .slider { width: 80%; height: 1px; background: var(--ink); position: relative; margin: 6px 0; }
+.sheet .slider::after { content: ""; position: absolute; right: 0; top: -6px; width: 12px; height: 12px; border: 1px solid var(--ink); background: var(--paper); }
+.hot { outline: 2px solid var(--ink); outline-offset: 2px; }
+.tag { font-size: 9px; letter-spacing: .1em; background: var(--ink); color: var(--paper); padding: 0 4px; margin-left: 6px; vertical-align: 1px; }
+
+/* idea on the left, input as plain fact on the right */
+.list { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 14px; text-transform: none; letter-spacing: .04em; font-size: 12px; }
+.list > * { padding: 7px 0; border-top: 1px solid var(--ink-8); overflow-wrap: anywhere; }
+.list > .in { color: var(--ink); }
+.list > .act { color: var(--ink-4); }
+.foot { margin-top: 18px; max-width: 80em; color: var(--ink-4); }
+.foot b { color: var(--ink); }
+</style>
+<div class="wrap">
+<h1>Controls page, option A, simpler &middot; 2 grains</h1>
+<div class="note">This is a mock drawn from plain HTML, not the game. It shows the layout and how many rows each grain gives; it cannot show the real sheet&rsquo;s fade, the pixel font, or row heights on a phone. Every row&rsquo;s words are a bracketed placeholder naming the idea: the words are the owner&rsquo;s. The input beside each is a plain fact read from the code, desktop and phone folded into one row.</div>
+<div class="opts" id="opts"></div>
+<div class="foot"><b>To decide:</b> A1 or A2 grain; whether the crew and places rows (desktop only today) stay; whether the front sheet&rsquo;s key line moves onto this page.</div>
+</div>
+<script>
+const A1 = [
+  ['[work the yard &mdash; owner&rsquo;s words]', 'click / tap the rock; drag across dust'],
+  ['[the crew &mdash; owner&rsquo;s words]', 'right-hold to lift, then shake (desktop only)'],
+  ['[look around &mdash; owner&rsquo;s words]', 'middle-drag / wheel / arrows / 1&ndash;9; two fingers mid-sweep'],
+  ['[hold; skip a scene &mdash; owner&rsquo;s words]', 'esc / pause button; hold space'],
+];
+const A2 = [
+  ['[mine the rock &mdash; owner&rsquo;s words]', 'click / tap'],
+  ['[sweep dust &mdash; owner&rsquo;s words]', 'click-drag / one-finger drag'],
+  ['[pick up and shake the crew &mdash; owner&rsquo;s words]', 'right-hold, then shake (desktop only)'],
+  ['[look around the yard &mdash; owner&rsquo;s words]', 'middle-drag / wheel / arrows; two fingers mid-sweep'],
+  ['[jump to a place &mdash; owner&rsquo;s words]', '1&ndash;9 (desktop only)'],
+  ['[hold; skip a scene &mdash; owner&rsquo;s words]', 'esc / pause button; hold space'],
+];
+const list = rows => `<div class="list">${rows.map(r => `<div class="in">${r[0]}</div><div class="act">${r[1]}</div>`).join('')}</div>`;
+const settings = () => `
+<div class="sheet">
+  <div class="word">settings</div>
+  <button>motion: full</button><button>touch: off</button><button>dark: off</button>
+  <button>fullscreen: off</button><button>sound: on</button>
+  <div class="slider"></div>
+  <button class="hot">controls<span class="tag">new</span></button>
+  <button>back</button>
+  <div class="small" style="color:var(--ink-4)">build</div>
+</div>`;
+const page = rows => `
+<div class="sheet wide">
+  <div class="word">controls</div>
+  ${list(rows)}
+  <button>back</button>
+</div>`;
+const OPTS = [
+  ['A1 &middot; four rows', 'The broadest grouping: working the yard, the crew, looking around, holding.', A1],
+  ['A2 &middot; six rows', 'Mining and sweeping split apart, and places split from looking around.', A2],
+];
+document.getElementById('opts').innerHTML = OPTS.map(o => `<section class="opt"><h2>${o[0]}</h2><p class="cap">${o[1]}</p><div class="flow">${settings()}<div class="arrow">&darr; controls opens a page, back returns &darr;</div>${page(o[2])}</div></section>`).join('');
+</script>
