@@ -1613,6 +1613,11 @@ export const SCENES = {
   // noughts.
   books: { about: 'the pit and the rift', say: 'the books over the pit',
     run: () => { rich(); window.__fast(60); window.__board('stats'); window.__look(st().pitX - 300); } },
+  // The controls page of the settings sheet, opened by its button.
+  controlspage: { about: 'the story', say: 'the controls page on the held sheet', page: true,
+    run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+                 document.getElementById('settingsbtn').click();
+                 document.getElementById('controlsbtn').click(); } },
   // Every sheet of the books: long enough for the arrows (two windows of
   // record), and a machine putting soot up so the sky sheet has a story.
   booksall: { about: 'the pit and the rift', say: 'every sheet of the books in their window, arrows and all',

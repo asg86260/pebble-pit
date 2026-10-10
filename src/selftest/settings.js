@@ -228,6 +228,7 @@ export const TESTS = [
       'sound: on',                            // the mute, which remembers -- see audio.js
       '',                                     // the volume: a slider has no words
       ...(timesOn() ? [''] : []),             // the name on the board: a box has no words
+      'controls',                             // the page of mouse buttons
       'back',
       version(),
     ];
@@ -247,6 +248,27 @@ export const TESTS = [
          `got ${JSON.stringify(page)}`),
       ok(down && !after.paused, 'resume takes it down', `${down}, ${after.paused}`),
       ok(after.workerPos.join() !== before.workerPos.join(), 'and the game runs on'),
+    ];
+  }],
+
+  ['the controls page lists the mouse and turns back to the settings', async () => {
+    newRun();
+    await settle();
+    await press();
+    settingsPage();
+    document.getElementById('controlsbtn').click();
+    const page = lines();
+    const list = [...document.querySelectorAll('#controlslist span')].map(el => el.textContent);
+    const settingsGone = document.getElementById('motion').hidden;
+    document.getElementById('controlsback').click();
+    const backOnSettings = !document.getElementById('motion').hidden && document.getElementById('controlslist').hidden;
+    return [
+      ok(page[0] === 'controls' && page.length === 3 && page[2] === 'back', 'the page has its word and back', JSON.stringify(page)),
+      ok(settingsGone, 'and the settings are not on it'),
+      ok(list.join('|') === ['left click', 'interact', 'right click', 'focus workers',
+        'right click + left click', 'pick up workers', 'middle click', 'move camera'].join('|'),
+        'four rows, input then action, in order', JSON.stringify(list)),
+      ok(backOnSettings, 'back turns to the settings'),
     ];
   }],
 

@@ -69,6 +69,8 @@ document.getElementById('timesback').addEventListener('click', back);
 boardName.addEventListener('change', () => { setTimesName(boardName.value); boardName.value = timesName(); });
 document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
 document.getElementById('settingsback').addEventListener('click', back);
+document.getElementById('controlsbtn').addEventListener('click', () => showPane('controls'));
+document.getElementById('controlsback').addEventListener('click', () => showPane('settings'));
 document.getElementById('titlebtn').addEventListener('click', () => leave('index.html'));
 
 // Leaving the page, for the landing page or the desk's exit: the veil goes up
