@@ -6,7 +6,7 @@
 // hole is the slowest thing any check does, and node runs files side by side --
 // so the slow ones are worth keeping together and out of everybody's way.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, P, WORKER } from './helpers.mjs';
 
 group('filling the pit stops at what the hole holds', async () => {
   window.__dig();
@@ -104,34 +104,6 @@ group('a find is banked through the rift when the hole is full', async () => {
   ];
 });
 
-// Same rule, and the case where getting it wrong costs the most: a core is one
-// a rock, for ever, and one the hole swallowed would be a rock done twice.
-group('a core goes in through the rift like anything else', async () => {
-    run(0.4);
-  window.__crew(2, 2);
-  window.__give(200000);
-  runUntil(() => state().riftOpen, 60);
-  // onto a rock that actually has a core in it: the first four have none
-  window.__jump(5);
-  window.__next();                             // the last of the rock goes
-  runUntil(() => state().coreItem?.rest, 40);
-  const banked = runUntil(() => state().cores === 1, 60);
-  const after = state();
-  window.__crew(0, 0);
-  window.__clearFloor();
-  return [
-    // A core used to sit on the ground until you dug room for it -- the one
-    // thing the hole would not take and the most expensive thing to be wrong
-    // about. A hole that has collapsed takes it, because it takes everything.
-    ok(banked && after.cores === 1, 'a core is banked with the hole full',
-       `${after.cores} cores`),
-    ok(!after.coreItem, 'and is not left lying about',
-       JSON.stringify(after.coreItem)),
-    ok(after.riftHeld.cores <= after.cores, 'the rift accounts for it if it took it',
-       `${after.riftHeld.cores} of ${after.cores} through`)
-  ];
-});
-
 // The hole never turns a hauler away. It used to: the crew booked their trips
 // against the room the COUNT said was left, and the count credits a few cells
 // at the heap's shoulders the pile's own search never fills. So a hole a few
@@ -180,7 +152,7 @@ group('a full hole collapses rather than stopping the yard', async () => {
   window.__reset();
   window.__crew(3, 6, 3, 3);
   window.__fullSites();
-  window.__grant({ sparks: 99, shards: 99, spores: 99, cores: 9 });
+  window.__grant({ sparks: 99, shards: 99, spores: 99 });
   window.__give(999999);                     // far more than the hole can hold
   run(20);
 

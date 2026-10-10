@@ -9,10 +9,15 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
-import { woundK } from '../deep/serpent.js';
-import { BAR_W, BAR_H, BAR_TOP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
+import { coilCeiling, coilEnds } from '../deep/place.js';
+import { owedWound, landsAt } from './barflight.js';
+import { drawFoeStatuses, statusRowH } from './statusicons.js';
+import { blowK } from '../deep/serpent.js';
+import { breakKind, breakFill, rising } from '../deep/phases.js';
+import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
          BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
-         SERPENT_WOUND } from '../config.js';
+         BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP, STATUS_PX,
+         SERPENT_WOUND, BREAK_FILL_STEPS } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
@@ -21,8 +26,32 @@ let stage = -1, was = 1, trail = 1, low = 1, hitAt = 0, then = 0;
 
 export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage < SERPENT_WOUND.length;
 
+// Where the bar stands on the glass, in screen pixels: centered with its pips
+// over the stretch of the coil on the glass, so with open water beside the
+// head it stands over the serpent and not over the water, and held still
+// just over the highest the coil ever sways.
+export function barRect() {
+  const whole = BAR_W + SERPENT_WOUND.length * (BAR_PIP + BAR_PIP_GAP);
+  // The row of statuses stands over the bar (render/statusicons.js), so the
+  // bar keeps room above it for the row, whether or not it has a status in it.
+  const row = statusRowH() + STATUS_GAP;
+  const over = (coilCeiling() - S.camY) * S.zoom - BAR_GAP - BAR_H;
+  const { x0, x1 } = coilEnds(), toScreen = x => (x - S.camX) * S.zoom;
+  const a = Math.max(0, toScreen(x0)), b = Math.min(S.W, toScreen(x1));
+  const mid = b > a ? (a + b) / 2 : S.W / 2;
+  const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
+  return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w: BAR_W, h: BAR_H };
+}
+// What the bar shows of the defense up, 0..1: the wound as the numbers that
+// have landed in it say, not yet as the sim has it (render/barflight.js).
+export function barLeft(t) {
+  const d = SERPENT_WOUND[Math.min(S.serpentStage, SERPENT_WOUND.length - 1)];
+  return d > 0 ? 1 - Math.max(0, Math.min(1, (S.serpentWound + owedWound(t)) / d)) : 1;
+}
+
 export function drawSerpentBar() {
-  const t = now(), left = 1 - woundK();
+  // A break refills the bar in held steps as it plays (deep/phases.js).
+  const t = now(), left = Math.min(barLeft(t), breakFill(BREAK_FILL_STEPS));
   // A new defense starts full, with nothing to remember.
   if (S.serpentStage !== stage) { stage = S.serpentStage; was = trail = low = left; hitAt = t; }
   const dt = Math.max(0, (t - then) / 1000);
@@ -36,8 +65,18 @@ export function drawSerpentBar() {
   if (low > left) low = left;
 
   const pips = SERPENT_WOUND.length;
-  const whole = BAR_W + pips * (BAR_PIP + BAR_PIP_GAP);
-  const x = Math.round((S.W - whole) / 2), y = BAR_TOP;
+  const { x, y: rest } = barRect();
+  // The number went in from underneath, so the bar recoils up: two held
+  // poses, the full knock and then half of it.
+  let knock = 0;
+  for (const h of S.hits) {
+    if (h.weapon === 'heal') continue;
+    const a = (t - landsAt(h)) / 1000;
+    if (a < 0 || a >= BAR_KNOCK_S) continue;
+    const full = blowK(h.done) > NUM_KICK_BIG ? BAR_KNOCK_BIG : BAR_KNOCK;
+    knock = Math.max(knock, a < BAR_KNOCK_S / 2 ? full : full / 2);
+  }
+  const y = rest - knock;
   const fill = (c, fx, fy, w, h) => { ctx.fillStyle = seen(c); ctx.fillRect(fx, fy, w, h); };
   const len = k => Math.round(BAR_W * k);
   ctx.save();
@@ -47,7 +86,11 @@ export function drawSerpentBar() {
   fill(BAR_TRAIL, x, y, len(trail), BAR_H);
   fill(BAR_HEALED, x, y, len(left), BAR_H);
   fill(BAR_LEFT, x, y, len(Math.min(low, left)), BAR_H);
-  for (let s = 0; s < pips; s++) {
+  // The phase boxes: none on the first defense, which is the only one the
+  // player knows of; they come up one by one as he rises from the first break.
+  const boxes = S.serpentStage === 0 ? 0
+              : breakKind() === 'dive' ? (rising() ? Math.round(breakFill(pips) * pips) : 0) : pips;
+  for (let s = 0; s < boxes; s++) {
     const px = x + BAR_W + BAR_PIP_GAP + s * (BAR_PIP + BAR_PIP_GAP);
     const py = y + Math.round((BAR_H - BAR_PIP) / 2);
     fill(BAR_EDGE, px - 1, py - 1, BAR_PIP + 2, BAR_PIP + 2);
@@ -59,5 +102,25 @@ export function drawSerpentBar() {
       fill(BAR_TRACK, px + BAR_STUN_RIM, py + BAR_STUN_RIM, BAR_PIP - BAR_STUN_RIM * 2, BAR_PIP - BAR_STUN_RIM * 2);
     }
   }
+  // Every blow that has landed lately knocks a sliver out of the fill's end.
+  const depthUp = SERPENT_WOUND[Math.min(S.serpentStage, SERPENT_WOUND.length - 1)] || 1;
+  const end = x + len(left);
+  for (const h of S.hits) {
+    if (h.weapon === 'heal') continue;
+    const a = (t - landsAt(h)) / 1000;
+    if (a < 0 || a >= BAR_CHIP_S) continue;
+    // The sliver the blow took: its share of the defense, the bar's whole
+    // height, a pixel at the least.
+    const w = Math.max(1, Math.round(BAR_W * h.done / depthUp));
+    const lit = a < BAR_CHIP_POSE_S, dir = h.side % 2 ? 1 : -1;
+    if (a < BAR_CHIP_OPEN_S) fill(lit ? BAR_CHIP : BAR_TRACK, end - w, y, w, BAR_H);
+    // and it, out of the notch and down past the bar, turned over a pose at a time
+    const flat = Math.floor(a / BAR_CHIP_POSE_S) % 2 === 0;
+    const cx = end - w / 2 + dir * BAR_CHIP_FALL.side * a, cy = y + BAR_CHIP_FALL.down * a + BAR_CHIP_FALL.grav * a * a;
+    const cw = flat ? w : BAR_H, ch = flat ? BAR_H : w;
+    fill(lit ? BAR_LEFT : BAR_CHIP, Math.round(cx - cw / 2), Math.round(cy), cw, ch);
+  }
+  // what the fighters have laid on the serpent, in a row under the bar
+  drawFoeStatuses(x, rest - statusRowH() - STATUS_GAP);
   ctx.restore();
 }

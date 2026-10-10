@@ -363,7 +363,7 @@ group('a row that lands rebuilds the board it is on', async () => {
   window.__reset();
   const { showPanel, hud } = await import('../src/board.js');
   window.__crew(4, 0);
-  window.__grant({ shards: 900, spores: 900, cores: 9 });
+  window.__grant({ shards: 900, spores: 900 });
   window.__tip(200000);
   window.__answered('props');                // the farm is what the timber opens
 
@@ -408,7 +408,7 @@ group('a loan is a body, and the roster ends where the player put it', async () 
   const start = () => {
     window.__reset();
     window.__crew(3, 0);                     // everybody on the rock, nobody spare
-    window.__grant({ shards: 900, spores: 900, cores: 9 });
+    window.__grant({ shards: 900, spores: 900 });
     window.__tip(200000);
     run(2);
   };
@@ -456,7 +456,7 @@ group('a loan is a body, and the roster ends where the player put it', async () 
 group('a loan comes back with the body that owes it', async () => {
   window.__reset();
   window.__crew(3, 0);
-  window.__grant({ shards: 900, spores: 900, cores: 9 });
+  window.__grant({ shards: 900, spores: 900 });
   window.__tip(200000);
   run(2);
 

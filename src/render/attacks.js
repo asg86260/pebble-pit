@@ -25,12 +25,13 @@
 //
 // Owned by track RENDER.
 
-import { P, DRAW_POSE, DRAW_KEY_EX, DRAW_NEAR_BEAT, DRAW_HAY_HOLDS, DRAW_HOLDS, DRAW_KICK } from '../config.js';
+import { P, DRAW_POSE, DRAW_KEY_EX, DRAW_NEAR_BEAT, DRAW_HAY_HOLDS, DRAW_HOLDS, DRAW_KICK, DRAW_KICK_HOLD_S, DRAW_KICK_BACK_S,
+         RANGER_BEATS, RANGER_AIM_HOLD, RANGER_LIFT_S, RANGER_SMEAR_S, BEAM_POOL } from '../config.js';
 import { deepFloor } from '../deep/place.js';
 import {
   GREYS, PURPLES, WHITE, BODY, R4, R8, hash, clamp, lerp, along, ease, cell, rect, ring, body, pips, blit,
   MOTES_P, MOTE_TONES, drift, bSize, bFist, bladeLen, sword, swordSprite, swordAt, TELL, MONK_SPIN, beads,
-  ribbon, pike, staffBack, drawBow, blades, dagger, bundle, charge, motes, glyph, glyphTimes, glyphAt,
+  ribbon, pike, staffBack, drawBow, stepBow, nocked, hipArrow, strainTicks, blades, dagger, bundle, charge, motes, glyph, glyphTimes, glyphAt,
   stone, mStaff, flute, REST, liftOf,
 } from '../deep/kits.js';
 import { hideTop, hideBot, hideMid, onHide } from './serpent.js';
@@ -150,8 +151,12 @@ export function sauceOf(c, R, a, x) {
     const shift = gr.real - gr.at;
     if (aw == null && a < gr.real) aw = a - shift;
     else if (aw == null && a < gr.real + gr.pause) aw = gr.at;
-    const u = a - gr.real - gr.pause, amt = DRAW_KICK.find(([k]) => gr.k >= k)?.[1] || 0;
-    if (amt && u >= 0 && u < 0.5) kick += amt * (u < 0.05 ? u / 0.05 : 1 - ease((u - 0.05) / 0.45));
+    // knocked back off the hide as the hit-pause lets go, held, then back a
+    // cell at a time; a stream's ticks (the beam) do not knock
+    const stream = gr.list.every(h => h.noPause);
+    const u = a - gr.real - gr.pause, amt = stream ? 0 : DRAW_KICK.find(([k]) => gr.k >= k)?.[1] || 0;
+    if (amt && u >= 0 && u < DRAW_KICK_HOLD_S + DRAW_KICK_BACK_S)
+      kick += u < DRAW_KICK_HOLD_S ? amt : Math.ceil(amt * (1 - (u - DRAW_KICK_HOLD_S) / DRAW_KICK_BACK_S));
   }
   if (aw == null) aw = a - (groups.length ? groups[groups.length - 1].real + groups[groups.length - 1].pause - groups[groups.length - 1].at : 0);
   const beats = [...groups.filter(gr => gr.pause > 0).map(gr => gr.at), ...(c.beats ? c.beats(R) : [])];
@@ -163,7 +168,7 @@ export function sauceOf(c, R, a, x) {
 }
 // The coil's give under this turn's contacts: where and how hard, and when
 // each landed, in world seconds (`t` now, `a` the raw clock).
-export const dentsOf = (S, t, a) => S.groups.flatMap(gr => gr.list.map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real) })));
+export const dentsOf = (S, t, a) => S.groups.flatMap(gr => gr.list.filter(h => h.dent !== false).map(h => ({ x: h.x, k: h.k, t0: t - (a - gr.real), stream: !!h.noPause })));
 // The held star at each contact, under the fighter so the fist or blade reads on top.
 export function sparksOf(g, S, t, a) {
   for (const gr of S.groups) for (const h of gr.list) {
@@ -227,6 +232,30 @@ const brawler = {
   },
 };
 
+// --- the Recruit -------------------------------------------------------------------
+// Every station's first fighter (DESIGN.md, "Built first, a recruit, then two
+// choices", voted C): just the body, and one light punch. Up under the hide,
+// a fist of one cell driven in off the body's right, squashed against the
+// hide a pose, and gone again at rest: a square with nothing to carry.
+const recruit = {
+  len: 2.4, kickMax: 1, JAB: 1.0,
+  hits(R, x) { return [{ at: this.JAB, x: x + BODY, k: 0.2, kind: '' }]; },
+  draw(g, t, a, api, R, x) {
+    const y = swum(api, maxBot([x - 1, x + BODY]) + 5, trip(a, 0.4, 1.6, this.len)) + api.kick;
+    body(x, y);
+    api.at(x, y);
+    const reach = punchReach(a, this.JAB);
+    if (!reach) return;
+    const fx = x + BODY;
+    const fy = reach < 0 ? y - reach : y + (maxBot([fx, fx]) + 1 - y) * reach;
+    if (holdPose(a, this.JAB)) {
+      // squashed a cell wider against the hide, a dark keyline round it
+      rect(g, fx - 1, fy - 1, 4, 3, GREYS[2]);
+      rect(g, fx, fy, 2, 1, GREYS[10]);
+    } else cell(g, fx, fy, WHITE);
+  },
+};
+
 // --- the Swordsman ---------------------------------------------------------------
 // The blade's angle is a track of keys: [time, angle, how it gets there, and
 // for a contact its strength]. 'in' accelerates (a strike), 'out'
@@ -265,6 +294,8 @@ const swordsman = {
     return K;
   },
   contacts(R) { return this.track(R).filter(k => k[3]).map(k => ({ at: k[0], k: k[3] })); },
+  // the Whirlwind's turn the blow lands on: its last, or rung 8's before the spin back
+  lands(R) { const cs = this.contacts(R); return cs[Math.max(0, cs.length - ((this.twice ?? R8(R)) ? 2 : 1))]; },
   // slower through the build-up and the Plant, quicker with each turn, so
   // the pose rate rises through the spin
   poseStep(R, a) {
@@ -284,11 +315,12 @@ const swordsman = {
     return null;
   },
   hits(R, x) {
-    const px = x + 1, cs = this.contacts(R);
-    return cs.flatMap(({ at, k }) => (R4(R) ? [px - 6, px, px + 6] : [px]).map(sx => ({
-      at, x: sx, k: sx === px ? k : Math.min(k, 0.5), kind: R4(R) ? 'whirl' : '', mid: sx === px,
+    return this.contacts(R).map(({ at, k }) => ({
+      at, x: x + 1, k, kind: R4(R) ? 'whirl' : '', mid: true,
+      // a move's other turns cut the air: only the one the blow lands on dents
+      dent: !R4(R) || at === this.lands(R).at,
       // the Whirlwind's last contact holds longest
-      pause: k >= 1.2 ? 0.2 : 0 })));
+      pause: k >= 1.2 ? 0.2 : 0 }));
   },
   draw(g, t, a, api, R, x) {
     const L = bladeLen(R), spin = R4(R), pal = R8(R) ? PAL_PURPLE : PAL_GREY;
@@ -494,11 +526,29 @@ const martial = {
 };
 
 // --- the Ranger ------------------------------------------------------------------
+// Each shot is held poses a beat (RANGER_BEATS): the arrow from his hip,
+// nocked, drawn in two steps, held full, loosed, a recoil and a settle. The
+// aimed shot holds its full draw RANGER_AIM_HOLD longer, a sight on the hide.
+const FULL_BEAT = RANGER_BEATS.find(([, p]) => p && p.strain);
+const FULL_AT = -FULL_BEAT[0];
+const SHOT_END = RANGER_BEATS[RANGER_BEATS.length - 1][0];
+const BRACED = { bend: 2, pull: 0 };
+// Seconds from a shot's first beat to its release.
+const shotLead = hold => -RANGER_BEATS[0][0] + hold;
+// The pose `d` seconds from a release; null outside that shot.
+function rangerBeat(d, hold) {
+  if (d < 0 && d >= -FULL_AT - hold) return FULL_BEAT[1];
+  const u = d < 0 ? d + hold : d;
+  if (u < RANGER_BEATS[0][0]) return null;
+  let pose = null;
+  for (const [at, p] of RANGER_BEATS) { if (u >= at) pose = p; else break; }
+  return pose;
+}
 const ranger = {
-  len: 3.2, shots: [0.6, 0.95, 1.3, 1.65], aimed: 2.45,
-  beats(R) { return this.only ? [...this.only.shots, ...(this.only.aimed ? [this.only.aimed] : [])] : R4(R) ? [...this.shots, this.aimed] : [0.8]; },
+  len: 5.6, shots: [1.1, 1.9, 2.7, 3.5], aimed: 4.7,
+  beats(R) { return this.only ? [...this.only.shots, ...(this.only.aimed ? [this.only.aimed] : [])] : R4(R) ? [...this.shots, this.aimed] : [1.1]; },
   hits(R, x) {
-    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [0.8], aimed = this.only ? this.only.aimed : R4(R) ? this.aimed : null;
+    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [1.1], aimed = this.only ? this.only.aimed : R4(R) ? this.aimed : null;
     const lx = x + 1, hs = shots.map(v => ({ at: v + 0.25, x: lx, k: 0.2, purple: false }));
     if (aimed) for (const dx of [-1, 1]) hs.push({ at: aimed + 0.1, x: lx + dx, k: 0.8 });
     return hs;
@@ -506,21 +556,40 @@ const ranger = {
   draw(g, t, a, api, R, x) {
     // rung 0 shoots once; from rung 4 a run of arrows, then the aimed shot, two at once
     const y = api.restY, aimed = this.only ? this.only.aimed : R4(R) ? this.aimed : null;
-    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [0.8];
-    const last = aimed || shots[shots.length - 1], up = 0.15, down = last + 0.35;
-    const pulling = shots.some(v => a >= v - 0.18 && a < v) || (aimed && a >= aimed - 0.55 && a < aimed);
-    const pose = a < up || a >= down + 0.24 ? 'rest' : a < up + 0.12 || a >= down + 0.12 ? 'lift'
-               : a < up + 0.24 || a >= down ? 'over' : pulling ? 'drawn' : 'braced';
-    body(x, y);
+    const shots = this.only ? this.only.shots : R4(R) ? this.shots : [1.1];
+    const rel = [...shots.map(v => ({ v, hold: 0 })), ...(aimed ? [{ v: aimed, hold: RANGER_AIM_HOLD, two: true }] : [])];
+    const L = RANGER_LIFT_S, up = rel[0].v - shotLead(rel[0].hold) - 2 * L, down = rel[rel.length - 1].v + SHOT_END;
     api.at(x, y);
-    drawBow(g, pose, x, y, R, aimed && a >= aimed - 0.55 && a < aimed);
+    if (a < up + 2 * L || a >= down) {
+      // lifting the bow over his head, or lowering it after the last shot
+      body(x, y);
+      if (a < up || a >= down + 2 * L) drawBow(g, 'rest', x, y, R);
+      else if (a < up + L || a >= down + L) drawBow(g, 'lift', x, y, R);
+      else stepBow(g, x + 2, y - 3, R, 2, 0);
+    } else {
+      // the shot whose first beat has come, the latest of them
+      let cur = null;
+      for (const r of rel) if (a >= r.v - shotLead(r.hold)) cur = r;
+      const p = (cur && rangerBeat(a - cur.v, cur.hold)) || BRACED, sink = p.sink || 0;
+      const cx = x + 1, sy = y - 4 + (p.lift || 0) + sink;
+      body(x, y + sink);
+      stepBow(g, cx, sy, R, p.bend, p.pull);
+      if (p.arrow === 'nocked') nocked(g, cx, sy + p.pull, !!cur.two);
+      else if (p.arrow === 'hip') hipArrow(g, x + 3, y + 1 + sink);
+      else cell(g, cx + 2, sy + 3, WHITE);
+      if (p.strain) strainTicks(g, x, y + sink);
+      // the loose: a held streak up off the string where the arrow went
+      if (p.loose && a - cur.v < RANGER_SMEAR_S)
+        for (const ax of cur.two ? [cx - 1, cx + 1] : [cx])
+          for (let r = y - 9; r <= y - 2; r++) cell(g, ax, r, r < y - 4 ? (cur.two ? PURPLES[11] : WHITE) : GREYS[8]);
+    }
     const lx = x + 1, ly = y - 6, ty = cBot(lx) + 1;
     api.shot(() => {
       // the aim: a dotted line up to the hide and a ring closing on the spot
-      if (aimed && a >= aimed - 0.5 && a < aimed) {
+      if (aimed && a >= aimed - FULL_AT - RANGER_AIM_HOLD && a < aimed) {
         const tone = a > aimed - 0.2 ? GREYS[9] : GREYS[6];
         for (let cy = ly - 1; cy > ty; cy -= 2) cell(g, lx, cy, tone);
-        ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - aimed + 0.5) * 5)), tone, 2);
+        ring(g, lx, ty - 1, Math.max(1, Math.round(4 - (a - aimed + FULL_AT + RANGER_AIM_HOLD) * 5)), tone, 2);
       }
       if (api.sim) return;
       const arrows = shots.map(v => ({ at: v, fly: 0.25, ax: lx }));
@@ -594,7 +663,7 @@ const assassin = {
 // --- the Sapper --------------------------------------------------------------------
 const sapper = {
   len: 3.2, throwAt: 0.3, fly: 0.6, blowAt: 2.1,
-  targets(R, x) { return R8(R) ? [x - 1, x + 8] : [x + 4]; },
+  targets(R, x) { return R8(R) ? [x + 4, x + 4] : [x + 4]; },
   hits(R, x) { return this.targets(R, x).map((tx, i) => ({ at: R4(R) ? this.blowAt : this.throwAt + i * 0.15 + this.fly, x: tx, k: R4(R) ? 0.9 : 0.6 })); },
   beats() { return [this.throwAt]; },
   draw(g, t, a, api, R, x) {
@@ -701,6 +770,22 @@ function beam(g, ax, ay, bx, by, w, t, fade = 0, white = true, surge = false, fr
     cell(g, cx, cy, fade > 0 ? down(core ? 0 : 1) : surge ? hot : lit);
   }
 }
+// Where the beam meets the hide (the owner's C of docs/mocks/beam-ball-2026-09-28.html):
+// a ball of it pooled flat on the underside, wider than tall and wider as the
+// beam widens, white in the middle; a ring of motes turning round it a step a
+// pose.
+function pool(g, x, y, w, t) {
+  const hw = BEAM_POOL.half[w >= 3 ? 1 : 0];
+  for (let dx = -hw; dx <= hw; dx++) {
+    cell(g, x + dx, y, Math.abs(dx) < hw - 1 ? WHITE : PURPLES[11]);
+    if (Math.abs(dx) < hw) cell(g, x + dx, y + 1, PURPLES[Math.abs(dx) < 2 ? 11 : 9]);
+  }
+  const turn = Math.floor(t / POSE) * BEAM_POOL.turn;
+  for (let i = 0; i < BEAM_POOL.motes; i++) {
+    const ang = turn + i * Math.PI * 2 / BEAM_POOL.motes;
+    cell(g, Math.round(x + Math.cos(ang) * (hw + BEAM_POOL.out)), Math.round(y + 1 + Math.sin(ang) * BEAM_POOL.out), PURPLES[i % 2 ? 9 : 11]);
+  }
+}
 // The finishing pulse: a bright bead `n` cells long at `p` 0..1 of the way
 // from (ax, ay) to (bx, by), `w` cells across, white at its head.
 function bead(g, ax, ay, bx, by, p, w, n, white) {
@@ -767,7 +852,7 @@ const mage = {
     api.shot(() => {
       // the beam, held; in the surge a cell wider and a step brighter
       const r = api.width != null ? api.width : this.ramp(R, a), w0 = R4(R) ? (r < 0.33 ? 1 : r < 0.8 ? 2 : 3) : 1, w = w0 + (surge ? 1 : 0);
-      if (a >= B.start && a < end) beam(g, sx, oy - 0.5, tx, hy, w, t, 0, R8(R), surge);
+      if (a >= B.start && a < end) { beam(g, sx, oy - 0.5, tx, hy, w, t, 0, R8(R), surge); pool(g, tx, hy, w, t); }
       // the pulse: the beam cut behind a bright bead shooting from stone to
       // hide; what is left ahead of it dims, and at rung 8 its white core
       // flares once more instead
@@ -827,7 +912,7 @@ const bard = {
   },
 };
 
-export const ATTACKS = { brawler, sword: swordsman, monk, martial, ranger, assassin, sapper, hexer, mage, bard };
+export const ATTACKS = { recruit, brawler, sword: swordsman, monk, martial, ranger, assassin, sapper, hexer, mage, bard };
 
 // --- one move at a time --------------------------------------------------------------
 // The fight strikes one move at a time (deep/classes.js, `w.pose`), where the
@@ -844,6 +929,7 @@ const only = (c, o) => Object.assign(Object.create(c), o);
 // A moment on the page's posed clock, on its raw one: every hold before it added in.
 const realOf = (c, R, at) => at + groupsOf(c, R, 0).filter(o => o.at < at - 1e-6).reduce((n, o) => n + o.pause, 0);
 export const SEGMENTS = {
+  recruit() { return { c: recruit, from: recruit.JAB - 0.34, hit: recruit.JAB, to: recruit.JAB + 0.42 }; },
   brawler(move, R, o) {
     const hay = move === 'haymaker', size = bSize(R) + (hay ? 1 : 0);
     const c = only(brawler, { punches: () => [{ at: H, side: hay ? 1 : o.side, k: hay ? 0.75 : 0.3, size, hay }] });
@@ -855,7 +941,7 @@ export const SEGMENTS = {
       return { c, from: H - 0.26, hit: H, to: H + 0.34 };
     }
     // the Whirlwind lands on its last turn, the biggest; the double on the spin back
-    const c = only(swordsman, { twice: !!o.twice }), cs = c.contacts(R), last = cs[o.twice ? cs.length - 2 : cs.length - 1];
+    const c = only(swordsman, { twice: !!o.twice }), last = c.lands(R);
     return { c, from: swordsman.SPIN.sink, hit: realOf(c, R, last.at), to: realOf(c, R, o.twice ? 3.25 : 2.75) + 0.001 };
   },
   monk(move, R) {
@@ -869,9 +955,11 @@ export const SEGMENTS = {
     return { c, from: H - (fin ? 0.35 : 0.2), hit: H, to: H + (fin ? 0.3 : 0.25) };
   },
   ranger(move, R) {
-    const aimed = move === 'aimed';
-    const c = only(ranger, { only: aimed ? { shots: [], aimed: H } : { shots: [H], aimed: null } });
-    return { c, from: aimed ? H - 0.55 : 0, mid: H - 0.55, hit: H, to: H + 0.34, off: H + 0.6 };
+    // its own release point, late enough that a standing start lifts the bow first
+    const aimed = move === 'aimed', hold = aimed ? RANGER_AIM_HOLD : 0, RH = shotLead(RANGER_AIM_HOLD) + 2 * RANGER_LIFT_S;
+    const c = only(ranger, { only: aimed ? { shots: [], aimed: RH } : { shots: [RH], aimed: null } });
+    return { c, from: RH - shotLead(hold) - 2 * RANGER_LIFT_S, mid: RH - shotLead(hold), hit: RH,
+             to: RH + SHOT_END - 0.01, off: RH + SHOT_END + 2 * RANGER_LIFT_S + 0.01 };
   },
   assassin(move, R, o) {
     const c = only(assassin, { stabs: [H], bladeI: o.side > 0 ? 1 : 0 });

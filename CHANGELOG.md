@@ -16,8 +16,68 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
-- A station starts as a base unit (Fighter, Novice, Scout, Adept, Apprentice) that forks into one of its two classes at rung 4, and the build button lays an empty lot whose board picks what goes up (test/rails.test.mjs, src/selftest/deep.js).
+- A station bought with a fang asks the yard's dust for its first rungs, so a new fighter climbs over minutes instead of all at once.
+- When the serpent resists explosive it floats a magic barrier under its body that soaks up the Sapper's charges.
+- The serpent's warded phase, split and fading resist whatever your highest-rung fighters deal, explosive included, instead of fixed kinds.
+- The deep's first pod costs 10 scales, and each after it a third more.
+- The serpent's statuses stand over its bar, twice the size, each with its name under it.
+- The serpent has a fifth phase: its comb lights up and bolts lock the strongest fighter in an orb; break the orb (a click on it hits harder), or pick the fighter out of it.
+- The serpent's warded phase no longer surges: its magic resist is the whole of it.
+- Small hits on the serpent shed more scales: two more on every hit.
+- Freeing the sqhusband plays out: the serpent goes limp, sinks to the floor and comes apart into motes, he walks out to her, and after the sheet the serpent gathers itself again (test/snatch.test.mjs).
+- Each serpent phase is a window: break the defense before it eats, or the meal heals it to full; stuns and Held stop the window, and the phases are far shallower (test/meals.test.mjs).
+- The Hexer's Wither now Exposes the serpent, so it takes more damage; Weakened is gone (test/classes.test.mjs).
+- Buying a fighter's rung closes the board and plays its level-up: it stops fighting and rises as a purple-hearted blaze twists up round it and ends in a burst of embers; the next rung waits until it has (test/classes.test.mjs).
+- The serpent's first defense breaks into a dive: it goes down out of sight under the floor and comes back up warded, the bar refilling and its four phase boxes showing for the first time (`node tools/look.mjs break-rise`).
+- Every later break is a roar: jaws wide, a bump running down the body with the new hide behind it, throwing off the fighters it passes (`node tools/look.mjs break-roar`).
+- A meal eaten while the serpent is stunned or Held no longer heals it (test/statuses.test.mjs).
+- A fighter's later rungs ask the deep's own price in dust, ore and sparks, sized for a yard that has reached the abyss (test/deep-board.test.mjs).
+- A blow knocks only its own sliver off the serpent's health bar, not a fixed chunk (`node tools/look.mjs deep-numbers`).
+- The serpent eats a creature out of the passing stream, the one swimming its own way into the mouth when a meal is due, instead of one that dashes in only to be eaten (test/meals.test.mjs).
+- The deep has a steady stream of creatures crossing it at three depths, with a giant now and then far behind; every one comes in from off the screen, the serpent's meals included, and none trails a line of dots (`node tools/look.mjs party-four`).
+- The rescue's sheet has no button with the second half on: it stands a beat, rises and fades, and the camera pulls in on the plank as the snatch plays (test/serpent-flag.test.mjs).
+- The rescue's sheet says the story isn't over when the second half follows it, and the sheet for freeing him says it is the end (src/selftest/times.js).
+- The serpent that comes up out of the pit has the deep's head: snout, purple crest and hinged jaws that open wide and shut on him, on a neck that leans out toward the plank (`node tools/look.mjs snatch`).
+- The story's line carries on into the second half: drown the pit, ask the wizards how to get down, buy the portal, free your sqhusband (test/objectives.test.mjs).
+- The deep's portal no longer pokes up through the water's surface, so a click on the roof is not a way up (src/selftest/deep.js).
+- The serpent's jaws swing wide open for a creature and it goes in between them, its lump travels slowly down the neck, and purple crosses rise off the body when the heal lands (`node tools/look.mjs meal-gulp`).
+- The serpent's bar centers over the stretch of serpent on screen instead of the middle of the window (`node tools/look.mjs meal-swim`).
+- The serpent eats to heal: eight abyss creatures swim in from the left, one a meal every 6 to 12 seconds, and the heal it banked lands in one lump as the swallow reaches its belly, at the same rate as before (test/meals.test.mjs, `node tools/look.mjs meal-swim`).
+- A melee fighter hopping up to the hide is thrown off by the lash like one at it (test/phase-mechanics.test.mjs).
+- The serpent is shorter: its head hangs just past the first fighter, leaving open water to its left (`node tools/look.mjs party-four`).
+- The serpent rides lower in the deep, with more room between it, the bar and the portal (`node tools/look.mjs deep-fading`).
+- The lash's tile stays under the serpent's bar all through its phase and says it stuns melee attackers, and the status badges are half again as big (`node tools/look.mjs deep-stun`).
+- The serpent's ward and plates show as tiles beside its debuffs under the bar, the fading's turning from one to the other with its rim blinking ahead (`node tools/look.mjs deep-fading`).
+- Every fighter attacks in its own combo -- a quick string, a reset and a rest -- at the same damage a second as before (test/combo.test.mjs).
+- Every class deals physical, magic or explosive damage: the warded phase resists magic under its purple ward, the split resists physical under plates, and the fading switches between the two (test/resists.test.mjs).
+- The Mage's beam pools in a ball of energy where it meets the serpent, and every status icon says what it is on hover (`node tools/look.mjs deep-fading`).
+- The serpent's statuses and its phase's surge, lash or sink show as icons under its bar, each with a timer, and a fighter's own statuses stand up a post beside its station (`node tools/look.mjs deep-stun`).
+- Every fighter's moves and capstones say what they do in two or three words, and the status hovers are a few words each (`node tools/look.mjs recruit-board`).
+- A status's hover line on a station's board is shown whole even past the board's edge, and a status named in an effect stays on its line (`node tools/look.mjs recruit-board`).
+- A station's board reads in full black, and each effect's description sits on the line under its name (`node tools/look.mjs recruit-board`).
+- The Recruit's board is as wide as its five choices need, so none of their names spill out of their boxes (`node tools/look.mjs recruit-board`).
+- The serpent flinches from a blow: the stretch of body round it is thrown up as one piece and settles, instead of a dent that sprang back past with a bulge running off it (`node tools/look.mjs deep-wound`).
+- An arrow dents the serpent the moment it reaches the hide instead of sitting against it first, and a held beam presses the hide steadily instead of setting the coil springing on every tick (test/deep-arms.test.mjs, test/sword-dent.test.mjs).
+- Blows land with weight: the serpent's hide is driven in and springs back past with a bulge running along it, the fighter is knocked back off every blow, and the bar recoils up as each number goes into it (`node tools/look.mjs deep-wound`).
+- Each blow that lands in the serpent's bar knocks a chip out of the end of its fill, so even a small blow shows (`node tools/look.mjs deep-numbers`).
+- The serpent's bar is bigger and hangs just over the serpent, the portal moved up for it, and every damage and heal number flies into the bar before it moves (`node tools/look.mjs deep-numbers`).
+- A fighter thrown off the serpent by its lash sees stars all the way down, not only once it lands (`node tools/look.mjs phase-lash`).
+- Every blow on the serpent shows its own number instead of being added into the last one's (test/serpent-numbers.test.mjs).
+- A blow's number is knocked off the serpent in an arc, bigger and with speed lines for a heavy blow, and the heal's number swells along its digits and fades through the purples (`node tools/look.mjs deep-numbers`).
+- A low dark dome stands behind every deep station, so the scales heaped on the floor sit behind it and the fighter reads against dark (`node tools/look.mjs party-four`).
+- Each phase past the first has a mechanic, warned ahead and answered by a class: the warded phase surges its heal until a stun spends it, the split lashes the melee fighters off the hide unless a Hexer holds it, and the fading sinks into the abyss out of reach (test/phase-mechanics.test.mjs).
+- The Ranger loads each shot: an arrow from the hip, nocked, drawn in two steps as he strains and sinks, held, then loosed with the string snapping and a held recoil (`node tools/look.mjs party-four`).
+- The build button puts a station up at once; a Recruit fights there with a light punch until rung 1 makes it a Fighter, Novice, Scout, Adept or Apprentice, and rung 4 forks it into one of two classes (test/rails.test.mjs, test/party.test.mjs, src/selftest/deep.js).
+- A new station whose Recruit is waiting on its first choice wears a chevron that says "choose a fighter" (test/props.test.mjs, src/selftest/deep.js).
+- A station's board shows where every choice leads: each base unit's two specialists, and each specialist's move and capstone, with status effects named and explained on hover (test/rails.test.mjs, src/selftest/deep.js).
+- Every station stands on a stepped stone plinth, off the deep's floor (test/props.test.mjs).
+- Every fighter attacks the serpent straight above its own station (test/classes.test.mjs).
+- Scales handed back by a station's Reset or a refund are tossed back into the crusher instead of dropped in the water (test/rails.test.mjs, test/crusher.test.mjs).
+- A refund's dust and finds are tossed back into the pit and counted as they land, instead of filling the pile before the toss arrives (test/queue.test.mjs).
+- The yard's house has a room for the yard's crew only, not one for every body living in the deep's pods, and the crew list shows the yard and the deep apart (test/two-crews.test.mjs).
+- The serpent's fight takes about an hour: the first fighter out-hits the first heal a few rungs up, each stage after waits on the party's next rungs, and a bigger hit sheds a few more scales than a small one (test/serpent.test.mjs).
 - Fighters sway a cell between attacks, and the melee ones hop as each step lands (`node tools/look.mjs party-four`).
+- A station is its fighter beside a prop instead of a building under a dome: a crate below the fork, the class's own from it, its parts purple at rung 8, and its board named for the fighter (test/props.test.mjs, src/selftest/deep.js).
 - The party: up to four stations built on the deep's floor, the first free and each after it for a fang the serpent drops at a break, each with a fighter of one of ten classes climbed on the station's rails, a move at rung 4 and a capstone at rung 8 (test/party.test.mjs, test/rails.test.mjs, test/classes.test.mjs).
 - The second half: when the sqwife is out and the pit has drowned, a serpent takes the sqhusband down into the abyss, and the deep below is fought by the party's fighters; the scales they knock loose are gathered off the floor into a crusher (test/snatch.test.mjs, test/serpent.test.mjs, test/deep-arms.test.mjs, test/crusher.test.mjs).
 - Pods, the deep's houses, bought in scales: the crew grows down there, each body works in the half it lives in first, and the deep is built by the yard's builders going down the shaft (test/pods.test.mjs, test/deep-works.test.mjs).
@@ -31,7 +91,14 @@ this section; the release that switches it on moves these under Unreleased.
 - The fight is read in numbers: each blow's damage rises off the coil in a carved pixel face of its own, a lance's and a beam's bleed and a grenade's burst each say one sum, and the heal rises off the wound in purple as +N once a second (test/serpent-numbers.test.mjs).
 - The serpent has a bar at the top of the deep: what its defense has left, what a blow just took in grey, what the heal won back in purple, and four pips for its four defenses.
 - Blows land on the serpent: each one bites its hide and bursts its scales off, and a heavy blow stuns it still, stopping its heal for a few seconds (test/serpent-stun.test.mjs).
+- Fighters at the serpent's hide are no longer dragged under the deep's floor when it dives or lies down (test/party.test.mjs).
+- Hovering a fighter up at the serpent no longer drops it to the deep's floor (test/classes.test.mjs).
+- After the serpent's death the fighters stop attacking it and go back to their posts, the motes fade away instead of hanging in the water, and the head comes apart with the rest (test/snatch.test.mjs).
 
+- The serpent no longer sheds more scales than the gatherers can ever carry to the crusher (test/serpent.test.mjs).
+- The deep's build button shows its price, one fang, instead of how many fangs you hold (src/selftest/deep.js).
+- A Swordsman's blow dents and wounds the serpent once, in one place, on the turn that lands it (test/sword-dent.test.mjs, test/classes.test.mjs).
+- A Sapper's two charges stick and go off in one spot instead of two (test/classes.test.mjs).
 - Two of the deep's stations of one kind, or two empty lots, no longer share a board's name (src/selftest/stations.js).
 - The deep no longer crawls on a large screen: its water and the serpent take a third of the time to draw they did (test/deep-paint-cost.test.mjs).
 - Scales tossed into the crusher drop into its funnel instead of sliding down in front of it (`node tools/look.mjs crusher`).
@@ -42,7 +109,6 @@ this section; the release that switches it on moves these under Unreleased.
 - On a tall window the deep's water goes all the way up to the top of the screen, with no black band over it (src/selftest/deep.js).
 - The serpent is one smooth coil that no longer comes apart; its wound cracks out along the body, and he is plainly inside it, in a cage of ribs the wound breaks open (test/serpent.test.mjs).
 - The serpent keeps its length as it sways, and has a sea serpent's head: a long snout and a purple crest down its neck (scene serpent-head).
-- The deep's stations stand in the middle of their domes, and a symmetric station draws symmetric (stations.html).
 - A worker thrown in the deep sinks to the deep's floor and stays down there, instead of landing on the yard's ground (test/deep-shaft.test.mjs).
 - The counts card keeps clear of the wizards' portal instead of covering it (src/selftest/deep.js).
 - The deep draws its water, serpent, stations and floor as a few images a frame instead of thousands of cells, so it no longer drops to a crawl on a large screen (scene deep-all).
@@ -51,12 +117,34 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep's crew no longer shouts when a rock lands up in the yard (test/two-crews.test.mjs).
 - What a deep station has in line hangs just over the station, in front of its dome, and its hover box is the station itself rather than a tall block round the dome (test/deep-works.test.mjs).
 - The deep's build button is drawn as a button again, and fades in and out (`node tools/look.mjs party-button`).
+- The Scout's arrows, the Assassin's daggers and the Hexer's bolts are seen flying up to the serpent, not stuck against it the whole way (`node tools/look.mjs deep-scout`).
+- Gatherers work the scales lying nearest the crusher first instead of swimming across the deep to the tallest heap (test/gather.test.mjs).
 
 ## Unreleased
 
 **New this release**
+- Cores are gone: each barrier that falls opens the next place instead -- the props the farm, the net the quarry, the arch the tower -- and the dome is paid without them.
+- A queued shop item's "refund" now reads "cancel".
+- Hold the right button to see the crew: the yard fades back, every worker is ringed, the cursor turns into an open hand, and the one under it slows down. Holding the left button as well picks a worker up, for as long as both are held; the right button alone no longer lifts anybody. Hovering no longer stops a worker.
+- After the first rock, the one still buried yells for help.
+- An achievement for shaking a worker dizzy.
+- A card at the top left says the story's next step, from digging out the rock to saving the sqwife.
+- The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.
+- The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 - The props can be built after the first rock.
 
+- The cards and buttons around the edges of the screen stand the same distance in, are padded alike, and all cast the same shadow as the story's card, the counter included (src/selftest/touch.js).
+- A card being built with nobody at it yet, a hand still walking over, wears the queued edge, and its refund and another keep their border (src/selftest/queue.js).
+- The queue of builds sits under the story's card in the top-left corner instead of on top of it (src/selftest/queue.js).
+- "It never rains but it pours" is earned when a shower of muck has finished falling, not when the clouds start to gather, and never for clean rain (test/notices.test.mjs).
+- Starting a new game no longer leaves the old crew's dust on the new ground (test/new-game.test.mjs).
+- A Hasted or Inspired fighter keeps its buff through a reload (test/classes.test.mjs).
+- Houses bought several at once each show their own progress bar, instead of an empty one covering the house being built (test/queue-repeats.test.mjs).
+- A queued card's refund and another keep a solid edge instead of the card's dashed one (`node tools/look.mjs queue`).
+- A board no longer opens with its title bar under the notice card at the top of the window, when it fits below the card (`node tools/look.mjs recruit-board`).
+- On a phone, a flick or a long drag down from a sheet at full height closes it instead of stopping at the short height (src/selftest/sheet.js).
+- The ticked glyph over a station after a rung lands wears that rung's color, not the next rung's (test/landed-unread.test.mjs).
+- After a refresh mid-build, the building's shop tile no longer sprays chips over its picture every frame, and the builder rests between bursts again (test/build-reload.test.mjs).
 - Workers mining the rock put up a third of the dust motes they did, and the motes thin out gradually instead of vanishing at the end (test/wave7-sky.test.mjs).
 - The cancel on a queued barrier is a small button instead of a bar across the whole card, and it no longer covers the description (src/selftest/boards.js).
 - Hovering a queued barrier keeps its description instead of fading it out (src/selftest/boards.js).

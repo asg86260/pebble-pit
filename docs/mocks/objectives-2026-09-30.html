@@ -1,0 +1,161 @@
+<title>Story Objectives</title>
+<style>
+/* Layout: two sections, the objective line (three looks, the same story
+   stepping on) and the snatch's head (two drawings, the same take). */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 13px; margin: 0; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; }
+</style>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Story Objectives</h1>
+    <p>One line at the top left says the next step of the story, words only, nothing for finishing it but the
+      next line. Each pane steps through the ten lines, finishing one every two seconds. Below, the snatch's head
+      redrawn to match the serpent in the deep. A mock drawn from plain shapes, not the game: the yard is a plain
+      white strip, and the game's own font and board are not used.</p>
+  </div>
+  <h1>The line</h1>
+  <div class="grid" id="lines"></div>
+  <h1>The snatch's head</h1>
+  <p>Today's head is a block with a wedge cut in it. Both options carry the deep's snout, crest, eye and hinged
+    jaws, in the yard's colors (black hide, the crest in purple). Each loops the take: up out of the portal, the
+    jaws open, him taken, back under.</p>
+  <div class="grid" id="heads"></div>
+</div>
+<script>
+(() => {
+  const P = 4;
+  const STEPS = ['dig out the rock', 'the rocks keep falling', 'build the props', 'string the net', 'raise the arch',
+    'raise the dome', 'save the sqwife', 'ask the wizards how to get down', 'buy the portal',
+    'free your sqhusband from the serpent\'s belly'];
+  const PUR = ['#6a2fbe', '#9b5de5', '#412465'];
+  const ease = x => x * x * (3 - 2 * x);
+
+  // --- the line ---------------------------------------------------------------------
+  const W = 380, H = 110;
+  const yard = g => {
+    g.fillStyle = '#f4f4f2'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#000'; g.fillRect(0, H - 22, W, 22);
+    for (let x = 0; x < W; x += 8) if ((x * 7) % 5 < 2) g.fillRect(x, H - 26, 4, 4);
+  };
+  const LOOKS = [
+    { name: 'A: a plain line', note: 'Black words on the sky, a square before them. Done, the square fills, the line holds a beat, and the next types itself out.',
+      draw(g, text, done, k) {
+        g.font = '12px ui-monospace, monospace'; g.textBaseline = 'top';
+        g.fillStyle = '#000'; g.fillRect(12, 14, 8, 8); if (!done) { g.fillStyle = '#f4f4f2'; g.fillRect(14, 16, 4, 4); }
+        g.fillStyle = '#000'; g.fillText(done ? text : text.slice(0, Math.ceil(text.length * Math.min(1, k * 3))), 28, 12);
+      } },
+    { name: 'B: a black tag', note: 'The notice card\'s own look, small: white words on a black tag. Done, a tick stands on the tag, then the tag slides up out of sight and the next slides down.',
+      draw(g, text, done, k) {
+        g.font = '11px ui-monospace, monospace'; g.textBaseline = 'top';
+        const w = g.measureText(text).width + 30, y = done ? 10 - ease(Math.max(0, (k - 0.6) / 0.4)) * 30 : 10 - (1 - ease(Math.min(1, k * 4))) * 30;
+        g.fillStyle = '#000'; g.fillRect(10, y, w, 20);
+        g.fillStyle = '#fff'; g.fillText(done ? '✓' : '›', 16, y + 5); g.fillText(text, 28, y + 5);
+      } },
+    { name: 'C: a label and the line', note: 'A small grey "next" over the line. Done, the line is struck through and fades, and the next comes up under the label.',
+      draw(g, text, done, k) {
+        g.textBaseline = 'top';
+        g.font = '10px ui-monospace, monospace'; g.fillStyle = '#8b8b96'; g.fillText('next', 12, 8);
+        g.font = '12px ui-monospace, monospace';
+        g.globalAlpha = done ? Math.max(0, 1 - Math.max(0, k - 0.5) * 2) : Math.min(1, k * 4);
+        g.fillStyle = '#000'; g.fillText(text, 12, 22);
+        if (done) g.fillRect(12, 28, g.measureText(text).width * Math.min(1, k * 3), 2);
+        g.globalAlpha = 1;
+      } },
+  ];
+  const lines = LOOKS.map(l => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${l.name}</h2><canvas width="${W}" height="${H}"></canvas><p>${l.note}</p>`;
+    document.getElementById('lines').appendChild(card);
+    return { l, g: card.querySelector('canvas').getContext('2d') };
+  });
+
+  // --- the head ---------------------------------------------------------------------
+  const HW = 380, HH = 220, SURF = 150;
+  const HEADS = [
+    { name: '1: the deep\'s head, straight up', note: 'The neck rises straight out of the portal, the head turned toward the plank: the deep\'s snout, eye and purple crest, the jaws swinging wide with white teeth, then shut on him.', curve: 0 },
+    { name: '2: the deep\'s head on a curling neck', note: 'The same head on a neck that leans out of the portal in a curve and draws back as it takes him, the crest running down the neck.', curve: 1 },
+  ];
+  function head(g, t, h) {
+    const LOOP = 5, u = t % LOOP;
+    g.fillStyle = '#f4f4f2'; g.fillRect(0, 0, HW, HH);
+    // the plank, the pit's liquid, the portal
+    g.fillStyle = '#000'; g.fillRect(0, SURF - 2, 150, 2); g.fillRect(0, SURF, 150, HH - SURF);
+    g.fillStyle = '#2d1d47'; g.fillRect(150, SURF, HW - 150, HH - SURF);
+    for (let i = 0; i < 18; i++) { const a = t * 2 + i / 18 * Math.PI * 2; g.fillStyle = PUR[i % 2]; g.fillRect(Math.round((250 + Math.cos(a) * 50) / P) * P, Math.round((SURF + 4 + Math.sin(a) * 8) / P) * P, P, P); }
+    // the two at the edge; the one nearer the water taken at the bite
+    const take = u > 2.3;
+    g.fillStyle = '#000';
+    g.fillRect(118, SURF - 26, 12, 24); if (!take) g.fillRect(136, SURF - 26, 12, 24);
+    // how far up, how open
+    const rise = u < 0.4 ? 0 : u < 1.6 ? ease((u - 0.4) / 1.2) : u < 3.6 ? 1 : 1 - ease((u - 3.6) / 1.2);
+    const open = u < 1.4 ? 0 : u < 1.9 ? ease((u - 1.4) / 0.5) : u < 2.3 ? 1 : u < 2.6 ? 1 - ease((u - 2.3) / 0.3) : 0;
+    const lean = h.curve ? (u < 2.3 ? ease(Math.min(1, u / 2)) : 1 - ease(Math.min(1, (u - 2.3) / 1))) : 0;
+    const top = SURF - rise * 110;
+    // the neck, cell by cell: straight, or curving out toward the plank
+    const neckX = y => 250 - (h.curve ? lean * 50 * Math.sin((SURF - y) / 110 * Math.PI / 2) : 0);
+    g.save(); g.beginPath(); g.rect(0, 0, HW, SURF); g.clip();
+    for (let y = SURF; y > top + 14; y -= P) {
+      const x = neckX(y);
+      for (let dx = -14; dx <= 14; dx += P) {
+        g.fillStyle = Math.abs(dx) > 10 ? '#000' : ((Math.round(y / P) + Math.round(dx / P)) % 3 ? '#1c1c21' : '#333339');
+        g.fillRect(Math.round((x + dx) / P) * P, Math.round(y / P) * P, P, P);
+      }
+      if (h.curve && Math.round(y / P) % 2 === 0) { g.fillStyle = PUR[Math.round(y / P) % 4 ? 0 : 1]; g.fillRect(Math.round((x + 16) / P) * P, Math.round(y / P) * P, P, P); }
+    }
+    // the head: a snout reaching left toward the plank, jaws hinged behind the eye
+    const hx = neckX(top + 20) - 10, hy = top;
+    for (let c = 0; c < 16; c++) {
+      const back = c / 15, half = 3 + Math.round(back * 2), gap = Math.round(open * 6 * (1 - c / 10));
+      for (let r = -half; r <= half; r++) {
+        const shift = c < 10 ? (r < 0 ? -gap : r > 0 ? gap : 0) : 0;
+        if (c < 10 && open > 0 && r === 0) continue;
+        const edge = Math.abs(r) === half;
+        g.fillStyle = edge ? '#000' : r === -half + 1 ? '#6e6e78' : ((c + r) % 3 ? '#1c1c21' : '#26262c');
+        g.fillRect(hx - (15 - c) * P, hy + 20 + (r + shift) * P, P, P);
+        // teeth along the jaws' inner edges
+        if (c < 9 && open > 0.2 && c % 2 === 0 && (r === -1 || r === 1)) { g.fillStyle = '#fff'; g.fillRect(hx - (15 - c) * P, hy + 20 + (r + shift) * P, P, P); }
+      }
+      if (open === 0 && c < 6) { g.fillStyle = '#000'; g.fillRect(hx - (15 - c) * P, hy + 20, P, P); }
+      // the crest, purple spikes along the top of the head
+      if (c > 5 && c % 2 === 0) { g.fillStyle = PUR[c % 4 ? 0 : 1]; const tall = c % 4 ? 2 : 3; for (let k = 1; k <= tall; k++) g.fillRect(hx - (15 - c) * P, hy + 20 + (-half - (c < 10 ? Math.round(open * 6 * (1 - c / 10)) : 0) - k) * P, P, P); }
+    }
+    // the eye
+    const eg = Math.round(open * 6 * (1 - 11 / 10));
+    g.fillStyle = '#fff'; g.fillRect(hx - 4 * P, hy + 20 - 2 * P, P, P);
+    // him, in the jaws once taken
+    if (take && rise > 0.1) { g.fillStyle = '#fff'; g.fillRect(hx - 13 * P - 2, hy + 12, 16, 16); g.fillStyle = '#000'; g.fillRect(hx - 13 * P, hy + 14, 12, 12); g.fillStyle = '#fff'; g.fillRect(hx - 12 * P, hy + 18, 4, 4); }
+    g.restore();
+  }
+  const heads = HEADS.map(h => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${h.name}</h2><canvas width="${HW}" height="${HH}"></canvas><p>${h.note}</p>`;
+    document.getElementById('heads').appendChild(card);
+    return { h, g: card.querySelector('canvas').getContext('2d') };
+  });
+
+  let t = 0, last = performance.now(), run = true;
+  window.__setT = v => { t = v; run = false; };
+  const frame = n => { requestAnimationFrame(frame);
+    const d = Math.max(0, Math.min(0.05, (n - last) / 1000)); last = n; if (run) t += d;
+    const step = Math.floor(t / 2) % STEPS.length, k = (t % 2) / 2, done = k > 0.6;
+    lines.forEach(({ l, g }) => { yard(g); l.draw(g, STEPS[step], done, done ? (k - 0.6) / 0.4 : k / 0.6); });
+    heads.forEach(({ h, g }) => head(g, t, h));
+  };
+  requestAnimationFrame(frame);
+})();
+</script>

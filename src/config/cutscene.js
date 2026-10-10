@@ -8,6 +8,11 @@ export const CUT_TEAR_S = 6;         // how long the tearing is watched
 export const CUT_TEAR_ZOOM = 1.5;    // pulled in on a small hole being born
 export const CUT_DROWN_S = 8;        // the drowning runs longer than its gulp
 export const CUT_DROWN_ZOOM = 1;     // and is framed wide: the whole mouth goes
+// The snatch, watched from the plank (DESIGN.md, "From the rescue straight into
+// the snatch"): pulled in on the pair at the edge for as long as it plays.
+export const CUT_SNATCH_ZOOM = 1.5;
+export const CUT_SNATCH_MAX_S = 40;
+export const CUT_SNATCH_TAIL_S = 0.5;
 // A shield's answer has no length of its own (the net pays out for as long as
 // its rate takes, the dome's first hold waits on somebody's walk), so the scene
 // ends on the fact plus a tail to see the wreck fly, under a ceiling that is a

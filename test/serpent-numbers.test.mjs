@@ -6,8 +6,9 @@
 // this.
 
 import { group, ok, yard } from './helpers.mjs';
-import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, NUM_HEAL_EVERY_S, SERPENT_DEFENSE,
-         SERPENT_HEAL, DOT_TICK_S, CLASSES } from '../src/config.js';
+import { guardOf } from '../src/deep/phases.js';
+import { NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_HELD_S, SERPENT_WINDOW,
+         DOT_TICK_S, CLASSES } from '../src/config.js';
 import { EPHEMERAL } from '../src/state.js';
 import { climb, openEveryClass } from './party-press.mjs';
 import { rungWorth } from '../src/deep/classes.js';
@@ -35,12 +36,12 @@ group("a Brawler's punch puts its damage in the recent list, and the list emptie
   fight('altar', 'brawler', 1);
   let first = null;
   frames(60, () => { first = of('brawler')[0]; return !!first; });
-  const worth = rungWorth(CLASSES.brawler, 1) * SERPENT_DEFENSE.brawler[0];
+  const worth = rungWorth(CLASSES.brawler, 1) * guardOf('brawler');
   const said = first && { done: first.done, x: first.x, y: first.y };
   // Watched past every number's life: each hit leaves the list by itself.
   // (The station goes on striking, its base unit or its class: a built
   // station always fights, so the list is never empty for long.)
-  const life = Math.max(NUM_LIFE_S, NUM_HEAL_LIFE_S) + 2 * NUM_HEAL_EVERY_S + 1;
+  const life = Math.max(NUM_LIFE_S, NUM_HEAL_LIFE_S) + 3;
   const had = new Set(S.hits);
   frames(life);
   return [
@@ -52,6 +53,27 @@ group("a Brawler's punch puts its damage in the recent list, and the list emptie
   ];
 });
 
+// Every blow is its own splat: a Martial Artist's thrusts land half a second
+// apart on one spot, faster than a number is gone, and none is summed into
+// the one before.
+group('each blow is a number of its own, never summed into the last', async () => {
+  fight('well', 'martial', 4);
+  const seen = new Set();
+  frames(12, () => { for (const h of of('martial')) seen.add(h); });
+  const worth = rungWorth(CLASSES.martial, 4) * guardOf('martial');
+  const list = [...seen].sort((a, b) => a.at - b.at);
+  // a thrust says one thrust; the finisher its own blow, the biggest there is
+  const fin = Math.max(...list.map(h => h.done));
+  const close = list.slice(1).filter((h, i) => h.at - list[i].at < NUM_LIFE_S * 1000).length;
+  return [
+    ok(list.length >= 6, 'the thrusts are said', list.length),
+    ok(close >= 3, "and several land while the last one's number is still up", close),
+    ok(list.every(h => Math.abs(h.done - worth) < 1e-9 || h.done === fin) && list.filter(h => Math.abs(h.done - worth) < 1e-9).length >= 6,
+       'each thrust says one thrust, never a sum of two',
+       JSON.stringify(list.map(h => +h.done.toFixed(2))))
+  ];
+});
+
 group('the recent hits are never saved', async () => {
   fight('altar', 'brawler', 1);
   const had = frames(60, () => S.hits.length > 0);
@@ -59,9 +81,9 @@ group('the recent hits are never saved', async () => {
   const raw = localStorage.getItem('boulder-clicker/v4') || '';
   return [
     ok(had, 'there were hits to lose'),
-    ok(['hits', 'healSum', 'healAt'].every(k => EPHEMERAL.includes(k)), 'the fields are ephemeral'),
+    ok(['hits', 'mealLandedAt'].every(k => EPHEMERAL.includes(k)), 'the fields are ephemeral'),
     ok(raw.length > 0 && raw.includes('"serpentWound"'), 'a save was written', raw.length),
-    ok(!/"(hits|healSum|healAt)"/.test(raw), 'and it carries none of them')
+    ok(!/"(hits|mealLandedAt)"/.test(raw), 'and it carries none of them')
   ];
 });
 
@@ -70,7 +92,7 @@ group("a Mage's beam says its ticks once a second, not a number a tick", async (
   fight('spire', 'mage', 1, 3);
   const seen = new Map();
   frames(12, () => { for (const h of of('mage')) if (h.key) seen.set(h, h.done); });
-  const tick = rungWorth(CLASSES.mage, 1) * DOT_TICK_S * SERPENT_DEFENSE.mage[3];
+  const tick = rungWorth(CLASSES.mage, 1) * DOT_TICK_S * guardOf('mage');
   const per = NUM_HELD_S / DOT_TICK_S;                  // ticks in a said second
   const sums = [...seen.keys()].map(h => Math.round(h.done / tick));
   const full = sums.filter(n => n === per).length;
@@ -83,23 +105,18 @@ group("a Mage's beam says its ticks once a second, not a number a tick", async (
   ];
 });
 
-group('the heal says what it closed, once a second, in its own entries', async () => {
-  // The ward's heal on a wound deep enough not to close in the watch, and
-  // nobody fighting: every entry is the heal's.
+group('the heal says what a meal closed, once a meal, in its own entry', async () => {
+  // The bare phase, wounded and a fresh window, nobody fighting: the one
+  // entry is the meal's, the whole wound.
   window.__snatch({ played: true });
-  window.__serpent({ stage: 1, wound: 400 });
+  window.__serpent({ stage: 0, wound: 1234 });
   window.__deepCrew();
+  S.mealT = 0; S.mealI = null;
   const said = [];
-  frames(6.5, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
-  const gaps = said.slice(1).map((h, i) => Math.round(h.at - said[i].at));
-  const each = SERPENT_HEAL[1] * NUM_HEAL_EVERY_S;
+  frames(SERPENT_WINDOW[0] * 2 + 50, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
   return [
-    ok(said.length >= 5 && said.length <= 7, 'about one a second', said.length),
-    ok(gaps.every(g => Math.abs(g - NUM_HEAL_EVERY_S * 1000) <= 20), 'a second apart', JSON.stringify(gaps)),
-    // The first second is on the heal's own clock, begun before the ward was
-    // set, so it is part of one; every one after is whole.
-    ok(said.slice(1).every(h => Math.abs(h.done - each) < 0.5), "each the wound the heal closed in its second",
-       JSON.stringify(said.map(h => h.done.toFixed(2)))),
+    ok(said.length === 1, 'a number for the meal, and none for the meals after with nothing to close', said.length),
+    ok(said[0] && Math.abs(said[0].done - 1234) < 1e-6, 'the whole wound', JSON.stringify(said.map(h => h.done))),
     ok(S.hits.every(h => h.weapon === 'heal'), 'and nothing else struck')
   ];
 });

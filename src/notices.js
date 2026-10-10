@@ -58,7 +58,6 @@ const WHEN = {
   firstgrain: () => S.banked > 0,
   firstrock: () => S.boulderNo >= 2,
   gotout: () => S.rescued,
-  firstcore: () => S.seenCore,
   firsthire: () => S.crew >= 2,
   firstshard: () => S.seenShard,
   firstspore: () => S.seenSpore,
@@ -82,7 +81,7 @@ const WHEN = {
   brew100: () => (S.brews || 0) >= NOTICE_BREWS,
   lived1h: () => eldest() >= NOTICE_LIVED_MS,
   everyjob: everyJobStaffed,
-  muckrain: () => (S.rains | 0) >= 1
+  muckrain: () => (S.tally.muckRains | 0) >= 1
 };
 
 export const NOTICES = CATALOG.map(n => (WHEN[n.key] ? { ...n, when: WHEN[n.key] } : { ...n }));

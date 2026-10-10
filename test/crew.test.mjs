@@ -4,7 +4,7 @@
 // Node checks: the yard is run rather than watched, so a walk the length of the
 // world costs a few milliseconds instead of the half minute it takes to happen.
 
-import { yard, group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, quarryFeetY, P, WORKER } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, haveRock, openSites, quarryFeetY, P, WORKER } from './helpers.mjs';
 // The yard's own chance, for the dust a check heaps itself. `Math.random` here
 // would hand each run a differently-shaped pile out of the same seed, which is
 // the seed's whole point undone from the test side. Every group is seeded
@@ -219,8 +219,6 @@ group('a body walks to its new work instead of appearing at it', async () => {
 group('a hired worker carries dust to the pit', async () => {
   window.__give(4000);
   run(0.2);
-  await bankCore();
-  await bankCore();
   window.__crew(0, 1);                        // one body, carrying
   const hired = state().crew > 0;
   quickCrew();

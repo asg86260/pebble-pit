@@ -1,6 +1,7 @@
 // The progress bar, and where each site's bar hangs.
 
-import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
+import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK, BUILD_DRIFT, SHELF_FLOAT_MS, SHELF_FLOAT_SPREAD } from '../config.js';
+import { now } from '../clock.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, filter, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
@@ -36,6 +37,7 @@ export function bar(cx, cy, at) {
 // so a station that is resited or grows takes its bar with it and a bar cannot
 // end up inside the building it is about.
 const BAR_CLEAR = P * 7;                 // how far above the top of a thing it floats
+const BAR_STEP = P * 4;                  // a bar's depth and a cell, between stacked bars
 
 // The spire: the main shaft, without the turret off the right-hand side, since
 // a bar centered on the tower's full rect lands right of the point. The top is
@@ -106,13 +108,14 @@ export function barSpot(site, w = null) {
 // with the fill. The same picture on the tile and over the station, so a
 // glance at either says what is coming.
 const EDGE = P / 6;                      // the outline's stroke, one yard pixel
-export function buildingGlyph(cx, cy, rows, at, tint = null) {
+export function buildingGlyph(cx, cy, rows, at, tint = null, dx = 0, dy = 0) {
   const g = glyphPlan(rows);
   const up = Math.floor(at * g.laid.length);
   const d = g.at[up] ||= drawnAt(g, up);
   // Centred on the ink, not the box: a drawing off to one side of its grid
   // (the shovel, the lamp) would otherwise hang beside the station.
-  const x0 = Math.round(cx / P - g.mid) * P, y0 = cy - (CELLS * P) / 2;
+  // The drift (`dx`, `dy`) goes on after, or the centering would snap it off.
+  const x0 = Math.round(cx / P - g.mid) * P + dx, y0 = cy - (CELLS * P) / 2 + dy;
   if (tint && up) paintRects(d.stroke, tint, x0, y0);
   paintRects(d.ink, '#000', x0, y0);
   paintRects(d.ghost, BUILD_GHOST_INK, x0, y0);
@@ -213,29 +216,56 @@ export function stackSlot(site, slot, w = null) {
   return { x, y, cy: y - (CELLS / 2 - 1.5) * P - slot * P * (CELLS + 2) };
 }
 
+// Where each of a site's works hangs, and as what: a bar over a construction,
+// the thing itself over anything else. One list for the drawing and for the
+// check that no two of them are laid over each other.
+export function workSpots(site) {
+  const out = [];
+  // The whole list, the line included: a work in line is at nought, so it
+  // hangs as the outline alone over the one being built, and the stack is
+  // what the station has been paid for.
+  const list = worksAt(site);
+  // One a work. On the yard each work stands on its own ground, so each
+  // hangs over its own thing; elsewhere the stack starts over what the
+  // station has finished and not yet shown (`drawDoneMarks`).
+  let stacked = doneAt(site).length;
+  for (const [i, w] of list.entries()) {
+    // On the yard, copies of one row (a second house) share ground with the
+    // first, so they stack over it as a station's line does.
+    const lift = site === 'yard' ? list.slice(0, i).filter(x => x.key === w.key).length : stacked++;
+    const at = stackSlot(site, lift, w);
+    if (!at) continue;
+    // A bar is shallower than a glyph, so a copy's stands a bar and a cell
+    // over the one before rather than a glyph's height: drawn at the foot,
+    // the copy in line (empty) was laid over the one filling.
+    if (site === 'yard' && risingPlaces().some(r => r.key === w.key)) out.push({ w, bar: { x: at.x, y: at.y - lift * BAR_STEP } });
+    else out.push({ w, glyph: { x: at.x, cy: at.cy } });
+  }
+  return out;
+}
+
 export function drawWorkBars() {
   for (const site of SITES) {
-    // The whole list, the line included: a work in line is at nought, so it
-    // hangs as the outline alone over the one being built, and the stack is
-    // what the station has been paid for.
-    const list = worksAt(site);
-    if (!list.length) continue;
-    // One a work. On the yard each work stands on its own ground, so each
-    // hangs over its own thing; elsewhere the stack starts over what the
-    // station has finished and not yet shown (`drawDoneMarks`).
-    let stacked = doneAt(site).length;
-    for (const [i, w] of list.entries()) {
-      // On the yard, copies of one row (a second house) share ground with the
-      // first, so they stack over it as a station's line does.
-      const lift = site === 'yard' ? list.slice(0, i).filter(x => x.key === w.key).length : stacked++;
-      const at = stackSlot(site, lift, w);
-      if (!at) continue;
-      if (site === 'yard' && risingPlaces().some(r => r.key === w.key)) {
-        bar(at.x, at.y, progressOf(w));
-        continue;
-      }
+    for (const { w, bar: b, glyph } of workSpots(site)) {
+      if (b) { bar(b.x, b.y, progressOf(w)); continue; }
       const row = rowFor(w.key);
-      buildingGlyph(at.x, at.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null);
+      const [dx, dy] = drift(site + w.key);
+      buildingGlyph(glyph.x, glyph.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null, dx, dy);
     }
   }
+}
+
+// The shop tile's drift (shelf.css, `shelf-sway-*`), in whole yard pixels:
+// each axis two sines summed, one on the glyph's own clock and one at an
+// incommensurate multiple of it, so the path never repeats. The rate, the
+// direction and the phase are hashed off the site and the row, so a stack
+// never breathes in unison.
+export function drift(name) {
+  let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const rate = 1 + ((h % 1000) / 1000 * 2 - 1) * SHELF_FLOAT_SPREAD;
+  const dir = (h >> 10) & 1 ? -1 : 1;
+  const p = dir * now() / (SHELF_FLOAT_MS * rate) + ((h >> 11) % 1000) / 1000;
+  const wave = k => Math.sin(Math.PI * 2 * p * k);
+  return [Math.round(BUILD_DRIFT * (wave(1) - wave(1 / 1.618))),
+          Math.round(BUILD_DRIFT * (-wave(1) - wave(1 / 0.73)))];
 }

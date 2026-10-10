@@ -22,13 +22,14 @@
 // its cells.
 
 import { now } from '../clock.js';
-import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_S, CLASSES,
+import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_S, CLASSES, RECRUIT,
          IDLE_STEP_S, IDLE_HOP_S, IDLE_SETTLE_S } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { S } from '../state.js';
-import { fighterAt, keyOf } from '../deep/party.js';
+import { fighterAt, keyOf, riseOf } from '../deep/party.js';
+import { orbLift } from '../deep/phases.js';
 import * as fight from '../deep/arms.js';
-import { deepFloor, deepTop, deepX0, slotX } from '../deep/place.js';
+import { deepFloor, deepTop, deepX0, postX } from '../deep/place.js';
 import { ctx } from './ctx.js';
 import { inTheDeep } from './crew.js';
 import { GREYS, PURPLES, WHITE, BODY, R4, R8, hash, lerp, ease, cell, ring, body, pips, dagger, charge,
@@ -39,7 +40,8 @@ import { hideBot } from './serpent.js';
 
 // The deep's bodies that fight: a pod resident seated at a station.
 export const isFighter = w => w.type === TYPE.FIGHTER;
-const MELEE = new Set(['brawler', 'sword', 'martial']);
+const MELEE = new Set(['recruit', 'brawler', 'sword', 'martial']);
+const tableOf = key => (key === 'recruit' ? RECRUIT : CLASSES[key]);
 
 // --- who is fighting, this frame ---------------------------------------------------
 // The scratch bench (dev only): stand-in bodies at the slots, so every class
@@ -74,10 +76,10 @@ function memOf(w) {
 // and when its contact will be: its wind-up starts when it is due (`w.next`).
 function nextOf(key, w, p) {
   const full = w.pipsMax > 0 && (w.pips || 0) >= w.pipsMax, last = w.pipsMax > 0 && (w.pips || 0) === w.pipsMax - 1;
-  const move = { brawler: last ? 'haymaker' : 'punch', sword: p.move, monk: full ? 'chi' : 'palm',
+  const move = { recruit: 'jab', brawler: last ? 'haymaker' : 'punch', sword: p.move, monk: full ? 'chi' : 'palm',
                  martial: full ? 'finisher' : 'thrust', ranger: last ? 'aimed' : 'shoot', assassin: 'stab',
                  sapper: 'throw', hexer: 'hex', mage: p.move === 'beam' ? 'finish' : 'beam', bard: 'sing' }[key];
-  const windup = (move === 'beam' ? 0 : (w.windup ?? CLASSES[key].windup ?? 0)) * 1000;
+  const windup = (move === 'beam' ? 0 : (w.windup ?? tableOf(key).windup ?? 0)) * 1000;
   const due = key === 'mage' && p.move === 'beam' ? p.end : w.next;
   return due > p.at ? { move, hit: due + windup } : null;
 }
@@ -123,7 +125,7 @@ function pageOf(key, w, R, T) {
 function idleAt(key, s) {
   if (s == null || s < IDLE_SETTLE_S) return [0, 0];
   const u = s - IDLE_SETTLE_S, step = u % (IDLE_STEP_S * 2) < IDLE_STEP_S ? 0 : 1;
-  return [step, CLASSES[key].melee && u % IDLE_STEP_S < IDLE_HOP_S ? -1 : 0];
+  return [step, tableOf(key).melee && u % IDLE_STEP_S < IDLE_HOP_S ? -1 : 0];
 }
 
 // --- the scratch bench's loop ---------------------------------------------------------
@@ -144,7 +146,7 @@ function fighters(t) {
   const list = [];
   for (const { w, st } of stationsNow()) {
     const k = keyOf(st), key = k && ATTACKS[k] ? k : null, R = st.rung || 0;
-    const x = Math.round(w.x) / P, restY = Math.round(w.y) / P;
+    const x = Math.round(w.x) / P, restY = Math.round(w.y) / P - riseOf(st) - orbLift(st);   // lifted by a level-up, or the orb
     const f = { w, st, key, R, x, restY, a: null, a0: null, sauce: null, c: null, sim: 'pose' in w, dx: 0, dy: 0 };
     if (key && f.sim) {
       const pg = pageOf(key, w, R, t * 1000);
@@ -240,7 +242,7 @@ export function drawFighters() {
   ctx.clip();
   for (const f of list) {
     let at = [f.x + f.dx, f.restY + f.dy];
-    if (!f.key) body(f.x, f.restY);             // a base fighter: the plain square, standing guard
+    if (!f.key) body(f.x, f.restY);             // no class to draw: the plain square
     else if (f.c) {
       const w = f.w, beam = f.sim && w.beam;
       const api = {
@@ -286,7 +288,7 @@ export function drawShots() {
   const t = now(), R = s => stationOfBody(s.by)?.rung || 0;
   // what the fight has in the water, each as the page draws it
   for (const s of inWater()) {
-    const x = Math.round(s.x / P - 0.5), bot = hideBot(x) + 1, y = Math.min(s.y / P, bot), r = R(s);
+    const x = Math.round(s.x / P - 0.5), bot = hideBot(x) + 1, y = Math.max(s.y / P, bot), r = R(s);
     const k = s.fly ? Math.min(1, (t - s.at) / s.fly) : 0;
     if (s.kind === 'arrow' || s.kind === 'aimed') {
       const pu = s.kind === 'aimed';
@@ -302,13 +304,13 @@ export function drawShots() {
       for (let m = 0; m < n; m++) {
         const q = Math.max(0, k - m * 0.5 / n) ** 1.5;
         if (q <= 0) continue;
-        const cx = lerp(x0, x, q) + [-1, 1, 0, -2, 2, -1, 1, 0, 0][m], cy = Math.min(lerp(y0, y, q), bot);
+        const cx = lerp(x0, x, q) + [-1, 1, 0, -2, 2, -1, 1, 0, 0][m], cy = Math.max(lerp(y0, y, q), bot);
         cell(ctx, cx, cy, PURPLES[11]); cell(ctx, cx, cy + 1, PURPLES[7]);
       }
     } else if (s.kind === 'dagger') {
       // point first up to the hide, spinning whole at the capstone; the pose
       // before it bites, a held streak down to where it left her
-      const gy = Math.min(y, bot + 3);
+      const gy = Math.max(y, bot + 3);
       if (s.fly && s.at + s.fly - t < DRAW_POSE * 1000) {
         streakAt(ctx, x, gy - 3, Math.max(gy + 1, s.y0 / P), R8(r) ? PURPLES[11] : WHITE, R8(r));
         speedLines(ctx, x, gy, 2, 3, R8(r));
@@ -370,7 +372,7 @@ if (import.meta.env?.DEV) {
     bench.length = 0;
     list.forEach((o, i) => {
       const slot = o.slot ?? i;
-      const cx = o.x != null ? o.x : Math.round(slotX(slot) / P) - 1;
+      const cx = o.x != null ? o.x : postX({ slot }) / P;
       const floor = Math.floor(deepFloor() / P);
       const y = o.gap != null ? hideBot(cx) + o.gap : floor - BODY - (o.up || 0);
       const w = { uid: 'bench' + i, x: cx * P, y: y * P, benchA: o.a ?? null };

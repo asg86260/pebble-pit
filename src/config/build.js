@@ -84,12 +84,6 @@ export const GRIT_SEA_DRAG = 0.1;    // what is left of a chip's speed after a s
 export const GRIT_SEA_GRAV = 0.5;    // px per frame per second, the sink
 export const GRIT_SEA_LIFE = 2.0;    // seconds -- several bursts hang at once
 
-// --- lobbing a core ------------------------------------------------------------
-// A core leaving a hauler's hands at the lip is thrown on the same arc as every
-// other load (`aim` in dust.js), sized so the peak clears the lip by about this
-// much rather than by however far the throw happens to travel.
-export const CORE_LOB_H = 90;
-
 // --- a building rising out of the ground ---------------------------------------
 // The frame a `kind: 'building'` work lands, the yard shakes half as hard as
 // for a rock landing (`SHAKE_LAND` in rock.js, which this is half of).

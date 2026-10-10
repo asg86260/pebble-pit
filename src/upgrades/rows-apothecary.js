@@ -1,4 +1,4 @@
-import { APOTHECARY_CORES, APOTHECARY_DUST, APOTH_HUT_W } from '../config.js';
+import { APOTHECARY_DUST, APOTH_HUT_W } from '../config.js';
 import { JOB } from '../jobs.js';
 import { apothecary } from '../state.js';
 import { site } from './site.js';
@@ -13,7 +13,7 @@ export const APOTHECARY_ROWS = [
     key: 'apothecary', name: 'build the apothecary',
     note: () => 'brew temporary boosts for your sqworkers',
     blurb: 'brews crew tonics',
-    cores: APOTHECARY_CORES, dust: APOTHECARY_DUST, job: JOB.STIR,
+    dust: APOTHECARY_DUST, job: JOB.STIR,
     // Built at the hut, not the middle of the plot, which is bare ground
     // between the hut and the pots.
     at: () => apothecary.x + APOTH_HUT_W / 2

@@ -9,7 +9,7 @@
 // writing the preference, and every group puts it back.
 
 import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle } from './kit.js';
-import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, THUMB, BRUSH, P, PROP_FROM } from '../config.js';
+import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, SHEET_MS, PROP_FROM, THUMB, BRUSH, P } from '../config.js';
 import { S } from '../state.js';
 import { purse } from '../words.js';
 import { workOn } from '../works.js';
@@ -238,14 +238,14 @@ export const TESTS = [
     const corner = r.top < 80 && r.right > state().W - 120 && r.width >= 44;
     await tap(pause);
     await frames(2);
-    await sleep(250);
+    await sleep(SHEET_MS + 60);
     const held = document.getElementById('held');
     const open = state().paused && !held.hidden && held.classList.contains('bottom');
     // the front page, as escape brings up: resume and the way to the settings
     const front = ['resume', 'settingsbtn'].every(id => { const el = document.getElementById(id); return !el.hidden && el.getBoundingClientRect().height > 0; });
     const hr = held.getBoundingClientRect();
     const asSheet = Math.abs(hr.width - state().W) <= 2 && hr.bottom >= state().H - 1 && Math.abs(hr.top - state().H * SHEET_H) <= 2;
-    // the grip dragged down past a third of the sheet
+    // the grip dragged down to the foot
     const grip = document.getElementById('heldhandle');
     const gr = grip.getBoundingClientRect();
     const ev = (type, y, buttons = 1) => grip.dispatchEvent(new PointerEvent(type, { clientX: gr.left + gr.width / 2, clientY: y, pointerId: 8, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true }));
@@ -253,7 +253,7 @@ export const TESTS = [
     for (let i = 1; i <= 5; i++) { ev('pointermove', gr.top + 5 + hr.height * 0.5 * i / 5); await raf(); }
     ev('pointerup', gr.top + 5 + hr.height * 0.5, 0);
     await frames(2);
-    await sleep(250);
+    await sleep(SHEET_MS + 60);
     const closed = !state().paused && held.hidden;
     phone(false);
     await frames(2);

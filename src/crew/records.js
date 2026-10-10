@@ -56,7 +56,7 @@ export const newRecord = () => ({
 // upgrades.js).
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 'tidied',
                       'at', 'trained', 'kitOf', 'x', 'y',
-                      'carry', 'load', 'hasCore', 'goal', 'lentFrom',
+                      'carry', 'load', 'goal', 'lentFrom',
                       // a body that lives in the deep's pods, not the yard's rooms
                       'deepHome',
                       // the doses in a stirrer's arms, or a stirrer saved on a
@@ -88,6 +88,11 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // the dance it is in the middle of, so a refresh mid-hop
                       // lands the hop (`moveAt` is a moment, below)
                       'jigAt', 'jigDir', 'jigRate', 'jigBeat', 'jigDown', 'move', 'moveFrom', 'moveBeats', 'foot', 'footAt',
+                      // and a builder's burst with it (`workJig`): `jigAt`
+                      // back skips the jig's start, so a count of blows left
+                      // behind is NaN for good -- the burst never ends, and
+                      // the board's tile throws chips every frame it "changes"
+                      'hits', 'hitsWanted', 'shiftTo',
                       // the mess it is on and where it planted its shovel, or
                       // a janitor against a fouling crew never wins
                       'muckAt', 'shovelAt',
@@ -103,6 +108,13 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // left to start again, since a fighter's feet are
                       // kept above and a blow is a moment
                       'phase',
+                      // and how far into its combo it is: the hits it has
+                      // struck, its bar, and the string's banked rest
+                      // (deep/classes.js, `beat`), or a refresh starts the
+                      // string over and the big hit lands late
+                      'count', 'pips', 'combo',
+                      // how much more an Inspired fighter hits for, with its moment below
+                      'inspiredK',
                       // which station a fighter stands at, and the name
                       // `S.stations[i].fighter` knows the body by: dropped,
                       // a reload seats a stranger and the station's record
@@ -121,7 +133,10 @@ const RETIRED_DEEP = new Set(['brawler', 'lancer', 'grenadier', 'scribe', 'warlo
 // every body a free swing.
 const MOMENTS = ['brkAt', 'idleSince', 'looAt',
                  'next', 'swingAt', 'stoopAt', 'quarryAt', 'tidyNext', 'moveAt', 'jigOn', 'sweepAt', 'propAt',
-                 'dizzyUntil'];
+                 'dizzyUntil',
+                 // a fighter's buffs, or a refresh strips a Haste or an Inspired
+                 // the frame after it was given (deep/statuses.js)
+                 'hastedUntil', 'inspiredUntil'];
 const momentsOf = w => {
   const out = {};
   for (const k of MOMENTS) if (Number.isFinite(w[k]) && w[k] > 0) out[k] = Math.round(w[k] - now());

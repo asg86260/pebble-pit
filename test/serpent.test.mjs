@@ -10,8 +10,9 @@
 // are about the depths and not about which class answers which stage.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_HEAL, SERPENT_WOUND, SERPENT_DEFENSE, CLICK_DMG, CLASSES } from '../src/config.js';
-import { clickDeep, clickDmg, strike, healNow, woundK, onBreak } from '../src/deep/serpent.js';
+import { SERPENT_WINDOW, SERPENT_PHASES, SERPENT_WOUND, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K } from '../src/config.js';
+import { clickDeep, clickDmg, strike, woundK, onBreak, scalesOf } from '../src/deep/serpent.js';
+import { breaking, guardOf } from '../src/deep/phases.js';
 import { spendScales } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -34,24 +35,25 @@ const frame = () => yard.fast(1 / 60);
 const belly = () => bellyAt(now());
 const clickBelly = () => { const p = belly(); return clickDeep(p.x, p.y); };
 
-group('the wound opens under clicks on the coil and closes when nothing strikes', async () => {
+group('the wound opens under clicks on the coil and stands until the window ends', async () => {
   deepYard();
+  S.mealT = 0; S.mealI = null;
   const p = belly();
   const missed = clickDeep(p.x, deepFloor() - 2);
   const woundMissed = S.serpentWound;
-  for (let i = 0; i < 10; i++) clickBelly();
+  const punch = clickDmg(), clicks = 20;
+  for (let i = 0; i < clicks; i++) clickBelly();
   const opened = S.serpentWound;
   run(3);
-  const closing = S.serpentWound;
-  run(10);
-  const punch = clickDmg();
+  const standing = S.serpentWound;
+  run(SERPENT_WINDOW[0] + 45);
   return [
     ok(!missed && woundMissed === 0, 'a click on the floor is not a click on the serpent',
        `answered ${missed}, wound ${woundMissed}`),
-    ok(Math.abs(opened - 10 * punch) < 1e-9, 'ten clicks on the coil open it ten punches deep',
-       `wound ${opened}, a punch ${punch}`),
-    ok(closing < opened && closing > 0, 'and it closes at the heal', `${opened} then ${closing} three seconds on`),
-    ok(S.serpentWound === 0, 'and left alone it closes altogether', `${S.serpentWound}`),
+    ok(Math.abs(opened - clicks * punch) < 1e-9, 'each click on the coil opens it a punch deeper',
+       `wound ${opened}, ${clicks} punches of ${punch}`),
+    ok(standing === opened, 'and nothing closes inside the window', `${opened} then ${standing} three seconds on`),
+    ok(S.serpentWound === 0, 'and left alone the window ends and the meal closes it whole', `${S.serpentWound}`),
     ok(S.serpentStage === 0, 'and nothing broke', `stage ${S.serpentStage}`)
   ];
 });
@@ -67,52 +69,50 @@ group("the click is always a punch, worth the first station's rung", async () =>
   return [
     ok(bare === CLICK_DMG[0], 'with no station, the first rung', `${bare}`),
     ok(fifth === CLICK_DMG[5], "on the first station's fifth, the fifth", `${fifth}`),
-    ok(said && said.done === CLICK_DMG[5] * SERPENT_DEFENSE.punch[0], 'and it lands as a punch', JSON.stringify(said && said.done)),
+    ok(said && said.done === CLICK_DMG[5] * guardOf('punch'), 'and it lands as a punch', JSON.stringify(said && said.done)),
     ok(S.serpentStun === 0, 'which never stuns', `${S.serpentStun}`)
   ];
 });
 
-group('a hand slower than the heal never opens it, a faster one breaks the stage', async () => {
+group('a hand too slow for the window never breaks it, a fast one does inside one', async () => {
   deepYard();
-  const heal = SERPENT_HEAL[0], punch = clickDmg();
-  // Slower: a punch every so often, half the heal a second.
-  const slowEvery = Math.round(60 * punch / (heal / 2));
+  S.mealT = 0; S.mealI = null;
+  const punch = clickDmg(), depth = SERPENT_WOUND[0], win = SERPENT_WINDOW[0];
+  // Slow: a third of the depth over a whole window, so each meal undoes it.
+  const slowEvery = Math.max(1, Math.round(60 * punch * win / (depth / 3)));
   let most = 0;
-  for (let f = 0; f < 60 * 30; f++) {
+  for (let f = 0; f < 60 * (win * 2 + 30); f++) {
     if (f % slowEvery === 0) clickBelly();
     frame();
     most = Math.max(most, S.serpentWound);
   }
-  const slowStage = S.serpentStage;
-  // Faster: four times the heal a second, until the depth.
-  const fastEvery = Math.max(1, Math.round(60 * punch / (heal * 4)));
+  const slowStage = S.serpentStage, meals = S.meal;
+  // Fast: the depth in half a window.
+  S.mealT = 0; S.mealI = null;
+  window.__serpent({ stage: 0, wound: 0 });
+  const fastEach = Math.ceil(depth / (win / 2) / (punch * 60));
   let frames = 0;
-  while (S.serpentStage === 0 && frames < 60 * 120) {
-    if (frames % fastEvery === 0) clickBelly();
+  while (S.serpentStage === 0 && frames < 60 * win) {
+    for (let i = 0; i < fastEach; i++) clickBelly();
     frame();
     frames++;
   }
   return [
-    ok(most <= punch + 1e-9, 'under the heal the wound is never more than the last blow',
-       `deepest ${most.toFixed(2)}, a punch ${punch}`),
-    ok(slowStage === 0, 'and the stage stands', `stage ${slowStage}`),
-    ok(S.serpentStage === 1, 'over the heal it opens to the depth and breaks', `stage ${S.serpentStage} after ${frames} frames`),
-    ok(frames / 60 >= SERPENT_WOUND[0] / (heal * 4),
-       'and no sooner than the depth over the rate allows',
-       `${(frames / 60).toFixed(1)}s against a depth of ${SERPENT_WOUND[0]}`)
+    ok(slowStage === 0 && most < depth, 'too slow, the stage stands', `stage ${slowStage}, deepest ${most.toFixed(0)} of ${depth}`),
+    ok(meals > 0, 'and a meal has put it back whole', `${meals} meals`),
+    ok(S.serpentStage === 1 && frames / 60 < win, 'fast enough, it breaks inside the window', `stage ${S.serpentStage} after ${(frames / 60).toFixed(1)}s`)
   ];
 });
 
-group('each defense breaks at its depth, in order, the fourth frees him, and every break is heard', async () => {
+group('each defense breaks at its depth, in order, the last frees him, and every break is heard', async () => {
   deepYard();
   const seen = [S.serpentStage], bad = [], heard = [];
   const stop = onBreak(stage => heard.push(stage));
   const at = () => coilAt(bellySeg(), now());
-  for (let stage = 0; stage < 4; stage++) {
+  for (let stage = 0; stage < SERPENT_PHASES; stage++) {
     const depth = SERPENT_WOUND[stage];
-    // Short of the depth by a whole second's heal: the frame closes a little,
-    // and the stage stands.
-    strike('punch', depth - SERPENT_HEAL[stage] * 2, at().x, at().y);
+    // A point short of the depth: the stage stands.
+    strike('punch', depth - 1, at().x, at().y);
     frame();
     if (S.serpentStage !== stage) bad.push(`stage ${stage} broke short of its depth`);
     strike('punch', depth, at().x, at().y);
@@ -121,6 +121,13 @@ group('each defense breaks at its depth, in order, the fourth frees him, and eve
     seen.push(S.serpentStage);
     if (S.serpentStage !== stage + 1) bad.push(`stage ${stage} did not break at its depth`);
     if (S.serpentWound !== 0) bad.push(`stage ${stage + 1} began with a wound of ${S.serpentWound}`);
+    // A break plays before the next defense can be touched: a blow in it
+    // does nothing.
+    if (stage < SERPENT_PHASES - 1) {
+      if (!breaking()) bad.push(`stage ${stage + 1} opened without a break`);
+      if (strike('punch', depth, at().x, at().y) !== 0) bad.push(`a blow landed in the break into stage ${stage + 1}`);
+      runUntil(() => !breaking(), 10);
+    }
   }
   const inOrder = seen.every((s, i) => i === 0 || s === seen[i - 1] + 1);
   run(5);
@@ -128,31 +135,31 @@ group('each defense breaks at its depth, in order, the fourth frees him, and eve
   return [
     ok(bad.length === 0, 'every stage broke at its depth and not before', bad.join('; ')),
     ok(inOrder, 'one at a time, in order, never back', seen.join(' -> ')),
-    ok(heard.join(' ') === '1 2 3 4', 'and each break is heard once, with the stage it reached', heard.join(' ')),
-    ok(S.serpentFreed && S.serpentStage === 4, 'and the fourth break opens the belly',
+    ok(heard.join(' ') === Array.from({ length: SERPENT_PHASES }, (_, i) => i + 1).join(' '), 'and each break is heard once, with the stage it reached', heard.join(' ')),
+    ok(S.serpentFreed && S.serpentStage === SERPENT_PHASES, 'and the last break opens the belly',
        `freed ${S.serpentFreed}, stage ${S.serpentStage}`),
-    ok(S.serpentStage === 4 && S.serpentWound === 0 && healNow() === 0,
-       'after which there is nothing to heal and nothing goes back', `stage ${S.serpentStage}, heal ${healNow()}`)
+    ok(S.serpentStage === SERPENT_PHASES && S.serpentWound === 0,
+       'after which nothing goes back', `stage ${S.serpentStage}, wound ${S.serpentWound}`)
   ];
 });
 
-group('every class that does damage takes half in one phase and the whole in the rest', async () => {
+group('a hit is halved in the phase that resists its kind, and whole in the rest', async () => {
   deepYard();
   const bad = [];
   for (const [key, cls] of Object.entries(CLASSES)) {
     if (!cls.hit) continue;
     const got = [];
-    for (let stage = 0; stage < 4; stage++) {
+    for (let stage = 0; stage < SERPENT_PHASES; stage++) {
       window.__serpent({ stage, wound: 0 });
       const p = belly();
       got.push(strike(cls.hit, 100, p.x, p.y) / 100);
     }
-    if (got.filter(k => k === 0.5).length !== 1 || got.filter(k => k === 1).length !== 3) bad.push(`${key}: ${got}`);
-    if (got.some((k, i) => k !== SERPENT_DEFENSE[cls.hit][i])) bad.push(`${key} off its row: ${got}`);
+    const want = RESISTS.map(r => (r[0] === DAMAGE_KIND[cls.hit] ? RESIST_K : 1));
+    if (got.some((k, i) => k !== want[i])) bad.push(`${key} (${DAMAGE_KIND[cls.hit]}): ${got}`);
   }
   return [
-    ok(bad.length === 0, 'by the defense table, with no wall', bad.join('; ')),
-    ok(!SERPENT_DEFENSE.star && !SERPENT_DEFENSE.beam && !SERPENT_DEFENSE.lance, 'and no weapon rows are left')
+    ok(bad.length === 0, 'by its kind, the fading as it opens', bad.join('; ')),
+    ok(!('star' in DAMAGE_KIND) && !('beam' in DAMAGE_KIND) && !('lance' in DAMAGE_KIND), 'and no weapon rows are left')
   ];
 });
 
@@ -162,14 +169,15 @@ group('a hit sheds scales, and they lie on the floor until they are crushed', as
   deepYard();
   const before = S.scales, bed = deepBed.n;
   const p = belly();
-  const done = strike('punch', 5, p.x, p.y);
+  const done = strike('punch', 500, p.x, p.y);
   const inWater = S.sinking.length, countedAtOnce = S.scales - before;
   const landed = runUntil(() => S.sinking.length === 0, 30);
   const nothing = strike('punch', 0, p.x, p.y);
   return [
-    ok(done === 5 && inWater === 5, 'five done, five knocked loose', `${done} done, ${inWater} in the water`),
+    ok(done === 500 && inWater === scalesOf(500) && inWater > scalesOf(5) && inWater < 10,
+       'a big blow knocks a few more loose than a small one, not one a unit of damage', `${done} done, ${inWater} in the water`),
     ok(countedAtOnce === 0, 'and none counted in the water', `${countedAtOnce}`),
-    ok(landed && deepBed.n - bed === 5, 'all five lying on the bed once they land', `${deepBed.n - bed}`),
+    ok(landed && deepBed.n - bed === inWater, 'all of them lying on the bed once they land', `${deepBed.n - bed}`),
     ok(S.scales === before, 'and none of them is money until it is crushed', `${S.scales - before}`),
     ok(nothing === 0 && S.sinking.length === 0, 'a blow that did nothing sheds nothing', `${S.sinking.length}`)
   ];
@@ -198,14 +206,16 @@ group('a cold reload in the split comes back split, wounded and with its scales'
   deepYard();
   window.__serpent({ stage: 2, wound: 1234 });
   window.__scales(37);
+  S.meal = 5; S.mealT = 2.5; S.mealI = null;
   window.__cold();
-  const back = { stage: S.serpentStage, wound: S.serpentWound, scales: S.scales };
-  run(1);
+  const back = { stage: S.serpentStage, wound: S.serpentWound, scales: S.scales, meal: S.meal, at: S.mealT };
+  run(SERPENT_WINDOW[2] + 45);
   return [
     ok(back.stage === 2, 'the stage', `${back.stage}`),
     ok(back.wound === 1234, 'the wound', `${back.wound}`),
     ok(back.scales === 37, 'and the crushed scales', `${back.scales}`),
-    ok(woundK() > 0 && S.serpentWound < 1234, 'and the fight goes on from there', `${S.serpentWound}`),
+    ok(back.meal === 5 && back.at === 2.5, 'and the window where it was', `${back.meal} ${back.at}`),
+    ok(S.serpentWound < 1234, 'and the fight goes on from there', `${S.serpentWound}`),
     ok(deepTop() < deepFloor(), 'the deep is where it was')
   ];
 });

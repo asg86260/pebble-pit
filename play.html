@@ -257,8 +257,8 @@ try {
      goes on behind it, because nothing here stops for a rock -- and the one
      button puts it down. See ending.js. -->
 <div id="saved" class="held" hidden>
-  <div class="word">you did it</div>
-  <div class="why">you saved your sqwife. it took <span id="savedin"></span>.</div>
+  <div class="word">It's over!</div>
+  <div class="why">you saved your sqwife in <span id="savedin"></span>!</div>
   <!-- The board of times: the one line the network is allowed on. A name
        box the first time, then the post; the reply is your rank or the
        board's refusal, in the same line. See times.js. -->
@@ -267,23 +267,24 @@ try {
     <button id="timesgo" type="button">post it</button>
   </div>
   <div id="timessaid" class="small"></div>
-  <div class="rule"></div>
-  <div class="why">that's the end of the story. the yard is yours &mdash; feel free to keep playing.</div>
-  <div class="why">thank you!</div>
+  <!-- With the second half on the story goes on (the snatch comes next), so
+       the thanks is only on the sheet that ends it (ending.js). -->
+  <div class="rule endonly"></div>
+  <div class="why endonly">thank you for playing!</div>
   <button id="keepplaying" type="button">keep playing</button>
 </div>
 
 <!-- The second half's end: the sqhusband out of the serpent (snatch.js),
      handled in ending.js the way #saved is. -->
 <div id="freed" class="held" hidden>
-  <div class="word">you did it</div>
-  <div class="why">you saved your sqhusband.</div>
+  <div class="word">ok now its over</div>
+  <div class="why">you saved your sqhusband from the serpent's belly.</div>
+  <div class="rule"></div>
+  <div class="why">that's the end, feel free to keep slaying the serpent and farming on the surface!</div>
+  <div class="why">thank you!</div>
   <button id="freedkeep" type="button">keep playing</button>
 </div>
 
-<!-- The queue card: what is building and what waits behind it, one name a
-     line, top-left. Filled by queue.js; absent when nothing is on the go. -->
-<div id="queue" class="queue off" hidden></div>
 <!-- The pin: the one card you chose to keep in the corner, top-right, with its
      live price. Filled by `fillPin` in shop.js; absent when nothing is pinned. -->
 <div id="pin" class="pin rows" hidden></div>
@@ -296,6 +297,17 @@ try {
      See raise.js for why the bench is built at all, and `seatCall` in board.js
      for how it is put where the bench is. -->
 <button id="raise" type="button" hidden>build the bench</button>
+
+<!-- The story's next step, one line pinned top left (objline.js; DESIGN.md,
+     "The story's objectives"). Words only: what, never where. -->
+<!-- The top-left corner is one column (#topleft): the story's step, and under it
+     the queue card, what is building and what waits behind it, one name a
+     line (queue.js; absent when nothing is on the go). Two cards each pinned
+     to the corner stood on top of each other. -->
+<div id="topleft">
+<div id="objective" aria-live="polite" hidden><span class="next">next</span><span class="say"></span><ul class="quest" hidden></ul></div>
+<div id="queue" class="queue off" hidden></div>
+</div>
 
 <!-- The yard's window is a scroller (DESIGN.md, "Momentum scrolling"): the
      spacer inside it is as wide as the world and the canvas is stuck to its

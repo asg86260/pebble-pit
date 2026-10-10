@@ -69,7 +69,7 @@ export function takeMess(w, c) {
   const { now, taken, muckTaken, poopTaken } = c;
   // Two kinds of mess: what the sky drops is everybody's, what a body leaves
   // behind is a post, and only a janitor's (`muckFor`, `capOf`).
-  if (w.carry || w.hasCore || muckFor(w) <= 0) return false;
+  if (w.carry || muckFor(w) <= 0) return false;
   // One body, one column, held until that column is clear; a set rebuilt
   // every pass is not a claim. A finished column is let go and the next one
   // picked a FRAME later: the set carries this body's own elbows until the

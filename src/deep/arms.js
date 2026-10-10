@@ -101,10 +101,12 @@ function stepShots(t) {
       if (s.land(s, { x: s.x, y: s.y }) === 'stuck') shots[keep++] = s;
       continue;
     }
-    const p = coilAt(s.seg, t);
+    // flown to the hide's underside, where it is seen to strike, not to the
+    // middle of the body: it lands on the frame it touches
+    const p = coilAt(s.seg, t), under = p.y + coilThick(s.seg) / 2;
     const k = Math.min(1, (t - s.at) / s.fly);
     s.x = s.x0 + (p.x - s.x0) * k;
-    s.y = s.y0 + (p.y - s.y0) * k - Math.sin(k * Math.PI) * s.arc;
+    s.y = s.y0 + (under - s.y0) * k - Math.sin(k * Math.PI) * s.arc;
     s.vx = s.x - px; s.vy = s.y - py;
     if (k < 1) { shots[keep++] = s; continue; }
     s.land(s, p);

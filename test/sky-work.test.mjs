@@ -451,7 +451,7 @@ group('the sky is saved as it was left', async () => {
 group('the tower goes up bare, and the first hat calls the first star', async () => {
   window.__reset();
   window.__give(999999);
-  window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+  window.__grant({ shards: 9000, spores: 9000 });
   // The ground standing first. The tower is the end of the chain now -- what a
   // finished yard buys -- so its row is not offered until the plots, the cut and
   // the work bench are all up. (It waited on the lab; the lab is gone and the

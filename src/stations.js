@@ -14,7 +14,7 @@
 // doors may stand open in either order, so `after` is a list a row reads
 // and not a step in a chain.
 
-import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS } from './config.js';
+import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS, CLASSES, BASES, RECRUIT } from './config.js';
 import { S, bench, casino, filter, tower, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { houseRect } from './house.js';
@@ -40,16 +40,19 @@ const nearly = n => S.stored >= n * UNLOCK_SHOW;
 const REACH = { left: 8, right: 8, up: 8, down: 4 };
 
 // The five kinds of station the party can build (docs/wave-party.md): what
-// each is called and drawn as on the shelf. The drawing on the floor is the
-// kind's sprite (`SPRITES` in deep/sprites.js); the two classes it offers are
-// `PAIRS` in config/classes.js.
+// each is drawn as on the shelf. What a station is called is its fighter's
+// (`whoOf`); on the floor it is its fighter and a prop (deep/props.js); the
+// two classes it offers are `PAIRS` in config/classes.js.
 export const KINDS = {
-  altar:  { name: 'the altar',  glyph: 'swing' },
-  well:   { name: 'the well',   glyph: 'bucket' },
-  armory: { name: 'the armory', glyph: 'bowl' },
-  circle: { name: 'the circle', glyph: 'wand' },
-  spire:  { name: 'the spire',  glyph: 'tower' }
+  altar:  { glyph: 'swing' },
+  well:   { glyph: 'bucket' },
+  armory: { glyph: 'bowl' },
+  circle: { glyph: 'wand' },
+  spire:  { glyph: 'tower' }
 };
+
+// Who stands at a station: its class, or below the fork its base unit.
+const whoOf = st => (st?.cls ? CLASSES[st.cls]?.name : st?.kind ? BASES[st.kind] : st?.built ? RECRUIT.name : null) || null;
 
 const ORDINALS = ['', 'second', 'third', 'fourth'];
 
@@ -67,24 +70,23 @@ function partyRow(id) {
   const st = () => stationById(id);
   return {
     key: id, party: true,
-    // Two of a kind, or two empty lots, would be two boards of one name, so a
-    // repeat is counted off the ids before it: "the second altar".
+    // A station is called by its fighter (DESIGN.md, "A station is its
+    // fighter and a prop"). Two Fighters, or two Recruits, would be two
+    // boards of one name, so a repeat is counted off the ids before it: "the
+    // second Fighter".
     get name() {
-      if (st() && !st().kind) return 'an empty lot';
-      const kind = st()?.kind;
-      const [art, noun] = (KINDS[kind]?.name || 'a station').split(' ');
+      const who = whoOf(st());
       const nth = PARTY_IDS.slice(0, PARTY_IDS.indexOf(id))
-        .filter(o => stationById(o)?.kind === kind).length;
+        .filter(o => whoOf(stationById(o)) === who).length;
+      const [art, noun] = who ? ['the', who] : ['a', 'station'];
       return nth ? `${art} ${ORDINALS[nth]} ${noun}` : `${art} ${noun}`;
     },
     get glyph() { return KINDS[st()?.kind]?.glyph || 'crate'; },
-    // Nothing to say until it has a kind: a lot's board is its own question.
-    get empty() { return st()?.kind ? 'nothing to learn yet' : ''; },
+    get empty() { return 'nothing to learn yet'; },
     // The fighter's post, under the station: one body at most (`moveFighter`).
     post: { key: `${id}job`, job: JOB.FIGHT, station: id },
-    // Open once it stands, and while it is an empty lot: the lot's board is
-    // where its kind is picked.
-    open: () => !!st() && (st().built || !st().kind),
+    // Open once it stands: a Recruit's board is where its kind is picked.
+    open: () => !!st() && st().built,
     // Its ground whether or not it has gone up yet: the build's scaffold
     // stands where the station will.
     stand: () => { const s = st(); return s ? standOfStation(s) : null; },
@@ -144,14 +146,15 @@ export const STATIONS = [
     open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
     reach: { right: 1 },
     after: ['farm'],
-    needs: () => S.seenCore },
+    // the net failing opens it (DESIGN.md, "The barriers are the gates")
+    needs: () => shieldDone('net') },
   { key: 'farm', name: 'the farm', glyph: 'furrow',
     empty: 'the ground is all broken', post: { key: 'farmjob', job: JOB.FARM, kit: true },
     open: () => S.farmOpen, stand: () => farmShed(), board: 'farmBoardOpen',
     after: [],
     // Sticky: `nearly` reads the dust in the hole, and as a plain `show` the
-    // door came and went every time you spent.
-    needs: () => S.seenCore && nearly(FARM_DUST), sticky: true },
+    // door came and went every time you spent. The props failing opens it.
+    needs: () => shieldDone('props') && nearly(FARM_DUST), sticky: true },
   // The hut, not the plot: a pot answers to its own picker (potpick.js), and
   // a pointer near a cauldron must not throw the shop menu over it.
   { key: 'apothecary', name: 'the apothecary', glyph: 'pot',
@@ -163,7 +166,8 @@ export const STATIONS = [
     empty: 'nothing stirs in here yet', post: { key: 'skyjob', job: JOB.WIZARD, kit: true, show: () => S.meteorOpen },
     open: () => S.towerOpen, stand: () => tower, board: 'towerBoardOpen',
     after: ['quarry'],
-    needs: () => S.seenCore },
+    // the arch failing opens it
+    needs: () => shieldDone('arch') },
   // The hut stands on ground the rock's own reach covers, so it is asked
   // before the rock in input.js's cascade.
   { key: 'shack', name: 'the shack', glyph: 'hut',

@@ -7,7 +7,8 @@
 // classes.test.mjs's.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { WORKER, CLASSES, SERPENT_DEFENSE, FORK_RUNG } from '../src/config.js';
+import { guardOf } from '../src/deep/phases.js';
+import { WORKER, CLASSES, FORK_RUNG } from '../src/config.js';
 import { shots, loose } from '../src/deep/arms.js';
 import { rungWorth } from '../src/deep/classes.js';
 import { pressBuild, climb, openEveryClass } from './party-press.mjs';
@@ -63,12 +64,14 @@ group('a straight shot never misses: it is on its segment when its flight is up'
     yard.fast(1 / 60);
   }
   const p = last && coilAt(last.seg, last.t);
-  const v = rungWorth(CLASSES.ranger, 1) * SERPENT_DEFENSE.ranger[3];
+  const v = rungWorth(CLASSES.ranger, 1) * guardOf('ranger');
   return [
-    ok(arrow && arrow.arc > 0, 'an arrow flies on a bow', `${arrow && arrow.arc}`),
+    ok(arrow && arrow.arc === 0, 'an arrow flies straight, on no bow', `${arrow && arrow.arc}`),
     ok(!shots.includes(arrow), 'and lands', `${shots.length} in the water`),
-    ok(p && Math.hypot(p.x - last.x, p.y - last.y) < coilThick(last.seg), 'on the hide where its segment had swayed to',
-       p && `${Math.round(last.x)},${Math.round(last.y)} against ${p.x},${p.y}`),
+    // at the hide's underside, where it is seen to strike, the frame it gets there
+    ok(p && Math.abs(p.x - last.x) < WORKER && Math.abs(p.y + coilThick(last.seg) / 2 - last.y) < WORKER,
+       "on the hide's underside where its segment had swayed to",
+       p && `${Math.round(last.x)},${Math.round(last.y)} against ${p.x},${p.y + coilThick(last.seg) / 2}`),
     ok(S.serpentWound >= woundAt + v - 1e-6 || S.serpentStage > 3, 'and strikes it', `${woundAt} then ${S.serpentWound}`)
   ];
 }, { reload: false });

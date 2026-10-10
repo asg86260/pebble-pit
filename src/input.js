@@ -4,12 +4,12 @@
 // else's module.
 
 import { closeWindow } from './modal.js';
-import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
+import { P, MINE_DELAY, WORKER, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt, lockScroller } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
-import { sweep, release, track, overCore, dustUnder } from './hands.js';
+import { sweep, release, track, dustUnder } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
 import { stirSmoke, airReadout } from './smog.js';
@@ -20,6 +20,9 @@ import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
 import { station, stationAt, STATIONS } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
+import { statusAt } from './render/statusicons.js';
+import { overChooseMark, chooseMarkAt } from './render/deep.js';
+const CHOOSE_SAYS = 'choose a fighter';
 import { markedPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { reset } from './persist.js';
@@ -126,14 +129,23 @@ canvas.addEventListener('pointerdown', e => {
   // while the camera is being handed back lands on whatever is under it.
   if (skipCutscene()) return;
   wheelOwed = 0;                             // a hand on the yard takes the view from the wheel
-  // The middle button looks around and the right button lifts (`lift`);
+  // The middle button looks around and the right button looks at the crew;
   // neither can mean any of the things the left button means.
   if (e.button === 1) {
     wheelPan = e.clientX;
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
+  // The right button, held, looks at the crew until it is let go; it lifts
+  // nobody by itself (the owner, 2026-10-09).
   if (e.button === 2) {
+    S.crewSight = now();
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    return;
+  }
+  // With the right button held, the left takes the body under the hand, for
+  // as long as both are down.
+  if (e.button === 0 && S.crewSight != null) {
     const p = pos(e);
     const w = workerAt(p.x, p.y);
     if (w) {
@@ -141,7 +153,6 @@ canvas.addEventListener('pointerdown', e => {
       try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
-    return;
   }
   down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
                           at: now(), kind: e.pointerType });
@@ -186,6 +197,7 @@ canvas.addEventListener('pointerdown', e => {
     // a rock is worked from the top down.
     const at = topOfRock(p.x) || p;
     knockOff(at.x, at.y, undefined, false);   // your own hands: no smoke
+    S.handChipped = true;
     S.mining = S.autoMine;                      // holding only mines once unlocked
     S.nextHit = now() + MINE_DELAY;
     try { canvas.setPointerCapture(e.pointerId); } catch {}
@@ -207,6 +219,15 @@ canvas.addEventListener('pointerdown', e => {
 canvas.addEventListener('pointermove', e => {
   const held = down.get(e.pointerId);
   if (held) { held.x = e.clientX; held.y = e.clientY; }
+
+  // A second button pressed while one is already down arrives as a move,
+  // not a press (Pointer Events: a chord): the left going down with the
+  // right held takes the body under the hand.
+  if (S.crewSight != null && e.button === 0 && (e.buttons & 3) === 3 && !lifted()) {
+    const p = pos(e);
+    const w = workerAt(p.x, p.y);
+    if (w) { S.mouse = p; lift(w); setCursor(p.x, p.y); return; }
+  }
 
   if (wheelPan !== null) {                   // middle button: drag the view along
     pan((wheelPan - e.clientX) / S.zoom);
@@ -241,8 +262,9 @@ canvas.addEventListener('pointermove', e => {
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
   if (e.pointerType !== 'touch') {
-    // a body under the cursor stands still while it is looked at; the stage
-    // in crew/step.js does the rest
+    // with the right button held, a body under the cursor walks slow; the
+    // stage in crew/step.js does the rest
+    if (S.crewSight != null && !(e.buttons & 2)) S.crewSight = null;
     hoverAt(S.mouse.x, S.mouse.y);
     potHover(S.mouse.x, S.mouse.y);
     // The table's order settles which wins where two patches overlap.
@@ -268,7 +290,7 @@ canvas.addEventListener('pointermove', e => {
     if (wasWx != null) shakeHeld(up, S.mouse.x - wasWx);
     up.x = S.mouse.x - WORKER / 2;
     up.y = S.mouse.y - WORKER / 2;
-    if (!(e.buttons & 2)) drop(up);            // the button let go somewhere else
+    if ((e.buttons & 3) !== 3) drop(up);       // either button let go somewhere else
     return;
   }
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
@@ -277,6 +299,10 @@ canvas.addEventListener('pointermove', e => {
 
 export function endDrag(e) {
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
+  if (!(e.buttons & 2) && S.crewSight != null) {  // the right button let go
+    S.crewSight = null;
+    if (S.mouse) setCursor(S.mouse.x, S.mouse.y);
+  }
   // the arm let go, wherever the pointer has got to
   releaseArm();
   const up = lifted();
@@ -307,7 +333,13 @@ export function endDrag(e) {
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 addEventListener('pointerup', endDrag);          // catch releases outside the canvas
+// The cursor answers a press or a release where it happens, not on the next
+// move: a hand closes the moment a button goes down. After the handlers above
+// have said what the press was.
+for (const type of ['pointerdown', 'pointerup'])
+  canvas.addEventListener(type, () => { if (S.mouse) setCursor(S.mouse.x, S.mouse.y); });
 addEventListener('blur', () => {
+  S.crewSight = null;
   down.clear();
   panning = null;
   wheelPan = null;
@@ -356,7 +388,6 @@ function cellAt(b, wx, wy) {
 
 function cellLabel(v) {
   if (!v) return null;
-  if (v === CORE_CELL) return 'core';
   const k = findKind(v);
   if (k === SHARD_CELL) return 'ore';
   if (k === SPORE_CELL) return 'crop';
@@ -445,7 +476,6 @@ export function whatIsAt(x, y) {
     if (onCoil(x, y)) return 'the serpent';
     return null;
   }
-  if (overCore(x, y)) return 'core';
   const grain = cellLabel(cellAt(floor, x, y) || cellAt(pit, x, y));
   if (grain) return grain;
   if (S.crew >= 1 && inRect(houseRect(), x, y)) return 'house';
@@ -505,6 +535,14 @@ function askedAbout(x, y, cx, cy) {
     return true;
   }
 
+  // A station whose Recruit still waits on its first choice says so.
+  const waiting = overChooseMark(x, y);
+  if (waiting) {
+    const m = chooseMarkAt(waiting);
+    showTip(CHOOSE_SAYS, { x: m.x + m.w / 2, y: m.y + m.h });
+    return true;
+  }
+
   const finished = overDoneMark(x, y);
   if (finished) {
     showTip(doneName(finished), doneMarkAt(finished));
@@ -512,6 +550,12 @@ function askedAbout(x, y, cx, cy) {
   }
   // A board over the same spot has nothing to add to.
   if (overOpenBoard(cx, cy)) { showTipAt(null); return false; }
+  // A status's icon, under the serpent's bar or up a station's post.
+  const icon = cx != null && statusAt(cx, cy);
+  if (icon) {
+    showTipAt(icon.text, icon.x + icon.w / 2, icon.y + icon.h + 8, true);
+    return true;
+  }
   // The air filter's gauge: the band the needle is in and which way it is
   // going. How full and how fast are the books' business.
   if (inRect(dialRect(), x, y)) {
@@ -541,9 +585,11 @@ function askedAbout(x, y, cx, cy) {
 // because the ground state of this game is aiming at a rock.
 const CURSORS = [
   // carrying something: the hand is closed
-  [() => S.heldCore || S.dragging || lifted(), 'grabbing'],
-  // a core lying about is the one thing here you pick up yourself
-  [(x, y) => overCore(x, y), 'grab'],
+  [() => S.dragging || lifted(), 'grabbing'],
+  // the right button held, looking at the crew: the hand open, ready to take
+  // one, and closed while the left is down too (the owner, 2026-10-09)
+  [() => S.crewSight != null && S.mining, 'grabbing'],
+  [() => S.crewSight != null, 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit

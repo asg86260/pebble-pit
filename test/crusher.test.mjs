@@ -9,7 +9,7 @@ import { rosterHit } from '../src/roster.js';
 import { haulCap } from '../src/levels.js';
 import { deepBed } from '../src/state.js';
 import { hopperRect, crusherRect, deepTop, deepFloor } from '../src/deep/place.js';
-import { spendScales } from '../src/deep/scales.js';
+import { spendScales, refundScales } from '../src/deep/scales.js';
 import { sweep, release } from '../src/hands.js';
 import crusherMigration from '../src/migrations/2026-09-23-crusher.js';
 
@@ -120,5 +120,22 @@ group('a save from the first pass comes back with its floor crushed', async () =
   return [
     ok(old.scales === 12, 'the purse is what the floor held', `${old.scales}`),
     ok(old.deepBed.heights.every(h => h === 0), 'and the floor is bare', old.deepBed.heights.join())
+  ];
+}, { reload: false });
+
+// A refund in the air when the page closes is the purse's on the way back in:
+// the save counts what is still flying, and the load lands it.
+group('scales handed back and still in the air are in the purse after a reload', async () => {
+  window.__snatch({ played: true });
+  window.__scales(50);
+  const purse = S.scales;
+  refundScales(120, crusherRect().x - P * 40, deepFloor() - P * 8);
+  run(0.5);
+  const landed = S.scales - purse, flying = S.sinking.filter(g => g.back).length;
+  window.__cold();
+  return [
+    ok(flying > 0 && landed < 120, 'some were still in the air', `${flying} flying, ${landed} landed`),
+    ok(S.scales === purse + 120 && !S.sinking.some(g => g.back), 'and the reload lands them all, once',
+       `${S.scales - purse} of 120`)
   ];
 }, { reload: false });

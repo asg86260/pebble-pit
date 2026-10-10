@@ -13,20 +13,42 @@ import { sayClock } from './stats.js';
 import { now } from './clock.js';
 import { beatRunning, skipBeat } from './beats.js';
 import { timesOn, timesName, postTime, sayRank, BOARD_DOWN } from './times.js';
+import { serpentOn } from './snatch.js';
+import { RESCUE_SHEET_LEAVE_S } from './config.js';
 
 const sheet = document.getElementById('saved');
 const savedIn = document.getElementById('savedin');
+const endOnly = [...sheet.querySelectorAll('.endonly')];
+const keepPlaying = document.getElementById('keepplaying');
+// With the half on the sheet has no button and floats away as its beat ends
+// (beats.js): it stays up, leaving, for RESCUE_SHEET_LEAVE_S after.
+let leavingUntil = 0, wasUp = false;
 
 const due = () => beatRunning('ending') && !S.paused && !S.fatal;
 
 export function syncEnding() {
-  const up = due();
+  const due0 = due(), t = performance.now();
+  if (wasUp && !due0 && serpentOn() && !S.paused && !S.fatal) leavingUntil = t + RESCUE_SHEET_LEAVE_S * 1000;
+  wasUp = due0;
+  const leaving = !due0 && t < leavingUntil;
+  sheet.classList.toggle('leaving', leaving);
+  const up = due0 || leaving;
   if (sheet.hidden === up) {
     sheet.hidden = !up;
     // The clock stopped when they walked out (`stepUnder`), so this is the
     // same number the books read.
-    if (up) { savedIn.textContent = sayClock(S.buriedMs); offerPost(); }
+    if (up) {
+      savedIn.textContent = sayClock(S.buriedMs);
+      offerPost();
+    }
     else posted = false;                    // the next story's sheet gets its own line
+  }
+  // With the second half on, the snatch follows this sheet: it says the
+  // story goes on rather than that it is over.
+  if (up) {
+    const on = serpentOn();
+    keepPlaying.hidden = on;
+    for (const el of endOnly) el.hidden = on;
   }
   // The second half's end, the same way: up while its beat has the sheet.
   const freedUp = beatRunning('freedsheet') && !S.paused && !S.fatal;

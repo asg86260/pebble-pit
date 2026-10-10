@@ -1,0 +1,126 @@
+<title>Serpent Heal Aura</title>
+<style>
+/* Layout: one pane per way of showing the heal on the hide, the same coil and
+   the same heal ticks in each; the pane is a strip of deep, black in either theme. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Heal Aura</h1>
+    <p>The heal today is one purple number swelling under the belly once a second, easy to miss against the hide.
+      Each pane adds a way of showing the hide itself healing, on the same tick. The stun stops the heal, so in the
+      game each aura would stop with it; the surge (heals 3x) would make each stronger. A mock drawn from plain
+      shapes on the cell grid, not the game: no bar, no fighters, no numbers flying in.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+(() => {
+  const P = 6, W = 480, H = 168, COLS = W / P, EVERY = 1;
+  const PUR = ['#130b20', '#1b112c', '#241739', '#2d1d47', '#412465', '#5c2ba6', '#6a2fbe', '#9b5de5', '#c9a7f5'];
+  const GREY = ['#26262c', '#42424a', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const cell = (g, c, r, col) => { g.fillStyle = col; g.fillRect(c * P, r * P, P, P); };
+  // the hide: a wave, five cells thick, with the tone varying cell by cell
+  const mid = (c, t) => 13 + Math.round(3.2 * Math.sin(c / 9 + t * 0.9) + 1.2 * Math.sin(c / 4 - t * 1.7));
+  function hide(g, t) {
+    const tops = [];
+    for (let c = 0; c < COLS; c++) {
+      const m = mid(c, t); tops.push(m - 2);
+      for (let r = m - 2; r <= m + 2; r++) cell(g, c, r, GREY[r === m - 2 ? 5 : 2 + Math.floor(hash(c * 31 + r) * 3)]);
+    }
+    return tops;
+  }
+  const FONT = { '0': ['###', '#.#', '#.#', '#.#', '###'], '+': ['...', '.#.', '###', '.#.', '...'], '1': ['.#.', '##.', '.#.', '.#.', '###'], '2': ['##.', '..#', '.#.', '#..', '###'] };
+  function number(g, s, x, y, col) {
+    [...s].forEach((ch, i) => FONT[ch].forEach((row, r) => [...row].forEach((v, c) => { if (v === '#') cell(g, x + i * 4 + c, y + r, col); })));
+  }
+  const WAYS = [
+    { name: 'As built', note: 'The purple number under the belly, and nothing on the hide.', fx() {} },
+    { name: 'A: glow band', note: 'A purple band lies over the hide for its whole length, brightening in steps on each tick and easing down, three tones deep either side.',
+      fx(g, t, tops, beat) {
+        const k = Math.max(0.25, 1 - beat * 1.2);
+        for (let c = 0; c < COLS; c++) {
+          const m = mid(c, t);
+          for (let d = 1; d <= 3; d++) {
+            if (d > 1 && hash(c * 17 + d * 5 + Math.floor(t * 2)) < 0.2 * d) continue;
+            const tone = Math.max(1, Math.round(8 - d * 1.5 - (1 - k) * 3));
+            cell(g, c, m - 2 - d, PUR[tone]); cell(g, c, m + 2 + d, PUR[tone]);
+          }
+          if (k > 0.6) { cell(g, c, m - 2, PUR[7]); cell(g, c, m + 2, PUR[6]); }
+        }
+      } },
+    { name: 'B: rising crosses', note: 'Small purple crosses lift off the hide all along it and fade as they rise, a burst of them on each tick.',
+      fx(g, t, tops, beat, tick) {
+        for (let k = 0; k < 46; k++) {
+          const c = 2 + Math.floor(hash(k * 3 + tick * 7) * (COLS - 4));
+          const delay = hash(k * 5 + tick) * 0.5, a = (beat - delay) / 0.9;
+          if (a < 0 || a > 1) continue;
+          const r = tops[c] - 1 - Math.floor(a * 7);
+          const tone = PUR[Math.max(1, 7 - Math.floor(a * 6))];
+          cell(g, c, r, tone); cell(g, c - 1, r, tone); cell(g, c + 1, r, tone); cell(g, c, r - 1, tone); cell(g, c, r + 1, tone);
+        }
+      } },
+    { name: 'C: a wave along the hide', note: 'On each tick a bright purple rim runs head to tail along both edges of the hide, leaving a dim rim behind it that fades.',
+      fx(g, t, tops, beat) {
+        const head = beat * (COLS + 20) - 10;
+        for (let c = 0; c < COLS; c++) {
+          const m = mid(c, t), d = head - c;
+          const tone = d < 0 ? 1 : d < 6 ? 8 - Math.floor(d / 2) : Math.max(1, 5 - Math.floor((d - 6) / 12));
+          for (const r of [m - 3, m + 3]) cell(g, c, r, PUR[tone]);
+          if (d >= 0 && d < 5) { cell(g, c, m - 4, PUR[tone - 1]); cell(g, c, m + 4, PUR[tone - 1]); }
+        }
+      } },
+  ];
+  const panes = WAYS.map(w => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${w.name}</h2><canvas width="${W}" height="${H}"></canvas><p>${w.note}</p>`;
+    document.getElementById('grid').appendChild(card);
+    return { w, g: card.querySelector('canvas').getContext('2d') };
+  });
+  function draw(p, t) {
+    const g = p.g, tick = Math.floor(t / EVERY), beat = (t % EVERY) / EVERY;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    const tops = hide(g, t);
+    p.w.fx(g, t, tops, beat, tick);
+    // the number under the belly, swelling in held steps and fading
+    const a = Math.min(1, beat / 0.9), tone = PUR[Math.max(1, 7 - Math.floor(a * 6))];
+    number(g, '+' + (10 + tick % 3), 38, 20 + Math.floor(a * 3), tone);
+  }
+  let t = 0, last = performance.now(), speed = 1, run = true;
+  const frame = n => { const d = Math.min(0.05, (n - last) / 1000); last = n; if (run) t += d * speed;
+    panes.forEach(p => draw(p, t)); requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+  const play = document.getElementById('play');
+  play.onclick = () => { run = !run; play.textContent = run ? 'pause' : 'play'; };
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', o === b));
+  });
+})();
+</script>

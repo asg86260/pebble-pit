@@ -1,0 +1,214 @@
+<title>Station Backdrops</title>
+<style>
+/* Layout: one row of panes, the same Ranger shooting in front of the same bed
+   of scales, a different backdrop behind him in each. Panes are the deep,
+   black in either theme; the chrome follows the viewer. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Station Backdrops</h1>
+    <p>The Ranger's new shot, standing at his station in front of the deep's bed of scales. Each pane puts a different
+      backdrop between the bed and him, so the grey bow reads on dark instead of on the grey heap. A mock drawn from
+      plain cells, not the game: the bed is a stand-in heap, the prop a plain crate, and the real bed can be lower or
+      heap forty cells deep.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+(() => {
+  const P = 6, CW = 34, CH = 40, FLOOR = 35, STATION_X = 19, BODY = 3;
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const WHITE = GREYS[11];
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const cell = (g, cx, cy, tone) => { g.fillStyle = tone; g.fillRect(Math.round(cx) * P, Math.round(cy) * P, P, P); };
+  const rect = (g, cx, cy, w, h, tone) => { g.fillStyle = tone; g.fillRect(cx * P, cy * P, w * P, h * P); };
+  function line(g, ax, ay, bx, by, tone) {
+    const n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay)));
+    for (let i = 0; i <= n; i++) cell(g, ax + (bx - ax) * i / n, ay + (by - ay) * i / n, tone);
+  }
+
+  // --- the deep, the bed and the coil ------------------------------------------------
+  function water(g, t) {
+    rect(g, 0, 0, CW, CH, GREYS[0]);
+    for (let i = 0; i < 14; i++) cell(g, (hash(i) * CW + t * 0.4) % CW, hash(i + 3) * FLOOR, GREYS[2 + Math.floor(hash(i + 5) * 3)]);
+  }
+  // The coil's underside across the top.
+  function coil(g, t) {
+    for (let cx = 0; cx < CW; cx++) {
+      const mid = 4 + 1.6 * Math.sin(cx * 0.14 + t * 0.6), top = Math.round(mid - 3), bot = Math.round(mid + 3);
+      for (let cy = top; cy <= bot; cy++) cell(g, cx, cy, cy === bot ? GREYS[8] : cy === Math.round(mid) ? GREYS[10] : WHITE);
+    }
+  }
+  const coilBottom = (cx, t) => Math.round(4 + 1.6 * Math.sin(cx * 0.14 + t * 0.6) + 3);
+  // The bed: scales heaped on the floor, a mound across the pane, every cell its
+  // own tone off the heap's greys.
+  const bedTop = cx => Math.round(FLOOR - 13 + 3.5 * Math.cos((cx - 17) * 0.13) - 2 * Math.cos(cx * 0.4));
+  function bed(g, clearOf) {
+    for (let cx = 0; cx < CW; cx++) for (let cy = bedTop(cx); cy < FLOOR; cy++) {
+      if (clearOf && clearOf(cx, cy)) continue;
+      cell(g, cx, cy, GREYS[7 + Math.floor(hash(cx * 31 + cy * 7) * 4)]);
+    }
+  }
+  function floor(g) {
+    rect(g, 0, FLOOR, CW, CH - FLOOR, GREYS[2]);
+    for (let c = 0; c < CW; c++) for (let r = FLOOR; r < CH; r++) if (hash(c * 31 + r * 17) < 0.22) cell(g, c, r, GREYS[3 + Math.floor(hash(c + r * 7) * 2)]);
+  }
+  // The station: a stepped plinth under him and a crate beside him.
+  function plinth(g) {
+    rect(g, STATION_X - 4, FLOOR - 1, 9, 1, GREYS[5]);
+    rect(g, STATION_X - 3, FLOOR - 2, 7, 1, GREYS[4]);
+  }
+  function crate(g) {
+    const x = STATION_X - 8, y = FLOOR - 4;
+    for (let dx = 0; dx < 3; dx++) for (let dy = 0; dy < 3; dy++) cell(g, x + dx, y + dy, (dx + dy) % 2 ? GREYS[6] : GREYS[7]);
+  }
+
+  // --- the backdrops -----------------------------------------------------------------
+  // The station's span: the crate to the fighter's bow tip.
+  const SPAN_L = STATION_X - 9, SPAN_R = STATION_X + 5;
+  // The old dome, lit from inside a shade above the water, its rim a shade
+  // above that, every cell dealt a tone near its own. `wall` rows of wall
+  // over the fighter's head before the arch springs.
+  function dome(g, wall, pad) {
+    const left = SPAN_L - pad, w = SPAN_R - SPAN_L + 1 + pad * 2, r = w / 2, spring = FLOOR - 3 - BODY - wall;
+    const inside = (x, y) => {
+      if (x < left || x >= left + w || y >= FLOOR) return false;
+      if (y >= spring) return true;
+      const dx = x + 0.5 - (left + r), dy = y + 0.5 - spring;
+      return dx * dx + dy * dy <= r * r;
+    };
+    for (let y = 0; y < FLOOR; y++) for (let x = left; x < left + w; x++) {
+      if (!inside(x, y)) continue;
+      const rim = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1);
+      cell(g, x, y, GREYS[(rim ? 5 : 2) + (hash(x * 13 + y * 29) < 0.5 ? 1 : 0)]);
+    }
+  }
+  // A backboard: a squared slab of the dome's dark, stood up behind the station.
+  function slab(g) {
+    const left = SPAN_L - 2, right = SPAN_R + 2, top = FLOOR - 3 - BODY - 10;
+    for (let y = top; y < FLOOR; y++) for (let x = left; x <= right; x++) {
+      const rim = x === left || x === right || y === top;
+      cell(g, x, y, GREYS[(rim ? 5 : 2) + (hash(x * 13 + y * 29) < 0.5 ? 1 : 0)]);
+    }
+  }
+  // The hollow: no new object; the bed is pushed back in a U round the station,
+  // so the water shows behind him.
+  const hollow = (cx, cy) => {
+    const mx = (SPAN_L + SPAN_R) / 2, half = (SPAN_R - SPAN_L) / 2 + 2;
+    return Math.abs(cx - mx) <= half - Math.max(0, (FLOOR - cy - 10) * 0.6);
+  };
+
+  // --- the Ranger's shot, option A as built (RANGER_BEATS) ---------------------------
+  const HX = STATION_X - 1, HY = FLOOR - 2 - BODY, SX = HX + 1;
+  const BEATS = [
+    [-0.76, { arrow: 'hip', bend: 2, pull: 0 }], [-0.62, { arrow: 'nocked', bend: 2, pull: 0 }],
+    [-0.50, { arrow: 'nocked', bend: 2, pull: 1 }], [-0.42, { arrow: 'nocked', bend: 3, pull: 2, sink: 1 }],
+    [-0.34, { arrow: 'nocked', bend: 3, pull: 3, sink: 1, strain: true }],
+    [0, { lift: -1, bend: 1, pull: -1, loose: true }], [0.07, { lift: -1, bend: 2, pull: 0 }], [0.23, { bend: 2, pull: 0 }],
+  ];
+  const CYCLE = 1.2, FLY = 0.25;
+  function beat(t) {
+    const d = (t % CYCLE) - 0.8;       // the release at 0.8 into each cycle
+    let pose = { bend: 2, pull: 0 };
+    for (const [at, p] of BEATS) if (d >= at) pose = p;
+    return { pose, d };
+  }
+  function drawBody(g, cx, cy) {
+    const x = cx * P, y = cy * P, w = BODY * P;
+    g.fillStyle = GREYS[6]; g.fillRect(x, y, w, w);
+    g.fillStyle = WHITE; g.fillRect(x + 2, y + 2, w - 4, w - 4);
+  }
+  function ranger(g, t, dark) {
+    const { pose: p, d } = beat(t), sink = p.sink || 0, sy = HY - 4 + (p.lift || 0) + sink, half = 3;
+    drawBody(g, HX, HY + sink);
+    const stave = dark ? GREYS[3] : GREYS[8], str = dark ? GREYS[5] : GREYS[9];
+    for (let c = -half; c <= half; c++) cell(g, SX + c, sy - Math.round(p.bend * (1 - (c / half) ** 2)), c ? stave : GREYS[6]);
+    line(g, SX - half, sy, SX, sy + p.pull, str); line(g, SX + half, sy, SX, sy + p.pull, str);
+    cell(g, SX - half, sy + 1, WHITE);
+    const ny = sy + p.pull;
+    if (p.arrow === 'nocked') {
+      cell(g, SX, ny - 6, WHITE); for (let r = ny - 5; r < ny; r++) cell(g, SX, r, GREYS[10]);
+      cell(g, SX - 1, ny, GREYS[7]); cell(g, SX + 1, ny, GREYS[7]); cell(g, SX + 1, ny, WHITE);
+    } else if (p.arrow === 'hip') {
+      const x = HX + 3, y = HY + 1 + sink;
+      cell(g, x, y - 1, GREYS[7]); cell(g, x, y + 1, GREYS[7]); for (let c = 1; c <= 3; c++) cell(g, x + c, y, GREYS[10]);
+      cell(g, x + 4, y, WHITE); cell(g, x, y, WHITE);
+    } else cell(g, SX + 2, sy + 3, WHITE);
+    if (p.strain) { cell(g, HX - 1, HY + sink, GREYS[6]); cell(g, HX + BODY, HY + sink, GREYS[6]); cell(g, HX - 2, HY + sink - 1, GREYS[5]); cell(g, HX + BODY + 1, HY + sink - 1, GREYS[5]); }
+    if (p.loose && d < 0.07) for (let r = HY - 9; r <= HY - 2; r++) cell(g, SX, r, r < HY - 4 ? WHITE : GREYS[8]);
+    // the arrow in the water
+    if (d >= 0 && d < FLY) {
+      const y0 = HY - 6, hy = y0 + (coilBottom(SX, t) + 1 - y0) * (d / FLY);
+      cell(g, SX, hy, WHITE); cell(g, SX, hy + 1, GREYS[10]); cell(g, SX, hy + 2, GREYS[8]);
+    }
+  }
+
+  const OPTIONS = [
+    { name: 'Now', about: 'No backdrop: the grey bow over the grey heap, as the game draws it today.',
+      draw: (g, t) => { bed(g); } },
+    { name: 'A · The dome', about: 'The retired dome back as it was: four cells of wall over him and a half-circle arch, the bed behind it.',
+      draw: (g, t) => { bed(g); dome(g, 4, 3); } },
+    { name: 'B · A low dome', about: 'The same dome cut down to just clear the bow and the arrow on the string: less of the bed hidden.',
+      draw: (g, t) => { bed(g); dome(g, 1, 1); } },
+    { name: 'C · A backboard', about: 'A squared slab of the dome’s dark behind the station, rimmed a shade lighter.',
+      draw: (g, t) => { bed(g); slab(g); } },
+    { name: 'D · A hollow', about: 'Nothing new stood up: the bed is kept back in a U round the station, so the water shows behind him.',
+      draw: (g, t) => { bed(g, hollow); } },
+    { name: 'E · A dark bow', about: 'No backdrop; the bow itself goes near-black instead (the earlier suggestion), for comparison.',
+      draw: (g, t) => { bed(g); }, dark: true },
+  ];
+  const grid = document.getElementById('grid'), panes = [];
+  for (const o of OPTIONS) {
+    const card = document.createElement('div'); card.className = 'card';
+    const h = document.createElement('h2'); h.textContent = o.name;
+    const cv = document.createElement('canvas'); cv.width = CW * P; cv.height = CH * P;
+    cv.setAttribute('aria-label', o.name);
+    const p = document.createElement('p'); p.textContent = o.about;
+    card.append(h, cv, p); grid.append(card);
+    panes.push({ o, g: cv.getContext('2d') });
+  }
+  let playing = true, speed = 1, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  (function tick(now) {
+    if (playing) clock += (now - last) / 1000 * speed;
+    last = now;
+    for (const { o, g } of panes) {
+      water(g, clock); coil(g, clock); o.draw(g, clock); floor(g); plinth(g); crate(g); ranger(g, clock, !!o.dark);
+    }
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>

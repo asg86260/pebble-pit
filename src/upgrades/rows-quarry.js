@@ -1,4 +1,4 @@
-import { QUARRY_CORES, QUARRY_DUST } from '../config.js';
+import { QUARRY_DUST } from '../config.js';
 import { JOB } from '../jobs.js';
 import { quarry } from '../state.js';
 import { site } from './site.js';
@@ -9,7 +9,7 @@ const CAVE = site({
   key: 'quarry', name: 'build the quarry',
   note: () => 'start digging for ore',
   blurb: 'dig for ore',
-  cores: QUARRY_CORES, dust: QUARRY_DUST,
+  dust: QUARRY_DUST,
   at: () => quarry.x + quarry.w / 2,
   job: JOB.QUARRY
 });

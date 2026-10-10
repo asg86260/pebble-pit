@@ -218,7 +218,6 @@ group('the save keeps what matters', async () => {
     ok(!!raw, 'a save exists'),
     ok(Math.abs(raw.stored - s.stored) <= 20, 'the hole is saved',
        `${raw?.stored} vs ${s.stored}`),
-    ok(raw.cores === s.cores, 'cores are saved'),
     ok(raw.rockhands === s.rockhands && raw.haulers === s.haulers, 'the crew is saved'),
     ok(raw.shards === s.shards, 'shards are saved', `${raw?.shards} vs ${s.shards}`),
     ok(raw.quarryOpen === s.quarryOpen, 'and whether the quarry is open'),

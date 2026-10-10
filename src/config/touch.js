@@ -22,21 +22,28 @@ export const THUMB = 28;             // px; a fingertip's half-width
 // height, since a phone has no fixed one.
 export const HOP_Y = 0.42;           // below the purse and the pin, above the call to build the bench and the counter
 export const HOP_SIZE = 48;          // px, eight cells; a thumb's target
-export const HOP_INSET = 6;          // px in from the edge
 
 // The fullscreen button, top-right in the sky (fullscreen.js): the hop's
-// square, the hop's inset, inside the safe area.
+// square, the page's --edge in (style.css), inside the safe area.
 export const FS_SIZE = 44;
-export const FS_INSET = 6;
 
 // A board as a sheet from the bottom, on a phone only. Its top edge at this
 // share of the window down, so the ground line and the station stay in the
-// picture above it; dragged up past its seat it grows to `SHEET_TALL`, and
-// dragged down past a third of its height it goes.
+// picture above it; `SHEET_TALL` is its stop for a long board.
 export const SHEET_H = 0.55;
 export const SHEET_TALL = 0.9;
-export const SHEET_DISMISS = 0.33;
-export const SHEET_MS = 220;         // up and down; nought under motion: less
+// Let go, it goes to whichever stop -- gone, the seat or tall -- lies nearest
+// to where it would coast, the way a phone's own sheets do: the finger's
+// speed over its last few moves only (a drag that stopped before it lifted
+// has no speed left), coasted out with UIKit's scroll decay, so a flick
+// travels past the next stop and a placed sheet stays where it was placed.
+export const SHEET_FLING_MS = 80;    // the finger's speed is read over this much of its end
+export const SHEET_DECAY = 0.998;    // UIKit's normal deceleration rate, per ms
+// Up past tall it follows the finger less and less, UIKit's rubber band:
+// the share of the window's height it can never quite reach past tall.
+export const SHEET_RUBBER = 0.55;
+export const SHEET_MS = 500;         // the ease to a stop; nought under motion: less
+export const SHEET_EASE = [0.32, 0.72, 0, 1];   // the settle's cubic-bezier, the platform's sheet curve
 export const SHEET_HANDLE = [36, 4]; // the bar on its top edge, px
 // The sheet's own scrollbar (board.js, the rail): a phone's overlay bar is
 // invisible until the list moves, so one is drawn down the right edge

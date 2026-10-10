@@ -34,7 +34,7 @@ all stand.
 | class | base | rung 4 | rung 8 |
 |---|---|---|---|
 | Brawler | heavy punches | **Combos**: every 4th punch is a haymaker, x3 | **Knockout**: the haymaker stuns |
-| Swordsman | cuts | **Whirlwind**: each cut lands at three spots | **Weak points**: every 3rd cut lands twice, the second leaving Bleeding |
+| Swordsman | cuts | **Whirlwind**: each cut lands x1.8, where the blade meets the hide | **Weak points**: every 3rd cut lands twice, the second leaving Bleeding |
 | Monk | palms build chi; a full row is a chi palm, x3 | **Deep breath**: chi fills twice as fast | **Still water**: the chi palm stuns |
 | Martial Artist | quick thrusts charge a finisher | **Flourish**: thrusts charge double | **Rally**: the finisher Hastes the party |
 | Ranger | arrows from overhead | **Aimed shot**: every 5th arrow x2 | **Pinning shot**: the aimed shot stuns |

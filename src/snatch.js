@@ -25,13 +25,15 @@
 // saved; a reload plays the beat again from the start, or, past the take,
 // from the surface closing (`startSnatch`).
 
-import { P, WORKER, COMMUTE_PACE, CORE_SIZE, INTRO_BEAT,
+import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_LOOK_MS, SNATCH_TAKE_MS, SNATCH_CLOSE_MS,
-         SNATCH_HURRY, FREED_OPEN_MS, SNATCH_PORTAL_MS, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
+         SNATCH_HURRY, SNATCH_PORTAL_MS, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
          DEEP_SURFACE, SERPENT_ON } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
-import { mouthX, bellyAt, deepTop } from './deep/place.js';
+import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine } from './deep/place.js';
+import { killFrame } from './view.js';
+import { now } from './clock.js';
 import { abyssLine } from './pit.js';
 import { walkY, lookAt } from './world.js';
 import { spawnChip, bell } from './dust.js';
@@ -40,7 +42,7 @@ import { syncWorkers, retask, FACTORY, newRecord, unbook } from './crew.js';
 import { belowYard } from './route.js';
 import { onYard } from './crew/body.js';
 import { TYPE, JOB_OF } from './jobs.js';
-import { beatDone } from './beats.js';
+import { beatDone, beatRunning } from './beats.js';
 
 // --- whether ---------------------------------------------------------------------
 // The half is played by a dev build and the node yard (which has no
@@ -84,13 +86,8 @@ function takeOff(n) {
   for (const w of took) {
     for (let i = 0; i < (w.carry || 0); i++)
       spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
-    if (w.hasCore) {
-      S.coreItem = { x: w.x, y: S.groundY - CORE_SIZE, vx: 0, vy: -1, rest: false };
-      if (S.coreTaker === w) S.coreTaker = null;
-    }
     w.carry = 0;
     w.load = [];
-    w.hasCore = false;
     w.claim = -1;
     unbook(w);
     const job = JOB_OF[w.type];
@@ -257,20 +254,57 @@ export const heldBodies = () =>
   S.snatch ? S.pair.filter(b => b.body).map(b => ({ w: b.body, x: b.x, y: b.y })) : [];
 
 // --- the freeing ------------------------------------------------------------------
-// The belly opens for FREED_OPEN_MS (drawn off the flag), and he comes out of
-// it: one of the deep's crew, a spare hand down there, who sinks to its
-// floor and gathers like any other. The beat is over the moment he is out,
-// so a reload before then opens the belly again and one after it has him in
-// the crew already.
-export function startFreed(t) { S.introAt = t; }
-
+// The kill (config KILL): the last blow, the serpent limp and sinking to the
+// floor, its hide coming apart (all drawn off `S.freedAt`, deep/phases.js);
+// then he is out on the floor where the belly was and walks to her, they
+// cheer, and the frame pulls back. He is one of the deep's crew at the end of
+// it, where he stands: a spare hand down there. The beat's clock is saved, so
+// a reload picks it up where it was. A skip plays it out at once.
+const ease = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
+const outAt = () => KILL.last + KILL.limp + KILL.apart;
+export function startFreed(t) { if (S.freedAt == null) S.freedAt = t; }
+// Her: the first station's fighter if there is one, or another of the deep's
+// own, else a little way off.
+function herX(from) {
+  const st = S.stations && S.stations[0];
+  const w = (st && S.workers.find(o => o.station === st.id)) || S.workers.find(o => belowYard(o));
+  const x = w ? w.x : from - P * 12;
+  return Math.max(deepX0() + P, Math.min(deepX1() - WORKER - P, x + WORKER + P));
+}
+// Where he is, once out: walking from the belly to her, then hopping as they
+// cheer. Null before he is out, or once the beat is over.
+// How long his walk to her takes.
+const walkS = () => Math.min(KILL_WALK_MAX_S, Math.abs(S.freedTo - S.freedFrom) / KILL_WALK_PX_S);
+export function freedBody(t = now()) {
+  if (!beatRunning('freed') || S.freedFrom == null) return null;
+  const a = (t - S.freedAt) / 1000 - outAt();
+  const walk = walkS();
+  const k = walk > 0 ? Math.min(1, a / walk) : 1, cheer = a - walk;
+  const hop = cheer >= 0 && cheer < KILL_CHEER_S && Math.floor(cheer / KILL_HOP_S) % 2 === 0;
+  return { x: S.freedFrom + (S.freedTo - S.freedFrom) * k, y: deepFloor() - WORKER - (hop ? P : 0), cheering: cheer >= 0 };
+}
+// Where the frame looks while he is down: on the belly as he goes limp; then
+// after the coming apart as it runs in from the tail, until it reaches the
+// belly and lets him go.
+function lookAtKill(t, a) {
+  const belly = bellyAt(t).x;
+  const apart = (a - KILL.last - KILL.limp) / KILL.apart;
+  if (apart <= 0 || apart >= 1) return belly;
+  const front = coilLine((1 - apart) * (COIL_SEGS - 1), t).x;
+  return Math.max(front, belly);
+}
 export function stepFreed(t) {
-  if (t - S.introAt < FREED_OPEN_MS) return true;
-  const at = bellyAt(t);
+  const a = (t - S.freedAt) / 1000;
+  const zin = ease((a - KILL.last) / KILL_IN_S);
+  if (a < outAt()) { killFrame(zin, lookAtKill(t, a)); return true; }
+  if (S.freedFrom == null) { S.freedFrom = bellyAt(t).x - WORKER / 2; S.freedTo = herX(S.freedFrom); }
+  // The frame follows him to her.
+  const end = outAt() + walkS() + KILL_CHEER_S, him = freedBody(t);
+  killFrame(zin * (1 - ease((a - end) / KILL_OUT_S)), (him ? him.x : S.freedTo) + WORKER / 2);
+  if (a < end + KILL_OUT_S) return true;
   const w = Object.assign(FACTORY(TYPE.GATHER), newRecord());
-  w.x = at.x - WORKER / 2;
-  w.y = at.y - WORKER / 2;
-  w.falling = true;
+  w.x = S.freedTo;
+  w.y = deepFloor() - WORKER;
   w.vx = w.vy = 0;
   S.crew++;
   S.deepCrew = (S.deepCrew || 0) + 1;
@@ -278,5 +312,8 @@ export function stepFreed(t) {
   S.workers.push(w);
   syncWorkers();
   S.shopStale = true;
+  S.freedFrom = S.freedTo = null;
   return false;
 }
+// The skip: all of it at once, played out on the next frame.
+export function cutFreed() { S.freedAt = -1e12; return false; }

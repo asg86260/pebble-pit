@@ -1,0 +1,275 @@
+<title>Blow Heft</title>
+<style>
+/* Layout: two panes side by side, the same blows landing in each; the right
+   one takes whichever of the switches under it are on. Panes are the deep,
+   black in either theme; the chrome follows the viewer. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+.switches { display: grid; gap: 8px; }
+.switches label { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; cursor: pointer; }
+.switches input { margin-top: 3px; accent-color: var(--accent); }
+.switches b { font-size: 12px; }
+.switches span { grid-column: 2; font-size: 12px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Blow Heft</h1>
+    <p>A Brawler punching up into the coil, every third punch a haymaker, and a Ranger's arrows beside him. Left, as
+      the game lands them now. Right, with the switches you turn on: each is a way to give a blow weight in held poses,
+      with no screen shake and no flash. They stack, so try them together. A mock drawn from plain cells, not the game:
+      one stretch of coil, two fighters, the bar with its chip as built.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+    <button id="all" type="button">all on</button>
+    <button id="none" type="button">all off</button>
+  </div>
+  <div class="grid">
+    <div class="card"><h2>Now</h2><canvas id="now" width="384" height="216" aria-label="Blows as the game lands them now"></canvas></div>
+    <div class="card"><h2>With the switches on</h2><canvas id="sauce" width="384" height="216" aria-label="Blows with the chosen heft"></canvas>
+      <div class="switches" id="switches"></div></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const P = 6, CW = 64, CH = 36, FLOOR = 32;
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                   '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+  const WHITE = GREYS[11];
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const cell = (g, x, y, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, P, P); };
+  const rect = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, Math.round(w) * P, Math.round(h) * P); };
+
+  const SWITCHES = [
+    { key: 'stop', name: 'Hit-stop', about: 'On contact the whole deep holds its frame for a beat: four frames for a punch, ten for a haymaker, two for an arrow. The fist stays buried in the hide while everything waits.' },
+    { key: 'give', name: 'The coil gives', about: 'The hide is driven in two cells at the blow, three for a haymaker, held, then springs back a cell past where it was and settles; a bulge runs out along the body both ways.' },
+    { key: 'burst', name: 'An impact burst', about: 'A held white burst at the contact with a dark keyline, big for two poses then broken into four spikes, and short held lines thrown out from it. The haymaker’s is a size up.' },
+    { key: 'recoil', name: 'The fighter takes it', about: 'The fist squashes a cell wide on contact and the Brawler is knocked a cell back down, held, before he swims back up. The Ranger’s bow jumps on the loose.' },
+    { key: 'bar', name: 'The bar is knocked', about: 'When a blow’s number lands in the bar the bar is knocked down a cell and held there a pose before it comes back; a haymaker knocks it two.' },
+  ];
+  const on = {};
+  const host = document.getElementById('switches');
+  for (const s of SWITCHES) {
+    const l = document.createElement('label');
+    const c = document.createElement('input'); c.type = 'checkbox'; c.id = 'sw-' + s.key; c.checked = true;
+    c.onchange = () => { on[s.key] = c.checked; };
+    on[s.key] = true;
+    const b = document.createElement('b'); b.textContent = s.name;
+    const sp = document.createElement('span'); sp.textContent = s.about;
+    l.append(c, b, sp); host.append(l);
+  }
+  const setAll = v => { for (const s of SWITCHES) { on[s.key] = v; document.getElementById('sw-' + s.key).checked = v; } };
+  document.getElementById('all').onclick = () => setAll(true);
+  document.getElementById('none').onclick = () => setAll(false);
+
+  // --- the blows, on the drawing's own clock -------------------------------------------
+  const BX = 20, RX = 44;                  // the Brawler's column, the Ranger's
+  const LOOP = 4;
+  const BLOWS = [
+    { at: 0.6, x: BX, k: 0.3, who: 'b', n: 18 }, { at: 1.4, x: BX, k: 0.3, who: 'b', n: 21 },
+    { at: 2.4, x: BX, k: 0.9, who: 'b', n: 64, big: true },
+    { at: 1.0, x: RX, k: 0.2, who: 'r', n: 12 }, { at: 1.8, x: RX, k: 0.2, who: 'r', n: 11 }, { at: 3.2, x: RX, k: 0.2, who: 'r', n: 13 },
+  ].sort((a, b) => a.at - b.at);
+  const HOLD = b => b.big ? 10 / 60 : b.who === 'b' ? 4 / 60 : 2 / 60;
+  // Real time to the drawing's clock: stopped for a blow's hold at its contact.
+  function clockOf(t, stop) {
+    const real = LOOP + (stop ? BLOWS.reduce((n, b) => n + HOLD(b), 0) : 0);
+    t %= real;
+    let acc = 0;
+    for (const b of BLOWS) {
+      if (!stop) break;
+      if (t < b.at + acc) return { d: t - acc, frozen: null };
+      if (t < b.at + acc + HOLD(b)) return { d: b.at, frozen: b };
+      acc += HOLD(b);
+    }
+    return { d: t - acc, frozen: null };
+  }
+
+  // --- the coil -------------------------------------------------------------------------
+  const sway = (x, d) => 11 + 1.8 * Math.sin(x * 0.11 + d * 0.7);
+  const GIRTH = 3;
+  // How far the hide at x is driven in (down, +) at d by the blows: held at its
+  // depth for two poses, sprung back a cell past, then settled; and the bulge
+  // running out either way.
+  function give(x, d) {
+    let y = 0;
+    for (const b of BLOWS) {
+      const a = d - b.at;
+      if (a < 0 || a > 0.9) continue;
+      const depth = b.big ? 3 : b.who === 'b' ? 2 : 1, near = clamp(1 - Math.abs(x - b.x) / 4, 0, 1);
+      const env = a < 0.16 ? 1 : a < 0.24 ? -0.4 : a < 0.32 ? 0.2 : 0;
+      y += Math.round(depth * near * env);
+      // the bulge: a cell up, running out at 40 cells a second, gone past 14 cells
+      const r = a * 40;
+      if (r < 14 && Math.abs(Math.abs(x - b.x) - r) < 1.5) y -= b.big ? 2 : 1;
+    }
+    return y;
+  }
+  function coil(g, d, withGive) {
+    for (let x = 0; x < CW; x++) {
+      const dy = withGive ? give(x, d) : 0, m = Math.round(sway(x, d)), top = m - GIRTH, bot = m + GIRTH;
+      for (let y = top; y <= bot; y++) {
+        const band = Math.floor((x + y - d * 3) / 5) % 3 === 0;
+        cell(g, x, y + (y > m - 1 ? dy : Math.round(dy / 2)), y === bot ? GREYS[8] : band ? PURPLES[9] : y === m ? GREYS[10] : WHITE);
+      }
+    }
+  }
+  const botAt = (x, d, withGive) => Math.round(sway(x, d)) + GIRTH + (withGive ? give(x, d) : 0);
+
+  // --- the scales and the chip in the hide (the game's own, both panes) -----------------
+  function spray(g, d, b, withGive) {
+    const a = d - b.at;
+    if (a < 0 || a > 1.2) return;
+    const n = Math.round(4 + 10 * b.k * b.k), y0 = botAt(b.x, b.at, false);
+    for (let i = 0; i < n; i++) {
+      const ang = Math.PI * (0.15 + 0.7 * hash(b.at * 97 + i)), sp = (8 + 12 * b.k) * (0.5 + hash(i + b.at));
+      const x = b.x + Math.cos(ang) * sp * a * (i % 2 ? 1 : -1), y = y0 + Math.sin(ang) * sp * a * 0.4 + 14 * a * a;
+      if (y < FLOOR) cell(g, x, y, GREYS[a < 0.5 ? 11 : 9]);
+    }
+  }
+  function star(g, d, b, big) {
+    const a = d - b.at;
+    if (a < 0 || a >= 0.16) return;
+    const y = botAt(b.x, b.at, false) + 1, r = big ? 3 : 2;
+    if (a < 0.08) {
+      for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, 1], [0, -1]]) cell(g, b.x + dx, y + dy, WHITE);
+      for (let i = 1; i <= r; i++) for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) cell(g, b.x + dx * i, y + dy * i, i === r ? GREYS[10] : WHITE);
+    } else for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r]]) cell(g, b.x + dx, y + dy, GREYS[9]);
+  }
+  // The impact burst: a white disk with a dark keyline, then four spikes, and
+  // held lines thrown out.
+  function burst(g, d, b) {
+    const a = d - b.at;
+    if (a < 0 || a >= 0.24) return;
+    const y = botAt(b.x, b.at, false) + 1, R = b.big ? 4 : b.who === 'b' ? 3 : 2;
+    if (a < 0.16) {
+      for (let dx = -R - 1; dx <= R + 1; dx++) for (let dy = -R - 1; dy <= R + 1; dy++) {
+        const r2 = dx * dx + dy * dy;
+        if (r2 <= R * R) cell(g, b.x + dx, y + dy, a < 0.08 ? WHITE : GREYS[10]);
+        else if (r2 <= (R + 1) * (R + 1)) cell(g, b.x + dx, y + dy, GREYS[1]);
+      }
+    } else for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let i = R; i <= R + 2; i++) cell(g, b.x + dx * i, y + dy * i, i === R + 2 ? GREYS[8] : WHITE);
+    const out = 3 + Math.floor(a / 0.08) * 2;
+    for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) for (let i = 0; i < 2; i++) cell(g, b.x + dx * (R + out + i), y + dy * (R + out + i), GREYS[9]);
+  }
+
+  // --- the fighters -----------------------------------------------------------------------
+  function drawBody(g, x, y, w = 3, h = 3) {
+    g.fillStyle = GREYS[6]; g.fillRect(Math.round(x) * P, Math.round(y) * P, w * P, h * P);
+    g.fillStyle = WHITE; g.fillRect(Math.round(x) * P + 2, Math.round(y) * P + 2, w * P - 4, h * P - 4);
+  }
+  function brawler(g, d, sauce) {
+    // he hangs under the coil; each punch a wind-down, the fist up into the hide, and home
+    const mine = BLOWS.filter(b => b.who === 'b');
+    let near = null;
+    for (const b of mine) if (d >= b.at - 0.3 && d < b.at + 0.4) near = b;
+    const hang = botAt(BX, d, false) + 4;
+    let y = hang, fy = hang - 1, squash = false;
+    if (near) {
+      const a = d - near.at;
+      if (a < -0.12) y = hang + 1;                           // the wind-down
+      else if (a < 0) { y = hang; fy = hang - 2; }
+      else if (a < 0.16) { fy = botAt(BX, near.at, false) + 1; squash = sauce.recoil; if (sauce.recoil) y = hang; }
+      else if (a < 0.28 && sauce.recoil) y = hang + (near.big ? 2 : 1);   // knocked back down, held
+      else y = hang;
+    }
+    drawBody(g, BX - 1, y);
+    // the fist: a cell, or squashed a cell wide against the hide
+    if (squash) { rect(g, BX - 1, fy, 3, 1, GREYS[1]); rect(g, BX - 1, fy, 3, 1, WHITE); }
+    else { cell(g, BX, fy, WHITE); for (let r = fy + 1; r < y; r++) cell(g, BX, r, GREYS[8]); }
+  }
+  function ranger(g, d, sauce) {
+    const y = FLOOR - 3;
+    drawBody(g, RX - 1, y);
+    const mine = BLOWS.filter(b => b.who === 'r');
+    let jump = 0;
+    for (const b of mine) { const a = d - (b.at - 0.25); if (sauce.recoil && a >= 0 && a < 0.1) jump = -1; }
+    // the bow over his head
+    const by = y - 3 + jump;
+    for (let c = -3; c <= 3; c++) cell(g, RX + c, by - Math.round(2 * (1 - (c / 3) ** 2)), GREYS[8]);
+    for (let c = -3; c <= 3; c++) cell(g, RX + c, by, GREYS[9]);
+    // arrows in the water
+    for (const b of mine) {
+      const a = d - (b.at - 0.25);
+      if (a < 0 || a >= 0.25) continue;
+      const hy = by - 1 + (botAt(RX, d, false) + 1 - (by - 1)) * (a / 0.25);
+      cell(g, RX, hy, WHITE); cell(g, RX, hy + 1, GREYS[10]); cell(g, RX, hy + 2, GREYS[8]);
+    }
+  }
+
+  // --- the bar and its chip, as built ------------------------------------------------------
+  const BAR = { x: 8, y: 1, w: 40, h: 2 };
+  function bar(g, d, sauce) {
+    let left = 0.62, knock = 0;
+    for (const b of BLOWS) {
+      const lands = b.at + 0.55, a = d - lands;
+      if (a >= 0) left -= 0.004 * (b.big ? 3 : 1);
+      if (sauce.bar && a >= 0 && a < 0.16) knock = Math.max(knock, b.big ? 2 : 1);
+    }
+    const y = BAR.y + knock;
+    rect(g, BAR.x - 0.2, y - 0.2, BAR.w + 0.4, BAR.h + 0.4, GREYS[9]);
+    rect(g, BAR.x, y, BAR.w, BAR.h, GREYS[0]);
+    rect(g, BAR.x, y, BAR.w * left, BAR.h, WHITE);
+    for (const b of BLOWS) {
+      const a = d - (b.at + 0.55);
+      if (a < 0 || a >= 0.5) continue;
+      const end = BAR.x + BAR.w * left;
+      if (a < 0.3) cell(g, end - 1, y + (b.who === 'b' ? 0 : 1), a < 0.08 ? GREYS[10] : GREYS[0]);
+      cell(g, end - 1 + (b.who === 'b' ? 1 : -1) * 3 * a, y + 1 + 3 * a + 10 * a * a, a < 0.08 ? WHITE : GREYS[10]);
+    }
+  }
+
+  function draw(g, t, sauce) {
+    const { d, frozen } = clockOf(t, sauce.stop);
+    g.fillStyle = GREYS[0]; g.fillRect(0, 0, CW * P, CH * P);
+    for (let i = 0; i < 24; i++) cell(g, (hash(i) * CW + d * 0.5) % CW, hash(i + 3) * FLOOR, GREYS[2 + Math.floor(hash(i + 5) * 3)]);
+    rect(g, 0, FLOOR, CW, CH - FLOOR, GREYS[2]);
+    coil(g, d, sauce.give);
+    for (const b of BLOWS) spray(g, d, b, sauce.give);
+    for (const b of BLOWS) sauce.burst ? burst(g, d, b) : star(g, d, b, b.big);
+    brawler(g, d, sauce);
+    ranger(g, d, sauce);
+    bar(g, d, sauce);
+  }
+
+  const gNow = document.getElementById('now').getContext('2d'), gSauce = document.getElementById('sauce').getContext('2d');
+  let playing = true, speed = 1, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  (function tick(now) {
+    if (playing) clock += (now - last) / 1000 * speed;
+    last = now;
+    draw(gNow, clock, {});
+    draw(gSauce, clock, on);
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>

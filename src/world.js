@@ -340,7 +340,7 @@ export const bankCeiling = c => {
   return Math.max(0, toEnd) * BANK_SLOPE;
 };
 
-// the outside of the rock's apron on one side: spoil and cores are aimed past it
+// the outside of the rock's apron on one side: spoil is aimed past it
 export const rockEdge = side =>
   side < 0 ? rockLeft() - ROCK_CLEAR : rockLeft() + S.gw * P + ROCK_CLEAR;
 

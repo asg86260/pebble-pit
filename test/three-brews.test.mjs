@@ -22,7 +22,7 @@ import { haulCap } from '../src/levels.js';
 function standApothecary() {
   window.__reset();
   window.__crew(1, 3, 0, 1);                   // rockhand, haulers, farm open, no quarry
-  window.__grant({ cores: 3, dust: 20000, spores: 2000, shards: 400 });
+  window.__grant({ dust: 20000, spores: 2000, shards: 400 });
   run(1);
   const started = window.__buy('unlockapothecary');
   window.__finish();
@@ -77,7 +77,7 @@ group('a stirrer carries the strong brew to a wizard, who comes down for it', as
   window.__reset();
   openSites();                                 // the quarry, for the ore it costs
   window.__crew(1, 2, 0, 1, 0, 2);             // two wizards on the ring
-  window.__grant({ cores: 3, dust: 20000, spores: 2000, shards: 400, sparks: 50 });
+  window.__grant({ dust: 20000, spores: 2000, shards: 400, sparks: 50 });
   run(1);
   window.__buy('unlockapothecary');
   window.__finish();

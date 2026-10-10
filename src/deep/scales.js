@@ -30,8 +30,9 @@ export const current = t => DEEP_CURRENT * Math.sin(2 * Math.PI * t / DEEP_CURRE
 // writes it up. `crushes` is for the drawing: each landing warms the fire
 // and spits its own sparks, so each keeps its moment (and a number for its
 // sparks' throw), forgotten once it has burned out or been crowded off.
+// A refund coming home is the player's own, not income.
 let crushed = 0;
-export function crush(n) {
+export function crush(n, income = true) {
   if (!(n > 0)) return;
   S.scales += n;
   S.seenScale = true;
@@ -41,14 +42,18 @@ export function crush(n) {
   let drop = Math.max(0, list.length - CRUSH_HEAT_KEEP);
   while (drop < list.length && list[drop].at < gone) drop++;
   if (drop) list.splice(0, drop);
-  earned('scale', n);
+  if (income) earned('scale', n);
 }
 
 // Loose `n` scales from (x, y): they sink, and lie where they land. A blow's
 // `spray` ({ dir, k }) sends them out of the edge it bit -- up for -1, down
 // for 1 -- in a fan, faster for a bigger blow (`k`, 0..1); without one they
 // drift off in a little cloud of their own, the way a held weapon bleeds them.
+// No more are let go than the bed has room for, counting those already in
+// the water: past that a scale has nowhere to lie and is lost to the dark
+// (`stepScales`), so it would be a fall drawn for nothing.
 export const shed = (x, y, n, spray = null) => {
+  if (deepBed.grid) n = Math.min(n, deepBed.cols * deepBed.rows - deepBed.n - S.sinking.length);
   for (let i = 0; i < n; i++) {
     let vx, vy;
     if (spray) {
@@ -104,16 +109,26 @@ export function scoop(x, n, reach) {
   return got;
 }
 
-// The column of the bed a gatherer should work next from x: the most scales
-// for the swim, how deep and how near both counting. -1 on a bare floor.
-export function richestNear(x) {
+// The column of the bed a gatherer should work next from x, with room for
+// `want` more in its arms and its load bound for `drop`: the most scales
+// banked for the swim. A stretch is worth what lies within `reach` of it, up
+// to the load, and costs the swim there and on to the crusher; the best
+// worth over cost wins, so a near stretch holding a load beats a tall heap
+// across the deep. -1 on a bare floor.
+export function nextStretch(x, want, drop, reach) {
   if (!deepBed.grid || !deepBed.n) return -1;
-  const home = colOf(deepBed, x);
-  let best = -1, score = -Infinity;
+  const span = Math.max(0, Math.round(reach / P));
+  const lying = new Array(deepBed.cols);
+  for (let c = 0; c < deepBed.cols; c++) lying[c] = topRow(deepBed, c) + 1;
+  let best = -1, score = -Infinity, near = 0;
+  for (let c = Math.max(0, -span); c <= Math.min(deepBed.cols - 1, span - 1); c++) near += lying[c];
   for (let c = 0; c < deepBed.cols; c++) {
-    const h = topRow(deepBed, c) + 1;
-    if (!h) continue;
-    const v = h * 8 - Math.abs(c - home) * 0.25;
+    // The running sum of the stretch's columns, [c - span, c + span].
+    if (c + span < deepBed.cols) near += lying[c + span];
+    if (c - span - 1 >= 0) near -= lying[c - span - 1];
+    if (!lying[c]) continue;
+    const at = bedX(c);
+    const v = Math.min(want, near) / (Math.abs(at - x) + Math.abs(at - drop) + P);
     if (v > score) { score = v; best = c; }
   }
   return best;
@@ -149,6 +164,22 @@ export function tossIn(x, y, shades) {
     S.sinking.push({ x, y, x0: x, y0: y, tx: h.x + h.w / 2 + (rand() - 0.5) * (h.w - P * 4),
                      ty: h.y + h.h + P * 2, arc: 0, wait: i * GATHER_TOSS_STAGGER, s });
   });
+}
+
+// A bill in scales handed back (a station's reset, a waiting copy's refund):
+// the payment's picture the other way. At most LIFT_FLECKS scales are tossed
+// from (x, y) into the hopper, each carrying its share of `n`, and the purse
+// takes them back as they land.
+export function refundScales(n, x, y) {
+  n = Math.floor(n);
+  if (!(n > 0)) return;
+  const shown = Math.min(n, LIFT_FLECKS), h = hopperRect();
+  for (let i = 0; i < shown; i++) {
+    const v = Math.floor(n / shown) + (i < n % shown ? 1 : 0);
+    S.sinking.push({ x, y, x0: x, y0: y, tx: h.x + h.w / 2 + (rand() - 0.5) * (h.w - P * 4),
+                     ty: h.y + h.h + P * 2, arc: 0, wait: i * GATHER_TOSS_STAGGER, v, back: true,
+                     s: shadeNear(SCALE_SHADE, SCALE_SPREAD) });
+  }
 }
 
 // Pay `n` scales out of the crusher: the account goes down, and a stream of
@@ -207,7 +238,7 @@ export const stepScales = c => {
       g.arc = Math.min(1, g.arc + f / GATHER_TOSS_FRAMES);
       g.x = g.x0 + (g.tx - g.x0) * g.arc;
       g.y = g.y0 + (g.ty - g.y0) * g.arc - Math.sin(Math.PI * g.arc) * (GATHER_TOSS_RISE + Math.max(0, g.y0 - g.ty));
-      if (g.arc >= 1) { crush(1); continue; }
+      if (g.arc >= 1) { crush(g.v || 1, !g.back); continue; }
       sink[keep++] = g;
       continue;
     }
@@ -247,7 +278,9 @@ export const stepScales = c => {
 
 // On the save the bed is the height of every column: every cell is a scale,
 // and the speckle is dealt again on the way back in from a stream of its own,
-// so a reload does not move the game's chance on.
+// so a reload does not move the game's chance on. A refund still in the air
+// is owed to the purse, and a reload finds it landed.
+const owed = () => S.sinking.reduce((n, g) => n + (g.back ? g.v : 0), 0);
 export const SAVE = {
   fields: ['deepBed'],
   write(out) {
@@ -259,9 +292,11 @@ export const SAVE = {
         heights[c] = n;
       }
     }
-    out.deepBed = { cols: deepBed.cols, heights };
+    out.deepBed = { cols: deepBed.cols, heights, owed: owed() };
   },
   read(s) {
+    S.sinking = S.sinking.filter(g => !g.back);
+    if (s.deepBed && s.deepBed.owed > 0) crush(s.deepBed.owed, false);
     if (!deepBed.grid) return;
     deepBed.grid.fill(0);
     const sv = s.deepBed;

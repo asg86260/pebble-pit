@@ -38,7 +38,7 @@
 // a route decided with the rest of its errands (`haulerWork`).
 
 import { P, LUNGE_EASE, WOBBLE, WOBBLE_BEAT, WORKER,
-         GROSS_MS, GROSS_COOLDOWN_MS } from '../config.js';
+         GROSS_MS, GROSS_COOLDOWN_MS, HOVER_SLOW } from '../config.js';
 import { S, floor } from '../state.js';
 import { colOf } from '../grid.js';
 import { dropZone } from '../rock.js';
@@ -157,17 +157,21 @@ const STAGES = [
   // it lands.
   w => w.floating === true && !floatDown(w),
 
-  // A cursor resting on a body holds it still, so its card is read off
-  // somebody standing. Above the commute, because the bodies you hover are
+  // A body under the cursor with the right button held walks slow: it moves
+  // on HOVER_SLOW of the frames, spread evenly (`slowOwed`), and stands
+  // through the rest. Above the commute, because the bodies you hover are
   // mostly mid-walk; held out of a dance, whose feet are off the ground.
   // Nothing is dropped and no claim is released.
   (w, c) => {
-    if (!(w.pauseUntil > c.now) || dancing(c)) return false;
-    w.say = { mark: '?', until: w.pauseUntil };
+    if (!(w.slowUntil > c.now) || dancing(c)) return false;
+    w.slowOwed = (w.slowOwed || 0) + HOVER_SLOW;
+    if (w.slowOwed >= 1) { w.slowOwed -= 1; return false; }
     // Standing on whatever is under it now: a hold that only returns true
     // leaves the body at the height it had when the hold began, and the gang
-    // take the columns under it. Every hold stands its body every frame.
-    w.y = stand(w);
+    // take the columns under it. Every hold stands its body every frame. In
+    // the deep a body is in the water, a fighter up at the hide as like as
+    // not, and is held where it is.
+    if (!belowYard(w)) w.y = stand(w);
     return true;
   },
 
@@ -340,7 +344,6 @@ export function updateWorkers(now, dt) {
       if ((w.claim >= from && w.claim <= to) || across) w.claim = -1;
     }
   }
-  if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   stepKit();                        // and anybody with kit to go and fetch or put back
 
   // Where everybody was standing when the frame began, for `faceTravel`.

@@ -58,7 +58,7 @@ group('every door row and every shield row is gated by offered and nothing else'
   same('on a fresh yard');
   window.__fullSites();
   window.__crew(2, 2, 1, 1);
-  window.__grant({ cores: 30, dust: 900000, spores: 90000, shards: 90000 });
+  window.__grant({ dust: 900000, spores: 90000, shards: 90000 });
   run(1);
   same('with the grounds open');
   // and every door there is, the shields answered, so the retired side of
@@ -77,9 +77,9 @@ group('every door row and every shield row is gated by offered and nothing else'
 // about, so it is hooks and facts on S; the reading is the row on the board.
 const MEET = {
   casino: () => { S().boulderNo = 2; },
-  quarry: () => { window.__grant({ cores: 3 }); },
+  quarry: () => { window.__answered('props', 'net'); },     // the net failed opens it
   apothecary: () => { window.__grant({ spores: 3 }); },
-  tower: () => { window.__grant({ cores: 3 }); },
+  tower: () => { window.__answered('props', 'net', 'arch'); },   // the arch failed opens it
   net: () => {},
   arch: () => {},
   dome: () => { S().wizardHats = 1; }

@@ -205,7 +205,13 @@ export function pour(secs) {
     SKY.length = w;
   }
   S.stormLeft = pick.length;
-  if (t >= len && !pick.length) S.raining = false;
+  if (t >= len && !pick.length) {
+    S.raining = false;
+    // A shower stood through to its end, if muck came down in it, is the
+    // record's "muck rain"; one of clean water is not.
+    if (S.tally.showerMuck) S.tally.muckRains = (S.tally.muckRains | 0) + 1;
+    S.tally.showerMuck = 0;
+  }
 }
 
 // --- the brew-up ---------------------------------------------------------------
@@ -370,6 +376,8 @@ export function stepDrops() {
     // Only what was sky leaves a mark; the water is water.
     if (d.dirt) {
       LEDGER.dirty++;
+      // the record's witness: this shower has rained muck (notices.js)
+      S.tally.showerMuck = (S.tally.showerMuck | 0) + 1;
       if (d.mark && m[c] < MUCK_MAX) { m[c]++; LEDGER.laid++; }
     } else LEDGER.clean++;
     SPLASHES.push({ c, y: rest, dirt: d.dirt, t: 0 });

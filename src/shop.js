@@ -165,7 +165,7 @@ addEventListener('pointerdown', e => {
 const PIC = '<span class="pic"></span>';
 // The scale first: on a deep board it is the coin the ladder is written in,
 // and the yard's coins are what the later bands add to it.
-const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'core', 'spark'];
+const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'spark'];
 const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
   '<span class="step">' +
   '<button type="button" class="less">-</button>' +
@@ -617,7 +617,7 @@ export function refresh(el, list, headcount) {
     if (strip) {
       if (strip.hidden !== !stands) strip.hidden = !stands;
       const back = strip.querySelector('.refund'), next = strip.querySelector('.another');
-      say(back, refunds ? `refund ×${refunds}` : 'building');
+      say(back, refunds ? `cancel ×${refunds}` : 'building');   // the owner's word, 2026-10-09
       back.classList.toggle('dead', !refunds);
       if (next.hidden !== !more) next.hidden = !more;
       if (more) { say(next, '+ another'); next.classList.toggle('dead', !canPay(u)); }
@@ -695,7 +695,11 @@ export function refresh(el, list, headcount) {
         sayHTML(price, '');
         sayHTML(time, `<span class="have">${queued ? placeWord(lineAt(u) - roomAt(u.site)) : MARK.time + ' ' + leftText(leftAt(u.site, u.key))}</span>`);
         if (row.classList.contains('building') !== (!queued && !stuck)) row.classList.toggle('building', !queued && !stuck);
-        if (row.classList.contains('queued') !== !!queued) row.classList.toggle('queued', !!queued);
+        // The tile wears what the word says: `queued` in line or with nobody
+        // there yet (a hand still walking over), so its edge is the dashes
+        // and its strip keeps a solid one.
+        const waiting = !!queued || stuck;
+        if (row.classList.contains('queued') !== waiting) row.classList.toggle('queued', waiting);
         // Greyed while being built, unless its strip has a copy to refund.
         grey(row, !refunds);
         // Not on offer: `off` keeps the shelf's hover away.
@@ -705,7 +709,7 @@ export function refresh(el, list, headcount) {
     }
     // An offer with copies in the works wears the state of its oldest copy
     // on the tile's edge, as a row with nothing more to sell does.
-    const going = more && !firstWaits(u) && !stalled(u.site), inline = more && firstWaits(u);
+    const going = more && !firstWaits(u) && !stalled(u.site), inline = more && !going;
     if (!waits && !more && row.classList.contains('waiting')) row.classList.remove('waiting');
     if (more && !row.classList.contains('waiting')) row.classList.add('waiting');
     if (row.classList.contains('building') !== going) row.classList.toggle('building', going);

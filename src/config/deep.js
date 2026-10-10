@@ -25,8 +25,8 @@ export const DEEP_MOUTH = P * 40;    // the shaft, in from the pit's near lip: w
 // its left edge. The altar is the deep's bench: punching, and the doors. The
 // pods stand between the crusher and the altar (the owner's call,
 // 2026-09-23), clear of the gatherers' toss at the crusher's side. Past the
-// crusher they stand an even step apart, each step wider than a dome and the
-// ground its crew stands on (DEEP_STAND_W) together, and the spire's dome is
+// crusher they stand an even step apart, each step wider than a station and
+// the ground its crew stands on (DEEP_STAND_W) together, and the spire is
 // still well inside the deep's right end.
 export const DEEP_SPOTS = { crusher: 0.05, pods: 0.19, altar: 0.335, well: 0.475, font: 0.62, circle: 0.76, spire: 0.9 };
 // The pods: the deep's houses, a capsule a body, stacked POD_COLS abreast from
@@ -36,7 +36,7 @@ export const POD_H = P * 5;
 export const POD_GAP = P;
 export const POD_COLS = 4;
 // How far either side of a station's middle a body working it may stand.
-// The station's own ground is its drawing (`standOf` in deep/place.js).
+// The station's own ground is its prop and its post (`standOfStation` in deep/place.js).
 export const DEEP_STAND_W = P * 30;
 
 // --- the crusher ------------------------------------------------------------------
@@ -62,9 +62,9 @@ export const DEEP_THROW = 0.25;
 // A chain of segments across the deep, swaying on its own clock: nothing in the
 // deep is still. `coilAt` in deep/place.js is the one reader.
 export const COIL_SEGS = 56;         // segments, head to tail
-export const COIL_X0 = 0.06;         // the head's end, a fraction of DEEP_W
+export const COIL_X0 = 0.28;         // the head's end, a fraction of DEEP_W
 export const COIL_X1 = 0.94;         // the tail's end
-export const COIL_Y = 0.5;           // its centerline, a fraction of DEEP_H down from the ceiling
+export const COIL_Y = 0.58;          // its centerline, a fraction of DEEP_H down from the ceiling
 export const COIL_AMP = P * 9;       // how far it swings either side of that
 export const COIL_WAVES = 3;         // waves along its length
 export const COIL_SWAY_MS = 7000;    // one sway
@@ -82,27 +82,34 @@ export const COIL_TIP = 0.25;        // the tip, a share of the girth
 export const BELLY_AT = 0.58;        // where he is held, a fraction of the way from head to tail
 export const SPLIT_LENGTHS = 5;      // stage three: the coil divides into this many lengths
 
-// --- the fight ---------------------------------------------------------------------
-// Four defenses, one a stage. The wound is held open against the heal and
-// breaks the stage at its depth; the fourth depth is the belly.
-export let SERPENT_HEAL = [1, 6, 20, 60];           // wound a second it closes, a stage
-export let SERPENT_WOUND = [60, 900, 6000, 30000];  // the depth that breaks it, a stage
-// How hard each defense is on each hit: a multiplier, a phase. Every class
-// that does damage takes half in one phase and the whole in the rest, so no
-// class walls and none is the answer to everything (docs/wave-party.md). The
-// click is a punch of its own, whole in every phase.
-export const SERPENT_DEFENSE = {
-  punch:    [1, 1, 1, 1],
-  brawler:  [1, 0.5, 1, 1],
-  sword:    [1, 1, 0.5, 1],
-  monk:     [0.5, 1, 1, 1],
-  martial:  [1, 0.5, 1, 1],
-  ranger:   [1, 1, 1, 0.5],
-  assassin: [1, 1, 0.5, 1],
-  sapper:   [1, 1, 0.5, 1],
-  hexer:    [0.5, 1, 1, 1],
-  mage:     [1, 1, 0.5, 1]
+// A phase is a window (DESIGN.md, "The serpent heals whole: a phase is a
+// window"): the party has SERPENT_WINDOW seconds of it, then the serpent eats
+// the next creature to reach its mouth and heals to full. A depth is about
+// what the party should do in one window: the median party's best window
+// 17.5 minutes into the phase, of eight parties less the strongest and the
+// weakest (`speedrun.mjs --fight --paced 17.5`), so a phase takes 15 to 20
+// minutes. The dev panel has both.
+export let SERPENT_WINDOW = [40, 32, 26, 20, 18];            // seconds a phase gives before it eats
+export const SERPENT_DEPTHS = [5970, 5070, 5560, 5670, 9210];  // the depth that breaks it, a stage
+// How many defenses there are; the stage past the last is the kill.
+export const SERPENT_PHASES = SERPENT_DEPTHS.length;
+export let SERPENT_WOUND = SERPENT_DEPTHS.slice();           // and as the dev panel has scaled it
+// Resists (DESIGN.md, "Resists: magic in the ward, physical in the split,
+// both in the fading"). Every hit is one kind of damage, and a phase resists
+// a kind: a resisted hit does RESIST_K of itself. The bare phase resists
+// nothing; the fading takes the two in turn, RESIST_TURN_S each, the coming
+// one showing on the hide RESIST_WARN_S before it (deep/phases.js). The click
+// is a punch, of no kind, whole in every phase.
+export const DAMAGE_KIND = {
+  punch: null,
+  brawler: 'physical', sword: 'physical', martial: 'physical', assassin: 'physical', ranger: 'physical',
+  monk: 'magic', hexer: 'magic', mage: 'magic',
+  sapper: 'explosive'
 };
+export const RESISTS = [[], ['magic'], ['physical'], ['magic', 'physical'], []];
+export const RESIST_K = 0.5;
+export const RESIST_TURN_S = 20;
+export const RESIST_WARN_S = 1;
 // A stunning blow seizes the coil and stops the heal (DESIGN.md, "Blows land:
 // the burst and the stun"). Only a capstone stuns -- the Brawler's haymaker,
 // the Monk's chi palm, the Ranger's aimed shot and the Sapper's pair of
@@ -120,22 +127,22 @@ export const CLICK_DMG = [1, 2, 3, 5, 8, 12, 18, 26, 40];
 
 // --- statuses ----------------------------------------------------------------------
 // Laid on the whole serpent (deep/statuses.js): Bleeding ticks, Exposed takes
-// more from everything, Held neither heals nor sways, Weakened heals less. On
-// a fighter: Inspired hits harder, Hasted swings sooner. What raises a hit --
-// Exposed, Held's share at the Hexer's capstone, Inspired -- is added up and
-// multiplied in once, at most AMP_MAX more; what cuts the heal, at most
-// HEAL_CUT_MAX of it.
-export const EXPOSED_AMP = 0.25;     // Exposed: this much more from everything
-export const AMP_MAX = 1;            // every amp together, at most
-export const HEAL_CUT_MAX = 0.6;     // every heal cut together, at most
+// more from everything, Held neither eats nor sways. On a fighter: Inspired
+// hits harder, Hasted swings sooner. What raises a hit -- Exposed, Inspired --
+// is added up and multiplied in once, at most AMP_MAX more.
+export const EXPOSED_AMP = [0.15, 0.25];   // Exposed, this much more from everything: the Hexer's move, its capstone
+export const AMP_MAX = 1;                  // every amp together, at most
 export const HASTE = 0.2;            // Hasted: this much more often
 
 // --- scales ------------------------------------------------------------------------
-// A hit knocks scales loose in proportion to what it did. They fall through
-// the water on the deep's own gravity and settle on its floor, which is the
-// deep's purse: a scale is counted when it lands, like a grain in the pit.
-export const SCALE_PER_DMG = 1;      // scales a unit of damage sheds
-export const SCALE_HIT_MAX = 12;     // and at most this many off one hit, the rest counted as they land nearby
+// A hit knocks scales loose by the size of what it did, a few more for each
+// tenfold of its damage rather than one a unit: the party's damage grows a
+// hundredfold over the fight and the gatherers' carry does not, so a shed
+// that followed the damage buried the floor. They fall through the water on
+// the deep's own gravity and settle on its floor, which is the deep's purse:
+// a scale is counted when it lands, like a grain in the pit.
+export const SCALE_PER_DECADE = 1.5; // scales a hit sheds for each tenfold of its damage, one at least
+export const SCALE_BASE = 2;         // and this many more on every hit, so a small one sheds a handful
 export const DUST_PER_SCALE = 10;    // what a scale is worth against dust (DUST_PER in upgrades/price.js)
 export const DEEP_BED_ROWS = 40;     // the floor's plot of scales: this many cells deep at most
 export const DEEP_BED_BRIM = 4;      // rows short of that the floor counts as full (the pile-full mark)
@@ -207,18 +214,96 @@ export const DEEP_REST_SILT = 4;                  // silt a landing kicks up
 // whatever the damage was.
 export const DOT_TICK_S = 0.5;
 
+// --- a phase's mechanic (DESIGN.md, "A phase has a mechanic and a class answers it") ---
+// One a phase past the first, on the phase's own clock: calm, then its
+// warning, then the thing itself, then round again, `every` seconds a turn.
+// Seconds throughout. The warded phase has none (the owner dropped its
+// surge, 2026-10-04): its resist is its whole difference.
+//
+//   lash   a wave runs head to tail in `last` and throws off the melee
+//          fighters at the hide, dazed `daze` where they land; the Hexer's
+//          Held in the warning stops it
+//   sink   he dims into the abyss for `last`, in and out over `fade`;
+//          nothing strikes him past half gone, and the heal runs
+//   orb    an orb round the strongest station's fighter for `last`, `hp` of
+//          the depth; blows crack it first, and a fighter lifted out is free
+export const MECHANICS = [
+  null,
+  null,
+  { kind: 'lash', every: 30, warn: 1.5, last: 1.1, daze: 3 },
+  { kind: 'sink', every: 40, warn: 1, last: 8, fade: 1 },
+  { kind: 'orb', every: 24, warn: 1.5, last: 12, hp: 0.15 }
+];
+// The constrict's orb (DESIGN.md, "A fifth phase: the constrict"): the comb
+// lights head first through the warning; bolts jag from its tips to the
+// strongest station's fighter for ORB_BOLT_S; an orb ORB_R cells across closes
+// round it and lifts it ORB_LIFT cells, a cell every ORB_LIFT_STEP seconds;
+// broken, it bursts into motes over ORB_BURST_S.
+export const ORB_BOLT_S = 0.5;
+export const ORB_BOLTS = 3;
+export const ORB_R = 5;
+export const ORB_LIFT = 3;
+export const ORB_LIFT_STEP = 0.1;
+export const ORB_BURST_S = 0.6;
+// A click on the orb itself is a punch ORB_CLICK_X times over, so the hand can
+// crack it faster; an arrow bobs over it, ORB_ARROW_UP cells and back every
+// ORB_ARROW_S, to say it can be clicked.
+export const ORB_CLICK_X = 3;
+export const ORB_ARROW_S = 0.4;
+export const ORB_ARROW_UP = 1;
+// The lash's shape: the coil draws up to this share of its sway in the
+// warning, over `LASH_TAUT_S`, and the tail lifts; then a bump this deep and
+// this wide (a share of the body) runs down it.
+export const LASH_TAUT = 0.8;
+export const LASH_TAUT_S = 0.6;
+export const LASH_LIFT = P * 12;       // the tail's tip, raised at the height of the warning
+export const LASH_H = P * 14;          // the bump, down off the line
+export const LASH_W = 0.05;            // its half width, a share of the body head to tail
+// A lashed fighter is thrown this hard, px a frame: down, and out to a side.
+export const LASH_THROW = [1.6, 2.2];
+// The sink's: the beat of its warning's flicker, how dim the coil goes under,
+// and how dim the flicker takes it.
+export const THROB_HZ = 2.5;
+export const SINK_DIM = 0.85;
+export const SINK_WARN_DIM = 0.3;
+export const SINK_VEIL_EVERY = 3;      // a veil cell every this many cells along the body
+
+// --- a phase's break (the owner's vote, 2026-10-04) ---------------------------------
+// The first break is a dive (the owner's B): he goes down out of sight below
+// the deep's floor over `in`, in BREAK_DIVE_STEPS held steps, stays under for
+// `under` while bubbles rise off the floor, and comes back up over `out` in
+// the next phase's hide, the bar refilling as he rises and its phase boxes shown from then on.
+// The later ones are a roar: the jaws stand wide over `gape`, a bump runs up
+// off the line head to tail over `run`, the new hide behind it and the bar
+// filling with it, and the jaws shut over `shut`. The bump throws off the
+// melee fighters it passes, dazed BREAK_ROAR_DAZE. Nothing reaches him while
+// either plays, and nothing heals. Seconds.
+export const BREAK_DIVE = { in: 1, under: 1.2, out: 1 };
+export const BREAK_DIVE_STEPS = 4;     // the held steps down, and back up
+export const BREAK_DIVE_OVER = P * 4;  // how far past the floor his top edge goes
+export const BREAK_BUBBLES = 9;        // bubbles off the body while he is under
+export const BREAK_BUBBLE_RISE = 14;   // cells a bubble climbs before it is gone
+export const BREAK_ROAR = { gape: 0.4, run: 1.6, shut: 0.4 };
+export const BREAK_ROAR_H = P * 8;     // the bump, up off the line
+export const BREAK_ROAR_DAZE = 0.6;
+export const BREAK_FILL_STEPS = 8;     // the bar refills in this many held steps
+
 export const DEEP_KNOBS = [
-  { key: 'SERPENT_HEAL_1', label: 'serpent heal, bare', min: 0, max: 20, step: 0.5,
-    get: () => SERPENT_HEAL[0], set: v => { SERPENT_HEAL = [v, ...SERPENT_HEAL.slice(1)]; } },
-  { key: 'SERPENT_HEAL_2', label: 'serpent heal, warded', min: 0, max: 100, step: 1,
-    get: () => SERPENT_HEAL[1], set: v => { SERPENT_HEAL = [SERPENT_HEAL[0], v, ...SERPENT_HEAL.slice(2)]; } },
-  { key: 'SERPENT_HEAL_3', label: 'serpent heal, split', min: 0, max: 300, step: 5,
-    get: () => SERPENT_HEAL[2], set: v => { SERPENT_HEAL = [...SERPENT_HEAL.slice(0, 2), v, SERPENT_HEAL[3]]; } },
-  { key: 'SERPENT_HEAL_4', label: 'serpent heal, fading', min: 0, max: 1000, step: 10,
-    get: () => SERPENT_HEAL[3], set: v => { SERPENT_HEAL = [...SERPENT_HEAL.slice(0, 3), v]; } },
+  { key: 'SERPENT_WINDOW_1', label: 'serpent window, bare', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[0], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 0 ? v : w)); } },
+  { key: 'SERPENT_WINDOW_2', label: 'serpent window, warded', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[1], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 1 ? v : w)); } },
+  { key: 'SERPENT_WINDOW_3', label: 'serpent window, split', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[2], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 2 ? v : w)); } },
+  { key: 'SERPENT_WINDOW_4', label: 'serpent window, fading', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[3], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 3 ? v : w)); } },
+  { key: 'SERPENT_WINDOW_5', label: 'serpent window, orb', min: 5, max: 120, step: 1,
+    get: () => SERPENT_WINDOW[4], set: v => { SERPENT_WINDOW = SERPENT_WINDOW.map((w, i) => (i === 4 ? v : w)); } },
   { key: 'SERPENT_WOUND_SCALE', label: 'serpent wound depths, x', min: 0.1, max: 5, step: 0.1,
-    get: () => SERPENT_WOUND[0] / 60,
-    set: v => { SERPENT_WOUND = [60, 900, 6000, 30000].map(d => Math.round(d * v)); } },
+    get: () => SERPENT_WOUND[0] / SERPENT_DEPTHS[0],
+    set: v => { SERPENT_WOUND = SERPENT_DEPTHS.map(d => Math.round(d * v)); } },
+  ...MECHANICS.filter(Boolean).map(m => ({ key: `MECH_${m.kind.toUpperCase()}_EVERY`, label: `${m.kind}, every s`,
+    min: 5, max: 180, step: 1, get: () => m.every, set: v => { m.every = v; } })),
   { key: 'STUN_SHARE', label: 'stun, share of the depth a blow needs', min: 0.005, max: 1, step: 0.005,
     get: () => STUN_SHARE, set: v => { STUN_SHARE = v; } },
   { key: 'STUN_BASE_S', label: 'stun, seconds at the share', min: 0.2, max: 10, step: 0.1,

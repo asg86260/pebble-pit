@@ -1,0 +1,84 @@
+<title>Serpent Resist Tiles</title>
+<style>
+/* Layout: one pane per icon pair for the phase's standing resist, each showing
+   the row under the bar through the four phases. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Resist Tiles</h1>
+    <p>The ward (magic halved) and the plates (physical halved) show on the hide but have no tile under the bar. Each
+      pane is one icon pair, the row under the bar in the four phases: the first resists nothing; the ward; the
+      plates; the fading, whose tile turns from one to the other every 20 s with its rim blinking for the last
+      second, and whose timer is the turn. The first tile is the resist, then the phase's mechanic if it is warned or
+      on, then what the fighters laid. A mock drawn from plain shapes at the game's tile size, not the game.</p>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+(() => {
+  const S = 2, T = 5 * S + 4, G = 5;
+  const ICON = {
+    surge: ['..#..', '..#..', '#####', '..#..', '..#..'], lash: ['...##', '..#..', '.#...', '#....', '#....'],
+    bleed: ['..#..', '.###.', '#####', '#####', '.###.'], held: ['.###.', '#...#', '#####', '##.##', '#####'],
+    wardA: ['.###.', '#...#', '#.#.#', '#...#', '.###.'], plateA: ['#####', '.....', '#####', '.....', '#####'],
+    wardB: ['..#..', '#.#.#', '.###.', '#.#.#', '..#..'], plateB: ['.###.', '#####', '#####', '.###.', '..#..'],
+    wardC: ['#.#.#', '.....', '#.#.#', '.....', '#.#.#'], plateC: ['##.##', '##.##', '.....', '##.##', '##.##'],
+  };
+  const SETS = [
+    { name: 'A: a ringed dot and stacked plates', note: 'The ward a ring with a spark in it, the plates three bars stacked.', w: 'wardA', p: 'plateA' },
+    { name: 'B: a star and a shield', note: 'The ward a four-point star, the plates a shield.', w: 'wardB', p: 'plateB' },
+    { name: 'C: a sparkle field and scales', note: 'The ward a scatter of motes, the plates a grid of scales.', w: 'wardC', p: 'plateC' },
+  ];
+  const ROWS = [
+    { label: 'bare', tiles: [] },
+    { label: 'ward', tiles: [['w', 1]] },
+    { label: 'split, lash warned', tiles: [['p', 1], ['lash', 1, 'warn'], ['bleed', .6, 0, 1]] },
+    { label: 'fading, turn ending', tiles: [['p', .12, 'warn'], ['held', .8, 0, 1]] },
+  ];
+  const W = 250, H = ROWS.length * 40 + 4;
+  function tile(g, ic, x, y, k, o = {}) {
+    const fill = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(a, b, w, h); };
+    fill(o.blink ? '#ffffff' : o.foe ? '#9b5de5' : '#8b8b96', x - 1, y - 1, T + 2, T + 2);
+    fill('#0a0a0c', x, y, T, T);
+    g.fillStyle = o.foe ? '#9b5de5' : '#ffffff';
+    ic.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') g.fillRect(x + 2 + c * S, y + 2 + r * S, S, S); }));
+    const lit = Math.ceil(k * 5);
+    for (let i = 0; i < 5; i++) fill(i < lit ? '#ffffff' : '#333339', x + i * (T / 5), y + T + 2, T / 5 - 1, 2);
+  }
+  SETS.forEach(set => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${set.name}</h2><canvas width="${W}" height="${H}"></canvas><p>${set.note}</p>`;
+    document.getElementById('grid').appendChild(card);
+    const g = card.querySelector('canvas').getContext('2d');
+    ROWS.forEach((row, i) => {
+      g.fillStyle = '#6e6e78'; g.font = '8px monospace'; g.fillText(row.label, 4, i * 40 + 10);
+      let x = 6;
+      row.tiles.forEach(([key, k, warn, foe]) => {
+        const ic = ICON[key === 'w' ? set.w : key === 'p' ? set.p : key];
+        tile(g, ic, x, i * 40 + 16, k, { foe, blink: warn === 'warn' && (key === 'p' ? false : true) });
+        x += T + G;
+      });
+    });
+    // the fading's blink is on the tile that turns, drawn as its white rim
+    const y = 3 * 40 + 16;
+    tile(g, ICON[set.p], 6, y, .12, { blink: true });
+  });
+})();
+</script>

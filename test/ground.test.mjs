@@ -317,7 +317,6 @@ group('a worker can reach the bank behind the rock', async () => {
 // only as wide as its limit needs, so what it makes stands up: a quarter is a
 // nub against the station, and the limit is a crest across the middle of it.
 group('a full pile is a heap you can read', async () => {
-  window.__grant({ cores: 8 });
   window.__crew(0, 0, 0, 0);                 // nobody: the pile is thrown, not mined
   window.__clearFloor();
   run(1);

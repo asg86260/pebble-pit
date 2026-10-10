@@ -15,7 +15,7 @@ const S = yard.S;
 const rich = (...crew) => {
   window.__reset();
   window.__crew(...crew);
-  window.__grant({ cores: 9, dust: 90000, shards: 900, spores: 900, sparks: 500 });
+  window.__grant({ dust: 90000, shards: 900, spores: 900, sparks: 500 });
   window.__answered('props', 'net', 'arch');
   // the air filter is sold after the first rain, with a machine running
   window.__machine('ram', { bought: true });

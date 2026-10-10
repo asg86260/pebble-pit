@@ -243,16 +243,12 @@ const YARD_ROW_SITE = {
 // is its station's (`stationBox`).
 const SITE_BOX = { lab: () => lab };
 
-// Every room the settlement will have once this house lands, the same way
-// `nextHouseAt` in house.js asks. `ahead` is how many houses are in the line
-// before it: a second house queued behind the first stands on the room after
-// the first's, not on the same one.
-const risingRooms = (ahead = 0) => {
-  const today = S.crew > 0 ? S.crew + 1 : 0;
-  return houseRooms(today + (S.crew > 0 ? 1 : 2) + ahead);
-};
-let houseRooms = () => [];
-export const setRooms = fn => { houseRooms = fn; };
+// Every room the settlement will have once this house lands (`roomsAfter` in
+// house.js, handed in). `ahead` is how many houses are in the line before
+// it: a second house queued behind the first stands on the room after the
+// first's, not on the same one.
+let risingRooms = () => [];
+export const setRooms = fn => { risingRooms = fn; };
 
 // `which` names one particular work on a yard holding several: the fence, the
 // bar and the builder for the SECOND thing going up must stand on the second
@@ -478,7 +474,7 @@ export function stepWorks(dt) {
       // HERE, on the frame the order changes: `layPiles` answers from a cached
       // key, so left for the next walk it was left for the next reload.
       reserve(w.key);
-      doneHook(site, w.key);
+      doneHook(site, w.key, w.bill);
       // The next in line is told it has started, exactly as if bought into an
       // empty site, and the builder this landing freed takes it (`siteFor` in
       // crew/builders.js).
@@ -495,12 +491,13 @@ export function stepWorks(dt) {
 // a building arriving is its own announcement, and the yard has no box to
 // center a tick on. A station of the deep's party is its own site, by its id,
 // so its tick lands over the station that went up, and its own board clears it.
-export function workFinished(site, key) {
+export function workFinished(site, key, bill = null) {
   if (site === 'yard') return;
   // Everything landed since the board was read, oldest first: the stack over
   // the station shows them all, ticked, in the order they landed. A fresh
   // array, as `markRowSeen` writes one, for the save.
   S.siteDone[site] = [...doneAt(site), key];
+  S.siteDoneBill[site] = [...doneBillsAt(site), Array.isArray(bill) ? bill : null];
   // The tile wears the turned-down corner of a card never seen until hovered
   // (`markRowSeen` in shop.js): the tick says a board has something, the
   // corner says which tile. A fresh array, as `markRowSeen` writes one: the
@@ -510,6 +507,12 @@ export function workFinished(site, key) {
 
 // What a site has finished and not yet shown, oldest first.
 export const doneAt = site => S.siteDone?.[site] || [];
+// What each of them was paid, index for index with `doneAt`; null where a
+// save from before it was kept has no bill to say.
+export const doneBillsAt = site => {
+  const b = S.siteDoneBill?.[site] || [];
+  return doneAt(site).map((_, i) => b[i] ?? null);
+};
 
 // what finished at a site, in the words the rows used
 export const doneName = site => {
@@ -521,4 +524,5 @@ export const doneName = site => {
 export function markDoneSeen(site) {
   if (!doneAt(site).length) return;
   delete S.siteDone[site];
+  delete S.siteDoneBill?.[site];
 }

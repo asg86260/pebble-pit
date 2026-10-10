@@ -1,9 +1,8 @@
-// What a core gives off, and the things that leave the yard: the core's glow,
-// the buried and freed core, the sand that comes off it, the paid dust, the
-// rift and the abyss the drowned pit holds.
+// The things that leave the yard: the sand lying on the rock, the paid dust,
+// the rift and the abyss the drowned pit holds.
 
 import { now } from '../clock.js';
-import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
+import { P, MAGIC_TONES,
          ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_SWELL_MS2, ABYSS_SWELL_MS3,
          ABYSS_SWELL_K1, ABYSS_SWELL_K2, ABYSS_SWELL_K3,
          ABYSS_SWELL_W1, ABYSS_SWELL_W2, ABYSS_SWELL_W3,
@@ -22,7 +21,6 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          RIFT_DEEP_LAYERS, RIFT_DEEP_NEAR, RIFT_DEEP_FAR, RIFT_DEEP_SPACING,
          RIFT_PULL_MOTES, RIFT_PULL_MS, RIFT_PULL_FROM, RIFT_PULL_INK,
          RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
-import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
 import { abyssLine, pitDepth } from '../pit.js';
@@ -30,83 +28,8 @@ import { S, floor, pit, rift } from '../state.js';
 
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
-import { drawCircle, drawMark } from './marks.js';
+import { drawMark } from './marks.js';
 import { paintAbyssField } from './abyssfield.js';
-
-// --- what a core gives off ----------------------------------------------------
-// Rings of cells walking outward and fading, each a different color and all of
-// them cycling. Cells, not a gradient, so the glow belongs to the picture; and
-// faint, so it reads as the air over the thing rather than the thing.
-const WAVES = 3;                   // rings in the air at once
-const WAVE_MS = 2400;              // how long one takes to walk out and go
-const WAVE_REACH = P * 6;          // and how far it gets
-const WAVE_ALPHA = 0.62;
-
-// Rounding that treats the two sides of nought alike (see the ring below).
-const evenly = v => Math.sign(v) * Math.round(Math.abs(v));
-
-export function drawCoreGlow(cx, cy, capAtGround) {
-  const t = now();
-  // Nothing is snapped: the point every cell is measured from is `cx, cy`
-  // exactly, which makes the ring symmetric about the disc by construction.
-  // A core does not sit on a whole cell (it rolls, and you carry it about), so
-  // a snapped middle sits wherever the lattice falls rather than around the
-  // thing; three pixels on an eighteen-pixel core is visibly off its own disc.
-  const ox = cx, oy = cy;
-  for (let i = 0; i < WAVES; i++) {
-    const k = ((t / WAVE_MS) + i / WAVES) % 1;
-    const r = CORE_SIZE / 2 + k * WAVE_REACH;
-    // out and gone: it thins as it widens
-    ctx.globalAlpha = WAVE_ALPHA * (1 - k) * (1 - k);
-    ctx.fillStyle = `hsl(${Math.round(t / 12 + i * 140) % 360} 85% 58%)`;
-    // One cell per cell of arc, never the same cell twice (a cell painted twice
-    // at half alpha is a cell at full alpha), and an EVEN number of them: when
-    // n is even the sampled angles are closed under a half turn, so every cell
-    // has an exact opposite wherever the ring has spun to. Odd, nothing pairs
-    // up and the ring is lopsided a different way each frame.
-    const spokes = Math.max(8, Math.round((Math.PI * 2 * r) / P));
-    const n = spokes + (spokes % 2);
-    const seen = new Set();
-    // The ring's cells as one path and one fill: a pit full of cores is a
-    // hundred rings a frame.
-    const path = new Path2D();
-    for (let j = 0; j < n; j++) {
-      const a = (j / n) * Math.PI * 2 + k * 0.8;      // and it turns as it goes
-      // Rounded away from nought rather than half-UP: `Math.round` lands plus
-      // a half on 1 and minus a half on 0, so the offset exists on one side
-      // only. `evenly` is odd-symmetric, so opposite spokes give opposite cells.
-      const x = ox + evenly(Math.cos(a) * r / P) * P;
-      const y = oy + evenly(Math.sin(a) * r / P) * P;
-      // A whole ring, except where the thing is still inside the rock: the
-      // buried core is drawn BEHIND the boulder, and the rock only covers what
-      // is above the ground line, so without the cut the bottom of the ring
-      // lies glowing on the open ground.
-      if (capAtGround && y - P / 2 >= S.groundY) continue;
-
-
-      // Keyed in cells about the middle, which a glow never reaches a
-      // thousand of.
-      const key = Math.round((x - ox) / P) * 4096 + Math.round((y - oy) / P);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      // `x, y` is the cell's MIDDLE; a rect wants its top-left. This offset
-      // is the conversion, not a nudge.
-      path.rect(x - P / 2, y - P / 2, P, P);
-    }
-    ctx.fill(path);
-  }
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#000';
-}
-
-export function drawCoreAt(x, y, capAtGround) {
-  // One middle for both, so the glow and the disc cannot disagree.
-  const cx = x + CORE_SIZE / 2, cy = y + CORE_SIZE / 2;
-  drawCoreGlow(cx, cy, capAtGround);
-  // radius allows for the 2px stroke, so the circle stays inside its box and
-  // never paints over the ground line
-  drawCircle(cx, cy, CORE_SIZE / 2 - 2);
-}
 
 // What is lying on the hill, drawn after the rock and before the chips. Every
 // grain goes through `drawMark` so it looks like the thing it is; there are
@@ -122,24 +45,6 @@ export function drawRockSand() {
       drawMark(s[k], left + c * P + P / 2, top + (s.length - 1 - k) * P + P / 2);
   }
   ctx.fillStyle = '#000';
-}
-
-// Buried in the rock: drawn first so the boulder covers it until you dig it
-// out. Only once the boulder is *there*: a rock still falling covers nothing.
-export function drawCoreBehind() {
-  if (S.heldCore || S.coreItem || !boulderAlive() || S.rockFall > 0) return;
-  // Cores start at CORE_FROM. `coreBuried` is set on every rock and means
-  // "this one still has something to give up", so drawing off it shows a core
-  // in rocks that will never yield one.
-  if (S.boulderNo < CORE_FROM) return;
-  const h = coreHome();
-  drawCoreAt(h.x, h.y, true);          // still in the rock: nothing spills onto the ground
-}
-
-// out in the world: on the cursor or lying on the ground
-export function drawCore() {
-  if (S.heldCore) drawCoreAt(S.mouse.x - CORE_SIZE / 2, S.mouse.y - CORE_SIZE / 2);
-  else if (S.coreItem) drawCoreAt(S.coreItem.x, S.coreItem.y);
 }
 
 // The grains in the air on the way out of the pile, drawn as whatever they are.

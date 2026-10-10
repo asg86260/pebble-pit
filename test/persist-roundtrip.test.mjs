@@ -117,11 +117,11 @@ group('every field on S is accounted for', async () => {
   const missing = Object.keys(S).filter(k => !seen.has(k));
   const twice = all.filter((k, i) => all.indexOf(k) !== i);
 
-  // The three keys a save spells differently from the field it holds. Every
+  // The key a save spells differently from the field it holds. Every
   // other name in the two saved lists is the field's own.
   // ...and the two moments of the beat between rocks, written as distances
   // (`danceLeft`, `nextBoulderIn`) the way a body's moments are.
-  const ALIAS = { who: 'workers', core: 'coreItem', coreLoose: 'coreItem',
+  const ALIAS = { who: 'workers',
                   danceLeft: 'danceUntil', nextBoulderIn: 'nextBoulderAt' };
   yard.persist();
   const written = Object.keys(JSON.parse(localStorage.getItem('boulder-clicker/v4')));
@@ -154,7 +154,7 @@ group('every field on S is accounted for', async () => {
       // ...and `mouth`, where the cut's mouth was: a fact about the layout the
       // crew were saved on, read by `restoreCrew` and kept by nothing.
       // ...and `saveV`, the shape number the migrations read off the blob.
-      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds', 'drops', 'puffs', 'clods', 'saveV', 'deepBed'];
+      const OUTSIDE = ['floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft', 'mouth', 'skyKinds', 'drops', 'puffs', 'clods', 'saveV', 'deepBed', 'refundOwed'];
       const odd = list.filter(k => !(k in S) && !OUTSIDE.includes(k));
       return ok(odd.length === 0, `${name} names only fields of the yard`, odd.join(', '));
     })

@@ -1,0 +1,158 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fang mark mock</title>
+<style>
+  /* the game's two pages (src/style.css), picked by the system's scheme */
+  :root { --paper: #fff; --ink: #000; --ink-5: #8c8c8c; --page: #f4f4f4; --soft: #555; --water: #000; --mote: #3a3a3a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #1f1f1f; --ink: #e0e0e0; --ink-5: #767676; --page: #111; --soft: #aaa; }
+  }
+  body { background: var(--page); color: var(--ink); font: 12px ui-monospace, "Courier New", monospace; margin: 16px; }
+  .note { max-width: 980px; margin: 0 0 16px; color: var(--soft); line-height: 1.5; }
+  .note b { color: var(--ink); }
+  h1 { font-size: 15px; margin: 0 0 6px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 18px; }
+  .opt { width: 440px; max-width: 100%; }
+  .opt h2 { font-size: 13px; margin: 0 0 3px; }
+  .opt p { margin: 0 0 8px; color: var(--soft); min-height: 32px; }
+  .opt pre { margin: 6px 0 0; font-size: 10px; line-height: 10px; color: var(--soft); }
+  /* the deep's water the button hangs in */
+  .water { background: var(--water); padding: 14px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start;
+           border: 1px solid #444; position: relative; overflow: hidden; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  /* a copy of #buildbtn (src/shelf.css): the mark is an ink mask, as the game's is */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--paper); color: var(--ink);
+         border: 2px solid var(--ink); font: 12px ui-monospace, "Courier New", monospace; letter-spacing: .14em;
+         text-transform: uppercase; white-space: nowrap; cursor: pointer; }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn i { display: inline-block; width: 9px; height: 9px; background: currentColor;
+           -webkit-mask: var(--m) 0 0 / 100% 100% no-repeat; mask: var(--m) 0 0 / 100% 100% no-repeat; }
+  /* the same button four times over, every length times four */
+  .btn.x4 { gap: 24px; padding: 24px 40px; border-width: 8px; font-size: 48px; }
+  .btn.x4 i { width: 36px; height: 36px; }
+  /* the counter card's line (render/counter.js): the mark in ink, the count beside it */
+  .card { background: var(--paper); color: var(--ink); border: 1px solid var(--ink-5); padding: 3px 6px;
+          display: inline-flex; gap: 6px; align-items: center; font-size: 11px; }
+  .card i { display: inline-block; width: 9px; height: 9px; background: currentColor;
+            -webkit-mask: var(--m) 0 0 / 100% 100% no-repeat; mask: var(--m) 0 0 / 100% 100% no-repeat; }
+  canvas { image-rendering: pixelated; display: block; }
+  .ref { margin: 0 0 18px; }
+  .ref .water { flex-direction: row; align-items: flex-end; gap: 28px; }
+  .lab { color: #888; font-size: 10px; margin-top: 4px; }
+</style>
+
+<h1>The fang's mark on the build button</h1>
+<p class="note"><b>A mock drawn from plain cells, not the game.</b> Each mark is nine pixels square and is laid on a copy
+  of the floating build button the way the game does it -- only the ink cells are drawn, as a mask in the text's color,
+  so a mark's "paper" cells are simply empty. Shown at the button's real size and at four times, over black water, and
+  on the counter card's line. It cannot show the real deep behind the button, the button's fade, or the camera moving it.
+  Light or dark follows your system's setting.</p>
+
+<div class="ref">
+  <h2 style="font-size:13px;margin:0 0 4px">For reference: the fang itself in the water (FANG_SPRITE, 3 cells, a cell 6 px)</h2>
+  <div class="water" id="ref"></div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+// Each option: a name, what it is meant to read as, and its nine rows ('#' ink).
+var OPTIONS = [
+  { name: 'Today -- FANG_MARK',
+    say: 'Meant as a hollow tooth hanging point down. At nine pixels the hollow outline reads as a triangle pointing down, a "▽".',
+    rows: [' ####### ', ' #.....# ', ' #.....# ', '  #...#  ', '  #...#  ', '   #.#   ', '   #.#   ', '    #    ', '    #    '] },
+  { name: 'A -- a solid fang, hooked',
+    say: 'A filled canine whose tip curls back, like a snake\'s. The bend is what no arrow or triangle has; it may read as a claw.',
+    rows: [' #####   ', ' ######  ', '  #####  ', '   ####  ', '    ###  ', '    ###  ', '    ##   ', '   ##    ', '   #     '] },
+  { name: 'B -- a bite',
+    say: 'An upper jaw with two fangs down and a lower jaw with two short teeth up: a mouth closing. Reads as teeth, not as one shape.',
+    rows: ['#########', ' ##   ## ', ' ##   ## ', '  #   #  ', '  #   #  ', '         ', '  #   #  ', ' ##   ## ', '#########'] },
+  { name: 'C -- the fang in the water, three times',
+    say: 'The same three-cell drawing the player picks up in the deep, blown up: what you carry is what the button asks for. Its grey cell left empty. At this size it reads as a T or a nail, as the sprite does.',
+    rows: ['#########', '#########', '#########', '   ###   ', '   ###   ', '   ###   ', '   ###   ', '   ###   ', '   ###   '],
+    from: ['###', '.#+', '.#.'] },
+  { name: 'D -- a solid fang with a sliver of light',
+    say: 'Today\'s tooth filled in, with one empty cell-line down its side for the curve of the enamel. Solid, so never an outline triangle.',
+    rows: [' ####### ', ' ####### ', '  ##.### ', '  ##.##  ', '   #.##  ', '   ###   ', '    ##   ', '    #    ', '    #    '] }
+];
+
+// A mark's ink cells as a mask image, the way deep/buildbutton.js builds --fang-mark.
+function maskOf(rows) {
+  var cells = '';
+  rows.forEach(function (row, y) {
+    for (var x = 0; x < row.length; x++) if (row[x] === '#') cells += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>';
+  });
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + rows[0].length + '" height="' + rows.length +
+            '" shape-rendering="crispEdges">' + cells + '</svg>';
+  return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+}
+function button(rows, text, big) {
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'btn' + (big ? ' x4' : '');
+  b.style.setProperty('--m', maskOf(rows));
+  b.innerHTML = '<i></i><b style="font-weight:normal">' + text + '</b>';
+  return b;
+}
+function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+
+// A few motes on the water, so the button sits on something like the deep.
+function motes(host) {
+  var c = document.createElement('canvas');
+  c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:0';
+  host.appendChild(c);
+  requestAnimationFrame(function () {
+    c.width = Math.ceil(host.clientWidth / 3); c.height = Math.ceil(host.clientHeight / 3);
+    var g = c.getContext('2d'), seed = 7;
+    function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    for (var i = 0; i < c.width * c.height / 40; i++) {
+      g.fillStyle = rnd() < 0.15 ? '#5b2fa8' : ['#2a2a2a', '#3a3a3a', '#666'][Math.floor(rnd() * 3)];
+      g.fillRect(Math.floor(rnd() * c.width), Math.floor(rnd() * c.height), 1, 1);
+    }
+  });
+}
+
+// The fang in the water: FANG_SPRITE ('#' white, '+' a grey a step down), a cell 6 px, and at 4x.
+(function () {
+  var ref = document.getElementById('ref'), SPRITE = ['###', '.#+', '.#.'];
+  [[6, '1x: as the player sees it sink'], [24, '4x']].forEach(function (z) {
+    var box = el('div');
+    box.style.marginRight = '40px';
+    var c = document.createElement('canvas'), n = 3 * z[0];
+    c.width = n + 2 * z[0]; c.height = n + 2 * z[0];
+    var g = c.getContext('2d');
+    SPRITE.forEach(function (row, r) {
+      for (var k = 0; k < row.length; k++) {
+        if (row[k] === '.') continue;
+        g.fillStyle = row[k] === '#' ? '#fff' : '#9a9a9a';
+        g.fillRect(z[0] + k * z[0], z[0] + r * z[0], z[0], z[0]);
+      }
+    });
+    box.appendChild(c);
+    box.appendChild(el('div', 'lab', z[1]));
+    box.style.position = 'relative'; box.style.zIndex = 1;
+    ref.appendChild(box);
+  });
+  motes(ref);
+})();
+
+var grid = document.getElementById('grid');
+OPTIONS.forEach(function (o) {
+  var box = el('div', 'opt');
+  box.appendChild(el('h2', null, o.name));
+  box.appendChild(el('p', null, o.say));
+  var water = el('div', 'water');
+  var small = el('div', 'row');
+  small.appendChild(button(o.rows, 'free'));
+  small.appendChild(button(o.rows, '×2'));
+  var card = el('span', 'card', '<i></i>2');
+  card.querySelector('i').style.setProperty('--m', maskOf(o.rows));
+  small.appendChild(card);
+  [small].concat([button(o.rows, '×2', true)]).forEach(function (n) { n.style.position = 'relative'; n.style.zIndex = 1; water.appendChild(n); });
+  box.appendChild(water);
+  box.appendChild(el('pre', null, o.rows.map(function (r) { return r.replace(/ /g, '.'); }).join('\n')));
+  grid.appendChild(box);
+  motes(water);
+});
+</script>

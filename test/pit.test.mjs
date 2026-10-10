@@ -5,7 +5,7 @@
 // against `step` in node with no browser anywhere. The words are the words these
 // checks were written with in the browser suite; what changed is where they run.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, P, WORKER } from './helpers.mjs';
 
 // A hole you can throw across has a back to it. The toss off the lip was a
 // fixed spray, which was fine while the pit ran two windows to the right and
@@ -32,94 +32,6 @@ group('a toss lands in the hole, not on the ground behind it', async () => {
        `${before.stored} -> ${s.stored}`),
     ok(s.dustPastPit === 0, 'nothing sails over the far wall onto the ground behind',
        `${s.dustPastPit} grains behind the pit`)
-  ];
-});
-
-// The hole is dug, not given: it starts as a scrape you can fill in a minute
-// and every dig at the bench takes the far wall out and the floor down. This
-// check digs it all the way out and leaves it there, which is the state the
-// capacity checks below it want.
-// The hole filling up is a fact about the *pile*, not about the counter, and
-// they are nearly the same number: a core in the pile takes a cell and is not
-// dust. Reading the counter meant the hole was physically full one grain
-// before the counter agreed, the heap over the mouth never unlocked, and the
-// crew stood at the lip throwing dust at a brim with nowhere under it -- for
-// ever, because nothing about that state could change.
-group('a core in the pile does not jam the hole', async () => {
-  const was = (({ rockhandSpeedLevel, haulPaceLevel, haulCarryLevel }) =>
-               ({ rockhandSpeedLevel, haulPaceLevel, haulCarryLevel }))(state());
-  // The core goes in first, while there is still room for it. Everything is
-  // counted against the one capacity now -- a find is a grain like any other --
-  // so a core arriving at a hole that is already full is a core that waits on
-  // the ground, and what this check is about is a core *in* the pile. Whatever
-  // an earlier check left in the hole is emptied out first, or there may be no
-  // room for it even at the start.
-  window.__spend(state().stored);
-  window.__clearFloor();
-  await bankCore();
-  // Enough hands to keep the yard clear: the rock's pile stops the gang when
-  // it fills, and this check needs the hole actually filled inside its run.
-  window.__crew(3, 6);
-  window.__levels({ rockhandSpeedLevel: 10, haulPaceLevel: 8, haulCarryLevel: 3 });
-  // Filled by hand. The hole is the whole hole from the first frame, so mining
-  // it full is an hour of yard -- and what this is about starts the moment
-  // there is no more room, not on the way there. The crew above are still here
-  // to keep working against a full hole once it is.
-  window.__give(999999);
-  // Waited on the COLLAPSE rather than on `pitFull`. Once the hole has torn
-  // open the rift swallows off the top on its own clock, so the pile drops a
-  // grain below the brim and back over it between one frame and the next --
-  // `pitFull` blinks, and a check that waits for it and then reads it can catch
-  // either. What this group is about is the yard against a hole with no room in
-  // it, and that is what the collapse says.
-  // The hole at the moment it gave way, read before a single frame of the
-  // tearing has run. `__give` fills the plot and the hole refuses a grain inside
-  // that one call, so this is the brim -- and the brim is all it is now: the
-  // tear takes the whole pile from there (see `## The rift`), so a check that
-  // runs a quarter of a second past it reads a hole a third of the way gone.
-  //
-  // The two facts about a *full* hole -- every cell spoken for, and the heap
-  // over the mouth unlocked on the way -- are only ever true here. Everything
-  // about the yard afterwards is read below, once the gulp is done and the crew
-  // have had a moment.
-  const brim = state();
-  run(10);                                     // the tearing, and a moment to stand down in
-  const s = state();
-  const carrying = s.crewDetail.filter(w => w[0] === 'h' && +w.split('|c')[1].split('|k')[0] > 0);
-  // put the yard back: an empty hole and a swept floor, or every check after
-  // this one starts in a works that has ground to a halt
-  window.__crew(0, 0);
-  window.__spend(s.stored);
-  window.__clearFloor();
-  window.__levels(was);                    // and a yard that swings at its old pace
-  run(1);
-  return [
-    ok(s.cores > 0, 'a core has been banked, so the pile is not all dust',
-       `${s.cores} cores`),
-    ok(brim.riftOpen && s.riftOpen, 'the hole has been filled past what it holds',
-       `${brim.pit} of ${brim.pitCapacity}`),
-    // Within a whisker of every cell: the rift is swallowing off the top the
-    // whole time, so the pile sits a hair under the brim and is topped straight
-    // back up. A tolerance rather than a number, because how big the whisker is
-    // depends on the rift's rate.
-    ok(brim.pit >= brim.pitCapacity * 0.99, 'and it really was: every cell the plot allows was spoken for',
-       `${brim.pit} cells of ${brim.pitCapacity}, ${brim.pitDust} of them dust`),
-    // the heap over the mouth has to have unlocked, or the pile stopped at
-    // the brim of the hole and everything above it was never reachable
-    ok(brim.pitDust > (brim.pitW / brim.pitGrain) * (brim.pitDepth / brim.pitGrain) - brim.cores,
-       'the heap over the mouth was unlocked on the way',
-       `${brim.pitDust} dust, hole holds ${(brim.pitW / brim.pitGrain) * (brim.pitDepth / brim.pitGrain)}`),
-    // Laden is fine now, and is the point: a hole that has collapsed always has
-    // somewhere to put a load, so a carter walks up and tips it rather than
-    // standing at the lip holding it. What must be true is that the books
-    // balance -- what is counted, less what is through the rift, is the pile.
-    // And the tearing took it: the hole a player is left with after the moment
-    // is an empty one, which is the whole of what the rift is for.
-    ok(s.pit < brim.pit * 0.1, 'and the tearing emptied it',
-       `${brim.pit} -> ${s.pit}`),
-    ok(s.stored - s.rift === s.pitDust,
-       'and what is counted, less what is through the rift, is the pile',
-       `${s.stored} counted, ${s.rift} through, ${s.pitDust} in the pile`)
   ];
 });
 

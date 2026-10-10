@@ -29,12 +29,11 @@ export const MACHINE_TUNE_RUNGS = MACHINE_TUNE_SPARKS.length;
 // a bill is built and upgrades.js cannot be reached without closing a ring.
 // The tuning ladder derives its dust leg from this.
 export const DUST_PER_SPARK = 20;
-// The other three coins on the same line. A coin is worth what the yard has to
+// The other two coins on the same line. A coin is worth what the yard has to
 // give up to make one, and a staffed farm mints forty-odd spores a minute
 // against a hundred-odd dust, so a spore is a few grains' worth of time.
 export const DUST_PER_SHARD = 12;
 export const DUST_PER_SPORE = 3;
-export const DUST_PER_CORE = 500;
 // Soot off the stack, per unit of the station's work -- not per minute. A
 // machine is the sky's only producer (`foul` refuses everything else), so this
 // one dial *is* the pollution rate, and a machine is also many times as quick

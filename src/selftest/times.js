@@ -121,5 +121,31 @@ export const TESTS = [
       ok(noAsk, 'the ending sheet has no line'),
       ok(calls === 0, 'and nothing was called', `${calls} calls`)
     ];
-  }]
+  }],
+  // The sheet's last words follow the switch (ending.js): with the second
+  // half on the snatch comes next, so it says the story goes on.
+  ['the ending sheet says the story goes on when the second half follows it, and ends it when not', async () => {
+    const said = async on => {
+      window.__serpentOn(on);
+      newRun();
+      await settle();
+      S.rescued = true; S.buried = false; S.buriedMs = 600000;
+      run(1 / 60);
+      await raf();
+      const sheet = document.getElementById('saved');
+      const text = [...sheet.querySelectorAll('.why')].filter(el => !el.hidden).map(el => el.textContent).join(' ');
+      const button = !document.getElementById('keepplaying').hidden;
+      window.__skipBeat('sheet');
+      return { text, button };
+    };
+    try {
+      const on = await said(true), off = await said(false);
+      return [
+        ok(!/thank you for playing/.test(on.text), 'with the half on there is no thanks: the story goes on', on.text),
+        ok(!on.button, 'and has no button: it goes by itself'),
+        ok(/thank you for playing/.test(off.text), 'with it off it thanks you for playing', off.text),
+        ok(off.button, 'and keeps its button')
+      ];
+    } finally { window.__serpentOn(null); }
+  }],
 ];

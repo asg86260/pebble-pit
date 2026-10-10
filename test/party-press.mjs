@@ -1,9 +1,10 @@
-// The party's presses, the player's way (DESIGN.md, "A fighter branches at
-// rung 4"): the floating build button, the lot's board that picks the kind,
-// a station's rows and its Reset. Shared by the node-tier checks that buy a
-// station or a rung as a step on the way to what they are about, so none of
-// them writes a station or a rung onto `S` by hand and a broken `layLot`,
-// `pickKind` or `buyRung` goes red everywhere it is leaned on.
+// The party's presses, the player's way (DESIGN.md, "Built first, a recruit,
+// then two choices"): the floating build button, the Recruit's board that
+// picks the kind at rung 1, a station's rows and its Reset. Shared by the
+// node-tier checks that buy a station or a rung as a step on the way to what
+// they are about, so none of them writes a station or a rung onto `S` by
+// hand and a broken `layStation`, `pressKind` or `buyRung` goes red
+// everywhere it is leaned on.
 
 import { S } from '../src/state.js';
 import { press, buildOffer } from '../src/deep/buildbutton.js';
@@ -11,11 +12,20 @@ import { pressKind, pressBuy, pressReset } from '../src/deep/rails.js';
 import { stationById } from '../src/deep/party.js';
 import { FORK_RUNG } from '../src/config.js';
 
-// The button pressed and a kind picked on the lot's board. True when it built.
-export function pressBuild(kind) {
+// The button pressed. With a `kind`, the build let land and the Recruit's
+// rung 1 bought as that kind, paid for; without one the station is left
+// going up. True when it did all it was asked.
+export function pressBuild(kind = null) {
   if (!buildOffer().shown) return false;
   const id = press();
-  return !!id && pressKind(id, kind);
+  if (!id || !kind) return !!id;
+  window.__finish();
+  return choose(id, kind);
+}
+// A Recruit's rung 1 bought on its board: it becomes the base unit of `kind`.
+export function choose(id, kind) {
+  flush();
+  return pressKind(id, kind);
 }
 
 // A purse deep enough for any rung: scales on the crusher and every coin the
@@ -36,7 +46,10 @@ export function climb(id, cls, n) {
   const st = stationById(id);
   if (!st) return null;
   flush();
-  while (st.rung < n && pressBuy(id, st.rung + 1 === FORK_RUNG ? cls : null)) flush();
+  // Each rung's level-up holds the next press back for LEVELUP_S
+  // (test/rails.test.mjs is about that wait); a climb is not, so it lets each
+  // one go rather than running the yard on through all of them.
+  while (st.rung < n && pressBuy(id, st.rung + 1 === FORK_RUNG ? cls : null)) { st.lvlAt = null; flush(); }
   return st;
 }
 

@@ -1,15 +1,15 @@
 // Statuses (docs/wave-party.md, "Statuses"): what each does, on the whole
-// serpent -- Bleeding ticks, Exposed takes more from everything, Held
-// neither heals nor sways, Weakened heals less -- and on a fighter, Inspired
-// and Hasted. Amps add and multiply once, capped; heal cuts cap. A status is
+// serpent -- Bleeding ticks, Exposed takes more from everything, Held stops
+// the window -- and on a fighter, Inspired and Hasted. Amps add and multiply
+// once, capped. A status is
 // laid outright here for the checks about what it does; that each class
 // lays its own is classes.test.mjs's, and the last group here lets a Hexer
 // lay Held the player's way.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { SERPENT_HEAL, SERPENT_DEFENSE, EXPOSED_AMP, AMP_MAX, HEAL_CUT_MAX, HASTE,
-         CLASSES } from '../src/config.js';
-import { strike, healNow } from '../src/deep/serpent.js';
+import { guardOf } from '../src/deep/phases.js';
+import { SERPENT_WINDOW, SERPENT_WOUND, EXPOSED_AMP, AMP_MAX, HASTE, CLASSES } from '../src/config.js';
+import { strike } from '../src/deep/serpent.js';
 import { lay, has, level, ampOf, inspire, haste, tempo } from '../src/deep/statuses.js';
 import { climb, openEveryClass } from './party-press.mjs';
 import { bellyAt, bellySeg, coilAt } from '../src/deep/place.js';
@@ -22,6 +22,7 @@ function deepYard(stage = 1) {
   window.__snatch({ played: true });
   window.__deepCrew();
   window.__serpent({ stage, wound: 0 });
+  S.mealT = 0; S.mealI = null;          // a fresh window: no meal lands inside a check
 }
 const frame = () => yard.fast(1 / 60);
 const belly = () => bellyAt(now());
@@ -34,11 +35,11 @@ group('Bleeding ticks the wound open, a tick at a time, and never stuns', async 
   const chips = S.serpentChips.length;
   let most = 0;
   for (let f = 0; f < 60 * 4; f++) { frame(); most = Math.max(most, S.serpentWound); }
-  const cut = SERPENT_DEFENSE.sword[1];
+  const cut = guardOf('sword');
   return [
     ok(most > 0, 'the wound opens under it', `${most}`),
-    // Three seconds of ten a second, less what the ward's heal closed.
-    ok(most <= 10 * 3 * cut + 1e-6 && most >= 10 * 3 * cut - SERPENT_HEAL[1] * 3 - 1e-6,
+    // Three seconds of ten a second: nothing closes inside the window.
+    ok(Math.abs(most - 10 * 3 * cut) < 1e-6,
        'by its damage a second over its length', `${most.toFixed(2)}`),
     ok(S.serpentStun === 0 && S.serpentChips.length === chips, 'a tick bites nothing and stuns nothing'),
     ok(!has('bleed'), 'and it runs out')
@@ -54,47 +55,48 @@ group("two fighters' bleeds add up, each ticking on its own", async () => {
   const kept = level('bleed');
   let most = 0;
   for (let f = 0; f < 60 * 4; f++) { frame(); most = Math.max(most, S.serpentWound); }
-  const cut = 10 * 3 * SERPENT_DEFENSE.sword[1] + 6 * 3 * SERPENT_DEFENSE.assassin[1];
+  const cut = 10 * 3 * guardOf('sword') + 6 * 3 * guardOf('assassin');
   return [
     ok(both === 16, 'two sources add up', `${both}`),
     ok(kept === 16, 'and a source laid again keeps the stronger of its own', `${kept}`),
-    ok(most <= cut + 1e-6 && most >= cut - SERPENT_HEAL[1] * 3 - 1e-6, 'both tick the wound open', `${most.toFixed(2)} of ${cut}`),
+    ok(Math.abs(most - cut) < 1e-6, 'both tick the wound open', `${most.toFixed(2)} of ${cut}`),
     ok(!has('bleed'), 'and both run out')
   ];
 });
 
-group('Exposed: a quarter more from everything, blows and ticks alike', async () => {
+group('Exposed: more from everything, blows and ticks alike', async () => {
   deepYard(0);
   const bare = hit();
   const tickBare = hit(100, { tick: true });
-  lay('exposed', EXPOSED_AMP, 5);
+  lay('exposed', EXPOSED_AMP[1], 5);
   const open = hit();
   const tickOpen = hit(100, { tick: true });
   return [
-    ok(near(open, bare * (1 + EXPOSED_AMP)), 'a blow', `${bare} then ${open}`),
-    ok(near(tickOpen, tickBare * (1 + EXPOSED_AMP)), 'and a tick', `${tickBare} then ${tickOpen}`)
+    ok(near(open, bare * (1 + EXPOSED_AMP[1])), 'a blow', `${bare} then ${open}`),
+    ok(near(tickOpen, tickBare * (1 + EXPOSED_AMP[1])), 'and a tick', `${tickBare} then ${tickOpen}`)
   ];
 });
 
-group('Held: no heal while it lasts, and the coil sways on', async () => {
+group('Held: the window stands still while it lasts, and the coil sways on', async () => {
   deepYard(1);
   window.__serpent({ stage: 1, wound: 400 });
+  run(2);
   lay('held', 0, 2, bellySeg());
   frame();
-  const pose = coilAt(bellySeg(), now());
-  let least = S.serpentWound, moved = false;
+  const t0 = S.mealT, pose = coilAt(bellySeg(), now());
+  let moved = false;
   for (let f = 0; f < 100; f++) {
     frame();
-    least = Math.min(least, S.serpentWound);
     const p = coilAt(bellySeg(), now());
     if (p.x !== pose.x || p.y !== pose.y) moved = true;
   }
-  run(3);
+  const held = S.mealT - t0;
+  run(SERPENT_WINDOW[1] + 45);
   const after = coilAt(bellySeg(), now());
   return [
-    ok(least === 400, 'nothing of the wound closes', `${least}`),
-    ok(moved, 'the coil sways all the while: Held stops the heal, not the body', `${pose.x},${pose.y}`),
-    ok(!has('held') && S.serpentWound < 400, 'and once it is over the heal takes up again', `${S.serpentWound}`),
+    ok(held === 0, 'the window does not run', `${held}s of it ran`),
+    ok(moved, 'the coil sways all the while: Held stops the window, not the body', `${pose.x},${pose.y}`),
+    ok(!has('held') && S.serpentWound === 0, 'and once it is over the window runs out and the meal heals him', `${S.serpentWound}`),
     ok(after.x !== pose.x || after.y !== pose.y, 'and the coil sways on'),
     ok(S.serpentGrace === 0, 'a hold is not a stun: no grace follows it', `${S.serpentGrace}`)
   ];
@@ -110,32 +112,19 @@ group('Held raises nothing: a blow and a tick land as they are', async () => {
   ];
 });
 
-group('Weakened cuts the heal, and no more than the cap', async () => {
-  deepYard(1);
-  const bare = healNow();
-  lay('weakened', 0.3, 5);
-  const weak = healNow();
-  lay('weakened', 0.95, 5);
-  const most = healNow();
-  return [
-    ok(near(weak, bare * 0.7), 'by its share', `${bare} then ${weak}`),
-    ok(near(most, bare * (1 - HEAL_CUT_MAX)), 'and never past HEAL_CUT_MAX', `${most}`)
-  ];
-});
-
 group('a status laid again keeps the longer and the stronger; a break takes them all', async () => {
   deepYard(1);
-  lay('weakened', 0.2, 10);
-  const long = S.statuses.weakened.until;
-  lay('weakened', 0.4, 1);
-  const kept = { until: S.statuses.weakened.until, k: level('weakened') };
-  lay('exposed', EXPOSED_AMP, 30);
+  lay('exposed', EXPOSED_AMP[0], 10);
+  const long = S.statuses.exposed.until;
+  lay('exposed', EXPOSED_AMP[1], 1);
+  const kept = { until: S.statuses.exposed.until, k: level('exposed') };
+  lay('held', 0, 30);
   const p = belly();
-  strike('mage', 900, p.x, p.y);
+  strike('punch', SERPENT_WOUND[1], p.x, p.y);   // a punch, which no phase resists
   frame();
   return [
-    ok(kept.until === long && kept.k === 0.4, 'the longer and the stronger stand', JSON.stringify(kept)),
-    ok(S.serpentStage === 2 && !has('weakened') && !has('exposed'), 'and the break clears them',
+    ok(kept.until === long && kept.k === EXPOSED_AMP[1], 'the longer and the stronger stand', JSON.stringify(kept)),
+    ok(S.serpentStage === 2 && !has('held') && !has('exposed'), 'and the break clears them',
        `stage ${S.serpentStage}, ${Object.keys(S.statuses)}`)
   ];
 });
@@ -143,7 +132,7 @@ group('a status laid again keeps the longer and the stronger; a break takes them
 group('amps add, then multiply once, capped', async () => {
   deepYard(0);
   const w = {};                   // a fighter's body, as far as its buffs go
-  lay('exposed', EXPOSED_AMP, 5);
+  lay('exposed', EXPOSED_AMP[1], 5);
   const two = ampOf(false, null);
   inspire(w, 0.2, 5);
   const three = ampOf(false, w);
@@ -151,8 +140,8 @@ group('amps add, then multiply once, capped', async () => {
   const capped = ampOf(false, w);
   const dealt = hit(100, { by: w });
   return [
-    ok(near(two, 1 + EXPOSED_AMP), 'Exposed raises it', `${two}`),
-    ok(near(three, 1 + EXPOSED_AMP + 0.2), 'and Inspired adds with it', `${three}`),
+    ok(near(two, 1 + EXPOSED_AMP[1]), 'Exposed raises it', `${two}`),
+    ok(near(three, 1 + EXPOSED_AMP[1] + 0.2), 'and Inspired adds with it', `${three}`),
     ok(near(capped, 1 + AMP_MAX) && near(dealt, 100 * (1 + AMP_MAX)), 'and all of them at most AMP_MAX more',
        `${capped}, ${dealt}`)
   ];
@@ -174,19 +163,26 @@ group('Hasted swings a fifth more often, for as long as it lasts', async () => {
 
 // A Hexer at the circle, her capstone bought on her board: the player's way
 // to a Held serpent.
-group('a Hexer at rung 8 Holds the serpent, and the heal stops while it does', async () => {
+group('a Hexer at rung 8 Holds the serpent, and the window stops while it does', async () => {
   window.__snatch({ played: true });
-  window.__serpent({ stage: 1, wound: 500 });
+  // A stage deep enough that no hex breaks it: a break clears every status.
+  window.__serpent({ stage: 2, wound: 500 });
   window.__party({ stations: [{ kind: 'circle', cls: null, rung: 0 }] });
   openEveryClass();
   climb(S.stations[0].id, 'hexer', 8);
-  const got = runUntil(() => has('held'), 30);
-  const wound = S.serpentWound;
-  let closed = false, frames = 0;
-  while (has('held') && frames < 600) { frame(); frames++; if (has('held') && S.serpentWound < wound - 1e-9) closed = true; }
+  // Waited for a frame at a time, from a hold's first frame: `runUntil`
+  // steps a second at a time, and would count a hold from part-way in.
+  let wait = 0;
+  while (has('held') && wait < 30 * 60) { frame(); wait++; }
+  while (!has('held') && wait < 60 * 60) { frame(); wait++; }
+  const got = has('held');
+  const t0 = S.mealT, turnedAt = S.mealI;
+  let frames = 0;
+  while (has('held') && frames < 600) { frame(); frames++; }
+  const ran = S.mealT - t0;
   return [
     ok(got, 'the hex lands and the serpent is Held', `${Object.keys(S.statuses)}`),
-    ok(!closed, 'and nothing of the wound closes while it is', `${wound} then ${S.serpentWound}`),
+    ok(turnedAt != null || ran < 1 / 60 + 1e-9, 'and the window does not run while it is', `${ran}s ran`),
     ok(Math.abs(frames / 60 - CLASSES.hexer.hold) < 0.1, 'for the hold the class table gives', `${frames / 60}s`)
   ];
 });

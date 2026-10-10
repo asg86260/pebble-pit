@@ -383,7 +383,7 @@ group('a speck arriving in the sky comes up to weight rather than appearing at i
   window.__machineGates();
   // A purse for three machines at once, which is more than a thousand of
   // anything the machines are priced in.
-  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9 });
+  window.__grant({ sparks: 9999, shards: 9999, spores: 9999 });
   // No burying the yard: a full pit under the works used to stand in for "at
   // work", but a hand on the rock fouls a little now (DESIGN.md, "Hand work
   // fouls, lightly") and its dust shifts the seeded run enough that a buried

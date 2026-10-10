@@ -1,0 +1,87 @@
+<meta charset="utf-8">
+<title>Pebble Pit Page D</title>
+<style>
+/* layout: the title, one carousel of captures, one line, two buttons -- nothing else */
+:root {
+  --paper: #fff; --ink: #000; --ink-2: #333; --ink-4: #666; --ink-8: #cfcfcf;
+  --mono: ui-monospace, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-8: #434343; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-8: #434343; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 14px/1.6 var(--mono); margin: 0; }
+.col { max-width: 720px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 56px; display: grid; gap: 22px; }
+.note { font-size: 11px; color: var(--ink-4); border-bottom: 1px solid var(--ink-8); padding-bottom: 8px; }
+h1 { text-align: center; font-size: clamp(22px, 6vw, 34px); letter-spacing: .34em; padding-left: .34em; margin: 12px 0 0; font-weight: 400; }
+.car { position: relative; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); aspect-ratio: 16 / 10; max-width: 100%; overflow: hidden; background: var(--paper); }
+.slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px;
+  background: repeating-linear-gradient(45deg, transparent 0 6px, var(--ink-8) 6px 7px); color: var(--ink-2); font-size: 13px;
+  opacity: 0; transition: opacity .35s ease; }
+.slide.on { opacity: 1; }
+.slide b { display: block; color: var(--ink); letter-spacing: .15em; margin-bottom: 6px; }
+.nav { position: absolute; top: 50%; transform: translateY(-50%); border: 2px solid var(--ink); background: var(--paper); color: var(--ink);
+  font: inherit; width: 34px; height: 34px; cursor: pointer; }
+.nav.prev { left: 10px; } .nav.next { right: 10px; }
+.dots { display: flex; justify-content: center; gap: 8px; }
+.dots button { width: 12px; height: 12px; border: 2px solid var(--ink); background: var(--paper); padding: 0; cursor: pointer; }
+.dots button[aria-current="true"] { background: var(--ink); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.lines { max-width: 560px; margin: 0 auto; display: grid; gap: 10px; }
+.lines p { margin: 0; }
+.lines p:first-child { font-size: 16px; }
+.cta { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+.cta a { border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: 8px 22px; text-decoration: none; color: var(--ink); letter-spacing: .2em; font-size: 12px; }
+.cta a.solid { background: var(--ink); color: var(--paper); }
+.meta { text-align: center; font-size: 11px; color: var(--ink-4); letter-spacing: .08em; margin: 0; }
+@media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
+</style>
+
+<div class="col">
+  <p class="note">MOCK D -- the short page: plain shapes, not the game. The hatched slides are where GIFs and screenshots go.</p>
+  <h1>PEBBLE PIT</h1>
+
+  <div class="car" id="car" role="region" aria-roledescription="carousel" aria-label="Screens from the game">
+    <div class="slide on"><div><b>GIF 1</b>The opening dig: one body at the rock, two grains carried to the pit</div></div>
+    <div class="slide"><div><b>GIF 2</b>A crew at work: rockhands at the face, haulers crossing the yard</div></div>
+    <div class="slide"><div><b>PICTURE 3</b>A bench board open, a card mid-climb</div></div>
+    <div class="slide"><div><b>GIF 4</b>A break: two workers talking in dots</div></div>
+    <button class="nav prev" type="button" aria-label="Previous">&lsaquo;</button>
+    <button class="nav next" type="button" aria-label="Next">&rsaquo;</button>
+  </div>
+  <div class="dots" id="dots"></div>
+
+  <div class="lines">
+    <p>A boulder falls on your sqwife, you must find a way to save her.</p>
+    <p>Toss pebbles into the pit to hire helpers and improve your gear.</p>
+    <p>Farm, quarry, build machines, control pollution, explore the depths.</p>
+  </div>
+
+  <div class="cta"><a class="solid" href="#">PLAY</a><a href="#">DOWNLOAD</a></div>
+  <p class="meta">Browser &middot; Windows &middot; macOS &middot; Linux &middot; [PRICE]</p>
+</div>
+
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.slide')];
+  const dots = document.getElementById('dots');
+  let at = 0, timer = null;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  slides.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.setAttribute('aria-label', 'Slide ' + (i + 1));
+    b.addEventListener('click', () => { show(i); restart(); });
+    dots.append(b);
+  });
+  function show(i) {
+    at = (i + slides.length) % slides.length;
+    slides.forEach((s, j) => s.classList.toggle('on', j === at));
+    [...dots.children].forEach((d, j) => d.setAttribute('aria-current', j === at ? 'true' : 'false'));
+  }
+  function restart() { if (still) return; clearInterval(timer); timer = setInterval(() => show(at + 1), 4000); }
+  document.querySelector('.prev').addEventListener('click', () => { show(at - 1); restart(); });
+  document.querySelector('.next').addEventListener('click', () => { show(at + 1); restart(); });
+  show(0); restart();
+})();
+</script>

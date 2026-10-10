@@ -99,7 +99,6 @@ export const RAY_MAX = 5;            // and at their longest
 export const RAY_BEAT = 1.7;         // seconds for one breath of the corona
 export const CORE_FLICK = 260;       // ms a core cell holds a tone before it shifts
 
-// Two cores and four thousand dust, and nothing else: a bill with four lines on it
-// is a row you have to study rather than read.
-export const TOWER_CORES = 2;
+// Dust and nothing else: the arch failing is the tower's gate (stations.js),
+// so its bill is only the build.
 export const TOWER_DUST = 4000;

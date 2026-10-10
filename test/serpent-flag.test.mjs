@@ -33,3 +33,25 @@ group('with the serpent switched off, a drowned yard\'s story ends at the dance'
     ];
   } finally { window.__serpentOn(null); }
 });
+
+group('with the serpent switched on, the rescue\'s sheet goes by itself and the snatch follows', async () => {
+  window.__serpentOn(true);
+  try {
+    window.__crew(2, 2);
+    run(1);
+    window.__rift();
+    rescued();
+    run(1 / 60);
+    const sheet = S.beat.sheet;
+    run(1);
+    const still = S.beat.sheet;
+    run(2);
+    return [
+      ok(sheet === 'ending', 'the rescue\'s sheet comes up', `sheet ${sheet}`),
+      ok(still === 'ending', 'and stands a beat', `sheet ${still}`),
+      ok(S.beatsDone.includes('ending') && !S.beat.sheet, 'then goes without a press', `sheet ${S.beat.sheet}`),
+      ok(S.beat.yard === 'snatch' || S.beatsDone.includes('snatch'), 'and the snatch begins', `yard ${S.beat.yard}`),
+      ok(S.beat.camera === 'snatchcam' || S.beatsDone.includes('snatchcam'), 'with the camera pulled in on the plank', `camera ${S.beat.camera}`)
+    ];
+  } finally { window.__serpentOn(null); }
+});

@@ -96,20 +96,19 @@ for (const k of crew) {
 line('give', box => {
   button(box, 'dust', () => window.__give(1000));
   button(box, 'fill', () => window.__give(999999));
-  button(box, 'core', () => window.__grant({ cores: 5 }));
   button(box, 'shard', () => window.__grant({ shards: 5 }));
   button(box, 'spore', () => window.__grant({ spores: 5 }));
 });
 
 line('open', box => {
-  button(box, 'quarry', () => { S.quarryOpen = !S.quarryOpen; S.seenCore = true; });
-  button(box, 'farm', () => { S.farmOpen = !S.farmOpen; S.seenCore = true; });
+  button(box, 'quarry', () => { S.quarryOpen = !S.quarryOpen; });
+  button(box, 'farm', () => { S.farmOpen = !S.farmOpen; });
 });
 
 line('open too', box => {
   button(box, 'filter', () => { S.filterOpen = !S.filterOpen; S.seenAir = true; });
   button(box, 'casino', () => { S.casinoOpen = !S.casinoOpen; });
-  button(box, 'tower', () => { S.towerOpen = !S.towerOpen; S.seenCore = true; });
+  button(box, 'tower', () => { S.towerOpen = !S.towerOpen; });
   button(box, 'meteor', () => window.__meteor());
   button(box, 'wizard hat', () => window.__wizardHat(1));
   button(box, 'kit', () => window.__kit({ breakers: 3, carters: 3,
@@ -134,6 +133,12 @@ line('boulder', box => {
   button(box, '+', () => window.__jump(S.boulderNo + 1));
   button(box, 'finish', () => window.__next());
   button(box, 'sweep', () => window.__clearFloor());
+});
+
+line('serpent', box => {
+  // The wound closed to nothing in the phase he is in: the same hook the
+  // checks set a fight with, which tells the rules the wound was set.
+  button(box, 'full health', () => window.__serpent({ wound: 0 }));
 });
 
 line('run on', box => {

@@ -9,7 +9,7 @@ import { countRect } from '../render/counter.js';
 import { portalNearEdge } from '../render/portal.js';
 import { S } from '../state.js';
 import { P, VIEW_GLIDE_S, PORTAL_RX } from '../config.js';
-import { mouthX, portalX, portalCircle, deepPortal, deepTop } from '../deep/place.js';
+import { mouthX, portalX, portalCircle, deepPortal, deepTop, deepFloor, propRect, postX } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { arrowBox } from '../render/shaftway.js';
 import { refreshCorner } from '../corner.js';
@@ -224,14 +224,23 @@ export const TESTS = [
 // the press reaching it, and the tree being drawn.
 import { showPanel } from '../board.js';
 import { seatRails } from '../deep/rails.js';
+import { stationById, levelingUp } from '../deep/party.js';
+import { chooseMarkAt } from '../render/deep.js';
 import { RAIL_FOLD_MS, FORK_RUNG } from '../config.js';
 import { tap, sleep, raf } from './kit.js';
 
 const rails = id => document.querySelector(`.rails[data-station="${id || 's1'}"]`);
 const seat = async () => { seatRails(); await raf(); await raf(); seatRails(); };
+// A rung bought shuts the board for the fighter's level-up: the player waits
+// it out and opens the board again.
+const reopen = async id => {
+  for (let i = 0; i < 60 && levelingUp(stationById(id)); i++) { window.__fast(0.1); await raf(); }
+  showPanel(id, true);
+  await seat();
+};
 const rowNamed = (id, text) => [...(rails(id)?.querySelectorAll('.rl-row') || [])].find(b => b.querySelector('.rl-t').textContent === text);
 
-TESTS.push(['rails: the rows climb the base unit, the fork takes a class and closes the other branch, Reset stands it again', async () => {
+TESTS.push(['rails: the rows climb the base unit, the fork takes a class and closes the other branch, Reset stands the Recruit again', async () => {
   // An altar and a spire, and a purse for every band.
   window.__fullSites();
   window.__party({ stations: [{ kind: 'altar' }, { kind: 'spire' }] });
@@ -246,62 +255,139 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   // A hover on a pip says what it is; pips are never pressed.
   const pip = rails().querySelector('.rl-arm i.big');
   pip.dispatchEvent(new PointerEvent('pointerenter'));
-  const tip = rails().querySelector('.rl-tip');
+  // The hover line stands on the page, not in the board (a sheet clips its own edge).
+  const tip = [...document.querySelectorAll('.rl-tip')].pop();   // the newest mount is the open board's
   const said = !tip.hidden && tip.textContent;
   pip.dispatchEvent(new PointerEvent('pointerleave'));
-  for (let r = 1; r < FORK_RUNG; r++) { await tap(rowNamed('s1', 'Fighter')); await seat(); }
+  await tap(rowNamed('s1', 'Fighter'));
+  await raf();
+  const shut = S.stationBoardOpen !== 's1' && levelingUp(stationById('s1'));
+  await reopen('s1');
+  for (let r = 2; r < FORK_RUNG; r++) { await tap(rowNamed('s1', 'Fighter')); await reopen('s1'); }
   const base = st.cls === null && st.rung === FORK_RUNG - 1;
   const ask = rails().querySelector('.rl-ask')?.textContent || '';
+  // each specialist's row names its capstone's status, bold, its line on hover
+  const stun = [...rails().querySelectorAll('.rl-row .rl-st')].find(b => b.textContent === 'Stun');
+  stun?.dispatchEvent(new PointerEvent('pointerenter'));
+  const stunSaid = !tip.hidden && tip.textContent;
+  stun?.dispatchEvent(new PointerEvent('pointerleave'));
+  const bold = stun && getComputedStyle(stun).fontWeight >= 700;
   await tap(rowNamed('s1', 'Become a Swordsman'));
-  await seat();
+  await reopen('s1');
   await sleep(RAIL_FOLD_MS + 100);
   const took = st.cls === 'sword' && st.rung === FORK_RUNG && st.paid.some(([m, n]) => m === 'scale' && n > 0);
   const gone = [...rails().querySelectorAll('.rl-arm')].map(a => a.classList.contains('gone'));
   const lit = rails().querySelectorAll('.rl-tree i.on').length;
   await tap(rails().querySelector('.rl-reset'));
   await seat();
-  const blanked = st.cls === null && st.rung === 0 && st.paid.length === 0;
-  const again = !rails().querySelector('.rl-arm.gone') && !!rowNamed('s1', 'Fighter');
+  const blanked = stationById('s1').cls === null && stationById('s1').kind === null && stationById('s1').rung === 0 &&
+                  stationById('s1').paid.length === 0;
+  const again = !!rails().querySelector('.rl-five') && !!rails().querySelector('.rl-become');
   showPanel(null, true);
   return [
     ok(up, "the station's board is up", `${S.stationBoardOpen}`),
     ok(pips === 3 + 2 * 5, 'its tree: three pips, then five a branch', `${pips}`),
-    ok(said === 'Combos: string punches together', 'a hover on a pip says what it is', `${said}`),
+    ok(said === 'Combos: chain punches', 'a hover on a pip says what it is', `${said}`),
+    ok(shut, "a rung bought shuts the board while the fighter's level-up plays", `${S.stationBoardOpen}`),
     ok(base, 'the rows climb the Fighter to the fork', JSON.stringify(st)),
     ok(ask === 'Specialize', 'where the board asks it to specialize', ask),
+    ok(bold && /^Stun: /.test(stunSaid || ''), "each row's status bold, its line on hover", `${stunSaid}`),
     ok(took, 'the Swordsman row takes the Swordsman, paid in scales', JSON.stringify(st)),
     ok(gone.join() === 'true,false', "and the Brawler's branch closes", gone.join()),
     ok(lit === FORK_RUNG, 'the pips climbed are lit', `${lit}`),
-    ok(blanked, 'Reset blanks the station'),
-    ok(again, 'and stands the whole tree and the Fighter again')
+    ok(blanked, 'Reset blanks the station, kind and all'),
+    ok(again, "and stands the Recruit's tree again")
   ];
 }]);
 
 // The floating build button under a real pointer (deep/buildbutton.js): at
-// the snatch it stands over the first slot; a tap lays an empty lot there
-// and opens its board, and a tap on a row there puts the station in the
-// deep's works.
-TESTS.push(['rails: the build button lays a lot, and its board picks the first station, free', async () => {
+// the snatch it stands over the first slot, and a tap puts the station up
+// there at once, free, nothing picked. Once it stands, its Recruit's board
+// (voted R2) offers the three starting kinds as nodes; a tap on one only
+// looks, and the button under it buys rung 1.
+TESTS.push(['rails: the build button puts the first station up, and its Recruit tree picks the fighter', async () => {
   window.__snatch({ played: true });
   window.__view('deep');
   await raf(); await raf();
   const btn = document.getElementById('buildbtn');
   const shown = !!btn && btn.classList.contains('on');
   await tap(btn);
-  await seat();
-  const lot = S.stations[0] && { ...S.stations[0] };
-  const open = S.stationBoardOpen === lot?.id;
-  const rows = [...(rails(lot?.id)?.querySelectorAll('.rl-row:not(:disabled)') || [])].map(b => b.dataset.kind);
-  await tap(rails(lot.id).querySelector('.rl-row[data-kind="armory"]'));
   await raf(); await raf();
-  const st = S.stations[0];
+  const queued = S.stations[0] && { ...S.stations[0] }, fangs = S.fangs;
+  const gone = !btn.classList.contains('on');
+  window.__finish();
+  // standing, and its done check read (its board opened and shut), it wears
+  // the mark until its first choice: the pointer on it asks
+  showPanel('s1', true); await seat(); showPanel(null, true);
+  run(VIEW_GLIDE_S + 0.5);
+  window.__look(stationById('s1') && chooseMarkAt(stationById('s1')).x - 300);
+  await sleep(120);
+  const m = chooseMarkAt(stationById('s1'));
+  point('pointermove', ...onScreen(m.x + m.w / 2, m.y + m.h / 2), 0);
+  await sleep(250);
+  const tipEl = document.getElementById('tip');
+  const asks = !tipEl.hidden && tipEl.textContent;
+  await hoverAway();
+  window.__scales(99999);
+  window.__grant({ dust: 1e8 });
+  showPanel('s1', true);
+  await seat();
+  const nodes = [...(rails()?.querySelectorAll('.rl-node:not(:disabled)') || [])].map(b => b.dataset.look);
+  const firstLook = rails()?.querySelector('.rl-become .rl-t')?.textContent;
+  await tap(rails().querySelector('.rl-node[data-look="armory"]'));
+  await seat();
+  const looked = rails().querySelector('.rl-become .rl-t')?.textContent, stillRecruit = stationById('s1').kind === null;
+  const glyphs = rails().querySelectorAll('.rl-pick .rl-bn svg').length;
+  await tap(rails().querySelector('.rl-become'));
+  await seat();
+  const st = { ...stationById('s1') };
   showPanel(null, true);
+  // with three fangs held, the button asks one
+  S.fangs = 3;
+  await raf(); await raf();
+  const price = btn.querySelector('.count')?.textContent;
   return [
     ok(shown, 'the button stands at the snatch'),
-    ok(lot && lot.kind === null && open, "a tap lays an empty lot and opens its board", JSON.stringify(lot)),
-    ok(rows.join() === 'altar,armory,spire', 'which offers the three starting kinds', rows.join()),
-    ok(st && st.id === 's1' && st.kind === 'armory' && !st.built && S.fangs === 0,
-       'a pick puts the first station up, free', JSON.stringify(st)),
-    ok(!btn.classList.contains('on'), 'and the button goes, with no fang held')
+    ok(queued && queued.id === 's1' && queued.kind === null && !queued.built && fangs === 0,
+       'a tap puts the first station up at once, free, with nothing picked', JSON.stringify(queued)),
+    ok(gone, 'and the button goes, with no fang held'),
+    ok(asks === 'choose a fighter', 'it stands wearing the mark, which asks for a fighter', `${asks}`),
+    ok(nodes.join() === 'altar,armory,spire', "once it stands, its Recruit's tree offers the three starting kinds", nodes.join()),
+    ok(firstLook === 'Become a Fighter' && looked === 'Become a Scout' && stillRecruit, 'a node only looks', `${firstLook} / ${looked}`),
+    ok(glyphs === 2, "the one looked at opens with its two specialists' glyphs", `${glyphs}`),
+    ok(st.kind === 'armory' && st.rung === 1, 'the button under it buys rung 1: a Scout', JSON.stringify(st)),
+    ok(price === '×1', 'with fangs held, the build button asks one of them', price)
+  ];
+}]);
+
+// A station is its fighter and a prop (DESIGN.md): its ground spans the prop
+// and the fighter's post, so the pointer on either opens its board, and the
+// board says whose it is -- the fighter's, not the old building's.
+TESTS.push(['rails: the pointer on a station\'s prop or its fighter opens the board, titled by the fighter', async () => {
+  window.__fullSites();
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }, { kind: 'armory', cls: 'ranger', rung: 8 }] });
+  window.__view('deep');
+  run(VIEW_GLIDE_S + 0.5);
+  const seen = [];
+  for (const st of S.stations) {
+    const p = propRect(st), post = postX(st);
+    for (const [name, wx] of [['prop', p.x + p.w / 2], ['post', post + P]]) {
+      window.__look(wx - 400);
+      await sleep(120);
+      const [x, y] = onScreen(wx, deepFloor() - P * 2);
+      point('pointermove', x, y, 0);
+      await sleep(250);
+      await seat();
+      seen.push({ id: st.id, name, open: S.stationBoardOpen === st.id,
+                  title: document.querySelector(`#${st.id}board .title`)?.textContent.trim() });
+      await hoverAway();
+    }
+  }
+  const at = (id, name) => seen.find(o => o.id === id && o.name === name);
+  return [
+    ok(seen.every(o => o.open), 'the pointer on the prop and on the post opens the board',
+       seen.map(o => `${o.id} ${o.name} ${o.open}`).join(', ')),
+    ok(at('s1', 'prop')?.title === 'the Fighter', "a base unit's board is the Fighter's", at('s1', 'prop')?.title),
+    ok(at('s2', 'post')?.title === 'the Ranger', "a class's board is its fighter's", at('s2', 'post')?.title)
   ];
 }]);

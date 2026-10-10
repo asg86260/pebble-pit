@@ -10,7 +10,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(4, 4);
-    window.__grant({ cores: 9, spores: 40 });
+    window.__grant({ spores: 40 });
     window.__invest();
     const has = () => { buildShopFromTest(); return !!shop().querySelector('[data-key="unlockfilter"]'); };
 

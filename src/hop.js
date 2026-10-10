@@ -10,7 +10,7 @@
 // hand. On a desk the wheel is the hop. The target is worked out here and
 // the glide is `lookAt`'s, so it obeys reduced motion like every other.
 
-import { HOP_Y, HOP_SIZE, HOP_INSET } from './config.js';
+import { HOP_Y, HOP_SIZE } from './config.js';
 import { S } from './state.js';
 import { coarse } from './prefs.js';
 import { lookAt } from './world.js';
@@ -43,9 +43,8 @@ export function hopTarget(dir, camX = S.camX) {
 }
 
 const hopEl = document.getElementById('hop');
-// The stylesheet draws the squares at the size and inset config names.
+// The stylesheet draws the squares at the size config names, --edge in from the glass.
 document.documentElement.style.setProperty?.('--hop-size', `${HOP_SIZE}px`);
-document.documentElement.style.setProperty?.('--hop-inset', `${HOP_INSET}px`);
 const arrows = { [-1]: hopEl?.querySelector('.left'), [1]: hopEl?.querySelector('.right') };
 
 // A hop is looking, not shopping: whatever board is up comes down, and the

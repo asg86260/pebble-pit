@@ -1,10 +1,10 @@
-// The floating build button (DESIGN.md, "Choosing the station on its
-// board"): a small button standing in the deep's water over the next free
-// floor slot, wearing the fang's mark and how many are held. It is how a
+// The floating build button (DESIGN.md, "Built first, a recruit, then two
+// choices"): a small button standing in the deep's water over the next free
+// floor slot, wearing the fang's mark and its price, one. It is how a
 // station is bought: the first one free, at the snatch, and every one after
-// it for a fang, whenever a fang is held and a slot is free. Pressed, it lays
-// out an empty lot there (`layLot`) and opens the lot's board, where what
-// goes up is picked (deep/rails.js).
+// it for a fang, whenever a fang is held and a slot is free. Pressed, its
+// build is queued there at once (`layStation`); what it becomes is picked on
+// its board once it stands (deep/rails.js).
 //
 // It is not on a board: it hangs over the place the station will stand, so
 // what the fang buys and where it goes are one picture. It rides the deep's
@@ -13,9 +13,8 @@
 
 import { S } from '../state.js';
 import { FANG_MARK, BUILD_BUTTON_UP, BUILD_FADE_MS } from '../config.js';
-import { canBuild, nextSlot, layLot } from './party.js';
+import { canBuild, nextSlot, layStation } from './party.js';
 import { slotX, deepFloor } from './place.js';
-import { showPanel } from '../board.js';
 import { onTap } from '../tap.js';
 
 document.documentElement.style.setProperty?.('--build-fade-ms', `${BUILD_FADE_MS}ms`);
@@ -33,12 +32,10 @@ export function buildOffer() {
   const shown = !!S.snatched && canBuild() && slot >= 0;
   return { shown, slot, first: S.stations.length === 0, fangs: S.fangs };
 }
-// Pressed: the lot laid out and its board opened on it. The lot's id, or null.
+// Pressed: the station's build queued. Its id, or null.
 export function press() {
   if (!buildOffer().shown) return null;
-  const id = layLot();
-  if (id) showPanel(id, true);
-  return id;
+  return layStation();
 }
 
 // --- the page -----------------------------------------------------------------------
@@ -63,7 +60,8 @@ export function seatBuildButton() {
   const on = offer.shown && S.view === 'deep';
   btn.classList.toggle('on', on);
   if (!on) return;
-  const count = offer.first ? 'free' : `×${offer.fangs}`;
+  // the price, not the purse: the fangs held are on the counter card
+  const count = offer.first ? 'free' : '×1';
   const say = btn.querySelector('.count');
   if (say.textContent !== count) say.textContent = count;
   // Centered over the slot, its foot BUILD_BUTTON_UP over the floor, in the

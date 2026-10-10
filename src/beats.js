@@ -17,7 +17,7 @@
 // pair, cutscene.js points the camera, ending.js draws the sheet. This file is
 // the order and the rule, nothing else.
 
-import { DANCE_MS } from './config.js';
+import { DANCE_MS, RESCUE_SHEET_HOLD_S } from './config.js';
 import { S } from './state.js';
 import { now } from './clock.js';
 import { boulderAlive } from './rock.js';
@@ -26,7 +26,7 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startMeet, stepMeet, cutMeet, parted, stepPart, letGo,
          startRescue, stepRescue, cutRescue } from './intro.js';
 import { cameraCues, play, stepShot, release } from './cutscene.js';
-import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, serpentOn } from './snatch.js';
+import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
 
@@ -98,10 +98,15 @@ export const BEATS = [
   // putting it down is the skip, and the crew have their dance about it --
   // unless the pit has drowned and the half is on, when what comes next is
   // the snatch.
+  // With the half on there is no button: the sheet stands RESCUE_SHEET_HOLD_S
+  // and the story carries on into the snatch (ending.js floats it away).
   { key: 'ending', owns: 'sheet', next: null,
     when: () => S.rescued && !S.beat.yard && !S.beat.camera,
-    enter: () => {},
-    step: () => true,
+    enter: t => { S.endingAt = t; },
+    step: t => {
+      if (!S.endingAt) S.endingAt = t;
+      return !(serpentOn() && t - S.endingAt >= RESCUE_SHEET_HOLD_S * 1000);
+    },
     skip: () => { if (S.rockhands > 0 && !(S.drowned && serpentOn())) S.danceUntil = now() + DANCE_MS; } },
 
   // --- the second half (snatch.js; docs/wave-serpent.md, "The story") -----
@@ -109,17 +114,20 @@ export const BEATS = [
   // whichever was second, and once only.
   { key: 'snatch', owns: 'yard', next: null,
     when: snatchDue, enter: startSnatch, step: stepSnatch, skip: cutSnatch },
-  // The fourth defense broken: the belly opens and he comes out. A skip
-  // opens it the rest of the way; he still comes out and swims.
+  // And the camera pulled in on the plank while it plays (cutscene.js).
+  { key: 'snatchcam', owns: 'camera', next: null,
+    when: () => S.beat.yard === 'snatch', enter: () => play('snatchcam'), step: stepShot, skip: release },
+  // The fourth defense broken: the kill, and him out and back with her
+  // (snatch.js). A skip plays it out at once.
   { key: 'freed', owns: 'yard', next: null,
-    when: () => S.serpentFreed, enter: startFreed, step: stepFreed,
-    skip: () => { S.introAt = -Infinity; return false; } },
+    when: () => S.serpentFreed, enter: startFreed, step: stepFreed, skip: cutFreed },
   // And the sheet that says so, stood until it is put down (ending.js).
   { key: 'freedsheet', owns: 'sheet', next: null,
     when: () => beatDone('freed') && !S.beat.yard && !S.beat.camera,
     enter: () => {},
     step: () => true,
-    skip: () => {} },
+    // Put down, the serpent gathers itself again (render/serpent.js).
+    skip: t => { S.reformAt = t; } },
 ];
 
 const ROW = new Map(BEATS.map(r => [r.key, r]));

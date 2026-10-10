@@ -9581,7 +9581,8 @@ six are event hooks and only the rain is a predicate.
 | come here you | pick a worker up | `lift` |
 | turn out your pockets | shake a full load out of a worker | the body came up carrying `load(w)` and `shedLoad` empties it |
 | hats off | shake the hat off a worker | `flingHat` |
-| it never rains but it pours | stand through a muck rain | `rains >= 1` |
+| shaken baby syndrome | shake a worker dizzy | `drop`, a shaken body let go (crew/pointer.js) |
+| it never rains but it pours | stand through a muck rain | a shower that rained muck has ended (`tally.muckRains`) |
 
 The whole-lot notice was asked for as *five birds from one group*, and a lot
 is two to four birds (`BIRD_FLOCK`), so the number cannot happen. The whole
@@ -12369,11 +12370,16 @@ never will be.
 It comes up from the bottom over `SHEET_MS` and goes down the same way --
 `fade.js`'s sheet-up-and-down is already this motion for the held sheet and
 is reused, with `translate3d` on the y axis instead of opacity. It goes
-down on: a drag on the handle past `SHEET_DISMISS` (a third of its height),
+down on: a drag on the handle let go nearest gone (below),
 a tap on the yard above it (as now), the station scrolling out of the
 window (as now, through `pan()`), and a hop. Dragging the handle *up* past
 its seat makes it tall (`SHEET_TALL`, 0.9 of the window) for a long board,
 and back down to its seat before dismissing; three stops, no free height.
+Let go, it goes to the stop nearest where it would coast -- the finger's
+speed over its last `SHEET_FLING_MS`, coasted out with UIKit's decay
+(`SHEET_DECAY`) -- out of all three, so a flick from tall closes it and a
+slow drag stays where it was placed; past tall it rubber-bands
+(`SHEET_RUBBER`).
 The desk keeps its popover, `place()` and all: the sheet is a second seat
 in board.js chosen by `coarse()`, not a rewrite of the first, so the two
 share `showPanel`, `settle`, the linger, the pinned card and every row.
@@ -12396,15 +12402,16 @@ same rows. The popover is not touched on a desk.
   has no way down but a tap on the yard.
 
 **The knobs** (`config/touch.js`): `SHEET_H` (0.55), `SHEET_TALL` (0.9),
-`SHEET_DISMISS` (0.33 of its height), `SHEET_MS` (220 ms; 0 under reduced
-motion), `SHEET_HANDLE` (the bar: 36 by 4 px). **Files:** `board.js` (the
+`SHEET_FLING_MS` (80), `SHEET_DECAY` (0.998), `SHEET_RUBBER` (0.55),
+`SHEET_MS` (500 ms on `SHEET_EASE`; 0 under reduced motion), `SHEET_HANDLE` (the bar: 36 by 4 px). **Files:** `board.js` (the
 second seat, the handle's drag through `tap.js`'s press tracking, the crew
 list as a page), `style.css` (`#panel.sheet` and the handle), `play.html`
 (the handle element in `#panel`), the purse's seat inside the sheet
 (`pinWidth` reads `--sheet-room` as the window's width). **Check:** browser
 tier, `selftest/sheet.js` (new): under a coarse pointer the panel's rect is
-full width with its top at `SHEET_H`; a synthetic drag on the handle past
-`SHEET_DISMISS` closes it and one past the seat makes it `SHEET_TALL`; the
+full width with its top at `SHEET_H`; a flick down on the handle closes
+it, a slow drag to just past the seat settles there, and one up past the
+seat makes it `SHEET_TALL`; the
 purse is inside the panel's rect; the crew list opens inside the sheet and
 never outside the window; and the desk's `boardFit` and `seatBoard`
 readings are unchanged with `coarse()` false. The look is a shot: a
@@ -15152,11 +15159,10 @@ pixel rounded to whole device pixels; white on a `#42424a` drop, the heal
 - *The sim's list:* `S.hits` (ephemeral), filled by `strike()` and by the
   heal. A held weapon's ticks are summed per body (the lance, the wizard)
   and said when its second is up, where the last tick landed; a grenade's
-  lengths into its ring's one number as they land; and blows of one kind
-  landing within four cells of each other are summed until the last
-  one's number has risen clear of its own height (`NUM_FOLD_S`, derived
-  from the font and `NUM_RISE`), so a gang of brawlers or one fast one
-  prints a running sum and not digits over digits. The heal says what it
+  lengths into its ring's one number as they land. Every other blow is
+  a splat of its own, however many land together (the owner, 2026-09-28:
+  "each hit should be a separate hit splat"); the kick throws them apart,
+  turn and turn about, so they do not print over each other. The heal says what it
   actually closed each second, off the belly, alternating sides.
 - *Under one:* a sum that rounds to nothing is not drawn, so a punch
   glancing off the ward at the first rung says nothing.
@@ -15223,6 +15229,8 @@ already has but does not keep:
    bar; drawn instead as the wound, it grows with damage and the heal eats it.
    Either way it replaces "still no bar" in "The serpent, redrawn".
 
+The numbers move (docs/mocks/fight-numbers-2026-09-28.html, the owner's B and H2): a blow's number is knocked off the hide in an arc away from the hit, turn and turn about, held a beat at its top and dropping as it fades, higher and wider the bigger the blow, and past NUM_KICK_BIG a font pixel bigger with held speed lines under it; the heal's climbs slow while a swell runs along its digits, the plus first, and fades down a ramp of purples instead of going see-through. Held steps throughout: no shake and no flash.
+
 ### The serpent's bar (built 2026-09-26)
 
 *The owner's call, 2026-09-26: B of four mocked,
@@ -15281,6 +15289,10 @@ floor from backing up the yard's piles.
 
 **Nothing teleports.** A gatherer stood down with a load drops it as scales
 into the water where it is, never as dust in the yard.
+
+Moved and grown (docs/mocks/serpent-bar-over-2026-09-28.html, the owner's A): the bar is 400 by 14 screen pixels, held still just over the highest the coil ever sways rather than at the top of the glass, the deep's portal moved up to make room. Every number goes into it: a blow's once it has held at the top of its kick, the heal's once it has swelled a moment, each falling in to the end of the fill. The bar takes a number's effect only when it lands, so it shows the sim's wound less the blows still in the air and plus the heals still on their way (render/barflight.js); the sim is not delayed, only the picture of it.
+
+A blow is a tenth of a percent of a defense, under a pixel of the bar, so each one that lands knocks a chip out of the fill's end (docs/mocks/bar-chip-2026-09-28.html, the owner's A): a notch half the bar high, wider for a bigger blow, and the chip falling out of it, turning over a pose at a time. The chip says the blow landed; the fill beneath it stays the truth.
 
 ### The deep's crew is set at the shaft (built, then superseded)
 
@@ -16470,6 +16482,69 @@ builders build: the scaffold goes up and the station is raised as that
 kind by bodies walking to it, as every station is. Nothing on the floor
 changes kind in place.
 
+### Built first, a recruit, then two choices (built)
+
+The owner, 2026-09-28: "the fighter selection should happen after the
+station is built. not before", and then: "start every class as the same
+generic base class. and then branch into the existing base classes". This
+replaces the empty lot above. A station is built with no choice made, a
+recruit stands at it, and the ladder asks the two choices as rungs.
+
+- **The button.** Pressed, it spends the fang (the first station free, as
+  now) and queues the build at the next free slot at once. No lot, no board
+  to answer first: the scaffold goes up and the delvers put it up.
+- **Built: the recruit.** When the build lands the plinth stands with the
+  crate on it, and a spare pod resident swims over and takes its post as a
+  **Recruit**, rung 0 -- the one base class every station starts as. It
+  fights at once, so no station stands idle. It is just the body, a plain
+  square with no kit, and its attack a light punch: it swims up under the
+  coil and throws one small fist, squashed against the hide a pose (voted C,
+  docs/mocks/recruit-2026-09-28.html).
+- **Rung 1, the first choice: a base unit.** The Recruit's board asks
+  "Choose your fighter": Fighter, Novice, Scout, Adept or Apprentice (the
+  first station the three that deal damage alone, as `FIRST_KINDS`).
+  Bought like any rung, with rung 1's bill; buying one writes the
+  station's kind. A mark hangs over a station whose rung 1 is waiting
+  ("choose a fighter" on hover), until it is bought: a white chevron on a
+  dark keyline, bobbing a cell (voted C, docs/mocks/recruit-mark-2026-09-28.html).
+  It waits for the build's done check to be read, so the two never stack.
+- **Rung 4, the second choice: a specialist**, as now (`FORK_RUNG`); rung 8
+  the capstone. The ladder stays eight rungs on one card: rung 0 the
+  Recruit, 1 to 3 the base unit (the pick and two plain rungs), 4 to 8 the
+  specialist.
+- **The board: the tree (voted E2, docs/mocks/station-effects-2-2026-09-28.html).**
+  A choice shows everything it leads to. At rung 4, the base unit centered
+  at the top, a stem to the fork, a crossbar ending at the two branches,
+  each headed by its specialist's icon and name, a square for its move
+  (rung 4) and a purple square for its capstone (rung 8), each with its
+  line. At rung 1, the Recruit's own tree (voted R2,
+  docs/mocks/recruit-choice-2026-09-28.html): the Recruit centered at the
+  top, a stem, a crossbar to five nodes -- each base unit's name over its
+  two specialists' icons, the locked ones dashed. The node picked opens
+  its E2 tree under the row, with "Become a ..." and rung 1's bill: the
+  purchase. Picking a node only looks; the button buys.
+- **Status effects are named.** A status in a line is its name, bold, with
+  a one-line hover: "applies **Bleed**", not "inflict bleeding". Stun,
+  Bleed, Haste, Weakened, Held, Exposed, Inspired (the lines are the
+  mock's). Wording fixed with it: the Whirlwind "a heavier cut" (it lands
+  in one spot); the Pinning shot "applies **Stun**", which is what it does.
+- **Reset** goes all the way back: the kind blanked, the Recruit at rung 0,
+  every bill handed back.
+- **Old saves.** A station keeps its kind, class and rung as they are. A lot
+  laid and not picked (kind null, no work queued) has its build queued on
+  load, its fang already spent; it lands as a Recruit.
+
+What changes in the code: `layLot` queues the build and there is no
+`pickKind`; a built station with no kind is manned (`seatUpTo` no longer
+waits on a kind) by a Recruit; rung 1 is a row a kind on the rails; the
+Recruit is a class of its own in the class table, kit and attack; `buildStation`
+and `raiseStation` (the scenes' and `__party`'s) build, then buy rung 1.
+
+What it must not break: every station still stands through a build worked
+by bodies; the four-station cap and the one-fang price are unchanged; a
+ladder is eight rungs, one card; nothing changes kind in place without a
+purchase, and the fighter who is there is the one who changes.
+
 ### The board (voted D, docs/mocks/branch-2026-09-28.html)
 
 Over the rows, the ladder as a tree of pips: the base unit's three, a
@@ -16501,3 +16576,910 @@ until a second station stands; every other fork is open from the start.
 - Whether rung 4's jump (the whole specialty at once) is too big a step
   in the ladder book, now that the base unit's rungs are a specialty's
   first three.
+
+## A station is its fighter and a prop (built)
+
+The owner: the stations "don't make sense anymore" now that the fighters
+are the focus. The domes and their drawings retire. A station is its
+fighter, standing beside the thing its class trains with -- a prop, drawn
+on the floor behind and beside the fighter, never over it. Flags with
+icons and cloth patterns were tried and cut: a sign with no link to the
+fighter means nothing unless it is learned. The approved look is
+docs/mocks/station-props-2026-09-28.html (its `PROPS`, `MAT`, `R8_PARTS`
+and placement are the spec).
+
+A low dome came back behind every built station (docs/mocks/station-backdrop-2026-09-28.html, B): the bed of scales heaps up behind the stations, and a grey kit -- the Ranger's bow above all -- was lost against it. The dome is only a dark ground behind the fighter and its prop, two cells of wall over his head and an arch, not a building: the station is still its fighter and its prop.
+
+- **The props.** Brawler a heavy bag on a gallows arm; Swordsman a sword
+  rack, one slot empty; Monk a bell in a frame over a mat; Martial Artist
+  a rack of staves; Ranger a straw target on a tripod; Assassin a sacking
+  dummy with a dagger in it; Hexer an iron pot on three legs; Sapper three
+  powder kegs; Mage a lectern with an open book; Bard a music stand. A base
+  unit (below the fork) has a crate, its gear still packed; at the fork the
+  crate is replaced by the class's prop.
+- **Rung 8.** Whole parts of the prop take the capstone's purple
+  (`R8_PARTS`), and its one accent cell is the brightest point.
+- **Tones.** A material is a short run of neighboring greys dealt a cell by
+  a hash, never one flat fill; nothing on a prop is brighter than GREYS[10],
+  so the kits' white weapons never land on a white prop.
+- **Placement.** The prop's right-hand column stands GAP cells short of the
+  fighter's body (5; the Swordsman 7, so his sword is not read as the
+  rack's third), its foot on the station's plinth. The station's ground --
+  where the pointer opens its board -- spans the plinth, the prop and the
+  fighter's post.
+- **The plinth.** Prop and fighter stand together on a stepped stone plinth
+  off the floor (docs/mocks/station-platform-2026-09-28.html, B): PLINTH_H
+  cells high, a cell past the prop and the body at its top and a cell wider
+  each course down. The fighter's post is on it, so it swims back up onto
+  it between fights; it stands when the build lands, with the prop.
+- **The board.** Its title is the fighter's: "the Fighter", "the Brawler".
+- **Building.** The scaffold stays for the build; when it lands the crate
+  stands.
+- **Nothing teleports.** A prop changes at the fork and at rung 8 the way
+  a kit does: the purchase is instant (decided 2026-09-28) and the drawing
+  follows the station's record.
+
+
+## The deep is paced by its purse (built)
+
+**The bargain.** The fight from the snatch to the freeing takes about an
+hour with a party that is bought into, and the time goes where it goes on
+the surface: between one station and the next, and between one rung and
+the next, each waiting on scales in the crusher. A stage breaks when a
+purchase makes it breakable, not after a long stretch of holding the wound
+open with nothing to buy.
+
+**Where it stands (measured 2026-09-28).** With the numbers as written the
+whole fight is under three minutes when every scale shed is banked
+(`node tools/node/deep-pace.mjs`). It is not banked: four gatherers at the
+hauler's first rungs crush about 4 a second off a thick floor, falling to 2
+as the near piles run out, while the party sheds 4 to 10 times that. The
+scales pile up, the fighters stall at rungs 4 to 6, and the deep is paced
+by the walk to the crusher rather than by anything the player chose.
+
+**The model.** `tools/node/deep-pace.mjs` reads the ladders, the classes and
+the serpent's table out of config and plays the fight a second at a time:
+the wound against the heal, the banked purse against the cheapest next
+rung, a station more at each break. `--gather n` is the banked rate,
+`--solve a,b,c,d` gives back the depths that break at those minutes. It
+leaves out the dust, ore and spark on a bill, the build time, the fang's
+carry, stuns, statuses and the Bard, so its breaks are the earliest the
+purse allows.
+
+**The order of the work.** Every number below rests on the banked rate, so
+it is settled first.
+
+1. **The gatherers.** `richestNear` weighs a column's height at 8 and its
+   distance at a quarter, so a gatherer swims to the tallest heap wherever
+   it is. It takes the stretch that banks the most for the swim instead
+   (built 2026-09-28: 328 crushed in a minute against 238). The gatherers
+   keep the hauler's load and pace (the owner, 2026-09-28).
+2. **The banked rate is measured**, in the `gathering` scene, and written
+   down here as the rate the depths are solved at.
+3. **The depths and heals.** Solved at that rate for breaks at about 8, 22,
+   40 and 60 minutes. At 4 a second that is about 35k / 140k / 360k / 560k
+   against 60 / 900 / 6000 / 30000 now; the party at each break stands at
+   rung 7, then 7-7, 8-8-7, and 8-8-8-8. The first stage's heal is one the
+   first fighter out-hits alone two or three rungs up (the owner: it starts
+   slow and after a few upgrades out-hits the heal); every later stage's
+   heal is set so a party two rungs short of the one that breaks it cannot
+   hold the wound open, so the heal is what makes the next rung the thing
+   to wait for. Built 2026-09-28 as heals 8 / 86 / 176 / 238 and depths
+   32k / 73k / 191k / 350k; every first class breaks the first stage at 8
+   or 9 minutes.
+4. **The rung bills stay.** Four ladders are 13,900 scales, and an hour at
+   4 a second banks 14,400: the bills as written already spend the hour.
+5. **The shed follows the log of the damage** (the owner, 2026-09-28). A
+   hit that shed its damage let a rung-8 party loose about 500 a second
+   against the gatherers' 4, burying the floor. A hit sheds
+   `SCALE_PER_DECADE` (1.5) a tenfold of its damage, one at least: 1 for a
+   first-rung punch, 3 at a hundred, 4 at five hundred, so a full party
+   sheds about 12 to 16 a second. With the phases' mechanics in, banked
+   without limit the model frees him at 50 minutes, and at 4 a second at
+   68, so the gatherers are still the pace but the floor is not a flood.
+
+**What it must not break.** Every scale is carried to the crusher by a body
+(nothing teleports). Every ladder stays a written table in `LADDERS`. The
+numbers land in config, and the model reads them from there.
+
+## A phase has a mechanic and a class answers it (built)
+
+**The bargain.** Past the first, each phase does one thing to the party,
+warned ahead, and one class answers it. What sets the phases apart now is
+their heal, their depth and the classes they halve, so the fight plays the
+same four times at bigger numbers. A mechanic makes the party's make-up the
+decision: a party with the answer loses little, one without it pays in
+time. Nothing walls; every mechanic only costs uptime. Mock:
+docs/mocks/serpent-phases-2026-09-28.html.
+
+| phase | the mechanic | its warning | the answer |
+|---|---|---|---|
+| 1 bare | none: the wound against the heal | -- | -- |
+| 2 warded | none since 2026-10-04 (the owner dropped the surge): its magic resist is its whole difference | -- | -- |
+| 3 split | **the lash**: a wave runs down the coil and throws off every melee fighter at the hide, every 30 s | the coil draws taut and the tail lifts, 1.5 s | the Hexer's Held in the warning: no lash |
+| 4 fading | **the sink**: he dims into the abyss for 8 s; nothing hits him and the heal runs | the dark gathers round him, 1 s | a burst banked before he sinks (the Assassin's execution, the Mage's finishing blow, a sticky charge) |
+
+- **The numbers are first guesses** (config, one block, on the dev panel):
+  the period, the warning, the length and the surge's multiple each.
+- **Nothing teleports.** A lashed fighter is thrown, sinks to the floor in
+  the deep's water (`SINK_PULL`), lies dazed `LASH_DAZE_S` and swims back
+  to its post. The sink is a full fade into the dark and out, the abyss's
+  veil flowing over the coil (render/serpent.js), never a pop.
+- **A warning is always drawn** on the coil, in the held-pose register
+  (animation feel: classic): a throb, a draw-up, the dark gathering. The
+  counts card's status line may say it in words.
+- **Stuns and Held already stop the heal**, so the surge's answer is the
+  built stun landing in the warning (`serpentStun`) and the lash's is the
+  built Held (`statuses.js`); only the sink asks something new of a class,
+  and only of the timing of what it already does.
+- **The heals and depths are solved again** once the mechanics are in the
+  model (`tools/node/deep-pace.mjs`, a mechanic as a share of uptime for a
+  party without its answer), so the hour stays an hour for a party that has
+  the answer and runs somewhat longer for one that does not.
+
+**As built (2026-09-28).** `src/deep/phases.js` keeps the turn
+(`S.mechAt`, `S.mechSkip`, saved); the heal reads `surgeK`, `strike` reads
+`sunk`, the coil's line reads the lash (deep/place.js), and a lashed fighter
+is thrown the way the hand throws a body (crew/falls.js), landing dizzy.
+The numbers did not need solving again: the model with the mechanics
+unanswered frees him at 67 minutes and answered at 60. Two things it shows:
+- **The answers come late.** A stun and Held are capstones (rung 8), and the
+  party stands at rung 7 through most of the warded phase, so in that phase
+  the surge is mostly unanswered.
+- **A melee party pays the most.** Sword, Assassin, Sapper and Hexer, taking
+  half in the split and lashed there, run to about two hours unanswered.
+  Decided (the owner, 2026-09-29): that stands; the fight teaches a
+  diverse party, and a lopsided one is meant to be slow.
+
+**Considered and not proposed:**
+- **A timed full heal** (break it in N minutes or the wound resets). With
+  the fight paced by the purse, a party a rung short would lose all it had
+  opened and wait again: a wall, not a fight. The softer form is a floor:
+  the wound never closes past the last quarter it reached. Open if a phase
+  wants more pressure.
+- **Debuffs on the fighters** (Slowed, Blinded so shots miss), with the
+  Bard's song clearing them. A good job for the Bard; kept for a later pass
+  so the first four each have one answer to learn.
+
+## Resists: magic in the ward, physical in the split, both in the fading (built)
+
+**The bargain.** A class's weak phase stops being a line in a table and
+becomes a kind of damage the player can see resisted. Every class deals one
+of three kinds; the warded phase resists magic, the split resists physical,
+and the fading phase switches between the two every ~20 s, warned a beat
+ahead. A party of one kind has a phase that halves all of it; a diverse one
+always has somebody at full strength (the owner, 2026-09-29: players should
+learn to have a diverse party). Mock: docs/mocks/serpent-resists-2026-09-29.html.
+
+| kind | classes | resisted in |
+|---|---|---|
+| physical | Brawler, Swordsman, Martial Artist, Assassin, Ranger | the split; the fading, half the time |
+| magic | Mage, Hexer, Monk (the chi palm is a wave of energy) | the warded; the fading, half the time |
+| explosive | Sapper | never |
+| the click | a punch | never, as now |
+
+- **A resisted hit does half**, the way a class's weak phase does now.
+  `SERPENT_DEFENSE`'s per-class rows give way to a kind a class and a
+  resist a phase; the bare phase resists nothing. The Mage's capstone still
+  burns through.
+- **Explosive has no phase of its own** (the owner's call over an
+  explosive-resist split, which would have slowed the Sapper alone). The
+  fading phase switches between the two resist phases, not three.
+- **The hide says which is up.** Magic is the ward's purple shimmer, as the
+  warded phase is drawn now. Physical is new: A, dark plates in bands across
+  the hide, or B, scales standing up off its top edge. In the fading phase
+  the coming look flickers in for a second before the switch.
+- **Nothing else moves.** The mechanics (surge, lash, sink) stay; the resist
+  is the phase's defense, the mechanic its move.
+- **The heals and depths are solved again** once the table is in: the
+  standard party (Brawler, Ranger, Mage, Monk) has two of its four halved in
+  both the warded phase and the split, where it had one.
+
+**As built (2026-09-29).** The owner picked A, the plates. `DAMAGE_KIND`,
+`RESISTS` and `RESIST_K` in config/deep.js; `SERPENT_DEFENSE` is derived
+from them (the fading's column as it opens). `guardOf` in deep/phases.js
+is what a hit takes this frame, on `S.phaseAt` (saved). Solved again with
+the mechanics answered: heals 8 / 107 / 128 / 211, depths 30k / 91k / 143k
+/ 322k. Every party the model tries frees him in 60 to 67 minutes
+answered and 67 to 80 unanswered; the slowest phase is now a magic-heavy
+party's warded one.
+
+## A fighter's combo (built 2026-09-29)
+
+The owner: the attacks "string into each other with no breathing room". A fighter now fights in its own rhythm (docs/mocks/combo-classes-2026-09-29.html, approved as drawn): a string of quick hits, a reset, a rest, and again.
+
+| class | rhythm |
+|---|---|
+| Recruit | jab-jab, rest |
+| Brawler | jab-jab-cross, a held beat, the haymaker, a long rest (below rung 4, jab-jab-cross and rest) |
+| Swordsman | cut and the return stroke, a long held guard |
+| Monk | even palms a breath apart, a longer breath before the chi palm, a still rest |
+| Martial Artist | a flurry of thrusts, a beat, the finisher, a long reset |
+| Ranger | three quick shots and a reload; from rung 4, then a long draw for the aimed shot and a breath |
+| Assassin | a double tap, a long wait |
+
+The Hexer, Sapper, Mage and Bard already breathe, and keep their beat.
+
+**The bargain: the rhythm never changes the damage a second.** Each quick gap in a string is a share of the class's `every` and banks the time it saves; the rest after the big hit (or after the string's last, where there is no combo bar) is a whole `every` and everything banked. So the average is exactly the even beat's, whatever the rung does to how many hits a bar takes -- Flow filling the Martial Artist's in fewer is paid for in the same rest. The rhythm is `rhythm` on each class (config/classes.js), stepped by `beat` in deep/classes.js; the fighter's place in its combo (`count`, `pips`, `combo`) is saved with the body, so a refresh does not start the string over.
+
+## The serpent eats to heal (built 2026-09-30)
+
+Approved by the owner in mocks, 2026-09-30: `docs/mocks/heal-fish-2026-09-30.html`
+(A, one fish a meal) and `docs/mocks/heal-bestiary-2026-09-30.html` (the eight
+creatures, as drawn there).
+
+### The bargain
+
+The heal is a trickle today (`healNow`, wound a second), and its purple number
+is a report of the last second of it. It reads as nothing: no cause, no
+moment. It becomes a meal. The serpent's heal is **banked** as it accrues and
+lands in **one lump** when the serpent swallows a creature that has swum in
+from the left edge of the deep. The total a second is unchanged (`SERPENT_HEAL`
+is still the number that means what it says); only when it arrives changes.
+
+What the player gets is a beat to read: a creature in the water, the jaws
+opening, a swallow running down the neck, the wound closing in one step and one
+number. What it costs is one thing that can be gamed (see "What it must not
+break").
+
+### The rules
+
+- **The bank.** `healNow()` (after Weakened, the surge, Held and the stun, as
+  now) accrues into `S.healBank` instead of closing the wound. Stopped by a stun
+  or Held, it stops accruing, exactly as the heal stops today.
+- **The meal.** Every `MEAL_EVERY_S` seconds, a span of 6 to 12 chosen
+  afresh each meal (`hash(meal)` between the two ends, so it is not on a clock
+  a player can count), the serpent's next creature reaches its mouth. A meal is `MEAL_SWIM_S` in from the left edge (3.4),
+  `MEAL_GULP_S` going in the mouth (0.55), `MEAL_SWALLOW_S` down the neck to
+  the belly (0.85); when the swallow reaches the belly the bank closes the wound
+  and the heal's number is said there. The sim strikes the wound at that
+  moment, not before: the picture is the sim.
+- **Nothing interrupts it.** A stun or Held while a creature is in the water
+  changes only what is in the bank; the meal comes anyway, and a lump under one
+  is not said (the existing round-to-one rule).
+- **The creature never changes the heal.** Eight species (`config/fish.js`,
+  a written table: lantern angler, ribbon eel, glass jelly, skull fish,
+  wandering eye, spiral drifter, many-mouthed blob, toothed ring), each a
+  length, a path, a bob, a trail and a drawing. A big one is a longer gulp and a
+  fatter swallow; the same lump.
+- **Which one, and when.** A saved meal counter picks both the creature,
+  `hash(meal) % 8`, and the wait to the next, so a reload lands the same
+  creature on the same beat and a yard can be checked frame by frame.
+- **The surge** fills the bank three times as fast, so its meals are three times
+  as big; it does not bring them faster. The warning and the throb stay.
+
+### The picture
+
+- The stream (the owner's C, `docs/mocks/deep-flow-2026-10-03.html`): the eight
+  cross the glass both ways at three depths -- far as flat dark silhouettes,
+  middle dimmed, near as drawn and in front of the serpent -- with a giant far
+  behind every `FLOW_GIANT_S`, each depth sliding with its share of the pan.
+  Every crossing starts and ends off the glass. No creature trails anything.
+- The near ones swim the world, end to end of the deep and in from beyond its
+  walls, a fixed schedule off the clock; a meal takes one of them (the owner,
+  2026-10-04: no creature spawned to be eaten, none dashing). A meal is the
+  first creature heading for the mouth to reach it once `MEAL_MIN_S` has
+  passed since the last landed: it keeps its own path and pace the whole way,
+  and only its height drifts to the mouth's over the last `MEAL_SWIM_S`. The
+  sim reads the same schedule (deep/meals.js, `nextMeal`), so the meal clock
+  is the stream's: every fourth creature swims away and the rest come a slot
+  apart, so meals land about every thirteen seconds, never under six and under a
+  ceiling of `MEAL_MAX_S`.
+- `render/fish.js` draws the creature from its local frame, cell by cell, over
+  the water and behind the serpent's head; it enters at the deep's left edge and
+  is clipped at the serpent's face while it goes in, so it is *eaten*, not
+  faded. The drawings are the mock's, ported verbatim.
+- The serpent's head is a wedge with hinged jaws (`render/serpent.js`): open
+  wide from a beat before the creature arrives, shut as the gulp ends. The
+  swallow is a smooth swelling of the neck that runs from the head to the belly
+  and scales with the creature's length.
+- The eating, redone (the owner's A with B's crosses,
+  `docs/mocks/heal-eat-2026-09-30.html`): the jaws swing apart from a hinge
+  `MEAL_HINGE` cells back, the head drawn wider by the gap and each half pushed
+  off the mouth's line; the creature is squeezed as it goes in and shows only
+  between the jaw lines (`jawGap`, shared by both). The swim is 2.8 s, the gulp
+  0.8, the swallow 2.4: the lump runs down the neck dark through the hide. On
+  landing purple crosses rise off the body, nearest the belly first.
+- With the serpent's head at `COIL_X0 = 0.28` there is open water to its left
+  for the swim.
+
+### What it must not break
+
+- **Nothing teleports.** The creature is in the water and swims to the mouth,
+  and the swallow is a swelling that travels. The number is said where the
+  swallow lands.
+- **The average heal.** Over any whole number of meals the wound closes by
+  exactly what the old trickle closed; a test asserts it.
+- **The break.** The break is asked first, before the lump, as the heal is asked
+  after it today (`serpent.js`, the frame's order).
+- **A save mid-swim.** The meal counter, its phase and the bank are saved; a
+  reload puts the creature back where it was.
+
+### Open
+
+- **The interval** is 6 to 12 s, mean 9: a lump is nine seconds of heal on
+  average and twelve at most. A party that times its burst to end just before a
+  meal lands the break a lump early, but with the wait unpredictable it can only
+  gamble on it, and the creature in the water is the tell. That is the one
+  balance change.
+- **The bar** is as built: it takes a heal when its number lands in it
+  (`barflight.js`), so it shows the old wound until the lump's number goes in.
+- **The heal number's colors and size** stay as built.
+
+## The serpent heals whole: a phase is a window (built 2026-10-04)
+
+Asked by the owner, 2026-10-04. Supersedes the heal half of "The serpent eats
+to heal": the meals, the stream and the eating stay as drawn; what a meal
+does changes.
+
+### The bargain
+
+Today a phase is a damage-per-second check. The heal trickles into a bank and
+lands in lumps, and a party breaks the defense once it out-hits the heal. The
+player cannot see the check. They watch a bar creep down, and a party a little
+under the heal never gets anywhere, which looks like the game stalling rather
+than a wall.
+
+It becomes a **window**. Each phase gives the party a fixed stretch of the
+serpent's attention. When it runs out, the serpent eats a creature and
+**heals to full**. Break the defense inside the window, or start that defense
+over. The wall is now one the player can see: a creature swims in, and the
+bar goes back to full. The answer is a bigger burst, not a slower grind.
+
+The cost: a party just short of the burst gets the same "nothing happens" as
+before, but now it is a visible reset rather than a creep. The depths come
+down a long way, because a defense is now what a party can do in one window,
+not what it can do over the heal.
+
+### The rules
+
+- **The window.** Each phase has a length, `SERPENT_WINDOW` (a written table
+  a phase, first guesses 40 / 32 / 26 / 20 s; shorter as the fight goes on).
+  Its clock is `S.mealT`, as now: seconds since the last meal landed, or since
+  the phase opened.
+- **No countdown is shown.** The fish swimming in is the cue (the owner,
+  2026-10-04). The bar has no timer and the page has no number.
+- **The meal ends it.** The window has run out when `S.mealT` reaches the
+  phase's length. The meal is then the next creature of the near stream heading
+  for the mouth: `nextMeal` as now, with `MEAL_MIN_S` replaced by the phase's
+  window. So a window is its length plus however long that creature takes to
+  arrive (the stream brings one every several seconds). The creature is
+  already swimming when the window ends; nothing is spawned for it.
+- **The meal heals to full.** When the swallow lands, the wound is closed
+  completely: `S.serpentWound = 0`. The bank, `SERPENT_HEAL` and `healNow`
+  go. The heal's number says what it closed, purple, where the swallow lands,
+  as now.
+- **Stuns and Held pause the window.** A stunned or Held serpent cannot eat:
+  `S.mealT` does not advance while either holds (it does advance today), so
+  the party gets that time back. A creature already in the mouth when a stun
+  lands is still swallowed; the window just ends later.
+- **The break is asked first,** before the meal, as now: a defense broken on
+  the frame the meal lands is broken, and a new phase opens with a fresh window.
+- **A break resets the window.** The new phase starts at `S.mealT = 0`, and
+  the phase-break animation plays first (the dive and the roar). The window
+  clock does not run during the break.
+
+### The mechanics that worked on the heal
+
+- **The surge (phase 2)** becomes **the window running fast**: for its 6 s the
+  window clock runs at `SURGE_X` (3) times speed, so it eats sooner. Its
+  warning and its answer stay: a stun in the warning spends it, and during the
+  surge a stun still pauses the clock outright.
+- **Weakened and Exposed become one status** (the owner, 2026-10-04): with no
+  heal to cut, Weakened folds into Exposed, **the serpent takes more damage**.
+  Only the Hexer lays either today. Its hex lays Exposed from rung 4 (its
+  move) at `EXPOSED_AMP[0]` (first guess 0.15) and from rung 8 (its capstone)
+  at `EXPOSED_AMP[1]` (0.25, today's), with Held as now. A stronger lay
+  replaces a weaker one; the amp goes through `ampOf` and is capped at
+  `AMP_MAX` as now. `weakened`, its icon, its dull hide, the heal cut and
+  `HEAL_CUT_MAX` all go; a save holding a Weakened status drops it on load.
+- **The sink (phase 4)** is unchanged: nothing hits him while he is under,
+  and the window keeps running. It costs uptime out of a short window, which
+  is why the bursts that land before he goes under are its answer.
+- **The lash (phase 3)** is unchanged.
+
+### The numbers
+
+- **Depths come down** to what the expected party does in one window, about
+  70% of its burst over the window at the rungs it should have by then. The
+  heal table goes. `tools/node/deep-pace.mjs` is re-solved for "the party's
+  damage over one window" in place of "the party's DPS over the heal", and the
+  new `SERPENT_DEPTHS` come from it. The dev panel's knobs become the window
+  a phase and the depth scale.
+- **First guess before the model runs:** each depth at roughly a quarter of
+  today's, so that the first party a player can field breaks the bare defense
+  in two or three windows.
+
+### What it must not break
+
+- **Nothing teleports.** The full heal is the bar going back up and the hide's
+  wound closing, as the lump does today. A heal from near-empty is a big
+  number, said once.
+- **A reload mid-window** resumes the same window: `S.mealT` and the meal
+  counter are already saved; the bank is dropped from the save (a migration
+  file, the save floor's way).
+- **The checks.** `verify.js`'s meal rule still holds (a meal is never overdue
+  past its window). `test/meals.test.mjs` loses the bank and the average-heal
+  check. It gains: a meal heals to full; a stun or Held pauses the window; the
+  surge shortens it. `test/statuses.test.mjs`: the Hexer at 4 Exposes at the
+  smaller amp and at 8 at the bigger, a stronger lay replacing a weaker. Each check is reached by striking
+  and buying, as a player does.
+
+### As built (2026-10-04)
+
+- `SERPENT_WINDOW` (config/deep.js) is 40 / 32 / 26 / 20 s, four dev-panel
+  knobs; `MEAL_MIN_S`, `MEAL_MAX_S`, `SERPENT_HEAL`, the bank and
+  `HEAL_CUT_MAX` are gone, and a migration (`2026-10-04-whole-heal.js`,
+  `SAVE_V` 8) drops a save's bank and its Weakened.
+- **The turned creature.** Once the meal is in its swim it is kept on the
+  serpent (`S.mealI`, saved), so a stun, Held or the surge moves the window
+  but never a creature already swimming in; one chosen afresh is never one
+  already in its swim (`mealNow`'s floor). The creatures eaten are a saved
+  list (`S.eaten`), not worked out again from the windows.
+- **Depths** are `tools/node/deep-pace.mjs --solve 8,22,40,60` with the default
+  party, rounded: **4300 / 9400 / 6700 / 5100**. The quarter-of-today guess
+  walled at phase 2: four fighters at full rungs cannot do 23,000 in a 32 s
+  window. They fall after phase 2 because the windows shorten and the
+  resists bite; the model's party is four, and a bigger one breaks sooner.
+
+### Open
+
+- **Nobody has played it.** The depths are a model's, for four fighters; a
+  real party is often bigger.
+- **The meal scenes** (`meal-swim` .. `meal-land`) commit their creature and
+  then run on the clock: the hold no longer pins a moment once it has turned.
+- **The window can be gamed** the way the lumps could: a party that holds its
+  capstones for the window's last seconds bursts best. That is the intended
+  skill here, not an exploit.
+- **The Hexer's words.** Its move line names {Weakened}, which goes. It will
+  need the owner's words for the move now that it Exposes, and Exposed's hover
+  line stays as is (player copy is the owner's).
+
+## The kill: limp, then apart (built 2026-10-04)
+
+The owner's B and D, together (mock "Serpent Kill: Limp and Apart",
+2026-10-04). The fourth break was a flag: the cage went, the coil went plain
+and he dropped out under the sheet. It is now the fight's ending, played out:
+
+- **The last blow** lands (`KILL.last`), and the deep's frame closes on the
+  belly, `KILL_ZOOM` in, the floor kept at its foot (`killFrame`, view.js).
+- **Limp** (`KILL.limp`): the sway dies and the coil sinks in
+  `KILL_LIMP_STEPS` held steps until it lies on the floor (deep/place.js).
+- **Apart** (`KILL.apart`): lying there its hide comes apart into the abyss's
+  motes, tail first, each up and dimming over `KILL_MOTE_S`. Nothing strikes
+  him while he is down or gone.
+- **Out**: he is held in the cage until the coming apart reaches the belly,
+  then drops to the floor where it was; he walks to her (the first station's
+  fighter, or another of the deep's own) at `KILL_WALK_PX_S`, in
+  `KILL_WALK_MAX_S` at most; they hop for `KILL_CHEER_S`; the frame pulls back
+  over `KILL_OUT_S`. The frame is on the belly as he goes limp, follows the
+  coming apart in from the tail to the belly, then follows him to her. He is one of
+  the deep's crew where he stands, and the sheet comes up.
+- **Back**: the sheet put down, the motes gather into the serpent head first
+  over `KILL_REFORM_S`, and it swims again, to be slain at leisure.
+
+The kill's clock (`S.freedAt`), his walk and the gathering (`S.reformAt`) are
+saved, so a reload picks it up where it was; a skip plays it out at once. A
+save freed before this has no clock and keeps its serpent as it was.
+
+## A fifth phase: the constrict (built 2026-10-04)
+
+Asked by the owner, 2026-10-04: beating the serpent should take all four
+fighters. The fourth station arrives with the third break's fang, at the start
+of the fading, and the fading was the last defense, so a party of four fought
+one phase at most. A fifth phase after the fading is the fight that four are
+needed for. Fangs stay at the first three breaks. Mock: "Serpent Phase Five",
+the owner's A, with a manual answer added.
+
+### The bargain
+
+The fifth defense is the **constrict**, a spell (the owner's B, mock
+"Serpent Bind Spells", 2026-10-04): every so often the serpent casts at a
+station, a stream of the abyss's motes from its eye to the fighter, and an
+orb of purple closes round the fighter and lifts it off its post, turning
+slowly. A fighter in the orb does nothing. The party frees it the slow way, by
+cracking the orb with their blows, or the player frees it at once by picking
+the fighter up out of it. It
+costs a party uptime it cannot afford in a short window, and it gives the
+player's hand something to do in the last fight, the way the click and the
+pebbles do in the yard.
+
+### The rules
+
+- **Order:** bare, warded, split, fading, **constrict**, then the kill. The
+  stage numbers move up one: the kill is stage 5. Five phase boxes on the bar;
+  the first stays hidden until the dive, as now.
+- **Resist:** none. The constrict is the test.
+- **Window and depth:** a window of `SERPENT_WINDOW[4]` (first guess 18 s) and
+  a depth solved with `deep-pace.mjs` for four fighters.
+- **The turn** (`MECHANICS[4]`, the way the lash and the sink have theirs):
+  every `every` seconds (first guess 24), a warning of `warn` (1.5 s): the
+  serpent's comb lights up head first (the owner's call, mock "Serpent Orb
+  Cast"), and then purple bolts jag from its lit tips to the target (the
+  owner's A), the station with the highest rung, the first slot of those.
+  The orb closes round that fighter and lifts it a few cells.
+- **In the orb:** the fighter does nothing. The orb has hit points,
+  `CONSTRICT_HP` of the phase's depth (first guess 15%), its own bar over the
+  station; while an orb is up, every blow lands on the orb first and the
+  defense takes nothing until it is cracked open. It lets go on its own after
+  `last` (12 s), fading out.
+- **The manual answer:** the fighter in the orb can be picked up, as any body
+  can (the right button; on a phone, a long press; bodies in the deep could
+  already be). Pulled out through
+  the orb's wall, it is free at once and the orb bursts into motes. Dropped, it
+  swims back to its post and fights. Picking up any other body in the deep
+  stays as it is today.
+- **The break into it** is a roar, as for the split and the fading. **The
+  break out of it** is the kill.
+
+### What it must not break
+
+- **Nothing teleports.** The orb lifts its fighter and sets it down, the motes
+  travel from the eye, and a lifted fighter is carried, not moved.
+- **Saves:** the loop's turn and its hit points are saved with the phase
+  (`S.mechAt`, a new `S.orbHp`). A save past the fading plays phase 5 before
+  the kill; a save already freed is unchanged.
+- **The checks** read the stage numbers in several places (`< 4`, `> 3`,
+  `LAST`); every one moves to the new count.
+
+### As built (2026-10-04)
+
+- `SERPENT_PHASES` (config/deep.js) is the number of defenses, five; the kill
+  is the stage past the last. A save already freed is moved to stage 5 (the
+  migration `2026-10-04-fifth-phase.js`, `SAVE_V` 9).
+- Depth 9,000 in an 18 s window (`deep-pace.mjs --solve`, four fighters, the
+  orb in the model); `MECHANICS[4]` is `{ every: 24, warn: 1.5, last: 12, hp: 0.15 }`.
+- `S.orb` (saved) is `{ st, hp, max, at }`; `test/orb.test.mjs` covers the
+  cast, the blows on it, the lift and the timeout. Scenes `phase-orb-cast`,
+  `phase-orb`.
+
+### The owner's words needed
+
+- The constrict's status lines: its badge's hover while it is coming, while a
+  fighter is in the orb, and when the orb is broken. Blank until they come
+  (`STATUS_SAYS.orb`, config/deepdraw.js).
+
+## The story's objectives (built 2026-09-30)
+
+Asked for by the owner, 2026-09-30, with three calls made: one pinned line at
+the top left, nothing for finishing one but the next line, and words only --
+the line says what, never where. Mock: `docs/mocks/objectives-2026-09-30.html`;
+the owner picked C (a grey "next" over the line, struck through and faded when
+done). Built with the open calls below taken at their defaults: a "drown the
+pit" line, "the rocks keep falling" as its own step, "build the wizards' tower"
+when it does not stand. Every step's fact implies the ones before it, so the
+line never steps back on a save that skipped one (objectives.js).
+
+### The bargain
+
+The story already has its beats (beats.js) but nothing tells a player what the
+next one is waiting on, and the second half is waiting on things a player has
+no reason to guess: that the wizards are the way down, that the portal is a
+row on their board. One line, always on screen, says the next step of the
+story in a few words. It costs a line of screen and nothing else: no reward,
+no marker, no new rule. It is read off facts the save already has, so an old
+save opens on the right line.
+
+### The line, step by step
+
+Each is the first whose fact is not yet true; the line shows it until it is.
+
+| # | the line | done when |
+|---|---|---|
+| 1 | dig out the rock | the first rock is dead (`boulderNo > 1` or the `meet` beat done) |
+| 2 | the rocks keep falling | the second rock has landed |
+| 3 | build the props | the props stand (the first shield) |
+| 4 | string the net | the net stands |
+| 5 | raise the arch | the arch stands |
+| 6 | raise the dome | the dome stands |
+| 7 | save the sqwife | `rescued` |
+| 8 | ask the wizards how to get down | after the snatch: the tower's board opened once |
+| 9 | buy the portal | `portalOpen` |
+| 10 | free your sqhusband from the serpent's belly | `serpentFreed` |
+
+After the last, no line. With the second half switched off the list ends at 7.
+
+### What it must not break
+
+- **Words only** (the owner's call and "Hover text concise"): a few words, the
+  thing to do, never how or where, never a remark.
+- **Read, never stored.** Every row is a predicate over saved facts, like the
+  notices (notices.js); nothing new goes on `S` but, if needed, the one flag
+  that the tower's board was opened after the snatch (SAVED).
+- **No beat waits on it.** It follows the story; the story never follows it.
+
+### Open
+
+- **Between the rescue and the snatch** the pit may not have drowned yet, and
+  the snatch waits on it. A line for that step ("drown the pit"? "feed the
+  rift"?) or nothing until it happens.
+- **"The rocks keep falling"** is a thing that happens rather than a thing to
+  do; it could stand as the line only while the second rock is coming, or be
+  folded into step 3.
+- **The shields' order** is the door chain's (`after` in stations.js); the
+  table above assumes props, net, arch, dome.
+- **The tower may not stand** at the snatch in a fast game; step 8 then reads
+  "build the wizards' tower" first.
+- **The ending sheet** still says the story is over; with the half on it
+  should say what comes next, or the snatch simply follows it.
+
+## From the rescue straight into the snatch (built 2026-09-30)
+
+Asked for by the owner, 2026-09-30. With the second half on, the rescue is
+no longer an ending: the sheet says so, waits a beat, and gets out of the way,
+and the story carries straight on into the snatch.
+
+### The sequence
+
+1. The rescue's sheet comes up, as now, but with **no button**.
+2. It stands `RESCUE_SHEET_HOLD_S` (a beat or two), then **rises and fades**
+   (the owner's A, `docs/mocks/rescue-to-snatch-2026-09-30.html`).
+3. As it goes, the camera moves in on the plank over the abyss, where the
+   sqhusband and the sqwife walk out: the snatch's own pan, and a camera beat
+   (`snatchcam`, cutscene.js) pulled in `CUT_SNATCH_ZOOM` for as long as the
+   snatch runs.
+4. The snatch plays as built.
+5. When it is over the story's line comes up with its next step, the
+   wizards (objectives.js; the words are the owner's, on the words page).
+
+With the half off the sheet is the end of the story and keeps its button.
+
+### What it must not break
+
+- **Nothing teleports.** The sheet leaves by moving, the camera glides, the
+  pair walk.
+- **A reload mid-sequence.** The sheet's hold is the `ending` beat's own; a
+  reload with the beat unfinished shows the sheet again and lets it float away
+  again. A reload in the snatch replays it as it does now.
+- **Old saves.** A save with the ending put down and nothing taken plays the
+  snatch on load (test/finished-save-snatch.test.mjs); it has no sheet to show.
+
+### Open
+
+- **The pit not yet drowned** at the rescue (the owner, 2026-09-30: likely
+  never, but possible): the sheet floats away anyway and the line says what is
+  next; the snatch plays when the pit drowns.
+- **The pair** are the two crew nearest the mouth today; the game does not
+  track which body is the sqwife or the sqhusband. Following the two by name
+  is a bigger change (a record on the body, kept through saves).
+- **The board of times'** name box is on this sheet. It is switched off
+  (`TIMES_ON` false); turning it back on needs the button, or a hold that waits
+  for the name.
+
+## Quests under the story's line (built 2026-10-03)
+
+Asked for by the owner, 2026-09-30, with three calls made: a quest is a
+**checklist under the main line**, any main step may carry one, and finishing
+one gives nothing. The words and which steps carry which quests are the
+owner's, written on the objectives page
+(https://claude.ai/artifact/9EysEv2o1CpUBNUFiztbP6); the first is the intro
+under "dig the boulder": break a piece off with a click, pick up a pebble, toss
+it into the pit.
+
+### The rules
+
+- While a main step is the line, its quest shows under it as a short list, a
+  line an item, each struck through as its fact comes true, in any order. When
+  every item is done the list goes; the main line stays until its own fact.
+- A main step that finishes before its quest does takes the quest with it: the
+  quest is help for that step, not a gate on it.
+- Every item is a fact the save already holds, or a small new one that is
+  saved (a piece knocked off by hand, a pebble picked up): nothing is a counter
+  that a reload could lose.
+
+### Open
+
+- "Grab a pebble" reads `seenDrag` (dust swept up by hand), "mine the boulder"
+  a new saved `handChipped` set by a click on the rock, "toss" `banked`.
+- How the list sits beside the notice card on a narrow window.
+
+## The serpent hardens against its strongest foes (built 2026-10-07)
+
+Asked for by the owner, 2026-10-07, after the driven runs: "what if the
+serpent reacted to the party comp". A first draft sized each phase's depth
+to the party; the owner turned that down ("i dont really want the serpent to
+change health") and kept the other half: the resists follow the party's
+strongest members -- the highest rung, and the Sapper's explosive resisted
+like the rest (the owner's two calls, the same day).
+
+**The bargain.** The warded phase resisted magic and the split physical,
+whoever was fighting: a party of two magic fighters waited an hour in the
+warded phase and walked through the split. Now the serpent hardens against
+whoever stands highest. Depths, windows and the heal stay as written.
+
+### The rules
+
+- **Each phase's resist is chosen at its break**, on the frame it begins,
+  and saved (`S.resistBy`, a stage's kinds), so a reload finds the same hide;
+  it never changes inside the phase, whoever climbs.
+- **The strongest fighter is the highest rung**, a tie going to the older
+  station. A Recruit (a punch) and the Bard deal no kind and are passed over.
+- **The warded phase and the split** each resist the strongest fighter's
+  kind, magic, physical or explosive. Two phases in a row may resist the
+  same one.
+- **The fading** switches between the kinds of the two strongest fighters of
+  different kinds; a party of one kind holds that one.
+- **The first phase and the constrict resist nothing**, as before; a party
+  with no kind at all falls back on the written `RESISTS`.
+- A dev jump (`__serpent`) chooses as a break into that stage would.
+
+### As built
+
+`chooseResist` / `settleResist` in deep/phases.js, called at the break in
+deep/serpent.js; checks in test/resists.test.mjs. The ward and the plates
+draw as before. **The explosive resist is a barrier** (the owner's F and
+tile 1 of docs/mocks/explosive-resist-2026-10-07.html): not a look on the
+hide but a row of floating purple cells under the coil's underside, a cross
+every fourth, flaring white then pale purple where it soaks up a charge
+(`drawBarrier`, render/serpent.js; `BARRIER_*` in config/deepdraw.js). Its
+tile says "Barrier: absorbs explosive damage" (the owner's). Scene
+`deep-barrier`; `deep-warded` and `deep-split` now stand the Mage and a
+Brawler highest, so they still show the ward and the plates.
+
+## A fang's station climbs from the party's dust (built 2026-10-07)
+
+The owner, after the driven runs: "price the new station's first rungs
+higher". A station bought with a fang joined a party already climbing, and
+its first rungs -- scales alone, which pile up by the thousand down there --
+landed in a minute or two, so the phase it joined broke almost at once and
+the next one waited. Now a fang's station asks at least `FANG_RUNG_DUST`
+(500k) dust for each of its first `FANG_RUNGS` (4) rungs, about fourteen
+minutes of a yard at the abyss; the free first station keeps the written
+table, so the deep's opening still climbs on the sqwife's swept scales.
+The depths are measured again on it (`speedrun.mjs --fight --paced 17.5`).
+
+## Holding the right button looks at the crew (built 2026-10-08)
+
+The owner: the hover's question mark goes, and holding the right button
+fades the buildings and picks out the workers, slowing the one under the
+cursor "instead of stopping them for a full second or two". Voted A of
+docs/mocks/crew-sight-2026-10-08.html (ghosted buildings).
+
+- The right button, held, sets `S.crewSight` (thrown away on a reload)
+  until it is let go, and lifts nobody by itself. With it held, the left
+  button down on a body lifts it, and it is dropped when either is let go
+  (the owner, 2026-10-09). A mouse sends the second button of a chord as a
+  move, not a press, so the lift is read in pointermove.
+- Everything behind the crew's plane is veiled pale (`drawSightVeil`, the
+  layer `sight veil` just before the roster's bodies), `SIGHT_VEIL` of white
+  stepping in over `SIGHT_IN_MS`; each body in the yard wears a ring a cell
+  out.
+- A body under the cursor, while held, moves on `HOVER_SLOW` of the frames
+  (a share owed and paid, so evenly) for `HOVER_SLOW_MS` after the cursor
+  last touched it. A plain hover does nothing to a body.
+- The cursor is the browser's own open hand (`grab`) while it is held, and
+  its closed one (`grabbing`) with the left button down too or a body in
+  hand (the owner, 2026-10-09: "just use the browser grab and grabbed
+  cursors"; the drawn hands of docs/mocks were not used).
+- Open: the deep is not veiled, and a phone has no way in.
+
+## The buried one yells for help (built 2026-10-08)
+
+The owner: in the first rock's scene, "the sqwife should be yelling for help".
+Voted B of docs/mocks/help-call-2026-10-08.html: one bang, two, three, a
+breath, and again, a step each `HELP_BANG_MS`, over the one in the ground
+for the whole of `meet`, in place of the hearts.
+
+## The barriers are the gates; cores go (built 2026-10-09)
+
+The owner, 2026-10-09: "im not sure we even need cores anymore? we could
+just have the barriers be the gates instead of cores".
+
+**What a core is today.** From rock 5 every rock mined out drops one core,
+which you pick up by hand and toss in the pit (`core.js`, the core item,
+`heldCore`). Cores are spent in exactly five places: the farm (1), the
+quarry (1), the apothecary (1), the tower (2) and the dome (25). Seeing the
+first core (`seenCore`) is also what lets the farm, the quarry and the tower
+appear at all. So in practice a core is a clock -- one a rock -- and the
+dome's 25 are the first half's longest wait.
+
+**The bargain.** The shields already are the story's spine: props, net,
+arch, dome, each failing under a rock. Let each failure be what opens the
+next place, so the yard grows because the story moved, not because a coin
+piled up. The player gives up the core's small hand job (picking it up,
+tossing it in) and the dome's wait on rocks; they gain a yard whose every
+new place is explained by the rock that just broke through.
+
+### The rules
+
+- **Each barrier that fails opens the next place** (`after` in
+  src/stations.js), replacing `seenCore` and the core in its bill:
+
+  | fails | opens | in its bill today |
+  |---|---|---|
+  | the props | the farm | 1 core, 600 dust |
+  | the net | the quarry | 1 core, dust |
+  | the arch | the tower | 2 cores, dust |
+
+  The chain still holds: the net needs the farm standing, the arch the
+  quarry, the dome the tower. The apothecary keeps its own gate (the first
+  crop) and loses its core.
+- **The dome is bought in the other four coins**: dust, ore, crops and
+  sparks, as it is now less its 25 cores.
+- **Cores go entirely**: no core in the rock, no core item, the counter's
+  core line, the rift's held cores, the board's core purse and the dev
+  button. Rocks no longer pause to give one up.
+- **Old saves**: a migration drops `cores` and `seenCore`; a place already
+  open stays open, and a place whose barrier has already failed is offered.
+
+### What it must not break
+
+- **Nothing teleports**: a place still appears as an offer and is built by
+  hand as now; only its gate and its bill change.
+- **The opening**: the first rock's beat waited on its core being out of the
+  way (`meet`); with no core it waits only on the rock.
+
+### As built
+
+The owner's calls: the table as written, the dome as it stood less its
+cores, the achievement "something was inside it" retired. Gates in
+src/stations.js (`shieldDone`), bills in upgrades/site.js and rows-tower.js,
+`DOME_BILL`; no rock gives up a core (core.js) and none is drawn in one;
+migration `2026-10-09-no-cores` (`SAVE_V` 10). Checks: test/door-chain,
+test/shield, test/gates, test/wave3-economy. The core's own code went after
+it: the item in the hand, a body carrying one, the glow, the rift's held
+cores, the counter's and boards' lines, `S.cores`/`seenCore`. `coreBuried`
+keeps its saved name and now means only "this rock is not yet finished
+with", and the cell value the core had stays unused so saved finds read the
+same.
+
+## Three builds: itch, Steam, and the Steam demo (design, not built)
+
+The owner, 2026-10-10: a build that uses our own cloud saves and one that
+uses Steam's -- "no auto cloud for steam, only steamworks for steam. if its
+downloaded from itch, and not connected to steam, use ours. we should do the
+steam demo as well." With the plan before it: the full game sold on Steam,
+a free demo that stops on a cliffhanger.
+
+**The bargain.** A Steam player's save follows them through Steam, the way
+every other Steam game's does, and nothing of ours is asked of them; an itch
+player keeps the cloud they have. Each build keeps one way of syncing, so no
+save is ever written by two clouds.
+
+### The builds
+
+| build | where | saves | sync |
+|---|---|---|---|
+| browser | itch, `html` channel | the browser (IndexedDB), as now | ours (`CLOUD_ON`, opt-in), as now |
+| desktop | itch downloads | `userData/saves` (electron/store.cjs), as now | ours, as now |
+| Steam full | Steam, the game's app | `userData/saves`, as now | Steam Cloud through the Steamworks SDK |
+| Steam demo | Steam, the demo app | the same | Steam Cloud through the SDK, the demo app's own |
+
+- **One build setting, `target`**: `itch` (the default) or `steam`, read at
+  build time (a `VITE_TARGET` the release workflow sets) and by the Electron
+  shell. `steam` switches our cloud off and its buttons with it; nothing
+  else in the game changes. The demo is a second setting, `demo`, on any
+  target (below).
+- **Steam Cloud by the SDK, not Auto-Cloud** (the owner's call). The shell
+  starts the Steamworks API at launch; the save store writes each save to
+  disk as now and also to Steam's remote storage, and at launch takes
+  whichever copy is newer by the save's own `playedS` (the rule our cloud
+  already uses). If Steam is not running or the API will not start, the
+  build plays on its disk saves and says nothing -- it never falls back to
+  our cloud.
+- **The demo**: `demo` stops the story at the chosen beat (proposed: the arch
+  failing, about the first hour) with an end card pointing to the full
+  game's store page, in place of the next objective. The demo is its own
+  Steam app, so its cloud is its own; on first launch the full game looks
+  for a demo save on the same machine and offers to carry it on.
+
+### What it costs
+
+- **A native dependency** in the Electron shell for the Steamworks SDK
+  (`steamworks.js` is the usual one; Valve's redistributable library ships
+  beside the executable). CLAUDE.md says no new dependencies; this is the
+  one place the platform requires it, and it is the shell's only, never the
+  game's.
+- A Steamworks account: the $100 app fee for the game; the demo is a free
+  child app of it. App ids go in config.
+- The release workflow gains Steam jobs (the full game and the demo, per
+  OS), uploaded with Valve's SteamPipe tool, and keeps its itch jobs.
+
+### The owner's calls
+
+1. **The demo's end**: the arch failing (proposed), the tower standing, or
+   another beat.
+2. **The native dependency**: `steamworks.js` in the shell, accepted?
+3. **Achievements**: map the game's own achievements to Steam's now, since
+   the SDK is in anyway, or later.
+

@@ -169,7 +169,7 @@ canon table, with their hit keys and the status each lays:
 | class | kind | base (rung 0-3) | rung 4 move | rung 8 capstone | lays |
 |---|---|---|---|---|---|
 | brawler | altar | punch, melee, 1.2 s | Haymaker: every 4th punch x4, a blow that stuns | haymaker stun x1.5 | Stunned |
-| sword | altar | cut, melee, 1 s, bleeds | Whirlwind: each cut lands at three spots | every 3rd cut hits twice | Bleeding |
+| sword | altar | cut, melee, 1 s, bleeds | Whirlwind: each cut lands x1.8, at one spot | every 3rd cut hits twice | Bleeding |
 | monk | well | palm wave, ranged, 1 s; chi pips, a full row is a stunning chi palm | chi fills twice as fast | chi palm stun x1.5 | Stunned |
 | martial | well | staff thrust, melee, 3/s; pips; a full row is a finisher blow | Flow: thrusts fill 2 pips | the finisher Hastes the party 3 s | Hasted |
 | ranger | armory | arrow, ranged, overhead, 0.8 s | Aimed shot: every 5th arrow x5 | the aimed shot stuns | Stunned |

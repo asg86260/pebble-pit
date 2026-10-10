@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Resists</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --purple: #6f36c9; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --purple: #a979ef; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --purple: #a979ef; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  table { border-collapse: collapse; margin: 8px 0 14px; }
+  td, th { border: 1px solid var(--ink); padding: 3px 8px; text-align: left; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 16px; }
+  .panel { background: var(--card); border: 1px solid var(--ink); padding: 10px; display: grid; gap: 6px; }
+  .panel h2 { font-size: 14px; margin: 0; }
+  .say { font-size: 12px; color: var(--dim); min-height: 2.8em; }
+  canvas { width: 100%; height: auto; image-rendering: pixelated; background: #000; display: block; }
+  .status { font-size: 12px; font-weight: bold; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Serpent Resists</h1>
+  <p>Each class deals one of three kinds of damage. The warded phase resists magic, the split resists physical, and
+    the fading phase switches between the two every ~20 s. A resisted hit does half, as a class's weak phase does now.</p>
+  <table>
+    <tr><th>kind</th><th>classes</th><th>resisted in</th></tr>
+    <tr><td>physical</td><td>Brawler, Swordsman, Martial Artist, Assassin, Ranger</td><td>split; fading, half the time</td></tr>
+    <tr><td>magic</td><td>Mage, Hexer, Monk</td><td>warded; fading, half the time</td></tr>
+    <tr><td>explosive</td><td>Sapper</td><td>never</td></tr>
+    <tr><td>the click</td><td>a punch</td><td>never</td></tr>
+  </table>
+  <p>The question here is how the hide shows which resist is up. Magic keeps the warded phase's purple ward as it is
+    in the game. Physical is new, and there are two looks for it: <b>A</b>, plates in bands across the hide, and
+    <b>B</b>, the scales standing up off its top edge. In the fading phase the next look flickers in for a second
+    before the switch.</p>
+  <p class="dim">A mock drawn from plain shapes, not the game's coil. Time runs about four times fast. It cannot show the
+    coil's real girth, cracks or belly, the hit numbers shrinking under a resist, or how the fading phase's dimness sits
+    under either look.</p>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const C = 4, W = 96, H = 44;
+const GREY = ['#1c1c20', '#3a3a40', '#6a6a72', '#9a9aa2', '#c8c8d0', '#f0f0f6'];
+const PURPLE = ['#3b1f66', '#5a2f9a', '#7f4ad0', '#a979ef', '#cdb2ff'];
+
+const PANELS = [
+  { title: 'Warded: magic resist', say: 'The purple ward shimmers over the hide, as it does now.', show: () => 'magic' },
+  { title: 'Split: physical resist, look A', say: 'A: dark plates in bands across the hide, every few cells.', show: () => 'plateA' },
+  { title: 'Split: physical resist, look B', say: 'B: scales standing up off the top edge like a crest of blades.', show: () => 'plateB' },
+  { title: 'Fading: switching, with look A', say: 'Magic, then physical, then round again. The next look flickers in for a second before the switch.', cycle: 'plateA' },
+  { title: 'Fading: switching, with look B', say: 'The same switching, with the physical look as B.', cycle: 'plateB' },
+];
+
+const CYCLE_S = 5, WARN_S = 1.2;   // compressed: ~20 s a resist in the game
+
+function make(p) {
+  const el = document.createElement('div');
+  el.className = 'panel';
+  el.innerHTML = `<h2>${p.title}</h2><div class="say">${p.say}</div><canvas width="${W * C}" height="${H * C}"></canvas><div class="status"></div>`;
+  document.getElementById('grid').appendChild(el);
+  return { p, g: el.querySelector('canvas').getContext('2d'), st: el.querySelector('.status') };
+}
+const panels = PANELS.map(make);
+
+const coilY = (x, t) => 20 + 5 * Math.sin(2 * Math.PI * (x / 96 * 2.2 - t / 4));
+const thick = x => (x < 8 ? 8 : x > 78 ? Math.max(2, 8 - (x - 78) * 0.35) : 8);
+
+function draw(s, t) {
+  const g = s.g, cell = (x, y, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * C, Math.round(y) * C, C, C); };
+  g.fillStyle = '#000'; g.fillRect(0, 0, W * C, H * C);
+  for (let i = 0; i < 50; i++) cell((i * 37.3 + t * 0.8) % W, (i * 53.7) % H, GREY[1 + (i % 2)]);
+  let look = s.p.show ? s.p.show() : null, next = null, status;
+  if (s.p.cycle) {
+    const phase = Math.floor(t / CYCLE_S) % 2, into = t % CYCLE_S;
+    look = phase === 0 ? 'magic' : s.p.cycle;
+    if (into > CYCLE_S - WARN_S) next = phase === 0 ? s.p.cycle : 'magic';
+    status = (look === 'magic' ? 'resisting magic' : 'resisting physical') + (next ? ', switching…' : '');
+  } else status = look === 'magic' ? 'resisting magic' : 'resisting physical';
+  // The flicker: the next look shows on alternate beats of the warning.
+  const shown = next && Math.floor(t * 8) % 2 ? next : look;
+  for (let x = 4; x < 92; x++) {
+    const y = coilY(x, t), th = thick(x), top = Math.round(y - th / 2);
+    for (let k = 0; k < th; k++) {
+      let c = k === th - 1 ? GREY[3] : k === 0 ? GREY[5] : GREY[4 + ((x + k) % 5 === 0 ? 0 : 1)];
+      if (shown === 'magic' && Math.sin(x * 0.45 + k * 1.1 - t * 3) > 0.55) c = PURPLE[3 + ((x * 7 + k) % 2)];
+      if (shown === 'plateA' && x % 6 < 2) c = k === 0 ? GREY[4] : GREY[2];
+      cell(x, top + k, c);
+    }
+    if (shown === 'plateB' && x % 3 === 0) { cell(x, top - 1, GREY[4]); if (x % 6 === 0) cell(x, top - 2, GREY[3]); }
+  }
+  s.st.textContent = status;
+}
+
+let t0 = performance.now();
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(now) {
+  const t = (now - t0) / 1000 * (still ? 0.25 : 1);
+  for (const s of panels) draw(s, t);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

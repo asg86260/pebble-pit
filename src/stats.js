@@ -19,7 +19,6 @@ import { registerBoard } from './boardrows.js';
 // one.
 const BOOKS = [
   { key: 'dust',  name: 'pebbles', mark: 'dust',  seen: () => true },
-  { key: 'core',  name: 'cores',   mark: 'core',  seen: () => S.seenCore },
   { key: 'shard', name: 'ore',     mark: 'shard', seen: () => S.seenShard },
   { key: 'spore', name: 'crops',   mark: 'spore', seen: () => S.seenSpore },
   { key: 'spark', name: 'sparks',  mark: 'spark', seen: () => S.seenSpark }
@@ -33,7 +32,7 @@ export const nextOver = over => STATS_OVER_S[(STATS_OVER_S.indexOf(over) + 1) % 
 const sayOver = over => over < 60 ? `${over / 60 === 0.5 ? '½' : (over / 60).toFixed(1)} min` : `${Math.round(over / 60)} min`;
 
 // Two figures of precision, and never a decimal point on something in the
-// hundreds: a core an hour and a thousand dust a second share this column.
+// hundreds: a spark an hour and a thousand dust a second share this column.
 const say = v =>
   v === 0 ? '0' :
   v < 1 ? v.toFixed(2) :
@@ -240,10 +239,10 @@ export const STATS_SECTIONS = [
 // Smoothed, because a raw per-second count of something that arrives in lumps
 // reads as noise.
 
-const WATCH = ['banked', 'shards', 'spores', 'cores'];
+const WATCH = ['banked', 'shards', 'spores'];
 const EASE = 0.25;                         // how fast the reading follows reality
 
-export const rates = { banked: 0, shards: 0, spores: 0, cores: 0 };
+export const rates = { banked: 0, shards: 0, spores: 0 };
 let lastBooks = null, lastBooksAt = 0;
 
 // A counter going to zero on a reset is not a negative rate.
@@ -267,6 +266,6 @@ export function sampleRates(now) {
   lastBooksAt = now;
 }
 
-const snapshot = () => ({ banked: S.banked, shards: S.shards, spores: S.spores, cores: S.cores });
+const snapshot = () => ({ banked: S.banked, shards: S.shards, spores: S.spores });
 
 registerBoard('stats', { rows: () => STATS_UPGRADES, sections: () => STATS_SECTIONS, ledger: true });

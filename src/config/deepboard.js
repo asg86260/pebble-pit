@@ -10,6 +10,26 @@ import { FIGHT_STATIONS_MAX } from './classes.js';
 // built with `lead: 'scale'` (upgrades/tiers.js). The purse crosses over, so
 // the yard's coins are the deep's second and third.
 export const SCALE_BAND_COINS = [[], ['dust'], ['dust', 'shard'], ['dust', 'shard', 'spark']];
+// What each rung of a deep ladder asks in the yard's coins, a rung at a time,
+// written rather than converted from its scales: a yard that has reached the
+// abyss holds millions of dust, so a scale's worth in dust is a bill nobody
+// notices. Every fighter's ladder pays the same; a coin is asked from the
+// band SCALE_BAND_COINS first names it in. The dust climbs gently: a yard at
+// the abyss banks about 145k a minute, so a four-station party buys a rung
+// every few minutes and stands near rung 7 when he is freed, and its damage
+// grows a step at a time rather than in jumps an hour apart.
+export const SCALE_RUNG_COINS = {
+  dust:  [0, 0, 100e3, 250e3, 500e3, 900e3, 1.5e6, 2.5e6],
+  shard: [0, 0, 0, 0, 1e3, 3e3, 10e3, 30e3],
+  spark: [0, 0, 0, 0, 0, 0, 1e3, 3e3]
+};
+
+// A station bought with a fang joins a party already climbing: its first
+// FANG_RUNGS rungs ask at least FANG_RUNG_DUST dust each, so it reaches the
+// party over minutes instead of breaking the phase it joins at once (the
+// driven runs, 2026-10-07). The free first station keeps the table above.
+export const FANG_RUNGS = 4;
+export const FANG_RUNG_DUST = 500e3;
 
 // The scale as a mark: nine pixels square, ink `#` and paper `.`, a blank
 // outside the edge. A square with its foot rounded in, and a crescent hanging
@@ -32,24 +52,27 @@ export const SCALE_MARK = [
 ];
 
 // The fang as a mark, the scale's way: nine pixels square, ink `#`, paper
-// `.`, a blank outside the edge. A tooth hanging point down from its root,
-// hollow down the middle, so it reads as a white thing on the black water.
+// `.`, a blank outside the edge. A solid fang hanging from its root, its tip
+// hooked back as a snake's is (the owner's A, docs/mocks/fang-mark-2026-09-28.html):
+// a hollow tooth read as a triangle at nine pixels.
 // The floating build button wears it (deep/buildbutton.js); the counter's
 // card can lay the same pixels down beside the scale's.
 export const FANG_MARK = [
-  ' ####### ',
-  ' #.....# ',
-  ' #.....# ',
-  '  #...#  ',
-  '  #...#  ',
-  '   #.#   ',
-  '   #.#   ',
-  '    #    ',
-  '    #    '
+  ' #####   ',
+  ' ######  ',
+  '  #####  ',
+  '   ####  ',
+  '    ###  ',
+  '    ###  ',
+  '    ##   ',
+  '   ##    ',
+  '   #     '
 ];
 
 // A pod: scales, a steeper price each one, like the yard's rooms (HOUSE_RATE).
-export const POD_SCALES0 = 150;
+// The foot is the first pod bought, past the sqwife's: cheap, since only the
+// hand gathers until it stands.
+export const POD_SCALES0 = 10;
 export const POD_RATE = 1.3;
 
 // --- the party's floor (docs/wave-party.md, "Floor slots") -------------------

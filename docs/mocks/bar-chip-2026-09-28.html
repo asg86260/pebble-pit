@@ -1,0 +1,232 @@
+<title>Serpent Bar Chips</title>
+<style>
+/* Layout: one pane per way of showing a blow on the bar, the same fight in
+   each; the pane is the strip of deep round the bar, black in either theme. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Bar Chips</h1>
+    <p>The bar as built, over the coil, with blows at the game's real scale: a blow of 10 to 30 against a defense of
+      16,000, so each is a tenth or two of a percent and moves the true fill by less than a pixel. Each pane shows the
+      landing a different way. A mock drawn from plain shapes, not the game: the numbers fly in as built, the coil is
+      left out, and the fight is sped up so the bar goes somewhere in a loop.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+(() => {
+  const W = 480, H = 120;
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                   '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+  const FONT = {
+    '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'], '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+    '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'], '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+    '4': ['#..#', '#..#', '####', '...#', '...#', '...#'], '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+    '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'], '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+    '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'], '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.'],
+    '+': ['....', '.#..', '###.', '.#..', '....', '....'],
+  };
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const step = (v, n = 2) => Math.round(v / n) * n;
+  const widthOf = (s, px) => s.length * 5 * px - px;
+  function num(g, s, x, y, px, face, drop) {
+    const top = Math.round(y - 7 * px), left = Math.round(x);
+    for (const [dy, tone] of [[px, drop], [0, face]]) {
+      g.fillStyle = tone;
+      [...s].forEach((ch, i) => FONT[ch].forEach((row, r) => { for (let c = 0; c < 4; c++) if (row[c] === '#')
+        g.fillRect(left + (i * 5 + c) * px, top + r * px + dy, px, px); }));
+    }
+  }
+  const rect = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+
+  // --- the fight: real-scale blows, sped up ------------------------------------------
+  // A defense of 16,000 with its wound held at 6,000 to start; a blow every
+  // ~0.37 s, faster than the game so the loop goes somewhere, the heal every second.
+  const HP = 16000, START = 10000, LOOP = 10, IN = 0.26, LEAVE = 0.36;
+  const EVENTS = [];
+  for (let i = 0, t = 0.2; t < LOOP - 1; i++) {
+    const big = i % 11 === 6;
+    EVENTS.push({ at: t, n: big ? 260 : 10 + Math.round(hash(i) * 22), x: 40 + hash(i + 5) * 300, i, big });
+    t += 0.26 + hash(i + 9) * 0.22;
+  }
+  for (let i = 0; i < LOOP - 1; i += 2) EVENTS.push({ at: 0.6 + i, n: 90, x: 300, i: 900 + i, heal: true });
+  const lands = e => e.at + LEAVE + IN;
+  function state(t) {
+    let left = START, trail = START, lastHit = -9;
+    const landed = [];
+    for (const e of [...EVENTS].sort((a, b) => lands(a) - lands(b))) {
+      if (lands(e) > t) break;
+      if (e.heal) left = Math.min(HP, left + e.n);
+      else {
+        trail = t - lastHit < 0.5 ? Math.max(trail, left) : left;
+        left = Math.max(0, left - e.n); lastHit = lands(e);
+      }
+      landed.push({ e, at: lands(e), after: left });
+    }
+    const since = t - lastHit;
+    return { left, trail: since < 0.5 ? trail : Math.max(left, trail - (since - 0.5) * HP / 3), landed };
+  }
+
+  const BAR = { x: 30, y: 50, w: 340, h: 14 };
+  const fx = k => BAR.x + BAR.w * k;
+  function frame(g, t, s) {
+    rect(g, 0, 0, W, H, GREYS[0]);
+    for (let i = 0; i < 30; i++) rect(g, step((hash(i) * W + t * 4) % W, 3), step(hash(i + 7) * H, 3), 3, 3, GREYS[2 + (i % 3)]);
+    // the coil's top edge, under the bar
+    for (let x = 0; x < W; x += 3) rect(g, x, step(96 + 4 * Math.sin(x * 0.02 + t * 0.6), 3), 3, 30, '#ececf2');
+    // the pips
+    for (let i = 0; i < 4; i++) {
+      const px = BAR.x + BAR.w + 8 + i * 20;
+      rect(g, px - 1, BAR.y - 1, 16, 16, GREYS[9]); rect(g, px, BAR.y, 14, 14, i === 1 ? '#fff' : i === 0 ? GREYS[0] : GREYS[7]);
+    }
+  }
+  // the numbers on their way in, as built
+  function numbers(g, t, s, target) {
+    for (const e of EVENTS) {
+      const age = t - e.at;
+      if (age < 0 || age > LEAVE + IN) continue;
+      const str = e.heal ? '+' + e.n : String(e.n), px = e.big ? 3 : 2;
+      let x, y;
+      const x0 = e.heal ? e.x : e.x + (e.i % 2 ? 8 : -8), y0 = e.heal ? 112 : 88;
+      if (age < LEAVE) { x = x0; y = y0 - (e.heal ? age * 12 : Math.min(age, 0.22) * 60); }
+      else {
+        const u = ((age - LEAVE) / IN) ** 2, ty = BAR.y + BAR.h / 2 + 7;
+        x = x0 + (target.x - x0) * u; y = (y0 - (e.heal ? LEAVE * 12 : 13)) + (ty - (y0 - 13)) * u;
+      }
+      num(g, str, step(x) - widthOf(str, px) / 2, step(y), px, e.heal ? PURPLES[11] : '#fff', e.heal ? PURPLES[5] : GREYS[6]);
+    }
+  }
+  function plainBar(g, s, leftK = s.left / HP, trailK = s.trail / HP) {
+    rect(g, BAR.x - 1, BAR.y - 1, BAR.w + 2, BAR.h + 2, GREYS[9]);
+    rect(g, BAR.x, BAR.y, BAR.w, BAR.h, GREYS[0]);
+    rect(g, BAR.x, BAR.y, BAR.w * trailK, BAR.h, GREYS[7]);
+    rect(g, BAR.x, BAR.y, BAR.w * leftK, BAR.h, '#fff');
+  }
+  const recent = (s, t, w) => s.landed.filter(l => t - l.at < w);
+
+  const OPTIONS = [
+    { name: 'Now', about: 'As built: the number goes in and the true fill moves by under a pixel. Only the grains off the end say anything landed.',
+      draw(g, t, s) {
+        plainBar(g, s);
+        for (const l of recent(s, t, 0.12)) for (const [dx, dy] of [[-4, -4], [2, -6], [-2, 16], [4, 18]]) rect(g, fx(l.after / HP) + dx, BAR.y + dy, 2, 2, l.e.heal ? PURPLES[11] : '#fff');
+      } },
+    { name: 'A · A chip knocked off', about: 'Each blow knocks a chip out of the fill’s end: a notch at least a font pixel deep, bigger with the blow, held white for a pose, then the chip falls away down past the bar and the notch closes to the true fill.',
+      draw(g, t, s) {
+        plainBar(g, s);
+        for (const l of recent(s, t, 0.6)) {
+          if (l.e.heal) continue;
+          const a = t - l.at, w = clamp(2 + Math.log(l.e.n) * 1.2, 4, 12), x = fx(l.after / HP);
+          // the notch: the chip's gap in the fill, open while the chip is still falling
+          if (a < 0.3) rect(g, x - w, BAR.y + (l.e.i % 2 ? 0 : BAR.h / 2), w, BAR.h / 2, a < 0.08 ? GREYS[10] : GREYS[0]);
+          // the chip, falling and turning over in held steps
+          const fy = BAR.y + 20 * a + 90 * a * a, fxp = x - w / 2 + (l.e.i % 2 ? 1 : -1) * 18 * a;
+          const flat = Math.floor(a / 0.08) % 2;
+          rect(g, step(fxp), step(fy), flat ? w : w / 2, flat ? BAR.h / 2 : w / 2, a < 0.08 ? '#fff' : GREYS[10]);
+        }
+      } },
+    { name: 'B · A close-up under it', about: 'Under the bar, a thin second bar is the last twentieth of the defense up close: small blows bite it visibly, and when it runs out the big bar’s white steps down a notch and the close-up fills again.',
+      draw(g, t, s) {
+        plainBar(g, s);
+        const slice = HP / 20, into = s.left % slice || slice, k = into / slice;
+        const y = BAR.y + BAR.h + 5, w = BAR.w, h = 4;
+        rect(g, BAR.x - 1, y - 1, w + 2, h + 2, GREYS[7]);
+        rect(g, BAR.x, y, w, h, GREYS[0]);
+        rect(g, BAR.x, y, w * k, h, '#fff');
+        // the slice it stands for, marked on the big bar
+        const x0 = fx((s.left - into) / HP), x1 = fx((s.left - into + slice) / HP);
+        rect(g, x0, BAR.y + BAR.h + 1, 1, 3, GREYS[9]); rect(g, x1, BAR.y + BAR.h + 1, 1, 3, GREYS[9]);
+        for (const l of recent(s, t, 0.1)) if (!l.e.heal) rect(g, BAR.x + w * ((l.after % slice) / slice), y - 3, 2, h + 6, GREYS[10]);
+      } },
+    { name: 'C · Cracks in the end cell', about: 'The bar’s fill is laid in cells, each a hundredth of the defense. The end cell cracks a step with each blow that lands in it, three steps, and breaks away when its hundredth is spent; the heal mends the cracks.',
+      draw(g, t, s) {
+        rect(g, BAR.x - 1, BAR.y - 1, BAR.w + 2, BAR.h + 2, GREYS[9]);
+        rect(g, BAR.x, BAR.y, BAR.w, BAR.h, GREYS[0]);
+        const cells = 100, cw = BAR.w / cells, per = HP / cells;
+        const whole = Math.floor(s.left / per), part = (s.left - whole * per) / per;
+        rect(g, BAR.x, BAR.y, whole * cw, BAR.h, '#fff');
+        for (let c = 1; c < whole; c += 1) rect(g, BAR.x + c * cw, BAR.y, 1, BAR.h, GREYS[10]);
+        if (part > 0) {
+          // the end cell, whole but cracked by what it has taken
+          const x = BAR.x + whole * cw, cracks = part > 0.75 ? 0 : part > 0.5 ? 1 : part > 0.25 ? 2 : 3;
+          rect(g, x, BAR.y, cw, BAR.h, '#fff');
+          const lines = [[1, 3, 1, 5], [2, 7, 1, 4], [0, 10, 2, 3]];
+          for (let i = 0; i < cracks; i++) { const [dx, dy, w, h] = lines[i]; rect(g, x + dx, BAR.y + dy, w, h, GREYS[0]); }
+        }
+        for (const l of recent(s, t, 0.3)) {
+          if (l.e.heal) continue;
+          const a = t - l.at, bx = fx(l.after / HP);
+          if (a < 0.08) rect(g, bx - 1, BAR.y - 2, 3, BAR.h + 4, GREYS[10]);
+          rect(g, step(bx + 6 * a), step(BAR.y + BAR.h + 60 * a * a + 4), 2, 2, '#fff');
+        }
+      } },
+    { name: 'D · Every blow a bite', about: 'Each blow bites a notch out of the white’s top edge where it lands along the bar, deeper for a bigger blow; the notches stand while that stretch is still white and are eaten as the fill passes them.',
+      draw(g, t, s) {
+        plainBar(g, s);
+        for (const l of s.landed) {
+          if (l.e.heal) continue;
+          const x = fx(l.after / HP) + 1;
+          if (x > fx(s.left / HP)) continue;
+          const d = clamp(Math.round(Math.log(l.e.n) / 1.4), 1, 4);
+          rect(g, step(x - 2, 1), BAR.y, 2, d * 2, GREYS[8]);
+        }
+      } },
+  ];
+  const grid = document.getElementById('grid'), panes = [];
+  for (const o of OPTIONS) {
+    const card = document.createElement('div'); card.className = 'card';
+    const h = document.createElement('h2'); h.textContent = o.name;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.setAttribute('aria-label', o.name);
+    const p = document.createElement('p'); p.textContent = o.about;
+    card.append(h, cv, p); grid.append(card);
+    panes.push({ o, g: cv.getContext('2d') });
+  }
+  let playing = true, speed = 1, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  (function tick(now) {
+    if (playing) clock += (now - last) / 1000 * speed;
+    last = now;
+    const t = clock % LOOP, s = state(t);
+    for (const { o, g } of panes) {
+      frame(g, t, s);
+      o.draw(g, t, s);
+      numbers(g, t, s, { x: fx(s.left / HP) });
+    }
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>

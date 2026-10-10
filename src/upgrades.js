@@ -13,15 +13,15 @@ import { P, SHELF_INK } from './config.js';
 import { S } from './state.js';
 import { maxed, rungOf, rungsOf } from './words.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
-import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
+import { SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
 
 import { spelled } from './tower.js';
-import { spendScales, shed } from './deep/scales.js';
+import { spendScales, refundScales } from './deep/scales.js';
 
 import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut,
          ahead, newestWaiting, waitingCount, worksOf } from './works.js';
-import { nextHouseAt } from './house.js';
+import { nextHouseAt, housed } from './house.js';
 import { DUST_PER } from './upgrades/price.js';
 import { hire } from './staffing.js';
 import { purse } from './words.js';
@@ -75,8 +75,8 @@ export const HOUSE_ROW = {
   // the curve.
   work: () => Math.min(HOUSE_WORK_MAX,
     HOUSE_WORK0 * Math.pow(HOUSE_WORK_STEP, Math.max(0, S.crew + ahead('house') - 1))),
-  from: () => S.crew + ahead('house'),
-  to: () => S.crew + ahead('house') + 1,
+  from: () => housed() + ahead('house'),
+  to: () => housed() + ahead('house') + 1,
   // Steeper than the ladders' rate on purpose: every body compounds the
   // income every ladder is priced against, so the crew is the one curve that
   // must outrun the shop's.
@@ -169,7 +169,6 @@ export function take(money, n, to = null) {
   if (!n) return;
   if (money === 'scale') { spendScales(n, to?.x ?? S.cx, to?.y ?? S.groundY); return; }
   if (money === 'dust') spend(n);
-  else if (money === 'core') { S.cores -= n; spendHeld(n, CORE_CELL); }
   else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (money === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
   else if (money === 'spark') { S.sparks -= n; spendHeld(n, SPARK_CELL); }
@@ -306,8 +305,8 @@ export function handBack(u) {
   const bill = w.bill || billOf(u).filter(([money]) => money !== 'time');
   if (!pullOut(u.site, u.key)) return false;
   const x = box ? box.x + box.w / 2 : S.cx, y = (box?.y ?? S.groundY) - P * 2;
-  // Scales go back into the water they came out of, and sink to the bed.
-  for (const [money, n] of bill) if (money === 'scale') shed(x, y, n);
+  // Scales go back into the crusher.
+  for (const [money, n] of bill) if (money === 'scale') refundScales(n, x, y);
                                  else if (money !== 'time') refund(money, n, x, y);
   S.shopStale = true;
   return false;

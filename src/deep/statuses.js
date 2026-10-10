@@ -13,23 +13,22 @@
 //   bleed     ticks: `k` is its damage a second (the one status whose k is
 //             not a share), struck through the Swordsman's hit
 //   exposed   `k` more from everything
-//   held      no heal while it lasts (the Hexer's capstone)
-//   weakened  the heal cut by `k`
+//   held      the window stopped while it lasts (the Hexer's capstone)
 //
 // On a fighter the two buffs live on the body, as fields no save keeps:
 // `inspiredUntil` / `inspiredK` (its hits `k` more) and `hastedUntil` (it
 // swings HASTE more often).
 //
-// Every amp is added up and multiplied in once, capped at AMP_MAX; every heal
-// cut likewise, capped at HEAL_CUT_MAX. Read in `strike` and `healNow`.
+// Every amp is added up and multiplied in once, capped at AMP_MAX. Read in
+// `strike`.
 
 import { S } from '../state.js';
-import { DOT_TICK_S, EXPOSED_AMP, AMP_MAX, HEAL_CUT_MAX, HASTE } from '../config.js';
+import { DOT_TICK_S, AMP_MAX, HASTE } from '../config.js';
 import { now } from '../clock.js';
 import { coilAt } from './place.js';
 import { strike } from './serpent.js';
 
-export const STATUSES = ['bleed', 'exposed', 'held', 'weakened'];
+export const STATUSES = ['bleed', 'exposed', 'held'];
 
 const on = () => S.statuses || (S.statuses = {});
 
@@ -82,8 +81,6 @@ export function ampOf(tick, by) {
   if (by) a += inspiredK(by);
   return 1 + Math.min(AMP_MAX, a);
 }
-// The heal's share left after the cuts: Weakened, capped.
-export const healLeft = () => 1 - Math.min(HEAL_CUT_MAX, level('weakened'));
 
 // A fighter's buffs.
 export const inspiredK = w => (w && now() < (w.inspiredUntil || 0) ? w.inspiredK || 0 : 0);

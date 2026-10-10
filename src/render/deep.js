@@ -15,8 +15,8 @@
 // serpent and the scales draw as they would in the yard and come out white.
 
 import { now } from '../clock.js';
-import { DOME_PAD, DOME_WALL, CRUSH_FIRE, CRUSH_STIR, CRUSH_HEAT, CRUSH_SPARKS, CRUSH_SPARK_MS,
-         CRUSH_SPARK } from '../config.js';
+import { CRUSH_FIRE, CRUSH_STIR, CRUSH_HEAT, CRUSH_SPARKS, CRUSH_SPARK_MS,
+         CRUSH_SPARK, SERPENT_PHASES } from '../config.js';
 import { invertByFilter } from './invert.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
@@ -32,7 +32,8 @@ import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, podAt,
          waterShift } from '../deep/place.js';
 import { paintAbyssField } from './abyssfield.js';
 import { abyssLine } from '../pit.js';
-import { SPRITES, CRUSHER_SPRITES } from '../deep/sprites.js';
+import { CRUSHER_SPRITES } from '../deep/sprites.js';
+import { propCells, brewCells } from '../deep/props.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
 import { raw, darkPage } from '../ink.js';
@@ -41,7 +42,9 @@ import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
-import { SCAFFOLD_BANDS, LOT_STAKE } from '../config.js';
+import { SCAFFOLD_BANDS, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, DOME_TONES, CHOOSE_MARK, CHOOSE_MARK_UP, CHOOSE_MARK_BOB_MS } from '../config.js';
+import { unchosen } from '../deep/party.js';
+import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
 
@@ -133,39 +136,12 @@ export function bedTop(x) {
   return deepFloor() - (r + 1) * b.p;
 }
 
-// --- the stations ------------------------------------------------------------------
-// The sprites and where each stands are the deep's geometry (deep/sprites.js);
-// these are the tones their characters are seen in.
+// --- the crusher -----------------------------------------------------------------
+// The furnace's drawing is the deep's geometry (deep/sprites.js); these are
+// the tones its characters are seen in.
 const SPRITE_INK = {
   '#': seen('#ffffff'), '+': GREYS[9], '-': GREYS[6], 'o': seen('#000000'), '*': PURPLES[11]
 };
-
-// The dome over a station: walls from the floor to DOME_WALL above the
-// drawing, and a half circle over them, cell by cell so it sits on the grid.
-// As wide as the drawing and DOME_PAD either side, so the two share one
-// middle whatever the drawing's width: a dome of one width for every station
-// had half a cell to spare on one side of every odd-width drawing.
-// Lit from inside a shade above the water, its rim a shade above that, and
-// every cell dealt a tone near it so the dome is not a flat block.
-function drawDome(stand, g = ctx) {
-  const w = stand.w + DOME_PAD * 2, r = w / 2, left = stand.x - DOME_PAD;
-  const spring = stand.y - DOME_WALL;
-  const top = Math.round((spring - r) / P) * P;
-  const inside = (x, y) => {
-    if (x < left || x >= left + w || y >= deepFloor() || y < top) return false;
-    if (y >= spring) return true;
-    const dx = x + P / 2 - (left + r), dy = y + P / 2 - spring;
-    return dx * dx + dy * dy <= r * r;
-  };
-  for (let y = top; y < deepFloor(); y += P) {
-    for (let x = left; x < left + w; x += P) {
-      if (!inside(x, y)) continue;
-      const rim = !inside(x - P, y) || !inside(x + P, y) || !inside(x, y - P);
-      g.fillStyle = GREYS[(rim ? 5 : 2) + (seeth(x / P, y / P) % 2)];
-      g.fillRect(x, y, P, P);
-    }
-  }
-}
 
 // The crusher, a brick furnace (deep/sprites.js), painted at crusherRect():
 // the drawing, painted once into an image of its own as a station is and
@@ -293,46 +269,100 @@ function drawPods() {
 }
 
 // --- the party's stations, at their slots -----------------------------------------
-// The floor's slots (docs/wave-party.md): any kind at any slot, more than one
-// of a kind. A kind's drawing is `SPRITES[kind]`, and where it stands is
-// place.js's (`spriteRectOfStation`, `standOfStation`), the one answer the
-// pointer, the works and the roster read too.
+// A station is its fighter and a prop (DESIGN.md, "A station is its fighter
+// and a prop"): the fighter is the fighters' layer's (render/arms.js), and
+// here is the prop beside its post -- the crate below the fork, the class's
+// own from it, its parts purple from rung 8. Where it stands is place.js's
+// (`propRect`), and what it is made of props.js's (`propCells`).
 const snap = v => Math.round(v / P) * P;
-function placed(st) {
-  const rows = SPRITES[st.kind];
-  if (!rows || st.slot == null) return null;
-  return { rows, s: place.spriteRectOfStation(st), stand: place.standOfStation(st) };
+const toneOf = (ramp, i) => (ramp === 'p' ? PURPLES : GREYS)[i];
+
+// A prop never changes but at the fork and at rung 8, so each is painted
+// once into an image of its own, a cell a cell, and drawn from there. Kept by
+// the prop and whether it is lit; it is drawn at wherever its station stands.
+const painted = new Map();
+function propImage(key, lit) {
+  const id = `${key}|${lit ? 8 : 0}`;
+  let img = painted.get(id);
+  if (img) return img;
+  const cells = propCells(key, lit);
+  img = document.createElement('canvas');
+  img.width = Math.max(...cells.map(c => c[0] + 1)) * P;
+  img.height = Math.max(...cells.map(c => c[1] + 1)) * P;
+  const g = img.getContext('2d');
+  for (const [c, r, ramp, i] of cells) { g.fillStyle = toneOf(ramp, i); g.fillRect(c * P, r * P, P, P); }
+  painted.set(id, img);
+  return img;
 }
 
-// A station and its dome never change once they stand, so each is painted
-// once into an image of its own, a world pixel a pixel, and drawn from there:
-// several hundred cells a station were a fillRect each, every frame. Kept by
-// the station and where it stands, so a station that moves (a resize, a
-// sprite edited in the station editor) is painted afresh.
-const painted = new Map();
-function stationImage(key, rows, s, stand) {
-  const r = (stand.w + DOME_PAD * 2) / 2;
-  const x = stand.x - DOME_PAD, y = Math.round((stand.y - DOME_WALL - r) / P) * P - P;
-  const w = stand.w + DOME_PAD * 2, h = deepFloor() - y;
-  const id = `${x}|${y}|${rows.join('')}`;
-  const had = painted.get(key);
-  if (had && had.id === id) return had;
-  const img = document.createElement('canvas');
-  img.width = w; img.height = h;
+// The plinth under a station (`plinthRect`): a lit top course, its ends a
+// step brighter than the stone between, every cell a tone of its own. The
+// same for every station of one width, so painted once a width.
+const plinths = new Map();
+function plinthImage(b) {
+  const cols = b.w / P, steps = b.step / P, id = `${cols}|${steps}`;
+  let img = plinths.get(id);
+  if (img) return img;
+  const across = cols + 2 * steps * (PLINTH_H - 1);
+  img = document.createElement('canvas');
+  img.width = across * P; img.height = PLINTH_H * P;
   const g = img.getContext('2d');
-  g.translate(-x, -y);
-  drawDome(stand, g);
-  for (let rr = 0; rr < rows.length; rr++) {
-    for (let c = 0; c < rows[rr].length; c++) {
-      const ink = SPRITE_INK[rows[rr][c]];
-      if (!ink) continue;
-      g.fillStyle = ink;
-      g.fillRect(s.x + c * P, s.y + rr * P, P, P);
+  for (let r = 0; r < PLINTH_H; r++) {
+    const l = steps * (PLINTH_H - 1 - r), n = cols + 2 * steps * r;
+    for (let c = 0; c < n; c++) {
+      const ramp = r === 0 ? PLINTH_TONES.top : c === 0 || c === n - 1 ? PLINTH_TONES.end : PLINTH_TONES.body;
+      g.fillStyle = GREYS[ramp[Math.floor(hash((l + c) * 7 + r * 131) * ramp.length)]];
+      g.fillRect((l + c) * P, r * P, P, P);
     }
   }
-  const out = { id, img, x, y };
-  painted.set(key, out);
-  return out;
+  plinths.set(id, img);
+  return img;
+}
+// The low dome behind a built station (`domeRect`): a shade above the water
+// inside, its rim a shade above that, every cell a tone of its own. The same
+// for every dome of one size, so painted once a size.
+const domes = new Map();
+function domeImage(w, wall) {
+  const id = `${w}|${wall}`;
+  let img = domes.get(id);
+  if (img) return img;
+  const cols = w / P, r = cols / 2, rows = Math.ceil(r) + wall;
+  const inside = (c, y) => {
+    if (c < 0 || c >= cols || y < 0 || y >= rows) return false;
+    if (y >= rows - wall) return true;
+    const dx = c + 0.5 - r, dy = y + 0.5 - (rows - wall);
+    return dx * dx + dy * dy <= r * r;
+  };
+  img = document.createElement('canvas');
+  img.width = w; img.height = rows * P;
+  const g = img.getContext('2d');
+  for (let y = 0; y < rows; y++) for (let c = 0; c < cols; c++) {
+    if (!inside(c, y)) continue;
+    const ramp = !inside(c - 1, y) || !inside(c + 1, y) || !inside(c, y - 1) ? DOME_TONES.rim : DOME_TONES.inside;
+    g.fillStyle = GREYS[ramp[Math.floor(hash(c * 13 + y * 29) * ramp.length)]];
+    g.fillRect(c * P, y * P, P, P);
+  }
+  domes.set(id, img);
+  return img;
+}
+function drawDome(st) {
+  const d = place.domeRect(st), wall = (deepFloor() - d.spring) / P, img = domeImage(d.w, wall);
+  ctx.drawImage(img, d.x, deepFloor() - img.height);
+}
+
+function drawPlinth(st) {
+  const b = place.plinthRect(st);
+  ctx.drawImage(plinthImage(b), b.x - b.step * (PLINTH_H - 1), b.y);
+}
+
+function drawProp(st, t) {
+  const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG;
+  ctx.drawImage(propImage(p.key, lit), p.x, p.y);
+  // the one prop that moves: the hexer's brew, over its pot
+  for (const [c, r, ramp, i] of brewCells(p.key, lit, t)) {
+    ctx.fillStyle = toneOf(ramp, i);
+    ctx.fillRect(p.x + c * P, p.y + r * P, P, P);
+  }
 }
 
 // A station not built yet stands as a building site does (render/buildsites.js):
@@ -347,30 +377,55 @@ function drawScaffold(stand) {
   for (let x = left + postW; x < right; x += P * 2) ctx.fillRect(x, deepFloor() - P * 3, P, 2);
 }
 
-// An empty lot: a stake at each end of its ground, waiting for its kind.
-function drawLot(stand) {
-  const top = deepFloor() - P * LOT_STAKE;
-  ctx.fillStyle = GREYS[9];
-  for (const x of [snap(stand.x), snap(stand.x + stand.w) - P]) ctx.fillRect(x, top, P, P * LOT_STAKE);
-  ctx.fillStyle = GREYS[6];
-  for (let x = snap(stand.x) + P * 2; x < snap(stand.x + stand.w) - P; x += P * 2) ctx.fillRect(x, top + P, P, 2);
+// The mark over a station whose Recruit waits on rung 1: where it hangs, its
+// top-left, centered over the station's ground and bobbing a held cell.
+const MARK_W = CHOOSE_MARK[0].length * P, MARK_H = CHOOSE_MARK.length * P;
+export function chooseMarkAt(st, t = now()) {
+  const g = place.standOfStation(st), bob = Math.floor(t / CHOOSE_MARK_BOB_MS) % 2;
+  return { x: snap(g.x + g.w / 2 - MARK_W / 2), y: g.y - (CHOOSE_MARK_UP + bob) * P - MARK_H, w: MARK_W, h: MARK_H };
+}
+// Whether a station wears it: its Recruit waiting, and the build's own done
+// check already read -- that one says it stands, and stays until its board
+// is opened; the two never stack on one station.
+const wearsMark = st => unchosen(st) && !doneAt(st.id).length;
+// The station whose mark the pointer (world x, y) is over, if any.
+export const overChooseMark = (x, y) => (S.stations || []).find(st => {
+  if (!wearsMark(st)) return false;
+  const m = chooseMarkAt(st);
+  return x >= m.x - P && x < m.x + m.w + P && y >= m.y - P && y < m.y + m.h + 2 * P;
+}) || null;
+// White on a dark keyline: every empty cell touching the ink, then the ink.
+function drawChooseMark(st) {
+  const m = chooseMarkAt(st), rows = CHOOSE_MARK, ink = (r, c) => rows[r]?.[c] === '#';
+  ctx.fillStyle = GREYS[2];
+  for (let r = -1; r <= rows.length; r++) for (let c = -1; c <= rows[0].length; c++) {
+    if (ink(r, c)) continue;
+    let touch = false;
+    for (let dr = -1; dr <= 1 && !touch; dr++) for (let dc = -1; dc <= 1; dc++) if (ink(r + dr, c + dc)) { touch = true; break; }
+    if (touch) ctx.fillRect(m.x + c * P, m.y + r * P, P, P);
+  }
+  ctx.fillStyle = GREYS[11];
+  rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') ctx.fillRect(m.x + c * P, m.y + r * P, P, P); }));
 }
 
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
   if (S.snatched) drawCrusher();
   drawPods();
-  const smooth = ctx.imageSmoothingEnabled;
+  const smooth = ctx.imageSmoothingEnabled, t = now() / 1000;
   ctx.imageSmoothingEnabled = false;
+  // every dome first, so no station's dome is over its neighbor's prop
   for (const st of S.stations || []) {
-    if (!st.kind) { if (st.slot != null) drawLot(place.standOfStation(st)); continue; }
-    const at = placed(st);
-    if (!at) continue;
-    const { rows, s, stand } = at;
-    if (s.x - DOME_PAD > x1 || s.x + s.w + DOME_PAD < x0) continue;
-    if (!st.built) { drawScaffold(stand); continue; }
-    const p = stationImage(st.id, rows, s, stand);
-    ctx.drawImage(p.img, p.x, p.y);
+    if (st.slot == null || !st.built) continue;
+    const d = place.domeRect(st);
+    if (d.x <= x1 && d.x + d.w >= x0) drawDome(st);
+  }
+  for (const st of S.stations || []) {
+    if (st.slot == null) continue;
+    const stand = place.standOfStation(st);
+    if (stand.x > x1 || stand.x + stand.w < x0) continue;
+    if (!st.built) drawScaffold(stand);
+    else { drawPlinth(st); drawProp(st, t); if (wearsMark(st)) drawChooseMark(st); }
   }
   ctx.imageSmoothingEnabled = smooth;
   ctx.fillStyle = '#000';
@@ -408,7 +463,7 @@ function stepMotes() {
     silt++;
   }
   // A fleck off a swaying coil every so often, at a segment the window holds.
-  if (S.serpentStage < 4 || S.serpentFreed) {
+  if (S.serpentStage < SERPENT_PHASES || S.serpentFreed) {
     fleckOwed += dt / 1000;
     while (fleckOwed > DEEP_FLECK_EVERY) {
       fleckOwed -= DEEP_FLECK_EVERY;

@@ -1,0 +1,136 @@
+<title>Serpent Fish Meal</title>
+<style>
+/* Layout: one pane per way the fish come to the serpent, the same meal in
+   each: the heal waits in the bank, the fish is eaten, the whole of it lands. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Fish Meal</h1>
+    <p>The heal is banked instead of trickling: fish drift through the deep on a clock, the serpent eats one with its mouth, and the
+      whole bank lands at once, the same total a second as today. A meal is a lunge, a swallow that runs down the
+      neck to the belly, and the heal there. The bar at the top gains the lump in one step. Each pane brings the
+      fish a different way. A mock drawn from plain shapes on the cell grid, not the game: the head is on the left,
+      the bar has no pips, and the numbers are made up.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+(() => {
+  const P = 6, W = 480, H = 192, COLS = W / P, LOOP = 6;
+  const PUR = ['#130b20', '#1b112c', '#241739', '#2d1d47', '#412465', '#5c2ba6', '#6a2fbe', '#9b5de5', '#c9a7f5'];
+  const GREY = ['#26262c', '#42424a', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const cell = (g, c, r, col) => { g.fillStyle = col; g.fillRect(Math.round(c) * P, Math.round(r) * P, P, P); };
+  const mid = (c, t) => 18 + Math.round(2.6 * Math.sin(c / 9 + t * 0.9) + 1 * Math.sin(c / 4 - t * 1.7));
+  const HEAD = 9, MOUTH_C = 2, OFF = 22;   // the head stands OFF cells in, with sea to its left
+  // the body's half-thickness: a head, then the girth; a swallow swells it as it runs from the head
+  const half = (c, sw) => (c < HEAD ? 3 : 2) + (sw != null && Math.abs(c - sw) < 3 ? 1 : 0);
+  const FISH = ['#.##.', '#####', '#.##.'];   // heading right: the tail on the left
+  function fish(g, c, r, col) {
+    FISH.forEach((row, dy) => [...row].forEach((v, dx) => { if (v === '#') cell(g, c + dx, r + dy, col); }));
+  }
+  const NOTE = { '+': ['...', '.#.', '###', '.#.', '...'], '1': ['.#.', '##.', '.#.', '.#.', '###'], '3': ['###', '..#', '.##', '..#', '###'], '0': ['###', '#.#', '#.#', '#.#', '###'] };
+  const BITE = 0.5, SWALLOW = 0.8;   // the jaws shut on it, then the swallow runs to the belly
+  // each way: when each fish is taken, its total lump (a third of the bank each in B), and where it
+  // is `u` seconds in; it comes in on the mouth, which faces left, from above, above and behind, or below
+  const WAYS = [
+    { name: 'A: one big fish', note: 'A fish swims in from the left edge at the height of the mouth; the jaws open as it comes in reach, shut on it, and the swallow runs down the neck.',
+      eats: [3.0], nums: ['+30'], at: (u, i, m) => { const s = Math.min(1, u / 3.0); return { c: -8 + (OFF - 2 + 8) * s, r: m - 1 }; } },
+    { name: 'B: a shoal, one bite each', note: 'Three small fish, spaced out, one after another from the left edge; the jaws open for each in turn, and each swallow is a third of the bank.',
+      eats: [2.4, 3.2, 4.0], nums: ['+10', '+10', '+10'], at: (u, i, m) => { const e = [2.4, 3.2, 4.0][i], s = Math.min(1, Math.max(0, (u + 0.9 * i * 0 + 2.0 - i * 0.2) / (e + 2.0 - i * 0.2))); return { c: -8 + (OFF - 2 + 8) * s, r: m - 1 - i + (i === 1 ? 1 : 0) }; } },
+    { name: 'C: a fish on a wobbling line', note: 'One fish from the left edge, rising and dipping as it swims; the head lifts to meet it, the jaws take it as it reaches them.',
+      eats: [3.0], nums: ['+30'], at: (u, i, m) => { const s = Math.min(1, u / 3.0); return { c: -8 + (OFF - 2 + 8) * s, r: m - 1 + Math.round(Math.sin(s * 9) * 3 * (1 - s)) }; } },
+  ];
+  const panes = WAYS.map(w => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${w.name}</h2><canvas width="${W}" height="${H}"></canvas><p>${w.note}</p>`;
+    document.getElementById('grid').appendChild(card);
+    return { w, g: card.querySelector('canvas').getContext('2d') };
+  });
+  function draw(p, t) {
+    const g = p.g, u = t % LOOP, w = p.w, n = w.eats.length;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    const m0 = mid(MOUTH_C, t);   // in body columns
+    // the mouth is open from a beat before each fish reaches it until its jaws shut
+    const open = w.eats.some(e => u > e - 0.5 && u < e + BITE * 0.4) ? 2 : w.eats.some(e => u >= e + BITE * 0.4 && u < e + BITE) ? 1 : 0;
+    // the swallows running down the neck, and the lumps landed by now
+    let sw = null, landed = 0, landing = -1;
+    w.eats.forEach((e, i) => {
+      const a = (u - e - BITE) / SWALLOW;
+      if (a >= 0 && a <= 1) sw = HEAD + a * (34 - HEAD);
+      if (a > 1) { landed++; if (u - (e + BITE + SWALLOW) < 1.2) landing = i; }
+    });
+    const bar = 0.5 - u * 0.02 + landed * 0.3 / n;
+    g.fillStyle = '#1c1c21'; g.fillRect(60, 6, 360, 12);
+    g.fillStyle = '#ffffff'; g.fillRect(60, 6, Math.round(360 * bar), 12);
+    if (landing >= 0) { g.fillStyle = PUR[7]; g.fillRect(60 + Math.round(360 * (bar - 0.3 / n)), 6, Math.round(360 * 0.3 / n), 12); }
+    // the bank: fills between meals, empties into the body as each is swallowed
+    const banked = Math.max(0, Math.min(1, 1 - landed / n - (sw != null ? 0.5 / n : 0)));
+    g.fillStyle = '#241739'; g.fillRect(60, 22, 360, 4);
+    g.fillStyle = PUR[6]; g.fillRect(60, 22, Math.round(360 * banked * Math.min(1, 0.4 + u / 3)), 4);
+    // the body, its head with the mouth cut into the left end
+    for (let c = 0; c < COLS - OFF; c++) {
+      const m = mid(c, t), h = half(c, sw);
+      for (let r = m - h; r <= m + h; r++) {
+        if (c < 5 && Math.abs(r - m) <= (c < 2 && open === 2 ? open : open === 2 ? 1 : 0)) continue;   // the gape
+        cell(g, c + OFF, r, GREY[r === m - h ? 5 : 2 + Math.floor(hash(c * 31 + r) * 3)]);
+      }
+    }
+    cell(g, OFF + 6, mid(6, t) - 1, GREY[0]);   // the eye
+    if (open === 0) for (let c = 0; c < 4; c++) cell(g, OFF + c, m0, GREY[0]);   // the closed mouth's line
+    // the fish, until the jaws have it; it is inside them at the end
+    w.eats.forEach((e, i) => {
+      if (u > e + BITE * 0.5) return;
+      const q = w.at(Math.min(u, e), i, m0);
+      fish(g, q.c, q.r, i % 2 ? GREY[3] : GREY[4]);
+    });
+    // the heal landing at the belly: a ring of purple and the number
+    if (landing >= 0) {
+      const e = w.eats[landing], a = (u - (e + BITE + SWALLOW)) / 1.2;
+      for (let c = 0; c < COLS - OFF; c++) {
+        const d = Math.abs(c - 34) - a * 46;
+        if (d > 0 || d < -5) continue;
+        const m = mid(c, t), h = half(c) + 1, tone = PUR[Math.max(1, 8 + Math.floor(d / 2) - Math.floor(a * 3))];
+        cell(g, c + OFF, m - h, tone); cell(g, c + OFF, m + h, tone);
+      }
+      [...w.nums[landing]].forEach((ch, i) => NOTE[ch].forEach((row, r) => [...row].forEach((v, c) => { if (v === '#') cell(g, OFF + 28 + i * 4 + c, mid(34, t) + 5 + r, PUR[Math.max(1, 7 - Math.floor(a * 6))]); })));
+    }
+  }
+  let t = 0, last = performance.now(), speed = 1, run = true;
+  const frame = n => { const d = Math.min(0.05, (n - last) / 1000); last = n; if (run) t += d * speed;
+    panes.forEach(p => draw(p, t)); requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+  const play = document.getElementById('play');
+  play.onclick = () => { run = !run; play.textContent = run ? 'pause' : 'play'; };
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', o === b));
+  });
+})();
+</script>

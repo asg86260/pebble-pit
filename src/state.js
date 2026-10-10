@@ -63,6 +63,7 @@ export const S = {
   buried: false,          // somebody is under it, and still alive
   rescued: false,         // and, once the dome held one off them, they got out
   rescueTo: 0,            // where they are walking to while they do
+  crewSight: null,        // when the right button went down off a body, held: the crew looked at (input.js)
   buriedSay: null,
   buriedSayAt: 0,
   // How far out of the ground it has been dug, nought to one; every rock that
@@ -78,7 +79,7 @@ export const S = {
   timePending: null,
   timesAsked: 0,          // which of the two the board has been asked this boot
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
-  coreBuried: true,       // this rock still has its core inside it
+  coreBuried: true,       // this rock is not yet finished with (a name from when it held a core)
   rockFall: 0,            // world pixels a new rock still has to come down
   landAt: 0,              // when the last one hit, for the spread it does on arriving
   rockFallV: 0,           // how fast it is coming
@@ -89,14 +90,14 @@ export const S = {
   // shield.js, so rock.js can ask without knowing that shields exist.
   rockHeld: false,
   danceUntil: 0,          // the crew are celebrating the last one until this moment
-  nextBoulderAt: 0,       // backstop, in case a core never falls clear
+  nextBoulderAt: 0,       // backstop, in case the footprint never clears
   peakRow: 0,             // the highest standing rock, recomputed each frame
 
   // --- dust in the air and on the cursor ---
   chips: [],              // knocked loose, still flying
   belt: [],               // on the belt's scoop, climbing from the ground to the band
   beltRun: 0,             // how far the band has run since it last shifted its load a cell
-  paid: [],               // flying out of the pit to the bench, on the way to being spent
+  paid: [],               // flying out of the pit to the bench, on the way to being spent, and refunds flying back in
   gulped: [],             // and out of the pit into the abyss, diving to its surface
   ripples: [],            // where the liquid just ate one: { x, at }, briefly drawn
   motes: [],              // the load drifting round the cursor
@@ -132,15 +133,8 @@ export const S = {
   riftShake: 0,
   // What is through it that is not dust, by kind, because the pile shows each
   // counter *less* what is through (`seedPitCores` in pit.js).
-  riftHeld: { cores: 0, shards: 0, spores: 0, sparks: 0 },
+  riftHeld: { shards: 0, spores: 0, sparks: 0 },
   hideDone: false,        // whether finished ladders are folded off the boards
-
-  // --- cores ---
-  cores: 0,
-  seenCore: false,        // nothing about cores is shown until one is banked
-  coreItem: null,         // a core loose in the world
-  heldCore: false,        // carrying one on the cursor
-  coreTaker: null,        // the worker that has claimed a loose one
 
   // --- what you have bought ---
   // The kit each station owns; whoever is standing there wears it
@@ -259,6 +253,9 @@ export const S = {
   // A finished work nobody has been to see yet, per site: the key of what
   // landed, kept until that station's board is read (drawDoneMarks).
   siteDone: {},
+  // What each of those marks was paid, index for index: the stroke it wears
+  // is its own rung's, and the row's bill has moved on to the next by then.
+  siteDoneBill: {},
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a
   // count; `haulers` is always the ones left over, never a job you hire into.
@@ -343,6 +340,7 @@ export const S = {
   mouse: { x: 0, y: 0 },
   mining: false,
   paused: false,          // the whole yard held still, on the space bar
+  still: false,           // the page's own frames not stepping the yard: a dev capture steps it itself (`__still`)
   houseBoardOpen: false,  // and the block, with what you can put up on it
   modal: null,            // which window is open over the yard, by kind (modal.js), or none
   quarryBoardOpen: false,
@@ -465,6 +463,7 @@ export const S = {
   serpentStage: 0,
   serpentWound: 0,
   serpentFreed: false,
+  resistBy: {},           // stage -> the kinds it resists, chosen at its break from the party (deep/phases.js)
   // A heavy blow's stun: seconds of it left (the heal stops while there
   // are), and seconds of the grace after one in which no new one can start.
   // `serpentStill` is the ms of sway the stuns have held back: the coil's
@@ -473,10 +472,24 @@ export const S = {
   serpentStun: 0,
   serpentGrace: 0,
   serpentStill: 0,
+  // The phase's mechanic (deep/phases.js): seconds into its turn, and whether
+  // this turn's was answered.
+  mechAt: 0,
+  mechSkip: false,
+  phaseAt: 0,             // seconds into the phase, for the fading's turns of resist
+  breakT: null,           // seconds into a phase's break while it plays (deep/phases.js), null otherwise
+  // The kill (snatch.js): when the fourth break landed, where he walks from
+  // and to once he is out, and when the serpent began to gather itself again.
+  freedAt: null, freedFrom: null, freedTo: null, reformAt: null,
+  // The constrict's orb (deep/phases.js): the station its fighter is at, what
+  // is left of it, and when it closed.
+  orb: null,
+  orbBurst: null,        // the orb as it bursts, for the drawing
   // The bites single blows took out of the hide, closing: { u, side, k, at },
   // `u` the segment, `side` -1 the top edge and 1 the underside, `k` how big
   // the blow was 0..1 (render/serpent.js).
   serpentChips: [],
+  barrierHits: [],        // explosives the barrier soaked up lately, for its flare: { x, at } (drawn only)
   snatch: null,           // the snatch beat's own state while it plays (snatch.js)
   // The deep's coin: every scale crushed and not yet spent (the crusher is the
   // purse; the floor's loose scales are `deepBed`), and whether one ever has.
@@ -502,8 +515,14 @@ export const S = {
   // a blow, or a held attack's second, or the heal's: { at, shut, x, y, done,
   // weapon, key, side }. A drawing, never a save.
   hits: [],
-  healSum: 0,             // the wound the heal has closed since it last said so
-  healAt: 0,              // when it next says so
+  endingAt: 0,            // when the rescue's sheet came up, for its hold before the snatch (ephemeral)
+  handChipped: false,     // a piece knocked off a rock by your own click: the intro quest's first item
+  askedWizards: false,    // the wizards' board looked at since the snatch: the story's line moves on
+  mealI: null,            // the creature the next meal is, once it has turned for the mouth (deep/meals.js)
+  eaten: [],              // the last creatures eaten, which the stream does not draw again
+  meal: 0,                // the meals the serpent has had: which creature is next, and how long it waits
+  mealT: 0,               // seconds since the last meal landed
+  mealLandedAt: 0,        // when the last one landed, on the game's clock, for the ring at the belly (drawn only)
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
   podsBoardOpen: false,
 
@@ -516,7 +535,7 @@ export const S = {
   seenFang: false,
   fangsDropped: 0,        // the breaks that have dropped theirs, so a reload drops none twice
   fangsLoose: [],         // fangs sinking or lying on the floor, until a gatherer carries them
-  statuses: {},           // on the whole serpent: { bleed, exposed, held, weakened } -> { until, k }
+  statuses: {},           // on the whole serpent: { bleed, exposed, held } -> { until, k }
   stationBoardOpen: null, // the id of the station whose board is up
 
   noticeboard: { x: 0, y: 0, w: 0, h: 0 }  // the record, on its posts (reseated at boot)
@@ -543,7 +562,6 @@ export const SAVED = [
   'speedLevel',
   'autoMine',
   'autoToss', 'tossSpeedLevel', 'tossReachLevel',
-  'cores',
   'seenBench', 'seenDrag',
   'seenSects',
   'seenRows',
@@ -578,6 +596,7 @@ export const SAVED = [
   // A work that finished while you were away is still news when you come
   // back.
   'siteDone',
+  'siteDoneBill',
   'tendLevel',
   'cropLevel',            // and what one cut off a plot is worth
   // A plain number, so it belongs here and not on the by-hand list, where a
@@ -660,14 +679,14 @@ export const SAVED = [
   'rockhandSpeedLevel', 'rockhandPickLevel',
   'quarryOpen', 'quarryPaceLevel', 'benchLevel', 'plotLevel',
   'quarryOwed',           // how much of the seam is still in the cut; goes with `quarryCells`
-  'seenCore', 'seenShard', 'seenSpore', 'seenSpark',
+  'seenShard', 'seenSpore', 'seenSpark',
   'looPosts',
   'roombas',              // the count; where each one is is crew/roomba.js's
-  'coreBuried',           // whether this rock still owes you its core
+  'coreBuried',           // whether this rock is not yet finished with
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   // The deep (docs/wave-serpent.md).
-  'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill',
+  'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'resistBy', 'scales', 'seenScale',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).
   'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',
@@ -687,7 +706,6 @@ export const SAVED = [
 export const SAVED_BY_HAND = [
   'runSeed',              // the run's name, and the stream it is partway through
   'camX',                 // rounded out, and read back once, into `camWas`
-  'coreItem',             // a core loose in the world: a spot, or the fact of one
   'workers',              // saved as `who`: a name and a record apiece, not four counts
   'lifts',                // saved by crew/lifts.js: where each is and what is on its forks
   'roombaBots',           // saved by crew/roomba.js: where each roomba is and what is in its bin
@@ -749,6 +767,7 @@ export const SAVED_BY_HAND = [
   // Not fields on S: the grids, the sky, the chance and the craft.
   'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
   'deepBed',              // the scales on the deep's floor, a plot like the pit (deep/scales.js)
+  'refundOwed',           // a bill handed back still in the air, by coin, landed on the way in (pit.js)
 ];
 
 // And everything else: this session's own, deliberately thrown away on a
@@ -758,8 +777,10 @@ export const SAVED_BY_HAND = [
 // beginning for. Named rather than assumed, so that adding a field and not
 // thinking about it is a failing test.
 export const EPHEMERAL = [
+  'orbBurst',
+  'still',
   // A bite out of the serpent's hide closes in seconds; a reload finds it closed.
-  'serpentChips',
+  'serpentChips', 'barrierHits',
   // What the store said about this page (persist.js, save.js).
   'unsaved', 'yielded', 'broken',
   'fellBack', 'newerSave',
@@ -773,7 +794,7 @@ export const EPHEMERAL = [
   'rockTops', 'tick', 'floorGrains', 'floorMarks', 'piles', 'pileCount', 'pileFull',
   'peakRow',
   // The opening, while it is running.
-  'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
+  'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt', 'crewSight',
   'introThrew', 'skipHeldAt', 'introCut',
   'timesAsked',           // once a boot is once a page
   // Only read for the spread a rock does on arriving.
@@ -790,7 +811,6 @@ export const EPHEMERAL = [
   // The tearing of the rift is an event, and the cutscene watching it a
   // camera.
   'riftGulp', 'riftShake', 'shot',
-  'heldCore', 'coreTaker',
   'smoke', 'grit', 'smokeAt', 'houseSmokeAt', 'shutters', 'shutterAt', 'shutterN',
   'shocks', 'shockMotes',
   'skyShown', 'flashAt',
@@ -823,7 +843,7 @@ export const EPHEMERAL = [
   'buriedDug',
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting',
-  'hits', 'healSum', 'healAt',
+  'hits', 'mealLandedAt', 'endingAt',
   'deepMotes', 'crushes', 'heldScales', 'portalAt',
   'podsBoardOpen',
   'statuses', 'stationBoardOpen',

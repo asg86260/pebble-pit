@@ -46,7 +46,7 @@ group('the catalog is what the design approved', async () => {
     // The note says what you did. A blank one is the one failure mode that
     // reads as finished on the board and tells the player nothing.
     ok(!noNote.length, 'and a note saying what you did', noNote.map(n => n.key).join(',')),
-    ok(hooks.length === 12, 'twelve are earned by an event rather than a fact', hooks.join(','))
+    ok(hooks.length === 13, 'thirteen are earned by an event rather than a fact', hooks.join(','))
   ];
 });
 
@@ -307,13 +307,40 @@ group('a load that was not full when it came up is not the feat', async () => {
   ];
 });
 
-group('the first muck rain is noticed', async () => {
+group('a worker shaken and let go comes down dizzy, and that is a notice', async () => {
+  window.__crew(2, 0);
+  await run(2);
+  const w = S.workers[0];
+  const before = hasNotice('dizzy');
+  lift(w);
+  for (let i = 0; i < SHAKE_TURNS * 4; i++) shakeHeld(w, i % 2 ? 6 : -6);
+  drop(w);
+  runUntil(() => !w.falling, 10);
+  return [
+    ok(!before, 'nobody is dizzy in a fresh yard'),
+    ok((w.dizzyUntil || 0) > 0 && hasNotice('dizzy'), 'shaken dizzy, it is on the record', `${w.dizzyUntil} ${hasNotice('dizzy')}`)
+  ];
+});
+
+group('a muck rain is noticed when it has rained down, not when the clouds gather', async () => {
   const before = hasNotice('muckrain');
   const rained = await makeItRain();
+  const whileFalling = hasNotice('muckrain');
+  const over = runUntil(() => !state().smog.raining, 300);
   await run(1);
   return [
     ok(!before, 'a dry yard has not stood through one'),
-    ok(rained, 'the sky broke'),
-    ok(hasNotice('muckrain'), 'and the rain is on the record')
+    ok(rained && !whileFalling, 'the sky broke, and nothing is on the record while it falls'),
+    ok(over && hasNotice('muckrain'), 'stood through to its end, the rain is on the record')
   ];
+});
+
+group('a shower of clean water is not a muck rain', async () => {
+  window.__air({ haze: 0 });
+  window.__front(1);
+  const rained = runUntil(() => state().smog.raining, 120);
+  const over = rained && runUntil(() => !state().smog.raining, 300);
+  await run(1);
+  return [ok(rained && over && !hasNotice('muckrain'), 'a clean sky rains water, and nothing is on the record',
+             `${rained} ${over} ${hasNotice('muckrain')}`)];
 });

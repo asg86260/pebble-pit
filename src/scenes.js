@@ -20,13 +20,17 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs } from './rock.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
+import { nextMeal, turned, windowS } from './deep/meals.js';
+import { KINDS } from './render/fish.js';
 import { buildStation, nextSlot } from './deep/party.js';
+import { lookAt } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
 import { lay } from './deep/statuses.js';
-import { worksAt, progressOf } from './works.js';
+import { worksAt, progressOf, markDoneSeen } from './works.js';
+import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 
@@ -47,7 +51,16 @@ const st = () => window.__state();
 const RICH_DUST = 90000;
 const rich = () => {
   window.__reset(); window.__crew(3, 3, 5, 7); window.__machineGates();
-  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: RICH_DUST });
+  window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: RICH_DUST });
+};
+
+// The quarry bought with nothing else open past the farm, eight seconds into
+// going up: one builder at it, and its tile on the bench.
+const quarryGoingUp = () => {
+  window.__reset(); window.__crew(4); S.quarryOpen = false; S.farmOpen = true;
+  window.__answered('props', 'net');
+  window.__grant({ dust: 99999, shards: 999, spores: 9999, sparks: 999 });
+  window.__buy('unlockquarry'); window.__fast(8);
 };
 
 // Holding the camera on a spot against whatever pans it (a meteor called down
@@ -200,7 +213,8 @@ const shieldBuilt = kind => {
 // A yard the serpent has come for: every site built, the snatch behind it,
 // the sqwife back down there as the deep's one resident (`__crew` sends the
 // whole crew up top), `spare` residents more, the party, the fight at
-// `stage`, scales on the floor, and the view.
+// `stage` with its wound held at `wound`, a share of its depth, scales on
+// the floor, and the view.
 function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scales = 400, loose = 0,
                     view = 'deep', run = 20 } = {}) {
   rich();
@@ -214,13 +228,15 @@ function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scal
   if (party.length) window.__deepCrew({ spare: 1 });
   window.__scales(scales);
   if (loose) window.__looseScales(loose);
-  window.__serpent({ stage, wound });
+  window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
   window.__view(view);
-  // Long enough to swim from the pods to the stations and the coil. The
-  // fighters may break the defense on the way, so the fight is set again
-  // once they are at it.
-  window.__fast(run);
-  window.__serpent({ stage, wound });
+  // Long enough to swim from the pods to the stations and the coil. A party
+  // at its top rungs breaks a defense in seconds, so the fight is set again
+  // every half second on the way, and once more when they are at it.
+  for (let s = 0; s < run; s += 0.5) {
+    window.__fast(Math.min(0.5, run - s));
+    window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
+  }
 }
 
 const lookDeep = x => window.__look(x - S.viewW / 2);
@@ -247,15 +263,94 @@ const stageScene = (stage, wound, stations = []) => () => {
   lookDeep(coilAt(bellySeg() - 4, now()).x);
 };
 
+// A meal caught at its moment: creature number `kind` of the eight, the
+// landing `to` seconds off (a second of the yard runs before the shot).
+const mealScene = (kind, to, atBelly = false) => () => {
+  deepYard({ stage: 1, wound: 0.4, party: [cast('ranger', 0)] });
+  // the time since the last meal that puts the next one `to` seconds off
+  // once the scene's second has run (the creature is whichever swims up)
+  // (a meal already turned for the mouth is the sim's to keep, so it is set so)
+  let n = 0, best = null, off = Infinity;
+  const clock = now() / 1000;
+  for (let m = 0; m < windowS() + 30; m += 0.05) {
+    const meal = nextMeal(clock - m), d = Math.abs(meal.land - clock - 1 - to);
+    if (d < off) { off = d; best = { m, meal }; }
+  }
+  S.mealT = best.m;
+  S.mealI = turned(best.meal.land - clock) ? best.meal.i : null;
+  lookDeep(atBelly ? coilAt(bellySeg() - 6, now()).x : coilAt(0, now()).x - 150);
+  // A meal's moments are quicker than a shot takes, so the clock is held on
+  // the page's frames for a few seconds once the second of yard has run.
+  const at = S.mealT + 1, until = performance.now() + 4000;
+  const hold = () => { if (performance.now() < until && S.meal === n) { if (S.mealT > at) S.mealT = at; requestAnimationFrame(hold); } };
+  requestAnimationFrame(hold);
+};
+
+// The lash is a second long, shorter than a shot takes, so its moment is
+// held on the page's frames for a few seconds (as the glide's is, below).
+const mechScene = (stage, into, stations, seg = null, pin = false) => () => {
+  stageScene(stage, 0.3, stations)();
+  const m = MECHANICS[stage];
+  S.mechAt = m.every - m.last - Math.max(0, into) - 0.05;
+  window.__fast(Math.max(0, -into) + 0.05);
+  if (seg != null) lookDeep(coilAt(seg, now()).x);
+  if (!pin) return;
+  const at = S.mechAt, until = performance.now() + 4000;
+  const hold = () => { if (performance.now() < until && S.serpentStage === stage) { S.mechAt = at; requestAnimationFrame(hold); } };
+  hold();
+};
+
+// A phase's break, held `at` seconds in (deep/phases.js).
+const breakScene = (stage, at, stations) => () => {
+  stageScene(stage, 0, stations)();
+  S.breakT = at;
+  const until = performance.now() + 4000;
+  const hold = () => { if (performance.now() < until && S.serpentStage === stage) { S.breakT = at; requestAnimationFrame(hold); } };
+  hold();
+};
+
+// The constrict's orb in frame: the strongest station's fighter.
+const lookAtOrb = () => {
+  const w = S.orb && S.workers.find(o => o.station === S.orb.st);
+  if (w) lookDeep(w.x);
+};
+
 // The snatch as it plays: both facts true, and the clock run until the beat
 // reaches the phase named. The shot tool runs a second more after a scene,
 // and the take is shorter than that, so the scene stops at the start of the
 // phase before the one to be seen.
-const snatchAt = phase => () => {
+const snatchAt = (phase, into = 0, pin = false) => () => {
   rich();
   window.__fullSites();
   window.__snatch();
   for (let i = 0; i < 60 * 60 && S.snatch?.phase !== phase; i++) window.__fast(1 / 60);
+  for (let i = 0; i < into; i++) window.__fast(1 / 60);
+  // A rise is sixteen frames and a take a beat, quicker than a shot is
+  // taken, so the moment is held on the page's frames for a few seconds.
+  if (!pin) { window.__holdShot(); return; }
+  window.__holdShot();
+  const sn = S.snatch, y = sn?.headY, carried = sn?.carried, until = performance.now() + 4000;
+  const hold = () => {
+    if (!sn || S.snatch !== sn || performance.now() > until) return;
+    sn.at = now(); sn.headY = y; sn.phase = phase; sn.carried = carried;
+    requestAnimationFrame(hold);
+  };
+  requestAnimationFrame(hold);
+};
+
+// The kill caught `a` seconds after the fourth break (or, with null, half
+// way through gathering itself again after the sheet), held for the shot.
+const killAt = a => () => {
+  deepYard({ stage: SERPENT_PHASES - 1, party: [cast('brawler', 8), cast('mage', 8)] });
+  window.__serpent({ stage: SERPENT_PHASES - 1, wound: SERPENT_WOUND[SERPENT_PHASES - 1] });
+  window.__fast(1 / 60);
+  if (a == null) {
+    for (let i = 0; i < 60 * 40 && S.beat.sheet !== 'freedsheet'; i++) window.__fast(1 / 60);
+    window.__skipBeat('sheet');
+    window.__fast(KILL_REFORM_S * 0.5);
+  } else window.__fast(a);
+  lookDeep(coilAt(bellySeg(), now()).x);
+  window.__holdShot();
 };
 
 // A glide caught at `k` of the way and held there (`poseGlide`): the first
@@ -274,16 +369,21 @@ const glideAt = (to, k) => () => {
   poseGlide();
 };
 
-// The five station kinds, each alone at the first slot with a fighter on
-// guard and no class taken: the shot to crop when a station's drawing
-// changes. `deep-all` has four, the most a party holds.
-const KINDS = Object.keys(PAIRS);
+// Every prop on the floor (deep/props.js), four stations a scene, the most a
+// party holds: a base unit's crate beside classes at rung 4 and rung 8, so
+// one shot holds a prop plain and lit and the crate beside them. The serpent
+// is left unwounded at the first stage so the ranged stay at their posts.
+const PROP_SCENES = {
+  'party-props-a': [{ kind: 'altar', cls: null, rung: 0 }, cast('brawler', 4), cast('sword', 8), cast('monk', 8)],
+  'party-props-b': [cast('martial', 4), cast('ranger', 8), cast('assassin', 8), cast('hexer', 8)],
+  'party-props-c': [cast('sapper', 8), cast('mage', 8), cast('bard', 8), cast('hexer', 4)]
+};
 
 const deepScenes = {
   snatch: { about: 'the deep', say: 'the snatch: the serpent up out of the abyss at the shaft, him in its jaws',
-    run: snatchAt('rise') },
+    run: snatchAt('rise', 13, true) },
   'snatch-take': { about: 'the deep', say: 'the snatch: the serpent going back under with him',
-    run: snatchAt('take') },
+    run: snatchAt('take', 0, true) },
   // The portal in the abyss's surface (DESIGN.md, "Two crews and a portal"):
   // opening before the head comes up, and closing as she leaps in after him.
   'snatch-portal': { about: 'the deep', say: 'the snatch: the whirlpool opening in the surface',
@@ -328,7 +428,7 @@ const deepScenes = {
                  for (const w of S.workers) if (w.y < S.worldH && n++ % 2) w.say = { mark: 'loo', until: now() + 60000 }; } },
   // A fresh deep: no station yet, the sqwife treading water by the pods.
   deep: { about: 'the deep', say: 'the deep, fresh: no station yet, the sqwife treading water by the pods, him in its belly',
-    run: stageScene(0, 20) },
+    run: stageScene(0, 0.33) },
   // The glide between the halves, caught at a point of it (`glideAt`): just
   // past the turn going down is the deep's side of the hand-over, and the
   // same point going up is the yard's side, so the two shots should be one
@@ -348,21 +448,74 @@ const deepScenes = {
     run: () => { deepYard({}); lookDeep(coilAt(COIL_SEGS - 8, now()).x); } },
   // The four defenses, each with fighters of the classes that suit it.
   'deep-wound': { about: 'the deep', say: 'the bare coil with the wound held most of the way open, a Brawler at it',
-    run: stageScene(0, 52, [cast('brawler', 1)]) },
+    run: stageScene(0, 0.87, [cast('brawler', 1)]) },
   'deep-warded': { about: 'the deep', say: 'the second defense: the ward shimmering over the scales, a Ranger\'s arrows in it',
-    run: stageScene(1, 300, [cast('ranger', 4), cast('brawler', 2)]) },
+    run: stageScene(1, 0.33, [cast('ranger', 2), cast('mage', 4)]) },        // the Mage the highest: it resists magic
+  'deep-scout': { about: 'the deep', say: 'the Scout, the armory base unit at rung 0, shooting its arrow',
+    run: () => { deepYard({ stage: 1, wound: 0.33, party: [cast('ranger', 0)] }); lookAtStation(0); } },
   'deep-split': { about: 'the deep', say: 'the third defense: the coil in lengths, a Sapper\'s charges bursting, a Hexer\'s hex on it',
-    run: stageScene(2, 1500, [cast('sapper', 4), cast('hexer', 4)]) },
+    run: stageScene(2, 0.25, [cast('sapper', 4), cast('hexer', 4), cast('brawler', 6)]) },   // the Brawler the highest: plates
+  'deep-barrier': { about: 'the deep', say: 'the barrier under the coil soaking up a Sapper\'s charges, the Sapper the highest rung',
+    run: stageScene(2, 0.25, [cast('sapper', 6), cast('hexer', 4)]) },
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',
-    run: stageScene(3, 8000, [cast('mage', 4), cast('monk', 4)]) },
+    run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
+  'meal-swim': { about: 'the deep', say: 'a Skull fish swimming in from the left to the serpent, its jaws opening',
+    run: mealScene(3, 4.4) },
+  'meal-bite': { about: 'the deep', say: 'a Wandering eye at the jaws, wide open',
+    run: mealScene(4, 3.3) },
+  'meal-gulp': { about: 'the deep', say: 'a Skull fish half into the jaws, cut by their lines',
+    run: mealScene(3, 2.75) },
+  'meal-swallow': { about: 'the deep', say: 'the swallow running down the neck after a Many-mouthed blob',
+    run: mealScene(6, 1.2, true) },
+  'meal-land': { about: 'the deep', say: 'the lump landed at the belly, purple crosses rising off the body',
+    run: mealScene(0, -0.6, true) },
+  // A phase's mechanic (deep/phases.js) caught at its moment: the turn set
+  // `into` seconds short of the thing itself (negative: that far into it).
+  'phase-taut': { about: 'the deep', say: 'the warning before the lash: the coil drawn up, its tail lifted',
+    run: mechScene(2, 0.3, [cast('brawler', 8), cast('sword', 8)], COIL_SEGS - 8, true) },
+  'phase-lash': { about: 'the deep', say: 'the lash running down the coil, melee fighters thrown off it',
+    run: mechScene(2, -0.6, [cast('brawler', 8), cast('sword', 8)], Math.round(COIL_SEGS * 0.55), true) },
+  'break-dive': { about: 'the deep', say: 'the first break: the coil stepping down under the floor',
+    run: breakScene(1, 0.6, [cast('brawler', 4), cast('ranger', 4)]) },
+  'break-rise': { about: 'the deep', say: 'back up from the first break in the ward: the bar refilling, the phase boxes coming up',
+    run: breakScene(1, 2.9, [cast('brawler', 4), cast('ranger', 4)]) },
+  'break-roar': { about: 'the deep', say: 'a later break: jaws wide, the bump halfway down, the new hide behind it',
+    run: breakScene(2, 1.2, [cast('brawler', 8), cast('sword', 8)]) },
+  'level-up': { about: 'the deep', say: 'a fighter just bought a rung: the abyssal corkscrew climbing round it',
+    run: () => {
+      stageScene(0, 0.3, [cast('ranger', 3), cast('brawler', 3)])();
+      const st = S.stations[0], until = performance.now() + 4000;
+      const hold = () => { if (performance.now() < until) { st.lvlAt = now() - 700; requestAnimationFrame(hold); } };
+      hold();
+      const w = S.workers.find(o => o.uid === st.fighter);
+      if (w) lookDeep(w.x);
+    } },
+  'level-up-burst': { about: 'the deep', say: "the level-up's end: the corkscrew's tongues flown out as embers",
+    run: () => {
+      stageScene(0, 0.3, [cast('ranger', 3), cast('brawler', 3)])();
+      const st = S.stations[0], until = performance.now() + 4000;
+      const hold = () => { if (performance.now() < until) { st.lvlAt = now() - (LEVELUP_S + LEVELUP_BURST_S * 0.35) * 1000; requestAnimationFrame(hold); } };
+      hold();
+      const w = S.workers.find(o => o.uid === st.fighter);
+      if (w) lookDeep(w.x);
+    } },
+  'phase-orb-warn': { about: 'the deep', say: 'the constrict coming: two seconds before the cast, the strongest fighter in frame',
+    run: () => { mechScene(4, 2, [cast('brawler', 8), cast('ranger', 6), cast('mage', 4), cast('monk', 2)])();
+                 const w = S.workers.find(o => o.station === S.stations[0].id); if (w) lookDeep(w.x); } },
+  'phase-orb-cast': { about: 'the deep', say: 'the constrict: the comb lit, the bolts leaving it for the strongest fighter',
+    run: () => { mechScene(4, -0.2, [cast('brawler', 8), cast('ranger', 6), cast('mage', 4), cast('monk', 2)])(); lookAtOrb(); } },
+  'phase-orb': { about: 'the deep', say: 'the constrict: a fighter held in the orb, its bar over its head',
+    run: () => { mechScene(4, -2, [cast('brawler', 8), cast('ranger', 6), cast('mage', 4), cast('monk', 2)])(); lookAtOrb(); } },
+  'phase-sink': { about: 'the deep', say: 'the sink in the fading phase: the coil dimmed into the abyss under its veil',
+    run: mechScene(3, -3, [cast('mage', 4), cast('monk', 4)]) },
   // Reading the fight: the numbers off the blows and the heal's purple `+`
   // off the belly, mid-fight, with a held beam's second summed.
   'deep-numbers': { about: 'the deep', say: 'the fight\'s numbers: each blow\'s damage rising off the coil, the heal\'s +N in purple',
     run: () => {
-      deepYard({ stage: 1, wound: 450, run: 30,
+      deepYard({ stage: 1, wound: 0.5, run: 30,
                  party: [cast('brawler', 6), cast('ranger', 4), cast('sapper', 3), cast('mage', 2)] });
       window.__fast(2);
-      window.__serpent({ stage: 1, wound: 450 });
+      window.__serpent({ stage: 1, wound: 0.5 * SERPENT_WOUND[1] });
       // Between the fists and the belly, so a narrow window has both the
       // blows' white and the heal's purple.
       const fist = S.hits.find(h => h.weapon === 'brawler');
@@ -375,7 +528,7 @@ const deepScenes = {
   // enough that the arrows before the fifth do not break it.
   'deep-stun': { about: 'the deep', say: 'a Ranger\'s aimed shot has stunned the coil: held still, a ring over its head, the heal stopped',
     run: () => {
-      deepYard({ stage: 2, wound: 1500, party: [cast('ranger', 8)] });
+      deepYard({ stage: 2, wound: 0.25, party: [cast('ranger', 8)] });
       for (let i = 0; i < 60 * 30 && !(S.serpentStun > 0); i++) window.__fast(1 / 60);
       // On the head, where the ring stands, as serpent-head frames it.
       lookDeep(coilAt(4, now()).x + S.viewW * 0.25);
@@ -386,7 +539,7 @@ const deepScenes = {
   // click on the top edge, the smallest.
   'deep-chip': { about: 'the deep', say: 'fresh bites out of the hide -- a Brawler\'s, a Sapper\'s, a click\'s -- and the scales bursting off them',
     run: () => {
-      deepYard({ stage: 2, wound: 1500, party: [cast('brawler', 8)] });
+      deepYard({ stage: 2, wound: 0.25, party: [cast('brawler', 8)] });
       const t = now(), seg = i => coilAt(bellySeg() + i, t);
       const blow = seg(-9), burst = seg(-3), fist = seg(3);
       strike('brawler', rungValue('brawler', 8) * 4, blow.x, blow.y);
@@ -443,6 +596,38 @@ const deepScenes = {
       lookDeep(spotX('pods'));
       window.__board('pods');
     } },
+  // A station just built: its Recruit at work, and its board asking the first
+  // choice, the Recruit's own tree with the Scout looked at (voted R2).
+  'recruit-board': { about: 'the deep', say: 'a new station: its Recruit at work, its board asking which fighter it becomes',
+    run: () => {
+      deepYard({ stage: 1, run: 2, party: [{ kind: null }] });
+      window.__scales(99999);
+      lookAtStation(0);
+      lookAt(S.stations[0].id, 'armory');
+      window.__board(S.stations[0].id);
+    } },
+  // A Recruit's light punch, up under the coil over its new station.
+  'recruit': { about: 'the deep', say: 'a Recruit up under the coil, throwing its one light punch',
+    run: () => {
+      deepYard({ stage: 1, wound: 0.33, run: 3, party: [{ kind: null }] });
+      lookAtStation(0);
+    } },
+  // The mark over a station whose Recruit waits on its first choice, the
+  // build's done check already read.
+  'recruit-mark': { about: 'the deep', say: "the chevron over a new station whose Recruit waits on its first choice",
+    run: () => {
+      deepYard({ stage: 1, wound: 0.33, run: 3, party: [{ kind: null }] });
+      markDoneSeen(S.stations[0].id);
+      lookAtStation(0);
+    } },
+  // A Fighter at the fork: each specialist's row with its move and capstone.
+  'fork-board': { about: 'the deep', say: "the Fighter's board at the fork: each specialist's move and capstone, statuses named",
+    run: () => {
+      deepYard({ stage: 1, run: 2, party: [{ kind: 'altar', cls: null, rung: 3 }] });
+      window.__scales(99999);
+      lookAtStation(0);
+      window.__board(S.stations[0].id);
+    } },
   // A station's board with a class taken: the rail climbed, the other folded.
   'armory-board': { about: 'the deep', say: 'the armory\'s board: a Ranger three rungs up her rail, the Assassin\'s folded away',
     run: () => {
@@ -454,15 +639,15 @@ const deepScenes = {
   // Every station the floor holds at once, the camera on the middle of them.
   'deep-all': { about: 'the deep', say: 'the whole deep floor, four stations standing, a fighter at each',
     run: () => {
-      deepYard({ stage: 1, wound: 300,
+      deepYard({ stage: 1, wound: 0.33,
                  party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } },
-  ...Object.fromEntries(KINDS.map(k => [`deep-${k}`, {
-    about: 'the deep', say: `the ${k} alone in the middle of the frame, under its dome, its base unit at work`,
+  ...Object.fromEntries(Object.entries(PROP_SCENES).map(([name, party]) => [name, {
+    about: 'the deep', say: `four stations' props: ${party.map(o => (o.cls || 'crate') + ' ' + o.rung).join(', ')}`,
     run: () => {
-      deepYard({ stage: 1, wound: 300, party: [{ kind: k, cls: null, rung: 0 }] });
-      lookDeep(slotAt(S.stations[0].slot));
+      deepYard({ stage: 0, run: 4, party });
+      lookDeep((slotAt(0) + slotAt(3)) / 2);
     } }])),
   // A station going up down there: a delver at the first slot, the silt off
   // each blow sinking back to the floor. The pick is the build button's.
@@ -475,11 +660,17 @@ const deepScenes = {
       window.__fast(1);
       lookDeep(slotAt(0));
     } },
+  // The kill as it plays (snatch.js, config KILL), each moment held for the shot.
+  'deep-kill-start': { about: 'the deep', say: 'the kill: the last blow, just landed', run: killAt(0.05) },
+  'deep-kill': { about: 'the deep', say: 'the kill: the serpent limp, sinking to the floor', run: killAt(KILL.last + KILL.limp * 0.6) },
+  'deep-kill-apart': { about: 'the deep', say: 'the kill: the hide coming apart into motes, tail first', run: killAt(KILL.last + KILL.limp + KILL.apart * 0.5) },
+  'deep-kill-out': { about: 'the deep', say: 'the kill: him out on the floor, walking to her', run: killAt(KILL.last + KILL.limp + KILL.apart + 1) },
+  'deep-kill-reform': { about: 'the deep', say: 'after the kill: the serpent gathering itself again, head first', run: killAt(null) },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {
-      deepYard({ stage: 3, party: [cast('brawler', 8), cast('mage', 8)] });
-      window.__serpent({ stage: 4 });
+      deepYard({ stage: SERPENT_PHASES - 1, party: [cast('brawler', 8), cast('mage', 8)] });
+      window.__serpent({ stage: SERPENT_PHASES });
       for (let i = 0; i < 60 * 30 && S.beat.yard !== 'freed'; i++) window.__fast(1 / 60);
       window.__fast(1.5);
       lookDeep(coilAt(bellySeg(), now()).x);
@@ -510,7 +701,7 @@ const deepScenes = {
     run: () => { deepYard({ party: [cast('brawler', 4)] }); lookAtStation(0); } },
   'party-four': { about: 'the deep', say: 'a full party: a Brawler, a Ranger, a Sapper and a Mage, each at rung 8',
     run: () => {
-      deepYard({ stage: 1, wound: 300, run: 30,
+      deepYard({ stage: 1, wound: 0.33, run: 30,
                  party: [cast('brawler'), cast('ranger'), cast('sapper'), cast('mage')] });
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } },
@@ -559,17 +750,17 @@ const deepScenes = {
   // Every status the serpent can wear, at once: a Swordsman's Bleeding, a
   // Sapper's Exposed, a Hexer's Weakened and Held, laid long so the shot
   // catches all four whatever the fighters' timing.
-  'party-statuses': { about: 'the deep', say: 'the serpent wearing all four statuses at once: Bleeding, Exposed, Held, Weakened',
+  'party-statuses': { about: 'the deep', say: 'the serpent wearing every status at once: Bleeding, Exposed, Held',
     run: () => {
-      deepYard({ stage: 2, wound: 1500, party: [cast('sword', 4), cast('sapper', 4), cast('hexer', 8)] });
-      for (const [key, k] of [['bleed', 0.5], ['exposed', 0.25], ['held', 1], ['weakened', 0.3]]) lay(key, k, 30);
+      deepYard({ stage: 2, wound: 0.25, party: [cast('sword', 4), cast('sapper', 4), cast('hexer', 8)] });
+      for (const [key, k] of [['bleed', 0.5], ['exposed', 0.25], ['held', 1]]) lay(key, k, 30);
       lookDeep(coilAt(bellySeg() - 4, now()).x);
     } },
   // A station going up, half built: its scaffold at the second slot, the
   // delver at it, a Brawler fighting at the first.
   'party-scaffold': { about: 'the deep', say: 'a station mid-build: its scaffold at the next slot, a delver at work on it',
     run: () => {
-      deepYard({ stage: 1, wound: 300, run: 4, party: [cast('brawler', 2)], fangs: 1 });
+      deepYard({ stage: 1, wound: 0.33, run: 4, party: [cast('brawler', 2)], fangs: 1 });
       buildStation('spire');
       const w = () => worksAt(S.stations[1]?.id)[0];
       for (let i = 0; i < 60 * 180 && !(w() && progressOf(w()) >= 0.5); i++) window.__fast(1 / 60);
@@ -580,9 +771,18 @@ const deepScenes = {
   ...Object.fromEntries(Object.keys(CLASSES).map(cls => [`class-${cls}`, {
     about: 'the deep', say: `a ${CLASSES[cls].name} at rung 8: the kit, the rung-4 mark, the rung-8 touch, the attack`,
     run: () => {
-      deepYard({ stage: 1, wound: 300, party: cls === 'bard' ? [cast('bard'), cast('brawler')] : [cast(cls)] });
+      deepYard({ stage: 1, wound: 0.33, party: cls === 'bard' ? [cast('bard'), cast('brawler')] : [cast(cls)] });
       lookAtStation(0);
     } }]))
+};
+
+const rescueSheet = on => () => {
+  window.__reset();
+  window.__crew(2, 1);
+  window.__serpentOn(on);
+  // drowned, so with the half on the snatch follows the sheet
+  if (on) window.__rift();
+  S.rescued = true; S.buried = false; S.buriedMs = 20 * 60 * 1000;
 };
 
 export const SCENES = {
@@ -593,6 +793,12 @@ export const SCENES = {
     run: () => window.__reset(true) },
   reunion: { about: 'the story', say: 'the first rock mined out, and somebody comes over',
     run: () => { window.__reset(); window.__crew(1, 0); window.__give(50); window.__next(); } },
+  // The rescue's sheet, as the story leaves it: the sqwife out after twenty
+  // minutes under, with the second half following it or not (ending.js).
+  'rescue-sheet': { about: 'the story', say: 'the rescue sheet, with the second half on: the story goes on',
+    run: rescueSheet(true) },
+  'rescue-sheet-off': { about: 'the story', say: 'the rescue sheet, with the second half off: the end of the story',
+    run: rescueSheet(false) },
   digging: { about: 'the story', say: 'between rocks, somebody digging at the one in the ground',
     run: () => { window.__reset(); window.__crew(3, 1); window.__jump(3); window.__next(); window.__fast(1.2); window.__look(S.cx - S.viewW / 2); } },
   landing: { about: 'the story', say: 'the second rock coming down on a yard with a crew',
@@ -644,7 +850,7 @@ export const SCENES = {
                  window.__finish(); window.__jump(8); window.__fast(6); window.__look(st().shackX - 400); } },
   // Both ends of the rock's growth: the walk leaves the hut exactly the room
   // `rockSize` needs and no more. Jumped and then run, because `rich` leaves
-  // the first rock still falling and nine cores tearing the rift.
+  // the first rock still falling and its grant tearing the rift.
   shackrock: { about: 'the rock', say: 'the shack against rock one',
     run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__jump(1);
                  window.__fast(6); window.__look(st().shackX - 200); } },
@@ -703,13 +909,6 @@ export const SCENES = {
                  const x = st().rockLeftX;
                  for (let d = -260; d < 260; d += 12) window.__pile(x + d, 60);
                  window.__fast(4); window.__look(st().rockLeftX - 340); } },
-  // The core is the one thing drawn from a snapped middle rather than a
-  // corner, so it is where being half a cell out shows. Centered on the core
-  // itself: at the zoom this wants, a landmark near it is off the crop.
-  core: { about: 'the rock', say: 'a core, and the glow around it',
-    run: () => { rich(); window.__drop(); window.__fast(3);
-                 const c = st().coreItem || { x: st().coreHome.x };
-                 window.__look(c.x - window.innerWidth / 2); } },
   // The roll is forced on and the rockhands left to work: the runner gives
   // every scene a second before the shot and a ring is over in a third of
   // one, so the yard has to be making crits while the picture is taken.
@@ -734,20 +933,19 @@ export const SCENES = {
   house: { about: 'the crew', say: 'the house, several storeys up',
     run: () => { window.__reset(); window.__crew(6, 5, 5, 4); window.__fast(2);
                  window.__look(st().houses.door - 400); } },
-  // Hovered for real, since the mark comes off `pointermove` in pointer.js.
-  // In a frame, not now: the runner turns a second of clock after a scene and
-  // the hold is only nine hundred milliseconds, so a hover sent from here
-  // would have lapsed by the shot.
-  asking: { about: 'the crew', say: 'a body hovered, saying its question mark', page: true,
+  // Three bought at once: one going up, two in line behind it, each with a bar.
+  housequeue: { about: 'the crew', say: 'three houses bought at once, the first going up',
+    run: () => { window.__reset(); window.__crew(3, 2, 2, 1); window.__grant({ dust: RICH_DUST });
+                 window.__buy('house'); window.__buy('house'); window.__buy('house');
+                 window.__fast(20); window.__look(st().houses.door - 400); } },
+  // The right button held over the yard (input.js sets `crewSight` on the
+  // press): the yard veiled pale behind the crew, each body ringed.
+  'crew-sight': { about: 'the crew', say: 'the right button held: the yard veiled behind the crew, each body ringed',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
                  window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
                  window.__fast(20);
-                 requestAnimationFrame(() => {
-                   const d = st().crewDetail[0].split('|');
-                   const wx = Number(d[2]), wy = Number(d[7].slice(1));
-                   window.__look(wx - 400 / st().zoom);
-                   hover(wx, wy);
-                 }); } },
+                 S.crewSight = 0;
+                 window.__holdShot(); } },
   // A smaller crew than `rich`'s: the rich yard fills every plot, and a full
   // station is exactly the one that must not ring.
   assign: { about: 'the crew', say: 'a body held over the farm, the ring on',
@@ -923,6 +1121,15 @@ export const SCENES = {
                  window.__buy('quarrybench'); window.__fast(6); window.__look(st().quarryX - 480); } },
   buildboard: { about: 'the bench', say: 'a row read while its work is on the go',
     run: () => { rich(); window.__buy('jaw'); window.__fast(30); window.__board('quarry'); } },
+  // A place going up, read on the bench's own tile: the glyph rising with the
+  // hand beside it throwing its chips.
+  buildtile: { about: 'the bench', say: 'the quarry tile on the bench while the quarry goes up',
+    run: () => { quarryGoingUp(); window.__board('bench'); } },
+  // The crew written down and read back mid-build, the way a refresh does it:
+  // the builder comes back to its hammer, and the tile's hand with it.
+  buildtilereload: { about: 'the bench', say: 'the quarry tile after a refresh mid-build',
+    run: () => { quarryGoingUp(); const o = {}; CREW_SAVE.write(o); CREW_SAVE.read(o);
+                 window.__fast(1); window.__board('bench'); } },
   // The whole crew is stood down after the work has some cells up: a station
   // with no gang is helped by a lent builder, so standing down the quarriers
   // alone stalls it only for the length of a walk.
@@ -934,7 +1141,7 @@ export const SCENES = {
   // camera overrides `__look` for every frame after.
   flag: { about: 'the bench', say: 'the offer flag up over the bench',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                  window.__fast(2); window.__look(4930); } },
   // The mast slides out over FLAG_RAISE_MS and the cloth runs up it over
   // FLAG_HOIST_MS. The grant has to land after the runner's own second of
@@ -944,14 +1151,14 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__fast(2); window.__look(4930);
                  requestAnimationFrame(() => {
-                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                    window.__fast(0.3);
                  }); } },
   flaghoist: { about: 'the bench', say: 'the flag halfway up its mast', page: true,
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__fast(2); window.__look(4930);
                  requestAnimationFrame(() => {
-                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                    window.__fast(0.95);
                  }); } },
   // Nothing else frames both sheds, and the whole question about a shack is
@@ -969,14 +1176,14 @@ export const SCENES = {
                  window.__look(st().farmShed.x - 60); } },
   donemark: { about: 'the bench', say: "a finished work's glyph, ticked, at the foot of the shed's stack",
     run: () => { window.__reset(); window.__crew(3, 3);
-                 window.__grant({ dust: 99999, shards: 99, spores: 9999, cores: 9 });
+                 window.__grant({ dust: 99999, shards: 99, spores: 9999 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockquarry'); window.__finish();
                  window.__buy('quarrybench'); window.__finish(); window.__fast(2);
                  window.__look(st().quarryX - 300); } },
   donestack: { about: 'the bench', say: 'two rungs landed and ticked, one going up over them, one in line',
     run: () => { window.__reset(); window.__crew(3, 3);
-                 window.__grant({ dust: 99999, shards: 999, spores: 9999, cores: 9 });
+                 window.__grant({ dust: 99999, shards: 999, spores: 9999 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockquarry'); window.__finish();
                  window.__buy('quarrybench'); window.__finish();
@@ -991,7 +1198,7 @@ export const SCENES = {
   notices2: { about: 'the bench', say: 'the noticeboard on a yard that has done a lot',
     run: () => { window.__reset(); window.__crew(1); window.__jump(30); window.__grant({ dust: RICH_DUST }); window.__fast(6);
                  window.__look(st().noticesX - 440); window.__fast(6); } },
-  // The opening lands a core and a hire within its first seconds, so a yard
+  // The opening lands a notice and a hire within its first seconds, so a yard
   // just started has a toast up by the shot.
   toast: { about: 'the bench', say: "a notice's card said out loud at the top edge",
     run: () => { window.__reset(); window.__crew(1); window.__fast(2); } },
@@ -1043,11 +1250,11 @@ export const SCENES = {
   // both rows away.
   quarryboardmid: { about: 'the cut', say: "the cut's board, a bench taken out and three to go",
     run: () => { window.__reset(); window.__crew(2, 3, 3, 3);
-                 window.__grant({ cores: 9, dust: 90000, spores: 999, shards: 999 });
+                 window.__grant({ dust: 90000, spores: 999, shards: 999 });
                  window.__board('quarry'); } },
   farmboardmid: { about: 'the plots', say: "the plots' board, two plots broken and four to go",
     run: () => { window.__reset(); window.__crew(2, 3, 3, 3);
-                 window.__grant({ cores: 9, dust: 90000, spores: 999, shards: 999 });
+                 window.__grant({ dust: 90000, spores: 999, shards: 999 });
                  window.__board('farm'); } },
   farmboard: { about: 'the plots', say: "the plots' board",
     run: () => { rich(); window.__board('farm'); } },
@@ -1066,7 +1273,7 @@ export const SCENES = {
   // steam exists in.
   apothecary: { about: 'the apothecary', say: 'a pot on the boil, a stirrer at it',
     run: () => { window.__reset(); window.__crew(0, 1, 0, 2);
-                 window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+                 window.__grant({ dust: 8000, spores: 3000, shards: 300 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__pot('stew'); window.__assign(JOB.STIR, 1); window.__fast(16);
@@ -1074,7 +1281,7 @@ export const SCENES = {
   // The site's bar hangs over the hut, not over the middle of the plot.
   apothbar: { about: 'the apothecary', say: 'a rung on the go, the bar over the hut',
     run: () => { window.__reset(); window.__crew(0, 1, 0, 2);
-                 window.__grant({ cores: 3, dust: 60000, spores: 3000, shards: 300 });
+                 window.__grant({ dust: 60000, spores: 3000, shards: 300 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__buy('brewdoses'); window.__fast(4); window.__look(st().apothecaryX - 300); } },
@@ -1082,7 +1289,7 @@ export const SCENES = {
   // would otherwise be out dealing is stood at the hut under the bar.
   potwork: { about: 'the apothecary', say: 'a keeper claimed to the hut for another pot',
     run: () => { window.__reset(); window.__crew(2, 4, 0, 3);
-                 window.__grant({ cores: 3, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5); window.__assign(JOB.STIR, 1); window.__pot('stew'); window.__fast(40);
@@ -1092,7 +1299,7 @@ export const SCENES = {
   // the steam.
   potbars: { about: 'the apothecary', say: 'four pots boiling, bars up, up close',
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5);
@@ -1106,7 +1313,7 @@ export const SCENES = {
   // side by side.
   apothpots: { about: 'the apothecary', say: 'the whole building at its widest',
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5);
@@ -1123,7 +1330,7 @@ export const SCENES = {
   // plank can stand (`drawShelves` in render/apothecary.js).
   apothshelf: { about: 'the apothecary', say: 'the rack of stock, pots cold',
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5);
@@ -1134,7 +1341,7 @@ export const SCENES = {
                  window.__fast(3); window.__look(st().apothecaryX - 320); } },
   apothboard: { about: 'the apothecary', say: "the apothecary's board",
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__look(st().apothecaryX - 320); window.__board('apothecary'); } },
@@ -1143,7 +1350,7 @@ export const SCENES = {
   // covers it.
   apothpick: { about: 'the apothecary', say: 'the picker open at the second pot', page: true,
     run: () => { window.__reset(); window.__crew(1, 4, 1, 2);
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5);
@@ -1155,7 +1362,7 @@ export const SCENES = {
   // The "for" section lists the trades that stand and none that do not.
   apothpickone: { about: 'the apothecary', say: 'the picker at a pot before the quarry: rockhands and farmhands, nobody else', page: true,
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);   // no quarrier: the cut stays shut
-                 window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
+                 window.__grant({ dust: 60000, spores: 9000, shards: 3000, sparks: 20 });
                  window.__buy('unlockfarm'); window.__finish();
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__pot('stew', 0);
@@ -1166,7 +1373,7 @@ export const SCENES = {
   // The props have fallen, which is what opens the rock's kit.
   hatbar: { about: 'the kit', say: 'a helmet being made, the bar over the shack',
     run: () => { window.__reset(); window.__crew(3, 3); window.__jump(PROP_FROM);
-                 window.__give(3000); window.__grant({ shards: 99, cores: 9 });
+                 window.__give(3000); window.__grant({ shards: 99 });
                  S.shieldsDone = ['props']; window.__shack();
                  window.__buy('breaker'); window.__fast(4); window.__look(st().shackX - 200); } },
   // The four boards the kit is sold on.
@@ -1292,11 +1499,11 @@ export const SCENES = {
   // is a shot of a lull. Compare the pair side by side.
   gustR: { about: 'the house and the sky', say: 'the wind at its strongest, blowing right',
     run: () => { window.__seed(1); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                  window.__air({ haze: 2100 }); window.__fast(64.5); window.__look(st().rockLeftX - 300); } },
   gustL: { about: 'the house and the sky', say: 'the wind at its strongest, blowing left',
     run: () => { window.__seed(1); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 5000 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 5000 });
                  window.__air({ haze: 2100 }); window.__fast(50); window.__look(st().rockLeftX - 300); } },
 
   // --- the tower --------------------------------------------------------------
@@ -1416,7 +1623,7 @@ export const SCENES = {
   // that had already had the moment.
   tear: { about: 'the pit and the rift', say: 'the hole giving way',
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
-                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9 });
+                 window.__grant({ sparks: 9999, shards: 9999, spores: 9999 });
                  window.__meteor(); window.__give(60000); window.__fast(0.5); window.__look(st().pitX - 300); } },
   rift: { about: 'the pit and the rift', say: 'the rift, torn and fed',
     run: () => { rich(); window.__meteor(); window.__rift(); window.__give(60000); window.__give(12000);

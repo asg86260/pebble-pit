@@ -20,6 +20,11 @@ export const INTRO_UP_MS = 3400;     // and up, staring at it, while the view pu
 // time.
 export const LAND_SAY_MS = 1600;
 export const INTRO_BEAT = 900;    // between one of them saying something and the other
+// The first rock mined out, the one under the next calls for help (the
+// owner's B): one bang, two, three, a breath, and again, a step each
+// HELP_BANG_MS.
+export const HELP_BANG_MS = 600;
+export const HELP_BANGS = 3;
 export const INTRO_APART = 20;    // and how far apart they stand, in world pixels
 export const INTRO_HURL = 4.2;    // how hard the one left standing is thrown back
 // Then it shows you the loop: a few swings at the rock, and one grain of it

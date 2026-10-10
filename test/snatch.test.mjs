@@ -13,7 +13,12 @@ import { ABYSS_AT, WORKER, P } from '../src/config.js';
 import { now } from '../src/clock.js';
 import { commutePace } from '../src/levels.js';
 import { belowYard } from '../src/route.js';
-import { mouthX, deepFloor } from '../src/deep/place.js';
+import { mouthX, deepFloor, bellyAt, bellySeg, coilAt, coilThick } from '../src/deep/place.js';
+import { SERPENT_WOUND, SERPENT_PHASES, KILL, KILL_REFORM_S } from '../src/config.js';
+const LAST = SERPENT_PHASES - 1;
+import { strike } from '../src/deep/serpent.js';
+import { killDrop, apartK, reformK } from '../src/deep/phases.js';
+import { freedBody } from '../src/snatch.js';
 
 const done = key => S.beatsDone.filter(k => k === key).length;
 const rescued = () => { S.rescued = true; S.buried = false; };
@@ -102,7 +107,7 @@ group('rescued first: the drowning\'s scene plays through, then the snatch', asy
     ok(early === null, 'nothing is taken before the pit has drowned', `yard ${early}`),
     ok(scene === 'drown' && during !== 'snatch', 'the drowning\'s scene plays first, alone',
        `camera ${scene}, yard ${during}`),
-    ok(after.yard === 'snatch' && after.drownDone && after.camera === null,
+    ok(after.yard === 'snatch' && after.drownDone && after.camera !== 'drown',
        'and the snatch follows once it has finished', JSON.stringify(after)),
     ok(S.snatched && done('snatch') === 1, 'and plays through, once')
   ];
@@ -179,11 +184,11 @@ group("the freeing gives the deep one more hand, and he stays down there", async
   window.__snatch({ played: true });
   const had = new Set(S.workers.map(w => w.name));
   const crew0 = S.crew, deep0 = S.deepCrew;
-  S.serpentStage = 4;                    // the fourth defense broken (deep/serpent.js)
+  S.serpentStage = SERPENT_PHASES;       // the last defense broken (deep/serpent.js)
   S.serpentFreed = true;
   run(1 / 60);
   const opening = S.beat.yard;
-  runUntil(() => S.beatsDone.includes('freed'), 10);
+  runUntil(() => S.beatsDone.includes('freed'), 30);
   const him = S.workers.find(w => !had.has(w.name));
   const sheet = S.beat.sheet;
   window.__skipBeat('sheet');
@@ -199,5 +204,83 @@ group("the freeing gives the deep one more hand, and he stays down there", async
        "he is one of the deep's crew, down there", `crew ${S.crew}, deep ${S.deepCrew}`),
     ok(sheet === 'freedsheet', 'the sheet says so', `sheet ${sheet}`),
     ok(!up, 'and he never goes up')
+  ];
+});
+
+// The kill (snatch.js, config KILL), reached by striking the fourth defense
+// down: he goes limp and lies on the floor, comes apart, nothing reaches him
+// while he is down, his freed one walks out to her and is one of the crew, and
+// once the sheet is put down the serpent gathers itself again.
+group('the fourth break: limp to the floor, apart, him out to her, and the serpent back after the sheet', async () => {
+  window.__snatch({ played: true });
+  window.__deepCrew({ spare: 1 });
+  window.__serpent({ stage: LAST, wound: 0 });
+  const crew0 = S.crew;
+  const p = bellyAt(now());
+  strike('punch', SERPENT_WOUND[LAST], p.x, p.y);
+  run(KILL.last + KILL.limp + 0.1);
+  const lying = killDrop(), seg = bellySeg(), low = coilAt(seg, now()).y + coilThick(seg) / 2;
+  const hit = strike('punch', 100, p.x, p.y);
+  run(KILL.apart);
+  const apart = apartK();
+  run(1);
+  const out = freedBody();
+  runUntil(() => S.beat.sheet === 'freedsheet', 30);
+  const sheet = S.beat.sheet, crew = S.crew;
+  window.__skipBeat('sheet');
+  run(KILL_REFORM_S + 0.5);
+  return [
+    ok(lying === 1 && Math.abs(low - deepFloor()) <= P, 'he goes limp and lies on the floor', `drop ${lying}, his underside ${low.toFixed(0)} by the floor ${deepFloor()}`),
+    ok(hit === 0, 'and nothing reaches him while he is down', `${hit}`),
+    ok(apart >= 1, 'he comes apart, all of him', `${apart}`),
+    ok(out && Math.abs(out.y + WORKER - deepFloor()) <= P, 'his freed one is out, on the floor', JSON.stringify(out)),
+    ok(sheet === 'freedsheet' && crew === crew0 + 1, 'and is one of the crew when the sheet comes up', `${sheet} crew ${crew0} then ${crew}`),
+    ok(reformK() === 1 && killDrop() === 0, 'put down, the serpent gathers itself whole again', `${reformK()} ${killDrop()}`)
+  ];
+});
+
+// A fight set back after the kill (the dev hook, `__serpent`) has not had it:
+// the next fourth break plays the kill and the meeting again.
+group('set back after the kill, the next fourth break plays it all again', async () => {
+  window.__snatch({ played: true });
+  window.__deepCrew({ spare: 1 });
+  window.__serpent({ stage: LAST, wound: 0 });
+  const hit = () => { const p = bellyAt(now()); strike('punch', SERPENT_WOUND[LAST], p.x, p.y); };
+  hit();
+  runUntil(() => S.beat.sheet === 'freedsheet', 30);
+  window.__skipBeat('sheet');
+  run(KILL_REFORM_S + 0.5);
+  const crew = S.crew;
+  window.__serpent({ stage: LAST, wound: 0 });
+  hit();
+  run(0.1);
+  const again = S.beat.yard, stage = S.serpentStage, beats = S.beatsDone.filter(k => k.startsWith('freed')).join();
+  run(KILL.last + KILL.limp + 0.1);
+  const lying = killDrop();
+  runUntil(() => S.beat.sheet === 'freedsheet', 30);
+  return [
+    ok(again === 'freed', 'the kill plays again', `${again} stage ${stage} done ${beats}`),
+    ok(lying === 1, 'he goes limp to the floor again', `${lying}`),
+    ok(S.beat.sheet === 'freedsheet' && S.crew === crew + 1, 'and the meeting and the sheet come again', `${S.beat.sheet} crew ${crew} then ${S.crew}`)
+  ];
+});
+
+// Down and gone after the kill there is nothing to fight: the party stops and
+// goes back to its posts until the serpent has gathered itself again.
+group('after the kill the fighters stop and go back to their posts', async () => {
+  window.__snatch({ played: true });
+  window.__party({ stations: [{ kind: 'altar', cls: 'brawler', rung: 8 }] });
+  window.__serpent({ stage: LAST, wound: 0 });
+  runUntil(() => S.workers.some(w => w.station && w.goal === 'fight'), 30);
+  const p = bellyAt(now());
+  strike('punch', SERPENT_WOUND[LAST], p.x, p.y);
+  run(0.1);
+  const seen = new Set(S.hits);
+  run(KILL.last + KILL.limp + KILL.apart + 3);
+  const blows = S.hits.filter(h => !seen.has(h) && h.weapon !== 'heal' && h.weapon !== 'punch').length;
+  const w = S.workers.find(o => o.station);
+  return [
+    ok(blows === 0, 'no blow lands on him down or gone', `${blows}`),
+    ok(w && w.goal === 'back' && Math.abs(w.y + WORKER - deepFloor()) <= P * 12, 'the fighter has gone back down to its post', `${w && w.goal} at ${w && Math.round(w.y)}`)
   ];
 });

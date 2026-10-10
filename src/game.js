@@ -15,7 +15,7 @@ import { stepBreaks } from './break.js';
 import { at, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, tickGrid } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack, quarryShed, farmShed } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
-import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine } from './pit.js';
+import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine, landRefund } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { stepBeats } from './beats.js';
 import { wireCut } from './quarry.js';
@@ -30,7 +30,7 @@ import { workFinished } from './works.js';
 import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';
 import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
-import { cubes as houseCubes } from './house.js';
+import { roomsAfter } from './house.js';
 import { sampleBooks } from './income.js';
 import { stepAudio, sfx } from './audio.js';
 
@@ -43,7 +43,7 @@ setDone(workFinished);
 // and where a station stands, for a body walking over to help at one
 setFoot(stationFoot);
 // and the settlement's rooms, so a build there is fenced round what will stand
-setRooms(houseCubes);
+setRooms(roomsAfter);
 // and the sheds the quarry's, the farm's and the apothecary's works are done at
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
@@ -536,12 +536,13 @@ function fly(list, tx, ty) {
   for (let i = list.length - 1; i >= 0; i--) {
     const m = list[i];
     m.t += m.rate * f;
-    if (m.t >= 1) { list.splice(i, 1); continue; }
+    if (m.t >= 1) { if (m.back) landRefund(m); list.splice(i, 1); continue; }
     if (m.t <= 0) continue;
 
     // A grain flies to the station that sold the row it paid for (stamped on
     // the grain at `lift`, see `payTo` in pit.js) and falls back to the
-    // bench (`tx`/`ty`) for a spend with no destination.
+    // bench (`tx`/`ty`) for a spend with no destination. A refund's grain
+    // (`back`) flies the other way, into the hole, and is banked on landing.
     const gx = m.tx != null ? m.tx : tx;
     const gy = m.ty != null ? m.ty : ty;
     const e = m.t * m.t * (3 - 2 * m.t);           // ease in and out

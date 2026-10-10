@@ -46,6 +46,7 @@ export * from './config/touch.js';
 export * from './config/deep.js';
 export * from './config/deepcrew.js';
 export * from './config/deepdraw.js';
+export * from './config/meals.js';
 export * from './config/deepboard.js';
 export * from './config/roomba.js';
 export * from './config/classes.js';
@@ -93,6 +94,7 @@ import { HOUSE_KNOBS } from './config/house.js';
 import { DEEP_KNOBS } from './config/deep.js';
 import { DEEP_CREW_KNOBS } from './config/deepcrew.js';
 import { DEEP_DRAW_KNOBS } from './config/deepdraw.js';
+import { MEAL_KNOBS } from './config/meals.js';
 import { DEEP_BOARD_KNOBS } from './config/deepboard.js';
 import { ROOMBA_KNOBS } from './config/roomba.js';
 
@@ -102,7 +104,7 @@ export const TUNABLE = [
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS,
   ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS, ...RUNG_KNOBS,
   ...CASINO_KNOBS, ...HOUSE_KNOBS,
-  ...DEEP_KNOBS, ...DEEP_CREW_KNOBS, ...DEEP_DRAW_KNOBS, ...DEEP_BOARD_KNOBS,
+  ...DEEP_KNOBS, ...DEEP_CREW_KNOBS, ...DEEP_DRAW_KNOBS, ...MEAL_KNOBS, ...DEEP_BOARD_KNOBS,
   ...ROOMBA_KNOBS
 ];
 

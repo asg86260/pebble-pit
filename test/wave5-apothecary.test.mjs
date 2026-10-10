@@ -22,7 +22,7 @@ function standApothecary() {
   openSites();                                 // the plots are broken
   window.__crew(1, 4, 0, 2);                   // a rockhand, spare hands, two farmhands
   // Sparks too: the bracing tonic is priced in them.
-  window.__grant({ cores: 3, dust: 40000, spores: 4000, shards: 800, sparks: 200 });
+  window.__grant({ dust: 40000, spores: 4000, shards: 800, sparks: 200 });
   run(1);
   const started = window.__buy('unlockapothecary');
   window.__finish();

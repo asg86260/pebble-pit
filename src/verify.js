@@ -14,16 +14,17 @@
 import { WORKER } from './config.js';
 import { S, pit, floor, cut, band } from './state.js';
 import { P } from './config.js';
+import { mealNow } from './deep/meals.js';
 import { ways, wayAt, standTop, WORKINGS, belowYard } from './route.js';
 import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf, liftsOf } from './kit.js';
 import { count, countDust } from './grid.js';
-import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
+import { SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
 
 // The same table `HELD` in pit.js is built from, written here rather than
 // imported because this file must not trust the code it is checking.
-const COIN_CELLS = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
+const COIN_CELLS = [[SHARD_CELL, 'shards'],
                     [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
 const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]));
 import { yardLeft } from './world.js';
@@ -32,7 +33,7 @@ import { now } from './clock.js';
 import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
-import { SERPENT_WOUND, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
+import { SERPENT_WOUND, SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
 import { CALLED } from './deep/party.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
@@ -394,13 +395,13 @@ export function verifyWorld() {
 
     // --- rule 8: the coins are in the hole or through the rift ------------------
     // What you own is what is lying in the hole plus what has gone through,
-    // for every coin the hole takes. One walk for all four.
+    // for every coin the hole takes. One walk for all three.
     if (pit.grid) {
       const held = S.riftHeld || {};
-      const inPile = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+      const inPile = { shards: 0, spores: 0, sparks: 0 };
       for (const v of pit.grid) {
         if (!v) continue;
-        const key = COIN_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
+        const key = COIN_OF[findKind(v)];
         if (key) inPile[key]++;
       }
       for (const [, key] of COIN_CELLS) {
@@ -444,24 +445,34 @@ export function verifyWorld() {
   // else, counted in two places for the reason the ledgers are.
   {
     const stage = S.serpentStage;
-    if (!Number.isInteger(stage) || stage < 0 || stage > 4)
+    if (!Number.isInteger(stage) || stage < 0 || stage > SERPENT_PHASES)
       fail('the serpent is in a stage it does not have', `${stage}`);
-    const depth = stage > 3 ? 0 : SERPENT_WOUND[stage];
+    const depth = stage >= SERPENT_PHASES ? 0 : SERPENT_WOUND[stage];
     if (!(S.serpentWound >= 0) || S.serpentWound > depth)
       fail('the wound is outside its stage', `wound ${S.serpentWound} in stage ${stage}, depth ${depth}`);
     if (stage < serpentWas)
       fail('the serpent\'s defense went back', `stage ${serpentWas} then ${stage}`);
     // A stunned serpent does not heal: a wound that was stunned at the end
     // of the last frame is no shallower at the end of this one, unless the
-    // stage broke under it. And no stun is longer than the longest.
-    if (stunWas && stage === serpentWas && S.serpentWound < woundWas - 1e-9)
+    // stage broke under it or a meal landed, which closes what was banked
+    // before the stun (the stun stops the bank filling, not the meal). And no
+    // stun is longer than the longest.
+    if (stunWas && stage === serpentWas && S.meal === mealWas && S.serpentWound < woundWas - 1e-9)
       fail('the serpent healed while it was stunned', `wound ${woundWas} then ${S.serpentWound} in stage ${stage}`);
+    // The meal: a bank that is never under nought, a clock inside its wait.
+    if (!(S.mealT >= 0) || (S.serpentWound < depth && S.snatched && stage < SERPENT_PHASES && mealNow().toLand < -1))
+      fail('the meal clock is outside its wait', `${S.mealT}s since the last, the next ${mealNow().toLand}s off`);
+    mealWas = S.meal;
     if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)
       fail('the stun is outside its bounds', `${S.serpentStun}s, at most ${STUN_MAX_S}`);
+    // The phase's mechanic (deep/phases.js) is somewhere in its turn.
+    const mech = stage < SERPENT_PHASES && !S.serpentFreed ? MECHANICS[stage] : null;
+    if (!(S.mechAt >= 0) || (mech && S.mechAt >= mech.every))
+      fail('the turn of the phase is outside itself', `${S.mechAt}s of ${mech ? mech.every : '-'}`);
     serpentWas = stage;
     woundWas = S.serpentWound;
     stunWas = S.serpentStun > 0;
-    if (S.serpentFreed !== (stage > 3))
+    if (S.serpentFreed !== (stage >= SERPENT_PHASES))
       fail('he is freed and the belly is not open, or the other way round', `freed ${S.serpentFreed}, stage ${stage}`);
     if (!S.snatched) {
       const top = deepTop();
@@ -544,7 +555,7 @@ export function verifyParty() {
 
 // The last stage seen, for the rule that it never goes back. A new game, or a
 // setup that sets the fight outright (`__serpent`), is a new start.
-let serpentWas = -1, woundWas = 0, stunWas = false;
+let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;
 // The length on the frame before, and which reading of the yard it was of.
 let playedWas = 0, playedReads = -1;
-export function forgetSerpent() { serpentWas = -1; stunWas = false; }
+export function forgetSerpent() { serpentWas = -1; stunWas = false; mealWas = S.meal; }

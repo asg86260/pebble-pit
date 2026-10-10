@@ -19,11 +19,11 @@ import { drawBuildSites, drawGrit, drawSilt } from './render/buildsites.js';
 import { drawYardArrow, drawDeepArrow } from './render/shaftway.js';
 import { drawPortal, drawDeepPortal } from './render/portal.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
-import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
+import { drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
-         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld } from './render/crew.js';
+         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { deepTop } from './deep/place.js';
@@ -50,21 +50,24 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
          drawSwimmers, drawDeepInvert } from './render/deep.js';
 import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
-import { drawSerpent, drawSnatch } from './render/serpent.js';
+import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier } from './render/serpent.js';
+import { drawFish, drawFishFar, drawFishNear } from './render/fish.js';
 import { drawFightNumbers } from './render/fightnums.js';
+import { drawStationStatuses } from './render/statusicons.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
-import { drawFighters, drawShots } from './render/arms.js';   // track RENDER, docs/wave-party.md
+import { drawFighters, drawShots } from './render/arms.js';
+import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // track RENDER, docs/wave-party.md
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
 import { S } from './state.js';
 
 // The drawing side's public surface: the rest of the game imports every one of
 // these from render.js and has no business knowing which file each is in.
 export { canvas, ctx } from './render/ctx.js';
-export { cell, drawCircle, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
+export { cell, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
 export { risingPlaces, rising, withRise } from './render/rise.js';
 export { bar, barSpot, drawWorkBars } from './render/bars.js';
 export { drawBuildSites, drawGrit } from './render/buildsites.js';
-export { drawGrid, drawGroundLine, drawPit, drawPitCores, drawPitOutline } from './render/ground.js';
+export { drawGrid, drawGroundLine, drawPit, drawPitOutline } from './render/ground.js';
 export { drawDoneMarks, doneMarkAt, overDoneMark } from './render/donemarks.js';
 export { drawCursor } from './render/cursor.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
@@ -74,7 +77,7 @@ export { drawShack } from './render/shack.js';
 export { drawFilter } from './render/filter.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 export { drawSky } from './render/sky.js';
-export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } from './render/cores.js';
+export { drawPaid, drawAbyss, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller } from './render/machines.js';
 export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';
@@ -109,7 +112,6 @@ const LAYERS = [
   { name: 'air', draw: drawAir },
 
   { name: 'world', draw: enterWorld },
-  { name: 'core behind', draw: drawCoreBehind },
   { name: 'ground line', draw: drawGroundLine },
   { name: 'ground texture', draw: drawGroundTexture },
   // The offer flags go down before every building: each pole runs to the
@@ -171,7 +173,6 @@ const LAYERS = [
   { name: 'shaft arrow', draw: drawYardArrow },  // and over it, the way down
 
   { name: 'paid', draw: drawPaid },
-  { name: 'core', draw: drawCore },
   { name: 'pile marks', draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
   { name: 'auras', draw: drawAuras },            // the hold-a-body ring; offers fly flags, painted far earlier
   { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way
@@ -189,20 +190,29 @@ const LAYERS = [
   // post stands on the deep's floor like any other.
   { name: 'deep water', draw: drawDeepWater },
   { name: 'deep motes', draw: drawDeepMotes },
+  { name: 'deep stream far', draw: drawFishFar },   // the giant and the far and middle crossings, behind all of it
   { name: 'deep portal', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
   { name: 'deep floor', draw: drawDeepFloor },
+  { name: 'serpent diving', draw: drawSerpentDiving },   // the first break's dive, behind the stations and the bed
   // The scales, then the stations standing in front of them: the bed can
   // heap forty cells deep, and a station buried in its own coin could not
   // be found to be paid at.
   { name: 'deep bed', draw: drawDeepBed },
   { name: 'into crusher', draw: drawIntoCrusher }, // behind the furnace, dropping into its funnel
   { name: 'deep stations', draw: drawDeepStations },
+  { name: 'deep fish', draw: drawFish },   // what the serpent eats, in front of the water and behind its head
   { name: 'serpent', draw: drawSerpent },
+  { name: 'barrier', draw: drawBarrier },  // the explosive resist, floating under the coil
+  { name: 'deep stream near', draw: drawFishNear },   // the near crossings, in front of the serpent
   { name: 'swimmers', draw: drawSwimmers },
   // The fighters in front of the coil they strike and the swimmers passing,
   // and what leaves them -- arrows, beams, charges, hexes, notes -- over all
   // of the fighters (track RENDER, docs/wave-party.md).
+  { name: 'level-up back', draw: drawLevelUpBack },   // the blaze's turns behind the fighter
   { name: 'party', draw: drawFighters },
+  { name: 'freed', draw: drawFreed },   // him out of the serpent, walking to her
+  { name: 'orb', draw: drawOrb },       // the constrict's bolts and orb round a fighter
+  { name: 'level-up front', draw: drawLevelUpFront },
   { name: 'shots', draw: drawShots },
   { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
   { name: 'lifting', draw: drawLifting },
@@ -213,6 +223,7 @@ const LAYERS = [
   // stack over a station on the deep's floor was inside its own dome.
   { name: 'work bars', draw: drawWorkBars },     // and whatever else the yard is putting up
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
+  { name: 'sight veil', draw: drawSightVeil },   // the right button held: the yard behind the crew veiled pale
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines
@@ -241,6 +252,7 @@ const LAYERS = [
   // fades against the picture actually behind it, whichever way the deep was
   // turned (render/fightnums.js). Still in the world, for the deep's camera.
   { name: 'fight numbers', draw: drawFightNumbers },
+  { name: 'status posts', draw: drawStationStatuses },   // and what is on each fighter, up a post at its station
   { name: 'world:done', draw: leaveWorld },
 
   { name: 'air near', draw: drawAirNear },       // the nearest dust passes in front of the yard, not behind it
@@ -270,7 +282,7 @@ export { LAYERS };
 // and not read: the layers a player reads off the picture are left out of it.
 const READING = new Set(['offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
-                         'stock count', 'pot labels', 'counter', 'fight numbers', 'serpent bar']);
+                         'stock count', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
 let picture = false;
 export const asPicture = on => { picture = on; };
 
@@ -280,8 +292,8 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'serpent', 'swimmers', 'party', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
-                      'fight numbers']);
+                      'deep fish', 'deep stream far', 'deep stream near', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves, each cut to its own (`PINNED`).

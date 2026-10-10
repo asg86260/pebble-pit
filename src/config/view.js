@@ -25,7 +25,6 @@ export const DARK_PAPER = '#1f1f1f', DARK_INK = '#e0e0e0';
 // when they land in the pit. Two systems that both mean "a thing in a pile" is
 // one system too many, and every rule they did not share was a bug waiting.
 export const MARK_SIZE = P;
-export const CORE_CELL = SHADES.length + 1;   // a core sitting in a pile, among the dust
 
 // Each kind of find gets a run of cell values rather than one, because each
 // grain carries its own tone: a heap of shards is a speckle of blues the way a
@@ -33,7 +32,10 @@ export const CORE_CELL = SHADES.length + 1;   // a core sitting in a pile, among
 // being worked out from where the cell is, because a grain slides as the heap
 // settles and must not change color on its way down a slope.
 export const FIND_TONES = 4;
-export const SHARD_CELL = CORE_CELL + 1;                  // and the three after it
+// The first value past the shades was the core's, and stays unused: saved
+// grids, loads and belts carry cell values, and a find shifted down one would
+// read back as the find before it.
+export const SHARD_CELL = SHADES.length + 2;             // and the three after it
 export const SPORE_CELL = SHARD_CELL + FIND_TONES;
 export const SPARK_CELL = SPORE_CELL + FIND_TONES;
 export const FIND_TOP = SPARK_CELL + FIND_TONES - 1;
@@ -92,6 +94,11 @@ export const VEIL_MS = 350;
 // and how long the held sheet and its wash take to come up and go down
 // (fade.js; style.css fades #held and #scrim in the same time)
 export const SHEET_FADE_MS = 180;
+// The hard shadow every floating card casts, down and right, in screen
+// pixels, and its gray: the page's --shadow-off and --ink-7 (style.css), for
+// the one card drawn on the canvas rather than the page (render/counter.js).
+export const FLOAT_SHADOW = 6;
+export const FLOAT_SHADOW_INK = '#aaa';
 // The most the landing page waits for its picture (the demo frame's first
 // drawn frame) before lifting its veil regardless: a frame that will not come
 // must not hold the page white.

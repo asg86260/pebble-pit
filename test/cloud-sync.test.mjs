@@ -15,6 +15,7 @@
 
 import { mock } from 'node:test';
 import { readFileSync } from 'node:fs';
+import cloudShape from '../src/migrations/2026-09-28-cloud.js';
 
 const { group, ok, run, yard, storeChecks } = await import('./helpers.mjs');
 storeChecks();          // every device here is a store of its own; the reload harness would write through them
@@ -448,7 +449,7 @@ group('a slot not opened since the update is brought up to today and pushed', as
   const old = blobOf(slotRaw(1));
   delete old.yardId;
   delete old.playedS;
-  old.saveV = SAVE_V - 1;
+  old.saveV = cloudShape.v - 1;               // from before the migration that names a yard
   writeSlot(2, JSON.stringify(old));
   await storeSettled();
   later(CLOUD_PUSH_S + 1);

@@ -140,7 +140,7 @@ group('the sites still lay out left of the rock, sheds and all', async () => {
 group('buying a place records it in the build order', async () => {
   window.__reset();
   window.__crew(0, 3);
-  window.__grant({ cores: 10, dust: 90000 });
+  window.__grant({ dust: 90000 });
   window.__answered('props', 'net');      // the shields that open the farm and the quarry
   run(1);
 

@@ -12,7 +12,9 @@
 // In hand it follows the finger with the same transform and nothing else
 // changes -- a height written every move reflowed the rows and the rail each
 // frame, which was the jank -- and the stylesheet's one transition
-// (SHEET_MS) eases it to a stop only once the finger has gone. The rows
+// (SHEET_MS, SHEET_EASE) eases it to a stop only once the finger has gone.
+// Let go, it goes to the stop nearest where it would coast, not the next
+// one along: a flick from tall closes it. The rows
 // keep their last line inside the part that shows (`--sheet-hidden`),
 // written at the stops and never a frame at a time.
 //
@@ -20,11 +22,13 @@
 // sheet is up, `leave` when the pointer stops being a thumb, and answers
 // `rect` and `stop` for whoever stands things around it.
 
-import { SHEET_H, SHEET_TALL, SHEET_DISMISS, SHEET_MS, SHEET_HANDLE, SHEET_RAIL_W, SHEET_RAIL_INSET, TAP_SLOP } from './config.js';
+import { SHEET_H, SHEET_TALL, SHEET_FLING_MS, SHEET_DECAY, SHEET_RUBBER, SHEET_MS, SHEET_EASE,
+         SHEET_HANDLE, SHEET_RAIL_W, SHEET_RAIL_INSET, TAP_SLOP } from './config.js';
 import { S } from './state.js';
 
 const root = document.documentElement;
 root.style.setProperty?.('--sheet-ms', `${SHEET_MS}ms`);
+root.style.setProperty?.('--sheet-ease', `cubic-bezier(${SHEET_EASE.join(', ')})`);
 root.style.setProperty?.('--sheet-grip-w', `${SHEET_HANDLE[0]}px`);
 root.style.setProperty?.('--sheet-grip-h', `${SHEET_HANDLE[1]}px`);
 root.style.setProperty?.('--sheet-rail-w', `${SHEET_RAIL_W}px`);
@@ -38,15 +42,29 @@ root.style.setProperty?.('--sheet-rail-inset', `${SHEET_RAIL_INSET}px`);
 // `enter`   () => once, as it becomes a sheet (the owner's measuring)
 // `rail`    whether to draw the rows' own scrollbar (a sheet that is its own
 //           scroller cannot hold one: the rail would scroll with the rows)
-export function sheetSeat(el, { handle, list, open, dismiss, enter = null, rail = true }) {
+// `backdrop` the wash behind it, if it has one: under a finger it thins as
+//           the sheet comes down below its seat, so the yard shows through
+//           as much as the sheet has let go of it
+export function sheetSeat(el, { handle, list, open, dismiss, enter = null, rail = true, backdrop = null }) {
   let tall = false;                        // the stop it stands at
-  let drag = null;                         // the handle in hand: where the finger began, and how far it has come
+  let drag = null;                         // the handle in hand: where the finger began, where it is, and its last moves
   let put = null;                          // the last transform written, so a still sheet leaves its layer alone
   let shown = 0;                           // how much of it shows at the stop it stands at, px
   let box = 0;                             // the box itself: always the tall stop's
 
-  const stopHeight = () => Math.round(S.H * (tall ? SHEET_TALL : (1 - SHEET_H)));
+  // Read off the window every time, so a turned phone's stops are its own.
+  const seatHeight = () => Math.round(S.H * (1 - SHEET_H));
   const tallHeight = () => Math.round(S.H * SHEET_TALL);
+  const stopHeight = () => (tall ? tallHeight() : seatHeight());
+
+  // How much of it shows under the finger: the stop it stood at moved by the
+  // finger, never below the foot, and past tall the rubber band -- the
+  // further it is pulled the less it follows, never a window's height past.
+  function heldHeight() {
+    const h = stopHeight() - (drag.y - drag.y0), top = tallHeight();
+    if (h <= top) return Math.max(0, h);
+    return top + (1 - 1 / ((h - top) * SHEET_RUBBER / S.H + 1)) * S.H;
+  }
 
   // --- the rail -----------------------------------------------------------------
   // The sheet's own scrollbar: a phone's overlay bar is invisible until the
@@ -91,17 +109,20 @@ export function sheetSeat(el, { handle, list, open, dismiss, enter = null, rail 
       handle.hidden = false;
       box = b;
       el.style.height = `${b}px`;
+      el.style.setProperty('--sheet-box', `${b}px`);
       el.style.transform = put = `translate3d(0, ${b}px, 0)`;
       void el.offsetHeight;
       el.classList.remove('dragging');
       enter?.();
     }
-    if (b !== box) { box = b; el.style.height = `${b}px`; }
-    const seat = stopHeight();
+    if (b !== box) { box = b; el.style.height = `${b}px`; el.style.setProperty('--sheet-box', `${b}px`); }
+    // Put away, however it went, it comes back at the seat.
+    if (!open() && tall) { tall = false; el.classList.remove('tall'); }
     // Off the foot by however much of the box is not showing: all of it
-    // while it is down, tall-minus-seat at the seat, none when tall.
-    let slide = open() ? b - seat : b;
-    if (drag) slide = Math.max(0, Math.min(b, slide + (drag.y - drag.y0)));
+    // while it is down, tall-minus-seat at the seat, none when tall -- and
+    // under a finger past tall, lifted off the foot, the stylesheet's paper
+    // below the box filling the gap.
+    const slide = drag ? Math.round(b - heldHeight()) : open() ? b - stopHeight() : b;
     const showing = b - slide;
     if (showing !== shown) {
       shown = showing;
@@ -110,6 +131,12 @@ export function sheetSeat(el, { handle, list, open, dismiss, enter = null, rail 
     const tf = `translate3d(0, ${slide}px, 0)`;
     if (tf !== put) { put = tf; el.style.transform = tf; }
     if (el.classList.contains('dragging') !== !!drag) el.classList.toggle('dragging', !!drag);
+    // In hand, the wash is as deep as the sheet is up to its seat; let go,
+    // it is the fade's again, which carries on from wherever it stood.
+    if (backdrop) {
+      const wash = drag ? String(Math.min(1, showing / seatHeight())) : '';
+      if (backdrop.style.opacity !== wash) { backdrop.style.opacity = wash; backdrop.style.transition = drag ? 'none' : ''; }
+    }
     // Nothing about the rail moves under a finger: the box does not change.
     if (!drag) placeRail();
   }
@@ -122,6 +149,8 @@ export function sheetSeat(el, { handle, list, open, dismiss, enter = null, rail 
     el.style.height = '';
     el.style.transform = '';
     el.style.removeProperty('--sheet-hidden');
+    el.style.removeProperty('--sheet-box');
+    if (backdrop) { backdrop.style.opacity = ''; backdrop.style.transition = ''; }
     handle.hidden = true;
     shown = 0; box = 0; put = null; tall = false; drag = null;
   }
@@ -132,29 +161,45 @@ export function sheetSeat(el, { handle, list, open, dismiss, enter = null, rail 
 
   // --- the handle in hand ---------------------------------------------------------
   // The press is tracked on the handle itself, captured, so the finger may
-  // wander off it; the release decides between the three stops by how far
-  // it went, and a press that went nowhere is a tap, which is nothing.
+  // wander off it; the release picks the stop, and a press that went
+  // nowhere is a tap, which is nothing.
+  const grab = (y, t) => { drag = { y0: y, y, moves: [{ y, t }] }; };
+  // Where the finger is, and when. Only the last SHEET_FLING_MS of moves are
+  // kept: the speed a sheet is let go at is the speed at the end, not the
+  // drag's average.
+  function follow(y, t) {
+    drag.y = y;
+    drag.moves.push({ y, t });
+    while (drag.moves.length > 1 && drag.moves[0].t < t - SHEET_FLING_MS) drag.moves.shift();
+  }
   handle.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
-    drag = { y0: e.clientY, y: e.clientY };
+    grab(e.clientY, e.timeStamp);
     try { handle.setPointerCapture(e.pointerId); } catch {}
     place();
   });
   handle.addEventListener('pointermove', e => {
     if (!drag) return;
-    drag.y = e.clientY;
+    follow(e.clientY, e.timeStamp);
     place();
   });
   const letGo = e => {
     if (!drag) return;
-    const dy = (e.clientY ?? drag.y) - drag.y0;
-    const seat = stopHeight();
+    follow(e.clientY ?? drag.y, e.timeStamp ?? performance.now());
+    const moved = Math.abs(drag.y - drag.y0);
+    const h = heldHeight();
+    // px/s upward over the moves kept; a finger that sat still through the
+    // whole window has left one move and no speed
+    const a = drag.moves[0], z = drag.moves[drag.moves.length - 1];
+    const v = z.t > a.t ? (a.y - z.y) / (z.t - a.t) * 1000 : 0;
     drag = null;
-    if (Math.abs(dy) < TAP_SLOP) { place(); return; }
-    // Down past a third of what shows: from tall back to the seat, from
-    // the seat away. Up: tall.
-    if (dy > seat * SHEET_DISMISS) { if (tall) tall = false; else { dismiss(); return; } }
-    else if (dy < 0) tall = true;
+    if (moved < TAP_SLOP) { place(); return; }
+    // Where it would coast to under UIKit's decay, and the stop nearest
+    // that out of all three, so a flick from tall can go straight to gone.
+    const coast = h + (v / 1000) * SHEET_DECAY / (1 - SHEET_DECAY);
+    const to = [0, seatHeight(), tallHeight()].reduce((best, s) => (Math.abs(s - coast) < Math.abs(best - coast) ? s : best));
+    if (to === 0) { dismiss(); return; }
+    tall = to === tallHeight();
     el.classList.toggle('tall', tall);
     place();
   };
@@ -181,16 +226,16 @@ export function sheetSeat(el, { handle, list, open, dismiss, enter = null, rail 
     const t = e.changedTouches[0];
     if (!drag) {
       if (!pull.atTop || t.clientY - pull.y0 <= 0) { pull = null; return; }   // scrolling the list: not ours
-      drag = { y0: pull.y0, y: t.clientY };
+      grab(pull.y0, e.timeStamp);
     }
-    drag.y = t.clientY;
+    follow(t.clientY, e.timeStamp);
     e.preventDefault();
     place();
   }, { passive: false });
   const pullEnd = e => {
     if (!pull) return;
     pull = null;
-    if (drag) letGo({ clientY: e.changedTouches[0]?.clientY });
+    if (drag) letGo({ clientY: e.changedTouches[0]?.clientY, timeStamp: e.timeStamp });
   };
   el.addEventListener('touchend', pullEnd);
   el.addEventListener('touchcancel', pullEnd);

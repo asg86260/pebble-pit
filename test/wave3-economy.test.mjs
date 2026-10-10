@@ -12,7 +12,7 @@ import { FILTER_UPGRADES } from '../src/filter.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
 import { OUTHOUSE_UPGRADES } from '../src/outhouse.js';
-import { PLOT_COST, PLOT_RATE, LOO_POSTS, LOOPOST_SHARDS, LAB_DUST, LADDERS, LADDER, RUNGS, QUARRY_CORES } from '../src/config.js';
+import { PLOT_COST, PLOT_RATE, LOO_POSTS, LOOPOST_SHARDS, LAB_DUST, LADDERS, LADDER, RUNGS } from '../src/config.js';
 
 const roster = () => state().roster;
 
@@ -131,28 +131,20 @@ group('the rockhand pick bites a whole pixel more per rung, and no further', asy
   ];
 });
 
-// --- A7: a place costs a core -------------------------------------------------
-group('a place costs a core, not dust alone', async () => {
+// --- A7: a place costs dust, and its gate is the barrier before it -------------
+// (DESIGN.md, "The barriers are the gates"): cores are gone, so a place is
+// bought in dust once the barrier before it has failed.
+group('a place costs dust once its barrier has failed', async () => {
   window.__reset();
-  window.__grant({ shards: 400, cores: 5, dust: 30000, spores: 100 });
-  window.__crew(0, 2);
-  // The quarry, which is the door this group asks about now. It was the lab,
-  // and then the construction bench once the lab went; both are gone, and the
-  // claim was never about any one of them. The quarry's own gate is the plots
-  // being broken, which is the whole of the setup.
+  window.__grant({ shards: 400, dust: 30000, spores: 100 });
   window.__crew(1, 1, 0, 1);
-  window.__answered('props', 'net');      // the shields that open the farm and the quarry
-  const before = state().cores;
+  window.__answered('props', 'net');      // the barriers that open the farm and the quarry
+  const before = state().stored;
   const built = buyBuilt('unlockquarry');
-  const after = state().cores;
+  const after = state().stored;
   return [
     ok(built, 'the quarry can be built'),
-    // The claim this group has always made is that a PLACE is bought with cores
-    // and never with dust alone -- see DESIGN.md, "cores buy places, and only
-    // places" -- so what matters is that it costs them at all, and the count is
-    // read off the row rather than guessed.
-    ok(before - after === QUARRY_CORES, 'and it costs cores, not none',
-       `${before} -> ${after}, of ${QUARRY_CORES}`)
+    ok(before > after, 'and it costs dust', `${before} -> ${after}`)
   ];
 });
 

@@ -15,19 +15,29 @@
 // A blow is read on it too: a bite out of the edge it came from, closing,
 // the hide giving under it a beat, and a ring running over a stunned coil's
 // head (DESIGN.md, "Blows land"); and what the fighters have laid on it, the
-// statuses, over the whole of it (docs/wave-party.md, "The picture").
+// statuses, over the whole of it (docs/wave-party.md, "The picture"); and
+// its phase's mechanic, the lash and the sink's fade under the
+// abyss's veil (deep/phases.js).
 
 import { now } from '../clock.js';
 import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
-         WOUND_GAP, BELLY_AT, DENT_S, DENT_RISE_S, DENT_DECAY, DENT_W, DENT_DEPTH,
+         WOUND_GAP, BELLY_AT, DENT_REACH, DENT_LIFT, DENT_BIG, DENT_CORE, DENT_STEPS,
          BLEED_DRIPS, BLEED_DRIP_S, HELD_EVERY, EXPOSED_EVERY, EXPOSED_LIFT_HZ,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
-         SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
+         SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, SNATCH_LEAN, SNATCH_HINGE, SNATCH_GAPE, SNATCH_CREST, SNATCH_HIDE, SNATCH_RISE, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
-         STUN_RING_DIM } from '../config.js';
+         STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
+         MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
+         BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
+         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP,
+         BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W } from '../config.js';
 import { S } from '../state.js';
-import { coilLine, coilThick, mouthX } from '../deep/place.js';
+import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
+import { lengthOfKind, mealKind } from './fish.js';
+import { coilLine, coilThick, mouthX, deepFloor, bellyAt } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, killFreeA, orbOn, orbLift } from '../deep/phases.js';
+import { freedBody } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
@@ -79,18 +89,24 @@ function lay(t, x0, x1) {
   return { pts: shown, alongAt };
 }
 
-// The coil answers a blow (the kit growth page's sauce): the hide round the
-// hit is pushed up a beat and springs back, over a few columns either side,
-// deeper and wider for a bigger blow. It never overshoots, so nothing
-// shudders, even under a stun. Cells, from the fighters' contacts
-// (render/arms.js); drawing only, the sim's coil does not move.
+// The body flinches from a blow, as a body does: the stretch of it round the
+// hit is thrown up as one piece, a cell or two, held, half down, and at rest
+// (DENT_STEPS) -- the middle of the stretch whole, its ends half as far. Held
+// steps, whole cells, never a shudder; where two blows overlap the bigger
+// lift stands. A stream's ticks (the beam) leave it be. Cells, from the
+// fighters' contacts (render/arms.js); drawing only, the sim's coil does not
+// move.
+const stepOf = u => { for (const [until, k] of DENT_STEPS) if (u < until) return k; return 0; };
+const DENT_S = DENT_STEPS[DENT_STEPS.length - 1][0];
 function dentAt(cx, t, dents) {
   let off = 0;
   for (const d of dents) {
     const u = t - d.t0;
-    if (u < 0 || u > DENT_S) continue;
-    const w = DENT_W[0] + DENT_W[1] * d.k, fall = Math.exp(-((cx - d.x) ** 2) / (2 * w * w));
-    off -= (DENT_DEPTH[0] + DENT_DEPTH[1] * d.k) * fall * (u < DENT_RISE_S ? u / DENT_RISE_S : Math.exp(-(u - DENT_RISE_S) * DENT_DECAY));
+    if (d.stream || u < 0 || u >= DENT_S) continue;
+    const big = d.k > DENT_BIG ? 1 : 0, reach = DENT_REACH[big], far = Math.abs(cx - d.x);
+    if (far > reach) continue;
+    const lift = Math.round(DENT_LIFT[big] * stepOf(u) * (far <= reach * DENT_CORE ? 1 : 0.5) + 0.01);
+    off = Math.min(off, -lift);
   }
   return off;
 }
@@ -160,28 +176,67 @@ function bitten(list, along, across, r, aI, cI) {
   return false;
 }
 
-export function drawSerpent() {
+// In front of the stations, but diving behind them (`drawSerpentDiving`,
+// earlier in the layers) and under the deep's floor: everything of him below
+// it is cut.
+export function drawSerpent() { if (breakKind() !== 'dive') drawCoil(); }
+export function drawSerpentDiving() {
+  if (breakKind() !== 'dive') return;
+  ctx.save(); ctx.beginPath(); ctx.rect(-1e6, -1e6, 2e6, deepFloor() + 1e6); ctx.clip();
+  drawCoil();
+  ctx.restore();
+}
+function drawCoil() {
   const t = now();
   const stage = S.serpentStage;
   const { x0, x1 } = deepWindow();
-  const held = !S.serpentFreed && stage < 4;
-  const wk = stage >= 4 ? 0 : woundK();
-  const { pts, alongAt } = lay(t, x0, x1);
+  // He is in the cage until the kill's coming apart reaches the belly.
+  const held = cradled();
+  const wk = stage >= SERPENT_PHASES ? 0 : woundK();
+  const { pts: laid, alongAt } = lay(t, x0, x1);
   hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) };
+  // Down after the kill he comes apart tail first, and gathers again head
+  // first (deep/phases.js): only what is whole is drawn; the rest is motes.
+  const pts = laid.filter(wholeAt);
+  drawKillMotes(t, laid);
   if (!pts.length) return;
   const bit = bites(t, alongAt);
   const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
   const gap = held ? Math.round(wk * WOUND_GAP / P) * P : 0;
   const reach = wk * CRACK_REACH;
-  // Weakened: the hide goes dull, a tone down (the class bench's painter).
-  const dull = has('weakened');
   const wardPh = t / WARD_MS * Math.PI * 2;
+  // The resist up shows on the hide: the ward's purple shimmer for magic,
+  // plates for physical; the coming one flickers in before the fading's
+  // switch (deep/phases.js).
+  const coming = resistNext();
+  // A break shows the old hide where it has not yet been renewed (deep/phases.js).
+  const shownNow = coming && Math.floor(t / 1000 * RESIST_FLICKER_HZ * 2) % 2 ? coming : resistNow();
+  const renewing = breaking();
 
   // The belly swells round him while he is in it.
   if (held) for (const p of pts) {
     const d = Math.abs(p.along - bellyA);
     if (d < BELLY_LEN) p.r += BELLY_BULGE * Math.sqrt(1 - (d / BELLY_LEN) ** 2);
   }
+  // A meal (the owner's A, docs/mocks/heal-eat-2026-09-30.html): the jaws
+  // swing apart from their hinge for the creature and shut on it, and its
+  // swallow is a lump that runs from the head to the belly, fatter for a
+  // longer one, the creature dark through the hide. The jaws are the head
+  // drawn wider by the gap (`jawGap`), each half pushed off the mouth's line.
+  const meal = held && S.view === 'deep' ? mealNow() : null;
+  const open = Math.max(meal ? jawOpen(meal.toLand) : 0, roarGape());   // and a break's roar
+  let lumpAt = null, lumpLen = 0;
+  if (meal && meal.toLand >= 0 && meal.toLand < MEAL_SWALLOW_S) {
+    const a = 1 - meal.toLand / MEAL_SWALLOW_S;
+    lumpAt = headA + (a * a * (3 - 2 * a)) * (bellyA - headA);
+    lumpLen = MEAL_SWELL_LEN * P * (0.7 + lengthOfKind(mealKind(meal.n)) / 30);
+    const swell = MEAL_SWELL * P * (0.5 + lengthOfKind(mealKind(meal.n)) / 24);
+    for (const p of pts) {
+      const d = Math.abs(p.along - lumpAt);
+      if (d < lumpLen) p.r += swell * Math.sqrt(1 - (d / lumpLen) ** 2);
+    }
+  }
+  if (open > 0) for (const p of pts) p.r += jawGap(p.along / P, open) * P;
 
   // Each cell takes the sample nearest it. On flat arrays over the coil's box, and
   // painted into one image (`coil`): a map of cell objects and a fillRect a
@@ -228,12 +283,26 @@ export function drawSerpent() {
     const p = pts[own[i]];
     const x = minX + (i % cols) * P, y = minY + Math.floor(i / cols) * P;
     const dx = x + P / 2 - p.x, dy = y + P / 2 - p.y;
-    const dist = best[i], r = p.r;
-    const along = p.along + dx * p.tx + dy * p.ty, across = dx * p.nx + dy * p.ny;
+    const dist = best[i];
+    let r = p.r;
+    const along = p.along + dx * p.tx + dy * p.ty;
+    let across = dx * p.nx + dy * p.ny;
     const da = along - bellyA;
     if (gap && Math.abs(da) < gap / 2) continue;                 // the wound: open water
     if (dist > r) continue;
+    // The jaws apart: between them open water, where the creature going in
+    // shows; outside, each half of the head as it was, pushed off the line.
+    const g = open > 0 ? jawGap(along / P, open) * P : 0;
+    let tooth = false;
+    if (g > 0) {
+      if (Math.abs(across) < g) continue;
+      tooth = Math.abs(across) - g < P;
+      across -= Math.sign(across) * g;
+      r -= g;
+      if (Math.abs(across) > r) continue;
+    }
     const aI = Math.round(along / P), cI = Math.round(across / P);
+    const shown = renewing ? resistAt(p.u / (COIL_SEGS - 1)) : shownNow;
     if (bit.length && bitten(bit, along, across, r, aI, cI)) continue;   // a bite: open water
     // The cage: inside the swell, pale, crossed by dark ribs he is seen
     // between. Pale because a body in the deep is dark with a light edge,
@@ -253,10 +322,11 @@ export function drawSerpent() {
              : Math.abs(across) < P / 2 ? WHITE - 2
              : across > P * 0.9 ? WHITE - 1
              : WHITE;
-    if (stage === 1 && Math.sin(aI * 0.45 + cI * 1.1 - wardPh) > WARD_AT) {
+    if (shown === 'magic' && Math.sin(aI * 0.45 + cI * 1.1 - wardPh) > WARD_AT) {
       ramp = PURPLES; rung = WHITE - (seeth(aI, cI) % 3);
     }
-    if (dull && ramp === GREYS && rung > WHITE - 3) rung -= 2;
+    if (shown === 'physical' && ((aI % PLATE_EVERY) + PLATE_EVERY) % PLATE_EVERY < PLATE_W)
+      rung = across < -r + P ? WHITE - PLATE_EDGE : WHITE - PLATE_TONE;
     // The cracks: two, wandering across the body, out from the belly as far
     // as the wound is deep; near black at the wound, greyer at their tips.
     if (reach > 0 && Math.abs(da) < reach) {
@@ -266,19 +336,28 @@ export function drawSerpent() {
         ramp = GREYS; rung = 1 + Math.round(3 * Math.abs(da) / reach);
       }
     }
+    // Teeth along the open jaws' edges, and the lump dark through the hide.
+    if (tooth && (aI & 1) === 0 && along < (MEAL_HINGE - 1) * P) { ramp = GREYS; rung = WHITE; }
+    if (lumpAt != null && Math.abs(along - lumpAt) < lumpLen * 0.6 && Math.abs(across) < P * 1.6) { ramp = GREYS; rung = 2; }
     // The snout's jaw, a line through it, and the eye behind it.
-    if (along < headA && Math.abs(across) < P / 2) { ramp = GREYS; rung = 0; }
+    if (!g && along < headA && Math.abs(across) < P / 2) { ramp = GREYS; rung = 0; }
     if (Math.abs(along - headA - P) < P / 2 && Math.abs(across + r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
     coil.put(i, ramp[rung]);
   }
+  // Sinking into the abyss the whole of him dims, and flickers dim in the
+  // warning (deep/phases.js).
+  ctx.globalAlpha = 1 - dimOf(t);
   coil.draw(ctx, minX, minY);
   hide = { c0, top, bot };
   // The crest: a fin of the abyss's purple standing up off the head and
   // running back along the neck, spikes a cell apart, every other one a cell
   // taller, shortening to nothing at its end. Stood on the body's top edge
   // across the body, so it rides the bends with the rest.
+  // Through the constrict's warning it lights up head first, and holds lit
+  // while the bolts leave it (`drawOrb`), which start from its tips.
   const crestFrom = headA - SNOUT / 2, crestTo = headA + CREST_LEN;
-  const spiked = new Set();
+  const spiked = new Set(), lit = combLit(t);
+  crestTips = [];
   for (const p of pts) {
     if (p.along < crestFrom || p.along > crestTo) continue;
     const j = Math.round((p.along - crestFrom) / P);
@@ -286,11 +365,13 @@ export function drawSerpent() {
     spiked.add(j);
     const left = 1 - (p.along - crestFrom) / (crestTo - crestFrom);
     const tall = Math.max(1, Math.round((j % 4 === 0 ? CREST_H : CREST_H - 1) * Math.min(1, left * 1.6)));
+    const on = 1 - left < lit, flick = Math.floor(t / 1000 * 12 + j) % 4 < 2;
     for (let m = 1; m <= tall; m++) {
       const d = p.r - P / 2 + m * P;
-      ctx.fillStyle = PURPLES[WHITE - 1 - (j % 2)];
+      ctx.fillStyle = on ? (m === tall ? GREYS[WHITE] : flick ? PURPLES[WHITE] : PURPLES[WHITE - 1]) : PURPLES[WHITE - 1 - (j % 2)];
       ctx.fillRect(snap(p.x - p.nx * d - P / 2), snap(p.y - p.ny * d - P / 2), P, P);
     }
+    if (on) crestTips.push({ x: p.x - p.nx * (p.r + tall * P), y: p.y - p.ny * (p.r + tall * P) });
   }
   // Him, whole in the cage, and the ribs over him: the wound's gap has
   // already taken the ribs it crossed.
@@ -306,13 +387,234 @@ export function drawSerpent() {
   for (const p of pts) if (Math.abs(p.along - ringA) < P && (!head || Math.abs(p.along - ringA) < Math.abs(head.along - ringA))) head = p;
   drawStatuses(t / 1000);
   drawStunRing(t, head);
+  if (held) drawMealCrosses(t, pts, bellyA);
+  ctx.globalAlpha = 1;
+  drawVeil(t, pts);
+  drawBubbles(pts);
   ctx.fillStyle = '#000';
+}
+
+// The heal landing (the owner's pick): purple crosses lift off the length of
+// the body, the nearest the belly first, each rising and fading.
+const unit = k => { const x = Math.sin(k * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+function drawMealCrosses(t, pts, bellyA) {
+  const a = (t - S.mealLandedAt) / 1000;
+  if (!(S.mealLandedAt > 0) || a < 0 || a >= MEAL_AURA_S || !pts.length) return;
+  const first = pts[0].along, span = pts[pts.length - 1].along - first, seed = Math.round(S.mealLandedAt);
+  for (let k = 0; k < MEAL_CROSSES; k++) {
+    const along = first + unit(seed + k * 3) * span;
+    const delay = unit(seed + k * 5) * 0.4 + Math.abs(along - bellyA) / (span || 1) * (MEAL_AURA_S - MEAL_CROSS_S - 0.4);
+    const b = (a - delay) / MEAL_CROSS_S;
+    if (b < 0 || b >= 1) continue;
+    let p = pts[0];
+    for (const q of pts) if (Math.abs(q.along - along) < Math.abs(p.along - along)) p = q;
+    const x = snap(p.x - p.nx * p.r), y = snap(p.y - p.ny * p.r) - (2 + Math.floor(b * MEAL_CROSS_RISE)) * P;
+    ctx.fillStyle = PURPLES[Math.max(2, WHITE - Math.floor(b * 7))];
+    for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) ctx.fillRect(x + dx * P, y + dy * P, P, P);
+  }
+}
+
+// --- a phase's mechanic, as drawn ----------------------------------------------
+// The sink's dimming: how far under he is, and in its warning a flicker.
+function dimOf(t) {
+  const p = part();
+  if (p.m?.kind !== 'sink' || S.mechSkip) return 0;
+  if (p.part === 'warn') return SINK_WARN_DIM * (0.5 + 0.5 * Math.sin(t / 1000 * Math.PI * 2 * THROB_HZ));
+  return sinkK() * SINK_DIM;
+}
+// The abyss's veil flowing over him while he is under: purple cells along
+// the body, wandering across it, as bright as he is gone.
+function drawVeil(t, pts) {
+  const k = sinkK();
+  if (!(k > 0)) return;
+  ctx.globalAlpha = k;
+  let last = -Infinity;
+  for (const p of pts) {
+    if (p.along - last < P * SINK_VEIL_EVERY) continue;
+    last = p.along;
+    const i = Math.round(p.along / P);
+    const across = Math.sin(p.along / (P * 2.5) + t / 400) * p.r;
+    ctx.fillStyle = PURPLES[WHITE - 1 - (i % 3)];
+    ctx.fillRect(snap(p.x + p.nx * across - P / 2), snap(p.y + p.ny * across - P / 2), P, P);
+  }
+  ctx.globalAlpha = 1;
+}
+// --- the constrict's orb --------------------------------------------------------------
+// How much of the comb is lit, head first, 0..1: through the orb's warning,
+// and held while the bolts fly.
+let crestTips = [];
+function combLit(t) {
+  const p = part();
+  if (p.m?.kind !== 'orb' || S.mechSkip && !orbOn()) return 0;
+  if (p.part === 'warn') return p.k;
+  const o = orbOn();
+  return o && t - o.at < ORB_BOLT_S * 1000 ? 1 : 0;
+}
+// The orb's fighter, where it hangs.
+function orbBody(id) {
+  const w = S.workers.find(o => o.station === id);
+  if (!w) return null;
+  const st = S.stations.find(s => s.id === id);
+  return { x: w.x + WORKER / 2, y: w.y + WORKER / 2 - orbLift(st) * P };
+}
+// The explosive resist's barrier: a row of floating cells under the coil's
+// underside, following it, a column of cells to each cell of the deep it
+// spans; the coming resist flickers it in before the fading's switch, as the
+// hide's looks do. A bomb it soaked up flares the cells under it.
+export function drawBarrier() {
+  if (S.view !== 'deep' || !S.snatched || S.serpentFreed || breaking()) return;
+  const t = now(), coming = resistNext();
+  const shown = coming && Math.floor(t / 1000 * RESIST_FLICKER_HZ * 2) % 2 ? coming : resistNow();
+  if (shown !== 'explosive') return;
+  // the underside, lowest at each column of cells
+  const under = new Map();
+  for (let u = 0; u <= COIL_SEGS - 1; u += 0.25) {
+    const p = coilLine(u, t), cx = Math.round(p.x / P), y = p.y + coilThick(u) / 2;
+    if (!(under.get(cx) >= y)) under.set(cx, y);
+  }
+  for (const [cx, y] of under) {
+    const k = ((cx % BARRIER_EVERY) + BARRIER_EVERY) % BARRIER_EVERY;
+    if (k === BARRIER_EVERY - 1) continue;
+    let ink = k === 1 ? PURPLES[WHITE] : PURPLES[WHITE - 2];
+    for (const h of S.barrierHits) {
+      const age = t - h.at;
+      if (age < 0 || age >= BARRIER_FLARE_MS || Math.abs(Math.round(h.x / P) - cx) > BARRIER_FLARE_W) continue;
+      ink = age < BARRIER_FLARE_MS * 0.4 ? GREYS[WHITE] : PURPLES[WHITE - 1];
+    }
+    ctx.fillStyle = ink;
+    const by = snap(y) + BARRIER_GAP * P;
+    ctx.fillRect(cx * P, by, P, P);
+    if (k === 1) { ctx.fillRect(cx * P, by - P, P, P); ctx.fillRect(cx * P, by + P, P, P); }
+  }
+}
+
+// The bolts off the lit comb to it, held two frames a shape; the orb turning
+// round it, with what is left of it over its head; and its burst when it goes.
+export function drawOrb() {
+  if (S.view !== 'deep') return;
+  const t = now(), o = orbOn();
+  if (o) {
+    const c = orbBody(o.st);
+    if (!c) return;
+    const age = (t - o.at) / 1000;
+    if (age < ORB_BOLT_S && crestTips.length) {
+      const shape = Math.floor(age * 6);
+      for (let n = 0; n < ORB_BOLTS; n++) {
+        const from = crestTips[(n * 5 + shape * 3) % crestTips.length];
+        let x = from.x, y = from.y;
+        for (let s = 1; s <= 14; s++) {
+          const u = s / 14;
+          const nx = from.x + (c.x - from.x) * u + (unit(n * 31 + s + shape * 7) - 0.5) * P * 4 * (1 - u);
+          const ny = from.y + (c.y - from.y) * u;
+          ctx.fillStyle = s % 3 ? PURPLES[WHITE] : GREYS[WHITE];
+          for (let q = 0; q <= 2; q++) ctx.fillRect(snap(x + (nx - x) * q / 2), snap(y + (ny - y) * q / 2), P, P);
+          x = nx; y = ny;
+        }
+      }
+    }
+    // the orb, closing over the first beat of it, turning
+    const r = Math.min(ORB_R, 1 + age * 20) * P, turn = Math.floor(t / 1000 * 8) / 8 * 0.6;
+    const dots = Math.max(16, Math.round(r * 2 * Math.PI / P));
+    for (let n = 0; n < dots; n++) {
+      const th = n / dots * Math.PI * 2 + turn;
+      ctx.fillStyle = n % 4 === 0 ? PURPLES[WHITE] : PURPLES[WHITE - 2];
+      ctx.fillRect(snap(c.x + Math.cos(th) * r - P / 2), snap(c.y + Math.sin(th) * r * 0.9 - P / 2), P, P);
+    }
+    // what is left of it, over its head
+    const bw = ORB_R * 2 + 2, by = snap(c.y - r - P * 3), bx = snap(c.x) - Math.floor(bw / 2) * P;
+    for (let i = 0; i < bw; i++) {
+      ctx.fillStyle = i < Math.round(bw * o.hp / o.max) ? PURPLES[WHITE - 1] : PURPLES[WHITE - 7];
+      ctx.fillRect(bx + i * P, by, P, P);
+    }
+    // and an arrow over that, bobbing, pointing at it: it can be clicked
+    const bob = Math.floor(t / 1000 / ORB_ARROW_S) % 2 ? ORB_ARROW_UP : 0, ay = by - (5 + bob) * P, ax = snap(c.x) - 2 * P;
+    ctx.fillStyle = GREYS[WHITE];
+    for (const [dx, dy] of [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [3, 1], [2, 2]]) ctx.fillRect(ax + dx * P, ay + dy * P, P, P);
+  }
+  const b = S.orbBurst;
+  if (b && t - b.at < ORB_BURST_S * 1000) {
+    const c = orbBody(b.st);
+    if (!c) return;
+    const k = (t - b.at) / 1000 / ORB_BURST_S, r = (ORB_R + Math.floor(k * 6) * 1.5) * P;
+    for (let n = 0; n < 16; n++) {
+      const th = n / 16 * Math.PI * 2;
+      ctx.fillStyle = PURPLES[WHITE - 1 - Math.min(6, Math.floor(k * 7))];
+      ctx.fillRect(snap(c.x + Math.cos(th) * r - P / 2), snap(c.y + Math.sin(th) * r * 0.9 - P / 2), P, P);
+    }
+  }
+}
+
+// --- the kill ---------------------------------------------------------------------
+// Whether the hide at a laid point is whole: not yet come apart (the tail goes
+// first), or gathered again (the head comes first).
+// The snout's points lie before the head's first segment: they count as the head.
+const kOf = p => Math.max(0, p.u / (COIL_SEGS - 1));
+function wholeAt(p) {
+  const back = reformK();
+  if (back != null) return kOf(p) < back || back >= 1;
+  const apart = apartK();
+  return apart <= 0 || (apart < 1 && kOf(p) < 1 - apart);
+}
+// The motes: off the hide as it comes apart, up and dimming; and drawing in
+// over where it is about to gather.
+function drawKillMotes(t, laid) {
+  const back = reformK(), apart = apartK();
+  if (back == null && !(apart > 0)) return;
+  for (let i = 0; i < laid.length; i += 3) {
+    const p = laid[i], k = kOf(p), seed = Math.round(p.along / P);
+    if (back != null) {
+      const near = (k - back) / 0.3;
+      if (back >= 1 || near < 0 || near > 1) continue;
+      const x = snap(p.x + (unit(seed) - 0.5) * P * 10 * near), y = snap(p.y - p.r - near * P * 8);
+      ctx.fillStyle = PURPLES[WHITE - 1 - Math.floor(near * 3)];
+      ctx.fillRect(x, y, P, P);
+      continue;
+    }
+    // on the kill's own clock, so they run out after the coming apart has
+    const age = killA() - (KILL.last + KILL.limp + (1 - k) * KILL.apart);
+    if (age < 0 || age > KILL_MOTE_S) continue;
+    const up = Math.floor(age * KILL_MOTE_RISE);
+    for (let n = 0; n < 2; n++) {
+      const x = snap(p.x + (unit(seed * 3 + n) - 0.5) * P * 6 * (age + 0.3));
+      const y = snap(p.y - p.r * unit(seed + n)) - (up + n * 2) * P;
+      ctx.fillStyle = PURPLES[WHITE - 1 - Math.min(6, Math.floor(age / KILL_MOTE_S * 7))];
+      ctx.fillRect(x, y, P, P);
+    }
+  }
+}
+// Him, let go where the belly was and dropping to the floor, then out and
+// walking to her, and hopping when he gets there.
+export function drawFreed() {
+  if (S.view !== 'deep') return;
+  const b = freedBody();
+  if (b) { drawBody(snap(b.x), snap(b.y)); return; }
+  const a = killA(), free = killFreeA();
+  if (a == null || a < free) return;
+  const at = bellyAt(now()), floor = deepFloor() - WORKER;
+  const k = Math.min(1, Math.ceil((a - free) / KILL_DROP_S * KILL_DROP_STEPS) / KILL_DROP_STEPS);
+  drawBody(snap(at.x) - WORKER / 2, snap(at.y - WORKER / 2 + (floor - at.y + WORKER / 2) * k));
+}
+
+// The dive's bubbles: up off the floor where he went under, while he is
+// under, climbing a held cell at a time and gone at BREAK_BUBBLE_RISE.
+function drawBubbles(pts) {
+  if (breakKind() !== 'dive' || !pts.length) return;
+  const b = BREAK_DIVE, from = b.in / 2, over = b.under + b.in / 2;
+  ctx.fillStyle = GREYS[WHITE - 2];
+  for (let n = 0; n < BREAK_BUBBLES; n++) {
+    const age = S.breakT - (from + n / BREAK_BUBBLES * over);
+    const up = Math.floor(age * BREAK_BUBBLE_RISE / (over / 2));
+    if (age < 0 || up >= BREAK_BUBBLE_RISE) continue;
+    const p = pts[Math.floor(unit(n * 7 + 1) * (pts.length - 1))];
+    const drift = Math.round(Math.sin(up * 0.9 + n) * 0.6);
+    ctx.fillRect(snap(p.x) + drift * P, snap(Math.min(p.y - p.r, deepFloor())) - (up + 1) * P, P, P);
+  }
 }
 
 // --- the statuses on the whole serpent ------------------------------------------
 // The class bench's painters (docs/mocks/classes), laid over the coil as
 // drawn: Bleeding drips off the belly, Held clasps it in the circle's bands,
-// Exposed lifts a scale every few columns; Weakened is the dull hide above.
+// Exposed lifts a scale every few columns.
 // A stunned coil only holds still under its ring. Read off `S.statuses`,
 // which the fight keeps (deep/statuses.js).
 const has = key => { const s = S.statuses?.[key]; return !!s && s.until > now(); };
@@ -368,46 +670,56 @@ export function drawSnatch() {
   const mx = mouthX();
   const surface = snap(abyssLine() + swellAt(Math.round(mx / P), t));
   if (sn.headY >= surface) return;
-  // the scales of it, in the yard's greys: the same lattice the coil wears
-  const scale = (c, r) => ((c + (r % 2) * 2) % 4 === 0 ? '#3a3a3a' : '#000');
+  const [EDGE, HIDE, LATTICE, BROW] = SNATCH_HIDE;
+  const k = Math.max(0, Math.min(1, (surface - sn.headY) / SNATCH_RISE));   // how far up
+  const ease = x => x * x * (3 - 2 * x);
+  // It leans out toward the plank as it comes up and draws back with him; the
+  // jaws part as it reaches the top and shut on him.
+  const lean = (sn.carried ? 0.35 : 1) * ease(k);
+  const open = sn.carried ? 0 : ease(Math.max(0, Math.min(1, k * 1.6 - 0.6)));
   const sway = Math.round(Math.sin(t / 700)) * P;
-  const cols = SNATCH_HEAD_W / P, rows = SNATCH_HEAD_H / P, mid = Math.floor(rows / 2);
-  // The head stands on the neck and reaches out over the plank, toward
-  // whoever is at the edge of it.
-  const nx = snap(mx - SNATCH_NECK_W / 2) + sway;
-  const hx = nx + SNATCH_NECK_W - SNATCH_HEAD_W, hy = snap(sn.headY);
+  const cols = SNATCH_HEAD_W / P, rows = SNATCH_HEAD_H / P, mid = Math.floor(rows / 2), neckC = SNATCH_NECK_W / P;
+  const hy = snap(sn.headY), neckTop = hy + (mid + 1) * P;
+  const baseX = snap(mx - SNATCH_NECK_W / 2) + sway;
+  const nxAt = y => baseX - snap(lean * SNATCH_LEAN * Math.sin(Math.max(0, Math.min(1, (surface - y) / Math.max(P, surface - neckTop))) * Math.PI / 2));
+  const cell = (x, y, tone) => { ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
   ctx.save();
   ctx.beginPath();
-  ctx.rect(hx - WORKER * 2, hy - WORKER * 2, SNATCH_HEAD_W + WORKER * 4, surface - hy + WORKER * 2);
+  ctx.rect(baseX - SNATCH_LEAN - SNATCH_HEAD_W - WORKER * 2, hy - P * 8, SNATCH_LEAN + SNATCH_HEAD_W + SNATCH_NECK_W + WORKER * 4, surface - hy + P * 8);
   ctx.clip();
-  for (let y = hy + SNATCH_HEAD_H; y < surface + P; y += P) {
-    for (let x = nx; x < nx + SNATCH_NECK_W; x += P) {
-      ctx.fillStyle = scale(x / P, y / P);
-      ctx.fillRect(x, y, P, P);
+  // The neck, row by row up the curve, the crest down its back.
+  for (let y = neckTop; y < surface + P; y += P) {
+    const x0 = nxAt(y);
+    for (let c = 0; c < neckC; c++)
+      cell(x0 + c * P, y, c === 0 || c === neckC - 1 ? EDGE : ((c + y / P) % 3 ? HIDE : LATTICE));
+    if ((y / P) % 2 === 0) cell(x0 + neckC * P, y, SNATCH_CREST[(y / P) % 4 ? 0 : 1]);
+  }
+  // The head: a snout reaching toward the plank, the jaws hinged behind the
+  // eye, each half pushed off the mouth's line by the gap, teeth on their edges.
+  const hx = nxAt(neckTop) + SNATCH_NECK_W - SNATCH_HEAD_W;
+  const gapAt = c => (c < SNATCH_HINGE ? Math.round(open * SNATCH_GAPE * (1 - c / SNATCH_HINGE)) : 0);
+  for (let c = 0; c < cols; c++) {
+    const half = Math.round(2 + (c / (cols - 1)) * (mid - 2)), gap = gapAt(c);
+    for (let r = -half; r <= half; r++) {
+      if (open > 0 && r === 0 && c < SNATCH_HINGE) continue;
+      const shift = r < 0 ? -gap : r > 0 ? gap : 0;
+      let tone = Math.abs(r) === half ? EDGE : r === -half + 1 ? BROW : ((c + r) % 3 ? HIDE : LATTICE);
+      if (open > 0.2 && c < SNATCH_HINGE - 1 && c % 2 === 0 && Math.abs(r) === 1) tone = '#fff';
+      if (!open && r === 0 && c < 6) tone = EDGE;
+      cell(hx + c * P, hy + (mid + r + shift) * P, tone);
+    }
+    if (c > 5 && c % 2 === 0) {
+      const tall = c % 4 ? 2 : 3;
+      for (let j = 1; j <= tall; j++) cell(hx + c * P, hy + (mid - half - gap - j) * P, SNATCH_CREST[c % 4 ? 0 : 1]);
     }
   }
-  // The jaws: a wedge open at the snout, running back into the head, shut
-  // to a line round him once it has him.
-  const open = sn.carried ? 0.5 : 2.5, depth = cols * 0.55;
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (c < depth && Math.abs(r - mid) < open * (1 - c / depth) + 0.5) continue;
-      if ((r === 0 || r === rows - 1) && (c === 0 || c === cols - 1)) continue;   // rounded
-      ctx.fillStyle = scale(c, r);
-      ctx.fillRect(hx + c * P, hy + r * P, P, P);
-    }
-  }
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(hx + Math.round(cols * 0.62) * P, hy + P * 2, P, P);          // the eye
-  if (!sn.carried) {
-    ctx.fillRect(hx + P, hy + (mid - 2) * P, P, P);                          // and its fangs
-    ctx.fillRect(hx + P, hy + (mid + 2) * P, P, P);
-  }
+  const eyeC = Math.round(cols * 0.62);
+  cell(hx + eyeC * P, hy + (mid - 2 - gapAt(eyeC)) * P, '#fff');
   if (sn.carried) drawBody(hx - WORKER / 2, hy + mid * P + P / 2 - WORKER / 2);
   ctx.restore();
   // the surface broken either side of the neck
   ctx.fillStyle = '#fff';
-  ctx.fillRect(nx - P * 2, surface, P, P);
-  ctx.fillRect(nx + SNATCH_NECK_W + P, surface, P, P);
+  ctx.fillRect(baseX - P * 2, surface, P, P);
+  ctx.fillRect(baseX + SNATCH_NECK_W + P, surface, P, P);
   ctx.fillStyle = '#000';
 }

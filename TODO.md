@@ -1,5 +1,75 @@
 # Still to do
 
+## Three builds: itch, Steam, and the Steam demo -- DESIGNED, AWAITING SIGN-OFF (2026-10-10)
+
+"Three builds" in DESIGN.md: our cloud on itch, Steam Cloud through the
+Steamworks SDK on Steam, a demo build. Blocked on the owner's three calls at
+the end of the section. No code yet.
+
+## The toast over a tall settlement -- OPEN (2026-10-09)
+
+The browser group "a notice stands clear of a building that reaches into the
+sky" (src/selftest/touch.js) fails: the card is 400px wide in an 800px window
+and `seatToast` (toast.js) finds no room to either side of the house, so it
+stays over it. Not yet known whether the spacing pass, the cores going (a
+different first notice) or neither changed it; `seatToast` also still
+assumes the card's top is 12px where the stylesheet now says `--edge`.
+
+## The barriers are the gates; cores go -- BUILT (2026-10-09)
+
+"The barriers are the gates; cores go" in DESIGN.md.
+
+## The serpent hardens against its strongest foes -- BUILT (2026-10-07)
+
+"The serpent hardens against its strongest foes" in DESIGN.md. Open:
+- **The barrier's flare sits under where the charge hit the hide**: the
+  Sapper's charge still flies to the hide, not to the barrier under it.
+- **A fang's station's first four rungs ask 500k dust each**
+  (`FANG_RUNG_DUST`, 2026-10-07), and the depths measured again on it:
+  5970 / 5070 / 5560 / 5670 / 9210. Unforced, four parties free him in 71
+  to 94 minutes; of their twenty phases fifteen run 12 to 25 minutes. Left:
+  a party whose first fighter reached rung 7 in a long first phase breaks
+  the second in 3 minutes (its depth is under the first's, since the
+  second resists that fighter), and one party's last two run 28 and 23.
+
+## A fifth phase: the constrict -- BUILT (2026-10-04)
+
+"A fifth phase: the constrict" in DESIGN.md. Open:
+- **The badge's three hover lines** are blank, waiting on the owner's words
+  (`STATUS_SAYS.orb`).
+- **Nobody has played it.** Depth 9,000 and the orb's 15% are the model's.
+
+## The serpent heals whole: a phase is a window -- BUILT (2026-10-04)
+
+"The serpent heals whole: a phase is a window" in DESIGN.md. Open:
+- **Nobody has played it.** Depths 4300 / 9400 / 6700 / 5100 are deep-pace's
+  for a four-fighter party; tune them in play.
+- **The driven runs** (`speedrun.mjs --fight --hand 2`, 2026-10-07, yard
+  buying off). The rungs' dust climbs gently now (100k to 2.5M, the yard
+  banking about 145k a minute), and the depths are the median party's best
+  window 17.5 minutes into each phase (`--paced 17.5`, eight parties, the
+  strongest and weakest dropped). Unforced, four parties all free him about
+  71 minutes after the portal; the Mage-first party's phases run 15 / 14 /
+  14 / 17 / 12 minutes, but a phase still falls in 2 to 4 minutes when the
+  next station's first cheap rungs land just short of its depth, and the
+  cloak's phase then runs 28 to 38.
+- **The meal scenes** commit their creature and run on; the shot no longer
+  pins the moment once it has turned.
+
+## The story's objectives -- BUILT (2026-09-30)
+
+"The story's objectives" in DESIGN.md. Open: nobody has read the line
+through a whole game.
+
+## The serpent eats to heal -- BUILT (2026-09-30)
+
+"The serpent eats to heal" in DESIGN.md; mocks `docs/mocks/heal-fish-2026-09-30.html`
+and `docs/mocks/heal-bestiary-2026-09-30.html`. Meals 6-12 s apart, chosen
+fresh; scenes `meal-swim`, `meal-bite`, `meal-swallow`, `meal-land`. Open:
+- **Nobody has watched it in play.** The jaws' gape and the swallow's swell
+  are small at the game's scale; the creatures are the mock's, not retouched.
+- **The break can be gambled** to land just before a meal, a lump early.
+
 ## Cloud saves -- BUILT AND ON, NOT YET RELEASED (2026-09-28)
 
 Built as `docs/wave-cloud.md`; "Cloud saves" in DESIGN.md. The worker is
@@ -12,6 +82,44 @@ Open:
 - **The `behind` card and *take it* / *keep this one*** have node checks
   but no browser check and have never been clicked by hand.
 
+## Resists: magic in the ward, physical in the split -- BUILT (2026-09-29)
+
+"Resists: magic in the ward, physical in the split, both in the fading" in
+DESIGN.md. Open: nobody has watched the fading switch in play (the plates
+flicker in `RESIST_WARN_S` before it).
+
+## A phase has a mechanic and a class answers it -- BUILT, TUNING OPEN (2026-09-28)
+
+"A phase has a mechanic and a class answers it" in DESIGN.md. The surge,
+the lash and the sink, each warned and answered. Open:
+- **Nobody has watched a whole turn in play.** Scenes `phase-surge`,
+  `phase-surging`, `phase-taut`, `phase-lash`, `phase-sink`; the periods are
+  on the dev panel.
+- **The answers are capstones**, so the warded phase's surge is mostly
+  unanswered at the pace the model plays. A rung-4 answer, or a later
+  surge, if that reads as unfair.
+- **The lash's bump reads as a dip** at the belly's girth; a deeper
+  `LASH_H` if it wants to read as a whip.
+
+## The deep is paced by its purse -- BUILT, TUNING OPEN (2026-09-28)
+
+"The deep is paced by its purse" in DESIGN.md; the model is
+`tools/node/deep-pace.mjs`. Heals 8 / 86 / 176 / 238, depths 32k / 73k /
+191k / 350k, the shed cap gone, gatherers taking the nearest load. Open:
+- **Nobody has played it.** The hour is the model's: 4 scales a second
+  banked, two clicks a second, and each class's move worth a guessed
+  multiple of its hit (`MOVE` in the tool). Bills in dust, ore and sparks,
+  build time and the fang's carry are left out.
+- **The shed is the log of the damage** (`SCALE_PER_DECADE`, 2026-09-28):
+  a full party sheds 12 to 16 a second against the gatherers' 4 to 5, down
+  from about 500. Nobody has watched a rung-8 party's floor with it.
+- **The banked rate is the load-bearing guess.** Four gatherers bank about
+  5 a second off a thick floor, falling to 3; 3 a second makes it 71
+  minutes, 5 makes it 52.
+- **A party halved in one stage walls there.** Sword, Assassin and Sapper
+  all take half in the split; that party reaches the fourth stage at 50
+  minutes and frees him at 70.
+
 ## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
 
 Built as `docs/wave-serpent.md`; "The serpent" at the end of DESIGN.md.
@@ -20,15 +128,8 @@ Open:
   src/config/deep.js; a dev build and the node yard still play it. Turning
   it on is that line plus moving CHANGELOG.md's "Held back" lines under
   Unreleased.
-- **The heals and depths are far too kind.** Measured with every door open:
-  bare ladders and half the deep's caps free him in ~16 min, full ladders
-  and full caps in 20 s. In play the doors gate each stage, so the length
-  is mostly the scales a door and a rung cost; tune `SERPENT_HEAL`,
-  `SERPENT_WOUND`, the doors' bills and `SCALE_PER_DMG` together against
-  the first half's length (the dev panel has the heals and a depth scale).
 - **Glyphs.** The fifteen deep rows and the hop's five arrows borrow
   drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
-- **The sheet before the snatch** still says it is the end of the story.
 - **The second half plays shallow** (the owner, 2026-09-26): answered by
   "Fighters in slots" (below).
 
@@ -38,8 +139,7 @@ The party is on main (docs/wave-party.md), with the branch at rung 4
 (DESIGN.md, "A fighter branches at rung 4"): a base unit a station forking
 into its two classes, the station picked on an empty lot's board. Open:
 whether rung 4's jump (a whole class at once) is too big a step in the
-ladder book; `guard` in deep/classes.js no longer has a caller in play
-(every built station fights), kept for a fighter with no station.
+ladder book.
 
 ## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 

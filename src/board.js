@@ -5,6 +5,7 @@ import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SL
          SHEET_MS, SCALE_MARK } from './config.js';
 import { fmt } from './words.js';
 import { S, bench } from './state.js';
+import { seatObjective } from './objline.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
 import { crewRows } from './crewboard.js';
 import { UPGRADES, lodgers, markSectionsSeen, canPay, forSale, building } from './upgrades.js';
@@ -228,7 +229,11 @@ function place(el, at) {
   const floorY = inDeep(mid, at.y) ? deepFloor() : S.groundY;
   const strip = (floorY + P * 11 - S.camY) * S.zoom;         // where the counters begin
   const lowest = Math.max(GAP, S.H - strip);
-  const highest = S.H - h - GAP;
+  // and under the notice card while one is up at the top of the glass, or a
+  // tall board's title bar is under the card -- when the whole board fits
+  // under it; a board taller than that stays on the glass, the card over it
+  const under = cardFoot() + GAP;
+  const highest = S.H - h - (under + h + GAP <= S.H ? Math.max(GAP, under) : GAP);
   const bottom = Math.round(highest < lowest ? highest      // a window too short for both
                                              : Math.max(lowest, Math.min(stands, highest)));
 
@@ -243,6 +248,11 @@ function place(el, at) {
 }
 
 const GAP = 4;                             // never flush against the edge
+// The foot of the notice card at the top of the glass (toast.js), 0 while it is
+// down. Read off the element: toast.js imports this file, and the card's own
+// class is the fact of it being up.
+const cardEl = document.getElementById('toast');
+const cardFoot = () => (cardEl && cardEl.classList.contains('up') ? cardEl.getBoundingClientRect().bottom : 0);
 
 // --- the sheet from the bottom ------------------------------------------------------
 // On a phone a board is a sheet (sheet.js; DESIGN.md, "Boards as bottom
@@ -532,6 +542,9 @@ export function showPanel(want, now = false) {
 // What actually moves the board, once it is settled where it is going.
 function settle(want) {
   if (want === at) return;
+  // The wizards' board looked at after the snatch moves the story's line on
+  // (objectives.js): it is the way down.
+  if (want === 'tower' && S.snatched) S.askedWizards = true;
   shutOpts();                  // and a board swapped for another takes its lists with it
   const wasAt = at;
   at = want;
@@ -620,7 +633,6 @@ function fill(which) {
 // met.
 const PURSE = [
   ['dust', () => true, () => S.stored],
-  ['core', () => S.seenCore, () => S.cores],
   ['shard', () => S.seenShard, () => S.shards],
   ['spore', () => S.seenSpore, () => S.spores],
   ['spark', () => S.seenSpark, () => S.sparks],
@@ -711,5 +723,6 @@ export function hud() {
   // row after seating could hang off the top of a short window.
   placeBoard();
   seatCall();
+  seatObjective(performance.now());
 }
 

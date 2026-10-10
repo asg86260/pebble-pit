@@ -3,7 +3,7 @@
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
-import { TIER_OWN, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
+import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 
 // The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -82,7 +82,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__give(999999);
-    window.__grant({ cores: 9, shards: 900, spores: 900, sparks: 999 });
+    window.__grant({ shards: 900, spores: 900, sparks: 999 });
     window.__crew(4, 3, 2, 2);
     // Every station standing: a card that is not on a board cannot be
     // measured.
@@ -136,7 +136,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__give(999999);
-    window.__grant({ cores: 9, shards: 900, spores: 900 });
+    window.__grant({ shards: 900, spores: 900 });
     window.__crew(4, 3, 2, 2);
     window.__air({ janitors: 1 });
     // The shack stands, so its door (the one card under this purse with a
@@ -273,14 +273,13 @@ export const TESTS = [
   ['a bill you can half afford says which half', async () => {
     newRun();
     await settle();
-    // The farm's door is the two-coin row on an early bench (a core and
-    // dust), offered once the props have fallen and a core has been seen.
-    // Dust enough, the core not.
+    // A hand ladder past its first band asks dust and crops: the grounds
+    // standing, so the crops are a bill rather than a wait. Dust enough, the
+    // crops not.
     window.__give(3000);
-    const St = (await import('/src/state.js')).S;
-    St.shieldsDone = ['props'];
-    St.seenCore = true;
-    window.__grant({ cores: 0, shards: 2, spores: 0 });
+    window.__invest();
+    window.__levels({ carryLevel: TIER_BAND });
+    window.__grant({ shards: 2 });
     window.__crew(2, 2);
     run(20);
     window.__board('bench');
@@ -320,7 +319,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__give(999999);
-    window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+    window.__grant({ shards: 9000, spores: 9000 });
     window.__answered('props', 'net', 'arch');  // the shields that open the doors below
     // The ground first: the tower is the end of the chain, so its row does not
     // appear until the plots, the cut and the lab are all standing.
@@ -469,7 +468,6 @@ export const TESTS = [
     newRun();
     await settle();
     window.__give(999999);
-    window.__grant({ cores: 9 });
     window.__crew(2, 2, 2, 0);
     run(20);
     const s0 = state();
@@ -506,7 +504,6 @@ export const TESTS = [
     newRun();
     await settle();
     window.__give(999999);
-    window.__grant({ cores: 9 });
     window.__crew(3, 2, 1, 1);
     window.__shack();
     run(20);
@@ -546,7 +543,7 @@ export const TESTS = [
     // that many iterations (a quarter of an hour).
     window.__give(999999);
     // Every coin: the last rung of each is the spark's.
-    window.__grant({ cores: 9, shards: 9000, spores: 9000, sparks: 9000 });
+    window.__grant({ shards: 9000, spores: 9000, sparks: 9000 });
     window.__invest();                        // the grounds stand: rungs past the first are priced in their coins
     run(20);
     // Two ladders to their tops, each one card pressed past its length. The
@@ -785,7 +782,7 @@ export const TESTS = [
     await settle();
     // enough of everything that every row on every board is showing
     window.__crew(4, 3);
-    window.__grant({ cores: 6, shards: 4000, spores: 4000, sparks: 400 });
+    window.__grant({ shards: 4000, spores: 4000, sparks: 400 });
     window.__invest();
     window.__shack();
     window.__kit({ learned: true });
@@ -927,7 +924,7 @@ export const TESTS = [
   ['a board taller than the window scrolls to its last row', async () => {
     newRun();
     window.__crew(3, 3, 5, 7);
-    window.__grant({ sparks: 9999, shards: 9999, spores: 9999, cores: 9, dust: 90000 });
+    window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 90000 });
     window.__board('bench');
     await settle();
     const sheet = board().closest('.sheet');
@@ -957,7 +954,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(0, 1, 0, 2);
-    window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+    window.__grant({ dust: 8000, spores: 3000, shards: 300 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
     // `anotherpot` is the row watched for movement, and it is earned: five
@@ -1035,7 +1032,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(0, 1, 0, 2);
-    window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+    window.__grant({ dust: 8000, spores: 3000, shards: 300 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
     window.__board('apothecary');
@@ -1139,7 +1136,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(1, 4, 0, 2);
-    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 200 });
+    window.__grant({ dust: 60000, spores: 9000, shards: 3000, sparks: 200 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
     // The second pot is an earned row (five batches); without them the
@@ -1295,7 +1292,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(2, 3, 0, 2);
-    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000, sparks: 200 });
+    window.__grant({ dust: 60000, spores: 9000, shards: 3000, sparks: 200 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
     window.__brews(5);
@@ -1367,7 +1364,7 @@ export const TESTS = [
   // off the page, because nothing in the yard knows it.
   ['a board holds its size while a build is running', async () => {
     window.__crew(3, 2, 0, 0, 2);
-    window.__grant({ shards: 60, dust: 20000, cores: 6 });
+    window.__grant({ shards: 60, dust: 20000 });
     (await import('/src/state.js')).S.seenMess = true;
     window.__board('bench');
     await settle(1);
@@ -1468,7 +1465,7 @@ export const TESTS = [
     newRun();
     window.__crew(3, 3, 5, 7);
     window.__machineGates();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 9000000 });
     window.__board('quarry');
     await settle(1);
     const tile = () => document.querySelector('#panel .rows.shelves [data-key="jaw"]');
@@ -1559,7 +1556,7 @@ export const TESTS = [
     newRun();
     window.__crew(3, 3, 5, 7);
     window.__machineGates();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 9000000 });
     window.__board('quarry');
     await settle(1);
     const tile = k => document.querySelector(`#panel .rows.shelves [data-key="${k}"]`);
@@ -1659,7 +1656,7 @@ export const TESTS = [
     newRun();
     window.__crew(3, 3, 5, 7);
     window.__fullSites();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 9000000 });
     state().shieldsDone = ['props', 'net', 'arch'];
     window.__kit({ blasters: 1 });
     window.__board('quarry');
@@ -1715,7 +1712,7 @@ export const TESTS = [
     newRun();
     window.__crew(3, 3, 5, 7);
     window.__fullSites();
-    window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9, dust: 9000000 });
+    window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 9000000 });
     state().shieldsDone = ['props', 'net', 'arch'];
     window.__levels({ carryLevel: 0, speedLevel: 2, critChanceLevel: 4, critMultLevel: 6, haulCarryLevel: 2, haulPaceLevel: 4 });
     window.__board('bench');
@@ -1746,7 +1743,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__give(999999);
-    window.__grant({ cores: 9, shards: 900, spores: 900 });
+    window.__grant({ shards: 900, spores: 900 });
     // The farm stands and its crop has been seen: the apothecary's door is on
     // the bench, and "build the apothecary" is wider than a slot.
     window.__crew(3, 3, 5, 7);
@@ -1959,7 +1956,7 @@ export const TESTS = [
       && c.bottom - s.bottom <= 2 && s.width >= c.width - 4;
     const before = state().stored;
     if (half('refund')) press(half('refund'));
-    await settle(0.1);
+    await settle(3);                            // the bill is tossed to the hole and banked as it lands
     const back = state().stored - before;
     const one = copies();
     const after = shows(half('refund')) ? half('refund').textContent : '';
@@ -1971,7 +1968,7 @@ export const TESTS = [
       ok(bodyQuiet, 'a press on the card itself buys nothing while the strip is up'),
       ok(two === 2, 'the other half of the strip queues a second copy', `${two}`),
       ok(pips === 2, 'and both copies paid for wear a dot on the pips', `${pips}`),
-      ok(/refund ×1/i.test(says), 'the refund half counts the copy waiting', says),
+      ok(/cancel ×1/i.test(says), 'the cancel half counts the copy waiting', says),
       ok(inFoot, 'and the strip stands inside the card, along its foot',
          c && s ? `card ${c.left},${c.bottom} ${c.width} strip ${s.left},${s.bottom} ${s.width}` : 'no strip'),
       ok(one === 1 && back > 0, 'the refund half hands the waiting copy back and buys nothing', `${one} left, ${back} back`),

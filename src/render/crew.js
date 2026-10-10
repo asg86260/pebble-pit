@@ -4,13 +4,12 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
 import { garage, hasGarage, doorX, inGarage } from '../crew/lifts.js';
 import { underground } from '../quarry.js';
-import { drawCoreGlow } from '../render/cores.js';
 import { hash } from './flicker.js';
 import { shadeOf } from '../grid.js';
 import { drawRoster, kitStands } from '../roster.js';
@@ -21,7 +20,7 @@ import { deepTop } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { drawRunSwitch } from './machines.js';
-import { drawCircle, drawMark } from './marks.js';
+import { drawMark } from './marks.js';
 import { withRise } from './rise.js';
 import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
@@ -231,13 +230,13 @@ export function drawKitCounts(screenAt) {
 // conversation. Everything stands a clear cell above the head so it never
 // touches the load a worker is carrying.
 
-function drawSay(w) {
+function drawSay(w, say) {
   const x = Math.round(w.x) + WORKER / 2;
   const top = Math.round(w.y) - P * 2;
   ctx.fillStyle = '#000';
 
   // the same heart the opening uses: the same thing said, so the same shape
-  if (w.say.mark === 'heart') {
+  if (say.mark === 'heart') {
     for (let r = 0; r < HEART.length; r++)
       for (let c = 0; c < 5; c++)
         if (HEART[r][c] === '1')
@@ -245,8 +244,8 @@ function drawSay(w) {
     return;
   }
 
-  if (w.say.mark === 'dots') {
-    const n = w.say.n || 2;
+  if (say.mark === 'dots') {
+    const n = say.n || 2;
     for (let i = 0; i < n; i++)
       ctx.fillRect(Math.round(x - (n * P) / 2 + i * P), top - P, P - 1, P - 1);
     return;
@@ -254,7 +253,7 @@ function drawSay(w) {
 
   // Stars, two cells going round the head rather than a fixed pair, so a body
   // seeing them is plainly still spinning.
-  if (w.say.mark === 'dizzy') {
+  if (say.mark === 'dizzy') {
     const t = now() / 160;
     for (const off of [0, Math.PI]) {
       const a = t + off;
@@ -264,7 +263,7 @@ function drawSay(w) {
     return;
   }
 
-  if (w.say.mark === 'loo') {
+  if (say.mark === 'loo') {
     ctx.fillStyle = MUCK_TONE;
     ctx.fillRect(Math.round(x - P * 1.5), top - P, P * 3, P);
     ctx.fillRect(Math.round(x - P * 0.5), top - P * 2, P, P);
@@ -274,7 +273,7 @@ function drawSay(w) {
 
   // Stink risers, the comic-strip smell mark, off the patch the body has just
   // refused to step in. They alternate their middle cell so the pair wafts.
-  if (w.say.mark === 'yuck') {
+  if (say.mark === 'yuck') {
     const wave = Math.floor(now() / 240) % 2 ? P : -P;
     for (const sx of [-P, P]) {
       const cx = Math.round(x + sx - P / 2);
@@ -285,23 +284,7 @@ function drawSay(w) {
     return;
   }
 
-  // A body held still under the cursor asks what you want of it. Drawn in
-  // half-cell strokes (still whole pixels) because the smallest legible question
-  // mark on the P grid stands over the head like a sign.
-  if (w.say.mark === '?') {
-    const u = P / 2;
-    const x0 = Math.round(x - P);
-    const y0 = top - u * 7;
-    ctx.fillRect(x0 + u, y0, u * 2, u);          // the top of the hook
-    ctx.fillRect(x0, y0 + u, u, u);              // its left shoulder
-    ctx.fillRect(x0 + u * 3, y0 + u, u, u * 2);  // and its right side, coming down
-    ctx.fillRect(x0 + u * 2, y0 + u * 3, u, u);  // the curve back in
-    ctx.fillRect(x0 + u, y0 + u * 4, u, u);      // the stem it lands on
-    ctx.fillRect(x0 + u, y0 + u * 6, u, u);      // and the dot, one gap under
-    return;
-  }
-
-  if (w.say.mark === 'note') {
+  if (say.mark === 'note') {
     // a head and a stem: the smallest thing that is unmistakably a note
     ctx.fillRect(Math.round(x - P), top - P, P, P);
     ctx.fillRect(Math.round(x), top - P * 2, P - 2, P + 1);
@@ -333,10 +316,16 @@ export function drawPointed() {
   }
 }
 
+// A body shaken loose -- thrown off the coil by the lash, or dropped by the
+// pointer -- sees stars all the way down, not only once it lands: the fall
+// leaves it dizzy (`dizzyFor`, crew/falls.js) and the stars are that.
+const FALLING_DIZZY = { mark: 'dizzy' };
+
 export function drawSays() {
   for (const w of S.workers) {
-    if (!w.say || underground(w) || atHome(w)) continue;
-    drawSay(w);
+    const say = w.say || (w.falling && w.dizzyFor ? FALLING_DIZZY : null);
+    if (!say || underground(w) || atHome(w)) continue;
+    drawSay(w, say);
   }
   ctx.fillStyle = '#000';
 }
@@ -364,9 +353,12 @@ function drawSaying(x, y, say) {
   }
 
   if (say.mark === 'bang') {
-    // a bar and a dot under it
-    ctx.fillRect(Math.round(mid - P / 2), top - P * 4, P, P * 3);
-    ctx.fillRect(Math.round(mid - P / 2), top, P, P);
+    // a bar and a dot under it; a call for help is several, a gap between
+    const n = say.n ?? 1, x0 = Math.round(mid - P / 2 - (n - 1) * P);
+    for (let i = 0; i < n; i++) {
+      ctx.fillRect(x0 + i * P * 2, top - P * 4, P, P * 3);
+      ctx.fillRect(x0 + i * P * 2, top, P, P);
+    }
     return;
   }
 
@@ -469,7 +461,7 @@ const PLAIN = { lunge: 0 };
 const LEAN = 0.5;
 
 // The forklifts: the truck and nobody on it, its load on the forks four
-// abreast, a core riding on top of the load. Not crew, so not faded with them
+// abreast. Not crew, so not faded with them
 // (the crew switch in the corner is about people).
 export function drawForklifts() {
   for (const w of S.lifts || []) {
@@ -484,12 +476,6 @@ export function drawForklifts() {
                lift.forkTop - P * (Math.floor(i / LIFT_ABREAST) + 1) + P / 2);
     }
     ctx.fillStyle = '#000';
-    if (w.hasCore) {
-      const cx = lift.forkX + LIFT_FORK / 2;
-      const cy = lift.forkTop - P * (Math.ceil(n / LIFT_ABREAST) + 2);
-      drawCoreGlow(cx, cy);
-      drawCircle(cx, cy, P * 1.2);
-    }
   }
 }
 
@@ -506,6 +492,34 @@ function underSurface(w) {
   return w.y + WORKER > line ? line : null;
 }
 
+// Each body ringed while the right button looks at the crew, so it stands out
+// of the veil behind it (`drawSightVeil`): a SIGHT_RING line a SIGHT_GAP clear
+// of its own edge.
+function ring(w) {
+  ctx.fillStyle = '#000';
+  const x = Math.round(w.x) - SIGHT_GAP - SIGHT_RING, y = Math.round(w.y) - SIGHT_GAP - SIGHT_RING;
+  const s = WORKER + (SIGHT_GAP + SIGHT_RING) * 2;
+  ctx.fillRect(x, y, s, SIGHT_RING);
+  ctx.fillRect(x, y + s - SIGHT_RING, s, SIGHT_RING);
+  ctx.fillRect(x, y, SIGHT_RING, s);
+  ctx.fillRect(x + s - SIGHT_RING, y, SIGHT_RING, s);
+}
+
+// Holding the right button: what is behind the crew's plane veiled pale, in
+// held steps as it comes in (config SIGHT_*). Over the yard's view, before
+// the crew are drawn.
+export function drawSightVeil() {
+  if (S.crewSight == null) return;
+  const k = Math.min(1, (now() - S.crewSight) / SIGHT_IN_MS);
+  const step = Math.ceil(k * SIGHT_STEPS) / SIGHT_STEPS;
+  if (!(step > 0)) return;
+  ctx.save();
+  ctx.globalAlpha = SIGHT_VEIL * step;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(S.camX - P, S.camY - P, S.viewW + P * 2, S.viewH + P * 2);
+  ctx.restore();
+}
+
 export function drawWorkers() {
   const t0 = now();
   for (const w of S.workers) {
@@ -514,6 +528,7 @@ export function drawWorkers() {
     // reason to skip it here. A body in a balloon's basket is drawn by the
     // balloon, wherever in the sky it is (render/balloon.js).
     if (w.lifted || underground(w) || atHome(w) || inBasket(w) || inTheDeep(w)) continue;
+    if (S.crewSight != null && underSurface(w) == null) ring(w);
     const sunk = underSurface(w);
     if (sunk != null) {
       if (w.y >= sunk) continue;
@@ -589,7 +604,7 @@ function drawWorker(w, t0) {
       ctx.fillStyle = '#000';
     }
 
-    if (!w.carry && !w.hasCore) return;
+    if (!w.carry) return;
 
     // What it brought up, over its head, as the thing itself.
     if (look.load === 'shard') { drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2); return; }
@@ -606,15 +621,6 @@ function drawWorker(w, t0) {
                top - P * (Math.floor(i / abreast) + 1) + P / 2);
     }
     ctx.fillStyle = '#000';
-    if (w.hasCore) {
-      const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
-      const cx = x + WORKER / 2, cy = y - P * (stack + 2);
-      // A carried core gives off the same waves one on the ground does. Drawn
-      // straight rather than through `drawCoreAt` because the disc riding a
-      // body is a different size from the one on the ground.
-      drawCoreGlow(cx, cy);
-      drawCircle(cx, cy, P * 1.2);
-    }
   }
 }
 

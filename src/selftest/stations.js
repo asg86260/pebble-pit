@@ -10,7 +10,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(2, 2);
-    window.__grant({ cores: 30, shards: 900, spores: 900 });
+    window.__grant({ shards: 900, spores: 900 });
     window.__answered('props', 'net');          // the shields that open the two doors
     window.__give(500000);
     buildShopFromTest();
@@ -161,7 +161,7 @@ export const TESTS = [
     // yard, so the rule is checked against the game rather than against a
     // guess: the purse shows exactly the currencies you have seen, in order.
     const s0 = state();
-    const want = ['dust', s0.seenCore && 'core', s0.seenShard && 'shard',
+    const want = ['dust', s0.seenShard && 'shard',
                   s0.seenSpore && 'spore'].filter(Boolean);
     const early = marks();
     window.__grant({ shards: 5, spores: 2 });

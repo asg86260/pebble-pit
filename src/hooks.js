@@ -17,7 +17,6 @@ import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
 import { SKY, DROPS, fillSky, forceStrike, pinHeft, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
-import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS, WORKER } from './config.js';
 import { seatRift } from './rift.js';
@@ -127,7 +126,7 @@ export const pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, b
 
 // The hut is settled rather than left to scoot: it walks out one rock at a
 // time, and a jump is many rocks in one frame.
-export const jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); settleShack(); };
+export const jump = n => { S.boulderNo = n; makeBoulder(); settleShack(); };
 
 export const preview = n => {
   const keep = S.boulderNo;
@@ -140,8 +139,6 @@ export const preview = n => {
 };
 
 export const next = () => { clearBoulder(); S.chips = []; };
-
-export const drop = () => { dropCore(); };
 
 // A flock now. Clears whatever was still up there first, so a check gets that
 // flock and not the leavings of the last one.
@@ -181,7 +178,6 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   if (f > 0) S.farmOpen = true;
   resite();
   rebalance();                                      // and the rest carry dust
-  if (S.crew) S.seenCore = true;
   syncWorkers(); buildShop();
 };
 
@@ -219,7 +215,6 @@ export const openMeteor = () => {
   S.towerOpen = true;
   S.meteorOpen = true;
   S.skyShown = true;
-  S.seenCore = true;
   makeMeteor();
   buildShop();
 };
@@ -321,12 +316,17 @@ export const setVerify = (on = true) => { verifying = !!on; resetVerify(); retur
 // turned by hand, so a check gets the same answer every time. `hz` is the
 // rate to pretend the machine is drawing at; thirty and a hundred and twenty
 // should do the same amount of yard per second, and this is how to ask.
+// A scene's moment held against the frames a caller runs after it (`__holdShot`):
+// the shot tool runs a second of the yard after every scene, and a moment
+// shorter than that is gone before the picture is taken. Wall clock, so it
+// lets go on its own.
+let heldUntil = 0;
 export const fast = (seconds = 1, hz = 60) => {
   const frames = Math.max(1, Math.round(seconds * hz));
   const ms = 1000 / hz;
   for (let i = 0; i < frames; i++) {
     // The same shape as a real frame, held included.
-    if (S.paused) continue;
+    if (S.paused || performance.now() < heldUntil) continue;
     advance(ms);
     step();
     // Throws on the frame a rule breaks, so the report names the frame.
@@ -483,7 +483,6 @@ export const invest = () => {
 export const grant = (o = {}) => {              // shards and spores, for looking at things
   if (o.shards) { S.shards += o.shards; S.seenShard = true; }
   if (o.spores) { S.spores += o.spores; S.seenSpore = true; }
-  if (o.cores) { S.cores += o.cores; S.seenCore = true; }
   if (o.sparks) { S.sparks += o.sparks; S.seenSpark = true; }
   // Scales lie on the deep's floor, not in the hole, and are counted by the
   // bed: laid there by the serpent's own handle.
@@ -491,14 +490,14 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   // Every counter is a *pile*, not a number: the coin you own is the coin
   // lying in the hole, so the cells move with the counter. `seedPitCores`
   // lays down what the hole will take and sends the rest through the rift.
-  if (o.shards || o.spores || o.cores || o.sparks) seedPitCores();
+  if (o.shards || o.spores || o.sparks) seedPitCores();
   // Dust through `give`, for the same reason, and whatever the hole will not
   // take through the rift, where it goes in play: a check about an endless
   // ladder needs more dust than a hole holds.
   if (o.dust) {
     // Only as many grains as the hole could take are offered: `give` banks
     // one at a time, so a million is a million tries on a full hole. Room in
-    // the *pile*, not the dust account, since a granted core takes a cell.
+    // the *pile*, not the dust account, since a granted find takes a cell.
     // The pile's own answer is the last word (the count credits a few cells
     // the search cannot fill), and a refusal tears the rift for real, with
     // the cutscene over every scene on a rich yard; a grant is a handout, so
@@ -928,10 +927,14 @@ export const waysNow = () => {
 // suites spread; a hook in one suite and not the other fails a check in a way
 // that has nothing to do with what it is checking.
 export const HANDLES = {
+  __holdShot: (ms = 4000) => { heldUntil = performance.now() + ms; },   // `fast` above
+  // The page's own frames held off the yard, so a capture steps it with
+  // `__fast` alone and every frame is the time it asked for.
+  __still: (on = true) => { S.still = !!on; },
   // a window (modal.js) by kind, or null to close it
   __window: kind => showWindow(kind),
   __clearFloor: clearFloor, __pile: pile, __jump: jump,
-  __preview: preview, __next: next, __drop: drop,
+  __preview: preview, __next: next,
   __birds: birds, __crew: crew, __kit: kit,
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
@@ -943,7 +946,7 @@ export const HANDLES = {
   // (crit.js).
   __crit: forceCrit,
   __toss: toss, __take: takeFromPile, __place: placeBody,
-  __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
+  __abandon: abandon, __reset: (...a) => { heldUntil = 0; return newGame(...a); }, __seed: seedGame, __reload: reload,
   __slot: switchSlot,
   __machine: machineSet, __fullSites: fullSites, __machineGates: machineGates,
   __swing: swing, __cold: coldReload,
@@ -1082,20 +1085,36 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 // that is not about getting there, and the rule that the stage never goes
 // back is told the setup is a new starting point.
 import { layScales, looseScales } from './deep/scales.js';
-import { healNow, woundK } from './deep/serpent.js';
+import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
 import { forgetSerpent } from './verify.js';
-import { FANG_BREAKS } from './config.js';
+import { resetMechanic, settleResist, part as phasePart } from './deep/phases.js';
+import { FANG_BREAKS, SERPENT_PHASES } from './config.js';
 HANDLES.__serpent = ({ stage, wound } = {}) => {
   if (Number.isInteger(stage)) {
-    S.serpentStage = Math.max(0, Math.min(4, stage));
-    S.serpentFreed = S.serpentStage > 3;
+    S.serpentStage = Math.max(0, Math.min(SERPENT_PHASES, stage));
+    S.serpentFreed = S.serpentStage >= SERPENT_PHASES;
+    S.orb = null;
     // The breaks this stage says have happened have dropped their fangs: a
     // fight set back takes them back, and one set forward skipped them, so
     // the next break drops its own and not the ones before it.
     S.fangsDropped = Math.min(S.serpentStage, FANG_BREAKS);
     // and a fang still in the water from a break taken back goes with it.
     if (S.fangsLoose.length > S.fangsDropped) S.fangsLoose = S.fangsLoose.slice(0, S.fangsDropped);
+    resetMechanic();                    // a stage set opens calm, as a break's does
+    // and resists as a break into it would, from the party standing now;
+    // the stages after it choose again when they are reached
+    S.resistBy = Object.fromEntries(Object.entries(S.resistBy || {}).filter(([k]) => +k < S.serpentStage));
+    settleResist(S.serpentStage);
+    // A fight set back before the kill has not had it: the kill, his walk,
+    // the gathering again and their beats are forgotten, so the next fourth
+    // break plays all of it (snatch.js).
+    if (S.serpentStage < SERPENT_PHASES) {
+      S.freedAt = S.freedFrom = S.freedTo = S.reformAt = S.breakT = null;
+      S.beatsDone = S.beatsDone.filter(k => k !== 'freed' && k !== 'freedsheet');
+      if (S.beat.yard === 'freed') S.beat.yard = null;
+      if (S.beat.sheet === 'freedsheet') S.beat.sheet = null;
+    }
   }
   if (Number.isFinite(wound)) S.serpentWound = Math.max(0, wound);
   forgetSerpent();
@@ -1103,9 +1122,12 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
 };
 HANDLES.__scales = n => layScales(n);                 // crushed: a purse to spend
 HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for the gatherers
+HANDLES.__setScales = n => { S.scales = Math.max(0, Math.floor(n || 0)); return S.scales; };   // the crushed purse, set outright
 HANDLES.__deepState = () => ({
-  stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(), heal: healNow(),
+  stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(),
+  meal: { n: S.meal, t: S.mealT, i: S.mealI },
   freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
+  mech: { at: S.mechAt, skip: S.mechSkip, ...phasePart() },
   statuses: JSON.parse(JSON.stringify(S.statuses)),
   stations: S.stations.map(st => ({ ...st, paid: (st.paid || []).map(p => p.slice()) })),
   fangs: S.fangs, fangsDropped: S.fangsDropped, fangsLoose: S.fangsLoose.length,
@@ -1124,7 +1146,7 @@ import * as party from './deep/party.js';
 import { settle } from './crew/commute.js';
 import { deepPost } from './crew/deep.js';
 import { forceSerpent } from './snatch.js';
-import { feet as deepFeet } from './deep/arms.js';
+import { postY } from './deep/place.js';
 
 // The pit drowned and the snatch played, so the shaft is open and the altar
 // stands, with no beat owed: a deep job set up by a hook is not the story.
@@ -1153,6 +1175,9 @@ HANDLES.__snatch = (o = {}) => {
   S.buried = false;
   markDone('meet', 'part', 'rescue', 'ending');
   if (S.crew < 2) { S.crew = 2; rebalance(); syncWorkers(); }
+  // Played out for a setup, the snatch has no camera shot: a check reads a
+  // camera standing where the setup left it, not one easing back out.
+  if (o.played) markDone('snatchcam');
   if (o.played) for (let f = 0; f < 60 * 120 && !S.beatsDone.includes('snatch'); f++) fast(1 / 60);
   // A setup played past the snatch can go down: the portal is conjured with
   // it, unless the check is about the portal (`portal: false`).
@@ -1176,9 +1201,10 @@ HANDLES.__deepCrew = (o = {}) => {
 
 // --- wave party: STATE ---
 // A party stood up for the setup a check is not about (docs/wave-party.md):
-// `stations` in floor order, each `{ kind, cls, rung }`, on the slots named
-// in `slots` or the next free ones, and `fangs` held after. Each is built the
-// way the button builds one -- the pick, the work landed -- and seated from
+// `stations` in floor order, each `{ kind, cls, rung }` (`kind` null a
+// Recruit), on the slots named in `slots` or the next free ones, and `fangs`
+// held after. Each is built the way the button builds one -- the work
+// landed, the kind written as rung 1 would -- and seated from
 // the pods, the deep's crew grown by a resident a station so nobody comes off
 // the yard. The class and the rung are set, not bought: a check about the
 // rails buys them there, and a Reset of a hook's rungs refunds nothing.
@@ -1187,7 +1213,7 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
   if (S.stations.length + stations.length > FIGHT_STATIONS_MAX)
     throw new Error(`__party: ${S.stations.length + stations.length} stations, at most ${FIGHT_STATIONS_MAX}`);
   for (const o of stations)
-    if (!PAIRS[o.kind] || (o.cls != null && !PAIRS[o.kind].includes(o.cls)))
+    if ((o.kind != null && !PAIRS[o.kind]) || (o.cls != null && !PAIRS[o.kind]?.includes(o.cls)))
       throw new Error(`__party: no ${o.cls} at a ${o.kind}`);
   const short = stations.length - deepSpare();
   if (short > 0) { S.crew += short; S.deepCrew = (S.deepCrew || 0) + short; }
@@ -1197,13 +1223,16 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
     const had = S.stations.length;
     // The first is free and every one after takes a fang, as the button asks.
     if (had > 0) S.fangs++;
-    if (!party.raiseStation(o.kind)) throw new Error(`__party: the ${o.kind} could not be built`);
+    // `kind` null stands a Recruit, its first choice still to make.
+    if (!(o.kind == null ? party.buildStation() : party.raiseStation(o.kind)))
+      throw new Error(`__party: the ${o.kind ?? 'station'} could not be built`);
     const st = S.stations[had];
     finishWorks();
     if (slots && Number.isInteger(slots[i])) st.slot = slots[i];
     st.cls = o.cls ?? null;
-    // Below the fork a station has no class: its rungs are its base unit's.
-    st.rung = Math.max(0, Math.min(st.cls ? LADDER : FORK_RUNG - 1, o.rung | 0));
+    // Below the fork a station has no class: its rungs are its base unit's;
+    // a Recruit stands at rung 0.
+    st.rung = o.kind == null ? 0 : Math.max(0, Math.min(st.cls ? LADDER : FORK_RUNG - 1, o.rung | 0));
     if (st.cls && st.rung < FORK_RUNG) st.rung = FORK_RUNG;
   }
   S.fangs = Math.max(0, fangs | 0);
@@ -1217,7 +1246,7 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
     if (!w) continue;
     settle(w);
     w.x = deepPost(TYPE.FIGHTER, w);
-    w.y = deepFeet();
+    w.y = postY();
   }
   buildShop();
   return S.stations.map(st => ({ id: st.id, kind: st.kind, slot: st.slot, cls: st.cls, rung: st.rung,

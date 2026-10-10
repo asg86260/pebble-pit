@@ -13,7 +13,7 @@ import { JOB, TYPE } from '../jobs.js';
 // Somebody who could go on an errand right now. Not one off the ground: a
 // wizard aloft cannot be handed a walk, because `stepCommute` puts a body on
 // the ground line for the length of it, a four-hundred-pixel drop mid-frame.
-const canRun = o => !o.walking && !o.inside && !o.aloft && !o.carry && !o.hasCore;
+const canRun = o => !o.walking && !o.inside && !o.aloft && !o.carry;
 
 // Somebody on that job standing bare-headed, who could go and get one.
 const bareAt = job => S.workers.find(o => JOB_OF[o.type] === job && !o.trained && canRun(o));

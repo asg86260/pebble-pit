@@ -20,7 +20,6 @@ const played = () => runUntil(() => !state().letting && !state().pouring, 60);
 async function atTheCasino() {
   newRun();
   await settle();
-  window.__grant({ cores: 20 });
   window.__give(2000);
   window.__dig(23);
   window.__invest();

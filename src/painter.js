@@ -3,7 +3,7 @@
 // size in one drawImage; a grain a fillRect is the most expensive thing in the
 // frame once there are tens of thousands. Give a grid one and hand it `mark`
 // as its `onPut` (wirePit, wireGround). Anything the painter has no color for
-// is left clear, so a grid can keep values of its own (the pit's cores) and
+// is left clear, so a grid can keep values of its own (the cut's rock) and
 // draw them itself, on top.
 
 import { SHADES, FIND_COLOR } from './config.js';

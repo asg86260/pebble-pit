@@ -3,7 +3,7 @@
 // were doing from wherever you left them.
 
 import { now } from '../clock.js';
-import { DIZZY_MS, HOVER_PAUSE_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
+import { DIZZY_MS, HOVER_SLOW_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
 import { bell, spawnChip } from '../dust.js';
 import { throwVel } from '../hands.js';
 import { underground } from '../quarry.js';
@@ -13,6 +13,7 @@ import { assignDrop } from './assign.js';
 import { load } from './hole.js';
 import { earn } from '../notices.js';
 import { crewView } from '../prefs.js';
+import { inOrb, breakOrb } from '../deep/phases.js';
 
 // --- picking somebody up ------------------------------------------------------
 export function workerAt(x, y) {
@@ -33,17 +34,19 @@ export function workerAt(x, y) {
 
 export const lifted = () => S.workers.find(w => w.lifted) || null;
 
-// The cursor resting on a body holds it still, so its card is read off
-// somebody standing. The stamp is refreshed on every pointermove, so the pause
-// outlives the hover by HOVER_PAUSE_MS and no more; `keepOf` drops it on save.
+// With the right button held (`S.crewSight`), the body under the cursor walks
+// slow, so it can be caught. The stamp is refreshed on every pointermove, so
+// the slow outlives the hover by HOVER_SLOW_MS and no more.
 export function hoverAt(x, y) {
   const w = workerAt(x, y);
-  if (w && !w.lifted) w.pauseUntil = now() + HOVER_PAUSE_MS;
+  if (w && !w.lifted && S.crewSight != null) w.slowUntil = now() + HOVER_SLOW_MS;
   return w;
 }
 
 export function lift(w) {
   if (!w) return false;
+  // Lifted out of the constrict's orb: free at once, and the orb bursts.
+  if (inOrb(w)) breakOrb();
   for (const o of S.workers) o.lifted = false;
   w.lifted = true;
   earn('lifted');
@@ -91,6 +94,7 @@ export function drop(w) {
   // shaking is one dizzy spell however long you keep hold of it.
   if (w.shook >= SHAKE_TURNS) {
     w.dizzyFor = DIZZY_MS;
+    earn('dizzy');
     // Whatever is still in its hands (most of it was shaken out already) goes
     // on the ground where it lands, never into the pit: it was never banked.
     w.spill = w.carry || 0;

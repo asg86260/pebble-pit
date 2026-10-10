@@ -4,18 +4,21 @@
 // goes down the shaft arrives somewhere real, and every position in the deep
 // is an ordinary world position that the route, the camera and the drawing
 // all read the same way. Nothing here moves on its own except the serpent's
-// body, which is a function of the clock and of the sway its stuns have held
-// back (`serpentStill`, saved).
+// body, which is a function of the clock, of the sway its stuns have held
+// back (`serpentStill`, saved) and of its phase's lash (deep/phases.js).
 //
 // Track SERPENT owns this file (docs/wave-serpent.md); every other track reads
 // it.
 
 import { S, pit } from '../state.js';
-import { P, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
+import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
-         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL, LOT_W, LOT_H } from '../config.js';
-import { SPRITES } from './sprites.js';
+         GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
+         WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
+         BREAK_DIVE_OVER, BREAK_ROAR_H } from '../config.js';
+import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop } from './phases.js';
+import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
 const snap = v => Math.round(v / P) * P;
@@ -63,52 +66,59 @@ export const waterShift = () => snap(abyssLine() - (deepTop() + DEEP_SURFACE));
 // A station's middle, on the floor.
 export const spotX = key => snap(deepX0() + DEEP_SPOTS[key] * DEEP_W);
 
-// The drawn cells' extent inside a sprite's grid. A sprite's blank rows and
-// columns are room for its dome, not part of the station.
-const inked = new Map();
-function inkOf(key) {
-  if (inked.has(key)) return inked.get(key);
-  const rows = SPRITES[key];
-  let c0 = rows[0].length, c1 = -1, r0 = rows.length, r1 = -1;
-  rows.forEach((row, r) => [...row].forEach((ch, c) => {
-    if (ch === '.') return;
-    c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r);
-  }));
-  const ink = { c0, r0, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
-  inked.set(key, ink);
-  return ink;
-}
-
-// Where a sprite is painted with its middle at `mid`: its whole grid,
-// standing on the floor, with the DRAWING's middle on the spot rather than
-// the grid's, so a blank column more on one side of a sprite moves nothing.
-function spriteAt(kind, mid) {
-  const rows = SPRITES[kind], ink = inkOf(kind);
-  const w = rows[0].length * P, h = rows.length * P;
-  return { x: snap(mid - (ink.c0 + ink.cols / 2) * P), y: deepFloor() - h, w, h };
-}
-// The ground under a sprite painted there: the station as drawn, so the
-// pointer, the fence round its door and the stack of works over it all
-// answer to the picture rather than to the dome round it.
-function groundAt(kind, mid) {
-  const s = spriteAt(kind, mid), ink = inkOf(kind);
-  return { x: s.x + ink.c0 * P, y: s.y + ink.r0 * P, w: ink.cols * P, h: ink.rows * P };
-}
-export const spriteRect = key => spriteAt(key, spotX(key));
-export const standOf = key => groundAt(key, spotX(key));
-
 // --- the party's floor (docs/wave-party.md) ------------------------------------
 // A station stands at a floor slot, not at a spot of its kind's: a kind can
 // stand twice, and the floor fills in the order stations are bought. Slot
 // `i`'s middle, on the floor.
 export const slotX = i => snap(deepX0() + DEEP_SLOTS[i] * DEEP_W);
-// A station's sprite and its ground, at its slot, in its kind's drawing. The
-// ground is the same for a station still going up: its scaffold stands where
-// it will.
-// An empty lot has no kind to be drawn as: its ground is the stakes' span.
-const lotAt = mid => ({ x: snap(mid - LOT_W / 2), y: deepFloor() - LOT_H, w: LOT_W, h: LOT_H });
-export const spriteRectOfStation = st => (st.kind ? spriteAt(st.kind, slotX(st.slot)) : lotAt(slotX(st.slot)));
-export const standOfStation = st => (st.kind ? groundAt(st.kind, slotX(st.slot)) : lotAt(slotX(st.slot)));
+// A station is its fighter and a prop (DESIGN.md, "A station is its fighter
+// and a prop"). The fighter's post: the left of its body, standing on the
+// floor over its slot's middle -- where it swims to (deep/classes.js) and
+// where it is stood when it is made (crew/deep.js). On the cell grid, as
+// everything at rest is: a body three cells wide cannot be centered on a
+// cell line, and half a cell off, the gap to its prop was never a whole
+// number of cells.
+export const postX = st => snap(slotX(st.slot) - WORKER / 2);
+// The top of the plinth a station stands on (PLINTH_H), and the fighter's
+// post on it: where its body's top is, stood there.
+export const plinthTop = () => deepFloor() - PLINTH_H * P;
+export const postY = () => plinthTop() - WORKER;
+// The prop, on the floor, its right-hand column PROP_GAP cells short of the
+// body's left column (PROP_GAP_OF where a class carries its kit further
+// off). Its own grid, top-left: a cell of the drawing is a cell here.
+export function propRect(st) {
+  const key = propKey(st), rows = PROPS[key].rows;
+  const right = postX(st) / P - (PROP_GAP_OF[st.cls] ?? PROP_GAP);
+  const w = rows[0].length * P, h = rows.length * P;
+  return { key, x: (right + 1) * P - w, y: plinthTop() - h, w, h };
+}
+// The plinth: its top course from PLINTH_OVER cells left of the prop to as
+// far right of the body, each course under it a cell wider at both ends.
+// `x`, `w` are the top course's; `step` how much each course down gains a side.
+export function plinthRect(st) {
+  const x = propRect(st).x - PLINTH_OVER * P, right = postX(st) + WORKER + PLINTH_OVER * P;
+  return { x, y: plinthTop(), w: right - x, h: PLINTH_H * P, step: P };
+}
+// A station's ground: the prop and the fighter's post together, from the
+// prop's left column to the body's right edge and from the taller of the two
+// down to the floor. What the pointer opens its board on, the build's
+// scaffold stands round and the works stack over: read off the prop the
+// station stands beside now, so it answers to the picture. A station still
+// going up has no class, so its scaffold stands round the crate's ground.
+export function standOfStation(st) {
+  const p = propRect(st), b = plinthRect(st), out = (PLINTH_H - 1) * b.step;
+  const y = Math.min(p.y, postY());
+  return { x: b.x - out, y, w: b.w + 2 * out, h: deepFloor() - y };
+}
+// The low dome behind a station: from the floor to `spring`, where its arch
+// starts, and a half circle over that as wide as the dome. Spans the ground
+// and the fighter's reach, so a bow held level over the head is inside it.
+export function domeRect(st) {
+  const s = standOfStation(st), mid = postX(st) + WORKER / 2;
+  const x = snap(Math.min(s.x, mid - DOME_REACH * P) - DOME_PAD * P);
+  const right = snap(Math.max(s.x + s.w, mid + DOME_REACH * P) + DOME_PAD * P);
+  return { x, w: right - x, spring: postY() - DOME_WALL * P };
+}
 
 // The crusher at the deep's left end, standing on the floor, and the hopper
 // across its top: the purse's mouth (DESIGN.md, "The crusher"). A scale is
@@ -155,19 +165,35 @@ export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 // reader comes through `coilLine`, which turns the clock into the coil's.
 // `waveLine(t)` is the line at one instant, everything but x worked out
 // once: the walk below asks it for thousands of points a frame.
+// The lash (deep/phases.js) bends it too: drawn up in the warning, its sway
+// cut and its tail lifted, then a bump run down it head to tail.
 const waveLine = t => {
   const x0 = coilX0(), span = coilSpan(), base = deepTop() + COIL_Y * DEEP_H;
   const split = S.serpentStage === 2 && !S.serpentFreed;
+  // The dive takes his highest edge past the floor, out of sight.
+  const dive = diveK(), drop = dive ? dive * (deepFloor() - coilCeiling() + BREAK_DIVE_OVER) : 0, roar = roarK();
+  const taut = tautK(), lash = lashK();
+  // The kill: the sway dying, and the line sunk until the body lies on the floor.
+  const lie = killDrop() * (deepFloor() - base - COIL_GIRTH / 2);
+  const amp = COIL_AMP * (1 - LASH_TAUT * taut) * killSway();
   return x => {
     const k = (x - x0) / span;
-    let y = base + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
-    if (split) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
+    let y = base + amp * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
+    if (split && renewed(k)) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
+    if (taut && k > COIL_TAIL_FROM) y -= taut * LASH_LIFT * (k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM);
+    if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
+    if (roar != null) y -= BREAK_ROAR_H * Math.exp(-((k - roar) ** 2) / (LASH_W * LASH_W));
+    y += drop + lie;
     return y;
   };
 };
 const waveY = (x, t) => waveLine(t)(x);
 const coilX0 = () => deepX0() + COIL_X0 * DEEP_W;
 const coilSpan = () => (COIL_X1 - COIL_X0) * DEEP_W;
+// Where the body runs, head to tail, across the deep.
+export const coilEnds = () => ({ x0: coilX0(), x1: coilX0() + coilSpan() });
+// How far along the body x is, head 0 to tail 1: what the lash is laid on.
+export const coilK = x => (x - coilX0()) / coilSpan();
 
 // The line walked once a frame: x at every step of arc length along it,
 // so a segment's place is a lookup. Keyed on the clock and the stage, the
@@ -175,7 +201,7 @@ const coilSpan = () => (COIL_X1 - COIL_X0) * DEEP_W;
 const STEP = 2;                           // px of arc a table entry
 let walked = null;
 function walk(t) {
-  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}`;
+  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}|${tautK()}|${lashK()}|${diveK()}|${roarK()}|${killSway()}|${killDrop()}`;
   if (walked?.key === key) return walked;
   const xs = [coilX0()];
   const wave = waveLine(t);
@@ -209,6 +235,15 @@ export function coilLine(u, t) {
   const x = xs[i] + (xs[i + 1] - xs[i]) * f;
   return { x, y: waveY(x, t) };
 }
+// The highest the body's top edge ever reaches as it sways: the line's highest
+// swing, the writhe of the split lengths on top of it, and the thickest half.
+// What the serpent's bar is held over.
+export function coilCeiling() {
+  let thick = 0;
+  for (let u = 0; u < COIL_SEGS; u++) thick = Math.max(thick, coilThick(u));
+  const writhe = S.serpentStage === 2 && !S.serpentFreed ? SPLIT_WRITHE : 0;
+  return deepTop() + COIL_Y * DEEP_H - COIL_AMP - writhe - thick / 2;
+}
 // Segment `i`, on the cell grid.
 export function coilAt(i, t) {
   const p = coilLine(i, t);
@@ -236,6 +271,16 @@ export const bellyAt = t => coilAt(bellySeg(), t);
 
 // The segment nearest a point, and how far it is: the one question a click, a
 // lance and a grenade all ask of the body.
+// The segment straight over x: the coil is laid along x, so it crosses a
+// column once, and the segment nearest in x is the one there.
+export function segAbove(x, t) {
+  let best = 0, d = Infinity;
+  for (let i = 0; i < COIL_SEGS; i++) {
+    const e = Math.abs(coilAt(i, t).x - x);
+    if (e < d) { d = e; best = i; }
+  }
+  return best;
+}
 export function nearestSeg(x, y, t) {
   let best = 0, d = Infinity;
   for (let i = 0; i < COIL_SEGS; i++) {

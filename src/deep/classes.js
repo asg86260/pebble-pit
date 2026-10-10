@@ -1,6 +1,7 @@
 // The ten classes at work: what the fighter at a station does, by the class
 // bought there (docs/wave-party.md, "Classes"; docs/serpent-classes.md
-// section 0). A station with no class has a base fighter, who stands guard.
+// section 0). Below the fork a station fights as its base unit, its pair's
+// first class (DESIGN.md, "A fighter branches at rung 4").
 //
 // Every class is one ladder: rungs raise its number (`rungWorth`, off the
 // class's LADDERS row), rung 4 gives its move and rung 8 its capstone. The
@@ -13,13 +14,13 @@
 // a reload drops a swing in the air, as it drops a shot):
 //
 //   pose      the attack in hand: { move, at, hit, end, x, y, big, twice }.
-//             `move` names it ('punch' 'haymaker' 'cut' 'whirl' 'palm' 'chi'
+//             `move` names it ('jab' 'punch' 'haymaker' 'cut' 'whirl' 'palm' 'chi'
 //             'thrust' 'finisher' 'shoot' 'aimed' 'stab' 'throw' 'hex'
 //             'beam' 'finish' 'sing'); `at` the wind-up's start, `hit` its
 //             contact (a melee blow lands, a shot leaves the hand), `end`
 //             the follow-through's end, all ms on the game's clock; (x, y)
 //             the point on the hide it is aimed at. `big` the heavy form,
-//             `twice` a cut that lands twice. Null standing guard.
+//             `twice` a cut that lands twice.
 //   struckAt  ms of the last contact: the impact's clock.
 //   pips      lit pips in the class's row, of `pipsMax` (0: no row).
 //   beam      the Mage's: { at, until, x, y, tx, ty, seg, width, burn }
@@ -33,28 +34,30 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { P, WORKER, COIL_SEGS, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG,
-         CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, rungValue } from '../config.js';
+import { P, WORKER, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG, BREAK_ROAR_DAZE,
+         CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, LASH_THROW, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
 import { now } from '../clock.js';
-import { slotX, coilAt, coilThick, nearestSeg } from './place.js';
-import { stationById, classOf, keyOf } from './party.js';
-import { mid, feet, working, swim, loose } from './arms.js';
+import { slotX, postX, postY, coilAt, coilThick, segAbove, coilK, deepFloor } from './place.js';
+import { lashHits, mechOf, roarHits, killA, inOrb } from './phases.js';
+import { rand } from '../rng.js';
+import { stationById, classOf, keyOf, levelingUp } from './party.js';
+import { mid, working, swim, loose } from './arms.js';
 import { strike, woundK } from './serpent.js';
-import { rest } from './rest.js';
 import { lay, inspire, haste, tempo } from './statuses.js';
 
 const hasCap = st => st.rung >= CAPSTONE_RUNG;
 const hasMove = st => st.rung >= MOVE_RUNG;
 
 // What a rung of a class is worth: its LADDERS row, rung 0..8, a percent
-// read as a share for a class that says so.
-export const rungWorth = (cls, rung) => rungValue(cls.ladder, rung) / (cls.pct ? 100 : 1);
+// read as a share for a class that says so, and a share of it for the
+// Recruit, which borrows the Brawler's row (`worthK`).
+export const rungWorth = (cls, rung) => rungValue(cls.ladder, rung) / (cls.pct ? 100 : 1) * (cls.worthK ?? 1);
 
 // The fighter's station, and the middle of it on the floor.
 export const stationOf = w => (w && w.station ? stationById(w.station) : null);
 export const stationX = st => slotX(st.slot);
-const toPost = (w, st) => swim(w, stationX(st) - WORKER / 2, feet());
+const toPost = (w, st) => swim(w, postX(st), postY());
 
 // --- the rhythm of a swing ---------------------------------------------------------
 
@@ -66,6 +69,27 @@ function due(w, t, every) {
   if (t < w.next) return false;
   w.next = t + tempo(w, every) * 1000;
   return true;
+}
+// The class's combo (`rhythm`, config/classes.js; DESIGN.md, "A fighter's
+// combo"): once a swing is chosen, when the next one is due. The quick hits
+// of a string come a share of `every` apart and bank what each saves; the one
+// before a big hit waits `pre`; the big hit, or the last of a string where
+// there is no bar to fill, is followed by the rest -- a whole `every` and
+// everything banked -- so the fighter resets, breathes, and comes again at
+// the same damage a second as an even beat. `bar` is whether a big hit is
+// what ends the string; `big` this swing's, `nextBig` the next's.
+function beat(w, t, cls, big, nextBig, bar) {
+  const r = cls.rhythm;
+  if (!r) return;
+  const c = w.combo || (w.combo = { n: 0, bank: 0 });
+  c.n++;
+  let gap;
+  if (big || (!bar && r.string && c.n >= r.string)) { gap = 1 + c.bank; c.n = 0; c.bank = 0; }
+  else {
+    gap = nextBig && r.pre ? r.pre : r.gaps[(c.n - 1) % r.gaps.length];
+    c.bank += 1 - gap;
+  }
+  w.next = t + tempo(w, gap * cls.every) * 1000;
 }
 // A swing begun: the wind-up runs to its contact, then the follow-through.
 function swing(w, t, move, windup, p, big = false) {
@@ -85,16 +109,20 @@ function landing(w, t) {
 
 // --- where a fighter stands ----------------------------------------------------------
 
-// Melee: up under the segment over it, hanging at `off` under the hide, and
+// Every fighter strikes the coil straight over its station, wherever the
+// sway has carried the rest of it.
+// Melee: up under that segment, hanging at `off` under the hide, and
 // following its sway -- at `slow` of the swim once within `range` of that
 // spot, which for the Assassin is nearly still. Null while it is still on
 // the way up.
-function closeIn(w, t, off = 0, slow = 1, range = MELEE_REACH) {
-  const seg = nearestSeg(mid(w), w.y, t).seg;
+function closeIn(w, st, t, off = 0, slow = 1, range = MELEE_REACH) {
+  const seg = segAbove(stationX(st), t);
   const p = coilAt(seg, t);
-  const reach = coilThick(seg) / 2 + off;
-  const far = Math.hypot(p.x - mid(w), p.y + reach - w.y) > range;
-  const there = swim(w, p.x - WORKER / 2, p.y + reach, commutePace() * SWIM_PACE * (far ? 1 : slow));
+  // Under the hide, but never under the floor: the coil goes down past it in
+  // the first break's dive and lies on it in the kill.
+  const y = Math.min(p.y + coilThick(seg) / 2 + off, deepFloor() - WORKER);
+  const far = Math.hypot(p.x - mid(w), y - w.y) > range;
+  const there = swim(w, p.x - WORKER / 2, y, commutePace() * SWIM_PACE * (far ? 1 : slow));
   if (!there && far) { w.goal = 'rise'; return null; }
   w.goal = 'fight';
   return { seg, p };
@@ -103,10 +131,9 @@ function closeIn(w, t, off = 0, slow = 1, range = MELEE_REACH) {
 function atPost(w, st, t) {
   if (!toPost(w, st)) { w.goal = 'back'; return null; }
   w.goal = 'fight';
-  const seg = nearestSeg(mid(w), w.y, t).seg;
+  const seg = segAbove(stationX(st), t);
   return { seg, p: coilAt(seg, t) };
 }
-const segNear = (seg, by) => Math.max(0, Math.min(COIL_SEGS - 1, Math.round(seg + by)));
 
 // A straight shot from (x, y) to the segment, landing `fly` seconds on.
 function shoot(w, kind, x, y, seg, t, fly, land, arc = 0) {
@@ -118,7 +145,7 @@ function shoot(w, kind, x, y, seg, t, fly, land, arc = 0) {
 // Heavy punches; from rung 4 every 4th is a haymaker, x4, and from rung 8
 // the haymaker stuns.
 function brawler(w, c, st, cls, v) {
-  const t = c.now, at = closeIn(w, t);
+  const t = c.now, at = closeIn(w, st, t);
   if (!at) return;
   const hm = cls.haymaker;
   w.pipsMax = hasMove(st) ? hm.every : 0;
@@ -131,31 +158,37 @@ function brawler(w, c, st, cls, v) {
   w.count = (w.count || 0) + 1;
   const big = hasMove(st) && w.count % hm.every === 0;
   w.pips = hasMove(st) ? w.count % hm.every : 0;
+  beat(w, t, cls, big, hasMove(st) && (w.count + 1) % hm.every === 0, hasMove(st));
   swing(w, t, big ? 'haymaker' : 'punch', cls.windup, at.p, big);
 }
 
-// Cuts; from rung 4 each lands at three spots along the coil (the
-// whirlwind), and from rung 8 every 3rd cut lands twice, the second landing
-// leaving the serpent Bleeding. The spots of one cut are one blow, summed on it.
+// The Recruit: one light punch at a time, up under the coil over its station.
+function recruit(w, c, st, cls, v) {
+  const t = c.now, at = closeIn(w, st, t);
+  if (!at) return;
+  w.pipsMax = 0;
+  if (landing(w, t)) strike(cls.hit, v, at.p.x, at.p.y, null, 0, { by: w });
+  if (!due(w, t, cls.every)) return;
+  beat(w, t, cls, false, false, false);
+  swing(w, t, 'jab', cls.windup, at.p);
+}
+
+// Cuts; from rung 4 each is a Whirlwind, x`whirl.x`, and from rung 8 every
+// 3rd cut lands twice, the second landing leaving the serpent Bleeding. A cut
+// lands where the blade meets the hide, once: the page's other turns are air.
 function sword(w, c, st, cls, v) {
-  const t = c.now, at = closeIn(w, t);
+  const t = c.now, at = closeIn(w, st, t);
   if (!at) return;
   w.pipsMax = 0;
   const hit = landing(w, t);
   if (hit) {
-    const wh = cls.whirl, wide = hasMove(st);
-    const spots = wide ? wh.spots : 1, each = v * (wide ? wh.x : 1);
-    const cut = {};
-    for (let n = 0; n < (hit.twice ? 2 : 1); n++) {
-      for (let i = 0; i < spots; i++) {
-        const q = coilAt(segNear(at.seg, (i - (spots - 1) / 2) * wh.spread), t);
-        strike(cls.hit, each, q.x, q.y, cut, 0, { by: w });
-      }
-    }
+    const dmg = v * (hasMove(st) ? cls.whirl.x : 1) * (hit.twice ? 2 : 1);
+    strike(cls.hit, dmg, at.p.x, at.p.y, null, 0, { by: w });
     if (hit.twice) lay('bleed', v * cls.bleed.dps, cls.bleed.s, at.seg, cls.hit);
   }
   if (!due(w, t, cls.every)) return;
   w.count = (w.count || 0) + 1;
+  beat(w, t, cls, false, false, false);
   const p = swing(w, t, hasMove(st) ? 'whirl' : 'cut', cls.windup, at.p);
   p.twice = hasCap(st) && w.count % cls.capEvery === 0;
 }
@@ -177,6 +210,7 @@ function monk(w, c, st, cls, v) {
   if (!due(w, t, cls.every)) return;
   const big = w.pips >= chi.max;
   w.pips = big ? 0 : Math.min(chi.max, w.pips + (hasMove(st) ? chi.moveFill : chi.fill));
+  beat(w, t, cls, big, w.pips >= chi.max, true);
   swing(w, t, big ? 'chi' : 'palm', cls.windup, at.p, big);
 }
 
@@ -184,7 +218,7 @@ function monk(w, c, st, cls, v) {
 // a finisher, a blow of the row's thrusts together; from rung 8 the
 // finisher Hastes the whole party.
 function martial(w, c, st, cls, v) {
-  const t = c.now, at = closeIn(w, t);
+  const t = c.now, at = closeIn(w, st, t);
   if (!at) return;
   const pp = cls.pips;
   w.pipsMax = pp.max;
@@ -197,6 +231,7 @@ function martial(w, c, st, cls, v) {
   if (!due(w, t, cls.every)) return;
   const big = w.pips >= pp.max;
   w.pips = big ? 0 : Math.min(pp.max, w.pips + (hasMove(st) ? pp.moveFill : pp.fill));
+  beat(w, t, cls, big, w.pips >= pp.max, true);
   swing(w, t, big ? 'finisher' : 'thrust', cls.windup, at.p, big);
 }
 
@@ -210,13 +245,14 @@ function ranger(w, c, st, cls, v) {
   const hit = landing(w, t);
   if (hit) {
     const big = hit.big, stun = big && hasCap(st) ? cls.capStun : 0;
-    shoot(w, big ? 'aimed' : 'arrow', mid(w), w.y - P * 2, at.seg, t, cls.fly, (s, q) =>
-      strike(cls.hit, v * (big ? am.x : 1), q.x, q.y, null, 0, { by: w, stun }), cls.arc);
+    shoot(w, big ? 'aimed' : 'arrow', mid(w), w.y - P * 6, at.seg, t, cls.fly, (s, q) =>
+      strike(cls.hit, v * (big ? am.x : 1), q.x, q.y, null, 0, { by: w, stun }));
   }
   if (!due(w, t, cls.every)) return;
   w.count = (w.count || 0) + 1;
   const big = hasMove(st) && w.count % am.every === 0;
   w.pips = hasMove(st) ? w.count % am.every : 0;
+  beat(w, t, cls, big, hasMove(st) && (w.count + 1) % am.every === 0, hasMove(st));
   swing(w, t, big ? 'aimed' : 'shoot', cls.windup, at.p, big);
 }
 
@@ -225,7 +261,7 @@ function ranger(w, c, st, cls, v) {
 // serpent; from rung 4 x(1 + the wound's share of the phase), to x2; from
 // rung 8 each dagger leaves it Bleeding. Read when the dagger lands.
 function assassin(w, c, st, cls, v) {
-  const t = c.now, at = closeIn(w, t, cls.standoff, cls.drift, cls.range);
+  const t = c.now, at = closeIn(w, st, t, cls.standoff, cls.drift, cls.range);
   if (!at) return;
   w.pipsMax = 0;
   const hit = landing(w, t);
@@ -238,6 +274,7 @@ function assassin(w, c, st, cls, v) {
     });
   }
   if (!due(w, t, cls.every)) return;
+  beat(w, t, cls, false, false, false);
   swing(w, t, 'stab', cls.windup, at.p);
 }
 
@@ -251,10 +288,11 @@ function hexer(w, c, st, cls, v) {
   if (hit) {
     shoot(w, 'hex', mid(w), w.y, at.seg, t, cls.fly, (s, q) => {
       strike(cls.hit, v, q.x, q.y, null, 0, { by: w });
-      if (hasMove(st)) lay('weakened', cls.weaken.k, cls.weaken.s, s.seg);
+      // Exposed from the move, harder from the capstone; the stronger stands (`lay`).
+      if (hasMove(st)) lay('exposed', EXPOSED_AMP[0], cls.expose, s.seg);
       if (hasCap(st)) {
         lay('held', 0, cls.hold, s.seg);
-        lay('exposed', EXPOSED_AMP, cls.exposed, s.seg);
+        lay('exposed', EXPOSED_AMP[1], cls.exposed, s.seg);
       }
     });
   }
@@ -264,7 +302,8 @@ function hexer(w, c, st, cls, v) {
 
 // Charges thrown on the water's gravity. From rung 4 a charge sticks to the
 // hide, ticks down and goes off as one blow, x3; from rung 8 two are thrown
-// at once, go off together, and stun.
+// at once, each at `pairX` of a lone one, at the one spot, go off together,
+// and stun.
 function sapper(w, c, st, cls, v) {
   const t = c.now, at = atPost(w, st, t);
   if (!at) return;
@@ -272,10 +311,10 @@ function sapper(w, c, st, cls, v) {
   const hit = landing(w, t);
   if (hit) {
     const n = hasCap(st) ? cls.capCharges : 1, sticky = hasMove(st);
+    const each = v * (n > 1 ? cls.pairX : 1);
     const pair = { blowAt: 0 };
     for (let i = 0; i < n; i++) {
-      const seg = segNear(at.seg, (i - (n - 1) / 2) * cls.spread);
-      throwCharge(w, seg, t, cls, (s, q) => {
+      throwCharge(w, at.seg, t, cls, (s, q) => {
         if (sticky && s.reached) {
           s.stuck = true;
           s.stuckAt = now();
@@ -284,11 +323,11 @@ function sapper(w, c, st, cls, v) {
           s.land = blow;
           return 'stuck';
         }
-        strike(cls.hit, v, q.x, q.y, null, 0, { by: w });
+        strike(cls.hit, each, q.x, q.y, null, 0, { by: w });
       });
     }
     function blow(s, q) {
-      strike(cls.hit, v * cls.stickyX, q.x, q.y, pair, 0, { by: w, stun: hasCap(st) ? 1 : 0 });
+      strike(cls.hit, each * cls.stickyX, q.x, q.y, pair, 0, { by: w, stun: hasCap(st) ? 1 : 0 });
     }
   }
   if (!due(w, t, cls.every)) return;
@@ -373,28 +412,44 @@ function bard(w, c, st, cls, v) {
   }
 }
 
-const STEP = { brawler, sword, monk, martial, ranger, assassin, hexer, sapper, mage, bard };
+function lashOff(w, daze) {
+  w.pose = null;
+  w.goal = null;
+  w.falling = true;
+  w.vx = (rand() < 0.5 ? -1 : 1) * LASH_THROW[0];
+  w.vy = LASH_THROW[1];
+  w.dizzyFor = daze * 1000;
+}
+
+const STEP = { recruit, brawler, sword, monk, martial, ranger, assassin, hexer, sapper, mage, bard };
 
 // Every fighter body at a station, the one asking included.
 export const fighters = () => S.workers.filter(o => o.station && stationById(o.station));
-
-// A base fighter -- a station with no class yet, or none at all -- stands
-// guard: at rest about its station, doing nothing.
-function guard(w, st, c) {
-  w.goal = 'guard';
-  w.pose = null;
-  w.beam = null;
-  w.pips = w.pipsMax = 0;
-  rest(w, st ? stationX(st) : 'pods', c);
-}
 
 // One frame of a fighter at work, by its station's class.
 export function stepFighter(w, c) {
   if (!working(w)) return;
   const st = stationOf(w);
   const cls = st && st.built !== false ? classOf(st) : null;
+  // A built station always has a class to fight as (the Recruit before rung
+  // 1, its base unit's below the fork), and a fighter is only ever seated at
+  // a built one.
   const step = cls && STEP[keyOf(st)];
-  if (!step) { guard(w, st, c); return; }
-  if (w.goal === 'guard' || w.goal === 'rest') w.lull = null;
+  if (!step) return;
+  // Its level-up playing (deep/party.js), it stops where it is and fights no more until it has.
+  if (levelingUp(st)) { w.pose = null; w.beam = null; return; }
+  // Held in the constrict's orb, it does nothing.
+  if (inOrb(w)) { w.pose = null; w.beam = null; return; }
+  // The serpent down after the kill, and gone, there is nothing to fight: back
+  // to its post until it has gathered itself again.
+  if (killA() != null) { w.pose = null; w.beam = null; w.goal = 'back'; toPost(w, st); return; }
+  // The lash (deep/phases.js) throws a melee fighter off the hide as it
+  // passes: it sinks through the water, lies dazed where it lands, and swims
+  // back up (crew/falls.js, the thrown body's own way down).
+  if (cls.melee && (w.goal === 'fight' || w.goal === 'rise') && lashHits(coilK(mid(w)))) { lashOff(w, mechOf().daze); return; }
+  // and so does a break's roar, more gently.
+  if (cls.melee && (w.goal === 'fight' || w.goal === 'rise') && roarHits(coilK(mid(w)))) { lashOff(w, BREAK_ROAR_DAZE); return; }
+  // A gatherer sent over from its rest by the crusher leaves that lull behind.
+  if (w.goal === 'rest') w.lull = null;
   step(w, c, st, cls, rungWorth(cls, st.rung));
 }

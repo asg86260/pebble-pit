@@ -1,0 +1,85 @@
+<meta charset="utf-8">
+<title>Sqwife Help Call</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* layout: three panels, each the sqwife buried to the chest beside the first rock's hole, a digger working at her, her call over her head */
+:root {
+  --bg: #050506; --panel: #0d0d10; --line: #26262c; --fg: #e8e8ec; --dim: #8b8b96;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--mono); padding-inline: 16px; padding-block: 24px 48px; }
+main { max-width: 1100px; margin: 0 auto; display: grid; gap: 24px; }
+h1 { font-size: 20px; font-weight: 600; margin: 0; }
+p { margin: 0; max-width: 72ch; color: var(--dim); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; min-width: 0; }
+figcaption { color: var(--dim); font-size: 13px; }
+figcaption b { color: var(--fg); }
+canvas { width: 100%; max-width: 100%; image-rendering: pixelated; display: block; background: #fff; }
+.note { border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>The sqwife calls for help</h1>
+    <p>The first rock mined out: one of the crew walks over and digs at her. Today she shows hearts; these have her yelling for help the whole scene. Pick one.</p>
+  </header>
+  <div class="grid" id="opts"></div>
+  <p class="note">Drawn from plain shapes, not the game: the bodies are squares on the game's cell grid at the game's size, and there is no rock, sky or crew around them. Option A's word is "HELP" from your message; any other word is yours to write.</p>
+</main>
+<script>
+const C = 6, W = 40, H = 26, GROUND = 18;
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FONT = { H: ['101', '101', '111', '101', '101'], E: ['111', '100', '110', '100', '111'], L: ['100', '100', '100', '100', '111'],
+               P: ['110', '101', '110', '100', '100'], '!': ['1', '1', '1', '0', '1'] };
+const OPTS = [
+  ['word', 'A · "HELP!"', 'the word in the game\'s pixel letters over her head, hopping a cell each time she yells it'],
+  ['bangs', 'B · Bangs', 'one, two, three bangs over her head, building and starting again, like a shout getting louder'],
+  ['wave', 'C · Arm and bang', 'an arm up out of the ground, waving side to side, with a bang over it'],
+];
+const cell = (g, x, y) => g.fillRect(x * C, y * C, C, C);
+function text(g, s, x, y) {
+  for (const ch of s) { const f = FONT[ch]; f.forEach((r, j) => [...r].forEach((b, i) => { if (b === '1') cell(g, x + i, y + j); })); x += f[0].length + 1; }
+}
+function draw(g, kind, t) {
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W * C, H * C);
+  g.fillStyle = '#8b8b8b'; g.fillRect(0, GROUND * C, W * C, (H - GROUND) * C);
+  // the hole she is in, and her: a three-cell square, two cells of her above the ground
+  const sx = 18, sy = GROUND - 2;
+  g.fillStyle = '#5a5a5a'; g.fillRect((sx - 2) * C, GROUND * C, 7 * C, 2 * C);
+  g.fillStyle = '#000'; g.fillRect(sx * C, sy * C, 3 * C, 3 * C);
+  g.fillStyle = '#fff'; g.fillRect((sx + 1) * C, (sy + 1) * C, C, C);
+  // the digger beside her, swinging
+  const dx = 25, swing = Math.floor(t * 4) % 2;
+  g.fillStyle = '#000'; g.fillRect(dx * C, (GROUND - 3) * C, 3 * C, 3 * C);
+  cell(g, dx - 1, GROUND - 3 + swing * 2); cell(g, dx - 2, GROUND - 2 + swing);
+  // the call, over her head
+  g.fillStyle = '#000';
+  const beat = Math.floor(t / 0.6);                 // a yell every 0.6 s
+  if (kind === 'word') {
+    const hop = beat % 2;
+    text(g, 'HELP!', sx - 7, sy - 8 - hop);
+  } else if (kind === 'bangs') {
+    const n = beat % 4;                             // 0..3 bangs, the fourth a breath
+    for (let i = 0; i < n; i++) { const x = sx - 2 + i * 3; [0, 1, 2].forEach(j => cell(g, x, sy - 7 + j)); cell(g, x, sy - 3); }
+  } else {
+    const side = beat % 2 ? 1 : -1;
+    const ax = sx + 1 + side;
+    cell(g, sx + 1, sy - 1); cell(g, ax, sy - 2); cell(g, ax + side, sy - 3);
+    if (beat % 2 === 0) { [0, 1, 2].forEach(j => cell(g, sx + 4, sy - 8 + j)); cell(g, sx + 4, sy - 4); }
+  }
+}
+const panels = OPTS.map(([kind, name, cap]) => {
+  const f = document.createElement('figure');
+  const cv = document.createElement('canvas'); cv.width = W * C; cv.height = H * C;
+  const fc = document.createElement('figcaption'); fc.innerHTML = `<b>${name}</b> — ${cap}`;
+  f.append(cv, fc); document.getElementById('opts').append(f);
+  return [cv.getContext('2d'), kind];
+});
+const frame = ms => {
+  const t = still ? 1.3 : Math.floor(ms / 1000 * 12) / 12;
+  for (const [g, kind] of panels) draw(g, kind, t);
+  if (!still) requestAnimationFrame(frame);
+};
+requestAnimationFrame(frame);
+</script>

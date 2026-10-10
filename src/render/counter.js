@@ -3,7 +3,7 @@
 
 import { openBoardRect } from '../board.js';
 import { fmt } from '../words.js';
-import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK } from '../config.js';
+import { P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK, FLOAT_SHADOW, FLOAT_SHADOW_INK } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
@@ -49,14 +49,13 @@ export const countRect = () => countBox;
 export const overCount = (sx, sy) => !!countBox && sx >= countBox.x && sx < countBox.x + countBox.w
                                      && sy >= countBox.y && sy < countBox.y + countBox.h;
 
-// The card's lines, top row first, in the purse's order: dust, core, ore,
+// The card's lines, top row first, in the purse's order: dust, ore,
 // crops, sparks, scales. Each read through the tweener, so a load tipping in
 // counts up and a purchase counts down. Gathered before any of it is placed,
 // because how wide the card is decides where it can stand.
 export function countLines() {
   const dust = digits(Math.round(shown('dust', S.stored)));
   const lines = [{ cell: null, text: dust }];
-  if (S.seenCore) lines.push({ cell: CORE_CELL, text: String(Math.round(shown('card:core', S.cores))) });
   if (S.seenShard) lines.push({ cell: SHARD_CELL, text: digits(Math.round(shown('card:shard', S.shards))) });
   if (S.seenSpore) lines.push({ cell: SPORE_CELL, text: digits(Math.round(shown('card:spore', S.spores))) });
   if (S.seenSpark) lines.push({ cell: SPARK_CELL, text: digits(Math.round(shown('card:spark', S.sparks))) });
@@ -124,6 +123,10 @@ export function drawCount() {
     x += put - box.x;
     box.x = put;
   }
+  // the shadow first, as the page's floating cards cast it, so the card
+  // covers all of it but the strip down its right and along its foot
+  ctx.fillStyle = FLOAT_SHADOW_INK;
+  ctx.fillRect(box.x + FLOAT_SHADOW, box.y + FLOAT_SHADOW, box.w, box.h);
   ctx.fillStyle = '#fff';
   countBox = box;
   ctx.fillRect(box.x, box.y, box.w, box.h);

@@ -18,7 +18,7 @@
 // save. See `floor` in state.js.
 //
 // Cells hold a shade, 1..SHADES.length, or 0 for empty. Anything above that is
-// for the owner to mean what it likes by (the pit puts cores in its pile).
+// for the owner to mean what it likes by (the finds, and the cut's rock).
 
 import { SHADES } from './config.js';
 import { rand } from './rng.js';
@@ -32,7 +32,7 @@ export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 // other two.
 globalThis.__perf = { ways: 0, grainCols: 0, grains: 0, stances: 0 };
 
-// A cell holds a shade of dust, or something that is not dust at all (a core,
+// A cell holds a shade of dust, or something that is not dust at all (a spark,
 // a shard, a spore). They move the same way; they are not worth one dust.
 export const isDust = v => v > 0 && v <= SHADES.length;
 

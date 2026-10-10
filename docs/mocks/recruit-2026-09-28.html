@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Recruit</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0; }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 9px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .tile { display: grid; gap: 4px; }
+  .tile canvas { width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--rule); background: #000; }
+  .tile b { font-size: 13px; }
+  .tile span { font-size: 12px; color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The Recruit</h1>
+  <p>Every station's first fighter: it stands on the new plinth beside the packed crate and fights at once, weakly,
+    until rung 1 makes it a Fighter, Novice, Scout, Adept or Apprentice. Three ways it could attack, each looping, and
+    a choice of how it reads as untrained.</p>
+  <p class="dim">A mock drawn from plain cells on the game's 6 px grid and grey ramp, not the game. It cannot show: the
+    real serpent and its dents, the kits of the other classes beside it, the swim up from the pods, or the numbers.</p>
+  <div class="bar"><span class="dim">looks like</span>
+    <button type="button" data-look="grey" aria-pressed="true">a grey body (untrained)</button>
+    <button type="button" data-look="band">a white body, a headband</button>
+    <button type="button" data-look="plain">a white body, nothing</button>
+    <button type="button" id="play">pause</button>
+  </div>
+  <div class="tiles" id="tiles"></div>
+</div>
+<script>
+'use strict';
+const P = 6, COLS = 44, ROWS = 34;
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+               '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const near = (i, x, y, s = 1) => GREYS[Math.max(1, Math.min(11, i + Math.round((hash(x * 31 + y * 17) * 2 - 1) * s)))];
+const cell = (g, x, y, tone) => { g.fillStyle = tone; g.fillRect(Math.round(x * P), Math.round(y * P), P, P); };
+const ease = k => k * k * (3 - 2 * k);
+const lerp = (a, b, k) => a + (b - a) * k;
+
+const FLOOR = ROWS - 3, TOP = FLOOR - 2;             // the floor, the plinth's top (2 cells)
+const CRATE = ['.S..S.', 'EEEEEE', 'EpppEE', 'EppEpE', 'EpEppE', 'EEEEEE'], CT = { E: 7, p: 5, S: 9 };
+const PROP_X = 8, POST = PROP_X + 6 + 5, BODY = 3;
+const COIL_Y = 7, COIL_H = 4;                          // the coil's top row at the post, its thickness
+const coilTop = (x, t) => COIL_Y + Math.round(1.5 * Math.sin(x / 7 + t * 0.6));
+const LOOP = 2.2, POSE = 0.08;                          // seconds a turn, a held pose
+
+function ground(g) {
+  for (let y = FLOOR; y < ROWS; y++) for (let x = 0; x < COLS; x++) cell(g, x, y, near(3, x, y));
+  for (let i = 0; i < 40; i++) cell(g, Math.floor(hash(i * 3.1) * COLS), Math.floor(hash(i * 5.7) * (FLOOR - 2)), GREYS[2 + Math.floor(hash(i) * 3)]);
+  // the plinth, stepped
+  const L = PROP_X - 1, R = POST + BODY;
+  for (let r = 0; r < 2; r++) for (let x = L - r; x <= R + r; x++)
+    cell(g, x, TOP + r, r === 0 ? near(9, x, r) : x === L - r || x === R + r ? near(8, x, r) : near(6, x, r));
+  CRATE.forEach((row, r) => [...row].forEach((c, col) => { if (c !== '.') cell(g, PROP_X + col, TOP - 6 + r, near(CT[c], col, r)); }));
+}
+function coil(g, t, dent = 0, at = 0) {
+  for (let x = 0; x < COLS; x++) {
+    const d = dent ? Math.round(dent * Math.exp(-((x - at) ** 2) / 6)) : 0;
+    const top = coilTop(x, t) - d;
+    for (let r = 0; r < COIL_H; r++) cell(g, x, top + r, r === 0 ? GREYS[11] : r === COIL_H - 1 ? GREYS[8] : GREYS[10]);
+  }
+}
+function recruit(g, x, y, look) {
+  const skin = look === 'grey' ? GREYS[8] : GREYS[11], shade = look === 'grey' ? GREYS[7] : GREYS[10];
+  for (let r = 0; r < BODY; r++) for (let c = 0; c < BODY; c++) cell(g, x + c, y + r, r === 0 ? skin : shade);
+  if (look === 'band') for (let c = 0; c < BODY; c++) cell(g, x + c, y, GREYS[6]);
+  cell(g, x + 2, y + 1, GREYS[2]);                    // an eye, facing up and right
+}
+// a small star where it lands, held a pose, then broken
+function star(g, cx, cy, u) {
+  if (u < 0 || u >= 2 * POSE * 2) return;
+  const broke = u >= POSE * 2;
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1]]) for (let r = 1; r <= 2; r++) {
+    if (broke && r === 1) continue;
+    cell(g, cx + dx * (broke ? r + 1 : r), cy + dy * (broke ? r + 1 : r), broke ? GREYS[8] : GREYS[11]);
+  }
+}
+
+// Each attack answers where the body is and draws its own part, at `a` seconds into the turn.
+const ATTACKS = [
+  { name: 'A. A pebble, tossed', say: 'it stays on the plinth and lobs a pebble up at the coil: a lean back, the throw, a puff where it lands',
+    turn(g, a, t, look) {
+      const lean = a > 0.3 && a < 0.5 ? -1 : 0;
+      const y = TOP - BODY;
+      recruit(g, POST + lean, y, look);
+      const k = (a - 0.5) / 0.6, hx = POST + 1, hitY = coilTop(hx, t) + COIL_H;
+      if (k >= 0 && k < 1) cell(g, lerp(POST + 2, hx, k), lerp(y - 1, hitY, ease(k)) - 3 * Math.sin(Math.PI * k), GREYS[9]);
+      else if (a < 0.5) cell(g, POST + 3 + lean, y + 1, GREYS[9]);   // in its hand
+      star(g, hx, hitY, a - 1.1);
+      return { dent: a >= 1.1 && a < 1.5 ? 1 : 0, at: hx };
+    } },
+  { name: 'B. A stick, poked', say: 'it swims up under the coil with a short stick and jabs it in, holds, and sinks back',
+    turn(g, a, t, look) {
+      const hx = POST + 1, under = coilTop(hx, t) + COIL_H + 2, home = TOP - BODY;
+      const up = a < 0.5 ? ease(a / 0.5) : a < 1.4 ? 1 : a < 1.9 ? 1 - ease((a - 1.4) / 0.5) : 0;
+      const y = Math.round(lerp(home, under, up));
+      recruit(g, POST, y, look);
+      const jab = a >= 0.8 && a < 1.0 ? 1 : 0;
+      for (let i = 0; i < 3; i++) cell(g, POST + 3, y - i - jab, GREYS[7]);    // the stick, up past the body's right
+      if (a >= 0.72 && a < 0.8) for (let i = 0; i < 4; i++) cell(g, POST + 3, y + 1 - i, GREYS[4]);   // the smear before the bite
+      star(g, POST + 3, coilTop(POST + 3, t) + COIL_H, a - 0.8);
+      return { dent: a >= 0.8 && a < 1.2 ? 1 : 0, at: POST + 3 };
+    } },
+  { name: 'C. Bare fists', say: 'it swims up under the coil and throws one small punch, the fist squashed against the hide a beat',
+    turn(g, a, t, look) {
+      const hx = POST + 1, under = coilTop(hx, t) + COIL_H + 1, home = TOP - BODY;
+      const up = a < 0.5 ? ease(a / 0.5) : a < 1.4 ? 1 : a < 1.9 ? 1 - ease((a - 1.4) / 0.5) : 0;
+      const y = Math.round(lerp(home, under, up));
+      recruit(g, POST, y, look);
+      const fx = POST + BODY, hit = a >= 0.85 && a < 1.0, wind = a >= 0.7 && a < 0.85;
+      if (hit) { cell(g, fx, y - 1, GREYS[11]); cell(g, fx + 1, y - 1, GREYS[11]); }
+      else cell(g, fx, y + (wind ? 2 : 1), GREYS[10]);
+      star(g, fx, coilTop(fx, t) + COIL_H, a - 0.85);
+      return { dent: hit || (a >= 1.0 && a < 1.2) ? 1 : 0, at: fx };
+    } },
+];
+
+let look = 'grey', playing = true, clock = 0, last = null;
+const tiles = document.getElementById('tiles');
+const cans = ATTACKS.map(A => {
+  const d = document.createElement('div'); d.className = 'tile';
+  const c = document.createElement('canvas'); c.width = COLS * P; c.height = ROWS * P;
+  const b = document.createElement('b'); b.textContent = A.name;
+  const s = document.createElement('span'); s.textContent = A.say;
+  d.append(c, b, s); tiles.append(d);
+  return c.getContext('2d');
+});
+function frame(ms) {
+  if (last != null && playing) clock += (ms - last) / 1000;
+  last = ms;
+  // posed: the clock stepped a held pose at a time, as the game's attacks are
+  const t = Math.floor(clock / POSE) * POSE, a = t % LOOP;
+  cans.forEach((g, i) => {
+    g.fillStyle = '#000'; g.fillRect(0, 0, COLS * P, ROWS * P);
+    ground(g);
+    // the attack first to learn its dent, then the coil, then the attack again over it
+    const probe = document.createElement('canvas').getContext('2d');
+    const hit = ATTACKS[i].turn(probe, a, t, look);
+    coil(g, t, hit.dent, hit.at);
+    ATTACKS[i].turn(g, a, t, look);
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+document.querySelectorAll('[data-look]').forEach(b => b.addEventListener('click', () => {
+  look = b.dataset.look;
+  document.querySelectorAll('[data-look]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+}));
+document.getElementById('play').addEventListener('click', e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; });
+</script>
+</body>
+</html>

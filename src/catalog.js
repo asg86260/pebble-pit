@@ -22,7 +22,6 @@ export const CATALOG = [
   { key: 'firstgrain', name: "makin' money", note: 'throw a pebble into the pit' },
   { key: 'firstrock', name: 'better keep digging', note: 'clear the first rock' },
   { key: 'gotout', name: 'you saved your sqwife', note: 'no more rocks, you did it.' },
-  { key: 'firstcore', name: 'something was inside it', note: 'bank a core out of a broken rock' },
   { key: 'firsthire', name: "you've constructed additional pylons", note: 'build another house' },
   { key: 'firstshard', name: 'the first ore', note: 'bring ore up out of the quarry' },
   { key: 'firstspore', name: 'cultivation', note: 'grow your first crop' },
@@ -71,5 +70,6 @@ export const CATALOG = [
   { key: 'lifted', name: 'come here you', note: 'pick a worker up' },
   { key: 'shookload', name: 'turn out your pockets', note: 'shake a full load out of a worker' },
   { key: 'hatoff', name: 'hats off', note: 'shake the hat off a worker' },
+  { key: 'dizzy', name: 'shaken baby syndrome', note: 'shake a worker dizzy' },   // the owner's
   { key: 'muckrain', name: 'it never rains but it pours', note: 'stand through a muck rain' }
 ];

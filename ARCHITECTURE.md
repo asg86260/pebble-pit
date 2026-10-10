@@ -30,7 +30,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `lab.js` | the research, who works it, and the multipliers it pays out | yes |
 | `dust.js` | a chip in the air: where it is aimed and how it flies | yes |
 | `pit.js` | the hole: banking, capacity, spending, its paint buffer | yes |
-| `core.js` | the thing buried in each rock | yes |
+| `core.js` | between rocks: one finished, the next brought down | yes |
 | `crew.js` | the crew — a barrel over `src/crew/`; a worker type is one file there plus a row in the `JOBS` registry (`src/crew/jobs.js`) | yes |
 | `air.js` | the dust hanging in the yard: three bands of it, at three distances, and its colour over each site | yes |
 | `roster.js` | the crew count and its two buttons under each station | yes |
@@ -153,11 +153,11 @@ place:
    (`test/deep-works.test.mjs` fails a station row with no name or glyph)
 
 Sites are placed by their distance from the rock, so adding one moves nothing
-else. Unlocking one should `lookAt()` it: it is several cores and a row in a
+else. Unlocking one should `lookAt()` it: it is a bill and a row in a
 menu, and the thing bought is off the left of the screen.
 
-**Anything that piles up is a cell in a plot.** Dust, shards, spores, sparks and
-cores are all values in the same grids, told apart by `isDust` and by the mark
+**Anything that piles up is a cell in a plot.** Dust, shards, spores and sparks
+are all values in the same grids, told apart by `isDust` and by the mark
 drawn on them. Do not give a new one a physics of its own: it was tried, and the
 rules the two systems did not share — the ceiling, the lattice, the angle of
 repose — were each a bug, found one at a time.
@@ -284,10 +284,10 @@ layout on seven screen sizes, mining, the crew, every site, the pit, spending,
 touch, saving and both boards. It resets the save first, so run it on a game you
 do not mind losing.
 
-Dev hooks: `__state() __give(n) __spend(n) __grant({shards,spores,cores})
+Dev hooks: `__state() __give(n) __spend(n) __grant({shards,spores,sparks})
 __crew(miners,workers,quarriers,farmhands,labbers,wizards) __levels({...})
 __lab() __meteor() __wizardHat(n) __brew() __board(name) __jump(n) __next()
-__drop() __pile(x,n)
+__pile(x,n)
 __clearFloor()`.
 
 **Balance by measuring, and measure a plausible game.** `__levels()` and

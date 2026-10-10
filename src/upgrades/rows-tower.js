@@ -1,4 +1,4 @@
-import { TOWER_CORES, TOWER_DUST } from '../config.js';
+import { TOWER_DUST } from '../config.js';
 import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
 import { offered } from '../stations.js';
@@ -12,7 +12,7 @@ export const TOWER_ROWS = [
     name: 'discover the tower',
     note: () => 'train some wizards',
     blurb: 'wizards live here',
-    bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST]],
+    bill: () => [['dust', TOWER_DUST]],
     cost: () => TOWER_DUST,                      // for anything that asks in one coin
     // Raises a tower and nothing else: the first hat out of it summons the
     // first star (`stepTower`).

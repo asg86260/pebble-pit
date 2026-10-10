@@ -1,23 +1,23 @@
-// A station's board (DESIGN.md, "A fighter branches at rung 4"): the empty
-// lot's question, then the ladder as a tree of pips over the rows that buy
-// it, read off what the page draws (`railsOf`) and pressed where the player
-// presses (`pressKind`, `pressBuy`, `pressReset` are the lot's rows, a rung's
-// row and the Reset). The base unit climbs three rungs with no class; the
-// fork asks for a path, a row a class, and buying one closes the other
-// branch; Reset hands back what was paid and stands the base unit again; a
-// class that needs company waits for a second station; and two stations of
-// one kind keep a ladder each.
+// A station's board (DESIGN.md, "A fighter branches at rung 4" and "Built
+// first, a recruit, then two choices"): the Recruit's first choice, then the
+// ladder as a tree of pips over the rows that buy it, read off what the page
+// draws (`railsOf`) and pressed where the player presses (`lookAt`,
+// `pressKind` the Recruit's tree and its button, `pressBuy`, `pressReset` a
+// rung's row and the Reset). Rung 1 makes the Recruit a base unit; the base
+// unit climbs to the fork, which asks for a path, a row a class, and buying
+// one closes the other branch; Reset hands back what was paid and stands the
+// Recruit again; a class that needs company waits for a second station; and
+// two stations of one kind keep a ladder each.
 //
 // The stations are stood up by `__party`: the setup these checks are not
 // about. The pointer's own presses are the browser group `rails`
 // (src/selftest/deep.js).
 
-import { group, ok, yard } from './helpers.mjs';
-import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, rungDust, rungValue } from '../src/config.js';
-import { railsOf, pressKind, pressBuy, pressReset } from '../src/deep/rails.js';
+import { group, ok, yard, runUntil } from './helpers.mjs';
+import { LADDER, CLASSES, PAIRS, FORK_RUNG, FIRST_KINDS, LEVELUP_S, LEVELUP_BURST_S, rungDust, rungValue } from '../src/config.js';
+import { railsOf, lookAt, pressKind, pressBuy, pressReset } from '../src/deep/rails.js';
 import { classLadder, rungBill } from '../src/deep/rows.js';
-import { press } from '../src/deep/buildbutton.js';
-import { stationById } from '../src/deep/party.js';
+import { stationById, levelingUp } from '../src/deep/party.js';
 import { purse } from '../src/words.js';
 import { pressBuild } from './party-press.mjs';
 
@@ -34,28 +34,45 @@ const flush = () => {
   window.__scales(99999);
   window.__grant({ dust: 1e8, shards: 1e6, sparks: 1e5 });
 };
-// A rung's row, and the Reset, pressed.
-const buy = (st, cls = null) => pressBuy(st.id, cls);
+// A rung's row, and the Reset, pressed. Each rung's level-up holds the next
+// press back (the group below is about that wait); these are not, so a rung
+// bought lets its level-up go.
+const buy = (st, cls = null) => { const got = pressBuy(st.id, cls); st.lvlAt = null; return got; };
 const reset = st => pressReset(st.id);
 const climbBase = st => { for (let r = 1; r < FORK_RUNG; r++) buy(st); };
 const wallet = () => ({ scale: purse('scale'), dust: purse('dust'), shard: purse('shard'), spark: purse('spark') });
 
-group("an empty lot's board asks what goes up; a pick sends the builders", async () => {
-  window.__snatch({ played: true });
-  const id = press();
-  const lot = railsOf(id);
-  const open = lot.kinds.filter(k => k.open).map(k => k.kind);
-  const altar = lot.kinds.find(k => k.kind === 'altar');
-  const shut = pressKind(id, 'well');
-  const picked = pressKind(id, 'altar');
-  const st = stationById(id);
+group("a Recruit's board asks what it becomes, shows where each leads, and rung 1 buys it", async () => {
+  window.__party({ stations: [{ kind: null }] });
+  const [st] = S.stations;
+  const board = railsOf(st.id);
+  const open = board.kinds.filter(k => k.open).map(k => k.kind);
+  const altar = board.kinds.find(k => k.kind === 'altar');
+  const first = { looking: board.looking, label: board.row?.label };
+  const looked = lookAt(st.id, 'armory') && railsOf(st.id);
+  const stillRecruit = stationById(st.id).kind === null;
+  const shut = pressKind(st.id, 'well');
+  const poor = pressKind(st.id, 'altar');
+  flush();
+  const bill = rungBill(st.id, PAIRS.altar[0]), before = wallet();
+  const picked = pressKind(st.id, 'altar');
+  const after = wallet(), now = stationById(st.id);
   return [
-    ok(lot.lot && lot.ask === 'Choose your fighter', 'the lot asks which fighter', lot.ask),
-    ok(JSON.stringify(open) === JSON.stringify(FIRST_KINDS), 'the first lot offers the three starting kinds', JSON.stringify(open)),
-    ok(altar.name === 'Fighter' && altar.sub === 'Throw punches', 'each a base unit, saying what it does',
-       `${altar.name}: ${altar.sub}`),
-    ok(!shut, 'a kind not offered cannot be picked'),
-    ok(picked && st.kind === 'altar' && !st.built, 'a pick names the station, and it is put up by hand', JSON.stringify(st))
+    ok(board.recruit && board.who === 'Recruit' && board.ask === 'Choose your fighter', 'a new station stands a Recruit, asking which fighter',
+       `${board.who}: ${board.ask}`),
+    ok(JSON.stringify(open) === JSON.stringify(FIRST_KINDS), 'the first station offers the three starting kinds', JSON.stringify(open)),
+    ok(altar.name === 'Fighter' && altar.does === 'Throw punches', 'each a base unit, saying what it does', `${altar.name}: ${altar.does}`),
+    ok(altar.pair.map(b => b.name).join() === 'Brawler,Swordsman' && altar.pair.every(b => b.move[0] && b.cap[0] && b.glyph),
+       'and the two specialists it forks into, each with its move, its capstone and its glyph', JSON.stringify(altar.pair)),
+    ok(first.looking === 'altar' && first.label === 'Become a Fighter', 'the first open one is looked at, with its button',
+       JSON.stringify(first)),
+    ok(looked.looking === 'armory' && looked.row.label === 'Become a Scout' && stillRecruit,
+       'looking at another only looks: nothing is bought', looked.row.label),
+    ok(!shut, 'a kind not offered cannot be bought'),
+    ok(!poor, 'nor one the purse cannot pay for'),
+    ok(picked && now.kind === 'altar' && now.rung === 1 && JSON.stringify(now.paid) === JSON.stringify(bill),
+       'rung 1 bought makes it a Fighter, and the station keeps what it paid', JSON.stringify(now)),
+    ok(bill.every(([m, n]) => before[m] - after[m] === n), 'paid out of the purse', `${JSON.stringify(before)} -> ${JSON.stringify(after)}`)
   ];
 });
 
@@ -91,7 +108,25 @@ group('the base unit climbs three rungs; the fork asks for a path and closes the
   ];
 });
 
-group('Reset hands back exactly what was paid and stands the base unit again', async () => {
+group("a rung's level-up holds the station's next rung back until it has played", async () => {
+  const [{ id }] = stand('altar');
+  flush();
+  // Read fresh each time: the yard is saved and read back as it runs.
+  const st = () => stationById(id);
+  const first = pressBuy(id), started = st().lvlAt != null;
+  const during = railsOf(id).rows[0].can, again = pressBuy(id);
+  const held = st().rung;
+  runUntil(() => !levelingUp(st()), 5);
+  flush();
+  const after = railsOf(id).rows[0].can, then = pressBuy(id);
+  return [
+    ok(first && started, 'a rung bought starts its level-up', `${first} ${started}`),
+    ok(!during && !again && held === 1, 'and while it plays the next row is shut and a press buys nothing', `${during} ${again} rung ${held}`),
+    ok(after && then && st().rung === 2, `after ${LEVELUP_S + LEVELUP_BURST_S}s the row opens again`, `${after} ${then} rung ${st().rung}`)
+  ];
+});
+
+group('Reset hands back exactly what was paid and stands the Recruit again', async () => {
   const [st] = stand('armory');
   flush();
   const before = wallet();
@@ -99,24 +134,26 @@ group('Reset hands back exactly what was paid and stands the base unit again', a
   buy(st, 'ranger');
   const spent = wallet();
   const climbed = st.rung;
-  const sinking = S.sinking.length;
   reset(st);
   const after = wallet();
+  const tossed = S.sinking.some(g => g.back);
+  runUntil(() => !S.sinking.some(g => g.back) && !S.paid.some(m => m.back), 20);
+  const home = wallet();
   const back = railsOf('s1');
-  // Scales go back into the water they were lifted out of and sink to the
-  // bed; every other coin comes home at once.
+  // Scales are tossed back into the crusher and every other coin into the
+  // pit, each counted as it lands.
   const coins = w => ({ dust: w.dust, shard: w.shard, spark: w.spark });
   return [
     ok(climbed === FORK_RUNG && spent.scale < before.scale, 'the Scout and then the Ranger were climbed, in scales',
        `rung ${climbed}, ${before.scale} -> ${spent.scale}`),
-    ok(JSON.stringify(coins(after)) === JSON.stringify(coins(before)), 'Reset gives every coin back',
-       `${JSON.stringify(before)} -> ${JSON.stringify(after)}`),
-    ok(S.sinking.length - sinking === before.scale - spent.scale, 'and every scale back into the water',
-       `${S.sinking.length - sinking} of ${before.scale - spent.scale}`),
-    ok(st.cls === null && st.rung === 0 && back.who === 'Scout', 'the station is its base unit again',
-       `${st.cls} ${st.rung} ${back.who}`),
-    ok(back.tree.arms.every(a => !a.gone) && back.tree.base.every(p => !p.on), 'with the whole tree open',
-       JSON.stringify(back.tree.arms.map(a => a.gone))),
+    ok(JSON.stringify(coins(home)) === JSON.stringify(coins(before)), 'Reset gives every coin back',
+       `${JSON.stringify(before)} -> ${JSON.stringify(home)}`),
+    ok(tossed && after.scale === spent.scale && home.scale === before.scale, 'and every scale tossed back into the crusher',
+       `${spent.scale} -> ${after.scale} -> ${home.scale} of ${before.scale}`),
+    ok(st.kind === null && st.cls === null && st.rung === 0 && back.recruit && back.who === 'Recruit',
+       'the station stands its Recruit again', `${st.kind} ${st.cls} ${st.rung} ${back.who}`),
+    ok(JSON.stringify(back.kinds.filter(k => k.open).map(k => k.kind)) === JSON.stringify(FIRST_KINDS),
+       'with its first choice asked again: the only station, so the three starters', JSON.stringify(back.kinds.map(k => [k.kind, k.open]))),
     ok(!back.reset.can, 'and nothing left for Reset to do')
   ];
 });
@@ -191,11 +228,31 @@ group('each pip says what it is, one short line', async () => {
   const lines = [base, move, cap, rung, locked, opened];
   return [
     ok(base === `Apprentice: ${rungValue('mage', 2)} dmg/s`, 'a base rung names the base unit and its number', base),
-    ok(move === 'Widening: widen the beam', 'rung 4 names the move', move),
-    ok(cap === 'Thermite: burn through armor', 'rung 8 the capstone', cap),
+    ok(move === 'Widening: wider beam', 'rung 4 names the move', move),
+    ok(cap === 'Thermite: burns armor', 'rung 8 the capstone', cap),
     ok(rung === `Mage: ${Math.round(rungValue('mage', 6))} dmg/s`, 'another rung its number', rung),
     ok(/second station/.test(locked), 'a locked branch says when it opens', locked),
     ok(!/second station/.test(opened), 'and opens with a second station', opened),
     ok(lines.every(l => !l.includes('\n') && l.length < 60), 'each one short line', lines.join(' | '))
+  ];
+});
+
+// Every choice says what it leads to (DESIGN.md, voted E2): at the fork each
+// specialist's row carries its move and its capstone, a status in a line
+// named in braces for the page to draw bold with its hover line.
+group("at the fork each specialist's row shows its move and its capstone, statuses named", async () => {
+  const [st] = stand('altar', 'circle');
+  flush();
+  climbBase(st);
+  const rows = railsOf(st.id).rows;
+  const by = cls => rows.find(r => r.cls === cls)?.branch;
+  const hexer = (() => { const [, c] = S.stations; climbBase(c); return railsOf(c.id).rows.find(r => r.cls === 'hexer')?.branch; })();
+  return [
+    ok(rows.length === 2 && rows.every(r => r.branch && r.branch.move[0] && r.branch.cap[0]), 'both rows carry a branch',
+       JSON.stringify(rows.map(r => r.branch))),
+    ok(by('brawler').cap[1] === '{Stun}' && by('sword').cap[1] === '{Bleed}',
+       'the capstones name their statuses', `${by('brawler').cap[1]} / ${by('sword').cap[1]}`),
+    ok(hexer && hexer.move[1] === 'serpent takes more damage' && hexer.cap[1] === '{Held}, {Exposed}',
+       "the Hexer's move and capstone name theirs", JSON.stringify(hexer))
   ];
 });

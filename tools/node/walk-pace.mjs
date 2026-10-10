@@ -40,7 +40,7 @@ const show = (label, n) => console.log(`  ${label.padEnd(22)} ${n.toFixed(2)} px
 console.log('\nbare yard, no gear bought');
 window.__reset();
 window.__crew(1, 2);
-window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+window.__grant({ sparks: 999, shards: 999, spores: 999 });
 window.__tip(90000);
 const haul0 = paceOf('hauler');
 window.__shack(false); window.__buy('unlockshack');
@@ -52,7 +52,7 @@ show('difference', Math.abs(haul0 - build0));
 console.log('\nsame yard, every pace rung and boot bought');
 window.__reset();
 window.__crew(1, 2);
-window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+window.__grant({ sparks: 999, shards: 999, spores: 999 });
 window.__tip(90000);
 window.__levels({ haulPaceLevel: 5, bootsLevel: 5, haulCarryLevel: 5, harnessLevel: 5 });
 const haul1 = paceOf('hauler');

@@ -25,9 +25,9 @@ const CPS = Number(cpsArg);
 const TOTAL = Number(minutes) * 60;
 
 // Balances under the names the bills use. The snapshot counts in plurals
-// (`cores`), the bills charge in singulars (`core`) — matching them here is
+// (`shards`), the bills charge in singulars (`shard`) — matching them here is
 // what lets affordability be read straight off a row's bill.
-const bal = s => ({ dust: s.stored, core: s.cores, shard: s.shards, spore: s.spores, spark: s.sparks });
+const bal = s => ({ dust: s.stored, shard: s.shards, spore: s.spores, spark: s.sparks });
 // `time` is labor, not a coin: every built row carries it and nobody's purse
 // holds it.
 const afford = (bill, b) => bill.every(([m, n]) => m === 'time' || (b[m] ?? 0) >= n);

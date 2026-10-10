@@ -136,8 +136,6 @@ export const TESTS = [
     await settle();
     window.__crew(2, 2);
     window.__give(200000);
-    // a place is bought with a core as well as with dust
-    window.__grant({ cores: 5 });
     window.__answered('props');                 // the shield that opens the plots
     run(20);
     // Each press reports what it cost as well as what the board did, because
@@ -194,7 +192,6 @@ export const TESTS = [
     // tears through the rift, and the drowning takes the camera to the pit
     // mid-walk.
     window.__give(30000);
-    window.__grant({ cores: 9 });
     window.__crew(6, 3);
     run(20);
     // the walk has to start from where a hand actually starts
@@ -275,7 +272,7 @@ export const TESTS = [
     await settle();
     window.__crew(4, 2);
     window.__give(40000);
-    window.__grant({ shards: 400, spores: 1300, cores: 9 });
+    window.__grant({ shards: 400, spores: 1300 });
     // The ground up, so the rows that carry a note are on the bench: the tower
     // is one of them and it is the last thing the chain offers.
     window.__crew(0, 0, 1, 1);

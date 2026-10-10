@@ -237,7 +237,6 @@ group('the net slows the rock and lets it through anyway', async () => {
 // order.
 group('each shield that fails opens the next station', async () => {
   ready();
-  window.__grant({ cores: 12 });
   run(1);
   const shown = key => !!window.__rows().find(r => r.key === key)?.shown;
   const build = key => buyBuilt(key, 200);
@@ -258,8 +257,10 @@ group('each shield that fails opens the next station', async () => {
   const towerUp = build('unlocktower');
 
   window.__reset();
-  const gated = (early, after) => early && after;
-  const when = 'before and after';
+  // Each place waits on the barrier before it failing (DESIGN.md, "The
+  // barriers are the gates"): not offered before, offered after.
+  const gated = (early, after) => !early && after;
+  const when = 'only once';
   return [
     ok(gated(farmEarly, farmAfter), `the farm is offered ${when} the timber has failed`,
        `${farmEarly} -> ${farmAfter}`),
@@ -438,7 +439,7 @@ group('the dome holds the rescue rock, sets it down, and then fades out', async 
   return [
     ok(!before, 'the dome is not offered until the machine has failed too'),
     ok(!noFlyers, 'nor until somebody can fly'),
-    ok(offered && bought, 'and is bought from the tower, in cores'),
+    ok(offered && bought, 'and is bought from the tower'),
     ok(nobodyCarries, 'nothing of it is carried across the yard'),
     ok(cast && poured, 'the wizards ring it and pour it up', `laid ${state().shieldsDone}`),
     ok(noGroundWork, 'and no work of it ever touches the ground'),
@@ -517,7 +518,7 @@ group('the dome is priced in every coin and is the dearest thing on any board', 
     .flatMap(r => r.bills.map((bill, i) =>
       ({ key: r.bills.length > 1 ? `${r.key}@${i + 1}` : r.key, bill })));
   window.__reset();
-  const coins = ['core', 'dust', 'shard', 'spore', 'spark'];
+  const coins = ['dust', 'shard', 'spore', 'spark'];
   const domeLine = money => (dome.bill.find(([m]) => m === money) || [money, 0])[1];
   const topOf = money => rows.reduce((best, r) => {
     const n = (r.bill.find(([m]) => m === money) || [money, 0])[1];

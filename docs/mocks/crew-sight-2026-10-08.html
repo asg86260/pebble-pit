@@ -1,0 +1,150 @@
+<meta charset="utf-8">
+<title>Crew Sight Mocks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* layout: three panels of the same little yard, each looping: a few seconds as it is, then the right button held and the cursor drifting over a worker */
+:root {
+  --bg: #050506; --panel: #0d0d10; --line: #26262c; --fg: #e8e8ec; --dim: #8b8b96;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--mono); padding-inline: 16px; padding-block: 24px 48px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+h1 { font-size: 20px; font-weight: 600; margin: 0; }
+p { margin: 0; max-width: 72ch; color: var(--dim); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 16px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; min-width: 0; }
+figcaption { color: var(--dim); font-size: 13px; }
+figcaption b { color: var(--fg); }
+canvas { width: 100%; max-width: 100%; image-rendering: pixelated; display: block; background: #fff; }
+.beat { font-size: 12px; color: var(--fg); min-height: 1.5em; }
+.note { border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>Seeing the crew</h1>
+    <p>No question mark on hover any more. Hold the right button and the buildings fade back and the workers stand out; a worker under the cursor slows down instead of stopping. Each panel loops: three seconds as the yard is, then the right button held.</p>
+  </header>
+  <div class="grid" id="opts"></div>
+  <p class="note">Drawn from plain shapes, not the game: the buildings are blocks, the workers are squares walking a flat ground, and there is no rock, pit, sky or board. A right press on a worker still picks it up, as now.</p>
+</main>
+<script>
+const C = 4, W = 90, H = 50;                       // cells across and down, px a cell
+const GROUND = 40;
+const LOOP = 9, HELD_FROM = 3;                     // seconds; the right button is held from 3 s
+const SLOW = 0.4;                                  // a hovered worker's pace while held
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const OPTS = [
+  ['ghost', 'A · Ghosted buildings', 'the buildings go pale grey and flat; the workers stay black with a white edge round them'],
+  ['outline', 'B · Outlines', 'the buildings thin to their outlines; the workers stay solid, each with a ring of black round it'],
+  ['veil', 'C · Dark veil', 'the whole yard dims to dark grey and the workers light up white over it, the hovered one ringed'],
+];
+
+// the yard: blocks standing on the ground line
+const BUILDINGS = [[6, 14, 12], [26, 10, 18], [44, 16, 9], [66, 12, 15], [80, 8, 7]];   // x, width, height in cells
+// walkers: start x, speed in cells a second, range
+const WALKERS = [[4, 4.2], [20, -3.6], [37, 5], [52, -4.4], [70, 3.8], [84, -3]];
+
+function scene(g, kind, t) {
+  const held = t >= HELD_FROM;
+  const k = held ? Math.min(1, (t - HELD_FROM) / 0.4) : 0;   // the fade, eased in over 0.4 s in held steps
+  const step = Math.floor(k * 4) / 4;
+  // the cursor: drifts in and parks over worker 2's path
+  const cx = held ? 30 + Math.min(1, (t - HELD_FROM) / 1.5) * 10 : 60, cy = GROUND - 2;
+  // ground and sky
+  const ink = (light, dark) => `rgb(${Math.round(light + (dark - light) * (kind === 'veil' ? step : 0))},${Math.round(light + (dark - light) * (kind === 'veil' ? step : 0))},${Math.round(light + (dark - light) * (kind === 'veil' ? step : 0))})`;
+  g.fillStyle = ink(255, 60); g.fillRect(0, 0, W * C, H * C);
+  g.fillStyle = ink(170, 40); g.fillRect(0, GROUND * C, W * C, (H - GROUND) * C);
+  for (let x = 0; x < W; x += 3) { g.fillStyle = ink(140, 30); g.fillRect(x * C, (GROUND + 2 + (x % 2)) * C, C, C); }
+  // buildings
+  for (const [bx, bw, bh] of BUILDINGS) {
+    const top = GROUND - bh;
+    if (kind === 'ghost') {
+      const v = Math.round(20 + (215 - 20) * step);
+      g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(bx * C, top * C, bw * C, bh * C);
+      g.fillStyle = `rgb(${Math.min(255, v + 25)},${Math.min(255, v + 25)},${Math.min(255, v + 25)})`;
+      for (let wy = top + 2; wy < GROUND - 2; wy += 4) for (let wx = bx + 2; wx < bx + bw - 2; wx += 4) g.fillRect(wx * C, wy * C, 2 * C, 2 * C);
+    } else if (kind === 'outline') {
+      g.fillStyle = '#141414'; g.fillRect(bx * C, top * C, bw * C, bh * C);
+      if (step > 0) {
+        g.fillStyle = '#fff';
+        const inset = Math.max(1, Math.round(step * 4)) ;
+        g.fillRect((bx + 1) * C, (top + 1) * C, (bw - 2) * C, (bh - 1) * C);
+        if (step < 1) { g.fillStyle = '#141414'; g.fillRect((bx + inset) * C, (top + inset) * C, Math.max(0, bw - 2 * inset) * C, Math.max(0, bh - inset) * C); }
+      } else {
+        g.fillStyle = '#3a3a3a';
+        for (let wy = top + 2; wy < GROUND - 2; wy += 4) for (let wx = bx + 2; wx < bx + bw - 2; wx += 4) g.fillRect(wx * C, wy * C, 2 * C, 2 * C);
+      }
+    } else {
+      const v = Math.round(20 + (75 - 20) * step);
+      g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(bx * C, top * C, bw * C, bh * C);
+      g.fillStyle = `rgb(${v + 30},${v + 30},${v + 30})`;
+      for (let wy = top + 2; wy < GROUND - 2; wy += 4) for (let wx = bx + 2; wx < bx + bw - 2; wx += 4) g.fillRect(wx * C, wy * C, 2 * C, 2 * C);
+    }
+  }
+  // workers: three cells square, walking and turning at the edges; the one
+  // under the cursor slows while the button is held
+  WALKERS.forEach(([x0, v], i) => {
+    let x = walk(i, t);
+    const hovered = held && Math.abs(x + 1.5 - cx) < 3;
+    const y = GROUND - 3 - (Math.floor(t * 6 + i) % 2 && !hovered ? 1 : 0);
+    const X = Math.round(x) * C, Y = y * C;
+    if (kind === 'ghost') {
+      if (step > 0) { g.fillStyle = '#fff'; g.fillRect(X - C, Y - C, 5 * C, 5 * C); }
+      g.fillStyle = '#000'; g.fillRect(X, Y, 3 * C, 3 * C);
+      if (hovered) { g.fillStyle = '#000'; g.fillRect(X + C, Y - 3 * C, C, C); }
+    } else if (kind === 'outline') {
+      if (step > 0) { g.fillStyle = '#000'; g.fillRect(X - C, Y - C, 5 * C, 5 * C); g.fillStyle = '#fff'; g.fillRect(X, Y, 3 * C, 3 * C); g.fillStyle = '#000'; g.fillRect(X + C, Y + C, C, C); }
+      else { g.fillStyle = '#000'; g.fillRect(X, Y, 3 * C, 3 * C); }
+      if (hovered) { g.fillStyle = '#000'; g.fillRect(X - 2 * C, Y - 2 * C, 7 * C, C); }
+    } else {
+      g.fillStyle = step > 0 ? '#fff' : '#000'; g.fillRect(X, Y, 3 * C, 3 * C);
+      if (hovered) {
+        g.fillStyle = '#fff';
+        for (const [dx, dy] of [[-2, -2], [4, -2], [-2, 4], [4, 4], [1, -2], [-2, 1], [4, 1], [1, 4]]) g.fillRect(X + dx * C, Y + dy * C, C, C);
+      }
+    }
+  });
+  // the cursor
+  g.fillStyle = kind === 'veil' && step > 0 ? '#fff' : '#000';
+  const px = Math.round(cx) * C, py = Math.round(cy - 6) * C;
+  for (const [dx, dy] of [[0, 0], [0, 1], [1, 1], [0, 2], [1, 2], [2, 2], [0, 3], [1, 3]]) g.fillRect(px + dx * C, py + dy * C, C, C);
+  return held;
+}
+
+// Where walker i is at time t: a slowed stretch while it is under the held
+// cursor, integrated in small steps so the slow-down carries over.
+function walk(i, t) {
+  const [x0, v0] = WALKERS[i];
+  let x = x0, v = v0;
+  for (let s = 0; s < t; s += 1 / 30) {
+    const held = s >= HELD_FROM;
+    const cx = held ? 30 + Math.min(1, (s - HELD_FROM) / 1.5) * 10 : 60;
+    const k = held && Math.abs(x + 1.5 - cx) < 3 ? SLOW : 1;
+    x += v * k / 30;
+    if (x < 1 || x > W - 4) { v = -v; x = Math.max(1, Math.min(W - 4, x)); }
+  }
+  return x;
+}
+
+const panels = OPTS.map(([kind, name, cap]) => {
+  const f = document.createElement('figure');
+  const cv = document.createElement('canvas'); cv.width = W * C; cv.height = H * C;
+  const beat = document.createElement('div'); beat.className = 'beat';
+  const fc = document.createElement('figcaption'); fc.innerHTML = `<b>${name}</b> — ${cap}`;
+  f.append(cv, beat, fc);
+  document.getElementById('opts').append(f);
+  return { g: cv.getContext('2d'), kind, beat };
+});
+
+const frame = ms => {
+  const t = still ? HELD_FROM + 2 : Math.floor((ms / 1000 % LOOP) * 12) / 12;
+  for (const p of panels) {
+    const held = scene(p.g, p.kind, t);
+    p.beat.textContent = held ? 'right button held: the cursor slows the worker under it' : 'the yard as it is';
+  }
+  if (!still) requestAnimationFrame(frame);
+};
+requestAnimationFrame(frame);
+</script>

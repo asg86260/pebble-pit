@@ -19,7 +19,7 @@
   td:first-child, th:first-child { text-align: left; }
   td.val { text-align: left; }
   td.dust { color: #111; } td.spore { color: #2e9e4b; } td.shard { color: #2f5fd0; }
-  td.core { color: #444; } td.spark { color: #d93a25; } td.time { color: #777; }
+  td.spark { color: #d93a25; } td.time { color: #777; }
   tr.spark-rung td { background: #fff4f2; }
   td.step, td.pct { color: #555; }
   td.eq { color: #333; } td.per { color: #7a4b00; }
@@ -57,7 +57,7 @@
 <h1>the ladder book</h1>
 <p class="note">Every ladder, climbed. <b>value</b> is what the row reads before the rung and after
   it, the after a box: type a figure and the ladder changes; <b>step</b> and <b>gain</b> are what
-  the rung adds; <b>dust</b> is its price, a box too, and <b>spore / shard / core / spark</b> follow
+  the rung adds; <b>dust</b> is its price, a box too, and <b>spore / shard / spark</b> follow
   it at the coins' rates; <b>work</b> is the builders' seconds; <b>≈dust</b> is the whole bill at the coins' dust rates,
   <b>per +1%</b> that over the gain (the number to compare down a ladder and across them), and
   <b>so far</b> the ladder's spend to here. Knobs on the right move first costs and the rest.</p>
@@ -103,7 +103,7 @@ import { LADDERS } from './src/config.js';
 Object.assign(S, {
   crew: 8, farmOpen: true, quarryOpen: true, apothecaryOpen: true, filterOpen: true,
   towerOpen: true, shackOpen: true, outhouseOpen: true, casinoOpen: true,
-  seenShard: true, seenSpore: true, seenCore: true, seenSpark: true, seenAir: true,
+  seenShard: true, seenSpore: true, seenSpark: true, seenAir: true,
   brews: 9, autoMine: true, boulderNo: 3, introDone: true,
   // and the deep
   snatched: true, seenScale: true
@@ -131,7 +131,7 @@ const ROWS = [
   { u: HOUSE_ROW, board: 'crew' }
 ].filter(({ u }) => u.rung && (u.bill || u.cost));
 
-const COINS = ['dust', 'scale', 'spore', 'shard', 'core', 'spark'];
+const COINS = ['dust', 'scale', 'spore', 'shard', 'spark'];
 
 // Everything on S a climb might move, kept and put back: the level fields are
 // plain numbers, the potions' potency and the multipliers are objects of

@@ -57,7 +57,7 @@ function build(key) {
 function yardWith(first, second) {
   window.__seed(SEED);
   window.__crew(3, 3);
-  window.__grant({ cores: 40, shards: 9999, spores: 9999, dust: 400000 });
+  window.__grant({ shards: 9999, spores: 9999, dust: 400000 });
   yard.S.seenMess = true;      // the outhouse's own gate
   build(first);
   build(second);

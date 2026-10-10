@@ -15,7 +15,7 @@
 // roster in the band under that, and no surface or sky over it.
 
 import { S } from './state.js';
-import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN } from './config.js';
+import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM, KILL_GLIDE } from './config.js';
 import { clampCam, setZoom } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
@@ -33,14 +33,16 @@ const yardZoom = () => CELL / P;
 // never rounded back up past the window.
 function deepZoom() {
   const need = DEEP_H - DEEP_SURFACE - P * 2 + DEEP_FLOOR_MARGIN;
-  const k = held ?? Math.min(1, S.H / (need * yardZoom()));
+  const k = (held ?? Math.min(1, S.H / (need * yardZoom()))) * (1 + KILL_ZOOM * killIn);
   const unit = CELL * S.dpr;
   return Math.max(1, Math.floor(unit * k)) / unit;
 }
+// How far the kill has the deep's frame pulled in, 0..1 (`killFrame`).
+let killIn = 0;
 
-// A zoom the deep is held at in place of its fit, for the station editor
-// (stations.html), which pulls in on the one station being painted: the deep
-// re-takes its zoom every frame, so a setZoom from outside lasts one frame.
+// A zoom the deep is held at in place of its fit, for a look pulled in on
+// one thing (`__deepZoom`): the deep re-takes its zoom every frame, so a
+// setZoom from outside lasts one frame.
 // Null lets go. Never saved, and nothing in the game sets it.
 let held = null;
 export const holdDeepZoom = k => { held = k; if (S.view === 'deep') setZoom(deepZoom()); };
@@ -68,6 +70,17 @@ export function deepCamera() {
   const x0 = deepX0();
   const camX = Math.max(x0, Math.min(openX('deep') - viewW / 2, Math.max(x0, deepX1() - viewW)));
   return { zoom, viewW, viewH, camX, camY: deepFloor() + DEEP_FLOOR_MARGIN - viewH };
+}
+
+// The kill's frame (snatch.js): the deep's own, closer by `k` of KILL_ZOOM
+// (held in `deepZoom`, which the deep re-takes every frame), glided over `x`;
+// the floor stays at the foot of it (`clampCam`). `k` 0 is the deep's frame.
+export function killFrame(k, x) {
+  killIn = k;
+  if (S.view !== 'deep') return;
+  setZoom(deepZoom());
+  S.camX += (x - S.viewW / 2 - S.camX) * KILL_GLIDE;
+  clampCam();
 }
 
 // A glide held where it is, for a scene that wants a shot of its middle

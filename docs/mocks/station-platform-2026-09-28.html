@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Station Platforms</title>
+<style>
+  :root { --ink: #111116; --paper: #f5f5f7; --card: #fff; --dim: #5d5d69; --rule: #d6d6de; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { max-width: 100ch; margin: 0 0 10px; }
+  .dim { color: var(--dim); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0; }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 9px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+  .tile { display: grid; gap: 4px; }
+  .tile canvas { width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--rule); background: #000; }
+  .tile b { font-size: 13px; }
+  .tile span { font-size: 12px; color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Station Platforms</h1>
+  <p>Every station stands on a raised platform, the prop and the fighter's post together, so it sits off the deep's
+    floor. Four shapes, each shown with a base unit's crate and its fighter bobbing a cell as the game's idle does.
+    Pick a shape and a height.</p>
+  <p class="dim">A mock drawn from plain shapes on the game's 6 px cell and grey ramp, not the game. It cannot show: the
+    real props past the crate, the loose scales that pile on the floor round it, the serpent, or the fighter swimming
+    up off the platform to fight.</p>
+  <div class="bar"><span class="dim">height</span>
+    <button type="button" data-h="1">1 cell</button>
+    <button type="button" data-h="2" aria-pressed="true">2 cells</button>
+    <button type="button" data-h="3">3 cells</button>
+  </div>
+  <div class="tiles" id="tiles"></div>
+</div>
+<script>
+'use strict';
+const P = 6, COLS = 40, ROWS = 26;
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+               '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+// a tone near `i`, per cell: no flat fills
+const near = (i, x, y, spread = 1) => GREYS[Math.max(1, Math.min(11, i + Math.round((hash(x * 31 + y * 17) * 2 - 1) * spread)))];
+const cell = (g, x, y, tone) => { g.fillStyle = tone; g.fillRect(x * P, y * P, P, P); };
+
+const FLOOR = ROWS - 3;                  // the deep's floor row
+// the crate (props.js), E frame, p boards, S straw
+const CRATE = ['.S..S.', 'EEEEEE', 'EpppEE', 'EppEpE', 'EpEppE', 'EEEEEE'];
+const CRATE_TONE = { E: 7, p: 5, S: 9 };
+const PROP_X = 10, POST_X = PROP_X + 6 + 5, BODY = 3;   // prop, then PROP_GAP, then the 3-cell body
+const LEFT = PROP_X - 2, RIGHT = POST_X + BODY + 2;     // the platform's span, a cell and more past each end
+
+function floor(g) {
+  for (let y = FLOOR; y < ROWS; y++) for (let x = 0; x < COLS; x++) cell(g, x, y, near(3, x, y));
+  // a thin scatter of loose scales along the floor, for scale
+  for (let x = 0; x < COLS; x++) if (hash(x * 7) < 0.35) cell(g, x, FLOOR - 1, near(7, x, 99, 2));
+  // motes in the water
+  for (let i = 0; i < 40; i++) cell(g, Math.floor(hash(i * 3.1) * COLS), Math.floor(hash(i * 5.7) * (FLOOR - 2)), GREYS[2 + Math.floor(hash(i) * 3)]);
+}
+
+// Each shape draws rows FLOOR-h .. FLOOR-1 between LEFT and RIGHT and answers
+// the row the station stands on (its top surface).
+const SHAPES = [
+  { name: 'A. Slab', say: 'one block of dressed stone, a lit top edge, a dark foot',
+    draw(g, h) {
+      const top = FLOOR - h;
+      for (let y = top; y < FLOOR; y++) for (let x = LEFT; x <= RIGHT; x++)
+        cell(g, x, y, y === top ? near(9, x, y) : y === FLOOR - 1 && h > 1 ? near(4, x, y) : near(6, x, y));
+      return top;
+    } },
+  { name: 'B. Stepped plinth', say: 'narrower as it rises: a step in at each end per cell of height',
+    draw(g, h) {
+      const top = FLOOR - h;
+      for (let y = top; y < FLOOR; y++) {
+        const out = y - top;            // a cell further out each row down: the base is widest
+        const l = LEFT - out, r = RIGHT + out;
+        for (let x = l; x <= r; x++) cell(g, x, y, x === l || x === r ? near(8, x, y) : y === top ? near(9, x, y) : near(6, x, y));
+      }
+      return top;
+    } },
+  { name: 'C. Plank deck', say: 'boards on short legs; the floor and its scales show underneath',
+    draw(g, h) {
+      const top = FLOOR - h;
+      for (let x = LEFT; x <= RIGHT; x++) cell(g, x, top, (x - LEFT) % 5 === 4 ? near(5, x, top) : near(8, x, top));
+      for (let y = top + 1; y < FLOOR; y++) for (const x of [LEFT + 1, Math.round((LEFT + RIGHT) / 2), RIGHT - 1]) cell(g, x, y, near(6, x, y));
+      return top;
+    } },
+  { name: 'D. Rock ledge', say: 'a lump of the deep’s own rock, flat on top, ragged at the sides',
+    draw(g, h) {
+      const top = FLOOR - h;
+      for (let y = top; y < FLOOR; y++) {
+        const k = y - top;
+        const l = LEFT - Math.round(hash(y * 13) * 2) - k, r = RIGHT + Math.round(hash(y * 29) * 2) + k;
+        for (let x = l; x <= r; x++) cell(g, x, y, y === top ? near(8, x, y, 2) : near(5, x, y, 2));
+      }
+      return top;
+    } },
+];
+
+function station(g, top, t) {
+  CRATE.forEach((row, r) => [...row].forEach((c, col) => {
+    if (c !== '.') cell(g, PROP_X + col, top - CRATE.length + r, near(CRATE_TONE[c], col, r));
+  }));
+  // the fighter: a 3-cell body, a cell's idle hop
+  const hop = Math.floor(t / 600) % 2;
+  for (let y = 0; y < BODY; y++) for (let x = 0; x < BODY; x++) cell(g, POST_X + x, top - BODY - hop + y, y === 0 ? GREYS[11] : GREYS[10]);
+}
+
+let height = 2;
+const tiles = document.getElementById('tiles');
+const cans = SHAPES.map(s => {
+  const d = document.createElement('div');
+  d.className = 'tile';
+  const c = document.createElement('canvas');
+  c.width = COLS * P; c.height = ROWS * P;
+  d.append(c);
+  const b = document.createElement('b'); b.textContent = s.name;
+  const sp = document.createElement('span'); sp.textContent = s.say;
+  d.append(b, sp);
+  tiles.append(d);
+  return c.getContext('2d');
+});
+// and the old way, for comparison
+{
+  const d = document.createElement('div');
+  d.className = 'tile';
+  const c = document.createElement('canvas');
+  c.width = COLS * P; c.height = ROWS * P;
+  const b = document.createElement('b'); b.textContent = 'Today';
+  const sp = document.createElement('span'); sp.textContent = 'on the floor, no platform';
+  d.append(c, b, sp);
+  tiles.append(d);
+  cans.push(c.getContext('2d'));
+}
+
+function frame(t) {
+  cans.forEach((g, i) => {
+    g.fillStyle = '#000'; g.fillRect(0, 0, COLS * P, ROWS * P);
+    floor(g);
+    const top = SHAPES[i] ? SHAPES[i].draw(g, height) : FLOOR - 1;
+    station(g, top, t);
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+document.querySelectorAll('[data-h]').forEach(b => b.addEventListener('click', () => {
+  height = +b.dataset.h;
+  document.querySelectorAll('[data-h]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+}));
+</script>
+</body>
+</html>

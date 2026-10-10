@@ -11,7 +11,7 @@
 // stand twice, and each keeps its own ladder.
 
 import { S } from '../state.js';
-import { rungValue, POD_SCALES0, POD_RATE, PARTY_IDS, CLASSES, PAIRS } from '../config.js';
+import { rungValue, POD_SCALES0, POD_RATE, PARTY_IDS, CLASSES, PAIRS, FANG_RUNGS, FANG_RUNG_DUST } from '../config.js';
 import { tierRows, named } from '../upgrades/tiers.js';
 import { hirePod } from '../staffing.js';
 import { registerRows, ahead } from '../works.js';
@@ -29,7 +29,8 @@ const POD = {
   repeats: true,
   from: () => S.crew + ahead('pod'), to: () => S.crew + ahead('pod') + 1,
   // Scales alone: naming no dust at nought would have `billOf` add its worth.
-  bill: () => [['scale', Math.round(POD_SCALES0 * Math.pow(POD_RATE, (S.pods || 0) + ahead('pod')))], ['dust', 0]],
+  // The sqwife's pod stands from the snatch, so the first one sold is the foot.
+  bill: () => [['scale', Math.round(POD_SCALES0 * Math.pow(POD_RATE, Math.max(0, (S.pods || 0) - 1) + ahead('pod')))], ['dust', 0]],
   buy: () => { hirePod(); S.shopStale = true; },
   show: () => S.snatched
 };
@@ -58,6 +59,18 @@ export function classLadder(st, cls) {
     show: () => true,
     bands: named(cls, CLASSES[cls].name)
   });
+  // A fang's station pays at least FANG_RUNG_DUST for each of its first rungs.
+  if (S.stations.indexOf(st) > 0) {
+    const written = card.bill;
+    card.bill = () => {
+      const b = written();
+      if ((st.rung || 0) >= FANG_RUNGS) return b;
+      const d = b.find(([m]) => m === 'dust');
+      if (d) d[1] = Math.max(d[1], FANG_RUNG_DUST);
+      else b.push(['dust', FANG_RUNG_DUST]);
+      return b;
+    };
+  }
   return card;
 }
 // What the next rung of `cls` at station `id` asks, as [coin, n] pairs with
@@ -87,6 +100,5 @@ for (const key of Object.keys(DEEP_ROWS))
 // first frame, empty until a station stands under it.
 const fighterHead = id => ({ title: 'the fighter', roster: true, keys: [],
                              heads: () => (stationById(id)?.fighter ? 1 : 0) });
-// An empty lot has no fighter yet, so no heading: its board is the question.
 for (const id of PARTY_IDS)
-  registerBoard(id, { rows: () => [], sections: () => (stationById(id)?.kind ? [fighterHead(id)] : []) });
+  registerBoard(id, { rows: () => [], sections: () => (stationById(id)?.built ? [fighterHead(id)] : []) });

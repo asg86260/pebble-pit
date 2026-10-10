@@ -19,12 +19,30 @@ export const RIPPLE_WARM_WAIT_MS = 1000; // the longest a pass waits for an idle
 // plus and minus, was hard to find.
 export const DEEP_FLOOR_MARGIN = P * 9;
 export const DEEP_POST_DOWN = P * 5;   // the roster's posts, this far under the floor
-// The stations are drawn cell for cell off their sprites, each under a lit
-// dome. The dome stands DOME_PAD out from the drawing either side, its walls
-// rise to DOME_WALL over the drawing's top, and the arch is a half circle
-// over that.
-export const DOME_PAD = P * 4;
-export const DOME_WALL = P * 4;
+// A station is its fighter and a prop (deep/props.js): the prop's right-hand
+// column stands PROP_GAP cells short of the fighter's body at its post, so a
+// kit carried at the body's left (the Monk's beads) has water between it and
+// the prop. The Swordsman carries his sword three cells off his body, so his
+// rack stands two more off, lest the sword be read as the rack's third.
+export const PROP_GAP = 5;
+export const PROP_GAP_OF = { sword: 7 };
+// Every station stands on a stepped stone plinth, prop and fighter together,
+// off the floor (docs/mocks/station-platform-2026-09-28.html, B): this many
+// cells high, a cell further out each course down, and reaching this many
+// cells past the prop and the body at its top.
+export const PLINTH_H = 2;
+export const PLINTH_OVER = 1;
+export const PLINTH_TONES = { top: [9, 8, 9], end: [8, 7], body: [6, 5, 6, 7] };   // GREYS indices, one picked a cell
+// A low dome behind every built station (docs/mocks/station-backdrop-2026-09-28.html,
+// B), so the bed of scales heaped on the floor sits behind it and a grey kit
+// reads on dark: its walls rise DOME_WALL cells over the fighter's head
+// before the arch springs, and it spans the station's ground and the widest
+// kit held out from the fighter's middle (DOME_REACH: the rung-8 bow's tip
+// and the hand on it), DOME_PAD cells more either side.
+export const DOME_WALL = 2;
+export const DOME_REACH = 6;
+export const DOME_PAD = 1;
+export const DOME_TONES = { inside: [2, 3], rim: [5, 6] };   // GREYS indices, one picked a cell
 // The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
 // the door's inside is one heat field. A cell's heat is the base, raised by
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from
@@ -80,7 +98,7 @@ export const SHAFT_ARROW_DOWN = P * 2;
 // so the camera that opens on it (view.js) shows it in the middle of the
 // window however much of the deep the window holds (the owner's call).
 export const DEEP_PORTAL_R = P * 15;
-export const DEEP_PORTAL_DOWN = P;
+export const DEEP_PORTAL_DOWN = -P * 2;   // up two cells: its top on the surface, clear of the serpent's bar and still under the roof
 export const DEEP_PORTAL_AT = 0.5;
 export const SHAFT_ARROW_BOB = P;
 export const SHAFT_ARROW_MS = 1600;
@@ -108,6 +126,24 @@ export const DEEP_MOTES_MAX = 400;   // however much is going on
 // --- the serpent -------------------------------------------------------------------
 export const WARD_MS = 2600;         // one pass of the ward's shimmer along the scales
 export const WARD_AT = 0.55;         // how much of the shimmer's wave is lit
+// The physical resist's plates (the owner's A, docs/mocks/serpent-resists-2026-09-29.html):
+// a band across the hide every PLATE_EVERY cells along it, PLATE_W wide, its
+// body PLATE_TONE rungs down from white and its top edge PLATE_EDGE. The
+// coming resist flickers in at RESIST_FLICKER_HZ before the fading's switch.
+export const PLATE_EVERY = 6;
+export const PLATE_W = 2;
+export const PLATE_TONE = 6;
+export const PLATE_EDGE = 2;
+export const RESIST_FLICKER_HZ = 4;
+// The explosive resist is a barrier under the body, not a look on the hide:
+// a row of floating cells BARRIER_GAP cells under the coil's underside, three
+// lit of every BARRIER_EVERY, the middle one a cross. A bomb that it soaks up
+// flares the cells under it white, then light purple, over BARRIER_FLARE_MS,
+// BARRIER_FLARE_W cells either side.
+export const BARRIER_GAP = 3;
+export const BARRIER_EVERY = 4;
+export const BARRIER_FLARE_MS = 900;
+export const BARRIER_FLARE_W = 2;
 // Splitting: the coil stays whole and thrashes, a ripple a length running
 // down it on top of the sway. place.js lays it into the centerline, so a
 // click, a lance and a ring all land on the body as drawn.
@@ -172,6 +208,16 @@ export const INVERT_PROBE_SIDE = 16;
 export const SNATCH_HEAD_W = P * 16;
 export const SNATCH_HEAD_H = P * 9;
 export const SNATCH_NECK_W = P * 7;
+// The deep's head on it (the owner's 2, docs/mocks/objectives-2026-09-30.html):
+// the neck leans out toward the plank as it rises, SNATCH_LEAN at the head,
+// and draws back once it has him; the jaws hinge SNATCH_HINGE cells back from
+// the snout and part SNATCH_GAPE cells at the tip; the crest in the abyss's
+// purples, as seen in the yard.
+export const SNATCH_LEAN = P * 10;
+export const SNATCH_HINGE = 10;
+export const SNATCH_GAPE = 4;
+export const SNATCH_CREST = ['#6a2fbe', '#9b5de5'];
+export const SNATCH_HIDE = ['#000', '#1c1c21', '#26262c', '#6e6e78'];   // edge, hide, the lattice, the brow
 
 export const DEEP_DRAW_KNOBS = [
   { key: 'VIEW_GLIDE_S', label: 'deep glide, s', min: 0.2, max: 5, step: 0.1,
@@ -202,37 +248,65 @@ export const NUM_FONT_PX = 2;        // screen pixels a font pixel
 // the finished deep, not turned over with it.
 export const NUM_FACE = '#ffffff';   // a blow: white
 export const NUM_DROP = '#42424a';   // on a grey drop line
-export const NUM_HEAL = '#9b5de5';   // the heal: the abyss's purple
-export const NUM_HEAL_DROP = '#2d1d47'; // on a dark purple drop
 export const NUM_LIFE_S = 1.3;       // a blow's number, in and out
-export const NUM_HEAL_LIFE_S = 1.6;  // the heal's, a little longer
-export const NUM_IN_S = 0.12;        // faded in over this; out over the last half of its life
+export const NUM_HEAL_LIFE_S = 1.8;  // the heal's, a little longer
+export const NUM_IN_S = 0.08;        // faded in over this
+export const NUM_OUT = 0.4;          // and out over this share of its life, at the end
 export const NUM_STEPS = 8;          // the fade in whole steps of opacity: never a jump bigger than one
-export const NUM_RISE = 14;          // screen pixels a second a number climbs
-export const NUM_LIFT = 6;           // screen pixels over the coil's top edge it starts
-export const NUM_JITTER = 6;         // screen pixels either way a blow's number is set off its hit
-export const NUM_HEAL_SIDE = 14;     // screen pixels either side of the belly the heal alternates
-export const NUM_HEAL_DROP_BY = 22;  // and under the coil's bottom edge it starts
+export const NUM_LIFT = 2;           // screen pixels over the coil's top edge a blow's number leaves from
+// A blow's number is knocked off the hide (docs/mocks/fight-numbers-2026-09-28.html,
+// B): up and away from the hit, the side turn and turn about, on its own
+// gravity, held a beat at the top of its arc, then dropping as it fades. A
+// bigger blow (`blowK`, 0..1) flies higher and wider; past NUM_KICK_BIG it
+// is a font pixel bigger and leaves held speed lines under it on the way up.
+// Screen pixels, and screen pixels a second.
+export const NUM_KICK_UP = 110;
+export const NUM_KICK_UP_K = 40;
+export const NUM_KICK_SIDE = 26;
+export const NUM_KICK_SIDE_K = 20;
+export const NUM_KICK_GRAV = 500;
+export const NUM_KICK_HOLD_S = 0.14;
+export const NUM_KICK_BIG = 0.5;
+export const NUM_KICK_LINE = '#6e6e78';
+export const NUM_KICK_LINE_H = 8;
+// The heal's number (B's partner, H2): under the belly, the side turn and turn
+// about, climbing slow while a swell runs along its digits a font pixel up and
+// down in held steps, the plus first; from NUM_HEAL_FADE of its life it fades
+// down this ramp of purples, bright to dark, instead of going see-through.
+export const NUM_HEAL_SIDE = 14;     // screen pixels either side of the belly
+export const NUM_HEAL_DROP_BY = 26;  // and under the coil's bottom edge it starts
+export const NUM_HEAL_RISE = 12;     // screen pixels a second it climbs
+export const NUM_HEAL_SWELL = 7;     // how fast the swell runs, radians a second
+export const NUM_HEAL_SWELL_LAG = 0.9; // and how far behind each digit is the one before, radians
+export const NUM_HEAL_FADE = 0.5;
+// Every number then goes into the serpent's bar (render/barflight.js): a
+// blow's once it has held at the top of its arc, the heal's NUM_HEAL_LEAVE_S
+// after it is said, each falling in over NUM_BAR_IN_S to the end of the fill,
+// where a few grains fly off it for NUM_BAR_BITE_S as it lands.
+export const NUM_HEAL_LEAVE_S = 0.7;
+export const NUM_BAR_IN_S = 0.26;
+export const NUM_BAR_BITE_S = 0.12;
+export const NUM_HEAL_FACES = ['#9b5de5', '#6a2fbe', '#5c2ba6', '#412465', '#2d1d47'];
+export const NUM_HEAL_DROPS = ['#2d1d47', '#241739', '#1b112c', '#130b20', '#130b20'];
 // What the sim keeps for them (deep/serpent.js): a weapon that hurts while it
 // is held (the lance, the beam) says its sum once this often, a body at a
-// time; the heal says what it actually closed once this often.
+// time; the heal says what it closed once a meal (config/meals.js).
 export const NUM_HELD_S = 1;
-export const NUM_HEAL_EVERY_S = 1;
-// Blows of one kind landing this near each other before the last one's number
-// has risen clear of its own height are summed into it: three brawlers
-// swinging as one, or one swinging faster than its numbers climb, print a
-// running sum and not a smear of digits over digits.
-export const NUM_FOLD_S = (NUM_FONT['0'].length + 1) * NUM_FONT_PX / NUM_RISE;
-export const NUM_FOLD_R = P * 4;
+// The spots of one blow that lands in several places (a whirlwind's cut)
+// landing within this of its first are summed into its one number.
+export const NUM_FOLD_S = 1;
 
 // --- the serpent's bar: what is left of the defense up -------------------------------
-// DESIGN.md, "The serpent's bar" (option B of four mocked). In screen pixels,
-// top-center of the glass, like the counter: full at a closed wound, empty at
-// the break. Tones as seen, over the finished deep.
-export const BAR_W = 240;              // screen pixels, the bar's length
-export const BAR_H = 8;                // and its height
-export const BAR_TOP = 12;             // from the top of the glass
-export const BAR_PIP = 8;              // a defense's pip, square, after the bar
+// DESIGN.md, "The serpent's bar" (option B of four mocked, then the owner's A
+// of docs/mocks/serpent-bar-over-2026-09-28.html). In screen pixels, centered
+// on the glass and held still BAR_GAP over the highest the coil's top edge
+// ever sways: full at a closed wound, empty at the break. Tones as seen, over
+// the finished deep.
+export const BAR_W = 400;              // screen pixels, the bar's length
+export const BAR_H = 14;               // and its height
+export const BAR_GAP = 14;             // over the coil's highest reach, from the bottom of the status row
+export const BAR_TOP = 12;             // and never nearer the top of the glass than this
+export const BAR_PIP = 14;             // a defense's pip, square, after the bar
 export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to pip
 export const BAR_EDGE = '#8b8b96';     // a one-pixel rim round the bar and each pip
 export const BAR_TRACK = '#000000';    // the empty of it
@@ -244,6 +318,91 @@ export const BAR_STUN = '#9b5de5';     // the defense's pip while a stun has sto
 export const BAR_STUN_RIM = 2;         // screen pixels, the ring's width
 export const BAR_TRAIL_HOLD_S = 0.5;  // the trail waits this long after the last blow
 export const BAR_TRAIL_RATE = 1;       // then drains at this share of the bar a second
+// A blow landing in the bar knocks a chip out of the end of its fill
+// (docs/mocks/bar-chip-2026-09-28.html, the owner's A): a blow is a tenth of
+// a percent of a defense, under a pixel of the bar, so the chip says it
+// landed. The notch is the blow's own sliver of the bar (a pixel at the
+// least), lit for a pose and open for BAR_CHIP_OPEN_S; the sliver falls out
+// of it, turning over a pose at a time, for BAR_CHIP_S.
+export const BAR_CHIP_S = 0.6;
+export const BAR_CHIP_OPEN_S = 0.3;
+export const BAR_CHIP_POSE_S = 0.08;
+export const BAR_CHIP_FALL = { side: 18, down: 20, grav: 90 };   // screen pixels a second, and a second a second
+export const BAR_CHIP = '#b4b4c0';      // the notch's first pose, and the chip after its first (white, as the fill)
+// And the bar recoils from it, the whole of it and its pips, up and away from
+// the number that went into its underside: BAR_KNOCK screen pixels
+// (BAR_KNOCK_BIG for a blow past NUM_KICK_BIG) for half of BAR_KNOCK_S, half
+// that for the other half, then home.
+export const BAR_KNOCK = 4;
+export const BAR_KNOCK_BIG = 8;
+export const BAR_KNOCK_S = 0.16;
+// The statuses as icons (render/statusicons.js; the owner's A and 3 of
+// docs/mocks/status-icons-2026-09-28.html): a five-by-five drawing each,
+// STATUS_PX screen pixels a pixel, on a dark tile in a rim -- the serpent's
+// in the heal's purple, a fighter's in white, Dazed with the serpent's --
+// and a timer of STATUS_STEPS steps under it. The serpent's in a row
+// STATUS_GAP under its bar; a fighter's up a post STATUS_POST_OUT right of
+// its station, standing STATUS_POST_FOOT over the floor. A status renewed by
+// more than STATUS_RENEW_MS starts its timer again.
+export const STATUS_ICONS = {
+  stun:     { rows: ['#.#.#', '.###.', '##.##', '.###.', '#.#.#'], foe: true },
+  bleed:    { rows: ['..#..', '.###.', '#####', '#####', '.###.'], foe: true },
+  held:     { rows: ['.###.', '#...#', '#####', '##.##', '#####'], foe: true },
+  exposed:  { rows: ['#...#', '.#.#.', '..#..', '.#.#.', '#...#'], foe: true },
+  haste:    { rows: ['#.#..', '.#.#.', '..#.#', '.#.#.', '#.#..'] },
+  inspired: { rows: ['..##.', '..#.#', '..#..', '.##..', '###..'] },
+  dazed:    { rows: ['#.#..', '.....', '..#.#', '.....', '#.#..'], foe: true },
+  constricted: { rows: ['.###.', '#...#', '#.#.#', '#...#', '.###.'], foe: true },
+  // the serpent's own, a phase's mechanic (deep/phases.js): the heal surging,
+  // the lash, the sink
+  lash:     { rows: ['...##', '..#..', '.#...', '#....', '#....'], own: true },
+  sink:     { rows: ['#####', '.....', '.###.', '.....', '..#..'], own: true },
+  orb:      { rows: ['.###.', '#...#', '#.#.#', '#...#', '.###.'], own: true },
+  // and the phase's standing resist (the owner's B, docs/mocks/status-resists-2026-09-30.html):
+  // the ward halves magic, the plates halve physical
+  ward:     { rows: ['..#..', '#.#.#', '.###.', '#.#.#', '..#..'], own: true },
+  plates:   { rows: ['.###.', '#####', '#####', '.###.', '..#..'], own: true },
+  // and the barrier under it soaks up explosives (the owner's F and 1, docs/mocks/explosive-resist-2026-10-07.html)
+  barrier:  { rows: ['#.#.#', '.###.', '##.##', '.###.', '#.#.#'], own: true },
+};
+// A mechanic's tile while it is warned: its rim blinking between these in held
+// steps, STATUS_WARN_HZ a second. Answered, it is struck through for the rest
+// of its turn.
+export const STATUS_WARN_HZ = 4;
+export const STATUS_WARN_RIM = ['#ffffff', '#42424a'];
+export const STATUS_STRUCK = '#9b5de5';
+// What a mechanic's tile and a dazed fighter's say on hover; the statuses' own
+// lines are the boards' (deep/rails.js, `statusLine`).
+export const STATUS_SAYS = {
+  lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
+  sink:  { coming: 'Cloak coming', on: 'Cloak: out of reach' },   // the owner calls it the cloak; nothing answers it
+  orb:   { coming: 'Constrict coming', on: 'Constrict', stopped: 'Constrict' },   // the owner's name for it
+  dazed: 'Dazed: thrown off, seeing stars',
+  constricted: 'Constricted',   // the owner's
+  barrier: 'Barrier: absorbs explosive damage',   // the owner's
+  ward: 'Ward: magic damage cut in half',
+  plates: 'Plates: phys damage cut in half',
+};
+export const STATUS_PX = 3;
+// Over the serpent's bar (the owner's B, 2026-10-04): the tiles twice the
+// size, each named under it in STATUS_LABEL_PX type, a column each.
+export const STATUS_BAR_PX = 6;
+export const STATUS_LABEL_PX = 11;
+export const STATUS_LABEL_GAP = 3;
+export const STATUS_GAP = 5;
+export const STATUS_STEPS = 5;
+export const STATUS_RENEW_MS = 5;
+export const STATUS_POST_OUT = 4;
+export const STATUS_POST_FOOT = 2;
+export const STATUS_TILE = '#0a0a0c';
+export const STATUS_RIM = '#8b8b96';
+export const STATUS_FOE = '#9b5de5';
+export const STATUS_FACE = '#ffffff';
+export const STATUS_TIMER = '#ffffff';
+export const STATUS_SPENT = '#333339';
+export const STATUS_POST = '#6e6e78';
+// Bleeding's count of sources in a tile's corner, three by four.
+export const STATUS_COUNT = { 2: ['##.', '..#', '.#.', '###'], 3: ['##.', '.##', '..#', '##.'], 4: ['#.#', '###', '..#', '..#'] };
 
 // --- track RENDER of docs/wave-party.md: the fighters, their kits and attacks ---------
 // The kit growth page's feel (docs/mocks/kit-growth-2026-09-27.html, all three
@@ -263,6 +422,32 @@ export const DRAW_NEAR_BEAT = 0.32;  // s either side of a beat the clock steps 
 export const DRAW_ROOM_S = 3;
 export const DRAW_LOWER_S = 2;
 export const LAND_FX_S = 1.3;
+// The Ranger's shot, a held pose a beat (the owner's A,
+// docs/mocks/ranger-draw-2026-09-28.html): from the hip, nocked, drawn in two
+// steps as the limbs bend and he sinks, held full with the strain showing,
+// loosed with the string snapped up past the stave, a recoil, a settle. Each
+// beat is [start, seconds from the release; the pose]: `lift` rows the bow
+// sits over its place (minus is higher), `bend` how far its limbs bow up,
+// `pull` the string's cells down to the nock (-1 snapped up), `sink` the
+// body's cells down. The last beat ends the shot, back to the braced stance.
+export const RANGER_BEATS = [
+  [-0.76, { arrow: 'hip',    bend: 2, pull: 0 }],
+  [-0.62, { arrow: 'nocked', bend: 2, pull: 0 }],
+  [-0.50, { arrow: 'nocked', bend: 2, pull: 1 }],
+  [-0.42, { arrow: 'nocked', bend: 3, pull: 2, sink: 1 }],
+  [-0.34, { arrow: 'nocked', bend: 3, pull: 3, sink: 1, strain: true }],
+  [0,     { lift: -1, bend: 1, pull: -1, loose: true }],
+  [0.07,  { lift: -1, bend: 2, pull: 0 }],
+  [0.23,  { bend: 2, pull: 0 }],
+  [0.37,  null],
+];
+export const RANGER_AIM_HOLD = 0.3;  // s the aimed shot holds its full draw past a plain one's
+export const RANGER_LIFT_S = 0.12;   // s each step of lifting the bow over his head, and of lowering it
+export const RANGER_SMEAR_S = 0.07;
+// The Mage's beam pooled on the hide where it meets it (render/attacks.js,
+// `pool`): half as wide as [a narrow beam, a wide one] in cells, and `motes`
+// turning `turn` radians a pose, `out` cells off its edge.
+export const BEAM_POOL = { half: [2, 3], motes: 5, turn: 0.5, out: 1.5 };  // s the loosed arrow's held streak stands behind it
 // Between two moves a fighter sways a cell forward and back, IDLE_STEP_S a
 // step, and a melee fighter hops a cell for IDLE_HOP_S as each step lands
 // (the owner's G, docs/mocks/idle-2026-09-28.html). It starts IDLE_SETTLE_S
@@ -276,21 +461,31 @@ export const IDLE_SETTLE_S = 0.35;
 export const PIP_PX = 6;
 export const PIP_RING = 1;
 export const PIP_GAP = 2;
-// The recoil after a heavy contact, in cells: [the contact's size from, cells].
-export const DRAW_KICK = [[1.2, 2], [0.7, 1.5], [0.45, 0.75]];
+// The fighter takes every blow it lands (docs/mocks/blow-heft-2026-09-28.html,
+// the owner's pick): knocked back off the hide the moment the hit-pause lets
+// go, in whole cells by the contact's size ([size from, cells]), held there
+// DRAW_KICK_HOLD_S, then back a cell at a time over DRAW_KICK_BACK_S. A class's
+// `kickMax` caps it.
+export const DRAW_KICK = [[0.7, 2], [0.4, 1.5], [0.1, 1]];
+export const DRAW_KICK_HOLD_S = 0.12;
+export const DRAW_KICK_BACK_S = 0.2;
 // The still cells of a kit are one sprite a class and a rung, painted in a
 // box this many cells round the body's top-left corner (deep/kits.js).
 export const KIT_BOX = { left: 6, top: 7, w: 16, h: 11 };
 export const MOTE_PERIOD = 2.2;      // s a rung-8 mote takes to drift off a kit
 export const MOTE_RISE = 3;          // and cells it rises
-// The coil's give under a contact (render/serpent.js): pushed up over
-// DENT_RISE_S, springing back at DENT_DECAY an s, gone by DENT_S. Its width
-// and depth in cells are [base, per unit of the blow's size].
-export const DENT_S = 0.6;
-export const DENT_RISE_S = 0.05;
-export const DENT_DECAY = 9;
-export const DENT_W = [1.2, 2];
-export const DENT_DEPTH = [0.5, 1.6];
+// The body flinches from a blow (render/serpent.js; the owner's C of
+// docs/mocks/coil-give-2026-09-28.html): the stretch of it round the blow,
+// DENT_REACH cells either way, is thrown up DENT_LIFT cells as one piece --
+// the inner DENT_CORE of it whole, the rest half as far -- held, then half
+// down, then at rest (DENT_STEPS, [until, share], in held poses). A blow past
+// DENT_BIG is the second of each pair. A stream's ticks (the beam) do not
+// move it.
+export const DENT_REACH = [9, 14];
+export const DENT_LIFT = [1, 2];
+export const DENT_BIG = 0.7;
+export const DENT_CORE = 0.6;
+export const DENT_STEPS = [[0.16, 1], [0.28, 0.5]];
 // The statuses on the whole serpent (the class bench's painters).
 export const BLEED_DRIPS = 9;        // columns Bleeding drips off
 export const BLEED_DRIP_S = 1.25;    // s a drop takes to fall its four cells
@@ -305,9 +500,43 @@ export const FANG_SPRITE = ['###', '.#+', '.#.'];
 // The scaffold over a station not yet built: posts this many bands tall,
 // the tape at head height.
 export const SCAFFOLD_BANDS = 5;
-// An empty lot, laid out by the build button before its kind is picked: a
-// stake at each end LOT_W apart, LOT_STAKE cells tall, and between them the
-// ground the pointer opens its board on, LOT_H tall.
-export const LOT_W = 96;
-export const LOT_STAKE = 3;
-export const LOT_H = 24;
+// The mark over a station whose Recruit still waits on its first choice
+// (docs/mocks/recruit-mark-2026-09-28.html, voted C): a white chevron pointing
+// down at it on a dark keyline, CHOOSE_MARK_UP cells over the station's top,
+// bobbing a cell every CHOOSE_MARK_BOB_MS, held between.
+export const CHOOSE_MARK = ['#.....#', '##...##', '.##.##.', '..###..', '...#...'];
+export const CHOOSE_MARK_UP = 3;
+export const CHOOSE_MARK_BOB_MS = 600;
+
+// A fighter's level-up (render/levelup.js; the owner's vote, 2026-10-04): one
+// strand of flame tongues corkscrews up round the body for LEVELUP_S, and the
+// station's Buy stands closed until it has. A strand of LEVELUP_TONGUES,
+// LEVELUP_TURNS round, turning LEVELUP_SPIN radians a second at LEVELUP_FPS
+// held frames; its reach out from the body's middle from foot to top, in
+// cells; how high it climbs, cells over the feet; a tongue's cells at the foot
+// and the top. It lights from the feet up over the first LEVELUP_IN of it; over
+// its last LEVELUP_FLARE every tongue leaps twice as tall; then for
+// LEVELUP_BURST_S each tongue's tip flies out along its own turn as an ember,
+// LEVELUP_BURST_STEPS held steps of LEVELUP_BURST_OUT cells out and
+// LEVELUP_BURST_RISE up (the owner's C, 2026-10-04).
+export const LEVELUP_S = 1.6;
+export const LEVELUP_FPS = 12;
+export const LEVELUP_TONGUES = 24;
+export const LEVELUP_TURNS = 2;
+export const LEVELUP_SPIN = 7;
+export const LEVELUP_R = [2.5, 5];
+export const LEVELUP_H = 12;
+export const LEVELUP_TONGUE = [2, 4];
+export const LEVELUP_IN = 0.35;
+export const LEVELUP_FLARE = 0.12;
+export const LEVELUP_BURST_S = 0.6;
+export const LEVELUP_BURST_STEPS = 6;
+export const LEVELUP_BURST_OUT = 1.6;
+export const LEVELUP_BURST_RISE = 1.2;
+export const LEVELUP_EMBER = [2, 1];   // an ember's cells square, flown out and then cooled to the last steps
+
+// While the level-up plays the fighter stops fighting and rises LEVELUP_RISE
+// cells off where it stood, a cell every LEVELUP_RISE_STEP seconds, holds, and
+// settles back the same way to land as the burst ends (deep/party.js `riseOf`).
+export const LEVELUP_RISE = 2;
+export const LEVELUP_RISE_STEP = 0.12;
