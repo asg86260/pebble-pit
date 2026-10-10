@@ -6,7 +6,7 @@
 // dust.
 import { belowYard } from './route.js';
 import { S } from './state.js';
-import { P, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE, DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
+import { P, shieldWidth, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE, DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
 import { workOn } from './works.js';
 import { spawnSpoil } from './dust.js';
@@ -62,18 +62,7 @@ export function shieldPlan(kind) {
   const size = rockSize();
   S.boulderNo = was;
   const rockW = size.w * P;
-  let w = rockW + ROCK_CLEAR * 2 + SHIELD_LEG_W * P * 2;
-  // The curved kinds are a set share wider than the rock (ARCH_SPAN,
-  // DOME_SPAN): their crown is the catch line, and a rock nearly as wide as
-  // the span perches on the apex. Even cells, so the middle stays on the
-  // grid; and nothing stands closer to the building on the flank than the
-  // rock itself may.
-  const span = kind === 'arch' ? ARCH_SPAN : kind === 'dome' ? DOME_SPAN : 0;
-  if (span) {
-    const cells = Math.ceil(rockW * span / P / 2) * 2;
-    w = Math.max(w, cells * P);
-  }
-  w = Math.min(w, rockW + ROCK_FLANK_CLEAR * 2);
+  const w = shieldWidth(kind, rockW);
   const x = Math.round((S.cx - w / 2) / P) * P;
   const clear = Math.max(S.gh, size.h) + SHIELD_CLEAR_C;
   // The shape decides the height: an arch's curve rises a quarter of the span

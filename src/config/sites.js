@@ -9,6 +9,7 @@ import { DIAL_CELLS, DIAL_STUB, FILTER_W, FILTER_WALL } from './filter.js';
 import { BALLOON_SPAN, BALLOON_MAST_GAP, BALLOON_RUNGS } from './balloon.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
+import { ARCH_SPAN, DOME_SPAN, SHIELD_LEG_W } from './shields.js';
 import { LIFT_STAND_OFF } from './kit.js';
 import { ROOMBA_DOCK_W } from './roomba.js';
 
@@ -162,25 +163,45 @@ export const hangOf = row => {
 // Rocks go on for ever, so they must stop growing at some point or rock ninety
 // would fill the sky. They plateau at about what the twelfth was.
 export const ROCK_W_MAX = 92;
-// The ground the biggest rock keeps clear of its flank SLOT. Fourteen is the
-// ram's parking space, not a hand's width: the ram stands off the flank
-// building by RAM_CLEAR and is spriteW(RAM), eleven cells, long, and
-// `ramTargetX` (rock.js) parks it no nearer the flank than that, so a slot
-// any closer puts the machine and its tender's post inside the boulder. The
-// hut stands nearer than this (SHACK_CLEAR; `shackSpot`, world.js) and only
-// reaches the slot at the biggest rock. shack.test.mjs holds this against the
-// ram's real width.
+// How far past the rock's own edge anything of the rock's may reach on its
+// flank: the ram's parking space, not a hand's width. The ram stands off the
+// flank building by RAM_CLEAR and is spriteW(RAM), eleven cells, long, and
+// `ramTargetX` (rock.js) parks it no nearer the flank than that. It is also
+// the cap on a curved shield's span (`shieldWidth`). The hut no longer stands
+// at this distance: it stands the widest shield's reach plus STATION_GAP off
+// the rock (TO_FIRST_SITE, `shackSpot`), which is further. shack.test.mjs
+// holds this against the ram's real width.
 export const ROCK_FLANK_CLEAR = P * 14;
+
+// How wide a shield stands over a rock of `rockW` pixels, per kind: the
+// rectangular two are the rock, its clearance and a leg either side; the
+// curved two a set share wider than the rock (the crown is the catch line),
+// in even cells so the middle stays on the grid; and none stands further
+// out than ROCK_FLANK_CLEAR off the rock's edge. One definition, read by the
+// shield's plan (shield.js) and by the yard's layout below, so the ground the
+// layout keeps for a shield is the ground the shield takes.
+export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so the spoil stands off it
+const SHIELD_SPAN = { props: 0, net: 0, arch: ARCH_SPAN, dome: DOME_SPAN };
+export const shieldWidth = (kind, rockW) => {
+  let w = rockW + ROCK_CLEAR * 2 + SHIELD_LEG_W * P * 2;
+  const span = SHIELD_SPAN[kind];
+  if (span) w = Math.max(w, Math.ceil(rockW * span / P / 2) * 2 * P);
+  return Math.min(w, rockW + ROCK_FLANK_CLEAR * 2);
+};
+// How far the widest of the four reaches past the rock's own edge, on one
+// side. A cell is added for `shieldPlan` rounding its left edge to the grid.
+export const shieldReach = rockW =>
+  Math.max(...Object.keys(SHIELD_SPAN).map(k => (shieldWidth(k, rockW) - rockW) / 2)) + P;
 
 // The bare ground between the rock's center and the near wall of the first
 // site along. Measured from `S.cx` rather than from the rock's edge, because
 // the rock changes size and the yard does not rearrange itself around it.
-// Derived: the room the rock actually needs and no more. Any closer and the
-// rock quietly stops growing short of its own ceiling; any further and the
-// shack stands out in the yard for no reason. The shack has no heap, so
-// nothing of its own stands in the rock's clear ground; a first site that
-// threw toward the rock would need its `padOf` added here.
-export const TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + ROCK_FLANK_CLEAR;
+// Derived: the biggest rock, the widest shield standing over it, the hut's
+// eave, and STATION_GAP of bare ground, like every other neighbor in the
+// yard. The shack has no heap, so nothing of its own stands in the rock's
+// clear ground; a first site that threw toward the rock would need its
+// `padOf` added here.
+export const TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + shieldReach(ROCK_W_MAX * P) + SHACK_EAVE + STATION_GAP;
 
 // Bare ground kept past the last building, at the far end of the walk, before
 // the world runs out: somewhere for the camera to stop and for the casino to
@@ -213,4 +234,3 @@ export const ROCK_SINK = 0;      // its foot sits on the ground line, like every
 export const ROCK_SKY = 520;     // sky kept clear above the ground line, for the rock
 // ROCK_W_MAX is up with the walk, which is measured off it -- see TO_FIRST_SITE.
 export const ROCK_H_MAX = 42;
-export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so the spoil stands off it

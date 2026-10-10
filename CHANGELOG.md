@@ -54,6 +54,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- The shack stands clear of the barriers: the arch and the dome no longer run into it, with bare ground left between (test/shield-fit.test.mjs).
+
 ## v0.5.2 — 2026-09-28
 
 - On the landing page, cloud saves are on the saves page with your slots, as they are in the game, instead of under settings (src/selftest/cloud.js).
