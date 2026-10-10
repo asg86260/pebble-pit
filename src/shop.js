@@ -168,15 +168,15 @@ export const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'spark'];
 // A row's price tag as the board writes it: the coins, each its own cell
 // saying whether you have it ("you are short of something" is not "you are
 // short of *this*"), in the order the yard hands them out whatever order the
-// row wrote its bill in, and the clock apart. The story's card wears the
-// same tag on its buy (objbarrier.js), so the two cannot disagree.
+// row wrote its bill in. The work's time is not part of it (the owner,
+// 2026-10-10). The story's card wears the same tag on its buy
+// (objbarrier.js), so the two cannot disagree.
 export function tagOf(u, full = billOf(u)) {
   const said = ([money, n]) =>
     `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`;
   const bill = full.filter(([m]) => m !== 'time')
     .sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0])).map(said).join('');
-  const clock = full.filter(([m]) => m === 'time').map(said).join('');
-  return { bill, clock };
+  return { bill };
 }
 
 // A press on a row, wherever the row is drawn: the tile, its strip, the
@@ -588,7 +588,7 @@ export function refresh(el, list, headcount) {
     // bill to the new read as the thing you had just bought going up under
     // you.
     const full = billOf(u);
-    const { bill, clock } = tagOf(u, full);
+    const { bill } = tagOf(u, full);
     // By class, never by position: a shelf tile and a card lay the cells out
     // differently.
     const gain = row.querySelector('.gain'), time = row.querySelector('.time'), price = row.querySelector('.cost');
@@ -738,7 +738,7 @@ export function refresh(el, list, headcount) {
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's decisions are the only ones: none costs anything, and the
     // number each is about is the pot.
-    sayHTML(price, u.price ? u.price() : bill); sayHTML(time, u.price ? '' : clock);
+    sayHTML(price, u.price ? u.price() : bill); sayHTML(time, '');
     const off = u.price ? !!u.dead?.() : !!waits || !canPay(u);
     grey(row, off && !stands);
     // The hover, the lift and the lean key off `off`, never off `disabled`.

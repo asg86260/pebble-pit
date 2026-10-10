@@ -239,7 +239,7 @@ export const TESTS = [
     ];
   }],
 
-  ['the clock in a tag is in the same ink as the bill beside it', async () => {
+  ['no price tag carries the time it takes', async () => {
     newRun();
     await settle();
     window.__give(3000);
@@ -247,26 +247,14 @@ export const TESTS = [
     run(20);
     window.__board('bench');
     await sleep(400);
-    // The clock cell wore a step less ink than the coins in the same box, and
-    // on the dark page that read as a second color, not a lighter touch
-    // (2026-09-20). Measured on both pages: the computed color of the clock
-    // cell against the bill's, on every card that carries both.
-    const off = [];
-    for (const dark of [false, true]) {
-      document.documentElement.classList.toggle('dark', dark);
-      await raf();
-      for (const row of document.querySelectorAll('#shop button[data-key]')) {
-        const time = row.querySelector('.tag .time'), cost = row.querySelector('.tag .cost');
-        if (!time || !cost || !time.textContent.trim() || !cost.textContent.trim()) continue;
-        const a = getComputedStyle(time).color, b = getComputedStyle(cost).color;
-        if (a !== b) off.push(`${dark ? 'dark' : 'light'} ${row.dataset.key} ${a} vs ${b}`);
-      }
-    }
-    document.documentElement.classList.remove('dark');
+    // The tag is the coins alone (the owner, 2026-10-10); the .time cell is
+    // the countdown of a row being built, and nothing is building here.
+    const tags = [...document.querySelectorAll('#shop button[data-key] .tag')];
+    const clocked = tags.filter(t => t.querySelector('.clock')).length;
     window.__board(null);
     return [
-      ok(document.querySelectorAll('#shop button[data-key] .tag .time').length > 0, 'the bench has clocks on it'),
-      ok(off.length === 0, 'every clock is the ink of its bill', off.join('; ')),
+      ok(tags.length > 0, 'the bench has tags on it'),
+      ok(clocked === 0, 'and none of them wears a clock', String(clocked)),
     ];
   }],
 
@@ -314,8 +302,8 @@ export const TESTS = [
     ];
   }],
 
-  // Time is a price, in the bill with the coins under a clock.
-  ['what a thing costs in waiting is priced with the rest of it', async () => {
+  // The bill is the coins alone; the work's time is not on the card.
+  ['a bill is the coins alone, with no waiting in it', async () => {
     newRun();
     await settle();
     window.__give(999999);
@@ -334,10 +322,7 @@ export const TESTS = [
     window.__board('tower');
     await sleep(500);
     const row = document.querySelector('#towershop button[data-key="wizard"]');
-    // The coins are the bill and the clock is a cell of its own beside the
-    // gain (the card in style.css), so the waiting is read across two cells.
     const coins = row && [...row.querySelectorAll('.cost i, .time i')].map(i => i.className);
-    const said = row && row.querySelector('.time').textContent.trim();
     const tall = row && Math.round(row.getBoundingClientRect().height);
     // A bill wraps inside its cell once it is longer than the card can hold,
     // so what is pinned is the wrap the design promises: every coin inside
@@ -353,10 +338,8 @@ export const TESTS = [
     return [
       ok(!!row && row.querySelector('.what').textContent.trim() === 'train a wizard',
          'the tower trains a wizard', row && row.querySelector('.what').textContent),
-      ok(coins && coins.slice().sort().join() === 'clock,dust,shard,spore',
-         'and the waiting is the fourth thing it costs', String(coins)),
-      ok(/[0-9]+ ?(min|s)$/i.test((said || '').trim()), 'said as a length of time, not a count of milliseconds',
-         said),
+      ok(coins && coins.slice().sort().join() === 'dust,shard,spore',
+         'and its bill is three coins, no clock', String(coins)),
       ok(!row?.dataset.note && !row?.title,
          'and the row keeps it all to itself: no sheet opens beside it'),
       ok(inside, 'and the bill of three coins stays inside its own cell, wrapped or not',
