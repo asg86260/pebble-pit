@@ -1771,7 +1771,7 @@ export const TESTS = [
     const shown = await cardShows('props', 'offer');
     const card = document.getElementById('objective');
     const block = () => card.querySelector('.barrier');
-    const firstSays = `${block()?.dataset.key}:${block()?.dataset.mode}`;
+    const firstSays = `${block()?.dataset.key}:${block()?.dataset.mode} ${card.className}`;
     const dust = () => block()?.querySelector('.bill li[data-money="dust"]');
     const buyBtn = () => block()?.querySelector('button.buy');
     const cancel = () => block()?.querySelector('button.cancel');
@@ -1803,6 +1803,8 @@ export const TESTS = [
     window.__give(20000);
     window.__buy('house');
     await settle(0.6);
+    // affordable is not done: the card stays up, still selling the props
+    const upWhenLit = await cardShows('props', 'offer');
     const ticked = !!dust()?.classList.contains('done');
     const lit = buyBtn()?.disabled === false;
     const had = state().stored;
@@ -1831,7 +1833,7 @@ export const TESTS = [
       ok(unticked && dim, 'short of the dust, its line is unticked and the buy dimmed'),
       ok(lineThrough && billThrough, 'the card is click-through to the yard', `${under?.id || under?.tagName}`),
       ok(buyTakes, 'but its buy takes the pointer'),
-      ok(ticked && lit, 'with the dust the line ticks and the buy lights', litSays),
+      ok(upWhenLit && ticked && lit, 'with the dust the card stays up, the line ticks and the buy lights', litSays),
       ok(paid && queued, 'the card\'s buy queues the props, as the bench does', JSON.stringify(state().line.yard)),
       ok(benchSays === 'queued', 'and the bench\'s own tile says queued', benchSays),
       ok(bar && /^cancel ×1$/.test(cancelSays) && cancelTakes, 'bought, the card shows the bar and the cancel', cancelSays),

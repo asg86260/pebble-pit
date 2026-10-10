@@ -24,6 +24,14 @@ export function seatObjective(t) {
   el.classList.toggle('deep', S.view === 'deep');
   if (hide) return;
   const key = want ? want.key : null;
+  // The step came back mid-strike (a reset or a loaded save stood the yard
+  // where it was): the strike is called off, or the card stayed struck and
+  // faded out with the right line under it.
+  if (leaving && shown && key === shown.key) {
+    leaving = 0;
+    say.classList.remove('done');
+    el.classList.remove('going');
+  }
   if (shown && key !== shown.key) {
     // the one done: struck through and faded, then the next
     if (!leaving) { leaving = t + STRIKE_MS; say.classList.add('done'); el.classList.add('going'); if (list) { list.hidden = true; listed = ''; } }

@@ -134,6 +134,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 - The props can be built after the first rock.
 
+- The story's card no longer stays faded out after a new game or a loaded save puts the story back on the step it was showing (src/selftest/boards.js).
 - The cards and buttons around the edges of the screen stand the same distance in, are padded alike, and all cast the same shadow as the story's card, the counter included (src/selftest/touch.js).
 - A card being built with nobody at it yet, a hand still walking over, wears the queued edge, and its refund and another keep their border (src/selftest/queue.js).
 - The queue of builds sits under the story's card in the top-left corner instead of on top of it (src/selftest/queue.js).
