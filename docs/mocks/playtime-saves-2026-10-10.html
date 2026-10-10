@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playtime and saves</title>
+<style>
+:root {
+  --paper: #fff; --ink: #000;
+  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf;
+  --page: #f2f2f2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1f1f1f; --ink: #e0e0e0;
+    --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+    --page: #141414;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1f1f1f; --ink: #e0e0e0;
+  --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+  --page: #141414;
+}
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body {
+  margin: 0; padding: 16px; background: var(--page); color: var(--ink);
+  font: 12px ui-monospace, "Courier New", monospace;
+}
+.wrap { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: 17px; letter-spacing: .3em; text-transform: uppercase; margin: 8px 0 10px; font-weight: 400; }
+h2 { font-size: 13px; letter-spacing: .2em; text-transform: uppercase; margin: 34px 0 6px; font-weight: 700; border-bottom: 1px solid var(--ink); padding-bottom: 4px; }
+p.note { color: var(--ink-2); max-width: 78ch; line-height: 1.5; margin: 6px 0; }
+.banner { border: 1px dashed var(--ink); padding: 8px 12px; background: var(--paper); line-height: 1.5; }
+.ph { color: var(--ink-4); }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; margin-top: 12px; }
+.opt { background: var(--paper); border: 1px solid var(--ink); padding: 12px; min-width: 0; }
+.opt h3 { margin: 0 0 4px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+.opt .cap { color: var(--ink-2); line-height: 1.45; margin: 0 0 10px; }
+.beat { color: var(--ink-4); margin-top: 8px; min-height: 1.4em; }
+.tog { display: inline-flex; gap: 0; margin: 0 0 8px; }
+.tog button { font: inherit; letter-spacing: .1em; text-transform: uppercase; background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 2px 8px; cursor: pointer; }
+.tog button + button { border-left: 0; }
+.tog button.on { background: var(--ink); color: var(--paper); }
+
+/* ---- the notice board: the tally, as the book sets it ---- */
+.book { font-size: 13px; letter-spacing: .06em; }
+.book .sect { font-weight: 700; letter-spacing: .26em; text-transform: uppercase; border-bottom: 2px solid var(--ink); padding: 14px 0 3px; margin-bottom: 6px; }
+.book .sect.first { padding-top: 0; }
+.book .r { display: flex; align-items: baseline; gap: 6px; line-height: 1.9; }
+.book .r .n { white-space: nowrap; }
+.book .r .lead { flex: 1; border-bottom: 1px dotted var(--ink-7); transform: translateY(-3px); min-width: 12px; }
+.book .r .v { white-space: nowrap; }
+.book .r.play { transition: background-color .5s linear, color .5s linear; }
+.book .r.play.fresh { animation: fadein 1.2s linear 1; }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+.book .gap { height: 14px; }
+.book .hint { color: var(--ink-4); font-size: 11px; letter-spacing: .04em; margin-top: 2px; }
+.dustm { display: inline-block; width: 8px; height: 8px; background: var(--ink); margin-right: 4px; }
+.clk { display: inline-block; width: 9px; height: 9px; border: 1.5px solid var(--ink); border-radius: 50%; margin-right: 4px; position: relative; top: 1px; }
+
+/* ---- the sheet: saves, as the landing column and the held sheet set it ---- */
+.col { background: var(--paper); border: 1px solid var(--ink); padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 7px; letter-spacing: .14em; text-transform: uppercase; width: max-content; }
+.col .word { font-size: 17px; letter-spacing: .3em; margin-bottom: 4px; }
+.col button { font: inherit; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 5px 14px; cursor: pointer; text-align: left; }
+.col button:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
+.col button:disabled { cursor: default; }
+.col .pair { display: flex; gap: 10px; }
+.col .pair button { flex: 1; text-align: center; }
+.col .reset { border-style: dashed; opacity: .7; }
+.col.today { width: 21em; font-size: 12px; }
+.col.today .slot { width: 100%; }
+.col.today .slot.open { color: var(--paper); background: var(--ink); }
+.col.today .slot.open span { color: inherit; }
+
+/* the widened rows: one grid line a slot, columns sized by their content so
+   the sheet is as wide as its longest row and no wider */
+.slots2 { display: grid; grid-template-columns: max-content max-content max-content max-content max-content max-content; gap: 6px 0; align-items: stretch; }
+.srow { display: contents; }
+.srow .cell { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 5px 0; background: var(--paper); white-space: nowrap; transition: background-color .4s linear, color .4s linear, opacity .5s linear; }
+.srow .cell.c1 { border-left: 1px solid var(--ink); padding-left: 14px; padding-right: 10px; }
+.srow .cell.cl { padding-right: 14px; }
+.srow .cell.c5 { padding-right: 14px; border-right: 1px solid var(--ink); }
+.srow .cell.pt { text-align: right; padding-right: 14px; padding-left: 10px; }
+.srow .cell.sp { display: block; }
+.srow.open .cell { background: var(--ink); color: var(--paper); }
+.srow.empty .cell { color: var(--ink); }
+.srow.empty .cell.c1 ~ .cell { opacity: 1; }
+.srow .cell.span { grid-column: 1 / span 5; border-right: 1px solid var(--ink); }
+.srow .dbtn { border: 1px dashed var(--ink); padding: 5px 14px; background: var(--paper); color: var(--ink); cursor: pointer; opacity: .7; font: inherit; letter-spacing: .14em; text-transform: uppercase; margin-left: 6px; text-align: center; transition: opacity .3s linear, background-color .3s linear, color .3s linear; position: relative; overflow: hidden; }
+.srow .dbtn:hover { opacity: 1; }
+.srow .dbtn.none { visibility: hidden; }
+.srow.open .dbtn { opacity: .7; }
+.ptc { font-variant-numeric: tabular-nums; }
+.measure { color: var(--ink-4); margin-top: 8px; line-height: 1.5; }
+.rowwrap { overflow-x: auto; padding-bottom: 2px; }
+
+/* ---- the delete options: a three-row list each, rows 2 deletable ---- */
+.lst { display: flex; flex-direction: column; gap: 6px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+.dr { display: flex; flex-direction: column; }
+.dr .line { display: flex; gap: 6px; align-items: stretch; }
+.dr .slotb { flex: 1; min-width: 0; text-align: left; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); padding: 5px 10px; font: inherit; letter-spacing: .1em; text-transform: uppercase; display: flex; justify-content: space-between; gap: 8px; transition: opacity .6s linear; white-space: nowrap; overflow: hidden; }
+.dr .slotb .tx { transition: opacity .35s linear; }
+.dr .del { position: relative; overflow: hidden; width: 11em; flex: none; font: inherit; letter-spacing: .14em; text-transform: uppercase; border: 1px dashed var(--ink); background: var(--paper); color: var(--ink); opacity: .7; cursor: pointer; padding: 5px 4px; text-align: center; transition: opacity .3s linear, color .3s linear, background-color .3s linear, border-color .3s linear; }
+.dr .del:hover { opacity: 1; }
+.dr .del .a, .dr .del .b { display: block; transition: opacity .3s linear; }
+.dr .del .b { position: absolute; inset: 5px 4px; opacity: 0; }
+.dr .del.armed { opacity: 1; background: var(--ink); color: var(--paper); border-style: solid; }
+.dr .del.armed .a { opacity: 0; }
+.dr .del.armed .b { opacity: 1; }
+.dr .del .timer { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--paper); transform-origin: left; transform: scaleX(0); }
+.dr .del.armed .timer { animation: drain 4s linear forwards; transform: scaleX(1); }
+@keyframes drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.dr .del .fill { position: absolute; inset: 0; background: var(--ink); transform-origin: left; transform: scaleX(0); transition: transform .35s linear; z-index: 0; }
+.dr .del.holding .fill { transform: scaleX(1); transition: transform 1.2s linear; }
+.dr .del .a2, .dr .del .b2 { position: relative; z-index: 1; display: block; transition: color .2s linear; }
+.dr .del .b2 { position: absolute; inset: 5px 4px; opacity: 0; transition: opacity .3s linear; }
+.dr .del.holding { color: var(--paper); opacity: 1; border-style: solid; }
+.dr .del.holding .a2 { opacity: 1; }
+.dr.gone .slotb .tx.full { opacity: 0; }
+.dr .slotb .tx.emp { position: absolute; opacity: 0; }
+.dr .slotb { position: relative; }
+.dr.gone .slotb .tx.emp { opacity: 1; position: static; }
+.dr.gone .slotb .tx.full { display: none; }
+.dr.gone .slotb { opacity: .55; }
+.dr.gone .del { visibility: hidden; }
+.dr .slotb.fading { opacity: .15; }
+.dr .confirm { display: flex; gap: 6px; align-items: center; overflow: hidden; max-height: 0; opacity: 0; transition: max-height .35s linear, opacity .35s linear, margin-top .35s linear; margin-top: 0; }
+.dr.asking .confirm { max-height: 40px; opacity: 1; margin-top: 6px; }
+.dr .confirm .q { flex: 1; color: var(--ink-2); letter-spacing: .1em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dr .confirm button { font: inherit; letter-spacing: .14em; text-transform: uppercase; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); padding: 3px 12px; cursor: pointer; }
+.dr .confirm button.yes { background: var(--ink); color: var(--paper); }
+.dr .confirm button:hover { opacity: .75; }
+.rep { color: var(--ink-2); cursor: pointer; background: none; border: 1px solid var(--ink-5); font: inherit; letter-spacing: .1em; text-transform: uppercase; padding: 2px 8px; margin-top: 8px; }
+@media (max-width: 560px) {
+  body { padding: 10px 16px; }
+  .dr .del { width: 8.5em; }
+  .dr .slotb { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Playtime and saves</h1>
+<div class="banner">
+  <b>A mock from plain HTML, not the game.</b> It copies the real fonts, borders, case and dotted leaders, but cannot show the real sheet's placement in the yard, the yard behind it, the held-sheet fade, the phone sheet, or real numbers. Anything in <span class="ph">[square brackets]</span> is a placeholder for the owner's words. Click anything; each state also plays by itself.
+</div>
+<p class="note">The owner asked for: a playtime counter on the notice board, a wider saves menu with each save's playtime, and a delete button on each save row in place of the reset progress button.</p>
+
+<!-- 1 --------------------------------------------------------------------->
+<h2>1 &middot; The notice board</h2>
+<p class="note">Today the book has no playtime anywhere. Two placements, each shown in both formats (the clock format is the one the rescue stopwatch already uses, <code>sayClock</code>; the h/m one matches how "longest on one clock" reads). The clock ticks live.</p>
+<div class="grid" id="boards"></div>
+
+<!-- 2 --------------------------------------------------------------------->
+<h2>2 &middot; The saves menu, widened</h2>
+<p class="note">Left: today (one 21em column, <code>--col-w</code>, rows of "1 &middot; rock 1 &middot; 0 crew &middot; just now" that already wrap at three words). Right: widened, with playtime on each row and a delete button per row; the reset progress button is gone. The width is not guessed: every column is <code>max-content</code>, so the sheet is exactly as wide as the longest row (the third row below is a worst case: three-digit rock, crew and a long playtime). The measure line reads the rendered width.</p>
+<div class="grid" style="grid-template-columns: minmax(0, 24em) minmax(0, 1fr);">
+  <div class="opt"><h3>Today</h3><p class="cap">The reset is the dashed box under copy and load.</p><div id="today"></div></div>
+  <div class="opt"><h3>Widened</h3>
+    <p class="cap">Playtime as a column of its own, right-aligned; delete dashed like the reset was. The open slot's delete is shown too (the owner to decide, see questions).</p>
+    <div class="tog" id="fmt2"><button data-f="clock" class="on">12:34:56</button><button data-f="hm">3h 12m</button></div>
+    <div class="rowwrap"><div id="wide"></div></div>
+    <div class="measure" id="measure"></div>
+  </div>
+</div>
+
+<!-- 3 --------------------------------------------------------------------->
+<h2>3 &middot; Confirming a delete</h2>
+<p class="note">Deleting is destructive, so each option asks once. All three fade, nothing pops. Press the delete on row 2 (or wait; it plays itself). The reset today already arms for four seconds, so (a) is the house habit.</p>
+<div class="grid" id="dels"></div>
+<p class="note" style="margin-top:18px">What this cannot show: the real sheet around it, the landing page's veil, the cloud section's own rows beneath it, touch (a hold on a phone competes with the native scroll), and what the sheet looks like with real names for the confirm words. All wording in brackets is placeholder.</p>
+</div>
+
+<script>
+var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+
+/* ---------- 1: boards ---------- */
+var secs = 12 * 3600 + 34 * 60 + 56;
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function fmtClock(s) { return Math.floor(s / 3600) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60); }
+function fmtHM(s) { var h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60; return h ? h + 'h ' + m + 'm' : m + 'm'; }
+var TALLY = [['rocks cleared', '12'], ['pebbles banked', '<span class="dustm"></span>48,210'], ['ore dug', '1,904'], ['through the rift', '<span class="dustm"></span>2,310'], ['on the payroll', '25'], ['notices earned', '31']];
+function row(n, v, cls) { return '<div class="r ' + (cls || '') + '"><span class="n">' + n + '</span><span class="lead"></span><span class="v">' + v + '</span></div>'; }
+var playEls = [];
+function board(place, fmt) {
+  var o = el('div', 'opt');
+  var title = place === 'A' ? 'A' + (fmt === 'clock' ? '1' : '2') + ' &middot; its own row at the top' : 'B' + (fmt === 'clock' ? '1' : '2') + ' &middot; among the tally rows';
+  var cap = place === 'A'
+    ? 'Above every section, set apart, the first thing the eye lands on.'
+    : 'Last line of the tally, after notices earned, where the other lifetime totals live.';
+  o.appendChild(el('h3', '', title));
+  o.appendChild(el('p', 'cap', cap + ' Format: ' + (fmt === 'clock' ? 'clock' : 'hours and minutes') + '.'));
+  var b = el('div', 'book');
+  var pv = '<span class="clk"></span><span class="pv" data-f="' + fmt + '"></span>';
+  var h = '';
+  if (place === 'A') {
+    h += row('playtime', pv, 'play');
+    h += '<div class="gap"></div>';
+  }
+  h += '<div class="sect' + (place === 'A' ? '' : ' first') + '">the tally</div>';
+  TALLY.forEach(function (t) { h += row(t[0], t[1]); });
+  if (place === 'B') h += row('playtime', pv, 'play');
+  b.innerHTML = h;
+  o.appendChild(b);
+  o.appendChild(el('div', 'beat', 'one row, same dotted leader and mark as its neighbors'));
+  return o;
+}
+var bd = document.getElementById('boards');
+[['A', 'clock'], ['A', 'hm'], ['B', 'clock'], ['B', 'hm']].forEach(function (p) { bd.appendChild(board(p[0], p[1])); });
+function paintPlay() {
+  document.querySelectorAll('.pv').forEach(function (e) { e.textContent = e.dataset.f === 'clock' ? fmtClock(secs) : fmtHM(secs); });
+}
+paintPlay();
+if (!RM) setInterval(function () { secs += 1; paintPlay(); }, 1000);
+
+/* ---------- 2: saves ---------- */
+var ROWS = [
+  { n: 1, rock: 12, crew: 25, ago: 'just now', s: 12 * 3600 + 34 * 60 + 56, open: true },
+  { n: 2, rock: 3, crew: 4, ago: '2 h ago', s: 1 * 3600 + 5 * 60 + 9 },
+  { n: 3, rock: 148, crew: 120, ago: '12 days ago', s: 123 * 3600 + 45 * 60 + 6 }
+];
+function sayP(s, f) { return f === 'clock' ? fmtClock(s) : fmtHM(s); }
+function today() {
+  var c = el('div', 'col today');
+  c.appendChild(el('div', 'word', 'saves'));
+  ROWS.forEach(function (r) {
+    var b = el('button', 'slot' + (r.open ? ' open' : ''), r.n + ' &middot; rock ' + r.rock + ' &middot; ' + r.crew + ' crew &middot; ' + (r.open ? 'playing' : r.ago));
+    c.appendChild(b);
+  });
+  var p = el('div', 'pair', '<button>copy a save</button><button>load a save</button>');
+  c.appendChild(p);
+  c.appendChild(el('button', 'reset', 'reset progress'));
+  c.appendChild(el('button', '', 'back'));
+  document.getElementById('today').appendChild(c);
+}
+today();
+var fmt2 = 'clock';
+function wide() {
+  var host = document.getElementById('wide'); host.innerHTML = '';
+  var c = el('div', 'col');
+  c.appendChild(el('div', 'word', 'saves'));
+  var g = el('div', 'slots2');
+  ROWS.concat([{ n: 4, empty: true }]).slice(0, 4).forEach(function (r) {
+    var rw = el('div', 'srow' + (r.open ? ' open' : '') + (r.empty ? ' empty' : ''));
+    if (r.empty) {
+      rw.innerHTML = '<span class="cell c1 span">' + r.n + ' &middot; <span class="ph">[empty]</span></span><button class="dbtn none">delete</button>';
+    } else {
+      rw.innerHTML = '<span class="cell c1">' + r.n + ' &middot;</span><span class="cell">rock ' + r.rock + '</span><span class="cell">&nbsp;&middot; ' + r.crew + ' crew</span><span class="cell">&nbsp;&middot; ' + (r.open ? 'playing' : r.ago) + '</span><span class="cell pt ptc c5">' + sayP(r.s, fmt2) + '</span><button class="dbtn">delete</button>';
+    }
+    g.appendChild(rw);
+  });
+  c.appendChild(g);
+  c.appendChild(el('div', '', '')).innerHTML = '';
+  var p = el('div', 'pair', '<button>copy a save</button><button>load a save</button>'); p.style.marginTop = '2px';
+  c.appendChild(p);
+  c.appendChild(el('button', '', 'back'));
+  host.appendChild(c);
+  var w = g.scrollWidth, cw = c.scrollWidth;
+  var em = 12;
+  document.getElementById('measure').innerHTML = 'measured: rows ' + Math.round(w) + 'px (' + (w / em).toFixed(1) + 'em), sheet ' + Math.round(cw) + 'px (' + (cw / em).toFixed(1) + 'em) with padding, against 21em today. The widest row sets it: slot 3, 123:45:06 or 123h 45m. Below about 560px of screen the row scrolls sideways inside the sheet [phone layout: to design].';
+}
+addEventListener('load', wide);
+wide();
+document.querySelectorAll('#fmt2 button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    fmt2 = b.dataset.f;
+    document.querySelectorAll('#fmt2 button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    wide();
+  });
+});
+
+/* ---------- 3: confirm options ---------- */
+function mkList(extra) {
+  var l = el('div', 'lst');
+  var rows = [
+    { n: 1, t: '1 &middot; rock 12 &middot; 12:34:56', open: true },
+    { n: 2, t: '2 &middot; rock 3 &middot; 1:05:09' },
+    { n: 3, t: '3 &middot; empty', empty: true }
+  ];
+  var out = {};
+  rows.forEach(function (r) {
+    var d = el('div', 'dr' + (r.empty ? ' gone' : ''));
+    var ln = el('div', 'line');
+    var sb = el('div', 'slotb', '<span class="tx full">' + r.t + '</span><span class="tx emp">' + r.n + ' &middot; <span class="ph">[empty]</span></span>');
+    ln.appendChild(sb);
+    var db = el('button', 'del');
+    db.innerHTML = extra.btn;
+    if (r.empty) db.style.visibility = 'hidden';
+    ln.appendChild(db);
+    d.appendChild(ln);
+    if (extra.confirm) d.insertAdjacentHTML('beforeend', '<div class="confirm"><span class="q"><span class="ph">[delete save 2?]</span></span><button class="no">no</button><button class="yes"><span class="ph" style="color:inherit">[yes]</span></button></div>');
+    l.appendChild(d);
+    if (r.n === 2) { out.d = d; out.btn = db; out.sb = sb; }
+  });
+  out.list = l;
+  return out;
+}
+function restore2(o, ref) {
+  o.d.classList.remove('gone', 'asking');
+  o.btn.classList.remove('armed', 'holding');
+  o.btn.style.visibility = '';
+}
+function wipe(o) {
+  o.btn.classList.remove('armed', 'holding');
+  o.d.classList.remove('asking');
+  o.sb.classList.add('fading');
+  setTimeout(function () { o.d.classList.add('gone'); o.sb.classList.remove('fading'); }, RM ? 0 : 450);
+}
+var dels = document.getElementById('dels');
+
+/* (a) press twice */
+(function () {
+  var o = el('div', 'opt');
+  o.innerHTML = '<h3>a &middot; press twice</h3><p class="cap">First press turns the button solid and asks; a thin bar drains for four seconds, then it goes back. A second press inside that deletes. The reset works this way today.</p>';
+  var m = mkList({ btn: '<span class="a">delete</span><span class="b ph" style="color:inherit">[sure?]</span><span class="timer"></span>' });
+  o.appendChild(m.list);
+  var beat = el('div', 'beat', 'at rest'); o.appendChild(beat);
+  var t = 0;
+  function arm() { m.btn.classList.add('armed'); beat.textContent = 'armed: asking, bar draining (4 s)'; t = setTimeout(function () { m.btn.classList.remove('armed'); beat.textContent = 'timed out: back to rest'; }, 4000); }
+  m.btn.addEventListener('click', function () {
+    if (!m.btn.classList.contains('armed')) { arm(); return; }
+    clearTimeout(t); beat.textContent = 'second press: row fades to empty'; wipe(m);
+  });
+  var rp = el('button', 'rep', 'replay'); rp.onclick = function () { clearTimeout(t); restore2(m); beat.textContent = 'at rest'; demo(); }; o.appendChild(rp);
+  function demo() { if (RM) return; setTimeout(arm, 1200); setTimeout(function () { clearTimeout(t); beat.textContent = 'second press: row fades to empty'; wipe(m); }, 3200); setTimeout(function () { restore2(m); beat.textContent = 'at rest'; demo(); }, 7500); }
+  demo();
+  dels.appendChild(o);
+})();
+
+/* (b) hold */
+(function () {
+  var o = el('div', 'opt');
+  o.innerHTML = '<h3>b &middot; hold to delete</h3><p class="cap">Press and hold: the button fills with ink over about 1.2 s and the row goes when it is full. Let go early and the fill drains back. No second click, so no mis-click; hard on a phone.</p>';
+  var m = mkList({ btn: '<span class="fill"></span><span class="a2">delete</span><span class="b2 ph" style="color:inherit">[hold]</span>' });
+  o.appendChild(m.list);
+  var beat = el('div', 'beat', 'at rest'); o.appendChild(beat);
+  var t = 0;
+  function down() { m.btn.classList.add('holding'); beat.textContent = 'holding: fill rising'; clearTimeout(t); t = setTimeout(function () { beat.textContent = 'full: row fades to empty'; wipe(m); }, 1200); }
+  function up() { if (!m.btn.classList.contains('holding')) return; clearTimeout(t); m.btn.classList.remove('holding'); beat.textContent = 'let go early: fill drains back'; }
+  m.btn.addEventListener('pointerdown', down);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (e) { m.btn.addEventListener(e, up); });
+  var rp = el('button', 'rep', 'replay'); rp.onclick = function () { clearTimeout(t); restore2(m); beat.textContent = 'at rest'; demo(); }; o.appendChild(rp);
+  function demo() { if (RM) return; setTimeout(down, 1000); setTimeout(up, 1700); setTimeout(down, 3000); setTimeout(function () { restore2(m); beat.textContent = 'at rest'; demo(); }, 7500); }
+  demo();
+  dels.appendChild(o);
+})();
+
+/* (c) inline confirm row */
+(function () {
+  var o = el('div', 'opt');
+  o.innerHTML = '<h3>c &middot; a confirm row</h3><p class="cap">The press opens a small row under the save with a yes and a no; it fades open, so the sheet grows a line. Nothing times out; it stays until answered.</p>';
+  var m = mkList({ btn: '<span class="a">delete</span>', confirm: true });
+  o.appendChild(m.list);
+  var beat = el('div', 'beat', 'at rest'); o.appendChild(beat);
+  function ask() { m.d.classList.add('asking'); beat.textContent = 'row open: waiting for yes or no'; }
+  function no() { m.d.classList.remove('asking'); beat.textContent = 'no: row fades shut'; }
+  function yes() { beat.textContent = 'yes: row fades to empty'; wipe(m); }
+  m.btn.addEventListener('click', function () { m.d.classList.contains('asking') ? no() : ask(); });
+  m.d.querySelector('.no').addEventListener('click', no);
+  m.d.querySelector('.yes').addEventListener('click', yes);
+  var rp = el('button', 'rep', 'replay'); rp.onclick = function () { restore2(m); beat.textContent = 'at rest'; demo(); }; o.appendChild(rp);
+  function demo() { if (RM) return; setTimeout(ask, 1000); setTimeout(no, 3000); setTimeout(ask, 4200); setTimeout(yes, 6200); setTimeout(function () { restore2(m); beat.textContent = 'at rest'; demo(); }, 9500); }
+  demo();
+  dels.appendChild(o);
+})();
+</script>
+</body>
+</html>
