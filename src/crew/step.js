@@ -25,7 +25,8 @@
 //      is dancing nothing else in this list may move it, and that position IS
 //      the fix for the judder (the duck, the elbow and a work stepper pulling
 //      on one body on one frame). Below the commute, so a body already on its
-//      way finishes the walk.
+//      way finishes the walk -- unless the zone has stopped it at its edge,
+//      when it dances there and walks on after.
 //   9. **tender** -- above the stations: a rockhand's work claims every frame,
 //      so a tender check below it is never reached and the ram never bites.
 //  10. **shutIn** -- everything below this line is a reason to walk somewhere,
@@ -72,6 +73,16 @@ import { sfx } from '../audio.js';
 // deadline danced every fall after a shield stood, and a body dancing under
 // a rock the dome held was jigged up onto its top.
 const dancing = c => c.now < S.danceUntil;
+
+// A body on the yard standing where `duck` leaves it, a cell off the zone's
+// edge, whose walk ends on the far side of that edge or under it.
+const heldAtEdge = (w, zone) => {
+  if (!zone || !onYard(w) || w.walkTo == null) return false;
+  const side = sideOf(zone, w.x);
+  if (!side || sideOf(zone, w.walkTo) === side) return false;
+  const gap = side < 0 ? zone.from - (w.x + WORKER) : w.x - zone.to;
+  return gap <= P + 1e-6;
+};
 
 // --- the stages -------------------------------------------------------------------
 const STAGES = [
@@ -178,7 +189,17 @@ const STAGES = [
   // On its way to a job, and doing none of it yet. A digger walks *into* the
   // footprint on purpose; the rock coming down is what sends it back out
   // (`stepDig`).
-  (w, c) => { if (!w.walking) return false; stepCommute(w, w.dig ? null : c.zone); return true; },
+  // A walk the zone has stopped at its edge cannot go on until the next rock
+  // is down, and while the yard dances that is the whole dance: the body joins
+  // in where the edge stopped it (the celebrate stage, which keeps the walk)
+  // rather than treading against the line until the music stops.
+  (w, c) => {
+    if (!w.walking) return false;
+    if (dancing(c) && !w.dig && heldAtEdge(w, c.zone)) return false;
+    if (w.jigAt != null && MOVE_KEYS.includes(w.move)) stopJig(w);
+    stepCommute(w, w.dig ? null : c.zone);
+    return true;
+  },
 
   // Which half of the works it belongs in. Only once the shaft is open: before
   // the pit drowns there is no way down, and nobody is on a deep job.

@@ -149,6 +149,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The cancel on a queued barrier is a small button instead of a bar across the whole card, and it no longer covers the description (src/selftest/boards.js).
 - Hovering a queued barrier keeps its description instead of fading it out (src/selftest/boards.js).
 - The shack stands clear of the barriers: the arch and the dome no longer run into it, with bare ground left between (test/shield-fit.test.mjs).
+- A worker on its way to the rock when it comes off dances at the edge of the drop instead of treading on the spot there until the next rock lands (test/dance.test.mjs).
 
 ## v0.5.2 — 2026-09-28
 

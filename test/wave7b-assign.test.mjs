@@ -138,15 +138,19 @@ group('a hauler dropped on the rock goes for its helmet before it climbs', async
   window.__kit({ breakers: 3 });
   window.__shack();
   run(2);
-  const w = S.workers.find(o => o.type === 'hauler');
+  const at = S.workers.findIndex(o => o.type === 'hauler');
+  let w = S.workers[at];
   const rock = dropTargets().find(t => t.key === 'rock');
   holdOver(w, rock);
   drop(w);
   const legs = [w.leg, ...(w.legs || []).map(l => l.do)];
   // Watched to the stand: it must reach the hat still bare, and climb wearing it.
+  // Read afresh every frame: the walk is longer than the harness's reload
+  // interval, and a reload stands the crew back up as new objects in order.
   let bareAtStand = false, landedWalking = false;
   for (let i = 0; i < 60 * 60; i++) {
     run(1 / 60);
+    w = S.workers[at];
     if (!w.falling && w.walking && w.leg === 'wear') landedWalking = true;
     if (w.leg === 'wear' && !w.trained && Math.abs(w.x - kitX(JOB.ROCK)) < WORKER) bareAtStand = true;
     if (!w.walking && !w.falling && w.leg === 'work') break;

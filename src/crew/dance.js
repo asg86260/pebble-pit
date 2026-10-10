@@ -132,12 +132,12 @@ function jig(w, now, zone, endsAt) {
     if (Math.abs(w.y - surfaceUnder(w)) > P) { w.y = stand(w); return; }
     // Never latch a walking body's foot: mid-stride it is wherever the walk had
     // it, and if the ground question then moves (the camera, a route's own
-    // footing) the body floats. On the yard the walk is given up and the body
-    // stood first; off the yard (a face, a ladder) the walk keeps it and it
-    // joins if it tops out.
+    // footing) the body floats. The only walker handed here is one the zone
+    // holds at its edge (`heldAtEdge`, crew/step.js): it is stood first and
+    // keeps its walk, which takes it on once the rock is down; off the yard (a
+    // face, a ladder) it does not join at all.
     if (w.walking) {
       if (!onYard(w)) return;
-      w.walking = false; w.legs = null; w.leg = 0;
       w.y = stand(w);
     }
     // The ground this body dances on: where it already is, not a fresh surface
