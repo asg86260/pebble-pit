@@ -127,6 +127,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A queued shop item's "refund" now reads "cancel".
 - Hold the right button to see the crew: the yard fades back, every worker is ringed, the cursor turns into an open hand, and the one under it slows down. Holding the left button as well picks a worker up, for as long as both are held; the right button alone no longer lifts anybody. Hovering no longer stops a worker.
 - After the first rock, the one still buried yells for help.
+- A tag at the top of the screen counts the muck on the ground, and another the poop, each going away once the last of it is swept.
 - An achievement for shaking a worker dizzy.
 - A card at the top left says the story's next step, from digging out the rock to saving the sqwife.
 - The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.

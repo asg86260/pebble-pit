@@ -430,6 +430,9 @@ export function nearestOpenMess(wx, taken) {
 }
 
 export const muckLeft = () => tally().all;
+// Cells of each kind lying anywhere, one figure a kind: the tags over the yard
+// (messtags.js) say what is on the ground, all of it, whoever may shift it.
+export const messCounts = () => ({ ...tally().by });
 // how much of it is what a body left, which is the janitor's alone
 export const poopLeft = () => tally().by.poop;
 // What a given pair of hands may shift, which decides whether it is worth

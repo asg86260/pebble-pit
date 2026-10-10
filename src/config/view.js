@@ -94,6 +94,9 @@ export const VEIL_MS = 350;
 // and how long the held sheet and its wash take to come up and go down
 // (fade.js; style.css fades #held and #scrim in the same time)
 export const SHEET_FADE_MS = 180;
+// The most a mess tag counts out (messtags.js): past it the card says the
+// cap and a plus, since a storm lays hundreds and the figure is a nudge.
+export const MESS_TAG_CAP = 99;
 // The hard shadow every floating card casts, down and right, in screen
 // pixels, and its gray: the page's --shadow-off and --ink-7 (style.css), for
 // the one card drawn on the canvas rather than the page (render/counter.js).

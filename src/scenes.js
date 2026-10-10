@@ -129,6 +129,12 @@ const dirty = () => {
   window.__poopSet(c => (c > c0 - 90 && c < c0 + 110 && c % 17 === 0) ? 2 : 0);
 };
 
+// A patch of poop every so often across the stretch in front of the camera.
+const messPoop = () => {
+  const c0 = Math.floor((st().camX + st().viewW / 2) / P);
+  window.__poopSet(c => (c > c0 - 60 && c < c0 + 60 && c % 23 === 0) ? 2 : 0);
+};
+
 // Where the hauler with the most in its arms is standing, off the snapshot's
 // crew lines, for a look at a load on the road.
 const ladenHauler = () => {
@@ -1471,6 +1477,17 @@ export const SCENES = {
     run: () => { skyAt(0); untilRaining(); window.__fast(18); } },
   acidrain: { about: 'the house and the sky', say: 'the same storm over a brim sky: the wash among the water',
     run: () => { skyAt(4200); untilRaining(); window.__fast(18); } },
+  // The mess tags (messtags.js): the acid storm's muck down through the
+  // rain itself, and a few patches of the crew's own poop by the rock that
+  // nobody but a janitor may shift, so both cards are up with the crew
+  // sweeping under them.
+  messtags: { about: 'the house and the sky', say: "the muck and poop tags over a yard the storm has dirtied",
+    run: () => { skyAt(4200); untilRaining(); window.__fast(18); messPoop(); window.__fast(1); } },
+  // The same with a notice's card up, which the tags stand under. Replaying
+  // the record is the one way to put a notice up on a yard that has earned
+  // them all already.
+  messtoast: { about: 'the house and the sky', say: "the mess tags standing under a notice's card",
+    run: () => { skyAt(4200); untilRaining(); window.__fast(18); messPoop(); S.wonShown = 0; window.__fast(1); } },
   raindrizzle: { about: 'the house and the sky', say: 'the drizzle',
     run: () => { skyAt(4200); untilRaining(); window.__fast(2); } },
   rain: { about: 'the house and the sky', say: 'the full pour',
