@@ -121,9 +121,19 @@ export const TESTS = [
     await framesUntil(() => false, 25);   // the glide to two seats
     const both = [tagOf('muck'), tagOf('poop')], dropped = state().smog.mess.poop;
 
+    // Held, both cards go with the rest of the yard's furniture, and come
+    // back when the game does.
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const heldGone = await framesUntil(() => tagOf('muck').gone && tagOf('poop').gone);
+    const wasHeld = state().paused;
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const heldBack = await framesUntil(() => tagOf('muck').on && tagOf('poop').on);
+
     window.__air({ muck: 0 });
     await settle(0);
-    const muckGone = await framesUntil(() => tagOf('muck').gone);
+    // every frame of the fade, the figure it had, never nought
+    let saidNought = false;
+    const muckGone = await framesUntil(() => { const t = tagOf('muck'); if (!t.gone && t.n === 0) saidNought = true; return t.gone; });
     await framesUntil(() => false, 25);   // and the glide to the middle
     const alone = tagOf('poop');
 
@@ -138,7 +148,9 @@ export const TESTS = [
       ok(poopUp && both[1].n === dropped, "the crew's poop gets its own tag, with its own count", `${poopUp}, ${both[1].n} vs ${dropped}`),
       ok(both[0].mid < mid && both[1].mid > mid && both[0].top === both[1].top,
          'the two stand side by side about the middle', JSON.stringify(both)),
+      ok(wasHeld && heldGone && heldBack, 'held, the tags go, and come back with the game', `${wasHeld}, ${heldGone}, ${heldBack}`),
       ok(muckGone, 'swept clean, the muck tag fades right out', `${muckGone}`),
+      ok(!saidNought, 'saying the last figure it had as it goes, never nought', `${saidNought}`),
       ok(alone.on && Math.abs(alone.mid - mid) <= 1, 'and the poop tag is left standing in the middle', `${alone.mid} vs ${mid}`),
       ok(poopGone, 'and goes with the last of the poop', `${poopGone}`)
     ];

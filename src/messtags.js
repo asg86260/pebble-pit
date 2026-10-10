@@ -32,8 +32,9 @@ const tags = [...holder.querySelectorAll('.messtag')].map(el =>
 const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 0;
 
 // Off wherever the rest of the yard's furniture is off: down in the deep,
-// on the way there, and while a beat or a cutscene has the yard.
-const showing = () => S.view === 'yard' && !gliding() && !cutsceneRunning()
+// on the way there, while a beat or a cutscene has the yard, and under the
+// held sheet, as the skip hint is.
+const showing = () => S.view === 'yard' && !S.paused && !gliding() && !cutsceneRunning()
   && !(S.beat.yard || S.beat.camera || S.beat.sheet);
 
 // Once a frame, from `frame()` in main.js, after the toast has been seated.
@@ -41,7 +42,8 @@ export function stepMessTags() {
   const counts = showing() ? messCounts() : null;
   for (const t of tags) {
     const n = counts ? counts[t.kind] | 0 : 0;
-    // written only when it changes, so a still count is a still card
+    // written only when it changes, so a still count is a still card; and
+    // never nought, so a card fading out says the last figure it had
     if (n > 0 && n !== t.said) { t.said = n; t.n.textContent = String(n); }
     t.up = n > 0;
     if (!t.up) fadeOut(t.el);
