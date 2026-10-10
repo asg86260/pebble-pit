@@ -1,5 +1,11 @@
 # Still to do
 
+## Three builds: itch, Steam, and the Steam demo -- DESIGNED, AWAITING SIGN-OFF (2026-10-10)
+
+"Three builds" in DESIGN.md: our cloud on itch, Steam Cloud through the
+Steamworks SDK on Steam, a demo build. Blocked on the owner's three calls at
+the end of the section. No code yet.
+
 ## The toast over a tall settlement -- OPEN (2026-10-09)
 
 The browser group "a notice stands clear of a building that reaches into the

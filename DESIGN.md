@@ -17423,3 +17423,63 @@ keeps its saved name and now means only "this rock is not yet finished
 with", and the cell value the core had stays unused so saved finds read the
 same.
 
+## Three builds: itch, Steam, and the Steam demo (design, not built)
+
+The owner, 2026-10-10: a build that uses our own cloud saves and one that
+uses Steam's -- "no auto cloud for steam, only steamworks for steam. if its
+downloaded from itch, and not connected to steam, use ours. we should do the
+steam demo as well." With the plan before it: the full game sold on Steam,
+a free demo that stops on a cliffhanger.
+
+**The bargain.** A Steam player's save follows them through Steam, the way
+every other Steam game's does, and nothing of ours is asked of them; an itch
+player keeps the cloud they have. Each build keeps one way of syncing, so no
+save is ever written by two clouds.
+
+### The builds
+
+| build | where | saves | sync |
+|---|---|---|---|
+| browser | itch, `html` channel | the browser (IndexedDB), as now | ours (`CLOUD_ON`, opt-in), as now |
+| desktop | itch downloads | `userData/saves` (electron/store.cjs), as now | ours, as now |
+| Steam full | Steam, the game's app | `userData/saves`, as now | Steam Cloud through the Steamworks SDK |
+| Steam demo | Steam, the demo app | the same | Steam Cloud through the SDK, the demo app's own |
+
+- **One build setting, `target`**: `itch` (the default) or `steam`, read at
+  build time (a `VITE_TARGET` the release workflow sets) and by the Electron
+  shell. `steam` switches our cloud off and its buttons with it; nothing
+  else in the game changes. The demo is a second setting, `demo`, on any
+  target (below).
+- **Steam Cloud by the SDK, not Auto-Cloud** (the owner's call). The shell
+  starts the Steamworks API at launch; the save store writes each save to
+  disk as now and also to Steam's remote storage, and at launch takes
+  whichever copy is newer by the save's own `playedS` (the rule our cloud
+  already uses). If Steam is not running or the API will not start, the
+  build plays on its disk saves and says nothing -- it never falls back to
+  our cloud.
+- **The demo**: `demo` stops the story at the chosen beat (proposed: the arch
+  failing, about the first hour) with an end card pointing to the full
+  game's store page, in place of the next objective. The demo is its own
+  Steam app, so its cloud is its own; on first launch the full game looks
+  for a demo save on the same machine and offers to carry it on.
+
+### What it costs
+
+- **A native dependency** in the Electron shell for the Steamworks SDK
+  (`steamworks.js` is the usual one; Valve's redistributable library ships
+  beside the executable). CLAUDE.md says no new dependencies; this is the
+  one place the platform requires it, and it is the shell's only, never the
+  game's.
+- A Steamworks account: the $100 app fee for the game; the demo is a free
+  child app of it. App ids go in config.
+- The release workflow gains Steam jobs (the full game and the demo, per
+  OS), uploaded with Valve's SteamPipe tool, and keeps its itch jobs.
+
+### The owner's calls
+
+1. **The demo's end**: the arch failing (proposed), the tower standing, or
+   another beat.
+2. **The native dependency**: `steamworks.js` in the shell, accepted?
+3. **Achievements**: map the game's own achievements to Steam's now, since
+   the SDK is in anyway, or later.
+
