@@ -16,7 +16,7 @@ import { buildBoard } from '../src/shop.js';
 import { kitX } from '../src/world.js';
 import { JOB } from '../src/jobs.js';
 import { rockSize, rockWidthAt } from '../src/rock.js';
-import { ROCK_FLANK_CLEAR, SHACK_CLEAR, SHACK_SCOOT, RAM_CLEAR, LADDER, TIER_BAND } from '../src/config.js';
+import { ROCK_FLANK_CLEAR, SHACK_CLEAR, SHACK_EAVE, STATION_GAP, shieldReach, SHACK_SCOOT, RAM_CLEAR, LADDER, TIER_BAND } from '../src/config.js';
 import { RAM_REACH } from '../src/rock.js';
 import { spriteW, RAM } from '../src/sprites.js';
 import { SHACK_DUST } from '../src/config.js';
@@ -343,6 +343,9 @@ group('the shack stands off the rock that is here, and scoots out for the next',
   const one = S.boulderNo, x1 = shack.x;
   const edge1 = S.cx - (rockWidthAt(one) / 2) * P;
   const off1 = edge1 - (x1 + shack.w);
+  // The clearance is the widest shield's reach over this rock and the gap
+  // beyond it (world.js, `shackSpot`), where that is more than the hut's own.
+  const clearAt = n => Math.max(SHACK_CLEAR, shieldReach(rockWidthAt(n) * P) + SHACK_EAVE + STATION_GAP);
 
   // A few rocks on: mined out and the next one down, the way it happens.
   const seen = [];
@@ -360,10 +363,10 @@ group('the shack stands off the rock that is here, and scoots out for the next',
 
   return [
     ok(later > one, 'rocks came and went', `${one} -> ${later}`),
-    ok(off1 === SHACK_CLEAR, 'at rock one the hut stands the clearance off the rock',
-       `${off1}px, clearance ${SHACK_CLEAR}`),
+    ok(Math.abs(off1 - clearAt(one)) <= P / 2, 'at rock one the hut stands the clearance off the rock',
+       `${off1}px, clearance ${clearAt(one)}`),
     ok(xN < x1, 'and has moved out by the time a broader rock is down', `${x1} -> ${xN}`),
-    ok(offN === SHACK_CLEAR, 'to the same clearance off the new one', `${offN}px`),
+    ok(Math.abs(offN - clearAt(later)) <= P / 2, 'to its clearance off the new one', `${offN}px`),
     ok(!jumps.length, 'sliding, never jumping', jumps.slice(0, 3).join(', ')),
     ok(monotone, 'and only ever outward'),
     ok(xN >= slot, 'never past its slot in the walk', `${xN} vs slot ${slot}`),
@@ -393,7 +396,7 @@ group('the hut stands behind the ram once there is one, and the slot always did'
     ok(ROCK_FLANK_CLEAR >= RAM_CLEAR + P * spriteW(RAM),
        'the slot leaves the ram its parking space at the biggest rock',
        `${ROCK_FLANK_CLEAR}px against ${RAM_CLEAR + P * spriteW(RAM)}`),
-    ok(after < before, 'buying the ram moves the hut out', `${before} -> ${after}`),
+    ok(after <= before, 'buying the ram never moves the hut in', `${before} -> ${after}`),
     ok(after + shack.w + RAM_CLEAR <= parked, 'clear of where the ram parks',
        `hut to ${after + shack.w}, ram from ${parked}`)
   ];

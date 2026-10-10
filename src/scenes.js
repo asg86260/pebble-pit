@@ -1495,6 +1495,11 @@ export const SCENES = {
     run: () => { domeCast(6); window.__look(st().shield.x - 260); } },
   // Proves the dome is refit for the rock that actually reaches it
   // (`refitShield`, from `makeBoulder`) rather than sized once at the pour.
+  // The widest shield standing over the biggest rock, the shack beside it:
+  // the bare ground between the shield's far leg and the hut's wall.
+  shieldflank: { about: 'the shields', say: 'the dome over the biggest rock, the shack beside it',
+    run: () => { shieldBuilt('dome'); window.__shack(); S.boulderNo = 40; window.__next(); window.__fast(8);
+                 window.__look(st().shackX - 150); } },
   'dome!!': { about: 'the shields', say: 'the dome met by a rock ten rocks later, refit for it',
     run: () => { shieldBuilt('dome'); S.boulderNo += 10; window.__next(); window.__fast(4.5); } },
   // Frame by frame to the first frame of the fade, because the set-down is
