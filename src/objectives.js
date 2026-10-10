@@ -14,7 +14,8 @@ import { beatDone } from './beats.js';
 // must imply every step before it (a fact that can come early, like the pit
 // drowning or the tower standing, is asked together with the one it follows); `when`, if
 // it has one, is whether the step is part of this story at all. The first
-// step not done is the line.
+// step not done is the line. `row` is the shop row the step is bought
+// through: the card under the line sells it (objbarrier.js).
 export const STEPS = [
   { key: 'rock', say: 'dig the boulder to save your sqwife!', done: () => S.boulderNo > 1 || beatDone('meet'),
     // the intro's quest (DESIGN.md, "Quests under the story's line")
@@ -24,10 +25,10 @@ export const STEPS = [
       { key: 'toss', say: 'toss the pebble into the pit', done: () => S.banked > 0 },
     ] },
   { key: 'falling', say: 'try to dig the boulder again!', done: () => S.boulderNo > 1 },
-  { key: 'props', say: 'maybe building a wooden roof will stop the next boulder?', done: () => shieldDone('props') || S.rescued },
-  { key: 'net', say: 'nope, try catching the boulder and slowing it down', done: () => shieldDone('net') || S.rescued },
-  { key: 'arch', say: "lets try building an arch from the mined ore and stone. surely that's sturdy enough.", done: () => shieldDone('arch') || S.rescued },
-  { key: 'dome', say: 'out of options, lets see if the wizards can help.', done: () => shieldDone('dome') || S.rescued },
+  { key: 'props', row: 'props', say: 'maybe building a wooden roof will stop the next boulder?', done: () => shieldDone('props') || S.rescued },
+  { key: 'net', row: 'net', say: 'nope, try catching the boulder and slowing it down', done: () => shieldDone('net') || S.rescued },
+  { key: 'arch', row: 'arch', say: "lets try building an arch from the mined ore and stone. surely that's sturdy enough.", done: () => shieldDone('arch') || S.rescued },
+  { key: 'dome', row: 'dome', say: 'out of options, lets see if the wizards can help.', done: () => shieldDone('dome') || S.rescued },
   { key: 'rescue', say: 'save your sqwife', done: () => !!S.rescued },
   // The second half: the snatch waits on the pit drowning, then the way down
   // is the wizards', and the portal is a row on their board.

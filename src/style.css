@@ -9,18 +9,11 @@ html, body {
   font: 12px/1.4 ui-monospace, "Courier New", monospace;
   /* The shape of a board, written once. A sheet is this wide (border and all),
      with this much border and side padding, and this much air between its two
-     columns of cards -- and a card is what is left, halved. The pinned card in
-     the corner is drawn by the same builder as a board's, so it has to come
-     out the same width, and it did not: it wore a width of its own (240px),
-     forty-odd pixels short of a card, and the name ran into the pips. Kept as
-     variables so there is one answer to "how wide is a card" rather than a
-     sum copied to the corner. */
+     columns of cards. */
   --sheet-w: 84ch;
   --sheet-border: 2px;
   --sheet-pad-x: 12px;
   --rows-gap: 4px;
-  --card-w: calc((var(--sheet-w) - 2 * var(--sheet-border) - 2 * var(--sheet-pad-x)
-                  - var(--rows-gap)) / 2);
   -webkit-user-select: none; user-select: none;
   -webkit-tap-highlight-color: transparent;
   /* The safe area at the foot of the glass (the home indicator, in landscape),
@@ -419,9 +412,7 @@ body.still #scroller { scroll-behavior: auto; }
   color: var(--ink);
   background: none;
   border: 1px solid var(--ink);
-  /* The bottom is deeper than the top: the pin sits in a strip of its own under
-     the price, at the bottom-right, so it never lands on the bill. */
-  padding: 6px 8px 18px;
+  padding: 6px 8px;
   cursor: pointer;
 }
 @media (hover: hover) {
@@ -499,62 +490,6 @@ body.still #scroller { scroll-behavior: auto; }
   border-right: 10px solid transparent;
 }
 
-/* The pin. A pushpin in the bottom-right corner of every card that is a
-   purchase, in the strip the card's deeper bottom padding leaves under the
-   price: a flat head, a body and a needle, cut from one filled block so it is
-   the same flat shape at any ink. Loose, the whole needle shows; pressed, the
-   needle is in the card and only the head and body stand proud of it -- a pin
-   stuck in reads as stuck in, where a ring read as nothing in particular. No
-   tilt: a nine-pixel shape turned through forty-five degrees is a smudge. Made
-   of the card the way the new-corner is, so it inverts under the cursor with
-   the rest. It is faint until the card is hovered -- a mark on every card at
-   full ink is a second pip on the sheet -- and stays up on the pinned one. Big
-   enough to press: it was a five-pixel dot in the top corner, and a target that
-   size is a thing you miss. */
-.rows button .pinmark {
-  position: absolute;
-  right: 7px;
-  bottom: 3px;
-  width: 9px;
-  height: 12px;
-  background: currentColor;
-  clip-path: polygon(0 0, 9px 0, 9px 2px, 7px 2px, 7px 6px, 5px 6px, 5px 12px,
-                     4px 12px, 4px 6px, 2px 6px, 2px 2px, 0 2px);
-  transform-origin: 50% 0;
-  opacity: .35;
-  cursor: pointer;
-}
-.rows button.pinned .pinmark { opacity: 1; }
-@media (hover: hover) {
-  .rows button:hover .pinmark { opacity: 1; }
-}
-.rows button.pinned .pinmark {
-  clip-path: polygon(0 0, 9px 0, 9px 2px, 7px 2px, 7px 6px, 2px 6px, 2px 2px, 0 2px);
-}
-@media (hover: hover) {
-  .rows button .pinmark:hover { transform: scale(1.3); }
-}
-
-/* The corner: the one pinned card, top-right, drawn by the same builder as
-   the boards and in the same frame as the goal card, because that is what it
-   usually is. One card wide -- a board's card, to the pixel, so the words wrap
-   where they do on the sheet -- and no heading: the pin is the heading. Under
-   the dev panel's corner, which is dev only. */
-.pin {
-  position: fixed;
-  /* under the corner's row where there is one (corner.js writes --fs-room),
-     and inside the safe area */
-  right: calc(var(--edge) + env(safe-area-inset-right, 0px)); top: calc(var(--edge) + env(safe-area-inset-top, 0px) + var(--fs-room, 0px));
-  z-index: 9;
-  display: block;
-  width: var(--card-w);
-  max-width: calc(100vw - 2 * var(--edge));
-  background: var(--paper);
-  box-shadow: var(--float-shadow);
-}
-.pin .sect { display: none; }
-.pin button { width: 100%; border: 3px double var(--ink); }
-.pin button .gain:empty { display: none; }
 /* The same marks the game draws in the yard, in the same colours: a grain of
    dust, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching
@@ -2026,3 +1961,49 @@ html.dark .modal {
 #objective .quest li::before { content: "□ "; }
 #objective .quest li.done { text-decoration: line-through; opacity: .55; }
 #objective .quest li.done::before { content: "■ "; }
+
+/* The shield on a shield step (objbarrier.js; the owner's B with C's bar,
+   2026-10-10): glyph and name, the note, the bill a coin a line and the buy;
+   bought, one bar and the cancel. The card ignores the pointer and only its
+   two buttons take it back, so the rest stays the yard. A change of shape
+   fades out and in (`swap`), and a line met fades to its done look over a
+   second, the box filling as it goes. */
+#objective .barrier { display: grid; gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--ink-4);
+                      font-size: 11px; transition: opacity .35s ease; }
+#objective .barrier[hidden] { display: none; }
+#objective .barrier.swap { opacity: 0; }
+#objective .barrier .head { display: flex; align-items: center; gap: 6px; }
+/* style.css's `canvas` rule is the yard's window; a glyph is a canvas too */
+#objective .barrier .head canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block;
+                                   margin: 0 !important; background: none; image-rendering: pixelated; flex: none; }
+#objective .barrier .name { text-transform: uppercase; letter-spacing: .08em; font-weight: bold; }
+#objective .barrier .note { color: var(--ink-2); }
+#objective .barrier .bill { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 1px; }
+#objective .barrier .bill li { display: flex; align-items: center; gap: 4px; white-space: nowrap; transition: opacity 1s ease; }
+#objective .barrier .bill li.done { opacity: .55; }
+#objective .barrier .bill .num { margin-left: auto; padding-left: 6px; font-variant-numeric: tabular-nums; }
+#objective .barrier .bill .box { position: relative; flex: none; width: 7px; height: 7px; border: 1px solid currentColor; }
+#objective .barrier .bill .box::after { content: ''; position: absolute; inset: 1px; background: currentColor; opacity: 0; transition: opacity 1s ease; }
+#objective .barrier .bill li.done .box::after { opacity: 1; }
+/* the clock is never short, so its line has no box to tick, only the room */
+#objective .barrier .bill li.time .box { visibility: hidden; }
+#objective .barrier button { pointer-events: auto; font: inherit; color: var(--ink); background: var(--paper); cursor: pointer;
+                             transition: opacity .35s ease, border-color 1s ease, color 1s ease; }
+#objective .barrier .buy { margin-top: 4px; padding: 2px 6px; border: 3px double var(--ink); }
+#objective .barrier .buy .cost { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; }
+#objective .barrier .buy .cost > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+#objective .barrier .buy:disabled { cursor: default; border: 3px dashed var(--ink-5); color: var(--ink-5); }
+#objective .barrier .buy .short { color: var(--ink-5); }
+#objective .barrier .track { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+#objective .barrier .bar { position: relative; flex: 1; min-width: 40px; height: 8px; border: 2px solid var(--ink); }
+#objective .barrier .bar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--ink); transition: width .3s linear; }
+#objective .barrier .cancel { flex: none; padding: 1px 6px; border: 1px solid var(--ink); white-space: nowrap; }
+#objective .barrier .cancel:not(.on) { opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s .35s; }
+@media (hover: hover) {
+  #objective .barrier button:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
+  #objective .barrier button:hover:not(:disabled) .short { color: var(--ink-8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #objective .barrier, #objective .barrier .bill li, #objective .barrier .bill .box::after,
+  #objective .barrier button, #objective .barrier .bar > i { transition: none; }
+}

@@ -313,18 +313,6 @@
    tile. The goal card is the exception below. */
 .rows.shelves > .tile .note { display: none; }
 
-/* The pin and the new-corner: the card's marks, kept, in the tile's corners. */
-.rows.shelves > .tile .pinmark {
-  position: absolute; right: 4px; bottom: 2px;
-  width: 9px; height: 9px;
-  opacity: 0;
-  cursor: pointer;
-  background: linear-gradient(var(--ink), var(--ink)) 4px 0 / 1px 9px no-repeat, linear-gradient(var(--ink), var(--ink)) 1px 0 / 7px 3px no-repeat;
-}
-.rows.shelves > .tile.pinned .pinmark { opacity: 1; }
-@media (hover: hover) {
-  .rows.shelves > .tile:hover .pinmark { opacity: 1; }
-}
 /* The strip (DESIGN.md, "Refund and another"): the whole width of the tile
    along its foot, in the title's capitals, split into the refund and the
    next copy while the row has another to sell. The tile grows by the strip
@@ -352,7 +340,6 @@
    built, the next copy while the purse is short -- pales as a short tag does. */
 .rows.shelves > .tile .strip > i.dead { color: var(--ink-5); cursor: default; }
 .rows.shelves > .tile.stripped { cursor: default; padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
-.rows.shelves > .tile.stripped .pinmark { bottom: calc(var(--shelf-refund, 18px) + 2px); }
 @media (hover: hover) {
   .rows.shelves > .tile .strip > i:not(.dead):hover { background: var(--ink); color: var(--paper); }
 }
@@ -670,7 +657,7 @@ body.still .rows.shelves > .tile.goal::after { animation: none; }
 }
 .rows.ledger > button .name { display: contents; }
 .rows.ledger > button .what { grid-column: 1; display: block; font-style: normal; letter-spacing: .08em; white-space: nowrap; }
-.rows.ledger > button .ladder, .rows.ledger > button .gain, .rows.ledger > button .time, .rows.ledger > button .pinmark { display: none; }
+.rows.ledger > button .ladder, .rows.ledger > button .gain, .rows.ledger > button .time { display: none; }
 /* a reading's note is the dim line under it: the sum behind a rate */
 .rows.ledger > button .note { grid-column: 1 / -1; grid-row: 2; display: block; padding: 2px 0 0 2ch; color: var(--ink-5); font-size: 11px; }
 .rows.ledger > button .note:empty { display: none; }
@@ -679,41 +666,11 @@ body.still .rows.shelves > .tile.goal::after { animation: none; }
 .rows.ledger > button .cost { grid-column: 3; grid-row: 1; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .rows.ledger > button .cost > span { display: inline-flex; align-items: center; gap: 4px; }
 
-/* --- the pin: one tile in the corner ---------------------------------------
-   The pinned row is the same tile it is on its board (the owner, 2026-09-15:
-   the card in the corner was a mistake), on a patch of the same dotted ground
-   in the sheet's frame, one slot wide. No plank: the pin is its own heading,
-   and a shelf under one thing is a shelf with nothing to say. */
-.pin.rows.shelves {
-  /* over `.rows.shelves { position: relative }`; the corner itself (top and
-     right, under the fullscreen and gear buttons) is `.pin`'s, said once */
-  position: fixed; left: auto;
-  box-sizing: border-box;
-  width: calc(var(--shelf-slot, 140px) + 2 * var(--sheet-pad-x, 8px) + 2 * var(--sheet-border, 2px));
-  max-width: calc(100vw - 2 * var(--edge));
-  margin: 0;
-  padding: 4px var(--sheet-pad-x, 8px) 0;
-  border: var(--sheet-border, 2px) solid var(--ink);
-  background-color: var(--paper);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
-}
-.pin.rows.shelves > .sect { display: none; }
-.pin.rows.shelves::after { display: none; }
-/* The pin does not answer the cursor: no lift, no drift, no darkened border.
-   It is the resting tile whatever the pointer does; the builder attaches no
-   lean to it either. */
-.pin.rows.shelves > button.tile.building { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
-@media (hover: hover) {
-  .pin.rows.shelves > button.tile:hover { --lift: 0px; animation: none; transition: none; border-color: rgba(0, 0, 0, 0); }
-}
-
-
 /* The stipples above carry their ink inside a data URI, which cannot read a
    variable, so the dark page (style.css, `:root`) gets its own. */
 html.dark .sheet:has(> .page:not([hidden]) .rows.shelves),
 html.dark .rows.shelves > button.tile,
-html.dark .sheet:has(> .page:not([hidden]) .rows.ledger),
-html.dark .pin.rows.shelves {
+html.dark .sheet:has(> .page:not([hidden]) .rows.ledger) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 

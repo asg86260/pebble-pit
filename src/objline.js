@@ -5,6 +5,7 @@
 
 import { S } from './state.js';
 import { objective, questNow } from './objectives.js';
+import { seatBarrier } from './objbarrier.js';
 
 const el = document.getElementById('objective');
 // The node yard's page is a stand-in with no line on it: nothing to seat.
@@ -23,6 +24,14 @@ export function seatObjective(t) {
   el.classList.toggle('deep', S.view === 'deep');
   if (hide) return;
   const key = want ? want.key : null;
+  // The step came back mid-strike (a reset or a loaded save stood the yard
+  // where it was): the strike is called off, or the card stayed struck and
+  // faded out with the right line under it.
+  if (leaving && shown && key === shown.key) {
+    leaving = 0;
+    say.classList.remove('done');
+    el.classList.remove('going');
+  }
   if (shown && key !== shown.key) {
     // the one done: struck through and faded, then the next
     if (!leaving) { leaving = t + STRIKE_MS; say.classList.add('done'); el.classList.add('going'); if (list) { list.hidden = true; listed = ''; } }
@@ -40,6 +49,7 @@ export function seatObjective(t) {
   }
   if (!want && !shown) el.hidden = true;
   seatQuest(want);
+  seatBarrier(want && shown && want.key === shown.key ? want : null, t);
 }
 
 // The quest under the line: drawn again only when an item's state changes.

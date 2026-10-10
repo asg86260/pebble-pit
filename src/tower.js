@@ -221,8 +221,7 @@ export const TOWER_UPGRADES = [
 // rift.js). `S.riftLevel` is still read off old saves so they load clean.
 
 // The dome is this board's goal, as each shield before it is the bench's: the
-// wide card, and it pins itself into the corner once you have opened the
-// tower to see it (`fillPin` in shop.js).
+// wide card. The story's card sells it too (objbarrier.js).
 export const TOWER_SECTIONS = [
   { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
   { title: 'the sphere', keys: ['sphere', 'tunesphere'] },

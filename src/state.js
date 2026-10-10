@@ -415,9 +415,6 @@ export const S = {
   // because you were nearly rich enough does not go away when you spend
   // (`revealed` in shop.js).
   shownRows: [],
-  // The card pinned to the corner of the game: a row's key, or null (`fillPin`
-  // in shop.js).
-  pinned: null,
   boardOpen: false,       // the workbench board is showing
   resetArmed: 0,          // the reset button wants a second click
 
@@ -566,7 +563,6 @@ export const SAVED = [
   'seenSects',
   'seenRows',
   'shownRows',
-  'pinned',
   // What is *through* the rift (`rift`, `riftHeld`) is clamped on the way in
   // and so is hand-read (persist.js).
   'seenFullPit',

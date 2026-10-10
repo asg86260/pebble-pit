@@ -174,6 +174,14 @@ const hover = (x, y) => {
 // (each row is offered once the one before has failed), so a scene about a
 // later shield stands the yard where the earlier ones have been through.
 const SHIELD_ORDER = ['props', 'net', 'arch', 'dome'];
+// A fresh yard with the props on offer and a small purse (the story's card
+// scenes).
+const cardYard = dust => {
+  window.__reset();
+  window.__crew(2, 1);
+  window.__jump(PROP_FROM);
+  window.__give(dust);
+};
 const shieldYard = () => {
   window.__reset();
   window.__crew(2, 1, 0, 0, 0, 1);   // and one who can fly, for the dome
@@ -1719,13 +1727,26 @@ export const SCENES = {
                   window.__look(S.cx - S.viewW / 2);
                 } }]])
   ])),
-  // The dome on offer: the three before it have failed and the tower is
-  // opened to it, so the board wears the wide goal card and the corner pins
-  // it (`fillPin` in shop.js).
-  domeoffer: { about: 'the shields', say: "the dome on offer on the tower's board, pinned in the corner",
-    run: () => { shieldYard(); window.__answered('props', 'net', 'arch');
-                 S.quarryOpen = S.farmOpen = true; window.__meteor();
-                 window.__board('tower'); window.__fast(12); } },
+  // The shield on the story's card (objbarrier.js), a scene a shape: on
+  // offer short of the dust, on offer with it, waiting its turn behind a
+  // house with the cancel up, and going up with the bar filling. A small
+  // purse each, since a pit filled past its brim tears and the tear's scene
+  // takes the card off the screen.
+  propsoffer: { about: 'the shields', say: "the props on offer on the story's card, short of the dust",
+    run: () => { cardYard(200); window.__fast(1); } },
+  propsready: { about: 'the shields', say: "the props on offer on the story's card, paid for and the buy lit",
+    run: () => { cardYard(2000); window.__fast(1); } },
+  propsqueued: { about: 'the shields', say: "the props bought behind a house: the card's bar at nought and its cancel",
+    run: () => { cardYard(20000); window.__buy('house'); window.__buy('props'); window.__fast(1); } },
+  propsrising: { about: 'the shields', say: "the props going up: the card's bar part filled",
+    run: () => { cardYard(2000); window.__buy('props'); window.__fast(12); } },
+  // The dome on offer: the three before it have failed and the tower stands,
+  // so the story's card sells it, four coins and a clock, two of them met.
+  domeoffer: { about: 'the shields', say: "the dome on offer on the story's card, four coins and a clock",
+    run: () => { cardYard(20000); window.__crew(2, 1, 0, 0, 0, 1);
+                 window.__answered('props', 'net', 'arch'); window.__meteor();
+                 const half = Object.fromEntries(DOME_BILL.filter(([m]) => m !== 'dust').map(([m, n], k) => [m + 's', k ? n / 2 : n]));
+                 window.__grant(half); window.__fast(2); } },
   // The star is left up so the shot proves the beams draw with one burning.
   'dome+': { about: 'the shields', say: 'the wizard called off the star, flat out for the dome',
     run: () => { domeCast(2.5); window.__look(st().shield.x - 1500); } },

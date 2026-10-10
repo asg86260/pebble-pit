@@ -100,3 +100,8 @@ export const SHELF_FOLLOW = 2;      // px a lifted tile leans toward the cursor 
 // light grey of a glyph you cannot pay for.
 export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', scale: '#5a5a5a',
                            short: '#8c8c8c', ghost: '#8c8c8c' };  // ghost: the outline of the unbuilt part of a glyph
+
+// The shield sold on the story's card (objbarrier.js): how long its block
+// takes to fade out before it comes back in its next shape (on offer, then
+// building), the same beat as the line's own fade in style.css.
+export const OBJ_SWAP_MS = 350;

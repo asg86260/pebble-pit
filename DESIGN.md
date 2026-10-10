@@ -2564,28 +2564,13 @@ tower's rows are. It was not taken because it is a second sheet for one row, and
 bench is already where a player goes to be told what to do next — a goal that is not on the
 bench is a goal in a place you have to know to look.
 
-### Pinning
+### Pinning (removed 2026-10-10)
 
-**Any card can be pinned, and the pinned card is drawn at the top right of the game.** A
-small nail-head mark in the card's corner; press it and the card is pinned, press it again
-and it is not. One pin at a time — pinning a second card takes the first down. The pinned
-card is the same row through the same builder (`mountRows` onto a `#pin` element), so it
-carries a live price, goes dashed when you cannot afford it, and buys when pressed: you can
-watch the number climb toward it and press it from the yard without opening a board. It comes
-down by itself when the row retires — bought, maxed, or gone from the board — and the corner
-is empty until you pin something else.
-
-`S.pinned` is the row's key or `null`, on the `SAVED` list, so the pin survives a reload and
-a row that no longer exists in a newer build reads as nothing pinned.
-
-**The goal pins itself.** When a shield row is first offered and nothing is pinned, it is
-pinned. That is what puts the arc on the screen for a player who has not opened the bench in
-ten minutes: the next shield is in the corner with its price, and the yard's income is
-visibly for something. The player can pin over it — the pin is theirs, not the story's — and
-the next shield will pin itself again only if the corner is empty when it arrives.
-
-What the pin is not: a second board. The corner shows one card, the card is not a menu, and
-nothing in the game reads `S.pinned` but the corner and the mark.
+There was a pin: any card could be pinned into the top-right corner, and the
+shield on offer pinned itself there. The owner took it out ("remove the barrier
+pinned recipe, and add it to the objective window instead", then "lets remove
+the recipe pin"): the shield on offer is sold on the story's card (see "The
+shield on the story's card"), and nothing stands in the corner.
 
 ### Order of work
 
@@ -17202,6 +17187,24 @@ After the last, no line. With the second half switched off the list ends at 7.
   "build the wizards' tower" first.
 - **The ending sheet** still says the story is over; with the half on it
   should say what comes next, or the snatch simply follows it.
+
+### The shield on the story's card (built 2026-10-10)
+
+The owner's vote on the mock (`docs/mocks/barrier-in-objective-2026-10-10.html`
+on `mock/barrier-in-objective`): B, with C's bar once bought. While the line is
+a shield step (`row` on the step in `STEPS`), the card sells that step's row
+(objbarrier.js): on offer, its glyph, name and note, its bill a coin a line --
+the coin, have / need, each line fading to done when the coin is met -- and a
+buy wearing the row's own price tag (`tagOf`), dimmed until it can be paid.
+Bought, those give way to one bar of the build (the builders' labor, then the
+shield's own count; the dome's is the pour) and the bench strip's
+`cancel ×N` while a copy waits its turn. Every press is the row's
+(`pressRow` in shop.js), so the queue, the walk and the bench's tile are the
+board's own mechanism. The card still ignores the pointer; only its two
+buttons take it.
+
+The dome is sold on the card from the yard as soon as it is offered; the old
+corner waited for the tower's board to be opened, so you walked there first.
 
 ## From the rescue straight into the snatch (built 2026-09-30)
 
