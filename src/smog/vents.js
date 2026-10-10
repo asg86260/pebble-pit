@@ -221,7 +221,8 @@ export function stepPuffs(secs) {
     // visible is somewhere new; the sky-readout check holds that rule.
     p.age += secs;
     if (p.age <= PLUME_LIFE) continue;
-    p.fade = Math.max(0, 1 - (p.age - PLUME_LIFE) / PLUME_THIN);
+    const k = Math.min(1, (p.age - PLUME_LIFE) / PLUME_THIN);
+    p.fade = 1 - k * k * (3 - 2 * k);
     if (p.age <= PLUME_LIFE + PLUME_THIN + 0.1) continue;
     settleHere(p, false);
     // Born straight at its place in the band, so the sink ease has nothing to

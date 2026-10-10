@@ -131,6 +131,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A card at the top left says the story's next step, from digging out the rock to saving the sqwife.
 - The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
+- The props can be built after the first rock.
 
 - The cards and buttons around the edges of the screen stand the same distance in, are padded alike, and all cast the same shadow as the story's card, the counter included (src/selftest/touch.js).
 - A card being built with nobody at it yet, a hand still walking over, wears the queued edge, and its refund and another keep their border (src/selftest/queue.js).
@@ -144,6 +145,10 @@ this section; the release that switches it on moves these under Unreleased.
 - On a phone, a flick or a long drag down from a sheet at full height closes it instead of stopping at the short height (src/selftest/sheet.js).
 - The ticked glyph over a station after a rung lands wears that rung's color, not the next rung's (test/landed-unread.test.mjs).
 - After a refresh mid-build, the building's shop tile no longer sprays chips over its picture every frame, and the builder rests between bursts again (test/build-reload.test.mjs).
+- Workers mining the rock put up a third of the dust motes they did, and the motes thin out gradually instead of vanishing at the end (test/wave7-sky.test.mjs).
+- The cancel on a queued barrier is a small button instead of a bar across the whole card, and it no longer covers the description (src/selftest/boards.js).
+- Hovering a queued barrier keeps its description instead of fading it out (src/selftest/boards.js).
+- The shack stands clear of the barriers: the arch and the dome no longer run into it, with bare ground left between (test/shield-fit.test.mjs).
 
 ## v0.5.2 — 2026-09-28
 

@@ -3,7 +3,7 @@
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
-import { TIER_OWN, TIER_BAND, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
+import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 
 // The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -1775,7 +1775,7 @@ export const TESTS = [
     newRun();
     await settle();
     window.__crew(2, 1);
-    window.__jump(4);                           // the timber is on offer from the fourth rock
+    window.__jump(PROP_FROM);                   // the timber is on offer once the first rock is down
     window.__give(200);
     window.__build();
     const corner = () => document.getElementById('pin');
@@ -1821,6 +1821,60 @@ export const TESTS = [
       ok(solid && bought, 'the corner card buys when it can be paid for'),
       ok(stayed, 'a ladder stays pinned for its next rung'),
       ok(down, 'and its pushpin takes it down again, leaving the corner empty')
+    ];
+  }],
+
+  // A browser page cannot be handed a real :hover, so the hover is stood up
+  // the way the cascade would see it: every stylesheet rule that names
+  // `:hover` is copied with a class in its place, and the class is put on the
+  // card. The goal card's sentence is its text; a hover that whitened it on a
+  // white card took the description away (and a queued shield is the card a
+  // player hovers, since its strip is the cancel).
+  ['the goal card keeps its description, and its strip stays a button, under the cursor', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1);
+    window.__jump(4);
+    window.__give(60000);
+    window.__build();
+    window.__buy('house');
+    window.__buy('props');
+    window.__board('bench');
+    await settle(0.5);
+    const goal = shop().querySelector('button.goal');
+    const note = goal?.querySelector('.note');
+    const rewrite = rules => [...rules].map(r => {
+      if (r.cssRules && !r.selectorText) return `${r.cssText.slice(0, r.cssText.indexOf('{') + 1)}${rewrite(r.cssRules)}}`;
+      return r.selectorText?.includes(':hover') ? r.cssText.replace(/:hover/g, '.__hov') : '';
+    }).join('\n');
+    let css = '';
+    for (const sheet of document.styleSheets) { try { css += rewrite(sheet.cssRules); } catch { /* cross-origin */ } }
+    const probe = document.createElement('style');
+    probe.textContent = css;
+    document.head.appendChild(probe);
+    const ink = e => getComputedStyle(e).color;
+    const ground = goal ? getComputedStyle(goal).backgroundColor : '';
+    const rest = !!note && ink(note) !== ground;
+    goal?.classList.add('__hov');
+    const seen = !!note && getComputedStyle(note).display !== 'none' && ink(note) !== getComputedStyle(goal).backgroundColor;
+    const strip = goal?.querySelector('.strip');
+    const stripW = strip ? strip.getBoundingClientRect().width : -1;
+    const cardW = goal ? goal.getBoundingClientRect().width : 0;
+    const sb = strip?.getBoundingClientRect();
+    // A line at a time: the sentence's box is a rectangle, but its last line is short.
+    const lines = note ? (() => { const r = document.createRange(); r.selectNodeContents(note); return [...r.getClientRects()]; })() : [];
+    const hit = sb && lines.some(l => sb.top < l.bottom && sb.bottom > l.top && sb.left < l.right && sb.right > l.left);
+    const clear = !!sb && lines.length > 0 && !hit;
+    const said = note ? `${ink(note)} on ${getComputedStyle(goal).backgroundColor}` : 'none';
+    goal?.classList.remove('__hov');
+    probe.remove();
+    window.__board(null);
+    newRun();
+    return [
+      ok(rest, 'the goal card reads at rest', said),
+      ok(seen, 'and under the cursor its sentence is still a different color from the card', said),
+      ok(stripW > 0 && stripW < cardW / 2, 'a queued shield offers a cancel a button wide, not a bar across the card', `${stripW} of ${cardW}`),
+      ok(clear, 'and the cancel stands clear of the sentence', sb ? `strip ${Math.round(sb.left)},${Math.round(sb.top)}-${Math.round(sb.bottom)}` : 'none'),
     ];
   }],
 

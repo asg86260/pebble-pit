@@ -11,6 +11,9 @@ import { P, PROP_FROM, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W,
          ARCH_SPAN, DOME_SPAN } from '../src/config.js';
 import { KINDS, shieldPlan, risingShield, refitShield } from '../src/shield.js';
 import { rockSize } from '../src/rock.js';
+import { shack } from '../src/state.js';
+import { SHACK_EAVE, STATION_GAP } from '../src/config.js';
+import { settleShack } from '../src/world.js';
 
 const S = yard.S;
 const SPAN = { arch: ARCH_SPAN, dome: DOME_SPAN };
@@ -141,5 +144,35 @@ group('a shield bought while a rock is falling is planned for the falling rock',
     ok(!!stood && again, 'it stands, and a bigger rock than it was planned for comes', detail),
     ok(fits && asPlanned && grew, 'and making that rock widens it to fit', detail),
     ok(kept, 'keeping what has been laid')
+  ];
+});
+
+// A shield stands clear of the hut with bare ground between: its far edge to
+// the hut's wall (and eave) is at least STATION_GAP at the biggest rock, where
+// the hut stands at its slot, and never less than a hut's own clearance at
+// the rocks before it. Read off the real plan against the real, settled hut,
+// for every kind at every rock the yard makes.
+group('no shield reaches the shack, at any rock', async () => {
+  window.__reset();
+  window.__crew(3, 0);
+  window.__shack();
+  const wrong = [];
+  let least = Infinity;
+  for (let n = 1; n <= 40; n++) {
+    S.boulderNo = n; S.rockFall = 0;
+    settleShack();                              // the hut stands off the rock that has come down
+    S.boulderNo = n - 1;                        // and the shield is planned for it, the one to meet
+    for (const kind of Object.keys(KINDS)) {
+      const plan = shieldPlan(kind);
+      const gap = plan.x - (shack.x + shack.w + SHACK_EAVE);
+      least = Math.min(least, gap);
+      if (gap < STATION_GAP) wrong.push(`${kind} for rock ${n}: ${gap}px off the hut`);
+    }
+  }
+  window.__reset();
+  return [
+    ok(wrong.length === 0, 'every shield stands STATION_GAP clear of the hut',
+       wrong.slice(0, 5).join('; ')),
+    ok(least < Infinity, 'least gap', `${least}px`)
   ];
 });

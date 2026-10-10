@@ -18,7 +18,7 @@ export let SMOG_PER_DUST = 0.08;
 // a machine's stack -- but only up to HAND_FOUL_CEIL of haze: past a light sky
 // hand work adds nothing, so a yard that never builds a machine tops out light
 // and the machines stay the dirty thing.
-export let HAND_FOUL = 12;
+export let HAND_FOUL = 4;      // two motes a swing; twelve was a column over every swing
 export let HAND_FOUL_CEIL = 200;
 export const QUARRY_FOUL = 2;        // a shard out of the quarry is a hole full of it
 export const FARM_FOUL = 1;          // and turning a plot over lifts some too
@@ -123,7 +123,9 @@ export const PUFF_FADE = 2400;
 // feeding the sky.
 export const PLUME_LIFE = 5.5;
 // The thinning dies the way it climbed, gradually; over a second reads as the
-// smoke being switched off.
+// smoke being switched off. Eased in `stepPuffs`: a straight line out of a
+// weight this light spends its last stretch too faint to see and reads as a
+// pop at the end.
 export const PLUME_THIN = 2.5;
 // There is no cap on how many specks may be climbing at once: past a cap the
 // next mote went straight into the band, which read as pollution appearing out

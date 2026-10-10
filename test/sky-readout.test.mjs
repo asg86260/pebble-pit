@@ -170,12 +170,12 @@ group('what the readout says is what is overhead', async () => {
   healJaw();
 
   return [
-    // Forty rather than eighty rather than two hundred: a yard of bodies doing
+    // Twenty (hand swings put up two motes, not six) rather than eighty rather than two hundred: a yard of bodies doing
     // ordinary work barely marks the sky (see SMOG_PER_DUST), and the whole air
     // cycle runs at half the pace it used to besides. What this group is
     // actually about is whether the number and the band agree -- not how big
     // either of them is.
-    ok(later.haze > 40, 'the yard has had time to make a sky worth checking',
+    ok(later.haze > 20, 'the yard has had time to make a sky worth checking',
        `${Math.round(later.haze)} haze`),
     // Nought, not "nearly nought". The number is worked out from the specks now
     // rather than kept beside them, so there is no room for a gap at all -- and
