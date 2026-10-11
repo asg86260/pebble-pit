@@ -423,4 +423,42 @@ export const TESTS = [
     phone(false);
     return out;
   }],
+  // A real 390px glass, which no style in this page can fake: the game in a
+  // frame that wide (play.html?bench, staged, so it never touches the save),
+  // the props on offer with a notice up (the `propstoast` scene). The card
+  // fits inside the gutters, and the notice stands under it, not on it.
+  ['on a 390px phone the story\'s card fits the glass and the notice stands under it', async () => {
+    const f = document.createElement('iframe');
+    f.src = './play.html?bench';
+    f.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:844px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(f);
+    try {
+      const t0 = performance.now();
+      // the dev handles come in by dynamic import, a moment after the page
+      const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__reset && x.__fast && x.__crew); };
+      while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+      const w = f.contentWindow, d = f.contentDocument;
+      if (!booted()) return [ok(false, 'the game boots in a 390px frame')];
+      w.__scene('propstoast');
+      const toast = d.getElementById('toast');
+      const card = d.getElementById('objective');
+      // its frames on its own clock, until the notice has landed and its
+      // slide is done
+      const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
+      for (let i = 0; i < 240 && !(toast.classList.contains('up') && !card.hidden && card.querySelector('.barrier:not([hidden])')); i++) await step();
+      for (let i = 0; i < 30; i++) await step();
+      await sleep(400);
+      const cr = card.getBoundingClientRect(), tr = toast.getBoundingClientRect();
+      const edge = parseFloat(w.getComputedStyle(d.documentElement).getPropertyValue('--edge')) || 0;
+      const meet = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+      const squares = [...d.querySelectorAll('#corner > button')].filter(b => !b.hidden).map(b => b.getBoundingClientRect());
+      return [
+        ok(w.innerWidth === 390 && !card.hidden && cr.width > 0, 'the card is up on a 390px glass', `${w.innerWidth}px, ${Math.round(cr.width)} wide`),
+        ok(cr.left >= edge && cr.right <= 390 - edge, 'and fits inside the gutters', `${Math.round(cr.left)}..${Math.round(cr.right)}`),
+        ok(squares.every(s => !meet(cr, s)), 'and clear of the corner squares'),
+        ok(toast.classList.contains('up'), 'a notice is up'),
+        ok(!meet(cr, tr) && tr.top >= cr.bottom, 'and it stands under the card, not on it', `card ${Math.round(cr.top)}..${Math.round(cr.bottom)}, notice ${Math.round(tr.top)}..${Math.round(tr.bottom)}`),
+      ];
+    } finally { f.remove(); }
+  }],
 ];

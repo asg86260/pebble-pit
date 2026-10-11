@@ -4,6 +4,7 @@
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows } from './kit.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
+import { offered } from '../stations.js';
 
 // The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -1902,6 +1903,105 @@ export const TESTS = [
       ok(noLine, 'with no line over it'),
       ok(lit && queued, "its buy queues the farm, as the bench's does", JSON.stringify(state().line.yard)),
       ok(net && line !== '', 'the farm standing, the card moves on to the net and its line', line),
+    ];
+  }],
+
+  // The owner's layout B (2026-10-10): the card as wide as its words up to
+  // one cap in characters, the glyph in a column of its own, the bill's
+  // numbers beside their coins and the buy only as wide as its price.
+  ['the story\'s card hugs its words up to its cap, its bill beside its coins and its buy its price\'s size', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1);
+    window.__jump(PROP_FROM);
+    window.__give(200);
+    window.__build();
+    await settle(0.6);
+    const card = document.getElementById('objective');
+    // the cap as the card's own font draws 44 characters
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;width:44ch';
+    card.appendChild(probe);
+    const cap = probe.getBoundingClientRect().width;
+    probe.remove();
+    const inner = () => { const cs = getComputedStyle(card); return card.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); };
+    const longShown = await cardShows('props', 'offer');
+    const longW = inner();
+    const block = card.querySelector('.barrier');
+    const glyph = block?.querySelector(':scope > canvas');
+    const side = block?.querySelector('.side');
+    const besideGlyph = !!glyph && !!side && side.getBoundingClientRect().left >= glyph.getBoundingClientRect().right;
+    const btn = block?.querySelector('button.buy')?.getBoundingClientRect();
+    const cr = card.getBoundingClientRect();
+    const li = block?.querySelector('.bill li');
+    const num = li?.querySelector('.num');
+    const range = document.createRange();
+    if (num) range.selectNodeContents(num);
+    const text = num ? range.getBoundingClientRect() : null;
+    const mark = num?.previousElementSibling?.getBoundingClientRect();
+    const near = text && mark ? text.left - mark.right : Infinity;
+    const shareRow = !!btn && !!text && btn.top < text.bottom && text.top < btn.bottom;
+    // the dome's four lines: every number within a few characters of its coin
+    window.__crew(2, 1, 0, 0, 0, 1);
+    window.__answered('props', 'net', 'arch');
+    window.__meteor();
+    window.__build();
+    await settle(0.6);
+    await cardShows('dome', 'offer');
+    const gaps = [...card.querySelectorAll('.barrier .bill li')].map(l => {
+      const n = l.querySelector('.num'), r = document.createRange();
+      r.selectNodeContents(n);
+      return Math.round(r.getBoundingClientRect().left - n.previousElementSibling.getBoundingClientRect().right);
+    });
+    // the farm as the goal, no line over it: a short card
+    newRun();
+    await settle();
+    window.__crew(2, 1);
+    window.__jump(PROP_FROM);
+    window.__answered('props');
+    window.__build();
+    await settle(0.6);
+    await cardShows('unlockfarm', 'offer');
+    const shortW = inner();
+    window.__crew(0, 0);
+    newRun();
+    return [
+      ok(longShown && longW <= cap + 1, 'a long line wraps at the cap', `${Math.round(longW)} in ${Math.round(cap)}`),
+      ok(shortW < cap - 40 && shortW < longW, 'and a short card hugs its words', `${Math.round(shortW)} in ${Math.round(cap)}`),
+      ok(besideGlyph, 'the words stand in a column beside the glyph'),
+      ok(near <= 12, "the bill's number sits beside its coin, not at the far edge", `${Math.round(near)}px`),
+      ok(gaps.length === 4 && gaps.every(g => g <= 40), "and every line of the dome's bill too", gaps.join(' ')),
+      ok(!!btn && btn.width < cr.width / 2, 'the buy is its price\'s size, not the card\'s', btn ? `${Math.round(btn.width)} of ${Math.round(cr.width)}` : 'none'),
+      ok(shareRow, 'and a one-coin bill and its buy share a row'),
+    ];
+  }],
+
+  // A place step is the goal from the barrier's fall (the owner, 2026-10-10):
+  // the farm stands on the card before the bench offers it, its buy dimmed,
+  // and a press of it buys nothing the bench would not sell.
+  ['the farm is the story\'s card\'s goal before the bench offers it, its buy dimmed', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1);
+    window.__jump(PROP_FROM);
+    window.__answered('props');
+    window.__build();
+    await settle(0.6);
+    const shown = await cardShows('unlockfarm', 'offer');
+    const card = document.getElementById('objective');
+    const btn = card.querySelector('.barrier button.buy');
+    const bench = offered('farm');
+    const dim = btn?.disabled === true;
+    const bill = card.querySelector('.barrier .bill li[data-money="dust"] .num')?.textContent || '';
+    if (btn) btn.click();
+    await settle(0.3);
+    const queued = (state().line.yard || []).some(w => w.key === 'unlockfarm');
+    window.__crew(0, 0);
+    newRun();
+    return [
+      ok(shown && !bench, 'the farm is on the card while the bench does not offer it', `shown ${shown}, offered ${bench}`),
+      ok(/\/ /.test(bill), 'with its bill, have over need', bill),
+      ok(dim && !queued, 'and its buy dimmed, buying nothing', `dim ${dim}, queued ${queued}`),
     ];
   }],
 

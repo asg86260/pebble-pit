@@ -805,6 +805,9 @@ export const SCENES = {
   // --- the story --------------------------------------------------------------
   opening: { about: 'the story', say: 'the intro, from the top',
     run: () => window.__reset(true) },
+  // The first step's checklist under its line, the first item ticked.
+  storyquest: { about: 'the story', say: "the story's card on the first step, its checklist one item in",
+    run: () => { window.__reset(); S.handChipped = true; S.seenDrag = false; S.banked = 0; window.__fast(1); } },
   leaving: { about: 'the story', say: 'the opening, the pair walking out of the house',
     run: () => window.__reset(true) },
   reunion: { about: 'the story', say: 'the first rock mined out, and somebody comes over',
@@ -1752,6 +1755,14 @@ export const SCENES = {
     run: () => { cardYard(2000); window.__buy('props'); window.__fast(12); } },
   farmstep: { about: 'the shields', say: "the props down: the story's card sells the farm, no line over it",
     run: () => { cardYard(2000); window.__answered('props'); window.__fast(4); } },
+  // The props on offer with a notice up (the record replayed, as `messtoast`
+  // does): on a phone the notice stands under the card rather than on it.
+  propstoast: { about: 'the shields', say: "the props on the story's card with a notice up, which seats itself under it on a phone",
+    run: () => { cardYard(200); S.wonShown = 0; window.__fast(1); } },
+  // The same step before the bench offers the farm: the goal and its bill
+  // stand on the card with the buy dimmed.
+  farmgoal: { about: 'the shields', say: "the props down, short of the farm's dust: the farm the card's goal, its buy dimmed",
+    run: () => { cardYard(100); window.__answered('props'); window.__fast(4); } },
   // The dome on offer: the three before it have failed and the tower stands,
   // so the story's card sells it, four coins, two of them met.
   domeoffer: { about: 'the shields', say: "the dome on offer on the story's card, four coins",

@@ -17206,6 +17206,26 @@ buttons take it.
 The dome is sold on the card from the yard as soon as it is offered; the old
 corner waited for the tower's board to be opened, so you walked there first.
 
+**The layout (the owner's B on `mock/objective-card-layout`, 2026-10-10).**
+The card is as wide as its words up to one cap in characters, `44ch`: the
+longest line in `STEPS` (the arch's) in two lines. It also stops short of the
+glass's gutters and of the squares in the top-right (`--corner-x`, measured by
+objline.js), so on a phone it is narrower and that line takes three. The
+glyph stands in a column of its own; the name, note, bill and buy are one
+column beside it. The bill's numbers stay one right-aligned column, but at the
+coins' side of the card rather than its far edge; the buy is its price's
+size, and a one-coin bill shares its row. Bought, the cancel sits beside the
+name. A notice that would land on the card seats itself under it and its
+queue (toast.js), measured from the cards on screen the way the mess tags
+are (dodge.js).
+
+**A place is the goal before it is offered (the owner, 2026-10-10).** A
+place step (the farm, the quarry, the tower) is the line from the moment the
+barrier before it falls, not from when the bench offers the place (the farm
+at seven-tenths of its dust): the card shows the row and its bill, with the
+buy dimmed until the bench would sell it (`revealed`, `forSale`), so the card
+never sells what the board would not, and is never empty between barriers.
+
 ## From the rescue straight into the snatch (built 2026-09-30)
 
 Asked for by the owner, 2026-09-30. With the second half on, the rescue is

@@ -5,6 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { yard, group, ok, run } from './helpers.mjs';
 import { objective } from '../src/objectives.js';
+import { offered } from '../src/stations.js';
 
 const S = yard.S;
 const line = () => objective()?.key ?? null;
@@ -78,9 +79,14 @@ group('the intro quest under the rock ticks off its three items, then goes', asy
 group('each fallen barrier asks for the place it opened before the next barrier', async () => {
   const fresh = () => { S.shieldsDone = []; S.farmOpen = false; S.quarryOpen = false; S.towerOpen = false; S.rescued = false; S.boulderNo = 2; };
   fresh();
-  window.__give(2000);
   const first = line();
+  // the farm is the goal from the props falling, before the bench offers it:
+  // with no dust at all the card already names it
+  const broke = S.stored;
   window.__answered('props');
+  const early = line();
+  const benchHas = offered('farm');
+  window.__give(2000);
   const farm = line();
   window.__buy('unlockfarm');
   window.__finish();
@@ -102,6 +108,7 @@ group('each fallen barrier asks for the place it opened before the next barrier'
   const dome = line();
   return [
     ok(first === 'props', 'the props first', first),
+    ok(early === 'farm' && broke === 0 && !benchHas, 'props down with no dust, the farm is the goal before the bench offers it', `${early} with ${broke} dust, offered ${benchHas}`),
     ok(farm === 'farm', 'props down, farm unbought: buy the farm', farm),
     ok(net === 'net', 'the farm bought: the net', net),
     ok(skipped === 'net', 'the farm already open: straight to the net', skipped),

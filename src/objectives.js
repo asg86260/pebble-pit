@@ -9,7 +9,7 @@ import { S } from './state.js';
 import { shieldDone } from './shield.js';
 import { serpentOn } from './snatch.js';
 import { beatDone } from './beats.js';
-import { open, offered } from './stations.js';
+import { open } from './stations.js';
 
 // In the order they come. `done` is the fact that finishes a step, and it
 // must imply every step before it (a fact that can come early, like the pit
@@ -54,14 +54,16 @@ export const STEPS = [
 // sqwife out means the shields are behind you, whatever this save recorded of
 // them). The snatch has no line: nothing the player does starts it, so while
 // it is due the line is empty rather than a thing to do. A place step has no
-// line either, only its row, and it is the step only while the bench would
-// offer that place (the door's own gate), so the card is never an empty box.
+// line either, only its row, and it is the step from the moment the barrier
+// before it falls, before the bench offers the place: the goal shows with its
+// bill and a dimmed buy (the owner, 2026-10-10), so the card is never empty
+// between one barrier and the next.
 export function objective() {
   const live = STEPS.filter(s => !s.when || s.when());
   let from = 0;
   live.forEach((s, i) => { if (s.done()) from = i + 1; });
   const next = live[from];
-  return next && (next.say || (next.place && offered(next.place))) ? next : null;
+  return next && (next.say || next.place) ? next : null;
 }
 
 // The quest under the step the line is on, item by item with whether each is

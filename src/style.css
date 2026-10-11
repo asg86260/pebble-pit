@@ -1055,8 +1055,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   position: fixed;
   z-index: 11;
   left: 50%; top: calc(var(--edge) + env(safe-area-inset-top, 0px));
-  /* --toast-dx: how far off center it stands to clear a building (toast.js) */
-  transform: translate(calc(-50% + var(--toast-dx, 0px)), -24px);
+  /* --toast-dx: how far off center it stands to clear a building, --toast-dy
+     how far down to clear a corner card (toast.js) */
+  transform: translate(calc(-50% + var(--toast-dx, 0px)), calc(var(--toast-dy, 0px) - 24px));
   opacity: 0;
   display: flex;
   flex-direction: column;
@@ -1076,9 +1077,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   transition: opacity .6s linear, transform .3s ease-in;
 }
 /* coming: quick, so it lands rather than seeps in */
-.toast.up { opacity: 1; transform: translate(calc(-50% + var(--toast-dx, 0px)), 0);
+.toast.up { opacity: 1; transform: translate(calc(-50% + var(--toast-dx, 0px)), var(--toast-dy, 0px));
             transition: opacity .16s linear, transform .3s cubic-bezier(.22, .61, .36, 1); }
-.toast.still { transition: none; transform: translate(calc(-50% + var(--toast-dx, 0px)), 0); }
+.toast.still { transition: none; transform: translate(calc(-50% + var(--toast-dx, 0px)), var(--toast-dy, 0px)); }
 @media (hover: hover) {
   .toast:hover { color: var(--ink); background: var(--paper); border-color: var(--ink); outline-color: var(--paper); }
 
@@ -1961,8 +1962,17 @@ html.dark .modal {
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
   pointer-events: none;
-  /* wraps before the notice card, which stands centered at the top */
-  max-width: max(120px, calc(50vw - 150px));
+  /* As wide as what it says, up to one cap in characters: 44ch is the
+     longest line in STEPS (the arch's) in two lines. Never past the glass
+     less the gutters and the shadow, nor past the squares in the top-right
+     (`--corner-x`, their left edge, measured by objline.js), so a phone has
+     the whole card and its buttons. A notice that would land on it seats
+     itself under it (toast.js). */
+  max-width: min(44ch,
+    calc(100vw - 2 * var(--edge) - var(--shadow-off) - 2 * var(--pad-m-x) - 4px
+         - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)),
+    calc(var(--corner-x, 100vw) - var(--edge) - var(--gap) - var(--shadow-off) - 2 * var(--pad-m-x) - 4px
+         - env(safe-area-inset-left, 0px)));
   transition: opacity .35s ease, translate .35s ease;
 }
 #objective .next { position: absolute; top: calc(-1 * var(--tab-h)); left: -2px; padding: 0 8px; line-height: var(--tab-h);
@@ -1988,28 +1998,34 @@ html.dark .modal {
 #objective .quest li.done::before { content: "■ "; }
 
 /* The shield on a shield step (objbarrier.js; the owner's B,
-   2026-10-10): glyph and name, the note, the bill a coin a line and the buy;
-   bought, the cancel. The card ignores the pointer and only its
+   2026-10-10, laid out as the owner's layout B the same day): the glyph in a
+   column of its own down the left, and on its right the name, the note, the
+   bill a coin a line and the buy; bought, the name and the cancel. The card ignores the pointer and only its
    two buttons take it back, so the rest stays the yard. A change of shape
    fades out and in (`swap`), and a line met fades to its done look over a
    second, the box filling as it goes. */
-#objective .barrier { display: grid; gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--ink-4);
+#objective .barrier { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: start;
+                      margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--ink-4);
                       font-size: 11px; transition: opacity .35s ease; }
+#objective .barrier .side { display: grid; gap: 2px; justify-items: start; min-width: 0; }
 #objective .barrier[hidden] { display: none; }
 /* a step with no line: the block starts the card, with no rule over it */
 #objective .say[hidden] ~ .barrier { margin-top: 0; padding-top: 0; border-top: 0; }
 #objective .barrier.swap { opacity: 0; }
-#objective .barrier .head { display: flex; align-items: center; gap: 6px; }
 /* style.css's `canvas` rule is the yard's window; a glyph is a canvas too */
-#objective .barrier .head canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block;
+#objective .barrier > canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block;
                                    margin: 0 !important; background: none; image-rendering: pixelated; flex: none; }
 #objective .barrier .name { text-transform: uppercase; letter-spacing: .08em; font-weight: bold; }
 #objective .barrier .note { color: var(--ink-2); }
-/* the bill as one small table against the card's right edge: box, mark, the
-   numbers right-aligned in their own column, so each line reads across (the
-   owner, 2026-10-10: across the card's width they were too far apart) */
-#objective .barrier .bill { list-style: none; margin: 2px 0 0; padding: 0; display: grid; grid-template-columns: auto auto auto;
-                            justify-content: end; align-items: center; column-gap: 4px; row-gap: 1px; }
+/* the bill as one small table: box, mark, the numbers right-aligned in their
+   own column, so each line reads across (the owner, 2026-10-10: across the
+   card's width they were too far apart), standing at its glyph's side of
+   the card rather than flung to the other */
+#objective .barrier .pay { display: grid; justify-items: start; gap: 4px; margin-top: 2px; }
+/* a one-coin bill and its buy share a row */
+#objective .barrier .pay.one { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+#objective .barrier .bill { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: auto auto auto;
+                            justify-content: start; align-items: center; column-gap: 4px; row-gap: 1px; }
 #objective .barrier .bill li { display: contents; white-space: nowrap; }
 #objective .barrier .bill li > * { transition: opacity 1s ease; }
 #objective .barrier .bill li.done > * { opacity: .55; }
@@ -2019,12 +2035,12 @@ html.dark .modal {
 #objective .barrier .bill li.done .box::after { opacity: 1; }
 #objective .barrier button { pointer-events: auto; font: inherit; color: var(--ink); background: var(--paper); cursor: pointer;
                              transition: opacity .35s ease, border-color 1s ease, color 1s ease; }
-#objective .barrier .buy { margin-top: 4px; padding: 2px 6px; border: 3px double var(--ink); }
+#objective .barrier .buy { padding: 2px 6px; border: 3px double var(--ink); max-width: 100%; }
 #objective .barrier .buy .cost { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; }
 #objective .barrier .buy .cost > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 #objective .barrier .buy:disabled { cursor: default; border-color: var(--ink-5); color: var(--ink-5); }
 #objective .barrier .buy .short { color: var(--ink-5); }
-#objective .barrier .track { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 2px; }
+#objective .barrier .track { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 #objective .barrier .cancel { flex: none; padding: 1px 6px; border: 1px solid var(--ink); white-space: nowrap; }
 #objective .barrier .cancel:not(.on) { opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s .35s; }
 @media (hover: hover) {

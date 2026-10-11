@@ -130,17 +130,18 @@ this section; the release that switches it on moves these under Unreleased.
 - The barrier card's sign is a swallowtail ribbon that wraps the frame's edge and flips its tail (it holds still with motion off).
 - The next barrier is bought from the story's card -- its bill ticking off coin by coin, then a cancel while it is built -- and no card is pinned in the corner any more.
 - Cores are gone: each barrier that falls opens the next place instead -- the props the farm, the net the quarry, the arch the tower -- and the dome is paid without them.
-- After the props the story's card sells the farm, after the net the quarry and after the arch the tower, each before the next barrier, and skips a place that is already open.
+- After the props the story's card sells the farm, after the net the quarry and after the arch the tower, each before the next barrier, and skips a place that is already open; the place is the goal the moment the barrier falls, its bill showing and its buy dimmed until it can be bought.
 - A queued shop item's "refund" now reads "cancel".
 - Hold the right button to see the crew: the yard fades back, every worker is ringed, the cursor turns into an open hand, and the one under it slows down. Holding the left button as well picks a worker up, for as long as both are held; the right button alone no longer lifts anybody. Hovering no longer stops a worker.
 - After the first rock, the one still buried yells for help.
 - A tag at the top of the screen counts the muck on the ground, and another the poop, each going away once the last of it is swept.
 - An achievement for shaking a worker dizzy.
-- A card at the top left says the story's next step, from digging out the rock to saving the sqwife.
+- A card at the top left says the story's next step, from digging out the rock to saving the sqwife; it is as wide as its words up to a set width, with the barrier's picture in a column of its own and its bill and buy beside its coins.
 - The first step carries a checklist under it: mine the boulder, grab a pebble, toss it into the pit.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 - The props can be built after the first rock.
 
+- On a phone a notice stands under the story's card instead of on top of it (src/selftest/touch.js).
 - The story's card no longer stays faded out after a new game or a loaded save puts the story back on the step it was showing (src/selftest/boards.js).
 - The cards and buttons around the edges of the screen stand the same distance in, are padded alike, and all cast the same shadow as the story's card, the counter included (src/selftest/touch.js).
 - A card being built with nobody at it yet, a hand still walking over, wears the queued edge, and its refund and another keep their border (src/selftest/queue.js).

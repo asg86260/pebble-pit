@@ -6,6 +6,7 @@
 import { S } from './state.js';
 import { objective, questNow } from './objectives.js';
 import { seatBarrier } from './objbarrier.js';
+import { cornerLeft } from './dodge.js';
 
 const el = document.getElementById('objective');
 // The node yard's page is a stand-in with no line on it: nothing to seat.
@@ -14,6 +15,7 @@ const list = el?.querySelector?.('.quest') ?? null;
 const STRIKE_MS = 1000;
 
 let shown = null, leaving = 0, listed = '';
+let cornerAt = null;
 
 export function seatObjective(t) {
   if (!say) return;
@@ -23,6 +25,7 @@ export function seatObjective(t) {
   el.hidden = hide;
   el.classList.toggle('deep', S.view === 'deep');
   if (hide) return;
+  seatRoom();
   const key = want ? want.key : null;
   // The step came back mid-strike (a reset or a loaded save stood the yard
   // where it was): the strike is called off, or the card stayed struck and
@@ -51,6 +54,18 @@ export function seatObjective(t) {
   if (!want && !shown) el.hidden = true;
   seatQuest(want);
   seatBarrier(want && shown && want.key === shown.key ? want : null, t);
+}
+
+// The card and the squares in the top-right share the top edge, so on a
+// narrow glass (a phone) the card's cap is the room short of them
+// (style.css does the sum); the row's width is whatever squares are up.
+function seatRoom() {
+  const x = cornerLeft();
+  const at = x === null ? '' : `${Math.floor(x)}px`;
+  if (at === cornerAt) return;
+  cornerAt = at;
+  if (at) el.style.setProperty('--corner-x', at);
+  else el.style.removeProperty('--corner-x');
 }
 
 // The quest under the line: drawn again only when an item's state changes.

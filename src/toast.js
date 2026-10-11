@@ -17,6 +17,7 @@ import { hold } from './input.js';
 import { showPane } from './settings.js';
 import { STATIONS, standRect } from './board.js';
 import { houseRect } from './house.js';
+import { cornerCards, clearBelow } from './dodge.js';
 
 const el = document.getElementById('toast');
 const nameEl = el.querySelector('.name');
@@ -58,7 +59,7 @@ function show(key) {
   // `hidden` off and `up` on in the same style pass would skip the slide, so
   // the layout is read once between them.
   void el.offsetWidth;
-  seatX = null;
+  seat = null;
   seatToast();
   el.classList.add('up');
 }
@@ -82,8 +83,11 @@ el.addEventListener('transitionend', () => {
 // to the clearer side of it, inside the glass. Asked every frame the card is
 // up, since the view moves under it; written only when the answer changes.
 // The buildings are the stations' own rectangles, read through the same
-// door the boards use, so a new station is dodged without being named.
-let seatX = null;
+// door the boards use, so a new station is dodged without being named. Then
+// the corner cards: a card it would still land on -- the story's, on a
+// phone, where it reaches the middle -- it stands under, as the mess tags do
+// (dodge.js), and glides there if the card grows under it.
+let seat = null;
 function seatToast() {
   const w = el.offsetWidth, h = el.offsetHeight;
   if (!w) return;
@@ -109,12 +113,15 @@ function seatToast() {
     else if (leftOf >= 8) x = leftOf;
     box.x = x;
   }
-  const at = Math.round(x + w / 2);
-  if (at === seatX) return;
-  seatX = at;
+  const top0 = el.offsetTop;
+  const dy = clearBelow(x, x + w, top0, h, cornerCards()) - top0;
+  const at = `${Math.round(x + w / 2)} ${dy}`;
+  if (at === seat) return;
+  seat = at;
   // As an offset on the transform, not a `left`: a fixed box given a left and
   // no right shrinks to the room past it, and the words folded.
-  el.style.setProperty('--toast-dx', `${Math.round(at - S.W / 2)}px`);
+  el.style.setProperty('--toast-dx', `${Math.round(x + w / 2 - S.W / 2)}px`);
+  el.style.setProperty('--toast-dy', `${dy}px`);
 }
 
 // Once a frame, from `frame()` in main.js, on the game's clock: a held game
