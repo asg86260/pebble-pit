@@ -15,14 +15,14 @@
 // const, because beats.js reads them at load and imports this file in a ring.
 
 import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
-         INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL, HELP_BANG_MS, HELP_BANGS,
+         INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL, HELP_BANG_MS, HELP_BANGS, BURIED_CALL_MS, BURIED_CALL_JITTER, BURIED_CALL_HOT_MS,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS,
          COMMUTE_PACE, ROCK_CLEAR,
          BURIED_DIG_S, BURIED_DIG_BEAT_MS, BURIED_DIG_LONE, BURIED_DIG_LEAD_MS, DUCK_PACE } from './config.js';
 import { S, pit } from './state.js';
 import { now, frames } from './clock.js';
-import { makeBoulder, dropZone } from './rock.js';
+import { makeBoulder, dropZone, boulderAlive } from './rock.js';
 import { spawnChip, spawnSpoil, aim } from './dust.js';
 import { shadeNear } from './grid.js';
 import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
@@ -697,10 +697,31 @@ export function stepUnder(dt) {
   S.buriedMs += dt;
 }
 
+// Under a rock that somebody is chipping at, the call for help: see
+// BURIED_CALL_MS. `chips` in the air is how a blow is seen from here, since
+// every blow at the rock throws some.
+function buriedCalls(t) {
+  if (S.chips.length) S.buriedMinedAt = t;
+  const k = S.buriedCall ? Math.floor((t - S.buriedCall) / HELP_BANG_MS) : -1;
+  if (k >= 0 && k < HELP_BANGS) {
+    S.buriedSay = { mark: 'bang', n: k + 1, pale: true, until: t + HELP_BANG_MS };
+    return;
+  }
+  S.buriedSay = null;
+  S.buriedCall = 0;
+  if (t - S.buriedMinedAt > BURIED_CALL_HOT_MS) { S.buriedCallAt = 0; return; }
+  if (!S.buriedCallAt) S.buriedCallAt = t + BURIED_CALL_MS * (1 + (rand() - 0.5) * 2 * BURIED_CALL_JITTER);
+  else if (t >= S.buriedCallAt) {
+    S.buriedCall = t;
+    S.buriedCallAt = t + BURIED_CALL_MS * (1 + (rand() - 0.5) * 2 * BURIED_CALL_JITTER);
+  }
+}
+
 // and every so often, while it is in sight, it says something -- and somebody
 // comes to dig
 export function stepBuried(t) {
   if (!buriedVisible()) {
+    if (buriedShown() && !ownsYard() && boulderAlive()) { buriedCalls(t); return; }
     // A rock landing on it drives it back in as far as it ever was.
     S.buriedDug = 0;
     S.buriedSay = null;

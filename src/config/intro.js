@@ -61,3 +61,13 @@ export const BURIED_DIG_LONE = 0.5;    // and how fast it works itself loose if 
 // body can walk out of one, so it downs tools while the dance still has the
 // length of its walk out left, plus this.
 export const BURIED_DIG_LEAD_MS = 400;
+
+// The one under a rock being mined calls out on a timer: BURIED_CALL_MS apart,
+// give or take BURIED_CALL_JITTER of it from the seeded rand so it is not a
+// metronome. A call builds one "!", two, three, a step each HELP_BANG_MS like
+// the meeting's. It calls only while the rock has been struck in the last
+// BURIED_CALL_HOT_MS: an unattended rock is silent, and the first blow after a
+// quiet spell is answered by the next call rather than a pile-up of them.
+export const BURIED_CALL_MS = 5000;
+export const BURIED_CALL_JITTER = 0.4;
+export const BURIED_CALL_HOT_MS = 3000;

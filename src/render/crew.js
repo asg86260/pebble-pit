@@ -340,7 +340,7 @@ export function drawSays() {
 const HEART = ['01010', '11111', '11111', '01110', '00100'];
 
 function drawSaying(x, y, say) {
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = say.pale ? '#fff' : '#000';   // white where it stands against the dark inside of a rock
   const mid = x + WORKER / 2;
   const top = y - P * 3;
 
@@ -387,7 +387,7 @@ export function drawIntro() {
     if (b.say) drawSaying(x, y, b.say);
   }
 
-  if (!buriedVisible() || !S.buriedSay) return;
+  if (!buriedShown() || !S.buriedSay) return;
   const at = buriedAt();
   drawSaying(at.x, at.y + Math.round(BURIED_SUNK_C * (1 - buriedOut())) * P, S.buriedSay);
 }
