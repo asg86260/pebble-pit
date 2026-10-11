@@ -68,6 +68,7 @@ export const SHELF_SLOTS_MIN = 2;   // and never narrower than this many, so a o
 export const SHELF_STEP = 5;        // px between the glyph, the name, the gain and the tag
 export const SHELF_TOP = 8;         // px from the plank's sign down to the first glyph
 export const SHELF_FOOT = 8;        // px from the tag down to the tile's own foot
+export const SHELF_GAP = 6;         // px between a tile's edge and the next tile's; the slot is the pitch, the tile is the slot less this
 export const SHELF_AIR = 6;         // px of air between a tile's foot and the plank
 export const SHELF_SIGN = 6;        // px between a section's sign and the tiles under it
 export const SHELF_GLYPH_CELL = 3;  // screen px a sprite cell: an eight-cell glyph is 24px

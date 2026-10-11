@@ -141,6 +141,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The story's card no longer stays faded out after a new game or a loaded save puts the story back on the step it was showing (src/selftest/boards.js).
 - The cards and buttons around the edges of the screen stand the same distance in, are padded alike, and all cast the same shadow as the story's card, the counter included (src/selftest/touch.js).
 - A card being built with nobody at it yet, a hand still walking over, wears the queued edge, and its refund and another keep their border (src/selftest/queue.js).
+- Cards on a shelf stand a gap apart, so two queued cards no longer touch borders (src/selftest/boards.js).
 - The queue of builds sits under the story's card in the top-left corner instead of on top of it (src/selftest/queue.js).
 - "It never rains but it pours" is earned when a shower of muck has finished falling, not when the clouds start to gather, and never for clean rain (test/notices.test.mjs).
 - Starting a new game no longer leaves the old crew's dust on the new ground (test/new-game.test.mjs).

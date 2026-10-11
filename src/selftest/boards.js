@@ -1513,11 +1513,17 @@ export const TESTS = [
     // Its edge is dashed: a thing waiting its turn is pencilled in.
     const queuedTile = shop().querySelector('[data-key="auto"]');
     const edge = queuedTile ? getComputedStyle(queuedTile).borderTopStyle : '';
+    // Neighbors on one plank never touch, whatever edge either draws.
+    const tiles = [...shop().querySelectorAll('.rows.shelves > .tile')].map(t => t.getBoundingClientRect());
+    let tight = Infinity;
+    for (const a of tiles) for (const b of tiles)
+      if (a !== b && Math.abs(a.top - b.top) < 2 && b.left >= a.right - 1) tight = Math.min(tight, b.left - a.right);
     window.__finish();
     await settle(1);
     window.__board(null);
     window.__crew(0, 0);
     return [
+      ok(tight > 0 && tight < Infinity, 'and tiles side by side on a plank leave a gap, so a queued edge never meets its neighbor', `${tight}px`),
       ok(whole > 0 && atStart < whole, 'pressing a build row draws its glyph as a ghost', `${whole} -> ${atStart}`),
       ok(/building|queued/.test(said) && pips > 0, 'and a ladder keeps its pips while its rung is being built', `${said}: ${pips} pips`),
       ok(nextSaid === 'queued' && nextTag === 'next', 'a row in line says queued, and its tag says next', `${nextSaid} / ${nextTag}`),
