@@ -37,8 +37,9 @@ import wholeHeal from './2026-10-04-whole-heal.js';
 import fifthPhase from './2026-10-04-fifth-phase.js';
 import noCores from './2026-10-09-no-cores.js';
 import noPin from './2026-10-10-no-pin.js';
+import firstMuckSeen from './2026-10-11-firstmuck-seen.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

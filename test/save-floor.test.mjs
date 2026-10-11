@@ -154,3 +154,24 @@ group('the migrations are in date order and none is ahead of SAVE_V', async () =
        'and each says what it does and can do it')
   ];
 });
+
+// The first muck's scene is for a yard that has not had a muck storm; one that
+// already had one was past it before the scene existed.
+group('an old save that has had a muck storm skips the first muck scene', async () => {
+  const old = muckRains => {
+    const s = blobOf();
+    s.saveV = 11;
+    s.tally = { ...(s.tally || {}), muckRains };
+    s.beatsDone = (s.beatsDone || []).filter(k => k !== 'firstmuck');
+    put(s);
+    yard.restore();
+  };
+  old(2);
+  const skipped = S.beatsDone.includes('firstmuck');
+  old(0);
+  const kept = !S.beatsDone.includes('firstmuck');
+  return [
+    ok(skipped, 'a save with a muck storm behind it has the scene marked had'),
+    ok(kept, 'and one without still gets it')
+  ];
+});
