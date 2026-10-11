@@ -11,6 +11,7 @@ import { WORKER, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK } from '../config.js';
 import { inWorking } from '../route.js';
 import { dropMuckAt, cleanSpotNear } from '../smog.js';
 import { rand } from '../rng.js';
+import { meet } from '../met.js';
 import { MOVE_KEYS } from './dance.js';
 import { stand } from './body.js';
 
@@ -30,6 +31,7 @@ export function relieve(w, now) {
     // takes the columns under a squatting mate.
     if (now < w.looUntil) { w.lunge = 0; w.y = stand(w); return true; }
     dropMuckAt(w.x + WORKER / 2, LOO_MUCK, 'poop');
+    meet('poop');
     w.looUntil = 0;
     w.say = null;
     w.looAt = now + LOO_EVERY * (1 + (rand() - 0.5) * 2 * LOO_SPREAD);

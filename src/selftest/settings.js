@@ -39,6 +39,7 @@ const lines = () => [...held().children]
   .map(el => el.id === 'recordbtn' ? 'achievements'
            : el.id === 'slotsbtn' ? 'saves'
            : el.id === 'timesbtn' ? 'times'
+           : el.id === 'indexbtn' ? 'index'
            : el.textContent.replace(/\s+/g, ' ').trim());
 
 export const TESTS = [
@@ -253,6 +254,7 @@ export const TESTS = [
       '',                                     // the rule
       'saves',                                // the three yards -- see slots.js
       'achievements',                         // the button to the page behind -- see record.js
+      'index',                                // every thing met -- see indexpage.js
       ...(timesOn() ? ['times'] : []),        // the board of times, only on a build with one -- see times.js
       'settings',                             // and the settings, behind one word
       'return to title',

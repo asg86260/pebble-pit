@@ -3,6 +3,7 @@ import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER
 import { rand, stream } from '../rng.js';
 import { gust } from '../wind.js';
 import { S } from '../state.js';
+import { meet } from '../met.js';
 import { DROPS, GOING, SKY, raining } from './band.js';
 import { colAt, muckCols, muckFloor } from './layer.js';
 import { dropped, moteX, moteY } from './sky.js';
@@ -145,7 +146,7 @@ export function pour(secs) {
   // A strike now and then at the height of it. Squared on the envelope so the
   // drizzle and the taper hardly ever flash, and by the heft so a light front
   // never does; one at a time, because a second bolt over the first is a fizz.
-  if (!S.bolt && boltRand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) S.bolt = strike();
+  if (!S.bolt && boltRand() < secs * env * env * S.stormHeft / BOLT_EVERY_S) { S.bolt = strike(); meet('lightning'); }
 
   // One sheet over the whole world, born over the top of the window. Not the
   // view: rain born only where the camera is fills in a second after every

@@ -1,11 +1,13 @@
 # Still to do
 
-## The index -- DESIGNED, AWAITING THE VOTE (2026-10-11)
+## The index -- BUILT, WORDS AND DRAWINGS OPEN (2026-10-11)
 
-"The index" in DESIGN.md; the inventory is docs/knowledge-index.md (sixty
-entries in six groups), the mock docs/mocks/knowledge-index-2026-10-11.html.
-Open: the shape (A book page / B glyph grid / C look mode), unmet entries
-hidden or locked, and who writes the sixty entries. No code yet.
+"The index" in DESIGN.md (built). Open: every entry's text in
+src/config/index.js is Claude's draft, for the owner to edit in that one
+file. Drawings to make in glyphs.html: muck, poop, pollution, rain,
+clouds, birds, the hole, the sqwife, the bench, the books, and the story's
+four (objective, achievements, the rescue, scenes); and whether the `i` key
+gets a line on the controls page (shared with the landing page).
 
 ## Three builds: itch, Steam, and the Steam demo -- DESIGNED, AWAITING SIGN-OFF (2026-10-10)
 

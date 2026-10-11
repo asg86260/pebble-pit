@@ -17552,7 +17552,58 @@ The owner's calls so far: the demo ends at the farm (above);
 achievements to Steam's now, since the SDK is in anyway, or later.
 
 
-## The index (design, not built)
+## The index (built)
+
+### As built (2026-10-11)
+
+The owner's votes: shape A, `i` and the held sheet's word (no corner
+square), unmet entries hidden, things only (no rows), no live line, and
+Claude's drafts for the owner to edit. What was built, and where it left
+the design below:
+
+- **The page** is `indexpage.js`: an `index` word on the held sheet's
+  front, between achievements and the times, turning to a page with the
+  list (sized by its longest name) and the entry (a reading measure) side
+  by side. Under 520px the list is the page and a pick pushes the entry
+  over it, with the entry's own back (`.index.reading` in style.css). `i`
+  holds the yard straight on the index, and again puts the sheet away;
+  held on another page, it turns to the index. Escape closes the sheet, as
+  on every page.
+- **Hidden, not locked**: an entry is not listed until met, and a group
+  with nothing met has no heading. No `???`, no silhouettes.
+- **The words** are all in `src/config/index.js` (`INDEX`, with `GROUPS`),
+  each entry's `text` a draft from the inventory's notes; nothing else in
+  the code says an entry's words. Names follow the owner: "the boulder",
+  "the hole", "diggers"; everywhere else the string the game shows.
+- **No live line and no "where it is"**: the entry is its drawing, name,
+  group and words.
+- **Met** (`met.js`) is a declarative string on each entry: `start`, a
+  field on S, `tally:`, `machine:`, `shield:`, `beat:`, or `seen`. `S.seen`
+  (SAVED) is written by `meet(key)` where the four things with no fact first
+  happen (a crit in `critRoll`, a bolt in rain.js, a flock in `sendBirds`,
+  poop in crew/nature.js), and twice a second the frame copies every entry
+  met by its fact into it (`noteMet`), so a count that falls back to nought
+  -- diggers reassigned, hats spent on a machine -- keeps its entry. The
+  brews, the balloon and the clouds turned out to have facts after all
+  (`S.brews`, `filterOpen`, the start). Old saves read `seen: []` and every
+  flagged entry is met from its own fact: no migration.
+- **The new dot**: `S.indexRead` (SAVED), the entries opened. A met entry
+  not in it carries a dot on its row, and the front's `index` word carries
+  one while any does. On a save from before the index every met entry is
+  new once.
+- **Glyphs**: a drawing from `GLYPHS` at one canvas pixel a cell, sized up
+  by a whole number; a coin's mark for pebbles; none at all where nobody has
+  drawn one (muck, poop, pollution, rain, clouds, birds, the hole, the
+  sqwife, the bench, the books, and the story's four). Crits and the boulder
+  share `cracked`, the rift and the abyss `portal`, the air filter and its
+  purifiers `balloon`, the apothecary and its keeper `pot`.
+- **The deep's half** (eight entries: scales, the deep, the portal, the
+  crusher, the pods, fighters, the sqhusband, the serpent) is listed only
+  where `serpentOn()` is true -- a released build with `SERPENT_ON`, or a
+  dev build.
+- **The `i` key is not on the controls page**: that page is shared with the
+  landing page, where there is no index to open; adding a line there is the
+  owner's words.
 
 The owner, 2026-10-11: "I think we should start a knowledge index of things
 users can open to view things in the game. Boulder, pebbles, crops, ore, all

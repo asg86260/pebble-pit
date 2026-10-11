@@ -61,6 +61,8 @@ field or two on `S` and a constant or two in `config.js`.
 | `timesboard.js` | the board of times without a yard: the call to the server, the read, the name, the page; the landing page reads this alone | rarely |
 | `times.js` | the board of times' yard half: the run named at the first rock, the ping on wall time, the rescue's post and the one that waits on the save; `server/` is the other end | rarely |
 | `crash.js` | a throw: the stopped sheet, the save offered out of it, and the `S.fatal` flag that stops `persist` writing after one | rarely; imported first by `main.js` on purpose |
+| `met.js` | what the player has met, for the index: each entry's `met` fact read, `S.seen` kept, `meet(key)` for the things with no fact; no DOM | yes |
+| `indexpage.js` | the index's page on the held sheet: the list by group, the entry beside it or pushed over it on a phone; every word is `config/index.js`'s | yes |
 | `selftest.js` | the order the browser groups run in; the checks themselves are in `selftest/`, one file to a subject | grows with every feature |
 
 What was one `upgrades.js` is four files, split by who reads them.

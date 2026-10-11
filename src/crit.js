@@ -12,6 +12,7 @@
 
 import { S } from './state.js';
 import { rand } from './rng.js';
+import { meet } from './met.js';
 import {
   rungValue,
 } from './config.js';
@@ -37,5 +38,6 @@ export const forceCrit = v => { forced = v; };
 // without touching the bench ladder everybody shares.
 export function critRoll(bonus = 0) {
   const hit = forced != null ? forced : rand() < critChance() + bonus;
+  if (hit) meet('crit');                 // the index's entry, from the first one
   return hit ? critMult() : 1;
 }
