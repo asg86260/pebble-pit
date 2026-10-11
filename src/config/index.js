@@ -22,6 +22,8 @@
 //          'beat:<key>'     that beat played
 // serpent  true for the deep's half, listed only where the serpent is on
 
+import { TYPE, JOB } from '../jobs.js';
+
 export const GROUPS = ['materials', 'the yard', 'the sky', 'places', 'crew', 'the story'];
 
 export const INDEX = [
@@ -126,23 +128,23 @@ export const INDEX = [
     text: "the deep's houses: a room for a body down there." },
 
   // --- crew ---
-  { key: 'hauler', group: 'crew', name: 'haulers', glyph: 'sack', met: 'start',
+  { key: TYPE.HAUL, group: 'crew', name: JOB.HAUL, glyph: 'sack', met: 'start',
     text: 'carry pebbles from the ground to the hole. anybody without a job hauls, and they shovel muck too.' },
-  { key: 'rockhand', group: 'crew', name: 'diggers', glyph: 'pickhead', met: 'rockhands',
+  { key: TYPE.ROCK, group: 'crew', name: 'diggers', glyph: 'pickhead', met: JOB.ROCK,
     text: 'swing at the boulder from its row. the shack sells their swing and pick.' },
-  { key: 'quarrier', group: 'crew', name: 'miners', glyph: 'swing', met: 'quarriers',
+  { key: TYPE.QUARRY, group: 'crew', name: 'miners', glyph: 'swing', met: JOB.QUARRY,
     text: "work the quarry's floor and bring ore up." },
-  { key: 'farmhand', group: 'crew', name: 'farmers', glyph: 'hoe', met: 'farmhands',
+  { key: TYPE.FARM, group: 'crew', name: 'farmers', glyph: 'hoe', met: JOB.FARM,
     text: 'tend the plots and harvest the crops.' },
-  { key: 'purifier', group: 'crew', name: 'air purifiers', glyph: 'balloon', met: 'purifiers',
+  { key: TYPE.PURIFY, group: 'crew', name: 'air purifiers', glyph: 'balloon', met: JOB.PURIFY,
     text: 'work the air filter. only the ones inside it count.' },
-  { key: 'stirrer', group: 'crew', name: 'apothecary', glyph: 'pot', met: 'stirrers',
+  { key: TYPE.STIR, group: 'crew', name: 'apothecary', glyph: 'pot', met: JOB.STIR,
     text: 'the keeper who lights the pot.' },
-  { key: 'janitor', group: 'crew', name: 'janitors', glyph: 'cap', met: 'janitors',
+  { key: TYPE.JANITOR, group: 'crew', name: JOB.JANITOR, glyph: 'cap', met: JOB.JANITOR,
     text: 'go after the poop first, then the muck.' },
-  { key: 'wizard', group: 'crew', name: 'wizards', glyph: 'point', met: 'wizards',
+  { key: TYPE.WIZARD, group: 'crew', name: JOB.WIZARD, glyph: 'point', met: JOB.WIZARD,
     text: 'fly up and bolt the star apart for sparks, and call down a new one. they pour the barrier too.' },
-  { key: 'builder', group: 'crew', name: 'builders', glyph: 'shovel', met: 'builders',
+  { key: TYPE.BUILD, group: 'crew', name: JOB.BUILD, glyph: 'shovel', met: JOB.BUILD,
     text: 'spare hands lent to put up a building or a machine.' },
   { key: 'breaker', group: 'crew', name: 'breaker', glyph: 'helmet', met: 'breakers',
     text: "the diggers' hat: twice the bite." },
@@ -154,7 +156,7 @@ export const INDEX = [
     text: "the farmers' hat: twice the tending." },
   { key: 'brews', group: 'crew', name: 'brews', glyph: 'bowl', met: 'brews',
     text: 'one for each coin. hearty stew speeds a body up, strong brew makes it stronger, bracing tonic makes it crit.' },
-  { key: 'party', group: 'crew', name: 'fighters', glyph: 'fist', met: 'fighters', serpent: true,
+  { key: 'party', group: 'crew', name: JOB.FIGHT, glyph: 'fist', met: JOB.FIGHT, serpent: true,
     text: 'crew gone down to the deep to fight the serpent, a fighter to a station.' },
 
   // --- the story ---
