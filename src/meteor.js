@@ -129,7 +129,11 @@ export function emptySky() {
   sky.n = 0;
 }
 
+// A fresh star owes nothing to the bolts thrown at the last one: a bolt names a
+// cell by row and column, and left in the air it would land on whatever stands
+// at that place in the new lattice.
 export function makeMeteor() {
+  BOLTS.length = 0;
   const n = Math.max(3, Math.round(sky.r * 2 / P));
   sky.cols = sky.rows = n;
   sky.cells = new Uint8Array(n * n);
