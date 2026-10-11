@@ -1,5 +1,12 @@
 # Still to do
 
+## The index -- DESIGNED, AWAITING THE VOTE (2026-10-11)
+
+"The index" in DESIGN.md; the inventory is docs/knowledge-index.md (sixty
+entries in six groups), the mock docs/mocks/knowledge-index-2026-10-11.html.
+Open: the shape (A book page / B glyph grid / C look mode), unmet entries
+hidden or locked, and who writes the sixty entries. No code yet.
+
 ## Three builds: itch, Steam, and the Steam demo -- DESIGNED, AWAITING SIGN-OFF (2026-10-10)
 
 "Three builds" in DESIGN.md: our cloud on itch, Steam Cloud through the

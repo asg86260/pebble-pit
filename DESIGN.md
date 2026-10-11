@@ -17551,3 +17551,140 @@ The owner's calls so far: the demo ends at the farm (above);
 `steamworks.js` in the shell is accepted. Open: map the game's own
 achievements to Steam's now, since the SDK is in anyway, or later.
 
+
+## The index (design, not built)
+
+The owner, 2026-10-11: "I think we should start a knowledge index of things
+users can open to view things in the game. Boulder, pebbles, crops, ore, all
+the things they interact with. So they can look up muck, pollution, all the
+things."
+
+The inventory -- every thing a released build shows, the name it already
+goes by, its glyph, the fact that says it has been met, and notes on what it
+does -- is `docs/knowledge-index.md`: sixty entries in six groups
+(materials, the yard, the sky, places, crew, the story), seven more behind
+`SERPENT_ON`. The mock is `docs/mocks/knowledge-index-2026-10-11.html`.
+
+### The bargain
+
+The yard explains itself by being watched: every body walks, every coin is a
+grain you can follow. What it cannot do is name the thing you are watching
+or say what it is *for*. A player who sees grey cells land after a storm can
+see muck; they cannot see that the filter is the answer to it, or that the
+crew will not touch it until the weather passes. The index is the one place
+that says so, on the player's asking, and never otherwise.
+
+What it costs the player: nothing they have to do. Nothing in it is bought,
+nothing is gated behind it, and a player who never opens it loses nothing
+but the answer to a question they did not ask.
+
+What it must not become:
+
+- **A manual.** An entry is a thing, its name, and a few short lines -- the
+  register of the hover text ("name + effect; never explain the system"),
+  longer by a line or two and no more. No formulas, no numbers the balance
+  pass will move, no system walk-throughs. If an entry needs a paragraph,
+  the thing it describes is unclear in the yard, and that is the fix.
+- **The books twice.** The books (`src/stats.js`, `BOOK_SECTIONS`) are what
+  the yard is earning now; the index is what a thing *is*. An entry may show
+  one live number the books already compute (below) and nothing else.
+- **A spoiler list.** Entries for things not yet met are not readable (the
+  second call below).
+- **Copy written by anybody but the owner.** Every word of an entry is
+  player copy ("Player copy is the owner's"). The names come from the
+  strings the game already shows; the text is the owner's. The build lands
+  with each entry's text as a visible placeholder (`[muck -- owner's
+  words]`) unless the owner asks for drafts to edit (the third call below).
+
+### Where it opens
+
+The held sheet already holds the reading that is not a place: saves,
+achievements, times, settings. The index joins it as one more word on the
+front ("index", or the owner's word), a page of its own behind it with its
+own back, like `achievements` (`#record`). That is the floor: whichever
+option is picked, the held sheet carries it, so a phone (where the held
+sheet is the pause square's) reaches it the same way.
+
+Two optional ways in, which the options use differently:
+
+- **A key.** `i` is free (the yard uses escape, space, the arrows, a/d, 1-9,
+  and the backtick in a dev build). It opens the held sheet straight onto
+  the index page -- or, in C, toggles the look mode.
+- **A corner square** (`#corner`, laid right to left): a book glyph beside
+  the crew switch. Only option C needs one, since its look mode is a thing
+  you toggle while watching.
+
+### What an entry shows
+
+- **The glyph**, at the shelf's size, from `GLYPHS` (about forty entries
+  already have one; the coins wear their marks). An entry with no drawing
+  gets a new one through `glyphs.html`, never the crate in a released build
+  -- the inventory lists which are missing (muck, poop, pollution, rain,
+  cloud, bird, the pit, the sqwife, the story's few).
+- **The name**: the string the game already uses for it. Where a thing goes
+  by two names -- "rock" and "the boulder", "the pit" and "the hole",
+  "diggers" and "rockhand" -- the owner picks the title.
+- **The owner's text**: two or three short lines.
+- **At most one live line**, read off what already exists: the purse for a
+  coin (`purse`), its income a second (`bookRate`), the mess count for muck
+  and poop (`messCounts`), how full the sky is for pollution
+  (`airReadout`), the headcount for a job, rocks cleared for the rock,
+  showers weathered for the rain. Nothing new is computed for the index.
+- **Where it is**: for a thing that stands in the yard, a press glides the
+  view to it (`lookAt`, as the hop does) and the sheet closes. Optional.
+
+### Unlocks, and the save
+
+An entry is listed but locked until met: its glyph as a silhouette in
+`--ink-7`, its name as `???`, no text. Met is, where the save already says
+so, the save's own fact (`seenShard`, `seenAir`, `riftOpen`, `<place>Open`,
+`shieldDone(...)`: the `met` column of the inventory), asked whenever the
+page is drawn rather than remembered. For the ten or so things with no flag
+(a crit, lightning, a bird, poop, a balloon, the brews) one new saved list:
+`S.seen`, the keys met, in `SAVED`, written where the thing first happens,
+as `seenRows` is. An old save reads `[]` and every flagged entry is already
+met from its own fact, so the index opens right with no migration; the
+handful of unflagged things unlock the next time they happen.
+
+A newly met entry carries the board's "new" mark until it is first opened,
+the way a new row does. Never a toast: a notice is for a thing done, and an
+entry being met is not one.
+
+### Phone
+
+The held sheet on a phone is a sheet from the bottom through the boards'
+seat (`sheet.js`). A two-column page (A) becomes a list that pushes to the
+entry with a back; a grid (B) is four tiles across with the card over it;
+the look mode (C) is a tap in place of the pointer, the entry a card at the
+foot of the glass.
+
+### How it relates to the rest
+
+- **Hover text** stays the one-word label it is (`whatIsAt`, `input.js`);
+  the index is the longer answer to the same question, and the label never
+  grows a "see the index" line.
+- **The books** stay the ledger; the index shows no trends, windows or
+  tallies beyond its one live line.
+- **Achievements** stay on their own page; a notice is not an entry.
+- **The shelf glyphs** are the index's pictures: every drawing made for the
+  index is one the shelf can borrow, and the other way round.
+
+### The calls this makes
+
+1. **The shape** (the mock): A, a book page on the held sheet -- a list down
+   the left, the entry on the right; B, a grid of glyph tiles like the
+   shelf, an entry opening as a card; or C, a look mode -- the corner square
+   or `i`, then click anything in the yard to open its entry -- with a list
+   for what cannot be clicked.
+2. **Unmet entries**: hidden entirely, listed as a locked silhouette with
+   `???`, or everything readable from the start.
+3. **The words**: the owner writes all sixty, or asks for drafts (from the
+   inventory's notes) to edit down. And whether rows (the spells, the
+   ladders) get entries at all, or only things.
+
+### What it must not break
+
+- **Nothing teleports**: the index moves nothing; "where it is" moves the
+  camera, never a body.
+- **The yard's clock**: the index takes whatever the held sheet does today
+  and pauses nothing of its own; option C's look mode pauses nothing at all.
