@@ -128,6 +128,9 @@ this section; the release that switches it on moves these under Unreleased.
 - She calls "!" from under a rock while it is being mined, every few seconds (test/sqwife-calls.test.mjs).
 - Each save has its own delete, confirmed on its row, in place of the reset progress button.
 - A controls page on the settings sheet, in the game and on the landing page, lists the mouse, the keys and the 1 – 9 jump.
+- Nobody goes for the muck while a storm is still raining it down; the clear-up starts once the last drop has landed.
+- The first muck a storm leaves gets a short scene: a worker walks up to it, asks what it is, pulls a face and shovels it up.
+- A controls page on the settings sheet lists the mouse buttons and what each does.
 - The barrier card's sign is a swallowtail ribbon that wraps the frame's edge and flips its tail (it holds still with motion off).
 - The next barrier is bought from the story's card -- its bill ticking off coin by coin, then a cancel while it is built -- and no card is pinned in the corner any more.
 - Cores are gone: each barrier that falls opens the next place instead -- the props the farm, the net the quarry, the arch the tower -- and the dome is paid without them.

@@ -2,7 +2,7 @@
 // leaves behind.
 
 import { now } from '../clock.js';
-import { BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
+import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
 import { DROPS, EMBERS, GOING, SPLASHES, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -92,7 +92,27 @@ export function drawMuck() {
     for (let i = 0; i < skin.length; i += 2) ctx.rect(skin[i], skin[i + 1], P, P);
     ctx.fill();
   }
+  drawMuckGhosts();
   ctx.fillStyle = '#000';
+}
+
+// The cells shovelled off the first muck's patch while its scene is watched
+// (firstmuck.js): each one fades where it lay, in held steps, rather than
+// going in a frame.
+function drawMuckGhosts() {
+  const sc = S.muckScene;
+  if (!sc || !sc.ghosts.length) return;
+  const t = now(), foot = muckFloor(sc.col);
+  for (const g of sc.ghosts) {
+    const k = 1 - (t - g.at) / (CUT_MUCK_FADE_S * 1000);
+    const a = Math.ceil(k * CUT_MUCK_FADE_STEPS) / CUT_MUCK_FADE_STEPS;
+    if (a <= 0) continue;
+    ctx.globalAlpha = a;
+    // each went as the top course, so each fades as one
+    ctx.fillStyle = MUCK_EDGE;
+    ctx.fillRect(sc.col * P, foot - g.n * P, P, P);
+  }
+  ctx.globalAlpha = 1;
 }
 
 // What the yard has put up there: the motes themselves, every one of which

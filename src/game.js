@@ -66,6 +66,7 @@ import './raise.js';
 // back to upgrades. See `setTake`.
 setTake(take);
 import { stepSmoke } from './puff.js';
+import { stepFirstMuck } from './firstmuck.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
@@ -216,6 +217,9 @@ export const STEPS = [
   // Straight after the rock: it reads where the rock has got to this frame
   // and may stop it there, so it has to run on the same frame the rock moved.
   { name: 'shield',  step: stepShield },
+  // Before the crew, so the body the first muck's scene sends off the rock
+  // walks this frame, and the patch's cells are counted before anybody swings.
+  { name: 'firstmuck', step: c => stepFirstMuck(c.now) },
   { name: 'crew',    step: c => updateWorkers(c.now, c.dt) },
   { name: 'restaff', step: drainRestaff },
   // Before `smog`, so the dirt a machine makes this frame is in this frame's

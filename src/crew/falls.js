@@ -141,7 +141,10 @@ export function fall(w) {
   // fell mid-errand with a claim held, in which case only the stale route is
   // dropped and the mess stage steers it on. Re-tasking that body sends it
   // home across the world and straight back to the same dip, a lap a fall.
-  if (atStation(JOB_OF[w.type], w.x + WORKER / 2)) settle(w);
-  else if (w.goal === 'muck' && w.muckAt != null) w.route = null;
+  // The claim is asked first: a rockhand sent off the rock for a patch steps
+  // off its edge and lands at its own station's foot, and settling it there
+  // dropped the patch it was on its way to.
+  if (w.goal === 'muck' && w.muckAt != null) w.route = null;
+  else if (atStation(JOB_OF[w.type], w.x + WORKER / 2)) settle(w);
   else retask(w, w.type);
 }

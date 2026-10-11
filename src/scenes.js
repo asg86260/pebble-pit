@@ -161,6 +161,13 @@ const skyAt = haze => {
 const untilBrewing = (heft = 1) => { window.__front(heft); for (let i = 0; i < 90 && !st().smog.brewing; i++) window.__fast(1); };
 const untilRaining = (heft = 1) => { untilBrewing(heft); for (let i = 0; i < 120 && !st().smog.raining; i++) window.__fast(1); };
 
+const firstMuck = (rockhands, haulers) => {
+  window.__reset(); window.__crew(rockhands, haulers); window.__fast(3);
+  window.__air({ haze: 4200 }); untilRaining();
+  for (let i = 0; i < 120 && st().smog.raining; i++) window.__fast(1);
+  for (let i = 0; i < 300 && st().beat.camera !== 'firstmuck'; i++) window.__fast(0.1);
+};
+
 // A pointer put on a spot of the yard. Not a hook: standing at a thing is
 // what opens it, and there is no handle that puts the mark up.
 const hover = (x, y) => {
@@ -1525,6 +1532,14 @@ export const SCENES = {
   raintaper: { about: 'the house and the sky', say: 'the taper at the end of the storm',
     run: () => { skyAt(4200); untilRaining();
                  for (let i = 0; i < 90 && st().smog.rainFor < st().smog.stormLen - 4; i++) window.__fast(1); } },
+  // The first muck's scene (firstmuck.js): a filthy first storm let run to
+  // its last drop, then the yard left to send somebody, and the scene caught
+  // as it starts. Rockhands alone, the early yard, so one is sent off the
+  // rock; the second has haulers, whose own clear-up picks the body.
+  firstmuck: { about: 'the house and the sky', say: 'the first muck after the first storm: a rockhand sent for it',
+    run: () => firstMuck(3, 0) },
+  'firstmuck-hauler': { about: 'the house and the sky', say: 'the first muck after the first storm: a hauler goes for it',
+    run: () => firstMuck(2, 2) },
   cloudsettle: { about: 'the house and the sky', say: 'the clouds settling after the shower',
     run: () => { skyAt(0); untilRaining();
                  for (let i = 0; i < 120 && st().smog.raining; i++) window.__fast(1);

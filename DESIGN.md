@@ -14028,6 +14028,49 @@ side on the bench.
 - `SMOG_RAIN_AT` stays as the readout's line (and `cloudR`); only the roll
   that read it is gone.
 
+## Muck waits for the storm (built 2026-10-10)
+
+The bargain: a storm is something the yard waits out, and the clear-up is what
+it does after. While muck is still coming down nobody goes for it -- no hauler,
+no shovel at a station, no roomba -- and once the weather has passed, the same
+clear-up as ever goes out for it. A body already on its way when the storm
+starts sets the claim down where it is (the claim reads empty and is let go
+the ordinary way) rather than finishing: a shovel in a downpour is a shovel
+against the sky, and a rule with an exception for whoever was nearest is a
+rule nobody can see.
+
+"Passed" is the last dirty drop landed, not the pour's clock running out: the
+tail is still in the air on the frame `S.raining` goes false. The brew before
+the drizzle is still dry, so the last storm's muck is fair game until the
+first drop. Poop is a body's own and never waits.
+
+The rule it must not break: one question, asked by everybody. `muckOpen()`
+(smog/layer.js) sits inside the ownership rule every claimant already asks
+(`mayShift`), so a hauler, a shovel and a roomba cannot disagree about it.
+Muck on the rock, the cut and the plots still eats work during a storm as it
+always has; that is the work, not a claim.
+
+## The first muck's scene (built 2026-10-10)
+
+The bargain: the first time the weather leaves muck, the player is shown what
+it is and that the crew deal with it -- once, briefly, and never again. After
+the first storm that ends with muck down, the first body to go for a patch on
+the open yard is watched: the camera goes wide on the patch (about ninety
+cells across, the patch off center away from the walker), the body walks the
+last stretch, stops a body's width short, a "?" goes up, then the yuck, then
+it shovels, and each cell taken fades out in held steps. Then the camera lets
+go like every other scene. About five seconds; a click or a held space skips
+it, and a tab closed on it plays it once over the yard as it stands.
+
+Whoever the yard's own clear-up sends is the one watched. Only when nobody
+whose job it is has gone a moment after the storm is one of the rock's gang
+sent for one patch a short walk off; it walks over, shovels, and walks back
+on the rock's own way home.
+
+The rules it must not break: nothing teleports and nothing pops -- the body
+walks both ways, the cells fade -- and the yard never stops for it: the
+followed body is held at its patch for the two marks and nobody else is.
+
 ## The board of times: a global competition for the rescue (built 2026-09-20)
 
 "The clock over the sqwife" ends: *the story ends with a time you can beat.
