@@ -17,7 +17,7 @@ import { swingFor } from './tenders.js';
 import { across, stand } from './body.js';
 import { unbook } from './hole.js';
 import { roombasOf } from './roomba.js';
-import { posing } from '../firstmuck.js';
+import { posing, standOff } from '../firstmuck.js';
 
 // Nobody shovels inside anybody, but only when two are genuinely standing in
 // each other: the claims already keep them four columns apart, and a wider
@@ -112,7 +112,11 @@ export function takeMess(w, c) {
   // nearest cells first), or the muck a rain leaves on the middle of a wide
   // bank -- further from bare ground than `slideOffLoose` carries it -- is
   // claimed, refused and claimed again by every body in the yard for good.
-  const to = patch == null ? null : workSpot(patch);
+  // The first muck's body stands a body's width off its patch, so the patch
+  // is seen going rather than hidden behind it, and reaches for it there
+  // (firstmuck.js). Nought for everybody else.
+  const off = standOff(w);
+  const to = patch == null ? null : workSpot(patch + off);
   if (to == null || (footing(patch) === NONE && Math.abs(to - patch) > WORKER)) { w.muckAt = null; return held(w); }
   // A mess under the coming rock, or across it, is not fetched through the
   // fall: the walk knows nothing of the zone and judders against its wall.
@@ -152,7 +156,7 @@ export function takeMess(w, c) {
   // arrival may be the two cells short, so any less walks a parted body
   // straight back in.
   const arrive = P * 2;
-  const slack = w.route ? arrive : arrive + WORKER;
+  const slack = w.route || off ? arrive : arrive + WORKER;
   if (Math.abs(at - w.x) > slack || wayAt(w.x, w.y, all).key !== on.key) {
     w.shovelAt = null;
     // Nowhere a route reaches: give the patch up rather than hold a claim on
@@ -197,7 +201,7 @@ export function takeMess(w, c) {
   // Stood at the first muck while its scene asks what it is (firstmuck.js).
   if (posing(w, now)) { w.resting = false; return true; }
   if (now >= (w.sweepAt || 0)) {
-    sweepMuckAt(w.x + WORKER / 2, 1, w);
+    sweepMuckAt(off ? patch : w.x + WORKER / 2, 1, w);
     w.lunge = 1;
     w.sweepAt = now + swingFor(w) * (0.85 + rand() * 0.3);
   }

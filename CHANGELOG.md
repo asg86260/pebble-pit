@@ -123,6 +123,8 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Nobody goes for the muck while a storm is still raining it down; the clear-up starts once the last drop has landed.
+- The first muck a storm leaves gets a short scene: a worker walks up to it, asks what it is, pulls a face and shovels it up.
 - A controls page on the settings sheet lists the mouse buttons and what each does.
 - The barrier card's sign is a swallowtail ribbon that wraps the frame's edge and flips its tail (it holds still with motion off).
 - The next barrier is bought from the story's card -- its bill ticking off coin by coin, then a bar and a cancel while it is built -- and no card is pinned in the corner any more.

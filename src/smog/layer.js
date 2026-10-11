@@ -266,6 +266,11 @@ export function sweepMuckAt(wx, n, hand) {
   for (let d = 0; d < 60 && cells > 0; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
       if (c < 0 || c >= floor.cols || cells < 1) continue;
+      // The first muck's patch is its body's while the scene watches it
+      // (firstmuck.js): a neighbor's reach taking it leaves a body asking
+      // about bare ground.
+      const sc = S.muckScene;
+      if (sc && c === sc.col && (!hand || hand.uid !== sc.uid)) continue;
       for (const m of stacks) {
         if (!m[c] || cells < 1) continue;
         const take = Math.min(m[c], cells);

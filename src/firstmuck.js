@@ -17,7 +17,8 @@
 // the beat's state is read straight off `S`.
 
 import { CELL, P, WORKER, CUT_MUCK_NEAR, CUT_MUCK_CELLS, CUT_MUCK_ZOOM_MAX, CUT_MUCK_LEAD,
-         CUT_MUCK_ASK_S, CUT_MUCK_YUCK_S, CUT_MUCK_FADE_S, CUT_MUCK_WAIT_S } from './config.js';
+         CUT_MUCK_ASK_S, CUT_MUCK_YUCK_S, CUT_MUCK_FADE_S, CUT_MUCK_WAIT_S,
+         CUT_MUCK_PULL_CELLS } from './config.js';
 import { S } from './state.js';
 import { TYPE } from './jobs.js';
 import { dryTime, muckCols, muckOpen, onOpenYard } from './smog.js';
@@ -28,7 +29,10 @@ const done = () => S.beatsDone.includes(KEY);
 const running = () => S.beat.camera === KEY && !(S.shot && S.shot.out);
 const mid = w => w.x + WORKER / 2;
 const cellX = c => c * P + P / 2;
-const weather = c => c != null && (muckCols()[c] || 0) > 0;
+// The patch the scene is about: weather muck on the open yard, ground a body
+// walks up to level. Muck on the rock or a heap is shovelled as ever, and
+// not watched: the shot is somebody crossing the yard to it.
+const weather = c => c != null && (muckCols()[c] || 0) > 0 && onOpenYard(c);
 
 // A storm has stood through to its end with muck in it (`muckRains`, the
 // record's own count, rain.js), the scene has not been had, and the weather
@@ -40,8 +44,10 @@ export const muckArmed = () => !done() && (S.tally.muckRains | 0) >= 1 && muckOp
 function claimant(near = Infinity) {
   let best = null, gap = Infinity;
   for (const w of S.workers) {
-    if (!weather(w.muckAt) || w.lifted || w.falling || w.inside) continue;
-    const d = Math.abs(mid(w) - cellX(w.muckAt));
+    // On its way to it, not holding the claim through the loo or a fall.
+    if (!weather(w.muckAt) || w.goal !== 'muck' || w.looUntil || w.lifted || w.falling || w.inside) continue;
+    // The body sent for it, if one was: the scene is that walk.
+    const d = w.uid === S.muckPull ? -1 : Math.abs(mid(w) - cellX(w.muckAt));
     if (d <= near && d < gap) { best = w; gap = d; }
   }
   return best;
@@ -114,6 +120,14 @@ export function posing(w, now) {
   return false;
 }
 
+// Where the followed body stands, off its patch: a body's width to the side
+// it came in from, so the cells are in view as they go. Nought for anybody
+// else, and once the scene has let go.
+export function standOff(w) {
+  const sc = S.muckScene;
+  return sc && running() && w.uid === sc.uid && w.muckAt === sc.col ? sc.side * WORKER : 0;
+}
+
 // --- one frame -------------------------------------------------------------------
 // Before the crew (game.js), so a body sent off the rock is sent this frame.
 export function stepFirstMuck(t) {
@@ -155,14 +169,13 @@ function pull() {
   S.muckPull = best.uid;
 }
 
-// The nearest weather muck on the open yard: ground a body stands level on,
-// so the shot is a body walking up to a patch and not up a heap.
+// The nearest such patch to a body, a short walk off.
 function nearestOpen(wx) {
   const m = muckCols();
   const home = Math.floor(wx / P);
-  for (let d = 0; d < m.length; d++) {
-    for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c >= 0 && c < m.length && m[c] > 0 && onOpenYard(c)) return c;
+  for (let d = CUT_MUCK_PULL_CELLS; d < m.length; d++) {
+    for (const c of [home - d, home + d]) {
+      if (c >= 0 && c < m.length && weather(c)) return c;
     }
     if (home - d < 0 && home + d >= m.length) break;
   }

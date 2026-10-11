@@ -61,3 +61,6 @@ export const CUT_MUCK_MAX_S = 10;     // a ceiling, never the design
 // Nobody whose job it is has gone for it this long after the storm: one of
 // the gang is sent off the rock for the one patch, and walks back after.
 export const CUT_MUCK_WAIT_S = 1.5;
+// and its patch at least this many cells from it, so the walk over is seen
+// rather than a step off the rock's edge
+export const CUT_MUCK_PULL_CELLS = 30;

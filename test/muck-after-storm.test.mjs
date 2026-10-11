@@ -74,12 +74,15 @@ group('the first muck is a scene, once, on whoever goes for it', async () => {
     const w = S.workers.find(o => o.uid === who);
     claimed = !!w && w.muckAt === col;
   }
+  // Cleared while the scene had it: a neighbor's heap may slump a cell back
+  // in after, which is the muck's business and not the scene's.
+  let clear = false;
   const len = frames(() => {
     const w = S.workers.find(o => o.uid === who);
     if (w && w.say) said.add(w.say.mark);
+    clear ||= col != null && !(muckCols()[col] > 0);
     return !S.beat.camera;
   }, CUT_MUCK_MAX_S + 3);
-  const clear = col != null && !(muckCols()[col] > 0);
   const once = S.beatsDone.includes('firstmuck');
   window.__reload();
   const kept = S.beatsDone.includes('firstmuck');
@@ -119,8 +122,8 @@ group('with nobody to clear it, one of the gang is sent off the rock', async () 
   }
   const scene = frames(() => S.beat.camera === 'firstmuck', 30);
   const followed = !!S.muckScene && !!sent && S.muckScene.uid === sent.uid;
-  frames(() => !S.beat.camera, CUT_MUCK_MAX_S + 3);
-  const clear = col != null && !(muckCols()[col] > 0);
+  let clear = false;
+  frames(() => { clear ||= col != null && !(muckCols()[col] > 0); return !S.beat.camera; }, CUT_MUCK_MAX_S + 3);
   const onRock = () => {
     const w = S.workers.find(o => sent && o.uid === sent.uid);
     if (!w) return false;
