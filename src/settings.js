@@ -1,10 +1,10 @@
 // The settings sheet, which is the held sheet with more on it: the one surface
-// that is not the yard. This file wires the shelf; escape, resume and the
-// reset's two-click arming are input.js's.
+// that is not the yard. This file wires the shelf; escape and resume are
+// input.js's.
 
 import { pref, setPref, reducedMotion, coarse, dark } from './prefs.js';
 import { version } from './version.js';
-import { exportSave, importSave, persist, switchSlot, restore, bootYard } from './persist.js';
+import { exportSave, importSave, persist, switchSlot, restore, bootYard, reset } from './persist.js';
 import { S } from './state.js';
 import { storeTrouble, storeSettled, openSlot } from './save.js';
 import { VEIL_MS, LIGHT_PAPER, DARK_PAPER, TOAST_MS } from './config.js';
@@ -53,7 +53,8 @@ export function showPane(name) {
   if (!timesOn()) { timesBtn.hidden = true; boardName.hidden = true; }
   if (name === 'record') showRecord(recordEl);
   if (name === 'slots') {
-    showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); });
+    // Deleting the open slot is the reset it replaced: a new yard, standing.
+    showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); }, true, () => reset());
     showCloud(cloudEl, line => { said.textContent = line; }, { took: tookCloud });
   }
   if (name === 'times') showTimes(timesEl);

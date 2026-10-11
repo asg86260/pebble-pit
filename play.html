@@ -116,7 +116,7 @@ try {
      board in the yard is somewhere you walked to, and this is the one surface
      that already is not the yard and already says the game is stopped. So the
      things a player needs a shelf for -- the motion switch, the save in and
-     out, the reset, the keys, the build -- hang under the word rather than on
+     out, the saves, the keys, the build -- hang under the word rather than on
      a second sheet or a corner button. See settings.js. -->
 <!-- The toast: a notice said out loud as it lands, at the top edge, in the
      record's own card. Pressing it holds the game on the achievements page.
@@ -176,7 +176,7 @@ try {
        this button, which says which yard this is. See slots.js. -->
   <button id="slotsbtn" type="button" data-pane="main">saves</button>
   <div class="word" data-pane="slots" hidden>saves</div>
-  <div id="slots" class="slots" data-pane="slots" hidden></div>
+  <div id="slots" class="saves" data-pane="slots" hidden></div>
   <div class="pair" data-pane="slots" hidden>
     <button id="savecopy" type="button">copy a save</button>
     <button id="loadsave" type="button">load a save</button>
@@ -193,8 +193,6 @@ try {
        ahead on this yard (cloudsheet.js). A build with no cloud leaves it
        hidden. -->
   <div id="cloudsheet" class="paste cloudsheet" data-pane="slots" hidden></div>
-  <!-- the reset erases the open slot only -->
-  <button id="reset" type="button" data-pane="slots" hidden>reset progress</button>
   <button id="slotsback" type="button" data-pane="slots" hidden>back</button>
   <!-- The record: what the yard has done, newest first. A list and not a
        board -- nothing on it is for sale, nothing on it answers to a cursor

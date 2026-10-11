@@ -53,10 +53,10 @@ try {
   <button id="quit" type="button" hidden>exit to desktop</button>
 
   <!-- the saves: three rows, the open one marked; picking one opens it and
-       turns back to the front. The save going out and coming in, and the
-       reset, act on the open slot's blob -->
+       turns back to the front; each row's delete clears that slot. The save
+       going out and coming in act on the open slot's blob -->
   <div class="word" data-pane="slots" hidden>saves</div>
-  <div id="slots" class="slots" data-pane="slots" hidden></div>
+  <div id="slots" class="saves" data-pane="slots" hidden></div>
   <div class="pair" data-pane="slots" hidden>
     <button id="savecopy" type="button">copy a save</button>
     <button id="loadsave" type="button">load a save</button>
@@ -71,7 +71,6 @@ try {
   <!-- the cloud's section, as on the held sheet's saves page (cloudsheet.js);
        a build with no cloud leaves it hidden -->
   <div id="cloudsheet" class="paste cloudsheet" data-pane="slots" hidden></div>
-  <button id="reset" type="button" data-pane="slots" hidden>reset progress</button>
   <button id="slotsback" type="button" data-pane="slots" hidden>back</button>
 
   <!-- the record of the open yard, off its save -->

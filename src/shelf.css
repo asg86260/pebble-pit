@@ -643,6 +643,9 @@ body.still .rows.shelves > .tile.goal::after { animation: none; }
   text-transform: uppercase;
 }
 .rows.ledger > .sect:first-child { margin-top: 0; }
+/* A section with no title has no heading: its rows stand over the first
+   heading, set apart by that heading's own margin (the books' playtime). */
+.rows > .sect[data-sect=""], .rows.ledger > .sect[data-sect=""] { display: none; }
 .rows.ledger > button {
   display: grid;
   grid-template-columns: max-content 1fr max-content;

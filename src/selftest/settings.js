@@ -7,8 +7,7 @@ import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
 import { pref, setPref, reducedMotion, coarse, dark } from '../prefs.js';
 import { timesOn } from '../timesboard.js';
-import { disarmReset } from '../input.js';
-import { setSlot, storeSettled, clear, slotRaw } from '../save.js';
+import { setSlot, storeSettled, clear, slotRaw, writeSlot } from '../save.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
 import { persist, exportSave, claimSave } from '../persist.js';
@@ -26,7 +25,7 @@ const press = async () => {
 const resume = () => document.getElementById('resume').click();
 // the settings are a page behind the front: one press to turn to it
 const settingsPage = () => document.getElementById('settingsbtn').click();
-// and the saves, with the save out and in and the reset under the rows
+// and the saves, with the save out and in under the rows
 const savesPage = () => document.getElementById('slotsbtn').click();
 const onFront = () => !document.getElementById('resume').hidden && document.getElementById('slots').hidden;
 const said = () => held().querySelector('.said').textContent;
@@ -64,7 +63,7 @@ export const TESTS = [
     f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
     const loaded = () => new Promise(r => f.addEventListener('load', r, { once: true }));
     document.body.appendChild(f);
-    let landed = false, label = '', rows = [], record = '', arrived = false, crewThere = 0, untouched = false, edges = [];
+    let landed = false, label = '', rows = [], played = [], noReset = false, record = '', arrived = false, crewThere = 0, untouched = false, edges = [];
     try {
       f.src = 'index.html';
       await loaded();
@@ -75,16 +74,19 @@ export const TESTS = [
       label = d.getElementById('playlabel').textContent;
       record = d.getElementById('recordbtn').textContent;
       d.getElementById('slotsbtn').click();
-      rows = [...d.querySelectorAll('.slot')].map(b => b.textContent);
-      // every control down the column, the saves page's pair and the
-      // settings page's slider among them, ends at one right edge
+      rows = [...d.querySelectorAll('.slot')].map(b => b.querySelector('.what').textContent);
+      played = [...d.querySelectorAll('.slot .played')].map(p => p.textContent);
+      noReset = !d.getElementById('reset');
+      // every control down a page of the column, the saves page's pair and
+      // the settings page's slider among them, ends at one right edge (the
+      // saves page is as wide as its rows, so the two pages may differ)
       const rights = () => [...d.querySelectorAll('.col > :not([hidden])')]
-        .filter(el => el.matches('button, input, .pair, .slots, .paste, .record') && el.getBoundingClientRect().width)
+        .filter(el => el.matches('button, input, .pair, .saves, .paste, .record') && el.getBoundingClientRect().width)
         .map(el => `${el.id || el.className} ${Math.round(el.getBoundingClientRect().right)}`);
-      edges.push(...rights());
+      edges.push(rights());
       d.getElementById('slotsback').click();
       d.getElementById('settingsbtn').click();
-      edges.push(...rights());
+      edges.push(rights());
       d.getElementById('settingsback').click();
       untouched = slotRaw(1) === blob;          // before play: the game itself writes the slot
       d.getElementById('play').click();
@@ -101,9 +103,11 @@ export const TESTS = [
       ok(/^rock \d+ · 4 crew · just now$/.test(label), 'play says what it opens, without a yard number', label),
       ok(rows.length === 3 && /^1 · rock \d+ · 4 crew/.test(rows[0]) && rows[1] === '2 · empty',
          'the saves rows read the slots', JSON.stringify(rows)),
+      ok(/^(\d+h )?\d+m$/.test(played[0]) && played[1] === '' && noReset,
+         'with the playtime beside a filled row, and no reset button', `${JSON.stringify(played)}, ${noReset}`),
       ok(/^achievements · \d+ of \d+$/.test(record), 'and the record has its count', record),
-      ok(edges.length > 4 && new Set(edges.map(e => e.split(' ').pop())).size === 1,
-         'every control in the column is one width', edges.join(', ')),
+      ok(edges.length === 2 && edges.every(p => p.length >= 3 && new Set(p.map(e => e.split(' ').pop())).size === 1),
+         'every control on a page of the column is one width', edges.map(p => p.join(', ')).join(' / ')),
       ok(arrived && crewThere === 4, 'play opens play.html with the yard', `${arrived}, ${crewThere} crew`),
       ok(untouched, 'and nothing the landing page did wrote the slot'),
     ];
@@ -127,16 +131,16 @@ export const TESTS = [
     await press();
     document.getElementById('slotsbtn').click();
     const rows = () => [...document.getElementById('slots').querySelectorAll('.slot')];
-    const listed = rows().map(b => b.textContent);
+    const listed = rows().map(b => b.querySelector('.what').textContent);
     const row2 = rows()[1];
     row2.click();
-    const asked = row2.textContent;
+    const asked = row2.querySelector('.what').textContent;
     row2.click();
     const fresh = state();
     const saidNew = said();
     const frontAfterNew = onFront();
     savesPage();
-    const rows2 = rows().map(b => b.textContent);
+    const rows2 = rows().map(b => b.querySelector('.what').textContent);
     rows()[0].click();
     const backAgain = state();
     const saidBack = said();
@@ -353,26 +357,74 @@ export const TESTS = [
     ];
   }],
 
-  ['reset progress lives on the sheet and still arms', async () => {
+  // Each save's playtime and its delete, pressed the player's way: the delete
+  // fades a confirm open under its row, `back` fades it shut, and `delete`
+  // clears the slot. The open slot's delete is the reset it replaced.
+  ['each save says its playtime, and its delete asks before it clears', async () => {
     newRun();
     await settle();
-    const onBench = board().querySelector('#reset');
-    const btn = held().querySelector('#reset');
+    window.__crew(2, 2);
+    run(5);
+    persist();
+    await storeSettled();
+    // Slot 2 holds a yard of its own, three hours and twelve minutes in: the
+    // setup this check is not about.
+    const other = JSON.parse(exportSave());
+    other.playedS = 3 * 3600 + 12 * 60 + 5;
+    const otherRaw = JSON.stringify(other);
+    writeSlot(2, otherRaw);
+    await storeSettled();
     await press();
     savesPage();
-    btn.click();
-    const armed = btn.classList.contains('armed') && btn.textContent === 'erase everything?';
-    const flagged = !!S.resetArmed;
-    clearTimeout(S.resetArmed);
-    disarmReset();
-    const stoodDown = !btn.classList.contains('armed') && btn.textContent === 'reset progress'
-      && !S.resetArmed;
+    const list = document.getElementById('slots');
+    const row = n => list.querySelector(`.slot[data-slot="${n}"]`);
+    const del = n => list.querySelector(`.del[data-slot="${n}"]`);
+    const ask = n => list.querySelector(`.confirm[data-slot="${n}"]`);
+    const open = n => { const c = ask(n); return getComputedStyle(c).opacity === '1' && c.getBoundingClientRect().height > 0; };
+    const shut = n => { const c = ask(n); return getComputedStyle(c).opacity === '0' && c.getBoundingClientRect().height === 0; };
+    const fade = () => sleep(reducedMotion() ? 50 : 450);
+    const played = [1, 2, 3].map(n => row(n).querySelector('.played').textContent);
+    const rights = [1, 2].map(n => Math.round(row(n).querySelector('.played').getBoundingClientRect().right));
+    const deletes = [1, 2, 3].map(n => getComputedStyle(del(n)).visibility);
+    const shutFirst = shut(2);
+    del(2).click();
+    await fade();
+    const opened = open(2);
+    const words = [...ask(2).querySelectorAll('button')].map(b => b.textContent);
+    ask(2).querySelector('.no').click();
+    await fade();
+    const backShut = shut(2);
+    const kept = slotRaw(2) === otherRaw && row(2).querySelector('.played').textContent === '3h 12m';
+    del(2).click();
+    await fade();
+    ask(2).querySelector('.yes').click();
+    await fade();
+    const gone = slotRaw(2) == null;
+    const emptyRow = row(2).querySelector('.what').textContent;
+    const emptyPlayed = row(2).querySelector('.played').textContent;
+    const noDelete = getComputedStyle(del(2)).visibility === 'hidden';
+    const yesShut = shut(2);
+    const crewBefore = state().crew;
+    del(1).click();
+    await fade();
+    ask(1).querySelector('.yes').click();
+    const fresh = state();
+    const openRow = row(1).querySelector('.what').textContent;
     resume();
     return [
-      ok(!onBench, 'the bench has no reset button'),
-      ok(!!btn, 'the sheet has it'),
-      ok(armed && flagged, 'one click arms it and it asks', `${btn.textContent}`),
-      ok(stoodDown, 'and it stands down without erasing anything'),
+      ok(/^\d+m$/.test(played[0]) && played[1] === '3h 12m' && played[2] === '',
+         'each filled row says its playtime, short', JSON.stringify(played)),
+      ok(rights[0] === rights[1], 'and the playtimes share a right edge', rights.join(', ')),
+      ok(deletes[0] === 'visible' && deletes[1] === 'visible' && deletes[2] === 'hidden',
+         'a filled row has a delete and an empty one does not', deletes.join(', ')),
+      ok(shutFirst && opened, 'delete fades a confirm open under its row', `${shutFirst}, ${opened}`),
+      ok(words.join(',') === 'delete,back', 'which answers delete or back', words.join(',')),
+      ok(backShut && kept, 'back fades it shut and the save is untouched', `${backShut}, ${kept}`),
+      ok(gone && emptyRow === '2 · empty' && emptyPlayed === '' && noDelete && yesShut,
+         'delete clears the slot, and its row reads empty', `${gone}, ${emptyRow}, '${emptyPlayed}', ${noDelete}, ${yesShut}`),
+      ok(crewBefore > 0 && fresh.crew === 0 && fresh.beat.yard && /^1 · rock 1 · 0 crew · playing$/.test(openRow),
+         'deleting the open slot is a new yard, as the reset was', `${crewBefore} -> ${fresh.crew}, ${openRow}`),
+      ok(!document.getElementById('reset'), 'and there is no reset button'),
     ];
   }],
 

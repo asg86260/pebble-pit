@@ -35,10 +35,10 @@ function showPane(name) {
   say('');
   front();
   if (name === 'slots') {
-    showSlots(document.getElementById('slots'), say, pick, false);
+    showSlots(document.getElementById('slots'), say, pick, false, wipeOpen);
     // a yard taken from the cloud changes the rows over the section too
     showCloud(document.getElementById('cloudsheet'), say, {
-      changed: () => { front(); showSlots(document.getElementById('slots'), say, pick, false); },
+      changed: () => { front(); showSlots(document.getElementById('slots'), say, pick, false, wipeOpen); },
       conflict: () => showPane('conflict') });
   }
   if (name === 'record') { const s = opened(); showRecord(document.getElementById('record'), recordListOf(s?.won, s?.wonAt)); }
@@ -139,23 +139,13 @@ document.getElementById('loadit').addEventListener('click', () => {
   say('loaded');
 });
 
-// The reset, armed the way the sheet's is: one press asks, a second within
-// four seconds erases the open slot.
-const resetEl = document.getElementById('reset');
-let armed = 0;
-const disarm = () => { clearTimeout(armed); armed = 0; resetEl.classList.remove('armed'); resetEl.textContent = 'reset progress'; };
-resetEl.addEventListener('click', () => {
-  if (!armed) {
-    armed = setTimeout(disarm, 4000);
-    resetEl.classList.add('armed');
-    resetEl.textContent = 'erase everything?';
-    return;
-  }
-  disarm();
+// Deleting the open slot, confirmed on its row (slots.js): the blob goes, and
+// the page turns to the front, where play now says it opens a new yard.
+function wipeOpen() {
   clear();
   showPane('main');
   say('erased');
-});
+}
 
 // The desk: a window with no menu bar needs a way out that is not a key.
 const quitEl = document.getElementById('quit');
