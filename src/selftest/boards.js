@@ -1105,6 +1105,11 @@ export const TESTS = [
     // What the dust row says, off the sheet: a mark, a number and a clock.
     const dust = document.querySelector('#statsshop [data-key="ratedust"]');
     const said = dust ? dust.querySelector('.cost').innerHTML : '';
+    // The playtime stands first, over every heading, on a clock mark.
+    const play = document.querySelector('#statsshop [data-key="playtime"]');
+    const playSaid = play ? play.querySelector('.cost').innerHTML : '';
+    const playText = play ? play.querySelector('.cost').textContent.trim() : '';
+    const firstSeen = [...document.getElementById('statsshop').children].find(el => el.offsetHeight > 0);
     // "a second" is the heading's word, said once over the rates rather than
     // as a clock on every line.
     const heading = [...document.querySelectorAll('#statsshop [data-sect]')].map(h => h.dataset.sect).join(' | ');
@@ -1121,6 +1126,8 @@ export const TESTS = [
          stand ? `${stand.x},${stand.y}` : 'nowhere'),
       ok(open, 'standing there opens them'),
       ok(rows.includes('ratedust'), 'and dust is on them', rows.join(',')),
+      ok(firstSeen === play && /class="clock"/.test(playSaid) && /^(\d+h )?\d+m$/.test(playText),
+         'with the playtime first, short, on a clock', `${firstSeen?.dataset.key || firstSeen?.dataset.sect}, ${playText}`),
       ok(/class="dust"/.test(said) && /\d/.test(said) && !/class="clock"/.test(said), 'with its rate as a mark and a number', said),
       ok(/a second/.test(heading), 'and the heading says the rate is a second', heading),
       ok(!rows.includes('openbooks'), 'and there is no way into the books window from them', rows.join(',')),

@@ -10,6 +10,7 @@ const { group, ok, state, run, yard } = await import('./helpers.mjs');
 const { persist, exportSave, importSave, claimSave } = await import('../src/persist.js');
 const { openSlot, setSlot, slotRaw } = await import('../src/save.js');
 const { slotLabels, since } = await import('../src/slots.js');
+const { sayPlayed } = await import('../src/words.js');
 const KEY = 'boulder-clicker/v4';
 // The same yard under a key: the save writes on the clock now, so a switch
 // writes the yard you leave once more, and the blob differs only by the
@@ -79,6 +80,25 @@ group('the labels read what each slot holds', async () => {
     ok(since(0, 5 * 3600 * 1000) === '5 h ago' && since(0, 3 * 86400 * 1000) === '3 days ago' &&
        since(0, 90 * 1000) === '1 min ago', 'and the time is the coarse kind'),
     ok(back.length === 3, 'three rows, always')
+  ];
+});
+
+// The playtime is the books' and the saves page's one format: minutes under
+// an hour, hours and minutes after, floored.
+group('each row carries its playtime, in the short format', async () => {
+  clean();
+  played(3);
+  window.__slot(2);
+  played(1);
+  const rows = slotLabels();
+  const edges = [[0, '0m'], [59, '0m'], [60, '1m'], [3599, '59m'], [3600, '1h 0m'],
+                 [3 * 3600 + 12 * 60 + 59, '3h 12m'], [123 * 3600 + 45 * 60, '123h 45m']];
+  const wrong = edges.filter(([s, want]) => sayPlayed(s) !== want).map(([s]) => `${s}: ${sayPlayed(s)}`);
+  return [
+    ok(wrong.length === 0, '3h 12m, and 12m under an hour', wrong.join(', ')),
+    ok(rows[0].played === sayPlayed(JSON.parse(slotRaw(1)).playedS), 'a stored slot reads its own save', rows[0].played),
+    ok(rows[1].played === sayPlayed(yard.S.playedS), 'the open slot reads the standing yard', rows[1].played),
+    ok(rows[2].played === '', 'and an empty slot says nothing', rows[2].played)
   ];
 });
 

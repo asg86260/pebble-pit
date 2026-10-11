@@ -7,7 +7,8 @@
 // player.
 
 import { S } from './state.js';
-import { SLOTS, openSlot, slotRaw } from './save.js';
+import { SLOTS, openSlot, slotRaw, writeSlot } from './save.js';
+import { sayPlayed } from './words.js';
 
 // Coarse on purpose: the page is read at a glance.
 export function since(then, now = Date.now()) {
@@ -31,8 +32,12 @@ export function slotLabels(now = Date.now(), playing = true) {
     let s = null;
     if (raw) { try { s = JSON.parse(raw); } catch {} }
     const parts = [String(n)];
+    // How long the yard has been played, said beside the row; nothing for a
+    // slot with no yard in it to have played.
+    let played = '';
     if (open && playing) {
       parts.push(`rock ${S.boulderNo}`, `${S.crew} crew`, 'playing');
+      played = sayPlayed(S.playedS);
     } else if (!raw) {
       parts.push('empty');
     } else if (!s) {
@@ -40,8 +45,9 @@ export function slotLabels(now = Date.now(), playing = true) {
     } else {
       parts.push(`rock ${s.boulderNo || 1}`, `${s.crew || 0} crew`);
       if (Number.isFinite(s.savedAt)) parts.push(since(s.savedAt, now));
+      played = sayPlayed(s.playedS);
     }
-    rows.push({ slot: n, open, empty: !raw, text: parts.join(' · ') });
+    rows.push({ slot: n, open, empty: !raw, text: parts.join(' · '), played });
   }
   return rows;
 }
@@ -57,45 +63,122 @@ export function playLabel(now = Date.now()) {
 // The line on the fronts: how many of the three are yards.
 export const slotsLabel = () => `saves · ${slotLabels(Date.now(), false).filter(r => !r.empty).length} of ${SLOTS}`;
 
-// One button a slot, the open one inert. An empty row is armed first (`start
-// a new yard?` for four seconds, like the reset) because it is the one press
-// on the page that begins an intro. `say` is the sheet's own line, handed in so
-// this file does not reach for settings.js's elements; `pick` is what opening
-// a slot means where the page is (`switchSlot` on the held sheet, the pointer
-// alone on the landing page).
+// One line a slot on a grid: the row's button (its words and its playtime,
+// the open one inert), a dashed `delete` beside it, and under it the confirm
+// that `delete` fades open. The columns are the content's own (`.slots` in
+// style.css), so the widest row sets the sheet's width; a row with nothing to
+// delete keeps an unseen `delete`, so the column does not come and go.
+//
+// An empty row is armed first (`start a new yard?` for four seconds) because
+// it is the one press on the page that begins an intro. `say` is the sheet's
+// own line, handed in so this file does not reach for settings.js's elements;
+// `pick` is what opening a slot means where the page is (`switchSlot` on the
+// held sheet, the pointer alone on the landing page); `wipeOpen` is what
+// deleting the open slot means there (the reset on the held sheet, the blob
+// cleared on the landing page). Any other slot is cleared here, through the
+// same `writeSlot` the reset's clear goes through, so the cloud hears of it.
 let armed = 0;
 let armedRow = null;
 function disarm() {
   clearTimeout(armed);
   armed = 0;
-  if (armedRow) { armedRow.classList.remove('armed'); armedRow.textContent = armedRow.dataset.text; }
+  if (armedRow) { armedRow.classList.remove('armed'); armedRow.querySelector('.what').textContent = armedRow.dataset.text; }
   armedRow = null;
 }
-export function showSlots(el, say, pick, playing = true) {
+
+// The confirm under a row, open or shut. A shut one is inert, so its buttons
+// are not reached by a key while it is folded away.
+function asking(confirm, on) {
+  confirm.classList.toggle('asking', on);
+  confirm.inert = !on;
+}
+
+// Each row's words read again off the store, into the lines already standing:
+// a delete changes what a row says, not where anything is.
+function paint(el, playing) {
+  for (const row of slotLabels(Date.now(), playing)) {
+    const b = el.querySelector(`.slot[data-slot="${row.slot}"]`);
+    const del = el.querySelector(`.del[data-slot="${row.slot}"]`);
+    if (!b || !del) continue;
+    b.className = 'slot' + (row.open ? ' open' : '');
+    b.querySelector('.what').textContent = row.text;
+    b.querySelector('.played').textContent = row.played;
+    b.dataset.text = row.text;
+    b.dataset.empty = row.empty ? '1' : '';
+    b.disabled = row.open;
+    del.classList.toggle('none', row.empty);
+    del.inert = row.empty;
+  }
+}
+
+export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
   disarm();
   el.replaceChildren();
-  for (const row of slotLabels(Date.now(), playing)) {
+  for (const { slot } of slotLabels(Date.now(), playing)) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'slot' + (row.open ? ' open' : '');
-    b.textContent = row.text;
-    b.dataset.text = row.text;
-    b.dataset.slot = row.slot;
-    b.disabled = row.open;
+    b.className = 'slot';
+    b.dataset.slot = slot;
+    b.innerHTML = '<span class="what"></span><span class="played"></span>';
     b.addEventListener('click', () => {
-      if (row.empty && armedRow !== b) {
+      const empty = !!b.dataset.empty;
+      if (empty && armedRow !== b) {
         disarm();
         armed = setTimeout(disarm, 4000);
         armedRow = b;
         b.classList.add('armed');
-        b.textContent = `${row.slot} · start a new yard?`;
+        b.querySelector('.what').textContent = `${slot} · start a new yard?`;
         return;
       }
       disarm();
-      pick(row.slot, row.empty);
-      say(row.empty ? 'a new yard' : 'loaded');
-      showSlots(el, say, pick, playing);
+      pick(slot, empty);
+      say(empty ? 'a new yard' : 'loaded');
+      showSlots(el, say, pick, playing, wipeOpen);
     });
-    el.appendChild(b);
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'del';
+    del.dataset.slot = slot;
+    del.textContent = 'delete';
+
+    const confirm = document.createElement('div');
+    confirm.className = 'confirm';
+    confirm.dataset.slot = slot;
+    confirm.innerHTML = '<div class="fold"><div class="pair"><button type="button" class="yes">delete</button>' +
+                        '<button type="button" class="no">back</button></div></div>';
+    asking(confirm, false);
+
+    // One question at a time: asking about this row puts any other away.
+    del.addEventListener('click', () => {
+      disarm();
+      for (const c of el.querySelectorAll('.confirm.asking')) if (c !== confirm) asking(c, false);
+      asking(confirm, true);
+    });
+    confirm.querySelector('.no').addEventListener('click', () => asking(confirm, false));
+    confirm.querySelector('.yes').addEventListener('click', () => {
+      asking(confirm, false);
+      if (slot === openSlot()) wipeOpen();
+      else writeSlot(slot, '');
+      paint(el, playing);
+    });
+    el.append(b, del, confirm);
   }
+  paint(el, playing);
+  fit(el);
+  shown = el;
 }
+
+// A row that will not fit the window across stacks: its words over its
+// playtime and its delete. Read off the rows as laid out, not a width guessed
+// for them, so a longer row (a three-figure rock, a long playtime) stacks at
+// the width it actually needs.
+let shown = null;
+function fit(el) {
+  if (el.hidden || !el.isConnected) return;
+  el.classList.remove('stacked');
+  const r = el.getBoundingClientRect();
+  const over = el.scrollWidth > el.clientWidth + 1 || r.left < 0 || r.right > document.documentElement.clientWidth;
+  el.classList.toggle('stacked', over);
+}
+if (typeof addEventListener === 'function') addEventListener('resize', () => { if (shown) fit(shown); });

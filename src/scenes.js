@@ -1652,6 +1652,16 @@ export const SCENES = {
     run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
                  document.getElementById('settingsbtn').click();
                  document.getElementById('controlsbtn').click(); } },
+  // The saves page of the held sheet, opened by its button, and the same page
+  // with the open slot's delete pressed: the confirm open under its row.
+  // Nothing is answered, so no slot is touched.
+  savespage: { about: 'the story', say: 'the saves page on the held sheet', page: true,
+    run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+                 document.getElementById('slotsbtn').click(); } },
+  savesask: { about: 'the story', say: 'the saves page, a delete asking', page: true,
+    run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+                 document.getElementById('slotsbtn').click();
+                 document.querySelector('#slots .del:not(.none)')?.click(); } },
   // Every sheet of the books: long enough for the arrows (two windows of
   // record), and a machine putting soot up so the sky sheet has a story.
   booksall: { about: 'the pit and the rift', say: 'every sheet of the books in their window, arrows and all',

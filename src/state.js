@@ -416,7 +416,6 @@ export const S = {
   // (`revealed` in shop.js).
   shownRows: [],
   boardOpen: false,       // the workbench board is showing
-  resetArmed: 0,          // the reset button wants a second click
 
   // --- housekeeping ---
   // The seed this run was started from: drawn by `reset` in persist.js, saved
@@ -824,7 +823,7 @@ export const EPHEMERAL = [
   'towerBoardOpen', 'filterBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',
   'shackBoardOpen',
-  'nextHit', 'nextToss', 'resetArmed',
+  'nextHit', 'nextToss',
   // Worked out again from the counts, or only true for a few lines of a frame.
   'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // A grain of mess mid-flight into a roomba or out of its bin: the bin's

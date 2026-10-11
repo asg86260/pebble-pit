@@ -21,11 +21,15 @@ body.title { overflow: hidden; }
   position: fixed; left: 20px; top: 20px; max-height: calc(100vh - 40px);
   padding: 14px 16px 16px; box-sizing: border-box;
   background: var(--paper); border: 1px solid var(--ink);
-  display: flex; flex-direction: column; align-items: flex-start; gap: 7px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 7px;
   letter-spacing: .14em; text-transform: uppercase;
   overflow-y: auto;
-  /* The column's one width, border and padding included: every button,
-     pair, box and slider in it is this wide, so none stands past the rest. */
+  /* Never past the window: the same margin on the right as on the left. */
+  max-width: calc(100vw - 40px);
+  /* The column's narrowest width, border and padding included: every
+     button, pair and box in it is at least this wide, and all of them stand
+     as wide as the widest (the saves page's rows, as wide as their words),
+     so none stands past the rest. */
   --col-w: 21em;
 }
 .col .gamename { font-size: 34px; letter-spacing: .34em; line-height: 1.1; margin-bottom: 4px; }
@@ -34,8 +38,9 @@ body.title { overflow: hidden; }
 .col button {
   font: inherit; letter-spacing: .14em; text-transform: uppercase;
   color: var(--ink); background: var(--paper); border: 1px solid var(--ink);
-  padding: 5px 14px; cursor: pointer; text-align: left; width: var(--col-w); box-sizing: border-box;
+  padding: 5px 14px; cursor: pointer; text-align: left; box-sizing: border-box;
 }
+.col > button, .col > .pair, .col > .paste { min-width: var(--col-w); }
 .col button:hover { color: var(--paper); background: var(--ink); }
 .col button.play { color: var(--paper); background: var(--ink); }
 .col button.play:hover { color: var(--ink); background: var(--paper); }
@@ -44,14 +49,15 @@ body.title { overflow: hidden; }
 .col .sub { font-size: 10px; color: var(--ink-2); letter-spacing: .1em; margin: -4px 0 4px 15px; }
 .col .said { font-size: 10px; color: var(--ink-2); letter-spacing: .1em; max-width: 24em; }
 .col .said:empty { display: none; }
-.col .pair { display: flex; gap: 10px; width: var(--col-w); }
+.col .pair { display: flex; gap: 10px; }
 .col .pair button { width: auto; flex: 1; min-width: 0; text-align: center; }
-.col .paste { display: flex; flex-direction: column; gap: 7px; width: var(--col-w); }
+.col .paste { display: flex; flex-direction: column; gap: 7px; }
 .col textarea {
   font: inherit; letter-spacing: 0; text-transform: none;
   color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 4px; resize: none; outline: none;
 }
-/* the saves: one row a yard, the open one filled */
+/* the saves: one row a yard, the open one filled (the rows are style.css's
+   `.saves`); the cloud's clashes are a plain column */
 .col .slots { display: flex; flex-direction: column; gap: 6px; }
 .col .slot.open { color: var(--paper); background: var(--ink); }
 .col .slot.armed { color: var(--paper); background: var(--ink); }
@@ -70,9 +76,6 @@ body.title { overflow: hidden; }
 .board .times { min-width: 0; max-height: none; }
 @media (max-width: 720px) { .board { display: none; } }
 .col .record .card { background: var(--paper); }
-.col #reset { border-style: dashed; opacity: .7; }
-.col #reset:hover, .col #reset.armed { opacity: 1; }
-.col #reset.armed { color: var(--paper); background: var(--ink); border-style: solid; }
 .col input[type=range] { width: var(--col-w); box-sizing: border-box; margin-left: 0; margin-right: 0; }
 /* the veil: white, over everything, up on play (title.js) */
 .veil { position: fixed; inset: 0; background: var(--paper); opacity: 0; pointer-events: none; transition: opacity .35s linear; z-index: 9; }

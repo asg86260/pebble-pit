@@ -25,7 +25,6 @@ import { overChooseMark, chooseMarkAt } from './render/deep.js';
 const CHOOSE_SAYS = 'choose a fighter';
 import { markedPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
-import { reset } from './persist.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster } from './roster.js';
 import { overCount, countRect } from './render/counter.js';
@@ -55,7 +54,6 @@ import { clickDeep } from './deep/serpent.js';
 import { nearestSeg, coilThick } from './deep/place.js';
 
 const canvas = document.getElementById('c');
-const resetEl = document.getElementById('reset');
 
 // Every finger currently down, so a second one can mean something different
 // from the first.
@@ -351,24 +349,6 @@ addEventListener('blur', () => {
 // The cursor leaving the canvas takes any label with it.
 canvas.addEventListener('pointerleave', () => showTipAt(null));
 
-
-export function disarmReset() {
-  S.resetArmed = 0;
-  resetEl.classList.remove('armed');
-  resetEl.textContent = 'reset progress';
-}
-
-resetEl.addEventListener('click', () => {
-  if (!S.resetArmed) {
-    S.resetArmed = setTimeout(disarmReset, 4000);
-    resetEl.classList.add('armed');
-    resetEl.textContent = 'erase everything?';
-    return;
-  }
-  clearTimeout(S.resetArmed);
-  disarmReset();
-  reset();
-});
 
 // --- the hover registry ---------------------------------------------------------
 // A label for whatever the cursor is over, in a word. The richer tooltips in
@@ -721,8 +701,8 @@ document.getElementById('panel').addEventListener('pointerleave', e => {
 addEventListener('keydown', e => {
   // ctrl+R is the browser reloading
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  // No reset key: erasing everything must never be quicker than two
-  // deliberate clicks on the armed button. Escape holds the yard; a list
+  // No reset key: erasing a yard must never be quicker than a save's delete
+  // and its confirm. Escape holds the yard; a list
   // standing open on a board, then an open window, answers to it first, so
   // the key never does two things at once. A held yard lets go first of all:
   // the held sheet stands over the window.

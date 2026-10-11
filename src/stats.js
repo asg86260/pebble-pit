@@ -5,7 +5,7 @@
 import { STATS_OVER_S, STATS_TREND_STEPS } from './config.js';
 import { S } from './state.js';
 import { MARK } from './words.js';
-import { fmt } from './words.js';
+import { fmt, sayPlayed } from './words.js';
 import { bookRate, bookGot, bookTrend, overNow } from './income.js';
 import { arrowsFor } from './words.js';
 import { AIR_TREND_STEPS } from './config.js';
@@ -230,9 +230,14 @@ export const OPEN_ROW = {
   buy: () => showWindow('books'),
   show: () => true
 };
-export const STATS_UPGRADES = [...INCOME_ROWS];
+// How long this yard has been played, on its own line over every section: a
+// section with no title draws no heading (style.css), so the line stands
+// apart by the gap above the first heading rather than under a word of its own.
+const PLAYTIME_ROW = readout('playtime', 'playtime', () => `${MARK.time} ${sayPlayed(S.playedS)}`, () => true);
+export const STATS_UPGRADES = [PLAYTIME_ROW, ...INCOME_ROWS];
 export const STATS_SECTIONS = [
-  { title: 'income, a second', keys: STATS_UPGRADES.map(u => u.key) }
+  { title: '', keys: [PLAYTIME_ROW.key] },
+  { title: 'income, a second', keys: INCOME_ROWS.map(u => u.key) }
 ];
 
 // --- the eased per-minute rates ----------------------------------------------

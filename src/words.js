@@ -132,6 +132,13 @@ export const leftText = ms => {
   const two = n => String(n).padStart(2, '0');
   return h ? `${h}:${two(m)}:${two(s % 60)}` : `${m}:${two(s % 60)}`;
 };
+// How long a yard has been played (`playedS`, in seconds), the way the books
+// and the saves page both say it: `3h 12m`, and only the minutes under an
+// hour. Floored, so a yard reads the time it has actually had.
+export const sayPlayed = sec => {
+  const m = Math.floor(Math.max(0, sec || 0) / 60), h = Math.floor(m / 60);
+  return h ? `${h}h ${m % 60}m` : `${m}m`;
+};
 export const ordinal = n =>
   n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 
