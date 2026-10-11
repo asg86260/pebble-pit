@@ -44,6 +44,7 @@ export function seatObjective(t) {
   if (!shown && want) {
     shown = want;
     say.textContent = want.say;
+    say.hidden = !want.say;
     say.classList.add('in');
     requestAnimationFrame(() => say.classList.remove('in'));
   }

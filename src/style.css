@@ -1962,15 +1962,17 @@ html.dark .modal {
 #objective .quest li.done { text-decoration: line-through; opacity: .55; }
 #objective .quest li.done::before { content: "■ "; }
 
-/* The shield on a shield step (objbarrier.js; the owner's B with C's bar,
+/* The shield on a shield step (objbarrier.js; the owner's B,
    2026-10-10): glyph and name, the note, the bill a coin a line and the buy;
-   bought, one bar and the cancel. The card ignores the pointer and only its
+   bought, the cancel. The card ignores the pointer and only its
    two buttons take it back, so the rest stays the yard. A change of shape
    fades out and in (`swap`), and a line met fades to its done look over a
    second, the box filling as it goes. */
 #objective .barrier { display: grid; gap: 2px; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--ink-4);
                       font-size: 11px; transition: opacity .35s ease; }
 #objective .barrier[hidden] { display: none; }
+/* a step with no line: the block starts the card, with no rule over it */
+#objective .say[hidden] ~ .barrier { margin-top: 0; padding-top: 0; border-top: 0; }
 #objective .barrier.swap { opacity: 0; }
 #objective .barrier .head { display: flex; align-items: center; gap: 6px; }
 /* style.css's `canvas` rule is the yard's window; a glyph is a canvas too */
@@ -1997,9 +1999,7 @@ html.dark .modal {
 #objective .barrier .buy .cost > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 #objective .barrier .buy:disabled { cursor: default; border-color: var(--ink-5); color: var(--ink-5); }
 #objective .barrier .buy .short { color: var(--ink-5); }
-#objective .barrier .track { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-#objective .barrier .bar { position: relative; flex: 1; min-width: 40px; height: 8px; border: 2px solid var(--ink); }
-#objective .barrier .bar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--ink); transition: width .3s linear; }
+#objective .barrier .track { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 2px; }
 #objective .barrier .cancel { flex: none; padding: 1px 6px; border: 1px solid var(--ink); white-space: nowrap; }
 #objective .barrier .cancel:not(.on) { opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s .35s; }
 @media (hover: hover) {
@@ -2008,5 +2008,5 @@ html.dark .modal {
 }
 @media (prefers-reduced-motion: reduce) {
   #objective .barrier, #objective .barrier .bill li, #objective .barrier .bill .box::after,
-  #objective .barrier button, #objective .barrier .bar > i { transition: none; }
+  #objective .barrier button { transition: none; }
 }

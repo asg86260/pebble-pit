@@ -1741,9 +1741,9 @@ export const TESTS = [
 
   // The shield on offer is sold on the story's card (objbarrier.js): its
   // bill a coin a line, ticking as each is met, and a buy that is the bench
-  // row's own press; bought, a bar and the strip's cancel. Only the two
+  // row's own press; bought, the strip's cancel and no bar (the queue card under it has the progress). Only the two
   // buttons take the pointer: the rest of the card is the yard under it.
-  ['the shield on offer is sold on the story\'s card: a bill that ticks, a buy, a bar and a cancel', async () => {
+  ['the shield on offer is sold on the story\'s card: a bill that ticks, a buy, and a cancel, no bar', async () => {
     newRun();
     await settle();
     window.__crew(2, 1);
@@ -1801,7 +1801,7 @@ export const TESTS = [
     const benchSays = shop().querySelector('button[data-key="props"] .gain')?.textContent || '';
     window.__board(null);
     await settle(0.3);
-    const bar = await cardShows('props', 'build') && !!block()?.querySelector('.bar i');
+    const bar = await cardShows('props', 'build') && !block()?.querySelector('.bar');
     const cancelSays = cancel()?.textContent || '';
     const cancelTakes = !!cancel() && cancel().classList.contains('on') && cancel().contains(hitAt(cancel()));
     const before = state().stored;
@@ -1819,7 +1819,7 @@ export const TESTS = [
       ok(upWhenLit && ticked && lit, 'with the dust the card stays up, the line ticks and the buy lights', litSays),
       ok(paid && queued, 'the card\'s buy queues the props, as the bench does', JSON.stringify(state().line.yard)),
       ok(benchSays === 'queued', 'and the bench\'s own tile says queued', benchSays),
-      ok(bar && /^cancel ×1$/.test(cancelSays) && cancelTakes, 'bought, the card shows the bar and the cancel', cancelSays),
+      ok(bar && /^cancel ×1$/.test(cancelSays) && cancelTakes, 'bought, the card shows the cancel and no bar', cancelSays),
       ok(handedBack && back, 'the cancel hands the bill back and the checklist returns'),
     ];
   }],
@@ -1847,6 +1847,48 @@ export const TESTS = [
       ok(block?.dataset.key === 'dome' && block?.dataset.mode === 'offer', "the dome is on offer on the story's card", block?.dataset.key),
       ok(coins === 4 && lines.length === 4, 'its bill is four coins, no clock', `${coins} coins, ${lines.length} lines`),
       ok(clipped === 0 && inside, 'and none of it runs out of the card', `${clipped} clipped`),
+    ];
+  }],
+
+  // A place step has no line of its own: the card is the farm's row alone,
+  // and its buy is the bench's own press. Bought, the story moves on to the net.
+  ['the farm is sold on the story\'s card with no line over it, and buying it moves the step on to the net', async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1);
+    window.__jump(4);
+    window.__give(20000);
+    window.__answered('props');
+    window.__build();
+    await settle(0.6);
+    const shown = await cardShows('unlockfarm', 'offer');
+    const card = document.getElementById('objective');
+    const block = () => card.querySelector('.barrier');
+    const buyBtn = () => block()?.querySelector('button.buy');
+    const noLine = card.querySelector('.say')?.hidden === true;
+    const words = !!block()?.querySelector('.name')?.textContent && !!block()?.querySelector('.note')?.textContent;
+    const lit = buyBtn()?.disabled === false;
+    const btn = buyBtn();
+    if (btn) {
+      const r = btn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const ev = (type, buttons) => btn.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 1,
+        isPrimary: true, button: 0, buttons, bubbles: true, cancelable: true }));
+      ev('pointerdown', 1); ev('pointerup', 0);
+      btn.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true, cancelable: true }));
+    }
+    await settle(0.6);
+    const queued = (state().line.yard || []).some(w => w.key === 'unlockfarm');
+    window.__finish();
+    await settle(0.6);
+    const net = await cardShows('net', 'offer');
+    const line = card.querySelector('.say')?.textContent || '';
+    window.__crew(0, 0);
+    newRun();
+    return [
+      ok(shown && words, "the farm is on offer on the story's card, named and described", `${block()?.dataset.key}`),
+      ok(noLine, 'with no line over it'),
+      ok(lit && queued, "its buy queues the farm, as the bench's does", JSON.stringify(state().line.yard)),
+      ok(net && line !== '', 'the farm standing, the card moves on to the net and its line', line),
     ];
   }],
 

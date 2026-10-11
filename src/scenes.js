@@ -1740,6 +1740,8 @@ export const SCENES = {
     run: () => { cardYard(20000); window.__buy('house'); window.__buy('props'); window.__fast(1); } },
   propsrising: { about: 'the shields', say: "the props going up: the card's bar part filled",
     run: () => { cardYard(2000); window.__buy('props'); window.__fast(12); } },
+  farmstep: { about: 'the shields', say: "the props down: the story's card sells the farm, no line over it",
+    run: () => { cardYard(2000); window.__answered('props'); window.__fast(4); } },
   // The dome on offer: the three before it have failed and the tower stands,
   // so the story's card sells it, four coins, two of them met.
   domeoffer: { about: 'the shields', say: "the dome on offer on the story's card, four coins",
