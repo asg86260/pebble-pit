@@ -113,6 +113,45 @@ export const TESTS = [
     ];
   }],
 
+  ['the landing page opens the controls page and turns back to the settings', async () => {
+    newRun();
+    await settle();
+    const wasStaged = S.staged;
+    S.staged = true;
+    const f = document.createElement('iframe');
+    f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
+    document.body.appendChild(f);
+    let list = [], page = [], settingsGone = false, backOnSettings = false, fits = false;
+    try {
+      const loaded = new Promise(r => f.addEventListener('load', r, { once: true }));
+      f.src = 'index.html';
+      await loaded;
+      const d = f.contentDocument;
+      for (let i = 0; i < 40 && !d.getElementById('playlabel').textContent; i++) await sleep(50);
+      d.getElementById('settingsbtn').click();
+      d.getElementById('controlsbtn').click();
+      page = [...d.querySelectorAll('.col > :not([hidden])')].map(el => el.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean);
+      list = [...d.querySelectorAll('#controlslist span')].map(el => el.textContent);
+      settingsGone = d.getElementById('motion').hidden;
+      const col = d.querySelector('.col').getBoundingClientRect();
+      const cl = d.getElementById('controlslist');
+      fits = col.right <= 960 && cl.scrollWidth <= cl.clientWidth + 1;
+      d.getElementById('controlsback').click();
+      backOnSettings = !d.getElementById('motion').hidden && cl.hidden;
+    } finally {
+      f.remove();
+      S.staged = wasStaged;
+    }
+    return [
+      ok(page.includes('controls') && page[page.length - 1] === 'back', 'the page has its word and back', JSON.stringify(page)),
+      ok(settingsGone, 'and the settings are not on it'),
+      ok(list.length === 14 && list[0] === 'left click' && list[12] === '1 \u2013 9' && list[13] === 'jump to a place',
+        'the same rows as the held sheet', JSON.stringify(list)),
+      ok(fits, 'and the column grows to hold them'),
+      ok(backOnSettings, 'back turns to the settings'),
+    ];
+  }],
+
   ['the saves page switches yards', async () => {
     // Slot 2 empty before and after, through the store: the save is in
     // IndexedDB, and a key removed from localStorage by hand leaves a run's
@@ -271,8 +310,8 @@ export const TESTS = [
       ok(settingsGone, 'and the settings are not on it'),
       ok(list.join('|') === ['left click', 'interact', 'right click', 'focus workers',
         'right click + left click', 'pick up workers', 'middle click', 'move camera',
-        'scroll wheel', 'move camera', '← → / a d', 'move camera'].join('|'),
-        'four rows, input then action, in order', JSON.stringify(list)),
+        'scroll wheel', 'move camera', '← → / a d', 'move camera', '1 – 9', 'jump to a place'].join('|'),
+        'seven rows, input then action, in order', JSON.stringify(list)),
       ok(backOnSettings, 'back turns to the settings'),
     ];
   }],

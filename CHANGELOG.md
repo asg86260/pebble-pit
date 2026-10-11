@@ -126,7 +126,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Shop items no longer show their build time; the coins are the whole price.
 - The books show how long the yard has been played, and each save on the saves page shows its own playtime.
 - Each save has its own delete, confirmed on its row, in place of the reset progress button.
-- A controls page on the settings sheet lists the mouse buttons and what each does.
+- A controls page on the settings sheet, in the game and on the landing page, lists the mouse, the keys and the 1 – 9 jump.
 - The barrier card's sign is a swallowtail ribbon that wraps the frame's edge and flips its tail (it holds still with motion off).
 - The next barrier is bought from the story's card -- its bill ticking off coin by coin, then a cancel while it is built -- and no card is pinned in the corner any more.
 - Cores are gone: each barrier that falls opens the next place instead -- the props the farm, the net the quarry, the arch the tower -- and the dome is paid without them.
