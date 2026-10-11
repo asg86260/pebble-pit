@@ -2,6 +2,7 @@
 
 import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy, sleep, point, onScreen, hoverAway, raf } from './kit.js';
 import { LOO_EVERY, MESS_TAG_CAP } from '../config.js';
+import { S } from '../state.js';
 
 // What a card says for a figure: the figure, or the cap and a plus past it.
 const says = n => (n > MESS_TAG_CAP ? `${MESS_TAG_CAP}+` : String(n));
@@ -97,6 +98,9 @@ export const TESTS = [
   // card fades right out and the other glides to the middle.
   ['the muck and poop tags come up with the mess and go with the last of it', async () => {
     newRun();
+    // The first muck's scene owns the camera after this storm and hides the
+    // tags while it runs; it is not what this check is about.
+    S.beatsDone.push('firstmuck');
     window.__crew(0, 0);
     window.__air({ haze: 0, muck: 0 });
     window.__poopSet(() => 0);
