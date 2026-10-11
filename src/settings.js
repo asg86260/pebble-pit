@@ -11,6 +11,7 @@ import { VEIL_MS, LIGHT_PAPER, DARK_PAPER, TOAST_MS } from './config.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
 import { fillControls } from './controls.js';
+import { showIndex, sayIndexButton } from './indexpage.js';
 import { showTimes, timesLabel, timesOn, timesName, setTimesName } from './times.js';
 import { copyOut } from './copyout.js';
 import { showCloud, CLOUD_LOOK_MS } from './cloudsheet.js';
@@ -31,6 +32,8 @@ const recordEl = document.getElementById('record');
 const slotsBtn = document.getElementById('slotsbtn');
 const slotsEl = document.getElementById('slots');
 const timesBtn = document.getElementById('timesbtn');
+const indexBtn = document.getElementById('indexbtn');
+const indexEl = document.getElementById('index');
 const timesEl = document.getElementById('times');
 const boardName = document.getElementById('boardname');
 const cloudEl = document.getElementById('cloudsheet');
@@ -43,16 +46,22 @@ const cloudEl = document.getElementById('cloudsheet');
 // page turns back to the front: the thing to do next is resume it. `hold` in
 // input.js opens the sheet on a front every time, or the resume button is
 // sometimes not there.
+let paneNow = 'main';
+// The page the sheet is on, for the `i` key: pressed on the index it closes.
+export const pane = () => paneNow;
 export function showPane(name) {
+  paneNow = name;
   for (const el of sheet.querySelectorAll('[data-pane]')) el.hidden = !el.dataset.pane.split(' ').includes(name);
   paste.hidden = true;                          // folded; asked for again if wanted
   recordBtn.textContent = recordLabel();
   slotsBtn.textContent = slotsLabel();
   timesBtn.textContent = timesLabel();
+  sayIndexButton(indexBtn);
   // No board, no page: a build nobody pointed at a server has no times button
   // and no name box.
   if (!timesOn()) { timesBtn.hidden = true; boardName.hidden = true; }
   if (name === 'record') showRecord(recordEl);
+  if (name === 'index') showIndex(indexEl);
   if (name === 'slots') {
     // Deleting the open slot is the reset it replaced: a new yard, standing.
     showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); }, true, () => reset());
@@ -64,6 +73,8 @@ export function showPane(name) {
 const back = () => showPane('main');
 recordBtn.addEventListener('click', () => showPane('record'));
 document.getElementById('recordback').addEventListener('click', back);
+indexBtn.addEventListener('click', () => showPane('index'));
+document.getElementById('indexback').addEventListener('click', back);
 slotsBtn.addEventListener('click', () => showPane('slots'));
 document.getElementById('slotsback').addEventListener('click', back);
 timesBtn.addEventListener('click', () => showPane('times'));

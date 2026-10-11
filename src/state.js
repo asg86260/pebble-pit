@@ -418,6 +418,10 @@ export const S = {
   seenDrag: false,        // you have swept dust up by hand, so the row about it shows
   seenSects: [],          // headings that were on the board last time it was open
   seenRows: [],           // and the rows themselves, so a new one can say so
+  // The index (met.js): every entry met, kept so a thing met once stays in the
+  // book, and the ones opened since, so a new one can carry its dot.
+  seen: [],
+  indexRead: [],
   // Rows whose reveal has fired. Revealing is one-way: a door that appeared
   // because you were nearly rich enough does not go away when you spend
   // (`revealed` in shop.js).
@@ -569,6 +573,7 @@ export const SAVED = [
   'seenSects',
   'seenRows',
   'shownRows',
+  'seen', 'indexRead',    // the index: what has been met, and which entries have been read
   // What is *through* the rift (`rift`, `riftHeld`) is clamped on the way in
   // and so is hand-read (persist.js).
   'seenFullPit',

@@ -123,6 +123,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The index: every thing you have met, with a few words on each, on the held sheet's `index` page or the `i` key.
 - Shop items no longer show their build time; the coins are the whole price.
 - The books show how long the yard has been played, and each save on the saves page shows its own playtime.
 - She calls "!" from under a rock while it is being mined, every few seconds (test/sqwife-calls.test.mjs).

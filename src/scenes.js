@@ -56,6 +56,20 @@ const rich = () => {
   window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: RICH_DUST });
 };
 
+// A yard with most of the index met: the rich yard, a storm's muck and the
+// sky seen, and the four things only `S.seen` remembers. Read up to the
+// tower, so the dots fall on what came after it.
+const indexYard = () => {
+  rich();
+  S.tally.muckRains = 1; S.seenAir = true; S.rains = 3;
+  S.seenShard = S.seenSpore = S.seenSpark = true;
+  for (const k of ['crit', 'poop', 'bird', 'lightning']) if (!S.seen.includes(k)) S.seen.push(k);
+  window.__fast(1);
+  S.indexRead = ['dust', 'shard', 'spore', 'spark', 'rock', 'pit', 'house', 'cloud', 'rain', 'hauler', 'sqwife'];
+};
+const pressI = () => dispatchEvent(new KeyboardEvent('keydown', { key: 'i', code: 'KeyI', bubbles: true }));
+const indexPick = key => document.querySelector(`#index .it[data-key="${key}"]`)?.click();
+
 // The quarry bought with nothing else open past the farm, eight seconds into
 // going up: one builder at it, and its tile on the bench.
 const quarryGoingUp = () => {
@@ -1670,6 +1684,15 @@ export const SCENES = {
     run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
                  document.getElementById('settingsbtn').click();
                  document.getElementById('controlsbtn').click(); } },
+  // The index (indexpage.js): a mid-game yard with most things met, the book
+  // opened by its key and muck picked; a few entries still unread, so their
+  // dots show. On a phone (WINDOW=390,844) the list, then muck pushed over it.
+  index: { about: 'the story', say: 'the index on the held sheet, open on muck', page: true,
+    run: () => { indexYard(); pressI(); indexPick('muck'); } },
+  indexphone: { about: 'the story', say: 'the index on a phone: the list', page: true,
+    run: () => { indexYard(); window.__coarse(true); pressI(); } },
+  indexphoneentry: { about: 'the story', say: 'the index on a phone: muck pushed over the list', page: true,
+    run: () => { indexYard(); window.__coarse(true); pressI(); indexPick('muck'); } },
   // The saves page of the held sheet, opened by its button, and the same page
   // with the open slot's delete pressed: the confirm open under its row.
   // Nothing is answered, so no slot is touched.

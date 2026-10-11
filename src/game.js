@@ -9,6 +9,7 @@
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
          RIFT_G, RIFT_G_MIN, RIFT_DRAG, RIFT_EAT, RIFT_VMAX,
          RIFT_SLOW_FROM, RIFT_GONE, CLOCK_LEAP_MS } from './config.js';
+import { noteMet } from './met.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
@@ -148,6 +149,8 @@ function countTick() {
   if (S.tick % 15 === 7) stripKit();
   // A heap finding its angle is a slow thing and nobody is watching a cell.
   if (S.tick % 12 === 3) slumpMess();
+  // Twice a second: an entry met by its fact is kept met in `S.seen`.
+  if (S.tick % 30 === 11) noteMet();
 }
 
 // A lever thrown during the crew pass cannot restaff its station itself:

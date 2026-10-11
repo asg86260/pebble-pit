@@ -44,7 +44,7 @@ import { riftOpen } from './rift.js';
 import { skipCutscene, cutsceneRunning } from './cutscene.js';
 import { holdSkip } from './skip.js';
 import { markNoticesRead } from './notices.js';
-import { sayStore, showPane } from './settings.js';
+import { sayStore, showPane, pane } from './settings.js';
 import { isTap } from './tap.js';   // one definition of a tap for the whole page
 import { reducedMotion } from './prefs.js';
 import { goDeep, goUp, gliding } from './view.js';
@@ -723,6 +723,12 @@ addEventListener('keydown', e => {
   // A digit jumps the view to a place: 1 is the rock, 2 onward the buildings
   // standing along from it, in yard order.
   if (key.length === 1 && key >= '1' && key <= '9') jumpTo(+key - 1);
+  // `i` is the index: the held sheet straight on its page, and again to put
+  // the sheet away. Held on another page, it turns to the index.
+  if ((key === 'i' || key === 'I') && !e.repeat) {
+    if (S.paused && pane() === 'index') hold(false);
+    else { if (!S.paused) hold(true); showPane('index'); }
+  }
   // Space, held, skips the running scene (skip.js); the browser's repeats are
   // ignored. Not while typing: the settings sheet has a box a save is pasted
   // into.

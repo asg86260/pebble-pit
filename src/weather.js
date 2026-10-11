@@ -24,6 +24,7 @@ import { gust } from './wind.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
 import { rand } from './rng.js';
+import { meet } from './met.js';
 import { sfx } from './audio.js';
 import { earn } from './notices.js';
 
@@ -483,6 +484,7 @@ export function sendBirds() {
   // got the whole lot. On the birds rather than in the save because the birds
   // are not saved either.
   const lot = { n, hit: 0 };
+  meet('bird');
   for (let i = 0; i < n; i++) {
     BIRDS.push({
       lot,

@@ -1,5 +1,14 @@
 # Still to do
 
+## The index -- BUILT, WORDS AND DRAWINGS OPEN (2026-10-11)
+
+"The index" in DESIGN.md (built). Open: every entry's text in
+src/config/index.js is Claude's draft, for the owner to edit in that one
+file. Drawings to make in glyphs.html: muck, poop, pollution, rain,
+clouds, birds, the hole, the sqwife, the bench, the books, and the story's
+four (objective, achievements, the rescue, scenes); and whether the `i` key
+gets a line on the controls page (shared with the landing page).
+
 ## Three builds: itch, Steam, and the Steam demo -- DESIGNED, AWAITING SIGN-OFF (2026-10-10)
 
 "Three builds" in DESIGN.md: our cloud on itch, Steam Cloud through the

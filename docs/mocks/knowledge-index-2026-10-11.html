@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The index</title>
+<style>
+:root {
+  --paper: #fff; --ink: #000;
+  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf;
+  --wash: rgba(0,0,0,.18);
+  --shadow: 6px 6px 0 var(--ink-7);
+  --shard: #2f5fd0; --spore: #2e9e4b; --spark: #d93a25;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1f1f1f; --ink: #e0e0e0;
+    --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+    --wash: rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1f1f1f; --ink: #e0e0e0;
+  --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+  --wash: rgba(0,0,0,.45);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); }
+body { font: 12px/1.4 ui-monospace, "Courier New", monospace; padding: 16px; }
+h1 { font-size: 14px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 6px; }
+.lede { max-width: 90ch; color: var(--ink-4); margin: 0 0 18px; }
+.lede b { color: var(--ink); font-weight: normal; }
+.opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+@media (max-width: 1100px) { .opts { grid-template-columns: minmax(0, 1fr); } }
+.opt { border: 2px solid var(--ink); padding: 12px; min-width: 0; }
+.opt > h2 { font-size: 13px; margin: 0 0 4px; letter-spacing: .1em; text-transform: uppercase; }
+.opt > .cap { color: var(--ink-4); margin: 0 0 12px; }
+.step { margin: 0 0 14px; }
+.step > .lbl { color: var(--ink-4); font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .1em; }
+/* a stand-in for the yard: sky, a ground line, a few shapes */
+.yard { position: relative; height: 150px; border: 1px solid var(--ink-8); overflow: hidden; background: var(--paper); }
+.yard canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.over { position: absolute; inset: 0; background: var(--wash); display: flex; align-items: center; justify-content: center; }
+/* the held sheet */
+.held { background: var(--paper); border: 1px solid var(--ink); padding: 10px 14px; text-transform: uppercase; letter-spacing: .14em;
+        display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; max-width: 94%; }
+.held .word { font-weight: bold; }
+.held .btn { border: 1px solid var(--ink); padding: 2px 10px; }
+.held .btn.new { background: var(--ink); color: var(--paper); }
+.held .rule { width: 60%; border-top: 1px solid var(--ink-7); }
+/* the book: list | entry */
+.book { display: grid; grid-template-columns: 11em minmax(0, 1fr); border: 2px solid var(--ink); box-shadow: var(--shadow); background: var(--paper); min-height: 210px; }
+.book .list { border-right: 2px solid var(--ink); padding: 6px 0; max-height: 240px; overflow: hidden; }
+.list .grp { color: var(--ink-5); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; padding: 6px 8px 2px; }
+.list .it { display: flex; align-items: center; gap: 6px; padding: 2px 8px; white-space: nowrap; }
+.list .it.on { background: var(--ink); color: var(--paper); }
+.list .it.locked { color: var(--ink-7); }
+.list .it.on canvas.g { filter: invert(1); }
+.list .it.on .m.dust { background: var(--paper); }
+.list .it.on .ghost { border-color: var(--paper); }
+.list .it .dot { width: 5px; height: 5px; background: currentColor; margin-left: auto; }
+.entry { padding: 10px 12px; min-width: 0; }
+.entry .head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.entry .name { font-size: 13px; font-weight: bold; }
+.entry .grp { color: var(--ink-5); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+.entry .text { border: 1px dashed var(--ink-5); padding: 6px 8px; color: var(--ink-4); margin-bottom: 8px; }
+.entry .live { display: flex; justify-content: space-between; border-top: 1px solid var(--ink-8); padding-top: 4px; }
+.entry .live .v { font-weight: bold; }
+.entry .go { margin-top: 8px; display: inline-block; border: 1px solid var(--ink); padding: 1px 8px; }
+.entry.locked .name { color: var(--ink-7); letter-spacing: .2em; }
+.entry.locked .text { border-style: dotted; }
+.back { color: var(--ink-4); margin-bottom: 6px; }
+/* the shelf grid */
+.card { border: 2px solid var(--ink); box-shadow: var(--shadow); background: var(--paper); padding: 8px; }
+.tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.tile { border: 1px solid var(--ink); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+.tile.locked { border-color: var(--ink-7); border-style: dashed; }
+.tile.on { outline: 2px solid var(--ink); outline-offset: 2px; }
+.tile .new { position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; background: var(--ink); }
+.tiles + .sect { margin-top: 8px; }
+.sect { color: var(--ink-5); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 4px; }
+.pop { position: relative; }
+.pop .card.entrycard { position: absolute; left: 12%; right: 12%; top: 22px; }
+.pop .dim { opacity: .35; }
+/* glyph canvases */
+canvas.g { image-rendering: pixelated; display: block; }
+.ghost { border: 1px dashed var(--ink-5); display: flex; align-items: center; justify-content: center; color: var(--ink-5); font-size: 9px; text-align: center; line-height: 1.1; }
+/* coin marks: the only color on the page */
+.m { display: inline-block; flex: none; }
+.m.dust { width: 7px; height: 7px; background: var(--ink); }
+.m.shard { width: 0; height: 0; border-left: 4.5px solid transparent; border-right: 4.5px solid transparent; border-bottom: 8px solid var(--shard); }
+.m.spore { width: 9px; height: 9px; background: var(--spore); clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%); }
+.m.spark { width: 11px; height: 11px; background: linear-gradient(var(--spark), var(--spark)) center/3px 11px no-repeat, linear-gradient(var(--spark), var(--spark)) center/11px 3px no-repeat; }
+.m.big { transform: scale(2.4); margin: 8px; }
+/* the phone */
+.phone { width: 220px; max-width: 100%; height: 400px; border: 2px solid var(--ink); border-radius: 14px; padding: 8px; position: relative; overflow: hidden; background: var(--paper); margin: 0 auto; }
+.phone .sheet { position: absolute; left: 0; right: 0; bottom: 0; border-top: 2px solid var(--ink); background: var(--paper); padding: 8px; }
+.phone .grip { width: 36px; height: 4px; background: var(--ink-7); margin: 0 auto 8px; }
+.phone .yard { height: 150px; }
+.phones { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.phones .phone { width: 180px; height: 340px; }
+.corner { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
+.corner .sq { width: 22px; height: 22px; border: 2px solid var(--ink); background: var(--paper); box-shadow: 3px 3px 0 var(--ink-7); display: flex; align-items: center; justify-content: center; }
+.corner .sq.on { background: var(--ink); }
+.mode { position: absolute; top: 6px; left: 6px; background: var(--ink); color: var(--paper); padding: 1px 6px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+.tag { position: absolute; background: var(--paper); border: 1px solid var(--ink); padding: 0 4px; font-size: 10px; }
+.cur { position: absolute; width: 14px; height: 14px; }
+.yardcard { position: absolute; border: 2px solid var(--ink); background: var(--paper); box-shadow: var(--shadow); padding: 6px 8px; width: 62%; }
+.yardcard .name { font-weight: bold; }
+.yardcard .text { border: 1px dashed var(--ink-5); color: var(--ink-4); padding: 3px 5px; margin-top: 4px; }
+.note { margin-top: 20px; border-top: 2px solid var(--ink); padding-top: 10px; color: var(--ink-4); max-width: 100ch; }
+.note b { color: var(--ink); font-weight: normal; }
+.q { margin-top: 10px; }
+.q li { margin: 2px 0; }
+</style>
+</head>
+<body>
+<h1>The index: three shapes</h1>
+<p class="lede"><b>A mock from plain shapes, not the game.</b> The glyphs are the real drawings from <code>GLYPHS</code> (src/glyphs.js); the yard is a stand-in.
+Names are the strings the game already shows; every entry's text is a placeholder for the owner's words. It cannot show: the real held sheet's fade and size,
+the real yard under a look mode, the live numbers moving, hover timing, or dark mode on the real canvas. Muck, poop, pollution and the pit have no glyph yet
+(dashed boxes) -- a new drawing each, through glyphs.html.</p>
+
+<div class="opts" id="opts"></div>
+
+<div class="note">
+<b>The calls for the owner.</b>
+<ol class="q">
+<li><b>Shape:</b> A book page / B glyph grid / C look mode (+ list).</li>
+<li><b>Unmet entries:</b> hidden / locked silhouette with ??? (shown here) / all readable from the start.</li>
+<li><b>The words:</b> the owner writes all sixty / Claude drafts from the inventory's notes for the owner to edit.</li>
+<li><b>Rows:</b> things only (60) / things plus the rows (spells, ladders).</li>
+<li><b>Live line:</b> one live number per entry (shown) / none.</li>
+</ol>
+</div>
+
+<script>
+// The real drawings, copied from src/glyphs.js (GLYPHS), eight cells square.
+const G = {
+  ore:     ['........', '........', '........', '........', '...##...', '..####..', '.######.', '########'],
+  ear:     ['........', '..#.....', '..##....', '..#.....', '.##.....', '..#.....', '..##....', '..#.....'],
+  spark:   ['........', '.#...##.', '..#..##.', '...#....', '....#...', '.##..#..', '.##...#.', '........'],
+  cracked: ['##....##', '###..###', '.######.', '..####..', '..####..', '.######.', '###..###', '##....##'],
+  portal:  ['........', '........', '..####..', '.#....#.', '#..##..#', '.#....#.', '..####..', '........'],
+  bolt:    ['....####', '...#####', '...#..##', '..##..##', '.#.####.', '#.#.#...', '.#.#....', '#.#.....'],
+  balloon: ['...##...', '..#..#..', '.#....#.', '.#....#.', '.#....#.', '..#..#..', '...##...', '...##...'],
+  furrow:  ['........', '.#...#..', '.##..##.', '.#...#..', '##..##..', '.#...#..', '.##..##.', '.#...#..'],
+  hoist:   ['........', '#......#', '#......#', '##....##', '##....##', '.#....#.', '.#.##.#.', '.######.'],
+  house:   ['........', '........', '........', '.#######', '..#####.', '..#...#.', '..#...#.', '..#...#.'],
+  pot:     ['########', '.######.', '########', '########', '########', '########', '.######.', '..#..#..'],
+  tower:   ['.#......', '###.....', '#.#.....', '###.#...', '######..', '#.##.#..', '######..', '#.####..'],
+  star:    ['...#....', '...#....', '..###...', '..###...', '.#####..', '.#####..', '.#####..', '..###...'],
+  planks:  ['........', '........', '###..###', '#..##..#', '#......#', '#......#', '#......#', '#......#'],
+  net:     ['........', '........', '##.#.#.#', '#.#.#.##', '##.#.#.#', '#.#.#.##', '#......#', '#......#'],
+  bucket:  ['........', '........', '..#.....', '..#.....', '..#.....', '..#.....', '.###....', '.###....'],
+  pickhead:['........', '..###...', '.#####..', '#..#..#.', '...#....', '...#....', '...#....', '...#....'],
+  hut:     ['########', '.##..##.', '.#....#.', '.######.', '.######.', '.#....#.', '.#....#.', '.#....#.'],
+  die:     ['...#####', '...#...#', '...#.#.#', '#####..#', '#...####', '#.#.#...', '#...#...', '#####...'],
+  sack:    ['########', '#......#', '#..##..#', '########', '#..##..#', '#......#', '#......#', '########'],
+};
+// The index's entries for the mock: [group, name the game shows, glyph or mark, met?]
+const E = [
+  ['materials', 'pebbles', 'm:dust', 1], ['materials', 'ore', 'ore', 1], ['materials', 'crops', 'ear', 1], ['materials', 'sparks', 'spark', 0],
+  ['the yard', 'rock', 'cracked', 1], ['the yard', 'the pit', null, 1], ['the yard', 'muck', null, 1], ['the yard', 'poop', null, 1], ['the yard', 'the rift', 'portal', 0],
+  ['the sky', 'pollution', null, 1], ['the sky', 'lightning', 'bolt', 1], ['the sky', 'the star', 'star', 0],
+  ['places', 'the farm', 'furrow', 1], ['places', 'the quarry', 'hoist', 1], ['places', 'the tower', 'tower', 0],
+];
+// #light or #dark in the address forces a theme, for checking both.
+if (/^#(light|dark)$/.test(location.hash)) document.documentElement.dataset.theme = location.hash.slice(1);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// A glyph at `cell` px a cell; `locked` draws it as a pale silhouette.
+function glyph(name, cell, locked) {
+  if (name && name.startsWith('m:')) {
+    const s = document.createElement('span');
+    s.className = 'm ' + name.slice(2) + (cell >= 5 ? ' big' : '');
+    return s;
+  }
+  if (!name || !G[name]) {
+    const d = document.createElement('div');
+    d.className = 'ghost';
+    d.style.width = d.style.height = cell * 8 + 'px';
+    d.textContent = cell >= 4 ? 'no glyph yet' : '';
+    return d;
+  }
+  const c = document.createElement('canvas');
+  c.className = 'g';
+  c.width = c.height = 8; c.style.width = c.style.height = cell * 8 + 'px';
+  const g = c.getContext('2d');
+  g.fillStyle = locked ? css('--ink-7') : css('--ink');
+  G[name].forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') g.fillRect(x, y, 1, 1); }));
+  return c;
+}
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+// The stand-in yard: a ground line, the rock, the pit's heap, a strip of muck, a body, the house.
+function yard(h, opts = {}) {
+  const box = el('div', 'yard'); box.style.height = h + 'px';
+  const c = document.createElement('canvas'); box.appendChild(c);
+  requestAnimationFrame(() => {
+    const W = Math.max(60, Math.floor(box.clientWidth / 3)), H = Math.floor(h / 3);
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    const ink = css('--ink'), g4 = css('--ink-4'), g5 = css('--ink-5'), g7 = css('--ink-7'), g8 = css('--ink-8');
+    const gy = H - 10;
+    g.fillStyle = ink; g.fillRect(0, gy, W, 1);
+    // haze motes
+    let s = 7; const r = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    for (let i = 0; i < W * 0.6; i++) { g.fillStyle = [g7, g8, g5][i % 3]; g.fillRect(Math.floor(r() * W), Math.floor(r() * H * 0.35), 1, 1); }
+    // the rock
+    const rx = Math.floor(W * 0.18);
+    g.fillStyle = ink;
+    for (let y = 0; y < 14; y++) { const w = 18 - Math.abs(7 - y); g.fillRect(rx + (18 - w) / 2 | 0, gy - 14 + y, w, 1); }
+    // the house
+    const hx = Math.floor(W * 0.5);
+    g.fillRect(hx, gy - 8, 10, 1); g.fillRect(hx, gy - 8, 1, 8); g.fillRect(hx + 9, gy - 8, 1, 8); g.fillRect(hx + 1, gy - 10, 8, 2);
+    // a body
+    g.fillRect(Math.floor(W * 0.38), gy - 3, 3, 3);
+    // muck: per-cell greys, a low strip
+    const mx = Math.floor(W * 0.64);
+    for (let x = 0; x < 9; x++) for (let y = 0; y < 1 + ((x * 7) % 3 === 0 ? 1 : 0); y++) { g.fillStyle = [g4, g5, g4, g7][(x + y) % 4]; g.fillRect(mx + x, gy - 1 - y, 1, 1); }
+    // the pit
+    const px = Math.floor(W * 0.82);
+    g.fillStyle = ink; g.fillRect(px, gy, 1, 8); g.fillRect(px + 14, gy, 1, 8); g.fillRect(px, gy + 8, 15, 1);
+    g.fillStyle = g5; g.fillRect(px + 1, gy + 4, 13, 4);
+    box.dataset.muckX = (mx + 4) * 3; box.dataset.gy = gy * 3;
+    if (opts.after) opts.after(box, { mx: (mx + 4) * 3, gy: gy * 3, W: W * 3 });
+  });
+  return box;
+}
+function heldFront(newWord) {
+  const h = el('div', 'held');
+  h.append(el('div', 'word', 'paused'), el('div', 'btn', 'resume'), el('div', 'rule'), el('div', 'btn', 'saves'),
+           el('div', 'btn', 'achievements'), el('div', 'btn' + (newWord ? ' new' : ''), 'index'), el('div', 'btn', 'settings'));
+  return h;
+}
+function entry(name, grp, gl, locked, opts = {}) {
+  const e = el('div', 'entry' + (locked ? ' locked' : ''));
+  if (opts.back) e.append(el('div', 'back', '&#9664; back'));
+  const head = el('div', 'head');
+  head.append(glyph(gl, opts.cell || 5, locked));
+  const t = el('div'); t.append(el('div', 'name', locked ? '???' : name), el('div', 'grp', grp)); head.append(t);
+  e.append(head);
+  e.append(el('div', 'text', locked ? '[not met yet]' : `[${name} — owner's words]`));
+  if (!locked && opts.live) e.append(el('div', 'live', `<span>${opts.live[0]}</span><span class="v">${opts.live[1]}</span>`));
+  if (!locked && opts.go) e.append(el('div', 'go', 'show me &#9654;'));
+  return e;
+}
+function list(sel, limit) {
+  const l = el('div', 'list'); let last = '';
+  for (const [grp, name, gl, met] of E.slice(0, limit || E.length)) {
+    if (grp !== last) { l.append(el('div', 'grp', grp)); last = grp; }
+    const it = el('div', 'it' + (name === sel ? ' on' : '') + (met ? '' : ' locked'));
+    it.append(glyph(gl, 1.5, !met)); it.append(document.createTextNode(met ? name : '???'));
+    if (name === 'lightning') it.append(el('span', 'dot'));
+    l.append(it);
+  }
+  return l;
+}
+function tiles(sel) {
+  const w = el('div'); let last = '', grid;
+  for (const [grp, name, gl, met] of E) {
+    if (grp !== last) { w.append(el('div', 'sect', grp)); grid = el('div', 'tiles'); w.append(grid); last = grp; }
+    const t = el('div', 'tile' + (met ? '' : ' locked') + (name === sel ? ' on' : ''));
+    t.title = met ? name : '???';
+    t.append(glyph(gl, 3, !met));
+    if (name === 'lightning') t.append(el('span', 'new'));
+    grid.append(t);
+  }
+  return w;
+}
+function step(label, ...kids) { const s = el('div', 'step'); s.append(el('div', 'lbl', label), ...kids); return s; }
+function withOver(box, inner) { const o = el('div', 'over'); o.append(inner); box.append(o); return box; }
+
+const OPTS = [
+  ['A', 'A book page', 'The index is a page on the held sheet: every entry down the left by group, the chosen one on the right. Escape (or the pause square) then "index", or the i key straight to it.', 'book'],
+  ['B', 'A shelf of tiles', 'The same page as a grid of glyph tiles, like the shelf; a tile opens its entry as a card over the grid. Reads at a glance which things are still unmet.', 'grid'],
+  ['C', 'Look at anything', 'A look mode: the corner square (or i) turns the cursor into a ? and a click on anything in the yard opens its entry as a card beside it. Things you cannot click (pollution, rain) are on a list behind the card.', 'look'],
+];
+
+const root = document.getElementById('opts');
+for (const [L, name, cap, kind] of OPTS) {
+  const p = el('section', 'opt');
+  p.append(el('h2', null, `${L} · ${name}`), el('p', 'cap', cap));
+  if (kind === 'book') {
+    p.append(step('1 · closed: the held sheet gains a word', withOver(yard(200), heldFront(true))));
+    const b1 = el('div', 'book'); b1.append(list('pebbles'), entry('pebbles', 'materials', 'm:dust', false, { live: ['in the pit', '14.2k'] }));
+    p.append(step('2 · opened: the first entry', b1));
+    const b2 = el('div', 'book'); b2.append(list('muck'), entry('muck', 'the yard', null, false, { live: ['lying about', '38'], go: true }));
+    p.append(step('3 · muck', b2));
+    const b3 = el('div', 'book'); b3.append(list('the rift'), entry('the rift', 'the yard', 'portal', true));
+    p.append(step('4 · not met yet', b3));
+    const ph = el('div', 'phones');
+    const a = el('div', 'phone'); a.append(yard(120)); const s1 = el('div', 'sheet'); s1.append(el('div', 'grip'), list('muck', 9)); a.append(s1);
+    const b = el('div', 'phone'); b.append(yard(120)); const s2 = el('div', 'sheet'); s2.append(el('div', 'grip'), entry('muck', 'the yard', null, false, { back: true, live: ['lying about', '38'], cell: 4 })); b.append(s2);
+    ph.append(a, b);
+    p.append(step('phone: the list, then the entry pushed over it', ph));
+  }
+  if (kind === 'grid') {
+    p.append(step('1 · closed: the held sheet gains a word', withOver(yard(200), heldFront(true))));
+    const c1 = el('div', 'card'); c1.append(tiles(null));
+    p.append(step('2 · opened: tiles by group (dashed = not met; dot = new)', c1));
+    const pop = el('div', 'pop'); const c2 = el('div', 'card dim'); c2.append(tiles('muck'));
+    const ec = el('div', 'card entrycard'); ec.append(entry('muck', 'the yard', null, false, { live: ['lying about', '38'], go: true }));
+    pop.append(c2, ec);
+    p.append(step('3 · muck: the card over the grid', pop));
+    const pop2 = el('div', 'pop'); const c3 = el('div', 'card dim'); c3.append(tiles('the rift'));
+    const ec2 = el('div', 'card entrycard'); ec2.append(entry('the rift', 'the yard', 'portal', true));
+    pop2.append(c3, ec2);
+    p.append(step('4 · not met yet', pop2));
+    const ph = el('div', 'phones');
+    const a = el('div', 'phone'); a.append(yard(110)); const s1 = el('div', 'sheet'); s1.append(el('div', 'grip'), tiles(null)); a.append(s1);
+    s1.querySelectorAll('.tiles').forEach(t => t.style.gridTemplateColumns = 'repeat(4, 1fr)');
+    s1.querySelectorAll('.sect').forEach((t, i) => { if (i > 2) t.remove(); }); s1.querySelectorAll('.tiles').forEach((t, i) => { if (i > 2) t.remove(); });
+    const b = el('div', 'phone'); b.append(yard(110)); const s2 = el('div', 'sheet'); s2.append(el('div', 'grip'), entry('muck', 'the yard', null, false, { back: true, live: ['lying about', '38'], cell: 4 })); b.append(s2);
+    ph.append(a, b);
+    p.append(step('phone: four tiles across, the entry as the sheet', ph));
+  }
+  if (kind === 'look') {
+    const corner = on => { const c = el('div', 'corner'); const sq = el('div', 'sq' + (on ? ' on' : ''));
+      sq.innerHTML = `<span style="color:${on ? 'var(--paper)' : 'var(--ink)'};font-weight:bold">?</span>`;
+      c.append(el('div', 'sq', '<span style="width:6px;height:8px;background:var(--ink);display:block"></span>'), sq); return c; };
+    const y1 = yard(170); y1.append(corner(false));
+    p.append(step('1 · closed: a ? square in the corner, beside the crew switch', y1));
+    const y2 = yard(170, { after: (box, at) => {
+      const t = el('div', 'tag', 'muck'); t.style.left = (at.mx + 10) + 'px'; t.style.top = (at.gy - 30) + 'px'; box.append(t);
+      const cur = el('div', 'cur', '<svg viewBox="0 0 14 14" width="14" height="14"><rect x="0" y="0" width="14" height="14" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><text x="7" y="11" font-size="11" text-anchor="middle" font-family="monospace" font-weight="bold" fill="var(--ink)">?</text></svg>');
+      cur.style.left = (at.mx - 4) + 'px'; cur.style.top = (at.gy - 18) + 'px'; box.append(cur);
+    } });
+    y2.append(corner(true), el('div', 'mode', 'look'));
+    p.append(step('2 · opened: look mode on, the cursor a ?, the hover label as now', y2));
+    const y3 = yard(220, { after: (box, at) => {
+      const c = el('div', 'yardcard');
+      c.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><div class="ghost" style="width:24px;height:24px"></div><div><div class="name">muck</div><div style="color:var(--ink-5);font-size:10px">LYING ABOUT 38</div></div></div><div class="text">[muck — owner's words]</div><div style="margin-top:4px;color:var(--ink-4)">&#9776; everything else</div>`;
+      c.style.right = '8px'; c.style.top = '30px'; box.append(c);
+    } });
+    y3.append(corner(true), el('div', 'mode', 'look'));
+    p.append(step('3 · muck: clicked, its card beside it; the list one press away', y3));
+    const b3 = el('div', 'book'); b3.append(list('pollution'), entry('pollution', 'the sky', null, false, { live: ['the sky is', '42% full'] }));
+    p.append(step('3b · the list, for what has no body to click (pollution, rain)', b3));
+    const y4 = yard(170, { after: (box, at) => {
+      const c = el('div', 'yardcard');
+      c.innerHTML = `<div class="name" style="color:var(--ink-7);letter-spacing:.2em">???</div><div class="text" style="border-style:dotted">[not met yet]</div>`;
+      c.style.left = '8px'; c.style.top = '30px'; c.style.width = '45%'; box.append(c);
+    } });
+    y4.append(corner(true), el('div', 'mode', 'look'));
+    p.append(step('4 · not met yet: a click on it says ???', y4));
+    const ph = el('div', 'phones');
+    const a = el('div', 'phone'); const ya = yard(200, { after: (box, at) => {
+      const t = el('div', 'tag', 'tap a thing'); t.style.left = '8px'; t.style.top = '34px'; box.append(t); } });
+    ya.append(corner(true), el('div', 'mode', 'look')); a.append(ya);
+    const b = el('div', 'phone'); b.append(yard(150)); const s2 = el('div', 'sheet'); s2.append(el('div', 'grip'), entry('muck', 'the yard', null, false, { live: ['lying about', '38'], cell: 4 })); b.append(s2);
+    ph.append(a, b);
+    p.append(step('phone: a tap in look mode, the entry as a card at the foot', ph));
+  }
+  root.append(p);
+}
+</script>
+</body>
+</html>
