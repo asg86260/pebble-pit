@@ -9,6 +9,7 @@ import { recordListOf, recordLabelOf, showRecord } from './record.js';
 import { timesOn, showTimes } from './timesboard.js';
 import { pref, setPref, reducedMotion, dark } from './prefs.js';
 import { version } from './version.js';
+import { fillControls } from './controls.js';
 import { copyOut } from './copyout.js';
 import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
 import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
@@ -67,6 +68,9 @@ function pick(n) { setSlot(n); showPane('main'); }
 document.getElementById('slotsbtn').addEventListener('click', () => showPane('slots'));
 document.getElementById('recordbtn').addEventListener('click', () => showPane('record'));
 document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
+fillControls(document.getElementById('controlslist'));
+document.getElementById('controlsbtn').addEventListener('click', () => showPane('controls'));
+document.getElementById('controlsback').addEventListener('click', () => showPane('settings'));
 for (const id of ['slotsback', 'recordback', 'settingsback', 'conflictback']) document.getElementById(id).addEventListener('click', () => showPane('main'));
 
 // Play waits for the store to take every write made here, and for the veil to

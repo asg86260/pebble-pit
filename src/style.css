@@ -1100,16 +1100,16 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    width, so a longer line the owner writes later still lines up. The card is
    shrink-to-fit at half the viewport, so a column that may wrap is squeezed
    to nothing: the cells stay max-content and the card grows around them. */
-.held .controls { display: grid; grid-template-columns: max-content max-content; gap: 8px 20px;
+.controls { display: grid; grid-template-columns: max-content max-content; gap: 8px 20px;
                   max-width: 100%; text-align: left; }
-.held .controls > :nth-child(odd) { text-align: right; }
+.controls > :nth-child(odd) { text-align: right; }
 /* a phone's card cannot hold the longest pair side by side without wrapping
    the action: each pair stacks instead, input over action */
 @media (max-width: 520px) {
-  .held .controls { grid-template-columns: max-content; gap: 0; text-align: center; white-space: nowrap; }
-  .held .controls > :nth-child(odd) { text-align: center; }
-  .held .controls { letter-spacing: .04em; }
-  .held .controls > :nth-child(even) { margin-bottom: 10px; }
+  .controls { grid-template-columns: max-content; gap: 0; text-align: center; white-space: nowrap; }
+  .controls > :nth-child(odd) { text-align: center; }
+  .controls { letter-spacing: .04em; }
+  .controls > :nth-child(even) { margin-bottom: 10px; }
 }
 /* what broke, in the browser's own words: lower case, since it is a quotation
    and not a label, and held to one line's width so a long stack does not turn

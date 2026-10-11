@@ -84,7 +84,12 @@ try {
   <button id="dark" type="button" data-pane="settings" hidden>dark: off</button>
   <button id="sound" type="button" data-pane="settings" hidden>sound: on</button>
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden>
+  <button id="controlsbtn" type="button" data-pane="settings" hidden>controls</button>
   <button id="settingsback" type="button" data-pane="settings" hidden>back</button>
+  <!-- the controls page: the rows are src/controls.js's -->
+  <div class="word" data-pane="controls" hidden>controls</div>
+  <div id="controlslist" class="controls" data-pane="controls" hidden></div>
+  <button id="controlsback" type="button" data-pane="controls" hidden>back</button>
 
   <!-- two yards in one slot, one here and one in the cloud: the player
        keeps one (cloudsheet.js, `showConflicts`) -->
