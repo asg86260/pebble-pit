@@ -1,7 +1,7 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_GAP, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
          SHEET_MS, SCALE_MARK } from './config.js';
 import { fmt } from './words.js';
 import { S, bench } from './state.js';
@@ -42,7 +42,7 @@ document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
 document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
 document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
 // The shelf's steps, the same way: config owns them, shelf.css reads them.
-for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHELF_TOP], ['foot', SHELF_FOOT], ['air', SHELF_AIR], ['sign', SHELF_SIGN], ['plank', SHELF_PLANK], ['refund', SHELF_REFUND]])
+for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHELF_TOP], ['foot', SHELF_FOOT], ['air', SHELF_AIR], ['gap', SHELF_GAP], ['sign', SHELF_SIGN], ['plank', SHELF_PLANK], ['refund', SHELF_REFUND]])
   document.documentElement.style.setProperty?.(`--shelf-${name}`, `${v}px`);
 document.documentElement.style.setProperty?.('--shelf-hover-ms', `${SHELF_HOVER_MS}ms`);
 document.documentElement.style.setProperty?.('--shelf-float-ms', `${SHELF_FLOAT_MS}ms`);

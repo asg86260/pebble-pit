@@ -126,7 +126,10 @@
   justify-items: center;
   align-items: center;
   box-sizing: border-box;
-  width: var(--shelf-slot, 140px);
+  /* The slot is the pitch and the tile is the slot less a gap, centered, so a
+     tile's edge -- a queued one draws a border -- never meets its neighbor's. */
+  width: calc(var(--shelf-slot, 140px) - var(--shelf-gap, 6px));
+  justify-self: center;
   /* The sides are the pips' column: the ladder stands down the right edge
      out of the tile's flow (`.ladder` below), so the flow keeps clear of it
      by padding -- its inset from the edge, its width, and a gap -- and the
@@ -511,7 +514,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
    after batch", a crew's name), not a number, and a slot folds one. The
    control sits on the center line like a tag, not flush right as it does on
    a card, and keeps to one line. `pinWidth` reads the span off the style. */
-.rows.shelves > .tile.pickrow { grid-column: span 2; width: calc(2 * var(--shelf-slot, 140px)); }
+.rows.shelves > .tile.pickrow { grid-column: span 2; width: calc(2 * var(--shelf-slot, 140px) - var(--shelf-gap, 6px)); }
 .rows.shelves > .tile.pickrow .chosen {
   grid-column: 1;
   justify-self: center;
