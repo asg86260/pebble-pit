@@ -206,7 +206,10 @@ group('a body joins the dance out of a commute without a snap', async () => {
   yard.S.beatsDone.push('meet', 'part');
   run(2);
   window.__assign('farmhands', 5);             // across the yard to the plots
-  run(1);
+  // A commuter keeps walking through the dance and joins when it arrives, so
+  // the rock goes late enough in the walk -- by way of the hat stand, a brim a
+  // grower -- that the gang reach the plots before the music stops.
+  run(2.5);
   const walking = yard.S.workers.filter(w => w.walking).length;
   window.__next();
   // Every body, every frame the yard is celebrating; a fall is its own motion.

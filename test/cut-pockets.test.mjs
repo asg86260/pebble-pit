@@ -80,7 +80,13 @@ group('a cut takes the time it took before the pockets, at pace nought and at th
   // `FACTORY` stands a body on the ground now (crew/jobs.js), so the gang
   // arrives together -- which is what a gang assigned from the board, walking
   // from where it stood, always did in play.
-  const WAS_P0 = 103, WAS_P9 = 21;
+  //
+  // Re-measured 2026-10-11 at 74 s and 16 s. The beat did not move: the five
+  // wear five lamps now that a lamp is a hat a body (`perHand`, kit.js), not
+  // three, and a pocket that runs off the end of its course carries on down
+  // the next one instead of being cut short. At three lamps the same yard
+  // still digs it in 96 s and 20 s.
+  const WAS_P0 = 74, WAS_P9 = 16;
   // The spark rung's pace over the floor's, off the pace list itself.
   const sparkGain = LADDERS.quarrypace.value[TIER_OWN] / LADDERS.quarrypace.value[TIER_RUNGS];
   const time = () => {

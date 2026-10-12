@@ -14,6 +14,8 @@ import { S, cut, quarry } from '../src/state.js';
 import { P, WORKER, ROCK_CELL } from '../src/config.js';
 import { quarryCells, quarryTarget, dugTopY, cutTop, cellsLeft, quarryDone } from '../src/quarry.js';
 import { at, put } from '../src/grid.js';
+import { worn, hats } from '../src/levels.js';
+import { JOB } from '../src/jobs.js';
 
 const quarriers = () => S.workers.filter(w => w.type === 'quarrier');
 const columns = () => quarryCells().map((_, c) => c);
@@ -24,9 +26,13 @@ group('a save whose rock sits above the counted floor comes back squared, and th
   // The deepest cut there is, five on the face, dug down near its floor -- a
   // few courses left rather than one, so the gang are still at work on the
   // floor when it is measured after the load rather than done and climbing out.
+  // Enough of them for a lamp on every head, which digs at twice the pace.
   window.__crew(0, 0, 5, 0); window.__fullSites(); window.__tip(90000);
+  // Every lamp on a head first: a lamp is fetched from the stand one trip at
+  // a time, and a body climbing out for its own is not standing on any floor.
+  runUntil(() => worn(JOB.QUARRY) >= hats(JOB.QUARRY), 60);
   const deepest = Math.max(...columns().map(quarryTarget));
-  window.__digCut(deepest - 4);
+  window.__digCut(deepest - 8);
   runUntil(() => quarriers().some(w => w.goal === 'work'), 60);
   run(2);
   // The grid disagrees with the count by a course in every column that still

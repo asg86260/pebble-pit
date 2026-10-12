@@ -157,6 +157,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The props can be built after the first rock.
 
 - An idle hauler stood beside the rock no longer drifts up its flank and hangs in the air there (test/haul-belt.test.mjs).
+- A fully lamped quarry gang no longer leaves a strip of the cut standing courses above the floor around it (test/cut-pockets.test.mjs).
 - Two haulers no longer walk to the same pebble: the nearer one takes it and the other picks another (test/hauler-claims.test.mjs).
 - A hauler with room in its hands picks up the pebbles near it, behind it too, before walking to the hole (test/hauler-claims.test.mjs).
 - On a phone a save's delete stays inside its row as a ✕ and no longer wraps onto a line of its own (src/selftest/settings.js).

@@ -549,12 +549,18 @@ export function stepQuarrier(w, now, ctx = null) {
   // out, so a pocket of three is three one-in-what-is-left chances exactly as
   // three swings were, and the last cell of a cut is still certain. The
   // crit's fountain goes on the first.
-  const course = cells[c];
+  let course = cells[c];
   findShards(w, cellsLeft(), crit);
   digCell(c);
   w.run.shift();
   for (let k = 1; k < take; k++) {
-    const n = nearestUndug(c, course);
+    // A course run out mid-pocket hands the rest of the pocket to the next
+    // one down, nearest first. Cut short instead, a body on a short stretch
+    // the others' claims hem in takes two cells a swing while they take a
+    // whole pocket each, and that stretch is left standing courses above
+    // the floor around it.
+    let n = nearestUndug(c, course);
+    if (n < 0) { course = shallowest(); n = nearestUndug(c, course); }
     if (n < 0) break;
     findShards(w, cellsLeft(), 1);
     digCell(n);
@@ -702,10 +708,16 @@ function runStands(w) {
   const cells = quarryCells();
   w.run = w.run.filter(c => cells[c] < quarryTarget(c));
   if (!w.run.length) return false;
+  return cells[w.run[0]] === shallowest();
+}
+
+// The shallowest course still standing anywhere in the cut.
+function shallowest() {
+  const cells = quarryCells();
   let shallow = Infinity;
   for (let c = 0; c < cells.length; c++)
     if (cells[c] < quarryTarget(c)) shallow = Math.min(shallow, cells[c]);
-  return cells[w.run[0]] === shallow;
+  return shallow;
 }
 
 // Every column some other quarrier is about to swing at: its cell and the
