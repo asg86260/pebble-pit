@@ -131,6 +131,7 @@ this section; the release that switches it on moves these under Unreleased.
 - On the story card each coin's line is its own bar, filling grey as the coins come in (src/selftest/boards.js).
 - The apothecary holds three pots, one to a brew; a yard that already has more keeps them.
 - The tower's door no longer says "wizards live here", and the story no longer says "ask the wizards how to get down".
+- After the snatch the story says "talk to the wizards about what just happened" until you open their board (test/objectives.test.mjs, src/selftest/boards.js).
 - The tower's row summons a wizard instead of training one.
 - The dome sits first on the tower's board as its goal card, and every goal card's ribbon reads "saving your sqwife" (src/selftest/boards.js, "the tower's dome").
 - The saves page draws the slot you are playing inverted, black with white text, in place of greyed out.
