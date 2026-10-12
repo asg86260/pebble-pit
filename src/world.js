@@ -6,7 +6,7 @@
 // a row there and a `seat` in `seatSites`.
 
 import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
-        ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
+        ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, GROUND_DEEP,
         SITES, TO_FIRST_SITE, STATION_GAP, SHACK_SHIELD_CLEAR, SHACK_EAVE, shieldReach, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_FILTER, HOPPER_H, TRAY_H,
@@ -594,7 +594,7 @@ export function resize(after) {
   // The world is the size of the finished works: laid out around the hole
   // the pit can ever be, so the view does not shift under you for a shop row.
   S.worldW = pit.x + PIT_W_MAX + PIT_PAD * P;
-  S.worldH = S.groundY + PIT_H + FLOOR_MARGIN;
+  S.worldH = S.groundY + GROUND_DEEP + FLOOR_MARGIN;
 
   floor.x = 0;
   // Which ground a column belongs to: a station's strip, by name, or `null`

@@ -133,6 +133,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The pit is a third as deep, so it fills and tears open about three times sooner; an old yard holding more than the new hole tears on load and keeps every grain (test/rift-migrate.test.mjs).
 - Pods build in a few seconds each, never more than eight, instead of three quarters of a minute.
 - The stations in the deep have no counter under them; each fighter stays at the station it first swims to.
 - The ram is a tracked crawler that pushes a turning cutter wheel into the rock, throwing curling chips as it bores.

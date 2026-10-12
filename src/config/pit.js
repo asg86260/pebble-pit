@@ -5,13 +5,25 @@ export let LOOSE_DEEP = 3;
 export let BANK_SLOPE = 1.5;
 // The hole is given, not dug: PIT_W_MAX across and PIT_H down from the first
 // frame. A hole bought a dig at a time made the pit the ceiling on everything
-// else in the game. PIT_H is what the world reserves under the ground line,
-// and the floor of the window sits on it.
-export const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
+// else in the game.
+//
+// **What it holds is a third of what it did**, so it tears in step with
+// ABYSS_AT (config/rift.js), cut from a million to 300,000. The cut is in
+// the depth, hole and heap alike, because the width is what the yard is laid
+// out along (the deep under it, the rift's seat, the world's end). A third of
+// 276 and 150 is 92 and 50, off the cell grid; of the whole-cell pairs that
+// keep the hole two thirds of the height, 84 and 48 come nearest a third of
+// the old count: 12,722 grains of 37,566 (`capacityAt` in pit.js counts it).
+export const PIT_H = 84;         // the pit is one fixed hole, in world pixels: this deep
+// What the world reserves under the ground line, and the floor of the window
+// sits on it. Not the hole's depth: the quarry's deepest cut and the window's
+// framing were laid out on this, and the ground under a shallower hole is
+// ground. At least PIT_H and the quarry's last bench (a check holds both).
+export const GROUND_DEEP = 276;
 // This much room above the brim. Once the hole is full the pile keeps going,
 // heaping up over the mouth -- but only over the mouth: the plot of sand is
 // only as wide as the hole, so it can rise but never get out onto the ground.
-export const PIT_HEAP = 150;
+export const PIT_HEAP = 48;
 // Inside the hole the pile is level, because a hole fills up. Above the brim
 // it is a heap: highest at the lip, where it is tipped in, leaning away down
 // the length of the hole; without that the near end fills to the top and

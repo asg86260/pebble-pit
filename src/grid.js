@@ -191,9 +191,14 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   // `BARRED_REACH`. **Heaped** is ground at its ceiling: the search may spread
   // as far as it likes inside the strip or bare ground it landed on, and never
   // out of it, or a grain lands in a station's heap nobody carried it to.
-  const barred = c => at(b, c, b.rows - 1) || (skip && skip(c));
+  // A column stacked to the plot's lid is heaped, not barred: the pit's heap
+  // stands to the lid along its whole middle, and read as barred a grain
+  // landing there gave up BARRED_REACH columns out and tore a hole with room
+  // in it.
+  const barred = c => skip && skip(c);
   // (the increment is the perf gate's: one per column asked whether it has room)
-  const full = c => (globalThis.__perf.grainCols++, barred(c) || (!free && !roomFor(b, c, topRow(b, c) + 1)));
+  const full = c => (globalThis.__perf.grainCols++,
+    barred(c) || at(b, c, b.rows - 1) || (!free && !roomFor(b, c, topRow(b, c) + 1)));
   if (full(col)) {
     const out = barred(col);
     // `region` answers `null` for the bare yard between strips, which is
