@@ -386,11 +386,42 @@ const killAt = a => () => {
   window.__serpent({ stage: SERPENT_PHASES - 1, wound: SERPENT_WOUND[SERPENT_PHASES - 1] });
   window.__fast(1 / 60);
   if (a == null) {
-    for (let i = 0; i < 60 * 40 && S.beat.sheet !== 'freedsheet'; i++) window.__fast(1 / 60);
+    for (let i = 0; i < 60 * 120 && S.beat.sheet !== 'freedsheet'; i++) window.__fast(1 / 60);
     window.__skipBeat('sheet');
     window.__fast(KILL_REFORM_S * 0.5);
   } else window.__fast(a);
   lookDeep(coilAt(bellySeg(), now()).x);
+  window.__holdShot();
+};
+
+// The finale (finale.js): a yard with a crew of every kind on it -- the gang,
+// haulers and carters, the cut, the plots, the janitors, the wizards -- and a
+// party at the last defense, struck down by the last blow and run until the
+// finale reaches `phase`, then `into` seconds more, the moment held for the
+// shot. With `phase` 'after', the sheet put down and the yard run on: the two
+// of them at the yard's end.
+const finaleAt = (phase, into = 0) => () => {
+  rich();
+  window.__fullSites();
+  window.__snatch({ played: true });
+  window.__crew(3, 6, 3, 4, 2, 2);
+  window.__kit({ carters: 3 });
+  window.__air({ janitors: 2 });
+  window.__deepCrew({ spare: 2 });
+  window.__party({ stations: [cast('sword', 8), cast('ranger', 6)] });
+  // and a gatherer at the crusher, the one who will take up her gear
+  window.__deepCrew({ spare: 1 });
+  window.__serpent({ stage: SERPENT_PHASES - 1, wound: 0 });
+  window.__view('deep');
+  window.__fast(12);
+  window.__serpent({ stage: SERPENT_PHASES - 1, wound: 0 });
+  const p = coilAt(bellySeg(), now());
+  strike('punch', SERPENT_WOUND[SERPENT_PHASES - 1], p.x, p.y);
+  if (phase === 'kill') { window.__fast(0.05); return; }
+  const at = () => phase === 'after' ? S.beat.sheet === 'freedsheet' : S.finale && S.finale.phase === phase;
+  for (let i = 0; i < 60 * 120 && !at(); i++) window.__fast(1 / 60);
+  if (phase === 'after') { window.__skipBeat('sheet'); window.__fast(3); }
+  for (let i = 0; i < into * 60; i++) window.__fast(1 / 60);
   window.__holdShot();
 };
 
@@ -757,6 +788,14 @@ const deepScenes = {
   'deep-kill-apart': { about: 'the deep', say: 'the kill: the hide coming apart into motes, tail first', run: killAt(KILL.last + KILL.limp + KILL.apart * 0.5) },
   'deep-kill-out': { about: 'the deep', say: 'the kill: him out on the floor, walking to her', run: killAt(KILL.last + KILL.limp + KILL.apart + 1) },
   'deep-kill-reform': { about: 'the deep', say: 'after the kill: the serpent gathering itself again, head first', run: killAt(null) },
+  // The finale (finale.js), a moment of each of its parts.
+  'finale-kill': { about: 'the deep', say: 'the finale from the top: a full yard, the last blow just landed', run: finaleAt('kill') },
+  'finale-gear': { about: 'the deep', say: 'the finale: her gear going back onto her station in held steps, him beside her', run: finaleAt('hang', 0.4) },
+  'finale-heir': { about: 'the deep', say: "the finale: one of the deep's crew taking up her gear at the station", run: finaleAt('heir', 0.2) },
+  'finale-portal': { about: 'the deep', say: 'the finale: the two of them at the portal, the ring ringing out', run: finaleAt('ring', 0.35) },
+  'finale-parade': { about: 'the deep', say: 'the finale: the walk down the yard, the crew falling in behind, fireworks', run: finaleAt('walk', 14) },
+  'finale-sunset': { about: 'the deep', say: "the finale: at the yard's end, sat together under the striped sun, a heart", run: finaleAt('sunset', 3.2) },
+  'finale-after': { about: 'the deep', say: "after the finale: the two of them at the yard's end, idling, for good", run: finaleAt('after', 6) },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {

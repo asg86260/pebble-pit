@@ -33,6 +33,7 @@ import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, c
 import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
 import { firstMuckDue, startFirstMuck } from './firstmuck.js';
+import { startFinale, stepFinale, cutFinale, sheetDown, workPaused } from './finale.js';
 
 const OWNERS = ['yard', 'camera', 'sheet'];
 
@@ -136,8 +137,14 @@ export const BEATS = [
     when: () => S.beat.yard === 'snatch', enter: () => play('snatchcam'), step: stepShot, skip: release },
   // The fourth defense broken: the kill, and him out and back with her
   // (snatch.js). A skip plays it out at once.
-  { key: 'freed', owns: 'yard', next: null,
+  { key: 'freed', owns: 'yard', next: 'finale',
     when: () => S.serpentFreed, enter: startFreed, step: stepFreed, skip: cutFreed },
+  // And straight on, the two of them going home (finale.js): her gear hung
+  // on her station and taken up, up through the portal and the length of
+  // the yard with the crew behind them, to the sunset. With nobody handed
+  // over it is done on its first frame. A skip plays the rest faster.
+  { key: 'finale', owns: 'yard', next: null,
+    when: () => false, enter: startFinale, step: stepFinale, skip: cutFinale },
   // The first trip down (abyssintro.js): on the arrival, the ripple done,
   // the camera on him in the cage and then on her first blow. A skip lets
   // the camera go and her with it; she swims to her own work.
@@ -145,13 +152,14 @@ export const BEATS = [
     when: cue => cue.arrive && abyssDue(),
     enter: t => { startAbyss(t); play('abyss'); },
     step: abyssShot, skip: () => { cutAbyss(); return release(); } },
-  // And the sheet that says so, stood until it is put down (ending.js).
+  // And the sheet that says so, stood until it is put down (ending.js), over
+  // the sunset still held. Put down, the serpent gathers itself again
+  // (render/serpent.js) and the yard is let go (finale.js).
   { key: 'freedsheet', owns: 'sheet', next: null,
-    when: () => beatDone('freed') && !S.beat.yard && !S.beat.camera,
+    when: () => beatDone('finale') && !S.beat.yard && !S.beat.camera,
     enter: () => {},
     step: () => true,
-    // Put down, the serpent gathers itself again (render/serpent.js).
-    skip: t => { S.reformAt = t; } },
+    skip: t => { S.reformAt = t; sheetDown(); } },
 ];
 
 const ROW = new Map(BEATS.map(r => [r.key, r]));
@@ -271,6 +279,8 @@ export function stepBeats(t) {
   for (const row of BEATS) {
     if (beatDone(row.key) || S.beat[row.owns] === row.key) continue;
     if (!row.when(cue)) continue;
+    // While the finale holds the yard nothing else starts but its sheet.
+    if (workPaused() && row.key !== 'freedsheet') continue;
     if (S.beat[row.owns]) continue;
     start(row, t);
   }

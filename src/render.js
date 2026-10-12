@@ -59,6 +59,7 @@ import { drawCharge } from './render/charge.js';
 import { drawFighters, drawShots } from './render/arms.js';
 import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // track RENDER, docs/wave-party.md
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
+import { drawSunset, drawFireworks, drawHungKits, drawFinaleDeep, drawFinaleYard } from './render/finale.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
 import { wash, setPass, backInk, byInk, drawLetterbox } from './render/recede.js';
@@ -115,6 +116,10 @@ const LAYERS = [
   { name: 'air', draw: drawAir },
 
   { name: 'world', draw: enterWorld },
+  // The finale's sky (render/finale.js): the sunset's bands and its sun over
+  // the horizon, and the fireworks far off over the walk. Behind the yard.
+  { name: 'sunset', draw: drawSunset },
+  { name: 'fireworks', draw: drawFireworks },
   { name: 'ground line', draw: drawGroundLine },
   { name: 'ground texture', draw: drawGroundTexture },
   // The offer flags go down before every building: each pole runs to the
@@ -204,6 +209,7 @@ const LAYERS = [
   { name: 'deep bed', draw: drawDeepBed },
   { name: 'into crusher', draw: drawIntoCrusher }, // behind the furnace, dropping into its funnel
   { name: 'deep stations', draw: drawDeepStations },
+  { name: 'hung kit', draw: drawHungKits },  // a station's gear hung up on it, with nobody wearing it
   { name: 'deep fish', draw: drawFish },   // what the serpent eats, in front of the water and behind its head
   { name: 'serpent', draw: drawSerpent },
   { name: 'barrier', draw: drawBarrier },  // the explosive resist, floating under the coil
@@ -217,6 +223,7 @@ const LAYERS = [
   { name: 'charge', draw: drawCharge },   // her speed lines in the first trip down, behind her
   { name: 'party', draw: drawFighters },
   { name: 'freed', draw: drawFreed },   // him out of the serpent, walking to her
+  { name: 'finale deep', draw: drawFinaleDeep },  // and the two of them after, her gear coming off, the way up
   { name: 'orb', draw: drawOrb },       // the constrict's bolts and orb round a fighter
   { name: 'level-up front', draw: drawLevelUpFront },
   { name: 'shots', draw: drawShots },
@@ -236,6 +243,7 @@ const LAYERS = [
   { name: 'workers', draw: drawWorkers, dim: 1 },
   { name: 'brew steam', draw: drawBrewSteam },   // off the pots, on the crew's plane: in front of the buildings
   { name: 'says', draw: drawSays, dim: 1 },      // and what any of them stood about is saying
+  { name: 'finale', draw: drawFinaleYard },      // the two of them, down the yard and at its end for good
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
   // The serpent's head over the liquid it came out of, and the one it takes
@@ -316,7 +324,7 @@ export const asPicture = on => { picture = on; };
 // in the deep every other layer is the yard's and is not drawn; in the yard
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
-const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
+const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
                       'deep fish', 'deep stream far', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the

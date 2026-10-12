@@ -1125,8 +1125,8 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
     // break plays all of it (snatch.js).
     if (S.serpentStage < SERPENT_PHASES) {
       S.freedAt = S.freedFrom = S.freedTo = S.reformAt = S.breakT = null;
-      S.beatsDone = S.beatsDone.filter(k => k !== 'freed' && k !== 'freedsheet');
-      if (S.beat.yard === 'freed') S.beat.yard = null;
+      S.beatsDone = S.beatsDone.filter(k => k !== 'freed' && k !== 'finale' && k !== 'freedsheet');
+      if (S.beat.yard === 'freed' || S.beat.yard === 'finale') S.beat.yard = null;
       if (S.beat.sheet === 'freedsheet') S.beat.sheet = null;
     }
   }

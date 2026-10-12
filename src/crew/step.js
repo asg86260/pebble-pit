@@ -14,6 +14,9 @@
 //      clear.
 //   4. **hat** -- the tail of dizzy: it goes and gets its hat before it works.
 //   5. **floating** -- falls *through* on the frame its feet land.
+//   5a. **the finale** -- while the finale holds the yard, and its sheet,
+//      every body stands where it is but the crowd walking behind the two
+//      of them and the one going to take up her gear (finale.js).
 //   5b. **held still** -- while a scene holds the yard, an attacker stops
 //      where it is and holds its pose (stage.js). Above the commute, so a
 //      walk is held mid-stride and carries on from there after.
@@ -72,6 +75,7 @@ import { surface } from './deep.js';
 import { sfx } from '../audio.js';
 import { holdStill, roleOf, meetHim } from '../stage.js';
 import { holdHer } from '../abyssintro.js';
+import { finaleBody } from '../finale.js';
 
 // The yard is celebrating, and the dance ends at the clock and nowhere else.
 // A fall is never a party: read as a dance by `danceUntil > 0`, a stale
@@ -172,6 +176,12 @@ const STAGES = [
   // Drifting down out of the sky (`floatDown`); falls *through* on the frame
   // it lands.
   w => w.floating === true && !floatDown(w),
+
+  // The finale's (finale.js): while it holds the yard, and its sheet after
+  // it, the work stands still -- every body where it is, but the crowd
+  // walking behind the two of them and the one going to take up her gear.
+  // Above the scene's hold, which would stand the crowd still as well.
+  w => finaleBody(w),
 
   // Held still while a scene holds the yard (stage.js): the rock's gang and
   // the deep's fighters stop and hold their pose. Above the commute, so a

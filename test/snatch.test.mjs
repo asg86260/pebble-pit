@@ -182,7 +182,9 @@ group('the portal opens, she leaps in as it closes, and she is the deep\'s one h
   ];
 });
 
-group("the freeing gives the deep one more hand, and he stays down there", async () => {
+// He is not given back to the crew: the finale takes the two of them home
+// (finale.js), off the crew both, and the sheet comes once it is over.
+group("the freeing: he is out, the two of them leave the crew, and the sheet comes after the finale", async () => {
   window.__crew(2, 2);
   run(1);
   window.__snatch({ played: true });
@@ -193,28 +195,23 @@ group("the freeing gives the deep one more hand, and he stays down there", async
   run(1 / 60);
   const opening = S.beat.yard;
   runUntil(() => S.beatsDone.includes('freed'), 30);
+  const finale = S.beat.yard;
+  runUntil(() => S.beat.sheet === 'freedsheet', 120);
   const him = S.workers.find(w => !had.has(w.name));
-  const sheet = S.beat.sheet;
-  window.__skipBeat('sheet');
-  let up = false;
-  for (let f = 0; f < 60 * 20; f++) {
-    run(1 / 60);
-    const w = him && S.workers.find(o => o.name === him.name);
-    if (w && !belowYard(w)) up = true;
-  }
   return [
     ok(opening === 'freed', 'the belly opens as a beat', `yard ${opening}`),
-    ok(S.crew === crew0 + 1 && S.deepCrew === deep0 + 1 && him && belowYard(him),
-       "he is one of the deep's crew, down there", `crew ${S.crew}, deep ${S.deepCrew}`),
-    ok(sheet === 'freedsheet', 'the sheet says so', `sheet ${sheet}`),
-    ok(!up, 'and he never goes up')
+    ok(finale === 'finale', 'and the finale follows it', `yard ${finale}`),
+    ok(!him && S.crew === crew0 - 1 && S.deepCrew === deep0 - 1 && !!S.retired,
+       'neither he nor she is one of the crew after it', `crew ${crew0} then ${S.crew}, deep ${deep0} then ${S.deepCrew}`),
+    ok(S.beat.sheet === 'freedsheet', 'the sheet says so', `sheet ${S.beat.sheet}`)
   ];
 });
 
 // The kill (snatch.js, config KILL), reached by striking the fourth defense
 // down: he goes limp and lies on the floor, comes apart, nothing reaches him
-// while he is down, his freed one walks out to her and is one of the crew, and
-// once the sheet is put down the serpent gathers itself again.
+// while he is down, his freed one walks out to her, the finale takes the two
+// of them off the crew, and once the sheet is put down the serpent gathers
+// itself again.
 group('the fourth break: limp to the floor, apart, him out to her, and the serpent back after the sheet', async () => {
   window.__snatch({ played: true });
   window.__deepCrew({ spare: 1 });
@@ -229,7 +226,7 @@ group('the fourth break: limp to the floor, apart, him out to her, and the serpe
   const apart = apartK();
   run(1);
   const out = freedBody();
-  runUntil(() => S.beat.sheet === 'freedsheet', 30);
+  runUntil(() => S.beat.sheet === 'freedsheet', 120);
   const sheet = S.beat.sheet, crew = S.crew;
   window.__skipBeat('sheet');
   run(KILL_REFORM_S + 0.5);
@@ -238,20 +235,21 @@ group('the fourth break: limp to the floor, apart, him out to her, and the serpe
     ok(hit === 0, 'and nothing reaches him while he is down', `${hit}`),
     ok(apart >= 1, 'he comes apart, all of him', `${apart}`),
     ok(out && Math.abs(out.y + WORKER - deepFloor()) <= P, 'his freed one is out, on the floor', JSON.stringify(out)),
-    ok(sheet === 'freedsheet' && crew === crew0 + 1, 'and is one of the crew when the sheet comes up', `${sheet} crew ${crew0} then ${crew}`),
+    ok(sheet === 'freedsheet' && crew === crew0 - 1, 'and the two of them are off the crew when the sheet comes up', `${sheet} crew ${crew0} then ${crew}`),
     ok(reformK() === 1 && killDrop() === 0, 'put down, the serpent gathers itself whole again', `${reformK()} ${killDrop()}`)
   ];
 });
 
 // A fight set back after the kill (the dev hook, `__serpent`) has not had it:
-// the next fourth break plays the kill and the meeting again.
+// the next fourth break plays the kill and the meeting again -- with the two
+// of them gone home already, no finale and nobody joining or leaving.
 group('set back after the kill, the next fourth break plays it all again', async () => {
   window.__snatch({ played: true });
   window.__deepCrew({ spare: 1 });
   window.__serpent({ stage: LAST, wound: 0 });
   const hit = () => { const p = bellyAt(now()); strike('punch', SERPENT_WOUND[LAST], p.x, p.y); };
   hit();
-  runUntil(() => S.beat.sheet === 'freedsheet', 30);
+  runUntil(() => S.beat.sheet === 'freedsheet', 120);
   window.__skipBeat('sheet');
   run(KILL_REFORM_S + 0.5);
   const crew = S.crew;
@@ -265,7 +263,7 @@ group('set back after the kill, the next fourth break plays it all again', async
   return [
     ok(again === 'freed', 'the kill plays again', `${again} stage ${stage} done ${beats}`),
     ok(lying === 1, 'he goes limp to the floor again', `${lying}`),
-    ok(S.beat.sheet === 'freedsheet' && S.crew === crew + 1, 'and the meeting and the sheet come again', `${S.beat.sheet} crew ${crew} then ${S.crew}`)
+    ok(S.beat.sheet === 'freedsheet' && S.crew === crew, 'and the meeting and the sheet come again', `${S.beat.sheet} crew ${crew} then ${S.crew}`)
   ];
 });
 
