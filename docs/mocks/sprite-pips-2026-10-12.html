@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprite Over Pips</title>
+<style>
+/* Layout: one section a case, each holding its variants and the two pip
+   styles as figures, every figure a yard strip at 1x and magnified 2x. The
+   strip is the game's paper: black and white on the 6px grid in either theme. */
+:root {
+  --bg: #f4f3f0; --panel: #ffffff; --fg: #18171a; --dim: #5d5a62; --rule: #dddad4; --accent: #c2410c;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f0f11; --panel: #18181b; --fg: #ecebef; --dim: #a5a3ab; --rule: #2d2c31; --accent: #fb923c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f0f11; --panel: #18181b; --fg: #ecebef; --dim: #a5a3ab; --rule: #2d2c31; --accent: #fb923c; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 18px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 14px; margin: 0; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.note { border-left: 3px solid var(--accent); padding-left: 10px; }
+.opt { background: var(--panel); border: 1px solid var(--rule); padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; align-content: start; }
+figcaption { font-size: 12px; color: var(--fg); }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+canvas.x1 { max-width: 100%; height: auto; border: 1px solid var(--rule); }
+.scroll { overflow-x: auto; border: 1px solid var(--rule); max-width: 100%; }
+.tag { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.sheet { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+.sheet figcaption { color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:grid;gap:8px">
+    <h1>Sprite Over Pips</h1>
+    <p>Every counter in the yard becomes the same shape: one sprite on top that says what is counted, and round pips
+      under it that are the count. A filled pip is a body at work; a grey ring is a seat with nobody in it. The
+      &minus;/+ stay where they are today, on the post's line at either end of the pips, a button and a cell clear,
+      and the house's counter and the garage's keep today's 24px gap. Every case is drawn in both pip styles: circles
+      two cells across, and one-cell dots. Each strip is shown at 1x (one world pixel a screen pixel, a cell 6px; the
+      game's own cell is 5px) and magnified 2x.</p>
+    <p class="note">A mock drawn from plain shapes, not the game. The sprites are the game's own drawing code
+      (<code>drawBody</code>, <code>drawCart</code>, <code>drawCartBox</code>, <code>drawLiftBox</code> from
+      <code>src/render/crew.js</code>) and the hat rows from <code>HATS</code> / <code>HATS_TIGHT</code> in
+      <code>src/sprites.js</code>, copied in and drawn here. The circles are pixel masks on whole world pixels, not
+      arcs; at the game's 5/6 zoom they would be resampled, which this page does not show. It cannot show live
+      counts (a pip filling in thirds as a body walks over, emptying as one leaves, the count easing), hover or the
+      cursor over a pip or button, a dead (dotted) button, or the station buildings as they really are; the farm
+      and the rock are stand-in shapes.</p>
+    <label><input type="checkbox" id="bounds"> show each counter's room (the 252px a crowd may take today) and the post line</label>
+  </div>
+
+  <section class="opt">
+    <h2>The parts</h2>
+    <p>The sprites that head each counter, and the pips, magnified 3x. Carters and forklifts are the whole body;
+      a trade wears its hat (the counter's tight brim for the farm, as the roster draws it today).</p>
+    <div class="sheet" id="sheet"></div>
+  </section>
+
+  <div id="cases" style="display:grid;gap:18px"></div>
+</div>
+
+<script>
+(() => {
+  // --- the game's numbers (src/config, src/roster.js) ------------------------
+  const P = 6, WORKER = P * 3;
+  const SEAT_GAP = P, SEAT_SEP = P * 2, SEAT_RULE = 2, SEAT_PLUS_W = P * 6, SEAT_EMPTY_INK = '#8c8c8c';
+  const BTN = P * 4, GAP = P, BAR = P * 3, THIN = 2;
+  const CROWD_MAX_W = 12 * (P * 2 + SEAT_GAP) - SEAT_GAP + P + SEAT_PLUS_W;   // 252
+  const HOUSE_CUBE = P * 6, HOUSE_COLS = 6, GARAGE_W = P * 8, GARAGE_H = P * 6, DOOR_W = 4, DOOR_H = 4;
+  const GARAGE_CLEAR = P * 24;                                    // derived in config/kit.js; 144
+  const LIFT_SEAT = P * 3;
+  const FONT = '13px ui-monospace, "Courier New", monospace';
+  const PER_ROW = 12;
+
+  // --- the sprites: src/render/crew.js, verbatim but for the ctx argument -------
+  const CART_W = P * 4, CART_H = P * 2;
+  function drawBody(ctx, x, y) {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+    ctx.fillStyle = '#000';
+  }
+  function cartBox(x, y, face) {
+    const back = face > 0 ? -1 : 1;
+    return { x: back < 0 ? x - CART_W - P : x + WORKER + P, y: y + WORKER - CART_H - P, back };
+  }
+  function drawCartBox(ctx, x, y) {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + CART_W / 2 - P / 2, y + CART_H, P, P);
+  }
+  function drawCart(ctx, x, y, face) {
+    const c = cartBox(x, y, face);
+    drawCartBox(ctx, c.x, c.y);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(c.back < 0 ? c.x + CART_W : x + WORKER, c.y + CART_H / 2 - 1, P + 1, 2);
+  }
+  const LIFT_W = P * 5, LIFT_H = LIFT_SEAT - P, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ANTENNA = P * 2;
+  function drawLiftBox(ctx, x, ground, fwd = 1) {
+    const bottom = ground - P;
+    const top = bottom - LIFT_H;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + 1, top + 1, LIFT_W - 2, LIFT_H - 2);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, top + 1, LIFT_W - 2, LIFT_H - 2);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x, bottom, P, P);
+    ctx.fillRect(x + LIFT_W - P, bottom, P, P);
+    const mastX = fwd > 0 ? x + LIFT_W : x - P;
+    ctx.fillRect(mastX, ground - LIFT_MAST, P, LIFT_MAST);
+    const forkX = fwd > 0 ? mastX + P : mastX - LIFT_FORK;
+    ctx.fillRect(forkX, bottom, LIFT_FORK, P);
+    const antX = x + (fwd > 0 ? P : LIFT_W - P * 2);
+    ctx.fillRect(antX + P / 2 - 1, top - LIFT_ANTENNA, 2, LIFT_ANTENNA);
+    ctx.fillRect(antX, top - LIFT_ANTENNA - P, P, P);
+  }
+  // src/sprites.js
+  const HATS = {
+    helmet: ['###'],
+    lamp: ['.#.', '###'],
+    brim: ['..###..', '#######'],
+    point: ['..#..', '.###.', '#####'],
+    cap: ['###', '###'],
+  };
+  const HATS_TIGHT = { brim: ['.###.', '#####'] };
+  function drawSprite(ctx, rows, x, y) {
+    for (let r = 0; r < rows.length; r++) for (let c = 0; c < rows[r].length; c++) {
+      const ch = rows[r][c];
+      if (ch === '.' || ch === ' ') continue;
+      ctx.fillStyle = ch === 'o' ? '#fff' : '#000';
+      ctx.fillRect(x + c * P, y + r * P, P, P);
+    }
+    ctx.fillStyle = '#000';
+  }
+  const spriteW = rows => Math.max(...rows.map(r => r.length));
+
+  function raster(w, h, paint) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    paint(c.getContext('2d'));
+    return c;
+  }
+  // A body wearing a hat (drawHat's placement: centered, bottom row on the
+  // head), the canvas wide enough for the overhang.
+  function hatted(kind, tight = true) {
+    const rows = (tight && HATS_TIGHT[kind]) || HATS[kind];
+    const hw = spriteW(rows) * P, hh = rows.length * P, w = Math.max(WORKER, hw);
+    return raster(w, hh + WORKER, g => {
+      const bx = (w - WORKER) / 2;
+      drawBody(g, bx, hh);
+      drawSprite(g, rows, bx + (WORKER - hw) / 2, 0);
+    });
+  }
+  const SPRITE = {
+    worker: raster(WORKER, WORKER, g => drawBody(g, 0, 0)),
+    carter: raster(CART_W + P + WORKER, WORKER, g => { drawCart(g, CART_W + P, 0, 1); drawBody(g, CART_W + P, 0); }),
+    lift: raster(LIFT_W + P + LIFT_FORK, LIFT_SEAT + LIFT_ANTENNA + P, g => drawLiftBox(g, 0, LIFT_SEAT + LIFT_ANTENNA + P, 1)),
+    grower: hatted('brim'),
+    breaker: hatted('helmet'),
+  };
+
+  // --- the pips: pixel masks on whole world pixels -----------------------------
+  // A disc is every pixel whose middle is inside the circle; a ring is the disc
+  // less a smaller one. No arcs, so no grey edge.
+  function maskOf(d, test) {
+    const c = document.createElement('canvas');
+    c.width = c.height = d;
+    const g = c.getContext('2d'), r = d / 2;
+    g.fillStyle = '#000';
+    for (let y = 0; y < d; y++) for (let x = 0; x < d; x++) {
+      const q = Math.hypot(x + 0.5 - r, y + 0.5 - r);
+      if (test(q, r)) g.fillRect(x, y, 1, 1);
+    }
+    return c;
+  }
+  function tint(src, color) {
+    const c = document.createElement('canvas');
+    c.width = src.width; c.height = src.height;
+    const g = c.getContext('2d');
+    g.drawImage(src, 0, 0);
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = color; g.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+  const disc = d => maskOf(d, (q, r) => q <= r);
+  const ring = (d, t) => maskOf(d, (q, r) => q <= r && q > r - t);
+  // the ringed pip: a ring, a pixel ring of paper, and a dot in the middle
+  const bull = d => maskOf(d, (q, r) => (q <= r && q > r - 2) || q <= r - 4);
+  const PIPS = {
+    big: { d: P * 2, gap: SEAT_GAP, on: disc(12), open: tint(ring(12, 2), SEAT_EMPTY_INK),
+           spec: bull(12), specSpare: tint(bull(12), SEAT_EMPTY_INK) },
+    // At one cell a ringed pip has no room for its ring, so a specialist is
+    // the big pip in a row of small ones.
+    dot: { d: P, gap: SEAT_GAP, on: disc(6), open: tint(ring(6, 1), SEAT_EMPTY_INK),
+           spec: disc(12), specSpare: tint(ring(12, 2), SEAT_EMPTY_INK) },
+  };
+  // kind -> mask; 'spare' (a hat waiting, nobody under it) is a grey ring in
+  // the hat row, the same mark as an open seat.
+  const maskFor = (style, k) => style[k === 'spare' ? 'open' : k];
+
+  // --- the counter -------------------------------------------------------------
+  // `sections` are lists of pip kinds, top to bottom with a grey rule between
+  // (today's hat row over its divider over the plain row). Each section wraps
+  // at PER_ROW; `capRows` holds the whole block to that many rows, the rest
+  // written as +N after the last row shown. The block is centered on the post
+  // line as today's is, so the buttons stand where they stand now; past three
+  // rows it is held at a three-row block's top and grows downward.
+  const snap = v => Math.round(v / P) * P;
+  function text(g, s, x, y) {
+    g.font = FONT; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillStyle = '#000';
+    g.fillText(s, Math.round(x), Math.round(y));
+  }
+  function button(g, b, kind) {
+    g.fillStyle = '#000';
+    const x = b.x + b.w / 2, y = b.y + b.h / 2;
+    g.fillRect(x - BAR / 2, y - THIN / 2, BAR, THIN);
+    if (kind === '+') g.fillRect(x - THIN / 2, y - BAR / 2, THIN, BAR);
+  }
+  function counter(g, o) {
+    const st = PIPS[o.style];
+    let budget = o.capRows ?? Infinity, hidden = 0;
+    const secs = [];
+    for (const list of o.sections.filter(s => s.length)) {
+      const rows = [];
+      const per = o.per ?? PER_ROW;
+      for (let i = 0; i < list.length; i += per) {
+        if (budget <= 0) { hidden += list.length - i; break; }
+        rows.push(list.slice(i, i + per)); budget--;
+      }
+      if (rows.length) secs.push(rows);
+    }
+    const pipW = k => maskFor(st, k).width;
+    const rowW = r => r.reduce((s, k) => s + pipW(k), 0) + st.gap * (r.length - 1);
+    const rowH = r => Math.max(...r.map(pipW));
+    const strip = Math.max(...secs.flat().map(rowW));
+    const plus = hidden > 0 || o.plusRoom;
+    const side = o.buttons ? BTN + GAP : 0;
+    const wide = side * 2 + strip + (plus ? GAP + SEAT_PLUS_W : 0);
+    const left = snap(o.mid - wide / 2), x0 = left + side;
+    const secH = s => s.reduce((h, r) => h + rowH(r), 0) + st.gap * (s.length - 1);
+    const H = secs.reduce((h, s) => h + secH(s), 0) + SEAT_SEP * (secs.length - 1);
+    const Hc = Math.min(H, 3 * (P * 2) + 2 * SEAT_GAP);
+    const y0 = Math.floor((o.post - Hc / 2) / P) * P;
+    let y = y0, last = null;
+    secs.forEach((s, si) => {
+      if (si > 0) {
+        const w = Math.max(rowW(s[0]), rowW(secs[si - 1][secs[si - 1].length - 1]));
+        g.fillStyle = SEAT_EMPTY_INK;
+        g.fillRect(x0 + snap((strip - w) / 2), y + (SEAT_SEP - SEAT_RULE) / 2 - st.gap * 0, w, SEAT_RULE);
+        y += SEAT_SEP;
+      }
+      s.forEach((r, ri) => {
+        const h = rowH(r);
+        let x = x0 + snap((strip - rowW(r)) / 2);
+        for (const k of r) {
+          const m = maskFor(st, k);
+          g.drawImage(m, x, y + (h - m.height) / 2);
+          x += m.width + st.gap;
+        }
+        last = { x: x - st.gap, y: y + h / 2 };
+        y += h + (ri < s.length - 1 ? st.gap : 0);
+      });
+    });
+    if (hidden > 0) text(g, `+${hidden}`, last.x + GAP, last.y);
+    // the sprite: centered over the pips, standing a cell clear of the top row
+    const sp = o.sprite;
+    g.drawImage(sp, x0 + snap((strip - sp.width) / 2), y0 - P - sp.height);
+    if (o.buttons) {
+      button(g, { x: left, y: o.post - BTN / 2, w: BTN, h: BTN }, '-');
+      button(g, { x: left + wide - BTN, y: o.post - BTN / 2, w: BTN, h: BTN }, '+');
+    }
+  }
+  const many = (n, k) => Array(n).fill(k);
+
+  // --- the strips ----------------------------------------------------------------
+  const G = 90, POST = G + P * 10;
+  function ground(g, vx, vw, vh) {
+    g.fillStyle = '#fff'; g.fillRect(vx, 0, vw, vh);
+    g.fillStyle = 'rgba(0,0,0,0.05)';
+    for (let y = G + P; y < vh; y += P) for (let x = Math.floor(vx / P) * P; x < vx + vw; x += P)
+      if (((x / P) + (y / P)) % 6 === 0) g.fillRect(x, y, P, P);
+    g.fillStyle = '#000'; g.fillRect(vx, G, vw, 2);
+  }
+  function house(g, x, rooms) {
+    rooms = Math.min(rooms, HOUSE_COLS * 2);
+    for (let i = 0; i < rooms; i++) {
+      const c = i % HOUSE_COLS, r = Math.floor(i / HOUSE_COLS);
+      const rx = x + c * HOUSE_CUBE, ry = G - (r + 1) * HOUSE_CUBE;
+      g.fillStyle = '#000'; g.fillRect(rx, ry, HOUSE_CUBE, HOUSE_CUBE);
+      g.fillStyle = '#fff';
+      if (i === 0) g.fillRect(rx + P, ry + HOUSE_CUBE - P * DOOR_H, P * DOOR_W, P * DOOR_H);
+      else g.fillRect(rx + P * 2, ry + P * 2, P * 2, P * 2);
+    }
+    g.fillStyle = '#000';
+    g.fillRect(x + P, G - Math.ceil(rooms / HOUSE_COLS) * HOUSE_CUBE - P * 2, P * 2, P * 2);
+  }
+  function garageAt(g, x) {
+    const top = G - GARAGE_H;
+    g.fillStyle = '#000';
+    g.fillRect(x, top, GARAGE_W, GARAGE_H);
+    g.fillRect(x - P, top - P, GARAGE_W + P * 2, P);
+    const dx = x + P, dw = GARAGE_W - P * 2, dy = top + P;
+    g.fillStyle = '#fff'; g.fillRect(dx, dy, dw, G - dy);
+    g.fillStyle = '#000';
+    for (let y = dy + P; y < G; y += P * 2) g.fillRect(dx, y, dw, 2);
+  }
+  // stand-ins: a shed with tilled plots beside it, and a rock sunk in the ground
+  function farm(g, mid) {
+    g.fillStyle = '#000';
+    g.fillRect(mid - P * 4, G - P * 6, P * 8, P * 6);
+    g.fillRect(mid - P * 5, G - P * 7, P * 10, P);
+    g.fillStyle = '#fff'; g.fillRect(mid - P, G - P * 4, P * 2, P * 4);
+    g.fillStyle = '#000';
+    for (let i = 0; i < 8; i++) {
+      const px = mid + (i < 4 ? -P * 30 + i * P * 5 : P * 10 + (i - 4) * P * 5);
+      g.fillRect(px, G - P, P * 4, P);
+      for (let c = 0; c < 4; c += 2) g.fillRect(px + c * P, G - P * 2, P, P);
+    }
+  }
+  function rock(g, mid) {
+    const R = P * 9, cy = G - R + P * 2;
+    g.fillStyle = '#000';
+    for (let y = -R; y < R; y += P) for (let x = -R; x < R; x += P)
+      if (Math.hypot(x + P / 2, y + P / 2) <= R && cy + y < G + P * 2) g.fillRect(mid + x, cy + y, P, P);
+  }
+  function bounds(g, mids, vx, vw) {
+    g.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#c2410c';
+    g.lineWidth = 1; g.setLineDash([3, 3]);
+    for (const m of mids) g.strokeRect(m - CROWD_MAX_W / 2 + 0.5, POST - 30.5, CROWD_MAX_W - 1, 61);
+    g.beginPath(); g.moveTo(vx, POST + 0.5); g.lineTo(vx + vw, POST + 0.5); g.stroke();
+    g.setLineDash([]);
+  }
+
+  // The house and the garage, as the game spaces them: the garage on the left.
+  const GAR_X = 0, HOUSE_X = GAR_X + GARAGE_W + GARAGE_CLEAR;
+  const GAR_MID = GAR_X + GARAGE_W / 2, HOUSE_MID = HOUSE_X + HOUSE_COLS * HOUSE_CUBE / 2;
+  const YARD_VIEW = { vx: GAR_MID - CROWD_MAX_W / 2 - 12, vw: (HOUSE_MID + CROWD_MAX_W / 2 + 12) - (GAR_MID - CROWD_MAX_W / 2 - 12) };
+  const ONE_VIEW = mid => ({ vx: mid - CROWD_MAX_W / 2 - 24, vw: CROWD_MAX_W + 48 });
+
+  const yardStrip = (k, style) => ({
+    view: YARD_VIEW, vh: G + 144, mids: [GAR_MID, HOUSE_MID],
+    draw(g) {
+      house(g, HOUSE_X, k.carters + k.workers); garageAt(g, GAR_X);
+      // Carters and workers side by side under the house, each its own counter.
+      // Two counters share the room one crowd had, so each wraps at half
+      // today's strip: six circles or nine dots, 102px a counter.
+      const per = HOUSE_PER[style], cw = counterW(k.carters, style, per), ww = counterW(k.workers, style, per);
+      const sp = P * 4, total = cw + sp + ww;
+      counter(g, { style, per, post: POST, mid: HOUSE_MID - total / 2 + cw / 2, sprite: SPRITE.carter, sections: [many(k.carters, 'on')] });
+      counter(g, { style, per, post: POST, mid: HOUSE_MID + total / 2 - ww / 2, sprite: SPRITE.worker, sections: [many(k.workers, 'on')] });
+      counter(g, { style, post: POST, mid: GAR_MID, sprite: SPRITE.lift, sections: [many(k.lifts, 'on')] });
+    }
+  });
+  const HOUSE_PER = { big: 6, dot: 9 };
+  // a counter's width: its widest row or its sprite, whichever is wider
+  function counterW(n, style, per, spriteWide = 48) {
+    const st = PIPS[style], k = Math.min(n, per);
+    return Math.max(spriteWide, k * (st.d + st.gap) - st.gap);
+  }
+
+  // The farm: 8 seats, 3 sun hats owned (2 worn at work, 1 waiting on its
+  // stand), 3 plain bodies at work, 2 seats empty.
+  const FARM = { worn: 2, spare: 1, plain: 3, open: 2 };
+  const FARM_MID = 0;
+  const farmStrip = (variant, style) => ({
+    view: ONE_VIEW(FARM_MID), vh: G + 100, mids: [FARM_MID],
+    draw(g) {
+      farm(g, FARM_MID);
+      const f = FARM;
+      const sections = variant === 'a'
+        ? [[...many(f.worn, 'on'), ...many(f.spare, 'spare')], [...many(f.plain, 'on'), ...many(f.open, 'open')]]
+        : [[...many(f.worn, 'spec'), ...many(f.plain, 'on'), ...many(f.spare, 'specSpare'), ...many(f.open, 'open')]];
+      counter(g, { style, post: POST, mid: FARM_MID, buttons: true,
+                   sprite: variant === 'a' ? SPRITE.grower : SPRITE.worker, sections });
+    }
+  });
+
+  // The rock: 3 breakers in helmets and 8 plain diggers, no seats.
+  const ROCK = { hats: 3, plain: 8 };
+  const rockStrip = (variant, style) => ({
+    view: ONE_VIEW(0), vh: G + 100, mids: [0],
+    draw(g) {
+      rock(g, 0);
+      const sections = variant === 'a'
+        ? [many(ROCK.hats, 'on'), many(ROCK.plain, 'on')]
+        : [[...many(ROCK.hats, 'spec'), ...many(ROCK.plain, 'on')]];
+      counter(g, { style, post: POST, mid: 0, buttons: true,
+                   sprite: variant === 'a' ? SPRITE.breaker : SPRITE.worker, sections });
+    }
+  });
+
+  // A big crowd of workers under the house.
+  const bigStrip = (n, capRows, style) => ({
+    view: ONE_VIEW(HOUSE_MID), vh: G + 150, mids: [HOUSE_MID],
+    draw(g) {
+      house(g, HOUSE_X, 12);
+      counter(g, { style, post: POST, mid: HOUSE_MID, sprite: SPRITE.worker, sections: [many(n, 'on')], capRows });
+    }
+  });
+
+  const STYLES = [['big', 'circles, two cells across'], ['dot', 'dots, one cell']];
+  const CASES = [
+    { title: '1. The house and the garage',
+      note: 'Three counters, count-only as today: a carter over its pips and a worker over theirs, side by side under the house; a forklift over its pips under the garage. Every pip is a body, so every pip is filled. The two house counters share the 252px one crowd had, so each wraps at six circles or nine dots, and in the big yard they run down rather than across; the forklifts wrap at 12.',
+      figs: [
+        ...STYLES.map(([s, n]) => ({ cap: `small yard (3 carters, 2 workers, 1 forklift), ${n}`, strip: yardStrip({ carters: 3, workers: 2, lifts: 1 }, s) })),
+        ...STYLES.map(([s, n]) => ({ cap: `big yard (20 carters, 30 workers, 8 forklifts), ${n}`, strip: yardStrip({ carters: 20, workers: 30, lifts: 8 }, s) })),
+      ] },
+    { title: '2. A seat station with specialists: the farm',
+      note: 'Eight seats: two growers in their sun hats at work, a third hat waiting on its stand, three plain hands at work, two seats empty. (a) The sprite wears the farm\'s hat; the hats keep their own row (worn filled, the waiting hat a grey ring) over today\'s grey rule over the plain seats. (b) A plain body heads it; one row of seats, the hatted marked: with circles a ringed pip (a ring with a dot in it), the waiting hat the same in grey; with dots a specialist is a two-cell pip among one-cell ones.',
+      figs: ['a', 'b'].flatMap(v => STYLES.map(([s, n]) => ({ cap: `(${v}) ${v === 'a' ? 'hatted sprite, hats in their own row' : 'plain sprite, specialists marked in one row'}, ${n}`, strip: farmStrip(v, s) }))) },
+    { title: '3. The diggers at the rock',
+      note: 'Three breakers in helmets and eight plain diggers. No seats, so no rings: every pip a body. −/+ flush at either end of the pips, a button and a cell clear, as today. (a) helmeted sprite, helmets in their own row; (b) plain sprite, breakers marked.',
+      figs: ['a', 'b'].flatMap(v => STYLES.map(([s, n]) => ({ cap: `(${v}) ${v === 'a' ? 'helmets in their own row' : 'breakers marked in one row'}, ${n}`, strip: rockStrip(v, s) }))) },
+    { title: '4. A big count: workers under the house',
+      note: 'Rows of 12. Thirty fill three rows exactly. Fifty capped at three rows writes the rest as +14 after the last row, as today\'s crowd does after its one. Fifty with no cap runs to five rows and grows down from where a three-row block would start, so the sprite and the buttons never move.',
+      figs: [
+        ...STYLES.map(([s, n]) => ({ cap: `30 workers, ${n}`, strip: bigStrip(30, 3, s) })),
+        ...STYLES.map(([s, n]) => ({ cap: `50 workers, capped at 3 rows, ${n}`, strip: bigStrip(50, 3, s) })),
+        ...STYLES.map(([s, n]) => ({ cap: `50 workers, no cap, ${n}`, strip: bigStrip(50, Infinity, s) })),
+      ] },
+  ];
+
+  // --- the page --------------------------------------------------------------------
+  const showBounds = document.getElementById('bounds');
+  const frames = [];
+  const host = document.getElementById('cases');
+  for (const cs of CASES) {
+    const sec = document.createElement('section');
+    sec.className = 'opt';
+    const h = document.createElement('h2'); h.textContent = cs.title;
+    const p = document.createElement('p'); p.textContent = cs.note;
+    const pair = document.createElement('div'); pair.className = 'pair';
+    sec.append(h, p, pair);
+    for (const f of cs.figs) {
+      const { vx, vw } = f.strip.view, vh = f.strip.vh;
+      const fig = document.createElement('figure');
+      const cap = document.createElement('figcaption'); cap.textContent = f.cap;
+      const base = document.createElement('canvas');
+      base.width = vw; base.height = vh; base.className = 'x1'; base.style.width = vw + 'px';
+      const big = document.createElement('canvas');
+      big.width = vw * 2; big.height = vh * 2; big.style.width = vw * 2 + 'px';
+      const sc = document.createElement('div'); sc.className = 'scroll'; sc.appendChild(big);
+      const t1 = document.createElement('div'); t1.className = 'tag'; t1.textContent = '1x';
+      const t2 = document.createElement('div'); t2.className = 'tag'; t2.textContent = '2x';
+      fig.append(cap, t1, base, t2, sc);
+      pair.appendChild(fig);
+      frames.push({ strip: f.strip, base, big });
+    }
+    host.appendChild(sec);
+  }
+  function render() {
+    for (const f of frames) {
+      const { vx, vw } = f.strip.view;
+      const g = f.base.getContext('2d');
+      g.setTransform(1, 0, 0, 1, -vx, 0);
+      ground(g, vx, vw, f.strip.vh);
+      f.strip.draw(g);
+      if (showBounds.checked) bounds(g, f.strip.mids, vx, vw);
+      const g2 = f.big.getContext('2d');
+      g2.imageSmoothingEnabled = false;
+      g2.clearRect(0, 0, f.big.width, f.big.height);
+      g2.drawImage(f.base, 0, 0, f.big.width, f.big.height);
+    }
+  }
+
+  // the parts sheet
+  const sheet = document.getElementById('sheet');
+  const parts = [
+    ['carter', SPRITE.carter], ['worker', SPRITE.worker], ['forklift', SPRITE.lift],
+    ['grower (brim)', SPRITE.grower], ['breaker (helmet)', SPRITE.breaker],
+    ['circle: body', PIPS.big.on], ['circle: empty seat / waiting hat', PIPS.big.open],
+    ['circle: ringed specialist', PIPS.big.spec], ['circle: ringed, waiting', PIPS.big.specSpare],
+    ['dot: body', PIPS.dot.on], ['dot: empty seat', PIPS.dot.open],
+  ];
+  for (const [name, img] of parts) {
+    const z = 3, c = document.createElement('canvas');
+    c.width = (img.width + 4) * z; c.height = (img.height + 4) * z; c.style.width = c.width + 'px';
+    c.style.border = '1px solid var(--rule)';
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(img, 2 * z, 2 * z, img.width * z, img.height * z);
+    const fig = document.createElement('figure');
+    const cap = document.createElement('figcaption'); cap.textContent = name;
+    fig.append(c, cap);
+    sheet.appendChild(fig);
+  }
+
+  showBounds.addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>
