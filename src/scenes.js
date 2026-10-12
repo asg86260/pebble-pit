@@ -987,6 +987,11 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(1, 3, 3, 7);
                  window.__levels({ benchLevel: 3, plotLevel: 6 }); window.__kit({ blasters: 2 });
                  window.__fast(20); window.__look(st().quarryX - 260); } },
+  // Two hats worn and three spare: every pip in the specialists row wears its brim.
+  seatsspare: { about: 'the crew', say: 'the cut with two hats worn and three spare, each in its own pip',
+    run: () => { window.__reset(); window.__crew(1, 2, 2, 7);
+                 window.__levels({ benchLevel: 3, plotLevel: 6 }); window.__kit({ blasters: 5 });
+                 window.__fast(20); window.__look(st().quarryX - 260); } },
   // The same, a moment after + at the cut: one body on its way over.
   seatswalk: { about: 'the crew', say: 'one more sent to the cut, on its way',
     run: () => { window.__reset(); window.__crew(1, 3, 3, 7);

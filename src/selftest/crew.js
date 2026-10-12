@@ -454,6 +454,29 @@ export const TESTS = [
     const after = q();
     run(2);
     const gone = pip(4);
+    // Filling seats takes a spare hat first: one hat spare, press + and the
+    // walker's pip stands in the top row with its brim, and it arrives hatted;
+    // press + again with none spare and it goes to the regular row.
+    window.__kit({ blasters: 4 });
+    run(15);
+    const topY = q().pips[0][1];
+    const spareBrim = pip(q().pips.length - 1);     // the spare box is last, after the bottom row
+    const sentHat = await put('quarryjob', 'more');
+    let hatWalk = null;
+    for (let i = 0; i < 200 && !hatWalk; i++) {
+      run(0.1);
+      const r = q();
+      if (r.seats.wearing.length === 1) hatWalk = { y: r.pips[2][1], brim: pip(2).brim, n: r.seats.wearing[0] };
+    }
+    runUntil(() => q().seats.brims === 4, 40);
+    const hatted = q().seats.brims;
+    const sentPlain = await put('quarryjob', 'more');
+    let plainWalk = null;
+    for (let i = 0; i < 200 && !plainWalk; i++) {
+      run(0.1);
+      const r = q();
+      if (r.seats.coming.length === 1 && r.seats.wearing.length === 0) plainWalk = { y: r.pips[r.seats.filled][1] };
+    }
     window.__crew(0, 0);
     // No hat owned: no top row, one row of seats.
     newRun();
@@ -487,7 +510,11 @@ export const TESTS = [
       ok(!dark(fullPlus), 'a full station dots its plus', `${fullPlus}`),
       ok(again === 4, "clicking the last body's own pip takes that body off", `${again}`),
       ok(less && after.n === 3, 'the minus takes one more off', `${after.n}`),
-      ok(light(gone.mid) && !dark(gone.low), 'and its seat is empty once it has gone', `${gone.mid} ${gone.low}`)
+      ok(light(gone.mid) && !dark(gone.low), 'and its seat is empty once it has gone', `${gone.mid} ${gone.low}`),
+      ok(!light(spareBrim.brim) && !dark(spareBrim.brim), 'a spare hat\'s outline wears a grey brim', `${spareBrim.brim}`),
+      ok(sentHat && hatWalk && hatWalk.y === topY && dark(hatWalk.brim) && hatted === 4,
+         'with a hat spare, the body added walks over as a specialist: top row, brim, and arrives hatted', JSON.stringify([hatWalk, topY, hatted])),
+      ok(sentPlain && plainWalk && plainWalk.y > topY, 'with none spare the next one fills the regular row', JSON.stringify([plainWalk, topY]))
     ];
   }],
 ];

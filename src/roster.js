@@ -160,6 +160,10 @@ const thirds = f => Math.min(2, Math.floor(f * 3));
 // How many of the bodies at work wear the post's hat. Pure, so the boxes can
 // ask it every frame without disturbing the walkers' clocks the way
 // `seatsAt` does.
+// A walker bound for the hat: on its way to the stand to take one, or already
+// wearing it on the way to the work. Its pip is a specialist's from the start.
+const wearsOn = (w, p) => !!p.kit && (w.wanting === p.job || (w.trained && w.kitOf === p.job));
+
 function hatsAtWork(p) {
   let n = 0;
   for (const w of bodiesOf(p)) if (!comingTo(w) && w.trained && w.kitOf === p.job) n++;
@@ -174,19 +178,22 @@ export function seatsAt(p) {
   if (!seats) return null;
   const on = count(p);
   let here = 0, brims = 0;
-  const walking = [];
+  const walking = [], hatBound = [];
   for (const w of bodiesOf(p)) {
-    if (comingTo(w)) { walking.push(walked(w)); continue; }
+    if (comingTo(w)) { (wearsOn(w, p) ? hatBound : walking).push(walked(w)); continue; }
     setOut.delete(w.uid);
     here++;
     if (w.trained && w.kitOf === p.job) brims++;
   }
-  const filled = Math.min(on, here);
+  const wearers = Math.min(hatBound.length, Math.max(0, on - here));
+  const filled = Math.min(on - wearers, here);
   walking.sort((a, b) => b - a);
+  hatBound.sort((a, b) => b - a);
   const coming = [];
-  for (let i = 0; i < on - filled; i++) coming.push(thirds(walking[i] ?? 0));
+  for (let i = 0; i < on - wearers - filled; i++) coming.push(thirds(walking[i] ?? 0));
+  const wearing = hatBound.slice(0, wearers).map(thirds);
   const gone = leaving(p, on).slice(0, Math.max(0, seats - on));
-  return { seats, on, filled, coming, leaving: gone, brims: Math.min(brims, filled) };
+  return { seats, on, filled, coming, wearing, leaving: gone, brims: Math.min(brims, filled) };
 }
 
 // The specialists stand in a row of their own above the regular seats: a pip
@@ -195,9 +202,12 @@ export function seatsAt(p) {
 // means no top row. The outlines never outnumber the seats, so the strip is
 // as wide as its seats and no wider.
 const topOf = p => {
-  if (!p.kit || !seatsOf(p)) return { worn: 0, spare: 0 };
+  if (!p.kit || !seatsOf(p)) return { worn: 0, wearing: 0, spare: 0 };
   const worn = hatsAtWork(p);
-  return { worn, spare: Math.max(0, Math.min(spareKit(p.job), seatsOf(p) - worn)) };
+  let wearing = 0, claimed = 0;
+  for (const w of bodiesOf(p)) if (comingTo(w) && wearsOn(w, p)) { wearing++; if (w.wanting === p.job) claimed++; }
+  wearing = Math.min(wearing, Math.max(0, count(p) - worn));
+  return { worn, wearing, spare: Math.max(0, Math.min(spareKit(p.job) - claimed, seatsOf(p) - worn - wearing)) };
 };
 
 // Each pip's square, in world units, in seat order: the hatted (top row),
@@ -206,7 +216,7 @@ const topOf = p => {
 // own size.
 function pipBoxes(p, left, y) {
   const n = seatsOf(p), t = topOf(p);
-  const nTop = t.worn + t.spare, nBot = n - t.worn;
+  const nTop = t.worn + t.wearing + t.spare, nBot = n - t.worn - t.wearing;
   const rb = rowOf(nBot || 1), rt = rowOf(nTop || 1);
   const x0 = left + BTN + GAP, strip = rowOf(n).w;
   // A row shows only when it has something in it. Whatever shows is one block
@@ -230,9 +240,10 @@ function pipBoxes(p, left, y) {
     return out;
   };
   const top = lay(rt, nTop, y0);
-  top.forEach((q, i) => { q.spare = i >= t.worn; });
+  const seated = t.worn + t.wearing;
+  top.forEach((q, i) => { q.spare = i >= seated; });
   const bottom = lay(rb, nBot, y0 + hTop + sep);
-  const boxes = [...top.slice(0, t.worn), ...bottom, ...top.slice(t.worn)];
+  const boxes = [...top.slice(0, seated), ...bottom, ...top.slice(seated)];
   if (sep) {
     const w = Math.max(wide(rt, nTop), wide(rb, nBot));
     boxes.rule = { x: x0 + Math.round((strip - w) / 2 / P) * P, y: y0 + hTop + (SEAT_SEP - SEAT_RULE) / 2, w, h: SEAT_RULE };
@@ -498,22 +509,28 @@ function part(ctx, b, k, t) {
 function drawPips(ctx, boxes, s) {
   boxes.forEach((b, i) => {
     const small = b.w < SEAT_PIP, t = small ? THIN / 2 : THIN;
-    if (b.spare) { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, t); return; }
-    if (i < s.filled) {
+    // The hat, as a brim a hairline clear of the head and proud of it either
+    // side, with a crown on it; at the small size there is room only for
+    // the brim. A spare hat's outline wears it too, in the outline's grey.
+    const hat = () => {
+      if (small) ctx.fillRect(b.x, b.y - t * 2, b.w, t);
+      else {
+        ctx.fillRect(b.x - t, b.y - t * 2, b.w + t * 2, t);
+        ctx.fillRect(b.x + b.w / 4, b.y - t * 2 - P / 2, b.w / 2, P / 2);
+      }
+    };
+    if (b.spare) { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, t); hat(); return; }
+    // The walkers bound for a hat sit in the top row just after the hatted at
+    // work; everyone else counts from there on as before.
+    const W = s.wearing.length;
+    if (i >= s.brims && i < s.brims + W) { part(ctx, b, s.wearing[i - s.brims], t); hat(); return; }
+    const m = i < s.brims ? i : i - W, on = s.on - W;
+    if (m < s.filled) {
       ctx.fillStyle = '#000';
       ctx.fillRect(b.x, b.y, b.w, b.h);
-      // The hat, as a brim a hairline clear of the head and proud of it either
-      // side, with a crown on it; at the small size there is room only for
-      // the brim.
-      if (i < s.brims) {
-        if (small) ctx.fillRect(b.x, b.y - t * 2, b.w, t);
-        else {
-          ctx.fillRect(b.x - t, b.y - t * 2, b.w + t * 2, t);
-          ctx.fillRect(b.x + b.w / 4, b.y - t * 2 - P / 2, b.w / 2, P / 2);
-        }
-      }
-    } else if (i < s.on) part(ctx, b, s.coming[i - s.filled], t);
-    else if (i < s.on + s.leaving.length) part(ctx, b, s.leaving[i - s.on], t);
+      if (m < s.brims) hat();
+    } else if (m < on) part(ctx, b, s.coming[m - s.filled], t);
+    else if (m < on + s.leaving.length) part(ctx, b, s.leaving[m - on], t);
     else { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, t); }
   });
   ctx.fillStyle = '#000';
