@@ -6,7 +6,7 @@
 // dust.
 import { belowYard } from './route.js';
 import { S, floor } from './state.js';
-import { P, shieldWidth, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_FADE_MS, DOME_BURST_MS, DOME_SQUASH, DOME_BURST_GRAV, DOME_BURST_SPEED, DOME_BURST_FLING, DOME_BURST_LIFT, DOME_BURST_POP, DOME_BURST_JITTER, DOME_SLIDE_KEEP, ARCH_SPAN, DOME_SPAN, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
+import { P, shieldWidth, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_FADE_MS, DOME_BURST_MS, DOME_SQUASH, DOME_BURST_GRAV, DOME_BURST_SPEED, DOME_BURST_FLING, DOME_BURST_LIFT, DOME_BURST_POP, DOME_BURST_JITTER, DOME_SLIDE_KEEP, DOME_SLIDE_KICK, ARCH_SPAN, DOME_SPAN, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
 import { rockSize, rockFootY, landRock, lumpCells, depthOf, clearBoulder, tipRockSand } from './rock.js';
 import { workOn } from './works.js';
 import { spawnSpoil, spawnChip } from './dust.js';
@@ -47,7 +47,11 @@ export const shieldDone = kind => S.shieldsDone.includes(kind);
 export const shieldOpened = kind => { const k = shieldBefore(kind); return !k || open(k); };
 
 // The top of whatever is standing: the thing the rock reaches first.
-export const shieldTopY = (s = S.shield) => S.groundY - s.h * P;
+// The dome's is the crown of its shell as drawn, a half-circle on the span a
+// cell inside it (`domeShell`): the rock comes to rest on the band rather
+// than on the air over it.
+export const shieldTopY = (s = S.shield) =>
+  S.groundY - (s.kind === 'dome' ? Math.min(s.h, Math.round(s.w / P / 2) - 2) : s.h) * P;
 
 // Which rock a shield planned now will meet: the one in the air, if there is
 // one, else the one after the one on the ground.
@@ -262,7 +266,16 @@ export function slideOnDome(ch, f) {
     ch.x = dx > 0 ? Math.max(ch.x, s.x + s.w) : Math.min(ch.x, s.x - P);
   let vUp = -ch.vy;
   const vn = ch.vx * nx + vUp * ny;
-  if (vn < 0) { ch.vx -= vn * nx; vUp -= vn * ny; }
+  if (vn < 0) {
+    ch.vx -= vn * nx; vUp -= vn * ny;
+    // The shell is magic and turns what hits it: part of the blow goes into
+    // speed down the curve, away from the crown, so nothing comes to rest on
+    // top of it -- a grain dropped square on the crown skates off too.
+    const side = nx ? Math.sign(nx) : (rand() < 0.5 ? -1 : 1);
+    const kick = -vn * DOME_SLIDE_KICK * side;
+    ch.vx += kick * ny;
+    vUp -= kick * Math.abs(nx) * side;
+  }
   const keep = Math.pow(DOME_SLIDE_KEEP, f / 60);
   ch.vx *= keep;
   ch.vy = -vUp * keep;

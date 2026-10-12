@@ -63,13 +63,14 @@ export const DOME_BURST_MS = 130;   // the held impact, squashed on the crown
 export const DOME_SQUASH = 0.65;    // how squashed, as a share of a landing's worst (SQUASH_WIDE, SQUASH_FLAT)
 // The burst is measured in dome radii, so a wide dome throws as far, as a
 // share of itself, in the same time as a narrow one.
-export const DOME_BURST_GRAV = 3.7;           // radii a second a second, pulling the grains down
-export const DOME_BURST_SPEED = [0.47, 1.16]; // radii a second out from the crown, slowest and fastest
-export const DOME_BURST_FLING = 1.3;          // the outward speed is this much of it across...
-export const DOME_BURST_LIFT = 0.5;           // ...and this much of it up
+export const DOME_BURST_GRAV = 4.5;           // radii a second a second, pulling the grains down
+export const DOME_BURST_SPEED = [0.6, 1.4];  // radii a second out from the crown, slowest and fastest
+export const DOME_BURST_FLING = 1.8;          // the outward speed is this much of it across...
+export const DOME_BURST_LIFT = 0.35;          // ...and this much of it up
 export const DOME_BURST_POP = [0.26, 0.68];   // radii a second of hop on top, least and most
 export const DOME_BURST_JITTER = 0.08;        // radii a second of sideways scatter, either way
-export const DOME_SLIDE_KEEP = 0.7;           // of a grain's speed along the shell, kept a second
+export const DOME_SLIDE_KEEP = 0.92;          // of a grain's speed along the shell, kept a second
+export const DOME_SLIDE_KICK = 0.6;           // of the blow of a grain coming down on the shell, turned down the curve
 // How long the burst's flare takes to run from the crown down the band.
 export const DOME_FLARE_MS = 450;
 export const DOME_FLARE_W = 0.07;     // half its width, as a share of the way from foot to crown
