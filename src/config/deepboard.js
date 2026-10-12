@@ -74,6 +74,12 @@ export const FANG_MARK = [
 // hand gathers until it stands.
 export const POD_SCALES0 = 10;
 export const POD_RATE = 1.3;
+// Built like a house, short and climbing (HOUSE_WORK0): a pod is one body's
+// bed, not a station, and the building's 45 seconds held a new hand back
+// longer than it took to earn the scales for it.
+export const POD_WORK0 = 10;       // the first pod past the sqwife's, in worker-seconds
+export const POD_WORK_STEP = 1.15; // and each one after it
+export const POD_WORK_MAX = 30;
 
 // --- the party's floor (docs/wave-party.md, "Floor slots") -------------------
 // Where a station may stand, as fractions of DEEP_W from the deep's left edge:

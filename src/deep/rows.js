@@ -11,7 +11,7 @@
 // stand twice, and each keeps its own ladder.
 
 import { S } from '../state.js';
-import { rungValue, POD_SCALES0, POD_RATE, PARTY_IDS, CLASSES, PAIRS, FANG_RUNGS, FANG_RUNG_DUST } from '../config.js';
+import { rungValue, POD_SCALES0, POD_RATE, POD_WORK0, POD_WORK_STEP, POD_WORK_MAX, PARTY_IDS, CLASSES, PAIRS, FANG_RUNGS, FANG_RUNG_DUST } from '../config.js';
 import { tierRows, named } from '../upgrades/tiers.js';
 import { hirePod } from '../staffing.js';
 import { registerRows, ahead } from '../works.js';
@@ -31,6 +31,8 @@ const POD = {
   // Scales alone: naming no dust at nought would have `billOf` add its worth.
   // The sqwife's pod stands from the snatch, so the first one sold is the foot.
   bill: () => [['scale', Math.round(POD_SCALES0 * Math.pow(POD_RATE, Math.max(0, (S.pods || 0) - 1) + ahead('pod')))], ['dust', 0]],
+  work: () => Math.min(POD_WORK_MAX,
+    POD_WORK0 * Math.pow(POD_WORK_STEP, Math.max(0, (S.pods || 0) - 1) + ahead('pod'))),
   buy: () => { hirePod(); S.shopStale = true; },
   show: () => S.snatched
 };
