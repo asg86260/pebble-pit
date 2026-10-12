@@ -198,7 +198,7 @@ export const SEAT_LEAVE_MS = 600;
 // A pip block wraps at this many and stops at this many rows; the rest is
 // written "+N" under the block, so a counter is never wider than one row
 // however big the crew gets.
-export const COUNTER_ROW = 6;
+export const COUNTER_ROW = 5;
 export const COUNTER_ROWS = 3;
 export const COUNTER_ROW_W = COUNTER_ROW * (SEAT_PIP + SEAT_GAP) - SEAT_GAP;
 // The air between a counter's sprite and its pips, and between two counters

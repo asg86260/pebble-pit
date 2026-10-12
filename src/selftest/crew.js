@@ -3,7 +3,7 @@
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
   point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil, canvas, put } from './kit.js';
-import { P, WORKER, SEAT_PIP, GARAGE_W, CART_W, CART_H, COUNTER_TOP_DROP, COUNTER_PAIR_GAP, COUNTER_ROW } from '../config.js';
+import { P, WORKER, SEAT_PIP, GARAGE_W, CART_W, CART_H, COUNTER_TOP_DROP, COUNTER_PAIR_GAP, COUNTER_ROW, COUNTER_ROWS } from '../config.js';
 import { S } from '../state.js';
 import { draw } from '../render.js';
 import { lifted } from '../crew.js';
@@ -530,7 +530,7 @@ export const TESTS = [
   // carriers, the rock's diggers and the garage's forklifts, a pip a body,
   // six to a row, three rows, and the rest written under the block. Read off
   // the canvas, and the diggers moved with the pointer.
-  ['seat pips, uncapped: six a row, three rows, then +N; carters and breakers a counter beside; a pip a forklift under the garage', async () => {
+  ['seat pips, uncapped: a row of COUNTER_ROW, COUNTER_ROWS rows, then +N; carters and breakers a counter beside; a pip a forklift under the garage', async () => {
     newRun();
     window.__crew(5, 30);
     window.__kit({ carters: 4, breakers: 3, drivers: 2 });
@@ -571,8 +571,8 @@ export const TESTS = [
     window.__crew(0, 0);
     return [
       ok(carry.crowd.top === 4 && carry.crowd.bottom === 26 && Math.max(...rowLens(carry)) <= COUNTER_ROW,
-         'the carriers: four carts and twenty-six plain, six a row in each counter', JSON.stringify(rowLens(carry))),
-      ok(plus && plus.n === 8 && plusInk, 'and the eight past three rows written under the block as +8', JSON.stringify(plus)),
+         'the carriers: four carts and twenty-six plain, a row of COUNTER_ROW at most in each counter', JSON.stringify(rowLens(carry))),
+      ok(plus && plus.n === 26 - COUNTER_ROW * COUNTER_ROWS && plusInk, 'and the plain past the last row written under the block as +N', JSON.stringify(plus)),
       ok(top(carry).length === 4 && top(carry).every(q => q.brim === 'cart') && cart.at[1] === plain.at[1] && cart.at[0] < plain.at[0],
          'the carters are a counter of their own beside the plain', JSON.stringify(top(carry))),
       ok(dark(cartInk.wheel) && cartInk.sprite === 'cart' && dark(plainInk.mid),
