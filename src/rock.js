@@ -148,11 +148,17 @@ function msToFall(left, v0) {
   return n * (1000 / 60);
 }
 
+const ANSWERS = new Set(['props', 'net', 'arch', 'dome']);
+
 // One frame of a new rock coming down.
 export function stepRock() {
   if (S.rockFall <= 0) return;
   // Something is holding it (shield.js): resting on something, not falling.
   if (S.rockHeld) { placeRock(); return; }
+  // A shield's answer is a scene, and the rock waits up in the sky until the
+  // yard has settled around it (cutscene.js, `stepHush`): the camera is still
+  // when it comes down, rather than arriving as it lands.
+  if (ANSWERS.has(S.beat.camera) && S.hushOn && S.hush < 1) { placeRock(); return; }
   // A rock takes the same time to come down whatever the machine is drawing at
   const f = frames();
   S.rockFallV += DROP_GRAV * f;

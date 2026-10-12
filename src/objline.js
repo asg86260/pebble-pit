@@ -20,11 +20,14 @@ let cornerAt = null;
 export function seatObjective(t) {
   if (!say) return;
   const want = objective();
-  // Off while a beat has the yard, the camera or a sheet: the story is being told.
-  const hide = (!want && !shown) || !!(S.beat.yard || S.beat.camera || S.beat.sheet);
+  // Faded out while a beat has the yard, the camera or a sheet -- the story
+  // is being told -- and back in after, never popped (style.css, `.scened`).
+  const scene = !!(S.beat.yard || S.beat.camera || S.beat.sheet);
+  const hide = !want && !shown;
   el.hidden = hide;
+  el.classList.toggle('scened', scene);
   el.classList.toggle('deep', S.view === 'deep');
-  if (hide) return;
+  if (hide || scene) return;
   seatRoom();
   const key = want ? want.key : null;
   // The step came back mid-strike (a reset or a loaded save stood the yard

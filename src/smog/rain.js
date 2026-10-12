@@ -1,4 +1,4 @@
-import { frames } from '../clock.js';
+import { ambientFrames } from '../clock.js';
 import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, RAIN_SHEETS, RAIN_NEAR, RAIN_BEHIND_DROP, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand, stream } from '../rng.js';
 import { gust } from '../wind.js';
@@ -344,7 +344,8 @@ export function stepBolt(secs) {
 let dead = new Uint8Array(0);
 export function stepDrops() {
   const m = muckCols();
-  const f = frames();
+  // the background's clock, with the rest of the weather (`stepSmog`)
+  const f = ambientFrames();
   // Every drop is carried by this instant's wind: the sheet leans as one and
   // swings with the gust rather than each drop remembering the air it was
   // born into.

@@ -18,7 +18,7 @@ import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS,
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL, HELP_BANG_MS, HELP_BANGS, BURIED_CALL_MS, BURIED_CALL_JITTER, BURIED_CALL_HOT_MS, BURIED_CALLS,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS,
-         COMMUTE_PACE, ROCK_CLEAR,
+         COMMUTE_PACE,
          BURIED_DIG_S, BURIED_DIG_BEAT_MS, BURIED_DIG_LONE, BURIED_DIG_LEAD_MS, DUCK_PACE } from './config.js';
 import { S, pit } from './state.js';
 import { now, frames } from './clock.js';
@@ -162,10 +162,11 @@ function getOut(t) {
   const at = buriedAt();
   S.introAt = t;
   S.introSaid = 0;
-  // Clear of the footprint the rock is going to be set down on, toward the
-  // pit, which is where the crew are.
-  const half = Math.round((S.gw / 2) * P);
-  S.rescueTo = at.x + half + ROCK_CLEAR + WORKER;
+  // A step aside from the hole she came out of, so the two of them stand
+  // together in the middle of the scene's frame, where the dig was: the dome
+  // burst the rock long before she is out, and walked off to the edge they
+  // stood against the heap it left, at the frame's edge.
+  S.rescueTo = at.x + WORKER + P;
   // The dome's first hold is a cutscene (cutscene.js) that overrules this pan
   // while it runs; the pan is kept for a hold with no scene on it (a skipped
   // one, or an older save).
@@ -248,7 +249,8 @@ export function stepRescue(t) {
   rebalance();
   syncWorkers();
   const fresh = S.workers.find(w => !had.has(w));
-  if (fresh) { fresh.x = b.x; fresh.y = walkY(b.x + WORKER / 2); }
+  // and still the scene's, drawn in full, until the yard is back (stage.js)
+  if (fresh) { fresh.x = b.x; fresh.y = walkY(b.x + WORKER / 2); fresh.cast = true; }
   for (const w of S.workers) { w.met = false; w.say = null; }
   S.pair = [];
   return false;

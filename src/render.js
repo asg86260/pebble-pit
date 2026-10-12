@@ -60,6 +60,8 @@ import { drawFighters, drawShots } from './render/arms.js';
 import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // track RENDER, docs/wave-party.md
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
 import { S } from './state.js';
+import { recede, frontLayers } from './cutscene.js';
+import { wash, setPass, backInk, byInk, drawLetterbox } from './render/recede.js';
 
 // The drawing side's public surface: the rest of the game imports every one of
 // these from render.js and has no business knowing which file each is in.
@@ -249,6 +251,11 @@ const LAYERS = [
   { name: 'held', draw: drawHeld, dim: 1 },      // the body in your hand, in front of all of it
   { name: 'pointed', draw: drawPointed },        // and an arrow over whoever you just asked for by name
   { name: 'cursor', draw: drawCursor },
+  // A scene holding the yard: everything so far washed back toward the page,
+  // and the layers the scene is about painted over it at full ink
+  // (render/recede.js). Before the deep is turned over, so its background
+  // settles toward the liquid as the yard's does toward the page.
+  { name: 'recede', draw: wash },
   // Last in the world, over everything the deep drew: the negative of it.
   { name: 'deep invert', draw: drawDeepInvert },
   // What the blows did and what the heal took back, over the finished deep
@@ -272,6 +279,9 @@ const LAYERS = [
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
   { name: 'serpent bar', draw: drawSerpentBar, when: barShown },  // and in the deep, what the defense up has left
+  // The scene's bands, over everything that is read: they step in over the
+  // counter rather than it vanishing under them.
+  { name: 'letterbox', draw: drawLetterbox },
 
   // A strike's instant, a dark pane over the finished frame. In screen pixels
   // it would be shared with the deep, which is under water and has no sky.
@@ -281,6 +291,17 @@ const LAYERS = [
 ];
 
 export { LAYERS };
+
+// The deep's fish are bystanders to every scene: they fade out with the
+// haulers while one holds.
+const FISH = new Set(['deep stream far', 'deep fish', 'deep stream near']);
+// The layers after the wash that are still the yard's background: drawn at
+// the receded share of their ink rather than washed.
+const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'roster counts', 'kit counts',
+                            'stock count', 'pot labels']);
+// Bodies of either kind in one layer: drawn behind the wash and again over
+// it, each body sorted by `bodyInk`.
+const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
 
 // The landing page's picture (main.js, `demo`) is the yard to be looked at
 // and not read: the layers a player reads off the picture are left out of it.
@@ -301,7 +322,7 @@ const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', '
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves, each cut to its own (`PINNED`).
-const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'roster', 'says', 'held', 'pointed', 'cursor',
+const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster', 'says', 'held', 'pointed', 'cursor',
                       'work bars', 'build sites', 'done marks', 'pile marks']);
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const shared = (layer, i) => BOTH.has(layer.name) || i > SCREEN_FROM;
@@ -314,32 +335,55 @@ const inHalf = (layer, i, deep) =>
 // deep and the other way about -- "off the glass in the other half" does not
 // hold on a window taller than the deep.
 // The body in your hand goes where the pointer goes, so it is the pointer's.
-const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'held', 'cursor', 'counter', 'serpent bar',
+const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'held', 'cursor', 'counter', 'serpent bar',
                         'flash', 'press']);
 const halfLine = () => (S.worldH + deepTop()) / 2;
 
 // One half, every layer that belongs to it, with whatever camera is standing.
+// While a scene holds the yard the layers it is about are held back from the
+// first pass and painted after the wash (`recede`), in their own order.
 function drawHalf(deep) {
+  const held = recede() > 0;
+  const front = held ? frontLayers() : null;
+  const later = [];
   for (let i = 0; i < LAYERS.length; i++) {
     const layer = LAYERS[i];
     if (!inHalf(layer, i, deep)) continue;
     if (picture && READING.has(layer.name)) continue;
     if (layer.when && !layer.when()) continue;
-    // A `dim` layer is the crew's own plane, and the corner's crew switch
-    // takes ink out of it, or takes it out of the picture, so the buildings
-    // behind a late yard's crowd can be read (prefs.js, `crewView`). Only the
-    // picture: the bodies still walk and work where nobody is drawing them.
-    // The alpha is put back the same frame: nothing else is ever drawn faint.
-    const view = layer.dim ? crewView() : 'show';
-    if (view === 'hide') continue;
-    const faint = view === 'fade';
-    if (faint) ctx.globalAlpha = CREW_FADE;
-    const cut = shared(layer, i) && !PINNED.has(layer.name);
-    if (cut) clipToHalf(deep, halfLine());
-    layer.draw();
-    if (cut) ctx.restore();
-    if (faint) ctx.globalAlpha = 1;
+    if (held && (front.has(layer.name) || MIXED.has(layer.name))) later.push(i);
+    if (held && front.has(layer.name)) continue;
+    if (held && layer.name === 'recede') {
+      drawLayer(layer, i, deep);
+      setPass('front');
+      for (const j of later) drawLayer(LAYERS[j], j, deep);
+      setPass('back');
+      continue;
+    }
+    const ink = !held ? 1 : FISH.has(layer.name) ? byInk() : AFTER_WASH.has(layer.name) ? backInk() : 1;
+    if (ink <= 0) continue;
+    if (ink < 1) ctx.globalAlpha = ink;
+    drawLayer(layer, i, deep);
+    if (ink < 1) ctx.globalAlpha = 1;
   }
+}
+
+function drawLayer(layer, i, deep) {
+  // A `dim` layer is the crew's own plane, and the corner's crew switch
+  // takes ink out of it, or takes it out of the picture, so the buildings
+  // behind a late yard's crowd can be read (prefs.js, `crewView`). Only the
+  // picture: the bodies still walk and work where nobody is drawing them.
+  // The alpha is put back the same frame: nothing else is ever drawn faint.
+  const view = layer.dim ? crewView() : 'show';
+  if (view === 'hide') return;
+  const faint = view === 'fade';
+  const cut = shared(layer, i) && !PINNED.has(layer.name);
+  if (cut) clipToHalf(deep, halfLine());
+  const was = ctx.globalAlpha;
+  if (faint) ctx.globalAlpha = was * CREW_FADE;
+  layer.draw();
+  if (cut) ctx.restore();
+  if (faint) ctx.globalAlpha = was;
 }
 
 // The half on screen, and in a glide the deep through the ripple out of the

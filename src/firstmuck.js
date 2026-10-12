@@ -16,7 +16,7 @@
 // This file is imported by the crew, so it imports nothing of the story's:
 // the beat's state is read straight off `S`.
 
-import { CELL, P, WORKER, CUT_MUCK_NEAR, CUT_MUCK_CELLS, CUT_MUCK_ZOOM_MAX, CUT_MUCK_LEAD,
+import { P, WORKER, CUT_MUCK_NEAR, CUT_MUCK_LEAD,
          CUT_MUCK_ASK_S, CUT_MUCK_YUCK_S, CUT_MUCK_FADE_S, CUT_MUCK_WAIT_S,
          CUT_MUCK_PULL_CELLS } from './config.js';
 import { S } from './state.js';
@@ -73,9 +73,6 @@ function adopt(w) {
 }
 
 // --- the camera's questions (cutscene.js) ---------------------------------------
-// The wide shot: CUT_MUCK_CELLS across, so the body is seen crossing to it.
-export const muckZoom = () =>
-  Math.max(1, Math.min(CUT_MUCK_ZOOM_MAX, S.W / (CUT_MUCK_CELLS * CELL)));
 // The patch off center, the frame's open side toward the walker.
 export function muckSpot() {
   const sc = S.muckScene;

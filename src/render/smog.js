@@ -1,7 +1,7 @@
 // The muck, the smog, the rain and the draught -- everything the sky does and
 // leaves behind.
 
-import { now } from '../clock.js';
+import { now, ambient } from '../clock.js';
 import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
 import { DROPS, EMBERS, GOING, SPLASHES, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
@@ -28,7 +28,7 @@ const MUCK_EDGE = MUCK_SKIN;
 // gone in the same frame it is. The column seeds the phase so neighbors are
 // not one animation played side by side.
 function drawStink(from, to, poo) {
-  const t = now() / 1000;
+  const t = ambient() / 1000;
   ctx.fillStyle = '#000';
   for (let c = from; c <= to; c++) {
     const n = poo[c] || 0;

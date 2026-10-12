@@ -22,7 +22,7 @@ import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
 import { rockLeft } from './world.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor } from './deep/place.js';
 import { sweep } from './hands.js';
@@ -365,7 +365,7 @@ const snatchAt = (phase, into = 0, pin = false) => () => {
   window.__snatch();
   for (let i = 0; i < 60 * 60 && S.snatch?.phase !== phase; i++) window.__fast(1 / 60);
   for (let i = 0; i < into; i++) window.__fast(1 / 60);
-  // A rise is sixteen frames and a take a beat, quicker than a shot is
+  // A rise is half a second and a take a beat, quicker than a shot is
   // taken, so the moment is held on the page's frames for a few seconds.
   if (!pin) { window.__holdShot(); return; }
   window.__holdShot();
@@ -453,7 +453,7 @@ const deepScenes = {
       // The shot comes a second after the scene: the closing set back so the
       // second lands mid-leap, at the beat's own pace.
       S.snatch.hurry = 1;
-      S.snatch.at = now() - (SNATCH_CLOSE_MS * 0.45 - 1000);
+      S.snatch.at = now() - (SNATCH_ALONE_MS + SNATCH_LEAP_MS * 0.4 - 1000);
     } },
   // The snatch behind it, the story's line sending the player to the wizards.
   aftersnatch: { about: 'the deep', say: 'the story\'s line after the snatch: talk to the wizards',
@@ -1932,6 +1932,10 @@ export const SCENES = {
                 } }],
     [`${k}!`, { about: 'the shields', say: `the rock reaching the ${k}`,
                 run: () => { shieldBuilt(k); window.__next(); window.__fast(4.5); } }],
+    // The same rock as it is let go, for a capture stepped on from here that
+    // has the whole answer, the camera's way in included.
+    [`${k}>`, { about: 'the shields', say: `the rock let go over the ${k}, the answer's scene from its start`,
+                run: () => { shieldBuilt(k); window.__next(); } }],
     // A frame at a time until the rock is a dozen cells over the top, so the
     // answer itself is still to come: the dome's burst is over in a second.
     [`${k}*`, { about: 'the shields', say: `the rock just over the ${k}, the answer still to come`,
@@ -2024,6 +2028,12 @@ export const SCENES = {
   'rescue-stage': { about: 'the shields', say: 'the rescue with a busy crew: everybody but the pair walks out of the shot',
     run: () => { shieldBuilt('dome'); window.__crew(4, 8, 0, 0, 0, 1); window.__fast(3);
                  S.buried = true; window.__next(); } },
+  // The whole ending on a working yard: the ram on the rock and the belt
+  // running when the rescue rock is let go, so a capture stepped on from here
+  // shows what keeps working behind the dome, the dig, the sheet and the snatch.
+  'ending-busy': { about: 'the shields', say: 'the ending on a working yard: ram and belt running, a big crew, then the snatch',
+    run: () => { shieldBuilt('dome'); window.__machine('ram', { bought: true }); window.__machine('belt', { bought: true });
+                 window.__crew(6, 10, 0, 0, 0, 1); window.__fast(4); S.buried = true; window.__next(); } },
   saved: { about: 'the shields', say: 'the end of the story: the sheet after the rescue',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(45); } },
 

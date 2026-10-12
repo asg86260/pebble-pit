@@ -14,9 +14,9 @@
 //      clear.
 //   4. **hat** -- the tail of dizzy: it goes and gets its hat before it works.
 //   5. **floating** -- falls *through* on the frame its feet land.
-//   5b. **off stage** -- while the ending's rescue or snatch plays, a body in
-//      its frame walks out and stands at the edge (stage.js). Above the
-//      commute, so a walk across the frame stops at it.
+//   5b. **held still** -- while a scene holds the yard, an attacker stops
+//      where it is and holds its pose (stage.js). Above the commute, so a
+//      walk is held mid-stride and carries on from there after.
 //   6. **commute** -- a body walking somewhere is not yet anywhere: the work,
 //      the mess and the loo are all things you do where you have arrived.
 //   6b. **which half** -- straight after: a body on a yard job with its feet
@@ -70,7 +70,7 @@ import { takeMess } from './shovel.js';
 import { jobOf } from './jobs.js';
 import { surface } from './deep.js';
 import { sfx } from '../audio.js';
-import { stageZone, stepStage, holdTheStage } from '../stage.js';
+import { holdStill, roleOf, meetHim } from '../stage.js';
 import { holdHer } from '../abyssintro.js';
 
 // The yard is celebrating, and the dance ends at the clock and nowhere else.
@@ -173,17 +173,18 @@ const STAGES = [
   // it lands.
   w => w.floating === true && !floatDown(w),
 
-  // Off the ending's stage (stage.js): while the rescue or the snatch plays,
-  // a body in its frame downs tools and walks out of it, and stands at the
-  // edge until it is over. Above the commute, so a walk across the frame is
-  // stopped at its edge; under the falls, which no scene interrupts.
-  (w, c) => stepStage(w, c),
+  // Held still while a scene holds the yard (stage.js): the rock's gang and
+  // the deep's fighters stop and hold their pose. Above the commute, so a
+  // walk is held where it is; under the falls, which no scene interrupts.
+  (w, c) => holdStill(w, c),
 
   // The first trip down's (abyssintro.js): the scene has her for its swim
   // to the portal and its charge, and lets her go to her own swing. Under
   // the falls, the hand and the stars, which no scene interrupts; above the
   // commute and every errand, so nothing else steers her while it plays.
   (w, c) => holdHer(w, c),
+  // And at the kill, her out to meet him (stage.js).
+  w => meetHim(w),
 
   // A body under the cursor with the right button held walks slow: it moves
   // on HOVER_SLOW of the frames, spread evenly (`slowOwed`), and stands
@@ -393,16 +394,15 @@ export function updateWorkers(now, dt) {
 
   // The frame, as one thing to hand about: the clock, its length, the ground a
   // rock is coming down on, and the books of claims.
-  const stage = stageZone();
-  const c = { now, dt, zone, stage, taken, muckTaken, poopTaken, cutTaken, rockTaken };
+  const c = { now, dt, zone, taken, muckTaken, poopTaken, cutTaken, rockTaken };
   for (const w of S.workers) {
-    // Whoever swings sets the lunge to 1 and nobody eases it themselves.
-    if (w.lunge) w.lunge *= LUNGE_EASE;
+    // Whoever swings sets the lunge to 1 and nobody eases it themselves --
+    // but a body held still by a scene holds its swing as well.
+    if (w.lunge && !(S.hushOn && roleOf(w) === 'held')) w.lunge *= LUNGE_EASE;
     let done = false;
     for (const stage of STAGES) if (stage(w, c) === true) { done = true; break; }
     if (!done) jobOf(w).work(w, c);
     holdTheLine(w, was.get(w), zone);
-    holdTheStage(w, was.get(w), stage);
   }
 
   // The forklifts, on the same books and held off the same footprint; not

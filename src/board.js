@@ -312,10 +312,13 @@ let callAt = { x: null, y: null };
 // (a narrow window opens on the rock) it stays at the edge nearest the bench
 // and says which way; pressing it turns the view there too (`raiseBench`).
 export function seatCall() {
-  if (!callOut() || !panelEl.hidden || cutsceneRunning() || S.view === 'deep') {
+  if (!callOut() || !panelEl.hidden || S.view === 'deep') {
     if (!raiseEl.hidden) { raiseEl.hidden = true; callAt = { x: null, y: null }; }
     return;
   }
+  // A cutscene fades it out where it stands and back in after (style.css,
+  // `.scened`), rather than popping it off and on.
+  raiseEl.classList.toggle('scened', cutsceneRunning());
   if (raiseEl.hidden) {
     raiseEl.hidden = false;
     callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };

@@ -175,6 +175,10 @@ export function stepMachines(now) {
 
     const at = spec.at();
     r.working = false;                         // until it gets through all of it
+    // A scene holding the yard stands the machines still with the attackers
+    // (stage.js): the beat pushed on as for an untended machine, so the work
+    // waits and nothing is banked to pay out in a lump after.
+    if (S.hushOn) { r.beatAt = now + 200; continue; }
     // A machine that runs itself needs nobody; every other one needs a body
     // standing at it.
     const tender = UNMANNED.has(m.key) ? null : tenderFor(spec, at);

@@ -6,7 +6,9 @@
 //
 // A cutscene is a camera, not a stop. The sim keeps stepping and the moment
 // plays out whether or not it is watched, so any click skips, and skipping
-// releases the camera, never the moment. Nothing is saved but the name of a
+// releases the camera, never the moment. What the yard does around it while
+// it holds -- the letterbox, the recede, the attackers standing still -- is
+// `stepHush` below and stage.js. Nothing is saved but the name of a
 // scene cut short (`S.beat.camera`, persist.js), which a reload plays over
 // the event as it now stands.
 //
@@ -15,60 +17,53 @@
 // it a frame, `release` lets go -- and the two cues the rows watch.
 //
 // Letting go is a stretch, not a frame, and it does not go home: the seat
-// stays on the event and the zoom and the ground line ease out over CUT_OUT_S.
+// stays on the event and the yard comes back around it over CUT_OUT_S.
 // The player scrolls away when they are done looking.
 
-import { P, CELL, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
-         CUT_SHIELD_ZOOM, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S,
-         CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_IN_S, CUT_OUT_S, CUT_GLIDE,
-         CUT_SNATCH_ZOOM, CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S,
-         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, CUT_MUCK_GROUND, ABYSS_MAX_S } from './config.js';
-import { muckZoom, muckSpot, muckOver } from './firstmuck.js';
+import { CUT_TEAR_S, CUT_DROWN_S, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S, CUT_OUT_S,
+         CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S, CUT_SETTLE_S,
+         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, ABYSS_MAX_S } from './config.js';
+import { muckSpot, muckOver } from './firstmuck.js';
 import { mouthX } from './deep/place.js';
 import { S, rift, pit } from './state.js';
-import { setZoom, clampCam, lockScroller } from './world.js';
+import { clampCam, lockScroller } from './world.js';
 import { arrived, holdDeepShot } from './view.js';
 import { reducedMotion } from './prefs.js';
 import { beatRunning, skipBeat } from './beats.js';
-import { now } from './clock.js';
+import { now, frameMs, setStill } from './clock.js';
+import { keepCast, dropCast } from './stage.js';
 
-// How long a scene may run, how far in it pulls, and where it looks. `spot`
+// How long a scene may run, where it looks, and what it is about. `spot`
 // is asked every frame where the thing watched moves (the disc grows under
 // the tearing); a scene with no `spot` looks where it stood when it started.
 // The drowning centers on the near stretch of the hole, where the surface and
-// the counter are, since the whole mouth is wider than any window.
+// the counter are, since the whole mouth is wider than any window. `front`
+// is the layers (render.js, `LAYERS`) the scene is about beyond the ones
+// every scene is (`FRONT`): they stay in full ink while the rest recedes.
+//
+// No scene zooms. The yard's zoom steps through whole cell sizes, so a pull
+// in is a run of snaps with the ground line jumping on each; held at the
+// yard's own size, the camera's one move is the glide (the owner's C).
 const SCENES = {
-  tear:  { s: CUT_TEAR_S, zoom: CUT_TEAR_ZOOM, spot: () => rift.x + rift.w / 2 },
-  drown: { s: CUT_DROWN_S, zoom: CUT_DROWN_ZOOM, spot: () => pit.x + Math.min(700, pit.w) / 2 },
+  tear:  { s: CUT_TEAR_S, spot: () => rift.x + rift.w / 2, front: ['rift', 'pit', 'pit outline', 'abyss'] },
+  drown: { s: CUT_DROWN_S, spot: () => pit.x + Math.min(700, pit.w) / 2, front: ['abyss', 'pit', 'pit outline', 'rift'] },
   // The snatch: on the edge of the plank, for as long as the beat runs.
-  snatchcam: { s: CUT_SNATCH_MAX_S, zoom: CUT_SNATCH_ZOOM, spot: () => mouthX(), tail: CUT_SNATCH_TAIL_S,
-               over: () => !beatRunning('snatch') },
-  // The first muck: wide on the patch, the walker coming in from the open side,
+  snatchcam: { s: CUT_SNATCH_MAX_S, spot: () => mouthX(), tail: CUT_SNATCH_TAIL_S,
+               over: () => !beatRunning('snatch'), front: ['abyss', 'portal', 'pit outline'] },
+  // The first muck: on the patch, the walker coming in from the open side,
   // over once the patch is clear and faded (firstmuck.js).
-  firstmuck: { s: CUT_MUCK_MAX_S, zoom: muckZoom, spot: muckSpot, tail: CUT_MUCK_TAIL_S,
-               ground: CUT_MUCK_GROUND, over: () => muckOver() },
+  firstmuck: { s: CUT_MUCK_MAX_S, spot: muckSpot, tail: CUT_MUCK_TAIL_S,
+               over: () => muckOver(), front: ['muck'] },
   // The first trip down (abyssintro.js): in the deep, so its framing is the
   // deep's (`stepDeepShot`), and a click there is a blow, so only the held
   // space bar skips it.
-  abyss: { s: ABYSS_MAX_S, zoom: 1, deep: true, holdOnly: true },
+  abyss: { s: ABYSS_MAX_S, deep: true, holdOnly: true },
 };
 // A shield's answer has no length of its own, so the scene ends on the fact
 // (the shield gone, or a held rock set down) plus a tail to see the wreck fly.
-// The ceiling is a safety. The pull-in is measured so the span, a rock's
-// height over it and a little sky fill the frame.
-// Measured across as well as up: a desk's window is wider than any shield, a
-// phone stood upright is not, and the tighter of the two fits says how far in.
+// The ceiling is a safety.
 const SHIELD = {
-  s: CUT_SHIELD_MAX_S, tail: CUT_SHIELD_TAIL_S, ground: CUT_SHIELD_GROUND,
-  zoom: () => {
-    const s = S.shield;
-    if (!s) return 1;
-    // the span, the rock over it, and a little sky
-    const up = (s.h + S.gh + 4) * P;
-    // and the span across, or the rock if it is the wider thing coming down
-    const across = Math.max(s.w, S.gw * P);
-    return Math.min(CUT_SHIELD_ZOOM, stepToFill(up, S.H), stepToFill(across, S.W));
-  },
+  s: CUT_SHIELD_MAX_S, tail: CUT_SHIELD_TAIL_S,
   over: c => {
     if (!S.shield) return true;                  // it broke: the four that fail
     if (S.rockHeld) c.held = true;               // it has hold of it
@@ -79,11 +74,20 @@ const SHIELD = {
 };
 const sceneOf = name => SCENES[name] || SHIELD;
 
-// The zoom step at which a world length fills CUT_SHIELD_FILL of a window
-// length. A step is a multiple of the yard's own scale, and the yard's own is
-// CELL / P screen pixels a world pixel (`setZoom`), so the bare ratio of the
-// two lengths is that much too big a step.
-const stepToFill = (world, window) => window * CUT_SHIELD_FILL / (world * CELL / P);
+// What every scene is about: the two of them and the serpent in all its
+// shapes, with what the pointer is holding. A shield's answer and the yard's
+// own beats (the opening, the reunion) are about the rock as well, and
+// whoever is under it; every other scene lets the rock recede with the yard
+// -- the first muck is the walker, not the gang's hill behind it.
+const FRONT = ['intro', 'snatch', 'serpent diving', 'serpent', 'barrier', 'freed', 'charge',
+               'held', 'pointed', 'cursor'];
+const ROCK = ['buried', 'rock', 'shield', 'rock sand', 'chips', 'shocks'];
+const fronts = new Map();
+export function frontLayers() {
+  const key = S.shot && S.beat.camera ? S.shot.name : '';
+  if (!fronts.has(key)) fronts.set(key, new Set([...FRONT, ...(SCENES[key] ? SCENES[key].front || [] : ROCK)]));
+  return fronts.get(key);
+}
 
 // The two cues the camera's rows watch, read once a frame by `stepBeats`
 // (beats.js) so an edge is seen exactly once. For the rift it is the *gulp
@@ -106,27 +110,10 @@ export function cameraCues() {
 // reload takes it again from the beat's name.
 export function play(name) {
   const sc = sceneOf(name);
-  const zoom = typeof sc.zoom === 'function' ? sc.zoom() : sc.zoom;
-  S.shot = { name, at: 0, s: sc.s, zoom, from: S.zoom,
+  S.shot = { name, at: 0, s: sc.s, fromX: S.camX + S.viewW / 2,
              spotX: S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2 };
   // The scroller is shut for the run: a fling in flight would fight the seat.
   lockScroller(true);
-}
-
-// The stretch of world a scene shows across, at its full pull-in and on its
-// spot: the shot's own when the scene has the camera, else where it would
-// look (a skipped scene's yard beat plays on without it). Snapped the way
-// `setZoom` snaps, so the width is the one the window will actually show.
-export function sceneFrame(name) {
-  const sc = sceneOf(name);
-  const c = S.shot && S.shot.name === name ? S.shot : null;
-  const k = c ? c.zoom : typeof sc.zoom === 'function' ? sc.zoom() : sc.zoom;
-  const unit = CELL * S.dpr;
-  const w = S.W / ((CELL / P) * Math.max(1, Math.round(unit * k)) / unit);
-  const cx = sc.spot ? sc.spot()
-           : c ? c.spotX
-           : S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2;
-  return { from: cx - w / 2, to: cx + w / 2 };
 }
 
 // A scene on its way out has let go as far as the player is concerned: the
@@ -141,6 +128,7 @@ export function skipCutscene() {
 }
 
 const ease = k => 1 - Math.pow(1 - k, 3);
+const easeInOut = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 
 // One frame of the camera's beat: true while it still has the camera, the
 // way out included.
@@ -161,53 +149,63 @@ export function stepShot(t) {
     }
   }
 
-  // Own the view every frame, not once: the zoom changes what a centered view
-  // is, the disc grows, and the follow or a purchase glide would otherwise
-  // wrestle the camera mid-scene. The rescue's own pan is on the same spot.
+  // Own the view every frame, not once: the follow or a purchase glide would
+  // otherwise wrestle the camera mid-scene.
   S.follow = null;
-  // How far let go the scene is: nought while it plays, easing to one on the
-  // way out, so the scene's last frame and the yard's first are one picture.
-  // Under reduced motion the way out is a cut.
-  if (c.out) c.outAt ??= t;
-  const out = !c.out ? 0
-            : reducedMotion() ? 1
-            : ease(Math.min(1, (t - c.outAt) / (CUT_OUT_S * 1000)));
-  // And how far in: the zoom and the ground line walk over CUT_IN_S alongside
-  // the seat's glide, since a picture that jumps closer and then pans is two
-  // moves where one was meant.
-  const into = reducedMotion() ? 1
-             : ease(Math.min(1, (t - c.at) / (CUT_IN_S * 1000)));
-  // The seat's center is what is kept across a zoom change, not its left
-  // edge: holding `camX` would slide the event off to the right as the view
-  // widens.
-  const center = S.camX + S.viewW / 2;
-  S.camLockY = null;
-  const from = c.from ?? 1;
-  const zoom = from + (c.zoom - from) * into;
-  setZoom(zoom + (1 - zoom) * out);
-  // Under reduced motion the framing is taken on the first frame and kept,
-  // so the one thing that moves is the hole.
-  const cx = sc.spot ? sc.spot() : c.spotX;
-  if (reducedMotion()) c.heldX ??= cx;
-  // Glided to, not cut to: setting the seat outright is a jump of a window or
-  // more from wherever the player was looking.
-  const want = c.heldX ?? cx;
-  const at = reducedMotion() ? want : center + (want - center) * CUT_GLIDE;
-  S.camX = at - S.viewW / 2;
   S.camTo = null;
-  // The ground line low in the frame, the event above it: measured up from
-  // the pit floor a close view is all pit. Walked back over the same stretch
-  // as the zoom; dropping the difference in one frame is a hitch you feel.
-  const close = S.groundY - S.viewH * (sc.ground || 0.62);
-  const rest = S.worldH - S.viewH;
-  S.camLockY = rest + (close - rest) * into * (1 - out);
-  clampCam();
-  if (out < 1) return true;
-  S.shot = null;
   S.camLockY = null;
-  setZoom(1);
-  return false;
+  // Letting go does not move the seat: the scene ends on the thing it was
+  // about, and the yard comes back around it (`stepHush`) over CUT_OUT_S.
+  // The camera is the beat's until the yard is all the way back, so the
+  // bands are never up with no scene behind them.
+  if (c.out) {
+    if (!reducedMotion() && S.hush > 0) return true;
+    S.shot = null;
+    return false;
+  }
+  // A glide on an ease, from where the player was looking to the spot, over
+  // the settle; then held there, following the spot exactly if it moves. Not
+  // a chase: a share of the gap a frame is fast at the start and still
+  // sliding when the thing it went to see happens. Under reduced motion the
+  // framing is taken on the first frame.
+  const want = sc.spot ? sc.spot() : c.spotX;
+  const k = reducedMotion() ? 1 : easeInOut(Math.min(1, (t - c.at) / (CUT_SETTLE_S * 1000)));
+  const from = c.fromX ?? want;
+  S.camX = from + (want - from) * k - S.viewW / 2;
+  clampCam();
+  return true;
 }
+
+// --- held still, letterboxed --------------------------------------------------
+// While a scene holds the yard the background settles and stands still: the
+// bands step in, the yard recedes, the bystanders fade, the attackers hold
+// (stage.js) and the ambient clocks slow to a stop (clock.js, `setStill`).
+// `S.hush` walks to one over CUT_SETTLE_S and back to nought over CUT_OUT_S;
+// everything that reads it reads the same number, so nothing pops in or out
+// ahead of anything else.
+//
+// A scene holds while a camera beat has the camera and has not let go, and
+// while a yard beat with no camera of its own runs: the opening, the
+// reunion, and the kill in the deep. The rescue and the snatch hold through
+// their cameras, so a skipped camera lets the yard go with it.
+const HUSH_YARD = new Set(['leave', 'chat', 'fall', 'down', 'up', 'show', 'meet', 'part', 'freed']);
+export const holding = () =>
+  (!!S.beat.camera && !!S.shot && !S.shot.out) || HUSH_YARD.has(S.beat.yard);
+
+export function stepHush(t) {
+  const on = holding();
+  if (on && !S.hushOn) S.hushAt = t;
+  S.hushOn = on;
+  const step = frameMs() / 1000;
+  S.hush = reducedMotion() ? (on ? 1 : 0)
+         : on ? Math.min(1, S.hush + step / CUT_SETTLE_S)
+         : Math.max(0, S.hush - step / CUT_OUT_S);
+  if (on) keepCast();
+  else if (S.hush <= 0) dropCast();
+  setStill(easeInOut(S.hush));
+}
+// How far the yard has receded, eased, for the drawing.
+export const recede = () => easeInOut(S.hush);
 
 // One frame of a scene in the deep: `want` is where its own beat looks this
 // frame, `{ k, x, y }` -- pulled in by `k` over the deep's fit, its middle on

@@ -68,7 +68,7 @@ import './raise.js';
 setTake(take);
 import { stepSmoke } from './puff.js';
 import { stepFirstMuck } from './firstmuck.js';
-import { now as clockNow, setFrames, frames } from './clock.js';
+import { now as clockNow, setFrames, frames, ambient, ambientFrames, ambientMs } from './clock.js';
 import { stepSmog, sampleAir, slumpMess, retally } from './smog.js';
 import { stepBalloons } from './balloon.js';
 import { stepCraftAir } from './craftair.js';
@@ -213,7 +213,10 @@ export const STEPS = [
   // after `clock`, which puts `now` on the frame.
   { name: 'books',   step: c => sampleBooks(c.now) },
   { name: 'notices', step: c => stepNotices(c.now) },   // and whether the yard did anything worth saying
-  { name: 'weather', step: c => stepWeather(c.now) },
+  // The sky, the smog and the belt run on the background's clock, which
+  // slows to a stop while a scene holds the yard (cutscene.js, `stepHush`)
+  // and starts again after: deferred, never skipped.
+  { name: 'weather', step: () => stepWeather(ambient()) },
   { name: 'survey',  step: countTick },
   { name: 'rock',    step: stepRock },        // a new one on its way down
   { name: 'shack',   step: c => stepShack(c.dt) },  // and the hut scooting over to make room for it
@@ -260,7 +263,7 @@ export const STEPS = [
   { name: 'serpent',   step: c => stepSerpent(c) },
   { name: 'arms',      step: c => stepArms(c) },
   { name: 'scales',    step: c => stepScales(c) },
-  { name: 'smog',      step: c => stepSmog(c.dt) },       // and the sky, which is filling up
+  { name: 'smog',      step: c => stepSmog(ambientMs(c.dt)) },       // and the sky, which is filling up
   { name: 'balloons',  step: c => stepBalloons(c.dt) },              // and the craft crossing it
   { name: 'craftair',  step: c => stepCraftAir(c.dt) },   // and the haze they are drawing in
   { name: 'sampleair', step: c => sampleAir(c.now) },
@@ -270,7 +273,7 @@ export const STEPS = [
   { name: 'tossing', step: c => holdToToss(c.now) },
   // The belt's band before the chips: a load that runs off the head becomes a
   // chip this same frame and should fall on the frame it left.
-  { name: 'belt',  step: c => stepBelt(c.now, frames()) },
+  { name: 'belt',  step: c => stepBelt(c.now, ambientFrames()) },
   { name: 'chips', step: c => stepChips(c.now) },
   { name: 'settle', step: c => {
       settleSome(floor, SETTLE_BUDGET);

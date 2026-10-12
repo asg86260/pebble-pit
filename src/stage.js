@@ -1,122 +1,79 @@
-// The stage cleared for the ending's two scenes: the rescue under the dome
-// and the snatch at the plank show their pair and nobody else.
+// Who is in a scene, and what the rest of the yard does while it plays.
 //
-// For as long as one of them plays, every other body on the yard inside the
-// scene's frame stops what it is doing and walks out of it -- to the nearer
-// edge, on its own legs, at the pace anybody crosses the yard at -- and
-// stands there facing in. A body outside that would walk in is held at the
-// edge, the way the drop zone holds its line. When the scene is over each
-// one that was stood off is put back on its job, which walks it back to its
-// work. Nothing is hidden and nothing is moved but by walking.
+// While a scene holds the yard (cutscene.js, `stepHush`) every body on it is
+// one of three things to it:
 //
-// The rescue's frame is taken from the dome's scene, which starts on the
-// rock leaving the sky: the walk-off runs through the fall, the catch and the
-// dig, all of which come before anybody steps out of the ground. The snatch's
-// is the plank's, and the portal waits at the edge until the frame is clear
-// (`stageClear`, snatch.js), never longer than STAGE_WAIT_S.
+//   lead   what the scene is about: the one who dug and the one dug out, the
+//          body the first muck follows, her on her first trip down, her at
+//          the kill, anybody at all in the opening. Drawn in full ink over
+//          the receded yard (render/recede.js).
+//   held   an attacker -- the rock's gang, a fighter in the deep. It stops
+//          where it is and holds its pose for as long as the scene holds,
+//          and picks up again from the same spot and the same swing after.
+//          Its work is paused, not dropped: nothing it was doing is lost and
+//          nothing is done twice.
+//   by     everybody else: haulers and every other bystander. They carry on
+//          with their day, faded out of the picture while the scene holds
+//          and back in as it lets go, so a body comes back from wherever its
+//          own legs took it. Nothing is walked off and nothing teleports.
+//
+// The snatch's portal waits for the bystanders to have faded (`stageClear`).
 
-import { P, WORKER, STAGE_MARGIN } from './config.js';
+import { WORKER } from './config.js';
 import { S } from './state.js';
-import { beatRunning } from './beats.js';
-import { sceneFrame } from './cutscene.js';
-import { keepTo, stepRoute, wayOver } from './route.js';
-import { commutePace } from './levels.js';
-import { outOfYard } from './crew/records.js';
-import { onYard, stand, duck } from './crew/body.js';
-import { retask } from './crew/commute.js';
+import { TYPE } from './jobs.js';
+import { onYard, stand } from './crew/body.js';
+import { swim } from './deep/arms.js';
+import { meetAt } from './snatch.js';
 
-// Which scene's frame is the stage now, if any. The dome's scene plays only
-// for its first hold, which is the rescue (beats.js, `shieldFalls`), and the
-// stage is its from the rock leaving the sky to the end of the rescue's own
-// beat: the sqwife joins the crew there, and the two of them would be walked
-// off their own scene by its tail. The snatch's lasts as long as its camera,
-// since she has gone under by then.
-function staged() {
-  if (beatRunning('snatch') || beatRunning('snatchcam')) return 'snatchcam';
-  if (beatRunning('rescue') || (beatRunning('dome') && !S.rescued)) return 'dome';
-  return null;
+// The opening is two bodies on an empty yard, and whoever is there is in it.
+const OPENING = new Set(['leave', 'chat', 'fall', 'down', 'up', 'show']);
+const ATTACKS = new Set([TYPE.ROCK, TYPE.FIGHTER]);
+
+// Her at the kill: the first station's fighter, whom he walks out to
+// (snatch.js, `herX`).
+const herAtKill = w => S.beat.yard === 'freed' && !!S.stations?.[0] && w.station === S.stations[0].id;
+
+export function roleOf(w) {
+  if (w.cast || w.met || w.dig || OPENING.has(S.beat.yard)) return 'lead';
+  if (S.muckScene && w.uid === S.muckScene.uid) return 'lead';
+  if (S.abyss && S.abyss.freeAt == null && w.uid === S.abyss.uid) return 'lead';
+  if (herAtKill(w)) return 'lead';
+  return ATTACKS.has(w.type) ? 'held' : 'by';
 }
 
-// Taken once a scene and kept: the dome fades at the end of its scene, and a
-// frame read off it then would slide out from under the bodies stood at its
-// edge.
-let held = null;
-export function stageZone() {
-  const key = staged();
-  if (!key) { held = null; return null; }
-  if (!held || held.key !== key) {
-    const f = sceneFrame(key);
-    const pad = STAGE_MARGIN * P;
-    held = { key, from: f.from - pad, to: f.to + pad };
-  }
-  return held;
+// A lead stays one until the yard is all the way back (`w.cast`, kept by
+// `stepHush`): the rescue's pair are two of the crew again before its
+// camera lets go, and faded out with the haulers then they would leave the
+// scene empty on its last beat.
+export function keepCast() {
+  for (const w of S.workers) if (!w.cast && roleOf(w) === 'lead') w.cast = true;
+}
+export function dropCast() {
+  for (const w of S.workers) if (w.cast) delete w.cast;
 }
 
-// The two the scene is about: the one who dug and the one dug out (her body
-// is `S.pair`, not one of the crew), and at the snatch the pair, who are
-// off the crew for the length of it.
-const leads = w => !!(w.met || w.dig);
-
-// Bodies the stage does not reach: off the yard, in your hand, falling,
-// aboard something, or the deep's own.
-const offYard = w => outOfYard(w) || !!w.craft || !!w.floating || w.homeward != null;
-
-const within = (z, x) => x + WORKER > z.from && x < z.to;
-
-// Out by the nearer edge, a cell clear of it, unless that side is off the
-// world's end.
-function exitX(z, w) {
-  const left = z.from - WORKER - P, right = z.to + P;
-  const leftOk = left >= 0, rightOk = right + WORKER <= S.worldW;
-  const nearLeft = w.x + WORKER / 2 < (z.from + z.to) / 2;
-  if (nearLeft ? leftOk : !rightOk) return leftOk ? left : right;
-  return right;
-}
-
-// The stage, as a stage of a body's frame (crew/step.js): true while it has
-// the body. Once the scene is over, the frame after puts each body it stood
-// off back on its job.
-export function stepStage(w, c) {
-  const z = c.stage;
-  if (!z) {
-    if (!w.offStage) return false;
-    w.offStage = false;
-    w.route = null;
-    if (!offYard(w)) retask(w, w.type);
-    return false;
-  }
-  if (leads(w) || offYard(w)) return false;
-  if (!w.offStage && !within(z, w.x)) return false;
-  w.offStage = true;
-  w.lunge = 0;
-  // A rock in the air comes first: out from under it at the duck's pace.
-  if (c.zone && onYard(w) && S.rockFall > 0 && !S.rockHeld && duck(w, c.zone)) {
-    w.y = stand(w);
-    return true;
-  }
-  const to = exitX(z, w);
-  if (within(z, w.x) && keepTo(w, to, wayOver(to))) {
-    if (stepRoute(w, commutePace())) return true;
-    w.route = null;
-  }
-  // Stood off the edge, watching.
-  w.face = w.x + WORKER / 2 < (z.from + z.to) / 2 ? 1 : -1;
+// A stage of a body's frame (crew/step.js): an attacker stood still while a
+// scene holds. Under the falls and the hand, which no scene interrupts; a
+// body in the way of a rock coming down is let go to get out from under it.
+export function holdStill(w, c) {
+  if (!S.hushOn || roleOf(w) !== 'held') return false;
+  if (c.zone && onYard(w) && w.x + WORKER > c.zone.from && w.x < c.zone.to) return false;
   if (onYard(w)) w.y = stand(w);
   return true;
 }
 
-// Nobody walks in while it plays: a body that began the frame outside and
-// ended it inside is put back on the edge, as `holdTheLine` does for a drop
-// zone.
-export function holdTheStage(w, x0, z) {
-  if (!z || x0 == null || leads(w) || offYard(w) || !onYard(w)) return;
-  if (within(z, x0) || !within(z, w.x)) return;
-  w.x = x0 + WORKER <= z.from ? z.from - WORKER : z.to;
-  w.y = stand(w);
+// Her at the kill, out of her station's glass to meet him where the two of
+// them can be seen (snatch.js, `meetAt`), with nothing in her hands; let go
+// with the beat, her own work swims her back to her post.
+export function meetHim(w) {
+  const m = herAtKill(w) ? meetAt() : null;
+  if (!m) return false;
+  w.pose = null;
+  w.beam = null;
+  swim(w, m.x, m.y);
+  return true;
 }
 
-// Whether the frame holds nobody but the pair.
-export function stageClear() {
-  const z = stageZone();
-  return !z || !S.workers.some(w => !leads(w) && !offYard(w) && within(z, w.x));
-}
+// Whether the frame holds nobody but the pair: the bystanders faded out.
+export const stageClear = () => S.hush >= 1;
