@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bubble Lift Options</title>
+<style>
+:root {
+  --bg: #f4f4f1;
+  --card: #ffffff;
+  --ink: #111111;
+  --muted: #5d5d5d;
+  --rule: #cfcfcf;
+  --chip: #ececec;
+  --accent: #6a2fbe;
+  /* the deep, as it is seen in the game on either page */
+  --deep: #000000;
+  --g3: #1c1c21; --g4: #26262c; --g5: #333339; --g6: #42424a; --g7: #55555e;
+  --g8: #6e6e78; --g9: #8b8b96; --g10: #b4b4c0; --g11: #ffffff;
+  --p3: #1b112c; --p4: #241739; --p5: #2d1d47; --p6: #371f56; --p7: #412465;
+  --p8: #4e2090; --p9: #5c2ba6; --p10: #6a2fbe; --p11: #9b5de5;
+  --board: #b4b4c0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --card: #1b1b1b; --ink: #ededed; --muted: #a3a3a3;
+    --rule: #333333; --chip: #262626; --accent: #b48cf0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212; --card: #1b1b1b; --ink: #ededed; --muted: #a3a3a3;
+  --rule: #333333; --chip: #262626; --accent: #b48cf0;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+main { max-width: 1320px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: .02em; }
+p { margin: 0 0 10px; }
+.lede { color: var(--muted); max-width: 70ch; }
+.mock {
+  border: 1px dashed var(--rule); background: var(--card); padding: 10px 12px;
+  margin: 14px 0 18px; max-width: 80ch; font-size: 13px;
+}
+.mock b { color: var(--accent); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; align-items: center; }
+button {
+  font: inherit; font-size: 13px; color: var(--ink); background: var(--chip);
+  border: 1px solid var(--rule); padding: 6px 10px; cursor: pointer;
+}
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+#scrub { flex: 1 1 160px; min-width: 120px; accent-color: var(--accent); }
+.clock { color: var(--muted); font-size: 13px; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.opt { background: var(--card); border: 1px solid var(--rule); padding: 12px; min-width: 0; }
+.opt h2 { font-size: 16px; margin: 0 0 2px; }
+.opt .one { color: var(--muted); font-size: 13px; margin-bottom: 8px; min-height: 3em; }
+canvas.stage {
+  display: block; width: 100%; height: auto; background: var(--deep);
+  image-rendering: pixelated; image-rendering: crisp-edges;
+}
+.beat { font-size: 12px; color: var(--muted); margin: 6px 0 8px; min-height: 1.5em; }
+.beat b { color: var(--ink); }
+dl { margin: 0; font-size: 13px; }
+dt { font-weight: bold; margin-top: 6px; }
+dd { margin: 0; color: var(--muted); }
+.keys { display: none; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 4px 0 10px; }
+.keys.on { display: grid; }
+.keys figure { margin: 0; }
+.keys canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: var(--deep); }
+.keys figcaption { font-size: 10px; color: var(--muted); line-height: 1.2; margin-top: 2px; }
+.today { border-style: dashed; }
+.cant { font-size: 13px; color: var(--muted); max-width: 80ch; margin-top: 22px; }
+.cant li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bubble lift</h1>
+  <p class="lede">The constrict's bubble today rises three cells and sits where the station's board opens. Three ways to lift it clear, each played through: the bubble forming, the rise, the hold with its bar, clicks landing, the release, and the fighter back at its post.</p>
+
+  <div class="mock"><b>This is a mock.</b> It is drawn from plain cells on a 6px grid, not the game. The bubble, its bar, its arrow, the bolts and the burst copy today's sizes and timings (<code>ORB_R</code> 5, bar 12 cells, 3 cells over the bubble, burst 0.6s, the turn 12s). The deep, the coil and the station are stand-ins. The dashed box is the board's footprint at about a 1080p window; the real board is sized in screen pixels, so its height in cells changes with the window.</div>
+
+  <div class="controls">
+    <button id="play" aria-pressed="true">pause</button>
+    <button data-speed="1" aria-pressed="true">1x</button>
+    <button data-speed="0.5" aria-pressed="false">0.5x</button>
+    <button data-speed="0.25" aria-pressed="false">0.25x</button>
+    <button id="restart">restart</button>
+    <button id="keys" aria-pressed="false">key frames</button>
+    <input id="scrub" type="range" min="0" max="11.99" step="0.01" value="0" aria-label="scrub the loop">
+    <span class="clock" id="clock"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="cant">
+    <b>What this mock cannot show</b>
+    <ul>
+      <li>The real board's size and seat: it is HTML in screen pixels, clamped to the window and pushed under the notice card, so the height that clears it differs per window. The box here is one size.</li>
+      <li>The real coil: its sway, its phase looks, its head's position against each station slot. The stand-in head is reared up at the left.</li>
+      <li>A melee fighter caught mid-swim at the coil rather than at its post (the bubble forms on the body, wherever it is).</li>
+      <li>The camera, other fighters, other stations' domes, scales falling, the numbers off blows, and the phone's bottom-sheet board.</li>
+      <li>How it feels under the hand: the cursor here is scripted.</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+(() => {
+  const P = 6, COLS = 100, ROWS = 110, FLOOR = 104, POST = 50, LOOP = 12, CAST = 1.5;
+  const css = getComputedStyle(document.documentElement);
+  const tok = n => css.getPropertyValue('--' + n).trim();
+  const G = [], PU = [];
+  for (let i = 3; i <= 11; i++) { G[i] = tok('g' + i); PU[i] = tok('p' + i); }
+  const DEEP = tok('deep'), BOARD = tok('board');
+  const BOX = { x0: 27, x1: 73, y0: 47, y1: 89 };           // the board's box, cells
+  const JAWS = { x: 7, y: 37 };
+
+  const unit = i => { const s = Math.sin(i * 12.9898 + 4.1) * 43758.5453; return s - Math.floor(s); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const easeOut = s => 1 - Math.pow(1 - clamp(s, 0, 1), 3);
+  const easeInOut = s => { s = clamp(s, 0, 1); return s < .5 ? 4 * s * s * s : 1 - Math.pow(-2 * s + 2, 3) / 2; };
+  const smooth = s => { s = clamp(s, 0, 1); return s * s * (3 - 2 * s); };
+  // Falling on the deep's gravity under its drag: speeding up, then steady.
+  const grav = s => { s = clamp(s, 0, 1); const a = 0.4, n = 1 - a / 2; return (s < a ? s * s / (2 * a) : s - a / 2) / n; };
+
+  // --- the options --------------------------------------------------------------------
+  // Each gives the bubble's middle while held (age: seconds since the cast),
+  // its click times (ages), and the fighter's way home after the pop.
+  const step = (v, n) => Math.floor(v * n) / n;
+  const bob = t => (Math.floor(t / 0.5) % 2 ? 1 : 0);
+  const lift3 = age => 100 - Math.min(3, Math.floor(Math.max(0, age - 0.2) / 0.1));
+
+  const OPTS = [
+    {
+      id: 'today', name: 'Today', today: true,
+      one: 'Lifts three cells and stays there: the bubble, its bar and its arrow sit inside the board’s footprint.',
+      held: (age) => ({ x: POST, y: lift3(age) }),
+      clicks: [1.3, 1.9, 2.5, 3.1, 3.7],
+      home: () => ({ x: POST, y: 100, pose: 'rest', done: true }),
+      homeLen: 0,
+      spec: [
+        ['height', 'ORB_LIFT 3 cells, a cell every 0.1s.'],
+        ['bar', '3 cells over the bubble’s top, 12 wide; arrow 5 cells over that, bobbing a cell every 0.4s.'],
+        ['release', 'Burst ring 0.6s. The fighter is drawn back at the post the frame it breaks, a 3-cell snap.'],
+      ],
+    },
+    {
+      id: 'a', name: 'A — straight up',
+      one: 'Rises straight up until its bottom clears the board’s top edge, and bobs there. Freed, the fighter sinks home on the deep’s gravity.',
+      held: (age, t) => {
+        if (age < 0.2) return { x: POST, y: 100 };
+        const s = (age - 0.2) / 1.4;
+        const y = 100 - 2 * Math.floor(easeOut(s) * 30);
+        return { x: POST, y: y - (s >= 1 ? bob(t) : 0) };
+      },
+      clicks: [2.3, 2.9, 3.5, 4.1, 4.7],
+      homeLen: 2.6,
+      home: (s, at) => {
+        if (s < 0.25) return { x: at.x, y: at.y, pose: 'fall' };
+        const k = (s - 0.25) / 2.2;
+        if (k >= 1) return { x: POST, y: 100, pose: s < 2.6 ? 'squash' : 'rest', done: s >= 2.6 };
+        return { x: POST, y: at.y + Math.floor(grav(k) * (100 - at.y)), pose: 'fall' };
+      },
+      spec: [
+        ['height', 'Clears the board by 2 cells: 60 cells over the post in this frame. Should be read off the open board’s top, not fixed.'],
+        ['timing', 'Closes 0.2s, then rises 1.4s in 2-cell held steps, fast at first with two ghost rings trailing, eased in at the top. Bobs a cell every 0.5s.'],
+        ['bar', '3 cells over the bubble’s top as today, the arrow over it.'],
+        ['release', 'Burst ring as today. The fighter hangs one held beat (0.25s, arms up), sinks on the deep’s gravity for 2.2s with ghost lines over its head while fast, and squashes on the plinth for 0.15s.'],
+      ],
+    },
+    {
+      id: 'b', name: 'B — reeled in',
+      one: 'Lifts clear of the board, then a tether from the jaws reels it toward the head, a cell at a time. Freeing it sooner keeps it nearer home.',
+      held: (age) => {
+        if (age < 0.5) return { x: POST, y: lift3(age) };
+        if (age < 1.7) return { x: POST, y: 97 - 2 * Math.floor(easeInOut((age - 0.5) / 1.2) * 28.5) };
+        const r = age - 1.7;
+        return { x: Math.max(JAWS.x + 9, POST - Math.floor(r / 0.3)), y: Math.max(JAWS.y, 40 - Math.floor(r / 1.2)) };
+      },
+      clicks: [2.6, 3.4, 4.2, 5.0, 5.8],
+      homeLen: 2.4,
+      home: (s, at) => {
+        if (s < 0.2) return { x: at.x, y: at.y, pose: 'fall' };
+        const k = (s - 0.2) / 2.0;
+        if (k >= 1) return { x: POST, y: 100, pose: s < 2.35 ? 'squash' : 'rest', done: s >= 2.35 };
+        return { x: at.x + Math.round(smooth(k) * (POST - at.x)), y: at.y + Math.floor(grav(k) * (100 - at.y)), pose: 'fall' };
+      },
+      tether: true,
+      spec: [
+        ['height', 'Same climb as A to clear the board (60 cells), then reeled toward the jaws a cell every 0.3s and up a cell every 1.2s. Left alone, the 12s turn brings it about 34 cells, to the head.'],
+        ['timing', 'Lift 3 cells as today (0.3s), climb 1.2s in 2-cell held steps, then the reel for the rest of the turn.'],
+        ['bar', '3 cells over the bubble’s top, riding with it as it is reeled. The tether runs from the jaws to the bubble’s edge.'],
+        ['release', 'The tether snaps back into the jaws in held steps (0.3s). The fighter falls on the deep’s gravity, drifting sideways home, 2.0s, squash on landing. What reaching the jaws does is an open call: today the turn simply ends.'],
+      ],
+    },
+    {
+      id: 'c', name: 'C — beside the board',
+      one: 'Drifts out sideways and stays low, just past the board’s side edge and under the coil. Freed, the fighter is tossed home in a short arc.',
+      held: (age, t) => {
+        if (age < 0.5) return { x: POST, y: lift3(age) };
+        const s = (age - 0.5) / 1.2, e = step(easeOut(s), 32);
+        return { x: POST + Math.round(32 * e), y: 97 - Math.round(23 * e) - (s >= 1 ? bob(t) : 0) };
+      },
+      clicks: [2.3, 2.9, 3.5, 4.1, 4.7],
+      homeLen: 1.75,
+      home: (s, at) => {
+        if (s < 0.15) return { x: at.x, y: at.y, pose: 'fall' };
+        const k = (s - 0.15) / 1.3;
+        if (k >= 1) return { x: POST, y: 100, pose: s < 1.6 ? 'squash' : 'rest', done: s >= 1.6 };
+        return { x: at.x + Math.round(k * (POST - at.x)), y: Math.round(at.y + (100 - at.y) * k * k - 6 * Math.sin(Math.PI * k)), pose: 'fall' };
+      },
+      spec: [
+        ['height', 'Lift 3 cells, then out to 2 cells past the board’s side edge (32 cells across) and 23 cells up: under the coil, well short of the board’s top.'],
+        ['timing', 'Out over 1.2s in 1-cell diagonal held steps, eased in at the end, ghost rings while fast. Bobs a cell every 0.5s.'],
+        ['bar', '3 cells over the bubble’s top, the arrow over it; both outside the box.'],
+        ['release', 'Burst ring as today; the fighter hops up 3 cells and falls back to the post in a 1.3s arc, squash 0.15s. The side is whichever has more open window; with slots 36 cells apart it lands over the neighbor’s dome.'],
+      ],
+    },
+  ];
+
+  // --- the static deep ----------------------------------------------------------------
+  const motes = [];
+  for (let i = 0; i < 260; i++) {
+    const x = Math.floor(unit(i) * COLS), y = Math.floor(unit(i + 999) * (FLOOR - 2));
+    const purple = unit(i + 77) < 0.18;
+    motes.push([x, y, purple ? PU[3 + Math.floor(unit(i + 5) * 4)] : G[3 + Math.floor(unit(i + 9) * 3)]]);
+  }
+
+  function drawFrame(ctx, o, t, wall) {
+    const cell = (x, y, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x) * P, Math.round(y) * P, P, P); };
+    ctx.fillStyle = DEEP; ctx.fillRect(0, 0, COLS * P, ROWS * P);
+    for (const [x, y, c] of motes) cell(x, y, c);
+    // floor, a tone a cell
+    for (let y = FLOOR; y < ROWS; y++) for (let x = 0; x < COLS; x++) cell(x, y, G[3 + Math.floor(unit(x * 131 + y * 7) * 4)]);
+    // dome, plinth, prop
+    for (let a = 0; a <= 40; a++) { const th = a / 40 * Math.PI; cell(47 + Math.round(9 * Math.cos(th)), 95 - Math.round(8 * Math.sin(th)), G[6]); }
+    for (let y = 95; y < FLOOR; y++) { cell(38, y, G[6]); cell(56, y, G[6]); }
+    for (let x = 40; x <= 54; x++) cell(x, 102, G[8]);
+    for (let x = 39; x <= 55; x++) cell(x, 103, G[6]);
+    ['..#..', '.###.', '..#..', '.#.#.', '#...#'].forEach((r, j) => [...r].forEach((ch, i) => { if (ch === '#') cell(41 + i, 97 + j, G[9]); }));
+
+    // the coil, swaying on the wall clock so a loop never jumps it
+    const age = t - CAST;
+    const warn = t < CAST ? clamp(t / CAST, 0, 1) : (age < 0.5 ? 1 : 0);
+    const coilY = x => 52 + 4 * Math.sin(x / 9 - wall * 1.1) - (x < 22 ? (22 - x) * 0.75 : 0);
+    const tips = [];
+    for (let x = 2; x < COLS; x++) {
+      const th = x < 6 ? 3 : x < 12 ? 5 : x > 82 ? Math.max(3, 7 - Math.floor((x - 82) / 4)) : 7;
+      const top = Math.round(coilY(x)) - Math.floor(th / 2);
+      for (let j = 0; j < th; j++) cell(x, top + j, j === 0 || j === th - 1 ? G[9] : ((x + Math.floor(wall * 2)) % 5 === 0 ? G[10] : G[11]));
+      if (x === 5) cell(x, top + 1, DEEP);                     // the eye
+      if (x >= 9 && x <= 72 && x % 3 === 0) {
+        const lit = warn > 0 && x <= 9 + warn * 63;
+        cell(x, top - 1, lit ? PU[11] : PU[7]);
+        if ((x / 3) % 2) { cell(x, top - 2, lit ? PU[11] : PU[7]); tips.push({ x, y: top - 2 }); }
+      }
+    }
+
+    // where the bubble is, and the fighter
+    const pop = CAST + o.clicks[o.clicks.length - 1];
+    const on = t >= CAST && t < pop;
+    const at = on ? o.held(age, t) : null;
+    const popAt = o.held(pop - CAST, pop);
+    const nClicks = o.clicks.filter(c => CAST + c <= t).length;
+    const hp = 1 - nClicks / o.clicks.length;
+    const lastClick = o.clicks.filter(c => CAST + c <= t).pop();
+    const impact = lastClick != null && t - CAST - lastClick < 0.22 ? t - CAST - lastClick : null;
+
+    // the board's footprint, under the bubble so what it would cover reads
+    for (let x = BOX.x0; x <= BOX.x1; x++) if (x % 2 === 0) { cell(x, BOX.y0, BOARD); cell(x, BOX.y1, BOARD); }
+    for (let y = BOX.y0; y <= BOX.y1; y++) if (y % 2 === 0) { cell(BOX.x0, y, BOARD); cell(BOX.x1, y, BOARD); }
+    ctx.fillStyle = BOARD; ctx.font = 'bold 18px ui-monospace, Menlo, Consolas, monospace';
+    ctx.fillText('board', (BOX.x0 + 2) * P, (BOX.y1 - 2) * P);
+
+    // the station's status post, while it is held
+    if (on) {
+      for (let y = 97; y < 102; y++) cell(58, y, G[6]);
+      ['.###.', '#...#', '#.#.#', '#...#', '.###.'].forEach((r, j) => [...r].forEach((ch, i) => { if (ch === '#') cell(56 + i, 91 + j, PU[11]); }));
+    }
+
+    // the bolts, off the lit comb to the body
+    if (age >= 0 && age < 0.5 && tips.length) {
+      const shape = Math.floor(age * 6);
+      for (let n = 0; n < 3; n++) {
+        const from = tips[(n * 5 + shape * 3) % tips.length];
+        let x = from.x, y = from.y;
+        for (let s = 1; s <= 14; s++) {
+          const u = s / 14;
+          const nx = from.x + (POST - from.x) * u + (unit(n * 31 + s + shape * 7) - 0.5) * 4 * (1 - u);
+          const ny = from.y + (100 - from.y) * u;
+          for (let q = 0; q <= 2; q++) cell(x + (nx - x) * q / 2, y + (ny - y) * q / 2, s % 3 ? PU[11] : G[11]);
+          x = nx; y = ny;
+        }
+      }
+    }
+
+    // the fighter: a 3x3 body, its middle at (x, y)
+    const body = (x, y, pose, flail) => {
+      x = Math.round(x); y = Math.round(y);
+      if (pose === 'squash') {
+        for (let i = -2; i <= 2; i++) { cell(x + i, y, G[11]); cell(x + i, y + 1, G[11]); }
+        cell(x, y, DEEP);
+        return;
+      }
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) cell(x + i, y + j, i || j ? G[11] : DEEP);
+      if (pose === 'rest') { cell(x - 2, y + 1, G[9]); cell(x + 2, y + 1, G[9]); }
+      else if (pose === 'held') { const f = flail ? 1 : 0; cell(x - 2, y - 1 + 2 * f, G[9]); cell(x + 2, y + 1 - 2 * f, G[9]); }
+      else if (pose === 'fall') { cell(x - 2, y - 2, G[9]); cell(x + 2, y - 2, G[9]); }
+    };
+
+    // the bubble's ring: today's dots, squashed for a held impact
+    const ring = (cx, cy, r, tone, sx = 1, sy = 1) => {
+      const dots = Math.max(16, Math.round(r * 2 * Math.PI)), turn = impact != null && impact < 0.12 ? 0 : Math.floor(wall * 8) / 8 * 0.6;
+      for (let n = 0; n < dots; n++) {
+        const th = n / dots * Math.PI * 2 + turn;
+        cell(cx + Math.cos(th) * r * sx, cy + Math.sin(th) * r * 0.9 * sy, tone ? tone : (n % 4 === 0 ? PU[11] : PU[9]));
+      }
+    };
+
+    let fighter = null;
+    if (!at && t < CAST) fighter = { x: POST, y: 100, pose: 'rest' };
+    else if (!at && t >= pop) {
+      const h = o.home(t - pop, popAt);
+      fighter = h;
+      // ghost lines over a body moving fast
+      if (h.pose === 'fall') {
+        const prev = o.home(Math.max(0, t - pop - 0.07), popAt);
+        if (Math.abs(prev.y - h.y) >= 2 || Math.abs(prev.x - h.x) >= 2) {
+          const dx = Math.sign(prev.x - h.x), dy = Math.sign(prev.y - h.y);
+          for (let i = -1; i <= 1; i++) { cell(h.x + i + dx * 3, h.y + dy * 3, G[6]); cell(h.x + i + dx * 4, h.y + dy * 4, G[4]); }
+        }
+      }
+    }
+
+    if (at) {
+      const r = Math.min(5, 1 + age * 20);
+      // ghost rings trailing a fast move
+      const g1 = o.held(Math.max(0, age - 0.06), t - 0.06), g2 = o.held(Math.max(0, age - 0.12), t - 0.12);
+      if (Math.hypot(g1.x - at.x, g1.y - at.y) >= 2) {
+        ring(g2.x, g2.y, r, PU[4]);
+        ring(g1.x, g1.y, r, PU[6]);
+      }
+      body(at.x, at.y, 'held', Math.floor(wall / 0.4) % 2);
+      const squash = impact != null && impact < 0.12;
+      ring(at.x, at.y, r, null, squash ? 1.1 : 1, squash ? 0.8 : 1);
+      // the bar: 12 cells, 3 over the top
+      const bw = 12, by = Math.round(at.y - r - 3), bx = Math.round(at.x) - 6;
+      for (let i = 0; i < bw; i++) cell(bx + i, by, i < Math.round(bw * hp) ? PU[10] : PU[4]);
+      // the arrow
+      const ay = by - 5 - (Math.floor(wall / 0.4) % 2), ax = Math.round(at.x) - 2;
+      for (const [dx, dy] of [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [3, 1], [2, 2]]) cell(ax + dx, ay + dy, G[11]);
+    } else if (fighter) body(fighter.x, fighter.y, fighter.pose);
+
+    // B's tether: reeling while held, snapping back after the pop
+    if (o.tether && t >= CAST + 1.7) {
+      let end = null;
+      if (at) end = { x: at.x - 5, y: at.y };
+      else if (t - pop < 0.3) { const k = 1 - step((t - pop) / 0.3, 3); end = { x: JAWS.x + (popAt.x - 5 - JAWS.x) * k, y: JAWS.y + (popAt.y - JAWS.y) * k }; }
+      if (end) {
+        const len = Math.hypot(end.x - JAWS.x, end.y - JAWS.y), n = Math.max(1, Math.round(len));
+        const crawl = Math.floor(wall * 6) % 2;
+        for (let i = 0; i <= n; i++) if ((i + crawl) % 2 === 0) cell(JAWS.x + (end.x - JAWS.x) * i / n, JAWS.y + (end.y - JAWS.y) * i / n, i % 4 ? PU[9] : PU[11]);
+      }
+    }
+
+    // the burst, today's: a ring of motes going out and dimming
+    if (t >= pop && t - pop < 0.6) {
+      const k = (t - pop) / 0.6, r = 5 + Math.floor(k * 6) * 1.5;
+      for (let n = 0; n < 16; n++) {
+        const th = n / 16 * Math.PI * 2;
+        cell(popAt.x + Math.cos(th) * r, popAt.y + Math.sin(th) * r * 0.9, PU[Math.max(4, 10 - Math.min(6, Math.floor(k * 7)))]);
+      }
+    }
+
+    // the cursor, and the impact where it lands
+    const firstC = CAST + o.clicks[0];
+    if (t > firstC - 0.6 && t < pop + 0.8) {
+      const aim = at ? { x: at.x + 2, y: at.y + 1 } : { x: popAt.x + 2, y: popAt.y + 1 };
+      let cx = aim.x, cy = aim.y;
+      if (t < firstC - 0.1) { const k = step((t - (firstC - 0.6)) / 0.5, 6); cx = 98 + (aim.x - 98) * k; cy = 70 + (aim.y - 70) * k; }
+      else if (t > pop + 0.2) { const k = step((t - pop - 0.2) / 0.6, 6); cx = aim.x + (98 - aim.x) * k; cy = aim.y + (64 - aim.y) * k; }
+      if (impact != null && impact < 0.12) cy += 1;
+      cx = Math.round(cx); cy = Math.round(cy);
+      ['X', 'XX', 'XWX', 'XWWX', 'XWWWX', 'XWXX', 'XX'].forEach((r, j) => [...r].forEach((ch, i) => cell(cx + i, cy + j, ch === 'W' ? G[11] : G[8])));
+      if (impact != null) {
+        const hx = aim.x, hy = aim.y;
+        if (impact < 0.12) {
+          cell(hx, hy, G[11]);
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0], [0, 2], [0, -2]]) cell(hx + dx, hy + dy, PU[11]);
+        } else {
+          for (const [dx, dy] of [[3, 0], [-3, 0], [0, 3], [0, -3]]) cell(hx + dx, hy + dy, PU[8]);
+        }
+      }
+    }
+  }
+
+  function beatOf(o, t) {
+    const pop = CAST + o.clicks[o.clicks.length - 1], age = t - CAST;
+    if (t < CAST) return 'warning: the comb lights head first';
+    if (age < 0.5) return 'the cast: bolts, the bubble closing';
+    if (t < CAST + o.clicks[0] - 0.4) return o.today ? 'held at 3 cells' : 'the rise';
+    if (t < pop) return 'held: clicks land, the bar steps down';
+    if (t < pop + 0.6) return 'the pop';
+    if (t < pop + (o.homeLen || 0)) return 'on the way home';
+    return 'back at the post';
+  }
+
+  // --- the page -----------------------------------------------------------------------
+  const grid = document.getElementById('grid');
+  const stages = [];
+  for (const o of OPTS) {
+    const card = document.createElement('section');
+    card.className = 'opt' + (o.today ? ' today' : '');
+    card.innerHTML = `<h2>${o.name}</h2><div class="one">${o.one}</div>`;
+    const cv = document.createElement('canvas');
+    cv.className = 'stage'; cv.width = COLS * P; cv.height = ROWS * P;
+    cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', o.name + ': ' + o.one);
+    card.appendChild(cv);
+    const beat = document.createElement('div'); beat.className = 'beat'; card.appendChild(beat);
+    const keys = document.createElement('div'); keys.className = 'keys'; card.appendChild(keys);
+    const pop = CAST + o.clicks[o.clicks.length - 1];
+    const frames = [
+      ['warning', 1.1], ['cast', CAST + 0.25], [o.today ? 'lifted' : 'rising', CAST + (o.today ? 0.6 : 1.0)],
+      ['held, bar full', CAST + o.clicks[0] - 0.2], ['a click lands', CAST + o.clicks[1] + 0.05],
+      ['the pop', pop + 0.12], ['going home', pop + Math.max(0.05, (o.homeLen || 0) * 0.55)], ['at the post', LOOP - 0.3],
+    ];
+    for (const [label, ft] of frames) {
+      const fig = document.createElement('figure');
+      const k = document.createElement('canvas'); k.width = COLS * P; k.height = ROWS * P;
+      drawFrame(k.getContext('2d'), o, ft, ft);
+      const cap = document.createElement('figcaption'); cap.textContent = label;
+      fig.append(k, cap); keys.appendChild(fig);
+    }
+    const dl = document.createElement('dl');
+    for (const [k, v] of o.spec) dl.insertAdjacentHTML('beforeend', `<dt>${k}</dt><dd>${v}</dd>`);
+    card.appendChild(dl);
+    grid.appendChild(card);
+    stages.push({ o, ctx: cv.getContext('2d'), beat, keys });
+  }
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let playing = !reduce, speed = 1, t = reduce ? CAST + 2.0 : 0, wall = 0, last = null;
+  const playBtn = document.getElementById('play'), keysBtn = document.getElementById('keys'), clock = document.getElementById('clock');
+  const setKeys = on => { keysBtn.setAttribute('aria-pressed', on); for (const s of stages) s.keys.classList.toggle('on', on); };
+  const setPlay = on => { playing = on; playBtn.textContent = on ? 'pause' : 'play'; playBtn.setAttribute('aria-pressed', on); };
+  setPlay(playing);
+  if (reduce) setKeys(true);
+  playBtn.onclick = () => setPlay(!playing);
+  keysBtn.onclick = () => setKeys(keysBtn.getAttribute('aria-pressed') !== 'true');
+  document.getElementById('restart').onclick = () => { t = 0; };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const o of document.querySelectorAll('[data-speed]')) o.setAttribute('aria-pressed', o === b);
+  };
+
+  const scrub = document.getElementById('scrub');
+  scrub.oninput = () => { setPlay(false); t = +scrub.value; };
+  function paint() {
+    if (document.activeElement !== scrub) scrub.value = t;
+    for (const s of stages) { drawFrame(s.ctx, s.o, t, wall); s.beat.innerHTML = `<b>${t.toFixed(1)}s</b> ${beatOf(s.o, t)}`; }
+    clock.textContent = `loop ${LOOP}s, the turn’s cast at ${CAST}s`;
+  }
+  function frame(now) {
+    const dt = last == null ? 0 : Math.min(0.1, (now - last) / 1000);
+    last = now;
+    if (playing) { t += dt * speed; wall += dt * speed; if (t >= LOOP) t -= LOOP; }
+    paint();
+    requestAnimationFrame(frame);
+  }
+  paint();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
