@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Surface Glimpses</title>
+<style>
+/* Three panes, one per option, each the drowned pit seen from the yard on a
+   shared clock. The panes are the yard's own black and white in either theme;
+   the chrome around them follows the viewer. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --track: #e6e4ec; --mark: #b9a4e0;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef;
+  --track: #24222c; --mark: #4e2090; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef;
+  --track: #24222c; --mark: #4e2090; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 13px; margin: 8px 0 0; text-transform: uppercase; letter-spacing: .08em; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.note { border: 1px dashed var(--rule); padding: 10px 12px; display: grid; gap: 6px; background: var(--panel); }
+.note b { color: var(--fg); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.bar .clock { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card h3 { margin: 0; font-size: 14px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #fff; }
+.timeline { position: relative; height: 14px; background: var(--track); cursor: pointer; }
+.timeline .g { position: absolute; top: 0; bottom: 0; background: var(--mark); }
+.timeline .head { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg); }
+dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; font-size: 12px; }
+dt { color: var(--fg); font-weight: 600; }
+dd { margin: 0; color: var(--dim); }
+.keys { display: none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+.keys.on { display: grid; }
+.keys figure { margin: 0; display: grid; gap: 2px; }
+.keys figcaption { font-size: 11px; color: var(--dim); }
+.q { border: 2px solid var(--accent); padding: 10px 12px; background: var(--panel); display: grid; gap: 6px; }
+.q h2 { margin: 0; color: var(--accent); }
+ul { margin: 0; padding-left: 18px; color: var(--dim); max-width: 92ch; }
+li { margin: 2px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Surface Glimpses</h1>
+    <p>A little life on the drowned pit: now and then the serpent shows a bit of itself at the surface, the way the
+      trash-compactor monster does, and goes back under. Three options, each a minute of the surface with two
+      glimpses in it, on the 6px grid in the yard's palette: the snatch's hide (black edge, dark scales, grey brow)
+      and the crest's two purples.</p>
+  </div>
+
+  <div class="note">
+    <p><b>This is a mock.</b> It is drawn from plain shapes, not by the game. It cannot show: the real abyss field
+      (the flow, the veil, the depth-lit stars; these are a cheap imitation), the real swell's three waves, the
+      portal standing over the pit, the camera and zoom, bodies and grain streams, or the game's frame pacing. Time is
+      squeezed: each pane plays two glimpses a minute so you are not waiting, where the game would wait the
+      randomized interval written under each one.</p>
+  </div>
+
+  <div class="bar" role="group" aria-label="Playback">
+    <button id="play" aria-pressed="true">pause</button>
+    <button data-speed="1" aria-pressed="true">1x</button>
+    <button data-speed="3" aria-pressed="false">3x</button>
+    <button id="next">next glimpse</button>
+    <button id="keys" aria-pressed="false">key frames</button>
+    <span class="clock" id="clock">0.0 s</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <h2>What it touches</h2>
+  <ul>
+    <li><b>Clicks:</b> nothing. No hit area; the glimpse is drawn under the bridge and under every pointer target,
+      and a click over it lands wherever it would have anyway.</li>
+    <li><b>Grains:</b> nothing floats on the abyss today (a grain going in dives and is gone, leaving its notch), so
+      there is nothing for a hump to push. A glimpse picks a stretch of surface away from any stream that is landing,
+      so a grain's notch and the glimpse's rings never pile up.</li>
+    <li><b>Bodies:</b> the bridge never moves; a walker crossing it is not touched. In option C the eye turns toward
+      the nearest body on the lip, which is only looking.</li>
+    <li><b>When not:</b> never during the snatch or a cutscene, never with the camera in the deep, never on the
+      columns under the portal's mouth once it stands, and never two at once.</li>
+    <li><b>Rings:</b> a grain's ripple today is a white notch on the surface's top cell, which against the white
+      above reads as a dip. The glimpse's marks stand a cell up in pale grey instead, so a ring reads as a crest
+      running out; the grain's notch would be left as it is.</li>
+    <li><b>Sound:</b> none proposed (the hits-only rule).</li>
+  </ul>
+
+  <div class="q">
+    <h2>Open question</h2>
+    <p>Should the glimpses start only <b>after the snatch</b>, when the player knows the serpent, or as
+      <b>foreshadowing</b> once the pit drowns, before the snatch? Before it, a glimpse is a promise of what is
+      down there (and the crest's purple is the only hint of the color); after it, it is a reminder that he is still
+      down there with the one it took.</p>
+  </div>
+</div>
+
+<script>
+// ---- the yard, in cells ------------------------------------------------------
+const P = 6, W = 72, H = 36, BRIDGE = 15, GROUND = 16, LINE = 20, LIP = 6, LOOP = 60;
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPS = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+               '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const EDGE = '#000', HIDE = '#1c1c21', LATTICE = '#26262c', BROW = '#6e6e78', BROW_DARK = '#42424a';
+const CREST = '#6a2fbe', CREST_HI = '#9b5de5';
+// Foam on a raised cell: a white notch on the liquid's top cell vanishes into
+// the white above it and reads as a dip, so marks stand a cell up, grey.
+const RING = ['#b4b4c0', '#b4b4c0', '#8b8b96', '#6e6e78', '#42424a', '#26262c'];
+const splash = (f, c) => { f.lift[c] = 1; f.notch[c] = '#b4b4c0'; };
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const held = (lt, step = 1 / 8) => Math.floor(lt / step) * step;   // everything moves in held steps
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// The surface: two slow waves under a crawling envelope, snapped to whole cells
+// and stepped four times a second.
+function swell(c, t) {
+  t = Math.floor(t * 4) / 4;
+  const h = Math.sin(t / 4.2 * Math.PI * 2 + c * 0.31) * 1.1 + Math.sin(t / 6.7 * Math.PI * 2 - c * 0.19) * 0.8;
+  const env = 0.35 + 0.65 * (Math.sin(t / 23 * Math.PI * 2 + c * 0.07) + 1) / 2;
+  return clamp(Math.round(h * env), -2, 2);
+}
+
+// Stars in the liquid, seated by hash once.
+const STARS = [];
+for (let c = LIP; c < W - LIP; c++) for (let r = LINE + 3; r < H; r++) {
+  const h = seeth(c, r);
+  if (h % 19) continue;
+  STARS.push({ c, r, h, purple: h % 7 === 0, depth: clamp((r - LINE) / 14, 0, 1) });
+}
+
+// ---- the three options --------------------------------------------------------
+// Each draws into a frame: `lift` raises the surface a column, `notch` paints the
+// surface's own cell, `cells` stand on the surface (`up` cells above it), `blot`
+// puts out the stars where the body passes under, `bubbles` rise in the liquid.
+function rings(f, cx, hw, a) {
+  if (a < 0.5) for (let d = -1; d <= 1; d++) f.lift[cx + d] = 1;   // the liquid closing over
+  for (let i = 0; i < 2; i++) {
+    const k = Math.floor((a - i * 0.9) / 0.3);
+    if (k < 0 || k >= RING.length) continue;
+    for (const s of [-1, 1]) { const c = cx + s * (hw + 1 + k); f.notch[c] = RING[k]; if (k < 3) f.lift[c] = 1; }
+  }
+}
+
+const A = {
+  key: 'A', name: 'A. The hump',
+  blurb: 'One hump of the coil\'s back rises through the surface, rolls along it a short way and sinks, leaving a ring either side. Slow and heavy: the hump creeps a cell every 0.6 s while the scales slide through it twice as fast, so it reads as a long body passing rather than a lump bobbing.',
+  facts: [
+    ['how often', 'every 40–90 s, randomized'],
+    ['how long', 'about 14 s: 2 s bulge, 2.4 s rising, 4 s rolling, 2.4 s sinking, 3 s of rings'],
+    ['before', 'the surface bulges a cell over nine columns, and the stars under it go out where the body passes beneath'],
+    ['after', 'the liquid heaps a cell where it went under, then two rings run out either side, a raised cell of pale foam darkening a tone a step until it is gone'],
+  ],
+  len: 14, at: [{ at: 6, x: 20, dir: 1 }, { at: 36, x: 52, dir: -1 }],
+  keys: [[1.0, 'bulge, stars out'], [3.0, 'rising'], [6.2, 'rolling'], [9.6, 'sinking'], [11.9, 'rings']],
+  draw(f, lt, g) {
+    const d = g.dir;
+    const cx = g.x + d * Math.floor(clamp(lt - 2, 0, 8.8) / 0.6);
+    const tall = lt < 2 ? 0 : lt < 4.4 ? Math.min(3, 1 + Math.floor((lt - 2) / 0.8))
+               : lt < 8.4 ? 3 : lt < 10.8 ? 3 - Math.floor((lt - 8.4) / 0.8) : 0;
+    if (lt < 10.8) f.blot.push({ c0: cx - 7, c1: cx + 7, r1: LINE + 8 });
+    if (lt >= 0.75 && lt < 2) for (let k = -4; k <= 4; k++) f.lift[cx + k] = 1;
+    if (tall > 0) {
+      const hw = [0, 3, 4, 5][tall], slide = Math.floor(lt / 0.3);
+      for (let dd = -hw; dd <= hw; dd++) {
+        const c = cx + dd, h = Math.max(1, Math.round(tall * Math.sqrt(1 - (dd / (hw + 0.6)) ** 2)));
+        const s = (((c - d * slide) % 3) + 3) % 3;
+        for (let k = 0; k < h; k++) {
+          const tone = k === 0 ? EDGE : k === 1 ? (s === 0 ? BROW_DARK : BROW) : (s ? HIDE : LATTICE);
+          f.cells.push({ c, up: h - k, tone });
+        }
+      }
+      splash(f, cx - hw - 1); splash(f, cx + hw + 1);
+      if (lt >= 4.4 && lt < 8.4) { f.lift[cx + d * (hw + 1)] = 1; f.notch[cx + d * (hw + 2)] = GREYS[9]; }
+    }
+    if (lt >= 10.8) rings(f, cx, 3, lt - 10.8);
+  },
+};
+
+const B = {
+  key: 'B', name: 'B. The fin',
+  blurb: 'A line of the crest\'s purple spikes cuts across the surface like a fin, tallest at the front and shortening to the tail as on the coil, a bow wave ahead and a wake trailing behind, then goes under front first.',
+  facts: [
+    ['how often', 'every 45–100 s, randomized'],
+    ['how long', 'about 13 s: 1.2 s bow forming, spikes up one by one, 6.4 s crossing (a cell every 0.2 s), 1.2 s under, 3 s of rings'],
+    ['before', 'a cell of bow wave heaps up where it will break, pale foam on its crest'],
+    ['after', 'the wake fades a tone a step behind it; two rings spread from where the last spike went under'],
+  ],
+  len: 13, at: [{ at: 6, x: 18, dir: 1 }, { at: 38, x: 56, dir: -1 }],
+  keys: [[1.0, 'bow wave'], [2.4, 'spikes up'], [5.6, 'crossing, wake'], [9.2, 'under, front first'], [10.6, 'rings']],
+  draw(f, lt, g) {
+    const d = g.dir, FULL = [3, 2, 3, 2, 2, 1, 1];
+    const L = g.x + d * Math.floor(clamp(lt - 2, 0, 6.4) / 0.2);
+    const moving = lt >= 2 && lt < 8.4;
+    if (lt < 9.8) f.blot.push({ c0: Math.min(L - d * 14, L + d * 2), c1: Math.max(L - d * 14, L + d * 2), r1: LINE + 5 });
+    FULL.forEach((full, j) => {
+      const col = L - d * 2 * j;
+      let up = lt < 1.2 + j * 0.2 ? 0 : Math.min(full, Math.floor((lt - 1.2 - j * 0.2) / 0.2) + 1);
+      const sinkAt = 8.6 + j * 0.15;
+      if (lt >= sinkAt) up = Math.max(0, up - (Math.floor((lt - sinkAt) / 0.2) + 1));
+      for (let u = 1; u <= up; u++) f.cells.push({ c: col, up: u, tone: u === full && full === 3 ? CREST_HI : CREST });
+    });
+    if (lt >= 0.6 && lt < 8.6) {
+      f.lift[L + d] = 1; f.lift[L + 2 * d] = 1;
+      if (lt >= 1.2) f.notch[L + 2 * d] = moving ? GREYS[10] : GREYS[9];
+    }
+    if (lt >= 2 && lt < 9.6) {
+      const fade = lt < 8.4 ? 0 : Math.floor((lt - 8.4) / 0.2) + 1;
+      const WAKE = ['#b4b4c0', '#b4b4c0', '#8b8b96', '#6e6e78', '#55555e', '#42424a', '#333339'];
+      const tail = L - d * 12;
+      for (let k = 1; k <= 8; k++) {
+        const i = k - 1 + fade;
+        if (i < WAKE.length) f.notch[tail - d * k] = WAKE[i];
+      }
+    }
+    if (lt >= 9.8) rings(f, L - d * 6, 7, lt - 9.8);
+  },
+};
+
+const C = {
+  key: 'C', name: 'C. The watcher',
+  blurb: 'Bubbles, a bulge, and then just the top of the head breaks: the black brow ridge, two stubs of crest, and the white eye. It opens, looks toward the nearest worker on the lip, blinks once, closes, and rolls back under, away from them.',
+  facts: [
+    ['how often', 'every 70–150 s, randomized (rarer: it is the most pointed of the three)'],
+    ['how long', 'about 15 s: 2.5 s bubbles, 1.6 s bulge, 6 s watching, 1.6 s rolling under, 3 s of rings'],
+    ['before', 'three bubbles climb a cell at a time out of the deep and notch the surface, then a cell of bulge over seven columns'],
+    ['after', 'the brow drops a row at a time as it rolls back; two rings where it went'],
+  ],
+  len: 15, at: [{ at: 6, x: 30, dir: -1 }, { at: 38, x: 44, dir: 1 }],
+  keys: [[1.4, 'bubbles'], [3.0, 'bulge'], [5.5, 'eye open'], [7.45, 'blink'], [11.0, 'rolling under'], [12.5, 'rings']],
+  draw(f, lt, g) {
+    const d = g.dir;
+    [-1, 1, 0].forEach((dc, b) => {
+      const age = lt - b * 0.6;
+      if (age < 0) return;
+      const row = LINE + 10 - Math.floor(age / 0.25);
+      if (row > LINE + 1) f.bubbles.push({ c: g.x + dc, r: row });
+      else if (row > LINE - 1) splash(f, g.x + dc);
+    });
+    if (lt >= 2 && lt < 3.6) for (let k = -3; k <= 3; k++) f.lift[g.x + k] = 1;
+    const cx = g.x - d * Math.floor(Math.max(0, lt - 10) / 0.4);
+    const tall = lt < 3.6 ? 0 : lt < 4.0 ? 1 : lt < 10.8 ? 2 : lt < 11.6 ? 1 : 0;
+    if (lt >= 0.5 && lt < 11.6) f.blot.push({ c0: cx - 5, c1: cx + 5, r1: LINE + 6 });
+    if (tall > 0) {
+      for (let dd = -3; dd <= 3; dd++) {
+        const h = Math.abs(dd) === 3 ? tall - 1 : tall;
+        for (let k = 0; k < h; k++) f.cells.push({ c: cx + dd, up: h - k, tone: k === 0 ? EDGE : BROW });
+      }
+      f.cells.push({ c: cx - d, up: tall + 1, tone: CREST_HI });
+      if (tall >= 2) f.cells.push({ c: cx - 3 * d, up: tall, tone: CREST });
+      splash(f, cx - 4); splash(f, cx + 4);
+      // the eye: opening, looking, a blink, closing
+      let eye = null;
+      if (lt >= 4.6 && lt < 4.85) eye = GREYS[10];
+      else if (lt >= 4.85 && lt < 9.6) eye = lt >= 7.4 && lt < 7.6 ? BROW_DARK : '#fff';
+      else if (lt >= 9.6 && lt < 9.85) eye = GREYS[10];
+      if (eye && tall >= 2) f.cells.push({ c: cx + d * (lt >= 6.4 ? 2 : 1), up: 1, tone: eye });
+    }
+    if (lt >= 11.6) rings(f, cx, 3, lt - 11.6);
+  },
+};
+
+const OPTIONS = [A, B, C];
+
+// ---- painting ----------------------------------------------------------------------
+function frameOf(opt, t) {
+  const f = { lift: {}, notch: {}, cells: [], blot: [], bubbles: [] };
+  for (const g of opt.at) {
+    const lt = held(t - g.at);
+    if (lt >= 0 && lt < opt.len) opt.draw(f, lt, g);
+  }
+  return f;
+}
+
+function paint(ctx, opt, t) {
+  const f = frameOf(opt, t);
+  const surf = c => LINE + swell(c, t) - (f.lift[c] || 0);
+  const cell = (c, r, tone) => { ctx.fillStyle = tone; ctx.fillRect(c * P, r * P, P, P); };
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W * P, H * P);
+  // the sky's motes, faint and still
+  for (let c = 0; c < W; c++) for (let r = 0; r < BRIDGE - 1; r++) if (seeth(c, r + 50) % 61 === 0) cell(c, r, '#c9c9cf');
+  // the ground either side, hatched
+  for (let c = 0; c < W; c++) {
+    if (c >= LIP && c < W - LIP) continue;
+    for (let r = GROUND; r < H; r++) if ((c + r) % 4 === 0) cell(c, r, '#ececf0');
+  }
+  // the liquid, a column at a time from its rolling surface down
+  for (let c = LIP; c < W - LIP; c++) { ctx.fillStyle = '#000'; ctx.fillRect(c * P, surf(c) * P, P, (H - surf(c)) * P); }
+  // the stars, breathing; put out where the body is under them
+  for (const s of STARS) {
+    if (s.r <= surf(s.c) + 2) continue;
+    if (f.blot.some(b => s.c >= b.c0 && s.c <= b.c1 && s.r <= b.r1)) continue;
+    const swing = (Math.sin(Math.floor(t * 6) / 6 / 3.4 * Math.PI * 2 * (0.6 + (s.h % 7) * 0.1) + s.h) + 1) / 2;
+    const ceil = 3 + Math.round(s.depth * 6) - (s.h >> 3) % 3;
+    const rung = Math.min(11, Math.round(swing ** 1.6 * ceil));
+    if (rung > 0) cell(s.c, s.r, (s.purple ? PURPS : GREYS)[rung]);
+  }
+  for (const b of f.bubbles) cell(b.c, b.r, GREYS[9]);
+  // the wisps off the surface
+  for (let c = LIP; c < W - LIP; c++) {
+    const h = seeth(c, 1);
+    if (h % 11) continue;
+    const k = (t / 2.4 + h / 997) % 1;
+    if (k > 0.82) continue;
+    const r = surf(c) - 1 - Math.floor(k * 7);
+    if (r === BRIDGE) continue;
+    cell(c, r, PURPS[[10, 9, 8][(h + Math.floor(k * 3)) % 3]]);
+  }
+  // the serpent: only what stands above the surface shows
+  for (const s of f.cells) if (s.c >= LIP && s.c < W - LIP) cell(s.c, surf(s.c) - s.up, s.tone);
+  for (const c in f.notch) if (c >= LIP && c < W - LIP) cell(+c, surf(+c), f.notch[c]);
+  // the bridge over the mouth, in front of everything
+  for (let c = LIP - 1; c <= W - LIP; c++) cell(c, BRIDGE, PURPS[8 + (seeth(c, Math.floor(t * 2)) % 4)]);
+  // a worker on the left lip, for scale
+  for (const [dc, dr] of [[1, -4], [2, -4], [3, -4], [1, -3], [3, -3], [1, -2], [3, -2], [1, -1], [2, -1], [3, -1], [0, -5], [1, -5], [2, -5], [3, -5], [4, -5]])
+    if (dr !== -5 || (dc >= 1 && dc <= 3)) cell(dc, GROUND + dr, EDGE);
+}
+
+// ---- the page --------------------------------------------------------------------
+const grid = document.getElementById('grid');
+const panes = OPTIONS.map(opt => {
+  const card = document.createElement('section');
+  card.className = 'card';
+  card.innerHTML = `<h3>${opt.name}</h3><canvas width="${W * P}" height="${H * P}" aria-label="${opt.name}, animated"></canvas>
+    <div class="timeline" title="the mock's minute; purple is a glimpse"></div>
+    <div class="keys"></div><p>${opt.blurb}</p><dl>${opt.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  grid.appendChild(card);
+  const tl = card.querySelector('.timeline');
+  for (const g of opt.at) {
+    const m = document.createElement('div');
+    m.className = 'g'; m.style.left = (g.at / LOOP * 100) + '%'; m.style.width = (opt.len / LOOP * 100) + '%';
+    tl.appendChild(m);
+  }
+  const head = document.createElement('div'); head.className = 'head'; tl.appendChild(head);
+  tl.addEventListener('click', e => { const r = tl.getBoundingClientRect(); clock = (e.clientX - r.left) / r.width * LOOP; draw(); });
+  const keys = card.querySelector('.keys');
+  for (const [lt, cap] of opt.keys) {
+    const fig = document.createElement('figure');
+    const cv = document.createElement('canvas'); cv.width = W * P; cv.height = H * P;
+    paint(cv.getContext('2d'), opt, opt.at[0].at + lt);
+    fig.appendChild(cv);
+    const fc = document.createElement('figcaption'); fc.textContent = `${lt.toFixed(1)} s, ${cap}`; fig.appendChild(fc);
+    keys.appendChild(fig);
+  }
+  return { opt, ctx: card.querySelector('canvas').getContext('2d'), head, keys };
+});
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let clock = reduce ? A.at[0].at + 6.2 : 0, speed = 1, playing = !reduce, last = performance.now();
+const playBtn = document.getElementById('play'), keysBtn = document.getElementById('keys');
+function setPlaying(v) { playing = v; playBtn.textContent = v ? 'pause' : 'play'; playBtn.setAttribute('aria-pressed', String(v)); }
+function setKeys(v) { keysBtn.setAttribute('aria-pressed', String(v)); for (const p of panes) p.keys.classList.toggle('on', v); }
+setPlaying(playing); setKeys(reduce);
+playBtn.onclick = () => setPlaying(!playing);
+keysBtn.onclick = () => setKeys(keysBtn.getAttribute('aria-pressed') !== 'true');
+document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+  speed = +b.dataset.speed;
+  document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+});
+document.getElementById('next').onclick = () => {
+  const starts = OPTIONS.flatMap(o => o.at.map(g => g.at - 1)).sort((a, b) => a - b);
+  clock = starts.find(s => s > clock + 0.1) ?? starts[0];
+  draw();
+};
+function draw() {
+  for (const p of panes) { paint(p.ctx, p.opt, clock); p.head.style.left = `calc(${clock / LOOP * 100}% - 1px)`; }
+  document.getElementById('clock').textContent = clock.toFixed(1) + ' s';
+}
+function tick(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (playing) clock = (clock + dt * speed) % LOOP;
+  draw();
+  requestAnimationFrame(tick);
+}
+draw();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
