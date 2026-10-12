@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone Saves Mock</title>
+<style>
+:root {
+  --paper: #fff; --ink: #000; --ink-4: #666; --bench: #e9e9e9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --bench: #141414; }
+}
+:root[data-theme="dark"] { --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --bench: #141414; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bench); color: var(--ink); overflow-x: hidden; }
+body { font: 12px/1.4 ui-monospace, "Courier New", monospace; padding: 16px 16px 40px; }
+.note { max-width: 70ch; margin: 0 0 6px; }
+.note.dim { color: var(--ink-4); }
+.words { margin: 8px 0 18px; color: var(--ink-4); }
+.words b { color: var(--ink); font-weight: normal; border: 1px solid var(--ink); padding: 0 4px; text-transform: uppercase; letter-spacing: .14em; }
+.row { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 12px; align-items: flex-start; }
+.opt { flex: none; width: 375px; }
+.opt h2 { font: inherit; margin: 0 0 6px; text-transform: uppercase; letter-spacing: .14em; }
+.opt p { margin: 0 0 8px; color: var(--ink-4); min-height: 5.6em; }
+.phone { width: 375px; background: var(--paper); border: 2px solid var(--ink); padding: 20px 16px 24px; }
+.phone h3 { font: inherit; text-align: center; letter-spacing: .5em; margin: 0 0 14px; text-transform: uppercase; }
+button { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 4px 14px; text-transform: uppercase; letter-spacing: .14em; text-align: center; cursor: default; }
+.slot, .tools button { width: 100%; }
+.slot { text-align: left; }
+.item { white-space: nowrap; }
+.item + .item { margin-left: 3ch; }
+.ln { display: flex; flex-wrap: nowrap; }
+.ln.sub { justify-content: space-between; }
+.open { background: var(--ink); color: var(--paper); }
+.gap { margin-bottom: 6px; }
+.x { width: 15px; height: 15px; display: block; shape-rendering: crispEdges; }
+.x rect { fill: currentColor; }
+.confirm { display: flex; gap: 10px; margin-bottom: 6px; }
+.confirm button { flex: 1; }
+.confirm .yes { background: var(--ink); color: var(--paper); }
+.tools { display: flex; gap: 10px; margin-top: 18px; }
+.dash { border-style: dashed; }
+.lite { opacity: .7; }
+.cap { margin-top: 8px; color: var(--ink-4); }
+.line { display: flex; gap: 6px; margin-bottom: 6px; }
+.line .slot { flex: 1; min-width: 0; }
+.sq { flex: none; width: 36px; padding: 0; display: grid; place-items: center; }
+.hole { flex: none; width: 36px; }
+/* B */
+.card { text-transform: uppercase; letter-spacing: .14em; display: flex; border: 1px solid var(--ink); margin-bottom: 6px; align-items: stretch; }
+.card .body { flex: 1; padding: 4px 14px; min-width: 0; }
+.card .tap { flex: none; width: 40px; display: grid; place-items: center; border: 0; border-left: 1px dashed var(--ink); padding: 0; background: transparent; }
+.card.open { background: var(--ink); color: var(--paper); }
+.card.open .tap { border-left-color: var(--paper); color: var(--paper); }
+/* C */
+.acts { display: flex; gap: 10px; margin-bottom: 6px; }
+.acts button { flex: 1; padding-left: 4px; padding-right: 4px; white-space: nowrap; }
+.acts button:first-child { flex: 1.7; }
+</style>
+</head>
+<body>
+<p class="note"><b>A mock from plain HTML, not the game.</b> It copies the saves page's font, case, spacing and borders but runs no game code: it cannot show fit() measuring real rows, the confirm's fade, the held sheet's motion, tap feel, or how a three-figure rock and a long playtime change the wrapping. Content is invented; widths are real (375px frames).</p>
+<p class="note dim">Today on a phone (shot at 375px): the row's button carries its words on one line, and the dashed delete wraps to its own line under it, at the right; its confirm opens below that. Here slot 1 is the open one (inverted) and the confirm is open on slot 2 in every option.</p>
+<p class="words">Words already in the game used here: <b>load a save</b> <b>copy a save</b> <b>delete</b> <b>back</b>, plus <b>empty</b> and <b>playing</b>. The pixel ✕ is a glyph, not a word. No new words anywhere.</p>
+
+<div class="row">
+
+<div class="opt">
+<h2>A square delete</h2>
+<p>A small square dashed ✕ on the same line, at the row's right edge. The row's items wrap inside its button to two lines.</p>
+<div class="phone"><h3>saves</h3>
+  <div class="line"><button class="slot open"><div class="ln"><span class="item">1</span><span class="item">Rock 41</span><span class="item">12 crew</span></div><div class="ln sub"><span class="item">playing</span><span class="item">3h 20m</span></div></button><button class="sq dash lite"><svg class="x" viewBox="0 0 5 5"><rect x="0" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/></svg></button></div>
+  <div class="line"><button class="slot"><div class="ln"><span class="item">2</span><span class="item">Rock 14</span><span class="item">3 crew</span></div><div class="ln sub"><span class="item">2d ago</span><span class="item">45m</span></div></button><button class="sq dash lite"><svg class="x" viewBox="0 0 5 5"><rect x="0" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/></svg></button></div>
+  <div class="confirm"><button class="yes">delete</button><button>back</button></div>
+  <div class="line"><button class="slot"><div class="ln"><span class="item">3</span><span class="item">Rock 2</span><span class="item">0 crew</span></div><div class="ln sub"><span class="item">9d ago</span><span class="item">6m</span></div></button><button class="sq dash lite"><svg class="x" viewBox="0 0 5 5"><rect x="0" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/></svg></button></div>
+  <div class="line"><button class="slot"><div class="ln"><span class="item">4</span><span class="item">empty</span></div></button><span class="hole"></span></div>
+  <div class="tools"><button>copy a save</button><button>load a save</button></div>
+  <button style="margin-top:10px;width:100%">back</button>
+</div>
+<div class="cap">The ✕ is a symbol, not a word; 36px square is a smallish thumb target.</div>
+</div>
+
+<div class="opt">
+<h2>B delete inside the border</h2>
+<p>One bordered card per slot. Items on two lines at the left; a ✕ tap target at the right inside the same border, set off by a dashed rule. The open card inverts whole.</p>
+<div class="phone"><h3>saves</h3>
+  <div class="card open"><div class="body"><div class="ln"><span class="item">1</span><span class="item">Rock 41</span><span class="item">12 crew</span></div><div class="ln"><span class="item">playing</span><span class="item">3h 20m</span></div></div><button class="tap"><svg class="x" viewBox="0 0 5 5"><rect x="0" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/></svg></button></div>
+  <div class="card"><div class="body"><div class="ln"><span class="item">2</span><span class="item">Rock 14</span><span class="item">3 crew</span></div><div class="ln"><span class="item">2d ago</span><span class="item">45m</span></div></div><button class="tap"><svg class="x" viewBox="0 0 5 5"><rect x="0" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/></svg></button></div>
+  <div class="confirm"><button class="yes">delete</button><button>back</button></div>
+  <div class="card"><div class="body"><div class="ln"><span class="item">3</span><span class="item">Rock 2</span><span class="item">0 crew</span></div><div class="ln"><span class="item">9d ago</span><span class="item">6m</span></div></div><button class="tap"><svg class="x" viewBox="0 0 5 5"><rect x="0" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/></svg></button></div>
+  <div class="card"><div class="body"><div class="ln"><span class="item">4</span><span class="item">empty</span></div></div></div>
+  <div class="tools"><button>copy a save</button><button>load a save</button></div>
+  <button style="margin-top:10px;width:100%">back</button>
+</div>
+<div class="cap">Reads as one object, but the delete sits inside what a thumb taps to load; the confirm is the net.</div>
+</div>
+
+<div class="opt">
+<h2>C no delete on the row</h2>
+<p>Tap a slot that isn't open and an action row opens under it. Slot 3 shows that row (<b>load a save</b> / <b>delete</b> / <b>back</b>); slot 2 shows delete pressed, the row turned into the confirm. The game would show one at a time.</p>
+<div class="phone"><h3>saves</h3>
+  <button class="slot open gap"><div class="ln"><span class="item">1</span><span class="item">Rock 41</span><span class="item">12 crew</span></div><div class="ln sub"><span class="item">playing</span><span class="item">3h 20m</span></div></button>
+  <button class="slot gap"><div class="ln"><span class="item">2</span><span class="item">Rock 14</span><span class="item">3 crew</span></div><div class="ln sub"><span class="item">2d ago</span><span class="item">45m</span></div></button>
+  <div class="confirm"><button class="yes">delete</button><button>back</button></div>
+  <button class="slot gap"><div class="ln"><span class="item">3</span><span class="item">Rock 2</span><span class="item">0 crew</span></div><div class="ln sub"><span class="item">9d ago</span><span class="item">6m</span></div></button>
+  <div class="acts"><button>load a save</button><button class="dash">delete</button><button>back</button></div>
+  <button class="slot gap"><div class="ln"><span class="item">4</span><span class="item">empty</span></div></button>
+  <div class="tools"><button>copy a save</button><button>load a save</button></div>
+  <button style="margin-top:10px;width:100%">back</button>
+</div>
+<div class="cap">Plain list, nothing to mis-tap; one more tap to load.</div>
+</div>
+
+<div class="opt">
+<h2>D delete is a mode</h2>
+<p>Rows are plain two-line buttons. The foot's <b>delete</b> toggles a mode that lays dashed ✕ squares on the rows (not the open one); it reads inverted while on, <b>back</b> leaves. Shown with the mode on.</p>
+<div class="phone"><h3>saves</h3>
+  <div class="line"><button class="slot open"><div class="ln"><span class="item">1</span><span class="item">Rock 41</span><span class="item">12 crew</span></div><div class="ln sub"><span class="item">playing</span><span class="item">3h 20m</span></div></button><span class="hole"></span></div>
+  <div class="line"><button class="slot"><div class="ln"><span class="item">2</span><span class="item">Rock 14</span><span class="item">3 crew</span></div><div class="ln sub"><span class="item">2d ago</span><span class="item">45m</span></div></button><button class="sq dash"><svg class="x" viewBox="0 0 5 5"><rect x="0" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/></svg></button></div>
+  <div class="confirm"><button class="yes">delete</button><button>back</button></div>
+  <div class="line"><button class="slot"><div class="ln"><span class="item">3</span><span class="item">Rock 2</span><span class="item">0 crew</span></div><div class="ln sub"><span class="item">9d ago</span><span class="item">6m</span></div></button><button class="sq dash"><svg class="x" viewBox="0 0 5 5"><rect x="0" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/></svg></button></div>
+  <div class="line"><button class="slot"><div class="ln"><span class="item">4</span><span class="item">empty</span></div></button><span class="hole"></span></div>
+  <div class="tools"><button>copy a save</button><button>load a save</button></div>
+  <div class="tools" style="margin-top:10px"><button style="background:var(--ink);color:var(--paper)">delete</button></div>
+  <button style="margin-top:10px;width:100%">back</button>
+</div>
+<div class="cap">Delete can't be hit by accident; one extra tap to reach it.</div>
+</div>
+
+</div>
+</body>
+</html>
