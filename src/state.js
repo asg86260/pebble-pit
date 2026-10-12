@@ -106,6 +106,9 @@ export const S = {
   ripples: [],            // where the liquid just ate one: { x, at }, briefly drawn
   glimpse: null,          // the serpent showing at the abyss's surface: { kind, at, x, dir } (glimpse.js)
   glimpseNext: null,      // and which comes next, and when: { kind, at }
+  riftLife: null,         // what is crossing behind the torn rift: a creature, a shoal or the serpent (riftlife.js)
+  riftLifeNext: null,     // and when the next creature is due, on the clock
+  riftLifeSerpentAt: null,  // and when the serpent is
   motes: [],              // the load drifting round the cursor
   trail: [],              // recent cursor positions, for the throw
   held: 0,                // how much dust is on the cursor
@@ -837,6 +840,8 @@ export const EPHEMERAL = [
   // A glimpse is on the page's own clock, which starts again with the page:
   // one in progress is not picked up again, and the wait is drawn afresh.
   'glimpse', 'glimpseNext',
+  // and so is what crosses behind the rift, and the minute it waits after the tear
+  'riftLife', 'riftLifeNext', 'riftLifeSerpentAt',
   'shownStored',
   // What was earned before this sitting is on the sheet, not in the air.
   'wonShown',

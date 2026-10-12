@@ -186,6 +186,22 @@ export function verifyWorld() {
       fail('a glimpse is up with the camera in the deep', `${S.glimpse.kind}, view ${S.view} to ${S.viewTo}`);
   }
 
+  // --- rule 18: life behind the rift only through a quiet, torn disc ---------
+  // What crosses behind the rift (riftlife.js) is there only between the tear
+  // and the drowning, never on a rescued yard's swell, never while the tear
+  // gulps the hole down, never under a beat that has the yard or the camera,
+  // and never with the camera in the deep or on its way there.
+  if (S.riftLife) {
+    const what = S.riftLife.kind;
+    if (!S.riftOpen || S.drowned) fail('something crosses behind a rift that is not torn', `${what}`);
+    if (S.rescued) fail('something crosses behind the rescue\'s swell', `${what}`);
+    if (S.riftGulp > 0) fail('something crosses behind the rift while it tears', `${what}`);
+    if (S.beat.camera || S.beat.yard || S.shot)
+      fail('something crosses behind the rift during a beat', `${what} under ${S.beat.camera || S.beat.yard || 'a shot'}`);
+    if (S.view === 'deep' || S.viewTo != null)
+      fail('something crosses behind the rift with the camera in the deep', `${what}, view ${S.view} to ${S.viewTo}`);
+  }
+
   const all = ways();
   const gy = S.groundY;
   const left = Math.min(0, yardLeft()) - OUTSIDE;

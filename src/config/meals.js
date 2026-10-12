@@ -64,5 +64,8 @@ export const FLOW_NEAR_SPEED = 24;
 export const FLOW_NEAR_AWAY = 4;       // every this-many-th swims away from the mouth
 export const FLOW_NEAR_JITTER = 0.4;   // how far a start strays from its slot
 export const FLOW_KINDS = 8;           // the creatures render/fish.js draws
+// and how long each is, front tip to tail, in its own units: the deep's meal
+// and the rift's crossings (riftlife.js) both measure them by this
+export const FLOW_LENGTHS = [18, 26, 18, 20, 22, 12, 16, 10];
 export const FLOW_NEAR_OUT = 200;
 export const FLOW_NEAR_BAND = 150;

@@ -16,7 +16,7 @@ import { coilLine } from '../deep/place.js';
 import { mealNow, nearAt, nearAll, eatenBefore, nowS, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_SWIM_CELLS, MEAL_HINGE, MEAL_SQUEEZE,
          FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED,
-         FLOW_NEAR_BAND, FLOW_KINDS, DEEP_H, COIL_Y, SERPENT_PHASES } from '../config.js';
+         FLOW_NEAR_BAND, FLOW_KINDS, FLOW_LENGTHS, DEEP_H, COIL_Y, SERPENT_PHASES } from '../config.js';
 import { deepTop, deepFloor, deepX0, deepX1 } from '../deep/place.js';
 
 // The mock's tones, on the deep's own ramps.
@@ -34,7 +34,7 @@ const ell = (put, cx, cy, rx, ry, tone) => {
     }
 };
 const SP = [
-  { name: 'Lantern angler', L: 18, bob: t => Math.sin(t * 2.4) * 1.6,
+  { name: 'Lantern angler', L: FLOW_LENGTHS[0], bob: t => Math.sin(t * 2.4) * 1.6,
     draw(put, t) {
       const flick = Math.sin(t * 9), jaw = Math.sin(t * 6) > 0.3 ? 1 : 0;
       ell(put, 6.5, 0, 6, 3.2, (x, y, d) => y > 1 ? G[1] : d > 0.7 ? G[3] : G[2]);
@@ -48,7 +48,7 @@ const SP = [
       for (const [x, y] of [[9, -3], [8, -4], [6, -5], [4, -6], [2, -6], [1, -5]]) put(x, y, G[1]);
       put(0, -5, bulb); put(0, -4, bulb); put(-1, -5, Pu[8]); put(-1, -4, bulb);
     } },
-  { name: 'Ribbon eel', L: 26, bob: t => 0,
+  { name: 'Ribbon eel', L: FLOW_LENGTHS[1], bob: t => 0,
     draw(put, t) {
       for (let i = 0; i < 26; i++) {
         const amp = 0.6 + i * 0.09, yy = Math.round(Math.sin(i / 2.4 - t * 7) * Math.min(2.6, amp)), th = i < 3 ? 2 : i < 18 ? 1.5 : 1;
@@ -60,7 +60,7 @@ const SP = [
       put(1, Math.round(Math.sin(1 / 2.4 - t * 7) * 0.7) - 1, G[5]);
       put(-1, Math.round(Math.sin(-t * 7) * 0.6), G[5]);
     } },
-  { name: 'Glass jelly', L: 18, bob: t => Math.sin(t * 1.5) * 3,
+  { name: 'Glass jelly', L: FLOW_LENGTHS[2], bob: t => Math.sin(t * 1.5) * 3,
     draw(put, t) {
       const pulse = Math.sin(t * 3.2), rx = 5 + pulse * 0.8, ry = 4 - pulse * 0.9;
       for (let x = 0; x <= 6; x++) {
@@ -73,7 +73,7 @@ const SP = [
         for (let x = 7; x < 18; x++) put(x, Math.round(j * 0.9 + Math.sin((x - 7) / 1.6 - t * 4 + j) * (0.6 + (x - 7) * 0.12)), (x + j) % 3 ? G[2] : G[1]);
       for (let x = 7; x < 12; x++) for (const o of [-1, 1]) put(x, o + Math.round(Math.sin(x - t * 3)), Pu[5]);
     } },
-  { name: 'Skull fish', L: 20, bob: t => Math.sin(t * 0.9) * 1,
+  { name: 'Skull fish', L: FLOW_LENGTHS[3], bob: t => Math.sin(t * 0.9) * 1,
     draw(put, t) {
       const chat = Math.sin(t * 11) > 0 ? 1 : 0, sway = x => Math.round(Math.sin(x / 3.2 - t * 5) * 1.2);
       ell(put, 4.5, -0.5, 4.3, 3.6, (x, y, d) => d > 0.72 ? G[5] : G[4]);
@@ -86,7 +86,7 @@ const SP = [
       for (let x = 8; x <= 14; x += 2) for (const o of [-2, -1, 1, 2]) put(x, sway(x) + o, o === -1 || o === 1 ? G[3] : G[2]);
       for (const o of [-2, -1, 1, 2]) put(19 + (Math.abs(o) === 2 ? 1 : 0), sway(19) + o, G[3]);
     } },
-  { name: 'Wandering eye', L: 22, bob: t => Math.sin(t * 2.6) * 2,
+  { name: 'Wandering eye', L: FLOW_LENGTHS[4], bob: t => Math.sin(t * 2.6) * 2,
     draw(put, t) {
       const blink = (t % 1.7) < 0.22 ? (t % 1.7) / 0.22 : 0, lid = Math.round(Math.sin(blink * Math.PI) * 7);
       ell(put, 4, 0, 4.2, 4.2, (x, y, d) => d > 0.8 ? G[3] : G[5]);
@@ -98,7 +98,7 @@ const SP = [
       for (let y = -5; y < -5 + lid; y++) for (let x = -1; x <= 9; x++) if (((x - 4) / 4.6) ** 2 + (y / 4.6) ** 2 <= 1) put(x, y, G[2]);
       for (let i = 0; i < 16; i++) put(8 + i, Math.round(Math.sin(i / 2 - t * 5) * (0.8 + i * 0.1)), Pu[Math.max(1, 6 - (i >> 2))]);
     } },
-  { name: 'Spiral drifter', L: 12, bob: t => Math.sin(t * 1.8) * 1.5,
+  { name: 'Spiral drifter', L: FLOW_LENGTHS[5], bob: t => Math.sin(t * 1.8) * 1.5,
     draw(put, t) {
       const rot = t * 2.6;
       ell(put, 7, 0, 4.6, 4.6, (x, y, d) => {
@@ -113,7 +113,7 @@ const SP = [
       put(-1, 2 - Math.round(w), Pu[7]); put(-2, 3 - Math.round(w * 1.5), Pu[6]);
       put(1, 0, G[5]);
     } },
-  { name: 'Many-mouthed blob', L: 16, bob: t => Math.sin(t * 2.2) * 2,
+  { name: 'Many-mouthed blob', L: FLOW_LENGTHS[6], bob: t => Math.sin(t * 2.2) * 2,
     draw(put, t) {
       const lobes = [[7, 0, 4.4 + Math.sin(t * 3) * 0.7, 3.6], [3.5, -1, 3 + Math.sin(t * 4 + 1) * 0.6, 2.8], [10.5, 1, 3.2 + Math.sin(t * 3.5 + 2) * 0.6, 3], [6, 2.4, 2.6 + Math.sin(t * 5 + 3) * 0.5, 2.4]];
       const inside = (x, y) => lobes.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1);
@@ -128,7 +128,7 @@ const SP = [
       });
       for (let x = 0; x < 15; x += 2) if (unit(x + Math.floor(t * 6)) > 0.5) { put(x, -5 - (unit(x) > 0.5 ? 1 : 0), Pu[6]); put(x, 5 + (unit(x + 3) > 0.5 ? 1 : 0), Pu[6]); }
     } },
-  { name: 'Toothed ring', L: 10, bob: t => 0,
+  { name: 'Toothed ring', L: FLOW_LENGTHS[7], bob: t => 0,
     draw(put, t) {
       ell(put, 5, 0, 5.2, 5.2, (x, y, d) => d > 0.72 ? G[3] : d > 0.32 ? G[2] : BLACK);
       for (let i = 0; i < 12; i++) { const a = t * 5 + i * Math.PI / 6; put(5 + Math.cos(a) * 5.6, Math.sin(a) * 5.6, G[5]); }
@@ -142,6 +142,11 @@ const SP = [
 export const lengthOfKind = k => SP[k].L;
 export const KINDS = SP.length;
 if (SP.length !== FLOW_KINDS) throw new Error('fish: FLOW_KINDS is the creatures drawn here');
+
+// The same eight seen through the rift (render/riftlife.js): one drawn into
+// any `put` at its own clock `t`, in the deep's drawn tones, and its bob.
+export const drawKind = (k, put, t) => SP[k].draw(put, t);
+export const bobOf = (k, t) => SP[k].bob(t);
 
 // --- the near stream and the meal, in the world ------------------------------------
 // Where each near creature is, and which one a meal is, are the sim's

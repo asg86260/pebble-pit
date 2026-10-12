@@ -31,6 +31,7 @@ import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 import { paintAbyssField } from './abyssfield.js';
 import { glimpseFrame } from '../glimpse.js';
+import { riftLifeFrame, drawRiftLife } from './riftlife.js';
 
 // What is lying on the hill, drawn after the rock and before the chips. Every
 // grain goes through `drawMark` so it looks like the thing it is; there are
@@ -134,10 +135,12 @@ const waver = (a, t) => {
 // `camX * (1 - k)`, so after the world transform it slides at `k` of the
 // yard's pace, and the gap between layers is the depth. A lattice with a
 // hash-jitter per cell, not a list: endless, free, identical frame to frame.
-function drawThrough(cx, cy, rad, t) {
+// Painted furthest first, with whatever is crossing at each depth (`life`,
+// render/riftlife.js) laid in front of its own sky and behind the nearer ones.
+function drawThrough(cx, cy, rad, t, life) {
   const inner = rad - P;                      // keep the rim's own edge clean
   if (inner < P) return;
-  for (let L = 0; L < RIFT_DEEP_LAYERS; L++) {
+  for (let L = RIFT_DEEP_LAYERS - 1; L >= 0; L--) {
     const f = RIFT_DEEP_LAYERS === 1 ? 0 : L / (RIFT_DEEP_LAYERS - 1);
     const k = RIFT_DEEP_NEAR + (RIFT_DEEP_FAR - RIFT_DEEP_NEAR) * f;
     const sp = RIFT_DEEP_SPACING * (1 + L * 0.5);   // thinner further back
@@ -161,6 +164,8 @@ function drawThrough(cx, cy, rad, t) {
         // round the edge and the middle stays dark.
         const bent = inner * Math.pow(d / inner, RIFT_BEND);
         ox *= bent / d; oy *= bent / d;
+        // something right up against the window has put this one out
+        if (life && life.blot && life.blot(Math.floor((cx + ox) / P), Math.floor((cy + oy) / P))) continue;
         // Each sparkles on its own phase, keyed to the star rather than the
         // clock alone, so they never blink together.
         const tw = 0.5 + 0.5 * Math.sin(t / RIFT_TWINKLE_MS * Math.PI * 2
@@ -175,6 +180,8 @@ function drawThrough(cx, cy, rad, t) {
         ctx.fill();
       }
     }
+    ctx.globalAlpha = 1;
+    drawRiftLife(life, L);
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
@@ -324,7 +331,7 @@ export function drawRift() {
   ctx.save();
   rimPath(cx, cy, rad, t, -P * 0.5);
   ctx.clip();
-  drawThrough(cx, cy, rad, t);
+  drawThrough(cx, cy, rad, t, riftLifeFrame(t, cx, cy, rad));
   ctx.restore();
 
   // The grains ARE of the yard and stay on cells. Each cell asks which side of

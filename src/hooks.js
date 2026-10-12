@@ -1153,6 +1153,7 @@ import { settle } from './crew/commute.js';
 import { deepPost } from './crew/deep.js';
 import { forceSerpent } from './snatch.js';
 import { startGlimpse } from './glimpse.js';
+import { startRiftLife } from './riftlife.js';
 import { postY } from './deep/place.js';
 
 // The pit drowned and the snatch played, so the shaft is open and the altar
@@ -1179,6 +1180,12 @@ HANDLES.__glimpse = (kind, o = {}) => {
   const g = startGlimpse(kind, clockNow(), o);
   return g && { ...g };
 };
+
+// Something crossing behind the torn rift now, `into` seconds along: 'shoal',
+// 'creature', or the serpent's 'coil', 'crest' or 'eye', with any of its
+// depth `d`, heading `dir`, lane `y`, creature `of` or shoal size `n` pinned
+// (riftlife.js). For a scene; the schedule brings them on its own.
+HANDLES.__riftLife = (kind, o = {}) => ({ ...startRiftLife(kind, clockNow(), o) });
 HANDLES.__demoOn = on => forceDemo(on);
 
 // Both facts true -- torn and drowned, and the sqwife out with her sheet put

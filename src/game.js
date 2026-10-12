@@ -19,6 +19,7 @@ import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sand
 import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine, landRefund } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { stepGlimpse } from './glimpse.js';
+import { stepRiftLife } from './riftlife.js';
 import { stepBeats } from './beats.js';
 import { wireCut } from './quarry.js';
 import { stepBelt, settleBelt, catchBelt, wireBelt } from './dust.js';
@@ -262,6 +263,9 @@ export const STEPS = [
   // and now and then the serpent showing at the drowned pit's surface: a
   // picture, stepped here so its rules are the yard's (glimpse.js)
   { name: 'glimpse',   step: c => stepGlimpse(c.now) },
+  // and before that, while the hole is only torn, what crosses behind the
+  // disc: the same kind of picture, under the same rules (riftlife.js)
+  { name: 'riftlife',  step: c => stepRiftLife(c.now) },
   // The deep, whether or not it is on screen: the serpent heals, the
   // weapons in the water land, the scales sink (docs/wave-serpent.md).
   { name: 'serpent',   step: c => stepSerpent(c) },
