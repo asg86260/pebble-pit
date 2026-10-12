@@ -5,12 +5,12 @@
 // bill: `dropZone` has walked the crew clear, and the wreck mines back as
 // dust.
 import { belowYard } from './route.js';
-import { S } from './state.js';
+import { S, floor } from './state.js';
 import { P, shieldWidth, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_FADE_MS, DOME_BURST_MS, DOME_SQUASH, DOME_BURST_GRAV, DOME_BURST_SPEED, DOME_BURST_FLING, DOME_BURST_LIFT, DOME_BURST_POP, DOME_BURST_JITTER, DOME_SLIDE_KEEP, ARCH_SPAN, DOME_SPAN, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
 import { rockSize, rockFootY, landRock, lumpCells, depthOf, clearBoulder, tipRockSand } from './rock.js';
 import { workOn } from './works.js';
 import { spawnSpoil, spawnChip } from './dust.js';
-import { shadeNear, depthShade } from './grid.js';
+import { shadeNear, depthShade, surfaceY, colOf } from './grid.js';
 import { now, frames } from './clock.js';
 // The yard's one generator, never `Math.random`, or a run cannot be had again
 // from its seed.
@@ -255,6 +255,11 @@ export function slideOnDome(ch, f) {
   const nx = dx / d, ny = up / d;
   ch.x = ox + nx * R - P / 2;
   ch.y = S.groundY - ny * R - P / 2;
+  // About to come down beside a foot, it comes down clear of it: the ground
+  // takes a grain by the column its left edge is in, and a grain hugging the
+  // shell low on the right still has that edge a hair inside.
+  if (ch.y + P >= surfaceY(floor, colOf(floor, ch.x)) - P)
+    ch.x = dx > 0 ? Math.max(ch.x, s.x + s.w) : Math.min(ch.x, s.x - P);
   let vUp = -ch.vy;
   const vn = ch.vx * nx + vUp * ny;
   if (vn < 0) { ch.vx -= vn * nx; vUp -= vn * ny; }
