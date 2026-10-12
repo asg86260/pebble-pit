@@ -123,6 +123,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Scales you grab off the deep's floor show on your pointer, and dropped on the furnace they fall in and count (src/selftest/deep.js).
 - After a refresh the deep's builders go back to a pod or station left half built and finish it (test/deep-build-reload.test.mjs).
 - Holding the right button in the deep picks out the crew down there as it does in the yard, the water veiled behind them and each body ringed (src/selftest/deep.js).
+- Gatherers no longer stack into what looks like one worker: each goes for scales nobody else is on and they swim in file, a body apart (test/gather-spread.test.mjs).
 
 ## Unreleased
 

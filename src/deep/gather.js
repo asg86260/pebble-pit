@@ -14,6 +14,7 @@ import { S, deepBed } from '../state.js';
 import { P, WORKER, GATHER_SCOOP } from '../config.js';
 import { haulCap, haulSpeed } from '../levels.js';
 import { topRow } from '../grid.js';
+import { frames } from '../clock.js';
 import { tossX } from './place.js';
 import { scoop, nextStretch, bedX, tossIn } from './scales.js';
 import { mid, feet, working, swim } from './arms.js';
@@ -21,8 +22,40 @@ import { rest } from './rest.js';
 
 // How far either side of where it stands a gatherer reaches for scales.
 const REACH = P * 3;
+// A gatherer's stretch (`w.col`) is its claim while it goes for it and
+// scoops there: no other picks a stretch whose reach would cross it, so two
+// never scoop the same scales or stand in one body's place. It is let go when
+// the hands turn for the crusher, so a heap is not held by a body away
+// tossing. `w.col` is not saved: after a reload each picks again in turn,
+// and the claims come back from the picks.
+const APART = 2 * REACH / P;
+const claimed = w => {
+  const kept = [];
+  for (const o of S.workers) if (o !== w && o.type === w.type && o.col >= 0 && o.goal !== 'haul') kept.push(o.col);
+  return kept;
+};
+
+// Two gatherers set off together -- from the crusher after tossing at
+// once, or down the shaft -- would swim the same line at the same pace and
+// read as one body. A gatherer about to swim on top of one moving the same
+// way just ahead of it (or level with it and earlier in the crew) holds a
+// beat, so they go in file a body's width apart. Only behind a body that is
+// moving: one stood scooping is swum past, never waited on.
+const ahead = (w, o, dir, step) => {
+  const d = (o.x - w.x) * dir;
+  return d < WORKER + step && (d > 0 || (d === 0 && S.workers.indexOf(o) < S.workers.indexOf(w)));
+};
+const go = (w, tx, ty, pace) => {
+  const dir = Math.sign(tx - w.x), step = pace * frames();
+  if (dir && S.workers.some(o => o !== w && o.type === w.type && o.heading === dir &&
+                                 (o.goal === 'go' || o.goal === 'haul') &&
+                                 Math.abs(o.y - w.y) < WORKER && ahead(w, o, dir, step))) return false;
+  w.heading = dir;
+  return swim(w, tx, ty, pace);
+};
 
 export const stepGatherer = (w, c) => {
+  w.heading = 0;
   if (!working(w)) return;
   const cap = haulCap();
   const pace = haulSpeed();
@@ -32,7 +65,8 @@ export const stepGatherer = (w, c) => {
   // crusher, and the load goes over the lip.
   if (w.carry >= cap || (w.carry > 0 && (w.goal === 'haul' || !deepBed.n))) {
     w.goal = 'haul';
-    if (!swim(w, tossX() - WORKER / 2, feet(), pace)) return;
+    w.col = -1;
+    if (!go(w, tossX() - WORKER / 2, feet(), pace)) return;
     tossIn(mid(w), w.y, w.load);
     w.load = [];
     w.carry = 0;
@@ -48,11 +82,18 @@ export const stepGatherer = (w, c) => {
   }
   // The stretch it was working gave out, or it has none: pick again.
   if (!(w.col >= 0) || w.col >= deepBed.cols || topRow(deepBed, w.col) < 0) {
-    w.col = nextStretch(mid(w), cap - w.carry, tossX(), REACH);
+    w.col = nextStretch(mid(w), cap - w.carry, tossX(), REACH, claimed(w), APART);
     w.owed = 0;
-    if (w.col < 0) return;
+    // Everything lying is somebody else's: home with what it has, or wait by
+    // the crusher until a stretch comes free.
+    if (w.col < 0) {
+      if (w.carry > 0) w.goal = 'haul';
+      else { w.goal = 'rest'; rest(w, 'crusher', c, pace); }
+      return;
+    }
   }
-  if (!swim(w, bedX(w.col) - WORKER / 2, feet(), pace)) { w.goal = 'go'; return; }
+  if (!go(w, bedX(w.col) - WORKER / 2, feet(), pace)) { w.goal = 'go'; return; }
+  w.heading = 0;
   w.goal = 'scoop';
   w.owed = (w.owed || 0) + GATHER_SCOOP * c.dt / 1000;
   const n = Math.min(cap - w.carry, Math.floor(w.owed));

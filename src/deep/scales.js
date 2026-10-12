@@ -114,8 +114,11 @@ export function scoop(x, n, reach) {
 // banked for the swim. A stretch is worth what lies within `reach` of it, up
 // to the load, and costs the swim there and on to the crusher; the best
 // worth over cost wins, so a near stretch holding a load beats a tall heap
-// across the deep. -1 on a bare floor.
-export function nextStretch(x, want, drop, reach) {
+// across the deep. A stretch within `apart` columns of one in `kept` (the
+// stretches the other gatherers are on) is theirs, so a second body goes for
+// other scales, or along the same heap clear of the first. -1 on a bare
+// floor, or one with nothing on it that is not spoken for.
+export function nextStretch(x, want, drop, reach, kept = [], apart = 0) {
   if (!deepBed.grid || !deepBed.n) return -1;
   const span = Math.max(0, Math.round(reach / P));
   const lying = new Array(deepBed.cols);
@@ -126,7 +129,7 @@ export function nextStretch(x, want, drop, reach) {
     // The running sum of the stretch's columns, [c - span, c + span].
     if (c + span < deepBed.cols) near += lying[c + span];
     if (c - span - 1 >= 0) near -= lying[c - span - 1];
-    if (!lying[c]) continue;
+    if (!lying[c] || kept.some(k => Math.abs(k - c) < apart)) continue;
     const at = bedX(c);
     const v = Math.min(want, near) / (Math.abs(at - x) + Math.abs(at - drop) + P);
     if (v > score) { score = v; best = c; }
