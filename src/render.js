@@ -23,7 +23,7 @@ import { drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawBuried, drawIntro, drawKitStands,
-         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil } from './render/crew.js';
+         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil, drawDeepSight } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { deepTop } from './deep/place.js';
@@ -205,6 +205,7 @@ const LAYERS = [
   { name: 'serpent', draw: drawSerpent },
   { name: 'barrier', draw: drawBarrier },  // the explosive resist, floating under the coil
   { name: 'deep stream near', draw: drawFishNear },   // the near crossings, in front of the serpent
+  { name: 'deep sight', draw: drawDeepSight },   // the right button held: the deep behind its crew veiled, each ringed
   { name: 'swimmers', draw: drawSwimmers },
   // The fighters in front of the coil they strike and the swimmers passing,
   // and what leaves them -- arrows, beams, charges, hexes, notes -- over all
@@ -293,7 +294,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'deep fish', 'deep stream far', 'deep stream near', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'deep fish', 'deep stream far', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

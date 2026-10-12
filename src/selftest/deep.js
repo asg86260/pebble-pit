@@ -447,3 +447,85 @@ TESTS.push(['deep: a handful swept off the floor shows on the pointer, and let g
     ok(S.scales - purse === held, 'and every one fell into the crusher', `${S.scales - purse} of ${held}; one, off the crusher's corner: ${path.join(' ')}`)
   ];
 }]);
+
+// The right button held looks at the crew (DESIGN.md, "Holding the right
+// button looks at the crew") in the deep as in the yard: what is behind the
+// bodies veiled, each body ringed. Pressed through the real pointer on a
+// body, then the frame drawn with the sight held and with it let go, from the
+// same instant: the ring's left side has gone over to the body's own ink, and
+// the veil has changed a good share of the window (the deep's open water is
+// its paper, and a veil over paper changes nothing). The yard is the control.
+import { inTheDeep } from '../render/crew.js';
+import { isFighter } from '../render/arms.js';
+import { WORKER, SIGHT_IN_MS, SIGHT_GAP, SIGHT_RING, DEEP_SURFACE } from '../config.js';
+TESTS.push(['deep: the right button held veils the deep and rings its crew, as in the yard', async () => {
+  const c = document.getElementById('c'), g = c.getContext('2d'), k = devicePixelRatio || 1;
+  const px = (wx, wy) => {
+    const [x, y] = onScreen(wx, wy);
+    return [...g.getImageData(Math.floor(x * k), Math.floor(y * k), 1, 1).data].slice(0, 3).join(',');
+  };
+  // Zoomed out, a ring two pixels wide is under two on the glass and comes
+  // out part-toned, and the page's press shades it too: the ring is a pixel
+  // well over toward the body's ink from what is there with the sight let go.
+  const tone = p => +p.split(',')[0];
+  const toward = (held, free, ink) => Math.abs(tone(held) - tone(ink)) + 64 < Math.abs(tone(free) - tone(ink));
+  const look = (half, w) => {
+    const [x, y] = onScreen(w.x + WORKER / 2, w.y + WORKER / 2);
+    point('pointerdown', x, y, 2, 2);
+    const held = S.crewSight != null;
+    run(SIGHT_IN_MS / 1000 + 0.2);
+    const read = () => {
+      draw();
+      const ink = px(w.x + 1, w.y + WORKER / 2);
+      const side = [];
+      for (let dy = P; dy < WORKER - P; dy += 2) side.push(px(w.x - SIGHT_GAP - SIGHT_RING / 2, w.y + dy));
+      return { ink, side, all: g.getImageData(0, 0, c.width, c.height).data };
+    };
+    const on = read();
+    const keep = S.crewSight;
+    S.crewSight = null;
+    const off = read();
+    S.crewSight = keep;
+    point('pointerup', x, y, 0, 2);
+    let differ = 0, n = 0;
+    for (let i = 0; i < on.all.length; i += 64, n++) if (on.all[i] !== off.all[i]) differ++;
+    return [
+      ok(held, `${half}: the right button down on a body holds the sight`, String(held)),
+      ok(on.side.every((p, i) => toward(p, off.side[i], on.ink)),
+         `${half}: and the body wears a ring`, `ink ${on.ink}; held ${on.side.join(' ')}; let go ${off.side.join(' ')}`),
+      ok(differ > n / 10, `${half}: and what is behind it is veiled`, `${differ} of ${n} samples`)
+    ];
+  };
+  deepYard();
+  const onGlass = w => w.x > S.camX + 40 && w.x < S.camX + S.viewW - 40;
+  const up = S.workers.find(w => !w.lifted && !w.inside && !inTheDeep(w) && onGlass(w));
+  const yard = up ? look('yard', up) : [ok(false, 'yard: a body on the glass')];
+  window.__view('deep');
+  run(VIEW_GLIDE_S + 1);
+  const down = S.workers.find(w => !w.lifted && inTheDeep(w) && !isFighter(w) &&
+                                   w.y > deepTop() + DEEP_SURFACE + P * 4 && onGlass(w));
+  const deep = down ? look('deep', down)
+                    : [ok(false, 'deep: a body on the glass', String(S.workers.filter(inTheDeep).length))];
+  // The rest of the pointer's crew controls down there: with the right button
+  // held, the left takes the body under the hand (a chord arrives as a move),
+  // and the middle button drags the view along.
+  let lifted = false, panned = false;
+  if (down) {
+    const [x, y] = onScreen(down.x + WORKER / 2, down.y + WORKER / 2);
+    point('pointerdown', x, y, 2, 2);
+    point('pointermove', x, y, 3, 0);
+    lifted = down.lifted === true;
+    point('pointerup', x, y, 0, 2);
+    run(3);
+    for (const dx of [-120, 120]) {
+      const was = S.camX;
+      point('pointerdown', x, y, 4, 1);
+      point('pointermove', x + dx, y, 4, -1);
+      point('pointerup', x + dx, y, 0, 1);
+      panned = panned || S.camX !== was;
+    }
+  }
+  deep.push(ok(lifted, 'deep: right and left together lift the body', String(lifted)),
+            ok(panned && S.view === 'deep', 'deep: and the middle button drags the view', `${panned} ${S.view}`));
+  return [...yard, ...deep];
+}]);
