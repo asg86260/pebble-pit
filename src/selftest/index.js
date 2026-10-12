@@ -115,17 +115,29 @@ export const TESTS = [
     } finally { f.remove(); }
   }],
 
-  ['the materials show the coin marks the counter draws, not glyph canvases', async () => {
+  ['the list is names only; the materials wear their coin marks on the entry, and an entry with no icon has no icon box', async () => {
     newRun();
     await settle();
     Object.assign(S, { seenShard: true, seenSpore: true, seenSpark: true });
+    window.__crew(2, 2);
+    run(1);
     await keyI();
     const out = [];
+    const rows = [...book().querySelectorAll('.list .it')];
+    out.push(ok(rows.length > 0 && rows.every(b => !b.querySelector('canvas, .mark, .pic')),
+      'no list row carries a canvas, a coin mark or an icon box'));
     for (const k of ['dust', 'shard', 'spore', 'spark']) {
-      const b = book().querySelector(`.it[data-key="${k}"]`);
-      out.push(ok(!!b?.querySelector(`.mark i.${k}`) && !b.querySelector('canvas'),
-        `${k} wears its coin mark`));
+      book().querySelector(`.it[data-key="${k}"]`)?.click();
+      await raf();
+      const h = book().querySelector('.entry .head');
+      out.push(ok(!!h?.querySelector(`.pic .mark i.${k}`) && !h.querySelector('canvas'),
+        `${k} wears its coin mark on its entry`));
     }
+    book().querySelector('.it[data-key="rockhand"]')?.click();
+    await raf();
+    const h = book().querySelector('.entry .head');
+    out.push(ok(!!h && !h.querySelector('.pic, canvas, .mark') && !!h.firstElementChild?.querySelector('.name'),
+      'an entry with no icon opens with no icon box, its name first'));
     await esc();
     return out;
   }],

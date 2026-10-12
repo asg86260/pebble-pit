@@ -71,11 +71,7 @@ function fill(el) {
       b.type = 'button';
       b.className = 'it' + (e.key === chosen ? ' on' : '');
       b.dataset.key = e.key;
-      const pic = document.createElement('span');
-      pic.className = 'pic';
-      const p = picture(e);
-      if (p) pic.appendChild(p);
-      b.append(pic, Object.assign(document.createElement('span'), { className: 'nm', textContent: e.name }));
+      b.append(Object.assign(document.createElement('span'), { className: 'nm', textContent: e.name }));
       if (unread(e)) b.appendChild(Object.assign(document.createElement('i'), { className: 'newdot' }));
       b.addEventListener('click', () => pick(el, e.key));
       list.appendChild(b);
