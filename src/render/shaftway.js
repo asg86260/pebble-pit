@@ -23,20 +23,24 @@ const size = rows => ({ w: rows[0].length * P, h: rows.length * P });
 const UP_BOX = size(UP), LEFT_BOX = size(LEFT);
 
 const snap = v => Math.round(v / P) * P;
-const shown = () => !!S.portalOpen && !gliding();
+export const arrowShown = () => !!S.portalOpen && !gliding();
+const shown = arrowShown;
 
 // Where the arrow is in its half, top-left, on the grid. The bob is a whole
 // cell each way on a slow sine, so it moves a cell at a time and never sits
 // half off the grid: along the line each arrow points, up and down in the
-// deep, toward the portal's lip and back in the yard.
+// deep, toward the portal's lip and back in the yard. `still` leaves the bob
+// out, for a pad's focus standing on the arrow (stops.js), which would
+// otherwise twitch a cell with it.
 const bob = () => snap(Math.sin(now() / SHAFT_ARROW_MS * Math.PI * 2) * SHAFT_ARROW_BOB);
-export function arrowBox(deep) {
+export function arrowBox(deep, still = false) {
+  const b = still ? 0 : bob();
   if (deep) {
     const c = deepPortal();
-    return { x: snap(c.x - UP_BOX.w / 2), y: snap(c.y + c.r + SHAFT_ARROW_DOWN) - bob(), ...UP_BOX };
+    return { x: snap(c.x - UP_BOX.w / 2), y: snap(c.y + c.r + SHAFT_ARROW_DOWN) - b, ...UP_BOX };
   }
   const c = portalCircle();
-  return { x: snap(c.x + holeReach() + SHAFT_ARROW_SIDE) + bob(), y: snap(c.y - LEFT_BOX.h / 2), ...LEFT_BOX };
+  return { x: snap(c.x + holeReach() + SHAFT_ARROW_SIDE) + b, y: snap(c.y - LEFT_BOX.h / 2), ...LEFT_BOX };
 }
 
 // A click near either: a cell of slack round the drawing, since it is small

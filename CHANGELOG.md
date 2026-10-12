@@ -142,6 +142,7 @@ this section; the release that switches it on moves these under Unreleased.
 **New this release**
 - New words on the rescue sheet, the demo's store link and an empty achievements page.
 - The board of rescue times is gone: no name box or post on the rescue sheet, no times page, no name on the board in settings.
+- A controller plays the whole game: the d-pad hops between the places a click lands on, A does what the click does, and the Steam Deck's back buttons and trackpads come mapped (test/pad.test.mjs).
 - On Steam, every in-game achievement is a Steam achievement, and the ones already won are given at launch (test/desk-steam-achievements.test.mjs).
 - A Steam build of the full game and of the demo: saves sync through Steam Cloud, and the full game offers to carry on a demo save on its first launch (test/desk-steam.test.mjs).
 - On a phone the yard is drawn smaller, 130 cells across at once, so every shield's whole answer fits upright and no scene zooms (test/phone-view.test.mjs).

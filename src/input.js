@@ -52,6 +52,7 @@ import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
 import { clickDeep, onOrb } from './deep/serpent.js';
 import { nearestSeg, coilThick } from './deep/place.js';
+import { stops, stopMid } from './stops.js';
 
 const canvas = document.getElementById('c');
 
@@ -606,7 +607,8 @@ function setCursor(x, y) {
   canvas.style.cursor = want;
 }
 
-function pan(dx) {
+// Exported for the pad's right stick (pad.js), which pans the same way.
+export function pan(dx) {
   S.camTo = null;                          // the player takes the view back
   unfollow();                              // including from whoever it was on
   const was = S.camX;
@@ -620,7 +622,7 @@ function pan(dx) {
 // platform's own fling (world.js reads that back and calls this). A board
 // comes down when its station is scrolled out of the window: a sheet that
 // follows you two windows off it is a menu that will not go away.
-function viewTaken() {
+export function viewTaken() {
   const open = openBoard();
   if (!open) return;
   const r = standRect(open);
@@ -788,17 +790,14 @@ export function stepPan() {
 }
 
 // The places a digit can send the view: the rock, then every building that
-// stands today, right to left. Read on the press rather than kept, so a
-// building that went up since is on the list by existing. The noticeboard
-// is furniture, not a place, and stands in the house's own gap anyway.
+// stands today, right to left. Read on the press rather than kept, off the
+// one list the hop arrows and the pad walk (stops.js), so a building that
+// went up since is on the list by existing. The noticeboard is furniture,
+// not a place, and stands in the house's own gap anyway. The rock is where
+// it stands even between rocks, which the stops' own rock box is not.
 function jumpStops() {
-  const stops = [];
-  for (const st of STATIONS) {
-    if (st.key === 'stats' || !st.stand || !st.open()) continue;
-    const r = st.stand();
-    if (r) stops.push(r.x + r.w / 2);
-  }
-  return [S.cx, ...stops.sort((p, q) => q - p)];
+  const places = stops().filter(s => s.kind === 'station' && s.key !== 'stats').map(stopMid);
+  return [S.cx, ...places.sort((p, q) => q - p)];
 }
 function jumpTo(i) {
   const x = jumpStops()[i];

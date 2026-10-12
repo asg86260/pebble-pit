@@ -1,15 +1,18 @@
 # Still to do
 
-## Controller support -- DESIGNED, AWAITING SIGN-OFF (2026-10-12)
+## Controller support -- BUILT, WORDS AND STEAMWORKS OPEN (2026-10-12)
 
-"Controller support" in DESIGN.md: a pad moves a focus between the things
-a click lands on, with a held-trigger hand for sweeping, throwing and
-dropping a body anywhere. Mocks: docs/mocks/controller-focus-2026-10-12.html
-(the marker on every surface, three styles) and
-docs/mocks/controller-map-2026-10-12.html (Xbox and Deck maps). Waiting on
-the owner's vote: the marker style; hops or a free cursor; mouse and pad
-both live (last input wins) or a pad mode; the Gamepad API with a Steam
-Input default config, or Steam Input's native API. No code until then.
+"Controller support" in DESIGN.md (built). Open:
+- **Words**: the controls page's pad-only rows (`PAD_WORDS`, src/controls.js)
+  are placeholders marked `[owner's words: ...]`, shown to a player once a
+  pad has been seen. The owner writes them in that one object.
+- **Steam Input**: electron/steam-input/controller_neptune.vdf is the Deck's
+  default config, unproven: there is no app id to upload it under (see
+  "Three builds" below). Its binding names are from the published format,
+  not from a Steamworks export.
+- **Nobody has held a pad**: every check drives a stand-in pad; the feel of
+  the glide, the hand's speed (`PAD_HAND_SPEED`) and the repeat
+  (`PAD_REPEAT_*`, config/pad.js) are first guesses.
 
 ## The index -- BUILT, WORDS AND DRAWINGS OPEN (2026-10-11)
 
@@ -36,7 +39,6 @@ Open:
 - **Steam achievements** are wired (src/achievements.js): the owner creates the
   49 in Steamworks from `node tools/steam-achievements.mjs` (API name, in-game
   id, in-game title), writes their text and draws their icons.
-- **Controller support**: not built.
 - The demo's Steam Cloud is not read by the full game's carry-over: the SDK
   reaches only the running app's remote storage. The demo's disk copy, which
   the demo itself keeps in step with its cloud, is what is offered.

@@ -14,22 +14,21 @@ import { HOP_Y, HOP_SIZE } from './config.js';
 import { S } from './state.js';
 import { coarse } from './prefs.js';
 import { lookAt } from './world.js';
-import { STATIONS, standRect, showPanel } from './board.js';
+import { showPanel } from './board.js';
 import { station } from './stations.js';
 import { GLYPHS, drawGlyph } from './glyphs.js';
 import { onTap } from './tap.js';
 import { inDeep } from './view.js';
-import { deepTop } from './deep/place.js';
+import { stops, stopMid } from './stops.js';
 
 
-// Every standing station in the half on screen, by where it stands, left to
-// right: the deep's stations are under the world, and a hop is a glide
-// across, never down the shaft.
-const here = r => (r.y >= deepTop()) === inDeep();
+// Every standing station with a board in the half on screen, by where it
+// stands, left to right: the deep's stations are under the world, and a hop
+// is a glide across, never down the shaft. Read off the one list of stops
+// the digit keys and the pad walk too (stops.js).
 const standing = () =>
-  STATIONS.map(key => ({ key, r: standRect(key) })).filter(s => s.r && here(s.r))
-          .map(s => ({ key: s.key, mid: s.r.x + s.r.w / 2 }))
-          .sort((a, b) => a.mid - b.mid);
+  stops(inDeep() ? 'deep' : 'yard').filter(s => s.kind === 'station' && s.board)
+    .map(s => ({ key: s.key, mid: stopMid(s) }));
 
 // The next station past the view's center, in a direction: the first whose
 // middle is past the center by more than a cell, so a station under the

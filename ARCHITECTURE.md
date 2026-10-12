@@ -46,6 +46,8 @@ field or two on `S` and a constant or two in `config.js`.
 | `raise.js` | the call to build the bench: the row it is finished under, and what pressing it does (the button itself is seated by `board.js`) | rarely |
 | `hands.js` | what a click, a drag and a flick do | yes |
 | `input.js` | events to calls, and nothing else | yes |
+| `stops.js` | the one list of stops -- the rock, every standing station, the way through the portal, the orb -- each with its box; the hop arrows, the digit keys and the pad each take their part of it | a row in `STATIONS` is a stop by existing |
+| `pad.js` | a pad: read once a frame and turned into the calls input.js makes, the focus over the stops and their controls, the hand on RT, the carry on LT + A; `padpage.js` is the same on the page's rows, `padread.js` the Gamepad API, `padglide.js` where the marker is drawn | yes |
 | `abyssintro.js` | the first trip down: the scene's clock, her body staged between the arrival and her own swing, and what the drawing reads (his hop and call, the bar's fade, her speed lines); the framing is cutscene.js's deep path | yes |
 | `finale.js` | the serpent's death and after: her gear hung back on her station and taken up by one of the deep's crew, the pair through the portal and down the yard with the crew falling in behind, the sunset, the yard held through it all and its sheet (`workPaused`); then the two of them at the yard's left end for good, off the crew (`S.retired`). Drawn by `render/finale.js` | yes |
 | `skip.js` | the space bar, held, ending whichever scene has the yard; `skiphint.js` is the hint under it, in the shell | yes |
@@ -190,6 +192,27 @@ them, for a by-hand name no saver claims (or two claim), and for one
 player reaches it. The two `shop-coverage-*.test.mjs` files walk the table:
 hidden before the gate, shown after, bought through `__buy`, and every board
 reading the same after a cold reload. A row with no line is a red check.
+
+## The pad
+
+A pad is a third front end on the calls the mouse and the finger make
+(DESIGN.md, "Controller support"), and like input.js it decides nothing.
+`padread.js` polls the Gamepad API once a frame (it raises no event for a
+button) and folds every pad into one reading; `pad.js` turns that into a
+focus moved between the stops (`stops.js`) and the controls inside each --
+a roster's minus and plus, the casino's arm and sign, the pots, the coil --
+and A into the click the focus stands for; `padpage.js` takes over whenever
+a part of the page has the pad (a story's sheet, the held sheet, a window,
+an open list, a board or the corner cards the pad went into), moving the
+page's own focus between its buttons and clicking them. `padglide.js` keeps
+where the marker is drawn and `render/padmark.js` paints it in the yard;
+over the page it is painted on `#padmark`. `main.js` calls `stepPad` before
+the step and `paintPad` after the page is written. The mouse and the pad
+are both live: a press shows the marker (`S.padOn`), a mouse move hides it.
+The checks drive the same reading through `__pad` (node) or a stand-in
+`navigator.getGamepads` (src/selftest/pad.js). The Deck's back buttons and
+trackpads are mapped onto inputs the game already reads by the Steam Input
+default in `electron/steam-input/`, which Steamworks holds, not the depot.
 
 ## The scenes
 

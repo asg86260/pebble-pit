@@ -467,21 +467,28 @@ export function tipFollowsView() {
   if (tipCam[0] !== S.camX || tipCam[1] !== S.camY || tipCam[2] !== S.zoom) showTipAt(null);
 }
 
-export function showTip(text, at) {
+export function showTip(text, at, lead = null) {
   if (!text) return showTipAt(null);
-  showTipAt(text, (at.x - S.camX) * S.zoom, (at.y - S.camY) * S.zoom + P * 4, true);
+  showTipAt(text, (at.x - S.camX) * S.zoom, (at.y - S.camY) * S.zoom + P * 4, true, false, lead);
 }
 
 // The same tip, seated in screen space for things on the page. `over` lets the
 // note stand on the board: a shelf tile's note sits beside its tile, over the
 // neighboring tiles, where standing clear of the whole board would put it on
-// the far side of the sheet from the tile.
-export function showTipAt(text, sx, sy, centred, over = false) {
+// the far side of the sheet from the tile. `lead` is a pad's button glyph
+// (padread.js) worn in front of the words, for a tip a pad's focus asked for.
+export function showTipAt(text, sx, sy, centred, over = false, lead = null) {
   if (!text) {
     if (tipFor !== null) { tipEl.hidden = true; tipFor = null; }
     return;
   }
-  if (text !== tipFor) { tipEl.textContent = text; tipEl.hidden = false; tipFor = text; }
+  const said = lead ? `${lead.textContent}|${text}` : text;
+  if (said !== tipFor) {
+    if (lead) tipEl.replaceChildren(lead, ` ${text}`);
+    else tipEl.textContent = text;
+    tipEl.hidden = false;
+    tipFor = said;
+  }
   tipCam = [S.camX, S.camY, S.zoom];
   const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
   let x = centred ? sx - w / 2 : sx;
