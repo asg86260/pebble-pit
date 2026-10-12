@@ -1785,6 +1785,19 @@ export const TESTS = [
     const words = !!block()?.querySelector('.name')?.textContent && !block()?.querySelector('.note') && !!card.querySelector('.say')?.textContent;
     const unticked = !!dust() && !dust().classList.contains('done');
     const dim = buyBtn()?.disabled === true;
+    // each line is a bar: its fill is have over need of the line's own width
+    const fillOf = async li => {
+      const t = performance.now();
+      while (performance.now() - t < 700) await new Promise(r => requestAnimationFrame(r));
+      const [h, n] = li.querySelector('.num').textContent.split('/').map(x => parseFloat(x));
+      return { want: h / n, got: parseFloat(getComputedStyle(li, '::before').width) / li.getBoundingClientRect().width, line: li.textContent };
+    };
+    const fillA = dust() ? await fillOf(dust()) : null;
+    const fillsA = !!fillA && fillA.want > 0 && fillA.want < 1 && Math.abs(fillA.got - fillA.want) < 0.02;
+    window.__give(50);
+    await settle(0.2);
+    const fillB = dust() ? await fillOf(dust()) : null;
+    const fillsB = !!fillB && fillB.want > (fillA?.want ?? 1) && Math.abs(fillB.got - fillB.want) < 0.02;
     // the line and the bill are click-through; the buy is not
     const say = card.querySelector('.say'), sr = say.getBoundingClientRect();
     const under = document.elementFromPoint(sr.left + 4, sr.top + sr.height / 2);
@@ -1803,6 +1816,7 @@ export const TESTS = [
     // affordable is not done: the card stays up, still selling the props
     const upWhenLit = await cardShows('props', 'offer');
     const ticked = !!dust()?.classList.contains('done');
+    const fullBar = dust() ? Math.abs((await fillOf(dust())).got - 1) < 0.01 : false;
     const lit = buyBtn()?.disabled === false;
     const had = state().stored;
     const litSays = `${dust()?.textContent}; buy ${buyBtn()?.disabled ? 'dim' : 'lit'}; card ${card.hidden ? 'hidden' : 'up'}`;
@@ -1828,6 +1842,8 @@ export const TESTS = [
     return [
       ok(offer && words, "the props are on offer on the story's card, named, under the step's line, with no shop description", firstSays),
       ok(unticked && dim, 'short of the dust, its line is unticked and the buy dimmed'),
+      ok(fillsA && fillsB, "the dust line's fill is its have over its need, and grows as dust comes in", `${JSON.stringify(fillA)} ${JSON.stringify(fillB)}`),
+      ok(fullBar && ticked, 'a met line is full and ticked'),
       ok(lineThrough && billThrough, 'the card is click-through to the yard', `${under?.id || under?.tagName}`),
       ok(buyTakes, 'but its buy takes the pointer'),
       ok(upWhenLit && ticked && lit, 'with the dust the card stays up, the line ticks and the buy lights', litSays),
@@ -1880,6 +1896,12 @@ export const TESTS = [
     const lines = [...(block?.querySelectorAll('.bill li') || [])];
     const coins = lines.filter(li => li.dataset.money).length;
     const clipped = lines.filter(li => li.scrollWidth > li.clientWidth + 1).length;
+    const widths = new Set(lines.map(li => Math.round(li.getBoundingClientRect().width)));
+    const bars = lines.map(li => li.style.getPropertyValue('--p'));
+    const own = lines.every(li => {
+      const [h, n] = li.querySelector('.num').textContent.split('/').map(x => parseFloat(x));
+      return /[kKmM]/.test(li.textContent) || Math.abs(parseFloat(li.style.getPropertyValue('--p')) - Math.min(1, h / n)) < 0.02;
+    });
     const card = document.getElementById('objective').getBoundingClientRect();
     const btn = block?.querySelector('button.buy')?.getBoundingClientRect();
     const inside = !!btn && btn.right <= card.right && btn.left >= card.left;
@@ -1887,6 +1909,7 @@ export const TESTS = [
       ok(block?.dataset.key === 'dome' && block?.dataset.mode === 'offer', "the dome is on offer on the story's card", block?.dataset.key),
       ok(coins === 4 && lines.length === 4, 'its bill is four coins, no clock', `${coins} coins, ${lines.length} lines`),
       ok(clipped === 0 && inside, 'and none of it runs out of the card', `${clipped} clipped`),
+      ok(widths.size === 1 && own, 'its four lines share one width and each fills by its own coin', `${[...widths]} ${bars}`),
     ];
   }],
 

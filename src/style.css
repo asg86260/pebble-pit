@@ -2088,7 +2088,15 @@ html.dark .modal {
 #objective .barrier .pay.one { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
 #objective .barrier .bill { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: auto auto auto;
                             justify-content: start; align-items: center; column-gap: 4px; row-gap: 1px; }
-#objective .barrier .bill li { display: contents; white-space: nowrap; }
+/* each line is its own bar: a grey fill grows behind it by have over need
+   (--p, set in objbarrier.js), and the lines sit on the bill's columns by
+   subgrid, so they share one width and compare at a glance */
+#objective .barrier .bill li { position: relative; display: grid; grid-column: 1 / -1; grid-template-columns: subgrid;
+                               align-items: center; padding: 1px 4px; white-space: nowrap; box-shadow: inset 0 0 0 1px var(--ink-8); }
+#objective .barrier .bill li::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--p, 0) * 100%);
+                                       background: var(--ink-8); transition: width .4s ease; }
+#objective .barrier .bill li > * { position: relative; }
+body.still #objective .barrier .bill li::before { transition: none; }
 #objective .barrier .bill li > * { transition: opacity 1s ease; }
 #objective .barrier .bill li.done > * { opacity: .55; }
 #objective .barrier .bill .num { text-align: right; padding-left: 2px; font-variant-numeric: tabular-nums; }
