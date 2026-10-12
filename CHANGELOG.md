@@ -120,6 +120,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep's build button is drawn as a button again, and fades in and out (`node tools/look.mjs party-button`).
 - The Scout's arrows, the Assassin's daggers and the Hexer's bolts are seen flying up to the serpent, not stuck against it the whole way (`node tools/look.mjs deep-scout`).
 - Gatherers work the scales lying nearest the crusher first instead of swimming across the deep to the tallest heap (test/gather.test.mjs).
+- Scales you grab off the deep's floor show on your pointer, and dropped on the furnace they fall in and count (src/selftest/deep.js).
 
 ## Unreleased
 

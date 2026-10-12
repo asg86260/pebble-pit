@@ -14,8 +14,8 @@ import { capacity, tossReach } from './levels.js';
 import { now } from './clock.js';
 import { rand } from './rng.js';
 import { noteThrow, noteCatch } from './notices.js';
-import { inDeep } from './deep/place.js';
-import { scoop, bedNear } from './deep/scales.js';
+import { inDeep, crusherRect } from './deep/place.js';
+import { scoop, bedNear, tossIn } from './deep/scales.js';
 
 export function track(x, y) {
   S.trail.push({ x, y, t: now() });
@@ -117,8 +117,18 @@ function sweepScales(mx, my) {
 export function release(x, y) {
   const { vx, vy } = throwVel();
   // Scales in the hand go into the water where they are let go, on the
-  // deep's own gravity: over the hopper, they fall in and are crushed.
+  // deep's own gravity: over the hopper, they fall in and are crushed. Let go
+  // on the furnace itself, below its mouth, they would sink behind the brick
+  // to the floor, so the hand tosses them up over the lip on the gatherers'
+  // arc instead: the furnace is the thing a player drops them on.
   if (S.heldScales) {
+    const c = crusherRect();
+    if (x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h) {
+      tossIn(x, y, Array.from({ length: S.heldScales }, (_, i) => S.motes[i]?.s || 1));
+      S.heldScales = 0;
+      S.motes = [];
+      return;
+    }
     for (let i = 0; i < S.heldScales; i++) {
       S.sinking.push({ x: x + (rand() - 0.5) * P * 4, y: y + (rand() - 0.5) * P * 4,
                        vx: vx * DEEP_THROW, vy: vy * DEEP_THROW, s: S.motes[i]?.s || 1 });

@@ -24,7 +24,8 @@ import { rockLeft } from './world.js';
 import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
-import { mouthX, portalX, spotX, coilAt, bellySeg, slotX } from './deep/place.js';
+import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor } from './deep/place.js';
+import { sweep } from './hands.js';
 import { nextMeal, turned, windowS } from './deep/meals.js';
 import { KINDS } from './render/fish.js';
 import { buildStation, nextSlot } from './deep/party.js';
@@ -595,6 +596,19 @@ const deepScenes = {
   crusher: { about: 'the deep', say: 'the crusher: gatherers tossing scales into the hopper, the fire burning up',
     run: () => {
       deepYard({ spare: 3, loose: 900, run: 12 });
+      lookDeep(spotX('crusher') + S.viewW * 0.3);
+    } },
+  // Your hand in the deep: a handful swept off the floor beside the crusher
+  // and held over the furnace's door, on the pointer as the yard's dust is.
+  'deep-grab': { about: 'the deep', say: 'a handful of scales off the floor, held on the pointer over the furnace',
+    run: () => {
+      deepYard({ run: 4 });
+      window.__looseScales(2500);
+      window.__levels({ carryLevel: 6 });
+      const c = crusherRect();
+      S.dragging = true;
+      for (let i = 0; i < 6; i++) sweep(c.x + c.w + P * (6 + i * 2), deepFloor() - P);
+      S.mouse = { x: c.x + c.w / 2, y: c.y + c.h * 0.6 };
       lookDeep(spotX('crusher') + S.viewW * 0.3);
     } },
   // A storm over the yard and a strike at its flash while the view is in the
