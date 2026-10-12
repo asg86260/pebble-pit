@@ -133,7 +133,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Nobody goes for the muck while a storm is still raining it down; the clear-up starts once the last drop has landed.
 - The first muck a storm leaves gets a short scene: a worker walks up to it, asks what it is, pulls a face and shovels it up.
 - A controls page on the settings sheet lists the mouse buttons and what each does.
-- The barrier card's sign is a swallowtail ribbon that wraps the frame's edge and flips its tail (it holds still with motion off).
+- The barrier card's sign is a swallowtail ribbon that wraps the frame's edge and flaps its free end like the yard's flags (it holds still with motion off) (src/selftest/boards.js, "goal card").
 - The next barrier is bought from the story's card -- its bill ticking off coin by coin, then a cancel while it is built -- and no card is pinned in the corner any more.
 - Cores are gone: each barrier that falls opens the next place instead -- the props the farm, the net the quarry, the arch the tower -- and the dome is paid without them.
 - After the props the story's card sells the farm, after the net the quarry and after the arch the tower, each before the next barrier, and skips a place that is already open; the place is the goal the moment the barrier falls, its bill showing and its buy dimmed until it can be bought.

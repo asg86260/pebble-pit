@@ -556,38 +556,12 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   background: var(--paper);
   text-align: left;
 }
-/* The sign is a swallowtail ribbon: two cells out past the frame's left edge,
-   a folded-under tab where it wraps the edge, and a tail that flips between two
-   held poses on a slow beat. Every edge is on the 6px cell grid; the frame is
-   3px, so the offsets are a cell and the frame. */
-.rows.shelves > .tile.goal {
-  --ribbon-beat: 1.2s;
-  --ribbon-out: 12px;
-}
-.rows.shelves > .tile.goal::after {
-  content: attr(data-sign);
-  position: absolute; left: calc(-1 * var(--ribbon-out) - 3px); top: -15px;
-  box-sizing: border-box; height: 18px;
-  padding: 3px 24px 3px 18px;
-  background: var(--ink); color: var(--paper);
-  font-size: 12px; line-height: 12px; font-weight: bold; letter-spacing: .18em; text-transform: uppercase;
-  white-space: nowrap;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%);
-  animation: ribbon-tail var(--ribbon-beat) steps(1) infinite;
-}
-.rows.shelves > .tile.goal::before {
-  content: '';
-  position: absolute; left: calc(-1 * var(--ribbon-out) - 3px); top: 3px;
-  width: 6px; height: 6px;
-  background: var(--ink-4);
-}
-@keyframes ribbon-tail {
-  0%, 100% { clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%); }
-  50%      { clip-path: polygon(0 0, calc(100% - 6px) 0, calc(100% - 12px) 50%, calc(100% - 6px) 100%, 0 100%); }
-}
-body.still .rows.shelves > .tile.goal::after { animation: none; }
-@media (prefers-reduced-motion: reduce) {
-  .rows.shelves > .tile.goal::after { animation: none; }
+/* The sign is a swallowtail ribbon (ribbon.js) wrapped round the frame's
+   top-left corner: two cells out past the left edge and a cell and a half up,
+   the frame being 3px so the offsets are a cell and the frame. */
+.rows.shelves > .tile.goal > canvas.ribbon {
+  position: absolute; left: -15px; top: -21px;
+  pointer-events: none;
 }
 .rows.shelves > .tile.goal .pic { grid-column: 1; grid-row: 1 / 3; justify-self: center; }
 .rows.shelves > .tile.goal .name { grid-column: 2; grid-row: 1; }

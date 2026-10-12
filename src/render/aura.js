@@ -23,6 +23,7 @@ import { chimneyAt } from '../house.js';
 import { S, bench, lab, tower } from '../state.js';
 import { holdOptions, holdTarget } from '../crew/assign.js';
 import { ctx } from './ctx.js';
+import { flagRip } from '../flagwave.js';
 import { cell } from './marks.js';
 import { groundOf } from '../deep/place.js';
 
@@ -166,8 +167,7 @@ function drawFlag(rect, which, t, pole, hoist) {
     // grows with the pull but never to nothing: FLAG_LIMP is what a furled flag
     // keeps, so the hang stirs instead of drawing as a bar. The seed staggers
     // pace and phase so the yard's flags never beat in unison.
-    const rip = Math.sin((t / (FLAG_RIPPLE_MS * (0.85 + 0.3 * seed))
-                          - (s * FLAG_WAVES) / FLAG_W) * Math.PI * 2 + seed * 7)
+    const rip = flagRip(t, s / FLAG_W, seed, FLAG_RIPPLE_MS, FLAG_WAVES)
               * Math.pow(s / FLAG_W, 1.4)
               * (FLAG_LIMP + (1 - FLAG_LIMP) * pull) * FLAG_SWING;
     // Added, not mirrored with the wind's sign: mirroring jumps the whole wave

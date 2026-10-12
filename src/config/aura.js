@@ -87,3 +87,20 @@ export const FLAG_RAISE_MS = 700;    // the pole, out of nothing to full height
 export const FLAG_HOIST_MS = 550;    // then the cloth, base to masthead. Shorter
                                      // than the pole: the pole is being pushed
                                      // up, the cloth is being pulled on a rope
+
+// --- the goal card's ribbon ---------------------------------------------------
+// The sign on the barrier card and the dome row: a swallowtail ribbon wrapped
+// round the frame's corner, its free end flapping with the flags' own wave
+// (flagwave.js), in whole cells.
+export const RIBBON_AMP = 1.1;       // cells the free end swings, at the tip
+export const RIBBON_MS = 2400;       // one wave along the cloth; gentler than a flag's, as the card is in view all game
+export const RIBBON_WAVES = 0.6;     // waves standing on the cloth at once
+export const RIBBON_GROWTH = 2;      // the swing grows with u to this power, toward the tip
+export const RIBBON_SEED = 0.37;     // the stagger of pace and phase
+export const RIBBON_CLAMP = 1.6;     // the most a column is lifted, in cells, before rounding
+export const RIBBON_FIXED = 3;       // columns at the wrapped end that never move
+export const RIBBON_PAD_L = 18;      // px of cloth before the first letter
+export const RIBBON_PAD_R = 24;      // px after the last, where the swallowtail is cut
+export const RIBBON_FONT_PX = 12;
+export const RIBBON_LETTER = 2.16;   // px between letters
+export const RIBBON_BASE = 13;       // baseline of the text in the cloth, px from its top
