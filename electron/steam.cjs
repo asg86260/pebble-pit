@@ -61,14 +61,24 @@ function appIdFor({ demo = false, packaged = true, env = process.env } = {}) {
   return packaged ? undefined : DEV_APP;
 }
 
-// Start the SDK and hand back the remote storage as three plain calls, or
-// null for every way that can fail. Each call swallows its own throw: a
-// remote storage that errors mid-game is a disk-only game, not a crash.
-function startSteam({ sdk = loadSdk(), appId } = {}) {
+// Start the SDK once and hand back its client, or null for every way that can
+// fail (not installed, Steam not running, no such app). The cloud and the
+// achievements both ride on this one client; the SDK is not started twice.
+function startClient({ sdk = loadSdk(), appId } = {}) {
   if (!sdk || typeof sdk.init !== 'function') return null;
+  try { return sdk.init(appId) || null; } catch { return null; }
+}
+
+// Hand back the remote storage as three plain calls, or null for every way
+// that can fail. Each call swallows its own throw: a remote storage that
+// errors mid-game is a disk-only game, not a crash. `client` is a started one
+// (startClient); without it the SDK is started here.
+function startSteam({ sdk = loadSdk(), appId, client = undefined } = {}) {
+  if (client === undefined) client = startClient({ sdk, appId });
+  if (!client) return null;
   let cloud;
   try {
-    cloud = sdk.init(appId).cloud;
+    cloud = client.cloud;
     if (!cloud.isEnabledForAccount() || !cloud.isEnabledForApp()) return null;
   } catch {
     return null;
@@ -82,6 +92,39 @@ function startSteam({ sdk = loadSdk(), appId } = {}) {
     },
     remove(name) {
       try { return cloud.fileExists(name) ? !!cloud.deleteFile(name) : true; } catch { return false; }
+    }
+  };
+}
+
+// The names the page may ask Steam to unlock: ACH_ and the in-game id in
+// upper case (src/achievements.js makes them). The shell never imports from
+// src/, so the shape is all it checks -- a name the Steamworks dashboard does
+// not hold is refused by Steam itself.
+const ACH_NAME = /^ACH_[A-Z0-9_]{1,60}$/;
+
+// The achievements, as two calls that never throw and do nothing without a
+// client. `unlock` sets one and stores it, once per name per run and not at
+// all if Steam already has it; `sync` unlocks a list (the save's, at launch)
+// so a player who won them before Steam was in the game gets them too.
+// steamworks.js's `activate` is the set and the store together.
+function achievementsOf(client) {
+  const api = client && client.achievement;
+  const told = new Set();
+  const unlock = name => {
+    if (!api || typeof name !== 'string' || !ACH_NAME.test(name) || told.has(name)) return false;
+    told.add(name);
+    try {
+      if (!api.isActivated(name)) api.activate(name);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  return {
+    unlock,
+    sync(names) {
+      if (!Array.isArray(names)) return 0;
+      return names.filter(unlock).length;
     }
   };
 }
@@ -193,5 +236,5 @@ function offerDemoSave({ store, demoSaves, demoRemote = null, marker, ask, slots
 
 module.exports = {
   APPS, DEV_APP, SLOTS, CARRY_WORDS,
-  loadSdk, appIdFor, startSteam, nameOf, playedOf, mirror, demoDirOf, demoSave, offerDemoSave
+  loadSdk, appIdFor, startClient, startSteam, achievementsOf, ACH_NAME, nameOf, playedOf, mirror, demoDirOf, demoSave, offerDemoSave
 };

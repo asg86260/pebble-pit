@@ -37,7 +37,9 @@ function openSaves() {
   const userData = app.getPath('userData');
   const disk = openStore(path.join(userData, 'saves'));
   if (build.target !== 'steam' && !process.env.STEAM_APP_ID) return disk;
-  const remote = steam.startSteam({ appId: steam.appIdFor({ demo: !!build.demo, packaged: app.isPackaged }) });
+  const client = steam.startClient({ appId: steam.appIdFor({ demo: !!build.demo, packaged: app.isPackaged }) });
+  achievements = steam.achievementsOf(client);
+  const remote = steam.startSteam({ client });
   const saves = steam.mirror(disk, remote);
   saves.reconcile();
   if (build.target === 'steam' && !build.demo) {
@@ -60,6 +62,8 @@ const saveName = () => `boulder-${new Date().toISOString().slice(0, 10)}.json`;
 const FILTERS = [{ name: 'save', extensions: ['json'] }];
 
 let store = null;
+// Steam's achievements, or ones that do nothing when this is not a Steam build.
+let achievements = steam.achievementsOf(null);
 // Read before the app is ready: the demo's saves live in a folder of their own,
 // and the folder has to be named before anything is written to it.
 const build = readBuild();
@@ -107,6 +111,9 @@ function wire() {
   ipcMain.on('desk:version', e => { e.returnValue = build; });
   // The itch app sets this for a game it launches; nothing else does.
   ipcMain.on('desk:itchKey', e => { e.returnValue = process.env.ITCHIO_API_KEY || ''; });
+  // Fire and forget: a win is told to Steam and the page does not wait.
+  ipcMain.on('desk:achievement', (e, name) => { achievements.unlock(name); });
+  ipcMain.on('desk:achievements', (e, names) => { achievements.sync(names); });
   ipcMain.handle('desk:write', (e, slot, raw) => store.write(slot, raw));
   ipcMain.handle('desk:exportTo', async (e, raw) => {
     const win = BrowserWindow.fromWebContents(e.sender);

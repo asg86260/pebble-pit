@@ -22,8 +22,10 @@ Open:
 - **Words**: the carry-over dialog (`CARRY_WORDS`, electron/steam.cjs) and
   the demo's last sheet are placeholders for the owner.
 - **Mac**: the Steam build has no mac depot until the mac app is notarized.
-- **Steam achievements** (now, since the SDK is in, or later) and
-  **controller support**: not built.
+- **Steam achievements** are wired (src/achievements.js): the owner creates the
+  49 in Steamworks from `node tools/steam-achievements.mjs` (API name, in-game
+  id, in-game title), writes their text and draws their icons.
+- **Controller support**: not built.
 - The demo's Steam Cloud is not read by the full game's carry-over: the SDK
   reaches only the running app's remote storage. The demo's disk copy, which
   the demo itself keeps in step with its cloud, is what is offered.

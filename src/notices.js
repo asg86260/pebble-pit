@@ -21,6 +21,7 @@ import { CATALOG } from './catalog.js';
 import { pitCapacity } from './pit.js';
 import { now } from './clock.js';
 import { YARD_JOBS } from './jobs.js';
+import { tellSteam } from './achievements.js';
 
 // --- the catalog ---------------------------------------------------------------
 // The names and notes are catalog.js's; here is how each is earned, a
@@ -115,6 +116,7 @@ export function earn(key, quiet = false) {
   // notice earned in the second sitting would sort under one from the first.
   S.wonSeq = (S.wonSeq || 0) + 1;
   S.wonAt = { ...S.wonAt, [key]: S.wonSeq };
+  tellSteam(key);
   if (quiet) { S.wonSeen = S.won.length; hushNotices(); }
   return true;
 }

@@ -230,7 +230,11 @@ builds"): every write also goes to Steam's remote storage through
 slot is settled against Steam at launch by `playedS`, and the full game's
 first launch offers the demo's save; plain Node too, checked against a fake
 remote in `test/desk-steam.test.mjs`. The shell learns which build it is from
-`dist/build.json` (`target`, `demo`), which vite.config.js stamps.
+`dist/build.json` (`target`, `demo`), which vite.config.js stamps. Each notice
+is also a Steam achievement: `src/achievements.js` names it `ACH_` plus its key,
+`earn` tells the shell through `window.desk`, `main.js` re-sends the save's
+record at launch, `steam.cjs` unlocks them, and
+`tools/steam-achievements.mjs` prints the table for Steamworks.
 
 Running it: `VITE_DEV_SERVER_URL=http://localhost:5183/ bun run desk` opens the
 shell against the dev server (any port; 5183 is the user's own game); `bun run

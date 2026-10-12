@@ -139,6 +139,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).
 - A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
 **New this release**
+- On Steam, every in-game achievement is a Steam achievement, and the ones already won are given at launch (test/desk-steam-achievements.test.mjs).
 - A Steam build of the full game and of the demo: saves sync through Steam Cloud, and the full game offers to carry on a demo save on its first launch (test/desk-steam.test.mjs).
 - On a phone the yard is drawn smaller, 130 cells across at once, so every shield's whole answer fits upright and no scene zooms (test/phone-view.test.mjs).
 - Every cutscene holds the yard still and letterboxed: black bands step in, everything but the scene's subjects fades back, the haulers fade out and the attackers freeze until it lets go (test/cutscene-hold.test.mjs).

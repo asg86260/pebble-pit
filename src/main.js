@@ -44,6 +44,7 @@ import { stepToast } from './toast.js';    // a notice said out loud as it lands
 import { stepSkipHint } from './skiphint.js';   // the hint under a scene, and its bar
 import { stepMessTags } from './messtags.js';   // a card at the top edge while mess is down
 import { tick } from './clock.js';
+import { syncSteam } from './achievements.js';
 
 // The layout is the game's; the measuring is the page's; this is the one line
 // where the two meet.
@@ -153,6 +154,7 @@ if (demo) {
   clampCam();
 } else {
   restore();
+  syncSteam(S.won);
   buildShop();
   syncWorkers();
   // The save that would not read has been put aside and the one before it is

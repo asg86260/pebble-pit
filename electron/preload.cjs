@@ -1,4 +1,4 @@
-// The bridge: one object, six functions, no events.
+// The bridge: one object, eight functions, no events.
 //
 // `window.desk` is the whole of what the page knows about the shell. The save
 // is read and written by slot number (1 to 3; see DESIGN.md, "Save slots"). No
@@ -18,5 +18,9 @@ contextBridge.exposeInMainWorld('desk', {
   version: () => ipcRenderer.sendSync('desk:version'),
   // The key the itch app put in the environment, or '' outside it; the board
   // of times sends it up so the server can ask itch whose it is (times.js).
-  itchKey: () => ipcRenderer.sendSync('desk:itchKey')
+  itchKey: () => ipcRenderer.sendSync('desk:itchKey'),
+  // Steam achievements: one won now, and the save's whole list at launch. The
+  // shell does nothing with either off Steam.
+  achievement: name => ipcRenderer.send('desk:achievement', name),
+  achievements: names => ipcRenderer.send('desk:achievements', names)
 });
