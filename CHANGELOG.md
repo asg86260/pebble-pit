@@ -146,6 +146,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 - The props can be built after the first rock.
 
+- The saves page keeps each save's rock, crew and time in their own columns with a gap between, instead of running them together (src/selftest/settings.js).
 - A save that has already had a muck storm no longer gets the first muck's scene (test/save-floor.test.mjs).
 - On a phone a notice stands under the story's card instead of on top of it (src/selftest/touch.js).
 - The story's card no longer stays faded out after a new game or a loaded save puts the story back on the step it was showing (src/selftest/boards.js).

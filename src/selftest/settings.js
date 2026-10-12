@@ -31,6 +31,24 @@ const onFront = () => !document.getElementById('resume').hidden && document.getE
 const said = () => held().querySelector('.said').textContent;
 const motion = () => document.getElementById('motion');
 
+// A saves row as the player reads it (items joined by the dots it used to
+// carry), and where its items sit: the rock, crew and when columns share a left
+// edge down every row that has them, an empty row's one item starts at the
+// rock column, and no two neighbors in a row are nearer than `gap` px.
+const slotWords = b => [...b.querySelectorAll('.what .item')].map(e => e.textContent).join(' · ');
+function slotColumns(btns) {
+  const left = {}; let gap = Infinity;
+  for (const b of btns) {
+    const its = [...b.querySelectorAll('.what .item')];
+    its.forEach((e, i) => {
+      const kind = e.classList.contains('lone') ? 'rock' : e.classList[1];
+      (left[kind] ||= new Set()).add(Math.round(e.getBoundingClientRect().left));
+      if (i) gap = Math.min(gap, e.getBoundingClientRect().left - its[i - 1].getBoundingClientRect().right);
+    });
+  }
+  return { aligned: Object.values(left).every(l => l.size === 1) && Object.keys(left).length >= 2, gap: Math.round(gap), left: Object.fromEntries(Object.entries(left).map(([k, v]) => [k, [...v]])) };
+}
+
 // What a player reads, top to bottom. The record's button carries a count
 // that is the yard's doing, and the saves button which yard, so each is read
 // as its name: what the check is about is that the line is there.
@@ -64,7 +82,7 @@ export const TESTS = [
     f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
     const loaded = () => new Promise(r => f.addEventListener('load', r, { once: true }));
     document.body.appendChild(f);
-    let landed = false, label = '', rows = [], played = [], noReset = false, record = '', arrived = false, crewThere = 0, untouched = false, edges = [];
+    let cols = null, landed = false, label = '', rows = [], played = [], noReset = false, record = '', arrived = false, crewThere = 0, untouched = false, edges = [];
     try {
       f.src = 'index.html';
       await loaded();
@@ -75,7 +93,8 @@ export const TESTS = [
       label = d.getElementById('playlabel').textContent;
       record = d.getElementById('recordbtn').textContent;
       d.getElementById('slotsbtn').click();
-      rows = [...d.querySelectorAll('.slot')].map(b => b.querySelector('.what').textContent);
+      rows = [...d.querySelectorAll('.slot')].map(slotWords);
+      cols = slotColumns([...d.querySelectorAll('.slot')]);
       played = [...d.querySelectorAll('.slot .played')].map(p => p.textContent);
       noReset = !d.getElementById('reset');
       // every control down a page of the column, the saves page's pair and
@@ -104,6 +123,7 @@ export const TESTS = [
       ok(/^rock \d+ · 4 crew · just now$/.test(label), 'play says what it opens, without a yard number', label),
       ok(rows.length === 3 && /^1 · rock \d+ · 4 crew/.test(rows[0]) && rows[1] === '2 · empty',
          'the saves rows read the slots', JSON.stringify(rows)),
+      ok(cols.aligned && cols.gap >= 12, 'the rows keep their items in columns with a gap between', JSON.stringify(cols)),
       ok(/^(\d+h )?\d+m$/.test(played[0]) && played[1] === '' && noReset,
          'with the playtime beside a filled row, and no reset button', `${JSON.stringify(played)}, ${noReset}`),
       ok(/^achievements · \d+ of \d+$/.test(record), 'and the record has its count', record),
@@ -171,16 +191,17 @@ export const TESTS = [
     await press();
     document.getElementById('slotsbtn').click();
     const rows = () => [...document.getElementById('slots').querySelectorAll('.slot')];
-    const listed = rows().map(b => b.querySelector('.what').textContent);
+    const listed = rows().map(slotWords);
     const row2 = rows()[1];
     row2.click();
-    const asked = row2.querySelector('.what').textContent;
+    const asked = slotWords(row2);
     row2.click();
     const fresh = state();
     const saidNew = said();
     const frontAfterNew = onFront();
     savesPage();
-    const rows2 = rows().map(b => b.querySelector('.what').textContent);
+    const rows2 = rows().map(slotWords);
+    const cols = slotColumns(rows());
     rows()[0].click();
     const backAgain = state();
     const saidBack = said();
@@ -196,6 +217,7 @@ export const TESTS = [
          `${fresh.crew} crew, ${saidNew}`),
       ok(rows2[1].endsWith('playing') && /^1 · rock \d+ · \d+ crew · just now$/.test(rows2[0]),
          'the page reads the swap', JSON.stringify(rows2)),
+      ok(cols.aligned && cols.gap >= 12, 'the filled rows keep rock, crew and when in columns with a gap between items', JSON.stringify(cols)),
       ok(backAgain.crew === crew && saidBack === 'loaded', 'and the first yard comes back',
          `${backAgain.crew} vs ${crew}, ${saidBack}`),
       ok(frontAfterNew && frontAfterLoad, 'and each pick turns back to the front',
@@ -441,7 +463,7 @@ export const TESTS = [
     ask(2).querySelector('.yes').click();
     await fade();
     const gone = slotRaw(2) == null;
-    const emptyRow = row(2).querySelector('.what').textContent;
+    const emptyRow = slotWords(row(2));
     const emptyPlayed = row(2).querySelector('.played').textContent;
     const noDelete = getComputedStyle(del(2)).visibility === 'hidden';
     const yesShut = shut(2);
@@ -450,7 +472,7 @@ export const TESTS = [
     await fade();
     ask(1).querySelector('.yes').click();
     const fresh = state();
-    const openRow = row(1).querySelector('.what').textContent;
+    const openRow = slotWords(row(1));
     resume();
     return [
       ok(/^\d+m$/.test(played[0]) && played[1] === '3h 12m' && played[2] === '',
