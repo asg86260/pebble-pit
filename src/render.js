@@ -25,6 +25,7 @@ import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawBuried, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil, drawDeepSight } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
+import { drawPadMark } from './render/padmark.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { deepTop } from './deep/place.js';
 import { drawFloor, drawGroundLine, drawGroundTexture, drawPit, drawPitOutline } from './render/ground.js';
@@ -272,6 +273,10 @@ const LAYERS = [
   // turned (render/fightnums.js). Still in the world, for the deep's camera.
   { name: 'fight numbers', draw: drawFightNumbers },
   { name: 'status posts', draw: drawStationStatuses },   // and what is on each fighter, up a post at its station
+  // A pad's focus (render/padmark.js): over every body and mark it can stand
+  // on, in both halves, and after the deep is turned so its purple is the
+  // purple seen.
+  { name: 'pad focus', draw: drawPadMark },
   { name: 'world:done', draw: leaveWorld },
 
   { name: 'air near', draw: drawAirNear },       // the nearest dust passes in front of the yard, not behind it
@@ -315,7 +320,7 @@ const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
 
 // The landing page's picture (main.js, `demo`) is the yard to be looked at
 // and not read: the layers a player reads off the picture are left out of it.
-const READING = new Set(['offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
+const READING = new Set(['pad focus', 'offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
                          'stock count', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
 let picture = false;
@@ -333,7 +338,7 @@ const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', '
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves, each cut to its own (`PINNED`).
 const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster', 'says', 'held', 'pointed', 'cursor',
-                      'work bars', 'build sites', 'done marks', 'pile marks']);
+                      'work bars', 'build sites', 'done marks', 'pile marks', 'pad focus']);
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const shared = (layer, i) => BOTH.has(layer.name) || i > SCREEN_FROM;
 const inHalf = (layer, i, deep) =>

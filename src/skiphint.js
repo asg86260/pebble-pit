@@ -7,12 +7,14 @@
 // opening -- the one scene a click does not skip, since a rested hand is not
 // a decision -- had no way out there at all. Held, the button is the key:
 // the same `holdSkip`, the same hold, the same bar filling under the words.
-// Under a thumb the words drop the key they cannot press.
+// Under a thumb the words drop the key they cannot press; with a pad the
+// last thing touched, the key is the pad's A, drawn (pad.js holds it).
 
 import { S } from './state.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { skippable, skipHeld, holdSkip } from './skip.js';
 import { coarse } from './prefs.js';
+import { glyph, markOf } from './padread.js';
 
 const el = document.getElementById('skip');
 const bar = el.querySelector('.bar');
@@ -24,8 +26,11 @@ export function stepSkipHint() {
   (up ? fadeIn : fadeOut)(el);
   if (!up) return;
   bar.style.width = `${(skipHeld() * 100).toFixed(1)}%`;
-  const words = coarse() ? 'hold to skip' : 'hold space to skip';
-  if (words !== said) { said = words; say.textContent = words; }
+  const words = S.padOn ? `pad:${markOf('a')}` : coarse() ? 'hold to skip' : 'hold space to skip';
+  if (words === said) return;
+  said = words;
+  if (words.startsWith('pad:')) say.replaceChildren('hold ', glyph('a'), ' to skip');
+  else say.textContent = words;
 }
 
 // Pressed and held, the button is the key held; let go, or the finger gone

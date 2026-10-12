@@ -158,7 +158,14 @@ function fire(event, o, cls, t, n = 1, counted = false) {
 // and ceilinged, because a refund lands hundreds of grains in one frame and
 // every strike is a buffer rendered.
 // Before the first gesture it is a no-op and nothing is queued.
+// Whoever else wants to know an event happened, asleep or awake: the pad's
+// rumble on a crit (pad.js) is the one, and it must not wait on a context
+// that only wakes on a pointer's gesture.
+const heard = [];
+export const hear = fn => { heard.push(fn); };
+
 export function sfx(event, opts = {}) {
+  for (const fn of heard) fn(event, opts);
   if (!awake) return;
   const cls = CLASSES.has(opts.cls) ? opts.cls : (SOUNDS[event] ? SOUNDS[event].cls : 'fold');
   decisions.byClass[cls]++;

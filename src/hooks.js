@@ -63,6 +63,7 @@ import { setTimesUrl, postTime, bootTimes } from './times.js';
 import { setCloudUrl, setCloudFetch } from './cloud.js';
 import { surfaceY, colOf } from './grid.js';
 import { showWindow } from './modal.js';
+import { PAD_HANDLE } from './pad.js';
 
 // --- the machines ---------------------------------------------------------------
 // A machine's facts set outright. A check about *buying* one must use `__buy`
@@ -952,6 +953,10 @@ export const waysNow = () => {
 // suites spread; a hook in one suite and not the other fails a check in a way
 // that has nothing to do with what it is checking.
 export const HANDLES = {
+  // A pad of the checks' own (pad.js): `__pad.press('a')`, `.down('lt')`,
+  // `.stick(x, y)`, `.step()` -- the presses a player makes, read exactly as
+  // a real pad's are.
+  __pad: PAD_HANDLE,
   __holdShot: (ms = 4000) => { heldUntil = performance.now() + ms; },   // `fast` above
   // The page's own frames held off the yard, so a capture steps it with
   // `__fast` alone and every frame is the time it asked for.

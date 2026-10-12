@@ -148,3 +148,6 @@ export * from './config/cloud.js';
 
 // the finale after the kill, and the pair at the yard's end after it
 export * from './config/finale.js';
+
+// controller support: the focus marker, the hops, the hand and the rumble
+export * from './config/pad.js';

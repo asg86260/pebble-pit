@@ -64,6 +64,13 @@ export const S = {
   rescued: false,         // and, once the dome held one off them, they got out
   rescueTo: 0,            // where they are walking to while they do
   crewSight: null,        // when the right button went down off a body, held: the crew looked at (input.js)
+  // A pad (pad.js): what its focus is on, by id (stops.js and pad.js name
+  // them; null is the rock), whether a pad was the last thing touched (the
+  // marker and the pad's glyphs show only then), and the hand on a held
+  // trigger, a point in the world, or null.
+  padFocus: null,
+  padOn: false,
+  padHand: null,
   buriedSay: null,
   buriedSayAt: 0,
   buriedCall: 0,          // when the call under the rock being mined began, 0 between calls
@@ -839,6 +846,9 @@ export const EPHEMERAL = [
   // The opening, while it is running.
   'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt', 'buriedCall', 'buriedCallAt', 'buriedPat', 'buriedMinedAt', 'crewSight',
   'introThrew', 'skipHeldAt', 'introCut',
+  // A pad's focus, whether it was the last input, and its hand: a reload
+  // starts with the focus on the rock and the mouse in charge.
+  'padFocus', 'padOn', 'padHand',
   'timesAsked',           // once a boot is once a page
   // Only read for the spread a rock does on arriving.
   'landAt',

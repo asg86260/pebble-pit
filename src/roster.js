@@ -504,6 +504,16 @@ export function rosterHit(x, y) {
   return false;
 }
 
+// The minus and the plus of one post's roster, as drawn, for a pad's focus
+// to stand on (pad.js): a press there is `rosterHit` at the button's middle,
+// the very call a click makes. Null for a post not standing or not a switch.
+export function rosterButtons(key) {
+  const p = posts().find(q => q.key === key && !q.fixed);
+  if (!p) return null;
+  const b = boxes(p);
+  return { less: b.less, more: b.more };
+}
+
 // --- drawing -----------------------------------------------------------------
 // The badge and the buttons are world pixels on the cell grid. The count is
 // the one thing drawn in screen pixels: it is type, and type scaled by five

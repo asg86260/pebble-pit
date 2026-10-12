@@ -45,6 +45,7 @@ import { stepSkipHint } from './skiphint.js';   // the hint under a scene, and i
 import { stepMessTags } from './messtags.js';   // a card at the top edge while mess is down
 import { tick } from './clock.js';
 import { syncSteam } from './achievements.js';
+import { stepPad, paintPad } from './pad.js';   // a pad: read once a frame, and its marker over what it is on
 
 // The layout is the game's; the measuring is the page's; this is the one line
 // where the two meet.
@@ -87,6 +88,7 @@ function frame() {
     (S.paused ? fadeIn : fadeOut)(scrim);
     syncEnding();
     stepPan();                                // the keys and the wheel: a held yard pans too
+    stepPad();                                // and a pad, before the step, so a press acts this frame
     const t0 = mark();
     if (!S.paused && !S.still && !(demo && reducedMotion())) step();
     // The boards, once, for whatever the step changed on them: a first find landing,
@@ -106,6 +108,7 @@ function frame() {
     stepToast();
     stepSkipHint();
     stepMessTags();
+    paintPad();                               // the pad's marker, over the frame and the page as written
     const t3 = mark();
     if (DEV) record(t0, t1, t2, t3);
   } catch (e) {
