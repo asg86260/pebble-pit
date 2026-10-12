@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Current Slot Mock</title>
+<style>
+:root { --paper:#fff; --ink:#000; --ink-5:#8c8c8c; --ink-7:#aaa; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper:#1f1f1f; --ink:#e0e0e0; --ink-5:#767676; --ink-7:#5f5f5f; } }
+:root[data-theme="dark"] { --paper:#1f1f1f; --ink:#e0e0e0; --ink-5:#767676; --ink-7:#5f5f5f; }
+* { box-sizing: border-box; }
+html, body { margin:0; background: var(--paper); color: var(--ink); font: 12px/1.4 ui-monospace, "Courier New", monospace; }
+body { padding: 16px; max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 6px; }
+.note { margin: 0 0 20px; color: var(--ink-5); }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 24px; }
+.opt h2 { font-size: 12px; margin: 0 0 4px; letter-spacing: .14em; text-transform: uppercase; }
+.opt p { margin: 0 0 10px; color: var(--ink-5); }
+.frame { border: 1px solid var(--ink-7); padding: 12px 12px 6px; margin-bottom: 12px; overflow: hidden; }
+.frame.phone { width: 340px; max-width: 100%; }
+.frame small { display:block; color: var(--ink-5); margin-bottom: 8px; }
+
+.saves { display: grid; grid-template-columns: repeat(3, max-content) minmax(max-content, 1fr) max-content max-content; column-gap: 6px; }
+.saves > .slot, .saves > .del { margin-bottom: 6px; }
+.slot { grid-column: 1 / 6; display: grid; grid-template-columns: subgrid; column-gap: 3ch; align-items: baseline; text-align: left; white-space: nowrap;
+  font: inherit; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: none; border: 1px solid var(--ink); padding: 4px 14px; position: relative; }
+.slot .what { display: contents; }
+.slot .item.lone { grid-column: 2 / -1; }
+.slot .played { text-align: right; font-variant-numeric: tabular-nums; }
+.del { grid-column: 6; font: inherit; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: none; border: 1px dashed var(--ink); padding: 4px 14px; opacity: .7; text-align: center; }
+.del.none { visibility: hidden; }
+.saves.stacked { grid-template-columns: minmax(0, 1fr) max-content; }
+.saves.stacked .slot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; column-gap: 3ch; white-space: normal; }
+.saves.stacked .slot .played { margin-left: auto; }
+.saves.stacked .del { grid-column: 2; }
+
+.today .slot.open { opacity: .7; color: var(--ink-5); border-color: var(--ink-5); }
+
+.A .slot.open { color: var(--paper); background: var(--ink); }
+
+.B .saves { padding-left: 24px; }
+.B .slot.open::before { content: ""; position: absolute; left: -24px; top: calc(50% - 9px); width: 6px; height: 6px; background: var(--ink);
+  box-shadow: 0 6px 0 var(--ink), 0 12px 0 var(--ink), 6px 6px 0 var(--ink); }
+
+.C .slot.open { border: 3px double var(--ink); padding: 2px 12px; }
+
+.D .slot.open { border-left: 6px solid var(--ink); padding-left: 9px; }
+.D .slot.open .item:first-child { color: var(--paper); background: var(--ink); padding: 0 .8ch; margin-left: -.8ch; justify-self: start; }
+</style>
+</head>
+<body>
+<h1>Current slot indicator</h1>
+<p class="note">A mock from plain HTML, not the game: the saves page's font, columns and borders redrawn by hand, with no clicking, fading or fit() measuring behind it.</p>
+<div class="opts" id="opts"></div>
+<script>
+const rows = [
+  { n: 1, open: true, parts: ['rock 1', '0 crew', 'playing'], played: '0m' },
+  { n: 2, parts: ['rock 7', '14 crew', '3h ago'], played: '2h 10m' },
+  { n: 3, parts: ['rock 3', '5 crew', 'yesterday'], played: '41m' },
+  { n: 4, parts: ['empty'], lone: true, played: '' },
+];
+const opts = [
+  ['today', 'Today', 'Grey at seven tenths: the open row is disabled and faded.'],
+  ['A', 'A  Inverted', 'Black fill, white text.'],
+  ['B', 'B  Pointer', 'A solid pixel arrow on the 6px grid, outside the border.'],
+  ['C', 'C  Heavy border', 'Double 3px border, text full black.'],
+  ['D', 'D  Bar and number block', 'A 6px bar on the left edge and the number cut into a solid block; text black.'],
+];
+function saves(stacked) {
+  const g = document.createElement('div');
+  g.className = 'saves' + (stacked ? ' stacked' : '');
+  for (const r of rows) {
+    const b = document.createElement('button');
+    b.className = 'slot' + (r.open ? ' open' : '');
+    let h = '<span class="what"><span class="item">' + r.n + '</span>';
+    r.parts.forEach(p => h += '<span class="item' + (r.lone ? ' lone' : '') + '">' + p + '</span>');
+    h += '</span><span class="played">' + r.played + '</span>';
+    b.innerHTML = h;
+    const d = document.createElement('button');
+    d.className = 'del' + (r.lone ? ' none' : '');
+    d.textContent = 'delete';
+    g.append(b, d);
+  }
+  return g;
+}
+for (const [cls, title, blurb] of opts) {
+  const o = document.createElement('div');
+  o.className = 'opt ' + cls;
+  o.innerHTML = '<h2>' + title + '</h2><p>' + blurb + '</p>';
+  for (const [stacked, label, cl] of [[false, 'wide', 'frame'], [true, 'phone width, stacked', 'frame phone']]) {
+    const f = document.createElement('div');
+    f.className = cl;
+    f.innerHTML = '<small>' + label + '</small>';
+    f.append(saves(stacked)); o.append(f);
+  }
+  document.getElementById('opts').append(o);
+}
+</script>
+</body>
+</html>
