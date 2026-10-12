@@ -11,10 +11,14 @@
 
 import { readFileSync } from 'node:fs';
 import { yard, group, ok, run } from './helpers.mjs';
+import { migrate } from '../src/migrations/index.js';
 
 const KEY = 'boulder-clicker/v4';
 const raw = readFileSync(new URL('./fixtures/crew-grows-on-load.json', import.meta.url), 'utf8');
+// The save as the load sees it: brought up to today's shape first, so a
+// balloon a migration moors counts as a seat.
 const saved = JSON.parse(raw);
+migrate(saved);
 
 // Read back the way a fresh page reads it: nothing of the old yard in memory.
 const load = text => {
