@@ -4,7 +4,7 @@
   "group": "Sheets",
   "where": "play.html:279",
   "context": "rescue sheet heading, end of first half",
-  "text": "It's over!"
+  "text": "It's Over?"
  },
  {
   "id": "saved.why",
@@ -39,7 +39,7 @@
   "group": "Sheets",
   "where": "play.html:293",
   "context": "rescue sheet dismiss button",
-  "text": "keep playing"
+  "text": "Happily Ever After"
  },
  {
   "id": "saved.telling",
@@ -102,7 +102,7 @@
   "group": "Sheets",
   "where": "play.html:302",
   "context": "demo end store link (if STORE_URL)",
-  "text": "get the full game"
+  "text": "wishlist today!"
  },
  {
   "id": "demoend.keep",
@@ -282,9 +282,9 @@
  {
   "id": "held.record.none",
   "group": "Sheets",
-  "where": "src/record.js:44",
+  "where": "src/record.js:40",
   "context": "achievements page, nothing earned",
-  "text": "nothing yet"
+  "text": "you haven't done anything yet."
  },
  {
   "id": "held.recordback",
@@ -1328,6 +1328,13 @@
   "where": "index.html:77",
   "context": "landing achievements page heading",
   "text": "achievements"
+ },
+ {
+  "id": "title.record.none",
+  "group": "Title page",
+  "where": "src/record.js:41",
+  "context": "landing achievements page, nothing earned",
+  "text": "nothing yet"
  },
  {
   "id": "title.recordback",

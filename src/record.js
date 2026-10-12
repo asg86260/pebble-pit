@@ -35,13 +35,18 @@ export const recordLabelOf = (won = []) => `achievements \u00b7 ${won.length} of
 // The line on the sheet's front, which is also the button that turns the page.
 export const recordLabel = () => `achievements \u00b7 ${noticeCount()} of ${noticeTotal()}`;
 
+// What an empty page says. The held sheet and the landing page draw the same
+// list but carry the owner's words separately.
+export const NONE_HELD = "you haven't done anything yet.";
+export const NONE_TITLE = 'nothing yet';
+
 // One card a notice: the name on top, what you did to earn it underneath.
-export function showRecord(el, rows = recordList()) {
+export function showRecord(el, rows = recordList(), noneSaid = NONE_HELD) {
   el.replaceChildren();
   if (rows.length === 0) {
     const none = document.createElement('div');
     none.className = 'none';
-    none.textContent = 'nothing yet';
+    none.textContent = noneSaid;
     el.appendChild(none);
   }
   for (const r of rows) {

@@ -5,7 +5,7 @@
 
 import { primeStore, openSlot, setSlot, slotRaw, clear, saveRaw, savePrev, isSave, storeSettled } from './save.js';
 import { playLabel, slotsLabel, showSlots } from './slots.js';
-import { recordListOf, recordLabelOf, showRecord } from './record.js';
+import { recordListOf, recordLabelOf, showRecord, NONE_TITLE } from './record.js';
 import { timesOn, showTimes } from './timesboard.js';
 import { pref, setPref, reducedMotion, dark } from './prefs.js';
 import { version } from './version.js';
@@ -42,7 +42,7 @@ function showPane(name) {
       changed: () => { front(); showSlots(document.getElementById('slots'), say, pick, false, wipeOpen); },
       conflict: () => showPane('conflict') });
   }
-  if (name === 'record') { const s = opened(); showRecord(document.getElementById('record'), recordListOf(s?.won, s?.wonAt)); }
+  if (name === 'record') { const s = opened(); showRecord(document.getElementById('record'), recordListOf(s?.won, s?.wonAt), NONE_TITLE); }
   if (name === 'settings') {
     sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume');
   }
