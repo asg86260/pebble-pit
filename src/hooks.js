@@ -496,7 +496,15 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   // Every counter is a *pile*, not a number: the coin you own is the coin
   // lying in the hole, so the cells move with the counter. `seedPitCores`
   // lays down what the hole will take and sends the rest through the rift.
-  if (o.shards || o.spores || o.sparks) seedPitCores();
+  // What will not fit tears the hole and counts as eaten when a save is
+  // read; a grant is a handout, so the event and the eating are dropped the
+  // way they are for dust below, and the rift is simply open.
+  if (o.shards || o.spores || o.sparks) {
+    const gulp = S.riftGulp || 0, ate = S.riftAte || 0;
+    seedPitCores();
+    if ((S.riftGulp || 0) > gulp) { S.riftGulp = gulp; S.riftShake = 0; }
+    S.riftAte = ate;
+  }
   // Dust through `give`, for the same reason, and whatever the hole will not
   // take through the rift, where it goes in play: a check about an endless
   // ladder needs more dust than a hole holds.
