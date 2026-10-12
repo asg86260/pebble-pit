@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arch on a Phone</title>
+<style>
+:root {
+  --bg: #f3f2ee;
+  --panel: #ffffff;
+  --text: #161616;
+  --muted: #5d5d5a;
+  --line: #d4d3cd;
+  --button: #161616;
+  --button-text: #ffffff;
+  --stage: #e9e8e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151514;
+    --panel: #1f1f1d;
+    --text: #ecebe6;
+    --muted: #a3a29c;
+    --line: #3a3a37;
+    --button: #ecebe6;
+    --button-text: #151514;
+    --stage: #2a2a28;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151514;
+  --panel: #1f1f1d;
+  --text: #ecebe6;
+  --muted: #a3a29c;
+  --line: #3a3a37;
+  --button: #ecebe6;
+  --button-text: #151514;
+  --stage: #2a2a28;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  padding: 24px 16px 48px;
+}
+main { max-width: 1320px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: 0.02em; }
+.lede { color: var(--muted); margin: 0 0 12px; max-width: 78ch; }
+.mock-tag { display: inline-block; border: 1px solid var(--text); padding: 0 6px; font-size: 12px; margin-right: 8px; vertical-align: 2px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 18px; }
+button { font: inherit; font-size: 13px; background: var(--button); color: var(--button-text); border: 0; padding: 4px 12px; cursor: pointer; }
+.clock { font-size: 13px; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.opt { background: var(--panel); border: 1px solid var(--line); padding: 12px; min-width: 0; }
+.opt h2 { font-size: 15px; margin: 0 0 4px; }
+.opt .cap { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+.screen { background: var(--stage); padding: 8px; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; margin: 0 auto; }
+.phone canvas { max-width: 260px; }
+.beat { font-size: 12px; margin-top: 6px; min-height: 1.6em; }
+.beat b { font-weight: bold; }
+dl { font-size: 12.5px; margin: 10px 0 0; }
+dt { font-weight: bold; margin-top: 6px; }
+dd { margin: 0; color: var(--muted); }
+.keys { display: none; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 8px; }
+.keys figure { margin: 0; }
+.keys figcaption { font-size: 11px; color: var(--muted); }
+.reduced .keys { display: grid; }
+.desk { margin-top: 20px; }
+.desk canvas { max-width: 900px; }
+section.notes { margin-top: 28px; max-width: 80ch; }
+section.notes h2 { font-size: 16px; margin: 0 0 6px; }
+section.notes p, section.notes li { color: var(--muted); font-size: 13.5px; }
+.facts { font-size: 13px; color: var(--muted); margin: 0 0 18px; max-width: 80ch; }
+.facts b { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+<h1><span class="mock-tag">MOCK</span>The arch's answer, on a phone</h1>
+<p class="lede">A phone stood upright (390 px across) at the yard's zoom shows 78 cells of the yard. The arch over rock 15 is 116 cells wide, so today both feet are off the frame for the whole scene. Four ways out, each drawn on the same ten-second loop, plus today's phone and a desk window for comparison.</p>
+<p class="facts">
+<b>Measured in the game</b> (rock 15, own dev server, 390&times;844 and 1280&times;800): arch x 5190, w 696 (116 cells), view 468 world units (78 cells) at zoom 0.833; the camera held at camX 5304, the span's middle, with 19 cells of arch off each side. At 1280 wide the view is 1536 units and the whole arch fits.
+<b>Widths by rock</b>: the arch passes the phone's 78 cells from rock 6 (80 cells) and tops out at 120 cells from rock 20; props and net top out at 104, the dome at 120.
+<b>The zoom ladder</b>: at a 1x phone, 5 px a cell is the yard; 4 px shows 97 cells (fits the arch up to about rock 10); 3 px shows 130 (fits every shield with room). On a 3x phone a step is a fifteenth of a cell, so a glide from 5 to 3 would be six visible snaps, which is why no option here glides the zoom.
+</p>
+<div class="bar">
+  <button id="play" type="button">pause</button>
+  <button id="slow" type="button">slow: off</button>
+  <span class="clock" id="clock"></span>
+</div>
+<div class="grid" id="grid"></div>
+<div class="opt desk" id="deskpanel"></div>
+
+<section class="notes">
+  <h2>What this mock cannot show</h2>
+  <ul>
+    <li>It is drawn from plain shapes on a 6-unit cell, not the game: the rock, the arch, the crew and the clouds are stand-ins, and the receded yard is a flat gray-out, not render/recede.js.</li>
+    <li>The real camera glides in from wherever the player was looking (CUT_SETTLE_S); every panel here starts already on the span.</li>
+    <li>The real answer (the hold, the set-down, the pair's beat under it) is shortened to one held impact; the timings are first guesses, not config.</li>
+    <li>It runs at 1 px a CSS pixel. A real phone at 2x or 3x renders the same cells crisper, and the size of a cell in hand (how small 3 px a cell feels) only shows on a phone.</li>
+    <li>It does not show the boards, the counter or the corner buttons, which a smaller zoom (C) would leave the same size over a smaller yard.</li>
+  </ul>
+</section>
+</main>
+
+<script>
+"use strict";
+// ---- the loop ---------------------------------------------------------------
+const LOOP = 10;
+const BANDS_IN = [0, 0.6], FALL = [0.6, 4.0], HOLD_END = 6.8, BANDS_OUT = [6.8, 7.6];
+const BEATS = [
+  [0, "bands in", "the letterbox steps in, the yard recedes"],
+  [0.6, "the fall", "the rock comes down on the arch"],
+  [4.0, "impact", "the crest takes it, the feet push dust out"],
+  [4.6, "held", "the arch holds the rock over the pair"],
+  [6.8, "bands out", "the yard comes back around the arch"],
+  [7.6, "yard", "the player has the camera again"],
+];
+const beatAt = t => { let b = BEATS[0]; for (const x of BEATS) if (t >= x[0]) b = x; return b; };
+const easeInOut = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+const clamp01 = k => Math.max(0, Math.min(1, k));
+// How far the yard has receded: 0 to 1 over the bands in, back over the bands out.
+const hush = t => t < BANDS_IN[1] ? easeInOut(t / BANDS_IN[1])
+  : t < BANDS_OUT[0] ? 1 : t < BANDS_OUT[1] ? 1 - easeInOut((t - BANDS_OUT[0]) / (BANDS_OUT[1] - BANDS_OUT[0])) : 0;
+
+// ---- the world, in cells (one cell = 6 world units) -------------------------
+const ARCH_W = 116, ARCH_H = 74, LEG_H = 46, THICK = 4;
+const MID = ARCH_W / 2;
+const ROCK_W = 92, ROCK_H = 46;
+const hash = (x, y) => { let h = (x * 374761393 + y * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+
+// The arch's top edge at column x (0..ARCH_W-1), with a dip at the crest when loaded.
+function archTop(x, dip) {
+  const dx = (x + 0.5 - MID) / MID;
+  const y = LEG_H + (ARCH_H - LEG_H) * Math.sqrt(Math.max(0, 1 - dx * dx));
+  return Math.round(y - dip * Math.max(0, 1 - Math.abs(dx) * 1.6));
+}
+// The rock: a lumpy blob, precomputed as [x, y, tone] relative to its bottom middle.
+const ROCK = [];
+for (let x = -ROCK_W / 2; x < ROCK_W / 2; x++) for (let y = 0; y < ROCK_H; y++) {
+  const nx = (x + 0.5) / (ROCK_W / 2), ny = (y + 0.5 - ROCK_H / 2) / (ROCK_H / 2);
+  const lump = 0.06 * Math.sin(x * 0.17) + 0.05 * Math.sin(x * 0.09 + 1.7) + (ny > 0 ? 0.05 * Math.sin(x * 0.23 + 0.4) : 0);
+  const d = Math.sqrt(nx * nx + ny * ny) - lump;
+  if (d > 1) continue;
+  const j = (hash(x, y) - 0.5) * 0.18;
+  const k = d + j;
+  ROCK.push([x, y, k < 0.5 ? "#141414" : k < 0.68 ? "#2e2e2e" : k < 0.84 ? "#555555" : "#7c7c7c"]);
+}
+const CLOUDS = [[-40, 128, 22], [10, 140, 16], [44, 118, 26], [96, 134, 20], [140, 124, 24], [178, 142, 14]];
+const BYSTANDERS = [-22, -30, 134, 150]; // haulers and the like, faded with the yard
+
+// ---- the cameras: center (cells) and pixels a cell, per option ----------------
+const PHONE = { W: 390, H: 844, ground: 604 };
+const DESK = { W: 1280, H: 800, ground: 560 };
+const LEFT_END = 39 - 3, RIGHT_END = ARCH_W - 39 + 3;
+const CAMS = {
+  today: () => ({ cx: MID, px: 5 }),
+  A: t => ({ cx: MID, px: t >= BANDS_IN[1] && t < BANDS_OUT[1] ? 3 : 5 }),
+  B: t => ({ cx: LEFT_END + (RIGHT_END - LEFT_END) * easeInOut(clamp01((t - 1.0) / 2.4)), px: 5 }),
+  C: () => ({ cx: MID, px: 3 }),
+  D: () => ({ cx: MID, px: 5 }),
+  desk: () => ({ cx: MID, px: 5 }),
+};
+
+// ---- drawing ------------------------------------------------------------------
+const gray = (ink, h) => {
+  // Receded ink: lifted toward the paper by h (the yard recede), in held steps.
+  const v = parseInt(ink.slice(1, 3), 16);
+  const k = Math.round(h * 4) / 4;
+  const out = Math.round(v + (226 - v) * k * 0.8);
+  const s = out.toString(16).padStart(2, "0");
+  return "#" + s + s + s;
+};
+
+function draw(g, scr, cam, t, opt) {
+  const { W, H, ground } = scr;
+  const px = cam.px;
+  const ox = Math.round(W / 2 - cam.cx * px);
+  const hz = hush(t);
+  const cell = (x, y, c, w = 1, h = 1) => { g.fillStyle = c; g.fillRect(ox + x * px, ground - (y + h) * px, w * px, h * px); };
+
+  // paper, sky motes, ground
+  g.fillStyle = "#fbfbf9"; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 70; i++) {
+    const x = Math.floor(hash(i, 3) * 360) - 120, y = Math.floor(hash(i, 7) * 150) + 6;
+    cell(x, y, gray(hash(i, 9) < 0.5 ? "#c8c8c6" : "#b0b0ae", hz));
+  }
+  for (const [cx, cy, cw] of CLOUDS) {
+    for (let x = 0; x < cw; x++) for (let y = 0; y < 6; y++) {
+      const e = Math.abs(x - cw / 2) / (cw / 2) + (y > 3 ? 0.35 : 0);
+      if (e > 1) continue;
+      cell(cx + x, cy + y, gray(hash(cx + x, y) < 0.5 ? "#dcdcda" : "#d2d2d0", hz));
+    }
+  }
+  g.fillStyle = "#f1f1ef"; g.fillRect(0, ground, W, H - ground);
+  g.fillStyle = gray("#e1e1df", hz);
+  for (let y = ground + px * 2; y < H; y += px * 3) for (let x = ((y / px) % 6) * px; x < W; x += px * 6) g.fillRect(x, y, px, px);
+  g.fillStyle = gray("#9a9a98", hz); g.fillRect(0, ground, W, Math.max(1, px / 2));
+
+  // the yard behind: a tower with its flag and the bystanders, receded
+  const tower = -16;
+  for (let y = 0; y < 10; y++) { cell(tower, y, gray("#7a7a78", hz)); cell(tower + 6, y, gray("#7a7a78", hz)); }
+  cell(tower - 1, 10, gray("#7a7a78", hz), 9, 2);
+  for (let y = 12; y < 20; y++) cell(tower + 3, y, gray("#7a7a78", hz));
+  cell(tower + 4, 17, gray("#7a7a78", hz), 3, 2);
+  for (const b of BYSTANDERS) {
+    const walk = Math.floor(t * 3 + b) % 2;
+    cell(b + walk, 0, gray("#8a8a88", Math.max(hz, 0)), 2, 3);
+  }
+
+  // the fall and the hold
+  const fallK = clamp01((t - FALL[0]) / (FALL[1] - FALL[0]));
+  const landed = t >= FALL[1];
+  const loadK = landed ? Math.min(1, (t - FALL[1]) / 0.25) : 0;
+  const dip = t >= FALL[1] && t < HOLD_END + 1.5 ? Math.round(2 * loadK) : 0;
+  const crest = archTop(Math.floor(MID), dip) + 1;
+  const startY = crest + 150;
+  const rockY = landed ? crest : Math.round(startY - (startY - crest) * fallK * fallK);
+  const showRock = t >= FALL[0] - 0.05 && t < LOOP;
+
+  // the arch
+  for (let x = 0; x < ARCH_W; x++) {
+    const top = archTop(x, dip);
+    const leg = x < THICK || x >= ARCH_W - THICK;
+    const prev = x > 0 ? archTop(x - 1, dip) : top, next = x < ARCH_W - 1 ? archTop(x + 1, dip) : top;
+    const lo = leg ? 0 : Math.min(top - THICK + 1, Math.min(prev, next) - THICK + 1, top - THICK + 1);
+    for (let y = Math.max(0, lo); y <= top; y++) {
+      if (!leg && y < LEG_H - 2 && (x > THICK + 6 && x < ARCH_W - THICK - 6)) continue;
+      cell(x, y, "#121212");
+    }
+  }
+  // the crew at each foot, and the pair underneath
+  const alarmed = landed && t < HOLD_END;
+  for (const fx of [THICK + 3, ARCH_W - THICK - 5]) {
+    cell(fx, 0, "#2a2a2a", 2, 3);
+    if (alarmed) { cell(fx + 0.5, 5, "#2a2a2a", 1, 3); cell(fx + 0.5, 4, "#fbfbf9"); }
+  }
+  cell(MID - 4, 0, "#222", 2, 3); cell(MID + 2, 0, "#222", 2, 3);
+  // dust out of the feet as they take the load: the moment the ends carry
+  if (landed && t - FALL[1] < 1.6) {
+    const age = t - FALL[1];
+    const tone = age < 0.5 ? "#6a6a68" : age < 1.0 ? "#9a9a98" : "#c4c4c2";
+    for (let i = 0; i < 9; i++) {
+      const sp = 3 + (i % 3) * 3 + hash(i, 1) * 2, hy = Math.floor((i % 4) * 0.8 + age * (1 + i % 2) * 2);
+      const d = Math.floor(age * sp * 2) + 1;
+      cell(-d, hy, tone); cell(ARCH_W - 1 + d, hy, tone);
+    }
+  }
+  if (showRock) for (const [x, y, c] of ROCK) cell(MID + x, rockY + y, c);
+
+  // D: the ends live in an inset and two cues at the frame's edges
+  if (opt === "D") drawInset(g, scr, t, hz, dip, rockY, showRock, cam, ox);
+
+  // the letterbox
+  const band = Math.round(30 * hz);
+  g.fillStyle = "#000"; g.fillRect(0, 0, W, band); g.fillRect(0, H - band, W, band);
+  if (hz > 0.95) {
+    const lw = 160, lx = Math.round(W / 2 - lw / 2), ly = H - 26;
+    g.fillStyle = "#555"; g.fillRect(lx + 4, ly + 4, lw, 20);
+    g.fillStyle = "#000"; g.fillRect(lx, ly, lw, 20);
+    g.strokeStyle = "#fff"; g.lineWidth = 1; g.strokeRect(lx + 1.5, ly + 1.5, lw - 3, 17);
+    g.fillStyle = "#fff"; g.font = "9px ui-monospace, Consolas, monospace"; g.textAlign = "center";
+    g.fillText("HOLD SPACE TO SKIP", W / 2, ly + 13);
+  }
+}
+
+function drawInset(g, scr, t, hz, dip, rockY, showRock, cam, ox) {
+  // A 1-px-a-cell picture of the whole span, under the top band, the view's
+  // edges marked on it; and a chevron at each edge of the frame, on the
+  // ground, which kicks out a cell when that foot takes the load.
+  const { W, ground } = scr;
+  const s = 1, iw = ARCH_W + 24, ih = 128, ix = 10, iy = 40;
+  const base = iy + ih - 8;
+  g.fillStyle = "#fbfbf9"; g.fillRect(ix, iy, iw, ih);
+  g.fillStyle = "#000"; g.fillRect(ix - 2, iy - 2, iw + 4, 2); g.fillRect(ix - 2, iy + ih, iw + 4, 2);
+  g.fillRect(ix - 2, iy, 2, ih); g.fillRect(ix + iw, iy, 2, ih);
+  g.fillStyle = "#9a9a98"; g.fillRect(ix, base, iw, 1);
+  const ax = ix + 12;
+  g.fillStyle = "#121212";
+  for (let x = 0; x < ARCH_W; x++) {
+    const top = archTop(x, dip);
+    const leg = x < THICK || x >= ARCH_W - THICK;
+    const y0 = leg ? 0 : Math.max(0, Math.min(top - THICK + 1, LEG_H - 2));
+    for (let y = y0; y <= top; y++) if (leg || y >= top - THICK + 1) g.fillRect(ax + x * s, base - (y + 1) * s, s, s);
+  }
+  if (showRock) for (const [x, y, c] of ROCK) {
+    const yy = base - (rockY + y + 1) * s;
+    if (yy < iy) continue;
+    g.fillStyle = c; g.fillRect(ax + (MID + x) * s, yy, s, s);
+  }
+  // the view's edges on the span
+  const vw = W / cam.px, vl = cam.cx - vw / 2;
+  g.fillStyle = "#555";
+  for (let y = iy + 2; y < iy + ih - 2; y += 4) { g.fillRect(ax + Math.round(vl * s), y, 1, 2); g.fillRect(ax + Math.round((vl + vw) * s), y, 1, 2); }
+  // edge cues
+  const landed = t >= FALL[1] && t - FALL[1] < 0.5;
+  const kick = landed ? 6 : 0;
+  if (hz > 0.5) for (const side of [-1, 1]) {
+    const x0 = side < 0 ? 4 - kick : W - 4 + kick;
+    g.fillStyle = "#121212";
+    for (let i = 0; i < 4; i++) {
+      g.fillRect(x0 + side * (-i * 5) - (side > 0 ? 5 : 0), ground - 30 - i * 5, 5, 5);
+      g.fillRect(x0 + side * (-i * 5) - (side > 0 ? 5 : 0), ground - 30 + i * 5, 5, 5);
+    }
+  }
+}
+
+// ---- the page -------------------------------------------------------------------
+const OPTS = [
+  ["today", "Today", "The yard's zoom, the span's middle held. Both feet are off the frame for the whole scene.",
+    [["sees", "the crest and the rock; the legs are two stubs leaving the frame."],
+     ["loses", "the feet, the crew at them and the dust when the arch takes the load: the part that says it held."],
+     ["no snaps", "holds: nothing changes size."]]],
+  ["A", "A. One held step out", "On a phone only, the scene cuts once to 3 px a cell when the bands are in, and cuts back once after they go.",
+    [["sees", "the whole arch, feet and crew, small, for the whole of the hold; the ground line drops to a new size once, behind full bands."],
+     ["loses", "the yard's own size for the length of the scene, and the rock is 40% smaller on screen at the moment it lands."],
+     ["no snaps", "bends it twice, on purpose: two cuts, each one frame, at the scene's two edges. No run of steps, the ground line jumps once, not six times."]]],
+  ["B", "B. Pan along the span", "The yard's zoom; the camera holds on the left foot, glides along the span on an ease during the fall, and holds on the right foot for the impact.",
+    [["sees", "both feet in turn, at full size, and the crest crossing the frame as the rock comes down."],
+     ["loses", "the left foot at the impact, and the middle (the pair, the landing spot) sits a third in from the edge, not centered; the phone check asserts the middle is held centered, so it would have to change."],
+     ["no snaps", "holds: only the glide moves, as today."]]],
+  ["C", "C. The phone yard, smaller", "The phone's yard zoom is 3 px a cell everywhere, so every shield fits and no scene changes anything.",
+    [["sees", "the whole arch at the size it plays at; nothing happens to the camera at all."],
+     ["loses", "everything else on a phone is 40% smaller all the time: bodies are 6 by 9 px, taps on a rock or a body are harder. One step (4 px, 97 cells) is not enough: past rock 10 the feet are off again."],
+     ["no snaps", "holds completely: the zoom never changes."]]],
+  ["D", "D. Frame the impact, carry the ends", "The yard's zoom on the span's middle, as today; an inset under the top band draws the whole span a pixel a cell, and a chevron at each edge kicks when its foot takes the load.",
+    [["sees", "the impact at full size, centered, and the whole arch at a glance in the inset, the view's edges marked on it."],
+     ["loses", "the feet are still never seen at size; the inset is a second thing to read in a scene meant to be one thing. The cues are new marks the game has no word for yet."],
+     ["no snaps", "holds: nothing changes size."]]],
+];
+
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (reduced) document.body.classList.add("reduced");
+const KEYS = [[0.3, "bands in"], [2.4, "the fall"], [4.3, "impact"], [8.6, "yard"]];
+
+const panels = [];
+const grid = document.getElementById("grid");
+function makePanel(host, id, name, cap, rows, scr, phone) {
+  host.innerHTML = `<h2>${name}</h2><p class="cap">${cap}</p>`;
+  const box = document.createElement("div"); box.className = "screen" + (phone ? " phone" : "");
+  const c = document.createElement("canvas"); c.width = scr.W; c.height = scr.H; box.appendChild(c);
+  host.appendChild(box);
+  const beat = document.createElement("div"); beat.className = "beat"; host.appendChild(beat);
+  const keys = document.createElement("div"); keys.className = "keys"; host.appendChild(keys);
+  if (rows) {
+    const dl = document.createElement("dl");
+    for (const [k, v] of rows) dl.insertAdjacentHTML("beforeend", `<dt>${k === "sees" ? "What the player sees" : k === "loses" ? "What is lost" : "The no-snap rule"}</dt><dd>${v}</dd>`);
+    host.appendChild(dl);
+  }
+  const p = { id, g: c.getContext("2d"), scr, beat, keys };
+  if (reduced) {
+    for (const [kt, kn] of KEYS) {
+      const f = document.createElement("figure");
+      const kc = document.createElement("canvas"); kc.width = scr.W; kc.height = scr.H;
+      draw(kc.getContext("2d"), scr, CAMS[id](kt), kt, id);
+      f.appendChild(kc); f.insertAdjacentHTML("beforeend", `<figcaption>${kn}</figcaption>`);
+      keys.appendChild(f);
+    }
+  }
+  panels.push(p);
+}
+for (const [id, name, cap, rows] of OPTS) {
+  const el = document.createElement("div"); el.className = "opt"; grid.appendChild(el);
+  makePanel(el, id, name, cap, rows, PHONE, true);
+}
+makePanel(document.getElementById("deskpanel"), "desk", "For comparison: a desk window (1280 wide)",
+  "Today's scene at the yard's zoom on a desk: the whole arch, both feet and their crew, centered. This is what each phone option is trying to keep.", null, DESK, false);
+
+let playing = !reduced, slow = false, t = reduced ? 4.3 : 0, last = performance.now();
+const clock = document.getElementById("clock");
+document.getElementById("play").onclick = e => { playing = !playing; e.target.textContent = playing ? "pause" : "play"; last = performance.now(); };
+document.getElementById("slow").onclick = e => { slow = !slow; e.target.textContent = "slow: " + (slow ? "on" : "off"); };
+if (reduced) document.getElementById("play").textContent = "play";
+
+function frame(now) {
+  if (playing) t = (t + (now - last) / 1000 * (slow ? 0.35 : 1)) % LOOP;
+  last = now;
+  const ft = Math.floor(t * 30) / 30;
+  const b = beatAt(ft);
+  for (const p of panels) {
+    draw(p.g, p.scr, CAMS[p.id](ft), ft, p.id);
+    p.beat.innerHTML = `<b>${b[1]}</b> &middot; ${b[2]}`;
+  }
+  clock.textContent = ft.toFixed(1) + " s of " + LOOP + " s";
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
