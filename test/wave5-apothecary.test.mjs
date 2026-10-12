@@ -205,12 +205,22 @@ group('the row stops selling pots at the third, one to a brew', async () => {
   ];
 });
 
-group('a yard that already holds four pots keeps all four, and the row is finished', async () => {
+group('a save that held four pots loads three, and the row is finished', async () => {
   standApothecary();
-  yard.S.apothPots = 4;                         // an old save, from when the cap was four
+  const KEY = 'boulder-clicker/v4';
+  yard.persist();
+  const old = JSON.parse(localStorage.getItem(KEY));
+  old.saveV = 13;                               // from when the cap was four
+  old.apothPots = 4;
+  old.potTonics = ['stew', 'strong', 'brace', 'stew'];
+  old.brewAt = [0, 0, 0, 5000];
+  localStorage.setItem(KEY, JSON.stringify(old));
+  yard.restore();
   run(1);
   const more = buyNow('anotherpot');
   return [
-    ok(!more && yard.S.apothPots === 4, 'nothing more is sold and nothing is taken', `${yard.S.apothPots} pots`)
+    ok(yard.S.apothPots === 3, 'the fourth pot is dropped', `${yard.S.apothPots} pots`),
+    ok(yard.S.potTonics.length <= 3 && !(yard.S.brewAt[3] > 0), 'with its brew and its setting', JSON.stringify(yard.S.brewAt)),
+    ok(!more && yard.S.apothPots === 3, 'and nothing more is sold', `${yard.S.apothPots} pots`)
   ];
 });

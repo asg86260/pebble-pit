@@ -20,6 +20,7 @@ import { MARK, purse, priceText } from './words.js';
 import { drawGlyph, glyphFor, badgeFor } from './glyphs.js';
 import { tagOf, pressRow, revealed, COIN_ORDER } from './shop.js';
 import { onTap } from './tap.js';
+import { setFill } from './billfill.js';
 
 const box = document.getElementById('objective')?.querySelector?.('.barrier') ?? null;
 
@@ -115,6 +116,7 @@ function draw(u, mode, step) {
   const lines = [];
   for (const [money] of coins) {
     const li = document.createElement('li');
+    li.className = 'fill';
     li.dataset.money = money;
     li.innerHTML = `<i class="box"></i>${MARK[money]}<span class="num"></span>`;
     list.appendChild(li);
@@ -146,8 +148,7 @@ function update(u, mode) {
   for (const li of parts.lines) {
     const need = bill.find(([m]) => m === li.dataset.money)?.[1] ?? 0;
     const have = purse(li.dataset.money);
-    li.classList.toggle('done', have >= need);
-    li.style.setProperty('--p', need > 0 ? Math.min(1, have / need) : 1);
+    setFill(li, have, need);
     say(li.lastChild, `${priceText(li.dataset.money, Math.min(have, need))} / ${priceText(li.dataset.money, need)}`);
   }
   sayHTML(parts.cost, tagOf(u, bill).bill);

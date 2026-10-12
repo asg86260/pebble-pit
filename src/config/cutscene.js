@@ -64,3 +64,13 @@ export const CUT_MUCK_WAIT_S = 1.5;
 // and its patch at least this many cells from it, so the walk over is seen
 // rather than a step off the rock's edge
 export const CUT_MUCK_PULL_CELLS = 30;
+
+// The ending's two scenes (the rescue under the dome, the snatch at the
+// plank) show their pair and nobody else: the rest of the crew walk out of
+// the frame while it plays and back to work after (src/stage.js). The frame
+// is the scene's own at its full pull-in, widened by this many cells a side
+// so a body stood just off it is not half in the picture.
+export const STAGE_MARGIN = 3;
+// The snatch's portal waits at the edge for the frame to be clear, never
+// longer than this: a body that cannot get out must not hold the story.
+export const STAGE_WAIT_S = 8;

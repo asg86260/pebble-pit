@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- During the snatch the rest of the crew walk off the plank's shot, the portal waits until they are clear, and no rock comes down until it is over (test/ending-stage.test.mjs).
 - A station bought with a fang asks the yard's dust for its first rungs, so a new fighter climbs over minutes instead of all at once.
 - When the serpent resists explosive it floats a magic barrier under its body that soaks up the Sapper's charges.
 - The serpent's warded phase, split and fading resist whatever your highest-rung fighters deal, explosive included, instead of fixed kinds.
@@ -123,14 +124,18 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The bench's build tiles show each coin of their price as a line that fills grey as you gather it, the same as the story card's bill (src/selftest/boards.js).
+- While the dome holds the rescue rock, the rest of the crew walk out of the shot so only the two of them are in it, and walk back to work after (test/ending-stage.test.mjs).
+- No new rock comes down from the rescue until the whole ending, the drowning of the pit included, is over (test/ending-stage.test.mjs).
 - A station's counter is a row of seats between its - and +: a filled pip for each body at work, a pip filling in thirds while one walks over, the specialist slots in a row of their own above (a brim each, grey ones on the outlines of hats not yet worn, and the next body sent takes a spare hat first) and only the seats left over below for plain workers, with a rule between the rows (none when every seat is a hat seat), whatever rows show centered on the - and +, and a click on a bottom pip sets the plain workers (src/selftest/crew.js).
 - Every miner and every farmer can wear a blaster or grower hat, not just three (test/hats-gate-machines.test.mjs).
 - The drill and the tiller sit greyed on their boards saying "buy 5 blasters to unlock" or "buy 5 growers to unlock" until five are bought (test/hats-gate-machines.test.mjs, src/selftest/boards.js).
 - The air filter comes with its first balloon (test/filter-balloon.test.mjs).
 - The forklift's load and speed sell only their last four rungs, and the balloon row only its last two, so neither starts out pocket change (test/forklift.test.mjs, test/balloon.test.mjs).
 - On the story card each coin's line is its own bar, filling grey as the coins come in (src/selftest/boards.js).
-- The apothecary holds three pots, one to a brew; a yard that already has more keeps them.
+- The apothecary holds three pots, one to a brew; a yard that already has a fourth loses it (test/save-floor.test.mjs).
 - The tower's door no longer says "wizards live here", and the story no longer says "ask the wizards how to get down".
+- After the snatch the story says "talk to the wizards about what just happened" until you open their board (test/objectives.test.mjs, src/selftest/boards.js).
 - The tower's row summons a wizard instead of training one.
 - The dome sits first on the tower's board as its goal card, and every goal card's ribbon reads "saving your sqwife" (src/selftest/boards.js, "the tower's dome").
 - The saves page draws the slot you are playing inverted, black with white text, in place of greyed out.
@@ -187,6 +192,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The shack stands clear of the barriers: the arch and the dome no longer run into it, with bare ground left between (test/shield-fit.test.mjs).
 - A worker on its way to the rock when it comes off dances at the edge of the drop instead of treading on the spot there until the next rock lands (test/dance.test.mjs).
 - After a refresh, a carter halfway through gathering a heap finishes filling its hands instead of heading home with half a load (test/heap-fringe.test.mjs).
+- The ram's strike rungs queue over the shack, not over the boulder (test/shack.test.mjs).
 - The sqwife is always drawn behind the rock, showing wherever its cells are mined away, instead of popping in once the rock is gone (test/lodged.test.mjs).
 
 ## v0.5.2 — 2026-09-28

@@ -434,6 +434,10 @@ const deepScenes = {
       S.snatch.hurry = 1;
       S.snatch.at = now() - (SNATCH_CLOSE_MS * 0.45 - 1000);
     } },
+  // The snatch behind it, the story's line sending the player to the wizards.
+  aftersnatch: { about: 'the deep', say: 'the story\'s line after the snatch: talk to the wizards',
+    run: () => { rich(); window.__fullSites(); window.__crew(0, 4); window.__snatch({ played: true, portal: false });
+                 window.__answered('props', 'net', 'arch'); window.__meteor(); window.__view('yard'); window.__fast(2); } },
   // A wizard out over the middle of the pit, pouring the portal.
   'portal-pour': { about: 'the deep', say: 'a wizard over the pit, pouring the portal',
     run: () => { rich(); window.__fullSites(); window.__crew(0, 4); window.__snatch({ played: true, portal: false });
@@ -889,6 +893,11 @@ export const SCENES = {
   shack: { about: 'the rock', say: 'the shack beside a big rock, the ram parked',
     run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__buy('ram');
                  window.__finish(); window.__jump(8); window.__fast(6); window.__look(st().shackX - 400); } },
+  // A ram strike rung queued: its glyph floats over the shack, not the boulder.
+  ramrung: { about: 'the rock', say: 'a ram strike rung in line: its glyph over the shack',
+    run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__buy('ram');
+                 window.__finish(); window.__jump(8); window.__fast(6); window.__buy('tuneram');
+                 window.__fast(0.5); window.__look(st().shackX - 400); } },
   // Mined away over her drop spot but not finished: she is behind the rock
   // and shows exactly where its cells are gone.
   rockhalf: { about: 'the rock', say: 'the rock mined away over the one buried, the rest standing',
@@ -957,6 +966,15 @@ export const SCENES = {
                  window.__fast(1);
                  S.mouse = { x, y: S.groundY - 12 }; S.dragging = true; S.nextToss = 0;
                  window.__look(x - 340); } },
+  // The build section's unlock tiles with some of each bill in the purse:
+  // about half the dust in, the crops and ore not yet.
+  unlockbars: { about: 'the bench', say: 'the unlock tiles on the bench, each coin of a bill filling as it comes in',
+    run: () => { window.__reset(); window.__crew(4); S.quarryOpen = false; S.farmOpen = false;
+                 window.__answered('props', 'net');
+                 window.__grant({ dust: 6000, shards: 2, spores: 1 }); window.__fast(2);
+                 window.__spend(st().stored - 300); window.__fast(1);
+                 window.__board('bench');
+                 setTimeout(() => document.querySelector('#shop button[data-key^="unlock"]')?.scrollIntoView({ block: 'center' }), 300); } },
   apron: { about: 'the rock', say: 'the bare strip in front of the hill',
     run: () => { rich(); window.__jump(4);
                  const x = st().rockLeftX;
@@ -1894,6 +1912,11 @@ export const SCENES = {
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(4.5); } },
   'rescue!': { about: 'the shields', say: 'the rock held on the dome, and the digging out under it',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(10); } },
+  // A busy crew under the dome, the rock about to leave the sky: run on to
+  // watch the rest walk out of the shot and back after (stage.js).
+  'rescue-stage': { about: 'the shields', say: 'the rescue with a busy crew: everybody but the pair walks out of the shot',
+    run: () => { shieldBuilt('dome'); window.__crew(4, 8, 0, 0, 0, 1); window.__fast(3);
+                 S.buried = true; window.__next(); } },
   saved: { about: 'the shields', say: 'the end of the story: the sheet after the rescue',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(45); } },
 
