@@ -4,7 +4,7 @@
 // is pressed.
 
 import { group, ok, state, run, openSites, yard } from './helpers.mjs';
-import { COUNTER_GAP, GARAGE_W, P } from '../src/config.js';
+import { COUNTER_GAP, COUNTER_TOP_DROP, GARAGE_W, P } from '../src/config.js';
 import { rosterReport, postAt, posts, rosterHit } from '../src/roster.js';
 import { garage } from '../src/crew/lifts.js';
 import { houseRect } from '../src/house.js';
@@ -67,5 +67,25 @@ group('a crowd counter hugs its pips, and the + stays under the pointer while it
     ok(pressed.every(d => d === 0) && moved === 0, 'the + does not move under a pointer that presses it twice',
        `${pressed} moved ${moved}`),
     ok(after > wide3, 'and the counter reflows once the pointer leaves', `${wide3} then ${after}`)
+  ];
+});
+
+group('the -/+ stand level with the first row, and stay put as rows are added under it', async () => {
+  window.__reset();
+  openSites();
+  window.__crew(3, 0);
+  run(5);
+  const mine = () => rosterReport().find(r => r.key === 'mine');
+  const one = mine();
+  window.__crew(16, 0);
+  run(10);
+  const three = mine();
+  const rows = r => new Set(r.crowd.pips.map(q => q.at[1])).size;
+  return [
+    ok(rows(one) === 1 && rows(three) === 3, 'one row of diggers, then three', `${rows(one)} then ${rows(three)}`),
+    ok(three.less[1] === one.less[1] && three.more[1] === one.more[1], 'the buttons do not move down as the block grows',
+       `${one.less[1]} then ${three.less[1]}`),
+    ok(three.crowd.block.y + COUNTER_TOP_DROP === three.less[1], 'and they are level with its first row',
+       `${three.crowd.block.y + COUNTER_TOP_DROP} against ${three.less[1]}`)
   ];
 });

@@ -7,7 +7,7 @@
 
 import { group, ok, state, run, runUntil, yard, P, WORKER } from './helpers.mjs';
 import { dropMuckAt, poopCols, muckFloor, colAt } from '../src/smog.js';
-import { GROSS_MS, HOVER_SLOW, HOVER_SLOW_MS } from '../src/config.js';
+import { GROSS_MS, HOVER_SLOW, HOVER_SLOW_MS, COUNTER_TOP_DROP } from '../src/config.js';
 import { whatIsAt } from '../src/input.js';
 import { OUTHOUSE_SECTIONS } from '../src/outhouse.js';
 import { OUTHOUSE_ROWS } from '../src/upgrades/rows-outhouse.js';
@@ -121,15 +121,15 @@ group('the trade line stands a clear cell under the counter, and the janitor has
   const rock = report.find(r => r.key === 'mine');
   const loo = report.find(r => r.key === 'loojob');
   const rockPost = posts().find(p => p.key === 'mine');
-  // The rock is a crowd: its breakers a row above the plain, the block
-  // centered on the post's line, where the buttons stand.
+  // The rock is a crowd: its breakers a counter beside the plain, the
+  // block's first row on the post's line, where the buttons stand.
   const top = rock && rock.crowd ? rock.crowd.pips.filter(q => q.top) : [];
-  const mid = rock && rock.crowd ? rock.crowd.block.y + rock.crowd.block.h / 2 : null;
+  const mid = rock && rock.crowd ? rock.crowd.block.y + COUNTER_TOP_DROP : null;
   return [
-    ok(rock && rock.trade === null && top.length === 2, 'the rock post draws its breakers as a top row, not a trade line',
+    ok(rock && rock.trade === null && top.length === 2, 'the rock post draws its breakers as a counter of their own, not a trade line',
        rock && JSON.stringify(rock.crowd)),
-    ok(mid !== null && Math.abs(mid - postAt(rockPost).y) <= P && rock.less[1] === postAt(rockPost).y,
-       'and the block stands centered on the post, between its buttons', `${mid} against ${postAt(rockPost).y}`),
+    ok(mid === postAt(rockPost).y && rock.less[1] === postAt(rockPost).y,
+       'and its first row stands on the post, level with its buttons', `${mid} against ${postAt(rockPost).y}`),
     ok(loo && loo.hats > 0, 'the janitor post owns its cap', loo && loo.hats),
     ok(loo && loo.trade === null,
        'but draws no second default body under the count -- the badge wears the cap')

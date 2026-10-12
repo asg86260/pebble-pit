@@ -498,15 +498,12 @@ export function rosterHit(x, y) {
     const pip = pipAt(p, b, x, y);
     if (pip) {
       // A plain seat sets the plain count: the hatted bodies stand outside
-      // it. But no plain hand is seated while a hat waits: a click that would
-      // add one is the +, which sends a body for the hat, and only the one. A
-      // waiting hat's ring is that same press. A hatted body's pip is no
-      // switch; it is only not a swing.
+      // it. A waiting hat's ring is a worker sent for that hat, the same
+      // press as the +. A hatted body's pip is no switch; it is only not a
+      // swing.
       if (pip.kind === 'reg') {
-        const t = topOf(p), inHats = t.worn + t.wearing, plain = count(p) - inHats;
-        const want = inHats + (pip.at === plain ? pip.at - 1 : pip.at);
-        if (want > count(p) && t.spare > 0) press(p, 1);
-        else setTo(p, want);
+        const t = topOf(p), held = t.worn + t.wearing, plain = count(p) - held;
+        setTo(p, held + (pip.at === plain ? pip.at - 1 : pip.at));
       } else if (pip.kind === 'spare') press(p, 1);
       S.shopStale = true;
       return true;

@@ -3,7 +3,7 @@
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
   point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil, canvas, put } from './kit.js';
-import { P, WORKER, SEAT_PIP, GARAGE_W } from '../config.js';
+import { P, WORKER, SEAT_PIP, GARAGE_W, CART_W, CART_H, COUNTER_TOP_DROP, COUNTER_PAIR_GAP, COUNTER_ROW } from '../config.js';
 import { S } from '../state.js';
 import { draw } from '../render.js';
 import { lifted } from '../crew.js';
@@ -394,17 +394,19 @@ export const TESTS = [
     const dark = v => v < 90, light = v => v > 170;
     const off = SEAT_PIP * 0.3;
     const pip = i => { draw(); const [x, y] = q().pips[i]; return { mid: ink(x, y), low: ink(x, y + off), high: ink(x, y - off),
-                                                                     brim: ink(x, y - SEAT_PIP / 2 - 3) }; };
+                                                                     edge: ink(x, y - SEAT_PIP / 2 + 1) }; };
+    // A counter's head, read a half cell under its top in the middle: the
+    // hat's crown on a hatted body, the white inside of a bare one.
+    const head = c => { draw(); const [x, y, w] = c.head; return ink(x + w / 2, y + P / 2); };
     const plusMid = () => { draw(); const [x, y] = q().more; return ink(x, y); };
     const at = q(), first = pip(0), third = pip(2), fifth = pip(4);
-    const rows = [...new Set(at.pips.map(p => p[1]))];
+    const heads = at.counters.map(head);
     const second = pip(1), regular = pip(2), pip3 = pip(3);
 
-    // The rule and the buttons, off the canvas: the rule is grey between the
-    // two rows, and the + (its upright bar scanned for its extent) stands at
-    // the middle of the block, the top row's top to the bottom row's foot.
+    // The buttons, off the canvas: the + (its upright bar scanned for its
+    // extent) stands level with the block's first row, not its middle.
     const grey = v => v > 100 && v < 200;
-    const centered = () => {
+    const level = () => {
       draw();
       // the + 's flat bar, read a few pixels in from its end, where even the
       // dotted one is solid
@@ -416,17 +418,16 @@ export const TESTS = [
         if (v < 90) { if (a < 0) a = d; z = d; }
       }
       const mid = (a + z) / 2 / S.dpr;
-      const blockMid = onScreen(px, r.block.y + r.block.h / 2)[1] - sy0;
-      return { off: Math.abs(mid - blockMid), mid, blockMid, a, z, reach, dpr: S.dpr, sy0, rule: r.rule, block: r.block, rows: new Set(r.pips.map(p => p[1])).size, n: r.pips.length };
+      const rowMid = onScreen(px, r.block.y + COUNTER_TOP_DROP)[1] - sy0;
+      return { off: Math.abs(mid - rowMid), mid, rowMid, a, z, reach, dpr: S.dpr, sy0, block: r.block,
+               rows: new Set(r.pips.map(p => p[1])).size, n: r.pips.length, heads: r.counters.map(c => c.sprite) };
     };
-    const twoRow = centered();
-    const ruleInk = twoRow.rule && [0, 1, -3, twoRow.rule.h + 3].map(d => ink(twoRow.rule.x + twoRow.rule.w / 2, twoRow.rule.y + d));
-    const pipsY = at.pips.map(p => p[1]);
-    // Every seat taken by a specialist: the top row alone, no rule, centered.
+    const twoCounters = level();
+    // Every seat taken by a specialist: the hatted counter alone.
     window.__crew(0, 5, 5, 0);
     window.__kit({ blasters: 5 });
     run(30);
-    const hatsOnly = centered();
+    const hatsOnly = level();
     window.__kit({ blasters: 2 });
     window.__crew(0, 3, 3, 0);
 
@@ -455,27 +456,31 @@ export const TESTS = [
     run(2);
     const gone = pip(4);
     // Filling seats takes a spare hat first: one hat spare, press + and the
-    // walker's pip stands in the top row with its brim, and it arrives hatted;
-    // press + again with none spare and it goes to the regular row.
+    // walker's pip stands in the hatted counter, and it arrives hatted;
+    // press + again with none spare and it takes a plain seat.
     window.__kit({ blasters: 4 });
     run(15);
-    const topY = q().pips[0][1];
-    const spareBrim = pip(q().pips.length - 1);     // the spare box is last, after the bottom row
+    const hatted = () => q().counters.find(c => c.top);
+    const spareRing = pip(hatted().shown - 1);     // the waiting hats are the hatted counter's last
     const sentHat = await put('quarryjob', 'more');
     let hatWalk = null;
     for (let i = 0; i < 200 && !hatWalk; i++) {
       run(0.1);
       const r = q();
-      if (r.seats.wearing.length === 1) hatWalk = { y: r.pips[2][1], brim: pip(2).brim, n: r.seats.wearing[0] };
+      if (r.seats.wearing.length === 1) hatWalk = { inHats: r.counters[0].top && r.counters[0].pips >= r.seats.brims + 1, n: r.seats.wearing[0] };
     }
     runUntil(() => q().seats.brims === 4, 40);
-    const hatted = q().seats.brims;
+    const fourHats = q().seats.brims;
     const sentPlain = await put('quarryjob', 'more');
     let plainWalk = null;
     for (let i = 0; i < 200 && !plainWalk; i++) {
       run(0.1);
       const r = q();
-      if (r.seats.coming.length === 1 && r.seats.wearing.length === 0) plainWalk = { y: r.pips[r.seats.filled][1] };
+      if (r.seats.coming.length === 1 && r.seats.wearing.length === 0) {
+        const [x] = r.pips[r.counters[0].shown + r.seats.plain];
+        const plainBox = r.counters.find(c => !c.top).box;
+        plainWalk = { x, plainBox, inPlain: x >= plainBox.x && x <= plainBox.x + plainBox.w };
+      }
     }
     window.__crew(0, 0);
     // No hat owned: no top row, one row of seats.
@@ -484,26 +489,27 @@ export const TESTS = [
     window.__levels({ benchLevel: 3 });
     run(20);
     const bare = q().pips;
-    const plainOnly = centered();
+    const plainOnly = level();
     window.__crew(0, 0);
     return [
-      ok(twoRow.rule && twoRow.off <= 1 && ruleInk[0] !== undefined && grey(ruleInk[0]) && grey(ruleInk[1]) && light(ruleInk[2]) && light(ruleInk[3])
-         && twoRow.rule.y > Math.max(pipsY[0], pipsY[1]) && twoRow.rule.y < pipsY[2],
-         'two rows have a grey rule between them and the + stands at the middle of the block', JSON.stringify([twoRow, ruleInk])),
-      ok(hatsOnly.rows === 1 && hatsOnly.n === 5 && !hatsOnly.rule && hatsOnly.off <= 1, 'a station of five seats and five hats is the top row only, no rule, centered on the buttons', JSON.stringify(hatsOnly)),
-      ok(plainOnly.rows === 1 && !plainOnly.rule && plainOnly.off <= 1, 'a station of only plain seats is one row, no rule, centered on the buttons', JSON.stringify(plainOnly)),
-      ok(new Set(bare.map(p => p[1])).size === 1 && bare.length === 5, 'a station with no hats shows one row of seats', JSON.stringify(bare)),
+      ok(twoCounters.heads.join() === 'hat,body' && twoCounters.rows === 1 && twoCounters.off <= 1,
+         'the lamped and the plain are two counters side by side, the + level with their first row', JSON.stringify(twoCounters)),
+      ok(hatsOnly.rows === 1 && hatsOnly.n === 5 && hatsOnly.heads.join() === 'hat' && hatsOnly.off <= 1,
+         'a station of five seats and five hats is the hatted counter alone', JSON.stringify(hatsOnly)),
+      ok(plainOnly.rows === 1 && plainOnly.heads.join() === 'body' && plainOnly.off <= 1,
+         'a station of only plain seats is the plain counter alone', JSON.stringify(plainOnly)),
       ok(at.seats && at.seats.seats === 5 && at.pips.length === 5, 'the cut with five benches shows five pips',
          at.seats && `${at.seats.seats} seats, ${at.pips && at.pips.length} pips`),
       ok(at.seats && at.seats.filled === 3, 'three of them filled for the three at work', at.seats && at.seats.filled),
       ok(dark(first.mid) && dark(third.mid), 'a body at work is a solid pip', `${first.mid} ${third.mid}`),
       ok(light(fifth.mid) && !dark(fifth.low), 'an empty seat is hollow', `${fifth.mid} ${fifth.low}`),
-      ok(at.seats && at.seats.brims === 2 && rows.length === 2 && at.pips[0][1] === at.pips[1][1] && at.pips[1][1] < at.pips[2][1] && at.pips[2][1] === at.pips[4][1],
-         'the two lamped stand in a row above the three regular seats', JSON.stringify(at.pips)),
+      ok(at.seats && at.seats.brims === 2 && at.counters[0].pips === 2 && at.counters[1].pips === 3
+         && at.pips[0][1] === at.pips[4][1] && at.counters[1].box.x - (at.counters[0].box.x + at.counters[0].box.w) === COUNTER_PAIR_GAP,
+         'the two lamped are a counter of their own beside the three regular seats', JSON.stringify(at.counters)),
       ok(at.seats && at.seats.plain === 1 && at.seats.regular === 3 && dark(regular.mid) && light(pip3.mid) && light(fifth.mid) && dark(first.mid) && dark(second.mid),
-         'two hatted and one plain: two specialist pips and three regular, one of them filled', JSON.stringify([at.seats, regular.mid, pip3.mid, fifth.mid]))  ,
-      ok(dark(first.brim) && dark(second.brim) && !dark(regular.brim), 'a lamped body has a brim over its pip, a regular seat none',
-         `${first.brim} ${second.brim} ${regular.brim}`),
+         'two hatted and one plain: two specialist pips and three regular, one of them filled', JSON.stringify([at.seats, regular.mid, pip3.mid, fifth.mid])),
+      ok(dark(heads[0]) && light(heads[1]), "the hatted counter's head wears the lamp, the plain one's is bare",
+         JSON.stringify(heads)),
       ok(sent, 'the plus under the cut sends one more'),
       ok(seen && dark(seen.low) && light(seen.high), 'its pip fills from the bottom while it walks over',
          seen && `low ${seen.low}, high ${seen.high}`),
@@ -513,25 +519,25 @@ export const TESTS = [
       ok(again === 4, "clicking the last body's own pip takes that body off", `${again}`),
       ok(less && after.n === 3, 'the minus takes one more off', `${after.n}`),
       ok(light(gone.mid) && !dark(gone.low), 'and its seat is empty once it has gone', `${gone.mid} ${gone.low}`),
-      ok(!light(spareBrim.brim) && !dark(spareBrim.brim), 'a spare hat\'s outline wears a grey brim', `${spareBrim.brim}`),
-      ok(sentHat && hatWalk && hatWalk.y === topY && dark(hatWalk.brim) && hatted === 4,
-         'with a hat spare, the body added walks over as a specialist: top row, brim, and arrives hatted', JSON.stringify([hatWalk, topY, hatted])),
-      ok(sentPlain && plainWalk && plainWalk.y > topY, 'with none spare the next one fills the regular row', JSON.stringify([plainWalk, topY]))
+      ok(grey(spareRing.edge) && light(spareRing.mid), 'a waiting hat is a grey ring in the hatted counter', JSON.stringify(spareRing)),
+      ok(sentHat && hatWalk && hatWalk.inHats && fourHats === 4,
+         'with a hat spare, the body added walks over as a specialist and arrives hatted', JSON.stringify([hatWalk, fourHats])),
+      ok(sentPlain && plainWalk && plainWalk.inPlain, 'with none spare the next one fills a plain seat', JSON.stringify(plainWalk))
     ];
   }],
 
   // The counters with no seat cap (roster.js, "the crowds"): the house's
   // carriers, the rock's diggers and the garage's forklifts, a pip a body,
-  // twelve to a row and the rest written after it. Read off the canvas, and
-  // the diggers moved with the pointer.
-  ['seat pips, uncapped: twelve a row then +N, carts and breakers on top, a pip a forklift under the garage', async () => {
+  // six to a row, three rows, and the rest written under the block. Read off
+  // the canvas, and the diggers moved with the pointer.
+  ['seat pips, uncapped: six a row, three rows, then +N; carters and breakers a counter beside; a pip a forklift under the garage', async () => {
     newRun();
     window.__crew(5, 30);
     window.__kit({ carters: 4, breakers: 3, drivers: 2 });
     run(25);
     const r = key => state().roster.find(p => p.key === key);
     const top = c => c.crowd.pips.filter(q => q.top), bot = c => c.crowd.pips.filter(q => !q.top);
-    const rowLens = c => Object.values(c.crowd.pips.reduce((m, q) => ((m[q.at[1]] = (m[q.at[1]] || 0) + 1), m), {}));
+    const rowLens = c => c.counters.flatMap(k => Object.values(k.at.reduce((m, q) => ((m[q[1]] = (m[q[1]] || 0) + 1), m), {})));
     const carry = r('carry');
     window.__look(carry.crowd.pips[0].at[0] - S.viewW / 2);
     run(0.1);
@@ -543,13 +549,15 @@ export const TESTS = [
     const dark = v => v < 90;
     draw();
     const cart = top(r('carry'))[0], plain = bot(r('carry'))[0];
-    const cartInk = { mid: ink(...cart.at), brim: ink(cart.at[0] - SEAT_PIP / 4, cart.at[1] - SEAT_PIP / 2 - 3) };
-    const plainInk = { mid: ink(...plain.at), brim: ink(plain.at[0] - SEAT_PIP / 4, plain.at[1] - SEAT_PIP / 2 - 3) };
-    // The "+N" is type after the row: some ink on the row's line past its last pip.
+    // The carter's head: the wheel under its cart, and the plain pip solid.
+    const carter = r('carry').counters.find(c => c.top);
+    const cartInk = { wheel: ink(carter.head[0] + CART_W / 2, carter.head[1] + CART_H + P / 2), sprite: carter.sprite };
+    const plainInk = { mid: ink(...plain.at) };
+    // The "+N" is type centered under the block: some ink on its line.
     const plus = r('carry').crowd.plus[0];
     let plusInk = false;
     // Type is anti-aliased, so any clearly inked pixel in the band will do.
-    if (plus) for (let d = 0; d < SEAT_PIP * 3 && !plusInk; d++)
+    if (plus) for (let d = -SEAT_PIP * 1.5; d <= SEAT_PIP * 1.5 && !plusInk; d++)
       for (let e = -P / 2; e <= P / 2 && !plusInk; e++) plusInk = ink(plus.at[0] + d, plus.at[1] + e) < 160;
     const gar = r('garage');
     const garMid = gar && gar.crowd.pips.reduce((a, q) => a + q.at[0], 0) / gar.crowd.pips.length;
@@ -562,16 +570,16 @@ export const TESTS = [
     const plusThen = r('mine').more;
     window.__crew(0, 0);
     return [
-      ok(carry.crowd.top === 4 && carry.crowd.bottom === 26 && Math.max(...rowLens(carry)) <= 12,
-         'the carriers: four carts and twenty-six plain, no row past twelve pips', JSON.stringify(rowLens(carry))),
-      ok(plus && plus.n === 14 && plusInk, 'and the fourteen past twelve written after the row as +14', JSON.stringify(plus)),
-      ok(top(carry).length === 4 && top(carry).every(q => q.brim === 'cart') && cart.at[1] < plain.at[1],
-         'the carts are brimmed pips on the top row', JSON.stringify(top(carry))),
-      ok(dark(cartInk.mid) && dark(cartInk.brim) && dark(plainInk.mid) && !dark(plainInk.brim),
-         'drawn: a cart pip wears its brim, a plain hauler none', JSON.stringify([cartInk, plainInk])),
+      ok(carry.crowd.top === 4 && carry.crowd.bottom === 26 && Math.max(...rowLens(carry)) <= COUNTER_ROW,
+         'the carriers: four carts and twenty-six plain, six a row in each counter', JSON.stringify(rowLens(carry))),
+      ok(plus && plus.n === 8 && plusInk, 'and the eight past three rows written under the block as +8', JSON.stringify(plus)),
+      ok(top(carry).length === 4 && top(carry).every(q => q.brim === 'cart') && cart.at[1] === plain.at[1] && cart.at[0] < plain.at[0],
+         'the carters are a counter of their own beside the plain', JSON.stringify(top(carry))),
+      ok(dark(cartInk.wheel) && cartInk.sprite === 'cart' && dark(plainInk.mid),
+         'drawn: the carters under a carter and its cart, the plain hauler solid', JSON.stringify([cartInk, plainInk])),
       ok(carry.lifts === null && !carry.crowd.pips.some(q => q.brim === 'fork'), 'and no forklift on the carriers'),
       ok(mine.crowd && top(mine).length === 3 && top(mine).every(q => q.brim === 'hat') && bot(mine).length === 2 &&
-         top(mine)[0].at[1] < bot(mine)[0].at[1], 'the diggers: three breakers on top of two plain', JSON.stringify(mine.crowd)),
+         top(mine)[0].at[0] < bot(mine)[0].at[0], 'the diggers: three breakers beside two plain', JSON.stringify(mine.crowd)),
       ok(lessed && afterLess === 4 && mored && afterMore === 5, 'and the - and + under the rock move a body each',
          `${afterLess} then ${afterMore}`),
       ok(plusAt[0] === plusThen[0] && plusAt[1] === plusThen[1], 'and the + stays where it was pressed',

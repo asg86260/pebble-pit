@@ -1033,6 +1033,12 @@ export const SCENES = {
                  window.__levels({ plotLevel: 6 }); window.__kit({ growers: 3 });
                  window.__fast(20); window.__assign(JOB.FARM, -3); window.__fast(10);
                  window.__look(st().farmX - 200); S.camLockY = S.groundY - S.viewH * 0.35; } },
+  // The house's and the garage's counters at their widest, six a row and +N
+  // under each: the ground GARAGE_CLEAR keeps between them.
+  seatswide: { about: 'the crew', say: 'the house and the garage counters at their widest',
+    run: () => { rich(); lip(); window.__crew(4, 40); window.__kit({ carters: 30, drivers: 14 }); window.__fast(20);
+                 const s = st(); window.__look(s.houses.door - s.viewW / 2 + 60);
+                 S.camLockY = S.groundY - S.viewH * 0.35; } },
   // The tower's floor plan is its hats: one counter, all specialists, with a
   // hat waiting indoors.
   seatstower: { about: 'the crew', say: 'the tower: three wizards at work, a fourth hat waiting',

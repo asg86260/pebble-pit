@@ -1,9 +1,10 @@
-// No plain hand is seated while a hat waits (roster.js): the + under a station
-// sends a body for the waiting hat, and so does a click on a plain counter's
-// empty seat. Done with the pointer, at the counter's own buttons and pips,
-// so every body still walks to the stand and then to the work.
+// The hats fill first, through the new counters (roster.js): with a hat
+// waiting, the + under a station sends a body for it, and so does a click on
+// the plain counter's first empty seat; no plain seat fills until the hats
+// are worn. Done with the pointer, at the counters' own buttons and pips, so
+// every body still walks to the stand and then to the work.
 
-import { group, ok, run, runUntil, state, yard, openSites } from './helpers.mjs';
+import { group, ok, runUntil, run, state, yard, openSites } from './helpers.mjs';
 import { rosterHit } from '../src/roster.js';
 
 const S = yard.S;
@@ -30,10 +31,7 @@ group('with a hat waiting, the + and a plain seat both seat the specialist first
   const sent = at(cut().more);
   watch(1);
   const one = cut();
-  // The plain counter's second empty seat, clicked while the second hat waits:
-  // as a switch it would ask for two more, one of them plain.
-  const plain = one.counters.find(c => !c.top);
-  const clicked = at(plain.at[1]);
+  const clicked = at(one.counters.find(c => !c.top).at[0]);
   watch(2);
   const two = cut();
   // Hats full: the next + is a plain hand.
@@ -47,7 +45,7 @@ group('with a hat waiting, the + and a plain seat both seat the specialist first
     ok(sent && one.n === 1 && one.worn === 1 && one.seats.plain === 0,
        'the + sends a body for the waiting hat, and it arrives hatted', JSON.stringify(one.seats)),
     ok(clicked && two.n === 2 && two.worn === 2 && two.seats.plain === 0,
-       'a click on a plain seat while a hat waits seats the specialist, and only the one', JSON.stringify(two.seats)),
+       'a click on the first plain seat while a hat waits seats the specialist too', JSON.stringify(two.seats)),
     ok(plainWhileWaiting === 0, 'no plain seat fills while a hat waits', `${plainWhileWaiting} frames`),
     ok(three.n === 3 && three.worn === 2 && three.seats.plain === 1,
        'and once the hats are full the + seats a plain hand', JSON.stringify(three.seats))
