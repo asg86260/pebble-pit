@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retirement Finale Mock</title>
+<style>
+:root {
+  --bg: #f3f2ef; --fg: #171717; --muted: #5c5c5c; --card: #ffffff; --line: #d7d5d0;
+  --accent: #6b38d4; --chip: #ebe9e4; --chip-on: #171717; --chip-on-fg: #ffffff;
+  /* the game's own tones: the same in both themes, since the canvas is the game */
+  --g-ink: #141414; --g-paper: #f4f4f4; --g-w: #fafafa; --g-1: #262626; --g-2: #3d3d3d;
+  --g-3: #666666; --g-4: #959595; --g-5: #c4c4c4; --g-6: #e3e3e3; --g-pu: #7b3fe4; --g-pud: #3f2378;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --fg: #ececec; --muted: #a2a2a2; --card: #1b1b1b; --line: #333333;
+    --accent: #a98af0; --chip: #262626; --chip-on: #ececec; --chip-on-fg: #121212;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212; --fg: #ececec; --muted: #a2a2a2; --card: #1b1b1b; --line: #333333;
+  --accent: #a98af0; --chip: #262626; --chip-on: #ececec; --chip-on-fg: #121212;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+main { max-width: 1060px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: .02em; }
+h2 { font-size: 17px; margin: 40px 0 6px; }
+h3 { font-size: 14px; margin: 0 0 4px; }
+p { margin: 6px 0; }
+.lede, .muted { color: var(--muted); }
+.note { border: 1px solid var(--line); background: var(--card); padding: 10px 12px; margin: 14px 0; }
+.note b { color: var(--accent); }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 12px; }
+.panel { background: var(--card); border: 1px solid var(--line); padding: 10px; min-width: 0; }
+.panel.pick { border-color: var(--accent); }
+.tag { font-size: 11px; color: var(--accent); margin-left: 6px; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #000; }
+.beat { font-size: 12px; color: var(--muted); margin: 6px 0 0; min-height: 1.5em; }
+.cap { font-size: 13px; margin: 6px 0 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0; }
+.chips span.lab { color: var(--muted); font-size: 12px; min-width: 7.5em; }
+button { font: inherit; font-size: 12px; background: var(--chip); color: var(--fg); border: 1px solid var(--line); padding: 4px 9px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-fg); border-color: var(--chip-on); }
+.scrub { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+.scrub input { flex: 1; min-width: 0; accent-color: var(--accent); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+td, th { border-top: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
+th { color: var(--muted); font-weight: normal; }
+.keys { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.keys figure { margin: 0; }
+.keys figcaption { font-size: 11px; color: var(--muted); }
+ol, ul { padding-left: 20px; margin: 6px 0; }
+li { margin: 4px 0; }
+.q b { color: var(--accent); font-weight: normal; }
+</style>
+</head>
+<body>
+<main>
+<h1>Retirement finale</h1>
+<p class="lede">After the serpent dies: the sqwife sets down her fighter's gear, a new fighter takes up her station, and the pair go home through the portal for a last parade down the yard.</p>
+<div class="note"><b>A mock, not the game.</b> Plain shapes on the 6px grid in the game's tones (the deep inverted: black water, white bodies; the yard paper and ink; purple the accent). It cannot show: the real kits, props, pods, crusher, houses or crew sprites; the real serpent; the real camera, letterbox easing and recede; timing against the sim; sound. The scene has no words; the closing sheet is grey bars standing in for its copy, which is the owner's to write.</div>
+
+<h2>1 · The finale</h2>
+<p class="muted">The main event. Pick a preset, or mix the three choices. Drag the bar to scrub; the beat line names the moment.</p>
+<div class="panel pick">
+  <div class="chips" id="presets"><span class="lab">preset</span></div>
+  <div class="chips" id="fw"><span class="lab">fireworks</span></div>
+  <div class="chips" id="crowd"><span class="lab">crowd</span></div>
+  <div class="chips" id="end"><span class="lab">ending</span></div>
+  <div id="finale"></div>
+  <div class="scrub" id="scrubrow"><button id="play" aria-pressed="true">pause</button><input id="scrub" type="range" min="0" max="42" step="0.1" value="0" aria-label="finale time"></div>
+  <p class="cap" id="presetcap"></p>
+</div>
+
+<h3 style="margin-top:18px">Rough timeline</h3>
+<table>
+  <tr><th>seconds</th><th>beat</th><th>held how</th></tr>
+  <tr><td>0 – 2</td><td>In the deep: the gear set down (the voted option in section 2); the pair together, a heart.</td><td>letterbox steps in, a cell a step</td></tr>
+  <tr><td>2 – 7</td><td>They swim up together; the camera rises with them to the portal's ring and they go through. The ring rings out in widening dark purple steps.</td><td>camera eases up, held on the ring</td></tr>
+  <tr><td>7 – 10</td><td>Out of the drowned pit's surface, onto the yard's edge, down onto the way.</td><td>a step a cell</td></tr>
+  <tr><td>10 – 31</td><td>The parade: a slow walk the length of the yard, the camera holding them a little right of center. The crowd hops in a wave that travels with them; marks rise and fade. Fireworks about every 1.25 s.</td><td>about 10 cells a second, stepped</td></tr>
+  <tr><td>31 – 36</td><td>The ending. House: the door slides open on a lit room, she goes in, he follows, the door slides shut, the window lights, a last volley. Sunset: they stop at the yard's end, sit, the sun sinks in steps, a heart.</td><td>each move held</td></tr>
+  <tr><td>36 – 37</td><td>Final hold.</td><td>nothing moves but the sparks falling out</td></tr>
+  <tr><td>37 – 42</td><td>The closing sheet steps open over the held frame.</td><td>bars stand in for its words</td></tr>
+</table>
+
+<h2>2 · Setting down the gear</h2>
+<p class="muted">Her station is a Swordsman's here, for the mock: a sword in hand, a plumed hat. The rack stands in for the station's prop. In each, the sqhusband swims up beside her first.</p>
+<div class="grid" id="gear"></div>
+
+<h2>3 · The replacement</h2>
+<p class="muted">A different body takes the gear up in held steps and starts fighting. The gear sits where the option above left it.</p>
+<div class="chips" id="gearpick"><span class="lab">gear left as</span></div>
+<div class="grid" id="repl"></div>
+
+<h2>4 · Gameplay questions</h2>
+<ul class="q">
+  <li>Does the station keep its class and rung, inherited by the new fighter? <b>Probably yes</b>: the gear is the station's, not hers.</li>
+  <li>Does the retired pair still count in the crew? <b>Probably they leave the count</b>, and her pod (if she had one) frees up.</li>
+  <li>What is "retire" after the kill, given the serpent reforms (deep-kill-reform)? Is the fight over for good, or does a new phase or a new serpent come? The replacement fighter only matters if there is still something to fight.</li>
+  <li>Who is the replacement? A gatherer or delver pulled off the deep's own work (nearest, but leaves that job short), a spare from the yard down the shaft (keeps the deep whole, costs the yard a body), or nobody until the player assigns one.</li>
+  <li>With nobody spare: does the station stand empty with its gear waiting until a body is free (a new pod, a hire), and does it get the pile-full style warning mark while it waits?</li>
+  <li>Finale: does the yard's work pause for the parade (the crowd is every worker), and does the deep's crew join it or stay below?</li>
+  <li>Finale: does the celebrating crowd stay at full ink, against the cutscene rule that everything the scene is not about recedes? The mock keeps them full.</li>
+  <li>Finale: the house they go into, which one is it: the house that is already the sqwife's, or a new one that appears? (Nothing may pop in.)</li>
+</ul>
+</main>
+
+<script>
+"use strict";
+const P = 6;
+const css = getComputedStyle(document.documentElement);
+const tok = k => css.getPropertyValue('--g-' + k).trim();
+const C = { ink: tok('ink'), paper: tok('paper'), w: tok('w'), g1: tok('1'), g2: tok('2'), g3: tok('3'),
+            g4: tok('4'), g5: tok('5'), g6: tok('6'), pu: tok('pu'), pud: tok('pud') };
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, t0, t1) => clamp((t - t0) / (t1 - t0), 0, 1);
+const ease = k => k * k * (3 - 2 * k);
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const step = (t, hz) => Math.floor(t * hz + 1e-6) / hz;
+
+// --- cells -------------------------------------------------------------------
+// A cell at whole cell (x, y); fillRect takes the top-left.
+function cell(g, x, y, c) { if (!c) return; g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, P, P); }
+function rect(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, w * P, h * P); }
+function glyph(g, rows, x, y, c) { rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === 'x') cell(g, x + i, y + j, c); }); }
+function ring(g, cx, cy, r, c, every = 1) {
+  const n = Math.max(8, Math.ceil(Math.PI * 2 * r)), seen = new Set();
+  for (let k = 0; k < n; k += every) {
+    const a = k / n * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r);
+    if (seen.has(x + ',' + y)) continue; seen.add(x + ',' + y); cell(g, x, y, c);
+  }
+}
+const MARKS = { heart: ['x.x', 'xxx', '.x.'], note: ['.xx', '.x.', 'xx.'], bang: ['.x.', '.x.', '...', '.x.'] };
+
+// The body: the square every worker is. In the deep, white on black.
+function body(g, x, y, o = {}) {
+  const X = Math.round(x) * P, Y = Math.round(y) * P + (o.squash ? P : 0), H = o.squash ? 2 * P : 3 * P;
+  g.fillStyle = o.line || (o.deep ? C.w : C.ink); g.fillRect(X, Y, 3 * P, H);
+  g.fillStyle = o.fill || (o.deep ? C.ink : C.paper); g.fillRect(X + 3, Y + 3, 3 * P - 6, H - 6);
+}
+// The class hat: a crown, a purple plume, a brim the body's width. (x, y) its top-left.
+function hat(g, x, y, deep = true) {
+  cell(g, x + 1, y, deep ? C.g5 : C.g2); cell(g, x + 2, y, C.pu);
+  for (let i = 0; i < 3; i++) cell(g, x + i, y + 1, deep ? C.g4 : C.ink);
+}
+// A sword from its grip at (hx, hy), the blade along `a` (0 is straight up).
+function sword(g, hx, hy, a, deep = true) {
+  const dx = Math.sin(a), dy = -Math.cos(a);
+  cell(g, hx, hy, C.g3);
+  cell(g, hx + dx - dy, hy + dy + dx, C.g4); cell(g, hx + dx + dy, hy + dy - dx, C.g4);
+  for (let i = 1; i <= 4; i++) cell(g, hx + dx * i, hy + dy * i, deep ? C.w : C.ink);
+}
+function mark(g, kind, x, y, age) {
+  if (age < 0 || age > 1.6) return;
+  const dy = Math.floor(age / 0.3);
+  const tone = age < 1.0 ? (kind === 'heart' ? C.pu : C.ink) : age < 1.3 ? C.g4 : C.g5;
+  glyph(g, MARKS[kind], x, y - 4 - dy, tone);
+}
+
+// --- the deep ----------------------------------------------------------------
+function deepBg(g, x0, y0, w, h, t) {
+  g.fillStyle = C.ink; g.fillRect(x0 * P, y0 * P, w * P, h * P);
+  const ts = step(t, 4);
+  for (let i = 0; i < Math.round(w * h / 60); i++) {
+    const x = x0 + Math.floor(hash(i) * w);
+    const y = y0 + ((Math.floor(hash(i + 9) * h - ts * (0.6 + hash(i + 3))) % h) + h) % h;
+    cell(g, x, y, i % 6 === 0 ? C.pud : i % 2 ? C.g1 : C.g2);
+  }
+}
+function floorRows(g, x0, x1, fy, h) {
+  for (let x = x0; x < x1; x++) for (let y = fy; y < fy + h; y++)
+    cell(g, x, y, y === fy ? (hash(x) < 0.5 ? C.g3 : C.g4) : (hash(x * 7 + y * 13) < 0.5 ? C.g1 : C.g2));
+}
+// The station's prop, a sword rack: two posts and a bar.
+function rack(g, sx, fy) {
+  for (let y = fy - 7; y < fy; y++) { cell(g, sx, y, hash(y) < .5 ? C.g2 : C.g3); cell(g, sx + 6, y, hash(y + 4) < .5 ? C.g2 : C.g3); }
+  for (let x = sx; x <= sx + 6; x++) cell(g, x, fy - 7, hash(x * 3) < .5 ? C.g3 : C.g4);
+}
+function coil(g, w, t, dents) {
+  const ts = step(t, 3);
+  for (let x = 0; x < w; x++) {
+    const c = 4 + Math.round(Math.sin((x + ts * 2) / 8));
+    cell(g, x, c - 2, C.g5); cell(g, x, c - 1, C.w); cell(g, x, c, C.w); cell(g, x, c + 1, C.w); cell(g, x, c + 2, C.g4);
+    if (x % 5 === 0) cell(g, x, c, C.g5);
+  }
+  (dents || []).forEach(([x]) => { const c = 4 + Math.round(Math.sin((x + ts * 2) / 8));
+    cell(g, x, c + 2, C.ink); cell(g, x + 1, c + 1, C.ink); cell(g, x - 1, c + 3, C.w); cell(g, x + 2, c + 3, C.w); });
+}
+// The shaft down from the yard: two walls.
+function shaft(g, t) { for (let y = 0; y < 23; y++) { cell(g, 2, y, C.g2); cell(g, 8, y, C.g2); } }
+function crusher(g, x0, fy) {
+  for (let y = fy - 12; y < fy; y++) for (let x = x0; x < x0 + 12; x++) {
+    const mortar = (y - fy) % 3 === 0 || (x + (Math.floor((y - fy) / 3) % 2 ? 2 : 0)) % 4 === 0;
+    cell(g, x, y, mortar ? C.g2 : (hash(x * 5 + y) < .5 ? C.g3 : C.g4));
+  }
+  for (let y = fy - 6; y < fy; y++) for (let x = x0 + 4; x < x0 + 8; x++) cell(g, x, y, C.ink);
+  if (Math.floor(performance.now() / 250) % 2) cell(g, x0 + 5, fy - 2, C.pu);
+}
+
+// --- the gear's moves --------------------------------------------------------
+// Positions in the 64x40 deep panel: floor top row 34, rack at 14. The wife
+// hovers at (24, 28) until her option moves her.
+const FY = 34, RACK = 14;
+function gearAt(opt, t) {
+  let wx = 24; const wy = 28;
+  if (opt === 'B') wx = lerp(24, 21, seg(t, 1.5, 2.25));
+  if (opt === 'C') wx = lerp(24, 27, seg(t, 1.5, 1.75));
+  const hx = opt === 'A' ? 29 : opt === 'B' ? 26 : 32;
+  const out = { wife: { x: wx, y: wy }, hus: { x: lerp(66, hx, seg(t, 0, 1.5)), y: 28 }, hat: null, sword: null };
+  const wob = Math.floor(t * 8) % 2;
+  if (opt === 'A') {
+    if (t >= 1.75) { const k = seg(t, 1.75, 2.5); out.sword = { x: lerp(27, 23, k), y: lerp(30, 33, k), a: lerp(0.25, Math.PI / 2, k) }; }
+    if (t >= 3.5) out.hat = { x: 25, y: 31 };
+    else if (t >= 2.75) { const k = seg(t, 2.75, 3.5); out.hat = { x: 24 + (k < 1 ? wob : 1), y: lerp(25, 31, k) }; }
+    else if (t >= 2.5) out.hat = { x: 24, y: 25 };
+  }
+  if (opt === 'B') {
+    if (t >= 2.25) out.hat = t < 2.75 ? { x: 21, y: lerp(26, 24, seg(t, 2.25, 2.75)) }
+                                     : { x: lerp(21, 15, seg(t, 2.75, 3.25)), y: lerp(24, 25, seg(t, 2.75, 3.25)) };
+    if (t >= 3.25) { const k = seg(t, 3.25, 4); out.sword = { x: lerp(24, 17, k), y: lerp(30, 28, k), a: lerp(0.25, Math.PI, k) }; }
+  }
+  if (opt === 'C') {
+    if (t >= 1.75) out.sword = t < 2 ? { x: lerp(30, 26, seg(t, 1.75, 2)), y: lerp(30, 24, seg(t, 1.75, 2)), a: lerp(0.25, Math.PI, seg(t, 1.75, 2)) }
+                                     : { x: lerp(26, 25, seg(t, 2, 2.25)), y: lerp(24, 30, seg(t, 2, 2.25)), a: Math.PI };
+    if (t >= 2.75) { const k = seg(t, 2.75, 3.5); out.hat = { x: lerp(27, 24, k), y: lerp(26, 28, k) - (k > 0 && k < 1 ? 1 : 0) }; }
+  }
+  return out;
+}
+const SPOT = { A: { x: 27, y: 28 }, B: { x: 21, y: 28 }, C: { x: 27, y: 28 } };
+
+function drawGear(opt) {
+  return (g, t) => {
+    const ts = step(t, 8);
+    g.save(); g.translate(-10 * P, -12 * P); // framed close on the station
+    deepBg(g, 0, 0, 64, 40, ts);
+    rack(g, RACK, FY); floorRows(g, 0, 64, FY, 6);
+    const s = gearAt(opt, ts);
+    const L = ease(seg(ts, 6, 8));
+    const wife = { x: lerp(s.wife.x, s.wife.x + 34, L), y: lerp(s.wife.y, -6, L) };
+    const hus = { x: lerp(s.hus.x, s.hus.x + 34, L), y: lerp(s.hus.y, -6, L) };
+    if (s.sword) sword(g, s.sword.x, s.sword.y, s.sword.a); else sword(g, wife.x + 3, wife.y + 2, 0.25);
+    if (s.hat) hat(g, s.hat.x, s.hat.y); else hat(g, wife.x, wife.y - 2);
+    body(g, wife.x, wife.y, { deep: true }); body(g, hus.x, hus.y, { deep: true });
+    if (ts >= 4.5 && ts < 6.2) glyph(g, MARKS.heart, (wife.x + hus.x) / 2 + 1, wife.y - 5 - Math.floor(seg(ts, 4.5, 6) * 2),
+      ts < 5.7 ? C.pu : C.pud);
+    g.restore();
+  };
+}
+
+// The replacement: from `from`, swims tA..tB to the gear, takes the sword
+// then the hat in held steps, rises to the coil and fights.
+function newcomer(g, t, opt, from, tA, tB) {
+  const rest = gearAt(opt, 8.9), tgt = SPOT[opt];
+  let x = lerp(from.x, tgt.x, ease(seg(t, tA, tB))), y = lerp(from.y, tgt.y, ease(seg(t, tA, tB)));
+  if (t >= tB + 1) y = lerp(tgt.y, 9, ease(seg(t, tB + 1, tB + 2)));
+  const hand = { x: x + 3, y: y + 2 };
+  let a = 0.25, dents = [];
+  if (t >= tB + 2) {
+    const p = (t - tB - 2) % 1.2;
+    a = p < 0.4 ? 0.5 : p < 0.6 ? 2.2 : p < 0.9 ? -0.2 : 0.5;
+    if (p >= 0.6 && p < 0.9) dents.push([Math.round(hand.x)]);
+  }
+  coil(g, 64, t, dents);
+  if (t < tB) sword(g, rest.sword.x, rest.sword.y, rest.sword.a);
+  else if (t < tB + 0.5) { const k = seg(t, tB, tB + 0.5); sword(g, lerp(rest.sword.x, hand.x, k), lerp(rest.sword.y, hand.y, k), lerp(rest.sword.a, 0.25, k)); }
+  else sword(g, hand.x, hand.y, a);
+  if (t < tB + 0.5) hat(g, rest.hat.x, rest.hat.y);
+  else if (t < tB + 1) { const k = seg(t, tB + 0.5, tB + 1); hat(g, lerp(rest.hat.x, x, k), lerp(rest.hat.y, y - 2, k)); }
+  else hat(g, x, y - 2);
+  body(g, x, y, { deep: true });
+}
+const state = { gear: 'A', fw: 'star', crowd: 'line', end: 'house', ft: 0, playing: true };
+const REPL = [
+  { name: 'From the deep\'s own crew', cap: 'A gatherer leaves the crusher, takes up the gear, and goes at the coil.', loop: 11,
+    beats: [[0, 'a gatherer at the crusher'], [1, 'swims to the station'], [3, 'takes the sword, then the hat'], [4, 'rises to the coil'], [5, 'fighting']],
+    draw: (g, t) => { t = step(t, 8); deepBg(g, 0, 0, 64, 40, t); crusher(g, 50, FY); rack(g, RACK, FY); floorRows(g, 0, 64, FY, 6); newcomer(g, t, state.gear, { x: 46, y: 31 }, 1, 3); } },
+  { name: 'A spare from the yard', cap: 'A spare hand comes down the shaft and swims over; the deep\'s own work is left alone.', loop: 12,
+    beats: [[0, 'down the shaft'], [2.5, 'swims to the station'], [4, 'takes the sword, then the hat'], [5, 'rises to the coil'], [6, 'fighting']],
+    draw: (g, t) => { t = step(t, 8); deepBg(g, 0, 0, 64, 40, t); shaft(g, t); rack(g, RACK, FY); floorRows(g, 0, 64, FY, 6);
+      if (t < 2.5) { coil(g, 64, t); const rest = gearAt(state.gear, 8.9); sword(g, rest.sword.x, rest.sword.y, rest.sword.a); hat(g, rest.hat.x, rest.hat.y);
+        body(g, 4, lerp(-4, 24, seg(t, 0, 2.5)), { deep: true }); }
+      else newcomer(g, t, state.gear, { x: 4, y: 24 }, 2.5, 4); } },
+  { name: 'Nobody spare', cap: 'The station stands empty, its gear waiting, until a body is free: here a new pod goes up and its resident comes over.', loop: 14,
+    beats: [[0, 'empty station, the gear waiting'], [7, 'the pod is up; its resident comes out'], [9, 'takes the gear'], [10, 'rises to the coil'], [11, 'fighting']],
+    draw: (g, t) => { t = step(t, 8); deepBg(g, 0, 0, 64, 40, t); rack(g, RACK, FY); floorRows(g, 0, 64, FY, 6);
+      // the pod: an arch of cells laid one by one
+      const arch = []; for (let k = 0; k <= 24; k++) { const a = Math.PI - k / 24 * Math.PI; arch.push([Math.round(52 + Math.cos(a) * 7), Math.round(FY - 1 - Math.sin(a) * 7)]); }
+      const n = Math.floor(seg(t, 0, 7) * arch.length);
+      arch.slice(0, n).forEach(([x, y], i) => cell(g, x, y, i % 3 ? C.g4 : C.g5));
+      if (n === arch.length) cell(g, 52, FY - 3, C.pu);
+      if (t < 9) { const s = SPOT[state.gear]; [[0, 0], [2, 0], [0, 2], [2, 2]].forEach(([i, j]) => cell(g, s.x + i, s.y + j, C.g2)); }
+      if (t < 7) { coil(g, 64, t); const rest = gearAt(state.gear, 8.9); sword(g, rest.sword.x, rest.sword.y, rest.sword.a); hat(g, rest.hat.x, rest.hat.y);
+        body(g, 50, FY - 3, { deep: true, line: C.g3 }); }
+      else newcomer(g, t, state.gear, { x: 50, y: FY - 3 }, 7.5, 9); } },
+];
+
+// --- the finale --------------------------------------------------------------
+const FL = 42, FW = 160, FH = 72, YW = 300, GY = 40, PATH = 49, BAND = 6;
+const endX = () => state.end === 'house' ? 34 : 30;
+const PX = t => t < 10 ? 245 : lerp(245, endX(), seg(t, 10, 31));
+const camX = t => clamp(Math.round(PX(t) - 70), 0, YW - FW);
+const tAtX = px => 10 + (245 - px) / (245 - endX()) * 21;
+
+const CROWD = Array.from({ length: 20 }, (_, i) => ({
+  x: Math.round(42 + i * 10 + hash(i) * 3), front: i % 2 === 0,
+  kind: ['heart', 'note', 'bang'][Math.floor(hash(i + 5) * 3)], kind2: ['note', 'bang', 'heart'][Math.floor(hash(i + 11) * 3)],
+  sy: [41, 44, 56, 59][i % 4],
+}));
+CROWD.forEach((c, i) => { c.k = CROWD.length - 1 - i; });
+const HOP = [{ dy: 0, sq: true }, { dy: -1 }, { dy: -2 }, { dy: -1 }];
+
+function crowdAt(c, t) {
+  if (state.crowd === 'line') {
+    const y = c.front ? 59 : 41;
+    // the last stretch before the ending keeps on celebrating to the end
+    const tS = Math.max(9.6, tAtX(c.x + 16)), tE = c.x < endX() + 50 ? 37 : tAtX(c.x - 14);
+    const on = t >= tS && t < tE;
+    const h = on ? HOP[Math.floor((t - tS) / 0.125) % 4] : { dy: 0 };
+    const marks = [];
+    for (let j = 0; tS + 0.2 + j * 1.1 < tE - 0.5; j++) marks.push([j % 2 ? c.kind2 : c.kind, t - tS - 0.2 - j * 1.1 - hash(c.x + j) * 0.3]);
+    return { x: c.x, y: y + h.dy, sq: h.sq, marks, front: c.front };
+  }
+  const tJ = Math.max(9.6, tAtX(c.x + 4));
+  if (t < tJ) return { x: c.x, y: c.sy, marks: [], front: c.sy > PATH, prop: true };
+  const tx = PX(t) + 8 + Math.floor(c.k / 2) * 4, ty = c.k % 2 ? 44 : 55;
+  const k = ease(seg(t, tJ, tJ + 0.8));
+  const h = HOP[Math.floor((t - tJ) / 0.125 + c.k) % 4];
+  return { x: lerp(c.x, tx, k), y: lerp(c.sy, ty, k) + h.dy, sq: h.sq, marks: [[c.kind, t - tJ - 0.1], [c.kind2, t - tJ - 1.4]], front: ty > PATH, prop: true };
+}
+
+const BURSTS = [];
+for (let i = 0, tl = 10.4; tl < 34.5; i++, tl += 1.25) BURSTS.push({ i, tl });
+[35.0, 35.3, 35.6].forEach((tl, j) => BURSTS.push({ i: 100 + j, tl, late: true }));
+function burstPos(b) {
+  const cx = camX(b.tl + 0.8);
+  const x = b.late ? cx + 20 + j3(b.i) * 40 : cx + 16 + Math.floor(hash(b.i * 3.1 + 1) * 128);
+  return { x, y: 9 + Math.floor(hash(b.i * 7.7 + 2) * 14) };
+}
+function j3(i) { return (i - 100) * 1 + hash(i) * 0.5; }
+function sparkTone(b, k) { return b < 1.2 ? (k % 2 ? C.pu : C.ink) : b < 1.8 ? C.g3 : C.g5; }
+function firework(g, bst, t) {
+  const a = t - bst.tl; if (a < 0 || a > 3.4) return;
+  const { x, y } = burstPos(bst);
+  if (a < 0.8) { const ry = Math.round(lerp(GY, y, a / 0.8)); cell(g, x, ry, C.ink); cell(g, x, ry + 1, C.g4); cell(g, x, ry + 2, C.g5); return; }
+  const b = a - 0.8, fw = state.fw;
+  if (fw === 'star') {
+    if (b < 0.6) { const r = 1 + Math.floor(b / 0.15); cell(g, x, y, C.pu);
+      for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4; for (let j = 1; j <= r; j++) cell(g, x + Math.cos(an) * j, y + Math.sin(an) * j, j === r ? C.pu : C.ink); } }
+    else if (b < 2.4) { const s = b - 0.6;
+      for (let k = 0; k < 16; k++) { const an = k * Math.PI / 8, d = 4 + s * 3; cell(g, x + Math.cos(an) * d, y + Math.sin(an) * d + s * s * 5, sparkTone(b, k)); } }
+  } else if (fw === 'ring') {
+    if (b < 0.75) { const r = 1 + Math.floor(b / 0.15); if (r > 1) ring(g, x, y, r - 1, C.g4, 2); ring(g, x, y, r, r % 2 ? C.pu : C.ink, 1); }
+    else if (b < 2.4) { const s = b - 0.75;
+      for (let k = 0; k < 14; k++) { const an = k * Math.PI / 7, d = 5 + s * 1.5; cell(g, x + Math.cos(an) * d, y + Math.sin(an) * d + s * s * 3, sparkTone(b, k)); } }
+  } else {
+    if (b < 0.3) { cell(g, x, y, C.pu); ring(g, x, y, 1 + Math.floor(b / 0.15), C.ink); }
+    else if (b < 2.6) { const s0 = b - 0.3;
+      for (let k = 0; k < 10; k++) { const an = -Math.PI / 2 + (k - 4.5) * 0.55;
+        const at = s => [x + Math.cos(an) * (2 + s * 2.4), y + Math.sin(an) * (2 + s * 2.4) * 0.6 + s * s * 4];
+        const trail = [C.g2, C.g3, C.g4, C.g5];
+        for (let j = 4; j >= 1; j--) { const s = s0 - j * 0.12; if (s < 0) continue; const [px, py] = at(s); cell(g, px, py, b > 1.8 ? C.g5 : trail[j - 1]); }
+        const [hx, hy] = at(s0); cell(g, hx, hy, b > 1.8 ? C.g4 : (k % 3 ? C.ink : C.pu)); } }
+  }
+}
+
+function house(g, t) {
+  for (let y = 32; y < GY; y++) for (let x = 18; x < 32; x++) cell(g, x, y, C.ink);
+  [[17, 32, 31], [18, 31, 30], [19, 30, 29], [20, 29, 28], [21, 28, 27]].forEach(([a, b, y]) => { for (let x = a; x <= b; x++) cell(g, x, y, C.ink); });
+  for (let y = 25; y < 28; y++) { cell(g, 28, y, C.ink); cell(g, 29, y, C.ink); }
+  const lit = t >= 35.8;
+  for (let x = 20; x < 23; x++) for (let y = 34; y < 36; y++) cell(g, x, y, lit ? C.pu : C.paper);
+  const open = t < 31 ? 0 : t < 35 ? Math.round(seg(t, 31, 31.5) * 4) : 4 - Math.round(seg(t, 35, 35.5) * 4);
+  for (let i = 0; i < 4; i++) for (let y = 34; y < GY; y++) cell(g, 25 + i, y, i < open ? C.pud : C.g4);
+  if (open > 2) cell(g, 27, 35, C.pu);
+}
+// One of the pair going in at the door: up from the way, then dimming into the lit room.
+function goIn(g, t, t0, x0) {
+  if (t >= t0 + 2.2) return;
+  let x = lerp(x0, 25, seg(t, t0, t0 + 0.6)), y = lerp(PATH, 36, seg(t, t0 + 0.6, t0 + 1.2));
+  if (t < t0 + 1.2) { body(g, x, y); return; }
+  const k = Math.floor(seg(t, t0 + 1.2, t0 + 2.2) * 3);
+  body(g, 25, 36, { line: [C.ink, C.g2, C.g1][k], fill: C.pud });
+}
+
+function drawFinale(g, t) {
+  t = step(t, 10);
+  if (t < 7) finaleDeep(g, t); else finaleYard(g, t);
+  const n = Math.min(BAND, Math.floor(t / 0.1));
+  rect(g, 0, 0, FW, n, C.ink); rect(g, 0, FH - n, FW, n, C.ink);
+  if (t >= 37) sheet(g, t);
+}
+function finaleDeep(g, t) {
+  const camY = t < 2 ? 40 : Math.round(lerp(40, 0, ease(seg(t, 2, 6))));
+  g.fillStyle = C.ink; g.fillRect(0, 0, FW * P, FH * P);
+  g.save(); g.translate(0, -camY * P);
+  deepBg(g, 0, 0, FW, 112, t);
+  ring(g, 80, 14, 5, C.pud); ring(g, 80, 14, 6, C.pu); ring(g, 80, 14, 7, C.pud, 3);
+  if (t >= 5.8) { const r = 8 + Math.floor((t - 5.8) / 0.2); if (r < 13) { ring(g, 80, 14, r, C.pud, 2); if (r > 8) ring(g, 80, 14, r - 1, C.g1, 3); } }
+  g.save(); g.translate(54 * P, 66 * P);
+  rack(g, RACK, FY);
+  const rest = gearAt(state.gear, 8.9); sword(g, rest.sword.x, rest.sword.y, rest.sword.a); hat(g, rest.hat.x, rest.hat.y);
+  g.restore();
+  floorRows(g, 0, FW, 100, 12);
+  const k = ease(seg(t, 2, 6.5)), k2 = ease(seg(t, 2.2, 6.7));
+  const w = { x: lerp(78, 78, k), y: lerp(94, -6, k) }, h = { x: lerp(83, 80, k2), y: lerp(94, -6, k2) };
+  body(g, w.x, w.y, { deep: true }); body(g, h.x, h.y, { deep: true });
+  if (t >= 0.4 && t < 2.2) glyph(g, MARKS.heart, 80, 89 - Math.floor((t - 0.4) / 0.5), t < 1.8 ? C.pu : C.pud);
+  g.restore();
+}
+function finaleYard(g, t) {
+  const cx = camX(t);
+  g.fillStyle = C.paper; g.fillRect(0, 0, FW * P, FH * P);
+  g.save(); g.translate(-cx * P, 0);
+  // sunset: the sky over the horizon fills in grey bands, a band a step
+  if (state.end === 'sunset' && t >= 30) {
+    const k = Math.min(7, Math.floor((t - 30) / 0.6));
+    for (let j = 0; j < k; j++) rect(g, cx, GY - 2 - j * 2, FW, 2, j < 2 ? C.g5 : C.g6);
+  }
+  // clouds, held
+  [[30, 14], [95, 20], [150, 11], [210, 18], [268, 13]].forEach(([x, y], i) => {
+    rect(g, x, y, 10, 2, C.g6); rect(g, x + 2, y - 1, 5, 1, C.g6); rect(g, x + 3, y - 2, 3, 1, C.g5);
+  });
+  BURSTS.forEach(b => firework(g, b, t));
+  // the ground, faint, and the drowned pit at the right end
+  for (let x = cx; x < cx + FW; x++) for (let y = GY + 1; y < FH; y++) if (x < 250 && (x + y) % 6 === 0 && y % 3 === 0) cell(g, x, y, C.g6);
+  for (let x = 0; x < 250; x++) cell(g, x, GY, C.g3);
+  for (let x = 250; x < YW; x++) { cell(g, x, GY, C.pu); for (let y = GY + 1; y < FH; y++) cell(g, x, y, (hash(x * 9 + y) < 0.04) ? C.pud : C.ink); }
+  if (state.end === 'sunset') {
+    const sy = GY + Math.min(5, Math.floor(Math.max(0, t - 31) / 1.2));
+    // a solid disc whose lower rows are cut into stripes, sinking a row at a time
+    for (let y = sy - 9; y < GY; y++) for (let x = 4; x <= 24; x++) {
+      if ((x - 14) ** 2 + (y - sy) ** 2 <= 81 && (y < sy - 4 || y % 2 === 0)) cell(g, x, y, C.ink);
+    }
+    for (let k = 0; k < 64; k += 2) { const a = k / 64 * Math.PI * 2, y = Math.round(sy + Math.sin(a) * 11);
+      if (y < GY) cell(g, 14 + Math.cos(a) * 11, y, C.pu); }
+  } else house(g, t);
+  const people = CROWD.map(c => crowdAt(c, t));
+  people.forEach((p, i) => { if (p.prop) rect(g, CROWD[i].x + 4, CROWD[i].sy + 1, 2, 2, C.g5); });
+  const drawP = p => { body(g, p.x, p.y, { squash: p.sq }); p.marks.forEach(([kind, age]) => mark(g, kind, Math.round(p.x), Math.round(p.y), age)); };
+  people.filter(p => !p.front).forEach(drawP);
+  // the pair
+  if (t < 8) {
+    const y = lerp(52, 41, seg(t, 7, 8));
+    body(g, 262, y, { deep: true }); body(g, 266, y + 1, { deep: true });
+  } else if (t < 10) {
+    const up = seg(t, 8, 8.5), along = seg(t, 8.5, 9.5), down = seg(t, 9.5, 10);
+    const y = t < 8.5 ? lerp(41, 37, up) : t < 9.5 ? 37 : lerp(37, PATH, down);
+    body(g, lerp(262, 245, along), y); body(g, lerp(266, 249, along), y);
+    cell(g, lerp(262, 245, along) + 3, y + 1, C.ink);
+  } else if (t < 31 || state.end === 'sunset') {
+    const x = PX(t), sit = state.end === 'sunset' && t >= 31.6;
+    body(g, x, PATH, { squash: sit }); body(g, x + 4, PATH, { squash: sit });
+    cell(g, x + 3, PATH + (sit ? 2 : 1), C.ink); // hand in hand
+    if (state.end === 'sunset' && t >= 32.2 && t < 36) glyph(g, MARKS.heart, x + 2, PATH - 4 - Math.floor((t - 32.2) / 0.6), t < 35 ? C.pu : C.g4);
+  } else {
+    goIn(g, t, 31.5, 34); goIn(g, t, 32.7, 38);
+    if (t < 32.7) body(g, 38, PATH);
+  }
+  people.filter(p => p.front).forEach(drawP);
+  g.restore();
+}
+function sheet(g, t) {
+  const W = 60, H = 30, x = (FW - W) / 2, y = (FH - H) / 2;
+  const h = Math.min(H, Math.floor((t - 37) / 0.08) * 3);
+  const yy = y + (H - h) / 2;
+  rect(g, x, yy, W, h, C.ink); rect(g, x, yy, W, h, C.ink);
+  g.fillStyle = C.w; g.fillRect(x * P + 3, yy * P + 3, W * P - 6, h * P - 6);
+  if (h < H) return;
+  rect(g, x + 20, y + 4, 20, 2, C.g4);
+  [[8, 10, 44], [12, 13, 36], [10, 17, 40]].forEach(([dx, dy, w]) => rect(g, x + dx, y + dy, w, 1, C.g5));
+  rect(g, x + 6, y + 23, 48, 3, C.g6); rect(g, x + 24, y + 24, 12, 1, C.g4);
+}
+const FINALE = { w: FW, h: FH, loop: FL, draw: drawFinale, keys: [1, 4, 8.5, 14, 20, 27, 32.5, 36, 39.5],
+  beats: [[0, 'in the deep: the gear down, the pair together'], [2, 'swimming up to the portal'], [5.8, 'through the ring'],
+          [7, 'out of the drowned pit'], [10, 'the parade: the crowd hops as they pass, fireworks'], [31, 'the ending'], [36, 'final hold'], [37, 'the closing sheet']] };
+
+// --- the page ------------------------------------------------------------------
+const GEAR = [
+  ['A', 'Dropped where she floats', 'She lets the sword go, then tips the hat off; each sinks in held steps and they lie in a little heap on the floor by the station.'],
+  ['B', 'Hung back on the station', 'She swims to the rack, lifts the hat off and sets it on the bar, then hangs the sword between the posts, as if returned.'],
+  ['C', 'Planted as a marker', 'She drives the sword point-down into the floor beside the station and sets the hat on its grip: a standing marker the next fighter takes up.'],
+];
+const gearBeats = o => [[0, 'the sqhusband swims up beside her'], [1.5, o === 'A' ? 'the sword sinks, then the hat' : o === 'B' ? 'hat to the bar, sword to the rack' : 'the sword planted, the hat on its grip'],
+  [4.5, 'together; a heart'], [6, 'they swim off together'], [8, 'the gear stays at the station']];
+const live = [];
+function beatOf(A, t) { let s = ''; for (const [t0, b] of A.beats) if (t >= t0) s = b; return s; }
+function mk(A) { const cv = document.createElement('canvas'); cv.width = A.w * P; cv.height = A.h * P; return cv; }
+function mount(el, A) {
+  el.querySelectorAll('.anim').forEach(n => n.remove());
+  const box = document.createElement('div'); box.className = 'anim'; el.append(box);
+  if (RM) {
+    const grid = document.createElement('div'); grid.className = 'keys';
+    A.keys.forEach(k => { const f = document.createElement('figure'), cv = mk(A); A.draw(cv.getContext('2d'), k);
+      const c = document.createElement('figcaption'); c.textContent = k.toFixed(1) + ' s: ' + beatOf(A, k); f.append(cv, c); grid.append(f); });
+    box.append(grid); A.rerender = () => mount(el, A); return;
+  }
+  const cv = mk(A), line = document.createElement('p'); line.className = 'beat';
+  box.append(cv, line); A.g = cv.getContext('2d'); A.line = line; live.push(A);
+}
+function panel(parent, title, cap, A, pick) {
+  const d = document.createElement('div'); d.className = 'panel' + (pick === 'my pick' ? ' pick' : '');
+  d.innerHTML = '<h3></h3>'; d.querySelector('h3').textContent = title;
+  if (pick) { const s = document.createElement('span'); s.className = 'tag'; s.textContent = pick; d.querySelector('h3').append(s); }
+  parent.append(d); mount(d, A);
+  const p = document.createElement('p'); p.className = 'cap'; p.textContent = cap; d.append(p);
+  return d;
+}
+GEAR.forEach(([o, n, cap]) => panel(document.getElementById('gear'), o + ' · ' + n, cap,
+  { w: 44, h: 28, loop: 9, draw: drawGear(o), beats: gearBeats(o), keys: [0.8, 2.25, 3.6, 5, 7] }, o === 'A' ? 'the literal ask' : o === 'B' ? 'my pick' : ''));
+const replAnims = REPL.map((r, i) => {
+  const A = { w: 64, h: 40, loop: r.loop, draw: r.draw, beats: r.beats, keys: r.beats.map(b => b[0] + 0.6) };
+  panel(document.getElementById('repl'), ['1', '2', '3'][i] + ' · ' + r.name, r.cap, A, i === 0 ? 'my pick' : '');
+  return A;
+});
+const fin = document.getElementById('finale'); mount(fin, FINALE);
+
+function chips(id, key, opts, after) {
+  const el = document.getElementById(id);
+  opts.forEach(([v, label]) => { const b = document.createElement('button'); b.textContent = label; b.dataset.v = v;
+    b.onclick = () => { state[key] = v; sync(); after && after(); }; el.append(b); });
+}
+const PRESETS = {
+  one: ['1 · lined path, starbursts, the house', { fw: 'star', crowd: 'line', end: 'house' }, 'My pick. The crowd lines the way on both sides of the path, front row and back; each worker starts hopping as the pair draw near and settles once they have passed, so the wave travels with them. Starbursts bloom in four steps and fall as sparks. They go in at the house; the door closes, the window lights, one last volley.'],
+  two: ['2 · procession, rings, the house', { fw: 'ring', crowd: 'rush', end: 'house' }, 'Workers are at their posts as the pair come; as they pass, each leaves its work and falls in behind, two files, hopping, so the parade grows to the whole crew by the house. Fireworks are widening rings that break into dots.'],
+  three: ['3 · lined path, willows, sunset', { fw: 'willow', crowd: 'line', end: 'sunset' }, 'The same lined path, but the fireworks droop in long grey trails, and there is no house: they walk to the far end of the yard, where the sun is going down in stripes, and sit together.'],
+};
+const presetEl = document.getElementById('presets');
+Object.entries(PRESETS).forEach(([k, [label, s]]) => { const b = document.createElement('button'); b.textContent = label; b.dataset.p = k;
+  b.onclick = () => { Object.assign(state, s); state.ft = 0; sync(); }; presetEl.append(b); });
+chips('fw', 'fw', [['star', 'starburst'], ['ring', 'rings'], ['willow', 'willow']]);
+chips('crowd', 'crowd', [['line', 'lining the path'], ['rush', 'falling in behind']]);
+chips('end', 'end', [['house', 'the house'], ['sunset', 'far end, sunset']]);
+GEAR.forEach(([o, n]) => { const b = document.createElement('button'); b.textContent = o + ' · ' + n.toLowerCase(); b.dataset.v = o;
+  b.onclick = () => { state.gear = o; sync(); }; document.getElementById('gearpick').append(b); });
+function sync() {
+  ['fw', 'crowd', 'end'].forEach(k => document.querySelectorAll('#' + k + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === state[k]))));
+  document.querySelectorAll('#gearpick button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === state.gear)));
+  let cap = 'A mix of the three choices.';
+  document.querySelectorAll('#presets button').forEach(b => { const [, s, c] = PRESETS[b.dataset.p];
+    const on = Object.keys(s).every(k => s[k] === state[k]); b.setAttribute('aria-pressed', String(on)); if (on) cap = c; });
+  document.getElementById('presetcap').textContent = cap;
+  if (RM) { FINALE.rerender && FINALE.rerender(); replAnims.forEach(A => A.rerender && A.rerender()); }
+}
+sync();
+
+const play = document.getElementById('play'), scrub = document.getElementById('scrub');
+if (RM) { document.getElementById('scrubrow').hidden = true; }
+play.onclick = () => { state.playing = !state.playing; play.textContent = state.playing ? 'pause' : 'play'; play.setAttribute('aria-pressed', String(state.playing)); };
+scrub.oninput = () => { state.ft = +scrub.value; if (state.playing) play.onclick(); };
+FINALE.clock = dt => { if (state.playing) { state.ft = (state.ft + dt) % FL; scrub.value = state.ft; } return state.ft; };
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  for (const A of live) {
+    const t = A.clock ? A.clock(dt) : (now / 1000) % A.loop;
+    A.draw(A.g, t); A.line.textContent = t.toFixed(1) + ' s · ' + beatOf(A, t);
+  }
+  requestAnimationFrame(frame);
+}
+if (!RM) requestAnimationFrame(frame);
+</script>
+</body>
+</html>
