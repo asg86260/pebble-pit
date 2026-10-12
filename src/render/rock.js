@@ -2,7 +2,8 @@
 
 import { MARK_SIZE, MAX_DEPTH, P, SQUASH_WIDE, SQUASH_FLAT } from '../config.js';
 import { depthShade, shadeOf } from '../grid.js';
-import { depthOf, rockFootY, rockShape } from '../rock.js';
+import { depthOf, rockFootY, rockShape, lumpCells } from '../rock.js';
+import { reducedMotion } from '../prefs.js';
 import { S } from '../state.js';
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
@@ -22,7 +23,7 @@ export function drawRock() {
   const deep = depthOf();
   for (let v = 0; v <= MAX_DEPTH; v++) TONE[v] = shadeOf(depthShade(v, deep));
   const { round, squash } = rockShape();
-  if (round > 0) return drawRoundRock(deep);
+  if (round > 0) return drawRoundRock(deep, squash);
 
   const left = rockLeft(), foot = rockFootY();
   // Wider and flatter for a moment after it lands (`rockShape`). Both scales
@@ -54,12 +55,24 @@ export function drawRock() {
   }
 }
 
-// A rock in the air: round, but not a circle, which would be a ball. The rim is
-// knocked about by three sines of the angle, seeded off the boulder's own
-// number so it is the same lump every frame of one fall. Shaded the way the
-// hill is, so the two are plainly the same object; it carries no mining.
-function drawRoundRock(deep) {
+// A rock in the air: the lump's cells (`lumpCells` in rock.js), shaded the
+// way the hill is. On the dome's crown it sits squashed for a held beat
+// (`rockShape`): wider and flatter about its foot, by whole cells, mapped
+// edge to edge as the hill's squash is, so no hairline opens between columns.
+// Under reduced motion it keeps its own shape instead.
+function drawRoundRock(deep, squash) {
   const foot = rockFootY(), left = rockLeft();
+  if (squash && !reducedMotion()) {
+    const n = S.gw, half = n / 2;
+    const ex = i => Math.round((i - half) * (1 + SQUASH_WIDE * squash) + half);
+    const ey = up => Math.round(up * (1 - SQUASH_FLAT * squash));
+    for (const { x, y, v } of lumpCells()) {
+      const top = ey(n - y), bot = ey(n - y - 1);
+      ctx.fillStyle = TONE[v];
+      ctx.fillRect(left + ex(x) * P, foot - top * P, (ex(x + 1) - ex(x)) * P, Math.max(P, (top - bot) * P));
+    }
+    return;
+  }
   const bands = roundBands(deep);
   // Laid about the lump's own corner and moved to where it is: the shape is
   // the same every frame of one fall, and only the fall moves it.
@@ -69,34 +82,17 @@ function drawRoundRock(deep) {
   ctx.translate(-x0, -y0);
 }
 
-// The lump's cells, a path to each thickness, worked out once a fall: a cell
-// is a root, an arctangent and three sines, and a late rock is two thousand
-// of them, which was the frame's biggest cost for as long as it was falling.
+// The lump's cells, a path to each thickness, built once a fall: two thousand
+// rects a frame was the frame's biggest cost for as long as a rock fell.
 let lump = null;
 function roundBands(deep) {
   const key = `${S.boulderNo},${S.gw},${deep}`;
   if (lump?.key === key) return lump.bands;
-  const R = S.gw / 2;
-  const seed = S.boulderNo * 1.7;
-  const rim = ang => 1 + 0.07 * Math.sin(ang * 3 + seed)
-                       + 0.05 * Math.sin(ang * 5.7 - seed * 2)
-                       + 0.03 * Math.sin(ang * 9.1 + seed * 3);
   const bands = new Map();
-  for (let y = 0; y < S.gw; y++) {
-    for (let x = 0; x < S.gw; x++) {
-      const dx = x + 0.5 - R, dy = y + 0.5 - R;
-      const d = Math.hypot(dx, dy) / R / rim(Math.atan2(dy, dx));
-      if (d > 1) continue;
-      // The bands are dithered cell by cell off a hash of where the cell is,
-      // or each band's edge runs flat through the middle like contours on a
-      // map. Hashed, not random: the same speckle every frame of one fall, or
-      // the whole face shimmers.
-      const jit = ((((x * 73) ^ (y * 151) ^ (S.boulderNo * 41)) % 7) - 3) * 0.13;
-      const v = Math.max(1, Math.min(deep, Math.round(deep * Math.sqrt(1 - d * d) + jit)));
-      let path = bands.get(v);
-      if (!path) bands.set(v, path = new Path2D());
-      path.rect(x * P, y * P, P, P);
-    }
+  for (const { x, y, v } of lumpCells()) {
+    let path = bands.get(v);
+    if (!path) bands.set(v, path = new Path2D());
+    path.rect(x * P, y * P, P, P);
   }
   lump = { key, bands };
   return bands;

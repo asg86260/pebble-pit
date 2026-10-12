@@ -26,7 +26,7 @@ import { inWorking, belowYard } from './route.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 import { sfx } from './audio.js';
-import { refitShield } from './shield.js';
+import { refitShield, domeSquash } from './shield.js';
 import { skyCam } from './view.js';
 
 // --- boulder ----------------------------------------------------------------
@@ -431,12 +431,51 @@ export const cellPos = (x, y) => ({ px: rockLeft() + x * P, py: rockFootY() - (S
 // change of shape reads as an impact rather than a substitution. Both are
 // read off the clock and `rockFall`, so nothing is saved or reset.
 export const rockShape = () => {
-  if (S.rockFall > 0) return { round: 1, squash: 0 };
+  // A rock on the dome's crown sits squashed for the held beat before it
+  // bursts (`domeSquash` in shield.js): still round, and spread.
+  if (S.rockFall > 0) return { round: 1, squash: domeSquash() };
   const since = now() - (S.landAt || 0);
   if (since >= SQUASH_MS) return { round: 0, squash: 0 };
   const k = 1 - since / SQUASH_MS;
   return { round: 0, squash: k * k };            // spreads hardest at the first frame
 };
+
+// The rock in the air, as cells: round, but not a circle, which would be a
+// ball. The rim is knocked about by three sines of the angle, seeded off the
+// boulder's own number so it is the same lump every frame of one fall, and
+// each cell holds a thickness as the hill's do, so the two are plainly the
+// same object. Laid in a square the rock's width on a side, its foot on the
+// rock's foot. Here rather than in the drawing because the dome bursts the
+// rock into exactly these cells (shield.js). Worked out once a fall: a cell
+// is a root, an arctangent and three sines, and a late rock is two thousand
+// of them.
+let lump = null;
+export function lumpCells() {
+  const deep = depthOf();
+  const key = `${S.boulderNo},${S.gw},${deep}`;
+  if (lump?.key === key) return lump.cells;
+  const R = S.gw / 2;
+  const seed = S.boulderNo * 1.7;
+  const rim = ang => 1 + 0.07 * Math.sin(ang * 3 + seed)
+                       + 0.05 * Math.sin(ang * 5.7 - seed * 2)
+                       + 0.03 * Math.sin(ang * 9.1 + seed * 3);
+  const cells = [];
+  for (let y = 0; y < S.gw; y++) {
+    for (let x = 0; x < S.gw; x++) {
+      const dx = x + 0.5 - R, dy = y + 0.5 - R;
+      const d = Math.hypot(dx, dy) / R / rim(Math.atan2(dy, dx));
+      if (d > 1) continue;
+      // Dithered cell by cell off a hash of where the cell is, or each band's
+      // edge runs flat through the middle like contours on a map. Hashed, not
+      // random: the same speckle every frame of one fall.
+      const jit = ((((x * 73) ^ (y * 151) ^ (S.boulderNo * 41)) % 7) - 3) * 0.13;
+      const v = Math.max(1, Math.min(deep, Math.round(deep * Math.sqrt(1 - d * d) + jit)));
+      cells.push({ x, y, v });
+    }
+  }
+  lump = { key, cells };
+  return cells;
+}
 
 // Whether there is any rock left, off `rockTops` rather than the grid: it
 // is asked every frame by the ram, `stepCore`, every rockhand, every route

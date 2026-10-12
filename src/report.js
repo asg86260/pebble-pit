@@ -249,7 +249,7 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   shield: S.shield && { kind: S.shield.kind, x: Math.round(S.shield.x), w: S.shield.w,
                         h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
                         pieces: KINDS[S.shield.kind].pieces, caught: !!S.shield.caught,
-                        rising: !!S.shield.rising, setting: !!S.shield.setting,
+                        burst: !!S.shield.burstAt,
                         sag: +(S.shield.sag || 0).toFixed(2),
                         strain: +(S.shield.strain || 0).toFixed(2) },
   shieldsDone: [...S.shieldsDone],

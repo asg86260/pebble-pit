@@ -43,6 +43,11 @@ export function stepCore() {
   // in the same call and the beat never plays.
   if (beatDone('show') && !beatDone('part') && S.boulderNo === 1 && !boulderAlive()) return;
 
+  // A dome on its way out catches nothing, so a rock made now would fall
+  // through the picture of one: the rescue rock bursts on it, and the next
+  // waits until it has gone.
+  if (S.shield && S.shield.fading) return;
+
   if (!S.coreBuried && !boulderAlive()) {
     // Nothing lands on top of the celebration, or on top of anybody.
     if ((footprintClear() || now() > S.nextBoulderAt) && now() >= S.danceUntil) {

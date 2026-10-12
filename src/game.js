@@ -22,7 +22,7 @@ import { stepBeats } from './beats.js';
 import { wireCut } from './quarry.js';
 import { stepBelt, settleBelt, catchBelt, wireBelt } from './dust.js';
 import { stepCore } from './core.js';
-import { stepShield } from './shield.js';
+import { stepShield, slideOnDome } from './shield.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { sampleRates } from './stats.js';
@@ -299,9 +299,11 @@ function stepChips(now) {
   for (let i = n - 1; i >= 0; i--) {
     const ch = chips[i];
     // however long this frame was, in the sixtieths these speeds are written in
-    ch.vy += GRAV * f;
+    // a grain the dome burst falls on its own lighter pull (`burstRock`)
+    ch.vy += (ch.g || GRAV) * f;
     ch.x += ch.vx * f;
     ch.y += ch.vy * f;
+    if (ch.dome) slideOnDome(ch, f);
 
     // The far wall of the hole is a wall at every height, not only below the
     // ground line: everything is thrown at the pit from the near lip, so a

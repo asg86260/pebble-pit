@@ -55,19 +55,28 @@ export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run 
 // the ring is three quarters of a minute, two is half that. Nobody on the
 // ground can put a second of this in.
 export const DOME_WORK = 45;
-export const DOME_HOLD_MS = 2200;   // the rock rests overhead before it is let down
-export const DOME_SET_RATE = 34;    // and comes down this gently, in world pixels a second
-// A held rock springs back up off the dome by this much, in cells, and settles
-// again under its own weight before the hold begins.
-export const DOME_BOUNCE_C = 5;
-// While somebody is still in the ground under it, or walking out from under,
-// the rock creeps down with the digging but keeps this many courses of
-// daylight over their head, so the walk out is from under a rock and not
-// through one.
-export const DOME_FLOOR_C = 8;
+// The dome does not hold the rock up: it bursts it. The rock sits squashed on
+// the crown for one held beat, then comes apart into its own grains, a grain a
+// sheet as a pick takes them, which skate down the curve and heap on the
+// ground outside it for the haulers to carry to the hole.
+export const DOME_BURST_MS = 130;   // the held impact, squashed on the crown
+export const DOME_SQUASH = 0.65;    // how squashed, as a share of a landing's worst (SQUASH_WIDE, SQUASH_FLAT)
+// The burst is measured in dome radii, so a wide dome throws as far, as a
+// share of itself, in the same time as a narrow one.
+export const DOME_BURST_GRAV = 3.7;           // radii a second a second, pulling the grains down
+export const DOME_BURST_SPEED = [0.47, 1.16]; // radii a second out from the crown, slowest and fastest
+export const DOME_BURST_FLING = 1.3;          // the outward speed is this much of it across...
+export const DOME_BURST_LIFT = 0.5;           // ...and this much of it up
+export const DOME_BURST_POP = [0.26, 0.68];   // radii a second of hop on top, least and most
+export const DOME_BURST_JITTER = 0.08;        // radii a second of sideways scatter, either way
+export const DOME_SLIDE_KEEP = 0.7;           // of a grain's speed along the shell, kept a second
+// How long the burst's flare takes to run from the crown down the band.
+export const DOME_FLARE_MS = 450;
+export const DOME_FLARE_W = 0.07;     // half its width, as a share of the way from foot to crown
+export const DOME_FLARE_TRAIL = 0.1;  // and the paler one this far behind it
 // The dome's one job is the rescue. Once they are out it has nothing left to
 // do, and it is magic, not masonry, so it fades rather than falls: this long
-// from the frame after the rescue rock is set down to gone. The one exit in
+// from the frame the rescue beat ends to gone. The one exit in
 // the game with no body walking it, because there is no body.
 export const DOME_FADE_MS = 1500;
 
