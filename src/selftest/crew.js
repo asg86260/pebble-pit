@@ -400,6 +400,36 @@ export const TESTS = [
     const rows = [...new Set(at.pips.map(p => p[1]))];
     const second = pip(1), regular = pip(2);
 
+    // The rule and the buttons, off the canvas: the rule is grey between the
+    // two rows, and the + (its upright bar scanned for its extent) stands at
+    // the middle of the block, the top row's top to the bottom row's foot.
+    const grey = v => v > 100 && v < 200;
+    const centered = () => {
+      draw();
+      // the + 's flat bar, read a few pixels in from its end, where even the
+      // dotted one is solid
+      const r = q(), [px0, py] = r.more, px = px0 - 7, [sx, sy0] = onScreen(px, py);
+      let a = -1, z = -1;
+      const reach = Math.round(3 * (onScreen(px, py + 1)[1] - sy0) * S.dpr);
+      for (let d = -reach; d <= reach; d++) {
+        const v = g.getImageData(Math.round(sx * S.dpr), Math.round(sy0 * S.dpr + d), 1, 1).data[0];
+        if (v < 90) { if (a < 0) a = d; z = d; }
+      }
+      const mid = (a + z) / 2 / S.dpr;
+      const blockMid = onScreen(px, r.block.y + r.block.h / 2)[1] - sy0;
+      return { off: Math.abs(mid - blockMid), mid, blockMid, a, z, reach, dpr: S.dpr, sy0, rule: r.rule, block: r.block, rows: new Set(r.pips.map(p => p[1])).size };
+    };
+    const twoRow = centered();
+    const ruleInk = twoRow.rule && [0, 1, -3, twoRow.rule.h + 3].map(d => ink(twoRow.rule.x + twoRow.rule.w / 2, twoRow.rule.y + d));
+    const pipsY = at.pips.map(p => p[1]);
+    // Every seat taken by a specialist: the top row alone, no rule, centered.
+    window.__crew(0, 5, 5, 0);
+    window.__kit({ blasters: 5 });
+    run(30);
+    const hatsOnly = centered();
+    window.__kit({ blasters: 2 });
+    window.__crew(0, 3, 3, 0);
+
     const sent = await put('quarryjob', 'more');
     let seen = null;
     for (let i = 0; i < 200 && !seen; i++) {
@@ -431,8 +461,14 @@ export const TESTS = [
     window.__levels({ benchLevel: 3 });
     run(20);
     const bare = q().pips;
+    const plainOnly = centered();
     window.__crew(0, 0);
     return [
+      ok(twoRow.rule && twoRow.off <= 1 && ruleInk[0] !== undefined && grey(ruleInk[0]) && grey(ruleInk[1]) && light(ruleInk[2]) && light(ruleInk[3])
+         && twoRow.rule.y > Math.max(pipsY[0], pipsY[1]) && twoRow.rule.y < pipsY[2],
+         'two rows have a grey rule between them and the + stands at the middle of the block', JSON.stringify([twoRow, ruleInk])),
+      ok(hatsOnly.rows === 1 && !hatsOnly.rule && hatsOnly.off <= 1, 'a station of only specialists is one row, no rule, centered on the buttons', JSON.stringify(hatsOnly)),
+      ok(plainOnly.rows === 1 && !plainOnly.rule && plainOnly.off <= 1, 'a station of only plain seats is one row, no rule, centered on the buttons', JSON.stringify(plainOnly)),
       ok(new Set(bare.map(p => p[1])).size === 1 && bare.length === 5, 'a station with no hats shows one row of seats', JSON.stringify(bare)),
       ok(at.seats && at.seats.seats === 5 && at.pips.length === 5, 'the cut with five benches shows five pips',
          at.seats && `${at.seats.seats} seats, ${at.pips && at.pips.length} pips`),

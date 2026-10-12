@@ -193,6 +193,10 @@ export const SEAT_PIP_SMALL = P;
 export const SEAT_GAP_SMALL = P;
 export const SEAT_SHRINK = 12;
 export const SEAT_ROW = 20;
+// The rule between the specialists' row and the regular seats: the air it sits
+// in, and its own thickness.
+export const SEAT_SEP = P * 2;
+export const SEAT_RULE = 2;
 // The empty seat's outline: the boards' bill-line grey, mapped by ink.js on
 // the dark page like every other gray.
 export const SEAT_EMPTY_INK = '#8c8c8c';

@@ -4,7 +4,7 @@
 // it is on nothing. Its count is there to be read.
 
 import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_DOWN, SEAT_PIP, SEAT_GAP, SEAT_PIP_SMALL, SEAT_GAP_SMALL,
-         SEAT_SHRINK, SEAT_ROW, SEAT_EMPTY_INK, SEAT_LEAVE_MS } from './config.js';
+         SEAT_SHRINK, SEAT_ROW, SEAT_EMPTY_INK, SEAT_LEAVE_MS, SEAT_SEP, SEAT_RULE } from './config.js';
 import { deepFloor, deepTop } from './deep/place.js';
 import { STATIONS } from './stations.js';
 import { S, quarry } from './state.js';
@@ -207,9 +207,18 @@ const topOf = p => {
 function pipBoxes(p, left, y) {
   const n = seatsOf(p), t = topOf(p);
   const nTop = t.worn + t.spare, nBot = n - t.worn;
-  const rb = rowOf(nBot), rt = rowOf(nTop || 1);
+  const rb = rowOf(nBot || 1), rt = rowOf(nTop || 1);
   const x0 = left + BTN + GAP, strip = rowOf(n).w;
-  const y0 = Math.floor((y - rb.pip / 2) / P) * P;
+  // A row shows only when it has something in it. Whatever shows is one block
+  // (top row, rule, bottom row) centered on the post's line, where the buttons
+  // stand, like align-items: center. The block is as tall as it is whenever
+  // any hat is owned, so the only reflow is the first hat arriving.
+  const hRow = (r, k) => k ? r.rows * (r.pip + r.gap) - r.gap : 0;
+  const hTop = hRow(rt, nTop), hBot = hRow(rb, nBot);
+  const sep = nTop && nBot ? SEAT_SEP : 0;
+  const H = hTop + sep + hBot;
+  const y0 = Math.floor((y - H / 2) / P) * P;
+  const wide = (r, k) => Math.min(r.per, k) * (r.pip + r.gap) - r.gap;
   const lay = (r, count, yy) => {
     const out = [];
     for (let i = 0; i < count; i++) {
@@ -220,9 +229,16 @@ function pipBoxes(p, left, y) {
     }
     return out;
   };
-  const top = lay(rt, nTop, y0 - (rt.pip + rt.gap) * rt.rows);
+  const top = lay(rt, nTop, y0);
   top.forEach((q, i) => { q.spare = i >= t.worn; });
-  return [...top.slice(0, t.worn), ...lay(rb, nBot, y0), ...top.slice(t.worn)];
+  const bottom = lay(rb, nBot, y0 + hTop + sep);
+  const boxes = [...top.slice(0, t.worn), ...bottom, ...top.slice(t.worn)];
+  if (sep) {
+    const w = Math.max(wide(rt, nTop), wide(rb, nBot));
+    boxes.rule = { x: x0 + Math.round((strip - w) / 2 / P) * P, y: y0 + hTop + (SEAT_SEP - SEAT_RULE) / 2, w, h: SEAT_RULE };
+  }
+  boxes.block = { y: y0, h: H };
+  return boxes;
 }
 
 // What a pip is to hit: grown half a gap to each side, so the row is one
@@ -394,6 +410,8 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) 
 
     if (b.pips) {
       drawPips(ctx, b.pips, seatsAt(p));
+      const rl = b.pips.rule;
+      if (rl) { ctx.fillStyle = SEAT_EMPTY_INK; ctx.fillRect(rl.x, rl.y, rl.w, rl.h); ctx.fillStyle = '#000'; }
       button(ctx, b.less, '-', canLess(p, n));
       button(ctx, b.more, '+', canMore(p, spare));
       continue;
@@ -576,6 +594,8 @@ export function rosterReport() {
              // where its middle is, for a check to click.
              seats: seatsAt(p),
              pips: b.pips ? b.pips.map(q => [q.x + q.w / 2, q.y + q.h / 2]) : null,
+             rule: b.pips && b.pips.rule ? { ...b.pips.rule } : null,
+             block: b.pips ? { ...b.pips.block } : null,
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
              more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
   });
