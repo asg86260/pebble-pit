@@ -163,7 +163,9 @@ function climb(u) {
     for (let i = 0; i < Math.min(top, 40) && !maxed(u); i++) {
       const at = rungOf(u);
       const bill = Object.fromEntries(billOf(u));
-      rows.push({ rung: at + 1, from: u.from ? u.from() : null, to: u.to ? u.to() : null,
+      // Numbered on the whole written table, so a ladder sold from a later
+      // foot (`first`) reads its own rungs and edits its own boxes.
+      rows.push({ rung: at + 1 + (u.first || 0), from: u.from ? u.from() : null, to: u.to ? u.to() : null,
                   bill, work: bill.time != null ? bill.time / 1000 : (u.work ? u.work() : null) });
       u.buy();
       if (rungOf(u) === at) break;

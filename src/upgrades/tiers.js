@@ -7,7 +7,7 @@
 // written a rung at a time in config/rungs.js.
 
 import { S } from '../state.js';
-import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, SCALE_RUNG_COINS, WORK_BASE, WORK_STEP, rungDust } from '../config.js';
+import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, SCALE_RUNG_COINS, WORK_BASE, WORK_STEP, rungDust, rungFoot } from '../config.js';
 import { DUST_PER, coinsOpen, coinNeeds } from './price.js';
 import { ahead } from '../works.js';
 
@@ -47,6 +47,10 @@ export const named = (key, name, n = LADDER_BANDS) =>
 //            LADDERS) is paid in: 'dust' for the yard, 'scale' for the deep.
 //            The band coins are the lead's amount at the coins' rates, or
 //            for the deep its own written table (SCALE_RUNG_COINS)
+//   foot     not an argument: LADDERS[key].foot, the rung the card is first
+//            sold from. The rungs under it are never offered; the card's
+//            pips, its end and its bill count from there, while the level
+//            field keeps counting rungs of the whole table
 //   bands    one line a band: a key, a name, optionally the coins the bill
 //            adds (the lead's band coins by position otherwise) and a gate of
 //            the band's own. The bands are drawn as ONE card, every rung on it
@@ -59,13 +63,16 @@ export const named = (key, name, n = LADDER_BANDS) =>
 export function tierRows({ field, level: at, climb, unit, pct, does, value,
                            site, board, show, after, follows, keep, bands, lead = 'dust' }) {
   const rungs = TIER_BAND * bands.length;
+  const foot = rungFoot(bands[0].key);
   const pair = field && typeof field === 'object' ? field : null;
-  const level = at || (pair ? () => Math.min(rungs, pair.get() || 0) : () => tierLevel(field, rungs));
+  const raw = at || (pair ? () => Math.min(rungs, pair.get() || 0) : () => tierLevel(field, rungs));
+  const level = () => Math.max(foot, raw());
   // The rung the next copy will be: the landed ones plus those paid for and
   // not yet fitted (DESIGN.md, "The same row, queued again"). Everything
   // about the offer reads this; the pips (`rung`) read what has landed.
   const next = () => level() + ahead(bands[0].key);
-  const step = climb || (pair ? () => { pair.set((pair.get() || 0) + 1); } : () => { S[field]++; });
+  const step = climb || (pair ? () => { pair.set(Math.max(foot, pair.get() || 0) + 1); }
+                              : () => { S[field] = Math.max(foot, S[field] || 0) + 1; });
 
   // One card, its pips in a group a band, the bill deepening as the groups
   // fill: the groups ARE the bands.
@@ -81,8 +88,9 @@ export function tierRows({ field, level: at, climb, unit, pct, does, value,
     after: follows,
     // Every rung is a piece of work finished at the place that sells it.
     kind: 'rung', site, board,
-    rung: () => Math.min(rungs, level()),
-    rungs: () => rungs,
+    rung: () => Math.min(rungs, level()) - foot,
+    rungs: () => rungs - foot,
+    first: foot,
     group: TIER_BAND,
     from: () => value(next()),
     to: () => value(next() + 1),

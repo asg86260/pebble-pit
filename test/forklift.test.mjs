@@ -8,7 +8,7 @@
 // nothing else; and it is never crew.
 
 import { group, ok, state, run, runUntil, openSites, buyNow, climb, yard } from './helpers.mjs';
-import { LADDER } from '../src/config.js';
+import { LADDER, LADDERS } from '../src/config.js';
 import { S } from '../src/state.js';
 import { load } from '../src/crew/hole.js';
 import { drive } from '../src/crew/hauler.js';
@@ -100,10 +100,37 @@ group('a forklift carries and drives by its own two ladders, bought like a playe
     ok(loadRow?.shown && paceRow?.shown, 'both ladders are on the bench once there is a forklift'),
     ok(load0 === liftCap(0) && Math.abs(pace0 - liftSpeed(0)) < 1e-9, 'at the foot it carries and drives what the table says',
        `${load0} grains, ${(pace0 * 60).toFixed(0)} px/s`),
-    ok(gotLoad === 1 && load(w) === liftCap(1) && load(w) > load0, 'a load rung carries more',
+    ok(gotLoad === 1 && load(w) === liftCap(S.liftLoadLevel) && load(w) > load0, 'a load rung carries more',
        `${load0} -> ${load(w)}`),
     ok(gotPace === 1 && drive(w) > pace0, 'a speed rung drives faster',
        `${(pace0 * 60).toFixed(0)} -> ${(drive(w) * 60).toFixed(0)} px/s`)
+  ];
+});
+
+// The forklift's ladders are the one exception to the eight-rung rule: sold
+// from rung five (`foot` in config/rungs.js), so the card has the last two
+// bands' four pips, its first bill is rung five's, and four rungs end at the
+// same top as eight did. A save from before the cut, with fewer rungs than
+// the foot, stands on the foot.
+group('the forklift ladders are sold from rung five, and end where they always did', async () => {
+  lip();
+  buyNow('driver');
+  const foot = LADDERS.liftload.foot;
+  const card = row('liftload');
+  const firstDust = (card?.bill || []).find(([c]) => c === 'dust')?.[1];
+  const got = climb('liftload', LADDER);
+  const top = row('liftload');
+  S.liftPaceLevel = 3;                          // an old save, three rungs in
+  const old = row('liftpace');
+  return [
+    ok(card?.rungs === LADDER - foot && card?.rung === 0, "the card has the last two bands' pips, none filled",
+       `${card?.rung} of ${card?.rungs}`),
+    ok(firstDust === LADDERS.liftload.dust[foot], "and its first bill is rung five's",
+       `${firstDust} dust, rung five ${LADDERS.liftload.dust[foot]}`),
+    ok(got === LADDER - foot && top?.done && S.liftLoadLevel === LADDER && liftCap() === LADDERS.liftload.value[LADDER],
+       "four rungs top it at the table's top", `${got} bought, level ${S.liftLoadLevel}, ${liftCap()} grains`),
+    ok(old?.rung === 0 && liftSpeed() * 60 === LADDERS.liftpace.value[foot],
+       'a save below the foot stands on the foot', `${old?.rung} pips, ${liftSpeed() * 60} px/s`)
   ];
 });
 

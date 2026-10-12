@@ -46,9 +46,12 @@ export const LADDERS = {
   // of theirs -- sixteen grains, doubled by the cart and again by the engine,
   // at twice the topped walk. Footed any lower, the first forklift carried
   // less than the carter beside it. Dearer than the haulers': they are the
-  // late yard's.
-  liftload:     { value: [64, 80, 96, 112, 128, 160, 192, 224, 256], dust: [600, 900, 1200, 1800, 2400, 3600, 4800, 7200] },     // grains a load
-  liftpace:     { value: [1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000], dust: [800, 1200, 1600, 2400, 3200, 4800, 6400, 9600] }, // px/s, the drive
+  // late yard's. By the time a forklift is affordable the first four rungs
+  // were pocket change, so both ladders are sold from rung five (`foot`):
+  // the owner's one exception to the eight-rung ladder (DESIGN.md, "Every
+  // ladder is sold in bands").
+  liftload:     { foot: 4, value: [64, 80, 96, 112, 128, 160, 192, 224, 256], dust: [600, 900, 1200, 1800, 2400, 3600, 4800, 7200] },     // grains a load
+  liftpace:     { foot: 4, value: [1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000], dust: [800, 1200, 1600, 2400, 3200, 4800, 6400, 9600] }, // px/s, the drive
   // --- the air filter -----------------------------------------------------
   power:        { value: [30, 35, 40, 45, 50, 60, 70, 90, 110], dust: [1000, 1500, 2000, 3000, 4000, 5000, 7000, 10000] },  // motes/s a balloon pulls
   balloonspeed: { value: [1, 1.2, 1.4, 1.6, 1.8, 2, 2.3, 2.6, 3], dust: [1000, 1500, 2000, 3000, 4000, 5000, 7000, 10000] },  // x, how fast a balloon goes cloud to cloud
@@ -92,13 +95,18 @@ export const LADDERS = {
   bard:     { value: [10, 11, 12, 13, 15, 15.5, 16, 16.5, 17], dust: [15, 30, 60, 120, 250, 500, 900, 1600] }   // % the others' hits rise, Inspired
 };
 
-// A ladder's value at a rung: the foot below nought, the top past the end. A
+// A ladder's value at a rung: the foot below it, the top past the end. A
 // save from a longer ladder reads as the top rather than as a rung nothing
-// agrees with, the same clamp every ladder makes on read.
-const clamp = (list, i) => list[Math.max(0, Math.min(list.length - 1, i | 0))];
-export const rungValue = (key, lvl) => clamp(LADDERS[key].value, lvl);
+// agrees with, the same clamp every ladder makes on read. `foot`, where an
+// entry names one, is the rung the ladder is first sold from: the rungs
+// under it are never offered, and a level below it -- a fresh yard's nought,
+// or a save from before the ladder was cut short -- stands on the foot, so
+// the level field keeps counting rungs of the whole written table.
+export const rungFoot = key => LADDERS[key]?.foot || 0;
+const clamp = (list, i, lo = 0) => list[Math.max(lo, Math.min(list.length - 1, i | 0))];
+export const rungValue = (key, lvl) => clamp(LADDERS[key].value, lvl, rungFoot(key));
 // ...and what the next rung costs in dust, from the rung you stand on.
-export const rungDust = (key, lvl) => clamp(LADDERS[key].dust, lvl);
+export const rungDust = (key, lvl) => clamp(LADDERS[key].dust, lvl, rungFoot(key));
 
 // A knob a rung, for the ladder book and the dev panel. The key names the
 // ladder, the list and the rung -- `LADDERS.carry.value[2]` -- so what the
