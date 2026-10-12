@@ -146,16 +146,24 @@ export function move(sc, dir) {
   }
   const [dx, dy] = DIRS[dir];
   const a = on.getBoundingClientRect(), c = center(a);
-  let best = null, score = Infinity;
-  for (const el of list) {
-    if (el === on) continue;
-    const r = el.getBoundingClientRect(), e = center(r);
-    const ahead = (e.x - c.x) * dx + (e.y - c.y) * dy;
-    if (ahead <= 1) continue;
-    const off = Math.abs((e.x - c.x) * dy) + Math.abs((e.y - c.y) * dx);
-    const s = ahead + off * 2;
-    if (s < score) { score = s; best = el; }
-  }
+  // Ahead within a cone first (more that way than off to the side); only up
+  // and down fall back to anything below or above, since a sheet is a column
+  // and its last button may stand off to one side of the row over it.
+  const pick = cone => {
+    let best = null, score = Infinity;
+    for (const el of list) {
+      if (el === on) continue;
+      const e = center(el.getBoundingClientRect());
+      const ahead = (e.x - c.x) * dx + (e.y - c.y) * dy;
+      if (ahead <= 1) continue;
+      const off = Math.abs((e.x - c.x) * dy) + Math.abs((e.y - c.y) * dx);
+      if (cone && off > ahead * 2) continue;
+      const s = ahead + off * 2;
+      if (s < score) { score = s; best = el; }
+    }
+    return best;
+  };
+  const best = pick(true) || (dy ? pick(false) : null);
   if (!best) return false;
   focusEl(best);
   return true;

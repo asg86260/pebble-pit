@@ -2182,8 +2182,38 @@ export const SCENES = {
                  window.__fast(0.35);
                  window.__look(st().rockLeftX - 500); } },
 
+  // A pad's focus (DESIGN.md, "Controller support"): the corner brackets on
+  // a station, on a board's row and on the coil, each reached by presses
+  // through `__pad` the way a player's thumb gets there, the camera given a
+  // moment after each hop to arrive.
+  'pad-yard': { about: 'the rock', say: "a pad's focus on the quarry, the brackets a cell clear of its shed",
+    run: () => { rich(); window.__fullSites(); padTo('st:quarry'); } },
+  'pad-board': { about: 'the bench', say: "a pad's focus on the farm's board, on its second row",
+    run: () => { rich(); padTo('st:farm'); window.__pad.press('a'); window.__fast(0.3);
+                 window.__pad.press('down'); } },
+  'pad-deep': { about: 'the deep', say: "a pad's focus up from a station onto the coil, in the deep's purple",
+    run: () => { stageScene(0, 0.33)(); padTo(null);
+                 padTo(window.__pad.stops().find(s => s.startsWith('st:') && s !== 'st:crusher' && s !== 'st:pods'));
+                 window.__pad.press('up'); } },
+
   ...deepScenes
 };
+
+// Wake the checks' pad and hop it along the stops until it is on `id` (or,
+// for null, wherever it lands in this half).
+// The hops are made under reduced motion, so the camera is there at once and
+// no yard time passes for a beat to start in; the preference is put back.
+function padTo(id) {
+  const pad = window.__pad, was = pref('motion');
+  setPref('motion', true);
+  pad.on();
+  pad.press('b');
+  for (let i = 0; i < 24 && id && pad.focus() !== id; i++) {
+    const list = pad.stops();
+    pad.press(list.indexOf(id) < list.indexOf(pad.focus()) ? 'left' : 'right');
+  }
+  setPref('motion', was);
+}
 
 // The names under each part, in ABOUT's order.
 export const byPart = () =>

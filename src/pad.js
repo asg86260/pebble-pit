@@ -463,6 +463,7 @@ function turnBoard(dir) {
   }
   if (!next) return;
   setFocus(next.id, true);
+  showTipAt(null);
   showPanel(next.key, true);
   dropFocus();
   enterBoard(true);
@@ -580,7 +581,7 @@ function pressFocus() {
   if (s.kind === 'orb') { const c = mid(s.r); clickDeep(c.x, c.y); return; }
   if (s.kind === 'raise') { s.el.click(); return; }
   if (s.kind === 'station') {
-    if (s.board) { showPanel(s.key, true); dropFocus(); enterBoard(true); return; }
+    if (s.board) { showTipAt(null); showPanel(s.key, true); dropFocus(); enterBoard(true); return; }
     // A place with no board (the casino): A steps into its controls.
     const rows = innerRows(s);
     if (rows.length) setFocus(rows[0][0].id);
@@ -647,7 +648,9 @@ function sayTip(box) {
 const fake = { id: 'check pad', connected: true, buttons: Object.values(BUTTON).map(() => ({ pressed: false, value: 0 })),
                axes: [0, 0, 0, 0] };
 let fakeT = 0;
-const fakeStep = (dt = 1 / 60) => { fakeT += dt * 1000; stepPad(fakeT); paintPad(fakeT); };
+// On the wall clock where it is ahead, so a check's frames and the page's
+// own (main.js) agree about when a glide began.
+const fakeStep = (dt = 1 / 60) => { fakeT = Math.max(fakeT + dt * 1000, performance.now()); stepPad(fakeT); paintPad(fakeT); };
 export const PAD_HANDLE = {
   on() { fakePad(fake); return true; },
   off() { fakePad(null); for (const b of fake.buttons) { b.pressed = false; b.value = 0; } fake.axes = [0, 0, 0, 0]; was = null; return true; },

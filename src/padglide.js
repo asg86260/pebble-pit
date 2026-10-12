@@ -12,6 +12,7 @@
 // the row as if it had arrived there.
 
 import { P, PAD_GLIDE_MS, PAD_SETTLE_STEP_MS, PAD_SETTLE_CELLS, PAD_BREATH_MS, PAD_PAGE_CELL } from './config.js';
+import { reducedMotion } from './prefs.js';
 
 let from = null, to = null, at = 0, id = null, space = null;
 
@@ -25,7 +26,8 @@ const snap = (v, u) => Math.round(v / u) * u;
 export function aim(newId, box, sp, t) {
   if (!box) { clear(); return; }
   if (newId === id && sp === space) { to = box; return; }
-  const was = sp === space && to ? drawnBox(t) : null;
+  // Under reduced motion the marker is there at once, as the camera is.
+  const was = sp === space && to && !reducedMotion() ? drawnBox(t) : null;
   from = was;
   to = box;
   at = t;
@@ -54,7 +56,8 @@ export function markAt(t) {
   const since = t - at - glide;
   const moving = since < 0;
   let out = 1;
-  if (!moving) {
+  // Reduced motion: no landing and no breath, one settled pose.
+  if (!moving && !reducedMotion()) {
     const step = Math.floor(since / PAD_SETTLE_STEP_MS);
     const settle = Math.max(0, PAD_SETTLE_CELLS - step);
     out += settle;
