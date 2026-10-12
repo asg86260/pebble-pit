@@ -74,19 +74,19 @@ group('the rescue shows the two of them, the crew walk back after, and no rock c
   wide(true);
   window.__next();                           // the rock goes, and the next is the rescue rock
   const rock = S.boulderNo + 1;
-  const caught = runUntil(() => S.rockHeld, 60);
+  // Frame by frame: the dome holds it for a beat, then bursts it.
+  let caught = false;
+  for (let f = 0; f < 60 * 60 && !caught; f++) { run(1 / 60); caught = S.rockHeld; }
   const scene = watch(() => S.rescued && !S.beat.yard, 60 * 120);
   const rescued = S.rescued && did('rescue');
-  // Walked back: nobody left stood off, and the gang back at the rock.
-  runUntil(() => !S.rockHeld && !S.rockFall, 60);
-  const back = runUntil(() => !S.workers.some(w => w.offStage)
-    && S.workers.some(w => w.type === 'rockhand' && Math.abs(w.x - S.cx) < 60), 30);
-  // The rescue rock mined out at once, and nothing in the sky behind it for
+  // The rescue rock burst on the dome, and nothing in the sky behind it for
   // the rest of the story: the sheet, the tearing, the drowning, the snatch.
-  window.__next();
-  let early = false, reloaded = false;
+  // Meanwhile the crew walk back: nobody is left stood off.
+  const gone = !boulderAlive() && !S.rockHeld && !S.rockFall;
+  let early = false, reloaded = false, back = false;
   for (let f = 0; f < 60 * 240 && !(did('snatch') && !S.beat.camera); f++) {
     run(1 / 60);
+    if (!back && !S.beat.yard && !S.workers.some(w => w.offStage)) back = true;
     // Asked at the end of the frame: the rock may come on the frame it ends.
     if (!(did('snatch') && !S.beat.camera) && (boulderAlive() || S.rockFall > 0 || S.boulderNo > rock)) early = true;
     // A save in the middle of it, read back: still nothing comes down.
@@ -96,12 +96,12 @@ group('the rescue shows the two of them, the crew walk back after, and no rock c
   const next = runUntil(() => S.boulderNo > rock, 30);
   wide(false);
   return [
-    ok(bought && cast && caught, 'the dome is bought, cast, and holds the rescue rock', `${bought} ${cast} ${caught}`),
+    ok(bought && cast && caught && gone, 'the dome is bought, cast, and catches and bursts the rescue rock', `${bought} ${cast} ${caught} ${gone}`),
     ok(scene.staged > 0 && rescued, 'the rescue plays with its stage', `staged ${scene.staged} frames`),
     ok(scene.worst <= scene.allowed, 'nobody but the pair stands in its frame longer than the walk out',
        `worst ${scene.worst} frames, allowed ${scene.allowed}`),
     ok(back, 'and the crew walk back to work after'),
-    ok(reloaded && over, 'the story runs on through the drowning and the snatch, a reload in the middle'),
+    ok(reloaded && over, 'the story runs on through the drowning and the snatch, a reload in the middle', `reloaded ${reloaded} drown ${did('drown')} tear ${did('tear')} ending ${did('ending')} snatch ${did('snatch')} cam ${S.beat.camera} yard ${S.beat.yard} sheet ${S.beat.sheet} drowned ${S.drowned}`),
     ok(!early, 'no rock comes down until the snatch is over'),
     ok(next, 'and then the next one does', `rock ${S.boulderNo}, want > ${rock}`)
   ];
