@@ -123,7 +123,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- A station's counter is a row of seats between its - and +: a filled pip for each body at work, a pip filling in thirds while one walks over, the specialists in a row of their own above (a brim each, grey ones on the outlines of hats not yet worn, and the next body sent takes a spare hat first) with a rule between the rows, whatever rows show centered on the - and +, and a click on a pip sets the count (src/selftest/crew.js).
+- A station's counter is a row of seats between its - and +: a filled pip for each body at work, a pip filling in thirds while one walks over, the specialist slots in a row of their own above (a brim each, grey ones on the outlines of hats not yet worn, and the next body sent takes a spare hat first) and only the seats left over below for plain workers, with a rule between the rows (none when every seat is a hat seat), whatever rows show centered on the - and +, and a click on a bottom pip sets the plain workers (src/selftest/crew.js).
 - Every miner and every farmer can wear a blaster or grower hat, not just three (test/hats-gate-machines.test.mjs).
 - The drill and the tiller sit greyed on their boards saying "buy 5 blasters to unlock" or "buy 5 growers to unlock" until five are bought (test/hats-gate-machines.test.mjs, src/selftest/boards.js).
 - The air filter comes with its first balloon (test/filter-balloon.test.mjs).
