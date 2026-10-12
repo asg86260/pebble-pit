@@ -1346,10 +1346,10 @@ export const SCENES = {
                  window.__buy('unlockapothecary'); window.__finish();
                  window.__brews(5); window.__assign(JOB.STIR, 1); window.__pot('stew'); window.__fast(40);
                  window.__buy('anotherpot'); window.__fast(14); window.__look(st().apothecaryX - 300); } },
-  // Four pots, each bought after the five batches that offer the next. Same
+  // Three pots, each bought after the five batches that offer the next. Same
   // setup as `apothpots`, camera on the pots for where the bar hangs against
   // the steam.
-  potbars: { about: 'the apothecary', say: 'four pots boiling, bars up, up close',
+  potbars: { about: 'the apothecary', say: 'three pots boiling, bars up, up close',
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
                  window.__grant({ dust: 60000, spores: 9000, shards: 3000 });
                  window.__buy('unlockfarm'); window.__finish();
@@ -1357,11 +1357,10 @@ export const SCENES = {
                  window.__brews(5);
                  window.__buy('anotherpot'); window.__finish();
                  window.__buy('anotherpot'); window.__finish();
-                 window.__buy('anotherpot'); window.__finish();
-                 window.__assign(JOB.STIR, 4);
-                 window.__pot('stew'); window.__pot('brace', 1); window.__pot('strong', 2); window.__pot('stew', 3);
+                 window.__assign(JOB.STIR, 3);
+                 window.__pot('stew'); window.__pot('brace', 1); window.__pot('strong', 2);
                  window.__fast(30); window.__look(st().apothecaryX + 60); } },
-  // Four pots each on a brew of its own, so the flames read as three colors
+  // Three pots each on a brew of its own, so the flames read as three colors
   // side by side.
   apothpots: { about: 'the apothecary', say: 'the whole building at its widest',
     run: () => { window.__reset(); window.__crew(1, 4, 0, 2);
@@ -1371,10 +1370,9 @@ export const SCENES = {
                  window.__brews(5);
                  window.__buy('anotherpot'); window.__finish();
                  window.__buy('anotherpot'); window.__finish();
-                 window.__buy('anotherpot'); window.__finish();
-                 window.__assign(JOB.STIR, 4);
+                 window.__assign(JOB.STIR, 3);
                  window.__pot('stew', 0); window.__pot('brace', 1);
-                 window.__pot('strong', 2);   // and the fourth left unset, for the empty block
+                 window.__pot('strong', 2);
                  window.__fast(50); window.__look(st().apothecaryX - 320); } },
   // Pots left cold so nothing pulls the eye off the rack. A full plank, a
   // couple, and one over the cap, so one shot carries both readings the rack

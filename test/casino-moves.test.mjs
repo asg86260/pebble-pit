@@ -16,9 +16,9 @@ group('the funnel and the tray move with the casino', async () => {
   window.__build();
   run(0.1);
   const x0 = casino.x;
-  // the apothecary opened and grown to four pots: the ground is laid again
+  // the apothecary opened and grown to its three pots: the ground is laid again
   yard.S.apothecaryOpen = true;
-  yard.S.apothPots = 4;
+  yard.S.apothPots = 3;
   run(0.1);
   // and a stake poured in the way a player does
   window.__holdArm(true, 1);
