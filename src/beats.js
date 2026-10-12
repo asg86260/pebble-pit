@@ -29,7 +29,7 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startRescue, stepRescue, cutRescue } from './intro.js';
 import { cameraCues, play, stepShot, release, stepDeepShot, dropDeepShot, stepHush } from './cutscene.js';
 import { abyssDue, startAbyss, stepAbyss, cutAbyss, endAbyss } from './abyssintro.js';
-import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn } from './snatch.js';
+import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn, deepOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
 import { firstMuckDue, startFirstMuck } from './firstmuck.js';
@@ -124,6 +124,14 @@ export const BEATS = [
   // stood until it is put down (ending.js); the yard plays on behind it.
   { key: 'demoend', owns: 'sheet', next: null,
     when: () => demoOn() && shieldDone('net') && !S.beat.yard && !S.beat.camera,
+    enter: () => {}, step: () => true },
+
+  // --- the teaser's end (DESIGN.md, "Three builds") ------------------------
+  // On the free build the snatch plays and the wizards are asked; what they
+  // would answer is the paid game's. The sheet that says so, stood until it is
+  // put down (ending.js).
+  { key: 'teaseend', owns: 'sheet', next: null,
+    when: () => serpentOn() && !deepOn() && S.snatched && S.askedWizards && !S.beat.yard && !S.beat.camera,
     enter: () => {}, step: () => true },
 
   // --- the second half (snatch.js; docs/wave-serpent.md, "The story") -----

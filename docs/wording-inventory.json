@@ -1,0 +1,3558 @@
+[
+ {
+  "id": "saved.word",
+  "group": "Sheets",
+  "where": "play.html:279",
+  "context": "rescue sheet heading, end of first half",
+  "text": "It's over!"
+ },
+ {
+  "id": "saved.why",
+  "group": "Sheets",
+  "where": "play.html:280",
+  "context": "rescue sheet line, time filled into span",
+  "text": "you saved your sqwife in <span id=\"savedin\"></span>!"
+ },
+ {
+  "id": "saved.timesname.placeholder",
+  "group": "Sheets",
+  "where": "play.html:285",
+  "context": "rescue sheet name box placeholder",
+  "text": "your name"
+ },
+ {
+  "id": "saved.timesgo",
+  "group": "Sheets",
+  "where": "play.html:286",
+  "context": "rescue sheet post-time button",
+  "text": "post it"
+ },
+ {
+  "id": "saved.thanks",
+  "group": "Sheets",
+  "where": "play.html:292",
+  "context": "rescue sheet, only when story ends here",
+  "text": "thank you for playing!"
+ },
+ {
+  "id": "saved.keepplaying",
+  "group": "Sheets",
+  "where": "play.html:293",
+  "context": "rescue sheet dismiss button",
+  "text": "keep playing"
+ },
+ {
+  "id": "saved.telling",
+  "group": "Sheets",
+  "where": "src/ending.js:109",
+  "context": "rescue sheet times line while posting",
+  "text": "telling the board…"
+ },
+ {
+  "id": "saved.boarddown",
+  "group": "Sheets",
+  "where": "src/ending.js:112",
+  "context": "rescue sheet times line, board unreachable",
+  "text": "the board is down right now; your time is kept and goes up next time you open the game"
+ },
+ {
+  "id": "saved.rank",
+  "group": "Sheets",
+  "where": "src/ending.js:114",
+  "context": "rescue sheet times line after post",
+  "text": "on the board: ${rank}${suffix} of ${of}"
+ },
+ {
+  "id": "saved.refuse.409",
+  "group": "Sheets",
+  "where": "src/times.js:102",
+  "context": "rescue sheet times line, refusal",
+  "text": "the board already has this one"
+ },
+ {
+  "id": "saved.refuse.422",
+  "group": "Sheets",
+  "where": "src/times.js:103",
+  "context": "rescue sheet times line, refusal",
+  "text": "the board did not believe it"
+ },
+ {
+  "id": "saved.refuse.429",
+  "group": "Sheets",
+  "where": "src/times.js:104",
+  "context": "rescue sheet times line, refusal",
+  "text": "the board is busy; try again in a minute"
+ },
+ {
+  "id": "demoend.word",
+  "group": "Sheets",
+  "where": "play.html:299",
+  "context": "demo end sheet heading",
+  "text": "thats it for the demo!"
+ },
+ {
+  "id": "demoend.why",
+  "group": "Sheets",
+  "where": "play.html:300",
+  "context": "demo end sheet line",
+  "text": "cant save your sqwife just yet."
+ },
+ {
+  "id": "demoend.store",
+  "group": "Sheets",
+  "where": "play.html:302",
+  "context": "demo end store link (if STORE_URL)",
+  "text": "get the full game"
+ },
+ {
+  "id": "demoend.keep",
+  "group": "Sheets",
+  "where": "play.html:303",
+  "context": "demo end dismiss button",
+  "text": "keep playing"
+ },
+ {
+  "id": "teaseend.word",
+  "group": "Sheets",
+  "where": "play.html:309",
+  "context": "free-build teaser end sheet heading",
+  "text": "to be continued in the full game!"
+ },
+ {
+  "id": "teaseend.store",
+  "group": "Sheets",
+  "where": "play.html:311",
+  "context": "teaser end store link (if STORE_URL)",
+  "text": "get the full game"
+ },
+ {
+  "id": "teaseend.keep",
+  "group": "Sheets",
+  "where": "play.html:312",
+  "context": "teaser end dismiss button",
+  "text": "keep playing"
+ },
+ {
+  "id": "freed.word",
+  "group": "Sheets",
+  "where": "play.html:318",
+  "context": "second-half end sheet heading",
+  "text": "ok now its over"
+ },
+ {
+  "id": "freed.why",
+  "group": "Sheets",
+  "where": "play.html:319",
+  "context": "second-half end sheet line",
+  "text": "you saved your sqhusband from the serpent's belly."
+ },
+ {
+  "id": "freed.end",
+  "group": "Sheets",
+  "where": "play.html:321",
+  "context": "second-half end sheet line",
+  "text": "that's the end, feel free to keep slaying the serpent and farming on the surface!"
+ },
+ {
+  "id": "freed.thanks",
+  "group": "Sheets",
+  "where": "play.html:322",
+  "context": "second-half end sheet line",
+  "text": "thank you!"
+ },
+ {
+  "id": "freed.keep",
+  "group": "Sheets",
+  "where": "play.html:323",
+  "context": "second-half end dismiss button",
+  "text": "keep playing"
+ },
+ {
+  "id": "crashed.word",
+  "group": "Sheets",
+  "where": "play.html:266",
+  "context": "crash sheet heading",
+  "text": "stopped"
+ },
+ {
+  "id": "crashed.copysave",
+  "group": "Sheets",
+  "where": "play.html:269",
+  "context": "crash sheet button",
+  "text": "copy save"
+ },
+ {
+  "id": "crashed.why.fallback",
+  "group": "Sheets",
+  "where": "src/crash.js:18",
+  "context": "crash sheet line when error has no message",
+  "text": "something threw"
+ },
+ {
+  "id": "held.word",
+  "group": "Sheets",
+  "where": "play.html:172",
+  "context": "pause sheet heading",
+  "text": "paused"
+ },
+ {
+  "id": "held.resume",
+  "group": "Sheets",
+  "where": "play.html:173",
+  "context": "pause sheet button",
+  "text": "resume"
+ },
+ {
+  "id": "held.slotsbtn",
+  "group": "Sheets",
+  "where": "play.html:177",
+  "context": "pause sheet button (relabelled from JS)",
+  "text": "saves"
+ },
+ {
+  "id": "held.slotsbtn.label",
+  "group": "Sheets",
+  "where": "src/slots.js:64",
+  "context": "saves button label on both fronts",
+  "text": "saves · ${n} of ${SLOTS}"
+ },
+ {
+  "id": "held.slots.word",
+  "group": "Sheets",
+  "where": "play.html:178",
+  "context": "saves page heading",
+  "text": "saves"
+ },
+ {
+  "id": "held.savecopy",
+  "group": "Sheets",
+  "where": "play.html:181",
+  "context": "saves page button",
+  "text": "copy a save"
+ },
+ {
+  "id": "held.loadsave",
+  "group": "Sheets",
+  "where": "play.html:182",
+  "context": "saves page button",
+  "text": "load a save"
+ },
+ {
+  "id": "held.loadit",
+  "group": "Sheets",
+  "where": "play.html:188",
+  "context": "saves page paste box confirm",
+  "text": "load it"
+ },
+ {
+  "id": "held.nevermind",
+  "group": "Sheets",
+  "where": "play.html:189",
+  "context": "saves page paste box cancel",
+  "text": "never mind"
+ },
+ {
+  "id": "held.slotsback",
+  "group": "Sheets",
+  "where": "play.html:196",
+  "context": "saves page back button",
+  "text": "back"
+ },
+ {
+  "id": "held.recordbtn",
+  "group": "Sheets",
+  "where": "play.html:203",
+  "context": "pause sheet button (relabelled from JS)",
+  "text": "achievements"
+ },
+ {
+  "id": "held.recordbtn.label",
+  "group": "Sheets",
+  "where": "src/record.js:36",
+  "context": "achievements button label with count",
+  "text": "achievements · ${count} of ${total}"
+ },
+ {
+  "id": "held.record.word",
+  "group": "Sheets",
+  "where": "play.html:204",
+  "context": "achievements page heading",
+  "text": "achievements"
+ },
+ {
+  "id": "held.record.none",
+  "group": "Sheets",
+  "where": "src/record.js:44",
+  "context": "achievements page, nothing earned",
+  "text": "nothing yet"
+ },
+ {
+  "id": "held.recordback",
+  "group": "Sheets",
+  "where": "play.html:206",
+  "context": "achievements page back",
+  "text": "back"
+ },
+ {
+  "id": "held.indexbtn",
+  "group": "Sheets",
+  "where": "play.html:211",
+  "context": "pause sheet button (also src/indexpage.js:24)",
+  "text": "index"
+ },
+ {
+  "id": "held.index.word",
+  "group": "Sheets",
+  "where": "play.html:212",
+  "context": "index page heading",
+  "text": "index"
+ },
+ {
+  "id": "held.index.entryback",
+  "group": "Sheets",
+  "where": "src/indexpage.js:87",
+  "context": "index entry back button on phone",
+  "text": "back"
+ },
+ {
+  "id": "held.indexback",
+  "group": "Sheets",
+  "where": "play.html:214",
+  "context": "index page back",
+  "text": "back"
+ },
+ {
+  "id": "held.timesbtn",
+  "group": "Sheets",
+  "where": "play.html:218",
+  "context": "pause sheet button",
+  "text": "times"
+ },
+ {
+  "id": "held.timesbtn.label",
+  "group": "Sheets",
+  "where": "src/timesboard.js:79",
+  "context": "times button label once best known",
+  "text": "times · best ${clock}"
+ },
+ {
+  "id": "held.times.word",
+  "group": "Sheets",
+  "where": "play.html:219",
+  "context": "times page heading",
+  "text": "times"
+ },
+ {
+  "id": "held.times.down",
+  "group": "Sheets",
+  "where": "src/timesboard.js:88",
+  "context": "times page, board unreachable",
+  "text": "the board is down right now — try again later"
+ },
+ {
+  "id": "held.times.asking",
+  "group": "Sheets",
+  "where": "src/timesboard.js:96",
+  "context": "times page while loading",
+  "text": "asking the board…"
+ },
+ {
+  "id": "held.times.noboard",
+  "group": "Sheets",
+  "where": "src/timesboard.js:96",
+  "context": "times page, no server configured",
+  "text": "no board to ask"
+ },
+ {
+  "id": "held.times.nobody",
+  "group": "Sheets",
+  "where": "src/timesboard.js:107",
+  "context": "times page, empty board",
+  "text": "nobody yet"
+ },
+ {
+  "id": "held.times.row",
+  "group": "Sheets",
+  "where": "src/timesboard.js:70",
+  "context": "times page row (time · name · itch · ago)",
+  "text": "${~}${clock} · ${name} · itch · ${since}"
+ },
+ {
+  "id": "held.timesback",
+  "group": "Sheets",
+  "where": "play.html:221",
+  "context": "times page back",
+  "text": "back"
+ },
+ {
+  "id": "held.settingsbtn",
+  "group": "Settings",
+  "where": "play.html:224",
+  "context": "pause sheet button",
+  "text": "settings"
+ },
+ {
+  "id": "held.settings.word",
+  "group": "Settings",
+  "where": "play.html:225",
+  "context": "settings page heading",
+  "text": "settings"
+ },
+ {
+  "id": "set.motion.full",
+  "group": "Settings",
+  "where": "src/settings.js:106",
+  "context": "settings motion switch",
+  "text": "motion: full"
+ },
+ {
+  "id": "set.motion.less",
+  "group": "Settings",
+  "where": "src/settings.js:106",
+  "context": "settings motion switch",
+  "text": "motion: less"
+ },
+ {
+  "id": "set.touch.on",
+  "group": "Settings",
+  "where": "src/settings.js:121",
+  "context": "settings touch switch (play only)",
+  "text": "touch: on"
+ },
+ {
+  "id": "set.touch.off",
+  "group": "Settings",
+  "where": "src/settings.js:121",
+  "context": "settings touch switch (play only)",
+  "text": "touch: off"
+ },
+ {
+  "id": "set.dark.on",
+  "group": "Settings",
+  "where": "src/settings.js:136",
+  "context": "settings dark switch",
+  "text": "dark: on"
+ },
+ {
+  "id": "set.dark.off",
+  "group": "Settings",
+  "where": "src/settings.js:136",
+  "context": "settings dark switch",
+  "text": "dark: off"
+ },
+ {
+  "id": "set.fullscreen.on",
+  "group": "Settings",
+  "where": "src/fullscreen.js:46",
+  "context": "settings fullscreen row",
+  "text": "fullscreen: on"
+ },
+ {
+  "id": "set.fullscreen.off",
+  "group": "Settings",
+  "where": "src/fullscreen.js:46",
+  "context": "settings fullscreen row",
+  "text": "fullscreen: off"
+ },
+ {
+  "id": "set.fullscreen.note",
+  "group": "Settings",
+  "where": "play.html:235",
+  "context": "settings note where fullscreen unavailable",
+  "text": "for the whole screen, add this page to the home screen"
+ },
+ {
+  "id": "set.sound.on",
+  "group": "Settings",
+  "where": "src/settings.js:265",
+  "context": "settings sound switch",
+  "text": "sound: on"
+ },
+ {
+  "id": "set.sound.off",
+  "group": "Settings",
+  "where": "src/settings.js:265",
+  "context": "settings sound switch",
+  "text": "sound: off"
+ },
+ {
+  "id": "set.volume.aria",
+  "group": "Settings",
+  "where": "play.html:239",
+  "context": "settings volume slider label",
+  "text": "volume"
+ },
+ {
+  "id": "set.boardname.placeholder",
+  "group": "Settings",
+  "where": "play.html:242",
+  "context": "settings name box placeholder",
+  "text": "name on the board"
+ },
+ {
+  "id": "set.controlsbtn",
+  "group": "Settings",
+  "where": "play.html:243",
+  "context": "settings button to controls page",
+  "text": "controls"
+ },
+ {
+  "id": "set.controls.word",
+  "group": "Settings",
+  "where": "play.html:245",
+  "context": "controls page heading",
+  "text": "controls"
+ },
+ {
+  "id": "set.controlsback",
+  "group": "Settings",
+  "where": "play.html:247",
+  "context": "controls page back",
+  "text": "back"
+ },
+ {
+  "id": "set.settingsback",
+  "group": "Settings",
+  "where": "play.html:250",
+  "context": "settings page back",
+  "text": "back"
+ },
+ {
+  "id": "ctl.leftclick.in",
+  "group": "Settings",
+  "where": "src/controls.js:6",
+  "context": "controls page input column",
+  "text": "left click"
+ },
+ {
+  "id": "ctl.leftclick.do",
+  "group": "Settings",
+  "where": "src/controls.js:6",
+  "context": "controls page action column",
+  "text": "interact"
+ },
+ {
+  "id": "ctl.rightclick.in",
+  "group": "Settings",
+  "where": "src/controls.js:7",
+  "context": "controls page input column",
+  "text": "right click"
+ },
+ {
+  "id": "ctl.rightclick.do",
+  "group": "Settings",
+  "where": "src/controls.js:7",
+  "context": "controls page action column",
+  "text": "focus workers"
+ },
+ {
+  "id": "ctl.rightleft.in",
+  "group": "Settings",
+  "where": "src/controls.js:8",
+  "context": "controls page input column",
+  "text": "right click + left click"
+ },
+ {
+  "id": "ctl.rightleft.do",
+  "group": "Settings",
+  "where": "src/controls.js:8",
+  "context": "controls page action column",
+  "text": "pick up workers"
+ },
+ {
+  "id": "ctl.middle.in",
+  "group": "Settings",
+  "where": "src/controls.js:9",
+  "context": "controls page input column",
+  "text": "middle click"
+ },
+ {
+  "id": "ctl.middle.do",
+  "group": "Settings",
+  "where": "src/controls.js:9",
+  "context": "controls page action column",
+  "text": "move camera"
+ },
+ {
+  "id": "ctl.wheel.in",
+  "group": "Settings",
+  "where": "src/controls.js:10",
+  "context": "controls page input column",
+  "text": "scroll wheel"
+ },
+ {
+  "id": "ctl.wheel.do",
+  "group": "Settings",
+  "where": "src/controls.js:10",
+  "context": "controls page action column",
+  "text": "move camera"
+ },
+ {
+  "id": "ctl.arrows.in",
+  "group": "Settings",
+  "where": "src/controls.js:11",
+  "context": "controls page input column",
+  "text": "← → / a d"
+ },
+ {
+  "id": "ctl.arrows.do",
+  "group": "Settings",
+  "where": "src/controls.js:11",
+  "context": "controls page action column",
+  "text": "move camera"
+ },
+ {
+  "id": "ctl.digits.in",
+  "group": "Settings",
+  "where": "src/controls.js:12",
+  "context": "controls page input column",
+  "text": "1 – 9"
+ },
+ {
+  "id": "ctl.digits.do",
+  "group": "Settings",
+  "where": "src/controls.js:12",
+  "context": "controls page action column",
+  "text": "jump to a place"
+ },
+ {
+  "id": "held.titlebtn",
+  "group": "Sheets",
+  "where": "play.html:253",
+  "context": "pause sheet button to landing page",
+  "text": "return to title"
+ },
+ {
+  "id": "held.quit",
+  "group": "Sheets",
+  "where": "play.html:257",
+  "context": "pause sheet button, desktop build only",
+  "text": "exit to desktop"
+ },
+ {
+  "id": "held.keys",
+  "group": "Sheets",
+  "where": "play.html:258",
+  "context": "pause sheet footer hint",
+  "text": "esc holds &middot; &larr; &rarr; look about &middot; hold space to skip a scene"
+ },
+ {
+  "id": "said.saved",
+  "group": "Sheets",
+  "where": "src/settings.js:155",
+  "context": "pause sheet reply, desktop export ok",
+  "text": "saved"
+ },
+ {
+  "id": "said.notsaved",
+  "group": "Sheets",
+  "where": "src/settings.js:155",
+  "context": "pause sheet reply, desktop export failed",
+  "text": "not saved"
+ },
+ {
+  "id": "said.fellback",
+  "group": "Sheets",
+  "where": "src/settings.js:161",
+  "context": "pause sheet reply, store fallback",
+  "text": "the last save would not load; this is the one before it"
+ },
+ {
+  "id": "said.broken",
+  "group": "Sheets",
+  "where": "src/settings.js:162",
+  "context": "pause sheet reply, unreadable save",
+  "text": "your last save could not be read. copy a save hands it over"
+ },
+ {
+  "id": "said.yielded",
+  "group": "Sheets",
+  "where": "src/settings.js:163",
+  "context": "pause sheet reply, yard open elsewhere",
+  "text": "this yard is open in another tab; that one is being saved"
+ },
+ {
+  "id": "said.newer",
+  "group": "Sheets",
+  "where": "src/settings.js:166",
+  "context": "pause sheet reply, save from newer build",
+  "text": "this save is from a newer build (${build})"
+ },
+ {
+  "id": "said.unsaved.blocked",
+  "group": "Sheets",
+  "where": "src/settings.js:176",
+  "context": "pause sheet reply, storage blocked",
+  "text": "not saving: your browser blocks storage inside this page. copy a save still works"
+ },
+ {
+  "id": "said.unsaved.full",
+  "group": "Sheets",
+  "where": "src/settings.js:177",
+  "context": "pause sheet reply, storage full",
+  "text": "not saving: this site's storage is full (${used} mb used, ${ours} kb of it ours). copy a save still works"
+ },
+ {
+  "id": "said.unsaved.refused",
+  "group": "Sheets",
+  "where": "src/settings.js:178",
+  "context": "pause sheet reply, storage refused",
+  "text": "not saving: storage refused the save (${name}). copy a save still works"
+ },
+ {
+  "id": "said.couldnotload",
+  "group": "Sheets",
+  "where": "src/settings.js:205",
+  "context": "pause sheet reply, import threw",
+  "text": "could not load: ${message}"
+ },
+ {
+  "id": "said.loaded",
+  "group": "Sheets",
+  "where": "src/settings.js:208",
+  "context": "sheet reply after loading a save",
+  "text": "loaded"
+ },
+ {
+  "id": "said.notasave",
+  "group": "Sheets",
+  "where": "src/settings.js:208",
+  "context": "sheet reply, pasted text invalid",
+  "text": "that is not a save"
+ },
+ {
+  "id": "said.copyout.none",
+  "group": "Sheets",
+  "where": "src/copyout.js:6",
+  "context": "sheet reply, copy with no save",
+  "text": "nothing saved yet"
+ },
+ {
+  "id": "said.copyout.copied",
+  "group": "Sheets",
+  "where": "src/copyout.js:9",
+  "context": "sheet reply after copy a save",
+  "text": "copied ${n}kb"
+ },
+ {
+  "id": "said.copyout.window",
+  "group": "Sheets",
+  "where": "src/copyout.js:12",
+  "context": "sheet reply when clipboard unavailable",
+  "text": "in window.__save"
+ },
+ {
+  "id": "slots.since.now",
+  "group": "Sheets",
+  "where": "src/slots.js:16",
+  "context": "save row age",
+  "text": "just now"
+ },
+ {
+  "id": "slots.since.min",
+  "group": "Sheets",
+  "where": "src/slots.js:17",
+  "context": "save row age",
+  "text": "${m} min ago"
+ },
+ {
+  "id": "slots.since.h",
+  "group": "Sheets",
+  "where": "src/slots.js:18",
+  "context": "save row age",
+  "text": "${h} h ago"
+ },
+ {
+  "id": "slots.since.day",
+  "group": "Sheets",
+  "where": "src/slots.js:20",
+  "context": "save row age",
+  "text": "a day ago"
+ },
+ {
+  "id": "slots.since.days",
+  "group": "Sheets",
+  "where": "src/slots.js:20",
+  "context": "save row age",
+  "text": "${d} days ago"
+ },
+ {
+  "id": "slots.row.rock",
+  "group": "Sheets",
+  "where": "src/slots.js:39",
+  "context": "save row item",
+  "text": "rock ${n}"
+ },
+ {
+  "id": "slots.row.crew",
+  "group": "Sheets",
+  "where": "src/slots.js:39",
+  "context": "save row item",
+  "text": "${n} crew"
+ },
+ {
+  "id": "slots.row.playing",
+  "group": "Sheets",
+  "where": "src/slots.js:39",
+  "context": "save row item for open slot in play",
+  "text": "playing"
+ },
+ {
+  "id": "slots.row.empty",
+  "group": "Sheets",
+  "where": "src/slots.js:42",
+  "context": "save row, no yard",
+  "text": "empty"
+ },
+ {
+  "id": "slots.row.unreadable",
+  "group": "Sheets",
+  "where": "src/slots.js:44",
+  "context": "save row, broken blob",
+  "text": "unreadable"
+ },
+ {
+  "id": "slots.arm",
+  "group": "Sheets",
+  "where": "src/slots.js:144",
+  "context": "empty save row after first press",
+  "text": "start a new yard?"
+ },
+ {
+  "id": "slots.said.new",
+  "group": "Sheets",
+  "where": "src/slots.js:149",
+  "context": "sheet reply after opening empty slot",
+  "text": "a new yard"
+ },
+ {
+  "id": "slots.said.loaded",
+  "group": "Sheets",
+  "where": "src/slots.js:149",
+  "context": "sheet reply after opening a slot",
+  "text": "loaded"
+ },
+ {
+  "id": "slots.del.aria",
+  "group": "Sheets",
+  "where": "src/slots.js:160",
+  "context": "save row delete cross label",
+  "text": "delete"
+ },
+ {
+  "id": "slots.confirm.yes",
+  "group": "Sheets",
+  "where": "src/slots.js:173",
+  "context": "save row delete confirm",
+  "text": "delete"
+ },
+ {
+  "id": "slots.confirm.no",
+  "group": "Sheets",
+  "where": "src/slots.js:174",
+  "context": "save row delete cancel",
+  "text": "back"
+ },
+ {
+  "id": "cloud.head",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:154",
+  "context": "saves page cloud section heading",
+  "text": "cloud saves"
+ },
+ {
+  "id": "cloud.line.off",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:28",
+  "context": "cloud status line (foot bar/section)",
+  "text": "cloud · off"
+ },
+ {
+  "id": "cloud.line.out",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:29",
+  "context": "cloud status line",
+  "text": "cloud · signed out"
+ },
+ {
+  "id": "cloud.line.refused",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:30",
+  "context": "cloud status line",
+  "text": "cloud · a save was refused"
+ },
+ {
+  "id": "cloud.line.offline",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:31",
+  "context": "cloud status line",
+  "text": "cloud · not saved: offline"
+ },
+ {
+  "id": "cloud.line.behind",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:32",
+  "context": "cloud status line",
+  "text": "cloud · newer on another device"
+ },
+ {
+  "id": "cloud.line.newer",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:33",
+  "context": "cloud status line",
+  "text": "cloud · update to take the newer save"
+ },
+ {
+  "id": "cloud.line.big",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:34",
+  "context": "cloud status line",
+  "text": "cloud · too big for the cloud"
+ },
+ {
+  "id": "cloud.line.full",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:35",
+  "context": "cloud status line",
+  "text": "cloud · the cloud is full"
+ },
+ {
+  "id": "cloud.line.paused",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:36",
+  "context": "cloud status line",
+  "text": "cloud · paused"
+ },
+ {
+  "id": "cloud.line.conflict",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:37",
+  "context": "cloud status line",
+  "text": "cloud · choose a yard"
+ },
+ {
+  "id": "cloud.line.saved",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:40",
+  "context": "cloud status line, synced",
+  "text": "cloud · saved ${since}"
+ },
+ {
+  "id": "cloud.line.on",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:40",
+  "context": "cloud status line, on, no time",
+  "text": "cloud · on"
+ },
+ {
+  "id": "cloud.foot.choose",
+  "group": "Title page",
+  "where": "src/cloudsheet.js:109",
+  "context": "title foot bar conflict link",
+  "text": "choose a yard"
+ },
+ {
+  "id": "cloud.btn.linkcode",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:167",
+  "context": "cloud section button",
+  "text": "enter a link code"
+ },
+ {
+  "id": "cloud.btn.recovery",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:168",
+  "context": "cloud section button",
+  "text": "use a recovery code"
+ },
+ {
+  "id": "cloud.btn.stop",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:169",
+  "context": "cloud section button",
+  "text": "stop cloud saves"
+ },
+ {
+  "id": "cloud.said.off",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:169",
+  "context": "cloud section reply after stop",
+  "text": "the cloud is off on this device"
+ },
+ {
+  "id": "cloud.btn.enable",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:173",
+  "context": "cloud section button",
+  "text": "enable cloud syncing"
+ },
+ {
+  "id": "cloud.why.noanswer",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:177",
+  "context": "cloud section reply on failure (also cloud.js:768)",
+  "text": "the cloud did not answer"
+ },
+ {
+  "id": "cloud.why.resting",
+  "group": "Sheets",
+  "where": "src/cloud.js:766",
+  "context": "cloud section reply, 503",
+  "text": "the cloud is resting; try again later"
+ },
+ {
+  "id": "cloud.why.forbidden",
+  "group": "Sheets",
+  "where": "src/cloud.js:767",
+  "context": "cloud section reply, 403",
+  "text": "the cloud does not know this page"
+ },
+ {
+  "id": "cloud.btn.copy",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:188",
+  "context": "cloud section, copy recovery code",
+  "text": "copy"
+ },
+ {
+  "id": "cloud.writedown",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:190",
+  "context": "cloud section under recovery code",
+  "text": "write this down: it brings your yards back on a new device"
+ },
+ {
+  "id": "cloud.btn.take",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:204",
+  "context": "cloud section, another device ahead",
+  "text": "take it"
+ },
+ {
+  "id": "cloud.said.taken",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:204",
+  "context": "cloud section reply",
+  "text": "taken"
+ },
+ {
+  "id": "cloud.btn.keep",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:205",
+  "context": "cloud section, another device ahead",
+  "text": "keep this one"
+ },
+ {
+  "id": "cloud.said.kept",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:205",
+  "context": "cloud section reply (also :316)",
+  "text": "kept"
+ },
+ {
+  "id": "cloud.pair.enter",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:213",
+  "context": "cloud section above pairing code",
+  "text": "on the other device, enter"
+ },
+ {
+  "id": "cloud.pair.left",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:215",
+  "context": "cloud section pairing countdown",
+  "text": "${m:ss} left"
+ },
+ {
+  "id": "cloud.btn.done",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:216",
+  "context": "cloud section, hide pairing code",
+  "text": "done"
+ },
+ {
+  "id": "cloud.btn.link",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:219",
+  "context": "cloud section button",
+  "text": "link a device"
+ },
+ {
+  "id": "cloud.btn.hidecode",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:227",
+  "context": "cloud section toggle",
+  "text": "hide recovery code"
+ },
+ {
+  "id": "cloud.btn.showcode",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:227",
+  "context": "cloud section toggle",
+  "text": "show recovery code"
+ },
+ {
+  "id": "cloud.btn.newcode",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:233",
+  "context": "cloud section button",
+  "text": "new recovery code"
+ },
+ {
+  "id": "cloud.btn.newcode.armed",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:237",
+  "context": "cloud section button, first press",
+  "text": "sign out other devices?"
+ },
+ {
+  "id": "cloud.box.linkph",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:268",
+  "context": "link code box placeholder",
+  "text": "···-···"
+ },
+ {
+  "id": "cloud.box.recph",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:272",
+  "context": "recovery code box placeholder",
+  "text": "····-····-····"
+ },
+ {
+  "id": "cloud.box.aria.link",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:274",
+  "context": "link code box label",
+  "text": "link code"
+ },
+ {
+  "id": "cloud.box.aria.rec",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:274",
+  "context": "recovery code box label",
+  "text": "recovery code"
+ },
+ {
+  "id": "cloud.wrong",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:275",
+  "context": "cloud section reply, bad code",
+  "text": "that code didn't work"
+ },
+ {
+  "id": "cloud.said.linked",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:287",
+  "context": "cloud section reply after linking",
+  "text": "linked"
+ },
+ {
+  "id": "cloud.btn.dolink",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:295",
+  "context": "cloud code entry confirm",
+  "text": "link"
+ },
+ {
+  "id": "cloud.btn.nevermind",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:295",
+  "context": "cloud code entry cancel",
+  "text": "never mind"
+ },
+ {
+  "id": "cloud.typing.link",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:296",
+  "context": "cloud code entry prompt",
+  "text": "the code on the other device"
+ },
+ {
+  "id": "cloud.typing.rec",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:296",
+  "context": "cloud code entry prompt",
+  "text": "your recovery code"
+ },
+ {
+  "id": "cloud.clash.here",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:324",
+  "context": "conflict row, keep this device",
+  "text": "this device · ${n} · ${here}"
+ },
+ {
+  "id": "cloud.clash.cloud",
+  "group": "Sheets",
+  "where": "src/cloudsheet.js:325",
+  "context": "conflict row, keep cloud copy",
+  "text": "cloud · ${n} · ${cloud}"
+ },
+ {
+  "id": "note.cloud.name",
+  "group": "Notices",
+  "where": "src/settings.js:308",
+  "context": "toast-shaped card, another device ahead",
+  "text": "newer on another device"
+ },
+ {
+  "id": "note.cloud.note",
+  "group": "Notices",
+  "where": "src/settings.js:309",
+  "context": "toast-shaped card, another device ahead",
+  "text": "saves has the answer"
+ },
+ {
+  "id": "modal.books",
+  "group": "Sheets",
+  "where": "src/shop.js:846",
+  "context": "window title opened off the books",
+  "text": "the books"
+ },
+ {
+  "id": "modal.crew",
+  "group": "Sheets",
+  "where": "src/shop.js:879",
+  "context": "window title, crew list",
+  "text": "who lives here"
+ },
+ {
+  "id": "modal.close.aria",
+  "group": "Sheets",
+  "where": "play.html:148",
+  "context": "window close button label",
+  "text": "close"
+ },
+ {
+  "id": "title.gamename",
+  "group": "Title page",
+  "where": "index.html:43",
+  "context": "landing page game name",
+  "text": "pebble<br>pit"
+ },
+ {
+  "id": "title.line",
+  "group": "Title page",
+  "where": "index.html:44",
+  "context": "landing page tagline",
+  "text": "a rock. a hole. a few people between them."
+ },
+ {
+  "id": "title.play",
+  "group": "Title page",
+  "where": "index.html:47",
+  "context": "landing page main button",
+  "text": "play"
+ },
+ {
+  "id": "title.playlabel.new",
+  "group": "Title page",
+  "where": "src/slots.js:59",
+  "context": "under play, empty open slot",
+  "text": "a new yard"
+ },
+ {
+  "id": "title.playlabel.row",
+  "group": "Title page",
+  "where": "src/slots.js:60",
+  "context": "under play, open slot summary",
+  "text": "rock ${n} · ${n} crew · ${since}"
+ },
+ {
+  "id": "title.slotsbtn",
+  "group": "Title page",
+  "where": "index.html:49",
+  "context": "landing page button (relabelled saves · n of 3)",
+  "text": "saves"
+ },
+ {
+  "id": "title.recordbtn",
+  "group": "Title page",
+  "where": "index.html:50",
+  "context": "landing page button (relabelled, src/record.js:33)",
+  "text": "achievements"
+ },
+ {
+  "id": "title.settingsbtn",
+  "group": "Title page",
+  "where": "index.html:51",
+  "context": "landing page button",
+  "text": "settings"
+ },
+ {
+  "id": "title.quit",
+  "group": "Title page",
+  "where": "index.html:53",
+  "context": "landing page, desktop build only",
+  "text": "exit to desktop"
+ },
+ {
+  "id": "title.slots.word",
+  "group": "Title page",
+  "where": "index.html:58",
+  "context": "landing saves page heading",
+  "text": "saves"
+ },
+ {
+  "id": "title.savecopy",
+  "group": "Title page",
+  "where": "index.html:62",
+  "context": "landing saves page button",
+  "text": "copy a save"
+ },
+ {
+  "id": "title.loadsave",
+  "group": "Title page",
+  "where": "index.html:63",
+  "context": "landing saves page button",
+  "text": "load a save"
+ },
+ {
+  "id": "title.loadit",
+  "group": "Title page",
+  "where": "index.html:67",
+  "context": "landing paste confirm",
+  "text": "load it"
+ },
+ {
+  "id": "title.nevermind",
+  "group": "Title page",
+  "where": "index.html:68",
+  "context": "landing paste cancel",
+  "text": "never mind"
+ },
+ {
+  "id": "title.slotsback",
+  "group": "Title page",
+  "where": "index.html:74",
+  "context": "landing saves page back",
+  "text": "back"
+ },
+ {
+  "id": "title.record.word",
+  "group": "Title page",
+  "where": "index.html:77",
+  "context": "landing achievements page heading",
+  "text": "achievements"
+ },
+ {
+  "id": "title.recordback",
+  "group": "Title page",
+  "where": "index.html:79",
+  "context": "landing achievements page back",
+  "text": "back"
+ },
+ {
+  "id": "title.settings.word",
+  "group": "Title page",
+  "where": "index.html:82",
+  "context": "landing settings page heading",
+  "text": "settings"
+ },
+ {
+  "id": "title.motion",
+  "group": "Title page",
+  "where": "src/title.js:100",
+  "context": "landing settings motion switch",
+  "text": "motion: full / motion: less"
+ },
+ {
+  "id": "title.dark",
+  "group": "Title page",
+  "where": "src/title.js:101",
+  "context": "landing settings dark switch",
+  "text": "dark: on / dark: off"
+ },
+ {
+  "id": "title.sound",
+  "group": "Title page",
+  "where": "src/title.js:102",
+  "context": "landing settings sound switch",
+  "text": "sound: off / sound: on"
+ },
+ {
+  "id": "title.controlsbtn",
+  "group": "Title page",
+  "where": "index.html:87",
+  "context": "landing settings to controls",
+  "text": "controls"
+ },
+ {
+  "id": "title.settingsback",
+  "group": "Title page",
+  "where": "index.html:88",
+  "context": "landing settings back",
+  "text": "back"
+ },
+ {
+  "id": "title.controls.word",
+  "group": "Title page",
+  "where": "index.html:90",
+  "context": "landing controls page heading",
+  "text": "controls"
+ },
+ {
+  "id": "title.controlsback",
+  "group": "Title page",
+  "where": "index.html:92",
+  "context": "landing controls back",
+  "text": "back"
+ },
+ {
+  "id": "title.conflict.word",
+  "group": "Title page",
+  "where": "index.html:96",
+  "context": "landing cloud conflict page heading",
+  "text": "choose a yard"
+ },
+ {
+  "id": "title.conflictback",
+  "group": "Title page",
+  "where": "index.html:98",
+  "context": "landing cloud conflict back",
+  "text": "back"
+ },
+ {
+  "id": "title.board.word",
+  "group": "Title page",
+  "where": "index.html:39",
+  "context": "landing times board heading",
+  "text": "times"
+ },
+ {
+  "id": "title.link.itch",
+  "group": "Title page",
+  "where": "index.html:110",
+  "context": "landing foot link",
+  "text": "itch"
+ },
+ {
+  "id": "title.link.github",
+  "group": "Title page",
+  "where": "index.html:110",
+  "context": "landing foot link",
+  "text": "github"
+ },
+ {
+  "id": "title.said.notasave",
+  "group": "Title page",
+  "where": "src/title.js:137",
+  "context": "landing reply, bad paste",
+  "text": "that is not a save"
+ },
+ {
+  "id": "title.said.loaded",
+  "group": "Title page",
+  "where": "src/title.js:143",
+  "context": "landing reply after load",
+  "text": "loaded"
+ },
+ {
+  "id": "title.said.erased",
+  "group": "Title page",
+  "where": "src/title.js:151",
+  "context": "landing reply after deleting open slot",
+  "text": "erased"
+ },
+ {
+  "id": "title.doctitle",
+  "group": "Title page",
+  "where": "index.html:11",
+  "context": "browser tab title, landing",
+  "text": "Pebble Pit"
+ },
+ {
+  "id": "play.doctitle",
+  "group": "Other",
+  "where": "play.html:14",
+  "context": "browser tab title, game page",
+  "text": "Boulder Clicker"
+ },
+ {
+  "id": "obj.next",
+  "group": "Objectives",
+  "where": "play.html:344",
+  "context": "label before story line",
+  "text": "next"
+ },
+ {
+  "id": "obj.rock",
+  "group": "Objectives",
+  "where": "src/objectives.js:23",
+  "context": "story line, first step",
+  "text": "dig the boulder to save your sqwife!"
+ },
+ {
+  "id": "obj.rock.q.chip",
+  "group": "Objectives",
+  "where": "src/objectives.js:26",
+  "context": "intro quest item",
+  "text": "mine the boulder"
+ },
+ {
+  "id": "obj.rock.q.pickup",
+  "group": "Objectives",
+  "where": "src/objectives.js:27",
+  "context": "intro quest item",
+  "text": "grab a pebble"
+ },
+ {
+  "id": "obj.rock.q.toss",
+  "group": "Objectives",
+  "where": "src/objectives.js:28",
+  "context": "intro quest item",
+  "text": "toss the pebble into the pit"
+ },
+ {
+  "id": "obj.falling",
+  "group": "Objectives",
+  "where": "src/objectives.js:30",
+  "context": "story line after first fall",
+  "text": "try to dig the boulder again!"
+ },
+ {
+  "id": "obj.props",
+  "group": "Objectives",
+  "where": "src/objectives.js:31",
+  "context": "story line, wooden roof barrier",
+  "text": "maybe building a wooden roof will stop the next boulder?"
+ },
+ {
+  "id": "obj.net",
+  "group": "Objectives",
+  "where": "src/objectives.js:37",
+  "context": "story line, net barrier",
+  "text": "nope, try catching the boulder and slowing it down"
+ },
+ {
+  "id": "obj.arch",
+  "group": "Objectives",
+  "where": "src/objectives.js:39",
+  "context": "story line, arch barrier",
+  "text": "lets try building an arch from the mined ore and stone. surely that's sturdy enough."
+ },
+ {
+  "id": "obj.dome",
+  "group": "Objectives",
+  "where": "src/objectives.js:41",
+  "context": "story line, wizards' barrier",
+  "text": "out of options, lets see if the wizards can help."
+ },
+ {
+  "id": "obj.rescue",
+  "group": "Objectives",
+  "where": "src/objectives.js:42",
+  "context": "story line before rescue",
+  "text": "save your sqwife"
+ },
+ {
+  "id": "obj.drown",
+  "group": "Objectives",
+  "where": "src/objectives.js:45",
+  "context": "story line, second half",
+  "text": "drown the pit"
+ },
+ {
+  "id": "obj.tower",
+  "group": "Objectives",
+  "where": "src/objectives.js:47",
+  "context": "story line after snatch",
+  "text": "build the wizards' tower"
+ },
+ {
+  "id": "obj.talk",
+  "group": "Objectives",
+  "where": "src/objectives.js:50",
+  "context": "story line after snatch",
+  "text": "talk to the wizards about what just happened"
+ },
+ {
+  "id": "obj.portal",
+  "group": "Objectives",
+  "where": "src/objectives.js:52",
+  "context": "story line, deep half",
+  "text": "conjure a portal to the abyss, what's down there?"
+ },
+ {
+  "id": "obj.free",
+  "group": "Objectives",
+  "where": "src/objectives.js:53",
+  "context": "story line, final step",
+  "text": "free your sqhusband from the serpent's belly"
+ },
+ {
+  "id": "obj.barrier.cancel",
+  "group": "Objectives",
+  "where": "src/objectives.js:142",
+  "context": "objective card cancel while building",
+  "text": "cancel ×${n}"
+ },
+ {
+  "id": "ach.firstgrain.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:22",
+  "context": "toast and achievements card name",
+  "text": "makin' money"
+ },
+ {
+  "id": "ach.firstgrain.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:22",
+  "context": "toast and achievements card note",
+  "text": "throw a pebble into the pit"
+ },
+ {
+  "id": "ach.firstrock.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:23",
+  "context": "achievement name",
+  "text": "better keep digging"
+ },
+ {
+  "id": "ach.firstrock.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:23",
+  "context": "achievement note",
+  "text": "clear the first rock"
+ },
+ {
+  "id": "ach.gotout.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:24",
+  "context": "achievement name",
+  "text": "you saved your sqwife"
+ },
+ {
+  "id": "ach.gotout.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:24",
+  "context": "achievement note",
+  "text": "no more rocks, you did it."
+ },
+ {
+  "id": "ach.firsthire.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:25",
+  "context": "achievement name",
+  "text": "you've constructed additional pylons"
+ },
+ {
+  "id": "ach.firsthire.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:25",
+  "context": "achievement note",
+  "text": "build another house"
+ },
+ {
+  "id": "ach.firstshard.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:26",
+  "context": "achievement name",
+  "text": "the first ore"
+ },
+ {
+  "id": "ach.firstshard.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:26",
+  "context": "achievement note",
+  "text": "bring ore up out of the quarry"
+ },
+ {
+  "id": "ach.firstspore.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:27",
+  "context": "achievement name",
+  "text": "cultivation"
+ },
+ {
+  "id": "ach.firstspore.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:27",
+  "context": "achievement note",
+  "text": "grow your first crop"
+ },
+ {
+  "id": "ach.firstspark.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:28",
+  "context": "achievement name",
+  "text": "magic in the air"
+ },
+ {
+  "id": "ach.firstspark.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:28",
+  "context": "achievement note",
+  "text": "earn your first spark"
+ },
+ {
+  "id": "ach.holefull.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:29",
+  "context": "achievement name",
+  "text": "the pit is full"
+ },
+ {
+  "id": "ach.holefull.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:29",
+  "context": "achievement note",
+  "text": "fill the pit to the brim"
+ },
+ {
+  "id": "ach.rifttorn.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:30",
+  "context": "achievement name",
+  "text": "the rift torn, storage is solved"
+ },
+ {
+  "id": "ach.rifttorn.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:30",
+  "context": "achievement note",
+  "text": "fill the pit causing an inter-dimensional rift"
+ },
+ {
+  "id": "ach.drowned.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:31",
+  "context": "achievement name",
+  "text": "the rift has gotten bigger"
+ },
+ {
+  "id": "ach.drowned.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:31",
+  "context": "achievement note",
+  "text": "a whole ocean of inter-dimensional storage."
+ },
+ {
+  "id": "ach.star.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:32",
+  "context": "achievement name",
+  "text": "conjure a star"
+ },
+ {
+  "id": "ach.star.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:32",
+  "context": "achievement note",
+  "text": "call a star down from the tower"
+ },
+ {
+  "id": "ach.firsthat.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:33",
+  "context": "achievement name",
+  "text": "you're a wizard squarey"
+ },
+ {
+  "id": "ach.firsthat.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:33",
+  "context": "achievement note",
+  "text": "finish a wizard hat at the tower"
+ },
+ {
+  "id": "ach.firstbrew.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:34",
+  "context": "achievement name",
+  "text": "hello, potion seller"
+ },
+ {
+  "id": "ach.firstbrew.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:34",
+  "context": "achievement note",
+  "text": "brew a batch at the apothecary"
+ },
+ {
+  "id": "ach.firsttrade.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:35",
+  "context": "achievement name",
+  "text": "first hat"
+ },
+ {
+  "id": "ach.firsttrade.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:35",
+  "context": "achievement note",
+  "text": "buy a station its first hat"
+ },
+ {
+  "id": "ach.alltrades.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:36",
+  "context": "achievement name",
+  "text": "educating the masses"
+ },
+ {
+  "id": "ach.alltrades.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:36",
+  "context": "achievement note",
+  "text": "stock every station with its hat"
+ },
+ {
+  "id": "ach.allbuilt.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:37",
+  "context": "achievement name",
+  "text": "building complete"
+ },
+ {
+  "id": "ach.allbuilt.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:37",
+  "context": "achievement note",
+  "text": "you built everything"
+ },
+ {
+  "id": "ach.rock0.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:41",
+  "context": "achievement name (ladder)",
+  "text": "10 rocks"
+ },
+ {
+  "id": "ach.rock0.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:42",
+  "context": "achievement note (ladder)",
+  "text": "clear 10 boulders"
+ },
+ {
+  "id": "ach.rock1.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:41",
+  "context": "achievement name (ladder)",
+  "text": "25 rocks"
+ },
+ {
+  "id": "ach.rock1.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:42",
+  "context": "achievement note (ladder)",
+  "text": "clear 25 boulders"
+ },
+ {
+  "id": "ach.rock2.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:41",
+  "context": "achievement name (ladder)",
+  "text": "50 rocks"
+ },
+ {
+  "id": "ach.rock2.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:42",
+  "context": "achievement note (ladder)",
+  "text": "clear 50 boulders"
+ },
+ {
+  "id": "ach.rock3.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:41",
+  "context": "achievement name (ladder)",
+  "text": "100 rocks"
+ },
+ {
+  "id": "ach.rock3.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:43",
+  "context": "achievement note (ladder)",
+  "text": "clear 100 boulders, that's a lot of rocks"
+ },
+ {
+  "id": "ach.pebble0.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:45",
+  "context": "achievement name (ladder)",
+  "text": "10k pebbles"
+ },
+ {
+  "id": "ach.pebble0.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:46",
+  "context": "achievement note (ladder)",
+  "text": "bank 10k pebbles"
+ },
+ {
+  "id": "ach.pebble1.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:45",
+  "context": "achievement name (ladder)",
+  "text": "100k pebbles"
+ },
+ {
+  "id": "ach.pebble1.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:46",
+  "context": "achievement note (ladder)",
+  "text": "bank 100k pebbles"
+ },
+ {
+  "id": "ach.pebble2.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:45",
+  "context": "achievement name (ladder)",
+  "text": "1m pebbles"
+ },
+ {
+  "id": "ach.pebble2.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:46",
+  "context": "achievement note (ladder)",
+  "text": "bank 1m pebbles"
+ },
+ {
+  "id": "ach.pebble3.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:45",
+  "context": "achievement name (ladder)",
+  "text": "10m pebbles"
+ },
+ {
+  "id": "ach.pebble3.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:46",
+  "context": "achievement note (ladder)",
+  "text": "bank 10m pebbles"
+ },
+ {
+  "id": "ach.pebble4.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:45",
+  "context": "achievement name (ladder)",
+  "text": "100m pebbles"
+ },
+ {
+  "id": "ach.pebble4.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:46",
+  "context": "achievement note (ladder)",
+  "text": "bank 100m pebbles"
+ },
+ {
+  "id": "ach.crew0.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:48",
+  "context": "achievement name (ladder)",
+  "text": "5 squares"
+ },
+ {
+  "id": "ach.crew0.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:49",
+  "context": "achievement note (ladder)",
+  "text": "hire a crew of 5"
+ },
+ {
+  "id": "ach.crew1.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:48",
+  "context": "achievement name (ladder)",
+  "text": "10 squares"
+ },
+ {
+  "id": "ach.crew1.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:49",
+  "context": "achievement note (ladder)",
+  "text": "hire a crew of 10"
+ },
+ {
+  "id": "ach.crew2.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:48",
+  "context": "achievement name (ladder)",
+  "text": "25 squares"
+ },
+ {
+  "id": "ach.crew2.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:49",
+  "context": "achievement note (ladder)",
+  "text": "hire a crew of 25"
+ },
+ {
+  "id": "ach.crew3.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:48",
+  "context": "achievement name (ladder)",
+  "text": "50 squares"
+ },
+ {
+  "id": "ach.crew3.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:49",
+  "context": "achievement note (ladder)",
+  "text": "hire a crew of 50"
+ },
+ {
+  "id": "ach.ore0.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:51",
+  "context": "achievement name (ladder)",
+  "text": "1k ore out of the cut"
+ },
+ {
+  "id": "ach.ore0.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:52",
+  "context": "achievement note (ladder)",
+  "text": "dig 1k ore out of the quarry"
+ },
+ {
+  "id": "ach.ore1.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:51",
+  "context": "achievement name (ladder)",
+  "text": "10k ore"
+ },
+ {
+  "id": "ach.ore1.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:52",
+  "context": "achievement note (ladder)",
+  "text": "dig 10k ore out of the quarry"
+ },
+ {
+  "id": "ach.rift1e6.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:53",
+  "context": "achievement name",
+  "text": "1m through the rift"
+ },
+ {
+  "id": "ach.rift1e6.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:53",
+  "context": "achievement note",
+  "text": "send 1m pebbles through the rift"
+ },
+ {
+  "id": "ach.brew100.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:54",
+  "context": "achievement name",
+  "text": "100 batches"
+ },
+ {
+  "id": "ach.brew100.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:54",
+  "context": "achievement note",
+  "text": "brew 100 batches"
+ },
+ {
+  "id": "ach.lived1h.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:55",
+  "context": "achievement name",
+  "text": "an hour on one clock"
+ },
+ {
+  "id": "ach.lived1h.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:55",
+  "context": "achievement note",
+  "text": "keep one body on the payroll for an hour"
+ },
+ {
+  "id": "ach.nobodyhired.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:58",
+  "context": "achievement name",
+  "text": "nobody hired"
+ },
+ {
+  "id": "ach.nobodyhired.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:58",
+  "context": "achievement note",
+  "text": "clear a whole boulder with nobody on the payroll"
+ },
+ {
+  "id": "ach.ownhand.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:59",
+  "context": "achievement name",
+  "text": "your own hand alone"
+ },
+ {
+  "id": "ach.ownhand.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:59",
+  "context": "achievement note",
+  "text": "clear a boulder without a single worker touching it"
+ },
+ {
+  "id": "ach.nevertouched.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:60",
+  "context": "achievement name",
+  "text": "never touched it"
+ },
+ {
+  "id": "ach.nevertouched.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:60",
+  "context": "achievement note",
+  "text": "clear a boulder without swinging at it once yourself"
+ },
+ {
+  "id": "ach.underminute.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:61",
+  "context": "achievement name",
+  "text": "a rock off in under a minute"
+ },
+ {
+  "id": "ach.underminute.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:61",
+  "context": "achievement note",
+  "text": "clear a boulder in under a minute"
+ },
+ {
+  "id": "ach.everyjob.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:62",
+  "context": "achievement name",
+  "text": "every job staffed at once"
+ },
+ {
+  "id": "ach.everyjob.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:62",
+  "context": "achievement note",
+  "text": "put at least one body on every job at once"
+ },
+ {
+  "id": "ach.tablebeaten.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:63",
+  "context": "achievement name",
+  "text": "we're so back"
+ },
+ {
+  "id": "ach.tablebeaten.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:63",
+  "context": "achievement note",
+  "text": "come out 50k up on a single hand at the casino"
+ },
+ {
+  "id": "ach.tableruin.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:64",
+  "context": "achievement name",
+  "text": "time to get a loan"
+ },
+ {
+  "id": "ach.tableruin.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:64",
+  "context": "achievement note",
+  "text": "come out 50k down on a single hand at the casino"
+ },
+ {
+  "id": "ach.bird.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:67",
+  "context": "achievement name",
+  "text": "get off my land"
+ },
+ {
+  "id": "ach.bird.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:67",
+  "context": "achievement note",
+  "text": "startle a bird"
+ },
+ {
+  "id": "ach.wholelot.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:68",
+  "context": "achievement name",
+  "text": "not one of you"
+ },
+ {
+  "id": "ach.wholelot.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:68",
+  "context": "achievement note",
+  "text": "startle every bird in one lot"
+ },
+ {
+  "id": "ach.catchall.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:69",
+  "context": "achievement name",
+  "text": "juggler"
+ },
+ {
+  "id": "ach.catchall.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:69",
+  "context": "achievement note",
+  "text": "throw a full hand of dust, at its biggest, and catch every grain"
+ },
+ {
+  "id": "ach.lifted.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:70",
+  "context": "achievement name",
+  "text": "come here you"
+ },
+ {
+  "id": "ach.lifted.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:70",
+  "context": "achievement note",
+  "text": "pick a worker up"
+ },
+ {
+  "id": "ach.shookload.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:71",
+  "context": "achievement name",
+  "text": "turn out your pockets"
+ },
+ {
+  "id": "ach.shookload.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:71",
+  "context": "achievement note",
+  "text": "shake a full load out of a worker"
+ },
+ {
+  "id": "ach.hatoff.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:72",
+  "context": "achievement name",
+  "text": "hats off"
+ },
+ {
+  "id": "ach.hatoff.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:72",
+  "context": "achievement note",
+  "text": "shake the hat off a worker"
+ },
+ {
+  "id": "ach.dizzy.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:73",
+  "context": "achievement name",
+  "text": "shaken baby syndrome"
+ },
+ {
+  "id": "ach.dizzy.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:73",
+  "context": "achievement note",
+  "text": "shake a worker dizzy"
+ },
+ {
+  "id": "ach.muckrain.name",
+  "group": "Achievements",
+  "where": "src/catalog.js:74",
+  "context": "achievement name",
+  "text": "it never rains but it pours"
+ },
+ {
+  "id": "ach.muckrain.note",
+  "group": "Achievements",
+  "where": "src/catalog.js:74",
+  "context": "achievement note",
+  "text": "stand through a muck rain"
+ },
+ {
+  "id": "serp.lash.calm",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:376",
+  "context": "serpent bar tile hover, mechanic calm",
+  "text": "Lash: stuns melee attackers"
+ },
+ {
+  "id": "serp.lash.coming",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:376",
+  "context": "serpent bar tile hover, warned",
+  "text": "Lash coming"
+ },
+ {
+  "id": "serp.lash.on",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:376",
+  "context": "serpent bar tile hover, active",
+  "text": "Lash: stuns melee attackers"
+ },
+ {
+  "id": "serp.lash.stopped",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:376",
+  "context": "serpent bar tile hover, answered",
+  "text": "Lash: stopped"
+ },
+ {
+  "id": "serp.sink.coming",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:377",
+  "context": "serpent bar tile hover, warned",
+  "text": "Cloak coming"
+ },
+ {
+  "id": "serp.sink.on",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:377",
+  "context": "serpent bar tile hover, active",
+  "text": "Cloak: out of reach"
+ },
+ {
+  "id": "serp.orb.coming",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:378",
+  "context": "serpent bar tile hover, warned",
+  "text": "Constrict coming"
+ },
+ {
+  "id": "serp.orb.on",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:378",
+  "context": "serpent bar tile hover, active",
+  "text": "Constrict"
+ },
+ {
+  "id": "serp.orb.stopped",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:378",
+  "context": "serpent bar tile hover, answered",
+  "text": "Constrict"
+ },
+ {
+  "id": "serp.dazed",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:379",
+  "context": "dazed fighter tile hover",
+  "text": "Dazed: thrown off, seeing stars"
+ },
+ {
+  "id": "serp.constricted",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:380",
+  "context": "constricted fighter tile hover",
+  "text": "Constricted"
+ },
+ {
+  "id": "serp.barrier",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:381",
+  "context": "serpent bar resist tile hover",
+  "text": "Barrier: absorbs explosive damage"
+ },
+ {
+  "id": "serp.ward",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:382",
+  "context": "serpent bar resist tile hover",
+  "text": "Ward: magic damage cut in half"
+ },
+ {
+  "id": "serp.plates",
+  "group": "Serpent statuses",
+  "where": "src/config/deepdraw.js:383",
+  "context": "serpent bar resist tile hover",
+  "text": "Plates: phys damage cut in half"
+ },
+ {
+  "id": "serp.stun",
+  "group": "Serpent statuses",
+  "where": "src/deep/rails.js:74",
+  "context": "status tile hover (statusLine), also boards",
+  "text": "Stun: holds still, stops healing"
+ },
+ {
+  "id": "serp.bleed",
+  "group": "Serpent statuses",
+  "where": "src/deep/rails.js:75",
+  "context": "status tile hover; xN inserted when stacked",
+  "text": "Bleed: damage over time"
+ },
+ {
+  "id": "serp.haste",
+  "group": "Serpent statuses",
+  "where": "src/deep/rails.js:76",
+  "context": "status tile hover (HASTE=0.2)",
+  "text": "Haste: attacks 20% faster"
+ },
+ {
+  "id": "serp.held",
+  "group": "Serpent statuses",
+  "where": "src/deep/rails.js:77",
+  "context": "status tile hover",
+  "text": "Held: cannot heal"
+ },
+ {
+  "id": "serp.exposed",
+  "group": "Serpent statuses",
+  "where": "src/deep/rails.js:78",
+  "context": "status tile hover (EXPOSED_AMP 0.15/0.25)",
+  "text": "Exposed: takes 15%-25% more damage"
+ },
+ {
+  "id": "serp.inspired",
+  "group": "Serpent statuses",
+  "where": "src/deep/rails.js:79",
+  "context": "status tile hover",
+  "text": "Inspired: hits harder"
+ },
+ {
+  "id": "other.skip.desk",
+  "group": "Other",
+  "where": "play.html:131",
+  "context": "skip hint during cutscene, desktop (skiphint.js:27)",
+  "text": "hold space to skip"
+ },
+ {
+  "id": "other.skip.touch",
+  "group": "Other",
+  "where": "src/skiphint.js:27",
+  "context": "skip hint during cutscene, phone",
+  "text": "hold to skip"
+ },
+ {
+  "id": "other.messtag.muck",
+  "group": "Other",
+  "where": "play.html:137",
+  "context": "top-edge mess tag",
+  "text": "muck"
+ },
+ {
+  "id": "other.messtag.poop",
+  "group": "Other",
+  "where": "play.html:138",
+  "context": "top-edge mess tag",
+  "text": "poop"
+ },
+ {
+  "id": "other.raise",
+  "group": "Other",
+  "where": "play.html:334",
+  "context": "floating button over bench site",
+  "text": "build the bench"
+ },
+ {
+  "id": "other.hidedone.init",
+  "group": "Other",
+  "where": "play.html:108",
+  "context": "board footer toggle, initial HTML",
+  "text": "finished: shown"
+ },
+ {
+  "id": "other.hidedone.hide",
+  "group": "Other",
+  "where": "src/board.js:676",
+  "context": "board footer toggle",
+  "text": "hide finished"
+ },
+ {
+  "id": "other.hidedone.show",
+  "group": "Other",
+  "where": "src/board.js:676",
+  "context": "board footer toggle",
+  "text": "show finished"
+ },
+ {
+  "id": "other.queue.queued",
+  "group": "Other",
+  "where": "src/queue.js:44",
+  "context": "queue card, nobody working",
+  "text": "queued"
+ },
+ {
+  "id": "other.queue.site.yard",
+  "group": "Other",
+  "where": "src/queue.js:26",
+  "context": "queue card line hover",
+  "text": "the yard"
+ },
+ {
+  "id": "other.queue.site.deep",
+  "group": "Other",
+  "where": "src/queue.js:26",
+  "context": "queue card line hover",
+  "text": "the deep"
+ },
+ {
+  "id": "other.queue.site.sphere",
+  "group": "Other",
+  "where": "src/queue.js:26",
+  "context": "queue card line hover",
+  "text": "the sphere"
+ },
+ {
+  "id": "other.queue.site.lab",
+  "group": "Other",
+  "where": "src/queue.js:26",
+  "context": "queue card line hover",
+  "text": "the lab"
+ },
+ {
+  "id": "other.corner.show",
+  "group": "Other",
+  "where": "src/corner.js:27",
+  "context": "crew-fade corner button label",
+  "text": "show workers"
+ },
+ {
+  "id": "other.corner.fade",
+  "group": "Other",
+  "where": "src/corner.js:27",
+  "context": "crew-fade corner button label",
+  "text": "fade workers"
+ },
+ {
+  "id": "other.corner.hide",
+  "group": "Other",
+  "where": "src/corner.js:27",
+  "context": "crew-fade corner button label",
+  "text": "hide workers"
+ },
+ {
+  "id": "other.corner.up",
+  "group": "Other",
+  "where": "src/corner.js:65",
+  "context": "way corner button tip",
+  "text": "up to the yard"
+ },
+ {
+  "id": "other.corner.down",
+  "group": "Other",
+  "where": "src/corner.js:65",
+  "context": "way corner button tip",
+  "text": "down to the deep"
+ },
+ {
+  "id": "other.fullscreen.title.on",
+  "group": "Other",
+  "where": "src/fullscreen.js:45",
+  "context": "corner fullscreen button tooltip",
+  "text": "leave fullscreen"
+ },
+ {
+  "id": "other.fullscreen.title.off",
+  "group": "Other",
+  "where": "src/fullscreen.js:45",
+  "context": "corner fullscreen button tooltip",
+  "text": "fullscreen"
+ },
+ {
+  "id": "other.pause.aria",
+  "group": "Other",
+  "where": "play.html:367",
+  "context": "phone pause button label",
+  "text": "pause"
+ },
+ {
+  "id": "idx.grp.materials",
+  "group": "Other",
+  "where": "src/config/index.js:27",
+  "context": "index page group heading",
+  "text": "materials"
+ },
+ {
+  "id": "idx.grp.yard",
+  "group": "Other",
+  "where": "src/config/index.js:27",
+  "context": "index page group heading",
+  "text": "the yard"
+ },
+ {
+  "id": "idx.grp.sky",
+  "group": "Other",
+  "where": "src/config/index.js:27",
+  "context": "index page group heading",
+  "text": "the sky"
+ },
+ {
+  "id": "idx.grp.places",
+  "group": "Other",
+  "where": "src/config/index.js:27",
+  "context": "index page group heading",
+  "text": "places"
+ },
+ {
+  "id": "idx.grp.crew",
+  "group": "Other",
+  "where": "src/config/index.js:27",
+  "context": "index page group heading",
+  "text": "crew"
+ },
+ {
+  "id": "idx.grp.story",
+  "group": "Other",
+  "where": "src/config/index.js:27",
+  "context": "index page group heading",
+  "text": "the story"
+ },
+ {
+  "id": "idx.dust.name",
+  "group": "Other",
+  "where": "src/config/index.js:31",
+  "context": "index entry name",
+  "text": "pebbles"
+ },
+ {
+  "id": "idx.dust.text",
+  "group": "Other",
+  "where": "src/config/index.js:32",
+  "context": "index entry text",
+  "text": "chipped off the boulder by you, the diggers and the ram. toss them into the hole: what is in the hole pays for everything."
+ },
+ {
+  "id": "idx.shard.name",
+  "group": "Other",
+  "where": "src/config/index.js:33",
+  "context": "index entry name",
+  "text": "ore"
+ },
+ {
+  "id": "idx.shard.text",
+  "group": "Other",
+  "where": "src/config/index.js:34",
+  "context": "index entry text",
+  "text": "dug out of the quarry by the miners and carried up to the hole. pays for the arch and the later rungs of every ladder."
+ },
+ {
+  "id": "idx.spore.name",
+  "group": "Other",
+  "where": "src/config/index.js:35",
+  "context": "index entry name",
+  "text": "crops"
+ },
+ {
+  "id": "idx.spore.text",
+  "group": "Other",
+  "where": "src/config/index.js:36",
+  "context": "index entry text",
+  "text": "grown on the farm and harvested by the farmers. pays for the net, and the apothecary brews with them."
+ },
+ {
+  "id": "idx.spark.name",
+  "group": "Other",
+  "where": "src/config/index.js:37",
+  "context": "index entry name",
+  "text": "sparks"
+ },
+ {
+  "id": "idx.spark.text",
+  "group": "Other",
+  "where": "src/config/index.js:38",
+  "context": "index entry text",
+  "text": "shed by the star when the wizards bolt it apart. the machines' coin: every machine, every rung of their ladders, and the rift."
+ },
+ {
+  "id": "idx.scale.name",
+  "group": "Other",
+  "where": "src/config/index.js:39",
+  "context": "index entry name",
+  "text": "scales"
+ },
+ {
+  "id": "idx.scale.text",
+  "group": "Other",
+  "where": "src/config/index.js:40",
+  "context": "index entry text",
+  "text": "the deep's coin, crushed out of what the serpent drops."
+ },
+ {
+  "id": "idx.crit.name",
+  "group": "Other",
+  "where": "src/config/index.js:41",
+  "context": "index entry name",
+  "text": "crits"
+ },
+ {
+  "id": "idx.crit.text",
+  "group": "Other",
+  "where": "src/config/index.js:42",
+  "context": "index entry text",
+  "text": "now and then a hit lands hard, and a fountain of pebbles comes off instead of a chip. the bench sells the chance and the size."
+ },
+ {
+  "id": "idx.rock.name",
+  "group": "Other",
+  "where": "src/config/index.js:45",
+  "context": "index entry name",
+  "text": "the boulder"
+ },
+ {
+  "id": "idx.rock.text",
+  "group": "Other",
+  "where": "src/config/index.js:46",
+  "context": "index entry text",
+  "text": "falls out of the sky, one after another. chip it down for pebbles; each new one drives the last back into the ground."
+ },
+ {
+  "id": "idx.pit.name",
+  "group": "Other",
+  "where": "src/config/index.js:47",
+  "context": "index entry name",
+  "text": "the hole"
+ },
+ {
+  "id": "idx.pit.text",
+  "group": "Other",
+  "where": "src/config/index.js:48",
+  "context": "index entry text",
+  "text": "everything you bank lands here, and every bill is paid out of it. it fills up."
+ },
+ {
+  "id": "idx.rift.name",
+  "group": "Other",
+  "where": "src/config/index.js:49",
+  "context": "index entry name",
+  "text": "the rift"
+ },
+ {
+  "id": "idx.rift.text",
+  "group": "Other",
+  "where": "src/config/index.js:50",
+  "context": "index entry text",
+  "text": "torn open over the hole once it was full. it swallows what the hole cannot take, and grows as it eats."
+ },
+ {
+  "id": "idx.abyss.name",
+  "group": "Other",
+  "where": "src/config/index.js:51",
+  "context": "index entry name",
+  "text": "the abyss"
+ },
+ {
+  "id": "idx.abyss.text",
+  "group": "Other",
+  "where": "src/config/index.js:52",
+  "context": "index entry text",
+  "text": "the hole, drowned. bottomless: whatever goes in, there is always room."
+ },
+ {
+  "id": "idx.muck.name",
+  "group": "Other",
+  "where": "src/config/index.js:53",
+  "context": "index entry name",
+  "text": "muck"
+ },
+ {
+  "id": "idx.muck.text",
+  "group": "Other",
+  "where": "src/config/index.js:54",
+  "context": "index entry text",
+  "text": "dirty rain lands as muck. nobody touches it while the storm is still dropping it; after, the crew shovel it up. muck on a station slows the work there."
+ },
+ {
+  "id": "idx.poop.name",
+  "group": "Other",
+  "where": "src/config/index.js:55",
+  "context": "index entry name",
+  "text": "poop"
+ },
+ {
+  "id": "idx.poop.text",
+  "group": "Other",
+  "where": "src/config/index.js:56",
+  "context": "index entry text",
+  "text": "everybody has to go sometime. the janitors clean it up."
+ },
+ {
+  "id": "idx.bird.name",
+  "group": "Other",
+  "where": "src/config/index.js:57",
+  "context": "index entry name",
+  "text": "birds"
+ },
+ {
+  "id": "idx.bird.text",
+  "group": "Other",
+  "where": "src/config/index.js:58",
+  "context": "index entry text",
+  "text": "they cross the sky now and then. click one and it shakes a few pebbles loose."
+ },
+ {
+  "id": "idx.house.name",
+  "group": "Other",
+  "where": "src/config/index.js:59",
+  "context": "index entry name",
+  "text": "the house"
+ },
+ {
+  "id": "idx.house.text",
+  "group": "Other",
+  "where": "src/config/index.js:60",
+  "context": "index entry text",
+  "text": "a room for every body. buy another house to hire somebody; its board is the crew."
+ },
+ {
+  "id": "idx.pollution.name",
+  "group": "Other",
+  "where": "src/config/index.js:63",
+  "context": "index entry name",
+  "text": "pollution"
+ },
+ {
+  "id": "idx.pollution.text",
+  "group": "Other",
+  "where": "src/config/index.js:64",
+  "context": "index entry text",
+  "text": "every grain dug kicks a mote into the sky, and the machines put up soot. the fuller the sky, the dirtier the rain. only the air filter takes it down."
+ },
+ {
+  "id": "idx.cloud.name",
+  "group": "Other",
+  "where": "src/config/index.js:65",
+  "context": "index entry name",
+  "text": "clouds"
+ },
+ {
+  "id": "idx.cloud.text",
+  "group": "Other",
+  "where": "src/config/index.js:66",
+  "context": "index entry text",
+  "text": "they drift past at the back. when they swell and darken, rain is coming."
+ },
+ {
+  "id": "idx.rain.name",
+  "group": "Other",
+  "where": "src/config/index.js:67",
+  "context": "index entry name",
+  "text": "rain"
+ },
+ {
+  "id": "idx.rain.text",
+  "group": "Other",
+  "where": "src/config/index.js:68",
+  "context": "index entry text",
+  "text": "comes when it likes and washes some of the sky down. clean drops just wet the yard; dirty ones land as muck."
+ },
+ {
+  "id": "idx.lightning.name",
+  "group": "Other",
+  "where": "src/config/index.js:69",
+  "context": "index entry name",
+  "text": "lightning"
+ },
+ {
+  "id": "idx.lightning.text",
+  "group": "Other",
+  "where": "src/config/index.js:70",
+  "context": "index entry text",
+  "text": "comes with a heavy pour. all show: it touches nothing."
+ },
+ {
+  "id": "idx.star.name",
+  "group": "Other",
+  "where": "src/config/index.js:71",
+  "context": "index entry name",
+  "text": "the star"
+ },
+ {
+  "id": "idx.star.text",
+  "group": "Other",
+  "where": "src/config/index.js:72",
+  "context": "index entry text",
+  "text": "a rock in the sky only the wizards can reach. every bit they bolt off sheds sparks; when it is gone they call down the next."
+ },
+ {
+  "id": "idx.balloon.name",
+  "group": "Other",
+  "where": "src/config/index.js:73",
+  "context": "index entry name",
+  "text": "balloon"
+ },
+ {
+  "id": "idx.balloon.text",
+  "group": "Other",
+  "where": "src/config/index.js:74",
+  "context": "index entry text",
+  "text": "the air filter's craft: it rides up among the clouds and draws the haze in."
+ },
+ {
+  "id": "idx.recycler.name",
+  "group": "Other",
+  "where": "src/config/index.js:75",
+  "context": "index entry name",
+  "text": "the recycler"
+ },
+ {
+  "id": "idx.recycler.text",
+  "group": "Other",
+  "where": "src/config/index.js:76",
+  "context": "index entry text",
+  "text": "hands back some of what the air filter takes out of the sky."
+ },
+ {
+  "id": "idx.bench.name",
+  "group": "Other",
+  "where": "src/config/index.js:79",
+  "context": "index entry name",
+  "text": "the bench"
+ },
+ {
+  "id": "idx.bench.text",
+  "group": "Other",
+  "where": "src/config/index.js:80",
+  "context": "index entry text",
+  "text": "your own board: your click, carry and toss, the haulers' gear, crits, the barriers, and the door to every new place."
+ },
+ {
+  "id": "idx.shack.name",
+  "group": "Other",
+  "where": "src/config/index.js:81",
+  "context": "index entry name",
+  "text": "the shack"
+ },
+ {
+  "id": "idx.shack.text",
+  "group": "Other",
+  "where": "src/config/index.js:82",
+  "context": "index entry text",
+  "text": "the diggers' hut by the boulder. sells their swing and pick, the breaker hat and the ram."
+ },
+ {
+  "id": "idx.stats.name",
+  "group": "Other",
+  "where": "src/config/index.js:83",
+  "context": "index entry name",
+  "text": "the books"
+ },
+ {
+  "id": "idx.stats.text",
+  "group": "Other",
+  "where": "src/config/index.js:84",
+  "context": "index entry text",
+  "text": "the noticeboard: how long you have played and what the yard earns a second."
+ },
+ {
+  "id": "idx.farm.name",
+  "group": "Other",
+  "where": "src/config/index.js:85",
+  "context": "index entry name",
+  "text": "the farm"
+ },
+ {
+  "id": "idx.farm.text",
+  "group": "Other",
+  "where": "src/config/index.js:86",
+  "context": "index entry text",
+  "text": "plots that grow crops, worked by farmers. sells plots, tending and yield, the grower hat and the tiller."
+ },
+ {
+  "id": "idx.quarry.name",
+  "group": "Other",
+  "where": "src/config/index.js:87",
+  "context": "index entry name",
+  "text": "the quarry"
+ },
+ {
+  "id": "idx.quarry.text",
+  "group": "Other",
+  "where": "src/config/index.js:88",
+  "context": "index entry text",
+  "text": "an open cut; miners work its floor and carry ore up. sells depth, pace and seam, the blaster hat and the drill."
+ },
+ {
+  "id": "idx.apothecary.name",
+  "group": "Other",
+  "where": "src/config/index.js:89",
+  "context": "index entry name",
+  "text": "the apothecary"
+ },
+ {
+  "id": "idx.apothecary.text",
+  "group": "Other",
+  "where": "src/config/index.js:90",
+  "context": "index entry text",
+  "text": "a keeper lights the pot and it brews by itself. the brews walk out to the crew."
+ },
+ {
+  "id": "idx.tower.name",
+  "group": "Other",
+  "where": "src/config/index.js:91",
+  "context": "index entry name",
+  "text": "the tower"
+ },
+ {
+  "id": "idx.tower.text",
+  "group": "Other",
+  "where": "src/config/index.js:92",
+  "context": "index entry text",
+  "text": "summons wizards, a hat each, who fly up to the star. sells the spells, the sphere and the barrier."
+ },
+ {
+  "id": "idx.casino.name",
+  "group": "Other",
+  "where": "src/config/index.js:93",
+  "context": "index entry name",
+  "text": "the casino"
+ },
+ {
+  "id": "idx.casino.text",
+  "group": "Other",
+  "where": "src/config/index.js:94",
+  "context": "index entry text",
+  "text": "no board, just levers. pull the arm and a handful of grains pours down the pegs; the bins they land in pay."
+ },
+ {
+  "id": "idx.outhouse.name",
+  "group": "Other",
+  "where": "src/config/index.js:95",
+  "context": "index entry name",
+  "text": "the janitor's closet"
+ },
+ {
+  "id": "idx.outhouse.text",
+  "group": "Other",
+  "where": "src/config/index.js:96",
+  "context": "index entry text",
+  "text": "home of the janitors, who clean up the poop and the muck. sells caps and the roombas."
+ },
+ {
+  "id": "idx.filter.name",
+  "group": "Other",
+  "where": "src/config/index.js:97",
+  "context": "index entry name",
+  "text": "the air filter"
+ },
+ {
+  "id": "idx.filter.text",
+  "group": "Other",
+  "where": "src/config/index.js:98",
+  "context": "index entry text",
+  "text": "the only thing that empties the sky. air purifiers work it; its dial reads clean, dirty or filthy."
+ },
+ {
+  "id": "idx.ram.name",
+  "group": "Other",
+  "where": "src/config/index.js:99",
+  "context": "index entry name",
+  "text": "the ram"
+ },
+ {
+  "id": "idx.ram.text",
+  "group": "Other",
+  "where": "src/config/index.js:100",
+  "context": "index entry text",
+  "text": "the boulder's machine. bought and tuned with sparks, and it puts up soot."
+ },
+ {
+  "id": "idx.jaw.name",
+  "group": "Other",
+  "where": "src/config/index.js:101",
+  "context": "index entry name",
+  "text": "the drill"
+ },
+ {
+  "id": "idx.jaw.text",
+  "group": "Other",
+  "where": "src/config/index.js:102",
+  "context": "index entry text",
+  "text": "the quarry's machine. bought and tuned with sparks, and it puts up soot."
+ },
+ {
+  "id": "idx.tiller.name",
+  "group": "Other",
+  "where": "src/config/index.js:103",
+  "context": "index entry name",
+  "text": "the tiller"
+ },
+ {
+  "id": "idx.tiller.text",
+  "group": "Other",
+  "where": "src/config/index.js:104",
+  "context": "index entry text",
+  "text": "the farm's machine. bought and tuned with sparks, and it puts up soot."
+ },
+ {
+  "id": "idx.belt.name",
+  "group": "Other",
+  "where": "src/config/index.js:105",
+  "context": "index entry name",
+  "text": "the belt"
+ },
+ {
+  "id": "idx.belt.text",
+  "group": "Other",
+  "where": "src/config/index.js:106",
+  "context": "index entry text",
+  "text": "carries pebbles from the boulder to the hole with nobody minding it. the haulers tip their loads onto it."
+ },
+ {
+  "id": "idx.sphere.name",
+  "group": "Other",
+  "where": "src/config/index.js:107",
+  "context": "index entry name",
+  "text": "the sphere"
+ },
+ {
+  "id": "idx.sphere.text",
+  "group": "Other",
+  "where": "src/config/index.js:108",
+  "context": "index entry text",
+  "text": "a shell round the star that catches its light and lets it fall as sparks."
+ },
+ {
+  "id": "idx.roomba.name",
+  "group": "Other",
+  "where": "src/config/index.js:109",
+  "context": "index entry name",
+  "text": "the roombas"
+ },
+ {
+  "id": "idx.roomba.text",
+  "group": "Other",
+  "where": "src/config/index.js:110",
+  "context": "index entry text",
+  "text": "little machines that go out from their dock, pick up the mess and bin it."
+ },
+ {
+  "id": "idx.driver.name",
+  "group": "Other",
+  "where": "src/config/index.js:111",
+  "context": "index entry name",
+  "text": "forklift"
+ },
+ {
+  "id": "idx.driver.text",
+  "group": "Other",
+  "where": "src/config/index.js:112",
+  "context": "index entry text",
+  "text": "drives itself to the hole with nobody aboard, and smokes."
+ },
+ {
+  "id": "idx.props.name",
+  "group": "Other",
+  "where": "src/config/index.js:113",
+  "context": "index entry name",
+  "text": "wooden barrier"
+ },
+ {
+  "id": "idx.props.text",
+  "group": "Other",
+  "where": "src/config/index.js:114",
+  "context": "index entry text",
+  "text": "the first try at holding off the next boulder. it does not hold."
+ },
+ {
+  "id": "idx.net.name",
+  "group": "Other",
+  "where": "src/config/index.js:115",
+  "context": "index entry name",
+  "text": "the net"
+ },
+ {
+  "id": "idx.net.text",
+  "group": "Other",
+  "where": "src/config/index.js:116",
+  "context": "index entry text",
+  "text": "rope that catches the boulder and lets it down slowly. it does not hold either."
+ },
+ {
+  "id": "idx.arch.name",
+  "group": "Other",
+  "where": "src/config/index.js:117",
+  "context": "index entry name",
+  "text": "the arch"
+ },
+ {
+  "id": "idx.arch.text",
+  "group": "Other",
+  "where": "src/config/index.js:118",
+  "context": "index entry text",
+  "text": "stone that catches one, and then the crack runs."
+ },
+ {
+  "id": "idx.dome.name",
+  "group": "Other",
+  "where": "src/config/index.js:119",
+  "context": "index entry name",
+  "text": "the barrier"
+ },
+ {
+  "id": "idx.dome.text",
+  "group": "Other",
+  "where": "src/config/index.js:120",
+  "context": "index entry text",
+  "text": "poured by the wizards, not carried. this one holds."
+ },
+ {
+  "id": "idx.deep.name",
+  "group": "Other",
+  "where": "src/config/index.js:121",
+  "context": "index entry name",
+  "text": "the deep"
+ },
+ {
+  "id": "idx.deep.text",
+  "group": "Other",
+  "where": "src/config/index.js:122",
+  "context": "index entry text",
+  "text": "the water under the drowned hole, where the serpent lives."
+ },
+ {
+  "id": "idx.portal.name",
+  "group": "Other",
+  "where": "src/config/index.js:123",
+  "context": "index entry name",
+  "text": "the portal"
+ },
+ {
+  "id": "idx.portal.text",
+  "group": "Other",
+  "where": "src/config/index.js:124",
+  "context": "index entry text",
+  "text": "conjured by the wizards over the abyss: the way down to the deep."
+ },
+ {
+  "id": "idx.crusher.name",
+  "group": "Other",
+  "where": "src/config/index.js:125",
+  "context": "index entry name",
+  "text": "the crusher"
+ },
+ {
+  "id": "idx.crusher.text",
+  "group": "Other",
+  "where": "src/config/index.js:126",
+  "context": "index entry text",
+  "text": "where the deep's scales are crushed and kept."
+ },
+ {
+  "id": "idx.pods.name",
+  "group": "Other",
+  "where": "src/config/index.js:127",
+  "context": "index entry name",
+  "text": "the pods"
+ },
+ {
+  "id": "idx.pods.text",
+  "group": "Other",
+  "where": "src/config/index.js:128",
+  "context": "index entry text",
+  "text": "the deep's houses: a room for a body down there."
+ },
+ {
+  "id": "idx.haul.name",
+  "group": "Other",
+  "where": "src/config/index.js:131",
+  "context": "index entry name (JOB.HAUL, jobs.js:34)",
+  "text": "haulers"
+ },
+ {
+  "id": "idx.haul.text",
+  "group": "Other",
+  "where": "src/config/index.js:132",
+  "context": "index entry text",
+  "text": "carry pebbles from the ground to the hole. anybody without a job hauls, and they shovel muck too."
+ },
+ {
+  "id": "idx.rockcrew.name",
+  "group": "Other",
+  "where": "src/config/index.js:133",
+  "context": "index entry name",
+  "text": "diggers"
+ },
+ {
+  "id": "idx.rockcrew.text",
+  "group": "Other",
+  "where": "src/config/index.js:134",
+  "context": "index entry text",
+  "text": "swing at the boulder from its row. the shack sells their swing and pick."
+ },
+ {
+  "id": "idx.quarrycrew.name",
+  "group": "Other",
+  "where": "src/config/index.js:135",
+  "context": "index entry name",
+  "text": "miners"
+ },
+ {
+  "id": "idx.quarrycrew.text",
+  "group": "Other",
+  "where": "src/config/index.js:136",
+  "context": "index entry text",
+  "text": "work the quarry's floor and bring ore up."
+ },
+ {
+  "id": "idx.farmcrew.name",
+  "group": "Other",
+  "where": "src/config/index.js:137",
+  "context": "index entry name",
+  "text": "farmers"
+ },
+ {
+  "id": "idx.farmcrew.text",
+  "group": "Other",
+  "where": "src/config/index.js:138",
+  "context": "index entry text",
+  "text": "tend the plots and harvest the crops."
+ },
+ {
+  "id": "idx.purify.name",
+  "group": "Other",
+  "where": "src/config/index.js:139",
+  "context": "index entry name",
+  "text": "air purifiers"
+ },
+ {
+  "id": "idx.purify.text",
+  "group": "Other",
+  "where": "src/config/index.js:140",
+  "context": "index entry text",
+  "text": "work the air filter. only the ones inside it count."
+ },
+ {
+  "id": "idx.stir.name",
+  "group": "Other",
+  "where": "src/config/index.js:141",
+  "context": "index entry name",
+  "text": "apothecary"
+ },
+ {
+  "id": "idx.stir.text",
+  "group": "Other",
+  "where": "src/config/index.js:142",
+  "context": "index entry text",
+  "text": "the keeper who lights the pot."
+ },
+ {
+  "id": "idx.janitor.name",
+  "group": "Other",
+  "where": "src/config/index.js:143",
+  "context": "index entry name (JOB.JANITOR)",
+  "text": "janitors"
+ },
+ {
+  "id": "idx.janitor.text",
+  "group": "Other",
+  "where": "src/config/index.js:144",
+  "context": "index entry text",
+  "text": "go after the poop first, then the muck."
+ },
+ {
+  "id": "idx.wizard.name",
+  "group": "Other",
+  "where": "src/config/index.js:145",
+  "context": "index entry name (JOB.WIZARD)",
+  "text": "wizards"
+ },
+ {
+  "id": "idx.wizard.text",
+  "group": "Other",
+  "where": "src/config/index.js:146",
+  "context": "index entry text",
+  "text": "fly up and bolt the star apart for sparks, and call down a new one. they pour the barrier too."
+ },
+ {
+  "id": "idx.build.name",
+  "group": "Other",
+  "where": "src/config/index.js:147",
+  "context": "index entry name (JOB.BUILD)",
+  "text": "builders"
+ },
+ {
+  "id": "idx.build.text",
+  "group": "Other",
+  "where": "src/config/index.js:148",
+  "context": "index entry text",
+  "text": "spare hands lent to put up a building or a machine."
+ },
+ {
+  "id": "idx.breaker.name",
+  "group": "Other",
+  "where": "src/config/index.js:149",
+  "context": "index entry name",
+  "text": "breaker"
+ },
+ {
+  "id": "idx.breaker.text",
+  "group": "Other",
+  "where": "src/config/index.js:150",
+  "context": "index entry text",
+  "text": "the diggers' hat: twice the bite."
+ },
+ {
+  "id": "idx.carter.name",
+  "group": "Other",
+  "where": "src/config/index.js:151",
+  "context": "index entry name",
+  "text": "carter"
+ },
+ {
+  "id": "idx.carter.text",
+  "group": "Other",
+  "where": "src/config/index.js:152",
+  "context": "index entry text",
+  "text": "the haulers' cart: twice the load."
+ },
+ {
+  "id": "idx.blaster.name",
+  "group": "Other",
+  "where": "src/config/index.js:153",
+  "context": "index entry name",
+  "text": "blaster"
+ },
+ {
+  "id": "idx.blaster.text",
+  "group": "Other",
+  "where": "src/config/index.js:154",
+  "context": "index entry text",
+  "text": "the miners' hat: twice the trips."
+ },
+ {
+  "id": "idx.grower.name",
+  "group": "Other",
+  "where": "src/config/index.js:155",
+  "context": "index entry name",
+  "text": "grower"
+ },
+ {
+  "id": "idx.grower.text",
+  "group": "Other",
+  "where": "src/config/index.js:156",
+  "context": "index entry text",
+  "text": "the farmers' hat: twice the tending."
+ },
+ {
+  "id": "idx.brews.name",
+  "group": "Other",
+  "where": "src/config/index.js:157",
+  "context": "index entry name",
+  "text": "brews"
+ },
+ {
+  "id": "idx.brews.text",
+  "group": "Other",
+  "where": "src/config/index.js:158",
+  "context": "index entry text",
+  "text": "one for each coin. hearty stew speeds a body up, strong brew makes it stronger, bracing tonic makes it crit."
+ },
+ {
+  "id": "idx.party.name",
+  "group": "Other",
+  "where": "src/config/index.js:159",
+  "context": "index entry name (JOB.FIGHT)",
+  "text": "fighters"
+ },
+ {
+  "id": "idx.party.text",
+  "group": "Other",
+  "where": "src/config/index.js:160",
+  "context": "index entry text",
+  "text": "crew gone down to the deep to fight the serpent, a fighter to a station."
+ },
+ {
+  "id": "idx.sqwife.name",
+  "group": "Other",
+  "where": "src/config/index.js:163",
+  "context": "index entry name",
+  "text": "sqwife"
+ },
+ {
+  "id": "idx.sqwife.text",
+  "group": "Other",
+  "where": "src/config/index.js:164",
+  "context": "index entry text",
+  "text": "buried by the first boulder. every one you clear, somebody runs to dig; every new one drives them back in."
+ },
+ {
+  "id": "idx.objective.name",
+  "group": "Other",
+  "where": "src/config/index.js:165",
+  "context": "index entry name",
+  "text": "objective"
+ },
+ {
+  "id": "idx.objective.text",
+  "group": "Other",
+  "where": "src/config/index.js:166",
+  "context": "index entry text",
+  "text": "the line at the top: the story's next step."
+ },
+ {
+  "id": "idx.notices.name",
+  "group": "Other",
+  "where": "src/config/index.js:167",
+  "context": "index entry name",
+  "text": "achievements"
+ },
+ {
+  "id": "idx.notices.text",
+  "group": "Other",
+  "where": "src/config/index.js:168",
+  "context": "index entry text",
+  "text": "the yard's milestones. this sheet keeps the ones you have earned."
+ },
+ {
+  "id": "idx.rescue.name",
+  "group": "Other",
+  "where": "src/config/index.js:169",
+  "context": "index entry name",
+  "text": "you saved your sqwife"
+ },
+ {
+  "id": "idx.rescue.text",
+  "group": "Other",
+  "where": "src/config/index.js:170",
+  "context": "index entry text",
+  "text": "the barrier held, and the sqwife came out."
+ },
+ {
+  "id": "idx.cutscene.name",
+  "group": "Other",
+  "where": "src/config/index.js:171",
+  "context": "index entry name",
+  "text": "scenes"
+ },
+ {
+  "id": "idx.cutscene.text",
+  "group": "Other",
+  "where": "src/config/index.js:172",
+  "context": "index entry text",
+  "text": "now and then a scene takes the camera. hold space to skip one."
+ },
+ {
+  "id": "idx.sqhusband.name",
+  "group": "Other",
+  "where": "src/config/index.js:173",
+  "context": "index entry name",
+  "text": "sqhusband"
+ },
+ {
+  "id": "idx.sqhusband.text",
+  "group": "Other",
+  "where": "src/config/index.js:174",
+  "context": "index entry text",
+  "text": "snatched by the serpent after the rescue. free him from its belly."
+ },
+ {
+  "id": "idx.serpent.name",
+  "group": "Other",
+  "where": "src/config/index.js:175",
+  "context": "index entry name",
+  "text": "the serpent"
+ },
+ {
+  "id": "idx.serpent.text",
+  "group": "Other",
+  "where": "src/config/index.js:176",
+  "context": "index entry text",
+  "text": "lives in the deep, and swallowed the sqhusband."
+ }
+]

@@ -1170,7 +1170,7 @@ import { PAIRS, FIGHT_STATIONS_MAX } from './config.js';
 import * as party from './deep/party.js';
 import { settle } from './crew/commute.js';
 import { deepPost } from './crew/deep.js';
-import { forceSerpent } from './snatch.js';
+import { forceSerpent, forceDeep } from './snatch.js';
 import { startGlimpse } from './glimpse.js';
 import { startRiftLife } from './riftlife.js';
 import { postY } from './deep/place.js';
@@ -1191,6 +1191,7 @@ function deepReady() {
 // build's story with SERPENT_ON off, true a released build's with it on, and
 // null hands the question back to the build (snatch.js, `serpentOn`).
 HANDLES.__serpentOn = on => forceSerpent(on);
+HANDLES.__deepOn = on => forceDeep(on);
 
 // A glimpse of the serpent at the drowned pit's surface, up now and `into`
 // seconds along, at column `x` heading `dir` or wherever the schedule would

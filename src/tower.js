@@ -1,6 +1,7 @@
 // The tower's board: the hat that lets somebody work the sky, the wizards'
 // two ladders, the spells and the dome.
 
+import { deepOn } from './snatch.js';
 import { wizMs, wizBite } from './wizard.js';
 import { STEP } from './mult.js';
 import { S } from './state.js';
@@ -212,7 +213,8 @@ export const TOWER_UPGRADES = [
     // Bought, then summoned: a wizard flies out over the pit and pours it
     // (`pourPortal` in wizard.js). Offered while there is a wizard to do it.
     buy: () => { S.portalPour = 1e-6; S.shopStale = true; },
-    show: () => !!S.snatched && !S.portalOpen && !(S.portalPour > 0) && S[JOB.WIZARD] > 0
+    // the paid game's only: on the free build the wizards' talk is the end
+    show: () => deepOn() && !!S.snatched && !S.portalOpen && !(S.portalPour > 0) && S[JOB.WIZARD] > 0
   }
 ];
 

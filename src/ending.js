@@ -56,6 +56,8 @@ export function syncEnding() {
   if (freed.hidden === freedUp) freed.hidden = !freedUp;
   const demoUp = beatRunning('demoend') && !S.paused && !S.fatal;
   if (demoEnd.hidden === demoUp) demoEnd.hidden = !demoUp;
+  const teaseUp = beatRunning('teaseend') && !S.paused && !S.fatal;
+  if (teaseEnd.hidden === teaseUp) teaseEnd.hidden = !teaseUp;
 }
 
 // The demo's last sheet, the same way, with the store's link when there is
@@ -64,6 +66,14 @@ const demoEnd = document.getElementById('demoend');
 const demoStore = document.getElementById('demostore');
 if (STORE_URL) { demoStore.href = STORE_URL; demoStore.hidden = false; }
 document.getElementById('demokeep').addEventListener('click', () => {
+  skipBeat(now(), 'sheet');
+});
+
+// The teaser's last sheet on the free build, the same way.
+const teaseEnd = document.getElementById('teaseend');
+const teaseStore = document.getElementById('teasestore');
+if (STORE_URL) { teaseStore.href = STORE_URL; teaseStore.hidden = false; }
+document.getElementById('teasekeep').addEventListener('click', () => {
   skipBeat(now(), 'sheet');
 });
 

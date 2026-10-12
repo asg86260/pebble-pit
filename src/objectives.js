@@ -9,7 +9,7 @@ import { demoOn } from './demo.js';
 import { PAST_DEMO } from './config.js';
 import { S } from './state.js';
 import { shieldDone } from './shield.js';
-import { serpentOn } from './snatch.js';
+import { serpentOn, deepOn } from './snatch.js';
 import { beatDone } from './beats.js';
 import { open } from './stations.js';
 
@@ -49,8 +49,8 @@ export const STEPS = [
   // askedWizards); a save already at the portal is past it.
   { key: 'talk', say: 'talk to the wizards about what just happened', when: serpentOn,
     done: () => !!S.snatched && (!!S.askedWizards || S.portalPour > 0 || !!S.portalOpen) },
-  { key: 'portal', say: "conjure a portal to the abyss, what's down there?", when: serpentOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
-  { key: 'free', say: 'free your sqhusband from the serpent\'s belly', when: serpentOn, done: () => !!S.serpentFreed },
+  { key: 'portal', say: "conjure a portal to the abyss, what's down there?", when: deepOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
+  { key: 'free', say: 'free your sqhusband from the serpent\'s belly', when: deepOn, done: () => !!S.serpentFreed },
 ];
 
 // The step the story is on, or null once it is told: the first step after
