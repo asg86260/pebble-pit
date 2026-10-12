@@ -1902,6 +1902,17 @@ export const SCENES = {
                  S.rescued = true; S.buried = false; window.__fast(1 / 60); window.__skipBeat('sheet');
                  window.__look(st().pitX - 300); } },
 
+  // The serpent showing itself on the drowned pit's surface (glimpse.js),
+  // one scene a kind, forced up in the middle of the pit where the camera
+  // is and caught a second short of the moment named, for the shot tool's
+  // second.
+  ...Object.fromEntries([['hump', 5.2, 'the coil\'s back rolling along the surface'],
+                         ['fin', 4.6, 'the crest crossing like a fin, the bow wave ahead'],
+                         ['watcher', 5.5, 'the top of the head, the eye open on the nearest body']]
+    .map(([kind, into, say]) => [`glimpse-${kind}`, { about: 'the pit and the rift', say: `a glimpse: ${say}`,
+      run: () => { window.__reset(); window.__crew(2, 3); window.__rift(); window.__fast(1);
+                   window.__look(st().pitX + 120); window.__glimpse(kind, { into }); } }])),
+
   // --- the shields ------------------------------------------------------------
   // The `!` scenes run the crew's five-second dance through, so the shot is
   // the rock meeting the shield rather than the dance before it.

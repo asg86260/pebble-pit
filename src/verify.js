@@ -174,6 +174,18 @@ export function verifyWorld() {
       fail('a beat that has played is running', `${key}`);
   }
 
+  // --- rule 17: the serpent shows itself only on a quiet surface -------------
+  // A glimpse (glimpse.js) is up only over a drowned pit, never under a beat
+  // that has the yard or the camera, and never with the camera in the deep
+  // or on its way there.
+  if (S.glimpse) {
+    if (!S.drowned) fail('a glimpse is up over a pit that has not drowned', `${S.glimpse.kind}`);
+    if (S.beat.camera || S.beat.yard || S.shot)
+      fail('a glimpse is up during a beat', `${S.glimpse.kind} under ${S.beat.camera || S.beat.yard || 'a shot'}`);
+    if (S.view === 'deep' || S.viewTo != null)
+      fail('a glimpse is up with the camera in the deep', `${S.glimpse.kind}, view ${S.view} to ${S.viewTo}`);
+  }
+
   const all = ways();
   const gy = S.groundY;
   const left = Math.min(0, yardLeft()) - OUTSIDE;

@@ -51,6 +51,7 @@ export * from './config/deepboard.js';
 export * from './config/demo.js';
 export * from './config/roomba.js';
 export * from './config/classes.js';
+export * from './config/glimpse.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.
