@@ -12,6 +12,8 @@ import { barSpot, pileMarkAt } from './render.js';
 import { dialRect } from './render/filter.js';
 import { siteBox } from './works.js';
 import { nameOf } from './stations.js';
+import { S } from './state.js';
+import { take } from './upgrades.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {
@@ -43,3 +45,19 @@ window.__state = () => ({
   houseRow: (r => r && r.textContent)(document.querySelector('#crewshop [data-key="house"]')),
   crewDoor: (r => r && r.textContent)(document.querySelector('#crewshop [data-key="crewlist"]'))
 });
+
+// Every coin to the amounts named, nought for any not named:
+// `setResources()` empties the purse, `setResources({ dust: 5000, sparks: 20 })`
+// sets those two and empties the rest. Through the game's own paying and
+// granting, so the cells leave and land in the hole the way a purchase and a
+// handout move them, rather than a counter jumping.
+window.setResources = (want = {}) => {
+  const coins = [['dust', 'stored', 'dust'], ['shards', 'shards', 'shard'], ['spores', 'spores', 'spore'],
+                 ['sparks', 'sparks', 'spark'], ['scales', 'scales', 'scale']];
+  for (const [name, field, money] of coins) {
+    const d = Math.round(want[name] || 0) - Math.round(S[field] || 0);
+    if (d < 0) take(money, -d);
+    else if (d > 0) hooks.grant({ [name]: d });
+  }
+  return Object.fromEntries(coins.map(([name, field]) => [name, Math.round(S[field] || 0)]));
+};
