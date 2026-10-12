@@ -3,7 +3,7 @@
 // were doing from wherever you left them.
 
 import { now } from '../clock.js';
-import { DIZZY_MS, HOVER_SLOW_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
+import { TOUCH_TARGET, DIZZY_MS, HOVER_SLOW_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
 import { bell, spawnChip } from '../dust.js';
 import { throwVel } from '../hands.js';
 import { underground } from '../quarry.js';
@@ -12,7 +12,7 @@ import { unbook } from '../crew.js';
 import { assignDrop } from './assign.js';
 import { load } from './hole.js';
 import { earn } from '../notices.js';
-import { crewView } from '../prefs.js';
+import { crewView, coarse } from '../prefs.js';
 import { inOrb, breakOrb, orbLiftOf } from '../deep/phases.js';
 
 // --- picking somebody up ------------------------------------------------------
@@ -21,7 +21,9 @@ export function workerAt(x, y) {
   // pointer on either: the click is for the building they were standing in
   // front of, which is why the player hid them.
   if (crewView() === 'hide') return null;
-  const pad = P * 1.5;
+  // On a thumb a cell is small, so the body's reach is the least a finger can
+  // land on, whatever the zoom.
+  const pad = Math.max(P * 1.5, coarse() ? (TOUCH_TARGET / S.zoom - WORKER) / 2 : 0);
   for (let i = S.workers.length - 1; i >= 0; i--) {
     const w = S.workers[i];
     if (w.inside || underground(w)) continue;

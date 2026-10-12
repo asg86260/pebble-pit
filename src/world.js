@@ -15,7 +15,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
         APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT, STAND_REACH, GARAGE_W, GARAGE_CLEAR, HOUSE_TO, HOUSE_COLS, HOUSE_CUBE,
         BRIDGE_RISE, BRIDGE_RUN,
-        OPENING_MARGIN, OPENING_ROCK_AT, DEEP_FLOOR_MARGIN } from './config.js';
+        OPENING_MARGIN, OPENING_ROCK_AT, DEEP_FLOOR_MARGIN, shieldWidth, ROCK_W_MAX, PHONE_MARGIN_CELLS } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, cut, farm, apothecary, sky, casino, filter, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
@@ -26,7 +26,7 @@ import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
 import { DOME_RINGS } from './config.js';
 import { JOB } from './jobs.js';
-import { reducedMotion } from './prefs.js';
+import { reducedMotion, coarse } from './prefs.js';
 import { deepX0, deepX1, deepFloor } from './deep/place.js';
 
 const canvas = document.getElementById('c');
@@ -553,6 +553,15 @@ export function seatSites() {
   seat(tower, 'tower', TOWER_H);
 }
 
+// How big a cell is drawn in the yard, in CSS px. The desk's `CELL`; on a
+// thumb, the size that fits the widest shield's span (over the biggest rock)
+// and `PHONE_MARGIN_CELLS` across the window's width.
+export function yardCell() {
+  if (!coarse()) return CELL;
+  const widest = Math.max(...['props', 'net', 'arch', 'dome'].map(k => shieldWidth(k, ROCK_W_MAX * P))) / P;
+  return Math.min(CELL, S.W / (widest + PHONE_MARGIN_CELLS));
+}
+
 export function resize(after) {
   // the canvas is told its size outright, in its own inline style and in device
   // pixels, so it does not depend on the stylesheet or on measuring anything
@@ -564,7 +573,8 @@ export function resize(after) {
   // against the page, and the seam between two comes out gray.
   const want = Math.max(1, devicePixelRatio || 1);
   const fit = Math.min(want, Math.sqrt(DEVICE_PIXELS / (S.W * S.H)));
-  S.dpr = Math.max(1, Math.round(CELL * fit)) / CELL;
+  const cell = yardCell();
+  S.dpr = Math.max(1, Math.round(cell * fit)) / cell;
 
   // Where it stands is the stylesheet's (stuck to the scroller's left edge);
   // how big it is is written here.
@@ -576,7 +586,7 @@ export function resize(after) {
   // A small window does not shrink the yard, it shows less of it. About
   // 830px of height shows the sky, the ground and the whole depth of the
   // pit; anything shorter loses sky off the top.
-  S.zoom = CELL / P;
+  S.zoom = cell / P;
   S.viewW = S.W / S.zoom;
   S.viewH = S.H / S.zoom;
 
@@ -666,7 +676,7 @@ export const SAVE = {
     // Where the view is, rounded. While a scene has the view pulled in,
     // `camX` is the left edge of a narrower view than the one that comes
     // back, so the seat is written at the yard's own zoom.
-    out.camX = Math.round(S.shot ? S.camX + S.viewW / 2 - S.W * P / CELL / 2 : S.camX);
+    out.camX = Math.round(S.shot ? S.camX + S.viewW / 2 - S.W * P / yardCell() / 2 : S.camX);
   },
   read(s) {
     S.camWas = Number.isFinite(s?.camX) ? s.camX : null;
@@ -757,9 +767,10 @@ export function setZoom(k) {
   // one pixel a cell, so a fractional scale resamples the whole pile and
   // the ground reads as see-through. The zoom steps through whole cell
   // sizes rather than sliding.
-  const unit = CELL * S.dpr;                    // device pixels a cell takes at 1x
+  const cell = yardCell();
+  const unit = cell * S.dpr;                    // device pixels a cell takes at 1x
   const px = Math.max(1, Math.round(unit * k));
-  S.zoom = (CELL / P) * (px / unit);
+  S.zoom = (cell / P) * (px / unit);
   S.viewW = S.W / S.zoom;
   S.viewH = S.H / S.zoom;
   clampCam();

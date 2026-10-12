@@ -14,7 +14,7 @@
 // as it has the yard. Every phase function here is a declaration, not a
 // const, because beats.js reads them at load and imports this file in a ring.
 
-import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
+import { P, CELL, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL, HELP_BANG_MS, HELP_BANGS, BURIED_CALL_MS, BURIED_CALL_JITTER, BURIED_CALL_HOT_MS, BURIED_CALLS,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS,
@@ -25,7 +25,11 @@ import { now, frames } from './clock.js';
 import { makeBoulder, dropZone, boulderAlive } from './rock.js';
 import { spawnChip, spawnSpoil, aim } from './dust.js';
 import { shadeNear } from './grid.js';
-import { walkY, setZoom, clampCam, lookAt, openingCamX } from './world.js';
+import { walkY, setZoom, clampCam, lookAt, openingCamX, yardCell } from './world.js';
+
+// The close-up the opening starts on, as a share of the yard's own zoom: held at
+// the same size on the glass on a phone, whose yard is drawn smaller.
+const introZoom = () => INTRO_ZOOM * CELL / yardCell();
 import { rebalance } from './staffing.js';
 import { syncWorkers } from './crew.js';
 import { wayAt, ways, feetOn, climbTo, plant } from './route.js';
@@ -94,7 +98,7 @@ export function startIntro() {
   for (const b of S.pair) b.y = walkY(b.x + WORKER / 2);
   // and the view is on the door before the first frame, so the walk out is
   // watched from the house rather than glided to from wherever the seat was
-  setZoom(INTRO_ZOOM);
+  setZoom(introZoom());
   S.camX = door + WORKER / 2 - S.viewW / 2;
   S.camTo = null;
   clampCam();       // and written through to the page's scroller, or the next frame reads the old seat back
@@ -315,7 +319,7 @@ function hold(t, key) {
   // midpoint, stopping at the spot where the chat holds it. Under reduced
   // motion every beat is watched from where it ends.
   if (key === 'leave') {
-    setZoom(INTRO_ZOOM);
+    setZoom(introZoom());
     S.camLockY = S.groundY - S.viewH * 0.66;
     const mid = reducedMotion() || !S.pair.length ? S.cx
               : S.pair.reduce((a, b) => a + b.x + WORKER / 2, 0) / S.pair.length;
@@ -338,7 +342,7 @@ function hold(t, key) {
             : key === 'meet' ? 1 - ease(Math.min(1, k0 / MEET_IN_MS))
             : key === 'part' ? ease(Math.min(1, k0 / PART_MS))
             : 0;
-  const k = INTRO_ZOOM + (1 - INTRO_ZOOM) * out;
+  const k = introZoom() + (1 - introZoom()) * out;
 
   // The ground line sits low in the frame, and is walked back to the yard's
   // own height over the same stretch the zoom is: dropping forty pixels in
