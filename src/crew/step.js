@@ -14,6 +14,9 @@
 //      clear.
 //   4. **hat** -- the tail of dizzy: it goes and gets its hat before it works.
 //   5. **floating** -- falls *through* on the frame its feet land.
+//   5b. **off stage** -- while the ending's rescue or snatch plays, a body in
+//      its frame walks out and stands at the edge (stage.js). Above the
+//      commute, so a walk across the frame stops at it.
 //   6. **commute** -- a body walking somewhere is not yet anywhere: the work,
 //      the mess and the loo are all things you do where you have arrived.
 //   6b. **which half** -- straight after: a body on a yard job with its feet
@@ -67,6 +70,7 @@ import { takeMess } from './shovel.js';
 import { jobOf } from './jobs.js';
 import { surface } from './deep.js';
 import { sfx } from '../audio.js';
+import { stageZone, stepStage, holdTheStage } from '../stage.js';
 
 // The yard is celebrating, and the dance ends at the clock and nowhere else.
 // A fall is never a party: read as a dance by `danceUntil > 0`, a stale
@@ -167,6 +171,12 @@ const STAGES = [
   // Drifting down out of the sky (`floatDown`); falls *through* on the frame
   // it lands.
   w => w.floating === true && !floatDown(w),
+
+  // Off the ending's stage (stage.js): while the rescue or the snatch plays,
+  // a body in its frame downs tools and walks out of it, and stands at the
+  // edge until it is over. Above the commute, so a walk across the frame is
+  // stopped at its edge; under the falls, which no scene interrupts.
+  (w, c) => stepStage(w, c),
 
   // A body under the cursor with the right button held walks slow: it moves
   // on HOVER_SLOW of the frames, spread evenly (`slowOwed`), and stands
@@ -376,7 +386,8 @@ export function updateWorkers(now, dt) {
 
   // The frame, as one thing to hand about: the clock, its length, the ground a
   // rock is coming down on, and the books of claims.
-  const c = { now, dt, zone, taken, muckTaken, poopTaken, cutTaken, rockTaken };
+  const stage = stageZone();
+  const c = { now, dt, zone, stage, taken, muckTaken, poopTaken, cutTaken, rockTaken };
   for (const w of S.workers) {
     // Whoever swings sets the lunge to 1 and nobody eases it themselves.
     if (w.lunge) w.lunge *= LUNGE_EASE;
@@ -384,6 +395,7 @@ export function updateWorkers(now, dt) {
     for (const stage of STAGES) if (stage(w, c) === true) { done = true; break; }
     if (!done) jobOf(w).work(w, c);
     holdTheLine(w, was.get(w), zone);
+    holdTheStage(w, was.get(w), stage);
   }
 
   // The forklifts, on the same books and held off the same footprint; not

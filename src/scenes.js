@@ -1912,6 +1912,11 @@ export const SCENES = {
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(4.5); } },
   'rescue!': { about: 'the shields', say: 'the rock held on the dome, and the digging out under it',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(10); } },
+  // A busy crew under the dome, the rock about to leave the sky: run on to
+  // watch the rest walk out of the shot and back after (stage.js).
+  'rescue-stage': { about: 'the shields', say: 'the rescue with a busy crew: everybody but the pair walks out of the shot',
+    run: () => { shieldBuilt('dome'); window.__crew(4, 8, 0, 0, 0, 1); window.__fast(3);
+                 S.buried = true; window.__next(); } },
   saved: { about: 'the shields', say: 'the end of the story: the sheet after the rescue',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(45); } },
 

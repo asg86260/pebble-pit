@@ -6,7 +6,21 @@ import { noteRockCleared } from './notices.js';
 import { boulderAlive, makeBoulder, dropZone } from './rock.js';
 import { onYard } from './crew/body.js';
 import { now } from './clock.js';
-import { ownsYard, beatDone } from './beats.js';
+import { ownsYard, beatDone, beatRunning } from './beats.js';
+import { serpentOn } from './snatch.js';
+
+// The end of the story is one sequence and no rock comes down in the middle
+// of it: from the sqwife's rescue, through her sheet, the tearing and the
+// drowning of the pit she is owed (`owedArc` in rift.js), to the snatch and
+// the camera letting go of it. Read off the facts and the beats every frame,
+// never a timer, so a save written anywhere in it holds the rock on load too.
+const ENDING_SCENES = ['rescue', 'dome', 'ending', 'tear', 'drown', 'snatch', 'snatchcam'];
+export function endingHolds() {
+  if (!S.rescued) return false;
+  if (!beatDone('ending') || ENDING_SCENES.some(beatRunning)) return true;
+  if (!S.drowned) return true;
+  return serpentOn() && !beatDone('snatch');
+}
 
 // Nobody is standing on the ground the next rock is coming down on. The crew
 // step out of the footprint when the last rock dies (crew/step.js) and the
@@ -42,6 +56,8 @@ export function stepCore() {
   // and the next not yet in the sky; without this the next boulder is built
   // in the same call and the beat never plays.
   if (beatDone('show') && !beatDone('part') && S.boulderNo === 1 && !boulderAlive()) return;
+
+  if (endingHolds()) return;
 
   if (!S.coreBuried && !boulderAlive()) {
     // Nothing lands on top of the celebration, or on top of anybody.
