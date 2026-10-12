@@ -58,7 +58,7 @@ export function seatBarrier(step, t) {
     swapUntil = 0;
     shown = want;
     box.hidden = !want;
-    parts = want ? draw(u, mode) : null;
+    parts = want ? draw(u, mode, step) : null;
     if (want) { box.classList.add('swap'); requestAnimationFrame(() => box.classList.remove('swap')); }
   }
   if (parts) update(u, mode);
@@ -70,7 +70,7 @@ const coinsOf = u => billOf(u).filter(([m]) => m !== 'time')
 
 // Two columns: the glyph on the left, spanning the block, and every word,
 // coin and button in one column on its right (`side`).
-function draw(u, mode) {
+function draw(u, mode, step) {
   box.textContent = '';
   box.appendChild(drawGlyph(glyphFor(u.key), tintOf(u), '#000', badgeFor(u.key)));
   const side = document.createElement('div');
@@ -97,7 +97,9 @@ function draw(u, mode) {
   }
 
   side.appendChild(name);
-  if (u.note) {
+  // The step's own line above is the card's words; the row's description is
+  // the card's only words when the step has none (a place step).
+  if (u.note && !step.say) {
     const note = document.createElement('div');
     note.className = 'note';
     note.textContent = u.note();

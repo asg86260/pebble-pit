@@ -1782,7 +1782,7 @@ export const TESTS = [
     };
     const hitAt = el => { const r = el.getBoundingClientRect(); return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); };
     const offer = shown;
-    const words = !!block()?.querySelector('.name')?.textContent && !!block()?.querySelector('.note')?.textContent;
+    const words = !!block()?.querySelector('.name')?.textContent && !block()?.querySelector('.note') && !!card.querySelector('.say')?.textContent;
     const unticked = !!dust() && !dust().classList.contains('done');
     const dim = buyBtn()?.disabled === true;
     // the line and the bill are click-through; the buy is not
@@ -1826,7 +1826,7 @@ export const TESTS = [
     window.__crew(0, 0);
     newRun();
     return [
-      ok(offer && words, "the props are on offer on the story's card, named and described", firstSays),
+      ok(offer && words, "the props are on offer on the story's card, named, under the step's line, with no shop description", firstSays),
       ok(unticked && dim, 'short of the dust, its line is unticked and the buy dimmed'),
       ok(lineThrough && billThrough, 'the card is click-through to the yard', `${under?.id || under?.tagName}`),
       ok(buyTakes, 'but its buy takes the pointer'),
