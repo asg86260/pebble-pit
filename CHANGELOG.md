@@ -123,6 +123,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The saves page draws the slot you are playing inverted, black with white text, in place of greyed out.
 - The index: every thing you have met, with a few words on each, on the held sheet's `index` page or the `i` key.
 - Shop items no longer show their build time; the coins are the whole price.
 - The books show how long the yard has been played, and each save on the saves page shows its own playtime.

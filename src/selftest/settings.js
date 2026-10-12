@@ -202,6 +202,15 @@ export const TESTS = [
     savesPage();
     const rows2 = rows().map(slotWords);
     const cols = slotColumns(rows());
+    const cs = el => getComputedStyle(el);
+    const opens = rows().filter(r => r.classList.contains('open'));
+    const probe = document.createElement('i');
+    probe.style.cssText = 'color:var(--ink);background:var(--paper)';
+    document.body.appendChild(probe);
+    const ink = cs(probe).color, paper = cs(probe).backgroundColor;
+    probe.remove();
+    const inverted = opens.length === 1 && cs(opens[0]).backgroundColor === ink && cs(opens[0]).color === paper
+      && cs(opens[0]).opacity === '1' && opens[0].disabled;
     rows()[0].click();
     const backAgain = state();
     const saidBack = said();
@@ -218,6 +227,7 @@ export const TESTS = [
       ok(rows2[1].endsWith('playing') && /^1 · rock \d+ · \d+ crew · just now$/.test(rows2[0]),
          'the page reads the swap', JSON.stringify(rows2)),
       ok(cols.aligned && cols.gap >= 12, 'the filled rows keep rock, crew and when in columns with a gap between items', JSON.stringify(cols)),
+      ok(inverted, 'the open row is inverted (ink fill, paper text), not faded, and inert', `${opens.length} open`),
       ok(backAgain.crew === crew && saidBack === 'loaded', 'and the first yard comes back',
          `${backAgain.crew} vs ${crew}, ${saidBack}`),
       ok(frontAfterNew && frontAfterLoad, 'and each pick turns back to the front',

@@ -1459,7 +1459,9 @@ body.still .saves .confirm { transition: none; }
 .saves.stacked .slot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; column-gap: 3ch; white-space: normal; }
 .saves.stacked .slot .played { margin-left: auto; }
 .saves.stacked .del { grid-column: 2; }
-.held .slot.open { opacity: .7; }
+/* The slot you are in is drawn inverted, not faded: inert, but plainly the
+   page's subject. The disabled color is set too, or the browser greys it. */
+.saves .slot.open, .saves .slot.open:disabled { color: var(--paper); background: var(--ink); opacity: 1; }
 /* The board of times: one line a row, best first, this yard's own row
    boxed. The ending sheet's line under "it took" is the same register. */
 .held .times, .board .times { display: flex; flex-direction: column; gap: 4px; min-width: 22em; max-height: 50vh; overflow-y: auto;
