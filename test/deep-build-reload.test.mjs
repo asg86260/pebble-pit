@@ -64,6 +64,9 @@ group('a pod half built across a refresh is finished by the deep\'s builders', a
 
 group('a station of the party half built across a refresh is finished', async () => {
   deepYard();
+  // The first station stands from the snatch, so the build followed is the
+  // second, bought with a fang.
+  window.__party({ fangs: 1 });
   const before = (S.stations || []).filter(s => s.built !== false).length;
   const pressed = pressBuild();
   const id = S.stations?.at(-1)?.id;

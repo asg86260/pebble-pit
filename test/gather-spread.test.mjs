@@ -15,7 +15,8 @@ const lay = (x, n) => { for (let i = 0; i < n; i++) addGrain(deepBed, x, null, 3
 const CREW = 4;
 
 group('gatherers spread over the scales rather than stacking on one heap', async () => {
-  window.__snatch({ played: true });
+  // The snatch's facts with no station: played, it stands the first one,
+  // and one of the hands down there would be its fighter.
   window.__crew(0, 4);
   window.__deepCrew({ spare: CREW });
   // Three patches out along the floor from the crusher's side.
@@ -68,7 +69,8 @@ group('gatherers spread over the scales rather than stacking on one heap', async
 // One heap and a crew for it: they split along it, a reach apart, or wait
 // their turn by the crusher -- never two scooping in one place.
 group('one heap is shared along its length, not scooped by bodies stood in one place', async () => {
-  window.__snatch({ played: true });
+  // The snatch's facts with no station: played, it stands the first one,
+  // and one of the hands down there would be its fighter.
   window.__crew(0, 4);
   window.__deepCrew({ spare: CREW });
   lay(tossX() + P * 60, 120);
