@@ -1714,10 +1714,10 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   white-space: nowrap;
   will-change: transform;
   backface-visibility: hidden;
-  transition: opacity .6s ease;
 }
-/* and a cutscene fades it rather than popping it off and on (board.js) */
-#raise.scened { opacity: 0; pointer-events: none; }
+/* and a scene holding the yard fades it rather than popping it off and on,
+   its opacity written each frame off the recede (board.js, `seatCall`) */
+#raise.scened { pointer-events: none; }
 /* Under the cursor it inverts, the same offer a board's row makes. */
 @media (hover: hover) {
   #raise:hover { background: var(--paper); color: var(--ink); }
