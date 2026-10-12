@@ -89,8 +89,15 @@ export const TESTS = [
     run(3);
     const over = state();
 
+    // No hat owned: no top row, one row of seats.
+    newRun();
+    window.__crew(0, 3, 3, 0);
+    window.__levels({ benchLevel: 3 });
+    run(20);
+    const bare = q().pips;
     window.__crew(0, 0);
     return [
+      ok(new Set(bare.map(p => p[1])).size === 1 && bare.length === 5, 'a station with no hats shows one row of seats', JSON.stringify(bare)),
       // Measured against each other rather than against a number: how far a
       // throw carries depends on where the body was standing when picked up.
       // The claim is that the flick does something the standstill does not,
@@ -380,10 +387,11 @@ export const TESTS = [
     newRun();
     window.__crew(0, 3, 3, 0);
     window.__levels({ benchLevel: 3 });
-    window.__kit({ blasters: 1 });
+    window.__kit({ blasters: 2 });
     run(20);
     const q = () => state().roster.find(r => r.key === 'quarryjob');
     window.__look(q().pips[2][0] - S.viewW / 2);
+    const two = q().pips, farm = state().roster.find(r => r.key === 'plotjob');
     run(0.1);
     const g = canvas().getContext('2d');
     const ink = (wx, wy) => {
@@ -396,6 +404,8 @@ export const TESTS = [
                                                                      brim: ink(x, y - SEAT_PIP / 2 - 3) }; };
     const plusMid = () => { draw(); const [x, y] = q().more; return ink(x, y); };
     const at = q(), first = pip(0), third = pip(2), fifth = pip(4);
+    const rows = [...new Set(at.pips.map(p => p[1]))];
+    const second = pip(1), regular = pip(2);
 
     const sent = await put('quarryjob', 'more');
     let seen = null;
@@ -428,8 +438,10 @@ export const TESTS = [
       ok(at.seats && at.seats.filled === 3, 'three of them filled for the three at work', at.seats && at.seats.filled),
       ok(dark(first.mid) && dark(third.mid), 'a body at work is a solid pip', `${first.mid} ${third.mid}`),
       ok(light(fifth.mid) && !dark(fifth.low), 'an empty seat is hollow', `${fifth.mid} ${fifth.low}`),
-      ok(dark(first.brim) && !dark(pip(1).brim), 'the lamped body has a brim over its pip, the bare one none',
-         `${first.brim} ${pip(1).brim}`),
+      ok(at.seats && at.seats.brims === 2 && rows.length === 2 && at.pips[0][1] === at.pips[1][1] && at.pips[1][1] < at.pips[2][1] && at.pips[2][1] === at.pips[4][1],
+         'the two lamped stand in a row above the three regular seats', JSON.stringify(at.pips)),
+      ok(dark(first.brim) && dark(second.brim) && !dark(regular.brim), 'a lamped body has a brim over its pip, a regular seat none',
+         `${first.brim} ${second.brim} ${regular.brim}`),
       ok(sent, 'the plus under the cut sends one more'),
       ok(seen && dark(seen.low) && light(seen.high), 'its pip fills from the bottom while it walks over',
          seen && `low ${seen.low}, high ${seen.high}`),
