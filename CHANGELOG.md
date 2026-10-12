@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The first trip down into the deep plays a short scene: the camera finds him calling from the serpent's belly, then her under the portal, and she charges down and lands her first blow; her station stands, free, from the snatch (test/abyss-intro.test.mjs).
 - During the snatch the rest of the crew walk off the plank's shot, the portal waits until they are clear, and no rock comes down until it is over (test/ending-stage.test.mjs).
 - A station bought with a fang asks the yard's dust for its first rungs, so a new fighter climbs over minutes instead of all at once.
 - When the serpent resists explosive it floats a magic barrier under its body that soaks up the Sapper's charges.

@@ -1194,11 +1194,7 @@ HANDLES.__snatch = (o = {}) => {
 // is a check of its own.
 HANDLES.__deepCrew = (o = {}) => {
   deepReady();
-  // On no station: a station standing with nobody at it (the snatch's free
-  // first one, its fighter sent up top by `__crew`) takes the first hand
-  // free, so it is given its own before the spares are counted.
-  const empty = (o.spare | 0) > 0 ? S.stations.filter(st => st.built && !st.fighter).length : 0;
-  const spare = Math.max(0, o.spare | 0) + empty;
+  const spare = Math.max(0, o.spare | 0);
   S.crew = Math.max(0, S.crew + spare);
   S.deepCrew = Math.max(0, (S.deepCrew || 0) + spare);
   rebalance(); syncWorkers(); buildShop();

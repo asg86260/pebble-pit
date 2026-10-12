@@ -1,16 +1,16 @@
 // Her charge in the first trip down (abyssintro.js): speed lines trailing
-// back along her way, held with each pose of it, the tones and lengths of a
-// heavy blow's (render/attacks.js, `speed`). Behind her, so the body reads
-// on top.
+// back along her way, held with each pose of it, bright at her and greying
+// off as a heavy blow's do (render/attacks.js, `speed`), a cell longer so
+// they read over the deep's motes. Behind her, so the body reads on top.
 
 import { P, WORKER } from '../config.js';
 import { GREYS, cell } from '../deep/kits.js';
 import { charging } from '../abyssintro.js';
 import { ctx } from './ctx.js';
 
-const TONES = [GREYS[9], GREYS[7], GREYS[5]];
+const TONES = [GREYS[11], GREYS[10], GREYS[8], GREYS[6]];
 const LINES = [-1, 1, 0];          // cells off her way, either side and down its middle
-const LEN = 4;                     // cells a line trails
+const LEN = 6;                     // cells a line trails
 
 export function drawCharge() {
   const c = charging();
@@ -25,7 +25,7 @@ export function drawCharge() {
     const start = 2 + (i % 2);
     for (let j = 0; j < LEN; j++) {
       const r = start + j;
-      cell(ctx, Math.round(cx - ux * r - uy * off * 2), Math.round(cy - uy * r + ux * off * 2), TONES[Math.min(2, j >> 1)]);
+      cell(ctx, Math.round(cx - ux * r - uy * off * 2), Math.round(cy - uy * r + ux * off * 2), TONES[Math.min(TONES.length - 1, Math.floor(j * TONES.length / LEN) + (i % 2))]);
     }
   }
 }
