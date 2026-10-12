@@ -493,6 +493,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   gulpedAt: (S.gulped || []).slice(0, 4).map(m => ({ t: +m.t.toFixed(2), x: Math.round(m.x), y: Math.round(m.y) })),
   // The serpent showing at the surface, if it is (glimpse.js).
   glimpse: S.glimpse && { ...S.glimpse },
+  // And what is crossing behind the torn rift, if anything is (riftlife.js).
+  riftLife: S.riftLife && { ...S.riftLife },
 
   // The dust lying in the cut, not yet fetched.
   cutDust: dustIn(cut),

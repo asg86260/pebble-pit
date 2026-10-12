@@ -52,6 +52,7 @@ export * from './config/demo.js';
 export * from './config/roomba.js';
 export * from './config/classes.js';
 export * from './config/glimpse.js';
+export * from './config/riftlife.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.

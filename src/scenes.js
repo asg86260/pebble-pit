@@ -37,7 +37,8 @@ import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 import { INDEX } from './config/index.js';
-import { ABYSS_AT } from './config.js';
+import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL } from './config.js';
+import { riftCenter, riftRadius } from './rift.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -1914,6 +1915,28 @@ export const SCENES = {
                    window.__look(st().pitX + 120);
                    const mid = Math.round((S.camX + S.viewW / 2) / P);
                    window.__glimpse(kind, { into, x: mid - back, dir: 1 }); } }])),
+
+  // Life seen through the torn rift (riftlife.js), one scene a kind at the
+  // grown disc and again just torn, where the same crossing is a keyhole.
+  // Each is forced in so its moment is at the middle of the window a second
+  // on, when the shot tool takes it: `at(R)` is how far in that is, from the
+  // disc's radius in cells.
+  ...Object.fromEntries([
+    ['shoal', 'a shoal of dark shapes crossing far off', { d: 0, n: 4, y: 0 },
+     R => (R + 1 + 7) / RIFTLIFE_SPEED[0]],
+    ['creature', 'one of the deep\'s creatures nearer, in its own tones', { d: 2, of: 0, y: 0 },
+     R => (R + 1 + 5) / RIFTLIFE_SPEED[2]],
+    ['coil', 'the serpent far off: a length of his coil sliding past', { y: 0 },
+     R => (R * 1.5 + RIFTLIFE_COIL.coil.enter) / RIFTLIFE_COIL.coil.v],
+    ['crest', 'the serpent nearer: his crest along the bottom of the window', {},
+     R => (R * 1.3 + RIFTLIFE_COIL.crest.enter) / RIFTLIFE_COIL.crest.v],
+    ['eye', 'the serpent\'s eye at the window, looking', {}, () => 4.2],
+  ].flatMap(([kind, say, pin, at]) => [['', 'grown', ABYSS_AT * 0.85], ['-torn', 'just torn', 0]]
+    .map(([tail, size, ate]) => [`riftlife-${kind}${tail}`, { about: 'the pit and the rift',
+      say: `through the rift, ${size}: ${say}`,
+      run: () => { window.__reset(); window.__crew(2, 3); window.__tear(ate); window.__fast(2);
+                   window.__look(riftCenter().x - S.viewW / 2);
+                   window.__riftLife(kind, { ...pin, dir: 1, into: Math.max(0, at(riftRadius() / P) - 1) }); } }]))),
 
   // --- the shields ------------------------------------------------------------
   // The `!` scenes run the crew's five-second dance through, so the shot is
