@@ -5,12 +5,15 @@
 // first half's length once the whole half can be played.
 import { P } from './yard.js';
 
-// The switch for the whole half. Off, a released build's story ends where
-// 0.4.1's did: the rescue's sheet, the crew's dance, a drowned pit and no
-// snatch, so nothing below it is ever reached. A dev build and the node yard
-// play the half whatever this says (snatch.js, `serpentOn`), so work on it
-// goes on; `__serpentOn(false)` plays a released build's yard.
-export const SERPENT_ON = false;
+// The switch for the whole half, set by the build (DESIGN.md, "Three
+// builds"): on only in the paid full game (`VITE_FULL=1`, `npm run
+// build:full`, on itch and Steam). The free itch build never sets it, so its
+// story ends at the rescue's sheet, the crew's dance, a drowned pit and no
+// snatch, for good. A dev build and the node yard play the half whatever this
+// says (snatch.js, `serpentOn`), so work on it goes on; `__serpentOn(false)`
+// plays the free build's yard. The demo is never on (demo.js).
+const fullEnv = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {};
+export const SERPENT_ON = fullEnv.VITE_FULL === '1';
 
 // --- where it is ---------------------------------------------------------------
 // The deep lies under the world, below the yard's bottom edge, so a body that

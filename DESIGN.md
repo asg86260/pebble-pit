@@ -17572,12 +17572,17 @@ save is ever written by two clouds.
 
 ### The builds
 
-| build | where | saves | sync |
-|---|---|---|---|
-| browser | itch, `html` channel | the browser (IndexedDB), as now | ours (`CLOUD_ON`, opt-in), as now |
-| desktop | itch downloads | `userData/saves` (electron/store.cjs), as now | ours, as now |
-| Steam full | Steam, the game's app | `userData/saves`, as now | Steam Cloud through the Steamworks SDK |
-| Steam demo | Steam, the demo app | the same | Steam Cloud through the SDK, the demo app's own |
+| build | where | content | saves | sync |
+|---|---|---|---|---|
+| free | itch, the free page (browser + downloads) | the surface, to the rescue; the deep never on | the browser / `userData/saves`, as now | ours (`CLOUD_ON`, opt-in), as now |
+| paid full | itch, a paid page (browser + downloads) | the whole game (`VITE_FULL=1`) | the same | ours |
+| Steam full | Steam, the game's app | the whole game | `userData/saves` | Steam Cloud through the Steamworks SDK |
+| Steam demo | Steam, the demo app | the demo cut, to the net (`VITE_DEMO=1`) | the same | Steam Cloud through the SDK, the demo app's own |
+
+The owner, 2026-10-12: the free itch page keeps the surface as it is
+released today -- nothing a player had is taken back -- and the deep is
+never switched on there; the demo cut is the Steam demo's, going forward.
+The second half is what the paid builds add.
 
 - **One build setting, `target`**: `itch` (the default) or `steam`, read at
   build time (a `VITE_TARGET` the release workflow sets) and by the Electron
