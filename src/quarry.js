@@ -550,6 +550,7 @@ export function stepQuarrier(w, now, ctx = null) {
   // three swings were, and the last cell of a cut is still certain. The
   // crit's fountain goes on the first.
   let course = cells[c];
+  const took = new Set([c]);                   // a swing takes a column once
   findShards(w, cellsLeft(), crit);
   digCell(c);
   w.run.shift();
@@ -559,9 +560,10 @@ export function stepQuarrier(w, now, ctx = null) {
     // the others' claims hem in takes two cells a swing while they take a
     // whole pocket each, and that stretch is left standing courses above
     // the floor around it.
-    let n = nearestUndug(c, course);
-    if (n < 0) { course = shallowest(); n = nearestUndug(c, course); }
+    let n = nearestUndug(c, course, took);
+    if (n < 0) { course = shallowest(); n = nearestUndug(c, course, took); }
     if (n < 0) break;
+    took.add(n);
     findShards(w, cellsLeft(), 1);
     digCell(n);
     const i = w.run.indexOf(n);
@@ -617,13 +619,15 @@ export function findShards(w, left, crit = critRoll(critBoost(w))) {
 // The nearest column to `c` still standing at `course`, for the rest of a
 // pocket. Same course, not nearest undug at any depth: once a neighbor was
 // taken it was still the nearest undug column, one deeper, so a crit's extra
-// cells went down the same neighbor as a shaft. A column taken once this
-// swing is no longer on the course.
-function nearestUndug(c, course) {
+// cells went down the same neighbor as a shaft. And none this swing has
+// `took` already: when the pocket steps down a course, the columns it just
+// took are on that course too, and the nearest of them went down twice while
+// the column under the pick stood a course above it.
+function nearestUndug(c, course, took) {
   const cells = quarryCells();
   for (let d = 1; d < cells.length; d++) {
     for (const i of [c - d, c + d]) {
-      if (i < 0 || i >= cells.length) continue;
+      if (i < 0 || i >= cells.length || took.has(i)) continue;
       if (cells[i] === course && cells[i] < quarryTarget(i)) return i;
     }
   }

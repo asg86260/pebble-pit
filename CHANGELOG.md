@@ -167,6 +167,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 - A balloon that was up when the game was reloaded comes back among the clouds instead of back at its post (test/balloon.test.mjs).
 - A quarrier saved digging against the cut's near wall comes back on the cut's floor, not stood up on the bank (test/cut-station.test.mjs).
+- A quarrier's swing no longer takes the same column twice and leaves the one under its pick standing a course above its neighbors (test/cut-pockets.test.mjs).
 - Saving the sqwife before the pit drowned no longer leaves it solid: once her sheet is put down the hole tears, swells and drowns on its own (test/abyss-after-rescue.test.mjs).
 - An idle hauler stood beside the rock no longer drifts up its flank and hangs in the air there (test/haul-belt.test.mjs).
 - A fully lamped quarry gang no longer leaves a strip of the cut standing courses above the floor around it (test/cut-pockets.test.mjs).
