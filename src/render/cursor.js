@@ -6,9 +6,10 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 
-// the carried dust drifts loosely around the cursor
+// the carried dust drifts loosely around the cursor, and in the deep the
+// scales off its floor, which the hand holds on a count of their own
 export function drawCursor() {
-  if (!S.held) return;
+  if (!S.held && !S.heldScales) return;
   const t = now() / 1000;
   for (const m of S.motes) {
     m.a += m.spin;

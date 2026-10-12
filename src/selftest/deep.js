@@ -391,3 +391,59 @@ TESTS.push(['rails: the pointer on a station\'s prop or its fighter opens the bo
     ok(at('s2', 'post')?.title === 'the Ranger', "a class's board is its fighter's", at('s2', 'post')?.title)
   ];
 }]);
+
+// The hand in the deep, the player's way: a press on the floor's loose
+// scales by the crusher sweeps them onto the pointer, where they are drawn
+// as the yard's dust is, and let go anywhere on the furnace they go in at its
+// mouth and are crushed (DESIGN.md, "The crusher").
+import { crusherRect } from '../deep/place.js';
+TESTS.push(['deep: a handful swept off the floor shows on the pointer, and let go on the furnace goes in', async () => {
+  window.__fullSites();
+  window.__snatch({ played: true });
+  window.__crew(0, 4);
+  window.__looseScales(400);
+  window.__levels({ carryLevel: 4 });
+  window.__view('deep');
+  run(VIEW_GLIDE_S + 0.5);
+  const c = crusherRect();
+  window.__look(c.x + c.w / 2 - S.viewW / 3);
+  run(0.2);
+  const purse = S.scales;
+  const bx = c.x + c.w + P * 10, by = deepFloor() - P;
+  point('pointerdown', ...onScreen(bx, by));
+  for (let i = 0; i < 4; i++) point('pointermove', ...onScreen(bx + i * P, by));
+  const held = S.heldScales;
+  // Carried onto the furnace's door, still held: what the hand holds is drawn
+  // round it. The same frame painted with the hand emptied for a moment is
+  // the difference.
+  const hx = c.x + c.w / 2, hy = c.y + c.h * 0.7;
+  point('pointermove', ...onScreen(hx, hy));
+  run(0.3);
+  const [sx, sy] = onScreen(hx, hy);
+  const box = () => {
+    draw();
+    const r = 6 * P * S.zoom, g = document.getElementById('c').getContext('2d');
+    const k = devicePixelRatio || 1;
+    return g.getImageData(Math.round((sx - r) * k), Math.round((sy - r) * k), Math.round(2 * r * k), Math.round(2 * r * k)).data;
+  };
+  const withHand = box();
+  const motes = S.motes; S.motes = [];
+  const without = box();
+  S.motes = motes;
+  let differ = 0;
+  for (let i = 0; i < withHand.length; i += 4) if (withHand[i] !== without[i] || withHand[i + 1] !== without[i + 1]) differ++;
+  point('pointerup', ...onScreen(hx, hy));
+  const inWater = S.sinking.length;
+  // One grain's path, every frame, for the report when it misses.
+  const one = S.sinking[0], path = [];
+  for (let f = 0; f < 60 * 15; f++) {
+    window.__fast(1 / 60);
+    if (f % 20 === 0 && S.sinking.includes(one)) path.push(`${Math.round(one.x - c.x)},${Math.round(one.y - c.y)}`);
+  }
+  return [
+    ok(held > 0, 'the press took scales off the floor', `${held}`),
+    ok(differ > 0, 'and they are drawn on the pointer while held', `${differ} pixels`),
+    ok(inWater >= held && S.heldScales === 0, 'let go, they all went into the water', `${inWater} of ${held}`),
+    ok(S.scales - purse === held, 'and every one fell into the crusher', `${S.scales - purse} of ${held}; one, off the crusher's corner: ${path.join(' ')}`)
+  ];
+}]);
