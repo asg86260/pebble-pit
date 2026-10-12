@@ -43,7 +43,7 @@ export const DOSE_CARRY = 1;
 // One stirrer to a pot, and one pot to begin with. `another pot` breaks standing
 // room for one more -- capOfBare-shaped, the farm's "another plot" exactly.
 export const APOTH_POTS0 = 1;          // pots the building comes with
-export const APOTH_POTS_MAX = 4;       // and the most it can hold
+export const APOTH_POTS_MAX = 3;       // and the most it can hold: one pot to a brew
 export const POT_COST = 700;           // dust for the second pot after it
 export const POT_RATE = 1.7;           // and how much steeper each one gets
 

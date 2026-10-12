@@ -192,3 +192,25 @@ group('and no stirrer ever walks a bracing tonic out to a hauler', async () => {
        `${dosedHaulers.length} haulers under a bracing tonic`)
   ];
 });
+
+// --- three brews, three pots --------------------------------------------------
+group('the row stops selling pots at the third, one to a brew', async () => {
+  standApothecary();
+  const second = buyNow('anotherpot');
+  const third = buyNow('anotherpot');
+  const fourth = buyNow('anotherpot');
+  return [
+    ok(second && third && yard.S.apothPots === 3, 'two more pots stand three', `${yard.S.apothPots} pots`),
+    ok(!fourth && yard.S.apothPots === 3, 'and a fourth is not for sale', `${yard.S.apothPots} pots`)
+  ];
+});
+
+group('a yard that already holds four pots keeps all four, and the row is finished', async () => {
+  standApothecary();
+  yard.S.apothPots = 4;                         // an old save, from when the cap was four
+  run(1);
+  const more = buyNow('anotherpot');
+  return [
+    ok(!more && yard.S.apothPots === 4, 'nothing more is sold and nothing is taken', `${yard.S.apothPots} pots`)
+  ];
+});
