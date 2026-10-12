@@ -1879,6 +1879,14 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__fullSites();
                  window.__grant({ sparks: 9999, shards: 9999, spores: 9999 });
                  window.__meteor(); window.__give(60000); window.__fast(0.5); window.__look(st().pitX - 300); } },
+  // The tear's cutscene from its start: past the first rock (its reunion would
+  // hold the yard otherwise), the gulp not yet taken.
+  'tear>': { about: 'the pit and the rift', say: 'the hole filled past its brim, the tear scene from its start',
+    run: () => { window.__reset(); window.__crew(3, 3, 5, 7); window.__jump(3); window.__fullSites();
+                 window.__meteor(); window.__give(60000); } },
+  // The drowning's cutscene from its start, the pit one gulp short of drowned.
+  'drown>': { about: 'the pit and the rift', say: 'the disc about to give way, the drowning scene from its start',
+    run: () => { rich(); window.__meteor(); window.__tear(ABYSS_AT - 500); window.__give(30000); } },
   rift: { about: 'the pit and the rift', say: 'the rift, torn and fed',
     run: () => { rich(); window.__meteor(); window.__rift(); window.__give(60000); window.__give(12000);
                  window.__fast(4); window.__look(st().pitX - 260); } },
