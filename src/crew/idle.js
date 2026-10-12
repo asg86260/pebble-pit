@@ -3,7 +3,8 @@
 // real ones, weighted. A random walk with no destination reads as insects;
 // going over to somebody is what gives the break code its conversations.
 
-import { WORKER, ROCK_CLEAR, AMBLE_RAMP } from '../config.js';
+import { P, WORKER, ROCK_CLEAR, AMBLE_RAMP } from '../config.js';
+import { standTop, rockTop } from '../route.js';
 import { S, pit, shack } from '../state.js';
 import { rockLeft, yardLeft } from '../world.js';
 import { TYPE } from '../jobs.js';
@@ -47,13 +48,23 @@ export function strollTo(w) {
   return Math.max(lo, Math.min(hi, spots[Math.floor(rand() * spots.length)]));
 }
 
-// Nobody stands inside anybody: two idlers on the same spot drift apart.
+// Ground a body at rest may step on to from where it stands: within two cells
+// of its feet, up or down. Further down is a cliff; further up is a face, and
+// the climber meets a face by holding the body at its foot and lifting the
+// feet first, so a body nudged into one every frame climbs it in mid-air. A
+// walk that means to get somewhere goes up the face that way and over; a body
+// with nowhere to be stays off it.
+export const stepable = (w, x) => Math.abs(standTop(x, rockTop) - (w.y + WORKER)) <= P * 2;
+
+// Nobody stands inside anybody: two idlers on the same spot drift apart, but
+// not up the rock's flank or off a cliff.
 export function elbowIdle(w) {
   for (const o of S.workers) {
     if (o === w || o.type !== TYPE.HAUL || o.inside || o.goal !== 'idle') continue;
     const d = o.x - w.x;
     if (Math.abs(d) >= ROAM_ELBOW) continue;
-    w.x -= Math.sign(d || 1) * 0.25 * frames();
+    const to = w.x - Math.sign(d || 1) * 0.25 * frames();
+    if (stepable(w, to)) w.x = to;
     return;
   }
 }
