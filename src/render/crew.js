@@ -4,7 +4,7 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedShown, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -541,6 +541,18 @@ export function drawSightVeil() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(S.camX - P, S.camY - P, S.viewW + P * 2, S.viewH + P * 2);
   ctx.restore();
+}
+
+// The same look in the deep, whose bodies are drawn by its own layers
+// (render/deep.js, render/arms.js) rather than `drawWorkers`: the veil over
+// the water, the serpent and the floor, and each body's ring, before the
+// swimmers and the fighters go over them. A body still in the liquid above
+// the deep's surface is not drawn, so it is not ringed either.
+export function drawDeepSight() {
+  if (S.crewSight == null) return;
+  drawSightVeil();
+  const cut = deepTop() + DEEP_SURFACE + P;
+  for (const w of S.workers) if (!w.lifted && inTheDeep(w) && w.y >= cut) ring(w);
 }
 
 export function drawWorkers() {

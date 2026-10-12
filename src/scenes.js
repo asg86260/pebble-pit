@@ -761,6 +761,14 @@ const deepScenes = {
                  party: [cast('brawler'), cast('ranger'), cast('sapper'), cast('mage')] });
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } },
+  // `crew-sight` in the deep: the deep's own layers veil and ring its bodies.
+  'deep-sight': { about: 'the deep', say: 'the right button held in the deep: the water veiled behind the crew, each body ringed',
+    run: () => {
+      deepYard({ stage: 1, wound: 0.33, run: 30, party: [cast('brawler'), cast('ranger')] });
+      lookDeep((slotAt(0) + slotAt(1)) / 2);
+      S.crewSight = 0;
+      window.__holdShot();
+    } },
   // Anthem is the Bard's rung 4; the Ranger is the fighter she lifts.
   'party-bard': { about: 'the deep', say: 'a Bard singing her Anthem over a Ranger, the Ranger\'s shots Inspired',
     run: () => { deepYard({ party: [cast('ranger', 4), cast('bard', 4)] }); lookAtStation(1); } },

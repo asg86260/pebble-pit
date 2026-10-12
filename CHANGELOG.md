@@ -122,6 +122,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Gatherers work the scales lying nearest the crusher first instead of swimming across the deep to the tallest heap (test/gather.test.mjs).
 - Scales you grab off the deep's floor show on your pointer, and dropped on the furnace they fall in and count (src/selftest/deep.js).
 - After a refresh the deep's builders go back to a pod or station left half built and finish it (test/deep-build-reload.test.mjs).
+- Holding the right button in the deep picks out the crew down there as it does in the yard, the water veiled behind them and each body ringed (src/selftest/deep.js).
 
 ## Unreleased
 

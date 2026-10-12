@@ -17427,7 +17427,12 @@ docs/mocks/crew-sight-2026-10-08.html (ghosted buildings).
   its closed one (`grabbing`) with the left button down too or a body in
   hand (the owner, 2026-10-09: "just use the browser grab and grabbed
   cursors"; the drawn hands of docs/mocks were not used).
-- Open: the deep is not veiled, and a phone has no way in.
+- The deep is veiled and ringed the same way (`drawDeepSight`, the layer
+  `deep sight` just before the swimmers): its bodies are drawn by its own
+  layers, not `drawWorkers`, and the yard's veil is not a deep layer. The
+  deep's picture is turned over last, so the pale veil reads there as the
+  water darkening behind the crew and the rings come out white.
+- Open: a phone has no way in.
 
 ## The buried one yells for help (built 2026-10-08)
 
