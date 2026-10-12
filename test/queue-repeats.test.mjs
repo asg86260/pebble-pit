@@ -174,15 +174,20 @@ group('copies in line come back from a save as themselves', async () => {
   window.__buy('autotoss');
   window.__buy('carry');
   run(1);
-  const was = worksAt('bench').map(w => `${w.key}:${w.id}:${w.done > 0 ? 'going' : 'waiting'}`);
+  // Who and in what order, not how far: the tenth of a second after the
+  // reload is long enough for a builder already on the spot to start the first.
+  const was = worksAt('bench').map(w => `${w.key}:${w.id}`);
+  const doneWas = worksAt('bench').map(w => w.done);
   window.__reload();
   run(0.1);
-  const now = worksAt('bench').map(w => `${w.key}:${w.id}:${w.done > 0 ? 'going' : 'waiting'}`);
+  const now = worksAt('bench').map(w => `${w.key}:${w.id}`);
+  const kept = worksAt('bench').every((w, i) => w.done >= doneWas[i]);
   const back = window.__handBack('carry');
   return [
     ok(was.length === 3 && new Set(worksAt('bench').map(w => w.id)).size === worksAt('bench').length,
        'two copies of carry and a toss between, told apart by their ids', was.join(' ')),
     ok(now.join(' ') === was.join(' '), 'the same three after the reload', `${was.join(' ')} -> ${now.join(' ')}`),
+    ok(kept, 'none of them lost its progress', `${doneWas.join(',')}`),
     ok(back === true, 'and the newest can still be handed back', `${back}`),
   ];
 });
