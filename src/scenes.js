@@ -1774,6 +1774,13 @@ export const SCENES = {
   // camera on it.
   drown: { about: 'the pit and the rift', say: 'the disc giving way and drowning',
     run: () => { rich(); window.__meteor(); window.__tear(999500); window.__give(30000); window.__fast(0.6); } },
+  // The rescue had with the pit still solid: its sheet put down, the hole is
+  // owed the rest of the arc (`owedArc` in rift.js). Run on for twenty-odd
+  // seconds to watch the tear, the swell and the drowning.
+  'abyss-owed': { about: 'the pit and the rift', say: 'rescued before the pit drowned: the tear, the swell, the drowning',
+    run: () => { window.__reset(); window.__crew(3, 3); window.__give(20000); window.__fast(1);
+                 S.rescued = true; S.buried = false; window.__fast(1 / 60); window.__skipBeat('sheet');
+                 window.__look(st().pitX - 300); } },
 
   // --- the shields ------------------------------------------------------------
   // The `!` scenes run the crew's five-second dance through, so the shot is

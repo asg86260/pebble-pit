@@ -89,6 +89,9 @@ group('drowned first: the rescue\'s sheet put down, and the serpent takes him, o
 group('rescued first: the drowning\'s scene plays through, then the snatch', async () => {
   window.__crew(2, 2);
   run(1);
+  // Torn already, so the rescue owes no tearing scene (abyss-after-rescue's
+  // subject) and the drowning below is the rift's own.
+  window.__tear(0);
   rescued();
   run(1 / 60);
   window.__skipBeat('sheet');

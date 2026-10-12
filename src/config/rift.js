@@ -19,6 +19,13 @@ import { P } from './yard.js';
 export let RIFT_W0 = 7;              // cells across, the day it tears
 export let RIFT_WMAX = 20;           // and the size it gives way at
 export let ABYSS_AT = 1000000;       // grains eaten when the drowning comes
+// A yard that reaches the rescue before the pit has drowned has the rest of
+// the arc played for it: torn if it is not, then swollen to RIFT_WMAX over
+// this long and drowned (`owedArc` in rift.js). A swell, not a cut, because
+// the drowning's cause on the ordinary route is the disc growing until it
+// gives way; two scenes back to back on the same spot would show the effect
+// with the cause skipped.
+export let RIFT_SWELL_S = 8;         // seconds from the tear's scene letting go to the drowning
 // A fraction of the hole rather than a count of cells: the disc belongs at the
 // end of the hole that is on screen, whatever that end measures. Far enough in
 // to clear the counter's card, which stands four cells from the lip.
@@ -232,5 +239,7 @@ export const RIFT_KNOBS = [
   { key: 'RIFT_REACH0', label: 'rift reach at birth', min: 1, max: 30, step: 1,
     get: () => RIFT_REACH0, set: v => { RIFT_REACH0 = v; } },
   { key: 'ABYSS_AT', label: 'drowns at', min: 50000, max: 4000000, step: 50000,
-    get: () => ABYSS_AT, set: v => { ABYSS_AT = v; } }
+    get: () => ABYSS_AT, set: v => { ABYSS_AT = v; } },
+  { key: 'RIFT_SWELL_S', label: 'swell after rescue', min: 1, max: 60, step: 1,
+    get: () => RIFT_SWELL_S, set: v => { RIFT_SWELL_S = v; } }
 ];

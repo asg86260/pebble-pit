@@ -125,6 +125,7 @@ export const S = {
   // (`riftCells` in rift.js), and at ABYSS_AT the hole gives way: `drowned`
   // is the era after.
   riftAte: 0,
+  riftSwell: 0,           // growth the disc was given after the rescue, in riftAte's grains (`owedArc` in rift.js)
   drowned: false,
   // The camera's shot of the beat running now, or null: { name, at, s,
   // zoom }. Never saved; the beat's name is (`beat`), and a reload takes the
@@ -694,6 +695,7 @@ export const SAVED = [
   'roombas',              // the count; where each one is is crew/roomba.js's
   'coreBuried',           // whether this rock is not yet finished with
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
+  'riftSwell',            // and the growth the rescue handed it on top
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'resistBy', 'scales', 'seenScale',
   'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',

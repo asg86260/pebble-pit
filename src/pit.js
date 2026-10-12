@@ -155,6 +155,17 @@ export const pitFull = () => pit.n >= pitCapacity();
 // handout; nothing in the yard stands down on it.
 export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 
+// The hole gives way: it takes the whole pile, and the yard is rocked while
+// it goes (`gulp` in rift.js). Once: a torn hole is not torn again. The
+// rescue tears a hole that never filled the same way (`owedArc` in rift.js).
+export function tearHole() {
+  if (S.riftOpen) return;
+  S.riftOpen = true;
+  S.riftGulp = RIFT_GULP;
+  S.riftShake = RIFT_SHAKE;      // knocked by whoever steps the world: see game.js
+  sfx('rift-tear', { x: pit.x + pit.w / 2 });
+}
+
 // What happens when the hole has no room left: it does not refuse, it
 // COLLAPSES. The first grain it cannot take opens the rift and goes through
 // it, so nothing stops and no purchase stands between the player and
@@ -162,14 +173,7 @@ export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 // is through, so the counters do not move (`swallow`).
 export function throughRift(x, shade, n = 1, income = true) {
   S.seenFullPit = true;
-  if (!S.riftOpen) {
-    // The hole gives way: it takes the whole pile, and the yard is rocked
-    // while it goes (`gulp` in rift.js).
-    S.riftOpen = true;
-    S.riftGulp = RIFT_GULP;
-    S.riftShake = RIFT_SHAKE;      // knocked by whoever steps the world: see game.js
-    sfx('rift-tear', { x: pit.x + pit.w / 2 });
-  }
+  tearHole();
   const held = riftHeld();
   S.riftAte = (S.riftAte || 0) + n;   // fed at the mouth counts toward its growth
   let coin;
