@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bill Bars Mock</title>
+<style>
+:root {
+  --paper:#fff; --ink:#000; --ink-2:#333; --ink-4:#666; --ink-5:#8c8c8c; --ink-7:#aaa; --ink-8:#cfcfcf;
+  --page:#ececec; --shadow-off:6px;
+  --shard:#2f5fd0; --spore:#2e9e4b; --spark:#d93a25;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper:#1f1f1f; --ink:#e0e0e0; --ink-2:#b9b9b9; --ink-4:#939393; --ink-5:#767676; --ink-7:#5f5f5f; --ink-8:#434343; --page:#111; }
+}
+:root[data-theme="dark"] { --paper:#1f1f1f; --ink:#e0e0e0; --ink-2:#b9b9b9; --ink-4:#939393; --ink-5:#767676; --ink-7:#5f5f5f; --ink-8:#434343; --page:#111; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--page); color:var(--ink); font:13px/1.4 ui-monospace,"Courier New",monospace; padding:16px; }
+h1 { font-size:15px; margin:0 0 6px; }
+.lede { max-width:80ch; margin:0 0 4px; color:var(--ink-2); }
+.cant { max-width:80ch; margin:0 0 14px; color:var(--ink-4); font-size:12px; }
+.opts { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px 18px; }
+.opt h2 { font-size:13px; margin:0 0 2px; }
+.opt p { margin:0 0 22px; font-size:12px; color:var(--ink-4); min-height:2.8em; }
+.state { font-size:11px; color:var(--ink-4); margin:0 0 20px; }
+.stage { display:grid; gap:4px; transition:opacity .4s ease; } .stage.off { opacity:0; }
+
+/* ---- the real card (style.css #objective, #objective .barrier) ---- */
+.card { position:relative; display:grid; gap:1px; padding:8px 12px; font:12px ui-monospace,"Courier New",monospace;
+  color:var(--ink); background:var(--paper); border:2px solid var(--ink); box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--ink-7);
+  max-width:44ch; margin:0 var(--shadow-off) 0 0; }
+.card .next { position:absolute; top:-14px; left:-2px; padding:0 8px; line-height:14px; font-size:10px; letter-spacing:.1em; text-transform:uppercase; background:var(--ink); color:var(--paper); }
+.say { margin:0 !important; min-height:0 !important; color:var(--ink); font-size:12px; }
+.barrier { display:grid; grid-template-columns:auto 1fr; column-gap:8px; align-items:start; margin-top:4px; padding-top:4px; border-top:1px dashed var(--ink-4); font-size:11px; }
+.glyph { width:30px; height:30px; display:block; background:linear-gradient(var(--ink),var(--ink)) 6px 6px/18px 18px no-repeat; }
+.glyph.dome { background:radial-gradient(circle at 15px 26px, var(--ink) 0 12px, transparent 12.5px); }
+.side { display:grid; gap:2px; justify-items:start; min-width:0; }
+.name { text-transform:uppercase; letter-spacing:.08em; font-weight:bold; }
+.pay { display:grid; justify-items:start; gap:4px; margin-top:2px; }
+.bill { list-style:none; margin:0; padding:0; display:grid; row-gap:1px; justify-content:start; }
+.bill li { white-space:nowrap; position:relative; }
+.bill li > * { transition:opacity 1s ease; }
+.bill li.done > * { opacity:.55; }
+.num { text-align:right; padding-left:2px; font-variant-numeric:tabular-nums; }
+.box { position:relative; flex:none; width:7px; height:7px; border:1px solid currentColor; display:inline-block; }
+.box::after { content:''; position:absolute; inset:1px; background:currentColor; opacity:0; transition:opacity 1s ease; }
+li.done .box::after { opacity:1; }
+.dust,.shard,.spore,.spark { display:inline-block; vertical-align:baseline; }
+.dust { width:7px; height:7px; background:currentColor; }
+.shard { width:0; height:0; border-left:4.5px solid transparent; border-right:4.5px solid transparent; border-bottom:8px solid var(--shard); }
+.spark { position:relative; width:11px; height:11px; background:linear-gradient(var(--spark),var(--spark)) center/3px 11px no-repeat, linear-gradient(var(--spark),var(--spark)) center/11px 3px no-repeat; }
+.spore { width:9px; height:9px; background:var(--spore); clip-path:polygon(0% 50%,25% 6.7%,75% 6.7%,100% 50%,75% 93.3%,25% 93.3%); }
+.buy { font:inherit; color:var(--ink); background:var(--paper); border:3px double var(--ink); padding:2px 6px; max-width:100%; transition:border-color 1s ease,color 1s ease; }
+.buy.off { border-color:var(--ink-5); color:var(--ink-5); }
+.buy .cost { display:inline-flex; flex-wrap:wrap; gap:2px 8px; }
+.buy .cost > span { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+
+/* ---- shared bar bits ---- */
+.trk { background:var(--ink-8); position:relative; overflow:hidden; }
+.fil { position:absolute; left:0; top:0; bottom:0; background:var(--ink); width:calc(var(--p,0) * 100%); }
+
+/* A: thin bar under each line */
+.A .bill { grid-template-columns:auto auto 1fr; column-gap:4px; row-gap:0; width:21ch; }
+.A .bill li { display:contents; }
+.A .num { grid-column:3; }
+.A .bar { grid-column:1 / -1; height:3px; margin:2px 0 5px; }
+
+/* B: segmented pixel bar, numbers on hover */
+.B .bill { grid-template-columns:auto auto; column-gap:5px; row-gap:5px; align-items:center; }
+.B .bill li { display:contents; }
+.B .cells { display:grid; grid-template-columns:repeat(16,5px); gap:1px; height:7px; cursor:help; position:relative; }
+.B .cells i { background:var(--ink-8); position:relative; overflow:hidden; }
+.B .cells i::after { content:''; position:absolute; inset:0; background:var(--ink); transform-origin:left; transform:scaleX(var(--c,0)); }
+.B .tip { display:none; position:absolute; left:0; top:-17px; background:var(--ink); color:var(--paper); padding:0 5px; font-size:11px; line-height:15px; z-index:3; }
+.B .cells:hover .tip { display:block; }
+
+/* C: the line is the bar; light grey fill behind the numbers */
+.C .bill { grid-template-columns:auto; row-gap:2px; }
+.C .bill li { display:grid; grid-template-columns:auto auto 1fr; column-gap:4px; align-items:center; padding:1px 4px; width:21ch;
+  background:linear-gradient(var(--ink-8),var(--ink-8)) 0 0/calc(var(--p,0)*100%) 100% no-repeat; box-shadow:inset 0 0 0 1px var(--ink-8); }
+
+/* D: the coin itself is the meter, drawn twice as big, filling from the bottom */
+.D .bill { grid-template-columns:auto 1fr; column-gap:6px; row-gap:4px; width:21ch; align-items:center; }
+.D .bill li { display:contents; }
+.D .tank { position:relative; width:22px; height:22px; display:grid; place-items:center; border-bottom:1px solid var(--ink-8); }
+.D .tank > div { position:absolute; display:grid; place-items:center; width:11px; height:11px; transform:scale(2); }
+.D .tank .ghost { filter:grayscale(1) opacity(.28); }
+.D .tank .real { clip-path:inset(calc((1 - var(--p,0)) * 100%) 0 0 0); }
+.D li.done .tank { outline:1px solid var(--ink); outline-offset:1px; }
+@media (prefers-reduced-motion:reduce){ .bill li > *,.buy,.box::after,.stage{ transition:none; } }
+</style>
+</head>
+<body>
+<h1>Bill bars, three bills, four ways</h1>
+<p class="lede">A mock from plain shapes, not the game: the card's font, sizes, edge, shadow, NEXT tab, coin marks and layout B are copied from style.css, and the fills run on a timer loop (about 15 s) standing in for coins arriving. Per option: 1 props short of dust (stops at 140 / 200), 2 props affordable (the line completes and the buy lights), 3 the dome, four coins at different fills.</p>
+<p class="cant">It cannot show: the real purse rates, the card's swap fade, the real story line above the bill (a stand-in), how a bar behaves at huge bills (200k) or inside the real card at phone width, or hover on touch. Fill is ink or grey only; coin colors stay on the coin marks. Hover a bar in B for its numbers. Freeze a moment with #t=6.</p>
+<div class="opts" id="opts"></div>
+<script>
+const MARK = { dust:'<i class="dust"></i>', shard:'<i class="shard"></i>', spore:'<i class="spore"></i>', spark:'<i class="spark"></i>' };
+// [coin, need, where it stops, starts at s, ends at s]
+const SCEN = [
+  { label:'1. Props, short of dust', glyph:'', name:'Props', say:'build the props', coins:[['dust',200,140,1,9]] },
+  { label:'2. Props, affordable', glyph:'', name:'Props', say:'build the props', coins:[['dust',200,200,1,8]] },
+  { label:'3. Dome, four coins', glyph:'dome', name:'Dome', say:'raise the dome', coins:[['dust',400,400,1,6],['shard',60,45,2,10],['spore',25,10,3,12],['spark',5,5,5,9]] }
+];
+const OPTS = {
+  A:['A. A thin bar under each line','Numbers kept; a 3px bar the width of the bill column fills ink over grey.'],
+  B:['B. The bar replaces the numbers','Mark, then sixteen cells on the 6px pitch that fill cell by cell; numbers only on hover.'],
+  C:['C. The line is the bar','A light grey fill runs left to right behind the line; numbers on top.'],
+  D:['D. The coin is the meter','Mine: the mark itself, twice as big, fills from the bottom in its own color over a grey ghost; numbers kept.']
+};
+const fmt = n => String(Math.round(n));
+function build(k){
+  const root = document.createElement('section'); root.className = 'opt '+k;
+  root.innerHTML = `<h2>${OPTS[k][0]}</h2><p>${OPTS[k][1]}</p>`;
+  const stage = document.createElement('div'); stage.className = 'stage'; root.appendChild(stage);
+  const cards = SCEN.map(s => {
+    const st = document.createElement('div');
+    st.innerHTML = `<div class="state">${s.label}</div>`;
+    const card = document.createElement('div'); card.className = 'card';
+    const lis = s.coins.map(([m]) => {
+      let inner;
+      if (k==='A') inner = `<i class="box"></i>${MARK[m]}<span class="num"></span><div class="bar trk"><div class="fil"></div></div>`;
+      if (k==='B') inner = `${MARK[m]}<div class="cells">${'<i></i>'.repeat(16)}<span class="tip"></span></div>`;
+      if (k==='C') inner = `<i class="box"></i>${MARK[m]}<span class="num"></span>`;
+      if (k==='D') inner = `<div class="tank"><div class="ghost">${MARK[m]}</div><div class="real">${MARK[m]}</div></div><span class="num"></span>`;
+      return `<li>${inner}</li>`;
+    }).join('');
+    const cost = s.coins.map(([m,need]) => `<span>${MARK[m]}${need}</span>`).join('');
+    card.innerHTML = `<span class="next">next</span><p class="say">${s.say}</p>
+      <div class="barrier"><i class="glyph ${s.glyph}"></i><div class="side"><span class="name">${s.name}</span>
+      <div class="pay"><ul class="bill">${lis}</ul><button class="buy off" type="button"><span class="cost">${cost}</span></button></div></div></div>`;
+    st.appendChild(card); stage.appendChild(st);
+    return { s, card };
+  });
+  return { root, stage, cards };
+}
+const built = Object.keys(OPTS).map(build);
+const host = document.getElementById('opts'); built.forEach(b => host.appendChild(b.root));
+const T = 15;
+function draw(t){
+  for (const b of built) for (const {s,card} of b.cards) {
+    let all = true;
+    const lis = card.querySelectorAll('.bill li');
+    s.coins.forEach(([m,need,cap,a,z],i) => {
+      const have = Math.max(0, Math.min(1,(t-a)/(z-a))) * cap;
+      const p = Math.min(1, have/need), done = have >= need;
+      if (!done) all = false;
+      const li = lis[i];
+      li.classList.toggle('done', done);
+      li.style.setProperty('--p', p);
+      const num = li.querySelector('.num'); if (num) num.textContent = `${fmt(have)} / ${need}`;
+      const tip = li.querySelector('.tip'); if (tip) tip.textContent = `${fmt(have)} / ${need}`;
+      li.querySelectorAll('.cells i').forEach((c,j) => c.style.setProperty('--c', Math.max(0,Math.min(1,p*16-j))));
+    });
+    card.querySelector('.buy').classList.toggle('off', !all);
+  }
+}
+const frozen = /#t=([\d.]+)/.exec(location.hash);
+if (frozen) draw(+frozen[1]);
+else {
+  const t0 = performance.now(); let fading = false;
+  (function loop(now){
+    const t = ((now - t0)/1000) % T;
+    draw(t);
+    const off = t > T-0.8;
+    if (off !== fading) { fading = off; built.forEach(b => b.stage.classList.toggle('off', off)); }
+    requestAnimationFrame(loop);
+  })(t0);
+}
+</script>
+</body>
+</html>
