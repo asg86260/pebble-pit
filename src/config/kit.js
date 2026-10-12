@@ -1,6 +1,6 @@
 import { P } from './yard.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
-import { CROWD_MAX_W, COUNTER_GAP } from './crew.js';
+import { COUNTER_ROW_W, COUNTER_PAIR_GAP, COUNTER_GAP } from './crew.js';
 
 // --- the kit ------------------------------------------------------------------
 // What a hat costs. Shards, all of it: the quarry starts giving them up long
@@ -41,13 +41,20 @@ export const LIFT_PUFF_CELLS = 6;
 // house's, room for the house door's comings and goings and a hand's width.
 export const GARAGE_W = P * 8;
 export const GARAGE_H = P * 6;
-// Derived: the house's carriers counter and the garage's, each at its widest
-// and centered under its building, keep COUNTER_GAP between them.
-export const GARAGE_CLEAR = Math.max(P * 3,
-  Math.ceil((CROWD_MAX_W + COUNTER_GAP - (HOUSE_COLS * HOUSE_CUBE + GARAGE_W) / 2) / P) * P);
 // How far the truck lifts its driver: a wheel and the truck's box. The yard
 // draws the driver this high and the roster leaves this much room for one.
 export const LIFT_SEAT = P * 3;
+// The cart and the forklift, drawn in the yard and on the counters both.
+export const CART_W = P * 4, CART_H = P * 2;
+export const LIFT_W = P * 5, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ANTENNA = P * 2;
+// Derived: the house's counters (carters beside workers) and the garage's
+// (forklifts), each at its widest and centered under its building, keep
+// COUNTER_GAP between them. A counter is its widest row or its sprite.
+const HOUSE_COUNTERS_W = COUNTER_ROW_W * 2 + COUNTER_PAIR_GAP;
+const GARAGE_COUNTER_W = Math.max(COUNTER_ROW_W, LIFT_W + P + LIFT_FORK);
+export const GARAGE_CLEAR = Math.max(P * 3,
+  Math.ceil(((HOUSE_COUNTERS_W + GARAGE_COUNTER_W) / 2 + COUNTER_GAP
+             - (HOUSE_COLS * HOUSE_CUBE + GARAGE_W) / 2) / P) * P);
 
 export const LIFT_KNOBS = [
   { key: 'LIFT_FOUL', label: 'soot a cell a lift drives', min: 0, max: 1, step: 0.01,

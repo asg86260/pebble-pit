@@ -1026,6 +1026,19 @@ export const SCENES = {
     run: () => { window.__reset(); window.__crew(1, 3, 3, 7);
                  window.__levels({ benchLevel: 3, plotLevel: 6 }); window.__kit({ blasters: 2 });
                  window.__fast(20); window.__assign(JOB.QUARRY, 1); window.__look(st().quarryX - 260); } },
+  // The plots with a sun hat waiting on its stand: the growers' counter
+  // beside the plain hands', a grey ring in each that nobody stands in.
+  seatsfarm: { about: 'the crew', say: 'the plots: two growers at work, a hat waiting, the plain seats empty',
+    run: () => { window.__reset(); window.__crew(1, 3, 0, 5);
+                 window.__levels({ plotLevel: 6 }); window.__kit({ growers: 3 });
+                 window.__fast(20); window.__assign(JOB.FARM, -3); window.__fast(10);
+                 window.__look(st().farmX - 200); S.camLockY = S.groundY - S.viewH * 0.35; } },
+  // The tower's floor plan is its hats: one counter, all specialists, with a
+  // hat waiting indoors.
+  seatstower: { about: 'the crew', say: 'the tower: three wizards at work, a fourth hat waiting',
+    run: () => { rich(); window.__meteor(); window.__crew(2, 2, 0, 0, 0, 3); window.__wizardHat(1);
+                 window.__fast(20);
+                 window.__fast(5); window.__look(st().towerX - 560); S.camLockY = S.groundY - S.viewH * 0.35; } },
   // Twenty-one rooms is three full courses and part of a fourth, so both the
   // square sides and the unfinished top show in one shot.
   house: { about: 'the crew', say: 'the house, several storeys up',

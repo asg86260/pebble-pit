@@ -181,36 +181,35 @@ CREW_KNOBS.push(
   { key: 'CREW_FADE', label: 'faded crew', min: 0.1, max: 1, step: 0.05,
     get: () => CREW_FADE, set: v => { CREW_FADE = v; } });
 
-// --- the seat pips ------------------------------------------------------------
-// A station's counter is a pip a seat (roster.js). A pip is two cells with a
-// cell between, so a row of five is narrower than the old badge and count
-// were wide by less than one button. Past `SEAT_SHRINK` seats the row would
-// be wider than the station it hangs under, so the pips drop to a cell with a
-// cell between and wrap every `SEAT_ROW`, with the count written over them.
+// --- the counters -------------------------------------------------------------
+// Every counter in the yard is one shape (roster.js): a sprite saying what is
+// counted, and under it a round pip a seat or a body, two cells across with a
+// cell between. Specialists are a counter of their own beside the plain hands.
 export const SEAT_PIP = P * 2;
 export const SEAT_GAP = P;
-export const SEAT_PIP_SMALL = P;
-export const SEAT_GAP_SMALL = P;
-export const SEAT_SHRINK = 12;
-export const SEAT_ROW = 20;
-// The rule between the specialists' row and the regular seats: the air it sits
-// in, and its own thickness.
-export const SEAT_SEP = P * 2;
-export const SEAT_RULE = 2;
-// The empty seat's outline: the boards' bill-line grey, mapped by ink.js on
-// the dark page like every other gray.
+// An empty seat's ring, and a waiting hat's: this many pixels thick, in the
+// boards' bill-line grey, mapped by ink.js on the dark page like every other
+// gray.
+export const SEAT_RING = 2;
 export const SEAT_EMPTY_INK = '#8c8c8c';
 // A body sent off has no seat to walk away from (it carries where it stands),
 // so its pip empties on a clock: three held thirds over this long.
 export const SEAT_LEAVE_MS = 600;
-// A counter with no seat cap (the rock's diggers, the house's carriers, the
-// garage's forklifts) draws a pip a body, at full size, and holds each row to
-// this many; the rest are written after the row as "+N", in room this wide.
-export const SEAT_CROWD_ROW = 12;
-export const SEAT_PLUS_W = P * 6;
-// The widest a crowd strip ever gets (a full row and its "+N", no buttons),
-// and the bare ground two neighboring counters keep between them at that
-// widest. Layout reserves ground for the widest case, so a counter growing
-// never reaches its neighbor.
-export const CROWD_MAX_W = SEAT_CROWD_ROW * (SEAT_PIP + SEAT_GAP) - SEAT_GAP + P + SEAT_PLUS_W;
+// A pip block wraps at this many and stops at this many rows; the rest is
+// written "+N" under the block, so a counter is never wider than one row
+// however big the crew gets.
+export const COUNTER_ROW = 6;
+export const COUNTER_ROWS = 3;
+export const COUNTER_ROW_W = COUNTER_ROW * (SEAT_PIP + SEAT_GAP) - SEAT_GAP;
+// The air between a counter's sprite and its pips, and between two counters
+// on one post.
+export const COUNTER_SPRITE_GAP = P;
+export const COUNTER_PAIR_GAP = P * 4;
+// The block hangs from its first row: that row's middle is on the post's
+// line, where the -/+ stand, so a row added below moves neither.
+export const COUNTER_TOP_DROP = SEAT_PIP / 2;
+// The middle of the "+N" line, this far under the block's foot, and the room
+// it keeps there for what stands below.
+export const COUNTER_PLUS_DOWN = P + 3;
+export const COUNTER_PLUS_ROOM = P * 3;
 export const COUNTER_GAP = P * 4;

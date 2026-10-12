@@ -4,7 +4,7 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedShown, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -84,7 +84,7 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
 // A carter drags a cart behind it, and what it carries rides *in* the cart.
 // Wider than the body and half its height: at three cells square a carter reads
 // as two workers walking in step.
-const CART_W = P * 4, CART_H = P * 2, CART_ABREAST = 4;
+const CART_ABREAST = 4;
 
 function cartBox(x, y, face) {
   const back = face > 0 ? -1 : 1;                       // behind whichever way it is going
@@ -114,12 +114,10 @@ function drawCartBox(x, y) {
 // truck lifts the body: a wheel and the box. Same footing as the cart: wheels
 // in the cell over the ground line, the box on the wheels. Five cells wide so
 // a three-cell body sits centered on it a whole cell in from each end.
-const LIFT_W = P * 5, LIFT_H = LIFT_SEAT - P, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ABREAST = 4;
+const LIFT_H = LIFT_SEAT - P, LIFT_ABREAST = 4;
 // the most drawn on the forks: a load past this is a stack taller than the
 // mast, and the rest rides unseen
 const LIFT_CAP = 64;
-// how tall the roof antenna's stalk is, under its knob
-const LIFT_ANTENNA = P * 2;
 
 // One drawing for all three places it is seen: on the road under a body, on
 // its stand, and lying where it was thrown. `x` is the truck's left edge,
@@ -649,10 +647,16 @@ function drawWorker(w, t0) {
   }
 }
 
-// roster.js lays the badges out and is handed the draws a badge is made of,
-// so the crew's own drawing stays here.
+// roster.js lays the counters out and is handed the draws a counter's head is
+// made of, so the crew's own drawing stays here. A carter faces away from its
+// cart, which trails on its left; a forklift faces right, its box the truck's
+// and its forks' reach and the antenna's height.
+const COUNTER_SPRITES = {
+  cart: (x, y) => { drawCart(x + CART_W + P, y, 1); drawBody(x + CART_W + P, y); },
+  lift: (x, y) => { drawLiftBox(x, y + LIFT_SEAT + LIFT_ANTENNA + P, 1); }
+};
 export function drawRosterBodies() {
-  drawRoster(ctx, drawBody, drawHat, drawRunSwitch);
+  drawRoster(ctx, drawBody, drawHat, drawRunSwitch, COUNTER_SPRITES);
 }
 
 // The forklifts' garage: a flat-roofed shed, a roll-up door of slats that

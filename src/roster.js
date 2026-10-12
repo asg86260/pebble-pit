@@ -3,14 +3,14 @@
 // no buttons: you never put a body *on* carrying, it is what a body does when
 // it is on nothing. Its count is there to be read.
 
-import { P, WORKER, DEEP_POST_DOWN, SEAT_PIP, SEAT_GAP, SEAT_PIP_SMALL, SEAT_GAP_SMALL,
-         SEAT_SHRINK, SEAT_ROW, SEAT_EMPTY_INK, SEAT_LEAVE_MS, SEAT_SEP, SEAT_RULE, SEAT_CROWD_ROW, SEAT_PLUS_W,
-         GARAGE_W } from './config.js';
+import { P, WORKER, DEEP_POST_DOWN, SEAT_PIP, SEAT_GAP, SEAT_RING, SEAT_EMPTY_INK, SEAT_LEAVE_MS,
+         COUNTER_ROW, COUNTER_ROWS, COUNTER_SPRITE_GAP, COUNTER_PAIR_GAP, COUNTER_TOP_DROP,
+         COUNTER_PLUS_DOWN, COUNTER_PLUS_ROOM, GARAGE_W, CART_W, LIFT_W, LIFT_FORK, LIFT_SEAT,
+         LIFT_ANTENNA } from './config.js';
 import { deepFloor, deepTop } from './deep/place.js';
 import { STATIONS } from './stations.js';
 import { S, quarry } from './state.js';
 import { groundAt, kitX } from './world.js';
-import { houseRect } from './house.js';
 import { siteBox } from './works.js';
 import { JOB_MACHINE, running } from './machines.js';
 import { assign, idle } from './staffing.js';
@@ -20,6 +20,7 @@ import { JOB, DEEP_JOBS, TYPE, TYPE_OF } from './jobs.js';
 import { stationsBuilt, stationById, stationMid, canMoveIn, canMoveOut, moveFighter } from './deep/party.js';
 import { shown, onSnap } from './tween.js';
 import { garage, hasGarage } from './crew/lifts.js';
+import { HATS, HATS_TIGHT, spriteW, spriteH } from './sprites.js';
 import { darkPage } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
@@ -58,7 +59,7 @@ function postOf(row) {
   const post = {
     key: p.key, job: p.job, kit: !!p.kit, fixed: !!p.fixed,
     show: p.show || (() => row.open()),
-    // Held clear by its own width: a row of pips is as wide as its seats.
+    // Held clear by its own width: a counter is as wide as its pips.
     at: () => clearOfHoles(p.at?.() ?? mid(), widthOf(post)),
     y: () => (deep() ? deepFloor() + DEEP_POST_DOWN : null),
     get deep() { return deep(); }
@@ -100,25 +101,14 @@ const press = (p, d) => (p.station ? moveFighter(p.station, d) : assign(p.job, d
 
 // --- the seats ----------------------------------------------------------------
 // A station with a floor plan is counted in seats: a pip a place to stand,
-// black where a body is at work, grey and hollow where nobody is. The rock
-// has no plan and carrying is not a place, so those two keep the badge and
-// the number. A save from before a cap can stand more than the plan holds,
-// and every one of them still gets a pip.
+// black where a body is at work, a grey ring where nobody is. The rock has no
+// plan and carrying is not a place, so those two count bodies instead (the
+// crowds, below). A save from before a cap can stand more than the plan
+// holds, and every one of them still gets a pip.
 const seatsOf = p => {
   if (p.fixed) return 0;
   const cap = p.station ? 1 : capOf(p.job);
   return Number.isFinite(cap) && cap >= 1 ? Math.max(cap, count(p)) : 0;
-};
-
-function rowOf(n) {
-  const small = n > SEAT_SHRINK;
-  const pip = small ? SEAT_PIP_SMALL : SEAT_PIP, gap = small ? SEAT_GAP_SMALL : SEAT_GAP;
-  const per = small ? Math.min(SEAT_ROW, n) : n;
-  return { small, pip, gap, per, rows: Math.ceil(n / per), w: per * (pip + gap) - gap };
-}
-const widthOf = p => {
-  if (crowded(p)) return crowdWidth(p);
-  const n = seatsOf(p); return n ? BTN + GAP + rowOf(n).w + GAP + BTN : WIDE;
 };
 
 // Who is at this post, as bodies: the count says who is assigned, and only a
@@ -166,26 +156,26 @@ function leaving(p, on) {
   return m.out.map(t0 => 2 - Math.min(2, Math.floor((t - t0) / SEAT_LEAVE_MS * 3)));
 }
 
-// Held thirds, never a slide: nought is an outline (somebody is on the way),
-// two is two thirds; a full pip is only ever a body that has arrived.
+// Held thirds, never a slide: nought is a ring (somebody is on the way), two
+// is two thirds; a full pip is only ever a body that has arrived.
 const thirds = f => Math.min(2, Math.floor(f * 3));
 
-// How many of the bodies at work wear the post's hat. Pure, so the boxes can
-// ask it every frame without disturbing the walkers' clocks the way
-// `seatsAt` does.
 // A walker bound for the hat: on its way to the stand to take one, or already
 // wearing it on the way to the work. Its pip is a specialist's from the start.
 const wearsOn = (w, p) => !!p.kit && (w.wanting === p.job || (w.trained && w.kitOf === p.job));
 
+// How many of the bodies at work wear the post's hat. Pure, so the boxes can
+// ask it every frame without disturbing the walkers' clocks the way
+// `seatsAt` does.
 function hatsAtWork(p) {
   let n = 0;
   for (const w of bodiesOf(p)) if (!comingTo(w) && w.trained && w.kitOf === p.job) n++;
   return Math.min(n, count(p));
 }
 
-// One post's seats, pip by pip from the left: who is at work (the hatted
-// first), who is walking over, the furthest along first, who has just gone,
-// and the rest empty.
+// One post's seats: who is at work (the hatted counted apart), who is walking
+// over, the furthest along first, who has just gone, and how many seats are
+// the plain hands'.
 export function seatsAt(p) {
   const seats = seatsOf(p);
   if (!seats) return null;
@@ -212,11 +202,10 @@ export function seatsAt(p) {
 }
 
 // The seats split in two. The specialist slots are the station's hats, worn
-// or spare, capped at its seats: a pip for each hatted body at work and an
-// outline for each hat not yet worn (`spareKit`). The regular slots are the
-// seats left over, and are the only ones a plain body is ever drawn in. Nothing
-// owned means no top row. Together they never outnumber the seats, so the
-// strip is as wide as its seats and no wider.
+// or spare, capped at its seats: a pip for each hatted body at work and a
+// ring for each hat not yet worn (`spareKit`). The regular slots are the
+// seats left over, and are the only ones a plain body is ever drawn in.
+// Together they never outnumber the seats.
 const topOf = p => {
   if (!p.kit || !seatsOf(p)) return { worn: 0, wearing: 0, spare: 0 };
   const worn = hatsAtWork(p);
@@ -224,97 +213,38 @@ const topOf = p => {
   for (const w of bodiesOf(p)) if (comingTo(w) && wearsOn(w, p)) { wearing++; if (w.wanting === p.job) claimed++; }
   wearing = Math.min(wearing, Math.max(0, count(p) - worn));
   // A hat seat a plain body already stands in is not shown: the seat is
-  // taken, and the regular row must hold every plain body at work.
+  // taken, and the regular counter must hold every plain body at work.
   const plain = Math.max(0, count(p) - worn - wearing);
   return { worn, wearing, spare: Math.max(0, Math.min(spareKit(p.job) - claimed, seatsOf(p) - worn - wearing - plain)) };
 };
 
-// Each pip's square, in world units, in seat order: the hatted (top row),
-// then the regular seats row by row, then the spare-hat outlines, flagged.
-// Every box carries its own gap, so a row shrunk past the limit is hit at its
-// own size.
-function pipBoxes(p, left, y) {
-  const n = seatsOf(p), t = topOf(p);
-  const nTop = t.worn + t.wearing + t.spare, nBot = n - nTop;
-  const rb = rowOf(nBot || 1), rt = rowOf(nTop || 1);
-  const x0 = left + BTN + GAP, strip = rowOf(n).w;
-  // A row shows only when it has something in it. Whatever shows is one block
-  // (top row, rule, bottom row) centered on the post's line, where the buttons
-  // stand, like align-items: center. The block is as tall as it is whenever
-  // any hat is owned, so the only reflow is the first hat arriving.
-  const hRow = (r, k) => k ? r.rows * (r.pip + r.gap) - r.gap : 0;
-  const hTop = hRow(rt, nTop), hBot = hRow(rb, nBot);
-  const sep = nTop && nBot ? SEAT_SEP : 0;
-  const H = hTop + sep + hBot;
-  const y0 = Math.floor((y - H / 2) / P) * P;
-  const wide = (r, k) => Math.min(r.per, k) * (r.pip + r.gap) - r.gap;
-  const lay = (r, count, yy) => {
-    const out = [];
-    for (let i = 0; i < count; i++) {
-      const inRow = Math.min(r.per, count - Math.floor(i / r.per) * r.per);
-      const w = inRow * (r.pip + r.gap) - r.gap;
-      out.push({ x: x0 + Math.round((strip - w) / 2 / P) * P + (i % r.per) * (r.pip + r.gap),
-                 y: yy + Math.floor(i / r.per) * (r.pip + r.gap), w: r.pip, h: r.pip, gap: r.gap });
-    }
-    return out;
-  };
-  const top = lay(rt, nTop, y0);
-  const seated = t.worn + t.wearing;
-  top.forEach((q, i) => { q.spare = i >= seated; q.kind = 'top'; });
-  const bottom = lay(rb, nBot, y0 + hTop + sep);
-  bottom.forEach(q => { q.kind = 'reg'; });
-  const boxes = [...top.slice(0, seated), ...bottom, ...top.slice(seated)];
-  if (sep) {
-    const w = Math.max(wide(rt, nTop), wide(rb, nBot));
-    boxes.rule = { x: x0 + Math.round((strip - w) / 2 / P) * P, y: y0 + hTop + (SEAT_SEP - SEAT_RULE) / 2, w, h: SEAT_RULE };
-  }
-  boxes.block = { y: y0, h: H };
-  return boxes;
-}
-
-// What a pip is to hit: grown half a gap to each side, so the row is one
-// target with no dead seams. Up and down only half a gap too, since the two
-// rows are a gap apart and a taller target would take the other row's click.
-const pipHit = b => ({ x: b.x - b.gap / 2, y: b.y - b.gap / 2, w: b.w + b.gap, h: b.h + b.gap });
-
-// A click on a regular seat sets the regular count to that seat, through the
-// same press the buttons make, once a body, so every one of them still walks.
-// The last plain body's own pip takes that body off: the row reads as a run of
-// switches, and pressing the one at the end of the run turns it off. With a
-// hat spare the engine sends an added body for the hat first, as for the +.
-function setTo(p, want) {
-  const was = count(p);
-  const d = Math.sign(want - was);
-  for (let k = Math.abs(want - was); k > 0; k--) {
-    const before = count(p);
-    press(p, d);
-    if (count(p) === before) break;
-  }
+// A seated post's two counters, as pip lists: `k` thirds filled (3 is a body
+// at work) or `open`, a grey ring. The hatted: the hatted at work, then the
+// walkers bound for a hat, then the hats waiting. The plain: the plain at
+// work, then walking over, then just gone, then the empty seats.
+function seatPips(p) {
+  const s = seatsAt(p), t = topOf(p);
+  const top = [];
+  for (let i = 0; i < t.worn + t.wearing; i++) top.push({ k: i < s.brims ? 3 : (s.wearing[i - s.brims] ?? 0) });
+  for (let i = 0; i < t.spare; i++) top.push({ k: 0, open: true, spare: true });
+  const plain = [], on = s.plain + s.coming.length;
+  for (let m = 0; m < s.regular; m++)
+    plain.push(m < s.plain ? { k: 3 }
+      : m < on ? { k: s.coming[m - s.plain] }
+      : m < on + s.leaving.length ? { k: s.leaving[m - on] }
+      : { k: 0, open: true });
+  return { top, plain };
 }
 
 // --- the crowds ----------------------------------------------------------------
 // The rock, carrying and the garage have no seats to count: the rock has no
 // floor plan, carrying is not a place, and nobody is put on a forklift. Each
-// is a pip a body all the same, solid where a body is at work, the hatted (or
-// carting) on a row of their own above the plain with the rule between, and
-// each row held to `SEAT_CROWD_ROW` pips with the rest written after it as
-// "+N", so the block never grows past one strip however big the crew gets.
-// The strip is that width from the first body, with the "+N" room kept
-// after it: a strip that grew with the count walked the + out from under a
-// pointer pressing it, a pip's width every two presses. The garage's is as
-// wide as its forklifts, centered under the garage: nobody presses anything
-// there, and there are only ever a few.
+// is a pip a body all the same, solid where a body is at work.
 const crowded = p => !p.station && !seatsOf(p) && (p.fixed || !Number.isFinite(capOf(p.job)));
-const BRIM_OF = job => (job === JOB.HAUL ? 'cart' : 'hat');
 
-// Each row's pips as { k, brim, spare }: `k` thirds filled (3 is a body at
-// work), the brim its kit's, and a spare hat's outline flagged. The top row is
-// the hatted at work, then the walkers bound for a hat, then the hats owned
-// and not yet worn; the bottom row the plain at work, then the plain walking
-// over.
-function crowdOf(p) {
-  if (p.lifts) return { top: [], bottom: Array.from({ length: liftsOf() }, () => ({ k: 3, brim: 'fork' })) };
-  const on = count(p), brim = p.kit ? BRIM_OF(p.job) : null;
+function crowdPips(p) {
+  if (p.lifts) return { top: [], plain: Array.from({ length: liftsOf() }, () => ({ k: 3 })) };
+  const on = count(p);
   let here = 0, brims = 0, claimed = 0;
   const walking = [], hatBound = [];
   for (const w of bodiesOf(p)) {
@@ -331,90 +261,121 @@ function crowdOf(p) {
   const hatted = Math.min(brims, filled);
   walking.sort((a, b) => b - a);
   hatBound.sort((a, b) => b - a);
-  const spare = brim ? Math.max(0, spareKit(p.job) - claimed) : 0;
+  const spare = p.kit ? Math.max(0, spareKit(p.job) - claimed) : 0;
   const top = [
-    ...Array.from({ length: hatted }, () => ({ k: 3, brim })),
-    ...hatBound.slice(0, wearers).map(f => ({ k: thirds(f), brim })),
-    ...Array.from({ length: spare }, () => ({ k: 0, brim, spare: true }))
+    ...Array.from({ length: hatted }, () => ({ k: 3 })),
+    ...hatBound.slice(0, wearers).map(f => ({ k: thirds(f) })),
+    ...Array.from({ length: spare }, () => ({ k: 0, open: true, spare: true }))
   ];
-  const bottom = Array.from({ length: filled - hatted }, () => ({ k: 3, brim: null }));
-  for (let i = 0; i < on - wearers - filled; i++) bottom.push({ k: thirds(walking[i] ?? 0), brim: null });
-  return { top, bottom };
+  const plain = Array.from({ length: filled - hatted }, () => ({ k: 3 }));
+  for (let i = 0; i < on - wearers - filled; i++) plain.push({ k: thirds(walking[i] ?? 0) });
+  return { top, plain };
 }
 
-const rowWide = k => Math.max(1, k) * (SEAT_PIP + SEAT_GAP) - SEAT_GAP;
-const shownOf = list => Math.min(list.length, SEAT_CROWD_ROW);
-// A counter is as wide as its pips, so a press that changes the row would
-// slide the button under the pointer. While the pointer is over a counter, the
-// button last pressed is held where it is and the row grows or shrinks away
-// from it; the counter centers again when the pointer leaves. `box` is the
-// counter as last drawn, `anchor` the pressed button's side and edge.
+// --- the counters ----------------------------------------------------------------
+// Every counter is one shape: a sprite that says what is counted, and under it
+// the pips. The specialists are a counter of their own beside the plain hands,
+// as the house's carters stand beside its workers. A sprite is a body, the
+// body in the station's hat (the counter's tight brim), a carter with its
+// cart, or a forklift.
+const hatRows = mark => HATS_TIGHT[mark] || HATS[mark] || HATS.helmet;
+function spriteOf(p, kind) {
+  if (kind === 'cart') return { kind, w: CART_W + P + WORKER, h: WORKER };
+  if (kind === 'lift') return { kind, w: LIFT_W + P + LIFT_FORK, h: LIFT_SEAT + LIFT_ANTENNA + P };
+  if (kind === 'hat') {
+    const mark = KIT_MARK[p.job], rows = hatRows(mark), head = spriteH(rows) * P;
+    return { kind, mark, head, w: Math.max(WORKER, spriteW(rows) * P), h: head + WORKER };
+  }
+  return { kind: 'body', w: WORKER, h: WORKER };
+}
+// What the report calls each sprite's kit, as the checks have always read it.
+const KIT_NAME = { hat: 'hat', cart: 'cart', lift: 'fork', body: null };
+
+const pipRowW = n => Math.max(0, n * (SEAT_PIP + SEAT_GAP) - SEAT_GAP);
+
+// The post's counters, measured: an empty counter is not drawn, unless the
+// post would have none, when the plain one stands alone so the post still
+// says what it counts. Each block wraps at COUNTER_ROW and stops at
+// COUNTER_ROWS, the rest hidden and written under it.
+function countersOf(p) {
+  const seated = !!seatsOf(p);
+  if (!seated && !crowded(p)) return null;
+  const { top, plain } = seated ? seatPips(p) : crowdPips(p);
+  const list = [
+    { sprite: spriteOf(p, p.job === JOB.HAUL ? 'cart' : 'hat'), pips: top, top: true },
+    { sprite: spriteOf(p, p.lifts ? 'lift' : 'body'), pips: plain, top: false }
+  ];
+  const some = list.filter(c => c.pips.length);
+  return (some.length ? some : [list[1]]).map(c => {
+    const n = Math.min(c.pips.length, COUNTER_ROW * COUNTER_ROWS);
+    const rows = Math.ceil(n / COUNTER_ROW);
+    const strip = pipRowW(Math.min(c.pips.length, COUNTER_ROW));
+    return { ...c, n, hidden: c.pips.length - n, strip,
+             w: Math.max(strip, c.sprite.w), h: Math.max(0, rows * (SEAT_PIP + SEAT_GAP) - SEAT_GAP) };
+  });
+}
+
+// Buttons either side where the post has them: one pair framing the whole
+// post, however many counters stand on it.
+const sideOf = p => (p.fixed ? 0 : BTN + GAP);
+const innerOf = cs => cs.reduce((s, c) => s + c.w, 0) + COUNTER_PAIR_GAP * (cs.length - 1);
+
+const widthOf = p => {
+  const cs = countersOf(p);
+  return cs ? innerOf(cs) + sideOf(p) * 2 : WIDE;
+};
+
+// Each counter placed: its sprite's corner, and each shown pip's square in
+// world units, the rows left-aligned on a strip centered under the counter.
+// The block hangs from its first row, whose middle is the post's line, so the
+// buttons stand level with that row and stay put as rows are added under it.
+function placeCounters(cs, x0, line) {
+  const y0 = line - COUNTER_TOP_DROP;
+  const snap = v => Math.round(v / P) * P;
+  let x = x0;
+  for (const c of cs) {
+    c.box = { x, y: y0, w: c.w, h: c.h };
+    c.spriteAt = { x: x + snap((c.w - c.sprite.w) / 2), y: y0 - COUNTER_SPRITE_GAP - c.sprite.h };
+    const px = x + snap((c.w - c.strip) / 2);
+    c.boxes = c.pips.slice(0, c.n).map((q, i) => ({
+      ...q, top: c.top, brim: KIT_NAME[c.sprite.kind],
+      x: px + (i % COUNTER_ROW) * (SEAT_PIP + SEAT_GAP),
+      y: y0 + Math.floor(i / COUNTER_ROW) * (SEAT_PIP + SEAT_GAP), w: SEAT_PIP, h: SEAT_PIP, gap: SEAT_GAP }));
+    c.plus = c.hidden ? { n: c.hidden, x: px + c.strip / 2, y: y0 + c.h + COUNTER_PLUS_DOWN } : null;
+    x += c.w + COUNTER_PAIR_GAP;
+  }
+  const H = Math.max(...cs.map(c => c.h));
+  const up = Math.max(...cs.map(c => c.sprite.h)) + COUNTER_SPRITE_GAP;
+  const foot = y0 + H + (cs.some(c => c.hidden) ? COUNTER_PLUS_ROOM : 0);
+  return { list: cs, block: { y: y0, h: H }, top: y0 - up, foot };
+}
+
+// A counter is as wide as its pips, so a press that changes them would slide
+// the button under the pointer. While the pointer is over a post, the button
+// last pressed is held where it is and the post grows or shrinks away from
+// it; the post centers again when the pointer leaves. `box` is the post as
+// last drawn, `anchor` the pressed button's side and edge.
 const held = new Map();
 const NEAR = P * 2;
 const pointerOn = f => !!f.box && !!S.mouse && S.mouse.x >= f.box.l - NEAR && S.mouse.x <= f.box.r + NEAR
   && S.mouse.y >= f.box.t - NEAR && S.mouse.y <= f.box.b + NEAR;
-// The strip, and whether "+N" needs room after it.
-function crowdStrip(p, c = crowdOf(p)) {
-  const over = c.top.length > SEAT_CROWD_ROW || c.bottom.length > SEAT_CROWD_ROW;
-  const now = { strip: rowWide(Math.max(shownOf(c.top), shownOf(c.bottom))), plus: over };
-  return now;
-}
-// Buttons either side where the post has them, and the "+N" room before the +.
-const crowdSide = p => (p.fixed ? 0 : BTN + GAP);
-function crowdWidth(p) {
-  const s = crowdStrip(p);
-  return crowdSide(p) * 2 + s.strip + (s.plus ? GAP + SEAT_PLUS_W : 0);
-}
 
-// Each shown pip's square in world units, top row then bottom, each row
-// centered on the strip, the block centered on the post's line as the seats'
-// is. `plus` is what each row has past its last pip, and where it is written.
-function crowdBoxes(p, left, y) {
-  const c = crowdOf(p), { strip } = crowdStrip(p, c);
-  const x0 = left + crowdSide(p);
-  const rows = [c.top, c.bottom].filter(r => r.length);
-  const sep = rows.length > 1 ? SEAT_SEP : 0;
-  const H = rows.length * SEAT_PIP + sep;
-  const y0 = Math.floor((y - H / 2) / P) * P;
-  const centered = n => x0 + Math.round((strip - rowWide(n)) / 2 / P) * P;
-  const pips = [], plus = [];
-  rows.forEach((r, ri) => {
-    const n = shownOf(r), yy = y0 + ri * (SEAT_PIP + sep), xr = centered(n);
-    for (let i = 0; i < n; i++)
-      pips.push({ ...r[i], top: r === c.top, x: xr + i * (SEAT_PIP + SEAT_GAP), y: yy, w: SEAT_PIP, h: SEAT_PIP });
-    if (r.length > n) plus.push({ n: r.length - n, x: xr + rowWide(n) + GAP, y: yy + SEAT_PIP / 2 });
-  });
-  const wide = Math.max(shownOf(c.top), shownOf(c.bottom));
-  const rule = sep ? { x: centered(wide), y: y0 + SEAT_PIP + (SEAT_SEP - SEAT_RULE) / 2, w: rowWide(wide), h: SEAT_RULE } : null;
-  return { pips, plus, rule, block: { y: y0, h: H }, top: c.top.length, bottom: c.bottom.length };
-}
+// What a pip is to hit: grown half a gap to each side, so the block is one
+// target with no dead seams.
+const pipHit = b => ({ x: b.x - b.gap / 2, y: b.y - b.gap / 2, w: b.w + b.gap, h: b.h + b.gap });
 
-// A kit's brim, a hairline clear of the pip and proud of it either side: a
-// hat wears a crown on it, a cart's is cut in the middle, a forklift's is cut
-// a hairline in from each end, where its forks are.
-function crowdBrim(ctx, b) {
-  const t = THIN, y = b.y - t * 2;
-  if (b.brim === 'hat') {
-    ctx.fillRect(b.x - t, y, b.w + t * 2, t);
-    ctx.fillRect(b.x + b.w / 4, y - P / 2, b.w / 2, P / 2);
-  } else if (b.brim === 'cart') {
-    ctx.fillRect(b.x - t, y, b.w / 2 + t - 1, t);
-    ctx.fillRect(b.x + b.w / 2 + 1, y, b.w / 2 + t - 1, t);
-  } else if (b.brim === 'fork') {
-    ctx.fillRect(b.x - t, y, t, t);
-    ctx.fillRect(b.x + t, y, b.w - t * 2, t);
-    ctx.fillRect(b.x + b.w, y, t, t);
+// A click on a regular seat sets the regular count to that seat, through the
+// same press the buttons make, once a body, so every one of them still walks.
+// The last plain body's own pip takes that body off: the row reads as a run of
+// switches, and pressing the one at the end of the run turns it off.
+function setTo(p, want) {
+  const was = count(p);
+  const d = Math.sign(want - was);
+  for (let k = Math.abs(want - was); k > 0; k--) {
+    const before = count(p);
+    press(p, d);
+    if (count(p) === before) break;
   }
-}
-
-function drawCrowd(ctx, c) {
-  for (const b of c.pips) {
-    if (b.spare) { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, THIN); crowdBrim(ctx, b); continue; }
-    if (b.k >= 3) { ctx.fillStyle = '#000'; ctx.fillRect(b.x, b.y, b.w, b.h); } else part(ctx, b, b.k, THIN);
-    crowdBrim(ctx, b);
-  }
-  if (c.rule) { ctx.fillStyle = SEAT_EMPTY_INK; ctx.fillRect(c.rule.x, c.rule.y, c.rule.w, c.rule.h); }
-  ctx.fillStyle = '#000';
 }
 
 // Below the ground line, clear of the stopped-station triangle (seven cells
@@ -425,55 +386,45 @@ export function postAt(p) {
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
-// The machine's mark stands under the count, at the bottom of the strip, below
-// the tradesmen's lines when there are any.
-function runBox(p, left, y, crowd) {
+// The machine's mark stands under the count, at the foot of the post.
+function runBox(p, left, y, set) {
   const h = BTN;
-  // A crowd's mark stands its own clear air under the block.
-  if (crowd) return { x: left, y: crowd.block.y + crowd.block.h + P * 2, w: widthOf(p), h };
-  // A row of pips has no tradesmen's line under it (the brims are the hats),
-  // but wraps when the seats run past a row.
-  const n = seatsOf(p);
-  if (n) {
-    const r = rowOf(n);
-    return { x: left, y: y + WORKER + P * 3 + (r.rows - 1) * (r.pip + r.gap), w: widthOf(p), h };
-  }
+  if (set) return { x: left, y: set.foot + P * 2, w: widthOf(p), h };
   return { x: left, y: y + WORKER + P * 3 + (p.kit ? WORKER + P * 2 : 0), w: WIDE, h };
 }
 
-// The boxes of one roster, left to right, in world units, and under them a
-// second line for the tradesmen: under rather than beside, because it is a
-// *part* of the headcount, not another number.
+// The boxes of one roster, left to right, in world units. A post with no
+// seats and no crowd keeps the badge and the number, and under them a second
+// line for the tradesmen: under rather than beside, because it is a *part* of
+// the headcount, not another number.
 function boxes(p) {
   const { x, y } = postAt(p);
-  const wide = widthOf(p);
-  // Back on the grid: an even number of seats is half a cell off center.
+  const cs = countersOf(p);
+  const wide = cs ? innerOf(cs) + sideOf(p) * 2 : WIDE;
+  // Back on the grid: an even number of pips is half a cell off center.
   let left = Math.round((x - wide / 2) / P) * P;
   const f = held.get(p.key);
   if (f && f.anchor && pointerOn(f)) left = f.anchor.side === 'l' ? f.anchor.x : f.anchor.x - wide;
   else if (f) f.anchor = null;
-  // Two cells of air more than the gap elsewhere: the hat stands a cell proud
-  // of its square, and past that a full clear cell keeps the two groups
-  // reading as two lines rather than one smudged column.
   const under = y + WORKER + P * 3;
-  const crowd = crowded(p) ? crowdBoxes(p, left, y) : null;
-  if (crowd) {
+  const set = cs ? placeCounters(cs, left + sideOf(p), y) : null;
+  if (set && !p.fixed) {
     const g = f || (held.set(p.key, { box: null, anchor: null }), held.get(p.key));
-    g.box = { l: left, r: left + wide, t: y - BTN, b: y + BTN * 2 };
+    g.box = { l: left, r: left + wide, t: set.top, b: set.foot };
   }
   return {
     less: { x: left, y: y - BTN / 2, w: BTN, h: BTN },
     badge: { x: left + BTN + GAP, y: y - WORKER / 2, w: WORKER, h: WORKER },
     num: { x: left + BTN + GAP + WORKER + GAP, y, w: NUM, h: BTN },
     more: { x: left + wide - BTN, y: y - BTN / 2, w: BTN, h: BTN },
-    pips: seatsOf(p) ? pipBoxes(p, left, y) : null,
-    crowd,
+    counters: set,
+    seated: !!seatsOf(p),
     trade: { x: left + BTN + GAP, y: under - WORKER / 2, w: WORKER, h: WORKER },
     tradeNum: { x: left + BTN + GAP + WORKER + GAP, y: under, w: NUM, h: BTN },
     // The machine's mark, on the roster: "is this station worked by hands or
     // by the machine" is the same question the counter above answers about
     // *how many* hands.
-    run: runBox(p, left, y, crowd)
+    run: runBox(p, left, y, set)
   };
 }
 
@@ -504,8 +455,8 @@ const inside = (b, x, y) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b
 // What a button is to *hit*, as against what it is to look at: the mark is a
 // hairline bar, so the target is grown well past it and the cursor turns over
 // exactly this much. A cell out to the sides, because sideways it may not
-// reach the count between the two buttons, which must not become one; two up
-// and down, where there is nothing but bare ground.
+// reach the pips beside it, which must not become one; two up and down,
+// where there is nothing but bare ground.
 const HIT_X = P, HIT_Y = P * 2;
 const hit = b => ({ x: b.x - HIT_X, y: b.y - HIT_Y,
                     w: b.w + HIT_X * 2, h: b.h + HIT_Y * 2 });
@@ -518,15 +469,18 @@ export const overRoster = (x, y) => posts().some(p => {
   return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y);
 });
 
-// The pip a point is over: { kind, at } where `at` counts from one inside the
-// regular row, or null.
+// The seat pip a point is over: { kind, at } where `at` counts from one
+// inside the plain counter, or null. A crowd's pips are bodies, not seats,
+// and are not switches.
 function pipAt(p, b, x, y) {
-  if (!b.pips) return null;
-  const i = b.pips.findIndex(q => inside(pipHit(q), x, y));
-  if (i < 0) return null;
-  const q = b.pips[i];
-  return q.kind === 'reg' ? { kind: 'reg', at: b.pips.filter((r, j) => j <= i && r.kind === 'reg').length }
-                          : { kind: q.spare ? 'spare' : 'top' };
+  if (!b.seated || !b.counters) return null;
+  for (const c of b.counters.list) {
+    const i = c.boxes.findIndex(q => inside(pipHit(q), x, y));
+    if (i < 0) continue;
+    if (!c.top) return { kind: 'reg', at: i + 1 };
+    return { kind: c.boxes[i].spare ? 'spare' : 'top' };
+  }
+  return null;
 }
 
 // A click on a roster, in world units: true if it was one, so the yard knows
@@ -543,20 +497,24 @@ export function rosterHit(x, y) {
     if (inside(hit(b.more), x, y)) { hold('r', b.more.x + b.more.w); press(p, 1); S.shopStale = true; return true; }
     const pip = pipAt(p, b, x, y);
     if (pip) {
-      // A regular pip sets the regular count: the hatted bodies stand outside
-      // it. A spare hat's outline is a worker sent for that hat, the same
-      // press as the +. A hatted body's pip is no switch; it is only not a swing.
+      // A plain seat sets the plain count: the hatted bodies stand outside
+      // it. But no plain hand is seated while a hat waits: a click that would
+      // add one is the +, which sends a body for the hat, and only the one. A
+      // waiting hat's ring is that same press. A hatted body's pip is no
+      // switch; it is only not a swing.
       if (pip.kind === 'reg') {
-        const t = topOf(p), held = t.worn + t.wearing, plain = count(p) - held;
-        setTo(p, held + (pip.at === plain ? pip.at - 1 : pip.at));
+        const t = topOf(p), inHats = t.worn + t.wearing, plain = count(p) - inHats;
+        const want = inHats + (pip.at === plain ? pip.at - 1 : pip.at);
+        if (want > count(p) && t.spare > 0) press(p, 1);
+        else setTo(p, want);
       } else if (pip.kind === 'spare') press(p, 1);
       S.shopStale = true;
       return true;
     }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
     // The machine's mark is not a button either (a machine is stopped by
-    // taking its tender off, the `-` two rows up), but a click there is not a
-    // swing at the ground.
+    // taking its tender off, the `-` beside the count), but a click there is
+    // not a swing at the ground.
     if (machineAt(p.job) && inside(hit(b.run), x, y)) return true;
   }
   return false;
@@ -567,7 +525,10 @@ export function rosterHit(x, y) {
 // the one thing drawn in screen pixels: it is type, and type scaled by five
 // sixths has a fuzzy edge.
 
-export function drawRoster(ctx, drawBody, drawHat, drawRun) {
+// `sprites` draws the counters' heads that are not a bare body or a hatted
+// one: `cart(x, y)` a carter with its cart, `lift(x, y)` a forklift, each from
+// the top-left of its box, so the crew's drawing stays in render/crew.js.
+export function drawRoster(ctx, drawBody, drawHat, drawRun, sprites) {
   const spare = idle();
   for (const p of posts()) {
     const b = boxes(p);
@@ -576,18 +537,19 @@ export function drawRoster(ctx, drawBody, drawHat, drawRun) {
     // Only on the stations that have a machine standing.
     if (machineAt(p.job) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
 
-    if (b.crowd) {
-      drawCrowd(ctx, b.crowd);
+    if (b.counters) {
+      for (const c of b.counters.list) {
+        const { x, y } = c.spriteAt, s = c.sprite;
+        if (s.kind === 'cart') sprites?.cart(x, y);
+        else if (s.kind === 'lift') sprites?.lift(x, y);
+        else {
+          const bx = x + (s.w - WORKER) / 2, by = y + (s.head || 0);
+          drawBody(bx, by);
+          if (s.kind === 'hat') drawHat(bx, by, s.mark, true);
+        }
+        for (const q of c.boxes) drawPip(ctx, q);
+      }
       if (p.fixed) continue;                     // carrying and the garage are read, not set
-      button(ctx, b.less, '-', canLess(p, n));
-      button(ctx, b.more, '+', canMore(p, spare));
-      continue;
-    }
-
-    if (b.pips) {
-      drawPips(ctx, b.pips, seatsAt(p));
-      const rl = b.pips.rule;
-      if (rl) { ctx.fillStyle = SEAT_EMPTY_INK; ctx.fillRect(rl.x, rl.y, rl.w, rl.h); ctx.fillStyle = '#000'; }
       button(ctx, b.less, '-', canLess(p, n));
       button(ctx, b.more, '+', canMore(p, spare));
       continue;
@@ -645,52 +607,42 @@ function button(ctx, b, kind, live) {
   }
 }
 
-// A pip's outline, as four hairlines: a stroked square straddles the pixel
-// edge and comes out as a grey smear at the yard's zoom.
-function edge(ctx, b, t) {
-  ctx.fillRect(b.x, b.y, b.w, t);
-  ctx.fillRect(b.x, b.y + b.h - t, b.w, t);
-  ctx.fillRect(b.x, b.y, t, b.h);
-  ctx.fillRect(b.x + b.w - t, b.y, t, b.h);
+// A pip is a pixel mask, never an arc: an arc's edge is a grey smear, and a
+// disc on whole pixels stays black and white. A disc is every pixel whose
+// middle is inside the circle; the ring is the disc less the pixels further
+// in than its thickness; a body on its way is the ring with the disc's rows
+// filled from the bottom. The mask is cut in the screen's own pixels, not the
+// world's: the yard is drawn at five sixths, and a world pixel's row lands
+// between two screen rows and leaves a pale seam through the disc.
+const masks = new Map();
+function maskOf(d, ring, fill, color) {
+  const key = `${d}:${ring}:${fill}:${color}`;
+  let c = masks.get(key);
+  if (c) return c;
+  c = document.createElement('canvas');
+  c.width = c.height = d;
+  const g = c.getContext('2d'), r = d / 2;
+  g.fillStyle = color;
+  for (let y = 0; y < d; y++) for (let x = 0; x < d; x++) {
+    const q = Math.hypot(x + 0.5 - r, y + 0.5 - r);
+    if (q <= r && (q > r - ring || y >= d - fill)) g.fillRect(x, y, 1, 1);
+  }
+  masks.set(key, c);
+  return c;
 }
 
-// An outline with `k` thirds of it filled from the bottom up.
-function part(ctx, b, k, t) {
-  ctx.fillStyle = '#000';
-  edge(ctx, b, t);
-  const h = Math.round(b.h * k / 3);
-  if (h) ctx.fillRect(b.x, b.y + b.h - h, b.w, h);
-}
-
-function drawPips(ctx, boxes, s) {
-  let ti = 0, ri = 0;
-  boxes.forEach(b => {
-    const small = b.w < SEAT_PIP, t = small ? THIN / 2 : THIN;
-    // The hat, as a brim a hairline clear of the head and proud of it either
-    // side, with a crown on it; at the small size there is room only for
-    // the brim. A spare hat's outline wears it too, in the outline's grey.
-    const hat = () => {
-      if (small) ctx.fillRect(b.x, b.y - t * 2, b.w, t);
-      else {
-        ctx.fillRect(b.x - t, b.y - t * 2, b.w + t * 2, t);
-        ctx.fillRect(b.x + b.w / 4, b.y - t * 2 - P / 2, b.w / 2, P / 2);
-      }
-    };
-    if (b.spare) { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, t); hat(); return; }
-    // The top row: the hatted at work, then the walkers bound for a hat.
-    if (b.kind === 'top') {
-      if (ti < s.brims) { ctx.fillStyle = '#000'; ctx.fillRect(b.x, b.y, b.w, b.h); hat(); }
-      else { part(ctx, b, s.wearing[ti - s.brims] ?? 0, t); hat(); }
-      ti++;
-      return;
-    }
-    // The bottom row: plain bodies at work, then walking over, then leaving.
-    const m = ri++, on = s.plain + s.coming.length;
-    if (m < s.plain) { ctx.fillStyle = '#000'; ctx.fillRect(b.x, b.y, b.w, b.h); }
-    else if (m < on) part(ctx, b, s.coming[m - s.plain], t);
-    else if (m < on + s.leaving.length) part(ctx, b, s.leaving[m - on], t);
-    else { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, t); }
-  });
+// A body at work is a black disc; an empty seat, or a hat waiting with nobody
+// under it, a grey ring. A body on its way is a black ring filling from the
+// bottom in held thirds, and one just gone the same, emptying.
+function drawPip(ctx, q) {
+  const m = ctx.getTransform(), z = m.a;
+  const d = Math.max(1, Math.round(q.w * z)), ring = Math.max(1, Math.round(SEAT_RING * z));
+  const fill = q.open ? 0 : q.k >= 3 ? d : Math.round(d * q.k / 3);
+  const mask = maskOf(d, ring, fill, q.open ? SEAT_EMPTY_INK : '#000');
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(mask, Math.round(m.a * q.x + m.e), Math.round(m.d * q.y + m.f));
+  ctx.restore();
   ctx.fillStyle = '#000';
 }
 
@@ -705,27 +657,14 @@ export function drawRosterCounts(ctx, screenAt) {
     // paper's white to stand on the black water like the post's own marks.
     ctx.fillStyle = p.deep && !darkPage ? '#fff' : '#000';
     const b = boxes(p);
-    // A crowd is its own count up to a row; past it, the rest after the row.
-    if (b.crowd) {
-      ctx.textAlign = 'left';
-      for (const q of b.crowd.plus) {
-        const at = screenAt(q.x, q.y);
-        ctx.fillText(`+${Math.round(shown('crowd:' + p.key + q.y, q.n))}`, Math.round(at.x), Math.round(at.y));
-      }
-      ctx.textAlign = 'center';
-      continue;
-    }
-    // A row of pips is its own count; past a row's worth it is written over
-    // them too, seated of seats, since nobody counts sixty dots.
-    if (b.pips) {
-      if (seatsOf(p) > SEAT_SHRINK) {
-        const s = seatsAt(p);
-        const top = Math.min(...b.pips.map(q => q.y));
-        const lo = Math.min(...b.pips.map(q => q.x)), hi = Math.max(...b.pips.map(q => q.x + q.w));
-        const at = screenAt((lo + hi) / 2, top - P * 2);
-        ctx.fillText(`${Math.round(shown('seats:' + (p.station || p.job), s.filled))}/${s.seats}`,
-                     Math.round(at.x), Math.round(at.y));
-      }
+    // A counter is its own count up to its rows; past them, the rest under
+    // the block, since nobody counts sixty dots.
+    if (b.counters) {
+      b.counters.list.forEach((c, i) => {
+        if (!c.plus) return;
+        const at = screenAt(c.plus.x, c.plus.y);
+        ctx.fillText(`+${Math.round(shown(`crowd:${p.key}:${i}`, c.plus.n))}`, Math.round(at.x), Math.round(at.y));
+      });
       continue;
     }
     const at = screenAt(b.num.x + b.num.w / 2, b.num.y);
@@ -754,6 +693,9 @@ export function rosterReport() {
   return posts().map(p => {
     const b = boxes(p);
     const H = hit(b.less);
+    const set = b.counters;
+    const mid = q => [q.x + q.w / 2, q.y + q.h / 2];
+    const all = set ? set.list.flatMap(c => c.boxes) : [];
     return { key: p.key, job: p.job, station: p.station || null, n: count(p),
              // The counter's ground, left and right, for the checks that keep two apart.
              span: [b.less.x, b.more.x + b.more.w], hats: hats(p.job), worn: worn(p.job),
@@ -765,28 +707,36 @@ export function rosterReport() {
              cap: p.station ? 1 : capOf(p.job) === Infinity ? null : capOf(p.job),
              // Whether it is *working* is `n`, two fields up.
              machine: machineAt(p.job),
-             run: (b => [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2])(boxes(p)),
+             run: [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2],
              hands: (n => n === Infinity ? null : n)(handsOf(p.job)),
              // Only where a trade line is actually drawn.
-             trade: !b.pips && !b.crowd && TRADE_OF[p.job] && hats(p.job) > 0
+             trade: !set && TRADE_OF[p.job] && hats(p.job) > 0
                ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
              lifts: p.lifts ? liftsOf() : null,
+             // Each counter on the post, left to right: what its sprite is
+             // and where, how many pips it has and how many are shown, each
+             // shown pip's middle, and the "+N" under it.
+             counters: set ? set.list.map(c => ({
+               sprite: c.sprite.kind, mark: c.sprite.mark || null, top: c.top,
+               head: [c.spriteAt.x, c.spriteAt.y, c.sprite.w, c.sprite.h], box: { ...c.box },
+               pips: c.pips.length, shown: c.n, at: c.boxes.map(mid),
+               plus: c.plus ? { n: c.plus.n, at: [c.plus.x, c.plus.y] } : null })) : null,
              // A crowd, where a post is one: each shown pip's middle, whether
-             // it is filled, its brim and its row; the rows' full lengths;
-             // and each "+N" written after a row.
-             crowd: b.crowd ? {
-               pips: b.crowd.pips.map(q => ({ at: [q.x + q.w / 2, q.y + q.h / 2], k: q.k, brim: q.brim || null,
-                                              spare: !!q.spare, top: q.top })),
-               top: b.crowd.top, bottom: b.crowd.bottom,
-               plus: b.crowd.plus.map(q => ({ n: q.n, at: [q.x, q.y] })),
-               rule: b.crowd.rule ? { ...b.crowd.rule } : null, block: { ...b.crowd.block } } : null,
+             // it is filled, its kit and whether it is in the specialists'
+             // counter; how many pips each counter has; and each "+N".
+             crowd: set && !b.seated ? {
+               pips: all.map(q => ({ at: mid(q), k: q.k, brim: q.brim, spare: !!q.spare, top: q.top })),
+               top: set.list.filter(c => c.top).reduce((s, c) => s + c.pips.length, 0),
+               bottom: set.list.filter(c => !c.top).reduce((s, c) => s + c.pips.length, 0),
+               plus: set.list.filter(c => c.plus).map(c => ({ n: c.plus.n, at: [c.plus.x, c.plus.y] })),
+               block: { ...set.block } } : null,
              mark: KIT_MARK[p.job],
              // The seats, where a post has them: what each pip shows and
-             // where its middle is, for a check to click.
+             // where its middle is (the specialists' counter first), for a
+             // check to click.
              seats: seatsAt(p),
-             pips: b.pips ? b.pips.map(q => [q.x + q.w / 2, q.y + q.h / 2]) : null,
-             rule: b.pips && b.pips.rule ? { ...b.pips.rule } : null,
-             block: b.pips ? { ...b.pips.block } : null,
+             pips: set && b.seated ? all.map(mid) : null,
+             block: set && b.seated ? { ...set.block } : null,
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
              more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
   });
