@@ -1,5 +1,16 @@
 # Still to do
 
+## Controller support -- DESIGNED, AWAITING SIGN-OFF (2026-10-12)
+
+"Controller support" in DESIGN.md: a pad moves a focus between the things
+a click lands on, with a held-trigger hand for sweeping, throwing and
+dropping a body anywhere. Mocks: docs/mocks/controller-focus-2026-10-12.html
+(the marker on every surface, three styles) and
+docs/mocks/controller-map-2026-10-12.html (Xbox and Deck maps). Waiting on
+the owner's vote: the marker style; hops or a free cursor; mouse and pad
+both live (last input wins) or a pad mode; the Gamepad API with a Steam
+Input default config, or Steam Input's native API. No code until then.
+
 ## The index -- BUILT, WORDS AND DRAWINGS OPEN (2026-10-11)
 
 "The index" in DESIGN.md (built). Open: every entry's text in

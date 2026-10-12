@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controller Button Map</title>
+<style>
+:root {
+  --bg: #ecece9; --panel: #ffffff; --line: #d2d2cd; --fg: #141414; --dim: #5a5a5a;
+  --paper: #ffffff; --ink: #141414; --grey: #8c8c8c; --pale: #d8d8d8; --wash: #f3f3f2;
+  --accent: #6f36c9; --accent-soft: #ece4f8;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #09090b; --panel: #121215; --line: #2a2a31; --fg: #e9e9ee; --dim: #9a9aa6;
+    --paper: #141416; --ink: #ebebeb; --grey: #7a7a7a; --pale: #34343b; --wash: #1a1a1e;
+    --accent: #a979ef; --accent-soft: #241a35; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #09090b; --panel: #121215; --line: #2a2a31; --fg: #e9e9ee; --dim: #9a9aa6;
+  --paper: #141416; --ink: #ebebeb; --grey: #7a7a7a; --pale: #34343b; --wash: #1a1a1e;
+  --accent: #a979ef; --accent-soft: #241a35; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--mono); padding: 24px 16px 56px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 15px; margin: 0; }
+h3 { font-size: 13px; margin: 0; }
+p, li { margin: 0; max-width: 78ch; color: var(--dim); }
+p b, li b, td b { color: var(--fg); }
+ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.mock { border: 1px dashed var(--accent); color: var(--fg); padding: 10px 12px; max-width: 78ch; }
+.two { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 16px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); padding: 12px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+figcaption { color: var(--dim); font-size: 13px; }
+figcaption b { color: var(--fg); }
+svg.pad { width: 100%; height: auto; display: block; }
+svg .body { fill: var(--paper); stroke: var(--ink); stroke-width: 3; }
+svg .ctl { fill: var(--paper); stroke: var(--ink); stroke-width: 2.5; }
+svg .ink { fill: var(--ink); }
+svg .lbl { fill: var(--paper); font: bold 10px var(--mono); text-anchor: middle; dominant-baseline: central; }
+svg .lbl.dark { fill: var(--ink); }
+svg .num circle { fill: var(--accent); }
+svg .num text { fill: #fff; font: bold 10px var(--mono); text-anchor: middle; dominant-baseline: central; }
+svg .cap { fill: var(--dim); font: 10px var(--mono); text-anchor: middle; }
+ol.legend { margin: 0; padding-left: 26px; display: grid; gap: 3px; font-size: 13px; }
+ol.legend li::marker { color: var(--accent); font-weight: bold; }
+.scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); background: var(--panel); }
+table { border-collapse: collapse; font-size: 12px; min-width: 760px; width: 100%; }
+th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { position: sticky; top: 0; background: var(--panel); color: var(--fg); }
+td { color: var(--dim); }
+td:first-child { color: var(--fg); }
+tr.grp td { background: var(--wash); color: var(--fg); font-weight: bold; letter-spacing: .06em; }
+canvas.yard { width: 100%; display: block; image-rendering: pixelated; }
+.beat { font-size: 12px; min-height: 3em; color: var(--fg); }
+.keys { display: flex; flex-wrap: wrap; gap: 6px; }
+.keys figure { padding: 6px; flex: 1 1 140px; }
+.keys figcaption { font-size: 11px; }
+.rec { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--fg); }
+
+/* the prompt glyphs: flat, black and white, no brand colors */
+.g { display: inline-grid; place-items: center; font: bold 10px/1 var(--mono); vertical-align: -3px;
+     min-width: 16px; height: 16px; padding: 0 3px; margin: 0 1px; background: var(--ink); color: var(--paper); }
+.g.face { border-radius: 50%; width: 16px; padding: 0; }
+.g.bump { border-radius: 3px 3px 6px 6px; }
+.g.trig { border-radius: 7px 7px 2px 2px; }
+.g.back { border-radius: 2px 8px 8px 2px; }
+.g.pad { background: none; color: var(--ink); border: 2px solid var(--ink); border-radius: 2px; }
+.g.stick { border-radius: 50%; width: 16px; padding: 0; background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.g.track { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); border-radius: 3px; }
+.big .g { transform: scale(2); margin: 10px 14px; }
+.sheet { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.sheet span { font-size: 11px; color: var(--dim); margin-right: 10px; }
+
+/* in-game prompts, drawn to the game's shapes */
+.ui { font: 10px/1.4 var(--mono); color: var(--ink); }
+.skip { display: inline-grid; border: 2px solid var(--ink); background: var(--paper); padding: 4px 10px; letter-spacing: .14em; text-transform: uppercase; box-shadow: 4px 4px 0 var(--pale); position: relative; }
+.skip .bar { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--ink); width: 0; }
+.tipx { display: inline-block; border: 2px solid var(--ink); background: var(--paper); padding: 3px 6px; }
+.ctlpage { display: grid; grid-template-columns: max-content max-content max-content; gap: 3px 16px; border: 2px solid var(--ink); background: var(--paper); padding: 10px 12px; max-width: 100%; overflow-x: auto; }
+.ctlpage b { letter-spacing: .1em; }
+.ctlpage .h { color: var(--grey); text-transform: uppercase; letter-spacing: .12em; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>The button map</h1>
+    <p>Every action in the game on an Xbox pad and on a Steam Deck, with the mouse, keys and touch it stands in for. Paired with <b>controller-focus-2026-10-12.html</b>, which shows the focus marker on each surface.</p>
+    <p class="mock"><b>This is a mock.</b> Diagrams and plain shapes, not the game: no pad is read here, the pads are outlines rather than the real hardware, and the two small yards are blocks on a grid. It cannot show how a stick's dead zone or a trigger's travel feels, what Steam Input's own overlay looks like, or how the prompts sit on the real HUD. Every word in a prompt is a placeholder for the owner's own.</p>
+  </header>
+
+  <section class="two">
+    <figure>
+      <svg class="pad" viewBox="0 0 400 270" role="img" aria-label="An Xbox pad with each control numbered">
+        <!-- triggers and bumpers -->
+        <rect class="ctl" x="62" y="10" width="54" height="26" rx="10"/><text class="lbl dark" x="89" y="23">LT</text>
+        <rect class="ctl" x="284" y="10" width="54" height="26" rx="10"/><text class="lbl dark" x="311" y="23">RT</text>
+        <rect class="ctl" x="52" y="40" width="80" height="16" rx="6"/><text class="lbl dark" x="92" y="48">LB</text>
+        <rect class="ctl" x="268" y="40" width="80" height="16" rx="6"/><text class="lbl dark" x="308" y="48">RB</text>
+        <path class="body" d="M78 60 Q200 44 322 60 Q372 70 388 160 Q398 238 352 244 Q320 248 292 196 L108 196 Q80 248 48 244 Q2 238 12 160 Q28 70 78 60 Z"/>
+        <!-- left stick, d-pad -->
+        <circle class="ctl" cx="108" cy="104" r="24"/><circle class="ink" cx="108" cy="104" r="12"/><text class="lbl" x="108" y="104">L</text>
+        <path class="ctl" d="M150 140 h16 v16 h16 v16 h-16 v16 h-16 v-16 h-16 v-16 h16 z"/>
+        <!-- view, menu -->
+        <circle class="ctl" cx="172" cy="100" r="9"/><text class="lbl dark" x="172" y="100">⧉</text>
+        <circle class="ctl" cx="228" cy="100" r="9"/><text class="lbl dark" x="228" y="100">≡</text>
+        <!-- face buttons -->
+        <circle class="ink" cx="292" cy="80" r="12"/><text class="lbl" x="292" y="80">Y</text>
+        <circle class="ink" cx="268" cy="104" r="12"/><text class="lbl" x="268" y="104">X</text>
+        <circle class="ink" cx="316" cy="104" r="12"/><text class="lbl" x="316" y="104">B</text>
+        <circle class="ink" cx="292" cy="128" r="12"/><text class="lbl" x="292" y="128">A</text>
+        <!-- right stick -->
+        <circle class="ctl" cx="246" cy="164" r="22"/><circle class="ink" cx="246" cy="164" r="11"/><text class="lbl" x="246" y="164">R</text>
+        <!-- numbers -->
+        <g class="num"><circle cx="40" cy="22" r="9"/><text x="40" y="22">1</text></g>
+        <g class="num"><circle cx="360" cy="22" r="9"/><text x="360" y="22">2</text></g>
+        <g class="num"><circle cx="30" cy="50" r="9"/><text x="30" y="50">3</text></g>
+        <g class="num"><circle cx="370" cy="50" r="9"/><text x="370" y="50">4</text></g>
+        <g class="num"><circle cx="70" cy="104" r="9"/><text x="70" y="104">5</text></g>
+        <g class="num"><circle cx="124" cy="164" r="9"/><text x="124" y="164">6</text></g>
+        <g class="num"><circle cx="172" cy="78" r="9"/><text x="172" y="78">7</text></g>
+        <g class="num"><circle cx="228" cy="78" r="9"/><text x="228" y="78">8</text></g>
+        <g class="num"><circle cx="292" cy="153" r="9"/><text x="292" y="153">9</text></g>
+        <g class="num"><circle cx="342" cy="104" r="9"/><text x="342" y="104">10</text></g>
+        <g class="num"><circle cx="243" cy="128" r="9"/><text x="243" y="128">11</text></g>
+        <g class="num"><circle cx="292" cy="56" r="9"/><text x="292" y="56">12</text></g>
+        <g class="num"><circle cx="280" cy="186" r="9"/><text x="280" y="186">13</text></g>
+        <text class="cap" x="200" y="264">Xbox layout (the Gamepad API's "standard" mapping)</text>
+      </svg>
+      <ol class="legend">
+        <li><b>LT, held</b>: crew sight (the right button held). With <span class="g face">A</span>: lift the focused body.</li>
+        <li><b>RT, held</b>: the hand: a free cursor where the focus is, for sweeping dust, throwing it, and dropping a body anywhere.</li>
+        <li><b>LB</b>: the station to the left, keeping its board open (turns the page).</li>
+        <li><b>RB</b>: the station to the right, the same way.</li>
+        <li><b>Left stick</b>: a flick hops the focus like the d-pad; with the hand out or a body lifted, it moves the hand. A waggle shakes.</li>
+        <li><b>D-pad</b>: ← → hop along the yard (or the deep); ↑ ↓ step into a station's controls, the sky above it, the coil. In a board or a sheet, card to card.</li>
+        <li><b>View</b>: up to the corner cards: the objective, the queue, the corner buttons (the crew switch, the way, fullscreen).</li>
+        <li><b>Menu</b>: hold the yard: the held sheet, with saves, achievements, index, settings.</li>
+        <li><b>A</b>: the click. Opens the focused station's board; buys; mines (held, mines on); strikes the coil; bursts the orb; works a lever. Held during a scene: skip.</li>
+        <li><b>B</b>: back. Puts the board, list or sheet away, one layer at a time; lets go of a body without a throw.</li>
+        <li><b>X</b>: a card's second thing: opens its list or rails where it has one. In the yard, unassigned.</li>
+        <li><b>Y</b>: hand back the newest queued copy (the refund strip; a queue line).</li>
+        <li><b>Right stick</b>: pan the camera; the follow lets go. <b>Click (R3)</b>: glide back to the focus and follow it again.</li>
+      </ol>
+      <figcaption><b>Xbox.</b> Left stick click (L3) is left free. The confirm is always the bottom face button, whatever letter the pad prints there.</figcaption>
+    </figure>
+
+    <figure>
+      <svg class="pad" viewBox="0 0 520 300" role="img" aria-label="A Steam Deck front and back with each control numbered">
+        <rect class="ctl" x="38" y="8" width="60" height="22" rx="9"/><text class="lbl dark" x="68" y="19">L2</text>
+        <rect class="ctl" x="422" y="8" width="60" height="22" rx="9"/><text class="lbl dark" x="452" y="19">R2</text>
+        <rect class="ctl" x="30" y="32" width="86" height="14" rx="6"/><text class="lbl dark" x="73" y="39">L1</text>
+        <rect class="ctl" x="404" y="32" width="86" height="14" rx="6"/><text class="lbl dark" x="447" y="39">R1</text>
+        <rect class="body" x="8" y="46" width="504" height="160" rx="46"/>
+        <rect class="ink" x="150" y="58" width="220" height="136" rx="4"/>
+        <text class="lbl" x="260" y="126">the screen: touch is a finger</text>
+        <!-- left side -->
+        <path class="ctl" d="M38 84 h12 v12 h12 v12 h-12 v12 h-12 v-12 h-12 v-12 h12 z"/>
+        <circle class="ctl" cx="112" cy="84" r="18"/><circle class="ink" cx="112" cy="84" r="9"/><text class="lbl" x="112" y="84">L</text>
+        <rect class="ctl" x="70" y="132" width="56" height="56" rx="8"/><text class="lbl dark" x="98" y="160">pad</text>
+        <circle class="ctl" cx="136" cy="118" r="7"/><text class="lbl dark" x="136" y="118">⧉</text>
+        <!-- right side -->
+        <circle class="ink" cx="466" cy="70" r="10"/><text class="lbl" x="466" y="70">Y</text>
+        <circle class="ink" cx="446" cy="90" r="10"/><text class="lbl" x="446" y="90">X</text>
+        <circle class="ink" cx="486" cy="90" r="10"/><text class="lbl" x="486" y="90">B</text>
+        <circle class="ink" cx="466" cy="110" r="10"/><text class="lbl" x="466" y="110">A</text>
+        <circle class="ctl" cx="408" cy="84" r="18"/><circle class="ink" cx="408" cy="84" r="9"/><text class="lbl" x="408" y="84">R</text>
+        <rect class="ctl" x="394" y="132" width="56" height="56" rx="8"/><text class="lbl dark" x="422" y="160">pad</text>
+        <circle class="ctl" cx="384" cy="118" r="7"/><text class="lbl dark" x="384" y="118">≡</text>
+        <!-- the back -->
+        <text class="cap" x="260" y="226">the back, drawn as if seen through the screen (left grip on the left)</text>
+        <rect class="body" x="60" y="236" width="400" height="44" rx="20"/>
+        <rect class="ink" x="92" y="244" width="40" height="12" rx="5"/><text class="lbl" x="112" y="250">L4</text>
+        <rect class="ink" x="92" y="262" width="40" height="12" rx="5"/><text class="lbl" x="112" y="268">L5</text>
+        <rect class="ink" x="388" y="244" width="40" height="12" rx="5"/><text class="lbl" x="408" y="250">R4</text>
+        <rect class="ink" x="388" y="262" width="40" height="12" rx="5"/><text class="lbl" x="408" y="268">R5</text>
+        <g class="num"><circle cx="70" cy="250" r="9"/><text x="70" y="250">1</text></g>
+        <g class="num"><circle cx="70" cy="270" r="9"/><text x="70" y="270">2</text></g>
+        <g class="num"><circle cx="450" cy="250" r="9"/><text x="450" y="250">3</text></g>
+        <g class="num"><circle cx="450" cy="270" r="9"/><text x="450" y="270">4</text></g>
+        <g class="num"><circle cx="56" cy="160" r="9"/><text x="56" y="160">5</text></g>
+        <g class="num"><circle cx="464" cy="160" r="9"/><text x="464" y="160">6</text></g>
+        <g class="num"><circle cx="190" cy="78" r="9"/><text x="190" y="78">7</text></g>
+        <g class="num"><circle cx="20" cy="24" r="9"/><text x="20" y="24">8</text></g>
+        <text class="cap" x="260" y="296">Steam Deck</text>
+      </svg>
+      <ol class="legend">
+        <li><b>L4, held</b>: crew sight, the same as L2 (LT); a grip button, so the right thumb stays free for <span class="g face">A</span> and the stick.</li>
+        <li><b>L5</b>: the way: down into the deep, or back up. A shortcut for the corner square.</li>
+        <li><b>R4, held</b>: the hand, the same as R2 (RT).</li>
+        <li><b>R5</b>: the index (the <code>i</code> key).</li>
+        <li><b>Left trackpad</b>: the camera, as the scroll wheel: a swipe pans with the wheel's own ease.</li>
+        <li><b>Right trackpad</b>: a real mouse pointer (Steam Input "as mouse"); its click is the left button. While it moves, the pad's marker and prompts go away (last input wins).</li>
+        <li><b>The screen</b>: touch, exactly as on a phone: the hop arrows, sweeping, tapping a station.</li>
+        <li><b>Everything else</b>: as the Xbox map. ABXY sit in the Xbox places; L1/R1/L2/R2 are LB/RB/LT/RT. Gyro is off.</li>
+      </ol>
+      <figcaption><b>Steam Deck.</b> The back buttons and trackpads reach the game through Steam Input's default config for the game (see the open calls in DESIGN.md), not through the Gamepad API.</figcaption>
+    </figure>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Every action</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>action</th><th>mouse and keys today</th><th>Xbox</th><th>Steam Deck</th><th>touch today</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Moving between stations: hops or a free cursor</h2>
+    <p>Both shown on the same yard, reaching the same four targets: three stations and a roster's plus sign. The free cursor is a hand on the left stick with acceleration, the way console ports of mouse games usually do it.</p>
+    <div class="two" id="movefigs"></div>
+    <p class="rec"><b>Recommended: hops</b>, with the free cursor kept as the hand on <span class="g trig">RT</span> for the three things that need a place rather than a target: sweeping dust, throwing it, and dropping a body somewhere that is not a station. The yard is a line, so a hop is one press a station; every click in the game already lands on a named thing with a rectangle (stations.js, the rosters, the levers, the coil), so the hop list is read off tables that exist. A free cursor makes every press an aim, and the small targets (a roster's plus is three cells) are where a stick cursor is worst.</p>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>The camera: the focus pulls it, the right stick pushes it</h2>
+    <div class="two" id="camfigs"></div>
+    <ul>
+      <li><b>Focus following.</b> Each hop sends the view with the glide the hop arrows and the digit keys already use (<code>lookAt</code>): the camera eases there, slower than the marker, and never cuts. Under reduced motion it moves the way <code>lookAt</code> moves there today.</li>
+      <li><b>Stick pan.</b> The right stick slides the view at the arrow keys' speed scaled by how far it is pushed, and the follow lets go, the way a drag lets go of it today. The focus stays on its station; if that station leaves the window, a small accent chevron at the window's edge points back at it.</li>
+      <li><b>Back to the focus.</b> <span class="g stick">R</span> click glides the view back. The next hop also brings it back: a hop from a station that is off screen goes to the station nearest the middle of the window instead, so the first press after a pan lands where you are looking.</li>
+    </ul>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>On-screen glyphs</h2>
+    <figure>
+      <div class="sheet"><span>face</span><b class="g face">A</b><b class="g face">B</b><b class="g face">X</b><b class="g face">Y</b>
+        <span>shoulders</span><b class="g bump">LB</b><b class="g bump">RB</b><b class="g trig">LT</b><b class="g trig">RT</b>
+        <span>d-pad</span><b class="g pad">↑</b><b class="g pad">↓</b><b class="g pad">←</b><b class="g pad">→</b>
+        <span>sticks</span><b class="g stick">L</b><b class="g stick">R</b>
+        <span>middle</span><b class="g bump">⧉</b><b class="g bump">≡</b>
+        <span>Deck back</span><b class="g back">L4</b><b class="g back">L5</b><b class="g back">R4</b><b class="g back">R5</b>
+        <span>trackpads</span><b class="g track">◧</b><b class="g track">◨</b></div>
+      <div class="sheet big"><b class="g face">A</b><b class="g bump">RB</b><b class="g trig">LT</b><b class="g pad">→</b><b class="g stick">L</b><b class="g back">L4</b><b class="g track">◨</b></div>
+      <figcaption><b>The prompt style.</b> Flat, black and white, the shapes of the buttons rather than their brand colors: face buttons a filled disc, bumpers a tab, triggers a taller tab, the d-pad an outlined square with its arrow, sticks a ring. The Deck uses the same face letters (it prints Xbox letters in Xbox places) plus its four back tabs and two trackpads. A PlayStation pad, read off the Gamepad API's id, swaps in drawn ✕ ○ □ △ in the same flat style; a Switch pad shows its own letters in their places. The confirm is always the bottom face button.</figcaption>
+    </figure>
+    <div class="two">
+      <figure>
+        <div class="ui" style="display:grid;gap:14px;justify-items:start">
+          <div class="skip" id="skip"><span id="skipsay">hold <b class="g face">A</b> to skip</span><i class="bar" id="skipbar"></i></div>
+          <div class="tipx"><b class="g face">A</b> the bench</div>
+          <div class="tipx"><b class="g face">A</b> another house · <b class="g face">Y</b> hand back</div>
+        </div>
+        <figcaption><b>Prompts in place.</b> The skip hint (skiphint.js) shows the pad's button while a pad was last used, and its bar fills while <span class="g face">A</span> is held, as it does for the space bar. A focus raises the same tip a hover raises, beside the thing rather than at a cursor, after the hover's own wait, with the button that acts on it in front. A card adds a second button only where it has a second action.</figcaption>
+      </figure>
+      <figure>
+        <div class="ui ctlpage">
+          <span class="h">mouse and keys</span><span class="h">pad</span><span class="h">does</span>
+          <span>left click</span><span><b class="g face">A</b></span><span>interact</span>
+          <span>right click</span><span><b class="g trig">LT</b></span><span>focus workers</span>
+          <span>right + left click</span><span><b class="g trig">LT</b>+<b class="g face">A</b></span><span>pick up workers</span>
+          <span>middle click</span><span><b class="g stick">R</b></span><span>move camera</span>
+          <span>← → / a d</span><span><b class="g pad">←</b><b class="g pad">→</b></span><span>next station</span>
+          <span>esc</span><span><b class="g bump">≡</b></span><span>hold</span>
+        </div>
+        <figcaption><b>The controls page</b> gains a pad column (controls.js's <code>CONTROLS</code> rows, shared with the landing page), shown only once a pad has been seen. The rows' words stay the owner's.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:10px">
+    <h2>Tips, mouse and pad together, and the phone</h2>
+    <ul>
+      <li><b>Tips on focus.</b> The hover tip (<code>showTip</code> / <code>showTipAt</code>) is asked for by the focused thing's rectangle instead of the cursor, after the same dwell, and goes when the focus moves. A board card's tip sits beside the card, on whichever side has room. Nothing new is written: the tip says what the hover says.</li>
+      <li><b>Last input wins.</b> Mouse and pad are both always live. The first pad press shows the marker where the focus was and turns the prompts to pad glyphs; the first mouse move hides the marker and turns them back. Nothing has to be switched in settings, and the Deck's right trackpad (a mouse) and its sticks (a pad) can be used in the same minute.</li>
+      <li><b>The phone.</b> Touch is untouched. The phone's hop arrows (hop.js) and the pad's d-pad walk the same list of stops in the same order, so the two are one mechanism with two front ends, and the digit keys' stops are that list too. A Deck's touch screen is a touch, and plays as the phone does. The pad's crew-sight hop (<span class="g trig">LT</span> and the d-pad over bodies) is a shape a phone could later borrow for the crew sight it does not have.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+'use strict';
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches || location.hash === '#still';
+const K = 4, DT = 1 / 60;
+const TOK = {};
+function readTokens() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const n of ['paper', 'ink', 'grey', 'pale', 'wash', 'accent']) TOK[n] = cs.getPropertyValue('--' + n).trim();
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const R = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+const G = (k, cls = 'face') => `<b class="g ${cls}">${k}</b>`;
+const KEY = { A: G('A'), B: G('B'), X: G('X'), Y: G('Y'), LB: G('LB', 'bump'), RB: G('RB', 'bump'), LT: G('LT', 'trig'), RT: G('RT', 'trig'),
+  up: G('↑', 'pad'), down: G('↓', 'pad'), left: G('←', 'pad'), right: G('→', 'pad'), ud: G('↑', 'pad') + G('↓', 'pad'), lr: G('←', 'pad') + G('→', 'pad'),
+  L: G('L', 'stick'), Rs: G('R', 'stick'), View: G('⧉', 'bump'), Menu: G('≡', 'bump'),
+  L4: G('L4', 'back'), L5: G('L5', 'back'), R4: G('R4', 'back'), R5: G('R5', 'back'), LP: G('◧', 'track'), RP: G('◨', 'track') };
+
+// ---------- the table ----------
+const ROWS = [
+  ['getting about'],
+  ['move between stations', 'hover; wheel, ← → or a d; 1–9 jump to a place', `${KEY.lr} hop; ${KEY.L} flick; ${KEY.LB}${KEY.RB} with a board open`, `the same; or ${KEY.RP} as a mouse`, 'the hop arrows; a one-finger scroll'],
+  ['a station\'s own controls (rosters, the casino arm and sign, the pot)', 'click on them', `${KEY.ud} into the station, ${KEY.lr} along, ${KEY.A}`, 'the same', 'tap'],
+  ['camera, by hand', 'middle drag; wheel; ← → / a d', `${KEY.Rs} (lets go of the follow)`, `${KEY.LP} swipe, as the wheel; or ${KEY.Rs}`, 'one-finger scroll'],
+  ['camera, back to the focus', '(a digit key)', `${KEY.Rs} click; or the next hop`, 'the same', 'a hop arrow'],
+  ['the corner cards: objective, queue, corner buttons', 'click', `${KEY.View}, then the d-pad, ${KEY.A}`, 'the same', 'tap'],
+  ['the deep and back up', 'the corner square; the shaft arrow', `${KEY.A} on the portal or shaft arrow (a stop); ${KEY.View} to the corner square`, `${KEY.L5}`, 'the corner square'],
+  ['boards and buying'],
+  ['open a station\'s board', 'stand the cursor on the station', `${KEY.A} on the station`, `${KEY.A}`, 'tap the station'],
+  ['buy a rung (it queues)', 'click the card', `${KEY.A} on the card`, `${KEY.A}`, 'tap the card'],
+  ['queue it again', 'click again', `${KEY.A} again`, `${KEY.A}`, 'tap again'],
+  ['hand a queued copy back', 'the card\'s refund strip; a queue line', `${KEY.Y} on the card or the queue line`, `${KEY.Y}`, 'tap the strip'],
+  ['a card\'s list or rails', 'click', `${KEY.X}`, `${KEY.X}`, 'tap'],
+  ['the next station\'s board', 'walk the cursor over', `${KEY.LB} ${KEY.RB}`, 'L1 R1', 'the hop arrows'],
+  ['put the board away', 'click off the station; cursor leaves', `${KEY.B}`, `${KEY.B}`, 'tap off'],
+  ['the rock and the dust'],
+  ['mine', 'click the rock', `${KEY.A} on the rock`, `${KEY.A}`, 'tap the rock'],
+  ['mine, held (once bought)', 'hold the button on the rock', `hold ${KEY.A}`, `hold ${KEY.A}`, 'hold'],
+  ['a crit', 'rolls by itself', 'rolls by itself; an optional short rumble', 'the same, on the trackpad\'s haptics', 'rolls by itself'],
+  ['sweep dust and throw it', 'drag over dust, let go with a flick', `hold ${KEY.RT}: the hand; ${KEY.L} over the dust, hold ${KEY.A}, flick, let go`, `hold ${KEY.R4}; or ${KEY.RP} with its click held`, 'a finger on the dust'],
+  ['the crew'],
+  ['crew sight', 'hold the right button', `hold ${KEY.LT}; the d-pad hops body to body`, `hold ${KEY.L4} (or L2)`, 'none yet'],
+  ['pick a body up', 'right held, then left on it', `${KEY.LT} + ${KEY.A} on the focused body`, `${KEY.L4} + ${KEY.A}`, 'none yet'],
+  ['carry, shake', 'move, waggle the mouse', `${KEY.L} carries; a waggle shakes; ${KEY.lr} carries it to the next station`, 'the same; or the trackpad', 'none yet'],
+  ['put it down', 'let go', `let go of ${KEY.A} (on a station: retrained; elsewhere: thrown with the stick's flick); ${KEY.B} sets it down, no throw`, 'the same', 'none yet'],
+  ['the deep'],
+  ['strike the serpent', 'click the coil', `${KEY.up} to the coil, ${KEY.L} along it, ${KEY.A}`, 'the same', 'tap the coil'],
+  ['burst the constrict orb', 'click the orb', `the orb is a stop: hop to it, ${KEY.A}`, 'the same', 'tap the orb'],
+  ['the deep\'s stations, pods, recruits', 'as the yard\'s', 'as the yard\'s', 'as the yard\'s', 'as the yard\'s'],
+  ['the game'],
+  ['skip a scene', 'hold space', `hold ${KEY.A}`, `hold ${KEY.A}`, 'hold the skip button'],
+  ['hold the yard (pause), settings, saves', 'esc', `${KEY.Menu}; ${KEY.B} backs out a page`, `${KEY.Menu}`, 'the corner\'s hold button'],
+  ['the index', 'i', `${KEY.Menu}, then index`, `${KEY.R5}`, 'from the held sheet'],
+  ['typing a name or pasting a save', 'the keyboard', 'skipped by the focus; a mouse or keyboard', 'Steam\'s on-screen keyboard', 'the phone\'s keyboard'],
+];
+document.getElementById('rows').innerHTML = ROWS.map(r => r.length === 1
+  ? `<tr class="grp"><td colspan="5">${r[0]}</td></tr>`
+  : `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+
+// ---------- the little yards ----------
+const GROUND = 26, H = 34, W = 96;
+const STOPS = [
+  { name: 'shack', x: 8, w: 8, h: 6 }, { name: 'bench', x: 30, w: 10, h: 7 }, { name: 'house', x: 54, w: 12, h: 11 },
+  { name: 'plus', x: 66, y: GROUND + 3, w: 3, h: 3 }, { name: 'tower', x: 80, w: 8, h: 18 },
+];
+const rectOf = s => s.y != null ? { x: s.x, y: s.y, w: s.w, h: s.h } : { x: s.x, y: GROUND - s.h, w: s.w, h: s.h };
+function drawWorld(c, cam, ww) {
+  R(c, 0, 0, W, H, TOK.paper);
+  R(c, 0, GROUND, W, H - GROUND, TOK.wash);
+  for (let y = GROUND + 1; y < H; y++) for (let x = 0; x < W; x++) if (((x + cam + y) % 6) === 0) R(c, x, y, 1, 1, TOK.pale);
+  R(c, 0, GROUND, W, 1, TOK.ink);
+  c.save(); c.translate(-cam, 0);
+  for (let rep = 0; rep < (ww || W) / W; rep++) {
+    const o = rep * W;
+    for (const s of STOPS) {
+      if (s.name === 'plus') {
+        R(c, o + s.x - 22, s.y + 1, 3, 1, TOK.ink);
+        for (let i = 0; i < 4; i++) R(c, o + s.x - 17 + i * 4, s.y, 3, 3, TOK.ink);
+        R(c, o + s.x, s.y + 1, 3, 1, TOK.ink); R(c, o + s.x + 1, s.y, 1, 3, TOK.ink);
+        continue;
+      }
+      const r = rectOf(s);
+      R(c, o + r.x, r.y + 1, r.w, r.h - 1, TOK.ink); R(c, o + r.x - 1, r.y, r.w + 2, 1, TOK.ink);
+      R(c, o + r.x + Math.floor(r.w / 2) - 1, GROUND - 3, 2, 3, TOK.paper);
+    }
+  }
+  c.restore();
+}
+function brackets(c, r, col) {
+  const x0 = r.x - 1, y0 = r.y - 1, x1 = r.x + r.w, y1 = r.y + r.h, L = 2;
+  const cells = [[x0, y0, L, 1], [x0, y0, 1, L], [x1 - L + 1, y0, L, 1], [x1, y0, 1, L], [x0, y1, L, 1], [x0, y1 - L + 1, 1, L], [x1 - L + 1, y1, L, 1], [x1, y1 - L + 1, 1, L]];
+  for (const [x, y, w, h] of cells) R(c, x - 1, y - 1, w + 2, h + 2, TOK.paper);
+  for (const [x, y, w, h] of cells) R(c, x, y, w, h, col);
+}
+function hand(c, x, y, col) {
+  R(c, x - 1, y - 1, 3, 3, col); R(c, x, y, 1, 1, TOK.paper); R(c, x - 1, y - 3, 1, 2, col); R(c, x + 1, y - 3, 1, 2, col);
+}
+
+const FIGS = [];
+function fig(host, spec) {
+  const f = document.createElement('figure');
+  f.innerHTML = `<div class="stage"></div><div class="beat"></div><figcaption><b>${spec.title}</b> ${spec.caption}</figcaption>`;
+  host.appendChild(f);
+  const stage = f.querySelector('.stage'), beat = f.querySelector('.beat');
+  const sayAt = t => { let s = ''; for (const b of spec.beats) if (b.at <= t) s = b.say; return s; };
+  if (RM) {
+    beat.remove();
+    const keys = document.createElement('div'); keys.className = 'keys'; stage.appendChild(keys);
+    for (const kt of spec.keys) {
+      const k = document.createElement('figure');
+      const cv = document.createElement('canvas'); cv.className = 'yard'; cv.width = (spec.cw || W) * K; cv.height = H * K; k.appendChild(cv);
+      const cap = document.createElement('figcaption'); cap.innerHTML = sayAt(kt); k.appendChild(cap);
+      keys.appendChild(k);
+      FIGS.push({ still: true, draw: () => { const c = cv.getContext('2d'); c.setTransform(K, 0, 0, K, 0, 0); spec.draw(c, kt); } });
+    }
+    return;
+  }
+  const cv = document.createElement('canvas'); cv.className = 'yard'; cv.width = (spec.cw || W) * K; cv.height = H * K; stage.appendChild(cv);
+  const c = cv.getContext('2d');
+  let said = null;
+  FIGS.push({ draw: t => { t %= spec.dur; c.setTransform(K, 0, 0, K, 0, 0); spec.draw(c, t); const s = sayAt(t); if (s !== said) { said = s; beat.innerHTML = s; } } });
+}
+
+// Hops: the marker glides stop to stop on each press.
+function hopsSpec() {
+  const presses = [0, .9, 1.8, 2.7, 3.6];
+  const beats = [{ at: 0, say: `${KEY.right} ${KEY.right} ${KEY.right} ${KEY.down}${KEY.right}: one press a target` },
+                 { at: 4.2, say: 'four targets, four presses, each landed the moment it is pressed; no aiming' }];
+  return {
+    title: 'Focus hops.', caption: 'The d-pad; each press is one target, small or large.', dur: 6, beats, keys: [.1, 1.0, 2.0, 3.8],
+    draw(c, t) {
+      drawWorld(c, 0);
+      let i = 0; for (let j = 0; j < presses.length; j++) if (presses[j] <= t) i = j;
+      const order = [0, 1, 2, 3, 4];
+      const a = rectOf(STOPS[order[Math.max(0, i - 1)]]), b = rectOf(STOPS[order[i]]);
+      const k = easeOut(clamp((t - presses[i]) / .3, 0, 1));
+      brackets(c, { x: Math.round(lerp(a.x, b.x, k)), y: Math.round(lerp(a.y, b.y, k)), w: Math.round(lerp(a.w, b.w, k)), h: Math.round(lerp(a.h, b.h, k)) }, TOK.accent);
+    },
+  };
+}
+// A free cursor: a hand on the stick, accelerating, overshooting the small one.
+function cursorSpec() {
+  const targets = STOPS.map(s => { const r = rectOf(s); return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; });
+  // the path, simulated once: a stick pushed toward each target in turn, with
+  // a speed that ramps up while held and a reaction lag, as thumbs have
+  const path = [];
+  let x = targets[0].x, y = targets[0].y, vx = 0, vy = 0, ti = 1, held = 0, dwell = 0;
+  const times = [];
+  for (let s = 0; s < 9; s += DT) {
+    if (ti < targets.length) {
+      const tg = targets[ti], dx = tg.x - x, dy = tg.y - y, d = Math.hypot(dx, dy);
+      const lagged = held < .12 ? 0 : 1;
+      const want = d > 1.2 ? Math.min(60, 12 + held * 55) : 0;
+      held = d > 1.2 ? held + DT : 0;
+      vx = lerp(vx, lagged * want * dx / (d || 1), .12); vy = lerp(vy, lagged * want * dy / (d || 1), .12);
+      if (d <= 1.2) { dwell += DT; vx *= .5; vy *= .5; if (dwell > .25) { times.push(s); ti++; dwell = 0; } }
+    } else { vx *= .8; vy *= .8; }
+    x += vx * DT; y += vy * DT;
+    path.push({ x, y, ti });
+  }
+  const end = times[times.length - 1] || 8;
+  const beats = [{ at: 0, say: `${KEY.L} pushes a hand across the yard: speed builds, then it overshoots and creeps back` },
+                 { at: times[2] || 3, say: 'the roster\'s plus is three cells wide: the slowest one to land on' },
+                 { at: end, say: `four targets in about ${end.toFixed(1)} seconds of steering, the small one the slowest` }];
+  return {
+    title: 'A free cursor.', caption: 'The left stick as a mouse; every press is an aim first.', dur: Math.min(9, end + 1.5), beats, keys: [.6, (times[1] || 2) - .3, (times[2] || 3) + .4, end],
+    draw(c, t) {
+      drawWorld(c, 0);
+      const p = path[Math.min(path.length - 1, Math.floor(t / DT))];
+      hand(c, Math.round(p.x), Math.round(p.y), TOK.accent);
+    },
+  };
+}
+// The camera: following the focus, then a stick pan, the edge chevron, R3.
+function followSpec() {
+  const VW = 48, WW = 96;
+  const presses = [0, 1.2, 2.4, 3.6];
+  const beats = [{ at: 0, say: `${KEY.right} each hop sends the view after the focus, on a slower glide` }];
+  const camFor = r => clamp(r.x + r.w / 2 - VW / 2, 0, WW - VW);
+  return {
+    title: 'Focus following.', caption: 'The view eases after the focus; it never cuts.', cw: VW, dur: 5, beats, keys: [.1, 1.4, 1.9, 2.8],
+    draw(c, t) {
+      let i = 0; for (let j = 0; j < presses.length; j++) if (presses[j] <= t) i = j;
+      const ord = [0, 1, 2, 4];
+      const a = rectOf(STOPS[ord[Math.max(0, i - 1)]]), b = rectOf(STOPS[ord[i]]);
+      const cam = Math.round(lerp(camFor(a), camFor(b), easeInOut(clamp((t - presses[i]) / .7, 0, 1))));
+      drawWorld(c, cam);
+      const k = easeOut(clamp((t - presses[i]) / .3, 0, 1));
+      c.save(); c.translate(-cam, 0);
+      brackets(c, { x: Math.round(lerp(a.x, b.x, k)), y: Math.round(lerp(a.y, b.y, k)), w: Math.round(lerp(a.w, b.w, k)), h: Math.round(lerp(a.h, b.h, k)) }, TOK.accent);
+      c.restore();
+    },
+  };
+}
+function panSpec() {
+  const beats = [
+    { at: 0, say: 'the focus on the bench, the view following it' },
+    { at: .8, say: `${KEY.Rs} pushed right: the view slides, the follow lets go; the focus stays on the bench` },
+    { at: 2.4, say: 'the bench has left the window: a chevron at the edge points back at it' },
+    { at: 3.8, say: `${KEY.Rs} click: the view glides back to the focus and follows again` },
+  ];
+  const bench = rectOf(STOPS[1]);
+  const camAt = t => {
+    if (t < .8) return 0;
+    if (t < 3.2) { const k = clamp((t - .8) / 2.4, 0, 1); return 56 * (k * k * (3 - 2 * k)); }
+    if (t < 3.8) return 56;
+    return 56 * (1 - easeInOut(clamp((t - 3.8) / .9, 0, 1)));
+  };
+  return {
+    title: 'Stick pan and back.', caption: 'The right stick pushes the view; its click brings it back.', cw: 48, dur: 5.6, beats, keys: [.4, 2.0, 3.0, 4.2],
+    draw(c, t) {
+      const cam = Math.round(camAt(t));
+      drawWorld(c, cam, W * 2);
+      c.save(); c.translate(-cam, 0); brackets(c, bench, TOK.accent); c.restore();
+      if (bench.x + bench.w - cam < 0) {
+        const bob = Math.floor(t / .5) % 2;
+        ['..#', '.##', '###', '.##', '..#'].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') R(c, 2 + i - bob, 8 + j, 1, 1, TOK.accent); }));
+      }
+    },
+  };
+}
+
+// ---------- the skip prompt ----------
+function skipLoop(t) {
+  t %= 3;
+  const bar = document.getElementById('skipbar');
+  const w = t < .4 ? 0 : t < 1.6 ? (t - .4) / 1.2 : t < 2.2 ? 1 : 0;
+  bar.style.width = (w * 100).toFixed(1) + '%';
+}
+
+function build() {
+  readTokens();
+  const mv = document.getElementById('movefigs'), cm = document.getElementById('camfigs');
+  fig(mv, hopsSpec()); fig(mv, cursorSpec());
+  fig(cm, followSpec()); fig(cm, panSpec());
+  const start = performance.now();
+  const frame = () => {
+    readTokens();
+    const t = (performance.now() - start) / 1000;
+    for (const f of FIGS) f.still ? f.draw() : f.draw(t);
+    if (RM) { document.getElementById('skipbar').style.width = '60%'; return; }
+    skipLoop(t);
+    requestAnimationFrame(frame);
+  };
+  frame();
+}
+build();
+</script>
+</body>
+</html>
