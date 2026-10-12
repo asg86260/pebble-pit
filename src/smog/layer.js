@@ -299,10 +299,11 @@ const loose = { owed: 0 };
 // mean the first body to ask cleared the mess out from under the sixth.
 let tallied = null;
 
-// A hand rewriting the cells in place between frames (the __muckSet/__poopSet
-// hooks) changes the world without changing either key, and every reader
-// until the next tick gets the old answer. The hook calls this; nothing in
-// play needs to.
+// A cell written in place changes the world without changing either key, and
+// every reader until the next tick gets the old answer. The frame lets go of
+// it last thing (`STEPS` in game.js), so what reads between frames -- the
+// tags, a snapshot -- counts what the rain and the shovels left after the
+// crew asked; the __muckSet/__poopSet hooks call it for the same reason.
 export const retally = () => { tallied = null; };
 
 function tally() {

@@ -69,7 +69,7 @@ setTake(take);
 import { stepSmoke } from './puff.js';
 import { stepFirstMuck } from './firstmuck.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
-import { stepSmog, sampleAir, slumpMess } from './smog.js';
+import { stepSmog, sampleAir, slumpMess, retally } from './smog.js';
 import { stepBalloons } from './balloon.js';
 import { stepCraftAir } from './craftair.js';
 import { stationFoot } from './board.js';
@@ -276,7 +276,12 @@ export const STEPS = [
       settleSome(floor, SETTLE_BUDGET);
       settlePit();
       if (cut.grid) settleSome(cut, SETTLE_BUDGET);
-      settleBelt(c.now); } }
+      settleBelt(c.now); } },
+  // Last of the yard: the crew's tally of the mess is taken once in the crew
+  // pass, and the rain, the slump and the shovels write the layer after it.
+  // Whatever reads between frames -- the mess tags, a snapshot -- counts the
+  // ground as it lies now, not as it lay when the crew asked.
+  { name: 'tally', step: retally }
 ];
 
 export function step() {

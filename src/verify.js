@@ -33,6 +33,7 @@ import { now } from './clock.js';
 import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
+import { messCounts } from './smog/layer.js';
 import { SERPENT_WOUND, SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
 import { CALLED } from './deep/party.js';
 import { roombasOf, binOf } from './crew/roomba.js';
@@ -391,6 +392,18 @@ export function verifyWorld() {
         if (b.d !== dust)
           fail(`${name} has lost count of its dust`, `ledger says ${b.d}, the cells say ${dust}`);
       }
+    }
+
+    // --- rule 16: the mess tags say what lies on the ground --------------------
+    // The figure a tag shows is the frame's tally of the layer, a second copy
+    // of it like the ledgers above; summed here off the layer itself, so a
+    // cell landed or swept after the tally was taken cannot leave the card a
+    // cell off what the ground shows.
+    const said = messCounts();
+    for (const kind of ['muck', 'poop']) {
+      const real = (S[kind] || []).reduce((n, d) => n + (d || 0), 0);
+      if ((said[kind] | 0) !== real)
+        fail(`the ${kind} tag has lost count of the ground`, `the tag says ${said[kind]}, the ground holds ${real}`);
     }
 
     // --- rule 8: the coins are in the hole or through the rift ------------------
