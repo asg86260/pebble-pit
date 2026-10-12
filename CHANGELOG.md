@@ -123,6 +123,8 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Every miner and every farmer can wear a blaster or grower hat, not just three (test/hats-gate-machines.test.mjs).
+- The drill and the tiller sit greyed on their boards saying "buy 5 blasters to unlock" or "buy 5 growers to unlock" until five are bought (test/hats-gate-machines.test.mjs, src/selftest/boards.js).
 - The air filter comes with its first balloon (test/filter-balloon.test.mjs).
 - The forklift's load and speed sell only their last four rungs, and the balloon row only its last two, so neither starts out pocket change (test/forklift.test.mjs, test/balloon.test.mjs).
 - On the story card each coin's line is its own bar, filling grey as the coins come in (src/selftest/boards.js).

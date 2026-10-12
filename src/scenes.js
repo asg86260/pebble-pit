@@ -1436,6 +1436,20 @@ export const SCENES = {
   kitfarm: { about: 'the kit', say: "the grower on the plots' board",
     run: () => { rich(); S.shieldsDone = ['props', 'net']; window.__kit({ growers: 1 });
                  window.__board('farm'); } },
+  // The drill and the tiller on their boards, greyed short of their set of
+  // hats, and the drill again with the set bought.
+  drillshort: { about: 'the kit', say: "the drill greyed on the cut's board, three blasters short",
+    run: () => { rich(); window.__machineGates(); window.__kit({ blasters: 2, growers: 0, learned: true });
+                 window.__board('quarry'); } },
+  tillershort: { about: 'the kit', say: "the tiller greyed on the plots' board, five growers short",
+    run: () => { rich(); window.__machineGates(); window.__kit({ blasters: 0, growers: 0, learned: true });
+                 window.__board('farm'); } },
+  drillset: { about: 'the kit', say: "the drill for sale with its five blasters bought",
+    run: () => { rich(); window.__machineGates(); window.__kit({ learned: true });
+                 window.__board('quarry'); } },
+  tillerset: { about: 'the kit', say: "the tiller for sale with its five growers bought",
+    run: () => { rich(); window.__machineGates(); window.__kit({ learned: true });
+                 window.__board('farm'); } },
   kitbench: { about: 'the kit', say: 'the carter on the bench, beside the belt',
     run: () => { rich(); S.shieldsDone = ['props']; window.__kit({ carters: 2 });
                  window.__board('bench'); } },

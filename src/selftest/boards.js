@@ -74,6 +74,39 @@ export const TESTS = [
     ];
   }],
 
+  // The drill and the tiller stand on their boards before their set of hats,
+  // greyed, the note in the line the gain would take, whole and unclipped.
+  ['a machine short of its hats stands greyed, saying how many more', async () => {
+    window.__crew(2, 2, 2, 2);
+    window.__machineGates();
+    window.__kit({ blasters: 2, growers: 0, learned: true });
+    window.__grant({ sparks: 999, shards: 9999, spores: 9999 });
+    window.__tip(90000);
+    const read = async (name, key) => {
+      window.__board(name);
+      await sleep(160);
+      const t = document.querySelector(`#${name}shop [data-key="${key}"]`);
+      const g = t && t.querySelector('.gain');
+      return t && { shown: !!t.offsetParent, off: t.disabled, gain: g.textContent,
+                    whole: g.scrollWidth <= g.clientWidth + 1 };
+    };
+    const jaw = await read('quarry', 'jaw');
+    const tiller = await read('farm', 'tiller');
+    window.__kit({ blasters: 5 });
+    const jawSet = await read('quarry', 'jaw');
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(jaw?.shown && jaw.off, "the drill is on the quarry's board, greyed", JSON.stringify(jaw)),
+      ok(jaw?.gain === 'buy 3 more blasters to unlock' && jaw.whole,
+         'saying how many more blasters, whole', JSON.stringify(jaw)),
+      ok(tiller?.shown && tiller.off && tiller.gain === 'buy 5 growers to unlock' && tiller.whole,
+         "and the tiller on the farm's, how many growers", JSON.stringify(tiller)),
+      ok(jawSet?.shown && !jawSet.off && !/unlock/.test(jawSet.gain),
+         'the fifth blaster lifts the note and the grey', JSON.stringify(jawSet))
+    ];
+  }],
+
   // A bill is allowed to cost the card another line but never a word of the
   // gain: a gain in a `1fr` track against a six-coin bill's `auto` comes out
   // nought pixels wide, still in the DOM and not on the screen, and no status
