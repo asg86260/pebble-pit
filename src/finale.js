@@ -540,3 +540,23 @@ export const SAVE = {
 
 // The two of them's spots at the end, for the checks.
 export const retiredAt = () => [endX(), endX() + WORKER + FINALE_PAIR_GAP];
+
+// What the finale is about, for the letterbox's window (cutscene.js,
+// `subject`): the two of them, and in the deep the station her gear goes back
+// on, from the top of its prop to the floor. Through the portal, the yard's
+// end of it, where they come out (the ripple itself has the window).
+export function finaleSubject() {
+  const f = F();
+  if (!f) return [];
+  if (f.phase === 'through') {
+    const pc = portalCircle();
+    return [{ x: pc.x - WORKER, y: pc.y - WORKER / 2, w: WORKER * 2, h: WORKER }];
+  }
+  const at = [...f.pair, herBody()].filter(Boolean).map(o => ({ x: o.x, y: o.y, w: WORKER, h: WORKER }));
+  const st = f.st ? stationById(f.st) : null;
+  if (st && DEEP.has(f.phase) && f.phase !== 'up' && f.phase !== 'ring') {
+    const r = propRect(st);
+    at.push({ x: r.x, y: r.y, w: Math.max(r.w, postX(st) + WORKER - r.x), h: deepFloor() - r.y });
+  }
+  return at;
+}

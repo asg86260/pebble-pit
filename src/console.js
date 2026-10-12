@@ -14,6 +14,8 @@ import { siteBox } from './works.js';
 import { nameOf } from './stations.js';
 import { S } from './state.js';
 import { take } from './upgrades.js';
+import { subject, bandCells, liftArrived } from './cutscene.js';
+import { CELL } from './config.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {
@@ -33,6 +35,15 @@ window.__siteBox = siteBox;
 window.__siteName = nameOf;
 window.__pileMarkAt = pileMarkAt;
 window.__dialRect = dialRect;
+// What the scene holding the yard is about, on the glass, against the
+// letterbox's bands (cutscene.js, `subject`), and whether it is framed yet:
+// the bands all the way in and the camera's move between them made.
+window.__framed = () => {
+  const box = subject(), band = bandCells() * CELL;
+  const rect = box && { x: (box.x - S.camX) * S.zoom, y: (box.y - S.camY) * S.zoom,
+                        w: box.w * S.zoom, h: box.h * S.zoom };
+  return { hush: S.hush, band, W: S.W, H: S.H, rect, framed: !!box && S.hush >= 1 && liftArrived() };
+};
 
 window.__state = () => ({
   ...snapshot(),

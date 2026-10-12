@@ -28,6 +28,7 @@ import { DOME_RINGS } from './config.js';
 import { JOB } from './jobs.js';
 import { reducedMotion, coarse } from './prefs.js';
 import { deepX0, deepX1, deepFloor } from './deep/place.js';
+import { frameHeight } from './cutscene.js';
 
 const canvas = document.getElementById('c');
 
@@ -792,7 +793,7 @@ export function clampCam() {
   if (S.view === 'deep') {
     const x0 = deepX0();
     S.camX = Math.max(x0, Math.min(S.camX, Math.max(x0, deepX1() - S.viewW)));
-    S.camY = S.camLockY != null ? S.camLockY : deepFloor() + DEEP_FLOOR_MARGIN - S.viewH;
+    S.camY = frameHeight(S.camLockY != null ? S.camLockY : deepFloor() + DEEP_FLOOR_MARGIN - S.viewH);
     writeScroll();
     return;
   }
@@ -800,7 +801,9 @@ export function clampCam() {
   // The bottom of the world sits on the bottom of the window, always, except
   // when a scene locks the height: pulled in close, half as much world
   // measured up from the pit floor is all pit.
-  S.camY = S.camLockY != null ? S.camLockY : S.worldH - S.viewH;
+  // And either is framed again between the letterbox's bands while a scene
+  // holds (cutscene.js, `frameHeight`).
+  S.camY = frameHeight(S.camLockY != null ? S.camLockY : S.worldH - S.viewH);
   // And the platform is told where the view now is, so the next fling
   // starts from here and not from where the last one ended.
   writeScroll();

@@ -756,3 +756,17 @@ export function stepBuried(t) {
     : { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: t + INTRO_BEAT * 0.9 };
   if (S.buriedSay) S.buriedSayAt = t + INTRO_BEAT * 1.6;
 }
+
+// What the opening and the reunion are about, for the letterbox's window
+// (cutscene.js, `subject`): the pair while they are two squares on the yard,
+// the body the show walks with, and the spot every rock lands on while the
+// reunion digs at it, with whoever is digging.
+export function introSubject() {
+  const at = [...S.pair, ...S.workers.filter(w => w.dig || w.met)];
+  // the show watches the body, and the grain once it is thrown, as far as
+  // the mouth it goes into
+  const chip = S.chips.find(c => c.intro);
+  if (S.beat.yard === 'show') at.push(chip ? { x: chip.x - WORKER / 2, y: Math.min(chip.y, S.groundY) - WORKER / 2 } : S.workers[0]);
+  if (S.beat.yard === 'meet' || S.beat.yard === 'part') at.push(buriedAt());
+  return at.filter(Boolean).map(b => ({ x: b.x, y: b.y, w: WORKER, h: WORKER }));
+}

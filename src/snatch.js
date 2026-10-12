@@ -373,12 +373,13 @@ function lookAtMeet(t) {
 // Where the frame looks while he is down: on the belly as he goes limp; then
 // after the coming apart as it runs in from the tail, until it reaches the
 // belly and lets him go.
-function lookAtKill(t, a) {
-  const belly = bellyAt(t).x;
+const lookAtKill = (t, a) => killPoint(t, a).x;
+function killPoint(t, a) {
+  const belly = bellyAt(t);
   const apart = (a - KILL.last - KILL.limp) / KILL.apart;
   if (apart <= 0 || apart >= 1) return belly;
-  const front = coilLine((1 - apart) * (COIL_SEGS - 1), t).x;
-  return Math.max(front, belly);
+  const front = coilLine((1 - apart) * (COIL_SEGS - 1), t);
+  return front.x > belly.x ? front : belly;
 }
 export function stepFreed(t) {
   const a = (t - S.freedAt) / 1000;
@@ -399,3 +400,26 @@ export function stepFreed(t) {
 }
 // The skip: all of it at once, played out on the next frame.
 export function cutFreed() { S.freedAt = -1e12; return false; }
+
+// What the snatch is about, for the letterbox's window (cutscene.js,
+// `subject`): the two of them on the plank, and the head out of the surface
+// while it is up.
+export function snatchSubject() {
+  const s = S.snatch;
+  if (!s) return [];
+  const at = S.pair.map(b => ({ x: b.x, y: b.y, w: WORKER, h: WORKER }));
+  const surface = abyssLine();
+  if (s.headY < surface) at.push({ x: mouthX() - WORKER, y: s.headY, w: WORKER * 2, h: surface - s.headY });
+  return at;
+}
+// And the kill's: the belly he is in while the serpent goes down, the
+// coming apart running in to it, then him out on the floor and her come out
+// to meet him.
+export function killSubject(t = now()) {
+  const him = freedBody(t), m = meetAt();
+  if (!him) {
+    const b = killPoint(t, (t - S.freedAt) / 1000);
+    return [{ x: b.x - WORKER / 2, y: b.y - WORKER / 2, w: WORKER, h: WORKER }];
+  }
+  return [him, m].filter(Boolean).map(o => ({ x: o.x, y: o.y, w: WORKER, h: WORKER }));
+}

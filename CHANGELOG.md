@@ -134,6 +134,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- In every cutscene the black bars frame what the scene is about instead of covering it, and notices and the corner buttons wait off the bars until the scene is over (test/letterbox-framing-desk.test.mjs).
 - A notice is always drawn on top, over a tall house or any building, instead of being pushed sideways out of the window (src/selftest/touch.js, "a notice is drawn over a building that reaches into the sky").
 - A yard already past the serpent retires the sqhusband along with her, instead of leaving him on the crew (test/finale.test.mjs).
 

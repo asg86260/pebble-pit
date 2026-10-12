@@ -15,7 +15,9 @@ import { CREW_VIEWS, crewView, setPref } from './prefs.js';
 import { onTap } from './tap.js';
 import { showTipAt } from './board.js';
 import { goDeep, goUp, gliding } from './view.js';
+import { recede } from './cutscene.js';
 
+const corner = document.getElementById('corner');
 const crew = document.getElementById('crewfade');
 const way = document.getElementById('way');
 
@@ -70,8 +72,15 @@ function seatWay() {
 
 // Seated every frame like the rest of the shell, after the squares that
 // decide for themselves (fullscreen.js, pause.js): gone while the game is
-// held, since the sheet is up over the yard it would fade.
+// held, since the sheet is up over the yard it would fade. And the row fades
+// out while a scene holds the yard and back in after, on the recede's own
+// number as the yard's reading does (render.js, `HUD`): the letterbox's top
+// band is where it stands. Untouchable while it is going (style.css,
+// `.scened`).
 export function refreshCorner() {
+  const ink = 1 - recede();
+  corner.classList.toggle('scened', ink < 1);
+  corner.style.opacity = ink < 1 ? ink.toFixed(3) : '';
   crew.hidden = S.paused;
   seatWay();
   if (crew.hidden && noting) { noting = false; showTipAt(null); }

@@ -1707,8 +1707,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   backface-visibility: hidden;
 }
 /* and a scene holding the yard fades it rather than popping it off and on,
-   its opacity written each frame off the recede (board.js, `seatCall`) */
-#raise.scened { pointer-events: none; }
+   its opacity written each frame off the recede (board.js, `seatCall`); the
+   corner's row the same (corner.js, `refreshCorner`) */
+#raise.scened, #corner.scened { pointer-events: none; }
 /* Under the cursor it inverts, the same offer a board's row makes. */
 @media (hover: hover) {
   #raise:hover { background: var(--paper); color: var(--ink); }

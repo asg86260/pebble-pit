@@ -239,3 +239,15 @@ export const SAVE = {
   },
   blank() { S.abyss = null; }
 };
+
+// What the scene is about, for the letterbox's window (cutscene.js,
+// `subject`): him in the belly while the camera is pushed in on it, then her.
+export function abyssSubject(t = now()) {
+  const a = S.abyss, w = her();
+  if (!a) return [];
+  if (a.phase === 'push' || a.phase === 'call' || !w) {
+    const b = bellyAt(t);
+    return [{ x: b.x - WORKER / 2, y: b.y - WORKER / 2, w: WORKER, h: WORKER }];
+  }
+  return [{ x: w.x, y: w.y, w: WORKER, h: WORKER }];
+}

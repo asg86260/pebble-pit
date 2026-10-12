@@ -23,12 +23,18 @@
 import { CUT_TEAR_S, CUT_DROWN_S, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S, CUT_OUT_S,
          CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S, CUT_SETTLE_S,
          CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, ABYSS_MAX_S, CUT_PAN_PX_S, CUT_PAN_MAX_S,
-         CUT_KILL_SETTLE_S } from './config.js';
-import { muckSpot, muckOver } from './firstmuck.js';
+         CUT_KILL_SETTLE_S, CUT_BAND_SHARE, CUT_FRAME_MARGIN, CELL, WORKER } from './config.js';
+import { muckSpot, muckOver, muckSubject } from './firstmuck.js';
 import { mouthX } from './deep/place.js';
 import { S, rift, pit } from './state.js';
 import { clampCam, lockScroller } from './world.js';
-import { arrived, holdDeepShot } from './view.js';
+import { arrived, holdDeepShot, gliding } from './view.js';
+import { abyssLine } from './pit.js';
+import { shieldTopY } from './shield.js';
+import { introSubject } from './intro.js';
+import { snatchSubject, killSubject } from './snatch.js';
+import { abyssSubject } from './abyssintro.js';
+import { finaleSubject } from './finale.js';
 import { reducedMotion } from './prefs.js';
 import { beatRunning, skipBeat } from './beats.js';
 import { now, frameMs, setStill } from './clock.js';
@@ -239,9 +245,123 @@ export function stepHush(t) {
   if (on) keepCast();
   else if (S.hush <= 0) dropCast();
   setStill(easeInOut(S.hush));
+  stepLift(step);
 }
 // How far the yard has receded, eased, for the drawing.
 export const recede = () => easeInOut(S.hush);
+
+// --- the window between the bands ---------------------------------------------
+// The bands cover the top and the foot of the glass, so a scene is framed in
+// what is left between them, not in the whole window. Every framing in the
+// game -- the yard's pit floor on the foot of the window, the deep's floor on
+// it, the opening's and the deep scenes' own heights -- is asked once more
+// here (`frameHeight`, from world.js `clampCam`) whether what the scene is
+// about is inside that window, and the camera is let down or up by as little
+// as puts it there. The bands step in with the hush, so the move comes in
+// with them, and the camera glides it; it never cuts.
+
+// How many cells deep each band stands at full: a share of the window's
+// height, in whole cells of the window's grid.
+export const bandCells = () => Math.max(1, Math.round(S.H * CUT_BAND_SHARE / CELL));
+// ...and in the world's pixels at the zoom the view stands at.
+const bandWorld = () => bandCells() * CELL / S.zoom;
+
+// What a scene is about, as one box in the world: what its camera is aimed
+// at. Each scene's own file says who that is; this is the one table of them.
+// Null when nothing holds the yard, or while the view is between the halves.
+const SHIELDS = new Set(['props', 'net', 'arch', 'dome']);
+function subjects() {
+  if (S.finale) return finaleSubject();
+  if (S.beat.yard === 'freed') return killSubject();
+  const cam = S.beat.camera;
+  if (cam === 'abyss') return abyssSubject();
+  if (cam === 'snatchcam' || S.beat.yard === 'snatch') return snatchSubject();
+  if (cam === 'firstmuck') return muckSubject();
+  // The tearing is the disc; the drowning is wider than any window, and what
+  // is watched is the stretch the camera is on (`SCENES`), from the ground to
+  // the surface.
+  if (cam === 'tear') return [{ x: rift.x, y: rift.y, w: rift.w, h: rift.h }];
+  if (cam === 'drown') {
+    const x = SCENES.drown.spot(), w = Math.min(S.viewW / 2, Math.min(700, pit.w));
+    const top = S.groundY - WORKER, foot = Math.max(S.groundY, abyssLine());
+    return [{ x: x - w / 2, y: top, w, h: foot - top }];
+  }
+  if (SHIELDS.has(cam)) {
+    if (!S.shield) return [];
+    const y = shieldTopY(S.shield);
+    return [{ x: S.shield.x, y, w: S.shield.w, h: S.groundY - y }];
+  }
+  if (S.beat.yard) return introSubject();
+  return [];
+}
+// A scene whose subject has gone from under it -- a shield broken, the
+// serpent back under with him -- is still about where it was for the tail it
+// holds on the wreck: the last box it named is kept for as long as the same
+// scene holds the same half.
+let kept = null;
+export function subject() {
+  if (!holding() || gliding()) return null;
+  const key = S.finale ? 'finale' : S.beat.camera || S.beat.yard || S.beat.sheet;
+  const at = subjects();
+  if (!at.length) return kept && kept.key === key && kept.view === S.view ? kept.box : null;
+  const x = Math.min(...at.map(r => r.x)), y = Math.min(...at.map(r => r.y));
+  const box = { x, y, w: Math.max(...at.map(r => r.x + r.w)) - x, h: Math.max(...at.map(r => r.y + r.h)) - y };
+  kept = { key, view: S.view, box };
+  return box;
+}
+
+// The window between the bands at full, in the world, for a view whose top
+// stands at `camY`.
+export function bandWindow(camY = S.camY) {
+  const band = bandWorld();
+  return { top: camY + band, bottom: camY + S.viewH - band };
+}
+// How far the view at `camY` must be let down (less than nought: up) to put
+// `box` inside that window, CUT_FRAME_MARGIN clear of both bands; a box
+// taller than the window is centered in it.
+function need(camY, box) {
+  const m = CUT_FRAME_MARGIN, { top, bottom } = bandWindow(camY);
+  if (box.h + m * 2 > bottom - top) return box.y + box.h / 2 - (top + bottom) / 2;
+  if (box.y - m < top) return box.y - m - top;
+  if (box.y + box.h + m > bottom) return box.y + box.h + m - bottom;
+  return 0;
+}
+
+// The move, in world pixels: `want` what the scene's box needs with the
+// bands all the way in, `lift` how far the camera has come toward it. The
+// bands come in on the hush, so the move does too; and it is walked at the
+// glide's own top speed, so a box that changes hands (a finale's phase, the
+// way through the portal) is a glide and never a jump. A scene letting go
+// keeps the last box's move and gives it back with the bands. Ephemeral: a
+// reload takes it again from the scene.
+let want = 0, lift = 0;
+export function frameHeight(camY) {
+  if (S.hush > 0) {
+    const box = subject();
+    if (box) want = need(camY, box);
+  }
+  return camY + lift;
+}
+function stepLift(step) {
+  // Asked every frame the bands are up, not only when a scene happens to
+  // frame: a view nobody is pointing (the yard come back through the portal)
+  // still has its subject put between them.
+  if (S.hush > 0) clampCam();
+  else want = 0;
+  const to = want * S.hush, most = CUT_PAN_PX_S * step;
+  const was = lift;
+  lift = reducedMotion() ? to : lift + Math.max(-most, Math.min(most, to - lift));
+  if (lift !== was) clampCam();
+}
+// A view framed afresh (view.js, `frameOn`): the way between the halves has
+// had the window, and the move starts again from the new framing.
+export function dropLift() { want = 0; lift = 0; }
+// For the checks: whether the move has come all the way to what the subject
+// needs from the view as it stands now.
+export function liftArrived() {
+  const box = subject();
+  return Math.abs(lift - (box ? need(S.camY - lift, box) : want) * S.hush) < 0.5;
+}
 
 // One frame of a scene in the deep: `want` is where its own beat looks this
 // frame, `{ k, x, y }` -- pulled in by `k` over the deep's fit, its middle on

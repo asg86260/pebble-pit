@@ -178,3 +178,13 @@ function nearestOpen(wx) {
   }
   return null;
 }
+
+// What the scene is about, for the letterbox's window (cutscene.js,
+// `subject`): the walker, and the patch it is walking to.
+export function muckSubject() {
+  const sc = S.muckScene;
+  if (!sc) return [];
+  const w = S.workers.find(o => o.uid === sc.uid);
+  const patch = { x: cellX(sc.col) - P / 2, y: S.groundY - WORKER, w: P, h: WORKER };
+  return w ? [patch, { x: w.x, y: w.y, w: WORKER, h: WORKER }] : [patch];
+}

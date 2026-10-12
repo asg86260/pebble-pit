@@ -1,3 +1,4 @@
+import { P } from './yard.js';
 // --- the cutscenes --------------------------------------------------------------
 // The one-time beats are watched: the camera goes to the event, the moment
 // plays, the camera comes back. One mechanism (src/cutscene.js) owns the
@@ -88,6 +89,9 @@ export const ABYSS_MAX_S = 20;        // a ceiling, never the design
 // over the same stretch and holds there. Letting go is CUT_OUT_S, the same in
 // reverse.
 export const CUT_BAND_SHARE = 0.09;
+// What a scene is about is framed inside the window between the bands, kept
+// CUT_FRAME_MARGIN world pixels clear of either (cutscene.js, `frameHeight`).
+export const CUT_FRAME_MARGIN = P * 2;
 // In the deep the bands are black on the black water, so each carries a rule
 // on its inner edge, CUT_BAND_RULE_PX screen pixels of the deep's rung
 // CUT_BAND_RULE_TONE (ABYSS_TONES), as seen.

@@ -11,7 +11,7 @@ import { S } from './state.js';
 import { now } from './clock.js';
 import { TOAST_MS, TOAST_GAP_MS } from './config.js';
 import { noticeFor } from './notices.js';
-import { cutsceneRunning } from './cutscene.js';
+import { cutsceneRunning, holding } from './cutscene.js';
 import { reducedMotion } from './prefs.js';
 import { hold } from './input.js';
 import { showPane } from './settings.js';
@@ -125,6 +125,15 @@ export function stepToast() {
   // that would otherwise stay up until the clock caught up with it.
   if (upAt > t) upAt = t;
   if (downAt > t) downAt = t - TOAST_GAP_MS;
+  // Not over a scene: the bands are its, top and foot, and a card would sit
+  // on the top one. One already up when the bands come in goes, and is put
+  // back at the head of the line to be said in full after.
+  const scened = cutsceneRunning() || holding() || S.hush > 0;
+  if (up && scened) {
+    S.wonShown = Math.min(S.wonShown | 0, S.wonAt[up] - 1);
+    hide();
+    return;
+  }
   if (up) {
     // said its piece, or says a notice the record no longer has
     if (!S.won.includes(up) || t - upAt >= TOAST_MS) hide();
@@ -133,8 +142,8 @@ export function stepToast() {
   }
   const next = pending();
   if (!next.length) return;
-  // Not over a cutscene: the line holds until the camera is given back.
-  if (cutsceneRunning()) return;
+  // ...and the line holds until the yard is given back.
+  if (scened) return;
   if (t - downAt < TOAST_GAP_MS) return;
   show(next[0]);
 }

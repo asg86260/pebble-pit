@@ -19,6 +19,7 @@ import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZO
 import { clampCam, setZoom, yardCell } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
+import { dropLift } from './cutscene.js';
 
 export const inDeep = () => S.view === 'deep';
 // A glide is running: the pointer waits for it.
@@ -58,6 +59,7 @@ const openX = v => (v === 'deep' ? deepPortal().x : portalX());
 function frameOn(v) {
   S.view = v;
   S.camLockY = null;
+  dropLift();
   setZoom(zoomOf(v));
   S.camX = openX(v) - S.viewW / 2;
   S.camTo = null;

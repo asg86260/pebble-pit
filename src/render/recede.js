@@ -11,9 +11,9 @@
 // are sorted inside their layers, since the crew's layer holds the pair and
 // the haulers both: `bodyInk` says how much of a body each pass draws.
 
-import { CELL, CUT_BAND_SHARE, CUT_BAND_RULE_PX, CUT_BAND_RULE_TONE, CUT_RECEDE_INK, ABYSS_TONES } from '../config.js';
+import { CELL, CUT_BAND_RULE_PX, CUT_BAND_RULE_TONE, CUT_RECEDE_INK, ABYSS_TONES } from '../config.js';
 import { S } from '../state.js';
-import { recede } from '../cutscene.js';
+import { recede, bandCells } from '../cutscene.js';
 import { roleOf } from '../stage.js';
 import { darkPage, turned } from '../ink.js';
 import { canvas, ctx } from './ctx.js';
@@ -66,9 +66,9 @@ export const backInk = () => 1 - recede() * (1 - CUT_RECEDE_INK);
 // is the page's, reads it too (board.js, `seatCall`).
 export const hudInk = () => 1 - recede();
 
-// How many cells deep each band stands at full: a share of the window's
-// height, in whole cells of the window's grid.
-export const bandCells = () => Math.max(1, Math.round(S.H * CUT_BAND_SHARE / CELL));
+// How many cells deep each band stands is cutscene.js's, since the scenes are
+// framed between them (`bandWindow`).
+export { bandCells };
 
 // The bands: a cell of the window's own grid a step, stepping in and out with
 // the hush rather than sliding, flat black over the finished picture. In the
