@@ -19,7 +19,7 @@ export const SCALE_BAND_COINS = [[], ['dust'], ['dust', 'shard'], ['dust', 'shar
 // every few minutes and stands near rung 7 when he is freed, and its damage
 // grows a step at a time rather than in jumps an hour apart.
 export const SCALE_RUNG_COINS = {
-  dust:  [0, 0, 100e3, 250e3, 500e3, 900e3, 1.5e6, 2.5e6],
+  dust:  [0, 0, 50e3, 125e3, 250e3, 450e3, 750e3, 1.25e6],
   shard: [0, 0, 0, 0, 1e3, 3e3, 10e3, 30e3],
   spark: [0, 0, 0, 0, 0, 0, 1e3, 3e3]
 };
@@ -29,7 +29,7 @@ export const SCALE_RUNG_COINS = {
 // party over minutes instead of breaking the phase it joins at once (the
 // driven runs, 2026-10-07). The free first station keeps the table above.
 export const FANG_RUNGS = 4;
-export const FANG_RUNG_DUST = 500e3;
+export const FANG_RUNG_DUST = 250e3;
 
 // The scale as a mark: nine pixels square, ink `#` and paper `.`, a blank
 // outside the edge. A square with its foot rounded in, and a crescent hanging
