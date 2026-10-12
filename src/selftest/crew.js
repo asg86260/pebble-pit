@@ -337,6 +337,7 @@ export const TESTS = [
     window.__look(wx - S.viewW / 2);
     const [sx, sy] = onScreen(wx, wy);
     point('pointerdown', sx + 2, sy + 2, 2, 2);
+    point('pointermove', sx + 2, sy + 2, 3, 0);
     const w = lifted();
     if (!w) return [ok(false, 'a body is picked up')];
     const g = canvas().getContext('2d');
@@ -352,7 +353,7 @@ export const TESTS = [
         S.view = view;
         S.camX = x0;
         S.camY = y - S.viewH / 2;
-        point('pointermove', S.viewW / 2, S.viewH / 2, 2, 2);
+        point('pointermove', S.viewW / 2, S.viewH / 2, 3, 0);
         draw();
         const held = seen();
         const all = S.workers;

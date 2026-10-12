@@ -23,9 +23,10 @@ export const TESTS = [
 
     // the right button picks it up
     point('pointerdown', ...scr(m[0] + 9, m[1] + 9), 2, 2);
+    point('pointermove', ...scr(m[0] + 9, m[1] + 9), 3, 0);
     const up = state();
     const away = [s.rockX - 700, s.groundY - 200];
-    point('pointermove', ...scr(...away), 2, -1);
+    point('pointermove', ...scr(...away), 3, -1);
     const carried = state();
     const heldCard = document.getElementById('tip');
     const heldSaid = heldCard.hidden ? '' : heldCard.textContent;
@@ -75,9 +76,10 @@ export const TESTS = [
     const scr = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
     const m = s.workerPos.find(p => p[0] === 'r').split(':')[1].split(',').map(Number);
     point('pointerdown', ...scr(m[0] + 9, m[1] + 9), 2, 2);
+    point('pointermove', ...scr(m[0] + 9, m[1] + 9), 3, 0);
     // straight up in the air over the rock, then let go
     const over = [s.rockX + s.rockW / 2, s.groundY - 260];
-    point('pointermove', ...scr(...over), 2, -1);
+    point('pointermove', ...scr(...over), 3, -1);
     point('pointerup', ...scr(...over), 0, 2);
     const let_go = state();
     run(0.35);
@@ -121,9 +123,10 @@ export const TESTS = [
     const dropAt = async (tag, wx) => {
       const w = state().workerPos.find(p => p[0] === tag).split(':')[1].split(',').map(Number);
       point('pointerdown', ...scr(w[0] + 9, w[1] + 9), 2, 2);
-      point('pointermove', ...scr(wx, sky), 2, -1);
+      point('pointermove', ...scr(w[0] + 9, w[1] + 9), 3, 0);
+      point('pointermove', ...scr(wx, sky), 3, -1);
       await sleep(180);
-      point('pointermove', ...scr(wx, sky), 2, -1);
+      point('pointermove', ...scr(wx, sky), 3, -1);
       await sleep(180);
       point('pointerup', ...scr(wx, sky), 0, 2);
       for (let i = 0; i < 80; i++) {
