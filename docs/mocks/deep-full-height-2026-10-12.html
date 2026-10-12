@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Full Height</title>
+<style>
+/* One pane per way of filling the deep's height, each the deep's own glass
+   at its real proportions, black in either theme as the deep is; a legend of
+   the creatures by the ocean zone each is drawn from. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; overflow-x: hidden; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 13px; }
+p { margin: 0; max-width: 96ch; color: var(--dim); }
+b { color: var(--fg); }
+.note { border: 1px dashed var(--dim); padding: 10px 12px; display: grid; gap: 6px; }
+.panel { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; min-width: 0; }
+.panel img { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #000; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 8px; }
+.stat { border: 1px solid var(--rule); padding: 8px; display: grid; gap: 2px; }
+.stat .n { font-size: 20px; color: var(--fg); }
+.stat .l { font-size: 12px; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 620px), 1fr)); gap: 14px; }
+.grid.whole { grid-template-columns: 1fr; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.card p, .card li { font-size: 12px; }
+canvas.view { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #000; }
+ul { margin: 0; padding-left: 18px; color: var(--dim); max-width: 96ch; }
+li { margin: 2px 0; }
+.cost { border-top: 1px solid var(--rule); padding-top: 6px; }
+.legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 8px; }
+.sp { display: grid; grid-template-columns: 72px 1fr; gap: 8px; align-items: center; border: 1px solid var(--rule); padding: 6px; }
+.sp canvas { width: 72px; height: 48px; image-rendering: pixelated; background: #000; }
+.sp .z { font-size: 11px; color: var(--dim); }
+.sp .zn { display: inline-block; font-size: 10px; border: 1px solid var(--dim); padding: 0 4px; margin-right: 4px; color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Deep Full Height</h1>
+    <p>Using the whole height of the deep: creatures living from the portal down to the floor, each in the band of
+      water its real-world kin lives in, sunlit at the top to hadal at the bottom. Three layouts, from "draw it in
+      and move nothing" to "put the stations up the height".</p>
+  </div>
+
+  <div class="note">
+    <p><b>A mock drawn from plain shapes, not the game.</b> The deep here is drawn cell by cell at its real
+      proportions (520 by 130 cells, plus the 9-cell floor margin the glass keeps), with the coil, the portal, the
+      domes and the bar at their real sizes and places. It cannot show: the abyss field's flowing water behind
+      everything (a few still current lines stand in for it), the real props, fighters, attacks and numbers, the
+      meal swim (the serpent eating one of these), the phone, and how busy it feels with a fight on. The sprites
+      are first drafts on the 6-pixel grid to show what reads at this size, not finished drawings.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Today, in the game</h2>
+    <img src="deep-full-height-2026-10-12/today-deep.png" width="2200" height="600"
+         alt="The whole deep today at 2200 by 600: the portal at the top middle, the coil and the bar across the middle, the domes on the floor, and empty dark water above.">
+    <p>The deep-all scene on a 2200-wide window, the whole width of the deep on one glass.</p>
+    <div class="stats">
+      <div class="stat"><span class="n">4 : 1</span><span class="l">the deep, 520 × 130 cells (3,120 × 780 world px); the glass shows all 130 rows on any window</span></div>
+      <div class="stat"><span class="n">4–7%</span><span class="l">of the drawn ink sits in the top third of the deep; the top 30% holds 3%</span></div>
+      <div class="stat"><span class="n">72–87%</span><span class="l">sits in the middle third: the coil, the bar and the near stream, all within 40–70% down</span></div>
+      <div class="stat"><span class="n">row 48</span><span class="l">of 130 is where anything solid starts; above it only the portal ring and the far shoals drawn a third of a cell big</span></div>
+    </div>
+    <p>Measured from the shots: every pixel brighter than the water, counted row by row over the deep's 520 screen
+      rows (HUD and scene notices masked), across deep-all, deep-chip, deep-numbers and meal-swim.</p>
+  </div>
+
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-view="camera" aria-pressed="true" type="button">the glass (800 wide)</button>
+    <button data-view="whole" aria-pressed="false" type="button">the whole deep</button>
+    <button id="labels" type="button" aria-pressed="true">zone labels</button>
+    <button id="tint" type="button" aria-pressed="true">zone tint</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="panel">
+    <h2>The creatures, by zone</h2>
+    <p>Depths are the usual figures for each animal's range, rounded. The zones are not to scale: the real hadal zone
+      is half the ocean's depth and the sunlit a fiftieth of it, so the bands here are cut to what reads.</p>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="note">
+    <p><b>What rides along with any of the three:</b> the serpent eats these. Today a meal is one of eight creatures
+      swimming in from the near stream's band over the coil; with creatures through the whole height, a meal could
+      come down from its own zone (a longer swim, so MEAL_SWIM_S grows) or stay drawn from the band it is now. The
+      zone tint is a few greys of the deep's own ramp, dithered, never a gradient; it can be dropped from any option
+      (button above).</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  // The deep's ramps as seen (render/deeptones.js).
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56',
+                   '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const h2 = (a, b) => hash(a * 31.7 + b * 113.3);
+
+  // --- the deep's measure (src/config/deep.js, deepdraw.js) -------------------------
+  const DW = 520, DH = 130, MARGIN = 9, ROWS = DH + MARGIN;
+  const COIL_X0 = 0.28 * DW, COIL_X1 = 0.94 * DW, GIRTH = 9;
+  const PORTAL = { x: 0.5 * DW, y: 20, r: 15 };
+  const SLOTS = [0.335, 0.475, 0.62, 0.76, 0.9].map(k => Math.round(k * DW));
+  const CRUSHER = { x: Math.round(0.05 * DW) - 15, w: 30, h: 30 };
+  const PODS = Math.round(0.19 * DW);
+  const BAR_W = 400, BAR_H = 14;
+
+  const ZONES = [
+    { key: 'sun', name: 'sunlit', real: 'epipelagic', from: 0, to: 22, tones: [2, 3], share: 0.12 },
+    { key: 'twi', name: 'twilight', real: 'mesopelagic', from: 22, to: 48, tones: [1, 2], share: 0.14 },
+    { key: 'mid', name: 'midnight', real: 'bathypelagic', from: 48, to: 88, tones: [0, 1], share: 0.07 },
+    { key: 'aby', name: 'abyssal', real: 'abyssopelagic', from: 88, to: 118, tones: [0, 1], share: 0.02 },
+    { key: 'had', name: 'hadal', real: 'trench', from: 118, to: 130, tones: [0, 0], share: 0 },
+  ];
+
+  // --- the creatures: a few cells each, two or three held frames ---------------------
+  // Tones: d c b the grey body (each cell nudged a rung either way, fixed per
+  // creature), w white, e near-black, q r p the purple ramp, L a light that
+  // blinks on its own clock.
+  const SPR = {
+    sardine: { fps: 6, f: [["d.cbw", "dcccb"], [".dcbw", "dcccb"]] },
+    jelly: { fps: 2.5, f: [
+      [".bbb.", "bcwcb", "b...b", "d.d.d", ".d.d.", "d.d.d"],
+      [".bbb.", "bcwcb", ".b.b.", ".ddd.", ".d.d.", ".d.d."],
+      ["..b..", ".bwb.", "bc.cb", "d.d.d", "d.d.d", ".d.d."]] },
+    lantern: { fps: 5, f: [["..cccb.", "dccccbw", "d.L.L.."], ["d.cccb.", ".ccccbw", "..L.L.."]] },
+    hatchet: { fps: 4, f: [["..bbw", ".bbbb", "dbbbb", ".bbbL", "..LL."], ["..bbw", ".bbbb", ".bbbb", "dbbbL", "..LL."]] },
+    angler: { fps: 2, f: [
+      [".....dddd.", "....d...dL", "..cccc....", "dccccccw..", "dcccccccc.", "dcccwcwc..", "..ccccc..."],
+      [".....dddd.", "....d...dL", "..cccc....", "dccccccw..", "dccccc....", "dcccwcw...", "..cccccc.."]] },
+    vampire: { fps: 2, f: [
+      ["...rr...", "..rrrr..", ".rqqqqr.", ".qbqqbq.", "qqqqqqqq", "q.q..q.q", "q.q..q.q", "..q..q.."],
+      ["...rr...", "..rrrr..", ".rqqqqr.", ".qbqqbq.", ".qqqqqq.", "..qqqq..", "..q..q..", ".q.qq.q."]] },
+    dumbo: { fps: 3, f: [
+      ["b.ccc.b", "bbcccbb", ".cwcwc.", ".ccccc.", "c.c.c.c", "c.c.c.c", ".c...c."],
+      ["..ccc..", "bbcccbb", "bcwcwcb", ".ccccc.", ".c.c.c.", "c.c.c.c", "c.....c"],
+      ["..ccc..", ".ccccc.", "bcwcwcb", "bcccccb", ".c.c.c.", ".c.c.c.", "c.c.c.c"]] },
+    tripod: { fps: 1.5, f: [
+      [".........b.", "......ccb..", "dccccccccw.", ".ccccccc...", ".d....d....", ".d.....d...", "d.......d.."],
+      ["..........b", "......cccb.", "dccccccccw.", ".ccccccc...", ".d....d....", ".d.....d...", "d.......d.."]] },
+    cucumber: { fps: 1, f: [[".cbcbc.", "ccccccc", "d.d.d.d"], ["..cbcbc", ".cccccc", ".d.d.d."]] },
+    amphipod: { fps: 6, f: [[".bb.", "bccw", "d.d."], [".bb.", "bccw", ".d.d"]] },
+    snail: { fps: 3, f: [["....bbb.", "dbbbbbbw", "....bbb."], ["d...bbb.", ".bbbbbbw", "....bbb."]] },
+    gulperHead: { fps: 1.5, f: [["cc...", "cccw.", "ccccc", "cccc.", "cc..."], ["cccc.", "cc.w.", "c....", "c....", "cccc."]] },
+  };
+  const BASE = { d: 6, c: 8, b: 10 };
+  function tone(ch, seed, r, c, t) {
+    if (ch in BASE) {
+      const j = h2(seed + r * 7.1, c * 3.3);
+      return GREYS[Math.max(4, Math.min(11, BASE[ch] + (j < 0.2 ? -1 : j > 0.85 ? 1 : 0)))];
+    }
+    if (ch === 'w') return GREYS[11];
+    if (ch === 'e') return GREYS[4];
+    if (ch === 'q') return PURPLES[h2(seed + r, c) < 0.25 ? 6 : 7];
+    if (ch === 'r') return PURPLES[9];
+    if (ch === 'p') return PURPLES[11];
+    if (ch === 'L') return Math.floor(t * 2.3 + seed * 5 + c * 0.7) % 3 ? PURPLES[11] : PURPLES[6];
+    return null;
+  }
+  function sprite(put, key, x, y, dir, seed, t) {
+    const s = SPR[key], fr = s.f[Math.floor(t * s.fps + seed * 10) % s.f.length], w = fr[0].length;
+    for (let r = 0; r < fr.length; r++) for (let c = 0; c < w; c++) {
+      const ch = fr[r][c];
+      if (ch === '.') continue;
+      const col = tone(ch, seed, r, c, t);
+      if (col) put(x + (dir > 0 ? c : w - 1 - c), y + r, col);
+    }
+    return { w, h: fr.length };
+  }
+  // A siphonophore: a float and a long chain of bells, a glint running down it.
+  function siphon(put, x, y, dir, seed, t) {
+    const n = 26, run = Math.floor(t * 6 + seed * 40) % (n + 8);
+    put(x, y - 1, GREYS[10]); put(x - dir, y - 1, GREYS[9]);
+    for (let i = 0; i < n; i++) {
+      const cx = x - dir * i, cy = y + Math.round(Math.sin(i * 0.45 - t * 1.2 + seed * 6) * 1.6);
+      const glint = Math.abs(i - run) < 1;
+      put(cx, cy, glint ? PURPLES[11] : i % 2 ? GREYS[7] : GREYS[9]);
+      if (i % 3 === 0) put(cx, cy + 1, i % 6 ? GREYS[5] : PURPLES[8]);
+    }
+  }
+  // A gulper eel: the great head, then a whip of a tail with a lit tip.
+  function gulper(put, x, y, dir, seed, t) {
+    sprite(put, 'gulperHead', x, y, dir, seed, t);
+    const n = 24;
+    for (let i = 1; i <= n; i++) {
+      const cx = dir > 0 ? x - i : x + 4 + i, cy = y + 2 + Math.round(Math.sin(i * 0.35 - t * 3 + seed * 6) * (i / n) * 3);
+      put(cx, cy, i === n ? PURPLES[11] : i > n - 6 ? GREYS[6] : GREYS[8]);
+      if (i < 8) put(cx, cy + 1, GREYS[6]);
+    }
+  }
+
+  // --- the three layouts ------------------------------------------------------------
+  const OPTS = [
+    { key: 'a', name: 'A · Zones over the fight',
+      about: 'The serpent, the bar and the stations stay exactly where they are. The creatures fill the deep from the portal down in their zones: shoals and jellies by the portal, lanternfish and siphonophores under them, anglers and gulpers in the coil\'s own band, dumbos and tripod fish between the coil and the domes, amphipods on the floor.',
+      cost: ['Moves nothing that is fought: coil, bar, stations, fighters\' walk, coil hit tests, camera and phone zoom are untouched.',
+             'New: a fauna drawing (one render file and a zone table in config), and a LAYERS entry for the tint.',
+             'The far stream\'s height formula (render/fish.js, drawCrossing) and the near stream\'s lane (laneY, a 25-cell band over the coil) re-pointed at the zones; the meal\'s swim from a high zone down to the mouth is longer.',
+             'Cheapest. Risk: the midnight band is also where the bar and the fight\'s numbers are, so it has to stay quiet there.'],
+      coil: { y: 75, amp: 9, waves: 3 }, bar: 'over', ledges: null },
+    { key: 'b', name: 'B · The coil ranges the deep',
+      about: 'The coil\'s sway is made tall: one and a half long waves from under the portal nearly to the domes, so the serpent itself uses the height. The creatures part round the body as it passes, and the bar is pinned to the top of the glass, since the coil\'s highest reach is now up by the portal.',
+      cost: ['deep/place.js waveLine: COIL_Y, COIL_AMP and COIL_WAVES; every reader of coilAt and coilLine (10 files, 7 test files) sees a new shape.',
+             'Melee fighters swim to the segment over their post (classes.js, segAbove): their swims become two to three times longer and vary with the sway.',
+             'The bar can no longer stand over coilCeiling (that is under the portal): pinned to the glass\'s top, which moves the status row and the numbers\' flight into it.',
+             'The crest passes the deep\'s portal: the portal moves or the coil goes behind it. The lash, dive, roar and kill offsets were tuned to a 9-cell sway and need retuning.',
+             'Camera and phone zoom unchanged; the creatures parting is drawing only.'],
+      coil: { y: 66, amp: 34, waves: 1.5 }, bar: 'top', ledges: null },
+    { key: 'c', name: 'C · Stations on ledges',
+      about: 'The stations stand on rock ledges that step up toward the middle of the deep, so the party is spread up the height, and the floor between them becomes the trench where the hadal things live. The serpent is raised to fight above the highest ledge.',
+      cost: ['Every station gets a height: DEEP_SLOTS gains a row, postY and plinthTop become per-slot (postY has 9 readers), and domes, props, scaffold, the works glyph stack and the board\'s pointer area (standOfStation) follow.',
+             'The fighters\' swim from the portal to the post, ranged attack angles, the rest walk and the build crate all read the floor today.',
+             'New rock drawing for the ledges, and the coil raised (COIL_Y) to clear the top ledge, which pushes the bar up toward the portal.',
+             'The biggest of the three. Camera and phone zoom unchanged.'],
+      coil: { y: 54, amp: 8, waves: 3 }, bar: 'over', ledges: [118, 102, 86, 100, 116] },
+  ];
+
+  const LEDGE_HALF = 13;
+  function ground(o, x) {
+    if (o.ledges) for (let i = 0; i < SLOTS.length; i++) {
+      const top = o.ledges[i], half = LEDGE_HALF + Math.floor((DH - top) / 2);
+      if (Math.abs(x - SLOTS[i]) <= LEDGE_HALF) return top;
+      if (Math.abs(x - SLOTS[i]) <= half) return top + 2 * (Math.abs(x - SLOTS[i]) - LEDGE_HALF);
+    }
+    return DH;
+  }
+  const coilY = (o, x, t) => {
+    const k = (x - COIL_X0) / (COIL_X1 - COIL_X0);
+    return o.coil.y + o.coil.amp * Math.sin(2 * Math.PI * (k * o.coil.waves - t / 7));
+  };
+  const coilHalf = k => GIRTH / 2 * (k < 0.7 ? 1 : Math.max(0.25, 1 - (k - 0.7) / 0.3 * 0.75));
+
+  // Who lives where. Same seeds in each layout, so the panes differ only by
+  // the layout; the floor-dwellers stand on whatever ground the layout has.
+  function population() {
+    const L = [], R = (i, a, b) => a + hash(i) * (b - a);
+    let i = 0;
+    for (let s = 0; s < 4; s++, i++) L.push({ kind: 'school', x0: R(i, 0, DW), y: R(i + 1, 5, 18), v: 5 + s, dir: s % 2 ? -1 : 1, seed: hash(i + 9), n: 9 + s });
+    for (let s = 0; s < 6; s++, i++) L.push({ kind: 'jelly', x0: R(i, 0, DW), y: R(i + 3, 4, 17), v: 0.5, dir: s % 2 ? 1 : -1, seed: hash(i + 5) });
+    for (let s = 0; s < 16; s++, i++) L.push({ kind: 'lantern', x0: R(i, 0, DW), y: R(i + 7, 24, 45), v: R(i + 2, 2.5, 5), dir: s % 3 ? 1 : -1, seed: hash(i + 1) });
+    for (let s = 0; s < 9; s++, i++) L.push({ kind: 'hatchet', x0: R(i, 0, DW), y: R(i + 7, 25, 43), v: R(i + 2, 1.5, 3), dir: s % 2 ? -1 : 1, seed: hash(i + 4) });
+    for (let s = 0; s < 3; s++, i++) L.push({ kind: 'siphon', x0: R(i, 0, DW), y: R(i + 7, 30, 44), v: 0.7, dir: s % 2 ? 1 : -1, seed: hash(i + 8) });
+    for (let s = 0; s < 3; s++, i++) L.push({ kind: 'angler', x0: R(i, 0, DW), y: R(i + 7, 50, 82), v: 1.2, dir: s % 2 ? -1 : 1, seed: hash(i + 2) });
+    for (let s = 0; s < 2; s++, i++) L.push({ kind: 'gulper', x0: R(i, 0, DW), y: R(i + 7, 52, 80), v: 2.2, dir: s % 2 ? 1 : -1, seed: hash(i + 6) });
+    for (let s = 0; s < 3; s++, i++) L.push({ kind: 'vampire', x0: R(i, 0, DW), y: R(i + 7, 50, 80), v: 0.9, dir: s % 2 ? 1 : -1, seed: hash(i + 3) });
+    for (let s = 0; s < 4; s++, i++) L.push({ kind: 'dumbo', x0: R(i, 0, DW), y: R(i + 7, 92, 106), v: 0.8, dir: s % 2 ? -1 : 1, seed: hash(i + 7) });
+    for (let s = 0; s < 5; s++, i++) L.push({ kind: 'tripod', x0: R(i, 0, DW), floor: true, v: 0, dir: s % 2 ? -1 : 1, seed: hash(i + 2) });
+    for (let s = 0; s < 6; s++, i++) L.push({ kind: 'cucumber', x0: R(i, 0, DW), floor: true, v: 0.25, dir: s % 2 ? 1 : -1, seed: hash(i + 1) });
+    for (let s = 0; s < 12; s++, i++) L.push({ kind: 'amphipod', x0: R(i, 0, DW), floor: true, v: 3.5, dir: s % 2 ? 1 : -1, seed: hash(i + 3), hop: true });
+    for (let s = 0; s < 3; s++, i++) L.push({ kind: 'snail', x0: R(i, 0, DW), low: true, v: 1.4, dir: s % 2 ? -1 : 1, seed: hash(i + 5) });
+    return L;
+  }
+  const POP = population();
+  const WRAP = DW + 60;
+  const xAt = (c, t) => {
+    // the amphipods go in fits and starts: a dash, a stop
+    const run = c.hop ? Math.floor(t * 1.5 + c.seed * 9) * 0.45 + Math.min(1, (t * 1.5 + c.seed * 9) % 1 * 2.2) * 0.45 : t;
+    return ((c.x0 + c.dir * c.v * run) % WRAP + WRAP) % WRAP - 30;
+  };
+
+  // --- drawing ----------------------------------------------------------------------
+  // Both at the game's own scale on an 800 by 600 window (zoom 0.667, four
+  // screen pixels a cell), so the bar's 400 pixels are true to the water.
+  const VIEWS = { camera: { x0: 120, w: 200, cs: 4 }, whole: { x0: 0, w: DW, cs: 4 } };
+  let view = 'camera', labels = true, tint = true;
+
+  function painter(g, v) {
+    return (x, y, col) => {
+      const px = (x - v.x0) * v.cs;
+      if (px < -v.cs || px > v.w * v.cs || y < 0 || y >= ROWS) return;
+      g.fillStyle = col; g.fillRect(px, y * v.cs, v.cs, v.cs);
+    };
+  }
+  // The still parts of a pane, drawn once a view: the water and its tint,
+  // the current lines, the floor, the ledges, the domes, the crusher.
+  function background(o, v) {
+    const cv = document.createElement('canvas');
+    cv.width = v.w * v.cs; cv.height = ROWS * v.cs;
+    const g = cv.getContext('2d'), put = painter(g, v);
+    g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
+    for (let y = 0; y < DH; y++) {
+      // the zone's own few tones, dithered across the four rows either side of a border
+      let z = ZONES.findIndex(q => y < q.to);
+      const next = ZONES[z + 1], prev = ZONES[z - 1];
+      for (let x = v.x0; x < v.x0 + v.w; x++) {
+        let zz = z;
+        if (next && ZONES[z].to - y <= 4 && h2(x, y) < (5 - (ZONES[z].to - y)) / 10) zz = z + 1;
+        if (prev && y - ZONES[z].from < 4 && h2(y, x) < (4 - (y - ZONES[z].from)) / 10) zz = z - 1;
+        const q = ZONES[zz];
+        if (tint) {
+          const k = h2(x * 1.3, y * 0.7);
+          if (k < q.share) put(x, y, GREYS[q.tones[1]]);
+          else if (q.tones[0] > 0 && k < 0.6) put(x, y, GREYS[q.tones[0]]);
+        }
+        // the current: slow vertical waves of dots
+        const wave = x + Math.round(Math.sin(y * 0.18 + x * 0.05) * 3);
+        if (wave % 23 === 0 && h2(x, y) < 0.55) put(x, y, GREYS[h2(y, x) < 0.5 ? 4 : 5]);
+        else if (h2(x * 3.1, y * 2.7) > 0.996) put(x, y, h2(y, x) < 0.5 ? PURPLES[8] : GREYS[8]);
+      }
+    }
+    // the floor and its margin
+    for (let y = DH; y < ROWS; y++) for (let x = v.x0; x < v.x0 + v.w; x++)
+      put(x, y, GREYS[y === DH ? 6 : h2(x, y) < 0.3 ? 4 : h2(x, y) < 0.8 ? 3 : 5]);
+    // the ledges: a course a cell wider each two rows down, rock tones
+    if (o.ledges) o.ledges.forEach((top, i) => {
+      for (let y = top; y < DH; y++) {
+        const half = LEDGE_HALF + Math.floor((y - top) / 2);
+        for (let x = SLOTS[i] - half; x <= SLOTS[i] + half; x++) {
+          const edge = y === top || Math.abs(x - SLOTS[i]) === half;
+          const crack = h2(x * 0.5 | 0, y) > 0.93;
+          put(x, y, edge ? GREYS[7] : crack ? GREYS[2] : GREYS[h2(x, y) < 0.35 ? 3 : h2(x, y) < 0.8 ? 4 : 5]);
+        }
+      }
+    });
+    // the crusher at the left end and the pods
+    for (let y = DH - CRUSHER.h; y < DH; y++) for (let x = CRUSHER.x; x < CRUSHER.x + CRUSHER.w; x++) {
+      const rim = y === DH - CRUSHER.h || x === CRUSHER.x || x === CRUSHER.x + CRUSHER.w - 1;
+      const mouth = Math.abs(x - (CRUSHER.x + 15)) < 5 && y > DH - 12;
+      put(x, y, mouth ? (h2(x, y) < 0.5 ? PURPLES[9] : PURPLES[7]) : rim ? GREYS[10] : (y % 4 === 0 || (x + (y >> 2) * 3) % 7 === 0) ? GREYS[6] : GREYS[8]);
+    }
+    for (let k = 0; k < 3; k++) for (let y = 0; y < 3; y++) for (let x = 0; x < 4; x++) put(PODS - 6 + k * 5 + x, DH - 3 + y, GREYS[y === 0 ? 8 : 6]);
+    // the stations: a plinth, a dome, a prop and its fighter, a mark over it
+    SLOTS.forEach((sx, i) => {
+      const fl = o.ledges ? o.ledges[i] : DH;
+      const R = 9, spring = fl - 2 - 2;
+      for (let y = spring - R; y < fl - 2; y++) for (let x = sx - R; x <= sx + R; x++) {
+        const dy = Math.max(0, spring - y), d = Math.hypot(x - sx, dy);
+        if (d > R + 0.4) continue;
+        put(x, y, d > R - 0.8 ? GREYS[6] : GREYS[h2(x, y) < 0.5 ? 3 : 4]);
+      }
+      for (let y = fl - 2; y < fl; y++) for (let x = sx - R - 1 - (y - fl + 2); x <= sx + R + 1 + (y - fl + 2); x++) put(x, y, GREYS[y === fl - 2 ? 8 : 6]);
+      for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) put(sx + 1 + x, fl - 5 + y, GREYS[11]);
+      for (let y = 0; y < 4; y++) for (let x = 0; x < 3; x++) put(sx - 5 + x, fl - 6 + y, GREYS[y === 0 ? 9 : 7]);
+      const mk = [[0, 2], [1, 3], [2, 2], [3, 1], [4, 0]];
+      for (const [x, y] of mk) put(sx - 2 + x, spring - R - 6 + y, GREYS[11]);
+    });
+    return cv;
+  }
+
+  function drawPortal(put, t) {
+    const { x, y, r } = PORTAL;
+    for (let dy = -r - 1; dy <= r + 1; dy++) for (let dx = -r - 1; dx <= r + 1; dx++) {
+      const d = Math.hypot(dx, dy);
+      if (d < r - 2) put(x + dx, y + dy, '#000');
+      else if (d <= r + 0.5) {
+        const a = Math.atan2(dy, dx), k = Math.sin(a * 5 + t * 1.4) * 0.5 + 0.5;
+        if (h2(dx + Math.floor(t * 3), dy) < 0.75) put(x + dx, y + dy, PURPLES[k > 0.7 ? 11 : k > 0.35 ? 9 : 7]);
+      }
+    }
+  }
+  function drawCoil(put, o, t) {
+    for (let x = Math.floor(COIL_X0); x <= COIL_X1; x++) {
+      const k = (x - COIL_X0) / (COIL_X1 - COIL_X0), cy = coilY(o, x, t), half = coilHalf(k);
+      const seg = Math.floor((x - COIL_X0) / 3) % 2;
+      for (let y = Math.round(cy - half); y <= Math.round(cy + half); y++) {
+        const edge = y === Math.round(cy - half) || y === Math.round(cy + half);
+        const j = h2(x, y) < 0.2;
+        put(x, y, edge ? GREYS[seg ? 6 : 9] : seg ? GREYS[j ? 7 : 8] : (j ? GREYS[10] : GREYS[11]));
+      }
+    }
+    // the head at the left end: a blunt snout, the eye, the jaw line
+    const hx = Math.floor(COIL_X0), hy = Math.round(coilY(o, hx, t));
+    for (let dx = 1; dx <= 9; dx++) for (let dy = -5; dy <= 5; dy++) {
+      if (Math.abs(dy) > 5 - Math.max(0, dx - 6)) continue;
+      put(hx - dx, hy + dy, dy === 1 && dx > 3 ? GREYS[4] : GREYS[h2(dx, dy) < 0.3 ? 10 : 11]);
+    }
+    put(hx - 4, hy - 2, '#000'); put(hx - 5, hy - 2, PURPLES[11]);
+  }
+  function drawCreatures(put, o, t) {
+    for (const c of POP) {
+      let x = Math.round(xAt(c, t));
+      let y = c.y;
+      if (c.floor) {
+        const h = SPR[c.kind].f[0].length;
+        y = ground(o, x + 2) - h;
+      } else if (c.low) {
+        y = ground(o, x + 3) - 6 + Math.round(Math.sin(t * 1.1 + c.seed * 9) * 1.5);
+      } else {
+        y += Math.round(Math.sin(t * (c.kind === 'jelly' ? 0.9 : 1.3) + c.seed * 11) * (c.kind === 'jelly' ? 2 : 1));
+        // B: the body passes and they part round it
+        if (o.key === 'b' && x > COIL_X0 - 12 && x < COIL_X1) {
+          const cy = coilY(o, Math.max(COIL_X0, x), t), clear = GIRTH / 2 + 6, d = y - cy;
+          if (Math.abs(d) < clear) y = Math.round(cy + (d >= 0 ? clear : -clear - 4));
+        }
+        // and nobody swims into the ground
+        y = Math.min(y, ground(o, x) - 8);
+      }
+      if (c.kind === 'school') {
+        for (let m = 0; m < c.n; m++) {
+          const dx = Math.round((hash(m + c.seed * 50) - 0.5) * 22 + Math.sin(t * 1.7 + m) * 1.2);
+          const dy = Math.round((hash(m * 3 + c.seed * 70) - 0.5) * 8 + Math.sin(t * 2.1 + m * 1.7) * 0.8);
+          sprite(put, 'sardine', x + dx, y + dy, c.dir, c.seed + m * 0.13, t);
+        }
+      } else if (c.kind === 'siphon') siphon(put, x, y, c.dir, c.seed, t);
+      else if (c.kind === 'gulper') gulper(put, x, y, c.dir, c.seed, t);
+      else sprite(put, c.kind, x, y, c.dir, c.seed, t);
+    }
+  }
+  function drawBar(g, o, v, t) {
+    const w = v.w * v.cs;
+    let y;
+    if (o.bar === 'top') y = 10;
+    else {
+      // over the highest the coil ever sways, with room for the status row
+      const ceil = o.coil.y - o.coil.amp - GIRTH / 2;
+      y = Math.round(ceil * v.cs - 14 - BAR_H);
+    }
+    const bw = Math.min(BAR_W, w - 120), x = Math.round((w - bw - 4 * 20) / 2);
+    g.fillStyle = '#8b8b96'; g.fillRect(x - 1, y - 1, bw + 2, BAR_H + 2);
+    g.fillStyle = '#000'; g.fillRect(x, y, bw, BAR_H);
+    g.fillStyle = '#fff'; g.fillRect(x, y, Math.round(bw * 0.62), BAR_H);
+    for (let i = 0; i < 4; i++) {
+      const px = x + bw + 6 + i * 20;
+      g.fillStyle = '#8b8b96'; g.fillRect(px - 1, y - 1, 16, 16);
+      g.fillStyle = i === 1 ? '#fff' : i < 1 ? '#000' : '#55555e'; g.fillRect(px, y, 14, 14);
+    }
+    // the status row over it, two icons as plain tiles
+    for (let i = 0; i < 2; i++) { g.fillStyle = '#8b8b96'; g.fillRect(x + i * 36, y - 40, 30, 30); g.fillStyle = '#1c1c21'; g.fillRect(x + i * 36 + 2, y - 38, 26, 26); }
+  }
+  function drawLabels(g, v) {
+    g.font = `${v.w > 300 ? 22 : 11}px ui-monospace, Consolas, monospace`;
+    g.textBaseline = 'top';
+    for (const z of ZONES) {
+      const y = z.from * v.cs;
+      g.fillStyle = GREYS[6]; g.fillRect(0, y, 10, 1);
+      g.fillStyle = GREYS[9]; g.fillText(z.name, 4, y + 3);
+    }
+  }
+
+  // --- panes ------------------------------------------------------------------------
+  const grid = document.getElementById('grid'), panes = [];
+  for (const o of OPTS) {
+    const card = document.createElement('div'); card.className = 'card';
+    const h = document.createElement('h2'); h.textContent = o.name;
+    const cv = document.createElement('canvas'); cv.className = 'view'; cv.setAttribute('aria-label', o.name);
+    const p = document.createElement('p'); p.textContent = o.about;
+    const cost = document.createElement('div'); cost.className = 'cost';
+    cost.innerHTML = '<p><b>What it costs in the game</b></p><ul>' + o.cost.map(c => `<li>${c}</li>`).join('') + '</ul>';
+    card.append(h, cv, p, cost); grid.append(card);
+    panes.push({ o, cv, g: cv.getContext('2d'), bg: null });
+  }
+  function restage() {
+    const v = VIEWS[view];
+    grid.classList.toggle('whole', view === 'whole');
+    for (const pn of panes) {
+      pn.cv.width = v.w * v.cs; pn.cv.height = ROWS * v.cs;
+      pn.bg = background(pn.o, v);
+    }
+  }
+  function paint(t) {
+    const v = VIEWS[view];
+    for (const pn of panes) {
+      const put = painter(pn.g, v);
+      pn.g.drawImage(pn.bg, 0, 0);
+      drawCreatures(put, pn.o, t);
+      drawCoil(put, pn.o, t);
+      drawPortal(put, t);
+      drawBar(pn.g, pn.o, v, t);
+      if (labels) drawLabels(pn.g, v);
+    }
+  }
+
+  // --- legend -----------------------------------------------------------------------
+  const LEG = [
+    ['sardine', 'Sardine shoal', 'sun', 'surface to 200 m'], ['jelly', 'Moon jelly', 'sun', 'surface to 200 m, some deeper'],
+    ['lantern', 'Lanternfish', 'twi', '200 to 1,000 m, rising at night'], ['hatchet', 'Hatchetfish', 'twi', '200 to 1,000 m'],
+    ['siphon', 'Siphonophore', 'twi', '200 to 1,000 m and below'], ['angler', 'Anglerfish', 'mid', '1,000 to 4,000 m'],
+    ['gulper', 'Gulper eel', 'mid', '500 to 3,000 m'], ['vampire', 'Vampire squid', 'mid', '600 to 1,200 m, the low-oxygen layer'],
+    ['dumbo', 'Dumbo octopus', 'aby', '3,000 to 7,000 m'], ['tripod', 'Tripod fish', 'aby', 'on the floor, 900 to 4,700 m'],
+    ['cucumber', 'Sea cucumber', 'aby', 'on the floor, down past 10,000 m'], ['amphipod', 'Amphipod', 'had', 'trench floors, to 11,000 m'],
+    ['snail', 'Snailfish', 'had', 'hovering low, to about 8,300 m'],
+  ];
+  const legend = document.getElementById('legend'), legs = [];
+  for (const [key, name, zk, depth] of LEG) {
+    const z = ZONES.find(q => q.key === zk);
+    const row = document.createElement('div'); row.className = 'sp';
+    const cv = document.createElement('canvas'); cv.width = 36 * 4; cv.height = 24 * 4;
+    const txt = document.createElement('div');
+    txt.innerHTML = `<div><span class="zn">${z.name}</span>${name}</div><div class="z">${z.real} · ${depth}</div>`;
+    row.append(cv, txt); legend.append(row);
+    legs.push({ key, g: cv.getContext('2d') });
+  }
+  function paintLegend(t) {
+    for (const l of legs) {
+      l.g.fillStyle = '#000'; l.g.fillRect(0, 0, 144, 96);
+      const put = (x, y, c) => { l.g.fillStyle = c; l.g.fillRect(x * 4, y * 4, 4, 4); };
+      if (l.key === 'siphon') siphon(put, 30, 11, 1, 0.3, t);
+      else if (l.key === 'gulper') gulper(put, 28, 9, 1, 0.4, t);
+      else { const f = SPR[l.key].f[0]; sprite(put, l.key, Math.round(18 - f[0].length / 2), Math.round(12 - f.length / 2), 1, 0.37, t); }
+    }
+  }
+
+  // --- controls and the clock --------------------------------------------------------
+  restage();
+  const q = new URLSearchParams(location.search);
+  if (q.get('view')) { view = q.get('view'); restage(); }
+  if (q.get('t') != null) { paint(+q.get('t')); paintLegend(+q.get('t')); return; }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { paint(3); paintLegend(3); return; }
+
+  let playing = true, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  for (const b of document.querySelectorAll('[data-view]')) b.onclick = () => {
+    view = b.dataset.view; restage();
+    for (const x of document.querySelectorAll('[data-view]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  const toggle = (id, set) => { const b = document.getElementById(id); b.onclick = () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', String(on)); set(on); }; };
+  toggle('labels', on => { labels = on; });
+  toggle('tint', on => { tint = on; restage(); });
+  (function tick(now) {
+    if (playing) clock += Math.max(0, Math.min(0.1, (now - last) / 1000));
+    last = now;
+    paint(clock); paintLegend(clock);
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>
+</body>
+</html>

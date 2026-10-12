@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Bar Motion</title>
+<style>
+/* One pane per way of moving the serpent's bar, every pane running the same
+   scripted fight; the pane is the strip of deep round the bar, black in
+   either theme, as it is in the game. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; overflow-x: hidden; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 13px; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.note { border: 1px dashed var(--dim); padding: 10px 12px; display: grid; gap: 6px; }
+.note b { color: var(--fg); }
+.today { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; }
+.today img { display: block; width: 100%; max-width: 840px; height: auto; image-rendering: pixelated; background: #000; }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 600px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.card p { font-size: 12px; }
+.beat { font-size: 12px; color: var(--fg); }
+.beat span { color: var(--dim); }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #000; }
+ul { margin: 0; padding-left: 18px; color: var(--dim); max-width: 92ch; }
+li { margin: 2px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Bar Motion</h1>
+    <p>The serpent's bar taking blows, losing what they took, refilling at a break and closing back up after a
+      meal. Every pane runs the same 14-second fight: a stream of small blows, a bigger one, the blow that breaks the
+      defense, the refill, more blows on the next defense, then a meal landing and the heal coming back in.</p>
+  </div>
+
+  <div class="note">
+    <p><b>A mock drawn from plain shapes, not the game.</b> The bar is drawn at its real size in screen pixels
+      (400 by 14, its rim, its four phase pips) and in its real tones. It cannot show: the numbers flying up into
+      the bar (left out so the bar is all you watch), the coil under it, the status row over it, the fight's real
+      pace (blows here are at the game's scale, a few pixels each, but packed closer so the loop goes somewhere),
+      and the phone, where the bar is the same pixels on a smaller glass. The recoil on a blow (the bar knocked up
+      4 or 8 pixels in two held poses) is as built and is the same in every pane.</p>
+  </div>
+
+  <div class="today">
+    <h2>Today, in the game</h2>
+    <img src="serpent-hp-bar-2026-10-12/today-bar.gif" width="840" height="210"
+         alt="The serpent's bar in the game: blows tick the fill down a pixel at a time, small chips flip as they fall, and a meal snaps the bar most of the way back up in purple.">
+    <p>Eight seconds of the deep-numbers scene, frame-exact at a tenth of a second. Watch the meal: the fill jumps
+      most of the bar's length in one frame and the jump is painted purple until the next blow wipes it.</p>
+  </div>
+
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+    <button data-speed="0.12" aria-pressed="false" type="button">0.12x</button>
+    <button id="restart" type="button">restart</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="note">
+    <p><b>Why today's bar reads as jank</b> (render/serpentbar.js):</p>
+    <ul>
+      <li>The fill is redrawn each frame straight from the wound: <code>Math.round(BAR_W * left)</code>. A blow is
+        0.2 to 1.5 per cent of a defense, so the fill moves by a pixel, or none, or two, at whatever frame the
+        rounding tips. Nothing eases it.</li>
+      <li>The grey trail's hold restarts on every blow (<code>hitAt = t</code>), so under a stream of blows it
+        never moves, then the moment the stream pauses it drains in a straight line at a whole bar a second.</li>
+      <li>The chip is anchored to the fill's end as it is <em>now</em>, not where the blow struck, so it slides
+        with the fill (and up with a heal). Its notch is painted inside what is left, not over what was taken.
+        It starts falling on the frame it lands, with no held pose, and swaps width and height every 0.08 s,
+        which reads as flicker rather than tumbling.</li>
+      <li>The heal is one lump: a meal closes the whole wound at once (deep/serpent.js, <code>land</code>), so
+        the fill jumps up in a frame. The purple band then stays until the next blow resets <code>low</code>,
+        and vanishes in a frame.</li>
+      <li>The break's refill is eight held steps (<code>BREAK_FILL_STEPS</code>), a different motion from
+        everything else on the bar.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+(() => {
+  const W = 520, H = 112;
+  const BX = 16, BY = 30, BW = 400, BH = 14, PIP = 14, PGAP = 6;
+  const EDGE = '#8b8b96', TRACK = '#000000', LEFT = '#ffffff', TRAIL = '#55555e', HEALED = '#9b5de5',
+        TOCOME = '#55555e', CHIP = '#b4b4c0';
+  const LOOP = 14;
+  const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rect = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+
+  // --- the script: one fight, the same in every pane --------------------------------
+  // Blows at the game's scale (a defense of ~5,500, blows of 20 to 70), packed
+  // close. `took` is a share of the bar.
+  const EV = [];
+  let v = 0.24, n = 0;
+  const blow = (at, took, big) => { took = Math.min(took, v); v -= took; EV.push({ at, took, big, side: n++ }); };
+  for (let i = 0; i < 16; i++) blow(0.3 + i * 0.15, 0.004 + hash(i) * 0.008);
+  blow(2.9, 0.05, true);
+  for (let i = 0; i < 7; i++) blow(3.25 + i * 0.15, 0.004 + hash(i + 40) * 0.006);
+  EV.push({ at: 4.5, took: v, big: true, brk: true, side: n++ }); v = 0;
+  const BREAK = 4.5, BREAK_HOLD = 0.35, REFILL_S = 1.4;
+  v = 1;
+  for (let i = 0; i < 19; i++) blow(6.75 + i * 0.15, 0.004 + hash(i + 80) * 0.008);
+  blow(7.7, 0.06, true); blow(8.9, 0.08, true);
+  EV.sort((a, b) => a.at - b.at);
+  EV.push({ at: 10.0, heal: true });
+  const START = 0.24;
+
+  const beat = t => t < 2.85 ? 'a stream of small blows'
+    : t < 3.2 ? 'a bigger blow'
+    : t < 4.45 ? 'small blows again'
+    : t < BREAK + BREAK_HOLD ? 'the blow that breaks the defense'
+    : t < BREAK + BREAK_HOLD + REFILL_S + 0.2 ? 'the break: the bar refills, the next pip is lit'
+    : t < 9.95 ? 'blows on the new defense, two of them big'
+    : t < 12 ? 'a meal lands: the heal comes back in'
+    : 'resting';
+
+  // --- the run each pane keeps --------------------------------------------------------
+  function fresh() {
+    return { t: 0, truth: START, stage: 0, ei: 0, refill: null, knocks: [], parts: [], o: {} };
+  }
+  // The bar's target: the wound as the sim has it, or the break's refill.
+  const target = s => s.refill != null ? s.refill : s.truth;
+  function advance(s, opt, dt) {
+    s.t += dt;
+    while (s.ei < EV.length && EV[s.ei].at <= s.t) {
+      const e = EV[s.ei++];
+      if (e.heal) { const from = s.truth; s.truth = 1; opt.heal && opt.heal(s, from); continue; }
+      const from = s.truth;
+      s.truth = Math.max(0, from - e.took);
+      s.knocks.push({ at: s.t, big: e.big });
+      opt.hit && opt.hit(s, from, s.truth, e);
+    }
+    const a = s.t - BREAK;
+    if (a >= BREAK_HOLD && s.stage === 0) { s.stage = 1; s.refill = 0; opt.newStage && opt.newStage(s); }
+    if (s.stage === 1 && s.refill != null) {
+      s.refill = clamp((a - BREAK_HOLD) / REFILL_S, 0, 1);
+      if (s.refill >= 1) { s.refill = null; s.truth = 1; }
+    }
+    opt.step(s, dt);
+    s.parts = s.parts.filter(p => s.t - p.born < p.life);
+  }
+  const knock = s => {
+    let k = 0;
+    for (const h of s.knocks) {
+      const a = s.t - h.at;
+      if (a < 0 || a >= 0.16) continue;
+      const full = h.big ? 8 : 4;
+      k = Math.max(k, a < 0.08 ? full : full / 2);
+    }
+    return k;
+  };
+  function frame(g, s, y) {
+    rect(g, 0, 0, W, H, '#000');
+    rect(g, BX - 1, y - 1, BW + 2, BH + 2, EDGE);
+    rect(g, BX, y, BW, BH, TRACK);
+  }
+  function pips(g, s, y) {
+    for (let i = 0; i < 4; i++) {
+      const px = BX + BW + PGAP + i * (PIP + PGAP), py = y;
+      rect(g, px - 1, py - 1, PIP + 2, PIP + 2, EDGE);
+      rect(g, px, py, PIP, PIP, i < s.stage ? TRACK : i === s.stage ? LEFT : TOCOME);
+    }
+  }
+  // A piece knocked off: held in its pose for `hold`, then it falls on a held
+  // clock of fifteen poses a second, and fades out whole over its last `fade`.
+  function drawParts(g, s) {
+    for (const p of s.parts) {
+      const a = s.t - p.born;
+      let x = p.x, y = p.y, c = p.c;
+      if (a < p.hold) { y -= p.lift; c = p.lit || c; }
+      else {
+        const f = Math.floor((a - p.hold) * 15) / 15;
+        x += p.vx * f; y += p.vy * f + 0.5 * 520 * f * f;
+      }
+      g.globalAlpha = clamp((p.life - a) / p.fade, 0, 1);
+      rect(g, x, y, p.w, p.h, c);
+      g.globalAlpha = 1;
+    }
+  }
+  // Pieces in a grid over the stretch of bar a blow took.
+  function shatter(s, x0, x1, opts) {
+    const cell = opts.cell || 3;
+    const w = Math.max(1, x1 - x0), cols = Math.max(1, Math.round(w / cell));
+    const cw = w / cols;
+    for (let c = 0; c < cols; c++) for (let r = 0; r * cell < BH; r++) {
+      const h = Math.min(cell, BH - r * cell), k = s.parts.length + c * 7 + r;
+      const out = (c + 0.5) / cols - 0.5;
+      s.parts.push({ born: s.t, x: x0 + c * cw, y: opts.y + r * cell, w: Math.max(1, Math.round(cw)), h,
+        c: opts.c, lit: opts.lit, lift: opts.lift || 0, hold: opts.hold + (opts.stagger ? c * opts.stagger : 0),
+        vx: (opts.dir * (10 + hash(k) * 26)) + out * 40, vy: -(18 + hash(k + 3) * 40) + r * 4,
+        life: (opts.hold + (opts.stagger ? c * opts.stagger : 0)) + 0.85, fade: 0.4 });
+    }
+  }
+  // The heal as a steady fill: at most `rate` of the bar a second, easing into
+  // its end; purple over what came back, fading to white once it is in.
+  function flowUp(s, o, dt, rate) {
+    const tg = target(s);
+    if (tg > o.disp + 1e-4) {
+      // the break's refill is the new defense coming up, not a heal: no purple
+      // and it keeps pace with the break's own clock, which is faster than a heal
+      if (s.refill != null) o.rising = true;
+      if (o.rising) { o.healLo = null; o.healing = false; }
+      else if (!o.healing) { o.healing = true; o.healLo = o.disp; o.fadeAt = null; }
+      const r = o.rising ? 1 / REFILL_S : rate;
+      o.disp = Math.min(tg, o.disp + dt * Math.max(0.05, Math.min(r, (tg - o.disp) * 4)));
+      if (o.disp >= tg - 1e-4) { o.disp = tg; if (o.healing) o.fadeAt = s.t; o.healing = false; o.rising = false; }
+    }
+  }
+  function drawHeal(g, s, o, y, from, to) {
+    if (o.healLo == null || s.refill != null || s.stage !== o.healStage) return;
+    const k = o.fadeAt == null ? 1 : clamp(1 - (s.t - o.fadeAt) / 0.9, 0, 1);
+    if (k <= 0) { o.healLo = null; return; }
+    g.globalAlpha = k;
+    rect(g, BX + BW * Math.min(from, to), y, BW * Math.abs(to - from), BH, HEALED);
+    g.globalAlpha = 1;
+  }
+  function easeDown(s, o, dt, tau) {
+    const tg = target(s);
+    if (tg < o.disp) { o.disp += (tg - o.disp) * (1 - Math.exp(-dt / tau)); if (o.disp - tg < 0.0005) o.disp = tg; o.healLo = null; o.healing = false; }
+  }
+
+  // --- the options -------------------------------------------------------------------
+  const OPTIONS = [
+    { key: 'today', name: '0 · Today, redrawn',
+      about: 'As built, for comparison: the fill rounds to the pixel each frame, the grey trail holds until the blows stop, the chip slides with the fill and flips as it falls, the heal jumps and stays purple until the next blow, the break refills in eight held steps.',
+      init(s) { Object.assign(s.o, { left: START, was: START, trail: START, low: START, hitAt: 0, chips: [] }); },
+      hit(s, from, to, e) { s.o.chips.push({ at: s.t, w: Math.max(1, Math.round(BW * e.took)), side: e.side }); },
+      newStage(s) { const o = s.o; o.left = o.was = o.trail = o.low = 0; },
+      step(s, dt) {
+        const o = s.o;
+        o.left = s.refill != null ? Math.floor(s.refill * 8) / 8 : s.truth;
+        if (o.left < o.was) { o.low = o.left; o.hitAt = s.t; }
+        o.was = o.left;
+        if (o.left >= o.trail) o.trail = o.left;
+        else if (s.t - o.hitAt > 0.5) o.trail = Math.max(o.left, o.trail - 1 * dt);
+        if (o.low > o.left) o.low = o.left;
+        o.chips = o.chips.filter(c => s.t - c.at < 0.6);
+      },
+      draw(g, s) {
+        const o = s.o, y = BY - knock(s), len = k => Math.round(BW * k);
+        frame(g, s, y);
+        rect(g, BX, y, len(o.trail), BH, TRAIL);
+        rect(g, BX, y, len(o.left), BH, HEALED);
+        rect(g, BX, y, len(Math.min(o.low, o.left)), BH, LEFT);
+        pips(g, s, y);
+        const end = BX + len(o.left);
+        for (const c of o.chips) {
+          const a = s.t - c.at, lit = a < 0.08, dir = c.side % 2 ? 1 : -1;
+          if (a < 0.3) rect(g, end - c.w, y, c.w, BH, lit ? CHIP : TRACK);
+          const flat = Math.floor(a / 0.08) % 2 === 0;
+          const cx = end - c.w / 2 + dir * 18 * a, cy = y + 20 * a + 90 * a * a;
+          const cw = flat ? c.w : BH, ch = flat ? BH : c.w;
+          rect(g, Math.round(cx - cw / 2), Math.round(cy), cw, ch, lit ? LEFT : CHIP);
+        }
+      } },
+
+    { key: 'ghost', name: 'A · Ease and ghost',
+      about: 'The fill slides down to each blow over about a tenth of a second, sub-pixel, so a stream of blows is one smooth drain. What they took stays as a grey ghost that holds 0.4 s from when it opened (not from the last blow), then eases in. No chips. The heal flows in at a steady third of the bar a second, purple, and the purple fades out once it is in.',
+      init(s) { Object.assign(s.o, { disp: START, ghost: START, sepAt: null, healStage: 0 }); },
+      newStage(s) { s.o.disp = s.o.ghost = 0; s.o.sepAt = null; s.o.healStage = 1; },
+      step(s, dt) {
+        const o = s.o;
+        easeDown(s, o, dt, 0.06);
+        flowUp(s, o, dt, 0.32);
+        if (o.disp >= o.ghost) { o.ghost = o.disp; o.sepAt = null; }
+        else {
+          if (o.sepAt == null) o.sepAt = s.t;
+          if (s.t - o.sepAt > 0.4) o.ghost = Math.max(o.disp, o.ghost - dt * Math.max(0.06, (o.ghost - o.disp) * 3));
+          if (o.ghost - o.disp < 0.0005) { o.ghost = o.disp; o.sepAt = null; }
+        }
+      },
+      draw(g, s) {
+        const o = s.o, y = BY - knock(s);
+        frame(g, s, y);
+        rect(g, BX, y, BW * o.ghost, BH, TRAIL);
+        rect(g, BX, y, BW * o.disp, BH, LEFT);
+        drawHeal(g, s, o, y, o.healLo ?? o.disp, o.disp);
+        pips(g, s, y);
+      } },
+
+    { key: 'shards', name: 'B · Pixel shards',
+      about: 'The fill slides down as in A, with no ghost. The stretch a blow took breaks into 3-pixel pieces: held lit in the notch for a beat (longer and lifted on a big blow, its cracks showing), then they drop on held poses, scatter, and fade out whole. The heal flows in as in A.',
+      init(s) { Object.assign(s.o, { disp: START, healStage: 0 }); },
+      newStage(s) { s.o.disp = 0; s.o.healStage = 1; },
+      hit(s, from, to, e) {
+        const x0 = BX + BW * to, x1 = BX + BW * from;
+        shatter(s, x0, x1, { y: BY, c: LEFT, lit: CHIP, dir: e.side % 2 ? 1 : -1,
+          hold: e.big ? 0.16 : 0.06, lift: e.big ? 2 : 1, stagger: e.big ? 0.012 : 0 });
+      },
+      step(s, dt) { easeDown(s, s.o, dt, 0.06); flowUp(s, s.o, dt, 0.32); },
+      draw(g, s) {
+        const o = s.o, y = BY - knock(s);
+        frame(g, s, y);
+        rect(g, BX, y, BW * o.disp, BH, LEFT);
+        drawHeal(g, s, o, y, o.healLo ?? o.disp, o.disp);
+        pips(g, s, y);
+        // a held big blow shows its cracks: pieces drawn with a black seam
+        drawParts(g, s);
+      } },
+
+    { key: 'tick', name: 'C · Even tick',
+      about: 'The bar is eighty cells of five pixels. The fill steps down a whole cell at a time at a fixed 40 cells a second, however the blows come, so the drain has a steady beat; a grey ghost cell winks out behind it at the same pace after 0.3 s. The heal fills a cell at a time at a fixed 24 a second, each cell purple and fading to white on its own.',
+      init(s) { Object.assign(s.o, { c: Math.round(START * 80), gc: Math.round(START * 80), acc: 0, gacc: 0, sepAt: null, lit: [] }); },
+      newStage(s) { const o = s.o; o.c = o.gc = 0; o.lit = []; o.sepAt = null; },
+      step(s, dt) {
+        const o = s.o, tc = Math.round(target(s) * 80);
+        o.acc += dt;
+        if (s.refill != null) o.rising = true;
+        const down = 1 / 40, up = o.rising ? REFILL_S / 80 : 1 / 24;
+        if (tc < o.c) { while (o.acc >= down && tc < o.c) { o.acc -= down; o.c--; } }
+        else if (tc > o.c) { while (o.acc >= up && tc > o.c) { o.acc -= up; o.c++; if (!o.rising) o.lit[o.c - 1] = s.t; } }
+        else { o.acc = 0; if (s.refill == null) o.rising = false; }
+        if (o.c >= o.gc) { o.gc = o.c; o.sepAt = null; o.gacc = 0; }
+        else {
+          if (o.sepAt == null) o.sepAt = s.t;
+          if (s.t - o.sepAt > 0.3) { o.gacc += dt; while (o.gacc >= down && o.gc > o.c) { o.gacc -= down; o.gc--; } }
+        }
+      },
+      draw(g, s) {
+        const o = s.o, y = BY - knock(s);
+        frame(g, s, y);
+        for (let i = 0; i < o.gc; i++) {
+          const x = BX + i * 5;
+          if (i >= o.c) { rect(g, x, y, 4, BH, TRAIL); continue; }
+          rect(g, x, y, 4, BH, LEFT);
+          const at = o.lit[i];
+          if (at != null) {
+            const k = clamp(1 - (s.t - at) / 0.5, 0, 1);
+            if (k > 0) { g.globalAlpha = k; rect(g, x, y, 4, BH, HEALED); g.globalAlpha = 1; }
+          }
+        }
+        pips(g, s, y);
+      } },
+
+    { key: 'crumble', name: 'D · Ghost that crumbles',
+      about: 'A and B together: the fill slides down and leaves a grey ghost, the ghost holds 0.35 s, then it is eaten from its far end at a steady pace and what is eaten falls off it as grey pixel pieces, a column at a time. One chunk of motion a blow, never a flicker. The heal flows in as in A.',
+      init(s) { Object.assign(s.o, { disp: START, ghost: START, sepAt: null, crumb: 0, healStage: 0 }); },
+      newStage(s) { s.o.disp = s.o.ghost = 0; s.o.sepAt = null; s.o.healStage = 1; },
+      step(s, dt) {
+        const o = s.o;
+        easeDown(s, o, dt, 0.06);
+        flowUp(s, o, dt, 0.32);
+        if (o.disp >= o.ghost) { o.ghost = o.disp; o.sepAt = null; return; }
+        if (o.sepAt == null) o.sepAt = s.t;
+        if (s.t - o.sepAt < 0.35) return;
+        const before = o.ghost;
+        o.ghost = Math.max(o.disp, o.ghost - dt * Math.max(0.12, (o.ghost - o.disp) * 2.5));
+        o.crumb += (before - o.ghost) * BW;
+        // every three pixels eaten fall off as a column of pieces
+        while (o.crumb >= 3) {
+          o.crumb -= 3;
+          const x = BX + BW * o.ghost + o.crumb;
+          shatter(s, x, x + 3, { y: BY, c: CHIP, dir: 1, hold: 0, lift: 0 });
+        }
+        if (o.ghost - o.disp < 0.0005) { o.ghost = o.disp; o.sepAt = null; o.crumb = 0; }
+      },
+      draw(g, s) {
+        const o = s.o, y = BY - knock(s);
+        frame(g, s, y);
+        rect(g, BX, y, BW * o.ghost, BH, TRAIL);
+        rect(g, BX, y, BW * o.disp, BH, LEFT);
+        drawHeal(g, s, o, y, o.healLo ?? o.disp, o.disp);
+        pips(g, s, y);
+        drawParts(g, s);
+      } },
+  ];
+
+  const grid = document.getElementById('grid'), panes = [];
+  for (const opt of OPTIONS) {
+    const card = document.createElement('div'); card.className = 'card';
+    const h = document.createElement('h2'); h.textContent = opt.name;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.setAttribute('aria-label', opt.name);
+    const b = document.createElement('div'); b.className = 'beat';
+    const p = document.createElement('p'); p.textContent = opt.about;
+    card.append(h, cv, b, p); grid.append(card);
+    panes.push({ opt, g: cv.getContext('2d'), beat: b, s: null });
+  }
+  const reset = () => { for (const pn of panes) { pn.s = fresh(); pn.opt.init(pn.s); } };
+  reset();
+  const STEP = 1 / 120;
+  const run = until => { for (const pn of panes) while (pn.s.t + STEP <= until) advance(pn.s, pn.opt, STEP); };
+  const paint = () => {
+    for (const pn of panes) {
+      pn.opt.draw(pn.g, pn.s);
+      pn.beat.innerHTML = `<span>${pn.s.t.toFixed(1).padStart(4, ' ')} s</span> ${beat(pn.s.t)}`;
+    }
+  };
+
+  // `?t=3.05` stands every pane still at that moment, for a shot of it.
+  const at = new URLSearchParams(location.search).get('t');
+  if (at != null) { run(+at); paint(); return; }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { run(2.98); paint(); return; }
+
+  let playing = true, speed = 1, clock = 0, last = performance.now();
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  document.getElementById('restart').onclick = () => { clock = 0; reset(); };
+  for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => {
+    speed = +b.dataset.speed;
+    for (const x of document.querySelectorAll('[data-speed]')) x.setAttribute('aria-pressed', String(x === b));
+  };
+  (function tick(now) {
+    if (playing) clock += Math.max(0, Math.min(0.1, (now - last) / 1000)) * speed;
+    last = now;
+    if (clock >= LOOP) { clock -= LOOP; reset(); }
+    run(clock);
+    paint();
+    requestAnimationFrame(tick);
+  })(performance.now());
+})();
+</script>
+</body>
+</html>
