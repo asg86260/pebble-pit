@@ -180,3 +180,22 @@ export let CREW_FADE = 0.4;
 CREW_KNOBS.push(
   { key: 'CREW_FADE', label: 'faded crew', min: 0.1, max: 1, step: 0.05,
     get: () => CREW_FADE, set: v => { CREW_FADE = v; } });
+
+// --- the seat pips ------------------------------------------------------------
+// A station's counter is a pip a seat (roster.js). A pip is two cells with a
+// cell between, so a row of five is narrower than the old badge and count
+// were wide by less than one button. Past `SEAT_SHRINK` seats the row would
+// be wider than the station it hangs under, so the pips drop to a cell with a
+// cell between and wrap every `SEAT_ROW`, with the count written over them.
+export const SEAT_PIP = P * 2;
+export const SEAT_GAP = P;
+export const SEAT_PIP_SMALL = P;
+export const SEAT_GAP_SMALL = P;
+export const SEAT_SHRINK = 12;
+export const SEAT_ROW = 20;
+// The empty seat's outline: the boards' bill-line grey, mapped by ink.js on
+// the dark page like every other gray.
+export const SEAT_EMPTY_INK = '#8c8c8c';
+// A body sent off has no seat to walk away from (it carries where it stands),
+// so its pip empties on a clock: three held thirds over this long.
+export const SEAT_LEAVE_MS = 600;

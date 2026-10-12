@@ -2,8 +2,8 @@
 // the dance, and the headcount badge.
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
-  point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil, canvas } from './kit.js';
-import { P, WORKER } from '../config.js';
+  point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil, canvas, put } from './kit.js';
+import { P, WORKER, SEAT_PIP } from '../config.js';
 import { S } from '../state.js';
 import { draw } from '../render.js';
 import { lifted } from '../crew.js';
@@ -372,5 +372,73 @@ export const TESTS = [
     window.__view('yard');
     return [ok(lost.length === 0, 'the body in your hand is drawn at every height it is carried to',
                `not drawn at ${lost.slice(0, 6).join(', ')}${lost.length > 6 ? ` and ${lost.length - 6} more` : ''}`)];
+  }],
+  // The seat pips (roster.js): a pip a seat under the cut, read off the
+  // canvas, and every change made with the pointer -- the plus, a pip, the
+  // minus -- so each body still walks.
+  ['seat pips: a pip a seat, filled in thirds as a body walks over, set by a click', async () => {
+    newRun();
+    window.__crew(0, 3, 3, 0);
+    window.__levels({ benchLevel: 3 });
+    window.__kit({ blasters: 1 });
+    run(20);
+    const q = () => state().roster.find(r => r.key === 'quarryjob');
+    window.__look(q().pips[2][0] - S.viewW / 2);
+    run(0.1);
+    const g = canvas().getContext('2d');
+    const ink = (wx, wy) => {
+      const [sx, sy] = onScreen(wx, wy);
+      return g.getImageData(Math.round(sx * S.dpr), Math.round(sy * S.dpr), 1, 1).data[0];
+    };
+    const dark = v => v < 90, light = v => v > 170;
+    const off = SEAT_PIP * 0.3;
+    const pip = i => { draw(); const [x, y] = q().pips[i]; return { mid: ink(x, y), low: ink(x, y + off), high: ink(x, y - off),
+                                                                     brim: ink(x, y - SEAT_PIP / 2 - 3) }; };
+    const plusMid = () => { draw(); const [x, y] = q().more; return ink(x, y); };
+    const at = q(), first = pip(0), third = pip(2), fifth = pip(4);
+
+    const sent = await put('quarryjob', 'more');
+    let seen = null;
+    for (let i = 0; i < 200 && !seen; i++) {
+      run(0.1);
+      if (q().seats.coming[0] === 1) seen = pip(3);
+    }
+    runUntil(() => q().seats.filled === 4, 30);
+    const arrived = pip(3);
+
+    const click = async i => {
+      const [x, y] = onScreen(...q().pips[i]);
+      point('pointerdown', x, y);
+      point('pointerup', x, y);
+      await sleep(150);
+    };
+    await click(4);
+    const five = state().quarriers;
+    const fullPlus = plusMid();
+    await click(4);
+    const again = state().quarriers;
+    const less = await put('quarryjob', 'less');
+    const after = q();
+    run(2);
+    const gone = pip(4);
+    window.__crew(0, 0);
+    return [
+      ok(at.seats && at.seats.seats === 5 && at.pips.length === 5, 'the cut with five benches shows five pips',
+         at.seats && `${at.seats.seats} seats, ${at.pips && at.pips.length} pips`),
+      ok(at.seats && at.seats.filled === 3, 'three of them filled for the three at work', at.seats && at.seats.filled),
+      ok(dark(first.mid) && dark(third.mid), 'a body at work is a solid pip', `${first.mid} ${third.mid}`),
+      ok(light(fifth.mid) && !dark(fifth.low), 'an empty seat is hollow', `${fifth.mid} ${fifth.low}`),
+      ok(dark(first.brim) && !dark(pip(1).brim), 'the lamped body has a brim over its pip, the bare one none',
+         `${first.brim} ${pip(1).brim}`),
+      ok(sent, 'the plus under the cut sends one more'),
+      ok(seen && dark(seen.low) && light(seen.high), 'its pip fills from the bottom while it walks over',
+         seen && `low ${seen.low}, high ${seen.high}`),
+      ok(dark(arrived.mid) && dark(arrived.high), 'and is solid once it is there', `${arrived.mid} ${arrived.high}`),
+      ok(five === 5, 'clicking the fifth pip asks for five', `${five}`),
+      ok(!dark(fullPlus), 'a full station dots its plus', `${fullPlus}`),
+      ok(again === 4, "clicking the last body's own pip takes that body off", `${again}`),
+      ok(less && after.n === 3, 'the minus takes one more off', `${after.n}`),
+      ok(light(gone.mid) && !dark(gone.low), 'and its seat is empty once it has gone', `${gone.mid} ${gone.low}`)
+    ];
   }],
 ];

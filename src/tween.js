@@ -42,4 +42,8 @@ function shownOf(r, at) {
 // Every number is its value from here on. A restored save, a fresh game and a
 // seeded run all call this: a reading that ran from the old yard's count to
 // the new one would be a story that never happened.
-export function snapShown() { runs.clear(); }
+// Anything else drawn off a remembered run (the roster's seats emptying) is
+// cleared on the same word, so a restored yard starts every one at rest.
+const snaps = [];
+export const onSnap = fn => { snaps.push(fn); };
+export function snapShown() { runs.clear(); for (const f of snaps) f(); }

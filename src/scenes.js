@@ -981,6 +981,17 @@ export const SCENES = {
                  window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
                  window.__loo(); window.__assign(JOB.JANITOR, 1); window.__fast(20);
                  window.__look(st().rockLeftX - 420); } },
+  // The seat pips under the cut and the plots: three of five at the cut, two
+  // of them lamped, the plots full, and three spare hands to send.
+  seats: { about: 'the crew', say: 'the cut three of five, two lamped; the plots full',
+    run: () => { window.__reset(); window.__crew(1, 3, 3, 7);
+                 window.__levels({ benchLevel: 3, plotLevel: 6 }); window.__kit({ blasters: 2 });
+                 window.__fast(20); window.__look(st().quarryX - 260); } },
+  // The same, a moment after + at the cut: one body on its way over.
+  seatswalk: { about: 'the crew', say: 'one more sent to the cut, on its way',
+    run: () => { window.__reset(); window.__crew(1, 3, 3, 7);
+                 window.__levels({ benchLevel: 3, plotLevel: 6 }); window.__kit({ blasters: 2 });
+                 window.__fast(20); window.__assign(JOB.QUARRY, 1); window.__look(st().quarryX - 260); } },
   // Twenty-one rooms is three full courses and part of a fourth, so both the
   // square sides and the unfinished top show in one shot.
   house: { about: 'the crew', say: 'the house, several storeys up',
