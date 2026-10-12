@@ -10,7 +10,7 @@
 
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
-const { RIFT_W0, RIFT_WMAX, ABYSS_AT, CUT_TEAR_S, CUT_DROWN_S, CUT_OUT_S } = await import('../src/config.js');
+const { RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_GULP, CUT_TEAR_S, CUT_DROWN_S, CUT_OUT_S } = await import('../src/config.js');
 const { riftCells } = await import('../src/rift.js');
 const { pitTop } = await import('../src/pit.js');
 
@@ -23,12 +23,13 @@ group('the first overflow tears a small hole, not the abyss', async () => {
   // player reaches it -- a full pit turning a grain away -- not by a hook.
   window.__give(60000);
   const torn = state();
-  run(8);                                // the tear's gulp and its scene run out
+  run(10);                               // the glide, the tear's gulp and its scene run out
   const after = state();
 
   return [
     ok(!early.riftOpen && !early.drowned, 'a fresh yard is solid'),
-    ok(torn.riftOpen, 'the overflow tears the rift'),
+    ok(torn.riftDue === 'tear' && after.riftOpen, 'the overflow tears the rift',
+       `owed ${torn.riftDue}, open after ${after.riftOpen}`),
     ok(!torn.drowned && !after.drowned, 'and the pit does not drown: the disc era comes first'),
     ok(after.riftAte > 0, 'the tear itself fed it', `${after.riftAte} eaten`),
     ok(after.riftCells >= RIFT_W0 && after.riftCells < RIFT_WMAX,
@@ -48,7 +49,8 @@ group('the tearing is watched once, and the yard never pauses', async () => {
   run(0.2);
   const during = state();
   const rockBefore = during.rock;
-  run(CUT_TEAR_S + CUT_OUT_S + 1);     // the scene, its way out, and a breath
+  // the glide, the scene from the camera's arrival, its way out, and a breath
+  runUntil(() => !state().beat.camera, CUT_TEAR_S + CUT_OUT_S + 6);
   const after = state();
 
   return [
@@ -159,4 +161,57 @@ group('a reset puts a drowned yard back to solid', async () => {
     ok(!after.riftOpen && after.riftAte === 0, 'the rift is neither torn nor fed',
        `open ${after.riftOpen}, ate ${after.riftAte}`)
   ];
+});
+
+// The moment waits for its camera (rift.js, `due`): the camera goes from
+// wherever the player was looking, arrives, and only then does the hole give
+// way or the water come up. Frame by frame from the cue: the first frame the
+// camera has settled, and the first frame anything of the moment shows -- the
+// disc open, the pit drowned, a grain gone from the pile, the gulp under way.
+// Quiet yards, so what the gulp eats is the hole and nothing else.
+const watchMoment = (key, seen) => {
+  const cue = state();
+  let settled = null, shown = null, camAt = null, camSettled = null, frames = 0;
+  for (; frames < 60 * 20 && (settled == null || shown == null); frames++) {
+    run(1 / 60);
+    const s = state();
+    if (settled == null && s.beat.camera === key && s.shotSettled) { settled = frames; camSettled = s.camX; }
+    if (shown == null && (seen(s) || s.pitGrains < cue.pitGrains || (s.riftGulp > 0 && s.riftGulp < RIFT_GULP))) {
+      shown = frames; camAt = s.camX;
+    }
+  }
+  runUntil(() => !state().beat.camera && state().riftGulp === 0, 20);
+  return { cue, settled, shown, camAt, camSettled, after: state() };
+};
+
+group('the tearing and the drowning wait for the camera to arrive', async () => {
+  window.__reset();
+  window.__look(0);                      // looking at the house, the far end of the yard
+  window.__give(60000);                  // the hole cannot take it: the tear is owed
+  const tear = watchMoment('tear', s => s.riftOpen);
+
+  window.__reset();
+  window.__tear(ABYSS_AT - 500);         // the last stretch of the torn era
+  window.__look(0);
+  window.__give(30000);                  // and the fill that crosses it
+  runUntil(() => state().riftDue === 'drown', 10);
+  const drown = watchMoment('drown', s => s.drowned);
+
+  const facts = (name, m) => [
+    ok(m.cue.riftDue === name && m.cue.camX < m.camSettled - m.cue.viewW,
+       `the ${name} is owed with the camera a window or more away`,
+       `owed ${m.cue.riftDue}, camera ${m.cue.camX} -> ${m.camSettled}`),
+    ok(m.settled != null && m.shown != null && m.shown >= m.settled,
+       `nothing of the ${name} shows before the camera has settled on it`,
+       `settled frame ${m.settled}, first shown ${m.shown}`),
+    ok(m.camAt === m.camSettled, `and the camera is still when it does`, `${m.camSettled} -> ${m.camAt}`),
+    // Held, not dropped: the gulp still takes the whole hole.
+    ok(m.after.riftAte - m.cue.riftAte >= m.cue.pitGrains && m.after.pitGrains === 0,
+       `the ${name}'s gulp still eats the whole hole`,
+       `ate ${m.after.riftAte - m.cue.riftAte} of ${m.cue.pitGrains}, ${m.after.pitGrains} left`),
+    ok(m.after.stored - m.after.rift === m.after.pitDust, 'and the books still balance',
+       `${m.after.stored} - ${m.after.rift} vs ${m.after.pitDust}`)
+  ];
+  return [...facts('tear', tear), ...facts('drown', drown),
+          ok(tear.after.riftOpen && !tear.after.drowned && drown.after.drowned, 'each era arrives')];
 });

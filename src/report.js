@@ -485,6 +485,9 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   riftCells: riftCells(),
   drowned: !!S.drowned,
   shotOut: !!(S.shot && S.shot.out),        // the camera's beat let go, and on its way out
+  shotSettled: !!(S.shot && S.shot.settled), // its glide arrived (cutscene.js)
+  riftDue: S.riftDue || null,               // the tearing or drowning owed, waiting on its scene
+  riftGulp: +(S.riftGulp || 0).toFixed(3),
   // The coins through it: what you own is what is in the hole plus this.
   riftHeld: { ...(S.riftHeld || {}) },
   // Grains in the air on their way in, with the first few so a check can see

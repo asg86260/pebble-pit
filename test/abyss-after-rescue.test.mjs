@@ -26,7 +26,8 @@ group('rescued with the pit solid: the hole tears, then drowns, each through its
   run(1 / 60);
   window.__skipBeat('sheet');                       // the button
   const tore = runUntil(() => S.beat.camera === 'tear', AFTER_DANCE_S);
-  const tornFirst = S.riftOpen && !S.drowned;
+  // the tear owed as its scene starts, and the disc open once it has arrived
+  const tornFirst = S.riftDue === 'tear' && !S.drowned && runUntil(() => S.riftOpen, 10) && !S.drowned;
   const drownedAt = runUntil(() => S.beat.camera === 'drown', 40);
   runUntil(() => did('drown') && !S.beat.camera, 30);
   const snatchOwed = serpentOn();

@@ -156,6 +156,9 @@ export const S = {
   // not a state.
   riftGulp: 0,
   riftShake: 0,
+  // The tearing or the drowning owed and not yet begun: 'tear' or 'drown',
+  // held until the scene that watches it has arrived (rift.js, `due`).
+  riftDue: null,
   // What is through it that is not dust, by kind, because the pile shows each
   // counter *less* what is through (`seedPitCores` in pit.js).
   riftHeld: { shards: 0, spores: 0, sparks: 0 },
@@ -847,7 +850,7 @@ export const EPHEMERAL = [
   'wonShown',
   // The tearing of the rift is an event, and the cutscene watching it a
   // camera.
-  'riftGulp', 'riftShake', 'shot', 'hush', 'hushOn', 'hushAt',
+  'riftGulp', 'riftShake', 'riftDue', 'shot', 'hush', 'hushOn', 'hushAt',
   'smoke', 'grit', 'smokeAt', 'houseSmokeAt', 'shutters', 'shutterAt', 'shutterN',
   'shocks', 'shockMotes',
   'skyShown', 'flashAt',

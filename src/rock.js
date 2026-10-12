@@ -19,6 +19,7 @@ import { at, put, depthShade, colOf, bottomY } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView, flankX, settleShack } from './world.js';
 import { spawnSpoil, spawnChip, critToss } from './dust.js';
 import { beatRunning } from './beats.js';
+import { awaitingShot } from './cutscene.js';
 import { critRoll } from './crit.js';
 import { critBoost } from './apothecary.js';
 import { pickCount, rockhandBite, rockhandMs } from './levels.js';
@@ -156,9 +157,10 @@ export function stepRock() {
   // Something is holding it (shield.js): resting on something, not falling.
   if (S.rockHeld) { placeRock(); return; }
   // A shield's answer is a scene, and the rock waits up in the sky until the
-  // yard has settled around it (cutscene.js, `stepHush`): the camera is still
-  // when it comes down, rather than arriving as it lands.
-  if (ANSWERS.has(S.beat.camera) && S.hushOn && S.hush < 1) { placeRock(); return; }
+  // camera has arrived and the yard has settled around it (cutscene.js,
+  // `awaitingShot`): the camera is still when it comes down, rather than
+  // arriving as it lands.
+  if (awaitingShot(ANSWERS)) { placeRock(); return; }
   // A rock takes the same time to come down whatever the machine is drawing at
   const f = frames();
   S.rockFallV += DROP_GRAV * f;

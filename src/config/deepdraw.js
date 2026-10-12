@@ -209,11 +209,10 @@ export const SNATCH_HEAD_W = P * 16;
 export const SNATCH_HEAD_H = P * 9;
 export const SNATCH_NECK_W = P * 7;
 // The deep's head on it (the owner's 2, docs/mocks/objectives-2026-09-30.html):
-// the neck leans out toward the plank as it rises, SNATCH_LEAN at the head,
-// and draws back once it has him; the jaws hinge SNATCH_HINGE cells back from
-// the snout and part SNATCH_GAPE cells at the tip; the crest in the abyss's
-// purples, as seen in the yard.
-export const SNATCH_LEAN = P * 10;
+// it comes up out of the whirlpool with its mouth's middle on the one it
+// takes (snatch.js, `jawAt`), the neck at the head's far end inside the ring;
+// the jaws hinge SNATCH_HINGE cells back from the snout and part SNATCH_GAPE
+// cells at the tip; the crest in the abyss's purples, as seen in the yard.
 export const SNATCH_HINGE = 10;
 export const SNATCH_GAPE = 4;
 export const SNATCH_CREST = ['#6a2fbe', '#9b5de5'];

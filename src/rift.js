@@ -19,6 +19,7 @@ import { S, pit, rift } from './state.js';
 import { swallow, pitGrains, tearHole } from './pit.js';
 import { sfx } from './audio.js';
 import { now } from './clock.js';
+import { awaitingShot, cueUnread } from './cutscene.js';
 
 // --- how big it is -------------------------------------------------------------
 // The disc grows with what it has eaten (`S.riftAte`), or with the swell the
@@ -84,18 +85,21 @@ export function riftReach() {
 // in the hole is what goes.
 export function stepRift(dt) {
   owedArc(dt);
+  // A save taken while the tearing was owed has the tear's scene in it but not
+  // the debt, which is a moment rather than a fact: the scene owes it again.
+  if (!S.riftOpen && !S.riftDue && S.beat.camera === 'tear') tearHole();
+  if (S.riftDue && !due()) return 0;          // owed, and its scene still on its way
   if (!riftOpen()) return 0;                  // not torn: nothing is pulled
   // Reseated every step because it grows: the bottom edge stays RIFT_UP
   // cells off the ground and the swelling goes upward.
   if (!S.drowned) seatRift();
   // The drowning: the hole has eaten its fill and gives way downward. The
   // gulp runs again, this time as `abyssLine` rising out of the floor
-  // (pit.js). One-way, once.
-  if (!S.drowned && growth() >= ABYSS_AT) {
-    S.drowned = true;
-    S.riftGulp = RIFT_GULP;
-    S.riftShake = RIFT_SHAKE;
-    sfx('rift-open', { x: pit.x + pit.w / 2 });
+  // (pit.js). One-way, once; owed first, like the tear.
+  if (!S.drowned && !(S.riftGulp > 0) && growth() >= ABYSS_AT) {
+    S.riftDue = 'drown';
+    S.riftGulp = RIFT_GULP;                   // the camera's cue
+    return 0;
   }
   if (S.riftGulp > 0) return gulp(dt);        // and the tearing is its own thing
   const take = riftBite();
@@ -125,6 +129,31 @@ function owedArc(dt) {
   // `riftCells` turned the other way.
   const k = Math.min(1, Math.sqrt(growth() / ABYSS_AT) + dt / 1000 / RIFT_SWELL_S);
   S.riftSwell = k >= 1 ? ABYSS_AT : k * k * ABYSS_AT;
+}
+
+// The tearing or the drowning, owed (`S.riftDue`) and begun only once the
+// scene that watches it has arrived and the yard has settled around it
+// (cutscene.js, `awaitingShot`) -- the rock waits in the sky the same way
+// (rock.js). Until then nothing about it has happened: the disc is not open,
+// the water has not risen, nothing is shaken, and the hole is the full one
+// it was. It waits a frame for the story to read the cue (`cueUnread`), and
+// no longer than that when no scene takes it: one already played, or the
+// camera busy with another.
+const WATCHED = new Set(['tear', 'drown']);
+function due() {
+  if (cueUnread() || awaitingShot(WATCHED)) return false;
+  if (S.riftDue === 'drown') {
+    S.drowned = true;
+    sfx('rift-open', { x: pit.x + pit.w / 2 });
+  } else {
+    S.riftOpen = true;
+    seatRift();
+    sfx('rift-tear', { x: pit.x + pit.w / 2 });
+  }
+  S.riftDue = null;
+  S.riftGulp = RIFT_GULP;
+  S.riftShake = RIFT_SHAKE;                   // knocked by whoever steps the world: see game.js
+  return true;
 }
 
 // The tearing: the hole emptied over RIFT_GULP seconds, however much is in it.

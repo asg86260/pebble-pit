@@ -196,6 +196,7 @@ export const answered = (...kinds) => {
 // in pit.js), so a check about the rift would otherwise be a check about
 // filling a hole.
 export const openRift = () => {
+  S.riftDue = null;
   S.riftOpen = true;
   S.drowned = true;
   S.riftAte = Math.max(S.riftAte || 0, ABYSS_AT);
@@ -205,12 +206,22 @@ export const openRift = () => {
 
 // The torn era: `ate` positions the disc along its growth.
 export const tearRift = (ate = 0) => {
+  S.riftDue = null;
   S.riftOpen = true;
   S.drowned = false;
   S.riftAte = Math.max(0, Math.round(ate));
   S.seenFullPit = true;
   seatRift();
 };
+
+// A handout that tore the hole: the event is dropped the way a save drops
+// it, and the rift simply open (`tearHole` in pit.js owes the tearing).
+function dropTear(gulp) {
+  if (S.riftDue === 'tear') { S.riftOpen = true; seatRift(); }
+  S.riftDue = null;
+  S.riftGulp = gulp;
+  S.riftShake = 0;
+}
 
 export const openMeteor = () => {
   S.towerOpen = true;
@@ -502,7 +513,7 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   if (o.shards || o.spores || o.sparks) {
     const gulp = S.riftGulp || 0, ate = S.riftAte || 0;
     seedPitCores();
-    if ((S.riftGulp || 0) > gulp) { S.riftGulp = gulp; S.riftShake = 0; }
+    if ((S.riftGulp || 0) > gulp) dropTear(gulp);
     S.riftAte = ate;
   }
   // Dust through `give`, for the same reason, and whatever the hole will not
@@ -520,7 +531,7 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
     const room = pitRoom();
     const gulp = S.riftGulp || 0;
     const got = room > 0 ? give(Math.min(o.dust, room)) : 0;
-    if ((S.riftGulp || 0) > gulp) { S.riftGulp = gulp; S.riftShake = 0; }
+    if ((S.riftGulp || 0) > gulp) dropTear(gulp);
     const over = o.dust - got;
     if (over > 0) { S.riftOpen = true; S.rift = (S.rift || 0) + over; S.stored += over; }
   }

@@ -22,7 +22,7 @@
 
 import { CUT_TEAR_S, CUT_DROWN_S, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S, CUT_OUT_S,
          CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S, CUT_SETTLE_S,
-         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, ABYSS_MAX_S } from './config.js';
+         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, ABYSS_MAX_S, CUT_PAN_PX_S, CUT_PAN_MAX_S } from './config.js';
 import { muckSpot, muckOver } from './firstmuck.js';
 import { mouthX } from './deep/place.js';
 import { S, rift, pit } from './state.js';
@@ -37,7 +37,9 @@ import { keepCast, dropCast } from './stage.js';
 // is asked every frame where the thing watched moves (the disc grows under
 // the tearing); a scene with no `spot` looks where it stood when it started.
 // The drowning centers on the near stretch of the hole, where the surface and
-// the counter are, since the whole mouth is wider than any window. `front`
+// the counter are, since the whole mouth is wider than any window. The two
+// are watched for their length after the camera has arrived (`arrived`),
+// since the moment itself waits for it (rift.js, `due`). `front`
 // is the layers (render.js, `LAYERS`) the scene is about beyond the ones
 // every scene is (`FRONT`): they stay in full ink while the rest recedes.
 //
@@ -45,8 +47,8 @@ import { keepCast, dropCast } from './stage.js';
 // in is a run of snaps with the ground line jumping on each; held at the
 // yard's own size, the camera's one move is the glide (the owner's C).
 const SCENES = {
-  tear:  { s: CUT_TEAR_S, spot: () => rift.x + rift.w / 2, front: ['rift', 'pit', 'pit outline', 'abyss'] },
-  drown: { s: CUT_DROWN_S, spot: () => pit.x + Math.min(700, pit.w) / 2, front: ['abyss', 'pit', 'pit outline', 'rift'] },
+  tear:  { s: CUT_TEAR_S, arrived: true, spot: () => rift.x + rift.w / 2, front: ['rift', 'pit', 'pit outline', 'abyss'] },
+  drown: { s: CUT_DROWN_S, arrived: true, spot: () => pit.x + Math.min(700, pit.w) / 2, front: ['abyss', 'pit', 'pit outline', 'rift'] },
   // The snatch: on the edge of the plank, for as long as the beat runs.
   snatchcam: { s: CUT_SNATCH_MAX_S, spot: () => mouthX(), tail: CUT_SNATCH_TAIL_S,
                over: () => !beatRunning('snatch'), front: ['abyss', 'portal', 'pit outline'] },
@@ -105,13 +107,34 @@ export function cameraCues() {
   sawFall = falling;
   return { gulp, fall, arrive: arrived() };
 }
+// A gulp begun since the story last looked: the rift holds its moment for
+// the frame it takes the beats to see it (rift.js, `due`).
+export const cueUnread = () => (S.riftGulp || 0) > sawGulp;
+
+// Whether a moment one of `keys`' scenes is about must still wait: that
+// scene has the camera and has not yet arrived, the glide done and the yard
+// settled around it. The rock waits in the sky on this (rock.js) and the
+// tearing and the drowning wait on it (rift.js), so the camera is still when
+// the thing happens. Let go or skipped, nothing waits.
+export function awaitingShot(keys) {
+  if (!keys.has(S.beat.camera)) return false;
+  const c = S.shot;
+  if (c && c.out) return false;
+  return !(c && c.settled && S.hush >= 1);
+}
 
 // The shot: how far in, on what, and how far along it is. Ephemeral -- a
 // reload takes it again from the beat's name.
 export function play(name) {
   const sc = sceneOf(name);
-  S.shot = { name, at: 0, s: sc.s, fromX: S.camX + S.viewW / 2,
-             spotX: S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2 };
+  const fromX = S.camX + S.viewW / 2;
+  const spotX = S.shield ? S.shield.x + S.shield.w / 2 : fromX;
+  // The glide takes the settle, or longer over a long way: its top speed,
+  // halfway along an ease in and out, is twice the average, and held under
+  // CUT_PAN_PX_S so a long pan reads as a pan, not a whip -- within reason.
+  const to = !sc.deep && sc.spot ? sc.spot() : spotX;
+  const glideS = Math.max(CUT_SETTLE_S, Math.min(CUT_PAN_MAX_S, 2 * Math.abs(to - fromX) / CUT_PAN_PX_S));
+  S.shot = { name, at: 0, s: sc.s, fromX, spotX, glideS };
   // The scroller is shut for the run: a fling in flight would fight the seat.
   lockScroller(true);
 }
@@ -142,7 +165,8 @@ export function stepShot(t) {
   const sc = sceneOf(c.name);
   if (!c.at) c.at = t;
   if (!c.out) {
-    if (t - c.at >= c.s * 1000) release();
+    const from = sc.arrived ? c.settledAt : c.at;
+    if (from != null && t - from >= c.s * 1000) release();
     else if (sc.over) {
       if (!c.overAt && sc.over(c)) c.overAt = t;
       if (c.overAt && t - c.overAt >= sc.tail * 1000) release();
@@ -169,7 +193,8 @@ export function stepShot(t) {
   // sliding when the thing it went to see happens. Under reduced motion the
   // framing is taken on the first frame.
   const want = sc.spot ? sc.spot() : c.spotX;
-  const k = reducedMotion() ? 1 : easeInOut(Math.min(1, (t - c.at) / (CUT_SETTLE_S * 1000)));
+  const k = reducedMotion() ? 1 : easeInOut(Math.min(1, (t - c.at) / ((c.glideS || CUT_SETTLE_S) * 1000)));
+  if (k >= 1 && !c.settled) { c.settled = true; c.settledAt = t; }
   const from = c.fromX ?? want;
   S.camX = from + (want - from) * k - S.viewW / 2;
   clampCam();
