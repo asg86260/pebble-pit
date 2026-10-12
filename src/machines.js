@@ -243,6 +243,10 @@ export function buyMachine(key) {
 // moment it started; gated this way the machine is worth half again what the
 // specialists were (`machineRate`).
 //
+// The drill and the tiller pass `kitFull` as always-true and stand on the board
+// greyed until their set is bought instead (`dead`, `waits`), so the player can
+// see what the hats are for.
+//
 // Gated on **bought**: a row that came and went with whether the machine was
 // manned would rebuild the board every time its tender wandered off.
 export const canBuy = (key, laddersFull, kitFull) => {

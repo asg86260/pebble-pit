@@ -232,6 +232,10 @@
   color: var(--ink-4);
 }
 .rows.shelves > .tile .gain i { transform: scale(.78); vertical-align: -1px; }
+/* A locked tile with no amount says what it waits on in the gain's place
+   (`gainText`): the drill's "buy 3 more blasters to unlock". That is the whole
+   of the tile's news, so it wraps rather than being cut to an ellipsis. */
+.rows.shelves > button.tile.locked .gain { white-space: normal; text-overflow: clip; }
 
 /* The tag: one box, the bill and the clock in it, at the board's own type
    size with the marks it was drawn for. An 18px box round a 16px line; the

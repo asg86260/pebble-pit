@@ -33,13 +33,23 @@ export const TOSS_NEAR = P * 20;  // how far either side a held hand reaches for
 // ladder" in DESIGN.md).
 export const RUNGS = 5;
 
-// How many of one trade a station will ever own, and the size of a full set
-// (`kitFull`), which is what makes the machines arrive. One number for both,
-// because the ram, the jaw and the tiller take those stations over and a fourth
-// helmet would be for a face nobody stands at. The carts are the exception: a
-// set is three and there is no ceiling, because carrying is the one station a
-// machine never takes off you. See `kitSetOf` and `kitMaxOf` in kit.js.
+// How many helmets the rock will ever own, and the size of a full set
+// (`kitFull`), which is what makes the ram arrive. One number for both,
+// because the ram takes the rock over and a fourth helmet would be for a face
+// nobody stands at. The carts have a set of three and no ceiling, because
+// carrying is the one station a machine never takes off you; the lamps and
+// brims are a hat a body and wait on `MACHINE_HATS`. See `kitSetOf` and
+// `kitMaxOf` in kit.js.
 export const KIT_MAX = 3;
+// The set the drill and the tiller wait for: hats bought at the cut and at the
+// plots before either machine can be had. The lamps and brims have no ceiling
+// of their own -- a hat for every body the station holds -- so the set is what
+// is left to choose. Five is the whole cut (`QUARRY_BENCH_MAX`), so the drill
+// takes a cut that is fully lamped, and five of the farm's seven plots, so the
+// tiller comes a little before the last furrow is broken. Both machines are
+// gated on their station's two ladders topped as well, the last band of each
+// the spark's, and a yard that far along has its benches and most plots.
+export const MACHINE_HATS = 5;
 export const WORKER = P * 3;     // worker square size
 
 // How far either way loitering may take a body from the post it is minding,

@@ -142,6 +142,12 @@ export const kitCap = job => Math.min(handsOf(job), kitSetOf(job));
 
 export const kitFull = job => hasKit(job) && hats(job) >= kitCap(job);
 
+// The hats still to buy before the station's machine is sold: its whole set,
+// whatever the floor plan holds today. Not `kitFull`, which forgives a station
+// smaller than its set; the drill and the tiller ask for the set itself, so a
+// short floor is a bench or a plot to buy before the last hats.
+export const hatsShort = job => Math.max(0, kitSetOf(job) - hats(job));
+
 // The gang in bare pairs of hands: a hat is a flat doubling, so a hatted body
 // counts twice. A sum, not a multiplier -- with kit capped below the
 // complement there is no one number that describes every body. A station

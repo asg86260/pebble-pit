@@ -15,7 +15,8 @@ import { walkY, plotCount, resite, pileAt } from './world.js';
 import { climbTo, keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance } from './staffing.js';
-import { kitFull, commutePace } from './levels.js';
+import { hats, hatsShort, commutePace } from './levels.js';
+import { unlockText } from './words.js';
 import { frames } from './clock.js';
 import { spelled } from './tower.js';
 import { tuneRow } from './machines.js';
@@ -302,16 +303,21 @@ export const FARM_UPGRADES = [
     show: () => S.farmOpen && plotCount() < FARM_PLOTS_MAX
   },
   {
-    // Gated like the ram: both of the plots' ladders topped and a hat on every
-    // grower (`canBuy`), not the last furrow.
+    // On the board once both of the plots' ladders are topped (`canBuy`), and
+    // greyed, saying how many more growers, until the station's set of hats
+    // is bought (`MACHINE_HATS`): a machine that came before the set would
+    // put the hats bought for this station in a drawer.
     key: 'tiller',
     kind: 'machine', site: 'farm',
     name: 'the tiller',
     bill: () => TILLER_BILL,
     buy: () => { buyMachine('tiller'); rebalance(); },
+    waits: () => { const left = hatsShort(JOB.FARM);
+                    return left ? unlockText(left, hats(JOB.FARM) > 0, 'grower') : ''; },
+    dead: () => hatsShort(JOB.FARM) > 0,
     show: () => S.farmOpen && canBuy('tiller',
                                       () => S.tendLevel >= LADDER && S.cropLevel >= LADDER,
-                                      () => kitFull(JOB.FARM))
+                                      () => true)
   },
 
   // The tiller's ladder, three rungs of red like the rest.

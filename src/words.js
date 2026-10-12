@@ -88,10 +88,19 @@ export const gainText = u => {
   // A finished ladder has nothing left to give, verb included.
   if (maxed(u)) return '';
   const amount = gainAmount(u);
+  // A row with no amount that is waiting on something says what, where the
+  // gain would go: the drill and the tiller before their set of hats.
+  const waits = !amount && u.waits ? u.waits() : '';
+  if (waits) return waits;
   // A door has no amount to print; it says what the place is for instead.
   if (!amount && u.blurb) return u.blurb;
   return amount && u.does ? `${u.does} ${amount}` : amount;
 };
+// What a machine row says until its station's set of hats is bought: the
+// owner's words, the count the live one.
+export const unlockText = (left, bought, noun) =>
+  `buy ${left}${bought ? ' more' : ''} ${noun}${left === 1 ? '' : 's'} to unlock`;
+
 const gainAmount = u => {
   if (!u.to) return '';
   const b = Number(u.to());

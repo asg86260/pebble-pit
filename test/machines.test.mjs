@@ -9,7 +9,7 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
-import { STACK_LIFE_S, LADDER, PILE_LIMIT } from '../src/config.js';
+import { STACK_LIFE_S, LADDER, PILE_LIMIT, MACHINE_HATS } from '../src/config.js';
 import { band, floor } from '../src/state.js';
 import { at, grainsIn, addGrain } from '../src/grid.js';
 import { beltFrom, beltReach } from '../src/dust.js';
@@ -531,18 +531,18 @@ group('a machine is worth its complement times the dial', async () => {
   const jaw = s.machines.jaw, ram = s.machines.ram, till = s.machines.tiller;
   return [
     // The complement, plus one again for each of it that is wearing a hat,
-    // times the dial. A machine is gated behind a full set -- three, `KIT_MAX` --
-    // so the gang it stands in for is five benches of which three are hatted:
-    // eight hands, and the jaw is half again on top of that.
-    ok(jaw.hands === 5 && jaw.kitFull && Math.abs(jaw.rate - 12) < 0.01,
-       'five benches, three of them hatted, is twelve hands',
+    // times the dial. The jaw and the tiller are gated behind a set of
+    // `MACHINE_HATS` (five), the ram behind `KIT_MAX` (three): five benches all
+    // hatted is ten hands, and the jaw is half again on top of that.
+    ok(jaw.hands === 5 && jaw.kitFull && Math.abs(jaw.rate - 15) < 0.01,
+       'five benches, all five hatted, is fifteen hands',
        `${jaw.hands} kitted -> ${jaw.rate}`),
-    ok(till.hands === 7 && Math.abs(till.rate - 15) < 0.01,
-       'seven furrows and three brims is fifteen', `${till.hands} -> ${till.rate}`),
+    ok(till.hands === 7 && Math.abs(till.rate - 18) < 0.01,
+       'seven furrows and five brims is eighteen', `${till.hands} -> ${till.rate}`),
     ok(ram.hands === 5 && Math.abs(ram.rate - 12) < 0.01,
-       "and the rock's five puts the ram level with the jaw",
+       "and the rock's five and three helmets is twelve",
        `${ram.hands} -> ${ram.rate}`),
-    ok(Math.abs(two.jaw.rate - 16) < 0.01 && Math.abs(two.tiller.rate - 20) < 0.01,
+    ok(Math.abs(two.jaw.rate - 20) < 0.01 && Math.abs(two.tiller.rate - 24) < 0.01,
        'and the whole of it moves with the dial rather than being written down',
        `at 2: jaw ${two.jaw.rate}, tiller ${two.tiller.rate}`),
     // Carrying has no floor plan either, and used to report none. It has a
@@ -673,7 +673,7 @@ group('a jaw pays a dig exactly what a gang would', async () => {
   // out in well under a second, and a whole dig can begin and end inside one
   // sample -- so the fall-ins get miscounted and the sum comes out one short.
   // What is being checked is the arithmetic of the payout, not the speed of it.
-  window.__tune('MACHINE_GAIN', 0.15);
+  window.__tune('MACHINE_GAIN', 0.12);
   window.__machine('jaw', { bought: true });
   window.__clearFloor();
   run(4);
@@ -1131,23 +1131,26 @@ group('a machine waits for the specialists, and then beats them', async () => {
   window.__machineGates();
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(9000);
-  const offered = () => window.__rows().filter(r => r.shown).map(r => r.key);
+  // For sale: on a board and not standing greyed for its hats. The jaw and the
+  // tiller stay on the board short of their set, saying how many more
+  // (test/hats-gate-machines.test.mjs); the ram leaves it.
+  const offered = () => window.__rows().filter(r => r.shown && !r.waits).map(r => r.key);
 
   const kitted = offered();
   // and now take the hats away again
   window.__kit({ blasters: 0, growers: 0, breakers: 0 });
   const bare = offered();
-  // half a set is not a set -- and a set is three now, so half of it is two
-  window.__kit({ blasters: 2 });
+  // a set short by one is not a set
+  window.__kit({ blasters: MACHINE_HATS - 1 });
   const half = offered();
-  window.__kit({ blasters: 3, growers: 3, breakers: 3 });
+  window.__kit({ blasters: MACHINE_HATS, growers: MACHINE_HATS, breakers: 3 });
   const back = offered();
 
   return [
     ok(kitted.includes('jaw'), 'a topped, fully hatted cut is offered a jaw'),
     ok(!bare.includes('jaw'), 'a cut with no blasters in it is not',
        bare.filter(k => k === 'jaw').join(',') || 'not offered'),
-    ok(!half.includes('jaw'), 'and nor is one with two of its three'),
+    ok(!half.includes('jaw'), 'and nor is one a hat short of its set'),
     ok(back.includes('jaw'), 'the last hat is what puts the row up'),
     ok(!bare.includes('tiller') && !bare.includes('ram'),
        'and the same for the other two')
@@ -1227,7 +1230,7 @@ group('buying a machine takes the specialists with it', async () => {
 
   window.__crew(0, 0, 0);
   return [
-    ok(before.machines.jaw.kit === 3, 'a full set of three blasters at the cut to begin with',
+    ok(before.machines.jaw.kit === MACHINE_HATS, 'a full set of blasters at the cut to begin with',
        `${before.machines.jaw.kit}`),
     ok(bought.machines.jaw.bought, 'the jaw is bought'),
     ok(handed && after.machines.jaw.kit === 0,
@@ -1235,8 +1238,8 @@ group('buying a machine takes the specialists with it', async () => {
     // The rate must not follow the hats down. It was bought against a kitted
     // gang and is worth what that gang made; reading the station afterwards
     // would find nought hats and quietly halve the thing you just paid for.
-    ok(Math.abs(after.machines.jaw.rate - 12) < 0.01,
-       'and the machine is still worth the twelve hands it was bought as',
+    ok(Math.abs(after.machines.jaw.rate - 15) < 0.01,
+       'and the machine is still worth the fifteen hands it was bought as',
        `${after.machines.jaw.rate}`),
     ok(after.trained.indexOf('q') < 0,
        'with nobody left wearing one', `${after.trained}`)
