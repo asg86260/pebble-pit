@@ -1,0 +1,531 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Into the Deep</title>
+<style>
+/* Three storyboards for the first arrival in the deep: the camera finds him
+   in the cage of ribs, then she throws her first blow and the player has the
+   deep. Each canvas loops its sequence, the ripple's tail first for context. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --tag: #ece8f6; --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; --tag: #241f33; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; --tag: #241f33; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; overflow-x: hidden; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 14px; margin: 0; }
+h3 { font-size: 12px; margin: 6px 0 0; color: var(--fg); }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card p, .card li, .card td, .card th { font-size: 12px; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #000; }
+.beat { min-height: 3em; font-size: 12px; color: var(--fg); }
+.beat .t { color: var(--dim); }
+.pill { display: inline-block; font-size: 11px; padding: 0 6px; margin-left: 4px; border: 1px solid var(--rule); background: var(--tag); }
+.pill.ctl { border-color: var(--accent); color: var(--accent); }
+.tl { position: relative; height: 10px; background: var(--rule); }
+.tl i { position: absolute; top: 0; bottom: 0; background: var(--accent); opacity: .35; }
+.tl b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg); }
+.tl s { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--accent); }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+td, th { text-align: left; vertical-align: top; padding: 3px 4px; border-top: 1px solid var(--rule); overflow-wrap: anywhere; }
+th { color: var(--dim); font-weight: normal; }
+col.c1 { width: 5.5em; } col.c3 { width: 6.5em; }
+ul { margin: 0; padding-left: 1.2em; color: var(--dim); }
+.stills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.stills figure { margin: 0; display: grid; gap: 2px; }
+.stills figcaption { font-size: 11px; color: var(--dim); }
+.note { border-left: 3px solid var(--accent); padding-left: 10px; }
+</style>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Into the Deep</h1>
+    <p>The owner's ask: a short scene the first time the player enters the abyss. The camera finds the captured
+      sqhusband in the serpent's cage of ribs. Then the sqwife makes her first attack on the serpent, and the player
+      takes over. Each pane opens on the end of the ripple out of the portal, because that is how the player arrives
+      today, and then plays one option. The purple bar under each pane is the stretch that hold-space skips. The tick
+      marks where the player takes over.</p>
+    <p class="note">This is a mock drawn from plain shapes, not the game. The coil, the cage, the two bodies, the
+      bang and heart marks and the punch follow the shots of <code>deep</code>, <code>deep-wound</code>,
+      <code>serpent-head</code> and <code>snatch-leap</code>. The mock cannot show the real hide shading, the fish,
+      the currents, the stations or the roster, the objective card, the real camera's zoom steps (the game snaps zoom
+      to whole device pixels), or the dark-mode deep (the game inverts it). Lines in [brackets] mark where the owner's
+      words would go. The boxes of grey bars on the canvas stand in for them.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.35" aria-pressed="false" type="button">0.35x</button>
+    <button id="restart" type="button">restart</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="card">
+    <h2>What every option shares</h2>
+    <ul>
+      <li>It plays once, the first time the player arrives in the deep, as a new beat in <code>BEATS</code> (beats.js) owning the camera. It goes into <code>beatsDone</code>, and a reload mid-scene replays it from <code>S.beat.camera</code>, like every camera beat.</li>
+      <li>It starts when the ripple (view.js, <code>VIEW_GLIDE_S</code> 1.3 s) has swept the window, not before: the ripple is the way down and is not part of the scene.</li>
+      <li>Hold space (<code>SKIP_HOLD_MS</code>) skips. Like the existing cutscenes, a skip lets go of the camera but never the moment: she still throws her first blow, and the coil still does what it did.</li>
+      <li>The camera lets go without going home, the cutscene.js rule: it eases out to the deep's own frame over <code>CUT_OUT_S</code>, and the serpent's bar returns as it does.</li>
+      <li>No letterbox, no flash, no shake. The deep keeps running underneath. Only the camera and her first blow are staged.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>What clashes with the deep as built</h2>
+    <ul>
+      <li><b>She is already fighting.</b> She leaps in as the snatch ends and is the first station's fighter from then on. The deep runs whether anyone watches it, so by the player's first visit she may have been punching for an hour, with cracks open. "Her first attack" is either the first one the player <i>sees</i>, or her fighting waits at the portal until the first visit. That is a sim change, and the owner's call.</li>
+      <li><b>The first visit can be long after the snatch.</b> The way down opens only once the wizards' portal is bought (<code>canGoDown</code>), so the scene keys on the first arrival, not on the snatch.</li>
+      <li><b>The ripple plays on every way down</b> (<code>VIEW_GLIDE_S</code>). The scene must wait until it has swept the window, or the first ripple could open on the belly instead of the portal.</li>
+      <li><b>cutscene.js only frames the yard.</b> <code>stepShot</code> sets a ground line (<code>camLockY</code>) and lets go to zoom 1, and the deep takes back its own zoom every frame in <code>stepView</code>. The kill's <code>killFrame</code> is the only deep camera move today.</li>
+      <li><b>stage.js does not reach the deep.</b> It skips bodies off the yard. At a first visit the deep is usually just her, but delvers or bought fighters would need a deep version, or should be left in the shot.</li>
+      <li><b>Any click skips a cutscene</b> (<code>skipCutscene</code>), and in the deep a click is a strike, so the player's first click would be eaten by the skip. Hold-space alone may be the better skip down here.</li>
+      <li><b>The serpent keeps living:</b> a fish can swim in for a meal mid-scene, it heals, and the bar and the objective card sit over the shot. Whether these pause, hide or carry on is open.</li>
+    </ul>
+  </div>
+</div>
+<script>
+(() => {
+  // ---- the world, in cells (P = 6 in the game; here a cell is k screen pixels)
+  const W = 480, H = 270, BASE = 3;
+  const TAIL = 12, HEAD = 146, BX = 88, MID = 50;      // the coil and its belly
+  const PORTAL = { x: 24, y: 14, r: 7 }, HANG = { x: 30, y: 22 };
+  const FX = BX - 6;                                     // her fight spot, over the cage's left end
+  const FLOOR = 84;
+  const GREY = ['#e8e8e8', '#d2d2d2', '#b4b4b4', '#8c8c8c', '#5a5a5a', '#3a3a3a', '#262626', '#1a1a1a'];
+  const PUR = ['#5b2fae', '#8a5ae0', '#3a2470', '#2d1d47'];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+  const ez = k => k * k * (3 - 2 * k);
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const held = (t, fps = 12) => Math.floor(t * fps) / fps;   // bodies move in held poses
+  function hash(x, y) {
+    let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  // ---- the camera: view center and screen pixels a cell
+  let cam = { x: 80, y: 45, k: BASE };
+  const sx = wx => Math.round((wx - cam.x) * cam.k + W / 2);
+  const sy = wy => Math.round((wy - cam.y) * cam.k + H / 2);
+  function cell(g, x, y, w, h, c) {
+    const x0 = sx(x), x1 = sx(x + w), y0 = sy(y), y1 = sy(y + h);
+    if (x1 <= 0 || y1 <= 0 || x0 >= W || y0 >= H) return;
+    g.fillStyle = c; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+  }
+  function camTrack(keys, t) {
+    for (let i = 0; i < keys.length - 1; i++) {
+      const [a, x0, y0, k0] = keys[i], [b, x1, y1, k1] = keys[i + 1];
+      if (t <= b) { const e = ez(seg(t, a, b)); return { x: lerp(x0, x1, e), y: lerp(y0, y1, e), k: lerp(k0, k1, e) }; }
+    }
+    const l = keys[keys.length - 1]; return { x: l[1], y: l[2], k: l[3] };
+  }
+
+  // ---- the coil. G is this frame's shape: sway clock, wave height, belly swell,
+  // how far the cage is drawn in, the dip a blow gives, the crack's reach, the jaw.
+  let G = {};
+  function thick(x) {
+    const u = (x - TAIL) / (HEAD - TAIL);
+    let t;
+    if (u < 0.35) t = 1 + 6 * ez(u / 0.35);
+    else if (u < 0.62) t = 7;
+    else if (u < 0.86) t = 7 - 3 * ez((u - 0.62) / 0.24);
+    else t = 4 + 2 * ez(clamp((u - 0.86) / 0.06, 0, 1));
+    const half = 8 - (G.squeeze || 0);
+    const d = (x - BX) / half;
+    return t + Math.max(0, G.bulge * (1 - d * d));
+  }
+  const center = x => MID + G.amp * Math.sin(x * 0.065 - G.sw * 0.9) + (G.dipAt != null && Math.abs(x - G.dipAt) <= 3 ? 1 : 0);
+  const top = x => Math.round(center(x) - thick(x) / 2);
+  const cageHalf = () => 7 - (G.squeeze || 0);
+
+  function drawCoil(g) {
+    const ch = cageHalf();
+    for (let x = TAIL; x <= HEAD + 4; x++) {
+      let th = x <= HEAD ? thick(x) : 6 - 1.2 * (x - HEAD);      // the snout's cap
+      const c = x <= HEAD ? center(x) : center(HEAD);
+      const n = Math.max(1, Math.round(th)), y0 = Math.round(c - th / 2);
+      for (let i = 0; i < n; i++) {
+        let col = hash(x, i) < 0.18 ? GREY[0] : '#fff';
+        if (i === n - 1) col = GREY[3];
+        else if (i > n * 0.6) col = GREY[1];
+        else if (i === Math.floor(n * 0.5)) col = GREY[2];
+        const inCage = Math.abs(x - BX) <= ch && i > 0 && i < n - 1;
+        if (inCage) {
+          const rib = ((x - BX + 7) % 3 + 3) % 3 === 0;
+          const broke = G.ribBroken && x === BX - 4;
+          col = rib ? (broke ? (i % 2 ? GREY[4] : '#000') : GREY[7]) : GREY[5];
+        }
+        cell(g, x, y0 + i, 1, 1, col);
+      }
+      // the crest, the abyss's purple, shortening back along the neck
+      if (x >= HEAD - 26 && x <= HEAD - 2 && x % 2 === 0) {
+        const hgt = ((x / 2) % 2 ? 1 : 2) * ((x - (HEAD - 26)) / 24) + 0.4;
+        cell(g, x, y0 - Math.round(hgt), 1, Math.round(hgt), PUR[1]);
+      }
+    }
+    // eye and jaw
+    const hc = center(HEAD), ht = Math.round(hc - 3);
+    cell(g, HEAD - 1, ht + 1, 1, 1, '#000');
+    if (G.jaw > 0) {
+      const o = Math.round(G.jaw * 2);
+      for (let x = HEAD - 2; x <= HEAD + 4; x++) cell(g, x, Math.round(hc), 1, o, '#000');
+    }
+    // cracks out from the belly, both ways, dark near it and grey at the tips
+    const reach = Math.round((G.crack || 0) * 16);
+    for (let d = 1; d <= reach; d++) for (const s of [-1, 1]) {
+      const x = BX + s * (ch + d);
+      const yy = top(x) + 1 + Math.floor(hash(x, 7) * 2);
+      cell(g, x, yy, 1, 1, d < reach * 0.6 ? GREY[7] : GREY[3]);
+    }
+  }
+
+  // ---- bodies: the crew's square, a white edge round a dark inside
+  function body(g, x, y, w = 3, h = 3) {
+    cell(g, x, y, w, h, '#fff');
+    if (w > 2 && h > 2) cell(g, x + 1, y + 1, w - 2, h - 2, '#000');
+  }
+  function mark(g, kind, cx, y, n = 1) {        // over a body whose top is y, centered on cx
+    if (kind === 'bang') {
+      const x0 = cx - (n - 1);
+      for (let i = 0; i < n; i++) { cell(g, x0 + i * 2, y - 6, 1, 3, '#fff'); cell(g, x0 + i * 2, y - 2, 1, 1, '#fff'); }
+    } else if (kind === 'dots') {
+      const x0 = cx - n + 1;
+      for (let i = 0; i < n; i++) cell(g, x0 + i * 2, y - 2, 1, 1, '#fff');
+    } else if (kind === 'heart') {
+      const HEART = ['01010', '11111', '11111', '01110', '00100'];
+      for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) if (HEART[r][c] === '1') cell(g, cx - 2 + c, y - 7 + r, 1, 1, '#fff');
+    }
+  }
+  function words(g, cx, y) {                     // a stand-in for the owner's line
+    cell(g, cx - 8, y - 6, 16, 5, '#fff');
+    cell(g, cx - 7, y - 5, 14, 3, '#000');
+    cell(g, cx - 6, y - 4, 7, 1, GREY[3]); cell(g, cx + 2, y - 4, 4, 1, GREY[3]);
+  }
+
+  // ---- her blow, straight down onto the hide, on her own held clock
+  function punch(tp, big) {
+    const WIND = big ? 0.3 : 0.4, SMEAR = 1 / 12, HOLD = big ? 0.42 : 0.34, HOME = 0.3;
+    if (tp < 0) return null;
+    if (tp < WIND) return { dy: tp < WIND * 0.35 ? -1 : -(big ? 3 : 2), shape: 'squash' };
+    if (tp < WIND + SMEAR) return { dy: 0, shape: 'stretch', reach: 0.6, smear: true };
+    if (tp < WIND + SMEAR + HOLD) { const h = tp - WIND - SMEAR; return { dy: 1, shape: 'idle', reach: 1, star: h < HOLD / 2 ? 1 : 2, contact: true }; }
+    if (tp < WIND + SMEAR + HOLD + HOME) return { dy: 0, shape: 'idle', reach: 1 - Math.ceil(seg(tp, WIND + SMEAR + HOLD, WIND + SMEAR + HOLD + HOME) * 3) / 3 };
+    return null;
+  }
+  const contactOf = (start, big) => start + (big ? 0.3 : 0.4) + 1 / 12;
+  function star(g, cx, cy, pose, big) {
+    const r = pose === 1 ? (big ? 4 : 3) : (big ? 3 : 2);
+    const pts = [];
+    if (pose === 1) for (let i = -r; i <= r; i++) { pts.push([cx + i, cy]); pts.push([cx, cy + i]); }
+    else for (let i = -r; i <= r; i++) { pts.push([cx + i, cy + i]); pts.push([cx + i, cy - i]); }
+    for (const [x, y] of pts) cell(g, x - 1, y - 1, 3, 3, '#000');       // the keyline
+    for (const [x, y] of pts) cell(g, x, y, 1, 1, '#fff');
+  }
+  function drawHer(g, w) {
+    const p = w.punch;
+    const y = Math.round(w.y + (p ? p.dy : 0));
+    const shape = p ? p.shape : w.shape || 'idle';
+    // speed lines behind a charge, held with the pose
+    if (w.dash) for (let i = 0; i < 3; i++) {
+      const len = 3 + i;
+      cell(g, Math.round(w.x - w.dash[0] * (2 + len)), y + i, len, 1, GREY[3]);
+    }
+    // the impact star sits on the hide at the contact, behind her and her fist
+    if (p && p.star) star(g, w.x + 1, top(w.x + 1) + 1, p.star, w.big);
+    if (shape === 'squash') body(g, w.x - 1, y + 1, 5, 2);
+    else if (shape === 'stretch') body(g, w.x, y, 3, 4);
+    else body(g, w.x, y, 3, 3);
+    if (p && p.reach > 0) {
+      const from = y + (shape === 'stretch' ? 4 : 3), to = top(w.x + 1);
+      const fs = w.big ? 3 : 2;
+      const fy = Math.round(lerp(from, to - fs, p.reach));
+      if (p.smear) cell(g, w.x, from, 3, Math.max(1, fy - from), GREY[3]);
+      cell(g, w.x, fy, 3, fs, '#fff');
+    }
+  }
+
+  // ---- the place around them
+  function drawDeep(g, t) {
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 90; i++) {                 // silt, drifting, a tone a kind
+      const x = Math.round(((hash(i, 1) * 160 + Math.sin(t * 0.3 + i) * 2 + t * 0.4) % 160 + 160) % 160);
+      const y = Math.round(((hash(i, 2) * 82 + t * (0.3 + hash(i, 3))) % 82));
+      const r = hash(i, 4);
+      cell(g, x, y, 1, 1, r < 0.15 ? PUR[0] : r < 0.22 ? GREY[0] : r < 0.55 ? GREY[5] : GREY[4]);
+    }
+    // the deep's end of the portal, and the chevron under it
+    for (let y = -PORTAL.r - 1; y <= PORTAL.r + 1; y++) for (let x = -PORTAL.r - 1; x <= PORTAL.r + 1; x++) {
+      const d = Math.hypot(x, y);
+      if (Math.abs(d - PORTAL.r) < 0.6) cell(g, PORTAL.x + x, PORTAL.y + y, 1, 1, hash(x, y + Math.floor(t * 4)) < 0.5 ? PUR[0] : PUR[2]);
+    }
+    for (let i = 0; i < 3; i++) cell(g, PORTAL.x - i, PORTAL.y + PORTAL.r + 3 + i, 1 + i * 2, 1, '#fff');
+    for (let x = 0; x < 160; x++) for (let y = FLOOR; y < 92; y++)
+      cell(g, x, y, 1, 1, ['#2a2a2a', '#333', '#262626', '#2e2e2e'][Math.floor(hash(x, y) * 4)]);
+  }
+  // the ripple's tail: the yard outside the leading ring, the deep inside it
+  function drawRipple(g, r) {
+    for (let y = 0; y < 92; y++) {
+      const dy = y - PORTAL.y, span = r * r - dy * dy;
+      if (span <= 0) cell(g, 0, y, 160, 1, '#f6f6f6');
+      else {
+        const s = Math.sqrt(span), a = Math.floor(PORTAL.x - s), b = Math.ceil(PORTAL.x + s);
+        if (a > 0) cell(g, 0, y, a, 1, '#f6f6f6');
+        if (b < 160) cell(g, b, y, 160 - b, 1, '#f6f6f6');
+      }
+    }
+    for (let i = 0; i < 3; i++) {
+      const rr = r - i * 4; if (rr <= 1) continue;
+      for (let a = 0; a < 720; a++) {
+        const th = a / 720 * Math.PI * 2;
+        cell(g, Math.round(PORTAL.x + Math.cos(th) * rr), Math.round(PORTAL.y + Math.sin(th) * rr), 1, 1, i === 1 ? PUR[1] : PUR[0]);
+      }
+    }
+  }
+  function drawBar(g, a) {                         // the serpent's bar, back as the scene lets go
+    if (a <= 0) return;
+    const step = Math.ceil(a * 3) / 3;
+    g.globalAlpha = step;
+    const x = Math.round(W * 0.19), w = Math.round(W * 0.62);
+    g.fillStyle = '#fff'; g.fillRect(x, 14, w, 9);
+    g.fillStyle = '#000'; g.fillRect(x + 1, 15, w - 2, 7);
+    g.fillStyle = '#fff'; g.fillRect(x + 1, 15, Math.round((w - 2) * 0.7), 7);
+    g.globalAlpha = 1;
+  }
+
+  // ---- shared bits of each option's state
+  const RIPPLE = 0.9;
+  function charge(t, a, b, to) {                  // a glide with a lag, in held poses
+    const k = ez(seg(held(t), a, b));
+    const x = Math.round(lerp(HANG.x, to.x, k)), y = Math.round(lerp(HANG.y, to.y, k) - Math.sin(k * Math.PI) * 6);
+    const moving = t > a && t < b;
+    return { x, y, dash: moving ? [Math.sign(to.x - HANG.x), 0] : null };
+  }
+  const hang = t => ({ x: HANG.x, y: HANG.y + (Math.floor(t * 2) % 2) });
+  const fightY = () => top(FX + 1) - 6;
+  const crackFrom = (t, hits) => hits.reduce((s, h) => s + (t >= h ? 0.3 * Math.max(0, 1 - (t - h) / 5) : 0), 0);
+  function scales(g, t, hits) {
+    for (const h of hits) if (t >= h && t < h + 3) {
+      const a = held(t - h, 8);
+      cell(g, Math.round(FX + 2 + Math.sin(a * 2.2) * 2 + a), Math.round(top(FX + 1) + 1 + a * 3), 2, 1, GREY[2]);
+    }
+  }
+  function punchesFrom(t, starts, big) {
+    for (const s of starts) { const p = punch(t - s, big && s === starts[0]); if (p) return { p, big: big && s === starts[0] }; }
+    return null;
+  }
+
+  // ---- the three options. Each `beats` row: [from, to, beat, skip?, note].
+  const OPTS = [
+    {
+      id: 'A', name: 'A · Push in, call, charge',
+      caption: 'The camera pushes in on him in the cage. He calls out. It pulls back to her at the portal, she answers, charges down, and her first punch lands. Then the player has the deep.',
+      loop: 8.5, skipFrom: RIPPLE, ctl: 6.45, stills: [1.6, 2.8, 4.1, 5.1, 6.15, 7.2],
+      beats: [
+        [0, 0.9, 'the ripple sweeps the window (today\'s way down)', false, 'not the scene'],
+        [0.9, 2.1, 'camera glides and pushes in on the belly', true, ''],
+        [2.1, 3.5, 'held on him: he hops against the ribs, bang ×2', true, '[line: husband calls out]'],
+        [3.5, 4.5, 'camera pulls back wide to frame her at the portal; she answers, bang', true, '[line: wife answers]'],
+        [4.5, 5.6, 'she charges down to the belly, held poses, speed lines', true, ''],
+        [5.6, 6.45, 'her first punch: wind-up, smear, held impact, a scale off', true, ''],
+        [6.45, 7.4, 'control back; camera eases out to the deep\'s frame, bar returns', false, 'the player\'s'],
+      ],
+      reuses: ['a camera beat row in BEATS, played once (beatsDone)', 'the kill\'s deep pull-in (killFrame, KILL_ZOOM / KILL_GLIDE in view.js) for the push onto the belly', 'the bang mark, n = 2 as the call for help (render/crew.js, drawSaying; the snatch already gives him one)', 'the Brawler\'s punch as built (render/attacks.js: wind-up, smear, held impact)', 'hold-space skip (skip.js) and the ease-out without going home (CUT_OUT_S)'],
+      needs: ['a deep framing in cutscene.js: stepShot is yard-only (ground line, camLockY, setZoom back to 1), so this needs a deep path or a general killFrame', 'a cue for the first arrival (the glide into the deep ending, the beat not yet done)', 'her held at the portal until the cue, so the charge and the first blow are hers to play (see the clash below)', 'a scripted pan between two subjects mid-scene (today a scene has one spot)'],
+      state(t) {
+        const s = { beat: '' };
+        s.cam = camTrack([[0, 80, 45, 3], [0.9, 80, 45, 3], [2.1, BX, 48, 7], [3.5, BX, 48, 7], [4.5, 62, 40, 3.6], [6.45, 62, 40, 3.6], [7.4, 80, 45, 3], [9, 80, 45, 3]], t);
+        G = { sw: t, amp: 5, bulge: 3, squeeze: 0, jaw: 0 };
+        const starts = [5.6, 7.6], hits = starts.map(x => contactOf(x, false));
+        G.crack = crackFrom(t, hits);
+        const pf = punchesFrom(t, starts, false);
+        if (pf && pf.p.contact && pf.p.star === 1) G.dipAt = FX + 1;
+        s.her = t < 4.5 ? hang(t) : t < 5.6 ? charge(t, 4.5, 5.6, { x: FX, y: fightY() }) : { x: FX, y: fightY() };
+        s.her.punch = pf && pf.p;
+        s.him = { hop: t > 2.1 && t < 3.5 && Math.floor((t - 2.1) * 4) % 2 === 0 ? -1 : 0 };
+        s.marks = [];
+        if (t > 2.2 && t < 3.5) { s.marks.push(['him', 'bang', 2]); if (t > 2.4) s.words = 'him'; }
+        if (t > 3.7 && t < 4.5) { s.marks.push(['her', 'bang', 1]); if (t > 3.9) s.words = 'her'; }
+        s.hits = hits; s.bar = seg(t, 6.45, 6.9);
+        return s;
+      },
+    },
+    {
+      id: 'B', name: 'B · The coil tightens, she answers',
+      caption: 'The camera settles on the belly and the head. The coil draws in round him in three held squeezes and the jaws open. She darts in from off the left with a haymaker, and the squeeze gives a step.',
+      loop: 8, skipFrom: RIPPLE, ctl: 4.8, stills: [1.6, 2.6, 3.2, 3.7, 4.45, 5.4],
+      beats: [
+        [0, 0.9, 'the ripple sweeps the window', false, 'not the scene'],
+        [0.9, 1.9, 'camera glides onto the belly and head, a little closer', true, ''],
+        [1.9, 3.4, 'three held squeezes: the cage draws in, he is squashed, jaws open, the sway stops', true, '[line: husband, squeezed]'],
+        [3.4, 4.0, 'she darts in from off frame, speed lines', true, ''],
+        [4.0, 4.8, 'her haymaker: big wind-up, smear, the coil gives a cell, held impact; the squeeze lets go a step', true, ''],
+        [4.8, 5.8, 'control back; camera eases out, the coil sways again, bar returns', false, 'the player\'s'],
+      ],
+      reuses: ['the same camera beat row and skip', 'the belly\'s swell (BELLY_BULGE) and the cage\'s ribs, driven down and back', 'the meal\'s open jaws (meal-bite)', 'the Haymaker as built: heavy wind-up, the coil\'s give, held impact star', 'the bang mark over him'],
+      needs: ['a squeeze on the serpent\'s drawing: the bulge and the cage length taken in by steps, the sway held (render/serpent.js, place.js); a picture-only knob, the wound and the sim untouched', 'the deep camera path in cutscene.js, as in A', 'her first blow held for the cue, as in A'],
+      state(t) {
+        const s = { beat: '' };
+        s.cam = camTrack([[0, 80, 45, 3], [0.9, 80, 45, 3], [1.9, 104, 46, 5], [3.4, 104, 46, 5], [3.9, 96, 44, 4.4], [4.8, 96, 44, 4.4], [5.8, 80, 45, 3], [9, 80, 45, 3]], t);
+        let sq = 0;
+        if (t >= 2.0) sq = 1; if (t >= 2.5) sq = 2; if (t >= 3.0) sq = 3;
+        const hit = contactOf(4.0, true);
+        if (t >= hit) sq = 2;
+        if (t >= 5.0) sq = 1; if (t >= 5.4) sq = 0;
+        // the give before each squeeze settles: a frame held a step tighter
+        const give = [2.0, 2.5, 3.0].some(a => t >= a && t < a + 1 / 12) ? 1 : 0;
+        const frozen = t >= 2.0 && t < hit;
+        G = { sw: frozen ? 2.0 : t >= hit ? t - (hit - 2.0) : t, amp: 5 + Math.min(sq, 3) * 1.2, bulge: 3 - sq - give, squeeze: sq + give, jaw: t > 2.2 && t < 3.8 ? (t < 2.4 ? 0.5 : 1) : 0 };
+        const starts = [4.0, 5.9, 7.1], hits = starts.map((x, i) => contactOf(x, i === 0));
+        G.crack = crackFrom(t, hits);
+        const pf = punchesFrom(t, starts, true);
+        if (pf && pf.p.contact && pf.p.star === 1) G.dipAt = FX + 1;
+        s.her = t < 3.4 ? hang(t) : t < 4.0 ? charge(t, 3.4, 4.0, { x: FX, y: fightY() }) : { x: FX, y: fightY() };
+        s.her.punch = pf && pf.p; s.her.big = pf && pf.big;
+        s.him = { squash: sq >= 2 };
+        s.marks = [];
+        if (t > 2.6 && t < 3.5) { s.marks.push(['him', 'bang', 2]); s.words = t > 2.8 ? 'him' : null; }
+        s.hits = hits; s.bar = seg(t, 4.8, 5.3);
+        return s;
+      },
+    },
+    {
+      id: 'C', name: 'C · Through the ribs',
+      caption: 'She glides down to the cage with the camera keeping the two of them in frame. They talk through the ribs, dots and then his heart, the opening\'s chat in the deep. Then she squares up and her first punch cracks the rib in front of him.',
+      loop: 9, skipFrom: RIPPLE, ctl: 5.1, stills: [1.7, 2.7, 3.3, 3.9, 4.75, 5.6],
+      beats: [
+        [0, 0.9, 'the ripple sweeps the window', false, 'not the scene'],
+        [0.9, 2.4, 'she glides down to the cage; the camera keeps the pair\'s middle and pulls in', true, ''],
+        [2.4, 3.6, 'they take turns talking: her dots, then his', true, 'dots, or [line: the pair, through the ribs]'],
+        [3.6, 4.2, 'his heart', true, ''],
+        [4.2, 5.1, 'she rises and squares up; her punch smears down, held impact, the rib in front of him cracks, his bang', true, ''],
+        [5.1, 6.1, 'control back; camera eases out, bar returns', false, 'the player\'s'],
+      ],
+      reuses: ['the opening\'s chat: dots taking turns and the heart (stepChat, the talking helper, INTRO_BEAT)', 'the opening\'s camera walking with the pair\'s middle', 'the cage breaking where the wound opens (the ribs in the gap are gone)', 'the Brawler\'s punch, the bang mark, the camera beat row and skip'],
+      needs: ['one rib that cracks on a single blow, and either stays cracked or heals with the wound (today a rib goes only when the wound\'s gap reaches it)', 'a camera spot that follows two bodies in the deep', 'the deep camera path in cutscene.js and her first blow held for the cue, as in A'],
+      state(t) {
+        const s = { beat: '' };
+        G = { sw: t, amp: 5, bulge: 3, squeeze: 0, jaw: 0 };
+        const spot = { x: FX, y: fightY() };
+        s.her = t < 0.9 ? hang(t) : t < 2.4 ? charge(t, 0.9, 2.4, spot) : { ...spot };
+        if (t > 2.4 && t < 4.2) s.her.face = 1;
+        const starts = [4.3, 6.6, 7.9], hits = starts.map(x => contactOf(x, false));
+        G.crack = crackFrom(t, hits);
+        G.ribBroken = t >= hits[0];
+        const pf = punchesFrom(t, starts, false);
+        if (pf && pf.p.contact && pf.p.star === 1) G.dipAt = FX + 1;
+        s.her.punch = pf && pf.p;
+        // the camera on the pair's middle, closer as she nears him
+        const mx = (s.her.x + 1 + BX) / 2, my = (s.her.y + MID) / 2;
+        const kin = ez(seg(t, 0.9, 2.4)), kout = ez(seg(t, 5.1, 6.1));
+        if (t < 0.9) s.cam = { x: 80, y: 45, k: 3 };
+        else {
+          const inx = lerp(80, mx, kin), iny = lerp(45, my, kin), ink = lerp(3, 5.5, kin);
+          s.cam = { x: lerp(inx, 80, kout), y: lerp(iny, 45, kout), k: lerp(ink, 3, kout) };
+        }
+        s.him = {};
+        s.marks = [];
+        if (t > 2.4 && t < 3.0) s.marks.push(['her', 'dots', 2]);
+        if (t > 3.0 && t < 3.6) s.marks.push(['him', 'dots', 3]);
+        if (t > 3.6 && t < 4.2) s.marks.push(['him', 'heart', 1]);
+        if (t > hits[0] && t < hits[0] + 0.6) s.marks.push(['him', 'bang', 1]);
+        s.hits = hits; s.bar = seg(t, 5.1, 5.6);
+        return s;
+      },
+    },
+  ];
+
+  function draw(g, o, t) {
+    const s = o.state(t);
+    cam = { x: 80, y: 45, k: BASE };
+    cam = s.cam;
+    drawDeep(g, t);
+    drawCoil(g);
+    // him, in the cage, riding the coil
+    const hy = Math.round(center(BX)) - 1 + (s.him.hop || 0);
+    if (s.him.squash) body(g, BX - 2, hy + 1, 5, 2); else body(g, BX - 1, hy, 3, 3);
+    scales(g, t, s.hits);
+    drawHer(g, s.her);
+    for (const [who, kind, n] of s.marks) {
+      if (who === 'him') mark(g, kind, BX, Math.min(hy, top(BX)) - 1, n);
+      else mark(g, kind, s.her.x + 1, s.her.y, n);
+    }
+    if (s.words === 'him') words(g, BX, top(BX) - 9);
+    if (s.words === 'her') words(g, s.her.x + 1, s.her.y - 7);
+    if (t < RIPPLE) { cam = { x: 80, y: 45, k: BASE }; drawRipple(g, ez(t / RIPPLE) * 190); }
+    drawBar(g, s.bar);
+  }
+
+  // ---- the page
+  const grid = document.getElementById('grid');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const panes = OPTS.map(o => {
+    const card = document.createElement('div'); card.className = 'card';
+    const fmt = v => v.toFixed(1) + 's';
+    const rows = o.beats.map(([a, b, name, skip, note]) =>
+      `<tr><td>${fmt(a)}–${fmt(b)}</td><td>${name}${note ? ` <span class="pill${note === "the player's" ? ' ctl' : ''}">${note}</span>` : ''}</td><td>${skip ? 'hold space' : '—'}</td></tr>`).join('');
+    card.innerHTML = `<h2>${o.name}</h2><p>${o.caption}</p>
+      ${reduce ? '<div class="stills"></div>' : '<canvas width="480" height="270"></canvas><div class="tl"></div><div class="beat"></div>'}
+      <table><colgroup><col class="c1"><col><col class="c3"></colgroup>
+        <tr><th>when</th><th>beat</th><th>skip</th></tr>${rows}</table>
+      <p>Hands control back at <b>${fmt(o.ctl)}</b> after arrival, ${fmt(o.ctl - o.skipFrom)} of scene. The scene before that is skippable.</p>
+      <h3>Reuses</h3><ul>${o.reuses.map(r => `<li>${r}</li>`).join('')}</ul>
+      <h3>New</h3><ul>${o.needs.map(r => `<li>${r}</li>`).join('')}</ul>`;
+    grid.appendChild(card);
+    if (reduce) {
+      const box = card.querySelector('.stills');
+      for (const k of o.stills) {
+        const f = document.createElement('figure');
+        const c = document.createElement('canvas'); c.width = W; c.height = H;
+        const beat = o.beats.find(([a, b]) => k >= a && k < b);
+        const cap = document.createElement('figcaption'); cap.textContent = `${k.toFixed(1)}s · ${beat ? beat[2] : ''}`;
+        f.append(c, cap); box.appendChild(f);
+        draw(c.getContext('2d'), o, k);
+      }
+      return null;
+    }
+    const tl = card.querySelector('.tl');
+    tl.innerHTML = `<i style="left:${o.skipFrom / o.loop * 100}%;width:${(o.ctl - o.skipFrom) / o.loop * 100}%"></i><s style="left:${o.ctl / o.loop * 100}%"></s><b></b>`;
+    return { o, g: card.querySelector('canvas').getContext('2d'), beat: card.querySelector('.beat'), head: tl.querySelector('b'), last: '' };
+  });
+
+  if (reduce) return;
+  // ?t=4.2 stands every pane on that moment, paused
+  const at = parseFloat(new URLSearchParams(location.search).get('t'));
+  let speed = 1, playing = isNaN(at), clock = isNaN(at) ? 0 : at, prev = performance.now();
+  if (!playing) document.getElementById('play').textContent = 'play';
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  document.getElementById('restart').onclick = () => { clock = 0; };
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+  });
+  function frame(now) {
+    const dt = Math.min(0.1, (now - prev) / 1000); prev = now;
+    if (playing) clock += dt * speed;
+    for (const p of panes) {
+      const t = clock % p.o.loop;
+      draw(p.g, p.o, t);
+      const b = p.o.beats.find(([a, z]) => t >= a && t < z);
+      const txt = b ? `<span class="t">${t.toFixed(1)}s</span> ${b[2]}${b[3] ? '<span class="pill">skippable</span>' : ''}${b[4] ? `<span class="pill${b[4] === "the player's" ? ' ctl' : ''}">${b[4]}</span>` : ''}`
+                    : `<span class="t">${t.toFixed(1)}s</span> the deep, the player's <span class="pill ctl">the player's</span>`;
+      const key = b ? b[2] : 'rest';
+      if (key !== p.last) { p.last = key; }
+      p.beat.innerHTML = txt;
+      p.head.style.left = (t / p.o.loop * 100) + '%';
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
