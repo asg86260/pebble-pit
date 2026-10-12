@@ -232,9 +232,10 @@ export function drawRunSwitch(box, key) {
   const mark = MACHINE_MARK[key];
   if (!mark) return;
   const w = spriteW(mark), h = spriteH(mark);
-  // Centered on the strip, standing on its bottom line.
+  // Centered on the strip, hung from its top line: a mark taller than the
+  // strip grows down into clear ground, never up into the count above it.
   const x = box.x + Math.round((box.w / P - w) / 2) * P;
-  const y = box.y + box.h - h * P;
+  const y = box.y;
 
   // A cell of clear air behind it, for the rosters with a pile or a wall
   // behind them, where the mark would be black on black.
