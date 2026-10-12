@@ -126,7 +126,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The index: every thing you have met, with a few words on each, on the held sheet's `index` page or the `i` key.
 - Shop items no longer show their build time; the coins are the whole price.
 - The books show how long the yard has been played, and each save on the saves page shows its own playtime.
-- She calls "!" from under a rock while it is being mined, every few seconds (test/sqwife-calls.test.mjs).
+- She calls from under a rock while it is being mined, every few seconds, in a few ways: a build of "!", one long "!", a quick burst, a "?" then "!", a sigh of dots (test/sqwife-calls.test.mjs).
 - Each save has its own delete, confirmed on its row, in place of the reset progress button.
 - A controls page on the settings sheet, in the game and on the landing page, lists the mouse, the keys and the 1 – 9 jump.
 - Nobody goes for the muck while a storm is still raining it down; the clear-up starts once the last drop has landed.

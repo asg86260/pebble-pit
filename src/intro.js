@@ -15,7 +15,7 @@
 // const, because beats.js reads them at load and imports this file in a ring.
 
 import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
-         INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL, HELP_BANG_MS, HELP_BANGS, BURIED_CALL_MS, BURIED_CALL_JITTER, BURIED_CALL_HOT_MS,
+         INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL, HELP_BANG_MS, HELP_BANGS, BURIED_CALL_MS, BURIED_CALL_JITTER, BURIED_CALL_HOT_MS, BURIED_CALLS,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS,
          COMMUTE_PACE, ROCK_CLEAR,
@@ -702,9 +702,11 @@ export function stepUnder(dt) {
 // every blow at the rock throws some.
 function buriedCalls(t) {
   if (S.chips.length) S.buriedMinedAt = t;
-  const k = S.buriedCall ? Math.floor((t - S.buriedCall) / HELP_BANG_MS) : -1;
-  if (k >= 0 && k < HELP_BANGS) {
-    S.buriedSay = { mark: 'bang', n: k + 1, pale: true, until: t + HELP_BANG_MS };
+  const call = BURIED_CALLS[S.buriedPat];
+  const k = S.buriedCall && call ? Math.floor((t - S.buriedCall) / call.ms) : -1;
+  if (k >= 0 && k < call.steps.length) {
+    const [mark, n] = call.steps[k];
+    S.buriedSay = { mark, n, pale: true, until: t + call.ms };
     return;
   }
   S.buriedSay = null;
@@ -713,8 +715,17 @@ function buriedCalls(t) {
   if (!S.buriedCallAt) S.buriedCallAt = t + BURIED_CALL_MS * (1 + (rand() - 0.5) * 2 * BURIED_CALL_JITTER);
   else if (t >= S.buriedCallAt) {
     S.buriedCall = t;
+    S.buriedPat = pickCall(S.buriedPat);
     S.buriedCallAt = t + BURIED_CALL_MS * (1 + (rand() - 0.5) * 2 * BURIED_CALL_JITTER);
   }
+}
+
+// Weighted by the table, never the same twice running.
+function pickCall(last) {
+  const names = Object.keys(BURIED_CALLS).filter(k => k !== last);
+  let r = rand() * names.reduce((a, k) => a + BURIED_CALLS[k].weight, 0);
+  for (const k of names) { r -= BURIED_CALLS[k].weight; if (r < 0) return k; }
+  return names[names.length - 1];
 }
 
 // and every so often, while it is in sight, it says something -- and somebody
