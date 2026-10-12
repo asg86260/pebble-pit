@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprite Crowd Counters</title>
+<style>
+/* Layout: one section an option (today's for reference first), each with the
+   small yard and the big yard, each at 1x and magnified 2x. The yard strip is
+   the game's paper: black and white on the 6px grid whatever the page theme. */
+:root {
+  --bg: #f4f3f0; --panel: #ffffff; --fg: #18171a; --dim: #5d5a62; --rule: #dddad4; --accent: #c2410c;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f0f11; --panel: #18181b; --fg: #ecebef; --dim: #a5a3ab; --rule: #2d2c31; --accent: #fb923c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f0f11; --panel: #18181b; --fg: #ecebef; --dim: #a5a3ab; --rule: #2d2c31; --accent: #fb923c; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 18px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 14px; margin: 0; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.note { border-left: 3px solid var(--accent); padding-left: 10px; }
+.opt { background: var(--panel); border: 1px solid var(--rule); padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 12px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figcaption { font-size: 12px; color: var(--dim); }
+canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+canvas.x1 { max-width: 100%; height: auto; border: 1px solid var(--rule); }
+.scroll { overflow-x: auto; border: 1px solid var(--rule); max-width: 100%; }
+.tag { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.sheet { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+.sheet figure { justify-items: start; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:grid;gap:8px">
+    <h1>Sprite Crowd Counters</h1>
+    <p>Three counters instead of two crowds: carters, workers and forklifts, each drawn with the body the yard already
+      draws for it, in place of today's square pips under a brim. Each strip is the ground line with the house's and
+      the garage's footprints, the garage on the left a <code>GARAGE_CLEAR</code> (144px) off the house as in the game,
+      and the counters at the post's line, ten cells under the ground. Shown for a small yard (3 carters, 2 workers,
+      1 forklift) and a big yard (20, 30, 8), each at 1x (one world pixel a screen pixel, so a cell is 6px; the game's
+      own cell is 5px, a touch smaller) and magnified 2x.</p>
+    <p class="note">A mock drawn from plain shapes, not the game. The sprites are the game's own drawing code
+      (<code>drawBody</code>, <code>drawCart</code>, <code>drawCartBox</code>, <code>drawLiftBox</code> from
+      <code>src/render/crew.js</code>) copied in verbatim and rasterized here; the small ones are those same pixels
+      halved, two-by-two. It cannot show live counts (a body walking over, the half-filled pip of one on its way, the
+      count easing up), hover, the house's lit windows, or anything else in the yard around them.</p>
+    <label><input type="checkbox" id="bounds"> show each counter's room (the 252px a crowd may take today, and the 24px <code>COUNTER_GAP</code> between)</label>
+  </div>
+
+  <section class="opt">
+    <h2>The sprites</h2>
+    <p>Full size as the yard draws them, and halved for a counter. A carter is its body with the cart hitched behind;
+      a forklift is the truck with its mast, forks and antenna, nobody on it.</p>
+    <div class="sheet" id="sheet"></div>
+  </section>
+
+  <div id="options" style="display:grid;gap:18px"></div>
+</div>
+
+<script>
+(() => {
+  // --- the game's numbers (src/config) ---------------------------------------
+  const P = 6, WORKER = P * 3;
+  const SEAT_PIP = P * 2, SEAT_GAP = P, SEAT_SEP = P * 2, SEAT_RULE = 2, SEAT_CROWD_ROW = 12, SEAT_PLUS_W = P * 6;
+  const SEAT_EMPTY_INK = '#8c8c8c', THIN = 2, GAP = P;
+  const CROWD_MAX_W = SEAT_CROWD_ROW * (SEAT_PIP + SEAT_GAP) - SEAT_GAP + P + SEAT_PLUS_W;   // 252
+  const COUNTER_GAP = P * 4;
+  const HOUSE_CUBE = P * 6, HOUSE_COLS = 6, GARAGE_W = P * 8, GARAGE_H = P * 6, DOOR_W = 4, DOOR_H = 4;
+  const GARAGE_CLEAR = Math.max(P * 3,
+    Math.ceil((CROWD_MAX_W + COUNTER_GAP - (HOUSE_COLS * HOUSE_CUBE + GARAGE_W) / 2) / P) * P);   // 144
+  const LIFT_SEAT = P * 3;
+  const GROUND_TILE = 6, GROUND_INK = 0.05;
+  const FONT = '13px ui-monospace, "Courier New", monospace';
+
+  // --- the strip ---------------------------------------------------------------
+  const G = 102;                                   // the ground line
+  const GARAGE_X = 0, HOUSE_X = GARAGE_X + GARAGE_W + GARAGE_CLEAR;
+  const GARAGE_MID = GARAGE_X + GARAGE_W / 2, HOUSE_MID = HOUSE_X + HOUSE_COLS * HOUSE_CUBE / 2;
+  const POST_Y = G + P * 10;
+  const VX = GARAGE_MID - CROWD_MAX_W / 2 - 12, VW = (HOUSE_MID + CROWD_MAX_W / 2 + 12) - VX, VH = G + 120;
+
+  // --- the sprites: src/render/crew.js, verbatim but for the ctx argument -------
+  const CART_W = P * 4, CART_H = P * 2;
+  function drawBody(ctx, x, y) {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+    ctx.fillStyle = '#000';
+  }
+  function cartBox(x, y, face) {
+    const back = face > 0 ? -1 : 1;
+    return { x: back < 0 ? x - CART_W - P : x + WORKER + P, y: y + WORKER - CART_H - P, back };
+  }
+  function drawCartBox(ctx, x, y) {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + CART_W / 2 - P / 2, y + CART_H, P, P);
+  }
+  function drawCart(ctx, x, y, face) {
+    const c = cartBox(x, y, face);
+    drawCartBox(ctx, c.x, c.y);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(c.back < 0 ? c.x + CART_W : x + WORKER, c.y + CART_H / 2 - 1, P + 1, 2);
+  }
+  const LIFT_W = P * 5, LIFT_H = LIFT_SEAT - P, LIFT_FORK = P * 4, LIFT_MAST = P * 5, LIFT_ANTENNA = P * 2;
+  function drawLiftBox(ctx, x, ground, fwd = 1) {
+    const bottom = ground - P;
+    const top = bottom - LIFT_H;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + 1, top + 1, LIFT_W - 2, LIFT_H - 2);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, top + 1, LIFT_W - 2, LIFT_H - 2);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x, bottom, P, P);
+    ctx.fillRect(x + LIFT_W - P, bottom, P, P);
+    const mastX = fwd > 0 ? x + LIFT_W : x - P;
+    ctx.fillRect(mastX, ground - LIFT_MAST, P, LIFT_MAST);
+    const forkX = fwd > 0 ? mastX + P : mastX - LIFT_FORK;
+    ctx.fillRect(forkX, bottom, LIFT_FORK, P);
+    const antX = x + (fwd > 0 ? P : LIFT_W - P * 2);
+    ctx.fillRect(antX + P / 2 - 1, top - LIFT_ANTENNA, 2, LIFT_ANTENNA);
+    ctx.fillRect(antX, top - LIFT_ANTENNA - P, P, P);
+  }
+
+  // Each body rasterized once at its yard size, then halved two-by-two: a
+  // block is ink where half of it is, paper where any of it is drawn.
+  function raster(w, h, paint) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    paint(g);
+    return c;
+  }
+  function halve(src) {
+    const w = Math.ceil(src.width / 2), h = Math.ceil(src.height / 2);
+    const a = src.getContext('2d').getImageData(0, 0, src.width, src.height).data;
+    const out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    const g = out.getContext('2d');
+    const im = g.createImageData(w, h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let ink = 0, any = 0;
+      for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+        const sx = x * 2 + dx, sy = y * 2 + dy;
+        if (sx >= src.width || sy >= src.height) continue;
+        const i = (sy * src.width + sx) * 4;
+        if (a[i + 3] < 128) continue;
+        any++;
+        if (a[i] < 128) ink++;
+      }
+      const o = (y * w + x) * 4;
+      if (!any) continue;
+      const v = ink >= 2 ? 0 : 255;
+      im.data[o] = im.data[o + 1] = im.data[o + 2] = v; im.data[o + 3] = 255;
+    }
+    g.putImageData(im, 0, 0);
+    return out;
+  }
+  // Snap a composed sprite's edges: canvas strokes on whole pixels are already
+  // crisp, but force alpha to all-or-nothing so the halving reads it cleanly.
+  function crisp(c) {
+    const g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height);
+    for (let i = 0; i < d.data.length; i += 4) {
+      if (d.data[i + 3] < 128) { d.data[i + 3] = 0; continue; }
+      const v = d.data[i] < 128 ? 0 : 255;
+      d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255;
+    }
+    g.putImageData(d, 0, 0);
+    return c;
+  }
+  const FULL = {
+    worker: crisp(raster(WORKER, WORKER, g => drawBody(g, 0, 0))),
+    // the body facing right, the cart hitched behind it on the left
+    carter: crisp(raster(CART_W + P + WORKER, WORKER, g => { drawCart(g, CART_W + P, 0, 1); drawBody(g, CART_W + P, 0); })),
+    // the truck standing on a ground line at its foot, forks to the right
+    lift: crisp(raster(LIFT_W + P + LIFT_FORK, LIFT_SEAT + LIFT_ANTENNA + P, g => drawLiftBox(g, 0, LIFT_SEAT + LIFT_ANTENNA + P, 1))),
+  };
+  const HALF = { worker: halve(FULL.worker), carter: halve(FULL.carter), lift: halve(FULL.lift) };
+
+  // --- the yard behind the counters ---------------------------------------------
+  function drawYard(g, n) {
+    g.fillStyle = '#fff';
+    g.fillRect(VX, 0, VW, VH);
+    // the ground's grain, GROUND_TEXTURE 2: a diagonal of faint cells
+    g.fillStyle = `rgba(0,0,0,${GROUND_INK})`;
+    for (let y = G + P; y < VH; y += P) for (let x = Math.floor(VX / P) * P; x < VX + VW; x += P)
+      if (((x / P) + (y / P)) % GROUND_TILE === 0) g.fillRect(x, y, P, P);
+    g.fillStyle = '#000';
+    g.fillRect(VX, G, VW, 2);                                       // the ground line
+    // the house: a room a body, courses six wide, a door in room zero and a
+    // window in each of the rest (drawn no more than two storeys high here)
+    const rooms = Math.min(n, HOUSE_COLS * 2);
+    for (let i = 0; i < rooms; i++) {
+      const c = i % HOUSE_COLS, r = Math.floor(i / HOUSE_COLS);
+      const x = HOUSE_X + c * HOUSE_CUBE, y = G - (r + 1) * HOUSE_CUBE;
+      g.fillStyle = '#000'; g.fillRect(x, y, HOUSE_CUBE, HOUSE_CUBE);
+      g.fillStyle = '#fff';
+      if (i === 0) g.fillRect(x + P, y + HOUSE_CUBE - P * DOOR_H, P * DOOR_W, P * DOOR_H);
+      else g.fillRect(x + P * 2, y + P * 2, P * 2, P * 2);
+    }
+    g.fillStyle = '#000';
+    const courses = Math.ceil(rooms / HOUSE_COLS);
+    g.fillRect(HOUSE_X + P, G - courses * HOUSE_CUBE - P * 2, P * 2, P * 2);   // the chimney
+    // the garage: a shed, its eaves, a door of slats
+    const top = G - GARAGE_H;
+    g.fillRect(GARAGE_X, top, GARAGE_W, GARAGE_H);
+    g.fillRect(GARAGE_X - P, top - P, GARAGE_W + P * 2, P);
+    const dx = GARAGE_X + P, dw = GARAGE_W - P * 2, dy = top + P;
+    g.fillStyle = '#fff'; g.fillRect(dx, dy, dw, G - dy);
+    g.fillStyle = '#000';
+    for (let y = dy + P; y < G; y += P * 2) g.fillRect(dx, y, dw, 2);
+  }
+  function drawBounds(g) {
+    g.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#c2410c';
+    g.lineWidth = 1;
+    g.setLineDash([3, 3]);
+    for (const mid of [GARAGE_MID, HOUSE_MID]) g.strokeRect(mid - CROWD_MAX_W / 2 + 0.5, POST_Y - 30.5, CROWD_MAX_W - 1, 61);
+    g.setLineDash([]);
+  }
+  const snap = v => Math.round(v / P) * P;
+  function text(g, s, x, y, align = 'left') {
+    g.font = FONT; g.textAlign = align; g.textBaseline = 'middle'; g.fillStyle = '#000';
+    g.fillText(s, Math.round(x), Math.round(y));
+  }
+
+  // --- today: src/roster.js crowdBoxes / crowdBrim / drawCrowd ------------------
+  const rowWide = k => Math.max(1, k) * (SEAT_PIP + SEAT_GAP) - SEAT_GAP;
+  const shownOf = list => Math.min(list.length, SEAT_CROWD_ROW);
+  function crowdBrim(g, b) {
+    const t = THIN, y = b.y - t * 2;
+    if (b.brim === 'cart') {
+      g.fillRect(b.x - t, y, b.w / 2 + t - 1, t);
+      g.fillRect(b.x + b.w / 2 + 1, y, b.w / 2 + t - 1, t);
+    } else if (b.brim === 'fork') {
+      g.fillRect(b.x - t, y, t, t);
+      g.fillRect(b.x + t, y, b.w - t * 2, t);
+      g.fillRect(b.x + b.w, y, t, t);
+    }
+  }
+  function todayCrowd(g, mid, top, bottom) {
+    const over = top.length > SEAT_CROWD_ROW || bottom.length > SEAT_CROWD_ROW;
+    const strip = rowWide(Math.max(shownOf(top), shownOf(bottom)));
+    const wide = strip + (over ? GAP + SEAT_PLUS_W : 0);
+    const x0 = snap(mid - wide / 2);
+    const rows = [top, bottom].filter(r => r.length);
+    const sep = rows.length > 1 ? SEAT_SEP : 0;
+    const H = rows.length * SEAT_PIP + sep;
+    const y0 = Math.floor((POST_Y - H / 2) / P) * P;
+    const centered = n => x0 + Math.round((strip - rowWide(n)) / 2 / P) * P;
+    g.fillStyle = '#000';
+    rows.forEach((r, ri) => {
+      const n = shownOf(r), yy = y0 + ri * (SEAT_PIP + sep), xr = centered(n);
+      for (let i = 0; i < n; i++) {
+        const b = { ...r[i], x: xr + i * (SEAT_PIP + SEAT_GAP), y: yy, w: SEAT_PIP, h: SEAT_PIP };
+        g.fillRect(b.x, b.y, b.w, b.h); crowdBrim(g, b);
+      }
+      if (r.length > n) text(g, `+${r.length - n}`, xr + rowWide(n) + GAP, yy + SEAT_PIP / 2);
+    });
+    if (sep) {
+      const wd = Math.max(shownOf(top), shownOf(bottom));
+      g.fillStyle = SEAT_EMPTY_INK;
+      g.fillRect(centered(wd), y0 + SEAT_PIP + (SEAT_SEP - SEAT_RULE) / 2, rowWide(wd), SEAT_RULE);
+      g.fillStyle = '#000';
+    }
+  }
+  const pips = (n, brim) => Array.from({ length: n }, () => ({ brim }));
+  function drawToday(g, k) {
+    todayCrowd(g, HOUSE_MID, pips(k.carters, 'cart'), pips(k.workers, null));
+    todayCrowd(g, GARAGE_MID, [], pips(k.lifts, 'fork'));
+  }
+
+  // --- the options' shared row layout -----------------------------------------
+  // A block is a list of rows stacked under a post. A row is drawn items:
+  // sprites at a pitch, then an optional label after them. Each row is
+  // centered on the block's widest, the block on the post, all on the grid.
+  function block(g, mid, rows, vgap = P, align = 'center') {
+    rows = rows.filter(Boolean);
+    if (!rows.length) return;
+    const slotH = r => Math.ceil(r.h / P) * P;
+    const H = rows.reduce((s, r) => s + slotH(r), 0) + vgap * (rows.length - 1);
+    const W = Math.max(...rows.map(r => r.w));
+    const x0 = snap(mid - W / 2);
+    let y = Math.floor((POST_Y - H / 2) / P) * P;
+    for (const r of rows) {
+      const left = align === 'left' ? x0 : x0 + snap((W - r.w) / 2);
+      r.draw(g, left, y + slotH(r) - r.h, slotH(r));
+      y += slotH(r) + vgap;
+    }
+  }
+  const labelW = s => s.length * 8;                 // 13px monospace, near enough for centering
+  // where a count sits beside its sprite: the body's middle, or the truck's box
+  const midOf = img => img.height - (img === FULL.lift ? P * 2 : WORKER / 2);
+  // `n` sprites (no more than `cap`) at `pitch`, then "+N" for the rest.
+  function spriteRow(img, n, cap, pitch, plusFmt = k => `+${k}`) {
+    if (!n) return null;
+    const shown = Math.min(n, cap), rest = n - shown;
+    const sw = (shown - 1) * pitch + img.width;
+    const lab = rest > 0 ? plusFmt(rest) : '';
+    const w = sw + (lab ? GAP + labelW(lab) : 0);
+    return { w, h: img.height, draw(g, x, y) {
+      for (let i = 0; i < shown; i++) g.drawImage(img, x + i * pitch, y);
+      if (lab) text(g, lab, x + sw + GAP, y + img.height / 2);
+    } };
+  }
+
+  // A: a row a kind, halved sprites, up to what the old strip holds, then +N.
+  const A_CAP = { carter: 7, worker: 12, lift: 6 };
+  const A_PITCH = { carter: P * 5, worker: P * 2, lift: P * 6 };
+  function drawA(g, k) {
+    block(g, HOUSE_MID, [spriteRow(HALF.carter, k.carters, A_CAP.carter, A_PITCH.carter),
+                         spriteRow(HALF.worker, k.workers, A_CAP.worker, A_PITCH.worker)]);
+    block(g, GARAGE_MID, [spriteRow(HALF.lift, k.lifts, A_CAP.lift, A_PITCH.lift)]);
+  }
+
+  // B: a badge and a number a kind, full-size sprites, side by side.
+  function badge(img, n) {
+    const s = String(n), w = img.width + GAP + labelW(s);
+    return { w, h: img.height, draw(g, x, y) {
+      g.drawImage(img, x, y);
+      text(g, s, x + img.width + GAP, y + midOf(img));
+    } };
+  }
+  function sideBySide(items) {
+    items = items.filter(Boolean);
+    const sp = P * 2;
+    const w = items.reduce((s, it) => s + it.w, 0) + sp * (items.length - 1);
+    const h = Math.max(...items.map(it => it.h));
+    return { w, h, draw(g, x, y) {
+      for (const it of items) { it.draw(g, x, y + h - it.h); x += snap(it.w) + sp; }
+    } };
+  }
+  function drawB(g, k) {
+    block(g, HOUSE_MID, [sideBySide([k.carters && badge(FULL.carter, k.carters), k.workers && badge(FULL.worker, k.workers)])]);
+    block(g, GARAGE_MID, [k.lifts ? badge(FULL.lift, k.lifts) : null]);
+  }
+
+  // C: full-size sprites, the bodies themselves up to three, past that one
+  // sprite and "×N".
+  const C_SHOW = 3;
+  function fewOrTimes(img, n, pitch) {
+    if (!n) return null;
+    if (n <= C_SHOW) return spriteRow(img, n, C_SHOW, pitch);
+    const s = `×${n}`;
+    return { w: img.width + GAP + labelW(s), h: img.height, draw(g, x, y) {
+      g.drawImage(img, x, y);
+      text(g, s, x + img.width + GAP, y + midOf(img));
+    } };
+  }
+  function drawC(g, k) {
+    block(g, HOUSE_MID, [fewOrTimes(FULL.carter, k.carters, FULL.carter.width + P),
+                         fewOrTimes(FULL.worker, k.workers, WORKER + P)], P, 'left');
+    block(g, GARAGE_MID, [fewOrTimes(FULL.lift, k.lifts, FULL.lift.width + P)]);
+  }
+
+  // --- the page ------------------------------------------------------------------
+  const YARDS = [
+    { name: 'small yard: 3 carters, 2 workers, 1 forklift', carters: 3, workers: 2, lifts: 1 },
+    { name: 'big yard: 20 carters, 30 workers, 8 forklifts', carters: 20, workers: 30, lifts: 8 },
+  ];
+  const OPTIONS = [
+    { key: 'today', title: 'Today, for reference',
+      note: 'Two crowds: carts over plain carriers under the house (split brims, a grey rule between), forks under the garage (notched brims). At 1x the brims run together into a dashed line.',
+      draw: drawToday },
+    { key: 'A', title: 'A: a row of small sprites a kind, then +N',
+      note: 'Halved sprites. Under the house the carters on top, up to 7 (a carter is five cells wide halved, so 7 is what the old strip holds), the workers under them up to 12; under the garage the forklifts, up to 6. The rest after each row as "+N", as today.',
+      draw: drawA },
+    { key: 'B', title: 'B: a badge and a number a kind',
+      note: 'One full-size sprite and its count: carter and worker side by side under the house, the forklift under the garage. The same width at 3 as at 300; nothing to count by eye.',
+      draw: drawB },
+    { key: 'C', title: 'C: the bodies themselves while few, then one and ×N',
+      note: 'Full-size sprites in a row a kind, up to 3 of them (a glance tells 1, 2, 3); at 4 or more the row turns into one sprite and "×N". Carters over workers under the house, the two rows flush left so the counts line up; forklifts under the garage.',
+      draw: drawC },
+  ];
+  const showBounds = document.getElementById('bounds');
+  const frames = [];
+
+  function render() {
+    for (const f of frames) {
+      const g = f.base.getContext('2d');
+      g.setTransform(1, 0, 0, 1, -VX, 0);
+      drawYard(g, f.yard.carters + f.yard.workers);
+      f.opt.draw(g, f.yard);
+      if (showBounds.checked) drawBounds(g);
+      const g2 = f.big.getContext('2d');
+      g2.imageSmoothingEnabled = false;
+      g2.clearRect(0, 0, f.big.width, f.big.height);
+      g2.drawImage(f.base, 0, 0, f.big.width, f.big.height);
+    }
+  }
+
+  const host = document.getElementById('options');
+  for (const opt of OPTIONS) {
+    const sec = document.createElement('section');
+    sec.className = 'opt';
+    sec.innerHTML = `<h2></h2><p></p><div class="pair"></div>`;
+    sec.querySelector('h2').textContent = opt.title;
+    sec.querySelector('p').textContent = opt.note;
+    const pair = sec.querySelector('.pair');
+    for (const yard of YARDS) {
+      const fig = document.createElement('figure');
+      const cap = document.createElement('figcaption');
+      cap.textContent = yard.name;
+      const base = document.createElement('canvas');
+      base.width = VW; base.height = VH; base.className = 'x1';
+      base.style.width = VW + 'px';
+      const t1 = document.createElement('div'); t1.className = 'tag'; t1.textContent = '1x';
+      const t2 = document.createElement('div'); t2.className = 'tag'; t2.textContent = '2x';
+      const big = document.createElement('canvas');
+      big.width = VW * 2; big.height = VH * 2;
+      big.style.width = VW * 2 + 'px';
+      const sc = document.createElement('div'); sc.className = 'scroll'; sc.appendChild(big);
+      fig.append(cap, t1, base, t2, sc);
+      pair.appendChild(fig);
+      frames.push({ opt, yard, base, big });
+    }
+    host.appendChild(sec);
+  }
+
+  // the sprite sheet: full and halved, magnified 3x
+  const sheet = document.getElementById('sheet');
+  const SRC = { worker: 'drawBody', carter: 'drawCart + drawBody', lift: 'drawLiftBox' };
+  for (const kind of ['carter', 'worker', 'lift']) for (const [size, set] of [['full', FULL], ['half', HALF]]) {
+    const img = set[kind], z = 3;
+    const c = document.createElement('canvas');
+    c.width = (img.width + 4) * z; c.height = (img.height + 4) * z;
+    c.style.width = c.width + 'px';
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(img, 2 * z, 2 * z, img.width * z, img.height * z);
+    const fig = document.createElement('figure');
+    const cap = document.createElement('figcaption');
+    cap.textContent = `${kind}, ${size} (${img.width}x${img.height}) - ${SRC[kind]}`;
+    c.style.border = '1px solid var(--rule)';
+    fig.append(c, cap);
+    sheet.appendChild(fig);
+  }
+
+  showBounds.addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>
