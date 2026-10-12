@@ -18,7 +18,9 @@ const frame = () => yard.fast(1 / 60);
 
 // A fresh window at `stage`, the wound set.
 function deepYard(stage = 0, wound = 0) {
-  window.__snatch({ played: true });
+  // The snatch's facts and nobody down there: the snatch played stands the
+  // first station with her fighting at it, and a blow of hers would be in
+  // every wound these checks read.
   window.__deepCrew();
   window.__serpent({ stage, wound });
   S.mealT = 0; S.mealI = null; S.breakT = null;

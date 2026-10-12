@@ -9,7 +9,7 @@ import { rosterHit } from '../src/roster.js';
 import { haulCap } from '../src/levels.js';
 import { deepBed } from '../src/state.js';
 import { hopperRect, crusherRect, deepTop, deepFloor } from '../src/deep/place.js';
-import { spendScales, refundScales } from '../src/deep/scales.js';
+import { spendScales, refundScales, bedNear } from '../src/deep/scales.js';
 import { sweep, release } from '../src/hands.js';
 import crusherMigration from '../src/migrations/2026-09-23-crusher.js';
 
@@ -19,8 +19,10 @@ const press = (key, which) => { const p = state().roster.find(o => o.key === key
 
 // A yard the serpent has come for, nobody down there, a floor of loose scales.
 function floorOf(n) {
-  window.__snatch({ played: true });
+  // The snatch's facts and no station: the snatch played stands the first
+  // one with her at it, and her blows would shed scales onto this floor.
   window.__deepCrew();
+  S.portalOpen = true;
   window.__crew(0, 6);
   window.__looseScales(n);
 }
@@ -84,8 +86,10 @@ group('hands sent down the shaft gather the floor, with their own load, and it c
 
 group('a handful thrown in by hand is crushed', async () => {
   floorOf(200);
-  // Swept off the bed by the crusher's side, let go over the hopper.
-  const x = crusherRect().x + crusherRect().w + P * 12;
+  // Swept off the bed by the crusher's side, where the first of the strewn
+  // scales lies, let go over the hopper.
+  let x = crusherRect().x + crusherRect().w + P * 12;
+  for (let i = 0; i < 400 && !bedNear(x, deepFloor() - P, P * 2); i++) x += P;
   S.dragging = true;
   for (let i = 0; i < 5; i++) sweep(x, deepFloor() - P);
   const held = S.heldScales;

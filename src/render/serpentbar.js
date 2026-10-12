@@ -10,6 +10,7 @@ import { ctx } from './ctx.js';
 import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
 import { coilCeiling, coilEnds } from '../deep/place.js';
+import { barK } from '../abyssintro.js';
 import { owedWound, landsAt } from './barflight.js';
 import { drawFoeStatuses, statusRowH } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
@@ -24,7 +25,9 @@ const seen = c => darkPage ? turned(c) : c;
 
 let stage = -1, was = 1, trail = 1, low = 1, hitAt = 0, then = 0;
 
-export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage < SERPENT_WOUND.length;
+// Not while the first trip down has the camera, and faded back in as it lets
+// go (abyssintro.js).
+export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage < SERPENT_WOUND.length && barK(now()) > 0;
 
 // Where the bar stands on the glass, in screen pixels: centered with its pips
 // over the stretch of the coil on the glass, so with open water beside the
@@ -81,6 +84,7 @@ export function drawSerpentBar() {
   const len = k => Math.round(BAR_W * k);
   ctx.save();
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  ctx.globalAlpha = barK(t);
   fill(BAR_EDGE, x - 1, y - 1, BAR_W + 2, BAR_H + 2);
   fill(BAR_TRACK, x, y, BAR_W, BAR_H);
   fill(BAR_TRAIL, x, y, len(trail), BAR_H);

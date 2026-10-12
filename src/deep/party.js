@@ -112,6 +112,22 @@ export function layStation() {
   S.shopStale = true;
   return id;
 }
+// The first station, standing from the snatch (snatch.js, `giveBack`): free,
+// and hers from the moment she is down, so she fights from then on whether
+// or not anybody has come down to watch, and the first trip down finds her
+// at it (DESIGN.md, "The first trip down"). Built as it is laid: nobody is
+// down there to see a scaffold, and she is the only one who could put it
+// up. A Recruit, its first choice still to make on its board. Its id, or
+// null where a station already stands.
+export function standFirst() {
+  if (S.stations.length || !S.snatched) return null;
+  const slot = nextSlot(), id = newId();
+  if (!id || slot < 0) return null;
+  S.stations = [{ id, kind: null, slot, built: true, cls: null, rung: 0, paid: [], fighter: null }];
+  S.stationsBuilt = Math.max(1, S.stationsBuilt || 0);
+  S.shopStale = true;
+  return id;
+}
 // The scenes' way to put a station up as the player would.
 export const buildStation = () => !!layStation();
 // A station of `kind` put up without its rung 1 bought: the setup hook's way

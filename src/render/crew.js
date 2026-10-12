@@ -293,6 +293,17 @@ function drawSay(w, say) {
     return;
   }
 
+  // A bang, as the pair's (`drawSaying`): a bar and a dot under it, several
+  // for a call for help.
+  if (say.mark === 'bang') {
+    const n = say.n ?? 1, x0 = Math.round(x - P / 2 - (n - 1) * P);
+    for (let i = 0; i < n; i++) {
+      ctx.fillRect(x0 + i * P * 2, top - P * 5, P, P * 3);
+      ctx.fillRect(x0 + i * P * 2, top - P, P, P);
+    }
+    return;
+  }
+
   if (say.mark === 'note') {
     // a head and a stem: the smallest thing that is unmistakably a note
     ctx.fillRect(Math.round(x - P), top - P, P, P);
@@ -348,7 +359,7 @@ export function drawSays() {
 // when a boulder has just landed on somebody.
 const HEART = ['01010', '11111', '11111', '01110', '00100'];
 
-function drawSaying(x, y, say) {
+export function drawSaying(x, y, say) {
   ctx.fillStyle = say.pale ? '#fff' : '#000';   // white where it stands against the dark inside of a rock
   const mid = x + WORKER / 2;
   const top = y - P * 3;

@@ -41,7 +41,8 @@ import { freedBody } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
-import { drawBody } from './crew.js';
+import { drawBody, drawSaying } from './crew.js';
+import { hisHop, hisSay } from '../abyssintro.js';
 import { swellAt } from './cores.js';
 import { cellImage } from './cellimage.js';
 import { dentsNow } from './arms.js';
@@ -378,9 +379,14 @@ function drawCoil() {
   if (held) {
     let b = pts[0];
     for (const p of pts) if (Math.abs(p.along - bellyA) < Math.abs(b.along - bellyA)) b = p;
-    if (Math.abs(b.along - bellyA) < BELLY_LEN) drawBody(snap(b.x) - WORKER / 2, snap(b.y) - WORKER / 2);
+    // The first trip down has him hop against the ribs and call over the
+    // hide, a stand clear of it (abyssintro.js).
+    const near = Math.abs(b.along - bellyA) < BELLY_LEN;
+    if (near) drawBody(snap(b.x) - WORKER / 2, snap(b.y) - WORKER / 2 - hisHop(t));
     ctx.fillStyle = GREYS[2];
     for (const c of ribs) ctx.fillRect(c.x, c.y, P, P);
+    const say = near && hisSay(t);
+    if (say) drawSaying(snap(b.x) - WORKER / 2, snap(b.y - Math.abs(b.ny) * b.r) - P * 2, say);
   }
   const ringA = headA + STUN_RING_BACK * P;
   let head = null;

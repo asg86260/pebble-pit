@@ -18,8 +18,10 @@ const frame = () => run(1 / 60);
 // its body comes out on the floor and gathers, and the floor is bare.
 function podBody() {
   window.__fullSites();
-  window.__snatch({ played: true });
+  // The snatch's facts and no station: the snatch played stands the first
+  // one with her fighting at it, and her blows would shed scales.
   window.__deepCrew();
+  S.portalOpen = true;
   window.__crew(0, 4);
   window.__scales(1000);
   window.__buy('pod');

@@ -27,7 +27,8 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startDown, stepDown, startUp, stepUp, begin, stepShow,
          startMeet, stepMeet, cutMeet, parted, stepPart, letGo,
          startRescue, stepRescue, cutRescue } from './intro.js';
-import { cameraCues, play, stepShot, release } from './cutscene.js';
+import { cameraCues, play, stepShot, release, stepDeepShot, dropDeepShot } from './cutscene.js';
+import { abyssDue, startAbyss, stepAbyss, cutAbyss, endAbyss } from './abyssintro.js';
 import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
@@ -137,6 +138,13 @@ export const BEATS = [
   // (snatch.js). A skip plays it out at once.
   { key: 'freed', owns: 'yard', next: null,
     when: () => S.serpentFreed, enter: startFreed, step: stepFreed, skip: cutFreed },
+  // The first trip down (abyssintro.js): on the arrival, the ripple done,
+  // the camera on him in the cage and then on her first blow. A skip lets
+  // the camera go and her with it; she swims to her own work.
+  { key: 'abyss', owns: 'camera', next: null,
+    when: cue => cue.arrive && abyssDue(),
+    enter: t => { startAbyss(t); play('abyss'); },
+    step: abyssShot, skip: () => { cutAbyss(); return release(); } },
   // And the sheet that says so, stood until it is put down (ending.js).
   { key: 'freedsheet', owns: 'sheet', next: null,
     when: () => beatDone('freed') && !S.beat.yard && !S.beat.camera,
@@ -147,6 +155,17 @@ export const BEATS = [
 ];
 
 const ROW = new Map(BEATS.map(r => [r.key, r]));
+
+// The first trip down's frame: the scene says where to look, the deep's
+// framing holds it, and its end lets the camera go.
+function abyssShot(t) {
+  const s = stepAbyss(t);
+  if (s.gone) { dropDeepShot(); endAbyss(); return false; }
+  if (s.over) release();
+  if (stepDeepShot(t, s.want)) return true;
+  endAbyss();
+  return false;
+}
 
 export const beatDone = key => S.beatsDone.includes(key);
 export const beatRunning = key => OWNERS.some(o => S.beat[o] === key);

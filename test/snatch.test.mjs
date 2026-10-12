@@ -78,9 +78,10 @@ group('drowned first: the rescue\'s sheet put down, and the serpent takes him, o
     ok(crewDuring === before - 2, 'the two are off the crew while it plays', `${before} -> ${crewDuring}`),
     ok(sawHead && carried, 'something comes up out of the surface and takes one of them'),
     ok(S.snatched && after === before - 1, 'the crew is one fewer', `${before} -> ${after}`),
-    ok(hers.length === 1 && hers[0].type === 'gatherer' && S.deepCrew === 1 && S.fighters === 0,
-       "and the one left standing is the deep's one hand, spare until its first station stands",
-       `${hers.length} bodies, ${hers[0]?.type}, ${S.fighters} fighting`),
+    ok(hers.length === 1 && hers[0].type === 'fighter' && S.deepCrew === 1 && S.fighters === 1
+       && S.stations.length === 1 && S.stations[0].built && hers[0].station === S.stations[0].id,
+       "and the one left standing is the deep's one hand, the fighter at the free first station that stands from it",
+       `${hers.length} bodies, ${hers[0]?.type}, ${S.fighters} fighting, ${S.stations.length} stations`),
     ok(done('snatch') === 1 && S.crew === after && S.beat.yard === null,
        'it plays once, and not again after a reload', `done ${done('snatch')}, crew ${S.crew}`)
   ];

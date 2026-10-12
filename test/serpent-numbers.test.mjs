@@ -108,9 +108,11 @@ group("a Mage's beam says its ticks once a second, not a number a tick", async (
 group('the heal says what a meal closed, once a meal, in its own entry', async () => {
   // The bare phase, wounded and a fresh window, nobody fighting: the one
   // entry is the meal's, the whole wound.
-  window.__snatch({ played: true });
-  window.__serpent({ stage: 0, wound: 1234 });
+  // The snatch's facts with no station: played, it stands the first one
+  // with her fighting at it, and her blows would be in every number here.
   window.__deepCrew();
+  S.portalOpen = true;
+  window.__serpent({ stage: 0, wound: 1234 });
   S.mealT = 0; S.mealI = null;
   const said = [];
   frames(SERPENT_WINDOW[0] * 2 + 50, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });

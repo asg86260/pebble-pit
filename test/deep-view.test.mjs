@@ -18,6 +18,9 @@ const { hopTarget } = await import('../src/hop.js');
 function deepYard() {
   window.__crew(3, 3, 5, 7);
   window.__snatch({ played: true });
+  // The first trip down's scene had: it takes the camera off the glide's
+  // framing, and it is a check of its own (abyss-intro.test.mjs).
+  S.beatsDone.push('abyss');
 }
 
 group('going down puts the camera in the deep, and going up brings it back', async () => {

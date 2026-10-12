@@ -24,6 +24,7 @@ import { openingCamX, clampCam, SAVE as VIEW } from './world.js';
 import { SAVE as CASINO } from './casino.js';
 import { SAVE as INTRO } from './intro.js';
 import { SAVE as BEATS } from './beats.js';
+import { SAVE as ABYSS } from './abyssintro.js';
 import { SAVE as ROCK } from './rock.js';
 import { setPitGrain, SAVE as PIT } from './pit.js';
 import { SAVE as DUST } from './dust.js';
@@ -464,6 +465,8 @@ export const SAVERS = [
   STAFF,
   QUARRY,
   BEATS,
+  // The first trip down's scene after the beats, whose camera says if it is owed.
+  ABYSS,
   // The catch is taken again here, once the rock's fall has been read.
   SHIELD,
   WORKS,

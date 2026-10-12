@@ -9,13 +9,17 @@
 import { S } from '../src/state.js';
 import { press, buildOffer } from '../src/deep/buildbutton.js';
 import { pressKind, pressBuy, pressReset } from '../src/deep/rails.js';
-import { stationById } from '../src/deep/party.js';
+import { stationById, unchosen } from '../src/deep/party.js';
 import { FORK_RUNG } from '../src/config.js';
 
 // The button pressed. With a `kind`, the build let land and the Recruit's
 // rung 1 bought as that kind, paid for; without one the station is left
-// going up. True when it did all it was asked.
+// going up. True when it did all it was asked. The first station needs no
+// button: it stands from the snatch, a Recruit with her at it (`standFirst`),
+// so a kind asked of a yard with only that one standing is its rung 1.
 export function pressBuild(kind = null) {
+  const only = S.stations.length === 1 ? S.stations[0] : null;
+  if (kind && only && unchosen(only) && only.rung === 0) return choose(only.id, kind);
   if (!buildOffer().shown) return false;
   const id = press();
   if (!id || !kind) return !!id;

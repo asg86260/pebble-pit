@@ -74,3 +74,28 @@ export const STAGE_MARGIN = 3;
 // The snatch's portal waits at the edge for the frame to be clear, never
 // longer than this: a body that cannot get out must not hold the story.
 export const STAGE_WAIT_S = 8;
+
+// The first trip down (DESIGN.md, "The first trip down", voted A in
+// docs/mocks/abyss-intro-2026-10-12.html): the camera pushes in on him in the
+// cage, he calls, it pulls back to her under the portal, she answers,
+// charges down to the coil over her station and throws her first blow there.
+// The pulls are steps over the deep's own fit, the framing `stepView` holds.
+export const ABYSS_CLOSE = 2;         // pushed in on the belly
+export const ABYSS_WIDE = 1.25;       // pulled back on her under the portal
+export const ABYSS_PUSH_S = 1.2;      // the glide and push onto the belly
+export const ABYSS_CALL_S = 1.4;      // held on him, hopping against the ribs
+export const ABYSS_HOP_S = 0.25;      // a hop up and a hop down, held each
+export const ABYSS_WAIT_S = 3;        // more of him while she is still on her way to the portal, at most
+export const ABYSS_WIDE_S = 1;        // the pull back to her
+export const ABYSS_ANSWER_S = 0.2;    // into the pull back, she answers
+export const ABYSS_MARK_S = 1.1;      // how long a mark stands over a head
+export const ABYSS_SWIM_K = 2.5;      // her swim to the portal spot, a hurried share of the swim
+export const ABYSS_UNDER = 3;         // cells under the portal's ring she waits at
+// The charge is stepped in held poses, each a stride under a body's width so
+// no step is a jump.
+export const ABYSS_CHARGE_POSE_S = 0.05;
+export const ABYSS_CHARGE_PX_S = 330;
+export const ABYSS_IMPACT_S = 0.45;   // held on the impact once her blow has landed
+export const ABYSS_BLOW_MAX_S = 2.5;  // waiting on her blow, at most
+export const ABYSS_BAR_IN_S = 0.45;   // the serpent's bar fading back as the camera lets go
+export const ABYSS_MAX_S = 20;        // a ceiling, never the design

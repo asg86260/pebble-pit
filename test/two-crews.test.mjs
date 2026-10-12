@@ -42,8 +42,8 @@ group("after the snatch the deep's crew is the sqwife alone, and a yard hire sta
     if (below().some(w => !deep0.includes(w.name))) down++;
   }
   return [
-    ok(deep0.length === 1 && S.deepCrew === 1 && S.fighters === 0 && below()[0].type === 'gatherer',
-       "the deep's one hand, spare until a station stands", `${deep0.length} below`),
+    ok(deep0.length === 1 && S.deepCrew === 1 && S.fighters === 1 && below()[0].type === 'fighter',
+       "the deep's one hand, at the first station, which stands from the snatch", `${deep0.length} below`),
     ok(S.pods === 1, 'living in the first pod', `pods ${S.pods}`),
     ok(bought, 'a room is bought'),
     ok(down === 0, 'and the new hand never goes down', `${down} frames with a stranger below`)
@@ -128,7 +128,7 @@ group('a hand thrown in the deep sinks to its floor and stays down there', async
     ok(!left, 'it never came up out of the deep'),
     ok(jump < WORKER, 'it never jumped', `${jump.toFixed(1)}px in a frame`),
     ok(landed, "it came to rest on the deep's floor"),
-    ok(back.type === 'gatherer' && belowYard(back), "and it is still the deep's, down there", back.type)
+    ok(back.type === 'fighter' && belowYard(back), "and it is still the deep's, down there", back.type)
   ];
 }, { reload: false });
 
