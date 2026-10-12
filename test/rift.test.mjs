@@ -40,8 +40,10 @@ group('the hole tears itself open the first time it cannot take a grain', async 
   window.__grant({ sparks: 999 });
   const early = state();
 
-  // and now more dust than the hole can hold
+  // and now more dust than the hole can hold; the tear waits for its scene
+  // to arrive (rift.js, `due`)
   window.__give(60000);
+  runUntil(() => state().riftOpen, 10);
   const late = state();
 
   return [
@@ -173,6 +175,8 @@ group('the tearing empties the hole, and nothing is lost to it', async () => {
   window.__meteor();
   window.__grant({ sparks: 999 });
   window.__give(60000);                  // more than the hole holds: it gives way
+  const owed = state().riftDue;
+  runUntil(() => state().riftOpen, 10);  // once its scene has arrived (rift.js, `due`)
   const torn = state();
   const full = torn.pitGrains;
 
@@ -183,7 +187,7 @@ group('the tearing empties the hole, and nothing is lost to it', async () => {
   const after = state();
 
   return [
-    ok(torn.riftOpen, 'the hole gave way', `${full} grains in it when it did`),
+    ok(owed === 'tear' && torn.riftOpen, 'the hole gave way', `${full} grains in it when it did`),
     ok(full > yard.pitMod.pitCapacity() * 0.5, 'and it was full when it went',
        `${full} of ${yard.pitMod.pitCapacity()}`),
     ok(after.pitGrains < full * 0.1, 'the tearing took the pile with it',

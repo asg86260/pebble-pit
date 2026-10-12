@@ -7,7 +7,7 @@
 
 import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-        RIFT_GULP, RIFT_SHAKE, RIFT_G, RIFT_G_MIN, RIFT_EAT, RIFT_SWING,
+        RIFT_GULP, RIFT_G, RIFT_G_MIN, RIFT_EAT, RIFT_SWING,
         ABYSS_DOWN, REFUND_FLECKS, findKind, someFind } from './config.js';
 import { S, pit, rift } from './state.js';
 import { at, put, addGrain, grainsIn, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
@@ -158,12 +158,12 @@ export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 // The hole gives way: it takes the whole pile, and the yard is rocked while
 // it goes (`gulp` in rift.js). Once: a torn hole is not torn again. The
 // rescue tears a hole that never filled the same way (`owedArc` in rift.js).
+// Owed here, not done: the disc opens once the tear's scene has arrived on
+// it (`due` in rift.js), and until then the hole is a full one, refusing.
 export function tearHole() {
-  if (S.riftOpen) return;
-  S.riftOpen = true;
-  S.riftGulp = RIFT_GULP;
-  S.riftShake = RIFT_SHAKE;      // knocked by whoever steps the world: see game.js
-  sfx('rift-tear', { x: pit.x + pit.w / 2 });
+  if (S.riftOpen || S.riftDue) return;
+  S.riftDue = 'tear';
+  S.riftGulp = RIFT_GULP;        // the camera's cue (cutscene.js, `cameraCues`)
 }
 
 // What happens when the hole has no room left: it does not refuse, it
@@ -691,7 +691,7 @@ export const SAVE = {
   read(s) {
     // Clamped to the counter: a rift holding more than you own leaves
     // `inHole` reading nought against a pile that plainly has dust in it.
-    S.riftGulp = 0; S.riftShake = 0;     // a save comes back after the tearing, never in it
+    S.riftGulp = 0; S.riftShake = 0; S.riftDue = null;     // a save comes back after the tearing, never in it
     S.rift = Math.max(0, Math.min(Math.round(+s.rift || 0), S.stored));
     // The coins through it, clamped to their own counters the same way.
     S.riftHeld = { shards: 0, spores: 0, sparks: 0 };
@@ -709,7 +709,7 @@ export const SAVE = {
   blank() {
     // A new yard has no hole in the air in it, and nothing standing on the
     // other side of one. An event is not a state (state.js).
-    S.riftGulp = 0; S.riftShake = 0;
+    S.riftGulp = 0; S.riftShake = 0; S.riftDue = null;
     S.rift = 0;
     S.riftHeld = { shards: 0, spores: 0, sparks: 0 };
     setPitGrain();

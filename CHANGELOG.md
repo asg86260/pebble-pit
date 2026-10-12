@@ -132,6 +132,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).
+- A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
 **New this release**
 - Every cutscene holds the yard still and letterboxed: black bands step in, everything but the scene's subjects fades back, the haulers fade out and the attackers freeze until it lets go (test/cutscene-hold.test.mjs).
 - Once the pit has drowned, now and then something shows at the abyss's surface and goes back under: a coil's back, a fin of purple spikes, or an eye watching the lip (test/glimpse.test.mjs).
