@@ -203,7 +203,7 @@ group('an old save past the kill gets the two of them at the left end, off the c
     stations: [{ id: 's1', kind: 'altar', slot: 0, built: true, cls: 'sword', rung: 8, paid: [], fighter: 'u9' }],
     who: [{ type: 'hauler', uid: 'u1' }, { type: 'hauler', uid: 'u2' },
           { type: 'fighter', uid: 'u9', station: 's1' }, { type: 'gatherer', uid: 'u7', deepHome: true },
-          { type: 'gatherer', uid: 'u8' }]
+          { type: 'gatherer', uid: 'u8', deepHome: true }]
   };
   migrate(s);
   return [

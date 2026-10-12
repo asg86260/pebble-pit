@@ -83,7 +83,7 @@ group("a pod is built by the deep's own hand, and its body is the deep's", async
 });
 
 // A player's yard with twenty pods: thirty-one crew, twenty-one of them the
-// deep's. The house stood a room for every one of them, so the yard read as
+// deep's, less the pair the finale retires (the yard is past the kill). The house stood a room for every one of them, so the yard read as
 // thirty-odd homes and nine faces.
 group("the yard's house has a room for the yard's crew only, and the list keeps the two apart", async () => {
   localStorage.setItem('boulder-clicker/v4',
@@ -94,7 +94,7 @@ group("the yard's house has a room for the yard's crew only, and the list keeps 
   const lists = Object.fromEntries(crewListSections().map(x => [x.title, x.keys.length]));
   const row = window.__upgrades().find(u => u.key === 'house');
   return [
-    ok(S.crew === 31 && S.deepCrew === 21 && up === 10 && down === 21, 'ten in the yard, twenty-one in the deep',
+    ok(S.crew === 29 && S.deepCrew === 19 && up === 10 && down === 19, 'ten in the yard, nineteen in the deep',
        `crew ${S.crew}, deep ${S.deepCrew}, bodies ${up} up ${down} down`),
     ok(roomsToday() === up + 1, 'a room a yard body, and the door', `${roomsToday()} rooms`),
     ok(lists['the yard'] === up && lists['the deep'] === down, 'the crew list under two headings', JSON.stringify(lists)),

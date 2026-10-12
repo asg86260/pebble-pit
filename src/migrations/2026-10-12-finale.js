@@ -3,9 +3,10 @@
 // the next hand. A save already past the kill has had its ending, so the
 // finale is marked had and its end is laid as the finale would leave it:
 // her off the crew and off her station, its gear hung up; him off the crew
-// as well -- he came out of the belly a gatherer with no pod of his own, the
-// last such on the list -- and the two of them at the left end, idling.
+// as well -- he came out of the belly the deep's one more gatherer, the last
+// such on the list -- and the two of them at the left end, idling.
 import { P } from '../config/yard.js';
+import { TYPE } from '../jobs.js';
 import { WORKER } from '../config/crew.js';
 import { FINALE_END_CELLS, FINALE_PAIR_GAP, RETIRED_TURN_S } from '../config/finale.js';
 
@@ -28,7 +29,7 @@ export default {
     const st = Array.isArray(s.stations) ? s.stations[0] : null;
     const her = st && st.fighter && who.find(w => w && w.uid === st.fighter);
     if (her) { drop(her); st.fighter = null; st.hung = true; }
-    const him = [...who].reverse().find(w => w && w.type === 'gatherer' && !w.deepHome);
+    const him = [...who].reverse().find(w => w && w.type === TYPE.GATHER && w.deepHome);
     if (him) drop(him);
     const x = FINALE_END_CELLS * P;
     s.retired = { x: [x, x + WORKER + FINALE_PAIR_GAP], mode: 'sit', left: RETIRED_TURN_S[0], u: 0, home: x };
