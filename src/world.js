@@ -34,8 +34,8 @@ const canvas = document.getElementById('c');
 // Is a grain over open air here rather than over anything it could rest on.
 export const overPitMouth = x => x + P > pit.x && x < pit.x + pit.w;
 // Asked while the quarry is shut too: there is no mouth then, and the
-// columns simply never match.
-export const overCutMouth = x => S.quarryOpen && x + P > quarry.x && x < quarry.x + quarry.w;
+// columns simply never match. A grain is a cell wide; a body passes its own.
+export const overCutMouth = (x, w = P) => S.quarryOpen && x + w > quarry.x && x < quarry.x + quarry.w;
 // Snapped to the cell: the rock is anchored by its middle, so an odd width
 // puts this edge half a cell off the grid, a fraction of a device pixel the
 // canvas draws as a hairline down every seam. Everything about the rock

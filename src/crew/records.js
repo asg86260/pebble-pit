@@ -241,7 +241,10 @@ function restoreCrew(who, mouth = null) {
         && rec.x + WORKER > mouth && rec.x < mouth + quarry.w) {
       rec = { ...rec, x: rec.x + cutShift };
     }
-    if (!sameGround && Number.isFinite(rec.x) && overCutMouth(rec.x)
+    // Over the mouth by the body's whole width, not a chip's: a quarrier at
+    // work against the near wall overhangs the bank with its middle over the
+    // floor, and asked as a cell it read as on the bank and stayed up there.
+    if (!sameGround && Number.isFinite(rec.x) && overCutMouth(rec.x, WORKER)
         && (!Number.isFinite(rec.y) || Math.abs(rec.y + WORKER - S.groundY) <= 1)) {
       if (k.type === TYPE.QUARRY && rec.goal === 'work') {
         rec = { ...rec, y: cutTop(rec.x + WORKER / 2) - WORKER };
