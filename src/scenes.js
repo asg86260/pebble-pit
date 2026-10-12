@@ -1934,7 +1934,7 @@ export const SCENES = {
   ].flatMap(([kind, say, pin, at]) => [['', 'grown', ABYSS_AT * 0.85], ['-torn', 'just torn', 0]]
     .map(([tail, size, ate]) => [`riftlife-${kind}${tail}`, { about: 'the pit and the rift',
       say: `through the rift, ${size}: ${say}`,
-      run: () => { rich(); window.__meteor(); window.__tear(ate); window.__give(12000); window.__fast(2);
+      run: () => { window.__reset(); window.__crew(2, 3); window.__tear(ate); window.__fast(2);
                    window.__look(riftCenter().x - S.viewW / 2);
                    window.__riftLife(kind, { ...pin, dir: 1, into: Math.max(0, at(riftRadius() / P) - 1) }); } }]))),
 
