@@ -147,6 +147,7 @@ function update(u, mode) {
     const need = bill.find(([m]) => m === li.dataset.money)?.[1] ?? 0;
     const have = purse(li.dataset.money);
     li.classList.toggle('done', have >= need);
+    li.style.setProperty('--p', need > 0 ? Math.min(1, have / need) : 1);
     say(li.lastChild, `${priceText(li.dataset.money, Math.min(have, need))} / ${priceText(li.dataset.money, need)}`);
   }
   sayHTML(parts.cost, tagOf(u, bill).bill);
