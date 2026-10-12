@@ -288,13 +288,22 @@ export const SAVE = {
     // height is the world's to answer on the way back in.
     out.belt = beltGrains();
     // Every grain in the air: a refresh destroying what was up is the one
-    // thing the yard promises it never does.
-    out.chips = (S.chips || []).map(c => [Math.round(c.x), Math.round(c.y), +c.vx.toFixed(2), +c.vy.toFixed(2), c.s, c.land == null ? null : Math.round(c.land)]);
+    // thing the yard promises it never does. A grain the dome burst carries
+    // its own pull, so it skates on down the shell after a refresh.
+    out.chips = (S.chips || []).map(c => {
+      const row = [Math.round(c.x), Math.round(c.y), +c.vx.toFixed(2), +c.vy.toFixed(2), c.s, c.land == null ? null : Math.round(c.land)];
+      if (c.dome) row.push(+c.g.toFixed(4));
+      return row;
+    });
   },
   read(s) {
     S.chips = Array.isArray(s.chips)
       ? s.chips.filter(c => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]))
-          .map(([x, y, vx, vy, sh, land]) => ({ x, y, vx: vx || 0, vy: vy || 0, s: sh || 1, land: Number.isFinite(land) ? land : null }))
+          .map(([x, y, vx, vy, sh, land, g]) => {
+            const ch = { x, y, vx: vx || 0, vy: vy || 0, s: sh || 1, land: Number.isFinite(land) ? land : null };
+            if (g > 0) { ch.g = g; ch.dome = true; }
+            return ch;
+          })
       : [];
     // Every grain back into the strip at its own column, so it lies as it
     // did (`fillBelt`); the strip is emptied first, since the save is the

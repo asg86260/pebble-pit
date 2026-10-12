@@ -1846,6 +1846,16 @@ export const SCENES = {
                 } }],
     [`${k}!`, { about: 'the shields', say: `the rock reaching the ${k}`,
                 run: () => { shieldBuilt(k); window.__next(); window.__fast(4.5); } }],
+    // A frame at a time until the rock is a dozen cells over the top, so the
+    // answer itself is still to come: the dome's burst is over in a second.
+    [`${k}*`, { about: 'the shields', say: `the rock just over the ${k}, the answer still to come`,
+                run: () => {
+                  shieldBuilt(k); window.__next();
+                  const over = () => S.groundY - S.rockFall <= S.groundY - (S.shield.h + 12) * P;
+                  for (let i = 0; i < 60 * 30 && S.shield && (!(S.rockFall > 0) || over()); i++) window.__fast(1 / 60);
+                  if (S.shield) window.__look(S.shield.x + S.shield.w / 2 - S.viewW / 2);
+                  window.__holdShot();
+                } }],
     // Halfway through the labor, for what hangs over the site and how much of
     // the shield stands: the dome has no labor from the ground (`dome~`).
     ...(k === 'dome' ? [] : [[`${k}~`, { about: 'the shields', say: `the ${k} half-built, the picture over it`,

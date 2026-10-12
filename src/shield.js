@@ -5,26 +5,27 @@
 // bill: `dropZone` has walked the crew clear, and the wreck mines back as
 // dust.
 import { belowYard } from './route.js';
-import { S } from './state.js';
-import { P, shieldWidth, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE, DOME_BOUNCE_C, DOME_FLOOR_C, DOME_FADE_MS, ARCH_SPAN, DOME_SPAN, DROP_GRAV, WORKER, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
-import { rockSize, rockFootY, landRock } from './rock.js';
+import { S, floor } from './state.js';
+import { P, shieldWidth, ROCK_SINK, ROCK_CLEAR, ROCK_FLANK_CLEAR, SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST, PROP_COST, PROP_PLANKS, NET_COST, NET_ROPES, NET_SLOW, ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS, ARCH_CATCH_SHAKE, DOME_BILL, DOME_RINGS, DOME_WORK, DOME_FADE_MS, DOME_BURST_MS, DOME_SQUASH, DOME_BURST_GRAV, DOME_BURST_SPEED, DOME_BURST_FLING, DOME_BURST_LIFT, DOME_BURST_POP, DOME_BURST_JITTER, DOME_SLIDE_KEEP, DOME_SLIDE_KICK, ARCH_SPAN, DOME_SPAN, SHIELD_WAVE_MS, SHIELD_WAVE_SPAN, SHIELD_WAVE_POWER, SHIELD_CHEER_MS, MAGIC_TONES } from './config.js';
+import { rockSize, rockFootY, landRock, lumpCells, depthOf, clearBoulder, tipRockSand } from './rock.js';
 import { workOn } from './works.js';
-import { spawnSpoil } from './dust.js';
-import { shadeNear } from './grid.js';
+import { spawnSpoil, spawnChip } from './dust.js';
+import { shadeNear, depthShade, surfaceY, colOf } from './grid.js';
 import { now, frames } from './clock.js';
 // The yard's one generator, never `Math.random`, or a run cannot be had again
 // from its seed.
 import { rand } from './rng.js';
-import { buriedOut } from './intro.js';
 import { beatRunning } from './beats.js';
-import { shakeView, rockEdge } from './world.js';
+import { shakeView, rockLeft } from './world.js';
 import { sfx } from './audio.js';
 import { shockAt } from './shock.js';
 import { open, shieldBefore } from './stations.js';
 
 // What each shield is made of, what it costs, and how it answers a rock. A
 // new one is an entry here and a case in the drawing. The answers escalate:
-// not noticed, slowed, stopped, held.
+// not noticed, slowed, stopped, burst. (The dome's answer is still called
+// 'hold': it does take hold of the rock, for the held beat before the burst,
+// and the rescue beat starts on that hold.)
 export const KINDS = {
   props: { pieces: PROP_PLANKS, cost: PROP_COST, money: 'dust', answer: 'through' },
   // Rope catches the rock and then pays out under it, all the way to the ground.
@@ -34,7 +35,7 @@ export const KINDS = {
           answer: 'crack', holds: ARCH_HOLD_MS },
   // Cast rather than carried: the wizards pour it (`pourDome`).
   dome: { pieces: DOME_RINGS, bill: DOME_BILL, answer: 'hold',
-          cast: true, work: DOME_WORK, holds: DOME_HOLD_MS, rate: DOME_SET_RATE }
+          cast: true, work: DOME_WORK, holds: DOME_BURST_MS }
 };
 
 export const shieldUp = () => !!S.shield && S.shield.laid >= KINDS[S.shield.kind].pieces;
@@ -46,7 +47,11 @@ export const shieldDone = kind => S.shieldsDone.includes(kind);
 export const shieldOpened = kind => { const k = shieldBefore(kind); return !k || open(k); };
 
 // The top of whatever is standing: the thing the rock reaches first.
-export const shieldTopY = (s = S.shield) => S.groundY - s.h * P;
+// The dome's is the crown of its shell as drawn, a half-circle on the span a
+// cell inside it (`domeShell`): the rock comes to rest on the band rather
+// than on the air over it.
+export const shieldTopY = (s = S.shield) =>
+  S.groundY - (s.kind === 'dome' ? Math.min(s.h, Math.round(s.w / P / 2) - 2) : s.h) * P;
 
 // Which rock a shield planned now will meet: the one in the air, if there is
 // one, else the one after the one on the ground.
@@ -89,7 +94,7 @@ export function raiseShield(kind) {
   // labor is in (works.js). The dome is poured after.
   const laid = KINDS[kind].cast ? 0 : KINDS[kind].pieces;
   S.shield = { ...shieldPlan(kind), laid, poured: 0, caught: 0, held: 0, strain: 0,
-               sag: 0, rising: false, rested: 0, setting: false, fading: 0 };
+               sag: 0, fading: 0 };
   if (laid >= KINDS[kind].pieces) fanfare(S.shield);
   refitShield();
 }
@@ -173,14 +178,108 @@ function lookUp(ms) {
   }
 }
 
-// Whether the one dug out is still under the rock's footprint on its walk
-// clear (intro.js, `getOut`). A scripted square, not a worker, so `dropZone`
-// cannot move it; the rock waits on it instead.
-const underneath = () => {
-  if (!beatRunning('rescue')) return false;
-  const b = S.pair[0];
-  return !!b && b.x + WORKER > rockEdge(-1) && b.x < rockEdge(1);
+// --- the dome's burst ---------------------------------------------------------
+// The dome takes hold of the rock on its crown for one held beat, squashed
+// there (`domeSquash`), and then the rock comes apart into its own grains: the
+// lump's cells as drawn, each one's grains in its own tone, flung out from the
+// crown. They skate down the shell (`slideOnDome`) and come down outside it as
+// ordinary dust, which the haulers carry to the hole. The grains are the
+// rock's sheets, a grain a sheet as a pick takes them, so the burst hands the
+// yard exactly what mining the rock would have: nothing made, nothing lost.
+
+// How squashed the rock on the crown is: the held pose, the whole beat.
+export const domeSquash = () => {
+  const s = S.shield;
+  return s && KINDS[s.kind].cast && s.caught && S.rockHeld ? DOME_SQUASH : 0;
 };
+
+function burstRock(s) {
+  const a = s.w / 2;                       // the shell's radius
+  const ox = s.x + a, crownY = S.groundY - a;
+  const left = rockLeft(), top = rockFootY() - S.gw * P;
+  const deep = depthOf();
+  const cells = lumpCells();
+  let owed = 0;
+  for (const row of S.boulder) for (const v of row) owed += v;
+  let thick = 0;
+  for (const c of cells) thick += c.v;
+  // Radii a second into world pixels a frame, and radii a second a second
+  // into world pixels a frame a frame.
+  const perS = a / 60, g = DOME_BURST_GRAV * a / 3600;
+  const [lo, hi] = DOME_BURST_SPEED;
+  const [pop0, pop1] = DOME_BURST_POP;
+  // The rock's sheets shared over the lump's cells by thickness, the running
+  // total floored so the shares add up to the sheets exactly.
+  let sum = 0, given = 0;
+  for (const c of cells) {
+    sum += c.v;
+    const due = thick ? Math.floor(sum * owed / thick) : 0;
+    const n = due - given;
+    given = due;
+    const cx = left + c.x * P + P / 2, cy = top + c.y * P + P / 2;
+    const dx = cx - ox, dy = crownY - cy, len = Math.hypot(dx, dy) || 1;
+    const shade = depthShade(c.v, deep);
+    for (let k = 0; k < n; k++) {
+      const sp = (lo + rand() * (hi - lo)) * perS;
+      const vx = dx / len * sp * DOME_BURST_FLING + (rand() - 0.5) * 2 * DOME_BURST_JITTER * perS;
+      const up = dy / len * sp * DOME_BURST_LIFT + (pop0 + rand() * (pop1 - pop0)) * perS;
+      spawnChip(cx - P / 2, cy - P / 2, vx, -up, shade);
+      const ch = S.chips[S.chips.length - 1];
+      ch.g = g;
+      ch.dome = true;
+    }
+  }
+  // Whatever lay on the rock goes on the heap while there is a rock to say
+  // where it was, and then the rock is gone the one way a rock goes.
+  tipRockSand();
+  clearBoulder();
+  S.rockFall = 0;
+  S.rockFallV = 0;
+  S.rockHeld = false;
+  s.caught = 0;
+  s.held = 0;
+  s.burstAt = now();                       // for the flare down the band
+  sfx('dome-burst', { x: ox, hard: 1, big: true });
+}
+
+// One frame of a burst grain against the shell: a grain that has come down
+// on to it is put back on its surface and keeps only the speed along it, less
+// a little, so it skates down the curve and leaves at the feet. Measured to
+// the grain's middle half a cell outside the footprint, so a grain at the foot
+// lands on the first column clear of it. Called from the chip loop (game.js)
+// for the grains `burstRock` threw.
+export function slideOnDome(ch, f) {
+  const s = S.shield;
+  if (!s || !KINDS[s.kind].cast) { ch.dome = false; return; }
+  const a = s.w / 2, ox = s.x + a, R = a + P / 2;
+  const cx = ch.x + P / 2, up = S.groundY - (ch.y + P / 2);
+  if (up <= 0) return;
+  const dx = cx - ox, d = Math.hypot(dx, up);
+  if (d >= R || d === 0) return;
+  const nx = dx / d, ny = up / d;
+  ch.x = ox + nx * R - P / 2;
+  ch.y = S.groundY - ny * R - P / 2;
+  // About to come down beside a foot, it comes down clear of it: the ground
+  // takes a grain by the column its left edge is in, and a grain hugging the
+  // shell low on the right still has that edge a hair inside.
+  if (ch.y + P >= surfaceY(floor, colOf(floor, ch.x)) - P)
+    ch.x = dx > 0 ? Math.max(ch.x, s.x + s.w) : Math.min(ch.x, s.x - P);
+  let vUp = -ch.vy;
+  const vn = ch.vx * nx + vUp * ny;
+  if (vn < 0) {
+    ch.vx -= vn * nx; vUp -= vn * ny;
+    // The shell is magic and turns what hits it: part of the blow goes into
+    // speed down the curve, away from the crown, so nothing comes to rest on
+    // top of it -- a grain dropped square on the crown skates off too.
+    const side = nx ? Math.sign(nx) : (rand() < 0.5 ? -1 : 1);
+    const kick = -vn * DOME_SLIDE_KICK * side;
+    ch.vx += kick * ny;
+    vUp -= kick * Math.abs(nx) * side;
+  }
+  const keep = Math.pow(DOME_SLIDE_KEEP, f / 60);
+  ch.vx *= keep;
+  ch.vy = -vUp * keep;
+}
 
 // What a shield does once it has hold of a rock: one frame of it, and the
 // only place the kinds differ in behavior rather than in looks.
@@ -199,47 +298,11 @@ function answer(s, kind) {
     if (S.rockFall <= 0) { breakShield(); landRock(); }
     return;
   }
-  // The dome gives (the rock springs back up and settles), holds for a beat,
-  // then lets it down gently. Its state is put back rather than thrown away:
+  // The dome: the held beat, then the burst. The dome itself is untouched:
   // until the rescue is done it stands for the next one, and then
   // `stepShield` starts the fade.
   if (kind.answer === 'hold') {
-    // The first hold digs out whoever is under that spot: the rescue beat
-    // (beats.js) starts on the hold and sends the digger, and where the rock
-    // lets itself down to is below.
-    // The spring is the fall run backward, settled by hand at the end so a
-    // rounding error cannot leave it a hair off where it was caught.
-    if (s.rising) {
-      const f = frames();
-      S.rockFallV += DROP_GRAV * f;
-      S.rockFall -= S.rockFallV * f;
-      if (S.rockFall <= s.held) {
-        S.rockFall = s.held;
-        S.rockFallV = 0;
-        s.rising = false;
-        s.rested = now();
-      }
-      return;
-    }
-    if (!s.setting) {
-      if (now() - (s.rested || s.caught) < kind.holds) return;
-      s.setting = true;
-    }
-    // Where it may come down to: the ground while nobody is under it,
-    // otherwise as far as the dig is far along and never below a few courses
-    // over whoever is still in the ground or walking out. Only ever at the
-    // set rate, so it creeps rather than jumps.
-    const floor = DOME_FLOOR_C * P;
-    const want = S.buried ? floor + (s.held - floor) * (1 - buriedOut())
-               : underneath() ? floor : 0;
-    S.rockFall = Math.max(want, S.rockFall - kind.rate * dt);
-    if (S.rockFall <= 0) {
-      landRock(true);
-      S.rockHeld = false;
-      s.setting = false;
-      s.caught = 0;
-      s.rested = 0;
-    }
+    if (now() - s.caught >= kind.holds) burstRock(s);
     return;
   }
   // Stone stops the rock dead, and then the crack runs.
@@ -265,7 +328,7 @@ export const SAVE = {
                             h: s.shield.h, rise: s.shield.rise || 0,
                             laid: s.shield.laid || 0, caught: 0, held: 0,
                             strain: 0, sag: 0,
-                            setting: false, poured: 0, fading: 0 } : null;
+                            poured: 0, fading: 0 } : null;
     // What is woven is the fact; the wizard-seconds behind it are worked
     // back out of it.
     if (S.shield && KINDS[S.shield.kind].cast) {
@@ -284,14 +347,12 @@ export const SAVE = {
       if (S.shield.laid >= k.pieces && k.answer !== 'through' && s.shield.caughtAgo != null && Number.isFinite(+s.shield.caughtAgo)) {
         // `held` is the catch height (where a falling rock's foot meets the
         // shield's top, as in `stepShield`), not where the rock is now, or
-        // every refresh would have the rope start straining from nothing. A
-        // rock above it is one the dome sprang back up.
+        // every refresh would have the rope start straining from nothing.
         S.shield.caught = now() - (+s.shield.caughtAgo || 0);
         S.shield.held = (S.shield.h + 1) * P + ROCK_SINK;
         S.shield.strain = +s.shield.strain || 0;
         S.shield.sag = +s.shield.sag || 0;
-        if (k.answer === 'hold' && S.rockFall > S.shield.held) S.shield.rising = true;
-        else S.rockFallV = 0;
+        S.rockFallV = 0;
         S.rockHeld = true;
       }
     }
@@ -340,13 +401,9 @@ export function stepShield() {
       shakeView(ARCH_CATCH_SHAKE);
       sfx('arch-catch', { x: s.x + s.w / 2, hard: 1, big: true });
     }
-    // The dome gives: the rock is sent back up with the speed a fall of
-    // DOME_BOUNCE_C cells would have given it, and gravity does the rest.
-    if (kind.answer === 'hold') {
-      s.rising = true;
-      S.rockFallV = -Math.sqrt(2 * DROP_GRAV * DOME_BOUNCE_C * P);
-    }
-    lookUp(kind.holds || 1200);
+    // The dome stops it dead on the crown for the held beat (`answer`).
+    if (kind.answer === 'hold') S.rockFallV = 0;
+    lookUp(Math.max(kind.holds || 0, 1200));
     return;
   }
 }

@@ -124,8 +124,9 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The dome no longer holds the rescue rock up: the rock sits squashed on its crown for a beat, then bursts into grit that skates down the dome and heaps outside it for the haulers to carry to the hole (test/shield.test.mjs).
 - The bench's build tiles show each coin of their price as a line that fills grey as you gather it, the same as the story card's bill (src/selftest/boards.js).
-- While the dome holds the rescue rock, the rest of the crew walk out of the shot so only the two of them are in it, and walk back to work after (test/ending-stage.test.mjs).
+- While the dome bursts the rescue rock, the rest of the crew walk out of the shot so only the two of them are in it, and walk back to work after (test/ending-stage.test.mjs).
 - No new rock comes down from the rescue until the whole ending, the drowning of the pit included, is over (test/ending-stage.test.mjs).
 - A station's counter is a row of seats between its - and +: a filled pip for each body at work, a pip filling in thirds while one walks over, the specialist slots in a row of their own above (a brim each, grey ones on the outlines of hats not yet worn, and the next body sent takes a spare hat first) and only the seats left over below for plain workers, with a rule between the rows (none when every seat is a hat seat), whatever rows show centered on the - and +, and a click on a bottom pip sets the plain workers (src/selftest/crew.js).
 - The rock's diggers and the house's carriers are counted in pips too, breakers or carts on top, twelve to a row and the rest written after it as +N (src/selftest/crew.js).

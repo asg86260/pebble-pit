@@ -5,7 +5,10 @@
 import { group, ok, state, run, runUntil, openSites, yard, buyBuilt } from './helpers.mjs';
 import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
          NET_COST, NET_ROPES, ARCH_COST, ARCH_BLOCKS,
-         DOME_BILL, DOME_FLOOR_C, DOME_FADE_MS, P } from '../src/config.js';
+         DOME_BILL, DOME_BURST_MS, DOME_FADE_MS, P } from '../src/config.js';
+import { rockShape, boulderAlive } from '../src/rock.js';
+import { floor } from '../src/state.js';
+import { at, colOf } from '../src/grid.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { domeOrbitR } from '../src/shield.js';
 import { DUST_PER } from '../src/levels.js';
@@ -278,7 +281,7 @@ group('each shield that fails opens the next station', async () => {
 // it mean anything -- that somebody was under there, that they are not any
 // more, that they walked rather than vanished, and that they are one of the
 // crew afterwards -- rather than for how it looked while it happened.
-group('under the dome, the one underneath walks out', async () => {
+group('under the dome, the rock bursts and the one underneath walks out', async () => {
   ready();
   openSites();
   window.__crew(2, 1);
@@ -297,71 +300,82 @@ group('under the dome, the one underneath walks out', async () => {
   }, 200);
 
   window.__next();
-  // Frame by frame, because the fall, the catch and the spring off the dome
-  // are over inside a second -- read straight off the yard, since a snapshot
-  // a frame for a minute of frames is the slow part of the file.
+  // Frame by frame, because the fall, the held beat and the burst are over
+  // inside a second -- read straight off the yard, since a snapshot a frame
+  // for a minute of frames is the slow part of the file.
   const S = yard.S;
-  let caught = false, held = 0, sprang = false, settled = false;
-  for (let i = 0; i < 60 * 240 && !settled; i++) {
+  const sh = S.shield;
+  const domeFrom = sh.x, domeTo = sh.x + sh.w;
+  let caught = false, caughtAt = 0, squashed = false, sheets = 0, burstAt = 0, grit = 0;
+  for (let i = 0; i < 60 * 240 && !burstAt; i++) {
     run(1 / 60);
-    if (!caught) { if (S.rockHeld) { caught = true; held = S.rockFall; } continue; }
-    // the dome gives: the rock springs back up off it and settles where it was caught...
-    if (S.rockFall > held) sprang = true;
-    if (sprang && !S.shield.rising) settled = S.rockFall === held;
+    if (!caught) {
+      if (S.rockHeld) {
+        caught = true; caughtAt = yard.clock.now();
+        sheets = S.boulder.reduce((n, row) => n + row.reduce((m, v) => m + v, 0), 0);
+      }
+      continue;
+    }
+    if (S.rockHeld && rockShape().squash > 0) squashed = true;
+    if (!S.rockHeld) { burstAt = yard.clock.now(); grit = S.chips.filter(c => c.dome).length; }
   }
-  const walking = runUntil(() => state().beat.yard === 'rescue', 30);
-  // ...then comes down with the digging, but never on to whoever is still in
-  // the ground: it keeps its courses of daylight over them the whole dig
-  const floor = DOME_FLOOR_C * P;
-  let lowest = Infinity, crept = false;
-  const dug = runUntil(() => {
-    const s = state();
-    // Only while somebody is under it: the sample that finds them out is a
-    // second on from the one before, and in that second the dome has begun
-    // letting the rock the rest of the way down -- which is the next check.
-    if (s.buried) lowest = Math.min(lowest, s.rockFall);
-    if (s.buried && s.shield.setting && s.rockFall < held) crept = true;
-    return !s.buried;
-  }, 60);
-  const over = lowest >= floor;
-  // ...and finishes the way down as they walk out, while the beat is still on:
-  // the two of them meet under a rock coming down beside them, not after it
-  const during = state().beat.yard === 'rescue' && state().rescued && state().shield.setting;
-  const out = runUntil(() => state().rescued && !state().beat.yard, 60);
+  const gone = !boulderAlive() && S.rockFall === 0 && !S.rockHeld;
+  const walking = state().beat.yard === 'rescue';
+  // Every burst grain comes down, and none of it settles between the dome's
+  // feet: the ground there is counted as the grit leaves the rock and again
+  // once the last of it is down, and it has not grown.
+  const under = () => {
+    let n = 0;
+    for (let c = colOf(floor, domeFrom); c < colOf(floor, domeTo); c++)
+      for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
+    return n;
+  };
+  const underBefore = under();
+  const flying = new Set(S.chips.filter(c => c.dome));
+  let down = 0;
+  for (let i = 0; i < 60 * 20 && flying.size; i++) {
+    run(1 / 60);
+    const up = new Set(S.chips);
+    for (const ch of flying) if (!up.has(ch)) { down++; flying.delete(ch); }
+  }
+  const underAfter = under();
+  const storedThen = state().stored;
+  const out = runUntil(() => state().rescued && !state().beat.yard, 90);
   const after = state();
-  const set = runUntil(() => !state().rockHeld && !state().rockFall, 60);
-  // the clock over them stopped the moment they walked out
+  // and the haulers carry it to the hole
+  const carried = runUntil(() => state().stored > storedThen + 50, 120);
   run(5);
   const later = state();
 
   window.__reset();
   return [
     ok(before.buried, 'somebody has been under every rock until now'),
-    ok(caught && walking, 'the dome holds one and the beat starts', `beat ${state().beat.yard}`),
-    ok(sprang && settled, 'the rock springs back up off the dome and settles',
-       `held ${held}, sprang ${sprang}, settled ${settled}`),
-    ok(dug && crept, 'and comes down with the digging while they are dug out'),
-    ok(over, 'but keeps its daylight over them the whole dig', `lowest ${lowest} floor ${floor}`),
-    ok(during, 'and is still on its way down as they walk out, before the beat is over',
-       `beat ${state().beat.yard}`),
+    ok(caught && walking, 'the dome takes hold of one and the beat starts', `beat ${state().beat.yard}`),
+    ok(squashed, 'the rock sits squashed on the crown while it is held'),
+    ok(burstAt && Math.abs(burstAt - caughtAt - DOME_BURST_MS) <= 1000 / 60 * 2,
+       `and bursts ${DOME_BURST_MS}ms after`, `${burstAt - caughtAt}ms`),
+    ok(gone, 'the rock is gone once it has burst'),
+    ok(sheets > 0 && grit === sheets, 'into a grain for every sheet of it', `${grit} grains, ${sheets} sheets`),
+    ok(!flying.size && down === grit, 'every grain comes down', `${down} of ${grit}`),
+    ok(underAfter <= underBefore, 'and none of it settles between the dome\'s feet',
+       `${underBefore} -> ${underAfter}`),
+    ok(carried, 'the haulers carry it to the hole', `${storedThen} -> ${state().stored}`),
     ok(out, 'they get out'),
     ok(!after.buried && after.rescued, 'and nobody is under the rock any more'),
     ok(after.crew > before.crew, 'they join the crew',
        `${before.crew} -> ${after.crew}`),
-    ok(set, 'and the rock is set down'),
     ok(after.buriedMs > before.buriedMs && later.buriedMs === after.buriedMs,
        'the clock over them ran until they walked out, and stopped there',
        `${before.buriedMs} -> ${after.buriedMs} -> ${later.buriedMs}`)
   ];
 });
 
-// The dome holds the one rock it was for, and then it is done. Its whole job
-// is the rescue; a dome that went on catching every rock after that was a hold
-// and a slow set-down on every rock for the rest of the game. So the frame
-// after the rescue rock is set down it starts to fade, and DOME_FADE_MS later
-// it is gone, remembered in `shieldsDone` like the kinds that broke -- and
-// the next rock comes down on the ground, hard, the way rocks do.
-group('the dome holds the rescue rock, sets it down, and then fades out', async () => {
+// The dome answers the one rock it was for, and then it is done. Its whole
+// job is the rescue, so the frame the rescue beat ends it starts to fade, and
+// DOME_FADE_MS later it is gone, remembered in `shieldsDone` like the kinds
+// that broke -- and the next rock waits for it to go, then comes down on the
+// ground, hard, the way rocks do.
+group('the dome bursts the rescue rock, and then fades out', async () => {
   ready();
   openSites();
   window.__crew(2, 1);
@@ -392,20 +406,24 @@ group('the dome holds the rescue rock, sets it down, and then fades out', async 
 
   // the first rock it answers -- the rescue rock
   window.__next();
-  const caught = runUntil(() => state().rockHeld, 240);
-  const up = state().rockFall;
   const S = yard.S;
-  // Frame by frame through the set-down: the fade starts the frame after the
-  // rock is set, and a fading dome is still `S.shield` for DOME_FADE_MS, so a
-  // second's stride from the set-down would step into the middle of it.
-  let set = false, atSet = null;
-  for (let i = 0; i < 60 * 120 && !set; i++) {
+  const landedBefore = S.landAt;
+  // Frame by frame: the hold is a held beat, gone inside a second's stride.
+  let caught = false, up = 0;
+  for (let i = 0; i < 60 * 240 && !caught; i++) {
     run(1 / 60);
-    if (!S.rockHeld && S.rockFall === 0 && S.boulder.length) { set = true; atSet = { landAt: S.landAt, shield: S.shield && { ...S.shield } }; }
+    if (S.rockHeld) { caught = true; up = S.rockFall; }
+  }
+  // Frame by frame through the burst: a fading dome is still `S.shield` for
+  // DOME_FADE_MS, so a second's stride would step into the middle of it.
+  let burst = false, atBurst = null;
+  for (let i = 0; i < 60 * 120 && !burst; i++) {
+    run(1 / 60);
+    if (!S.rockHeld) { burst = true; atBurst = { landAt: S.landAt, alive: boulderAlive(), shield: S.shield && { ...S.shield } }; }
   }
   const stillUp = !!S.shield && S.shield.kind === 'dome';
-  // The rock is set down while the two of them are still walking to meet
-  // under it (the `rescue` beat), and the dome stands over that walk: the
+  // The rock bursts while the one underneath is still in the ground (the
+  // `rescue` beat), and the dome stands over the dig and the walk: the
   // fade waits for the beat to end, and starts on the frame it does (the
   // beats step before the shield).
   let walkOver = false, heldOff = true;
@@ -418,10 +436,11 @@ group('the dome holds the rescue rock, sets it down, and then fades out', async 
   const fading = !!S.shield && S.shield.fading > 0;
   const fadeFrom = S.shield && S.shield.fading;
   // the whole fade is a shield that is still there and never catches anything
-  let heldWhileFading = false, gone = false, goneAt = 0;
+  let heldWhileFading = false, gone = false, goneAt = 0, rockWhileFading = false;
   for (let i = 0; i < 60 * 10 && !gone; i++) {
     run(1 / 60);
     if (S.shield && S.rockHeld) heldWhileFading = true;
+    if (S.shield && S.rockFall > 0) rockWhileFading = true;
     if (!S.shield) { gone = true; goneAt = yard.clock.now(); }
   }
   const done = state().shieldsDone.includes('dome');
@@ -444,12 +463,13 @@ group('the dome holds the rescue rock, sets it down, and then fades out', async 
     ok(cast && poured, 'the wizards ring it and pour it up', `laid ${state().shieldsDone}`),
     ok(noGroundWork, 'and no work of it ever touches the ground'),
     ok(caught && up > 0, 'it catches the rock overhead', `${up}px up`),
-    ok(set && atSet.landAt === 0, 'and lets it down rather than dropping it',
-       atSet && `landAt ${atSet.landAt}`),
-    ok(stillUp && !atSet.shield.fading, 'the dome is still standing the frame the rock is set'),
+    ok(burst && !atBurst.alive && atBurst.landAt === landedBefore, 'and bursts it rather than letting it land',
+       atBurst && `landAt ${landedBefore} -> ${atBurst.landAt}`),
+    ok(stillUp && !atBurst.shield.fading, 'the dome is still standing after the burst'),
     ok(walkOver && heldOff, 'and stands until the two of them have met under it'),
     ok(fading, 'then starts to fade the frame after', `fading ${fadeFrom}`),
     ok(gone && !heldWhileFading, 'it catches nothing while it fades, and then it is gone'),
+    ok(!rockWhileFading, 'and no rock comes down through it while it fades'),
     ok(gone && Math.abs(goneAt - fadeFrom - DOME_FADE_MS) <= 1000 / 60 * 2,
        `gone ${DOME_FADE_MS}ms after the fade began`, `${goneAt - fadeFrom}ms`),
     ok(done, 'and it is remembered as answered, like the kinds that broke'),

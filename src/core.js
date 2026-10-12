@@ -58,6 +58,9 @@ export function stepCore() {
   if (beatDone('show') && !beatDone('part') && S.boulderNo === 1 && !boulderAlive()) return;
 
   if (endingHolds()) return;
+  // A dome on its way out catches nothing, so a rock made now would fall
+  // through the picture of one: the next waits until it has gone.
+  if (S.shield && S.shield.fading) return;
 
   if (!S.coreBuried && !boulderAlive()) {
     // Nothing lands on top of the celebration, or on top of anybody.

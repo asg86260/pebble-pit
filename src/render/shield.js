@@ -2,7 +2,8 @@
 // kind grows out of the trips that built it rather than fading in, so a frame
 // at six planks is visibly six planks. See DESIGN.md, "The shields".
 
-import { P, SHIELD_LEG_W, SHIELD_LID_T, MAGIC_TONES } from '../config.js';
+import { P, SHIELD_LEG_W, SHIELD_LID_T, MAGIC_TONES, DOME_FLARE_MS, DOME_FLARE_W, DOME_FLARE_TRAIL } from '../config.js';
+import { reducedMotion } from '../prefs.js';
 import { S } from '../state.js';
 import { now } from '../clock.js';
 import { KINDS, risingShield, domeAt, domeFade } from '../shield.js';
@@ -140,6 +141,10 @@ function drawDome(s, done, topY, cols) {
   // in pieces and nothing in this yard pops out of existence.
   const fade = domeFade(s);
   if (fade) { ctx.save(); ctx.globalAlpha = Math.max(0, 1 - fade); }
+  // The burst lights the band: a bright front runs from the crown down to
+  // both feet, a paler one trailing it. Left out under reduced motion.
+  const k = s.burstAt && !reducedMotion() ? (now() - s.burstAt) / DOME_FLARE_MS : 1;
+  const front = k < 1 ? 1 - k : null;
   for (let c = 0; c < cols; c++) {
     const dx = Math.abs(c + 0.5 - a);
     for (let r = 0; r < s.h; r++) {
@@ -151,7 +156,11 @@ function drawDome(s, done, topY, cols) {
       // on itself.
       const along = ang / total;
       const lit = Math.sin(along * 9 - t * 3.4) * 0.6 + Math.sin(along * 4 + t * 2.1) * 0.4;
-      const tone = lit > 0.55 ? 0 : lit > 0 ? 1 : lit > -0.55 ? 2 : 3;
+      let tone = lit > 0.55 ? 0 : lit > 0 ? 1 : lit > -0.55 ? 2 : 3;
+      if (front != null) {
+        if (Math.abs(along - front) < DOME_FLARE_W) tone = 0;
+        else if (Math.abs(along - front - DOME_FLARE_TRAIL) < DOME_FLARE_W * 0.7) tone = 1;
+      }
       ctx.fillStyle = MAGIC_TONES[tone];
       ctx.fillRect(s.x + c * P, S.groundY - (r + 1) * P, P, P);
     }

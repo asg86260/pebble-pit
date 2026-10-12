@@ -24,6 +24,7 @@ import { machine } from './machines.js';
 import { spriteW, RAM } from './sprites.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
+import { DOME_RINGS } from './config.js';
 import { JOB } from './jobs.js';
 import { reducedMotion } from './prefs.js';
 import { deepX0, deepX1, deepFloor } from './deep/place.js';
@@ -306,7 +307,18 @@ export const blocked = c => {
   // by `ROCK_CLEAR` from the table, so nothing needs the apron barred.
   if (pastRock(x) < 0) return true;
   if (overPitMouth(x)) return true;
+  if (pastDome(x) < 0) return true;
   return false;
+};
+
+// How far past a standing dome's feet a column is, in cells, -1 for one under
+// it, and Infinity with no dome up. While it stands its shell is a cliff the
+// way the rock's footprint is: the grit it bursts the rescue rock into
+// (shield.js, `burstRock`) heaps against its feet and never under it.
+export const pastDome = x => {
+  const s = S.shield;
+  if (!s || s.kind !== 'dome' || s.laid < DOME_RINGS || s.fading) return Infinity;
+  return x + P <= s.x ? (s.x - (x + P)) / P : x >= s.x + s.w ? (x - s.x - s.w) / P : -1;
 };
 
 // which pile a station's own output belongs in
@@ -331,6 +343,11 @@ export const bankCeiling = c => {
   // away from the wall like every other bank. Nought there sent every throw
   // that cleared the pit back to the near side.
   if (pastPit(x)) return Math.max(0, (x + P - (pit.x + pit.w)) / P) * BANK_SLOPE;
+  // and against a standing dome, rising away from its feet
+  const dome = Math.max(0, pastDome(x)) * BANK_SLOPE;
+  return Math.min(dome, groundCeiling(x));
+};
+const groundCeiling = x => {
   const p = pileAt(x);
   // Bare ground takes a scatter and no more; nought means "full", and full
   // means `addGrain` puts the grain in a pile you were not pointing at.
