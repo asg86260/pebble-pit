@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finale House Mock</title>
+<style>
+:root {
+  --bg: #f3f2ef; --fg: #171717; --muted: #5c5c5c; --card: #ffffff; --line: #d7d5d0;
+  --accent: #6b38d4; --chip: #ebe9e4; --chip-on: #171717; --chip-on-fg: #ffffff;
+  /* the game's own tones: the same in both themes, since the canvas is the game */
+  --g-ink: #141414; --g-paper: #f4f4f4; --g-w: #fafafa; --g-1: #262626; --g-2: #3d3d3d;
+  --g-3: #666666; --g-4: #959595; --g-5: #c4c4c4; --g-6: #e3e3e3; --g-pu: #7b3fe4; --g-pud: #3f2378; --g-pul: #b79af2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --fg: #ececec; --muted: #a2a2a2; --card: #1b1b1b; --line: #333333;
+    --accent: #a98af0; --chip: #262626; --chip-on: #ececec; --chip-on-fg: #121212;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212; --fg: #ececec; --muted: #a2a2a2; --card: #1b1b1b; --line: #333333;
+  --accent: #a98af0; --chip: #262626; --chip-on: #ececec; --chip-on-fg: #121212;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; overflow-x: hidden; }
+main { max-width: 1060px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: .02em; }
+h2 { font-size: 17px; margin: 36px 0 6px; }
+h3 { font-size: 14px; margin: 14px 0 4px; }
+p { margin: 6px 0; }
+.lede, .muted { color: var(--muted); }
+.note { border: 1px solid var(--line); background: var(--card); padding: 10px 12px; margin: 14px 0; }
+.note b { color: var(--accent); }
+.today { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 10px; }
+.today figure { margin: 0; min-width: 0; }
+.today img { display: block; width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--line); }
+.today figcaption { font-size: 11px; color: var(--muted); }
+.wide { grid-column: 1 / -1; }
+.panel { background: var(--card); border: 1px solid var(--line); padding: 10px; min-width: 0; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+#mini { margin-top: 6px; }
+.beat { font-size: 12px; color: var(--muted); margin: 6px 0 0; min-height: 3em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0; }
+.chips span.lab { color: var(--muted); font-size: 12px; width: 100%; }
+@media (min-width: 640px) { .chips span.lab { width: auto; min-width: 8.5em; } }
+button { font: inherit; font-size: 12px; background: var(--chip); color: var(--fg); border: 1px solid var(--line); padding: 4px 9px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-fg); border-color: var(--chip-on); }
+.scrub { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.scrub input { flex: 1; min-width: 120px; accent-color: var(--accent); }
+.scrub output { font-size: 12px; min-width: 4.5em; }
+.optcap { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; table-layout: fixed; }
+td, th { border-top: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: normal; }
+td:first-child, th:first-child { width: 7.5em; }
+ol, ul { padding-left: 20px; margin: 6px 0; }
+li { margin: 4px 0; }
+code { font-size: 12.5px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main>
+<h1>Finale: the house</h1>
+<p class="lede">After the serpent dies: the pair come out of the portal, the whole yard downs tools and falls in behind them, fireworks overhead, and at the end of the walk the builders finish a house just as the pair arrive. They go in, the door shuts, the window lights.</p>
+
+<div class="note"><b>A mock, not the game.</b> Plain shapes on the 6px cell grid in the game's tones, at the yard's real length (1,281 cells, the window 160 wide, the walk 30 seconds). It starts at the yard end of the portal; the deep half is unchanged and not shown. It cannot show: the real sprites, kits, hats, carts and heaps; the real stations (they are grey boxes here); the sim's own paths and timing; the camera's glide and the letterbox; sound; or the closing sheet's words, which are grey bars (the copy is the owner's). The builders' pile is already on the plot when the scene starts; in the game they would carry it there while the deep half plays.</div>
+
+<h2>Today</h2>
+<p class="muted">The finale as built, shot from the game (<code>finale-portal</code>, <code>finale-parade</code>, <code>finale-sunset</code>, <code>finale-after</code>), and 4 seconds of the parade at 30 frames a second.</p>
+<div class="today">
+  <figure class="wide"><img src="finale-house-2026-10-12/today-parade.gif" alt="Four seconds of today's parade: the crowd bunched behind the pair, hopping in flicks"><figcaption>the parade, 4 s at 30 fps: the hops flick on and off, the crowd bunches and slides; the quarry's three stay down the cut, the diggers stay on the hill</figcaption></figure>
+  <figure><img src="finale-house-2026-10-12/today-portal.png" alt="Today: the portal"><figcaption>finale-portal</figcaption></figure>
+  <figure><img src="finale-house-2026-10-12/today-parade.png" alt="Today: the parade"><figcaption>finale-parade</figcaption></figure>
+  <figure><img src="finale-house-2026-10-12/today-sunset.png" alt="Today: the sunset"><figcaption>finale-sunset</figcaption></figure>
+  <figure><img src="finale-house-2026-10-12/today-after.png" alt="Today: after"><figcaption>finale-after</figcaption></figure>
+</div>
+<h3>Why the hops look janky</h3>
+<ul>
+  <li><b>Too big, too few frames.</b> A hop is four held poses, 0, 1, 2 and 1 cells up, an eighth of a second each. Two cells is 12 px on a body 18 px tall, so each pose jumps by a third of a body, with no crouch before it and no landing after.</li>
+  <li><b>It switches off.</b> A body only hops while it is within one cell of its place in the files. The pair move a whole cell at a time (about 33 cells a second, so a cell every other frame), each place jumps with them, and the body chasing it at 42 cells a second keeps falling more than a cell behind. The hop goes off and on, and the body drops to the ground mid-hop.</li>
+  <li><b>A lockstep pattern.</b> Each body's pose is the shared clock plus its join number, so neighbors are exactly one pose apart and every fourth body matches. It reads as pistons, not a crowd.</li>
+  <li><b>Sliding.</b> Joiners close the gap at 42 cells a second along the ground, not hopping, and the files bunch up where they overtake each other.</li>
+</ul>
+<h3>Why the quarry and the farm stay at work</h3>
+<ul>
+  <li>Only bodies that pass <code>free()</code> in finale.js can fall in: on the yard's own floor, within two cells of the flat way, not inside, not aloft, not in a craft, not homeward.</li>
+  <li>Everyone else is frozen where they stand for the whole finale (<code>finaleBody</code> takes their frame and does nothing), so a body that fails the test once can never come free.</li>
+  <li><b>Quarry:</b> down the cut, so <code>onYard</code> is false. <b>Diggers:</b> on the hill's crest, 13 to 18 cells above the way. <b>Farm:</b> farmhands walk over their plots and heaps (<code>climbTo(walkY)</code>), so one on a bank is more than two cells up. In the shot scene the farmhands happened to be on flat ground and joined, but the quarry's three and the hill's three never did.</li>
+  <li>Also left behind: wizards aloft, purifiers in a balloon, anyone knocked off inside a shack, haulers down the shaft. Forklifts are machines, not crew, so the finale never sees them.</li>
+</ul>
+
+<h2>The ending, mixed</h2>
+<div class="panel">
+  <canvas id="view" width="960" height="480" aria-label="The finale scene"></canvas>
+  <canvas id="mini" width="960" height="60" aria-label="The whole yard, with the window, the pair, the crowd and the house"></canvas>
+  <p class="beat" id="beat"></p>
+  <div class="scrub">
+    <button id="play" aria-pressed="true">pause</button>
+    <button id="spd" aria-pressed="false">2x</button>
+    <input id="t" type="range" min="0" max="60" step="0.05" value="0" aria-label="Time">
+    <output id="tout">0.0 s</output>
+  </div>
+  <div class="chips" id="c-hop"><span class="lab">hops</span></div>
+  <p class="optcap" id="cap-hop"></p>
+  <div class="chips" id="c-fw"><span class="lab">fireworks</span></div>
+  <p class="optcap" id="cap-fw"></p>
+  <div class="chips" id="c-volley"><span class="lab">at the door</span></div>
+  <div class="chips" id="c-where"><span class="lab">the house stands</span></div>
+  <p class="optcap" id="cap-where"></p>
+  <div class="chips" id="c-after"><span class="lab">afterwards</span></div>
+  <p class="optcap" id="cap-after"></p>
+  <div class="chips" id="c-cam"><span class="lab">camera</span></div>
+  <p class="optcap" id="cap-cam"></p>
+  <div class="chips" id="c-lift"><span class="lab">forklifts</span></div>
+</div>
+
+<h2>Beats</h2>
+<p class="muted">With the house at the yard's left end. By the shacks the walk is the same 30 seconds over 400 cells, so the pair stroll.</p>
+<table>
+  <tr><th>seconds</th><th>beat</th></tr>
+  <tr><td>0.0 – 1.4</td><td>Out of the drowned pit and onto the near lip, six held steps (as today).</td></tr>
+  <tr><td>0.6 – 31.0</td><td>At the plot, five builders put the house up a piece a trip: scaffold, three posts, the plates, the walls a board row at a time from the ground up, the roof a row of tiles at a time, the chimney, the door, the window (and the bench if they will sit out), then the scaffold comes down onto a woodpile that stays. 42 or 43 trips; each piece leaves the pile in a builder's hands and is set in place.</td></tr>
+  <tr><td>1.4 – 31.4</td><td>The walk, the length of the yard. Each body leaves work as the pair come within four cells: climbs out of the cut, comes down the hill, steps out of a shack, the balloon and the wizards come down in held steps. Then it hurries to its place in the files, and starts hopping on its own next beat.</td></tr>
+  <tr><td>1.9 – 31.4</td><td>Fireworks, one every 1.25 s (the works: quickening to one every 0.55 s near the end).</td></tr>
+  <tr><td>31.4</td><td>At the door, as the last scaffold pole comes down. The crowd stops in its files, still hopping.</td></tr>
+  <tr><td>32.0 – 32.5</td><td>The door slides open in four steps on a lit room.</td></tr>
+  <tr><td>32.6 – 34.4</td><td>She steps up and goes in, dimming into the room.</td></tr>
+  <tr><td>33.4 – 35.2</td><td>He follows.</td></tr>
+  <tr><td>35.4 – 35.9</td><td>The door slides shut in four steps. The volley goes up from both sides of the house (if on).</td></tr>
+  <tr><td>36.2</td><td>The window lights. The heart burst over the house (if the volley is on).</td></tr>
+  <tr><td>38.4 – 41.0</td><td>The hold: only the last sparks move.</td></tr>
+  <tr><td>41.0 – 44.0</td><td>The sheet.</td></tr>
+  <tr><td>44.0 –</td><td>Sheet down: the crowd walks back to work, and the pair's afterwards begins, for good.</td></tr>
+</table>
+
+<h2>Who joins, and how each gets free</h2>
+<table>
+  <tr><th>kind</th><th>where today</th><th>getting free</th></tr>
+  <tr><td>diggers</td><td>on the hill's crest</td><td>walk down its near slope</td></tr>
+  <tr><td>miners</td><td>down the cut</td><td>walk to the ladder, climb out a cell a step</td></tr>
+  <tr><td>farmers</td><td>at the plots, on a bank</td><td>a held hop down off the bank</td></tr>
+  <tr><td>haulers, carters</td><td>on the way, with carts</td><td>at once; carters bring the cart</td></tr>
+  <tr><td>apothecary, scholar, janitors</td><td>at their stations</td><td>at once</td></tr>
+  <tr><td>purifier</td><td>aloft in a balloon</td><td>the balloon comes down a cell a step, lands, they hop out; it stays parked</td></tr>
+  <tr><td>wizards</td><td>aloft over the tower</td><td>float down a cell a step</td></tr>
+  <tr><td>resting</td><td>inside a shack</td><td>the door opens, they step out</td></tr>
+  <tr><td>builders</td><td>at the house</td><td>they are the ones building it, so they do not walk; they join the cheer at the door</td></tr>
+  <tr><td>forklift</td><td>a machine, not crew</td><td>optional: rolls along at the tail</td></tr>
+</table>
+
+<h2>Questions</h2>
+<ol class="q">
+  <li>Where does the house stand: the yard's left end, where the pair idle today, or by the crew's shacks as their neighbors? The left end keeps the full walk and passes everyone; by the shacks the workers further left walk over to meet them.</li>
+  <li>Should the build be seen during the walk? With the camera on the pair the house only comes into view in the last five seconds. Two short glances at the plot (camera option) show the build going up; the strip under the scene shows it either way.</li>
+  <li>The builders' pile: carried down the yard while the deep half plays (out of sight), or a beat of its own before the pair come out?</li>
+  <li>Afterwards: do they come out and sit by the door (the bench is built with the house), or stay in with the window lit and the chimney going?</li>
+  <li>Forklifts: roll along at the tail, or stay parked?</li>
+  <li>Does the yard keep the house and the woodpile for good, even on a new rock?</li>
+</ol>
+</main>
+
+<script>
+"use strict";
+const P = 6, VW = 160, VH = 80, GY = 58, YW = 1281, LOOP = 60;
+const css = getComputedStyle(document.documentElement);
+const tok = k => css.getPropertyValue('--g-' + k).trim();
+const C = { ink: tok('ink'), paper: tok('paper'), w: tok('w'), g1: tok('1'), g2: tok('2'), g3: tok('3'),
+            g4: tok('4'), g5: tok('5'), g6: tok('6'), pu: tok('pu'), pud: tok('pud'), pul: tok('pul') };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, t0, t1) => clamp((t - t0) / (t1 - t0), 0, 1);
+const ease = k => k * k * (3 - 2 * k);
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const step = (t, hz) => Math.floor(t * hz + 1e-6) / hz;
+const stepped = (k, n) => Math.min(1, Math.floor(clamp(k, 0, 1) * n + 1e-6) / n);
+
+// --- cells ------------------------------------------------------------------------------
+// fillRect takes a top-left: every (x, y) here is the top-left cell.
+function cell(g, x, y, c) { if (!c) return; g.fillStyle = c; g.fillRect(Math.round(x * P), Math.round(y * P), P, P); }
+function rect(g, x, y, w, h, c) { if (!c) return; g.fillStyle = c; g.fillRect(Math.round(x * P), Math.round(y * P), Math.round(w * P), Math.round(h * P)); }
+function glyph(g, rows, x, y, c) { rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === 'x') cell(g, x + i, y + j, c); }); }
+function ring(g, cx, cy, r, c, every = 1) {
+  const n = Math.max(8, Math.ceil(Math.PI * 2 * r)), seen = new Set();
+  for (let k = 0; k < n; k += every) {
+    const a = k / n * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r);
+    if (seen.has(x + ',' + y)) continue; seen.add(x + ',' + y); cell(g, x, y, c);
+  }
+}
+const MARKS = { heart: ['x.x', 'xxx', '.x.'], note: ['.xx', '.x.', 'xx.'], bang: ['.x.', '.x.', '...', '.x.'] };
+function mark(g, kind, x, y, age) {
+  if (age < 0 || age > 1.2) return;
+  const tone = age < 0.8 ? (kind === 'heart' ? C.pu : C.ink) : age < 1.0 ? C.g4 : C.g5;
+  glyph(g, MARKS[kind], x, y - 4 - Math.floor(age / 0.3), tone);
+}
+
+// A body: the square every worker is, at top-left (x, y) in cells, `rows`
+// tall (2 is the squash), lifted `lift` whole pixels; its feet stay on y + 3.
+function body(g, x, y, o = {}) {
+  const rows = o.rows || 3, lift = o.lift || 0;
+  const X = Math.round(x * P), Y = Math.round((y + 3 - rows) * P) - Math.round(lift), H = rows * P;
+  g.fillStyle = o.line || C.ink; g.fillRect(X, Y, 3 * P, H);
+  g.fillStyle = o.fill || C.paper; g.fillRect(X + 3, Y + 3, 3 * P - 6, H - 6);
+  return { X, Y };
+}
+// What each kind wears, over the head (hx, hy the body's top-left cell).
+function kit(g, kind, hx, hy) {
+  const c = C.g3;
+  switch (kind) {
+    case 'rock': cell(g, hx + 2, hy - 1, c); cell(g, hx + 3, hy - 2, C.g4); break;          // a pick
+    case 'quarry': rect(g, hx, hy - 1, 3, 1, C.g2); cell(g, hx + 1, hy - 1, C.w); break;   // helmet and lamp
+    case 'farm': rect(g, hx - 1, hy - 1, 5, 1, C.g4); cell(g, hx + 1, hy - 2, C.g4); break; // straw hat
+    case 'haul': rect(g, hx, hy - 1, 3, 1, C.g4); break;                                    // cap
+    case 'janitor': cell(g, hx + 3, hy, C.g4); cell(g, hx + 3, hy + 1, C.g4); cell(g, hx + 3, hy + 2, C.g2); break; // broom
+    case 'wizard': rect(g, hx, hy - 1, 3, 1, C.ink); cell(g, hx + 1, hy - 2, C.ink); cell(g, hx + 1, hy - 3, C.pu); break;
+    case 'stir': cell(g, hx + 1, hy - 1, C.pu); break;                                      // a vial
+    case 'purify': rect(g, hx, hy + 1, 3, 1, C.g4); break;                                  // a mask
+    case 'scholar': rect(g, hx, hy - 1, 3, 1, C.ink); break;
+    case 'build': rect(g, hx, hy - 1, 3, 1, C.g2); cell(g, hx + 1, hy - 2, C.g2); break;   // hard hat
+  }
+}
+
+// --- the yard's layout, in cells ------------------------------------------------------------
+const PIT0 = 1029, LIP = 1018;
+const SITES = [
+  { name: 'tower', x: 160, w: 22, h: 26 }, { name: 'casino', x: 222, w: 26, h: 10 },
+  { name: 'filter', x: 288, w: 24, h: 12 }, { name: 'apothecary', x: 360, w: 22, h: 9 },
+  { name: 'bench', x: 788, w: 16, h: 4 }, { name: 'hire', x: 838, w: 12, h: 8 },
+];
+const PLOTS = [420, 432, 444, 466, 478, 490];
+const CUT = { x0: 520, x1: 585, floor: 70, ladder: 525 };
+const SHACKS = { x0: 635, x1: 771 };
+const HILL = { a: 868, b: 903, c: 935, d: 970, top: 42 };
+const BANK = { x0: 452, x1: 462, h: 3 };
+const surf = x => x < HILL.a || x > HILL.d ? GY : x < HILL.b ? lerp(GY, HILL.top, (x - HILL.a) / (HILL.b - HILL.a))
+  : x <= HILL.c ? HILL.top : lerp(HILL.top, GY, (x - HILL.c) / (HILL.d - HILL.c));
+
+// --- options --------------------------------------------------------------------------------
+const state = { hop: 'held', fw: 'works', volley: 'on', where: 'left', after: 'porch', cam: 'follow', lift: 'roll', t: 0, playing: true, speed: 1 };
+const HOPS = {
+  today: ['today', 'As built: 0, 1, 2, 1 cells, an eighth of a second each, in lockstep, only while a body is within a cell of its place. The pair move a cell at a time.'],
+  arc: ['eased arc, rolling wave', 'A one-frame crouch, a smooth parabola in whole pixels, a squash on landing; each rank half a beat behind the one ahead, so a wave rolls back from the pair as they walk.'],
+  held: ['held poses, off the beat', 'Crouch, up with a smear under it, apex held, down with a smear over it, a held landing with two dust cells; a steady beat, the crowd in three groups a third of a beat apart.'],
+  cheer: ['hop then arms up', 'One held hop, then both arms up and held, then down; alternate bodies take turns, so half the crowd is always up.'],
+};
+const FWS = {
+  today: ['today', 'As built: a starburst, rings or a willow at random, one every 1.25 s, a three-cell tail on the rocket.'],
+  crossette: ['crossettes', 'Five arms open and hold, then every head splits into a small cross; rockets leave a smoke trail that lingers and greys out.'],
+  ringwillow: ['rings into willows', 'A black ring with a purple ring inside opens and holds, then every point droops away in a long grey willow trail.'],
+  works: ['the works', 'All of them and a purple-cored peony, the cadence quickening from 1.25 s to 0.55 s as the pair near the house, doubles in the last third, held blooms and lingering trails.'],
+};
+const WHERE = {
+  left: ['the yard\'s left end', 'Where the pair idle today (S.retired, 40 cells in). The whole yard is walked and everyone is passed.'],
+  shacks: ['by the crew\'s shacks', 'Their neighbors, just left of the settlement. A 400-cell stroll; the workers to the left of it walk over and line the way beyond the house.'],
+};
+const AFTER = {
+  porch: ['in and out', 'They come out and sit on the bench by the door, a heart, a stroll, one goes in and the window lights while anyone is in.'],
+  indoors: ['stay in', 'They stay in: the window lit, the chimney puffing, a curtain drawn now and then, a face at the window.'],
+};
+const CAMS = {
+  follow: ['on the pair', 'As today: the pair a share of the window in from its left; the house comes into view in the last few seconds.'],
+  glance: ['two glances at the plot', 'At 10 s and 20 s the camera glides to the plot for two seconds and back, so the build is seen going up.'],
+};
+
+// --- the house ------------------------------------------------------------------------------
+// Laid out at hx; the pieces in the order the builders bring them. `up`
+// pieces are set from the scaffold's plank; `off` pieces are the scaffold
+// taken down onto the woodpile.
+function layout() {
+  const hx = state.where === 'left' ? 26 : 598;
+  const pileX = state.where === 'left' ? hx - 10 : hx + 22;
+  const doorX = hx + 11;
+  const pieces = [];
+  const add = (kind, segs, o = {}) => pieces.push({ kind, segs, ...o });
+  add('pole', [[hx - 2, 50, 1, 8]]); add('pole', [[hx + 19, 50, 1, 8]]); add('plank', [[hx - 2, 50, 22, 1]]);
+  add('post', [[hx, 49, 1, 9]]); add('post', [[hx + 17, 49, 1, 9]]); add('post', [[hx + 8, 49, 1, 9]], { up: true });
+  add('plate', [[hx, 48, 9, 1]], { up: true }); add('plate', [[hx + 9, 48, 9, 1]], { up: true });
+  for (let y = 57; y >= 49; y--) {
+    const winRow = y === 52 || y === 53, doorRow = y >= 51;
+    add('wall', winRow ? [[hx + 1, y, 2, 1], [hx + 6, y, 2, 1]] : [[hx + 1, y, 7, 1]], { up: y < 53 });
+    add('wall', doorRow ? [[hx + 9, y, 2, 1], [hx + 15, y, 2, 1]] : [[hx + 9, y, 8, 1]], { up: y < 53 });
+  }
+  [[47, hx - 1, 20], [46, hx, 18], [45, hx + 1, 16], [44, hx + 2, 14], [43, hx + 4, 10]].forEach(([y, x, w]) => {
+    const h1 = Math.floor(w / 2);
+    add('roof', [[x, y, h1, 1]], { up: true }); add('roof', [[x + h1, y, w - h1, 1]], { up: true });
+  });
+  add('chimney', [[hx + 13, 40, 2, 3]], { up: true });
+  add('door', [[doorX, 51, 4, 7]]);
+  add('window', [[hx + 3, 52, 3, 2]]);
+  if (state.after === 'porch') add('bench', [[hx + 16, 56, 4, 1], [hx + 16, 57, 1, 1], [hx + 19, 57, 1, 1]]);
+  add('plank', [[hx - 2, 50, 22, 1]], { off: 2 }); add('pole', [[hx + 19, 50, 1, 8]], { off: 1 }); add('pole', [[hx - 2, 50, 1, 8]], { off: 0 });
+  pieces.forEach(p => {
+    const xs = p.segs.map(s => s[0]), xe = p.segs.map(s => s[0] + s[2]);
+    p.cx = (Math.min(...xs) + Math.max(...xe)) / 2; p.top = Math.min(...p.segs.map(s => s[1]));
+    if (p.kind === 'roof' || p.kind === 'chimney') p.up = true;
+  });
+  return { hx, pileX, doorX, pieces };
+}
+
+// --- the timeline ---------------------------------------------------------------------------
+const OUT1 = 1.4, WALK0 = 1.4, WALK1 = 31.4, BUILD0 = 0.6, BUILD1 = 31.0;
+const DOOR0 = 32.0, HER0 = 32.6, HIM0 = 33.4, SHUT0 = 35.4, LIGHT = 36.2, HOLD0 = 38.4, SHEET0 = 41, AFTER0 = 44;
+const NB = 5;
+let L, crowd, frames, shells, trips;
+
+function herXAt(t) {
+  if (t < WALK0) return LIP;
+  const x = lerp(LIP, L.doorX, seg(t, WALK0, WALK1));
+  return state.hop === 'today' ? Math.round(x) : x;
+}
+// The pair's spots: [her, him] as { x, y, dim } in cells.
+function pairAt(t) {
+  if (t < OUT1) {
+    // up through the liquid to its surface, then over onto the lip, six held steps
+    const k = stepped(t / OUT1, 6), up = clamp(k / 0.5, 0, 1), over = clamp((k - 0.5) / 0.5, 0, 1);
+    return [0, 1].map(i => {
+      const sx = 1034 + i * 4, ex = LIP + i * 4;
+      const x = Math.round(lerp(sx, ex, over));
+      const y = over > 0 ? Math.round(lerp(GY - 3, GY - 3, over) - Math.sin(over * Math.PI) * 3) : Math.round(lerp(GY + 6, GY - 3, up));
+      return { x, y };
+    });
+  }
+  const x = herXAt(t), D = L.doorX;
+  if (t < WALK1) return [{ x, y: GY - 3 }, { x: x + 4, y: GY - 3 }];
+  // at the door, then in: up the step, dimming into the lit room
+  const her = goIn(t, HER0, D, D + 0.5), him = goIn(t, HIM0, D + 4, D + 0.5);
+  if (t >= AFTER0) return afterPair(t);
+  return [her, him];
+}
+function goIn(t, t0, x0, xd) {
+  if (t < t0) return { x: x0, y: GY - 3 };
+  const x = lerp(x0, xd, stepped(seg(t, t0, t0 + 0.6), 4));
+  if (t < t0 + 0.9) return { x, y: GY - 3 };
+  if (t < t0 + 1.8) return { x: xd, y: GY - 3, dim: 1 + Math.floor(seg(t, t0 + 0.9, t0 + 1.8) * 3) };
+  return null;
+}
+// Afterwards, a loop of turns, for good.
+function afterPair(t) {
+  const u = (t - AFTER0) % 16, D = L.doorX, bx = L.hx + 16;
+  if (state.after === 'indoors') {
+    return [null, null];
+  }
+  // porch: out at 0..2, sit 2..7 with a heart at 4, he strolls 7..11, she goes in 12..14, back out 14..16
+  const out = (t0, tx) => {
+    if (u < t0) return null;
+    if (u < t0 + 0.6) return { x: D + 0.5, y: GY - 3, dim: 3 - Math.floor(seg(u, t0, t0 + 0.6) * 3) };
+    return { x: lerp(D + 0.5, tx, stepped(seg(u, t0 + 0.6, t0 + 1.6), 6)), y: GY - 3 };
+  };
+  let her = out(0, bx), him = out(0.8, bx + 3);
+  if (her && u >= 1.8) her = { x: bx, y: GY - 3, sit: true };
+  if (him && u >= 2.6) him = { x: bx + 3, y: GY - 3, sit: true };
+  if (u >= 7 && u < 11) { const k = u < 9 ? seg(u, 7, 9) : 1 - seg(u, 9, 11); him = { x: Math.round(bx + 3 + k * 10), y: GY - 3, face: u < 9 ? 1 : -1 }; }
+  if (u >= 12 && u < 14) {
+    if (u < 12.8) her = { x: lerp(bx, D + 0.5, stepped(seg(u, 12, 12.8), 5)), y: GY - 3 };
+    else if (u < 13.6) her = { x: D + 0.5, y: GY - 3, dim: 1 + Math.floor(seg(u, 12.8, 13.6) * 3) };
+    else her = null;
+  }
+  if (u >= 14) { const k = seg(u, 14, 15.4); her = u < 14.6 ? { x: D + 0.5, y: GY - 3, dim: 3 - Math.floor(seg(u, 14, 14.6) * 3) } : { x: lerp(D + 0.5, bx, stepped(k, 6)), y: GY - 3, sit: u > 15.4 }; }
+  return [her, him];
+}
+function anyoneIn(t) {
+  if (t < LIGHT) return false;
+  if (t < AFTER0) return true;
+  if (state.after === 'indoors') return true;
+  const u = (t - AFTER0) % 16;
+  return u < 1.4 || (u >= 13.2 && u < 14.4);
+}
+
+// --- the builders' trips ----------------------------------------------------------------------
+function planTrips() {
+  const N = L.pieces.length, jL = Math.floor((N - 1) / NB), bL = (N - 1) % NB, fSet = 0.55;
+  const D = (BUILD1 - BUILD0) / (jL + bL / NB + fSet);
+  return L.pieces.map((p, i) => {
+    const j = Math.floor(i / NB), b = i % NB, t0 = BUILD0 + j * D + b * D / NB;
+    return { p, b, t0, D, set: t0 + fSet * D, take: p.off != null ? t0 + 0.45 * D : t0 + 0.06 * D };
+  });
+}
+// Where builder b is at t, and what it holds: { x, y, hold, arms, rows }.
+function builderAt(b, t) {
+  const home = { x: L.pileX + 1 + b * 2 - 2, y: GY - 3 };
+  const mine = trips.filter(r => r.b === b);
+  const r = mine.find(r => t >= r.t0 && t < r.t0 + r.D);
+  if (t >= AFTER0) {
+    // the yard goes again: off to their next job, rightwards
+    const x = home.x + (t - AFTER0) * 12;
+    return { x, y: GY - 3 };
+  }
+  if (!r) {
+    if (t >= BUILD1 && t < AFTER0) return { x: state.where === 'left' ? L.pileX - 2 - b * 3.5 : L.pileX + 8 + b * 4, y: GY - 3, cheer: true };
+    return home;
+  }
+  const f = (t - r.t0) / r.D, p = r.p;
+  const pile = L.pileX + 3, spot = p.cx - 1.5;
+  const sx = L.hx - 2, ex = L.hx + 19;
+  if (p.off != null) {
+    // scaffold down: walk out empty, take it, carry it back onto the woodpile
+    if (f < 0.4) return { x: lerp(pile, spot, ease(f / 0.4)), y: GY - 3 };
+    if (f < 0.5) return { x: spot, y: GY - 3, arms: true, hold: f >= 0.45 ? p : null };
+    if (f < 0.95) return { x: lerp(spot, pile, ease((f - 0.5) / 0.45)), y: GY - 3, hold: p };
+    return { x: pile, y: GY - 3, rows: 2 };
+  }
+  if (f < 0.06) return { x: pile, y: GY - 3, rows: 2, hold: f > 0.03 ? p : null };
+  if (!p.up) {
+    if (f < 0.5) return { x: lerp(pile, spot, ease((f - 0.06) / 0.44)), y: GY - 3, hold: p };
+    if (f < 0.62) return { x: spot, y: GY - 3, arms: true, hold: f < 0.55 ? p : null, rows: f >= 0.55 && f < 0.58 ? 2 : 3 };
+    return { x: lerp(spot, pile, ease((f - 0.62) / 0.38)), y: GY - 3 };
+  }
+  // up: to the nearer pole, climb a cell a step, along the plank, set it, back
+  const pole = Math.abs(spot - sx) < Math.abs(spot - ex) ? sx - 1 : ex - 1;
+  const top = 47, gy = GY - 3;
+  if (f < 0.30) return { x: lerp(pile, pole, ease((f - 0.06) / 0.24)), y: gy, hold: p };
+  if (f < 0.40) return { x: pole, y: Math.round(lerp(gy, top, stepped((f - 0.30) / 0.10, 8))), hold: p };
+  if (f < 0.52) return { x: lerp(pole, spot, ease((f - 0.40) / 0.12)), y: top, hold: p };
+  if (f < 0.62) return { x: spot, y: top, arms: true, hold: f < 0.55 ? p : null };
+  if (f < 0.72) return { x: lerp(spot, pole, ease((f - 0.62) / 0.10)), y: top };
+  if (f < 0.80) return { x: pole, y: Math.round(lerp(top, gy, stepped((f - 0.72) / 0.08, 8))) };
+  return { x: lerp(pole, pile, ease((f - 0.80) / 0.20)), y: gy };
+}
+// Whether piece i is standing in place at t.
+function pieceUp(i, t) {
+  const r = trips[i], p = r.p;
+  if (p.off != null) return false;
+  if (t < r.set) return false;
+  if (p.kind === 'plank' || p.kind === 'pole') {
+    const off = trips.find(o => o.p.off != null && o.p.kind === p.kind && o.p.segs[0][0] === p.segs[0][0]);
+    if (off && t >= off.take) return false;
+  }
+  return true;
+}
+
+// --- the crowd ------------------------------------------------------------------------------
+function makeCrowd() {
+  const list = [];
+  const add = (kind, x, y, free, o = {}) => list.push({ kind, x0: x, y0: y, free, ...o });
+  const g = GY - 3;
+  [912, 919, 927].forEach(x => add('rock', x, surf(x + 1.5) - 3, 'hill'));
+  add('scholar', 796, g, 'none');
+  [652, 694, 736].forEach(x => add('rest', x, g, 'door'));
+  add('haul', 994, g, 'none', { cart: true }); add('haul', 978, g, 'none'); add('haul', 706, g, 'none', { cart: true }); add('haul', 612 - (state.where === 'shacks' ? 20 : 0), g, 'none');
+  [538, 553, 568].forEach(x => add('quarry', x, CUT.floor - 3, 'cut'));
+  add('farm', 426, g, 'none'); add('farm', 455, g - BANK.h, 'bank'); add('farm', 484, g, 'none');
+  add('stir', 372, g, 'none');
+  add('purify', 303, 26, 'balloon');
+  add('janitor', 294, g, 'none'); add('janitor', 334, g, 'none');
+  add('wizard', 168, 20, 'float'); add('wizard', 178, 15, 'float');
+  if (state.lift === 'roll') add('lift', 958, g, 'none', { lift: true });
+  return list;
+}
+// A place in the files behind the pair: today's ranks are 7 cells with the
+// second file 3 back, bodies touching; the options open them to 8 and 4.
+const slotX = (k, herX) => state.hop === 'today' ? herX + 10 + Math.floor(k / 2) * 7 + (k % 2) * 3
+                                                 : herX + 10 + Math.floor(k / 2) * 8 + (k % 2) * 4;
+const passT = x => WALK0 + clamp((LIP - (x + 4)) / (LIP - L.doorX), 0, 1) * (WALK1 - WALK0);
+
+// The whole scene stepped once at 60 a second whenever an option changes,
+// so a body chasing its place is the same on every replay and the scrubber.
+function simulate() {
+  L = layout();
+  trips = planTrips();
+  crowd = makeCrowd();
+  const conv = m => state.where === 'shacks' && m.x0 < L.hx;
+  crowd.forEach(m => {
+    m.conv = conv(m);
+    m.tl = m.conv ? WALK0 + 1 + hash(m.x0) * 4 : passT(m.x0);
+  });
+  // join order: by when each leaves its work; the forklift always last
+  const fol = crowd.filter(m => !m.conv && !m.lift).sort((a, b) => a.tl - b.tl);
+  fol.forEach((m, i) => { m.k = i; });
+  crowd.filter(m => m.lift).forEach(m => { m.k = fol.length + 1; });
+  crowd.filter(m => m.conv).sort((a, b) => b.x0 - a.x0).forEach((m, i) => { m.k = i; });
+  const F = Math.ceil(LOOP * 60);
+  frames = crowd.map(() => new Array(F));
+  const walkV = (LIP - L.doorX) / (WALK1 - WALK0);
+  const H = Math.max(walkV * 1.6, 26);
+  crowd.forEach((m, mi) => {
+    let x = m.x0, y = m.y0, st = 'work', ft = 0, inAt = null, balloonY = m.y0 + 4, face = -1;
+    for (let n = 0; n < F; n++) {
+      const t = n / 60, dt = 1 / 60;
+      if (st === 'work' && t >= m.tl) st = 'free', ft = 0;
+      if (st === 'free') {
+        ft += dt;
+        if (m.free === 'none') st = 'hurry';
+        else if (m.free === 'hill') { x -= 18 * dt; y = surf(x + 1.5) - 3; if (x + 1.5 < HILL.a) { y = GY - 3; st = 'hurry'; } }
+        else if (m.free === 'cut') {
+          if (x > CUT.ladder + 0.1) x = Math.max(CUT.ladder, x - 16 * dt);
+          else { m._c0 ??= ft; y = CUT.floor - 3 - Math.floor((ft - m._c0) / 0.08); if (y <= GY - 3) { y = GY - 3; x = CUT.ladder - 4; st = 'hurry'; } }
+        }
+        else if (m.free === 'bank') { const k = stepped(ft / 0.4, 4); x = m.x0 - k * 4; y = m.y0 + k * BANK.h - Math.round(Math.sin(k * Math.PI) * 2); if (ft >= 0.4) { y = GY - 3; st = 'hurry'; } }
+        else if (m.free === 'balloon') { balloonY = Math.min(GY - 2, m.y0 + 4 + Math.floor(ft / 0.1)); y = balloonY - 4; if (balloonY >= GY - 2) { if (ft > (m._l ??= ft) + 0.3) { y = GY - 3; x = m.x0 + 5; st = 'hurry'; } else { const k = stepped((ft - m._l) / 0.3, 3); x = m.x0 + k * 5; y = lerp(balloonY - 4, GY - 3, k) - Math.round(Math.sin(k * Math.PI) * 2); } } }
+        else if (m.free === 'float') { y = Math.min(GY - 3, m.y0 + Math.floor(ft / 0.08)); if (y >= GY - 3) st = 'hurry'; }
+        else if (m.free === 'door') { if (ft >= 0.5) { y = GY - 3; st = 'hurry'; } }
+      }
+      if (st === 'hurry' || st === 'in') {
+        let tx, ty;
+        if (m.conv) { tx = L.hx - 8 - Math.floor(m.k / 2) * 5; ty = GY - 3 + (m.k % 2); }
+        else {
+          const hx = t >= AFTER0 ? L.doorX : herXAt(Math.min(t, WALK1));
+          tx = slotX(m.k, hx); ty = GY - 3 + (m.k % 2);
+        }
+        const d = tx - x;
+        const pace = st === 'in' && state.hop === 'today' ? 42 : st === 'in' ? Infinity : (m.conv ? Math.max(14, Math.abs(m.x0 - tx) / 18) : H);
+        if (Math.abs(d) <= pace * dt) { x = tx; if (st === 'hurry') { st = 'in'; inAt = t; } }
+        else x += Math.sign(d) * pace * dt;
+        face = Math.abs(d) > 0.3 ? Math.sign(d) : (m.conv ? 1 : -1);
+        y = ty;
+      }
+      if (t >= AFTER0 && st !== 'home') st = 'home';
+      if (st === 'home') {
+        const d = m.x0 - x;
+        x += Math.sign(d) * Math.min(Math.abs(d), 14 * dt);
+        face = Math.sign(d) || -1;
+        y = GY - 3;
+      }
+      frames[mi][n] = { x, y, st, inAt, face, balloonY, ft };
+    }
+  });
+  shells = planShells();
+}
+
+// --- hops -------------------------------------------------------------------------------------
+// The pose of body m at t: { lift (px), rows, smear, dust, arms }.
+function hopPose(m, f, t) {
+  if (m.lift) return {};
+  if (f.st !== 'in' || t >= HOLD0) return {};
+  if (m.conv && herXAt(t) - L.hx > 60) return {};
+  const h = state.hop;
+  if (h === 'today') {
+    // today's gate: off whenever the body is more than a cell from its place
+    const tx = slotX(m.k, herXAt(Math.min(t, WALK1)));
+    if (!m.conv && Math.abs(tx - f.x) > 1) return {};
+    return { lift: [0, 1, 2, 1][Math.floor(t / 0.125 + m.k) % 4] * P };
+  }
+  if (h === 'arc') {
+    const per = 0.55, ph = Math.floor(m.k / 2) * 0.07 + (m.k % 2) * 0.035;
+    const start = Math.ceil((f.inAt + ph) / per) * per - ph;
+    if (t < start) return {};
+    const u = ((t + ph) % per) / per;
+    if (u < 0.14) return { rows: 2 };
+    if (u < 0.84) { const k = (u - 0.14) / 0.70; return { lift: Math.round(4 * k * (1 - k) * 2.2 * P) }; }
+    return { rows: 2 };
+  }
+  const per = h === 'held' ? 0.76 : 1.2;
+  const ph = h === 'held' ? (m.k % 3) * per / 3 : (m.k % 2) * per / 2;
+  const start = Math.ceil((f.inAt + ph) / per) * per - ph;
+  if (t < start) return {};
+  const u = (t + ph) % per;
+  // the held hop: stand, crouch, up (smear under), apex held, down (smear over), land held
+  const hop = [[0.20, {}], [0.12, { rows: 2 }], [0.08, { lift: P, smear: 'under' }], [0.16, { lift: 2 * P }],
+               [0.08, { lift: P, smear: 'over' }], [0.12, { rows: 2, dust: true }]];
+  if (h === 'cheer' && u >= 0.76) return u < 1.0 ? { arms: 'up' } : u < 1.12 ? { arms: 'half' } : {};
+  let a = 0;
+  for (const [d, pose] of hop) { if (u < a + d) return pose; a += d; }
+  return {};
+}
+
+// --- fireworks --------------------------------------------------------------------------------
+function planShells() {
+  const out = [], fw = state.fw;
+  let t = WALK0 + 0.5, i = 0;
+  while (t < WALK1 - 0.3) {
+    let kind;
+    if (fw === 'today') kind = ['star', 'ring', 'willow'][Math.floor(hash(i * 5.3) * 3)];
+    else if (fw === 'works') kind = ['peony', 'crossette', 'ringwillow', 'willow', 'crossette', 'peony'][Math.floor(hash(i * 5.3) * 6)];
+    else kind = fw;
+    out.push({ i, t0: t, sx: 0.08 + 0.84 * hash(i * 3.1 + 1), y: 8 + Math.floor(hash(i * 7.7 + 2) * 20), kind, trail: fw !== 'today' });
+    if (fw === 'works' && t > WALK0 + 20 && hash(i * 2.9) < 0.5)
+      out.push({ i: i + 500, t0: t + 0.15, sx: clamp(0.08 + 0.84 * hash(i * 3.1 + 1) + 0.18, 0.1, 0.9), y: 10 + Math.floor(hash(i * 1.7) * 16), kind: 'peony', trail: true });
+    const gap = fw === 'works' ? lerp(1.25, 0.55, seg(t, WALK0, WALK1)) : 1.25;
+    t += gap; i++;
+  }
+  if (state.volley === 'on') {
+    // the volley: off both sides of the house as the door shuts, bursting
+    // left to right over it, then the heart as the window lights
+    for (let j = 0; j < 6; j++) out.push({ i: 900 + j, t0: SHUT0 + j * 0.12, world: L.hx - 14 + j * 9, y: 10 + (j % 2) * 6, kind: j % 2 ? 'ring' : 'crossette', trail: true, rise: 0.6 });
+    out.push({ i: 950, t0: LIGHT - 0.3, world: L.hx + 9, y: 14, kind: 'heart', trail: true, rise: 0.6 });
+  }
+  return out;
+}
+function fade(b, k, base) { return b < 1.2 ? (k % 3 === 0 ? C.pu : base) : b < 1.8 ? C.g3 : b < 2.3 ? C.g4 : C.g5; }
+function shell(g, s, t, cx) {
+  const rise = s.rise || 0.8, a = t - s.t0;
+  if (a < 0 || a > rise + 3.4) return;
+  const x = s.world != null ? s.world - cx : Math.round(s.sx * VW), y = s.y;
+  const gx = x, gy = GY - 1;
+  if (s.trail) {
+    // the rocket's smoke: a cell left at every held step, greying out
+    const n = Math.floor(Math.min(a, rise) * 10);
+    for (let j = 0; j <= n; j++) {
+      const age = a - j / 10; if (age > 0.9) continue;
+      const ry = Math.round(lerp(gy, y, j / 10 / rise));
+      cell(g, gx + (j % 2 ? 0 : 0), ry + 1, age < 0.3 ? C.g4 : age < 0.6 ? C.g5 : C.g6);
+    }
+  }
+  if (a < rise) {
+    const ry = Math.round(lerp(gy, y, a / rise));
+    cell(g, gx, ry, C.ink);
+    if (!s.trail) { cell(g, gx, ry + 1, C.g4); cell(g, gx, ry + 2, C.g5); }
+    return;
+  }
+  const b = a - rise;
+  if (s.kind === 'star') {
+    if (b < 0.6) { const r = 1 + Math.floor(b / 0.15); cell(g, x, y, C.pu);
+      for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4; for (let j = 1; j <= r; j++) cell(g, x + Math.cos(an) * j, y + Math.sin(an) * j, j === r ? C.pu : C.ink); } }
+    else if (b < 2.4) { const u = b - 0.6;
+      for (let k = 0; k < 16; k++) { const an = k * Math.PI / 8, d = 4 + u * 3; cell(g, x + Math.cos(an) * d, y + Math.sin(an) * d + u * u * 5, fade(b, k, C.ink)); } }
+  } else if (s.kind === 'ring') {
+    if (b < 0.75) { const r = 2 + Math.floor(b / 0.15); if (r > 2) ring(g, x, y, r - 1, C.g4, 2); ring(g, x, y, r, r % 2 ? C.pu : C.ink, 1); }
+    else if (b < 2.4) { const u = b - 0.75;
+      for (let k = 0; k < 14; k++) { const an = k * Math.PI / 7, d = 5 + u * 1.5; cell(g, x + Math.cos(an) * d, y + Math.sin(an) * d + u * u * 3, fade(b, k, C.ink)); } }
+  } else if (s.kind === 'willow') {
+    if (b < 0.3) { cell(g, x, y, C.pu); ring(g, x, y, 2 + Math.floor(b / 0.15), C.ink, 2); }
+    else if (b < 2.6) willow(g, x, y, b - 0.3, b, 10, 2, 2.4);
+  } else if (s.kind === 'crossette') {
+    const arms = 5, r = Math.min(5, 1 + Math.floor(b / 0.1));
+    if (b < 0.75) {
+      cell(g, x, y, C.pu);
+      for (let k = 0; k < arms; k++) { const an = -Math.PI / 2 + k * 2 * Math.PI / arms;
+        for (let j = 1; j <= r; j++) cell(g, x + Math.cos(an) * j, y + Math.sin(an) * j, j === r ? (b < 0.5 ? C.pu : C.ink) : j > r - 2 ? C.g3 : null); }
+    } else if (b < 2.8) {
+      const u = b - 0.75, d = Math.min(4, Math.floor(u / 0.1));
+      for (let k = 0; k < arms; k++) { const an = -Math.PI / 2 + k * 2 * Math.PI / arms;
+        const hx = x + Math.cos(an) * 5, hy = y + Math.sin(an) * 5 + u * u * 3;
+        if (u < 0.15) { cell(g, hx, hy, C.w); ring(g, hx, hy, 1, C.pu, 2); continue; }
+        for (let q = 0; q < 4; q++) { const aq = an + Math.PI / 4 + q * Math.PI / 2;
+          cell(g, hx + Math.cos(aq) * d, hy + Math.sin(aq) * d + u * u * 2, fade(b - 0.4, q + k, C.ink));
+          if (d > 1 && u < 0.9) cell(g, hx + Math.cos(aq) * (d - 1), hy + Math.sin(aq) * (d - 1) + u * u * 2, C.g4); } }
+    }
+  } else if (s.kind === 'peony') {
+    const r = Math.min(7, 2 + Math.floor(b / 0.08));
+    if (b < 0.9) {
+      rect(g, x - 1, y - 1, 3, 3, b < 0.6 ? C.pu : C.pud);
+      for (let k = 0; k < 20; k++) { const an = k * Math.PI / 10; cell(g, x + Math.cos(an) * r, y + Math.sin(an) * r, k % 4 === 0 ? C.pu : C.ink);
+        if (r > 3) cell(g, x + Math.cos(an) * (r - 2), y + Math.sin(an) * (r - 2), C.g4); }
+    } else if (b < 2.8) { const u = b - 0.9;
+      for (let k = 0; k < 20; k++) { const an = k * Math.PI / 10; cell(g, x + Math.cos(an) * (7 + u), y + Math.sin(an) * (7 + u) + u * u * 4, fade(b - 0.3, k, C.ink)); } }
+  } else if (s.kind === 'ringwillow') {
+    const r = Math.min(7, 1 + Math.floor(b / 0.1));
+    if (b < 1.0) { if (r < 3) cell(g, x, y, C.pu); else { ring(g, x, y, r, C.ink); if (r > 4) ring(g, x, y, r - 3, C.pu); } }
+    else if (b < 3.4) {
+      const u = b - 1.0;
+      for (let k = 0; k < 16; k++) { const an = k * Math.PI / 8;
+        for (let j = 5; j >= 0; j--) { const s2 = Math.max(0, u - j * 0.1);
+          const px = x + Math.cos(an) * (7 + s2 * 1.2), py = y + Math.sin(an) * (7 + s2 * 0.8) + s2 * s2 * 4;
+          cell(g, px, py, j === 0 ? (u < 1.2 ? (k % 2 ? C.ink : C.pu) : C.g4) : u > 1.8 ? C.g6 : [C.g2, C.g3, C.g3, C.g4, C.g5, C.g6][j]); } }
+    }
+  } else if (s.kind === 'heart') {
+    const pts = [];
+    for (let k = 0; k < 28; k++) { const q = k / 28 * Math.PI * 2;
+      pts.push([16 * Math.pow(Math.sin(q), 3) / 16, -(13 * Math.cos(q) - 5 * Math.cos(2 * q) - 2 * Math.cos(3 * q) - Math.cos(4 * q)) / 16]); }
+    const sc = b < 0.3 ? 3 : b < 0.6 ? 6 : 9;
+    if (b < 1.6) pts.forEach(([px, py], k) => cell(g, x + px * sc, y + py * sc, b < 1.2 ? (k % 2 ? C.pu : C.pud) : C.g3));
+    else if (b < 3.2) { const u = b - 1.6; pts.forEach(([px, py], k) => cell(g, x + px * 9, y + py * 9 + u * u * 4, fade(u + 1.2, k, C.pu))); }
+  }
+}
+function willow(g, x, y, s0, b, n, r0, reach) {
+  for (let k = 0; k < n; k++) { const an = -Math.PI / 2 + (k - (n - 1) / 2) * 0.55;
+    const at = s => [x + Math.cos(an) * (r0 + s * reach), y + Math.sin(an) * (r0 + s * reach) * 0.6 + s * s * 4];
+    const trail = [C.g2, C.g3, C.g4, C.g5];
+    for (let j = 4; j >= 1; j--) { const s = s0 - j * 0.12; if (s < 0) continue; const [px, py] = at(s); cell(g, px, py, b > 1.8 ? C.g5 : trail[j - 1]); }
+    const [hx, hy] = at(s0); cell(g, hx, hy, b > 1.8 ? C.g4 : (k % 3 ? C.ink : C.pu)); }
+}
+
+// --- drawing the yard -------------------------------------------------------------------------
+function camAt(t) {
+  const follow = clamp(herXAt(Math.min(t, WALK1)) - 0.38 * VW, 0, YW - VW);
+  const house = clamp(L.hx + 9 - VW * 0.42, 0, YW - VW);
+  let k = 0;
+  if (state.cam === 'glance') for (const g0 of [10, 20]) k = Math.max(k, ease(seg(t, g0, g0 + 0.6)) * (1 - ease(seg(t, g0 + 2.6, g0 + 3.2))));
+  if (t >= WALK1 - 1) k = Math.max(k, ease(seg(t, WALK1 - 1, WALK1 + 0.8)));
+  return Math.round(lerp(follow, house, k) * P) / P;
+}
+function drawWorld(g, t, cx) {
+  const inView = (x, w = 0) => x + w >= cx - 4 && x <= cx + VW + 4;
+  // the ground: the way, and dust cells under it in a few greys
+  for (let x = Math.floor(cx); x < cx + VW + 1; x++) {
+    if (x >= PIT0) continue;
+    if (x >= CUT.x0 && x < CUT.x1) { cell(g, x, GY, C.g4); continue; }
+    cell(g, x, surf(x), C.g3);
+    for (let y = GY + 1; y < VH; y++) if (hash(x * 13 + y * 7) < 0.05) cell(g, x, y, hash(x + y) < 0.5 ? C.g5 : C.g6);
+  }
+  // the hill
+  if (inView(HILL.a, HILL.d - HILL.a)) for (let x = HILL.a; x <= HILL.d; x++) for (let y = Math.ceil(surf(x)) + 1; y < GY; y++) cell(g, x, y, hash(x * 3 + y * 11) < 0.3 ? C.g4 : C.g5);
+  // the cut
+  if (inView(CUT.x0, CUT.x1 - CUT.x0)) {
+    for (let y = GY; y <= CUT.floor; y++) { cell(g, CUT.x0, y, C.g3); cell(g, CUT.x1, y, C.g3); }
+    for (let x = CUT.x0; x <= CUT.x1; x++) cell(g, x, CUT.floor, hash(x) < 0.5 ? C.g3 : C.g4);
+    for (let y = GY; y < CUT.floor; y++) { cell(g, CUT.ladder, y, C.g4); cell(g, CUT.ladder + 2, y, C.g4); if (y % 2 === 0) cell(g, CUT.ladder + 1, y, C.g5); }
+  }
+  // the bank, the plots
+  for (let x = BANK.x0; x < BANK.x1; x++) for (let y = GY - BANK.h; y < GY; y++) if (Math.abs(x - (BANK.x0 + BANK.x1) / 2) < (y - (GY - BANK.h) + 2) * 1.6) cell(g, x, y, hash(x * 5 + y) < 0.4 ? C.g4 : C.g5);
+  PLOTS.forEach(px => { if (inView(px, 8)) for (let i = 0; i < 8; i++) cell(g, px + i, GY - 1, i % 2 ? C.g4 : C.g3); });
+  // the stations: grey boxes
+  SITES.forEach(s => { if (!inView(s.x, s.w)) return;
+    for (let x = s.x; x < s.x + s.w; x++) for (let y = GY - s.h; y < GY; y++) cell(g, x, y, (x === s.x || x === s.x + s.w - 1 || y === GY - s.h) ? C.g4 : C.g6); });
+  // the shacks: two rows of cubes with windows
+  if (inView(SHACKS.x0, SHACKS.x1 - SHACKS.x0)) for (let i = 0; i < 17; i++) for (let r = 0; r < 2; r++) {
+    const x = SHACKS.x0 + i * 8, y = GY - 6 - r * 6;
+    rect(g, x, y, 7, 6, C.g5); rect(g, x + 1, y + 1, 5, 4, C.g6); cell(g, x + 2, y + 2, (i + r) % 3 ? C.w : C.g4);
+  }
+  // the drowned pit and the portal in its near wall
+  if (inView(PIT0, 300)) {
+    for (let x = PIT0; x < YW; x++) { cell(g, x, GY, C.pu); for (let y = GY + 1; y < VH; y++) cell(g, x, y, hash(x * 9 + y) < 0.04 ? C.pud : C.ink); }
+    ring(g, 1036, 66, 4, C.pu); ring(g, 1036, 66, 5, C.pud, 2);
+  }
+}
+function drawHouse(g, t, cx) {
+  const hx = L.hx;
+  // the pile: a stack of boards a row for every seventh piece left in it
+  const takeN = trips.filter(r => r.p.off == null).length;
+  const left = trips.filter(r => r.p.off == null && t < r.take).length;
+  const rows = Math.ceil(left / takeN * 6);
+  for (let r = 0; r < rows; r++) for (let i = 0; i < 7; i++) cell(g, L.pileX + i, GY - 1 - r, (i + r) % 3 ? C.g3 : C.g4);
+  // the woodpile: the scaffold, come down
+  const back = trips.filter(r => r.p.off != null && t >= r.t0 + 0.95 * r.D).length;
+  for (let r = 0; r < back; r++) for (let i = 0; i < 7; i++) cell(g, L.pileX + i, GY - 1 - rows - r, r % 2 ? C.g4 : C.g2);
+  const lit = anyoneIn(t);
+  trips.forEach((r, i) => {
+    if (!pieceUp(i, t)) return;
+    const p = r.p;
+    p.segs.forEach(([x, y, w, h]) => {
+      for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) {
+        const X = x + a, Y = y + b;
+        let c = C.ink;
+        if (p.kind === 'wall') c = hash(X * 7 + Y * 3) < 0.15 ? C.g1 : C.ink;
+        else if (p.kind === 'post' || p.kind === 'plate') c = C.g2;
+        else if (p.kind === 'roof') c = Y === 47 ? C.g2 : (X + Y) % 2 ? C.g3 : C.g4;
+        else if (p.kind === 'chimney') c = Y === 40 ? C.g1 : C.g2;
+        else if (p.kind === 'pole' || p.kind === 'plank') c = C.g4;
+        else if (p.kind === 'bench') c = C.g3;
+        else if (p.kind === 'window') c = lit ? (b === 0 && a === 1 && t >= AFTER0 && state.after === 'indoors' && peek(t) ? C.g1 : C.pu) : C.w;
+        else if (p.kind === 'door') continue;
+        cell(g, X, Y, c);
+      }
+    });
+    if (p.kind === 'window' && t >= AFTER0 && state.after === 'indoors' && curtain(t)) rect(g, hx + 3, 52, 3, 1, C.g4);
+  });
+  // the door: slides into the wall in four steps, a lit room behind it
+  const di = trips.findIndex(r => r.p.kind === 'door');
+  if (di >= 0 && pieceUp(di, t)) {
+    const open = doorOpen(t);
+    for (let i = 0; i < 4; i++) for (let y = 51; y < GY; y++) {
+      const X = L.doorX + i;
+      if (i < open) cell(g, X, y, C.pul); else cell(g, X, y, C.g4);
+    }
+    if (open < 3) cell(g, L.doorX + 3, 54, C.g1);
+    if (open > 0) rect(g, L.doorX, 51, open, 1, C.pu);
+  }
+  // the chimney puffing while anyone is in
+  if (lit && t >= LIGHT) for (let k = 0; k < 4; k++) {
+    const age = ((t * 0.8 + k * 0.25) % 1);
+    const st = Math.floor(age * 8);
+    cell(g, hx + 13 + (st % 3 === 2 ? 1 : 0), 39 - st, st < 4 ? C.g4 : st < 6 ? C.g5 : C.g6);
+  }
+}
+function doorOpen(t) {
+  if (t >= DOOR0 && t < SHUT0) return Math.min(4, Math.floor(seg(t, DOOR0, DOOR0 + 0.5) * 4 + 1e-6));
+  if (t >= SHUT0 && t < AFTER0) return 4 - Math.min(4, Math.floor(seg(t, SHUT0, SHUT0 + 0.5) * 4 + 1e-6));
+  if (t >= AFTER0 && state.after === 'porch') {
+    const u = (t - AFTER0) % 16;
+    const win = (a, b) => u >= a && u < b ? Math.min(4, Math.floor(seg(u, a, a + 0.4) * 4)) - Math.max(0, Math.floor(seg(u, b - 0.4, b) * 4)) : 0;
+    return Math.max(0, win(0, 3.4), win(12.4, 15));
+  }
+  return 0;
+}
+const peek = t => { const u = (t - AFTER0) % 16; return (u > 3 && u < 5) || (u > 9 && u < 10.5); };
+const curtain = t => { const u = (t - AFTER0) % 16; return u > 6 && u < 8.5; };
+
+function drawPairBody(g, o, cx) {
+  if (!o) return;
+  const x = o.x - cx;
+  if (o.dim) { body(g, x, o.y, { line: [C.ink, C.g2, C.pud, C.pul][o.dim] || C.pud, fill: C.pul }); return; }
+  body(g, x, o.y, { rows: o.sit ? 2 : 3 });
+}
+function drawFrame(g, t) {
+  const cx = camAt(t);
+  g.fillStyle = C.paper; g.fillRect(0, 0, VW * P, VH * P);
+  g.save(); g.translate(-Math.round(cx * P), 0);
+  // clouds, held, far off
+  [[30, 12], [140, 18], [260, 10], [380, 16], [520, 12], [660, 19], [790, 11], [930, 15], [1080, 12], [1200, 18]].forEach(([x, y]) => {
+    rect(g, x, y, 12, 2, C.g6); rect(g, x + 2, y - 1, 6, 1, C.g6); rect(g, x + 4, y - 2, 3, 1, C.g6);
+  });
+  drawWorld(g, t, cx);
+  g.restore();
+  // fireworks: over the window
+  const tf = step(t, 10);
+  shells.forEach(s => shell(g, s, tf, cx));
+  g.save(); g.translate(-Math.round(cx * P), 0);
+  drawHouse(g, t, 0);
+  g.restore();
+  // bodies, back file first
+  const n = Math.min(frames[0].length - 1, Math.floor(t * 60));
+  const people = crowd.map((m, i) => ({ m, f: frames[i][n] }));
+  const draw = ({ m, f }) => {
+    const x = f.x - cx;
+    if (x < -8 || x > VW + 8) return;
+    if (m.free === 'balloon') {
+      // the balloon: an envelope over a basket, coming down a cell a step and parked
+      const by = f.balloonY;
+      const X = m.x0 - cx;
+      for (let j = 0; j < 7; j++) for (let i = -3; i <= 3; i++) if (i * i + (j - 3) * (j - 3) <= 11) cell(g, X + 1 + i, by - 14 + j, (i + j) % 3 ? C.g5 : C.g4);
+      cell(g, X - 1, by - 7, C.g3); cell(g, X + 3, by - 7, C.g3); cell(g, X - 1, by - 6, C.g3); cell(g, X + 3, by - 6, C.g3);
+      rect(g, X - 1, by - 2, 5, 2, C.g3);
+      if (f.st === 'work' || (f.st === 'free' && f.y < GY - 3 - 0.5 && Math.abs(f.x - m.x0) < 0.5)) { body(g, X, by - 4); kit(g, 'purify', X, by - 4); rect(g, X - 1, by - 2, 5, 2, C.g3); return; }
+    }
+    if (m.free === 'door' && f.st === 'work') return;  // inside, out of sight
+    if (m.lift) {
+      // a forklift: a box, a mast and forks, rolling
+      rect(g, x, f.y + 1, 4, 2, C.g3); rect(g, x + 1, f.y, 2, 1, C.g4); cell(g, x - 1, f.y - 1, C.g2); cell(g, x - 1, f.y, C.g2); cell(g, x - 2, f.y + 2, C.g2);
+      cell(g, x, f.y + 3, C.ink); cell(g, x + 3, f.y + 3, C.ink); return;
+    }
+    let pose = hopPose(m, f, t);
+    if (m.free === 'door' && f.st === 'free') { body(g, x, f.y, { line: f.ft < 0.25 ? C.g4 : C.g2 }); return; }
+    if (m.cart) { const dx = f.face > 0 ? -4 : 3; rect(g, x + dx, f.y + 1, 4, 1, C.g3); cell(g, x + dx, f.y + 2, C.g2); cell(g, x + dx + 3, f.y + 2, C.g2); }
+    if (pose.smear === 'under') { cell(g, x + 1, f.y + 3 - 1 + 1, C.g5); cell(g, x, f.y + 3, C.g6); cell(g, x + 2, f.y + 3, C.g6); }
+    if (pose.smear === 'over') { cell(g, x, f.y - 2, C.g6); cell(g, x + 1, f.y - 2, C.g5); cell(g, x + 2, f.y - 2, C.g6); }
+    const { X, Y } = body(g, x, f.y, { rows: pose.rows, lift: pose.lift });
+    const hy = Y / P;
+    if (pose.dust) { cell(g, x - 1, f.y + 2, C.g4); cell(g, x + 3, f.y + 2, C.g4); }
+    if (pose.arms === 'up') { cell(g, x - 1, hy - 1, C.ink); cell(g, x + 3, hy - 1, C.ink); cell(g, x - 1, hy, C.ink); cell(g, x + 3, hy, C.ink); }
+    if (pose.arms === 'half') { cell(g, x - 1, hy + 1, C.ink); cell(g, x + 3, hy + 1, C.ink); }
+    kit(g, m.kind, x, hy);
+    if (f.st === 'in' && t < HOLD0 && !m.lift) {
+      const per = 3, beat = t + hash(m.k + 1) * per, nn = Math.floor(beat / per), age = beat - nn * per;
+      if (age < 1.2 && t - f.inAt > 0.6) mark(g, ['heart', 'note', 'bang'][Math.floor(hash(m.k * 7 + nn) * 3)], Math.round(x), Math.round(hy), age);
+    }
+  };
+  people.filter(p => p.f.y < GY - 2.5 || p.m.k % 2 === 0 || p.m.conv).forEach(draw);
+  // builders
+  for (let b = 0; b < NB; b++) {
+    const o = builderAt(b, t), x = o.x - cx;
+    if (x < -8 || x > VW + 8) continue;
+    let rows = o.rows, lift = 0, arms = o.arms;
+    if (o.cheer && t < HOLD0) { const ps = hopPose({ k: b * 2, kind: 'build' }, { st: 'in', inAt: BUILD1, x: 0 }, t); rows = ps.rows; lift = ps.lift || 0; arms = arms || ps.arms === 'up'; }
+    const { Y } = body(g, x, o.y, { rows, lift });
+    const hy = Y / P;
+    kit(g, 'build', x, hy);
+    if (arms) { cell(g, x - 1, hy - 1, C.ink); cell(g, x + 3, hy - 1, C.ink); }
+    if (o.hold) {
+      const w = Math.min(o.hold.kind === 'plank' ? 8 : 5, Math.max(...o.hold.segs.map(s => s[2])) + 1);
+      rect(g, x + 1.5 - w / 2, hy - (arms ? 3 : 2), w, 1, o.hold.kind === 'wall' ? C.ink : o.hold.kind === 'window' ? C.w : C.g3);
+      if (o.hold.kind === 'window') { cell(g, x + 1.5 - w / 2 - 1, hy - 2, C.g3); }
+    }
+  }
+  // the pair, hand in hand
+  const pair = pairAt(t);
+  pair.forEach(o => drawPairBody(g, o, cx));
+  if (pair[0] && pair[1] && !pair[0].dim && !pair[1].dim && Math.abs(pair[1].x - pair[0].x - 4) < 0.5) cell(g, pair[0].x + 3 - cx, pair[0].y + (pair[0].sit ? 2 : 1), C.ink);
+  if (t >= AFTER0 && state.after === 'porch') { const u = (t - AFTER0) % 16; if (u > 4 && u < 6.2 && pair[0] && pair[1]) mark(g, 'heart', L.hx + 18 - cx, GY - 4, u - 4); }
+  people.filter(p => !(p.f.y < GY - 2.5 || p.m.k % 2 === 0 || p.m.conv)).forEach(draw);
+  // the letterbox, stepping in and out, and the sheet
+  const band = t < AFTER0 ? Math.min(5, Math.floor(t / 0.1)) : Math.max(0, 5 - Math.floor((t - AFTER0) / 0.1));
+  rect(g, 0, 0, VW, band, C.ink); rect(g, 0, VH - band, VW, band, C.ink);
+  if (t >= SHEET0 && t < AFTER0) {
+    const k = stepped(seg(t, SHEET0, SHEET0 + 0.4), 4) * (1 - stepped(seg(t, AFTER0 - 0.4, AFTER0), 4));
+    if (k > 0) {
+      const w = Math.round(64 * k), h = Math.round(26 * k), x0 = Math.round(VW / 2 - w / 2), y0 = Math.round(VH / 2 - h / 2 - 6);
+      rect(g, x0 + 1, y0 + 1, w, h, C.g4); rect(g, x0, y0, w, h, C.ink); rect(g, x0 + 1, y0 + 1, w - 2, h - 2, C.paper);
+      if (k === 1) { rect(g, x0 + 10, y0 + 6, 44, 2, C.g3); rect(g, x0 + 16, y0 + 11, 32, 1, C.g5); rect(g, x0 + 14, y0 + 14, 36, 1, C.g5); rect(g, x0 + 24, y0 + 19, 16, 3, C.ink); }
+    }
+  }
+}
+
+// The whole yard in a strip: the stations, the window, the crowd, the house.
+function drawMini(m, t) {
+  const W = m.canvas.width, s = W / YW, base = 44;
+  m.fillStyle = C.paper; m.fillRect(0, 0, W, 60);
+  m.fillStyle = C.g4; m.fillRect(0, base, W, 1);
+  m.fillStyle = C.ink; m.fillRect(PIT0 * s, base, (YW - PIT0) * s, 16);
+  const box = (x, w, h, c) => { m.fillStyle = c; m.fillRect(Math.round(x * s), base - h, Math.max(1, Math.round(w * s)), h); };
+  SITES.forEach(o => box(o.x, o.w, Math.min(12, o.h / 2), C.g5));
+  box(SHACKS.x0, SHACKS.x1 - SHACKS.x0, 6, C.g5); box(HILL.a, HILL.d - HILL.a, 8, C.g5);
+  box(PLOTS[0], 78, 2, C.g4);
+  m.fillStyle = C.g5; m.fillRect(CUT.x0 * s, base, (CUT.x1 - CUT.x0) * s, 6);
+  m.font = '9px ui-monospace, monospace'; m.fillStyle = C.g3;
+  [['tower', 160], ['filter', 288], ['farm', 420], ['quarry', 520], ['shacks', 660], ['hill', 880], ['pit', 1100]].forEach(([n, x]) => m.fillText(n, x * s, 12));
+  // the house: its pieces standing, as a share of its height
+  const up = trips.filter((r, i) => pieceUp(i, t) && r.p.kind !== 'pole' && r.p.kind !== 'plank').length;
+  const all = trips.filter(r => r.p.off == null && r.p.kind !== 'pole' && r.p.kind !== 'plank').length;
+  m.strokeStyle = C.g4; m.strokeRect(Math.round(L.hx * s) + 0.5, base - 14.5, Math.round(18 * s), 14);
+  const h = Math.round(14 * up / all); m.fillStyle = C.ink; m.fillRect(Math.round(L.hx * s), base - h, Math.round(18 * s), h);
+  // the window
+  const cx = camAt(t); m.strokeStyle = C.pu; m.lineWidth = 1; m.strokeRect(Math.round(cx * s) + 0.5, 16.5, Math.round(VW * s), 40);
+  const n = Math.min(frames[0].length - 1, Math.floor(t * 60));
+  crowd.forEach((c, i) => { const f = frames[i][n]; m.fillStyle = f.st === 'work' ? C.g3 : C.ink; m.fillRect(Math.round(f.x * s), base - 3 - (f.st === 'work' ? 0 : 2), 2, 2); });
+  const p = pairAt(Math.min(t, AFTER0 - 0.01));
+  if (p[0]) { m.fillStyle = C.pu; m.fillRect(Math.round(p[0].x * s) - 1, base - 6, 4, 4); }
+}
+
+// --- the page ---------------------------------------------------------------------------------
+const view = document.getElementById('view').getContext('2d');
+const mini = document.getElementById('mini').getContext('2d');
+const tIn = document.getElementById('t'), tOut = document.getElementById('tout'), beatEl = document.getElementById('beat');
+const BEATS = [[0, 'Out of the drowned pit and onto the lip.'], [WALK0, 'The walk: each worker leaves work as the pair pass, gets free and falls in; the builders are putting the house up at the far end.'],
+  [WALK1, 'At the door, as the last scaffold pole comes down.'], [DOOR0, 'The door slides open on a lit room.'], [HER0, 'She goes in.'], [HIM0, 'He follows.'],
+  [SHUT0, 'The door slides shut; the volley goes up.'], [LIGHT, 'The window lights.'], [HOLD0, 'The hold.'], [SHEET0, 'The sheet (its words are the owner\'s).'],
+  [AFTER0, 'Sheet down: the crowd goes back to work; the pair at home, for good.']];
+function beatAt(t) { let b = BEATS[0][1]; for (const [t0, s] of BEATS) if (t >= t0) b = s; return b; }
+function chips(id, key, opts, cap) {
+  const box = document.getElementById('c-' + id);
+  Object.entries(opts).forEach(([k, v]) => {
+    const b = document.createElement('button');
+    b.textContent = Array.isArray(v) ? v[0] : v;
+    b.dataset.k = k;
+    b.setAttribute('aria-pressed', String(state[key] === k));
+    b.onclick = () => { state[key] = k; box.querySelectorAll('button').forEach(o => o.setAttribute('aria-pressed', String(o === b))); if (cap) document.getElementById('cap-' + id).textContent = opts[k][1]; simulate(); paint(); };
+    box.append(b);
+  });
+  if (cap) document.getElementById('cap-' + id).textContent = opts[state[key]][1];
+}
+chips('hop', 'hop', HOPS, true);
+chips('fw', 'fw', FWS, true);
+chips('volley', 'volley', { on: 'volley and heart', off: 'no volley' });
+chips('where', 'where', WHERE, true);
+chips('after', 'after', AFTER, true);
+chips('cam', 'cam', CAMS, true);
+chips('lift', 'lift', { roll: 'roll along at the tail', park: 'stay parked' });
+simulate();
+function paint() {
+  drawFrame(view, state.t);
+  drawMini(mini, state.t);
+  tIn.value = state.t.toFixed(2); tOut.textContent = state.t.toFixed(1) + ' s';
+  beatEl.textContent = beatAt(state.t);
+}
+const playB = document.getElementById('play'), spdB = document.getElementById('spd');
+playB.onclick = () => { state.playing = !state.playing; playB.textContent = state.playing ? 'pause' : 'play'; playB.setAttribute('aria-pressed', String(state.playing)); };
+spdB.onclick = () => { state.speed = state.speed === 1 ? 2 : 1; spdB.setAttribute('aria-pressed', String(state.speed === 2)); };
+tIn.oninput = () => { state.t = +tIn.value; paint(); };
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) { state.playing = false; playB.textContent = 'play'; playB.setAttribute('aria-pressed', 'false'); state.t = 33.0; }
+const q = new URLSearchParams(location.search);
+// options by address too (?hop=arc&where=shacks), so a mix can be passed on
+['hop', 'fw', 'volley', 'where', 'after', 'cam', 'lift'].forEach(k => {
+  if (!q.has(k)) return;
+  const b = [...document.querySelectorAll('#c-' + k + ' button')].find(o => o.dataset.k === q.get(k));
+  if (b) b.click();
+});
+if (q.has('t')) { state.t = +q.get('t'); state.playing = false; playB.textContent = 'play'; }
+let last = performance.now();
+function frame(now) {
+  const dt = clamp((now - last) / 1000, 0, 0.1); last = now;
+  if (state.playing) { state.t = (state.t + dt * state.speed) % LOOP; }
+  paint();
+  requestAnimationFrame(frame);
+}
+paint();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
