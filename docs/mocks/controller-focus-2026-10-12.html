@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controller Focus Mocks</title>
+<style>
+/* Tokens: the game is black and white with one purple accent (the capstone
+   purple of shelf.css); the focus marker is the accent, everything else ink
+   on paper. Dark mode flips paper and ink the way the game's own dark does. */
+:root {
+  --bg: #ecece9; --panel: #ffffff; --line: #d2d2cd; --fg: #141414; --dim: #5a5a5a;
+  --paper: #ffffff; --ink: #141414; --grey: #8c8c8c; --pale: #d8d8d8; --wash: #f3f3f2;
+  --accent: #6f36c9; --deep: #08070c; --deepink: #ecebf3; --deepgrey: #4d4960; --deepaccent: #a979ef;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #09090b; --panel: #121215; --line: #2a2a31; --fg: #e9e9ee; --dim: #9a9aa6;
+    --paper: #141416; --ink: #ebebeb; --grey: #7a7a7a; --pale: #34343b; --wash: #1a1a1e;
+    --accent: #a979ef; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #09090b; --panel: #121215; --line: #2a2a31; --fg: #e9e9ee; --dim: #9a9aa6;
+  --paper: #141416; --ink: #ebebeb; --grey: #7a7a7a; --pale: #34343b; --wash: #1a1a1e;
+  --accent: #a979ef; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--mono); padding: 24px 16px 56px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 76ch; color: var(--dim); }
+p b, li b { color: var(--fg); }
+.mock { border: 1px dashed var(--accent); color: var(--fg); padding: 10px 12px; max-width: 76ch; }
+.picker { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.picker button { font: inherit; background: var(--panel); color: var(--fg); border: 1px solid var(--line); padding: 6px 10px; cursor: pointer; }
+.picker button[aria-pressed="true"] { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: -2px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+.wide { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 16px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; min-width: 0; align-content: start; }
+figcaption { color: var(--dim); font-size: 13px; }
+figcaption b { color: var(--fg); }
+.stage { position: relative; min-width: 0; }
+canvas.yard { width: 100%; display: block; image-rendering: pixelated; }
+canvas.over { position: absolute; left: 0; top: 0; pointer-events: none; image-rendering: pixelated; }
+.beat { font-size: 12px; min-height: 3em; color: var(--fg); }
+.keys { display: flex; flex-wrap: wrap; gap: 6px; }
+.keys figure { padding: 6px; flex: 1 1 140px; }
+.keys canvas { width: 100%; }
+.keys figcaption { font-size: 11px; }
+ol.steps { margin: 0; padding-left: 20px; font-size: 12px; color: var(--dim); }
+.note { border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 8px; }
+
+/* The on-screen prompt glyphs: flat, black and white, no brand colors. */
+.g { display: inline-grid; place-items: center; font: bold 10px/1 var(--mono); vertical-align: -3px;
+     min-width: 16px; height: 16px; padding: 0 3px; margin: 0 1px; background: var(--ink); color: var(--paper); }
+.g.face { border-radius: 50%; width: 16px; padding: 0; }
+.g.bump { border-radius: 3px 3px 6px 6px; }
+.g.trig { border-radius: 7px 7px 2px 2px; }
+.g.pad { background: none; color: var(--ink); border: 2px solid var(--ink); border-radius: 2px; }
+.g.stick { border-radius: 50%; width: 16px; padding: 0; background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.held { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* The tip a focus raises, where a hover raises it today: one short line. */
+.tip { position: absolute; transform: translate(-50%, -100%); background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+       font: 10px/1.3 var(--mono); padding: 3px 6px; white-space: nowrap; pointer-events: none; opacity: 0; }
+.tip.on { opacity: 1; }
+.tip.side { transform: translate(0, -50%); }
+
+/* A board, a queue, a sheet: drawn to the game's shapes, not its stylesheet. */
+.ui { position: relative; font: 10px/1.4 var(--mono); color: var(--ink); }
+.board { background: var(--paper); border: 2px solid var(--ink); padding: 12px; display: grid; gap: 10px; max-width: 460px; }
+.board .ttl { letter-spacing: .14em; text-transform: uppercase; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+.board .sec { justify-self: start; background: var(--ink); color: var(--paper); letter-spacing: .14em; padding: 2px 6px; font-weight: bold; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
+.tile { display: grid; justify-items: center; gap: 3px; text-align: center; padding: 6px 2px; letter-spacing: .08em; text-transform: uppercase; }
+.tile .pic { width: 18px; height: 18px; border: 3px solid var(--ink); }
+.tile .ab { color: var(--grey); }
+.tile .bill { border: 1px solid var(--ink); padding: 0 4px; }
+.tile .bill::before { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--ink); margin-right: 4px; }
+.tile .pips { letter-spacing: 1px; font-size: 9px; }
+.tile .q { font-weight: bold; min-height: 1.4em; }
+.hide { justify-self: start; border: 1px dashed var(--ink); padding: 3px 6px; letter-spacing: .1em; text-transform: uppercase; color: var(--grey); }
+.fade { transition: opacity .25s; }
+.gone { opacity: 0; }
+.hud { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: start; }
+.obj { background: var(--paper); border: 2px solid var(--ink); padding: 8px 10px; position: relative; display: grid; gap: 6px; max-width: 340px; }
+.obj .next { position: absolute; top: -9px; left: 6px; background: var(--ink); color: var(--paper); font-weight: bold; padding: 0 4px; letter-spacing: .1em; }
+.obj .row { display: flex; gap: 6px; align-items: center; }
+.obj .row span { flex: 1; text-transform: uppercase; letter-spacing: .08em; }
+.btn { border: 1px solid var(--ink); padding: 1px 6px; background: var(--paper); }
+.queue { background: var(--paper); border: 2px solid var(--ink); padding: 6px 8px; display: grid; gap: 4px; margin-top: 10px; max-width: 340px; }
+.queue div { padding: 1px 2px; }
+.corner { display: flex; gap: 6px; }
+.corner i { width: 26px; height: 26px; border: 2px solid var(--ink); background: var(--paper); display: grid; place-items: center; font-style: normal; box-shadow: 3px 3px 0 var(--pale); }
+.sheet { background: var(--paper); border: 2px solid var(--ink); padding: 14px; display: grid; gap: 6px; max-width: 300px; margin: 0 auto; text-align: center; }
+.sheet .word { letter-spacing: .2em; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
+.sheet .b { border: 1px solid var(--ink); padding: 4px; letter-spacing: .1em; }
+.sheet .rule { border-top: 2px solid var(--ink); margin: 2px 0; }
+.sheet .small { color: var(--grey); font-size: 9px; }
+.sheet .vol { height: 14px; border: 1px solid var(--ink); position: relative; }
+.sheet .vol i { position: absolute; left: 0; top: 2px; bottom: 2px; background: var(--ink); }
+.sheet .name { border: 1px solid var(--ink); padding: 4px; color: var(--grey); text-align: left; }
+.sheet [hidden] { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>Focus on a pad</h1>
+    <p>Every part of the game as it looks with a controller in hand. Focus moves between the places a click would land, and a marker in the purple accent says where it is. Three markers to choose from; the picker below redraws every panel in the one you pick. The first panel shows all three side by side.</p>
+    <p class="mock"><b>This is a mock.</b> Drawn from plain shapes, not the game: the stations are blocks on a 6-pixel grid, the boards, sheets and cards are stand-ins built to the game's shapes, and no real pad is read. It cannot show the real art, the real board stylesheet, how the marker reads over rain, smog or a busy endgame yard, or how a pad feels in the hand. Every word in a prompt or tip is a placeholder for the owner's own.</p>
+    <div class="picker" role="group" aria-label="marker style">
+      <span>marker:</span>
+      <button type="button" data-style="brackets">A · corner brackets</button>
+      <button type="button" data-style="stepped">B · stepped outline</button>
+      <button type="button" data-style="arrow">C · bobbing arrow</button>
+    </div>
+  </header>
+
+  <section style="display:grid;gap:12px">
+    <h2>1 · The three markers, hopping along the yard</h2>
+    <p>The d-pad hops one stop along the yard. The marker glides there in a quarter second, fast out and soft in, on whole cells only, then steps in a cell or two to land. The camera follows behind it at a slower glide; it never cuts. The name the hover gives today comes up once the marker has settled.</p>
+    <div class="grid" id="trio"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>2 · Every surface, in the picked marker</h2>
+    <div class="wide" id="figs"></div>
+  </section>
+
+  <section class="note">
+    <h2>What the three markers are</h2>
+    <p><b>A · Corner brackets.</b> Four L-shaped corners a cell outside the thing, three cells along each arm. When it lands it steps in from two cells out, then breathes out by one cell and back on a slow two-pose beat. It says what is selected without covering any of it, and it scales from a roster's plus sign to the whole rock.</p>
+    <p><b>B · Stepped outline.</b> A full one-cell ring with its corners knocked out, the pixel-art rounded box. It is the plainest and the strongest read on a busy yard. It covers the most picture of the three.</p>
+    <p><b>C · Bobbing arrow.</b> The game's own chevron (the shaft arrow and the orb's arrow), hanging over the thing and bobbing a whole cell on a slow beat. It covers nothing, and it reads as "this one" the way the existing hints do. On a small target in a crowd (one body among six, a single coil segment) it is the least precise about which one.</p>
+    <p>All three wear a one-cell halo in the paper color, so the accent reads over ink, over grey and over the deep's dark. In the deep the accent is the lighter purple the deep already uses.</p>
+  </section>
+</main>
+
+<script>
+'use strict';
+// `#still` in the address shows the reduced-motion key frames without the OS setting
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches || location.hash === '#still';
+const K = 4;                    // canvas pixels a cell, before the page scales it
+const DT = 1 / 60;              // the simulation's fixed step
+const U = 3;                    // CSS pixels a marker cell over the stand-in boards
+let STYLE = 'brackets';
+try { STYLE = localStorage.getItem('ctl-focus-style') || STYLE; } catch {}
+
+// ---------- small helpers ----------
+const TOK = {};
+function readTokens() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const n of ['paper', 'ink', 'grey', 'pale', 'wash', 'accent', 'deep', 'deepink', 'deepgrey', 'deepaccent'])
+    TOK[n] = cs.getPropertyValue('--' + n).trim();
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const easeInOut = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+function hash(x, y) { let h = (x * 374761393 + y * 668265263) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return h / 4294967296; }
+const R = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+const G = (k, cls = 'face') => `<b class="g ${cls}">${k}</b>`;
+const KEYS = {
+  A: G('A'), B: G('B'), X: G('X'), Y: G('Y'),
+  LB: G('LB', 'bump'), RB: G('RB', 'bump'), LT: G('LT', 'trig'), RT: G('RT', 'trig'),
+  up: G('↑', 'pad'), down: G('↓', 'pad'), left: G('←', 'pad'), right: G('→', 'pad'),
+  L: G('L', 'stick'), Menu: G('≡', 'bump'), View: G('⧉', 'bump'),
+};
+
+// ---------- the marker ----------
+// Cells, in whatever unit the surface uses: a yard cell, or U px over a board.
+function markerCells(style, r, t, settle) {
+  const out = [];
+  const add = (x, y, w, h) => { for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) out.push([x + i, y + j]); };
+  let o = 1 + settle;
+  if (style === 'brackets' && !settle) o += Math.floor(t / 0.7) % 2;          // the slow two-pose breath
+  const x0 = r.x - o, y0 = r.y - o, x1 = r.x + r.w - 1 + o, y1 = r.y + r.h - 1 + o;
+  if (style === 'brackets') {
+    const L = Math.min(3, Math.max(2, Math.floor(Math.min(x1 - x0, y1 - y0) / 2)));
+    add(x0, y0, L, 1); add(x0, y0, 1, L); add(x1 - L + 1, y0, L, 1); add(x1, y0, 1, L);
+    add(x0, y1, L, 1); add(x0, y1 - L + 1, 1, L); add(x1 - L + 1, y1, L, 1); add(x1, y1 - L + 1, 1, L);
+  } else if (style === 'stepped') {
+    add(x0 + 1, y0, x1 - x0 - 1, 1); add(x0 + 1, y1, x1 - x0 - 1, 1);
+    add(x0, y0 + 1, 1, y1 - y0 - 1); add(x1, y0 + 1, 1, y1 - y0 - 1);
+  } else {
+    // the game's chevron (render/shaftway.js) turned point down, a whole cell of bob
+    const bob = Math.sin(t * Math.PI * 2 / 1.2) > 0 ? 1 : 0;
+    const cx = r.x + Math.floor(r.w / 2), top = r.y - 5 - bob - settle;
+    ['#####', '.###.', '..#..'].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') out.push([cx - 2 + i, top + j]); }));
+  }
+  return out;
+}
+function drawMarker(c, style, r, t, settle, col, halo) {
+  const cells = markerCells(style, r, t, settle);
+  if (halo) {
+    const set = new Set(cells.map(([x, y]) => x + ',' + y));
+    c.fillStyle = halo;
+    for (const [x, y] of cells) for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++)
+      if (!set.has((x + dx) + ',' + (y + dy))) c.fillRect(x + dx, y + dy, 1, 1);
+  }
+  c.fillStyle = col;
+  for (const [x, y] of cells) c.fillRect(x, y, 1, 1);
+}
+
+// Where the focus is at time t: the last beat's target, reached by an eased
+// glide from the one before, on whole units; then a settle of two held steps.
+const settleOf = s => s < .06 ? 2 : s < .12 ? 1 : 0;
+function focusAt(beats, t, where) {
+  let i = -1;
+  for (let j = 0; j < beats.length; j++) if (beats[j].f !== undefined && beats[j].at <= t) i = j;
+  if (i < 0) return null;
+  const cur = beats[i];
+  if (cur.f == null) return null;
+  let p = i - 1; while (p >= 0 && beats[p].f === undefined) p--;
+  const prev = p >= 0 ? beats[p] : null;
+  const b = where(cur.f, t);
+  if (!b) return null;
+  if (!prev || prev.f == null) return { r: b, settle: settleOf(t - cur.at), f: cur.f, since: t - cur.at };
+  if (prev.f === cur.f) return { r: b, settle: 0, f: cur.f, since: 9 };
+  const a = where(prev.f, cur.at) || b;
+  const D = Math.min(.45, .2 + Math.hypot(b.x - a.x, b.y - a.y) * .004);
+  const k = clamp((t - cur.at) / D, 0, 1), e = easeOut(k);
+  const r = { x: Math.round(lerp(a.x, b.x, e)), y: Math.round(lerp(a.y, b.y, e)),
+              w: Math.round(lerp(a.w, b.w, e)), h: Math.round(lerp(a.h, b.h, e)) };
+  return { r, settle: k < 1 ? 0 : settleOf(t - cur.at - D), f: cur.f, since: t - cur.at - D, moving: k < 1 };
+}
+function beatAt(beats, t) {
+  let say = '';
+  for (const b of beats) if (b.at <= t && b.say) say = b.say;
+  return say;
+}
+
+// ---------- the yard ----------
+const GROUND = 32;
+function shapeOf(kind) {
+  return { rock: { w: 25, h: 17 }, shack: { w: 8, h: 6 }, bench: { w: 10, h: 7 }, house: { w: 12, h: 11 },
+           tower: { w: 8, h: 21 }, farm: { w: 14, h: 3 }, apothecary: { w: 15, h: 8 }, casino: { w: 12, h: 13 },
+           quarry: { w: 12, h: 6 } }[kind];
+}
+const NAMES = { rock: 'the rock', shack: 'the shack', bench: 'the bench', house: 'the house', tower: 'the tower',
+                farm: 'the farm', apothecary: 'the apothecary', casino: 'the casino', quarry: 'the quarry' };
+function stationRect(s) { const sh = shapeOf(s.kind); return { x: s.x, y: GROUND - sh.h, w: sh.w, h: sh.h }; }
+
+function drawStation(c, s, col, opt = {}) {
+  const x = s.x, g = GROUND, ink = col.ink, paper = col.paper, grey = col.grey;
+  switch (s.kind) {
+    case 'rock': {
+      for (let i = 0; i < 25; i++) {
+        const d = Math.abs(i - 12) / 13, h = Math.max(1, Math.round(17 * (1 - Math.pow(d, 1.5))));
+        for (let j = 0; j < h; j++) {
+          const v = hash(x + i, j);
+          R(c, x + i, g - 1 - j, 1, 1, opt.veil ? col.pale : v < .55 ? ink : v < .85 ? col.rock2 : grey);
+        }
+      }
+      break;
+    }
+    case 'shack': R(c, x - 1, g - 6, 10, 1, ink); R(c, x, g - 5, 8, 5, ink); R(c, x + 3, g - 3, 2, 3, paper); break;
+    case 'bench': R(c, x, g - 4, 10, 1, ink); R(c, x + 1, g - 3, 1, 3, ink); R(c, x + 8, g - 3, 1, 3, ink);
+      R(c, x + 2, g - 7, 4, 3, ink); R(c, x + 3, g - 6, 2, 1, paper); break;
+    case 'house': R(c, x + 5, g - 11, 2, 1, ink); R(c, x + 3, g - 10, 6, 1, ink); R(c, x + 1, g - 9, 10, 1, ink);
+      R(c, x, g - 8, 12, 8, ink); R(c, x + 5, g - 4, 2, 4, paper); R(c, x + 2, g - 6, 2, 2, paper); R(c, x + 8, g - 6, 2, 2, paper); break;
+    case 'tower': R(c, x + 3, g - 21, 1, 5, ink); R(c, x + 4, g - 21, 3, 2, ink);
+      R(c, x, g - 16, 2, 1, ink); R(c, x + 3, g - 16, 2, 1, ink); R(c, x + 6, g - 16, 2, 1, ink);
+      R(c, x + 1, g - 15, 6, 15, ink); R(c, x + 3, g - 3, 2, 3, paper); R(c, x + 3, g - 11, 2, 2, paper); break;
+    case 'farm': for (let i = 0; i < 14; i++) { if (i % 2 === 0) R(c, x + i, g - 1, 1, 1, grey); if (i % 3 === 1) R(c, x + i, g - 3, 1, 2, ink); } break;
+    case 'apothecary': R(c, x - 1, g - 8, 11, 1, ink); R(c, x, g - 7, 9, 7, ink); R(c, x + 3, g - 3, 2, 3, paper);
+      R(c, x + 9, g - 4, 6, 1, ink); R(c, x + 10, g - 3, 4, 3, ink); break;
+    case 'casino': {
+      R(c, x - 1, g - 13, 14, 1, ink); R(c, x + 1, g - 12, 10, 1, ink); R(c, x + 4, g - 11, 4, 1, ink);
+      R(c, x, g - 10, 12, 10, ink); R(c, x + 2, g - 7, 8, 2, paper); R(c, x + 5, g - 7, 2, 2, ink);
+      // the arm, off a boss on the right wall; `arm` is 0 (up) to 1 (pulled down)
+      const a = opt.arm || 0, ang = lerp(-1.25, 0.15, a);
+      R(c, x + 12, g - 6, 1, 1, ink);
+      for (let k = 1; k <= 5; k++) R(c, x + 12 + Math.round(Math.cos(ang) * k), g - 6 + Math.round(Math.sin(ang) * k), 1, 1, ink);
+      R(c, x + 12 + Math.round(Math.cos(ang) * 6) - 1, g - 6 + Math.round(Math.sin(ang) * 6) - 1, 2, 2, ink);
+      if (opt.signDown) R(c, x + 2, g - 7, 8, 2, grey);
+      break;
+    }
+    case 'quarry': R(c, x, g, 12, 1, col.wash); R(c, x + 1, g - 6, 1, 6, ink); R(c, x + 10, g - 6, 1, 6, ink); R(c, x, g - 6, 12, 1, ink); R(c, x + 5, g - 5, 1, 4, ink); break;
+  }
+}
+const casinoArm = s => ({ x: s.x + 13, y: GROUND - 12, w: 6, h: 7 });
+const casinoSign = s => ({ x: s.x + 2, y: GROUND - 7, w: 8, h: 2 });
+
+function yardColors(veil) {
+  return { ink: veil ? TOK.pale : TOK.ink, paper: TOK.paper, grey: veil ? TOK.pale : TOK.grey,
+           pale: TOK.pale, wash: TOK.wash, rock2: veil ? TOK.pale : mix(TOK.ink, TOK.grey) };
+}
+function mix(a, b) { return b; }
+function drawGround(c, W, H, cam) {
+  R(c, 0, 0, W, H, TOK.paper);
+  for (let i = 0; i < 26; i++) { const x = Math.floor(hash(i, 7) * (W + 200)) - Math.floor(cam * 0.6) % (W + 200); R(c, ((x % W) + W) % W, 1 + Math.floor(hash(i, 3) * (GROUND - 8)), 1, 1, TOK.pale); }
+  R(c, 0, GROUND, W, H - GROUND, TOK.wash);
+  for (let y = GROUND + 1; y < H; y++) for (let x = 0; x < W; x++) if (((x + cam + y) % 6) === 0) R(c, x, y, 1, 1, TOK.pale);
+  R(c, 0, GROUND, W, 1, TOK.ink);
+}
+function drawBody(c, x, y, col, ring) {
+  if (ring) { R(c, x - 2, y - 2, 7, 7, col.ringc); R(c, x - 1, y - 1, 5, 5, col.paper); }
+  R(c, x, y, 3, 3, col.body); R(c, x + 1, y + 1, 1, 1, col.paper);
+}
+
+// ---------- the playback ----------
+const FIGS = [];
+function addCanvasFig(host, spec) {
+  const fig = document.createElement('figure');
+  fig.innerHTML = `<div class="stage"></div><div class="beat"></div><figcaption><b>${spec.title}</b> ${spec.caption}</figcaption>`;
+  host.appendChild(fig);
+  const stage = fig.querySelector('.stage'), beat = fig.querySelector('.beat');
+  const tip = document.createElement('div'); tip.className = 'tip';
+  if (RM) {
+    // reduced motion: the key frames side by side, each with what is happening
+    beat.remove();
+    const keys = document.createElement('div'); keys.className = 'keys';
+    stage.appendChild(keys);
+    for (const kt of spec.keys) {
+      const f = document.createElement('figure');
+      const cv = document.createElement('canvas'); cv.width = spec.W * K; cv.height = spec.H * K;
+      f.appendChild(cv);
+      const cap = document.createElement('figcaption'); cap.innerHTML = beatAt(spec.beats, kt); f.appendChild(cap);
+      keys.appendChild(f);
+      FIGS.push({ still: true, draw: () => { const c = cv.getContext('2d'); c.setTransform(K, 0, 0, K, 0, 0);
+        const st = spec.init(); for (let s = 0; s < kt; s += DT) spec.step(st, s, DT); spec.draw(c, st, kt, null); } });
+    }
+    return;
+  }
+  const cv = document.createElement('canvas'); cv.className = 'yard'; cv.width = spec.W * K; cv.height = spec.H * K;
+  stage.appendChild(cv); stage.appendChild(tip);
+  const c = cv.getContext('2d');
+  const f = { spec, c, beat, tip, st: spec.init(), simT: 0, said: null };
+  f.draw = (t) => {
+    if (t < f.simT) { f.st = spec.init(); f.simT = 0; }
+    while (f.simT + DT <= t) { spec.step(f.st, f.simT, DT); f.simT += DT; }
+    c.setTransform(K, 0, 0, K, 0, 0);
+    const tipAt = spec.draw(c, f.st, t, tip);
+    const say = beatAt(spec.beats, t);
+    if (say !== f.said) { f.said = say; beat.innerHTML = say; }
+    if (tipAt) {
+      tip.innerHTML = tipAt.html;
+      tip.style.left = (tipAt.x / spec.W * 100) + '%';
+      tip.style.top = (tipAt.y / spec.H * 100) + '%';
+      tip.classList.add('on');
+    } else tip.classList.remove('on');
+  };
+  FIGS.push(f);
+}
+
+// A stand-in board, sheet or card with an overlay canvas for the marker.
+function addDomFig(host, spec) {
+  const fig = document.createElement('figure');
+  fig.innerHTML = `<div class="stage ui"></div><div class="beat"></div><figcaption><b>${spec.title}</b> ${spec.caption}</figcaption>`;
+  host.appendChild(fig);
+  const stage = fig.querySelector('.stage'), beat = fig.querySelector('.beat');
+  stage.innerHTML = spec.html;
+  const over = document.createElement('canvas'); over.className = 'over'; stage.appendChild(over);
+  const tip = document.createElement('div'); tip.className = 'tip side'; stage.appendChild(tip);
+  const last = new Map();
+  const where = (key) => {
+    const el = stage.querySelector(key);
+    if (!el || el.offsetParent === null) return last.get(key) || null;
+    const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+    const out = { x: Math.round((r.left - sr.left) / U) + 2, y: Math.round((r.top - sr.top) / U) + 2,
+                  w: Math.max(1, Math.round(r.width / U)), h: Math.max(1, Math.round(r.height / U)) };
+    last.set(key, out);
+    return out;
+  };
+  const f = { said: null };
+  f.draw = (t) => {
+    spec.apply(stage, t);
+    const sr = stage.getBoundingClientRect();
+    const cw = Math.ceil(sr.width / U) + 4, ch = Math.ceil(sr.height / U) + 4;
+    if (over.width !== cw || over.height !== ch) { over.width = cw; over.height = ch; }
+    over.style.width = cw * U + 'px'; over.style.height = ch * U + 'px';
+    over.style.left = -2 * U + 'px'; over.style.top = -2 * U + 'px';
+    const c = over.getContext('2d'); c.clearRect(0, 0, cw, ch);
+    const fo = focusAt(spec.beats, t, where);
+    if (fo) drawMarker(c, STYLE, fo.r, t, fo.settle, TOK.accent, TOK.paper);
+    const tp = spec.tip && fo && !fo.moving && fo.since > .35 ? spec.tip(fo.f, t) : null;
+    if (tp && fo) {
+      tip.innerHTML = tp;
+      // beside the thing, on whichever side has the room
+      const right = (fo.r.x + fo.r.w + 1) * U - 2 * U + 8;
+      const fits = right + tip.offsetWidth <= sr.width;
+      tip.style.left = (fits ? right : Math.max(0, (fo.r.x - 1) * U - 2 * U - 8 - tip.offsetWidth)) + 'px';
+      tip.style.top = ((fo.r.y + fo.r.h / 2) * U - 2 * U) + 'px';
+      tip.classList.add('on');
+    } else tip.classList.remove('on');
+    if (!RM) { const say = beatAt(spec.beats, t); if (say !== f.said) { f.said = say; beat.innerHTML = say; } }
+  };
+  if (RM) {
+    // reduced motion: one settled frame, and the steps written out under it
+    const t = spec.still;
+    f.still = true;
+    const draw = f.draw;
+    f.draw = () => draw(t);
+    const ol = document.createElement('ol'); ol.className = 'steps';
+    ol.innerHTML = spec.beats.filter(b => b.say).map(b => `<li>${b.say}</li>`).join('');
+    beat.replaceWith(ol);
+  }
+  f.dur = spec.dur;
+  FIGS.push(f);
+}
+
+let start = performance.now();
+function frame() {
+  readTokens();
+  const now = (performance.now() - start) / 1000;
+  for (const f of FIGS) {
+    if (f.still) { f.draw(); continue; }
+    const dur = f.spec ? f.spec.dur : f.dur;
+    f.draw(now % dur);
+  }
+  if (!RM) requestAnimationFrame(frame);
+}
+
+// ---------- 1 · the trio ----------
+const YARD = [
+  { kind: 'rock', x: 4 }, { kind: 'shack', x: 36 }, { kind: 'bench', x: 50 }, { kind: 'house', x: 66 },
+  { kind: 'tower', x: 86 }, { kind: 'farm', x: 102 }, { kind: 'apothecary', x: 122 }, { kind: 'casino', x: 142 },
+];
+const YARD_W = 162;
+function trioSpec(style, label) {
+  const VW = 72, H = 40, HOP = 1.3;
+  const order = [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1];
+  const beats = order.map((k, i) => ({ at: i * HOP, f: k, say: i === 0 ? `${KEYS.right} hop right along the yard` : i === 8 ? `${KEYS.left} and back` : undefined }));
+  const where = (k) => stationRect(YARD[k]);
+  const camFor = k => { const r = where(k); return clamp(r.x + r.w / 2 - VW / 2, 0, YARD_W - VW); };
+  return {
+    title: label, caption: '', W: VW, H, dur: order.length * HOP, beats, keys: [0.2, 1.36, 1.6, 3.0],
+    init: () => ({}), step: () => {},
+    draw(c, st, t) {
+      let i = 0; for (let j = 0; j < beats.length; j++) if (beats[j].at <= t) i = j;
+      const prev = i > 0 ? beats[i - 1].f : beats[i].f;
+      const cam = Math.round(lerp(camFor(prev), camFor(beats[i].f), easeInOut(clamp((t - beats[i].at) / .7, 0, 1))));
+      drawGround(c, VW, H, cam);
+      c.save(); c.translate(-cam, 0);
+      const col = yardColors(false);
+      for (const s of YARD) drawStation(c, s, col);
+      const fo = focusAt(beats, t, where);
+      if (fo) drawMarker(c, style, fo.r, t, fo.settle, TOK.accent, TOK.paper);
+      c.restore();
+      if (fo && !fo.moving && fo.since > .25) {
+        const r = fo.r;
+        return { html: `${KEYS.A} ${NAMES[YARD[fo.f].kind]}`, x: r.x + r.w / 2 - cam, y: style === 'arrow' ? r.y - 7 : r.y - 3 };
+      }
+      return null;
+    },
+  };
+}
+
+// ---------- 2 · a stop's own controls ----------
+function controlsSpec() {
+  const W = 104, H = 44;
+  const house = { kind: 'house', x: 10 }, casino = { kind: 'casino', x: 52 }, apo = { kind: 'apothecary', x: 82 };
+  const RY = GROUND + 4;                                    // the roster's row, under the house
+  const rosterX = 6;
+  const minus = { x: rosterX, y: RY, w: 3, h: 3 }, plus = { x: rosterX + 29, y: RY, w: 3, h: 3 };
+  const pot = { x: apo.x + 9, y: GROUND - 4, w: 6, h: 4 };
+  const beats = [
+    { at: 0, f: 'house', say: `focus on the house` },
+    { at: 1.2, f: 'minus', say: `${KEYS.down} steps down into the house's own controls: the roster` },
+    { at: 2.0, f: 'plus', say: `${KEYS.right} along the roster to the plus` },
+    { at: 2.8, say: `${KEYS.A} one more body on the job (one walks out, as now)` },
+    { at: 3.8, f: 'casino', say: `${KEYS.up} back out, ${KEYS.right} on to the casino` },
+    { at: 4.8, f: 'arm', say: `${KEYS.down} the arm` },
+    { at: 5.6, say: `hold ${KEYS.A} to grab the arm, ${KEYS.L} pull down to pour the stake in` },
+    { at: 7.4, f: 'sign', say: `${KEYS.down} the sign` },
+    { at: 8.2, say: `${KEYS.A} drops the stake` },
+    { at: 9.2, f: 'apo', say: `${KEYS.up} ${KEYS.right} the apothecary` },
+    { at: 10.0, f: 'pot', say: `${KEYS.down} the pot's picker; ${KEYS.A} picks, as a click does` },
+  ];
+  const where = k => ({ house: stationRect(house), casino: { ...stationRect(casino), w: 19 }, apo: stationRect(apo),
+                        minus, plus, arm: casinoArm(casino), sign: casinoSign(casino), pot })[k];
+  return {
+    title: "A stop's own controls.", caption: 'Up and down step into a station\'s rosters, levers, sign and pickers; left and right hop along.',
+    W, H, dur: 11.6, beats, keys: [2.1, 3.0, 6.6, 8.3],
+    init: () => ({ filled: 3, arm: 0, grains: [] }),
+    step(st, t, dt) {
+      st.filled = t >= 2.8 ? 4 : 3;
+      const pulling = t >= 5.6 && t < 7.2;
+      st.arm = clamp(st.arm + (pulling ? dt * 1.2 : -dt * 2), 0, 1);
+      if (pulling && st.arm > .6 && Math.floor(t * 20) !== Math.floor((t - dt) * 20)) st.grains.push({ x: casino.x + 5 + Math.floor(hash(st.grains.length, 1) * 2), y: GROUND - 14 - 8, vy: 0 });
+      for (const g of st.grains) { g.vy += 30 * dt; g.y += g.vy * dt; }
+      st.grains = st.grains.filter(g => g.y < GROUND - 11);
+      st.signDown = t >= 8.2 && t < 8.6;
+    },
+    draw(c, st, t) {
+      drawGround(c, W, H, 0);
+      const col = yardColors(false);
+      drawStation(c, house, col); drawStation(c, apo, col);
+      drawStation(c, casino, col, { arm: st.arm, signDown: st.signDown });
+      for (const g of st.grains) R(c, g.x, Math.round(g.y), 1, 1, TOK.grey);
+      // the roster: minus, pips, plus (the shapes under a station today)
+      R(c, minus.x, RY + 1, 3, 1, TOK.ink);
+      for (let i = 0; i < 6; i++) {
+        const px = rosterX + 5 + i * 4;
+        if (i < st.filled) R(c, px, RY, 3, 3, TOK.ink);
+        else { R(c, px, RY, 3, 3, TOK.ink); R(c, px + 1, RY + 1, 1, 1, TOK.wash); }
+      }
+      R(c, plus.x, RY + 1, 3, 1, TOK.ink); R(c, plus.x + 1, RY, 1, 3, TOK.ink);
+      const fo = focusAt(beats, t, where);
+      if (fo) drawMarker(c, STYLE, fo.r, t, fo.settle, TOK.accent, TOK.paper);
+      return null;
+    },
+  };
+}
+
+// ---------- 3 · the rock, mining and tossing ----------
+function rockSpec() {
+  const W = 96, H = 44, rock = { kind: 'rock', x: 10 };
+  const PIT = { x: 62, w: 18 };
+  const top = { x: 22, y: GROUND - 17 };
+  const hits = [1.0, 1.6, 2.2, 3.2, 3.5, 3.8, 4.1, 4.4, 4.7];
+  const CRIT = 4.1;
+  const beats = [
+    { at: 0, f: 'rock', say: `focus on the rock; the prompt is ${KEYS.A} mine` },
+    { at: 1.0, say: `${KEYS.A} ${KEYS.A} ${KEYS.A} a press is a click: a chip off the top` },
+    { at: 3.2, say: `hold ${KEYS.A} mines on its own, once that is bought, as a held button does` },
+    { at: CRIT, say: `a crit rolls as now: the bigger burst and its number. Optional: one short rumble` },
+    { at: 5.4, f: 'hand', say: `hold ${KEYS.RT}: the hand comes out where the focus is` },
+    { at: 6.0, say: `${KEYS.L} walk it over the dust, hold ${KEYS.A} to sweep it up` },
+    { at: 7.3, say: `flick ${KEYS.L} toward the pit and let go of ${KEYS.A}: the load is thrown with the flick` },
+    { at: 8.6, f: 'rock', say: `let go of ${KEYS.RT}: the hand goes, the focus is back on the rock` },
+  ];
+  const handPath = t => {
+    // the hand's place in the yard, a function of time while it is out
+    if (t < 6.0) return { x: 26, y: GROUND - 3 };
+    if (t < 7.0) { const k = easeInOut((t - 6) / 1); return { x: lerp(26, 38, k), y: GROUND - 3 }; }
+    if (t < 7.3) return { x: 38, y: GROUND - 3 };
+    if (t < 7.55) { const k = easeOut((t - 7.3) / .25); return { x: lerp(38, 50, k), y: lerp(GROUND - 3, GROUND - 9, k) }; }
+    return { x: 50, y: GROUND - 9 };
+  };
+  const where = (k, t) => k === 'rock' ? stationRect(rock) : (() => { const p = handPath(t); return { x: Math.round(p.x) - 1, y: Math.round(p.y) - 1, w: 4, h: 4 }; })();
+  return {
+    title: 'The rock.', caption: 'Mining by button, the crit, and the hand that sweeps and throws.',
+    W, H, dur: 10, beats, keys: [1.1, 4.2, 6.9, 7.6],
+    init: () => ({ chips: [], nums: [], made: 0 }),
+    step(st, t, dt) {
+      for (const h of hits) if (h <= t && h > t - dt) {
+        const n = h === CRIT ? 7 : 2;
+        for (let i = 0; i < n; i++) {
+          const s = st.made++;
+          st.chips.push({ x: top.x + hash(s, 1) * 2, y: top.y, vx: (hash(s, 2) - .3) * (h === CRIT ? 22 : 12), vy: -10 - hash(s, 3) * 10, rest: false, held: false });
+        }
+        st.nums.push({ x: top.x + 4, y: top.y - 3, at: t, s: h === CRIT ? '×4' : '1', crit: h === CRIT });
+      }
+      const hand = handPath(t);
+      const sweeping = t >= 6.0 && t < 7.3;
+      for (const g of st.chips) {
+        if (g.held) {
+          if (t >= 7.3 && !g.thrown) { g.held = false; g.thrown = true; g.vx = 40 + hash(g.x | 0, 5) * 14; g.vy = -16 - hash(g.y | 0, 6) * 6; g.rest = false; }
+          else { g.x = lerp(g.x, hand.x + (g.ox || 0), .35); g.y = lerp(g.y, hand.y - 2 + (g.oy || 0), .35); continue; }
+        }
+        if (sweeping && g.rest && Math.abs(g.x - hand.x) < 5) { g.held = true; g.ox = (hash(g.x | 0, 9) - .5) * 3; g.oy = -hash(g.y | 0, 8) * 2; continue; }
+        if (g.rest) continue;
+        g.vy += 60 * dt; g.x += g.vx * dt; g.y += g.vy * dt;
+        // rests on the rock's slope or the ground, falls into the pit
+        const overPit = g.x >= PIT.x && g.x < PIT.x + PIT.w;
+        const floor = overPit ? H + 4 : GROUND - 1 - rockH(g.x - rock.x);
+        if (g.y >= floor) { if (overPit) g.gone = true; g.y = floor; g.rest = true; g.vx = 0; g.vy = 0; }
+      }
+      st.chips = st.chips.filter(g => !g.gone);
+    },
+    draw(c, st, t) {
+      drawGround(c, W, H, 0);
+      R(c, PIT.x, GROUND, PIT.w, H - GROUND, TOK.ink); R(c, PIT.x + 1, GROUND + 1, PIT.w - 2, H - GROUND, TOK.grey);
+      drawStation(c, rock, yardColors(false));
+      for (const g of st.chips) R(c, Math.round(g.x), Math.round(g.y), 1, 1, g.held ? TOK.ink : TOK.grey);
+      for (const n of st.nums) {
+        const a = t - n.at; if (a < 0 || a > .9) continue;
+        c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
+        c.font = `${n.crit ? 'bold ' : ''}${n.crit ? 13 * K / 2 : 9 * K / 2}px ui-monospace, monospace`;
+        c.fillStyle = TOK.ink; c.fillText(n.s, n.x * K, (n.y - Math.floor(a * 6)) * K);
+        c.restore();
+      }
+      const out = t >= 5.4 && t < 8.6;
+      if (out) {
+        const p = handPath(t), hx = Math.round(p.x), hy = Math.round(p.y);
+        // the hand: an open square of a palm, closed (filled) while sweeping
+        const closed = t >= 6.0 && t < 7.3;
+        R(c, hx - 1, hy - 1, 3, 3, TOK.ink); if (!closed) R(c, hx, hy, 1, 1, TOK.paper);
+        R(c, hx - 1, hy - 3, 1, 2, TOK.ink); R(c, hx + 1, hy - 3, 1, 2, TOK.ink);
+      }
+      const fo = focusAt(beats, t, where);
+      if (fo) drawMarker(c, STYLE, fo.r, t, fo.settle, TOK.accent, TOK.paper);
+      return null;
+    },
+  };
+}
+function rockH(i) { if (i < 0 || i >= 25) return 0; const d = Math.abs(i - 12) / 13; return Math.max(1, Math.round(17 * (1 - Math.pow(d, 1.5)))); }
+
+// ---------- 4 · the crew: sight and the lift chord ----------
+function crewSpec() {
+  const W = 128, H = 44;
+  const bench = { kind: 'bench', x: 30 }, house = { kind: 'house', x: 6 }, quarry = { kind: 'quarry', x: 104 };
+  const SIGHT = [1.4, 8.8], LIFT = 3.8, DROP = 7.8;
+  // bodies walk back and forth; the one picked out walks slow, then is carried
+  const BODIES = [{ a: 46, b: 60, v: 7, p: 0 }, { a: 62, b: 78, v: 6, p: 3 }, { a: 80, b: 100, v: 8, p: 5 }, { a: 88, b: 112, v: 5, p: 1 }];
+  const beats = [
+    { at: 0, f: 'bench', say: `the yard as it is; focus on the bench` },
+    { at: SIGHT[0], f: 'b1', say: `hold ${KEYS.LT}: crew sight. Buildings fade, bodies ring, and the focus hops to the nearest body` },
+    { at: 2.6, f: 'b2', say: `${KEYS.LT} + ${KEYS.right} next body. The focused one walks slow, as under the cursor` },
+    { at: LIFT, say: `${KEYS.LT} + ${KEYS.A}: lifted. The marker is the hand now` },
+    { at: 4.3, say: `${KEYS.L} carries it, at the hand's own speed` },
+    { at: 5.4, say: `waggle ${KEYS.L}: a shaking. Turns are counted as the mouse's are` },
+    { at: 6.6, say: `${KEYS.right}${KEYS.left} with a body in hand carry it to the next station; the drop spot shows` },
+    { at: DROP, say: `let go of ${KEYS.A}: dropped on the bench is a retraining, anywhere else a throw` },
+    { at: SIGHT[1], f: 'bench', say: `let go of ${KEYS.LT}: sight ends, the focus goes back to the station` },
+  ];
+  // body i's walk, integrated so a slow-down never jumps it
+  function walkX(i, t) {
+    const b = BODIES[i]; let s = b.p;
+    const slowFrom = 2.6, slowTo = LIFT;
+    if (i === 2) s += Math.min(t, slowFrom) * b.v + clamp(t - slowFrom, 0, slowTo - slowFrom) * b.v * .4;
+    else s += t * b.v;
+    const span = b.b - b.a, m = s % (2 * span);
+    return b.a + (m < span ? m : 2 * span - m);
+  }
+  const benchTop = { x: bench.x + 4, y: GROUND - 14 };
+  function carried(t) {
+    const x0 = walkX(2, LIFT), y0 = GROUND - 3;
+    if (t < LIFT) return { x: walkX(2, t), y: y0 };
+    if (t < 4.3) return { x: x0, y: lerp(y0, y0 - 4, easeOut((t - LIFT) / .5)) };
+    if (t < 5.4) { const k = easeInOut((t - 4.3) / 1.1); return { x: lerp(x0, 66, k), y: lerp(y0 - 4, GROUND - 16, k) }; }
+    if (t < 6.6) { const w = Math.floor((t - 5.4) * 8) % 2 ? 2 : -2; return { x: 66 + w, y: GROUND - 16 }; }
+    if (t < DROP) { const k = easeOut(clamp((t - 6.6) / .6, 0, 1)); return { x: lerp(66, benchTop.x, k), y: lerp(GROUND - 16, benchTop.y, k) }; }
+    const fall = t - DROP; const y = Math.min(GROUND - 3 - 4, benchTop.y + 30 * fall * fall);
+    return { x: benchTop.x, y };
+  }
+  const bodyAt = (i, t) => i === 2 ? carried(t) : { x: walkX(i, t), y: GROUND - 3 };
+  const where = (k, t) => {
+    if (k === 'bench') return stationRect(bench);
+    const i = +k.slice(1); const p = bodyAt(i, t);
+    return { x: Math.round(p.x), y: Math.round(p.y), w: 3, h: 3 };
+  };
+  return {
+    title: 'Crew sight and the lift.', caption: `${KEYS.LT} is the right button held; ${KEYS.A} under it is the left. A d-pad hop with a body in hand carries it, never jumps it.`,
+    W, H, dur: 10.4, beats, keys: [2.7, 4.1, 5.6, 7.0],
+    init: () => ({ veil: 0 }),
+    step(st, t, dt) { const on = t >= SIGHT[0] && t < SIGHT[1]; st.veil = clamp(st.veil + (on ? dt : -dt) / .25, 0, 1); },
+    draw(c, st, t) {
+      drawGround(c, W, H, 0);
+      const veiled = st.veil > .5;
+      const col = yardColors(veiled);
+      drawStation(c, house, col); drawStation(c, bench, col); drawStation(c, quarry, col);
+      // the drop spot while a body is carried toward a station
+      if (t >= 6.6 && t < DROP) {
+        const r = stationRect(bench);
+        for (let x = r.x - 1; x <= r.x + r.w; x++) if (x % 2 === 0) { R(c, x, r.y - 2, 1, 1, TOK.ink); R(c, x, GROUND - 1, 1, 1, TOK.ink); }
+      }
+      const bc = { body: TOK.ink, paper: TOK.paper, ringc: TOK.ink };
+      for (let i = 0; i < BODIES.length; i++) {
+        const p = bodyAt(i, t), x = Math.round(p.x), y = Math.round(p.y);
+        drawBody(c, x, y, bc, veiled);
+        if (i === 2 && t >= 5.6 && t < 9.2) {            // the stars of a shaking, held
+          const s = Math.floor(t * 3) % 2; R(c, x - 2 + s, y - 4, 1, 1, TOK.ink); R(c, x + 3 - s, y - 5, 1, 1, TOK.ink);
+        }
+        if (i === 2 && t >= 5.6 && t < 6.6) for (let k = 0; k < 3; k++) { const a = ((t - 5.6) * 2 + k * .3) % 1; R(c, 64 + k * 2, Math.round(GROUND - 13 + a * 12), 1, 1, TOK.grey); }
+      }
+      const fo = focusAt(beats, t, where);
+      if (fo) drawMarker(c, STYLE, fo.r, t, fo.settle, TOK.accent, TOK.paper);
+      return null;
+    },
+  };
+}
+
+// ---------- 5 · the deep ----------
+function deepSpec() {
+  const W = 112, H = 46, FLOOR = 40;
+  const ST = [{ x: 12 }, { x: 52 }, { x: 90 }];
+  const ORB = [5.0, 6.8];
+  const segAt = (i, t) => ({ x: 8 + i * 4, y: Math.round(18 + 5 * Math.sin(i * .45 - t * 1.1)) });
+  const beats = [
+    { at: 0, f: 's0', say: `the deep: a fighter's station, focused` },
+    { at: 1.2, f: 'g6', say: `${KEYS.up} to the coil: the nearest segment` },
+    { at: 2.0, f: 'g8', say: `${KEYS.L} slides the focus along the coil, segment by segment, as it moves` },
+    { at: 2.6, f: 'g10' },
+    { at: 3.2, say: `${KEYS.A} strikes where the focus is, as a click on the coil does` },
+    { at: ORB[0], say: `the constrict: an orb over a station, with the arrow it already has` },
+    { at: 5.8, f: 'orb', say: `${KEYS.down} ${KEYS.right} the orb is a stop like any other; nothing grabs the focus for you` },
+    { at: ORB[1], say: `${KEYS.A} bursts it; the fighter comes down` },
+    { at: 8.0, f: 's1', say: `${KEYS.down} back to the station. The way up is a stop too (the shaft arrow), or ${KEYS.View} to the corner` },
+  ];
+  const where = (k, t) => {
+    if (k[0] === 's') { const s = ST[+k[1]]; return { x: s.x, y: FLOOR - 6, w: 10, h: 6 }; }
+    if (k === 'orb') return { x: ST[1].x + 1, y: FLOOR - 19, w: 9, h: 9 };
+    const p = segAt(+k.slice(1), t); return { x: p.x, y: p.y, w: 4, h: 4 };
+  };
+  const strikes = [3.2, 3.8];
+  return {
+    title: 'The deep.', caption: 'The serpent, its coil and the constrict orb. The accent is the deep\'s lighter purple.',
+    W, H, dur: 9.6, beats, keys: [2.1, 3.25, 5.9, 6.95],
+    init: () => ({}), step() {},
+    draw(c, st, t) {
+      R(c, 0, 0, W, H, TOK.deep);
+      for (let i = 0; i < 70; i++) R(c, Math.floor(hash(i, 2) * W), Math.floor(hash(i, 4) * H), 1, 1, hash(i, 6) < .3 ? '#5a3c8c' : TOK.deepgrey);
+      R(c, 0, FLOOR, W, H - FLOOR, '#121018');
+      for (const s of ST) { R(c, s.x, FLOOR - 6, 10, 6, TOK.deepgrey); R(c, s.x, FLOOR - 6, 10, 1, TOK.deepink); }
+      // fighters at their stations; the middle one hangs in the orb while it holds
+      const orbOn = t >= ORB[0] && t < ORB[1];
+      ST.forEach((s, i) => {
+        const up = i === 1 && orbOn ? 12 : i === 1 && t >= ORB[1] && t < ORB[1] + .4 ? Math.round(12 * (1 - (t - ORB[1]) / .4)) : 0;
+        R(c, s.x + 4, FLOOR - 9 - up, 3, 3, TOK.deepink);
+      });
+      for (let i = 0; i < 22; i++) {
+        const p = segAt(i, t);
+        R(c, p.x, p.y, 4, 4, i % 2 ? '#bfbccb' : TOK.deepink); R(c, p.x + 3, p.y, 1, 4, '#3a3748');
+      }
+      const hd = segAt(22, t); R(c, hd.x, hd.y - 1, 6, 6, TOK.deepink); R(c, hd.x + 3, hd.y + 1, 1, 1, TOK.deep);
+      for (const s of strikes) {
+        const a = t - s; if (a < 0 || a > .5) continue;
+        const p = segAt(10, s);
+        if (a < .16) for (let k = 0; k < 6; k++) R(c, p.x - 2 + k, p.y - 2 + k, 1, 1, '#ffffff');   // the smear, held
+        else { R(c, p.x + 1, p.y - 1, 2, 6, '#ffffff'); R(c, p.x - 1, p.y + 1, 6, 2, '#ffffff'); }     // the held impact
+        c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.font = `bold ${5 * K}px ui-monospace, monospace`; c.fillStyle = TOK.deepink;
+        c.fillText('12', (p.x + 5) * K, (p.y - 3 - Math.floor(a * 8)) * K); c.restore();
+      }
+      if (orbOn) {
+        const o = where('orb'); const cx = o.x + 4, cy = o.y + 4;
+        for (let a = 0; a < 24; a++) { const ang = a / 24 * Math.PI * 2; R(c, cx + Math.round(Math.cos(ang) * 4), cy + Math.round(Math.sin(ang) * 4), 1, 1, a % 3 ? TOK.deepaccent : '#ffffff'); }
+        // the game's own orb arrow, a cell of bob
+        const bob = Math.floor(t / .5) % 2;
+        ['#####', '.###.', '..#..'].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') R(c, cx - 2 + i, o.y - 7 - bob + j, 1, 1, '#ffffff'); }));
+      }
+      if (t >= ORB[1] && t < ORB[1] + .6) {          // the burst: the ring steps out and breaks
+        const o = where('orb'), cx = o.x + 4, cy = o.y + 4, step = Math.floor((t - ORB[1]) / .15);
+        for (let a = 0; a < 12; a++) { const ang = a / 12 * Math.PI * 2, rr = 5 + step * 2; R(c, cx + Math.round(Math.cos(ang) * rr), cy + Math.round(Math.sin(ang) * rr) + step, 1, 1, TOK.deepaccent); }
+      }
+      const fo = focusAt(beats, t, where);
+      if (fo && !(fo.f === 'orb' && !orbOn && t >= ORB[1])) drawMarker(c, STYLE, fo.r, t, fo.settle, TOK.deepaccent, TOK.deep);
+      return null;
+    },
+  };
+}
+
+// ---------- 6 · a board ----------
+const TILES = [
+  ['who lives here', '18', '18'], ['another house', '18 → 19', '3.9k'], ['a wider door', '2 → 3', '1.2k'],
+  ['a second floor', '0 → 1', '9k'], ['the long table', '1 → 2', '640'], ['a softer bed', '3 → 4', '2.1k'],
+];
+const BENCH_TILES = [['crit chance', '4% → 5%', '800'], ['crit size', '×3 → ×4', '1.4k'], ['a toss', '6 → 8', '300'],
+                     ['the sweep', '2 → 3', '900'], ['the hold', 'off → on', '5k'], ['a wider pan', '1 → 2', '2k']];
+function boardSpec() {
+  const html = `<div class="board fade" id="bd">
+    <div class="ttl" id="bdt">the house</div>
+    <div class="sec">the crew</div>
+    <div class="tiles">${TILES.map((tl, i) => `<div class="tile" id="t${i}"><i class="pic"></i><span class="nm">${tl[0]}</span><span class="ab">${tl[1]}</span><span class="bill">${tl[2]}</span><span class="pips">●●○○○○○○</span><span class="q"></span></div>`).join('')}</div>
+    <div class="hide" id="hide">hide finished</div>
+  </div>`;
+  const beats = [
+    { at: 0, f: '#t0', say: `${KEYS.A} at the house opened its board; the focus lands on the first card` },
+    { at: 1.3, f: '#t1', say: `${KEYS.right} the next card` },
+    { at: 2.3, say: `${KEYS.A} buys a rung; it goes in the queue` },
+    { at: 3.1, say: `${KEYS.A} again: queued twice` },
+    { at: 3.9, say: `${KEYS.Y} hands the newest copy back (the card's refund strip)` },
+    { at: 4.9, f: '#t4', say: `${KEYS.down} the row below. Its tip comes up beside it after the hover's own wait` },
+    { at: 6.4, f: '#hide', say: `${KEYS.down} the board's own buttons` },
+    { at: 7.2, say: `${KEYS.A} as a click` },
+    { at: 8.2, f: '#t0', say: `${KEYS.RB} turns to the next station's board; the camera glides there under it` },
+    { at: 9.6, f: '#t0', say: `${KEYS.LB} back to the house` },
+    { at: 10.6, f: null, say: `${KEYS.B} puts the board away; the focus is back on the house in the yard` },
+  ];
+  return {
+    title: 'A board and its cards.', caption: 'D-pad moves card to card in the grid, the way the eye reads it.',
+    html, beats, dur: 12, still: 5.8,
+    tip: (f) => f === '#t4' ? `${KEYS.A} the long table: one more seat` : f === '#t1' ? `${KEYS.A} another house` : null,
+    apply(el, t) {
+      const bench = t >= 8.2 && t < 9.6;
+      const set = bench ? BENCH_TILES : TILES;
+      el.querySelector('#bdt').textContent = bench ? 'the bench' : 'the house';
+      set.forEach((tl, i) => { const tile = el.querySelector('#t' + i); tile.querySelector('.nm').textContent = tl[0]; tile.querySelector('.ab').textContent = tl[1]; tile.querySelector('.bill').textContent = tl[2]; });
+      const n = bench ? 0 : t >= 3.9 ? 1 : t >= 3.1 ? 2 : t >= 2.3 ? 1 : 0;
+      el.querySelector('#t1 .q').textContent = n ? `queued ×${n}` : '';
+      el.querySelector('#t1 .pips').textContent = bench ? '●●○○○○○○' : '●●' + '◐'.repeat(n) + '○'.repeat(6 - n);
+      el.querySelector('#hide').textContent = t >= 7.2 && !bench ? 'show finished' : 'hide finished';
+      el.querySelector('#bd').classList.toggle('gone', t >= 10.6);
+    },
+  };
+}
+
+// ---------- 7 · the objective, the queue and the corner ----------
+function hudSpec() {
+  const html = `<div class="hud">
+    <div>
+      <div class="obj" id="obj"><span class="next">next</span>
+        <div>lets try building an arch from the mined ore and stone. surely that's sturdy enough.</div>
+        <div class="row" id="arch"><span>the arch</span><b class="btn" id="archbuy">■ 40k</b></div>
+      </div>
+      <div class="queue" id="q"><div id="q0">the house · another house <b id="qn">×2</b> ●●○</div><div id="q1">the bench · crit chance ●○○</div><div id="q2"></div></div>
+    </div>
+    <div class="corner"><i id="cw">◐</i><i id="cp">▢</i><i id="cf">⛶</i></div>
+  </div>`;
+  const beats = [
+    { at: 0, f: null, say: `the focus is out in the yard` },
+    { at: 1.0, f: '#obj', say: `${KEYS.View} lifts the focus to the cards in the window's corners` },
+    { at: 2.0, f: '#archbuy', say: `${KEYS.down} the objective's own row` },
+    { at: 2.8, say: `${KEYS.A} buys it, as a click does` },
+    { at: 3.8, f: '#q0', say: `${KEYS.down} the queue: a line with a copy waiting is a button` },
+    { at: 5.0, say: `${KEYS.Y} hands one back` },
+    { at: 6.0, f: '#cw', say: `${KEYS.right} across to the corner: the crew switch, the hold, fullscreen` },
+    { at: 7.0, f: '#cp' },
+    { at: 8.0, f: null, say: `${KEYS.B} or ${KEYS.View} again: back to the yard, where the focus was` },
+  ];
+  return {
+    title: 'The objective, the queue and the corner.', caption: 'Out of the yard\'s way until asked for: one button lifts the focus up to them.',
+    html, beats, dur: 9.4, still: 4.4,
+    tip: f => f === '#q0' ? `the house: 40s` : f === '#cw' ? `crew: shown` : f === '#cp' ? `${KEYS.Menu} hold` : null,
+    apply(el, t) {
+      el.querySelector('#qn').textContent = t >= 5.0 ? '' : '×2';
+      el.querySelector('#q2').textContent = t >= 2.8 ? 'the yard · the arch ○○○' : '';
+      el.querySelector('#archbuy').textContent = t >= 2.8 ? 'queued' : '■ 40k';
+    },
+  };
+}
+
+// ---------- 8 · the sheets ----------
+function sheetSpec() {
+  const html = `<div class="sheet" id="sh">
+    <div class="word" id="word">paused</div>
+    <div data-p="main"><div class="b" id="resume">resume</div></div>
+    <div class="rule" data-p="main"></div>
+    <div class="b" data-p="main" id="saves">saves</div>
+    <div class="b" data-p="main" id="ach">achievements</div>
+    <div class="b" data-p="main" id="idx">index</div>
+    <div class="b" data-p="main" id="times">times</div>
+    <div class="b" data-p="main" id="set">settings</div>
+    <div class="b" data-p="main" id="title">return to title</div>
+    <div class="b" data-p="settings" id="motion">motion: full</div>
+    <div class="b" data-p="settings" id="touch">touch: off</div>
+    <div class="b" data-p="settings" id="dark">dark: off</div>
+    <div class="b" data-p="settings" id="fs">fullscreen: off</div>
+    <div class="b" data-p="settings" id="sound">sound: on</div>
+    <div class="vol" data-p="settings" id="vol"><i></i></div>
+    <div class="name" data-p="settings" id="name">name on the board</div>
+    <div class="b" data-p="settings" id="ctl">controls</div>
+    <div class="b" data-p="settings" id="back">back</div>
+    <div class="small" data-p="main" id="hint">≡ holds · B back · hold A to skip a scene</div>
+  </div>`;
+  const beats = [
+    { at: 0, f: '#resume', say: `${KEYS.Menu} holds the yard; the sheet comes up with the focus on resume` },
+    { at: 1.1, f: '#saves', say: `${KEYS.down} down the list` },
+    { at: 1.7, f: '#ach' }, { at: 2.3, f: '#idx' }, { at: 2.9, f: '#times' },
+    { at: 3.5, f: '#set' },
+    { at: 4.3, f: '#motion', say: `${KEYS.A} opens settings; the focus starts on its first row` },
+    { at: 5.3, f: '#touch' },
+    { at: 5.9, f: '#dark' },
+    { at: 6.6, say: `${KEYS.A} flips a switch` },
+    { at: 7.4, f: '#fs' }, { at: 7.9, f: '#sound' },
+    { at: 8.5, f: '#vol', say: `${KEYS.left} ${KEYS.right} on the volume step it a notch` },
+    { at: 10.2, f: '#name', say: `${KEYS.A} on the name box: the Steam keyboard on a Deck; elsewhere it is skipped` },
+    { at: 11.4, f: '#set', say: `${KEYS.B} back a page, focus on the row it came from; ${KEYS.B} again resumes` },
+  ];
+  return {
+    title: 'The held sheet and settings.', caption: 'A list the d-pad walks top to bottom, wrapping; B is every page\'s back.',
+    html, beats, dur: 12.6, still: 6.0,
+    tip: null,
+    apply(el, t) {
+      const pane = t >= 4.3 && t < 11.4 ? 'settings' : 'main';
+      el.querySelectorAll('[data-p]').forEach(n => { n.hidden = n.dataset.p !== pane; });
+      el.querySelector('#word').textContent = pane === 'settings' ? 'settings' : 'paused';
+      el.querySelector('#dark').textContent = t >= 6.6 ? 'dark: on' : 'dark: off';
+      const v = t < 9.1 ? .8 : t < 9.6 ? .75 : .7;
+      el.querySelector('#vol i').style.width = (v * 100) + '%';
+    },
+  };
+}
+
+// ---------- build ----------
+function build() {
+  readTokens();
+  document.querySelectorAll('.picker button').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.style === STYLE));
+    b.addEventListener('click', () => {
+      STYLE = b.dataset.style;
+      try { localStorage.setItem('ctl-focus-style', STYLE); } catch {}
+      document.querySelectorAll('.picker button').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+      if (RM) frame();
+    });
+  });
+  const trio = document.getElementById('trio');
+  addCanvasFig(trio, { ...trioSpec('brackets', 'A · corner brackets'), caption: '' });
+  addCanvasFig(trio, { ...trioSpec('stepped', 'B · stepped outline'), caption: '' });
+  addCanvasFig(trio, { ...trioSpec('arrow', 'C · bobbing arrow'), caption: '' });
+  const figs = document.getElementById('figs');
+  addCanvasFig(figs, controlsSpec());
+  addCanvasFig(figs, rockSpec());
+  addCanvasFig(figs, crewSpec());
+  addCanvasFig(figs, deepSpec());
+  addDomFig(figs, boardSpec());
+  addDomFig(figs, hudSpec());
+  addDomFig(figs, sheetSpec());
+  frame();
+  if (RM) addEventListener('resize', frame);
+}
+build();
+</script>
+</body>
+</html>

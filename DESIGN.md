@@ -17892,3 +17892,184 @@ foot of the glass.
   camera, never a body.
 - **The yard's clock**: the index takes whatever the held sheet does today
   and pauses nothing of its own; option C's look mode pauses nothing at all.
+
+## Controller support (design, not built)
+
+The owner, 2026-10-12: full controller support -- "lets mock up the focus
+states for stations, and everything else". Two mocks, for the vote:
+docs/mocks/controller-focus-2026-10-12.html (the focus marker on every
+surface, in three styles) and docs/mocks/controller-map-2026-10-12.html (the
+Xbox and Steam Deck maps, every action, hops against a free cursor, the
+camera, the glyphs). The Steam build ("Three builds", above) makes this
+more than a nicety: "doesn't work on Steam Deck / no controller" is on the
+list of what a Steam page's reviews say first (docs/steam-ready.md).
+
+**The bargain.** A pad plays the whole game -- every board, sheet, rung,
+lift and strike -- by **moving a focus between the things a click would
+land on**, never by steering a cursor at them. The yard is a line of
+stations, and every click in the game already lands on a named thing with
+a rectangle (`STATIONS` and `standRect`, the rosters, the levers, the pot
+pickers, the coil, the orb, the board rows), so the list a pad walks is
+read off tables that exist. What the player gives up is aim: the few things
+that need a *place* rather than a *thing* -- sweeping dust, throwing it,
+dropping a body somewhere that is not a station -- go through a second,
+deliberate mode, the hand on a held trigger.
+
+### The focus
+
+- **One focus**, on one thing at a time: a station, one of a station's own
+  controls, a body (under crew sight), a coil segment, the orb, a board
+  card, a corner card, a sheet's row. It lives on `S` as `padFocus`, in
+  `EPHEMERAL`: a reload starts with it on the rock.
+- **The stops are one list.** Left and right hop along the yard in yard
+  order -- the list the phone's hop arrows (hop.js) and the digit keys
+  (`jumpStops`, input.js) already walk, made one function all three ask, so
+  a station that goes up is a stop on all three by existing. Up and down
+  step *into* a stop: a station's roster minus and plus, the casino's arm
+  and sign, the apothecary's picker; in the deep, the coil over the
+  stations. A stop off screen is skipped for the nearest one in the window,
+  so the first press after a pan lands where you are looking.
+- **The marker** is drawn in the purple accent (`#6f36c9`; the deep's
+  `#a979ef`), on the `P` grid, with a one-cell halo in the paper color so
+  it reads over ink, grey and the deep's dark. It glides between stops in
+  about a quarter second, fast out and soft in, on whole cells only, and
+  steps in a cell or two to land. Three styles in the mock: **A** corner
+  brackets, **B** a stepped outline, **C** the game's own chevron bobbing a
+  cell over the thing. One is chosen; the other two are not built.
+- **The tip.** A settled focus asks for the hover's tip (`showTip` /
+  `showTipAt`) by the focused thing's rectangle instead of the cursor's
+  point, after the hover's own wait, with the button that acts on it in
+  front. The words are the hover's; nothing new is written.
+- **Boards, sheets, cards** are DOM, and their rows are already buttons:
+  the focus there is real DOM focus, moved spatially by the d-pad (nearest
+  row in the pressed direction) and drawn by the same marker over the row.
+  The board opens on **A** at a station, not on the focus arriving -- a
+  hop past four stations must not open four boards -- and **B** puts it
+  away and gives the focus back to the station. **LB / RB** hop to the
+  neighbor station with its board open, turning the page.
+- **The corner cards** (the objective and its barrier row, the queue, the
+  corner buttons) are out of the yard's way until **View** lifts the focus
+  up to them; **View** or **B** puts it back where it was.
+
+### The map (Xbox; the Deck adds four back buttons and two trackpads)
+
+| | Xbox | the Deck, in addition |
+|---|---|---|
+| hop along / into a stop | d-pad; a left-stick flick | |
+| the click | A (held on the rock: held mining; held in a scene: skip) | |
+| back | B | |
+| a card's second action | X | |
+| hand a queued copy back | Y | |
+| neighbor station, board open | LB / RB | |
+| crew sight (the right button) | LT held; with A, lift | L4 held |
+| the hand (a free cursor) | RT held; left stick moves it, A sweeps, a flick throws | R4 held; the right trackpad as a mouse |
+| camera | right stick pans (lets go of the follow); R3 glides back | left trackpad as the wheel |
+| the corner cards | View | |
+| hold (the held sheet) | Menu | |
+| the way (deep / up) | A on the portal or shaft arrow, a stop | L5 |
+| the index | from the held sheet | R5 |
+
+- **Crew sight and the lift.** LT is the right button held: the veil and
+  rings exactly as now, and the focus hops between *bodies* instead of
+  stations (nearest in the pressed direction), the focused one walking
+  slow (`hoverAt`'s `slowUntil`). A lifts it, the marker becomes the hand,
+  and the left stick carries it at the hand's speed; a waggle is a shaking,
+  counted by `shakeHeld` as the mouse's turns are. A d-pad hop with a body
+  in hand *carries* it to the next station's drop spot, never moves it
+  there; letting go of A over a station is `assignDrop`, anywhere else a
+  throw with the stick's last flick. B sets it down without a throw.
+- **The rock.** A is a click (`knockOff` at `topOfRock`), held A is held
+  mining once bought, as now. Crits roll as now; an optional short rumble
+  on one is the pad's only new feedback, off by default.
+- **The deep.** Up from a station is the coil: the focus lands on the
+  nearest segment and the stick slides it along as the coil moves; A is
+  `clickDeep` there. The constrict's orb is a stop like any other, with
+  the arrow it already wears; it never takes the focus by itself.
+- **The casino.** Its arm is a stop; holding A grabs it (`holdAt`) and the
+  stick's vertical is the drag (`dragArm`); the sign is the stop under it.
+- **Text boxes** (the name on the board, the pasted save) are skipped by
+  the focus. On the Deck, A on one opens Steam's own keyboard; elsewhere a
+  keyboard or mouse is needed, as now.
+
+### Glyphs and the controls page
+
+Prompts are flat black-and-white shapes, not brand colors: face buttons a
+filled disc with the letter, bumpers and triggers tabs, the d-pad an
+outlined square with its arrow, sticks a ring, the Deck's back buttons and
+trackpads their own tabs. The confirm is always the bottom face button
+(the Gamepad API's button 0); the glyph shows what that pad prints there --
+Xbox letters by default, drawn ✕ ○ □ △ for a PlayStation pad read off the
+pad's id. Prompts follow the last input: "hold space to skip" (skiphint.js)
+shows the pad's A while a pad was the last thing touched. The controls
+page (`CONTROLS`, controls.js) gains a pad column, shown once a pad has
+been seen. **Every prompt's words are the owner's**; the mocks' are
+placeholders.
+
+### What it costs
+
+- **A module, pad.js**, that reads the pad once a frame (the Gamepad API
+  has no events for buttons) and turns presses into the same calls
+  input.js makes -- `knockOff`, `lift` / `drop` / `shakeHeld`, `holdAt` /
+  `dragArm`, `clickDeep`, `showPanel`, `hold`, `holdSkip` -- deciding
+  nothing itself, as input.js decides nothing. The hand reuses the
+  pointer's path (`sweep`, `track`, `release`, `throwVel`) with the stick
+  standing in for the pointer's position, so a throw is the same throw.
+- **A stops function** shared by hop.js, the digit keys and the pad, with
+  a rectangle for every stop. The in-station controls already have hit
+  tests (`rosterHit`, `leverUnder`, `signUnder`, `potHover`, `onOrb`); each
+  needs its rectangle exported beside the test.
+- **A marker layer** in `LAYERS` (render.js), after the bodies and before
+  the HUD marks, plus one stylesheet rule for the DOM rows, which today
+  have hover styles and no `:focus-visible` at all.
+- **Checks.** The node tier: the stops list against the stations standing,
+  hops in order, a hop with a body in hand never moves it more than the
+  hand's speed in a frame, and a lift-carry-drop on a station retrains it,
+  done the player's way (pad presses through a `__pad` handle, not
+  `__crew`). The browser tier: the d-pad through a board's rows, A buys,
+  B closes; the held sheet's list.
+
+### What it must not break
+
+- **Nothing teleports, the camera included.** The marker glides; the view
+  glides after it with `lookAt` (under reduced motion it moves as `lookAt`
+  moves there today); a carried body goes where the hand takes it at the
+  hand's speed; a d-pad hop with a body in hand is a carry, never a
+  placement. No press anywhere sets a position.
+- **Black and white, one accent.** The marker is the one purple; the
+  glyphs are ink on paper. No new colors, no flash, no shake on focus.
+- **A focus is not a hover.** Arriving at a station shows its tip and
+  opens nothing; only A does what a click does.
+- **The mouse and touch paths do not change.** The pad is a third front
+  end on the same calls, as touch is a second one; the phone's hop arrows
+  and the pad's hops walk one list.
+- **Hover text stays concise.** The tip is the hover's line plus a button;
+  no explaining the system.
+
+### The calls this makes
+
+1. **Focus hops or a free cursor** as the way about. Recommended: hops on
+   the d-pad, with the free cursor as the hand on a held RT for sweeping,
+   throwing and dropping a body anywhere. A free cursor everywhere is
+   simpler to build (one stick, one pointer, no stop lists) and worse to
+   play: every press becomes an aim, and the smallest targets -- a
+   roster's plus is three cells -- are the slowest to land on (the map
+   mock races the two).
+2. **Mouse and pad at the same time.** Recommended: both always live, the
+   last input wins -- a pad press shows the marker and the pad's glyphs,
+   a mouse move hides them -- with no setting. The alternative, a "pad
+   mode" switch that hides the cursor, is simpler but breaks the Deck,
+   whose right trackpad is a mouse and whose sticks are a pad, and breaks
+   the moment a player reaches for the mouse mid-game.
+3. **The browser's Gamepad API, or Steam Input.** Recommended: the
+   Gamepad API in the game for every build (web, itch desktop, Steam),
+   since Electron's Chromium has it and it needs no dependency; plus a
+   default Steam Input configuration shipped with the Steam app that maps
+   the Deck's back buttons and trackpads onto inputs the game already
+   reads (L4 / R4 as the triggers, L5 / R5 as spare buttons, the right pad
+   as the mouse, the left as the wheel). Steam Input's native API through
+   steamworks.js (already planned for Steam Cloud) would give true glyphs
+   and action sets, but only in the Steam build, and makes the pad a
+   second code path there.
+
+Also for the vote, smaller: the marker style (A, B or C), and whether a
+crit's rumble exists at all.
