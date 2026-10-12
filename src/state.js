@@ -391,6 +391,7 @@ export const S = {
   stormLeft: 0,           // marked motes still to fall in this shower
   rains: 0,               // how many times they have
   filterOpen: false,       // the house is built
+  craftGift: 0,           // 1 once the house's own balloon has come with it (not a bought one)
   purifiers: 0,           // and this many bodies are in it
   janitors: 0,            // and how many are shovelling up after everybody
   seenMess: false,        // and whether the yard has ever been left in a state
@@ -627,6 +628,7 @@ export const SAVED = [
   'potency',
   'casinoOpen',
   'filterOpen',
+  'craftGift',
   'towerOpen',
   'outhouseOpen',
   'shackOpen',

@@ -12,7 +12,7 @@ import { S, filter } from './state.js';
 import { walkY } from './world.js';
 import { climbTo } from './route.js';
 
-import { CRAFT, craftCost, buyCraft, berthFor, stepRider, dismount } from './balloon.js';
+import { bought, craftCost, buyCraft, berthFor, stepRider, dismount } from './balloon.js';
 import { registerRows, ahead } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 import { staffDoor } from './staffing.js';
@@ -88,14 +88,14 @@ const CRAFT_ROW = {
   kind: 'machine', site: 'filter',
   name: 'the balloon',
   note: () => 'rides the clouds and lets what it catches fall under itself',
-  rung: () => CRAFT.length,
+  rung: () => bought(),
   rungs: () => BALLOON_RUNGS,
   cost: () => craftCost(ahead('balloon')),
   currency: 'dust',
   // A craft is a place for one, and opens like a door: a spare body is sent
   // over to ride it (`staffDoor`).
   buy: () => { buyCraft(); staffDoor(JOB.PURIFY); },
-  show: () => S.filterOpen && CRAFT.length < BALLOON_RUNGS
+  show: () => S.filterOpen && bought() < BALLOON_RUNGS
 };
 
 export const FILTER_UPGRADES = [
