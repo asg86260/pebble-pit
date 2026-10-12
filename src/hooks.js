@@ -3,6 +3,7 @@
 // this one implementation (the browser suite through `window.__`, the node
 // checks by import), so a hook cannot mean two things.
 
+import { forceDemo } from './demo.js';
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, LADDER, FORK_RUNG, ABYSS_AT } from './config.js';
@@ -1164,6 +1165,7 @@ function deepReady() {
 // build's story with SERPENT_ON off, true a released build's with it on, and
 // null hands the question back to the build (snatch.js, `serpentOn`).
 HANDLES.__serpentOn = on => forceSerpent(on);
+HANDLES.__demoOn = on => forceDemo(on);
 
 // Both facts true -- torn and drowned, and the sqwife out with her sheet put
 // down, the reunion long behind her -- so the snatch is due: it plays from the next frame. A crew of two

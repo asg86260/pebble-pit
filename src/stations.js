@@ -20,6 +20,7 @@ import { farmShed, quarryShed } from './world.js';
 import { houseRect } from './house.js';
 import { apothHut } from './apothecary.js';
 import { shieldDone } from './shield.js';
+import { demoOn } from './demo.js';
 import { beatDone } from './beats.js';
 import { MACHINES, running } from './machines.js';
 import { poopLeft } from './smog.js';
@@ -146,8 +147,9 @@ export const STATIONS = [
     open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
     reach: { right: 1 },
     after: ['farm'],
-    // the net failing opens it (DESIGN.md, "The barriers are the gates")
-    needs: () => shieldDone('net') },
+    // the net failing opens it (DESIGN.md, "The barriers are the gates");
+    // never in the demo, which ends there
+    needs: () => shieldDone('net') && !demoOn() },
   { key: 'farm', name: 'the farm', glyph: 'furrow',
     empty: 'the ground is all broken', post: { key: 'farmjob', job: JOB.FARM, kit: true },
     open: () => S.farmOpen, stand: () => farmShed(), board: 'farmBoardOpen',
@@ -161,7 +163,8 @@ export const STATIONS = [
     page: 'apothboard', shop: 'apothshop', empty: 'the pot stands cold', post: { key: 'stirjob', job: JOB.STIR },
     open: () => S.apothecaryOpen, stand: () => apothHut(), board: 'apothBoardOpen',
     after: ['farm'],
-    needs: () => S.seenSpore },
+    // not in the demo: the farm is the last place it sells
+    needs: () => S.seenSpore && !demoOn() },
   { key: 'tower', name: 'the tower', glyph: 'tower',
     empty: 'nothing stirs in here yet', post: { key: 'skyjob', job: JOB.WIZARD, kit: true, show: () => S.meteorOpen },
     open: () => S.towerOpen, stand: () => tower, board: 'towerBoardOpen',

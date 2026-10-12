@@ -12,8 +12,10 @@ gets a line on the controls page (shared with the landing page).
 ## Three builds: itch, Steam, and the Steam demo -- DESIGNED, AWAITING SIGN-OFF (2026-10-10)
 
 "Three builds" in DESIGN.md: our cloud on itch, Steam Cloud through the
-Steamworks SDK on Steam, a demo build ending at the farm. Open: Steam
-achievements now or later. No code yet.
+Steamworks SDK on Steam, a demo build ending at the farm. The demo flag is
+built (2026-10-11); its last sheet's words are placeholders, waiting on the
+owner. Open: the Steam build and Steam Cloud, the release jobs, Steam
+achievements now or later.
 
 ## The toast over a tall settlement -- OPEN (2026-10-09)
 

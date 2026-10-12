@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:demo": "vite build --mode demo",
     "preview": "vite preview",
     "dev:test": "vite --port 5184",
     "test": "node tools/sweep.mjs --lock node -- node --test --test-concurrency=4 test/*.test.mjs",

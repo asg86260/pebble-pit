@@ -5,6 +5,8 @@
 //
 // The yard's half only; the line on the page is objline.js.
 
+import { demoOn } from './demo.js';
+import { PAST_DEMO } from './config.js';
 import { S } from './state.js';
 import { shieldDone } from './shield.js';
 import { serpentOn } from './snatch.js';
@@ -59,7 +61,9 @@ export const STEPS = [
 // bill and a dimmed buy (the owner, 2026-10-10), so the card is never empty
 // between one barrier and the next.
 export function objective() {
-  const live = STEPS.filter(s => !s.when || s.when());
+  // the demo's line ends with the net; its last sheet says the rest
+  const cut = demoOn() ? PAST_DEMO : [];
+  const live = STEPS.filter(s => (!s.when || s.when()) && !cut.includes(s.key));
   let from = 0;
   live.forEach((s, i) => { if (s.done()) from = i + 1; });
   const next = live[from];

@@ -25,6 +25,7 @@
 // saved; a reload plays the beat again from the start, or, past the take,
 // from the surface closing (`startSnatch`).
 
+import { demoOn } from './demo.js';
 import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_LOOK_MS, SNATCH_TAKE_MS, SNATCH_CLOSE_MS,
          SNATCH_HURRY, SNATCH_PORTAL_MS, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
@@ -50,7 +51,8 @@ import { beatDone, beatRunning } from './beats.js';
 // A check can say either way for itself.
 const DEV_BUILD = !import.meta.env || !!import.meta.env.DEV;
 let forced = null;
-export function serpentOn() { return forced ?? (SERPENT_ON || DEV_BUILD); }
+// The demo never has the second half, whatever else says so.
+export function serpentOn() { return !demoOn() && (forced ?? (SERPENT_ON || DEV_BUILD)); }
 export function forceSerpent(on) { forced = on; }
 
 // --- when -------------------------------------------------------------------------

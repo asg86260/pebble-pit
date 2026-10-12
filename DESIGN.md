@@ -17547,6 +17547,15 @@ save is ever written by two clouds.
 
 ### The owner's calls
 
+**As built (the demo, 2026-10-11).** `VITE_DEMO=1` (`npm run build:demo`,
+`.env.demo`) sets `DEMO_ON` (config/demo.js); `demoOn()` (src/demo.js,
+`__demoOn` for checks) closes the apothecary's and the quarry's gates
+(stations.js), cuts the story's line at the net (`PAST_DEMO`,
+objectives.js), keeps the second half off (`serpentOn`), and plays the
+`demoend` sheet (beats.js, ending.js) once the net has failed. The sheet's
+words are placeholders until the owner writes them; its store link shows
+once `VITE_STORE_URL` is set. Check: test/demo.test.mjs.
+
 The owner's calls so far: the demo ends at the farm (above);
 `steamworks.js` in the shell is accepted. Open: map the game's own
 achievements to Steam's now, since the SDK is in anyway, or later.

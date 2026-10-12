@@ -8,6 +8,7 @@
 // is the beat's skip. It steps aside for the held sheet so two sheets never
 // stand on one spot.
 
+import { STORE_URL } from './config.js';
 import { S } from './state.js';
 import { sayClock } from './stats.js';
 import { now } from './clock.js';
@@ -53,7 +54,18 @@ export function syncEnding() {
   // The second half's end, the same way: up while its beat has the sheet.
   const freedUp = beatRunning('freedsheet') && !S.paused && !S.fatal;
   if (freed.hidden === freedUp) freed.hidden = !freedUp;
+  const demoUp = beatRunning('demoend') && !S.paused && !S.fatal;
+  if (demoEnd.hidden === demoUp) demoEnd.hidden = !demoUp;
 }
+
+// The demo's last sheet, the same way, with the store's link when there is
+// a store page to point at (config STORE_URL).
+const demoEnd = document.getElementById('demoend');
+const demoStore = document.getElementById('demostore');
+if (STORE_URL) { demoStore.href = STORE_URL; demoStore.hidden = false; }
+document.getElementById('demokeep').addEventListener('click', () => {
+  skipBeat(now(), 'sheet');
+});
 
 // The sqhusband out of the belly (snatch.js). The second half is not timed
 // and not on the board of times, so the sheet is the words and the button.

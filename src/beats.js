@@ -17,6 +17,8 @@
 // pair, cutscene.js points the camera, ending.js draws the sheet. This file is
 // the order and the rule, nothing else.
 
+import { demoOn } from './demo.js';
+import { shieldDone } from './shield.js';
 import { DANCE_MS, RESCUE_SHEET_HOLD_S } from './config.js';
 import { S } from './state.js';
 import { now } from './clock.js';
@@ -115,6 +117,13 @@ export const BEATS = [
       return !(serpentOn() && t - S.endingAt >= RESCUE_SHEET_HOLD_S * 1000);
     },
     skip: () => { if (S.rockhands > 0 && !(S.drowned && serpentOn())) S.danceUntil = now() + DANCE_MS; } },
+
+  // --- the demo's end (DESIGN.md, "Three builds") ------------------------
+  // The net failed in the demo: the sheet that points to the full game,
+  // stood until it is put down (ending.js); the yard plays on behind it.
+  { key: 'demoend', owns: 'sheet', next: null,
+    when: () => demoOn() && shieldDone('net') && !S.beat.yard && !S.beat.camera,
+    enter: () => {}, step: () => true },
 
   // --- the second half (snatch.js; docs/wave-serpent.md, "The story") -----
   // The serpent takes him: once the sqwife is out and the pit has drowned,
