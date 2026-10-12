@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dome Obliterates Rock</title>
+<style>
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --ink: #111111; --muted: #5b5b5b;
+  --line: #d8d8d8; --accent: #6a2fbe;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141414; --panel: #1d1d1d; --ink: #ececec; --muted: #a0a0a0;
+    --line: #333333; --accent: #9b5de5;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141414; --panel: #1d1d1d; --ink: #ececec; --muted: #a0a0a0;
+  --line: #333333; --accent: #9b5de5;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 20px 16px 40px; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+h1 { font-size: 18px; margin: 0 0 6px; letter-spacing: .02em; }
+.note { color: var(--muted); max-width: 70ch; margin: 0 0 18px; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--line); padding: 12px; min-width: 0; }
+.card h2 { font-size: 14px; margin: 0 0 4px; }
+.card h2 b { color: var(--accent); }
+.card p { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--line); }
+.beat { margin-top: 6px; font-size: 12px; min-height: 1.4em; }
+.beat::before { content: "> "; color: var(--accent); }
+.foot { color: var(--muted); max-width: 70ch; margin-top: 22px; }
+</style>
+</head>
+<body>
+<h1>The dome obliterates the rock</h1>
+<p class="note">A mock from plain shapes, not the game. The dome, rock, dust and the two people are drawn on the game's 6px grid in its tones, but this mock cannot show the real rock (every rock is its own cell drawing and size), the real worker sprites, the camera's pan and look-up, the rest of the crew walking off, the next rock waiting, or sound. Today's panel is compressed: its hold is 1 s here, 2.2 s in the game.</p>
+
+<div class="grid" id="grid"></div>
+
+<p class="foot">Open question for the owner: the dust and grit a broken rock throws (A, B, D) lands outside the dome here and fades. In the game it could instead be banked, or left lying as heaps for the haulers to carry, or just be gone. C has no dust: the magic eats the rock.</p>
+
+<script>
+"use strict";
+const P = 6, W = 64, H = 44, G0 = 40, CX = 32, R = 19, T = 2, GRAV = 70, DT = 1 / 24;
+const MAGIC = ["#9b5de5", "#8244d8", "#6a2fbe", "#4e2090"];
+const INK = "#111111", RIM = "#5b5b5b", SPECK = "#606060";
+const DUST = ["#585858", "#6a6a6a", "#7b7b7b", "#8b8b8b"];
+const SKY = "#f3f3f3", HATCH = "#e6e6e6";
+
+const hash = (i, j) => { const v = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return v - Math.floor(v); };
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// The rock: a noisy round of cells, a grey rim and a speckled black core.
+const ROCK = [];
+for (let j = -10; j <= 10; j++) for (let i = -10; i <= 10; i++) {
+  const a = Math.atan2(j, i), rr = 8 + 0.7 * Math.sin(3 * a + 1) + 0.45 * Math.sin(5 * a + 2.3) + 0.3 * Math.sin(7 * a);
+  const d = Math.hypot(i, j);
+  if (d >= rr) continue;
+  const e = rr - d, h = hash(i, j);
+  ROCK.push({ i, j, tone: e < 1.6 ? RIM : (h < (e < 3 ? 0.5 : 0.28) ? SPECK : INK) });
+}
+const JMIN = Math.min(...ROCK.map(k => k.j)), JMAX = Math.max(...ROCK.map(k => k.j));
+let CY_C = -1e9;
+for (const k of ROCK) { const dx = k.i + 0.5; if (Math.abs(dx) < R + 0.4) CY_C = Math.max(CY_C, Math.sqrt((R + 0.4) ** 2 - dx * dx) - k.j - 0.5); }
+CY_C = Math.ceil(CY_C);
+const T0 = 0.3, TF = 0.85, TC = T0 + TF;              // fall starts, falls, meets the dome
+const CY0 = CY_C + 0.5 * GRAV * TF * TF;
+const fallCY = t => t < T0 ? CY0 : CY0 - 0.5 * GRAV * (t - T0) ** 2;
+const fallV = t => t < T0 ? 0 : GRAV * (t - T0);
+
+function cell(g, c, r, color) { g.fillStyle = color; g.fillRect(c * P, (G0 - 1 - r) * P, P, P); }
+
+function scene(g) {
+  g.fillStyle = SKY; g.fillRect(0, 0, W * P, H * P);
+  g.fillStyle = "#fafafa"; g.fillRect(0, G0 * P, W * P, (H - G0) * P);
+  for (let r = G0 + 1; r < H; r++) for (let c = 0; c < W; c++) if ((c + r) % 6 === 0) { g.fillStyle = HATCH; g.fillRect(c * P, r * P, P, P); }
+  g.fillStyle = INK; g.fillRect(0, G0 * P, W * P, 2);
+}
+
+// The dome as the game draws it: a breathing band whose running light is two
+// waves of tone, with an aura of sparks thrown off it. `flare(along)` lights
+// a cell outright, for a pulse running on it.
+function dome(g, t, alpha = 1, flare = null) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha;
+  const Rb = R - 0.3 + Math.sin(t * 1.7) * 0.5, total = Math.PI / 2;
+  for (let c = 0; c < W; c++) {
+    const dx = Math.abs(c + 0.5 - CX);
+    for (let r = 0; r <= R + 1; r++) {
+      const d = Math.hypot(dx, r);
+      if (d < Rb - T || d > Rb) continue;
+      const along = Math.atan2(r, dx) / total;
+      const lit = Math.sin(along * 9 - t * 3.4) * 0.6 + Math.sin(along * 4 + t * 2.1) * 0.4;
+      let tone = lit > 0.55 ? 0 : lit > 0 ? 1 : lit > -0.55 ? 2 : 3;
+      const f = flare && flare(along);
+      if (f != null && f !== false) tone = f;
+      cell(g, c, r, MAGIC[tone]);
+    }
+  }
+  for (let i = 0; i < 18; i++) {
+    const life = (t * 0.5 + i * 0.137) % 1;
+    if (life > 0.92) continue;
+    const ang = (i * 2.399) % total, rr = R + 1 + life * 5, side = i % 2 ? 1 : -1;
+    const cx = Math.round(CX + Math.cos(ang) * rr * side - 0.5), cy = Math.round(Math.sin(ang) * rr);
+    cell(g, cx, cy, MAGIC[life < 0.3 ? 1 : life < 0.65 ? 2 : 3]);
+  }
+  g.restore();
+}
+
+function box(g, c, r) {
+  const x = c * P, y = (G0 - r - 3) * P;
+  g.fillStyle = "#fff"; g.fillRect(x, y, 3 * P, 3 * P);
+  g.strokeStyle = INK; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, 3 * P - 2, 3 * P - 2);
+}
+// The sqwife and the digger (the one with the spade).
+function people(g, xs = 28, xd = 33) {
+  box(g, xs, 0); box(g, xd, 0);
+  for (let r = 0; r < 4; r++) cell(g, xd + 3, r, RIM);
+  cell(g, xd + 3, 0, INK); cell(g, xd + 4, 0, INK);
+}
+const HEART = [".X.X.", "XXXXX", ".XXX.", "..X.."];
+function heart(g, c, r) { HEART.forEach((row, k) => [...row].forEach((ch, m) => { if (ch === "X") cell(g, c + m, r - k, INK); })); }
+
+function drawRock(g, cy, opt = {}) {
+  const base = Math.round(cy), sq = opt.squash;
+  if (opt.smear) for (const [k, tone] of [[4, "#e2e2e2"], [2, "#cfcfcf"]]) for (const c of ROCK) cell(g, CX + c.i, base + c.j + k, tone);
+  for (const c of ROCK) {
+    if (opt.skip && opt.skip(c)) continue;
+    const i = sq ? Math.round(c.i * 1.1) : c.i, j = sq && c.j > JMIN ? JMIN + Math.round((c.j - JMIN) * 0.82) : c.j;
+    cell(g, CX + i + (opt.dx || 0), base + j, opt.tone ? opt.tone(c) : c.tone);
+  }
+}
+
+// --- loose grains: fall, slide off the dome's curve, heap on the ground ----
+function stepParts(st, dt) {
+  for (const p of st.parts) {
+    if (p.ground || p.dead) continue;
+    p.vy -= GRAV * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+    const dx = p.x - CX, d = Math.hypot(dx, p.y);
+    if (p.y > 0 && d < R + 0.6 && d > R - T - 5) {
+      const nx = dx / d, ny = p.y / d;
+      p.x = CX + nx * (R + 0.6); p.y = ny * (R + 0.6);
+      const vn = p.vx * nx + p.vy * ny;
+      if (vn < 0) { p.vx -= vn * nx; p.vy -= vn * ny; }
+      p.vx *= 0.985; p.vy *= 0.985;
+    }
+    if (p.y <= 0) land(st, p);
+    if (p.x < -3 || p.x > W + 3) p.dead = true;
+  }
+}
+const outside = c => Math.abs(c + 0.5 - CX) > R + 0.6;
+function land(st, p) {
+  let c = Math.floor(p.x);
+  if (c < 0 || c >= W) { p.dead = true; return; }
+  for (let k = 0; k < 5; k++) {
+    const l = c > 0 && outside(c - 1) ? st.h[c - 1] : 99, r = c < W - 1 && outside(c + 1) ? st.h[c + 1] : 99;
+    if (l < st.h[c] && l <= r) c--; else if (r < st.h[c]) c++; else break;
+  }
+  p.ground = true; p.x = c + 0.5; p.y = st.h[c]; st.h[c]++;
+  if (p.tone[0] === "#" && !MAGIC.includes(p.tone)) p.tone = p.tone === INK ? DUST[st.rnd() < 0.6 ? 0 : 1] : DUST[1 + Math.floor(st.rnd() * 3)];
+}
+function drawParts(g, st, alpha) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha;
+  for (const p of st.parts) if (!p.dead) cell(g, Math.floor(p.x), Math.floor(p.y), p.tone);
+  g.restore();
+}
+const fadeBy = (t, from, len) => t < from ? 1 : Math.max(0, 1 - (t - from) / len);
+const freshState = seed => ({ parts: [], h: new Array(W).fill(0), rnd: rng(seed), ev: {} });
+
+// --- the options -------------------------------------------------------------
+const OPTS = [];
+
+// Today: caught, sprung back, held, set down; the pair walk out; the dome fades.
+{
+  const v0 = Math.sqrt(2 * GRAV * 5), tUp = 2 * v0 / GRAV, tHold = TC + tUp + 1.0;
+  const cyFloor = 11 - JMIN, tCreep = tHold + (CY_C - cyFloor) / 5.7;
+  const tWalk = tCreep + 1.6, tSet = tWalk + (cyFloor + JMIN) / 5.7, tFade = tSet + 1.5;
+  const cyAt = t => t < TC ? fallCY(t) : t < TC + tUp ? CY_C + v0 * (t - TC) - 0.5 * GRAV * (t - TC) ** 2
+    : t < tHold ? CY_C : t < tCreep ? CY_C - 5.7 * (t - tHold) : t < tWalk ? cyFloor : Math.max(-JMIN, cyFloor - 5.7 * (t - tWalk));
+  OPTS.push({ key: "today", name: "Today · Caught and set down", L: tFade + 1,
+    cap: "What the game does now: the dome gives, springs the rock back up, holds it, lets it down gently, then fades.",
+    beat: t => t < TC ? "the rock falls" : t < TC + tUp ? "the dome gives and springs it back" : t < tHold ? "held overhead"
+      : t < tCreep ? "let down, a few courses over them" : t < tWalk ? "the pair walk out from under" : t < tSet ? "set down on the ground" : t < tFade ? "the dome fades" : "rock on the ground, dome gone",
+    draw(g, t) {
+      const k = Math.min(1, Math.max(0, (t - tCreep) / 1.6)), walk = Math.round(k * 24);
+      people(g, 28 + walk, 33 + walk);
+      drawRock(g, cyAt(t), { smear: t < TC && fallV(t) > 25 });
+      dome(g, t, fadeBy(t, tSet, 1.5));
+      if (t > tFade - 0.4) heart(g, 28 + walk + 1, 9);
+    } });
+}
+
+// A: burst along the curve.
+{
+  const tB = TC + 0.13, tF = tB + 1.4;
+  OPTS.push({ key: "A", name: "<b>A</b> · Burst along the curve", L: tF + 2.1,
+    cap: "It hits the crown, holds a squashed beat, then bursts into its own cells, which skate off down the dome's curve and land as grit around the yard, fading.",
+    beat: t => t < TC ? "the rock falls" : t < tB ? "held impact, squashed on the crown" : t < tB + 0.5 ? "it bursts; the dome flares" : t < tF ? "its cells skate down the curve and heap" : t < tF + 0.9 ? "the grit fades" : "the dome stands clear",
+    init: st => {},
+    step(st, t) {
+      if (t >= tB && !st.ev.burst) {
+        st.ev.burst = true;
+        for (const c of ROCK) {
+          const x = CX + c.i + 0.5, y = CY_C + c.j + 0.5, dx = x - CX, dy = y - R, len = Math.hypot(dx, dy) || 1;
+          const sp = 9 + st.rnd() * 13;
+          st.parts.push({ x, y, vx: dx / len * sp * 1.3 + (st.rnd() - 0.5) * 3, vy: dy / len * sp * 0.5 + 5 + st.rnd() * 8, tone: c.tone });
+        }
+      }
+      stepParts(st, DT);
+    },
+    draw(g, t, st) {
+      people(g);
+      if (t < tB) drawRock(g, t < TC ? fallCY(t) : CY_C, { smear: t < TC && fallV(t) > 25, squash: t >= TC });
+      const fl = t >= tB && t < tB + 0.45 ? 1 - (t - tB) / 0.45 : null;
+      dome(g, t, 1, fl == null ? null : a => Math.abs(a - fl) < 0.07 ? 0 : Math.abs(a - fl - 0.1) < 0.05 ? 1 : null);
+      drawParts(g, st, fadeBy(t, tF, 0.9));
+      if (t > tF + 0.9) heart(g, 29, 9);
+    } });
+}
+
+// B: cracks, two halves slide down both sides, crumbling to dust at the feet.
+{
+  const tS = TC + 0.45, tF = tS + 1.75, ALPHA = 2.3;
+  const crackCol = j => Math.round(Math.sin(j * 1.3) * 1.2);
+  const span = JMAX - JMIN;
+  OPTS.push({ key: "B", name: "<b>B</b> · Split and slide", L: tF + 2.0,
+    cap: "It stops dead on the crown, the crack runs up through it, and the two halves slide down either side of the dome, crumbling top first and heaping as dust at its feet.",
+    beat: t => t < TC ? "the rock falls" : t < tS ? "stopped dead; the crack runs" : t < tS + 1.1 ? "the halves slide down both sides, crumbling" : t < tF ? "crumbled to dust at the feet" : t < tF + 0.9 ? "the dust fades" : "the dome stands clear",
+    step(st, t) {
+      if (t >= tS && !st.ev.split) {
+        st.ev.split = true; st.halves = [];
+        for (const side of [-1, 1]) {
+          const cells = ROCK.filter(c => side < 0 ? c.i < crackCol(c.j) : c.i > crackCol(c.j));
+          const xs = cells.map(c => CX + c.i + 0.5), ys = cells.map(c => CY_C + c.j + 0.5);
+          const gx = xs.reduce((a, b) => a + b) / xs.length, gy = ys.reduce((a, b) => a + b) / ys.length;
+          const ymin = Math.min(...ys), ymax = Math.max(...ys);
+          st.halves.push({ side, gx, gy, phi0: Math.atan2(gx - CX, gy), rho: Math.hypot(gx - CX, gy),
+            cells: cells.map((c, n) => ({ rx: CX + c.i + 0.5 - gx, ry: CY_C + c.j + 0.5 - gy, tone: c.tone,
+              shedAt: tS + 0.35 + (1 - (CY_C + c.j + 0.5 - ymin) / (ymax - ymin)) * 0.8 + st.rnd() * 0.25 })) });
+        }
+        for (const c of ROCK) if (c.i === crackCol(c.j)) st.parts.push({ x: CX + c.i + 0.5, y: CY_C + c.j + 0.5, vx: (st.rnd() - 0.5) * 6, vy: 2, tone: c.tone });
+      }
+      if (st.halves) for (const hf of st.halves) {
+        const s = t - tS, phi = hf.phi0 + hf.side * (0.05 + 0.5 * ALPHA * s * s), w = hf.side * ALPHA * s;
+        // and tips over onto its outer face as it goes, the way a broken half does
+        const d = phi - hf.phi0 + hf.side * Math.min(0.8, s * 2.2);
+        // The half rests on the curve: it drops toward the dome until its
+        // nearest cell is on the surface, so it slides rather than floats.
+        let mind = Infinity;
+        for (const c of hf.cells) {
+          const x = CX + hf.rho * Math.sin(phi) + c.rx * Math.cos(d) + c.ry * Math.sin(d), y = hf.rho * Math.cos(phi) - c.rx * Math.sin(d) + c.ry * Math.cos(d);
+          mind = Math.min(mind, Math.hypot(x - CX, y));
+        }
+        if (mind > R + 0.6 && mind < 1e9) hf.rho -= Math.min(mind - R - 0.6, 1.2);
+        const px = CX + hf.rho * Math.sin(phi), py = hf.rho * Math.cos(phi);
+        const vx = hf.rho * w * Math.cos(phi), vy = -hf.rho * w * Math.sin(phi);
+        const atFeet = Math.abs(phi) > 1.2;
+        hf.draw = [];
+        hf.cells = hf.cells.filter(c => {
+          const x = px + c.rx * Math.cos(d) + c.ry * Math.sin(d), y = py - c.rx * Math.sin(d) + c.ry * Math.cos(d);
+          if (atFeet || t >= c.shedAt || Math.hypot(x - CX, y) < R + 0.3) {
+            st.parts.push({ x, y, vx: atFeet ? vx * 0.25 + (st.rnd() - 0.5) * 4 : vx * 0.8 + (st.rnd() - 0.5) * 3, vy: atFeet ? 1 : vy * 0.8 + st.rnd() * 2, tone: c.tone });
+            return false;
+          }
+          hf.draw.push([x, y, c.tone]); return true;
+        });
+      }
+      stepParts(st, DT);
+    },
+    draw(g, t, st) {
+      people(g);
+      if (!st.halves) {
+        const run = t < TC ? -1 : JMIN + Math.floor((t - TC) / 0.4 * (span + 1) * 6) / 6;
+        drawRock(g, t < TC ? fallCY(t) : CY_C, { smear: t < TC && fallV(t) > 25, skip: c => c.j <= run && c.i === crackCol(c.j) });
+      }
+      if (st.halves) for (const hf of st.halves) for (const [x, y, tone] of hf.draw) cell(g, Math.floor(x), Math.floor(y), tone);
+      dome(g, t);
+      drawParts(g, st, fadeBy(t, tF, 0.9));
+      if (t > tF + 0.9) heart(g, 29, 9);
+    } });
+}
+
+// C: eaten by the magic, cell by cell from where it touches, in held steps.
+{
+  const tE = TC + 0.13;
+  const eat = ROCK.map(c => {
+    const x = CX + c.i + 0.5, y = CY_C + c.j + 0.5;
+    const v = tE + 0.2 + Math.hypot(x - CX, y - R) * 0.11 + hash(c.j, c.i) * 0.14;
+    return Math.ceil(v * 8) / 8;
+  });
+  const last = Math.max(...eat), MOTE = 1.3;
+  OPTS.push({ key: "C", name: "<b>C</b> · Eaten by the light", L: last + MOTE + 1.2,
+    cap: "It settles on the crown and the dome's magic eats it from the touch outward: an interference fringe runs ahead, each cell lights purple for a held step, then lifts away as a mote and fades.",
+    beat: t => t < TC ? "the rock falls" : t < tE ? "held impact on the crown" : t < last ? "eaten from the touch upward, cell by cell" : t < last + MOTE ? "the last motes drift off" : "the dome stands clear",
+    draw(g, t) {
+      people(g);
+      const ts = Math.floor(t * 12) / 12;
+      if (t < TC) drawRock(g, fallCY(t), { smear: fallV(t) > 25 });
+      else drawRock(g, CY_C, { squash: t < tE, skip: c => ts >= eat[ROCK.indexOf(c)],
+        tone: c => {
+          const e = eat[ROCK.indexOf(c)];
+          if (ts < e - 0.3) return c.tone;
+          const x = CX + c.i, y = CY_C + c.j;
+          const f = Math.sin(x * 1.4 + ts * 6) + Math.sin(y * 1.1 - ts * 5);
+          return f > 0.9 ? MAGIC[2] : f > 0.2 ? MAGIC[3] : c.tone;
+        } });
+      dome(g, t);
+      ROCK.forEach((c, n) => {
+        const e = eat[n];
+        if (ts < e) return;
+        const x0 = CX + c.i, y0 = CY_C + c.j;
+        if (ts < e + 0.125) { cell(g, x0, y0, MAGIC[0]); return; }
+        const s = Math.floor((t - e - 0.125) * 12) / 12;
+        if (s > MOTE) return;
+        const ph = hash(c.i, c.j) * 6.28, side = c.i + 0.5 < 0 ? -1 : 1;
+        const x = x0 + Math.sin(s * 4 + ph) * 1.6 * Math.min(1, s * 2) + side * s * 2.5;
+        const y = y0 + s * 6 + s * s * 2;
+        g.save(); g.globalAlpha = Math.max(0, 1 - s / MOTE);
+        cell(g, Math.round(x), Math.round(y), MAGIC[s < 0.3 ? 1 : s < 0.7 ? 2 : 3]);
+        g.restore();
+      });
+      if (t > last + MOTE) heart(g, 29, 9);
+    } });
+}
+
+// D: whittled by the light. Pulses climb the dome from its feet; each one
+// that reaches the crown grinds the rock's underside off, and the rock sinks
+// a step onto it. The grit streams down both sides.
+{
+  const PER = 0.3, CLIMB = 0.22, tP = TC + 0.15;
+  const arrivals = [];
+  for (let k = 0; k < 11; k++) arrivals.push(tP + k * PER + CLIMB);
+  const done = arrivals[9], tF = done + 0.9;
+  OPTS.push({ key: "D", name: "<b>D</b> · Whittled by the light", L: tF + 2.0,
+    cap: "My own: it rests on the crown and the dome's light climbs from its feet in pulses; each pulse that reaches the rock grinds a layer off its underside, it sinks a held step, and the grit pours down both sides.",
+    beat: t => t < TC ? "the rock falls" : t < done ? "each pulse whittles a layer; it sinks a step" : t < tF ? "the last grit pours down" : t < tF + 0.9 ? "the grit fades" : "the dome stands clear",
+    step(st, t) {
+      if (!st.alive) st.alive = ROCK.map(() => true), st.off = 0;
+      for (let k = 0; k < arrivals.length; k++) {
+        if (t < arrivals[k] || st.ev["a" + k]) continue;
+        st.ev["a" + k] = true;
+        if (k > 0) st.off += 2;
+        ROCK.forEach((c, n) => {
+          if (!st.alive[n]) return;
+          const x = CX + c.i + 0.5, y = CY_C - st.off + c.j + 0.5;
+          if (Math.hypot(x - CX, y) < R + 0.5 + (k > 0 ? 1.5 : 0)) {
+            st.alive[n] = false;
+            const sd = Math.abs(x - CX) < 1 ? (st.rnd() < 0.5 ? -1 : 1) : Math.sign(x - CX);
+            st.parts.push({ x, y: Math.max(y, Math.sqrt(Math.max(0, (R + 0.7) ** 2 - (x - CX) ** 2))), vx: sd * (5 + st.rnd() * 7), vy: 2 + st.rnd() * 4, tone: c.tone });
+          }
+        });
+      }
+      stepParts(st, DT);
+    },
+    draw(g, t, st) {
+      people(g);
+      if (t < TC) drawRock(g, fallCY(t), { smear: fallV(t) > 25 });
+      else if (st.alive) drawRock(g, CY_C - st.off, { skip: c => !st.alive[ROCK.indexOf(c)] });
+      let flare = null;
+      for (let k = 0; k < 10; k++) {
+        const s = t - (tP + k * PER);
+        if (s >= 0 && s < CLIMB + 0.05) { const b = s / CLIMB; flare = a => Math.abs(a - b) < 0.06 ? 0 : (a < b && a > b - 0.16) ? 1 : null; }
+      }
+      dome(g, t, 1, flare);
+      drawParts(g, st, fadeBy(t, tF, 0.9));
+      if (t > tF + 0.9) heart(g, 29, 9);
+    } });
+}
+
+// --- panels -------------------------------------------------------------------
+const grid = document.getElementById("grid");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const panels = OPTS.map((o, n) => {
+  const card = document.createElement("div"); card.className = "card";
+  card.innerHTML = `<h2>${o.name}</h2><p>${o.cap}</p>`;
+  const cv = document.createElement("canvas"); cv.width = W * P; cv.height = H * P;
+  const beat = document.createElement("div"); beat.className = "beat";
+  card.append(cv, beat); grid.append(card);
+  return { o, g: cv.getContext("2d"), beat, st: null, simT: 0, last: -1, seed: 1000 + n };
+});
+
+function frame(p, t) {
+  const o = p.o;
+  if (!p.st || t < p.last) { p.st = freshState(p.seed); p.simT = 0; }
+  p.last = t;
+  if (o.step) while (p.simT + DT <= t) { p.simT += DT; o.step(p.st, p.simT); }
+  scene(p.g);
+  o.draw(p.g, t, p.st);
+  p.beat.textContent = o.beat(t);
+}
+
+if (reduce) {
+  for (const p of panels) frame(p, Math.min(p.o.L - 0.1, TC + 0.9));
+} else {
+  const t0 = performance.now();
+  const loop = now => {
+    if (window.__frozen) return;
+    const s = (now - t0) / 1000;
+    for (const p of panels) frame(p, s % p.o.L);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+// For a headless check: draw every panel at a given loop time.
+window.__at = s => { window.__frozen = true; for (const p of panels) { p.st = null; frame(p, Math.min(s, p.o.L - 0.01)); } };
+</script>
+</body>
+</html>
