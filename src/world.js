@@ -7,7 +7,7 @@
 
 import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
-        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_EAVE, shieldReach, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
+        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_SHIELD_CLEAR, SHACK_EAVE, shieldReach, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_FILTER, HOPPER_H, TRAY_H,
         FILTER_W, FILTER_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
@@ -398,7 +398,7 @@ export const shackSpot = () => {
   const ram = machine('ram')?.bought;
   const clear = ram ? RAM_CLEAR + P * (RAM_REACH + spriteW(RAM)) : SHACK_CLEAR;
   const rockW = rockWidthAt(S.boulderNo) * P;
-  const near = S.cx - rockW / 2 - Math.max(clear, shieldReach(rockW) + SHACK_EAVE + STATION_GAP) - shack.w;
+  const near = S.cx - rockW / 2 - Math.max(clear, shieldReach(rockW) + SHACK_EAVE + SHACK_SHIELD_CLEAR) - shack.w;
   return Math.max(spot.x, Math.round(near / P) * P);
 };
 

@@ -16,7 +16,7 @@ import { buildBoard } from '../src/shop.js';
 import { kitX } from '../src/world.js';
 import { JOB } from '../src/jobs.js';
 import { rockSize, rockWidthAt } from '../src/rock.js';
-import { ROCK_FLANK_CLEAR, SHACK_CLEAR, SHACK_EAVE, STATION_GAP, shieldReach, SHACK_SCOOT, RAM_CLEAR, LADDER, TIER_BAND } from '../src/config.js';
+import { ROCK_FLANK_CLEAR, SHACK_CLEAR, SHACK_EAVE, SHACK_SHIELD_CLEAR, shieldReach, SHACK_SCOOT, RAM_CLEAR, LADDER, TIER_BAND } from '../src/config.js';
 import { RAM_REACH } from '../src/rock.js';
 import { spriteW, RAM } from '../src/sprites.js';
 import { SHACK_DUST } from '../src/config.js';
@@ -345,7 +345,7 @@ group('the shack stands off the rock that is here, and scoots out for the next',
   const off1 = edge1 - (x1 + shack.w);
   // The clearance is the widest shield's reach over this rock and the gap
   // beyond it (world.js, `shackSpot`), where that is more than the hut's own.
-  const clearAt = n => Math.max(SHACK_CLEAR, shieldReach(rockWidthAt(n) * P) + SHACK_EAVE + STATION_GAP);
+  const clearAt = n => Math.max(SHACK_CLEAR, shieldReach(rockWidthAt(n) * P) + SHACK_EAVE + SHACK_SHIELD_CLEAR);
 
   // A few rocks on: mined out and the next one down, the way it happens.
   const seen = [];

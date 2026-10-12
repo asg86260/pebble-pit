@@ -86,6 +86,13 @@ export const STAND_REACH = P;
 // fall inside it.
 const kitHang = key => KIT_OUT[key] + STAND_REACH;
 export const SHACK_EAVE = P / 2;   // how far a roof hangs past its own wall
+// Bare ground between the widest shield's foot and the hut's eave. Not a
+// STATION_GAP: the shield is the rock's, not a neighbor with a heap or a
+// stand to keep off. The hut's kit stand hangs on its far side and it has no
+// heap, so all that must pass here is a body slipping between the leg and the
+// wall (three cells wide); the ram parks behind its own clearance
+// (RAM_CLEAR, `shackSpot`), not in this strip.
+export const SHACK_SHIELD_CLEAR = P * 4;
 
 export const SITES = [
   // The rockhands' hut, the first thing along from the rock. Its ground is
@@ -168,7 +175,7 @@ export const ROCK_W_MAX = 92;
 // flank building by RAM_CLEAR and is spriteW(RAM), eleven cells, long, and
 // `ramTargetX` (rock.js) parks it no nearer the flank than that. It is also
 // the cap on a curved shield's span (`shieldWidth`). The hut no longer stands
-// at this distance: it stands the widest shield's reach plus STATION_GAP off
+// at this distance: it stands the widest shield's reach plus SHACK_SHIELD_CLEAR off
 // the rock (TO_FIRST_SITE, `shackSpot`), which is further. shack.test.mjs
 // holds this against the ram's real width.
 export const ROCK_FLANK_CLEAR = P * 14;
@@ -201,7 +208,7 @@ export const shieldReach = rockW =>
 // yard. The shack has no heap, so nothing of its own stands in the rock's
 // clear ground; a first site that threw toward the rock would need its
 // `padOf` added here.
-export const TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + shieldReach(ROCK_W_MAX * P) + SHACK_EAVE + STATION_GAP;
+export const TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + shieldReach(ROCK_W_MAX * P) + SHACK_EAVE + SHACK_SHIELD_CLEAR;
 
 // Bare ground kept past the last building, at the far end of the walk, before
 // the world runs out: somewhere for the camera to stop and for the casino to
