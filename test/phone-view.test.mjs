@@ -2,12 +2,13 @@
 // against a desk's window, which is wider than anything in the yard, and a
 // phone stood upright is not: it is narrower than a shield is wide and than
 // the opening's walk lags. What is asserted here is that the thing a scene is
-// about stays inside the frame at that width, for the whole of the scene --
-// the shield's span under its answer, the pair on the walk out of the house.
+// about is framed at that width, for the whole of the scene -- the shield's
+// span centered under its answer, the pair inside the frame on the walk out of
+// the house.
 // The same checks pass trivially on a desk, which is why they are stood at a
 // phone.
 import { group, ok, state, run, runUntil, openSites, SEED, yard, WORKER } from './helpers.mjs';
-import { PROP_FROM, NET_COST, ARCH_COST, P, shieldWidth } from '../src/config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, P, shieldWidth, CUT_SETTLE_S } from '../src/config.js';
 import { rockWidthAt } from '../src/rock.js';
 
 // A portrait phone, as the page reports it. `__seed` lays the world out again
@@ -28,18 +29,20 @@ const inView = (x, w) => {
   return x >= S.camX && x + w <= S.camX + S.viewW;
 };
 
-// The arch is the widest shield short of the dome and the check is about the
-// width, so it is the one stood up. The same yard cutscene.test.mjs stands,
-// from the first rock whose arch is wider than the yard-zoom view: the props
-// open early now, and the arch over an early rock fits a phone without the
-// pull-out this is about. Rocks only grow, so the arch over the rock the net
-// and props leave standing is wider still.
-const YARD_ZOOM = 0.833;
-let archFrom = PROP_FROM;
-while (shieldWidth('arch', rockWidthAt(archFrom) * P) <= PHONE.W / YARD_ZOOM) archFrom++;
-group("a shield's answer is framed whole at a phone's width", async () => {
+// The arch is the widest shield short of the dome, and over a big enough rock
+// it is wider than a phone's window at the yard's zoom. No scene zooms (the
+// owner's C, cutscene.js): the yard's zoom steps through whole cell sizes, so
+// any pull-out is a snap. What the scene owes a phone instead is the yard's
+// own zoom held for the whole of it, and the span's middle -- the spot the
+// rock comes down on -- glided to the middle of the frame and held there. The
+// rock is the first whose arch is wider than the view, so the check is stood
+// where the framing could have been tempted to give.
+group("a shield's answer is centered on its span at a phone's width, at the yard's zoom", async () => {
   phone();
   window.__reset();
+  const yardZoom = state().zoom;
+  let archFrom = PROP_FROM;
+  while (shieldWidth('arch', rockWidthAt(archFrom) * P) <= PHONE.W / yardZoom) archFrom++;
   window.__crew(2, 1);
   window.__jump(archFrom);
   window.__give(40000);
@@ -57,34 +60,32 @@ group("a shield's answer is framed whole at a phone's width", async () => {
   window.__buy('arch');
   runUntil(() => { const sh = state().shield; return sh && sh.laid >= sh.pieces; }, 400);
   const span = { ...state().shield };
+  const middle = span.x + span.w / 2;
   window.__next();
-  // The scene, a sixtieth at a time: once the glide in has had its half
-  // second, the whole span is inside the frame on every frame until the
-  // scene lets go, and the view is narrower than the span at the yard's own
-  // zoom, so it is the pull-in doing it.
-  let started = null, out = 0, frames = 0, zoomIn = null, narrow = false;
+  // The scene, a sixtieth at a time: the zoom on every frame of it, and once
+  // the glide in has had its CUT_SETTLE_S, the view's middle on the span's.
+  let started = null, frames = 0, zoomed = 0, off = 0, held = 0;
   while (frames < 60 * 40) {
     run(1 / 60);
     frames++;
     const s = state();
     if (s.beat.camera === 'arch' && !s.shotOut) {
       started ??= frames;
-      if (frames - started >= 30) {
-        zoomIn ??= s.zoom;
-        if (!inView(span.x, span.w)) out++;
-        if (span.w > PHONE.W / YARD_ZOOM) narrow = true;
+      if (s.zoom !== yardZoom) zoomed++;
+      if (frames - started > 60 * CUT_SETTLE_S) {
+        held++;
+        if (Math.abs(yard.S.camX + yard.S.viewW / 2 - middle) > P) off++;
       }
     }
     if (started && !s.beat.camera) break;
   }
   return [
     ok(started != null, 'the scene runs', `${started}`),
-    ok(narrow, 'and the span is wider than the yard-zoom view, so the framing has to give',
-       `span ${span.w}, window ${PHONE.W}`),
-    ok(zoomIn != null && zoomIn < YARD_ZOOM, 'the view pulls out rather than in',
-       `zoom ${zoomIn}`),
-    ok(out === 0, 'and the whole span is in the frame for the whole scene',
-       `${out} frames with a foot off the edge`),
+    ok(span.w > PHONE.W / yardZoom, 'and the span is wider than the yard-zoom view',
+       `span ${span.w}, window ${PHONE.W}, zoom ${yardZoom}`),
+    ok(zoomed === 0, "the view holds the yard's zoom the whole way", `${zoomed} frames off ${yardZoom}`),
+    ok(held > 0 && off === 0, "and holds the span's middle in the middle of the frame",
+       `${off} of ${held} frames off it`),
   ];
 });
 

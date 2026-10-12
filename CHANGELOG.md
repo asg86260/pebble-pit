@@ -181,6 +181,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 - The props can be built after the first rock.
 
+- Putting the rescue's sheet down with the pit not yet torn gets the crew's dance again, before the hole tears (test/dance-once.test.mjs).
 - A balloon that was up when the game was reloaded comes back among the clouds instead of back at its post (test/balloon.test.mjs).
 - A quarrier saved digging against the cut's near wall comes back on the cut's floor, not stood up on the bank (test/cut-station.test.mjs).
 - A quarrier's swing no longer takes the same column twice and leaves the one under its pick standing a course above its neighbors (test/cut-pockets.test.mjs).

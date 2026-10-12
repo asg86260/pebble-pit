@@ -75,6 +75,9 @@ group('the rift pulls, and a grain at rest falls straight into it', async () => 
 
 group('a grain thrown past it swings, and the same grain dropped does not', async () => {
   tornYard();
+  // The pile finished first, for the reason the group above gives: a disc
+  // still growing walks its middle out from under a grain dropped at rest.
+  run(4);
   const c = mid(), R = rift.w * 0.5;
   // The same place, the same distance out, twice: once at rest and once with a
   // good sideways clip on it. If the fall were a drawn shape these would be the

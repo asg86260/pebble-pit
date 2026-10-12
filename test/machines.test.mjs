@@ -9,12 +9,17 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
-import { STACK_LIFE_S, LADDER, PILE_LIMIT, MACHINE_HATS } from '../src/config.js';
+import { STACK_LIFE_S, LADDER, PILE_LIMIT, MACHINE_HATS, ABYSS_AT } from '../src/config.js';
 import { band, floor } from '../src/state.js';
 import { at, grainsIn, addGrain } from '../src/grid.js';
 import { beltFrom, beltReach } from '../src/dust.js';
 import { S } from '../src/state.js';
 import { RAM, TILLER, cabRow, stackCol, spriteW, spriteH } from '../src/sprites.js';
+
+// A scene holding the yard stands the machines still with the attackers
+// (cutscene.js, `holding`; crew/tenders.js), so a check about how a machine
+// runs waits for the yard to be let go all the way.
+const yardBack = (limit = 30) => runUntil(() => !S.hushOn && S.hush === 0, limit);
 
 // The two boards nobody could buy from.
 //
@@ -1448,8 +1453,9 @@ group('a full hole does not stop the band', async () => {
   const s0 = state();
   for (let i = 0; i < 80; i++) window.__pile(s0.pitX - 500 + (i % 40) * 6, 3);
   runUntil(() => state().belt > 0, 20);
-  window.__give(999999);                       // past the brim: it tears open
+  window.__give(ABYSS_AT / 2);                 // past the brim: it tears open, short of the drowning
   run(1);
+  yardBack();                                  // and the tearing is watched with the band held
   const full = state();
 
   run(3);
@@ -1524,6 +1530,7 @@ group("spoil coming down on a tall heap on the band lands on it, not the floor",
   window.__machine('belt', { bought: true });
   haveRock();
   run(8);
+  yardBack();                                  // the first rock out is the reunion, which holds the band
   // A ragged heap on the band, everywhere the spoil comes down: steps taller
   // than a chip falls in a frame, for a chip to come down beside.
   for (let x = beltFrom(), k = 0; x < beltReach(); x += P, k++) {
