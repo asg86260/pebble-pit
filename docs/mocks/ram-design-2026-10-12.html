@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ram Design Options</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --panel: #ffffff; --ink: #111111; --muted: #5d5d5d;
+    --rule: #d6d6d0; --tag: #111111; --tagink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161616; --panel: #202020; --ink: #ececec; --muted: #a2a2a2;
+      --rule: #343434; --tag: #ececec; --tagink: #111111;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161616; --panel: #202020; --ink: #ececec; --muted: #a2a2a2;
+    --rule: #343434; --tag: #ececec; --tagink: #111111;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 15px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    padding: 20px 16px 40px;
+  }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 6px; letter-spacing: .02em; }
+  .note { color: var(--muted); margin: 0 0 18px; max-width: 80ch; }
+  .opt {
+    background: var(--panel); border: 1px solid var(--rule);
+    padding: 14px; margin: 0 0 16px;
+  }
+  .opt h2 { font-size: 16px; margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .tag { background: var(--tag); color: var(--tagink); padding: 0 7px; }
+  .cap { margin: 0 0 4px; }
+  .foot { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+  .pair { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+  .pair figure { margin: 0; }
+  canvas {
+    width: 100%; display: block; image-rendering: pixelated;
+    border: 1px solid var(--rule); background: #fff;
+  }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; min-height: 1.4em; }
+  .beat { color: var(--ink); }
+  .closing { color: var(--muted); max-width: 80ch; }
+  @media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>The ram: four new designs beside today's, and D with a spinning bore</h1>
+  <p class="note">A mock drawn from plain shapes on the 6px cell grid, not the game. It cannot show
+  the rider on the roof, the build site, the real rock eaten column by column (the face here stays put
+  while chips fly), the drive back at a new boulder, the wind, or the real rate a tuned ram strikes at.
+  Each scene is the same ground: the shack's wall at the left, <code>RAM_CLEAR</code> (3 cells) of bare
+  ground, the machine's 11-cell body, <code>RAM_REACH</code> (8 cells) of daylight, then the face.</p>
+  <div id="opts"></div>
+  <p class="closing">Every option keeps the 11-cell body, so <code>ROCK_FLANK_CLEAR</code> (14 = 3 + 11)
+  holds without a change; what differs is height and what crosses the 8-cell gap. Smears are drawn in
+  light grey on the frame after a fast move; nothing flashes and nothing shakes. Soot puffs use the
+  machines' soot tones (<code>SMOG_TINTS.mach</code>) and fade over 3.2 s as the game's do. D1 to D3
+  are the pick, D, with a spinning bore for its working end: the spin is one held step a frame at
+  12 frames a second, and the chips curl off the cutter before they fall. D2's wheel is drawn face-on,
+  a cheat a side view needs for the turn to read at all.</p>
+</main>
+<script>
+"use strict";
+const P = 6, COLS = 34, ROWS = 20, GY = 18, X0 = 5, FACE = 24;
+const FPS = 12, FRAME = 1000 / FPS;
+const GHOST = "#c4c4c4", GHOST2 = "#e0e0e0";
+const MACH = ["#3c2c18", "#46341c", "#332615", "#402f19"];
+
+// --- deterministic noise ------------------------------------------------------
+function hash(n) { n = (n ^ 61) ^ (n >>> 16); n = n + (n << 3); n = n ^ (n >>> 4); n = Math.imul(n, 0x27d4eb2d); n = n ^ (n >>> 15); return (n >>> 0) / 4294967296; }
+const rnd = (a, b) => hash(a * 9973 + b * 131 + 7);
+
+// --- drawing primitives on the cell grid --------------------------------------
+let ctx;
+function cell(x, y, c) { ctx.fillStyle = c; ctx.fillRect(Math.round(x) * P, Math.round(y) * P, P, P); }
+function spr(rows, x, y, k = "#000", w = "#fff") {
+  rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) {
+    const ch = r[i];
+    if (ch === "#" && k) cell(x + i, y + j, k);
+    else if (ch === "o" && w) cell(x + i, y + j, w);
+  }});
+}
+function rect(x, y, w, h, c) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) cell(x + i, y + j, c); }
+function line(x0, y0, x1, y1, c, dotted) {
+  x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let e = dx + dy, n = 0;
+  for (;;) {
+    if (!dotted || n % 2 === 0) cell(x0, y0, c);
+    n++;
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * e;
+    if (e2 >= dy) { e += dy; x0 += sx; }
+    if (e2 <= dx) { e += dx; y0 += sy; }
+  }
+}
+const lerp = (a, b, f) => a + (b - a) * f;
+const ease = f => f * f * (3 - 2 * f);
+const seg = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
+
+// --- the yard around the machine ----------------------------------------------
+const ROCK_H = [11, 13, 14, 15, 16, 17, 17, 17, 18, 18];
+function rockTone(d, x, y) {
+  const r = rnd(x, y);
+  if (d === 0) return r < .5 ? "#8c8c8c" : "#969696";
+  if (d < 3) return r < .5 ? "#5e5e5e" : "#666666";
+  if (d < 5) return r < .5 ? "#3a3a3a" : "#424242";
+  if (d < 8) return r < .5 ? "#1e1e1e" : "#252525";
+  return r < .5 ? "#111111" : "#151515";
+}
+function drawYard() {
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, COLS * P, ROWS * P);
+  ctx.fillStyle = "#f3f3f3";
+  for (let y = 0; y < GY * P; y += 3) ctx.fillRect(0, y, COLS * P, 1);
+  // the shack's wall, cropped
+  rect(0, 7, 2, GY - 7, "#000"); rect(0, 6, 3, 1, "#000"); cell(0, 13, "#fff"); cell(0, 14, "#fff");
+  // the rock: a black mass under bands of muck, a tone a cell
+  ROCK_H.forEach((h, i) => { const x = FACE + i; for (let y = GY - h; y < GY; y++) cell(x, y, rockTone(y - (GY - h), x, y)); });
+  // the ground
+  ctx.fillStyle = "#000"; ctx.fillRect(0, GY * P, COLS * P, 2);
+  ctx.fillStyle = "#ececec";
+  for (let x = 0; x < COLS * P; x += 14) for (let k = 0; k < 6; k++) ctx.fillRect(x + k * 2, GY * P + 4 + k * 2, 2, 2);
+}
+
+// --- chips off the face and soot off the stack, read off the clock ----------
+function hitTimes(d, T, back, list = d.hits) {
+  const out = [];
+  const k0 = Math.floor((T - back) / d.period) - 1, k1 = Math.floor(T / d.period);
+  for (let k = k0; k <= k1; k++) for (const ph of list) {
+    const h = k * d.period + ph * d.period;
+    if (h <= T && h > T - back) out.push([h, k * 10 + Math.round(ph * 100)]);
+  }
+  return out;
+}
+function drawChips(d, T) {
+  for (const [h, id] of hitTimes(d, T, 3000)) {
+    const age = (T - h) / 1000;
+    for (let i = 0; i < (d.chips || 6); i++) {
+      const s = id * 17 + i * 3 + d.seed;
+      const vx = -(3 + rnd(s, 1) * 9), vy = -(5 + rnd(s, 2) * 9), g = 38;
+      const x0 = FACE - 0.6, y0 = d.hitY + (rnd(s, 3) - .5) * 3;
+      const tLand = (vy + Math.sqrt(vy * vy + 2 * g * (GY - 1 - y0))) / g;
+      const ta = Math.min(age, tLand);
+      let x = x0 + vx * ta, y = y0 + vy * ta + g * ta * ta / 2;
+      if (d.swirl) {                               // thrown off a turning cutter: a curl before it falls
+        const sw = Math.max(0, 1 - age / 0.4), a = age * 14 + rnd(s, 6) * 6.3;
+        x += Math.cos(a) * 1.6 * sw; y += Math.sin(a) * 1.6 * sw;
+      }
+      const tone = ["#000", "#3a3a3a", "#6e6e6e"][Math.floor(rnd(s, 4) * 3)];
+      let a = 1;
+      if (age > tLand) a = Math.max(0, 1 - (age - tLand) / 1.6);
+      if (a <= 0 || x < X0 + 11 && age > tLand) continue;   // grit under the machine is hidden by it
+      ctx.globalAlpha = a; cell(x, y, tone); ctx.globalAlpha = 1;
+    }
+  }
+}
+const PUFF_OFFS = Array.from({ length: 9 }, (_, i) => [rnd(i, 11) * 2 - 1, rnd(i, 12) * 2 - 1]);
+function drawPuffs(d, T) {
+  const [sx, sy] = d.stack;
+  for (const [h, id] of hitTimes(d, T, 3200, d.puffAt || d.hits)) {
+    for (let p = 0; p < d.puffs; p++) {
+      const age = (T - h) / 1000 - p * 0.12;
+      if (age < 0 || age > 3.2) continue;
+      const s = id * 5 + p + d.seed;
+      const cx = sx + (rnd(s, 5) - .5) * 1.6 * age + age * 1.1;
+      const cy = sy - 9 * (1 - Math.exp(-age / 1.2)) - 0.5;
+      const r = 0.4 + age * 0.85;
+      ctx.globalAlpha = Math.max(0, 1 - age / 3.2) * 0.9;
+      const n = Math.min(9, 3 + Math.floor(age * 3));
+      for (let i = 0; i < n; i++) {
+        const o = PUFF_OFFS[(i + s) % 9];
+        cell(cx + o[0] * r, cy + o[1] * r * 0.8, MACH[(i + s) % 4]);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+// --- the designs --------------------------------------------------------------
+// Each design: `body(t, idle)` the parts that stay put, `moving(t, k, w)` the
+// parts that move (drawn again in grey as the smear), `hits` the stroke phases
+// a blow lands on, `fast` the phases a smear trails.
+
+const RAM = ["..##.......", "..##.......", "..##.......", "###########", "#oooo######", "#oooo######", "#oooo######", "###########"];
+const TODAY = {
+  key: "now", letter: "Now", name: "Today's ram",
+  cap: "A box with a chimney; a 2-cell bar slides out of its middle to the face, holds, and is drawn back.",
+  foot: "Body 11 x 8 cells (3 of them chimney); the bar crosses the 8-cell gap. 19 cells of ground.",
+  period: 900, hits: [0.18], fast: [[0.0, 0.2]], hitY: 15.5, stack: [7.5, 9.5], puffs: 3, seed: 1,
+  beats: [[0, "drives out"], [0.18, "held on the face"], [0.34, "drawn back, slowly"]],
+  body() {
+    spr(RAM, X0, GY - 8);
+    rect(X0 + 1, GY - 2, 9, 1, "#fff"); rect(X0 + 1, GY - 2, 4, 1, "#000");   // the boulder's progress bar
+  },
+  moving(t, k, idle) {
+    const gap = FACE - (X0 + 11), rest = Math.round(gap / 2);
+    const reach = idle ? rest : t < 0.18 ? Math.round(rest + (gap - rest) * (t / 0.18)) : t < 0.34 ? gap
+      : Math.max(2, Math.round(gap - (gap - rest) * ((t - 0.34) / 0.66)));
+    const x = X0 + 11;
+    rect(x, GY - 3, reach, 2, k);
+    rect(x + reach - 1, GY - 4, 2, 4, k);
+  }
+};
+
+// A: a log on chains in a wheeled frame, hauled back by a steam winch.
+const A_FRAME = [
+  ".##........", ".##........", "###########", ".##.......#", ".#.#......#", ".#..#.....#",
+  ".#...#....#", "###...#...#", "#o#....#..#", "###########", ".#o#...#o#.", ".###...###."
+];
+function aTheta(t, idle) {
+  if (idle) return 0;
+  if (t < 0.40) return lerp(0, -55, ease(seg(t, 0, 0.40)));
+  if (t < 0.50) return -55;
+  if (t < 0.56) return lerp(-55, 53, seg(t, 0.50, 0.56));
+  if (t < 0.70) return 53;
+  if (t < 0.82) return lerp(53, 18, ease(seg(t, 0.70, 0.82)));
+  return lerp(18, 0, ease(seg(t, 0.82, 1)));
+}
+const A = {
+  key: "a", letter: "A", name: "Siege ram",
+  cap: "A log slung on chains in a wheeled frame; a steam winch hauls it back, holds it cocked, lets it swing into the face.",
+  foot: "Frame 11 x 12 cells; the log hangs 3 cells into the gap at rest and swings the last 3 to the face.",
+  period: 1800, hits: [0.56], fast: [[0.50, 0.57]], hitY: 13.5, stack: [6.5, 5.5], puffs: 3, seed: 2,
+  beats: [[0, "the winch hauls the log back"], [0.40, "cocked, held"], [0.50, "let go"], [0.56, "held on the face"], [0.70, "swings back on the chains"], [0.82, "settles"]],
+  body() { spr(A_FRAME, X0, GY - 12); },
+  moving(t, k, idle) {
+    const th = aTheta(t, idle) * Math.PI / 180, L = 5;
+    const dx = L * Math.sin(th), dy = -L * (1 - Math.cos(th));
+    const top = GY - 12, lx = X0 + 3 + dx, ly = top + 7 + dy;
+    line(X0 + 4, top + 3, lx + 1, ly - 1, k, true);
+    line(X0 + 8, top + 3, lx + 5, ly - 1, k, true);
+    // A cell of daylight round the log where it crosses the frame, so it
+    // reads as a log in front of the posts rather than one black mass.
+    if (k === "#000") for (let i = -1; i <= 10; i++) for (const j of [-1, 2]) if (lx + i < X0 + 11) cell(lx + i, ly + j, "#fff");
+    rect(lx, ly, 10, 2, k);
+    rect(lx + 10, ly - 1, 2, 4, k);                // the iron head
+  }
+};
+
+// B: a boiler on a skid with a flywheel, the piston punching a square head.
+const B_BODY = [
+  ".##........", ".##........", ".##...#....", "..######...", ".#########.", "###ooo#####",
+  "###o#o#####", "###ooo#####", ".#########.", "###########", ".#.#...#.#."
+];
+const RING = [[3, 5], [4, 5], [5, 5], [5, 6], [5, 7], [4, 7], [3, 7], [3, 6]];
+function bReach(t, idle) {
+  const rest = 2, gap = FACE - (X0 + 11);
+  if (idle) return rest;
+  if (t < 0.10) return Math.round(lerp(rest, gap, seg(t, 0, 0.10)));
+  if (t < 0.30) return gap;
+  if (t < 0.46) return gap - 1;                   // the head kicks back a cell off the face
+  return Math.round(lerp(gap - 1, rest, ease(seg(t, 0.46, 1))));
+}
+const B = {
+  key: "b", letter: "B", name: "Steam hammer",
+  cap: "A boiler on a skid; the piston punches a big square head into the face and it kicks back a cell. The stack chuffs on every blow; the flywheel turns.",
+  foot: "Body 11 x 11 cells; the rod crosses the 8-cell gap, the 2 x 5 head lands on the face.",
+  period: 1000, hits: [0.10], fast: [[0.0, 0.11]], hitY: 13, stack: [6.5, 6.5], puffs: 3, seed: 3,
+  beats: [[0, "the punch"], [0.10, "held on the face"], [0.30, "kicks back a cell"], [0.46, "drawn in"]],
+  body(t, idle) {
+    const top = GY - 11;
+    spr(B_BODY, X0, top);
+    const i = idle ? 0 : Math.floor(t * 8) % 8;     // the flywheel's spoke going round
+    cell(X0 + RING[i][0], top + RING[i][1], "#000");
+  },
+  moving(t, k, idle) {
+    const r = bReach(t, idle), x = X0 + 11, top = GY - 11;
+    rect(x, top + 6, r, 1, k);
+    rect(x + r - 2, top + 4, 2, 5, k);
+  }
+};
+
+// C: a gantry whose boom overhangs the gap, a pendulum hammer wound back by a
+// cable off a turning wheel and dropped.
+const C_FRAME = [
+  "##.............", "##.............", "###############", ".#.......#...#.", ".#.......#...#.", ".#.......#.....",
+  ".#.......#.....", ".#.......#.....", ".#.......#.....", "###......#.....", "#o#......#.....", "###########....", ".###...###....."
+];
+function cPhi(t, idle) {
+  if (idle) return 0;
+  if (t < 0.42) return lerp(5, -70, ease(seg(t, 0, 0.42)));
+  if (t < 0.52) return -70;
+  if (t < 0.58) return lerp(-70, 35, seg(t, 0.52, 0.58));
+  if (t < 0.74) return 35;
+  return lerp(35, 5, ease(seg(t, 0.74, 1)));
+}
+const C = {
+  key: "c", letter: "C", name: "Pendulum hammer",
+  cap: "A gantry with its boom out over the gap; a wheel winds the pendulum back on a cable, holds it high, and drops it into the foot of the face.",
+  foot: "11 cells on the ground, 13 tall; the boom overhangs 4 cells of the gap and the head swings back over the frame.",
+  period: 1300, hits: [0.58], fast: [[0.52, 0.59]], hitY: 15, stack: [5.5, 4.5], puffs: 3, seed: 4,
+  beats: [[0, "wound back on the cable"], [0.42, "held high"], [0.52, "dropped"], [0.58, "held on the face"], [0.74, "swings home"]],
+  body(t, idle) {
+    const top = GY - 13;
+    spr(C_FRAME, X0, top);
+    // the winding wheel, a ring with a pin that turns while it winds
+    const cx = X0 + 5, cy = top + 7;
+    for (let a = 0; a < 12; a++) cell(cx + Math.round(2 * Math.cos(a * Math.PI / 6)), cy + Math.round(2 * Math.sin(a * Math.PI / 6)), "#000");
+    const w = idle ? 0 : seg(t, 0, 0.42) * Math.PI * 3;
+    cell(cx + Math.round(Math.cos(w)), cy + Math.round(Math.sin(w)), "#000");
+    cell(cx, cy, "#000");
+  },
+  moving(t, k, idle) {
+    const top = GY - 13, px = X0 + 13, py = top + 4, L = 7;
+    const ph = cPhi(t, idle) * Math.PI / 180;
+    const hx = px + L * Math.sin(ph), hy = py + L * Math.cos(ph);
+    if (k === "#000") {                           // the cable, not smeared
+      const mx = px + 3 * Math.sin(ph), my = py + 3 * Math.cos(ph);
+      line(X0 + 5, top + 5, mx, my, "#000", true);
+    }
+    line(px, py, hx, hy, k); line(px + 1, py, hx + 1, hy, k);
+    rect(Math.round(hx) - 1, Math.round(hy) - 2, 3, 4, k);
+    if (k === "#000") cell(Math.round(hx), Math.round(hy) - 1, "#fff");
+  }
+};
+
+// D: a tracked crawler with a boom and a hydraulic breaker.
+const D_BODY = [
+  ".##........", ".##..####..", ".##..#oo#..", ".##..#oo#..", "##########.", "###########",
+  "###########", ".#########.", "#o#o#o#o#o#", ".#########."
+];
+function dPose(t, idle) {
+  if (idle) return { park: true };
+  let o, struck = false;
+  if (t < 0.15) o = seg(t, 0, 0.15);
+  else if (t < 0.70) { o = 1; const j = ((t - 0.15) / 0.55 * 3) % 1; struck = j < 0.45; }
+  else o = 1 - ease(seg(t, 0.70, 1));
+  return { o: Math.round(o * 2), struck };
+}
+const D = {
+  key: "d", letter: "D", name: "Breaker crawler",
+  cap: "A low crawler on tracks, a boom and a hydraulic breaker; it sets the chisel on the face and hammers three times, the breaker body kicking back on the chisel between blows.",
+  foot: "Body 11 x 10 cells; the boom and breaker reach the last 8 cells to the face, and fold back over the tracks when parked.",
+  period: 1200, hits: [0.17, 0.35, 0.53], fast: [], hitY: 15, stack: [6.5, 7.5], puffs: 2, seed: 5,
+  beats: [[0, "sets the chisel"], [0.15, "hammering"], [0.70, "lifts off"]],
+  body() { spr(D_BODY, X0, GY - 10); },
+  moving(t, k, idle) {
+    const p = dPose(t, idle);
+    const rx = X0 + 10, ry = GY - 5;               // the boom's foot at the cab's front
+    if (p.park) {
+      line(rx, ry, rx + 2, ry - 4, k); line(rx - 1, ry, rx + 1, ry - 4, k);
+      line(rx + 2, ry - 4, rx + 3, ry - 1, k);
+      rect(rx + 2, ry - 1, 3, 3, k); cell(rx + 3, ry + 2, k);
+      return;
+    }
+    const ex = rx + 2 + p.o, ey = ry - 5;          // the elbow
+    line(rx, ry, ex, ey, k); line(rx, ry - 1, ex, ey - 1, k);
+    const bx = X0 + 12 + p.o + (p.struck ? 1 : 0); // the breaker body rides the chisel
+    line(ex, ey, bx + 1, GY - 4, k);
+    rect(bx, GY - 4, 3, 3, k);
+    const tip = X0 + 16 + p.o;                // the chisel, set against the face
+    rect(bx + 3, GY - 3, Math.max(1, tip - (bx + 3) + 1), 1, k);
+  }
+};
+
+
+// --- D with a spinning bore -----------------------------------------------------
+// The owner's pick: D's crawler, with a turning cutter in place of the breaker.
+// The spin is a held step a frame (`spinStep`), read off the clock; the
+// crawler pushes in, bores, and backs out.
+const spinStep = T => Math.floor(T / FRAME);
+function boreAdv(t, idle) {
+  if (idle) return 0;
+  if (t < 0.15) return Math.round(2 * ease(seg(t, 0, 0.15)));
+  if (t < 0.75) return 2;
+  return Math.round(2 * (1 - ease(seg(t, 0.75, 1))));
+}
+const BORE_HITS = Array.from({ length: 10 }, (_, i) => 0.18 + i * 0.06);
+const boreBase = {
+  period: 2400, hits: BORE_HITS, puffAt: [0.15, 0.45], fast: [], chips: 3, swirl: true,
+  stack: [6.5, 7.5], puffs: 2, hitY: 15,
+  beats: [[0, "pushes in, spinning"], [0.15, "boring"], [0.75, "backs out"]],
+  body() { spr(D_BODY, X0, GY - 10); }
+};
+
+const D1 = Object.assign({}, boreBase, {
+  key: "d1", letter: "D1", name: "Crawler auger", seed: 6,
+  cap: "D's crawler with a conical auger on the boom: white flutes crawl along the cone a step a frame as it turns, and it buries its tip in the face.",
+  foot: "Body 11 x 10 cells; boom, motor and a 6-cell cone fill the gap, the tip a cell off the face when parked.",
+  moving(t, k, idle, T = 0) {
+    const a = boreAdv(t, idle), cy = GY - 3;
+    const rx = X0 + 10, ry = GY - 5, hx = X0 + 10 + a;   // the motor, on the nose
+    line(rx, ry, rx + 3 + a, ry - 4, k); line(rx, ry - 1, rx + 3 + a, ry - 5, k);
+    line(rx + 3 + a, ry - 4, hx + 1, cy - 2, k);
+    rect(hx, cy - 1, 2, 3, k);                     // the motor (its back half on the hull)
+    const half = [2, 2, 2, 1, 1, 0];                  // the cone's half-height, column by column
+    const ph = idle ? 0 : spinStep(T) % 3;
+    half.forEach((h, i) => { for (let j = -h; j <= h; j++) {
+      const x = hx + 2 + i, white = ((i + j + 30 - ph) % 3 === 0) && h > 0;
+      cell(x, cy + j, white ? "#fff" : k);
+    }});
+  }
+});
+
+const D2 = Object.assign({}, boreBase, {
+  key: "d2", letter: "D2", name: "Crawler cutter wheel", seed: 7, hitY: 14,
+  cap: "D's crawler pushing a round cutter wheel, shown face-on like a tunnel borer's: spokes and teeth turn a step a frame as it grinds into the face.",
+  foot: "Body 11 x 10 cells; the wheel is 9 cells across (teeth included) and stands in the gap, its left edge on the body's nose.",
+  moving(t, k, idle, T = 0) {
+    const a = boreAdv(t, idle), cx = X0 + 15 + a, cy = GY - 5;
+    rect(X0 + 11, cy - 1, cx - (X0 + 11), 2, k);    // the thrust ram
+    const ph = idle ? 0 : spinStep(T) % 8;
+    const rot = ph * Math.PI / 12;
+    for (let i = 0; i < 24; i++) {                  // the rim
+      const an = i * Math.PI / 12;
+      cell(cx + Math.round(3 * Math.cos(an)), cy + Math.round(3 * Math.sin(an)), k);
+    }
+    // the face inside the rim, white, with three spokes turning
+    for (let y = -2; y <= 2; y++) for (let x = -2; x <= 2; x++) if (x * x + y * y <= 5) cell(cx + x, cy + y, "#fff");
+    for (let q = 0; q < 3; q++) {
+      const an = rot + q * Math.PI * 2 / 3;
+      for (let r = 0; r <= 2; r++) cell(cx + Math.round(r * Math.cos(an)), cy + Math.round(r * Math.sin(an)), k);
+    }
+    for (let q = 0; q < 6; q++) {                   // six teeth outside the rim, going round with it
+      const an = rot + q * Math.PI / 3 + Math.PI / 6;
+      cell(cx + Math.round(4 * Math.cos(an)), cy + Math.round(4 * Math.sin(an)), k);
+    }
+  }
+});
+
+const D3 = Object.assign({}, boreBase, {
+  key: "d3", letter: "D3", name: "Crawler cutter drum", seed: 8, hitY: 14,
+  cap: "My own: D's crawler with a roadheader's drum on a long boom. Picks crawl over the drum as it turns, and the boom sweeps it down the face and back up while it cuts.",
+  foot: "Body 11 x 10 cells; the boom reaches 7 cells into the gap, the 4 x 3 drum sweeps 5 rows of the face; folded high when parked.",
+  moving(t, k, idle, T = 0) {
+    const px = X0 + 10, py = GY - 6;
+    let ang;                                      // the boom's tilt, degrees below level
+    if (idle) ang = -45;
+    else if (t < 0.15) ang = lerp(-45, -20, ease(seg(t, 0, 0.15)));
+    else if (t < 0.75) ang = -20 + 30 * (0.5 - 0.5 * Math.cos(seg(t, 0.15, 0.75) * Math.PI * 2));
+    else ang = lerp(-20, -45, ease(seg(t, 0.75, 1)));
+    const an = ang * Math.PI / 180, L = idle ? 5 : 7;
+    const dx = Math.round(px + L * Math.cos(an)), dy = Math.round(py + L * Math.sin(an));
+    line(px, py, dx, dy, k); line(px, py + 1, dx, dy + 1, k);
+    const x0 = dx - 1, y0 = dy - 1;
+    rect(x0, y0, 4, 3, k);
+    const ph = idle ? 0 : spinStep(T) % 2;
+    for (let i = 0; i < 4; i++) {
+      if ((i + ph) % 2 === 0) cell(x0 + i, y0 - 1, k);      // picks over the top, crawling
+      if ((i + ph) % 2 === 1) cell(x0 + i, y0 + 3, k);      // and under it, the other way
+      if ((i + ph) % 2 === 0) cell(x0 + i, y0 + 1, "#fff"); // the drum's band turning
+    }
+  }
+});
+
+const OPTS = [TODAY, A, B, C, D, D1, D2, D3];
+
+// --- the page -------------------------------------------------------------------
+const host = document.getElementById("opts");
+const panels = OPTS.map(d => {
+  const el = document.createElement("section");
+  el.className = "opt";
+  el.innerHTML = `<h2><span class="tag">${d.letter}</span>${d.name}</h2><p class="cap">${d.cap}</p><p class="foot">Footprint: ${d.foot}</p>
+    <div class="pair"><figure><canvas width="${COLS * P}" height="${ROWS * P}"></canvas><figcaption>working: <span class="beat"></span></figcaption></figure>
+    <figure><canvas width="${COLS * P}" height="${ROWS * P}"></canvas><figcaption>parked by the shack, idle</figcaption></figure></div>`;
+  host.append(el);
+  const [work, park] = el.querySelectorAll("canvas");
+  return { d, work: work.getContext("2d"), park: park.getContext("2d"), beat: el.querySelector(".beat") };
+});
+
+function drawScene(d, T, idle) {
+  const t = idle ? 0 : (T % d.period) / d.period;
+  drawYard();
+  if (!idle) drawPuffs(d, T);
+  if (!idle) {
+    const dt = FRAME / d.period;
+    // The smear: the moving part where it was a frame or two ago, in grey,
+    // on the frames of the fast move and the one after it.
+    for (const [a, b] of d.fast) if (t >= a && t <= b + dt) {
+      const t2 = t - 2 * dt, t1 = t - dt;
+      if (t2 >= a - dt) d.moving(t2, GHOST2, false);
+      if (t1 >= a - dt) d.moving(t1, GHOST, false);
+    }
+  }
+  d.body(t, idle);
+  // A turning cutter throws its chips out from behind it, so the spin stays readable.
+  if (!idle && d.swirl) drawChips(d, T);
+  d.moving(t, "#000", idle, T);
+  if (!idle && !d.swirl) drawChips(d, T);
+}
+
+function frame(ms) {
+  const T = Math.floor((ms + 60000) / FRAME) * FRAME;   // a minute in, so every blow behind it is a real one
+  for (const p of panels) {
+    ctx = p.work; drawScene(p.d, T, false);
+    const t = (T % p.d.period) / p.d.period;
+    let label = p.d.beats[0][1];
+    for (const [a, s] of p.d.beats) if (t >= a) label = s;
+    p.beat.textContent = label;
+  }
+}
+for (const p of panels) { ctx = p.park; drawScene(p.d, 0, true); }
+
+if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  // one representative frame: each machine just after its blow lands
+  for (const p of panels) {
+    const T = p.d.period * 3 + p.d.hits[0] * p.d.period + 2 * FRAME;
+    ctx = p.work; drawScene(p.d, T, false); p.beat.textContent = "on the face (motion reduced)";
+  }
+} else {
+  const loop = ms => { frame(ms); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
