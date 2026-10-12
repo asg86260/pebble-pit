@@ -123,18 +123,23 @@ function scoop(w, c, now) {
   return true;
 }
 
-// The nearest column with something in it to `bare`, the column just emptied,
-// on any ground, or -1 when nothing is nearer than the walk home. A body with
-// room in hand keeps taking what is nearest until its hands are full; held to
-// its own strip it stepped over what the heap sheds past the edge. Nearer
-// than the hole is the bound: further off is another trip's. Claimed or not,
-// unless the claimant is nearer (`keptBy`).
-function nextNear(w, bare, taken) {
+// The nearest column with something in it to `from` -- the column just
+// emptied, or where the body stands -- on any ground, or -1 when nothing is
+// nearer than the walk home. A body with room in hand keeps taking what is
+// nearest until its hands are full; held to its own strip it stepped over what
+// the heap sheds past the edge. Nearer than the hole is the bound: further off
+// is another trip's. Claimed or not, unless the claimant is nearer (`keptBy`);
+// never ground that is `taken` with no carter's claim on it -- under a rock
+// coming down, or a farmer's elbows -- nor across that rock.
+function nextNear(w, from, taken, zone) {
   const last = lastCol();
   const reach = Math.floor(Math.abs(pit.x - w.x) / P);
-  for (let d = 1; d <= reach; d++) {
-    for (const c of [bare - d, bare + d]) {
+  const side = zone ? sideOf(zone, w.x) : 0;
+  for (let d = 0; d <= reach; d++) {
+    for (const c of [from - d, from + d]) {
       if (c < 0 || c > last || !at(floor, c, 0) || keptBy(w, c)) continue;
+      if (taken.has(c) && !hauling().some(o => o.claim === c)) continue;
+      if (side && sideOf(zone, floor.x + c * P) !== side) continue;
       return c;
     }
   }
@@ -153,8 +158,13 @@ function keptBy(w, c) {
   return !!o && Math.abs(o.x - x) <= Math.abs(w.x - x);
 }
 
-// Taking a column on.
+// Taking a column on, and out of the hands of anybody farther off who had
+// set off for it (`keptBy` said this body is nearer): a claim is one body's,
+// or the one it was taken from walks on to a grain that is already spoken
+// for and two bodies converge on one shard. The one let go picks again from
+// where it stands, on its own next look.
 function claim(w, c, taken) {
+  for (const o of hauling()) if (o !== w && o.claim === c) o.claim = -1;
   w.claim = c; taken.add(c);
 }
 
@@ -342,14 +352,20 @@ export function haulerWork(w, c) {
       // taking the nearest thing until its hands are full, then turns for
       // home. Sent for one column, a far heap lost one column a trip.
       if (w.carry && w.carry < load(w)) {
-        const next = nextNear(w, bare, taken);
+        const next = nextNear(w, bare, taken, zone);
         if (next >= 0) claim(w, next, taken);
       }
     }
-    // A target is picked with empty hands only. Once anything is in hand the
-    // trip has a shape, and its target being bare is the turn for home, not a
-    // reason to pick again (the sweep home is the `dump` branch).
-    if (w.claim < 0 && w.carry) { w.goal = 'dump'; return; }
+    // A target from the whole yard is picked with empty hands only. Once
+    // anything is in hand the trip has a shape: with room left it takes the
+    // nearest thing to where it stands -- its claim let go under a rock coming
+    // down, or taken by a nearer body -- and with nothing nearer than the
+    // hole it turns for home (the sweep home is the `dump` branch).
+    if (w.claim < 0 && w.carry) {
+      const next = w.carry < load(w) ? nextNear(w, colOf(floor, w.x + WORKER / 2), taken, zone) : -1;
+      if (next >= 0) claim(w, next, taken);
+      else { w.goal = 'dump'; return; }
+    }
     if (w.claim < 0) {
       // Book the hole before picking a column: nothing is fetched without
       // room for it, or a shard stays on the ground behind a full hole.
@@ -394,10 +410,16 @@ export function haulerWork(w, c) {
     const tip = tipSpot(w, now);
     const target = tip.x;
     let stride = Math.min(drive(w) * frames(), Math.abs(target - w.x));
+    // The column it is stood over is held while it is, and let go each frame
+    // until the next look says it is still there.
+    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
     if (w.carry < load(w)) {
       const c = underfoot(w, stride);
       const under = c >= 0 && floor.x + c * P <= w.x + WORKER;
       if (under && roomToTake(w)) {
+        // Held, so whoever set off for it from farther off picks again now
+        // rather than walking up to it after it is gone.
+        claim(w, c, taken);
         if (now >= w.next) scoop(w, c, now);
         return;                                // stood over it until it is bare
       }

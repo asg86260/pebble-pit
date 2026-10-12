@@ -60,7 +60,11 @@ group('a grain a stride away is taken before the walk to the hole', async () => 
   ];
 });
 
-group('what lies behind the target is left for the next trip', async () => {
+// With room in hand a body takes the nearest thing before it turns for home,
+// whichever side of it that is: a grain a stride behind it, left for a trip of
+// its own, is a hauler walking to the hole half empty past work it could have
+// carried. Nearer than the hole is the bound (`nextNear`).
+group('what lies a stride behind comes too while the hands have room', async () => {
   oneHauler();
   // the target, one grain a stride further out, and one a stride nearer home.
   // On the open ground the target is the oldest grain, so the target goes
@@ -72,15 +76,14 @@ group('what lies behind the target is left for the next trip', async () => {
   window.__pile(at + P * 8, 1);
   window.__place('hauler', at);
   run(0.1);
+  const cap = state().haulCap;
   const r = firstToss();
-  // and then it does go back for it: leaving it is not forgetting it
-  const second = runUntil(() => floor.n === 0, 90);
   window.__crew(0, 0);
   return [
+    ok(cap >= 3, 'the hands hold all three', `${cap}`),
     ok(r.tossed, 'the load is tipped', `${r.took} grains`),
-    ok(r.took === 2 && r.left === 1, 'the target and the one on the way home, not the one behind',
-       `${r.took} banked, ${r.left} still on the ground`),
-    ok(second, 'and the one behind is fetched on the trip after')
+    ok(r.took === 3 && r.left === 0, 'the target, the one on the way home and the one behind, on one trip',
+       `${r.took} banked, ${r.left} still on the ground`)
   ];
 });
 
