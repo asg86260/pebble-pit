@@ -17893,7 +17893,7 @@ foot of the glass.
 - **The yard's clock**: the index takes whatever the held sheet does today
   and pauses nothing of its own; option C's look mode pauses nothing at all.
 
-## Controller support (design, not built)
+## Controller support (built)
 
 The owner, 2026-10-12: full controller support -- "lets mock up the focus
 states for stations, and everything else". Two mocks, for the vote:
@@ -17935,7 +17935,8 @@ deliberate mode, the hand on a held trigger.
   about a quarter second, fast out and soft in, on whole cells only, and
   steps in a cell or two to land. Three styles in the mock: **A** corner
   brackets, **B** a stepped outline, **C** the game's own chevron bobbing a
-  cell over the thing. One is chosen; the other two are not built.
+  cell over the thing. **A was chosen** (the owner, 2026-10-12); B and C
+  are not built.
 - **The tip.** A settled focus asks for the hover's tip (`showTip` /
   `showTipAt`) by the focused thing's rectangle instead of the cursor's
   point, after the hover's own wait, with the button that acts on it in
@@ -17979,8 +17980,10 @@ deliberate mode, the hand on a held trigger.
   there; letting go of A over a station is `assignDrop`, anywhere else a
   throw with the stick's last flick. B sets it down without a throw.
 - **The rock.** A is a click (`knockOff` at `topOfRock`), held A is held
-  mining once bought, as now. Crits roll as now; an optional short rumble
-  on one is the pad's only new feedback, off by default.
+  mining once bought, as now. Crits roll as now; a short rumble on one of
+  your own is the pad's only new feedback (the owner, 2026-10-12: yes),
+  through the pad's `vibrationActuator` where it has one and nothing where
+  it does not.
 - **The deep.** Up from a station is the coil: the focus lands on the
   nearest segment and the stick slides it along as the coil moves; A is
   `clickDeep` there. The constrict's orb is a stop like any other, with
@@ -18073,3 +18076,59 @@ placeholders.
 
 Also for the vote, smaller: the marker style (A, B or C), and whether a
 crit's rumble exists at all.
+
+### The owner's vote (2026-10-12)
+
+- **The marker: A, corner brackets.** L-corners a cell outside the thing,
+  the slow two-pose breath, a one-cell paper halo, the purple accent (the
+  deep's lighter purple in the deep). It glides in about a quarter second,
+  fast out and soft in, on whole cells, and lands in a one- or two-cell
+  settle.
+- **Moving: hops.** The d-pad, and a flick of the left stick, hop the focus
+  between the stops a click already lands on; up and down step into a
+  station's own controls. A free hand only on RT held: sweeping dust,
+  throwing it, dropping a body anywhere.
+- **Mouse and pad together:** both always live, the last input wins, no
+  setting. The first pad press shows the marker and the pad's glyphs; the
+  first mouse move hides them.
+- **Reading the pad: the Gamepad API** in every build, plus a default Steam
+  Input configuration for the Deck's back buttons and trackpads, shipped for
+  Steamworks (no SDK input API).
+- **The rumble on a crit: yes.**
+
+### As built
+
+- **The files.** `stops.js` is the one list (the hop arrows take its
+  stations with a board in the half on screen, the digit keys the rock and
+  every station but the books, the pad all of it plus the build call's
+  button while it stands); `padread.js` reads the pads, names the family,
+  draws a glyph and rumbles; `pad.js` is the yard's half and the frame;
+  `padpage.js` the page's rows; `padglide.js` where the marker is drawn,
+  and `render/padmark.js` its layer (`pad focus`, after the deep is turned,
+  in both halves). The numbers are `config/pad.js`.
+- **A greyed card cannot hold the page's focus** (a disabled button never
+  can), so on a board the pad keeps its own note of the row with the focus
+  and the marker stands on it; the page's focus follows wherever the row can
+  take it. A on a greyed card does what a click does there: nothing.
+- **The marker over a page's rows** is drawn on a sheet of its own over the
+  page (`#padmark`), in cells of `PAD_PAGE_CELL` CSS pixels, since a row
+  stands over the yard's canvas and a bracket painted there would be under
+  it. The glide never crosses from the yard to the page: going into a board,
+  the marker lands on the row as if it had arrived there.
+- **The tip.** In the yard a settled focus raises `showTip` with the
+  station's name (the pointer's label) or `whatIsAt`'s word, the A glyph in
+  front where A acts on it. On a row, the row's own hover is raised
+  (`pointerenter`, then `pointerleave` when the focus goes), so every word
+  is the hover's.
+- **X** opens a dial's list where the card has one; nothing else yet (the
+  deep's rails have no second action wired).
+- **L3** is the way through the portal from either half; the Deck's L5 is
+  mapped onto it by the Steam Input config, and its R5 onto the `i` key
+  (the index), the L4 and R4 onto the triggers, the right trackpad onto the
+  mouse and the left onto the wheel (electron/steam-input/).
+- **Reduced motion**: the marker is there at once and does not breathe, as
+  the camera is there at once.
+- **The controls page** gains a pad column once a pad has been seen in the
+  session, and rows for what the pad does that the mouse has no row for;
+  those rows' words are the owner's, placeholders until written
+  (`PAD_WORDS`, src/controls.js).

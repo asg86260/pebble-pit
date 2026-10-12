@@ -204,7 +204,50 @@ group('a body in the pad\'s hand is carried, never moved faster than the hand', 
   ];
 }, { reload: false });
 
-// --- 7. a scene ----------------------------------------------------------------------
+// --- 7. the hand ----------------------------------------------------------------------
+group('RT held is a hand: the stick takes it to the dust, A sweeps, a flick and a let-go throw', async () => {
+  window.__crew(3, 3);
+  run(1);
+  wake();
+  for (let i = 0; i < 12 && pad().focus() !== 'st:house'; i++) pad().press(pad().stops().indexOf('st:house') < pad().stops().indexOf(pad().focus()) ? 'left' : 'right');
+  pad().down('rt');
+  frame();
+  const h0 = pad().hand();
+  // A heap a little left of the hand, on the open ground beyond the house.
+  const x = Math.round(h0.x - 120);
+  window.__pile(x, 60);
+  // Down and left to it, at the hand's pace.
+  pad().stick(-0.4, 1);
+  let n = 0;
+  while (pad().hand().y < S.groundY - 8 && n < 600) { frame(); n++; }
+  pad().stick(-1, 0);
+  while (pad().hand().x > x && n < 1200) { frame(); n++; }
+  pad().stick(0, 0);
+  frame();
+  pad().down('a');
+  for (let i = 0; i < 20; i++) frame();
+  const got = S.held;
+  // A flick up and away, and let go mid-flick.
+  pad().stick(1, -1);
+  frame(); frame(); frame();
+  const chips = S.chips.length;
+  pad().up('a');
+  frame();
+  const thrown = S.chips.length > chips && S.held === 0;
+  pad().stick(0, 0);
+  pad().up('rt');
+  frame();
+  const away = pad().hand() === null;
+  done();
+  return [
+    ok(!!h0, 'RT put a hand out'),
+    ok(got > 0, 'A over the heap swept dust into it', `${got}; hand ${JSON.stringify(pad().hand())} ground ${S.groundY}`),
+    ok(thrown, 'and letting go mid-flick threw it'),
+    ok(away, 'RT let go takes the hand in'),
+  ];
+});
+
+// --- 8. a scene ----------------------------------------------------------------------
 group('A held through a scene skips it, as the space bar does', async () => {
   window.__reset(true);
   run(0.5);

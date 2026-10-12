@@ -387,6 +387,11 @@ export function stepPad(t = performance.now()) {
     } else if (m < PAD_DEAD) flickArmed = true;
   }
 
+  // Menu holds the yard and lets it go, wherever the focus is, as Escape
+  // does; a story's sheet is put away only by its own buttons.
+  const sc = scope();
+  if (pressed('menu') && !(sc && sc.kind === 'sheet')) { hold(!S.paused); return; }
+
   // A scene has the yard: A held is the space bar held, and nothing else
   // answers (skip.js).
   if (skippable() && !S.paused) {
@@ -395,11 +400,6 @@ export function stepPad(t = performance.now()) {
     return;
   }
   if (skipping && !p.down.a) { holdSkip(false); skipping = false; }
-
-  // Menu holds the yard and lets it go, wherever the focus is; a story's
-  // sheet is put away only by its own buttons.
-  const sc = scope();
-  if (pressed('menu') && !(sc && sc.kind === 'sheet')) { hold(!S.paused); return; }
 
   // The page's rows, when the pad is on one.
   if (sc) { pagePresses(sc, dirs, pressed, t); return; }
