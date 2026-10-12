@@ -89,15 +89,7 @@ export const TESTS = [
     run(3);
     const over = state();
 
-    // No hat owned: no top row, one row of seats.
-    newRun();
-    window.__crew(0, 3, 3, 0);
-    window.__levels({ benchLevel: 3 });
-    run(20);
-    const bare = q().pips;
-    window.__crew(0, 0);
     return [
-      ok(new Set(bare.map(p => p[1])).size === 1 && bare.length === 5, 'a station with no hats shows one row of seats', JSON.stringify(bare)),
       // Measured against each other rather than against a number: how far a
       // throw carries depends on where the body was standing when picked up.
       // The claim is that the flick does something the standstill does not,
@@ -433,7 +425,15 @@ export const TESTS = [
     run(2);
     const gone = pip(4);
     window.__crew(0, 0);
+    // No hat owned: no top row, one row of seats.
+    newRun();
+    window.__crew(0, 3, 3, 0);
+    window.__levels({ benchLevel: 3 });
+    run(20);
+    const bare = q().pips;
+    window.__crew(0, 0);
     return [
+      ok(new Set(bare.map(p => p[1])).size === 1 && bare.length === 5, 'a station with no hats shows one row of seats', JSON.stringify(bare)),
       ok(at.seats && at.seats.seats === 5 && at.pips.length === 5, 'the cut with five benches shows five pips',
          at.seats && `${at.seats.seats} seats, ${at.pips && at.pips.length} pips`),
       ok(at.seats && at.seats.filled === 3, 'three of them filled for the three at work', at.seats && at.seats.filled),
