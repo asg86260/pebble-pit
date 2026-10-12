@@ -9,7 +9,7 @@
 // imports those and never this, so a station's load order does not run
 // through the shop.
 
-import { P, SHELF_INK } from './config.js';
+import { P, SHELF_INK, GOAL_TITLE } from './config.js';
 import { S } from './state.js';
 import { maxed, rungOf, rungsOf } from './words.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
@@ -123,7 +123,7 @@ export const lodgers = board => UPGRADES.filter(u => u.board === board);
 // those are the one group that cannot be sold at the place they belong to --
 // the place is what they buy.
 export const SECTIONS = [
-  { title: 'saving your sqwife', goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
+  { title: GOAL_TITLE, goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
   { title: 'you', keys: ['carry', 'autotoss', 'toss', 'reach', 'auto', 'speed', 'pick'] },
   { title: 'lucky swings', keys: ['critchance', 'critmult'] },
   { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'carter', 'driver', 'liftload', 'liftpace', 'belt'] },

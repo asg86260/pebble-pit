@@ -17201,9 +17201,8 @@ Each is the first whose fact is not yet true; the line shows it until it is.
 | 5 | raise the arch | the arch stands |
 | 6 | raise the dome | the dome stands |
 | 7 | save the sqwife | `rescued` |
-| 8 | ask the wizards how to get down | after the snatch: the tower's board opened once |
-| 9 | buy the portal | `portalOpen` |
-| 10 | free your sqhusband from the serpent's belly | `serpentFreed` |
+| 8 | buy the portal | `portalOpen` |
+| 9 | free your sqhusband from the serpent's belly | `serpentFreed` |
 
 After the last, no line. With the second half switched off the list ends at 7.
 

@@ -93,6 +93,8 @@ export const SHIELD_CHEER_MS = 2500;   // and how long the crew cheer
 // shape: an impact, not an animation. Beside the shields because the dome is
 // what decides a rock does not do it -- something set down gently is placed
 // rather than dropped.
+// The ribbon on every goal card, wherever the board it hangs on.
+export const GOAL_TITLE = 'saving your sqwife';
 export const SQUASH_MS = 260;
 export const SQUASH_WIDE = 0.16; // how much wider it goes at the worst of it
 export const SQUASH_FLAT = 0.26; // and how much of its height it gives up

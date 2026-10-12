@@ -1813,6 +1813,9 @@ export const SCENES = {
                  window.__answered('props', 'net', 'arch'); window.__meteor();
                  const half = Object.fromEntries(DOME_BILL.filter(([m]) => m !== 'dust').map(([m, n], k) => [m + 's', k ? n / 2 : n]));
                  window.__grant(half); window.__fast(2); } },
+  domeboard: { about: 'the shields', say: "the tower's board with the dome on offer: its goal card first",
+    run: () => { cardYard(300000); window.__crew(2, 1, 0, 0, 0, 1);
+                 window.__answered('props', 'net', 'arch'); window.__meteor(); window.__board('tower'); } },
   // The star is left up so the shot proves the beams draw with one burning.
   'dome+': { about: 'the shields', say: 'the wizard called off the star, flat out for the dome',
     run: () => { domeCast(2.5); window.__look(st().shield.x - 1500); } },

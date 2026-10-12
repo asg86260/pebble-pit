@@ -123,6 +123,9 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The tower's door no longer says "wizards live here", and the story no longer says "ask the wizards how to get down".
+- The tower's row summons a wizard instead of training one.
+- The dome sits first on the tower's board as its goal card, and every goal card's ribbon reads "saving your sqwife" (src/selftest/boards.js, "the tower's dome").
 - The saves page draws the slot you are playing inverted, black with white text, in place of greyed out.
 - The index: every thing you have met, with a few words on each, on the held sheet's `index` page or the `i` key.
 - Shop items no longer show their build time; the coins are the whole price.
