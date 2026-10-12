@@ -193,21 +193,27 @@ export function seatsAt(p) {
   for (let i = 0; i < on - wearers - filled; i++) coming.push(thirds(walking[i] ?? 0));
   const wearing = hatBound.slice(0, wearers).map(thirds);
   const gone = leaving(p, on).slice(0, Math.max(0, seats - on));
-  return { seats, on, filled, coming, wearing, leaving: gone, brims: Math.min(brims, filled) };
+  const t = topOf(p), nested = Math.min(brims, filled);
+  return { seats, on, filled, coming, wearing, leaving: gone, brims: nested,
+           plain: filled - nested, regular: seats - t.worn - t.wearing - t.spare };
 }
 
-// The specialists stand in a row of their own above the regular seats: a pip
-// for each hatted body at work, and an outline for each hat owned and not
-// worn (`spareKit`), which is a place for a hat, not a seat. Nothing owned
-// means no top row. The outlines never outnumber the seats, so the strip is
-// as wide as its seats and no wider.
+// The seats split in two. The specialist slots are the station's hats, worn
+// or spare, capped at its seats: a pip for each hatted body at work and an
+// outline for each hat not yet worn (`spareKit`). The regular slots are the
+// seats left over, and are the only ones a plain body is ever drawn in. Nothing
+// owned means no top row. Together they never outnumber the seats, so the
+// strip is as wide as its seats and no wider.
 const topOf = p => {
   if (!p.kit || !seatsOf(p)) return { worn: 0, wearing: 0, spare: 0 };
   const worn = hatsAtWork(p);
   let wearing = 0, claimed = 0;
   for (const w of bodiesOf(p)) if (comingTo(w) && wearsOn(w, p)) { wearing++; if (w.wanting === p.job) claimed++; }
   wearing = Math.min(wearing, Math.max(0, count(p) - worn));
-  return { worn, wearing, spare: Math.max(0, Math.min(spareKit(p.job) - claimed, seatsOf(p) - worn - wearing)) };
+  // A hat seat a plain body already stands in is not shown: the seat is
+  // taken, and the regular row must hold every plain body at work.
+  const plain = Math.max(0, count(p) - worn - wearing);
+  return { worn, wearing, spare: Math.max(0, Math.min(spareKit(p.job) - claimed, seatsOf(p) - worn - wearing - plain)) };
 };
 
 // Each pip's square, in world units, in seat order: the hatted (top row),
@@ -216,7 +222,7 @@ const topOf = p => {
 // own size.
 function pipBoxes(p, left, y) {
   const n = seatsOf(p), t = topOf(p);
-  const nTop = t.worn + t.wearing + t.spare, nBot = n - t.worn - t.wearing;
+  const nTop = t.worn + t.wearing + t.spare, nBot = n - nTop;
   const rb = rowOf(nBot || 1), rt = rowOf(nTop || 1);
   const x0 = left + BTN + GAP, strip = rowOf(n).w;
   // A row shows only when it has something in it. Whatever shows is one block
@@ -241,8 +247,9 @@ function pipBoxes(p, left, y) {
   };
   const top = lay(rt, nTop, y0);
   const seated = t.worn + t.wearing;
-  top.forEach((q, i) => { q.spare = i >= seated; });
+  top.forEach((q, i) => { q.spare = i >= seated; q.kind = 'top'; });
   const bottom = lay(rb, nBot, y0 + hTop + sep);
+  bottom.forEach(q => { q.kind = 'reg'; });
   const boxes = [...top.slice(0, seated), ...bottom, ...top.slice(seated)];
   if (sep) {
     const w = Math.max(wide(rt, nTop), wide(rb, nBot));
@@ -257,13 +264,13 @@ function pipBoxes(p, left, y) {
 // rows are a gap apart and a taller target would take the other row's click.
 const pipHit = b => ({ x: b.x - b.gap / 2, y: b.y - b.gap / 2, w: b.w + b.gap, h: b.h + b.gap });
 
-// A click on a seat sets the count to that seat, through the same press the
-// buttons make, once a body, so every one of them still walks. The last
-// body's own pip takes that body off: the row reads as a run of switches, and
-// pressing the one at the end of the run turns it off.
+// A click on a regular seat sets the regular count to that seat, through the
+// same press the buttons make, once a body, so every one of them still walks.
+// The last plain body's own pip takes that body off: the row reads as a run of
+// switches, and pressing the one at the end of the run turns it off. With a
+// hat spare the engine sends an added body for the hat first, as for the +.
 function setTo(p, want) {
   const was = count(p);
-  if (want === was) want = was - 1;
   const d = Math.sign(want - was);
   for (let k = Math.abs(want - was); k > 0; k--) {
     const before = count(p);
@@ -375,12 +382,15 @@ export const overRoster = (x, y) => posts().some(p => {
   return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || pipAt(p, b, x, y) > 0;
 });
 
-// Which seat (counted from one) a point is over, or nought.
+// The pip a point is over: { kind, at } where `at` counts from one inside the
+// regular row, or null.
 function pipAt(p, b, x, y) {
-  if (!b.pips) return 0;
-  // An outline for a hat is not a seat; a click on it is nothing.
-  const i = b.pips.findIndex(q => !q.spare && inside(pipHit(q), x, y));
-  return i + 1;
+  if (!b.pips) return null;
+  const i = b.pips.findIndex(q => inside(pipHit(q), x, y));
+  if (i < 0) return null;
+  const q = b.pips[i];
+  return q.kind === 'reg' ? { kind: 'reg', at: b.pips.filter((r, j) => j <= i && r.kind === 'reg').length }
+                          : { kind: q.spare ? 'spare' : 'top' };
 }
 
 // A click on a roster, in world units: true if it was one, so the yard knows
@@ -394,8 +404,18 @@ export function rosterHit(x, y) {
     // something else entirely
     if (inside(hit(b.less), x, y)) { press(p, -1); S.shopStale = true; return true; }
     if (inside(hit(b.more), x, y)) { press(p, 1); S.shopStale = true; return true; }
-    const seat = pipAt(p, b, x, y);
-    if (seat) { setTo(p, seat); S.shopStale = true; return true; }
+    const pip = pipAt(p, b, x, y);
+    if (pip) {
+      // A regular pip sets the regular count: the hatted bodies stand outside
+      // it. A spare hat's outline is a worker sent for that hat, the same
+      // press as the +. A hatted body's pip is no switch; it is only not a swing.
+      if (pip.kind === 'reg') {
+        const t = topOf(p), held = t.worn + t.wearing, plain = count(p) - held;
+        setTo(p, held + (pip.at === plain ? pip.at - 1 : pip.at));
+      } else if (pip.kind === 'spare') press(p, 1);
+      S.shopStale = true;
+      return true;
+    }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
     // The machine's mark is not a button either (a machine is stopped by
     // taking its tender off, the `-` two rows up), but a click there is not a
@@ -507,7 +527,8 @@ function part(ctx, b, k, t) {
 }
 
 function drawPips(ctx, boxes, s) {
-  boxes.forEach((b, i) => {
+  let ti = 0, ri = 0;
+  boxes.forEach(b => {
     const small = b.w < SEAT_PIP, t = small ? THIN / 2 : THIN;
     // The hat, as a brim a hairline clear of the head and proud of it either
     // side, with a crown on it; at the small size there is room only for
@@ -520,16 +541,17 @@ function drawPips(ctx, boxes, s) {
       }
     };
     if (b.spare) { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, t); hat(); return; }
-    // The walkers bound for a hat sit in the top row just after the hatted at
-    // work; everyone else counts from there on as before.
-    const W = s.wearing.length;
-    if (i >= s.brims && i < s.brims + W) { part(ctx, b, s.wearing[i - s.brims], t); hat(); return; }
-    const m = i < s.brims ? i : i - W, on = s.on - W;
-    if (m < s.filled) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(b.x, b.y, b.w, b.h);
-      if (m < s.brims) hat();
-    } else if (m < on) part(ctx, b, s.coming[m - s.filled], t);
+    // The top row: the hatted at work, then the walkers bound for a hat.
+    if (b.kind === 'top') {
+      if (ti < s.brims) { ctx.fillStyle = '#000'; ctx.fillRect(b.x, b.y, b.w, b.h); hat(); }
+      else { part(ctx, b, s.wearing[ti - s.brims] ?? 0, t); hat(); }
+      ti++;
+      return;
+    }
+    // The bottom row: plain bodies at work, then walking over, then leaving.
+    const m = ri++, on = s.plain + s.coming.length;
+    if (m < s.plain) { ctx.fillStyle = '#000'; ctx.fillRect(b.x, b.y, b.w, b.h); }
+    else if (m < on) part(ctx, b, s.coming[m - s.plain], t);
     else if (m < on + s.leaving.length) part(ctx, b, s.leaving[m - on], t);
     else { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, t); }
   });

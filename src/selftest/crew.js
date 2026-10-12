@@ -398,7 +398,7 @@ export const TESTS = [
     const plusMid = () => { draw(); const [x, y] = q().more; return ink(x, y); };
     const at = q(), first = pip(0), third = pip(2), fifth = pip(4);
     const rows = [...new Set(at.pips.map(p => p[1]))];
-    const second = pip(1), regular = pip(2);
+    const second = pip(1), regular = pip(2), pip3 = pip(3);
 
     // The rule and the buttons, off the canvas: the rule is grey between the
     // two rows, and the + (its upright bar scanned for its extent) stands at
@@ -417,7 +417,7 @@ export const TESTS = [
       }
       const mid = (a + z) / 2 / S.dpr;
       const blockMid = onScreen(px, r.block.y + r.block.h / 2)[1] - sy0;
-      return { off: Math.abs(mid - blockMid), mid, blockMid, a, z, reach, dpr: S.dpr, sy0, rule: r.rule, block: r.block, rows: new Set(r.pips.map(p => p[1])).size };
+      return { off: Math.abs(mid - blockMid), mid, blockMid, a, z, reach, dpr: S.dpr, sy0, rule: r.rule, block: r.block, rows: new Set(r.pips.map(p => p[1])).size, n: r.pips.length };
     };
     const twoRow = centered();
     const ruleInk = twoRow.rule && [0, 1, -3, twoRow.rule.h + 3].map(d => ink(twoRow.rule.x + twoRow.rule.w / 2, twoRow.rule.y + d));
@@ -490,7 +490,7 @@ export const TESTS = [
       ok(twoRow.rule && twoRow.off <= 1 && ruleInk[0] !== undefined && grey(ruleInk[0]) && grey(ruleInk[1]) && light(ruleInk[2]) && light(ruleInk[3])
          && twoRow.rule.y > Math.max(pipsY[0], pipsY[1]) && twoRow.rule.y < pipsY[2],
          'two rows have a grey rule between them and the + stands at the middle of the block', JSON.stringify([twoRow, ruleInk])),
-      ok(hatsOnly.rows === 1 && !hatsOnly.rule && hatsOnly.off <= 1, 'a station of only specialists is one row, no rule, centered on the buttons', JSON.stringify(hatsOnly)),
+      ok(hatsOnly.rows === 1 && hatsOnly.n === 5 && !hatsOnly.rule && hatsOnly.off <= 1, 'a station of five seats and five hats is the top row only, no rule, centered on the buttons', JSON.stringify(hatsOnly)),
       ok(plainOnly.rows === 1 && !plainOnly.rule && plainOnly.off <= 1, 'a station of only plain seats is one row, no rule, centered on the buttons', JSON.stringify(plainOnly)),
       ok(new Set(bare.map(p => p[1])).size === 1 && bare.length === 5, 'a station with no hats shows one row of seats', JSON.stringify(bare)),
       ok(at.seats && at.seats.seats === 5 && at.pips.length === 5, 'the cut with five benches shows five pips',
@@ -500,6 +500,8 @@ export const TESTS = [
       ok(light(fifth.mid) && !dark(fifth.low), 'an empty seat is hollow', `${fifth.mid} ${fifth.low}`),
       ok(at.seats && at.seats.brims === 2 && rows.length === 2 && at.pips[0][1] === at.pips[1][1] && at.pips[1][1] < at.pips[2][1] && at.pips[2][1] === at.pips[4][1],
          'the two lamped stand in a row above the three regular seats', JSON.stringify(at.pips)),
+      ok(at.seats && at.seats.plain === 1 && at.seats.regular === 3 && dark(regular.mid) && light(pip3.mid) && light(fifth.mid) && dark(first.mid) && dark(second.mid),
+         'two hatted and one plain: two specialist pips and three regular, one of them filled', JSON.stringify([at.seats, regular.mid, pip3.mid, fifth.mid]))  ,
       ok(dark(first.brim) && dark(second.brim) && !dark(regular.brim), 'a lamped body has a brim over its pip, a regular seat none',
          `${first.brim} ${second.brim} ${regular.brim}`),
       ok(sent, 'the plus under the cut sends one more'),

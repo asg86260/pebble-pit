@@ -45,6 +45,10 @@ export const STEPS = [
   { key: 'drown', say: 'drown the pit', when: serpentOn, done: () => (!!S.drowned && !!S.rescued) || !!S.snatched },
   { key: 'snatch', say: '', when: serpentOn, done: () => !!S.snatched },
   { key: 'tower', say: 'build the wizards\' tower', when: serpentOn, done: () => !!S.snatched && (!!S.towerOpen || !!S.portalOpen) },
+  // Opening the wizards' board after the snatch is the talking (board.js sets
+  // askedWizards); a save already at the portal is past it.
+  { key: 'talk', say: 'talk to the wizards about what just happened', when: serpentOn,
+    done: () => !!S.snatched && (!!S.askedWizards || S.portalPour > 0 || !!S.portalOpen) },
   { key: 'portal', say: "conjure a portal to the abyss, what's down there?", when: serpentOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
   { key: 'free', say: 'free your sqhusband from the serpent\'s belly', when: serpentOn, done: () => !!S.serpentFreed },
 ];

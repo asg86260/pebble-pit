@@ -1988,6 +1988,31 @@ export const TESTS = [
     ];
   }],
 
+  // After the snatch the story's line sends the player to the wizards, and
+  // opening their board is the talking.
+  ['the story\'s card after the snatch says to talk to the wizards, and opening their board moves it on', async () => {
+    newRun();
+    await settle();
+    window.__serpentOn(true);
+    try {
+      window.__fullSites();
+      window.__crew(0, 4);
+      window.__snatch({ played: true, portal: false });
+      window.__answered('props', 'net', 'arch'); window.__meteor();
+      await settle(0.6); await sleep(1500);
+      const card = document.getElementById('objective');
+      const said = card.querySelector('.say')?.textContent || '';
+      window.__board('tower');
+      await settle(0.6); await sleep(1500);
+      const after = card.querySelector('.say')?.textContent || '';
+      window.__board(null);
+      return [
+        ok(said === 'talk to the wizards about what just happened', 'the line after the snatch', said),
+        ok(after !== said, 'opening the tower board moves it on', after),
+      ];
+    } finally { window.__serpentOn(null); }
+  }],
+
   // The owner's layout B (2026-10-10): the card as wide as its words up to
   // one cap in characters, the glyph in a column of its own, the bill's
   // numbers beside their coins and the buy only as wide as its price.
