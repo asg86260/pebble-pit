@@ -29,7 +29,7 @@ import { demoOn } from './demo.js';
 import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_LOOK_MS, SNATCH_TAKE_MS, SNATCH_CLOSE_MS,
          SNATCH_HURRY, SNATCH_PORTAL_MS, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
-         DEEP_SURFACE, SERPENT_ON } from './config.js';
+         DEEP_SURFACE, SERPENT_ON, STAGE_WAIT_S } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
 import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine } from './deep/place.js';
@@ -44,6 +44,7 @@ import { belowYard } from './route.js';
 import { onYard } from './crew/body.js';
 import { TYPE, JOB_OF } from './jobs.js';
 import { beatDone, beatRunning } from './beats.js';
+import { stageClear } from './stage.js';
 
 // --- whether ---------------------------------------------------------------------
 // The half is played by a dev build and the node yard (which has no
@@ -158,7 +159,11 @@ export function stepSnatch(t) {
       S.introSaid = t + INTRO_BEAT * 1.4;
       S.pair[0].say = { mark: 'dots', n: 3, until: t + INTRO_BEAT };
     }
-    if (t - s.stood >= SNATCH_LOOK_MS / s.hurry) next('open');
+    // And nobody else in the picture before anything comes up (stage.js):
+    // the rest of the crew are walking out of the frame while the pair walk
+    // in, and a slow one holds the look a beat, never past STAGE_WAIT_S.
+    const clear = S.introCut || stageClear() || t - s.stood >= STAGE_WAIT_S * 1000;
+    if (t - s.stood >= SNATCH_LOOK_MS / s.hurry && clear) next('open');
     return true;
   }
   if (s.phase === 'open') {
