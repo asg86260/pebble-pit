@@ -39,7 +39,14 @@ group('a save that finished the first half opens on the way down, or on nothing 
     load();
     const waiting = line();
     S.snatched = true;
+    S.towerOpen = true;
     const after = line();
+    S.askedWizards = true; // board.js sets it on opening the tower's board (src/selftest/boards.js)
+    const talked = line();
+    S.askedWizards = false;
+    S.portalPour = 1;
+    const pastIt = line();
+    S.portalPour = 0;
     S.askedWizards = true;
     const portal = line();
     S.portalOpen = true;
@@ -49,7 +56,9 @@ group('a save that finished the first half opens on the way down, or on nothing 
     return [
       ok(off === null, 'with the half off, the story is told', off),
       ok(waiting === null, 'with it on, nothing while the snatch is due', waiting),
-      ok(after === 'tower' || after === 'portal', 'after the snatch, the tower or the portal', after),
+      ok(after === 'talk', 'after the snatch, tower up: talk to the wizards', after),
+      ok(talked === 'portal' && S.askedWizards, "opening the wizards' board is the talking", talked),
+      ok(pastIt === 'free', 'a save already past the portal is past the talk', pastIt),
       ok(portal === 'portal', 'tower up, buy the portal', portal),
       ok(deep === 'free', 'through the portal, free him', deep),
       ok(told === null, 'freed, no line', told)

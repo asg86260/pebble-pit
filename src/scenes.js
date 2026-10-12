@@ -434,6 +434,10 @@ const deepScenes = {
       S.snatch.hurry = 1;
       S.snatch.at = now() - (SNATCH_CLOSE_MS * 0.45 - 1000);
     } },
+  // The snatch behind it, the story's line sending the player to the wizards.
+  aftersnatch: { about: 'the deep', say: 'the story\'s line after the snatch: talk to the wizards',
+    run: () => { rich(); window.__fullSites(); window.__crew(0, 4); window.__snatch({ played: true, portal: false });
+                 window.__answered('props', 'net', 'arch'); window.__meteor(); window.__view('yard'); window.__fast(2); } },
   // A wizard out over the middle of the pit, pouring the portal.
   'portal-pour': { about: 'the deep', say: 'a wizard over the pit, pouring the portal',
     run: () => { rich(); window.__fullSites(); window.__crew(0, 4); window.__snatch({ played: true, portal: false });
