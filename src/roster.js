@@ -344,11 +344,20 @@ function crowdOf(p) {
 
 const rowWide = k => Math.max(1, k) * (SEAT_PIP + SEAT_GAP) - SEAT_GAP;
 const shownOf = list => Math.min(list.length, SEAT_CROWD_ROW);
+// A counter is as wide as its pips, so a press that changes the row would
+// slide the button under the pointer. While the pointer is over a counter, the
+// button last pressed is held where it is and the row grows or shrinks away
+// from it; the counter centers again when the pointer leaves. `box` is the
+// counter as last drawn, `anchor` the pressed button's side and edge.
+const held = new Map();
+const NEAR = P * 2;
+const pointerOn = f => !!f.box && !!S.mouse && S.mouse.x >= f.box.l - NEAR && S.mouse.x <= f.box.r + NEAR
+  && S.mouse.y >= f.box.t - NEAR && S.mouse.y <= f.box.b + NEAR;
 // The strip, and whether "+N" needs room after it.
 function crowdStrip(p, c = crowdOf(p)) {
-  if (!p.lifts) return { strip: rowWide(SEAT_CROWD_ROW), plus: true };
   const over = c.top.length > SEAT_CROWD_ROW || c.bottom.length > SEAT_CROWD_ROW;
-  return { strip: rowWide(Math.max(shownOf(c.top), shownOf(c.bottom))), plus: over };
+  const now = { strip: rowWide(Math.max(shownOf(c.top), shownOf(c.bottom))), plus: over };
+  return now;
 }
 // Buttons either side where the post has them, and the "+N" room before the +.
 const crowdSide = p => (p.fixed ? 0 : BTN + GAP);
@@ -439,12 +448,19 @@ function boxes(p) {
   const { x, y } = postAt(p);
   const wide = widthOf(p);
   // Back on the grid: an even number of seats is half a cell off center.
-  const left = Math.round((x - wide / 2) / P) * P;
+  let left = Math.round((x - wide / 2) / P) * P;
+  const f = held.get(p.key);
+  if (f && f.anchor && pointerOn(f)) left = f.anchor.side === 'l' ? f.anchor.x : f.anchor.x - wide;
+  else if (f) f.anchor = null;
   // Two cells of air more than the gap elsewhere: the hat stands a cell proud
   // of its square, and past that a full clear cell keeps the two groups
   // reading as two lines rather than one smudged column.
   const under = y + WORKER + P * 3;
   const crowd = crowded(p) ? crowdBoxes(p, left, y) : null;
+  if (crowd) {
+    const g = f || (held.set(p.key, { box: null, anchor: null }), held.get(p.key));
+    g.box = { l: left, r: left + wide, t: y - BTN, b: y + BTN * 2 };
+  }
   return {
     less: { x: left, y: y - BTN / 2, w: BTN, h: BTN },
     badge: { x: left + BTN + GAP, y: y - WORKER / 2, w: WORKER, h: WORKER },
@@ -522,8 +538,9 @@ export function rosterHit(x, y) {
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
-    if (inside(hit(b.less), x, y)) { press(p, -1); S.shopStale = true; return true; }
-    if (inside(hit(b.more), x, y)) { press(p, 1); S.shopStale = true; return true; }
+    const hold = (side, edge) => { const f = held.get(p.key); if (f) f.anchor = { side, x: edge }; };
+    if (inside(hit(b.less), x, y)) { hold('l', b.less.x); press(p, -1); S.shopStale = true; return true; }
+    if (inside(hit(b.more), x, y)) { hold('r', b.more.x + b.more.w); press(p, 1); S.shopStale = true; return true; }
     const pip = pipAt(p, b, x, y);
     if (pip) {
       // A regular pip sets the regular count: the hatted bodies stand outside
@@ -737,7 +754,9 @@ export function rosterReport() {
   return posts().map(p => {
     const b = boxes(p);
     const H = hit(b.less);
-    return { key: p.key, job: p.job, station: p.station || null, n: count(p), hats: hats(p.job), worn: worn(p.job),
+    return { key: p.key, job: p.job, station: p.station || null, n: count(p),
+             // The counter's ground, left and right, for the checks that keep two apart.
+             span: [b.less.x, b.more.x + b.more.w], hats: hats(p.job), worn: worn(p.job),
              spareKit: spareKit(p.job), fixed: !!p.fixed, hitW: H.w, hitH: H.h,
              room: p.station ? 1 - count(p) : p.lifts ? null : Math.min(99, roomAt(p.job)),
              // What the station holds now (1 while a machine runs) and what it

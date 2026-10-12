@@ -8,7 +8,7 @@
 // nothing else; and it is never crew.
 
 import { group, ok, state, run, runUntil, openSites, buyNow, climb, yard } from './helpers.mjs';
-import { LADDER, LADDERS } from '../src/config.js';
+import { LADDER, LADDERS, GARAGE_W, GARAGE_CLEAR, P } from '../src/config.js';
 import { S } from '../src/state.js';
 import { load } from '../src/crew/hole.js';
 import { drive } from '../src/crew/hauler.js';
@@ -70,7 +70,7 @@ group('a forklift is bought off the bench and drives out of its garage by itself
     ok(s0.carters === 3, 'the carts are still the carts', `${s0.carters}`),
     ok(s0.roster.find(p => p.key === 'garage')?.lifts === 1 && carry(s0)?.lifts === null,
        'the garage counts it, not the carriers', `${s0.roster.find(p => p.key === 'garage')?.lifts} at the garage`),
-    ok(s0.garage && Math.abs(s0.garage - s0.houses.plotLeft) < 120 && s0.garage < s0.houses.plotLeft,
+    ok(s0.garage && s0.houses.plotLeft - s0.garage <= GARAGE_W + GARAGE_CLEAR + P && s0.garage < s0.houses.plotLeft,
        'and the garage stands on the far side of the house from the rock', `${s0.garage} against the plot at ${s0.houses.plotLeft}`)
   ];
 });

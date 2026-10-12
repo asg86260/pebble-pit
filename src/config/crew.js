@@ -208,3 +208,9 @@ export const SEAT_LEAVE_MS = 600;
 // this many; the rest are written after the row as "+N", in room this wide.
 export const SEAT_CROWD_ROW = 12;
 export const SEAT_PLUS_W = P * 6;
+// The widest a crowd strip ever gets (a full row and its "+N", no buttons),
+// and the bare ground two neighboring counters keep between them at that
+// widest. Layout reserves ground for the widest case, so a counter growing
+// never reaches its neighbor.
+export const CROWD_MAX_W = SEAT_CROWD_ROW * (SEAT_PIP + SEAT_GAP) - SEAT_GAP + P + SEAT_PLUS_W;
+export const COUNTER_GAP = P * 4;

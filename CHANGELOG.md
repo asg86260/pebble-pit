@@ -197,6 +197,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The ram's strike rungs queue over the shack, not over the boulder (test/shack.test.mjs).
 - The sqwife is always drawn behind the rock, showing wherever its cells are mined away, instead of popping in once the rock is gone (test/lodged.test.mjs).
 
+- The garage and the house stand far enough apart that their counters never touch, and a counter hugs its pips with the + staying under the pointer while you press it (test/counter-gap.test.mjs).
 ## v0.5.2 — 2026-09-28
 
 - On the landing page, cloud saves are on the saves page with your slots, as they are in the game, instead of under settings (src/selftest/cloud.js).
