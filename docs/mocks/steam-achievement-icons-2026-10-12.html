@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steam Achievement Icons</title>
+<style>
+:root {
+  --paper: #f7f7f5; --card: #ffffff; --ink: #141414; --ink-2: #5c5c5c; --rule: #d4d4d0;
+  --note-bg: #efefea; --warn: #8a5a00; --warn-bg: #fff4dc; --flag: #a33a1c; --steam: #1b2838;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #161616; --card: #202020; --ink: #ececec; --ink-2: #a3a3a3; --rule: #3a3a3a;
+    --note-bg: #262626; --warn: #f0c060; --warn-bg: #2c2618; --flag: #f08a6a; --steam: #0e141b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #161616; --card: #202020; --ink: #ececec; --ink-2: #a3a3a3; --rule: #3a3a3a;
+  --note-bg: #262626; --warn: #f0c060; --warn-bg: #2c2618; --flag: #f08a6a; --steam: #0e141b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 14px/1.55 ui-monospace, "Courier New", monospace; padding: 24px 16px 64px; }
+main { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: 22px; letter-spacing: .3em; text-transform: uppercase; margin: 0 0 6px; }
+h2 { font-size: 17px; letter-spacing: .2em; text-transform: uppercase; margin: 44px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+p, li { max-width: 80ch; }
+.lede { color: var(--ink-2); }
+.mock { background: var(--warn-bg); color: var(--warn); border: 1px solid currentColor; padding: 10px 12px; margin: 16px 0; }
+.note { background: var(--note-bg); padding: 10px 12px; margin: 10px 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 12px 0; }
+.list { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); }
+.ach { background: var(--card); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; align-content: start; }
+.ach .icons { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; }
+.ach .icons .big { display: flex; gap: 6px; }
+.ach canvas { display: block; image-rendering: pixelated; }
+.ach canvas.x2 { width: 128px; height: 128px; }
+.ach .name { font-weight: bold; }
+.ach .noteline { color: var(--ink-2); font-size: 12px; }
+.ach .meta { font-size: 11px; color: var(--ink-2); margin-top: 4px; }
+.flag { color: var(--flag); }
+.steamrow { background: var(--steam); padding: 12px; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+.steamrow canvas { width: 64px; height: 64px; image-rendering: pixelated; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--rule); }
+th { letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+.tablewrap { overflow-x: auto; }
+code { font: inherit; background: var(--note-bg); padding: 0 4px; }
+label { cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+<h1>Steam Achievement Icons</h1>
+<p class="lede">Every achievement in <code>src/catalog.js</code>, all 49, drawn as Steam's 64×64 icon in three styles, each unlocked and locked, at 1× and 2×. Names and notes are the catalog's, as given.</p>
+<div class="mock"><b>This is a mock.</b> The icons are drawn on this page from the game's own glyph maps (<code>GLYPHS</code> and <code>BADGES</code>, copied from <code>src/glyphs.js</code>), with the shelf's conventions imitated: a one-pixel stroke in the coin's color, the unbuilt "ghost" outline for a thing not yet had. It cannot show Steam's own treatment (the rounded corners and the darkening it applies in some clients), how the icons look in the overlay pop-up, or new drawings for the achievements that have no glyph: those wear the closest existing glyph and are flagged.</div>
+
+<div class="controls">
+  <span>Style:</span>
+  <label><input type="radio" name="style" value="glyph" checked> 1. the glyph</label>
+  <label><input type="radio" name="style" value="badge"> 2. framed badge</label>
+  <label><input type="radio" name="style" value="line"> 3. on the line</label>
+</div>
+
+<div class="note" id="styleNote"></div>
+
+<h2>Side by side, on Steam's dark</h2>
+<p class="lede">The first twelve achievements in all three styles, unlocked then locked, on the dark blue Steam lists them on.</p>
+<div id="compare"></div>
+
+<h2>Every achievement</h2>
+<p class="lede">Each card: the icon unlocked and locked at 64×64, then both at 2×. The glyph used is named; a flag marks a borrowed drawing or a name worth hiding.</p>
+<div class="list" id="list"></div>
+
+<h2>No fitting glyph</h2>
+<p>These borrow the closest drawing on the shelf. Each needs a drawing of its own in the glyph editor (<code>glyphs.html</code>) before the icons are final.</p>
+<div class="tablewrap"><table id="missing"><thead><tr><th>key</th><th>name</th><th>borrowed</th><th>what it wants</th></tr></thead><tbody></tbody></table></div>
+
+<h2>To decide</h2>
+<ul>
+  <li><b>Hidden achievements.</b> Steam shows every name and description on the store page unless an achievement is marked hidden. These give the surface away: <span id="spoilers"></span>. Suggest hidden; the owner's call.</li>
+  <li><b>Locked style.</b> Steam needs a separate locked image. Drawn here the game's way (a thing not yet built is its outline in ghost grey); the alternative is the unlocked icon desaturated and dimmed, which Steam users expect but which reads as a grey smudge at 64 px.</li>
+  <li><b>Coin color.</b> The stroke round the glyph takes the coin the achievement is about (blue ore, green crops, red sparks), as on the shelf. Or all black.</li>
+  <li><b>Tiers.</b> The ladders (10/25/50/100 rocks, the pebble and crew counts, ore) are told apart by pips in styles 2 and 3, and only by the glyph's badge in style 1. Is a pip row enough, or does each tier want its own drawing?</li>
+  <li><b>New drawings.</b> The table above lists what has no glyph; the drawing is the owner's (or a glyph-editor session).</li>
+  <li>No new words are needed: Steam takes the catalog's name and note as the achievement's title and description.</li>
+</ul>
+</main>
+
+<script>
+// ---- copied from src/glyphs.js (2026-10-12): the drawings and the badges
+const GLYPHS = {
+  sack:     ['########', '#......#', '#..##..#', '########', '#..##..#', '#......#', '#......#', '########'],
+  planks:   ['........', '........', '###..###', '#..##..#', '#......#', '#......#', '#......#', '#......#'],
+  lever:    ['........', '..###...', '.#...#.#', '#......#', '#....###', '#.......', '.#...#..', '..###...'],
+  swing:    ['...##...', '##..##..', '.##..##.', '..##..##', '..##..##', '.##..##.', '##..##..', '...##...'],
+  pickhead: ['........', '..###...', '.#####..', '#..#..#.', '...#....', '...#....', '...#....', '...#....'],
+  spark:    ['........', '.#...##.', '..#..##.', '...#....', '....#...', '.##..#..', '.##...#.', '........'],
+  cracked:  ['##....##', '###..###', '.######.', '..####..', '..####..', '.######.', '###..###', '##....##'],
+  boot:     ['........', '........', '........', '........', '.####...', '..##....', '..####..', '..####..'],
+  cart:     ['........', '........', '........', '########', '#......#', '#......#', '########', '...##...'],
+  lift:     ['........', '........', '.....#..', '.###.#..', '######..', '#....#..', '######..', '.#.#.###'],
+  die:      ['...#####', '...#...#', '...#.#.#', '#####..#', '#...####', '#.#.#...', '#...#...', '#####...'],
+  hut:      ['########', '.##..##.', '.#....#.', '.######.', '.######.', '.#....#.', '.#....#.', '.#....#.'],
+  bucket:   ['........', '........', '..#.....', '..#.....', '..#.....', '..#.....', '.###....', '.###....'],
+  door:     ['........', '........', '.######.', '.#....#.', '.#....#.', '.#....#.', '.#....#.', '.######.'],
+  house:    ['........', '........', '........', '.#######', '..#####.', '..#...#.', '..#...#.', '..#...#.'],
+  cap:      ['........', '........', '...#....', '...#....', '...#....', '...#....', '..###...', '..###...'],
+  helmet:   ['.#####..', '#######.', '#.....#.', '..###...', '.#####..', '#..#..#.', '...#....', '...#....'],
+  shovel:   ['..###...', '...#....', '...#....', '...#....', '...#....', '..###...', '..###...', '...#....'],
+  ore:      ['........', '........', '........', '........', '...##...', '..####..', '.######.', '########'],
+  ear:      ['........', '..#.....', '..##....', '..#.....', '.##.....', '..#.....', '..##....', '..#.....'],
+  pot:      ['########', '.######.', '########', '########', '########', '########', '.######.', '..#..#..'],
+  vial:     ['........', '........', '........', '........', '.##.....', '####....', '####....', '####....'],
+  star:     ['...#....', '...#....', '..###...', '..###...', '.#####..', '.#####..', '.#####..', '..###...'],
+  bolt:     ['....####', '...#####', '...#..##', '..##..##', '.#.####.', '#.#.#...', '.#.#....', '#.#.....'],
+  portal:   ['........', '........', '..####..', '.#....#.', '#..##..#', '.#....#.', '..####..', '........'],
+  chip:     ['........', '...##...', '..#..#..', '.#.##.#.', '.#.##.#.', '..#..#..', '...##...', '........'],
+  balloon:  ['...##...', '..#..#..', '.#....#.', '.#....#.', '.#....#.', '..#..#..', '...##...', '...##...'],
+  brim:     ['........', '........', '........', '........', '..###...', '#######.', '........', '........'],
+  crate:    ['...##...', '..####..', '.######.', '########', '#......#', '#.#..#.#', '#......#', '########'],
+  hat:      ['........', '...##...', '..####..', '.######.', '########', '........', '........', '........'],
+};
+const BADGES = {
+  up:    ['..#..', '.#.#.', '.....', '..#..', '.#.#.'],
+  plus:  ['.....', '..#..', '.###.', '..#..', '.....'],
+  star:  ['..#..', '.#.#.', '.....', '..#..', '.#.#.'],
+  dust:  ['..###', '..###', '..###', '.....', '.....'],
+  crop:  ['..#..', '.###.', '#####', '.###.', '..#..'],
+  ore:   ['.....', '.....', '..#..', '.###.', '#####'],
+  spark: ['..#..', '..#..', '#####', '..#..', '..#..'],
+};
+const INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', ghost: '#8c8c8c' };
+
+// ---- the catalog, as src/catalog.js expands it (names and notes verbatim)
+const SAY = ['10', '25', '50', '100'], PEBBLE_SAY = ['10k', '100k', '1m', '10m', '100m'], CREW_SAY = ['5', '10', '25', '50'];
+const CATALOG = [
+  { key: 'firstgrain', name: "makin' money", note: 'throw a pebble into the pit' },
+  { key: 'firstrock', name: 'better keep digging', note: 'clear the first rock' },
+  { key: 'gotout', name: 'you saved your sqwife', note: 'no more rocks, you did it.' },
+  { key: 'firsthire', name: "you've constructed additional pylons", note: 'build another house' },
+  { key: 'firstshard', name: 'the first ore', note: 'bring ore up out of the quarry' },
+  { key: 'firstspore', name: 'cultivation', note: 'grow your first crop' },
+  { key: 'firstspark', name: 'magic in the air', note: 'earn your first spark' },
+  { key: 'holefull', name: 'the pit is full', note: 'fill the pit to the brim' },
+  { key: 'rifttorn', name: 'the rift torn, storage is solved', note: 'fill the pit causing an inter-dimensional rift' },
+  { key: 'drowned', name: 'the rift has gotten bigger', note: 'a whole ocean of inter-dimensional storage.' },
+  { key: 'star', name: 'conjure a star', note: 'call a star down from the tower' },
+  { key: 'firsthat', name: "you're a wizard squarey", note: 'finish a wizard hat at the tower' },
+  { key: 'firstbrew', name: 'hello, potion seller', note: 'brew a batch at the apothecary' },
+  { key: 'firsttrade', name: 'first hat', note: 'buy a station its first hat' },
+  { key: 'alltrades', name: 'educating the masses', note: 'stock every station with its hat' },
+  { key: 'allbuilt', name: 'building complete', note: 'you built everything' },
+  ...SAY.map((s, i) => ({ key: 'rock' + i, name: `${s} rocks`, note: `clear ${s} boulders` + (i === SAY.length - 1 ? ", that's a lot of rocks" : ''), tier: [i + 1, SAY.length] })),
+  ...PEBBLE_SAY.map((s, i) => ({ key: 'pebble' + i, name: `${s} pebbles`, note: `bank ${s} pebbles`, tier: [i + 1, PEBBLE_SAY.length] })),
+  ...CREW_SAY.map((s, i) => ({ key: 'crew' + i, name: `${s} squares`, note: `hire a crew of ${s}`, tier: [i + 1, CREW_SAY.length] })),
+  ...[0, 1].map(i => ({ key: 'ore' + i, name: i === 0 ? '1k ore out of the cut' : '10k ore', note: `dig ${i === 0 ? '1k' : '10k'} ore out of the quarry`, tier: [i + 1, 2] })),
+  { key: 'rift1e6', name: '1m through the rift', note: 'send 1m pebbles through the rift' },
+  { key: 'brew100', name: '100 batches', note: 'brew 100 batches' },
+  { key: 'lived1h', name: 'an hour on one clock', note: 'keep one body on the payroll for an hour' },
+  { key: 'nobodyhired', name: 'nobody hired', note: 'clear a whole boulder with nobody on the payroll' },
+  { key: 'ownhand', name: 'your own hand alone', note: 'clear a boulder without a single worker touching it' },
+  { key: 'nevertouched', name: 'never touched it', note: 'clear a boulder without swinging at it once yourself' },
+  { key: 'underminute', name: 'a rock off in under a minute', note: 'clear a boulder in under a minute' },
+  { key: 'everyjob', name: 'every job staffed at once', note: 'put at least one body on every job at once' },
+  { key: 'tablebeaten', name: "we're so back", note: 'come out 50k up on a single hand at the casino' },
+  { key: 'tableruin', name: 'time to get a loan', note: 'come out 50k down on a single hand at the casino' },
+  { key: 'bird', name: 'get off my land', note: 'startle a bird' },
+  { key: 'wholelot', name: 'not one of you', note: 'startle every bird in one lot' },
+  { key: 'catchall', name: 'juggler', note: 'throw a full hand of dust, at its biggest, and catch every grain' },
+  { key: 'lifted', name: 'come here you', note: 'pick a worker up' },
+  { key: 'shookload', name: 'turn out your pockets', note: 'shake a full load out of a worker' },
+  { key: 'hatoff', name: 'hats off', note: 'shake the hat off a worker' },
+  { key: 'dizzy', name: 'shaken baby syndrome', note: 'shake a worker dizzy' },
+  { key: 'muckrain', name: 'it never rains but it pours', note: 'stand through a muck rain' }
+];
+
+// Which drawing each achievement wears: [glyph, badge, coin, borrowed-because]
+const PICK = {
+  firstgrain: ['sack', 'dust'], firstrock: ['pickhead'], gotout: ['door', null, null, 'nothing for her or for getting out; the door stands in'],
+  firsthire: ['house', 'plus'], firstshard: ['ore', null, 'shard'], firstspore: ['ear', null, 'spore'], firstspark: ['spark', null, 'spark'],
+  holefull: ['bucket', null, null, 'no drawing of the pit itself; the toss bucket stands in'],
+  rifttorn: ['portal'], drowned: ['portal', 'plus'], star: ['star', null, 'spark'], firsthat: ['hat', 'star'],
+  firstbrew: ['pot'], firsttrade: ['helmet'], alltrades: ['helmet', 'up'], allbuilt: ['hut', 'star'],
+  rock: ['cracked'], pebble: ['sack', 'dust'], crew: ['door', 'plus'], ore: ['ore', 'up', 'shard'],
+  rift1e6: ['portal', 'dust'], brew100: ['vial', 'up'],
+  lived1h: ['boot', null, null, 'no clock or hourglass; the boot stands in'],
+  nobodyhired: ['pickhead', null, null, 'no drawing of an empty payroll; the pick stands in'],
+  ownhand: ['swing'], nevertouched: ['lever'],
+  underminute: ['bolt', null, null, 'no clock; the bolt stands in for speed'],
+  everyjob: ['crate', 'plus', null, 'no drawing of a full roster; the crate stands in'],
+  tablebeaten: ['chip', 'up'], tableruin: ['die'],
+  bird: ['crate', null, null, 'no bird on the shelf (the yard draws birds as a three-cell chevron)'],
+  wholelot: ['crate', 'plus', null, 'no bird on the shelf'],
+  catchall: ['swing', 'star'],
+  lifted: ['lift', null, null, 'no hand; the lift (a forklift) stands in, and reads wrong'],
+  shookload: ['sack'], hatoff: ['brim'],
+  dizzy: ['spark', null, null, 'no dizzy mark; the spark stands in, and reads as the red coin'],
+  muckrain: ['balloon', null, null, 'no cloud or rain on the shelf; the balloon stands in']
+};
+const SPOIL = ['gotout', 'rifttorn', 'drowned', 'rift1e6', 'star', 'firsthat'];
+const pickOf = a => PICK[a.key] || PICK[a.key.replace(/\d+$/, '')];
+
+// ---- drawing
+// The glyph into a 1-bit mask at `cell` pixels a cell, with its badge cut in
+// top-right on a finer grid, as drawGlyph does it.
+function mask(rows, badge, cell, W, ox, oy) {
+  const m = new Uint8Array(W * W), H = W;
+  rows.forEach((r, y) => [...r].forEach((ch, x) => {
+    if (ch !== '#') return;
+    for (let j = 0; j < cell; j++) for (let i = 0; i < cell; i++) m[(oy + y * cell + j) * W + ox + x * cell + i] = 1;
+  }));
+  if (badge) {
+    const b = BADGES[badge], bc = Math.max(1, Math.round(cell * .6)), bx = ox + 8 * cell - 5 * bc, by = oy;
+    const mk = new Uint8Array(W * H);
+    b.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') for (let j = 0; j < bc; j++) for (let i = 0; i < bc; i++) mk[(by + y * bc + j) * W + bx + x * bc + i] = 1; }));
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (mk[y * W + x]) { m[y * W + x] = 2; continue; }
+      let near = false;
+      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H && mk[ny * W + nx]) { near = true; break; } }
+      if (near && m[y * W + x] === 1) m[y * W + x] = 0;
+    }
+  }
+  return m;
+}
+const solid = v => v > 0;
+// The left edge that centers a drawing's ink (not its box) on x, as the shelf does.
+function inkLeft(rows, cell, x) {
+  let lo = 8, hi = 0;
+  rows.forEach(r => [...r].forEach((c, i) => { if (c === '#') { lo = Math.min(lo, i); hi = Math.max(hi, i + 1); } }));
+  return Math.round(x - (lo + hi) / 2 * cell);
+}
+function outside(m, W) {
+  const out = new Uint8Array(W * W), q = [0]; out[0] = 1;
+  while (q.length) { const k = q.pop(), x = k % W, y = (k - x) / W;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= W) continue; const n = ny * W + nx; if (out[n] || solid(m[n])) continue; out[n] = 1; q.push(n); } }
+  return out;
+}
+function paintMask(g, m, W, ink, stroke, locked) {
+  const out = outside(m, W);
+  for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
+    const k = y * W + x;
+    if (locked) {
+      // a thing not had: its own one-pixel edge in ghost grey, nothing inside
+      if (solid(m[k]) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => !solid(m[(y + dy) * W + x + dx]))) { g.fillStyle = INK.ghost; g.fillRect(x, y, 1, 1); }
+      continue;
+    }
+    if (solid(m[k])) { g.fillStyle = m[k] === 2 && stroke ? stroke : ink; g.fillRect(x, y, 1, 1); continue; }
+    if (stroke && out[k]) {
+      let near = false;
+      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) { const n = (y + dy) * W + x + dx; if (n >= 0 && n < W * W && solid(m[n])) { near = true; break; } }
+      if (near) { g.fillStyle = stroke; g.fillRect(x, y, 1, 1); }
+    }
+  }
+}
+const pips = (g, n, of, y, on, off, W = 64) => {
+  const s = 4, gap = 3, w = of * s + (of - 1) * gap, x0 = Math.round((W - w) / 2);
+  for (let i = 0; i < of; i++) { g.fillStyle = i < n ? on : off; g.fillRect(x0 + i * (s + gap), y, s, s); }
+};
+
+// Style 1: the glyph, on white, at six pixels a cell, with the coin's stroke.
+function styleGlyph(g, a, locked) {
+  const [gl, bd, coin] = pickOf(a), W = 64;
+  g.fillStyle = locked ? '#ededeb' : '#ffffff'; g.fillRect(0, 0, W, W);
+  const m = mask(GLYPHS[gl], bd, 6, W, Math.min(16, Math.max(2, inkLeft(GLYPHS[gl], 6, 32))), 8);
+  paintMask(g, m, W, '#141414', coin ? INK[coin] : null, locked);
+}
+// Style 2: a framed badge: a two-pixel frame with notched corners, the glyph
+// at four pixels a cell, a pip row for a ladder.
+function styleBadge(g, a, locked) {
+  const [gl, bd, coin] = pickOf(a), W = 64;
+  const frame = locked ? INK.ghost : '#141414';
+  g.fillStyle = locked ? '#e4e4e1' : '#f6f6f4'; g.fillRect(0, 0, W, W);
+  g.fillStyle = frame;
+  g.fillRect(4, 2, W - 8, 2); g.fillRect(4, W - 4, W - 8, 2); g.fillRect(2, 4, 2, W - 8); g.fillRect(W - 4, 4, 2, W - 8);
+  g.fillRect(6, 6, W - 12, 1); g.fillRect(6, W - 7, W - 12, 1); g.fillRect(6, 6, 1, W - 12); g.fillRect(W - 7, 6, 1, W - 12);
+  if (locked) for (let y = 8; y < W - 8; y++) for (let x = 8; x < W - 8; x++) if ((x + y) % 6 === 0) { g.fillStyle = '#d2d2cf'; g.fillRect(x, y, 1, 1); }
+  const m = mask(GLYPHS[gl], bd, 4, W, Math.min(24, Math.max(10, inkLeft(GLYPHS[gl], 4, 32))), a.tier ? 12 : 16);
+  paintMask(g, m, W, '#141414', coin ? INK[coin] : null, locked);
+  if (a.tier) pips(g, a.tier[0], a.tier[1], 49, locked ? INK.ghost : '#141414', locked ? '#d2d2cf' : '#bdbdbd');
+}
+// Style 3: on the line: the thing stands on a hairline of ground like a
+// building in the yard, a heap of dust beside it that grows with the tier;
+// locked, it is a ghost outline in a hazy yard.
+function styleLine(g, a, locked) {
+  const [gl, bd, coin] = pickOf(a), W = 64, gy = 46;
+  g.fillStyle = locked ? '#e9e9e6' : '#f6f6f4'; g.fillRect(0, 0, W, W);
+  // the ground below, hatched
+  for (let y = gy; y < W; y++) for (let x = 0; x < W; x++) { g.fillStyle = ((x + y) % 4 === 0) ? '#dcdcd8' : (locked ? '#e9e9e6' : '#efefec'); g.fillRect(x, y, 1, 1); }
+  // motes in the sky
+  for (let i = 0; i < 7; i++) { const x = (i * 23 + a.key.length * 7) % 60 + 2, y = (i * 17 + a.key.length * 3) % 30 + 3; g.fillStyle = '#c4c4c4'; g.fillRect(x, y, 1, 1); }
+  // the heap, by tier
+  const t = a.tier ? a.tier[0] / a.tier[1] : .35, hh = Math.round(3 + t * 9), half = Math.round(4 + t * 8);
+  for (let x = -half; x <= half; x++) { const h = Math.round(hh * (1 - Math.abs(x) / half)); for (let y = 0; y < h; y++) { g.fillStyle = locked ? '#cfcfcb' : ['#6a6a6a', '#7a7a7a', '#5e5e5e', '#868686'][(x * 7 + y * 3 + 40) % 4]; g.fillRect(48 + x, gy - 1 - y, 1, 1); } }
+  // the glyph standing on the line, at four pixels a cell
+  const rows = GLYPHS[gl]; let foot = 0; rows.forEach((r, y) => { if (r.includes('#')) foot = y; });
+  const m = mask(rows, bd, 4, W, Math.min(22, Math.max(2, inkLeft(rows, 4, 22))), gy - (foot + 1) * 4);
+  paintMask(g, m, W, '#141414', coin ? INK[coin] : null, locked);
+  g.fillStyle = locked ? INK.ghost : '#141414'; g.fillRect(0, gy, W, 1);
+}
+const STYLES = { glyph: styleGlyph, badge: styleBadge, line: styleLine };
+const NOTES = {
+  glyph: '<b>1. The glyph.</b> The shelf\'s own drawing at six pixels a cell (48 px of a 64 px icon), black ink, a one-pixel stroke in the coin\'s color where the achievement is about a coin, and the shelf\'s badge in the corner for "more", "up" or a coin. Locked: the drawing\'s outline in ghost grey on a grey ground, the way the game shows a thing not yet built.',
+  badge: '<b>2. Framed badge.</b> The same drawing at four pixels a cell inside a notched double frame, so a row of them reads as a set of medals; ladders carry a row of pips, one lit per tier. Locked: the frame in ghost grey, hatched inside, the glyph as an outline.',
+  line: '<b>3. On the line (own idea).</b> The icon is a tiny piece of yard: the thing stands on the ground line like a building does, with a heap of dust beside it that is bigger the higher the tier. It ties the icons to the capsules and the game\'s one picture. Locked: the same yard in haze, the thing an outline.'
+};
+
+function icon(a, style, locked, cls) {
+  const c = document.createElement('canvas'); c.width = 64; c.height = 64; if (cls) c.className = cls;
+  STYLES[style](c.getContext('2d'), a, locked);
+  return c;
+}
+let style = 'glyph';
+function render() {
+  document.getElementById('styleNote').innerHTML = NOTES[style];
+  const list = document.getElementById('list'); list.innerHTML = '';
+  CATALOG.forEach(a => {
+    const [gl, bd, , why] = pickOf(a);
+    const d = document.createElement('div'); d.className = 'ach';
+    const ic = document.createElement('div'); ic.className = 'icons';
+    ic.append(icon(a, style, false), icon(a, style, true));
+    const big = document.createElement('div'); big.className = 'big';
+    big.append(icon(a, style, false, 'x2'), icon(a, style, true, 'x2'));
+    ic.append(big);
+    const t = document.createElement('div');
+    const flags = [why ? `<div class="meta flag">borrowed: ${why}</div>` : '', SPOIL.includes(a.key) ? '<div class="meta flag">past the surface: suggest hidden</div>' : ''].join('');
+    t.innerHTML = `<div class="name">${a.name}</div><div class="noteline">${a.note}</div><div class="meta">key <code>${a.key}</code> · glyph <code>${gl}</code>${bd ? ` + badge <code>${bd}</code>` : ''}</div>${flags}`;
+    d.append(ic, t); list.append(d);
+  });
+}
+// the comparison strip
+const cmp = document.getElementById('compare');
+['glyph', 'badge', 'line'].forEach(s => {
+  const h = document.createElement('div'); h.className = 'lede'; h.style.marginTop = '12px'; h.textContent = NOTES[s].match(/<b>(.*?)<\/b>/)[1];
+  const row = document.createElement('div'); row.className = 'steamrow';
+  CATALOG.slice(0, 12).forEach(a => row.append(icon(a, s, false)));
+  const row2 = document.createElement('div'); row2.className = 'steamrow'; row2.style.marginTop = '0';
+  CATALOG.slice(0, 12).forEach(a => row2.append(icon(a, s, true)));
+  cmp.append(h, row, row2);
+});
+// the table of borrowed drawings
+const tb = document.querySelector('#missing tbody');
+CATALOG.forEach(a => { const [gl, , , why] = pickOf(a); if (!why) return;
+  const tr = document.createElement('tr'); tr.innerHTML = `<td><code>${a.key}</code></td><td>${a.name}</td><td><code>${gl}</code></td><td>${why}</td>`; tb.append(tr); });
+document.getElementById('spoilers').innerHTML = SPOIL.map(k => { const a = CATALOG.find(x => x.key === k); return `<code>${k}</code> (${a.name})`; }).join(', ');
+document.querySelectorAll('input[name=style]').forEach(r => r.addEventListener('change', e => { style = e.target.value; render(); }));
+render();
+</script>
+</body>
+</html>

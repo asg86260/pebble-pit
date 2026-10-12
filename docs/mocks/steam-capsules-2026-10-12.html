@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steam Capsule Art</title>
+<style>
+:root {
+  --paper: #f7f7f5; --card: #ffffff; --ink: #141414; --ink-2: #5c5c5c; --rule: #d4d4d0;
+  --frame: #1a1a1a; --note-bg: #efefea; --warn: #8a5a00; --warn-bg: #fff4dc;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #161616; --card: #202020; --ink: #ececec; --ink-2: #a3a3a3; --rule: #3a3a3a;
+    --frame: #8a8a8a; --note-bg: #262626; --warn: #f0c060; --warn-bg: #2c2618;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #161616; --card: #202020; --ink: #ececec; --ink-2: #a3a3a3; --rule: #3a3a3a;
+  --frame: #8a8a8a; --note-bg: #262626; --warn: #f0c060; --warn-bg: #2c2618;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper); color: var(--ink);
+  font: 14px/1.55 ui-monospace, "Courier New", monospace;
+  padding: 24px 16px 64px;
+}
+main { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: 22px; letter-spacing: .3em; text-transform: uppercase; margin: 0 0 6px; }
+h2 { font-size: 17px; letter-spacing: .2em; text-transform: uppercase; margin: 48px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+h3 { font-size: 14px; letter-spacing: .14em; text-transform: uppercase; margin: 24px 0 8px; }
+p, li { max-width: 78ch; }
+.lede { color: var(--ink-2); }
+.mock { background: var(--warn-bg); color: var(--warn); border: 1px solid currentColor; padding: 10px 12px; margin: 16px 0; }
+.mock b { color: inherit; }
+.note { background: var(--note-bg); padding: 10px 12px; margin: 10px 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 12px 0; }
+.controls label { cursor: pointer; }
+.grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); align-items: start; }
+.grid .wide { grid-column: 1 / -1; }
+figure { margin: 0; background: var(--card); border: 1px solid var(--rule); padding: 10px; }
+figcaption { font-size: 12px; color: var(--ink-2); margin-top: 8px; }
+figcaption b { color: var(--ink); }
+canvas.cap, img.cap { display: block; width: 100%; height: auto; outline: 1px solid var(--frame); image-rendering: pixelated; }
+canvas.logo { background-color: #cfcfcf; background-image: linear-gradient(45deg, #e8e8e8 25%, transparent 25%, transparent 75%, #e8e8e8 75%), linear-gradient(45deg, #e8e8e8 25%, transparent 25%, transparent 75%, #e8e8e8 75%); background-size: 24px 24px; background-position: 0 0, 12px 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--rule); }
+th { letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+.tablewrap { overflow-x: auto; }
+ul.tight li { margin: 2px 0; }
+.shots { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
+code { font: inherit; background: var(--note-bg); padding: 0 4px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Steam Capsule Art</h1>
+<p class="lede">Three directions for Pebble Pit's Steam store art, each drawn at every size Steam asks for, plus a proposed set of store screenshots and two GIF ideas.</p>
+
+<div class="mock"><b>This is a mock.</b> The capsules are drawn on this page's canvases from plain shapes on the game's cell grid, imitating the game's look; they are not the game's renderer, so tones, the crew's bodies and the rock's bands are close but not exact. The store screenshots and the yard panorama <i>are</i> real game renders (dev build, <code>src/scenes.js</code> "store shot" scenes). It cannot show: the art at Steam's real placements (with the price, tags and wishlist button over it), animation, how Steam recompresses the images, or the game's dark mode. The only words on any capsule are the title; the hatched bars marked as placeholders are slots for the owner's own text, and are empty on purpose.</div>
+
+<div class="controls">
+  <label><input type="checkbox" id="bars" checked> show the owner's placeholder bars</label>
+  <label><input type="checkbox" id="caps" checked> title in capitals (off: lowercase, as typed on the landing page)</label>
+</div>
+
+<div class="note"><b>Ground rules held in all three.</b> Black and white; flat cells, no gradients; every shape on a cell grid (6&nbsp;px at 1x; the large capsules draw at 12&nbsp;px a cell, the small one at 3&nbsp;px, always a whole multiple or half of 6). Per-cell tone variation on the rock and the heaps, as the game does. Color only where the yard itself shows it: the blue of ore and the green of crops, in small amounts, in direction B. <b>No purple</b>: in the game purple belongs only to the wizards' magic, which is past what a store page should show. Nothing past the surface: no snatch, no serpent, no deep, no portal, no rift, no tower; the dome is left out (borderline, see the questions at the end).</div>
+
+<section id="dirA">
+<h2>A. The rock on its line</h2>
+<p>The game's icon made big: the stepped half-disc of rock sitting on a single hairline of ground, banded the way a rock is in the yard (grey rind, dark mantle, black core), with a handful of crew standing on the crest and dust coming off it. Scale is the joke: the crew is three cells tall and the rock is sixty. The title is set in a pixel face drawn on the same grid, solid black.</p>
+<div class="grid" id="gridA"></div>
+<h3>How it adapts</h3>
+<ul class="tight">
+  <li><b>Header 920×430 / main 1232×706:</b> title stacked on two lines at the left, the rock seated right of center so its crest and crew sit in the top-right third.</li>
+  <li><b>Small 462×174:</b> title on one line at full height, the rock shrinks to the icon's own 16-cell drawing at the right edge. No crew: at this size they would be specks.</li>
+  <li><b>Vertical 748×896 / library capital 600×900:</b> title on two lines across the top, the rock filling the bottom half, the ground line low.</li>
+  <li><b>Library hero 3840×1240:</b> no title (Steam lays the logo over the hero). The line runs edge to edge, the rock right of center so the logo's usual bottom-left spot stays empty sky and ground.</li>
+  <li><b>Library logo 1280×720:</b> the title alone on transparent, with the icon's rock-on-a-line under it as a mark.</li>
+</ul>
+<h3>To decide, and words needed</h3>
+<ul class="tight">
+  <li>Words: none beyond the title. Placeholder bar on the main and vertical capsules only if the owner wants a line there (Steam discourages taglines on capsules).</li>
+  <li>Capitals or lowercase for the title (toggle above).</li>
+  <li>Whether the crew stays on the crest at the main size, or the rock stands alone like the icon.</li>
+  <li>Whether the title face should be this drawn pixel face, or the game's own monospace in spaced capitals as on the landing page (that would be rasterized type, and reads less like the yard).</li>
+</ul>
+</section>
+
+<section id="dirB">
+<h2>B. The yard in cross-section</h2>
+<p>A busy strip of the surface, cut open: plots, the cut with its ladder, the house, the notice board, the bench, the shack, the rock with its crew, the spoil heap and the pit, with the ground below shown in section so the cut and the pit read as holes people dug. Crew are tiny and everywhere. The title sits on a black plate with white letters, the way the game heads a board. Blue ore and green crops are the only color. A second row shows the same idea built from a <b>real render</b> of the yard (the panorama below), cropped and plated.</p>
+<div class="grid" id="gridB"></div>
+<h3>How it adapts</h3>
+<ul class="tight">
+  <li><b>Header / main:</b> a wide window on the yard from the house to the pit, plate top-left over the sky.</li>
+  <li><b>Small:</b> the plate takes most of the frame, a thin slice of the yard under it so it still reads as a place.</li>
+  <li><b>Vertical / capital:</b> the camera moves to the rock and the pit and looks down: the pit is cut deep in section so the tall frame is mostly hole and heap. Plate at the top.</li>
+  <li><b>Hero:</b> the yard at full width, no plate. Offered twice: drawn, and the real render.</li>
+  <li><b>Logo:</b> the black plate with the title, on transparent.</li>
+</ul>
+<h3>To decide, and words needed</h3>
+<ul class="tight">
+  <li>Words: the title only. The plate could later carry a second line; that would be the owner's words, so it is a placeholder bar here.</li>
+  <li>Drawn yard or real render. The render is honest but at capsule size the stations shrink to a few pixels; the drawn one cheats scale to keep them legible.</li>
+  <li>Whether the color flecks (ore blue, crop green) stay, or the capsule goes strictly black and white.</li>
+  <li>The "!" on the rock in some real renders is the call from under the rock. It is the story's first hook; keep or crop it.</li>
+</ul>
+</section>
+
+<section id="dirC">
+<h2>C. A title made of pebbles</h2>
+<p>The name lettered in pebbles: each pixel of the letterform is a small stone with its own grey, piled on top of a spoil heap that runs down to the ground line, a few stones tumbling off. One body at the heap's foot for scale. The letters are what the yard makes.</p>
+<div class="grid" id="gridC"></div>
+<h3>How it adapts</h3>
+<ul class="tight">
+  <li><b>Header / main:</b> one line of pebble letters riding the crest of a long, low heap.</li>
+  <li><b>Small:</b> one line on the heap; at this size stones four pixels across blur into dots, so the letters fall back to the solid face from A.</li>
+  <li><b>Vertical / capital:</b> two lines, with the second word sitting on the heap's peak and loose stones down both flanks.</li>
+  <li><b>Hero:</b> no letters: a field of heaps and loose pebbles, crew working them.</li>
+  <li><b>Logo:</b> the pebble letters alone on transparent.</li>
+</ul>
+<h3>To decide, and words needed</h3>
+<ul class="tight">
+  <li>Words: the title only.</li>
+  <li>Stone tones: four greys as drawn, or the yard's full dust ramp (more texture, less legible at small size).</li>
+  <li>The small capsule falls back to solid letters (from direction A) for legibility; keep, or try bigger stones on a shorter word.</li>
+  <li>The heap under the letters: a flat-topped bank as drawn, or a pointed heap with the letters propped on stones of their own.</li>
+</ul>
+</section>
+
+<section id="shots">
+<h2>Store screenshots</h2>
+<p>Five proposed 1920×1080 screenshots, captured from the game for real (dev build, 1152×648 window at 5/3 scale so every cell lands on a whole 10&nbsp;px). Story notices, the objective plate, the build-the-bench call and the corner buttons are hidden; the purse, pips and boards are the game's own HUD and stay. Files sit next to this page in <code>steam-capsules/</code>; the originals are in the worktree's <code>shots/steam/</code>.</p>
+<div class="shots" id="shotgrid"></div>
+<h3>Two GIF ideas</h3>
+<ol>
+  <li><b>A rock comes down.</b> A yard with a crew, the next rock falling onto the crest, everyone hopping at the landing, then straight back to swinging (scenes <code>landing</code> / <code>digging</code>). Three seconds, loops on the swing.</li>
+  <li><b>A hand thrown at the hole.</b> The held hand tossing dust from a heap in arcs into the pit, the grains settling in the hole (scene <code>tossing</code>). Shows the one verb the store page should teach.</li>
+</ol>
+<p class="lede">Both are surface only. Frame-exact capture would go through <code>__still</code> and <code>__holdShot</code> (the pebble-capture route); not captured for this mock.</p>
+</section>
+
+<section id="ask">
+<h2>Open questions for the owner</h2>
+<ul>
+  <li><b>The dome.</b> Left out of every capsule as borderline. Allowed or not?</li>
+  <li><b>The rescue.</b> The "!" under the rock and the house are kept as surface; anything about who is under the rock is left out. Should the store art hint at her at all?</li>
+  <li><b>Title casing</b> and <b>title face</b> (drawn pixel face here, or the landing page's monospace).</li>
+  <li><b>Any line besides the title</b> (tagline, "early access", a date): the placeholder bars mark where it would go; the words are yours, and Steam's capsule rules discourage most of them.</li>
+  <li><b>Light or dark.</b> All capsules are drawn on the game's light paper; the game has a dark mode, which could be an alternate set.</li>
+</ul>
+</section>
+</main>
+
+<script>
+// ---------------------------------------------------------------- basics
+const SIZES = [
+  ['header', 920, 430, 'header capsule'],
+  ['small', 462, 174, 'small capsule'],
+  ['main', 1232, 706, 'main capsule'],
+  ['vertical', 748, 896, 'vertical capsule'],
+  ['capital', 600, 900, 'library capital'],
+  ['hero', 3840, 1240, 'library hero'],
+  ['logo', 1280, 720, 'library logo (transparent)']
+];
+const PAPER = '#f6f6f4', EARTH = '#efefec', HATCH = '#e1e1dd', LINE = '#141414';
+const ROCK_RIND = ['#6f6f6f', '#7b7b7b', '#868686', '#747474'];
+const ROCK_MANTLE = ['#2e2e2e', '#353535', '#3d3d3d', '#323232'];
+const ROCK_CORE = ['#0f0f0f', '#151515', '#1b1b1b', '#121212'];
+const HEAP = ['#5f5f5f', '#6a6a6a', '#767676', '#808080', '#8b8b8b'];
+const STONE = ['#1c1c1c', '#2a2a2a', '#393939', '#474747', '#565656'];
+const CLOUD = ['#d9d9d6', '#cfcfcc', '#c6c6c3'];
+const ORE = ['#3f68d4', '#2f5fd0', '#2748a4', '#5b83e0'];
+const CROP = ['#3aa957', '#2e9e4b', '#227b3a', '#57c074'];
+
+const hash = (a, b, s = 0) => { let h = (a * 374761393 + b * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0); };
+const pick = (arr, a, b, s) => arr[hash(a, b, s) % arr.length];
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+let SHOW_BARS = true, CAPS = true;
+
+// A cell painter: everything is placed in cells of `c` pixels.
+function cells(g, c) {
+  return {
+    c,
+    at(x, y, col) { g.fillStyle = col; g.fillRect(Math.round(x) * c, Math.round(y) * c, c, c); },
+    rect(x, y, w, h, col) { g.fillStyle = col; g.fillRect(Math.round(x) * c, Math.round(y) * c, Math.round(w) * c, Math.round(h) * c); }
+  };
+}
+
+// ---------------------------------------------------------------- the letters
+const FONT = {
+  P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
+  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
+  B: ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
+  L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
+  I: ['111', '010', '010', '010', '010', '010', '111'],
+  T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+  ' ': ['000', '000', '000', '000', '000', '000', '000'],
+  // lowercase on a 9-row box: two ascender rows, five x-height, two descender
+  p: ['00000', '00000', '11110', '10001', '10001', '10001', '11110', '10000', '10000'],
+  e: ['00000', '00000', '01110', '10001', '11111', '10000', '01111', '00000', '00000'],
+  b: ['10000', '10000', '11110', '10001', '10001', '10001', '11110', '00000', '00000'],
+  l: ['110', '010', '010', '010', '010', '010', '111', '000', '000'],
+  i: ['010', '000', '110', '010', '010', '010', '111', '000', '000'],
+  t: ['0100', '0100', '1110', '0100', '0100', '0100', '0011', '0000', '0000']
+};
+const word = s => CAPS ? s.toUpperCase() : s.toLowerCase();
+const glyphRows = ch => FONT[ch] || FONT[' '];
+const textW = s => [...s].reduce((n, ch, i) => n + glyphRows(ch)[0].length + (i ? 1 : 0), 0);
+const textH = () => CAPS ? 7 : 9;
+// plot(x, y) is called once per lit font cell, in font-cell units from the
+// text's top-left.
+function eachCell(s, plot) {
+  let x = 0;
+  [...s].forEach(ch => {
+    const rows = glyphRows(ch);
+    rows.forEach((r, y) => [...r].forEach((v, i) => { if (v === '1') plot(x + i, y); }));
+    x += rows[0].length + 1;
+  });
+}
+// The title as lines: one or two, in the current case.
+const titleLines = two => two ? [word('pebble'), word('pit')] : [word('pebble pit')];
+
+function solidTitle(g, lines, x0, y0, s, col, align = 'left', boxW = 0) {
+  g.fillStyle = col;
+  lines.forEach((ln, k) => {
+    const w = textW(ln) * s;
+    const ox = align === 'center' ? x0 + Math.round((boxW - w) / 2) : x0;
+    const oy = y0 + k * (textH() + 2) * s;
+    eachCell(ln, (x, y) => g.fillRect(ox + x * s, oy + y * s, s, s));
+  });
+}
+function knockout(g, x, y, w, h, pad) { g.fillStyle = PAPER; g.fillRect(x - pad, y - pad, w + 2 * pad, h + 2 * pad); }
+const titleBox = (lines, s) => ({ w: Math.max(...lines.map(textW)) * s, h: (lines.length * (textH() + 2) - 2) * s });
+
+// A pebble on a 4x4 sub-grid: a rounded square, a lit corner, a tone of its own.
+function pebble(g, x, y, s, seed) {
+  const u = s / 4, tone = STONE[hash(x, y, seed) % STONE.length];
+  const map = ['.##.', '####', '####', '.##.'];
+  const lumpy = hash(y, x, seed + 7) % 4;   // some stones lose a corner more
+  map.forEach((r, j) => [...r].forEach((v, i) => {
+    if (v !== '#') return;
+    if (lumpy === 0 && j === 2 && i === 3) return;
+    g.fillStyle = (i === 1 && j === 1) ? '#8a8a8a' : tone;
+    g.fillRect(x + i * u, y + j * u, u, u);
+  }));
+}
+// The pebble face is the same letters with every stroke doubled sideways, so
+// a line of stones reads as a stroke rather than a string of beads.
+function boldCells(ln) {
+  const out = new Set(); let x = 0;
+  [...ln].forEach(ch => {
+    const rows = glyphRows(ch);
+    rows.forEach((r, y) => [...r].forEach((v, i) => { if (v === '1') { out.add((x + i) + ',' + y); out.add((x + i + 1) + ',' + y); } }));
+    x += rows[0].length + 2;
+  });
+  return { cells: [...out].map(k => k.split(',').map(Number)), w: x - 2 };
+}
+const boldBox = (lines, s) => ({ w: Math.max(...lines.map(l => boldCells(l).w)) * s, h: (lines.length * (textH() + 2) - 2) * s });
+function pebbleTitle(g, lines, x0, y0, s, seed, align = 'left', boxW = 0) {
+  lines.forEach((ln, k) => {
+    const { cells: cs, w } = boldCells(ln);
+    const ox = align === 'center' ? x0 + Math.round((boxW - w * s) / 2) : x0;
+    const oy = y0 + k * (textH() + 2) * s;
+    cs.forEach(([x, y]) => pebble(g, ox + x * s, oy + y * s, s, seed + k));
+  });
+}
+
+// ---------------------------------------------------------------- the yard's parts
+function sky(g, W, H) { g.fillStyle = PAPER; g.fillRect(0, 0, W, H); }
+function ground(p, cols, rows, gy, lineW) {
+  for (let y = gy; y < rows; y++) for (let x = 0; x < cols; x++)
+    p.at(x, y, (x + y) % 4 === 0 ? HATCH : EARTH);
+}
+function groundLine(g, W, gyPx, lw) { g.fillStyle = LINE; g.fillRect(0, gyPx - Math.floor(lw / 2), W, lw); }
+function motes(p, cols, rowsTop, rowsBot, n, r) {
+  for (let i = 0; i < n; i++) p.at(Math.floor(r() * cols), rowsTop + Math.floor(r() * (rowsBot - rowsTop)), r() < .5 ? '#bdbdbd' : '#d0d0d0');
+}
+function cloud(p, x, y, w, seed) {
+  // a stepped bank: three bumps on a flat underside, a darker sole
+  const r = rng(seed);
+  const h = Math.max(3, Math.round(w / 5));
+  for (let i = 0; i < w; i++) {
+    const bump = Math.round(h * (0.55 + 0.45 * Math.abs(Math.sin((i / w) * Math.PI * (1.5 + r())))));
+    const top = Math.round(h * Math.sin((i + .5) / w * Math.PI) * 0.6) + Math.min(bump, h);
+    for (let j = 0; j < top; j++) p.at(x + i, y - j, j === 0 ? CLOUD[2] : pick(CLOUD, x + i, y - j, seed));
+  }
+}
+function bird(p, x, y) { p.at(x, y, '#444'); p.at(x + 1, y + 1, '#444'); p.at(x + 2, y, '#444'); }
+// A body: three cells square, white with a black skin; a hat if asked.
+function body(g, c, x, y, hat) {
+  const s = 3 * c, k = Math.max(1, Math.round(c / 3));
+  g.fillStyle = LINE; g.fillRect(x * c, y * c, s, s);
+  g.fillStyle = '#fff'; g.fillRect(x * c + k, y * c + k, s - 2 * k, s - 2 * k);
+  if (hat) { g.fillStyle = LINE; g.fillRect(x * c, y * c, s, Math.max(k, Math.round(c * .7))); if (hat === 'brim') g.fillRect(x * c - k, y * c + Math.round(c * .5), s + 2 * k, k); }
+}
+// The rock: a stepped half-disc in bands, its rim a little lumpy.
+function rock(p, cx, gy, R, seed) {
+  for (let y = 0; y <= R; y++) {
+    const half = Math.round(Math.sqrt(R * R - y * y) + ((hash(y, seed) % 3) - 1) * (y > R * .5 ? .6 : .3));
+    for (let x = -half; x <= half; x++) {
+      const d = R - Math.sqrt(x * x + y * y);
+      const pal = d < R * .09 + 1.2 ? ROCK_RIND : d < R * .26 + 1.5 ? ROCK_MANTLE : ROCK_CORE;
+      p.at(cx + x, gy - 1 - y, pick(pal, cx + x, y, seed));
+    }
+  }
+}
+// The rock as the icon draws it: sixteen cells, no bands.
+const ICON = [16, 15, 13, 11, 10, 7, 4];   // widths, bottom row up, from build/icon.png
+function iconRock(g, x, gyPx, u) {
+  ICON.forEach((w, j) => { g.fillStyle = LINE; g.fillRect(x + ((16 - w) / 2 - 0) * u, gyPx - (j + 1) * u, w * u, u); });
+  g.fillRect(x - u, gyPx, 18 * u, u);
+}
+function heap(p, cx, gy, half, h, seed, pal = HEAP) {
+  for (let x = -half; x <= half; x++) {
+    const t = 1 - Math.abs(x) / half;
+    const top = Math.round(h * Math.pow(t, 1.15) + ((hash(x, seed) % 3) - 1) * .7);
+    for (let y = 0; y < top; y++) p.at(cx + x, gy - 1 - y, pick(pal, cx + x, y, seed));
+  }
+}
+function placeholder(g, x, y, w, h) {
+  if (!SHOW_BARS) return;
+  g.save();
+  g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(x, y, w, h);
+  g.strokeStyle = '#7a7a7a'; g.lineWidth = Math.max(1, Math.round(h / 24)); g.setLineDash([h / 6, h / 8]);
+  g.strokeRect(x + .5, y + .5, w - 1, h - 1);
+  g.setLineDash([]);
+  g.beginPath(); g.rect(x, y, w, h); g.clip();
+  g.strokeStyle = '#d0d0d0'; g.lineWidth = 1;
+  for (let i = -h; i < w; i += Math.max(6, h / 4)) { g.beginPath(); g.moveTo(x + i, y + h); g.lineTo(x + i + h, y); g.stroke(); }
+  g.fillStyle = '#6a6a6a'; g.font = `${Math.max(9, Math.round(h * .32))}px ui-monospace, monospace`;
+  g.textBaseline = 'middle'; g.fillText('PLACEHOLDER: OWNER TEXT', x + h * .4, y + h / 2);
+  g.restore();
+}
+
+// Crew standing along the crest of a rock of radius R centered at cx.
+function crestCrew(g, c, cx, gy, R, n, seed) {
+  const r = rng(seed);
+  for (let i = 0; i < n; i++) {
+    const x = Math.round(cx - R * .55 + (R * 1.1) * (i + r() * .6) / n);
+    const top = Math.round(Math.sqrt(Math.max(0, R * R - (x - cx) ** 2)));
+    body(g, c, x - 1, gy - top - 3 - (r() < .3 ? 1 : 0), r() < .5 ? 'cap' : null);
+  }
+}
+function spray(p, cx, top, R, n, seed) {
+  const r = rng(seed);
+  for (let i = 0; i < n; i++) {
+    const a = Math.PI * (.15 + r() * .7), d = 3 + r() * R * .9;
+    p.at(cx + Math.cos(a) * d * (r() < .5 ? -1 : 1), top - Math.sin(a) * d * .8, r() < .35 ? '#9a9a9a' : '#cfc9c4');
+  }
+}
+
+// ---------------------------------------------------------------- direction A
+function drawA(g, W, H, kind) {
+  const logo = kind === 'logo';
+  const L = {
+    header:   { c: 6,  gy: .74, rx: .72, R: 31, ts: 12, two: true,  tx: 48,  ty: 54, crew: 5 },
+    small:    { c: 3,  gy: .80, small: true, ts: 6, two: false },
+    main:     { c: 6,  gy: .76, rx: .74, R: 44, ts: 15, two: true,  tx: 72,  ty: 86, crew: 6, bar: [72, 0, 420, 34] },
+    vertical: { c: 6,  gy: .80, rx: .5,  R: 46, ts: 16, two: true,  center: true, ty: 72, crew: 6, bar: [64, 0, 620, 34] },
+    capital:  { c: 6,  gy: .82, rx: .5,  R: 40, ts: 13, two: true,  center: true, ty: 80, crew: 5 },
+    hero:     { c: 12, gy: .74, rx: .64, R: 34, crew: 6 },
+    logo:     { ts: 20, two: true }
+  }[kind];
+  if (logo) {
+    const lines = titleLines(true), b = titleBox(lines, L.ts);
+    const x = Math.round((W - b.w) / 2), y = Math.round((H - b.h) / 2) - 70;
+    solidTitle(g, lines, x, y, L.ts, LINE, 'center', b.w);
+    iconRock(g, Math.round(W / 2 - 9 * 10), y + b.h + 120, 10);
+    return;
+  }
+  const c = L.c, cols = Math.ceil(W / c), rows = Math.ceil(H / c), gy = Math.round(rows * L.gy);
+  const p = cells(g, c), r = rng(11);
+  sky(g, W, H);
+  ground(p, cols, rows, gy);
+  for (let i = 0; i < Math.round(cols / 30); i++) cloud(p, Math.floor(r() * cols), 4 + Math.floor(r() * rows * .25), 8 + Math.floor(r() * 14), 50 + i);
+  motes(p, cols, 2, gy - 2, Math.round(cols * rows / 260), r);
+  groundLine(g, W, gy * c, Math.max(2, Math.round(c / 3)));
+  if (L.small) {
+    const s = L.ts, lines = titleLines(false), b = titleBox(lines, s);
+    const ty = Math.round((gy * c - b.h) / 2);
+    knockout(g, 18, ty, b.w, b.h, s);
+    solidTitle(g, lines, 18, ty, s, LINE);
+    const u = 5; iconRock(g, W - 18 * u - 14, gy * c, u);
+    return;
+  }
+  const cx = Math.round(cols * L.rx);
+  rock(p, cx, gy, L.R, 3);
+  heap(p, cx + L.R + 10, gy, 8, 4, 9);
+  spray(p, cx, gy - L.R - 3, L.R, Math.round(L.R * 1.4), 21);
+  crestCrew(g, c, cx, gy, L.R, L.crew, 5);
+  for (let i = 0; i < 3; i++) bird(p, Math.floor(cols * (.15 + r() * .3)), 6 + Math.floor(r() * rows * .15));
+  if (L.ts) {
+    const lines = titleLines(L.two), b = titleBox(lines, L.ts);
+    knockout(g, L.center ? Math.round((W - b.w) / 2) : L.tx, L.ty, b.w, b.h, L.ts);
+    if (L.center) solidTitle(g, lines, 0, L.ty, L.ts, LINE, 'center', W);
+    else solidTitle(g, lines, L.tx, L.ty, L.ts, LINE);
+    if (L.bar) placeholder(g, L.center ? Math.round((W - L.bar[2]) / 2) : L.bar[0], L.ty + b.h + 26, L.bar[2], L.bar[3]);
+  }
+}
+
+// ---------------------------------------------------------------- direction B
+// One world, drawn through a camera: x0 is the first world column on screen.
+function yardWorld(g, c, W, H, x0, gyFrac, opts = {}) {
+  const p = cells(g, c), cols = Math.ceil(W / c), rows = Math.ceil(H / c), gy = Math.round(rows * gyFrac);
+  const r = rng(77);
+  const X = x => x - x0;   // world column to screen column
+  sky(g, W, H);
+  ground(p, cols, rows, gy);
+  for (let i = 0; i < Math.round(cols / 26) + 2; i++) cloud(p, Math.floor(r() * cols), 4 + Math.floor(r() * Math.max(4, gy * .35)), 7 + Math.floor(r() * 12), 300 + i);
+  motes(p, cols, 2, gy - 2, Math.round(cols * gy / 300), r);
+  // strata under the yard: three faint bands, a cell of tone each
+  for (let b = 1; b <= 3; b++) { const y = gy + Math.round((rows - gy) * b / 4); for (let x = 0; x < cols; x++) if (hash(x, b) % 5) p.at(x, y, '#e4e4e0'); }
+  const hole = (a, b, depth) => { for (let x = a; x < b; x++) for (let y = gy; y < gy + depth; y++) p.at(X(x), y, '#ffffff'); };
+  const edge = (a, b, depth) => {
+    p.rect(X(a), gy, 1 / 3 * 0 + 1, depth, '#1d1d1d'); p.rect(X(b) - 1, gy, 1, depth, '#1d1d1d'); p.rect(X(a), gy + depth - 1, b - a, 1, '#1d1d1d');
+  };
+  // the plots: furrows of stems, a little green, growers in brims
+  for (let x = 2; x < 44; x += 4) {
+    const h = 2 + hash(x, 1) % 3;
+    for (let y = 0; y < h; y++) p.at(X(x), gy - 1 - y, '#151515');
+    p.at(X(x) + 1, gy - h, '#151515');
+    if (hash(x, 2) % 3 === 0) p.at(X(x) - 1, gy - 1, pick(CROP, x, 3));
+  }
+  heap(p, X(48), gy, 3, 2, 4, CROP);
+  body(g, c, X(12), gy - 3, 'brim'); body(g, c, X(30), gy - 3, 'brim');
+  // the cut: a notch with a ladder, ore heaped beside it, hands down in it
+  const qd = opts.deepCut || 7;
+  hole(56, 80, qd); edge(56, 80, qd);
+  for (let y = gy - 2; y < gy + qd - 1; y++) { p.at(X(60), y, '#1d1d1d'); p.at(X(62), y, '#1d1d1d'); if ((y - gy) % 2 === 0) p.at(X(61), y, '#1d1d1d'); }
+  p.rect(X(52), gy - 7, 5, 1, '#151515'); p.rect(X(52), gy - 6, 1, 6, '#151515'); p.rect(X(56), gy - 6, 1, 6, '#151515');
+  body(g, c, X(66), gy + qd - 4, 'cap'); body(g, c, X(72), gy + qd - 4, null);
+  heap(p, X(88), gy, 6, 4, 8, ORE);
+  // the house
+  p.rect(X(98), gy - 14, 24, 14, '#121212'); p.rect(X(98), gy - 17, 9, 3, '#121212'); p.rect(X(101), gy - 19, 2, 2, '#121212');
+  for (let y = gy - 12; y < gy - 2; y += 4) for (let x = 100; x < 121; x += 4) p.rect(X(x), y, 2, 2, '#8a8a8a');
+  p.rect(X(100), gy - 3, 3, 3, '#ffffff');
+  // the notice board
+  p.rect(X(128), gy - 9, 11, 1, '#151515'); p.rect(X(128), gy - 8, 11, 5, '#151515');
+  for (let x = 129; x < 138; x += 3) p.rect(X(x), gy - 7, 2, 1, '#ddd');
+  for (let x = 129; x < 138; x += 3) p.rect(X(x), gy - 5, 2, 1, '#ddd');
+  p.rect(X(129), gy - 3, 1, 3, '#151515'); p.rect(X(137), gy - 3, 1, 3, '#151515');
+  // the bench, its flag
+  p.rect(X(146), gy - 4, 12, 1, '#151515'); p.rect(X(147), gy - 3, 2, 3, '#151515'); p.rect(X(155), gy - 3, 2, 3, '#151515');
+  p.rect(X(151), gy - 11, 1, 7, '#151515'); p.rect(X(149), gy - 11, 2, 2, '#151515'); p.rect(X(152), gy - 11, 2, 1, '#151515');
+  // the shack: a gate with a dome in its lintel
+  p.rect(X(176), gy - 10, 10, 2, '#151515'); p.rect(X(177), gy - 8, 2, 8, '#151515'); p.rect(X(183), gy - 8, 2, 8, '#151515');
+  p.rect(X(179), gy - 6, 4, 1, '#151515'); p.rect(X(180), gy - 7, 2, 1, '#151515');
+  body(g, c, X(188), gy - 3, 'cap');
+  // the rock, its crew, the spoil heap
+  const R = opts.R || 22;
+  rock(p, X(216), gy, R, 6);
+  spray(p, X(216), gy - R - 3, R, R, 33);
+  crestCrew(g, c, X(216), gy, R, 5, 8);
+  heap(p, X(216 + R + 13), gy, 10, 9, 12);
+  body(g, c, X(216 + R + 26), gy - 3, null);
+  // the pit, cut in section, dust lying in its floor
+  const pd = opts.pitDepth || 16, pa = 270, pb = 330;
+  hole(pa, pb, pd); edge(pa, pb, pd);
+  for (let x = pa + 1; x < pb - 1; x++) {
+    const t = 1 - Math.abs((x - (pa + pb) / 2) / ((pb - pa) / 2));
+    const h = Math.round(1 + t * pd * .28 + (hash(x, 5) % 2));
+    for (let y = 0; y < h; y++) p.at(X(x), gy + pd - 2 - y, pick(HEAP, x, y, 2));
+  }
+  // grains on their way in from the lip
+  for (let i = 0; i < 9; i++) p.at(X(pa + 2 + i * 2), gy - 3 + Math.round((i - 4) ** 2 / 4), '#7a7a7a');
+  body(g, c, X(pa - 6), gy - 3, null);
+  groundLine(g, W, gy * c, Math.max(2, Math.round(c / 3)));
+  return { gy, cols, rows };
+}
+function plate(g, lines, x, y, s, padCells = 3) {
+  const b = titleBox(lines, s), pad = padCells * s;
+  g.fillStyle = '#c9c9c6'; g.fillRect(x + s, y + s, b.w + 2 * pad, b.h + 2 * pad);   // the board's offset shadow
+  g.fillStyle = LINE; g.fillRect(x, y, b.w + 2 * pad, b.h + 2 * pad);
+  solidTitle(g, lines, x + pad, y + pad, s, '#ffffff');
+  return { w: b.w + 2 * pad, h: b.h + 2 * pad };
+}
+function drawB(g, W, H, kind, real) {
+  if (kind === 'logo') {
+    const lines = titleLines(true), s = 18, b = titleBox(lines, s);
+    plate(g, lines, Math.round((W - b.w) / 2 - 3 * s), Math.round((H - b.h) / 2 - 3 * s), s);
+    return;
+  }
+  if (real) {
+    // the real render, cropped above the purse, covering the frame
+    const img = PANO; if (!img.complete || !img.naturalWidth) return;
+    const sw = 3360, sh = 1085, k = Math.max(W / sw, H / sh);
+    const fx = kind === 'vertical' || kind === 'capital' ? .62 : kind === 'main' || kind === 'header' ? .3 : 0;
+    const cw = W / k, ch = H / k, cx = Math.min(sw - cw, Math.max(0, fx * sw)), cy = Math.max(0, sh - ch);
+    g.imageSmoothingEnabled = false;
+    g.drawImage(img, cx, cy, cw, ch, 0, 0, W, H);
+  } else {
+    const V = {
+      header:   { c: 4,  x0: 90,  gy: .62 },
+      small:    { c: 3,  x0: 120, gy: .82 },
+      main:     { c: 5,  x0: 90,  gy: .60 },
+      vertical: { c: 6,  x0: 186, gy: .50, R: 18, pitDepth: 62 },
+      capital:  { c: 6,  x0: 190, gy: .50, R: 16, pitDepth: 64 },
+      hero:     { c: 12, x0: 10,  gy: .70 }
+    }[kind];
+    yardWorld(g, V.c, W, H, V.x0, V.gy, V);
+  }
+  if (kind === 'hero') return;
+  const P = {
+    header: { s: 9, two: false, x: 28, y: 28 }, small: { s: 6, two: false, x: 16, y: 16 },
+    main: { s: 12, two: false, x: 44, y: 40, bar: true }, vertical: { s: 10, two: true, x: 0, y: 24, center: true, bar: true },
+    capital: { s: 9, two: true, x: 0, y: 24, center: true }
+  }[kind];
+  const lines = titleLines(P.two), b = titleBox(lines, P.s), pw = b.w + 6 * P.s;
+  const x = P.center ? Math.round((W - pw) / 2) : P.x;
+  const box = plate(g, lines, x, P.y, P.s);
+  if (P.bar) placeholder(g, x, P.y + box.h + 18, box.w, 30);
+}
+
+// ---------------------------------------------------------------- direction C
+function drawC(g, W, H, kind) {
+  if (kind === 'logo') {
+    const lines = titleLines(true), s = 24, b = boldBox(lines, s);
+    pebbleTitle(g, lines, 0, Math.round((H - b.h) / 2), s, 4, 'center', W);
+    return;
+  }
+  const L = {
+    header:   { c: 6, gy: .88, s: 12, two: false, ty: .42 },
+    small:    { c: 3, gy: .92, s: 4,  two: false, ty: .30 },
+    main:     { c: 6, gy: .82, s: 16, two: false, ty: .42, bar: true },
+    vertical: { c: 6, gy: .82, s: 16, two: true,  ty: .14, bar: true },
+    capital:  { c: 6, gy: .88, s: 12, two: true,  ty: .18 },
+    hero:     { c: 12, gy: .78 }
+  }[kind];
+  const c = L.c, cols = Math.ceil(W / c), rows = Math.ceil(H / c), gy = Math.round(rows * L.gy);
+  const p = cells(g, c), r = rng(91);
+  sky(g, W, H);
+  ground(p, cols, rows, gy);
+  for (let i = 0; i < Math.round(cols / 34) + 1; i++) cloud(p, Math.floor(r() * cols), 4 + Math.floor(r() * rows * .2), 8 + Math.floor(r() * 12), 500 + i);
+  motes(p, cols, 2, gy - 2, Math.round(cols * rows / 320), r);
+  if (kind === 'hero') {
+    [[.22, 22, 9], [.46, 34, 15], [.70, 26, 11], [.9, 18, 7]].forEach(([fx, half, h], i) => heap(p, Math.round(cols * fx), gy, half, h, 40 + i));
+    for (let i = 0; i < 70; i++) { const x = Math.floor(r() * cols); pebble(g, x * c, (gy - 1) * c - Math.floor(r() * 3) * c, 2 * c, i); }
+    [[.3, 'cap'], [.55, null], [.6, 'cap'], [.8, null]].forEach(([fx, h]) => body(g, c, Math.round(cols * fx), gy - 3, h));
+    groundLine(g, W, gy * c, Math.max(2, Math.round(c / 3)));
+    return;
+  }
+  const lines = titleLines(L.two), b = boldBox(lines, L.s);
+  const ty = Math.round(H * L.ty);
+  knockout(g, Math.round((W - b.w) / 2), ty, b.w, b.h, L.s);
+  // the heap rises to just under the last line of letters, flat along their foot
+  const foot = Math.ceil((ty + b.h) / c), top = gy - foot;
+  const half = Math.round(cols * .49), cx = Math.round(cols / 2), plateau = Math.min(half - 4, Math.ceil(b.w / c / 2) * (L.two ? .6 : 1));
+  for (let x = -half; x <= half; x++) {
+    const d = Math.max(0, Math.abs(x) - plateau) / (half - plateau);
+    const h = Math.round(top * Math.pow(1 - d, 1.8) + ((hash(x, 3) % 3) - 1) * .7);
+    for (let y = 0; y < h; y++) p.at(cx + x, gy - 1 - y, pick(HEAP, cx + x, y, 3));
+  }
+  // stones tumbling down the flanks
+  for (let i = 0; i < Math.round(cols / 4); i++) {
+    const side = r() < .5 ? -1 : 1, t = .05 + .9 * r();
+    const x = cx + side * Math.round(plateau + (half - plateau) * t);
+    const hh = Math.round(top * Math.pow(1 - t, 1.8));
+    pebble(g, x * c, (gy - hh - 2) * c, 2 * c, i + 9);
+  }
+  groundLine(g, W, gy * c, Math.max(2, Math.round(c / 3)));
+  // at the small size the stones blur, so the letters fall back to solid
+  if (kind === 'small') { knockout(g, Math.round((W - textW(lines[0]) * 6) / 2), ty, textW(lines[0]) * 6, textH() * 6, 6); solidTitle(g, lines, 0, ty, 6, LINE, 'center', W); }
+  else pebbleTitle(g, lines, 0, ty, L.s, 2, 'center', W);
+  body(g, c, Math.round(cx - half - 5), gy - 3, 'cap');
+  if (L.bar) placeholder(g, Math.round((W - b.w) / 2), gy * c + 24, b.w, 32);
+}
+
+// ---------------------------------------------------------------- the page
+const PANO = new Image(); PANO.src = 'steam-capsules/yard-panorama.png';
+const DIRS = [['gridA', (g, W, H, k) => drawA(g, W, H, k)],
+              ['gridB', (g, W, H, k) => drawB(g, W, H, k, false)],
+              ['gridC', (g, W, H, k) => drawC(g, W, H, k)]];
+const canvases = [];
+function figure(grid, kind, W, H, label, draw, extra = '') {
+  const f = document.createElement('figure');
+  if (kind === 'hero' || kind === 'main') f.className = 'wide';
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H; cv.className = 'cap' + (kind === 'logo' ? ' logo' : '');
+  f.appendChild(cv);
+  const cap = document.createElement('figcaption');
+  cap.innerHTML = `<b>${label}</b> ${W}×${H}${extra}`;
+  f.appendChild(cap);
+  grid.appendChild(f);
+  canvases.push({ cv, kind, draw });
+}
+DIRS.forEach(([id, draw]) => {
+  const grid = document.getElementById(id);
+  SIZES.forEach(([kind, W, H, label]) => figure(grid, kind, W, H, label, draw));
+});
+// direction B again, from the real render
+{
+  const grid = document.getElementById('gridB');
+  const h = document.createElement('h3'); h.className = 'wide'; h.textContent = 'B, built on a real render'; h.style.gridColumn = '1 / -1';
+  grid.appendChild(h);
+  ['hero', 'header', 'main', 'vertical'].forEach(kind => {
+    const [, W, H, label] = SIZES.find(s => s[0] === kind);
+    figure(grid, kind, W, H, label, (g, W2, H2, k) => drawB(g, W2, H2, k, true), ' · real render, cropped above the purse');
+  });
+}
+function redraw() {
+  for (const { cv, kind, draw } of canvases) {
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    g.imageSmoothingEnabled = false;
+    draw(g, cv.width, cv.height, kind);
+  }
+}
+document.getElementById('bars').addEventListener('change', e => { SHOW_BARS = e.target.checked; redraw(); });
+document.getElementById('caps').addEventListener('change', e => { CAPS = e.target.checked; redraw(); });
+PANO.addEventListener('load', redraw);
+redraw();
+
+// the screenshots
+const SHOTS = [
+  ['steamhome', 'The yard at work: the house, the notice board, the bench, the shack, and the crew on the rock.'],
+  ['steamrock', 'The rock and the hole: rockhands on the crest, the spoil heap, the lip of the pit.'],
+  ['steamsites', 'The plots and the cut side by side, growers in their brims, hands down the ladder, ore heaped.'],
+  ['steamstorm', 'A storm over the yard: a bolt, the muck rain, the crew still swinging.'],
+  ['steamboard', "A board open: the farm's rungs, pips and bills over the plots and the cut."]
+];
+const sg = document.getElementById('shotgrid');
+SHOTS.forEach(([n, say], i) => {
+  const f = document.createElement('figure');
+  f.innerHTML = `<img class="cap" loading="lazy" src="steam-capsules/${n}.png" alt="${say}" width="1920" height="1080"><figcaption><b>${i + 1}. ${n}</b> 1920×1080, scene <code>${n}</code>. ${say}</figcaption>`;
+  sg.appendChild(f);
+});
+</script>
+</body>
+</html>
