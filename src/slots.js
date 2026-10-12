@@ -47,7 +47,7 @@ export function slotLabels(now = Date.now(), playing = true) {
       if (Number.isFinite(s.savedAt)) parts.push(since(s.savedAt, now));
       played = sayPlayed(s.playedS);
     }
-    rows.push({ slot: n, open, empty: !raw, text: parts.join(' · '), played });
+    rows.push({ slot: n, open, empty: !raw, parts, text: parts.join(' · '), played });
   }
   return rows;
 }
@@ -82,7 +82,7 @@ let armedRow = null;
 function disarm() {
   clearTimeout(armed);
   armed = 0;
-  if (armedRow) { armedRow.classList.remove('armed'); armedRow.querySelector('.what').textContent = armedRow.dataset.text; }
+  if (armedRow) { armedRow.classList.remove('armed'); setItems(armedRow.querySelector('.what'), JSON.parse(armedRow.dataset.text)); }
   armedRow = null;
 }
 
@@ -93,6 +93,19 @@ function asking(confirm, on) {
   confirm.inert = !on;
 }
 
+// A row's words as items, one span each: the grid gives each its own column
+// and the gap between them is the separator, so no dot is drawn. A row that
+// says one thing after its number (empty, unreadable, the arm) lets it span.
+const ITEMS = ['n', 'rock', 'crew', 'when'];
+function setItems(what, parts) {
+  what.replaceChildren(...parts.map((t, i) => {
+    const e = document.createElement('span');
+    e.className = parts.length === 2 ? (i ? 'item lone' : 'item n') : 'item ' + ITEMS[i];
+    e.textContent = t;
+    return e;
+  }));
+}
+
 // Each row's words read again off the store, into the lines already standing:
 // a delete changes what a row says, not where anything is.
 function paint(el, playing) {
@@ -101,9 +114,9 @@ function paint(el, playing) {
     const del = el.querySelector(`.del[data-slot="${row.slot}"]`);
     if (!b || !del) continue;
     b.className = 'slot' + (row.open ? ' open' : '');
-    b.querySelector('.what').textContent = row.text;
+    setItems(b.querySelector('.what'), row.parts);
     b.querySelector('.played').textContent = row.played;
-    b.dataset.text = row.text;
+    b.dataset.text = JSON.stringify(row.parts);
     b.dataset.empty = row.empty ? '1' : '';
     b.disabled = row.open;
     del.classList.toggle('none', row.empty);
@@ -127,7 +140,7 @@ export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
         armed = setTimeout(disarm, 4000);
         armedRow = b;
         b.classList.add('armed');
-        b.querySelector('.what').textContent = `${slot} · start a new yard?`;
+        setItems(b.querySelector('.what'), [String(slot), 'start a new yard?']);
         return;
       }
       disarm();
