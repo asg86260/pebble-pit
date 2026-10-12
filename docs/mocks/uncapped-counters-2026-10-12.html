@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uncapped Counters Mock</title>
+<style>
+  :root {
+    --bg: #f4f4f4; --panel: #ffffff; --ink: #111111; --grey: #8c8c8c; --rule: #cfcfcf; --note: #555555;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #101010; --panel: #181818; --ink: #f0f0f0; --grey: #8c8c8c; --rule: #333333; --note: #aaaaaa; }
+  }
+  :root[data-theme="dark"] { --bg: #101010; --panel: #181818; --ink: #f0f0f0; --grey: #8c8c8c; --rule: #333333; --note: #aaaaaa; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 14px/1.45 ui-monospace, Menlo, Consolas, monospace; padding: 16px; overflow-x: hidden; }
+  h1 { font-size: 16px; margin: 0 0 6px; }
+  .top { color: var(--note); max-width: 760px; margin: 0 0 18px; }
+  .opt { background: var(--panel); border: 2px solid var(--ink); padding: 12px 16px 16px; margin: 0 0 18px; max-width: 1100px; }
+  .opt h2 { font-size: 15px; margin: 0 0 2px; }
+  .opt p { margin: 0 0 10px; color: var(--note); }
+  .who { font-weight: 700; margin: 10px 0 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+  .cell { border: 1px solid var(--rule); padding: 6px; min-width: 0; }
+  .cell small { display: block; color: var(--note); margin-bottom: 2px; }
+  canvas { width: 100%; height: auto; display: block; }
+  .beat { color: var(--note); min-height: 1.4em; }
+  .note { max-width: 760px; color: var(--note); }
+</style>
+</head>
+<body>
+<h1>Uncapped counters</h1>
+<p class="top">A mock from plain shapes, not the game: it cannot show the real walk (pips filling by thirds, the leaving clock), the hats and glyphs as the game draws them, the hover lines, or the counts moving at real yard speed. Brim glyphs are stand-ins: a notch in the middle for a cart, a notch at each end for a forklift.</p>
+
+<div id="root"></div>
+
+<p class="note">Reading of the ask: "miners" is the boulder's diggers (the quarry's miners already have seat pips). The diggers keep the - and +; the house's carriers have none, since haulers are the remainder. Typical counts in the game: diggers up to a handful (the gang is 5, the breaker hat capped at 3); haulers 100+; carts and forklifts single digits. Every pip is one body, black, no empty seats, since neither counter has a cap to be empty against.</p>
+
+<script>
+const P = 6, BTN = 24, W = 300, H = 190;
+const OPTS = [
+  ["A", "Every body a pip, wrapping", "One solid pip per body, a row per kind (forklifts, carts, then plain), shrinking and wrapping past 12 with the count written over the row."],
+  ["B", "Twelve pips and a remainder", "A row held to twelve pips, then the rest as +N after it. Specialists on top; the block never grows past one strip."],
+  ["C", "Pips by tens and hundreds", "Specialists as in A; plain bodies as pips of three sizes: a small one is one body, a middle one ten, a large one a hundred."]
+];
+const CASES = [
+  ["Diggers, 3", "dig", 3, 3], ["Diggers, 12", "dig", 12, 12], ["Diggers, live", "dig", 3, 12, true],
+  ["Carriers, 8 haulers", "car", 8, 8], ["Carriers, 146 haulers", "car", 146, 146], ["Carriers, live", "car", 8, 146, true]
+];
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// A row: list of pips {s, brim}, plus optional trailing text. Returns {w, h, items, text}.
+function lay(n, o) {
+  const brim = o.brim || null;
+  const mode = o.mode || "A";
+  if (mode === "B") {
+    const k = Math.min(n, 12);
+    return { w: (o.fixed ? 12 : k) * 18 - 6, h: 12, rows: [{ pips: Array.from({ length: k }, () => ({ s: 12, brim })), per: k }], plus: n > 12 ? "+" + (n - 12) : "", brim };
+  }
+  if (mode === "C" && n > 12 && !brim) {
+    const h = Math.floor(n / 100), t = Math.floor(n % 100 / 10), u = n % 10;
+    const list = [];
+    for (let i = 0; i < h; i++) list.push({ s: 24 });
+    for (let i = 0; i < t; i++) list.push({ s: 12 });
+    for (let i = 0; i < u; i++) list.push({ s: 6 });
+    return { w: list.reduce((a, p) => a + p.s + 6, -6), h: 24, rows: [{ pips: list, per: list.length, mixed: true }], plus: String(n), brim };
+  }
+  const small = n > 12;
+  const s = small ? 6 : 12, per = small ? Math.min(20, n) : n;
+  const rows = [];
+  for (let i = 0; i < n; i += per) rows.push({ pips: Array.from({ length: Math.min(per, n - i) }, () => ({ s, brim: small ? null : brim })), per });
+  return { w: per * (s + 6) - 6, h: rows.length * (s + 6) - 6, rows, plus: "", count: small && mode === "A" ? n : 0, brim, s };
+}
+
+function glyphBrim(c, x, y, s, g, ink, bg) {
+  c.fillStyle = ink; c.fillRect(x - 2, y - 4, s + 4, 4);
+  if (g === "cart") { c.fillStyle = bg; c.fillRect(x + s / 2 - 1, y - 3, 2, 2); }
+  if (g === "fork") { c.fillStyle = bg; c.fillRect(x, y - 3, 2, 2); c.fillRect(x + s - 2, y - 3, 2, 2); }
+}
+
+function drawLayRow(c, L, cx, y, ink, grey, bg) {
+  let x = cx - L.w / 2;
+  for (const r of L.rows) {
+    const rw = r.mixed ? L.w : r.pips.length * (r.pips[0].s + 6) - 6;
+    let xx = cx - rw / 2, yy = y;
+    if (r.mixed) {
+      xx = cx - L.w / 2;
+      for (const p of r.pips) { c.fillStyle = ink; c.fillRect(Math.round(xx), y + (L.h - p.s) / 2, p.s, p.s); xx += p.s + 6; }
+      continue;
+    }
+    for (let i = 0; i < r.pips.length; i++) {
+      const p = r.pips[i];
+      const row = Math.floor(i / r.per);
+      c.fillStyle = ink; c.fillRect(Math.round(xx), y + row * (p.s + 6), p.s, p.s);
+      if (p.brim) glyphBrim(c, Math.round(xx), y + row * (p.s + 6), p.s, p.brim, ink, bg);
+      xx += p.s + 6;
+    }
+  }
+  // rows after the first (wrapped) share the first loop above only for one row object; handled by per.
+}
+
+function layoutRows(n, o) {
+  const L = lay(n, o);
+  // flatten wrapped pips into one logical row object for drawing
+  return L;
+}
+
+function draw(c, kind, opt, d, t) {
+  const ink = css("--ink"), grey = css("--grey"), bg = css("--panel");
+  c.setTransform(2, 0, 0, 2, 0, 0); const H = +c.canvas.dataset.h; c.clearRect(0, 0, W, H); c.fillStyle = bg; c.fillRect(0, 0, W, H);
+  const mode = opt;
+  const blocks = [];
+  if (kind === "dig") {
+    const hats = Math.min(d.n, 3);
+    if (hats) blocks.push(lay(hats, { mode: "A", brim: "hat" }));
+    blocks.push(lay(d.n - hats || 0, { mode }));
+    if (d.n - hats <= 0) blocks.pop();
+  } else {
+    if (d.lifts) blocks.push(lay(d.lifts, { mode: "A", brim: "fork" }));
+    if (d.carts) blocks.push(lay(d.carts, { mode: mode === "B" ? "B" : "A", brim: "cart" }));
+    blocks.push(lay(d.n, { mode, fixed: true }));
+  }
+  const SEP = 12;
+  let hh = blocks.reduce((a, b) => a + b.h, 0) + SEP * (blocks.length - 1);
+  const strip = Math.max(...blocks.map(b => b.w));
+  const stripFull = strip + (mode === "B" && kind === "car" ? 0 : 0);
+  const textW = mode === "B" ? 40 : 0;
+  const total = stripFull + (mode === "B" ? 6 + textW : 0);
+  let cx = W / 2;
+  const btns = kind === "dig";
+  if (btns) cx = W / 2;
+  const top = Math.max(4, Math.floor((H - hh) / 2 / P) * P);
+  let y = top;
+  c.textBaseline = "middle"; c.font = "bold 12px ui-monospace, Menlo, Consolas, monospace";
+  const stripX = cx - (mode === "B" && kind === "car" ? textW / 2 : 0);
+  blocks.forEach((b, i) => {
+    const flat = flattenDraw(c, b, stripX, y, ink, bg);
+    if (b.plus && mode === "B") { c.fillStyle = ink; c.textAlign = "left"; c.fillText(b.plus, stripX + b.w / 2 + 6, y + 6); }
+    if (b.plus && mode === "C") { c.fillStyle = ink; c.textAlign = "left"; c.fillText(b.plus, stripX + b.w / 2 + 8, y + b.h / 2); }
+    if (b.count && mode === "A") {
+      const tw = c.measureText(String(b.count)).width + 8;
+      c.fillStyle = bg; c.fillRect(stripX - b.w / 2, y, tw, 14);
+      c.fillStyle = ink; c.textAlign = "left"; c.fillText(String(b.count), stripX - b.w / 2 + 4, y + 7);
+    }
+    y += b.h;
+    if (i < blocks.length - 1) { c.fillStyle = grey; c.fillRect(stripX - strip / 2, y + (SEP - 2) / 2, strip, 2); y += SEP; }
+  });
+  if (btns) {
+    const my = top + hh / 2;
+    const half = (mode === "C" || mode === "B" ? total : strip) / 2;
+    c.fillStyle = ink;
+    const lx = Math.round(stripX - strip / 2 - 6 - BTN), rx = Math.round(stripX + strip / 2 + 6 + 0);
+    c.fillRect(lx + 4, Math.round(my) - 1, BTN - 8, 2);
+    c.fillRect(rx + 4, Math.round(my) - 1, BTN - 8, 2); c.fillRect(rx + BTN / 2 - 1, Math.round(my) - BTN / 2 + 4, 2, BTN - 8);
+  }
+}
+
+// Draws one laid-out block centered on cx at y.
+function flattenDraw(c, b, cx, y, ink, bg) {
+  const r = b.rows;
+  if (r.length === 1 && r[0].mixed) { drawLayRow(c, b, cx, y, ink, null, bg); return; }
+  for (let ri = 0; ri < r.length; ri++) {
+    const row = r[ri];
+    const s = row.pips[0].s;
+    const rw = row.pips.length * (s + 6) - 6;
+    let xx = cx - (rw) / 2;
+    for (let i = 0; i < row.pips.length; i++) {
+      const p = row.pips[i];
+      c.fillStyle = ink; c.fillRect(Math.round(xx), y + ri * (s + 6), s, s);
+      if (p.brim) glyphBrim(c, Math.round(xx), y + ri * (s + 6), s, p.brim, ink, bg);
+      xx += s + 6;
+    }
+  }
+}
+
+// ---- page ----
+const root = document.getElementById("root");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const live = [];
+for (const [letter, name, cap] of OPTS) {
+  const sec = document.createElement("section"); sec.className = "opt";
+  sec.innerHTML = `<h2>${letter} &middot; ${name}</h2><p>${cap}</p>`;
+  for (const group of ["dig", "car"]) {
+    const g = document.createElement("div");
+    g.innerHTML = `<div class="who">${group === "dig" ? "The boulder's diggers (- and +)" : "The house's carriers (no buttons; 8 carts, 2 forklifts)"}</div>`;
+    const grid = document.createElement("div"); grid.className = "grid"; g.appendChild(grid);
+    for (const [label, k, a, b, isLive] of CASES.filter(x => x[1] === group)) {
+      const cell = document.createElement("div"); cell.className = "cell";
+      const cv = document.createElement("canvas"); const hh0 = k === "dig" ? 90 : 190; cv.width = W * 2; cv.height = hh0 * 2; cv.dataset.h = hh0;
+      cell.innerHTML = `<small>${label}</small>`; cell.appendChild(cv);
+      const beat = document.createElement("div"); beat.className = "beat"; if (isLive) cell.appendChild(beat);
+      grid.appendChild(cell);
+      const state = n => ({ n, carts: k === "car" ? 8 : 0, lifts: k === "car" ? 2 : 0 });
+      const c = cv.getContext("2d");
+      if (isLive) live.push({ c, k, letter, a, b, beat, state }); else draw(c, k, letter, state(a), 0);
+      if (!isLive) cv._r = () => draw(c, k, letter, state(a), 0);
+    }
+    sec.appendChild(g);
+  }
+  root.appendChild(sec);
+}
+// Count ticks one body at a time, up then down, holding at each end.
+function liveN(a, b, t) {
+  const L = 10, u = (t % L);
+  if (reduce) return b;
+  const up = 4, hold = 1.5, down = 3;
+  if (u < 1) return a;
+  if (u < 1 + up) return Math.round(a + (b - a) * (u - 1) / up);
+  if (u < 1 + up + hold) return b;
+  if (u < 1 + up + hold + down) return Math.round(b - (b - a) * (u - 1 - up - hold) / down);
+  return a;
+}
+function frame(ms) {
+  const t = ms / 1000;
+  for (const v of live) {
+    const n = liveN(v.a, v.b, t);
+    draw(v.c, v.k, v.letter, v.state(n), t);
+    v.beat.textContent = (v.k === "dig" ? "diggers " : "haulers ") + n;
+  }
+  if (!reduce) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+// Static cells repaint on theme change.
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => document.querySelectorAll("canvas").forEach(cv => cv._r && cv._r()));
+</script>
+</body>
+</html>
