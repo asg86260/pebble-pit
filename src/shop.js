@@ -26,6 +26,7 @@ import { crewRows, crewSections, crewList, crewListSections, WHERE_WORDS } from 
 import { DEEP_ROWS, DEEP_SECTIONS } from './deep/rows.js';
 import { shown } from './tween.js';
 import { onTap } from './tap.js';
+import { hangRibbon } from './ribbon.js';
 import { now as clockNow } from './clock.js';
 import { coarse } from './prefs.js';
 import { station as stationRow } from './stations.js';
@@ -366,7 +367,7 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
       if (shelf) { b.classList.add('tile'); if (!u.read && !coarse()) leanToCursor(b, u.key); }
       // The goal card wears its section's title as a sign on its own frame
       // (shelf.css), since the goal heading itself is not drawn on a shelf.
-      if (sect.goal) { b.classList.add('goal'); b.dataset.sign = sect.title; }
+      if (sect.goal) { b.classList.add('goal'); b.dataset.sign = sect.title; if (shelf) hangRibbon(b, sect.title); }
       // The strip along the tile's foot (DESIGN.md, "Refund and another"):
       // one half hands back the newest copy still waiting its turn, the
       // other buys the next, so the repeat the card's body also sells is a

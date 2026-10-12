@@ -2049,9 +2049,32 @@ export const TESTS = [
     const said = note ? `${ink(note)} on ${getComputedStyle(goal).backgroundColor}` : 'none';
     goal?.classList.remove('__hov');
     probe.remove();
+    // The sign is a canvas over the card's top-left edge (ribbon.js) that
+    // flaps with motion on and holds still with it off.
+    const rib = goal?.querySelector('canvas.ribbon');
+    const gr = goal?.getBoundingClientRect(), rr = rib?.getBoundingClientRect();
+    const overEdge = !!rr && !!gr && rr.left < gr.left && rr.right > gr.left && rr.top < gr.top && rr.bottom > gr.top;
+    const snap = () => rib.toDataURL();
+    const wasStill = document.body.classList.contains('still');
+    let moves = false, held = false;
+    if (rib) {
+      document.body.classList.remove('still');
+      for (let i = 0; i < 3; i++) await raf();
+      const a = snap();
+      for (let i = 0; i < 12 && !moves; i++) { await sleep(150); moves = snap() !== a; }
+      document.body.classList.add('still');
+      await sleep(100); for (let i = 0; i < 3; i++) await raf();
+      const b = snap();
+      await sleep(900); for (let i = 0; i < 3; i++) await raf();
+      held = snap() === b;
+      document.body.classList.toggle('still', wasStill);
+    }
     window.__board(null);
     newRun();
     return [
+      ok(overEdge, 'the ribbon canvas sits over the goal card\'s top-left edge', rr ? `${Math.round(rr.left - gr.left)},${Math.round(rr.top - gr.top)}` : 'none'),
+      ok(moves, 'and its pixels change between frames when motion is on'),
+      ok(held, 'and do not when the body is still'),
       ok(rest, 'the goal card reads at rest', said),
       ok(seen, 'and under the cursor its sentence is still a different color from the card', said),
       ok(stripW > 0 && stripW < cardW / 2, 'a queued shield offers a cancel a button wide, not a bar across the card', `${stripW} of ${cardW}`),
