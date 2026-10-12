@@ -133,6 +133,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- A notice is always drawn on top, over a tall house or any building, instead of being pushed sideways out of the window (src/selftest/touch.js, "a notice is drawn over a building that reaches into the sky").
+
 - The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).
 - A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
 **New this release**

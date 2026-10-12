@@ -77,29 +77,22 @@ el.addEventListener('transitionend', () => {
   if (!el.classList.contains('up')) el.hidden = true;
 });
 
-// Where the card stands: the top edge, centered -- unless a building reaches
-// into that sky, as the settlement does once it is a few storeys tall in a
-// short window (a phone on its side), in which case the card slides sideways
-// to the clearer side of it, inside the glass. Asked every frame the card is
-// up, since the view moves under it; written only when the answer changes.
-// The buildings are the stations' own rectangles, read through the same
-// door the boards use, so a new station is dodged without being named. Then
-// the corner cards: a card it would still land on -- the story's, on a
-// phone, where it reaches the middle -- it stands under, as the mess tags do
-// (dodge.js), and glides there if the card grows under it.
+// Where the card stands: the top edge, centered, drawn over whatever is
+// there -- a notice is the top layer, over the houses and every building, a
+// settlement reaching into the sky included (the owner's call, 2026-10-12).
+// It steps aside only for the page's own squares in the corner (fullscreen.js,
+// pause.js), which are clickable and already on the glass, and stands under a
+// corner card it would still land on -- the story's, on a phone -- as the mess
+// tags do (dodge.js), gliding there if the card grows under it. Asked every
+// frame the card is up; written only when the answer changes.
 let seat = null;
 function seatToast() {
   const w = el.offsetWidth, h = el.offsetHeight;
   if (!w) return;
-  const top = 12, left0 = (S.W - w) / 2;
-  const box = { x: left0, y: top, w, h };
-  const rects = STATIONS.map(standRect).filter(Boolean);
-  if (S.crew > 0) rects.push(houseRect());
-  const onScreen = r => ({ x: (r.x - S.camX) * S.zoom, y: (r.y - S.camY) * S.zoom, w: r.w * S.zoom, h: r.h * S.zoom });
+  const left0 = (S.W - w) / 2;
+  const box = { x: left0, y: el.offsetTop, w, h };
   const meets = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-  // and the two squares in the corner (fullscreen.js, pause.js), which are
-  // the page's, already on the glass
-  const boxes = rects.map(onScreen);
+  const boxes = [];
   for (const id of ['pause', 'fullscreen']) {
     const b = document.getElementById(id);
     if (b && !b.hidden) { const r = b.getBoundingClientRect(); boxes.push({ x: r.left, y: r.top, w: r.width, h: r.height }); }
@@ -107,7 +100,7 @@ function seatToast() {
   let x = left0;
   for (const r of boxes) {
     if (!meets(box, r)) continue;
-    // to whichever side of the building has the room, and only if it has it
+    // to whichever side of the square has the room, and only if it has it
     const leftOf = r.x - 8 - w, rightOf = r.x + r.w + 8;
     if (rightOf + w <= S.W - 8 && (leftOf < 8 || S.W - rightOf >= r.x)) x = rightOf;
     else if (leftOf >= 8) x = leftOf;

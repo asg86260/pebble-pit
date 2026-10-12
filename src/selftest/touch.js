@@ -200,9 +200,9 @@ export const TESTS = [
     ];
   }],
 
-  ['a notice stands clear of a building that reaches into the sky', async () => {
+  ['a notice is drawn over a building that reaches into the sky', async () => {
     // A settlement tall enough to reach the top edge, where the card lands;
-    // the card slides to the clearer side rather than over the rooms.
+    // the card is the top layer and stands over the rooms, whole.
     window.__nocine();
     window.__crew(35, 30, 0, 0);
     run(3);
@@ -212,7 +212,9 @@ export const TESTS = [
     for (let i = 0; i < 40 && document.getElementById('toast').hidden; i++) await frames(1);
     await sleep(450);                       // the card's slide is a real transition
     const s = state();
-    const t = document.getElementById('toast').getBoundingClientRect();
+    const toastEl = document.getElementById('toast');
+    const t = toastEl.getBoundingClientRect();
+    const top = document.elementFromPoint((t.left + t.right) / 2, (t.top + t.bottom) / 2);
     const hr = { x: (h.x - s.camX) * s.zoom, y: (h.y - s.camY) * s.zoom, w: h.w * s.zoom, h: h.h * s.zoom };
     const reaches = hr.y < t.bottom;
     const meets = t.left < hr.x + hr.w && hr.x < t.right && t.top < hr.y + hr.h && hr.y < t.bottom;
@@ -220,8 +222,10 @@ export const TESTS = [
     return [
       ok(!document.getElementById('toast').hidden, 'a notice is up'),
       ok(reaches, 'and the house reaches the sky the card lands in', `house top ${Math.round(hr.y)}, card bottom ${Math.round(t.bottom)}`),
-      ok(!meets, 'so the card stands beside it, not over it', `card ${Math.round(t.left)}..${Math.round(t.right)}, house ${Math.round(hr.x)}..${Math.round(hr.x + hr.w)}`),
-      ok(t.left >= 0 && t.right <= s.W, 'inside the window'),
+      ok(meets, 'so the card is drawn over it', `card ${Math.round(t.left)}..${Math.round(t.right)}, house ${Math.round(hr.x)}..${Math.round(hr.x + hr.w)}`),
+      ok(t.left >= 0 && t.right <= s.W && t.top >= 0, 'fully inside the window'),
+      ok(top && (top === toastEl || toastEl.contains(top)), 'and on top: the card is what is at its own center', top ? (top.id || top.tagName) : 'nothing'),
+      ok(getComputedStyle(toastEl).opacity === '1', 'and fully visible'),
     ];
   }],
 

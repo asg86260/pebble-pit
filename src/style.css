@@ -1055,7 +1055,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   position: fixed;
   z-index: 11;
   left: 50%; top: calc(var(--edge) + env(safe-area-inset-top, 0px));
-  /* --toast-dx: how far off center it stands to clear a building, --toast-dy
+  /* --toast-dx: how far off center it stands to clear a corner square, --toast-dy
      how far down to clear a corner card (toast.js) */
   transform: translate(calc(-50% + var(--toast-dx, 0px)), calc(var(--toast-dy, 0px) - 24px));
   opacity: 0;
