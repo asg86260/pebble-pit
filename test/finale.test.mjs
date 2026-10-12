@@ -13,7 +13,7 @@ import { P, WORKER, SERPENT_PHASES, SERPENT_WOUND, FINALE_END_CELLS } from '../s
 import { TYPE, isDeepType } from '../src/jobs.js';
 import { belowYard } from '../src/route.js';
 import { migrate } from '../src/migrations/index.js';
-import { SAVE_V } from '../src/config/saves.js';
+import finale from '../src/migrations/2026-10-12-finale.js';
 
 const LAST = SERPENT_PHASES - 1;
 
@@ -198,7 +198,7 @@ group('a reload mid-finale lands at its end', async () => {
 // left end and off the counts, her station's gear hung up for its next hand.
 group('an old save past the kill gets the two of them at the left end, off the count', async () => {
   const s = {
-    saveV: SAVE_V - 1, crew: 5, deepCrew: 3, serpentFreed: true, snatched: true,
+    saveV: finale.v - 1, crew: 5, deepCrew: 3, serpentFreed: true, snatched: true,
     beatsDone: ['show', 'freed', 'freedsheet'],
     stations: [{ id: 's1', kind: 'altar', slot: 0, built: true, cls: 'sword', rung: 8, paid: [], fighter: 'u9' }],
     who: [{ type: 'hauler', uid: 'u1' }, { type: 'hauler', uid: 'u2' },
