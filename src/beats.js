@@ -172,8 +172,13 @@ export function markDone(...keys) {
 export const SAVE = {
   fields: ['beat'],
   write(out) {
-    // A scene on its way out has let go as far as the player is concerned.
-    out.beat = { camera: S.beat.camera && !(S.shot && S.shot.out) ? S.beat.camera : null };
+    // A scene on its way out has let go as far as the player is concerned,
+    // so it is written down as seen: its cue was an edge, and a reload that
+    // dropped it from both would leave it neither playing nor played.
+    const leaving = S.shot && S.shot.out;
+    out.beat = { camera: S.beat.camera && !leaving ? S.beat.camera : null };
+    if (S.beat.camera && leaving && Array.isArray(out.beatsDone) && !out.beatsDone.includes(S.beat.camera))
+      out.beatsDone = [...out.beatsDone, S.beat.camera];
   },
   read(s) {
     // A chain of beats (the opening, the reunion) is one story: a save taken

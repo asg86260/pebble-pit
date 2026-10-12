@@ -14,18 +14,20 @@
 
 import { P, RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_AT, RIFT_UP, RIFT_GULP,
          RIFT_GULP_SHOW, RIFT_SHAKE, RIFT_REACH0,
-         RIFT_INHALE_MAX, RIFT_INHALE_SHOW } from './config.js';
+         RIFT_INHALE_MAX, RIFT_INHALE_SHOW, RIFT_SWELL_S } from './config.js';
 import { S, pit, rift } from './state.js';
-import { swallow, pitWidth, pitGrains } from './pit.js';
+import { swallow, pitWidth, pitGrains, tearHole } from './pit.js';
 import { sfx } from './audio.js';
 
 // --- how big it is -------------------------------------------------------------
-// The disc grows with what it has eaten (`S.riftAte`) and nothing else, and
-// the diameter is derived here rather than stored. The square root
-// front-loads the growth and slows toward the ceiling. Whole cells: a disc
-// half a cell wider is a hairline.
+// The disc grows with what it has eaten (`S.riftAte`), or with the swell the
+// rescue gave it if that is further along (`owedArc`), and the diameter is
+// derived here rather than stored. The square root front-loads the growth and
+// slows toward the ceiling. Whole cells: a disc half a cell wider is a
+// hairline.
+const growth = () => Math.max(S.riftAte || 0, S.riftSwell || 0);
 export function riftCells() {
-  const k = Math.sqrt(Math.min(1, (S.riftAte || 0) / ABYSS_AT));
+  const k = Math.sqrt(Math.min(1, growth() / ABYSS_AT));
   return Math.round(RIFT_W0 + (RIFT_WMAX - RIFT_W0) * k);
 }
 
@@ -80,6 +82,7 @@ export function riftReach() {
 // Nothing is accumulated between frames and no remainder is carried: what is
 // in the hole is what goes.
 export function stepRift(dt) {
+  owedArc(dt);
   if (!riftOpen()) return 0;                  // not torn: nothing is pulled
   // Reseated every step because it grows: the bottom edge stays RIFT_UP
   // cells off the ground and the swelling goes upward.
@@ -87,7 +90,7 @@ export function stepRift(dt) {
   // The drowning: the hole has eaten its fill and gives way downward. The
   // gulp runs again, this time as `abyssLine` rising out of the floor
   // (pit.js). One-way, once.
-  if (!S.drowned && (S.riftAte || 0) >= ABYSS_AT) {
+  if (!S.drowned && growth() >= ABYSS_AT) {
     S.drowned = true;
     S.riftGulp = RIFT_GULP;
     S.riftShake = RIFT_SHAKE;
@@ -97,6 +100,27 @@ export function stepRift(dt) {
   const take = riftBite();
   if (!take) return 0;
   return swallow(take, RIFT_INHALE_SHOW, false, riftReach());
+}
+
+// --- the rest of the arc, after the rescue -----------------------------------
+// The story ends at the rescue and the second half starts from a drowned pit,
+// so a yard that got the sqwife out before its hole filled is owed the rest of
+// the arc. Once the rescue's beats and its sheet are over and nothing holds
+// the yard, the camera or the sheet, the hole is torn the way a full one
+// tears (its gulp is the tear's scene), and once that scene has let go the
+// disc swells to its full size over RIFT_SWELL_S, so the drowning comes on
+// its own, by the same line as on the ordinary route. Read off the facts
+// each frame, so an old save rescued and not drowned is owed it on load.
+// The swell is its own number, not grains eaten: `riftAte` stays a count.
+function owedArc(dt) {
+  if (!S.rescued || S.drowned || !S.beatsDone.includes('ending')) return;
+  if (S.beat.yard || S.beat.camera || S.beat.sheet) return;
+  if (!riftOpen()) { tearHole(); return; }
+  if (S.riftGulp > 0) return;
+  // Even in the diameter, which is the thing watched: the square root in
+  // `riftCells` turned the other way.
+  const k = Math.min(1, Math.sqrt(growth() / ABYSS_AT) + dt / 1000 / RIFT_SWELL_S);
+  S.riftSwell = k >= 1 ? ABYSS_AT : k * k * ABYSS_AT;
 }
 
 // The tearing: the hole emptied over RIFT_GULP seconds, however much is in it.
@@ -114,4 +138,4 @@ function gulp(dt) {
   const take = left <= 0 ? have : Math.ceil(have * Math.min(1, (was - left) / was));
   return swallow(take, RIFT_GULP_SHOW, true);
 }
-
+
