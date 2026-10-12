@@ -114,4 +114,19 @@ export const TESTS = [
       ];
     } finally { f.remove(); }
   }],
+
+  ['the materials show the coin marks the counter draws, not glyph canvases', async () => {
+    newRun();
+    await settle();
+    Object.assign(S, { seenShard: true, seenSpore: true, seenSpark: true });
+    await keyI();
+    const out = [];
+    for (const k of ['dust', 'shard', 'spore', 'spark']) {
+      const b = book().querySelector(`.it[data-key="${k}"]`);
+      out.push(ok(!!b?.querySelector(`.mark i.${k}`) && !b.querySelector('canvas'),
+        `${k} wears its coin mark`));
+    }
+    await esc();
+    return out;
+  }],
 ];
