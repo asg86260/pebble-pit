@@ -174,8 +174,9 @@ group('an old yard with more than the new hole holds tears it, and keeps every g
   const s = state();
   const S = yard.S;
   const through = s.rift + s.riftHeld.shards + s.riftHeld.spores + s.riftHeld.sparks;
-  const tearing = S.riftGulp > 0;
-  run(3);                                       // the tear runs, and the rules watch it
+  // Owed on load, and played once the scene's camera has come to the hole.
+  const tearing = S.riftGulp > 0 || S.riftDue === 'tear';
+  run(6);                                       // the camera comes, the tear runs, the rules watch it
   const after = state();
   return [
     ok(s.stored === player.stored && s.shards === player.shards && s.sparks === player.sparks
@@ -185,8 +186,8 @@ group('an old yard with more than the new hole holds tears it, and keeps every g
        `${s.pitGrains} of ${yard.pitMod.pitCapacity()}`),
     ok(through > 0 && s.riftAte === through, 'the rest went through, counted as eaten',
        `${through} through, ate ${s.riftAte}`),
-    ok(s.riftOpen && tearing, 'and the hole is tearing, not standing open with no tearing seen',
-       `open ${s.riftOpen}, gulp ${S.riftGulp}`),
+    ok(after.riftOpen && tearing, 'and the hole tears on screen, not standing open with no tearing seen',
+       `open ${after.riftOpen}, owed ${tearing}`),
     ok(after.pitDust + after.rift === after.stored, 'and the books balance after it',
        `${after.pitDust} + ${after.rift} against ${after.stored}`)
   ];
