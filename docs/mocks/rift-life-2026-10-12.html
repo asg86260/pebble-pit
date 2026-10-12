@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Life Through the Rift</title>
+<style>
+/* Six panes, each the torn rift at both of its sizes side by side on a shared
+   clock: just torn (7 cells) on the left, grown (20 cells) on the right. The
+   panes are the yard's own white page and the rift's black in either theme;
+   the chrome around them follows the viewer. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --track: #e6e4ec; --mark: #b9a4e0; --mark2: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef;
+  --track: #24222c; --mark: #4e2090; --mark2: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef;
+  --track: #24222c; --mark: #4e2090; --mark2: #a979ef; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; text-wrap: balance; }
+h2 { font-size: 13px; margin: 8px 0 0; text-transform: uppercase; letter-spacing: .08em; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.note { border: 1px dashed var(--rule); padding: 10px 12px; display: grid; gap: 6px; background: var(--panel); }
+.note b { color: var(--fg); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.bar .clock { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card h3 { margin: 0; font-size: 14px; }
+.card p { font-size: 12px; }
+.sizes { display: flex; justify-content: space-around; font-size: 11px; color: var(--dim); margin-top: -4px; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #fff; }
+.timeline { position: relative; height: 14px; background: var(--track); cursor: pointer; }
+.timeline .g { position: absolute; top: 0; bottom: 0; background: var(--mark); }
+.timeline .g.s { background: var(--mark2); }
+.timeline .head { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg); }
+dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; font-size: 12px; }
+dt { color: var(--fg); font-weight: 600; }
+dd { margin: 0; color: var(--dim); }
+.keys { display: none; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.keys.on { display: grid; }
+.keys figure { margin: 0; display: grid; gap: 2px; }
+.keys figcaption { font-size: 11px; color: var(--dim); }
+.q { border: 2px solid var(--accent); padding: 10px 12px; background: var(--panel); display: grid; gap: 6px; }
+.q h2 { margin: 0; color: var(--accent); }
+ul { margin: 0; padding-left: 18px; color: var(--dim); max-width: 92ch; }
+li { margin: 2px 0; }
+li b { color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Life Through the Rift</h1>
+    <p>The pit's serpent glimpses, given to the rift: things crossing the sky on the other side of the tear, and now
+      and then the serpent itself. Every pane shows the rift at both ends of its life on one clock: <b>just torn,
+      7 cells</b> on the left and <b>grown, 20 cells</b> on the right, so each glimpse can be judged at the size it
+      will be seen most (small, for hours) and at its best (big, just before the drowning). Drawn on the 6px grid in
+      the rift's look: the wavering rim, the paper halo, the three parallax skies of purple stars, the deep's eight
+      creatures in the deep's own tones.</p>
+  </div>
+
+  <div class="note">
+    <p><b>This is a mock.</b> It is drawn from plain shapes, not by the game. It cannot show: the camera, so the three
+      star skies and the creatures do not slide against each other as the yard pans (in the game that is where most
+      of the depth comes from); the lens bend on the yard round the rim; the real grain stream and its orbits (a
+      handful of stand-ins circle here); the rift growing between the two sizes; the zoom; or the game's frame
+      pacing. Time is squeezed: each pane plays two or three glimpses a minute so you are not waiting, where the game
+      would wait the randomized interval written under each one. The creatures here are not bent by the lens the
+      way the stars are (see the open questions).</p>
+  </div>
+
+  <div class="bar" role="group" aria-label="Playback">
+    <button id="play" aria-pressed="true">pause</button>
+    <button data-speed="1" aria-pressed="true">1x</button>
+    <button data-speed="3" aria-pressed="false">3x</button>
+    <button id="next">next glimpse</button>
+    <button id="keys" aria-pressed="false">key frames</button>
+    <span class="clock" id="clock">0.0 s</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <h2>Shared to all of them</h2>
+  <ul>
+    <li><b>Only while torn:</b> between the tear and the drowning. Never during the tear's gulp or any cutscene,
+      never two at once, and the first one no sooner than a minute after the tear, so the tear itself stands alone.
+      A yard reaching the rescue first gets only the eight-second swell before the drowning: nothing is scheduled
+      into it.</li>
+    <li><b>Behind the rim, between the skies:</b> everything is drawn inside the tear's clip, between the star
+      layers by depth: a far thing has the middle and near stars over it, a near one is over all of them. The grains
+      going in stay over everything.</li>
+    <li><b>Held steps:</b> every crossing moves a whole cell at a time on its depth's beat (far 2.5, middle 3.5,
+      near 5 cells a second); the creatures' own wriggles are their deep sprites at an eighth of a second. No
+      flash, no shake, nothing brightens the disc.</li>
+    <li><b>The same world behind both sizes:</b> a creature or the serpent is the same size and speed whatever
+      the disc measures, so the small rift is a keyhole and the grown one a window.</li>
+    <li><b>Picture only:</b> no hit area, no board, no sound (the hits-only rule).</li>
+  </ul>
+
+  <div class="q">
+    <h2>Open questions</h2>
+    <ul>
+      <li><b>Foreshadowing only.</b> The rift closes at the drowning and the serpent is first met at the snatch,
+        after it, so every serpent glimpse through the rift comes before the player has seen him. Is that the
+        point (a promise), or should the rift show only creatures and leave the serpent to the pit?</li>
+      <li><b>Should the lens bend them?</b> The stars are pushed out toward the rim. A creature bent the same way
+        would stretch as it nears the edge and squeeze through the middle, which reads as lensing but breaks the
+        sprites into gaps at 7 cells.</li>
+      <li><b>Small-rift sizes.</b> Near creatures and the eye are bigger than the just-torn window on purpose. If
+        you would rather the 7-cell rift always show a whole creature, the near depth is dropped until the disc
+        reaches about 12 cells.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ---- the tones, as seen ------------------------------------------------------------------
+// The abyss's two ramps (config/rift.js), dark to bright. The deep draws its
+// creatures in these as seen; through the tear the window is the same black, so
+// they are used as they are.
+const P = 6, W = 60, H = 36, GROUND = 32, UP = 8, LOOP = 60;
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e',
+               '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465',
+                 '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const MAGIC_TONES = ['#9b5de5', '#8244d8', '#6a2fbe', '#4e2090'];
+const WHITE = 11;
+// The creatures' tones, as render/fish.js names them.
+const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
+const Pu = [2, 3, 4, 5, 7, 9, 10, 11, 11].map(i => PURPLES[i]);
+const BLACK = GREYS[0];
+const unit = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const ell = (put, cx, cy, rx, ry, tone) => {
+  for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++)
+    for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) {
+      const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+      if (d <= 1) put(x, y, tone(x, y, d));
+    }
+};
+// The deep's eight, copied from src/render/fish.js unchanged.
+const SP = [
+  { name: 'Lantern angler', L: 18, bob: t => Math.sin(t * 2.4) * 1.6,
+    draw(put, t) {
+      const flick = Math.sin(t * 9), jaw = Math.sin(t * 6) > 0.3 ? 1 : 0;
+      ell(put, 6.5, 0, 6, 3.2, (x, y, d) => y > 1 ? G[1] : d > 0.7 ? G[3] : G[2]);
+      for (let x = 0; x <= 4; x++) put(x, 2 + jaw, G[1]);
+      for (const x of [0, 2, 4]) put(x, 1, G[5]);
+      for (let i = 0; i < 4; i++) { put(11 + i, Math.round(flick * i * 0.4) - 1, G[2]); put(11 + i, Math.round(flick * i * 0.4) + 1, G[1]); }
+      put(12, Math.round(flick * 1.6), G[2]);
+      put(8, -4, G[1]); put(9, -4, G[1]);
+      put(4, -1, G[5]); put(3, -1, G[0]);
+      const bulb = Pu[6 + Math.round(Math.sin(t * 5) + 1)];
+      for (const [x, y] of [[9, -3], [8, -4], [6, -5], [4, -6], [2, -6], [1, -5]]) put(x, y, G[1]);
+      put(0, -5, bulb); put(0, -4, bulb); put(-1, -5, Pu[8]); put(-1, -4, bulb);
+    } },
+  { name: 'Ribbon eel', L: 26, bob: t => 0,
+    draw(put, t) {
+      for (let i = 0; i < 26; i++) {
+        const amp = 0.6 + i * 0.09, yy = Math.round(Math.sin(i / 2.4 - t * 7) * Math.min(2.6, amp)), th = i < 3 ? 2 : i < 18 ? 1.5 : 1;
+        put(i, yy, Pu[i < 3 ? 7 : 6]);
+        if (th >= 1.5) put(i, yy + 1, Pu[i % 4 < 2 ? 8 : 7]);
+        if (i > 3 && i < 21 && i % 2 === 0) put(i, yy - 1, Pu[4]);
+        if (i < 3) put(i, yy - 1, Pu[6]);
+      }
+      put(1, Math.round(Math.sin(1 / 2.4 - t * 7) * 0.7) - 1, G[5]);
+      put(-1, Math.round(Math.sin(-t * 7) * 0.6), G[5]);
+    } },
+  { name: 'Glass jelly', L: 18, bob: t => Math.sin(t * 1.5) * 3,
+    draw(put, t) {
+      const pulse = Math.sin(t * 3.2), rx = 5 + pulse * 0.8, ry = 4 - pulse * 0.9;
+      for (let x = 0; x <= 6; x++) {
+        const w = ry * Math.sqrt(Math.max(0, 1 - ((rx - x) / rx) ** 2));
+        for (let y = -Math.round(w); y <= Math.round(w); y++)
+          put(x, y, Math.abs(y) >= Math.round(w) || x === 0 ? G[5] : G[3 + ((x + y) & 1)]);
+      }
+      for (let j = 0; j < 3; j++) put(2 + j * 1.5, Math.round(Math.sin(t * 3 + j * 2) * 1.4), Pu[Math.sin(t * 4 + j * 2.1) > 0 ? 8 : 6]);
+      for (let j = -2; j <= 2; j++)
+        for (let x = 7; x < 18; x++) put(x, Math.round(j * 0.9 + Math.sin((x - 7) / 1.6 - t * 4 + j) * (0.6 + (x - 7) * 0.12)), (x + j) % 3 ? G[2] : G[1]);
+      for (let x = 7; x < 12; x++) for (const o of [-1, 1]) put(x, o + Math.round(Math.sin(x - t * 3)), Pu[5]);
+    } },
+  { name: 'Skull fish', L: 20, bob: t => Math.sin(t * 0.9) * 1,
+    draw(put, t) {
+      const chat = Math.sin(t * 11) > 0 ? 1 : 0, sway = x => Math.round(Math.sin(x / 3.2 - t * 5) * 1.2);
+      ell(put, 4.5, -0.5, 4.3, 3.6, (x, y, d) => d > 0.72 ? G[5] : G[4]);
+      for (let x = 0; x <= 2; x++) { put(x, 0, G[4]); put(x, 1, G[4]); }
+      ell(put, 3.6, -1, 1.7, 1.6, () => G[0]);
+      put(3, -1, G[5]);
+      for (const x of [0, 1, 2, 3, 4]) put(x, 2, x % 2 ? G[5] : G[2]);
+      for (let x = 0; x <= 5; x++) { put(x, 3 + chat, G[3]); if (x % 2 === 0) put(x, 2 + chat, G[5]); }
+      for (let x = 7; x < 20; x++) put(x, sway(x), x % 2 ? G[4] : G[3]);
+      for (let x = 8; x <= 14; x += 2) for (const o of [-2, -1, 1, 2]) put(x, sway(x) + o, o === -1 || o === 1 ? G[3] : G[2]);
+      for (const o of [-2, -1, 1, 2]) put(19 + (Math.abs(o) === 2 ? 1 : 0), sway(19) + o, G[3]);
+    } },
+  { name: 'Wandering eye', L: 22, bob: t => Math.sin(t * 2.6) * 2,
+    draw(put, t) {
+      const blink = (t % 1.7) < 0.22 ? (t % 1.7) / 0.22 : 0, lid = Math.round(Math.sin(blink * Math.PI) * 7);
+      ell(put, 4, 0, 4.2, 4.2, (x, y, d) => d > 0.8 ? G[3] : G[5]);
+      ell(put, 2.4, 0, 2.2, 2.2, () => Pu[8]);
+      ell(put, 2.4, 0, 1.4, 1.4, () => Pu[6]);
+      ell(put, 2.2, 0, 0.7, 0.7, () => BLACK);
+      put(3, -1, G[5]);
+      for (const [x, y] of [[6, -2], [7, 0], [6, 2], [5, -3]]) put(x, y, Pu[4]);
+      for (let y = -5; y < -5 + lid; y++) for (let x = -1; x <= 9; x++) if (((x - 4) / 4.6) ** 2 + (y / 4.6) ** 2 <= 1) put(x, y, G[2]);
+      for (let i = 0; i < 16; i++) put(8 + i, Math.round(Math.sin(i / 2 - t * 5) * (0.8 + i * 0.1)), Pu[Math.max(1, 6 - (i >> 2))]);
+    } },
+  { name: 'Spiral drifter', L: 12, bob: t => Math.sin(t * 1.8) * 1.5,
+    draw(put, t) {
+      const rot = t * 2.6;
+      ell(put, 7, 0, 4.6, 4.6, (x, y, d) => {
+        const r = Math.hypot(x - 7, y), ang = Math.atan2(y, x - 7) - rot;
+        const turn = ((ang / (Math.PI * 2) + r / 1.7) % 1 + 1) % 1;
+        return d > 0.8 ? G[5] : turn < 0.35 ? G[1] : turn < 0.7 ? G[3] : G[4];
+      });
+      ell(put, 1.6, 1, 2.6, 1.6, () => Pu[5]);
+      ell(put, 1.2, 1, 1.4, 0.8, () => Pu[6]);
+      const w = Math.sin(t * 5);
+      put(-1, -1 + Math.round(w), Pu[7]); put(-2, -2 + Math.round(w * 1.5), Pu[6]);
+      put(-1, 2 - Math.round(w), Pu[7]); put(-2, 3 - Math.round(w * 1.5), Pu[6]);
+      put(1, 0, G[5]);
+    } },
+  { name: 'Many-mouthed blob', L: 16, bob: t => Math.sin(t * 2.2) * 2,
+    draw(put, t) {
+      const lobes = [[7, 0, 4.4 + Math.sin(t * 3) * 0.7, 3.6], [3.5, -1, 3 + Math.sin(t * 4 + 1) * 0.6, 2.8], [10.5, 1, 3.2 + Math.sin(t * 3.5 + 2) * 0.6, 3], [6, 2.4, 2.6 + Math.sin(t * 5 + 3) * 0.5, 2.4]];
+      const inside = (x, y) => lobes.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1);
+      for (let x = -1; x < 16; x++) for (let y = -6; y <= 6; y++) {
+        if (!inside(x, y)) continue;
+        const rim = !inside(x + 1, y) || !inside(x - 1, y) || !inside(x, y + 1) || !inside(x, y - 1);
+        put(x, y, rim ? Pu[7] : Pu[4 + ((x * 3 + y * 5) & 1) + (unit(x * 7 + y) > 0.8 ? 1 : 0)]);
+      }
+      [[3, 0, 0], [7, -2, 1.7], [9, 2, 3.1], [5, 3, 4.4], [12, 0, 5.2]].forEach(([x, y, ph]) => {
+        const open = Math.max(0, Math.sin(t * 3 + ph)) * 1.4;
+        if (open > 0.3) { put(x, y, BLACK); if (open > 0.8) put(x, y + 1, BLACK); put(x + 1, y, G[5]); }
+      });
+      for (let x = 0; x < 15; x += 2) if (unit(x + Math.floor(t * 6)) > 0.5) { put(x, -5 - (unit(x) > 0.5 ? 1 : 0), Pu[6]); put(x, 5 + (unit(x + 3) > 0.5 ? 1 : 0), Pu[6]); }
+    } },
+  { name: 'Toothed ring', L: 10, bob: t => 0,
+    draw(put, t) {
+      ell(put, 5, 0, 5.2, 5.2, (x, y, d) => d > 0.72 ? G[3] : d > 0.32 ? G[2] : BLACK);
+      for (let i = 0; i < 12; i++) { const a = t * 5 + i * Math.PI / 6; put(5 + Math.cos(a) * 5.6, Math.sin(a) * 5.6, G[5]); }
+      for (let i = 0; i < 8; i++) { const a = -t * 7 + i * Math.PI / 4; put(5 + Math.cos(a) * 2.6, Math.sin(a) * 2.6, G[4]); }
+      put(5, 0, G[0]);
+    } },
+];
+
+// ---- helpers ------------------------------------------------------------------------------
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const spec = (i, n) => { const h = Math.sin(i * 127.1 + n * 311.7) * 43758.5453; return h - Math.floor(h); };
+const held = (lt, step = 1 / 8) => Math.floor(lt / step) * step;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lum = h => { const n = parseInt(h.slice(1), 16); return ((n >> 16) & 255) * 0.3 + ((n >> 8) & 255) * 0.59 + (n & 255) * 0.11; };
+// A thing further off is painted lower down its own ramp: there is no alpha.
+const RAMP = new Map();
+for (const ramp of [GREYS, PURPLES]) ramp.forEach((c, i) => { if (!RAMP.has(c) || i) RAMP.set(c, [ramp, i]); });
+const darker = (c, n) => { const r = RAMP.get(c); return r && r[1] ? r[0][Math.max(1, r[1] - n)] : c; };
+
+// ---- depths -------------------------------------------------------------------------------
+// far, middle, near: cells a second (held, a whole cell a step), the size of a
+// sprite unit in yard cells, and how a creature is inked at that depth.
+const SPEED = [2.5, 3.5, 5];
+const SCALE = [0.2, 0.3, 0.5];
+const SILHOUETTE = [PURPLES[5], PURPLES[7], PURPLES[9]];
+
+// ---- the two rifts ------------------------------------------------------------------------
+// Seated as seatRift does: whole cells across, the bottom edge UP cells off the ground.
+const RIFTS = [{ cells: 7, x0: 8 }, { cells: 20, x0: 33 }].map(r => {
+  const w = r.cells * P, x = r.x0 * P, y = (GROUND - UP) * P - w;
+  return { ...r, cx: x + w / 2, cy: y + w / 2, rad: w / 2, R: r.cells / 2, cxC: (x + w / 2) / P, cyC: (y + w / 2) / P };
+});
+
+// ---- what is behind the tear --------------------------------------------------------------
+// Every option fills a frame for one rift: cells by depth (0 far .. 2 near), in
+// world cells, and a blot that puts out the stars where something near stands.
+function frame() { return { cells: [new Map(), new Map(), new Map()], blot: null }; }
+function put(f, d, col, row, tone, brightest = true) {
+  const k = col + ',' + row, was = f.cells[d].get(k);
+  if (!was || !brightest || lum(tone) > lum(was.tone)) f.cells[d].set(k, { col, row, tone });
+}
+
+// One of the deep's creatures at depth `d`, its front at `head` cells from the
+// rift's middle (x), `y` cells down from it, swimming `dir`. Its sprite units
+// are folded onto whole yard cells, the brightest unit winning a cell.
+function creature(f, rift, kind, d, head, y, dir, tA, inked) {
+  const sp = SP[kind], s = SCALE[d];
+  const bob = Math.round(sp.bob(tA) * s);
+  sp.draw((x, yy, tone) => {
+    const col = Math.floor(rift.cxC + head - dir * x * s);
+    const row = Math.floor(rift.cyC + y + bob + yy * s);
+    put(f, d, col, row, inked(tone));
+  }, tA);
+}
+const inkAt = (d, silhouette) => silhouette ? () => SILHOUETTE[d] : d === 2 ? c => c : c => darker(c, d === 1 ? 3 : 5);
+
+// A crossing's lead: from a cell outside the window on the side it comes in,
+// a whole cell a step. `flee` (seconds into the crossing) triples the pace.
+function lead(rift, ev, lt) {
+  const v = SPEED[ev.d];
+  const run = ev.flee != null && lt > ev.flee ? ev.flee * v + (lt - ev.flee) * v * 3 : lt * v;
+  return -ev.dir * (rift.R + 1) + ev.dir * Math.floor(run);
+}
+const spanOf = ev => Math.max(...ev.members.map(([k, back]) => back + SP[k].L * SCALE[ev.d]));
+
+function drawCrossing(f, rift, ev, lt) {
+  const head = lead(rift, ev, lt), tA = held(lt);
+  for (const [kind, back, dy] of ev.members)
+    creature(f, rift, kind, ev.d, head - ev.dir * back, ev.y * rift.R * 0.5 + dy, ev.dir, tA + back, inkAt(ev.d, ev.silhouette));
+}
+const crossingLen = (ev, R) => {
+  const v = SPEED[ev.d], dist = 2 * R + 2 + spanOf(ev);
+  if (ev.flee == null) return dist / v;
+  const before = ev.flee * v;
+  return before >= dist ? dist / v : ev.flee + (dist - before) / (v * 3);
+};
+
+// ---- the serpent --------------------------------------------------------------------------
+// The coil as the deep draws it, seen: white hide, a darker spine and belly,
+// the edge a few rungs down, the crest in the abyss's purples with a white tip
+// on the tallest spikes. A far glimpse is the same hide lower down the ramp.
+const COIL = {
+  coil: { d: 0, v: 4, r: 2.5, amp: 1.2, len: 46, crest: 10, crestH: 2,
+          edge: GREYS[5], hide: GREYS[7], spine: GREYS[6], belly: GREYS[6], lattice: GREYS[6],
+          crestTones: [PURPLES[7], PURPLES[9]], tip: PURPLES[10] },
+  crest: { d: 1, v: 7, r: 4, amp: 0.6, len: 40, crest: 24, crestH: 3,
+           edge: GREYS[7], hide: GREYS[10], spine: GREYS[9], belly: GREYS[9], lattice: GREYS[9],
+           crestTones: [PURPLES[9], PURPLES[10]], tip: GREYS[WHITE] },
+};
+const coilY = (rift, ev, c) => ev.mode === 'crest' ? rift.R - 2.4 + c.r : ev.y * rift.R * 0.3;
+function drawCoil(f, rift, ev, lt) {
+  const c = COIL[ev.mode], dir = ev.dir, tw = held(lt, 1 / 4);
+  const head = -dir * (rift.R + 3) + dir * Math.floor(lt * c.v);
+  const y0 = coilY(rift, ev, c);
+  const line = a => y0 + c.amp * Math.sin(a / 5 - tw * 1.3);
+  const radius = a => a < 0 ? c.r * (1 - 0.6 * Math.min(1, -a / 1.5))
+                    : a > c.len - 14 ? c.r * Math.max(0.3, (c.len - a) / 14) : c.r;
+  const R = rift.R + 1;
+  for (let col = Math.floor(rift.cxC - R); col <= Math.ceil(rift.cxC + R); col++) {
+    const ox = col + 0.5 - rift.cxC, a = dir * (head - ox);
+    if (a < -1.5 || a > c.len) continue;
+    const r = radius(a), mid = line(a);
+    for (let row = Math.floor(rift.cyC - R); row <= Math.ceil(rift.cyC + R); row++) {
+      const across = row + 0.5 - rift.cyC - mid;
+      if (Math.abs(across) > r) continue;
+      let tone = Math.abs(across) > r - 1 ? c.edge
+               : Math.abs(across) < 0.5 ? c.spine
+               : across > 0.9 ? c.belly
+               : ((Math.floor(a) + Math.floor(across + 10)) % 3 === 0 ? c.lattice : c.hide);
+      if (a < 1 && Math.abs(across) < 0.5) tone = BLACK;                              // the mouth's line
+      if (a >= 1.5 && a < 2.5 && across > -r + 0.6 && across < -r + 1.6) tone = BLACK;  // the eye
+      put(f, c.d, col, row, tone, false);
+    }
+  }
+  // The crest: down the back from the head, tallest every fourth cell, tapering.
+  // A spike every other cell, so the gaps between them show the black through.
+  for (let a = 1; a <= c.crest; a += 2) {
+    const col = Math.floor(rift.cxC + head - dir * a);
+    const top = line(a) - radius(a);
+    const tall = Math.max(1, Math.round((a % 4 === 1 ? c.crestH : c.crestH - 1) * Math.min(1, (1 - a / c.crest) * 1.6)));
+    for (let k = 1; k <= tall; k++)
+      put(f, c.d, col, Math.floor(rift.cyC + top - k + 0.5), k === tall && tall === c.crestH ? c.tip : c.crestTones[k % 2], false);
+  }
+}
+const coilLen = (ev, R) => (2 * R + 5 + COIL[ev.mode].len) / COIL[ev.mode].v;
+
+// The eye at the window: something near puts the stars out, its hide comes up
+// out of the dark, a lid opens on a pale eye with the crest's purple round a
+// slit, it looks, blinks, closes and backs away.
+const EYE_LEN = 10.6;
+function drawEye(f, rift, ev, lt) {
+  const ex = rift.R > 5 ? -2 : 0, ey = rift.R > 5 ? 1 : 0;
+  const rp = lt < 1.5 ? Math.min(9, Math.floor(lt / 0.15)) : lt < 8.8 ? 9 : Math.max(0, 9 - Math.floor((lt - 8.8) / 0.18));
+  if (rp <= 0) return;
+  const textured = lt >= 1.5 && lt < 9.6;
+  const open = lt < 2.6 ? -1 : lt < 2.9 ? 1 : lt < 3.2 ? 2 : lt < 6.4 ? 3 : lt < 6.6 ? 0 : lt < 6.8 ? 2
+             : lt < 8.0 ? 3 : lt < 8.2 ? 2 : lt < 8.4 ? 1 : lt < 8.8 ? 0 : -1;
+  const px = lt >= 4.6 && lt < 5.8 ? -1.5 : lt >= 6.8 && lt < 7.6 ? 1.5 : 0;
+  const hh = [0, 0.9, 1.6, 2.3][Math.max(0, open)];
+  f.blot = (col, row) => Math.hypot(col + 0.5 - rift.cxC - ex, row + 0.5 - rift.cyC - ey) <= rp;
+  const R = rift.R + 1;
+  for (let col = Math.floor(rift.cxC - R); col <= Math.ceil(rift.cxC + R); col++)
+    for (let row = Math.floor(rift.cyC - R); row <= Math.ceil(rift.cyC + R); row++) {
+      const dx = col + 0.5 - rift.cxC - ex, dy = row + 0.5 - rift.cyC - ey, dist = Math.hypot(dx, dy);
+      if (dist > rp) continue;
+      let tone = !textured ? GREYS[1] : dist > rp - 1 ? GREYS[2] : ((col + row * 2) % 3 === 0 ? GREYS[4] : GREYS[3]);
+      if (open === 0 && Math.abs(dx) <= 4 && Math.abs(dy) < 0.5) tone = GREYS[6];       // the lid, shut
+      if (open > 0) {
+        const e = (dx / 4.6) ** 2 + (dy / hh) ** 2;
+        if (e <= 1) {
+          const ix = dx - px;
+          tone = Math.abs(ix) < 0.5 && Math.abs(dy) < 1.6 ? BLACK
+               : ix * ix + dy * dy <= 2.6 ? PURPLES[ix < 0 && dy < 0 ? 11 : 10]
+               : e > 0.7 ? GREYS[8] : GREYS[10];
+        } else if (dy < 0 && (dx / 5.2) ** 2 + (dy / (hh + 1)) ** 2 <= 1) tone = GREYS[6];  // the brow over it
+      }
+      put(f, 2, col, row, tone, false);
+    }
+}
+
+// ---- the options --------------------------------------------------------------------------
+// Each is a list of events on the mock's minute; `kind` picks the drawing.
+const SHOAL_A = [[1, 0, 0], [0, 4, -2], [5, 7, 1], [3, 10, -1]];
+const SHOAL_B = [[3, 0, 1], [6, 3, -1], [1, 6, 2], [2, 10, 0], [5, 13, -2]];
+const OPTIONS = [
+  { key: '1a', name: '1a. Shadows crossing',
+    blurb: 'A shoal of the deep\'s creatures far off behind the tear, flattened to one dark purple each, so they read as shapes going past against the stars rather than as fish. Three to five together, slow, the middle and near stars over them.',
+    facts: [
+      ['how often', 'a shoal every 20 to 40 s, randomized; three to five in it'],
+      ['how long', '13 s across the grown rift at the far pace, 8 s across the just-torn one'],
+      ['at 7 cells', 'one or two 2-to-3-cell shapes in the window at a time: something moving behind the stars, not yet fish'],
+      ['at 20 cells', 'the whole shoal in a loose line; the eel\'s ribbon and the angler\'s lamp read as outlines'],
+      ['depth', 'far (a fifth size, flattest purple) or middle (three tenths, a tone lighter), one depth a shoal'],
+    ],
+    events: [
+      { at: 3, kind: 'cross', d: 0, dir: 1, y: -0.2, silhouette: true, members: SHOAL_A },
+      { at: 32, kind: 'cross', d: 1, dir: -1, y: 0.3, silhouette: true, members: SHOAL_B },
+    ],
+    keys: [[6, 'far shoal coming in'], [10, 'far shoal across'], [36, 'middle shoal'], [40, 'middle shoal leaving']] },
+  { key: '1b', name: '1b. The deep\'s own creatures',
+    blurb: 'One creature at a time in its own deep tones, as the deep draws them: the angler with its lamp, the eel, the wandering eye. Near ones at half size and full tone, swimming over every star; middle ones smaller and three rungs darker.',
+    facts: [
+      ['how often', 'one every 40 to 90 s, randomized; any of the eight'],
+      ['how long', '7 s across the grown rift at the near pace, 4 s across the just-torn one'],
+      ['at 7 cells', 'a near creature is bigger than the window: the angler\'s lamp goes by, then its head, then its tail. A keyhole'],
+      ['at 20 cells', 'the whole creature crosses, wriggling, and is plainly one of the deep\'s'],
+      ['depth', 'near (half size, own tones) or middle (three tenths, three rungs darker)'],
+    ],
+    events: [
+      { at: 4, kind: 'cross', d: 2, dir: -1, y: 0, members: [[0, 0, 0]] },
+      { at: 22, kind: 'cross', d: 1, dir: 1, y: 0.4, members: [[1, 0, 0]] },
+      { at: 40, kind: 'cross', d: 2, dir: 1, y: -0.3, members: [[4, 0, 0]] },
+    ],
+    keys: [[6.6, 'angler: the lamp first'], [8.2, 'angler across'], [27, 'eel, middle depth'], [43.4, 'wandering eye']] },
+  { key: '2a', name: '2a. A length of coil',
+    blurb: 'The serpent far behind the tear, sliding past: the head with its eye and a short crest, then a long band of hide whose scales slide through the window, then the tail tapering away. Three rungs down from his deep white, and the near stars stay over him.',
+    facts: [
+      ['how often', 'every 4 to 8 min, randomized'],
+      ['how long', '18 s across the grown rift, 15 s across the just-torn one (his length is most of it)'],
+      ['at 7 cells', 'the window fills with grey hide sliding sideways for ten seconds. Nothing to see but something enormous'],
+      ['at 20 cells', 'head, crest, a slow undulating band, the tail: plainly a serpent, plainly far off'],
+    ],
+    serpent: true,
+    events: [
+      { at: 4, kind: 'coil', mode: 'coil', dir: 1, y: 0.2 },
+      { at: 34, kind: 'coil', mode: 'coil', dir: -1, y: -0.4 },
+    ],
+    keys: [[6.5, 'head and crest'], [12, 'the band'], [19, 'the tail'], [40, 'the other way']] },
+  { key: '2b', name: '2b. The crest passing',
+    blurb: 'Nearer and quicker: only the top of his back shows along the bottom of the window, white hide and the crest\'s purple spikes standing off it, tallest at the head with white tips, shortening to the tail.',
+    facts: [
+      ['how often', 'every 3 to 6 min, randomized'],
+      ['how long', '9 s across the grown rift, 8 s across the just-torn one'],
+      ['at 7 cells', 'the spikes cross the bottom third, bright on black: the clearest of the three at the small size'],
+      ['at 20 cells', 'a fin running along the bottom chord, the hide\'s white edge under it'],
+    ],
+    serpent: true,
+    events: [
+      { at: 6, kind: 'coil', mode: 'crest', dir: 1 },
+      { at: 36, kind: 'coil', mode: 'crest', dir: -1 },
+    ],
+    keys: [[8.2, 'the head\'s spikes'], [10, 'the crest along'], [13.5, 'the hide going'], [39, 'the other way']] },
+  { key: '2c', name: '2c. The eye at the window',
+    blurb: 'Something comes right up to the other side: the stars go out from the middle, dark hide surfaces, and a lid opens on a pale eye with a purple iris round a slit. It looks one way, blinks once, looks the other, closes and backs off, the stars coming back from the rim in.',
+    facts: [
+      ['how often', 'every 6 to 12 min, randomized (rarest: the most pointed)'],
+      ['how long', '10.6 s whatever the size: 1.5 s stars out, 1 s hide, 6 s watching with a blink, 2 s backing off'],
+      ['at 7 cells', 'the eye overfills the window: iris and slit and nothing else. The strongest of the three small'],
+      ['at 20 cells', 'the eye sits in a patch of hide, off center, with stars still round it'],
+    ],
+    serpent: true,
+    events: [
+      { at: 6, kind: 'eye' },
+      { at: 36, kind: 'eye' },
+    ],
+    keys: [[7, 'stars going out'], [8.2, 'hide'], [10, 'eye open'], [11, 'looking'], [12.5, 'blink'], [15.6, 'backing off']] },
+  { key: '3', name: '3. Combined',
+    blurb: 'Creatures most of the time, as 1a and 1b, and rarely the serpent, one of 2a, 2b or 2c at random. Whatever is crossing when he comes darts off ahead of him at three times its pace, and nothing else crosses while he is there.',
+    facts: [
+      ['how often', 'a creature or a shoal every 20 to 40 s; the serpent no more than once in 5 min, at random among the three'],
+      ['how long', 'as each above; the dart-off clears the window in a second or two'],
+      ['at 7 cells', 'mostly dark shapes crossing; the serpent, when it comes, fills the keyhole'],
+      ['at 20 cells', 'a populated sky with depth, and the serpent unmistakable when he passes'],
+    ],
+    serpent: true,
+    events: [
+      { at: 2, kind: 'cross', d: 0, dir: 1, y: -0.2, silhouette: true, members: SHOAL_A },
+      { at: 12, kind: 'cross', d: 2, dir: -1, y: 0.1, members: [[1, 0, 0]] },
+      { at: 24, kind: 'cross', d: 1, dir: 1, y: -0.3, silhouette: true, members: SHOAL_B, flee: 6 },
+      { at: 31, kind: 'coil', mode: 'coil', dir: -1, y: 0.1 },
+      { at: 51, kind: 'cross', d: 1, dir: 1, y: 0.4, members: [[5, 0, 0]] },
+    ],
+    keys: [[6, 'far shoal'], [14.5, 'near eel'], [29.5, 'shoal darts off'], [36, 'the coil'], [54, 'a drifter again']] },
+];
+const lenOf = (ev, R) => ev.kind === 'cross' ? crossingLen(ev, R) : ev.kind === 'coil' ? coilLen(ev, R) : EYE_LEN;
+const isSerpent = ev => ev.kind !== 'cross';
+
+function frameOf(opt, rift, t) {
+  const f = frame();
+  for (const ev of opt.events) {
+    const lt = held(t - ev.at);
+    if (lt < 0 || lt >= lenOf(ev, rift.R)) continue;
+    if (ev.kind === 'cross') drawCrossing(f, rift, ev, lt);
+    else if (ev.kind === 'coil') drawCoil(f, rift, ev, lt);
+    else drawEye(f, rift, ev, lt);
+  }
+  return f;
+}
+
+// ---- the rift's own drawing, after render/cores.js ------------------------------------
+const MODES = [[2, -7300, 0.34], [3, 4900, 0.38], [5, -3100, 0.28]];
+const waver = (a, ms) => { let r = 1; for (const [l, p, s] of MODES) r += 0.11 * s * Math.sin(l * a + ms / p * Math.PI * 2); return r; };
+function rimPath(ctx, rift, ms, grow) {
+  const n = 96;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const a = i / n * Math.PI * 2, r = rift.rad * waver(a, ms) + grow;
+    const x = rift.cx + Math.cos(a) * r, y = rift.cy + Math.sin(a) * r;
+    if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+}
+// One sky of the three: L 0 nearest .. 2 furthest, bent outward toward the rim.
+function sky(ctx, rift, L, ms, blot) {
+  const inner = rift.rad - P;
+  if (inner < P) return;
+  const f = L / 2, sp = 21 * (1 + L * 0.5);
+  ctx.fillStyle = MAGIC_TONES[Math.round(f * 3)];
+  const n = Math.ceil(inner / sp);
+  for (let i = -n; i <= n; i++) for (let j = -n; j <= n; j++) {
+    if (spec(i * 31 + L * 7, j) > 0.55) continue;
+    let ox = (i + spec(i, j + L)) * sp, oy = (j + spec(j + 40, i + L)) * sp;
+    const d = Math.hypot(ox, oy);
+    if (d > inner || d < 0.001) continue;
+    const bent = inner * Math.pow(d / inner, 0.55);
+    ox *= bent / d; oy *= bent / d;
+    if (blot && blot(Math.floor(rift.cxC + ox / P), Math.floor(rift.cyC + oy / P))) continue;
+    const tw = 0.5 + 0.5 * Math.sin(ms / 2800 * Math.PI * 2 + spec(i + L * 13, j) * Math.PI * 2);
+    ctx.globalAlpha = 0.35 + tw * 0.65;
+    ctx.beginPath();
+    ctx.arc(rift.cx + ox, rift.cy + oy, P * (0.30 + spec(i + 5, j + L * 3) * 0.30) * (1 - f * 0.35), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function paint(ctx, opt, t) {
+  const ms = t * 1000, cell = (c, r, tone) => { ctx.fillStyle = tone; ctx.fillRect(c * P, r * P, P, P); };
+  ctx.setTransform(ctx.canvas.width / (W * P), 0, 0, ctx.canvas.height / (H * P), 0, 0);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W * P, H * P);
+  // the sky's motes
+  for (let c = 0; c < W; c++) for (let r = 0; r < GROUND; r++) if (seeth(c, r + 50) % 67 === 0) cell(c, r, seeth(c, r) % 3 ? '#dcdce1' : '#b9b9c1');
+  // the pit's pile under both, peeled down under each mouth
+  for (let c = 2; c < W - 2; c++) {
+    const near = RIFTS.some(rf => Math.abs(c + 0.5 - rf.cxC) < rf.R * 0.6 + 1);
+    for (let r = GROUND + (near ? 1 : 0); r < H; r++) cell(c, r, ['#8b8b96', '#6e6e78', '#55555e', '#42424a'][seeth(c, r) % 4]);
+  }
+  for (const c of [0, 1, W - 2, W - 1]) for (let r = GROUND; r < H; r++) if ((c + r) % 3 === 0) cell(c, r, '#d4d4da');
+  for (const rift of RIFTS) {
+    // grains going in, a few stand-ins on decaying orbits
+    for (let i = 0; i < 9; i++) {
+      const k = (t / (3.2 + spec(i, 4) * 2) + spec(i, 1)) % 1;
+      const a = spec(i, 2) * Math.PI * 2 + k * 5.5, r = rift.rad * (3.2 - 2.4 * k * k);
+      cell(Math.floor((rift.cx + Math.cos(a) * r) / P), Math.floor((rift.cy + Math.sin(a) * r) / P), ['#26262c', '#42424a', '#55555e'][i % 3]);
+    }
+    // the pull's motes, in toward the rim
+    for (let i = 0; i < 6; i++) {
+      const k = (ms / (3400 * (0.75 + spec(i, 3) * 0.5)) + spec(i, 1)) % 1, a = spec(i, 2) * Math.PI * 2;
+      const r = rift.rad * (2.4 - 1.4 * k * k);
+      ctx.globalAlpha = 0.9 * (1 - k) * (0.5 + spec(i, 5) * 0.5);
+      cell(Math.round((rift.cx + Math.cos(a) * r) / P), Math.round((rift.cy + Math.sin(a) * r) / P), MAGIC_TONES[Math.min(3, Math.floor(k * 3))]);
+      ctx.globalAlpha = 1;
+    }
+    // the halo, the tear, the light on its edge
+    ctx.fillStyle = '#fff'; rimPath(ctx, rift, ms, 2 * P); ctx.fill();
+    ctx.fillStyle = '#000'; rimPath(ctx, rift, ms, 0); ctx.fill();
+    ctx.save(); rimPath(ctx, rift, ms, 0); ctx.clip();
+    ctx.strokeStyle = MAGIC_TONES[0]; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.75; rimPath(ctx, rift, ms, 0); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.restore();
+    // and the other side: the skies and what is in them, far to near
+    const f = frameOf(opt, rift, t);
+    ctx.save(); rimPath(ctx, rift, ms, -P * 0.5); ctx.clip();
+    for (let d = 0; d < 3; d++) {
+      sky(ctx, rift, 2 - d, ms, f.blot);
+      for (const { col, row, tone } of f.cells[d].values()) cell(col, row, tone);
+    }
+    ctx.restore();
+  }
+}
+
+// ---- the page --------------------------------------------------------------------------
+const grid = document.getElementById('grid');
+const SCALE_PX = 2;
+const panes = OPTIONS.map(opt => {
+  const card = document.createElement('section');
+  card.className = 'card';
+  card.innerHTML = `<h3>${opt.name}</h3><canvas width="${W * P * SCALE_PX}" height="${H * P * SCALE_PX}" aria-label="${opt.name}, animated, at both rift sizes"></canvas>
+    <div class="sizes"><span>just torn, 7 cells</span><span>grown, 20 cells</span></div>
+    <div class="timeline" title="the mock's minute; light is a creature, dark the serpent"></div>
+    <div class="keys"></div><p>${opt.blurb}</p><dl>${opt.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  grid.appendChild(card);
+  const tl = card.querySelector('.timeline');
+  for (const ev of opt.events) {
+    const m = document.createElement('div');
+    m.className = 'g' + (isSerpent(ev) ? ' s' : '');
+    m.style.left = (ev.at / LOOP * 100) + '%'; m.style.width = (lenOf(ev, 10) / LOOP * 100) + '%';
+    tl.appendChild(m);
+  }
+  const head = document.createElement('div'); head.className = 'head'; tl.appendChild(head);
+  tl.addEventListener('click', e => { const r = tl.getBoundingClientRect(); clock = (e.clientX - r.left) / r.width * LOOP; draw(); });
+  const keys = card.querySelector('.keys');
+  for (const [at, cap] of opt.keys) {
+    const fig = document.createElement('figure');
+    const cv = document.createElement('canvas'); cv.width = W * P * SCALE_PX; cv.height = H * P * SCALE_PX;
+    paint(cv.getContext('2d'), opt, at);
+    fig.appendChild(cv);
+    const fc = document.createElement('figcaption'); fc.textContent = `${at.toFixed(1)} s, ${cap}`; fig.appendChild(fc);
+    keys.appendChild(fig);
+  }
+  return { opt, ctx: card.querySelector('canvas').getContext('2d'), head, keys };
+});
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let clock = reduce ? 10 : 0, speed = 1, playing = !reduce, last = performance.now();
+const playBtn = document.getElementById('play'), keysBtn = document.getElementById('keys');
+function setPlaying(v) { playing = v; playBtn.textContent = v ? 'pause' : 'play'; playBtn.setAttribute('aria-pressed', String(v)); }
+function setKeys(v) { keysBtn.setAttribute('aria-pressed', String(v)); for (const p of panes) p.keys.classList.toggle('on', v); }
+// `#keys` opens the key frames and `#t=12` stands the clock there, paused.
+const hashT = /t=([\d.]+)/.exec(location.hash);
+if (hashT) { clock = +hashT[1]; playing = false; }
+setPlaying(playing); setKeys(reduce || location.hash.includes('keys'));
+playBtn.onclick = () => setPlaying(!playing);
+keysBtn.onclick = () => setKeys(keysBtn.getAttribute('aria-pressed') !== 'true');
+document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+  speed = +b.dataset.speed;
+  document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+});
+document.getElementById('next').onclick = () => {
+  const starts = [...new Set(OPTIONS.flatMap(o => o.events.map(e => Math.max(0, e.at - 0.5))))].sort((a, b) => a - b);
+  clock = starts.find(s => s > clock + 0.1) ?? starts[0];
+  draw();
+};
+function draw() {
+  for (const p of panes) { paint(p.ctx, p.opt, clock); p.head.style.left = `calc(${clock / LOOP * 100}% - 1px)`; }
+  document.getElementById('clock').textContent = clock.toFixed(1) + ' s';
+}
+function tick(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (playing) { clock = (clock + dt * speed) % LOOP; draw(); }
+  requestAnimationFrame(tick);
+}
+draw();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
