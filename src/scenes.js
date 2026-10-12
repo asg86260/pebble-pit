@@ -895,6 +895,11 @@ export const SCENES = {
                  const at = buriedAt(), g = Math.floor((at.x - rockLeft()) / P);
                  for (const row of S.boulder) for (let x = g - 3; x <= g + 5; x++) if (x >= 0 && x < row.length && x !== g + 1) row[x] = 0;
                  window.__fast(0.2); window.__look(S.cx - S.viewW / 2); window.__holdShot(); } },
+  // The whole rock over her, her calls over it. Nobody is mining: strike it
+  // (`__swing(1)` a second) to keep her calling.
+  sqwifecalls: { about: 'the rock', say: 'the one buried under a whole rock, ready to call while it is struck',
+    run: () => { window.__reset(); window.__crew(3, 1); window.__jump(3); window.__fast(1);
+                 window.__look(S.cx - S.viewW / 2); } },
   // Both ends of the rock's growth: the walk leaves the hut exactly the room
   // `rockSize` needs and no more. Jumped and then run, because `rich` leaves
   // the first rock still falling and its grant tearing the rift.

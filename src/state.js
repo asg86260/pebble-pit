@@ -68,6 +68,7 @@ export const S = {
   buriedSayAt: 0,
   buriedCall: 0,          // when the call under the rock being mined began, 0 between calls
   buriedCallAt: 0,        // when the next one starts
+  buriedPat: '',          // which of BURIED_CALLS the last one was
   buriedMinedAt: -1e9,    // the last frame a blow at the rock had grains in the air
   // How far out of the ground it has been dug, nought to one; every rock that
   // lands puts it back to nought.
@@ -802,7 +803,7 @@ export const EPHEMERAL = [
   'rockTops', 'tick', 'floorGrains', 'floorMarks', 'piles', 'pileCount', 'pileFull',
   'peakRow',
   // The opening, while it is running.
-  'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt', 'buriedCall', 'buriedCallAt', 'buriedMinedAt', 'crewSight',
+  'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt', 'buriedCall', 'buriedCallAt', 'buriedPat', 'buriedMinedAt', 'crewSight',
   'introThrew', 'skipHeldAt', 'introCut',
   'timesAsked',           // once a boot is once a page
   // Only read for the spread a rock does on arriving.

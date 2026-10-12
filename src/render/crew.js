@@ -363,6 +363,13 @@ function drawSaying(x, y, say) {
     return;
   }
 
+  if (say.mark === 'ask') {
+    for (let r = 0; r < ASK.length; r++)
+      for (let c = 0; c < 3; c++)
+        if (ASK[r][c] === '1') ctx.fillRect(Math.round(mid - P * 1.5 + c * P), top - P * 4 + r * P, P, P);
+    return;
+  }
+
   if (say.mark === 'bang') {
     // a bar and a dot under it; a call for help is several, a gap between
     const n = say.n ?? 1, x0 = Math.round(mid - P / 2 - (n - 1) * P);

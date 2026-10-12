@@ -71,3 +71,15 @@ export const BURIED_DIG_LEAD_MS = 400;
 export const BURIED_CALL_MS = 5000;
 export const BURIED_CALL_JITTER = 0.4;
 export const BURIED_CALL_HOT_MS = 3000;
+
+// What a call is: marks only, one per step, each held `ms`. The table is the
+// variety -- the plain build stays the commonest, so the rest read as her
+// changing her mind, not as a different game. Nothing warm (heart, note):
+// those belong to the reunion. A call is never the one just made.
+export const BURIED_CALLS = {
+  build: { weight: 6, ms: HELP_BANG_MS,     steps: [['bang', 1], ['bang', 2], ['bang', 3]] },
+  long:  { weight: 3, ms: 1800,             steps: [['bang', 1]] },
+  quick: { weight: 3, ms: HELP_BANG_MS / 2, steps: [['bang', 1], ['bang', 2], ['bang', 3]] },
+  query: { weight: 3, ms: 800,              steps: [['ask', 0], ['bang', 1]] },
+  sigh:  { weight: 2, ms: 1400,             steps: [['dots', 3]] },
+};
