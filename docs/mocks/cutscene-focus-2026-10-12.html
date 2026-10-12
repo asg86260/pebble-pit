@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ending, Three Ways</title>
+<style>
+:root {
+  --bg: #f3f2ee;
+  --panel: #ffffff;
+  --text: #161616;
+  --muted: #5d5d5a;
+  --line: #d4d3cd;
+  --seg-a: #1d1d1d;
+  --seg-b: #8a8a86;
+  --seg-text-a: #ffffff;
+  --seg-text-b: #ffffff;
+  --head: #161616;
+  --button: #161616;
+  --button-text: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151514;
+    --panel: #1f1f1d;
+    --text: #ecebe6;
+    --muted: #a3a29c;
+    --line: #3a3a37;
+    --seg-a: #e6e5df;
+    --seg-b: #6b6a66;
+    --seg-text-a: #151514;
+    --seg-text-b: #ffffff;
+    --head: #ecebe6;
+    --button: #ecebe6;
+    --button-text: #151514;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151514;
+  --panel: #1f1f1d;
+  --text: #ecebe6;
+  --muted: #a3a29c;
+  --line: #3a3a37;
+  --seg-a: #e6e5df;
+  --seg-b: #6b6a66;
+  --seg-text-a: #151514;
+  --seg-text-b: #ffffff;
+  --head: #ecebe6;
+  --button: #ecebe6;
+  --button-text: #151514;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  padding: 24px 16px 48px;
+}
+main { max-width: 1280px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: 0.02em; }
+.lede { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
+.mock-tag {
+  display: inline-block; border: 1px solid var(--text); padding: 0 6px;
+  font-size: 12px; margin-right: 8px; vertical-align: 2px;
+}
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.opt { background: var(--panel); border: 1px solid var(--line); padding: 12px; min-width: 0; }
+.opt h2 { font-size: 15px; margin: 0 0 4px; }
+.opt h2 b { color: var(--head); }
+.opt p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+@media (min-width: 960px) { .opt p { min-height: 6.2em; } }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #f7f7f5; }
+.beat { font-size: 12px; margin-top: 6px; min-height: 2.6em; }
+.beat .name { font-weight: bold; }
+.keys { display: none; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 8px; }
+.keys figure { margin: 0; }
+.keys figcaption { font-size: 11px; color: var(--muted); }
+.reduced .keys { display: grid; }
+section { margin-top: 28px; }
+section h3 { font-size: 15px; margin: 0 0 8px; }
+.controls { display: flex; gap: 12px; align-items: center; margin: 0 0 10px; flex-wrap: wrap; }
+.controls button {
+  background: var(--button); color: var(--button-text); border: 0;
+  font: inherit; font-size: 13px; padding: 4px 12px; cursor: pointer;
+}
+.controls input[type=range] { flex: 1 1 200px; min-width: 0; }
+.controls .clock { font-size: 13px; min-width: 9ch; }
+.bar { position: relative; display: flex; height: 34px; border: 1px solid var(--line); background: var(--panel); }
+.bar .seg { position: relative; overflow: hidden; font-size: 11px; line-height: 1.2; padding: 3px 4px; white-space: nowrap; }
+.bar .seg:nth-child(odd) { background: var(--seg-a); color: var(--seg-text-a); }
+.bar .seg:nth-child(even) { background: var(--seg-b); color: var(--seg-text-b); }
+.bar .head { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--head); left: 0; }
+.beats { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.beats td, .beats th { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.beats th { color: var(--muted); font-weight: normal; }
+.beats tr.on td { font-weight: bold; text-decoration: underline; }
+.beats td.s { white-space: nowrap; }
+.table-wrap { overflow-x: auto; }
+ul { padding-left: 20px; margin: 6px 0; }
+li { margin: 3px 0; }
+.note { color: var(--muted); font-size: 13px; max-width: 80ch; }
+</style>
+</head>
+<body>
+<main>
+  <h1><span class="mock-tag">MOCK</span>The ending, staged three ways</h1>
+  <p class="lede">The dome bursts the rescue rock, she is dug out, the two of them together, then the snatch.
+  In all three the attackers stop and hold, the haulers fade out, and the camera glides and then holds.
+  What differs is how the rest of the yard recedes. Drawn from plain shapes on the 6-pixel grid, not the game.</p>
+
+  <div class="controls">
+    <button id="play" type="button">pause</button>
+    <input id="scrub" type="range" min="0" max="1" step="0.01" value="0" aria-label="time in the loop">
+    <span class="clock" id="clock">0.0 s</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <section>
+    <h3>Timing (the same in all three)</h3>
+    <div class="bar" id="bar"><div class="head" id="head"></div></div>
+    <div class="table-wrap"><table class="beats" id="beats"></table></div>
+    <p class="note">Each moment ends in a hold: the impact, the dust landing, her out of the ground, the heart, the take,
+    her alone, the empty water. The camera moves only in the settle, the walk and the release, and it glides on an ease
+    in and out rather than a chase; it never zooms. Today the dome's scene to the end of the snatch runs about
+    45 seconds with an eight-second drowning in the middle; this runs about 25 with no drowning.</p>
+  </section>
+
+  <section>
+    <h3>What this mock cannot show</h3>
+    <ul class="note">
+      <li>The real sprites, the dome's color, the pit's liquid and the serpent's drawing: all of it is stand-in squares and blocks.</li>
+      <li>The real camera: the game's zoom snaps to whole device steps, and this mock does not zoom at all, so whether a held zoom or a pan alone reads better is still open.</li>
+      <li>The drowning, which today plays between the sheet and the snatch; where it goes (before the rescue, folded into the walk, or left out of the ending) is a separate call.</li>
+      <li>The interface, the sheet and the story card, and any words: none are drawn.</li>
+      <li>The real crew sizes, the belt, rain and the wizard: a busy yard is three attackers and four haulers here.</li>
+      <li>The deep's kill and freed beat, which has the same problem (fighters keep swinging, gatherers cross, the pair are hidden in the station); it is not drawn here.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var P = 6, W = 100, H = 56, G = 46;      // cells across, cells down, the ground's top row
+  var DX = 40, R = 14;                     // the dome's middle and radius, in cells
+  var PAPER = "#f7f7f5", INK = "#141414", DARK = "#3c3c3c", MID = "#777777", LIGHT = "#b5b5b5", PALE = "#d3d3d0";
+
+  // The options: [letter, name, caption, kind]
+  var OPTS = [
+    ["A", "Pale ghost", "Everything but the subjects drops to about 20% ink: buildings, ground texture, heaps, sky motes, and the stopped attackers with them. Only the pair, the dome, the rock and the serpent stay full black.", "ghost"],
+    ["B", "Bystanders out", "Haulers fade out completely and the attackers stand frozen in full ink. Buildings, the ground and the heaps stay exactly as they are, and the sky keeps drifting.", "clear"],
+    ["C", "Held still, letterboxed", "Flat black bands step in top and bottom, the sky and motes slow to a stop, and the whole background, frozen attackers included, settles at about 35% ink.", "hold"]
+  ];
+
+  // The beats: [key, seconds, what happens, group]
+  var PH = [
+    ["work", 2.0, "the yard at work, the rock not yet let go", "yard"],
+    ["settle", 1.6, "attackers stop and hold; haulers fade; the background recedes; the camera glides onto the dome", "yard"],
+    ["fall", 1.2, "the rock comes down, a smear on its last frames", "rock"],
+    ["impact", 0.5, "held on the impact, the rock squashed on the dome", "rock"],
+    ["burst", 1.0, "the dome bursts the rock, the pieces flying out in held steps", "rock"],
+    ["dust", 0.6, "held while the pieces land", "rock"],
+    ["dig", 3.0, "he digs her out, each swing a held pose", "dig"],
+    ["out", 1.0, "she climbs out a step at a time", "dig"],
+    ["together", 3.0, "they face each other, hop in turn, a heart held; the dome fades", "together"],
+    ["walk", 3.0, "the two walk out to the plank; the camera follows on an ease", "plank"],
+    ["hush", 0.8, "stood at the edge; dots over them; the surface opens", "plank"],
+    ["rise", 0.5, "the serpent rises in three held frames", "snatch"],
+    ["take", 1.2, "held: him in its jaws", "snatch"],
+    ["sink", 0.6, "it goes under with him", "snatch"],
+    ["alone", 1.4, "held on her alone; a mark over her", "snatch"],
+    ["leap", 0.8, "she leaps in after him", "snatch"],
+    ["still", 1.2, "the ring closes; held on the empty water", "snatch"],
+    ["release", 1.8, "the background comes back and the camera lets go", "release"]
+  ];
+  var GROUPS = [["yard", "the yard"], ["rock", "the rock"], ["dig", "the dig"], ["together", "together"],
+                ["plank", "to the plank"], ["snatch", "the snatch"], ["release", "let go"]];
+  var START = {}, DUR = {}, LOOP = 0;
+  PH.forEach(function (p) { START[p[0]] = LOOP; DUR[p[0]] = p[1]; LOOP += p[1]; });
+
+  var clamp = function (x, a, b) { return x < a ? a : x > b ? b : x; };
+  var ease = function (k) { k = clamp(k, 0, 1); return k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; };
+  var step12 = function (x) { return Math.floor(x * 12) / 12; };
+  var kOf = function (name, t) { return clamp((t - START[name]) / DUR[name], 0, 1); };
+  var sOf = function (name, t) { return t - START[name]; };
+  var inPh = function (name, t) { return t >= START[name] && t < START[name] + DUR[name]; };
+  var after = function (name, t) { return t >= START[name]; };
+  function phaseAt(t) {
+    for (var i = PH.length - 1; i >= 0; i--) if (t >= START[PH[i][0]]) return PH[i];
+    return PH[0];
+  }
+  function hash(x, y) { var s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
+
+  // How far the background has receded: nought at work, one through the scene.
+  function recede(t) {
+    if (t < START.settle) return 0;
+    if (t < START.release) return ease((t - START.settle) / 1.2);
+    return 1 - ease(kOf("release", t));
+  }
+  // The background's own clock for the held-still option: it slows to a stop
+  // as the scene recedes and starts again as it lets go.
+  var DT = 1 / 60, HELD = [];
+  (function () { var acc = 0; for (var i = 0; i * DT <= LOOP + DT; i++) { HELD.push(acc); acc += DT * (1 - recede(i * DT)); } })();
+  var heldClock = function (t) { return HELD[Math.min(HELD.length - 1, Math.floor(t / DT))]; };
+
+  // The camera's left edge in cells: a glide onto the dome, a hold, a glide
+  // after the two of them, a hold, and back.
+  var CAM_WORK = -4, CAM_DOME = DX - W / 2, CAM_PLANK = 54;
+  function camAt(t) {
+    if (t < START.settle) return CAM_WORK;
+    if (t < START.walk) return CAM_WORK + (CAM_DOME - CAM_WORK) * ease(kOf("settle", t));
+    if (t < START.hush) return CAM_DOME + (CAM_PLANK - CAM_DOME) * ease(kOf("walk", t));
+    if (t < START.release) return CAM_PLANK;
+    return CAM_PLANK + (CAM_WORK - CAM_PLANK) * ease(kOf("release", t));
+  }
+
+  // ---- drawing --------------------------------------------------------------
+  function Painter(ctx) { this.ctx = ctx; this.cam = 0; }
+  Painter.prototype.rect = function (x, y, w, h, color, alpha) {
+    if (alpha != null && alpha <= 0.001) return;
+    var c = this.ctx;
+    c.globalAlpha = alpha == null ? 1 : alpha;
+    c.fillStyle = color;
+    c.fillRect(Math.round(x * P - this.cam * P), Math.round(y * P), Math.round(w * P), Math.round(h * P));
+    c.globalAlpha = 1;
+  };
+  Painter.prototype.cell = function (x, y, color, alpha) { this.rect(x, y, 1, 1, color, alpha); };
+
+  // A body: a hollow square four cells across, the eye on the side it faces.
+  function body(p, x, y, face, alpha, bow) {
+    p.rect(x, y, 4, 4, INK, alpha);
+    p.rect(x + 1, y + 1, 2, 2, PAPER, alpha);
+    p.cell(face > 0 ? x + 2 : x + 1, y + 1, INK, alpha);
+    if (bow) { p.cell(x + 3, y - 1, INK, alpha); p.cell(x + 4, y - 1, INK, alpha); }
+  }
+  var HEART = [".X.X.", "XXXXX", "XXXXX", ".XXX.", "..X.."];
+  function heart(p, x, y) {
+    for (var r = 0; r < HEART.length; r++) for (var c = 0; c < 5; c++) if (HEART[r][c] === "X") p.cell(x + c, y + r, INK);
+  }
+  function bang(p, x, y) { p.cell(x, y, INK); p.cell(x, y + 1, INK); p.cell(x, y + 3, INK); }
+  function dots(p, x, y, n) { for (var i = 0; i < n; i++) p.cell(x + i * 2, y, INK); }
+
+  function cloud(p, x, y, a) {
+    p.rect(x + 2, y, 8, 1, PALE, a); p.rect(x, y + 1, 13, 1, PALE, a); p.rect(x + 1, y + 2, 11, 1, LIGHT, a);
+  }
+
+  function background(p, t, opt, a, mt) {
+    var x0 = Math.floor(p.cam) - 1, x1 = x0 + W + 3, x, y;
+    // the sky: clouds and motes, each mote its own tone
+    [[-6, 6], [34, 3], [78, 8], [126, 4], [168, 7]].forEach(function (c, i) {
+      var cx = ((c[0] + mt * (0.5 + i * 0.1) + 40) % 240) - 40;
+      cloud(p, cx, c[1], a);
+    });
+    for (var i = 0; i < 70; i++) {
+      var mx = ((i * 37.7 + mt * (0.6 + (i % 3) * 0.35)) % 230) - 30;
+      var my = 2 + ((i * 13) % 36) + Math.round(Math.sin(mt * 0.7 + i) * 0.8);
+      p.cell(Math.round(mx), my, [MID, LIGHT, DARK][i % 3], a * 0.9);
+    }
+    // the hill being mined, left of the dome, mottled
+    for (x = 1; x <= 19; x++) {
+      var top = G - Math.round(9 * Math.sqrt(Math.max(0, 1 - Math.pow((x - 10) / 9.5, 2))));
+      for (y = top; y < G; y++) p.cell(x, y, hash(x, y) < 0.3 ? DARK : INK, a);
+    }
+    // a shed and a post between the dome and the pool
+    p.rect(66, G - 7, 9, 7, INK, a); p.rect(65, G - 8, 11, 1, INK, a); p.rect(69, G - 4, 3, 4, LIGHT, a);
+    p.rect(82, G - 12, 2, 12, INK, a); p.rect(80, G - 13, 6, 2, INK, a);
+    // the dust heap right of the pool
+    for (x = 148; x <= 164; x++) {
+      var ht = Math.round(11 - Math.abs(x - 156) * 1.3);
+      for (y = G - ht; y < G; y++) p.cell(x, y, hash(x, y) < 0.45 ? MID : DARK, a);
+    }
+    // the house, far right
+    p.rect(170, G - 7, 12, 7, INK, a); p.rect(172, G - 10, 2, 3, INK, a); p.rect(178, G - 4, 2, 4, LIGHT, a);
+    // the ground's texture
+    for (x = x0; x < x1; x++) {
+      if (x >= 100 && x < 145) continue;
+      for (y = G + 1; y < H; y++) if ((x * 2 + y * 3) % 7 === 0) p.cell(x, y, hash(x, y) < 0.5 ? PALE : LIGHT, a);
+    }
+  }
+
+  // The pool, the plank and the ground line stay full in every option: the
+  // pair stand on them and the snatch happens in them.
+  function ground(p, t) {
+    var x0 = Math.floor(p.cam) - 1, x1 = x0 + W + 3, x, y;
+    for (x = x0; x < x1; x++) if (x < 100 || x >= 145) p.cell(x, G, INK);
+    p.rect(100, G, 45, H - G, INK);
+    for (x = 100; x < 145; x++) for (y = G + 1; y < H; y++) if (hash(x, y) < 0.05) p.cell(x, y, DARK);
+    p.rect(99, G, 8, 1, MID);
+  }
+
+  // Attackers: two diggers on the hill and the ram against it. Stopped on
+  // the pose they had when the scene took the yard, and held there.
+  function attackers(p, t, a) {
+    var pt = (t >= START.settle && t < START.release) ? START.settle : t;
+    [[5, G - 12, 0], [12, G - 13, 0.4]].forEach(function (d) {
+      var ph = ((pt + d[2]) % 0.6) / 0.6;
+      var x = d[0], y = d[1];
+      body(p, x, y, 1, a);
+      if (ph < 0.45) { p.cell(x + 4, y - 1, INK, a); p.cell(x + 5, y - 2, INK, a); p.cell(x + 6, y - 2, DARK, a); }
+      else if (ph < 0.55) { p.cell(x + 4, y, MID, a); p.cell(x + 5, y, MID, a); p.cell(x + 6, y + 1, MID, a); }
+      else { p.cell(x + 4, y + 2, INK, a); p.cell(x + 5, y + 3, INK, a); p.cell(x + 6, y + 4, DARK, a); }
+    });
+    var rp = (pt % 1.0);
+    var rx = rp < 0.45 ? 24 : rp < 0.5 ? 22 : 20;
+    if (rp >= 0.45 && rp < 0.5) p.rect(rx + 6, G - 3, 2, 2, LIGHT, a);
+    p.rect(rx, G - 4, 6, 4, INK, a); p.rect(rx + 1, G - 3, 4, 1, MID, a);
+    p.rect(21, G - 1, 9, 1, DARK, a);
+    if (rp >= 0.5 && rp < 0.7) { p.cell(19, G - 6, MID, a); p.cell(18, G - 5, LIGHT, a); }
+  }
+
+  // Haulers keep walking under the fade, so they walk back in on the release.
+  function haulers(p, t, a) {
+    [[0, 9, 1], [60, 7, -1], [25, 11, 1], [95, 8, -1]].forEach(function (h) {
+      var span = 170, d = (h[0] + t * h[1]) % span;
+      var x = h[2] > 0 ? -20 + d : 150 - d;
+      var bob = Math.floor(t * 6 + h[0]) % 2;
+      body(p, Math.round(x), G - 4 - bob, h[2], a);
+      p.rect(Math.round(x) + 1, G - 6 - bob, 2, 2, MID, a);
+    });
+  }
+
+  function dome(p, t) {
+    var a = 1;
+    if (inPh("together", t)) a = 1 - ease((sOf("together", t) - 1.2) / 1.2);
+    else if (after("walk", t) && t < START.release) a = 0;
+    if (t >= START.release) a = 0;
+    if (a <= 0) return;
+    var dip = inPh("impact", t) ? 1 : 0;
+    for (var x = DX - R - 1; x <= DX + R + 1; x++) for (var y = G - R - 1; y < G; y++) {
+      var dx = x + 0.5 - DX, dy = y + 0.5 - G;
+      if (dip && Math.abs(dx) < 4) dy -= 1;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d > R - 1 && d <= R) p.cell(x, y, DARK, a);
+    }
+  }
+
+  function rockBlob(p, cx, cy, rx, ry, alpha) {
+    for (var x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) for (var y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) {
+      var dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry;
+      if (dx * dx + dy * dy <= 1) p.cell(x, y, hash(x, y) < 0.25 ? DARK : INK, alpha);
+    }
+  }
+  var REST = G - R - 6;                     // the rock's middle row sitting on the dome
+  var PIECES = [];
+  for (var i = 0; i < 40; i++) {
+    var ang = -Math.PI * (0.03 + 0.94 * hash(i, 3)), sp = 14 + 20 * hash(i, 7);
+    PIECES.push([Math.cos(ang) * sp, Math.sin(ang) * sp, hash(i, 11) < 0.5 ? INK : DARK, (hash(i, 5) - 0.5) * 8]);
+  }
+  function rock(p, t) {
+    if (inPh("work", t) || inPh("settle", t)) return;
+    if (inPh("fall", t)) {
+      var k = step12(sOf("fall", t)) / DUR.fall, cy = -10 + (REST + 10) * k * k;
+      if (k > 0.75) { rockBlob(p, DX, cy - 4, 6, 6, 0.18); rockBlob(p, DX, cy - 2, 6, 6, 0.3); }
+      rockBlob(p, DX, cy, 6, 6);
+      return;
+    }
+    if (inPh("impact", t)) { rockBlob(p, DX, REST + 2.5, 7.5, 4.5); return; }
+    if (inPh("burst", t) || inPh("dust", t)) {
+      var tau = step12(t - START.burst);
+      var fade = inPh("dust", t) ? 1 - kOf("dust", t) : 1;
+      PIECES.forEach(function (pc) {
+        var x = DX + pc[3] * 0.4 + pc[0] * tau, y = REST + pc[1] * tau + 0.5 * 30 * tau * tau;
+        var ground = G - 1, inside = Math.abs(x - DX) < R + 1;
+        if (inside) ground = Math.min(ground, G - Math.sqrt(Math.max(0, R * R - (x - DX) * (x - DX))) - 1);
+        if (y > ground) y = ground;
+        p.cell(Math.round(x), Math.round(y), pc[2], fade);
+        if (tau < 0.3) p.cell(Math.round(x - pc[0] * 0.04), Math.round(y - pc[1] * 0.04), LIGHT, fade);
+      });
+    }
+  }
+
+  // The pair, and what they are doing.
+  var HIM_X = 33, HER_X = 39;
+  function pair(p, t) {
+    var hx = HIM_X, hy = G - 4, hf = 1, sx = HER_X, sy = G + 2, sf = -1, showHim = true, showHer = true;
+    // the hole she is in
+    var depth = 0;
+    if (after("dig", t) && t < START.walk + DUR.walk) depth = inPh("dig", t) ? Math.floor(kOf("dig", t) * 5) : 5;
+    if (depth > 0 && t < START.release) for (var d = 0; d < depth; d++) p.rect(38, G + d, 6, 1, d === 0 ? MID : "#e8e8e5");
+    if (t < START.dig) {
+      if (inPh("burst", t) || inPh("dust", t)) bang(p, hx + 1, hy - 6);
+    } else if (inPh("dig", t)) {
+      hx = 34;
+      var sw = sOf("dig", t) % 0.6;
+      if (sw < 0.25) { p.cell(hx + 4, hy - 1, INK); p.cell(hx + 5, hy - 2, INK); }
+      else if (sw < 0.3) { p.cell(hx + 4, hy + 1, MID); p.cell(hx + 5, hy + 2, MID); p.cell(hx + 5, hy + 3, MID); }
+      else { p.cell(hx + 4, hy + 3, INK); p.cell(hx + 5, hy + 4, INK); p.cell(hx + 3, hy - 3, MID); }
+    } else if (inPh("out", t)) {
+      hx = 34;
+      var rows = [G + 2, G, G - 2, G - 4];
+      sy = rows[Math.min(3, Math.floor(kOf("out", t) * 4))];
+    } else if (inPh("together", t)) {
+      hx = 34; sy = G - 4;
+      var s = sOf("together", t);
+      sf = s < 0.4 ? 1 : -1;
+      if (s >= 0.6 && s < 1.6) {
+        var q = Math.floor((s - 0.6) / 0.25);
+        if (q === 0 || q === 2) hy -= 1; else sy -= 1;
+      }
+      if (s >= 1.6) heart(p, 37, G - 12);
+    } else if (inPh("walk", t)) {
+      var k = ease(kOf("walk", t)), b = Math.floor(sOf("walk", t) * 6) % 2;
+      hx = Math.round(34 + (102 - 34) * k); sx = Math.round(39 + (95 - 39) * Math.max(0, k * 1.05 - 0.05));
+      sy = G - 4 - (b ? 0 : 1); hy = G - 4 - (b ? 1 : 0); sf = 1;
+    } else if (inPh("hush", t)) {
+      hx = 102; sx = 95; sy = G - 4; sf = 1;
+      var n = Math.min(3, 1 + Math.floor(sOf("hush", t) / 0.25));
+      dots(p, hx, hy - 3, n);
+    } else if (after("rise", t) && t < START.release) {
+      hx = 102; sx = 95; sy = G - 4; sf = 1;
+      showHim = false;
+    }
+    if (after("leap", t)) {
+      showHer = false;
+      if (inPh("leap", t)) {
+        var lk = step12(sOf("leap", t)) / 0.6;
+        if (lk <= 1) {
+          var lx = 95 + 11 * lk, ly = G - 4 - 7 * Math.sin(Math.PI * Math.min(1, lk)) + (lk > 0.7 ? (lk - 0.7) * 10 : 0);
+          var pk = Math.max(0, lk - 0.12), px = 95 + 11 * pk, py = G - 4 - 7 * Math.sin(Math.PI * pk);
+          p.rect(Math.round(px), Math.round(py), 4, 4, LIGHT, 0.6);
+          body(p, Math.round(lx), Math.round(ly), 1, 1, true);
+        } else {
+          [[104, G - 2], [106, G - 3], [108, G - 3], [110, G - 2], [107, G - 1], [105, G - 1]].forEach(function (c) { p.cell(c[0], c[1], MID); });
+        }
+      }
+    }
+    if (t >= START.release) { showHim = false; showHer = false; }
+    if (showHer && t >= START.alone && t < START.leap && sOf("alone", t) > 0.3) bang(p, sx + 1, sy - 6);
+    if (showHim) body(p, hx, hy, hf, 1, false);
+    if (showHer) body(p, sx, sy, sf, 1, true);
+    return { hx: hx };
+  }
+
+  // The serpent, the ring on the surface, and him in its jaws.
+  function serpent(p, t) {
+    var ringW = 0;
+    if (inPh("hush", t)) ringW = [2, 4, 6][Math.min(2, Math.floor(sOf("hush", t) / 0.27))];
+    else if (after("rise", t) && t < START.still) ringW = 6;
+    else if (inPh("still", t)) ringW = [6, 4, 2, 0][Math.min(3, Math.floor(sOf("still", t) / 0.2))];
+    if (ringW > 0) for (var x = 108 - ringW; x <= 108 + ringW; x++) {
+      var edge = Math.abs(x - 108) >= ringW - 1;
+      p.cell(x, G, edge ? LIGHT : MID); if (edge) p.cell(x, G + 1, MID);
+    }
+    var h = null, smear = false;
+    if (inPh("rise", t)) {
+      var f = Math.min(2, Math.floor(sOf("rise", t) / (DUR.rise / 3)));
+      // the first frame is the surface heaving under him, the head not yet out
+      if (f === 0) { p.rect(100, G - 1, 12, 1, DARK); p.rect(102, G - 2, 8, 1, DARK); body(p, 102, G - 4, 1, 1, false); return; }
+      h = [0, 8, 14][f]; smear = f === 1;
+    }
+    else if (inPh("take", t)) h = 14;
+    else if (inPh("sink", t)) { var g = Math.min(2, Math.floor(sOf("sink", t) / 0.2)); h = [9, 3, -8][g]; smear = g === 1; }
+    if (h == null || h < -6) {
+      if (inPh("sink", t)) for (var s = 0; s < 6; s++) p.cell(103 + s * 2, G - 1 - (s % 2), MID);
+      return;
+    }
+    var Y = G - h - 8;
+    if (smear) p.rect(113, Y + 3, 1, h + 5, LIGHT);
+    // neck and head: two jaws with a gap between them, the back of the head
+    // closing it, an eye and teeth
+    p.rect(106, Y + 8, 6, Math.max(0, G - (Y + 8)), INK);
+    p.rect(98, Y, 15, 2, INK); p.rect(98, Y + 6, 15, 2, INK); p.rect(105, Y + 2, 8, 4, INK);
+    p.cell(109, Y + 3, PAPER);
+    p.cell(98, Y + 2, INK); p.cell(98, Y + 5, INK);
+    // him, in its jaws from the second frame of the rise on
+    if (h >= 8 || (inPh("sink", t) && h > 0)) body(p, 100, Y + 2, 1, 1, false);
+    else if (inPh("rise", t)) body(p, 102, G - 4, 1, 1, false);
+    // the water closing round the neck
+    p.cell(105, G - 1, MID); p.cell(111, G - 1, MID);
+  }
+
+  function letterbox(p, r) {
+    var n = Math.round(r * 6);
+    if (n <= 0) return;
+    var c = p.ctx;
+    c.fillStyle = INK;
+    c.fillRect(0, 0, W * P, n * P);
+    c.fillRect(0, (H - n) * P, W * P, n * P);
+  }
+
+  function draw(ctx, opt, t) {
+    var p = new Painter(ctx), r = recede(t), kind = opt[3];
+    p.cam = camAt(t);
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W * P, H * P);
+    var bgA = kind === "ghost" ? 1 - r * 0.8 : kind === "hold" ? 1 - r * 0.65 : 1;
+    var atA = kind === "clear" ? 1 : bgA;
+    var hauA = 1 - r;
+    var mt = kind === "hold" ? heldClock(t) : t;
+    background(p, t, opt, bgA, mt);
+    ground(p, t);
+    attackers(p, t, atA);
+    haulers(p, t, hauA);
+    dome(p, t);
+    rock(p, t);
+    pair(p, t);
+    serpent(p, t);
+    if (kind === "hold") letterbox(p, r);
+  }
+
+  // ---- the page -------------------------------------------------------------
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) document.body.classList.add("reduced");
+  var KEYS = [["settled", START.fall - 0.05], ["impact", START.impact + 0.2], ["dig", START.dig + 1.5],
+              ["together", START.together + 2.2], ["take", START.take + 0.6], ["empty water", START.still + 0.9]];
+
+  var grid = document.getElementById("grid"), panels = [];
+  OPTS.forEach(function (o) {
+    var el = document.createElement("div");
+    el.className = "opt";
+    var h = document.createElement("h2");
+    var b = document.createElement("b"); b.textContent = o[0];
+    h.appendChild(b); h.appendChild(document.createTextNode(" · " + o[1]));
+    var cap = document.createElement("p"); cap.textContent = o[2];
+    var cv = document.createElement("canvas"); cv.width = W * P; cv.height = H * P;
+    var beat = document.createElement("div"); beat.className = "beat";
+    el.appendChild(h); el.appendChild(cap); el.appendChild(cv); el.appendChild(beat);
+    var keys = document.createElement("div"); keys.className = "keys";
+    KEYS.forEach(function (k) {
+      var f = document.createElement("figure"), kc = document.createElement("canvas");
+      kc.width = W * P; kc.height = H * P;
+      var fc = document.createElement("figcaption"); fc.textContent = k[0];
+      f.appendChild(kc); f.appendChild(fc); keys.appendChild(f);
+      draw(kc.getContext("2d"), o, k[1]);
+    });
+    el.appendChild(keys);
+    grid.appendChild(el);
+    panels.push({ opt: o, ctx: cv.getContext("2d"), beat: beat });
+  });
+
+  // the timeline bar and the beats table
+  var bar = document.getElementById("bar"), headEl = document.getElementById("head");
+  GROUPS.forEach(function (g) {
+    var secs = PH.filter(function (p) { return p[3] === g[0]; }).reduce(function (a, p) { return a + p[1]; }, 0);
+    var seg = document.createElement("div"); seg.className = "seg";
+    seg.style.width = (secs / LOOP * 100) + "%";
+    seg.textContent = g[1] + " " + secs.toFixed(1) + "s";
+    seg.title = g[1] + ", " + secs.toFixed(1) + " s";
+    bar.insertBefore(seg, headEl);
+  });
+  var table = document.getElementById("beats");
+  table.innerHTML = "<tr><th>at</th><th>for</th><th>beat</th><th>what happens</th></tr>";
+  var rowsEl = {};
+  PH.forEach(function (p) {
+    var tr = document.createElement("tr");
+    [START[p[0]].toFixed(1) + "s", p[1].toFixed(1) + "s", p[0], p[2]].forEach(function (v, i) {
+      var td = document.createElement("td"); td.textContent = v; if (i < 2) td.className = "s"; tr.appendChild(td);
+    });
+    table.appendChild(tr); rowsEl[p[0]] = tr;
+  });
+
+  var scrub = document.getElementById("scrub"), clock = document.getElementById("clock"), play = document.getElementById("play");
+  scrub.max = LOOP.toFixed(2);
+  var playing = !reduced, t0 = performance.now(), tNow = reduced ? START.together + 2.2 : 0, lastKey = null;
+  play.textContent = playing ? "pause" : "play";
+
+  function render(t) {
+    var ph = phaseAt(t);
+    panels.forEach(function (pn) {
+      draw(pn.ctx, pn.opt, t);
+      pn.beat.innerHTML = "";
+      var n = document.createElement("span"); n.className = "name"; n.textContent = ph[0];
+      pn.beat.appendChild(n); pn.beat.appendChild(document.createTextNode(" — " + ph[2]));
+    });
+    headEl.style.left = (t / LOOP * 100) + "%";
+    clock.textContent = t.toFixed(1) + " s";
+    scrub.value = t.toFixed(2);
+    if (lastKey !== ph[0]) {
+      if (lastKey) rowsEl[lastKey].classList.remove("on");
+      rowsEl[ph[0]].classList.add("on"); lastKey = ph[0];
+    }
+  }
+  function frame(now) {
+    if (playing) { tNow = ((now - t0) / 1000) % LOOP; render(tNow); }
+    requestAnimationFrame(frame);
+  }
+  play.addEventListener("click", function () {
+    playing = !playing;
+    play.textContent = playing ? "pause" : "play";
+    if (playing) t0 = performance.now() - tNow * 1000;
+  });
+  scrub.addEventListener("input", function () {
+    tNow = parseFloat(scrub.value);
+    t0 = performance.now() - tNow * 1000;
+    if (!playing) render(tNow);
+  });
+  render(tNow);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
