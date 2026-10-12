@@ -1,0 +1,173 @@
+// Pebble Pit's default Steam Input configuration for the Steam Deck
+// (DESIGN.md, "Controller support"). Uploaded in Steamworks as the app's
+// default controller configuration ("Steam Input" -> "Default
+// configuration" -> a template from this file); it is not part of any depot
+// and the game never reads it.
+//
+// The game reads the pad through the browser's Gamepad API (src/pad.js), in
+// the standard Xbox layout, so this config's whole job is to put the Deck's
+// extra controls onto inputs the game already reads, and nothing else:
+//   L4 -> the left trigger  (crew sight, held)
+//   R4 -> the right trigger (the hand, held)
+//   L5 -> the left stick's click (the way through the portal)
+//   R5 -> the keyboard's I  (the index)
+//   right trackpad -> the mouse, the left click on its press
+//   left trackpad  -> the scroll wheel (the camera)
+// Every other control is the Deck's own gamepad layout, passed through.
+//
+// Not yet proven in Steamworks: there is no app id to upload it under.
+
+"controller_mappings"
+{
+	"version"		"3"
+	"revision"		"1"
+	"title"		"Pebble Pit"
+	"description"		"The pad as the game reads it, with the back buttons as the triggers, the way and the index, and the trackpads as the mouse and the wheel."
+	"creator"		"0"
+	"progenitor"		""
+	"url"		""
+	"export_type"		"unknown"
+	"controller_type"		"controller_neptune"
+	"major_revision"		"0"
+	"minor_revision"		"0"
+	"Timestamp"		"0"
+	"actions"
+	{
+		"Default"
+		{
+			"title"		"Default"
+			"legacy_set"		"1"
+		}
+	}
+	"action_layers"
+	{
+	}
+	"localization"
+	{
+	}
+	"group"
+	{
+		"id"		"0"
+		"mode"		"four_buttons"
+		"inputs"
+		{
+			"button_a" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button A" } } } }
+			"button_b" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button B" } } } }
+			"button_x" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button X" } } } }
+			"button_y" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button Y" } } } }
+		}
+	}
+	"group"
+	{
+		"id"		"1"
+		"mode"		"dpad"
+		"inputs"
+		{
+			"dpad_north" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button dpad_up" } } } }
+			"dpad_south" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button dpad_down" } } } }
+			"dpad_east" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button dpad_right" } } } }
+			"dpad_west" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button dpad_left" } } } }
+		}
+	}
+	"group"
+	{
+		"id"		"2"
+		"mode"		"joystick_move"
+		"inputs"
+		{
+			"click" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button JOYSTICK_LEFT" } } } }
+		}
+	}
+	"group"
+	{
+		"id"		"3"
+		"mode"		"joystick_camera"
+		"inputs"
+		{
+			"click" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button JOYSTICK_RIGHT" } } } }
+		}
+		"settings"
+		{
+			"output_joystick"		"1"
+		}
+	}
+	"group"
+	{
+		"id"		"4"
+		"mode"		"trigger"
+		"inputs"
+		{
+		}
+		"settings"
+		{
+			"output_trigger"		"1"
+		}
+	}
+	"group"
+	{
+		"id"		"5"
+		"mode"		"trigger"
+		"inputs"
+		{
+		}
+		"settings"
+		{
+			"output_trigger"		"2"
+		}
+	}
+	"group"
+	{
+		"id"		"6"
+		"mode"		"absolute_mouse"
+		"inputs"
+		{
+			"click" { "activators" { "Full_Press" { "bindings" { "binding" "mouse_button LEFT" } } } }
+		}
+	}
+	"group"
+	{
+		"id"		"7"
+		"mode"		"scrollwheel"
+		"inputs"
+		{
+		}
+	}
+	"group"
+	{
+		"id"		"8"
+		"mode"		"switches"
+		"inputs"
+		{
+			"button_escape" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button start" } } } }
+			"button_menu" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button select" } } } }
+			"left_bumper" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button shoulder_left" } } } }
+			"right_bumper" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button shoulder_right" } } } }
+			"button_back_left" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button TRIGGER_LEFT" } } } }
+			"button_back_right" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button TRIGGER_RIGHT" } } } }
+			"button_back_left_upper" { "activators" { "Full_Press" { "bindings" { "binding" "xinput_button JOYSTICK_LEFT" } } } }
+			"button_back_right_upper" { "activators" { "Full_Press" { "bindings" { "binding" "key_press I" } } } }
+		}
+	}
+	"preset"
+	{
+		"id"		"0"
+		"name"		"Default"
+		"group_source_bindings"
+		{
+			"0"		"button_diamond active"
+			"1"		"dpad active"
+			"2"		"joystick active"
+			"3"		"right_joystick active"
+			"4"		"left_trigger active"
+			"5"		"right_trigger active"
+			"6"		"right_trackpad active"
+			"7"		"left_trackpad active"
+			"8"		"switch active"
+		}
+	}
+	"settings"
+	{
+		"left_trackpad_mode"		"0"
+		"right_trackpad_mode"		"0"
+	}
+}
