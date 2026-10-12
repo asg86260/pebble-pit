@@ -259,10 +259,24 @@ function nextCloud(i, from, not) {
 // only chooses where they go. `k.go` is how far along its last trip the
 // picture is, nought to one; a cloud that goes out from under a hanging craft
 // (a front's, melted away) is a trip the picture makes up at the same pace.
+// A craft with no picture yet is one just bought, at its post, or one read
+// back off a save: the sky is not written down, so a craft read back up finds
+// a cloud of the new sky and is already under it, as at the end of its climb,
+// rather than climbing again from its post while the yard counts it working.
+function skyOf(i, c) {
+  if (c.sky) return c.sky;
+  const post = atPost(i);
+  c.sky = { ...post, cloud: null, from: null, leg: null, go: 0 };
+  if (c.phase === 'aloft' || c.phase === 'down') {
+    const cloud = nextCloud(i, post, null), to = under(cloud);
+    if (to) Object.assign(c.sky, to, { cloud: c.phase === 'aloft' ? cloud : null, leg: 'aloft', go: 1 });
+  }
+  return c.sky;
+}
+
 function stepSky(i, c, secs) {
   const post = atPost(i);
-  if (!c.sky) c.sky = { ...post, cloud: null, from: null, leg: null, go: 0 };
-  const k = c.sky;
+  const k = skyOf(i, c);
   if (c.phase === 'moored') {
     Object.assign(k, post, { cloud: null, from: null, leg: null });
     return;
@@ -350,7 +364,7 @@ function sheetSize(far) {
 // the bottom-middle of its basket, its depth and its size.
 export function craftAt(i) {
   const c = CRAFT[i];
-  const k = c && c.sky ? c.sky : atPost(i);
+  const k = c ? skyOf(i, c) : atPost(i);
   return { x: onSky(k.x, k.far), y: k.y, far: k.far, s: sizeAt(k.far), cx: k.x };
 }
 // Where a thing let go at depth `far` is drawn this frame, from its `x` in the

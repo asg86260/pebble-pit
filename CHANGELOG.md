@@ -165,6 +165,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 - The props can be built after the first rock.
 
+- A balloon that was up when the game was reloaded comes back among the clouds instead of back at its post (test/balloon.test.mjs).
 - Saving the sqwife before the pit drowned no longer leaves it solid: once her sheet is put down the hole tears, swells and drowns on its own (test/abyss-after-rescue.test.mjs).
 - An idle hauler stood beside the rock no longer drifts up its flank and hangs in the air there (test/haul-belt.test.mjs).
 - A fully lamped quarry gang no longer leaves a strip of the cut standing courses above the floor around it (test/cut-pockets.test.mjs).
