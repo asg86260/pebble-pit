@@ -50,14 +50,17 @@ import { stageClear } from './stage.js';
 import { standFirst } from './deep/party.js';
 
 // --- whether ---------------------------------------------------------------------
-// The half is played by a dev build and the node yard (which has no
-// `import.meta.env`), and by a released build only when the switch is on.
-// A check can say either way for itself.
+// Two switches (DESIGN.md, "Three builds"). The snatch plays in every build
+// but the demo: on the free itch page it is the teaser, the story going on
+// past the rescue as far as the wizards. The deep -- the portal, the serpent
+// fight -- is the paid game's (SERPENT_ON), and a dev build's and the node
+// yard's (no `import.meta.env`). A check can say either way for itself.
 const DEV_BUILD = !import.meta.env || !!import.meta.env.DEV;
-let forced = null;
-// The demo never has the second half, whatever else says so.
-export function serpentOn() { return !demoOn() && (forced ?? (SERPENT_ON || DEV_BUILD)); }
+let forced = null, forcedDeep = null;
+export function serpentOn() { return !demoOn() && (forced ?? true); }
 export function forceSerpent(on) { forced = on; }
+export function deepOn() { return serpentOn() && (forcedDeep ?? (SERPENT_ON || DEV_BUILD)); }
+export function forceDeep(on) { forcedDeep = on; }
 
 // --- when -------------------------------------------------------------------------
 // Both facts, the ending's sheet put down (the rescue's own beat and its

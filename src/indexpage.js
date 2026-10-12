@@ -9,11 +9,11 @@
 
 import { GROUPS } from './config/index.js';
 import { metEntries, unread, markRead } from './met.js';
-import { serpentOn } from './snatch.js';
+import { deepOn } from './snatch.js';
 import { GLYPHS } from './glyphs.js';
 import { MARK } from './words.js';
 
-const listed = () => metEntries(serpentOn());
+const listed = () => metEntries(deepOn());
 // The entry open on the right, kept across openings so the page comes back
 // where it was left.
 let chosen = null;

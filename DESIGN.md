@@ -17574,7 +17574,7 @@ save is ever written by two clouds.
 
 | build | where | content | saves | sync |
 |---|---|---|---|---|
-| free | itch, the free page (browser + downloads) | the surface, to the rescue; the deep never on | the browser / `userData/saves`, as now | ours (`CLOUD_ON`, opt-in), as now |
+| free | itch, the free page (browser + downloads) | the surface, the rescue and the snatch as a teaser; the portal never offered, the deep never on | the browser / `userData/saves`, as now | ours (`CLOUD_ON`, opt-in), as now |
 | paid full | itch, a paid page (browser + downloads) | the whole game (`VITE_FULL=1`) | the same | ours |
 | Steam full | Steam, the game's app | the whole game | `userData/saves` | Steam Cloud through the Steamworks SDK |
 | Steam demo | Steam, the demo app | the demo cut, to the net (`VITE_DEMO=1`) | the same | Steam Cloud through the SDK, the demo app's own |
@@ -17582,7 +17582,13 @@ save is ever written by two clouds.
 The owner, 2026-10-12: the free itch page keeps the surface as it is
 released today -- nothing a player had is taken back -- and the deep is
 never switched on there; the demo cut is the Steam demo's, going forward.
-The second half is what the paid builds add.
+The second half is what the paid builds add. Later the same day: the free
+build plays the snatch as a teaser -- the story goes on past the rescue to
+"talk to the wizards", the portal is never offered, and opening the
+wizards' board stands the teaser's last sheet (`teaseend`, beats.js;
+words still the owner's to give). Two switches in snatch.js: `serpentOn`
+(the snatch; every build but the demo) and `deepOn` (the portal and the
+fight; the paid game, `SERPENT_ON`). Check: test/teaser.test.mjs.
 
 - **One build setting, `target`**: `itch` (the default) or `steam`, read at
   build time (a `VITE_TARGET` the release workflow sets) and by the Electron
