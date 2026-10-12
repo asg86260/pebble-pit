@@ -483,17 +483,29 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
     for (let i = 0; i < on.all.length; i += 64, n++) if (on.all[i] !== off.all[i]) differ++;
     return [
       ok(held, `${half}: the right button down on a body holds the sight`, String(held)),
-      ok(on.side.every((p, i) => toward(p, off.side[i], on.ink)),
+      // The deep is drawn inverted, so its ink is the paper's tone: the ring
+      // is a pixel far from what is there with the sight let go.
+      ok(on.side.every((p, i) => (half === 'deep' ? Math.abs(tone(p) - tone(off.side[i])) > 64 : toward(p, off.side[i], on.ink))),
          `${half}: and the body wears a ring`, `ink ${on.ink}; held ${on.side.join(' ')}; let go ${off.side.join(' ')}`),
       ok(differ > n / 10, `${half}: and what is behind it is veiled`, `${differ} of ${n} samples`)
     ];
   };
   deepYard();
+  // Hands of the deep's own beside the fighter the snatch stands, and the
+  // first trip down already had, so the view is the player's.
+  window.__deepCrew({ spare: 3 });
+  if (!S.beatsDone.includes('abyss')) S.beatsDone.push('abyss');
+  run(1);
   const onGlass = w => w.x > S.camX + 40 && w.x < S.camX + S.viewW - 40;
+  // Wherever the yard's crew are, the camera goes to one of them.
+  const pick = S.workers.find(w => !w.lifted && !w.inside && !inTheDeep(w) && !w.aloft);
+  if (pick) { window.__look(pick.x - S.viewW / 2); run(0.1); }
   const up = S.workers.find(w => !w.lifted && !w.inside && !inTheDeep(w) && onGlass(w));
   const yard = up ? look('yard', up) : [ok(false, 'yard: a body on the glass')];
   window.__view('deep');
   run(VIEW_GLIDE_S + 1);
+  const below = S.workers.find(w => !w.lifted && inTheDeep(w) && !isFighter(w) && w.y > deepTop() + DEEP_SURFACE + P * 4);
+  if (below) { window.__look(below.x - S.viewW / 2); run(0.1); }
   const down = S.workers.find(w => !w.lifted && inTheDeep(w) && !isFighter(w) &&
                                    w.y > deepTop() + DEEP_SURFACE + P * 4 && onGlass(w));
   const deep = down ? look('deep', down)
@@ -501,12 +513,16 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   // The rest of the pointer's crew controls down there: with the right button
   // held, the left takes the body under the hand (a chord arrives as a move),
   // and the middle button drags the view along.
-  let lifted = false, panned = false;
+  let lifted = false, panned = false, why = '';
   if (down) {
     const [x, y] = onScreen(down.x + WORKER / 2, down.y + WORKER / 2);
     point('pointerdown', x, y, 2, 2);
     point('pointermove', x, y, 3, 0);
-    lifted = down.lifted === true;
+    // The body the hand finds: gatherers resting by the crusher stand
+    // together, and the top one of them is the one taken.
+    const got = S.workers.find(o => o.lifted);
+    lifted = !!got && inTheDeep(got);
+    why = `${got ? got.type : 'none'} under the hand`;
     point('pointerup', x, y, 0, 2);
     run(3);
     for (const dx of [-120, 120]) {
@@ -517,7 +533,7 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
       panned = panned || S.camX !== was;
     }
   }
-  deep.push(ok(lifted, 'deep: right and left together lift the body', String(lifted)),
+  deep.push(ok(lifted, 'deep: right and left together lift the body', why),
             ok(panned && S.view === 'deep', 'deep: and the middle button drags the view', `${panned} ${S.view}`));
   return [...yard, ...deep];
 }]);
