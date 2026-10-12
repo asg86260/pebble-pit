@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worker counter mocks</title>
+<style>
+:root {
+  --paper: #ffffff; --ink: #000000; --grey: #c8c8c8; --mid: #8a8a8a; --dim: #555555;
+  --dust: #8a8a8a; --ore: #4a7bd8; --crop: #2fa04a; --spark: #d83a2a;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #000000; --ink: #ffffff; --grey: #3a3a3a; --mid: #777777; --dim: #aaaaaa;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #000000; --ink: #ffffff; --grey: #3a3a3a; --mid: #777777; --dim: #aaaaaa;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper); color: var(--ink);
+  font: 13px/1.45 ui-monospace, Consolas, "Courier New", monospace;
+  padding: 18px 16px 36px; max-width: 1320px; margin: 0 auto;
+}
+h1 { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 6px; }
+.lede { margin: 0 0 6px; max-width: 80ch; }
+.lede b { background: var(--ink); color: var(--paper); padding: 0 6px; }
+.today { margin: 0 0 18px; max-width: 80ch; color: var(--dim); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.opt { border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: 12px; min-width: 0; }
+.opt h2 { margin: 0 0 4px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+.opt h2 span { background: var(--ink); color: var(--paper); padding: 0 6px; margin-right: 6px; }
+.opt p { margin: 0 0 8px; }
+canvas { width: 100%; max-width: 100%; display: block; image-rendering: pixelated; border-top: 2px solid var(--ink); }
+canvas.phone { border-top: 2px dashed var(--grey); }
+.beat { margin-top: 6px; color: var(--dim); min-height: 1.45em; }
+.beat::before { content: "beat: "; color: var(--mid); }
+.cant { margin-top: 28px; border-top: 2px solid var(--ink); padding-top: 12px; max-width: 90ch; }
+.cant ul { margin: 6px 0 0; padding-left: 18px; }
+.ctl { margin: 0 0 14px; }
+.ctl button { font: inherit; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 2px 10px; cursor: pointer; }
+.ctl button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+</style>
+</head>
+<body>
+<h1>Worker counter, second pass</h1>
+<p class="lede"><b>Mock</b> drawn from plain shapes, not the game. It cannot show the real yard sprites, the real body glyph, the yard's zoom, the screen-pixel digits, or real seat counts; stations are stand-ins and the walking bodies are boxes.</p>
+<p class="today">Each panel: quarry 3 of 5 with 2 hats, farm 7 of 7 (full), filter 1 of 4 with one walking over. The loop presses + on the quarry (a body walks over and takes the seat), + on the full farm (dead, nothing moves), and - on the quarry (the body walks off). Under the line: the house's carriers at 52 of 60 with 8 carts, for scale. Grey on the seats is the bill-line grey; the only color is none (no coin marks are counted here).</p>
+<div class="ctl"><button id="pause" aria-pressed="false">pause</button> <button id="step">step 1/12 s</button></div>
+<div class="grid" id="grid"></div>
+
+<div class="cant">
+<b>What the mock cannot show</b>
+<ul>
+<li>How each reads at the yard's real zoom and over a busy ground (dust, rain, the quarry mouth).</li>
+<li>Seat counts here are invented: the game would read them from <code>capOf</code> / <code>roomAt</code>, which today the roster never shows.</li>
+<li>Deep stations (one fighter each), the forklift line, the wizard's hat-is-the-badge case.</li>
+<li>Touch: hit targets are drawn, not tested.</li>
+<li>The 0.6x strip shrinks the digits with everything else; the game draws its counts in screen pixels, so on a phone they would stay full size while the glyphs, pips and buttons shrink.</li>
+</ul>
+</div>
+
+<script>
+"use strict";
+const OPTS = [
+  ["A", "Seat pips", "One pip a seat: black is a body at work, grey outline an empty seat, a pip filling in held thirds is a body on its way. A brim over the pip is a hat. Past twelve seats the pips shrink into rows of twenty, with the count over them.", "pips"],
+  ["B", "Mess tag", "The muck tag's shape: body glyph, the count, a hairline, the seats; a hat and its count in a second cell. A dashed body steps into the tag while one is walking. Full inverts the tag, like the saves page's current row.", "tag"],
+  ["C", "Bill bar", "The bill line's grey-filling bar, a seat to a notch, count over it; - and + are the bar's own ends, inverting when pressed. A hatched seat is one walking over. Hats ride after the bar.", "bar"],
+  ["D", "Tally ruler", "The casino's ruled feet under the station: a notch a seat, a standing tick a body, a capped tick a hat, a tick rising in held thirds a body on its way. Past twelve it becomes a fine comb with tens marked long. The count follows a hairline.", "ruler"]
+];
+
+const LOOP = 10, FPS = 12, W = 440, H = 190, GROUND = 54, HOUSE_Y = 150;
+const STN = [
+  { key: "quarry", x: 78, seats: 5, hats: 2 },
+  { key: "farm", x: 222, seats: 7, hats: 0 },
+  { key: "filter", x: 366, seats: 4, hats: 0 }
+];
+const BEATS = [
+  [0, "at rest: quarry 3/5 (2 hats), farm full, filter 1/4 with one walking over"],
+  [2, "+ on the quarry: a body leaves the house and walks over"],
+  [3, "the filter's walker arrives: its seat finishes filling"],
+  [4, "the quarry's walker arrives: its seat finishes filling"],
+  [5, "+ on the full farm: dead, nothing moves"],
+  [7, "- on the quarry: the fourth body stands up and walks off"],
+  [8.6, "it is out of sight: the seat is empty again"]
+];
+
+// The yard state at a moment: seated, coming, leaving and the progress of the
+// one in motion, plus which button is held down.
+function yard(t) {
+  const q = { s: 3, c: 0, l: 0, p: 0, press: null };
+  if (t >= 2 && t < 4) { q.c = 1; q.p = (t - 2) / 2; }
+  if (t >= 4) q.s = 4;
+  if (t >= 7) { q.s = 3; if (t < 8.6) { q.l = 1; q.p = (t - 7) / 1.6; } }
+  if (t >= 2 && t < 2.34) q.press = { side: "+", live: true };
+  if (t >= 7 && t < 7.34) q.press = { side: "-", live: true };
+  const f = { s: 7, c: 0, l: 0, p: 0, press: t >= 5 && t < 5.34 ? { side: "+", live: false } : null };
+  const a = t < 3 ? { s: 1, c: 1, l: 0, p: t / 3, press: null } : { s: 2, c: 0, l: 0, p: 0, press: null };
+  return [q, f, a];
+}
+// Held thirds: a seat fills in three steps, never a smooth slide.
+const third = p => Math.min(3, Math.floor(p * 3 + 1e-6));
+
+let C = {};
+function tokens() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ["paper", "ink", "grey", "mid", "dim"]) C[k] = cs.getPropertyValue("--" + k).trim();
+}
+
+const snap = v => Math.round(v / 3) * 3;
+function rect(g, x, y, w, h, col) { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function edge(g, x, y, w, h, col, t = 2) { rect(g, x, y, w, t, col); rect(g, x, y + h - t, w, t, col); rect(g, x, y, t, h, col); rect(g, x + w - t, y, t, h, col); }
+function txt(g, s, x, y, col, align = "left", size = 11) {
+  g.font = "600 " + size + "px ui-monospace, Consolas, monospace";
+  g.fillStyle = col; g.textAlign = align; g.textBaseline = "middle"; g.fillText(s, x, y);
+}
+const tw = (g, s, size = 11) => { g.font = "600 " + size + "px ui-monospace, Consolas, monospace"; return g.measureText(s).width; };
+
+// The body glyph: an outlined square. `x, y` is the top-left (fillRect rule).
+function body(g, x, y, s, ink, paper, dashed) {
+  if (dashed) {
+    for (let i = 0; i < s; i += 4) { rect(g, x + i, y, 2, 2, ink); rect(g, x + i, y + s - 2, 2, 2, ink); rect(g, x, y + i, 2, 2, ink); rect(g, x + s - 2, y + i, 2, 2, ink); }
+    return;
+  }
+  rect(g, x, y, s, s, paper); edge(g, x, y, s, s, ink);
+}
+function hat(g, x, y, s, ink) { rect(g, x - 2, y - 3, s + 4, 2, ink); rect(g, x + s / 4, y - 6, s / 2, 3, ink); }
+function cart(g, x, y, ink, paper) { rect(g, x, y + 2, 14, 7, paper); edge(g, x, y + 2, 14, 7, ink); rect(g, x + 2, y + 10, 3, 3, ink); rect(g, x + 9, y + 10, 3, 3, ink); }
+
+// A hairline - or +, dotted when it would do nothing; pressed, it stands
+// inverted in its own square for a held step.
+function button(g, cx, cy, kind, live, pressed) {
+  const B = 9, T = 2;
+  let ink = C.ink;
+  if (pressed) { rect(g, cx - 8, cy - 8, 16, 16, C.ink); ink = C.paper; }
+  if (live) rect(g, cx - B / 2, cy - T / 2, B, T, ink);
+  else for (let i = 0; i < B; i += 4) rect(g, cx - B / 2 + i, cy - T / 2, 2, T, ink);
+  if (kind === "+") {
+    if (live) rect(g, cx - T / 2, cy - B / 2, T, B, ink);
+    else for (let i = 0; i < B; i += 4) rect(g, cx - T / 2, cy - B / 2 + i, T, 2, ink);
+  }
+}
+const liveMore = (st, y) => y.s + y.c < st.seats;
+
+// --- the stand-in yard -------------------------------------------------------
+function stations(g, t, ys) {
+  rect(g, 0, GROUND, W, 2, C.ink);
+  // the house, far left, where walkers come from
+  rect(g, 6, GROUND - 30, 24, 30, C.ink); rect(g, 3, GROUND - 33, 30, 3, C.ink); rect(g, 15, GROUND - 12, 6, 12, C.paper);
+  // quarry: a shed beside a cut
+  const q = STN[0].x;
+  rect(g, q - 30, GROUND - 24, 24, 24, C.ink); rect(g, q - 33, GROUND - 27, 30, 3, C.ink); rect(g, q - 21, GROUND - 12, 6, 12, C.paper);
+  rect(g, q, GROUND, 36, 2, C.paper); rect(g, q, GROUND + 2, 36, 0, C.ink);
+  for (let i = 0; i < 3; i++) rect(g, q + i * 6, GROUND - 6 + i * 3, 36 - i * 12, 3, C.mid);
+  // farm: a hut and plots
+  const f = STN[1].x;
+  rect(g, f - 40, GROUND - 21, 18, 21, C.ink); rect(g, f - 43, GROUND - 24, 24, 3, C.ink);
+  for (let i = 0; i < 5; i++) { rect(g, f - 15 + i * 12, GROUND - 6, 6, 6, C.ink); rect(g, f - 13 + i * 12, GROUND - 12, 2, 6, C.ink); }
+  // filter: a box with a fan
+  const a = STN[2].x;
+  rect(g, a - 15, GROUND - 33, 30, 33, C.ink); rect(g, a - 9, GROUND - 27, 18, 18, C.paper);
+  const k = Math.floor(t * FPS / 3) % 2;
+  if (k) { rect(g, a - 7, GROUND - 19, 14, 2, C.ink); rect(g, a - 1, GROUND - 25, 2, 14, C.ink); }
+  else for (let i = 0; i < 6; i++) { rect(g, a - 6 + i * 2, GROUND - 24 + i * 2, 3, 3, C.ink); rect(g, a + 4 - i * 2, GROUND - 24 + i * 2, 3, 3, C.ink); }
+  // walkers: boxes on the ground line, legs in two held poses
+  const walkers = [];
+  if (t >= 2 && t < 4) walkers.push(lerp(30, q - 12, (t - 2) / 2));
+  if (t >= 7 && t < 8.6) walkers.push(lerp(q - 12, -12, (t - 7) / 1.6));
+  if (t < 3) walkers.push(lerp(300, a - 30, t / 3));
+  for (const x of walkers) {
+    const wx = snap(x), leg = Math.floor(t * FPS / 2) % 2;
+    rect(g, wx, GROUND - 18, 9, 12, C.paper); edge(g, wx, GROUND - 18, 9, 12, C.ink);
+    rect(g, wx + (leg ? 1 : 2), GROUND - 6, 2, 6, C.ink); rect(g, wx + (leg ? 6 : 5), GROUND - 6, 2, 6, C.ink);
+  }
+}
+const lerp = (a, b, p) => a + (b - a) * Math.max(0, Math.min(1, p));
+
+// --- A: seat pips -----------------------------------------------------------
+function drawPips(g, cx, cy, st, y, opts = {}) {
+  const n = st.seats, big = n > 12;
+  const p = big ? 5 : 10, gap = big ? 2 : 3, per = big ? 20 : n;
+  const rows = Math.ceil(n / per), wRow = per * (p + gap) - gap;
+  const x0 = snap(cx - wRow / 2), y0 = cy - (rows * (p + gap) - gap) / 2;
+  if (big) txt(g, y.s + "/" + n, cx, y0 - 10, C.ink, "center");
+  for (let i = 0; i < n; i++) {
+    const x = x0 + (i % per) * (p + gap), yy = y0 + Math.floor(i / per) * (p + gap);
+    if (i < y.s) {
+      rect(g, x, yy, p, p, C.ink);
+      if (i < st.hats && !big) hat(g, x, yy - 1, p, C.ink);
+      if (i < st.hats && big) rect(g, x, yy - 2, p, 1, C.ink);
+    } else if (i < y.s + y.c) {
+      edge(g, x, yy, p, p, C.ink); const k = third(y.p); rect(g, x, yy + p - p * k / 3, p, p * k / 3, C.ink);
+    } else if (i < y.s + y.l) {
+      edge(g, x, yy, p, p, C.ink); const k = 3 - third(y.p); rect(g, x, yy + p - p * k / 3, p, p * k / 3, C.ink);
+    } else edge(g, x, yy, p, p, C.grey, big ? 1 : 2);
+  }
+  if (opts.fixed) return;
+  const pr = y.press;
+  button(g, x0 - 14, cy, "-", y.s > 0, pr && pr.side === "-");
+  button(g, x0 + wRow + 14, cy, "+", liveMore(st, y), pr && pr.side === "+");
+}
+
+// --- B: mess tag ------------------------------------------------------------
+function drawTag(g, cx, cy, st, y, opts = {}) {
+  const full = y.s + y.c >= st.seats && !y.c;
+  const fill = full ? C.paper : C.ink, ink = full ? C.ink : C.paper;
+  const nS = String(y.s), sS = String(st.seats);
+  const coming = y.c ? 15 : 0;
+  let w = 6 + 12 + 6 + tw(g, nS) + coming + 6 + 2 + 6 + tw(g, sS) + 6;
+  const hatW = st.hats ? 2 + 6 + 12 + 5 + tw(g, String(st.hats)) + 6 : 0;
+  w = Math.ceil(w); const total = w + hatW, h = 20;
+  const x0 = snap(cx - total / 2), y0 = cy - h / 2;
+  rect(g, x0, y0, total, h, fill);
+  if (full) edge(g, x0, y0, total, h, C.ink);
+  let x = x0 + 6;
+  body(g, x, cy - 6, 12, ink, fill); x += 18;
+  txt(g, nS, x, cy + 1, ink); x += tw(g, nS);
+  if (y.c) {
+    const k = third(y.p); body(g, x + 3 + (3 - k) * 2, cy - 4, 8, ink, fill, k < 3); x += coming;
+  }
+  x += 6; rect(g, x, y0 + 4, 2, h - 8, ink); x += 8;
+  txt(g, sS, x, cy + 1, full ? C.ink : C.grey); x += tw(g, sS) + 6;
+  if (st.hats) {
+    rect(g, x, y0, 2, h, full ? C.ink : C.paper); x += 8;
+    body(g, x, cy - 5, 12, ink, fill); hat(g, x, cy - 5, 12, ink); x += 17;
+    txt(g, String(st.hats), x, cy + 1, ink);
+  }
+  if (opts.cart) { const cx2 = x0 + total + 8; cart(g, cx2, cy - 7, C.ink, C.paper); txt(g, String(opts.cart), cx2 + 20, cy + 1, C.ink); }
+  if (opts.fixed) return;
+  const pr = y.press;
+  button(g, x0 - 13, cy, "-", y.s > 0, pr && pr.side === "-");
+  button(g, x0 + total + 13, cy, "+", liveMore(st, y), pr && pr.side === "+");
+}
+
+// --- C: bill bar ------------------------------------------------------------
+function drawBar(g, cx, cy, st, y, opts = {}) {
+  const n = st.seats, end = opts.fixed ? 0 : 18, bw = n > 12 ? 120 : 72, h = 20;
+  const extra = st.hats || opts.cart ? 34 : 0;
+  const total = bw + end * 2, x0 = snap(cx - (total + extra) / 2), y0 = cy - h / 2;
+  rect(g, x0 + 3, y0 + 3, total, h, C.ink);
+  rect(g, x0, y0, total, h, C.paper);
+  const bx = x0 + end, sw = bw / n;
+  rect(g, bx, y0, sw * y.s, h, C.grey);
+  if (y.c || y.l) {
+    const k = y.c ? third(y.p) : 3 - third(y.p), sx = bx + sw * y.s, fw = sw * k / 3;
+    g.save(); g.beginPath(); g.rect(sx, y0, fw, h); g.clip();
+    for (let i = -h; i < fw + h; i += 4) { g.fillStyle = C.grey; g.beginPath(); g.moveTo(sx + i, y0 + h); g.lineTo(sx + i + 2, y0 + h); g.lineTo(sx + i + 2 + h, y0); g.lineTo(sx + i + h, y0); g.fill(); }
+    g.restore();
+  }
+  if (n <= 12) for (let i = 1; i < n; i++) rect(g, Math.round(bx + i * sw) - 1, y0 + h - 5, 1, 3, C.mid);
+  edge(g, x0, y0, total, h, C.ink);
+  txt(g, y.s + "/" + n, bx + bw / 2, cy + 1, C.ink, "center");
+  if (!opts.fixed) {
+    rect(g, bx - 2, y0, 2, h, C.ink); rect(g, bx + bw, y0, 2, h, C.ink);
+    const pr = y.press;
+    if (pr) { const ex = pr.side === "-" ? x0 : bx + bw; rect(g, ex, y0, end + (pr.side === "-" ? 0 : 2), h, C.ink); }
+    button(g, x0 + end / 2, cy, "-", y.s > 0, false);
+    button(g, bx + bw + 1 + end / 2, cy, "+", liveMore(st, y), false);
+    if (pr) { // redraw the pressed mark in paper over its inverted end
+      const ex = pr.side === "-" ? x0 + end / 2 : bx + bw + 1 + end / 2;
+      rect(g, ex - 8, cy - 8, 16, 16, C.ink); button(g, ex, cy, pr.side, pr.live, true);
+    }
+  }
+  let x = x0 + total + 9;
+  if (st.hats) { body(g, x, cy - 5, 12, C.ink, C.paper); hat(g, x, cy - 5, 12, C.ink); txt(g, String(st.hats), x + 16, cy + 1, C.ink); }
+  if (opts.cart) { cart(g, x, cy - 7, C.ink, C.paper); txt(g, String(opts.cart), x + 20, cy + 1, C.ink); }
+}
+
+// --- D: tally ruler ---------------------------------------------------------
+function drawRuler(g, cx, cy, st, y, opts = {}) {
+  const n = st.seats, big = n > 12, pitch = big ? 3 : 9;
+  const rw = (n - 1) * pitch + 2, nS = String(y.s), sS = "/" + n;
+  const numW = 10 + tw(g, nS) + tw(g, sS);
+  const hatW = st.hats ? 18 : 0, total = rw + numW + hatW, x0 = snap(cx - total / 2), base = cy + 6;
+  rect(g, x0 - 3, base, rw + 6, 2, C.ink);
+  for (let i = 0; i < n; i++) {
+    const x = x0 + i * pitch, tall = big ? 9 : 14;
+    if (i < y.s) {
+      rect(g, x, base - tall, 2, tall, C.ink);
+      if (i < st.hats) rect(g, x - 2, base - tall - 2, 6, 2, C.ink);
+    } else if (i < y.s + y.c || i < y.s + y.l) {
+      const k = y.c ? third(y.p) : 3 - third(y.p), hh = Math.round(tall * k / 3);
+      for (let j = 0; j < hh; j += 3) rect(g, x, base - j - 2, 2, 2, C.ink);
+    }
+    const notch = big && (i + 1) % 10 === 0 ? 6 : 3;
+    rect(g, x, base + 2, 2, notch, big ? C.mid : C.grey);
+  }
+  let x = x0 + rw + 6;
+  rect(g, x, cy - 8, 2, 16, C.ink); x += 6;
+  txt(g, nS, x, cy, C.ink); x += tw(g, nS); txt(g, sS, x, cy, C.mid);
+  x += tw(g, sS) + 6;
+  if (st.hats) { rect(g, x, cy - 3, 6, 2, C.ink); rect(g, x + 1, cy - 6, 4, 3, C.ink); txt(g, String(st.hats), x + 9, cy, C.ink); }
+  if (opts.cart) { cart(g, x, cy - 7, C.ink, C.paper); txt(g, String(opts.cart), x + 20, cy, C.ink); }
+  if (opts.fixed) return;
+  const pr = y.press;
+  button(g, x0 - 15, cy, "-", y.s > 0, pr && pr.side === "-");
+  button(g, x0 + total + 16, cy, "+", liveMore(st, y), pr && pr.side === "+");
+}
+
+const DRAW = { pips: drawPips, tag: drawTag, bar: drawBar, ruler: drawRuler };
+
+// --- panels -----------------------------------------------------------------
+const grid = document.getElementById("grid");
+const panels = OPTS.map(([L, name, cap, kind]) => {
+  const el = document.createElement("section"); el.className = "opt";
+  el.innerHTML = `<h2><span>${L}</span>${name}</h2><p>${cap}</p>`;
+  const cv = document.createElement("canvas"); cv.width = W * 2; cv.height = H * 2;
+  const beat = document.createElement("div"); beat.className = "beat";
+  // the quarry's counter at desktop zoom and at the phone yard's (about 0.6)
+  const ph = document.createElement("canvas"); ph.width = W * 2; ph.height = 56 * 2; ph.className = "phone";
+  el.append(cv, ph, beat); grid.append(el);
+  return { kind, g: cv.getContext("2d"), p: ph.getContext("2d"), beat };
+});
+
+function frame(t) {
+  tokens();
+  const ys = yard(t), b = BEATS.filter(x => x[0] <= t).pop()[1];
+  for (const P of panels) {
+    const g = P.g; g.setTransform(2, 0, 0, 2, 0, 0); g.imageSmoothingEnabled = false;
+    rect(g, 0, 0, W, H, C.paper);
+    stations(g, t, ys);
+    STN.forEach((st, i) => DRAW[P.kind](g, st.x, GROUND + 36, st, ys[i]));
+    // under the line: the house's carriers, 52 of 60 with 8 carts, read not set
+    rect(g, 0, 112, W, 2, C.grey);
+    rect(g, 18, HOUSE_Y - 18, 30, 30, C.ink); rect(g, 15, HOUSE_Y - 21, 36, 3, C.ink);
+    for (let i = 0; i < 3; i++) rect(g, 22 + i * 9, HOUSE_Y - 12, 4, 4, C.paper);
+    const house = { seats: 60, hats: 0 };
+    const hy = { s: 52, c: t >= 4 && t < 6 ? 1 : 0, l: 0, p: (t - 4) / 2, press: null };
+    if (t >= 6) hy.s = 53;
+    DRAW[P.kind](g, 230, HOUSE_Y, house, hy, { fixed: true, cart: 8 });
+    const p = P.p; p.setTransform(2, 0, 0, 2, 0, 0);
+    rect(p, 0, 0, W, 56, C.paper);
+    txt(p, "1x", 8, 10, C.mid); txt(p, "0.6x", W / 2 + 8, 10, C.mid);
+    rect(p, W / 2, 6, 1, 44, C.grey);
+    DRAW[P.kind](p, W / 4, 32, STN[0], ys[0]);
+    p.setTransform(1.2, 0, 0, 1.2, (W * 3 / 4) * 2 * (1 - 0.6), 32 * 2 * (1 - 0.6));
+    DRAW[P.kind](p, W * 3 / 4, 32, STN[0], ys[0]);
+    P.beat.textContent = b;
+  }
+}
+
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let paused = false, clock = 2.5, last = performance.now();
+document.getElementById("pause").onclick = e => { paused = !paused; e.target.setAttribute("aria-pressed", paused); };
+document.getElementById("step").onclick = () => { paused = true; document.getElementById("pause").setAttribute("aria-pressed", true); clock += 1 / FPS; frame(Math.floor((clock % LOOP) * FPS) / FPS); };
+if (location.hash.startsWith("#t=")) { clock = parseFloat(location.hash.slice(3)); paused = true; }
+function tick(now) {
+  if (!paused) clock += (now - last) / 1000;
+  last = now;
+  frame(Math.floor((clock % LOOP) * FPS) / FPS);
+  requestAnimationFrame(tick);
+}
+if (still) frame(2.5); else requestAnimationFrame(tick);
+</script>
+</body>
+</html>
