@@ -40,6 +40,15 @@ export const RUNGS = 5;
 // set is three and there is no ceiling, because carrying is the one station a
 // machine never takes off you. See `kitSetOf` and `kitMaxOf` in kit.js.
 export const KIT_MAX = 3;
+// The set the drill and the tiller wait for: hats bought at the cut and at the
+// plots before either machine can be had. The lamps and brims have no ceiling
+// of their own -- a hat for every body the station holds -- so the set is what
+// is left to choose. Five is the whole cut (`QUARRY_BENCH_MAX`), so the drill
+// takes a cut that is fully lamped, and five of the farm's seven plots, so the
+// tiller comes a little before the last furrow is broken. Both machines are
+// gated on their station's two ladders topped as well, the last band of each
+// the spark's, and a yard that far along has its benches and most plots.
+export const MACHINE_HATS = 5;
 export const WORKER = P * 3;     // worker square size
 
 // How far either way loitering may take a body from the post it is minding,

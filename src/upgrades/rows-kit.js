@@ -1,8 +1,8 @@
 import { TRADE_COST, TRADE_RATE, LIFT_BILL, LADDER } from '../config.js';
 import { S } from '../state.js';
 import { JOB } from '../jobs.js';
-import { stockOf, kitMaxOf, LIFT } from '../kit.js';
-import { kitFull, liftCap, liftSpeed } from '../levels.js';
+import { KIT, stockOf, kitMaxOf, LIFT } from '../kit.js';
+import { kitFull, handsOf, liftCap, liftSpeed } from '../levels.js';
 import { tierRows, named } from './tiers.js';
 import { kitDisplaced, machineFor } from '../machines.js';
 import { shieldOpened } from '../shield.js';
@@ -49,8 +49,8 @@ export const tradeCost = t =>
   Math.round(TRADE_COST * Math.pow(TRADE_RATE, stockOf(t.job) + ahead(t.key)));
 
 // What is bought is the kit, and it stays at the station: whoever is sent
-// there next picks up whatever the last one put down. Three to a station
-// (`KIT_MAX`); a finished set is what the machine asks for (`kitFull`). The
+// there next picks up whatever the last one put down. Up to `ceiling` a
+// station; a finished set is what the machine asks for (`kitFull`). The
 // carts have no end, because carrying is never taken over.
 function train(t) {
   if (taught(t) >= ceiling(t)) return;
@@ -65,13 +65,16 @@ function train(t) {
 // count the same hats the yard counts.
 const taught = t => stockOf(t.job);
 
-// `KIT_MAX` for three of the four and `Infinity` for the carts, off the kit
-// table rather than the constant.
-const ceiling = t => kitMaxOf(t.job);
+// Off the kit table: `KIT_MAX` for the breakers, `Infinity` for the carts, and
+// for the lamps and brims (`perHand`) a hat for every body the station holds,
+// so the row reopens when a bench or a plot is added.
+const ceiling = t => (KIT[t.job]?.perHand ? handsOf(t.job) : kitMaxOf(t.job));
 
 // A trade with an end is a ladder; one without is a count that never
 // finishes, and `'○'.repeat(Infinity)` is not a picture.
-const ladder = t => isFinite(ceiling(t));
+// Asked of the table, not of `ceiling`: this is read as the rows are built, at
+// module load, before there is a floor plan to count.
+const ladder = t => !!KIT[t.job]?.perHand || isFinite(kitMaxOf(t.job));
 
 // The shields are the gate: the props open the rock's and the lip's kit, the
 // net the plots', the arch the cut's. A yard that already owns kit keeps the

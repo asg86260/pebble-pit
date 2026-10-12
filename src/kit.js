@@ -16,18 +16,23 @@
 //           license, not a doubling) and the carter's cart (the belt runs one
 //           line; everything off it is still walked, so another cart is
 //           always worth buying).
+//   perHand or: the ceiling is the station's complement (`handsOf`), a hat
+//           for every body it holds, so it rises with the floor plan. Read by
+//           the row (rows-kit.js), since the complement lives in levels.js.
 //   tall    how far it stands above the head, for the count over its stand
 //
 // Every row says where its hats come from exactly once: `trade` or `stock`,
 // never both and never neither. `stockOf` does not care which answered.
-import { P, LOO_POSTS, KIT_MAX } from './config.js';
+import { P, LOO_POSTS, KIT_MAX, MACHINE_HATS } from './config.js';
 import { S } from './state.js';
 import { JOB } from './jobs.js';
 
 export const KIT = {
   [JOB.ROCK]:    { mark: 'helmet', trade: 'breakers', tall: P,     set: KIT_MAX, max: KIT_MAX },
-  [JOB.QUARRY]: { mark: 'lamp',   trade: 'blasters', tall: P * 2, set: KIT_MAX, max: KIT_MAX },
-  [JOB.FARM]: { mark: 'brim',   trade: 'growers',  tall: P * 2, set: KIT_MAX, max: KIT_MAX },
+  // A hat for every body the station holds (`perHand`), and the machine waits
+  // for a set of `MACHINE_HATS`.
+  [JOB.QUARRY]: { mark: 'lamp',   trade: 'blasters', tall: P * 2, set: MACHINE_HATS, perHand: true },
+  [JOB.FARM]: { mark: 'brim',   trade: 'growers',  tall: P * 2, set: MACHINE_HATS, perHand: true },
   // A set of three, and no ceiling over it: see the note on `max` above. The
   // cart is no hat: on its stand it is the box, two cells high, standing on
   // its wheel (`drawCartBox`, render/crew.js), so the count clears the box.

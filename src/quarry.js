@@ -27,7 +27,8 @@ import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
 import { SPELL_LUCK } from './config.js';
 import { rebalance } from './staffing.js';
-import { kitFull, commutePace } from './levels.js';
+import { hats, hatsShort, commutePace } from './levels.js';
+import { unlockText } from './words.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE, LADDER } from './config.js';
 import { rand } from './rng.js';
@@ -897,17 +898,21 @@ export const QUARRY_UPGRADES = [
     show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
   },
   {
-    // Gated like the ram: both of the cut's ladders topped and a helmet on
-    // every quarrier (`canBuy`), not the last bench -- the benches are room,
-    // and a machine replaces the hands, not the floor.
+    // On the board once both of the cut's ladders are topped (`canBuy`), and
+    // greyed, saying how many more blasters, until the station's set of hats
+    // is bought (`MACHINE_HATS`): a machine that came before the set would
+    // put the hats bought for this station in a drawer.
     key: 'jaw',
     kind: 'machine', site: 'quarry',
     name: 'the drill',
     bill: () => JAW_BILL,
     buy: () => { buyMachine('jaw'); rebalance(); },
+    waits: () => { const left = hatsShort(JOB.QUARRY);
+                    return left ? unlockText(left, hats(JOB.QUARRY) > 0, 'blaster') : ''; },
+    dead: () => hatsShort(JOB.QUARRY) > 0,
     show: () => S.quarryOpen && canBuy('jaw',
                                        () => S.quarryPaceLevel >= LADDER && S.seamLevel >= LADDER,
-                                       () => kitFull(JOB.QUARRY))
+                                       () => true)
   },
 
   // The drill's own ladder, three rungs of red (`tuneRow` in machines.js).
