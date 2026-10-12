@@ -36,14 +36,14 @@ export const SPELLS = [
   { key: 'gmo',    name: 'genetically modify crops', spark: 105,
     note: 'every crop is 25% bigger' },
   { key: 'thrift', name: 'cheapen the houses',   spark: 90,
-    note: 'every house from now on costs half as much' },
+    note: 'every house from now on is 75% cheaper' },
   { key: 'sweep',  name: 'quicken the janitors', spark: 75,
     note: 'janitors shovel and walk twice as fast' }
 ];
 export const SPELL_DRIVE = 1.5;      // what each one is worth
 export const SPELL_LUCK = 1.25;
 export const SPELL_GMO = 1.25;
-export const SPELL_THRIFT = 0.5;
+export const SPELL_THRIFT = 0.25;
 export const SPELL_SWEEP = 2;
 
 // The tower's own two ladders: how often a bolt goes, and how much of the star

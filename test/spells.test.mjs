@@ -50,7 +50,7 @@ group('each enchantment says what it is worth on the tile', async () => {
     ok(gains.spelldrive === '+50% speed', 'the drive', gains.spelldrive),
     ok(gains.spellluck === '+25% ore', 'the luck', gains.spellluck),
     ok(gains.spellgmo === '+25% spores', 'the gmo', gains.spellgmo),
-    ok(gains.spellthrift === '50% cheaper', 'the thrift', gains.spellthrift),
+    ok(gains.spellthrift === '75% cheaper', 'the thrift', gains.spellthrift),
     ok(gains.spellsweep === '2x faster', 'the sweep', gains.spellsweep)
   ];
 });
