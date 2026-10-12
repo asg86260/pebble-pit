@@ -23,7 +23,7 @@ const el = document.getElementById('queue');
 
 // A site's name is its station's (`nameOf`, the same words the pointer
 // answers with); these are the sites that are not a station.
-const NOT_A_STATION = { yard: 'the yard', deep: 'the deep', sphere: 'the sphere', lab: 'the lab' };
+const NOT_A_STATION = { yard: 'the yard', sphere: 'the sphere' };
 const siteName = site => nameOf(site) || NOT_A_STATION[site] || site;
 
 // The same glyphs a ladder is drawn with on a row.

@@ -201,7 +201,7 @@ function drawCloud(el, say, opts) {
     const n = st.slot ?? openSlot();
     const pair = node('div', 'pair');
     pair.append(
-      button('take it', async () => { await takeCloud(n); opts.took?.(n, 'cloud'); done('taken'); }),
+      button('take it', async () => { await takeCloud(n); opts.took?.(n, 'cloud'); done(); }),
       button('keep this one', async () => { await keepHere(n); done('kept'); }));
     el.append(pair);
   }

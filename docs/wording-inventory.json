@@ -1029,13 +1029,6 @@
   "text": "take it"
  },
  {
-  "id": "cloud.said.taken",
-  "group": "Sheets",
-  "where": "src/cloudsheet.js:204",
-  "context": "cloud section reply",
-  "text": "taken"
- },
- {
   "id": "cloud.btn.keep",
   "group": "Sheets",
   "where": "src/cloudsheet.js:205",
@@ -1467,7 +1460,7 @@
   "group": "Other",
   "where": "play.html:14",
   "context": "browser tab title, game page",
-  "text": "Boulder Clicker"
+  "text": "Pebble Pit"
  },
  {
   "id": "obj.next",
@@ -2450,13 +2443,6 @@
   "text": "build the bench"
  },
  {
-  "id": "other.hidedone.init",
-  "group": "Other",
-  "where": "play.html:108",
-  "context": "board footer toggle, initial HTML",
-  "text": "finished: shown"
- },
- {
   "id": "other.hidedone.hide",
   "group": "Other",
   "where": "src/board.js:676",
@@ -2485,25 +2471,11 @@
   "text": "the yard"
  },
  {
-  "id": "other.queue.site.deep",
-  "group": "Other",
-  "where": "src/queue.js:26",
-  "context": "queue card line hover",
-  "text": "the deep"
- },
- {
   "id": "other.queue.site.sphere",
   "group": "Other",
   "where": "src/queue.js:26",
   "context": "queue card line hover",
   "text": "the sphere"
- },
- {
-  "id": "other.queue.site.lab",
-  "group": "Other",
-  "where": "src/queue.js:26",
-  "context": "queue card line hover",
-  "text": "the lab"
  },
  {
   "id": "other.corner.show",
