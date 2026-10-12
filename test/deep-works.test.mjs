@@ -113,8 +113,11 @@ group('a builder hammering in the deep stirs up silt that settles on the floor',
   const pods = S.pods;
   const bought = window.__buy('pod');
   let oldest = 0, settled = false, sunk = [];
-  for (let f = 0; f < 60 * 120 && S.pods === pods; f++) {
+  // Past the pod standing too: a pod goes up in a few blows, and its chips
+  // are still sinking when it does.
+  for (let f = 0, after = 0; f < 60 * 120 && after < 60 * 3; f++) {
     yard.fast(1 / 60);
+    if (S.pods !== pods) after++;
     for (const g of S.grit) {
       if (!g.sea) continue;
       oldest = Math.max(oldest, g.t);
