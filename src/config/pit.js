@@ -17,7 +17,13 @@ export const PIT_HEAP = 150;
 // the length of the hole; without that the near end fills to the top and
 // stops dead, a wall rather than a pile.
 export const PIT_HEAP_SLOPE = 0.12;   // rows of surplus lost per column along
-export const PIT_W_MAX = 3600;   // and this wide, six hundred cells of it
+// **What it holds is a third of what it did** at 3600 across, so it tears in
+// step with ABYSS_AT (config/rift.js), cut from a million to 300,000. Cut in
+// the length, not the depth: the drowned abyss and the portal in its near
+// wall are sized off the depth. The heap's lean is fixed a column, so it
+// does not shrink in proportion; 234 columns is the whole-cell length that
+// comes nearest a third: 12,504 grains of 37,566 (`capacityAt` in pit.js).
+export const PIT_W_MAX = 1404;   // and this long
 // What a grain in the pile is drawn at. **One size, for ever.** At two pixels
 // the pile stops reading as dust and is a flat grey slab with a diagonal top,
 // and it bought nothing in speed either (0.09 ms a frame for the whole pile).

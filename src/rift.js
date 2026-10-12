@@ -16,7 +16,7 @@ import { P, RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_AT, RIFT_UP, RIFT_GULP,
          RIFT_GULP_SHOW, RIFT_SHAKE, RIFT_REACH0,
          RIFT_INHALE_MAX, RIFT_INHALE_SHOW, RIFT_SWELL_S } from './config.js';
 import { S, pit, rift } from './state.js';
-import { swallow, pitWidth, pitGrains, tearHole } from './pit.js';
+import { swallow, pitGrains, tearHole } from './pit.js';
 import { sfx } from './audio.js';
 
 // --- how big it is -------------------------------------------------------------
@@ -45,7 +45,7 @@ export function seatRift() {
   const w = riftCells() * P;
   rift.w = w;
   rift.h = w;
-  rift.x = pit.x + Math.round(pitWidth() * RIFT_AT / P) * P;
+  rift.x = pit.x + RIFT_AT * P;
   rift.y = S.groundY - w - RIFT_UP * P;
 }
 

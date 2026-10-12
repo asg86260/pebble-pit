@@ -566,6 +566,16 @@ export function swallow(n, show, everywhere, within = Infinity) {
 }
 
 
+// More was in the hole than the hole now holds (a save from a deeper hole,
+// or one laid out at another grain): it went the way a grain at a full hole
+// goes, through the rift and counted as eaten, and a hole that had not torn
+// tears now, on screen, rather than standing open with no tearing seen.
+function overflowed(n) {
+  S.riftAte = (S.riftAte || 0) + n;
+  S.seenFullPit = true;
+  tearHole();
+}
+
 // Put the dust where it belongs, after a save is read. The pile may be
 // short (the saved pile did not fit this hole and was thrown away) or over
 // (more is owned than the hole can show); either way, fill the hole to what
@@ -584,12 +594,11 @@ export function rehomeDust() {
     else col++;
   }
 
-  // Over: whatever the hole would not take is through the rift, and a save
-  // that needs one has one.
+  // Over: whatever the hole would not take is through the rift.
   const over = inHole() - have;
   if (over > 0) {
     S.rift = (S.rift || 0) + over;
-    S.riftOpen = true;
+    overflowed(over);
   }
   // And anything left over the target comes off the top, which is the ordinary
   // case of a hole that shrank.
@@ -661,7 +670,7 @@ export function seedPitCores() {
     const over = (S[key] || 0) - (held[key] || 0) - have;
     if (over > 0) {
       held[key] = (held[key] || 0) + over;
-      S.riftOpen = true;
+      overflowed(over);
     }
     if (have > want) takeCoreCells(have - want, cell);
   }

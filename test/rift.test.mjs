@@ -141,8 +141,9 @@ group('the drowned hole eats at its surface, and the grains dive to it', async (
   // it lands -- so the stream is a burst rather than a trickle: a fifth of a
   // second after the dust arrives the grains are strung out on their dives,
   // and a second after it they have all gone in.
+  // Under the brim: a heap over it lifts grains from above the ground line.
   run(3);
-  window.__give(20000);
+  window.__give(Math.floor(yard.pit.holeCap * 0.7));
   run(0.2);
   const { pit, S } = yard;
   const line = abyssLine();
@@ -227,12 +228,15 @@ group('it eats the pile under it, not the whole top of it', async () => {
   const wide = Math.round(rift.w / pit.p);
   const cols = [mid, mid + wide * 2, Math.floor(pit.cols / 2), pit.cols - 3];
   const before = cols.map(high);
-  const took = yard.pitMod.swallow(3000);
+  // A twelfth of the full pile, which was three thousand grains of the hole
+  // before it was cut to a third: the same share of a smaller hole.
+  const bite = Math.round(yard.pitMod.pitCapacity() / 12);
+  const took = yard.pitMod.swallow(bite);
   const after = cols.map(high);
   const lost = before.map((h, i) => h - after[i]);
 
   return [
-    ok(took === 3000, 'the rift took what it was asked for', `${took}`),
+    ok(took === bite, 'the rift took what it was asked for', `${took} of ${bite}`),
     ok(lost[0] > 0, 'the column under the mouth is lower than it was',
        `${before[0]} -> ${after[0]}`),
     ok(lost[0] > lost[1], 'the hollow is deepest at the mouth',
@@ -287,6 +291,7 @@ group('a young hole skims the pile it hangs over, and the pile stands under it',
   run(4);
   const emptied = state().pitGrains;
   let refused = 0;
+  const tipped = 30 * 100;
   for (let i = 0; i < 30; i++) {
     const was = state().stored;
     window.__tip(100);
@@ -303,10 +308,16 @@ group('a young hole skims the pile it hangs over, and the pile stands under it',
 
   return [
     ok(emptied === 0, 'the tear leaves the hole empty', `${emptied}`),
-    ok(standing > 500, 'and the pile the yard tips in afterward stands under the disc',
-       `${standing} grains after two minutes`),
+    // A share of what was tipped, not a count: a shallower hole spreads the
+    // same tipping wider and nearer the mouth. A reach that touches the floor
+    // leaves a sixteenth of it.
+    ok(standing > tipped / 8, 'and the pile the yard tips in afterward stands under the disc',
+       `${standing} of ${tipped} grains after two minutes`),
     ok(refused === 0, 'with every grain tipped in still counted', `${refused} refused`),
-    ok(grown > young * 10, 'the reach grows with the hole', `${young.toFixed(0)} -> ${grown.toFixed(0)} cells`),
+    // Nearly grown, it reaches most of the length of the hole, however long
+    // that is: a factor between the two ends was a fact about one length.
+    ok(grown > young * 5 && grown > yard.pit.cols / 2, 'the reach grows with the hole, to most of its length',
+       `${young.toFixed(0)} -> ${grown.toFixed(0)} cells, the hole ${yard.pit.cols} long`),
     ok(late < standing / 4, 'and a grown hole eats what the young one left standing',
        `${standing} -> ${late}`)
   ];

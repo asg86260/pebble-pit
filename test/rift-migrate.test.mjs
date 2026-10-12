@@ -22,7 +22,7 @@
 // wrote the code, and this one was not.
 
 import { readFileSync } from 'node:fs';
-import { yard, group, ok, state } from './helpers.mjs';
+import { yard, group, ok, state, run } from './helpers.mjs';
 
 const SAVE = readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8');
 const saved = JSON.parse(SAVE);
@@ -113,5 +113,81 @@ group('spending reaches into the rift only once the hole is empty', async () => 
     ok(after.rift === after.stored,
        'which is all of what is left, the hole being empty',
        `${after.rift} against ${after.stored}`)
+  ];
+});
+
+// The hole cut to a third (config/pit.js, `2026-10-12-smaller-pit.js`). A
+// player's yard saved untorn, with more in its hole than the new hole holds:
+// a few thousand dust and twenty thousand finds. Nothing is lost and nothing
+// stands open unseen: the hole is filled, the rest goes through as eaten,
+// and the hole tears on screen the way a full one does.
+const PLAYER = readFileSync(new URL('./fixtures/player-yard.json', import.meta.url), 'utf8');
+const player = JSON.parse(PLAYER);
+const { default: smallerPit } = await import('../src/migrations/2026-10-12-smaller-pit.js');
+const runsOf = str => String(str).split('.').flatMap(r => {
+  const [v, n] = r.split('x').map(Number);
+  return new Array(n).fill(v);
+});
+const grains = str => runsOf(str).filter(Boolean).length;
+
+group('an old pile is cut down to the shorter hole, the shape it was', async () => {
+  const raw = JSON.parse(SAVE);                 // the full hole, at the old length
+  const was = raw.pit;
+  smallerPit.apply(raw);
+  const now = runsOf(raw.pit.heights);
+  const { pit } = yard;
+  return [
+    ok(raw.pit.cols === pit.cols && raw.pit.rows === pit.rows,
+       'the profile is the new hole\'s', `${was.cols} -> ${raw.pit.cols} columns, the plot ${pit.cols}`),
+    ok(now.length === pit.cols && now.every(h => h <= pit.rows),
+       'every column fits it', `${Math.max(...now)} of ${pit.rows}`),
+    ok(now[0] > 0 && now[now.length >> 1] >= now[0],
+       'and it is still a heap over a full hole', `${now[0]} at the lip, ${now[now.length >> 1]} mid`)
+  ];
+});
+
+// A drowned yard with grains lying on ground the shorter world no longer
+// has: they are banked as if they fell in, and the abyss has them.
+group('the ground past the new end of the world falls in, not out of the books', async () => {
+  const text = readFileSync(new URL('./fixtures/quarry-crossing.json', import.meta.url), 'utf8');
+  const raw = JSON.parse(text);
+  const before = { floor: grains(raw.floor.cells), stored: raw.stored, ate: raw.riftAte };
+  smallerPit.apply(raw);
+  const kept = grains(raw.floor.cells), fell = before.floor - kept;
+  localStorage.setItem('boulder-clicker/v4', text);
+  yard.restore();
+  const s = state();
+  return [
+    ok(fell > 0, 'there was ground past the new end with something on it', `${fell} grains`),
+    ok(raw.riftAte - before.ate === fell && raw.stored - before.stored <= fell,
+       'every one of them is counted as gone into the hole',
+       `${fell} fell, ${raw.stored - before.stored} of them dust, ate +${raw.riftAte - before.ate}`),
+    ok(s.stored === raw.stored && s.rift === raw.rift, 'and the load reads them back',
+       `${s.stored} against ${raw.stored}`),
+    ok(yard.floor.n === kept, 'with the rest of the ground where it lay', `${yard.floor.n} of ${kept}`)
+  ];
+});
+
+group('an old yard with more than the new hole holds tears it, and keeps every grain', async () => {
+  localStorage.setItem('boulder-clicker/v4', PLAYER);
+  yard.restore();
+  const s = state();
+  const S = yard.S;
+  const through = s.rift + s.riftHeld.shards + s.riftHeld.spores + s.riftHeld.sparks;
+  const tearing = S.riftGulp > 0;
+  run(3);                                       // the tear runs, and the rules watch it
+  const after = state();
+  return [
+    ok(s.stored === player.stored && s.shards === player.shards && s.sparks === player.sparks
+       && s.spores === player.spores, 'every coin that was owned is still owned',
+       `dust ${s.stored}, shards ${s.shards}, sparks ${s.sparks}, spores ${s.spores}`),
+    ok(s.pitGrains >= yard.pitMod.pitCapacity() - 200, 'the hole is full',
+       `${s.pitGrains} of ${yard.pitMod.pitCapacity()}`),
+    ok(through > 0 && s.riftAte === through, 'the rest went through, counted as eaten',
+       `${through} through, ate ${s.riftAte}`),
+    ok(s.riftOpen && tearing, 'and the hole is tearing, not standing open with no tearing seen',
+       `open ${s.riftOpen}, gulp ${S.riftGulp}`),
+    ok(after.pitDust + after.rift === after.stored, 'and the books balance after it',
+       `${after.pitDust} + ${after.rift} against ${after.stored}`)
   ];
 });

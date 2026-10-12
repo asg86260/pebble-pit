@@ -7,6 +7,8 @@
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, P, WORKER } from './helpers.mjs';
 
+const { PIT_W_MAX, PIT_H, PIT_HEAP } = await import('../src/config.js');
+
 // A hole you can throw across has a back to it. The toss off the lip was a
 // fixed spray, which was fine while the pit ran two windows to the right and
 // wrong the moment it starts as a scrape: the same throw cleared the far wall
@@ -44,18 +46,16 @@ group('the pit is the whole hole from the first frame', async () => {
   run(0.4);
   const s = state();
   return [
-    ok(s0.pitW === 3600, 'it is the full width from the start', `${s0.pitW}`),
-    ok(s0.pitDepth === 276, 'and the full depth', `${s0.pitDepth}`),
-    ok(s0.pitCapacity > 30000, 'so it holds a run of the yard, not a couple of minutes',
-       `${s0.pitCapacity}`),
+    ok(s0.pitW === PIT_W_MAX, 'it is the full width from the start', `${s0.pitW}`),
+    ok(s0.pitDepth === PIT_H, 'and the full depth', `${s0.pitDepth}`),
     ok(!s.pitFull && s.pitDust === s.stored,
        'a thousand tipped in is a thousand in the pile, with room to spare',
        `${s.pitDust} of ${s.pitCapacity}`),
     // the hole itself, plus whatever the heap over the brim is allowed to be
-    ok(s.pitCapacity > (3600 / s.pitGrain) * (276 / s.pitGrain),
+    ok(s.pitCapacity > (PIT_W_MAX / s.pitGrain) * (PIT_H / s.pitGrain),
        'it holds the hole and then some, for the heap over the mouth',
        `${s.pitCapacity} at grain ${s.pitGrain}`),
-    ok(s.pitCapacity < (3600 / s.pitGrain) * (276 / s.pitGrain) * 1.5,
+    ok(s.pitCapacity < (PIT_W_MAX / s.pitGrain) * ((PIT_H + PIT_HEAP) / s.pitGrain),
        'but the heap is a heap, not another hole', `${s.pitCapacity}`)
   ];
 });
@@ -69,8 +69,7 @@ group('dust in the pit is one grain each', async () => {
     ok(s.pitGrain === 6, 'a grain in the pile is the same size as dust anywhere else',
        `${s.pitGrain}px`),
     ok(s.stored === s.pitDust, 'every dust counted is a grain in the pile',
-       `${s.stored} counted, ${s.pitDust} in the pit`),
-    ok(cap > 20000, 'the hole holds a whole run of mining', `${cap}`)
+       `${s.stored} counted, ${s.pitDust} in the pit`)
   ];
 });
 

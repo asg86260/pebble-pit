@@ -8,6 +8,8 @@
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, P, WORKER } from './helpers.mjs';
 
+const { PIT_W_MAX, PIT_H } = await import('../src/config.js');
+
 group('filling the pit stops at what the hole holds', async () => {
   window.__dig();
   const cap = state().pitCapacity;
@@ -25,7 +27,7 @@ group('filling the pit stops at what the hole holds', async () => {
     // at what the plot will hold, and never gets out onto the ground
     ok(peak <= cap, 'the pile stops at what the plot holds',
        `${peak} of ${cap}`),
-    ok(peak > (3600 / s.pitGrain) * (276 / s.pitGrain),
+    ok(peak > (PIT_W_MAX / s.pitGrain) * (PIT_H / s.pitGrain),
        'having heaped up over the mouth on the way', `${peak}`),
     // The pile stops; the COUNTER does not. What will not fit goes through the
     // rift, and `stored` less `rift` is what is in the hole -- so the number and

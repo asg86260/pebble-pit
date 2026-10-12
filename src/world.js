@@ -709,7 +709,9 @@ export function lockScroller(on, why = 'scene') {
 }
 function writeScroll() {
   if (!scroller) return;
-  const w = Math.round(S.worldW * S.zoom);
+  // In the deep the scroller spans the deep as well: it is laid out off the
+  // pit's lip, not its length, and runs on past the yard's far end.
+  const w = Math.round((S.view === 'deep' ? Math.max(S.worldW, deepX1()) : S.worldW) * S.zoom);
   if (w !== spacerW) { spacerW = w; spacer.style.width = `${w}px`; }
   const left = S.camX * S.zoom;
   if (left === wroteLeft) return;
