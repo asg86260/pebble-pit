@@ -80,7 +80,7 @@ group('the disc grows with what it eats, and only grows', async () => {
 group('spending never shrinks the hole', async () => {
   window.__reset();
   window.__crew(0, 2);
-  window.__tear(200000);
+  window.__tear(ABYSS_AT * 0.2);
   window.__give(20000);                  // the rift inhales it: dust through, ate up
   run(3);
   const fed = state();
@@ -89,7 +89,7 @@ group('spending never shrinks the hole', async () => {
   const after = state();
 
   return [
-    ok(fed.riftAte > 200000, 'feeding it grew the count', `${fed.riftAte}`),
+    ok(fed.riftAte > ABYSS_AT * 0.2, 'feeding it grew the count', `${fed.riftAte}`),
     ok(after.riftAte >= fed.riftAte, 'a spend took nothing off what it ate',
        `${fed.riftAte} -> ${after.riftAte}`),
     ok(after.riftCells >= fed.riftCells, 'so the disc never shrank',
@@ -127,7 +127,7 @@ group('a save comes back in the era it was written in', async () => {
   // save on purpose -- a reset is a reset -- so the raw save is carried
   // across it by hand, which is also exactly what a bug-report save is.
   window.__reset();
-  window.__tear(300000);
+  window.__tear(ABYSS_AT * 0.3);
   yard.persist();
   const raw = localStorage.getItem('boulder-clicker/v4');
   window.__reset();
@@ -139,7 +139,7 @@ group('a save comes back in the era it was written in', async () => {
   // the arc), so there is no pre-arc era to be read back into.
   return [
     ok(torn.riftOpen && !torn.drowned, 'a torn yard reloads torn'),
-    ok(torn.riftAte === 300000, 'with its appetite intact', `${torn.riftAte}`)
+    ok(torn.riftAte === ABYSS_AT * 0.3, 'with its appetite intact', `${torn.riftAte}`)
   ];
 });
 

@@ -18,7 +18,7 @@ import { P } from './yard.js';
 // the parallax had nothing to read against.
 export let RIFT_W0 = 7;              // cells across, the day it tears
 export let RIFT_WMAX = 20;           // and the size it gives way at
-export let ABYSS_AT = 1000000;       // grains eaten when the drowning comes
+export let ABYSS_AT = 300000;        // grains eaten when the drowning comes
 // A yard that reaches the rescue before the pit has drowned has the rest of
 // the arc played for it: torn if it is not, then swollen to RIFT_WMAX over
 // this long and drowned (`owedArc` in rift.js). A swell, not a cut, because

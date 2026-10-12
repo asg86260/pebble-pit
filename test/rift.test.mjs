@@ -10,6 +10,7 @@
 // and the pile and the rift together are always the counter.
 
 import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
+import { ABYSS_AT } from '../src/config.js';
 
 // Straight off the modules: `yard.upgrades` is the `__upgrades` hook, and the
 // rift's plot is not among the handles the yard spreads.
@@ -281,7 +282,7 @@ group('a grown hole takes the whole pile, not a rate off a ladder', async () => 
 // through: the pile holds at a level and the counter climbs by every grain.
 group('a young hole skims the pile it hangs over, and the pile stands under it', async () => {
   readyYard();
-  window.__tear(30000);                      // torn, barely grown
+  window.__tear(ABYSS_AT * 0.03);                    // torn, barely grown
   window.__nocine();
   run(4);
   const emptied = state().pitGrains;
@@ -295,7 +296,7 @@ group('a young hole skims the pile it hangs over, and the pile stands under it',
   const standing = state().pitGrains;
   const young = yard.riftMod.riftReach();
 
-  window.__tear(900000);                     // nearly grown: the reach is the hole
+  window.__tear(ABYSS_AT * 0.9);                    // nearly grown: the reach is the hole
   run(6);
   const late = state().pitGrains;
   const grown = yard.riftMod.riftReach();

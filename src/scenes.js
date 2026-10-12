@@ -37,6 +37,7 @@ import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 import { INDEX } from './config/index.js';
+import { ABYSS_AT } from './config.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -1881,18 +1882,18 @@ export const SCENES = {
     run: () => { rich(); window.__meteor(); window.__rift(); window.__give(60000); window.__give(12000);
                  window.__fast(4); window.__look(st().pitX - 260); } },
   grown: { about: 'the pit and the rift', say: 'the disc half grown',
-    run: () => { rich(); window.__meteor(); window.__tear(400000); window.__give(30000);
+    run: () => { rich(); window.__meteor(); window.__tear(ABYSS_AT * 0.4); window.__give(30000);
                  window.__fast(3); window.__look(st().pitX - 300); } },
   // The pan clamps at the end of the world, so the disc sits against the
   // right edge however much further you ask for; `--zoom 2` is the closest
   // look that still holds the whole rim.
   rim: { about: 'the pit and the rift', say: 'the rim, as close as the camera comes',
-    run: () => { rich(); window.__meteor(); window.__tear(400000); window.__give(30000);
+    run: () => { rich(); window.__meteor(); window.__tear(ABYSS_AT * 0.4); window.__give(30000);
                  window.__fast(3); window.__look(st().pitX - 155); } },
   // A second before the shot lands this mid-liquefy, with the cutscene's own
   // camera on it.
   drown: { about: 'the pit and the rift', say: 'the disc giving way and drowning',
-    run: () => { rich(); window.__meteor(); window.__tear(999500); window.__give(30000); window.__fast(0.6); } },
+    run: () => { rich(); window.__meteor(); window.__tear(ABYSS_AT - 500); window.__give(30000); window.__fast(0.6); } },
   // The rescue had with the pit still solid: its sheet put down, the hole is
   // owed the rest of the arc (`owedArc` in rift.js). Run on for twenty-odd
   // seconds to watch the tear, the swell and the drowning.
