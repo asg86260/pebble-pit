@@ -138,7 +138,7 @@ export const INDEX = [
     text: 'tend the plots and harvest the crops.' },
   { key: TYPE.PURIFY, group: 'crew', name: 'air purifiers', glyph: null, met: JOB.PURIFY,
     text: 'work the air filter. only the ones inside it count.' },
-  { key: TYPE.STIR, group: 'crew', name: 'apothecary', glyph: null, met: JOB.STIR,
+  { key: TYPE.STIR, group: 'crew', name: 'apothecary', glyph: 'pot', met: JOB.STIR,
     text: 'the keeper who lights the pot.' },
   { key: TYPE.JANITOR, group: 'crew', name: JOB.JANITOR, glyph: 'cap', met: JOB.JANITOR,
     text: 'go after the poop first, then the muck.' },

@@ -9,8 +9,8 @@ player would recognize from the game.
   (`planks` for the wooden barrier, `ram` for the ram).
 - A drawing made for a stat or upgrade does not stand for the station or
   body that upgrade belongs to (the pick-speed swing is not the miners).
-- No two entries share a drawing (`test/index.test.mjs` checks this; the
-  coin marks are the exception).
+- A place and the crew who work it may share a drawing (the apothecary and
+  its keeper wear the pot, the owner's pick of 2026-10-12).
 - Where nothing that exists depicts the entry, it gets **no icon**
   (`glyph: null`) instead of a misleading one.
 
