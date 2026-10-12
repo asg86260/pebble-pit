@@ -35,11 +35,11 @@ group('finishing the air filter brings one balloon, which goes up and draws', as
     ok(bought && early === 0, 'the house is bought and no balloon is there before it is built'),
     ok(moored === 1 && yard.S.craftGift === 1, 'one balloon moored with the finished house', `${moored}`),
     ok(up, 'with a rider aboard it goes up', `${yard.S.purifiers} riders, ${JSON.stringify(state().craft[0])}`),
-    ok(r && r.cost === 1200, 'the row still starts at its first bill', JSON.stringify(r && r.cost))
+    ok(r && r.cost === Math.round(1200 * 1.9), "the row starts at its foot's bill, rung two", JSON.stringify(r && r.cost))
   ];
 });
 
-group('the first balloon bought is the second craft, at the first bill', async () => {
+group("the first balloon bought is the second craft, at rung two's bill", async () => {
   rich();
   buyNow('unlockfilter');
   run(1);
@@ -48,7 +48,7 @@ group('the first balloon bought is the second craft, at the first bill', async (
   run(1);
   return [
     ok(got && crafts() === 2, 'two craft after one purchase', `${crafts()}`),
-    ok(paid === 1200 && row().cost === Math.round(1200 * 1.9), 'the next is the second rung', `${paid} then ${row().cost}`)
+    ok(paid === Math.round(1200 * 1.9) && row().cost === Math.round(1200 * 1.9 * 1.9), 'the next is the third rung', `${paid} then ${row().cost}`)
   ];
 });
 

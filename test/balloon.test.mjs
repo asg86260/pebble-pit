@@ -9,6 +9,7 @@
 
 import { group, ok, state, run, runUntil, buyBuilt, buyNow, climb, SEED, yard, openSites } from './helpers.mjs';
 import { CRAFT } from '../src/balloon.js';
+import { BALLOON_RUNGS, BALLOON_FOOT, BALLOON_DUST, BALLOON_RATE } from '../src/config.js';
 
 const rich = () => {
   window.__reset();
@@ -217,8 +218,8 @@ group('balloon speed shortens the trip from one cloud to the next', async () => 
 
 group('no two balloons hang at the same cloud', async () => {
   rich();
-  buyNow('balloon'); buyNow('balloon'); buyNow('balloon');
-  window.__air({ purifiers: 3 });
+  buyNow('balloon'); buyNow('balloon');
+  window.__air({ purifiers: 2 });
   runUntil(() => CRAFT.every(c => c.phase === 'aloft'), 120);
   let shared = 0, looked = 0;
   for (let s = 0; s < 90; s++) {
@@ -235,16 +236,26 @@ group('no two balloons hang at the same cloud', async () => {
 
 // The row carries as many pips as there are balloons to buy, and is finished
 // on the last one; it once drew the default ladder's five and vanished at three.
-group('the balloon row has a pip for each balloon there is to buy', async () => {
+// It is sold from its foot (`BALLOON_FOOT`): the rungs above it, at their own
+// bills, the first rung's never asked.
+group('the balloon row has a pip for each balloon there is to buy, from its foot', async () => {
   rich();
   const row = () => window.__rows().find(r => r.key === 'balloon');
-  const seen = [];
-  for (let i = 0; i < 3; i++) { seen.push(row() && row().rungs); buyNow('balloon'); }
+  const sold = BALLOON_RUNGS - BALLOON_FOOT;
+  const seen = [], bills = [];
+  for (let i = 0; i < sold; i++) {
+    seen.push(row() && row().rungs);
+    bills.push(row() && row().bill[0][1]);
+    buyNow('balloon');
+  }
   const last = row();
+  const rungBill = r => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, r));
   return [
-    ok(seen.every(n => n === 3), 'three pips from the first', seen.join(', ')),
-    ok(CRAFT.length === 3, 'three bought off the row', `${CRAFT.length}`),
-    ok(!last || last.done, 'and the row is finished at the third', JSON.stringify(last && { rung: last.rung, rungs: last.rungs }))
+    ok(sold === 2 && seen.every(n => n === sold), "the last two rungs' pips from the first", seen.join(', ')),
+    ok(bills[0] === rungBill(BALLOON_FOOT) && bills[1] === rungBill(BALLOON_FOOT + 1),
+       "at the second and third rungs' bills", bills.join(', ')),
+    ok(CRAFT.length === sold, 'every one bought off the row', `${CRAFT.length}`),
+    ok(!last || last.done, 'and the row is finished at the last', JSON.stringify(last && { rung: last.rung, rungs: last.rungs }))
   ];
 });
 

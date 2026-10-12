@@ -13,7 +13,7 @@
 // camera the way a cloud's place is. The picture reads the clock; the clock
 // never reads the picture.
 
-import { P, WORKER, COMMUTE_PACE, BALLOON_DUST, BALLOON_RATE, BALLOON_W, BALLOON_H,
+import { P, WORKER, COMMUTE_PACE, BALLOON_DUST, BALLOON_RATE, BALLOON_FOOT, BALLOON_W, BALLOON_H,
          BALLOON_BASKET, BALLOON_LINES, BALLOON_BOB,
          BALLOON_MAST_GAP, BALLOON_CLIMB_S, BALLOON_TRAVEL_S, BALLOON_DWELL_S,
          BALLOON_HANG, BALLOON_VISIT, CLOUD_DRAWN_EASE, CLOUD_LAYERS,
@@ -43,8 +43,9 @@ export const CRAFT = [];
 export const craftCount = () => CRAFT.length;
 
 // What one more costs: a finite ladder in dust on the house's own board.
-// `extra` is the craft already paid for and not yet moored.
-export const craftCost = (extra = 0) => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, bought() + extra));
+// `extra` is the craft already paid for and not yet moored. Counted from the
+// row's foot, the rungs under it never sold.
+export const craftCost = (extra = 0) => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, BALLOON_FOOT + bought() + extra));
 
 // Bought moored, with nobody in it, like every other station that sells the
 // room before the body.

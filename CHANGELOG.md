@@ -124,6 +124,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - The air filter comes with its first balloon (test/filter-balloon.test.mjs).
+- The forklift's load and speed sell only their last four rungs, and the balloon row only its last two, so neither starts out pocket change (test/forklift.test.mjs, test/balloon.test.mjs).
 - The tower's door no longer says "wizards live here", and the story no longer says "ask the wizards how to get down".
 - The tower's row summons a wizard instead of training one.
 - The dome sits first on the tower's board as its goal card, and every goal card's ribbon reads "saving your sqwife" (src/selftest/boards.js, "the tower's dome").

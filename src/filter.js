@@ -5,7 +5,7 @@
 // (balloon.js, smog/craft.js). The shed is where you buy them and their power,
 // the gauge that reads the sky, and the row of posts they moor at.
 
-import { WORKER, COMMUTE_PACE, rungValue, FILTER_DUST, RECYCLE_SHARDS, BALLOON_RUNGS, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
+import { WORKER, COMMUTE_PACE, rungValue, FILTER_DUST, RECYCLE_SHARDS, BALLOON_RUNGS, BALLOON_FOOT, DIAL_STEPS, DIAL_EASE, DIAL_GIVE } from './config.js';
 import { tierRows, named } from './upgrades/tiers.js';
 import { balloonPull, murk } from './smog.js';
 import { S, filter } from './state.js';
@@ -88,14 +88,16 @@ const CRAFT_ROW = {
   kind: 'machine', site: 'filter',
   name: 'the balloon',
   note: () => 'rides the clouds and lets what it catches fall under itself',
-  rung: () => bought(),
-  rungs: () => BALLOON_RUNGS,
+  // Sold from its foot: the pips and the end count the rungs above it.
+  rung: () => Math.min(BALLOON_RUNGS - BALLOON_FOOT, bought()),
+  rungs: () => BALLOON_RUNGS - BALLOON_FOOT,
+  first: BALLOON_FOOT,
   cost: () => craftCost(ahead('balloon')),
   currency: 'dust',
   // A craft is a place for one, and opens like a door: a spare body is sent
   // over to ride it (`staffDoor`).
   buy: () => { buyCraft(); staffDoor(JOB.PURIFY); },
-  show: () => S.filterOpen && bought() < BALLOON_RUNGS
+  show: () => S.filterOpen && bought() < BALLOON_RUNGS - BALLOON_FOOT
 };
 
 export const FILTER_UPGRADES = [

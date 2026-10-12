@@ -5,6 +5,11 @@ import { P } from './yard.js';
 // to the next, drawing each in, and brings what it catches home to its post.
 // See DESIGN.md, "The balloons ride the clouds", and src/balloon.js.
 export const BALLOON_RUNGS = 3;      // a finite ladder, like every other one
+// The rung the row is first sold from, as a ladder's `foot` in config/rungs.js:
+// the first rung was cheap by the time a filter stands, so the row sells rungs
+// two and three only, at their own bills (DESIGN.md, "Every ladder is sold in
+// bands").
+export const BALLOON_FOOT = 1;
 export const BALLOON_DUST = 1200;    // what the first one costs
 export const BALLOON_RATE = 1.9;     // and how much steeper each one gets
 export const BALLOON_W = P * 11;     // the envelope

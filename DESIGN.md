@@ -2951,6 +2951,14 @@ goes rather than standing there. The
 grounds' own tables already have this order (compost / fertilizer / hybrid
 seed is dust / +spore / +shard) and keep it; nothing there moves.
 
+**Two rows sold from a later foot (the owner's exception, 2026-10-11).** By the
+time a forklift or a balloon is affordable the low rungs are pocket change, so
+the forklift's two ladders sell only rungs 5-8 (`foot: 4` in their `LADDERS`
+entries, honored by `tierRows` and `rungValue`) and the balloon row only rungs
+2-3 (`BALLOON_FOOT`). The level on S still counts rungs of the whole table, so
+a save below the foot stands on it and nothing is taken back. Every other
+ladder keeps all eight.
+
 **No fourth band.** The grounds' fourth card is the old lab multiplier --
 everything the yard makes, a spark and a core in the bill, a BUILD bodies
 stand at -- and it exists because those two multipliers were already in the

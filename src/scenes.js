@@ -1450,6 +1450,9 @@ export const SCENES = {
                  window.__fast(30);
                  const l = st().lifts.find(k => k.carry) || st().lifts[0];
                  window.__look((l ? l.x : ladenHauler()) - st().viewW / 2); } },
+  // The forklift's two ladders on the bench, sold from rung five.
+  liftboard: { about: 'the kit', say: "the bench's board with a forklift bought: its two ladders, four pips each",
+    run: () => { rich(); lip(); window.__kit({ drivers: 1 }); window.__fast(2); window.__board('bench'); } },
   // The camera held up so the strip under the ground is in the picture.
   liftroster: { about: 'the kit', say: 'the carry roster: bodies, carts, and the forklifts under them',
     run: () => { rich(); lip(); window.__kit({ drivers: 2 }); window.__fast(20);
