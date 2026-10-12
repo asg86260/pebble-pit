@@ -199,6 +199,12 @@ export const TESTS = [
     run(2);
     const full = state();
     const warn = at(full.pitX - 30, full.groundY - 42);
+    // A crowd's strip is as wide as its pips, so the buttons move with the
+    // count: read them again where they stand now.
+    const r2 = full.roster.find(x => x.job === 'rockhands');
+    const nearMiss = at(r2.less[0], r2.less[1] - 16) === 'pointer' &&
+                     at(r2.less[0] - 16, r2.less[1]) === 'pointer';
+    const between = at((r2.less[0] + r2.more[0]) / 2, r2.less[1]);
     window.__crew(0, 0);
     newRun();
     await sleep(300);
@@ -212,11 +218,8 @@ export const TESTS = [
       // say where the edge is, so the edge is generous instead
       ok(r.hitW >= 36 && r.hitH >= 48, 'with a target well past the mark itself',
          `${r.hitW}x${r.hitH} for an 18x2 mark`),
-      ok(at(r.less[0], r.less[1] - 16) === 'pointer' &&
-         at(r.less[0] - 16, r.less[1]) === 'pointer',
-         'so a near miss still lands on it'),
-      ok(at((r.less[0] + r.more[0]) / 2, r.less[1]) !== 'pointer',
-         'and the count between them is still not a button'),
+      ok(nearMiss, 'so a near miss still lands on it'),
+      ok(between !== 'pointer', 'and the count between them is still not a button', between),
       // The hole cannot stop anything (the first grain it refuses tears the
       // rift), so it carries no mark and no help cursor. The stations still
       // carry their marks; the stations group hovers one for the tooltip half.
