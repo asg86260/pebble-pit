@@ -77,13 +77,9 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
 
-      # The board of times' hostname (server/README.md): a repository
-      # variable, so a fork with no board builds a game with no board.
-      - name: Board of times
-        if: vars.TIMES_URL != ''
-        run: echo "VITE_TIMES_URL=${{ vars.TIMES_URL }}" >> "$GITHUB_ENV"
-      # The cloud-save worker's address (cloud/README.md), the same way: a
-      # build with no CLOUD_URL variable has no cloud line and sends nothing.
+      # The cloud-save worker's address (cloud/README.md): a repository
+      # variable, so a build with no CLOUD_URL has no cloud line and sends
+      # nothing.
       - name: Cloud saves
         if: vars.CLOUD_URL != ''
         run: echo "VITE_CLOUD_URL=${{ vars.CLOUD_URL }}" >> "$GITHUB_ENV"
@@ -183,10 +179,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - name: Board of times
-        if: vars.TIMES_URL != ''
-        shell: bash
-        run: echo "VITE_TIMES_URL=${{ vars.TIMES_URL }}" >> "$GITHUB_ENV"
       - name: Package
         shell: bash
         run: bun run desk:build --${{ matrix.cut }} ${{ matrix.build }}

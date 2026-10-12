@@ -242,8 +242,6 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   buriedShown: buriedShown(),
   buriedDug: S.buriedDug,
   buriedMs: S.buriedMs,
-  runId: S.runId,                      // the board of times' name for this run
-  timePending: S.timePending,          // and a post of it still waiting to go
   rescued: S.rescued,
 
   // The shields.

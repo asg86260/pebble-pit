@@ -195,3 +195,21 @@ group('a save with four pots loads three, without the fourth\'s batch or stirrer
     ok(S.stirrers <= 3, 'and no stirrer is left without a pot', `${S.stirrers}`)
   ];
 });
+
+// The board of times is gone: a save's run id and a post still waiting to
+// go up are dropped on the way in, and the next save does not carry them.
+group('a save from the board of times loads without its run id or waiting post', async () => {
+  const s = blobOf();
+  s.saveV = 17;
+  s.runId = 'run-1';
+  s.timePending = { ms: 600000, name: 'bob' };
+  const raw = JSON.parse(JSON.stringify(s));
+  migrate(raw);
+  put(s);
+  yard.restore();
+  const out = JSON.parse(exportSave());
+  return [
+    ok(!('runId' in raw) && !('timePending' in raw), 'the migration drops both', JSON.stringify([raw.runId, raw.timePending])),
+    ok(!('runId' in out) && !('timePending' in out), 'and the next save carries neither', JSON.stringify([out.runId, out.timePending]))
+  ];
+});

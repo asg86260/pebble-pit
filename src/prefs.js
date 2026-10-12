@@ -12,7 +12,6 @@ const DEFAULTS = {
   touch: null,       // null = follow the pointer; true = a thumb; false = a mouse
   dark: null,        // null = follow the system; true = white on black; false = black on white
   crew: 'show',      // the crew drawn 'show', 'fade' or 'hide', so a crowded yard can still be read
-  name: '',          // the name on the board of times, typed once (times.js)
 };
 
 let prefs = { ...DEFAULTS };

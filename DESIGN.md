@@ -14079,7 +14079,11 @@ The rules it must not break: nothing teleports and nothing pops -- the body
 walks both ways, the cells fade -- and the yard never stops for it: the
 followed body is held at its patch for the two marks and nobody else is.
 
-## The board of times: a global competition for the rescue (built 2026-09-20)
+## The board of times: a global competition for the rescue (built 2026-09-20, removed 2026-10-12)
+
+Removed from the game 2026-10-12 by the owner: rescue times are no longer
+kept. The rescue sheet still says how long it took; `server/` and
+`config/times.js` (the server's numbers) stay in the repo, untouched.
 
 "The clock over the sqwife" ends: *the story ends with a time you can beat.
 It is the one thing in the game you are racing, and it was never written

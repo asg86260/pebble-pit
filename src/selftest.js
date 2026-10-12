@@ -32,7 +32,7 @@ import { TESTS as scenes } from './selftest/scenes.js';
 import { TESTS as queue } from './selftest/queue.js';
 import { TESTS as touch } from './selftest/touch.js';
 import { TESTS as sheet } from './selftest/sheet.js';
-import { TESTS as times } from './selftest/times.js';
+import { TESTS as ending } from './selftest/ending.js';
 import { TESTS as deep } from './selftest/deep.js';   // wave serpent: RENDER
 import { TESTS as cloud } from './selftest/cloud.js';   // wave-cloud FACE
 
@@ -58,7 +58,7 @@ const TESTS = [
   ...queue,
   ...touch,
   ...sheet,
-  ...times,
+  ...ending,
   ...deep,
   ...cloud,
 ];

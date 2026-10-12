@@ -6,7 +6,6 @@
 import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
 import { pref, setPref, reducedMotion, coarse, dark } from '../prefs.js';
-import { timesOn } from '../timesboard.js';
 import { setSlot, storeSettled, clear, slotRaw, writeSlot } from '../save.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
@@ -56,7 +55,6 @@ const lines = () => [...held().children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
   .map(el => el.id === 'recordbtn' ? 'achievements'
            : el.id === 'slotsbtn' ? 'saves'
-           : el.id === 'timesbtn' ? 'times'
            : el.id === 'indexbtn' ? 'index'
            : el.textContent.replace(/\s+/g, ' ').trim());
 
@@ -287,7 +285,6 @@ export const TESTS = [
       'saves',                                // the three yards -- see slots.js
       'achievements',                         // the button to the page behind -- see record.js
       'index',                                // every thing met -- see indexpage.js
-      ...(timesOn() ? ['times'] : []),        // the board of times, only on a build with one -- see times.js
       'settings',                             // and the settings, behind one word
       'return to title',
       'esc holds · ← → look about · hold space to skip a scene',
@@ -304,7 +301,6 @@ export const TESTS = [
       ...(document.fullscreenEnabled || document.webkitFullscreenEnabled ? ['fullscreen: off'] : []),
       'sound: on',                            // the mute, which remembers -- see audio.js
       '',                                     // the volume: a slider has no words
-      ...(timesOn() ? [''] : []),             // the name on the board: a box has no words
       'controls',                             // the page of mouse buttons
       'back',
       version(),

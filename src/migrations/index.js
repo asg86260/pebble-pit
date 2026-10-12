@@ -43,8 +43,9 @@ import dropFourthPot from './2026-10-12-drop-fourth-pot.js';
 import abyssIntro from './2026-10-12-abyss-intro.js';
 import smallerPit from './2026-10-12-smaller-pit.js';
 import finale from './2026-10-12-finale.js';
+import noTimes from './2026-10-12-no-times.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot, abyssIntro, smallerPit, finale];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot, abyssIntro, smallerPit, finale, noTimes];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

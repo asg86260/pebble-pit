@@ -109,8 +109,6 @@ function rememberWindow(win) {
 function wire() {
   ipcMain.on('desk:read', (e, slot) => { e.returnValue = store.read(slot); });
   ipcMain.on('desk:version', e => { e.returnValue = build; });
-  // The itch app sets this for a game it launches; nothing else does.
-  ipcMain.on('desk:itchKey', e => { e.returnValue = process.env.ITCHIO_API_KEY || ''; });
   // Fire and forget: a win is told to Steam and the page does not wait.
   ipcMain.on('desk:achievement', (e, name) => { achievements.unlock(name); });
   ipcMain.on('desk:achievements', (e, names) => { achievements.sync(names); });

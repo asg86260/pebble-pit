@@ -212,13 +212,6 @@ try {
   <div class="word" data-pane="index" hidden>index</div>
   <div id="index" class="index" data-pane="index" hidden></div>
   <button id="indexback" type="button" data-pane="index" hidden>back</button>
-  <!-- The board of times: everybody's rescue, best first, off the server.
-       A page of its own behind this button, which carries the best. See
-       times.js. -->
-  <button id="timesbtn" type="button" data-pane="main">times</button>
-  <div class="word" data-pane="times" hidden>times</div>
-  <div id="times" class="times" data-pane="times" hidden></div>
-  <button id="timesback" type="button" data-pane="times" hidden>back</button>
   <!-- The settings, behind one word: a title page with a volume slider on it
        is not a title page. -->
   <button id="settingsbtn" type="button" data-pane="main">settings</button>
@@ -237,9 +230,6 @@ try {
   <button id="sound" type="button" data-pane="settings" hidden>sound: on</button>
   <!-- the volume: a share of the designed level, all the way up is still quiet -->
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden>
-  <!-- the name the board of times shows for this player; a preference, like
-       the mute, so it survives a reset -->
-  <input id="boardname" type="text" maxlength="20" placeholder="name on the board" spellcheck="false" autocomplete="off" data-pane="settings" hidden>
   <button id="controlsbtn" type="button" data-pane="settings" hidden>controls</button>
   <!-- the controls page: input on the left, what it does on the right -->
   <div class="word" data-pane="controls" hidden>controls</div>
@@ -278,18 +268,9 @@ try {
 <div id="saved" class="held" hidden>
   <div class="word">It's Over?</div>
   <div class="why">you saved your sqwife in <span id="savedin"></span>!</div>
-  <!-- The board of times: the one line the network is allowed on. A name
-       box the first time, then the post; the reply is your rank or the
-       board's refusal, in the same line. See times.js. -->
-  <div id="timespost" class="pair" hidden>
-    <input id="timesname" type="text" maxlength="20" placeholder="your name" spellcheck="false" autocomplete="off">
-    <button id="timesgo" type="button">post it</button>
-  </div>
-  <div id="timessaid" class="small"></div>
-  <!-- With the second half on the story goes on (the snatch comes next), so
-       the thanks is only on the sheet that ends it (ending.js). -->
+  <!-- With the second half on the sheet has no button (the snatch comes
+       next), and the rule over the button goes with it (ending.js). -->
   <div class="rule endonly"></div>
-  <div class="why endonly">thank you for playing!</div>
   <button id="keepplaying" type="button">Happily Ever After</button>
 </div>
 

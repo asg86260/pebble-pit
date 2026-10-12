@@ -15,27 +15,6 @@ const ids = (prefix, filter = () => true) => INV.filter(s => s.id.startsWith(pre
 const HOLD = `(await M('input')).hold(true); await W.frames(3);`;
 const PANE = p => `(await M('settings')).showPane(${JSON.stringify(p)}); await W.frames(3);`;
 const YARD = `window.__reset(); window.__crew(3, 2); window.__fast(2);`;
-// The board of times pointed at a stub: the answer is whatever
-// window.__timesSay(path, body) returns (an object, null for a dead board, or
-// a promise that never settles).
-const TIMES = `
-  (await M('timesboard')).setTimesUrl('http://times.test');
-  if (!window.__realFetch) {
-    window.__realFetch = window.fetch;
-    window.fetch = async (u, init = {}) => {
-      if (!String(u).startsWith('http://times.test')) return window.__realFetch(u, init);
-      const path = String(u).slice('http://times.test'.length);
-      const a = await window.__timesSay(path, init.body ? JSON.parse(init.body) : undefined);
-      if (a === null) throw new Error('down');
-      return new Response(JSON.stringify(a.body ?? a), { status: a.status || 200, headers: { 'content-type': 'application/json' } });
-    };
-  }
-  window.__timesSay = () => ({ rows: [] });`;
-const ROWS = `[
-  { id: 'a', ms: 754000, seen: 754000, name: 'pebblefan', itch: true, at: Date.now() - 3 * 3600e3 },
-  { id: 'b', ms: 912000, seen: 100000, name: 'rockhound', at: Date.now() - 2 * 86400e3 },
-  { id: 'mine', ms: 1200000, seen: 1200000, name: 'you', at: Date.now() - 60e3 }]`;
-
 // The cloud worker as a list of answers (after src/selftest/cloud.js).
 // window.__cloudSay(method, path, init) may answer first with a Response.
 const CLOUD = (where = 'play') => `
@@ -280,56 +259,16 @@ export const SURFACES = [
                 (await M('settings')).sayStore(); await W.frames(3);`,
         ids: [id], noteAll: 'the store made to refuse writes with a ' + name + ' for the shot' })),
   ] },
-  // --- the board of times ---------------------------------------------------------
-  { name: 'times', steps: [
-    { file: 'sheet-paused-times', clip: '#held',
-      setup: `${TIMES} window.__timesSay = () => ({ rows: ${ROWS} }); ${YARD} ${HOLD}`,
-      ids: ['held.timesbtn'], noteAll: 'the board of times is off in this build (TIMES_ON=false); pointed at a stub for the shot' },
-    { file: 'sheet-times', clip: '#held',
-      setup: `(await M('state')).S.runId = 'mine'; ${PANE('times')} await W.until(() => document.querySelector('#times .row'));`,
-      ids: ['held.times.word', 'held.times.row', 'held.timesback'], noteAll: 'TIMES_ON=false in this build; a stub board' },
-    { file: 'sheet-paused-times-best', clip: '#held',
-      setup: `${PANE('main')}`,
-      ids: ['held.timesbtn.label'], noteAll: 'TIMES_ON=false in this build; a stub board' },
-    { file: 'sheet-times-asking', clip: '#held',
-      setup: `window.__timesSay = () => new Promise(() => {}); ${PANE('times')}`,
-      ids: ['held.times.asking'], noteAll: 'TIMES_ON=false in this build; a stub board that never answers' },
-    { file: 'sheet-times-down', clip: '#held',
-      setup: `window.__timesSay = () => null; ${PANE('main')} ${PANE('times')} await W.sleep(200);`,
-      ids: ['held.times.down'], noteAll: 'TIMES_ON=false in this build; a stub board that cannot be reached' },
-    { file: 'sheet-times-nobody', clip: '#held',
-      setup: `window.__timesSay = () => ({ rows: [] }); ${PANE('main')} ${PANE('times')} await W.sleep(200);`,
-      ids: ['held.times.nobody'], noteAll: 'TIMES_ON=false in this build; a stub board with no rows' },
-    { file: 'sheet-times-noboard', clip: '#held',
-      setup: `(await M('timesboard')).setTimesUrl(''); ${PANE('main')} ${PANE('times')}`,
-      ids: ['held.times.noboard'], noteAll: 'the page turned to directly: with no board the times button is hidden, so a player never sees this' },
-  ] },
-  { name: 'times-name', steps: [
-    { file: 'sheet-settings-times', clip: '#held',
-      setup: `${TIMES} ${YARD} ${HOLD} ${PANE('settings')}`,
-      ids: ['set.boardname.placeholder'], noteAll: 'the name box shows only with a board of times (TIMES_ON=false in this build; a stub here)' },
-  ] },
   // --- the rescue sheet and the other ends ------------------------------------------
   { name: 'rescue', steps: [
     { file: 'sheet-rescue', clip: '#saved', pad: 60,
-      setup: `${TIMES} window.__timesSay = (p) => (p === '/runs' ? { id: 'r1' } : new Promise(() => {}));
-              window.__scene('rescue-sheet-off'); window.__fast(1); await W.until(() => !document.getElementById('saved').hidden); await W.frames(3);`,
-      ids: ['saved.word', 'saved.why', 'saved.timesname.placeholder', 'saved.timesgo', 'saved.thanks', 'saved.keepplaying'],
-      note: { 'saved.timesname.placeholder': 'TIMES_ON=false in this build; the name box shows only with a board (a stub here)',
-              'saved.timesgo': 'TIMES_ON=false in this build; a stub board' } },
-    { file: 'sheet-rescue-telling', clip: '#saved', pad: 60,
-      setup: `document.getElementById('timesname').value = 'pebblefan'; document.getElementById('timesgo').click(); await W.frames(3);`,
-      ids: ['saved.telling'], noteAll: 'TIMES_ON=false in this build; a stub board that has not answered yet' },
-    ...[['rank', `{ rank: 3, of: 41 }`, 'saved.rank'], ['down', 'null', 'saved.boarddown'], ['409', `{ status: 409, body: { error: 'x' } }`, 'saved.refuse.409'],
-        ['422', `{ status: 422, body: { error: 'x' } }`, 'saved.refuse.422'], ['429', `{ status: 429, body: { error: 'x' } }`, 'saved.refuse.429']].map(([k, a, id]) => (
-      { file: 'sheet-rescue-' + k, clip: '#saved', pad: 60,
-        setup: `window.__timesSay = () => (${a}); document.getElementById('timesgo').click(); await W.sleep(250);`,
-        ids: [id], noteAll: 'TIMES_ON=false in this build; the stub board answering ' + k })),
+      setup: `window.__scene('rescue-sheet-off'); window.__fast(1); await W.until(() => !document.getElementById('saved').hidden); await W.frames(3);`,
+      ids: ['saved.word', 'saved.why', 'saved.keepplaying'] },
   ] },
   { name: 'rescue-on', steps: [
     { file: 'sheet-rescue-storygoeson', clip: '#saved', pad: 60,
       setup: `window.__scene('rescue-sheet'); window.__fast(1); await W.until(() => !document.getElementById('saved').hidden); await W.frames(3);`,
-      ids: ['saved.word', 'saved.why'], note: { 'saved.word': 'with the second half on: no thanks and no button' } },
+      ids: ['saved.word', 'saved.why'], note: { 'saved.word': 'with the second half on: no button' } },
   ] },
   { name: 'ends', steps: [
     { file: 'sheet-demoend', clip: '#demoend', pad: 60,
@@ -416,10 +355,6 @@ export const SURFACES = [
     { file: 'title-controls', clip: '.col',
       setup: `document.getElementById('controlsbtn').click(); await W.frames(3);`,
       ids: ['title.controls.word', 'title.controlsback'] },
-    { file: 'title-board', clip: 'full',
-      setup: `${TIMES} window.__timesSay = () => ({ rows: ${ROWS} }); document.getElementById('settingsback').click();
-              document.getElementById('board').hidden = false; await (await M('timesboard')).showTimes(document.getElementById('times')); await W.frames(3);`,
-      ids: ['title.board.word'], noteAll: 'the board of times is off in this build (TIMES_ON=false): the panel unhidden over a stub board for the shot' },
   ] },
 
   // --- cloud saves, on the landing page's saves page and foot bar -----------------------

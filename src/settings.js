@@ -12,7 +12,6 @@ import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
 import { fillControls } from './controls.js';
 import { showIndex, sayIndexButton } from './indexpage.js';
-import { showTimes, timesLabel, timesOn, timesName, setTimesName } from './times.js';
 import { copyOut } from './copyout.js';
 import { showCloud, CLOUD_LOOK_MS } from './cloudsheet.js';
 import { cloudReady, cloudStatus } from './cloud.js';
@@ -31,11 +30,8 @@ const recordBtn = document.getElementById('recordbtn');
 const recordEl = document.getElementById('record');
 const slotsBtn = document.getElementById('slotsbtn');
 const slotsEl = document.getElementById('slots');
-const timesBtn = document.getElementById('timesbtn');
 const indexBtn = document.getElementById('indexbtn');
 const indexEl = document.getElementById('index');
-const timesEl = document.getElementById('times');
-const boardName = document.getElementById('boardname');
 const cloudEl = document.getElementById('cloudsheet');
 
 // The sheet's pages: every child carries `data-pane`, a space-separated list
@@ -55,11 +51,7 @@ export function showPane(name) {
   paste.hidden = true;                          // folded; asked for again if wanted
   recordBtn.textContent = recordLabel();
   slotsBtn.textContent = slotsLabel();
-  timesBtn.textContent = timesLabel();
   sayIndexButton(indexBtn);
-  // No board, no page: a build nobody pointed at a server has no times button
-  // and no name box.
-  if (!timesOn()) { timesBtn.hidden = true; boardName.hidden = true; }
   if (name === 'record') showRecord(recordEl);
   if (name === 'index') showIndex(indexEl);
   if (name === 'slots') {
@@ -67,8 +59,6 @@ export function showPane(name) {
     showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); }, true, () => reset());
     showCloud(cloudEl, line => { said.textContent = line; }, { took: tookCloud });
   }
-  if (name === 'times') showTimes(timesEl);
-  if (name === 'settings') boardName.value = timesName();
 }
 const back = () => showPane('main');
 recordBtn.addEventListener('click', () => showPane('record'));
@@ -77,9 +67,6 @@ indexBtn.addEventListener('click', () => showPane('index'));
 document.getElementById('indexback').addEventListener('click', back);
 slotsBtn.addEventListener('click', () => showPane('slots'));
 document.getElementById('slotsback').addEventListener('click', back);
-timesBtn.addEventListener('click', () => showPane('times'));
-document.getElementById('timesback').addEventListener('click', back);
-boardName.addEventListener('change', () => { setTimesName(boardName.value); boardName.value = timesName(); });
 document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
 document.getElementById('settingsback').addEventListener('click', back);
 fillControls(document.getElementById('controlslist'));

@@ -43,7 +43,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The serpent eats a creature out of the passing stream, the one swimming its own way into the mouth when a meal is due, instead of one that dashes in only to be eaten (test/meals.test.mjs).
 - The deep has a steady stream of creatures crossing it at three depths, with a giant now and then far behind; every one comes in from off the screen, the serpent's meals included, and none trails a line of dots (`node tools/look.mjs party-four`).
 - The rescue's sheet has no button with the second half on: it stands a beat, rises and fades, and the camera pulls in on the plank as the snatch plays (test/serpent-flag.test.mjs).
-- The rescue's sheet says the story isn't over when the second half follows it, and the sheet for freeing him says it is the end (src/selftest/times.js).
+- The rescue's sheet says the story isn't over when the second half follows it, and the sheet for freeing him says it is the end (src/selftest/ending.js).
 - The serpent that comes up out of the pit has the deep's head: snout, purple crest and hinged jaws that open wide and shut on him, on a neck that leans out toward the plank (`node tools/look.mjs snatch`).
 - The story's line carries on into the second half: drown the pit, ask the wizards how to get down, buy the portal, free your sqhusband (test/objectives.test.mjs).
 - The deep's portal no longer pokes up through the water's surface, so a click on the roof is not a way up (src/selftest/deep.js).
@@ -141,6 +141,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
 **New this release**
 - New words on the rescue sheet, the demo's store link and an empty achievements page.
+- The board of rescue times is gone: no name box or post on the rescue sheet, no times page, no name on the board in settings.
 - On Steam, every in-game achievement is a Steam achievement, and the ones already won are given at launch (test/desk-steam-achievements.test.mjs).
 - A Steam build of the full game and of the demo: saves sync through Steam Cloud, and the full game offers to carry on a demo save on its first launch (test/desk-steam.test.mjs).
 - On a phone the yard is drawn smaller, 130 cells across at once, so every shield's whole answer fits upright and no scene zooms (test/phone-view.test.mjs).

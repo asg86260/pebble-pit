@@ -59,7 +59,6 @@ import { rand, seedRng, seed } from './rng.js';
 import { verifyWorld, resetVerify } from './verify.js';
 import { JOB, TYPE, DEEP_JOBS } from './jobs.js';
 import { dustUnder, sweep, release } from './hands.js';
-import { setTimesUrl, postTime, bootTimes } from './times.js';
 import { setCloudUrl, setCloudFetch } from './cloud.js';
 import { surfaceY, colOf } from './grid.js';
 import { showWindow } from './modal.js';
@@ -997,9 +996,6 @@ export const HANDLES = {
   // One owner's beat cut, the way its own click would (the sheet's button, a
   // click on a cutscene): the yard's, the camera's or the sheet's.
   __skipBeat: owner => skipBeat(clockNow(), owner),
-  // The board of times: a check points the yard at a stub server, posts the
-  // rescue the way the ending sheet's button does, and says when it boots.
-  __timesUrl: setTimesUrl, __postTime: postTime, __bootTimes: bootTimes,
   // Cloud saves: a check points the yard at a worker, and answers its calls
   // itself (the node tier with the real `handle`, the browser group from a
   // scripted list).

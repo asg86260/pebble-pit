@@ -14,74 +14,11 @@
   "text": "you saved your sqwife in <span id=\"savedin\"></span>!"
  },
  {
-  "id": "saved.timesname.placeholder",
-  "group": "Sheets",
-  "where": "play.html:285",
-  "context": "rescue sheet name box placeholder",
-  "text": "your name"
- },
- {
-  "id": "saved.timesgo",
-  "group": "Sheets",
-  "where": "play.html:286",
-  "context": "rescue sheet post-time button",
-  "text": "post it"
- },
- {
-  "id": "saved.thanks",
-  "group": "Sheets",
-  "where": "play.html:292",
-  "context": "rescue sheet, only when story ends here",
-  "text": "thank you for playing!"
- },
- {
   "id": "saved.keepplaying",
   "group": "Sheets",
   "where": "play.html:293",
   "context": "rescue sheet dismiss button",
   "text": "Happily Ever After"
- },
- {
-  "id": "saved.telling",
-  "group": "Sheets",
-  "where": "src/ending.js:109",
-  "context": "rescue sheet times line while posting",
-  "text": "telling the board…"
- },
- {
-  "id": "saved.boarddown",
-  "group": "Sheets",
-  "where": "src/ending.js:112",
-  "context": "rescue sheet times line, board unreachable",
-  "text": "the board is down right now; your time is kept and goes up next time you open the game"
- },
- {
-  "id": "saved.rank",
-  "group": "Sheets",
-  "where": "src/ending.js:114",
-  "context": "rescue sheet times line after post",
-  "text": "on the board: ${rank}${suffix} of ${of}"
- },
- {
-  "id": "saved.refuse.409",
-  "group": "Sheets",
-  "where": "src/times.js:102",
-  "context": "rescue sheet times line, refusal",
-  "text": "the board already has this one"
- },
- {
-  "id": "saved.refuse.422",
-  "group": "Sheets",
-  "where": "src/times.js:103",
-  "context": "rescue sheet times line, refusal",
-  "text": "the board did not believe it"
- },
- {
-  "id": "saved.refuse.429",
-  "group": "Sheets",
-  "where": "src/times.js:104",
-  "context": "rescue sheet times line, refusal",
-  "text": "the board is busy; try again in a minute"
  },
  {
   "id": "demoend.word",
@@ -322,69 +259,6 @@
   "text": "back"
  },
  {
-  "id": "held.timesbtn",
-  "group": "Sheets",
-  "where": "play.html:218",
-  "context": "pause sheet button",
-  "text": "times"
- },
- {
-  "id": "held.timesbtn.label",
-  "group": "Sheets",
-  "where": "src/timesboard.js:79",
-  "context": "times button label once best known",
-  "text": "times · best ${clock}"
- },
- {
-  "id": "held.times.word",
-  "group": "Sheets",
-  "where": "play.html:219",
-  "context": "times page heading",
-  "text": "times"
- },
- {
-  "id": "held.times.down",
-  "group": "Sheets",
-  "where": "src/timesboard.js:88",
-  "context": "times page, board unreachable",
-  "text": "the board is down right now — try again later"
- },
- {
-  "id": "held.times.asking",
-  "group": "Sheets",
-  "where": "src/timesboard.js:96",
-  "context": "times page while loading",
-  "text": "asking the board…"
- },
- {
-  "id": "held.times.noboard",
-  "group": "Sheets",
-  "where": "src/timesboard.js:96",
-  "context": "times page, no server configured",
-  "text": "no board to ask"
- },
- {
-  "id": "held.times.nobody",
-  "group": "Sheets",
-  "where": "src/timesboard.js:107",
-  "context": "times page, empty board",
-  "text": "nobody yet"
- },
- {
-  "id": "held.times.row",
-  "group": "Sheets",
-  "where": "src/timesboard.js:70",
-  "context": "times page row (time · name · itch · ago)",
-  "text": "${~}${clock} · ${name} · itch · ${since}"
- },
- {
-  "id": "held.timesback",
-  "group": "Sheets",
-  "where": "play.html:221",
-  "context": "times page back",
-  "text": "back"
- },
- {
   "id": "held.settingsbtn",
   "group": "Settings",
   "where": "play.html:224",
@@ -481,13 +355,6 @@
   "where": "play.html:239",
   "context": "settings volume slider label",
   "text": "volume"
- },
- {
-  "id": "set.boardname.placeholder",
-  "group": "Settings",
-  "where": "play.html:242",
-  "context": "settings name box placeholder",
-  "text": "name on the board"
  },
  {
   "id": "set.controlsbtn",
@@ -1412,13 +1279,6 @@
   "where": "index.html:98",
   "context": "landing cloud conflict back",
   "text": "back"
- },
- {
-  "id": "title.board.word",
-  "group": "Title page",
-  "where": "index.html:39",
-  "context": "landing times board heading",
-  "text": "times"
  },
  {
   "id": "title.link.itch",

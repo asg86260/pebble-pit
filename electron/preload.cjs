@@ -16,9 +16,6 @@ contextBridge.exposeInMainWorld('desk', {
   exportTo: raw => ipcRenderer.invoke('desk:exportTo', raw),
   importFrom: () => ipcRenderer.invoke('desk:importFrom'),
   version: () => ipcRenderer.sendSync('desk:version'),
-  // The key the itch app put in the environment, or '' outside it; the board
-  // of times sends it up so the server can ask itch whose it is (times.js).
-  itchKey: () => ipcRenderer.sendSync('desk:itchKey'),
   // Steam achievements: one won now, and the save's whole list at launch. The
   // shell does nothing with either off Steam.
   achievement: name => ipcRenderer.send('desk:achievement', name),

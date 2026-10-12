@@ -6,7 +6,6 @@
 import { primeStore, openSlot, setSlot, slotRaw, clear, saveRaw, savePrev, isSave, storeSettled } from './save.js';
 import { playLabel, slotsLabel, showSlots } from './slots.js';
 import { recordListOf, recordLabelOf, showRecord, NONE_TITLE } from './record.js';
-import { timesOn, showTimes } from './timesboard.js';
 import { pref, setPref, reducedMotion, dark } from './prefs.js';
 import { version } from './version.js';
 import { fillControls } from './controls.js';
@@ -54,12 +53,6 @@ function front() {
   document.getElementById('playlabel').textContent = playLabel();
   document.getElementById('slotsbtn').textContent = slotsLabel();
   document.getElementById('recordbtn').textContent = recordLabelOf(s?.won);
-}
-// The board of times, standing on the right the whole time: asked once as
-// the page comes up. A build with no board has no panel at all.
-if (timesOn()) {
-  document.getElementById('board').hidden = false;
-  showTimes(document.getElementById('times'), opened()?.runId || null);
 }
 // Opening a slot here moves the pointer and nothing else: no yard is running
 // to swap. The page turns back to the front, where play says what it opens.

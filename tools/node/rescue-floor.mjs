@@ -2,7 +2,7 @@
 // with the hooks, buys the four shields one after another and stands the
 // dome, and the clock over the sqwife is read the moment they walk out.
 // Nobody playing can beat a yard the hooks fund, so this is the floor under
-// a posted time -- TIMES_FLOOR_MS in config/times.js is this, less a margin.
+// a posted time -- TIMES_FLOOR_MS in config/times.js (the server's) is this, less a margin.
 //
 //   node tools/node/rescue-floor.mjs [crew]
 //
@@ -10,7 +10,8 @@
 // test/shield.test.mjs, with the clock read instead of the walk.
 
 import { newYard } from './yard.mjs';
-import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, TIMES_FLOOR_MS } from '../../src/config.js';
+import { PROP_FROM, NET_COST, ARCH_COST, DOME_BILL } from '../../src/config.js';
+import { TIMES_FLOOR_MS } from '../../src/config/times.js';
 
 const yard = await newYard();
 const state = yard.state;
