@@ -18,7 +18,7 @@ import { haulerWork } from './hauler.js';
 import { stand } from './body.js';
 import { unbook } from './hole.js';
 
-// The garage: a shed on the ground left of the carts' stand, standing from
+// The garage: a shed on the house's far side from the rock, standing from
 // the first forklift. However many there are, an idle one drives in at the
 // door and is out of sight until there is something to fetch, the way a body
 // goes into its house (DESIGN.md, "The forklifts drive themselves").

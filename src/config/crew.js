@@ -203,3 +203,8 @@ export const SEAT_EMPTY_INK = '#8c8c8c';
 // A body sent off has no seat to walk away from (it carries where it stands),
 // so its pip empties on a clock: three held thirds over this long.
 export const SEAT_LEAVE_MS = 600;
+// A counter with no seat cap (the rock's diggers, the house's carriers, the
+// garage's forklifts) draws a pip a body, at full size, and holds each row to
+// this many; the rest are written after the row as "+N", in room this wide.
+export const SEAT_CROWD_ROW = 12;
+export const SEAT_PLUS_W = P * 6;

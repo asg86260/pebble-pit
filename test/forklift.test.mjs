@@ -68,7 +68,10 @@ group('a forklift is bought off the bench and drives out of its garage by itself
     ok(S.workers.length === people && S.crew === crew && !S.workers.some(w => w.vehicle),
        'and nobody on the crew is it, or is driving it', `${people} -> ${S.workers.length} bodies`),
     ok(s0.carters === 3, 'the carts are still the carts', `${s0.carters}`),
-    ok(carry(s0)?.lifts === 1, 'the carry roster counts it under the carts', `${carry(s0)?.lifts}`)
+    ok(s0.roster.find(p => p.key === 'garage')?.lifts === 1 && carry(s0)?.lifts === null,
+       'the garage counts it, not the carriers', `${s0.roster.find(p => p.key === 'garage')?.lifts} at the garage`),
+    ok(s0.garage && Math.abs(s0.garage - s0.houses.plotLeft) < 120 && s0.garage < s0.houses.plotLeft,
+       'and the garage stands on the far side of the house from the rock', `${s0.garage} against the plot at ${s0.houses.plotLeft}`)
   ];
 });
 

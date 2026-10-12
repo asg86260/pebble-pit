@@ -124,23 +124,29 @@ group('a cart belongs to the lip, not to the carter', async () => {
 group('the roster says how many of them have the trade', async () => {
   window.__crew(4, 3);
   window.__kit({ breakers: 0, carters: 0 });
+  run(5);
   const none = state().roster.find(r => r.job === 'rockhands');
   window.__kit({ breakers: 2, carters: 1 });
+  run(20);
   const some = state().roster;
   const rock = some.find(r => r.job === 'rockhands');
   const carry = some.find(r => r.job === 'haulers');
   window.__crew(0, 0);
+  // A pip a body; the hatted (or carting) on a row of their own above the
+  // plain, wearing their kit's brim.
+  const rows = r => [...new Set(r.crowd.pips.map(q => q.at[1]))];
+  const topOf = r => r.crowd.pips.filter(q => q.top);
   return [
-    ok(!none.trade, 'no second line until somebody has a trade'),
-    ok(rock.hats === 2 && !!rock.trade,
-       'then the count of them stands under the headcount', `${rock.hats}`),
-    ok(rock.trade && rock.trade[1] > none.less[1],
-       'under it, not beside it: they are part of that number, not another one',
-       rock.trade && `${rock.trade[1]} vs ${none.less[1]}`),
+    ok(none.crowd && rows(none).length === 1 && none.crowd.pips.length === 4 && !topOf(none).length,
+       'no top row until somebody has a trade', JSON.stringify(none.crowd)),
+    ok(rock.hats === 2 && topOf(rock).length === 2 && topOf(rock).every(q => q.brim === 'hat'),
+       'then the hatted stand in a row of their own, brimmed', JSON.stringify(rock.crowd)),
+    ok(rows(rock).length === 2 && topOf(rock)[0].at[1] < rock.crowd.pips.find(q => !q.top).at[1] && rock.crowd.rule,
+       'above the plain, with the rule between: part of that number, not another one', JSON.stringify(rows(rock))),
     // carrying has no buttons -- you never put a body *on* it -- but it has
     // carters, and they are worth as much of a count as anybody
-    ok(carry.hats === 1 && !!carry.trade,
-       'and the haulers get one too, buttons or no buttons', `${carry.hats}`),
+    ok(carry.hats === 1 && topOf(carry).length === 1 && topOf(carry)[0].brim === 'cart',
+       'and the haulers get one too, buttons or no buttons', JSON.stringify(carry.crowd)),
     // and it is the cart, not a hat: what you see of a carter in the yard is
     // the thing it is dragging
     ok(carry.mark === 'cart' && rock.mark === 'helmet',

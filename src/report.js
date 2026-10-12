@@ -49,6 +49,7 @@ import { idle } from './staffing.js';
 import { hasOffer, STATIONS, standRect } from './board.js';
 import { boiling as apothBoiling, doseComing } from './apothecary.js';
 import { TYPE } from './jobs.js';
+import { garage, hasGarage } from './crew/lifts.js';
 import { onBelt, beltGrains } from './dust.js';
 
 // The floor, a column at a time: how many grains are lying in each, and how
@@ -598,6 +599,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   drivers: S.drivers || 0,
   lifts: (S.lifts || []).map(w => ({ x: Math.round(w.x), carry: w.carry || 0, goal: w.goal,
                                      inside: !!w.inside })),
+  // The garage's left wall, where one stands.
+  garage: hasGarage() ? garage().x : null,
   // The roombas: owned, and each one in the yard, where it is, what it is
   // doing and what is in its bin.
   roombas: S.roombas || 0,

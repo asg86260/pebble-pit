@@ -121,14 +121,15 @@ group('the trade line stands a clear cell under the counter, and the janitor has
   const rock = report.find(r => r.key === 'mine');
   const loo = report.find(r => r.key === 'loojob');
   const rockPost = posts().find(p => p.key === 'mine');
-  // The counter body spans WORKER cells around its post's y; the trade body's
-  // center sits WORKER + P*3 under the post, which leaves one clear cell
-  // between the hat standing a cell proud of the trade square and the counter.
-  const gap = rock && rock.trade ? rock.trade[1] - postAt(rockPost).y : null;
+  // The rock is a crowd: its breakers a row above the plain, the block
+  // centered on the post's line, where the buttons stand.
+  const top = rock && rock.crowd ? rock.crowd.pips.filter(q => q.top) : [];
+  const mid = rock && rock.crowd ? rock.crowd.block.y + rock.crowd.block.h / 2 : null;
   return [
-    ok(rock && !!rock.trade, 'the rock post draws a trade line', rock && rock.hats),
-    ok(gap === WORKER + P * 3,
-       'and it stands a clear cell below the counter group', `${gap}px`),
+    ok(rock && rock.trade === null && top.length === 2, 'the rock post draws its breakers as a top row, not a trade line',
+       rock && JSON.stringify(rock.crowd)),
+    ok(mid !== null && Math.abs(mid - postAt(rockPost).y) <= P && rock.less[1] === postAt(rockPost).y,
+       'and the block stands centered on the post, between its buttons', `${mid} against ${postAt(rockPost).y}`),
     ok(loo && loo.hats > 0, 'the janitor post owns its cap', loo && loo.hats),
     ok(loo && loo.trade === null,
        'but draws no second default body under the count -- the badge wears the cap')

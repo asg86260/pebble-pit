@@ -13,7 +13,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         FILTER_W, FILTER_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
-        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT, STAND_REACH, LIFT_STAND_OFF,
+        APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT, STAND_REACH, GARAGE_W, GARAGE_CLEAR, HOUSE_TO, HOUSE_COLS, HOUSE_CUBE,
         BRIDGE_RISE, BRIDGE_RUN,
         OPENING_MARGIN, OPENING_ROCK_AT, DEEP_FLOOR_MARGIN } from './config.js';
 import { frames } from './clock.js';
@@ -103,9 +103,14 @@ export const kitX = job =>
   job === JOB.WIZARD ? tower.x + tower.w / 2 - WORKER / 2 :
   job === JOB.JANITOR ? outhouse.x - KIT_OUT.outhouse : null;
 
-// Where the forklifts' garage stands, beyond the carts' stand (`garage` in
-// crew/lifts.js).
-export const liftX = () => kitX(JOB.HAUL) - LIFT_STAND_OFF;
+// Where the forklifts' garage stands: on the ground the house hangs off its
+// far side (`hang` in sites.js), `GARAGE_CLEAR` off the house's wall. Off the
+// house's plot, which never moves, not off the rooms built on it.
+export const liftX = () => {
+  const h = S.placed && S.placed.house;
+  const plot = h ? h.x : Math.round((S.cx + HOUSE_TO - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P;
+  return plot - GARAGE_CLEAR - GARAGE_W;
+};
 
 // The strips are laid once and kept. Rather than every door remembering to
 // lay them again, what they depend on is written here as one key and the
@@ -440,11 +445,11 @@ export function seatSites() {
 
   // The noticeboard does NOT get a slot: a row reserves ground, the world
   // gets wider, the floor gains columns, and the sky's dust budget goes with
-  // it. It is furniture, centered in the gap between the engines' stand (the
-  // farther of the two left of the bench, `liftX`) and the front doors, so it
-  // moves when they move. The rect is the PANEL, which hangs on its posts.
+  // it. It is furniture, centered in the gap between the carts' stand and
+  // the house, so it moves when they move. The rect is the PANEL, which hangs
+  // on its posts.
   const gapFrom = placed.at.house.x + placed.at.house.w;
-  const gapTo = liftX() - STAND_REACH;
+  const gapTo = kitX(JOB.HAUL) - STAND_REACH;
   S.noticeboard.w = BOARD_W;
   S.noticeboard.h = BOARD_H;
   S.noticeboard.x = Math.round((gapFrom + (gapTo - gapFrom - BOARD_W) / 2) / P) * P;

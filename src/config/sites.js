@@ -10,7 +10,7 @@ import { BALLOON_SPAN, BALLOON_MAST_GAP, BALLOON_RUNGS } from './balloon.js';
 import { BOARD_W } from './notices.js';
 import { BENCH_W, P } from './yard.js';
 import { ARCH_SPAN, DOME_SPAN, SHIELD_LEG_W } from './shields.js';
-import { LIFT_STAND_OFF } from './kit.js';
+import { GARAGE_CLEAR, GARAGE_W } from './kit.js';
 import { ROOMBA_DOCK_W } from './roomba.js';
 
 export const TO_LEDGE = 636;     // rock center to the lip of the pit
@@ -101,19 +101,19 @@ export const SITES = [
   // measured off whatever is nearest, is exactly the size it was.
   { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null,
     hang: () => kitHang('shack') },
-  // The carts' stand is left of the bench (`kitX`) and the engines' a stand
-  // beyond it (`liftX`). The noticeboard's gap (STATION_GAP, and the house's
-  // furniture pad for the board itself) covers the carts' stand and the
-  // board together, so the bench pads only for the second trestle.
-  { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null,
-    hang: () => LIFT_STAND_OFF },
+  // The carts' stand is left of the bench (`kitX`). The noticeboard's gap
+  // (STATION_GAP, and the house's furniture pad for the board itself) covers
+  // the stand and the board together, so the bench pads for nothing.
+  { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
   // The settlement owns the ground the noticeboard stands on. The board is
   // furniture rather than a station (seated in world.js) and has no slot of
   // its own, so the house pads its rock side by the board's own width, the
   // way a site with a heap pads by its heap, and the board is centered in a
   // gap with a walk's worth of ground round it.
+  // Its far side hangs the forklifts' garage (`garageX` in world.js), so the
+  // garage stands at the house rather than in the board's gap.
   { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null,
-    furniture: () => BOARD_W },
+    furniture: () => BOARD_W, hang: () => GARAGE_W + GARAGE_CLEAR },
   // The closet keeps its roombas' dock on its rock side, every slot from the
   // start, so the third roomba docks where the ground was always kept for it.
   { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null,

@@ -1483,11 +1483,22 @@ export const SCENES = {
   liftboard: { about: 'the kit', say: "the bench's board with a forklift bought: its two ladders, four pips each",
     run: () => { rich(); lip(); window.__kit({ drivers: 1 }); window.__fast(2); window.__board('bench'); } },
   // The camera held up so the strip under the ground is in the picture.
-  liftroster: { about: 'the kit', say: 'the carry roster: bodies, carts, and the forklifts under them',
+  liftroster: { about: 'the kit', say: 'the carriers under the house and the forklifts under the garage',
     run: () => { rich(); lip(); window.__kit({ drivers: 2 }); window.__fast(20);
                  const s = st(); window.__look(s.houses.door - s.viewW / 2);
                  S.camLockY = S.groundY - S.viewH * 0.35; } },
-  liftstand: { about: 'the kit', say: 'the garage by the bench with all three forklifts inside, the yard clean',
+  // Thirty haulers, four of them carting, and three forklifts: the carriers'
+  // counter past its twelve, and the garage with its own counter.
+  carriers: { about: 'the kit', say: 'thirty haulers, four carts and three forklifts: the house and the garage counters',
+    run: () => { rich(); window.__crew(3, 30); window.__kit({ carters: 4, drivers: 3 }); window.__fast(20);
+                 const s = st(); window.__look(s.houses.door - s.viewW / 2 + 60);
+                 S.camLockY = S.groundY - S.viewH * 0.35; } },
+  // Eighteen on the rock, three of them breakers: the diggers' counter past twelve.
+  diggers: { about: 'the kit', say: "eighteen on the rock, three breakers: the diggers' counter",
+    run: () => { rich(); window.__crew(18, 2); window.__kit({ breakers: 3 }); window.__fast(20);
+                 const s = st(); window.__look(s.rockLeftX - s.viewW / 2);
+                 S.camLockY = S.groundY - S.viewH * 0.35; } },
+  liftstand: { about: 'the kit', say: 'the garage by the house with all three forklifts inside, the yard clean',
     // The floor cleared and nobody working, so nothing falls to fetch and all
     // three stay in the garage.
     run: () => { window.__reset(); window.__crew(0, 0); window.__fullSites(); window.__crew(0, 0);

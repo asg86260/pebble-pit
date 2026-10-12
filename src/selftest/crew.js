@@ -3,7 +3,7 @@
 
 import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
   point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil, canvas, put } from './kit.js';
-import { P, WORKER, SEAT_PIP } from '../config.js';
+import { P, WORKER, SEAT_PIP, GARAGE_W } from '../config.js';
 import { S } from '../state.js';
 import { draw } from '../render.js';
 import { lifted } from '../crew.js';
@@ -517,6 +517,69 @@ export const TESTS = [
       ok(sentHat && hatWalk && hatWalk.y === topY && dark(hatWalk.brim) && hatted === 4,
          'with a hat spare, the body added walks over as a specialist: top row, brim, and arrives hatted', JSON.stringify([hatWalk, topY, hatted])),
       ok(sentPlain && plainWalk && plainWalk.y > topY, 'with none spare the next one fills the regular row', JSON.stringify([plainWalk, topY]))
+    ];
+  }],
+
+  // The counters with no seat cap (roster.js, "the crowds"): the house's
+  // carriers, the rock's diggers and the garage's forklifts, a pip a body,
+  // twelve to a row and the rest written after it. Read off the canvas, and
+  // the diggers moved with the pointer.
+  ['seat pips, uncapped: twelve a row then +N, carts and breakers on top, a pip a forklift under the garage', async () => {
+    newRun();
+    window.__crew(5, 30);
+    window.__kit({ carters: 4, breakers: 3, drivers: 2 });
+    run(25);
+    const r = key => state().roster.find(p => p.key === key);
+    const top = c => c.crowd.pips.filter(q => q.top), bot = c => c.crowd.pips.filter(q => !q.top);
+    const rowLens = c => Object.values(c.crowd.pips.reduce((m, q) => ((m[q.at[1]] = (m[q.at[1]] || 0) + 1), m), {}));
+    const carry = r('carry');
+    window.__look(carry.crowd.pips[0].at[0] - S.viewW / 2);
+    run(0.1);
+    const g = canvas().getContext('2d');
+    const ink = (wx, wy) => {
+      const [sx, sy] = onScreen(wx, wy);
+      return g.getImageData(Math.round(sx * S.dpr), Math.round(sy * S.dpr), 1, 1).data[0];
+    };
+    const dark = v => v < 90;
+    draw();
+    const cart = top(r('carry'))[0], plain = bot(r('carry'))[0];
+    const cartInk = { mid: ink(...cart.at), brim: ink(cart.at[0] - SEAT_PIP / 4, cart.at[1] - SEAT_PIP / 2 - 3) };
+    const plainInk = { mid: ink(...plain.at), brim: ink(plain.at[0] - SEAT_PIP / 4, plain.at[1] - SEAT_PIP / 2 - 3) };
+    // The "+N" is type after the row: some ink on the row's line past its last pip.
+    const plus = r('carry').crowd.plus[0];
+    let plusInk = false;
+    // Type is anti-aliased, so any clearly inked pixel in the band will do.
+    if (plus) for (let d = 0; d < SEAT_PIP * 3 && !plusInk; d++)
+      for (let e = -P / 2; e <= P / 2 && !plusInk; e++) plusInk = ink(plus.at[0] + d, plus.at[1] + e) < 160;
+    const gar = r('garage');
+    const garMid = gar && gar.crowd.pips.reduce((a, q) => a + q.at[0], 0) / gar.crowd.pips.length;
+    const mine = r('mine');
+    const lessed = await put('mine', 'less');
+    const afterLess = state().rockhands;
+    const plusAt = r('mine').more;
+    const mored = await put('mine', 'more');
+    const afterMore = state().rockhands;
+    const plusThen = r('mine').more;
+    window.__crew(0, 0);
+    return [
+      ok(carry.crowd.top === 4 && carry.crowd.bottom === 26 && Math.max(...rowLens(carry)) <= 12,
+         'the carriers: four carts and twenty-six plain, no row past twelve pips', JSON.stringify(rowLens(carry))),
+      ok(plus && plus.n === 14 && plusInk, 'and the fourteen past twelve written after the row as +14', JSON.stringify(plus)),
+      ok(top(carry).length === 4 && top(carry).every(q => q.brim === 'cart') && cart.at[1] < plain.at[1],
+         'the carts are brimmed pips on the top row', JSON.stringify(top(carry))),
+      ok(dark(cartInk.mid) && dark(cartInk.brim) && dark(plainInk.mid) && !dark(plainInk.brim),
+         'drawn: a cart pip wears its brim, a plain hauler none', JSON.stringify([cartInk, plainInk])),
+      ok(carry.lifts === null && !carry.crowd.pips.some(q => q.brim === 'fork'), 'and no forklift on the carriers'),
+      ok(mine.crowd && top(mine).length === 3 && top(mine).every(q => q.brim === 'hat') && bot(mine).length === 2 &&
+         top(mine)[0].at[1] < bot(mine)[0].at[1], 'the diggers: three breakers on top of two plain', JSON.stringify(mine.crowd)),
+      ok(lessed && afterLess === 4 && mored && afterMore === 5, 'and the - and + under the rock move a body each',
+         `${afterLess} then ${afterMore}`),
+      ok(plusAt[0] === plusThen[0] && plusAt[1] === plusThen[1], 'and the + stays where it was pressed',
+         JSON.stringify([plusAt, plusThen])),
+      ok(gar && gar.lifts === 2 && gar.crowd.pips.length === 2 && gar.crowd.pips.every(q => q.brim === 'fork'),
+         'the garage: a pip a forklift', gar && JSON.stringify(gar.crowd)),
+      ok(gar && Math.abs(garMid - (state().garage + GARAGE_W / 2)) <= P, 'standing under the garage',
+         `${garMid} against ${state().garage + GARAGE_W / 2}`)
     ];
   }],
 ];

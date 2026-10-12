@@ -652,7 +652,7 @@ function drawWorker(w, t0) {
 // roster.js lays the badges out and is handed the draws a badge is made of,
 // so the crew's own drawing stays here.
 export function drawRosterBodies() {
-  drawRoster(ctx, drawBody, drawHat, drawCart, drawRunSwitch, drawLift);
+  drawRoster(ctx, drawBody, drawHat, drawRunSwitch);
 }
 
 // The forklifts' garage: a flat-roofed shed, a roll-up door of slats that

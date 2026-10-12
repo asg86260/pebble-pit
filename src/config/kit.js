@@ -32,15 +32,14 @@ export const LIFT_BILL = [['spark', 30], ['dust', 1800]];
 // the rock line smokes about what the belt would have.
 export let LIFT_FOUL = 0.04;
 export const LIFT_PUFF_CELLS = 6;
-// The engines' trestle stands this far beyond the carts' (`liftX`): the
-// truck on its slab is five cells, the mast one, the forks four, and a cell
-// of ground before the carts' slab. The bench pads its left side by it
-// (`hang` in sites.js), which is what keeps it off the noticeboard.
-export const LIFT_STAND_OFF = P * 11;
-// The forklifts' garage, on the old engine stand's ground left of the carts'
-// stand: a shed a forklift drives into when there is nothing to fetch.
+// The forklifts' garage, on the house's far side from the rock: a shed a
+// forklift drives into when there is nothing to fetch. The house keeps the
+// ground for it from the first hire (`hang` in sites.js), so buying the
+// first forklift moves nothing, and its wall stands `GARAGE_CLEAR` off the
+// house's, room for the house door's comings and goings and a hand's width.
 export const GARAGE_W = P * 8;
 export const GARAGE_H = P * 6;
+export const GARAGE_CLEAR = P * 3;
 // How far the truck lifts its driver: a wheel and the truck's box. The yard
 // draws the driver this high and the roster leaves this much room for one.
 export const LIFT_SEAT = P * 3;

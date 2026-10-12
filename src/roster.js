@@ -3,8 +3,9 @@
 // no buttons: you never put a body *on* carrying, it is what a body does when
 // it is on nothing. Its count is there to be read.
 
-import { P, WORKER, LIFT_SEAT as SEAT, DEEP_POST_DOWN, SEAT_PIP, SEAT_GAP, SEAT_PIP_SMALL, SEAT_GAP_SMALL,
-         SEAT_SHRINK, SEAT_ROW, SEAT_EMPTY_INK, SEAT_LEAVE_MS, SEAT_SEP, SEAT_RULE } from './config.js';
+import { P, WORKER, DEEP_POST_DOWN, SEAT_PIP, SEAT_GAP, SEAT_PIP_SMALL, SEAT_GAP_SMALL,
+         SEAT_SHRINK, SEAT_ROW, SEAT_EMPTY_INK, SEAT_LEAVE_MS, SEAT_SEP, SEAT_RULE, SEAT_CROWD_ROW, SEAT_PLUS_W,
+         GARAGE_W } from './config.js';
 import { deepFloor, deepTop } from './deep/place.js';
 import { STATIONS } from './stations.js';
 import { S, quarry } from './state.js';
@@ -18,6 +19,7 @@ import { KIT_MARK, TRADE_OF, liftsOf } from './kit.js';
 import { JOB, DEEP_JOBS, TYPE, TYPE_OF } from './jobs.js';
 import { stationsBuilt, stationById, stationMid, canMoveIn, canMoveOut, moveFighter } from './deep/party.js';
 import { shown, onSnap } from './tween.js';
+import { garage, hasGarage } from './crew/lifts.js';
 import { darkPage } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
@@ -80,10 +82,18 @@ const partyPost = st => ({
   at: () => stationMid(st),
   y: () => deepFloor() + DEEP_POST_DOWN
 });
-const allPosts = () => [...yardPosts(), ...stationsBuilt().map(partyPost)];
+// The garage's: one pip a forklift, under the garage. Nobody is put on a
+// forklift, so like carrying it is read, not set.
+const GARAGE_POST = {
+  key: 'garage', job: null, lifts: true, station: null, kit: false, fixed: true,
+  show: hasGarage,
+  at: () => garage().x + GARAGE_W / 2,
+  y: () => null
+};
+const allPosts = () => [...yardPosts(), GARAGE_POST, ...stationsBuilt().map(partyPost)];
 
 // How many stand at a post, and whether each of its buttons would do anything.
-const count = p => (p.station ? (stationById(p.station)?.fighter ? 1 : 0) : S[p.job]);
+const count = p => (p.lifts ? liftsOf() : p.station ? (stationById(p.station)?.fighter ? 1 : 0) : S[p.job]);
 const canLess = (p, n) => (p.station ? canMoveOut(p.station) : n > 0);
 const canMore = (p, spare) => (p.station ? canMoveIn(p.station) : spare > 0 && roomAt(p.job) > 0);
 const press = (p, d) => (p.station ? moveFighter(p.station, d) : assign(p.job, d));
@@ -106,7 +116,10 @@ function rowOf(n) {
   const per = small ? Math.min(SEAT_ROW, n) : n;
   return { small, pip, gap, per, rows: Math.ceil(n / per), w: per * (pip + gap) - gap };
 }
-const widthOf = p => { const n = seatsOf(p); return n ? BTN + GAP + rowOf(n).w + GAP + BTN : WIDE; };
+const widthOf = p => {
+  if (crowded(p)) return crowdWidth(p);
+  const n = seatsOf(p); return n ? BTN + GAP + rowOf(n).w + GAP + BTN : WIDE;
+};
 
 // Who is at this post, as bodies: the count says who is assigned, and only a
 // body can say whether it has got there.
@@ -279,6 +292,122 @@ function setTo(p, want) {
   }
 }
 
+// --- the crowds ----------------------------------------------------------------
+// The rock, carrying and the garage have no seats to count: the rock has no
+// floor plan, carrying is not a place, and nobody is put on a forklift. Each
+// is a pip a body all the same, solid where a body is at work, the hatted (or
+// carting) on a row of their own above the plain with the rule between, and
+// each row held to `SEAT_CROWD_ROW` pips with the rest written after it as
+// "+N", so the block never grows past one strip however big the crew gets.
+// The strip is that width from the first body, with the "+N" room kept
+// after it: a strip that grew with the count walked the + out from under a
+// pointer pressing it, a pip's width every two presses. The garage's is as
+// wide as its forklifts, centered under the garage: nobody presses anything
+// there, and there are only ever a few.
+const crowded = p => !p.station && !seatsOf(p) && (p.fixed || !Number.isFinite(capOf(p.job)));
+const BRIM_OF = job => (job === JOB.HAUL ? 'cart' : 'hat');
+
+// Each row's pips as { k, brim, spare }: `k` thirds filled (3 is a body at
+// work), the brim its kit's, and a spare hat's outline flagged. The top row is
+// the hatted at work, then the walkers bound for a hat, then the hats owned
+// and not yet worn; the bottom row the plain at work, then the plain walking
+// over.
+function crowdOf(p) {
+  if (p.lifts) return { top: [], bottom: Array.from({ length: liftsOf() }, () => ({ k: 3, brim: 'fork' })) };
+  const on = count(p), brim = p.kit ? BRIM_OF(p.job) : null;
+  let here = 0, brims = 0, claimed = 0;
+  const walking = [], hatBound = [];
+  for (const w of bodiesOf(p)) {
+    if (comingTo(w)) {
+      if (wearsOn(w, p)) { hatBound.push(walked(w)); if (w.wanting === p.job) claimed++; } else walking.push(walked(w));
+      continue;
+    }
+    setOut.delete(w.uid);
+    here++;
+    if (w.trained && w.kitOf === p.job) brims++;
+  }
+  const wearers = Math.min(hatBound.length, Math.max(0, on - here));
+  const filled = Math.min(on - wearers, here);
+  const hatted = Math.min(brims, filled);
+  walking.sort((a, b) => b - a);
+  hatBound.sort((a, b) => b - a);
+  const spare = brim ? Math.max(0, spareKit(p.job) - claimed) : 0;
+  const top = [
+    ...Array.from({ length: hatted }, () => ({ k: 3, brim })),
+    ...hatBound.slice(0, wearers).map(f => ({ k: thirds(f), brim })),
+    ...Array.from({ length: spare }, () => ({ k: 0, brim, spare: true }))
+  ];
+  const bottom = Array.from({ length: filled - hatted }, () => ({ k: 3, brim: null }));
+  for (let i = 0; i < on - wearers - filled; i++) bottom.push({ k: thirds(walking[i] ?? 0), brim: null });
+  return { top, bottom };
+}
+
+const rowWide = k => Math.max(1, k) * (SEAT_PIP + SEAT_GAP) - SEAT_GAP;
+const shownOf = list => Math.min(list.length, SEAT_CROWD_ROW);
+// The strip, and whether "+N" needs room after it.
+function crowdStrip(p, c = crowdOf(p)) {
+  if (!p.lifts) return { strip: rowWide(SEAT_CROWD_ROW), plus: true };
+  const over = c.top.length > SEAT_CROWD_ROW || c.bottom.length > SEAT_CROWD_ROW;
+  return { strip: rowWide(Math.max(shownOf(c.top), shownOf(c.bottom))), plus: over };
+}
+// Buttons either side where the post has them, and the "+N" room before the +.
+const crowdSide = p => (p.fixed ? 0 : BTN + GAP);
+function crowdWidth(p) {
+  const s = crowdStrip(p);
+  return crowdSide(p) * 2 + s.strip + (s.plus ? GAP + SEAT_PLUS_W : 0);
+}
+
+// Each shown pip's square in world units, top row then bottom, each row
+// centered on the strip, the block centered on the post's line as the seats'
+// is. `plus` is what each row has past its last pip, and where it is written.
+function crowdBoxes(p, left, y) {
+  const c = crowdOf(p), { strip } = crowdStrip(p, c);
+  const x0 = left + crowdSide(p);
+  const rows = [c.top, c.bottom].filter(r => r.length);
+  const sep = rows.length > 1 ? SEAT_SEP : 0;
+  const H = rows.length * SEAT_PIP + sep;
+  const y0 = Math.floor((y - H / 2) / P) * P;
+  const centered = n => x0 + Math.round((strip - rowWide(n)) / 2 / P) * P;
+  const pips = [], plus = [];
+  rows.forEach((r, ri) => {
+    const n = shownOf(r), yy = y0 + ri * (SEAT_PIP + sep), xr = centered(n);
+    for (let i = 0; i < n; i++)
+      pips.push({ ...r[i], top: r === c.top, x: xr + i * (SEAT_PIP + SEAT_GAP), y: yy, w: SEAT_PIP, h: SEAT_PIP });
+    if (r.length > n) plus.push({ n: r.length - n, x: xr + rowWide(n) + GAP, y: yy + SEAT_PIP / 2 });
+  });
+  const wide = Math.max(shownOf(c.top), shownOf(c.bottom));
+  const rule = sep ? { x: centered(wide), y: y0 + SEAT_PIP + (SEAT_SEP - SEAT_RULE) / 2, w: rowWide(wide), h: SEAT_RULE } : null;
+  return { pips, plus, rule, block: { y: y0, h: H }, top: c.top.length, bottom: c.bottom.length };
+}
+
+// A kit's brim, a hairline clear of the pip and proud of it either side: a
+// hat wears a crown on it, a cart's is cut in the middle, a forklift's is cut
+// a hairline in from each end, where its forks are.
+function crowdBrim(ctx, b) {
+  const t = THIN, y = b.y - t * 2;
+  if (b.brim === 'hat') {
+    ctx.fillRect(b.x - t, y, b.w + t * 2, t);
+    ctx.fillRect(b.x + b.w / 4, y - P / 2, b.w / 2, P / 2);
+  } else if (b.brim === 'cart') {
+    ctx.fillRect(b.x - t, y, b.w / 2 + t - 1, t);
+    ctx.fillRect(b.x + b.w / 2 + 1, y, b.w / 2 + t - 1, t);
+  } else if (b.brim === 'fork') {
+    ctx.fillRect(b.x - t, y, t, t);
+    ctx.fillRect(b.x + t, y, b.w - t * 2, t);
+    ctx.fillRect(b.x + b.w, y, t, t);
+  }
+}
+
+function drawCrowd(ctx, c) {
+  for (const b of c.pips) {
+    if (b.spare) { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, THIN); crowdBrim(ctx, b); continue; }
+    if (b.k >= 3) { ctx.fillStyle = '#000'; ctx.fillRect(b.x, b.y, b.w, b.h); } else part(ctx, b, b.k, THIN);
+    crowdBrim(ctx, b);
+  }
+  if (c.rule) { ctx.fillStyle = SEAT_EMPTY_INK; ctx.fillRect(c.rule.x, c.rule.y, c.rule.w, c.rule.h); }
+  ctx.fillStyle = '#000';
+}
+
 // Below the ground line, clear of the stopped-station triangle (seven cells
 // down and 2.6 tall) that hangs just under it. A post that says its own
 // height (the deep's) stands there instead.
@@ -287,14 +416,12 @@ export function postAt(p) {
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
-// The forklifts have a line of their own under the carters': how many the
-// yard owns, drawn as one with nobody aboard.
-const liftLine = p => p.job === JOB.HAUL && liftsOf() > 0;
-
 // The machine's mark stands under the count, at the bottom of the strip, below
 // the tradesmen's lines when there are any.
-function runBox(p, left, y) {
+function runBox(p, left, y, crowd) {
   const h = BTN;
+  // A crowd's mark stands its own clear air under the block.
+  if (crowd) return { x: left, y: crowd.block.y + crowd.block.h + P * 2, w: widthOf(p), h };
   // A row of pips has no tradesmen's line under it (the brims are the hats),
   // but wraps when the seats run past a row.
   const n = seatsOf(p);
@@ -302,8 +429,7 @@ function runBox(p, left, y) {
     const r = rowOf(n);
     return { x: left, y: y + WORKER + P * 3 + (r.rows - 1) * (r.pip + r.gap), w: widthOf(p), h };
   }
-  return { x: left, y: y + WORKER + P * 3 + (p.kit ? WORKER + P * 2 : 0) +
-                     (liftLine(p) ? WORKER + SEAT + P * 3 : 0), w: WIDE, h };
+  return { x: left, y: y + WORKER + P * 3 + (p.kit ? WORKER + P * 2 : 0), w: WIDE, h };
 }
 
 // The boxes of one roster, left to right, in world units, and under them a
@@ -318,26 +444,20 @@ function boxes(p) {
   // of its square, and past that a full clear cell keeps the two groups
   // reading as two lines rather than one smudged column.
   const under = y + WORKER + P * 3;
+  const crowd = crowded(p) ? crowdBoxes(p, left, y) : null;
   return {
     less: { x: left, y: y - BTN / 2, w: BTN, h: BTN },
     badge: { x: left + BTN + GAP, y: y - WORKER / 2, w: WORKER, h: WORKER },
     num: { x: left + BTN + GAP + WORKER + GAP, y, w: NUM, h: BTN },
     more: { x: left + wide - BTN, y: y - BTN / 2, w: BTN, h: BTN },
     pips: seatsOf(p) ? pipBoxes(p, left, y) : null,
+    crowd,
     trade: { x: left + BTN + GAP, y: under - WORKER / 2, w: WORKER, h: WORKER },
     tradeNum: { x: left + BTN + GAP + WORKER + GAP, y: under, w: NUM, h: BTN },
-    // The driver's line, the same clear air under the carters' as theirs is
-    // under the headcount. `lift.y` is where the body would stand on foot;
-    // the truck lifts it `SEAT`, so the count sits halfway down the pair. A
-    // cell left of the other badges, so the stack out the truck's back ends
-    // where their bodies do and the counts stay one column.
-    lift: { x: left + BTN + GAP - P, y: under + WORKER / 2 + P * 3 + SEAT, w: WORKER, h: WORKER },
-    liftNum: { x: left + BTN + GAP + WORKER + GAP, y: under + WORKER + P * 3 + SEAT / 2,
-               w: NUM, h: BTN },
     // The machine's mark, on the roster: "is this station worked by hands or
     // by the machine" is the same question the counter above answers about
     // *how many* hands.
-    run: runBox(p, left, y)
+    run: runBox(p, left, y, crowd)
   };
 }
 
@@ -430,7 +550,7 @@ export function rosterHit(x, y) {
 // the one thing drawn in screen pixels: it is type, and type scaled by five
 // sixths has a fuzzy edge.
 
-export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) {
+export function drawRoster(ctx, drawBody, drawHat, drawRun) {
   const spare = idle();
   for (const p of posts()) {
     const b = boxes(p);
@@ -438,6 +558,14 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) 
 
     // Only on the stations that have a machine standing.
     if (machineAt(p.job) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
+
+    if (b.crowd) {
+      drawCrowd(ctx, b.crowd);
+      if (p.fixed) continue;                     // carrying and the garage are read, not set
+      button(ctx, b.less, '-', canLess(p, n));
+      button(ctx, b.more, '+', canMore(p, spare));
+      continue;
+    }
 
     if (b.pips) {
       drawPips(ctx, b.pips, seatsAt(p));
@@ -465,19 +593,10 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun, drawLift) 
     // How many have the trade, drawn as the trade looks out in the yard.
     if (hats(p.job) > 0) {
       drawBody(b.trade.x, b.trade.y);
-      // A carter is a body *with* a cart. It trails to the left, into the slot
-      // the minus button would be in: carrying has no buttons, so the room is
-      // there.
-      if (p.job === JOB.HAUL) drawCart(b.trade.x, b.trade.y, 1);
-      else drawHat(b.trade.x, b.trade.y, KIT_MARK[p.job], true);
-    }
-    // Facing left, like the cart trails left: the forks go into the empty
-    // minus slot and the stack stays clear of the count.
-    if (liftLine(p) && drawLift) {
-      drawLift(b.lift.x, b.lift.y, -1);
+      drawHat(b.trade.x, b.trade.y, KIT_MARK[p.job], true);
     }
 
-    if (p.fixed) continue;                       // carrying is read, not set
+    if (p.fixed) continue;
     // The hat belongs to the station, so the minus is live whenever there is
     // anybody there to take off.
     button(ctx, b.less, '-', canLess(p, n));
@@ -569,6 +688,16 @@ export function drawRosterCounts(ctx, screenAt) {
     // paper's white to stand on the black water like the post's own marks.
     ctx.fillStyle = p.deep && !darkPage ? '#fff' : '#000';
     const b = boxes(p);
+    // A crowd is its own count up to a row; past it, the rest after the row.
+    if (b.crowd) {
+      ctx.textAlign = 'left';
+      for (const q of b.crowd.plus) {
+        const at = screenAt(q.x, q.y);
+        ctx.fillText(`+${Math.round(shown('crowd:' + p.key + q.y, q.n))}`, Math.round(at.x), Math.round(at.y));
+      }
+      ctx.textAlign = 'center';
+      continue;
+    }
     // A row of pips is its own count; past a row's worth it is written over
     // them too, seated of seats, since nobody counts sixty dots.
     if (b.pips) {
@@ -591,11 +720,6 @@ export function drawRosterCounts(ctx, screenAt) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
       ctx.fillText(String(Math.round(shown('hats:' + p.job, hats(p.job)))), Math.round(t.x), Math.round(t.y));
     }
-    if (liftLine(p)) {
-      const t = screenAt(b.liftNum.x + b.liftNum.w / 2, b.liftNum.y);
-      ctx.fillText(String(Math.round(shown('lifts:' + p.job, liftsOf()))), Math.round(t.x), Math.round(t.y));
-    }
-
   }
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
@@ -615,7 +739,7 @@ export function rosterReport() {
     const H = hit(b.less);
     return { key: p.key, job: p.job, station: p.station || null, n: count(p), hats: hats(p.job), worn: worn(p.job),
              spareKit: spareKit(p.job), fixed: !!p.fixed, hitW: H.w, hitH: H.h,
-             room: p.station ? 1 - count(p) : Math.min(99, roomAt(p.job)),
+             room: p.station ? 1 - count(p) : p.lifts ? null : Math.min(99, roomAt(p.job)),
              // What the station holds now (1 while a machine runs) and what it
              // would hold by hand; without both a check cannot tell a capped
              // station from a small one.
@@ -625,9 +749,18 @@ export function rosterReport() {
              run: (b => [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2])(boxes(p)),
              hands: (n => n === Infinity ? null : n)(handsOf(p.job)),
              // Only where a trade line is actually drawn.
-             trade: !b.pips && TRADE_OF[p.job] && hats(p.job) > 0
+             trade: !b.pips && !b.crowd && TRADE_OF[p.job] && hats(p.job) > 0
                ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
-             lifts: liftLine(p) ? liftsOf() : null,
+             lifts: p.lifts ? liftsOf() : null,
+             // A crowd, where a post is one: each shown pip's middle, whether
+             // it is filled, its brim and its row; the rows' full lengths;
+             // and each "+N" written after a row.
+             crowd: b.crowd ? {
+               pips: b.crowd.pips.map(q => ({ at: [q.x + q.w / 2, q.y + q.h / 2], k: q.k, brim: q.brim || null,
+                                              spare: !!q.spare, top: q.top })),
+               top: b.crowd.top, bottom: b.crowd.bottom,
+               plus: b.crowd.plus.map(q => ({ n: q.n, at: [q.x, q.y] })),
+               rule: b.crowd.rule ? { ...b.crowd.rule } : null, block: { ...b.crowd.block } } : null,
              mark: KIT_MARK[p.job],
              // The seats, where a post has them: what each pip shows and
              // where its middle is, for a check to click.
