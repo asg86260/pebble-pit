@@ -333,7 +333,7 @@ export const TESTS = [
   ['a tap skips a scene and a held button skips the opening', async () => {
     // A cutscene: the hole giving way. A tap on the yard lets the camera go,
     // the way a click does.
-    window.__scene('tear');
+    window.__scene('tear>');
     await frames(2);
     const running = !!state().beat.camera && !state().shotOut;
     const s = state();
