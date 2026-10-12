@@ -2077,6 +2077,15 @@ html.dark .modal {
                                    margin: 0 !important; background: none; image-rendering: pixelated; flex: none; }
 #objective .barrier .name { text-transform: uppercase; letter-spacing: .08em; font-weight: bold; }
 #objective .barrier .note { color: var(--ink-2); }
+/* A bill line that fills (billfill.js): a grey fill grows behind it by have
+   over need (--p), the line's own children stand over it. Shared by the
+   story card's bill and the bench's unlock tiles. */
+.fill { position: relative; isolation: isolate; }
+.fill::before { content: ''; z-index: -1; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--p, 0) * 100%);
+                background: var(--ink-8); transition: width .4s ease; }
+.fill > * { position: relative; }
+body.still .fill::before { transition: none; }
+@media (prefers-reduced-motion: reduce) { .fill::before { transition: none; } }
 /* the bill as one small table: box, mark, the numbers right-aligned in their
    own column, so each line reads across (the owner, 2026-10-10: across the
    card's width they were too far apart), standing at its glyph's side of
@@ -2091,10 +2100,7 @@ html.dark .modal {
    subgrid, so they share one width and compare at a glance */
 #objective .barrier .bill li { position: relative; display: grid; grid-column: 1 / -1; grid-template-columns: subgrid;
                                align-items: center; padding: 1px 4px; white-space: nowrap; box-shadow: inset 0 0 0 1px var(--ink-8); }
-#objective .barrier .bill li::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--p, 0) * 100%);
-                                       background: var(--ink-8); transition: width .4s ease; }
 #objective .barrier .bill li > * { position: relative; }
-body.still #objective .barrier .bill li::before { transition: none; }
 #objective .barrier .bill li > * { transition: opacity 1s ease; }
 #objective .barrier .bill li.done > * { opacity: .55; }
 #objective .barrier .bill .num { text-align: right; padding-left: 2px; font-variant-numeric: tabular-nums; }

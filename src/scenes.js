@@ -961,6 +961,15 @@ export const SCENES = {
                  window.__fast(1);
                  S.mouse = { x, y: S.groundY - 12 }; S.dragging = true; S.nextToss = 0;
                  window.__look(x - 340); } },
+  // The build section's unlock tiles with some of each bill in the purse:
+  // about half the dust in, the crops and ore not yet.
+  unlockbars: { about: 'the bench', say: 'the unlock tiles on the bench, each coin of a bill filling as it comes in',
+    run: () => { window.__reset(); window.__crew(4); S.quarryOpen = false; S.farmOpen = false;
+                 window.__answered('props', 'net');
+                 window.__grant({ dust: 6000, shards: 2, spores: 1 }); window.__fast(2);
+                 window.__spend(st().stored - 300); window.__fast(1);
+                 window.__board('bench');
+                 setTimeout(() => document.querySelector('#shop button[data-key^="unlock"]')?.scrollIntoView({ block: 'center' }), 300); } },
   apron: { about: 'the rock', say: 'the bare strip in front of the hill',
     run: () => { rich(); window.__jump(4);
                  const x = st().rockLeftX;
