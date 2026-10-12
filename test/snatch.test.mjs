@@ -18,7 +18,7 @@ import { SERPENT_WOUND, SERPENT_PHASES, KILL, KILL_REFORM_S } from '../src/confi
 const LAST = SERPENT_PHASES - 1;
 import { strike } from '../src/deep/serpent.js';
 import { killDrop, apartK, reformK } from '../src/deep/phases.js';
-import { freedBody } from '../src/snatch.js';
+import { freedBody, ringAt, jawAt } from '../src/snatch.js';
 
 const done = key => S.beatsDone.filter(k => k === key).length;
 const rescued = () => { S.rescued = true; S.buried = false; };
@@ -179,6 +179,42 @@ group('the portal opens, she leaps in as it closes, and she is the deep\'s one h
     ok(her && belowYard(her) && S.deepCrew === 1 && down.length === 1 && down[0].name === name,
        "and she is the deep's one hand, down there", `deepCrew ${S.deepCrew}, ${down.length} below`),
     ok(S.workers.length === yard0 - 1, 'the crew is one fewer: he is not given back', `${S.workers.length} of ${yard0}`)
+  ];
+});
+
+// The take is one place (snatch.js, `ringAt`): the whirlpool opens with its
+// middle on him where he stands at the edge, the jaws close where he stood
+// rather than he being moved to them, and her leap ends in the ring. The
+// drawing reads the same functions (render/portal.js, render/serpent.js).
+group('the whirlpool, the jaws and her leap all land where he stands', async () => {
+  window.__crew(2, 2);
+  run(1);
+  window.__snatch();
+  let stood = null, ring = null, taken = null, last = null, landed = null, heldIn = true;
+  for (let f = 0; f < 60 * 90 && !S.beatsDone.includes('snatch'); f++) {
+    run(1 / 60);
+    const sn = S.snatch;
+    if (!sn) continue;
+    // him, stood at the edge as the whirlpool opens
+    if (sn.phase === 'open' && S.pair.length === 2) { stood = { ...S.pair[1] }; ring = ringAt(); }
+    if (sn.takenAt && !taken) taken = sn.takenAt;
+    // while it has him he is drawn in its jaws, on the take's line
+    if (sn.carried && sn.phase !== 'close' && Math.abs(jawAt(sn.headY).x - ring.x + WORKER / 2) > 0.5) heldIn = false;
+    const b = S.pair[0];
+    if (b && b.leap) {
+      if (b.under && !landed) landed = { x: last.x, y: last.y, end: { x: b.x, y: b.y } };
+      last = { x: b.x, y: b.y };
+    }
+  }
+  const mid = p => ({ x: p.x + WORKER / 2, y: p.y + WORKER / 2 });
+  return [
+    ok(stood && Math.abs(mid(stood).x - ring.x) <= P,
+       'he stands with the whirlpool opening under him', `him ${stood && mid(stood).x}, ring ${ring && ring.x}`),
+    ok(taken && Math.abs(taken.jaw.x - taken.x) <= P && Math.abs(taken.jaw.y - taken.y) <= P,
+       'the jaws close where he stood', JSON.stringify(taken)),
+    ok(heldIn, 'and keep him on the take as they go back down'),
+    ok(landed && Math.abs(mid(landed.end).x - ring.x) <= 0.5 && Math.abs(mid(landed.end).y - ring.y) <= 0.5,
+       'her leap ends in the middle of the ring', JSON.stringify({ landed, ring }))
   ];
 });
 

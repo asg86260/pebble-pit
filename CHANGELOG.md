@@ -28,6 +28,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The serpent's statuses stand over its bar, twice the size, each with its name under it.
 - The serpent has a fifth phase: its comb lights up and bolts lock the strongest fighter in an orb; break the orb (a click on it hits harder), or pick the fighter out of it.
 - The serpent's warded phase no longer surges: its magic resist is the whole of it.
+- In the snatch he stands over the middle of the whirlpool, the serpent's jaws close where he is standing, and her leap ends in the ring (test/snatch.test.mjs).
 - Small hits on the serpent shed more scales: two more on every hit.
 - Freeing the sqhusband plays out: the serpent goes limp, sinks to the floor and comes apart into motes, he walks out to her, and after the sheet the serpent gathers itself again (test/snatch.test.mjs).
 - Each serpent phase is a window: break the defense before it eats, or the meal heals it to full; stuns and Held stop the window, and the phases are far shallower (test/meals.test.mjs).

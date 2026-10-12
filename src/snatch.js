@@ -30,7 +30,7 @@ import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_WALK_MAX_S, SNATCH_LOOK_MS, SNATCH_HEAVE_MS,
          SNATCH_RISE_MS, SNATCH_RISE_STEPS, SNATCH_TAKE_MS, SNATCH_SINK_MS, SNATCH_SINK_STEPS,
          SNATCH_ALONE_MS, SNATCH_LEAP_MS, SNATCH_LEAP_STEPS, SNATCH_LEAP_H, SNATCH_STILL_MS,
-         SNATCH_HURRY, SNATCH_PORTAL_MS, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_GLIDE_S, KILL_MEET_GAP, KILL_HOP_S, KILL_IN_S, KILL_OUT_S,
+         SNATCH_HURRY, SNATCH_PORTAL_MS, SNATCH_HEAD_H, SNATCH_HINGE, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_GLIDE_S, KILL_MEET_GAP, KILL_HOP_S, KILL_IN_S, KILL_OUT_S,
          DEEP_SURFACE, SERPENT_ON, STAGE_WAIT_S } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
@@ -70,9 +70,24 @@ export function snatchDue() {
   return serpentOn() && S.rescued && S.drowned && beatDone('ending') && !S.beat.camera;
 }
 
-// Where each of the two stands at the edge: the one it takes nearest the
-// water, at the head of the shaft itself.
-const edgeX = i => i === 1 ? mouthX() : mouthX() - WORKER - SNATCH_EDGE;
+// --- where ------------------------------------------------------------------------
+// The take, in one place: the whirlpool opens with its middle on it, he
+// stands on it, the jaws close on it, and she leaps into it. The drawing
+// reads it from here (render/portal.js, render/serpent.js), so the four
+// cannot drift apart.
+const snap = v => Math.round(v / P) * P;
+export const ringAt = () => ({ x: mouthX(), y: snap(abyssLine()) });
+// Where a body in the jaws is, top-left, for a head whose top is `headY`:
+// across the mouth halfway from the snout to the hinge, on the mouth's line,
+// so the head is placed off the take rather than the take off the head.
+const MID = Math.floor(SNATCH_HEAD_H / P / 2);
+export const jawAt = headY => ({ x: ringAt().x - WORKER / 2, y: snap(headY) + MID * P + P / 2 - WORKER / 2 });
+// The head's snout end: the mouth's middle on the take.
+export const headLeft = () => ringAt().x - snap(SNATCH_HINGE * P / 2);
+
+// Where each of the two stands at the edge: the one it takes on the take,
+// the other a body and a gap back toward the yard.
+const edgeX = i => ringAt().x - WORKER / 2 - (i === 1 ? 0 : WORKER + SNATCH_EDGE);
 const onPlank = x => walkY(x + WORKER / 2);
 
 // Taken off the crew for the beat: the `n` bodies nearest the mouth that are
@@ -187,17 +202,23 @@ export function stepSnatch(t) {
   }
   if (s.phase === 'rise') {
     // Up out of the surface in held frames, never popped in and never a
-    // smooth slide: each step a pose.
+    // smooth slide: each step a pose. It comes up under him, and the step
+    // its jaws reach where he stands is the step it has him; he goes up the
+    // rest of the way in them.
     const k = Math.min(1, (t - s.at) / (SNATCH_RISE_MS / s.hurry));
     s.headY = surface - SNATCH_RISE * Math.min(1, Math.ceil(k * SNATCH_RISE_STEPS) / SNATCH_RISE_STEPS);
-    if (k >= 1) {
-      next('take');
+    const him = S.pair.length > 1 ? S.pair[S.pair.length - 1] : null;
+    if (!s.carried && (k >= 1 || (him && jawAt(s.headY).y <= him.y + P))) {
       s.carried = true;
+      // Where he stood and where the jaws were as they closed, for the
+      // checks: nothing in play reads it.
+      s.takenAt = { x: him ? him.x : null, y: him ? him.y : null, jaw: jawAt(s.headY) };
       // He is in its jaws now, drawn there off `S.snatch`, not as one of the
       // pair; the one left says what anybody would.
-      s.him = S.pair.length > 1 ? S.pair.pop() : null;
+      s.him = him ? S.pair.pop() : null;
       if (S.pair[0]) S.pair[0].say = { mark: 'bang', until: t + SNATCH_TAKE_MS + SNATCH_SINK_MS + SNATCH_ALONE_MS };
     }
+    if (k >= 1) next('take');
     return true;
   }
   if (s.phase === 'take') {
@@ -226,7 +247,8 @@ export function stepSnatch(t) {
   if (b && u >= SNATCH_ALONE_MS) {
     b.leap ??= { x: b.x, y: b.y };
     const j = Math.min(1, Math.floor((u - SNATCH_ALONE_MS) / SNATCH_LEAP_MS * SNATCH_LEAP_STEPS) / SNATCH_LEAP_STEPS);
-    const tx = mouthX() - WORKER / 2, ty = surface;
+    // Her middle on the whirlpool's.
+    const ring = ringAt(), tx = ring.x - WORKER / 2, ty = ring.y - WORKER / 2;
     b.x = b.leap.x + (tx - b.leap.x) * j;
     b.y = b.leap.y + (ty - b.leap.y) * j - Math.sin(j * Math.PI) * SNATCH_LEAP_H;
     if (j >= 1) b.under = true;
@@ -262,7 +284,7 @@ function giveBack() {
   rebalance();
   retask(w, TYPE.GATHER);
   w.say = null;
-  w.x = mouthX() - WORKER / 2;
+  w.x = ringAt().x - WORKER / 2;
   w.y = deepTop() + DEEP_SURFACE + P * 2;
   w.walking = false;
   w.route = null;
