@@ -17322,6 +17322,55 @@ With the half off the sheet is the end of the story and keeps its button.
   (`TIMES_ON` false); turning it back on needs the button, or a hold that waits
   for the name.
 
+## The first trip down (built 2026-10-12)
+
+Asked for by the owner: a short scene the first time the player enters the
+abyss. Voted A of `docs/mocks/abyss-intro-2026-10-12.html` (push in, call,
+charge). A camera beat, `abyss` in `BEATS`, played once (`beatsDone`) on the
+first arrival in the deep -- the ripple's end (view.js, `arrived`), never a
+straight cut -- with him still in the belly and her at her station.
+
+### The sequence (abyssintro.js)
+
+1. The camera glides and pushes in on the belly (`ABYSS_PUSH_S`, pulled
+   `ABYSS_CLOSE` over the deep's own fit).
+2. Held on him: he hops against the ribs, a double bang (`ABYSS_CALL_S`;
+   longer while she is still swimming to the portal, at most `ABYSS_WAIT_S`).
+3. Pulled back wide on her under the portal (`ABYSS_WIDE`); she answers, a
+   bang.
+4. She charges to where her station has her fight -- up under the coil over
+   it -- in held poses (`ABYSS_CHARGE_POSE_S`), each a stride under a body's
+   width, with speed lines behind her.
+5. Her blow is her own: on the frame she is there her next swing is due, and
+   it is her class's ordinary one, the Recruit's jab, drawn and struck as
+   any other. It counts.
+6. Held on the impact, then let go: the camera eases back to the deep's fit
+   over `CUT_OUT_S` where it is, and the serpent's bar fades back in.
+
+### The owner's calls
+
+- **The first blow you see.** The fight is not changed: she fights unseen
+  from the snatch on, and the scene only stages her -- the swim to the
+  portal and the charge -- between the arrival and her next swing.
+- **Her station already stands.** The free first station stands from the
+  snatch, built, with her as its fighter (deep/party.js, `standFirst`); a
+  save past the snatch with none is given it on load (migration v15). The
+  build button sells only the fang-bought ones now.
+- **Afterwards she is at her station.** The charge ends where her station has
+  her fight, so letting go hands her straight to her own work; a skip lets
+  her go wherever she is and she swims there.
+
+### What it must not break
+
+- **Nothing teleports**: every move is a swim on the deep's water, and the
+  charge's held strides are each under a body's width.
+- **A click is a blow** in the deep, so only the held space bar skips it.
+- **A reload mid-scene** picks it up where it stood: the beat's name is on the
+  save as every camera beat's, and the scene's own record beside it (written
+  only while it is owed).
+- **Old saves**: one that has been down -- a station laid, or the view left
+  in the deep -- or whose sqhusband is out is marked as having had it.
+
 ## Quests under the story's line (built 2026-10-03)
 
 Asked for by the owner, 2026-09-30, with three calls made: a quest is a

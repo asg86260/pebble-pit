@@ -13,7 +13,8 @@ const gatherers = () => S.workers.filter(w => w.type === 'gatherer');
 const lay = (x, n) => { for (let i = 0; i < n; i++) addGrain(deepBed, x, null, 3, true); };
 
 group('a gatherer takes the load lying near the crusher before the tall heap across the deep', async () => {
-  window.__snatch({ played: true });
+  // The snatch's facts with no station: played, it stands the first one,
+  // and the one hand down there would be its fighter.
   window.__crew(0, 4);
   window.__deepCrew({ spare: 1 });
   const near = tossX() + P * 20, far = deepBed.x + deepBed.cols * P - P * 20;

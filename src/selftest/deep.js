@@ -300,25 +300,18 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   ];
 }]);
 
-// The floating build button under a real pointer (deep/buildbutton.js): at
-// the snatch it stands over the first slot, and a tap puts the station up
-// there at once, free, nothing picked. Once it stands, its Recruit's board
-// (voted R2) offers the three starting kinds as nodes; a tap on one only
-// looks, and the button under it buys rung 1.
-TESTS.push(['rails: the build button puts the first station up, and its Recruit tree picks the fighter', async () => {
+// The first station under a real pointer: it stands from the snatch, free,
+// nothing picked (deep/party.js, `standFirst`), so the floating build button
+// (deep/buildbutton.js) has nothing to sell until a fang is held. Its
+// Recruit's board (voted R2) offers the three starting kinds as nodes; a tap
+// on one only looks, and the button under it buys rung 1.
+TESTS.push(['rails: the first station stands from the snatch, and its Recruit tree picks the fighter', async () => {
   window.__snatch({ played: true });
   window.__view('deep');
   await raf(); await raf();
   const btn = document.getElementById('buildbtn');
-  const shown = !!btn && btn.classList.contains('on');
-  await tap(btn);
-  await raf(); await raf();
   const queued = S.stations[0] && { ...S.stations[0] }, fangs = S.fangs;
-  const gone = !btn.classList.contains('on');
-  window.__finish();
-  // standing, and its done check read (its board opened and shut), it wears
-  // the mark until its first choice: the pointer on it asks
-  showPanel('s1', true); await seat(); showPanel(null, true);
+  const gone = !btn || !btn.classList.contains('on');
   run(VIEW_GLIDE_S + 0.5);
   window.__look(stationById('s1') && chooseMarkAt(stationById('s1')).x - 300);
   await sleep(120);
@@ -347,10 +340,9 @@ TESTS.push(['rails: the build button puts the first station up, and its Recruit 
   await raf(); await raf();
   const price = btn.querySelector('.count')?.textContent;
   return [
-    ok(shown, 'the button stands at the snatch'),
-    ok(queued && queued.id === 's1' && queued.kind === null && !queued.built && fangs === 0,
-       'a tap puts the first station up at once, free, with nothing picked', JSON.stringify(queued)),
-    ok(gone, 'and the button goes, with no fang held'),
+    ok(queued && queued.id === 's1' && queued.kind === null && queued.built && fangs === 0,
+       'the first station stands from the snatch, free, with nothing picked', JSON.stringify(queued)),
+    ok(gone, 'and the build button has nothing to sell, with no fang held'),
     ok(asks === 'choose a fighter', 'it stands wearing the mark, which asks for a fighter', `${asks}`),
     ok(nodes.join() === 'altar,armory,spire', "once it stands, its Recruit's tree offers the three starting kinds", nodes.join()),
     ok(firstLook === 'Become a Fighter' && looked === 'Become a Scout' && stillRecruit, 'a node only looks', `${firstLook} / ${looked}`),

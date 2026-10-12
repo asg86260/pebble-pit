@@ -22,11 +22,12 @@ import { P, CELL, CUT_TEAR_S, CUT_TEAR_ZOOM, CUT_DROWN_S, CUT_DROWN_ZOOM,
          CUT_SHIELD_ZOOM, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S,
          CUT_SHIELD_FILL, CUT_SHIELD_GROUND, CUT_IN_S, CUT_OUT_S, CUT_GLIDE,
          CUT_SNATCH_ZOOM, CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S,
-         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, CUT_MUCK_GROUND } from './config.js';
+         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, CUT_MUCK_GROUND, ABYSS_MAX_S } from './config.js';
 import { muckZoom, muckSpot, muckOver } from './firstmuck.js';
 import { mouthX } from './deep/place.js';
 import { S, rift, pit } from './state.js';
 import { setZoom, clampCam, lockScroller } from './world.js';
+import { arrived, holdDeepShot } from './view.js';
 import { reducedMotion } from './prefs.js';
 import { beatRunning, skipBeat } from './beats.js';
 import { now } from './clock.js';
@@ -46,6 +47,10 @@ const SCENES = {
   // over once the patch is clear and faded (firstmuck.js).
   firstmuck: { s: CUT_MUCK_MAX_S, zoom: muckZoom, spot: muckSpot, tail: CUT_MUCK_TAIL_S,
                ground: CUT_MUCK_GROUND, over: () => muckOver() },
+  // The first trip down (abyssintro.js): in the deep, so its framing is the
+  // deep's (`stepDeepShot`), and a click there is a blow, so only the held
+  // space bar skips it.
+  abyss: { s: ABYSS_MAX_S, zoom: 1, deep: true, holdOnly: true },
 };
 // A shield's answer has no length of its own, so the scene ends on the fact
 // (the shield gone, or a held rock set down) plus a tail to see the wreck fly.
@@ -94,7 +99,7 @@ export function cameraCues() {
   const falling = S.rockFall > 0 && !S.rockHeld;
   const fall = falling && !sawFall;
   sawFall = falling;
-  return { gulp, fall };
+  return { gulp, fall, arrive: arrived() };
 }
 
 // The shot: how far in, on what, and how far along it is. Ephemeral -- a
@@ -130,7 +135,7 @@ export const cutsceneRunning = () => !!S.shot && !S.shot.out;
 
 // Any click while a scene runs lands here first -- see `input.js`.
 export function skipCutscene() {
-  if (!cutsceneRunning()) return false;
+  if (!cutsceneRunning() || sceneOf(S.shot.name).holdOnly) return false;
   skipBeat(now(), 'camera');
   return true;
 }
@@ -202,6 +207,45 @@ export function stepShot(t) {
   S.camLockY = null;
   setZoom(1);
   return false;
+}
+
+// One frame of a scene in the deep: `want` is where its own beat looks this
+// frame, `{ k, x, y }` -- pulled in by `k` over the deep's fit, its middle on
+// (x, y) in the world -- and this holds the deep's camera on it
+// (`holdDeepShot`). The yard's framing above does not reach the deep: its
+// ground line is the yard's and its zoom goes back to the yard's, and the deep
+// takes back its own every frame (view.js, `stepView`). Letting go is the same
+// stretch as the yard's, and no more going home: the pull eases back to the
+// deep's fit and the height to its floor over CUT_OUT_S, on the last thing
+// looked at. True while it still has the camera.
+export function stepDeepShot(t, want) {
+  if (!S.shot) play(S.beat.camera);
+  const c = S.shot;
+  if (!c.at) c.at = t;
+  if (!c.out && t - c.at >= c.s * 1000) release();
+  S.follow = null;
+  S.camTo = null;
+  if (!c.out && want) c.last = want;
+  if (c.out) c.outAt ??= t;
+  const out = !c.out ? 0
+            : reducedMotion() ? 1
+            : ease(Math.min(1, (t - c.outAt) / (CUT_OUT_S * 1000)));
+  const f = c.last;
+  if (out < 1 && f) {
+    holdDeepShot({ k: f.k + (1 - f.k) * out, x: f.x, y: f.y, w: 1 - out });
+    return true;
+  }
+  holdDeepShot(null);
+  S.shot = null;
+  return false;
+}
+
+// A deep scene whose deep has gone from under it (the way up taken while it
+// played): the camera is the yard's again at once, nothing held.
+export function dropDeepShot() {
+  holdDeepShot(null);
+  S.shot = null;
+  lockScroller(false);
 }
 
 // Over or skipped: owed nothing more, and on its way out. The camera is

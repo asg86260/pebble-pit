@@ -55,6 +55,7 @@ import { drawFish, drawFishFar, drawFishNear } from './render/fish.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawStationStatuses } from './render/statusicons.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
+import { drawCharge } from './render/charge.js';
 import { drawFighters, drawShots } from './render/arms.js';
 import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // track RENDER, docs/wave-party.md
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
@@ -211,6 +212,7 @@ const LAYERS = [
   // and what leaves them -- arrows, beams, charges, hexes, notes -- over all
   // of the fighters (track RENDER, docs/wave-party.md).
   { name: 'level-up back', draw: drawLevelUpBack },   // the blaze's turns behind the fighter
+  { name: 'charge', draw: drawCharge },   // her speed lines in the first trip down, behind her
   { name: 'party', draw: drawFighters },
   { name: 'freed', draw: drawFreed },   // him out of the serpent, walking to her
   { name: 'orb', draw: drawOrb },       // the constrict's bolts and orb round a fighter
@@ -294,7 +296,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'deep bed',
-                      'deep fish', 'deep stream far', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'deep fish', 'deep stream far', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

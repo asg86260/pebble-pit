@@ -17,7 +17,7 @@
 import { S } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM, KILL_GLIDE } from './config.js';
 import { clampCam, setZoom } from './world.js';
-import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor } from './deep/place.js';
+import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
 
 export const inDeep = () => S.view === 'deep';
@@ -33,7 +33,7 @@ const yardZoom = () => CELL / P;
 // never rounded back up past the window.
 function deepZoom() {
   const need = DEEP_H - DEEP_SURFACE - P * 2 + DEEP_FLOOR_MARGIN;
-  const k = (held ?? Math.min(1, S.H / (need * yardZoom()))) * (1 + KILL_ZOOM * killIn);
+  const k = (held ?? Math.min(1, S.H / (need * yardZoom()))) * (1 + KILL_ZOOM * killIn) * (shot ? shot.k : 1);
   const unit = CELL * S.dpr;
   return Math.max(1, Math.floor(unit * k)) / unit;
 }
@@ -83,6 +83,35 @@ export function killFrame(k, x) {
   clampCam();
 }
 
+// A scene's framing of the deep (cutscene.js, `stepDeepShot`): pulled in by
+// `k` over the deep's fit, its middle on (x, y), and `w` how much of that
+// height is kept against the deep's own (the floor at the foot of the
+// window), so a way out can ease the one into the other. The deep re-takes
+// its framing every frame, so the scene's is held here and re-taken with it.
+// Null lets go. Never saved: a reload plays the scene again.
+let shot = null;
+export function holdDeepShot(f) {
+  shot = f;
+  if (S.view === 'deep' && !gliding()) frameShot();
+}
+function frameShot() {
+  setZoom(deepZoom());
+  if (!shot) { S.camLockY = null; clampCam(); return; }
+  const rest = deepFloor() + DEEP_FLOOR_MARGIN - S.viewH;
+  const y = shot.y == null ? rest : Math.max(deepTop(), Math.min(rest, shot.y - S.viewH / 2));
+  S.camLockY = rest + (y - rest) * (shot.w ?? 1);
+  S.camX = shot.x - S.viewW / 2;
+  S.camTo = null;
+  clampCam();
+}
+
+// The way down arriving: the ripple has swept the window and the deep is
+// framed. An edge, read once by `arrived` (cutscene.js, `cameraCues`): the
+// first trip down's scene waits on it, and a straight cut there (`setView`,
+// for scenes and checks) is not a trip.
+let landed = false;
+export function arrived() { const was = landed; landed = false; return was; }
+
 // A glide held where it is, for a scene that wants a shot of its middle
 // (scenes.js, `glideAt`): the yard runs on, the glide's own clock does not.
 // Let go by the next glide or the next framing.
@@ -117,7 +146,7 @@ function start(v) {
   if (S.view === v || gliding()) return;
   if (v === 'deep' && !canGoDown()) return;
   posed = false;
-  if (reducedMotion()) { if (v === 'deep') { keepYard(); frameOn('deep'); } else backToYard(); return; }
+  if (reducedMotion()) { if (v === 'deep') { keepYard(); frameOn('deep'); landed = true; } else backToYard(); return; }
   // The yard is the half standing through the whole ripple: going down it
   // is where the camera already is, going up it is put back first and the
   // deep drawn over it, shrinking.
@@ -143,11 +172,15 @@ export function setView(v) {
 const ease = k => k * k * (3 - 2 * k);
 
 export function stepView(c) {
+  // A scene's framing outlives no scene: a new game or a read save drops
+  // the shot, and its framing with it.
+  if (shot && !S.shot) shot = null;
   if (gliding()) { glide(c.dt); return; }
   // A save left in the deep from before the portal comes back to the yard.
   if (S.view === 'deep' && !canGoDown()) { setView('yard'); return; }
   // Held every frame, since a resize or a scene's zoom lets go of it.
   if (S.view !== 'deep') return;
+  if (shot) { frameShot(); return; }
   const z = deepZoom();
   if (S.zoom !== z * yardZoom()) setZoom(z);
   if (S.camLockY != null) S.camLockY = null;
@@ -158,7 +191,7 @@ function glide(dt) {
   if (posed) dt = 0;
   S.viewFade = Math.min(1, S.viewFade + dt / (VIEW_GLIDE_S * 1000));
   if (S.viewFade < 1) return;
-  if (S.viewTo === 'deep') frameOn('deep');
+  if (S.viewTo === 'deep') { frameOn('deep'); landed = true; }
   else yardCam = null;
   S.viewTo = null;
   S.viewFade = 0;

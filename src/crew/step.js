@@ -71,6 +71,7 @@ import { jobOf } from './jobs.js';
 import { surface } from './deep.js';
 import { sfx } from '../audio.js';
 import { stageZone, stepStage, holdTheStage } from '../stage.js';
+import { holdHer } from '../abyssintro.js';
 
 // The yard is celebrating, and the dance ends at the clock and nowhere else.
 // A fall is never a party: read as a dance by `danceUntil > 0`, a stale
@@ -177,6 +178,12 @@ const STAGES = [
   // edge until it is over. Above the commute, so a walk across the frame is
   // stopped at its edge; under the falls, which no scene interrupts.
   (w, c) => stepStage(w, c),
+
+  // The first trip down's (abyssintro.js): the scene has her for its swim
+  // to the portal and its charge, and lets her go to her own swing. Under
+  // the falls, the hand and the stars, which no scene interrupts; above the
+  // commute and every errand, so nothing else steers her while it plays.
+  (w, c) => holdHer(w, c),
 
   // A body under the cursor with the right button held walks slow: it moves
   // on HOVER_SLOW of the frames, spread evenly (`slowOwed`), and stands

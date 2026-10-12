@@ -45,6 +45,7 @@ import { onYard } from './crew/body.js';
 import { TYPE, JOB_OF } from './jobs.js';
 import { beatDone, beatRunning } from './beats.js';
 import { stageClear } from './stage.js';
+import { standFirst } from './deep/party.js';
 
 // --- whether ---------------------------------------------------------------------
 // The half is played by a dev build and the node yard (which has no
@@ -221,8 +222,8 @@ export function stepSnatch(t) {
 
 // The one who leapt is one of the crew again, as the rescue's body was, and
 // the deep's whole crew: she comes down through the liquid under the portal
-// and sinks to the deep's floor (crew/falls.js, `sink`), and treads water
-// there until the first station stands, then swims to it as its fighter.
+// and sinks to the deep's floor (crew/falls.js, `sink`), and swims to the
+// first station, which stands from here (`standFirst`), as its fighter.
 // She is the deep's first body, living in its first pod, and the only one
 // until another is built.
 function giveBack() {
@@ -236,8 +237,9 @@ function giveBack() {
   // Her home down there: the deep's first pod is hers, standing from the
   // start, so the pods sell the second.
   S.pods = Math.max(1, S.pods || 0);
-  // A spare hand down there until a station stands for her: the first one
-  // is free, and she is its fighter once it does (`seatUpTo`, deep/party.js).
+  // The first station, free, and her its fighter (`seatUpTo`, deep/party.js):
+  // she fights from the moment she is down, watched or not.
+  standFirst();
   rebalance();
   retask(w, TYPE.GATHER);
   w.say = null;

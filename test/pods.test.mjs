@@ -66,15 +66,22 @@ group('a gatherer stood down with a load drops it in the deep', async () => {
   window.__crew(0, 6);
   // Four of the deep's own hands on no station: they gather.
   window.__deepCrew({ spare: 4 });
+  // A fang held: the first station stands from the snatch, so the build is
+  // the second's.
+  window.__party({ fangs: 1 });
   window.__looseScales(300);
-  runUntil(() => S.workers.filter(w => w.type === 'gatherer' && (w.carry || 0) > 1 && inDeep(w)).length >= 3, 120);
   const gathering = () => S.workers.filter(w => w.type === 'gatherer');
+  // The gatherer a build stands down is the last of them (`syncWorkers`):
+  // the build is pressed on a frame that one has a load.
+  const lastLoaded = () => { const g = gathering().at(-1); return g && (g.carry || 0) > 1 && inDeep(g); };
+  runUntil(() => S.workers.filter(w => w.type === 'gatherer' && (w.carry || 0) > 1 && inDeep(w)).length >= 3, 120);
+  for (let f = 0; f < 60 * 60 && !lastLoaded(); f++) run(1 / 60);
   const loads = gathering().reduce((n, w) => n + (w.carry || 0), 0);
   const was = gathering().length;
   const dust = S.chips.length, water = S.sinking.length;
   // A station to build: a gatherer is stood down where it is, load and all,
   // and goes to put it up empty-handed.
-  pressBuild('altar');
+  pressBuild();
   const stood = was - gathering().length;
   return [
     ok(loads > 1, 'the gatherers had loads', `${loads}`),

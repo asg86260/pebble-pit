@@ -1214,23 +1214,35 @@ HANDLES.__deepCrew = (o = {}) => {
 // rails buys them there, and a Reset of a hook's rungs refunds nothing.
 HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
   deepReady();
-  if (S.stations.length + stations.length > FIGHT_STATIONS_MAX)
-    throw new Error(`__party: ${S.stations.length + stations.length} stations, at most ${FIGHT_STATIONS_MAX}`);
+  // The snatch stands the first station, a Recruit with her at it
+  // (`standFirst`): untouched, it is the first asked for, so a party is the
+  // stations named and no more.
+  const first = S.stations.length === 1 && party.unchosen(S.stations[0]) && S.stations[0].rung === 0
+    && !S.stations[0].paid.length && stations.length > 0 ? S.stations[0] : null;
+  const total = S.stations.length + stations.length - (first ? 1 : 0);
+  if (total > FIGHT_STATIONS_MAX)
+    throw new Error(`__party: ${total} stations, at most ${FIGHT_STATIONS_MAX}`);
   for (const o of stations)
     if ((o.kind != null && !PAIRS[o.kind]) || (o.cls != null && !PAIRS[o.kind]?.includes(o.cls)))
       throw new Error(`__party: no ${o.cls} at a ${o.kind}`);
-  const short = stations.length - deepSpare();
+  const short = stations.length - (first ? 1 : 0) - deepSpare();
   if (short > 0) { S.crew += short; S.deepCrew = (S.deepCrew || 0) + short; }
   rebalance(); syncWorkers();
-  const from = S.stations.length;
+  const from = first ? 0 : S.stations.length;
   for (const [i, o] of stations.entries()) {
     const had = S.stations.length;
-    // The first is free and every one after takes a fang, as the button asks.
-    if (had > 0) S.fangs++;
-    // `kind` null stands a Recruit, its first choice still to make.
-    if (!(o.kind == null ? party.buildStation() : party.raiseStation(o.kind)))
-      throw new Error(`__party: the ${o.kind ?? 'station'} could not be built`);
-    const st = S.stations[had];
+    let st;
+    if (i === 0 && first) {
+      st = first;
+      st.kind = o.kind ?? null;
+    } else {
+      // The first is free and every one after takes a fang, as the button asks.
+      if (had > 0) S.fangs++;
+      // `kind` null stands a Recruit, its first choice still to make.
+      if (!(o.kind == null ? party.buildStation() : party.raiseStation(o.kind)))
+        throw new Error(`__party: the ${o.kind ?? 'station'} could not be built`);
+      st = S.stations[had];
+    }
     finishWorks();
     if (slots && Number.isInteger(slots[i])) st.slot = slots[i];
     st.cls = o.cls ?? null;

@@ -25,8 +25,10 @@ const { deepBed } = await import('../src/state.js');
 // subject; here it is the setup, and the sqwife it leaves on the deep's
 // first job is taken off it, so every blow in these checks is the check's own.
 function deepYard() {
-  window.__snatch({ played: true });
+  // The snatch's facts with no station: played, it stands the first one
+  // with her fighting at it, and her blows would be in every number here.
   window.__deepCrew();
+  S.portalOpen = true;
   window.__serpent({ stage: 0, wound: 0 });
 }
 

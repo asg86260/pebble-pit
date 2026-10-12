@@ -19,8 +19,10 @@ const S = yard.S;
 
 // A yard the serpent has come for, nobody striking: every hit is the check's.
 function deepYard(stage = 1) {
-  window.__snatch({ played: true });
+  // The snatch's facts with no station: played, it stands the first one
+  // with her fighting at it, and her blows would be in every number here.
   window.__deepCrew();
+  S.portalOpen = true;
   window.__serpent({ stage, wound: 0 });
   S.mealT = 0; S.mealI = null;          // a fresh window: no meal lands inside a check
 }

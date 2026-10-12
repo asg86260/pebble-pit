@@ -1,5 +1,5 @@
 // The party (docs/wave-party.md, "Checks"): after the snatch the first
-// station is free, built by a delver, and the sqwife swims to it; a fang drops
+// station stands, free, and the sqwife swims to it; a fang drops
 // at a phase break, sinks, is carried to the crusher, and buys the next
 // station, whose fighter is a pod resident who swims there; four stations is
 // the most. The snatch and the deep's spare hands are set up with the hooks,
@@ -11,7 +11,7 @@ import { P, WORKER, FIRST_KINDS, FIGHT_STATIONS_MAX, SERPENT_WOUND, FANG_BREAKS,
 import { belowYard } from '../src/route.js';
 import { deepPost } from '../src/crew/deep.js';
 import { stationById, fighterAt, classesOpen, stationMid, kindsOffered, keyOf } from '../src/deep/party.js';
-import { buildOffer, press } from '../src/deep/buildbutton.js';
+import { buildOffer } from '../src/deep/buildbutton.js';
 import { railsOf } from '../src/deep/rails.js';
 import { worksAt } from '../src/works.js';
 import { pressBuild, choose, climb, reset, flush } from './party-press.mjs';
@@ -47,17 +47,16 @@ function afterSnatch() {
 // at the stage's depth, and the serpent's own step turning the stage.
 const breakPhase = () => window.__serpent({ wound: SERPENT_WOUND[S.serpentStage] });
 
-group('after the snatch the first station is free, a delver builds it and the sqwife swims there as its Recruit', async () => {
-  afterSnatch();
-  const offer = buildOffer();
-  const could = offer.shown && offer.first;
-  const name = her().name;
-  // The button puts the station up at once: nothing is picked first.
-  const id = press();
+group('after the snatch the first station stands, free, and the sqwife swims to it as its Recruit', async () => {
+  window.__crew(0, 3);
+  window.__snatch({ played: true });
+  const id = S.stations[0]?.id;
   const st = () => stationById(id);
-  const queued = st() && { kind: st().kind, built: st().built, fangs: S.fangs };
+  const stood = st() && { kind: st().kind, built: st().built, fangs: S.fangs, n: S.stations.length };
+  const offer = buildOffer();
   const second = pressBuild();
-  const trip = follow(name, w => stationById('s1')?.built && w.type === 'fighter' && atPost(w));
+  const name = her().name;
+  const trip = follow(name, w => w.type === 'fighter' && !w.falling && w.goal === 'fight');
   const w = S.workers.find(o => o.name === name);
   // Standing, its Recruit's board asks what it becomes: the three starters.
   const asked = railsOf(id);
@@ -65,13 +64,12 @@ group('after the snatch the first station is free, a delver builds it and the sq
   const fought = keyOf(st());
   const chose = choose(id, 'altar');
   return [
-    ok(could && id && queued && queued.kind === null && !queued.built && queued.fangs === 0,
-       'the button puts the first station up at once, with nothing picked, for nothing', JSON.stringify(queued)),
-    ok(!second && S.stations.length === 1, 'and with no fang held, nothing else can be built'),
-    ok(trip.types.includes('delver'), 'she puts it up herself, as a delver', trip.types.join()),
-    ok(trip.there && S.stationsBuilt === 1, 'it stands, and she swims to it as its fighter', JSON.stringify(trip)),
+    ok(stood && stood.built && stood.kind === null && stood.fangs === 0 && stood.n === 1,
+       'the first station stands from the snatch, with nothing picked, for nothing', JSON.stringify(stood)),
+    ok(!offer.shown && !second && S.stations.length === 1, 'and with no fang held, nothing else can be built'),
+    ok(trip.there && S.stationsBuilt === 1, 'she swims to it as its fighter', JSON.stringify(trip)),
     ok(trip.jump < WORKER, 'a stroke at a time, never a jump', `${trip.jump.toFixed(1)}px`),
-    ok(w && fighterAt(st()) === w && w.station === 's1' && belowYard(w), 'and she is the one the station names'),
+    ok(w && fighterAt(st()) === w && w.station === id && belowYard(w), 'and she is the one the station names'),
     ok(fought === 'recruit' && asked?.recruit && JSON.stringify(offered) === JSON.stringify(FIRST_KINDS),
        'a Recruit, whose board offers the three starting kinds', `${fought} ${JSON.stringify(offered)}`),
     ok(chose && st().kind === 'altar' && st().rung === 1 && keyOf(st()) === 'brawler',

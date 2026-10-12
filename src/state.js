@@ -131,6 +131,9 @@ export const S = {
   // zoom }. Never saved; the beat's name is (`beat`), and a reload takes the
   // shot again over the event as it now stands (cutscene.js).
   shot: null,
+  // The first trip down's scene while it plays (abyssintro.js): its phase,
+  // her by uid, where the camera looks. Saved by hand while the beat is owed.
+  abyss: null,
   // The first muck's scene while it plays, and the one of the rock's gang it
   // sent for the patch (firstmuck.js). Neither is saved: the beat's name is.
   muckScene: null,
@@ -734,6 +737,7 @@ export const SAVED_BY_HAND = [
   // the event as it now stands, while the yard's beats come back by their
   // own triggers and the sheet by its fact.
   'beat',
+  'abyss',                // the first trip down's scene, while it is owed (abyssintro.js)
   'buried',
   'machines',             // facts only: bought, driven, tuned, took the kit
   'summon',               // three places, and only meaningful once the tower is open

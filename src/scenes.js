@@ -392,6 +392,25 @@ const killAt = a => () => {
   window.__holdShot();
 };
 
+// A yard past the snatch with her at the free first station, on the yard
+// at the portal, and the way down taken with full motion for the one call
+// that starts it (a headless browser asks for reduced motion, which makes the
+// ripple a cut), run on to its tail.
+function firstTrip() {
+  rich();
+  window.__fullSites();
+  window.__crew(0, 4);
+  window.__snatch({ played: true });
+  for (let i = 0; i < 60 * 30 && S.workers.some(w => w.falling); i++) window.__fast(1 / 60);
+  window.__view('yard');
+  window.__look(portalX() - S.viewW / 2);
+  const was = pref('motion');
+  setPref('motion', false);
+  goDeep();
+  setPref('motion', was);
+  for (let i = 0; i < 60 * 3 && S.viewFade < 0.75 && S.viewTo; i++) window.__fast(1 / 60);
+}
+
 // A glide caught at `k` of the way and held there (`poseGlide`): the first
 // real frame after a long setup would otherwise carry it to its end before
 // the shot.
@@ -452,6 +471,19 @@ const deepScenes = {
   // Its other end in the deep, hanging in the water, the arrow under it.
   'deep-portal': { about: 'the deep', say: 'the portal\'s deep end, the way back up to the yard',
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true }); window.__view('deep'); } },
+  // The first trip down (abyssintro.js): the way down taken, caught on the
+  // ripple's tail, so the shot's second runs into the push onto the belly
+  // and a capture stepped on from here has the whole scene.
+  'abyss-intro': { about: 'the deep', say: 'the first trip down: the ripple ending, the camera about to push in on him in the cage',
+    run: () => firstTrip() },
+  // And after it: the scene played out, the camera handed back, her at her
+  // station and the serpent's bar back.
+  'abyss-intro-after': { about: 'the deep', say: 'after the first trip down: the scene played out, her at her station, the bar back',
+    run: () => {
+      firstTrip();
+      for (let i = 0; i < 60 * 30 && !S.beatsDone.includes('abyss'); i++) window.__fast(1 / 60);
+      window.__fast(0.5);
+    } },
   'glide-up-in': { about: 'the deep', say: "going up, a third in: the deep drawing back into its end of the portal",
     run: glideAt('yard', 0.35) },
   // The deep with the whole yard shouting over its head: a boulder landed for
@@ -469,8 +501,9 @@ const deepScenes = {
                  for (let i = 0; i < 600 && S.landAt === was; i++) window.__fast(1 / 60);
                  let n = 0;
                  for (const w of S.workers) if (w.y < S.worldH && n++ % 2) w.say = { mark: 'loo', until: now() + 60000 }; } },
-  // A fresh deep: no station yet, the sqwife treading water by the pods.
-  deep: { about: 'the deep', say: 'the deep, fresh: no station yet, the sqwife treading water by the pods, him in its belly',
+  // A fresh deep: the free first station that stands from the snatch, her
+  // Recruit at it, and a gatherer by the crusher.
+  deep: { about: 'the deep', say: 'the deep, fresh: her Recruit at the free first station, him in its belly',
     run: stageScene(0, 0.33) },
   // The glide between the halves, caught at a point of it (`glideAt`): just
   // past the turn going down is the deep's side of the hand-over, and the
