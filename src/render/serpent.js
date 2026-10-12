@@ -24,7 +24,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          WOUND_GAP, BELLY_AT, DENT_REACH, DENT_LIFT, DENT_BIG, DENT_CORE, DENT_STEPS,
          BLEED_DRIPS, BLEED_DRIP_S, HELD_EVERY, EXPOSED_EVERY, EXPOSED_LIFT_HZ,
          CRACK_REACH, COIL_STEP, SNOUT, CREST_LEN, CREST_H, BELLY_BULGE, BELLY_LEN, RIB_EVERY,
-         SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, SNATCH_LEAN, SNATCH_HINGE, SNATCH_GAPE, SNATCH_CREST, SNATCH_HIDE, SNATCH_RISE, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
+         SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, SNATCH_LEAN, SNATCH_HINGE, SNATCH_GAPE, SNATCH_CREST, SNATCH_HIDE, SNATCH_RISE, SNATCH_HEAVE_MS, SNATCH_HEAVE_STEPS, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
@@ -675,8 +675,24 @@ export function drawSnatch() {
   const t = now();
   const mx = mouthX();
   const surface = snap(abyssLine() + swellAt(Math.round(mx / P), t));
-  if (sn.headY >= surface) return;
   const [EDGE, HIDE, LATTICE, BROW] = SNATCH_HIDE;
+  // Before it breaks the surface, the surface heaves over it: a hump of its
+  // hide a neck wide, up a cell and back in held steps.
+  if (sn.phase === 'heave') {
+    const k = Math.min(SNATCH_HEAVE_STEPS - 1, Math.floor((t - sn.at) * sn.hurry / SNATCH_HEAVE_MS * SNATCH_HEAVE_STEPS));
+    const up = 1 + (k % 2);
+    const x0 = snap(mx - SNATCH_NECK_W / 2) - P * 2, cols = SNATCH_NECK_W / P + 4;
+    for (let c = 0; c < cols; c++) {
+      const h = c === 0 || c === cols - 1 ? up - 1 : up;
+      for (let r = 1; r <= h; r++) {
+        ctx.fillStyle = r === h ? EDGE : HIDE;
+        ctx.fillRect(x0 + c * P, surface - r * P, P, P);
+      }
+    }
+    ctx.fillStyle = '#000';
+    return;
+  }
+  if (sn.headY >= surface) return;
   const k = Math.max(0, Math.min(1, (surface - sn.headY) / SNATCH_RISE));   // how far up
   const ease = x => x * x * (3 - 2 * x);
   // It leans out toward the plank as it comes up and draws back with him; the

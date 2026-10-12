@@ -27,7 +27,7 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startDown, stepDown, startUp, stepUp, begin, stepShow,
          startMeet, stepMeet, cutMeet, parted, stepPart, letGo,
          startRescue, stepRescue, cutRescue } from './intro.js';
-import { cameraCues, play, stepShot, release, stepDeepShot, dropDeepShot } from './cutscene.js';
+import { cameraCues, play, stepShot, release, stepDeepShot, dropDeepShot, stepHush } from './cutscene.js';
 import { abyssDue, startAbyss, stepAbyss, cutAbyss, endAbyss } from './abyssintro.js';
 import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
@@ -216,6 +216,9 @@ export const SAVE = {
     const owed = typeof s.beat?.camera === 'string' ? s.beat.camera : null;
     const camera = BEATS.find(r => r.key === owed && r.owns === 'camera' && !done.has(owed));
     S.beat = { yard: null, camera: camera ? camera.key : null, sheet: null };
+    // A yard read back with no scene owed is a yard nothing holds: a page
+    // opens on it with no bands and nothing receded.
+    if (!S.beat.camera) { S.hush = 0; S.hushOn = false; }
     // A shot of some other scene is the old yard's; the same scene, still
     // standing in this process, carries on rather than starting over. The
     // view's center is kept across the zoom going back, the way the scene's
@@ -279,6 +282,9 @@ export function stepBeats(t) {
     markDone(key);
     if (row.next && !beatDone(row.next)) start(ROW.get(row.next), t);
   }
+  // And the yard held around whatever now has it (cutscene.js), read off
+  // the owners this frame left standing.
+  stepHush(t);
   // The ground under the rock is only somewhere to get out of once something
   // is actually coming down on it -- see `dropZone`.
   S.sceneHolds = ownsYard() && !S.rockFall;

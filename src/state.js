@@ -131,6 +131,14 @@ export const S = {
   // zoom }. Never saved; the beat's name is (`beat`), and a reload takes the
   // shot again over the event as it now stands (cutscene.js).
   shot: null,
+  // How far a scene has the yard held, nought to one (cutscene.js,
+  // `stepHush`): the letterbox, the background's recede and the ambient
+  // clocks all read it. `hushOn` is whether a scene is holding now (the
+  // attackers stand still while it is), `hushAt` when it took hold, the
+  // moment the held bodies are drawn at.
+  hush: 0,
+  hushOn: false,
+  hushAt: 0,
   // The first trip down's scene while it plays (abyssintro.js): its phase,
   // her by uid, where the camera looks. Saved by hand while the beat is owed.
   abyss: null,
@@ -829,7 +837,7 @@ export const EPHEMERAL = [
   'wonShown',
   // The tearing of the rift is an event, and the cutscene watching it a
   // camera.
-  'riftGulp', 'riftShake', 'shot',
+  'riftGulp', 'riftShake', 'shot', 'hush', 'hushOn', 'hushAt',
   'smoke', 'grit', 'smokeAt', 'houseSmokeAt', 'shutters', 'shutterAt', 'shutterN',
   'shocks', 'shockMotes',
   'skyShown', 'flashAt',

@@ -31,6 +31,7 @@ import { orbLift } from '../deep/phases.js';
 import * as fight from '../deep/arms.js';
 import { deepFloor, deepTop, deepX0, postX } from '../deep/place.js';
 import { ctx } from './ctx.js';
+import { bodyInk, inFront } from './recede.js';
 import { inTheDeep } from './crew.js';
 import { GREYS, PURPLES, WHITE, BODY, R4, R8, hash, lerp, ease, cell, ring, body, pips, dagger, charge,
          blades } from '../deep/kits.js';
@@ -231,7 +232,12 @@ function buffsOf(f, list, t) {
 // --- the layers --------------------------------------------------------------------
 let queued = [];
 export function drawFighters() {
-  const t = now() / 1000, list = fighters(t);
+  // A scene holding the deep stands its fighters still in the pose they had
+  // when it took hold (stage.js), while the one it is about moves on: the
+  // receding pass is drawn at that moment, the front pass at this one
+  // (render/recede.js).
+  const t = (S.hushOn && !inFront() ? S.hushAt : now()) / 1000, list = fighters(t);
+  const was = ctx.globalAlpha;
   queued = [];
   // A fighter still coming down the shaft is in the liquid over the deep's
   // surface and not drawn, as every swimmer is (render/deep.js).
@@ -241,6 +247,9 @@ export function drawFighters() {
   ctx.rect(deepX0() - P * 16, cut, DEEP_W + P * 32, deepFloor() - cut + P * 8);
   ctx.clip();
   for (const f of list) {
+    const ink = f.w ? bodyInk(f.w) : inFront() ? 0 : 1;
+    if (ink <= 0) continue;
+    ctx.globalAlpha = was * ink;
     let at = [f.x + f.dx, f.restY + f.dy];
     if (!f.key) body(f.x, f.restY);             // no class to draw: the plain square
     else if (f.c) {
@@ -268,6 +277,7 @@ export function drawFighters() {
     if (b.inspired) paintInspired(t, at[0], at[1], b.inspired);
     if (b.hasted) paintHasted(t, at[0], at[1]);
   }
+  ctx.globalAlpha = was;
   ctx.restore();
   ctx.fillStyle = '#000';
 }

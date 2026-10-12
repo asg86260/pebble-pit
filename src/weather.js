@@ -18,7 +18,7 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
-import { frames } from './clock.js';
+import { ambientFrames } from './clock.js';
 import { dryTime } from './smog/rain.js';
 import { gust } from './wind.js';
 import { spawnChip, bell } from './dust.js';
@@ -364,8 +364,9 @@ export function stepWeather(now) {
     storms++;
   }
   // Pixels a frame, stepped by how long the frame was, or the sky slows down
-  // on a slow machine while the clock behind it does not.
-  const f = frames();
+  // on a slow machine while the clock behind it does not -- on the
+  // background's clock, which stands still while a scene holds the yard.
+  const f = ambientFrames();
   // a swelled cloud leans with the wind the rain under it leans with
   const lean = gust() * CLOUD_LEAN * sw;
   // the front has peaked and is letting go: neither brewing nor pouring

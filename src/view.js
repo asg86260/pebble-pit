@@ -15,7 +15,7 @@
 // roster in the band under that, and no surface or sky over it.
 
 import { S } from './state.js';
-import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM, KILL_GLIDE } from './config.js';
+import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM } from './config.js';
 import { clampCam, setZoom } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
@@ -73,13 +73,14 @@ export function deepCamera() {
 }
 
 // The kill's frame (snatch.js): the deep's own, closer by `k` of KILL_ZOOM
-// (held in `deepZoom`, which the deep re-takes every frame), glided over `x`;
-// the floor stays at the foot of it (`clampCam`). `k` 0 is the deep's frame.
+// (held in `deepZoom`, which the deep re-takes every frame), its middle on
+// `x`, which the beat glides on an ease; the floor stays at the foot of it
+// (`clampCam`). `k` 0 is the deep's frame.
 export function killFrame(k, x) {
   killIn = k;
   if (S.view !== 'deep') return;
   setZoom(deepZoom());
-  S.camX += (x - S.viewW / 2 - S.camX) * KILL_GLIDE;
+  S.camX = x - S.viewW / 2;
   clampCam();
 }
 

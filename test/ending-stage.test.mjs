@@ -1,54 +1,54 @@
-// The ending's stage (stage.js): while the rescue under the dome and the
-// snatch at the plank play, nobody but the pair stands in the scene's frame
-// for longer than it takes to walk out of it, and everybody walks back to
-// work after. And no rock comes down from the rescue to the end of the
-// snatch (`endingHolds` in core.js), a reload in the middle included.
+// The ending's stage (stage.js, render/recede.js): while the rescue under the
+// dome and the snatch at the plank hold the yard, nobody but the pair is
+// drawn -- the rest of the crew fade out where they are and carry on with
+// their day -- nobody teleports, and everybody is drawn again after. And no
+// rock comes down from the rescue to the end of the snatch (`endingHolds` in
+// core.js), a reload in the middle included.
 //
 // The dome is bought through its row and the rescue rock caught by it, as a
 // player has it; the three shields before it are marked answered, which
 // shield.test.mjs walks through on its own.
 import { group, ok, run, runUntil, state } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { WORKER, COMMUTE_PACE, PROP_FROM, DOME_BILL, ARCH_COST, NET_COST } from '../src/config.js';
-import { stageZone } from '../src/stage.js';
+import { WORKER, PROP_FROM, DOME_BILL, ARCH_COST, NET_COST } from '../src/config.js';
 import { boulderAlive } from '../src/rock.js';
 import { outOfYard } from '../src/crew/records.js';
 import { setZoom } from '../src/world.js';
 import { mouthX } from '../src/deep/place.js';
 import { stand } from '../src/crew/body.js';
+import { bodyInk, setPass } from '../src/render/recede.js';
+import { roleOf } from '../src/stage.js';
 
-// A desk's window, not the node yard's narrow one: the frame a scene pulls
-// in to is a share of the window, and the crew have to walk out of it.
+// A desk's window, not the node yard's narrow one.
 const wide = on => { S.W = on ? 1920 : 800; setZoom(1); };
 
 const did = key => S.beatsDone.includes(key);
-const leads = w => !!(w.met || w.dig);
-const onStage = (z, w) => !leads(w) && !outOfYard(w) && !w.craft && !w.floating
-  && w.homeward == null && w.x + WORKER > z.from && w.x < z.to;
+const onYard = w => !outOfYard(w) && !w.craft && !w.floating && w.homeward == null;
+// How much of a body the picture has: the receding pass and the front pass
+// together, as render.js paints them.
+const ink = w => { setPass('back'); const b = bodyInk(w); setPass('front'); const f = bodyInk(w); setPass('back'); return Math.max(b, f); };
 
-// Frame by frame until `until`: for every body, the longest run of frames it
-// stood in the frame while a scene had the stage, against the frames a walk
-// from the frame's middle to its edge takes at the slowest pace anybody
-// crosses the yard at, and a second for the turn. Bodies are known by name:
-// the harness reads the yard back every five seconds and stands each one up
-// afresh.
+// Frame by frame until `until`: the frames the yard was held all the way,
+// and on those, the most bystanders the picture still had; the longest step
+// any body on the yard took in one frame (a body known by name: the harness
+// reads the yard back every five seconds and stands each one up afresh).
 function watch(until, limit) {
-  const runs = new Map();
-  let worst = 0, allowed = 0, staged = 0, wasStaged = false, endedAt = -1;
+  let held = 0, shown = 0, jump = 0, who = '';
+  const was = new Map();
   for (let f = 0; f < limit && !until(); f++) {
     run(1 / 60);
-    const z = stageZone();
-    if (!z) { if (wasStaged && endedAt < 0) endedAt = f; runs.clear(); continue; }
-    wasStaged = true;
-    staged++;
-    allowed = Math.max(allowed, Math.ceil((z.to - z.from) / 2 / COMMUTE_PACE) + 60);
     for (const w of S.workers) {
-      const n = onStage(z, w) ? (runs.get(w.name) || 0) + 1 : 0;
-      runs.set(w.name, n);
-      worst = Math.max(worst, n);
+      if (!onYard(w) || w.falling) { was.delete(w.name); continue; }
+      const p = was.get(w.name);
+      if (p != null && Math.abs(w.x - p) > jump) { jump = Math.abs(w.x - p); who = `${w.name} ${w.type}`; }
+      was.set(w.name, w.x);
+    }
+    if (S.hushOn && S.hush >= 1) {
+      held++;
+      shown = Math.max(shown, S.workers.filter(w => onYard(w) && roleOf(w) === 'by' && ink(w) > 0).length);
     }
   }
-  return { worst, allowed, staged };
+  return { held, shown, jump, who };
 }
 
 const domeYard = () => {
@@ -67,7 +67,7 @@ const domeYard = () => {
   run(1);
 };
 
-group('the rescue shows the two of them, the crew walk back after, and no rock comes until the snatch is over', async () => {
+group('the rescue shows the two of them, the crew fade back after, and no rock comes until the snatch is over', async () => {
   domeYard();
   const bought = window.__buy('dome');
   const cast = runUntil(() => { const sh = state().shield; return sh && sh.laid >= sh.pieces; }, 300);
@@ -81,12 +81,12 @@ group('the rescue shows the two of them, the crew walk back after, and no rock c
   const rescued = S.rescued && did('rescue');
   // The rescue rock burst on the dome, and nothing in the sky behind it for
   // the rest of the story: the sheet, the tearing, the drowning, the snatch.
-  // Meanwhile the crew walk back: nobody is left stood off.
+  // Meanwhile the crew are drawn again: the yard is back in full.
   const gone = !boulderAlive() && !S.rockHeld && !S.rockFall;
   let early = false, reloaded = false, back = false;
   for (let f = 0; f < 60 * 240 && !(did('snatch') && !S.beat.camera); f++) {
     run(1 / 60);
-    if (!back && !S.beat.yard && !S.workers.some(w => w.offStage)) back = true;
+    if (!back && !S.beat.yard && S.hush === 0 && S.workers.every(w => ink(w) === 1)) back = true;
     // Asked at the end of the frame: the rock may come on the frame it ends.
     if (!(did('snatch') && !S.beat.camera) && (boulderAlive() || S.rockFall > 0 || S.boulderNo > rock)) early = true;
     // A save in the middle of it, read back: still nothing comes down.
@@ -97,17 +97,17 @@ group('the rescue shows the two of them, the crew walk back after, and no rock c
   wide(false);
   return [
     ok(bought && cast && caught && gone, 'the dome is bought, cast, and catches and bursts the rescue rock', `${bought} ${cast} ${caught} ${gone}`),
-    ok(scene.staged > 0 && rescued, 'the rescue plays with its stage', `staged ${scene.staged} frames`),
-    ok(scene.worst <= scene.allowed, 'nobody but the pair stands in its frame longer than the walk out',
-       `worst ${scene.worst} frames, allowed ${scene.allowed}`),
-    ok(back, 'and the crew walk back to work after'),
+    ok(scene.held > 0 && rescued, 'the rescue plays, the yard held around it', `held ${scene.held} frames`),
+    ok(scene.shown === 0, 'nobody but the pair is drawn once it holds', `${scene.shown} bystanders drawn`),
+    ok(scene.jump < WORKER, 'and nobody teleports', `${scene.jump.toFixed(1)}px a frame, ${scene.who}`),
+    ok(back, 'and the crew are drawn again after'),
     ok(reloaded && over, 'the story runs on through the drowning and the snatch, a reload in the middle', `reloaded ${reloaded} drown ${did('drown')} tear ${did('tear')} ending ${did('ending')} snatch ${did('snatch')} cam ${S.beat.camera} yard ${S.beat.yard} sheet ${S.beat.sheet} drowned ${S.drowned}`),
     ok(!early, 'no rock comes down until the snatch is over'),
     ok(next, 'and then the next one does', `rock ${S.boulderNo}, want > ${rock}`)
   ];
 });
 
-group('the snatch shows the pair at the plank, and the crew walk back after', async () => {
+group('the snatch shows the pair at the plank, and the crew fade back after', async () => {
   window.__reset();
   window.__crew(4, 10);
   run(1);
@@ -122,23 +122,19 @@ group('the snatch shows the pair at the plank, and the crew walk back after', as
   });
   window.__skipBeat('sheet');                // the button
   const started = runUntil(() => S.beat.yard === 'snatch', 10);
-  // Who was standing in the frame as it began, for the portal's wait.
-  const z0 = stageZone();
-  const crowd = z0 ? S.workers.filter(w => onStage(z0, w)).length : 0;
   let openedOnCrowd = false;
-  const runs = watch(() => {
-    const z = stageZone();
-    if (z && S.snatch && S.snatch.phase === 'open' && S.workers.some(w => onStage(z, w))) openedOnCrowd = true;
+  const scene = watch(() => {
+    if (S.snatch && S.snatch.phase === 'open' && S.workers.some(w => onYard(w) && roleOf(w) === 'by' && ink(w) > 0)) openedOnCrowd = true;
     return did('snatch') && !S.beat.camera;
   }, 60 * 120);
-  const back = runUntil(() => !S.workers.some(w => w.offStage), 10);
+  const back = runUntil(() => S.hush === 0 && S.workers.every(w => ink(w) === 1), 10);
   wide(false);
   return [
     ok(started, 'the snatch plays'),
-    ok(runs.staged > 0, 'with its stage', `staged ${runs.staged} frames, ${crowd} in the frame at the start`),
-    ok(runs.worst <= runs.allowed, 'nobody but the pair stands in its frame longer than the walk out',
-       `worst ${runs.worst} frames, allowed ${runs.allowed}`),
+    ok(scene.held > 0, 'with the yard held around it', `held ${scene.held} frames`),
+    ok(scene.shown === 0, 'nobody but the pair is drawn once it holds', `${scene.shown} bystanders drawn`),
+    ok(scene.jump < WORKER, 'and nobody teleports', `${scene.jump.toFixed(1)}px a frame, ${scene.who}`),
     ok(!openedOnCrowd, 'the portal opens on a clear frame'),
-    ok(back, 'and the crew are back on their jobs after')
+    ok(back, 'and the crew are drawn again after')
   ];
 });

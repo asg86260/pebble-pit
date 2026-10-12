@@ -15,7 +15,7 @@ import { S, floor, pit, quarry, farm, rift } from './state.js';
 import { at, surfaceY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
-import { now, frames } from './clock.js';
+import { ambient, ambientFrames } from './clock.js';
 import { gust, give } from './wind.js';
 import { seed, stream } from './rng.js';
 
@@ -180,7 +180,8 @@ function born(anywhere) {
 const appetite = () => AIR_FLOOR + Math.round(dustAbout() / AIR_PER_DUST);
 
 export function stepAir() {
-  const t = now();
+  // The background's clock: the dust hangs still while a scene holds the yard.
+  const t = ambient();
   const want = Math.min(AIR_CAP, appetite());
   const wind = gust() * AIR_LEAN;         // the yard's wind, in the pixels dust travels in
 
@@ -199,7 +200,7 @@ export function stepAir() {
   // Everything below is pixels a frame, stepped by however long this frame
   // was; the easing, a proportion of what is left, is raised to that power.
   // See `frames` in clock.js.
-  const f = frames();
+  const f = ambientFrames();
   const keep = Math.max(0, 1 - AIR_STIR_EASE / 60) ** f;
   const suck = riftOnGlass();
   for (const m of AIR) {

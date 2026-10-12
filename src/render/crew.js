@@ -4,6 +4,7 @@
 
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
+import { bodyInk } from './recede.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedShown, buriedVisible, buriedOut } from '../intro.js';
@@ -342,11 +343,16 @@ export function drawPointed() {
 const FALLING_DIZZY = { mark: 'dizzy' };
 
 export function drawSays() {
+  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     const say = w.say || (w.falling && w.dizzyFor ? FALLING_DIZZY : null);
     if (!say || underground(w) || atHome(w)) continue;
+    const ink = bodyInk(w);
+    if (ink <= 0) continue;
+    ctx.globalAlpha = was * ink;
     drawSay(w, say);
   }
+  ctx.globalAlpha = was;
   ctx.fillStyle = '#000';
 }
 
@@ -568,12 +574,18 @@ export function drawDeepSight() {
 
 export function drawWorkers() {
   const t0 = now();
+  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     // Out of sight: in the lab, down the quarry, in the outhouse, or home. The
     // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
     // reason to skip it here. A body in a balloon's basket is drawn by the
     // balloon, wherever in the sky it is (render/balloon.js).
     if (w.lifted || underground(w) || atHome(w) || inBasket(w) || inTheDeep(w)) continue;
+    // and while a scene holds the yard, only as much of it as this pass draws
+    // (render/recede.js)
+    const ink = bodyInk(w);
+    if (ink <= 0) continue;
+    ctx.globalAlpha = was * ink;
     if (S.crewSight != null && underSurface(w) == null) ring(w);
     const sunk = underSurface(w);
     if (sunk != null) {
@@ -588,6 +600,7 @@ export function drawWorkers() {
     }
     drawWorker(w, t0);
   }
+  ctx.globalAlpha = was;
 }
 
 // The body in your hand is the pointer's, not the ground's: drawn whole, over

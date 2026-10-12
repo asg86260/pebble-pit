@@ -15,6 +15,7 @@
 // serpent and the scales draw as they would in the yard and come out white.
 
 import { now } from '../clock.js';
+import { bodyInk } from './recede.js';
 import { CRUSH_FIRE, CRUSH_STIR, CRUSH_HEAT, CRUSH_SPARKS, CRUSH_SPARK_MS,
          CRUSH_SPARK, SERPENT_PHASES } from '../config.js';
 import { invertByFilter } from './invert.js';
@@ -518,10 +519,14 @@ export function drawSwimmers() {
   ctx.beginPath();
   ctx.rect(deepX0() - P * 8, cut, deepX1() - deepX0() + P * 16, deepFloor() - cut + P * 4);
   ctx.clip();
+  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     if (w.lifted || !inTheDeep(w)) continue;   // the one in your hand: `drawHeld`
     // a fighter at a built station is the fighters' layer's (render/arms.js)
     if (isFighter(w) && (S.stations || []).some(st => st.built && st.id === w.station)) continue;
+    const ink = bodyInk(w);                    // a scene holding the deep (render/recede.js)
+    if (ink <= 0) continue;
+    ctx.globalAlpha = was * ink;
     const x = Math.round(w.x), y = Math.round(w.y);
     drawBody(x, y);
     // A gatherer's handful, overhead two abreast, each scale as it is. A
@@ -532,6 +537,7 @@ export function drawSwimmers() {
                y - P * (Math.floor(i / 2) + 1) + P / 2);
     }
   }
+  ctx.globalAlpha = was;
   ctx.restore();
   ctx.fillStyle = '#000';
 }

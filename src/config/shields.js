@@ -59,7 +59,7 @@ export const DOME_WORK = 45;
 // the crown for one held beat, then comes apart into its own grains, a grain a
 // sheet as a pick takes them, which skate down the curve and heap on the
 // ground outside it for the haulers to carry to the hole.
-export const DOME_BURST_MS = 130;   // the held impact, squashed on the crown
+export const DOME_BURST_MS = 500;   // the held impact, squashed on the crown: a beat the eye can land on
 export const DOME_SQUASH = 0.65;    // how squashed, as a share of a landing's worst (SQUASH_WIDE, SQUASH_FLAT)
 // The burst is measured in dome radii, so a wide dome throws as far, as a
 // share of itself, in the same time as a narrow one.

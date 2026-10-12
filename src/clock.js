@@ -19,7 +19,7 @@ export const now = () => t;
 // rather than off elapsed time (the wind is a wave with a phase), so two runs
 // of one seed started at different times are two different yards; `seedGame`
 // in hooks.js calls this with the seed. Nothing in play calls it.
-export function restart(at = 0) { t = at; wall = performance.now(); }
+export function restart(at = 0) { t = at; wall = performance.now(); lag = 0; }
 
 // A real frame: however much the wall moved, up to one leap, unless the game
 // is being held.
@@ -58,4 +58,21 @@ export const frames = () => scale;
 export const frameMs = () => scale * TUNED;
 export function setFrames(dt) {
   scale = Math.max(0, Math.min(3, dt / TUNED));
+  lag += Math.max(0, dt) * still;
 }
+
+// --- the background's clock ---------------------------------------------------
+//
+// While a scene holds the yard (cutscene.js, `stepHush`) the sky, the weather
+// and the machines slow to a stop and start again after, rather than playing
+// on behind the moment. They read this clock instead of `now`: the game's,
+// less every stretch the background was held, so it runs at `1 - still` of
+// the game's pace and never goes back. Outside a scene it is the game's clock
+// a fixed stretch behind, which nothing reading phases off it can tell.
+let still = 0, lag = 0;
+export const setStill = k => { still = Math.max(0, Math.min(1, k)); };
+export const ambient = () => t - lag;
+// And a frame's length on it, in the sixtieths `frames` counts in.
+export const ambientFrames = () => scale * (1 - still);
+// And a stretch of the game's milliseconds, as the background lives it.
+export const ambientMs = ms => ms * (1 - still);

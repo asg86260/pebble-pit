@@ -1,7 +1,7 @@
 // The three machines and the hoist: the drill, the ram, the tiller, the belt,
 // their run switch.
 
-import { now } from '../clock.js';
+import { now, ambient } from '../clock.js';
 import { MACHINE_IDLE_MS, P, WORKER, RAM_BORE_MS, RAM_BORE_PUSH, RAM_BORE_BACK, RAM_BORE_IN,
          RAM_WHEEL_R, RAM_WHEEL_ROW, RAM_SPIN_FPS, RAM_SPIN_STEP, RAM_SPIN_STEPS } from '../config.js';
 import { beltFrom, beltReach, beltRunning, beltTo, beltY, rampLip, rampTop } from '../dust.js';
@@ -35,7 +35,9 @@ function stroke(key, ms = 900) {
   // Against the *moment* rather than the frame flag: a beat lands on one frame
   // in three or worse, and a stroke gated on the flag would strobe.
   if (now() - (m.workedAt || 0) > MACHINE_IDLE_MS) return 0;
-  return (now() % ms) / ms;
+  // the motion on the background's clock: it slows to a stop while a scene
+  // holds the yard
+  return (ambient() % ms) / ms;
 }
 
 // A bought machine that is not running is still there; it simply does not move.
@@ -119,7 +121,7 @@ export function drawRam() {
   ctx.fillRect(nose, cy - P, cx - nose, P * 2);                             // the thrust ram
   // The turn, a held step a frame at RAM_SPIN_FPS, off the clock so a paused
   // game holds it; still when it is not working, and under reduced motion.
-  const step = turning && !reducedMotion() ? Math.floor(now() / (1000 / RAM_SPIN_FPS)) % RAM_SPIN_STEPS : 0;
+  const step = turning && !reducedMotion() ? Math.floor(ambient() / (1000 / RAM_SPIN_FPS)) % RAM_SPIN_STEPS : 0;
   const rot = step * RAM_SPIN_STEP;
   for (let i = 0; i < 24; i++) {                                           // the rim
     const a = i * Math.PI / 12;
@@ -207,7 +209,7 @@ export function drawBelt() {
   // straight off the shovel, so the marks would stand still under moving
   // loads. The band runs whenever it is manned and on, the gate `stepBelt`
   // keeps.
-  const t = beltRunning(now()) ? (now() % 900) / 900 : 0;
+  const t = beltRunning(now()) ? (ambient() % 900) / 900 : 0;
   ctx.fillStyle = '#fff';
   for (let x = from + Math.round(t * 4) * P; x < rampLip(); x += P * 4) {
     ctx.fillRect(x, rampTop(x), P, P);

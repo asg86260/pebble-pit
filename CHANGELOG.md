@@ -17,7 +17,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
 - The first trip down into the deep plays a short scene: the camera finds him calling from the serpent's belly, then her under the portal, and she charges down and lands her first blow; her station stands, free, from the snatch (test/abyss-intro.test.mjs).
-- During the snatch the rest of the crew walk off the plank's shot, the portal waits until they are clear, and no rock comes down until it is over (test/ending-stage.test.mjs).
+- During the snatch the rest of the crew fade out of the shot, the portal waits until they are gone, and no rock comes down until it is over (test/ending-stage.test.mjs).
 - A station bought with a fang asks the yard's dust for its first rungs, so a new fighter climbs over minutes instead of all at once.
 - When the serpent resists explosive it floats a magic barrier under its body that soaks up the Sapper's charges.
 - The serpent's warded phase, split and fading resist whatever your highest-rung fighters deal, explosive included, instead of fixed kinds.
@@ -130,6 +130,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Every cutscene holds the yard still and letterboxed: black bands step in, everything but the scene's subjects fades back, the haulers fade out and the attackers freeze until it lets go (test/cutscene-hold.test.mjs).
 - Pods build in a few seconds each, never more than eight, instead of three quarters of a minute.
 - The stations in the deep have no counter under them; each fighter stays at the station it first swims to.
 - The ram is a tracked crawler that pushes a turning cutter wheel into the rock, throwing curling chips as it bores.

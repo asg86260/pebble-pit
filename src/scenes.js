@@ -22,7 +22,7 @@ import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
 import { rockLeft } from './world.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor } from './deep/place.js';
 import { sweep } from './hands.js';
@@ -364,7 +364,7 @@ const snatchAt = (phase, into = 0, pin = false) => () => {
   window.__snatch();
   for (let i = 0; i < 60 * 60 && S.snatch?.phase !== phase; i++) window.__fast(1 / 60);
   for (let i = 0; i < into; i++) window.__fast(1 / 60);
-  // A rise is sixteen frames and a take a beat, quicker than a shot is
+  // A rise is half a second and a take a beat, quicker than a shot is
   // taken, so the moment is held on the page's frames for a few seconds.
   if (!pin) { window.__holdShot(); return; }
   window.__holdShot();
@@ -452,7 +452,7 @@ const deepScenes = {
       // The shot comes a second after the scene: the closing set back so the
       // second lands mid-leap, at the beat's own pace.
       S.snatch.hurry = 1;
-      S.snatch.at = now() - (SNATCH_CLOSE_MS * 0.45 - 1000);
+      S.snatch.at = now() - (SNATCH_ALONE_MS + SNATCH_LEAP_MS * 0.4 - 1000);
     } },
   // The snatch behind it, the story's line sending the player to the wizards.
   aftersnatch: { about: 'the deep', say: 'the story\'s line after the snatch: talk to the wizards',

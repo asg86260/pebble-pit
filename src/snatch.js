@@ -7,8 +7,8 @@
 // by its row in beats.js). Two of the crew nearest the mouth are taken off it
 // for the length of the beat and walked as `S.pair`, the reunion's own
 // drawing: out to the plank, where a portal opens in the abyss's own surface
-// -- a whirlpool turning on the liquid -- and something comes up out of it a
-// cell a frame, takes the one nearer the water and goes back down. The
+// -- a whirlpool turning on the liquid -- and something heaves under it, comes
+// up out of it in held steps, takes the one nearer the water and goes back down. The
 // portal starts to close, and the one left standing runs and leaps into it
 // before it shuts: she is the deep's whole crew, the first station's fighter
 // once it stands, sinking to its floor under the portal (DESIGN.md, "Two crews and a
@@ -27,12 +27,14 @@
 
 import { demoOn } from './demo.js';
 import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
-         SNATCH_RISE, SNATCH_EDGE, SNATCH_LOOK_MS, SNATCH_TAKE_MS, SNATCH_CLOSE_MS,
-         SNATCH_HURRY, SNATCH_PORTAL_MS, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, SNATCH_LEAP_AT, SNATCH_LEAP_MS, SNATCH_LEAP_H,
+         SNATCH_RISE, SNATCH_EDGE, SNATCH_WALK_MAX_S, SNATCH_LOOK_MS, SNATCH_HEAVE_MS,
+         SNATCH_RISE_MS, SNATCH_RISE_STEPS, SNATCH_TAKE_MS, SNATCH_SINK_MS, SNATCH_SINK_STEPS,
+         SNATCH_ALONE_MS, SNATCH_LEAP_MS, SNATCH_LEAP_STEPS, SNATCH_LEAP_H, SNATCH_STILL_MS,
+         SNATCH_HURRY, SNATCH_PORTAL_MS, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_GLIDE_S, KILL_MEET_GAP, KILL_HOP_S, KILL_IN_S, KILL_OUT_S,
          DEEP_SURFACE, SERPENT_ON, STAGE_WAIT_S } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
-import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine } from './deep/place.js';
+import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine, domeRect } from './deep/place.js';
 import { killFrame } from './view.js';
 import { now } from './clock.js';
 import { abyssLine } from './pit.js';
@@ -143,11 +145,15 @@ export function stepSnatch(t) {
 
   if (s.phase === 'walk') {
     // Out to the plank at the pace anybody crosses the yard at, a little
-    // apart, and stood at its edge looking in; one of them says so.
+    // apart, and stood at its edge looking in; one of them says so. A long
+    // way off, they hurry, so the walk is never the longest beat of the
+    // scene (SNATCH_WALK_MAX_S): the pace is set once, from the walk ahead.
+    s.pace ??= Math.max(COMMUTE_PACE, ...S.pair.map((b, i) =>
+      Math.abs(edgeX(S.pair.length === 1 ? 1 : i) - b.x) / (SNATCH_WALK_MAX_S * 60)));
     let there = true;
     for (const [i, b] of S.pair.entries()) {
       const d = edgeX(S.pair.length === 1 ? 1 : i) - b.x;
-      if (Math.abs(d) > 1) { b.x += Math.sign(d) * Math.min(COMMUTE_PACE * f, Math.abs(d)); there = false; }
+      if (Math.abs(d) > 1) { b.x += Math.sign(d) * Math.min(s.pace * f, Math.abs(d)); there = false; }
       else b.x = edgeX(S.pair.length === 1 ? 1 : i);
       // Feet to the floor at the same pace, for one taken off the hill.
       const up = onPlank(b.x) - b.y;
@@ -161,8 +167,8 @@ export function stepSnatch(t) {
       S.pair[0].say = { mark: 'dots', n: 3, until: t + INTRO_BEAT };
     }
     // And nobody else in the picture before anything comes up (stage.js):
-    // the rest of the crew are walking out of the frame while the pair walk
-    // in, and a slow one holds the look a beat, never past STAGE_WAIT_S.
+    // the rest of the crew have faded out of it, never waited on past
+    // STAGE_WAIT_S.
     const clear = S.introCut || stageClear() || t - s.stood >= STAGE_WAIT_S * 1000;
     if (t - s.stood >= SNATCH_LOOK_MS / s.hurry && clear) next('open');
     return true;
@@ -170,19 +176,27 @@ export function stepSnatch(t) {
   if (s.phase === 'open') {
     // The portal opens in the surface before anything comes out of it.
     s.portal = Math.min(1, (t - s.at) / (SNATCH_PORTAL_MS / s.hurry));
-    if (s.portal >= 1) next('rise');
+    if (s.portal >= 1) next('heave');
+    return true;
+  }
+  if (s.phase === 'heave') {
+    // The surface heaves over what is coming before anything breaks it
+    // (render/serpent.js draws the swell off the phase).
+    if (held(SNATCH_HEAVE_MS)) next('rise');
     return true;
   }
   if (s.phase === 'rise') {
-    // Up out of the surface a cell a frame, never popped in.
-    s.headY = Math.max(surface - SNATCH_RISE, s.headY - P * f);
-    if (s.headY <= surface - SNATCH_RISE) {
+    // Up out of the surface in held frames, never popped in and never a
+    // smooth slide: each step a pose.
+    const k = Math.min(1, (t - s.at) / (SNATCH_RISE_MS / s.hurry));
+    s.headY = surface - SNATCH_RISE * Math.min(1, Math.ceil(k * SNATCH_RISE_STEPS) / SNATCH_RISE_STEPS);
+    if (k >= 1) {
       next('take');
       s.carried = true;
       // He is in its jaws now, drawn there off `S.snatch`, not as one of the
       // pair; the one left says what anybody would.
       s.him = S.pair.length > 1 ? S.pair.pop() : null;
-      if (S.pair[0]) S.pair[0].say = { mark: 'bang', until: t + SNATCH_TAKE_MS + SNATCH_CLOSE_MS / 2 };
+      if (S.pair[0]) S.pair[0].say = { mark: 'bang', until: t + SNATCH_TAKE_MS + SNATCH_SINK_MS + SNATCH_ALONE_MS };
     }
     return true;
   }
@@ -191,31 +205,36 @@ export function stepSnatch(t) {
     return true;
   }
   if (s.phase === 'sink') {
-    // And back down the same way, with him, until the both of them are under.
-    s.headY = Math.min(surface + WORKER, s.headY + P * f);
-    if (s.headY >= surface + WORKER) {
+    // And back down the same way, with him, in held frames, until the both
+    // of them are under.
+    const k = Math.min(1, (t - s.at) / (SNATCH_SINK_MS / s.hurry));
+    const top = surface - SNATCH_RISE;
+    s.headY = top + (surface + WORKER - top) * Math.floor(k * SNATCH_SINK_STEPS) / SNATCH_SINK_STEPS;
+    if (k >= 1) {
+      s.headY = surface + WORKER;
       S.snatched = true;               // the crew is one fewer: he is not given back
       S.shopStale = true;              // the deep's boards stand from here
       next('close');
     }
     return true;
   }
-  // 'close': the portal closing over him, and the one left at the edge
-  // running and leaping in before it shuts -- an arc from where she stands to
-  // the whirlpool's middle, and under.
-  const k = Math.min(1, (t - s.at) / (SNATCH_CLOSE_MS / s.hurry));
-  s.portal = 1 - k;
+  // 'close': the one left at the edge alone a beat, then running and leaping
+  // in -- an arc in held poses from where she stands to the whirlpool's
+  // middle, and under -- and the portal closing over the empty water after.
+  const u = (t - s.at) * s.hurry;
   const b = S.pair[0];
-  if (b && k >= SNATCH_LEAP_AT) {
+  if (b && u >= SNATCH_ALONE_MS) {
     b.leap ??= { x: b.x, y: b.y };
-    const j = Math.min(1, (k - SNATCH_LEAP_AT) * SNATCH_CLOSE_MS / SNATCH_LEAP_MS);
+    const j = Math.min(1, Math.floor((u - SNATCH_ALONE_MS) / SNATCH_LEAP_MS * SNATCH_LEAP_STEPS) / SNATCH_LEAP_STEPS);
     const tx = mouthX() - WORKER / 2, ty = surface;
     b.x = b.leap.x + (tx - b.leap.x) * j;
     b.y = b.leap.y + (ty - b.leap.y) * j - Math.sin(j * Math.PI) * SNATCH_LEAP_H;
     if (j >= 1) b.under = true;
     b.say = null;
   }
-  if (k < 1) return true;
+  const shut = SNATCH_ALONE_MS + SNATCH_LEAP_MS;
+  s.portal = u < shut ? 1 : Math.max(0, 1 - (u - shut) / SNATCH_STILL_MS);
+  if (u < shut + SNATCH_STILL_MS) return true;
   giveBack();
   return false;
 }
@@ -271,11 +290,18 @@ export const heldBodies = () =>
 // a reload picks it up where it was. A skip plays it out at once.
 const ease = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
 const outAt = () => KILL.last + KILL.limp + KILL.apart;
-export function startFreed(t) { if (S.freedAt == null) S.freedAt = t; }
-// Her: the first station's fighter if there is one, or another of the deep's
-// own, else a little way off.
+export function startFreed(t) { if (S.freedAt == null) S.freedAt = t; glide = null; }
+// Where he stops: beside her, out in the water past her station's glass on
+// his side (she comes out to its edge, stage.js `meetHim`), so the two of
+// them meet where they can be seen. With no station standing, beside the
+// deep's own body nearest, or a little way off.
 function herX(from) {
   const st = S.stations && S.stations[0];
+  if (st && st.built) {
+    const d = domeRect(st), side = from < d.x + d.w / 2 ? -1 : 1;
+    const her = side < 0 ? d.x - WORKER - KILL_MEET_GAP : d.x + d.w + KILL_MEET_GAP;
+    return Math.max(deepX0() + P, Math.min(deepX1() - WORKER - P, her + side * (WORKER + KILL_MEET_GAP)));
+  }
   const w = (st && S.workers.find(o => o.station === st.id)) || S.workers.find(o => belowYard(o));
   const x = w ? w.x : from - P * 12;
   return Math.max(deepX0() + P, Math.min(deepX1() - WORKER - P, x + WORKER + P));
@@ -292,6 +318,33 @@ export function freedBody(t = now()) {
   const hop = cheer >= 0 && cheer < KILL_CHEER_S && Math.floor(cheer / KILL_HOP_S) % 2 === 0;
   return { x: S.freedFrom + (S.freedTo - S.freedFrom) * k, y: deepFloor() - WORKER - (hop ? P : 0), cheering: cheer >= 0 };
 }
+// Where she comes out to meet him, while the beat has her: a body and a gap
+// on from where he stops, on the floor. Null outside the beat.
+export function meetAt() {
+  if (!beatRunning('freed') || S.freedFrom == null || S.freedTo == null) return null;
+  const dir = Math.sign(S.freedTo - S.freedFrom) || 1;
+  return { x: S.freedTo + dir * (WORKER + KILL_MEET_GAP), y: deepFloor() - WORKER };
+}
+// The frame's glide: from where it was when the move began to where it is
+// going, on an ease over KILL_GLIDE_S, and then on it exactly. Not a share of
+// the gap a frame, which is a chase that is still sliding when the thing
+// happens. In the kill's own seconds; a reload takes the move again.
+let glide = null;
+const easeInOut = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+function glideTo(move, a, x) {
+  if (!glide || glide.move !== move) glide = { move, at: a, from: S.camX + S.viewW / 2 };
+  const k = easeInOut(Math.max(0, Math.min(1, (a - glide.at) / KILL_GLIDE_S)));
+  return glide.from + (x - glide.from) * k;
+}
+// Where the frame looks while they meet: on the two of them, from his way
+// out to the cheer -- the middle of his walk when the whole of it fits the
+// frame, so he walks in to her across a held shot, else on him.
+function lookAtMeet(t) {
+  const him = freedBody(t), m = meetAt();
+  if (!m) return (him ? him.x : S.freedTo) + WORKER / 2;
+  if (Math.abs(m.x - S.freedFrom) + WORKER * 4 <= S.viewW) return (S.freedFrom + m.x) / 2 + WORKER / 2;
+  return ((him ? him.x : S.freedTo) + m.x) / 2 + WORKER / 2;
+}
 // Where the frame looks while he is down: on the belly as he goes limp; then
 // after the coming apart as it runs in from the tail, until it reaches the
 // belly and lets him go.
@@ -305,16 +358,17 @@ function lookAtKill(t, a) {
 export function stepFreed(t) {
   const a = (t - S.freedAt) / 1000;
   const zin = ease((a - KILL.last) / KILL_IN_S);
-  if (a < outAt()) { killFrame(zin, lookAtKill(t, a)); return true; }
+  if (a < outAt()) { killFrame(zin, glideTo('kill', a, lookAtKill(t, a))); return true; }
   if (S.freedFrom == null) { S.freedFrom = bellyAt(t).x - WORKER / 2; S.freedTo = herX(S.freedFrom); }
-  // The frame follows him to her.
-  const end = outAt() + walkS() + KILL_CHEER_S, him = freedBody(t);
-  killFrame(zin * (1 - ease((a - end) / KILL_OUT_S)), (him ? him.x : S.freedTo) + WORKER / 2);
+  // The frame goes over to the two of them and holds.
+  const end = outAt() + walkS() + KILL_CHEER_S;
+  killFrame(zin * (1 - ease((a - end) / KILL_OUT_S)), glideTo('meet', a, lookAtMeet(t)));
   if (a < end + KILL_OUT_S) return true;
   const w = Object.assign(FACTORY(TYPE.GATHER), newRecord());
   w.x = S.freedTo;
   w.y = deepFloor() - WORKER;
   w.vx = w.vy = 0;
+  w.cast = true;                    // the scene's still, until the deep is back (stage.js)
   S.crew++;
   S.deepCrew = (S.deepCrew || 0) + 1;
   rebalance();

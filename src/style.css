@@ -1714,7 +1714,10 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   white-space: nowrap;
   will-change: transform;
   backface-visibility: hidden;
+  transition: opacity .6s ease;
 }
+/* and a cutscene fades it rather than popping it off and on (board.js) */
+#raise.scened { opacity: 0; pointer-events: none; }
 /* Under the cursor it inverts, the same offer a board's row makes. */
 @media (hover: hover) {
   #raise:hover { background: var(--paper); color: var(--ink); }
@@ -2044,6 +2047,9 @@ html.dark .modal {
 /* the step done: the strike stands a beat, then the card goes */
 #objective.going { opacity: 0; translate: 0 -8px; transition: opacity .35s ease .55s, translate .35s ease .55s; }
 #objective.deep { --paper: #000; --ink: #fff; --ink-7: #5f5f66; }
+/* A scene holding the yard: the card fades out where it stands and back in
+   after (objline.js), as the letterbox steps in and out. */
+#objective.scened { opacity: 0; transition: opacity .6s ease; }
 @media (prefers-reduced-motion: reduce) { #objective, #objective.going { transition: none; translate: none; } }
 
 /* The rescue's sheet leaving with the second half on (ending.js): it rises
