@@ -35,6 +35,7 @@ import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
+import { INDEX } from './config/index.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -1715,6 +1716,11 @@ export const SCENES = {
   // dots show. On a phone (WINDOW=390,844) the list, then muck pushed over it.
   index: { about: 'the story', say: 'the index on the held sheet, open on muck', page: true,
     run: () => { indexYard(); pressI(); indexPick('muck'); } },
+  // The same book scrolled down to the places and to the crew, for their icons.
+  indexplaces: { about: 'the story', say: 'the index open on the farm, among the places', page: true,
+    run: () => { indexYard(); pressI(); indexPick('farm'); } },
+  indexcrew: { about: 'the story', say: 'the index open on its last crew entry', page: true,
+    run: () => { indexYard(); pressI(); [...document.querySelectorAll('#index .it')].filter(el => INDEX.find(e => e.key === el.dataset.key)?.group === 'crew').pop()?.click(); } },
   indexphone: { about: 'the story', say: 'the index on a phone: the list', page: true,
     run: () => { indexYard(); window.__coarse(true); pressI(); } },
   indexphoneentry: { about: 'the story', say: 'the index on a phone: muck pushed over the list', page: true,
