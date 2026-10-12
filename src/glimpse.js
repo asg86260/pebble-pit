@@ -219,15 +219,17 @@ function kept() {
 }
 
 // A column for a glimpse of `kind` heading `dir`, inside the pit and clear of
-// everything `kept`; in view where the view has room for it, so the one the
-// player is looking at the pit for is the one they see. Null if none was
+// everything `kept`; with the middle of its stretch in view where it can be,
+// so the one the player is looking at the pit for is the one they see (a
+// narrow window may not hold all of the fin's crossing). Null if none was
 // found this time.
 function spotFor(kind, dir) {
   const { lo, hi } = footprint(kind, dir);
   const c0 = Math.ceil(pit.x / P) + GLIMPSE_LIP - lo;
   const c1 = Math.floor((pit.x + pit.w) / P) - 1 - GLIMPSE_LIP - hi;
   if (c1 < c0) return null;
-  const v0 = Math.max(c0, Math.ceil(S.camX / P) - lo), v1 = Math.min(c1, Math.floor((S.camX + S.viewW) / P) - 1 - hi);
+  const mid = Math.round((lo + hi) / 2);
+  const v0 = Math.max(c0, Math.ceil(S.camX / P) - mid), v1 = Math.min(c1, Math.floor((S.camX + S.viewW) / P) - 1 - mid);
   const bans = kept();
   const clear = x => bans.every(([a, b]) => x + hi < a || x + lo > b);
   for (const [a, b] of v1 >= v0 ? [[v0, v1], [c0, c1]] : [[c0, c1]])

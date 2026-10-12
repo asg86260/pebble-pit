@@ -1903,15 +1903,17 @@ export const SCENES = {
                  window.__look(st().pitX - 300); } },
 
   // The serpent showing itself on the drowned pit's surface (glimpse.js),
-  // one scene a kind, forced up in the middle of the pit where the camera
-  // is and caught a second short of the moment named, for the shot tool's
-  // second.
-  ...Object.fromEntries([['hump', 5.2, 'the coil\'s back rolling along the surface'],
-                         ['fin', 4.6, 'the crest crossing like a fin, the bow wave ahead'],
-                         ['watcher', 5.5, 'the top of the head, the eye open on the nearest body']]
-    .map(([kind, into, say]) => [`glimpse-${kind}`, { about: 'the pit and the rift', say: `a glimpse: ${say}`,
+  // one scene a kind, forced up so the moment named lands in the middle of
+  // the window (where `--zoom` crops), caught a second short of it for the
+  // shot tool's second. `back` is how far it has travelled by then, in cells.
+  ...Object.fromEntries([['hump', 5.2, 7, 'the coil\'s back rolling along the surface'],
+                         ['fin', 4.6, 18, 'the crest crossing like a fin, the bow wave ahead'],
+                         ['watcher', 5.5, 0, 'the top of the head, the eye open on the nearest body']]
+    .map(([kind, into, back, say]) => [`glimpse-${kind}`, { about: 'the pit and the rift', say: `a glimpse: ${say}`,
       run: () => { window.__reset(); window.__crew(2, 3); window.__rift(); window.__fast(1);
-                   window.__look(st().pitX + 120); window.__glimpse(kind, { into }); } }])),
+                   window.__look(st().pitX + 120);
+                   const mid = Math.round((S.camX + S.viewW / 2) / P);
+                   window.__glimpse(kind, { into, x: mid - back, dir: 1 }); } }])),
 
   // --- the shields ------------------------------------------------------------
   // The `!` scenes run the crew's five-second dance through, so the shot is
