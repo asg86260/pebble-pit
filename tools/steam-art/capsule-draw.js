@@ -160,8 +160,8 @@ function rock(p, cx, gy, R, seed) {
 }
 // The rock as the icon draws it: sixteen cells, no bands.
 const ICON = [16, 15, 13, 11, 10, 7, 4];   // widths, bottom row up, from build/icon.png
-function iconRock(g, x, gyPx, u) {
-  ICON.forEach((w, j) => { g.fillStyle = LINE; g.fillRect(x + ((16 - w) / 2 - 0) * u, gyPx - (j + 1) * u, w * u, u); });
+function iconRock(g, x, gyPx, u, ink = LINE) {
+  ICON.forEach((w, j) => { g.fillStyle = ink; g.fillRect(x + ((16 - w) / 2 - 0) * u, gyPx - (j + 1) * u, w * u, u); });
   g.fillRect(x - u, gyPx, 18 * u, u);
 }
 function heap(p, cx, gy, half, h, seed, pal = HEAP) {
@@ -204,7 +204,9 @@ function spray(p, cx, top, R, n, seed) {
 }
 
 // ---------------------------------------------------------------- direction A
-function drawA(g, W, H, kind) {
+// `ink` colors the logo's letters and rock: black for a light library, white
+// for a dark one. The other kinds draw their own picture and ignore it.
+function drawA(g, W, H, kind, ink = LINE) {
   const logo = kind === 'logo';
   const L = {
     header:   { c: 6,  gy: .74, rx: .72, R: 31, ts: 12, two: true,  tx: 48,  ty: 54, crew: 5 },
@@ -218,8 +220,8 @@ function drawA(g, W, H, kind) {
   if (logo) {
     const lines = titleLines(true), b = titleBox(lines, L.ts);
     const x = Math.round((W - b.w) / 2), y = Math.round((H - b.h) / 2) - 70;
-    solidTitle(g, lines, x, y, L.ts, LINE, 'center', b.w);
-    iconRock(g, Math.round(W / 2 - 9 * 10), y + b.h + 120, 10);
+    solidTitle(g, lines, x, y, L.ts, ink, 'center', b.w);
+    iconRock(g, Math.round(W / 2 - 9 * 10), y + b.h + 120, 10, ink);
     return;
   }
   const c = L.c, cols = Math.ceil(W / c), rows = Math.ceil(H / c), gy = Math.round(rows * L.gy);

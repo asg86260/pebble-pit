@@ -55,7 +55,7 @@ try {
   await run(readFileSync(join(root, 'tools/steam-art/capsule-draw.js'), 'utf8'));
   await run(readFileSync(join(root, 'tools/steam-art/icon-draw.js'), 'utf8'));
   await run(`globalThis.SteamArt.state.bars = false; globalThis.SteamArt.state.caps = true; globalThis.ROWS = ${JSON.stringify(rows)}; globalThis.GHOST = ${JSON.stringify(SHELF_INK.ghost)};
-    globalThis.capsule = (kind, W, H) => { const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; SteamArt.drawA(g, W, H, kind); return c; };
+    globalThis.capsule = (kind, W, H, ink) => { const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; SteamArt.drawA(g, W, H, kind, ink); return c; };
     globalThis.icon = (a, locked) => { const s = document.createElement('canvas'); s.width = 64; s.height = 64; SteamIcons.drawIcon(s.getContext('2d'), a.rows, a.badge, a.coin, GHOST, locked);
       const c = document.createElement('canvas'); c.width = 256; c.height = 256; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(s, 0, 0, 256, 256); return c; };
     true`);
@@ -66,6 +66,12 @@ try {
     const f = out('steam/store/capsules', `${names[kind]}_${W}x${H}.png`);
     writeFileSync(f, b64(await run(`capsule(${JSON.stringify(kind)}, ${W}, ${H}).toDataURL('image/png')`)));
     console.log('wrote', f);
+    // The logo again in white, for a library page whose hero is dark.
+    if (kind === 'logo') {
+      const w = out('steam/store/capsules', `${names[kind]}-white_${W}x${H}.png`);
+      writeFileSync(w, b64(await run(`capsule('logo', ${W}, ${H}, '#ffffff').toDataURL('image/png')`)));
+      console.log('wrote', w);
+    }
   }
   if (wantIcons) {
     for (let i = 0; i < rows.length; i++) for (const locked of [false, true]) {

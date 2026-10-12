@@ -13,6 +13,7 @@ the headless shell playwright already keeps; no dev server.
 | `capsules/library-capital_600x900.png` | Library capsule | Library Assets, Library Capsule |
 | `capsules/library-hero_3840x1240.png` | Library hero, no title | Library Assets, Library Hero |
 | `capsules/library-logo_1280x720.png` | Library logo, transparent | Library Assets, Library Logo |
+| `capsules/library-logo-white_1280x720.png` | Library logo in white, transparent, for a dark hero | Library Assets, Library Logo (in place of the black one) |
 | `screenshots/*.png` | Five 1920x1080 store screenshots, copied from `docs/mocks/steam-capsules/` | Store Page Assets, Screenshots |
 | `achievements/ACH_*.png` | Unlocked icon, 256x256 | Stats & Achievements, each achievement's icon |
 | `achievements/ACH_*_locked.png` | Locked icon (grey outline), 256x256 | Same achievement, locked icon |
