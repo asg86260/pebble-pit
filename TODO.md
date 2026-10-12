@@ -9,13 +9,24 @@ clouds, birds, the hole, the sqwife, the bench, the books, and the story's
 four (objective, achievements, the rescue, scenes); and whether the `i` key
 gets a line on the controls page (shared with the landing page).
 
-## Three builds: itch, Steam, and the Steam demo -- DESIGNED, AWAITING SIGN-OFF (2026-10-10)
+## Three builds: itch, Steam, and the Steam demo -- BUILT, AWAITING STEAMWORKS (2026-10-12)
 
-"Three builds" in DESIGN.md: our cloud on itch, Steam Cloud through the
-Steamworks SDK on Steam, a demo build ending at the farm. The demo flag is
-built (2026-10-11); its last sheet's words are placeholders, waiting on the
-owner. Open: the Steam build and Steam Cloud, the release jobs, Steam
-achievements now or later.
+"Three builds" in DESIGN.md: the demo (2026-10-11) and the Steam build,
+Steam Cloud, the carry-over and the release jobs (2026-10-12) are built.
+Open:
+- **App ids**: none exist. `APPS` in electron/steam.cjs is null for both
+  (placeholders); the release workflow needs the repository variables and
+  secrets listed at the top of release.yml before its Steam jobs run, and
+  `ITCH_FULL_TARGET` before the paid page gets a push. Nothing has been
+  uploaded through SteamPipe yet, so the jobs are unproven.
+- **Words**: the carry-over dialog (`CARRY_WORDS`, electron/steam.cjs) and
+  the demo's last sheet are placeholders for the owner.
+- **Mac**: the Steam build has no mac depot until the mac app is notarized.
+- **Steam achievements** (now, since the SDK is in, or later) and
+  **controller support**: not built.
+- The demo's Steam Cloud is not read by the full game's carry-over: the SDK
+  reaches only the running app's remote storage. The demo's disk copy, which
+  the demo itself keeps in step with its cloud, is what is offered.
 
 ## The toast over a tall settlement -- OPEN (2026-10-09)
 

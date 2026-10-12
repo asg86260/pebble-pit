@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import { execSync } from 'node:child_process';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -23,29 +23,40 @@ function build() {
 // The same stamp, as a file beside index.html, for the desk (wave-desk-sound,
 // track A). The Electron shell reads `dist/build.json` to answer
 // `desk.version()`, so the shell and the page name the same build -- one
-// `build()` call, written to both places.
-function stampFile(stamp) {
+// `build()` call, written to both places. The file also says which store and
+// which cut the page was built for (DESIGN.md, "Three builds"), which the
+// shell cannot learn from the page: a Steam build starts Steam, and the demo
+// keeps its saves apart from the full game's. Written to whichever folder
+// the build went to, so a build with `--outDir` stamps its own.
+function stampFile(stamp, cut) {
+  let outDir = 'dist';
   return {
     name: 'boulder-build-stamp',
+    configResolved(c) { outDir = c.build.outDir; },
     closeBundle() {
-      writeFileSync(join('dist', 'build.json'), JSON.stringify(stamp) + '\n');
+      writeFileSync(join(outDir, 'build.json'), JSON.stringify({ ...stamp, ...cut }) + '\n');
     }
   };
 }
 
-export default defineConfig(({ command }) => {
+export default defineConfig(({ command, mode }) => {
   const stamp = command === 'build' ? build() : { version: '', hash: 'dev', date: '' };
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const cut = { target: env.VITE_TARGET === 'steam' ? 'steam' : 'itch', demo: env.VITE_DEMO === '1' };
   return {
     // Relative, because the desk loads dist/ over file:// and an absolute
     // /assets path is the root of the disk there.
     base: './',
     // two pages: the landing page and the game (DESIGN.md, "The landing page")
     build: { rollupOptions: { input: { index: 'index.html', play: 'play.html' } } },
-    plugins: command === 'build' ? [stampFile(stamp)] : [],
+    plugins: command === 'build' ? [stampFile(stamp, cut)] : [],
     define: {
       // Off the dev server the page says "dev": a stamp that changed on every
       // save would be a stamp nobody could compare against anything.
-      __BUILD__: JSON.stringify(stamp)
+      __BUILD__: JSON.stringify(stamp),
+      // A Steam build has no cloud of ours (config/cloud.js), and should not
+      // carry the worker's address either, whatever the environment held.
+      ...(cut.target === 'steam' ? { 'import.meta.env.VITE_CLOUD_URL': '""' } : {})
     },
     server: {
       // listen on every interface, not just localhost, so the phone on the

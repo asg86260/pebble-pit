@@ -11,6 +11,8 @@
     "build": "vite build",
     "build:demo": "vite build --mode demo",
     "build:full": "vite build --mode full",
+    "build:steam": "vite build --mode steam",
+    "build:steam-demo": "vite build --mode steam-demo",
     "preview": "vite preview",
     "dev:test": "vite --port 5184",
     "test": "node tools/sweep.mjs --lock node -- node --test --test-concurrency=4 test/*.test.mjs",
@@ -34,7 +36,7 @@
   "build": {
     "appId": "com.boulderclicker.desk",
     "productName": "Pebble Pit",
-    "files": ["dist/**", "electron/**"],
+    "files": ["dist/**", "electron/**", "!node_modules/steamworks.js/**"],
     "electronLanguages": ["en-US"],
     "icon": "build/icon.png",
     "directories": { "output": "release" },
@@ -42,6 +44,9 @@
     "portable": { "artifactName": "${productName} ${version} portable.exe" },
     "mac": { "target": ["dmg"] },
     "linux": { "target": ["AppImage"] }
+  },
+  "dependencies": {
+    "steamworks.js": "0.4.0"
   },
   "devDependencies": {
     "electron": "44.3.0",

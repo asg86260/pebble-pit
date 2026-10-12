@@ -3,16 +3,28 @@
 // secret nobody types. Read by both ends -- the worker imports this file --
 // so a ceiling is one fact, not two that can disagree.
 
+// The node yard has no `import.meta.env`, so the read is guarded.
+const env = (typeof import.meta !== 'undefined' && import.meta.env) || {};
+
+// Which store the build is for (DESIGN.md, "Three builds"): `itch`, or
+// `steam` (`VITE_TARGET`, `.env.steam`). A Steam build's saves go through
+// Steam's remote storage in the shell (electron/steam.cjs), and a save
+// synced by two clouds is a save the two can disagree about, so on Steam
+// ours is off whether or not Steam turns out to be running.
+export const targetOf = e => (e && e.VITE_TARGET === 'steam' ? 'steam' : 'itch');
+export const TARGET = targetOf(env);
+
 // The switch. Off, the build has no cloud: no line in the foot bar, no page
-// on the sheet, no request. On since the worker was deployed (2026-09-28);
-// a build still has no cloud unless VITE_CLOUD_URL names the worker, and
-// each player still opts in on the sheet.
-export const CLOUD_ON = true;
+// on the sheet, no request. On for itch since the worker was deployed
+// (2026-09-28); a build still has no cloud unless VITE_CLOUD_URL names the
+// worker, and each player still opts in on the sheet.
+export const cloudOnFor = target => target !== 'steam';
+export const CLOUD_ON = cloudOnFor(TARGET);
 
 // Where the worker is. Empty means no cloud, which is the node yard, the
-// checks and any build nobody pointed at a worker. The node yard has no
-// `import.meta.env`, so the read is guarded.
-export const CLOUD_URL = (CLOUD_ON && typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CLOUD_URL) || '';
+// checks, a Steam build and any build nobody pointed at a worker.
+export const cloudUrlFor = e => (cloudOnFor(targetOf(e)) && e && e.VITE_CLOUD_URL) || '';
+export const CLOUD_URL = cloudUrlFor(env);
 
 // The longest the boot waits on the cloud before it plays the local yard.
 export const CLOUD_BOOT_MS = 3000;
