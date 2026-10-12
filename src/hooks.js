@@ -437,9 +437,12 @@ export const reload = () => { persist(); restore(); buildShop(); };
 // which hides the *order* things are restored in (a machine still running in
 // memory made `restore`'s rebalance clamp by accident). This blanks what a
 // fresh page would not have and makes the save do the work. The works too,
-// which the load's deal is done before reading back.
-export const coldReload = () => {
+// which the load's deal is done before reading back. `clock` is the new
+// page's clock, which starts again near nought on a real refresh: anything
+// saved as a moment on the old page's clock is then read back wrong.
+export const coldReload = ({ clock } = {}) => {
   persist();
+  if (Number.isFinite(clock)) { restartClock(clock); S.lastFrame = 0; }   // and no last frame on it
   S.machines = null;
   S.works = {};
   restore();

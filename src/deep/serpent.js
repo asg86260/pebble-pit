@@ -19,7 +19,7 @@ import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
-import { mealNow, turned } from './meals.js';
+import { mealNow, turned, streamS } from './meals.js';
 import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbLift, settleResist } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
@@ -223,7 +223,7 @@ function forget(t) {
 function stepMeal(c, stopped) {
   // The window's clock: stopped by a stun or Held, and let be once the
   // creature has turned for the mouth.
-  const clock = c.now / 1000;
+  const clock = streamS(c.now);
   if (S.mealI == null) S.mealT += (stopped ? 0 : 1) * c.dt / 1000;
   else S.mealT += c.dt / 1000;
   const meal = mealNow(clock);
@@ -234,7 +234,7 @@ function stepMeal(c, stopped) {
 // it: the new defense is whole already, so it closes nothing.
 function landTurned(c) {
   if (S.mealI == null) return;
-  const meal = mealNow(c.now / 1000);
+  const meal = mealNow(streamS(c.now));
   if (meal.toLand <= 0) land(c, meal, false);
 }
 // The swallow at the belly: the wound closed whole (DESIGN.md, "The serpent

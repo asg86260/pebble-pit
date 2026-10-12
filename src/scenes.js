@@ -26,7 +26,7 @@ import { COIL_SEGS, SNATCH_CLOSE_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, M
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor } from './deep/place.js';
 import { sweep } from './hands.js';
-import { nextMeal, turned, windowS } from './deep/meals.js';
+import { nextMeal, turned, windowS, nowS } from './deep/meals.js';
 import { KINDS } from './render/fish.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
@@ -310,7 +310,7 @@ const mealScene = (kind, to, atBelly = false) => () => {
   // once the scene's second has run (the creature is whichever swims up)
   // (a meal already turned for the mouth is the sim's to keep, so it is set so)
   let n = 0, best = null, off = Infinity;
-  const clock = now() / 1000;
+  const clock = nowS();
   for (let m = 0; m < windowS() + 30; m += 0.05) {
     const meal = nextMeal(clock - m), d = Math.abs(meal.land - clock - 1 - to);
     if (d < off) { off = d; best = { m, meal }; }

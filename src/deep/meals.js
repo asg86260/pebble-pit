@@ -11,7 +11,14 @@ import { SERPENT_WINDOW, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_JAW_LEAD
 import { now } from '../clock.js';
 import { deepX0, coilEnds } from './place.js';
 
-export const nowS = () => now() / 1000;
+// The stream's clock, in seconds: the page's, carried on across a refresh.
+// The page's clock starts again near nought on every load, and the stream,
+// the meal that has turned (`S.mealI`) and the eaten are all creatures picked
+// off it by number, so read off the page's alone a refresh moves every one of
+// them, and a turned meal is put back as far off as the last page had run.
+// `S.streamOff` is how far the stream's clock stands ahead of the page's.
+export const streamS = (ms = now()) => ms / 1000 + (S.streamOff || 0);
+export const nowS = () => streamS();
 
 // A unit number from an integer, the same on every machine (Math.sin is not).
 function unit(n) {
@@ -111,3 +118,20 @@ const TURN_SLACK = 0.25;
 export const turned = toLand => toLand <= BITE_BEFORE + MEAL_SWIM_S;
 // The creatures eaten lately (`S.eaten`, saved): the stream does not draw them.
 export const eatenBefore = () => new Set(S.eaten || []);
+
+// --- the save -------------------------------------------------------------------
+// The stream's clock goes down as it reads, and comes back as an offset on the
+// new page's. A save from before it was written has no stream to carry on:
+// its turned meal and its eaten are numbers off a clock nobody kept, so the
+// next meal is picked again from the window, which is saved whole (`S.mealT`).
+export const SAVE = {
+  fields: ['streamOff'],
+  write(out) { out.stream = streamS(); },
+  read(s) {
+    if (Number.isFinite(s.stream)) { S.streamOff = s.stream - now() / 1000; return; }
+    S.streamOff = 0;
+    S.mealI = null;
+    S.eaten = [];
+  },
+  blank() { S.streamOff = 0; }
+};

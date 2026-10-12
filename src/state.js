@@ -535,6 +535,7 @@ export const S = {
   eaten: [],              // the last creatures eaten, which the stream does not draw again
   meal: 0,                // the meals the serpent has had: which creature is next, and how long it waits
   mealT: 0,               // seconds since the last meal landed
+  streamOff: 0,           // how far the stream's clock stands ahead of the page's (deep/meals.js)
   mealLandedAt: 0,        // when the last one landed, on the game's clock, for the ring at the belly (drawn only)
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
   podsBoardOpen: false,
@@ -738,6 +739,7 @@ export const SAVED_BY_HAND = [
   // own triggers and the sheet by its fact.
   'beat',
   'abyss',                // the first trip down's scene, while it is owed (abyssintro.js)
+  'streamOff',            // the deep's stream, written as its clock and read back against the new page's (deep/meals.js)
   'buried',
   'machines',             // facts only: bought, driven, tuned, took the kit
   'summon',               // three places, and only meaningful once the tower is open

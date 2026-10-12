@@ -14,7 +14,7 @@
 import { WORKER } from './config.js';
 import { S, pit, floor, cut, band } from './state.js';
 import { P } from './config.js';
-import { mealNow } from './deep/meals.js';
+import { mealNow, SWIM_BEFORE } from './deep/meals.js';
 import { ways, wayAt, standTop, WORKINGS, belowYard } from './route.js';
 import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
@@ -475,6 +475,9 @@ export function verifyWorld() {
     // The meal: a bank that is never under nought, a clock inside its wait.
     if (!(S.mealT >= 0) || (S.serpentWound < depth && S.snatched && stage < SERPENT_PHASES && mealNow().toLand < -1))
       fail('the meal clock is outside its wait', `${S.mealT}s since the last, the next ${mealNow().toLand}s off`);
+    // and a creature turned for the mouth is never further off than its swim.
+    if (S.mealI != null && mealNow().toLand > SWIM_BEFORE() + 1)
+      fail('the turned meal is further off than its swim', `${mealNow().toLand}s off, a swim is ${SWIM_BEFORE()}s`);
     mealWas = S.meal;
     if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)
       fail('the stun is outside its bounds', `${S.serpentStun}s, at most ${STUN_MAX_S}`);
