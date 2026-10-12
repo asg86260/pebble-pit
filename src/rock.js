@@ -13,7 +13,7 @@ import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
 import { S, floor } from './state.js';
 import { noteBite } from './notices.js';
-import { spriteW, spriteH, stackCol, roofRow, seatCol, RAM } from './sprites.js';
+import { spriteW, spriteH, stackCol, cabRow, cabCol, RAM } from './sprites.js';
 import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView, flankX, settleShack } from './world.js';
@@ -643,6 +643,7 @@ function bite(want, order, mx, body, from) {
   // the pick sounds lower and duller the more sheets are under it.
   const hard = took ? S.boulder[near[0].y][near[0].x] / depthOf() : 0;
   let through = null;                          // the first cell taken down to daylight
+  const thrown = S.chips.length;
   for (const cell of near.slice(0, took)) {
     const left = S.boulder[cell.y][cell.x];
     const shade = depthShade(left, depthOf());   // how deep it looked, for color
@@ -651,6 +652,11 @@ function bite(want, order, mx, body, from) {
     if (left === 1 && through === null) through = px;
     if (crit > 1) critToss(px, py, shade, 'rock', crit);
     else spawnSpoil(px, py, shade);
+  }
+  // Off the ram's turning cutter, the spoil curls before it falls: stamped
+  // with when it left and where on the circle, which only the drawing reads.
+  if (from === 'machine') {
+    for (let i = thrown; i < S.chips.length; i++) { S.chips[i].curl = now(); S.chips[i].curlAt = i * 2.4; }
   }
   // The pick meeting stone. Your own click is never folded and a crit is an
   // event of its own; a body's swing folds with the yard. The ram is not
@@ -729,11 +735,11 @@ defineMachine('ram', {
   type: TYPE.ROCK,
   at: ramX,
   y: () => S.groundY - P * Math.round(spriteH(RAM) / 2),
-  // Up on the roof of the engine, at the end away from the chimney: a body
-  // that has climbed onto the thing is a body running it.
+  // Up on the roof of the cab, the end away from the chimney: a body that has
+  // climbed onto the thing is a body running it.
   seat: () => ({
-    x: ramX() + seatCol(RAM) * P,
-    y: S.groundY - spriteH(RAM) * P + roofRow(RAM) * P - WORKER
+    x: ramX() + cabCol(RAM) * P,
+    y: S.groundY - spriteH(RAM) * P + cabRow(RAM) * P - WORKER
   }),
   // The top of its chimney: where the smoke leaves and where the dirt enters
   // the sky. Both read this, so they cannot come from two places.

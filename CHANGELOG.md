@@ -124,6 +124,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The ram is a tracked crawler that pushes a turning cutter wheel into the rock, throwing curling chips as it bores.
 - The dome no longer holds the rescue rock up: the rock sits squashed on its crown for a beat, then bursts into grit that skates down the dome and heaps outside it for the haulers to carry to the hole (test/shield.test.mjs).
 - The bench's build tiles show each coin of their price as a line that fills grey as you gather it, the same as the story card's bill (src/selftest/boards.js).
 - While the dome bursts the rescue rock, the rest of the crew walk out of the shot so only the two of them are in it, and walk back to work after (test/ending-stage.test.mjs).

@@ -156,3 +156,28 @@ export const MACHINE_KNOBS = [
   { key: 'MACHINE_FOUL', label: 'soot a machine unit', min: 0, max: 12, step: 0.1,
     get: () => MACHINE_FOUL, set: v => { MACHINE_FOUL = v; } }
 ];
+
+// --- the ram's cutter wheel (feat/ram-cutter-wheel) ------------------------------
+// A crawler pushing a round cutter, drawn face-on in the gap (the owner's D2).
+// One bore cycle while it works: push in, bore, back out, as shares of
+// RAM_BORE_MS. The strikes come every couple of frames once the ram is tuned,
+// far too often for a push a strike, so the cycle runs on its own clock while
+// the machine is striking and backs out when the strikes stop.
+export const RAM_BORE_MS = 2400;
+export const RAM_BORE_PUSH = 0.15;   // in by here
+export const RAM_BORE_BACK = 0.75;   // and backing out from here
+export const RAM_BORE_IN = 2;        // cells the wheel goes into the face
+// The wheel: a rim of this radius in cells, the teeth a cell outside it, so
+// the wheel is RAM_WHEEL_R * 2 + 3 cells across with its left tooth on the nose.
+export const RAM_WHEEL_R = 3;
+export const RAM_WHEEL_ROW = 5;      // the hub, in cells above the ground
+// The turn is a held step, never a smooth spin: this many frames a second,
+// a step of SPIN_STEP radians each, round in SPIN_STEPS steps.
+export const RAM_SPIN_FPS = 12;
+export const RAM_SPIN_STEP = Math.PI / 12;
+export const RAM_SPIN_STEPS = 8;
+// A chip off the turning cutter curls before it falls: a circle this many
+// cells wide, turning this many radians a second, gone after this long.
+export const RAM_CHIP_CURL = 1.6;
+export const RAM_CHIP_CURL_SPIN = 14;
+export const RAM_CHIP_CURL_S = 0.4;

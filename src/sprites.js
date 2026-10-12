@@ -35,6 +35,16 @@ export function drawSprite(ctx, rows, x, y, o = {}) {
 // else. A literal would go on pointing at the fender after a mirror.
 export const stackCol = rows => Math.max(0, rows[0].search(/[^. ]/));
 
+// The cab of an engine that has one: the first block standing up off the top
+// row that is not the stack, read off the picture. `cabRow` is its roof row
+// and `cabCol` its first column, so a body can ride on it.
+const pastStack = rows => { let c = stackCol(rows); while (rows[0][c] === '#') c++; return c; };
+export const cabRow = rows => Math.max(0, rows.findIndex((r, i) => i > 0 && /#/.test(r.slice(pastStack(rows)))));
+export const cabCol = rows => {
+  const from = pastStack(rows);
+  return from + Math.max(0, rows[cabRow(rows)].slice(from).search(/#/));
+};
+
 // Where a body stands when it works a machine from on top: the first row solid
 // all the way across (everything above it is chimney and mast), at whichever
 // end the chimney is not, three in from the far edge for a three-wide body.
@@ -117,17 +127,20 @@ export const BIT = [
   '...#...'
 ];
 
-// The ram, at the foot of the hill. The arm is drawn separately because its
-// length is the animation.
+// The ram, at the foot of the hill: a low crawler on tracks, its stack at the
+// back and its cab forward. The cutter wheel is drawn separately because its
+// push and its turn are the animation.
 export const RAM = [
-  '..##.......',
-  '..##.......',
-  '..##.......',
+  '.##........',
+  '.##..####..',
+  '.##..#oo#..',
+  '.##..#oo#..',
+  '##########.',
   '###########',
-  '#oooo######',
-  '#oooo######',
-  '#oooo######',
-  '###########'
+  '###########',
+  '.#########.',
+  '#o#o#o#o#o#',
+  '.#########.'
 ];
 
 // The tiller: a tractor, big wheel at the back, little one at the front. It
@@ -146,7 +159,7 @@ export const TILLER = [
 
 // The same three at roster size. The one rule a mark keeps is that it is the
 // *same machine*, smaller: the same silhouette, feature for feature (the ram's
-// arm, the tractor's unequal wheels), so the thing on the strip and the thing
+// cutter wheel, the tractor's unequal wheels), so the thing on the strip and the thing
 // in the yard are obviously one object.
 export const MACHINE_MARK = {
   jaw: [
@@ -159,12 +172,13 @@ export const MACHINE_MARK = {
     '..#...'
   ],
   ram: [
-    '.#.......',
-    '.#.......',
-    '######..#',
-    '#oo######',
-    '#oo######',
-    '######..#'
+    '.#..........',
+    '.#.##...###.',
+    '.#.##..#ooo#',
+    '########o#o#',
+    '########ooo#',
+    '######..###.',
+    '#o#o#o......'
   ],
   tiller: [
     '.....#.',

@@ -2,15 +2,17 @@
 // their run switch.
 
 import { now } from '../clock.js';
-import { MACHINE_IDLE_MS, P, WORKER } from '../config.js';
+import { MACHINE_IDLE_MS, P, WORKER, RAM_BORE_MS, RAM_BORE_PUSH, RAM_BORE_BACK, RAM_BORE_IN,
+         RAM_WHEEL_R, RAM_WHEEL_ROW, RAM_SPIN_FPS, RAM_SPIN_STEP, RAM_SPIN_STEPS } from '../config.js';
 import { beltFrom, beltReach, beltRunning, beltTo, beltY, rampLip, rampTop } from '../dust.js';
 
 import { drawGrid } from './ground.js';
 import { tillerAt, tillerCol, tillerWay } from '../farm.js';
 import { machine } from '../machines.js';
 import { jawX, jawY, rigTop, shaftX } from '../quarry.js';
-import { ramX, rockFaceX, rockShare } from '../rock.js';
-import { BIT, DRILL, MACHINE_MARK, RAM, TILLER, drawSprite, spriteH, spriteW } from '../sprites.js';
+import { RAM_REACH, ramX, rockFaceX, rockShare } from '../rock.js';
+import { BIT, DRILL, MACHINE_MARK, RAM, TILLER, drawSprite, roofRow, spriteH, spriteW } from '../sprites.js';
+import { reducedMotion } from '../prefs.js';
 import { S, band } from '../state.js';
 import { walkY } from '../world.js';
 import { ctx } from './ctx.js';
@@ -66,13 +68,34 @@ export function drawDrill() {
   ctx.fillStyle = '#000';
 }
 
-// The ram: a squat engine outside the apron with an arm that reaches into the
-// face and strikes; the only machine whose working end is somewhere other than
-// where its body stands.
-// The rows of the picture that are stack rather than engine, counted off the
-// sprite, so the arm still comes out of the middle of the engine if the
-// chimney is made taller.
-const BONNET = RAM.findIndex(r => !r.includes('.'));
+// The ram: a crawler outside the apron pushing a round cutter into the face,
+// the wheel drawn face-on in the gap -- a cheat a side view needs for the
+// turn to read at all. The only machine whose working end is somewhere other
+// than where its body stands.
+//
+// One bore cycle while it is striking: push in RAM_BORE_IN cells, bore, back
+// out, on its own clock (RAM_BORE_MS), since a tuned ram strikes every couple
+// of frames. When the strikes stop it backs out from wherever it was and the
+// wheel stands still. The cycle's start and the stop are remembered here, as
+// the ram's drive is in `ramX`: the picture's memory, never the yard's.
+const ease = f => f * f * (3 - 2 * f);
+const seg = (v, a, b) => Math.min(1, Math.max(0, (v - a) / (b - a)));
+const cycleIn = ph => RAM_BORE_IN * (ph < RAM_BORE_PUSH ? ease(seg(ph, 0, RAM_BORE_PUSH))
+                                   : ph < RAM_BORE_BACK ? 1
+                                   : 1 - ease(seg(ph, RAM_BORE_BACK, 1)));
+let boreFrom = null, boreStop = 0, boreLeft = 0, boreLast = 0;
+function bore() {
+  const m = machine('ram'), t = now();
+  if (m && m.bought && t - (m.workedAt || 0) <= MACHINE_IDLE_MS) {
+    if (boreFrom == null || t < boreFrom) boreFrom = t;
+    boreLast = Math.round(cycleIn(((t - boreFrom) % RAM_BORE_MS) / RAM_BORE_MS));
+    return { adv: boreLast, turning: true };
+  }
+  if (boreFrom != null) { boreFrom = null; boreStop = t; boreLeft = boreLast; }
+  if (t < boreStop) boreLeft = 0;                 // the clock went back: a new yard
+  const adv = Math.round(boreLeft * (1 - ease(seg(t - boreStop, 0, RAM_BORE_MS * (1 - RAM_BORE_BACK)))));
+  return { adv, turning: adv > 0 };
+}
 
 export function drawRam() {
   if (!built('ram')) return;
@@ -81,31 +104,49 @@ export function drawRam() {
   const y = Math.round((S.groundY - H * P) / P) * P;
   drawSprite(ctx, RAM, x, y);
 
-  // The arm's *length* is the animation: out fast, held, drawn back slowly. At
-  // rest it stands half out, so the arm is part of the machine's shape. It
-  // reaches to the **face**, where the rock still is, measured rather than
-  // taken from `RAM_REACH`: the face moves the instant a column empties and
-  // the machine snaps to the cell grid, so the two disagree in some frames.
-  const gap = Math.max(2, Math.round((rockFaceX() - (x + W * P)) / P));
-  const t = stroke('ram', 900);
-  const rest = Math.max(2, Math.round(gap / 2));
-  const reach = t === 0 ? rest
-              : t < 0.18 ? Math.round(rest + (gap - rest) * (t / 0.18))
-              : t < 0.34 ? gap
-              : Math.max(2, Math.round(gap - (gap - rest) * ((t - 0.34) / 0.66)));
-  // Out of the middle of the body's height, so the engine can grow a row
-  // without a literal to fix.
-  const mid = Math.round((H - BONNET) / 2) + BONNET;      // the body's middle row
+  // The wheel's left tooth on the nose and its hub RAM_WHEEL_ROW off the
+  // ground, pushed RAM_BORE_IN cells into the face at the bottom of a stroke.
+  // A working ram drives after a face that keeps retreating, so it runs a
+  // few cells behind its parked standoff: the thrust ram pays out that lag,
+  // measured off the face, or the wheel would bore the daylight in front of it.
+  const { adv, turning } = bore();
+  const R = RAM_WHEEL_R;
+  const nose = x + W * P;
+  const lag = Math.max(0, Math.round((rockFaceX() - nose) / P) - RAM_REACH);
+  const cx = nose + (R + 1 + lag + adv) * P, cy = y + (H - RAM_WHEEL_ROW) * P;
+  const cell = (dx, dy) => ctx.fillRect(cx + dx * P, cy + dy * P, P, P);   // the cell's top-left
   ctx.fillStyle = '#000';
-  ctx.fillRect(x + W * P, y + (mid - 1) * P, P * reach, P * 2);
-  ctx.fillRect(x + W * P + (reach - 1) * P, y + (mid - 2) * P, P * 2, P * 4);   // the head
+  ctx.fillRect(nose, cy - P, cx - nose, P * 2);                             // the thrust ram
+  // The turn, a held step a frame at RAM_SPIN_FPS, off the clock so a paused
+  // game holds it; still when it is not working, and under reduced motion.
+  const step = turning && !reducedMotion() ? Math.floor(now() / (1000 / RAM_SPIN_FPS)) % RAM_SPIN_STEPS : 0;
+  const rot = step * RAM_SPIN_STEP;
+  for (let i = 0; i < 24; i++) {                                           // the rim
+    const a = i * Math.PI / 12;
+    cell(Math.round(R * Math.cos(a)), Math.round(R * Math.sin(a)));
+  }
+  // The face inside the rim, white, with three spokes on it.
+  const inner = R - 1;
+  ctx.fillStyle = '#fff';
+  for (let dy = -inner; dy <= inner; dy++) for (let dx = -inner; dx <= inner; dx++) {
+    if (dx * dx + dy * dy <= inner * inner + 1) cell(dx, dy);
+  }
+  ctx.fillStyle = '#000';
+  for (let q = 0; q < 3; q++) {
+    const a = rot + q * Math.PI * 2 / 3;
+    for (let r = 0; r <= inner; r++) cell(Math.round(r * Math.cos(a)), Math.round(r * Math.sin(a)));
+  }
+  for (let q = 0; q < 6; q++) {                                            // the teeth, going round with it
+    const a = rot + q * Math.PI / 3 + Math.PI / 6;
+    cell(Math.round((R + 1) * Math.cos(a)), Math.round((R + 1) * Math.sin(a)));
+  }
 
   // How far through this boulder it is: the hill is the one workplace whose
   // progress has no shape you can read from beside the machine.
   const share = rockShare();
   if (share > 0) {
     const wide = Math.max(1, Math.round((W - 2) * share));
-    const bar = y + (H - 2) * P;                          // the last row inside the body
+    const bar = y + (roofRow(RAM) + 1) * P;               // the hull's second solid row
     ctx.fillStyle = '#fff';
     ctx.fillRect(x + P, bar, (W - 2) * P, P);
     ctx.fillStyle = '#000';

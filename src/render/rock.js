@@ -1,6 +1,7 @@
 // The boulder itself, and the chips coming off it.
 
-import { MARK_SIZE, MAX_DEPTH, P, SQUASH_WIDE, SQUASH_FLAT } from '../config.js';
+import { MARK_SIZE, MAX_DEPTH, P, SQUASH_WIDE, SQUASH_FLAT, RAM_CHIP_CURL, RAM_CHIP_CURL_SPIN, RAM_CHIP_CURL_S } from '../config.js';
+import { now } from '../clock.js';
 import { depthShade, shadeOf } from '../grid.js';
 import { depthOf, rockFootY, rockShape, lumpCells } from '../rock.js';
 import { reducedMotion } from '../prefs.js';
@@ -109,6 +110,7 @@ export function drawChips() {
   // the air. Off the glass is not drawn at all.
   const x0 = S.camX - P * 4, x1 = S.camX + S.viewW + P * 4;
   const y0 = S.camY - P * 4, y1 = S.camY + S.viewH + P * 4;
+  const t = now(), calm = reducedMotion();
   for (const ch of S.chips) {
     if (ch.x < x0 || ch.x > x1 || ch.y < y0 || ch.y > y1) continue;
     let size = MARK_SIZE;
@@ -116,7 +118,18 @@ export function drawChips() {
       const slow = 1 - Math.min(1, Math.abs(ch.vy) / ch.cv);   // 0 at launch, 1 at apex
       size = P * (1 + (0.6 + 0.12 * (ch.cp || 3)) * slow);
     }
-    markInto(runs, ch.s, Math.round(ch.x) + P / 2, Math.round(ch.y) + P / 2, size);
+    let x = ch.x, y = ch.y;
+    // A chip off the ram's cutter goes round with it for a moment first: an
+    // offset on the drawing alone, so where the grain lands is untouched.
+    if (ch.curl && !calm) {
+      const age = (t - ch.curl) / 1000, sw = 1 - age / RAM_CHIP_CURL_S;
+      if (sw > 0) {
+        const a = age * RAM_CHIP_CURL_SPIN + ch.curlAt;
+        x += Math.cos(a) * RAM_CHIP_CURL * P * sw;
+        y += Math.sin(a) * RAM_CHIP_CURL * P * sw;
+      }
+    }
+    markInto(runs, ch.s, Math.round(x) + P / 2, Math.round(y) + P / 2, size);
   }
   fillMarks(runs);
 }

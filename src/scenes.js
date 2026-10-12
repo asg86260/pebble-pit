@@ -18,7 +18,7 @@
 import { S } from './state.js';
 import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
-import { dropMs } from './rock.js';
+import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
 import { rockLeft } from './world.js';
 import { now } from './clock.js';
@@ -888,6 +888,17 @@ export const SCENES = {
   rock: { about: 'the rock', say: 'the hill, and the ram driving into it',
     run: () => { rich(); window.__buy('ram'); window.__finish(); window.__jump(6);
                  window.__look(st().rockLeftX - 200); } },
+  // The ram's cutter wheel, framed for `--zoom 4`: boring into the face, and
+  // parked with its tender taken off, the wheel standing still.
+  ramwheel: { about: 'the rock', say: 'the ram boring into the face, its cutter wheel turning',
+    run: () => { rich(); window.__buy('ram'); window.__finish(); window.__jump(6);
+                 for (let i = 0; i < 1800 && now() - (S.machines.ram.workedAt || 0) > 100; i++) window.__fast(1 / 60);
+                 window.__fast(0.4);
+                 window.__look(ramX() + P * 15 - S.viewW / 2); window.__holdShot(); } },
+  ramparked: { about: 'the rock', say: 'the ram parked off the face, idle, its wheel still',
+    run: () => { rich(); window.__buy('ram'); window.__finish(); window.__jump(6); window.__fast(4);
+                 window.__crew(0, 0, 0); window.__machine('ram', { bought: true }); window.__fast(3);
+                 window.__look(ramX() + P * 15 - S.viewW / 2); } },
   // The clearance between the hut's wall and a parked ram at a big boulder is
   // the one thing about this layout arithmetic cannot settle.
   shack: { about: 'the rock', say: 'the shack beside a big rock, the ram parked',

@@ -14,7 +14,7 @@ import { band, floor } from '../src/state.js';
 import { at, grainsIn, addGrain } from '../src/grid.js';
 import { beltFrom, beltReach } from '../src/dust.js';
 import { S } from '../src/state.js';
-import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
+import { RAM, TILLER, cabRow, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
 // The two boards nobody could buy from.
 //
@@ -442,9 +442,10 @@ group('a body put on a station with a machine goes to the machine, not up the hi
     const m = yard.S.workers.find(w => w.type === 'rockhand');
     if (m) highest = Math.max(highest, Math.round((g - m.y - WORKER) / P));
   }
-  // The ram's roof is five cells up. The hill is a great deal more than that, so
-  // anything much above the roof means it went over the boulder to get here.
-  const roof = 5;
+  // The ram's seat is the roof of its cab, read off the picture. The hill is a
+  // great deal more than that, so anything much above the cab means it went
+  // over the boulder to get here.
+  const roof = spriteH(RAM) - cabRow(RAM);
   const men = state().rockhands;                 // read before the crew is torn down
   window.__crew(0, 0, 0);
   return [
