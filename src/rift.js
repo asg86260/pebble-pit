@@ -18,6 +18,7 @@ import { P, RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_AT, RIFT_UP, RIFT_GULP,
 import { S, pit, rift } from './state.js';
 import { swallow, pitWidth, pitGrains, tearHole } from './pit.js';
 import { sfx } from './audio.js';
+import { now } from './clock.js';
 
 // --- how big it is -------------------------------------------------------------
 // The disc grows with what it has eaten (`S.riftAte`), or with the swell the
@@ -115,6 +116,9 @@ export function stepRift(dt) {
 function owedArc(dt) {
   if (!S.rescued || S.drowned || !S.beatsDone.includes('ending')) return;
   if (S.beat.yard || S.beat.camera || S.beat.sheet) return;
+  // Nor while the crew dance the sheet down: the tearing's scene holds the
+  // rock's gang still, and a dance held from its first beat is never had.
+  if (now() < (S.danceUntil || 0)) return;
   if (!riftOpen()) { tearHole(); return; }
   if (S.riftGulp > 0) return;
   // Even in the diameter, which is the thing watched: the square root in
