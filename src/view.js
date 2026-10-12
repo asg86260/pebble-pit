@@ -79,13 +79,22 @@ export function deepCamera() {
 // (held in `deepZoom`, which the deep re-takes every frame), its middle on
 // `x`, which the beat glides on an ease; the floor stays at the foot of it
 // (`clampCam`). `k` 0 is the deep's frame.
-export function killFrame(k, x) {
+// With `y`, the frame's middle is held at that height as well, for the
+// finale's way up (finale.js), the floor let go of; null keeps it on the floor.
+let killY = null;
+export function killFrame(k, x, y = null) {
   killIn = k;
+  killY = y;
   if (S.view !== 'deep') return;
   setZoom(deepZoom());
   S.camX = x - S.viewW / 2;
+  S.camLockY = y == null ? null : liftedY(y);
   clampCam();
 }
+const liftedY = y => {
+  const rest = deepFloor() + DEEP_FLOOR_MARGIN - S.viewH;
+  return Math.max(deepTop(), Math.min(rest, y - S.viewH / 2));
+};
 
 // A scene's framing of the deep (cutscene.js, `stepDeepShot`): pulled in by
 // `k` over the deep's fit, its middle on (x, y), and `w` how much of that
@@ -192,7 +201,7 @@ export function stepView(c) {
   if (shot) { frameShot(); return; }
   const z = deepZoom();
   if (S.zoom !== z * yardZoom()) setZoom(z);
-  if (S.camLockY != null) S.camLockY = null;
+  S.camLockY = killY != null ? liftedY(killY) : null;
   clampCam();
 }
 

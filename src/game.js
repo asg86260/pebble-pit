@@ -588,3 +588,23 @@ STEPS.splice(STEPS.findIndex(s => s.name === 'serpent') + 1, 0, { name: 'party',
 // of one yard on two devices (cloud.js). Not on a staged yard, which is
 // nobody's and is never written down.
 STEPS.push({ name: 'played', step: c => { if (!S.staged) S.playedS += Math.max(0, c.dt) / 1000; } });
+
+// --- the finale (finale.js) ---------------------------------------------------
+// While the finale holds the yard, and its sheet after it, the work stands
+// still: no rock is brought down, no machine turns, no build goes up, the
+// table, the pot, the filter, the sky's star and the crew's breaks all wait;
+// the crew are held body by body (crew/step.js) and the background's clocks
+// by the hush (cutscene.js). Everything picks up again from where it was
+// when the sheet is put down.
+import { workPaused, stepFinaleAfter } from './finale.js';
+const HELD_STEPS = new Set(['core', 'machines', 'works', 'casino', 'table', 'apothecary', 'filter', 'meteor',
+                            'summon', 'sparkle', 'house', 'breaks', 'balloons', 'craftair', 'glimpse', 'riftlife',
+                            'firstmuck', 'doses', 'dosemotes', 'mining', 'tossing', 'restaff']);
+for (const s of STEPS) {
+  if (!HELD_STEPS.has(s.name)) continue;
+  const go = s.step;
+  s.step = c => { if (!workPaused()) go(c); };
+}
+// And the finale's own afterwards: the sunset going once the sheet is down,
+// and the two of them at the yard's end. After the crew.
+STEPS.splice(STEPS.findIndex(s => s.name === 'crew') + 1, 0, { name: 'finale', step: c => stepFinaleAfter(c) });

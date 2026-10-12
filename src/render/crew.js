@@ -2,6 +2,7 @@
 // hats and carts, the bench, the kit stands, the speech, the pointed arrow,
 // and the whole-crew draw.
 
+import { paradeLift } from '../finale.js';
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
 import { bodyInk } from './recede.js';
@@ -632,7 +633,8 @@ function drawWorker(w, t0) {
     // drawn between pixels smears a hairline off its own edge.
     const ht = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
     const hop = ht >= 0 && ht < 1 ? LAND_HOP_H * (w.hopK || 1) * 4 * ht * (1 - ht) * P : 0;
-    const ground = Math.round(w.y + throwOn * look.lunge * P - hop);
+    // and the finale's crowd hopping in held poses (finale.js), drawn the same way
+    const ground = Math.round(w.y + throwOn * look.lunge * P - hop - paradeLift(w));
 
     // A cart is kit like any other, drawn off what the body is holding rather
     // than what the books say it is: the same rule a helmet has.

@@ -47,6 +47,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `hands.js` | what a click, a drag and a flick do | yes |
 | `input.js` | events to calls, and nothing else | yes |
 | `abyssintro.js` | the first trip down: the scene's clock, her body staged between the arrival and her own swing, and what the drawing reads (his hop and call, the bar's fade, her speed lines); the framing is cutscene.js's deep path | yes |
+| `finale.js` | the serpent's death and after: her gear hung back on her station and taken up by one of the deep's crew, the pair through the portal and down the yard with the crew falling in behind, the sunset, the yard held through it all and its sheet (`workPaused`); then the two of them at the yard's left end for good, off the crew (`S.retired`). Drawn by `render/finale.js` | yes |
 | `skip.js` | the space bar, held, ending whichever scene has the yard; `skiphint.js` is the hint under it, in the shell | yes |
 | `render.js` | the `LAYERS` list — painting order as data, one entry a line, every draw body in `src/render/` | the **order** of the list is the picture |
 | `persist.js` | reading and writing the game: the loop over `SAVERS` and the codec for the three plots; plain fields come off `SAVED` in state.js in one loop, every by-hand field is written and read by its owner's `SAVE`; `restore()` reads today's shape only, after `migrate` | a field in no list is a red test; the **order** of `SAVERS` is the load |

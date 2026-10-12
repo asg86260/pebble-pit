@@ -37,6 +37,7 @@ import { S } from '../state.js';
 import { P, WORKER, DOT_TICK_S, EXPOSED_AMP, MOVE_RUNG, BREAK_ROAR_DAZE,
          CAPSTONE_RUNG, MELEE_REACH, FOLLOW_K, SWIM_PACE, DEEP_GRAV, LASH_THROW, rungValue } from '../config.js';
 import { commutePace } from '../levels.js';
+import { FINALE_TAKE_S } from '../config.js';
 import { now } from '../clock.js';
 import { slotX, postX, postY, coilAt, coilThick, segAbove, coilK, deepFloor } from './place.js';
 import { lashHits, mechOf, roarHits, killA, inOrb } from './phases.js';
@@ -427,6 +428,21 @@ const STEP = { recruit, brawler, sword, monk, martial, ranger, assassin, hexer, 
 export const fighters = () => S.workers.filter(o => o.station && stationById(o.station));
 
 // One frame of a fighter at work, by its station's class.
+// Taking up a station's hung gear: swum to its post, it stands there
+// FINALE_TAKE_S while the gear comes off the prop onto it (render/finale.js
+// draws it off `takeAt`), and then it is this body's. A moment from an
+// older page is ahead of this one's clock, and starts the taking again.
+function takeUp(w, st) {
+  w.pose = null;
+  w.beam = null;
+  w.goal = 'back';
+  if (!toPost(w, st)) { st.takeAt = null; return; }
+  if (st.takeAt == null || st.takeAt > now()) st.takeAt = now();
+  if (now() - st.takeAt < FINALE_TAKE_S * 1000) return;
+  st.hung = false;
+  st.takeAt = null;
+}
+
 export function stepFighter(w, c) {
   if (!working(w)) return;
   const st = stationOf(w);
@@ -436,6 +452,9 @@ export function stepFighter(w, c) {
   // a built one.
   const step = cls && STEP[keyOf(st)];
   if (!step) return;
+  // Its station's gear hung up on it (finale.js): to the post, and the gear
+  // taken up off the prop in held steps, before anything else.
+  if (st.hung) { takeUp(w, st); return; }
   // Its level-up playing (deep/party.js), it stops where it is and fights no more until it has.
   if (levelingUp(st)) { w.pose = null; w.beam = null; return; }
   // Held in the constrict's orb, it does nothing.

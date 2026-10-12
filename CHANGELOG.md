@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- After the serpent dies she hangs her gear on her station for one of the deep's crew to take up, and the two of them go home through the portal and down the whole yard with the crew falling in behind, to sit at its far end for good (test/finale.test.mjs).
 - The first trip down into the deep plays a short scene: the camera finds him calling from the serpent's belly, then her under the portal, and she charges down and lands her first blow; her station stands, free, from the snatch (test/abyss-intro.test.mjs).
 - During the snatch the rest of the crew fade out of the shot, the portal waits until they are gone, and no rock comes down until it is over (test/ending-stage.test.mjs).
 - A station bought with a fang asks the yard's dust for its first rungs, so a new fighter climbs over minutes instead of all at once.

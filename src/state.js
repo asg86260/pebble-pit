@@ -510,6 +510,12 @@ export const S = {
   // The kill (snatch.js): when the fourth break landed, where he walks from
   // and to once he is out, and when the serpent began to gather itself again.
   freedAt: null, freedFrom: null, freedTo: null, reformAt: null,
+  // The finale after the kill (finale.js): the beat's own state while it
+  // plays and its sunset until the sheet is put down; and the two of them
+  // at the yard's left end for good after it, off the crew -- their spots
+  // and the turn they are on.
+  finale: null,
+  retired: null,
   // The constrict's orb (deep/phases.js): the station its fighter is at, what
   // is left of it, and when it closed.
   orb: null,
@@ -719,6 +725,7 @@ export const SAVED = [
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'resistBy', 'scales', 'seenScale',
   'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
+  'retired',              // the two of them at the yard's end after the finale (finale.js)
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).
   'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',
@@ -755,6 +762,7 @@ export const SAVED_BY_HAND = [
   // own triggers and the sheet by its fact.
   'beat',
   'abyss',                // the first trip down's scene, while it is owed (abyssintro.js)
+  'finale',               // the finale's phase only: a reload mid-finale lands at its end (finale.js)
   'streamOff',            // the deep's stream, written as its clock and read back against the new page's (deep/meals.js)
   'buried',
   'machines',             // facts only: bought, driven, tuned, took the kit

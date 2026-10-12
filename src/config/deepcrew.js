@@ -136,11 +136,11 @@ export const SNATCH_HURRY = 4;
 // sheet. Put down, the motes gather back into the serpent head first over
 // KILL_REFORM_S. Seconds.
 // The last blow is held a full beat before the coil goes limp.
-export const KILL = { last: 1, limp: 2.4, apart: 2.4 };
+export const KILL = { last: 1, limp: 1.6, apart: 1.6 };
 export const KILL_LIMP_STEPS = 4;
 export const KILL_WALK_PX_S = P * 18;
-export const KILL_WALK_MAX_S = 3;     // and never longer than this: across the whole deep he hurries
-export const KILL_CHEER_S = 2.6;       // held on the two of them before anything else comes up
+export const KILL_WALK_MAX_S = 2;     // and never longer than this: across the whole deep he hurries
+export const KILL_CHEER_S = 1.2;       // held on the two of them before the finale takes them on
 export const KILL_HOP_S = 0.25;        // a hop up and down, a beat each, while they cheer
 export const KILL_ZOOM = 0.7;          // how much closer the deep's frame comes in
 export const KILL_IN_S = 0.8;

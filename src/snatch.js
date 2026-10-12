@@ -15,8 +15,8 @@
 // portal"). Nobody else ever crosses.
 //
 // The freeing is the fourth defense broken (deep/serpent.js sets the flag):
-// the belly opens, he comes out of it and is one of the deep's crew, a spare
-// hand down there.
+// the belly opens and he comes out of it, and the finale takes the two of
+// them home (finale.js). Neither is one of the crew after.
 //
 // `S.snatch` is the beat's state while it plays, and what the drawing reads:
 // `{ phase, at, headY, carried, portal }` -- the phase, when it began, the
@@ -48,6 +48,7 @@ import { TYPE, JOB_OF } from './jobs.js';
 import { beatDone, beatRunning } from './beats.js';
 import { stageClear } from './stage.js';
 import { standFirst } from './deep/party.js';
+import { handOver } from './finale.js';
 
 // --- whether ---------------------------------------------------------------------
 // Two switches (DESIGN.md, "Three builds"). The snatch plays in every build
@@ -310,8 +311,7 @@ export const heldBodies = () =>
 // The kill (config KILL): the last blow, the serpent limp and sinking to the
 // floor, its hide coming apart (all drawn off `S.freedAt`, deep/phases.js);
 // then he is out on the floor where the belly was and walks to her, they
-// cheer, and the frame pulls back. He is one of the deep's crew at the end of
-// it, where he stands: a spare hand down there. The beat's clock is saved, so
+// cheer, and the finale has them (finale.js). The beat's clock is saved, so
 // a reload picks it up where it was. A skip plays it out at once.
 const ease = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
 const outAt = () => KILL.last + KILL.limp + KILL.apart;
@@ -385,21 +385,15 @@ export function stepFreed(t) {
   const zin = ease((a - KILL.last) / KILL_IN_S);
   if (a < outAt()) { killFrame(zin, glideTo('kill', a, lookAtKill(t, a))); return true; }
   if (S.freedFrom == null) { S.freedFrom = bellyAt(t).x - WORKER / 2; S.freedTo = herX(S.freedFrom); }
-  // The frame goes over to the two of them and holds.
+  // The frame goes over to the two of them and holds; and then the finale
+  // has them (finale.js): he is not one of the crew, and nor, once her gear
+  // is hung up, is she. Two gone home already, there is nobody to hand over,
+  // and the frame lets go.
   const end = outAt() + walkS() + KILL_CHEER_S;
-  killFrame(zin * (1 - ease((a - end) / KILL_OUT_S)), glideTo('meet', a, lookAtMeet(t)));
-  if (a < end + KILL_OUT_S) return true;
-  const w = Object.assign(FACTORY(TYPE.GATHER), newRecord());
-  w.x = S.freedTo;
-  w.y = deepFloor() - WORKER;
-  w.vx = w.vy = 0;
-  w.cast = true;                    // the scene's still, until the deep is back (stage.js)
-  S.crew++;
-  S.deepCrew = (S.deepCrew || 0) + 1;
-  rebalance();
-  S.workers.push(w);
-  syncWorkers();
-  S.shopStale = true;
+  const going = !S.retired;
+  killFrame(zin * (going ? 1 : 1 - ease((a - end) / KILL_OUT_S)), glideTo('meet', a, lookAtMeet(t)));
+  if (a < end + (going ? 0 : KILL_OUT_S)) return true;
+  if (going) handOver(S.freedTo, deepFloor() - WORKER);
   S.freedFrom = S.freedTo = null;
   return false;
 }

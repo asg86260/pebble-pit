@@ -18,7 +18,7 @@ import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DE
          WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
          BREAK_DIVE_OVER, BREAK_ROAR_H,
          PORTAL_LIP_TO, PORTAL_TEAR_LOBE, PORTAL_TEAR_JITTER } from '../config.js';
-import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop } from './phases.js';
+import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop, killA } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -230,6 +230,9 @@ export function coilLine(u, t) {
   // stunned coil holds its pose and the one after it carries on from there
   // (`serpentStill`, deep/serpent.js).
   t -= S.serpentStill;
+  // Struck down, the sway is held where the last blow caught it, from the
+  // blow's own frame: the kill settles at once (deep/phases.js, `killA`).
+  if (killA() != null) t = Math.min(t, S.freedAt - S.serpentStill);
   const s = u / (COIL_SEGS - 1) * coilSpan();   // arc from the head
   if (s <= 0) {
     // The snout, run on past the head along the same wave.

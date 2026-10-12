@@ -22,7 +22,8 @@
 
 import { CUT_TEAR_S, CUT_DROWN_S, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S, CUT_OUT_S,
          CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S, CUT_SETTLE_S,
-         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, ABYSS_MAX_S, CUT_PAN_PX_S, CUT_PAN_MAX_S } from './config.js';
+         CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, ABYSS_MAX_S, CUT_PAN_PX_S, CUT_PAN_MAX_S,
+         CUT_KILL_SETTLE_S } from './config.js';
 import { muckSpot, muckOver } from './firstmuck.js';
 import { mouthX } from './deep/place.js';
 import { S, rift, pit } from './state.js';
@@ -84,10 +85,14 @@ const sceneOf = name => SCENES[name] || SHIELD;
 const FRONT = ['intro', 'snatch', 'serpent diving', 'serpent', 'barrier', 'freed', 'charge',
                'held', 'pointed', 'cursor'];
 const ROCK = ['buried', 'rock', 'shield', 'rock sand', 'chips', 'shocks'];
+// The finale (finale.js) is the two of them, her gear and the station it
+// hangs on, the way up and the way out, and the yard's own sky over the walk.
+const FINALE = ['finale deep', 'hung kit', 'deep stations', 'deep portal', 'finale', 'fireworks', 'sunset',
+                'abyss', 'pit outline', 'portal'];
 const fronts = new Map();
 export function frontLayers() {
-  const key = S.shot && S.beat.camera ? S.shot.name : '';
-  if (!fronts.has(key)) fronts.set(key, new Set([...FRONT, ...(SCENES[key] ? SCENES[key].front || [] : ROCK)]));
+  const key = S.finale && holding() ? 'finale' : S.shot && S.beat.camera ? S.shot.name : '';
+  if (!fronts.has(key)) fronts.set(key, new Set([...FRONT, ...(key === 'finale' ? FINALE : SCENES[key] ? SCENES[key].front || [] : ROCK)]));
   return fronts.get(key);
 }
 
@@ -213,17 +218,23 @@ export function stepShot(t) {
 // while a yard beat with no camera of its own runs: the opening, the
 // reunion, and the kill in the deep. The rescue and the snatch hold through
 // their cameras, so a skipped camera lets the yard go with it.
-const HUSH_YARD = new Set(['leave', 'chat', 'fall', 'down', 'up', 'show', 'meet', 'part', 'freed']);
+// The kill and the finale after it hold the yard through the sheet that
+// ends them, until that is put down; and the kill settles at once, the
+// background still from its first frame (CUT_KILL_SETTLE_S).
+const HUSH_YARD = new Set(['leave', 'chat', 'fall', 'down', 'up', 'show', 'meet', 'part', 'freed', 'finale']);
+const AT_ONCE = new Set(['freed', 'finale']);
 export const holding = () =>
-  (!!S.beat.camera && !!S.shot && !S.shot.out) || HUSH_YARD.has(S.beat.yard);
+  (!!S.beat.camera && !!S.shot && !S.shot.out) || HUSH_YARD.has(S.beat.yard) || S.beat.sheet === 'freedsheet'
+  || (!!S.finale && S.finale.phase === 'held');
 
 export function stepHush(t) {
   const on = holding();
   if (on && !S.hushOn) S.hushAt = t;
   S.hushOn = on;
   const step = frameMs() / 1000;
+  const settle = AT_ONCE.has(S.beat.yard) ? CUT_KILL_SETTLE_S : CUT_SETTLE_S;
   S.hush = reducedMotion() ? (on ? 1 : 0)
-         : on ? Math.min(1, S.hush + step / CUT_SETTLE_S)
+         : on ? Math.min(1, S.hush + step / settle)
          : Math.max(0, S.hush - step / CUT_OUT_S);
   if (on) keepCast();
   else if (S.hush <= 0) dropCast();

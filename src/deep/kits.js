@@ -56,7 +56,14 @@ export function ring(g, cx, cy, r, tone, every = 1) {
   }
 }
 // The body, the same square every body in the deep is, at a cell position.
-export const body = (cx, cy) => drawBody(Math.round(cx * P), Math.round(cy * P));
+export const body = (cx, cy) => { if (!bare) drawBody(Math.round(cx * P), Math.round(cy * P)); };
+// A kit drawn with no body in it: the gear hung on a station, or on its way
+// there or back (render/finale.js). `REST` as ever, for the length of `fn`.
+let bare = false;
+export function kitOnly(fn) {
+  bare = true;
+  try { fn(); } finally { bare = false; }
+}
 // A build-up's pips under a body: `n` lit of `of`, all lit on a `flash`.
 // The shop's pips: a ring for one to come, a disc for a lit one, drawn in
 // screen pixels so the ring still reads when the deep is zoomed out. The

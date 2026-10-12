@@ -25,6 +25,7 @@ import { TYPE } from './jobs.js';
 import { onYard, stand } from './crew/body.js';
 import { swim } from './deep/arms.js';
 import { meetAt } from './snatch.js';
+import { finaleCast } from './finale.js';
 
 // The opening is two bodies on an empty yard, and whoever is there is in it.
 const OPENING = new Set(['leave', 'chat', 'fall', 'down', 'up', 'show']);
@@ -39,6 +40,9 @@ export function roleOf(w) {
   if (S.muckScene && w.uid === S.muckScene.uid) return 'lead';
   if (S.abyss && S.abyss.freeAt == null && w.uid === S.abyss.uid) return 'lead';
   if (herAtKill(w)) return 'lead';
+  // The finale's: the two of them, the one taking up her gear, and in the
+  // yard the whole crew, who are its crowd (finale.js).
+  if (finaleCast(w)) return 'lead';
   return ATTACKS.has(w.type) ? 'held' : 'by';
 }
 

@@ -146,7 +146,9 @@ function fighters(t) {
   if (frame.t === t) return frame.list;
   const list = [];
   for (const { w, st } of stationsNow()) {
-    const k = keyOf(st), key = k && ATTACKS[k] ? k : null, R = st.rung || 0;
+    // Its gear hung on the station, or on its way on or off it (render/finale.js),
+    // the body is the plain square.
+    const k = st.hung ? null : keyOf(st), key = k && ATTACKS[k] ? k : null, R = st.rung || 0;
     const x = Math.round(w.x) / P, restY = Math.round(w.y) / P - riseOf(st) - orbLift(st);   // lifted by a level-up, or the orb
     const f = { w, st, key, R, x, restY, a: null, a0: null, sauce: null, c: null, sim: 'pose' in w, dx: 0, dy: 0 };
     if (key && f.sim) {

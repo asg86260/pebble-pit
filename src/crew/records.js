@@ -120,7 +120,10 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored', 
                       // `S.stations[i].fighter` knows the body by: dropped,
                       // a reload seats a stranger and the station's record
                       // points at nobody (docs/wave-party.md)
-                      'station', 'uid'];
+                      'station', 'uid',
+                      // its place in the finale's crowd (finale.js), so a
+                      // reload under the sheet still walks it home after
+                      'parade'];
 
 // The five weapon crews a save from before the party may carry. No such
 // trade exists now; a body on one comes back a pod resident on the deep's
