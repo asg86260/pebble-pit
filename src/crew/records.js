@@ -13,7 +13,7 @@ import { syncWorkers } from './muster.js';
 import { resite, overCutMouth } from '../world.js';
 import { cutTop } from '../quarry.js';
 import { rebalance } from '../staffing.js';
-import { busyBuilderSites } from '../works.js';
+import { busyBuilderSites, busyDeepSites } from '../works.js';
 import { hushNotices } from '../notices.js';
 import { heldBodies } from '../snatch.js';
 import { standTop, rockTop, footing, solidNear, SOLID, belowYard } from '../route.js';
@@ -304,8 +304,10 @@ export const SAVE = {
     // its builders sent again: only a build starting turns spare hands into
     // builders, and a reload is not one. Only when there is a busy site,
     // because a second `rebalance` over a roster whose numbers never quite
-    // add up is a place a body can be lost.
-    if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
+    // add up is a place a body can be lost. The deep's sites as much as the
+    // yard's: the load's first deal is done before the works are read back,
+    // so it counts no delvers.
+    if (busyBuilderSites().length || busyDeepSites().length) { rebalance(); syncWorkers(); }
   },
   // The crew walks out by the counts (`syncWorkers`), which a reset does
   // itself once every count is nought.

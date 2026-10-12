@@ -436,10 +436,12 @@ export const reload = () => { persist(); restore(); buildShop(); };
 // in one process, so anything still standing in `S` survives into the load,
 // which hides the *order* things are restored in (a machine still running in
 // memory made `restore`'s rebalance clamp by accident). This blanks what a
-// fresh page would not have and makes the save do the work.
+// fresh page would not have and makes the save do the work. The works too,
+// which the load's deal is done before reading back.
 export const coldReload = () => {
   persist();
   S.machines = null;
+  S.works = {};
   restore();
   buildShop();
 };
