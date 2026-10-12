@@ -12,5 +12,5 @@ export const TUNING_ROWS = [
   // rock's spoil lands on the band straight off the shovel (`catchBelt`), so a
   // faster scoop finds nothing faster: the rung bought nothing you could see.
   tuneRow('ram', 'ram strike',
-          () => `the ram strikes ${MACHINE_TUNE}x harder`, 'yard', 'shack')
+          () => `the ram strikes ${MACHINE_TUNE}x harder`, 'shack', 'shack')
 ];

@@ -1988,6 +1988,31 @@ export const TESTS = [
     ];
   }],
 
+  // After the snatch the story's line sends the player to the wizards, and
+  // opening their board is the talking.
+  ['the story\'s card after the snatch says to talk to the wizards, and opening their board moves it on', async () => {
+    newRun();
+    await settle();
+    window.__serpentOn(true);
+    try {
+      window.__fullSites();
+      window.__crew(0, 4);
+      window.__snatch({ played: true, portal: false });
+      window.__answered('props', 'net', 'arch'); window.__meteor();
+      await settle(0.6); await sleep(1500);
+      const card = document.getElementById('objective');
+      const said = card.querySelector('.say')?.textContent || '';
+      window.__board('tower');
+      await settle(0.6); await sleep(1500);
+      const after = card.querySelector('.say')?.textContent || '';
+      window.__board(null);
+      return [
+        ok(said === 'talk to the wizards about what just happened', 'the line after the snatch', said),
+        ok(after !== said, 'opening the tower board moves it on', after),
+      ];
+    } finally { window.__serpentOn(null); }
+  }],
+
   // The owner's layout B (2026-10-10): the card as wide as its words up to
   // one cap in characters, the glyph in a column of its own, the bill's
   // numbers beside their coins and the buy only as wide as its price.
@@ -2228,6 +2253,41 @@ export const TESTS = [
          c && s ? `card ${c.left},${c.bottom} ${c.width} strip ${s.left},${s.bottom} ${s.width}` : 'no strip'),
       ok(one === 1 && back > 0, 'the refund half hands the waiting copy back and buys nothing', `${one} left, ${back} back`),
       ok(/building/i.test(after), 'and with nothing left waiting it says the copy is being built', after),
+    ];
+  }],
+
+  // The unlock tiles' bills fill like the story card's (billfill.js).
+  ['an unlock tile fills each coin of its bill by what the purse holds', async () => {
+    newRun();
+    await settle();
+    window.__crew(4);
+    window.__answered('props', 'net');
+    window.__grant({ dust: 6000 });
+    run(2);
+    window.__board('bench');
+    await sleep(400);
+    // The tile is offered once the purse can buy it and stays; spend the
+    // purse back to half the shack's bill.
+    window.__spend(state().stored - 75);
+    run(1);
+    await sleep(900);
+    const lines = () => [...document.querySelectorAll('#shop button[data-key^="unlock"] .tag .fill')];
+    const share = el => parseFloat(getComputedStyle(el, '::before').width) / el.getBoundingClientRect().width;
+    const seen = `${state().stored} ${lines().length}`;
+    const half = document.querySelector('#shop button[data-key="unlockshack"] .tag .fill');
+    const part = half ? share(half) : -1;
+    const wide = half ? half.getBoundingClientRect().width : 0;
+    window.__grant({ dust: 6000 });
+    run(2);
+    await sleep(900);
+    const met = half;
+    const full = met ? share(met) : -1;
+    const done = !!met?.classList.contains('done');
+    window.__board(null);
+    newRun();
+    return [
+      ok(!!half && Math.abs(part * wide - wide / 2) <= 2, 'a coin half in the purse fills half its line', `${part.toFixed(2)} of ${wide}px ${seen}`),
+      ok(Math.abs(full * wide - wide) <= 2 && done, 'and a met coin fills the whole line', `${full.toFixed(2)} done=${done}`),
     ];
   }],
 ];

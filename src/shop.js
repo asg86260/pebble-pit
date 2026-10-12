@@ -26,6 +26,7 @@ import { crewRows, crewSections, crewList, crewListSections, WHERE_WORDS } from 
 import { DEEP_ROWS, DEEP_SECTIONS } from './deep/rows.js';
 import { shown } from './tween.js';
 import { onTap } from './tap.js';
+import { wearBill } from './billfill.js';
 import { hangRibbon } from './ribbon.js';
 import { now as clockNow } from './clock.js';
 import { coarse } from './prefs.js';
@@ -172,11 +173,14 @@ export const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'spark'];
 // row wrote its bill in. The work's time is not part of it (the owner,
 // 2026-10-10). The story's card wears the same tag on its buy
 // (objbarrier.js), so the two cannot disagree.
+export const coinsOf = full => full.filter(([m]) => m !== 'time')
+  .sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0]));
+const isUnlock = u => u.key.startsWith('unlock');
+
 export function tagOf(u, full = billOf(u)) {
   const said = ([money, n]) =>
     `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`;
-  const bill = full.filter(([m]) => m !== 'time')
-    .sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0])).map(said).join('');
+  const bill = coinsOf(full).map(said).join('');
   return { bill };
 }
 
@@ -739,7 +743,11 @@ export function refresh(el, list, headcount) {
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's decisions are the only ones: none costs anything, and the
     // number each is about is the pot.
-    sayHTML(price, u.price ? u.price() : bill); sayHTML(time, '');
+    // An unlock tile's bill is lines that fill as each coin comes in
+    // (billfill.js); they replace the plain tag because the fill says the
+    // same have-or-short and how far, and the tag's cells are the lines.
+    if (!u.price && isUnlock(u)) { wearBill(price, coinsOf(full)); sayHTML(time, ''); }
+    else { sayHTML(price, u.price ? u.price() : bill); sayHTML(time, ''); }
     const off = u.price ? !!u.dead?.() : !!waits || !canPay(u);
     grey(row, off && !stands);
     // The hover, the lift and the lean key off `off`, never off `disabled`.

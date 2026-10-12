@@ -39,8 +39,9 @@ import noCores from './2026-10-09-no-cores.js';
 import noPin from './2026-10-10-no-pin.js';
 import firstMuckSeen from './2026-10-11-firstmuck-seen.js';
 import filterBalloon from './2026-10-11-filter-balloon.js';
+import dropFourthPot from './2026-10-12-drop-fourth-pot.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

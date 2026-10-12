@@ -175,3 +175,23 @@ group('an old save that has had a muck storm skips the first muck scene', async 
     ok(kept, 'and one without still gets it')
   ];
 });
+
+// The apothecary's cap went from four pots to three; an old save's fourth pot,
+// its batch and its stirrer's seat are dropped, with no refund.
+group('a save with four pots loads three, without the fourth\'s batch or stirrer', async () => {
+  const s = blobOf();
+  s.saveV = 13;
+  s.apothPots = 4;
+  s.stirrers = 4;
+  s.potTonics = ['stew', 'strong', 'brace', 'stew'];
+  s.brewAt = [0, 0, 0, 7000];
+  s.brewKeys = [null, null, null, 'stew'];
+  put(s);
+  yard.restore();
+  return [
+    ok(S.apothPots === 3, 'the pots are trimmed to three', `${S.apothPots}`),
+    ok(S.potTonics.length === 3 && !(S.brewAt[3] > 0) && !S.brewKeys[3], 'and the fourth\'s setting and batch go with it',
+       JSON.stringify([S.potTonics, S.brewAt, S.brewKeys])),
+    ok(S.stirrers <= 3, 'and no stirrer is left without a pot', `${S.stirrers}`)
+  ];
+});

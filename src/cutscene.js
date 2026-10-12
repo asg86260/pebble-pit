@@ -108,6 +108,22 @@ export function play(name) {
   lockScroller(true);
 }
 
+// The stretch of world a scene shows across, at its full pull-in and on its
+// spot: the shot's own when the scene has the camera, else where it would
+// look (a skipped scene's yard beat plays on without it). Snapped the way
+// `setZoom` snaps, so the width is the one the window will actually show.
+export function sceneFrame(name) {
+  const sc = sceneOf(name);
+  const c = S.shot && S.shot.name === name ? S.shot : null;
+  const k = c ? c.zoom : typeof sc.zoom === 'function' ? sc.zoom() : sc.zoom;
+  const unit = CELL * S.dpr;
+  const w = S.W / ((CELL / P) * Math.max(1, Math.round(unit * k)) / unit);
+  const cx = sc.spot ? sc.spot()
+           : c ? c.spotX
+           : S.shield ? S.shield.x + S.shield.w / 2 : S.camX + S.viewW / 2;
+  return { from: cx - w / 2, to: cx + w / 2 };
+}
+
 // A scene on its way out has let go as far as the player is concerned: the
 // click that would have skipped it lands in the yard instead.
 export const cutsceneRunning = () => !!S.shot && !S.shot.out;
