@@ -499,7 +499,7 @@ const hit = b => ({ x: b.x - HIT_X, y: b.y - HIT_Y,
 export const overRoster = (x, y) => posts().some(p => {
   if (p.fixed) return false;
   const b = boxes(p);
-  return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || pipAt(p, b, x, y) > 0;
+  return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y);
 });
 
 // The pip a point is over: { kind, at } where `at` counts from one inside the
