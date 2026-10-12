@@ -61,7 +61,7 @@ import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // tr
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
-import { wash, setPass, backInk, byInk, drawLetterbox } from './render/recede.js';
+import { wash, setPass, backInk, byInk, hudInk, drawLetterbox } from './render/recede.js';
 
 // The drawing side's public surface: the rest of the game imports every one of
 // these from render.js and has no business knowing which file each is in.
@@ -297,8 +297,10 @@ export { LAYERS };
 const FISH = new Set(['deep stream far', 'deep fish', 'deep stream near']);
 // The layers after the wash that are still the yard's background: drawn at
 // the receded share of their ink rather than washed.
-const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'roster counts', 'kit counts',
-                            'stock count', 'pot labels']);
+const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
+// The yard's reading, which is in no scene: faded right out while one holds,
+// on the recede's own number (render/recede.js, `hudInk`).
+const HUD = new Set(['pile marks', 'roster', 'roster counts', 'kit counts', 'stock count', 'counter']);
 // Bodies of either kind in one layer: drawn behind the wash and again over
 // it, each body sorted by `bodyInk`.
 const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
@@ -360,7 +362,8 @@ function drawHalf(deep) {
       setPass('back');
       continue;
     }
-    const ink = !held ? 1 : FISH.has(layer.name) ? byInk() : AFTER_WASH.has(layer.name) ? backInk() : 1;
+    const ink = !held ? 1 : FISH.has(layer.name) ? byInk() : HUD.has(layer.name) ? hudInk()
+              : AFTER_WASH.has(layer.name) ? backInk() : 1;
     if (ink <= 0) continue;
     if (ink < 1) ctx.globalAlpha = ink;
     drawLayer(layer, i, deep);

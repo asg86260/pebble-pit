@@ -7,16 +7,16 @@
 //
 // The scene is the first muck, reached the way a player reaches it: a dirty
 // sky, the yard's own storm, and the first body that goes for its muck.
-import { group, ok, run, runUntil, state, makeItRain } from './helpers.mjs';
+import { group, ok, run, runUntil, state, makeItRain, reloads } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { WORKER, CUT_BAND_CELLS } from '../src/config.js';
+import { WORKER, CELL } from '../src/config.js';
 import { outOfYard } from '../src/crew/records.js';
-import { bodyInk, setPass } from '../src/render/recede.js';
+import { bodyInk, setPass, bandCells, hudInk } from '../src/render/recede.js';
 import { roleOf } from '../src/stage.js';
 
 const onYard = w => !outOfYard(w) && !w.craft && !w.floating && w.homeward == null;
 const ink = w => { setPass('back'); const b = bodyInk(w); setPass('front'); const f = bodyInk(w); setPass('back'); return Math.max(b, f); };
-const bands = () => Math.round(S.hush * CUT_BAND_CELLS);
+const bands = () => Math.round(S.hush * bandCells());
 const mined = () => S.workers.reduce((n, w) => n + (w.mined || 0), 0);
 
 // Two of the gang on the rock and three haulers, a filthy sky, the storm let
@@ -33,13 +33,24 @@ function toTheMuck() {
 group('the first muck: the bands only while it holds, the haulers faded, the gang held and back at work after', async () => {
   const started = toTheMuck();
   let bandsOff = 0, full = 0, shown = 0, jump = 0, who = '', gangMoved = 0, gangSwung = 0, heldFrames = 0;
+  let hudLeft = 0, hudStep = 0, hudWas = hudInk(), hudLow = 1, hudAt = '', seenReloads = reloads;
   const was = new Map();
   let gang0 = null;
   for (let f = 0; f < 60 * 30 && (S.beat.camera || S.hush > 0); f++) {
     run(1 / 60);
     // the bands: up only while a beat has the camera, its way out included
     if (bands() > 0 && !S.beat.camera) bandsOff++;
-    if (bands() === CUT_BAND_CELLS) full++;
+    if (bands() === bandCells()) full++;
+    // the yard's reading: faded on the recede's own number, never popped --
+    // across a frame, which the harness's reload is not
+    const fresh = reloads !== seenReloads;
+    seenReloads = reloads;
+    if (!fresh && Math.abs(hudInk() - hudWas) > hudStep) {
+      hudStep = Math.abs(hudInk() - hudWas);
+      hudAt = `frame ${S.tick}, ${hudWas.toFixed(2)} to ${hudInk().toFixed(2)}, camera ${S.beat.camera}`;
+    }
+    hudWas = hudInk();
+    hudLow = Math.min(hudLow, hudWas);
     for (const w of S.workers) {
       if (!onYard(w) || w.falling) { was.delete(w.name); continue; }
       const p = was.get(w.name);
@@ -48,6 +59,7 @@ group('the first muck: the bands only while it holds, the haulers faded, the gan
     }
     if (S.hushOn && S.hush >= 1) {
       heldFrames++;
+      if (hudInk() > 0) hudLeft++;
       shown = Math.max(shown, S.workers.filter(w => onYard(w) && roleOf(w) === 'by' && ink(w) > 0).length);
       const gang = S.workers.filter(w => roleOf(w) === 'held');
       gang0 ??= new Map(gang.map(w => [w.name, { x: w.x, mined: w.mined || 0 }]));
@@ -67,6 +79,10 @@ group('the first muck: the bands only while it holds, the haulers faded, the gan
     ok(started, 'the first muck plays'),
     ok(full > 0 && heldFrames > 0, 'the bands step all the way in while it holds', `${full} frames at full, ${heldFrames} held`),
     ok(bandsOff === 0 && bandsAfter === 0, 'and are never up with no scene behind them', `${bandsOff} frames, ${bandsAfter} after`),
+    ok(bandCells() * CELL >= 0.08 * S.H, 'and stand a share of the window deep', `${bandCells()} cells on ${S.H}px`),
+    ok(hudLow === 0 && hudLeft === 0 && hudInk() === 1, 'the counter, the rosters and the pile marks are gone while it holds, and back after',
+       `${hudLeft} held frames with any, lowest ${hudLow}, ${hudInk()} after`),
+    ok(hudStep < 0.05, 'and fade rather than pop', `${hudStep.toFixed(3)} a frame at most, ${hudAt}`),
     ok(shown === 0, 'no bystander is drawn once it holds', `${shown}`),
     ok(jump < WORKER, 'nobody teleports', `${jump.toFixed(1)}px a frame, ${who}`),
     ok(gang0 && gang0.size > 0 && gangMoved === 0 && gangSwung === 0, 'the gang stand still and land nothing while it holds',

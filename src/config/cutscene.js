@@ -79,11 +79,19 @@ export const ABYSS_MAX_S = 20;        // a ceiling, never the design
 
 // --- held still, letterboxed (the owner's C, docs/mocks/cutscene-focus-2026-10-12.html)
 // While a scene holds the yard, flat black bands step in at the top and the
-// foot of the window, CUT_BAND_CELLS cells at full, a cell a step; everything
-// the scene is not about settles to CUT_RECEDE_INK of its ink over
-// CUT_SETTLE_S, the sky and the machines slowing to a stop with it; and the
-// camera glides to the scene's spot on an ease over the same stretch and
-// holds there. Letting go is CUT_OUT_S, the same in reverse.
-export const CUT_BAND_CELLS = 6;
+// foot of the window, each CUT_BAND_SHARE of the window's height at full,
+// whole cells of the window's grid a cell a step; everything the scene is not
+// about settles to CUT_RECEDE_INK of its ink over CUT_SETTLE_S, the sky and
+// the machines slowing to a stop with it, and the yard's reading -- the
+// counter, the rosters, the pile-full marks, the call to build the bench --
+// fades out with it; and the camera glides to the scene's spot on an ease
+// over the same stretch and holds there. Letting go is CUT_OUT_S, the same in
+// reverse.
+export const CUT_BAND_SHARE = 0.09;
+// In the deep the bands are black on the black water, so each carries a rule
+// on its inner edge, CUT_BAND_RULE_PX screen pixels of the deep's rung
+// CUT_BAND_RULE_TONE (ABYSS_TONES), as seen.
+export const CUT_BAND_RULE_PX = 2;
+export const CUT_BAND_RULE_TONE = 9;
 export const CUT_RECEDE_INK = 0.35;
 export const CUT_SETTLE_S = 1.6;

@@ -101,7 +101,11 @@ function drawNet(s, done, topY, cols) {
       // The head rope is solid all the way across; under it the strands run
       // both diagonals and cross, which is what makes diamonds.
       if (k && (c + k) % 4 && (c - k + 4 * cols) % 4) continue;
-      ctx.fillRect(s.x + c * P, topY + (off + k) * P, P, P);
+      // Ridden down to the ground, the mesh lies on it under the rock: no
+      // course hangs through the ground line.
+      const y = topY + (off + k) * P;
+      if (y + P > S.groundY) break;
+      ctx.fillRect(s.x + c * P, y, P, P);
     }
   }
 }

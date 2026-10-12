@@ -11,7 +11,7 @@ import { crewRows } from './crewboard.js';
 import { UPGRADES, lodgers, markSectionsSeen, canPay, forSale, building } from './upgrades.js';
 import { markDoneSeen } from './works.js';
 import { callOut, raiseBench } from './raise.js';
-import { cutsceneRunning } from './cutscene.js';
+import { recede } from './cutscene.js';
 import { busy } from './casino.js';
 import { FILTER_UPGRADES } from './filter.js';
 import { QUARRY_UPGRADES } from './quarry.js';
@@ -306,9 +306,9 @@ let callSize = { w: 0, h: 0 };
 const CALL_TEXT = raiseEl.textContent;
 let callAt = { x: null, y: null };
 
-// Hidden while a board is up (its z-index assumes that never overlaps), while
-// a cutscene has the yard, and while the view is in the deep, where there is
-// no bench to point at. When the bench's ground is off the window
+// Hidden while a board is up (its z-index assumes that never overlaps) and
+// while the view is in the deep, where there is no bench to point at; faded
+// while a scene holds the yard. When the bench's ground is off the window
 // (a narrow window opens on the rock) it stays at the edge nearest the bench
 // and says which way; pressing it turns the view there too (`raiseBench`).
 export function seatCall() {
@@ -316,9 +316,12 @@ export function seatCall() {
     if (!raiseEl.hidden) { raiseEl.hidden = true; callAt = { x: null, y: null }; }
     return;
   }
-  // A cutscene fades it out where it stands and back in after (style.css,
-  // `.scened`), rather than popping it off and on.
-  raiseEl.classList.toggle('scened', cutsceneRunning());
+  // A scene holding the yard fades it out where it stands and back in after,
+  // on the recede's own number, as the canvas's reading fades (render.js,
+  // `HUD`); untouchable while it is going (style.css, `.scened`).
+  const ink = 1 - recede();
+  raiseEl.classList.toggle('scened', ink < 1);
+  raiseEl.style.opacity = ink < 1 ? ink.toFixed(3) : '';
   if (raiseEl.hidden) {
     raiseEl.hidden = false;
     callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };

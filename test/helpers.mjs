@@ -49,6 +49,10 @@ let fileReloads = true;              // and the file's, see `storeChecks`
 // top of such a file; nowhere else.
 export const storeChecks = () => { fileReloads = false; };
 
+// How many reloads the harness has made, for a check that follows something
+// frame to frame across one: a reload is a fresh page, not a frame.
+export let reloads = 0;
+
 export function reloadCheck() {
   const S = yard.S;
   // Not during the opening, or a beat that has the yard. Neither is written
@@ -59,6 +63,7 @@ export function reloadCheck() {
   if (S.beat.yard || !S.beatsDone.includes('show')) return;
   const before = S.workers.map(w => ({ name: w.name, type: w.type, x: w.x, y: w.y }));
   window.__reload();
+  reloads++;
   // Matched by place in the list, not by name: the save writes the crew in
   // order and the load stands them up in order, and two of a big crew can
   // share a name.

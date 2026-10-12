@@ -222,6 +222,10 @@ this section; the release that switches it on moves these under Unreleased.
 
 - The garage and the house stand far enough apart that their counters never touch, and a counter hugs its pips with the + staying under the pointer while you press it (test/counter-gap.test.mjs).
 - The muck and poop tags over the yard always show as many cells as lie on the ground, never one off while it rains or the crew sweep (test/mess-tags.test.mjs).
+- A cutscene's black bands are deep enough to read as a film's, and in the deep a pale rule edges each so they show against the water (test/cutscene-hold.test.mjs).
+- During a cutscene the counter, the station counters, the pile-full warnings and the "build the bench" call fade out with the yard and fade back after (test/cutscene-hold.test.mjs).
+- The first trip down no longer jumps the picture up as its scene starts (`node tools/look.mjs abyss-intro`).
+- The net no longer hangs through the ground once the rock has ridden it down (the `net>` scene, run through).
 
 ## v0.5.2 — 2026-09-28
 

@@ -11,10 +11,11 @@
 // are sorted inside their layers, since the crew's layer holds the pair and
 // the haulers both: `bodyInk` says how much of a body each pass draws.
 
-import { CELL, CUT_BAND_CELLS, CUT_RECEDE_INK } from '../config.js';
+import { CELL, CUT_BAND_SHARE, CUT_BAND_RULE_PX, CUT_BAND_RULE_TONE, CUT_RECEDE_INK, ABYSS_TONES } from '../config.js';
 import { S } from '../state.js';
 import { recede } from '../cutscene.js';
 import { roleOf } from '../stage.js';
+import { darkPage, turned } from '../ink.js';
 import { canvas, ctx } from './ctx.js';
 
 // Which half of the picture is being painted: the receding yard ('back') or
@@ -59,13 +60,32 @@ export function wash() {
 // The share of ink left on a background layer painted after the wash.
 export const backInk = () => 1 - recede() * (1 - CUT_RECEDE_INK);
 
+// The yard's reading -- the counter, the rosters and their counts, the
+// pile-full marks -- is in no scene: it fades right out with the recede and
+// comes back with it, on the same number. The call to build the bench, which
+// is the page's, reads it too (board.js, `seatCall`).
+export const hudInk = () => 1 - recede();
+
+// How many cells deep each band stands at full: a share of the window's
+// height, in whole cells of the window's grid.
+export const bandCells = () => Math.max(1, Math.round(S.H * CUT_BAND_SHARE / CELL));
+
 // The bands: a cell of the window's own grid a step, stepping in and out with
-// the hush rather than sliding, flat black over the finished picture.
+// the hush rather than sliding, flat black over the finished picture. In the
+// deep that black is the water's own, so a rule of the deep's light tone
+// stands on each band's inner edge; drawn after the deep's negative, its tone
+// is written as seen (render/fightnums.js).
+const seen = c => darkPage ? turned(c) : c;
 export function drawLetterbox() {
-  const n = Math.round(S.hush * CUT_BAND_CELLS);
+  const n = Math.round(S.hush * bandCells());
   if (n <= 0) return;
   const h = n * CELL;
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, S.W, h);
   ctx.fillRect(0, S.H - h, S.W, h);
+  if (S.view !== 'deep') return;
+  ctx.fillStyle = seen(ABYSS_TONES[CUT_BAND_RULE_TONE]);
+  ctx.fillRect(0, h - CUT_BAND_RULE_PX, S.W, CUT_BAND_RULE_PX);
+  ctx.fillRect(0, S.H - h, S.W, CUT_BAND_RULE_PX);
+  ctx.fillStyle = '#000';
 }

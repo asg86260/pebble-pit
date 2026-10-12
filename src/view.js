@@ -101,8 +101,13 @@ export function holdDeepShot(f) {
 function frameShot() {
   setZoom(deepZoom());
   if (!shot) { S.camLockY = null; clampCam(); return; }
+  // Held between the deep's top and its floor at the foot of the window. A
+  // window taller than the deep has no such room, and is held at the floor:
+  // clamped to the top instead, the first frame of a scene jumped the whole
+  // picture up off the framing the way down arrived on.
   const rest = deepFloor() + DEEP_FLOOR_MARGIN - S.viewH;
-  const y = shot.y == null ? rest : Math.max(deepTop(), Math.min(rest, shot.y - S.viewH / 2));
+  const top = Math.min(deepTop(), rest);
+  const y = shot.y == null ? rest : Math.max(top, Math.min(rest, shot.y - S.viewH / 2));
   S.camLockY = rest + (y - rest) * (shot.w ?? 1);
   S.camX = shot.x - S.viewW / 2;
   S.camTo = null;
