@@ -893,6 +893,11 @@ export const SCENES = {
   shack: { about: 'the rock', say: 'the shack beside a big rock, the ram parked',
     run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__buy('ram');
                  window.__finish(); window.__jump(8); window.__fast(6); window.__look(st().shackX - 400); } },
+  // A ram strike rung queued: its glyph floats over the shack, not the boulder.
+  ramrung: { about: 'the rock', say: 'a ram strike rung in line: its glyph over the shack',
+    run: () => { rich(); window.__kit({ breakers: 3 }); window.__shack(); window.__buy('ram');
+                 window.__finish(); window.__jump(8); window.__fast(6); window.__buy('tuneram');
+                 window.__fast(0.5); window.__look(st().shackX - 400); } },
   // Mined away over her drop spot but not finished: she is behind the rock
   // and shows exactly where its cells are gone.
   rockhalf: { about: 'the rock', say: 'the rock mined away over the one buried, the rest standing',
