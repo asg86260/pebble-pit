@@ -77,13 +77,13 @@ export const BEATS = [
     enter: startRescue, step: stepRescue, skip: cutRescue },
 
   // --- the hole: the tearing, and the drowning ----------------------------
-  // Each is the gulp starting, which a restored save (its gulp already spent)
-  // never shows, so a reload replays nothing; `drowned` says which of the two
-  // moments a fresh gulp is.
+  // Each is the gulp owed, which a restored save (its gulp already spent)
+  // never shows, so a reload replays nothing; `riftDue` says which of the two
+  // moments it is, and the moment waits for the camera (rift.js, `due`).
   { key: 'tear', owns: 'camera', next: null,
-    when: cue => cue.gulp && !S.drowned, enter: () => play('tear'), step: stepShot, skip: release },
+    when: cue => cue.gulp && S.riftDue === 'tear', enter: () => play('tear'), step: stepShot, skip: release },
   { key: 'drown', owns: 'camera', next: null,
-    when: cue => cue.gulp && S.drowned, enter: () => play('drown'), step: stepShot, skip: release },
+    when: cue => cue.gulp && S.riftDue === 'drown', enter: () => play('drown'), step: stepShot, skip: release },
 
   // --- the shields' answers -----------------------------------------------
   { key: 'props', owns: 'camera', next: null,

@@ -4,7 +4,7 @@
 // camera for the length of a scene; any click skips. No scene zooms (the
 // owner's C): the camera glides and holds at the yard's own size. Times are
 // wall seconds.
-export const CUT_TEAR_S = 6;         // how long the tearing is watched
+export const CUT_TEAR_S = 6;         // how long the tearing is watched, once the camera is on it
 export const CUT_DROWN_S = 5;        // the drowning runs longer than its gulp, and no longer than its pool takes to read
 // The snatch, watched from the plank (DESIGN.md, "From the rescue straight into
 // the snatch"), for as long as it plays.
@@ -87,3 +87,8 @@ export const ABYSS_MAX_S = 20;        // a ceiling, never the design
 export const CUT_BAND_CELLS = 6;
 export const CUT_RECEDE_INK = 0.35;
 export const CUT_SETTLE_S = 1.6;
+// and the glide's top speed, in the yard's pixels a second: a longer way
+// takes longer than the settle rather than whipping across the yard, up to
+// CUT_PAN_MAX_S, past which the whole length of the yard is not worth waiting on
+export const CUT_PAN_PX_S = 1300;
+export const CUT_PAN_MAX_S = 3;

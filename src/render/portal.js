@@ -18,11 +18,12 @@ import { P, PORTAL_RX, PORTAL_RY, PORTAL_TURN_MS, ABYSS_TONES, ABYSS_MAGIC_TONES
          PORTAL_CRUMBS, PORTAL_CRUMB_MS, PORTAL_CRUMB_TURNS } from '../config.js';
 import { S, pit } from '../state.js';
 import { now } from '../clock.js';
-import { mouthX, portalCircle, deepPortal, portalReach } from '../deep/place.js';
+import { portalCircle, deepPortal, portalReach } from '../deep/place.js';
 import { pouringPortal } from '../wizard.js';
 import { WORKER, MAGIC_TONES } from '../config.js';
 import { abyssLine, pitDepth } from '../pit.js';
 import { ctx } from './ctx.js';
+import { ringAt } from '../snatch.js';
 import { cellImage } from './cellimage.js';
 import { GREYS, PURPLES } from './deep.js';
 import { abyssRung } from './abyssfield.js';
@@ -81,7 +82,7 @@ function drawSnatch() {
   const k = snatchOpen();
   if (k <= 0) return;
   const t = now();
-  const cx = mouthX(), cy = snap(abyssLine());
+  const { x: cx, y: cy } = ringAt();          // on the take (snatch.js)
   const rx = Math.max(P, PORTAL_RX * k), ry = Math.max(P / 2, PORTAL_RY * k);
   const turn = t / PORTAL_TURN_MS;
   const top = ABYSS_MAGIC_TONES.length - 1;

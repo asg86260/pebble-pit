@@ -58,13 +58,15 @@ const watch = (kind) => {
   const seat = state().camX;
   const zoom0 = state().zoom;
   window.__next();
-  let started = null, onSpan = false, walked = false, ended = null, frames = 0;
+  let started = null, onSpan = false, walked = false, ended = null, frames = 0, settled = null;
   let pos = state().workerPos.join(' ');
   while (frames < 60 * 40) {
     run(1 / 60);
     frames++;
     const s = state();
     if (s.beat.camera === kind && started == null) started = { frames, rockFall: s.rockFall, zoom: s.zoom };
+    // the frame the camera has arrived, and how far the rock had come by then
+    if (s.beat.camera === kind && s.shotSettled && settled == null) settled = { frames, rockFall: s.rockFall, camX: s.camX };
     if (s.beat.camera === kind) {
       // stood on the span: the seat's center within a body of it, once the glide is in
       if (Math.abs(s.camX + s.viewW / 2 - spanX) < 30) onSpan = true;
@@ -75,7 +77,7 @@ const watch = (kind) => {
     if (started && !s.beat.camera && ended == null) { ended = { frames, shield: s.shield && s.shield.kind, held: s.rockHeld, rockFall: s.rockFall, zoom: s.zoom }; }
     if (ended && frames > ended.frames + 120) break;
   }
-  return { started, onSpan, walked, ended, seat, zoom0, spanX, camAfter: state().camX + state().viewW / 2 };
+  return { started, settled, onSpan, walked, ended, seat, zoom0, spanX, camAfter: state().camX + state().viewW / 2 };
 };
 
 for (const kind of ['props', 'net', 'arch']) {
@@ -87,6 +89,11 @@ for (const kind of ['props', 'net', 'arch']) {
       ok(!!w.started, `a scene named ${kind} runs`, JSON.stringify(w.started)),
       ok(w.started && w.started.rockFall > 0, 'and it starts while the rock is still in the sky',
          w.started && `${w.started.rockFall} to fall`),
+      // The rock waits up there for the camera (rock.js, `awaitingShot`): it
+      // has not come down a cell while the camera was on its way.
+      ok(w.started && w.settled && w.started.rockFall - w.settled.rockFall < 6,
+         'and the rock waits in the sky until the camera has arrived',
+         w.settled && `${w.started.rockFall} -> ${w.settled.rockFall} by the arrival`),
       ok(w.onSpan, 'it is stood on the span', `span ${w.spanX}`),
       ok(w.walked, 'and the yard kept walking under it'),
       ok(!!w.ended, 'it lets go', JSON.stringify(w.ended)),
