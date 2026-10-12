@@ -1478,6 +1478,12 @@ export const SCENES = {
                  window.__buy('balloon'); window.__finish(); window.__buy('balloon'); window.__finish();
                  window.__air({ purifiers: 2 }); window.__fast(14);
                  window.__look(st().filterX - 200); } },
+  // The house just finished, with its own balloon rising from the first post.
+  filterballoon: { about: 'the house and the sky', say: 'the air filter just built, its balloon going up',
+    run: () => { rich(); window.__crew(0, 0, 1, 1); window.__machine('ram', { bought: true });
+                 S.crew += 4; window.__air({ rains: 1, haze: 2600 }); S.seenAir = true; window.__fast(2);
+                 window.__buy('unlockfilter'); window.__finish(); window.__fast(5);
+                 window.__look(st().filterX - 200); } },
   // The shed and its dial at three readings (DESIGN.md, "The air filter").
   filterclean: { about: 'the house and the sky', say: 'the air filter under a clean sky',
     run: () => { rich(); window.__air({ open: true, haze: 0 }); window.__fast(20);

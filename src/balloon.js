@@ -44,12 +44,24 @@ export const craftCount = () => CRAFT.length;
 
 // What one more costs: a finite ladder in dust on the house's own board.
 // `extra` is the craft already paid for and not yet moored.
-export const craftCost = (extra = 0) => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, CRAFT.length + extra));
+export const craftCost = (extra = 0) => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, bought() + extra));
 
 // Bought moored, with nobody in it, like every other station that sells the
 // room before the body.
 export function buyCraft() {
   CRAFT.push({ phase: 'moored', t: 0, hang: false, sky: null });
+}
+
+// The craft paid for: the house's own (`S.craftGift`) is not on the row's
+// ladder, so the first purchase is still its first rung.
+export const bought = () => CRAFT.length - (S.craftGift | 0);
+
+// The house's own, moored the frame the house is finished.
+export function giveCraft() {
+  if (S.craftGift) return false;
+  S.craftGift = 1;
+  buyCraft();
+  return true;
 }
 
 // --- the posts ----------------------------------------------------------------------
