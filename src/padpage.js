@@ -67,6 +67,10 @@ export function focusables(sc) {
 }
 
 // --- the focus ----------------------------------------------------------------
+// The pad's focus on a row is the page's focus wherever the row can hold it.
+// A greyed card is a disabled button and cannot, so the pad keeps its own
+// note of the row (`on`), the marker stands on it, and A on it does what a
+// click on it does, which is nothing.
 let on = null;          // the row with the focus
 let onKey = null;       // and what it was, to find it again after a rebuild
 let onRect = null;
@@ -102,7 +106,7 @@ export function focusEl(el, t = performance.now()) {
 export const focused = () => on;
 export function dropFocus() {
   if (on && asked) hover(on, 'out');
-  on = null; onKey = null; asked = false;
+  on = null; onKey = null; onRect = null; asked = false;
   if (aimedSpace() === 'page') aim(null);
 }
 
@@ -111,7 +115,12 @@ export function dropFocus() {
 export function keepFocus(sc, t) {
   const list = focusables(sc);
   if (!list.length) { if (on) dropFocus(); return null; }
-  if (on && list.includes(on)) return on;
+  if (on && list.includes(on)) {
+    // A row on a board still fading in will not take the page's focus the
+    // frame it is asked; asked again until it has.
+    if (document.activeElement !== on) try { on.focus({ preventScroll: true }); } catch {}
+    return on;
+  }
   const same = onKey && list.find(el => keyOf(el) === onKey);
   if (same) { focusEl(same, t); return same; }
   let best = list[0];

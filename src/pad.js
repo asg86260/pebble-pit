@@ -653,7 +653,10 @@ let fakeT = 0;
 const fakeStep = (dt = 1 / 60) => { fakeT = Math.max(fakeT + dt * 1000, performance.now()); stepPad(fakeT); paintPad(fakeT); };
 export const PAD_HANDLE = {
   on() { fakePad(fake); return true; },
-  off() { fakePad(null); for (const b of fake.buttons) { b.pressed = false; b.value = 0; } fake.axes = [0, 0, 0, 0]; was = null; return true; },
+  // Unplugged, and the pad put to sleep as a mouse move would, so a check
+  // after this one finds no marker over its picture.
+  off() { fakePad(null); for (const b of fake.buttons) { b.pressed = false; b.value = 0; } fake.axes = [0, 0, 0, 0];
+          letAllGo(); was = null; sleep(); return true; },
   down(name) { fakePad(fake); const b = fake.buttons[BUTTON[name]]; b.pressed = true; b.value = 1; },
   up(name) { const b = fake.buttons[BUTTON[name]]; b.pressed = false; b.value = 0; },
   stick(x = 0, y = 0, right = false) { fakePad(fake); fake.axes[right ? 2 : 0] = x; fake.axes[right ? 3 : 1] = y; },
