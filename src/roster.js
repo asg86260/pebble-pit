@@ -16,8 +16,7 @@ import { JOB_MACHINE, running } from './machines.js';
 import { assign, idle } from './staffing.js';
 import { hats, worn, spareKit, roomAt, capOf, handsOf } from './levels.js';
 import { KIT_MARK, TRADE_OF, liftsOf } from './kit.js';
-import { JOB, DEEP_JOBS, TYPE, TYPE_OF } from './jobs.js';
-import { stationsBuilt, stationById, stationMid, canMoveIn, canMoveOut, moveFighter } from './deep/party.js';
+import { JOB, DEEP_JOBS, TYPE_OF } from './jobs.js';
 import { shown, onSnap } from './tween.js';
 import { garage, hasGarage } from './crew/lifts.js';
 import { HATS, HATS_TIGHT, spriteW, spriteH } from './sprites.js';
@@ -73,31 +72,21 @@ let POSTS = null;
 const yardPosts = () => (POSTS ||= STATIONS.filter(r => r.post && r.post.job && !DEEP_JOBS.includes(r.post.job))
                                           .map(postOf));
 
-// The deep's: one post under each station standing, keyed by its id. A
-// station holds one fighter, so the count is nought or one, and the two
-// buttons move a fighter between stations (`moveFighter`) rather than
-// making or unmaking one.
-const partyPost = st => ({
-  key: `station:${st.id}`, job: JOB.FIGHT, station: st.id, kit: false, fixed: false, deep: true,
-  show: () => true,
-  at: () => stationMid(st),
-  y: () => deepFloor() + DEEP_POST_DOWN
-});
 // The garage's: one pip a forklift, under the garage. Nobody is put on a
 // forklift, so like carrying it is read, not set.
 const GARAGE_POST = {
-  key: 'garage', job: null, lifts: true, station: null, kit: false, fixed: true,
+  key: 'garage', job: null, lifts: true, kit: false, fixed: true,
   show: hasGarage,
   at: () => garage().x + GARAGE_W / 2,
   y: () => null
 };
-const allPosts = () => [...yardPosts(), GARAGE_POST, ...stationsBuilt().map(partyPost)];
+const allPosts = () => [...yardPosts(), GARAGE_POST];
 
 // How many stand at a post, and whether each of its buttons would do anything.
-const count = p => (p.lifts ? liftsOf() : p.station ? (stationById(p.station)?.fighter ? 1 : 0) : S[p.job]);
-const canLess = (p, n) => (p.station ? canMoveOut(p.station) : n > 0);
-const canMore = (p, spare) => (p.station ? canMoveIn(p.station) : spare > 0 && roomAt(p.job) > 0);
-const press = (p, d) => (p.station ? moveFighter(p.station, d) : assign(p.job, d));
+const count = p => (p.lifts ? liftsOf() : S[p.job]);
+const canLess = (p, n) => n > 0;
+const canMore = (p, spare) => spare > 0 && roomAt(p.job) > 0;
+const press = (p, d) => assign(p.job, d);
 
 // --- the seats ----------------------------------------------------------------
 // A station with a floor plan is counted in seats: a pip a place to stand,
@@ -107,15 +96,13 @@ const press = (p, d) => (p.station ? moveFighter(p.station, d) : assign(p.job, d
 // holds, and every one of them still gets a pip.
 const seatsOf = p => {
   if (p.fixed) return 0;
-  const cap = p.station ? 1 : capOf(p.job);
+  const cap = capOf(p.job);
   return Number.isFinite(cap) && cap >= 1 ? Math.max(cap, count(p)) : 0;
 };
 
 // Who is at this post, as bodies: the count says who is assigned, and only a
 // body can say whether it has got there.
-const bodiesOf = p => (p.station
-  ? S.workers.filter(w => w.type === TYPE.FIGHTER && w.station === p.station)
-  : S.workers.filter(w => w.type === TYPE_OF[p.job]));
+const bodiesOf = p => S.workers.filter(w => w.type === TYPE_OF[p.job]);
 
 // On its way: a commute whose last leg is the work (crew/commute.js), the
 // hat fetched first included. A hat errand ends on 'back', not 'work': that
@@ -146,7 +133,7 @@ function walked(w) {
 const leftAt = new Map();
 onSnap(() => { leftAt.clear(); setOut.clear(); });
 function leaving(p, on) {
-  const key = p.station || p.job, t = now();
+  const key = p.job, t = now();
   let m = leftAt.get(key);
   if (!m) leftAt.set(key, m = { n: on, out: [] });
   if (on < m.n && !reducedMotion()) for (let i = on; i < m.n; i++) m.out.push(t);
@@ -240,7 +227,7 @@ function seatPips(p) {
 // The rock, carrying and the garage have no seats to count: the rock has no
 // floor plan, carrying is not a place, and nobody is put on a forklift. Each
 // is a pip a body all the same, solid where a body is at work.
-const crowded = p => !p.station && !seatsOf(p) && (p.fixed || !Number.isFinite(capOf(p.job)));
+const crowded = p => !seatsOf(p) && (p.fixed || !Number.isFinite(capOf(p.job)));
 
 function crowdPips(p) {
   if (p.lifts) return { top: [], plain: Array.from({ length: liftsOf() }, () => ({ k: 3 })) };
@@ -665,7 +652,7 @@ export function drawRosterCounts(ctx, screenAt) {
       continue;
     }
     const at = screenAt(b.num.x + b.num.w / 2, b.num.y);
-    ctx.fillText(String(Math.round(shown('roster:' + (p.station || p.job), count(p)))), Math.round(at.x), Math.round(at.y));
+    ctx.fillText(String(Math.round(shown('roster:' + p.job, count(p)))), Math.round(at.x), Math.round(at.y));
     // What the station owns, not what is being worn: the number says what is
     // waiting there for the next body you send. No second line where the
     // badge already wears the hat (see `drawRoster`).
@@ -693,15 +680,15 @@ export function rosterReport() {
     const set = b.counters;
     const mid = q => [q.x + q.w / 2, q.y + q.h / 2];
     const all = set ? set.list.flatMap(c => c.boxes) : [];
-    return { key: p.key, job: p.job, station: p.station || null, n: count(p),
+    return { key: p.key, job: p.job, n: count(p),
              // The counter's ground, left and right, for the checks that keep two apart.
              span: [b.less.x, b.more.x + b.more.w], hats: hats(p.job), worn: worn(p.job),
              spareKit: spareKit(p.job), fixed: !!p.fixed, hitW: H.w, hitH: H.h,
-             room: p.station ? 1 - count(p) : p.lifts ? null : Math.min(99, roomAt(p.job)),
+             room: p.lifts ? null : Math.min(99, roomAt(p.job)),
              // What the station holds now (1 while a machine runs) and what it
              // would hold by hand; without both a check cannot tell a capped
              // station from a small one.
-             cap: p.station ? 1 : capOf(p.job) === Infinity ? null : capOf(p.job),
+             cap: capOf(p.job) === Infinity ? null : capOf(p.job),
              // Whether it is *working* is `n`, two fields up.
              machine: machineAt(p.job),
              run: [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2],

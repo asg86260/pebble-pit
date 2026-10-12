@@ -27,7 +27,6 @@ import { swim, working, feet, mid } from './arms.js';
 import { haulSpeed } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { syncWorkers } from '../crew/muster.js';
-import { retask } from '../crew/commute.js';
 
 // --- the queries --------------------------------------------------------------------
 export const stationById = id => S.stations.find(s => s.id === id) || null;
@@ -216,43 +215,6 @@ export function bindNew(w) {
   const st = S.stations.find(waiting);
   if (!st || !w.uid) return false;
   take(st, w);
-  return true;
-}
-
-// The roster post's +/-: one fighter a station, moved between stations,
-// never made or unmade. `-` sends this station's fighter to the oldest
-// built station standing empty; `+` fetches the fighter of the newest other
-// station that has one. Either swims.
-export const canMoveOut = id => {
-  const st = stationById(id);
-  return !!st && !!st.fighter && S.stations.some(o => o !== st && o.built && !o.fighter);
-};
-export const canMoveIn = id => {
-  const st = stationById(id);
-  return !!st && st.built && !st.fighter && S.stations.some(o => o !== st && o.fighter);
-};
-export function moveFighter(id, dir) {
-  const st = stationById(id);
-  if (!st) return false;
-  let from, to;
-  if (dir < 0) {
-    if (!canMoveOut(id)) return false;
-    from = st;
-    to = S.stations.find(o => o !== st && o.built && !o.fighter);
-  } else {
-    if (!canMoveIn(id)) return false;
-    to = st;
-    from = [...S.stations].reverse().find(o => o !== st && o.fighter);
-  }
-  const w = fighterAt(from);
-  to.fighter = from.fighter;
-  from.fighter = null;
-  if (w) {
-    w.station = to.id;
-    // The same job at another place: sent there the way any body is.
-    retask(w, TYPE.FIGHTER);
-  }
-  S.shopStale = true;
   return true;
 }
 

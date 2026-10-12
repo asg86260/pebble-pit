@@ -23,7 +23,7 @@ import { capOf, roomAt } from './levels.js';
 // (upgrades/rows-kit.js).
 // The yard's jobs only. The deep's one job is not a count on `S`: a fighter
 // is a manned station (docs/wave-party.md), set by the party (`seatUpTo`,
-// `moveFighter`) and read here as `fightersOn`.
+// and the station it first swims to) and read here as `fightersOn`.
 export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD];
 
 // Bodies on no job. They are the haulers. Builders are not subtracted here:
@@ -211,7 +211,7 @@ const forgive = job => { for (const w of S.workers) if (w.lentFrom === job) dele
 //
 // A body keeps to its half (DESIGN.md, "Two crews and a portal"): a yard
 // job takes the yard's spare hands. The deep's fighters are not assigned by
-// count; a station's post moves them (`moveFighter` in deep/party.js).
+// count: each stays at the station it first swims to.
 export function assign(job, d) {
   if (!JOBS.includes(job)) return;
   if (d > 0 && yardSpare() < 1) return;

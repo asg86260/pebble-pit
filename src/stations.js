@@ -84,7 +84,7 @@ function partyRow(id) {
     },
     get glyph() { return KINDS[st()?.kind]?.glyph || 'crate'; },
     get empty() { return 'nothing to learn yet'; },
-    // The fighter's post, under the station: one body at most (`moveFighter`).
+    // The fighter, one a station: the deep draws no counter for it.
     post: { key: `${id}job`, job: JOB.FIGHT, station: id },
     // Open once it stands: a Recruit's board is where its kind is picked.
     open: () => !!st() && st().built,
