@@ -74,15 +74,18 @@ const SHIELD = {
 };
 const sceneOf = name => SCENES[name] || SHIELD;
 
-// What every scene is about: the rock and whoever is under it, a shield over
-// it, the two of them, and the serpent in all its shapes, with what the
-// pointer is holding. Everything else on the yard recedes.
-const FRONT = ['buried', 'rock', 'shield', 'rock sand', 'chips', 'shocks', 'intro', 'snatch',
-               'serpent diving', 'serpent', 'barrier', 'freed', 'charge', 'held', 'pointed', 'cursor'];
+// What every scene is about: the two of them and the serpent in all its
+// shapes, with what the pointer is holding. A shield's answer and the yard's
+// own beats (the opening, the reunion) are about the rock as well, and
+// whoever is under it; every other scene lets the rock recede with the yard
+// -- the first muck is the walker, not the gang's hill behind it.
+const FRONT = ['intro', 'snatch', 'serpent diving', 'serpent', 'barrier', 'freed', 'charge',
+               'held', 'pointed', 'cursor'];
+const ROCK = ['buried', 'rock', 'shield', 'rock sand', 'chips', 'shocks'];
 const fronts = new Map();
 export function frontLayers() {
   const key = S.shot && S.beat.camera ? S.shot.name : '';
-  if (!fronts.has(key)) fronts.set(key, new Set([...FRONT, ...(SCENES[key]?.front || [])]));
+  if (!fronts.has(key)) fronts.set(key, new Set([...FRONT, ...(SCENES[key] ? SCENES[key].front || [] : ROCK)]));
   return fronts.get(key);
 }
 
