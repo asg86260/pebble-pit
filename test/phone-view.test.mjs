@@ -8,18 +8,21 @@
 // The same checks pass trivially on a desk, which is why they are stood at a
 // phone.
 import { group, ok, state, run, runUntil, openSites, SEED, yard, WORKER } from './helpers.mjs';
-import { PROP_FROM, NET_COST, ARCH_COST, P, shieldWidth, CUT_SETTLE_S } from '../src/config.js';
+import { CELL, PROP_FROM, NET_COST, ARCH_COST, P, shieldWidth, CUT_SETTLE_S } from '../src/config.js';
 import { rockWidthAt } from '../src/rock.js';
 
 // A portrait phone, as the page reports it. `__seed` lays the world out again
 // through `resize`, which reads the window from the document, so the size is
 // set first and the yard stood up after.
 const PHONE = { W: 390, H: 844 };
+const DESK_ZOOM = CELL / P;              // what the desk draws the yard at
+const LATE_ROCK = 15;
 const phone = () => {
   document.documentElement.clientWidth = PHONE.W;
   document.documentElement.clientHeight = PHONE.H;
   globalThis.innerWidth = PHONE.W;
   globalThis.innerHeight = PHONE.H;
+  window.__coarse(true);                 // a thumb: the yard draws smaller (world.js, `yardCell`)
   window.__seed(SEED);
 };
 
@@ -37,12 +40,12 @@ const inView = (x, w) => {
 // rock comes down on -- glided to the middle of the frame and held there. The
 // rock is the first whose arch is wider than the view, so the check is stood
 // where the framing could have been tempted to give.
-group("a shield's answer is centered on its span at a phone's width, at the yard's zoom", async () => {
+group("a shield's answer holds the whole span in frame at a phone's width, at the phone's zoom", async () => {
   phone();
   window.__reset();
   const yardZoom = state().zoom;
-  let archFrom = PROP_FROM;
-  while (shieldWidth('arch', rockWidthAt(archFrom) * P) <= PHONE.W / yardZoom) archFrom++;
+  // A late rock, where the arch is at its widest: the stock scenes use rock 2.
+  const archFrom = Math.max(PROP_FROM, LATE_ROCK);
   window.__crew(2, 1);
   window.__jump(archFrom);
   window.__give(40000);
@@ -64,7 +67,7 @@ group("a shield's answer is centered on its span at a phone's width, at the yard
   window.__next();
   // The scene, a sixtieth at a time: the zoom on every frame of it, and once
   // the glide in has had its CUT_SETTLE_S, the view's middle on the span's.
-  let started = null, frames = 0, zoomed = 0, off = 0, held = 0;
+  let started = null, frames = 0, zoomed = 0, off = 0, held = 0, cut = 0;
   while (frames < 60 * 40) {
     run(1 / 60);
     frames++;
@@ -72,6 +75,7 @@ group("a shield's answer is centered on its span at a phone's width, at the yard
     if (s.beat.camera === 'arch' && !s.shotOut) {
       started ??= frames;
       if (s.zoom !== yardZoom) zoomed++;
+      if (!inView(span.x, span.w)) cut++;
       if (frames - started > 60 * CUT_SETTLE_S) {
         held++;
         if (Math.abs(yard.S.camX + yard.S.viewW / 2 - middle) > P) off++;
@@ -81,9 +85,12 @@ group("a shield's answer is centered on its span at a phone's width, at the yard
   }
   return [
     ok(started != null, 'the scene runs', `${started}`),
-    ok(span.w > PHONE.W / yardZoom, 'and the span is wider than the yard-zoom view',
-       `span ${span.w}, window ${PHONE.W}, zoom ${yardZoom}`),
-    ok(zoomed === 0, "the view holds the yard's zoom the whole way", `${zoomed} frames off ${yardZoom}`),
+    ok(span.w > PHONE.W / DESK_ZOOM, 'and the span is wider than a desk-zoom view',
+       `span ${span.w}, window ${PHONE.W}, desk zoom ${DESK_ZOOM}`),
+    ok(yardZoom < DESK_ZOOM, 'the phone draws the yard smaller than the desk', `${yardZoom} against ${DESK_ZOOM}`),
+    ok(rockWidthAt(archFrom) >= 1 && state().rock >= LATE_ROCK - 1, 'at a late rock', `rock ${state().rock}`),
+    ok(cut === 0, 'both feet inside the frame on every frame of the scene', `${cut} frames with a foot off`),
+    ok(zoomed === 0, 'and the zoom never changes during it', `${zoomed} frames off ${yardZoom}`),
     ok(held > 0 && off === 0, "and holds the span's middle in the middle of the frame",
        `${off} of ${held} frames off it`),
   ];

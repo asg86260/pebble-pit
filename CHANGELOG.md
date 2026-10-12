@@ -133,6 +133,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- On a phone the yard is drawn smaller, 130 cells across at once, so every shield's whole answer fits upright and no scene zooms (test/phone-view.test.mjs).
 - Every cutscene holds the yard still and letterboxed: black bands step in, everything but the scene's subjects fades back, the haulers fade out and the attackers freeze until it lets go (test/cutscene-hold.test.mjs).
 - Once the pit has drowned, now and then something shows at the abyss's surface and goes back under: a coil's back, a fin of purple spikes, or an eye watching the lip (test/glimpse.test.mjs).
 - The pit is a third as long, so it fills and tears open about three times sooner; an old yard holding more than the new hole tears on load and keeps every grain (test/rift-migrate.test.mjs).

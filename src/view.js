@@ -16,7 +16,7 @@
 
 import { S } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM } from './config.js';
-import { clampCam, setZoom } from './world.js';
+import { clampCam, setZoom, yardCell } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
 
@@ -25,7 +25,7 @@ export const inDeep = () => S.view === 'deep';
 export const gliding = () => S.viewTo != null;
 
 // The yard's own zoom, the one `resize` sets.
-const yardZoom = () => CELL / P;
+const yardZoom = () => yardCell() / P;
 
 // The deep's: the yard's, or less if the window is too short to hold the
 // deep's water from under its surface to the floor. Snapped down to a whole
@@ -33,8 +33,11 @@ const yardZoom = () => CELL / P;
 // never rounded back up past the window.
 function deepZoom() {
   const need = DEEP_H - DEEP_SURFACE - P * 2 + DEEP_FLOOR_MARGIN;
-  const k = (held ?? Math.min(1, S.H / (need * yardZoom()))) * (1 + KILL_ZOOM * killIn) * (shot ? shot.k : 1);
-  const unit = CELL * S.dpr;
+  // Against the desk's cell, not the yard's: a phone draws the yard smaller
+  // (`yardCell`) but the deep stays the size it is, so its share of the yard's
+  // zoom is scaled up by the difference.
+  const k = (held ?? Math.min(1, S.H / (need * CELL / P))) * (1 + KILL_ZOOM * killIn) * (shot ? shot.k : 1) * (CELL / yardCell());
+  const unit = yardCell() * S.dpr;
   return Math.max(1, Math.floor(unit * k)) / unit;
 }
 // How far the kill has the deep's frame pulled in, 0..1 (`killFrame`).

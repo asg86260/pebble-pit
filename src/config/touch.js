@@ -51,3 +51,12 @@ export const SHEET_HANDLE = [36, 4]; // the bar on its top edge, px
 export const SHEET_RAIL_W = 6;       // px, a cell
 export const SHEET_RAIL_INSET = 4;   // px in from the edge
 
+
+// The yard at a phone's window. A phone stood upright is narrower than a
+// shield is wide, so on a thumb the yard is drawn at the size that holds the
+// widest shield's whole answer with this many cells of ground to spare, and
+// no scene ever zooms (cutscene.js). Never larger than the desk's cell.
+export const PHONE_MARGIN_CELLS = 10;
+// The least a body is to be as a target on the glass: the cell is small
+// enough on a phone that a three-cell body is not a thumb's.
+export const TOUCH_TARGET = 44;      // px, the platform's own minimum

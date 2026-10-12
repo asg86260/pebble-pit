@@ -122,6 +122,7 @@ function sayTouch() {
 }
 touchEl.addEventListener('click', () => {
   setPref('touch', !coarse());
+  dispatchEvent(new Event('resize'));          // the yard's zoom follows the thumb
   sayTouch();
 });
 
