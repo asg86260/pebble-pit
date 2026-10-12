@@ -122,6 +122,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Gatherers work the scales lying nearest the crusher first instead of swimming across the deep to the tallest heap (test/gather.test.mjs).
 - Scales you grab off the deep's floor show on your pointer, and dropped on the furnace they fall in and count (src/selftest/deep.js).
 - After a refresh the deep's builders go back to a pod or station left half built and finish it (test/deep-build-reload.test.mjs).
+- Gatherers no longer stack into what looks like one worker: each goes for scales nobody else is on and they swim in file, a body apart (test/gather-spread.test.mjs).
 
 ## Unreleased
 
