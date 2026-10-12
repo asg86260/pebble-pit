@@ -10,7 +10,7 @@
 // shield.test.mjs walks through on its own.
 import { group, ok, run, runUntil, state } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { WORKER, PROP_FROM, DOME_BILL, ARCH_COST, NET_COST } from '../src/config.js';
+import { WORKER, PROP_FROM, DOME_BILL, ARCH_COST, NET_COST, ABYSS_AT } from '../src/config.js';
 import { boulderAlive } from '../src/rock.js';
 import { outOfYard } from '../src/crew/records.js';
 import { setZoom } from '../src/world.js';
@@ -62,6 +62,9 @@ const domeYard = () => {
     else window.__grant({ [money + 's']: n * 3 });
   }
   window.__answered('props', 'net', 'arch');
+  // The gifts above overflow the hole into the rift; a yard that reaches the
+  // rescue undrowned is what this is about, so it stays short of the drowning.
+  S.riftAte = Math.min(S.riftAte || 0, ABYSS_AT / 2);
   S.quarryOpen = S.farmOpen = S.towerOpen = S.meteorOpen = true;
   window.__meteor();
   run(1);
