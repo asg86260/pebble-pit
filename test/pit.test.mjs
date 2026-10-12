@@ -7,8 +7,7 @@
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, P, WORKER } from './helpers.mjs';
 
-const { PIT_W_MAX, PIT_H, PIT_HEAP, GROUND_DEEP, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH_MAX, QUARRY_BENCH0 } =
-  await import('../src/config.js');
+const { PIT_W_MAX, PIT_H, PIT_HEAP } = await import('../src/config.js');
 
 // A hole you can throw across has a back to it. The toss off the lip was a
 // fixed spray, which was fine while the pit ran two windows to the right and
@@ -58,20 +57,6 @@ group('the pit is the whole hole from the first frame', async () => {
        `${s.pitCapacity} at grain ${s.pitGrain}`),
     ok(s.pitCapacity < (PIT_W_MAX / s.pitGrain) * ((PIT_H + PIT_HEAP) / s.pitGrain),
        'but the heap is a heap, not another hole', `${s.pitCapacity}`)
-  ];
-});
-
-// The world reserves its own depth under the ground line, apart from the
-// hole's: the window's floor sits on it, and the quarry's deepest cut has to
-// be inside it.
-group('the ground under the yard is deep enough for the hole and the cut', async () => {
-  const s = state();
-  const cut = QUARRY_H + (QUARRY_BENCH_MAX - QUARRY_BENCH0) * QUARRY_DEEPEN;
-  return [
-    ok(GROUND_DEEP >= PIT_H, 'the hole is inside it', `${PIT_H} of ${GROUND_DEEP}`),
-    ok(GROUND_DEEP >= cut, 'and the quarry at its last bench', `${cut} of ${GROUND_DEEP}`),
-    ok(s.worldH > s.groundY + GROUND_DEEP, 'and the world is laid out on it',
-       `${s.worldH} against ${s.groundY} + ${GROUND_DEEP}`)
   ];
 });
 

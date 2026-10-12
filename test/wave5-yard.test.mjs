@@ -198,7 +198,10 @@ group('a save from before the world widened keeps its dust where it lay', () => 
   save.floor = { cols, rows: was.rows, cx: was.cx - TOOK * P, cells: packed };
   localStorage.setItem('boulder-clicker/v4', JSON.stringify(save));
   yard.restore();
-  const dx = floor.cols - cols;              // the columns the world gained, all on its left
+  // The columns the world gained, all on its left, read off the anchor: the
+  // far end has since been cut short (the pit's length), so the widths no
+  // longer differ by the slide alone.
+  const dx = Math.round((yard.S.cx - save.floor.cx) / P);
   const now = new Map();
   const shades = new Set();
   for (let r = 0; r < floor.rows; r++)
@@ -214,7 +217,7 @@ group('a save from before the world widened keeps its dust where it lay', () => 
   return [
     ok(lost === 0, 'the columns cut off held nothing', `${lost} grains stood in them`),
     ok(dx > 0, 'the world this save was written in was narrower than today\'s',
-       `${cols} columns then, ${floor.cols} now`),
+       `${dx} columns more on its left`),
     ok(grains === total, 'every grain it was carrying came back',
        `${grains} of ${total}`),
     ok(moved, 'and each one is the same distance along, in the same column of the yard',
@@ -282,6 +285,10 @@ group('a save from a world wider than today keeps its dust where it lay', () => 
   const save = JSON.parse(raw);
   save.floor = { cols, rows: floor.rows, cx: S.cx + GAVE * P, cells: packed };
   save.muck = [...new Array(GAVE).fill(0), ...muckWas];
+  // The ground is today's, so the pile is too: an old-length pile tells the
+  // migration this is an old-length world, and it would cut the ground short.
+  yard.persist();
+  save.pit = JSON.parse(localStorage.getItem('boulder-clicker/v4')).pit;
   localStorage.setItem('boulder-clicker/v4', JSON.stringify(save));
   yard.restore();
   const got = columns();

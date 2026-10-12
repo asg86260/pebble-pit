@@ -61,10 +61,6 @@ export function drawGroundTexture() {
   const y = S.groundY + P, h = S.worldH - y;
   ctx.fillRect(0, y, pit.x - 1, h);
   ctx.fillRect(pit.x + pit.w + 1, y, S.worldW - pit.x - pit.w - 1, h);
-  // and under the hole's floor, which is ground the world reserves past it
-  // (GROUND_DEEP)
-  const under = S.groundY + pitDepth() + P;
-  if (under < S.worldH) ctx.fillRect(pit.x - 1, under, pit.w + 2, S.worldH - under);
 }
 
 // the walls and floor of the pit, over the pile so the hole keeps its edges

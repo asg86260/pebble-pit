@@ -6,7 +6,7 @@
 // a row there and a `seat` in `seatSites`.
 
 import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
-        ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, GROUND_DEEP,
+        ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         SITES, TO_FIRST_SITE, STATION_GAP, SHACK_SHIELD_CLEAR, SHACK_EAVE, shieldReach, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_CASINO, CASINO_W, CASINO_H, TO_FILTER, HOPPER_H, TRAY_H,
@@ -594,7 +594,7 @@ export function resize(after) {
   // The world is the size of the finished works: laid out around the hole
   // the pit can ever be, so the view does not shift under you for a shop row.
   S.worldW = pit.x + PIT_W_MAX + PIT_PAD * P;
-  S.worldH = S.groundY + GROUND_DEEP + FLOOR_MARGIN;
+  S.worldH = S.groundY + PIT_H + FLOOR_MARGIN;
 
   floor.x = 0;
   // Which ground a column belongs to: a station's strip, by name, or `null`
@@ -709,7 +709,9 @@ export function lockScroller(on, why = 'scene') {
 }
 function writeScroll() {
   if (!scroller) return;
-  const w = Math.round(S.worldW * S.zoom);
+  // In the deep the scroller spans the deep as well: it is laid out off the
+  // pit's lip, not its length, and runs on past the yard's far end.
+  const w = Math.round((S.view === 'deep' ? Math.max(S.worldW, deepX1()) : S.worldW) * S.zoom);
   if (w !== spacerW) { spacerW = w; spacer.style.width = `${w}px`; }
   const left = S.camX * S.zoom;
   if (left === wroteLeft) return;

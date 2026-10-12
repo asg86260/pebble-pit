@@ -124,24 +124,47 @@ group('spending reaches into the rift only once the hole is empty', async () => 
 const PLAYER = readFileSync(new URL('./fixtures/player-yard.json', import.meta.url), 'utf8');
 const player = JSON.parse(PLAYER);
 const { default: smallerPit } = await import('../src/migrations/2026-10-12-smaller-pit.js');
-const pitRows = () => yard.pit.rows;
+const runsOf = str => String(str).split('.').flatMap(r => {
+  const [v, n] = r.split('x').map(Number);
+  return new Array(n).fill(v);
+});
+const grains = str => runsOf(str).filter(Boolean).length;
 
-group('an old pile is cut down to the smaller hole, the shape it was', async () => {
-  const raw = JSON.parse(SAVE);                 // the full hole, at the old size
+group('an old pile is cut down to the shorter hole, the shape it was', async () => {
+  const raw = JSON.parse(SAVE);                 // the full hole, at the old length
   const was = raw.pit;
   smallerPit.apply(raw);
-  const heights = s => s.heights.split('.').flatMap(r => {
-    const [v, n] = r.split('x').map(Number);
-    return new Array(n).fill(v);
-  });
-  const now = heights(raw.pit);
+  const now = runsOf(raw.pit.heights);
+  const { pit } = yard;
   return [
-    ok(was.rows !== raw.pit.rows && raw.pit.rows === pitRows(),
-       'the profile is the new hole\'s', `${was.rows} -> ${raw.pit.rows} rows, the plot ${pitRows()}`),
-    ok(now.length === was.cols && now.every(h => h <= pitRows()),
-       'every column fits it', `${Math.max(...now)} of ${pitRows()}`),
-    ok(now[0] > 0 && now[Math.floor(now.length / 2)] >= now[0],
+    ok(raw.pit.cols === pit.cols && raw.pit.rows === pit.rows,
+       'the profile is the new hole\'s', `${was.cols} -> ${raw.pit.cols} columns, the plot ${pit.cols}`),
+    ok(now.length === pit.cols && now.every(h => h <= pit.rows),
+       'every column fits it', `${Math.max(...now)} of ${pit.rows}`),
+    ok(now[0] > 0 && now[now.length >> 1] >= now[0],
        'and it is still a heap over a full hole', `${now[0]} at the lip, ${now[now.length >> 1]} mid`)
+  ];
+});
+
+// A drowned yard with grains lying on ground the shorter world no longer
+// has: they are banked as if they fell in, and the abyss has them.
+group('the ground past the new end of the world falls in, not out of the books', async () => {
+  const text = readFileSync(new URL('./fixtures/quarry-crossing.json', import.meta.url), 'utf8');
+  const raw = JSON.parse(text);
+  const before = { floor: grains(raw.floor.cells), stored: raw.stored, ate: raw.riftAte };
+  smallerPit.apply(raw);
+  const kept = grains(raw.floor.cells), fell = before.floor - kept;
+  localStorage.setItem('boulder-clicker/v4', text);
+  yard.restore();
+  const s = state();
+  return [
+    ok(fell > 0, 'there was ground past the new end with something on it', `${fell} grains`),
+    ok(raw.riftAte - before.ate === fell && raw.stored - before.stored <= fell,
+       'every one of them is counted as gone into the hole',
+       `${fell} fell, ${raw.stored - before.stored} of them dust, ate +${raw.riftAte - before.ate}`),
+    ok(s.stored === raw.stored && s.rift === raw.rift, 'and the load reads them back',
+       `${s.stored} against ${raw.stored}`),
+    ok(yard.floor.n === kept, 'with the rest of the ground where it lay', `${yard.floor.n} of ${kept}`)
   ];
 });
 

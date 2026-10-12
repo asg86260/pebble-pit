@@ -314,7 +314,10 @@ group('a young hole skims the pile it hangs over, and the pile stands under it',
     ok(standing > tipped / 8, 'and the pile the yard tips in afterward stands under the disc',
        `${standing} of ${tipped} grains after two minutes`),
     ok(refused === 0, 'with every grain tipped in still counted', `${refused} refused`),
-    ok(grown > young * 10, 'the reach grows with the hole', `${young.toFixed(0)} -> ${grown.toFixed(0)} cells`),
+    // Nearly grown, it reaches most of the length of the hole, however long
+    // that is: a factor between the two ends was a fact about one length.
+    ok(grown > young * 5 && grown > yard.pit.cols / 2, 'the reach grows with the hole, to most of its length',
+       `${young.toFixed(0)} -> ${grown.toFixed(0)} cells, the hole ${yard.pit.cols} long`),
     ok(late < standing / 4, 'and a grown hole eats what the young one left standing',
        `${standing} -> ${late}`)
   ];

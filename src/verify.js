@@ -38,7 +38,7 @@ import { SERPENT_WOUND, SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMB
 import { CALLED } from './deep/party.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
-import { deepTop, deepFloor } from './deep/place.js';
+import { deepTop, deepFloor, deepX1 } from './deep/place.js';
 import { yardReads } from './persist.js';
 
 // The jobs the roster is made of, and the count on S that owns each: every
@@ -177,7 +177,8 @@ export function verifyWorld() {
   const all = ways();
   const gy = S.groundY;
   const left = Math.min(0, yardLeft()) - OUTSIDE;
-  const right = (S.worldW || 0) + OUTSIDE;
+  // The deep is laid out off the pit's lip and runs on past the yard's end.
+  const right = Math.max(S.worldW || 0, deepX1()) + OUTSIDE;
 
   for (const w of S.workers) {
     // --- rule 6: a position is a position -------------------------------------

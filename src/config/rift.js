@@ -4,8 +4,8 @@ import { P } from './yard.js';
 // The hole in the air past the far wall of the pit: what the hole in the ground
 // overflows into. See src/rift.js and `## The rift` in DESIGN.md.
 //
-// A black disc standing in the air over the near end of the hole, RIFT_AT of
-// the hole's length in from the near lip and clear of the ground line by
+// A black disc standing in the air over the near end of the hole, RIFT_AT
+// cells in from the near lip and clear of the ground line by
 // RIFT_UP cells, so the whole of it is against the white page (`seatRift`).
 //
 // **It grows with what it eats.** The disc tears small and swells toward
@@ -26,10 +26,11 @@ export let ABYSS_AT = 300000;        // grains eaten when the drowning comes
 // gives way; two scenes back to back on the same spot would show the effect
 // with the cause skipped.
 export let RIFT_SWELL_S = 8;         // seconds from the tear's scene letting go to the drowning
-// A fraction of the hole rather than a count of cells: the disc belongs at the
-// end of the hole that is on screen, whatever that end measures. Far enough in
-// to clear the counter's card, which stands four cells from the lip.
-export const RIFT_AT = 0.05;
+// Cells, not a share of the hole's length: what it has to clear is measured
+// from the lip -- the belt's tip, which reaches out over the hole, and the
+// counter's card four cells in -- and a share of a shorter hole sat the disc
+// on the belt's end.
+export const RIFT_AT = 30;
 // The pile has to be in view under it, since the disc eats by reach
 // (RIFT_REACH0): at three cells of air a disc eating the top of a full pile
 // sat on its own crater.
@@ -42,11 +43,7 @@ export let RIFT_UP = 8;          // cells of clear air between it and the ground
 // sinks as the hole grows, and every grain tipped in lands on that top and
 // goes. Taking everything on the frame it landed left the pit an empty white
 // hole under a black disc for the hours between the tear and the drowning.
-// A share of the hole's depth, not a reach of its own: four cells of a hole
-// 46 deep, kept as that share when the hole was cut to 14 (config/pit.js).
-// Four cells into a hole that shallow reached the floor from the day it tore,
-// and the whole pile slumped into the crater.
-export let RIFT_REACH0 = 1;      // cells below the air, the day it tears
+export let RIFT_REACH0 = 4;      // cells below the air, the day it tears
 // --- the tearing ---------------------------------------------------------------
 // The moment a hole that cannot take another grain gives way: it **empties the
 // hole**, every grain in one long gulp, with the yard rocking under it. It is
