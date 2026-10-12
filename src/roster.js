@@ -157,6 +157,15 @@ function leaving(p, on) {
 // two is two thirds; a full pip is only ever a body that has arrived.
 const thirds = f => Math.min(2, Math.floor(f * 3));
 
+// How many of the bodies at work wear the post's hat. Pure, so the boxes can
+// ask it every frame without disturbing the walkers' clocks the way
+// `seatsAt` does.
+function hatsAtWork(p) {
+  let n = 0;
+  for (const w of bodiesOf(p)) if (!comingTo(w) && w.trained && w.kitOf === p.job) n++;
+  return Math.min(n, count(p));
+}
+
 // One post's seats, pip by pip from the left: who is at work (the hatted
 // first), who is walking over, the furthest along first, who has just gone,
 // and the rest empty.
@@ -180,21 +189,46 @@ export function seatsAt(p) {
   return { seats, on, filled, coming, leaving: gone, brims: Math.min(brims, filled) };
 }
 
-// Each pip's square, in world units, left to right and row by row.
+// The specialists stand in a row of their own above the regular seats: a pip
+// for each hatted body at work, and an outline for each hat owned and not
+// worn (`spareKit`), which is a place for a hat, not a seat. Nothing owned
+// means no top row. The outlines never outnumber the seats, so the strip is
+// as wide as its seats and no wider.
+const topOf = p => {
+  if (!p.kit || !seatsOf(p)) return { worn: 0, spare: 0 };
+  const worn = hatsAtWork(p);
+  return { worn, spare: Math.max(0, Math.min(spareKit(p.job), seatsOf(p) - worn)) };
+};
+
+// Each pip's square, in world units, in seat order: the hatted (top row),
+// then the regular seats row by row, then the spare-hat outlines, flagged.
+// Every box carries its own gap, so a row shrunk past the limit is hit at its
+// own size.
 function pipBoxes(p, left, y) {
-  const r = rowOf(seatsOf(p));
-  const x0 = left + BTN + GAP;
-  const y0 = Math.floor((y - r.pip / 2) / P) * P;
-  const out = [];
-  for (let i = 0; i < seatsOf(p); i++)
-    out.push({ x: x0 + (i % r.per) * (r.pip + r.gap), y: y0 + Math.floor(i / r.per) * (r.pip + r.gap),
-               w: r.pip, h: r.pip });
-  return out;
+  const n = seatsOf(p), t = topOf(p);
+  const nTop = t.worn + t.spare, nBot = n - t.worn;
+  const rb = rowOf(nBot), rt = rowOf(nTop || 1);
+  const x0 = left + BTN + GAP, strip = rowOf(n).w;
+  const y0 = Math.floor((y - rb.pip / 2) / P) * P;
+  const lay = (r, count, yy) => {
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const inRow = Math.min(r.per, count - Math.floor(i / r.per) * r.per);
+      const w = inRow * (r.pip + r.gap) - r.gap;
+      out.push({ x: x0 + Math.round((strip - w) / 2 / P) * P + (i % r.per) * (r.pip + r.gap),
+                 y: yy + Math.floor(i / r.per) * (r.pip + r.gap), w: r.pip, h: r.pip, gap: r.gap });
+    }
+    return out;
+  };
+  const top = lay(rt, nTop, y0 - (rt.pip + rt.gap) * rt.rows);
+  top.forEach((q, i) => { q.spare = i >= t.worn; });
+  return [...top.slice(0, t.worn), ...lay(rb, nBot, y0), ...top.slice(t.worn)];
 }
 
 // What a pip is to hit: grown half a gap to each side, so the row is one
-// target with no dead seams, and as far up and down as a button is.
-const pipHit = (b, gap) => ({ x: b.x - gap / 2, y: b.y - HIT_Y, w: b.w + gap, h: b.h + HIT_Y * 2 });
+// target with no dead seams. Up and down only half a gap too, since the two
+// rows are a gap apart and a taller target would take the other row's click.
+const pipHit = b => ({ x: b.x - b.gap / 2, y: b.y - b.gap / 2, w: b.w + b.gap, h: b.h + b.gap });
 
 // A click on a seat sets the count to that seat, through the same press the
 // buttons make, once a body, so every one of them still walks. The last
@@ -317,8 +351,8 @@ export const overRoster = (x, y) => posts().some(p => {
 // Which seat (counted from one) a point is over, or nought.
 function pipAt(p, b, x, y) {
   if (!b.pips) return 0;
-  const gap = rowOf(b.pips.length).gap;
-  const i = b.pips.findIndex(q => inside(pipHit(q, gap), x, y));
+  // An outline for a hat is not a seat; a click on it is nothing.
+  const i = b.pips.findIndex(q => !q.spare && inside(pipHit(q), x, y));
   return i + 1;
 }
 
@@ -444,9 +478,9 @@ function part(ctx, b, k, t) {
 }
 
 function drawPips(ctx, boxes, s) {
-  const small = boxes.length > SEAT_SHRINK;
-  const t = small ? THIN / 2 : THIN;
   boxes.forEach((b, i) => {
+    const small = b.w < SEAT_PIP, t = small ? THIN / 2 : THIN;
+    if (b.spare) { ctx.fillStyle = SEAT_EMPTY_INK; edge(ctx, b, t); return; }
     if (i < s.filled) {
       ctx.fillStyle = '#000';
       ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -481,9 +515,11 @@ export function drawRosterCounts(ctx, screenAt) {
     // A row of pips is its own count; past a row's worth it is written over
     // them too, seated of seats, since nobody counts sixty dots.
     if (b.pips) {
-      if (b.pips.length > SEAT_SHRINK) {
-        const s = seatsAt(p), top = b.pips[0];
-        const at = screenAt(b.pips[0].x + rowOf(s.seats).w / 2, top.y - P * 2);
+      if (seatsOf(p) > SEAT_SHRINK) {
+        const s = seatsAt(p);
+        const top = Math.min(...b.pips.map(q => q.y));
+        const lo = Math.min(...b.pips.map(q => q.x)), hi = Math.max(...b.pips.map(q => q.x + q.w));
+        const at = screenAt((lo + hi) / 2, top - P * 2);
         ctx.fillText(`${Math.round(shown('seats:' + (p.station || p.job), s.filled))}/${s.seats}`,
                      Math.round(at.x), Math.round(at.y));
       }
