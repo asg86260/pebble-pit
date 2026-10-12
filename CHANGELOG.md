@@ -188,6 +188,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The shack stands clear of the barriers: the arch and the dome no longer run into it, with bare ground left between (test/shield-fit.test.mjs).
 - A worker on its way to the rock when it comes off dances at the edge of the drop instead of treading on the spot there until the next rock lands (test/dance.test.mjs).
 - After a refresh, a carter halfway through gathering a heap finishes filling its hands instead of heading home with half a load (test/heap-fringe.test.mjs).
+- The ram's strike rungs queue over the shack, not over the boulder (test/shack.test.mjs).
 - The sqwife is always drawn behind the rock, showing wherever its cells are mined away, instead of popping in once the rock is gone (test/lodged.test.mjs).
 
 ## v0.5.2 — 2026-09-28

@@ -22,7 +22,7 @@ import { spriteW, RAM } from '../src/sprites.js';
 import { SHACK_DUST } from '../src/config.js';
 import { SHACK_GEAR } from '../src/shack.js';
 import { workAt } from '../src/works.js';
-import { barSpot } from '../src/render/bars.js';
+import { barSpot, workSpots } from '../src/render/bars.js';
 import { TYPE } from '../src/jobs.js';
 import { shack } from '../src/state.js';
 
@@ -324,6 +324,28 @@ group('a speed rung bought at the shack is worked there, under a bar over the hu
     ok(overHut, 'its bar hangs over the hut', JSON.stringify({ spot, shack: { ...shack } })),
     ok(arrived, 'a spare hand stands at the shack to fit it'),
     ok(landed && level === LADDER, 'and it lands', `${level}`)
+  ];
+});
+
+// The ram's strike rung is sold on the shack's board, so it is worked and
+// shown at the shack. It was `site: 'yard'`, whose ground guesses the middle of
+// the rock, and its glyph floated over the boulder.
+group("a ram strike rung's glyph floats over the shack, not the rock", async () => {
+  window.__reset();
+  window.__fullSites();
+  window.__invest();
+  window.__grant({ shards: 900, dust: 9000000, spores: 900, sparks: 9000 });
+  window.__crew(2, 2);
+  window.__machine('ram', { bought: true });
+  const bought = window.__buy('tuneram');
+  const w = workAt('shack');
+  const spot = w && workSpots('shack').find(s => s.w === w)?.glyph;
+  const overHut = !!spot && spot.x >= shack.x && spot.x <= shack.x + shack.w;
+  return [
+    ok(bought, 'the rung is bought like a player buys it'),
+    ok(!!w && w.key === 'tuneram', "and the work is the shack's", w ? w.key : 'no work'),
+    ok(!workAt('yard'), "not the yard's"),
+    ok(overHut, 'its glyph hangs over the hut', JSON.stringify({ spot, shack: { ...shack }, cx: S.cx }))
   ];
 });
 
