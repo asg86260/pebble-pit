@@ -1931,6 +1931,10 @@ export const SCENES = {
                 } }],
     [`${k}!`, { about: 'the shields', say: `the rock reaching the ${k}`,
                 run: () => { shieldBuilt(k); window.__next(); window.__fast(4.5); } }],
+    // The same rock as it is let go, for a capture stepped on from here that
+    // has the whole answer, the camera's way in included.
+    [`${k}>`, { about: 'the shields', say: `the rock let go over the ${k}, the answer's scene from its start`,
+                run: () => { shieldBuilt(k); window.__next(); } }],
     // A frame at a time until the rock is a dozen cells over the top, so the
     // answer itself is still to come: the dome's burst is over in a second.
     [`${k}*`, { about: 'the shields', say: `the rock just over the ${k}, the answer still to come`,
@@ -2023,6 +2027,12 @@ export const SCENES = {
   'rescue-stage': { about: 'the shields', say: 'the rescue with a busy crew: everybody but the pair walks out of the shot',
     run: () => { shieldBuilt('dome'); window.__crew(4, 8, 0, 0, 0, 1); window.__fast(3);
                  S.buried = true; window.__next(); } },
+  // The whole ending on a working yard: the ram on the rock and the belt
+  // running when the rescue rock is let go, so a capture stepped on from here
+  // shows what keeps working behind the dome, the dig, the sheet and the snatch.
+  'ending-busy': { about: 'the shields', say: 'the ending on a working yard: ram and belt running, a big crew, then the snatch',
+    run: () => { shieldBuilt('dome'); window.__machine('ram', { bought: true }); window.__machine('belt', { bought: true });
+                 window.__crew(6, 10, 0, 0, 0, 1); window.__fast(4); S.buried = true; window.__next(); } },
   saved: { about: 'the shields', say: 'the end of the story: the sheet after the rescue',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(45); } },
 
