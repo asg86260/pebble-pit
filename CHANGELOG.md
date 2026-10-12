@@ -129,7 +129,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The air filter comes with its first balloon (test/filter-balloon.test.mjs).
 - The forklift's load and speed sell only their last four rungs, and the balloon row only its last two, so neither starts out pocket change (test/forklift.test.mjs, test/balloon.test.mjs).
 - On the story card each coin's line is its own bar, filling grey as the coins come in (src/selftest/boards.js).
-- The apothecary holds three pots, one to a brew; a yard that already has more keeps them.
+- The apothecary holds three pots, one to a brew; a yard that already has a fourth loses it (test/save-floor.test.mjs).
 - The tower's door no longer says "wizards live here", and the story no longer says "ask the wizards how to get down".
 - After the snatch the story says "talk to the wizards about what just happened" until you open their board (test/objectives.test.mjs, src/selftest/boards.js).
 - The tower's row summons a wizard instead of training one.

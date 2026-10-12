@@ -18,6 +18,7 @@ const raw = readFileSync(new URL('./fixtures/crew-grows-on-load.json', import.me
 // The save as the load sees it: brought up to today's shape first, so a
 // balloon a migration moors counts as a seat.
 const saved = JSON.parse(raw);
+const stirrersWas = saved.stirrers;
 migrate(saved);
 
 // Read back the way a fresh page reads it: nothing of the old yard in memory.
@@ -42,7 +43,8 @@ group('a refresh does not stand up more crew than the save holds', async () => {
   // The save is from when the air filter seated a purifier of its own; the
   // purifiers are one a balloon now, so the one past the craft is spare and
   // dealt to the haulers like any other.
-  const unseated = Math.max(0, saved.purifiers - saved.craft.length);
+  // The fourth pot's stirrer went spare with the pot, and is dealt the same way.
+  const unseated = Math.max(0, saved.purifiers - saved.craft.length) + (stirrersWas - saved.stirrers);
   return [
     ok(first.crew === saved.crew && first.bodies === want,
        'the first load has the crew the save has', `${saved.crew} saved -> ${JSON.stringify(first)}`),
