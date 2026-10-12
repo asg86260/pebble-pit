@@ -49,8 +49,8 @@ group('a save that finished the first half opens on the way down, or on nothing 
     return [
       ok(off === null, 'with the half off, the story is told', off),
       ok(waiting === null, 'with it on, nothing while the snatch is due', waiting),
-      ok(after === 'ask' || after === 'tower', 'after the snatch, the wizards', after),
-      ok(portal === 'portal', 'asked, buy the portal', portal),
+      ok(after === 'tower' || after === 'portal', 'after the snatch, the tower or the portal', after),
+      ok(portal === 'portal', 'tower up, buy the portal', portal),
       ok(deep === 'free', 'through the portal, free him', deep),
       ok(told === null, 'freed, no line', told)
     ];

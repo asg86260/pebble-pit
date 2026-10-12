@@ -89,7 +89,7 @@ export const INDEX = [
   { key: 'apothecary', group: 'places', name: 'the apothecary', glyph: 'pot', met: 'apothecaryOpen',
     text: 'a keeper lights the pot and it brews by itself. the brews walk out to the crew.' },
   { key: 'tower', group: 'places', name: 'the tower', glyph: 'tower', met: 'towerOpen',
-    text: 'trains wizards, a hat each, who fly up to the star. sells the spells, the sphere and the barrier.' },
+    text: 'summons wizards, a hat each, who fly up to the star. sells the spells, the sphere and the barrier.' },
   { key: 'casino', group: 'places', name: 'the casino', glyph: 'die', met: 'casinoOpen',
     text: 'no board, just levers. pull the arm and a handful of grains pours down the pegs; the bins they land in pay.' },
   { key: 'outhouse', group: 'places', name: "the janitor's closet", glyph: 'bucket', met: 'outhouseOpen',

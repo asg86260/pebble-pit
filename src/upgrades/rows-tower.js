@@ -10,8 +10,7 @@ export const TOWER_ROWS = [
     key: 'unlocktower',
     kind: 'building', site: 'yard', at: () => tower.x + tower.w / 2,
     name: 'discover the tower',
-    note: () => 'train some wizards',
-    blurb: 'wizards live here',
+    note: () => 'summon some wizards',
     bill: () => [['dust', TOWER_DUST]],
     cost: () => TOWER_DUST,                      // for anything that asks in one coin
     // Raises a tower and nothing else: the first hat out of it summons the

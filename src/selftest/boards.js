@@ -337,8 +337,8 @@ export const TESTS = [
       r.left >= box.left - 1 && r.right <= box.right + 1 && r.bottom <= card.bottom + 1);
     window.__board(null);
     return [
-      ok(!!row && row.querySelector('.what').textContent.trim() === 'train a wizard',
-         'the tower trains a wizard', row && row.querySelector('.what').textContent),
+      ok(!!row && row.querySelector('.what').textContent.trim() === 'summon a wizard',
+         'the tower summons a wizard', row && row.querySelector('.what').textContent),
       ok(coins && coins.slice().sort().join() === 'dust,shard,spore',
          'and its bill is three coins, no clock', String(coins)),
       ok(!row?.dataset.note && !row?.title,
@@ -1835,6 +1835,32 @@ export const TESTS = [
       ok(benchSays === 'queued', 'and the bench\'s own tile says queued', benchSays),
       ok(bar && /^cancel ×1$/.test(cancelSays) && cancelTakes, 'bought, the card shows the cancel and no bar', cancelSays),
       ok(handedBack && back, 'the cancel hands the bill back and the checklist returns'),
+    ];
+  }],
+
+  ["the tower's dome is its first card, and the ribbon reads the same as the bench's", async () => {
+    newRun();
+    await settle();
+    window.__crew(2, 1, 0, 0, 0, 1);
+    window.__jump(4);
+    window.__answered('props', 'net', 'arch');
+    window.__meteor();
+    window.__build();
+    window.__give(20000);
+    window.__board('tower');
+    await settle(0.6);
+    const first = shop().querySelector('button.buy, .row, button');
+    const goal = shop().querySelector('button.goal');
+    const rib = goal?.querySelector('canvas.ribbon');
+    const all = [...shop().querySelectorAll('button')];
+    const tops = all.length ? all[0] === goal : false;
+    const sign = goal?.dataset.sign;
+    window.__board(null);
+    newRun();
+    return [
+      ok(!!goal && !!rib, 'the dome is a goal card with a ribbon on the tower board', goal ? 'card, no ribbon' : 'no card'),
+      ok(tops && first === goal, 'and it is the first card on the board', all.map(b => b.dataset.key).slice(0, 3).join(',')),
+      ok(sign === 'saving your sqwife', 'and its ribbon reads what the bench does', sign),
     ];
   }],
 

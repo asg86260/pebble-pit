@@ -16,7 +16,7 @@ import { emptySky } from './meteor.js';
 import { registerRows, workOn, progressOf, ahead } from './works.js';
 import { TYPE, JOB } from './jobs.js';
 import { MACHINES, machine, buyMachine, canBuy, tuneRow } from './machines.js';
-import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
+import { GOAL_TITLE, KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
 import { stockOf } from './kit.js';
 import { sky } from './state.js';
 import { sphereUp } from './sphere.js';
@@ -143,7 +143,7 @@ export const TOWER_UPGRADES = [
   // standing on it.
   {
     key: TYPE.WIZARD,
-    name: 'train a wizard',
+    name: 'summon a wizard',
     note: () => 'flies up and bolts the star apart for sparks, and summons a new one when the sky is empty',
     // A rung, not a building: made inside a tower that already stands, so
     // nothing rises and no tape goes round it. The first hat is made by
@@ -223,10 +223,10 @@ export const TOWER_UPGRADES = [
 // The dome is this board's goal, as each shield before it is the bench's: the
 // wide card. The story's card sells it too (objbarrier.js).
 export const TOWER_SECTIONS = [
+  { title: GOAL_TITLE, goal: true, keys: ['dome'] },
   { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
   { title: 'the sphere', keys: ['sphere', 'tunesphere'] },
   { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
-  { title: 'the dome', goal: true, keys: ['dome'] },
   { title: 'the abyss', keys: ['portal'] }
 ];
 
