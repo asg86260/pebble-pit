@@ -115,6 +115,21 @@ const lip = () => {
   window.__kit({ carters: 6 });
 };
 
+// A surface yard some way in, for store shots: a crew at every site with hats
+// on, the shack and the outhouse up, the third rock down, and the bench raised
+// through its own call. `then` frames it once the bench is standing.
+const steamYard = then => {
+  window.__reset(); window.__crew(5, 4, 4, 6);
+  window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
+  window.__levels({ benchLevel: 3, plotLevel: 6 });
+  window.__loo(); window.__assign(JOB.JANITOR, 1); window.__shack(); window.__jump(3);
+  window.__give(100); window.__fast(2);
+  requestAnimationFrame(() => {
+    document.getElementById('raise').click();
+    window.__fast(40); window.__nocine(); then();
+  });
+};
+
 // The closet with its caps and its tender, and `n` roombas bought through
 // their row and built. The haulers are the spare hands that build them.
 const roombaYard = (n = 3) => {
@@ -2080,6 +2095,22 @@ export const SCENES = {
                  window.__crew(6, 10, 0, 0, 0, 1); window.__fast(4); S.buried = true; window.__next(); } },
   saved: { about: 'the shields', say: 'the end of the story: the sheet after the rescue',
     run: () => { shieldBuilt('dome'); S.buried = true; window.__next(); window.__fast(45); } },
+
+  // --- the store page ---------------------------------------------------------
+  // Shots for a store page: a working surface yard with nothing past it --
+  // no rich grant (it opens the rift), no tower, no shields. The bench is
+  // raised through its own call, so these need the page.
+  steamhome: { about: 'the crew', say: 'store shot: the house, the bench, the shack and the rock, everyone at work', page: true,
+    run: () => { steamYard(() => window.__look(st().houses.left + 150)); } },
+  steamrock: { about: 'the rock', say: 'store shot: the rock and the hole, dust going over the lip', page: true,
+    run: () => { steamYard(() => window.__look(st().shackX - 60)); } },
+  steamsites: { about: 'the cut', say: 'store shot: the plots and the cut side by side, hands at both', page: true,
+    run: () => { steamYard(() => window.__look(st().farmX - 120)); } },
+  steamstorm: { about: 'the house and the sky', say: 'store shot: a bolt over the pour, the crew still at the rock', page: true,
+    run: () => { steamYard(() => { window.__air({ haze: 4200 }); untilRaining(); window.__fast(14);
+                                   window.__look(st().houses.left + 150); window.__strike(9, 0); window.__holdShot(); }); } },
+  steamboard: { about: 'the plots', say: "store shot: the farm's board open over the plots and the cut", page: true,
+    run: () => { steamYard(() => { window.__look(st().farmX - 120); window.__board('farm'); }); } },
 
   // --- the endgame ------------------------------------------------------------
   yard: { about: 'the endgame', say: 'the whole works, every machine running',
