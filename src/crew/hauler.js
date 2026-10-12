@@ -23,7 +23,7 @@ import { stopJig } from './dance.js';
 import { duck, stand, hireSpot, sideOf } from './body.js';
 import { downTheHole, downTheCut, nearestCutDust, cutDustAt, load, roomToTake, tookOne, bookRoom, unbook } from './hole.js';
 import { takeMess } from './shovel.js';
-import { strollTo, elbowIdle, amble, ROAM_PACE } from './idle.js';
+import { strollTo, elbowIdle, amble, stepable, ROAM_PACE } from './idle.js';
 import { park } from './lifts.js';
 
 // Everybody who hauls: the haulers, and the forklifts, which are not crew but
@@ -479,15 +479,20 @@ export function haulerWork(w, c) {
       // its own legs, and they get going and slow down rather than switching
       // on and off (`amble`)
       const stride = w.x;
-      const there = amble(w, w.roamTo, haulSpeed() * ROAM_PACE * (w.amble || 1));
+      let there = amble(w, w.roamTo, haulSpeed() * ROAM_PACE * (w.amble || 1));
+      // A stroll keeps to ground it can step on (`stepable`): a step off a
+      // cliff or up the rock's flank is given back and the stroll ends there.
+      // Judged before the feet move: a step stood on and then taken back
+      // leaves the feet eased toward ground the body is no longer over,
+      // hanging in the air. Here, not in the climber -- working walks
+      // legitimately drop down ramps and lips and their length is a tested
+      // promise; a roam has nowhere to be.
+      if (!stepable(w, w.x)) {
+        w.x = stride; w.pace = 0; there = true;
+      }
       // Feet on the ground it is strolling over: the roam moves x and leaves y
       // where the last job put it.
       w.y = stand(w);
-      // A stroll does not stride off a cliff: a step that leaves the feet
-      // hanging more than two cells over the ground is given back. Here, not
-      // in the climber -- working walks legitimately drop down ramps and lips
-      // and their length is a tested promise; a roam has nowhere to be.
-      if (standTop(w.x, rockTop) - (w.y + WORKER) > P * 2) { w.x = stride; w.pace = 0; }
       if (there) {
         w.roamTo = null;
         // and its own patience about standing there afterwards
