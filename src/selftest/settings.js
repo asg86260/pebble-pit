@@ -459,6 +459,16 @@ export const TESTS = [
     const played = [1, 2, 3].map(n => row(n).querySelector('.played').textContent);
     const rights = [1, 2].map(n => Math.round(row(n).querySelector('.played').getBoundingClientRect().right));
     const deletes = [1, 2, 3].map(n => getComputedStyle(del(n)).visibility);
+    // The ✕ is inside the row's border box, at least 36px across, and the open
+    // card is inverted whole (ink fill, paper text and paper dashed rule).
+    const card = n => row(n).parentElement;
+    const within = n => { const c = card(n).getBoundingClientRect(), d = del(n).getBoundingClientRect();
+      return d.left >= c.left && d.right <= c.right && d.top >= c.top - 1 && d.bottom <= c.bottom + 1 && d.width >= 36; };
+    const inside = within(1) && within(2);
+    const cs = getComputedStyle(card(1)), plain = getComputedStyle(card(2));
+    const inverted = cs.backgroundColor !== plain.backgroundColor && cs.backgroundColor === plain.color && cs.color !== plain.color;
+    const ruleOpen = getComputedStyle(del(1)).borderLeftColor === cs.color;
+    const labelled = del(2).getAttribute('aria-label') === 'delete';
     const shutFirst = shut(2);
     del(2).click();
     await fade();
@@ -490,6 +500,8 @@ export const TESTS = [
       ok(rights[0] === rights[1], 'and the playtimes share a right edge', rights.join(', ')),
       ok(deletes[0] === 'visible' && deletes[1] === 'visible' && deletes[2] === 'hidden',
          'a filled row has a delete and an empty one does not', deletes.join(', ')),
+      ok(inside && labelled, 'the ✕ sits inside the row\'s border, 36px wide, and is called delete', `${inside}, ${labelled}`),
+      ok(inverted && ruleOpen && card(1).classList.contains('open'), 'the open row stays inverted, rule and all', `${cs.backgroundColor}, ${ruleOpen}`),
       ok(shutFirst && opened, 'delete fades a confirm open under its row', `${shutFirst}, ${opened}`),
       ok(words.join(',') === 'delete,back', 'which answers delete or back', words.join(',')),
       ok(backShut && kept, 'back fades it shut and the save is untouched', `${backShut}, ${kept}`),
@@ -499,6 +511,34 @@ export const TESTS = [
          'deleting the open slot is a new yard, as the reset was', `${crewBefore} -> ${fresh.crew}, ${openRow}`),
       ok(!document.getElementById('reset'), 'and there is no reset button'),
     ];
+  }],
+
+  // A real 390px glass: the saves page in a frame that wide. Whatever the
+  // rows hold, the ✕ stays inside its card -- it never wraps to a line of its own.
+  ['on a 390px phone no save row wraps its delete onto a line of its own', async () => {
+    const f = document.createElement('iframe');
+    f.src = './play.html?bench';
+    f.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:844px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(f);
+    try {
+      const t0 = performance.now();
+      const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__reset && x.__fast && x.__crew); };
+      while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+      if (!booted()) return [ok(false, 'the game boots in a 390px frame')];
+      const w = f.contentWindow, d = f.contentDocument;
+      w.__scene('savespage');
+      await sleep(600);
+      const list = d.getElementById('slots');
+      const cards = [...list.querySelectorAll('.saverow')];
+      const bad = cards.filter(c => {
+        const cr = c.getBoundingClientRect(), dr = c.querySelector('.del').getBoundingClientRect();
+        return !(dr.top >= cr.top - 1 && dr.bottom <= cr.bottom + 1 && dr.right <= cr.right + 1 && cr.right <= 390);
+      });
+      return [
+        ok(w.innerWidth === 390 && cards.length > 0, 'the saves page is up on a 390px glass', `${w.innerWidth}px, ${cards.length} rows`),
+        ok(bad.length === 0, 'and every ✕ is inside its card, none on a line of its own', `${bad.length} outside`),
+      ];
+    } finally { f.remove(); }
   }],
 
   // --- the toast (DESIGN.md, "a toast when one lands") -------------------------

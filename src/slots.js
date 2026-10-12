@@ -63,11 +63,11 @@ export function playLabel(now = Date.now()) {
 // The line on the fronts: how many of the three are yards.
 export const slotsLabel = () => `saves · ${slotLabels(Date.now(), false).filter(r => !r.empty).length} of ${SLOTS}`;
 
-// One line a slot on a grid: the row's button (its words and its playtime,
-// the open one inert), a dashed `delete` beside it, and under it the confirm
+// One card a slot on a grid: the row's button (its words and its playtime,
+// the open one inert) and a ✕ delete inside the same border, and under it the confirm
 // that `delete` fades open. The columns are the content's own (`.slots` in
 // style.css), so the widest row sets the sheet's width; a row with nothing to
-// delete keeps an unseen `delete`, so the column does not come and go.
+// delete keeps an unseen ✕, so the column does not come and go.
 //
 // An empty row is armed first (`start a new yard?` for four seconds) because
 // it is the one press on the page that begins an intro. `say` is the sheet's
@@ -113,6 +113,7 @@ function paint(el, playing) {
     const b = el.querySelector(`.slot[data-slot="${row.slot}"]`);
     const del = el.querySelector(`.del[data-slot="${row.slot}"]`);
     if (!b || !del) continue;
+    b.parentElement.classList.toggle('open', row.open);
     b.className = 'slot' + (row.open ? ' open' : '');
     setItems(b.querySelector('.what'), row.parts);
     b.querySelector('.played').textContent = row.played;
@@ -149,11 +150,22 @@ export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
       showSlots(el, say, pick, playing, wipeOpen);
     });
 
+    // The delete sits inside the row's border, set off by a dashed rule: one
+    // card a yard, so a phone never wraps it onto a line of its own. A pixel
+    // cross (five cells), named by the word the confirm uses.
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'del';
     del.dataset.slot = slot;
-    del.textContent = 'delete';
+    del.setAttribute('aria-label', 'delete');
+    del.innerHTML = '<svg class="x" viewBox="0 0 5 5" aria-hidden="true">' +
+      [[0, 0], [4, 0], [1, 1], [3, 1], [2, 2], [1, 3], [3, 3], [0, 4], [4, 4]]
+        .map(([x, y]) => `<rect x="${x}" y="${y}" width="1" height="1"/>`).join('') + '</svg>';
+
+    const card = document.createElement('div');
+    card.className = 'saverow';
+    card.dataset.slot = slot;
+    card.append(b, del);
 
     const confirm = document.createElement('div');
     confirm.className = 'confirm';
@@ -175,7 +187,7 @@ export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
       else writeSlot(slot, '');
       paint(el, playing);
     });
-    el.append(b, del, confirm);
+    el.append(card, confirm);
   }
   paint(el, playing);
   fit(el);
@@ -183,7 +195,7 @@ export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
 }
 
 // A row that will not fit the window across stacks: its words over its
-// playtime and its delete. Read off the rows as laid out, not a width guessed
+// when and playtime, the ✕ staying inside the card. Read off the rows as laid out, not a width guessed
 // for them, so a longer row (a three-figure rock, a long playtime) stacks at
 // the width it actually needs.
 let shown = null;
