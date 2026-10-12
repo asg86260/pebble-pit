@@ -111,13 +111,15 @@ group('a builder hammering in the deep stirs up silt that settles on the floor',
   window.__scales(99999);
   window.__grant({ dust: 900000 });
   const pods = S.pods;
-  const bought = window.__buy('pod');
+  // A pod goes up in a few blows, and a chip settles only if it was thrown
+  // low enough to reach the floor in its life: several, back to back.
+  const bought = [1, 2, 3, 4].every(() => window.__buy('pod'));
   let oldest = 0, settled = false, sunk = [];
   // Past the pod standing too: a pod goes up in a few blows, and its chips
   // are still sinking when it does.
   for (let f = 0, after = 0; f < 60 * 120 && after < 60 * 3; f++) {
     yard.fast(1 / 60);
-    if (S.pods !== pods) after++;
+    if (S.pods >= pods + 4) after++;
     for (const g of S.grit) {
       if (!g.sea) continue;
       oldest = Math.max(oldest, g.t);
