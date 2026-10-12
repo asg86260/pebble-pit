@@ -18,6 +18,7 @@ import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, o
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine, landRefund } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
+import { stepGlimpse } from './glimpse.js';
 import { stepBeats } from './beats.js';
 import { wireCut } from './quarry.js';
 import { stepBelt, settleBelt, catchBelt, wireBelt } from './dust.js';
@@ -258,6 +259,9 @@ export const STEPS = [
   // (`swallow` in pit.js): the one thing that empties the hole and leaves the
   // counter where it was.
   { name: 'rift',      step: c => stepRift(c.dt) },
+  // and now and then the serpent showing at the drowned pit's surface: a
+  // picture, stepped here so its rules are the yard's (glimpse.js)
+  { name: 'glimpse',   step: c => stepGlimpse(c.now) },
   // The deep, whether or not it is on screen: the serpent heals, the
   // weapons in the water land, the scales sink (docs/wave-serpent.md).
   { name: 'serpent',   step: c => stepSerpent(c) },

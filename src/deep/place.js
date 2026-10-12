@@ -16,7 +16,8 @@ import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DE
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
          WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
-         BREAK_DIVE_OVER, BREAK_ROAR_H } from '../config.js';
+         BREAK_DIVE_OVER, BREAK_ROAR_H,
+         PORTAL_LIP_TO, PORTAL_TEAR_LOBE, PORTAL_TEAR_JITTER } from '../config.js';
 import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
@@ -50,6 +51,11 @@ export function portalCircle() {
   return { x: snap(pit.x + r * (1 - PORTAL_INTO_WALL)), y: snap((line + floor) / 2), r };
 }
 export const portalX = () => portalCircle().x;
+// How far out from its middle the hole reaches at radius `r`: the lip's
+// outer edge where the tear's lobes and jitter carry it furthest. Here rather
+// than with the drawing, so the yard can keep clear of it too (glimpse.js).
+export const portalReach = (r = portalCircle().r) =>
+  r * (PORTAL_LIP_TO + PORTAL_TEAR_LOBE + PORTAL_TEAR_JITTER * 5);
 // Its other end in the deep, hanging in the water across the deep's middle
 // rather than under the yard's end, which stands near the deep's left edge:
 // the way up, and where the deep's camera opens.

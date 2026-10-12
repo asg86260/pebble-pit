@@ -491,6 +491,8 @@ const snapshotOf = (survey, apron, stranded, air) => ({
   // the orbit.
   gulped: (S.gulped || []).length,
   gulpedAt: (S.gulped || []).slice(0, 4).map(m => ({ t: +m.t.toFixed(2), x: Math.round(m.x), y: Math.round(m.y) })),
+  // The serpent showing at the surface, if it is (glimpse.js).
+  glimpse: S.glimpse && { ...S.glimpse },
 
   // The dust lying in the cut, not yet fetched.
   cutDust: dustIn(cut),

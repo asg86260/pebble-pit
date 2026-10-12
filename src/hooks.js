@@ -1152,6 +1152,7 @@ import * as party from './deep/party.js';
 import { settle } from './crew/commute.js';
 import { deepPost } from './crew/deep.js';
 import { forceSerpent } from './snatch.js';
+import { startGlimpse } from './glimpse.js';
 import { postY } from './deep/place.js';
 
 // The pit drowned and the snatch played, so the shaft is open and the altar
@@ -1170,6 +1171,14 @@ function deepReady() {
 // build's story with SERPENT_ON off, true a released build's with it on, and
 // null hands the question back to the build (snatch.js, `serpentOn`).
 HANDLES.__serpentOn = on => forceSerpent(on);
+
+// A glimpse of the serpent at the drowned pit's surface, up now and `into`
+// seconds along, at column `x` heading `dir` or wherever the schedule would
+// put it (glimpse.js). For a scene; the schedule brings them on its own.
+HANDLES.__glimpse = (kind, o = {}) => {
+  const g = startGlimpse(kind, clockNow(), o);
+  return g && { ...g };
+};
 HANDLES.__demoOn = on => forceDemo(on);
 
 // Both facts true -- torn and drowned, and the sqwife out with her sheet put

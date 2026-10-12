@@ -134,6 +134,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - Every cutscene holds the yard still and letterboxed: black bands step in, everything but the scene's subjects fades back, the haulers fade out and the attackers freeze until it lets go (test/cutscene-hold.test.mjs).
+- Once the pit has drowned, now and then something shows at the abyss's surface and goes back under: a coil's back, a fin of purple spikes, or an eye watching the lip (test/glimpse.test.mjs).
 - Pods build in a few seconds each, never more than eight, instead of three quarters of a minute.
 - The stations in the deep have no counter under them; each fighter stays at the station it first swims to.
 - The ram is a tracked crawler that pushes a turning cutter wheel into the rock, throwing curling chips as it bores.

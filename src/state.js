@@ -104,6 +104,8 @@ export const S = {
   paid: [],               // flying out of the pit to the bench, on the way to being spent, and refunds flying back in
   gulped: [],             // and out of the pit into the abyss, diving to its surface
   ripples: [],            // where the liquid just ate one: { x, at }, briefly drawn
+  glimpse: null,          // the serpent showing at the abyss's surface: { kind, at, x, dir } (glimpse.js)
+  glimpseNext: null,      // and which comes next, and when: { kind, at }
   motes: [],              // the load drifting round the cursor
   trail: [],              // recent cursor positions, for the throw
   held: 0,                // how much dust is on the cursor
@@ -832,6 +834,9 @@ export const EPHEMERAL = [
   'rescueTo',
   // A grain mid-flight has no beginning to come back to.
   'paid', 'gulped', 'ripples', 'motes', 'trail', 'held',
+  // A glimpse is on the page's own clock, which starts again with the page:
+  // one in progress is not picked up again, and the wait is drawn afresh.
+  'glimpse', 'glimpseNext',
   'shownStored',
   // What was earned before this sitting is on the sheet, not in the air.
   'wonShown',

@@ -18,7 +18,7 @@ import { P, PORTAL_RX, PORTAL_RY, PORTAL_TURN_MS, ABYSS_TONES, ABYSS_MAGIC_TONES
          PORTAL_CRUMBS, PORTAL_CRUMB_MS, PORTAL_CRUMB_TURNS } from '../config.js';
 import { S, pit } from '../state.js';
 import { now } from '../clock.js';
-import { mouthX, portalCircle, deepPortal } from '../deep/place.js';
+import { mouthX, portalCircle, deepPortal, portalReach } from '../deep/place.js';
 import { pouringPortal } from '../wizard.js';
 import { WORKER, MAGIC_TONES } from '../config.js';
 import { abyssLine, pitDepth } from '../pit.js';
@@ -127,9 +127,8 @@ function drawPourBeams() {
   ctx.fillStyle = '#000';
 }
 
-// How far out from its middle the hole reaches at radius `r`: the lip's
-// outer edge where the tear's lobes and jitter carry it furthest.
-const reach = r => r * (PORTAL_LIP_TO + PORTAL_TEAR_LOBE + PORTAL_TEAR_JITTER * 5);
+// How far out from its middle the hole reaches at radius `r` (deep/place.js).
+const reach = portalReach;
 
 // How far out the whole hole reaches from its middle, standing open.
 export const holeReach = () => reach(portalCircle().r);

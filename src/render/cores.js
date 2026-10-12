@@ -20,7 +20,7 @@ import { P, MAGIC_TONES,
          RIFT_BEND_RINGS, RIFT_BEND_R, RIFT_BEND_AMT, RIFT_BEND_SHEET_STEP, RIFT_RING_W, RIFT_RING_INK,
          RIFT_DEEP_LAYERS, RIFT_DEEP_NEAR, RIFT_DEEP_FAR, RIFT_DEEP_SPACING,
          RIFT_PULL_MOTES, RIFT_PULL_MS, RIFT_PULL_FROM, RIFT_PULL_INK,
-         RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
+         RIFT_TAIL, RIFT_TAIL_R, GLIMPSE_BUBBLE } from '../config.js';
 import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
 import { abyssLine, pitDepth } from '../pit.js';
@@ -30,6 +30,7 @@ import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 import { paintAbyssField } from './abyssfield.js';
+import { glimpseFrame } from '../glimpse.js';
 
 // What is lying on the hill, drawn after the rock and before the chips. Every
 // grain goes through `drawMark` so it looks like the thing it is; there are
@@ -365,20 +366,28 @@ export function drawAbyss() {
   const to = Math.min(pit.x + pit.w, Math.ceil((S.camX + S.viewW + P * 2) / P) * P);
   if (to <= from) return;
 
+  // The serpent showing itself, if it is (glimpse.js): null nearly always,
+  // and then nothing below costs a thing. Where it lifts the surface a cell,
+  // the body is drawn a cell higher.
+  const g = glimpseFrame(t);
+  const surf = c => line + swellAt(c, t) - (g && g.lift[c] ? P : 0);
+
   // The grains still diving go under the body.
   drawLeaving(S.gulped);
 
   // The body, a column at a time so the surface is a rolling line.
   ctx.fillStyle = '#000';
   for (let x = from; x < to; x += P) {
-    const top = Math.min(floorY, line + swellAt(x / P, t));
+    const top = Math.min(floorY, surf(x / P));
     ctx.fillRect(x, top, P, Math.max(0, floorY - top));
   }
 
   // The liquid itself: the field the deep's water is drawn from too
   // (abyssfield.js), from a few cells under the rolling surface down.
-  paintAbyssField({ from, to, top: Math.round(line / P) * P + P * 3, bottom: floorY, line,
+  const fieldTop = Math.round(line / P) * P + P * 3;
+  paintAbyssField({ from, to, top: fieldTop, bottom: floorY, line,
                     tones: ABYSS_TONES, magic: ABYSS_MAGIC_TONES, t });
+  if (g) drawGlimpseUnder(g, from, to, fieldTop, line, surf);
 
   // The wisps: position is the clock and the column, so a wisp is a place
   // that exhales rather than a particle that exists; it narrows as it rises
@@ -408,6 +417,8 @@ export function drawAbyss() {
     ctx.fillRect(rx, Math.round((line + swellAt(Math.round(r.x / P), t)) / P) * P, wide, P);
   }
 
+  if (g) drawGlimpseOver(g, from, to, surf);
+
   // The bridge over the mouth: a cell-thick run across the two lips, which is
   // what a body crossing the drowned pit walks on (`pitTop`). Made of the same
   // light as the deep, each cell's tone off the flow, so a brightening travels
@@ -425,5 +436,44 @@ export function drawAbyss() {
       ctx.fillRect(x, by, P, P);
     }
   }
+}
+
+// The glimpse's part in the liquid: the lights put out where the body passes
+// under them, and its bubbles climbing. The field starts a few cells under
+// the line, below the lowest the surface goes, so putting a light out is
+// painting the liquid's own black over it.
+function drawGlimpseUnder(g, from, to, fieldTop, line, surf) {
+  ctx.fillStyle = '#000';
+  for (const b of g.blot) {
+    const x0 = Math.max(from, b.c0 * P), x1 = Math.min(to, (b.c1 + 1) * P);
+    const y1 = Math.round(line / P) * P + b.deep * P;
+    if (x1 > x0 && y1 > fieldTop) ctx.fillRect(x0, fieldTop, x1 - x0, y1 - fieldTop);
+  }
+  ctx.fillStyle = ABYSS_TONES[GLIMPSE_BUBBLE];
+  for (const b of g.bubbles) {
+    const x = b.c * P;
+    if (x >= from && x < to) ctx.fillRect(x, Math.round((surf(b.c) + b.deep * P) / P) * P, P, P);
+  }
+  ctx.fillStyle = '#000';
+}
+
+// And its part above: whatever of it stands over the surface, and the foam
+// on the surface's own top cell. Only over the pit's own columns.
+function drawGlimpseOver(g, from, to, surf) {
+  const x0 = Math.max(from, pit.x), x1 = Math.min(to, pit.x + pit.w);
+  const at = c => Math.round(surf(c) / P) * P;
+  for (const s of g.cells) {
+    const x = s.c * P;
+    if (x < x0 || x >= x1) continue;
+    ctx.fillStyle = s.tone;
+    ctx.fillRect(x, at(s.c) - s.up * P, P, P);
+  }
+  for (const k in g.notch) {
+    const c = +k, x = c * P;
+    if (x < x0 || x >= x1) continue;
+    ctx.fillStyle = g.notch[k];
+    ctx.fillRect(x, at(c), P, P);
+  }
+  ctx.fillStyle = '#000';
 }
 
