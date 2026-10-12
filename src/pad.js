@@ -25,7 +25,7 @@ import { readPads, seeFamily, glyph, rumble, fakePad, BUTTON } from './padread.j
 import { stops, stopById, stopMid } from './stops.js';
 import { station } from './stations.js';
 import { showPanel, openBoard, showTip, showTipAt } from './board.js';
-import { lookAt, unfollow, clampCam } from './world.js';
+import { lookAt, unfollow } from './world.js';
 import { knockOff, topOfRock, overBoulder } from './rock.js';
 import { sweep, release, track } from './hands.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
@@ -48,8 +48,8 @@ import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt } from './padglide.js';
 import { fillControls } from './controls.js';
-import { scope, focusables, focusEl, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX, pressY,
-         enterBoard, enterCorner, boardEntered, cornerEntered, paintPage } from './padpage.js';
+import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX, pressY,
+         enterBoard, enterCorner, paintPage } from './padpage.js';
 
 const mid = r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 const half = () => (S.view === 'deep' ? 'deep' : 'yard');
