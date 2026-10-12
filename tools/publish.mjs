@@ -15,6 +15,11 @@
 //
 //   bun run publish              # the browser build
 //   bun run publish -- --desktop # the packaged apps
+//
+// The paid page (DESIGN.md, "Three builds") is the same two pushes with
+// ITCH_TARGET naming it, BUILD_MODE=full so the browser build is the whole
+// game, and RELEASE_DIR naming the folder `desk:build -- --mode full` was
+// told to fill, so the free page's apps are never pushed to it.
 
 import { readdirSync, statSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -27,6 +32,7 @@ if (!target) {
   process.exit(2);
 }
 const desktop = process.argv.includes('--desktop');
+const mode = process.env.BUILD_MODE || '';
 
 // Every push is labeled with the version, so the itch dashboard and the
 // settings sheet agree on what a build is called.
@@ -46,7 +52,7 @@ function push(file, channel) {
 // The browser build: built fresh so the channel never carries a stale dist/,
 // then pushed as a directory -- butler zips it and itch serves index.html.
 if (!desktop) {
-  const b = spawnSync('vite', ['build'], { stdio: 'inherit', shell: true });
+  const b = spawnSync('vite', mode ? ['build', '--mode', mode] : ['build'], { stdio: 'inherit', shell: true });
   if (b.status !== 0 || !existsSync('dist/index.html')) {
     console.error('publish: the build failed; nothing was pushed');
     process.exit(1);
@@ -54,7 +60,7 @@ if (!desktop) {
   process.exit(push('dist', 'html') ? 0 : 1);
 }
 
-const DIR = 'release';
+const DIR = process.env.RELEASE_DIR || 'release';
 
 // Which channel each artifact belongs on, by the shape electron-builder gives
 // it. The portable Windows build is told apart from the installer by its name,

@@ -224,6 +224,13 @@ crosses, no path included; `store.cjs` is the save on disk, plain Node so
 `current.json` beside `last-good.json` under `userData/saves/`: a write goes to
 a temp file and is renamed over, and the save that was `current` before is
 promoted to `last-good` only after the new one has been read back whole.
+`steam.cjs` is the Steam build's mirror of that store (DESIGN.md, "Three
+builds"): every write also goes to Steam's remote storage through
+`steamworks.js` (required lazily, so nothing else needs it installed), each
+slot is settled against Steam at launch by `playedS`, and the full game's
+first launch offers the demo's save; plain Node too, checked against a fake
+remote in `test/desk-steam.test.mjs`. The shell learns which build it is from
+`dist/build.json` (`target`, `demo`), which vite.config.js stamps.
 
 Running it: `VITE_DEV_SERVER_URL=http://localhost:5183/ bun run desk` opens the
 shell against the dev server (any port; 5183 is the user's own game); `bun run

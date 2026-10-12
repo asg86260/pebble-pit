@@ -17557,7 +17557,7 @@ keeps its saved name and now means only "this rock is not yet finished
 with", and the cell value the core had stays unused so saved finds read the
 same.
 
-## Three builds: itch, Steam, and the Steam demo (design, not built)
+## Three builds: itch, Steam, and the Steam demo (built)
 
 The owner, 2026-10-10: a build that uses our own cloud saves and one that
 uses Steam's -- "no auto cloud for steam, only steamworks for steam. if its
@@ -17634,6 +17634,71 @@ objectives.js), keeps the second half off (`serpentOn`), and plays the
 `demoend` sheet (beats.js, ending.js) once the net has failed. The sheet's
 words are placeholders until the owner writes them; its store link shows
 once `VITE_STORE_URL` is set. Check: test/demo.test.mjs.
+
+**As built (the Steam build, 2026-10-12).** The owner's calls, relayed by
+the marketing session: saves through the SDK (`steamworks.js` 0.4.0, the
+one new dependency, the shell's only), Windows and Linux, no Auto-Cloud;
+the Steam build drops mac until it is notarized. Check:
+test/desk-steam.test.mjs.
+
+- **The target.** `VITE_TARGET=steam` in `.env.steam` (with `VITE_FULL=1`;
+  `npm run build:steam`) and `.env.steam-demo` (with `VITE_DEMO=1`; `npm run
+  build:steam-demo`). config/cloud.js derives `CLOUD_ON` from it
+  (`cloudOnFor`, `cloudUrlFor`): on Steam our cloud is off and the worker's
+  address is never in the bundle (vite.config.js defines it empty), so no
+  line, no page, no request, whether or not Steam is running. vite.config.js
+  also stamps `target` and `demo` into `build.json`, which is how the shell
+  knows what it is running.
+- **The mirror** is `electron/steam.cjs`, plain Node like the store. The SDK
+  is required lazily inside a try, so dev, the checks and the itch builds
+  never need it (and electron-builder leaves it out of the itch packages).
+  `startSteam` gives back the remote storage as `read` / `write` / `remove`,
+  or null when the SDK is missing, Steam will not start, or Steam Cloud is
+  off for the account or the game -- and null is the disk alone, said to
+  nobody. `mirror(store, remote)` writes every save that lands on disk to
+  Steam under the store's own file name (`current.json`, `slot-n.json`); a
+  reset deletes the slot from Steam, or the next launch would find the
+  thrown-away yard played longer than the empty one. Only the current save
+  is mirrored; last-good is the machine's own backup.
+- **At launch**, before the window opens, `reconcile` settles each of the
+  three slots: the copy with the larger `playedS` wins, a blob that is
+  missing or will not parse loses to any save, Steam's copy is written
+  through the store (so the disk's is kept as last-good), the disk's goes up
+  to Steam, and a tie writes nothing. Reads after that are the disk's.
+- **The demo's saves** live in a folder of their own: the demo build sets
+  `userData` to the full game's with " Demo" after it (`demoDirOf`), so the
+  two never share a save and the full game knows where to look.
+- **The carry-over.** On the full Steam game's launch, after `reconcile`, a
+  store with nothing in any slot is a first launch; if the demo's folder
+  holds a save (its slot played longest), a native dialog asks, and a yes
+  writes it to slot 1 through the mirror. `demo-carry.json` in `userData`
+  marks the offer made, taken or not, so it is never made again; a launch
+  with no demo save to offer asks again next time. The dialog's words
+  (`CARRY_WORDS`) are placeholders for the owner. The demo's Steam Cloud is
+  not read: the SDK reaches only the running app's own remote storage, and
+  the demo keeps its disk in step with its cloud whenever it runs, so its
+  disk copy is the one offered (`demoSave` takes a remote too, for the day
+  one is reachable).
+- **App ids**: none exist. `APPS` in steam.cjs is null for both; a packaged
+  build then lets Steam say which app it started (Steam sets `SteamAppId`),
+  and one not started by Steam plays on disk -- no restart through Steam.
+  A dev run uses `STEAM_APP_ID`, or 480 (Spacewar) when it is unset; a dev
+  shell starts Steam only on a Steam `build.json` or with `STEAM_APP_ID` set.
+- **Packaging.** `bun run desk:build -- --steam` (or `--steam-demo`) builds
+  with `tools/steam-builder.cjs`: package.json's `build` without mac,
+  steamworks.js's `dist/` unpacked from the asar, a plain folder target
+  (Steam is the installer) under `release/steam*`, and the demo its own
+  appId. `--mode full` builds the paid itch game.
+- **Release jobs** (release.yml): each itch leg also packages the full game
+  into `release/full` and pushes it, apps and page, to `ITCH_FULL_TARGET`
+  (publish.mjs reads `RELEASE_DIR` and `BUILD_MODE`). A `steam` job builds
+  the two cuts on windows and linux, tarred so the linux binary keeps its
+  mode; `steampipe` installs steamcmd, restores the build account's
+  `config.vdf` from a secret, and runs `tools/steampipe.mjs`, which writes
+  the app build script (one depot a platform) and uploads it, setting a beta
+  branch live only if `STEAM_BRANCH` names one. Both run only once
+  `STEAM_APP_ID` is set. The GitHub release takes only the free legs'
+  artifacts; the Steam folders are kept a day.
 
 The owner's calls so far: the demo ends at the farm (above);
 `steamworks.js` in the shell is accepted. Open: map the game's own

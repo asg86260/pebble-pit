@@ -15,13 +15,42 @@
 // `publish --desktop` finds both. On Linux itself (the release workflow's
 // ubuntu leg) `--linux` is just electron-builder's own flag.
 
+//
+// The cuts (DESIGN.md, "Three builds"): `--mode full` builds the paid game
+// for the paid itch page; `--steam` and `--steam-demo` build the Steam full
+// game and the Steam demo with tools/steam-builder.cjs, which drops the mac
+// target, carries steamworks.js unpacked beside the asar, and leaves an
+// unpacked folder under release/steam* for SteamPipe to upload. Each cut
+// names its own output folder, so one runner's cuts never mix in release/.
+
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 const args = process.argv.slice(2);
 const run = (cmd, opts) => execSync(cmd, { stdio: 'inherit', ...opts });
+const take = flag => {
+  const i = args.indexOf(flag);
+  if (i < 0) return null;
+  const v = args[i + 1];
+  args.splice(i, 2);
+  return v;
+};
+const drop = flag => {
+  const i = args.indexOf(flag);
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+};
 
-run('vite build');
+let mode = take('--mode');
+const steamDemo = drop('--steam-demo');
+const steamFull = drop('--steam');
+if (steamDemo) mode = 'steam-demo';
+else if (steamFull) mode = 'steam';
+const viteBuild = mode ? `vite build --mode ${mode}` : 'vite build';
+if (steamDemo || steamFull) args.push('--config', 'tools/steam-builder.cjs');
+const env = steamDemo ? { ...process.env, STEAM_DEMO: '1' } : process.env;
+
+run(viteBuild);
 
 if (args.includes('--linux') && process.platform !== 'linux') {
   // Paths are handed to docker in Windows form; under Git Bash the
@@ -31,7 +60,7 @@ if (args.includes('--linux') && process.platform !== 'linux') {
   const out = resolve('release').replace(/\\/g, '/');
   const inside = [
     'npm install --no-package-lock --no-audit --no-fund --loglevel=error',
-    'npx vite build',
+    `npx ${viteBuild}`,
     'npx electron-builder --linux AppImage --publish never --config.directories.output=/out',
   ].join(' && ');
   run(
@@ -43,4 +72,4 @@ if (args.includes('--linux') && process.platform !== 'linux') {
   if (!args.length) process.exit(0);
 }
 
-run(`electron-builder ${args.join(' ')} --publish never`);
+run(`electron-builder ${args.join(' ')} --publish never`, { env });

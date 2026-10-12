@@ -10,6 +10,7 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, screen } = require('electron'
 const fs = require('node:fs');
 const path = require('node:path');
 const { openStore } = require('./store.cjs');
+const steam = require('./steam.cjs');
 
 // The window as it opens, and the least it may be shrunk to. The yard lays
 // itself out to any size; these are the sizes at which the boards read.
@@ -27,13 +28,42 @@ function readBuild() {
   return { hash: 'dev', date: '' };
 }
 
+// The save store this build plays on. A Steam build (or a dev run with
+// STEAM_APP_ID set) mirrors it to Steam's remote storage and settles each
+// slot against Steam before the page reads it; when Steam cannot be reached
+// the store is the disk alone and nothing is said. The full game on Steam
+// then offers a demo save on its first launch (DESIGN.md, "Three builds").
+function openSaves() {
+  const userData = app.getPath('userData');
+  const disk = openStore(path.join(userData, 'saves'));
+  if (build.target !== 'steam' && !process.env.STEAM_APP_ID) return disk;
+  const remote = steam.startSteam({ appId: steam.appIdFor({ demo: !!build.demo, packaged: app.isPackaged }) });
+  const saves = steam.mirror(disk, remote);
+  saves.reconcile();
+  if (build.target === 'steam' && !build.demo) {
+    steam.offerDemoSave({
+      store: saves,
+      demoSaves: path.join(steam.demoDirOf(userData), 'saves'),
+      marker: path.join(userData, 'demo-carry.json'),
+      ask: w => dialog.showMessageBoxSync({
+        type: 'question', title: w.title, message: w.message,
+        buttons: [w.yes, w.no], defaultId: 0, cancelId: 1, noLink: true
+      }) === 0
+    });
+  }
+  return saves;
+}
+
 // The default name for a save on its way out: the day, so a folder of them
 // sorts itself.
 const saveName = () => `boulder-${new Date().toISOString().slice(0, 10)}.json`;
 const FILTERS = [{ name: 'save', extensions: ['json'] }];
 
 let store = null;
-let build = { version: '', hash: 'dev', date: '' };
+// Read before the app is ready: the demo's saves live in a folder of their own,
+// and the folder has to be named before anything is written to it.
+const build = readBuild();
+if (build.demo) app.setPath('userData', steam.demoDirOf(app.getPath('userData')));
 
 // Where the window was last left -- its bounds, and whether it was maximized
 // or full -- so it comes back there. A window that opens 1440x900 in the
@@ -135,8 +165,7 @@ function open() {
 Menu.setApplicationMenu(null);
 
 app.whenReady().then(() => {
-  store = openStore(path.join(app.getPath('userData'), 'saves'));
-  build = readBuild();
+  store = openSaves();
   wire();
   open();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) open(); });

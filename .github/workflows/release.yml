@@ -6,8 +6,16 @@
 #           to its itch channel through tools/publish.mjs; the linux leg also
 #           builds the browser game and pushes the `html` channel, which is
 #           the page itself.
+#           With ITCH_FULL_TARGET set, each leg also packages the paid full
+#           game (`--mode full`) and pushes it, apps and page, to the paid
+#           page's channels.
+#   steam   the Steam full game and the Steam demo, windows and linux (no
+#           mac until it is notarized), each an unpacked folder; then
+#   steampipe uploads both apps through Valve's steamcmd. Both run only
+#           once STEAM_APP_ID is set.
 #   release the GitHub release for the tag, with this version's CHANGELOG
-#           section as its notes and every build attached.
+#           section as its notes and the free builds attached -- never a
+#           paid one: the Steam folders go up as artifacts kept a day.
 #
 # The legs are independent (fail-fast off): a mac hiccup does not stop the
 # windows exe reaching the page. A failed leg is re-run from the Actions tab.
@@ -23,6 +31,20 @@
 # Without the certificate electron-builder signs ad-hoc, which runs on Apple
 # silicon but shows the "unidentified developer" sheet. Without the Apple ID
 # notarization is skipped. The Windows build is not signed (TODO.md).
+#
+# The paid itch page and Steam (DESIGN.md, "Three builds") are repository
+# variables, so a fork with none of them builds only the free page:
+#   ITCH_FULL_TARGET   variable -- the paid page, user/game; unset, no paid push.
+#   STEAM_APP_ID       variable -- the full game's app; unset, no Steam jobs.
+#   STEAM_DEPOT_WINDOWS, STEAM_DEPOT_LINUX            variables -- its depots.
+#   STEAM_DEMO_APP_ID  variable -- the demo's app; unset, no demo upload.
+#   STEAM_DEMO_DEPOT_WINDOWS, STEAM_DEMO_DEPOT_LINUX  variables -- its depots.
+#   STEAM_BRANCH       variable, optional -- a beta branch to set live; the
+#                      default branch is set by hand in Steamworks.
+#   STEAM_USERNAME     secret -- the build account's login.
+#   STEAM_CONFIG_VDF   secret -- base64 of that account's steamcmd
+#                      config/config.vdf after one interactive login with its
+#                      Steam Guard code, so the runner never has to answer one.
 
 name: release
 
@@ -119,14 +141,123 @@ jobs:
           bun run publish --desktop
           if [ "$RUNNER_OS" = Linux ]; then bun run publish; fi
 
+      # The paid page: the whole game, packaged into a folder of its own so
+      # the free page's apps are never pushed to it, nor its apps to the free one.
+      - name: Package the paid game
+        if: vars.ITCH_FULL_TARGET != ''
+        shell: bash
+        run: bun run desk:build --mode full ${{ matrix.build }} --config.directories.output=release/full --config.mac.notarize=${{ env.APPLE_ID != '' }}
+
+      - name: Push to the paid page
+        if: vars.ITCH_FULL_TARGET != ''
+        shell: bash
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_TARGET: ${{ vars.ITCH_FULL_TARGET }}
+          RELEASE_DIR: release/full
+          BUILD_MODE: full
+        run: |
+          bun run publish --desktop
+          if [ "$RUNNER_OS" = Linux ]; then bun run publish; fi
+
+  # The Steam cuts, a folder each, tarred so the linux binary keeps its
+  # executable bit through the artifact store, which drops file modes.
+  steam:
+    if: vars.STEAM_APP_ID != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        cut: [steam, steam-demo]
+        include:
+          - os: ubuntu-latest
+            build: --linux dir
+            plat: linux
+            folder: linux-unpacked
+          - os: windows-latest
+            build: --win dir
+            plat: windows
+            folder: win-unpacked
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Board of times
+        if: vars.TIMES_URL != ''
+        shell: bash
+        run: echo "VITE_TIMES_URL=${{ vars.TIMES_URL }}" >> "$GITHUB_ENV"
+      - name: Package
+        shell: bash
+        run: bun run desk:build --${{ matrix.cut }} ${{ matrix.build }}
+      - name: Pack the folder
+        shell: bash
+        run: tar -czf ${{ matrix.cut }}-${{ matrix.plat }}.tgz -C release/${{ matrix.cut }} ${{ matrix.folder }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.cut }}-${{ matrix.plat }}
+          path: ${{ matrix.cut }}-${{ matrix.plat }}.tgz
+          retention-days: 1
+          if-no-files-found: error
+
+  steampipe:
+    needs: steam
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: steam*
+          path: steam
+          merge-multiple: true
+      - name: Unpack
+        run: |
+          for f in steam/*.tgz; do
+            d="steam/$(basename "$f" .tgz)"
+            mkdir -p "$d" && tar -xzf "$f" -C "$d" --strip-components=1
+          done
+      - name: Install steamcmd
+        env:
+          CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+        run: |
+          mkdir -p "$HOME/steamcmd" && cd "$HOME/steamcmd"
+          curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar -xz
+          ./steamcmd.sh +quit || true
+          for c in "$HOME/steamcmd/config" "$HOME/Steam/config"; do
+            mkdir -p "$c" && echo "$CONFIG_VDF" | base64 -d > "$c/config.vdf"
+          done
+          echo "STEAMCMD=$HOME/steamcmd/steamcmd.sh" >> "$GITHUB_ENV"
+      - name: Upload the full game
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          LIVE: ${{ vars.STEAM_BRANCH }}
+        run: >
+          node tools/steampipe.mjs --app ${{ vars.STEAM_APP_ID }}
+          --depot ${{ vars.STEAM_DEPOT_WINDOWS }}=steam/steam-windows
+          --depot ${{ vars.STEAM_DEPOT_LINUX }}=steam/steam-linux
+          --desc "${{ github.ref_name }}" ${LIVE:+--live "$LIVE"}
+      - name: Upload the demo
+        if: vars.STEAM_DEMO_APP_ID != ''
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          LIVE: ${{ vars.STEAM_BRANCH }}
+        run: >
+          node tools/steampipe.mjs --app ${{ vars.STEAM_DEMO_APP_ID }}
+          --depot ${{ vars.STEAM_DEMO_DEPOT_WINDOWS }}=steam/steam-demo-windows
+          --depot ${{ vars.STEAM_DEMO_DEPOT_LINUX }}=steam/steam-demo-linux
+          --desc "${{ github.ref_name }}" ${LIVE:+--live "$LIVE"}
+
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Only the free legs' artifacts, which are named for their runner; the
+      # Steam folders are named for their cut and never reach this release.
       - uses: actions/download-artifact@v4
         with:
+          pattern: '*-latest'
           path: builds
           merge-multiple: true
       - name: GitHub release
