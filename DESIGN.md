@@ -14600,8 +14600,11 @@ with the load.
   `holdTheLine`, and the rock's footprint check (`footprintClear`).
 - **Idle, it goes in the garage** *(amended, the owner's call: a row of parked
   forklifts has no room for a lot of them)*. The first forklift stands up a
-  small shed on the old engine stand's ground left of the carts' stand
-  (`garage` in crew/lifts.js, `GARAGE_W` by `GARAGE_H`). A new forklift is
+  small shed on the house's far side from the rock, on ground the house's
+  SITES row keeps for it from the first hire (`garage` in crew/lifts.js,
+  `GARAGE_W` by `GARAGE_H`, `GARAGE_CLEAR` off the house's wall; moved there
+  2026-10-12, the owner's call, with a counter of its own under it, a pip a
+  forklift, in place of the forklift line under the carriers). A new forklift is
   made inside it; one with nothing to fetch drives to the door and goes in,
   out of sight like a body in its house, and drives out through the same door
   the moment there is dust. Any number fit. The count of those inside rides
