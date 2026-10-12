@@ -23,11 +23,11 @@
 
 import { now } from '../clock.js';
 import { P, DEEP_W, DEEP_SURFACE, DRAW_POSE, DRAW_ROOM_S, DRAW_LOWER_S, LAND_FX_S, CLASSES, RECRUIT,
-         IDLE_STEP_S, IDLE_HOP_S, IDLE_SETTLE_S } from '../config.js';
+         IDLE_STEP_S, IDLE_HOP_S, IDLE_SETTLE_S, WORKER, ORB_SQUASH_WIDE, ORB_SQUASH_FLAT } from '../config.js';
 import { TYPE } from '../jobs.js';
 import { S } from '../state.js';
 import { fighterAt, keyOf, riseOf } from '../deep/party.js';
-import { orbLift } from '../deep/phases.js';
+import { orbLift, orbSquash } from '../deep/phases.js';
 import * as fight from '../deep/arms.js';
 import { deepFloor, deepTop, deepX0, postX } from '../deep/place.js';
 import { ctx } from './ctx.js';
@@ -241,6 +241,15 @@ export function drawFighters() {
   ctx.rect(deepX0() - P * 16, cut, DEEP_W + P * 32, deepFloor() - cut + P * 8);
   ctx.clip();
   for (const f of list) {
+    // landed home from the constrict's orb: squashed on its feet for a beat
+    const squash = orbSquash(f.st);
+    if (squash) {
+      const fx = f.x * P + WORKER / 2, fy = f.restY * P + WORKER;
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.scale(1 + ORB_SQUASH_WIDE, 1 - ORB_SQUASH_FLAT);
+      ctx.translate(-fx, -fy);
+    }
     let at = [f.x + f.dx, f.restY + f.dy];
     if (!f.key) body(f.x, f.restY);             // no class to draw: the plain square
     else if (f.c) {
@@ -267,6 +276,7 @@ export function drawFighters() {
     const b = buffsOf(f, list, t);
     if (b.inspired) paintInspired(t, at[0], at[1], b.inspired);
     if (b.hasted) paintHasted(t, at[0], at[1]);
+    if (squash) ctx.restore();
   }
   ctx.restore();
   ctx.fillStyle = '#000';

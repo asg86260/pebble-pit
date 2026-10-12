@@ -13,7 +13,7 @@ import { assignDrop } from './assign.js';
 import { load } from './hole.js';
 import { earn } from '../notices.js';
 import { crewView } from '../prefs.js';
-import { inOrb, breakOrb } from '../deep/phases.js';
+import { inOrb, breakOrb, orbLiftOf } from '../deep/phases.js';
 
 // --- picking somebody up ------------------------------------------------------
 export function workerAt(x, y) {
@@ -25,8 +25,11 @@ export function workerAt(x, y) {
   for (let i = S.workers.length - 1; i >= 0; i--) {
     const w = S.workers[i];
     if (w.inside || underground(w)) continue;
+    // where it is drawn: a fighter the constrict's orb holds up, or is
+    // letting down, hangs over its spot
+    const wy = w.y - orbLiftOf(w) * P;
     if (x < w.x - pad || x > w.x + WORKER + pad) continue;
-    if (y < w.y - pad || y > w.y + WORKER + pad) continue;
+    if (y < wy - pad || y > wy + WORKER + pad) continue;
     return w;
   }
   return null;
@@ -45,8 +48,13 @@ export function hoverAt(x, y) {
 
 export function lift(w) {
   if (!w) return false;
-  // Lifted out of the constrict's orb: free at once, and the orb bursts.
+  // Lifted out of the constrict's orb: free at once, and the orb bursts. The
+  // body is taken where it is drawn, and the hand, not the sink, brings it
+  // down.
+  const up = orbLiftOf(w);
   if (inOrb(w)) breakOrb();
+  if (S.orbBurst && S.orbBurst.st === w.station) S.orbBurst.from = 0;
+  w.y -= up * P;
   for (const o of S.workers) o.lifted = false;
   w.lifted = true;
   earn('lifted');

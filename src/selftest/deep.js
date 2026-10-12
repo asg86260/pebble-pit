@@ -521,3 +521,66 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
             ok(panned && S.view === 'deep', 'deep: and the middle button drags the view', `${panned} ${S.view}`));
   return [...yard, ...deep];
 }]);
+
+// The constrict's orb under a real pointer (deep/phases.js): its fighter
+// stands on its station's ground, and the orb rises until it is clear of the
+// station's hit box. A mouse coming up from the fighter's post onto the orb,
+// clicking, and pressing and holding, and a finger tapping it: each press
+// takes from the orb, and no board is up over it once the pointer is on it.
+import { SCENES } from '../scenes.js';
+import { orbOn, orbMiddle } from '../deep/phases.js';
+import { postY } from '../deep/place.js';
+import { hitRect } from '../stations.js';
+import { ORB_R, ORB_CLOSE_S, ORB_RISE_S } from '../config.js';
+import { panel, canvas } from './kit.js';
+TESTS.push(['deep: a press on the constrict\'s orb hits the orb and opens no board, by mouse or finger', async () => {
+  SCENES['phase-orb'].run();
+  // The party swims down from the portal: held in the orb's turn until a
+  // fighter is standing on its post (the brawler the scene casts it on goes
+  // up to the coil), and the orb moved onto that one, outlasting the party's
+  // blows (they land on it first) and every press below.
+  const turn = S.mechAt;
+  if (S.orb) S.orb.hp = S.orb.max = 1e9;
+  const onPost = () => S.workers.find(b => b.station && S.stations.some(s => s.id === b.station) && Math.abs(b.y - postY()) < P);
+  for (let i = 0; i < 240 && !onPost(); i++) { run(0.25); S.mechAt = turn; }
+  if (S.orb && onPost()) S.orb.st = onPost().station;
+  const o = orbOn(), w = o && S.workers.find(b => b.station === o.st);
+  if (!w || Math.abs(w.y - postY()) >= P) {
+    return [ok(false, 'a fighter held in the orb, on its post', JSON.stringify({ orb: S.orb, y: w?.y, post: postY() }))];
+  }
+  o.at = now() - (ORB_CLOSE_S + ORB_RISE_S) * 1000;   // closed and risen all the way
+  const mid = orbMiddle(o.st), hit = hitRect(o.st);
+  const clear = mid.y + ORB_R * P <= hit.y;
+  const open = () => !panel().hidden || panel().classList.contains('open');
+  // `up` 0 is the fighter's spot on its post, 1 the orb's middle
+  const at = (up = 1) => { const m = orbMiddle(o.st); return onScreen(m.x, w.y + WORKER - (w.y + WORKER - m.y) * up); };
+  const ev = (kind, type, [x, y], buttons) => canvas().dispatchEvent(new PointerEvent(type, {
+    clientX: x, clientY: y, pointerId: kind === 'touch' ? 7 : 1, isPrimary: true,
+    pointerType: kind, button: 0, buttons, bubbles: true }));
+  const seen = [];
+  const press = async (kind, hold) => {
+    const hp = o.hp;
+    if (kind === 'mouse') {
+      // up from the feet, across the station's ground, onto the orb
+      for (const k of [0, 0.25, 0.5, 0.75, 1]) { ev(kind, 'pointermove', at(k), 0); await sleep(120); }
+      await sleep(200);
+    }
+    const over = open();
+    ev(kind, 'pointerdown', at(), 1);
+    if (hold) await sleep(400);
+    ev(kind, 'pointerup', at(), 0);
+    await sleep(250); await raf();
+    seen.push({ kind, hold, hit: o.hp < hp, over, open: open() });
+    await hoverAway();
+  };
+  for (let i = 0; i < 3; i++) await press('mouse', false);
+  await press('mouse', true);
+  for (let i = 0; i < 3; i++) await press('touch', false);
+  const say = seen.map(s => `${s.kind}${s.hold ? ' held' : ''}: hit ${s.hit}, board on arrival ${s.over}, after ${s.open}`).join('; ');
+  return [
+    ok(clear, 'risen, the orb is clear of its station\'s hit box', `bottom ${mid.y + ORB_R * P}, hit box top ${hit.y}`),
+    ok(orbOn() === o, 'the orb holds through the presses', JSON.stringify(S.orb)),
+    ok(seen.every(s => s.hit), 'every press on the orb takes from it', say),
+    ok(seen.every(s => !s.over && !s.open), 'and no board is up over it, on arrival or after the press', say)
+  ];
+}]);

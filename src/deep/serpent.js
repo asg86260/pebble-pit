@@ -11,7 +11,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_WOUND, SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_X, P, WORKER,
+import { SERPENT_WOUND, SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_X, P,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG, DAMAGE_KIND, BARRIER_FLARE_MS } from '../config.js';
@@ -20,7 +20,7 @@ import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned, streamS } from './meals.js';
-import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbLift, settleResist } from './phases.js';
+import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbMiddle, settleResist } from './phases.js';
 
 // The four defenses are 0..3; the fourth break leaves the stage at 4, which
 // resists nothing and has nothing left to heal.
@@ -133,6 +133,14 @@ export const clickDmg = () => {
   return CLICK_DMG[Math.max(0, Math.min(CLICK_DMG.length - 1, (st && st.rung) || 0))];
 };
 
+// The constrict's orb's middle if (x, y) is on it, else null. Its fighter
+// stands on its station's ground, so the pointer asks this before the
+// station's board (input.js).
+export function onOrb(x, y) {
+  const orb = orbOn(), c = orb && orbMiddle(orb.st);
+  return c && Math.hypot(x - c.x, y - c.y) <= ORB_R * P ? c : null;
+}
+
 // A click in the deep, in world coordinates: true if it was the serpent's.
 // It lands where the body is, not where the pointer is, so the scales come
 // off the coil. Always a punch.
@@ -140,11 +148,8 @@ export function clickDeep(x, y) {
   if (!S.snatched) return false;
   const t = now();
   // On the constrict's orb, a punch several times over (deep/phases.js).
-  const orb = orbOn(), w = orb && S.workers.find(o => o.station === orb.st);
-  if (w) {
-    const st = S.stations.find(s => s.id === orb.st), cx = w.x + WORKER / 2, cy = w.y + WORKER / 2 - orbLift(st) * P;
-    if (Math.hypot(x - cx, y - cy) <= ORB_R * P) { strike('punch', clickDmg() * ORB_CLICK_X, cx, cy); return true; }
-  }
+  const c = onOrb(x, y);
+  if (c) { strike('punch', clickDmg() * ORB_CLICK_X, c.x, c.y); return true; }
   const near = nearestSeg(x, y, t);
   if (near.d > coilThick(near.seg)) return false;
   const p = coilAt(near.seg, t);

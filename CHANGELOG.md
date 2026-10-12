@@ -22,6 +22,9 @@ this section; the release that switches it on moves these under Unreleased.
 - When the serpent resists explosive it floats a magic barrier under its body that soaks up the Sapper's charges.
 - The serpent's warded phase, split and fading resist whatever your highest-rung fighters deal, explosive included, instead of fixed kinds.
 - The deep's first pod costs 10 scales, and each after it a third more.
+- A click or tap on the constrict's orb no longer opens the fighter's board over the orb and its bar (src/selftest/deep.js).
+- The constrict's orb rises clear of its fighter's station, and once broken the fighter sinks home instead of snapping back (test/orb.test.mjs).
+- Refreshing the page while a fighter is in the constrict's orb no longer stops the game (`node tools/look.mjs phase-orb`).
 - The serpent's statuses stand over its bar, twice the size, each with its name under it.
 - The serpent has a fifth phase: its comb lights up and bolts lock the strongest fighter in an orb; break the orb (a click on it hits harder), or pick the fighter out of it.
 - The serpent's warded phase no longer surges: its magic resist is the whole of it.

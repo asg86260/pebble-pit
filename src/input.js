@@ -50,7 +50,7 @@ import { reducedMotion } from './prefs.js';
 import { goDeep, goUp, gliding } from './view.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
-import { clickDeep } from './deep/serpent.js';
+import { clickDeep, onOrb } from './deep/serpent.js';
 import { nearestSeg, coilThick } from './deep/place.js';
 
 const canvas = document.getElementById('c');
@@ -110,9 +110,15 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
 canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
 
+// The constrict's orb hangs inside its fighter's station ground, and is the
+// thing to press there: a board opened under it would cover it and its bar.
+const overOrb = (x, y) => S.view === 'deep' && !!onOrb(x, y);
+// The station whose board the pointer asks for: the hover, the click and the
+// tap all ask this one.
+const boardAt = (x, y) => (overOrb(x, y) ? null : stationAt(x, y));
 // Standing at any station at all; the click and move handlers ask the same
 // table.
-const atStation = (x, y) => stationAt(x, y) !== null;
+const atStation = (x, y) => boardAt(x, y) !== null;
 
 const onCoil = (x, y) => {
   if (S.view !== 'deep') return false;
@@ -266,7 +272,7 @@ canvas.addEventListener('pointermove', e => {
     hoverAt(S.mouse.x, S.mouse.y);
     potHover(S.mouse.x, S.mouse.y);
     // The table's order settles which wins where two patches overlap.
-    const want = stationAt(S.mouse.x, S.mouse.y);
+    const want = boardAt(S.mouse.x, S.mouse.y);
     // Standing at a station outranks being on the way to the open board: a
     // station under the pointer is an arrival, and the wedge is for the ground
     // *between* things, so it only has a say when the answer would otherwise
@@ -274,6 +280,9 @@ canvas.addEventListener('pointermove', e => {
     // the board and the crew list is bare canvas over whatever station is next
     // along, and crossing it is reading the menu, not arriving.
     if (want && !onMenu(e.clientX, e.clientY)) showPanel(want);
+    // The orb is reached across its station's ground, which opened the board
+    // over it: it goes at once, not after the linger or the wedge.
+    else if (overOrb(S.mouse.x, S.mouse.y)) showPanel(null, true);
     else if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
     // a board opens because you walked up to a station, a tooltip because you
     // went and looked at a mark
@@ -317,7 +326,7 @@ export function endDrag(e) {
       isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
     if (tapAt(p.x, p.y)) { S.mining = false; return; }
-    const which = stationAt(p.x, p.y);
+    const which = boardAt(p.x, p.y);
     // A second tap on the station whose board is up puts it away.
     showPanel(which && !S[station(which).board] ? which : null, true);
   }
@@ -573,7 +582,7 @@ const CURSORS = [
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
-  [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y), 'pointer'],
+  [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y) || overOrb(x, y), 'pointer'],
   [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],

@@ -239,14 +239,31 @@ export const MECHANICS = [
 // The constrict's orb (DESIGN.md, "A fifth phase: the constrict"): the comb
 // lights head first through the warning; bolts jag from its tips to the
 // strongest station's fighter for ORB_BOLT_S; an orb ORB_R cells across closes
-// round it and lifts it ORB_LIFT cells, a cell every ORB_LIFT_STEP seconds;
+// round it over ORB_CLOSE_S, then rises over ORB_RISE_S in held ORB_STEP-cell
+// steps, fast at first with ORB_GHOSTS rings trailing, until its bottom is
+// ORB_CLEAR cells over its station's hit box, and bobs a cell every ORB_BOB_S;
 // broken, it bursts into motes over ORB_BURST_S.
 export const ORB_BOLT_S = 0.5;
 export const ORB_BOLTS = 3;
 export const ORB_R = 5;
-export const ORB_LIFT = 3;
-export const ORB_LIFT_STEP = 0.1;
+export const ORB_CLOSE_S = 0.2;
+export const ORB_RISE_S = 1.4;
+export const ORB_STEP = 2;
+export const ORB_CLEAR = 2;
+export const ORB_BOB_S = 0.5;
+export const ORB_GHOSTS = 2;
+export const ORB_GHOST_K = 0.5;        // the share of the rise that trails rings
 export const ORB_BURST_S = 0.6;
+// Let go, its fighter hangs ORB_HANG_S, sinks home over ORB_SINK_S on the
+// deep's gravity (speeding up over the first ORB_SINK_EASE of it, then
+// steady, with ghost lines over its head once it is), and lands squashed for
+// ORB_SQUASH_S, ORB_SQUASH_WIDE wider and ORB_SQUASH_FLAT shorter.
+export const ORB_HANG_S = 0.25;
+export const ORB_SINK_S = 2.2;
+export const ORB_SINK_EASE = 0.4;
+export const ORB_SQUASH_S = 0.15;
+export const ORB_SQUASH_WIDE = 0.16;
+export const ORB_SQUASH_FLAT = 0.26;
 // A click on the orb itself is a punch ORB_CLICK_X times over, so the hand can
 // crack it faster; an arrow bobs over it, ORB_ARROW_UP cells and back every
 // ORB_ARROW_S, to say it can be clicked.

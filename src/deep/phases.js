@@ -17,9 +17,11 @@ import { S } from '../state.js';
 import { now } from '../clock.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
          BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT,
-         SERPENT_PHASES, SERPENT_WOUND, ORB_LIFT, ORB_LIFT_STEP } from '../config.js';
+         SERPENT_PHASES, SERPENT_WOUND, P, WORKER, ORB_R, ORB_CLOSE_S, ORB_RISE_S, ORB_STEP, ORB_CLEAR,
+         ORB_BOB_S, ORB_GHOST_K, ORB_HANG_S, ORB_SINK_S, ORB_SINK_EASE, ORB_SQUASH_S } from '../config.js';
 import { CLASSES, PAIRS } from '../config/classes.js';
 import { has } from './statuses.js';
+import { hitRect } from '../stations.js';
 
 const LAST = SERPENT_PHASES - 1;
 export const mechOf = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? MECHANICS[S.serpentStage] : null);
@@ -93,7 +95,9 @@ function stepOrb(p) {
 // is answered.
 export function breakOrb() {
   if (!S.orb) return;
-  S.orbBurst = { st: S.orb.st, at: now() };
+  // `from`: the height it let go at, which its fighter sinks home from.
+  const st = S.stations.find(s => s.id === S.orb.st);
+  S.orbBurst = { st: S.orb.st, at: now(), from: heldLift(st, S.orb) || 0 };
   S.orb = null;
   S.mechSkip = true;
 }
@@ -109,12 +113,79 @@ export function hitOrb(done) {
 }
 // Whether this body is the one in the orb.
 export const inOrb = w => { const o = orbOn(); return !!o && !!w && w.station === o.st; };
-// How many cells the orb has lifted its fighter, a step at a time.
-export function orbLift(st) {
-  const o = orbOn();
-  if (!o || !st || o.st !== st.id) return 0;
-  return Math.min(ORB_LIFT, Math.floor((now() - o.at) / 1000 / ORB_LIFT_STEP));
+
+// --- where the orb's fighter is drawn ------------------------------------------------
+// The body stays on its spot in the yard; the orb, the arms, the burst and
+// the hand all read its height off `orbLift`, so they cannot disagree.
+//
+// Seconds since a moment. The orb is saved and the page's clock starts again
+// near nought on a refresh, so a moment ahead of the clock is from an older
+// page and reads as long past: the orb risen, nothing replayed.
+const since = at => (at > now() ? Infinity : (now() - at) / 1000);
+const fighterOf = st => st && S.workers.find(w => w.station === st.id);
+const easeOut = s => 1 - Math.pow(1 - Math.min(1, Math.max(0, s)), 3);
+// Falling on the deep's gravity under its drag: speeding up, then steady.
+const sinkCurve = k => {
+  const a = ORB_SINK_EASE;
+  return (k < a ? k * k / (2 * a) : k - a / 2) / (1 - a / 2);
+};
+// How many cells the orb must rise for its bottom to clear its station's hit
+// box by ORB_CLEAR, in whole steps: none for a fighter already clear of it.
+function orbTop(st, w) {
+  const r = hitRect(st.id);
+  if (!r || !w) return 0;
+  const cx = w.x + WORKER / 2;
+  if (cx + ORB_R * P <= r.x || cx - ORB_R * P >= r.x + r.w) return 0;
+  const need = Math.ceil((w.y + WORKER / 2 + ORB_R * P - r.y) / P) + ORB_CLEAR;
+  return need <= 0 ? 0 : Math.ceil(need / ORB_STEP) * ORB_STEP;
 }
+// The rise's progress, 0..1, or null with no orb `o` on this station.
+function riseK(st, o = orbOn()) {
+  if (!o || !st || o.st !== st.id) return null;
+  return Math.max(0, Math.min(1, (since(o.at) - ORB_CLOSE_S) / ORB_RISE_S));
+}
+// How high orb `o` holds the fighter: risen in steps, then bobbing. Asked of
+// the orb itself as it breaks, when it is no longer on.
+function heldLift(st, o) {
+  const k = riseK(st, o);
+  if (k == null) return null;
+  const top = orbTop(st, fighterOf(st));
+  if (k < 1) return ORB_STEP * Math.floor(easeOut(k) * top / ORB_STEP);
+  // the bob counted from the top, so it does not add a cell to the last step
+  const up = since(o.at) - ORB_CLOSE_S - ORB_RISE_S;
+  return top + Math.floor((Number.isFinite(up) ? up : now() / 1000) / ORB_BOB_S) % 2;
+}
+// How many cells the fighter is drawn over its spot: the orb's rise and bob,
+// then, let go, the hang and the sink home.
+export function orbLift(st) {
+  const held = heldLift(st, orbOn());
+  if (held != null) return held;
+  const b = S.orbBurst;
+  if (!b || !st || b.st !== st.id || !b.from) return 0;
+  const a = since(b.at);
+  if (a < ORB_HANG_S) return b.from;
+  const s = (a - ORB_HANG_S) / ORB_SINK_S;
+  return s < 1 ? b.from - Math.floor(sinkCurve(s) * b.from) : 0;
+}
+// The same for a body: a fighter's station's, nobody else's.
+export const orbLiftOf = w => (w && w.station && S.stations ? orbLift(S.stations.find(s => s.id === w.station)) : 0);
+// The middle of the orb's fighter where it is drawn, by station id: the orb's
+// middle while it holds, the burst's after.
+export function orbMiddle(id) {
+  const st = S.stations.find(s => s.id === id), w = fighterOf(st);
+  return w ? { x: w.x + WORKER / 2, y: w.y + WORKER / 2 - orbLift(st) * P } : null;
+}
+// The drawing's beats: whether the rise is still fast enough to trail rings,
+// the sink fast enough to trail lines, and the landing's squash.
+export const orbRising = st => { const k = riseK(st); return k != null && k > 0 && k < ORB_GHOST_K; };
+function sinkS(st) {
+  const b = S.orbBurst;
+  return b && st && b.st === st.id && b.from ? (since(b.at) - ORB_HANG_S) / ORB_SINK_S : null;
+}
+export const orbSinking = st => { const s = sinkS(st); return s != null && s > ORB_SINK_EASE && s < 1; };
+export const orbSquash = st => { const s = sinkS(st); return s != null && s >= 1 && s < 1 + ORB_SQUASH_S / ORB_SINK_S; };
+// Seconds since the orb was cast, as the bolts read it.
+export const orbAge = () => (orbOn() ? since(orbOn().at) : Infinity);
 
 // --- a phase's break -------------------------------------------------------------
 // It plays from the frame the defense breaks (`S.breakT`, seconds in): into

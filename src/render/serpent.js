@@ -29,14 +29,14 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
-         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP,
+         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP, ORB_STEP, ORB_GHOSTS,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
 import { coilLine, coilThick, mouthX, deepFloor, bellyAt } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, killFreeA, orbOn, orbLift } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift } from '../deep/phases.js';
 import { freedBody } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -453,15 +453,17 @@ function combLit(t) {
   const p = part();
   if (p.m?.kind !== 'orb' || S.mechSkip && !orbOn()) return 0;
   if (p.part === 'warn') return p.k;
-  const o = orbOn();
-  return o && t - o.at < ORB_BOLT_S * 1000 ? 1 : 0;
+  return orbAge() < ORB_BOLT_S ? 1 : 0;
 }
-// The orb's fighter, where it hangs.
-function orbBody(id) {
-  const w = S.workers.find(o => o.station === id);
-  if (!w) return null;
-  const st = S.stations.find(s => s.id === id);
-  return { x: w.x + WORKER / 2, y: w.y + WORKER / 2 - orbLift(st) * P };
+// A ring of the orb's dots round (x, y), every `every`th one drawn.
+function orbRing(x, y, r, t, ink, every = 1) {
+  const turn = Math.floor(t / 1000 * 8) / 8 * 0.6;
+  const dots = Math.max(16, Math.round(r * 2 * Math.PI / P));
+  for (let n = 0; n < dots; n += every) {
+    const th = n / dots * Math.PI * 2 + turn;
+    ctx.fillStyle = ink(n);
+    ctx.fillRect(snap(x + Math.cos(th) * r - P / 2), snap(y + Math.sin(th) * r * 0.9 - P / 2), P, P);
+  }
 }
 // The explosive resist's barrier: a row of floating cells under the coil's
 // underside, following it, a column of cells to each cell of the deep it
@@ -500,9 +502,9 @@ export function drawOrb() {
   if (S.view !== 'deep') return;
   const t = now(), o = orbOn();
   if (o) {
-    const c = orbBody(o.st);
+    const c = orbMiddle(o.st);
     if (!c) return;
-    const age = (t - o.at) / 1000;
+    const age = orbAge(), st = S.stations.find(s => s.id === o.st);
     if (age < ORB_BOLT_S && crestTips.length) {
       const shape = Math.floor(age * 6);
       for (let n = 0; n < ORB_BOLTS; n++) {
@@ -518,14 +520,13 @@ export function drawOrb() {
         }
       }
     }
-    // the orb, closing over the first beat of it, turning
-    const r = Math.min(ORB_R, 1 + age * 20) * P, turn = Math.floor(t / 1000 * 8) / 8 * 0.6;
-    const dots = Math.max(16, Math.round(r * 2 * Math.PI / P));
-    for (let n = 0; n < dots; n++) {
-      const th = n / dots * Math.PI * 2 + turn;
-      ctx.fillStyle = n % 4 === 0 ? PURPLES[WHITE] : PURPLES[WHITE - 2];
-      ctx.fillRect(snap(c.x + Math.cos(th) * r - P / 2), snap(c.y + Math.sin(th) * r * 0.9 - P / 2), P, P);
+    // the orb, closing over the first beat of it, turning; while it rises
+    // fast, fainter rings trailing a step apart under it
+    const r = Math.min(ORB_R, 1 + age * 20) * P;
+    if (orbRising(st)) {
+      for (let g = ORB_GHOSTS; g >= 1; g--) orbRing(c.x, c.y + g * ORB_STEP * P, r, t, () => PURPLES[WHITE - 3 - 2 * g], 2);
     }
+    orbRing(c.x, c.y, r, t, n => (n % 4 === 0 ? PURPLES[WHITE] : PURPLES[WHITE - 2]));
     // what is left of it, over its head
     const bw = ORB_R * 2 + 2, by = snap(c.y - r - P * 3), bx = snap(c.x) - Math.floor(bw / 2) * P;
     for (let i = 0; i < bw; i++) {
@@ -538,14 +539,26 @@ export function drawOrb() {
     for (const [dx, dy] of [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [3, 1], [2, 2]]) ctx.fillRect(ax + dx * P, ay + dy * P, P, P);
   }
   const b = S.orbBurst;
-  if (b && t - b.at < ORB_BURST_S * 1000) {
-    const c = orbBody(b.st);
-    if (!c) return;
+  if (!b) return;
+  const st = S.stations.find(s => s.id === b.st), w = orbMiddle(b.st);
+  if (!w) return;
+  // the burst where the orb let go, not on the fighter sinking out of it
+  if (t - b.at < ORB_BURST_S * 1000) {
+    const c = { x: w.x, y: w.y - ((b.from || 0) - orbLift(st)) * P };
     const k = (t - b.at) / 1000 / ORB_BURST_S, r = (ORB_R + Math.floor(k * 6) * 1.5) * P;
     for (let n = 0; n < 16; n++) {
       const th = n / 16 * Math.PI * 2;
       ctx.fillStyle = PURPLES[WHITE - 1 - Math.min(6, Math.floor(k * 7))];
       ctx.fillRect(snap(c.x + Math.cos(th) * r - P / 2), snap(c.y + Math.sin(th) * r * 0.9 - P / 2), P, P);
+    }
+  }
+  // sinking home fast: lines trailing over its head
+  if (orbSinking(st)) {
+    const top = snap(w.y - WORKER / 2);
+    ctx.fillStyle = GREYS[WHITE - 4];
+    for (const dx of [-WORKER / 2, 0, WORKER / 2 - P]) {
+      const len = dx ? 2 : 3;
+      for (let i = 1; i <= len; i++) ctx.fillRect(snap(w.x + dx), top - (i + 1) * P, P, P);
     }
   }
 }

@@ -286,16 +286,23 @@ export function standRect(key) {
   return r && { x: r.x, y: r.y, w: r.w, h: r.h };
 }
 
-// Near enough to a station's ground to be interested in it: its rectangle
-// padded by its reach.
-export function nearStation(key, x, y) {
+// A station's hit box: its ground padded by its reach, where the pointer
+// opens its board. The constrict's orb rises until it is clear of it
+// (deep/phases.js).
+export function hitRect(key) {
   const s = station(key);
-  if (!s || !s.stand || !s.open()) return false;
+  if (!s || !s.stand || !s.open()) return null;
   const r = s.stand();
-  if (!r) return false;
+  if (!r) return null;
   const c = { ...REACH, ...(s.reach || {}) };
-  return x > r.x - P * c.left && x < r.x + r.w + P * c.right &&
-         y > r.y - P * c.up && y < r.y + r.h + P * c.down;
+  return { x: r.x - P * c.left, y: r.y - P * c.up,
+           w: r.w + P * (c.left + c.right), h: r.h + P * (c.up + c.down) };
+}
+
+// Near enough to a station's ground to be interested in it: inside its hit box.
+export function nearStation(key, x, y) {
+  const r = hitRect(key);
+  return !!r && x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h;
 }
 
 // The station a point on the ground asks for, in table order, or null.
