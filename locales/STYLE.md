@@ -2,8 +2,7 @@
 
 One page for whoever translates or reviews `locales/<code>.ftl`. The
 English source is `locales/en.ftl`; the comment over each message says
-where it shows. This is a draft for the owner to approve, and the glossary's
-renderings of the made-up words are proposals, not decisions.
+where it shows. The glossary is the owner's: follow it.
 
 ## The voice
 
@@ -94,13 +93,12 @@ in a comment for the owner.
 
 ## The glossary
 
-The terms, what each is in the yard, and the rendering this draft uses. A
-line marked **(proposal)** is a coinage the owner must approve.
+The terms, what each is in the yard, and the rendering this draft uses.
 
 | term | what it is | de | fr | es | pt-BR | ru | zh-CN | ja | ko |
 |---|---|---|---|---|---|---|---|---|---|
-| sqwife | the player's wife, a square, buried under the first rock. "sq" is "square": the people are squares | quadratfrau (proposal) | carrépouse (proposal) | cuadresposa (proposal) | quadresposa (proposal) | квадражена (proposal) | 方妻 (proposal) | 四角妻 (proposal) | 네모아내 (proposal) |
-| sqhusband | her husband, swallowed by the serpent in the second half | quadratmann (proposal) | carrémari (proposal) | cuadresposo (proposal) | quadresposo (proposal) | квадрамуж (proposal) | 方夫 (proposal) | 四角夫 (proposal) | 네모남편 (proposal) |
+| sqwife | the player's wife, buried under the first rock | frau | femme | esposa | esposa | жена | 妻子 | 妻 | 아내 |
+| sqhusband | her husband, swallowed by the serpent in the second half | mann | mari | esposo | marido | муж | 丈夫 | 夫 | 남편 |
 | squares, sq- | the people of the yard (`{ $n } squares`, `sqworkers`) | quadrate, quadrat- | carrés, carr- | cuadrados, cuadr- | quadrados, quadr- | квадраты, квадра- | 方块, 方- | 四角, 四角- | 네모, 네모- |
 | pebbles | the first coin, chipped off the boulder | kiesel | cailloux | piedritas | pedrinhas | камушки | 石子 | 小石 | 자갈 |
 | ore | the second coin, from the quarry | erz | minerai | mineral | minério | руда | 矿石 | 鉱石 | 광석 |
@@ -122,12 +120,7 @@ line marked **(proposal)** is a coinage the owner must approve.
 | diggers | the trade at the rock | steinklopfer | casseurs | picadores | britadores | камнебои | 凿石工 | 石割り | 돌깨는 이 |
 | grower (hat) | the farmers' hat, sold as a set | gärtner | jardinier | cultivador | cultivador | садовод | 园丁 | 栽培師 | 재배꾼 |
 
-**Why adapt sqwife and sqhusband rather than keep them.** In English the
-word is a blend a reader takes apart at once: square plus wife. Kept as
-`sqwife`, it is a meaningless string in every one of these languages, and
-the engine the pilot compared turns it into plain "wife" or into nonsense
-(Russian rendered it once as "pork"). A blend of the language's own word for
-square with its own word for wife keeps both the joke and the meaning, as
-English does. The proposals are short where the language allows; the
-Japanese and Korean ones use the native everyday word for a square shape
-(四角, 네모) rather than a loanword.
+**sqwife and sqhusband are plain wife and husband** (the owner, 2026-10-13:
+"keep it easy"). Use the language's ordinary word for wife and husband, with
+the possessive the English has ("your wife"). No coined blend, and never
+leave the English word in place.
