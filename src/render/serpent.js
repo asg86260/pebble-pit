@@ -36,7 +36,7 @@ import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
 import { coilLine, coilThick, mouthX, deepFloor, bellyAt } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift, recoilGape } from '../deep/phases.js';
 import { freedBody, jawAt, headLeft } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -229,7 +229,7 @@ function drawCoil() {
   // longer one, the creature dark through the hide. The jaws are the head
   // drawn wider by the gap (`jawGap`), each half pushed off the mouth's line.
   const meal = whole && S.view === 'deep' ? mealNow() : null;
-  const open = Math.max(meal ? jawOpen(meal.toLand) : 0, roarGape());   // and a break's roar
+  const open = Math.max(meal ? jawOpen(meal.toLand) : 0, roarGape(), recoilGape());   // and a break's roar, a recoil's cry
   let lumpAt = null, lumpLen = 0;
   if (meal && meal.toLand >= 0 && meal.toLand < MEAL_SWALLOW_S) {
     const a = 1 - meal.toLand / MEAL_SWALLOW_S;

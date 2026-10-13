@@ -247,7 +247,8 @@ group("the freeing: he is out, the two of them leave the crew, and the sheet com
 // down: he goes limp and lies on the floor, comes apart, nothing reaches him
 // while he is down, his freed one walks out to her, the finale takes the two
 // of them off the crew, and once the sheet is put down the serpent gathers
-// itself again and rises a level deeper (DESIGN.md, "Endless serpent").
+// itself again and comes back once, at level 2 on its last defense
+// (DESIGN.md, "Endless serpent").
 group('the fourth break: limp to the floor, apart, him out to her, and the serpent back after the sheet', async () => {
   window.__snatch({ played: true });
   window.__deepCrew({ spare: 1 });
@@ -272,8 +273,8 @@ group('the fourth break: limp to the floor, apart, him out to her, and the serpe
     ok(apart >= 1, 'he comes apart, all of him', `${apart}`),
     ok(out && Math.abs(out.y + WORKER - deepFloor()) <= P, 'his freed one is out, on the floor', JSON.stringify(out)),
     ok(sheet === 'freedsheet' && crew === crew0 - 1, 'and the two of them are off the crew when the sheet comes up', `${sheet} crew ${crew0} then ${crew}`),
-    ok(S.serpentLevel === 2 && S.serpentStage === 0 && !S.serpentFreed && killDrop() === 0,
-       'put down, the serpent gathers itself whole again and rises at level 2, its first defense up',
+    ok(S.serpentLevel === 2 && S.serpentStage === LAST && !S.serpentFreed && killDrop() === 0,
+       'put down, the serpent gathers itself whole again and comes back at level 2, on its last defense',
        `level ${S.serpentLevel} stage ${S.serpentStage} freed ${S.serpentFreed} drop ${killDrop()}`)
   ];
 });

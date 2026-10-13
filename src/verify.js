@@ -37,7 +37,7 @@ import { messCounts } from './smog/layer.js';
 import { SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
 import { CALLED } from './deep/party.js';
 import { depthAt } from './deep/depth.js';
-import { cradled } from './deep/phases.js';
+import { cradled, recoilLen } from './deep/phases.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor, deepX1 } from './deep/place.js';
@@ -512,8 +512,9 @@ export function verifyWorld() {
     if (!(S.serpentWound >= 0) || S.serpentWound > depth)
       fail('the wound is outside its stage', `wound ${S.serpentWound} in stage ${stage}, depth ${depth}`);
     // The level (DESIGN.md, "Endless serpent"): a whole number from 1, up by
-    // one on a rise and never down, and the best never under it. A rise is
-    // the one frame the defense goes back, to the first.
+    // one at a time and never down, and the best never under it. Past the
+    // story the serpent is on its last defense and nowhere else: the return
+    // is the one frame the defense goes back, from down to the last.
     const level = S.serpentLevel;
     if (yardReads !== levelReads) { levelWas = -1; levelReads = yardReads; }
     if (!Number.isInteger(level) || level < 1)
@@ -523,8 +524,11 @@ export function verifyWorld() {
     if (!(S.serpentBest >= level))
       fail('the best level is under the level fought', `best ${S.serpentBest}, level ${level}`);
     const rose = levelWas >= 0 && level === levelWas + 1;
-    if (rose && stage !== 0)
-      fail('the serpent rose into a defense past its first', `level ${level}, stage ${stage}`);
+    if (level > 1 && stage !== SERPENT_PHASES - 1)
+      fail('the serpent past the story is on a defense before its last', `level ${level}, stage ${stage}`);
+    // The recoil is a level's bar emptied, past the story, and lasts its length.
+    if (S.recoilT != null && (level < 2 || !(S.recoilT >= 0) || S.recoilT > recoilLen() + 1e-9))
+      fail('the serpent recoils where it cannot', `level ${level}, ${S.recoilT}s of ${recoilLen()}`);
     if (stage < serpentWas && !rose)
       fail('the serpent\'s defense went back', `stage ${serpentWas} then ${stage}`);
     levelWas = level;
@@ -639,7 +643,7 @@ export function verifyParty() {
   if (!Number.isInteger(S.fangsDropped) || S.fangsDropped < 0 || S.fangsDropped > breaks)
     fail('more fangs have dropped than the serpent has had breaks',
          `${S.fangsDropped} dropped, stage ${S.serpentStage}, level ${S.serpentLevel}`);
-  const kills = Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed ? 1 : 0);
+  const kills = Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed || S.recoilT != null ? 1 : 0);
   if (!Number.isInteger(S.killFangs) || S.killFangs < 0 || S.killFangs > kills)
     fail('more fangs have dropped than the serpent has been killed', `${S.killFangs} dropped, ${kills} kills`);
   // The ledger: a fang from nowhere is the thing that must never be possible.

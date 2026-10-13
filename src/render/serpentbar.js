@@ -26,7 +26,7 @@ import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRA
          BAR_SHARD_PX, BAR_SHARD_HOLD, BAR_SHARD_LIFT, BAR_SHARD_STAGGER_S, BAR_SHARD_POSES, BAR_SHARD_GRAV,
          BAR_SHARD_KICK, BAR_SHARD_FALL_S, BAR_SHARD_FADE_S, BAR_CHIP,
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
-         SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP } from '../config.js';
+         SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP, RECOIL_FILL_S } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
@@ -35,8 +35,9 @@ const seen = c => darkPage ? turned(c) : c;
 // was heading last frame, so a blow's stretch is measured off it; `healLo`
 // where the purple starts (null for none), `healIn` when the heal finished
 // flowing in (null while it still is); `refilling` while a break's refill is
-// coming up, which is the new defense and not a heal, so it has no purple.
-let stage = -1, then = 0, shown = 1, shownTo = 1, healLo = null, healIn = null, refilling = false;
+// coming up, which is the new defense or the next level and not a heal, so it
+// has no purple; `level` the level it was last drawn at.
+let level = -1, stage = -1, then = 0, shown = 1, shownTo = 1, healLo = null, healIn = null, refilling = false;
 // Blows from a defense that has broken, whose numbers are still flying in:
 // they land on the new defense's bar but took nothing from it.
 let stale = new WeakSet();
@@ -118,7 +119,10 @@ function step(t, dt, target) {
     healLo = healIn = null;
     stale = new WeakSet(S.hits);
     refilling = false;
+    level = S.serpentLevel;
   }
+  // The next level, past a recoil: the same defense full again, a refill.
+  if (S.serpentLevel !== level) { if (level >= 0) refilling = true; level = S.serpentLevel; healLo = healIn = null; }
   // Away from the deep, the bar's memory is too old to tell: it shows the bar
   // as it stands, with nothing breaking off it.
   if (dt > BAR_STALE_S) { shown = shownTo = target; healLo = healIn = null; refilling = false; shards = []; return; }
@@ -146,7 +150,7 @@ function step(t, dt, target) {
     if (refilling) healLo = null;
     else if (healLo == null || healIn != null) { healLo = shown; healIn = null; }
     const pace = !refilling ? BAR_HEAL_RATE
-               : 1 / (breakKind() === 'roar' ? BREAK_ROAR.run : BREAK_DIVE.out);
+               : 1 / (breakKind() === 'roar' ? BREAK_ROAR.run : breakKind() === 'dive' ? BREAK_DIVE.out : RECOIL_FILL_S);
     shown = Math.min(target, shown + dt * Math.max(BAR_FLOW_MIN, Math.min(pace, (target - shown) * BAR_FLOW_EASE)));
     if (shown >= target - BAR_SETTLE) {
       shown = target;

@@ -20,7 +20,7 @@ import { deepX0, deepX1, deepFloor, slotX, bellyAt, tossX, inHopper } from './pl
 import { start, registerRows, worksAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { frames, now } from '../clock.js';
-import { onBreak, onRise } from './serpent.js';
+import { onBreak, onRise, onRecoil } from './serpent.js';
 import { rand } from '../rng.js';
 import { refund } from '../pit.js';
 import { refundScales } from './scales.js';
@@ -316,13 +316,16 @@ const fangAtBelly = t => {
   return { x: at.x, y: at.y, vx: (rand() * 2 - 1) * FANG_KICK, vy: 0, rest: false, by: null, held: false };
 };
 
-// And one at each kill (DESIGN.md, "Endless serpent"), for as long as a slot
-// is free: a fang held or lying on the floor already promises one, and a
-// station is never taken down, so a kill with no room owes nothing later.
+// And one at the story's kill and at each level's bar emptied after it
+// (DESIGN.md, "Endless serpent"), for as long as a slot is free: a fang held
+// or lying on the floor already promises one, and a station is never taken
+// down, so a bar emptied with no room owes nothing later.
 // `killFangs` is the guard, as `fangsDropped` is the breaks': asked on the
-// kill and again on the rise, the other moment the belly is whole and in
-// place, which is how a save from before this drops its story kill's fang.
-export const killsHad = () => Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed ? 1 : 0);
+// kill, on each recoil, and again on the return, the other moment the belly
+// is whole and in place, which is how a save from before the endless serpent
+// drops its story kill's fang. A bar emptied counts from its recoil's first
+// frame; the level goes up at its last.
+export const killsHad = () => Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed || S.recoilT != null ? 1 : 0);
 export function dropKillFang(t = now()) {
   const room = FIGHT_STATIONS_MAX - S.stations.length - (S.fangs | 0) - S.fangsLoose.length;
   const due = Math.min(killsHad(), (S.killFangs | 0) + Math.max(0, room));
@@ -374,6 +377,7 @@ export function listenFangs() {
   if (listening) return;
   onBreak(stage => { dropFangs(stage); if (stage >= SERPENT_PHASES) dropKillFang(); });
   onRise(() => dropKillFang());
+  onRecoil(() => dropKillFang());
   listening = true;
 }
 export function stepParty() {

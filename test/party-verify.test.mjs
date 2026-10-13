@@ -12,7 +12,7 @@ import { S } from '../src/state.js';
 import { verifyParty, verifyWorld } from '../src/verify.js';
 import { deepFloor, deepX0 } from '../src/deep/place.js';
 import { fighterAt, CALLED } from '../src/deep/party.js';
-import { FIGHT_STATIONS_MAX, WORKER } from '../src/config.js';
+import { FIGHT_STATIONS_MAX, WORKER, SERPENT_PHASES } from '../src/config.js';
 
 // Whether the rules throw, and what they say.
 const broken = () => {
@@ -94,25 +94,32 @@ group('a fang from nowhere is red; one a break or a kill dropped is not', async 
   ];
 });
 
-group('the defense goes back only on a rise, to the first, a level up', async () => {
+group('the defense goes back only on the return, to the last, a level up, and past the story stays there', async () => {
+  const LAST = SERPENT_PHASES - 1;
   window.__party({ stations: [{ kind: 'altar' }] });
-  window.__serpent({ stage: 2 });
+  window.__serpent({ stage: SERPENT_PHASES });
   run(1 / 60);
-  S.serpentStage = 0; S.serpentWound = 0; S.serpentLevel = 2; S.serpentBest = 2;
+  S.beat.yard = null;                         // the kill's beat, which a hook's kill starts, is not what this is about
+  S.serpentStage = LAST; S.serpentFreed = false; S.freedAt = null; S.serpentWound = 0; S.serpentLevel = 2; S.serpentBest = 2;
   const rose = brokenWorld();
-  window.__serpent({ level: 2, stage: 2 });
+  window.__serpent({ level: 2 });
   run(1 / 60);
   S.serpentStage = 0; S.serpentWound = 0;
   const back = brokenWorld();
-  window.__serpent({ level: 2, stage: 2 });
+  window.__serpent({ level: 2 });
   run(1 / 60);
-  S.serpentStage = 0; S.serpentWound = 0; S.serpentLevel = 4; S.serpentBest = 4;
+  S.serpentLevel = 4; S.serpentBest = 4;
   const jump = brokenWorld();
-  window.__serpent({ level: 4, stage: 2 });
+  window.__serpent({ level: 4 });
+  run(1 / 60);
+  S.recoilT = 99;
+  const long = brokenWorld();
+  window.__serpent({ level: 4 });
   return [
-    ok(rose === '', 'a rise is the one frame it may', rose),
-    ok(/the serpent's defense went back/.test(back), 'without one it is red', back),
-    ok(/the serpent's level jumped/.test(jump), 'and a level never rises by more than one', jump)
+    ok(rose === '', 'the return is the one frame it may', rose),
+    ok(/a defense before its last/.test(back), 'past the story a defense before the last is red', back),
+    ok(/the serpent's level jumped/.test(jump), 'and a level never rises by more than one', jump),
+    ok(/recoils where it cannot/.test(long), 'and a recoil lasts its length', long)
   ];
 });
 

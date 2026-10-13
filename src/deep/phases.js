@@ -18,7 +18,8 @@ import { now } from '../clock.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
          BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT,
          SERPENT_PHASES, P, WORKER, ORB_R, ORB_CLOSE_S, ORB_RISE_S, ORB_STEP, ORB_CLEAR,
-         ORB_BOB_S, ORB_GHOST_K, ORB_HANG_S, ORB_SINK_S, ORB_SINK_EASE, ORB_SQUASH_S } from '../config.js';
+         ORB_BOB_S, ORB_GHOST_K, ORB_HANG_S, ORB_SINK_S, ORB_SINK_EASE, ORB_SQUASH_S,
+         RECOIL, RECOIL_SMEAR, RECOIL_BACK_STEPS, RECOIL_POSES, RECOIL_POSE } from '../config.js';
 import { CLASSES, PAIRS } from '../config/classes.js';
 import { has } from './statuses.js';
 import { hitRect } from '../stations.js';
@@ -292,6 +293,24 @@ export const bellyWhole = () => {
 export const cradled = () => S.serpentLevel <= 1 && !S.beatsDone.includes('freed') && bellyWhole();
 // How much of him has gathered again, head first, 0..1; null when he is not.
 export const reformK = () => (S.reformAt == null ? null : clamp01((now() - S.reformAt) / 1000 / KILL_REFORM_S));
+
+// --- the recoil (deep/serpent.js plays it; config RECOIL) ---------------------------
+// Past the story a level's bar emptied is no kill: the serpent reels in a held
+// pose, read here as how far into it, in held frames -- the smear frame past
+// the pose, the pose held, and back to the line in RECOIL_BACK_STEPS steps.
+export const recoilLen = () => RECOIL.snap + RECOIL.hold + RECOIL.back;
+export const recoiling = () => S.recoilT != null && S.snatched && !S.serpentFreed;
+export function recoilK() {
+  if (!recoiling()) return 0;
+  const s = S.recoilT;
+  if (s < RECOIL.snap) return RECOIL_SMEAR;
+  if (s < RECOIL.snap + RECOIL.hold) return 1;
+  const b = Math.min(1, (s - RECOIL.snap - RECOIL.hold) / RECOIL.back);
+  return 1 - Math.floor(b * RECOIL_BACK_STEPS) / RECOIL_BACK_STEPS;
+}
+// The pose the owner chose; the bump it lays on the line, and the jaws.
+export const recoilPose = () => RECOIL_POSES[RECOIL_POSE] || Object.values(RECOIL_POSES)[0];
+export const recoilGape = () => Math.min(1, recoilK() * recoilPose().gape);
 
 // A phase broken: the next opens at the top of its turn.
 export function resetMechanic() { S.mechAt = 0; S.mechSkip = false; S.phaseAt = 0; }
