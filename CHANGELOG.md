@@ -144,7 +144,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- The deep's seventh station stands in the middle, between the two rows of three, instead of off to the right.
+- The deep's stations stand spread evenly under the whole serpent, the first four already spanning it, instead of bunched to one side.
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
 - A feedback page off settings, on the pause sheet and the title page, and under copy save when the game stops, sends your words and, if you tick it, your save, and lists everything that goes before you send (test/feedback.test.mjs).
 

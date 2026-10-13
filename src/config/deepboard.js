@@ -2,6 +2,7 @@
 // Owned by track BOARD (docs/wave-serpent.md, docs/wave-party.md). Every
 // number the track needs lives here; a magic number in a module is a bug.
 import { P } from './yard.js';
+import { COIL_X0, COIL_X1 } from './deep.js';
 
 // The coins each group of a deep ladder adds to its scales, first to last:
 // scales alone, then the yard's dust, then its ore, then a spark on top. The
@@ -82,10 +83,13 @@ export const POD_WORK_MAX = 8;
 
 // --- the party's floor (docs/wave-party.md, "Floor slots") -------------------
 // Where a station may stand, as fractions of DEEP_W from the deep's left edge:
-// two rows of three either side of the middle, and one in the middle between
-// them (0.5475, halfway from 0.475 to 0.62). A station takes the lowest slot
-// free when it is bought.
-export const DEEP_SLOTS = [0.335, 0.475, 0.62, 0.76, 0.5475, 0.405, 0.69];
+// the serpent's length (COIL_X0 to COIL_X1) cut into one share a station, a
+// station at the middle of each, so the party stands spread under the whole
+// coil. A station takes the lowest slot free when it is bought, and the order
+// below hands out every other share first, then the middle, then the gaps, so
+// a small party is already spread wide.
+const SLOT_ORDER = [0, 2, 4, 6, 3, 1, 5];
+export const DEEP_SLOTS = SLOT_ORDER.map(k => COIL_X0 + (COIL_X1 - COIL_X0) * (k + 0.5) / SLOT_ORDER.length);
 // The most stations there can be: a slot each. The first is free, the
 // story's three breaks drop a fang each and the kills after them the rest
 // (DESIGN.md, "Endless serpent").
