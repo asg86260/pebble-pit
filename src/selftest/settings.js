@@ -13,6 +13,8 @@ import { persist, exportSave, claimSave } from '../persist.js';
 import { earn, noticeFor } from '../notices.js';
 import { toastUp, toastWaiting } from '../toast.js';
 import { TOAST_MS, TOAST_GAP_MS, SHEET_FADE_MS } from '../config.js';
+import { msg } from '../lang.js';
+import { inForce } from '../langpage.js';
 
 const held = () => document.getElementById('held');
 // escape, and then a frame: the sheet puts itself in order when it sees itself
@@ -297,6 +299,7 @@ export const TESTS = [
       'motion: ' + (reducedMotion() ? 'less' : 'full'),
       'touch: ' + (coarse() ? 'on' : 'off'),  // the thumb switch -- see prefs.js
       'dark: ' + (dark() ? 'on' : 'off'),     // the page turned over -- see ink.js
+      msg('set-langbtn', { name: inForce().name }),   // the language page -- see langpage.js
       // the whole screen, where the platform can give it -- see fullscreen.js
       ...(document.fullscreenEnabled || document.webkitFullscreenEnabled ? ['fullscreen: off'] : []),
       'sound: on',                            // the mute, which remembers -- see audio.js

@@ -864,8 +864,22 @@
   "id": "set-controlsback",
   "group": "Settings",
   "where": "play.html",
-  "context": "controls page back",
+  "context": "controls page back, and the language page's",
   "text": "back"
+ },
+ {
+  "id": "set-langbtn",
+  "group": "Settings",
+  "where": "src/selftest/settings.js",
+  "context": "settings button to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)",
+  "text": "[owner's words: language] · ${name}"
+ },
+ {
+  "id": "set-lang-word",
+  "group": "Settings",
+  "where": "play.html",
+  "context": "language page heading (a placeholder for the owner's words)",
+  "text": "[owner's words: heading]"
  },
  {
   "id": "set-settingsback",
@@ -1291,8 +1305,22 @@
   "id": "title-controlsback",
   "group": "Title page",
   "where": "index.html",
-  "context": "landing controls back",
+  "context": "landing controls back, and the language page's",
   "text": "back"
+ },
+ {
+  "id": "title-langbtn",
+  "group": "Title page",
+  "where": "src/title.js",
+  "context": "landing settings to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)",
+  "text": "[owner's words: language] · ${name}"
+ },
+ {
+  "id": "title-lang-word",
+  "group": "Title page",
+  "where": "index.html",
+  "context": "landing language page heading (a placeholder for the owner's words)",
+  "text": "[owner's words: heading]"
  },
  {
   "id": "title-conflict-word",

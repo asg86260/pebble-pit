@@ -224,6 +224,9 @@ try {
   <button id="dark" type="button" data-pane="settings" hidden data-l10n-id="set-dark-off">dark: off</button>
   <!-- the whole screen, where the platform will give it (fullscreen.js);
        where it will not -- an iphone -- the line under says what does -->
+  <!-- the language: a row that opens a page of its own, the language in
+       force named beside its label (langpage.js) -->
+  <button id="langbtn" type="button" data-pane="settings" hidden></button>
   <button id="fullscreenrow" type="button" data-pane="settings" hidden data-l10n-id="set-fullscreen-off">fullscreen: off</button>
   <div id="fullscreennote" class="small" data-pane="" hidden data-l10n-id="set-fullscreen-note">for the whole screen, add this page to the home screen</div>
   <!-- wave-desk-sound, track B: the mute, which remembers. See settings.js. -->
@@ -235,6 +238,10 @@ try {
   <div class="word" data-pane="controls" hidden data-l10n-id="set-controls-word">controls</div>
   <div id="controlslist" class="controls" data-pane="controls" hidden></div>
   <button id="controlsback" type="button" data-pane="controls" hidden data-l10n-id="set-controlsback">back</button>
+  <!-- the language page: a button a language, each in its own name -->
+  <div class="word" data-pane="language" hidden data-l10n-id="set-lang-word"></div>
+  <div id="langlist" class="langs" data-pane="language" hidden></div>
+  <button id="langback" type="button" data-pane="language" hidden data-l10n-id="set-controlsback">back</button>
   <!-- the sheet's one-line reply, on every page that has something to say -->
   <div class="said" data-pane="main slots settings"></div>
   <button id="settingsback" type="button" data-pane="settings" hidden data-l10n-id="set-settingsback">back</button>
