@@ -15340,6 +15340,71 @@ grey for those to come. Answering the old mock's question 2: the defense.
 - *Stages are not to scale:* each stage is its own full bar, since the depths
   run 60 to 30,000 and a bar drawn to scale would hide the first three.
 
+### The finale: a house at the end of the yard (built 2026-10-12)
+
+*The owner's votes on docs/mocks/finale-house-2026-10-12.html (branch
+`mock/finale-house`): hops "held poses, off the beat", fireworks "the
+works", the volley and the heart, the house at the yard's left end, "in and
+out: a bench by the door", the camera on the pair, the forklifts at the
+tail, the house kept for good. It replaces the sunset ending of
+docs/mocks/retire-2026-10-12.html; the deep half (her gear hung back on her
+station and taken up, the way up through the portal) is unchanged.*
+
+The kill ends the fight, and the finale ends the game's story: the two of
+them walk home. The sunset that ended it first was a picture over the yard;
+the house is something the yard *does*. While the deep half plays, the
+yard's builders -- topped up from the spare hands builders are drawn from,
+and with none of those, two of whoever is on the yard -- carry the pile
+down to the yard's left end, out of sight. During the walk they put the
+house up a piece a trip, in the mock's order: scaffold, posts, plates, the
+walls a board row at a time from the ground, the roof a row of tiles at a
+time, the chimney, the door, the window, the bench, and the scaffold down
+onto a woodpile that stays. Every piece leaves the pile in a builder's
+hands and is set by that builder standing at it; pieces higher than the
+reach row are set from the plank, up the nearer pole a cell a step. The
+trips are fitted to the walk the moment its length is known (the pair
+coming out of the portal), so the last pole comes down just before they
+reach the door; if the haul ran late they wait at the door until it is
+done. Nothing pops in. (`home.js`, `render/home.js`.)
+
+At the door the door slides open on a lit room, she steps up and goes in,
+dimming into it, he follows, the door shuts; a volley goes up off both
+sides of the house, the window lights under a heart burst, a last hold,
+and the sheet. The camera stays on the pair the whole walk, so the house
+comes into view in its last seconds as the camera arrives.
+
+**Everyone joins.** The old crowd took only bodies standing on the flat
+way, and froze everyone else for the whole finale, so the quarry and the
+hill never came. Now a body the pair pass gets free of where it is, by
+kind of place rather than by job: the ways off the hill or up the cut's
+ladder (route.js climbs), a held hop down off a bank, out of a shack's
+door, a wizard floating down a cell a step, a purifier's balloon brought
+down to its post in held steps (it stays parked). Then it hurries to its
+place and is locked there, so the hop never switches off; the pair walk in
+whole pixels, not a cell every other frame; the ranks open to eight cells
+with the second file four back. The builders are not in the crowd: they
+cheer by the woodpile. The forklifts roll along at the tail.
+
+**The hop** is held poses on a steady 0.76 s beat, the crowd in three groups
+a third of a beat apart: stood, a crouch (two rows), up with a smear under,
+the apex held, down with a smear over, a held landing with two dust cells.
+
+**The fireworks** are every kind -- a peony with a purple core, crossettes
+that split, rings that droop into willows, willows -- in held steps, with
+smoke trails that linger and grey out, the gap closing from 1.25 s to
+0.55 s as the pair near the house and doubles in the last third. A ring
+never opens at a radius of one: a ring of one cell is a hollow 3x3 box,
+which reads as a body.
+
+**Afterwards** the two of them live there. The sheet put down, they come out
+and sit on the bench by the door; then a turn at random: sat, a heart, a
+stroll, one nipping in, both in for a while. The window is lit while
+anyone is in and the chimney goes. The house stands wherever `S.retired`
+does, so an old save past the finale has it with no migration; a turn the
+game no longer plays (the sunset's `look`, `hop`) reads as sat on the bench.
+Only `S.retired`'s mode and clock are saved; a reload mid-finale lands with
+the house standing and the pair indoors, the sheet to come.
+
 ## One crew, two homes: pods in the deep (built 2026-09-23)
 
 *The owner's calls, 2026-09-23: one crew, pods cost scales, the weapon

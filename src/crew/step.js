@@ -15,8 +15,9 @@
 //   4. **hat** -- the tail of dizzy: it goes and gets its hat before it works.
 //   5. **floating** -- falls *through* on the frame its feet land.
 //   5a. **the finale** -- while the finale holds the yard, and its sheet,
-//      every body stands where it is but the crowd walking behind the two
-//      of them and the one going to take up her gear (finale.js).
+//      every body stands where it is but the crowd getting free and walking
+//      behind the two of them, the builders at the house, and the one going
+//      to take up her gear (finale.js, home.js).
 //   5b. **held still** -- while a scene holds the yard, an attacker stops
 //      where it is and holds its pose (stage.js). Above the commute, so a
 //      walk is held mid-stride and carries on from there after.
@@ -179,7 +180,8 @@ const STAGES = [
 
   // The finale's (finale.js): while it holds the yard, and its sheet after
   // it, the work stands still -- every body where it is, but the crowd
-  // walking behind the two of them and the one going to take up her gear.
+  // getting free and walking behind the two of them, the builders at the
+  // house, and the one going to take up her gear.
   // Above the scene's hold, which would stand the crowd still as well.
   w => finaleBody(w),
 
