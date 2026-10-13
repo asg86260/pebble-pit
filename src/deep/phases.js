@@ -87,8 +87,9 @@ function stepOrb(p) {
     const manned = S.stations.filter(st => st.built && st.fighter);
     if (!manned.length) return;
     const st = manned.reduce((b, o) => ((o.rung || 0) > (b.rung || 0) ? o : b));
-    // The orb is the serpent's health, so it grows with the level.
-    const hp = p.m.hp * depthAt(S.serpentStage);
+    // The orb keeps the level-1 serpent's hit points at every level: only the
+    // defenses grow, so the squeeze stays a turn to answer, not a wall.
+    const hp = p.m.hp * depthAt(S.serpentStage, 1);
     S.orb = { st: st.id, hp, max: hp, at: now() };
   }
   if (S.orb && p.part !== 'on') breakOrb();

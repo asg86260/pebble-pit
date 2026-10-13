@@ -12,11 +12,11 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { now } from '../src/clock.js';
-import { SERPENT_PHASES, SERPENT_WOUND, KILL, KILL_REFORM_S, SERPENT_RISE_PAUSE_S, FIGHT_STATIONS_MAX,
+import { SERPENT_PHASES, SERPENT_WOUND, MECHANICS, KILL, KILL_REFORM_S, SERPENT_RISE_PAUSE_S, FIGHT_STATIONS_MAX,
          STUN_SHARE, FANG_BREAKS } from '../src/config.js';
 import { depthAt } from '../src/deep/depth.js';
 import { strike, clickDeep } from '../src/deep/serpent.js';
-import { cradled, breaking } from '../src/deep/phases.js';
+import { cradled, breaking, orbOn } from '../src/deep/phases.js';
 import { bellyAt, coilAt, bellySeg } from '../src/deep/place.js';
 import { stationById } from '../src/deep/party.js';
 import { buildOffer } from '../src/deep/buildbutton.js';
@@ -120,6 +120,26 @@ group('a defense is 1.1 times as deep a level, the stun as long, and only depth.
     ok(rows.every(r => r.broke), 'and one more breaks it', JSON.stringify(rows.map(r => r.broke))),
     ok(at7 > 0 && Math.abs(at7 - at1) < 1e-9, 'the same blow stuns as long at level 7 as at 1', `${at7} ${at1}`),
     ok(!indexing.length, 'and only depth.js indexes SERPENT_WOUND', indexing.join())
+  ];
+});
+
+group('the orb keeps the hit points of level one at every level', async () => {
+  window.__snatch({ played: true });
+  window.__party({ stations: FOUR });
+  runUntil(() => S.workers.filter(w => w.station).every(w => w.goal === 'fight' || w.goal === null), 30);
+  const M = MECHANICS[LAST];
+  const orbAt = level => {
+    window.__serpent({ level, stage: LAST, wound: 0 });
+    S.orb = null;
+    S.mechAt = M.every - M.last - 0.5;               // half a second short of its turn
+    run(0.6);
+    const o = orbOn();
+    return o && o.max;
+  };
+  const at1 = orbAt(1), at7 = orbAt(7);
+  return [
+    ok(at1 > 0 && Math.abs(at1 - M.hp * SERPENT_WOUND[LAST]) < 1e-6, 'at level 1 it is the share of the depth', `${at1}`),
+    ok(at7 === at1 && depthAt(LAST, 7) > depthAt(LAST, 1), 'and at level 7 the same, though the defense is deeper', `${at7} against ${at1}`)
   ];
 });
 

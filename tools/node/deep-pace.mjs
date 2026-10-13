@@ -14,6 +14,8 @@
 //   node tools/node/deep-pace.mjs --table            # a class's damage and shed, rung by rung
 //   node tools/node/deep-pace.mjs --answered         # every phase's mechanic answered
 //   node tools/node/deep-pace.mjs --stood 7          # stations standing from the start, not one a break
+//   node tools/node/deep-pace.mjs --level 12         # the depths of a later serpent, the orb kept at level 1's
+//   node tools/node/deep-pace.mjs --stood 7 --wall   # the first defense that stops breaking, level by level
 //
 // Each phase's mechanic (deep/phases.js) is played unanswered -- the lash takes the melee fighters off the hide for its
 // length, the fall, the daze and the swim back (`LASH_OUT_S`), the sink takes
@@ -25,7 +27,7 @@
 import { LADDERS } from '../../src/config/rungs.js';
 import { CLASSES } from '../../src/config/classes.js';
 import { SERPENT_WINDOW, SERPENT_WOUND, DAMAGE_KIND, RESISTS, RESIST_K, SCALE_PER_DECADE, SCALE_BASE,
-         CLICK_DMG, MECHANICS } from '../../src/config/deep.js';
+         CLICK_DMG, MECHANICS, SERPENT_LEVEL_GROWTH } from '../../src/config/deep.js';
 
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const party = (arg('--party') || 'brawler,ranger,mage,monk').split(',');
@@ -84,17 +86,22 @@ const scalesOf = d => Math.max(1, Math.round(SCALE_BASE + SCALE_PER_DECADE * Mat
 const shed = (c, r, st) => scalesOf(hit(c, r, st)) / tempo(c);
 const cost = (c, r) => LADDERS[c].dust[r];
 
-// A second at a time. `depth` is the four depths; `ends`, if given, fixes the
-// minute each stage breaks and the depth is read off instead: the damage of
-// the last window before it, a share of it.
-function fight(depth, ends, windows = SERPENT_WINDOW) {
+// A later serpent's depths (`depthAt` in src/deep/depth.js): the level-1
+// table grown SERPENT_LEVEL_GROWTH a level, compounding.
+const atLevel = (depths, l) => depths.map(d => Math.round(d * SERPENT_LEVEL_GROWTH ** (l - 1)));
+
+// A second at a time. `depth` is the defenses' depths; `ends`, if given, fixes
+// the minute each stage breaks and the depth is read off instead: the damage
+// of the last window before it, a share of it. The orb's hit points read the
+// level-1 depth whatever the level, as the game's do.
+function fight(depth, ends, windows = SERPENT_WINDOW, orbDepth = SERPENT_WOUND) {
   let st = 0, wound = 0, purse = 0, loose = 0, stood = Math.min(party.length, stoodFrom), from = 0, win = 0;
   const rung = party.map(() => 0), made = SERPENT_WOUND.map(() => 0), at = [], last = [];
   let orbLeft = 0;
   for (let t = 0; st < SERPENT_WOUND.length && t < 86400 * 3; t++) {
     const mk = mechanic(st, t - from);
     let d = clicks * CLICK_DMG[rung[0]] * mk.all, y = clicks * scalesOf(CLICK_DMG[rung[0]]) * mk.all;
-    if (mk.orbAt) orbLeft = MECHANICS[st].hp * (depth ? depth[st] : 0);
+    if (mk.orbAt) orbLeft = MECHANICS[st].hp * orbDepth[st];
     // the strongest fighter in the orb while it holds, the highest rung
     const held = mk.orb && orbLeft > 0 ? rung.slice(0, stood).indexOf(Math.max(...rung.slice(0, stood))) : -1;
     for (let i = 0; i < stood; i++) {
@@ -135,10 +142,21 @@ if (process.argv.includes('--table')) {
   console.log(`party ${party.join('+')}, banked ${gather}/s, breaks at ${ends.join(' / ')} min, windows ${SERPENT_WINDOW.join(' / ')} s`);
   console.log('depths', r.made.map(x => Math.round(x)).join(' / '));
   console.log('rungs at each break', r.at.map(a => a.rungs).join('  '));
+} else if (process.argv.includes('--wall')) {
+  // Level by level until a defense holds: the first that stops breaking, and
+  // the level it stops at.
+  let was = -1;
+  for (let l = 1; l <= 500; l++) {
+    const n = fight(atLevel(SERPENT_WOUND, l), null).at.length;
+    if (n !== was) console.log(`level ${String(l).padStart(3)}: ${n === SERPENT_WOUND.length ? 'every defense breaks' : `stage ${n + 1} holds`}`);
+    was = n;
+    if (n === 0) break;
+  }
 } else {
   // `--depths` and `--windows` try numbers before they go in config.
   const list = (k, dflt) => (arg(k) ? arg(k).split(',').map(Number) : dflt);
-  const r = fight(list('--depths', SERPENT_WOUND), null, list('--windows', SERPENT_WINDOW));
+  const level = +(arg('--level') || 1);
+  const r = fight(atLevel(list('--depths', SERPENT_WOUND), level), null, list('--windows', SERPENT_WINDOW));
   console.log(`party ${party.join('+')}, banked ${gather}/s`);
   for (const [i, a] of r.at.entries()) console.log(`stage ${i + 1} breaks at ${min(a.min)} min, rungs ${a.rungs}`);
   console.log(`left loose on the floor: ${Math.round(r.loose)}`);

@@ -18275,7 +18275,7 @@ it stands on main at 6f8f6172.
 Built as written, with the owner's answers to the open calls: the label from
 level 2 on; the camera left where the player has it on a later kill; the
 stun read off the level-1 depth and the orb's hit points scaled with the
-level; heal numbers left as raw digits; the wall a record, nothing to keep a
+level (since 2026-10-13 pinned to level 1's, below); heal numbers left as raw digits; the wall a record, nothing to keep a
 maxed party climbing; notices at best level 2, 5, 10 and 25 and every slot
 standing. Where it differs from the text below, or settles what the text
 left open:
@@ -18324,6 +18324,16 @@ left open:
   and the hand, so the real wall stands somewhat higher, but well under the
   level-25 notice: by the design's own rule the top threshold wants moving
   down, or the constrict's depth or the growth wants the owner's look.
+- **The orb stays at level 1** (the owner's call, 2026-10-13): its hit
+  points are `MECHANICS` hp times the level-1 depth at every level
+  (`depthAt(stage, 1)` in deep/phases.js), so only the defenses grow.
+  Re-measured (`deep-pace.mjs --stood 7 --wall`, the same seven at rung 8,
+  mechanics unanswered): every defense breaks through **level 3**, up from
+  2 with the orb grown; at level 4 the constrict itself still holds, at 15
+  the fading, 16 the split, 21 the warded, 23 the bare hide. Answered, the
+  orb never counted, so the answered wall stays at 3. The wall is the
+  constrict's depth (18420, three times the others, in an 18-second
+  window), not its orb.
 
 ### The bargain
 
