@@ -150,3 +150,6 @@ export * from './config/finale.js';
 
 // controller support: the focus marker, the hops, the hand and the rumble
 export * from './config/pad.js';
+
+// the feedback form: its worker's address, its caps and its short lists
+export * from './config/feedback.js';

@@ -119,6 +119,20 @@
   "text": "copy save"
  },
  {
+  "id": "crashed-fbbtn",
+  "group": "Sheets",
+  "where": "play.html",
+  "context": "crash sheet button under copy save, opening the feedback form in place (a placeholder for the owner's words)",
+  "text": "[owner's words: send a report]"
+ },
+ {
+  "id": "crashed-fb-ask",
+  "group": "Sheets",
+  "where": "src/feedbackform.js",
+  "context": "crash sheet line over the feedback form's box, asking for the save with the report (a placeholder for the owner's words)",
+  "text": "[owner's words: the crashed sheet asks for the save]"
+ },
+ {
   "id": "held-word",
   "group": "Sheets",
   "where": "play.html",
@@ -864,7 +878,7 @@
   "id": "set-controlsback",
   "group": "Settings",
   "where": "play.html",
-  "context": "controls page back, and the language page's",
+  "context": "controls page back, and the language page's and the feedback page's",
   "text": "back"
  },
  {
@@ -880,6 +894,139 @@
   "where": "play.html",
   "context": "language page heading (a placeholder for the owner's words)",
   "text": "[owner's words: heading]"
+ },
+ {
+  "id": "set-fbbtn",
+  "group": "Settings",
+  "where": "play.html",
+  "context": "settings button to the feedback page, under controls (a placeholder for the owner's words)",
+  "text": "[owner's words: feedback]"
+ },
+ {
+  "id": "set-fb-word",
+  "group": "Settings",
+  "where": "play.html",
+  "context": "feedback page heading (a placeholder for the owner's words)",
+  "text": "[owner's words: heading]"
+ },
+ {
+  "id": "fb-box.placeholder",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form: the box's hint while it is empty (a placeholder for the owner's words)",
+  "text": "[owner's words: what went wrong, or what reads wrong]"
+ },
+ {
+  "id": "fb-left",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form: under the box in the last few hundred characters; $n is how many are left (a placeholder for the owner's words)",
+  "text": "[owner's words: characters left] ${n}"
+ },
+ {
+  "id": "fb-tick",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form: the tick that sends the save along (a placeholder for the owner's words)",
+  "text": "[owner's words: send my save]"
+ },
+ {
+  "id": "fb-goes",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form: the lead-in to the line listing everything that will be sent, rebuilt as the form changes (a placeholder for the owner's words)",
+  "text": "[owner's words: what goes, before it goes]:"
+ },
+ {
+  "id": "fb-goes-words",
+  "group": "Settings",
+  "where": "src/feedback.js",
+  "context": "feedback form, on the line of what goes: the player's own words (a placeholder for the owner's words)",
+  "text": "[owner's words: your words]"
+ },
+ {
+  "id": "fb-goes-save",
+  "group": "Settings",
+  "where": "src/feedback.js",
+  "context": "feedback form, on the line of what goes while the tick is on: the save; $kb is its size in kilobytes (a placeholder for the owner's words)",
+  "text": "[owner's words: your save] ${kb} KB"
+ },
+ {
+  "id": "fb-goes-save-yard",
+  "group": "Settings",
+  "where": "src/feedback.js",
+  "context": "feedback form on the landing page, on the line of what goes while the tick is on: the save; $yard is which yard, as the saves rows say it (\"rock 12 · 7 crew\"), $kb its size in kilobytes (a placeholder for the owner's words)",
+  "text": "[owner's words: your save] ${yard} · ${kb} KB"
+ },
+ {
+  "id": "fb-goes-keep",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form, at the end of the line of what goes: how long it is kept; $reportDays for a report, $saveDays for a save (a placeholder for the owner's words)",
+  "text": "[owner's words: a report is kept ${reportDays} days, a save ${saveDays} days]"
+ },
+ {
+  "id": "fb-nosave-empty",
+  "group": "Settings",
+  "where": "src/feedback.js",
+  "context": "feedback form, on the line of what goes when the tick is grey: the open slot has no save (a placeholder for the owner's words)",
+  "text": "[owner's words: no save to send, the slot is empty]"
+ },
+ {
+  "id": "fb-nosave-big",
+  "group": "Settings",
+  "where": "src/feedback.js",
+  "context": "feedback form, on the line of what goes when the tick is grey: the save is past the size the worker takes; $kb is its size in kilobytes (a placeholder for the owner's words)",
+  "text": "[owner's words: the save is too big to send] ${kb} KB"
+ },
+ {
+  "id": "fb-public",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form, under the line while the tick is on: whether a sent save may become a public test fixture (the owner's call is open; a placeholder for the owner's words)",
+  "text": "[owner's words: a sent save may become a public test fixture]"
+ },
+ {
+  "id": "fb-send",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form's send button (a placeholder for the owner's words)",
+  "text": "[owner's words: send]"
+ },
+ {
+  "id": "fb-sending",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form's send button while the report is on its way (a placeholder for the owner's words)",
+  "text": "[owner's words: sending]"
+ },
+ {
+  "id": "fb-sent",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form, once the report is taken (a placeholder for the owner's words)",
+  "text": "[owner's words: sent, thank you]"
+ },
+ {
+  "id": "fb-sent-nosave",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form, once the report is taken but its save was not, the worker's store being full (a placeholder for the owner's words)",
+  "text": "[owner's words: sent, but the save was not kept]"
+ },
+ {
+  "id": "fb-sent-where",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form, under the sent line: where a reply would be found; $target is the store, steam or itch (a placeholder for the owner's words)",
+  "text": "[owner's words: a reply is in the itch page's comments]"
+ },
+ {
+  "id": "fb-failed",
+  "group": "Settings",
+  "where": "src/feedbackform.js",
+  "context": "feedback form, when a send did not go: the words and the tick are kept and nothing is sent later (a placeholder for the owner's words)",
+  "text": "[owner's words: did not send, your words are kept, try again]"
  },
  {
   "id": "set-settingsback",
@@ -1305,7 +1452,7 @@
   "id": "title-controlsback",
   "group": "Title page",
   "where": "index.html",
-  "context": "landing controls back, and the language page's",
+  "context": "landing controls back, and the language page's and the feedback page's",
   "text": "back"
  },
  {
@@ -1320,6 +1467,20 @@
   "group": "Title page",
   "where": "index.html",
   "context": "landing language page heading (a placeholder for the owner's words)",
+  "text": "[owner's words: heading]"
+ },
+ {
+  "id": "title-fbbtn",
+  "group": "Title page",
+  "where": "index.html",
+  "context": "landing settings button to the feedback page, under controls (a placeholder for the owner's words)",
+  "text": "[owner's words: feedback]"
+ },
+ {
+  "id": "title-fb-word",
+  "group": "Title page",
+  "where": "index.html",
+  "context": "landing feedback page heading (a placeholder for the owner's words)",
   "text": "[owner's words: heading]"
  },
  {

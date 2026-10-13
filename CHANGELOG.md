@@ -145,6 +145,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
+- A feedback page off settings, on the pause sheet and the title page, and under copy save when the game stops, sends your words and, if you tick it, your save, and lists everything that goes before you send (test/feedback.test.mjs).
 
 - The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
 - With the conveyor belt running, a left click anywhere no longer puts a free handful of pebbles in your hand (src/selftest/dust.js, "a click on open sky over the belt's yard catches nothing"; test/belt-head.test.mjs).

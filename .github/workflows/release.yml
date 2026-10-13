@@ -83,6 +83,14 @@ jobs:
       - name: Cloud saves
         if: vars.CLOUD_URL != ''
         run: echo "VITE_CLOUD_URL=${{ vars.CLOUD_URL }}" >> "$GITHUB_ENV"
+      # The feedback worker's address (feedback/README.md), the same way: a
+      # build with no FEEDBACK_URL has no feedback button and sends nothing.
+      # Unlike the cloud's it is not cleared for Steam (the steam job below
+      # sets it too).
+      - name: Feedback form
+        if: vars.FEEDBACK_URL != ''
+        shell: bash
+        run: echo "VITE_FEEDBACK_URL=${{ vars.FEEDBACK_URL }}" >> "$GITHUB_ENV"
       # The signing variables are only exported when the secrets exist: an
       # unset secret is an empty string, and electron-builder reads an empty
       # CSC_LINK as a path to a certificate file that is not there.
@@ -179,6 +187,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # The feedback form goes in every build, the Steam cuts included
+      # (DESIGN.md, "Feedback form"); the cloud's address does not.
+      - name: Feedback form
+        if: vars.FEEDBACK_URL != ''
+        shell: bash
+        run: echo "VITE_FEEDBACK_URL=${{ vars.FEEDBACK_URL }}" >> "$GITHUB_ENV"
       - name: Package
         shell: bash
         run: bun run desk:build --${{ matrix.cut }} ${{ matrix.build }}

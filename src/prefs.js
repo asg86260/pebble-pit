@@ -13,6 +13,7 @@ const DEFAULTS = {
   dark: null,        // null = follow the system; true = white on black; false = black on white
   crew: 'show',      // the crew drawn 'show', 'fade' or 'hide', so a crowded yard can still be read
   language: null,    // null = follow Steam, the system or the browser; else a file in locales/ (lang.js); read at boot
+  feedbackDraft: '', // the feedback form's words, kept until they are sent (feedback.js); never the save
 };
 
 let prefs = { ...DEFAULTS };

@@ -234,6 +234,9 @@ try {
   <!-- the volume: a share of the designed level, all the way up is still quiet -->
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden data-l10n-id="set-volume">
   <button id="controlsbtn" type="button" data-pane="settings" hidden data-l10n-id="set-controlsbtn">controls</button>
+  <!-- the feedback form, a page of its own (feedbackform.js): no pane, so
+       never shown, unless the build was pointed at the feedback worker -->
+  <button id="fbbtn" type="button" data-pane="" hidden data-l10n-id="set-fbbtn"></button>
   <!-- the controls page: input on the left, what it does on the right -->
   <div class="word" data-pane="controls" hidden data-l10n-id="set-controls-word">controls</div>
   <div id="controlslist" class="controls" data-pane="controls" hidden></div>
@@ -242,6 +245,10 @@ try {
   <div class="word" data-pane="language" hidden data-l10n-id="set-lang-word"></div>
   <div id="langlist" class="langs" data-pane="language" hidden></div>
   <button id="langback" type="button" data-pane="language" hidden data-l10n-id="set-controlsback">back</button>
+  <!-- the feedback page: the box, the tick, the line of what goes, send -->
+  <div class="word" data-pane="feedback" hidden data-l10n-id="set-fb-word"></div>
+  <div id="fbform" class="paste feedback" data-pane="feedback" hidden></div>
+  <button id="fbback" type="button" data-pane="feedback" hidden data-l10n-id="set-controlsback">back</button>
   <!-- the sheet's one-line reply, on every page that has something to say -->
   <div class="said" data-pane="main slots settings"></div>
   <button id="settingsback" type="button" data-pane="settings" hidden data-l10n-id="set-settingsback">back</button>
@@ -264,6 +271,10 @@ try {
   <div class="why"></div>
   <div class="rule"></div>
   <button id="copysave" type="button" data-l10n-id="crashed-copysave">copy save</button>
+  <!-- the feedback form, opened in place under it (crash.js fetches the
+       form at the click); shown only where the build has a worker -->
+  <button id="crashfb" type="button" hidden data-l10n-id="crashed-fbbtn"></button>
+  <div id="crashform" class="paste feedback" hidden></div>
   <div class="said"></div>
 </div>
 

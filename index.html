@@ -78,6 +78,9 @@ try {
   <button id="sound" type="button" data-pane="settings" hidden data-l10n-id="set-sound-on">sound: on</button>
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden data-l10n-id="set-volume">
   <button id="controlsbtn" type="button" data-pane="settings" hidden data-l10n-id="title-controlsbtn">controls</button>
+  <!-- the feedback form, a page of its own (feedbackform.js): no pane, so
+       never shown, unless the build was pointed at the feedback worker -->
+  <button id="fbbtn" type="button" data-pane="" hidden data-l10n-id="title-fbbtn"></button>
   <button id="settingsback" type="button" data-pane="settings" hidden data-l10n-id="title-settingsback">back</button>
   <!-- the controls page: the rows are src/controls.js's -->
   <div class="word" data-pane="controls" hidden data-l10n-id="title-controls-word">controls</div>
@@ -87,6 +90,10 @@ try {
   <div class="word" data-pane="language" hidden data-l10n-id="title-lang-word"></div>
   <div id="langlist" class="langs" data-pane="language" hidden></div>
   <button id="langback" type="button" data-pane="language" hidden data-l10n-id="title-controlsback">back</button>
+  <!-- the feedback page: the box, the tick, the line of what goes, send -->
+  <div class="word" data-pane="feedback" hidden data-l10n-id="title-fb-word"></div>
+  <div id="fbform" class="paste feedback" data-pane="feedback" hidden></div>
+  <button id="fbback" type="button" data-pane="feedback" hidden data-l10n-id="title-controlsback">back</button>
 
   <!-- two yards in one slot, one here and one in the cloud: the player
        keeps one (cloudsheet.js, `showConflicts`) -->
