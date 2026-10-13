@@ -1373,36 +1373,12 @@
    "text": "pause"
   },
   {
-   "id": "idx.grp.materials",
-   "text": "materials"
-  },
-  {
-   "id": "idx.grp.yard",
-   "text": "the yard"
-  },
-  {
-   "id": "idx.grp.sky",
-   "text": "the sky"
-  },
-  {
-   "id": "idx.grp.places",
-   "text": "places"
-  },
-  {
-   "id": "idx.grp.crew",
-   "text": "crew"
-  },
-  {
-   "id": "idx.grp.story",
-   "text": "the story"
-  },
-  {
    "id": "idx.dust.name",
    "text": "pebbles"
   },
   {
    "id": "idx.dust.text",
-   "text": "chipped off the boulder by you, the diggers and the ram. toss them into the hole: what is in the hole pays for everything."
+   "text": "mined off of the boulder."
   },
   {
    "id": "idx.shard.name",
@@ -1410,7 +1386,7 @@
   },
   {
    "id": "idx.shard.text",
-   "text": "dug out of the quarry by the miners and carried up to the hole. pays for the arch and the later rungs of every ladder."
+   "text": "mined out of the quarry."
   },
   {
    "id": "idx.spore.name",
@@ -1418,7 +1394,7 @@
   },
   {
    "id": "idx.spore.text",
-   "text": "grown on the farm and harvested by the farmers. pays for the net, and the apothecary brews with them."
+   "text": "grown on the farm."
   },
   {
    "id": "idx.spark.name",
@@ -1426,7 +1402,7 @@
   },
   {
    "id": "idx.spark.text",
-   "text": "shed by the star when the wizards bolt it apart. the machines' coin: every machine, every rung of their ladders, and the rift."
+   "text": "bolted off the star by the wizards."
   },
   {
    "id": "idx.scale.name",
@@ -1434,7 +1410,7 @@
   },
   {
    "id": "idx.scale.text",
-   "text": "the deep's coin, crushed out of what the serpent drops."
+   "text": "crushed out of what the serpent drops."
   },
   {
    "id": "idx.crit.name",
@@ -1442,7 +1418,7 @@
   },
   {
    "id": "idx.crit.text",
-   "text": "now and then a hit lands hard, and a fountain of pebbles comes off instead of a chip. the bench sells the chance and the size."
+   "text": "has a chance to do more damage."
   },
   {
    "id": "idx.rock.name",
@@ -1450,15 +1426,15 @@
   },
   {
    "id": "idx.rock.text",
-   "text": "falls out of the sky, one after another. chip it down for pebbles; each new one drives the last back into the ground."
+   "text": "squished your sqwife, mined for valuable pebbles."
   },
   {
    "id": "idx.pit.name",
-   "text": "the hole"
+   "text": "the pit"
   },
   {
    "id": "idx.pit.text",
-   "text": "everything you bank lands here, and every bill is paid out of it. it fills up."
+   "text": "toss your pebbles, and whatever else into here for storage."
   },
   {
    "id": "idx.rift.name",
@@ -1466,7 +1442,7 @@
   },
   {
    "id": "idx.rift.text",
-   "text": "torn open over the hole once it was full. it swallows what the hole cannot take, and grows as it eats."
+   "text": "massive pebble concentration caused a rift in reality?"
   },
   {
    "id": "idx.abyss.name",
@@ -1474,7 +1450,7 @@
   },
   {
    "id": "idx.abyss.text",
-   "text": "the hole, drowned. bottomless: whatever goes in, there is always room."
+   "text": "the rift consumed too many pebbles to remain stable, engulfing the entire pit."
   },
   {
    "id": "idx.muck.name",
@@ -1482,7 +1458,7 @@
   },
   {
    "id": "idx.muck.text",
-   "text": "dirty rain lands as muck. nobody touches it while the storm is still dropping it; after, the crew shovel it up. muck on a station slows the work there."
+   "text": "pollution corrupts the ecosystem and rain leaves behind piles of gunk."
   },
   {
    "id": "idx.poop.name",
@@ -1490,7 +1466,7 @@
   },
   {
    "id": "idx.poop.text",
-   "text": "everybody has to go sometime. the janitors clean it up."
+   "text": "ew."
   },
   {
    "id": "idx.bird.name",
@@ -1498,7 +1474,7 @@
   },
   {
    "id": "idx.bird.text",
-   "text": "they cross the sky now and then. click one and it shakes a few pebbles loose."
+   "text": "regular birds."
   },
   {
    "id": "idx.house.name",
@@ -1506,7 +1482,7 @@
   },
   {
    "id": "idx.house.text",
-   "text": "a room for every body. buy another house to hire somebody; its board is the crew."
+   "text": "where the workers live."
   },
   {
    "id": "idx.pollution.name",
@@ -1514,31 +1490,7 @@
   },
   {
    "id": "idx.pollution.text",
-   "text": "every grain dug kicks a mote into the sky, and the machines put up soot. the fuller the sky, the dirtier the rain. only the air filter takes it down."
-  },
-  {
-   "id": "idx.cloud.name",
-   "text": "clouds"
-  },
-  {
-   "id": "idx.cloud.text",
-   "text": "they drift past at the back. when they swell and darken, rain is coming."
-  },
-  {
-   "id": "idx.rain.name",
-   "text": "rain"
-  },
-  {
-   "id": "idx.rain.text",
-   "text": "comes when it likes and washes some of the sky down. clean drops just wet the yard; dirty ones land as muck."
-  },
-  {
-   "id": "idx.lightning.name",
-   "text": "lightning"
-  },
-  {
-   "id": "idx.lightning.text",
-   "text": "comes with a heavy pour. all show: it touches nothing."
+   "text": "the cost of industry. mining, farming, quarrying, wizarding, all creates pollution that will dirty up the air."
   },
   {
    "id": "idx.star.name",
@@ -1546,7 +1498,7 @@
   },
   {
    "id": "idx.star.text",
-   "text": "a rock in the sky only the wizards can reach. every bit they bolt off sheds sparks; when it is gone they call down the next."
+   "text": "a real star generated by wizards magic, blasted for sparks."
   },
   {
    "id": "idx.balloon.name",
@@ -1554,7 +1506,7 @@
   },
   {
    "id": "idx.balloon.text",
-   "text": "the air filter's craft: it rides up among the clouds and draws the haze in."
+   "text": "equipped with an air filter that cleans pollution from the clouds."
   },
   {
    "id": "idx.recycler.name",
@@ -1562,7 +1514,7 @@
   },
   {
    "id": "idx.recycler.text",
-   "text": "hands back some of what the air filter takes out of the sky."
+   "text": "concentrates air pollution into usable pebbles."
   },
   {
    "id": "idx.bench.name",
@@ -1570,7 +1522,7 @@
   },
   {
    "id": "idx.bench.text",
-   "text": "your own board: your click, carry and toss, the haulers' gear, crits, the barriers, and the door to every new place."
+   "text": "basically the general store. hauler upgrades, manual upgrades, new buildings."
   },
   {
    "id": "idx.shack.name",
@@ -1578,7 +1530,7 @@
   },
   {
    "id": "idx.shack.text",
-   "text": "the diggers' hut by the boulder. sells their swing and pick, the breaker hat and the ram."
+   "text": "shop for buying miner upgrades."
   },
   {
    "id": "idx.stats.name",
@@ -1586,7 +1538,7 @@
   },
   {
    "id": "idx.stats.text",
-   "text": "the noticeboard: how long you have played and what the yard earns a second."
+   "text": "holds various stats for your game, income, time played."
   },
   {
    "id": "idx.farm.name",
@@ -1594,7 +1546,7 @@
   },
   {
    "id": "idx.farm.text",
-   "text": "plots that grow crops, worked by farmers. sells plots, tending and yield, the grower hat and the tiller."
+   "text": "plots that grow crops."
   },
   {
    "id": "idx.quarry.name",
@@ -1602,7 +1554,7 @@
   },
   {
    "id": "idx.quarry.text",
-   "text": "an open cut; miners work its floor and carry ore up. sells depth, pace and seam, the blaster hat and the drill."
+   "text": "dig deep for ores."
   },
   {
    "id": "idx.apothecary.name",
@@ -1610,7 +1562,7 @@
   },
   {
    "id": "idx.apothecary.text",
-   "text": "a keeper lights the pot and it brews by itself. the brews walk out to the crew."
+   "text": "where the brews are made."
   },
   {
    "id": "idx.tower.name",
@@ -1618,7 +1570,7 @@
   },
   {
    "id": "idx.tower.text",
-   "text": "summons wizards, a hat each, who fly up to the star. sells the spells, the sphere and the barrier."
+   "text": "home of the wizards."
   },
   {
    "id": "idx.casino.name",
@@ -1626,7 +1578,7 @@
   },
   {
    "id": "idx.casino.text",
-   "text": "no board, just levers. pull the arm and a handful of grains pours down the pegs; the bins they land in pay."
+   "text": "peg board based casino."
   },
   {
    "id": "idx.outhouse.name",
@@ -1634,7 +1586,7 @@
   },
   {
    "id": "idx.outhouse.text",
-   "text": "home of the janitors, who clean up the poop and the muck. sells caps and the roombas."
+   "text": "home of the janitors."
   },
   {
    "id": "idx.filter.name",
@@ -1642,7 +1594,7 @@
   },
   {
    "id": "idx.filter.text",
-   "text": "the only thing that empties the sky. air purifiers work it; its dial reads clean, dirty or filthy."
+   "text": "draws the pollution out of the sky."
   },
   {
    "id": "idx.ram.name",
@@ -1650,7 +1602,7 @@
   },
   {
    "id": "idx.ram.text",
-   "text": "the boulder's machine. bought and tuned with sparks, and it puts up soot."
+   "text": "quickly chunk through boulders."
   },
   {
    "id": "idx.jaw.name",
@@ -1658,7 +1610,7 @@
   },
   {
    "id": "idx.jaw.text",
-   "text": "the quarry's machine. bought and tuned with sparks, and it puts up soot."
+   "text": "machine drill for quick excavation."
   },
   {
    "id": "idx.tiller.name",
@@ -1666,7 +1618,7 @@
   },
   {
    "id": "idx.tiller.text",
-   "text": "the farm's machine. bought and tuned with sparks, and it puts up soot."
+   "text": "tractors make quick work of the crops."
   },
   {
    "id": "idx.belt.name",
@@ -1674,7 +1626,7 @@
   },
   {
    "id": "idx.belt.text",
-   "text": "carries pebbles from the boulder to the hole with nobody minding it. the haulers tip their loads onto it."
+   "text": "automatically dump pebbles into the pit."
   },
   {
    "id": "idx.sphere.name",
@@ -1682,15 +1634,15 @@
   },
   {
    "id": "idx.sphere.text",
-   "text": "a shell round the star that catches its light and lets it fall as sparks."
+   "text": "a dyson sphere to harvest the stars power."
   },
   {
    "id": "idx.roomba.name",
-   "text": "the roombas"
+   "text": "robot vacuums"
   },
   {
    "id": "idx.roomba.text",
-   "text": "little machines that go out from their dock, pick up the mess and bin it."
+   "text": "automated vacuums to clean up messes."
   },
   {
    "id": "idx.driver.name",
@@ -1698,7 +1650,7 @@
   },
   {
    "id": "idx.driver.text",
-   "text": "drives itself to the hole with nobody aboard, and smokes."
+   "text": "automated forklift to carry loads of resources very quickly."
   },
   {
    "id": "idx.props.name",
@@ -1706,7 +1658,7 @@
   },
   {
    "id": "idx.props.text",
-   "text": "the first try at holding off the next boulder. it does not hold."
+   "text": "the desperate attempt at holding off the boulder."
   },
   {
    "id": "idx.net.name",
@@ -1714,7 +1666,7 @@
   },
   {
    "id": "idx.net.text",
-   "text": "rope that catches the boulder and lets it down slowly. it does not hold either."
+   "text": "weave crops into a net to catch and slow the boulder."
   },
   {
    "id": "idx.arch.name",
@@ -1722,7 +1674,7 @@
   },
   {
    "id": "idx.arch.text",
-   "text": "stone that catches one, and then the crack runs."
+   "text": "a sturdy stone and metal arch to try to hold off the boulder."
   },
   {
    "id": "idx.dome.name",
@@ -1730,15 +1682,15 @@
   },
   {
    "id": "idx.dome.text",
-   "text": "poured by the wizards, not carried. this one holds."
+   "text": "an energy barrier conjured by the wizards."
   },
   {
    "id": "idx.deep.name",
-   "text": "the deep"
+   "text": "the abyss"
   },
   {
    "id": "idx.deep.text",
-   "text": "the water under the drowned hole, where the serpent lives."
+   "text": "not quite space, not quite ocean, something in between."
   },
   {
    "id": "idx.portal.name",
@@ -1746,7 +1698,7 @@
   },
   {
    "id": "idx.portal.text",
-   "text": "conjured by the wizards over the abyss: the way down to the deep."
+   "text": "only way in and out of the abyss."
   },
   {
    "id": "idx.crusher.name",
@@ -1754,7 +1706,7 @@
   },
   {
    "id": "idx.crusher.text",
-   "text": "where the deep's scales are crushed and kept."
+   "text": "where the deep's scales are kept."
   },
   {
    "id": "idx.pods.name",
@@ -1762,7 +1714,7 @@
   },
   {
    "id": "idx.pods.text",
-   "text": "the deep's houses: a room for a body down there."
+   "text": "pods for abyssal workers."
   },
   {
    "id": "idx.haul.name",
@@ -1770,7 +1722,7 @@
   },
   {
    "id": "idx.haul.text",
-   "text": "carry pebbles from the ground to the hole. anybody without a job hauls, and they shovel muck too."
+   "text": "carry pebbles into the pit."
   },
   {
    "id": "idx.rockcrew.name",
@@ -1778,7 +1730,7 @@
   },
   {
    "id": "idx.rockcrew.text",
-   "text": "swing at the boulder from its row. the shack sells their swing and pick."
+   "text": "swing at the boulder."
   },
   {
    "id": "idx.quarrycrew.name",
@@ -1786,7 +1738,7 @@
   },
   {
    "id": "idx.quarrycrew.text",
-   "text": "work the quarry's floor and bring ore up."
+   "text": "dig ore in the quarry."
   },
   {
    "id": "idx.farmcrew.name",
@@ -1794,7 +1746,7 @@
   },
   {
    "id": "idx.farmcrew.text",
-   "text": "tend the plots and harvest the crops."
+   "text": "farms the crops."
   },
   {
    "id": "idx.purify.name",
@@ -1802,7 +1754,7 @@
   },
   {
    "id": "idx.purify.text",
-   "text": "work the air filter. only the ones inside it count."
+   "text": "flies the air purifier balloons around to clean up the sky."
   },
   {
    "id": "idx.stir.name",
@@ -1810,7 +1762,7 @@
   },
   {
    "id": "idx.stir.text",
-   "text": "the keeper who lights the pot."
+   "text": "in charge of one batch of brews."
   },
   {
    "id": "idx.janitor.name",
@@ -1818,7 +1770,7 @@
   },
   {
    "id": "idx.janitor.text",
-   "text": "go after the poop first, then the muck."
+   "text": "clean up the poop and the muck."
   },
   {
    "id": "idx.wizard.name",
@@ -1826,7 +1778,7 @@
   },
   {
    "id": "idx.wizard.text",
-   "text": "fly up and bolt the star apart for sparks, and call down a new one. they pour the barrier too."
+   "text": "learned magic users that have the ability to chunk of pieces of a star."
   },
   {
    "id": "idx.build.name",
@@ -1834,7 +1786,7 @@
   },
   {
    "id": "idx.build.text",
-   "text": "spare hands lent to put up a building or a machine."
+   "text": "put up buildings and machines."
   },
   {
    "id": "idx.breaker.name",
@@ -1842,7 +1794,7 @@
   },
   {
    "id": "idx.breaker.text",
-   "text": "the diggers' hat: twice the bite."
+   "text": "much more impactful while digging the boulder."
   },
   {
    "id": "idx.carter.name",
@@ -1850,7 +1802,7 @@
   },
   {
    "id": "idx.carter.text",
-   "text": "the haulers' cart: twice the load."
+   "text": "haulers can pull a cart around to double their capacity."
   },
   {
    "id": "idx.blaster.name",
@@ -1858,7 +1810,7 @@
   },
   {
    "id": "idx.blaster.text",
-   "text": "the miners' hat: twice the trips."
+   "text": "equipped with small explosives to really excavate ore."
   },
   {
    "id": "idx.grower.name",
@@ -1866,7 +1818,7 @@
   },
   {
    "id": "idx.grower.text",
-   "text": "the farmers' hat: twice the tending."
+   "text": "able to tend to crops twice as much."
   },
   {
    "id": "idx.brews.name",
@@ -1874,7 +1826,7 @@
   },
   {
    "id": "idx.brews.text",
-   "text": "one for each coin. hearty stew speeds a body up, strong brew makes it stronger, bracing tonic makes it crit."
+   "text": "special brews from the apothecary."
   },
   {
    "id": "idx.party.name",
@@ -1882,7 +1834,7 @@
   },
   {
    "id": "idx.party.text",
-   "text": "crew gone down to the deep to fight the serpent, a fighter to a station."
+   "text": "brave party of adventurers willing to risk their life to defeat the serpent."
   },
   {
    "id": "idx.sqwife.name",
@@ -1890,15 +1842,7 @@
   },
   {
    "id": "idx.sqwife.text",
-   "text": "buried by the first boulder. every one you clear, somebody runs to dig; every new one drives them back in."
-  },
-  {
-   "id": "idx.objective.name",
-   "text": "objective"
-  },
-  {
-   "id": "idx.objective.text",
-   "text": "the line at the top: the story's next step."
+   "text": "living her life, until the incident(s), stuck under infinitely falling boulders from the sky. crazy."
   },
   {
    "id": "idx.notices.name",
@@ -1906,31 +1850,7 @@
   },
   {
    "id": "idx.notices.text",
-   "text": "the yard's milestones. this sheet keeps the ones you have earned."
-  },
-  {
-   "id": "idx.rescue.name",
-   "text": "you saved your sqwife"
-  },
-  {
-   "id": "idx.rescue.text",
-   "text": "the barrier held, and the sqwife came out."
-  },
-  {
-   "id": "idx.cutscene.name",
-   "text": "scenes"
-  },
-  {
-   "id": "idx.cutscene.text",
-   "text": "now and then a scene takes the camera. hold space to skip one."
-  },
-  {
-   "id": "idx.sqhusband.name",
-   "text": "sqhusband"
-  },
-  {
-   "id": "idx.sqhusband.text",
-   "text": "snatched by the serpent after the rescue. free him from its belly."
+   "text": "the yard's milestones."
   },
   {
    "id": "idx.serpent.name",
@@ -1938,7 +1858,7 @@
   },
   {
    "id": "idx.serpent.text",
-   "text": "lives in the deep, and swallowed the sqhusband."
+   "text": "some weird abyssal snake like creature that inhabits the abyss."
   }
  ],
  "extracted": {
@@ -2767,7 +2687,7 @@
    "from": "src/config/index.js:31"
   },
   "idx-dust-text": {
-   "text": "chipped off the boulder by you, the diggers and the ram. toss them into the hole: what is in the hole pays for everything.",
+   "text": "mined off of the boulder.",
    "from": "src/config/index.js:32"
   },
   "idx-shard-name": {
@@ -2775,7 +2695,7 @@
    "from": "src/config/index.js:33"
   },
   "idx-shard-text": {
-   "text": "dug out of the quarry by the miners and carried up to the hole. pays for the arch and the later rungs of every ladder.",
+   "text": "mined out of the quarry.",
    "from": "src/config/index.js:34"
   },
   "idx-spore-name": {
@@ -2783,7 +2703,7 @@
    "from": "src/config/index.js:35"
   },
   "idx-spore-text": {
-   "text": "grown on the farm and harvested by the farmers. pays for the net, and the apothecary brews with them.",
+   "text": "grown on the farm.",
    "from": "src/config/index.js:36"
   },
   "idx-spark-name": {
@@ -2791,7 +2711,7 @@
    "from": "src/config/index.js:37"
   },
   "idx-spark-text": {
-   "text": "shed by the star when the wizards bolt it apart. the machines' coin: every machine, every rung of their ladders, and the rift.",
+   "text": "bolted off the star by the wizards.",
    "from": "src/config/index.js:38"
   },
   "idx-scale-name": {
@@ -2799,7 +2719,7 @@
    "from": "src/config/index.js:39"
   },
   "idx-scale-text": {
-   "text": "the deep's coin, crushed out of what the serpent drops.",
+   "text": "crushed out of what the serpent drops.",
    "from": "src/config/index.js:40"
   },
   "idx-crit-name": {
@@ -2807,7 +2727,7 @@
    "from": "src/config/index.js:41"
   },
   "idx-crit-text": {
-   "text": "now and then a hit lands hard, and a fountain of pebbles comes off instead of a chip. the bench sells the chance and the size.",
+   "text": "has a chance to do more damage.",
    "from": "src/config/index.js:42"
   },
   "idx-rock-name": {
@@ -2815,15 +2735,15 @@
    "from": "src/config/index.js:45"
   },
   "idx-rock-text": {
-   "text": "falls out of the sky, one after another. chip it down for pebbles; each new one drives the last back into the ground.",
+   "text": "squished your sqwife, mined for valuable pebbles.",
    "from": "src/config/index.js:46"
   },
   "idx-pit-name": {
-   "text": "the hole",
+   "text": "the pit",
    "from": "src/config/index.js:47"
   },
   "idx-pit-text": {
-   "text": "everything you bank lands here, and every bill is paid out of it. it fills up.",
+   "text": "toss your pebbles, and whatever else into here for storage.",
    "from": "src/config/index.js:48"
   },
   "idx-rift-name": {
@@ -2831,7 +2751,7 @@
    "from": "src/config/index.js:49"
   },
   "idx-rift-text": {
-   "text": "torn open over the hole once it was full. it swallows what the hole cannot take, and grows as it eats.",
+   "text": "massive pebble concentration caused a rift in reality?",
    "from": "src/config/index.js:50"
   },
   "idx-abyss-name": {
@@ -2839,7 +2759,7 @@
    "from": "src/config/index.js:51"
   },
   "idx-abyss-text": {
-   "text": "the hole, drowned. bottomless: whatever goes in, there is always room.",
+   "text": "the rift consumed too many pebbles to remain stable, engulfing the entire pit.",
    "from": "src/config/index.js:52"
   },
   "idx-muck-name": {
@@ -2847,7 +2767,7 @@
    "from": "src/config/index.js:53"
   },
   "idx-muck-text": {
-   "text": "dirty rain lands as muck. nobody touches it while the storm is still dropping it; after, the crew shovel it up. muck on a station slows the work there.",
+   "text": "pollution corrupts the ecosystem and rain leaves behind piles of gunk.",
    "from": "src/config/index.js:54"
   },
   "idx-poop-name": {
@@ -2855,7 +2775,7 @@
    "from": "src/config/index.js:55"
   },
   "idx-poop-text": {
-   "text": "everybody has to go sometime. the janitors clean it up.",
+   "text": "ew.",
    "from": "src/config/index.js:56"
   },
   "idx-bird-name": {
@@ -2863,7 +2783,7 @@
    "from": "src/config/index.js:57"
   },
   "idx-bird-text": {
-   "text": "they cross the sky now and then. click one and it shakes a few pebbles loose.",
+   "text": "regular birds.",
    "from": "src/config/index.js:58"
   },
   "idx-house-name": {
@@ -2871,7 +2791,7 @@
    "from": "src/config/index.js:59"
   },
   "idx-house-text": {
-   "text": "a room for every body. buy another house to hire somebody; its board is the crew.",
+   "text": "where the workers live.",
    "from": "src/config/index.js:60"
   },
   "idx-pollution-name": {
@@ -2879,39 +2799,15 @@
    "from": "src/config/index.js:63"
   },
   "idx-pollution-text": {
-   "text": "every grain dug kicks a mote into the sky, and the machines put up soot. the fuller the sky, the dirtier the rain. only the air filter takes it down.",
+   "text": "the cost of industry. mining, farming, quarrying, wizarding, all creates pollution that will dirty up the air.",
    "from": "src/config/index.js:64"
-  },
-  "idx-cloud-name": {
-   "text": "clouds",
-   "from": "src/config/index.js:65"
-  },
-  "idx-cloud-text": {
-   "text": "they drift past at the back. when they swell and darken, rain is coming.",
-   "from": "src/config/index.js:66"
-  },
-  "idx-rain-name": {
-   "text": "rain",
-   "from": "src/config/index.js:67"
-  },
-  "idx-rain-text": {
-   "text": "comes when it likes and washes some of the sky down. clean drops just wet the yard; dirty ones land as muck.",
-   "from": "src/config/index.js:68"
-  },
-  "idx-lightning-name": {
-   "text": "lightning",
-   "from": "src/config/index.js:69"
-  },
-  "idx-lightning-text": {
-   "text": "comes with a heavy pour. all show: it touches nothing.",
-   "from": "src/config/index.js:70"
   },
   "idx-star-name": {
    "text": "the star",
    "from": "src/config/index.js:71"
   },
   "idx-star-text": {
-   "text": "a rock in the sky only the wizards can reach. every bit they bolt off sheds sparks; when it is gone they call down the next.",
+   "text": "a real star generated by wizards magic, blasted for sparks.",
    "from": "src/config/index.js:72"
   },
   "idx-balloon-name": {
@@ -2919,7 +2815,7 @@
    "from": "src/config/index.js:73"
   },
   "idx-balloon-text": {
-   "text": "the air filter's craft: it rides up among the clouds and draws the haze in.",
+   "text": "equipped with an air filter that cleans pollution from the clouds.",
    "from": "src/config/index.js:74"
   },
   "idx-recycler-name": {
@@ -2927,7 +2823,7 @@
    "from": "src/config/index.js:75"
   },
   "idx-recycler-text": {
-   "text": "hands back some of what the air filter takes out of the sky.",
+   "text": "concentrates air pollution into usable pebbles.",
    "from": "src/config/index.js:76"
   },
   "idx-bench-name": {
@@ -2935,7 +2831,7 @@
    "from": "src/config/index.js:79"
   },
   "idx-bench-text": {
-   "text": "your own board: your click, carry and toss, the haulers' gear, crits, the barriers, and the door to every new place.",
+   "text": "basically the general store. hauler upgrades, manual upgrades, new buildings.",
    "from": "src/config/index.js:80"
   },
   "idx-shack-name": {
@@ -2943,7 +2839,7 @@
    "from": "src/config/index.js:81"
   },
   "idx-shack-text": {
-   "text": "the diggers' hut by the boulder. sells their swing and pick, the breaker hat and the ram.",
+   "text": "shop for buying miner upgrades.",
    "from": "src/config/index.js:82"
   },
   "idx-stats-name": {
@@ -2951,7 +2847,7 @@
    "from": "src/config/index.js:83"
   },
   "idx-stats-text": {
-   "text": "the noticeboard: how long you have played and what the yard earns a second.",
+   "text": "holds various stats for your game, income, time played.",
    "from": "src/config/index.js:84"
   },
   "idx-farm-name": {
@@ -2959,7 +2855,7 @@
    "from": "src/config/index.js:85"
   },
   "idx-farm-text": {
-   "text": "plots that grow crops, worked by farmers. sells plots, tending and yield, the grower hat and the tiller.",
+   "text": "plots that grow crops.",
    "from": "src/config/index.js:86"
   },
   "idx-quarry-name": {
@@ -2967,7 +2863,7 @@
    "from": "src/config/index.js:87"
   },
   "idx-quarry-text": {
-   "text": "an open cut; miners work its floor and carry ore up. sells depth, pace and seam, the blaster hat and the drill.",
+   "text": "dig deep for ores.",
    "from": "src/config/index.js:88"
   },
   "idx-apothecary-name": {
@@ -2975,7 +2871,7 @@
    "from": "src/config/index.js:89"
   },
   "idx-apothecary-text": {
-   "text": "a keeper lights the pot and it brews by itself. the brews walk out to the crew.",
+   "text": "where the brews are made.",
    "from": "src/config/index.js:90"
   },
   "idx-tower-name": {
@@ -2983,7 +2879,7 @@
    "from": "src/config/index.js:91"
   },
   "idx-tower-text": {
-   "text": "summons wizards, a hat each, who fly up to the star. sells the spells, the sphere and the barrier.",
+   "text": "home of the wizards.",
    "from": "src/config/index.js:92"
   },
   "idx-casino-name": {
@@ -2991,7 +2887,7 @@
    "from": "src/config/index.js:93"
   },
   "idx-casino-text": {
-   "text": "no board, just levers. pull the arm and a handful of grains pours down the pegs; the bins they land in pay.",
+   "text": "peg board based casino.",
    "from": "src/config/index.js:94"
   },
   "idx-outhouse-name": {
@@ -2999,7 +2895,7 @@
    "from": "src/config/index.js:95"
   },
   "idx-outhouse-text": {
-   "text": "home of the janitors, who clean up the poop and the muck. sells caps and the roombas.",
+   "text": "home of the janitors.",
    "from": "src/config/index.js:96"
   },
   "idx-filter-name": {
@@ -3007,7 +2903,7 @@
    "from": "src/config/index.js:97"
   },
   "idx-filter-text": {
-   "text": "the only thing that empties the sky. air purifiers work it; its dial reads clean, dirty or filthy.",
+   "text": "draws the pollution out of the sky.",
    "from": "src/config/index.js:98"
   },
   "idx-ram-name": {
@@ -3015,7 +2911,7 @@
    "from": "src/config/index.js:99"
   },
   "idx-ram-text": {
-   "text": "the boulder's machine. bought and tuned with sparks, and it puts up soot.",
+   "text": "quickly chunk through boulders.",
    "from": "src/config/index.js:100"
   },
   "idx-jaw-name": {
@@ -3023,7 +2919,7 @@
    "from": "src/config/index.js:101"
   },
   "idx-jaw-text": {
-   "text": "the quarry's machine. bought and tuned with sparks, and it puts up soot.",
+   "text": "machine drill for quick excavation.",
    "from": "src/config/index.js:102"
   },
   "idx-tiller-name": {
@@ -3031,7 +2927,7 @@
    "from": "src/config/index.js:103"
   },
   "idx-tiller-text": {
-   "text": "the farm's machine. bought and tuned with sparks, and it puts up soot.",
+   "text": "tractors make quick work of the crops.",
    "from": "src/config/index.js:104"
   },
   "idx-belt-name": {
@@ -3039,7 +2935,7 @@
    "from": "src/config/index.js:105"
   },
   "idx-belt-text": {
-   "text": "carries pebbles from the boulder to the hole with nobody minding it. the haulers tip their loads onto it.",
+   "text": "automatically dump pebbles into the pit.",
    "from": "src/config/index.js:106"
   },
   "idx-sphere-name": {
@@ -3047,15 +2943,15 @@
    "from": "src/config/index.js:107"
   },
   "idx-sphere-text": {
-   "text": "a shell round the star that catches its light and lets it fall as sparks.",
+   "text": "a dyson sphere to harvest the stars power.",
    "from": "src/config/index.js:108"
   },
   "idx-roomba-name": {
-   "text": "the roombas",
+   "text": "robot vacuums",
    "from": "src/config/index.js:109"
   },
   "idx-roomba-text": {
-   "text": "little machines that go out from their dock, pick up the mess and bin it.",
+   "text": "automated vacuums to clean up messes.",
    "from": "src/config/index.js:110"
   },
   "idx-driver-name": {
@@ -3063,7 +2959,7 @@
    "from": "src/config/index.js:111"
   },
   "idx-driver-text": {
-   "text": "drives itself to the hole with nobody aboard, and smokes.",
+   "text": "automated forklift to carry loads of resources very quickly.",
    "from": "src/config/index.js:112"
   },
   "idx-props-name": {
@@ -3071,7 +2967,7 @@
    "from": "src/config/index.js:113"
   },
   "idx-props-text": {
-   "text": "the first try at holding off the next boulder. it does not hold.",
+   "text": "the desperate attempt at holding off the boulder.",
    "from": "src/config/index.js:114"
   },
   "idx-net-name": {
@@ -3079,7 +2975,7 @@
    "from": "src/config/index.js:115"
   },
   "idx-net-text": {
-   "text": "rope that catches the boulder and lets it down slowly. it does not hold either.",
+   "text": "weave crops into a net to catch and slow the boulder.",
    "from": "src/config/index.js:116"
   },
   "idx-arch-name": {
@@ -3087,7 +2983,7 @@
    "from": "src/config/index.js:117"
   },
   "idx-arch-text": {
-   "text": "stone that catches one, and then the crack runs.",
+   "text": "a sturdy stone and metal arch to try to hold off the boulder.",
    "from": "src/config/index.js:118"
   },
   "idx-dome-name": {
@@ -3095,15 +2991,15 @@
    "from": "src/config/index.js:119"
   },
   "idx-dome-text": {
-   "text": "poured by the wizards, not carried. this one holds.",
+   "text": "an energy barrier conjured by the wizards.",
    "from": "src/config/index.js:120"
   },
   "idx-deep-name": {
-   "text": "the deep",
+   "text": "the abyss",
    "from": "src/config/index.js:121"
   },
   "idx-deep-text": {
-   "text": "the water under the drowned hole, where the serpent lives.",
+   "text": "not quite space, not quite ocean, something in between.",
    "from": "src/config/index.js:122"
   },
   "idx-portal-name": {
@@ -3111,7 +3007,7 @@
    "from": "src/config/index.js:123"
   },
   "idx-portal-text": {
-   "text": "conjured by the wizards over the abyss: the way down to the deep.",
+   "text": "only way in and out of the abyss.",
    "from": "src/config/index.js:124"
   },
   "idx-crusher-name": {
@@ -3119,7 +3015,7 @@
    "from": "src/config/index.js:125"
   },
   "idx-crusher-text": {
-   "text": "where the deep's scales are crushed and kept.",
+   "text": "where the deep's scales are kept.",
    "from": "src/config/index.js:126"
   },
   "idx-pods-name": {
@@ -3127,11 +3023,11 @@
    "from": "src/config/index.js:127"
   },
   "idx-pods-text": {
-   "text": "the deep's houses: a room for a body down there.",
+   "text": "pods for abyssal workers.",
    "from": "src/config/index.js:128"
   },
   "idx-haul-text": {
-   "text": "carry pebbles from the ground to the hole. anybody without a job hauls, and they shovel muck too.",
+   "text": "carry pebbles into the pit.",
    "from": "src/config/index.js:132"
   },
   "idx-rockcrew-name": {
@@ -3139,7 +3035,7 @@
    "from": "src/config/index.js:133"
   },
   "idx-rockcrew-text": {
-   "text": "swing at the boulder from its row. the shack sells their swing and pick.",
+   "text": "swing at the boulder.",
    "from": "src/config/index.js:134"
   },
   "idx-quarrycrew-name": {
@@ -3147,7 +3043,7 @@
    "from": "src/config/index.js:135"
   },
   "idx-quarrycrew-text": {
-   "text": "work the quarry's floor and bring ore up.",
+   "text": "dig ore in the quarry.",
    "from": "src/config/index.js:136"
   },
   "idx-farmcrew-name": {
@@ -3155,7 +3051,7 @@
    "from": "src/config/index.js:137"
   },
   "idx-farmcrew-text": {
-   "text": "tend the plots and harvest the crops.",
+   "text": "farms the crops.",
    "from": "src/config/index.js:138"
   },
   "idx-purify-name": {
@@ -3163,7 +3059,7 @@
    "from": "src/config/index.js:139"
   },
   "idx-purify-text": {
-   "text": "work the air filter. only the ones inside it count.",
+   "text": "flies the air purifier balloons around to clean up the sky.",
    "from": "src/config/index.js:140"
   },
   "idx-stir-name": {
@@ -3171,19 +3067,19 @@
    "from": "src/config/index.js:141"
   },
   "idx-stir-text": {
-   "text": "the keeper who lights the pot.",
+   "text": "in charge of one batch of brews.",
    "from": "src/config/index.js:142"
   },
   "idx-janitor-text": {
-   "text": "go after the poop first, then the muck.",
+   "text": "clean up the poop and the muck.",
    "from": "src/config/index.js:144"
   },
   "idx-wizard-text": {
-   "text": "fly up and bolt the star apart for sparks, and call down a new one. they pour the barrier too.",
+   "text": "learned magic users that have the ability to chunk of pieces of a star.",
    "from": "src/config/index.js:146"
   },
   "idx-build-text": {
-   "text": "spare hands lent to put up a building or a machine.",
+   "text": "put up buildings and machines.",
    "from": "src/config/index.js:148"
   },
   "idx-breaker-name": {
@@ -3191,7 +3087,7 @@
    "from": "src/config/index.js:149"
   },
   "idx-breaker-text": {
-   "text": "the diggers' hat: twice the bite.",
+   "text": "much more impactful while digging the boulder.",
    "from": "src/config/index.js:150"
   },
   "idx-carter-name": {
@@ -3199,7 +3095,7 @@
    "from": "src/config/index.js:151"
   },
   "idx-carter-text": {
-   "text": "the haulers' cart: twice the load.",
+   "text": "haulers can pull a cart around to double their capacity.",
    "from": "src/config/index.js:152"
   },
   "idx-blaster-name": {
@@ -3207,7 +3103,7 @@
    "from": "src/config/index.js:153"
   },
   "idx-blaster-text": {
-   "text": "the miners' hat: twice the trips.",
+   "text": "equipped with small explosives to really excavate ore.",
    "from": "src/config/index.js:154"
   },
   "idx-grower-name": {
@@ -3215,7 +3111,7 @@
    "from": "src/config/index.js:155"
   },
   "idx-grower-text": {
-   "text": "the farmers' hat: twice the tending.",
+   "text": "able to tend to crops twice as much.",
    "from": "src/config/index.js:156"
   },
   "idx-brews-name": {
@@ -3223,11 +3119,11 @@
    "from": "src/config/index.js:157"
   },
   "idx-brews-text": {
-   "text": "one for each coin. hearty stew speeds a body up, strong brew makes it stronger, bracing tonic makes it crit.",
+   "text": "special brews from the apothecary.",
    "from": "src/config/index.js:158"
   },
   "idx-party-text": {
-   "text": "crew gone down to the deep to fight the serpent, a fighter to a station.",
+   "text": "brave party of adventurers willing to risk their life to defeat the serpent.",
    "from": "src/config/index.js:160"
   },
   "idx-sqwife-name": {
@@ -3235,55 +3131,23 @@
    "from": "src/config/index.js:163"
   },
   "idx-sqwife-text": {
-   "text": "buried by the first boulder. every one you clear, somebody runs to dig; every new one drives them back in.",
+   "text": "living her life, until the incident(s), stuck under infinitely falling boulders from the sky. crazy.",
    "from": "src/config/index.js:164"
-  },
-  "idx-objective-name": {
-   "text": "objective",
-   "from": "src/config/index.js:165"
-  },
-  "idx-objective-text": {
-   "text": "the line at the top: the story's next step.",
-   "from": "src/config/index.js:166"
   },
   "idx-notices-name": {
    "text": "achievements",
    "from": "src/config/index.js:167"
   },
   "idx-notices-text": {
-   "text": "the yard's milestones. this sheet keeps the ones you have earned.",
+   "text": "the yard's milestones.",
    "from": "src/config/index.js:168"
-  },
-  "idx-rescue-name": {
-   "text": "you saved your sqwife",
-   "from": "src/config/index.js:169"
-  },
-  "idx-rescue-text": {
-   "text": "the barrier held, and the sqwife came out.",
-   "from": "src/config/index.js:170"
-  },
-  "idx-cutscene-name": {
-   "text": "scenes",
-   "from": "src/config/index.js:171"
-  },
-  "idx-cutscene-text": {
-   "text": "now and then a scene takes the camera. hold space to skip one.",
-   "from": "src/config/index.js:172"
-  },
-  "idx-sqhusband-name": {
-   "text": "sqhusband",
-   "from": "src/config/index.js:173"
-  },
-  "idx-sqhusband-text": {
-   "text": "snatched by the serpent after the rescue. free him from its belly.",
-   "from": "src/config/index.js:174"
   },
   "idx-serpent-name": {
    "text": "the serpent",
    "from": "src/config/index.js:175"
   },
   "idx-serpent-text": {
-   "text": "lives in the deep, and swallowed the sqhusband.",
+   "text": "some weird abyssal snake like creature that inhabits the abyss.",
    "from": "src/config/index.js:176"
   },
   "machine-jaw": {
@@ -4515,42 +4379,6 @@
      "n": 3
     },
     "text": "another house ×3"
-   }
-  ],
-  "idx-grp-materials": [
-   {
-    "args": {},
-    "text": "materials"
-   }
-  ],
-  "idx-grp-yard": [
-   {
-    "args": {},
-    "text": "the yard"
-   }
-  ],
-  "idx-grp-sky": [
-   {
-    "args": {},
-    "text": "the sky"
-   }
-  ],
-  "idx-grp-places": [
-   {
-    "args": {},
-    "text": "places"
-   }
-  ],
-  "idx-grp-crew": [
-   {
-    "args": {},
-    "text": "crew"
-   }
-  ],
-  "idx-grp-story": [
-   {
-    "args": {},
-    "text": "the story"
    }
   ],
   "job-rockhands": [

@@ -7,8 +7,8 @@
 // `idx-<key>-text`): change it there and the book says it.
 //
 // key    the entry's own key: what `S.seen` and `S.indexRead` hold
-// group  the heading it is listed under (GROUPS, in that order; its words
-//        are GROUP_NAMES)
+// group  where it sits in the table (GROUPS, in that order); the list is flat,
+//        no heading is drawn
 // name   the name the game already shows for it
 // glyph  a drawing in GLYPHS (src/glyphs.js), `mark:<coin>` for a coin's
 //        mark, or null where nobody has drawn one yet (none is shown)
@@ -26,11 +26,8 @@
 import { TYPE, JOB, jobSaid } from '../jobs.js';
 import { msg } from '../lang.js';
 
+// The table's order, one run per group; nothing draws a heading for them.
 export const GROUPS = ['materials', 'yard', 'sky', 'places', 'crew', 'story'];
-export const GROUP_NAMES = {
-  materials: msg('idx-grp-materials'), yard: msg('idx-grp-yard'), sky: msg('idx-grp-sky'),
-  places: msg('idx-grp-places'), crew: msg('idx-grp-crew'), story: msg('idx-grp-story')
-};
 
 export const INDEX = [
   // --- materials ---
@@ -68,12 +65,6 @@ export const INDEX = [
   // --- the sky ---
   { key: 'pollution', group: 'sky', name: msg('idx-pollution-name'), glyph: null, met: 'seenAir',
     text: msg('idx-pollution-text') },
-  { key: 'cloud', group: 'sky', name: msg('idx-cloud-name'), glyph: null, met: 'start',
-    text: msg('idx-cloud-text') },
-  { key: 'rain', group: 'sky', name: msg('idx-rain-name'), glyph: null, met: 'rains',
-    text: msg('idx-rain-text') },
-  { key: 'lightning', group: 'sky', name: msg('idx-lightning-name'), glyph: null, met: 'seen',
-    text: msg('idx-lightning-text') },
   { key: 'star', group: 'sky', name: msg('idx-star-name'), glyph: null, met: 'meteorOpen',
     text: msg('idx-star-text') },
   { key: 'balloon', group: 'sky', name: msg('idx-balloon-name'), glyph: 'balloon', met: 'filterOpen',
@@ -168,16 +159,8 @@ export const INDEX = [
   // --- the story ---
   { key: 'sqwife', group: 'story', name: msg('idx-sqwife-name'), glyph: null, met: 'start',
     text: msg('idx-sqwife-text') },
-  { key: 'objective', group: 'story', name: msg('idx-objective-name'), glyph: null, met: 'start',
-    text: msg('idx-objective-text') },
   { key: 'notices', group: 'story', name: msg('idx-notices-name'), glyph: null, met: 'won',
     text: msg('idx-notices-text') },
-  { key: 'rescue', group: 'story', name: msg('idx-rescue-name'), glyph: null, met: 'rescued',
-    text: msg('idx-rescue-text') },
-  { key: 'cutscene', group: 'story', name: msg('idx-cutscene-name'), glyph: null, met: 'start',
-    text: msg('idx-cutscene-text') },
-  { key: 'sqhusband', group: 'story', name: msg('idx-sqhusband-name'), glyph: null, met: 'beat:snatch', serpent: true,
-    text: msg('idx-sqhusband-text') },
   { key: 'serpent', group: 'story', name: msg('idx-serpent-name'), glyph: null, met: 'beat:snatch', serpent: true,
     text: msg('idx-serpent-text') },
 ];

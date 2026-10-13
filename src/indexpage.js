@@ -1,14 +1,12 @@
 // The index's page on the held sheet (DESIGN.md, "The index"): every entry
-// met, down the left under its group, and the chosen one on the right -- its
-// drawing, its name, its group, its words. A group with nothing met is not
-// shown, and nothing unmet is named. On a narrow window the two halves do not
+// met, down the left in one flat list, and the chosen one on the right -- its
+// drawing, its name, its words. Nothing unmet is named. On a narrow window the two halves do not
 // fit side by side, so the list is the page and picking an entry pushes it
 // over the list, with its own back (style.css, `.index.reading`).
 //
 // What is met is met.js's; the entries are config/index.js's, their words
 // locales/en.ftl's.
 
-import { GROUPS, GROUP_NAMES } from './config/index.js';
 import { metEntries, unread, markRead } from './met.js';
 import { deepOn } from './snatch.js';
 import { GLYPHS } from './glyphs.js';
@@ -64,20 +62,15 @@ function fill(el) {
   if (!all.some(e => e.key === chosen)) chosen = all[0]?.key ?? null;
   const list = document.createElement('div');
   list.className = 'list';
-  for (const g of GROUPS) {
-    const mine = all.filter(e => e.group === g);
-    if (!mine.length) continue;
-    list.appendChild(Object.assign(document.createElement('div'), { className: 'grp', textContent: GROUP_NAMES[g] }));
-    for (const e of mine) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'it' + (e.key === chosen ? ' on' : '');
-      b.dataset.key = e.key;
-      b.append(Object.assign(document.createElement('span'), { className: 'nm', textContent: e.name }));
-      if (unread(e)) b.appendChild(Object.assign(document.createElement('i'), { className: 'newdot' }));
-      b.addEventListener('click', () => pick(el, e.key));
-      list.appendChild(b);
-    }
+  for (const e of all) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'it' + (e.key === chosen ? ' on' : '');
+    b.dataset.key = e.key;
+    b.append(Object.assign(document.createElement('span'), { className: 'nm', textContent: e.name }));
+    if (unread(e)) b.appendChild(Object.assign(document.createElement('i'), { className: 'newdot' }));
+    b.addEventListener('click', () => pick(el, e.key));
+    list.appendChild(b);
   }
   const entry = document.createElement('div');
   entry.className = 'entry';
@@ -92,10 +85,7 @@ function fill(el) {
     head.className = 'head';
     const p = picture(e);
     if (p) head.appendChild(Object.assign(document.createElement('span'), { className: 'pic' })).appendChild(p);
-    const t = document.createElement('div');
-    t.append(Object.assign(document.createElement('div'), { className: 'name', textContent: e.name }),
-             Object.assign(document.createElement('div'), { className: 'grp', textContent: GROUP_NAMES[e.group] }));
-    head.appendChild(t);
+    head.appendChild(Object.assign(document.createElement('div'), { className: 'name', textContent: e.name }));
     entry.append(back, head, Object.assign(document.createElement('div'), { className: 'text', textContent: e.text }));
     entry.dataset.key = e.key;
   }

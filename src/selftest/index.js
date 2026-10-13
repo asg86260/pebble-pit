@@ -5,7 +5,7 @@
 
 import { sleep, raf, newRun, settle, ok, run } from './kit.js';
 import { S } from '../state.js';
-import { INDEX, GROUPS, GROUP_NAMES } from '../config/index.js';
+import { INDEX } from '../config/index.js';
 import { metEntries } from '../met.js';
 import { serpentOn } from '../snatch.js';
 
@@ -19,7 +19,7 @@ const listedKeys = () => [...book().querySelectorAll('.it')].map(b => b.dataset.
 const heads = () => [...book().querySelectorAll('.list .grp')].map(g => g.textContent);
 
 export const TESTS = [
-  ['i opens the index: only what is met, grouped, and a pick shows its words', async () => {
+  ['i opens the index: only what is met, flat, and a pick shows its words', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);                     // diggers met, and their house
@@ -28,7 +28,6 @@ export const TESTS = [
     const opened = onIndex() && S.paused;
     const want = metEntries(serpentOn()).map(e => e.key);
     const got = listedKeys();
-    const wantHeads = GROUPS.filter(g => metEntries(serpentOn()).some(e => e.group === g)).map(g => GROUP_NAMES[g]);
     const unmet = INDEX.filter(e => !want.includes(e.key)).map(e => e.key);
     const pickBtn = book().querySelector('.it[data-key="rockhand"]');
     pickBtn?.click();
@@ -41,8 +40,7 @@ export const TESTS = [
       ok(opened, 'i holds the yard on the index page'),
       ok(got.join() === want.join(), 'the list is the met entries, in the book\'s order', got.join(',')),
       ok(!got.some(k => unmet.includes(k)) && !got.includes('muck'), 'nothing unmet is named'),
-      ok(heads().join() === wantHeads.join(), 'grouped under the groups that have something',
-         JSON.stringify(heads())),
+      ok(heads().length === 0, 'one flat list, no group headings', JSON.stringify(heads())),
       ok(!!pickBtn && name === 'diggers' && text === INDEX.find(e => e.key === 'rockhand').text,
          'picking diggers shows its name and words', `${name}: ${text}`),
       ok(held().hidden || !S.paused, 'escape closes it', `${S.paused}`),

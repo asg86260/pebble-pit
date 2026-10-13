@@ -70,7 +70,7 @@ const indexYard = () => {
   S.seenShard = S.seenSpore = S.seenSpark = true;
   for (const k of ['crit', 'poop', 'bird', 'lightning']) if (!S.seen.includes(k)) S.seen.push(k);
   window.__fast(1);
-  S.indexRead = ['dust', 'shard', 'spore', 'spark', 'rock', 'pit', 'house', 'cloud', 'rain', TYPE.HAUL, 'sqwife'];
+  S.indexRead = ['dust', 'shard', 'spore', 'spark', 'rock', 'pit', 'house', TYPE.HAUL, 'sqwife'];
 };
 const pressI = () => dispatchEvent(new KeyboardEvent('keydown', { key: 'i', code: 'KeyI', bubbles: true }));
 const indexPick = key => document.querySelector(`#index .it[data-key="${key}"]`)?.click();

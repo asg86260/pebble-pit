@@ -35,7 +35,7 @@ group('every entry has a name, a group and words, and its met resolves', async (
   const released = INDEX.filter(e => !e.serpent).length;
   return [
     ok(bad.length === 0, 'every entry is whole', bad.join('; ')),
-    ok(released === 60, 'sixty entries in a released build', `${released}`),
+    ok(released === 54, 'fifty-four entries in a released build', `${released}`),
   ];
 });
 
@@ -71,7 +71,7 @@ group('a storm that leaves muck down reveals muck', async () => {
   return [
     ok(!before, 'muck is not listed before any storm'),
     ok(listed().includes('muck'), 'and is once a storm has left it down', `muckRains ${S.tally.muckRains | 0}`),
-    ok(listed().includes('rain') && listed().includes('pollution'), 'the rain and the sky with it'),
+    ok(!listed().includes('rain') && listed().includes('pollution'), 'rain has no entry, pollution does'),
   ];
 });
 
