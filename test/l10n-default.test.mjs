@@ -89,10 +89,10 @@ test('the shell\'s words come from the language file, English unchanged', () => 
   assert.equal(say('title-doctitle'), 'Pebble Pit', 'the window\'s title');
   const steam = require('../electron/steam.cjs');
   assert.deepEqual(steam.CARRY_WORDS, {
-    title: "[owner's words: the carry-over offer's title]",
-    message: "[owner's words: a save from the demo was found -- carry it on?]",
-    yes: "[owner's words: carry it on]",
-    no: "[owner's words: start fresh]"
+    title: say('shell-carry-title'),
+    message: say('shell-carry-message'),
+    yes: say('shell-carry-yes'),
+    no: say('shell-carry-no')
   });
   assert.deepEqual(steam.carryWords(shell.sayer('xx')), steam.CARRY_WORDS, 'a language with no file says it in English');
 });
