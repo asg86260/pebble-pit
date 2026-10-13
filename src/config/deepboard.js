@@ -82,10 +82,10 @@ export const POD_WORK_MAX = 8;
 
 // --- the party's floor (docs/wave-party.md, "Floor slots") -------------------
 // Where a station may stand, as fractions of DEEP_W from the deep's left edge:
-// the five spots the old stations stood at first, then two between them. A
-// station takes the lowest slot free when it is bought, so the floor fills
-// left to right after the crusher and the pods.
-export const DEEP_SLOTS = [0.335, 0.475, 0.62, 0.76, 0.9, 0.405, 0.69];
+// two rows of three either side of the middle, and one in the middle between
+// them (0.5475, halfway from 0.475 to 0.62). A station takes the lowest slot
+// free when it is bought.
+export const DEEP_SLOTS = [0.335, 0.475, 0.62, 0.76, 0.5475, 0.405, 0.69];
 // The most stations there can be: a slot each. The first is free, the
 // story's three breaks drop a fang each and the kills after them the rest
 // (DESIGN.md, "Endless serpent").
