@@ -105,9 +105,12 @@ function type(d, box, text) {
 // The form's parts a player can see, by name, top to bottom: anything drawn
 // with height or words, so an empty said line is not one.
 const PART = { 'fb-ask': 'ask', 'fb-box': 'box', tick: 'tick', send: 'send', 'fb-said': 'said', 'fb-where': 'where' };
-const partsOf = form => [...form.children]
-  .filter(e => e.getClientRects().length > 0 && e.getBoundingClientRect().height > 0)
-  .map(e => Object.entries(PART).find(([c]) => e.classList.contains(c))?.[1] || e.className || e.tagName);
+// The last line, back and send side by side, reads as `back+send`.
+const seen = e => e.getClientRects().length > 0 && e.getBoundingClientRect().height > 0;
+const partsOf = form => [...form.children].filter(seen)
+  .map(e => e.classList.contains('fb-foot')
+    ? [...e.children].filter(seen).map(c => c.classList.contains('send') ? 'send' : c.id === 'fbback' ? 'back' : c.className || c.tagName).join('+')
+    : Object.entries(PART).find(([c]) => e.classList.contains(c))?.[1] || e.className || e.tagName);
 
 // What the form shows, read as a player reads it.
 function read(form) {
@@ -154,7 +157,10 @@ async function walkForm(d, form, stub, reached = {}) {
 // crashed sheet's line stands over the box.
 function said(o, where, { ask = false } = {}) {
   const b = o.body || {};
-  const form = [...(ask ? ['ask'] : []), 'box', 'tick', 'send'].join(',');
+  // The crashed sheet has no back: send stands alone. Elsewhere back and send
+  // share the last line, and once sent back stands there alone.
+  const form = (ask ? ['ask', 'box', 'tick', 'send'] : ['box', 'tick', 'back+send']).join(',');
+  const done = ask ? 'said,where' : 'said,where,back';
   const want = ['text', ...FACTS, ...(b.meta?.page === 'crashed' ? ['meta.fatal'] : []), 'save'].join(',');
   return [
     ok(o.tickOff && o.sendGrey, `${where}: the tick off as the form opens, send grey while the box is empty`),
@@ -165,7 +171,7 @@ function said(o, where, { ask = false } = {}) {
     ok(o.sent && o.calls === 1, `${where}: send, pressed, sends once`, String(o.calls)),
     ok(b.text === WORDS && typeof b.save === 'string' && b.save.length > 0, `${where}: the words and the save went`),
     ok(keysOf(b).join(',') === want, `${where}: the words, the facts and the save, and nothing else`, `${keysOf(b).join(',')} vs ${want}`),
-    ok(o.done.said === msg('fb-sent') && o.done.where && o.done.parts.join(',') === 'said,where',
+    ok(o.done.said === msg('fb-sent') && o.done.where && o.done.parts.join(',') === done,
       `${where}: the sent state, the box, the tick and send gone`, o.done.parts.join(',')),
   ];
 }

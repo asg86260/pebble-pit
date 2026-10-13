@@ -1113,6 +1113,11 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .toast.up::after { animation: toastring .8s ease-out .1s; }
 .toast.still::after { animation: none; }
 .held .word { font-size: 17px; letter-spacing: calc(.3em * var(--track)); }
+/* A sheet's heading asks for its whole width, so the sheet grows to hold it
+   on one line: pinned at the window's middle, the sheet would otherwise be
+   capped at half the window and fold a long heading. Past the window's own
+   width it folds after all. */
+.held .word { width: max-content; max-width: calc(100vw - 2 * var(--edge) - 2 * var(--pad-l-x)); text-align: center; }
 /* the controls page: two columns sized by what is in them, not by a guessed
    width, so a longer line the owner writes later still lines up. The card is
    shrink-to-fit at half the viewport, so a column that may wrap is squeezed

@@ -907,7 +907,7 @@
   "group": "Settings",
   "where": "play.html",
   "context": "feedback page heading",
-  "text": "comments / concerns / bugs"
+  "text": "comments · concerns · bugs"
  },
  {
   "id": "fb-box.placeholder",
@@ -1418,7 +1418,7 @@
   "group": "Title page",
   "where": "index.html",
   "context": "landing feedback page heading",
-  "text": "comments / concerns / bugs"
+  "text": "comments · concerns · bugs"
  },
  {
   "id": "title-conflict-word",

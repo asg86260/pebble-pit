@@ -65,7 +65,7 @@ export function showPane(name) {
   if (name === 'index') showIndex(indexEl);
   // A new form every time the page is turned to: the tick off, the words the
   // draft, the save the open slot's blob as the store holds it now.
-  if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'game', raw: () => slotRaw(openSlot()) });
+  if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'game', raw: () => slotRaw(openSlot()), back: document.getElementById('fbback') });
   if (name === 'slots') {
     // Deleting the open slot is the reset it replaced: a new yard, standing.
     showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); }, true, () => reset());

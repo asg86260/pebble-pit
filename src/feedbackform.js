@@ -21,8 +21,10 @@ function make(tag, className, text) {
 }
 
 // Into `el`, a new form: the tick off and the words the draft. `ask` is the
-// crashed sheet's line over the box, asking for the save.
-export function mountFeedback(el, { page, raw, fatal = null, ask = false }) {
+// crashed sheet's line over the box, asking for the save. `back`, where the
+// page has one, shares the last line with send: back on the left, send on the
+// right, under the line that says how a send went.
+export function mountFeedback(el, { page, raw, fatal = null, ask = false, back = null }) {
   el.textContent = '';
   const askEl = make('div', 'said fb-ask', ask ? msg('crashed-fb-ask') : '');
   const box = make('textarea', 'fb-box');
@@ -38,7 +40,9 @@ export function mountFeedback(el, { page, raw, fatal = null, ask = false }) {
   send.type = 'button';
   const said = make('div', 'said fb-said');
   const where = make('div', 'said fb-where small');
-  el.append(askEl, box, tick, send, said, where);
+  const foot = back ? make('div', 'pair fb-foot') : null;
+  if (foot) foot.append(back, send);
+  el.append(askEl, box, tick, said, where, foot || send);
 
   const form = feedbackForm({ page, raw, fatal, onChange: paint });
   box.value = form.text;

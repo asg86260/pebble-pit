@@ -53,7 +53,7 @@ function showPane(name) {
   }
   // A new form each time: the tick off, the words the draft, and the save the
   // open slot's blob, the one play would open.
-  if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'title', raw: () => slotRaw(openSlot()) });
+  if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'title', raw: () => slotRaw(openSlot()), back: document.getElementById('fbback') });
   if (name === 'conflict') showConflicts(document.getElementById('clashes'), say, { done: () => showPane('main') });
 }
 // The front's three lines that read the store.

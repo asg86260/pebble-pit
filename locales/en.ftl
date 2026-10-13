@@ -408,7 +408,7 @@ set-langbtn = language · { $name }
 set-lang-word = language
 
 # feedback page heading
-set-fb-word = comments / concerns / bugs
+set-fb-word = comments · concerns · bugs
 
 # feedback form: the box's hint while it is empty
 fb-box =
@@ -633,7 +633,7 @@ title-lang-word = language
 title-fbbtn = feedback
 
 # landing feedback page heading
-title-fb-word = comments / concerns / bugs
+title-fb-word = comments · concerns · bugs
 
 # landing cloud conflict page heading
 title-conflict-word = choose a yard

@@ -40,6 +40,9 @@ import { pref, setPref } from './prefs.js';
 import { INDEX } from './config/index.js';
 import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL, DEEP_W } from './config.js';
 import { riftCenter, riftRadius } from './rift.js';
+import { hold } from './input.js';
+import { showPane } from './settings.js';
+import { setFeedbackUrl } from './feedback.js';
 
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
@@ -1341,6 +1344,15 @@ export const SCENES = {
                  const s = st(); window.__look(s.outhouseX + 21 - s.viewW / 2); } },
   // `page`: the camera reads `houses` off the page's snapshot, which the node
   // yard's has not got.
+  // A dev build has no worker: the scene points the form at a made-up one so
+  // the page is drawn; nothing is sent.
+  feedback: { about: 'the story', say: 'the feedback page off the pause sheet, words typed, the tick on', page: true,
+    run: () => {
+      setFeedbackUrl('https://feedback.invalid'); hold(true); showPane('feedback');
+      const box = document.querySelector('#fbform textarea');
+      box.value = 'the crew stand still by the quarry'; box.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#fbform .tick')?.click();
+    } },
   houseboard:{ about: 'the crew', say: "the crew's board", page: true,
     run: () => { rich(); window.__board('house'); window.__look(st().houses.door - 400); } },
   // The door hovered the way a pointer does it, since nothing but a hover
