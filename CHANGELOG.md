@@ -139,6 +139,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- With the conveyor belt running, a left click anywhere no longer puts a free handful of pebbles in your hand (src/selftest/dust.js, "a click on open sky over the belt's yard catches nothing"; test/belt-head.test.mjs).
 - In every cutscene the black bars frame what the scene is about instead of covering it, and notices and the corner buttons wait off the bars until the scene is over (test/letterbox-framing-desk.test.mjs).
 - A notice is always drawn on top, over a tall house or any building, instead of being pushed sideways out of the window (src/selftest/touch.js, "a notice is drawn over a building that reaches into the sky").
 - A rockhand on the hill no longer walks off and sinks into the ground when the serpent falls (test/freed-rockhand.test.mjs).

@@ -456,6 +456,23 @@ export function verifyWorld() {
       }
     }
 
+    // --- rule 19: everything in the air is somewhere ----------------------------
+    // A grain with no number for where it is or how it is going never lands,
+    // never leaves, and answers every distance test with "near": any hand
+    // closed anywhere in the yard caught it, and the air held an endless
+    // supply. So every grain in flight and every rider on the belt has a
+    // place, and a rider on the ramp the throw it will leave the lip with.
+    // Once a second, with the ledgers: such a grain lives until a hand takes
+    // it.
+    for (const c of S.chips) {
+      if (!(Number.isFinite(c.x) && Number.isFinite(c.y) && Number.isFinite(c.vx) && Number.isFinite(c.vy)))
+        fail('a grain in the air is nowhere', `at ${c.x},${c.y} going ${c.vx},${c.vy}, shade ${c.s}`);
+    }
+    for (const b of S.belt || []) {
+      if (!(Number.isFinite(b.x) && Number.isFinite(b.y)) || (b.r != null && !Number.isFinite(b.k)))
+        fail('a grain on the belt is nowhere', JSON.stringify(b));
+    }
+
     // --- rule 14: the load on the belt lies at rest ------------------------------
     // A heap on the band stands up the way one on the ground does (`repose`
     // in grid.js: a grain slides only into a drop of two), what lands on it

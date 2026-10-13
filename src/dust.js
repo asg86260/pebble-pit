@@ -133,8 +133,11 @@ export const beltY = () => S.groundY - P * 5;
 // its shape up the ramp and comes apart only at the lip. Its grains are
 // riders in `S.belt`, `{ x, r, s, k }`: a step's x, the row in the column
 // it stands in, and how high in its column it left the band (`k`, how far
-// it is thrown). Anything in `S.belt` past the head is on the ramp.
+// it is thrown). A rider with a row is on the ramp; a lift has none.
 export const rampLip = () => beltTo() + BELT_RAMP * P;
+// A rider is on the ramp when `onRamp` gave it its row; a lift on the scoop
+// has none, wherever it has got to.
+const onTheRamp = b => b.r != null;
 export const rampTop = x => beltY() - Math.max(0, Math.min(BELT_RAMP - 1, Math.floor((x - beltTo()) / P))) * P;
 
 // How fast the band runs, in world pixels a frame at sixty.
@@ -375,14 +378,19 @@ export function stepBelt(now, f) {
   const head = beltTo();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];
-    if (b.x >= head) continue;
+    if (onTheRamp(b)) continue;
+    // One read back past the head before the band was wired goes on the
+    // ramp where it lies, with the row and the throw a rider needs.
+    if (b.x >= head) { S.belt.splice(i, 1); onRamp(b.x, b.s, rand()); continue; }
     const c = Math.max(0, Math.min(band.cols - 1, colOf(band, b.x)));
     const d = highY(c) - b.y;
     if (Math.abs(d) > BELT_LIFT * f) {
       // Still on the scoop. It creeps forward while it climbs, so the lift
-      // reads as a machine taking it up rather than a grain levitating.
+      // reads as a machine taking it up rather than a grain levitating --
+      // but never past the band's last column, since a lift that crept past
+      // the head would have no column to land in.
       b.y += Math.sign(d) * BELT_LIFT * f;
-      b.x += BELT_PACE * 0.35 * f;
+      b.x = Math.min(head - P, b.x + BELT_PACE * 0.35 * f);
       continue;
     }
     S.belt.splice(i, 1);
@@ -401,7 +409,7 @@ export function stepBelt(now, f) {
   S.beltRun = (S.beltRun || 0) + BELT_PACE * f;
   while (S.beltRun >= P) {
     S.beltRun -= P;
-    if (!grainsIn(band) && !S.belt.some(b => b.x >= head)) { S.beltRun = 0; break; }
+    if (!grainsIn(band) && !S.belt.some(onTheRamp)) { S.beltRun = 0; break; }
     climbRamp();
     const last = band.cols - 1;
     const tall = Math.max(1, highOf(last));
@@ -442,7 +450,7 @@ export function stepBelt(now, f) {
 // already unless its row is given.
 function onRamp(x, v, k, r = null) {
   x = beltTo() + Math.max(0, Math.round((x - beltTo()) / P)) * P;
-  if (r == null) r = S.belt.filter(b => b.x === x).length;
+  if (r == null) r = S.belt.filter(b => onTheRamp(b) && b.x === x).length;
   S.belt.push({ x, r, y: rampTop(x) - (r + 1) * P, s: v, k });
 }
 
@@ -452,7 +460,7 @@ function climbRamp() {
   const lip = rampLip();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];
-    if (b.x < beltTo()) continue;
+    if (!onTheRamp(b)) continue;
     if (b.x + P >= lip) { S.belt.splice(i, 1); flick(b.x, b.y, b.k, b.s); continue; }
     b.x += P;
     b.y = rampTop(b.x) - (b.r + 1) * P;
