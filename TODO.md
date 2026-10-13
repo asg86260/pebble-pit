@@ -1,5 +1,21 @@
 # Still to do
 
+## Feedback form -- DESIGNED, AWAITS MOCK VOTE (2026-10-13)
+
+"Feedback form (design, not built)" in DESIGN.md. A box, a tick that sends
+the open slot's save (57 KB gzipped at the deepest fixture), and a send, on
+the held sheet's settings, the landing page's settings and the crashed
+sheet; version, target, shell, os, language and page go along, and one line
+under send lists all of it before it goes. A worker of its own in
+`feedback/` (D1 only; no card, so no R2), `VITE_FEEDBACK_URL` from a repo
+variable, read by Claude through the Cloudflare connector, a save pulled
+into test/fixtures through `GET /reports/:id/save`. Nothing is queued: a
+failed send keeps the words. Mock:
+docs/mocks/feedback-form-2026-10-13.html. Blocked on: the vote (A, B or
+C), the owner's three calls at the section's end (a way to answer, a kind
+or not, the tick on the crashed sheet), and every word on the pane, which
+is the owner's.
+
 ## Localization, phase two -- PLUMBING BUILT, PICKER AND LOOK AWAIT MOCKS (2026-10-13)
 
 Built (DESIGN.md's "As built: the plumbing"): the language table
