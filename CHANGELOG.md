@@ -145,7 +145,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
-- A feedback page off settings, on the pause sheet and the title page, and under copy save when the game stops, sends your words and, if you tick it, your save, and lists everything that goes before you send (test/feedback.test.mjs).
+- A feedback page on the pause sheet under settings, off settings on the title page, and under copy save when the game stops, sends your words and, if you tick it, your save (test/feedback.test.mjs).
 
 - The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
 - On a narrow window the game opens looking at the rock again, so the bigger rocks to come are not cut off at the right edge (src/selftest/view.js, "the opening view is looking at the rock").

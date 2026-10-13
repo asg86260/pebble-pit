@@ -1,5 +1,5 @@
 // The feedback form's working (DESIGN.md, "Feedback form"): what a report
-// is, the line that says what goes, and the send. No page in here: the form
+// is and the send. No page in here: the form
 // on a page is feedbackform.js, which draws this, so the node tier can drive
 // the very thing the page does.
 //
@@ -12,7 +12,7 @@
 // Nothing is sent later. A send that fails says so and keeps the words and
 // the tick, and the player presses send again or does not: a report sent
 // behind the player's back would carry a save they had played past, at a
-// moment the line of what goes was not on screen. Only the words survive the
+// moment the form was not on screen. Only the words survive the
 // page closing, as a draft (prefs, `feedbackDraft`), never the save.
 
 import {
@@ -21,7 +21,7 @@ import {
 import { TARGET } from './config/cloud.js';
 import { DEMO_ON } from './config/demo.js';
 import { BUILD } from './version.js';
-import { LANG, msg } from './lang.js';
+import { LANG } from './lang.js';
 import { pref, setPref } from './prefs.js';
 import { gzip } from './gzip.js';
 
@@ -61,7 +61,7 @@ export function osOf(nav = globalThis.navigator) {
 // followed Steam, the system or the browser to it.
 export const langOf = () => `${LANG} · ${pref('language') ? 'chosen' : 'followed'}`;
 
-// Everything attached, in the order the line lists it. `fatal` is the
+// Everything attached. `fatal` is the
 // crashed sheet's alone: the error's first line, never the stack, whose
 // file paths carry the Windows user's name on the desk.
 export function factsOf(page, fatal = null) {
@@ -90,18 +90,7 @@ export async function offerOf(raw) {
   return { bytes: gz.length, b64: toBase64(gz) };
 }
 
-const kbOf = bytes => Math.max(1, Math.round(bytes / 1024));
-
-// Which yard a blob is, as the saves rows say one: for the landing page,
-// where there is no yard behind the form to say it.
-export function yardOf(raw) {
-  let s = null;
-  try { s = JSON.parse(raw); } catch {}
-  if (!s) return '';
-  return [msg('slots-row-rock', { n: s.boulderNo || 1 }), msg('slots-row-crew', { n: s.crew || 0 })].join(' · ');
-}
-
-// --- the report and its line --------------------------------------------------
+// --- the report -----------------------------------------------------------------
 // The request's body: the words, the facts, and the save only while the tick
 // is on.
 export function reportOf({ text, meta, offer, ticked }) {
@@ -110,32 +99,10 @@ export function reportOf({ text, meta, offer, ticked }) {
   return report;
 }
 
-// The line of what goes, read off the report itself, key by key, so it
-// cannot list less than the request carries: the words as a word, each fact
-// as its value, the save as its size. A key the request gains later is
-// listed as it stands until it is given words of its own.
-export function goesOf(report, offer = null, yard = '') {
-  const out = [];
-  for (const [k, v] of Object.entries(report)) {
-    if (k === 'text') out.push({ key: 'text', text: msg('fb-goes-words') });
-    else if (k === 'meta') for (const [m, mv] of Object.entries(v)) out.push({ key: `meta.${m}`, text: String(mv) });
-    else if (k === 'save') {
-      const kb = kbOf(offer?.bytes || 0);
-      out.push({ key: 'save', text: yard ? msg('fb-goes-save-yard', { yard, kb }) : msg('fb-goes-save', { kb }) });
-    } else out.push({ key: k, text: String(v) });
-  }
-  return out;
-}
-// Every key a report carries, as `goesOf` names them: the line's check.
+// Every key a report carries, the facts by name: what the checks hold the
+// request to.
 export const keysOf = report => Object.entries(report)
   .flatMap(([k, v]) => (k === 'meta' ? Object.keys(v).map(m => `meta.${m}`) : [k]));
-
-// Why the tick is grey, said on the line; '' while it can be ticked.
-export function whyNot(offer) {
-  if (offer?.why === 'empty') return msg('fb-nosave-empty');
-  if (offer?.why === 'big') return msg('fb-nosave-big', { kb: kbOf(offer.bytes) });
-  return '';
-}
 
 // --- the draft ------------------------------------------------------------------
 const draft = () => {
@@ -166,11 +133,10 @@ async function post(body) {
 
 // --- the form, as a thing with no page ------------------------------------------
 // `page` is which of the three it is on; `raw` reads the open slot's blob,
-// once, as the form opens; `fatal` the crash's first line; `yard` whether the
-// line says which yard the save is (the landing page). `onChange` is told
+// once, as the form opens; `fatal` the crash's first line. `onChange` is told
 // whenever anything the page draws has changed. The tick is off every time a
 // form is made, and the words are the draft.
-export function feedbackForm({ page, raw = () => null, fatal = null, yard = false, onChange = () => {} }) {
+export function feedbackForm({ page, raw = () => null, fatal = null, onChange = () => {} }) {
   let blob = null;
   try { blob = raw() || null; } catch {}
   const f = {
@@ -183,16 +149,12 @@ export function feedbackForm({ page, raw = () => null, fatal = null, yard = fals
     // what the last send carried, and whether the worker kept its save
     sentSave: false,
     savedKept: null,
-    yard: yard && blob ? yardOf(blob) : '',
   };
   const changed = () => { try { onChange(f); } catch {} };
   f.ready = offerOf(blob).then(o => { f.offer = o; changed(); return o; });
 
   f.meta = () => factsOf(page, fatal);
   f.report = () => reportOf({ text: f.text, meta: f.meta(), offer: f.offer, ticked: f.ticked });
-  f.goes = () => goesOf(f.report(), f.offer, f.yard);
-  f.why = () => whyNot(f.offer);
-  f.left = () => FEEDBACK_TEXT_MAX - f.text.length;
   const open = () => f.phase !== 'sending' && f.phase !== 'sent';
   f.canTick = () => !!f.offer?.b64 && open();
   f.canSend = () => feedbackReady() && f.text.trim().length > 0 && open();

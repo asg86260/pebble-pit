@@ -123,7 +123,7 @@
   "group": "Sheets",
   "where": "play.html",
   "context": "crash sheet button under copy save, opening the feedback form in place",
-  "text": "send a report"
+  "text": "send report"
  },
  {
   "id": "crashed-fb-ask",
@@ -840,6 +840,13 @@
   "text": "settings"
  },
  {
+  "id": "held-fbbtn",
+  "group": "Settings",
+  "where": "play.html",
+  "context": "pause sheet button to the feedback page, under settings",
+  "text": "feedback"
+ },
+ {
   "id": "held-settings-word",
   "group": "Settings",
   "where": "play.html",
@@ -896,32 +903,18 @@
   "text": "language"
  },
  {
-  "id": "set-fbbtn",
-  "group": "Settings",
-  "where": "play.html",
-  "context": "settings button to the feedback page, under controls",
-  "text": "feedback"
- },
- {
   "id": "set-fb-word",
   "group": "Settings",
   "where": "play.html",
   "context": "feedback page heading",
-  "text": "feedback"
+  "text": "comments / concerns / bugs"
  },
  {
   "id": "fb-box.placeholder",
   "group": "Settings",
   "where": "src/feedbackform.js",
   "context": "feedback form: the box's hint while it is empty",
-  "text": "what went wrong, or what reads wrong"
- },
- {
-  "id": "fb-left",
-  "group": "Settings",
-  "where": "src/feedbackform.js",
-  "context": "feedback form: under the box in the last few hundred characters; $n is how many are left",
-  "text": "${n} characters left"
+  "text": "tell us your feedback"
  },
  {
   "id": "fb-tick",
@@ -929,62 +922,6 @@
   "where": "src/feedbackform.js",
   "context": "feedback form: the tick that sends the save along",
   "text": "send my save"
- },
- {
-  "id": "fb-goes",
-  "group": "Settings",
-  "where": "src/feedbackform.js",
-  "context": "feedback form: the lead-in to the line listing everything that will be sent, rebuilt as the form changes",
-  "text": "this gets sent:"
- },
- {
-  "id": "fb-goes-words",
-  "group": "Settings",
-  "where": "src/feedback.js",
-  "context": "feedback form, on the line of what goes: the player's own words",
-  "text": "your words"
- },
- {
-  "id": "fb-goes-save",
-  "group": "Settings",
-  "where": "src/feedback.js",
-  "context": "feedback form, on the line of what goes while the tick is on: the save; $kb is its size in kilobytes",
-  "text": "your save ${kb} KB"
- },
- {
-  "id": "fb-goes-save-yard",
-  "group": "Settings",
-  "where": "src/feedback.js",
-  "context": "feedback form on the landing page, on the line of what goes while the tick is on: the save; $yard is which yard, as the saves rows say it (\"rock 12 · 7 crew\"), $kb its size in kilobytes",
-  "text": "your save ${yard} · ${kb} KB"
- },
- {
-  "id": "fb-goes-keep",
-  "group": "Settings",
-  "where": "src/feedbackform.js",
-  "context": "feedback form, at the end of the line of what goes: how long it is kept; $reportDays for a report, $saveDays for a save",
-  "text": "reports are kept ${reportDays} days, saves ${saveDays} days"
- },
- {
-  "id": "fb-nosave-empty",
-  "group": "Settings",
-  "where": "src/feedback.js",
-  "context": "feedback form, on the line of what goes when the tick is grey: the open slot has no save",
-  "text": "no save to send, the slot is empty"
- },
- {
-  "id": "fb-nosave-big",
-  "group": "Settings",
-  "where": "src/feedback.js",
-  "context": "feedback form, on the line of what goes when the tick is grey: the save is past the size the worker takes; $kb is its size in kilobytes",
-  "text": "the save is too big to send (${kb} KB)"
- },
- {
-  "id": "fb-public",
-  "group": "Settings",
-  "where": "src/feedbackform.js",
-  "context": "feedback form, under the line while the tick is on: a sent save may become a public test fixture",
-  "text": "a save that shows a bug may end up in the game's public tests"
  },
  {
   "id": "fb-send",
@@ -1481,7 +1418,7 @@
   "group": "Title page",
   "where": "index.html",
   "context": "landing feedback page heading",
-  "text": "feedback"
+  "text": "comments / concerns / bugs"
  },
  {
   "id": "title-conflict-word",

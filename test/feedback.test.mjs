@@ -94,7 +94,6 @@ group('a ticked save is the open slot\'s blob, and the worker\'s copy is the sam
   wire();
   const before = { yardId: S.yardId, playedS: S.playedS, stored: S.stored, crew: S.crew, boulderNo: S.boulderNo, workers: S.workers.length };
   const f = await form({ tick: true });
-  const line = f.goes().map(g => g.text).join(' | ');
   await f.send();
   const body = sentBody();
   const res = await handle(new Request(`${URL_}/reports/1/save`, { headers: { authorization: `Bearer ${TOKEN}` } }), w.env, Date.now());
@@ -111,30 +110,27 @@ group('a ticked save is the open slot\'s blob, and the worker\'s copy is the sam
   unwire();
   return [
     ok(f.ticked && 'save' in body, 'the tick puts the save in the request'),
-    ok(/KB/.test(line), 'and the line gains the save and its size', line),
     ok(res.status === 200 && back === raw, 'the save route hands back the open slot\'s blob, byte for byte', `${res.status} ${back.length} vs ${raw.length}`),
     ok(reset, 'another yard stood in its place meanwhile'),
     ok(JSON.stringify(after) === JSON.stringify(before), 'and the report\'s save opens as the same yard', `${JSON.stringify(before)} -> ${JSON.stringify(after)}`),
   ];
 });
 
-group('the line of what goes lists exactly the request\'s keys, on every page and either way the tick is', async () => {
+group('the request is the words, the facts and the save only when ticked, on every page', async () => {
   await played();
   wire();
   const out = [];
+  const facts = ['version', 'target', 'shell', 'os', 'lang', 'page'].map(m => `meta.${m}`);
   for (const [page, fatal] of [['game', null], ['title', null], ['crashed', 'TypeError: w.route is undefined']]) {
     for (const tick of [false, true]) {
       const f = await form({ page, tick, fatal });
-      const listed = f.goes().map(g => g.key).join(',');
       const carried = fb.keysOf(f.report()).join(',');
-      out.push(ok(listed === carried, `${page}, tick ${tick ? 'on' : 'off'}: the line is the request`, `${listed} vs ${carried}`));
-      if (page === 'crashed') out.push(ok(f.report().meta.fatal === fatal && f.goes().some(g => g.text === fatal), 'the crashed sheet sends the crash\'s first line, and lists it'));
+      const want = ['text', ...facts, ...(page === 'crashed' ? ['meta.fatal'] : []), ...(tick ? ['save'] : [])].join(',');
+      out.push(ok(carried === want, `${page}, tick ${tick ? 'on' : 'off'}: the request is that and nothing else`, `${carried} vs ${want}`));
+      if (page === 'crashed') out.push(ok(f.report().meta.fatal === fatal, 'the crashed sheet sends the crash\'s first line'));
       else out.push(ok(!('fatal' in f.report().meta), `${page}: no crash line off the crashed sheet`));
     }
   }
-  // A key the request gains is on the line before anybody writes words for it.
-  const extra = fb.goesOf({ text: 'x', meta: {}, kind: 'bug' });
-  out.push(ok(extra.some(g => g.key === 'kind' && g.text === 'bug'), 'a new key is listed as it stands'));
   unwire();
   return out;
 });
@@ -196,13 +192,13 @@ group('the words survive a reload as a draft, never the save; a sent report clea
     ok(draftBack, 'a form opened again has the words back, its tick off'),
     ok(cleared, 'a report taken clears the draft'),
     ok(empty, 'and the next form opens empty'),
-    ok(h.left() === 0 && h.text.length === FEEDBACK_TEXT_MAX, 'the words stop at FEEDBACK_TEXT_MAX', String(h.text.length)),
+    ok(h.text.length === FEEDBACK_TEXT_MAX, 'the words stop at FEEDBACK_TEXT_MAX', String(h.text.length)),
   ];
 });
 
-group('an empty slot greys the tick and the line says why', async () => {
+group('an empty slot or a save past the cap greys the tick', async () => {
   wire();
-  const f = fb.feedbackForm({ page: 'title', raw: () => null, yard: true });
+  const f = fb.feedbackForm({ page: 'title', raw: () => null });
   await f.ready;
   f.type('a word');
   f.tick();
@@ -210,21 +206,9 @@ group('an empty slot greys the tick and the line says why', async () => {
   unwire();
   return [
     ok(!f.canTick() && !f.ticked, 'nothing to tick in an empty slot'),
-    ok(f.why() === '[owner\'s words: no save to send, the slot is empty]', 'the line says why', f.why()),
-    ok(big.why === 'big' && /too big/.test(fb.whyNot(big)), 'a save past the cap is not offered either', JSON.stringify({ why: big.why, bytes: big.bytes })),
+    ok(!('save' in f.report()), 'and no save goes'),
+    ok(big.why === 'big' && !big.b64, 'a save past the cap is not offered either', JSON.stringify({ why: big.why, bytes: big.bytes })),
   ];
-});
-
-group('the landing page\'s line names the yard the save is', async () => {
-  await played();
-  wire();
-  const f = fb.feedbackForm({ page: 'title', raw: () => slotRaw(openSlot()), yard: true });
-  await f.ready;
-  f.type('hello');
-  f.tick();
-  const save = f.goes().find(g => g.key === 'save')?.text || '';
-  unwire();
-  return [ok(save.includes(`rock ${S.boulderNo}`) && save.includes(`${S.crew} crew`) && /KB$/.test(save), 'rock and crew, then the size', save)];
 });
 
 group('an empty VITE_FEEDBACK_URL leaves the form inert', async () => {

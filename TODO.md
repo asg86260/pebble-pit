@@ -3,22 +3,18 @@
 ## Feedback form -- BUILT, AWAITS THE OWNER'S WORDS AND THE DEPLOY (2026-10-13)
 
 Built to option A (DESIGN.md, "Feedback form (built)", its As-built note):
-a button under `controls` on both settings pages and one under `copy save`
+a button under `settings` on the pause page, one under `controls` on the
+landing page's settings and one under `copy save`
 on the crashed sheet, the worker in `feedback/`, checks in
 feedback/test/routes.test.mjs, test/feedback.test.mjs and the browser group
-"the feedback form says what it sends". No build shows it yet: the button
-needs `VITE_FEEDBACK_URL`. Open, the owner's:
-- **The words.** Every word on the pane is a placeholder in en.ftl:
-  `set-fbbtn`, `set-fb-word`, `title-fbbtn`, `title-fb-word`,
-  `crashed-fbbtn`, `crashed-fb-ask`, `fb-box.placeholder`, `fb-left`,
-  `fb-tick`, `fb-goes`, `fb-goes-words`, `fb-goes-save`,
-  `fb-goes-save-yard`, `fb-goes-keep`, `fb-nosave-empty`, `fb-nosave-big`,
-  `fb-public`, `fb-send`, `fb-sending`, `fb-sent`, `fb-sent-nosave`,
+"the feedback form is a box, a tick and send". No build shows it yet: the
+button needs `VITE_FEEDBACK_URL`. The owner dropped the line of what goes
+(2026-10-13), so the public-fixture call is moot. Open, the owner's:
+- **The words.** The pane's messages in en.ftl:
+  `held-fbbtn`, `set-fb-word`, `title-fbbtn`, `title-fb-word`,
+  `crashed-fbbtn`, `crashed-fb-ask`, `fb-box.placeholder`,
+  `fb-tick`, `fb-send`, `fb-sending`, `fb-sent`, `fb-sent-nosave`,
   `fb-sent-where`, `fb-failed`.
-- **The public fixture call.** Whether the form says a sent save may become
-  a public test fixture (the repository is public). `fb-public` holds the
-  place, shown while the tick is on; if the answer is no line, delete the
-  message and the `.fb-public` element in src/feedbackform.js.
 - **The three calls** (DESIGN.md's list) were taken as recommended: no
   contact field, no kind, the tick off on the crashed sheet too.
 - **The deploy.** feedback/README.md, "Deploy": create the D1 database,

@@ -64,7 +64,7 @@ crashed-word = stopped
 crashed-copysave = copy save
 
 # crash sheet button under copy save, opening the feedback form in place
-crashed-fbbtn = send a report
+crashed-fbbtn = send report
 
 # crash sheet line over the feedback form's box, asking for the save with the report
 crashed-fb-ask = your save helps find what broke
@@ -379,6 +379,9 @@ modal-crew = who lives here
 # pause sheet button
 held-settingsbtn = settings
 
+# pause sheet button to the feedback page, under settings
+held-fbbtn = feedback
+
 # settings page heading
 held-settings-word = settings
 
@@ -404,45 +407,15 @@ set-langbtn = language · { $name }
 # language page heading
 set-lang-word = language
 
-# settings button to the feedback page, under controls
-set-fbbtn = feedback
-
 # feedback page heading
-set-fb-word = feedback
+set-fb-word = comments / concerns / bugs
 
 # feedback form: the box's hint while it is empty
 fb-box =
-    .placeholder = what went wrong, or what reads wrong
-
-# feedback form: under the box in the last few hundred characters; $n is how many are left
-fb-left = { $n } characters left
+    .placeholder = tell us your feedback
 
 # feedback form: the tick that sends the save along
 fb-tick = send my save
-
-# feedback form: the lead-in to the line listing everything that will be sent, rebuilt as the form changes
-fb-goes = this gets sent:
-
-# feedback form, on the line of what goes: the player's own words
-fb-goes-words = your words
-
-# feedback form, on the line of what goes while the tick is on: the save; $kb is its size in kilobytes
-fb-goes-save = your save { $kb } KB
-
-# feedback form on the landing page, on the line of what goes while the tick is on: the save; $yard is which yard, as the saves rows say it ("rock 12 · 7 crew"), $kb its size in kilobytes
-fb-goes-save-yard = your save { $yard } · { $kb } KB
-
-# feedback form, at the end of the line of what goes: how long it is kept; $reportDays for a report, $saveDays for a save
-fb-goes-keep = reports are kept { $reportDays } days, saves { $saveDays } days
-
-# feedback form, on the line of what goes when the tick is grey: the open slot has no save
-fb-nosave-empty = no save to send, the slot is empty
-
-# feedback form, on the line of what goes when the tick is grey: the save is past the size the worker takes; $kb is its size in kilobytes
-fb-nosave-big = the save is too big to send ({ $kb } KB)
-
-# feedback form, under the line while the tick is on: a sent save may become a public test fixture
-fb-public = a save that shows a bug may end up in the game's public tests
 
 # feedback form's send button
 fb-send = send
@@ -660,7 +633,7 @@ title-lang-word = language
 title-fbbtn = feedback
 
 # landing feedback page heading
-title-fb-word = feedback
+title-fb-word = comments / concerns / bugs
 
 # landing cloud conflict page heading
 title-conflict-word = choose a yard

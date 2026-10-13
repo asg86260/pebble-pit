@@ -52,8 +52,8 @@ function showPane(name) {
     sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume');
   }
   // A new form each time: the tick off, the words the draft, and the save the
-  // open slot's blob, the one play would open, named as the saves rows name it.
-  if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'title', raw: () => slotRaw(openSlot()), yard: true });
+  // open slot's blob, the one play would open.
+  if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'title', raw: () => slotRaw(openSlot()) });
   if (name === 'conflict') showConflicts(document.getElementById('clashes'), say, { done: () => showPane('main') });
 }
 // The front's three lines that read the store.

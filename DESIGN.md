@@ -19766,7 +19766,7 @@ it is read before it is committed, because the repository is public.
   the request's keys; a refused or offline send keeps the words and the
   tick and sends nothing later; the draft survives a reload; an empty
   `VITE_FEEDBACK_URL` leaves the module inert.
-- **Browser, group `the feedback form says what it sends`** (a new
+- **Browser, group `the feedback form is a box, a tick and send`** (a new
   `src/selftest/feedback.js`), through the pointer: held sheet → settings →
   the button, type, tick, the line gains the save, send against a stubbed
   `fetch`, the sent state, `back`; the same in the landing page's column;
@@ -19800,9 +19800,12 @@ it is read before it is committed, because the repository is public.
 **As built (2026-10-13).** Option A of
 docs/mocks/feedback-form-2026-10-13.html, the owner's vote, with the three
 calls above taken as recommended (no contact field, no kind, the tick off
-everywhere) until the owner says otherwise. On both settings pages a button
-under `controls` (`set-fbbtn`, `title-fbbtn`) opens a `feedback` pane with a
-`back` (the controls page's own back messages); its `data-pane` is set only
+everywhere) until the owner says otherwise. On the held sheet a button
+directly under `settings` on the pause page (`held-fbbtn`; moved there from
+the settings page by the owner, 2026-10-13), and on the landing page's
+settings a button under `controls` (`title-fbbtn`), opens a `feedback` pane
+with a `back` (the controls page's own back messages) to the page it came
+from; its `data-pane` is set only
 while `feedbackReady()`, so a build with no `VITE_FEEDBACK_URL` never shows
 it. The crashed sheet has `crashed-fbbtn` under `copy save`, shown once
 `fatal` has fetched the form's module and found a worker, and the form opens
@@ -19816,14 +19819,13 @@ locale files untouched.
   element a page hands it, a new form every time the pane is turned to. The
   gzip moved out of cloud.js into src/gzip.js, which the form, the cloud and
   the worker share.
-- **The line** is `goesOf(report)`, a value a key of the very object that is
-  POSTed, in order: the words (as a word), the six facts as their values,
-  `fatal` on the crashed sheet, the save as its size (on the landing page
-  with its yard, `rock 12 · 7 crew · 57 KB`). Under the values, why the tick
-  is grey when it is, and how long a report and a save are kept
-  (`fb-goes-keep`). While the tick is on, one more line, `fb-public`, holds
-  the place for the owner's open call on whether a sent save may become a
-  public test fixture.
+- **No line of what goes** (the owner, 2026-10-13: "just have it be an
+  input, send my save, send button"). The form is the box, the tick and
+  send; the line listing the request's values, why the tick is grey, how
+  long things are kept, the public-fixture line and the characters-left
+  count were all dropped. The request is unchanged -- the words, the six
+  facts, `fatal` on the crashed sheet, the save only when ticked -- and the
+  tick still greys with no save to send, saying nothing.
 - **`target`** is the store and the demo, `itch`, `itch-demo`, `steam` or
   `steam-demo`: the table above listed three, and the free itch page is the
   demo build.

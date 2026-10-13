@@ -2194,9 +2194,7 @@ body.pad :focus { outline: none; }
    docs/mocks/feedback-form-2026-10-13.html), on the held sheet, the landing
    page's column and the crashed sheet, in the paste box's hand. The tick is a
    sheet button drawn as a one-cell box and its words, the box filled when on
-   as the boards fill a chosen thing; the line of what goes is small and lower
-   case, since its values are data, each value in full ink and the save
-   underlined. */
+   as the boards fill a chosen thing. */
 .held .paste.feedback, .col .paste.feedback { align-items: stretch; }
 .held .feedback { width: 26em; max-width: 100%; align-self: center; }
 .feedback textarea { box-sizing: border-box; }
@@ -2213,24 +2211,6 @@ body.pad :focus { outline: none; }
   .held .feedback .tick:hover, .col .feedback .tick:hover,
   .held .feedback .send:disabled:hover, .col .feedback .send:disabled:hover { color: var(--ink); background: none; }
 }
-.feedback .goes, .feedback .fb-public, .feedback .fb-left {
-  text-transform: none; letter-spacing: calc(.06em * var(--track));
-  color: var(--ink-2); line-height: 1.5; text-align: left;
-}
-.col .feedback .goes, .col .feedback .fb-public { max-width: var(--col-w); }
-.feedback .goes .lead { margin-right: .5em; }
-/* a fact is read whole, so it does not break inside; the words, the save
-   and the crash's line are sentences and wrap */
-.feedback .goes .v { color: var(--ink); white-space: nowrap; }
-.feedback .goes .v[data-key="text"], .feedback .goes .v[data-key="save"],
-.feedback .goes .v[data-key="meta.fatal"] { white-space: normal; overflow-wrap: anywhere; }
-/* the dot between two values ends the first of them, so a wrapped line never
-   starts with one; the line breaks at the spaces feedbackform.js puts
-   between them. The save is always last, so no dot is ever underlined. */
-.feedback .goes .v:has(+ .v)::after { content: '\00a0·'; color: var(--ink-4); }
-.feedback .goes .v.save { text-decoration: underline; text-underline-offset: 2px; }
-.feedback .goes .why, .feedback .goes .keep { display: block; }
-.feedback .fb-left { text-align: right; }
 .feedback [hidden] { display: none !important; }
 /* The crashed sheet has no seat of its own to scroll in, and the form makes
    it taller than a phone: held to the window, it scrolls inside itself. */

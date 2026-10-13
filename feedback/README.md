@@ -24,7 +24,7 @@ imports and wrangler bundles; the page list it answers is the cloud's
 From the repo root: `node --test feedback/test/routes.test.mjs`. They run
 the real `handle` over `node:sqlite`; nothing needs installing. The game's
 side is `node --test test/feedback.test.mjs` (the form against this same
-`handle`) and the browser group `the feedback form says what it sends`.
+`handle`) and the browser group `the feedback form is a box, a tick and send`.
 
 ## Running it locally
 

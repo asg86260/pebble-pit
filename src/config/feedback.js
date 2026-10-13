@@ -15,11 +15,8 @@ const env = (typeof import.meta !== 'undefined' && import.meta.env) || {};
 export const feedbackUrlFor = e => (e && e.VITE_FEEDBACK_URL) || '';
 export const FEEDBACK_URL = feedbackUrlFor(env);
 
-// The words, at most, in characters...
+// The words, at most, in characters.
 export const FEEDBACK_TEXT_MAX = 4000;
-// ...counted down only in the last few hundred, so the count is a warning
-// and not a meter a player watches while writing.
-export const FEEDBACK_COUNT_FROM = 300;
 // A save, gzipped, at most: the cloud's own ceiling, four times the largest
 // yard on file (test/cloud-size.test.mjs trips on a format growing toward it).
 export const FEEDBACK_SAVE_MAX = CLOUD_BLOB_MAX;

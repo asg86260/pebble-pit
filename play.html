@@ -215,6 +215,9 @@ try {
   <!-- The settings, behind one word: a title page with a volume slider on it
        is not a title page. -->
   <button id="settingsbtn" type="button" data-pane="main" data-l10n-id="held-settingsbtn">settings</button>
+  <!-- the feedback form, a page of its own off the front (feedbackform.js):
+       no pane, so never shown, unless the build was pointed at the worker -->
+  <button id="fbbtn" type="button" data-pane="" hidden data-l10n-id="held-fbbtn"></button>
   <div class="word" data-pane="settings" hidden data-l10n-id="held-settings-word">settings</div>
   <button id="motion" type="button" data-pane="settings" hidden data-l10n-id="set-motion-full">motion: full</button>
   <!-- the thumb switch: the hop, the sheet and the tap gate follow the
@@ -234,9 +237,6 @@ try {
   <!-- the volume: a share of the designed level, all the way up is still quiet -->
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden data-l10n-id="set-volume">
   <button id="controlsbtn" type="button" data-pane="settings" hidden data-l10n-id="set-controlsbtn">controls</button>
-  <!-- the feedback form, a page of its own (feedbackform.js): no pane, so
-       never shown, unless the build was pointed at the feedback worker -->
-  <button id="fbbtn" type="button" data-pane="" hidden data-l10n-id="set-fbbtn"></button>
   <!-- the controls page: input on the left, what it does on the right -->
   <div class="word" data-pane="controls" hidden data-l10n-id="set-controls-word">controls</div>
   <div id="controlslist" class="controls" data-pane="controls" hidden></div>
@@ -245,7 +245,7 @@ try {
   <div class="word" data-pane="language" hidden data-l10n-id="set-lang-word"></div>
   <div id="langlist" class="langs" data-pane="language" hidden></div>
   <button id="langback" type="button" data-pane="language" hidden data-l10n-id="set-controlsback">back</button>
-  <!-- the feedback page: the box, the tick, the line of what goes, send -->
+  <!-- the feedback page: the box, the tick, send -->
   <div class="word" data-pane="feedback" hidden data-l10n-id="set-fb-word"></div>
   <div id="fbform" class="paste feedback" data-pane="feedback" hidden></div>
   <button id="fbback" type="button" data-pane="feedback" hidden data-l10n-id="set-controlsback">back</button>
