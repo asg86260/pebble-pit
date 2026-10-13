@@ -1,15 +1,19 @@
 # Still to do
 
-## Localization, phase two -- PHASE ONE BUILT, PICKER AND TRANSLATIONS OPEN (2026-10-13)
+## Localization, phase two -- DESIGNED, AWAITING APPROVAL (2026-10-13)
 
-"Localization (phase one: one language file, built)" in DESIGN.md. Every
-word a player reads is in locales/en.ftl and comes out through `msg`
-(src/lang.js); test/l10n.test.mjs and test/l10n-pseudo.test.mjs hold it
-there. Open, in its "Open -- phase two": the picker and its words (the
-owner's), translators and a Crowdin/Weblate sync, fonts for other scripts
-(the DOM's faces, the casino's marquee and the number font), the numbers
-and lists the code still writes (`fmt`, clocks, the done mark's commas),
-and the Electron shell's two strings.
+"Localization phase two (design, not built)" in DESIGN.md, on top of phase
+one (built: every word in locales/en.ftl through `msg`). Nine languages,
+Steam's common set. Eight phases, each approvable alone: measure (pseudo
+locale `long`/`wide`, overflow survey, `l10nfit` browser group), choose
+(picker, `language: null` follows Steam then the system, `desk.language()`),
+sync (Crowdin Free, private -- neither platform's open-source plan fits a
+sold game with no LICENSE), faces (subset Noto SC/JP/KR, `--track`,
+`:lang` blocks), the casino sign, a German + Simplified Chinese pilot, the
+other six, Steam. Blocked on the owner's calls listed at the section's
+end: paid or volunteer translators, which Spanish, the picker's words, the
+sign (icons recommended), the CJK look, a localized title, Steam's
+achievement names.
 
 ## Endless serpent -- BUILT, WORDS AND THE WALL OPEN (2026-10-12)
 

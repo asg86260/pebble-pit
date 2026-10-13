@@ -18808,6 +18808,8 @@ preference for the next load.
 
 ### Open -- phase two
 
+Designed in "Localization phase two (design, not built)", below.
+
 1. **The picker**: where it stands (the settings page, the landing page)
    and its words, which are the owner's; each language named in itself.
 2. **Translators** and a sync with a platform (Crowdin, Weblate): both read
@@ -18826,3 +18828,590 @@ preference for the next load.
 6. **A fifth like-named deep station** reads "the undefined Recruit", as the
    code said before the words moved; the file keeps it, for the owner to
    word (`station-party`).
+
+## Localization phase two (design, not built)
+
+Phase one put every word in `locales/en.ftl` and changed nothing a player
+sees. Phase two is everything between that file and a player in Shanghai
+reading the yard: a way to choose the language, a way for the words to go
+out to translators and come back, faces that have the letters, the few
+places the game still writes words or numbers itself, the shell and the
+store, and the checks that keep nine files honest. The owner's calls,
+already made: the languages are Steam's common set -- English (the source),
+Simplified Chinese, Russian, Spanish, Brazilian Portuguese, German, French,
+Japanese, Korean -- and the format is Fluent, as built. A dependency is
+welcome where it earns its place; this design takes one (a font subsetter,
+build time only) and nothing at run time.
+
+The size of the job, measured off en.ftl on 2026-10-13: 964 messages, 3,687
+words of English once comments and placeables are taken out, 11 selectors
+(plurals and the ordinal), 5 messages with page markup (`<br>`,
+`data-l10n-name`), and 29 still `[owner's words: ...]` placeholders. That
+is a small game to translate -- a week of one translator's time a language,
+not a month -- and most of the risk is in the layout and the faces, not the
+words.
+
+### The languages and their codes
+
+One file a language, named by the tag a browser reports, so the match
+against `navigator.languages` is a string compare:
+
+| language | file | Steam's API name | matches from the browser |
+|---|---|---|---|
+| English (source) | `en.ftl` | `english` | `en`, `en-*` |
+| Simplified Chinese | `zh-CN.ftl` | `schinese` | `zh-CN`, `zh-SG`, `zh-Hans*`, bare `zh` |
+| Russian | `ru.ftl` | `russian` | `ru`, `ru-*` |
+| Spanish | `es.ftl` | `spanish`, `latam` | `es`, `es-*` |
+| Brazilian Portuguese | `pt-BR.ftl` | `brazilian` | `pt-BR`, then any `pt-*` |
+| German | `de.ftl` | `german` | `de`, `de-*` |
+| French | `fr.ftl` | `french` | `fr`, `fr-*` |
+| Japanese | `ja.ftl` | `japanese` | `ja`, `ja-*` |
+| Korean | `ko.ftl` | `koreana` | `ko`, `ko-*` |
+
+Traditional Chinese (`zh-TW`, `zh-HK`, `zh-Hant*`) is deliberately not
+matched to the Simplified file: a reader there is handed the next language
+in their list, else English, and can still pick Simplified by hand. Steam
+splits Spanish into Spain (`spanish`) and Latin America (`latam`); one `es`
+file answers both (the open call below is which Spanish it is written in).
+
+### 1. The picker
+
+**Where.** On both settings panes -- the held sheet's (play.html, the
+`settings` pane beside `dark`) and the landing page's (index.html, its own
+`settings` pane) -- as one button that opens a page of its own, the way
+`controls` does: a `language` pane listing the nine, each named in itself
+(English, 简体中文, Русский, Español, Português (Brasil), Deutsch, Français,
+日本語, 한국어), the one in force marked. A cycling switch (`dark: off`)
+does not fit nine choices, and a list read in its own script is the one
+control a player who cannot read the current language can still use. The
+landing page also says the language in force as a third link in its foot,
+beside `itch · github`, in its own name: a player whose language was
+guessed wrong finds the way out without reading a word of the wrong one.
+That foot link and the pane's shape are a look, so they are a mock before
+they are code.
+
+**Its words are the owner's.** The button's label, the pane's heading and
+its back button go into en.ftl as `[owner's words: ...]` placeholders
+(`set-langbtn`, `set-lang-word`, `set-langback`, and the `title-` pair for
+the landing page). The endonyms are not messages: a language's name for
+itself is the same in every file, so they are one table in config
+(`LANG_NAMES`), which the guard's allow list names. Whether they are
+lowercased to match the house's lowercase is the owner's call; the table
+holds whatever is chosen.
+
+**The default.** Today `lang: 'en'` is a default in prefs.js, and
+`setPref` writes the whole preference object, so every player who has
+touched any switch since phase one has `"lang":"en"` saved -- a choice they
+never made. Phase two retires that key and reads a new one, `language`,
+default `null`, meaning "follow", exactly as `dark: null` follows the
+system. The old `lang` is ignored, not migrated: nobody has had a picker to
+set it with. With `language` null, the language is the first of these that
+names a file:
+
+1. On a Steam build, Steam's language for this game:
+   `client.apps.currentGameLanguage()` in steamworks.js 0.4.0 (present in
+   its `client.d.ts`), mapped by the table above. This is what the player
+   chose in Steam's properties for the game, and Steam's guidance is to
+   honor it.
+2. On any desk build, the system's languages:
+   `app.getPreferredSystemLanguages()` in the shell. Not
+   `navigator.languages`: the packaged build ships only the `en-US` locale
+   (`"electronLanguages": ["en-US"]` in package.json), and Chromium's
+   reported languages follow the locales it has. This wants checking on a
+   packaged Windows build before it is trusted either way.
+3. On the web, `navigator.languages`, in order, matched as the table says.
+4. English.
+
+The shell hands its answers to the page as one more synchronous call on the
+bridge, `desk.language()` -> `{ steam, system }` (preload.cjs grows from
+eight functions to nine). It is synchronous for the reason `read` is: lang.js
+resolves the language as it loads, before the first frame. The Steam client
+is already started in `openSaves()` before the window opens, so the answer
+is there in time.
+
+A choice made in the picker wins over all four and is kept in `language`.
+Choosing English sets `language: 'en'`, which is then a real choice.
+
+**Switching.** As phase one built it and as the dark switch does: set the
+preference, raise the veil, reload (`leave(location.href)`). Every module
+reads its words at load and some at their own top level, and a language
+that is fixed at boot is the reason that is safe. A live switch is not
+worth un-making that.
+
+### 2. The translation pipeline
+
+**Crowdin, on its Free plan, as a private project.** The premise that both
+platforms are free for a public repo does not hold for this repo. Both
+free tiers for open source want an open-source project: Crowdin's open
+source license asks for public code and no commercial use, and Hosted
+Weblate's libre plan asks for a free license. Pebble Pit is sold, and the
+repo carries no LICENSE file at all, which makes it public but not open
+source. What is left:
+
+| | Crowdin Free | Hosted Weblate | Weblate, self-hosted |
+|---|---|---|---|
+| price | free | paid plan (no libre plan) | free software; our server and our upkeep |
+| limit | 60,000 hosted words (source words x target languages) | by strings | none |
+| our use | 3,687 x 8 = ~29,500 -- room to roughly double | | |
+| Fluent | supported format | supported format (5.x) | same |
+| GitHub | the GitHub integration: sources pulled from `main`, translations back as a pull request on a branch of their own | a Git component, pushes commits | same |
+| screenshots | an API to upload a shot and tag strings in it with a rectangle | screenshots, assigned by hand or by OCR | same |
+| machine drafts | pre-translate with a machine engine (DeepL, Google) as unapproved suggestions | automatic suggestions, the same engines | same |
+
+Crowdin wins on the two things that are ours to build: the screenshot API
+takes exactly what `tools/wording-shots.mjs` already knows (which string,
+on which shot, in which rectangle), and the free plan carries the whole
+job without a server. Weblate is the fallback if Crowdin's plan changes;
+nothing below is Crowdin-shaped except one upload tool.
+
+**The trial before the commitment.** The first job on the project is to
+import en.ftl and look at how a plural (`slots-since-days`), the ordinal
+(`ordinal`), a message with markup (`data-l10n-name`) and a message with an
+attribute (`.aria-label`) are shown to a translator. If a translator is
+asked to edit raw Fluent select syntax with no help, the guard below
+catches what they break, but the brief has to say how to write one.
+
+**What syncs, which way.**
+
+- Out: `locales/en.ftl` on `main`. A `crowdin.yml` in the repo root (ours)
+  names it and maps each language to its file name in the table above.
+  Messages whose English is still `[owner's words: ...]` are not sent: the
+  sync marks them hidden, so nobody translates a placeholder. They go out
+  when the owner writes them.
+- Back: Crowdin's GitHub integration opens a pull request on its own branch
+  with `locales/xx.ftl` for every language, **approved strings only**, and
+  keeps it current. We merge it like any other change: the guard runs on
+  it, and a red guard is a translation to send back, not to hand-fix.
+- Edits: when an English line changes, Crowdin marks its translations as
+  needing a look; the old translation stays in the file (and is shown) until
+  a new one is approved, which is better than English in the middle of a
+  Russian board.
+
+**Screenshots as context.** `tools/wording-shots.mjs` already writes a shot
+of every surface with every string outlined where it stands, and
+`shots/wording/map.json` from each id to its shot. It gains one thing: the
+rectangle of each outline, written into the map (page.js already finds
+it). A new tool, `tools/wording/crowdin-shots.mjs`, uploads each shot once
+and tags every string on it with its rectangle, through Crowdin's
+screenshot API; run again, it replaces a shot by name. The comment over
+each message in en.ftl, which phase one wrote for exactly this, goes out as
+the string's context with no extra work, since Crowdin reads Fluent
+comments.
+
+**The brief.** `locales/STYLE.md`, one page, read by every translator,
+loaded into the project as its style guide, with a glossary built in
+Crowdin from it:
+
+- the voice: lowercase, short, deadpan; a line says what is there and
+  stops; nothing explained that the yard already shows; no exclamation
+- case: the game lowercases its words and the stylesheet raises some to
+  capitals; write lowercase (where the language has case) and let the page
+  decide
+- the terms, each with a line on what it is in the yard and a picture:
+  pebble, dust, shard, spore, spark, scale, the yard, the pit, the rift,
+  the deep, the crew's trades (`job-*`), the stations, sqwife, sqhusband,
+  the serpent -- invented words are rendered, not glossed, and the
+  translator proposes a rendering per language for the owner to approve
+- what is never translated: the crew's own names, `Pebble Pit` where it is
+  the name, anything inside `{ }`
+- how to write a plural and a placeable in Fluent, with the file's own
+  `slots-since-days` as the example
+- length: a board row and a button have the English line's room plus
+  about a third (the pseudo-locale below is what sets that)
+
+The brief is ours to draft and the owner's to approve; the glossary
+renderings of the invented words are each translator's proposal and the
+owner's approval.
+
+**Machine drafts.** Crowdin's pre-translation fills every empty string with
+a machine draft (DeepL for the European languages and Japanese, Google or
+DeepL for Chinese and Korean), left unapproved. It is a starting point for
+the human, never what ships: only approved strings come back to the repo,
+so a draft that no one approved is not in any file.
+
+**Who translates and who reviews.** Neither the owner nor this team reads
+eight of the nine languages, so a review cannot be ours. Each language
+wants two people: one translator and one proofreader, both native, with
+the proofreader the one who presses approve. They are either paid (a
+freelancer pair a language, or an agency that supplies both) or players
+who volunteer, invited to the private project. A volunteer-only language
+gets reviewed when someone gets to it; a paid one gets reviewed this
+month. Which is the owner's call, and it can differ by language.
+
+Once a language is approved, the same wording-shots tool runs with that
+language forced (`language` set before load) and the shots go back to its
+proofreader: a read-through in place, which catches what reading strings
+in a list never does (a line cut off, a word that reads wrong next to its
+picture).
+
+**The owner's part and ours.**
+
+- The owner: makes the Crowdin account and the project (Free plan,
+  private), installs Crowdin's GitHub app on the repo, creates an API token
+  for the screenshot upload and keeps it as a GitHub secret or a local
+  environment variable we never see, chooses and pays (or recruits) the
+  translators, approves the brief and the glossary, writes the
+  placeholders.
+- Ours: `crowdin.yml`, the hidden-placeholder rule, the screenshot
+  rectangles and the upload tool, the brief's draft, the per-language
+  shots run, and the guard.
+
+### 3. Faces
+
+**What the DOM uses today.** One stack, everywhere: `ui-monospace,
+"Courier New", monospace` (style.css, shelf.css, title.css, and five canvas
+`ctx.font` strings in apothecary.js, counter.js, crew.js, statusicons.js
+and roster.js; ribbon.js reads the card's computed face). No `@font-face`
+anywhere: the game wears the system's mono. `ui-monospace` is honored by
+Safari and by Chromium on macOS only, so in practice the face is SF Mono on
+a Mac or iPhone, Courier New on Windows (the desk and most web players),
+and the system's `monospace` on Linux, the Steam Deck and Android.
+
+**Coverage, by script.**
+
+- Accented Latin (es, pt-BR, de, fr) and Cyrillic (ru): covered. Courier
+  New, SF Mono, DejaVu Sans Mono (the usual Linux `monospace`) and Android's
+  mono all carry them. Nothing to bundle; the pseudo-locale's accented
+  letters prove it on each platform's shot.
+- CJK (zh-CN, ja, ko): none of those faces has a single ideograph or hangul
+  syllable. The browser falls back glyph by glyph to whatever the system
+  has (Microsoft YaHei, Yu Gothic, Malgun Gothic on Windows; PingFang,
+  Hiragino, Apple SD Gothic on Apple), which works but differs by machine;
+  and on a Linux or SteamOS install without a CJK font it is boxes. Whether
+  the Steam Deck ships one is to be checked on a Deck, not assumed.
+
+**The choice: keep the stack for Latin and Cyrillic, bundle a subset face
+for each CJK language.** One woff2 a CJK language, cut from Noto Sans SC,
+JP and KR (SIL Open Font License, which allows bundling with the license
+file beside it) down to exactly the characters in that language's file,
+with the weight axis kept so bold is real. Ideographs and hangul are fixed
+width by their nature, so a proportional Noto face is as monospace as a
+"Mono CJK" one where it matters, and the Latin letters and digits in a
+Chinese line keep the game's own mono, because the CJK face stands after
+the stack, not before it:
+
+    :lang(zh) { --face: ui-monospace, "Courier New", "Pit SC", monospace; }
+
+The sizes, as estimates to be measured when cut: the whole of Noto Sans SC
+is around 10 MB as woff2 (and 16 MB for Noto Sans Mono CJK as OTF) -- never
+shipped. A translation of 3,700 English words comes to roughly 800 to 1,200
+distinct hanzi, or a few hundred kanji plus the kana, or 600 to 900 hangul
+syllables, and a subset of that is in the region of 150 to 400 KB a
+language, with the weight axis. An `@font-face` is only fetched when a
+glyph on the page needs it, so a German player downloads none of them.
+
+The subsetter is the one new dependency: `subset-font` (npm, MIT,
+harfbuzz in wasm), a dev dependency run by the build, reading
+`locales/xx.ftl` for its characters plus a fixed set (digits, the game's
+marks, CJK punctuation). The faces are cut at build and never committed,
+so a new translation cannot ship without its glyphs. The alternative --
+system stacks only, with named CJK fallbacks per platform -- costs nothing
+to ship and is what the pilot can start on, but leaves the Deck and Linux
+to chance; it is not the end state.
+
+**What CJK does to this page's type.** The house type is small (10 to 17
+px), uppercase and tracked: 73 `letter-spacing` rules and 38
+`text-transform: uppercase` across the three sheets, plus `toUpperCase()`
+in ribbon.js. In Chinese, Japanese and Korean, case does not exist, so
+every heading the capitals marked out loses its mark; and tracking pulls
+ideographs apart into a stammer, which reads as broken, not as style. At
+12 px a complex hanzi is close to illegible.
+
+So the tracking stops being a number in each rule and becomes one knob:
+every rule that tracks words writes `letter-spacing: calc(.1em *
+var(--track))` (its own em, times the knob), with `--track: 1` on the root
+and `--track: 0` under `:lang(zh)`, `:lang(ja)` and `:lang(ko)`. The rules
+that space pips and marks (`.pips`, the glyph rows), which are pictures,
+keep their plain numbers. This is the system fix: one variable a language
+instead of seventy overrides. Under the same `:lang` block, the base size
+steps up a pixel or two and headings take weight where the Latin ones took
+capitals. How much, and whether that reads as the same game, is a look,
+and a mock: the CJK block is shown as option pairs on real lines from the
+translations before it is code. Korean, which spaces its words, also takes
+`word-break: keep-all`, so a line breaks between words and not inside one.
+
+**One face constant for the canvas.** The canvas does not see `:lang`, so
+the five hand-written `ctx.font` strings become one `FACE` lang.js exports,
+built from the active language (the stack, with the CJK face added for
+those three). And a bundled face must be loaded before the canvas measures
+with it, or it silently measures the fallback: ribbon.js measures once to
+size its cloth. lang.js already awaits the language's chunk before the
+game's modules run; for a CJK language it awaits `document.fonts.load()`
+of its face in the same breath.
+
+The objective card is capped at 44ch, the English longest step in two
+lines. `ch` is the width of a Latin zero, so a German step outgrows it and
+a Chinese one is half its width. The cap is derived instead: the longest
+step in the active language, measured once at boot.
+
+### 4. Words drawn in pixels
+
+Every place the canvas draws words as pixel glyphs, found by searching for
+glyph tables and `fillText`:
+
+- **The casino's marquee** (`GLYPH`, render/casino.js): `casino-sign`
+  (CASINO) and `casino-drop` (DROP IT), seven cells by five, capitals and
+  figures only. The sign's width is derived from `WORD.length`, and its
+  even middle gap assumes six letters.
+- **The serpent's level label** (`serp-level`, drawn through `drawable()`
+  in the number font `NUM_FONT`, four by six, figures and `+` only): letters
+  the font lacks are dropped, so today it is the bare number in every
+  language.
+- **The Steam capsule's title** (`FONT`, tools/steam-art/capsule-draw.js):
+  P E B L I T and their lowercase. Store art, not the game.
+
+Every other canvas word (the status labels, the counter's numbers, the
+apothecary's, crew and roster counts, the ribbon) is `fillText` in the DOM's
+face and is covered by section 3.
+
+The options for the marquee, which is the only one with words a player
+must read:
+
+- **A: drawn glyphs a script.** Latin capitals with accents and Cyrillic
+  fit a 7-wide box but not five rows -- an accent needs two rows over a
+  capital -- so the sign grows to seven rows. CJK cannot be drawn legibly
+  under about eleven cells square: a different, taller sign. Only the
+  characters the two messages use need drawing, a handful a language, but
+  each is a drawing the owner signs off. Cost: half a day of tables and the
+  sign's height made a function of the script, then the drawings
+  themselves, a sitting each for CJK; and every re-translation of two words
+  is a new drawing.
+- **B: rasterize a face into the grid.** Draw the word in the language's
+  face into a small offscreen canvas, threshold its alpha to cells, and lay
+  each cell on the P grid as the sign does now. Every script, every future
+  translation, no drawing; derived rather than drawn. The Latin result is
+  rougher than the hand-cut letters (which can stay for the languages they
+  cover, with the raster only for letters the table lacks), and hanzi at
+  eleven or twelve cells read but are crude. Cost: about half a day.
+- **C: icons instead of words.** CASINO becomes a pictogram drawn in the
+  sign's own stroke (a pebble falling through pegs), DROP IT an arrow, and
+  the stake stays figures. No language at all, and the two messages leave
+  the file. Cost: the owner's design and a mock, then an hour of drawing in
+  code.
+
+**Recommendation: C**, with B the fallback if the owner wants the sign to
+keep saying a word. The serpent's label goes the same way: figures in every
+language, with a pictogram for "level" drawn into `NUM_FONT` if one is
+wanted; its `[owner's words]` placeholder is then not a word. The capsule
+title stays Latin in every language unless the owner wants a localized
+title (an open call below); Steam takes a capsule per language if so.
+
+### 5. Length and layout
+
+German and Russian run around 30% longer than English on average, and the
+short labels run far longer than that: a five-letter English button is
+often twelve in German. French and Spanish sit between. CJK runs shorter in
+characters but each is two columns wide.
+
+**The tight surfaces**, from the stylesheets: the board rows (shelf.css,
+`.what` with `white-space: nowrap` on the ledger, the goal tile's tracked
+bold capitals), the held sheet's switches (`motion: full`, tracked
+capitals, one line), the index's entries (`nowrap`), the objective card
+(its 44ch cap), the hover tip (one line by the house rule), the toast's
+name, the queue and corner cards, the controls page's two columns, the
+status labels on the canvas, and all of it again at phone width (390 px).
+
+**The pseudo-locale, before any translator starts.** Two modes, made at
+run time from the English rather than written as a file -- a file in
+`locales/` would be found by the build's glob and shipped, and sent to
+Crowdin:
+
+- `long`: each message's letters accented (a -> á, o -> ö, s -> š, and so
+  on, which proves the faces) and padded by a ratio that falls with length
+  -- double for a short label, a third for a long sentence -- the way real
+  German behaves.
+- `wide`: letters swapped for full-width forms, two columns each, which
+  stands in for CJK's width on a monospace layout before any CJK exists.
+
+Both go through the hook phase one built for exactly this,
+`globalThis.__l10nMark` in lang.js, set from `?pseudo=long|wide` in a dev
+build. Markup and placeables are left alone: the transform runs on text
+outside `<...>`, and digits are not letters. Today `localizeElement` (the
+pages' own words) formats without the mark; it is routed through the same
+wrap, so the pages are tested too.
+
+**Measuring overflow.** The node tier cannot: the node yard has no layout,
+so `test/l10n-pseudo.test.mjs` stays what it is (no word the code wrote
+itself) and gains only the shared transform, run once in `long` mode to
+prove no message breaks under it. The measuring is in the page:
+
+- `tools/wording-shots.mjs --pseudo long|wide` stands up every surface as
+  it does now and, for every outlined string, compares its box with its
+  nearest clipping ancestor and its card, and writes `overflow.json` with
+  the shots, the overflowing strings outlined red. This is the survey, run
+  once before translators start and once a language as it lands.
+- A browser group, `l10nfit` in src/selftest/, for the tight few: under
+  `long` and `wide`, a filled board's rows, the held sheet's switches, the
+  objective card and the hover tip each fit (no `scrollWidth` past
+  `clientWidth` on a `nowrap` element, no text box past its card). This is
+  the check that stays red when a layout regresses.
+
+What the survey finds is fixed in the system where it can be (a derived
+width, `max-content`, a wrap allowed where a row can take two lines), and
+put to the owner as a mock where the fix changes a shape.
+
+### 6. What phase one left out
+
+- **The Electron window's title** stays `Pebble Pit` in every language: it
+  is the name, not a sentence (main.cjs prevents the page's `<title>` from
+  replacing it). If the owner localizes the name, it reads the same message
+  as the capsule.
+- **The Steam carry-over dialog** (`CARRY_WORDS`, electron/steam.cjs) runs in
+  the shell before the window opens, so it cannot use the page's lookup or
+  the page's preference. Its four strings move into en.ftl as
+  `shell-carry-*` (still the owner's placeholders), the packaged app takes
+  `locales/**` into its `files` (the build hashes the page's copies into
+  chunks the shell cannot find by name), and the shell formats them with
+  @fluent/bundle's CommonJS entry in the language from steps 1 and 2 of the
+  default. It is shown on a first launch, before any choice could exist, so
+  following Steam is the right answer.
+- **The casino sign**: section 4.
+- **Numbers.** `fmt` (words.js) writes the game's own short scale: 1.3k,
+  2m, 4.5b. `Intl.NumberFormat` with `notation: 'compact'` would write
+  1,3 Tsd. in German, 1,3 тыс. in Russian and 1.3万 (ten thousands, not
+  thousands) in Chinese and Japanese -- longer, a different grouping, and a
+  different number of steps between them. The k/m/b/t letters stay: they
+  are game notation, drawn as glyphs in the casino's sign, and players of
+  every one of these languages read them in other clickers. What follows
+  the language is the decimal mark: `1,3k` in German, French, Spanish,
+  Portuguese and Russian, from `Intl.NumberFormat(LANG).formatToParts`,
+  read once. The casino's glyph table gains a comma. Under a thousand, `fmt`
+  writes the bare number and nothing changes. A translator who wants a
+  number formatted in a sentence writes `NUMBER($n)` in their file; lang.js
+  already hands numbers over as Fluent numbers.
+- **Clocks** (`leftText`: 0:47, 1:02:05) are read the same in all nine and
+  stay. `3h 12m` is already a message (`played-hm`).
+- **Separators.** The `·` between a save's parts (slots.js, cloud.js) is a
+  mark, not a word, and stays. The list of names a done mark joins with
+  `', '` (works.js, `hover-done`) takes its separator from a message,
+  `list-sep = {", "}` (Fluent's string literal, so the space survives),
+  which Japanese and Chinese write as `、`. Not `Intl.ListFormat`: its
+  conjunction form adds "and" to the English, and phase one's rule is that
+  English reads byte for byte as before.
+- **Uppercasing in code.** ribbon.js's `text.toUpperCase()` becomes
+  `toLocaleUpperCase(LANG)`; for these nine languages the result is the
+  same, but it is the correct call.
+- **`station-party`** ("the undefined Recruit"), phase one's sixth open
+  item, is still the owner's words and is hidden from translators until
+  written.
+
+### 7. Steam
+
+- **The store page** is not the game: its description, short description,
+  tags' text and screenshots' captions are entered per language in
+  Steamworks, and they are the owner's to write or commission (a store page
+  is marketing copy, and the same translators can quote for it). The
+  capsules can be per language too; the default is one set for all (section
+  4).
+- **Supported languages.** Steamworks' table has three ticks a language:
+  interface, full audio, subtitles. Each language is ticked for interface
+  only, and only once its file is approved and its overflow survey is
+  clean. The game has no voice. One depot carries every language.
+- **Achievements.** Steamworks holds each achievement's display name and
+  description per language and takes them in bulk as a localization file
+  exported and imported from the achievements page. The in-game notices'
+  names and notes are already messages (`ach-*-name`, `ach-*-note`, 82
+  lines). `tools/steam-achievements.mjs` gains `--vdf`, which writes that
+  file off every locales/xx.ftl, so Steam's names and the game's cannot
+  drift. Whether Steam's display names are the in-game names at all is the
+  owner's (the tool's header says so today); if they are, the owner imports
+  the file.
+- **Steam's language when Steam asks.** Steam starts the game in the
+  language the player set for it; the default (section 1) honors that, and
+  the in-game picker overrides it for this install.
+
+### 8. Checks
+
+A new node file, `test/l10n-locales.test.mjs`, beside the two from phase
+one, over every `locales/*.ftl` but English:
+
+- **Parses**: no junk, no error from `addResource`.
+- **Nothing stale**: every message id (and attribute) is in en.ftl. A stale
+  id is red: it is a line the game no longer says.
+- **Nothing dropped**: for every message, the variables the English uses
+  (`{ $n }`, `{ $name }`), across all of its variants, are each used by the
+  translation, and it uses none the English does not. Read off the parsed
+  resource's patterns (`type: 'var'` in @fluent/bundle's runtime shape),
+  so no new dependency; `@fluent/syntax` if that shape proves brittle.
+- **Same markup**: a message with a `<br>` or a `data-l10n-name` element
+  keeps each one, by name; `writeInto` drops a named element it cannot
+  place. The same for an attribute (`.aria-label`, `.placeholder`).
+- **Selectors have their default**: every select has a `*` variant
+  (Fluent requires it; a hand-edited file can lose it).
+- **Missing is reported, not red**: a message the translation lacks reads
+  in English, which is the intended fallback while a new line waits for its
+  translators. The file prints a count and the ids a language, and is red
+  only for a language listed in config's `LANG_READY` (the ones the picker
+  shows and Steam is ticked for) falling below complete. A language not yet
+  ready is in the repo, tested for the four rules above, and not offered.
+- **Pseudo**: `l10n-pseudo.test.mjs` runs under the `long` transform too
+  (section 5), and the browser group `l10nfit` holds the tight surfaces.
+
+`LANG_READY` is what the picker lists, so a half-translated file can be
+merged without a player ever meeting it; `LANGS` (every file found) stays
+what the dev panel and the shots tool can force.
+
+### 9. The order of work
+
+Each phase can be approved and landed on its own. The estimates are ours in
+working days, the owner's in hours, and exclude waiting on translators.
+
+1. **Measure** -- the pseudo-locale (both modes, pages included), the
+   overflow survey in wording-shots, the `l10nfit` group. Ours: 1 to 1.5
+   days. Out of it comes a list of what breaks; fixing it is its own
+   estimate once the list exists (likely 1 to 3 days, some of it mock and
+   vote).
+2. **Choose** -- the picker (both panes, the foot link), the `language`
+   preference and the default chain, `desk.language()` and the Steam
+   mapping, `list-sep`, the decimal mark, the shell's dialog through the
+   file, `LANG_READY`, the new guard file. Ours: 1.5 to 2 days, plus a mock
+   of the picker first. The owner: the picker's words.
+3. **Sync** -- `crowdin.yml`, placeholders hidden, the shot rectangles and
+   the upload tool, the brief's draft, the per-language shots run. Ours: 1
+   to 1.5 days. The owner: about two hours (the account, the project, the
+   GitHub app, the token), then the brief and glossary approved.
+4. **Faces** -- the subsetter in the build, the three CJK faces with their
+   license, `--track` across the sheets, the `:lang` blocks, `FACE` for the
+   canvas and the font wait, the objective card's derived cap. Ours: 2 to 3
+   days, the CJK typography mocked and voted first.
+5. **The sign** -- the owner's choice of A, B or C from a mock, then 1 hour
+   (C) to 2 days (A).
+6. **Pilot two languages** -- German (the long Latin case) and Simplified
+   Chinese (the CJK case, and one of Steam's two largest language
+   audiences), translated, reviewed, shot and read in place, fixed. Ours:
+   1 to 2 days of fixes
+   across the weeks it takes. The owner: the translators, and their bill.
+   At typical rates for game text (roughly 8 to 15 US cents a word for
+   translation, a third to a half again for a separate proofread), 3,700
+   words is on the order of $400 to $800 a language with review; a machine
+   draft post-edited can bring that down, and volunteers take it to nothing
+   but time.
+7. **The other six**, the same way, in whatever order the owner's
+   translators arrive. Ours: under a day a language once the pilots have
+   shaken out the layout.
+8. **Steam** -- the `--vdf` achievements file, the supported-language ticks
+   a language as it becomes ready. Ours: half a day. The owner: the store
+   pages, the ticks, the import.
+
+All eight languages at paid rates: on the order of $3,000 to $6,500 for the
+words, and about two working weeks of ours spread across the phases.
+
+### The owner's calls
+
+1. **Paid or volunteer translators**, a language at a time, and so the
+   budget; and who presses approve.
+2. **Which Spanish** the one `es` file is written in: Latin American (the
+   larger Steam audience) or Spain's, with Steam's other Spanish ticked
+   too or not.
+3. **The words**: the picker's label, heading and back button; whether the
+   endonyms are lowercased; the carry-over dialog's four strings and
+   `station-party`, which have been placeholders since before this.
+4. **The casino's sign**: icons (recommended), rasterized words, or drawn
+   glyphs a script -- from a mock.
+5. **The CJK look**: how much the type steps up and what takes the place
+   of capitals -- from a mock.
+6. **The name**: whether Pebble Pit has a title of its own in Chinese,
+   Japanese or Korean (on the capsule, the window and the landing page), or
+   stays Latin everywhere.
+7. **Steam's achievement names**: the in-game notice names, translated
+   with the rest and imported, or written separately for Steam.
