@@ -65,17 +65,28 @@ export const purse = money =>
 // in here is written out in the row's own word (see `gainText`).
 export const UNITS = {
   'px': '<i class="dust"></i>',
-  'px/s': '<i class="dust"></i>/s',
-  'trips/min': '<i class="shard"></i>/min',
-  'plots/min': '<i class="spore"></i>/min',
-  'shards/dig': '<i class="shard"></i>/dig',
-  'spores/cut': '<i class="spore"></i>/harvest'
+  'px/s': msg('unit-per-s', { icon: '<i class="dust"></i>' }),
+  'trips/min': msg('unit-per-min', { icon: '<i class="shard"></i>' }),
+  'plots/min': msg('unit-per-min', { icon: '<i class="spore"></i>' }),
+  'shards/dig': msg('unit-per-dig', { icon: '<i class="shard"></i>' }),
+  'spores/cut': msg('unit-per-harvest', { icon: '<i class="spore"></i>' })
+};
+
+// And what the others are said as: a row keeps its unit as a key (the
+// symbols, % and x, are compared against), and the words are the language's.
+// A unit in neither table is written as it stands.
+const UNIT_WORDS = {
+  'hits/s': msg('unit-hits-s'), 'hit/s': msg('unit-hit-s'), 'throws/s': msg('unit-throws-s'),
+  'bolts/min': msg('unit-bolts-min'), 'cells/bolt': msg('unit-cells-bolt'), 'motes/s': msg('unit-motes-s'),
+  'plots': msg('unit-plots'), 'shovels': msg('unit-shovels'), 'pots': msg('unit-pots'), 'doses': msg('unit-doses'),
+  's': msg('unit-s'), 'dmg': msg('unit-dmg'), 'dmg/s': msg('unit-dmg-s'),
+  'faster': msg('unit-faster'), 'stronger': msg('unit-stronger'), 'crit': msg('unit-crit')
 };
 
 // A second is written 's' wherever it is a unit; the clock glyph is the bill's
 // alone, because the same glyph meaning "per second" on the gain line and "a
 // price in time" on the bill forty pixels below it read as two things.
-export const unitText = unit => UNITS[unit] || unit;
+export const unitText = unit => UNITS[unit] || UNIT_WORDS[unit] || unit;
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 
@@ -85,7 +96,8 @@ export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 // number is about (`does`) leads the line, because "boots +45%" leaves the one
 // word that matters to the player's guess; test/gain-verb.test.mjs holds
 // every proportional row to having one.
-export const gainText = u => {
+// `verb` false leaves the verb off: a shelf tile's name is its verb.
+export const gainText = (u, verb = true) => {
   // A finished ladder has nothing left to give, verb included.
   if (maxed(u)) return '';
   const amount = gainAmount(u);
@@ -95,12 +107,12 @@ export const gainText = u => {
   if (waits) return waits;
   // A door has no amount to print; it says what the place is for instead.
   if (!amount && u.blurb) return u.blurb;
-  return amount && u.does ? `${u.does} ${amount}` : amount;
+  return amount && u.does && verb ? msg('gain-does', { does: u.does, amount }) : amount;
 };
 // What a machine row says until its station's set of hats is bought: the
 // owner's words, the count the live one.
-export const unlockText = (left, bought, noun) =>
-  `buy ${left}${bought ? ' more' : ''} ${noun}${left === 1 ? '' : 's'} to unlock`;
+const UNLOCK = { grower: 'unlock-grower', blaster: 'unlock-blaster' };
+export const unlockText = (left, bought, noun) => msg(UNLOCK[noun], { left, more: bought ? 'yes' : 'no' });
 
 const gainAmount = u => {
   if (!u.to) return '';
@@ -133,7 +145,7 @@ const gainAmount = u => {
 // time off a clock.
 export const priceText = (money, n) =>
   money !== 'time' ? fmt(n) :
-  n >= 60000 ? `${Math.round(n / 60000)} min` : `${Math.ceil(n / 1000)}`;
+  n >= 60000 ? msg('price-min', { n: Math.round(n / 60000) }) : `${Math.ceil(n / 1000)}`;
 
 // Time left on a build, to the second: `0:47`, `1:02:05`. Ceiling, so it
 // reads 0:01 until the last blow and never 0:00 on a thing not up.

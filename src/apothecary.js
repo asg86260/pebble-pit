@@ -33,6 +33,7 @@ import { puff } from './puff.js';
 import { JOB, TYPE, YARD_JOBS } from './jobs.js';
 import { moored, inBasket, craftAt } from './balloon.js';
 import { registerBoard } from './boardrows.js';
+import { msg } from './lang.js';
 
 // --- the pot's dials, level by level ------------------------------------------
 // Clamped to the ladder, so a save from before a ladder landed reads as level
@@ -68,13 +69,13 @@ export const carryDoses = () => DOSE_CARRY;
 const EVERY = YARD_JOBS.filter(j => j !== JOB.STIR);
 const ROLLERS = EVERY.filter(j => j !== JOB.HAUL && j !== JOB.PURIFY);
 export const TONICS = [
-  { key: 'stew',   name: 'hearty stew',   reagent: 'spore', kind: 'speed',
+  { key: 'stew',   name: msg('tonic-stew'),   reagent: 'spore', kind: 'speed',
     base: TONIC_STEW_SPEED,      unit: 'faster',   color: '#5fb84f', short: 'stew',
     jobs: EVERY },                                                               // green
-  { key: 'strong', name: 'strong brew',   reagent: 'shard', kind: 'strength',
+  { key: 'strong', name: msg('tonic-strong'),   reagent: 'shard', kind: 'strength',
     base: TONIC_STRONG_STRENGTH, unit: 'stronger', color: '#4a86c7', short: 'brew',
     jobs: EVERY },                                                               // blue
-  { key: 'brace',  name: 'bracing tonic', reagent: 'spark', kind: 'crit',
+  { key: 'brace',  name: msg('tonic-brace'), reagent: 'spark', kind: 'crit',
     base: TONIC_BRACE_CRIT,      unit: 'crit',     color: '#e04848', short: 'tonic',
     jobs: ROLLERS }                                                              // red
 ];
@@ -103,8 +104,8 @@ export const tonicVal = t => (t ? t.base * strengthOf(t.key) : 0);
 export function tonicGain(t) {
   if (!t) return '';
   const v = Math.round(tonicVal(t) * 100);
-  const what = t.kind === 'crit' ? `+${v} crit` : `+${v}% ${t.unit}`;
-  return `${what}, ${Math.round(buffMs() / 1000)} ${unitText('s')}`;
+  const secs = Math.round(buffMs() / 1000);
+  return t.kind === 'crit' ? msg('tonic-gain-crit', { v, secs }) : msg('tonic-gain', { v, unit: unitText(t.unit), secs });
 }
 
 // --- who a tonic is for -------------------------------------------------------
@@ -532,7 +533,7 @@ const brewLadder = ({ after = 0, ...o }) => tierRows({
 // One potency ladder a tonic, all in the hut's own section, named for the
 // drink so three ladders showing one card each still read as three brews.
 // `does` says what each number is a number *of*.
-const DOES = { speed: 'faster', strength: 'stronger', crit: 'crit' };
+const DOES = { speed: msg('does-faster'), strength: msg('does-stronger'), crit: msg('does-crit') };
 const potencyRows = t => brewLadder({
   level: () => potencyLevel(t.key),
   climb: () => { S.potency[t.key] = potencyLevel(t.key) + 1; },
@@ -557,12 +558,12 @@ export const APOTHECARY_UPGRADES = [
   // batch is dealt.
   {
     key: 'potkeep', dial: true, site: 'apothecary',
-    name: 'keep brewing',
-    value: () => (S.potKeep ? 'batch after batch' : 'just this one'),
+    name: msg('row-potkeep'),
+    value: () => (S.potKeep ? msg('row-potkeep-on') : msg('row-potkeep-off')),
     // `options` is what makes a dial a select; a dial without it keeps the two
     // buttons, which is what a *number* like the casino's chip wants.
-    options: () => [{ key: 'on', label: 'batch after batch' },
-                    { key: 'off', label: 'just this one' }],
+    options: () => [{ key: 'on', label: msg('row-potkeep-on') },
+                    { key: 'off', label: msg('row-potkeep-off') }],
     at: () => (S.potKeep ? 'on' : 'off'),
     pick: k => setKeep(k === 'on'),
     less: () => setKeep(!S.potKeep),
@@ -575,7 +576,7 @@ export const APOTHECARY_UPGRADES = [
   // exactly.
   {
     key: 'anotherpot', kind: 'place', site: 'apothecary',
-    name: 'another pot', unit: 'pots',
+    name: msg('row-anotherpot'), unit: 'pots',
     // One more each press, each priced as the pot it will be; `cap` is how
     // many more the floor has room for, which the copies paid for count
     // against (`full` in upgrades.js).
@@ -591,20 +592,20 @@ export const APOTHECARY_UPGRADES = [
     show: () => S.apothecaryOpen && S.brews >= 5 && S.apothPots < APOTH_POTS_MAX
   },
 
-  ...brewLadder({ field: 'lengthLevel', unit: 's', does: 'lasts', after: 3,
+  ...brewLadder({ field: 'lengthLevel', unit: 's', does: msg('does-lasts'), after: 3,
     value: lvl => Math.round(buffMs(lvl) / 1000),
-    bands: named('bufflength', 'brew concentration') }),
+    bands: named('bufflength', msg('row-bufflength')) }),
   ...brewLadder({ field: 'dosesLevel', unit: 'doses', after: 3,
     value: lvl => dosesPer(lvl),
-    bands: named('brewdoses', 'batch size') }),
+    bands: named('brewdoses', msg('row-brewdoses')) }),
   ...TONICS.flatMap(potencyRows)
 ];
 
 // How it is run, how well it runs, and how deep each recipe goes.
 export const APOTHECARY_SECTIONS = [
-  { title: 'the pot', heads: () => S.stirrers, keys: ['potkeep', 'anotherpot'] },
-  { title: 'brewing', keys: ['bufflength', 'brewdoses'] },
-  { title: 'potency', keys: TONICS.map(t => `potency-${t.key}`) }
+  { title: msg('sect-pot'), heads: () => S.stirrers, keys: ['potkeep', 'anotherpot'] },
+  { title: msg('sect-brewing'), keys: ['bufflength', 'brewdoses'] },
+  { title: msg('sect-potency'), keys: TONICS.map(t => `potency-${t.key}`) }
 ];
 
 // The jobs a dose can favor, in the picker's order. Null (whoever is nearest)

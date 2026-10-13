@@ -4,6 +4,7 @@ import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
 import { raiseShield, shieldDone, shieldGround } from '../shield.js';
 import { offered } from '../stations.js';
+import { msg } from '../lang.js';
 
 // The shields: what the yard puts between itself and the sky. Data only;
 // upgrades.js strings the files together into UPGRADES.
@@ -20,8 +21,8 @@ export const SHIELD_ROWS = [
     key: 'props',
     kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
     work: () => PROP_WORK,
-    name: 'wooden barrier',
-    note: () => 'quickly try to build a barrier to save your sqwife',
+    name: msg('row-props'),
+    note: () => msg('row-props-note'),
     cost: () => PROP_COST,
     buy: () => raiseShield('props'),
     show: () => offered('props')
@@ -30,8 +31,8 @@ export const SHIELD_ROWS = [
     key: 'net',
     kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
     work: () => NET_WORK,
-    name: 'the net',
-    note: () => 'that didn\'t work, try catching the rock with a net?',
+    name: msg('row-net'),
+    note: () => msg('row-net-note'),
     cost: () => NET_COST,
     currency: 'spore',
     buy: () => raiseShield('net'),
@@ -41,8 +42,8 @@ export const SHIELD_ROWS = [
     key: 'arch',
     kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
     work: () => ARCH_WORK,
-    name: 'cut the arch',
-    note: () => 'still not sturdy enough. lets build a stone arch.',
+    name: msg('row-arch'),
+    note: () => msg('row-arch-note'),
     cost: () => ARCH_COST,
     currency: 'shard',
     buy: () => raiseShield('arch'),
@@ -55,8 +56,8 @@ export const SHIELD_ROWS = [
     sign: true,
     bill: () => [],
     cost: () => 0,
-    name: 'maybe the wizards would know?',
-    note: () => 'everything of the ground has failed. what is left is not of the ground',
+    name: msg('row-dome'),
+    note: () => msg('row-dome-note'),
     buy: () => lookAt(tower.x + tower.w / 2),
     // gone for good once the dome has been and gone: it reads as done the way
     // the three that broke do (`shieldsDone`)

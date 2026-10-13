@@ -32,6 +32,7 @@ import { rand } from './rng.js';
 import { registerRows, ahead } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 import { registerBoard } from './boardrows.js';
+import { msg } from './lang.js';
 
 // Where the two farm ladders stand, clamped to their length.
 export const tendLadder = () => tierLevel('tendLevel');
@@ -254,25 +255,25 @@ const FARM_YIELD = tierRows({
   site: 'farm', board: 'farm',
   show: () => S.farmOpen,
   bands: [
-    { key: 'crop',    name: 'crop yield',     coins: [] },
-    { key: 'crop2',   name: 'crop yield',  coins: ['spore'] },
-    { key: 'crop3',   name: 'crop yield', coins: ['spore', 'shard'] },
+    { key: 'crop',    name: msg('row-crop'),     coins: [] },
+    { key: 'crop2',   name: msg('row-crop'),  coins: ['spore'] },
+    { key: 'crop3',   name: msg('row-crop'), coins: ['spore', 'shard'] },
     // The spark rung. `restore` still knows the old key, `labcrop`.
-    { key: 'crop4',   name: 'crop yield', coins: ['shard', 'spore', 'spark'] }
+    { key: 'crop4',   name: msg('row-crop'), coins: ['shard', 'spore', 'spark'] }
   ]
 });
 
 const FARM_SPEED = tierRows({
   field: 'tendLevel',
-  unit: 'plots/min', pct: true, does: 'tend',
+  unit: 'plots/min', pct: true, does: msg('does-tend'),
   value: lvl => tendRate(lvl),
   site: 'farm', board: 'farm',
   show: () => S.farmOpen,
   bands: [
-    { key: 'tend',    name: 'farming speed',     coins: [] },
-    { key: 'tend2',   name: 'farming speed',  coins: ['spore'] },
-    { key: 'tend3',   name: 'farming speed', coins: ['spore', 'shard'] },
-    { key: 'tend4',   name: 'farming speed', coins: ['shard', 'spore', 'spark'] }
+    { key: 'tend',    name: msg('row-tend'),     coins: [] },
+    { key: 'tend2',   name: msg('row-tend'),  coins: ['spore'] },
+    { key: 'tend3',   name: msg('row-tend'), coins: ['spore', 'shard'] },
+    { key: 'tend4',   name: msg('row-tend'), coins: ['shard', 'spore', 'spark'] }
   ]
 });
 
@@ -283,7 +284,7 @@ export const FARM_UPGRADES = [
     key: 'farmplot',
     // A place, broken by the hands that work the row. See works.js.
     kind: 'place', site: 'farm',
-    name: 'another plot',
+    name: msg('row-farmplot'),
     // What the from/to is counting, so the gain reads "1 -> 2 plots".
     unit: 'plots',
     from: () => plotCount(),
@@ -309,7 +310,7 @@ export const FARM_UPGRADES = [
     // put the hats bought for this station in a drawer.
     key: 'tiller',
     kind: 'machine', site: 'farm',
-    name: 'the tiller',
+    name: msg('machine-tiller'),
     bill: () => TILLER_BILL,
     buy: () => { buyMachine('tiller'); rebalance(); },
     waits: () => { const left = hatsShort(JOB.FARM);
@@ -321,16 +322,16 @@ export const FARM_UPGRADES = [
   },
 
   // The tiller's ladder, three rungs of red like the rest.
-  tuneRow('tiller', 'tiller pace',
-          () => `the tiller works ${MACHINE_TUNE}x faster`, 'farm')
+  tuneRow('tiller', msg('row-tunetiller'),
+          () => msg('row-tunetiller-note', { n: MACHINE_TUNE }), 'farm')
 ];
 
 // Two headings: who works the plots (the grower's brims lodge here from
 // upgrades/rows-kit.js, see `lodgers`), and what a plot pays. Every card of
 // both ladders is named; only the band you are on answers `true` to `show`.
 export const FARM_SECTIONS = [
-  { title: JOB.FARM, heads: () => S[JOB.FARM], keys: ['farmplot', 'grower', 'tiller', 'tunetiller'] },
-  { title: 'the crop',  keys: ['crop', 'tend'] }
+  { title: msg('sect-farmhands'), heads: () => S[JOB.FARM], keys: ['farmplot', 'grower', 'tiller', 'tunetiller'] },
+  { title: msg('sect-crop'),  keys: ['crop', 'tend'] }
 ];
 
 

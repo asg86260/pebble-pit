@@ -54,7 +54,7 @@ const statsEl = document.getElementById('statsshop');
 const grouped = (list, sections) => {
   const named = new Set(sections.flatMap(x => x.keys));
   const rest = list.map(u => u.key).filter(k => !named.has(k));
-  return rest.length ? [...sections, { title: 'and', keys: rest }] : sections;
+  return rest.length ? [...sections, { title: msg('sect-and'), keys: rest }] : sections;
 };
 
 // Revealing is a one-way door. A row may leave because you bought or finished
@@ -616,10 +616,10 @@ export function refresh(el, list, headcount) {
     if (strip) {
       if (strip.hidden !== !stands) strip.hidden = !stands;
       const back = strip.querySelector('.refund'), next = strip.querySelector('.another');
-      say(back, refunds ? `cancel ×${refunds}` : 'building');   // the owner's word, 2026-10-09
+      say(back, refunds ? msg('obj-barrier-cancel', { n: refunds }) : msg('card-building'));   // the owner's word, 2026-10-09
       back.classList.toggle('dead', !refunds);
       if (next.hidden !== !more) next.hidden = !more;
-      if (more) { say(next, '+ another'); next.classList.toggle('dead', !canPay(u)); }
+      if (more) { say(next, msg('card-another')); next.classList.toggle('dead', !canPay(u)); }
       if (row.classList.contains('stripped') !== stands) row.classList.toggle('stripped', stands);
     }
     const pic = row.querySelector('.pic');           // set on a shelf tile; the gain reads it below
@@ -686,7 +686,7 @@ export function refresh(el, list, headcount) {
         const stuck = !queued && stalled(u.site);
         // Two words about bodies: `building` while somebody is at it, `queued`
         // while nobody is. The tile says which by the rest of it.
-        sayHTML(gain, queued || stuck ? 'queued' : 'building');
+        sayHTML(gain, queued || stuck ? msg('card-queued') : msg('card-building'));
         // A paid bill is not a price: the tag holds the time left, or for a
         // row in line its place. The place is in the LINE, not among the
         // site's works: a site building two at once has its first waiting row
@@ -726,7 +726,7 @@ export function refresh(el, list, headcount) {
     // one you cannot afford.
     if (maxed(u)) {
       sayHTML(gain, '');
-      sayHTML(price, 'done'); sayHTML(time, '');
+      sayHTML(price, msg('card-done')); sayHTML(time, '');
       grey(row, true); row.classList.add('off', 'done');
       continue;
     }
@@ -739,8 +739,8 @@ export function refresh(el, list, headcount) {
     const g = gainText(u);
     // While copies are in the works the gain line is theirs, in the same two
     // words a row being built uses.
-    if (more) sayHTML(gain, going ? 'building' : 'queued');
-    else sayHTML(gain, pic && u.does && g.startsWith(u.does + ' ') ? g.slice(u.does.length + 1) : g);
+    if (more) sayHTML(gain, going ? msg('card-building') : msg('card-queued'));
+    else sayHTML(gain, pic && u.does ? gainText(u, false) : g);
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's decisions are the only ones: none costs anything, and the
     // number each is about is the pot.

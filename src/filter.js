@@ -17,6 +17,7 @@ import { registerRows, ahead } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 import { staffDoor } from './staffing.js';
 import { registerBoard } from './boardrows.js';
+import { msg } from './lang.js';
 
 export function newPurifier() {
   return { type: TYPE.PURIFY, goal: 'to', x: filter.x, y: 0 };
@@ -61,20 +62,20 @@ export function stepPurifier(w) {
 // it hangs at a cloud, so the trips between are time it is not cleaning.
 const SPEED = tierRows({
   field: 'balloonSpeedLevel',
-  unit: 'x', does: 'fly',
+  unit: 'x', does: msg('does-fly'),
   value: lvl => rungValue('balloonspeed', lvl),
   site: 'filter',
   show: () => S.filterOpen,
-  bands: named('balloonspeed', 'balloon speed')
+  bands: named('balloonspeed', msg('row-balloonspeed'))
 });
 
 const FAN = tierRows({
   field: 'powerLevel',
-  unit: 'motes/s', pct: true, does: 'filter',
+  unit: 'motes/s', pct: true, does: msg('does-filter'),
   value: lvl => balloonPull(lvl),
   site: 'filter',
   show: () => S.filterOpen,
-  bands: named('power', 'balloon power')
+  bands: named('power', msg('row-power'))
 });
 
 // The craft the shed sells: a finite ladder on the building that owns the
@@ -86,8 +87,8 @@ const CRAFT_ROW = {
   key: 'balloon',
   // Built at the air filter, where it is moored, in a machine's time.
   kind: 'machine', site: 'filter',
-  name: 'the balloon',
-  note: () => 'rides the clouds and lets what it catches fall under itself',
+  name: msg('row-balloon'),
+  note: () => msg('row-balloon-note'),
   // Sold from its foot: the pips and the end count the rungs above it.
   rung: () => Math.min(BALLOON_RUNGS - BALLOON_FOOT, bought()),
   rungs: () => BALLOON_RUNGS - BALLOON_FOOT,
@@ -113,8 +114,8 @@ export const FILTER_UPGRADES = [
     key: 'recycler',
     // A fitting a spare hand puts in (`SITE_JOB`), like balloon power's rungs.
     kind: 'place', site: 'filter',
-    name: 'the recycler',
-    note: () => 'what the balloons catch comes down as pebbles instead of muck',
+    name: msg('row-recycler'),
+    note: () => msg('row-recycler-note'),
     cost: () => RECYCLE_SHARDS,
     currency: 'shard',
     buy: () => { S.recycler = true; },
@@ -124,7 +125,7 @@ export const FILTER_UPGRADES = [
 ];
 
 export const FILTER_SECTIONS = [
-  { title: 'equipment', keys: ['power', 'balloonspeed', 'balloon', 'recycler'] }
+  { title: msg('sect-equipment'), keys: ['power', 'balloonspeed', 'balloon', 'recycler'] }
 ];
 
 // Dust, like every other building.

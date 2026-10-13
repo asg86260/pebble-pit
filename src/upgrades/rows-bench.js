@@ -5,6 +5,7 @@ import { S } from '../state.js';
 import { kitFull, mineRate, capacity, pickCount, tossRate, tossReach } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { tierRows, named } from './tiers.js';
+import { msg } from '../lang.js';
 
 // The bench's bench rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -13,23 +14,23 @@ import { tierRows, named } from './tiers.js';
 // fractions; the swing is a rate and eases to its floor.
 const YOU_CARRY = tierRows({
   field: 'carryLevel',
-  unit: 'px', does: 'hold',
+  unit: 'px', does: msg('does-hold'),
   value: lvl => capacity(lvl),
   site: 'bench',
   // Once you have dragged: a row about a thing you have done is a row you can
   // read, and this was the first, cheapest row on the first board.
   show: () => S.seenDrag,
-  bands: named('carry', 'carry amount')
+  bands: named('carry', msg('row-carry'))
 });
 
 const YOU_SWING = tierRows({
   field: 'speedLevel',
-  unit: 'hits/s', pct: true, does: 'hit',
+  unit: 'hits/s', pct: true, does: msg('does-hit'),
   value: lvl => mineRate(lvl),
   site: 'bench',
   // faster swings only read as an upgrade once the swinging is automatic
   show: () => S.autoMine,
-  bands: named('speed', 'auto swing')
+  bands: named('speed', msg('row-speed'))
 });
 
 // --- hold to toss's two ladders ---------------------------------------------
@@ -37,30 +38,30 @@ const YOU_SWING = tierRows({
 // on the holding being automatic, like the swing waits on the swinging.
 const YOU_TOSS = tierRows({
   field: 'tossSpeedLevel',
-  unit: 'throws/s', pct: true, does: 'throw',
+  unit: 'throws/s', pct: true, does: msg('does-throw'),
   value: lvl => tossRate(lvl),
   site: 'bench',
   show: () => S.autoToss,
-  bands: named('toss', 'throw pace')
+  bands: named('toss', msg('row-toss'))
 });
 
 const YOU_REACH = tierRows({
   field: 'tossReachLevel',
-  unit: 'px', does: 'reach',
+  unit: 'px', does: msg('does-reach'),
   value: lvl => tossReach(lvl),
   site: 'bench',
   show: () => S.autoToss,
-  bands: named('reach', 'throw reach')
+  bands: named('reach', msg('row-reach'))
 });
 
 // --- what a swing takes ---------------------------------------------------
 const YOU_PICK = tierRows({
   field: 'pickLevel',
-  unit: 'px', does: 'per swing',
+  unit: 'px', does: msg('does-per-swing'),
   value: lvl => pickCount(lvl),
   site: 'bench',
   show: () => S.autoMine,
-  bands: named('pick', 'pick damage')
+  bands: named('pick', msg('row-pick'))
 });
 
 export const BENCH_ROWS = [
@@ -75,7 +76,7 @@ export const BENCH_ROWS = [
     // Put up where it will stand, which the machine's spec knows: the builders
     // walk to it.
     kind: 'machine', site: 'yard', at: () => specOf('ram')?.at(), board: 'shack',
-    name: 'the ram',
+    name: msg('machine-ram'),
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },
     show: () => canBuy('ram', () => S.rockhandPickLevel >= LADDER && S.rockhandSpeedLevel >= LADDER,
@@ -92,7 +93,7 @@ export const BENCH_ROWS = [
     // the ground the machine covers, for the bar to hang over: the whole run,
     // not the tail `at` names (`siteBox` in works.js)
     box: () => specOf('belt')?.box?.(),
-    name: 'the belt',
+    name: msg('machine-belt'),
     bill: () => BELT_BILL,
     buy: () => { buyMachine('belt'); rebalance(); },
     show: () => canBuy('belt',
@@ -102,7 +103,7 @@ export const BENCH_ROWS = [
   {
     key: 'autotoss',
     kind: 'rung', site: 'bench',
-    name: 'hold to toss',
+    name: msg('row-autotoss'),
     // What it gives is the pace ladder's foot.
     unit: 'throws/s',
     to: () => tossRate(0),
@@ -116,7 +117,7 @@ export const BENCH_ROWS = [
   {
     key: 'auto',
     kind: 'rung', site: 'bench',
-    name: 'hold to mine',
+    name: msg('row-auto'),
     // What it gives is the swing ladder's foot.
     unit: 'hit/s',
     to: () => mineRate(0),

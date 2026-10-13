@@ -16,14 +16,15 @@ import { MACHINE_TUNE, MACHINE_TUNE_SPARKS, MACHINE_TUNE_RUNGS, DUST_PER_SPARK }
 import { JOB } from './jobs.js';
 import { now } from './clock.js';
 import { ahead } from './works.js';
+import { msg } from './lang.js';
 
 // The job is the link to everything else: what `capOf` answers about, what
 // `handsOf` reads, and what `restaff` puts back.
 export const MACHINES = [
   // Keyed 'jaw', which is in every save; the name is what anybody reads.
-  { key: 'jaw',    job: JOB.QUARRY, name: 'the drill' },
-  { key: 'ram',    job: JOB.ROCK,    name: 'the ram' },
-  { key: 'tiller', job: JOB.FARM, name: 'the tiller' },
+  { key: 'jaw',    job: JOB.QUARRY, name: msg('machine-jaw') },
+  { key: 'ram',    job: JOB.ROCK,    name: msg('machine-ram') },
+  { key: 'tiller', job: JOB.FARM, name: msg('machine-tiller') },
   // The belt works the ground between the rock and the hole (dust.js), not a
   // face. `takesKit: false`: once a jaw or a ram stands, its face is worked by
   // the machine or not at all, so the helmets are spent buying it
@@ -33,17 +34,17 @@ export const MACHINES = [
   // lip, where every hauler comes to tip, so a tender taken there is a laden
   // body that stands holding its load for the rest of the run
   // (test/fixtures/belt-lip.json).
-  { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false, unmanned: true },
+  { key: 'belt',   job: JOB.HAUL,   name: msg('machine-belt'), takesKit: false, unmanned: true },
   // The shell round the star (sphere.js). `takesKit: false`: a wizard's hat is
   // its license to fly, and the tender is the one body that still has to.
-  { key: 'sphere', job: JOB.WIZARD, name: 'the sphere', takesKit: false },
+  { key: 'sphere', job: JOB.WIZARD, name: msg('machine-sphere'), takesKit: false },
   // The closet's roombas (crew/roomba.js). One record for however many are
   // owned (`S.roombas`): bought with the first, and its ladder tunes them all.
   // `takesKit: false`: a janitor's cap is its post, and the one janitor left
   // is the tender the roombas run on. No `defineMachine`: a roomba is a
   // vehicle that drives, not a station worked on a beat, so it steps itself
   // and `stepMachines` passes it by.
-  { key: 'roomba', job: JOB.JANITOR, name: 'the roombas', takesKit: false }
+  { key: 'roomba', job: JOB.JANITOR, name: msg('machine-roomba'), takesKit: false }
 ];
 // The machines that run themselves, by key.
 export const UNMANNED = new Set(MACHINES.filter(m => m.unmanned).map(m => m.key));

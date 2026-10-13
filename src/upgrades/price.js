@@ -4,6 +4,7 @@
 // would close a cycle (upgrades.js -> filter.js -> tiers.js ->
 // upgrades.js) and find itself uninitialized. Re-exported from upgrades.js.
 
+import { msg } from '../lang.js';
 import { S } from '../state.js';
 import { DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_SCALE } from '../config.js';
 
@@ -26,11 +27,11 @@ export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: D
 // and get the coin from. Dust is always there. The words a card says while it
 // waits (`coinNeeds`) sit beside the flag so the two cannot disagree.
 const COIN_FROM = {
-  spore: { open: () => !!S.farmOpen,   needs: 'needs crops' },
-  shard: { open: () => !!S.quarryOpen, needs: 'needs a quarry' },
-  spark: { open: () => !!S.seenSpark,  needs: 'needs a spark' },
+  spore: { open: () => !!S.farmOpen,   needs: msg('needs-spore') },
+  shard: { open: () => !!S.quarryOpen, needs: msg('needs-shard') },
+  spark: { open: () => !!S.seenSpark,  needs: msg('needs-spark') },
   // The serpent's, and there is none to be had until it has taken him.
-  scale: { open: () => !!S.snatched,   needs: 'needs a scale' }
+  scale: { open: () => !!S.snatched,   needs: msg('needs-scale') }
 };
 export const coinOpen = coin => !COIN_FROM[coin] || COIN_FROM[coin].open();
 export const coinsOpen = coins => coins.every(coinOpen);

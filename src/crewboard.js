@@ -3,6 +3,7 @@
 // The one board that is a list of people rather than a shop, built out of the
 // same rows as the shop so it reads as the same game's menu.
 
+import { msg } from './lang.js';
 import { S } from './state.js';
 import { inBasket } from './balloon.js';
 import { houseRect, housed } from './house.js';
@@ -18,14 +19,14 @@ import { minding } from './crew/tenders.js';
 
 // Where a body is, in the yard's words. Every job needs a line here: one
 // without reads as `undefined` on its row.
-const AT = { rockhands: 'on the rock', haulers: 'at the pit', quarriers: 'in the quarry',
-             farmhands: 'at the farm plots',
-             purifiers: 'at the air filter',
-             janitors: 'clearing up' };
+const AT = { rockhands: msg('crew-at-rockhands'), haulers: msg('crew-at-haulers'), quarriers: msg('crew-at-quarriers'),
+             farmhands: msg('crew-at-farmhands'),
+             purifiers: msg('crew-at-purifiers'),
+             janitors: msg('crew-at-janitors') };
 
-const WHERE = { lifted: 'in your hand', falling: 'in mid-air', home: 'at home',
-                basket: 'up in a balloon', yard: 'in the yard',
-                resting: 'on a break', walking: 'on the way', deep: 'in the deep' };
+const WHERE = { lifted: msg('crew-where-lifted'), falling: msg('crew-where-falling'), home: msg('crew-where-home'),
+                basket: msg('crew-where-basket'), yard: msg('crew-where-yard'),
+                resting: msg('crew-where-resting'), walking: msg('crew-where-walking'), deep: msg('crew-where-deep') };
 // Every place a body can be said to be, so the crew window can make its
 // column as wide as the longest of them (`fitCrewColumn` in shop.js).
 export const WHERE_WORDS = [...Object.values(WHERE), ...Object.values(AT)];
@@ -50,10 +51,10 @@ export function whereIs(w) {
 }
 
 // A line a job, or a body reads a favorite of `undefined`.
-const DOES = { rockhands: 'digging the rock', quarriers: 'mining the quarry',
-               farmhands: 'farming', scholars: 'researching',
-               purifiers: 'clearing the air',
-               janitors: 'shoveling', haulers: 'transporting' };
+const DOES = { rockhands: msg('crew-does-rockhands'), quarriers: msg('crew-does-quarriers'),
+               farmhands: msg('crew-does-farmhands'), scholars: msg('crew-does-scholars'),
+               purifiers: msg('crew-does-purifiers'),
+               janitors: msg('crew-does-janitors'), haulers: msg('crew-does-haulers') };
 // The tip is monospace, so a label padded to a fixed width is a column; done
 // with spaces because this is one text node.
 const LABEL = 10;
@@ -62,26 +63,26 @@ const row = (label, value) => `${label.padEnd(LABEL)}${value}`;
 
 // One line a goal, read off the word the yard's own steppers set, so there is
 // no second state machine to fall out of step with them.
-const NOW = { seek: 'looking for pebbles', dump: 'tipping a load',
-              muck: 'shoveling up mess', cut: 'digging in the quarry',
-              work: 'digging in the quarry', up: 'climbing out', down: 'climbing down',
-              tend: 'tending a plot', home: 'heading home', idle: 'nothing much',
-              in: 'inside', aloft: 'up in the balloon' };
+const NOW = { seek: msg('crew-now-seek'), dump: msg('crew-now-dump'),
+              muck: msg('crew-now-muck'), cut: msg('crew-now-cut'),
+              work: msg('crew-now-cut'), up: msg('crew-now-up'), down: msg('crew-now-down'),
+              tend: msg('crew-now-tend'), home: msg('crew-now-home'), idle: msg('crew-now-idle'),
+              in: msg('crew-now-in'), aloft: msg('crew-now-aloft') };
 
 export function doing(w) {
   // These outrank any goal: the stepper's last word is stale for all four.
-  if (w.lifted) return 'in your hand';
-  if (w.falling) return 'in mid-air';
-  if (w.brk || w.resting) return 'on a break';
-  if (w.inside) return 'at home';
+  if (w.lifted) return WHERE.lifted;
+  if (w.falling) return WHERE.falling;
+  if (w.brk || w.resting) return WHERE.resting;
+  if (w.inside) return WHERE.home;
   // The tender stage is above the job and writes no goal, so a body minding
   // the belt still carries whatever goal it had before (`minding`).
   const m = minding(w);
-  if (m) return `minding ${m.name}`;
-  if (w.goal === 'to') return 'walking there';
+  if (m) return msg('crew-minding', { name: m.name });
+  if (w.goal === 'to') return msg('crew-now-to');
   // The bench is the one site where the thing being built is not a place.
-  if (w.goal === 'at') return w.site === 'bench' ? 'fitting kit at the bench' : 'building';
-  return NOW[w.goal] || DOES[JOBS_AT[w.type]] || 'working';
+  if (w.goal === 'at') return w.site === 'bench' ? msg('crew-now-kit') : msg('crew-now-build');
+  return NOW[w.goal] || DOES[JOBS_AT[w.type]] || msg('crew-now-working');
 }
 
 // Three lines and no more: who this is and what it is doing this second. The
@@ -89,9 +90,9 @@ export function doing(w) {
 export function card(w) {
   const mins = Math.floor((w.lived || 0) / 60000);
   return [
-    w.name || 'somebody',
-    row('age', mins < 1 ? 'new today' : `${mins} min`),
-    row('doing', doing(w))
+    w.name || msg('crew-somebody'),
+    row(msg('crew-card-age'), mins < 1 ? msg('crew-card-new') : msg('crew-card-mins', { mins })),
+    row(msg('crew-card-doing'), doing(w))
   ].join(NL);
 }
 
@@ -120,7 +121,7 @@ export function crewRows() {
 // The door through to them. Where the cost would go it says how many there are.
 const CREW_ROW = {
   key: 'crewlist',
-  name: 'who lives here',
+  name: msg('modal-crew'),
   // Pressed, not hovered: the list is a window you sit and read (modal.js),
   // and a window that came up on a pass of the pointer would be in the way.
   buy: () => showWindow('crew'),
@@ -138,8 +139,8 @@ const CREW_ROW = {
 export const crewList = () => people();
 
 export const crewListSections = () => [
-  { title: 'the yard', keys: whoIn(false) },
-  { title: 'the deep', keys: whoIn(true) }
+  { title: msg('crew-sect-yard'), keys: whoIn(false) },
+  { title: msg('crew-sect-deep'), keys: whoIn(true) }
 ].filter(sect => sect.keys.length);
 
 // The two crews never cross (DESIGN.md, "Two crews and a portal"), so the
@@ -151,7 +152,7 @@ const whoIn = deep => S.workers.flatMap((w, i) => !!w.deepHome === deep ? [`who$
 function people() {
   return S.workers.map((w, i) => ({
     key: `who${i}`,
-    name: w.name || 'somebody',
+    name: w.name || msg('crew-somebody'),
     note: () => card(w),
     price: () => whereIs(w),
     dead: () => false,
@@ -167,5 +168,5 @@ function people() {
 // that opens off the door wears the same word, which is how a submenu says
 // which heading it came out of.
 export const crewSections = () => [
-  { title: 'the crew', keys: [CREW_ROW.key, HOUSE_ROW.key] }
+  { title: msg('crew-sect-crew'), keys: [CREW_ROW.key, HOUSE_ROW.key] }
 ];

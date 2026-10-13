@@ -5,6 +5,7 @@ import { giveCraft } from '../balloon.js';
 import { staffDoor } from '../staffing.js';
 import { JOB } from '../jobs.js';
 import { lookAt } from '../world.js';
+import { msg } from '../lang.js';
 
 // The bench's filter rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -13,9 +14,9 @@ export const FILTER_ROWS = [
   {
     key: 'unlockfilter',
     kind: 'building', site: 'yard', at: () => filter.x + filter.w / 2,
-    name: 'build the air filter',
-    note: () => 'sells the balloons that pull the haze back out of the sky, and reads the sky',
-    blurb: 'clears the sky',
+    name: msg('row-unlockfilter'),
+    note: () => msg('row-unlockfilter-note'),
+    blurb: msg('row-unlockfilter-blurb'),
     cost: () => filterCost(),
     buy: () => {
       S.filterOpen = true;

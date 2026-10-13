@@ -1,6 +1,7 @@
 import { S } from '../state.js';
 import { rockhandBite, rockhandRate } from '../levels.js';
 import { tierRows, named } from './tiers.js';
+import { msg } from '../lang.js';
 
 // The rock's rows. Data only: upgrades.js strings the files together into
 // UPGRADES, in this order.
@@ -11,21 +12,21 @@ import { tierRows, named } from './tiers.js';
 
 const SPEED = tierRows({
   field: 'rockhandSpeedLevel',
-  unit: 'hits/s', pct: true, does: 'hit',
+  unit: 'hits/s', pct: true, does: msg('does-hit'),
   value: lvl => rockhandRate(lvl),
   site: 'shack', board: 'shack',
   show: () => S.crew > 0,
-  bands: named('rockhandspeed', 'swing speed')
+  bands: named('rockhandspeed', msg('row-rockhandspeed'))
 });
 
 // The gang's bite: whole pixels off its list (config/rungs.js).
 const BITE = tierRows({
   field: 'rockhandPickLevel',
-  unit: 'px', does: 'per swing',
+  unit: 'px', does: msg('does-per-swing'),
   value: lvl => rockhandBite(lvl),
   site: 'shack', board: 'shack',
   show: () => S.crew > 0,
-  bands: named('rockhandpick', 'digger pick damage')
+  bands: named('rockhandpick', msg('row-rockhandpick'))
 });
 
 export const ROCK_ROWS = [

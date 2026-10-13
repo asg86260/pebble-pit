@@ -30,6 +30,7 @@ import { stationById } from './deep/party.js';
 import { bedAtBrim } from './deep/scales.js';
 import { registerSites } from './works.js';
 import { JOB } from './jobs.js';
+import { msg } from './lang.js';
 
 // A door is shown once you are within reach of affording it: a price you have
 // no idea is coming is a price you cannot save for.
@@ -55,8 +56,6 @@ export const KINDS = {
 // Who stands at a station: its class, or below the fork its base unit.
 const whoOf = st => (st?.cls ? CLASSES[st.cls]?.name : st?.kind ? BASES[st.kind] : st?.built ? RECRUIT.name : null) || null;
 
-const ORDINALS = ['', 'second', 'third', 'fourth'];
-
 // One row for a station of the party, by its id. It stands once its build
 // has landed, at its slot, and whatever it is called and drawn as is its
 // kind's; until a station is bought under the id, the row is an empty lot
@@ -79,11 +78,10 @@ function partyRow(id) {
       const who = whoOf(st());
       const nth = PARTY_IDS.slice(0, PARTY_IDS.indexOf(id))
         .filter(o => whoOf(stationById(o)) === who).length;
-      const [art, noun] = who ? ['the', who] : ['a', 'station'];
-      return nth ? `${art} ${ORDINALS[nth]} ${noun}` : `${art} ${noun}`;
+      return who ? msg('station-party', { nth, who }) : msg('station-party-lot', { nth });
     },
     get glyph() { return KINDS[st()?.kind]?.glyph || 'crate'; },
-    get empty() { return 'nothing to learn yet'; },
+    get empty() { return msg('station-party-empty'); },
     // The fighter, one a station: the deep draws no counter for it.
     post: { key: `${id}job`, job: JOB.FIGHT, station: id },
     // Open once it stands: a Recruit's board is where its kind is picked.
@@ -125,12 +123,12 @@ for (const id of PARTY_IDS) {
 // The shields come after, since they have no ground and answer to no pointer.
 export const STATIONS = [
   // No board: the casino's decisions are levers on the building (levers.js).
-  { key: 'casino', name: 'the casino', glyph: 'die', open: () => S.casinoOpen, stand: () => casino, board: null,
+  { key: 'casino', name: msg('station-casino'), glyph: 'die', open: () => S.casinoOpen, stand: () => casino, board: null,
     after: ['quarry'],
     // The yard has been invested in: a second rock, not any one building.
     needs: () => S.boulderNo >= 2 },
-  { key: 'filter', name: 'the air filter', glyph: 'balloon',
-    page: 'filter', empty: 'nothing to fit', post: { key: 'filterjob', job: JOB.PURIFY },
+  { key: 'filter', name: msg('station-filter'), glyph: 'balloon',
+    page: 'filter', empty: msg('station-filter-empty'), post: { key: 'filterjob', job: JOB.PURIFY },
     open: () => S.filterOpen, stand: () => filter, board: 'filterBoardOpen',
     after: [],
     // After the first rain (the problem arriving), after the sky's readout has
@@ -142,16 +140,16 @@ export const STATIONS = [
   // tight margin: `SHED_GAP` is much narrower than `BRIDGE_RUN`, so the usual
   // eight cells would reach from the shed onto the ramp and open the board
   // there.
-  { key: 'quarry', name: 'the quarry', glyph: 'hoist',
-    empty: 'the quarry is as deep as it goes', post: { key: 'quarryjob', job: JOB.QUARRY, kit: true },
+  { key: 'quarry', name: msg('station-quarry'), glyph: 'hoist',
+    empty: msg('station-quarry-empty'), post: { key: 'quarryjob', job: JOB.QUARRY, kit: true },
     open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
     reach: { right: 1 },
     after: ['farm'],
     // the net failing opens it (DESIGN.md, "The barriers are the gates");
     // never in the demo, which ends there
     needs: () => shieldDone('net') && !demoOn() },
-  { key: 'farm', name: 'the farm', glyph: 'furrow',
-    empty: 'the ground is all broken', post: { key: 'farmjob', job: JOB.FARM, kit: true },
+  { key: 'farm', name: msg('station-farm'), glyph: 'furrow',
+    empty: msg('station-farm-empty'), post: { key: 'farmjob', job: JOB.FARM, kit: true },
     open: () => S.farmOpen, stand: () => farmShed(), board: 'farmBoardOpen',
     after: [],
     // Sticky: `nearly` reads the dust in the hole, and as a plain `show` the
@@ -159,22 +157,22 @@ export const STATIONS = [
     needs: () => shieldDone('props') && nearly(FARM_DUST), sticky: true },
   // The hut, not the plot: a pot answers to its own picker (potpick.js), and
   // a pointer near a cauldron must not throw the shop menu over it.
-  { key: 'apothecary', name: 'the apothecary', glyph: 'pot',
-    page: 'apothboard', shop: 'apothshop', empty: 'the pot stands cold', post: { key: 'stirjob', job: JOB.STIR },
+  { key: 'apothecary', name: msg('station-apothecary'), glyph: 'pot',
+    page: 'apothboard', shop: 'apothshop', empty: msg('station-apothecary-empty'), post: { key: 'stirjob', job: JOB.STIR },
     open: () => S.apothecaryOpen, stand: () => apothHut(), board: 'apothBoardOpen',
     after: ['farm'],
     // not in the demo: the farm is the last place it sells
     needs: () => S.seenSpore && !demoOn() },
-  { key: 'tower', name: 'the tower', glyph: 'tower',
-    empty: 'nothing stirs in here yet', post: { key: 'skyjob', job: JOB.WIZARD, kit: true, show: () => S.meteorOpen },
+  { key: 'tower', name: msg('station-tower'), glyph: 'tower',
+    empty: msg('station-tower-empty'), post: { key: 'skyjob', job: JOB.WIZARD, kit: true, show: () => S.meteorOpen },
     open: () => S.towerOpen, stand: () => tower, board: 'towerBoardOpen',
     after: ['quarry'],
     // the arch failing opens it
     needs: () => shieldDone('arch') },
   // The hut stands on ground the rock's own reach covers, so it is asked
   // before the rock in input.js's cascade.
-  { key: 'shack', name: 'the shack', glyph: 'hut',
-    empty: 'the tools are all on the rock', post: { key: 'mine', job: JOB.ROCK, kit: true, show: () => S.crew > 0,
+  { key: 'shack', name: msg('station-shack'), glyph: 'hut',
+    empty: msg('station-shack-empty'), post: { key: 'mine', job: JOB.ROCK, kit: true, show: () => S.crew > 0,
             at: () => (S.shackOpen ? null : S.cx) },
     open: () => S.shackOpen, stand: () => shack, board: 'shackBoardOpen',
     after: [],
@@ -183,13 +181,13 @@ export const STATIONS = [
     needs: () => S.crew > 0 && nearly(SHACK_DUST), sticky: true },
   // The bench has no door row: the call to build it (raise.js) is its door,
   // and `needs` is what the call asks.
-  { key: 'bench', name: 'the bench', glyph: 'crate',
-    page: 'board', shop: 'shop', empty: 'nothing to sell',
+  { key: 'bench', name: msg('station-bench'), glyph: 'crate',
+    page: 'board', shop: 'shop', empty: msg('station-bench-empty'),
     open: () => S.seenBench, stand: () => bench, board: 'boardOpen',
     after: [],
     needs: () => canAfford() },
-  { key: 'outhouse', name: "the janitor's closet", glyph: 'bucket',
-    page: 'looboard', shop: 'looshop', empty: 'the brooms are all on their hooks', post: { key: 'loojob', job: JOB.JANITOR, kit: true },
+  { key: 'outhouse', name: msg('station-outhouse'), glyph: 'bucket',
+    page: 'looboard', shop: 'looshop', empty: msg('station-outhouse-empty'), post: { key: 'loojob', job: JOB.JANITOR, kit: true },
     open: () => S.outhouseOpen, stand: () => outhouse, board: 'looBoardOpen',
     after: [],
     // Once you have seen why you want one: five patches of mess nobody is
@@ -201,7 +199,7 @@ export const STATIONS = [
   // the bench's board; the strip between them belongs to neither, which is
   // what the safe wedge needs. Nothing above the roof either. Nobody sells
   // the house: it stands from the first hire.
-  { key: 'house', name: 'the house', glyph: 'house',
+  { key: 'house', name: msg('station-house'), glyph: 'house',
     page: 'house', shop: 'crewshop', post: { key: 'carry', job: JOB.HAUL, fixed: true, kit: true },
     open: () => S.crew > 0, stand: () => houseRect(), board: 'houseBoardOpen',
     reach: { right: 2, up: 0 },
@@ -209,20 +207,20 @@ export const STATIONS = [
   // The books open once the hole has had something in it: a rate measured
   // over a yard that has never earned anything is a column of noughts. Nobody
   // sells them either.
-  { key: 'stats', name: 'the books', glyph: 'sack',
-    empty: 'nothing has come in yet',
+  { key: 'stats', name: msg('station-stats'), glyph: 'sack',
+    empty: msg('station-stats-empty'),
     open: () => S.banked > 0, stand: () => S.noticeboard, board: 'statsBoardOpen',
     after: [], needs: () => false },
 
   // The crusher, the deep's purse, stands from the snatch. It sells nothing
   // and nobody is put on it: its gatherers are lent haulers.
-  { key: 'crusher', name: 'the crusher', glyph: 'sack', open: () => S.snatched, stand: () => crusherRect(), board: null,
+  { key: 'crusher', name: msg('station-crusher'), glyph: 'sack', open: () => S.snatched, stand: () => crusherRect(), board: null,
     after: [], needs: () => false,
     // Its pile is the floor: scales lying at the brim, the gathering behind.
-    pile: () => bedAtBrim(), full: 'the floor is full of scales' },
+    pile: () => bedAtBrim(), full: msg('station-crusher-full') },
   // The pods, the deep's houses, standing from the snatch with the sqwife's
   // in them. Another pod is sold on their own board; nobody is put on them.
-  { key: 'pods', name: 'the pods', glyph: 'house', empty: 'nothing to build',
+  { key: 'pods', name: msg('station-pods'), glyph: 'house', empty: msg('station-pods-empty'),
     open: () => S.pods > 0, stand: () => podsRect(), board: 'podsBoardOpen',
     after: [], needs: () => false },
   // The party's stations (docs/wave-party.md): a row an id, not a kind, since

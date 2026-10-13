@@ -2,6 +2,8 @@
 // --- the meteor, and the wizards who work it ------------------------------------
 // How much of the meteor is core, as a share of the radius: a dig you can see
 // the end of, the grey shrinking until red shows through.
+import { msg } from '../lang.js';
+
 export const METEOR_CORE = 0.44;
 // Sparks a cell of it is worth: the crust, and then the fire under it. The
 // whole of a star is hot, so everything it sheds is the red; the core is
@@ -29,16 +31,16 @@ export const WIZ_MS = 2600;
 // as fast" is worth more than five rungs of nine per cent. Worded as what
 // changes, in the plainest numbers there are.
 export const SPELLS = [
-  { key: 'drive',  name: 'speed the machines',   spark: 135,
-    note: 'every machine in the yard runs 50% faster' },
-  { key: 'luck',   name: 'enrich the quarry',    spark: 105,
-    note: 'every dig in the quarry brings up 25% more ore' },
-  { key: 'gmo',    name: 'genetically modify crops', spark: 105,
-    note: 'every crop is 25% bigger' },
-  { key: 'thrift', name: 'cheapen the houses',   spark: 90,
-    note: 'every house from now on is 75% cheaper' },
-  { key: 'sweep',  name: 'quicken the janitors', spark: 75,
-    note: 'janitors shovel and walk twice as fast' }
+  { key: 'drive',  name: msg('spell-drive'),   spark: 135,
+    note: msg('spell-drive-note') },
+  { key: 'luck',   name: msg('spell-luck'),    spark: 105,
+    note: msg('spell-luck-note') },
+  { key: 'gmo',    name: msg('spell-gmo'), spark: 105,
+    note: msg('spell-gmo-note') },
+  { key: 'thrift', name: msg('spell-thrift'),   spark: 90,
+    note: msg('spell-thrift-note') },
+  { key: 'sweep',  name: msg('spell-sweep'), spark: 75,
+    note: msg('spell-sweep-note') }
 ];
 export const SPELL_DRIVE = 1.5;      // what each one is worth
 export const SPELL_LUCK = 1.25;

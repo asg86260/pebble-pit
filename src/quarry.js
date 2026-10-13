@@ -36,6 +36,7 @@ import { tidyStep } from './tidy.js';
 import { registerRows, ahead } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 import { registerBoard } from './boardrows.js';
+import { msg } from './lang.js';
 
 // Where the two quarry ladders stand, clamped to their length (`tierLevel`).
 export const paceLadder = () => tierLevel('quarryPaceLevel');
@@ -865,25 +866,25 @@ const QUARRY_YIELD = tierRows({
   site: 'quarry', board: 'quarry',
   show: () => S.quarryOpen,
   bands: [
-    { key: 'seam',    name: 'ore yield',     coins: [] },
-    { key: 'seam2',   name: 'ore yield',  coins: ['shard'] },
-    { key: 'seam3',   name: 'ore yield', coins: ['shard', 'spore'] },
+    { key: 'seam',    name: msg('row-seam'),     coins: [] },
+    { key: 'seam2',   name: msg('row-seam'),  coins: ['shard'] },
+    { key: 'seam3',   name: msg('row-seam'), coins: ['shard', 'spore'] },
     // The spark rung. `restore` still knows the old key, `labseam`.
-    { key: 'seam4',   name: 'ore yield', coins: ['shard', 'spore', 'spark'] }
+    { key: 'seam4',   name: msg('row-seam'), coins: ['shard', 'spore', 'spark'] }
   ]
 });
 
 const QUARRY_SPEED = tierRows({
   field: 'quarryPaceLevel',
-  unit: 'trips/min', pct: true, does: 'dig',
+  unit: 'trips/min', pct: true, does: msg('does-dig'),
   value: lvl => quarryRate(lvl),
   site: 'quarry', board: 'quarry',
   show: () => S.quarryOpen,
   bands: [
-    { key: 'quarrypace',  name: 'mining speed',     coins: [] },
-    { key: 'quarrypace2', name: 'mining speed',  coins: ['shard'] },
-    { key: 'quarrypace3', name: 'mining speed', coins: ['shard', 'spore'] },
-    { key: 'quarrypace4', name: 'mining speed', coins: ['shard', 'spore', 'spark'] }
+    { key: 'quarrypace',  name: msg('row-quarrypace'),     coins: [] },
+    { key: 'quarrypace2', name: msg('row-quarrypace'),  coins: ['shard'] },
+    { key: 'quarrypace3', name: msg('row-quarrypace'), coins: ['shard', 'spore'] },
+    { key: 'quarrypace4', name: msg('row-quarrypace'), coins: ['shard', 'spore', 'spark'] }
   ]
 });
 
@@ -898,7 +899,7 @@ export const QUARRY_UPGRADES = [
     // `capOfBare` caps quarriers at `benches()`, so what you are buying is
     // another quarrier's shovel at the face; the cut a bench deeper is what
     // it leaves behind.
-    name: 'another shovel',
+    name: msg('row-quarrybench'),
     // What the from/to is counting, so the gain reads "1 -> 2 shovels".
     unit: 'shovels',
     from: () => benches(),
@@ -920,7 +921,7 @@ export const QUARRY_UPGRADES = [
     // put the hats bought for this station in a drawer.
     key: 'jaw',
     kind: 'machine', site: 'quarry',
-    name: 'the drill',
+    name: msg('machine-jaw'),
     bill: () => JAW_BILL,
     buy: () => { buyMachine('jaw'); rebalance(); },
     waits: () => { const left = hatsShort(JOB.QUARRY);
@@ -934,16 +935,16 @@ export const QUARRY_UPGRADES = [
   // The drill's own ladder, three rungs of red (`tuneRow` in machines.js).
   // Keyed 'jaw', which is what every save has in it; the words are what
   // anybody reads.
-  tuneRow('jaw', 'drill bite',
-          () => `the drill bites ${MACHINE_TUNE}x harder`, 'quarry')
+  tuneRow('jaw', msg('row-tunejaw'),
+          () => msg('row-tunejaw-note', { n: MACHINE_TUNE }), 'quarry')
 ];
 
 // Two headings: who works the hole (the blaster's lamps lodge here from
 // upgrades/rows-kit.js, see `lodgers`), and what the hole pays. Every card of
 // both ladders is named; only the band you are on answers `true` to `show`.
 export const QUARRY_SECTIONS = [
-  { title: JOB.QUARRY, heads: () => S[JOB.QUARRY], keys: ['quarrybench', 'blaster', 'jaw', 'tunejaw'] },
-  { title: 'the ore',   keys: ['seam', 'quarrypace'] }
+  { title: msg('sect-quarriers'), heads: () => S[JOB.QUARRY], keys: ['quarrybench', 'blaster', 'jaw', 'tunejaw'] },
+  { title: msg('sect-ore'),   keys: ['seam', 'quarrypace'] }
 ];
 
 

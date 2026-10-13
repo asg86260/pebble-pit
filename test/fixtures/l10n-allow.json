@@ -1,0 +1,16 @@
+{
+ "about": "Strings in src/ that read as words but no player reads (test/l10n.test.mjs). files: skipped whole -- the dev panel, the browser checks, the console handles, the scene list, the rules. strings: by file, each literal as it stands in the source.",
+ "files": [
+  "src/dev.js",
+  "src/selftest.js",
+  "src/selftest/",
+  "src/hooks.js",
+  "src/console.js",
+  "src/scenes.js",
+  "src/scenesheet.js",
+  "src/report.js",
+  "src/verify.js",
+  "src/migrations/"
+ ],
+ "strings": {}
+}

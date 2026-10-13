@@ -47,7 +47,9 @@ for (const e of list) {
       if (!rel.startsWith('.')) rel = './' + rel;
       const m = src.match(/^import [^;]*?;[^\n]*\n/m);
       const line = `import { msg } from '${rel}';\n`;
-      src = m ? src.slice(0, m.index) + line + src.slice(m.index) : line + src;
+      // before the first import, or else after the header comment
+      const head = src.match(/^(\/\/[^\n]*\n)*\n?/)[0];
+      src = m ? src.slice(0, m.index) + line + src.slice(m.index) : head + line + (head ? '\n' : '') + src.slice(head.length);
     }
     files.set(e.file, src);
   }

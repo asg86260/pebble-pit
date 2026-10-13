@@ -2420,7 +2420,7 @@
   },
   "obj-barrier-cancel": {
    "text": "cancel ×${n}",
-   "from": "src/objbarrier.js:142"
+   "from": "src/shop.js:619"
   },
   "ach-firstgrain-name": {
    "text": "makin' money",
@@ -2752,7 +2752,7 @@
   },
   "station-bench": {
    "text": "the bench",
-   "from": "src/shop.js:916"
+   "from": "src/stations.js:186"
   },
   "other-skip-touch": {
    "text": "hold to skip",
@@ -3285,6 +3285,702 @@
   "idx-serpent-text": {
    "text": "lives in the deep, and swallowed the sqhusband.",
    "from": "src/config/index.js:176"
+  },
+  "machine-jaw": {
+   "text": "the drill",
+   "from": "src/quarry.js:923"
+  },
+  "machine-ram": {
+   "text": "the ram",
+   "from": "src/upgrades/rows-bench.js:78"
+  },
+  "machine-tiller": {
+   "text": "the tiller",
+   "from": "src/farm.js:312"
+  },
+  "machine-belt": {
+   "text": "the belt",
+   "from": "src/upgrades/rows-bench.js:95"
+  },
+  "machine-sphere": {
+   "text": "the sphere",
+   "from": "src/tower.js:230"
+  },
+  "machine-roomba": {
+   "text": "the roombas",
+   "from": "src/machines.js:46"
+  },
+  "does-hold": {
+   "text": "hold",
+   "from": "src/upgrades/rows-bench.js:16"
+  },
+  "row-carry": {
+   "text": "carry amount",
+   "from": "src/upgrades/rows-bench.js:22"
+  },
+  "does-hit": {
+   "text": "hit",
+   "from": "src/upgrades/rows-rock.js:14"
+  },
+  "row-speed": {
+   "text": "auto swing",
+   "from": "src/upgrades/rows-bench.js:32"
+  },
+  "does-throw": {
+   "text": "throw",
+   "from": "src/upgrades/rows-bench.js:40"
+  },
+  "row-toss": {
+   "text": "throw pace",
+   "from": "src/upgrades/rows-bench.js:44"
+  },
+  "does-reach": {
+   "text": "reach",
+   "from": "src/upgrades/rows-bench.js:49"
+  },
+  "row-reach": {
+   "text": "throw reach",
+   "from": "src/upgrades/rows-bench.js:53"
+  },
+  "does-per-swing": {
+   "text": "per swing",
+   "from": "src/upgrades/rows-rock.js:24"
+  },
+  "row-pick": {
+   "text": "pick damage",
+   "from": "src/upgrades/rows-bench.js:63"
+  },
+  "row-autotoss": {
+   "text": "hold to toss",
+   "from": "src/upgrades/rows-bench.js:105"
+  },
+  "row-auto": {
+   "text": "hold to mine",
+   "from": "src/upgrades/rows-bench.js:119"
+  },
+  "does-carry": {
+   "text": "carry",
+   "from": "src/upgrades/rows-kit.js:148"
+  },
+  "row-haulcarry": {
+   "text": "hauler carry",
+   "from": "src/upgrades/rows-crew.js:16"
+  },
+  "does-walk": {
+   "text": "walk",
+   "from": "src/upgrades/rows-crew.js:21"
+  },
+  "row-haulpace": {
+   "text": "hauler speed",
+   "from": "src/upgrades/rows-crew.js:25"
+  },
+  "does-crit": {
+   "text": "crit",
+   "from": "src/upgrades/rows-luck.js:22"
+  },
+  "row-critchance": {
+   "text": "crit chance",
+   "from": "src/upgrades/rows-luck.js:16"
+  },
+  "row-critmult": {
+   "text": "crit damage",
+   "from": "src/upgrades/rows-luck.js:26"
+  },
+  "row-rockhandspeed": {
+   "text": "swing speed",
+   "from": "src/upgrades/rows-rock.js:18"
+  },
+  "row-rockhandpick": {
+   "text": "digger pick damage",
+   "from": "src/upgrades/rows-rock.js:28"
+  },
+  "row-unlockapothecary": {
+   "text": "build the apothecary",
+   "from": "src/upgrades/rows-apothecary.js:13"
+  },
+  "row-unlockapothecary-note": {
+   "text": "brew temporary boosts for your sqworkers",
+   "from": "src/upgrades/rows-apothecary.js:14"
+  },
+  "row-unlockapothecary-blurb": {
+   "text": "brews crew tonics",
+   "from": "src/upgrades/rows-apothecary.js:15"
+  },
+  "row-unlockcasino": {
+   "text": "build the casino",
+   "from": "src/upgrades/rows-casino.js:12"
+  },
+  "row-unlockcasino-note": {
+   "text": "a table that takes a stake and pays double or nothing",
+   "from": "src/upgrades/rows-casino.js:13"
+  },
+  "row-unlockcasino-blurb": {
+   "text": "double or nothing",
+   "from": "src/upgrades/rows-casino.js:14"
+  },
+  "row-unlockfarm": {
+   "text": "build the farm",
+   "from": "src/upgrades/rows-farm.js:7"
+  },
+  "row-unlockfarm-note": {
+   "text": "grow some crops",
+   "from": "src/upgrades/rows-farm.js:8"
+  },
+  "row-unlockfarm-blurb": {
+   "text": "grow crops",
+   "from": "src/upgrades/rows-farm.js:9"
+  },
+  "row-unlockfilter": {
+   "text": "build the air filter",
+   "from": "src/upgrades/rows-filter.js:16"
+  },
+  "row-unlockfilter-note": {
+   "text": "sells the balloons that pull the haze back out of the sky, and reads the sky",
+   "from": "src/upgrades/rows-filter.js:17"
+  },
+  "row-unlockfilter-blurb": {
+   "text": "clears the sky",
+   "from": "src/upgrades/rows-filter.js:18"
+  },
+  "row-unlockouthouse": {
+   "text": "build the janitor's closet",
+   "from": "src/upgrades/rows-outhouse.js:16"
+  },
+  "row-unlockouthouse-note": {
+   "text": "you've seen enough poop, lets clean it up",
+   "from": "src/upgrades/rows-outhouse.js:17"
+  },
+  "row-unlockouthouse-blurb": {
+   "text": "poop, cleaned up",
+   "from": "src/upgrades/rows-outhouse.js:18"
+  },
+  "row-unlockquarry": {
+   "text": "build the quarry",
+   "from": "src/upgrades/rows-quarry.js:9"
+  },
+  "row-unlockquarry-note": {
+   "text": "start digging for ore",
+   "from": "src/upgrades/rows-quarry.js:10"
+  },
+  "row-unlockquarry-blurb": {
+   "text": "dig for ore",
+   "from": "src/upgrades/rows-quarry.js:11"
+  },
+  "row-unlockshack": {
+   "text": "build the shack",
+   "from": "src/upgrades/rows-shack.js:17"
+  },
+  "row-unlockshack-note": {
+   "text": "Digging upgrades",
+   "from": "src/upgrades/rows-shack.js:18"
+  },
+  "row-unlockshack-blurb": {
+   "text": "gear for the rock",
+   "from": "src/upgrades/rows-shack.js:19"
+  },
+  "row-unlocktower": {
+   "text": "discover the tower",
+   "from": "src/upgrades/rows-tower.js:12"
+  },
+  "row-unlocktower-note": {
+   "text": "summon some wizards",
+   "from": "src/upgrades/rows-tower.js:13"
+  },
+  "row-props": {
+   "text": "wooden barrier",
+   "from": "src/upgrades/rows-shields.js:23"
+  },
+  "row-props-note": {
+   "text": "quickly try to build a barrier to save your sqwife",
+   "from": "src/upgrades/rows-shields.js:24"
+  },
+  "row-net": {
+   "text": "the net",
+   "from": "src/upgrades/rows-shields.js:33"
+  },
+  "row-net-note": {
+   "text": "that didn't work, try catching the rock with a net?",
+   "from": "src/upgrades/rows-shields.js:34"
+  },
+  "row-arch": {
+   "text": "cut the arch",
+   "from": "src/upgrades/rows-shields.js:44"
+  },
+  "row-arch-note": {
+   "text": "still not sturdy enough. lets build a stone arch.",
+   "from": "src/upgrades/rows-shields.js:45"
+  },
+  "row-dome": {
+   "text": "maybe the wizards would know?",
+   "from": "src/upgrades/rows-shields.js:58"
+  },
+  "row-dome-note": {
+   "text": "everything of the ground has failed. what is left is not of the ground",
+   "from": "src/upgrades/rows-shields.js:59"
+  },
+  "kit-breaker": {
+   "text": "breaker",
+   "from": "src/upgrades/rows-kit.js:28"
+  },
+  "kit-breaker-does": {
+   "text": "twice the bite",
+   "from": "src/upgrades/rows-kit.js:29"
+  },
+  "kit-breaker-place": {
+   "text": "the rock",
+   "from": "src/upgrades/rows-kit.js:29"
+  },
+  "kit-carter": {
+   "text": "carter",
+   "from": "src/upgrades/rows-kit.js:31"
+  },
+  "kit-carter-does": {
+   "text": "twice the load",
+   "from": "src/upgrades/rows-kit.js:32"
+  },
+  "kit-carter-place": {
+   "text": "the pit",
+   "from": "src/upgrades/rows-kit.js:32"
+  },
+  "kit-blaster": {
+   "text": "blaster",
+   "from": "src/upgrades/rows-kit.js:34"
+  },
+  "kit-blaster-does": {
+   "text": "twice the trips",
+   "from": "src/upgrades/rows-kit.js:35"
+  },
+  "kit-blaster-place": {
+   "text": "the quarry",
+   "from": "src/upgrades/rows-kit.js:35"
+  },
+  "kit-grower": {
+   "text": "grower",
+   "from": "src/upgrades/rows-kit.js:37"
+  },
+  "kit-grower-does": {
+   "text": "twice the tending",
+   "from": "src/upgrades/rows-kit.js:38"
+  },
+  "kit-grower-place": {
+   "text": "the farm",
+   "from": "src/upgrades/rows-kit.js:38"
+  },
+  "row-driver": {
+   "text": "forklift",
+   "from": "src/upgrades/rows-kit.js:126"
+  },
+  "row-driver-note": {
+   "text": "a forklift that drives itself: it hauls to the pit with nobody aboard, and smokes",
+   "from": "src/upgrades/rows-kit.js:127"
+  },
+  "row-liftload": {
+   "text": "forklift load",
+   "from": "src/upgrades/rows-kit.js:152"
+  },
+  "does-drive": {
+   "text": "drive",
+   "from": "src/upgrades/rows-kit.js:155"
+  },
+  "row-liftpace": {
+   "text": "forklift speed",
+   "from": "src/upgrades/rows-kit.js:159"
+  },
+  "sect-and": {
+   "text": "and",
+   "from": "src/shop.js:57"
+  },
+  "card-building": {
+   "text": "building",
+   "from": "src/shop.js:742"
+  },
+  "card-another": {
+   "text": "+ another",
+   "from": "src/shop.js:622"
+  },
+  "card-queued": {
+   "text": "queued",
+   "from": "src/shop.js:742"
+  },
+  "card-done": {
+   "text": "done",
+   "from": "src/shop.js:729"
+  },
+  "station-party-empty": {
+   "text": "nothing to learn yet",
+   "from": "src/stations.js:86"
+  },
+  "station-casino": {
+   "text": "the casino",
+   "from": "src/stations.js:128"
+  },
+  "station-filter": {
+   "text": "the air filter",
+   "from": "src/stations.js:132"
+  },
+  "station-filter-empty": {
+   "text": "nothing to fit",
+   "from": "src/stations.js:133"
+  },
+  "station-quarry": {
+   "text": "the quarry",
+   "from": "src/stations.js:145"
+  },
+  "station-quarry-empty": {
+   "text": "the quarry is as deep as it goes",
+   "from": "src/stations.js:146"
+  },
+  "station-farm": {
+   "text": "the farm",
+   "from": "src/stations.js:153"
+  },
+  "station-farm-empty": {
+   "text": "the ground is all broken",
+   "from": "src/stations.js:154"
+  },
+  "station-apothecary": {
+   "text": "the apothecary",
+   "from": "src/stations.js:162"
+  },
+  "station-apothecary-empty": {
+   "text": "the pot stands cold",
+   "from": "src/stations.js:163"
+  },
+  "station-tower": {
+   "text": "the tower",
+   "from": "src/tower.js:229"
+  },
+  "station-tower-empty": {
+   "text": "nothing stirs in here yet",
+   "from": "src/stations.js:169"
+  },
+  "station-shack": {
+   "text": "the shack",
+   "from": "src/stations.js:176"
+  },
+  "station-shack-empty": {
+   "text": "the tools are all on the rock",
+   "from": "src/stations.js:177"
+  },
+  "station-bench-empty": {
+   "text": "nothing to sell",
+   "from": "src/stations.js:187"
+  },
+  "station-outhouse": {
+   "text": "the janitor's closet",
+   "from": "src/outhouse.js:64"
+  },
+  "station-outhouse-empty": {
+   "text": "the brooms are all on their hooks",
+   "from": "src/stations.js:192"
+  },
+  "station-house": {
+   "text": "the house",
+   "from": "src/stations.js:204"
+  },
+  "station-stats": {
+   "text": "the books",
+   "from": "src/stations.js:212"
+  },
+  "station-stats-empty": {
+   "text": "nothing has come in yet",
+   "from": "src/stations.js:213"
+  },
+  "station-crusher": {
+   "text": "the crusher",
+   "from": "src/stations.js:219"
+  },
+  "station-crusher-full": {
+   "text": "the floor is full of scales",
+   "from": "src/stations.js:222"
+  },
+  "station-pods": {
+   "text": "the pods",
+   "from": "src/stations.js:225"
+  },
+  "station-pods-empty": {
+   "text": "nothing to build",
+   "from": "src/stations.js:225"
+  },
+  "spell-drive": {
+   "text": "speed the machines",
+   "from": "src/config/tower.js:32"
+  },
+  "spell-drive-note": {
+   "text": "every machine in the yard runs 50% faster",
+   "from": "src/config/tower.js:33"
+  },
+  "spell-luck": {
+   "text": "enrich the quarry",
+   "from": "src/config/tower.js:34"
+  },
+  "spell-luck-note": {
+   "text": "every dig in the quarry brings up 25% more ore",
+   "from": "src/config/tower.js:35"
+  },
+  "spell-gmo": {
+   "text": "genetically modify crops",
+   "from": "src/config/tower.js:36"
+  },
+  "spell-gmo-note": {
+   "text": "every crop is 25% bigger",
+   "from": "src/config/tower.js:37"
+  },
+  "spell-thrift": {
+   "text": "cheapen the houses",
+   "from": "src/config/tower.js:38"
+  },
+  "spell-thrift-note": {
+   "text": "every house from now on is 75% cheaper",
+   "from": "src/config/tower.js:39"
+  },
+  "spell-sweep": {
+   "text": "quicken the janitors",
+   "from": "src/config/tower.js:40"
+  },
+  "spell-sweep-note": {
+   "text": "janitors shovel and walk twice as fast",
+   "from": "src/config/tower.js:41"
+  },
+  "row-wizspeed": {
+   "text": "quicker casting",
+   "from": "src/tower.js:111"
+  },
+  "row-wizspeed-note": {
+   "text": "every wizard throws a bolt at the star ${pct}% more often",
+   "from": "src/tower.js:114"
+  },
+  "does-cast": {
+   "text": "cast",
+   "from": "src/tower.js:117"
+  },
+  "row-wizpower": {
+   "text": "heavier bolts",
+   "from": "src/tower.js:131"
+  },
+  "row-wizpower-note": {
+   "text": "each bolt knocks ${next} cells off the star instead of ${now}",
+   "from": "src/tower.js:132"
+  },
+  "row-wizard": {
+   "text": "summon a wizard",
+   "from": "src/tower.js:147"
+  },
+  "row-wizard-note": {
+   "text": "flies up and bolts the star apart for sparks, and summons a new one when the sky is empty",
+   "from": "src/tower.js:148"
+  },
+  "row-sphere-note": {
+   "text": "capture the power of a star",
+   "from": "src/tower.js:172"
+  },
+  "row-tunesphere": {
+   "text": "sphere yield",
+   "from": "src/tower.js:184"
+  },
+  "row-tunesphere-note": {
+   "text": "the sphere catches ${n}x the light",
+   "from": "src/tower.js:185"
+  },
+  "row-dome-tower": {
+   "text": "conjure the barrier",
+   "from": "src/tower.js:195"
+  },
+  "row-dome-tower-note": {
+   "text": "nothing can get past this thing.",
+   "from": "src/tower.js:196"
+  },
+  "row-portal": {
+   "text": "conjure the portal",
+   "from": "src/tower.js:209"
+  },
+  "row-portal-note": {
+   "text": "a way down into the abyss, held open.",
+   "from": "src/tower.js:210"
+  },
+  "sect-enchantments": {
+   "text": "enchantments",
+   "from": "src/tower.js:231"
+  },
+  "sect-abyss": {
+   "text": "the abyss",
+   "from": "src/tower.js:232"
+  },
+  "row-crop": {
+   "text": "crop yield",
+   "from": "src/farm.js:261"
+  },
+  "does-tend": {
+   "text": "tend",
+   "from": "src/farm.js:267"
+  },
+  "row-tend": {
+   "text": "farming speed",
+   "from": "src/farm.js:275"
+  },
+  "row-farmplot": {
+   "text": "another plot",
+   "from": "src/farm.js:286"
+  },
+  "row-tunetiller": {
+   "text": "tiller pace",
+   "from": "src/farm.js:324"
+  },
+  "row-tunetiller-note": {
+   "text": "the tiller works ${n}x faster",
+   "from": "src/farm.js:325"
+  },
+  "sect-crop": {
+   "text": "the crop",
+   "from": "src/farm.js:333"
+  },
+  "row-seam": {
+   "text": "ore yield",
+   "from": "src/quarry.js:872"
+  },
+  "does-dig": {
+   "text": "dig",
+   "from": "src/quarry.js:878"
+  },
+  "row-quarrypace": {
+   "text": "mining speed",
+   "from": "src/quarry.js:886"
+  },
+  "row-quarrybench": {
+   "text": "another shovel",
+   "from": "src/quarry.js:901"
+  },
+  "row-tunejaw": {
+   "text": "drill bite",
+   "from": "src/quarry.js:937"
+  },
+  "row-tunejaw-note": {
+   "text": "the drill bites ${n}x harder",
+   "from": "src/quarry.js:938"
+  },
+  "sect-ore": {
+   "text": "the ore",
+   "from": "src/quarry.js:946"
+  },
+  "does-fly": {
+   "text": "fly",
+   "from": "src/filter.js:64"
+  },
+  "row-balloonspeed": {
+   "text": "balloon speed",
+   "from": "src/filter.js:68"
+  },
+  "does-filter": {
+   "text": "filter",
+   "from": "src/filter.js:73"
+  },
+  "row-power": {
+   "text": "balloon power",
+   "from": "src/filter.js:77"
+  },
+  "row-balloon": {
+   "text": "the balloon",
+   "from": "src/filter.js:89"
+  },
+  "row-balloon-note": {
+   "text": "rides the clouds and lets what it catches fall under itself",
+   "from": "src/filter.js:90"
+  },
+  "row-recycler": {
+   "text": "the recycler",
+   "from": "src/filter.js:116"
+  },
+  "row-recycler-note": {
+   "text": "what the balloons catch comes down as pebbles instead of muck",
+   "from": "src/filter.js:117"
+  },
+  "sect-equipment": {
+   "text": "equipment",
+   "from": "src/filter.js:127"
+  },
+  "row-loopost": {
+   "text": "another cap",
+   "from": "src/outhouse.js:23"
+  },
+  "row-roomba": {
+   "text": "a roomba",
+   "from": "src/outhouse.js:40"
+  },
+  "row-roomba-note": {
+   "text": "drives to the mess on the open yard and brings it home; one janitor minds them, and they smoke",
+   "from": "src/outhouse.js:41"
+  },
+  "row-tuneroomba": {
+   "text": "roomba suction",
+   "from": "src/outhouse.js:56"
+  },
+  "row-tuneroomba-note": {
+   "text": "the roombas take in ${n}x faster",
+   "from": "src/outhouse.js:57"
+  },
+  "tonic-stew": {
+   "text": "hearty stew",
+   "from": "src/apothecary.js:71"
+  },
+  "tonic-strong": {
+   "text": "strong brew",
+   "from": "src/apothecary.js:74"
+  },
+  "tonic-brace": {
+   "text": "bracing tonic",
+   "from": "src/apothecary.js:77"
+  },
+  "unit-faster": {
+   "text": "faster",
+   "from": "src/apothecary.js:535"
+  },
+  "unit-stronger": {
+   "text": "stronger",
+   "from": "src/apothecary.js:535"
+  },
+  "unit-crit": {
+   "text": "crit",
+   "from": "src/apothecary.js:535"
+  },
+  "row-potkeep": {
+   "text": "keep brewing",
+   "from": "src/apothecary.js:560"
+  },
+  "row-potkeep-on": {
+   "text": "batch after batch",
+   "from": "src/apothecary.js:564"
+  },
+  "row-potkeep-off": {
+   "text": "just this one",
+   "from": "src/apothecary.js:565"
+  },
+  "row-anotherpot": {
+   "text": "another pot",
+   "from": "src/apothecary.js:578"
+  },
+  "does-lasts": {
+   "text": "lasts",
+   "from": "src/apothecary.js:594"
+  },
+  "row-bufflength": {
+   "text": "brew concentration",
+   "from": "src/apothecary.js:596"
+  },
+  "row-brewdoses": {
+   "text": "batch size",
+   "from": "src/apothecary.js:599"
+  },
+  "sect-pot": {
+   "text": "the pot",
+   "from": "src/apothecary.js:605"
+  },
+  "sect-brewing": {
+   "text": "brewing",
+   "from": "src/apothecary.js:606"
+  },
+  "sect-potency": {
+   "text": "potency",
+   "from": "src/apothecary.js:607"
   }
  },
  "cases": {
@@ -3855,6 +4551,1145 @@
    {
     "args": {},
     "text": "the story"
+   }
+  ],
+  "job-rockhands": [
+   {
+    "args": {},
+    "text": "diggers"
+   }
+  ],
+  "job-haulers": [
+   {
+    "args": {},
+    "text": "haulers"
+   }
+  ],
+  "job-quarriers": [
+   {
+    "args": {},
+    "text": "miners"
+   }
+  ],
+  "job-farmhands": [
+   {
+    "args": {},
+    "text": "farmers"
+   }
+  ],
+  "job-scholars": [
+   {
+    "args": {},
+    "text": "scholars"
+   }
+  ],
+  "job-purifiers": [
+   {
+    "args": {},
+    "text": "air purifiers"
+   }
+  ],
+  "job-stirrers": [
+   {
+    "args": {},
+    "text": "apothecary"
+   }
+  ],
+  "job-janitors": [
+   {
+    "args": {},
+    "text": "janitors"
+   }
+  ],
+  "job-wizards": [
+   {
+    "args": {},
+    "text": "wizards"
+   }
+  ],
+  "job-builders": [
+   {
+    "args": {},
+    "text": "builders"
+   }
+  ],
+  "job-fighters": [
+   {
+    "args": {},
+    "text": "fighters"
+   }
+  ],
+  "job-gatherers": [
+   {
+    "args": {},
+    "text": "gatherers"
+   }
+  ],
+  "job-delvers": [
+   {
+    "args": {},
+    "text": "deep builders"
+   }
+  ],
+  "unit-per-s": [
+   {
+    "args": {
+     "icon": "<i class=\"dust\"></i>"
+    },
+    "text": "<i class=\"dust\"></i>/s"
+   }
+  ],
+  "unit-per-min": [
+   {
+    "args": {
+     "icon": "<i class=\"shard\"></i>"
+    },
+    "text": "<i class=\"shard\"></i>/min"
+   }
+  ],
+  "unit-per-dig": [
+   {
+    "args": {
+     "icon": "<i class=\"shard\"></i>"
+    },
+    "text": "<i class=\"shard\"></i>/dig"
+   }
+  ],
+  "unit-per-harvest": [
+   {
+    "args": {
+     "icon": "<i class=\"spore\"></i>"
+    },
+    "text": "<i class=\"spore\"></i>/harvest"
+   }
+  ],
+  "unit-hits-s": [
+   {
+    "args": {},
+    "text": "hits/s"
+   }
+  ],
+  "unit-hit-s": [
+   {
+    "args": {},
+    "text": "hit/s"
+   }
+  ],
+  "unit-throws-s": [
+   {
+    "args": {},
+    "text": "throws/s"
+   }
+  ],
+  "unit-bolts-min": [
+   {
+    "args": {},
+    "text": "bolts/min"
+   }
+  ],
+  "unit-cells-bolt": [
+   {
+    "args": {},
+    "text": "cells/bolt"
+   }
+  ],
+  "unit-motes-s": [
+   {
+    "args": {},
+    "text": "motes/s"
+   }
+  ],
+  "unit-plots": [
+   {
+    "args": {},
+    "text": "plots"
+   }
+  ],
+  "unit-shovels": [
+   {
+    "args": {},
+    "text": "shovels"
+   }
+  ],
+  "unit-pots": [
+   {
+    "args": {},
+    "text": "pots"
+   }
+  ],
+  "unit-doses": [
+   {
+    "args": {},
+    "text": "doses"
+   }
+  ],
+  "unit-s": [
+   {
+    "args": {},
+    "text": "s"
+   }
+  ],
+  "unit-dmg": [
+   {
+    "args": {},
+    "text": "dmg"
+   }
+  ],
+  "unit-dmg-s": [
+   {
+    "args": {},
+    "text": "dmg/s"
+   }
+  ],
+  "unit-faster": [
+   {
+    "args": {},
+    "text": "faster"
+   }
+  ],
+  "unit-stronger": [
+   {
+    "args": {},
+    "text": "stronger"
+   }
+  ],
+  "unit-crit": [
+   {
+    "args": {},
+    "text": "crit"
+   }
+  ],
+  "gain-does": [
+   {
+    "args": {
+     "does": "hold",
+     "amount": "3 → 4"
+    },
+    "text": "hold 3 → 4"
+   }
+  ],
+  "unlock-grower": [
+   {
+    "args": {
+     "left": 1,
+     "more": "no"
+    },
+    "text": "buy 1 grower to unlock"
+   },
+   {
+    "args": {
+     "left": 2,
+     "more": "no"
+    },
+    "text": "buy 2 growers to unlock"
+   },
+   {
+    "args": {
+     "left": 1,
+     "more": "yes"
+    },
+    "text": "buy 1 more grower to unlock"
+   },
+   {
+    "args": {
+     "left": 3,
+     "more": "yes"
+    },
+    "text": "buy 3 more growers to unlock"
+   }
+  ],
+  "unlock-blaster": [
+   {
+    "args": {
+     "left": 1,
+     "more": "no"
+    },
+    "text": "buy 1 blaster to unlock"
+   },
+   {
+    "args": {
+     "left": 2,
+     "more": "no"
+    },
+    "text": "buy 2 blasters to unlock"
+   },
+   {
+    "args": {
+     "left": 1,
+     "more": "yes"
+    },
+    "text": "buy 1 more blaster to unlock"
+   },
+   {
+    "args": {
+     "left": 3,
+     "more": "yes"
+    },
+    "text": "buy 3 more blasters to unlock"
+   }
+  ],
+  "price-min": [
+   {
+    "args": {
+     "n": 3
+    },
+    "text": "3 min"
+   }
+  ],
+  "sect-you": [
+   {
+    "args": {},
+    "text": "you"
+   }
+  ],
+  "sect-luck": [
+   {
+    "args": {},
+    "text": "lucky swings"
+   }
+  ],
+  "sect-haulers": [
+   {
+    "args": {},
+    "text": "the haulers"
+   }
+  ],
+  "sect-build": [
+   {
+    "args": {},
+    "text": "build"
+   }
+  ],
+  "row-house": [
+   {
+    "args": {},
+    "text": "another house"
+   }
+  ],
+  "goal-title": [
+   {
+    "args": {},
+    "text": "saving your sqwife"
+   }
+  ],
+  "needs-spore": [
+   {
+    "args": {},
+    "text": "needs crops"
+   }
+  ],
+  "needs-shard": [
+   {
+    "args": {},
+    "text": "needs a quarry"
+   }
+  ],
+  "needs-spark": [
+   {
+    "args": {},
+    "text": "needs a spark"
+   }
+  ],
+  "needs-scale": [
+   {
+    "args": {},
+    "text": "needs a scale"
+   }
+  ],
+  "kit-note": [
+   {
+    "args": {
+     "name": "breaker",
+     "does": "twice the bite",
+     "place": "the rock"
+    },
+    "text": "breaker: twice the bite, at the rock"
+   }
+  ],
+  "row-tuneram": [
+   {
+    "args": {},
+    "text": "ram strike"
+   }
+  ],
+  "row-tuneram-note": [
+   {
+    "args": {
+     "n": 1.5
+    },
+    "text": "the ram strikes 1.5x harder"
+   }
+  ],
+  "station-lab": [
+   {
+    "args": {},
+    "text": "the lab"
+   }
+  ],
+  "station-party": [
+   {
+    "args": {
+     "nth": 0,
+     "who": "Recruit"
+    },
+    "text": "the Recruit"
+   },
+   {
+    "args": {
+     "nth": 1,
+     "who": "Recruit"
+    },
+    "text": "the second Recruit"
+   },
+   {
+    "args": {
+     "nth": 2,
+     "who": "Recruit"
+    },
+    "text": "the third Recruit"
+   },
+   {
+    "args": {
+     "nth": 3,
+     "who": "Recruit"
+    },
+    "text": "the fourth Recruit"
+   },
+   {
+    "args": {
+     "nth": 4,
+     "who": "Recruit"
+    },
+    "text": "the undefined Recruit"
+   },
+   {
+    "args": {
+     "nth": 6,
+     "who": "Recruit"
+    },
+    "text": "the undefined Recruit"
+   }
+  ],
+  "station-party-lot": [
+   {
+    "args": {
+     "nth": 0
+    },
+    "text": "a station"
+   },
+   {
+    "args": {
+     "nth": 1
+    },
+    "text": "a second station"
+   },
+   {
+    "args": {
+     "nth": 2
+    },
+    "text": "a third station"
+   },
+   {
+    "args": {
+     "nth": 3
+    },
+    "text": "a fourth station"
+   },
+   {
+    "args": {
+     "nth": 5
+    },
+    "text": "a undefined station"
+   }
+  ],
+  "spell-drive-blurb": [
+   {
+    "args": {
+     "pct": "50%"
+    },
+    "text": "+50% speed"
+   }
+  ],
+  "spell-luck-blurb": [
+   {
+    "args": {
+     "pct": "25%"
+    },
+    "text": "+25% ore"
+   }
+  ],
+  "spell-gmo-blurb": [
+   {
+    "args": {
+     "pct": "25%"
+    },
+    "text": "+25% spores"
+   }
+  ],
+  "spell-thrift-blurb": [
+   {
+    "args": {
+     "pct": "75%"
+    },
+    "text": "75% cheaper"
+   }
+  ],
+  "spell-sweep-blurb": [
+   {
+    "args": {
+     "x": 2
+    },
+    "text": "2x faster"
+   }
+  ],
+  "sect-farmhands": [
+   {
+    "args": {},
+    "text": "farmhands"
+   }
+  ],
+  "sect-quarriers": [
+   {
+    "args": {},
+    "text": "quarriers"
+   }
+  ],
+  "does-faster": [
+   {
+    "args": {},
+    "text": "faster"
+   }
+  ],
+  "does-stronger": [
+   {
+    "args": {},
+    "text": "stronger"
+   }
+  ],
+  "tonic-gain": [
+   {
+    "args": {
+     "v": 25,
+     "unit": "faster",
+     "secs": 30
+    },
+    "text": "+25% faster, 30 s"
+   }
+  ],
+  "tonic-gain-crit": [
+   {
+    "args": {
+     "v": 8,
+     "secs": 30
+    },
+    "text": "+8 crit, 30 s"
+   }
+  ],
+  "crew-at-rockhands": [
+   {
+    "args": {},
+    "text": "on the rock"
+   }
+  ],
+  "crew-at-haulers": [
+   {
+    "args": {},
+    "text": "at the pit"
+   }
+  ],
+  "crew-at-quarriers": [
+   {
+    "args": {},
+    "text": "in the quarry"
+   }
+  ],
+  "crew-at-farmhands": [
+   {
+    "args": {},
+    "text": "at the farm plots"
+   }
+  ],
+  "crew-at-purifiers": [
+   {
+    "args": {},
+    "text": "at the air filter"
+   }
+  ],
+  "crew-at-janitors": [
+   {
+    "args": {},
+    "text": "clearing up"
+   }
+  ],
+  "crew-where-lifted": [
+   {
+    "args": {},
+    "text": "in your hand"
+   }
+  ],
+  "crew-where-falling": [
+   {
+    "args": {},
+    "text": "in mid-air"
+   }
+  ],
+  "crew-where-home": [
+   {
+    "args": {},
+    "text": "at home"
+   }
+  ],
+  "crew-where-basket": [
+   {
+    "args": {},
+    "text": "up in a balloon"
+   }
+  ],
+  "crew-where-yard": [
+   {
+    "args": {},
+    "text": "in the yard"
+   }
+  ],
+  "crew-where-resting": [
+   {
+    "args": {},
+    "text": "on a break"
+   }
+  ],
+  "crew-where-walking": [
+   {
+    "args": {},
+    "text": "on the way"
+   }
+  ],
+  "crew-where-deep": [
+   {
+    "args": {},
+    "text": "in the deep"
+   }
+  ],
+  "crew-does-rockhands": [
+   {
+    "args": {},
+    "text": "digging the rock"
+   }
+  ],
+  "crew-does-quarriers": [
+   {
+    "args": {},
+    "text": "mining the quarry"
+   }
+  ],
+  "crew-does-farmhands": [
+   {
+    "args": {},
+    "text": "farming"
+   }
+  ],
+  "crew-does-scholars": [
+   {
+    "args": {},
+    "text": "researching"
+   }
+  ],
+  "crew-does-purifiers": [
+   {
+    "args": {},
+    "text": "clearing the air"
+   }
+  ],
+  "crew-does-janitors": [
+   {
+    "args": {},
+    "text": "shoveling"
+   }
+  ],
+  "crew-does-haulers": [
+   {
+    "args": {},
+    "text": "transporting"
+   }
+  ],
+  "crew-now-seek": [
+   {
+    "args": {},
+    "text": "looking for pebbles"
+   }
+  ],
+  "crew-now-dump": [
+   {
+    "args": {},
+    "text": "tipping a load"
+   }
+  ],
+  "crew-now-muck": [
+   {
+    "args": {},
+    "text": "shoveling up mess"
+   }
+  ],
+  "crew-now-cut": [
+   {
+    "args": {},
+    "text": "digging in the quarry"
+   }
+  ],
+  "crew-now-up": [
+   {
+    "args": {},
+    "text": "climbing out"
+   }
+  ],
+  "crew-now-down": [
+   {
+    "args": {},
+    "text": "climbing down"
+   }
+  ],
+  "crew-now-tend": [
+   {
+    "args": {},
+    "text": "tending a plot"
+   }
+  ],
+  "crew-now-home": [
+   {
+    "args": {},
+    "text": "heading home"
+   }
+  ],
+  "crew-now-idle": [
+   {
+    "args": {},
+    "text": "nothing much"
+   }
+  ],
+  "crew-now-in": [
+   {
+    "args": {},
+    "text": "inside"
+   }
+  ],
+  "crew-now-aloft": [
+   {
+    "args": {},
+    "text": "up in the balloon"
+   }
+  ],
+  "crew-minding": [
+   {
+    "args": {
+     "name": "the belt"
+    },
+    "text": "minding the belt"
+   }
+  ],
+  "crew-now-to": [
+   {
+    "args": {},
+    "text": "walking there"
+   }
+  ],
+  "crew-now-kit": [
+   {
+    "args": {},
+    "text": "fitting kit at the bench"
+   }
+  ],
+  "crew-now-build": [
+   {
+    "args": {},
+    "text": "building"
+   }
+  ],
+  "crew-now-working": [
+   {
+    "args": {},
+    "text": "working"
+   }
+  ],
+  "crew-somebody": [
+   {
+    "args": {},
+    "text": "somebody"
+   }
+  ],
+  "crew-card-age": [
+   {
+    "args": {},
+    "text": "age"
+   }
+  ],
+  "crew-card-new": [
+   {
+    "args": {},
+    "text": "new today"
+   }
+  ],
+  "crew-card-mins": [
+   {
+    "args": {
+     "mins": 12
+    },
+    "text": "12 min"
+   }
+  ],
+  "crew-card-doing": [
+   {
+    "args": {},
+    "text": "doing"
+   }
+  ],
+  "crew-sect-yard": [
+   {
+    "args": {},
+    "text": "the yard"
+   }
+  ],
+  "crew-sect-deep": [
+   {
+    "args": {},
+    "text": "the deep"
+   }
+  ],
+  "crew-sect-crew": [
+   {
+    "args": {},
+    "text": "the crew"
+   }
+  ],
+  "books-dust": [
+   {
+    "args": {},
+    "text": "pebbles"
+   }
+  ],
+  "books-shard": [
+   {
+    "args": {},
+    "text": "ore"
+   }
+  ],
+  "books-spore": [
+   {
+    "args": {},
+    "text": "crops"
+   }
+  ],
+  "books-spark": [
+   {
+    "args": {},
+    "text": "sparks"
+   }
+  ],
+  "books-over-min": [
+   {
+    "args": {
+     "n": "½"
+    },
+    "text": "½ min"
+   },
+   {
+    "args": {
+     "n": 5
+    },
+    "text": "5 min"
+   }
+  ],
+  "books-over": [
+   {
+    "args": {},
+    "text": "averaged over"
+   }
+  ],
+  "books-last-half": [
+   {
+    "args": {},
+    "text": "the last half minute"
+   }
+  ],
+  "books-last-one": [
+   {
+    "args": {},
+    "text": "the last minute"
+   }
+  ],
+  "books-last-mins": [
+   {
+    "args": {
+     "n": 5
+    },
+    "text": "the last 5 minutes"
+   }
+  ],
+  "books-got": [
+   {
+    "args": {
+     "n": "1.2k",
+     "over": "the last minute"
+    },
+    "text": "1.2k in the last minute"
+   }
+  ],
+  "books-nothing": [
+   {
+    "args": {},
+    "text": "nothing"
+   }
+  ],
+  "books-dirt-mach": [
+   {
+    "args": {},
+    "text": "from the machines"
+   }
+  ],
+  "books-dirt-dust": [
+   {
+    "args": {},
+    "text": "from the rock"
+   }
+  ],
+  "books-dirt-shard": [
+   {
+    "args": {},
+    "text": "from the quarry"
+   }
+  ],
+  "books-dirt-spore": [
+   {
+    "args": {},
+    "text": "from the farm"
+   }
+  ],
+  "books-due-never": [
+   {
+    "args": {},
+    "text": "not at this rate"
+   }
+  ],
+  "books-sky-trend": [
+   {
+    "args": {},
+    "text": "pollution"
+   }
+  ],
+  "books-sky-up": [
+   {
+    "args": {},
+    "text": "put up, a minute"
+   }
+  ],
+  "books-sky-down": [
+   {
+    "args": {},
+    "text": "taken out, a minute"
+   }
+  ],
+  "books-sky-haze": [
+   {
+    "args": {},
+    "text": "the sky is"
+   }
+  ],
+  "books-sky-full": [
+   {
+    "args": {
+     "pct": "40%"
+    },
+    "text": "40% full"
+   }
+  ],
+  "books-sky-due": [
+   {
+    "args": {},
+    "text": "full in"
+   }
+  ],
+  "books-sky-rains": [
+   {
+    "args": {},
+    "text": "showers weathered"
+   }
+  ],
+  "books-sky-muck": [
+   {
+    "args": {},
+    "text": "muck lying about"
+   }
+  ],
+  "books-working": [
+   {
+    "args": {},
+    "text": "working"
+   }
+  ],
+  "books-idle": [
+   {
+    "args": {},
+    "text": "idle"
+   }
+  ],
+  "books-best-mined": [
+   {
+    "args": {},
+    "text": "most off the rock"
+   }
+  ],
+  "books-best-quarried": [
+   {
+    "args": {},
+    "text": "most ore mined"
+   }
+  ],
+  "books-best-farmed": [
+   {
+    "args": {},
+    "text": "most crops farmed"
+   }
+  ],
+  "books-best-stored": [
+   {
+    "args": {},
+    "text": "most into the hole"
+   }
+  ],
+  "books-best-tidied": [
+   {
+    "args": {},
+    "text": "most muck cleared"
+   }
+  ],
+  "books-hours": [
+   {
+    "args": {
+     "n": 1.5
+    },
+    "text": "1.5 h"
+   }
+  ],
+  "books-mins": [
+   {
+    "args": {
+     "n": 42
+    },
+    "text": "42 min"
+   }
+  ],
+  "books-eldest": [
+   {
+    "args": {},
+    "text": "longest on one clock"
+   }
+  ],
+  "books-tally-rocks": [
+   {
+    "args": {},
+    "text": "rocks cleared"
+   }
+  ],
+  "books-tally-banked": [
+   {
+    "args": {},
+    "text": "pebbles banked"
+   }
+  ],
+  "books-tally-ore": [
+   {
+    "args": {},
+    "text": "ore dug"
+   }
+  ],
+  "books-tally-earned": [
+   {
+    "args": {
+     "coin": "ore"
+    },
+    "text": "ore earned"
+   }
+  ],
+  "books-tally-rift": [
+   {
+    "args": {},
+    "text": "through the rift"
+   }
+  ],
+  "books-tally-brews": [
+   {
+    "args": {},
+    "text": "batches brewed"
+   }
+  ],
+  "books-tally-hats": [
+   {
+    "args": {},
+    "text": "hats finished"
+   }
+  ],
+  "books-tally-crew": [
+   {
+    "args": {},
+    "text": "on the payroll"
+   }
+  ],
+  "books-tally-notes": [
+   {
+    "args": {},
+    "text": "notices earned"
+   }
+  ],
+  "books-tally-under": [
+   {
+    "args": {},
+    "text": "sqwife under the rock for"
+   }
+  ],
+  "books-tally-saved": [
+   {
+    "args": {},
+    "text": "sqwife saved in"
+   }
+  ],
+  "books-tally-serpent": [
+   {
+    "args": {},
+    "text": "[owner's words: e.g. \"deepest serpent\"]"
+   }
+  ],
+  "books-sect-income": [
+   {
+    "args": {},
+    "text": "income, a second"
+   }
+  ],
+  "books-sect-sky": [
+   {
+    "args": {},
+    "text": "the sky"
+   }
+  ],
+  "books-sect-crew": [
+   {
+    "args": {},
+    "text": "the crew"
+   }
+  ],
+  "books-sect-tally": [
+   {
+    "args": {},
+    "text": "the tally"
+   }
+  ],
+  "books-open": [
+   {
+    "args": {},
+    "text": "open the books"
+   }
+  ],
+  "books-playtime": [
+   {
+    "args": {},
+    "text": "playtime"
    }
   ]
  }

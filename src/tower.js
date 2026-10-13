@@ -22,6 +22,7 @@ import { stockOf } from './kit.js';
 import { sky } from './state.js';
 import { sphereUp } from './sphere.js';
 import { registerBoard } from './boardrows.js';
+import { msg } from './lang.js';
 
 // what the next hat costs, in each of the three things the yard makes
 // `extra` is the hats already paid for and not yet made.
@@ -76,11 +77,11 @@ export const spelled = key => (S.spells || []).includes(key);
 // sentence about.
 const pct = f => `${Math.round(Math.abs(f - 1) * 100)}%`;
 const SPELL_BLURB = {
-  drive: () => `+${pct(SPELL_DRIVE)} speed`,
-  luck: () => `+${pct(SPELL_LUCK)} ore`,
-  gmo: () => `+${pct(SPELL_GMO)} spores`,
-  thrift: () => `${pct(SPELL_THRIFT)} cheaper`,
-  sweep: () => `${SPELL_SWEEP}x faster`
+  drive: () => msg('spell-drive-blurb', { pct: pct(SPELL_DRIVE) }),
+  luck: () => msg('spell-luck-blurb', { pct: pct(SPELL_LUCK) }),
+  gmo: () => msg('spell-gmo-blurb', { pct: pct(SPELL_GMO) }),
+  thrift: () => msg('spell-thrift-blurb', { pct: pct(SPELL_THRIFT) }),
+  sweep: () => msg('spell-sweep-blurb', { x: SPELL_SWEEP })
 };
 const SPELL_NEEDS = {
   drive: () => MACHINES.some(m => machine(m.key)?.bought),
@@ -108,13 +109,13 @@ export const TOWER_UPGRADES = [
     // How often a wizard throws.
     key: 'wizspeed',
     kind: 'rung', site: 'tower',
-    name: 'quicker casting',
+    name: msg('row-wizspeed'),
     // The tower board hides its gain column (`#towershop .gain` in style.css),
     // so the note carries the number the column would have.
-    note: () => `every wizard throws a bolt at the star ${Math.round((STEP - 1) * 100)}% more often`,
+    note: () => msg('row-wizspeed-note', { pct: Math.round((STEP - 1) * 100) }),
     unit: 'bolts/min',
     pct: true,
-    does: 'cast',
+    does: msg('does-cast'),
     rung: () => S.wizSpeedLevel,
     from: () => 60000 / wizMs(),
     to: () => 60000 / (wizMs() / STEP),
@@ -128,8 +129,8 @@ export const TOWER_UPGRADES = [
     // spreads outward from where it hit rather than punching deeper.
     key: 'wizpower',
     kind: 'rung', site: 'tower',
-    name: 'heavier bolts',
-    note: () => `each bolt knocks ${wizBite() + 1} cells off the star instead of ${wizBite()}`,
+    name: msg('row-wizpower'),
+    note: () => msg('row-wizpower-note', { next: wizBite() + 1, now: wizBite() }),
     unit: 'cells/bolt',
     rung: () => S.wizPowerLevel,
     from: () => wizBite(),
@@ -144,8 +145,8 @@ export const TOWER_UPGRADES = [
   // standing on it.
   {
     key: TYPE.WIZARD,
-    name: 'summon a wizard',
-    note: () => 'flies up and bolts the star apart for sparks, and summons a new one when the sky is empty',
+    name: msg('row-wizard'),
+    note: () => msg('row-wizard-note'),
     // A rung, not a building: made inside a tower that already stands, so
     // nothing rises and no tape goes round it. The first hat is made by
     // whoever the yard lends an empty station (`busyBuilderSites`).
@@ -168,8 +169,8 @@ export const TOWER_UPGRADES = [
   // there is no work on the ground and no bar under the tower.
   {
     key: 'sphere',
-    name: 'the sphere',
-    note: () => 'capture the power of a star',
+    name: msg('machine-sphere'),
+    note: () => msg('row-sphere-note'),
     bill: () => [...SPHERE_BILL.map(l => [...l]), ['time', SPHERE_WORK * 1000]],
     cost: () => SPHERE_BILL.find(([m]) => m === 'dust')[1],
     buy: () => buyMachine('sphere'),
@@ -181,8 +182,8 @@ export const TOWER_UPGRADES = [
   // tender from the ring (`sphere` in works.js's SITE_JOB), and offered once the
   // shell stands rather than once it is bought.
   {
-    ...tuneRow('sphere', 'sphere yield',
-               () => `the sphere catches ${MACHINE_TUNE}x the light`, 'sphere', 'tower'),
+    ...tuneRow('sphere', msg('row-tunesphere'),
+               () => msg('row-tunesphere-note', { n: MACHINE_TUNE }), 'sphere', 'tower'),
     at: () => sky.x,
     work: () => SPHERE_TUNE_WORK,
     show: sphereUp
@@ -192,8 +193,8 @@ export const TOWER_UPGRADES = [
   // is one body's pour; a ring shares it, the same as a summoning.
   {
     key: 'dome',
-    name: 'conjure the barrier',
-    note: () => 'nothing can get past this thing.',
+    name: msg('row-dome-tower'),
+    note: () => msg('row-dome-tower-note'),
     bill: () => [...DOME_BILL.map(l => [...l]), ['time', DOME_WORK * 1000]],
     cost: () => DOME_BILL.find(([m]) => m === 'dust')[1],
     buy: () => raiseShield('dome'),
@@ -206,8 +207,8 @@ export const TOWER_UPGRADES = [
   // through it. Nobody walks through it; it is the player's.
   {
     key: 'portal',
-    name: 'conjure the portal',
-    note: () => 'a way down into the abyss, held open.',
+    name: msg('row-portal'),
+    note: () => msg('row-portal-note'),
     bill: () => PORTAL_BILL.map(l => [...l]),
     cost: () => PORTAL_BILL.find(([m]) => m === 'dust')[1],
     // Bought, then summoned: a wizard flies out over the pit and pours it
@@ -226,10 +227,10 @@ export const TOWER_UPGRADES = [
 // wide card. The story's card sells it too (objbarrier.js).
 export const TOWER_SECTIONS = [
   { title: GOAL_TITLE, goal: true, keys: ['dome'] },
-  { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
-  { title: 'the sphere', keys: ['sphere', 'tunesphere'] },
-  { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
-  { title: 'the abyss', keys: ['portal'] }
+  { title: msg('station-tower'), keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
+  { title: msg('machine-sphere'), keys: ['sphere', 'tunesphere'] },
+  { title: msg('sect-enchantments'), keys: SPELLS.map(sp => 'spell' + sp.key) },
+  { title: msg('sect-abyss'), keys: ['portal'] }
 ];
 
 // so a work coming back out of a save knows which row it belongs to

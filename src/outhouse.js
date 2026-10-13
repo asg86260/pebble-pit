@@ -11,6 +11,7 @@ import { buyMachine, canBuy, machine, tuneRow } from './machines.js';
 import { dockX, syncRoombas } from './crew/roomba.js';
 import { registerRows } from './works.js';
 import { registerBoard } from './boardrows.js';
+import { msg } from './lang.js';
 
 const roombas = () => S.roombas | 0;
 
@@ -20,7 +21,7 @@ export const OUTHOUSE_UPGRADES = [
   {
     key: 'loopost',
     kind: 'rung', site: 'outhouse',
-    name: 'another cap',
+    name: msg('row-loopost'),
     cost: () => LOOPOST_SHARDS,
     currency: 'shard',
     buy: () => { S.looPosts = 2; rebalance(); },
@@ -37,8 +38,8 @@ export const OUTHOUSE_UPGRADES = [
     key: 'roomba',
     kind: 'machine', site: 'outhouse',
     at: () => dockX(Math.min(roombas(), ROOMBA_MAX - 1)) + ROOMBA_W * P / 2,
-    name: 'a roomba',
-    note: () => 'drives to the mess on the open yard and brings it home; one janitor minds them, and they smoke',
+    name: msg('row-roomba'),
+    note: () => msg('row-roomba-note'),
     rung: roombas,
     rungs: () => ROOMBA_MAX,
     bill: () => ROOMBA_BILLS[Math.min(roombas(), ROOMBA_MAX - 1)],
@@ -53,15 +54,15 @@ export const OUTHOUSE_UPGRADES = [
   },
   // Their ladder, three rungs of red like every machine's: every roomba's
   // intake at once.
-  tuneRow('roomba', 'roomba suction',
-          () => `the roombas take in ${MACHINE_TUNE}x faster`, 'outhouse')
+  tuneRow('roomba', msg('row-tuneroomba'),
+          () => msg('row-tuneroomba-note', { n: MACHINE_TUNE }), 'outhouse')
 ];
 
 // One heading, the board's own name, so the sheet draws no heading at all
 // (`lone` in shop.js).
 export const OUTHOUSE_SECTIONS = [
   // Display string only: everything internal still says outhouse.
-  { title: "the janitor's closet", keys: OUTHOUSE_UPGRADES.map(u => u.key) }
+  { title: msg('station-outhouse'), keys: OUTHOUSE_UPGRADES.map(u => u.key) }
 ];
 
 // A rung is built rather than had, and a save closed mid-build has to find its

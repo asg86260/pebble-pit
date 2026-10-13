@@ -23,7 +23,7 @@
 //          'beat:<key>'     that beat played
 // serpent  true for the deep's half, listed only where the serpent is on
 
-import { TYPE, JOB } from '../jobs.js';
+import { TYPE, JOB, jobSaid } from '../jobs.js';
 import { msg } from '../lang.js';
 
 export const GROUPS = ['materials', 'yard', 'sky', 'places', 'crew', 'story'];
@@ -134,7 +134,7 @@ export const INDEX = [
     text: msg('idx-pods-text') },
 
   // --- crew ---
-  { key: TYPE.HAUL, group: 'crew', name: JOB.HAUL, glyph: null, met: 'start',
+  { key: TYPE.HAUL, group: 'crew', name: jobSaid(JOB.HAUL), glyph: null, met: 'start',
     text: msg('idx-haul-text') },
   { key: TYPE.ROCK, group: 'crew', name: msg('idx-rockcrew-name'), glyph: null, met: JOB.ROCK,
     text: msg('idx-rockcrew-text') },
@@ -146,11 +146,11 @@ export const INDEX = [
     text: msg('idx-purify-text') },
   { key: TYPE.STIR, group: 'crew', name: msg('idx-stir-name'), glyph: 'pot', met: JOB.STIR,
     text: msg('idx-stir-text') },
-  { key: TYPE.JANITOR, group: 'crew', name: JOB.JANITOR, glyph: 'cap', met: JOB.JANITOR,
+  { key: TYPE.JANITOR, group: 'crew', name: jobSaid(JOB.JANITOR), glyph: 'cap', met: JOB.JANITOR,
     text: msg('idx-janitor-text') },
-  { key: TYPE.WIZARD, group: 'crew', name: JOB.WIZARD, glyph: 'point', met: JOB.WIZARD,
+  { key: TYPE.WIZARD, group: 'crew', name: jobSaid(JOB.WIZARD), glyph: 'point', met: JOB.WIZARD,
     text: msg('idx-wizard-text') },
-  { key: TYPE.BUILD, group: 'crew', name: JOB.BUILD, glyph: null, met: JOB.BUILD,
+  { key: TYPE.BUILD, group: 'crew', name: jobSaid(JOB.BUILD), glyph: null, met: JOB.BUILD,
     text: msg('idx-build-text') },
   { key: msg('idx-breaker-name'), group: 'crew', name: 'breaker', glyph: 'helmet', met: 'breakers',
     text: msg('idx-breaker-text') },
@@ -162,7 +162,7 @@ export const INDEX = [
     text: msg('idx-grower-text') },
   { key: msg('idx-brews-name'), group: 'crew', name: 'brews', glyph: 'vial', met: 'brews',
     text: msg('idx-brews-text') },
-  { key: 'party', group: 'crew', name: JOB.FIGHT, glyph: null, met: JOB.FIGHT, serpent: true,
+  { key: 'party', group: 'crew', name: jobSaid(JOB.FIGHT), glyph: null, met: JOB.FIGHT, serpent: true,
     text: msg('idx-party-text') },
 
   // --- the story ---

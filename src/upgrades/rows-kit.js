@@ -9,6 +9,7 @@ import { shieldOpened } from '../shield.js';
 import { rebalance } from '../staffing.js';
 import { ahead } from '../works.js';
 import { syncWorkers } from '../crew.js';
+import { msg } from '../lang.js';
 
 // The kit rows: a hat for the rock, a lamp for the cut, a brim for the plots, a
 // cart for the lip. Data only: upgrades.js strings the files together into
@@ -25,17 +26,17 @@ import { syncWorkers } from '../crew.js';
 // trained, and the thing it is twice as good at. `shield` is the try against
 // the sky that opens the row (`learned`).
 export const TRADES = [
-  { key: 'breaker', name: 'breaker', job: JOB.ROCK, count: 'breakers',
-    does: 'twice the bite', place: 'the rock',
+  { key: msg('kit-breaker'), name: 'breaker', job: JOB.ROCK, count: 'breakers',
+    does: msg('kit-breaker-does'), place: msg('kit-breaker-place'),
     site: 'shack', board: 'shack', shield: 'props' },
-  { key: 'carter', name: 'carter', job: JOB.HAUL, count: 'carters',
-    does: 'twice the load', place: 'the pit',
+  { key: msg('kit-carter'), name: 'carter', job: JOB.HAUL, count: 'carters',
+    does: msg('kit-carter-does'), place: msg('kit-carter-place'),
     site: 'bench', board: null, shield: 'props' },
-  { key: 'blaster', name: 'blaster', job: JOB.QUARRY, count: 'blasters',
-    does: 'twice the trips', place: 'the quarry',
+  { key: msg('kit-blaster'), name: 'blaster', job: JOB.QUARRY, count: 'blasters',
+    does: msg('kit-blaster-does'), place: msg('kit-blaster-place'),
     site: 'quarry', board: 'quarry', shield: 'arch' },
-  { key: 'grower', name: 'grower', job: JOB.FARM, count: 'growers',
-    does: 'twice the tending', place: 'the farm',
+  { key: msg('kit-grower'), name: 'grower', job: JOB.FARM, count: 'growers',
+    does: msg('kit-grower-does'), place: msg('kit-grower-place'),
     site: 'farm', board: 'farm', shield: 'net' }
 ];
 
@@ -88,7 +89,7 @@ export const KIT_ROWS = TRADES.map(t => ({
   kind: 'rung', site: t.site,
   ...(t.board ? { board: t.board } : {}),
   name: t.name,
-  note: () => `${t.name}: ${t.does}, at ${t.place}`,
+  note: () => msg('kit-note', { name: t.name, does: t.does, place: t.place }),
   unit: null,
   from: () => taught(t),
   to: () => taught(t) + 1,
@@ -123,8 +124,8 @@ export const liftCost = (n = lifts()) =>
 KIT_ROWS.push({
   key: 'driver',
   kind: 'rung', site: 'bench',
-  name: 'forklift',
-  note: () => 'a forklift that drives itself: it hauls to the pit with nobody aboard, and smokes',
+  name: msg('row-driver'),
+  note: () => msg('row-driver-note'),
   unit: null,
   from: lifts,
   to: () => lifts() + 1,
@@ -145,16 +146,16 @@ KIT_ROWS.push({
 // how fast it drives, every forklift at once. Offered once there is one.
 KIT_ROWS.push(...tierRows({
   field: 'liftLoadLevel',
-  unit: 'px', does: 'carry',
+  unit: 'px', does: msg('does-carry'),
   value: lvl => liftCap(lvl),
   site: 'bench',
   show: () => lifts() > 0,
-  bands: named('liftload', 'forklift load')
+  bands: named('liftload', msg('row-liftload'))
 }), ...tierRows({
   field: 'liftPaceLevel',
-  unit: 'px/s', pct: true, does: 'drive',
+  unit: 'px/s', pct: true, does: msg('does-drive'),
   value: lvl => liftSpeed(lvl) * 60,
   site: 'bench',
   show: () => lifts() > 0,
-  bands: named('liftpace', 'forklift speed')
+  bands: named('liftpace', msg('row-liftpace'))
 }));

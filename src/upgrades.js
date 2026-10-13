@@ -9,6 +9,7 @@
 // imports those and never this, so a station's load order does not run
 // through the shop.
 
+import { msg } from './lang.js';
 import { P, SHELF_INK, GOAL_TITLE } from './config.js';
 import { S } from './state.js';
 import { maxed, rungOf, rungsOf } from './words.js';
@@ -64,7 +65,7 @@ export const chained = rows => {
 // body; the opening hands you one (intro.js).
 export const HOUSE_ROW = {
   key: 'house',
-  name: 'another house',
+  name: msg('row-house'),
   kind: 'building', site: 'yard', at: () => nextHouseAt(ahead('house')),
   // One more room each press, as many as you can pay for: each copy is priced
   // and timed as the room it will be, counting the ones already paid for.
@@ -122,12 +123,16 @@ export const lodgers = board => UPGRADES.filter(u => u.board === board);
 // for sale. Everything not yet built is under one "build" heading, because
 // those are the one group that cannot be sold at the place they belong to --
 // the place is what they buy.
+//
+// A section's `key` is what `S.seenSects` keeps, so the bench's mark reads the
+// same whatever language its `title` is in: the English titles the saves have
+// always held.
 export const SECTIONS = [
-  { title: GOAL_TITLE, goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
-  { title: 'you', keys: ['carry', 'autotoss', 'toss', 'reach', 'auto', 'speed', 'pick'] },
-  { title: 'lucky swings', keys: ['critchance', 'critmult'] },
-  { title: 'the haulers', keys: ['haulcarry', 'haulpace', 'carter', 'driver', 'liftload', 'liftpace', 'belt'] },
-  { title: 'build', keys: [
+  { key: 'saving your sqwife', title: GOAL_TITLE, goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
+  { key: 'you', title: msg('sect-you'), keys: ['carry', 'autotoss', 'toss', 'reach', 'auto', 'speed', 'pick'] },
+  { key: 'lucky swings', title: msg('sect-luck'), keys: ['critchance', 'critmult'] },
+  { key: 'the haulers', title: msg('sect-haulers'), keys: ['haulcarry', 'haulpace', 'carter', 'driver', 'liftload', 'liftpace', 'belt'] },
+  { key: 'build', title: msg('sect-build'), keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
     'unlockshack', 'unlockouthouse', 'unlocktower',
     'unlockfilter'
@@ -141,7 +146,7 @@ export const openSections = () =>
   SECTIONS.filter(sect => sect.keys.some(k => {
     const u = UPGRADES.find(x => x.key === k);
     return u && u.show();
-  })).map(sect => sect.title);
+  })).map(sect => sect.key);
 
 // Something you could buy and actually press this second.
 export const canAfford = () => UPGRADES.some(u => !u.job && forSale(u) && canPay(u));

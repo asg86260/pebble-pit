@@ -1421,3 +1421,1044 @@ idx-grp-crew = crew
 
 # index: a group heading in the list, and under an entry's name
 idx-grp-story = the story
+
+## Jobs
+
+# a job, as the boards, the crew and the index say it (the save's key is rockhands)
+job-rockhands = diggers
+
+# a job, as the boards, the crew and the index say it (the save's key is haulers)
+job-haulers = haulers
+
+# a job, as the boards, the crew and the index say it (the save's key is quarriers)
+job-quarriers = miners
+
+# a job, as the boards, the crew and the index say it (the save's key is farmhands)
+job-farmhands = farmers
+
+# a job, as the boards, the crew and the index say it (the save's key is scholars)
+job-scholars = scholars
+
+# a job, as the boards, the crew and the index say it (the save's key is purifiers)
+job-purifiers = air purifiers
+
+# a job, as the boards, the crew and the index say it (the save's key is stirrers)
+job-stirrers = apothecary
+
+# a job, as the boards, the crew and the index say it (the save's key is janitors)
+job-janitors = janitors
+
+# a job, as the boards, the crew and the index say it (the save's key is wizards)
+job-wizards = wizards
+
+# a job, as the boards, the crew and the index say it (the save's key is builders)
+job-builders = builders
+
+# a job, as the boards, the crew and the index say it (the save's key is fighters)
+job-fighters = fighters
+
+# a job, as the boards, the crew and the index say it (the save's key is gatherers)
+job-gatherers = gatherers
+
+# a job, as the boards, the crew and the index say it (the save's key is delvers)
+job-delvers = deep builders
+
+## Boards
+
+# a row's unit: so many a second; $icon is the coin's mark (html)
+unit-per-s = { $icon }/s
+
+# a row's unit: so many a minute; $icon is the coin's mark (html)
+unit-per-min = { $icon }/min
+
+# a row's unit: so many a dig; $icon is the coin's mark (html)
+unit-per-dig = { $icon }/dig
+
+# a row's unit: so many a harvest; $icon is the coin's mark (html)
+unit-per-harvest = { $icon }/harvest
+
+# a row's unit after its number: swings a second
+unit-hits-s = hits/s
+
+# a row's unit after its number: swings a second, from one
+unit-hit-s = hit/s
+
+# a row's unit after its number: throws a second
+unit-throws-s = throws/s
+
+# a row's unit after its number: a wizard's bolts a minute
+unit-bolts-min = bolts/min
+
+# a row's unit after its number: star cells a bolt knocks off
+unit-cells-bolt = cells/bolt
+
+# a row's unit after its number: haze a balloon takes in a second
+unit-motes-s = motes/s
+
+# a row's unit after its number: farm plots
+unit-plots = plots
+
+# a row's unit after its number: the quarry's shovels
+unit-shovels = shovels
+
+# a row's unit after its number: the apothecary's pots
+unit-pots = pots
+
+# a row's unit after its number: doses a batch
+unit-doses = doses
+
+# a unit after a number: seconds
+unit-s = s
+
+# a deep row's unit after its number: damage
+unit-dmg = dmg
+
+# a deep row's unit after its number: damage a second
+unit-dmg-s = dmg/s
+
+# a brew's unit after its percentage: how much faster
+unit-faster = faster
+
+# a brew's unit after its percentage: how much stronger
+unit-stronger = stronger
+
+# a brew's unit after its number: crit chance
+unit-crit = crit
+
+# a row's gain line: $does is its verb (does-…), $amount the change (3 → 4, +25%; html)
+gain-does = { $does } { $amount }
+
+# a machine's row until its station's set of grower hats is bought: $left is how many are still to buy;
+# $more is yes once one is bought
+unlock-grower = { $more ->
+        [yes] buy { $left } more { $left ->
+            [one] grower
+           *[other] growers
+        } to unlock
+       *[no] buy { $left } { $left ->
+            [one] grower
+           *[other] growers
+        } to unlock
+    }
+
+# a machine's row until its station's set of blaster hats is bought: $left is how many are still to buy;
+# $more is yes once one is bought
+unlock-blaster = { $more ->
+        [yes] buy { $left } more { $left ->
+            [one] blaster
+           *[other] blasters
+        } to unlock
+       *[no] buy { $left } { $left ->
+            [one] blaster
+           *[other] blasters
+        } to unlock
+    }
+
+# a price in time, a minute or more: $n minutes
+price-min = { $n } min
+
+# a row's verb, before its gain: how much a hand holds
+does-hold = hold
+
+# the bench: your carry ladder
+row-carry = carry amount
+
+# a row's verb, before its gain: swings
+does-hit = hit
+
+# the bench: your swing pace ladder
+row-speed = auto swing
+
+# a row's verb, before its gain: throws
+does-throw = throw
+
+# the bench: how often a held hand lets go
+row-toss = throw pace
+
+# a row's verb, before its gain: how far a throw carries
+does-reach = reach
+
+# the bench: how far a handful carries
+row-reach = throw reach
+
+# a row's verb, before its gain: what a swing takes
+does-per-swing = per swing
+
+# the bench: what a swing of yours takes
+row-pick = pick damage
+
+# the bench: holding a handful throws it by itself
+row-autotoss = hold to toss
+
+# the bench: holding the pointer on the boulder swings by itself
+row-auto = hold to mine
+
+# a row's verb, before its gain: how much a body carries
+does-carry = carry
+
+# the bench: the haulers' load ladder
+row-haulcarry = hauler carry
+
+# a row's verb, before its gain: walking pace
+does-walk = walk
+
+# the bench: the haulers' pace ladder
+row-haulpace = hauler speed
+
+# a row's verb, before its gain: crits
+does-crit = crit
+
+# the bench: the chance a hit is a crit
+row-critchance = crit chance
+
+# the bench: how much more a crit takes
+row-critmult = crit damage
+
+# the shack: the diggers' swing pace ladder
+row-rockhandspeed = swing speed
+
+# the shack: what a digger's swing takes
+row-rockhandpick = digger pick damage
+
+# the bench: the row that puts up the apothecary
+row-unlockapothecary = build the apothecary
+
+# the bench: what the apothecary is for, under its name
+row-unlockapothecary-note = brew temporary boosts for your sqworkers
+
+# the bench: what the apothecary row gives, where a gain would go
+row-unlockapothecary-blurb = brews crew tonics
+
+# the bench: the row that puts up the casino
+row-unlockcasino = build the casino
+
+# the bench: what the casino is for, under its name
+row-unlockcasino-note = a table that takes a stake and pays double or nothing
+
+# the bench: what the casino row gives, where a gain would go
+row-unlockcasino-blurb = double or nothing
+
+# the bench: the row that puts up the farm
+row-unlockfarm = build the farm
+
+# the bench: what the farm is for, under its name
+row-unlockfarm-note = grow some crops
+
+# the bench: what the farm row gives, where a gain would go
+row-unlockfarm-blurb = grow crops
+
+# the bench: the row that puts up the air filter
+row-unlockfilter = build the air filter
+
+# the bench: what the air filter is for, under its name
+row-unlockfilter-note = sells the balloons that pull the haze back out of the sky, and reads the sky
+
+# the bench: what the air filter row gives, where a gain would go
+row-unlockfilter-blurb = clears the sky
+
+# the bench: the row that puts up the janitor's closet
+row-unlockouthouse = build the janitor's closet
+
+# the bench: what the closet is for, under its name
+row-unlockouthouse-note = you've seen enough poop, lets clean it up
+
+# the bench: what the closet row gives, where a gain would go
+row-unlockouthouse-blurb = poop, cleaned up
+
+# the bench: the row that puts up the quarry
+row-unlockquarry = build the quarry
+
+# the bench: what the quarry is for, under its name
+row-unlockquarry-note = start digging for ore
+
+# the bench: what the quarry row gives, where a gain would go
+row-unlockquarry-blurb = dig for ore
+
+# the bench: the row that puts up the shack
+row-unlockshack = build the shack
+
+# the bench: what the shack is for, under its name
+row-unlockshack-note = Digging upgrades
+
+# the bench: what the shack row gives, where a gain would go
+row-unlockshack-blurb = gear for the rock
+
+# the bench: the row that puts up the tower
+row-unlocktower = discover the tower
+
+# the bench: what the tower is for, under its name
+row-unlocktower-note = summon some wizards
+
+# the bench: the first barrier against the boulder
+row-props = wooden barrier
+
+# the bench: the wooden barrier's line
+row-props-note = quickly try to build a barrier to save your sqwife
+
+# the bench: the second barrier
+row-net = the net
+
+# the bench: the net's line
+row-net-note = that didn't work, try catching the rock with a net?
+
+# the bench: the third barrier
+row-arch = cut the arch
+
+# the bench: the arch's line
+row-arch-note = still not sturdy enough. lets build a stone arch.
+
+# the tower: the last barrier, the wizards'
+row-dome = maybe the wizards would know?
+
+# the tower: the last barrier's line
+row-dome-note = everything of the ground has failed. what is left is not of the ground
+
+# a hat's name: the diggers' (its row, the index, the crew)
+kit-breaker = breaker
+
+# what the breaker hat does
+kit-breaker-does = twice the bite
+
+# where the breaker hat is worn
+kit-breaker-place = the rock
+
+# a hat's name: the haulers' cart
+kit-carter = carter
+
+# what the cart does
+kit-carter-does = twice the load
+
+# where the cart is used
+kit-carter-place = the pit
+
+# a hat's name: the miners'
+kit-blaster = blaster
+
+# what the blaster hat does
+kit-blaster-does = twice the trips
+
+# where the blaster hat is worn
+kit-blaster-place = the quarry
+
+# a hat's name: the farmers'
+kit-grower = grower
+
+# what the grower hat does
+kit-grower-does = twice the tending
+
+# where the grower hat is worn
+kit-grower-place = the farm
+
+# the bench: a forklift that drives itself
+row-driver = forklift
+
+# the bench: the forklift's line
+row-driver-note = a forklift that drives itself: it hauls to the pit with nobody aboard, and smokes
+
+# the bench: the forklifts' load ladder
+row-liftload = forklift load
+
+# a row's verb, before its gain: driving pace
+does-drive = drive
+
+# the bench: the forklifts' pace ladder
+row-liftpace = forklift speed
+
+# a heading on the bench's board: your own ladders
+sect-you = you
+
+# a heading on the bench's board: the crit ladders
+sect-luck = lucky swings
+
+# a heading on the bench's board: the haulers' gear
+sect-haulers = the haulers
+
+# a heading on the bench's board: the rows that put up a new place
+sect-build = build
+
+# the house's board: buy another house to hire somebody
+row-house = another house
+
+# the ribbon on every goal card: the barrier the story is on
+goal-title = saving your sqwife
+
+# a card greyed out: its next rung costs crops, and there is no farm yet
+needs-spore = needs crops
+
+# a card greyed out: its next rung costs ore, and there is no quarry yet
+needs-shard = needs a quarry
+
+# a card greyed out: its next rung costs a spark, and none has been earned
+needs-spark = needs a spark
+
+# a card greyed out: its next rung costs a scale, and the deep is not open
+needs-scale = needs a scale
+
+# a hat's row, its line: $name is the hat (kit-…), $does what it does, $place where it is worn
+kit-note = { $name }: { $does }, at { $place }
+
+# the shack: the ram's tuning ladder
+row-tuneram = ram strike
+
+# the ram's tuning ladder, its line: $n is how many times harder a rung makes it
+row-tuneram-note = the ram strikes { $n }x harder
+
+# a heading on any board over the rows no section names
+sect-and = and
+
+# a card the yard is at: somebody is building it (the strip's word with nothing to hand back; the gain line's word)
+card-building = building
+
+# the strip at a card's foot: buy another copy behind the one being built
+card-another = + another
+
+# a card in line: nobody is at it yet
+card-queued = queued
+
+# a finished ladder, where its price would go
+card-done = done
+
+# the tower: an enchantment's name
+spell-drive = speed the machines
+
+# the tower: the enchantment's line
+spell-drive-note = every machine in the yard runs 50% faster
+
+# the tower: an enchantment's name
+spell-luck = enrich the quarry
+
+# the tower: the enchantment's line
+spell-luck-note = every dig in the quarry brings up 25% more ore
+
+# the tower: an enchantment's name
+spell-gmo = genetically modify crops
+
+# the tower: the enchantment's line
+spell-gmo-note = every crop is 25% bigger
+
+# the tower: an enchantment's name
+spell-thrift = cheapen the houses
+
+# the tower: the enchantment's line
+spell-thrift-note = every house from now on is 75% cheaper
+
+# the tower: an enchantment's name
+spell-sweep = quicken the janitors
+
+# the tower: the enchantment's line
+spell-sweep-note = janitors shovel and walk twice as fast
+
+# the tower: how often a wizard throws
+row-wizspeed = quicker casting
+
+# the tower: how often a wizard throws, its line; $pct is the rise a rung
+row-wizspeed-note = every wizard throws a bolt at the star { $pct }% more often
+
+# a row's verb, before its gain: a wizard's casting
+does-cast = cast
+
+# the tower: how much of the star a bolt takes
+row-wizpower = heavier bolts
+
+# the tower: the bolt ladder's line; $now and $next are cells a bolt takes
+row-wizpower-note = each bolt knocks { $next } cells off the star instead of { $now }
+
+# the tower: a wizard's hat
+row-wizard = summon a wizard
+
+# the tower: a wizard's line
+row-wizard-note = flies up and bolts the star apart for sparks, and summons a new one when the sky is empty
+
+# the tower: the sphere's line
+row-sphere-note = capture the power of a star
+
+# the tower: the sphere's tuning ladder
+row-tunesphere = sphere yield
+
+# the tower: the sphere's tuning ladder, its line; $n is how many times the light
+row-tunesphere-note = the sphere catches { $n }x the light
+
+# the tower: the barrier the wizards pour
+row-dome-tower = conjure the barrier
+
+# the tower: the barrier's line
+row-dome-tower-note = nothing can get past this thing.
+
+# the tower: the way down to the deep
+row-portal = conjure the portal
+
+# the tower: the portal's line
+row-portal-note = a way down into the abyss, held open.
+
+# a heading on the tower's board: the spells
+sect-enchantments = enchantments
+
+# a heading on the tower's board: the portal
+sect-abyss = the abyss
+
+# the tower: what the enchantment gives, where a gain would go; $pct is a percentage with its sign (50%)
+spell-drive-blurb = +{ $pct } speed
+
+# the tower: what the enchantment gives, where a gain would go; $pct is a percentage with its sign
+spell-luck-blurb = +{ $pct } ore
+
+# the tower: what the enchantment gives, where a gain would go; $pct is a percentage with its sign
+spell-gmo-blurb = +{ $pct } spores
+
+# the tower: what the enchantment gives, where a gain would go; $pct is a percentage with its sign
+spell-thrift-blurb = { $pct } cheaper
+
+# the tower: what the enchantment gives, where a gain would go; $x is how many times
+spell-sweep-blurb = { $x }x faster
+
+# the farm: what a harvest is worth, a ladder
+row-crop = crop yield
+
+# a row's verb, before its gain: tending plots
+does-tend = tend
+
+# the farm: how often a plot is tended, a ladder
+row-tend = farming speed
+
+# the farm: break another plot
+row-farmplot = another plot
+
+# the farm: the tiller's tuning ladder
+row-tunetiller = tiller pace
+
+# the farm: the tiller's tuning ladder, its line; $n is how many times faster
+row-tunetiller-note = the tiller works { $n }x faster
+
+# a heading on the farm's board: what a plot pays
+sect-crop = the crop
+
+# the quarry: what a dig turns up, a ladder
+row-seam = ore yield
+
+# a row's verb, before its gain: digging
+does-dig = dig
+
+# the quarry: how often a dig happens, a ladder
+row-quarrypace = mining speed
+
+# the quarry: another miner's shovel at the face
+row-quarrybench = another shovel
+
+# the quarry: the drill's tuning ladder
+row-tunejaw = drill bite
+
+# the quarry: the drill's tuning ladder, its line; $n is how many times harder
+row-tunejaw-note = the drill bites { $n }x harder
+
+# a heading on the quarry's board: what the hole pays
+sect-ore = the ore
+
+# a heading on the farm's board over who works the plots, with their headcount (the job's save key, as it has always read)
+sect-farmhands = farmhands
+
+# a heading on the quarry's board over who works the cut, with their headcount (the job's save key, as it has always read)
+sect-quarriers = quarriers
+
+# a row's verb, before its gain: a balloon's flight
+does-fly = fly
+
+# the air filter: how fast the balloons go from cloud to cloud
+row-balloonspeed = balloon speed
+
+# a row's verb, before its gain: what a balloon takes in
+does-filter = filter
+
+# the air filter: how much haze a balloon draws
+row-power = balloon power
+
+# the air filter: another balloon
+row-balloon = the balloon
+
+# the air filter: the balloon's line
+row-balloon-note = rides the clouds and lets what it catches fall under itself
+
+# the air filter: the recycler
+row-recycler = the recycler
+
+# the air filter: the recycler's line
+row-recycler-note = what the balloons catch comes down as pebbles instead of muck
+
+# a heading on the air filter's board
+sect-equipment = equipment
+
+# the janitor's closet: the second cap on the stand
+row-loopost = another cap
+
+# the janitor's closet: another roomba
+row-roomba = a roomba
+
+# the janitor's closet: the roomba's line
+row-roomba-note = drives to the mess on the open yard and brings it home; one janitor minds them, and they smoke
+
+# the janitor's closet: the roombas' tuning ladder
+row-tuneroomba = roomba suction
+
+# the janitor's closet: the roombas' tuning ladder, its line; $n is how many times faster
+row-tuneroomba-note = the roombas take in { $n }x faster
+
+# a brew's name: the speed one, priced in crops
+tonic-stew = hearty stew
+
+# a brew's name: the strength one, priced in ore
+tonic-strong = strong brew
+
+# a brew's name: the crit one, priced in sparks
+tonic-brace = bracing tonic
+
+# the apothecary: keep the fires going, or let them die once a batch is dealt (a setting)
+row-potkeep = keep brewing
+
+# the apothecary's keep-brewing setting: on
+row-potkeep-on = batch after batch
+
+# the apothecary's keep-brewing setting: off
+row-potkeep-off = just this one
+
+# the apothecary: room for one more pot and its stirrer
+row-anotherpot = another pot
+
+# a row's verb, before its gain: how long a dose lasts
+does-lasts = lasts
+
+# the apothecary: how long a dose lasts, a ladder
+row-bufflength = brew concentration
+
+# the apothecary: doses a batch, a ladder
+row-brewdoses = batch size
+
+# a heading on the apothecary's board over the pots, with the stirrers' headcount
+sect-pot = the pot
+
+# a heading on the apothecary's board
+sect-brewing = brewing
+
+# a heading on the apothecary's board: one ladder a brew
+sect-potency = potency
+
+# a brew's potency row's verb, before its gain
+does-faster = faster
+
+# a brew's potency row's verb, before its gain
+does-stronger = stronger
+
+# what a brew does, in the picker and on its rows: $v per cent $unit (faster, stronger) for $secs seconds
+tonic-gain = +{ $v }% { $unit }, { $secs } s
+
+# what the crit brew does: $v points of crit chance for $secs seconds
+tonic-gain-crit = +{ $v } crit, { $secs } s
+
+## Machines
+
+# a machine's name: the quarry's (the save's key is jaw)
+machine-jaw = the drill
+
+# a machine's name: the boulder's
+machine-ram = the ram
+
+# a machine's name: the farm's
+machine-tiller = the tiller
+
+# a machine's name: carries pebbles from the boulder to the hole
+machine-belt = the belt
+
+# a machine's name: the shell round the star
+machine-sphere = the sphere
+
+# a machine's name: the janitor's closet's
+machine-roomba = the roombas
+
+## Stations
+
+# a deep station's board with nothing on it yet
+station-party-empty = nothing to learn yet
+
+# a station's name: its board's title, the pointer's label, the queue card
+station-casino = the casino
+
+# a station's name
+station-filter = the air filter
+
+# the air filter's board with nothing on it
+station-filter-empty = nothing to fit
+
+# a station's name
+station-quarry = the quarry
+
+# the quarry's board with nothing on it
+station-quarry-empty = the quarry is as deep as it goes
+
+# a station's name
+station-farm = the farm
+
+# the farm's board with nothing on it
+station-farm-empty = the ground is all broken
+
+# a station's name
+station-apothecary = the apothecary
+
+# the apothecary's board with nothing on it
+station-apothecary-empty = the pot stands cold
+
+# a station's name
+station-tower = the tower
+
+# the tower's board with nothing on it
+station-tower-empty = nothing stirs in here yet
+
+# a station's name
+station-shack = the shack
+
+# the shack's board with nothing on it
+station-shack-empty = the tools are all on the rock
+
+# the bench's board with nothing on it
+station-bench-empty = nothing to sell
+
+# a station's name
+station-outhouse = the janitor's closet
+
+# the janitor's closet's board with nothing on it
+station-outhouse-empty = the brooms are all on their hooks
+
+# a station's name
+station-house = the house
+
+# a station's name: the noticeboard over the pit
+station-stats = the books
+
+# the books with nothing on them
+station-stats-empty = nothing has come in yet
+
+# a station's name: the deep's purse
+station-crusher = the crusher
+
+# the crusher's pile-full mark, on a hover
+station-crusher-full = the floor is full of scales
+
+# a station's name: the deep's houses
+station-pods = the pods
+
+# the pods' board with nothing on it
+station-pods-empty = nothing to build
+
+# the lab's board title, still in the page's markup (the lab itself is gone)
+station-lab = the lab
+
+# a deep station's name: its fighter's (Brawler, Recruit); $nth counts the like-named stations before it.
+# (A fifth like-named station reads "undefined": that is what the code said before the words moved here, kept for the owner to word.)
+station-party = { $nth ->
+        [0] the { $who }
+        [1] the second { $who }
+        [2] the third { $who }
+        [3] the fourth { $who }
+       *[other] the undefined { $who }
+    }
+
+# a deep station not yet given a fighter; $nth counts the empty lots before it (a fifth reads "undefined", as the code said)
+station-party-lot = { $nth ->
+        [0] a station
+        [1] a second station
+        [2] a third station
+        [3] a fourth station
+       *[other] a undefined station
+    }
+
+## Crew
+
+# the crew window: where a body is, standing at its station (rockhands)
+crew-at-rockhands = on the rock
+
+# the crew window: where a body is, standing at its station (haulers)
+crew-at-haulers = at the pit
+
+# the crew window: where a body is, standing at its station (quarriers)
+crew-at-quarriers = in the quarry
+
+# the crew window: where a body is, standing at its station (farmhands)
+crew-at-farmhands = at the farm plots
+
+# the crew window: where a body is, standing at its station (purifiers)
+crew-at-purifiers = at the air filter
+
+# the crew window: where a body is, standing at its station (janitors)
+crew-at-janitors = clearing up
+
+# the crew window and a body's card: where a body is (lifted)
+crew-where-lifted = in your hand
+
+# the crew window and a body's card: where a body is (falling)
+crew-where-falling = in mid-air
+
+# the crew window and a body's card: where a body is (home)
+crew-where-home = at home
+
+# the crew window and a body's card: where a body is (basket)
+crew-where-basket = up in a balloon
+
+# the crew window and a body's card: where a body is (yard)
+crew-where-yard = in the yard
+
+# the crew window and a body's card: where a body is (resting)
+crew-where-resting = on a break
+
+# the crew window and a body's card: where a body is (walking)
+crew-where-walking = on the way
+
+# the crew window and a body's card: where a body is (deep)
+crew-where-deep = in the deep
+
+# a body's card, doing: at its job with no step to name (rockhands)
+crew-does-rockhands = digging the rock
+
+# a body's card, doing: at its job with no step to name (quarriers)
+crew-does-quarriers = mining the quarry
+
+# a body's card, doing: at its job with no step to name (farmhands)
+crew-does-farmhands = farming
+
+# a body's card, doing: at its job with no step to name (scholars)
+crew-does-scholars = researching
+
+# a body's card, doing: at its job with no step to name (purifiers)
+crew-does-purifiers = clearing the air
+
+# a body's card, doing: at its job with no step to name (janitors)
+crew-does-janitors = shoveling
+
+# a body's card, doing: at its job with no step to name (haulers)
+crew-does-haulers = transporting
+
+# a body's card, doing: what its step is (seek)
+crew-now-seek = looking for pebbles
+
+# a body's card, doing: what its step is (dump)
+crew-now-dump = tipping a load
+
+# a body's card, doing: what its step is (muck)
+crew-now-muck = shoveling up mess
+
+# a body's card, doing: what its step is (cut)
+crew-now-cut = digging in the quarry
+
+# a body's card, doing: what its step is (up)
+crew-now-up = climbing out
+
+# a body's card, doing: what its step is (down)
+crew-now-down = climbing down
+
+# a body's card, doing: what its step is (tend)
+crew-now-tend = tending a plot
+
+# a body's card, doing: what its step is (home)
+crew-now-home = heading home
+
+# a body's card, doing: what its step is (idle)
+crew-now-idle = nothing much
+
+# a body's card, doing: what its step is (in)
+crew-now-in = inside
+
+# a body's card, doing: what its step is (aloft)
+crew-now-aloft = up in the balloon
+
+# a body's card, doing: minding a machine; $name is the machine's (the belt)
+crew-minding = minding { $name }
+
+# a body's card, doing: what its step is (to)
+crew-now-to = walking there
+
+# a body's card, doing: what its step is (kit)
+crew-now-kit = fitting kit at the bench
+
+# a body's card, doing: what its step is (build)
+crew-now-build = building
+
+# a body's card, doing: what its step is (working)
+crew-now-working = working
+
+# a body with no name, on its card and in the crew window
+crew-somebody = somebody
+
+# a body's card: the label before how long it has been here (a column of ten in monospace)
+crew-card-age = age
+
+# a body's card, age: under a minute
+crew-card-new = new today
+
+# a body's card, age: $mins minutes
+crew-card-mins = { $mins } min
+
+# a body's card: the label before what it is doing (a column of ten in monospace)
+crew-card-doing = doing
+
+# a heading in the crew window over the yard's crew
+crew-sect-yard = the yard
+
+# a heading in the crew window over the deep's crew
+crew-sect-deep = the deep
+
+# a heading on the house's board, and the window it opens
+crew-sect-crew = the crew
+
+## The books
+
+# the books: a coin, before its rate
+books-dust = pebbles
+
+# the books: a coin, before its rate
+books-shard = ore
+
+# the books: a coin, before its rate
+books-spore = crops
+
+# the books: a coin, before its rate
+books-spark = sparks
+
+# the books: the window the rates are taken over, in minutes ($n may be ½)
+books-over-min = { $n } min
+
+# the books: the row that steps the window the rates are taken over
+books-over = averaged over
+
+# the books: the window, in a rate's note (nothing in the last half minute)
+books-last-half = the last half minute
+
+# the books: the window, in a rate's note
+books-last-one = the last minute
+
+# the books: the window, in a rate's note; $n minutes, more than one
+books-last-mins = the last { $n } minutes
+
+# the books: a rate's note, what came in; $n is the sum (or books-nothing), $over the window (books-last-…)
+books-got = { $n } in { $over }
+
+# the books: a rate's note when nothing came in
+books-nothing = nothing
+
+# the books: a line
+books-dirt-mach = from the machines
+
+# the books: a line
+books-dirt-dust = from the rock
+
+# the books: a line
+books-dirt-shard = from the quarry
+
+# the books: a line
+books-dirt-spore = from the farm
+
+# the books: the sky full in, while the filter is winning
+books-due-never = not at this rate
+
+# the books: a line
+books-sky-trend = pollution
+
+# the books: a line
+books-sky-up = put up, a minute
+
+# the books: a line
+books-sky-down = taken out, a minute
+
+# the books: a line
+books-sky-haze = the sky is
+
+# the books: how full the sky is; $pct with its sign
+books-sky-full = { $pct } full
+
+# the books: a line
+books-sky-due = full in
+
+# the books: a line
+books-sky-rains = showers weathered
+
+# the books: a line
+books-sky-muck = muck lying about
+
+# the books: a line
+books-working = working
+
+# the books: a line
+books-idle = idle
+
+# the books: a line
+books-best-mined = most off the rock
+
+# the books: a line
+books-best-quarried = most ore mined
+
+# the books: a line
+books-best-farmed = most crops farmed
+
+# the books: a line
+books-best-stored = most into the hole
+
+# the books: a line
+books-best-tidied = most muck cleared
+
+# the books: the longest on one clock, an hour or more; $n hours to a tenth
+books-hours = { $n } h
+
+# the books: the longest on one clock, under an hour; $n minutes
+books-mins = { $n } min
+
+# the books: a line
+books-eldest = longest on one clock
+
+# the books: a line
+books-tally-rocks = rocks cleared
+
+# the books: a line
+books-tally-banked = pebbles banked
+
+# the books: a line
+books-tally-ore = ore dug
+
+# the books: a coin earned over the whole game; $coin is books-shard, books-spore or books-spark
+books-tally-earned = { $coin } earned
+
+# the books: a line
+books-tally-rift = through the rift
+
+# the books: a line
+books-tally-brews = batches brewed
+
+# the books: a line
+books-tally-hats = hats finished
+
+# the books: a line
+books-tally-crew = on the payroll
+
+# the books: a line
+books-tally-notes = notices earned
+
+# the books: a line
+books-tally-under = sqwife under the rock for
+
+# the books: a line
+books-tally-saved = sqwife saved in
+
+# the books: the endless serpent's best level (a placeholder for the owner's words)
+books-tally-serpent = [owner's words: e.g. "deepest serpent"]
+
+# a heading in the books, and on the noticeboard
+books-sect-income = income, a second
+
+# a heading in the books
+books-sect-sky = the sky
+
+# a heading in the books
+books-sect-crew = the crew
+
+# a heading in the books
+books-sect-tally = the tally
+
+# the noticeboard: the way into the books (off the board for now)
+books-open = open the books
+
+# the noticeboard: how long this yard has been played
+books-playtime = playtime

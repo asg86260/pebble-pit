@@ -1,3 +1,4 @@
+import { msg } from '../lang.js';
 import { MACHINE_TUNE } from '../config.js';
 import { tuneRow } from '../machines.js';
 
@@ -11,6 +12,6 @@ export const TUNING_ROWS = [
   // The belt has no ladder. Its scoop only lifts what is lying loose, and the
   // rock's spoil lands on the band straight off the shovel (`catchBelt`), so a
   // faster scoop finds nothing faster: the rung bought nothing you could see.
-  tuneRow('ram', 'ram strike',
-          () => `the ram strikes ${MACHINE_TUNE}x harder`, 'shack', 'shack')
+  tuneRow('ram', msg('row-tuneram'),
+          () => msg('row-tuneram-note', { n: MACHINE_TUNE }), 'shack', 'shack')
 ];

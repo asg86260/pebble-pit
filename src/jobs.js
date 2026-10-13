@@ -1,10 +1,13 @@
 // The yard's vocabulary: every job there is, the worker type that does it, and
 // how each is said out loud.
 //
-// This file imports nothing, on purpose: config.js prices jobs, state.js
-// counts them, kit.js hats them, so a table all of them read has to sit under
-// all of them. A misspelled key here is `undefined` and wrong loudly, where a
-// bare string is a comparison that is false forever.
+// This file imports nothing but the words (lang.js, itself a leaf), on
+// purpose: config.js prices jobs, state.js counts them, kit.js hats them, so
+// a table all of them read has to sit under all of them. A misspelled key
+// here is `undefined` and wrong loudly, where a bare string is a comparison
+// that is false forever.
+
+import { msg } from './lang.js';
 
 // What a body IS. This is `w.type`, and it is what `FACTORY` is keyed on.
 export const TYPE = Object.freeze({
@@ -71,10 +74,13 @@ export const TYPE_OF = Object.freeze(Object.fromEntries(
 export const DEEP_TYPES = Object.freeze([...DEEP_JOBS.map(j => TYPE_OF[j]), TYPE.GATHER, TYPE.DELVE]);
 export const isDeepType = type => DEEP_TYPES.includes(type);
 
-// How a job is SAID, where the key is not already the words. Nothing prints a
-// raw key. The keys stay `rockhands` and `quarriers` -- saves and hooks quote
-// them.
-const SAID = Object.freeze({ [JOB.ROCK]: 'diggers', [JOB.QUARRY]: 'miners', [JOB.FARM]: 'farmers',
-                             [JOB.PURIFY]: 'air purifiers', [JOB.STIR]: 'apothecary',
-                             [JOB.DELVE]: 'deep builders' });
+// How a job is SAID. Nothing prints a raw key. The keys stay `rockhands` and
+// `quarriers` -- saves and hooks quote them.
+const SAID = Object.freeze({
+  [JOB.ROCK]: msg('job-rockhands'), [JOB.HAUL]: msg('job-haulers'), [JOB.QUARRY]: msg('job-quarriers'),
+  [JOB.FARM]: msg('job-farmhands'), [JOB.SCHOLAR]: msg('job-scholars'), [JOB.PURIFY]: msg('job-purifiers'),
+  [JOB.STIR]: msg('job-stirrers'), [JOB.JANITOR]: msg('job-janitors'), [JOB.WIZARD]: msg('job-wizards'),
+  [JOB.BUILD]: msg('job-builders'), [JOB.FIGHT]: msg('job-fighters'), [JOB.GATHER]: msg('job-gatherers'),
+  [JOB.DELVE]: msg('job-delvers')
+});
 export const jobSaid = job => SAID[job] || job || '';
