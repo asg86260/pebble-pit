@@ -62,7 +62,6 @@ field or two on `S` and a constant or two in `config.js`.
 | `save.js` | the store seam: IndexedDB on a page (read once before the boot, `primeStore`), `window.desk` in the shell, localStorage as the way in and the fallback; the guard, the fallback and the save floor (`isSave`) over all of it; every key follows the open slot | rarely |
 | `idb.js` | IndexedDB as four promises over one key-value store; null wherever it is not to be had | rarely |
 | `slots.js` | the saves page: three yards, one open at a time, labelled off their own blobs | rarely |
-| `config/times.js` | the board of times' numbers, read only by `server/`: the game has had no board since 2026-10-12, and `config.js` does not re-export it | never |
 | `crash.js` | a throw: the stopped sheet, the save offered out of it, and the `S.fatal` flag that stops `persist` writing after one | rarely; imported first by `main.js` on purpose |
 | `met.js` | what the player has met, for the index: each entry's `met` fact read, `S.seen` kept, `meet(key)` for the things with no fact; no DOM | yes |
 | `indexpage.js` | the index's page on the held sheet: the list by group, the entry beside it or pushed over it on a phone; every word is `config/index.js`'s | yes |
