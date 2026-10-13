@@ -94,11 +94,14 @@ export function drawDeepWater() {
 // The ground never changes, so it is painted once into an image, a world
 // pixel a pixel, and drawn from there (a fillRect a cell was a sizeable share
 // of the deep's frame). Deep enough for the tallest window the deep is
-// framed in, and painted afresh if the deep has moved.
+// framed in, and painted afresh if the deep has moved. As wide as the deep or
+// the window, whichever is wider: a window wider than the deep is held at its
+// left end and shows past its right one.
 let ground = null;
 const GROUND_ROWS = 40;
 export function drawDeepFloor() {
-  const fy = deepFloor(), from = deepX0() - P * 4, to = deepX1() + P * 4;
+  const win = deepWindow();
+  const fy = deepFloor(), from = Math.min(win.x0, deepX0() - P * 4), to = Math.max(win.x1, deepX1() + P * 4);
   const id = `${fy}|${from}|${to}`;
   if (!ground || ground.id !== id) {
     const img = document.createElement('canvas');

@@ -30,10 +30,6 @@ export const FAUNA_TINT_FILL = 0.6;
 // gradient.
 export const FAUNA_TINT_EDGE = 4;
 export const FAUNA_TINT_MIX = 0.4;
-// Rows of the sunlit's tint carried on over the deep's ceiling: a tall window
-// (a phone's) reaches above it, and the tint stopping there would draw a
-// hard edge across the water.
-export const FAUNA_TINT_HEAD = 60;
 
 // The drawings: rows of characters, two or three held frames each at `fps`.
 // d c b a grey body, each cell nudged a rung either way, fixed per creature
@@ -82,21 +78,22 @@ export const FAUNA_BLINK = { rate: 2.3, lit: 11, dark: 6 };
 // cells a second (one, or a range each draws from); every `flip`-th swims
 // the other way. A school is `school` sardines scattered over `spread`
 // cells; the amphipods `hop`, going in dashes. Same seeds every run.
-// Sparse, the way the birds are (the owner, 2026-10-13: "a little noisy"):
-// a few of each zone, a kind or two each, the midnight band round the coil
-// and the bar the fewest.
+// Sparse, the way the birds are (the owner, 2026-10-13: "a little noisy",
+// then "still have too many creatures around"): two in each zone, the
+// midnight band round the coil and the bar one. A row at nought is a kind
+// that zone keeps for a busier deep.
 export const FAUNA = [
   { kind: 'school', zone: 'sun', n: 1, y: [5, 18], v: [5, 8], flip: 2, school: [9, 12], spread: [22, 8] },
-  { kind: 'jelly', zone: 'sun', n: 2, y: [4, 17], v: 0.5, flip: 2 },
-  { kind: 'lantern', zone: 'twi', n: 2, y: [24, 45], v: [2.5, 5], flip: 2 },
-  { kind: 'hatchet', zone: 'twi', n: 1, y: [25, 43], v: [1.5, 3], flip: 2 },
+  { kind: 'jelly', zone: 'sun', n: 1, y: [4, 17], v: 0.5, flip: 2 },
+  { kind: 'lantern', zone: 'twi', n: 1, y: [24, 45], v: [2.5, 5], flip: 2 },
+  { kind: 'hatchet', zone: 'twi', n: 0, y: [25, 43], v: [1.5, 3], flip: 2 },
   { kind: 'siphon', zone: 'twi', n: 1, y: [30, 44], v: 0.7, flip: 2 },
   { kind: 'angler', zone: 'mid', n: 1, y: [50, 82], v: 1.2, flip: 2 },
-  { kind: 'vampire', zone: 'mid', n: 1, y: [50, 80], v: 0.9, flip: 2 },
+  { kind: 'vampire', zone: 'mid', n: 0, y: [50, 80], v: 0.9, flip: 2 },
   { kind: 'dumbo', zone: 'aby', n: 1, y: [92, 106], v: 0.8, flip: 2 },
   { kind: 'tripod', zone: 'aby', n: 1, floor: true, v: 0, flip: 2 },
-  { kind: 'cucumber', zone: 'aby', n: 1, floor: true, v: 0.25, flip: 2 },
-  { kind: 'amphipod', zone: 'had', n: 2, floor: true, v: 3.5, flip: 2, hop: true },
+  { kind: 'cucumber', zone: 'aby', n: 0, floor: true, v: 0.25, flip: 2 },
+  { kind: 'amphipod', zone: 'had', n: 1, floor: true, v: 3.5, flip: 2, hop: true },
   { kind: 'snail', zone: 'had', n: 1, low: true, v: 1.4, flip: 2 },
 ];
 
