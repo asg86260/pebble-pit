@@ -37,6 +37,7 @@ import { TESTS as deep } from './selftest/deep.js';   // wave serpent: RENDER
 import { TESTS as cloud } from './selftest/cloud.js';   // wave-cloud FACE
 import { TESTS as pad } from './selftest/pad.js';       // controller support
 import { TESTS as language } from './selftest/language.js';   // the language page
+import { TESTS as feedback } from './selftest/feedback.js';   // the feedback form
 
 // Every group there is, in file order.
 const TESTS = [
@@ -65,6 +66,7 @@ const TESTS = [
   ...cloud,
   ...pad,
   ...language,
+  ...feedback,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says
