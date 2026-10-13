@@ -8,7 +8,7 @@
 // drawing's top-left.
 
 import { DEEP_W, DEEP_H, P, FAUNA, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_MOTION, FAUNA_GULPER,
-         FAUNA_SIPHON } from '../config.js';
+         FAUNA_SIPHON, FAUNA_SCARE } from '../config.js';
 
 export const COLS = DEEP_W / P, ROWS = DEEP_H / P;
 
@@ -55,10 +55,53 @@ function run(c, t) {
   return Math.floor(beat) * step + Math.min(1, (beat % 1) * burst) * step;
 }
 
+// --- scares ---------------------------------------------------------------------
+// The recent frights, each a point of the deep (cells), the second it
+// happened, and how much of the push it carries. A creature's place is still
+// a function of its seed, the clock and this list; the list is picture only,
+// kept by whoever draws the deep and never saved.
+export const SCARES = [];
+export function addScare(x, y, t, power = 1, list = SCARES) {
+  list.push({ x, y, t, power });
+  const over = list.length - FAUNA_SCARE.keep;
+  if (over > 0) list.splice(0, over);
+}
+export const clearScares = (list = SCARES) => { list.length = 0; };
+
+// How far a scare is thrown out and held at `age` seconds: up over `rise`,
+// down over `fall`, on the stepped clock so it moves a held pose at a time.
+export function scareEnvelope(age) {
+  const K = FAUNA_SCARE;
+  if (age < 0 || age >= K.rise + K.fall) return 0;
+  const a = Math.floor(age * K.rate) / K.rate;
+  return a < K.rise ? a / K.rise : 1 - (a - K.rise) / K.fall;
+}
+
+// The whole cells a creature standing at (x, y) is pushed by every scare in
+// `list` at `t`: straight away from each point, most near it, none beyond its
+// reach. `floor` creatures go sideways only; `scale` is one fish's share.
+export function scareOffset(x, y, t, floor = false, scale = 1, list = SCARES) {
+  const K = FAUNA_SCARE;
+  let ox = 0, oy = 0;
+  for (const s of list) {
+    const e = scareEnvelope(t - s.t);
+    if (e <= 0) continue;
+    const reach = s.power > 1 ? K.break.reach : K.lash.reach, push = s.power > 1 ? K.break.push : K.lash.push;
+    const dx = x - s.x, dy = y - s.y, d = Math.hypot(dx, dy);
+    if (d >= reach) continue;
+    const amp = push * (1 - d / reach) * e * scale * (floor ? K.floorK : 1);
+    const run = Math.max(d, K.core);   // through the point itself the push eases to nothing and back out, never flips
+    ox += amp * dx / run;
+    if (!floor) oy += amp * K.lift * dy / run;
+  }
+  return { x: Math.round(ox), y: Math.round(oy) };
+}
+
 // Where creature `c` is at `t` seconds. `floorRow(x)` is the row its ground
 // stands at under column x (the scales heap on the floor), the deep's floor
-// when nobody says.
-export function faunaAt(c, t, floorRow = () => ROWS) {
+// when nobody says. A school is left whole here: its fish are scared one at
+// a time (`scareOffset`), where the drawing places them.
+export function faunaAt(c, t, floorRow = () => ROWS, scares = SCARES) {
   const M = FAUNA_MOTION, span = COLS + 2 * M.wrap;
   const x = ((c.x0 + c.dir * c.v * run(c, t)) % span + span) % span - M.wrap;
   const col = Math.round(x);
@@ -70,7 +113,11 @@ export function faunaAt(c, t, floorRow = () => ROWS) {
     y = c.y + Math.round(Math.sin(t * (jelly ? M.jellyBob : M.bob) + c.seed * 11) * (jelly ? M.jellyAmp : M.amp));
     y = Math.min(y, floorRow(col) - M.clear);
   }
-  return { x, y };
+  if (c.kind === 'school' || !scares.length) return { x, y };
+  const o = scareOffset(x, y, t, c.floor, 1, scares);
+  if (c.floor) return { x: x + o.x, y };
+  const ny = Math.max(0, y + o.y);
+  return { x: x + o.x, y: c.low ? Math.min(ny, floorRow(col) - heightOf(c.kind)) : Math.min(ny, floorRow(col) - M.clear) };
 }
 
 // A school's members about its middle, each with a seed of its own.

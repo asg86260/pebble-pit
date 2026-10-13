@@ -11,12 +11,15 @@
 
 import { now } from '../clock.js';
 import { P, FAUNA_ZONES, FAUNA_TINT_FILL, FAUNA_TINT_EDGE, FAUNA_TINT_MIX, FAUNA_TINT_HEAD, FAUNA_SPRITES, FAUNA_BASE,
-         FAUNA_VARY, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAUNA_GULPER } from '../config.js';
+         FAUNA_VARY, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAUNA_GULPER, FAUNA_SCARE, COIL_SEGS } from '../config.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow, bedTop } from './deep.js';
-import { COLS, ROWS, POPULATION, unit2, zoneAtRow, faunaAt, schoolAt, frameOf, reachOf } from '../deep/fauna.js';
+import { COLS, ROWS, POPULATION, unit, unit2, zoneAtRow, faunaAt, schoolAt, frameOf, reachOf, addScare, scareOffset,
+         clearScares, SCARES } from '../deep/fauna.js';
+import { coilAt, bellyAt } from '../deep/place.js';
+import { lashK, breaking } from '../deep/phases.js';
 
 const grey = i => GREYS[Math.max(0, Math.min(GREYS.length - 1, i))];
 const purple = i => PURPLES[Math.max(0, Math.min(PURPLES.length - 1, i))];
@@ -143,21 +146,41 @@ function gulper(x, y, dir, seed, t, dim) {
 // Each zone's own dim, looked up once.
 const DIM = new Map(FAUNA_ZONES.map(z => [z.key, z.dim]));
 
+// The frights the fight raises, seen from the drawing: the tip of a lash as
+// it sweeps the coil, and the belly as a defense breaks. Read off the
+// phases, so the sim never hears of them.
+let wasBreaking = false, lastLash = -1;
+function watchFight(t) {
+  if (t < lastLash) { lastLash = -1; clearScares(); }          // the clock went back (a scene stood again)
+  const cell = p => [(p.x - deepX0()) / P, (p.y - deepTop()) / P];
+  const k = lashK();
+  if (k != null && t - lastLash >= FAUNA_SCARE.lash.every) {
+    lastLash = t;
+    const [x, y] = cell(coilAt(Math.round(k * (COIL_SEGS - 1)), now()));
+    addScare(x, y, t, 1);
+  }
+  const b = breaking();
+  if (b && !wasBreaking) { const [x, y] = cell(bellyAt(now())); addScare(x, y, t, 2); }
+  wasBreaking = b;
+}
+
 export function drawDeepFauna() {
   const t = now() / 1000, { x0, x1 } = deepWindow();
+  watchFight(t);
   const left = (x0 - deepX0()) / P, right = (x1 - deepX0()) / P;
   // The ground under a column: the scales heaped on the floor, in rows.
   const floorRow = col => (bedTop(deepX0() + col * P) - deepTop()) / P;
   const smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
   for (const c of POPULATION) {
-    const { x, y } = faunaAt(c, t, floorRow), reach = reachOf(c);
+    const { x, y } = faunaAt(c, t, floorRow), reach = reachOf(c) + FAUNA_SCARE.break.push;
     if (x + reach < left || x - reach > right) continue;
     const col = Math.round(x), dim = DIM.get(c.zone) || 0;
     if (c.kind === 'school') {
       for (let m = 0; m < c.n; m++) {
-        const s = schoolAt(c, m, t);
-        sprite('sardine', col + s.dx, y + s.dy, c.dir, s.seed, t, dim);
+        const s = schoolAt(c, m, t), px = col + s.dx, py = y + s.dy;
+        const o = SCARES.length ? scareOffset(px, py, t, false, 1 + (unit(m * 2.3 + c.seed * 40) - 0.5) * 2 * FAUNA_SCARE.shoal) : { x: 0, y: 0 };
+        sprite('sardine', px + o.x, Math.max(0, py + o.y), c.dir, s.seed, t, dim);
       }
     } else if (c.kind === 'siphon') siphon(col, y, c.dir, c.seed, t, dim);
     else if (c.kind === 'gulper') gulper(col, y, c.dir, c.seed, t, dim);

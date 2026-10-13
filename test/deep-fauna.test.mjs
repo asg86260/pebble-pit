@@ -46,3 +46,43 @@ test('nothing teleports: a jump happens only off the deep, at the wrap', () => {
     }
   }
 });
+
+test('a scare throws the near creatures away and they ease back to their own path', async () => {
+  const { addScare, scareEnvelope } = await import('../src/deep/fauna.js');
+  const { FAUNA_SCARE: K } = await import('../src/config.js');
+  const home = K.rise + K.fall, T0 = 30;
+  // the step a creature can take between frames: the push over the rise, a held pose at a time
+  const stepMax = Math.ceil(K.break.push / (K.rise * K.rate)) + 1;
+  for (const power of [1, 2]) {
+    let moved = 0;
+    for (const c of POPULATION) {
+      const base = faunaAt(c, T0, undefined, []);
+      const list = [];
+      addScare(base.x - 4, base.y, T0, power, list);
+      if (Math.abs(faunaAt(c, T0 + K.rise, undefined, list).x - faunaAt(c, T0 + K.rise, undefined, []).x) > 0) moved++;
+      let was = faunaAt(c, T0, undefined, list);
+      for (let t = T0 + DT; t < T0 + home + 1; t += DT) {
+        const p = faunaAt(c, t, undefined, list), q = faunaAt(c, t, undefined, []);
+        const wrap = Math.abs(p.x - was.x) > 100;   // out past one wall, in past the other
+        assert.ok(wrap || Math.abs(p.x - was.x) <= stepMax + c.v * FAUNA_MOTION.hop.burst * DT * 2 + 1 && Math.abs(p.y - was.y) <= stepMax + 1,
+          `${c.kind} ${c.i} jumped at ${t.toFixed(2)}s`);
+        if (t > T0 + home + 0.01) assert.deepEqual(p, q, `${c.kind} ${c.i} is not home ${(t - T0).toFixed(2)}s after`);
+        was = p;
+      }
+    }
+    assert.ok(moved > 0, `nobody was pushed by a power-${power} scare`);
+  }
+  assert.equal(scareEnvelope(home), 0);
+  assert.ok(scareEnvelope(K.rise + 1 / K.rate) > 0.9, 'the push peaks just after the rise');
+});
+
+test('a scare pushes outward, floor creatures only sideways, and a break harder than a lash', async () => {
+  const { addScare, scareOffset } = await import('../src/deep/fauna.js');
+  const lash = [], brk = [];
+  addScare(50, 60, 0, 1, lash); addScare(50, 60, 0, 2, brk);
+  const near = scareOffset(60, 60, 0.3, false, 1, lash), nearB = scareOffset(60, 60, 0.3, false, 1, brk);
+  assert.ok(near.x > 0 && nearB.x > near.x, 'away from the point, further for a break');
+  assert.ok(scareOffset(40, 60, 0.3, false, 1, lash).x < 0, 'the other side goes the other way');
+  assert.equal(scareOffset(60, 70, 0.3, true, 1, brk).y, 0, 'the floor-dwellers keep the floor');
+  assert.deepEqual(scareOffset(200, 60, 0.3, false, 1, brk), { x: 0, y: 0 }, 'beyond the reach nothing moves');
+});

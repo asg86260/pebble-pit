@@ -788,6 +788,22 @@ const deepScenes = {
                  party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
       lookDeep(deepX0() + DEEP_W / 2);
     } },
+  // Creatures darting from a lash and from a break (DESIGN.md, "The deep's
+  // zones"): the scene stops just before the fright, the camera on the
+  // coil's middle, so a still-driven film shows the water at rest, the
+  // scare, and the creatures easing home.
+  'deep-scatter-lash': { about: 'the deep', say: 'the lash a half second off, the coil in frame, the creatures round it about to dart',
+    run: () => {
+      deepYard({ stage: 2, wound: 0.3, party: [cast('brawler', 2), cast('ranger', 2)] });
+      S.mechAt = MECHANICS[2].every - MECHANICS[2].last - 0.55;
+      lookDeep(coilAt(Math.round(COIL_SEGS * 0.5), now()).x);
+    } },
+  'deep-scatter-break': { about: 'the deep', say: 'a defense a hair from breaking, the coil in frame, the creatures round it about to scatter',
+    run: () => {
+      deepYard({ stage: 1, wound: 0.3, party: [cast('brawler', 2), cast('ranger', 2)] });
+      S.serpentWound = SERPENT_WOUND[1] - 0.01;
+      lookDeep(coilAt(Math.round(COIL_SEGS * 0.5), now()).x);
+    } },
   ...Object.fromEntries(Object.entries(PROP_SCENES).map(([name, party]) => [name, {
     about: 'the deep', say: `four stations' props: ${party.map(o => (o.cls || 'crate') + ' ' + o.rung).join(', ')}`,
     run: () => {

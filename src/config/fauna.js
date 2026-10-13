@@ -123,3 +123,22 @@ export const FAUNA_GULPER = { tail: 24, wave: 0.35, beat: 3, amp: 3, thick: 8, d
 // to last. The near stream keeps its band over the coil, where the meals
 // come from.
 export const FLOW_FAR_ZONES = [['sun', 'twi'], ['twi', 'twi']];
+
+// --- a scare -----------------------------------------------------------------------
+// A lash sweeping the coil, or a defense breaking, frightens what lives near
+// it: a creature within `reach` cells of the point is thrown directly away
+// from it, up to `push` cells at the point itself and nothing at the edge of
+// the reach, in whole cells, held `rate` times a second. The push builds over
+// `rise` seconds, then eases back over `fall`, so a creature is home on its
+// own path `rise + fall` after. A lash scares every `every` seconds of its
+// sweep, at the tip of it. The floor-dwellers skitter along the floor
+// (`floorK` of the push, sideways only); a school's fish each take a share
+// of `shoal` either side of whole, and a vertical push is `lift` of a
+// horizontal one. At most `keep` scares are held; within `core` cells of the
+// point the push eases to nothing rather than turning a creature round.
+export const FAUNA_SCARE = {
+  lash: { reach: 34, push: 5, every: 0.35 },
+  break: { reach: 80, push: 13 },
+  rise: 0.3, fall: 2.2, rate: 12,
+  floorK: 1, shoal: 0.45, lift: 0.6, keep: 24, core: 6,
+};
