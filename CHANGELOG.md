@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- After the story's kill the serpent keeps rising again, a level deeper and a tenth tougher each time; each kill drops a fang until seven stations stand, and the level shows on its bar (test/endless.test.mjs).
 - The serpent's bar slides down under blows, each blow's stretch breaking off in pixel pieces that fall away, and a meal's heal flows back in instead of jumping (`node tools/look.mjs deep-numbers`).
 - The deep is alive top to bottom: shoals and jellies by the portal, lanternfish and siphonophores under them, anglers round the fight, dumbo octopuses and tripod fish over the floor, each zone's water its own shade.
 - The deep's creatures dart away from a lash and scatter harder when a defense breaks, then ease back to their own paths; floor-dwellers skitter along the floor and shoals scatter fish by fish (test/deep-fauna.test.mjs, `node tools/look.mjs deep-scatter-lash,deep-scatter-break`).
