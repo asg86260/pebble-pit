@@ -48,7 +48,7 @@ function walk(el, path, out, seen = new Set()) {
 const IDS = ['shop', 'crewshop', 'towershop', 'quarryshop', 'farmshop', 'filtershop', 'apothshop', 'shackshop', 'looshop',
   'statsshop', 'podsshop', 'bookincome', 'booksky', 'bookcrew', 'booktally', 'crewlistrows', 'modaltitle', 'objective',
   'queue', 'hidedone', 'raise', 'record', 'index', 'slots', 'cloudsheet', 'controlslist', 'said', 'motion', 'touch', 'dark',
-  'sound', 'fullscreenrow', 'langbtn', 'recordbtn', 'slotsbtn', 'indexbtn', 'crewfade', 'way', 'fullscreen', 'toast', 'skip'];
+  'sound', 'fullscreenrow', 'langbtn', 'fbbtn', 'recordbtn', 'slotsbtn', 'indexbtn', 'crewfade', 'way', 'fullscreen', 'toast', 'skip'];
 
 export async function findUnmarked() {
   const yard = await newYard();

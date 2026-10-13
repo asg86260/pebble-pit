@@ -19,3 +19,7 @@ steam-output/
 
 # the CJK faces, cut from the language files by tools/fonts.mjs at build
 src/fonts/
+
+# the feedback worker's local secrets and wrangler's local state (feedback/README.md)
+.dev.vars
+.wrangler/

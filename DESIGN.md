@@ -19539,7 +19539,7 @@ words, and about two working weeks of ours spread across the phases.
 7. **Steam's achievement names**: the in-game notice names, translated
    with the rest and imported, or written separately for Steam.
 
-## Feedback form (design, not built)
+## Feedback form (built)
 
 Today a bug report is a player finding the itch comments or the Steam
 forum, describing a yard in words, and being asked for their save, which
@@ -19796,3 +19796,49 @@ it is read before it is committed, because the repository is public.
    crash report without one is close to useless. *Recommended: off
    everywhere, the same tick and the same line, with the crashed sheet's
    own words (the owner's) asking for it.*
+
+**As built (2026-10-13).** Option A of
+docs/mocks/feedback-form-2026-10-13.html, the owner's vote, with the three
+calls above taken as recommended (no contact field, no kind, the tick off
+everywhere) until the owner says otherwise. On both settings pages a button
+under `controls` (`set-fbbtn`, `title-fbbtn`) opens a `feedback` pane with a
+`back` (the controls page's own back messages); its `data-pane` is set only
+while `feedbackReady()`, so a build with no `VITE_FEEDBACK_URL` never shows
+it. The crashed sheet has `crashed-fbbtn` under `copy save`, shown once
+`fatal` has fetched the form's module and found a worker, and the form opens
+in place under it with `crashed-fb-ask` over the box. Every word on the pane
+is an `[owner's words: ...]` placeholder in en.ftl (`fb-*`), the other
+locale files untouched.
+
+- **Two modules.** src/feedback.js is the form with no page -- the facts, the
+  offer, the request, the line, the send, the draft -- so the node tier
+  drives what the page draws; src/feedbackform.js draws it into whichever
+  element a page hands it, a new form every time the pane is turned to. The
+  gzip moved out of cloud.js into src/gzip.js, which the form, the cloud and
+  the worker share.
+- **The line** is `goesOf(report)`, a value a key of the very object that is
+  POSTed, in order: the words (as a word), the six facts as their values,
+  `fatal` on the crashed sheet, the save as its size (on the landing page
+  with its yard, `rock 12 · 7 crew · 57 KB`). Under the values, why the tick
+  is grey when it is, and how long a report and a save are kept
+  (`fb-goes-keep`). While the tick is on, one more line, `fb-public`, holds
+  the place for the owner's open call on whether a sent save may become a
+  public test fixture.
+- **`target`** is the store and the demo, `itch`, `itch-demo`, `steam` or
+  `steam-demo`: the table above listed three, and the free itch page is the
+  demo build.
+- **The tick is a button** (`role="checkbox"`), so every stop on the pane is
+  a row padpage.js already walks: the tick, send, back. The box is skipped
+  as the paste box is.
+- **The worker** is feedback/ as above. `POST /reports` refuses a request
+  with no Origin as well as a foreign one (a report has no other door; the
+  owner's two routes are reached from a terminal, with the token). A save
+  past `FEEDBACK_SAVE_MAX` is a 413, the other bad saves a 400. Past the
+  ceiling `save_bytes` is 0; the sweep sets it to 0 when a save goes, so the
+  inbox's column says whether there is one to pull. `GET /stats` also counts
+  the unread.
+- **The crashed sheet** scrolls inside itself, held to the window: the form
+  makes it taller than a phone.
+- **Not built**: deploying it. feedback/README.md has the steps; the
+  release workflow passes the repository variable `FEEDBACK_URL` to every
+  build, the Steam cuts included.

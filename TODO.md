@@ -1,21 +1,30 @@
 # Still to do
 
-## Feedback form -- DESIGNED, AWAITS MOCK VOTE (2026-10-13)
+## Feedback form -- BUILT, AWAITS THE OWNER'S WORDS AND THE DEPLOY (2026-10-13)
 
-"Feedback form (design, not built)" in DESIGN.md. A box, a tick that sends
-the open slot's save (57 KB gzipped at the deepest fixture), and a send, on
-the held sheet's settings, the landing page's settings and the crashed
-sheet; version, target, shell, os, language and page go along, and one line
-under send lists all of it before it goes. A worker of its own in
-`feedback/` (D1 only; no card, so no R2), `VITE_FEEDBACK_URL` from a repo
-variable, read by Claude through the Cloudflare connector, a save pulled
-into test/fixtures through `GET /reports/:id/save`. Nothing is queued: a
-failed send keeps the words. Mock:
-docs/mocks/feedback-form-2026-10-13.html (published:
-https://claude.ai/artifact/Wvp9GBkrXAkJWNPsuAsRvJ). Blocked on: the vote (A, B or
-C), the owner's three calls at the section's end (a way to answer, a kind
-or not, the tick on the crashed sheet), and every word on the pane, which
-is the owner's.
+Built to option A (DESIGN.md, "Feedback form (built)", its As-built note):
+a button under `controls` on both settings pages and one under `copy save`
+on the crashed sheet, the worker in `feedback/`, checks in
+feedback/test/routes.test.mjs, test/feedback.test.mjs and the browser group
+"the feedback form says what it sends". No build shows it yet: the button
+needs `VITE_FEEDBACK_URL`. Open, the owner's:
+- **The words.** Every word on the pane is a placeholder in en.ftl:
+  `set-fbbtn`, `set-fb-word`, `title-fbbtn`, `title-fb-word`,
+  `crashed-fbbtn`, `crashed-fb-ask`, `fb-box.placeholder`, `fb-left`,
+  `fb-tick`, `fb-goes`, `fb-goes-words`, `fb-goes-save`,
+  `fb-goes-save-yard`, `fb-goes-keep`, `fb-nosave-empty`, `fb-nosave-big`,
+  `fb-public`, `fb-send`, `fb-sending`, `fb-sent`, `fb-sent-nosave`,
+  `fb-sent-where`, `fb-failed`.
+- **The public fixture call.** Whether the form says a sent save may become
+  a public test fixture (the repository is public). `fb-public` holds the
+  place, shown while the tick is on; if the answer is no line, delete the
+  message and the `.fb-public` element in src/feedbackform.js.
+- **The three calls** (DESIGN.md's list) were taken as recommended: no
+  contact field, no kind, the tick off on the crashed sheet too.
+- **The deploy.** feedback/README.md, "Deploy": create the D1 database,
+  its id into feedback/wrangler.toml, migrations, the two secrets
+  (`FEEDBACK_TOKEN`, `IP_PEPPER`), `wrangler deploy`, then the repository
+  variable `FEEDBACK_URL`. Nothing was run against the account.
 
 ## Localization, phase two -- PLUMBING AND PICKER BUILT, LOOK AWAITS A MOCK (2026-10-13)
 

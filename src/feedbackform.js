@@ -59,7 +59,8 @@ export function mountFeedback(el, { page, raw, fatal = null, yard = false, ask =
       return v;
     });
     const why = form.why();
-    goes.replaceChildren(make('span', 'lead', msg('fb-goes')), ...items,
+    // a space between each, which is where the line may break
+    goes.replaceChildren(make('span', 'lead', msg('fb-goes')), ...items.flatMap(v => [v, ' ']),
       ...(why ? [make('span', 'why', why)] : []),
       make('span', 'keep', msg('fb-goes-keep', { reportDays: FEEDBACK_REPORT_KEEP_D, saveDays: FEEDBACK_SAVE_KEEP_D })));
   }
