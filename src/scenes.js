@@ -20,7 +20,7 @@ import { JOB, TYPE } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
-import { rockLeft } from './world.js';
+import { rockLeft, clampCam } from './world.js';
 import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
@@ -414,8 +414,9 @@ const killAt = a => () => {
 // party at the last defense, struck down by the last blow and run until the
 // finale reaches `phase`, then `into` seconds more, the moment held for the
 // shot. With `phase` 'after', the sheet put down and the yard run on: the two
-// of them at the yard's end.
-const finaleAt = (phase, into = 0) => () => {
+// of them at the house. `onHouse` turns the held camera onto the house, for a
+// moment of the build the walk's own camera is not looking at.
+const finaleAt = (phase, into = 0, onHouse = false) => () => {
   rich();
   window.__fullSites();
   window.__snatch({ played: true });
@@ -438,6 +439,8 @@ const finaleAt = (phase, into = 0) => () => {
   if (phase === 'after') { window.__skipBeat('sheet'); window.__fast(3); }
   for (let i = 0; i < into * 60; i++) window.__fast(1 / 60);
   window.__holdShot();
+  // the walk's own camera would take it back on the page's next frame: held still
+  if (onHouse) { S.still = true; S.camX = 0; clampCam(); }
 };
 
 // A yard past the snatch with her at the free first station, on the yard
@@ -832,9 +835,13 @@ const deepScenes = {
   'finale-gear': { about: 'the deep', say: 'the finale: her gear going back onto her station in held steps, him beside her', run: finaleAt('hang', 0.4) },
   'finale-heir': { about: 'the deep', say: "the finale: one of the deep's crew taking up her gear at the station", run: finaleAt('heir', 0.2) },
   'finale-portal': { about: 'the deep', say: 'the finale: the two of them at the portal, the ring ringing out', run: finaleAt('ring', 0.35) },
-  'finale-parade': { about: 'the deep', say: 'the finale: the walk down the yard, the crew falling in behind, fireworks', run: finaleAt('walk', 14) },
-  'finale-sunset': { about: 'the deep', say: "the finale: at the yard's end, sat together under the striped sun, a heart", run: finaleAt('sunset', 3.2) },
-  'finale-after': { about: 'the deep', say: "after the finale: the two of them at the yard's end, idling, for good", run: finaleAt('after', 6) },
+  'finale-parade': { about: 'the deep', say: 'the finale: the walk down the yard, the crew falling in behind, hopping, fireworks', run: finaleAt('walk', 14) },
+  'finale-build': { about: 'the deep', say: "the finale: the builders putting the house up at the yard's end while the pair walk", run: finaleAt('walk', 16, true) },
+  'finale-arrive': { about: 'the deep', say: 'the finale: the pair at the door of the finished house, the crowd behind', run: finaleAt('arrive', 0.3) },
+  'finale-door': { about: 'the deep', say: 'the finale: the door open on the lit room, her going in', run: finaleAt('in', 1.2) },
+  'finale-light': { about: 'the deep', say: 'the finale: the door shut, the window lit, the heart over the house', run: finaleAt('light', 0.6) },
+  'finale-after': { about: 'the deep', say: 'after the finale: the two of them come out of the house to the bench', run: finaleAt('after', 1.2) },
+  'finale-after-bench': { about: 'the deep', say: 'after the finale: the two of them sat on the bench by the door, for good', run: finaleAt('after', 6) },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {

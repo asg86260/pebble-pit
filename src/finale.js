@@ -1,5 +1,6 @@
 // The finale: the serpent's death, and the two of them going home (the
-// owner's picks on docs/mocks/retire-2026-10-12.html).
+// owner's picks on docs/mocks/retire-2026-10-12.html and
+// docs/mocks/finale-house-2026-10-12.html).
 //
 // The kill hands the two of them over here (snatch.js, `handOver`): he is out
 // of the belly beside her. She swims back to her station and hangs her gear on
@@ -8,42 +9,52 @@
 // gear up. Then the pair are not crew any more: no job, not counted, no
 // wages, no room. They swim up through the portal, come up out of the
 // drowned pit, and walk the whole yard to its far end, the left, away from
-// the hole. As they pass, each of the crew leaves its work and falls in
-// behind them, two files, hopping, with marks over them, and fireworks go up
-// overhead. At the far end the sun goes down in stripes, they sit, a heart,
-// a last hold, and the sheet. The yard is held for all of it -- work paused,
-// the background still and quiet (cutscene.js, `stepHush`) -- and through the
-// sheet; putting the sheet down lets it go, and the crowd walks home.
+// the hole, where the yard's builders are putting up a house (home.js) from a
+// pile they carried there while the deep half played. As the pair pass, each
+// of the crew gets free of where it is and falls in behind them, two files,
+// hopping in held poses, with marks over them, the forklifts rolling at the
+// tail, and fireworks go up overhead, quicker as they near the house. At the
+// door -- the house finished as they arrive -- the door opens, she goes in,
+// he follows, it shuts, a volley goes up off both sides of the house, the
+// window lights under a heart, a last hold, and the sheet. The yard is held
+// for all of it -- work paused, the background still and quiet (cutscene.js,
+// `stepHush`) -- and through the sheet; putting the sheet down lets it go,
+// and the crowd walks home.
 //
-// Afterwards the two of them stay at the left end for good, idling
-// (`stepRetired`), saved in `S.retired`.
+// Afterwards the two of them live in the house for good (home.js,
+// `stepRetired`), saved in `S.retired`.
 //
-// `S.finale` is the beat while it plays, and the sunset after it until the
-// sheet is put down: `{ phase, u, T, hurry, st, her, heir, pair, joined,
-// bursts, kit, glide }` -- the phase and the seconds into it, the seconds
-// since the yard part began, the station she fought at, her body's uid while
-// she is still one of the crew, the one who takes the gear up, the two of
-// them where they are once they are not crew, how many have fallen in, the
-// fireworks up, where the gear is while it moves, and the camera's glide.
+// `S.finale` is the beat while it plays, and the house's last hold under the
+// sheet: `{ phase, u, T, hurry, st, her, heir, pair, joined, bursts, kit,
+// glide, house }` -- the phase and the seconds into it, the seconds since the
+// yard part began, the station she fought at, her body's uid while she is
+// still one of the crew, the one who takes the gear up, the two of them where
+// they are once they are not crew, how many have fallen in, the fireworks up,
+// where the gear is while it moves, the camera's glide, and the build.
 // Only the phase is written down: a reload mid-finale lands at its end
-// (`land`), the pair at the left end and the sheet to come.
+// (`land`), the house standing, the pair in it and the sheet to come.
 
-import { S, pit } from './state.js';
+import { S, pit, quarry } from './state.js';
 import { P, WORKER, KILL_GLIDE_S,
-         FINALE_SWIM_PX_S, FINALE_SWIM_MAX_S, FINALE_LIFT_S, FINALE_LIFT_CELLS, FINALE_HANG_S, FINALE_HANG_STEPS,
+         FINALE_SWIM_PX_S, FINALE_SWIM_MAX_S, FINALE_LIFT_S, FINALE_HANG_S,
          FINALE_HEART_S, FINALE_HEIR_MAX_S, FINALE_TAKE_S, FINALE_WATCH_S, FINALE_UP_PX_S, FINALE_UP_MAX_S,
          FINALE_RING_S, FINALE_OUT_S, FINALE_OUT_STEPS, FINALE_WALK_PX_S, FINALE_WALK_MAX_S, FINALE_LEAD,
-         FINALE_END_CELLS, FINALE_PAIR_GAP, FINALE_JOIN_CELLS, FINALE_JOIN_PX_S, FINALE_RANK, FINALE_BEHIND,
-         FINALE_HOP_S, FINALE_HOP, FINALE_MARK_EVERY_S, FINALE_MARK_S, FINALE_FIREWORK_S, FIREWORK_RISE_S,
-         FIREWORK_LIFE_S, FIREWORK_HIGH, SUNSET_SIT_S, SUNSET_HOLD_S, SUNSET_OUT_S, FINALE_HURRY,
-         RETIRED_TURN_S, RETIRED_STROLL_CELLS, RETIRED_STROLL_PX_S } from './config.js';
+         FINALE_END_CELLS, FINALE_PAIR_GAP, FINALE_JOIN_CELLS, FINALE_JOIN_PX_S, FINALE_HURRY_K, FINALE_RANK,
+         FINALE_FILE_BACK, FINALE_BEHIND, FINALE_FREE_PX_S, FINALE_FLOAT_STEP_S, FINALE_DOOR_OUT_S,
+         FINALE_BANK_S, FINALE_BANK_STEPS, FINALE_BANK_CELLS, FINALE_BANK_ARC, FINALE_BANK_RISE,
+         FINALE_BALLOON_S, FINALE_BALLOON_STEPS, FINALE_HOP_BEAT_S, FINALE_HOP_GROUPS, FINALE_HOP_POSES,
+         FINALE_MARK_EVERY_S, FINALE_MARK_S, FINALE_MARK_AFTER_S, FINALE_LIFT_TAIL,
+         FINALE_ARRIVE_S, FINALE_DOOR_S, FINALE_GAP_S, FINALE_IN_S, FINALE_HIM_AFTER_S, FINALE_SHUT_S,
+         FINALE_LIGHT_S, FINALE_HOLD_S, FINALE_HURRY, FINALE_WALL_ROWS, FINALE_ROOF, FINALE_HOUSE_W,
+         FIREWORK_GAP_S, FIREWORK_FIRST_S, FIREWORK_LAST_S, FIREWORK_DOUBLE_FROM, FIREWORK_DOUBLE_CHANCE,
+         FIREWORK_DOUBLE_LAG_S, FIREWORK_DOUBLE_DX, FIREWORK_KINDS, FIREWORK_RISE_S, FIREWORK_LIFE_S,
+         FIREWORK_HIGH, FINALE_VOLLEY, FINALE_HEART_BURST } from './config.js';
 import { now, frames, frameMs } from './clock.js';
-import { rand } from './rng.js';
 import { stationById, fighterAt } from './deep/party.js';
 import { postX, postY, deepPortal, portalCircle, deepFloor, propRect } from './deep/place.js';
 import { swim } from './deep/arms.js';
 import { abyssLine } from './pit.js';
-import { feetOn, ways, belowYard } from './route.js';
+import { feetOn, ways, belowYard, wayAt, keepTo, stepRoute, rockSpan } from './route.js';
 import { killFrame, gliding, goUp, setView, canGoDown } from './view.js';
 import { clampCam, lockScroller } from './world.js';
 import { rebalance } from './staffing.js';
@@ -51,20 +62,30 @@ import { syncWorkers, retask } from './crew.js';
 import { onYard } from './crew/body.js';
 import { TYPE, isDeepType } from './jobs.js';
 import { markDone } from './beats.js';
+import { inBasket, bringDown } from './balloon.js';
+import { takeBuilders, planBuild, stepBuilder, builderPose, freeBuilders, finishHouse, houseDone,
+         houseX, doorX, stepRetired, retiredIn, goInto, afterPair as afterOf } from './home.js';
 
 const F = () => S.finale;
 const clamp01 = k => Math.max(0, Math.min(1, k));
+const lerp = (a, b, k) => a + (b - a) * k;
 const easeInOut = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 const snap = v => Math.round(v / P) * P;
 // A held step: `k` 0..1 in `n` whole steps, each taken as its stretch begins.
 const stepped = (k, n) => Math.min(1, Math.ceil(clamp01(k) * n) / n);
+// ...and each taken as its stretch ends.
+const held = (k, n) => Math.min(1, Math.floor(clamp01(k) * n + 1e-6) / n);
 const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
 
 // The phases the yard sees, and the deep's.
 const DEEP = new Set(['swim', 'lift', 'hang', 'heart', 'heir', 'up', 'ring', 'through']);
-const YARD = new Set(['out', 'walk', 'sunset', 'held']);
+const YARD = new Set(['out', 'walk', 'arrive', 'open', 'in', 'shut', 'light', 'hold', 'held']);
+// At the door, the pair stood there; and the house's own end, them indoors.
+const AT_DOOR = new Set(['arrive', 'open', 'in', 'shut', 'light', 'hold', 'held']);
+const INDOORS = new Set(['shut', 'light', 'hold', 'held']);
 export const finaleInDeep = () => !!F() && DEEP.has(F().phase);
 export const finaleInYard = () => !!F() && YARD.has(F().phase);
+export const finalePhase = () => (F() ? F().phase : null);
 
 // --- whether -------------------------------------------------------------------------
 // The beat running, or its sheet up after it: the yard's work stands still,
@@ -80,7 +101,7 @@ export const workPaused = () => finaleRunning() || S.beat.sheet === 'freedsheet'
 export function finaleCast(w) {
   const f = F();
   if (!f || !w) return false;
-  if (w.parade) return true;
+  if (w.parade || w.house) return true;
   if (f.her && w.uid === f.her) return true;
   if (f.heir && w.uid === f.heir && DEEP.has(f.phase)) return true;
   return YARD.has(f.phase) && !belowYard(w);
@@ -89,7 +110,9 @@ export function finaleCast(w) {
 // --- the hand-over from the kill -----------------------------------------------------
 // Him out of the belly at (x, y), beside her. Her: the first station's
 // fighter, or failing that whoever of the deep's crew is first; with nobody,
-// or the two of them already gone home, there is no finale.
+// or the two of them already gone home, there is no finale. The yard's
+// builders are taken off their work here and set off down the yard with the
+// pile for the house.
 export function handOver(x, y) {
   if (S.retired) return false;
   const st0 = S.stations && S.stations[0];
@@ -98,7 +121,9 @@ export function handOver(x, y) {
   if (!her) return false;
   const st = her.station ? stationById(her.station) : null;
   S.finale = { phase: 'swim', u: 0, T: 0, hurry: 1, st: st ? st.id : null, her: her.uid, heir: null,
-               pair: [null, { x, y, face: -1 }], joined: 0, bursts: [], kit: null, glide: null, swum: null };
+               pair: [null, { x, y, face: -1 }], joined: 0, bursts: [], kit: null, glide: null, swum: null,
+               house: null, landing: {} };
+  takeBuilders(S.finale);
   return true;
 }
 
@@ -152,6 +177,11 @@ export function hungAt(st) {
   return { x: snap(r.x + r.w - WORKER), y: r.y + r.h - WORKER };
 }
 
+const endX = () => doorX();
+const himAt = x => x + WORKER + FINALE_PAIR_GAP;
+// Where they come out onto the near lip of the drowned pit.
+const lipX = () => snap(pit.x - WORKER * 2 - FINALE_PAIR_GAP - P * 2);
+
 export function stepFinale(t) {
   const f = F();
   if (!f) return false;
@@ -160,6 +190,7 @@ export function stepFinale(t) {
   f.T += dt;
   const st = f.st ? stationById(f.st) : null;
   const him = f.pair[1];
+  landCrafts(f);
 
   if (f.phase === 'swim') {
     // Her back to her station's post and him beside her, at the post's
@@ -243,6 +274,14 @@ export function stepFinale(t) {
     f.from = f.pair.map(o => ({ x: o.x, y: o.y }));
     f.T = 0;
     f.glide = null;
+    // The walk's length is known now, and the build is fitted to it: done as
+    // they reach the door. With nobody to build it, it is stood up here,
+    // a whole yard away from anybody looking.
+    f.walkFrom = lipX();
+    f.walkPace = Math.max(FINALE_WALK_PX_S, (f.walkFrom - endX()) / FINALE_WALK_MAX_S);
+    f.walkS = Math.max(0, f.walkFrom - endX()) / f.walkPace;
+    if (f.house && f.house.n) planBuild(f, FINALE_OUT_S + f.walkS);
+    else finishHouse(f);
     lockScroller(true, 'finale');
     next('out');
     return true;
@@ -252,9 +291,8 @@ export function stepFinale(t) {
     // to the way, in held steps.
     const k = stepped(f.u / FINALE_OUT_S, FINALE_OUT_STEPS);
     const surf = abyssLine() - WORKER;
-    const lipX = snap(pit.x - WORKER * 2 - FINALE_PAIR_GAP - P * 2);
     f.pair.forEach((o, i) => {
-      const s = f.from[i], ex = lipX + i * (WORKER + FINALE_PAIR_GAP);
+      const s = f.from[i], ex = f.walkFrom + i * (WORKER + FINALE_PAIR_GAP);
       const up = clamp01(k / 0.5), over = clamp01((k - 0.5) / 0.5);
       o.x = snap(s.x + (ex - s.x) * over);
       const lift = Math.sin(over * Math.PI) * P * 3;
@@ -263,39 +301,70 @@ export function stepFinale(t) {
     });
     yardFrame(f.pair[0].x);
     if (f.u < FINALE_OUT_S) return true;
-    f.walkFrom = f.pair[0].x;
-    f.walkPace = Math.max(FINALE_WALK_PX_S, (f.walkFrom - endX()) / FINALE_WALK_MAX_S);
+    f.walkT = f.T;
+    f.nextFw = f.T + FIREWORK_FIRST_S;
     next('walk');
     return true;
   }
   if (f.phase === 'walk') {
-    // The length of the yard, a whole cell at a time; the crowd falls in.
-    const x = Math.max(endX(), snap(f.walkFrom - f.walkPace * f.u));
+    // The length of the yard in whole pixels; the crowd falls in.
+    const x = Math.max(endX(), Math.round(f.walkFrom - f.walkPace * f.u));
     placePair(x);
     yardFrame(x);
     joinCrowd(x);
-    launch();
+    launch(f);
     if (x > endX()) return true;
-    next('sunset');
+    next('arrive');
     return true;
   }
-  if (f.phase === 'sunset') {
-    placePair(endX());
-    yardFrame(endX());
-    if (f.u < SUNSET_HOLD_S) return true;
-    // Over: the sunset held under the sheet, and the two of them home for good.
+  placePair(endX());
+  yardFrame(endX());
+  if (f.phase === 'arrive') {
+    // At the door; held there until the house is done, the crowd still
+    // falling in from anywhere it was not passed.
+    joinCrowd(endX());
+    if (f.u >= FINALE_ARRIVE_S && houseDone()) next('open');
+    return true;
+  }
+  if (f.phase === 'open') {
+    if (f.u >= FINALE_DOOR_S + FINALE_GAP_S) next('in');
+    return true;
+  }
+  if (f.phase === 'in') {
+    // Her in, then him, in held steps (`pairInYard` draws them dimming).
+    const her = goInto(f.u, endX()), he = goInto(f.u - FINALE_HIM_AFTER_S, himAt(endX()));
+    if (her) f.pair[0].x = her.x;
+    if (he) f.pair[1].x = he.x;
+    if (f.u < FINALE_IN_S) return true;
+    volley(f);
+    next('shut');
+    return true;
+  }
+  if (f.phase === 'shut') {
+    if (f.u < FINALE_SHUT_S) return true;
+    next('light');
+    return true;
+  }
+  if (f.phase === 'light') {
+    if (f.u < FINALE_LIGHT_S) return true;
+    next('hold');
+    return true;
+  }
+  if (f.phase === 'hold') {
+    if (f.u < FINALE_HOLD_S) return true;
+    // Over: held under the sheet, and the two of them home for good.
     f.phase = 'held';
-    S.retired = { x: f.pair.map(o => o.x), mode: 'sit', left: RETIRED_TURN_S[0], u: 0, home: endX() };
+    S.retired = retiredIn();
     return false;
   }
   return false;
 }
 
-const endX = () => FINALE_END_CELLS * P;
 function placePair(x) {
-  const [her, him] = F().pair;
+  const f = F(), [her, him] = f.pair;
+  if (AT_DOOR.has(f.phase) && f.phase !== 'arrive' && f.phase !== 'open') return;
   her.x = x; her.face = -1;
-  him.x = x + WORKER + FINALE_PAIR_GAP; him.face = -1;
+  him.x = himAt(x); him.face = -1;
   const way = ways().yard;
   her.y = feetOn(way, her.x);
   him.y = feetOn(way, him.x);
@@ -306,7 +375,8 @@ function placePair(x) {
 function deepFrame(x, k, y = null) {
   killFrame(k, glideX('deep', x), k > 0 && y != null ? y : null);
 }
-// The yard's: the pair a share of the window in from its left.
+// The yard's: the pair a share of the window in from its left. At the door
+// it stays there, the house coming into view as the camera arrives.
 function yardFrame(x) {
   S.follow = null;
   S.camTo = null;
@@ -337,174 +407,264 @@ function retire(f) {
 }
 
 // --- the crowd ----------------------------------------------------------------------------
-// Who can fall in: out in the open on the yard's own floor, on its feet and
-// free to walk -- not behind a door, aloft, in a craft, on the cursor, or
-// down a working.
-const free = w => !w.parade && !w.lifted && !w.falling && !w.aloft && !w.floating && !w.inside
-                && !w.craft && !w.homeward && !isDeepType(w.type) && onYard(w) && !belowYard(w)
-                && Math.abs(w.y - feetOn(ways().yard, w.x)) < P * 2;
+// Who can fall in: any of the yard's crew, wherever it is, once nothing
+// else has it -- not in your hand, not mid-fall or seeing stars, not being
+// brought home by its own job. The builders are building.
+const joinable = w => !w.parade && !w.house && !isDeepType(w.type) && !w.lifted && !w.falling && !w.floating
+  && !w.dizzyUntil && !w.hatOff && !w.robbed && (w.homeward == null);
+// How it gets free of where it is: down out of a balloon, a wizard down out
+// of the sky, out of a shack's door, by the ways off the hill or up out of a
+// working, a hop down off a bank, or nothing to get free of.
+function howFree(w) {
+  if (w.craft != null && inBasket(w)) return 'balloon';
+  if (w.aloft) return 'float';
+  if (w.inside) return 'door';
+  if (belowYard(w) || !onYard(w) || wayAt(w.x, w.y).key !== 'yard') return 'route';
+  if (w.y < S.groundY - WORKER - FINALE_BANK_RISE * P) return 'bank';
+  return 'none';
+}
 function joinCrowd(x) {
   const f = F();
   for (const w of S.workers) {
-    if (!free(w) || x > w.x + FINALE_JOIN_CELLS * P) continue;
-    w.parade = { k: f.joined++ };
+    if (!joinable(w) || x > w.x + FINALE_JOIN_CELLS * P) continue;
+    const how = howFree(w);
+    w.parade = { k: f.joined++, st: 'free', how, ft: 0, x0: w.x, y0: w.y };
     w.walking = false;
     w.route = null;
     w.say = null;
+    if (how === 'balloon') { w.homeward = w.craft; w.berth = null; f.landing[w.craft] ??= f.T; }
+    if (how === 'float') { w.channel = false; w.cell = null; }
+    if (how === 'door') w.inside = false;
   }
 }
-// Its place in the files: behind the pair, two abreast, the second file
-// half a rank back and a cell nearer.
-function slotOf(k) {
-  const f = F(), lead = f.pair[1].x + WORKER + FINALE_BEHIND;
-  const rank = Math.floor(k / 2), file = k % 2;
-  return { x: lead + rank * FINALE_RANK + file * snap(FINALE_RANK / 2), file };
+// The balloons coming down to their posts, in held steps.
+function landCrafts(f) {
+  for (const i of Object.keys(f.landing || {}))
+    bringDown(+i, held((f.T - f.landing[i]) / FINALE_BALLOON_S, FINALE_BALLOON_STEPS));
 }
-// The crowd's step (crew/step.js): to its place at a hurry, then hopping in
-// held poses with a mark over it now and then; still in the final hold.
+// Where a body gets out to on the yard's floor: clear of the cut's mouth and
+// of the hill, on the side the pair are going.
+function clearX(w) {
+  let x = w.x;
+  if (S.quarryOpen && x + WORKER > quarry.x && x < quarry.x + quarry.w) x = quarry.x - WORKER - P;
+  const span = rockSpan();
+  if (span && x + WORKER > span.from && x < span.to) x = span.from - WORKER - P;
+  return x;
+}
+// Its place in the files: behind the pair (behind the door once they are at
+// it), two abreast, the second file FINALE_FILE_BACK further back and a cell
+// nearer.
+function slotOf(k) {
+  const f = F(), at = AT_DOOR.has(f.phase) ? himAt(endX()) : f.pair[1].x;
+  const lead = at + WORKER + FINALE_BEHIND;
+  const rank = Math.floor(k / 2), file = k % 2;
+  return { x: lead + rank * FINALE_RANK + file * FINALE_FILE_BACK, file };
+}
+const hurryPace = f => Math.max(FINALE_JOIN_PX_S, (f.walkPace || 0) * FINALE_HURRY_K) / 60;
+// The crowd's step (crew/step.js): free of where it is, then to its place at
+// a hurry, then locked to it, hopping in held poses with a mark over it now
+// and then; still in the final hold.
 function stepParade(w) {
   const f = F();
   if (!f || !YARD.has(f.phase)) return;
-  const s = slotOf(w.parade.k);
-  const step = FINALE_JOIN_PX_S / 60 * frames() * f.hurry;
-  const d = s.x - w.x;
-  w.x += Math.sign(d) * Math.min(Math.abs(d), step);
-  if (Math.abs(d) > 0.5) w.face = Math.sign(d);
-  else w.face = -1;
-  w.y = feetOn(ways().yard, w.x) + s.file * P;
-  if (stillNow()) { w.say = null; return; }
-  const k = w.parade.k, beat = f.T + hash(k) * FINALE_MARK_EVERY_S;
+  const p = w.parade, way = ways().yard;
+  const dt = frames() / 60 * f.hurry;
+  if (p.st === 'free') {
+    p.ft = (p.ft || 0) + dt;
+    if (p.how === 'balloon') {
+      // off at the foot of its post the frame the craft is moored (`comeHome`)
+      if (w.homeward == null) p.st = 'hurry';
+    } else if (p.how === 'float') {
+      const foot = feetOn(way, w.x);
+      w.y = Math.min(foot, p.y0 + Math.floor(p.ft / FINALE_FLOAT_STEP_S) * P);
+      w.aloft = w.y < foot;
+      if (!w.aloft) p.st = 'hurry';
+    } else if (p.how === 'door') {
+      if (p.ft >= FINALE_DOOR_OUT_S) p.st = 'hurry';
+    } else if (p.how === 'route') {
+      if (!keepTo(w, clearX(w), way) || !stepRoute(w, FINALE_FREE_PX_S / 60 * f.hurry)) { w.route = null; p.st = 'hurry'; }
+    } else if (p.how === 'bank') {
+      const k = held(p.ft / FINALE_BANK_S, FINALE_BANK_STEPS), tx = p.x0 - FINALE_BANK_CELLS * P;
+      w.x = lerp(p.x0, tx, k);
+      w.y = lerp(p.y0, feetOn(way, tx), k) - Math.round(Math.sin(k * Math.PI) * FINALE_BANK_ARC) * P;
+      if (p.ft >= FINALE_BANK_S) p.st = 'hurry';
+    } else p.st = 'hurry';
+    if (p.st !== 'hurry') return;
+  }
+  const s = slotOf(p.k);
+  if (p.st === 'hurry') {
+    const step = hurryPace(f) * frames() * f.hurry, d = s.x - w.x;
+    if (Math.abs(d) <= step) { w.x = s.x; p.st = 'in'; p.inAt = f.T; }
+    else { w.x += Math.sign(d) * step; w.face = Math.sign(d); }
+  } else w.x = s.x;
+  if (p.st === 'in') w.face = -1;
+  w.y = feetOn(way, w.x) + s.file * P;
+  if (stillNow() || p.st !== 'in') { w.say = null; return; }
+  if (f.T - p.inAt < FINALE_MARK_AFTER_S) return;
+  const beat = f.T + hash(p.k + 1) * FINALE_MARK_EVERY_S;
   const n = Math.floor(beat / FINALE_MARK_EVERY_S);
-  if (n !== w.parade.n && f.T > 0.4) {
-    w.parade.n = n;
-    w.say = { mark: ['heart', 'note', 'bang'][Math.floor(hash(k * 7 + n) * 3)], until: now() + FINALE_MARK_S * 1000 };
+  if (n !== p.n) {
+    p.n = n;
+    w.say = { mark: ['heart', 'note', 'bang'][Math.floor(hash(p.k * 7 + n) * 3)], until: now() + FINALE_MARK_S * 1000 };
   }
 }
 // The final hold: nothing moves but the sparks falling out.
-const stillNow = () => { const f = F(); return f.phase === 'held' || (f.phase === 'sunset' && f.u >= SUNSET_HOLD_S - 2); };
-// How far a body in the crowd is drawn over its feet, in pixels: its hop, a
-// held pose at a time, once it is in its place. Never moves `w.y`, so
-// nothing reasoning about where a body stands has a body in the air.
-export function paradeLift(w) {
+const stillNow = () => { const f = F(); return !f || f.phase === 'hold' || f.phase === 'held'; };
+
+// The hop, a held pose at a time: a steady beat, the crowd in groups a share
+// of a beat apart, each body starting on its own group's next beat after it
+// is in its place. `{ lift, rows, smear, dust }`, lift in cells.
+function hopPose(k, inAt) {
+  const f = F(), per = FINALE_HOP_BEAT_S;
+  const ph = (k % FINALE_HOP_GROUPS) * per / FINALE_HOP_GROUPS;
+  const start = Math.ceil((inAt + ph) / per) * per - ph;
+  if (f.T < start) return null;
+  let u = (f.T + ph) % per;
+  for (const pose of FINALE_HOP_POSES) { if (u < pose.s) return pose; u -= pose.s; }
+  return null;
+}
+// How a body in the finale is drawn over its feet (render/crew.js): its hop
+// in the crowd, or a builder's stoop, raised arms and what it carries.
+// `{ lift, rows, smear, dust, arms, hold }`, lift in pixels; null drawn as
+// itself. Never moves `w.y`, so nothing reasoning about where a body stands
+// has a body in the air.
+export function finalePose(w) {
   const f = F();
-  if (!w.parade || !f || !YARD.has(f.phase) || stillNow()) return 0;
-  const s = slotOf(w.parade.k);
-  if (Math.abs(s.x - w.x) > P) return 0;
-  return FINALE_HOP[Math.floor(f.T / FINALE_HOP_S + w.parade.k) % FINALE_HOP.length] * P;
+  if (!f || !YARD.has(f.phase) && !w.house) return null;
+  if (w.house) {
+    const b = builderPose(w);
+    if (b) return { lift: 0, rows: b.rows, arms: b.arms, hold: b.hold };
+    if (w.house.st === 'cheer' && YARD.has(f.phase) && !stillNow()) {
+      w.house.inAt ??= f.T;
+      const pose = hopPose(w.house.b * 2, w.house.inAt);
+      return pose ? { lift: (pose.lift || 0) * P, rows: pose.rows || 3, smear: pose.smear, dust: pose.dust } : null;
+    }
+    return null;
+  }
+  if (!w.parade || w.parade.st !== 'in' || stillNow()) return null;
+  const pose = hopPose(w.parade.k, w.parade.inAt);
+  return pose ? { lift: (pose.lift || 0) * P, rows: pose.rows || 3, smear: pose.smear, dust: pose.dust } : null;
 }
 
 // One of the crew's frames while the yard is held (crew/step.js): the crowd
-// in the procession, the one taking the gear up let get on with it, and
-// everybody else stood still where they are. True when the frame is taken.
+// getting free and in the procession, the builders at the house, the one
+// taking the gear up let get on with it, and everybody else stood still
+// where they are. True when the frame is taken.
 export function finaleBody(w) {
   if (!workPaused()) return false;
-  if (w.parade) { stepParade(w); return true; }
   const f = F();
+  if (w.house) { if (f) stepBuilder(w, f); return true; }
+  if (w.parade) { stepParade(w); return true; }
   // the one taking up her gear goes once the heart is had, and only then
   if (f && f.heir && w.uid === f.heir && f.phase === 'heir') return false;
   return true;
 }
 
-// --- the fireworks -------------------------------------------------------------------------
-// One every FINALE_FIREWORK_S of the walk, somewhere over the window, a kind
-// picked at random; where each is is a share of the window, since they burst
-// far off over the yard and the window is on the move.
-function launch() {
+// A forklift's frame while the yard is held (crew/lifts.js): stood where it
+// is, until the pair pass it; then it rolls along at the tail of the
+// procession. True when the frame is taken.
+export function finaleLift(w) {
+  if (!workPaused()) return false;
   const f = F();
-  const n = Math.floor(f.T / FINALE_FIREWORK_S);
-  while ((f.fired || 0) <= n) {
-    const i = f.fired = (f.fired || 0) + 1;
-    f.bursts.push({ i, at: (i - 1) * FINALE_FIREWORK_S, sx: 0.08 + 0.84 * hash(i * 3.1 + 1),
-                    sy: FIREWORK_HIGH[0] + (FIREWORK_HIGH[1] - FIREWORK_HIGH[0]) * hash(i * 7.7 + 2),
-                    kind: ['star', 'ring', 'willow'][Math.floor(rand() * 3) % 3] });
+  if (!f || !YARD.has(f.phase)) return true;
+  if (!w.parade) {
+    const x = f.phase === 'walk' ? f.pair[0].x : AT_DOOR.has(f.phase) ? endX() : Infinity;
+    if (w.inside || x > w.x + FINALE_JOIN_CELLS * P) return true;
+    w.parade = { tail: (S.lifts || []).filter(o => o.parade).length };
   }
-  f.bursts = f.bursts.filter(b => f.T - b.at < FIREWORK_RISE_S + FIREWORK_LIFE_S);
+  const s = slotOf(f.joined + (FINALE_LIFT_TAIL + w.parade.tail) * 2);
+  const step = hurryPace(f) * frames() * f.hurry, d = s.x - w.x;
+  w.x += Math.sign(d) * Math.min(Math.abs(d), step);
+  if (Math.abs(d) > 0.5) w.face = Math.sign(d);
+  w.y = feetOn(ways().yard, w.x);
+  return true;
+}
+
+// --- the fireworks -------------------------------------------------------------------------
+// Over the walk, from FIREWORK_FIRST_S into it, the gap closing as the pair
+// near the house and some going up in twos at the end; each a kind off the
+// list, somewhere over the window -- a share of it, since they burst far off
+// over the yard and the window is on the move.
+function launch(f) {
+  const left = f.walkT + f.walkS - FIREWORK_LAST_S;
+  while (f.T >= f.nextFw && f.nextFw < left) {
+    const i = f.fired = (f.fired || 0) + 1, at = f.nextFw;
+    const k = clamp01((at - f.walkT) / Math.max(1e-6, f.walkS));
+    const sx = 0.08 + 0.84 * hash(i * 3.1 + 1);
+    f.bursts.push({ i, at, sx, sy: FIREWORK_HIGH[0] + (FIREWORK_HIGH[1] - FIREWORK_HIGH[0]) * hash(i * 7.7 + 2),
+                    kind: FIREWORK_KINDS[Math.floor(hash(i * 5.3) * FIREWORK_KINDS.length) % FIREWORK_KINDS.length] });
+    if (k > FIREWORK_DOUBLE_FROM && hash(i * 2.9) < FIREWORK_DOUBLE_CHANCE)
+      f.bursts.push({ i: i + 500, at: at + FIREWORK_DOUBLE_LAG_S, sx: clamp01(sx + FIREWORK_DOUBLE_DX) * 0.8 + 0.1,
+                      sy: FIREWORK_HIGH[0] + (FIREWORK_HIGH[1] - FIREWORK_HIGH[0]) * hash(i * 1.7), kind: 'peony' });
+    f.nextFw += lerp(FIREWORK_GAP_S[0], FIREWORK_GAP_S[1], k);
+  }
+  f.bursts = f.bursts.filter(b => f.T - b.at < (b.rise || FIREWORK_RISE_S) + FIREWORK_LIFE_S);
+}
+// The volley off both sides of the house as the door shuts, bursting left to
+// right over it, and the heart over it as the window lights.
+function volley(f) {
+  const V = FINALE_VOLLEY, H = FINALE_HEART_BURST, hx = houseX();
+  for (let j = 0; j < V.n; j++)
+    f.bursts.push({ i: 900 + j, at: f.T + j * V.every, wx: hx + (V.from + j * V.step) * P, sy: V.high[j % 2],
+                    kind: j % 2 ? 'ring' : 'crossette', rise: V.rise });
+  f.bursts.push({ i: 950, at: f.T + H.at, wx: hx + H.dx * P, sy: H.high, kind: 'heart', rise: H.rise });
 }
 
 // --- the sheet put down ------------------------------------------------------------------
-// The yard goes again: the crowd walks home, each the way it would to a job
-// it was put on, and the sunset's bands go.
+// The yard goes again: the crowd and the builders walk back to work, each
+// the way it would to a job it was put on, the forklifts back to theirs;
+// and the two of them come out of the house (home.js).
 export function sheetDown() {
   for (const w of S.workers) {
-    if (!w.parade) continue;
+    if (!w.parade && !w.house) continue;
     delete w.parade;
     w.say = null;
     retask(w, w.type);
   }
+  freeBuilders();
+  for (const w of S.lifts || []) delete w.parade;
   lockScroller(false, 'finale');
-  if (F()) { F().phase = 'dusk'; F().u = 0; }
+  S.finale = null;
 }
 
 // --- every frame --------------------------------------------------------------------------
-// The sunset going once the sheet is down, and the two of them at the left
-// end going about their afternoon.
+// Under the sheet the fireworks' clock runs on so the last sparks fall out;
+// and afterwards the two of them at the house, going about their afternoon.
 export function stepFinaleAfter(c) {
   const f = F();
-  if (f && f.phase === 'dusk') {
-    f.u += c.dt / 1000;
-    if (f.u >= SUNSET_OUT_S) S.finale = null;
-  }
   if (f && f.phase === 'held') {
-    // Under the sheet: the sunset stands, the clock of the fireworks runs on
-    // so the last sparks fall out.
     f.T += c.dt / 1000;
     f.u += c.dt / 1000;
   }
-  stepRetired(c);
+  if (!f) stepRetired(c);
 }
 
-// The turns the two of them take, at random, a turn lasting
-// RETIRED_TURN_S..: sitting together, a stroll out and back, looking up at
-// the sky, a heart, a hop. Never while the finale is still on them.
-const TURNS = ['sit', 'stroll', 'look', 'heart', 'hop'];
-function stepRetired(c) {
-  const r = S.retired;
-  if (!r || (F() && F().phase !== 'dusk')) return;
-  if (!Array.isArray(r.x) || r.x.length !== 2) r.x = [endX(), endX() + WORKER + FINALE_PAIR_GAP];
-  r.home ??= endX();
-  const dt = c.dt / 1000;
-  r.u = (r.u || 0) + dt;
-  r.left = (r.left ?? 0) - dt;
-  if (r.mode === 'stroll') {
-    // out along the yard a few cells and back, hand in hand
-    const half = RETIRED_STROLL_CELLS * P / RETIRED_STROLL_PX_S;
-    const k = r.u < half ? r.u / half : Math.max(0, 2 - r.u / half);
-    const x = snap(r.home + k * RETIRED_STROLL_CELLS * P);
-    r.x = [x, x + WORKER + FINALE_PAIR_GAP];
-    r.face = r.u < half ? 1 : -1;
-    if (r.u >= half * 2) { r.x = [r.home, r.home + WORKER + FINALE_PAIR_GAP]; r.left = 0; }
-    else return;
-  }
-  if (r.left > 0) return;
-  const was = r.mode;
-  let mode = TURNS[Math.floor(rand() * TURNS.length) % TURNS.length];
-  if (mode === was) mode = TURNS[(TURNS.indexOf(mode) + 1) % TURNS.length];
-  r.mode = mode;
-  r.u = 0;
-  r.face = -1;
-  r.left = RETIRED_TURN_S[0] + rand() * (RETIRED_TURN_S[1] - RETIRED_TURN_S[0]);
-}
-
-// Where the two of them are drawn, finale or after: [{ x, y, face, sit }]
-// in world pixels, or null when they are nowhere to be seen in the yard.
+// Where the two of them are drawn, finale or after: [{ x, y, face, sit, dim }
+// or null for one indoors] in world pixels, or null when they are nowhere to
+// be seen in the yard.
 export function pairInYard() {
   const f = F();
   if (f && YARD.has(f.phase)) {
-    const sit = (f.phase === 'sunset' && f.u >= SUNSET_SIT_S) || f.phase === 'held';
-    return f.pair.map(o => ({ x: o.x, y: f.phase === 'held' ? feetOn(ways().yard, o.x) : o.y, face: o.face, sit }));
+    if (INDOORS.has(f.phase)) return [null, null];
+    if (f.phase === 'in') {
+      const y = feetOn(ways().yard, endX());
+      return [goInto(f.u, endX()), goInto(f.u - FINALE_HIM_AFTER_S, himAt(endX()))
+                ?? (f.u < FINALE_HIM_AFTER_S ? { x: himAt(endX()) } : null)]
+        .map(o => o && { x: o.x, y, face: -1, sit: false, dim: o.dim || 0 });
+    }
+    return f.pair.map(o => ({ x: o.x, y: o.y, face: o.face, sit: false, dim: 0 }));
   }
+  if (f) return null;
   const r = S.retired;
-  if (!r || !Array.isArray(r.x)) return null;
-  const way = ways().yard;
-  return r.x.map((x, i) => ({ x, y: feetOn(way, x), face: r.mode === 'heart' ? (i ? -1 : 1) : (r.face ?? -1),
-                              sit: r.mode === 'sit' || !!f }));
+  if (!r) return null;
+  return afterOf(r);
 }
 
 // --- the save ------------------------------------------------------------------------------
 // Only the phase is written. A reload mid-finale lands at its end: her off
-// the crew if she was not yet, the two of them at the left end, the kill and
-// the finale played, the sunset held and the sheet to come. Read after the
-// crew and the beats (persist.js, `SAVERS`).
+// the crew if she was not yet, the house standing with the two of them in
+// it, the kill and the finale played, held for the sheet to come. Read after
+// the crew and the beats (persist.js, `SAVERS`).
 export function land(her = null) {
   const w = her && S.workers.find(o => o.uid === her);
   if (w) {
@@ -516,10 +676,12 @@ export function land(her = null) {
     rebalance();
     syncWorkers();
   }
-  S.retired = { x: [endX(), endX() + WORKER + FINALE_PAIR_GAP], mode: 'sit', left: RETIRED_TURN_S[0], u: 0, home: endX() };
-  S.finale = { phase: 'held', u: SUNSET_HOLD_S, T: 0, hurry: 1, st: null, her: null, heir: null,
-               pair: S.retired.x.map(x => ({ x, y: S.groundY - WORKER, face: -1 })), joined: 0, bursts: [],
-               kit: null, glide: null };
+  S.retired = retiredIn();
+  const y = S.groundY - WORKER;
+  S.finale = { phase: 'held', u: FINALE_HOLD_S, T: 0, hurry: 1, st: null, her: null, heir: null,
+               pair: [{ x: endX(), y, face: -1 }, { x: himAt(endX()), y, face: -1 }], joined: 0, bursts: [],
+               kit: null, glide: null, house: null, landing: {} };
+  finishHouse(S.finale);
   markDone('freed', 'finale');
 }
 
@@ -527,7 +689,7 @@ export const SAVE = {
   fields: ['finale'],
   write(out) {
     const f = F();
-    out.finale = f && f.phase !== 'dusk' ? { phase: f.phase, her: f.her || null } : null;
+    out.finale = f ? { phase: f.phase, her: f.her || null } : null;
   },
   read(s) {
     S.finale = null;
@@ -538,19 +700,29 @@ export const SAVE = {
   blank() { S.finale = null; }
 };
 
-// The two of them's spots at the end, for the checks.
-export const retiredAt = () => [endX(), endX() + WORKER + FINALE_PAIR_GAP];
+// The house's walls and roof, as a box in the world (the letterbox's subject
+// at the door).
+function houseBox() {
+  const rows = FINALE_WALL_ROWS + 1 + FINALE_ROOF.length;
+  return { x: houseX(), y: S.groundY - rows * P, w: FINALE_HOUSE_W * P, h: rows * P };
+}
 
 // What the finale is about, for the letterbox's window (cutscene.js,
 // `subject`): the two of them, and in the deep the station her gear goes back
 // on, from the top of its prop to the floor. Through the portal, the yard's
-// end of it, where they come out (the ripple itself has the window).
+// end of it, where they come out (the ripple itself has the window). At the
+// door, the house with them; once they are in, the house.
 export function finaleSubject() {
   const f = F();
   if (!f) return [];
   if (f.phase === 'through') {
     const pc = portalCircle();
     return [{ x: pc.x - WORKER, y: pc.y - WORKER / 2, w: WORKER * 2, h: WORKER }];
+  }
+  if (AT_DOOR.has(f.phase)) {
+    const at = [houseBox()];
+    for (const o of pairInYard() || []) if (o) at.push({ x: o.x, y: o.y, w: WORKER, h: WORKER });
+    return at;
   }
   const at = [...f.pair, herBody()].filter(Boolean).map(o => ({ x: o.x, y: o.y, w: WORKER, h: WORKER }));
   const st = f.st ? stationById(f.st) : null;
@@ -560,3 +732,6 @@ export function finaleSubject() {
   }
   return at;
 }
+
+// Where the walk ends, for the checks: the door, and him beside her.
+export const doorAt = () => [endX(), himAt(endX())];

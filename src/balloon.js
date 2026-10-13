@@ -213,6 +213,19 @@ export function stepBalloons(dt) {
   paleClouds(secs);
 }
 
+// Brought home by the finale (finale.js) while the held yard does not turn
+// the clock: put `k` of the way down from wherever it was, and moored at the
+// end of it, its rider let off at the post (`comeHome`). It stays moored
+// until the yard goes again.
+export function bringDown(i, k) {
+  const c = CRAFT[i];
+  if (!c || c.phase === 'moored') return;
+  if (c.phase !== 'down') { c.phase = 'down'; c.hang = false; }
+  c.t = Math.min(1, Math.max(0, k)) * BALLOON_CLIMB_S;
+  if (k >= 1) { c.phase = 'moored'; c.t = 0; }
+  stepSky(i, c, 0);
+}
+
 // --- the picture's half: where it is among the clouds ------------------------------
 // `sky` is `{ x, far, y }` -- an `x` in the clouds' own space (the camera is
 // added to it by depth, as to a cloud's), the depth, and where the bottom of

@@ -17,6 +17,7 @@ import { spawnChip, bell } from '../dust.js';
 import { haulerWork } from './hauler.js';
 import { stand } from './body.js';
 import { unbook } from './hole.js';
+import { finaleLift } from '../finale.js';
 
 // The garage: a shed on the house's far side from the rock, standing from
 // the first forklift. However many there are, an idle one drives in at the
@@ -57,6 +58,9 @@ export function syncLifts() {
 // footprint in `hold`.
 export function stepLifts(c, hold) {
   for (const w of S.lifts || []) {
+    // While the finale holds the yard: stood still, then rolling along at
+    // the tail of the procession once the pair have passed (finale.js).
+    if (finaleLift(w)) continue;
     const x0 = w.x;
     haulerWork(w, c);
     // Anything to do takes it back out through the door it went in by.

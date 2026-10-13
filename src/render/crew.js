@@ -2,7 +2,8 @@
 // hats and carts, the bench, the kit stands, the speech, the pointed arrow,
 // and the whole-crew draw.
 
-import { paradeLift } from '../finale.js';
+import { finalePose } from '../finale.js';
+import { drawHopMarks, drawHeldPiece } from './finale.js';
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
 import { bodyInk } from './recede.js';
@@ -58,6 +59,17 @@ export function drawBody(x, y) {
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+  ctx.fillStyle = '#000';
+}
+
+// The same square squashed to two rows, its feet on the ground of a body
+// stood at (x, y): the crouch before a hop and the landing after it.
+export function drawSquat(x, y) {
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + 1, y + P + 1, WORKER - 2, WORKER - P - 2);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + P + 1, WORKER - 2, WORKER - P - 2);
   ctx.fillStyle = '#000';
 }
 
@@ -633,17 +645,23 @@ function drawWorker(w, t0) {
     // drawn between pixels smears a hairline off its own edge.
     const ht = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
     const hop = ht >= 0 && ht < 1 ? LAND_HOP_H * (w.hopK || 1) * 4 * ht * (1 - ht) * P : 0;
-    // and the finale's crowd hopping in held poses (finale.js), drawn the same way
-    const ground = Math.round(w.y + throwOn * look.lunge * P - hop - paradeLift(w));
+    // and the finale's crowd hopping in held poses and its builders stooping
+    // (finale.js), drawn the same way
+    const pose = finalePose(w);
+    const ground = Math.round(w.y + throwOn * look.lunge * P - hop - (pose ? pose.lift || 0 : 0));
 
     // A cart is kit like any other, drawn off what the body is holding rather
     // than what the books say it is: the same rule a helmet has.
     const kit = wearing(w);
     const cart = kit === 'cart' ? cartBox(x, ground, w.face || 1) : null;
     if (cart) drawCart(x, ground, w.face || 1);       // behind the body it follows
-    const y = ground;
+    // A body squashed to two rows keeps its feet where they were.
+    const squat = pose && pose.rows === 2 ? P : 0;
+    const y = ground + squat;
+    if (pose) drawHopMarks(x, Math.round(w.y), pose);
 
-    drawBody(x, y);
+    if (squat) drawSquat(x, ground); else drawBody(x, y);
+    if (pose && (pose.arms || pose.hold)) drawHeldPiece(x, y, pose.hold, pose.arms);
 
     // One line, for everybody: the whole of what "hats are always shown" means.
     const hat = kit;

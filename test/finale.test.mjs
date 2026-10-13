@@ -1,7 +1,9 @@
-// The finale (finale.js; docs/mocks/retire-2026-10-12.html, the owner's
-// picks): after the kill her gear is hung back on her station, one of the
-// deep's own crew takes it up, and the two of them go home through the portal
-// and down the yard to its left end, where they stay, off the crew, for good.
+// The finale (finale.js; docs/mocks/retire-2026-10-12.html and
+// docs/mocks/finale-house-2026-10-12.html, the owner's picks): after the kill
+// her gear is hung back on her station, one of the deep's own crew takes it
+// up, and the two of them go home through the portal and down the yard to its
+// left end, where the yard's builders have put up a house (home.js); they go
+// in, and live there, off the crew, for good.
 //
 // Reached the player's way where it can be: the party breaks the last defense
 // itself, and the sheet is put down with its button's own call. The setup
@@ -11,15 +13,18 @@ import { group, ok, run, runUntil } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { P, WORKER, SERPENT_PHASES, SERPENT_WOUND, FINALE_END_CELLS } from '../src/config.js';
 import { TYPE, isDeepType } from '../src/jobs.js';
-import { belowYard } from '../src/route.js';
+import { belowYard, wayAt, inWorking } from '../src/route.js';
+import { pieces, pieceUp, houseDone, houseStands, spotOf, benchAt } from '../src/home.js';
 import { migrate } from '../src/migrations/index.js';
 import finale from '../src/migrations/2026-10-12-finale.js';
 
 const LAST = SERPENT_PHASES - 1;
+const HILL_SETTLE_S = 6;
 
 // A yard past the snatch with a crew of every kind up top, a party of two at
 // the last defense, and a gatherer by the crusher.
-function yardAtTheEnd() {
+// With `hill`, run on until a rock is down and a rockhand is up on it.
+function yardAtTheEnd(hill = false) {
   window.__fullSites();
   window.__snatch({ played: true });
   window.__crew(3, 6, 3, 3, 0, 0);
@@ -27,11 +32,14 @@ function yardAtTheEnd() {
   window.__deepCrew({ spare: 2 });
   window.__serpent({ stage: LAST, wound: 0 });
   run(8);
+  if (hill) { runUntil(() => S.workers.some(w => w.type === TYPE.ROCK && wayAt(w.x, w.y).key === 'rock'), 90); run(HILL_SETTLE_S); }
   window.__serpent({ stage: LAST, wound: SERPENT_WOUND[LAST] * 0.95 });
 }
 // The party at it until the last defense goes, as a player's would.
 const killed = () => runUntil(() => S.serpentFreed, 60);
 const phase = () => S.finale && S.finale.phase;
+// Every piece of the house in place and the scaffold gone.
+const standing = () => pieces().every((p, i) => p.off != null || pieceUp(i) === !(p.kind === 'pole' || p.kind === 'plank'));
 const until = (fn, limit = 120) => { for (let i = 0; i < limit * 60 && !fn(); i++) run(1 / 60); return fn(); };
 
 group('the kill: her gear hung on her station, and one of the deep\'s crew takes it up', async () => {
@@ -115,11 +123,13 @@ group('work stands still through the finale and its sheet, and goes again after'
   killed();
   until(() => phase() === 'walk');
   run(3);
-  const still = new Map(S.workers.filter(w => !w.parade && !belowYard(w)).map(w => [w.uid, { x: w.x, y: w.y }]));
+  // the builders are at the house, not standing still
+  const still = new Map(S.workers.filter(w => !w.parade && !w.house && !belowYard(w)).map(w => [w.uid, { x: w.x, y: w.y }]));
   const banked0 = S.banked;
   until(() => S.beat.sheet === 'freedsheet');
   run(3);
-  const moved = S.workers.filter(w => still.has(w.uid) && !w.parade
+  until(() => S.beat.sheet === 'freedsheet');
+  const moved = S.workers.filter(w => still.has(w.uid) && !w.parade && !w.house
     && Math.hypot(w.x - still.get(w.uid).x, w.y - still.get(w.uid).y) > 1).length;
   const paraded = S.workers.filter(w => w.parade).length;
   const banked1 = S.banked;
@@ -129,17 +139,20 @@ group('work stands still through the finale and its sheet, and goes again after'
     ok(paraded >= 4, 'the crew falls in behind them', `${paraded} in the procession`),
     ok(moved === 0, 'everybody else stands where they were', `${moved} of ${still.size} moved`),
     ok(banked1 === banked0, 'and nothing goes in the hole', `${banked0} then ${banked1}`),
-    ok(!S.workers.some(w => w.parade), 'the sheet put down, the procession is over'),
+    ok(!S.workers.some(w => w.parade || w.house), 'the sheet put down, the procession and the build are over'),
     ok(home, 'and the work goes on again', `${banked1} then ${S.banked}`)
   ];
 });
 
-group('afterwards the two of them stay at the yard\'s left end, and a reload keeps them there', async () => {
+group('afterwards the two of them come out to the bench by their house, and a reload keeps them there', async () => {
   yardAtTheEnd();
   killed();
   until(() => S.beat.sheet === 'freedsheet');
   window.__skipBeat('sheet');
-  run(20);
+  run(4);
+  const sat = S.retired && S.retired.mode === 'sit';
+  const onBench = S.retired.x.every((x, i) => x === benchAt()[i]);
+  run(15);
   const near = () => S.retired && S.retired.x.every(x => x < (FINALE_END_CELLS + 20) * P);
   const before = near();
   window.__reload();
@@ -147,7 +160,8 @@ group('afterwards the two of them stay at the yard\'s left end, and a reload kee
   const after = near();
   const crew = S.crew, n = S.workers.length;
   return [
-    ok(before, 'at the left end', JSON.stringify(S.retired)),
+    ok(sat && onBench, 'out of the house and sat on the bench', JSON.stringify(S.retired)),
+    ok(before && houseStands(), 'at the left end, by the house', JSON.stringify(S.retired)),
     ok(after, 'and still there after a reload', JSON.stringify(S.retired)),
     ok(!S.finale && !S.beat.yard && !S.beat.sheet, 'with nothing replayed', `${phase()} ${JSON.stringify(S.beat)}`),
     ok(crew === n, 'the crew read back is its bodies, the two of them not among them', `${crew} ${n}`)
@@ -174,8 +188,8 @@ group('the two of them cannot be put on a job', async () => {
   ].concat(onThem > 2 ? [ok(false, 'a body stands in for them', `${onThem}`)] : []);
 });
 
-// A reload in the middle lands at the end: the two of them at the left end,
-// the kill and the finale played, her off the crew, the sheet still to come.
+// A reload in the middle of the walk lands at the end: the house standing
+// with the two of them in it, the kill and the finale played, her off the crew, the sheet still to come.
 group('a reload mid-finale lands at its end', async () => {
   yardAtTheEnd();
   const crew0 = S.crew;
@@ -188,7 +202,8 @@ group('a reload mid-finale lands at its end', async () => {
   run(1);
   return [
     ok(done, 'the kill and the finale are played', S.beatsDone.join()),
-    ok(S.retired && S.retired.x[0] === FINALE_END_CELLS * P, 'the two of them at the left end', JSON.stringify(S.retired)),
+    ok(S.retired && S.retired.x[0] === FINALE_END_CELLS * P && S.retired.mode === 'in', 'the two of them at home, indoors', JSON.stringify(S.retired)),
+    ok(houseDone() && standing(), 'the house standing, scaffold down'),
     ok(S.crew === crew0 - 1, 'her off the crew', `${crew0} then ${S.crew}`),
     ok(S.beat.sheet === 'freedsheet', 'and the sheet comes up', JSON.stringify(S.beat))
   ];
@@ -212,5 +227,78 @@ group('an old save past the kill gets the two of them at the left end, off the c
     ok(!s.who.some(w => w.uid === 'u9' || w.uid === 'u8'), 'her and him off the crew', s.who.map(w => w.uid).join()),
     ok(s.crew === 3 && s.deepCrew === 1, 'and off the counts', `${s.crew} ${s.deepCrew}`),
     ok(s.stations[0].fighter === null && s.stations[0].hung === true, 'her gear hung on her station', JSON.stringify(s.stations[0]))
+  ];
+});
+
+// Everybody falls in, wherever their work had them: a quarrier down the cut
+// climbs out by the ladder, a rockhand on the hill walks down off it.
+group('a quarrier down the cut and a rockhand on the hill both end up in the procession', async () => {
+  yardAtTheEnd(true);
+  killed();
+  until(() => S.beat.yard === 'finale');
+  const down = S.workers.filter(w => w.type === TYPE.QUARRY && inWorking(w));
+  const hill = S.workers.filter(w => w.type === TYPE.ROCK && wayAt(w.x, w.y).key === 'rock');
+  until(() => phase() === 'arrive');
+  run(3);
+  const inLine = w => w.parade && w.parade.st === 'in';
+  const say = list => list.map(w => `${w.parade && w.parade.st} ${Math.round(w.x)},${Math.round(w.y)}`).join('; ');
+  return [
+    ok(down.length > 0 && hill.length > 0, 'there is a quarrier down the cut and a rockhand on the hill', `${down.length} ${hill.length}`),
+    ok(down.every(inLine), 'every quarrier from down the cut is in its place in the files', say(down)),
+    ok(hill.every(inLine), 'every rockhand from the hill is in its place in the files', say(hill))
+  ];
+});
+
+// The house goes up during the walk, a piece a trip: every piece that comes
+// up comes up with a builder standing at it, and the last of it is done --
+// the scaffold down on the woodpile -- when the two of them reach the door.
+group("the house is built by the builders, a piece in a builder's hands at a time, finished as they reach the door", async () => {
+  yardAtTheEnd();
+  killed();
+  until(() => phase() === 'out');
+  const N = pieces().length;
+  const was = new Array(N).fill(false);
+  const unmanned = [];
+  let ups = 0;
+  while (phase() !== 'arrive' && S.beat.yard === 'finale') {
+    run(1 / 60);
+    for (let i = 0; i < N; i++) {
+      const up = pieceUp(i);
+      if (up && !was[i]) {
+        ups++;
+        const at = spotOf(pieces()[i]);
+        if (!S.workers.some(w => w.house && Math.abs(w.x - at) <= P)) unmanned.push(`${i} ${pieces()[i].kind}`);
+      }
+      was[i] = up;
+    }
+  }
+  const set = S.finale && S.finale.house ? S.finale.house.set : [];
+  const builders = new Set(S.workers.filter(w => w.house).map(w => w.name));
+  return [
+    ok(builders.size > 0, 'the yard has builders on it', `${builders.size}`),
+    ok(ups === N - 3, 'every piece went up', `${ups} of ${N - 3}`),
+    ok(unmanned.length === 0, 'and none without a builder standing at it', unmanned.join(', ')),
+    ok(set.length === N && set.every(r => r && builders.has(r.by)), 'every piece set, or taken down, by one of the builders',
+       `${set.filter(Boolean).length} of ${N}`),
+    ok(phase() === 'arrive' && houseDone() && standing(), 'and the house is standing, scaffold down, as they reach the door', `${phase()} ${houseDone()}`)
+  ];
+});
+
+// A save from before the house: the two of them at the left end on a turn
+// nobody plays any more. The house stands for it, and the turn is read as
+// sat on the bench.
+group('an old save with the two of them retired loads with the house and a turn it knows', async () => {
+  yardAtTheEnd();
+  killed();
+  until(() => S.beat.sheet === 'freedsheet');
+  window.__skipBeat('sheet');
+  run(1);
+  S.retired = { x: [FINALE_END_CELLS * P, FINALE_END_CELLS * P + 24], mode: 'look', left: 3, u: 1, home: FINALE_END_CELLS * P };
+  window.__reload();
+  run(1 / 60);
+  return [
+    ok(houseStands() && standing(), 'the house is standing'),
+    ok(['in', 'out', 'sit', 'heart', 'stroll', 'nip'].includes(S.retired.mode), 'on a turn the game plays', S.retired.mode),
+    ok(S.retired.x.every((x, i) => x === benchAt()[i]), 'sat on the bench', JSON.stringify(S.retired))
   ];
 });

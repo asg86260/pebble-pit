@@ -61,7 +61,8 @@ import { drawCharge } from './render/charge.js';
 import { drawFighters, drawShots } from './render/arms.js';
 import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // track RENDER, docs/wave-party.md
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
-import { drawSunset, drawFireworks, drawHungKits, drawFinaleDeep, drawFinaleYard } from './render/finale.js';
+import { drawFireworks, drawHungKits, drawFinaleDeep, drawFinaleYard } from './render/finale.js';
+import { drawHome } from './render/home.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
 import { wash, setPass, backInk, byInk, hudInk, drawLetterbox } from './render/recede.js';
@@ -118,9 +119,8 @@ const LAYERS = [
   { name: 'air', draw: drawAir },
 
   { name: 'world', draw: enterWorld },
-  // The finale's sky (render/finale.js): the sunset's bands and its sun over
-  // the horizon, and the fireworks far off over the walk. Behind the yard.
-  { name: 'sunset', draw: drawSunset },
+  // The finale's sky (render/finale.js): the fireworks far off over the
+  // walk, and the volley and the heart over the house. Behind the yard.
   { name: 'fireworks', draw: drawFireworks },
   { name: 'ground line', draw: drawGroundLine },
   { name: 'ground texture', draw: drawGroundTexture },
@@ -193,6 +193,7 @@ const LAYERS = [
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them
   { name: 'garage', draw: drawGarage },           // where the forklifts go when there is nothing to fetch
+  { name: 'home', draw: drawHome },               // the two of them's house at the left end, and its woodpile (render/home.js)
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   // The deep (render/deep.js), back to front, drawn only while the camera is
   // down there: the roof and the underside of the surface, the water, the

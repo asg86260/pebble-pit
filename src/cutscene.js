@@ -92,8 +92,9 @@ const FRONT = ['intro', 'snatch', 'serpent diving', 'serpent', 'barrier', 'freed
                'held', 'pointed', 'cursor'];
 const ROCK = ['buried', 'rock', 'shield', 'rock sand', 'chips', 'shocks'];
 // The finale (finale.js) is the two of them, her gear and the station it
-// hangs on, the way up and the way out, and the yard's own sky over the walk.
-const FINALE = ['finale deep', 'hung kit', 'deep stations', 'deep portal', 'finale', 'fireworks', 'sunset',
+// hangs on, the way up and the way out, the yard's own sky over the walk,
+// and the house they walk to.
+const FINALE = ['finale deep', 'hung kit', 'deep stations', 'deep portal', 'finale', 'fireworks', 'home',
                 'abyss', 'pit outline', 'portal'];
 const fronts = new Map();
 export function frontLayers() {
