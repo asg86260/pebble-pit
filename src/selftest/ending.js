@@ -32,4 +32,18 @@ export const TESTS = [
       ];
     } finally { window.__serpentOn(null); }
   }],
+  ['the store links on the demo and teaser sheets are drawn as the sheet buttons', async () => {
+    const out = [];
+    for (const [link, btn] of [['demostore', 'demokeep'], ['teasestore', 'teasekeep']]) {
+      const a = document.getElementById(link), b = document.getElementById(btn);
+      const was = a.hidden; a.hidden = false;
+      const sa = getComputedStyle(a), sb = getComputedStyle(b);
+      const same = ['borderTopWidth', 'borderTopColor', 'color', 'fontSize', 'letterSpacing', 'textTransform', 'paddingLeft']
+        .every(k => sa[k] === sb[k]);
+      out.push(ok(same && sa.textDecorationLine === 'none' && a.tagName === 'A' && a.hasAttribute('href'),
+        link + ' looks like ' + btn, sa.textDecorationLine + ' ' + sa.color));
+      a.hidden = was;
+    }
+    return out;
+  }],
 ];

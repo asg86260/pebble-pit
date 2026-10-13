@@ -1194,7 +1194,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   outline: none;
 }
 
-.held button {
+.held button,
+.held a.store {
   font: inherit;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -1207,12 +1208,15 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
      widest line, and a column of buttons of one width reads as a menu */
   align-self: stretch;
   box-sizing: border-box;
+  /* the store link is an <a> that opens the store, drawn as the sheet's buttons */
+  text-decoration: none;
+  text-align: center;
 }
 .held .pair button { flex: 1; }
 .held .pair { align-self: stretch; }
 .held .slots, .held .saves { align-self: stretch; }
 @media (hover: hover) {
-  .held button:hover { color: var(--paper); background: var(--ink); }
+  .held button:hover, .held a.store:hover { color: var(--paper); background: var(--ink); }
 }
 /* The volume: the sheet's one slider, drawn in its ink -- a hairline for the
    track and a square for the thumb, the same square everything else here is
