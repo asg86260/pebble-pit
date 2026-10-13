@@ -63,7 +63,7 @@ group('every place with ground says its name and its drawing', async () => {
   stand(['altar', 'well', 'armory', 'spire']);
   const bare = STATIONS.filter(r => r.stand && (!r.name || !GLYPHS[r.glyph])).map(r => r.key);
   const kinds = Object.entries(KINDS).filter(([, v]) => !GLYPHS[v.glyph]).map(([k]) => k);
-  const named = PARTY_IDS.map(id => station(id).name);
+  const named = PARTY_IDS.slice(0, 4).map(id => station(id).name);   // the four stood up
   return [
     ok(bare.length === 0, 'no station row is missing a name or a drawn glyph', bare.join(', ')),
     ok(kinds.length === 0, 'every kind has a glyph on the shelf', kinds.join(', ')),

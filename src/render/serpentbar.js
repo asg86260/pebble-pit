@@ -17,13 +17,15 @@ import { owedWound, landsAt } from './barflight.js';
 import { drawFoeStatuses, statusRowH } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
 import { breakKind, breakFill, rising } from '../deep/phases.js';
+import { depthAt } from '../deep/depth.js';
+import { sheetOf, write, widthOf, sayNum, drawable } from './numfont.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
          BAR_HEALED, BAR_TO_COME, BAR_STUN, BAR_STUN_RIM, BAR_HEAL_FADE_S,
          BAR_EASE_S, BAR_SETTLE, BAR_HEAL_RATE, BAR_FLOW_EASE, BAR_FLOW_MIN, BAR_STALE_S,
          BAR_SHARD_PX, BAR_SHARD_HOLD, BAR_SHARD_LIFT, BAR_SHARD_STAGGER_S, BAR_SHARD_POSES, BAR_SHARD_GRAV,
          BAR_SHARD_KICK, BAR_SHARD_FALL_S, BAR_SHARD_FADE_S, BAR_CHIP,
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
-         SERPENT_WOUND, BREAK_DIVE, BREAK_ROAR } from '../config.js';
+         SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, SERPENT_LEVEL_SAYS, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
@@ -44,14 +46,23 @@ const hash = n => { const v = Math.sin(n * 127.1 + 3.7) * 43758.5453; return v -
 
 // Not while the first trip down has the camera, and faded back in as it lets
 // go (abyssintro.js).
-export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage < SERPENT_WOUND.length && barK(now()) > 0;
+export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage < SERPENT_PHASES && barK(now()) > 0;
+
+// The level, after the pips: from level 2 on, the story's serpent being no
+// "level 1" to a player who does not yet know there are more. What of it the
+// number font can draw, and how wide that is in screen pixels.
+const levelSays = () => S.serpentLevel > 1
+  ? drawable(SERPENT_LEVEL_SAYS.replace('{n}', sayNum(S.serpentLevel))) : '';
+const levelW = str => (str ? BAR_LEVEL_GAP + widthOf(str, NUM_FONT_PX) : 0);
 
 // Where the bar stands on the glass, in screen pixels: centered with its pips
 // over the stretch of the coil on the glass, so with open water beside the
 // head it stands over the serpent and not over the water, and held still
 // just over the highest the coil ever sways.
 export function barRect() {
-  const whole = BAR_W + SERPENT_WOUND.length * (BAR_PIP + BAR_PIP_GAP);
+  // measured with the level drawn after it, so the strip stays centered as
+  // the number grows
+  const whole = BAR_W + SERPENT_PHASES * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
   // The row of statuses stands over the bar (render/statusicons.js), so the
   // bar keeps room above it for the row, whether or not it has a status in it.
   const row = statusRowH() + STATUS_GAP;
@@ -62,7 +73,7 @@ export function barRect() {
   const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
   return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w: BAR_W, h: BAR_H };
 }
-const depthOf = st => SERPENT_WOUND[Math.min(st, SERPENT_WOUND.length - 1)];
+const depthOf = st => depthAt(Math.min(st, SERPENT_PHASES - 1));
 // What the bar shows of the defense up, 0..1: the wound as the numbers that
 // have landed in it say, not yet as the sim has it (render/barflight.js).
 export function barLeft(t) {
@@ -153,7 +164,7 @@ export function drawSerpentBar() {
   step(t, dt, target);
   then = t;
 
-  const pips = SERPENT_WOUND.length;
+  const pips = SERPENT_PHASES;
   const { x, y: rest } = barRect();
   // The number went in from underneath, so the bar recoils up: two held
   // poses, the full knock and then half of it.
@@ -186,9 +197,11 @@ export function drawSerpentBar() {
     fill(BAR_HEALED, x + a, y, b - a, BAR_H);
     ctx.globalAlpha = alpha;
   }
-  // The phase boxes: none on the first defense, which is the only one the
-  // player knows of; they come up one by one as he rises from the first break.
-  const boxes = S.serpentStage === 0 ? 0
+  // The phase boxes: none on the story's first defense, which is the only one
+  // the player knows of; they come up one by one as he rises from the first
+  // break. A serpent risen again is one the player knows all of.
+  const boxes = S.serpentLevel > 1 ? pips
+              : S.serpentStage === 0 ? 0
               : breakKind() === 'dive' ? (rising() ? Math.round(breakFill(pips) * pips) : 0) : pips;
   for (let s = 0; s < boxes; s++) {
     const px = x + BAR_W + BAR_PIP_GAP + s * (BAR_PIP + BAR_PIP_GAP);
@@ -201,6 +214,18 @@ export function drawSerpentBar() {
       fill(BAR_STUN, px, py, BAR_PIP, BAR_PIP);
       fill(BAR_TRACK, px + BAR_STUN_RIM, py + BAR_STUN_RIM, BAR_PIP - BAR_STUN_RIM * 2, BAR_PIP - BAR_STUN_RIM * 2);
     }
+  }
+  // The level, in the number font on the bar's own height, white on the
+  // fight numbers' drop; in device pixels, as the numbers are, so a glyph's
+  // pixel is whole on any screen.
+  const says = levelSays();
+  if (says) {
+    const u = S.dpr, px = Math.max(1, Math.round(NUM_FONT_PX * u));
+    const lx = x + BAR_W + pips * (BAR_PIP + BAR_PIP_GAP) + BAR_LEVEL_GAP;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    write(sheetOf(px, BAR_LEFT, NUM_DROP), says, px, Math.round(lx * u), Math.round((y + BAR_H) * u));
+    ctx.restore();
   }
   // The pieces: held lit in the notch the blow made, where it struck and not
   // where the fill has slid to since, then falling a held pose at a time and

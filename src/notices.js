@@ -14,7 +14,7 @@
 
 import {
   NOTICE_TICK_S, NOTICE_ROCKS, NOTICE_PEBBLES, NOTICE_CREW, NOTICE_ORE,
-  NOTICE_RIFT, NOTICE_BREWS, NOTICE_LIVED_MS, NOTICE_FAST_ROCK_S
+  NOTICE_RIFT, NOTICE_BREWS, NOTICE_LIVED_MS, NOTICE_FAST_ROCK_S, NOTICE_SERPENT, FIGHT_STATIONS_MAX
 } from './config.js';
 import { S, pit } from './state.js';
 import { CATALOG } from './catalog.js';
@@ -78,6 +78,9 @@ const WHEN = {
   ...ladder('pebble', NOTICE_PEBBLES, () => S.banked),
   ...ladder('crew', NOTICE_CREW, () => S.crew),
   ...ladder('ore', NOTICE_ORE, () => S.quarryTotal),
+  // the best, not the level: a fight a dev hook sets back un-earns nothing
+  ...ladder('serpent', NOTICE_SERPENT, () => S.serpentBest | 0),
+  allstations: () => (S.stations || []).filter(st => st.built).length >= FIGHT_STATIONS_MAX,
   rift1e6: () => (S.riftAte || 0) >= NOTICE_RIFT,
   brew100: () => (S.brews || 0) >= NOTICE_BREWS,
   lived1h: () => eldest() >= NOTICE_LIVED_MS,

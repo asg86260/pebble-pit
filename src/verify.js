@@ -34,8 +34,10 @@ import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
 import { messCounts } from './smog/layer.js';
-import { SERPENT_WOUND, SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
+import { SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
 import { CALLED } from './deep/party.js';
+import { depthAt } from './deep/depth.js';
+import { cradled } from './deep/phases.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor, deepX1 } from './deep/place.js';
@@ -489,11 +491,32 @@ export function verifyWorld() {
     const stage = S.serpentStage;
     if (!Number.isInteger(stage) || stage < 0 || stage > SERPENT_PHASES)
       fail('the serpent is in a stage it does not have', `${stage}`);
-    const depth = stage >= SERPENT_PHASES ? 0 : SERPENT_WOUND[stage];
+    const depth = stage >= SERPENT_PHASES ? 0 : depthAt(stage);
     if (!(S.serpentWound >= 0) || S.serpentWound > depth)
       fail('the wound is outside its stage', `wound ${S.serpentWound} in stage ${stage}, depth ${depth}`);
-    if (stage < serpentWas)
+    // The level (DESIGN.md, "Endless serpent"): a whole number from 1, up by
+    // one on a rise and never down, and the best never under it. A rise is
+    // the one frame the defense goes back, to the first.
+    const level = S.serpentLevel;
+    if (yardReads !== levelReads) { levelWas = -1; levelReads = yardReads; }
+    if (!Number.isInteger(level) || level < 1)
+      fail('the serpent is at a level it cannot be', `${level}`);
+    if (levelWas >= 0 && (level < levelWas || level > levelWas + 1))
+      fail('the serpent\'s level jumped', `level ${levelWas} then ${level}`);
+    if (!(S.serpentBest >= level))
+      fail('the best level is under the level fought', `best ${S.serpentBest}, level ${level}`);
+    const rose = levelWas >= 0 && level === levelWas + 1;
+    if (rose && stage !== 0)
+      fail('the serpent rose into a defense past its first', `level ${level}, stage ${stage}`);
+    if (stage < serpentWas && !rose)
       fail('the serpent\'s defense went back', `stage ${serpentWas} then ${stage}`);
+    levelWas = level;
+    // The story's kill is had once: past it nobody is in the belly, and its
+    // beat and the finale it leads to never run again.
+    if (level > 1 && cradled())
+      fail('somebody is in the belly of a serpent past the story', `level ${level}`);
+    if (level > 1 && (S.beat.yard === 'freed' || S.beat.yard === 'finale'))
+      fail('the story\'s kill plays on a serpent past it', `level ${level}, ${S.beat.yard}`);
     // A stunned serpent does not heal: a wound that was stunned at the end
     // of the last frame is no shallower at the end of this one, unless the
     // stage broke under it or a meal landed, which closes what was banked
@@ -550,7 +573,8 @@ export function verifyWorld() {
 // --- wave party: STATE -----------------------------------------------------------
 // The stations and their fighters (docs/wave-party.md). A station is built on
 // a free slot by the first pick or a fang, so there are never more than the
-// first and three fangs' worth; a fighter is seated only at a station that
+// slots; every station past the first and every fang held or loose came from
+// a break or a kill (the ledger); a fighter is seated only at a station that
 // stands, one a station, and a station holds one fighter; the serpent drops a
 // fang at each of its first breaks, so no more have dropped than breaks have
 // happened or than it has fangs to drop; and a fighter is the deep's, its
@@ -593,14 +617,34 @@ export function verifyParty() {
   }
   if (!Number.isInteger(S.fangs) || S.fangs < 0)
     fail('the fangs are a count that is not a count', `${S.fangs}`);
-  if (!Number.isInteger(S.fangsDropped) || S.fangsDropped < 0 || S.fangsDropped > Math.min(S.serpentStage, FANG_BREAKS))
+  // Past the story's serpent its three breaks are all behind it.
+  const breaks = S.serpentLevel > 1 ? FANG_BREAKS : Math.min(S.serpentStage, FANG_BREAKS);
+  if (!Number.isInteger(S.fangsDropped) || S.fangsDropped < 0 || S.fangsDropped > breaks)
     fail('more fangs have dropped than the serpent has had breaks',
-         `${S.fangsDropped} dropped, stage ${S.serpentStage}`);
+         `${S.fangsDropped} dropped, stage ${S.serpentStage}, level ${S.serpentLevel}`);
+  const kills = Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed ? 1 : 0);
+  if (!Number.isInteger(S.killFangs) || S.killFangs < 0 || S.killFangs > kills)
+    fail('more fangs have dropped than the serpent has been killed', `${S.killFangs} dropped, ${kills} kills`);
+  // The ledger: a fang from nowhere is the thing that must never be possible.
+  // A setup hook or a save read back is a new starting point, and what it
+  // stood up beyond the drops is taken as given (`forgetFangs`).
+  if (yardReads !== fangReads) forgetFangs();
+  if (fangSurplus() > fangsGiven)
+    fail('a station or a fang came from nowhere',
+         `${stations.length} stations, ${S.fangs} held, ${S.fangsLoose.length} loose; ${S.fangsDropped} from breaks, ${S.killFangs} from kills`);
 }
+
+// What the party holds past the first station and the fangs that have
+// dropped, and what a setup or a save was let start with.
+const fangSurplus = () => (S.stations || []).length + (S.fangs | 0) + (S.fangsLoose || []).length
+  - 1 - (S.fangsDropped | 0) - (S.killFangs | 0);
+let fangsGiven = 0, fangReads = -1;
+export function forgetFangs() { fangsGiven = Math.max(0, fangSurplus()); fangReads = yardReads; }
 
 // The last stage seen, for the rule that it never goes back. A new game, or a
 // setup that sets the fight outright (`__serpent`), is a new start.
 let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;
 // The length on the frame before, and which reading of the yard it was of.
 let playedWas = 0, playedReads = -1;
-export function forgetSerpent() { serpentWas = -1; stunWas = false; mealWas = S.meal; }
+let levelWas = -1, levelReads = -1;
+export function forgetSerpent() { serpentWas = -1; levelWas = -1; stunWas = false; mealWas = S.meal; forgetFangs(); }

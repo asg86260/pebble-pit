@@ -1,7 +1,7 @@
 // The party (docs/wave-party.md, "Checks"): after the snatch the first
 // station stands, free, and the sqwife swims to it; a fang drops
 // at a phase break, sinks, is carried to the crusher, and buys the next
-// station, whose fighter is a pod resident who swims there; four stations is
+// station, whose fighter is a pod resident who swims there; a station a slot is
 // the most. The snatch and the deep's spare hands are set up with the hooks,
 // because they are not what these checks are about; a station is bought off
 // the floating build button and a rung on the station's rails.
@@ -165,25 +165,28 @@ group('a break drops its fang once, across a reload', async () => {
   ];
 });
 
-group('four stations is the most; a station with nobody spare stands empty until one is', async () => {
+group('a station a slot is the most; a station with nobody spare stands empty until one is', async () => {
   afterSnatch();
   pressBuild('spire');
   window.__finish();
   run(3);
-  window.__party({ fangs: 5 });                      // three breaks' fangs, and more
+  window.__party({ fangs: FIGHT_STATIONS_MAX + 1 });  // every break's and kill's fang, and more
   // The spire's Apprentice fights meanwhile, and a break she makes drops a fang.
   const dropped = S.fangsDropped;
-  const built = ['altar', 'circle', 'well'].map(k => { const b = pressBuild(k); window.__finish(); return b; });
-  const fifth = pressBuild('armory');
+  const three = ['altar', 'circle', 'well'].map(k => { const b = pressBuild(k); window.__finish(); return b; });
+  const story = S.stations.length;
+  const rest = ['armory', 'altar', 'spire'].map(k => { const b = pressBuild(k); window.__finish(); return b; });
+  const past = pressBuild('armory');
   run(3);
   const manned = S.stations.filter(st => st.fighter).length;
   window.__deepCrew({ spare: 1 });                   // a pod resident comes free
   runUntil(() => S.workers.filter(w => w.type === 'fighter' && atPost(w)).length === 2, 60);
   const fighters = S.workers.filter(w => w.type === 'fighter');
   return [
-    ok(built.every(Boolean) && S.stations.length === FIGHT_STATIONS_MAX, 'three fangs build three more',
+    ok(three.every(Boolean) && story === 1 + FANG_BREAKS, 'three fangs build three more', `${story} stations`),
+    ok(rest.every(Boolean) && S.stations.length === FIGHT_STATIONS_MAX, 'and the kills\' fangs the rest, a slot each',
        `${S.stations.length} stations`),
-    ok(!fifth && !buildOffer().shown && S.fangs === 2 + S.fangsDropped - dropped, 'and a fifth cannot be built, fang or no fang',
+    ok(!past && !buildOffer().shown && S.fangs === 2 + S.fangsDropped - dropped, 'and one past the slots cannot be built, fang or no fang',
        `fangs ${S.fangs}, ${S.fangsDropped - dropped} dropped`),
     ok(manned === 1, 'with only her down there, one station is manned', `${manned}`),
     ok(fighters.length === 2 && new Set(fighters.map(w => w.station)).size === 2,

@@ -5,13 +5,14 @@
 // and the heal is what the serpent closes a second, so a strike slower than
 // the heal never gets anywhere and a stage breaks only when the party can
 // hold the wound open to its depth (DESIGN.md, "The serpent is the rock").
-// The fourth break is the belly, and after it the serpent stays, coiled and
-// healed, to be struck for its scales.
+// The last break is the kill: the serpent comes apart, gathers itself again
+// and rises a level deeper (DESIGN.md, "Endless serpent"; `rise`).
 //
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_WOUND, SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_X, P,
+import { SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_X, P,
+         KILL, KILL_REFORM_S, SERPENT_RISE_PAUSE_S,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG, DAMAGE_KIND, BARRIER_FLARE_MS } from '../config.js';
@@ -21,11 +22,12 @@ import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned, streamS } from './meals.js';
 import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbMiddle, settleResist } from './phases.js';
+import { depthAt } from './depth.js';
 
-// The four defenses are 0..3; the fourth break leaves the stage at 4, which
+// The defenses are 0..LAST; the last break leaves the stage past it, which
 // resists nothing and has nothing left to heal.
 const LAST = SERPENT_PHASES - 1;
-const depth = () => S.serpentStage > LAST ? 0 : SERPENT_WOUND[S.serpentStage];
+const depth = () => S.serpentStage > LAST ? 0 : depthAt(S.serpentStage);
 
 // What a hit did, kept a moment for the number over it (render/fightnums.js).
 // Every blow is its own number, however many land together. Something that
@@ -65,8 +67,10 @@ export const blowK = done => Math.max(0, Math.min(1, Math.log(Math.max(1, done))
 // the square root of how many times over STUN_SHARE of the stage's depth the
 // blow was, and never past STUN_MAX_S. A stun never stacks -- the longer of
 // the two stands -- and none starts in the grace after one has ended.
+// The share is of the level-1 depth, so a party's stuns last as long at every
+// level: the levels grow the serpent's health and nothing else.
 function stun(blow, k) {
-  const d = depth();
+  const d = S.serpentStage > LAST ? 0 : depthAt(S.serpentStage, 1);
   if (!(d > 0)) return;
   const over = blow / (d * STUN_SHARE);
   if (!(S.serpentStun > 0) && S.serpentGrace > 0) return;
@@ -180,6 +184,7 @@ export function onBreak(fn) {
 // laid against it, and goes with it: the stun and every status.
 export const stepSerpent = c => {
   forget(c.now);
+  if (S.snatched && S.serpentFreed && stepDown(c)) return;
   if (!S.snatched || S.serpentStage > LAST) { S.serpentStun = S.serpentGrace = 0; return; }
   const stunned = S.serpentStun > 0, secs = c.dt / 1000;
   if (stunned) {
@@ -205,6 +210,60 @@ export const stepSerpent = c => {
   else S.breakT = 0;
   for (const fn of breakers.slice()) fn(S.serpentStage);
 };
+
+// --- the rise ---------------------------------------------------------------------
+// After a kill the serpent is down: it goes limp and comes apart on the kill's
+// own clock (`killA`), the motes gather it again over KILL_REFORM_S from
+// `reformAt`, and then it rises a level deeper. The story's kill is put down
+// by its sheet (beats.js sets `reformAt`); every kill after it, and the
+// story's once its sheet is behind it, gathers by itself SERPENT_RISE_PAUSE_S
+// after the coming apart is done.
+//
+// A moment ahead of the clock was written by an older page (the clock starts
+// again with each one) and reads as long past.
+const DOWN_S = () => KILL.last + KILL.limp + KILL.apart + SERPENT_RISE_PAUSE_S;
+const storyDone = () => S.serpentLevel > 1 || S.beatsDone.includes('freedsheet');
+function stepDown(c) {
+  if (S.reformAt == null) {
+    if (!storyDone()) return false;
+    const a = S.freedAt == null || S.freedAt > c.now ? Infinity : (c.now - S.freedAt) / 1000;
+    if (a < DOWN_S()) return false;
+    S.reformAt = Number.isFinite(a) ? S.freedAt + DOWN_S() * 1000 : c.now;
+  }
+  if (S.reformAt <= c.now && c.now - S.reformAt < KILL_REFORM_S * 1000) return false;
+  rise();
+  return true;
+}
+
+// Who hears a rise: the kill's fang owed and not yet dropped (party.js).
+const risers = [];
+export function onRise(fn) {
+  if (!risers.includes(fn)) risers.push(fn);
+  return () => { const i = risers.indexOf(fn); if (i >= 0) risers.splice(i, 1); };
+}
+
+// Gathered whole: a level deeper, back at its first defense with the clean
+// slate a break gives a defense.
+export function rise() {
+  S.serpentLevel = Math.max(1, S.serpentLevel | 0) + 1;
+  S.serpentBest = Math.max(S.serpentBest | 0, S.serpentLevel);
+  S.serpentStage = 0;
+  S.serpentWound = 0;
+  S.serpentFreed = false;
+  S.freedAt = S.reformAt = S.breakT = null;
+  S.orb = null;
+  S.serpentChips = [];
+  S.serpentStun = S.serpentGrace = 0;
+  clearStatuses();
+  resetMechanic();
+  S.mealT = 0;
+  S.mealI = null;
+  S.meal++;
+  S.resistBy = {};
+  settleResist(0);
+  S.shopStale = true;
+  for (const fn of risers.slice()) fn(S.serpentLevel);
+}
 
 // The numbers' list keeps itself: a hit goes once its number has faded; and
 // so does the hide, a bite once it has closed.

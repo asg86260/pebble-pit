@@ -99,6 +99,10 @@ export const SERPENT_DEPTHS = [5970, 5070, 5560, 5670, 18420];  // the depth tha
 // How many defenses there are; the stage past the last is the kill.
 export const SERPENT_PHASES = SERPENT_DEPTHS.length;
 export let SERPENT_WOUND = SERPENT_DEPTHS.slice();           // and as the dev panel has scaled it
+// Each time the serpent rises again its depths are this many times the last
+// level's (DESIGN.md, "Endless serpent"): health only, compounding, read
+// through `depthAt` (deep/depth.js) and nowhere else.
+export let SERPENT_LEVEL_GROWTH = 1.1;
 // Resists (DESIGN.md, "Resists: magic in the ward, physical in the split,
 // both in the fading"). Every hit is one kind of damage, and a phase resists
 // a kind: a resisted hit does RESIST_K of itself. The bare phase resists
@@ -323,6 +327,8 @@ export const DEEP_KNOBS = [
   { key: 'SERPENT_WOUND_SCALE', label: 'serpent wound depths, x', min: 0.1, max: 5, step: 0.1,
     get: () => SERPENT_WOUND[0] / SERPENT_DEPTHS[0],
     set: v => { SERPENT_WOUND = SERPENT_DEPTHS.map(d => Math.round(d * v)); } },
+  { key: 'SERPENT_LEVEL_GROWTH', label: 'serpent depth a level, x', min: 1, max: 2, step: 0.01,
+    get: () => SERPENT_LEVEL_GROWTH, set: v => { SERPENT_LEVEL_GROWTH = v; } },
   ...MECHANICS.filter(Boolean).map(m => ({ key: `MECH_${m.kind.toUpperCase()}_EVERY`, label: `${m.kind}, every s`,
     min: 5, max: 180, step: 1, get: () => m.every, set: v => { m.every = v; } })),
   { key: 'STUN_SHARE', label: 'stun, share of the depth a blow needs', min: 0.005, max: 1, step: 0.005,

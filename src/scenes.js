@@ -22,7 +22,8 @@ import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
 import { rockLeft, clampCam } from './world.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, SERPENT_RISE_PAUSE_S, rungValue } from './config.js';
+import { depthAt } from './deep/depth.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
 import { sweep } from './hands.js';
@@ -270,9 +271,10 @@ const shieldBuilt = kind => {
 // the sqwife back down there as the deep's one resident (`__crew` sends the
 // whole crew up top), `spare` residents more, the party, the fight at
 // `stage` with its wound held at `wound`, a share of its depth, scales on
-// the floor, and the view.
+// the floor, and the view; at `level`, the serpent risen that many times
+// less one, its depths that level's.
 function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scales = 400, loose = 0,
-                    view = 'deep', run = 20 } = {}) {
+                    view = 'deep', run = 20, level = 1 } = {}) {
   rich();
   window.__fullSites();
   window.__snatch({ played: true });
@@ -284,14 +286,15 @@ function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scal
   if (party.length) window.__deepCrew({ spare: 1 });
   window.__scales(scales);
   if (loose) window.__looseScales(loose);
-  window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
+  window.__serpent({ level, stage });
+  window.__serpent({ stage, wound: wound * depthAt(stage) });
   window.__view(view);
   // Long enough to swim from the pods to the stations and the coil. A party
   // at its top rungs breaks a defense in seconds, so the fight is set again
   // every half second on the way, and once more when they are at it.
   for (let s = 0; s < run; s += 0.5) {
     window.__fast(Math.min(0.5, run - s));
-    window.__serpent({ stage, wound: wound * (SERPENT_WOUND[stage] || 0) });
+    window.__serpent({ stage, wound: wound * depthAt(stage) });
   }
 }
 
@@ -398,7 +401,7 @@ const snatchAt = (phase, into = 0, pin = false) => () => {
 // way through gathering itself again after the sheet), held for the shot.
 const killAt = a => () => {
   deepYard({ stage: SERPENT_PHASES - 1, party: [cast('brawler', 8), cast('mage', 8)] });
-  window.__serpent({ stage: SERPENT_PHASES - 1, wound: SERPENT_WOUND[SERPENT_PHASES - 1] });
+  window.__serpent({ stage: SERPENT_PHASES - 1, wound: depthAt(SERPENT_PHASES - 1) });
   window.__fast(1 / 60);
   if (a == null) {
     for (let i = 0; i < 60 * 120 && S.beat.sheet !== 'freedsheet'; i++) window.__fast(1 / 60);
@@ -408,6 +411,19 @@ const killAt = a => () => {
   lookDeep(coilAt(bellySeg(), now()).x);
   window.__holdShot();
 };
+
+// A kill at level 3, `a` seconds after its last blow, or with null just past
+// its rise: the story behind the yard (the freed beat and the finale had),
+// so nothing but the kill, the pause and the gathering play.
+function endlessKill(a) {
+  deepYard({ level: 3, stage: SERPENT_PHASES - 1, party: [cast('brawler', 8), cast('mage', 8)] });
+  window.__serpent({ stage: SERPENT_PHASES - 1, wound: depthAt(SERPENT_PHASES - 1) });
+  window.__fast(1 / 60);
+  const down = KILL.last + KILL.limp + KILL.apart + SERPENT_RISE_PAUSE_S + KILL_REFORM_S;
+  window.__fast(a == null ? down + 0.6 : a);
+  lookDeep(coilAt(bellySeg(), now()).x);
+  window.__holdShot();
+}
 
 // The finale (finale.js): a yard with a crew of every kind on it -- the gang,
 // haulers and carters, the cut, the plots, the janitors, the wizards -- and a
@@ -432,7 +448,7 @@ const finaleAt = (phase, into = 0, onHouse = false) => () => {
   window.__fast(12);
   window.__serpent({ stage: SERPENT_PHASES - 1, wound: 0 });
   const p = coilAt(bellySeg(), now());
-  strike('punch', SERPENT_WOUND[SERPENT_PHASES - 1], p.x, p.y);
+  strike('punch', depthAt(SERPENT_PHASES - 1), p.x, p.y);
   if (phase === 'kill') { window.__fast(0.05); return; }
   const at = () => phase === 'after' ? S.beat.sheet === 'freedsheet' : S.finale && S.finale.phase === phase;
   for (let i = 0; i < 60 * 120 && !at(); i++) window.__fast(1 / 60);
@@ -642,7 +658,7 @@ const deepScenes = {
       deepYard({ stage: 1, wound: 0.5, run: 30,
                  party: [cast('brawler', 6), cast('ranger', 4), cast('sapper', 3), cast('mage', 2)] });
       window.__fast(2);
-      window.__serpent({ stage: 1, wound: 0.5 * SERPENT_WOUND[1] });
+      window.__serpent({ stage: 1, wound: 0.5 * depthAt(1) });
       // Between the fists and the belly, so a narrow window has both the
       // blows' white and the heal's purple.
       const fist = S.hits.find(h => h.weapon === 'brawler');
@@ -804,7 +820,7 @@ const deepScenes = {
   'deep-scatter-break': { about: 'the deep', say: 'a defense a hair from breaking, the coil in frame, the creatures round it about to scatter',
     run: () => {
       deepYard({ stage: 1, wound: 0.3, party: [cast('brawler', 2), cast('ranger', 2)] });
-      S.serpentWound = SERPENT_WOUND[1] - 0.01;
+      S.serpentWound = depthAt(1) - 0.01;
       lookDeep(coilAt(Math.round(COIL_SEGS * 0.5), now()).x);
     } },
   ...Object.fromEntries(Object.entries(PROP_SCENES).map(([name, party]) => [name, {
@@ -830,6 +846,21 @@ const deepScenes = {
   'deep-kill-apart': { about: 'the deep', say: 'the kill: the hide coming apart into motes, tail first', run: killAt(KILL.last + KILL.limp + KILL.apart * 0.5) },
   'deep-kill-out': { about: 'the deep', say: 'the kill: him out on the floor, walking to her', run: killAt(KILL.last + KILL.limp + KILL.apart + 1) },
   'deep-kill-reform': { about: 'the deep', say: 'after the kill: the serpent gathering itself again, head first', run: killAt(null) },
+  // The endless serpent (DESIGN.md, "Endless serpent"): a serpent risen six
+  // times past the story's, its level after the pips and all five pips up
+  // from its first defense; the belly's ribs with nobody in them.
+  'deep-endless': { about: 'the deep', say: 'the serpent at level 7: its level after the bar\'s pips, every pip up, an empty belly',
+    run: () => {
+      deepYard({ level: 7, stage: 1, wound: 0.4,
+                 party: [cast('brawler', 6), cast('ranger', 6), cast('sapper', 5), cast('mage', 5)] });
+      lookDeep(coilAt(bellySeg(), now()).x);
+    } },
+  // A kill past the story's: the last blow at level 3, no beat, no sheet, the
+  // camera left where it was; `a` seconds on (null: just after the rise).
+  'deep-endless-kill': { about: 'the deep', say: 'a kill at level 3: the last blow, no letterbox, no sheet, the camera the player\'s',
+    run: () => endlessKill(0.05) },
+  'deep-endless-rise': { about: 'the deep', say: 'a kill at level 3 a moment after it rose again: level 4 on the bar, its first defense up',
+    run: () => endlessKill(null) },
   // The finale (finale.js), a moment of each of its parts.
   'finale-kill': { about: 'the deep', say: 'the finale from the top: a full yard, the last blow just landed', run: finaleAt('kill') },
   'finale-gear': { about: 'the deep', say: 'the finale: her gear going back onto her station in held steps, him beside her', run: finaleAt('hang', 0.4) },
@@ -897,7 +928,7 @@ const deepScenes = {
   'party-fang': { about: 'the deep', say: 'a fang sinking through the water after a break',
     run: () => {
       deepYard({ party: [cast('brawler', 8)] });
-      window.__serpent({ stage: 0, wound: Math.max(0, SERPENT_WOUND[0] - 1) });
+      window.__serpent({ stage: 0, wound: Math.max(0, depthAt(0) - 1) });
       for (let i = 0; i < 60 * 60 && !S.fangsLoose.length; i++) window.__fast(1 / 60);
       window.__fast(0.4);
       const f = S.fangsLoose[0];

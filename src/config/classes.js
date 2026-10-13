@@ -16,8 +16,6 @@ export const FIRST_KINDS = ['altar', 'armory', 'spire'];
 // A class that does nothing with nobody beside it: its fork opens with a
 // second station.
 export const NEEDS_COMPANY = ['bard'];
-// The first station and a fang for each of the first three breaks.
-export const FIGHT_STATIONS_MAX = 4;
 
 // One row a class: name, ladder key (in LADDERS), the hit key (in
 // DAMAGE_KIND), melee or not, and its tempo and move numbers. What a rung

@@ -17,11 +17,12 @@ import { S } from '../state.js';
 import { now } from '../clock.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
          BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT,
-         SERPENT_PHASES, SERPENT_WOUND, P, WORKER, ORB_R, ORB_CLOSE_S, ORB_RISE_S, ORB_STEP, ORB_CLEAR,
+         SERPENT_PHASES, P, WORKER, ORB_R, ORB_CLOSE_S, ORB_RISE_S, ORB_STEP, ORB_CLEAR,
          ORB_BOB_S, ORB_GHOST_K, ORB_HANG_S, ORB_SINK_S, ORB_SINK_EASE, ORB_SQUASH_S } from '../config.js';
 import { CLASSES, PAIRS } from '../config/classes.js';
 import { has } from './statuses.js';
 import { hitRect } from '../stations.js';
+import { depthAt } from './depth.js';
 
 const LAST = SERPENT_PHASES - 1;
 export const mechOf = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? MECHANICS[S.serpentStage] : null);
@@ -86,7 +87,8 @@ function stepOrb(p) {
     const manned = S.stations.filter(st => st.built && st.fighter);
     if (!manned.length) return;
     const st = manned.reduce((b, o) => ((o.rung || 0) > (b.rung || 0) ? o : b));
-    const hp = p.m.hp * SERPENT_WOUND[S.serpentStage];
+    // The orb is the serpent's health, so it grows with the level.
+    const hp = p.m.hp * depthAt(S.serpentStage);
     S.orb = { st: st.id, hp, max: hp, at: now() };
   }
   if (S.orb && p.part !== 'on') breakOrb();
@@ -276,13 +278,17 @@ export function apartK() {
   return a == null ? 0 : clamp01((a - KILL.last - KILL.limp) / KILL.apart);
 }
 // When, in seconds of the kill, the coming apart reaches the belly and lets
-// him go; and whether he is still held in it (the cage drawn round him).
+// him go; whether the belly is still whole (the cage of ribs drawn, the
+// wound's gap opening in it); and whether he is still held in it. He is in it
+// only on the story's serpent: out on its kill, he went home in the finale,
+// and every serpent risen after it has an empty belly.
 export const killFreeA = () => KILL.last + KILL.limp + (1 - BELLY_AT) * KILL.apart;
-export const cradled = () => {
+export const bellyWhole = () => {
   if (!S.serpentFreed) return S.serpentStage < SERPENT_PHASES;
   const a = killA();
   return a != null && a < killFreeA();
 };
+export const cradled = () => S.serpentLevel <= 1 && !S.beatsDone.includes('freed') && bellyWhole();
 // How much of him has gathered again, head first, 0..1; null when he is not.
 export const reformK = () => (S.reformAt == null ? null : clamp01((now() - S.reformAt) / 1000 / KILL_REFORM_S));
 

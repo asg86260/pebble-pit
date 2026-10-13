@@ -2,7 +2,6 @@
 // Owned by track BOARD (docs/wave-serpent.md, docs/wave-party.md). Every
 // number the track needs lives here; a magic number in a module is a bug.
 import { P } from './yard.js';
-import { FIGHT_STATIONS_MAX } from './classes.js';
 
 // The coins each group of a deep ladder adds to its scales, first to last:
 // scales alone, then the yard's dust, then its ore, then a spark on top. The
@@ -87,6 +86,10 @@ export const POD_WORK_MAX = 8;
 // station takes the lowest slot free when it is bought, so the floor fills
 // left to right after the crusher and the pods.
 export const DEEP_SLOTS = [0.335, 0.475, 0.62, 0.76, 0.9, 0.405, 0.69];
+// The most stations there can be: a slot each. The first is free, the
+// story's three breaks drop a fang each and the kills after them the rest
+// (DESIGN.md, "Endless serpent").
+export const FIGHT_STATIONS_MAX = DEEP_SLOTS.length;
 
 // The ids a station can have. A station is never taken down, so the ids are
 // the first FIGHT_STATIONS_MAX of `s1, s2, ...`, and each has its row in the
