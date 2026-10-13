@@ -64,7 +64,9 @@ body.title { overflow: hidden; }
 /* the record's cards, one across in the column */
 .col .record { grid-template-columns: 1fr; width: var(--col-w); max-width: none; max-height: 50vh; box-sizing: border-box; }
 .col .record .card { background: var(--paper); }
-.col input[type=range] { width: var(--col-w); box-sizing: border-box; margin-left: 0; margin-right: 0; }
+/* The slider as wide as the column, as the buttons are: at least its
+   narrowest, and stretched with them when a longer line widens it. */
+.col input[type=range] { width: auto; min-width: var(--col-w); align-self: stretch; box-sizing: border-box; margin-left: 0; margin-right: 0; }
 /* the veil: white, over everything, up on play (title.js) */
 .veil { position: fixed; inset: 0; background: var(--paper); opacity: 0; pointer-events: none; transition: opacity .35s linear; z-index: 9; }
 .veil.up { opacity: 1; pointer-events: auto; }
@@ -85,6 +87,13 @@ body.still .veil { transition: none; }   /* motion: less: see style.css */
 .foot .cloud.row { display: inline-flex; align-items: center; gap: 6px; }
 .foot .cloud .tick { display: inline-block; width: 6px; height: 6px; background: var(--ink); margin-right: 5px; vertical-align: 1px; }
 .foot .cloud .tick.off { background: none; border: 1px solid var(--ink-2); box-sizing: border-box; }
+/* The language in force, in its own name (langpage.js): a button drawn as
+   the links beside it, in its language's face, and in full ink so it is the
+   one a player looking for a way out sees. */
+.foot .langfoot {
+  font: inherit; font-family: var(--face); letter-spacing: inherit; text-transform: inherit; color: var(--ink);
+  background: none; border: 0; border-bottom: 1px solid var(--ink); padding: 0; cursor: pointer;
+}
 .foot .cloud .go {
   font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit;
   background: none; border: 0; border-bottom: 1px solid var(--ink-2); padding: 0; cursor: pointer;

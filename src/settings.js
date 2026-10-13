@@ -17,6 +17,7 @@ import { showCloud, CLOUD_LOOK_MS } from './cloudsheet.js';
 import { cloudReady, cloudStatus } from './cloud.js';
 import { cloudNoticeDue } from './notices.js';
 import { msg } from './lang.js';
+import { fillLanguages, inForce } from './langpage.js';
 // input.js imports this file; `hold` is a declaration, so it is there to
 // call however the ring is entered.
 import { hold } from './input.js';
@@ -73,6 +74,13 @@ document.getElementById('settingsback').addEventListener('click', back);
 fillControls(document.getElementById('controlslist'));
 document.getElementById('controlsbtn').addEventListener('click', () => showPane('controls'));
 document.getElementById('controlsback').addEventListener('click', () => showPane('settings'));
+// The language, a page of its own: a pick of another language is a reload,
+// as the dark switch's is, since every module reads its words at load.
+const langBtn = document.getElementById('langbtn');
+langBtn.textContent = msg('set-langbtn', { name: inForce().name });
+fillLanguages(document.getElementById('langlist'), { reload: () => leave(location.href), stay: () => showPane('settings') });
+langBtn.addEventListener('click', () => showPane('language'));
+document.getElementById('langback').addEventListener('click', () => showPane('settings'));
 document.getElementById('titlebtn').addEventListener('click', () => leave('index.html'));
 
 // Leaving the page, for the landing page or the desk's exit: the veil goes up

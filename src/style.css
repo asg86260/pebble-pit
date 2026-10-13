@@ -2177,3 +2177,15 @@ body.still .fill::before { transition: none; }
 /* The marker is the pad's focus ring, so the browser's own is not drawn twice
    over a row the pad is on. */
 body.pad :focus { outline: none; }
+
+/* The language page (langpage.js; option (a) of
+   docs/mocks/language-picker-2026-10-13.html), on the held sheet and the
+   landing page's column: a button a language, a tighter column than the
+   sheet's own so nine fit a phone's sheet, the one in force inverted as the
+   boards mark a chosen thing. Each name carries its language's tag, and
+   takes that language's face (the :lang blocks above) rather than inheriting
+   the page's. A line height of its own, since a face with ideographs stands
+   taller than the mono and would make its row a different height. */
+.langs { display: flex; flex-direction: column; gap: 4px; align-self: stretch; }
+.langs button { width: 100%; font-family: var(--face); line-height: 1.4; }
+.langs button.on { color: var(--paper); background: var(--ink); }

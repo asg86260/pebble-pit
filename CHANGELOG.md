@@ -143,6 +143,9 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+**New this release**
+- A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
+
 - The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
 - With the conveyor belt running, a left click anywhere no longer puts a free handful of pebbles in your hand (src/selftest/dust.js, "a click on open sky over the belt's yard catches nothing"; test/belt-head.test.mjs).
 - In every cutscene the black bars frame what the scene is about instead of covering it, and notices and the corner buttons wait off the bars until the scene is over (test/letterbox-framing-desk.test.mjs).

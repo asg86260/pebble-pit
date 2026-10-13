@@ -13,6 +13,7 @@ import { copyOut } from './copyout.js';
 import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
 import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
 import { msg } from './lang.js';
+import { fillLanguages, inForce } from './langpage.js';
 
 const col = document.querySelector('.col');
 const said = document.getElementById('said');
@@ -65,6 +66,24 @@ document.getElementById('settingsbtn').addEventListener('click', () => showPane(
 fillControls(document.getElementById('controlslist'));
 document.getElementById('controlsbtn').addEventListener('click', () => showPane('controls'));
 document.getElementById('controlsback').addEventListener('click', () => showPane('settings'));
+// The language, a page of its own, and the foot's name for the language in
+// force, which opens the same page. A pick is a reload behind the veil.
+const langName = inForce();
+document.getElementById('langbtn').textContent = msg('title-langbtn', { name: langName.name });
+const langFoot = document.getElementById('langfoot');
+langFoot.textContent = langName.name;
+langFoot.setAttribute('lang', langName.code);
+fillLanguages(document.getElementById('langlist'), { reload: reloadIn, stay: () => showPane('settings') });
+document.getElementById('langbtn').addEventListener('click', () => showPane('language'));
+langFoot.addEventListener('click', () => showPane('language'));
+document.getElementById('langback').addEventListener('click', () => showPane('settings'));
+async function reloadIn() {
+  if (leaving) return;
+  leaving = true;
+  document.getElementById('veil').classList.add('up');
+  await new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS));
+  location.reload();
+}
 for (const id of ['slotsback', 'recordback', 'settingsback', 'conflictback']) document.getElementById(id).addEventListener('click', () => showPane('main'));
 
 // Play waits for the store to take every write made here, and for the veil to

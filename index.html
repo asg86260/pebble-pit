@@ -74,6 +74,7 @@ try {
   <div class="word" data-pane="settings" hidden data-l10n-id="title-settings-word">settings</div>
   <button id="motion" type="button" data-pane="settings" hidden data-l10n-id="set-motion-full">motion: full</button>
   <button id="dark" type="button" data-pane="settings" hidden data-l10n-id="set-dark-off">dark: off</button>
+  <button id="langbtn" type="button" data-pane="settings" hidden></button>
   <button id="sound" type="button" data-pane="settings" hidden data-l10n-id="set-sound-on">sound: on</button>
   <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden data-l10n-id="set-volume">
   <button id="controlsbtn" type="button" data-pane="settings" hidden data-l10n-id="title-controlsbtn">controls</button>
@@ -82,6 +83,10 @@ try {
   <div class="word" data-pane="controls" hidden data-l10n-id="title-controls-word">controls</div>
   <div id="controlslist" class="controls" data-pane="controls" hidden></div>
   <button id="controlsback" type="button" data-pane="controls" hidden data-l10n-id="title-controlsback">back</button>
+  <!-- the language page, as on the held sheet (langpage.js) -->
+  <div class="word" data-pane="language" hidden data-l10n-id="title-lang-word"></div>
+  <div id="langlist" class="langs" data-pane="language" hidden></div>
+  <button id="langback" type="button" data-pane="language" hidden data-l10n-id="title-controlsback">back</button>
 
   <!-- two yards in one slot, one here and one in the cloud: the player
        keeps one (cloudsheet.js, `showConflicts`) -->
@@ -99,7 +104,10 @@ try {
   <!-- the build and the cloud's line beside it (cloudsheet.js, `showFoot`;
        DESIGN.md, "Linking a device") -->
   <span class="left"><span id="build"></span><span id="cloud" class="cloud" hidden></span></span>
-  <span id="links"><a href="https://cameldash.itch.io/pebble-pit" target="_blank" rel="noopener" data-l10n-id="title-link-itch">itch</a> &middot; <a href="https://github.com/asg86260/pebble-pit" target="_blank" rel="noopener" data-l10n-id="title-link-github">github</a></span>
+  <!-- the language in force, in its own name: a player whose language was
+       guessed wrong finds the way out without reading a word of it. Not in
+       #links, which the desk hides -->
+  <span><span id="links"><a href="https://cameldash.itch.io/pebble-pit" target="_blank" rel="noopener" data-l10n-id="title-link-itch">itch</a> &middot; <a href="https://github.com/asg86260/pebble-pit" target="_blank" rel="noopener" data-l10n-id="title-link-github">github</a> &middot; </span><button id="langfoot" type="button" class="langfoot"></button></span>
 </div>
 <script type="module" src="./src/title.js"></script>
 </body>

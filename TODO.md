@@ -1,18 +1,18 @@
 # Still to do
 
-## Localization, phase two -- PLUMBING BUILT, PICKER AND LOOK AWAIT MOCKS (2026-10-13)
+## Localization, phase two -- PLUMBING AND PICKER BUILT, LOOK AWAITS A MOCK (2026-10-13)
 
 Built (DESIGN.md's "As built: the plumbing"): the language table
 (locales/languages.json, only English `ready`), the `language` preference
 and the default chain with `desk.language()`, the CJK faces cut at build
 (tools/fonts.mjs), `--face`/`--track` and `FACE`, the shell's words through
 the file, test/l10n-locales and l10n-default. Open, in order:
-- **The picker** (both settings panes, the landing page's foot link): its
-  look is being mocked; its words (`set-langbtn`, `set-lang-word`,
-  `set-langback`, the `title-` pair) are the owner's. It lists the rows with
-  `ready: true` and calls `chooseLang`. A language goes `ready` when its file
-  is approved and its overflow survey is clean; the guard then holds it
-  complete.
+- **The picker's words** (built, DESIGN.md "As built: the picker"): the
+  label and heading are placeholders, `set-langbtn`, `set-lang-word`,
+  `title-langbtn`, `title-lang-word`; whether the names are lowercased. It
+  lists the rows with `ready: true` (every file in a dev build). A language
+  goes `ready` when its file is approved and its overflow survey is clean;
+  the guard then holds it complete.
 - **The CJK look**: `--track` under `:lang(zh|ja|ko)` is still 1 (a TODO in
   style.css), the size step and what replaces the capitals, Korean's
   `word-break: keep-all` -- from the mock vote.

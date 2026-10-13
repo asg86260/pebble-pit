@@ -389,8 +389,14 @@ set-controlsbtn = controls
 # controls page heading
 set-controls-word = controls
 
-# controls page back
+# controls page back, and the language page's
 set-controlsback = back
+
+# settings button to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)
+set-langbtn = [owner's words: language] · { $name }
+
+# language page heading (a placeholder for the owner's words)
+set-lang-word = [owner's words: heading]
 
 # settings page back
 set-settingsback = back
@@ -574,8 +580,14 @@ title-settingsback = back
 # landing controls page heading
 title-controls-word = controls
 
-# landing controls back
+# landing controls back, and the language page's
 title-controlsback = back
+
+# landing settings to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)
+title-langbtn = [owner's words: language] · { $name }
+
+# landing language page heading (a placeholder for the owner's words)
+title-lang-word = [owner's words: heading]
 
 # landing cloud conflict page heading
 title-conflict-word = choose a yard

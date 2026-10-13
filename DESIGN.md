@@ -18877,8 +18877,9 @@ The parts with no look to vote on are built, and nothing an English player
 sees has changed. Built: the default (section 1, all but the picker), the
 faces' machinery (section 3, all but the CJK look), the shell's words
 (section 6, its first two items) and the guard (section 8, all but `long`
-pseudo). Not built: the picker, the sync, the sign, the CJK typography,
-the numbers, `list-sep`, the objective card's derived cap, `l10nfit`.
+pseudo). Not built: the sync, the sign, the CJK typography, the numbers,
+`list-sep`, the objective card's derived cap, `l10nfit`. The picker was
+built the same day, after the vote (section 1, "As built: the picker").
 
 - **The table.** One table, `locales/languages.json`, not two config lists
   (`LANG_NAMES`, `LANG_READY`): a row a language with its code, its name for
@@ -18968,7 +18969,7 @@ in their list, else English, and can still pick Simplified by hand. Steam
 splits Spanish into Spain (`spanish`) and Latin America (`latam`); one `es`
 file answers both (the open call below is which Spanish it is written in).
 
-### 1. The picker (the default built; the picker not)
+### 1. The picker (built)
 
 **Where.** On both settings panes -- the held sheet's (play.html, the
 `settings` pane beside `dark`) and the landing page's (index.html, its own
@@ -19031,6 +19032,34 @@ preference, raise the veil, reload (`leave(location.href)`). Every module
 reads its words at load and some at their own top level, and a language
 that is fixed at boot is the reason that is safe. A live switch is not
 worth un-making that.
+
+**As built: the picker (2026-10-13).** Option (a) of
+docs/mocks/language-picker-2026-10-13.html, the owner's vote: on both
+settings pages a row, `[label] · English`, the language in force named in
+itself after the label (`set-langbtn`, `title-langbtn`, `$name`), opens a
+`language` pane of its own (`data-pane`, as `controls` is), a button a
+language in `#langlist`, the one in force inverted (`.on`, the boards'
+mark), and a back row; the landing page's foot names the language in force
+after `itch · github`, outside `#links` so the desk, which hides the links,
+keeps it, and pressing it opens the same pane. One module builds the list
+for both pages (src/langpage.js); each page says how it reloads: the held
+sheet through `leave(location.href)` as the dark switch does, the landing
+page behind its veil. The list is the ready rows of the table that have a
+file, and in a dev build every row with a file, so a language still being
+translated can be read in the game. The names are the table's `name`, not
+a config list (`LANG_NAMES` became the table, as the plumbing note says),
+each button tagged `lang` so it takes its own face. Picking the language in
+force writes it (a followed language becomes a chosen one) and turns back
+without a reload. The back rows reuse `set-controlsback` and
+`title-controlsback` ("back", to the same settings page) rather than new
+ids, so every file already has their words; the label and heading
+(`set-langbtn`, `set-lang-word`, `title-langbtn`, `title-lang-word`) are
+the owner's placeholders. The names are in the sheet's capitals, the
+mock's default; lowercasing them is still the owner's call. No pad code:
+every row is a button, so padpage.js walks it, and B finds `#langback`.
+The checks are src/selftest/language.js: each page walked by its own
+clicks in a frame, the reload a pick costs watched and the page that comes
+back asked its language, and the held sheet walked again with a pad.
 
 ### 2. The translation pipeline
 
