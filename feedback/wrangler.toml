@@ -24,7 +24,7 @@ binding = "DB"
 database_name = "pebble-feedback"
 # Set by the owner from `npx wrangler d1 create pebble-feedback` (README.md,
 # step 3). `wrangler dev --local` runs over a local database whatever it says.
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "7850c0f4-b777-47b9-ac45-a2fc41ad2cda"
 # The same files feedback/test/d1.mjs builds its database from.
 migrations_dir = "migrations"
 
