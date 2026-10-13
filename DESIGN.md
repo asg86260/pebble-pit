@@ -14810,10 +14810,13 @@ ceiling (the sunlit carried on up) and a wide one past the deep's far end.
 **Sparse, and clickable like the birds** (the owner, 2026-10-13: "tone down
 the amount of creatures in the deep. its a little noisy ... the same
 treatment as the birds above. sparse, and able to click and drop scales").
-Fifteen creatures where there were seventy-six: three in the sunlit, four in
-the twilight, two in the midnight band (the quietest, round the coil and the
-bar), three abyssal, three hadal; twelve of the thirteen kinds, the gulper
-eel the one left out. A click on one (the bird's reach, `BIRD_REACH`) shakes
+And again ("still have too many creatures around"): nine where there were
+seventy-six, two in each zone and one in the midnight band (the quietest,
+round the coil and the bar) -- shoal and jelly, lanternfish and
+siphonophore, angler, dumbo and tripod fish, amphipod and snail; the
+hatchetfish, vampire squid, sea cucumber and gulper eel are kept at nought.
+The far and middle crossings set off a third as often (one a minute); the
+near stream is the serpent's meals and is left as it is. A click on one (the bird's reach, `BIRD_REACH`) shakes
 loose the bird's handful (`FAUNA_SCALES` is `BIRD_DUST`) as ordinary loose
 scales from where it was: they sink to the floor and are money only once a
 gatherer has carried them to the crusher. The creature bolts for the nearer
