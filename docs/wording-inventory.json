@@ -122,15 +122,15 @@
   "id": "crashed-fbbtn",
   "group": "Sheets",
   "where": "play.html",
-  "context": "crash sheet button under copy save, opening the feedback form in place (a placeholder for the owner's words)",
-  "text": "[owner's words: send a report]"
+  "context": "crash sheet button under copy save, opening the feedback form in place",
+  "text": "send a report"
  },
  {
   "id": "crashed-fb-ask",
   "group": "Sheets",
   "where": "src/feedbackform.js",
-  "context": "crash sheet line over the feedback form's box, asking for the save with the report (a placeholder for the owner's words)",
-  "text": "[owner's words: the crashed sheet asks for the save]"
+  "context": "crash sheet line over the feedback form's box, asking for the save with the report",
+  "text": "your save helps find what broke"
  },
  {
   "id": "held-word",
@@ -885,148 +885,148 @@
   "id": "set-langbtn",
   "group": "Settings",
   "where": "src/selftest/settings.js",
-  "context": "settings button to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)",
-  "text": "[owner's words: language] · ${name}"
+  "context": "settings button to the language page; $name is the language in force, in its own name",
+  "text": "language · ${name}"
  },
  {
   "id": "set-lang-word",
   "group": "Settings",
   "where": "play.html",
-  "context": "language page heading (a placeholder for the owner's words)",
-  "text": "[owner's words: heading]"
+  "context": "language page heading",
+  "text": "language"
  },
  {
   "id": "set-fbbtn",
   "group": "Settings",
   "where": "play.html",
-  "context": "settings button to the feedback page, under controls (a placeholder for the owner's words)",
-  "text": "[owner's words: feedback]"
+  "context": "settings button to the feedback page, under controls",
+  "text": "feedback"
  },
  {
   "id": "set-fb-word",
   "group": "Settings",
   "where": "play.html",
-  "context": "feedback page heading (a placeholder for the owner's words)",
-  "text": "[owner's words: heading]"
+  "context": "feedback page heading",
+  "text": "feedback"
  },
  {
   "id": "fb-box.placeholder",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form: the box's hint while it is empty (a placeholder for the owner's words)",
-  "text": "[owner's words: what went wrong, or what reads wrong]"
+  "context": "feedback form: the box's hint while it is empty",
+  "text": "what went wrong, or what reads wrong"
  },
  {
   "id": "fb-left",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form: under the box in the last few hundred characters; $n is how many are left (a placeholder for the owner's words)",
-  "text": "[owner's words: characters left] ${n}"
+  "context": "feedback form: under the box in the last few hundred characters; $n is how many are left",
+  "text": "${n} characters left"
  },
  {
   "id": "fb-tick",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form: the tick that sends the save along (a placeholder for the owner's words)",
-  "text": "[owner's words: send my save]"
+  "context": "feedback form: the tick that sends the save along",
+  "text": "send my save"
  },
  {
   "id": "fb-goes",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form: the lead-in to the line listing everything that will be sent, rebuilt as the form changes (a placeholder for the owner's words)",
-  "text": "[owner's words: what goes, before it goes]:"
+  "context": "feedback form: the lead-in to the line listing everything that will be sent, rebuilt as the form changes",
+  "text": "this gets sent:"
  },
  {
   "id": "fb-goes-words",
   "group": "Settings",
   "where": "src/feedback.js",
-  "context": "feedback form, on the line of what goes: the player's own words (a placeholder for the owner's words)",
-  "text": "[owner's words: your words]"
+  "context": "feedback form, on the line of what goes: the player's own words",
+  "text": "your words"
  },
  {
   "id": "fb-goes-save",
   "group": "Settings",
   "where": "src/feedback.js",
-  "context": "feedback form, on the line of what goes while the tick is on: the save; $kb is its size in kilobytes (a placeholder for the owner's words)",
-  "text": "[owner's words: your save] ${kb} KB"
+  "context": "feedback form, on the line of what goes while the tick is on: the save; $kb is its size in kilobytes",
+  "text": "your save ${kb} KB"
  },
  {
   "id": "fb-goes-save-yard",
   "group": "Settings",
   "where": "src/feedback.js",
-  "context": "feedback form on the landing page, on the line of what goes while the tick is on: the save; $yard is which yard, as the saves rows say it (\"rock 12 · 7 crew\"), $kb its size in kilobytes (a placeholder for the owner's words)",
-  "text": "[owner's words: your save] ${yard} · ${kb} KB"
+  "context": "feedback form on the landing page, on the line of what goes while the tick is on: the save; $yard is which yard, as the saves rows say it (\"rock 12 · 7 crew\"), $kb its size in kilobytes",
+  "text": "your save ${yard} · ${kb} KB"
  },
  {
   "id": "fb-goes-keep",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form, at the end of the line of what goes: how long it is kept; $reportDays for a report, $saveDays for a save (a placeholder for the owner's words)",
-  "text": "[owner's words: a report is kept ${reportDays} days, a save ${saveDays} days]"
+  "context": "feedback form, at the end of the line of what goes: how long it is kept; $reportDays for a report, $saveDays for a save",
+  "text": "reports are kept ${reportDays} days, saves ${saveDays} days"
  },
  {
   "id": "fb-nosave-empty",
   "group": "Settings",
   "where": "src/feedback.js",
-  "context": "feedback form, on the line of what goes when the tick is grey: the open slot has no save (a placeholder for the owner's words)",
-  "text": "[owner's words: no save to send, the slot is empty]"
+  "context": "feedback form, on the line of what goes when the tick is grey: the open slot has no save",
+  "text": "no save to send, the slot is empty"
  },
  {
   "id": "fb-nosave-big",
   "group": "Settings",
   "where": "src/feedback.js",
-  "context": "feedback form, on the line of what goes when the tick is grey: the save is past the size the worker takes; $kb is its size in kilobytes (a placeholder for the owner's words)",
-  "text": "[owner's words: the save is too big to send] ${kb} KB"
+  "context": "feedback form, on the line of what goes when the tick is grey: the save is past the size the worker takes; $kb is its size in kilobytes",
+  "text": "the save is too big to send (${kb} KB)"
  },
  {
   "id": "fb-public",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form, under the line while the tick is on: whether a sent save may become a public test fixture (the owner's call is open; a placeholder for the owner's words)",
-  "text": "[owner's words: a sent save may become a public test fixture]"
+  "context": "feedback form, under the line while the tick is on: a sent save may become a public test fixture",
+  "text": "a save that shows a bug may end up in the game's public tests"
  },
  {
   "id": "fb-send",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form's send button (a placeholder for the owner's words)",
-  "text": "[owner's words: send]"
+  "context": "feedback form's send button",
+  "text": "send"
  },
  {
   "id": "fb-sending",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form's send button while the report is on its way (a placeholder for the owner's words)",
-  "text": "[owner's words: sending]"
+  "context": "feedback form's send button while the report is on its way",
+  "text": "sending"
  },
  {
   "id": "fb-sent",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form, once the report is taken (a placeholder for the owner's words)",
-  "text": "[owner's words: sent, thank you]"
+  "context": "feedback form, once the report is taken",
+  "text": "sent, thanks"
  },
  {
   "id": "fb-sent-nosave",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form, once the report is taken but its save was not, the worker's store being full (a placeholder for the owner's words)",
-  "text": "[owner's words: sent, but the save was not kept]"
+  "context": "feedback form, once the report is taken but its save was not, the worker's store being full",
+  "text": "sent, but the save could not be kept"
  },
  {
   "id": "fb-sent-where",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form, under the sent line: where a reply would be found; $target is the store, steam or itch (a placeholder for the owner's words)",
-  "text": "[owner's words: a reply is in the itch page's comments]"
+  "context": "feedback form, under the sent line: where a reply would be found; $target is the store, steam or itch",
+  "text": "to talk, use the itch page's comments"
  },
  {
   "id": "fb-failed",
   "group": "Settings",
   "where": "src/feedbackform.js",
-  "context": "feedback form, when a send did not go: the words and the tick are kept and nothing is sent later (a placeholder for the owner's words)",
-  "text": "[owner's words: did not send, your words are kept, try again]"
+  "context": "feedback form, when a send did not go: the words and the tick are kept and nothing is sent later",
+  "text": "did not send. your words are kept, try again"
  },
  {
   "id": "set-settingsback",
@@ -1228,64 +1228,64 @@
   "id": "ctl-pad-hop",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: the d-pad (a placeholder for the owner's words)",
-  "text": "[owner's words: d-pad, move between places]"
+  "context": "controls page, with a pad: the d-pad",
+  "text": "move between places"
  },
  {
   "id": "ctl-pad-back",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: B (a placeholder for the owner's words)",
-  "text": "[owner's words: B, back]"
+  "context": "controls page, with a pad: B",
+  "text": "back"
  },
  {
   "id": "ctl-pad-handback",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: Y (a placeholder for the owner's words)",
-  "text": "[owner's words: Y, hand back a queued copy]"
+  "context": "controls page, with a pad: Y",
+  "text": "hand back a queued copy"
  },
  {
   "id": "ctl-pad-turn",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: LB / RB (a placeholder for the owner's words)",
-  "text": "[owner's words: LB / RB, the next station's board]"
+  "context": "controls page, with a pad: LB / RB",
+  "text": "next or last board"
  },
  {
   "id": "ctl-pad-hand",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: RT held (a placeholder for the owner's words)",
-  "text": "[owner's words: RT held, the hand: sweep and throw]"
+  "context": "controls page, with a pad: RT held",
+  "text": "hold for the hand: sweep and throw"
  },
  {
   "id": "ctl-pad-corner",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: View (a placeholder for the owner's words)",
-  "text": "[owner's words: View, the corner cards]"
+  "context": "controls page, with a pad: View",
+  "text": "the corner cards"
  },
  {
   "id": "ctl-pad-hold",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: Menu (a placeholder for the owner's words)",
-  "text": "[owner's words: Menu, hold the yard]"
+  "context": "controls page, with a pad: Menu",
+  "text": "hold the yard"
  },
  {
   "id": "ctl-pad-look",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: R3 (a placeholder for the owner's words)",
-  "text": "[owner's words: R3, the camera back to the focus]"
+  "context": "controls page, with a pad: R3",
+  "text": "camera back to the focus"
  },
  {
   "id": "ctl-pad-way",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: L3 (a placeholder for the owner's words)",
-  "text": "[owner's words: L3, through the portal]"
+  "context": "controls page, with a pad: L3",
+  "text": "through the portal"
  },
  {
   "id": "set-fullscreen-on",
@@ -1459,29 +1459,29 @@
   "id": "title-langbtn",
   "group": "Title page",
   "where": "src/title.js",
-  "context": "landing settings to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)",
-  "text": "[owner's words: language] · ${name}"
+  "context": "landing settings to the language page; $name is the language in force, in its own name",
+  "text": "language · ${name}"
  },
  {
   "id": "title-lang-word",
   "group": "Title page",
   "where": "index.html",
-  "context": "landing language page heading (a placeholder for the owner's words)",
-  "text": "[owner's words: heading]"
+  "context": "landing language page heading",
+  "text": "language"
  },
  {
   "id": "title-fbbtn",
   "group": "Title page",
   "where": "index.html",
-  "context": "landing settings button to the feedback page, under controls (a placeholder for the owner's words)",
-  "text": "[owner's words: feedback]"
+  "context": "landing settings button to the feedback page, under controls",
+  "text": "feedback"
  },
  {
   "id": "title-fb-word",
   "group": "Title page",
   "where": "index.html",
-  "context": "landing feedback page heading (a placeholder for the owner's words)",
-  "text": "[owner's words: heading]"
+  "context": "landing feedback page heading",
+  "text": "feedback"
  },
  {
   "id": "title-conflict-word",
@@ -2446,29 +2446,29 @@
   "id": "ach-serpent-name",
   "group": "Achievements",
   "where": "src/catalog.js",
-  "context": "achievement name: a serpent level reached; $n is the level (a placeholder for the owner's words)",
-  "text": "[owner's words: name, serpent level ${n}]"
+  "context": "achievement name: a serpent level reached; $n is the level",
+  "text": "serpent level ${n}"
  },
  {
   "id": "ach-serpent-note",
   "group": "Achievements",
   "where": "src/catalog.js",
-  "context": "achievement note: a serpent level reached (a placeholder for the owner's words)",
-  "text": "[owner's words: note, reach serpent level ${n}]"
+  "context": "achievement note: a serpent level reached",
+  "text": "reach serpent level ${n}"
  },
  {
   "id": "ach-allstations-name",
   "group": "Achievements",
   "where": "src/catalog.js",
-  "context": "achievement name: every deep station standing (a placeholder for the owner's words)",
-  "text": "[owner's words: name, every station standing]"
+  "context": "achievement name: every deep station standing",
+  "text": "full party"
  },
  {
   "id": "ach-allstations-note",
   "group": "Achievements",
   "where": "src/catalog.js",
-  "context": "achievement note: every deep station standing (a placeholder for the owner's words)",
-  "text": "[owner's words: note, stand a station on every slot in the deep]"
+  "context": "achievement note: every deep station standing",
+  "text": "stand a station on every slot in the deep"
  },
  {
   "id": "idx-dust-name",
@@ -5575,8 +5575,8 @@
   "id": "books-tally-serpent",
   "group": "The books",
   "where": "src/stats.js",
-  "context": "the books: the endless serpent's best level (a placeholder for the owner's words)",
-  "text": "[owner's words: e.g. \"deepest serpent\"]"
+  "context": "the books: the endless serpent's best level",
+  "text": "deepest serpent"
  },
  {
   "id": "books-sect-income",
@@ -6793,35 +6793,35 @@
   "id": "serp-level",
   "group": "The deep",
   "where": "src/render/serpentbar.js",
-  "context": "the serpent's level after the pips on its bar, from level 2 on; $n is the level. [owner's words: a level label, e.g. \"Lv 7\"] -- until then the bare number. Drawn in the pixel number font (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font",
+  "context": "the serpent's level after the pips on its bar, from level 2 on; $n is the level. drawn as the bare number, in the pixel number font (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font",
   "text": "${n}"
  },
  {
   "id": "shell-carry-title",
   "group": "The shell",
   "where": "electron/steam.cjs",
-  "context": "the Steam carry-over offer, on the full game's first launch when a demo save is found: the dialog's title (a placeholder for the owner's words)",
-  "text": "[owner's words: the carry-over offer's title]"
+  "context": "the Steam carry-over offer, on the full game's first launch when a demo save is found: the dialog's title",
+  "text": "a demo save"
  },
  {
   "id": "shell-carry-message",
   "group": "The shell",
   "where": "electron/steam.cjs",
-  "context": "the Steam carry-over offer: the question (a placeholder for the owner's words)",
-  "text": "[owner's words: a save from the demo was found -- carry it on?]"
+  "context": "the Steam carry-over offer: the question",
+  "text": "a save from the demo was found. carry it on?"
  },
  {
   "id": "shell-carry-yes",
   "group": "The shell",
   "where": "electron/steam.cjs",
-  "context": "the Steam carry-over offer: the button that carries the demo save over (a placeholder for the owner's words)",
-  "text": "[owner's words: carry it on]"
+  "context": "the Steam carry-over offer: the button that carries the demo save over",
+  "text": "carry it on"
  },
  {
   "id": "shell-carry-no",
   "group": "The shell",
   "where": "electron/steam.cjs",
-  "context": "the Steam carry-over offer: the button that starts a fresh yard (a placeholder for the owner's words)",
-  "text": "[owner's words: start fresh]"
+  "context": "the Steam carry-over offer: the button that starts a fresh yard",
+  "text": "start fresh"
  }
 ]

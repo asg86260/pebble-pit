@@ -50,8 +50,7 @@ export const CATALOG = [
   ...ladder('ore', NOTICE_ORE,
             (n, i) => i === 0 ? msg('ach-ore0-name') : msg('ach-ore1-name'),
             (n, i) => msg('ach-ore-note', { n: i === 0 ? '1k' : '10k' })),
-  // The endless serpent's (DESIGN.md, "Endless serpent"): the names and notes
-  // are the owner's to write, placeholders until then.
+  // The endless serpent's (DESIGN.md, "Endless serpent").
   ...ladder('serpent', NOTICE_SERPENT,
             n => msg('ach-serpent-name', { n }),
             n => msg('ach-serpent-note', { n })),

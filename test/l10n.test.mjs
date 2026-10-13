@@ -208,3 +208,10 @@ test('the wording inventory is the language file', () => {
   const had = JSON.parse(readFileSync('docs/wording-inventory.json', 'utf8'));
   assert.deepEqual(had, inventory(), 'run: node tools/wording/inventory.mjs');
 });
+
+// A line nobody has written yet is never shipped as a stand-in: the owner
+// would rather read plain words than a bracketed note in the real game.
+test('no message is a placeholder', () => {
+  const marked = FTL.split('\n').filter(l => !l.startsWith('#') && /\[owner'?s words/i.test(l));
+  assert.deepEqual(marked, []);
+});

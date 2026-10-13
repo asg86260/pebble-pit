@@ -63,11 +63,11 @@ crashed-word = stopped
 # crash sheet button
 crashed-copysave = copy save
 
-# crash sheet button under copy save, opening the feedback form in place (a placeholder for the owner's words)
-crashed-fbbtn = [owner's words: send a report]
+# crash sheet button under copy save, opening the feedback form in place
+crashed-fbbtn = send a report
 
-# crash sheet line over the feedback form's box, asking for the save with the report (a placeholder for the owner's words)
-crashed-fb-ask = [owner's words: the crashed sheet asks for the save]
+# crash sheet line over the feedback form's box, asking for the save with the report
+crashed-fb-ask = your save helps find what broke
 
 # pause sheet heading
 held-word = paused
@@ -398,72 +398,72 @@ set-controls-word = controls
 # controls page back, and the language page's and the feedback page's
 set-controlsback = back
 
-# settings button to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)
-set-langbtn = [owner's words: language] · { $name }
+# settings button to the language page; $name is the language in force, in its own name
+set-langbtn = language · { $name }
 
-# language page heading (a placeholder for the owner's words)
-set-lang-word = [owner's words: heading]
+# language page heading
+set-lang-word = language
 
-# settings button to the feedback page, under controls (a placeholder for the owner's words)
-set-fbbtn = [owner's words: feedback]
+# settings button to the feedback page, under controls
+set-fbbtn = feedback
 
-# feedback page heading (a placeholder for the owner's words)
-set-fb-word = [owner's words: heading]
+# feedback page heading
+set-fb-word = feedback
 
-# feedback form: the box's hint while it is empty (a placeholder for the owner's words)
+# feedback form: the box's hint while it is empty
 fb-box =
-    .placeholder = [owner's words: what went wrong, or what reads wrong]
+    .placeholder = what went wrong, or what reads wrong
 
-# feedback form: under the box in the last few hundred characters; $n is how many are left (a placeholder for the owner's words)
-fb-left = [owner's words: characters left] { $n }
+# feedback form: under the box in the last few hundred characters; $n is how many are left
+fb-left = { $n } characters left
 
-# feedback form: the tick that sends the save along (a placeholder for the owner's words)
-fb-tick = [owner's words: send my save]
+# feedback form: the tick that sends the save along
+fb-tick = send my save
 
-# feedback form: the lead-in to the line listing everything that will be sent, rebuilt as the form changes (a placeholder for the owner's words)
-fb-goes = [owner's words: what goes, before it goes]:
+# feedback form: the lead-in to the line listing everything that will be sent, rebuilt as the form changes
+fb-goes = this gets sent:
 
-# feedback form, on the line of what goes: the player's own words (a placeholder for the owner's words)
-fb-goes-words = [owner's words: your words]
+# feedback form, on the line of what goes: the player's own words
+fb-goes-words = your words
 
-# feedback form, on the line of what goes while the tick is on: the save; $kb is its size in kilobytes (a placeholder for the owner's words)
-fb-goes-save = [owner's words: your save] { $kb } KB
+# feedback form, on the line of what goes while the tick is on: the save; $kb is its size in kilobytes
+fb-goes-save = your save { $kb } KB
 
-# feedback form on the landing page, on the line of what goes while the tick is on: the save; $yard is which yard, as the saves rows say it ("rock 12 · 7 crew"), $kb its size in kilobytes (a placeholder for the owner's words)
-fb-goes-save-yard = [owner's words: your save] { $yard } · { $kb } KB
+# feedback form on the landing page, on the line of what goes while the tick is on: the save; $yard is which yard, as the saves rows say it ("rock 12 · 7 crew"), $kb its size in kilobytes
+fb-goes-save-yard = your save { $yard } · { $kb } KB
 
-# feedback form, at the end of the line of what goes: how long it is kept; $reportDays for a report, $saveDays for a save (a placeholder for the owner's words)
-fb-goes-keep = [owner's words: a report is kept { $reportDays } days, a save { $saveDays } days]
+# feedback form, at the end of the line of what goes: how long it is kept; $reportDays for a report, $saveDays for a save
+fb-goes-keep = reports are kept { $reportDays } days, saves { $saveDays } days
 
-# feedback form, on the line of what goes when the tick is grey: the open slot has no save (a placeholder for the owner's words)
-fb-nosave-empty = [owner's words: no save to send, the slot is empty]
+# feedback form, on the line of what goes when the tick is grey: the open slot has no save
+fb-nosave-empty = no save to send, the slot is empty
 
-# feedback form, on the line of what goes when the tick is grey: the save is past the size the worker takes; $kb is its size in kilobytes (a placeholder for the owner's words)
-fb-nosave-big = [owner's words: the save is too big to send] { $kb } KB
+# feedback form, on the line of what goes when the tick is grey: the save is past the size the worker takes; $kb is its size in kilobytes
+fb-nosave-big = the save is too big to send ({ $kb } KB)
 
-# feedback form, under the line while the tick is on: whether a sent save may become a public test fixture (the owner's call is open; a placeholder for the owner's words)
-fb-public = [owner's words: a sent save may become a public test fixture]
+# feedback form, under the line while the tick is on: a sent save may become a public test fixture
+fb-public = a save that shows a bug may end up in the game's public tests
 
-# feedback form's send button (a placeholder for the owner's words)
-fb-send = [owner's words: send]
+# feedback form's send button
+fb-send = send
 
-# feedback form's send button while the report is on its way (a placeholder for the owner's words)
-fb-sending = [owner's words: sending]
+# feedback form's send button while the report is on its way
+fb-sending = sending
 
-# feedback form, once the report is taken (a placeholder for the owner's words)
-fb-sent = [owner's words: sent, thank you]
+# feedback form, once the report is taken
+fb-sent = sent, thanks
 
-# feedback form, once the report is taken but its save was not, the worker's store being full (a placeholder for the owner's words)
-fb-sent-nosave = [owner's words: sent, but the save was not kept]
+# feedback form, once the report is taken but its save was not, the worker's store being full
+fb-sent-nosave = sent, but the save could not be kept
 
-# feedback form, under the sent line: where a reply would be found; $target is the store, steam or itch (a placeholder for the owner's words)
+# feedback form, under the sent line: where a reply would be found; $target is the store, steam or itch
 fb-sent-where = { $target ->
-    [steam] [owner's words: a reply is in the store page's discussions]
-   *[other] [owner's words: a reply is in the itch page's comments]
+    [steam] to talk, use the store page's discussions
+   *[other] to talk, use the itch page's comments
 }
 
-# feedback form, when a send did not go: the words and the tick are kept and nothing is sent later (a placeholder for the owner's words)
-fb-failed = [owner's words: did not send, your words are kept, try again]
+# feedback form, when a send did not go: the words and the tick are kept and nothing is sent later
+fb-failed = did not send. your words are kept, try again
 
 # settings page back
 set-settingsback = back
@@ -549,32 +549,32 @@ ctl-digits-in = 1 – 9
 # controls page action column
 ctl-digits-do = jump to a place
 
-# controls page, with a pad: the d-pad (a placeholder for the owner's words)
-ctl-pad-hop = [owner's words: d-pad, move between places]
+# controls page, with a pad: the d-pad
+ctl-pad-hop = move between places
 
-# controls page, with a pad: B (a placeholder for the owner's words)
-ctl-pad-back = [owner's words: B, back]
+# controls page, with a pad: B
+ctl-pad-back = back
 
-# controls page, with a pad: Y (a placeholder for the owner's words)
-ctl-pad-handback = [owner's words: Y, hand back a queued copy]
+# controls page, with a pad: Y
+ctl-pad-handback = hand back a queued copy
 
-# controls page, with a pad: LB / RB (a placeholder for the owner's words)
-ctl-pad-turn = [owner's words: LB / RB, the next station's board]
+# controls page, with a pad: LB / RB
+ctl-pad-turn = next or last board
 
-# controls page, with a pad: RT held (a placeholder for the owner's words)
-ctl-pad-hand = [owner's words: RT held, the hand: sweep and throw]
+# controls page, with a pad: RT held
+ctl-pad-hand = hold for the hand: sweep and throw
 
-# controls page, with a pad: View (a placeholder for the owner's words)
-ctl-pad-corner = [owner's words: View, the corner cards]
+# controls page, with a pad: View
+ctl-pad-corner = the corner cards
 
-# controls page, with a pad: Menu (a placeholder for the owner's words)
-ctl-pad-hold = [owner's words: Menu, hold the yard]
+# controls page, with a pad: Menu
+ctl-pad-hold = hold the yard
 
-# controls page, with a pad: R3 (a placeholder for the owner's words)
-ctl-pad-look = [owner's words: R3, the camera back to the focus]
+# controls page, with a pad: R3
+ctl-pad-look = camera back to the focus
 
-# controls page, with a pad: L3 (a placeholder for the owner's words)
-ctl-pad-way = [owner's words: L3, through the portal]
+# controls page, with a pad: L3
+ctl-pad-way = through the portal
 
 # settings fullscreen row
 set-fullscreen-on = fullscreen: on
@@ -650,17 +650,17 @@ title-controls-word = controls
 # landing controls back, and the language page's and the feedback page's
 title-controlsback = back
 
-# landing settings to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)
-title-langbtn = [owner's words: language] · { $name }
+# landing settings to the language page; $name is the language in force, in its own name
+title-langbtn = language · { $name }
 
-# landing language page heading (a placeholder for the owner's words)
-title-lang-word = [owner's words: heading]
+# landing language page heading
+title-lang-word = language
 
-# landing settings button to the feedback page, under controls (a placeholder for the owner's words)
-title-fbbtn = [owner's words: feedback]
+# landing settings button to the feedback page, under controls
+title-fbbtn = feedback
 
-# landing feedback page heading (a placeholder for the owner's words)
-title-fb-word = [owner's words: heading]
+# landing feedback page heading
+title-fb-word = feedback
 
 # landing cloud conflict page heading
 title-conflict-word = choose a yard
@@ -1088,17 +1088,17 @@ ach-ore1-name = 10k ore
 # achievement note: ore dug; $n is the count, short (1k, 10k)
 ach-ore-note = dig { $n } ore out of the quarry
 
-# achievement name: a serpent level reached; $n is the level (a placeholder for the owner's words)
-ach-serpent-name = [owner's words: name, serpent level { $n }]
+# achievement name: a serpent level reached; $n is the level
+ach-serpent-name = serpent level { $n }
 
-# achievement note: a serpent level reached (a placeholder for the owner's words)
-ach-serpent-note = [owner's words: note, reach serpent level { $n }]
+# achievement note: a serpent level reached
+ach-serpent-note = reach serpent level { $n }
 
-# achievement name: every deep station standing (a placeholder for the owner's words)
-ach-allstations-name = [owner's words: name, every station standing]
+# achievement name: every deep station standing
+ach-allstations-name = full party
 
-# achievement note: every deep station standing (a placeholder for the owner's words)
-ach-allstations-note = [owner's words: note, stand a station on every slot in the deep]
+# achievement note: every deep station standing
+ach-allstations-note = stand a station on every slot in the deep
 
 ## Index
 
@@ -2502,8 +2502,8 @@ books-tally-under = sqwife under the rock for
 # the books: a line
 books-tally-saved = sqwife saved in
 
-# the books: the endless serpent's best level (a placeholder for the owner's words)
-books-tally-serpent = [owner's words: e.g. "deepest serpent"]
+# the books: the endless serpent's best level
+books-tally-serpent = deepest serpent
 
 # a heading in the books, and on the noticeboard
 books-sect-income = income, a second
@@ -3029,7 +3029,7 @@ row-raise-station = raise a station
 build-free = free
 
 # the serpent's level after the pips on its bar, from level 2 on; $n is the level.
-# [owner's words: a level label, e.g. "Lv 7"] -- until then the bare number. Drawn in the pixel number font
+# drawn as the bare number, in the pixel number font
 # (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font
 serp-level = { $n }
 
@@ -3037,14 +3037,14 @@ serp-level = { $n }
 
 # the desk's window title is title-doctitle, read by the shell (electron/main.cjs)
 
-# the Steam carry-over offer, on the full game's first launch when a demo save is found: the dialog's title (a placeholder for the owner's words)
-shell-carry-title = [owner's words: the carry-over offer's title]
+# the Steam carry-over offer, on the full game's first launch when a demo save is found: the dialog's title
+shell-carry-title = a demo save
 
-# the Steam carry-over offer: the question (a placeholder for the owner's words)
-shell-carry-message = [owner's words: a save from the demo was found -- carry it on?]
+# the Steam carry-over offer: the question
+shell-carry-message = a save from the demo was found. carry it on?
 
-# the Steam carry-over offer: the button that carries the demo save over (a placeholder for the owner's words)
-shell-carry-yes = [owner's words: carry it on]
+# the Steam carry-over offer: the button that carries the demo save over
+shell-carry-yes = carry it on
 
-# the Steam carry-over offer: the button that starts a fresh yard (a placeholder for the owner's words)
-shell-carry-no = [owner's words: start fresh]
+# the Steam carry-over offer: the button that starts a fresh yard
+shell-carry-no = start fresh

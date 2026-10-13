@@ -160,6 +160,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
 - In Japanese and Korean the shield card's cancel button no longer sits on its sentence, and in German, French, Portuguese and Russian a queued card's cancel and "another" no longer run into each other and off the card (src/selftest/boardwords.js, "board words never overlap, in every language").
 - The deep's fifth, sixth and seventh party stations have their own names instead of all three reading "a undefined station" (src/selftest/stations.js, "every board says whose it is").
+- No bracketed note stands in for words anywhere in the game: the language and feedback pages, the controller rows, the serpent's achievements, the books and the demo carry-over all say plain words, and the feedback form's small print is the sheet's size (test/l10n.test.mjs, "no message is a placeholder").
 **New this release**
 - New words on the rescue sheet, the demo's store link and an empty achievements page.
 - The board of rescue times is gone: no name box or post on the rescue sheet, no times page, no name on the board in settings.

@@ -32,10 +32,8 @@ const PAD_FOR = [
   ['left', 'right'],
 ];
 
-// What the pad does that the mouse has no row for. Every one of these words
-// is a placeholder for the owner's (player copy is the owner's to write):
-// they are marked as such in locales/en.ftl (`ctl-pad-…`), and the report
-// that built them lists them.
+// What the pad does that the mouse has no row for (`ctl-pad-…` in
+// locales/en.ftl).
 export const PAD_WORDS = {
   hop: msg('ctl-pad-hop'),
   back: msg('ctl-pad-back'),

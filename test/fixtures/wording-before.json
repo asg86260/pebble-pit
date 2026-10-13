@@ -2067,39 +2067,39 @@
    "from": "src/controls.js:19"
   },
   "ctl-pad-hop": {
-   "text": "[owner's words: d-pad, move between places]",
+   "text": "move between places",
    "from": "src/controls.js:39"
   },
   "ctl-pad-back": {
-   "text": "[owner's words: B, back]",
+   "text": "back",
    "from": "src/controls.js:40"
   },
   "ctl-pad-handback": {
-   "text": "[owner's words: Y, hand back a queued copy]",
+   "text": "hand back a queued copy",
    "from": "src/controls.js:41"
   },
   "ctl-pad-turn": {
-   "text": "[owner's words: LB / RB, the next station's board]",
+   "text": "next or last board",
    "from": "src/controls.js:42"
   },
   "ctl-pad-hand": {
-   "text": "[owner's words: RT held, the hand: sweep and throw]",
+   "text": "hold for the hand: sweep and throw",
    "from": "src/controls.js:43"
   },
   "ctl-pad-corner": {
-   "text": "[owner's words: View, the corner cards]",
+   "text": "the corner cards",
    "from": "src/controls.js:44"
   },
   "ctl-pad-hold": {
-   "text": "[owner's words: Menu, hold the yard]",
+   "text": "hold the yard",
    "from": "src/controls.js:45"
   },
   "ctl-pad-look": {
-   "text": "[owner's words: R3, the camera back to the focus]",
+   "text": "camera back to the focus",
    "from": "src/controls.js:46"
   },
   "ctl-pad-way": {
-   "text": "[owner's words: L3, through the portal]",
+   "text": "through the portal",
    "from": "src/controls.js:47"
   },
   "said-copyout-none": {
@@ -4343,7 +4343,7 @@
     "args": {
      "n": 5
     },
-    "text": "[owner's words: name, serpent level 5]"
+    "text": "serpent level 5"
    }
   ],
   "ach-serpent-note": [
@@ -4351,19 +4351,19 @@
     "args": {
      "n": 5
     },
-    "text": "[owner's words: note, reach serpent level 5]"
+    "text": "reach serpent level 5"
    }
   ],
   "ach-allstations-name": [
    {
     "args": {},
-    "text": "[owner's words: name, every station standing]"
+    "text": "full party"
    }
   ],
   "ach-allstations-note": [
    {
     "args": {},
-    "text": "[owner's words: note, stand a station on every slot in the deep]"
+    "text": "stand a station on every slot in the deep"
    }
   ],
   "other-skip-pad": [
@@ -5481,7 +5481,7 @@
   "books-tally-serpent": [
    {
     "args": {},
-    "text": "[owner's words: e.g. \"deepest serpent\"]"
+    "text": "deepest serpent"
    }
   ],
   "books-sect-income": [

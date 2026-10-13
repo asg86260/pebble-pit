@@ -2214,7 +2214,7 @@ body.pad :focus { outline: none; }
   .held .feedback .send:disabled:hover, .col .feedback .send:disabled:hover { color: var(--ink); background: none; }
 }
 .feedback .goes, .feedback .fb-public, .feedback .fb-left {
-  font-size: 10px; text-transform: none; letter-spacing: calc(.06em * var(--track));
+  text-transform: none; letter-spacing: calc(.06em * var(--track));
   color: var(--ink-2); line-height: 1.5; text-align: left;
 }
 .col .feedback .goes, .col .feedback .fb-public { max-width: var(--col-w); }
