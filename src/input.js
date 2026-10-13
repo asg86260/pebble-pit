@@ -3,6 +3,7 @@
 // Nothing in here decides anything: it turns an event into a call on somebody
 // else's module.
 
+import { msg } from './lang.js';
 import { closeWindow } from './modal.js';
 import { P, MINE_DELAY, WORKER, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
@@ -22,7 +23,7 @@ import { station, stationAt, STATIONS } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { statusAt } from './render/statusicons.js';
 import { overChooseMark, chooseMarkAt } from './render/deep.js';
-const CHOOSE_SAYS = 'choose a fighter';
+const CHOOSE_SAYS = msg('hover-choose');
 import { markedPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
@@ -383,10 +384,10 @@ function cellAt(b, wx, wy) {
 function cellLabel(v) {
   if (!v) return null;
   const k = findKind(v);
-  if (k === SHARD_CELL) return 'ore';
-  if (k === SPORE_CELL) return 'crop';
-  if (k === SPARK_CELL) return 'spark';
-  return isDust(v) ? 'pebble' : null;
+  if (k === SHARD_CELL) return msg('hover-ore');
+  if (k === SPORE_CELL) return msg('hover-crop');
+  if (k === SPARK_CELL) return msg('hover-spark');
+  return isDust(v) ? msg('hover-pebble') : null;
 }
 
 // Every building `standRect` (board.js) answers "is it there, and where" for.
@@ -399,14 +400,14 @@ function buildingAt(x, y) {
   }
   // the drowned pit answers as the abyss; through the torn era, the disc
   // answers as the rift
-  if (S.drowned && x > pit.x && x < pit.x + pit.w && y > S.groundY) return 'the abyss';
-  if (riftOpen() && !S.drowned && inRect(rift, x, y)) return 'the rift';
+  if (S.drowned && x > pit.x && x < pit.x + pit.w && y > S.groundY) return msg('hover-abyss');
+  if (riftOpen() && !S.drowned && inRect(rift, x, y)) return msg('hover-rift');
   return null;
 }
 
 // A machine has no rect exported, so this is a generous box round the point
 // `specOf` hands out.
-const MACHINE_NAME = { jaw: 'the drill', ram: 'the ram', tiller: 'the tiller', belt: 'the belt' };
+const MACHINE_NAME = { jaw: msg('machine-jaw'), ram: msg('machine-ram'), tiller: msg('machine-tiller'), belt: msg('machine-belt') };
 function machineAt(x, y) {
   for (const m of MACHINES) {
     if (!running(m.key)) continue;
@@ -426,7 +427,7 @@ function messAt(x, y) {
   if (!n) return null;
   const foot = muckFloor(c);
   if (y < foot - n * P || y > foot) return null;
-  return poo ? 'poop' : 'muck';
+  return poo ? msg('hover-poop') : msg('hover-muck');
 }
 
 // A balloon's box, where render/balloon.js draws it: at its size, among the
@@ -455,36 +456,53 @@ function cropAt(x, y) {
   return false;
 }
 
+// A body reads as what it is.
+const TYPE_SAID = {
+  rockhand: msg('hover-rockhand'),
+  hauler: msg('hover-hauler'),
+  quarrier: msg('hover-quarrier'),
+  farmhand: msg('hover-farmhand'),
+  scholar: msg('hover-scholar'),
+  purifier: msg('hover-purifier'),
+  stirrer: msg('hover-stirrer'),
+  janitor: msg('hover-janitor'),
+  wizard: msg('hover-wizard'),
+  builder: msg('hover-builder'),
+  fighter: msg('hover-fighter'),
+  gatherer: msg('hover-gatherer'),
+  delver: msg('hover-delver'),
+};
+
 // What is at a spot, in a word, or nothing. Asked in the order a thing would
 // catch your eye: somebody moving before the ground under them, a grain before
 // the building the pile stands beside.
 export function whatIsAt(x, y) {
   const w = lifted() || workerAt(x, y);
-  if (w) return w.type;
+  if (w) return TYPE_SAID[w.type] || w.type;
   // Down there nothing of the yard is under the pointer: the way up, and the
   // serpent.
   // The arrow at the portal stands in both halves.
-  if (onShaftArrow(x, y)) return S.view === 'deep' ? 'up to the yard' : 'down to the deep';
-  if (onPortal(x, y)) return S.view === 'deep' ? 'the portal — up to the yard' : 'the portal — down to the deep';
+  if (onShaftArrow(x, y)) return S.view === 'deep' ? msg('other-corner-up') : msg('other-corner-down');
+  if (onPortal(x, y)) return S.view === 'deep' ? msg('hover-portal-up') : msg('hover-portal-down');
   if (S.view === 'deep') {
-    if (onCoil(x, y)) return 'the serpent';
+    if (onCoil(x, y)) return msg('hover-serpent');
     return null;
   }
   const grain = cellLabel(cellAt(floor, x, y) || cellAt(pit, x, y));
   if (grain) return grain;
-  if (S.crew >= 1 && inRect(houseRect(), x, y)) return 'house';
+  if (S.crew >= 1 && inRect(houseRect(), x, y)) return msg('hover-house');
   const building = buildingAt(x, y);
   if (building) return building;
   // the mess before the rock it lies on: poop lands on the rock's flank, and
   // the rock would otherwise answer for the whole of its footprint
   const mess = messAt(x, y);
   if (mess) return mess;
-  if (overBoulder(x, y)) return 'rock';
+  if (overBoulder(x, y)) return msg('hover-rock');
   const machine = machineAt(x, y);
   if (machine) return machine;
-  if (overBird(x, y)) return 'bird';
-  if (balloonAt(x, y)) return 'balloon';
-  if (cropAt(x, y)) return 'crop';
+  if (overBird(x, y)) return msg('hover-bird');
+  if (balloonAt(x, y)) return msg('hover-balloon');
+  if (cropAt(x, y)) return msg('hover-crop');
   return null;
 }
 
@@ -554,14 +572,14 @@ function askedAbout(x, y, cx, cy) {
   // going. How full and how fast are the books' business.
   if (inRect(dialRect(), x, y)) {
     const r = dialRect(), a = airReadout();
-    const way = a.fouling > a.filtering ? 'getting worse' : a.filtering > a.fouling ? 'getting better' : 'holding steady';
-    showTip(`${dialZone()}, ${way}`, { x: r.x + r.w / 2, y: r.y + r.h });
+    const way = a.fouling > a.filtering ? msg('hover-dial-worse') : a.filtering > a.fouling ? msg('hover-dial-better') : msg('hover-dial-steady');
+    showTip(msg('hover-dial', { zone: dialZone(), way }), { x: r.x + r.w / 2, y: r.y + r.h });
     return true;
   }
   // The counter says what it counts: nothing else names the coin.
   if (overCount(cx, cy)) {
     const r = countRect();
-    showTipAt('pebbles in the pit: what everything costs', r.x + r.w / 2, r.y - P * 5, true);
+    showTipAt(msg('hover-counter'), r.x + r.w / 2, r.y - P * 5, true);
     return true;
   }
   const label = polledWhatIsAt(x, y);

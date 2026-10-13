@@ -10,6 +10,7 @@
 // off a station. A station is keyed by its id, never its kind: a kind can
 // stand twice, and each keeps its own ladder.
 
+import { msg } from '../lang.js';
 import { S } from '../state.js';
 import { rungValue, POD_SCALES0, POD_RATE, POD_WORK0, POD_WORK_STEP, POD_WORK_MAX, PARTY_IDS, CLASSES, PAIRS, FANG_RUNGS, FANG_RUNG_DUST } from '../config.js';
 import { tierRows, named } from '../upgrades/tiers.js';
@@ -23,8 +24,8 @@ import { stationById } from './party.js';
 // homes"). Sold on the pods' own board, as the yard's rooms are on the
 // house's, and built there by the builders, a steeper price in scales each one.
 const POD = {
-  key: 'pod', name: 'another pod', kind: 'building', site: 'pods', board: 'pods',
-  note: () => 'a capsule on the deep\'s far side: one more of the crew, living down here',
+  key: 'pod', name: msg('row-pod'), kind: 'building', site: 'pods', board: 'pods',
+  note: () => msg('row-pod-note'),
   // One more each press, each priced as the pod it will be.
   repeats: true,
   from: () => S.crew + ahead('pod'), to: () => S.crew + ahead('pod') + 1,
@@ -89,7 +90,7 @@ export function rungBill(id, cls) {
 // The pods, by key, for board.js and shop.js to draw and hooks.js to reach.
 export const DEEP_ROWS = { pods: [POD] };
 export const DEEP_UPGRADES = Object.values(DEEP_ROWS).flat();
-export const DEEP_SECTIONS = { pods: [{ title: 'the pods', keys: ['pod'] }] };
+export const DEEP_SECTIONS = { pods: [{ title: msg('station-pods'), keys: ['pod'] }] };
 
 // So a work coming back out of a save knows which row it belongs to.
 registerRows(DEEP_UPGRADES);
@@ -100,7 +101,7 @@ for (const key of Object.keys(DEEP_ROWS))
 // a roster heading wears, and nothing sold as a card -- the rails stand under
 // the heading, laid in by deep/rails.js. Every id has its board from the
 // first frame, empty until a station stands under it.
-const fighterHead = id => ({ title: 'the fighter', roster: true, keys: [],
+const fighterHead = id => ({ title: msg('rail-fighter'), roster: true, keys: [],
                              heads: () => (stationById(id)?.fighter ? 1 : 0) });
 for (const id of PARTY_IDS)
   registerBoard(id, { rows: () => [], sections: () => (stationById(id)?.built ? [fighterHead(id)] : []) });

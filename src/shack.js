@@ -8,6 +8,7 @@
 // what takes it off the bench.
 
 import { UPGRADES } from './upgrades.js';
+import { msg } from './lang.js';
 import { registerBoard } from './boardrows.js';
 import { S } from './state.js';
 
@@ -27,7 +28,7 @@ export const shackRows = () =>
 // The list itself, not a maker of lists: `unsection` (hooks.js) proves a board
 // still draws a row by taking its key out of the section that names it, and a
 // fresh array on every call would hand it a copy nothing reads again.
-export const SHACK_SECTIONS = [{ title: 'diggers', keys: SHACK_GEAR }];
+export const SHACK_SECTIONS = [{ title: msg('sect-diggers'), keys: SHACK_GEAR }];
 export const shackSections = () => SHACK_SECTIONS;
 
 registerBoard('shack', { rows: shackRows, sections: shackSections, count: () => S.rockhands });

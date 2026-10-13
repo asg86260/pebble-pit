@@ -10,7 +10,142 @@
   "src/scenesheet.js",
   "src/report.js",
   "src/verify.js",
-  "src/migrations/"
+  "src/migrations/",
+  "src/config/sound.js"
  ],
- "strings": {}
+ "strings": {
+  "src/cloudsheet.js": [
+   "tick off",
+   "small said",
+   "slots clashes",
+   "small count",
+   "pair clash"
+  ],
+  "src/cutscene.js": [
+   "pit outline",
+   "serpent diving",
+   "rock sand",
+   "finale deep",
+   "hung kit",
+   "deep stations",
+   "deep portal"
+  ],
+  "src/deep/rails.js": [
+   "<button type=\"button\" class=\"rl-node${}${}\"",
+   " data-look=\"${}\"${}><span class=\"rl-ic\">${}</span>${}</button>",
+   ".rl-tree i, .rl-st"
+  ],
+  "src/objbarrier.js": [
+   "pay one"
+  ],
+  "src/pad.js": [
+   "#held button[id$=\"back\"]",
+   "check pad"
+  ],
+  "src/render.js": [
+   "rain behind",
+   "ground line",
+   "ground texture",
+   "offer flags",
+   "quarry shed",
+   "farm shed",
+   "air filter",
+   "balloon posts",
+   "roomba dock",
+   "pot pile",
+   "dose motes",
+   "rock sand",
+   "rising room",
+   "pit outline",
+   "shaft arrow",
+   "pile marks",
+   "build sites",
+   "rise landings",
+   "tower waves",
+   "casino mark",
+   "kit stands",
+   "dropped hats",
+   "deep zones",
+   "deep water",
+   "deep motes",
+   "deep stream far",
+   "deep fauna",
+   "deep portal",
+   "deep floor",
+   "serpent diving",
+   "deep bed",
+   "into crusher",
+   "deep stations",
+   "hung kit",
+   "deep fish",
+   "deep stream near",
+   "deep sight",
+   "finale deep",
+   "deep arrow",
+   "work bars",
+   "done marks",
+   "sight veil",
+   "brew steam",
+   "deep invert",
+   "fight numbers",
+   "status posts",
+   "pad focus",
+   "air near",
+   "roster counts",
+   "kit counts",
+   "stock count",
+   "pot labels",
+   "serpent bar",
+   "build button"
+  ],
+  "src/render/fish.js": [
+   "Lantern angler",
+   "Ribbon eel",
+   "Glass jelly",
+   "Skull fish",
+   "Wandering eye",
+   "Spiral drifter",
+   "Many-mouthed blob",
+   "Toothed ring"
+  ],
+  "src/route.js": [
+   "quarry ladder",
+   "near pit ladder",
+   "far pit ladder",
+   "near rock flank",
+   "far rock flank",
+   "climb ${} to ${}",
+   "${} to ${}"
+  ],
+  "src/shop.js": [
+   "sect goal",
+   "job tile"
+  ],
+  "src/slots.js": [
+   "item lone"
+  ],
+  "src/tower.js": [
+   "${} min"
+  ],
+  "src/upgrades.js": [
+   "saving your sqwife",
+   "lucky swings",
+   "the haulers"
+  ]
+ },
+ "why": {
+  "src/config/sound.js": "the sound bench mapping: each event's label and recipe names are for the bench and the dev panel",
+  "src/cloudsheet.js": "class names",
+  "src/cutscene.js": "layer names (render.js LAYERS) a scene keeps or hides",
+  "src/deep/rails.js": "markup: class and data attributes; a selector",
+  "src/objbarrier.js": "a class name",
+  "src/pad.js": "a selector; the checks' fake pad's id",
+  "src/render.js": "layer names, the keys LAYERS and its sets are written in",
+  "src/render/fish.js": "the creatures' names, written beside their drawings and shown nowhere; the error a miscount throws",
+  "src/route.js": "the ways' names and the route report, read by the checks",
+  "src/shop.js": "class names",
+  "src/slots.js": "class names",
+  "src/tower.js": "a time helper nothing calls",
+  "src/upgrades.js": "the bench sections' keys: S.seenSects keeps them, so they stay as the saves have them"
+ }
 }

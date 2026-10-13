@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { FluentBundle, FluentResource } from '@fluent/bundle';
-import { literals, looksLikeCopy } from '../tools/wording/strings.mjs';
+import { literals, looksLikeCopy, devFacing } from '../tools/wording/strings.mjs';
 import { msg, placeOf } from '../src/lang.js';
 
 const FTL = readFileSync('locales/en.ftl', 'utf8');
@@ -87,23 +87,33 @@ function varsOf(full) {
 }
 
 // The inventory as it stood before the words moved (docs/wording-inventory.json
-// at 45761258), each entry under the id it has now. An entry that became part
-// of a message with arguments says which (`as`, in the fixture).
+// at 45761258), each entry under the id it has now: its own id with the dots
+// made dashes, or, where it became part of a message with arguments, what the
+// fixture's `inventoryAs` says -- a message and its arguments (an argument
+// may itself be a message, `{ msg, args }`), a run of `parts` joined as the
+// code joins them, or null for a line the inventory wrote as a summary of
+// two messages, each checked under its own id. A `${…}` reads as a slot.
 test('the wording inventory reads the same', () => {
   const ents = s => s.replace(/&middot;/g, '·').replace(/&larr;/g, '←').replace(/&rarr;/g, '→').replace(/&amp;/g, '&');
   const slot = s => s.replace(/\$\{[^}]*\}/g, '\u0000');
+  const argsOf = a => Object.fromEntries(Object.entries(a || {}).map(([k, v]) =>
+    [k, v && typeof v === 'object' ? msg(v.msg, argsOf(v.args)) : v]));
+  const say = (id, a) => {
+    if (!FULL.includes(id)) return null;
+    const args = argsOf(a);
+    for (const n of varsOf(id)) if (!(n in args)) args[n] = '\u0000';
+    return msg(id, args);
+  };
   const wrong = [];
   for (const { id: old, text } of BEFORE.inventory) {
     const as = BEFORE.inventoryAs?.[old];
-    if (as === null) continue;                 // a summary of two lines, each checked under its own id
-    const id = as?.id || old.replace(/\./g, '-');
-    const args = Object.fromEntries(Object.entries(as?.args || {}).map(([k, v]) => [k, typeof v === 'string' && v.startsWith('@') ? msg(v.slice(1)) : v]));
-    const names = varsOf(id);
-    for (const n of names) if (!(n in args)) args[n] = '\u0000';
-    if (!FULL.includes(id)) { wrong.push(`${old}: no message ${id}`); continue; }
-    const got = slot(msg(id, args));
+    if (as === null) continue;
+    let got;
+    if (as?.parts) got = as.parts.map(p => (typeof p === 'string' ? p : say(p[0], p[1]))).join(as.sep);
+    else got = say(as?.id || old.replace(/\./g, '-'), as?.args);
+    if (got == null) { wrong.push(`${old}: no message ${as?.id || old.replace(/\./g, '-')}`); continue; }
     const want = slot(ents(text)).replace(/<span id="savedin"><\/span>/, '<span data-l10n-name="time"></span>');
-    if (got !== want) wrong.push(`${old} -> ${id}: ${JSON.stringify(got)} was ${JSON.stringify(want)}`);
+    if (slot(got) !== want) wrong.push(`${old}: ${JSON.stringify(slot(got))} was ${JSON.stringify(want)}`);
   }
   assert.deepEqual(wrong, []);
 });
@@ -135,12 +145,29 @@ test('no words are left in the code', () => {
   for (const f of SRC) {
     if (skipped(f)) continue;
     const allowed = new Set(ALLOW.strings[f] || []);
-    for (const l of literals(readFileSync(f, 'utf8'))) {
+    const src = readFileSync(f, 'utf8'), lines = src.split('\n');
+    for (const l of literals(src)) {
       if (!looksLikeCopy(l.text) || allowed.has(l.text)) continue;
+      // said to the developer: the line it is on, or the one it continues
+      if (devFacing((lines[l.line - 2] || '') + lines[l.line - 1])) continue;
       left.push(`${f}:${l.line} ${JSON.stringify(l.text)}`);
     }
   }
   assert.deepEqual(left, []);
+});
+
+// The allow list says why for each file, and names nothing that has gone: an
+// entry left behind when its string moved is an entry a new sentence could
+// hide behind.
+test('the allow list is current', () => {
+  const stale = [];
+  for (const [f, list] of Object.entries(ALLOW.strings)) {
+    if (!ALLOW.why[f]) stale.push(`${f}: no reason given`);
+    const have = new Set(literals(readFileSync(f, 'utf8')).map(l => l.text));
+    for (const s of list) if (!have.has(s)) stale.push(`${f}: ${JSON.stringify(s)} is not there`);
+  }
+  for (const f of ALLOW.files) if (!ALLOW.why[f] && !/^src\/(dev|selftest|hooks|console|scenes|scenesheet|report|verify)\.js$|\/$/.test(f)) stale.push(`${f}: no reason given`);
+  assert.deepEqual(stale, []);
 });
 
 // On a page: a text node with a letter in it stands inside an element that
@@ -148,7 +175,7 @@ test('no words are left in the code', () => {
 test('no words are left on the pages', () => {
   const left = [];
   for (const p of PAGES) {
-    const html = readFileSync(p, 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
+    const html = readFileSync(p, 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/<!doctype[^>]*>/i, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
     const stack = [];
     for (const m of html.matchAll(/<(\/?)([a-zA-Z0-9]+)([^>]*?)(\/?)>|([^<]+)/g)) {
       const [, close, tag, attrs, self, text] = m;

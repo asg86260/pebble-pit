@@ -13,6 +13,7 @@
 // first: a row a job the set brew can reach, with how many are dosed out of
 // how many there are.
 
+import { msg } from './lang.js';
 import { TONICS, potTonicOf, choosePotTonic, potAt, potBox, brewCost,
          tonicGain, tonicOf, tonicShown, canAffordBrew,
          potPreferOf, choosePotPrefer, preferableFor, preferLabel, doseCount } from './apothecary.js';
@@ -59,7 +60,7 @@ function build() {
     line.className = 'line';
     const what = document.createElement('span');
     what.className = 'what';
-    what.textContent = t ? t.name : 'nothing';
+    what.textContent = t ? t.name : msg('pot-nothing');
     line.appendChild(what);
     // The bill and the effect are filled at every open, because both move
     // under a rung.
@@ -81,7 +82,7 @@ function build() {
   // list (the check that there is a swatch a recipe) goes on counting brews.
   const head = document.createElement('span');
   head.className = 'forhead';
-  head.textContent = 'for';
+  head.textContent = msg('pot-for');
   opts.appendChild(head);
   for (const job of [null, ...FOR_JOBS]) {
     const row = document.createElement('button');
@@ -90,7 +91,7 @@ function build() {
     row.dataset.for = job || '';
     const who = document.createElement('span');
     who.className = 'who';
-    who.textContent = job ? preferLabel(job) : 'whoever is nearest';
+    who.textContent = job ? preferLabel(job) : msg('pot-nearest');
     row.appendChild(who);
     const n = document.createElement('span');
     n.className = 'count';

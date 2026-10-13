@@ -11,6 +11,7 @@
 // camera as the roster posts do, and fades in and out (shelf.css,
 // `#buildbtn`), never popping.
 
+import { msg } from '../lang.js';
 import { S } from '../state.js';
 import { FANG_MARK, BUILD_BUTTON_UP, BUILD_FADE_MS } from '../config.js';
 import { canBuild, nextSlot, layStation } from './party.js';
@@ -61,7 +62,7 @@ export function seatBuildButton() {
   btn.classList.toggle('on', on);
   if (!on) return;
   // the price, not the purse: the fangs held are on the counter card
-  const count = offer.first ? 'free' : '×1';
+  const count = offer.first ? msg('build-free') : '×1';
   const say = btn.querySelector('.count');
   if (say.textContent !== count) say.textContent = count;
   // Centered over the slot, its foot BUILD_BUTTON_UP over the floor, in the

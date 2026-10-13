@@ -89,8 +89,13 @@ export function msg(id, args) {
   let b = active, p = patternIn(active, id);
   if (p == null && active !== english) { b = english; p = patternIn(english, id); }
   if (p == null) return id;
-  return b.formatPattern(p, argsOf(args), []);
+  const out = b.formatPattern(p, argsOf(args), []);
+  return globalThis.__l10nMark ? globalThis.__l10nMark(out) : out;
 }
+// `globalThis.__l10nMark`, set before the game's modules load, wraps every
+// message the game says: a pseudo-language for the checks, under which any
+// word on a board that came from somewhere else is plain to see
+// (tools/wording/pseudo.mjs). Never set in play.
 
 // Whether a message exists in the source file (the guard's question).
 export const has = id => patternIn(english, id) != null;

@@ -18,6 +18,7 @@
 // The purchases go through the party (`buyRung`, `resetStation`); this file says what the player sees and what a press asks
 // for. The fade of a closed branch is the stylesheet's (shelf.css, `.rails`).
 
+import { msg } from '../lang.js';
 import { S } from '../state.js';
 import { P, CLASSES, RECRUIT, PAIRS, BASES, FORK_RUNG, MOVE_RUNG, CAPSTONE_RUNG, LADDER, RAIL_FOLD_MS, RAIL_FOLD_STEPS,
          HASTE, EXPOSED_AMP, rungValue } from '../config.js';
@@ -27,7 +28,7 @@ import { rungBill, CLASS_UNIT } from './rows.js';
 import { take } from '../upgrades.js';
 import { payTo } from '../pit.js';
 import { standOfStation } from './place.js';
-import { MARK, purse, priceText, fmt } from '../words.js';
+import { MARK, purse, priceText, fmt, unitText } from '../words.js';
 import { pageOf, shopOf } from '../pages.js';
 import { remeasure, showPanel } from '../board.js';
 import { onTap } from '../tap.js';
@@ -44,53 +45,58 @@ document.documentElement.style.setProperty?.('--rail-fold-steps', String(RAIL_FO
 // in braces -- "{Bleed}" -- and the board draws it bold with its hover line
 // (`STATUS`), which says the rest. `fork` is the class's
 // line at the fork, and its glyph the weapon drawn over its branch.
+// The status tokens a line can carry: a message names a status as a
+// placeable ($stun), and the code hands it over as `{Stun}`, which `say`
+// draws bold with its hover line and `plain` writes as its name.
+const TOKENS = { stun: '{Stun}', bleed: '{Bleed}', haste: '{Haste}', held: '{Held}', exposed: '{Exposed}', inspired: '{Inspired}' };
+const w = id => msg(id, TOKENS);
 const WORDS = {
-  brawler:  { fork: 'Throw harder punches, learn combos',
-              move: ['Combos', 'chain punches'], cap: ['Knockout', '{Stun}'] },
-  sword:    { fork: 'Master the sword',
-              move: ['Whirlwind', 'heavier cut'], cap: ['Weak points', '{Bleed}'] },
-  monk:     { fork: 'Focus your chi',
-              move: ['Deep breath', 'faster chi'], cap: ['Still water', '{Stun}'] },
-  martial:  { fork: 'Strike quicker and finish faster',
-              move: ['Flourish', 'faster finishers'], cap: ['Rally', 'party {Haste}'] },
-  ranger:   { fork: 'Aim at weak points',
-              move: ['Aimed shot', 'charged arrow'], cap: ['Pinning shot', '{Stun}'] },
-  assassin: { fork: 'Strike quick and precise',
-              move: ['Execution', 'punish wounds'], cap: ['Serrated', '{Bleed}'] },
-  hexer:    { fork: 'Cast hexes that debuff',
-              move: ['Wither', 'serpent takes more damage'], cap: ['Binding', '{Held}, {Exposed}'] },
-  sapper:   { fork: 'Learn explosives',
-              move: ['Sticky bombs', 'stick, then blow'], cap: ['Pair', 'two bombs, {Stun}'] },
-  mage:     { fork: 'Channel powerful beams',
-              move: ['Widening', 'wider beam'], cap: ['Thermite', 'burns armor'] },
-  bard:     { fork: 'Give your party {Inspired}',
-              move: ['Anthem', 'double {Inspired}'], cap: ['Tempo', 'party {Haste}'] }
+  brawler: { fork: w('cls-brawler-fork'), move: [w('cls-brawler-move'), w('cls-brawler-move-does')], cap: [w('cls-brawler-cap'), w('cls-brawler-cap-does')] },
+  sword: { fork: w('cls-sword-fork'), move: [w('cls-sword-move'), w('cls-sword-move-does')], cap: [w('cls-sword-cap'), w('cls-sword-cap-does')] },
+  monk: { fork: w('cls-monk-fork'), move: [w('cls-monk-move'), w('cls-monk-move-does')], cap: [w('cls-monk-cap'), w('cls-monk-cap-does')] },
+  martial: { fork: w('cls-martial-fork'), move: [w('cls-martial-move'), w('cls-martial-move-does')], cap: [w('cls-martial-cap'), w('cls-martial-cap-does')] },
+  ranger: { fork: w('cls-ranger-fork'), move: [w('cls-ranger-move'), w('cls-ranger-move-does')], cap: [w('cls-ranger-cap'), w('cls-ranger-cap-does')] },
+  assassin: { fork: w('cls-assassin-fork'), move: [w('cls-assassin-move'), w('cls-assassin-move-does')], cap: [w('cls-assassin-cap'), w('cls-assassin-cap-does')] },
+  hexer: { fork: w('cls-hexer-fork'), move: [w('cls-hexer-move'), w('cls-hexer-move-does')], cap: [w('cls-hexer-cap'), w('cls-hexer-cap-does')] },
+  sapper: { fork: w('cls-sapper-fork'), move: [w('cls-sapper-move'), w('cls-sapper-move-does')], cap: [w('cls-sapper-cap'), w('cls-sapper-cap-does')] },
+  mage: { fork: w('cls-mage-fork'), move: [w('cls-mage-move'), w('cls-mage-move-does')], cap: [w('cls-mage-cap'), w('cls-mage-cap-does')] },
+  bard: { fork: w('cls-bard-fork'), move: [w('cls-bard-move'), w('cls-bard-move-does')], cap: [w('cls-bard-cap'), w('cls-bard-cap-does')] }
 };
 const GLYPH = { brawler: 'fist', sword: 'blade', monk: 'bell', martial: 'staff', ranger: 'target',
                 assassin: 'dagger', hexer: 'rune', sapper: 'bomb', mage: 'beamwand', bard: 'lyre' };
 const pct = k => `${Math.round(k * 100)}%`;
 // What a status does, a line, its numbers read off the tables it is laid by.
 const STATUS = {
-  Stun: 'holds still, stops healing',
-  Bleed: 'damage over time',
-  Haste: `attacks ${pct(HASTE)} faster`,
-  Held: 'cannot heal',
-  Exposed: `takes ${pct(EXPOSED_AMP[0])}-${pct(EXPOSED_AMP[1])} more damage`,
-  Inspired: 'hits harder'
+  Stun: msg('status-stun-does'),
+  Bleed: msg('status-bleed-does'),
+  Haste: msg('status-haste-does', { pct: pct(HASTE) }),
+  Held: msg('status-held-does'),
+  Exposed: msg('status-exposed-does', { lo: pct(EXPOSED_AMP[0]), hi: pct(EXPOSED_AMP[1]) }),
+  Inspired: msg('status-inspired-does')
 };
+// And what each is called, wherever it is named: the key is the code's.
+const STATUS_NAME = { Stun: msg('status-stun'), Bleed: msg('status-bleed'), Haste: msg('status-haste'),
+                      Held: msg('status-held'), Exposed: msg('status-exposed'), Inspired: msg('status-inspired') };
+// A status's hover line: its name and what it does.
+const lineFor = k => msg('status-line', { name: STATUS_NAME[k], does: STATUS[k] });
 // The same line for a status's icon (render/statusicons.js), by the icon's key.
 const ICON_STATUS = { stun: 'Stun', bleed: 'Bleed', held: 'Held', exposed: 'Exposed',
                       haste: 'Haste', inspired: 'Inspired' };
-export const statusLine = key => (ICON_STATUS[key] ? `${ICON_STATUS[key]}: ${STATUS[ICON_STATUS[key]]}` : null);
-const plain = t => t.replace(/\{(\w+)\}/g, '$1');
-const BASE_DOES = { altar: 'Throw punches', well: 'Practice martial arts', armory: 'Shoot arrows',
-                    circle: 'Cast hexes', spire: 'Shoot beams' };
-const RECRUIT_DOES = 'a light punch';
+export const statusLine = key => (ICON_STATUS[key] ? lineFor(ICON_STATUS[key]) : null);
+// The same with a count: `n` of it on at once.
+export const statusLineOf = (key, n) => (ICON_STATUS[key]
+  ? msg('status-line-n', { name: STATUS_NAME[ICON_STATUS[key]], n, does: STATUS[ICON_STATUS[key]] }) : null);
+// And its name alone, for its label under the icon.
+export const statusName = key => (ICON_STATUS[key] ? STATUS_NAME[ICON_STATUS[key]] : null);
+const plain = t => t.replace(/\{(\w+)\}/g, (_, k) => STATUS_NAME[k] ?? k);
+const BASE_DOES = { altar: msg('base-altar-does'), well: msg('base-well-does'), armory: msg('base-armory-does'),
+                    circle: msg('base-circle-does'), spire: msg('base-spire-does') };
+const RECRUIT_DOES = msg('recruit-does');
 // The Bard alone: nobody else is fighting, so her song does nothing.
-const ALONE = 'no one else to sing to';
-const LOCKED = 'opens with a second station';
-const FORK_ASK = 'Specialize';
-const RECRUIT_ASK = 'Choose your fighter';
+const ALONE = msg('rail-alone');
+const LOCKED = msg('rail-locked');
+const FORK_ASK = msg('rail-fork-ask');
+const RECRUIT_ASK = msg('rail-recruit-ask');
 
 // Which base unit a Recruit's board is looking at, a station: only looked at,
 // never bought, so nothing a save keeps (DESIGN.md, voted R2).
@@ -105,20 +111,21 @@ const othersFight = id => S.stations.some(o => o.id !== id && o.built && o.fight
 function worth(cls, r) {
   const v = rungValue(cls, r), unit = CLASS_UNIT[cls];
   const said = Number.isInteger(v) || v >= 10 ? fmt(Math.round(v)) : v.toFixed(1);
-  return unit === '%' ? `+${said}%` : `${said} ${unit}`;
+  return unit === '%' ? msg('rail-worth-pct', { n: said }) : msg('rail-worth', { n: said, unit: unitText(unit) });
 }
 // The one line for a pip: a name and what it does. `cls` null is the base
 // unit's rung, counted off its pair's first class.
 export function lineOf(id, cls, r) {
   const st = stationById(id);
   if (!st?.kind) return '';
-  if (!cls) return `${BASES[st.kind]}: ${worth(PAIRS[st.kind][0], r)}`;
+  const line = (name, what) => msg('rail-line', { name, what });
+  if (!cls) return line(BASES[st.kind], worth(PAIRS[st.kind][0], r));
   const w = WORDS[cls], name = CLASSES[cls].name;
-  if (!classesOpen(st.kind).includes(cls)) return `${name}: ${LOCKED}`;
-  if (cls === 'bard' && !othersFight(id)) return `${name}: ${ALONE}`;
-  if (r === MOVE_RUNG) return `${w.move[0]}: ${plain(w.move[1])}`;
-  if (r === CAPSTONE_RUNG) return `${w.cap[0]}: ${plain(w.cap[1])}`;
-  return `${name}: ${worth(cls, r)}`;
+  if (!classesOpen(st.kind).includes(cls)) return line(name, LOCKED);
+  if (cls === 'bard' && !othersFight(id)) return line(name, ALONE);
+  if (r === MOVE_RUNG) return line(w.move[0], plain(w.move[1]));
+  if (r === CAPSTONE_RUNG) return line(w.cap[0], plain(w.cap[1]));
+  return line(name, worth(cls, r));
 }
 // A specialist's branch: its name and glyph, its move and its capstone.
 const branchOf = cls => ({ cls, name: CLASSES[cls].name, glyph: GLYPH[cls], move: WORDS[cls].move, cap: WORDS[cls].cap });
@@ -139,7 +146,7 @@ export function railsOf(id) {
     const bill = sel ? rungBill(id, PAIRS[sel.kind][0]) : [];
     return {
       id, recruit: true, ask: RECRUIT_ASK, who: RECRUIT.name, does: RECRUIT_DOES, kinds, looking: sel?.kind || null,
-      row: sel && { kind: sel.kind, label: `Become a ${sel.name}`, bill, can: !levelingUp(st) && bill.every(([m, n]) => purse(m) >= n) },
+      row: sel && { kind: sel.kind, label: msg('rail-become', { name: sel.name }), bill, can: !levelingUp(st) && bill.every(([m, n]) => purse(m) >= n) },
       reset: { can: false }
     };
   }
@@ -169,7 +176,7 @@ export function railsOf(id) {
     ask = FORK_ASK;
     for (const cls of PAIRS[st.kind]) {
       const w = WORDS[cls], locked = !open.includes(cls);
-      rows.push({ ...row(cls, `Become a ${CLASSES[cls].name}`, locked ? LOCKED : w.fork, locked),
+      rows.push({ ...row(cls, msg('rail-become', { name: CLASSES[cls].name }), locked ? LOCKED : w.fork, locked),
                   branch: locked ? null : branchOf(cls) });
     }
   } else if (next <= LADDER) {
@@ -236,7 +243,7 @@ const billHTML = bill => bill
   .map(([m, n]) => `<span class="${purse(m) >= n ? 'have' : 'short'}">${MARK[m]} ${priceText(m, n)}</span>`).join('');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 // A line with its statuses bold, each carrying its hover line.
-const say = t => esc(t).replace(/\{(\w+)\}/g, (_, k) => `<b class="rl-st" data-line="${esc(`${k}: ${STATUS[k]}`)}">${k}</b>`);
+const say = t => esc(t).replace(/\{(\w+)\}/g, (_, k) => `<b class="rl-st" data-line="${esc(lineFor(k))}">${esc(STATUS_NAME[k] ?? k)}</b>`);
 // A glyph, drawn in the board's ink at `px` screen pixels a cell.
 const glyphHTML = (name, px = 2) => {
   const rows = GLYPHS[name] || GLYPHS.crate;
@@ -284,7 +291,7 @@ function bodyHTML(r) {
   return `<div class="rl-who">${esc(r.who)}</div>` + treeHTML(r) +
          (r.ask ? `<div class="rl-ask">${esc(r.ask)}</div>` : '') +
          r.rows.map(o => rowHTML(o, o.cls ? `data-cls="${o.cls}"` : '')).join('') +
-         `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>reset – refunds everything</button>`;
+         `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>${esc(msg('rail-reset'))}</button>`;
 }
 
 // The hover line over a pip or a status, and a tap's where a thumb has no hover.

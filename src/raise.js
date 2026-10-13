@@ -6,6 +6,7 @@
 // what is being built, whether the call is out, and what pressing it does --
 // so the node tier can press it without a document.
 
+import { msg } from './lang.js';
 import { WORK_BASE } from './config.js';
 import { S, bench } from './state.js';
 import { canAfford } from './upgrades.js';
@@ -17,7 +18,7 @@ import { lookAt } from './world.js';
 // what it was for.
 const RAISE_BENCH = {
   key: 'raisebench',
-  name: 'the bench',
+  name: msg('station-bench'),
   // A building, which earns it the barriers, the tape and the clip (`risingPlaces`
   // in render/rise.js).
   kind: 'building',

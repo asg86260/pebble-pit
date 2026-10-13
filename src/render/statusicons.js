@@ -7,6 +7,7 @@
 // In screen pixels, like the numbers and the bar: one size however the camera
 // is zoomed, over the finished deep, their tones written as seen.
 
+import { msg } from '../lang.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
@@ -14,10 +15,10 @@ import { darkPage, turned } from '../ink.js';
 import { inspiredK, hasted } from '../deep/statuses.js';
 import { standOfStation, deepFloor } from '../deep/place.js';
 import { part, resistNow, resistNext, inOrb, orbOn } from '../deep/phases.js';
-import { statusLine } from '../deep/rails.js';
+import { statusLine, statusLineOf, statusName } from '../deep/rails.js';
 import { STATUS_ICONS, STATUS_PX, STATUS_GAP, STATUS_STEPS, STATUS_RENEW_MS, STATUS_TILE, STATUS_RIM,
          STATUS_FOE, STATUS_FACE, STATUS_TIMER, STATUS_SPENT, STATUS_POST, STATUS_POST_OUT, STATUS_POST_FOOT,
-         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, MECHANICS, STATUS_BAR_PX, STATUS_LABEL_PX, STATUS_LABEL_GAP } from '../config.js';
+         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, STATUS_NAMES, MECHANICS, STATUS_BAR_PX, STATUS_LABEL_PX, STATUS_LABEL_GAP } from '../config.js';
 
 const seen = c => darkPage ? turned(c) : c;
 
@@ -37,8 +38,7 @@ function saysOf(key, n = 0, mech = null) {
     return (says[state] ?? says.on ?? '').replace('{x}', mech.x);
   }
   if (key === 'dazed' || key === 'ward' || key === 'plates' || key === 'barrier' || key === 'constricted') return STATUS_SAYS[key];
-  const line = statusLine(key);
-  return n > 1 ? line.replace(':', ` x${n}:`) : line;
+  return n > 1 ? statusLineOf(key, n) : statusLine(key);
 }
 
 // How much of a status is left, 0..1, and when it first came on, by `id`: a
@@ -96,7 +96,10 @@ function foeStatuses(t) {
 const barTileW = () => 5 * STATUS_BAR_PX + 4;
 export const statusRowH = () => barTileW() + 4 + STATUS_LABEL_GAP + STATUS_LABEL_PX;
 // A status's name off its hover line: what comes before its colon, less "coming".
-const labelOf = text => (text || '').split(':')[0].replace(/ coming$/, '');
+const labelOf = (key, n) => {
+  const name = STATUS_NAMES[key] ?? statusName(key) ?? '';
+  return n > 1 ? msg('status-label-n', { name, n }) : name;
+};
 export function drawFoeStatuses(x, y) {
   const t = now(), s = barTileW();
   barTiles = [];
@@ -109,7 +112,7 @@ export function drawFoeStatuses(x, y) {
   };
   const column = (key, text, k, n, o = {}) => {
     labelType();
-    const label = labelOf(text), w = Math.max(s, Math.ceil(ctx.measureText(label).width));
+    const label = labelOf(key, n), w = Math.max(s, Math.ceil(ctx.measureText(label).width));
     const tx = x + Math.round((w - s) / 2);
     barTiles.push({ x: tx, y, w: s, h: s, text });
     tile(key, tx, y, k, n, { ...o, px: STATUS_BAR_PX });

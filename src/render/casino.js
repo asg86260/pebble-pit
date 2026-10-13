@@ -8,6 +8,7 @@
 // the glyphs. The shared primitives (ctx, drawGrid, drawMark, withRise, rising)
 // come from ./ctx.js, ./ground.js, ./marks.js and ./rise.js.
 
+import { msg } from '../lang.js';
 import { fieldAt, hasPeg, pegRow, busy, mayFlash, pourRate, shownPays, shownChange, payingBin, binLeft, slotW, PEBBLE, hopperN, hatchOpen } from '../casino.js';
 import { shown } from '../tween.js';
 import { now } from '../clock.js';
@@ -68,7 +69,9 @@ const GLYPH = {
   'k': ['1000010', '1001100', '1110000', '1001100', '1000010'],
   'm': ['0000000', '0000000', '1101100', '1010010', '1000010']
 };
-const WORD = 'CASINO';
+// Drawn in the sign's own pixel letters (`GLYPH` above), so a
+// language with letters the sign has no drawing for needs drawings for them.
+const WORD = msg('casino-sign');
 const GLYPH_H = 5, GLYPH_W = 7, GLYPH_GAP = 1, SIGN_PAD = 2;
 // Across the front in one word, the building's own width. Six letters and
 // five gaps come to forty-seven cells, one more than can center on a building
@@ -105,7 +108,7 @@ function onWords(t) {
 function signWord() {
   const state = signState();
   if (state === 'idle') return { word: WORD, gap: true, state };
-  if (state === 'ready' && onWords(now())) return { word: 'DROP IT', gap: false, state };
+  if (state === 'ready' && onWords(now())) return { word: msg('casino-drop'), gap: false, state };
   // the count is the stake as held -- what has been committed, in the bowl
   // or on its way -- and, draining, what is left of it in the bowl
   const d = S.drop;

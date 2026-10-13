@@ -8,6 +8,7 @@
 // Owns where each control stands, whether it is live, what working it does,
 // and the hit test; render/casino.js draws them off `leverShape`.
 
+import { msg } from './lang.js';
 import { P, HOPPER_H, GATE_H, CASINO_SIGN_H, ARM_LENGTH, ARM_BOSS, ARM_KNOB, ARM_SWING, LEVER_HIT, LEVER_SWING_MS } from './config.js';
 import { S, casino } from './state.js';
 import { canHold, holdArm, setThrottle, canDrop, dropIt } from './casino.js';
@@ -18,7 +19,7 @@ import { coarse } from './prefs.js';
 // the two halves of a decision -- may it, and do it. It stands beside the
 // funnel, on a boss out from the right wall.
 export const LEVERS = [
-  { key: 'casino-gate', name: 'the arm', kind: 'arm',
+  { key: 'casino-gate', name: msg('lever-arm'), kind: 'arm',
     side: 'right', row: () => HOPPER_H - 2, live: canHold, hold: holdArm }
 ];
 

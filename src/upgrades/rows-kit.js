@@ -26,16 +26,16 @@ import { msg } from '../lang.js';
 // trained, and the thing it is twice as good at. `shield` is the try against
 // the sky that opens the row (`learned`).
 export const TRADES = [
-  { key: msg('kit-breaker'), name: 'breaker', job: JOB.ROCK, count: 'breakers',
+  { key: 'breaker', name: msg('kit-breaker'), job: JOB.ROCK, count: 'breakers',
     does: msg('kit-breaker-does'), place: msg('kit-breaker-place'),
     site: 'shack', board: 'shack', shield: 'props' },
-  { key: msg('kit-carter'), name: 'carter', job: JOB.HAUL, count: 'carters',
+  { key: 'carter', name: msg('kit-carter'), job: JOB.HAUL, count: 'carters',
     does: msg('kit-carter-does'), place: msg('kit-carter-place'),
     site: 'bench', board: null, shield: 'props' },
-  { key: msg('kit-blaster'), name: 'blaster', job: JOB.QUARRY, count: 'blasters',
+  { key: 'blaster', name: msg('kit-blaster'), job: JOB.QUARRY, count: 'blasters',
     does: msg('kit-blaster-does'), place: msg('kit-blaster-place'),
     site: 'quarry', board: 'quarry', shield: 'arch' },
-  { key: msg('kit-grower'), name: 'grower', job: JOB.FARM, count: 'growers',
+  { key: 'grower', name: msg('kit-grower'), job: JOB.FARM, count: 'growers',
     does: msg('kit-grower-does'), place: msg('kit-grower-place'),
     site: 'farm', board: 'farm', shield: 'net' }
 ];

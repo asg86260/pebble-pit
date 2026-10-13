@@ -737,6 +737,12 @@ other-skip-pad = hold <span data-l10n-name="key"></span> to skip
 # the queue card: a run of copies of one row; $name is the row, $n how many
 queue-run = { $name } ×{ $n }
 
+# the casino's marquee, idle (drawn in the sign's own pixel capitals)
+casino-sign = CASINO
+
+# the casino's marquee when a hand is ready to let go (drawn in the sign's own pixel capitals)
+casino-drop = DROP IT
+
 ## Notices
 
 # toast-shaped card, another device ahead
@@ -2052,6 +2058,9 @@ tonic-gain = +{ $v }% { $unit }, { $secs } s
 # what the crit brew does: $v points of crit chance for $secs seconds
 tonic-gain-crit = +{ $v } crit, { $secs } s
 
+# the shack's heading over the diggers' gear, with their headcount
+sect-diggers = diggers
+
 ## Machines
 
 # a machine's name: the quarry's (the save's key is jaw)
@@ -2462,3 +2471,508 @@ books-open = open the books
 
 # the noticeboard: how long this yard has been played
 books-playtime = playtime
+
+## Hover
+
+# the hover on a deep station whose Recruit still waits on its first choice
+hover-choose = choose a fighter
+
+# the hover over a grain of ore
+hover-ore = ore
+
+# the hover over a crop, a grain of it or a grown plot
+hover-crop = crop
+
+# the hover over a spark
+hover-spark = spark
+
+# the hover over a pebble
+hover-pebble = pebble
+
+# the hover over the drowned pit
+hover-abyss = the abyss
+
+# the hover over the rift
+hover-rift = the rift
+
+# the hover over poop on the ground
+hover-poop = poop
+
+# the hover over muck on the ground
+hover-muck = muck
+
+# the hover over a body, as the job it does (its type, rockhand)
+hover-rockhand = rockhand
+
+# the hover over a body, as the job it does (its type, hauler)
+hover-hauler = hauler
+
+# the hover over a body, as the job it does (its type, quarrier)
+hover-quarrier = quarrier
+
+# the hover over a body, as the job it does (its type, farmhand)
+hover-farmhand = farmhand
+
+# the hover over a body, as the job it does (its type, scholar)
+hover-scholar = scholar
+
+# the hover over a body, as the job it does (its type, purifier)
+hover-purifier = purifier
+
+# the hover over a body, as the job it does (its type, stirrer)
+hover-stirrer = stirrer
+
+# the hover over a body, as the job it does (its type, janitor)
+hover-janitor = janitor
+
+# the hover over a body, as the job it does (its type, wizard)
+hover-wizard = wizard
+
+# the hover over a body, as the job it does (its type, builder)
+hover-builder = builder
+
+# the hover over a body, as the job it does (its type, fighter)
+hover-fighter = fighter
+
+# the hover over a body, as the job it does (its type, gatherer)
+hover-gatherer = gatherer
+
+# the hover over a body, as the job it does (its type, delver)
+hover-delver = delver
+
+# the hover over the portal, from the deep
+hover-portal-up = the portal — up to the yard
+
+# the hover over the portal, from the yard
+hover-portal-down = the portal — down to the deep
+
+# the hover over the serpent
+hover-serpent = the serpent
+
+# the hover over the crew's houses
+hover-house = house
+
+# the hover over the boulder
+hover-rock = rock
+
+# the hover over a bird
+hover-bird = bird
+
+# the hover over a balloon
+hover-balloon = balloon
+
+# the hover over the air filter's gauge: $zone is the band the needle is in (clean, dirty, filthy), $way which way it is going
+hover-dial = { $zone }, { $way }
+
+# the air filter's gauge: the sky filling faster than it is cleaned
+hover-dial-worse = getting worse
+
+# the air filter's gauge: the sky cleaned faster than it fills
+hover-dial-better = getting better
+
+# the air filter's gauge: neither
+hover-dial-steady = holding steady
+
+# the hover over the counter above the pit
+hover-counter = pebbles in the pit: what everything costs
+
+# the air filter's gauge: the needle in the first band
+hover-dial-clean = clean
+
+# the air filter's gauge: the needle in the middle band
+hover-dial-dirty = dirty
+
+# the air filter's gauge: the needle in the last band
+hover-dial-filthy = filthy
+
+# the hover on a pile-full mark: a station's pile has nowhere left to go
+hover-pile-full = pile is full
+
+# the hover on a station's done mark: $names is what finished there, the rows' names joined by commas
+hover-done = { $names } done
+
+# the hover on a done mark whose rows have no names
+hover-done-work = work done
+
+# the casino's lever, by name (its hover and the pad's label)
+lever-arm = the arm
+
+# a pot's picker: the brew it is set to, when it is set to none
+pot-nothing = nothing
+
+# a pot's picker: the heading over who the brew is for
+pot-for = for
+
+# a pot's picker: the brew goes to whoever is nearest, not one trade
+pot-nearest = whoever is nearest
+
+## The deep
+
+# a brawler's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-brawler-fork = Throw harder punches, learn combos
+
+# the brawler's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-brawler-move = Combos
+
+# what the brawler's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-brawler-move-does = chain punches
+
+# the brawler's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-brawler-cap = Knockout
+
+# what the brawler's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-brawler-cap-does = { $stun }
+
+# a sword's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-sword-fork = Master the sword
+
+# the sword's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-sword-move = Whirlwind
+
+# what the sword's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-sword-move-does = heavier cut
+
+# the sword's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-sword-cap = Weak points
+
+# what the sword's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-sword-cap-does = { $bleed }
+
+# a monk's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-monk-fork = Focus your chi
+
+# the monk's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-monk-move = Deep breath
+
+# what the monk's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-monk-move-does = faster chi
+
+# the monk's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-monk-cap = Still water
+
+# what the monk's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-monk-cap-does = { $stun }
+
+# a martial's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-martial-fork = Strike quicker and finish faster
+
+# the martial's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-martial-move = Flourish
+
+# what the martial's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-martial-move-does = faster finishers
+
+# the martial's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-martial-cap = Rally
+
+# what the martial's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-martial-cap-does = party { $haste }
+
+# a ranger's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-ranger-fork = Aim at weak points
+
+# the ranger's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-ranger-move = Aimed shot
+
+# what the ranger's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-ranger-move-does = charged arrow
+
+# the ranger's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-ranger-cap = Pinning shot
+
+# what the ranger's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-ranger-cap-does = { $stun }
+
+# a assassin's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-assassin-fork = Strike quick and precise
+
+# the assassin's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-assassin-move = Execution
+
+# what the assassin's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-assassin-move-does = punish wounds
+
+# the assassin's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-assassin-cap = Serrated
+
+# what the assassin's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-assassin-cap-does = { $bleed }
+
+# a hexer's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-hexer-fork = Cast hexes that debuff
+
+# the hexer's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-hexer-move = Wither
+
+# what the hexer's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-hexer-move-does = serpent takes more damage
+
+# the hexer's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-hexer-cap = Binding
+
+# what the hexer's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-hexer-cap-does = { $held }, { $exposed }
+
+# a sapper's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-sapper-fork = Learn explosives
+
+# the sapper's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-sapper-move = Sticky bombs
+
+# what the sapper's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-sapper-move-does = stick, then blow
+
+# the sapper's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-sapper-cap = Pair
+
+# what the sapper's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-sapper-cap-does = two bombs, { $stun }
+
+# a mage's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-mage-fork = Channel powerful beams
+
+# the mage's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-mage-move = Widening
+
+# what the mage's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-mage-move-does = wider beam
+
+# the mage's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-mage-cap = Thermite
+
+# what the mage's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-mage-cap-does = burns armor
+
+# a bard's line at the fork: what choosing it means; a { $status } is a status, drawn bold with its own hover line
+cls-bard-fork = Give your party { $inspired }
+
+# the bard's move (rung 4), by name; a { $status } is a status, drawn bold with its own hover line
+cls-bard-move = Anthem
+
+# what the bard's move does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-bard-move-does = double { $inspired }
+
+# the bard's capstone (rung 8), by name; a { $status } is a status, drawn bold with its own hover line
+cls-bard-cap = Tempo
+
+# what the bard's capstone does, a few words; a { $status } is a status, drawn bold with its own hover line
+cls-bard-cap-does = party { $haste }
+
+# a status, by name (bold in a line, under its icon)
+status-stun = Stun
+
+# a status, by name
+status-bleed = Bleed
+
+# a status, by name
+status-haste = Haste
+
+# a status, by name
+status-held = Held
+
+# a status, by name
+status-exposed = Exposed
+
+# a status, by name
+status-inspired = Inspired
+
+# what Stun does, after its name
+status-stun-does = holds still, stops healing
+
+# what Bleed does, after its name
+status-bleed-does = damage over time
+
+# what Haste does, after its name; $pct with its sign
+status-haste-does = attacks { $pct } faster
+
+# what Held does, after its name
+status-held-does = cannot heal
+
+# what Exposed does, after its name; $lo and $hi with their signs
+status-exposed-does = takes { $lo }-{ $hi } more damage
+
+# what Inspired does, after its name
+status-inspired-does = hits harder
+
+# a status's hover line: $name (status-…) and what it does
+status-line = { $name }: { $does }
+
+# a status's hover line when $n of it are on
+status-line-n = { $name } x{ $n }: { $does }
+
+# a status's label under its icon when $n of it are on
+status-label-n = { $name } x{ $n }
+
+# a base fighter's line: the altar's (the Fighter)
+base-altar-does = Throw punches
+
+# a base fighter's line: the well's (the Novice)
+base-well-does = Practice martial arts
+
+# a base fighter's line: the armory's (the Scout)
+base-armory-does = Shoot arrows
+
+# a base fighter's line: the circle's (the Adept)
+base-circle-does = Cast hexes
+
+# a base fighter's line: the spire's (the Apprentice)
+base-spire-does = Shoot beams
+
+# the Recruit's line, before its first choice
+recruit-does = a light punch
+
+# the Bard's line with nobody else fighting
+rail-alone = no one else to sing to
+
+# a class that needs company, before there is any
+rail-locked = opens with a second station
+
+# a station's board at the fork: the heading over the two classes
+rail-fork-ask = Specialize
+
+# a Recruit's board: the heading over its first choice
+rail-recruit-ask = Choose your fighter
+
+# a rung's number in its class's unit; $unit is unit-dmg or unit-dmg-s
+rail-worth = { $n } { $unit }
+
+# a rung's number for a class written in percent (the Bard)
+rail-worth-pct = +{ $n }%
+
+# a pip's hover line on a station's tree: $name (a fighter, a move) and $what (its number, or a few words)
+rail-line = { $name }: { $what }
+
+# the row that buys a class or a base fighter; $name is its name (Brawler, Scout)
+rail-become = Become a { $name }
+
+# a station's board: stand the Recruit again, every rung handed back
+rail-reset = reset – refunds everything
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-brawler = Brawler
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-sword = Swordsman
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-monk = Monk
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-martial = Martial Artist
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-ranger = Ranger
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-assassin = Assassin
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-hexer = Hexer
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-sapper = Sapper
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-mage = Mage
+
+# a class's name: the fighter it makes (its board's title, its row, its hover)
+class-bard = Bard
+
+# a base fighter's name: the altar's, below the fork
+base-altar = Fighter
+
+# a base fighter's name: the well's
+base-well = Novice
+
+# a base fighter's name: the armory's
+base-armory = Scout
+
+# a base fighter's name: the circle's
+base-circle = Adept
+
+# a base fighter's name: the spire's
+base-spire = Apprentice
+
+# every station's first fighter, before its first choice
+class-recruit = Recruit
+
+# the serpent's lash, its tile's hover while it waits
+serp-lash-calm = Lash: stuns melee attackers
+
+# the serpent's lash, its tile's hover while it is warned
+serp-lash-coming = Lash coming
+
+# the serpent's lash, its tile's hover while it is on
+serp-lash-on = Lash: stuns melee attackers
+
+# the serpent's lash, its tile's hover once answered
+serp-lash-stopped = Lash: stopped
+
+# the serpent's cloak, warned
+serp-sink-coming = Cloak coming
+
+# the serpent's cloak, on
+serp-sink-on = Cloak: out of reach
+
+# the serpent's constrict, warned
+serp-orb-coming = Constrict coming
+
+# the serpent's constrict, on
+serp-orb-on = Constrict
+
+# the serpent's constrict, answered
+serp-orb-stopped = Constrict
+
+# a fighter's tile: dazed, its hover
+serp-dazed = Dazed: thrown off, seeing stars
+
+# a fighter's tile: constricted, its hover
+serp-constricted = Constricted
+
+# the serpent's barrier, its tile's hover
+serp-barrier = Barrier: absorbs explosive damage
+
+# the serpent's ward, its tile's hover
+serp-ward = Ward: magic damage cut in half
+
+# the serpent's plates, its tile's hover
+serp-plates = Plates: phys damage cut in half
+
+# the lash's tile, its label
+serp-lash = Lash
+
+# the cloak's tile, its label
+serp-sink = Cloak
+
+# the constrict's tile, its label
+serp-orb = Constrict
+
+# a fighter's dazed tile, its label
+serp-dazed-name = Dazed
+
+# a fighter's constricted tile, its label
+serp-constricted-name = Constricted
+
+# the barrier's tile, its label
+serp-barrier-name = Barrier
+
+# the ward's tile, its label
+serp-ward-name = Ward
+
+# the plates' tile, its label
+serp-plates-name = Plates
+
+# the pods: one more of the crew, living down here
+row-pod = another pod
+
+# the pods: the pod's line
+row-pod-note = a capsule on the deep's far side: one more of the crew, living down here
+
+# a deep station's board: the heading over its one fighter, with the count
+rail-fighter = the fighter
+
+# the deep: the build of a new fighter's station (the queue card names it)
+row-raise-station = raise a station
+
+# the deep's build button: the first station costs no fang
+build-free = free

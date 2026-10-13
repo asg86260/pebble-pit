@@ -5691,6 +5691,1799 @@
     "args": {},
     "text": "playtime"
    }
+  ],
+  "hover-choose": [
+   {
+    "args": {},
+    "text": "choose a fighter"
+   }
+  ],
+  "hover-ore": [
+   {
+    "args": {},
+    "text": "ore"
+   }
+  ],
+  "hover-crop": [
+   {
+    "args": {},
+    "text": "crop"
+   }
+  ],
+  "hover-spark": [
+   {
+    "args": {},
+    "text": "spark"
+   }
+  ],
+  "hover-pebble": [
+   {
+    "args": {},
+    "text": "pebble"
+   }
+  ],
+  "hover-abyss": [
+   {
+    "args": {},
+    "text": "the abyss"
+   }
+  ],
+  "hover-rift": [
+   {
+    "args": {},
+    "text": "the rift"
+   }
+  ],
+  "hover-poop": [
+   {
+    "args": {},
+    "text": "poop"
+   }
+  ],
+  "hover-muck": [
+   {
+    "args": {},
+    "text": "muck"
+   }
+  ],
+  "hover-rockhand": [
+   {
+    "args": {},
+    "text": "rockhand"
+   }
+  ],
+  "hover-hauler": [
+   {
+    "args": {},
+    "text": "hauler"
+   }
+  ],
+  "hover-quarrier": [
+   {
+    "args": {},
+    "text": "quarrier"
+   }
+  ],
+  "hover-farmhand": [
+   {
+    "args": {},
+    "text": "farmhand"
+   }
+  ],
+  "hover-scholar": [
+   {
+    "args": {},
+    "text": "scholar"
+   }
+  ],
+  "hover-purifier": [
+   {
+    "args": {},
+    "text": "purifier"
+   }
+  ],
+  "hover-stirrer": [
+   {
+    "args": {},
+    "text": "stirrer"
+   }
+  ],
+  "hover-janitor": [
+   {
+    "args": {},
+    "text": "janitor"
+   }
+  ],
+  "hover-wizard": [
+   {
+    "args": {},
+    "text": "wizard"
+   }
+  ],
+  "hover-builder": [
+   {
+    "args": {},
+    "text": "builder"
+   }
+  ],
+  "hover-fighter": [
+   {
+    "args": {},
+    "text": "fighter"
+   }
+  ],
+  "hover-gatherer": [
+   {
+    "args": {},
+    "text": "gatherer"
+   }
+  ],
+  "hover-delver": [
+   {
+    "args": {},
+    "text": "delver"
+   }
+  ],
+  "hover-portal-up": [
+   {
+    "args": {},
+    "text": "the portal — up to the yard"
+   }
+  ],
+  "hover-portal-down": [
+   {
+    "args": {},
+    "text": "the portal — down to the deep"
+   }
+  ],
+  "hover-serpent": [
+   {
+    "args": {},
+    "text": "the serpent"
+   }
+  ],
+  "hover-house": [
+   {
+    "args": {},
+    "text": "house"
+   }
+  ],
+  "hover-rock": [
+   {
+    "args": {},
+    "text": "rock"
+   }
+  ],
+  "hover-bird": [
+   {
+    "args": {},
+    "text": "bird"
+   }
+  ],
+  "hover-balloon": [
+   {
+    "args": {},
+    "text": "balloon"
+   }
+  ],
+  "hover-dial": [
+   {
+    "args": {
+     "zone": "dirty",
+     "way": "getting worse"
+    },
+    "text": "dirty, getting worse"
+   }
+  ],
+  "hover-dial-worse": [
+   {
+    "args": {},
+    "text": "getting worse"
+   }
+  ],
+  "hover-dial-better": [
+   {
+    "args": {},
+    "text": "getting better"
+   }
+  ],
+  "hover-dial-steady": [
+   {
+    "args": {},
+    "text": "holding steady"
+   }
+  ],
+  "hover-counter": [
+   {
+    "args": {},
+    "text": "pebbles in the pit: what everything costs"
+   }
+  ],
+  "hover-dial-clean": [
+   {
+    "args": {},
+    "text": "clean"
+   }
+  ],
+  "hover-dial-dirty": [
+   {
+    "args": {},
+    "text": "dirty"
+   }
+  ],
+  "hover-dial-filthy": [
+   {
+    "args": {},
+    "text": "filthy"
+   }
+  ],
+  "hover-pile-full": [
+   {
+    "args": {},
+    "text": "pile is full"
+   }
+  ],
+  "hover-done": [
+   {
+    "args": {
+     "names": "another plot, crop yield"
+    },
+    "text": "another plot, crop yield done"
+   }
+  ],
+  "hover-done-work": [
+   {
+    "args": {},
+    "text": "work done"
+   }
+  ],
+  "lever-arm": [
+   {
+    "args": {},
+    "text": "the arm"
+   }
+  ],
+  "pot-nothing": [
+   {
+    "args": {},
+    "text": "nothing"
+   }
+  ],
+  "pot-for": [
+   {
+    "args": {},
+    "text": "for"
+   }
+  ],
+  "pot-nearest": [
+   {
+    "args": {},
+    "text": "whoever is nearest"
+   }
+  ],
+  "cls-brawler-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Throw harder punches, learn combos"
+   }
+  ],
+  "cls-brawler-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Combos"
+   }
+  ],
+  "cls-brawler-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "chain punches"
+   }
+  ],
+  "cls-brawler-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Knockout"
+   }
+  ],
+  "cls-brawler-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "{Stun}"
+   }
+  ],
+  "cls-sword-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Master the sword"
+   }
+  ],
+  "cls-sword-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Whirlwind"
+   }
+  ],
+  "cls-sword-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "heavier cut"
+   }
+  ],
+  "cls-sword-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Weak points"
+   }
+  ],
+  "cls-sword-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "{Bleed}"
+   }
+  ],
+  "cls-monk-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Focus your chi"
+   }
+  ],
+  "cls-monk-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Deep breath"
+   }
+  ],
+  "cls-monk-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "faster chi"
+   }
+  ],
+  "cls-monk-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Still water"
+   }
+  ],
+  "cls-monk-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "{Stun}"
+   }
+  ],
+  "cls-martial-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Strike quicker and finish faster"
+   }
+  ],
+  "cls-martial-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Flourish"
+   }
+  ],
+  "cls-martial-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "faster finishers"
+   }
+  ],
+  "cls-martial-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Rally"
+   }
+  ],
+  "cls-martial-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "party {Haste}"
+   }
+  ],
+  "cls-ranger-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Aim at weak points"
+   }
+  ],
+  "cls-ranger-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Aimed shot"
+   }
+  ],
+  "cls-ranger-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "charged arrow"
+   }
+  ],
+  "cls-ranger-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Pinning shot"
+   }
+  ],
+  "cls-ranger-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "{Stun}"
+   }
+  ],
+  "cls-assassin-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Strike quick and precise"
+   }
+  ],
+  "cls-assassin-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Execution"
+   }
+  ],
+  "cls-assassin-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "punish wounds"
+   }
+  ],
+  "cls-assassin-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Serrated"
+   }
+  ],
+  "cls-assassin-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "{Bleed}"
+   }
+  ],
+  "cls-hexer-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Cast hexes that debuff"
+   }
+  ],
+  "cls-hexer-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Wither"
+   }
+  ],
+  "cls-hexer-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "serpent takes more damage"
+   }
+  ],
+  "cls-hexer-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Binding"
+   }
+  ],
+  "cls-hexer-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "{Held}, {Exposed}"
+   }
+  ],
+  "cls-sapper-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Learn explosives"
+   }
+  ],
+  "cls-sapper-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Sticky bombs"
+   }
+  ],
+  "cls-sapper-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "stick, then blow"
+   }
+  ],
+  "cls-sapper-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Pair"
+   }
+  ],
+  "cls-sapper-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "two bombs, {Stun}"
+   }
+  ],
+  "cls-mage-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Channel powerful beams"
+   }
+  ],
+  "cls-mage-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Widening"
+   }
+  ],
+  "cls-mage-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "wider beam"
+   }
+  ],
+  "cls-mage-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Thermite"
+   }
+  ],
+  "cls-mage-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "burns armor"
+   }
+  ],
+  "cls-bard-fork": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Give your party {Inspired}"
+   }
+  ],
+  "cls-bard-move": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Anthem"
+   }
+  ],
+  "cls-bard-move-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "double {Inspired}"
+   }
+  ],
+  "cls-bard-cap": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "Tempo"
+   }
+  ],
+  "cls-bard-cap-does": [
+   {
+    "args": {
+     "stun": "{Stun}",
+     "bleed": "{Bleed}",
+     "haste": "{Haste}",
+     "held": "{Held}",
+     "exposed": "{Exposed}",
+     "inspired": "{Inspired}"
+    },
+    "text": "party {Haste}"
+   }
+  ],
+  "status-stun": [
+   {
+    "args": {},
+    "text": "Stun"
+   }
+  ],
+  "status-bleed": [
+   {
+    "args": {},
+    "text": "Bleed"
+   }
+  ],
+  "status-haste": [
+   {
+    "args": {},
+    "text": "Haste"
+   }
+  ],
+  "status-held": [
+   {
+    "args": {},
+    "text": "Held"
+   }
+  ],
+  "status-exposed": [
+   {
+    "args": {},
+    "text": "Exposed"
+   }
+  ],
+  "status-inspired": [
+   {
+    "args": {},
+    "text": "Inspired"
+   }
+  ],
+  "status-stun-does": [
+   {
+    "args": {},
+    "text": "holds still, stops healing"
+   }
+  ],
+  "status-bleed-does": [
+   {
+    "args": {},
+    "text": "damage over time"
+   }
+  ],
+  "status-haste-does": [
+   {
+    "args": {
+     "pct": "20%"
+    },
+    "text": "attacks 20% faster"
+   }
+  ],
+  "status-held-does": [
+   {
+    "args": {},
+    "text": "cannot heal"
+   }
+  ],
+  "status-exposed-does": [
+   {
+    "args": {
+     "lo": "15%",
+     "hi": "25%"
+    },
+    "text": "takes 15%-25% more damage"
+   }
+  ],
+  "status-inspired-does": [
+   {
+    "args": {},
+    "text": "hits harder"
+   }
+  ],
+  "status-line": [
+   {
+    "args": {
+     "name": "Stun",
+     "does": "holds still, stops healing"
+    },
+    "text": "Stun: holds still, stops healing"
+   }
+  ],
+  "status-line-n": [
+   {
+    "args": {
+     "name": "Bleed",
+     "n": 2,
+     "does": "damage over time"
+    },
+    "text": "Bleed x2: damage over time"
+   }
+  ],
+  "status-label-n": [
+   {
+    "args": {
+     "name": "Bleed",
+     "n": 3
+    },
+    "text": "Bleed x3"
+   }
+  ],
+  "base-altar-does": [
+   {
+    "args": {},
+    "text": "Throw punches"
+   }
+  ],
+  "base-well-does": [
+   {
+    "args": {},
+    "text": "Practice martial arts"
+   }
+  ],
+  "base-armory-does": [
+   {
+    "args": {},
+    "text": "Shoot arrows"
+   }
+  ],
+  "base-circle-does": [
+   {
+    "args": {},
+    "text": "Cast hexes"
+   }
+  ],
+  "base-spire-does": [
+   {
+    "args": {},
+    "text": "Shoot beams"
+   }
+  ],
+  "recruit-does": [
+   {
+    "args": {},
+    "text": "a light punch"
+   }
+  ],
+  "rail-alone": [
+   {
+    "args": {},
+    "text": "no one else to sing to"
+   }
+  ],
+  "rail-locked": [
+   {
+    "args": {},
+    "text": "opens with a second station"
+   }
+  ],
+  "rail-fork-ask": [
+   {
+    "args": {},
+    "text": "Specialize"
+   }
+  ],
+  "rail-recruit-ask": [
+   {
+    "args": {},
+    "text": "Choose your fighter"
+   }
+  ],
+  "rail-worth": [
+   {
+    "args": {
+     "n": "50",
+     "unit": "dmg"
+    },
+    "text": "50 dmg"
+   }
+  ],
+  "rail-worth-pct": [
+   {
+    "args": {
+     "n": "18"
+    },
+    "text": "+18%"
+   }
+  ],
+  "rail-line": [
+   {
+    "args": {
+     "name": "Brawler",
+     "what": "50 dmg"
+    },
+    "text": "Brawler: 50 dmg"
+   }
+  ],
+  "rail-become": [
+   {
+    "args": {
+     "name": "Scout"
+    },
+    "text": "Become a Scout"
+   }
+  ],
+  "rail-reset": [
+   {
+    "args": {},
+    "text": "reset – refunds everything"
+   }
+  ],
+  "class-brawler": [
+   {
+    "args": {},
+    "text": "Brawler"
+   }
+  ],
+  "class-sword": [
+   {
+    "args": {},
+    "text": "Swordsman"
+   }
+  ],
+  "class-monk": [
+   {
+    "args": {},
+    "text": "Monk"
+   }
+  ],
+  "class-martial": [
+   {
+    "args": {},
+    "text": "Martial Artist"
+   }
+  ],
+  "class-ranger": [
+   {
+    "args": {},
+    "text": "Ranger"
+   }
+  ],
+  "class-assassin": [
+   {
+    "args": {},
+    "text": "Assassin"
+   }
+  ],
+  "class-hexer": [
+   {
+    "args": {},
+    "text": "Hexer"
+   }
+  ],
+  "class-sapper": [
+   {
+    "args": {},
+    "text": "Sapper"
+   }
+  ],
+  "class-mage": [
+   {
+    "args": {},
+    "text": "Mage"
+   }
+  ],
+  "class-bard": [
+   {
+    "args": {},
+    "text": "Bard"
+   }
+  ],
+  "base-altar": [
+   {
+    "args": {},
+    "text": "Fighter"
+   }
+  ],
+  "base-well": [
+   {
+    "args": {},
+    "text": "Novice"
+   }
+  ],
+  "base-armory": [
+   {
+    "args": {},
+    "text": "Scout"
+   }
+  ],
+  "base-circle": [
+   {
+    "args": {},
+    "text": "Adept"
+   }
+  ],
+  "base-spire": [
+   {
+    "args": {},
+    "text": "Apprentice"
+   }
+  ],
+  "class-recruit": [
+   {
+    "args": {},
+    "text": "Recruit"
+   }
+  ],
+  "serp-lash-calm": [
+   {
+    "args": {},
+    "text": "Lash: stuns melee attackers"
+   }
+  ],
+  "serp-lash-coming": [
+   {
+    "args": {},
+    "text": "Lash coming"
+   }
+  ],
+  "serp-lash-on": [
+   {
+    "args": {},
+    "text": "Lash: stuns melee attackers"
+   }
+  ],
+  "serp-lash-stopped": [
+   {
+    "args": {},
+    "text": "Lash: stopped"
+   }
+  ],
+  "serp-sink-coming": [
+   {
+    "args": {},
+    "text": "Cloak coming"
+   }
+  ],
+  "serp-sink-on": [
+   {
+    "args": {},
+    "text": "Cloak: out of reach"
+   }
+  ],
+  "serp-orb-coming": [
+   {
+    "args": {},
+    "text": "Constrict coming"
+   }
+  ],
+  "serp-orb-on": [
+   {
+    "args": {},
+    "text": "Constrict"
+   }
+  ],
+  "serp-orb-stopped": [
+   {
+    "args": {},
+    "text": "Constrict"
+   }
+  ],
+  "serp-dazed": [
+   {
+    "args": {},
+    "text": "Dazed: thrown off, seeing stars"
+   }
+  ],
+  "serp-constricted": [
+   {
+    "args": {},
+    "text": "Constricted"
+   }
+  ],
+  "serp-barrier": [
+   {
+    "args": {},
+    "text": "Barrier: absorbs explosive damage"
+   }
+  ],
+  "serp-ward": [
+   {
+    "args": {},
+    "text": "Ward: magic damage cut in half"
+   }
+  ],
+  "serp-plates": [
+   {
+    "args": {},
+    "text": "Plates: phys damage cut in half"
+   }
+  ],
+  "serp-lash": [
+   {
+    "args": {},
+    "text": "Lash"
+   }
+  ],
+  "serp-sink": [
+   {
+    "args": {},
+    "text": "Cloak"
+   }
+  ],
+  "serp-orb": [
+   {
+    "args": {},
+    "text": "Constrict"
+   }
+  ],
+  "serp-dazed-name": [
+   {
+    "args": {},
+    "text": "Dazed"
+   }
+  ],
+  "serp-constricted-name": [
+   {
+    "args": {},
+    "text": "Constricted"
+   }
+  ],
+  "serp-barrier-name": [
+   {
+    "args": {},
+    "text": "Barrier"
+   }
+  ],
+  "serp-ward-name": [
+   {
+    "args": {},
+    "text": "Ward"
+   }
+  ],
+  "serp-plates-name": [
+   {
+    "args": {},
+    "text": "Plates"
+   }
+  ],
+  "row-pod": [
+   {
+    "args": {},
+    "text": "another pod"
+   }
+  ],
+  "row-pod-note": [
+   {
+    "args": {},
+    "text": "a capsule on the deep's far side: one more of the crew, living down here"
+   }
+  ],
+  "rail-fighter": [
+   {
+    "args": {},
+    "text": "the fighter"
+   }
+  ],
+  "row-raise-station": [
+   {
+    "args": {},
+    "text": "raise a station"
+   }
+  ],
+  "build-free": [
+   {
+    "args": {},
+    "text": "free"
+   }
+  ],
+  "sect-diggers": [
+   {
+    "args": {},
+    "text": "diggers"
+   }
+  ],
+  "casino-sign": [
+   {
+    "args": {},
+    "text": "CASINO"
+   }
+  ],
+  "casino-drop": [
+   {
+    "args": {},
+    "text": "DROP IT"
+   }
   ]
+ },
+ "inventoryAs": {
+  "set.volume.aria": {
+   "id": "set-volume.aria-label"
+  },
+  "modal.close.aria": {
+   "id": "modal-close.aria-label"
+  },
+  "other.pause.aria": {
+   "id": "other-pause.aria-label"
+  },
+  "slots.since.day": {
+   "id": "slots-since-days",
+   "args": {
+    "d": 1
+   }
+  },
+  "cloud.line.off": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-off"
+    }
+   }
+  },
+  "cloud.line.out": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-out"
+    }
+   }
+  },
+  "cloud.line.refused": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-refused"
+    }
+   }
+  },
+  "cloud.line.offline": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-offline"
+    }
+   }
+  },
+  "cloud.line.behind": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-behind"
+    }
+   }
+  },
+  "cloud.line.newer": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-newer"
+    }
+   }
+  },
+  "cloud.line.big": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-big"
+    }
+   }
+  },
+  "cloud.line.full": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-full"
+    }
+   }
+  },
+  "cloud.line.paused": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-paused"
+    }
+   }
+  },
+  "cloud.line.conflict": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-conflict"
+    }
+   }
+  },
+  "cloud.line.on": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-on"
+    }
+   }
+  },
+  "cloud.line.saved": {
+   "id": "cloud-line",
+   "args": {
+    "state": {
+     "msg": "cloud-state-saved",
+     "args": {
+      "since": "${since}"
+     }
+    }
+   }
+  },
+  "title.playlabel.row": {
+   "parts": [
+    [
+     "slots-row-rock",
+     {
+      "n": "${n}"
+     }
+    ],
+    [
+     "slots-row-crew",
+     {
+      "n": "${n}"
+     }
+    ],
+    "${since}"
+   ],
+   "sep": " · "
+  },
+  "title.motion": null,
+  "title.dark": null,
+  "title.sound": null,
+  "ach.rock0.name": {
+   "id": "ach-rocks-name",
+   "args": {
+    "n": "10"
+   }
+  },
+  "ach.rock0.note": {
+   "id": "ach-rocks-note",
+   "args": {
+    "n": "10"
+   }
+  },
+  "ach.rock1.name": {
+   "id": "ach-rocks-name",
+   "args": {
+    "n": "25"
+   }
+  },
+  "ach.rock1.note": {
+   "id": "ach-rocks-note",
+   "args": {
+    "n": "25"
+   }
+  },
+  "ach.rock2.name": {
+   "id": "ach-rocks-name",
+   "args": {
+    "n": "50"
+   }
+  },
+  "ach.rock2.note": {
+   "id": "ach-rocks-note",
+   "args": {
+    "n": "50"
+   }
+  },
+  "ach.rock3.name": {
+   "id": "ach-rocks-name",
+   "args": {
+    "n": "100"
+   }
+  },
+  "ach.rock3.note": {
+   "id": "ach-rocks-note-last",
+   "args": {
+    "n": "100"
+   }
+  },
+  "ach.pebble0.name": {
+   "id": "ach-pebbles-name",
+   "args": {
+    "n": "10k"
+   }
+  },
+  "ach.pebble0.note": {
+   "id": "ach-pebbles-note",
+   "args": {
+    "n": "10k"
+   }
+  },
+  "ach.pebble1.name": {
+   "id": "ach-pebbles-name",
+   "args": {
+    "n": "100k"
+   }
+  },
+  "ach.pebble1.note": {
+   "id": "ach-pebbles-note",
+   "args": {
+    "n": "100k"
+   }
+  },
+  "ach.pebble2.name": {
+   "id": "ach-pebbles-name",
+   "args": {
+    "n": "1m"
+   }
+  },
+  "ach.pebble2.note": {
+   "id": "ach-pebbles-note",
+   "args": {
+    "n": "1m"
+   }
+  },
+  "ach.pebble3.name": {
+   "id": "ach-pebbles-name",
+   "args": {
+    "n": "10m"
+   }
+  },
+  "ach.pebble3.note": {
+   "id": "ach-pebbles-note",
+   "args": {
+    "n": "10m"
+   }
+  },
+  "ach.pebble4.name": {
+   "id": "ach-pebbles-name",
+   "args": {
+    "n": "100m"
+   }
+  },
+  "ach.pebble4.note": {
+   "id": "ach-pebbles-note",
+   "args": {
+    "n": "100m"
+   }
+  },
+  "ach.crew0.name": {
+   "id": "ach-crew-name",
+   "args": {
+    "n": "5"
+   }
+  },
+  "ach.crew0.note": {
+   "id": "ach-crew-note",
+   "args": {
+    "n": "5"
+   }
+  },
+  "ach.crew1.name": {
+   "id": "ach-crew-name",
+   "args": {
+    "n": "10"
+   }
+  },
+  "ach.crew1.note": {
+   "id": "ach-crew-note",
+   "args": {
+    "n": "10"
+   }
+  },
+  "ach.crew2.name": {
+   "id": "ach-crew-name",
+   "args": {
+    "n": "25"
+   }
+  },
+  "ach.crew2.note": {
+   "id": "ach-crew-note",
+   "args": {
+    "n": "25"
+   }
+  },
+  "ach.crew3.name": {
+   "id": "ach-crew-name",
+   "args": {
+    "n": "50"
+   }
+  },
+  "ach.crew3.note": {
+   "id": "ach-crew-note",
+   "args": {
+    "n": "50"
+   }
+  },
+  "ach.ore0.note": {
+   "id": "ach-ore-note",
+   "args": {
+    "n": "1k"
+   }
+  },
+  "ach.ore1.note": {
+   "id": "ach-ore-note",
+   "args": {
+    "n": "10k"
+   }
+  },
+  "serp.stun": {
+   "id": "status-line",
+   "args": {
+    "name": {
+     "msg": "status-stun"
+    },
+    "does": {
+     "msg": "status-stun-does"
+    }
+   }
+  },
+  "serp.bleed": {
+   "id": "status-line",
+   "args": {
+    "name": {
+     "msg": "status-bleed"
+    },
+    "does": {
+     "msg": "status-bleed-does"
+    }
+   }
+  },
+  "serp.held": {
+   "id": "status-line",
+   "args": {
+    "name": {
+     "msg": "status-held"
+    },
+    "does": {
+     "msg": "status-held-does"
+    }
+   }
+  },
+  "serp.inspired": {
+   "id": "status-line",
+   "args": {
+    "name": {
+     "msg": "status-inspired"
+    },
+    "does": {
+     "msg": "status-inspired-does"
+    }
+   }
+  },
+  "serp.haste": {
+   "id": "status-line",
+   "args": {
+    "name": {
+     "msg": "status-haste"
+    },
+    "does": {
+     "msg": "status-haste-does",
+     "args": {
+      "pct": "20%"
+     }
+    }
+   }
+  },
+  "serp.exposed": {
+   "id": "status-line",
+   "args": {
+    "name": {
+     "msg": "status-exposed"
+    },
+    "does": {
+     "msg": "status-exposed-does",
+     "args": {
+      "lo": "15%",
+      "hi": "25%"
+     }
+    }
+   }
+  },
+  "idx.haul.name": {
+   "id": "job-haulers"
+  },
+  "idx.janitor.name": {
+   "id": "job-janitors"
+  },
+  "idx.wizard.name": {
+   "id": "job-wizards"
+  },
+  "idx.build.name": {
+   "id": "job-builders"
+  },
+  "idx.party.name": {
+   "id": "job-fighters"
+  }
  }
 }

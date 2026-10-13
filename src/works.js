@@ -8,6 +8,7 @@
 // who any of the bodies are: crew.js registers the one thing only it can
 // answer, how many pairs of hands are at a site this frame.
 
+import { msg } from './lang.js';
 import { S, bench, lab, filter, tower, shack, outhouse } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT, PARTY_IDS } from './config.js';
 import { JOB } from './jobs.js';
@@ -517,7 +518,7 @@ export const doneBillsAt = site => {
 // what finished at a site, in the words the rows used
 export const doneName = site => {
   const names = doneAt(site).map(key => rowFor(key)?.name).filter(Boolean);
-  return names.length ? `${names.join(', ')} done` : 'work done';
+  return names.length ? msg('hover-done', { names: names.join(', ') }) : msg('hover-done-work');
 };
 
 // and reading that station's board is what clears its mark

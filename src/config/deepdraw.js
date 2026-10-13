@@ -1,6 +1,7 @@
 // --- how the deep is drawn: its sky, its motes, the serpent, the weapons, the glide ---
 // Owned by track RENDER of docs/wave-serpent.md. Every number the track needs
 // lives here; a magic number in a module is a bug.
+import { msg } from '../lang.js';
 import { P } from './yard.js';
 
 // --- the view, and the glide between the two halves -----------------------------
@@ -400,14 +401,19 @@ export const STATUS_STRUCK = '#9b5de5';
 // What a mechanic's tile and a dazed fighter's say on hover; the statuses' own
 // lines are the boards' (deep/rails.js, `statusLine`).
 export const STATUS_SAYS = {
-  lash:  { calm: 'Lash: stuns melee attackers', coming: 'Lash coming', on: 'Lash: stuns melee attackers', stopped: 'Lash: stopped' },
-  sink:  { coming: 'Cloak coming', on: 'Cloak: out of reach' },   // the owner calls it the cloak; nothing answers it
-  orb:   { coming: 'Constrict coming', on: 'Constrict', stopped: 'Constrict' },   // the owner's name for it
-  dazed: 'Dazed: thrown off, seeing stars',
-  constricted: 'Constricted',   // the owner's
-  barrier: 'Barrier: absorbs explosive damage',   // the owner's
-  ward: 'Ward: magic damage cut in half',
-  plates: 'Plates: phys damage cut in half',
+  lash:  { calm: msg('serp-lash-calm'), coming: msg('serp-lash-coming'), on: msg('serp-lash-on'), stopped: msg('serp-lash-stopped') },
+  sink:  { coming: msg('serp-sink-coming'), on: msg('serp-sink-on') },   // the owner calls it the cloak; nothing answers it
+  orb:   { coming: msg('serp-orb-coming'), on: msg('serp-orb-on'), stopped: msg('serp-orb-stopped') },   // the owner's name for it
+  dazed: msg('serp-dazed'),
+  constricted: msg('serp-constricted'),   // the owner's
+  barrier: msg('serp-barrier'),   // the owner's
+  ward: msg('serp-ward'),
+  plates: msg('serp-plates'),
+};
+// And each one's name alone, the label under its tile.
+export const STATUS_NAMES = {
+  lash: msg('serp-lash'), sink: msg('serp-sink'), orb: msg('serp-orb'), dazed: msg('serp-dazed-name'),
+  constricted: msg('serp-constricted-name'), barrier: msg('serp-barrier-name'), ward: msg('serp-ward-name'), plates: msg('serp-plates-name')
 };
 export const STATUS_PX = 3;
 // Over the serpent's bar (the owner's B, 2026-10-04): the tiles twice the

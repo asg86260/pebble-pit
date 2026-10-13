@@ -1,6 +1,7 @@
 // The pile-full warning over a station whose pile has filled, and where it
 // hangs.
 
+import { msg } from '../lang.js';
 import { stationFoot } from '../board.js';
 import { P } from '../config.js';
 import { S, farm, sky } from '../state.js';
@@ -34,7 +35,7 @@ export function drawPileMarks() {
 // whose row has a pile of its own, its mark over the station.
 export const markedPiles = () => [...S.piles, ...STATIONS.filter(r => r.pile && r.open()).map(r => ({ key: r.key }))];
 // What the hover says over one: the row's own words, or the yard's.
-export const fullSays = key => station(key)?.full || 'pile is full';
+export const fullSays = key => station(key)?.full || msg('hover-pile-full');
 
 // A warning triangle: hollow, with a bar and a dot inside it. One radius, and
 // everything inside is a fraction of it, so changing it changes the whole sign.
