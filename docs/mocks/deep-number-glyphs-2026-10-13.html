@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep number glyphs</title>
+<style>
+:root{--bg:#f4f4f1;--ink:#16161a;--mute:#5d5d66;--card:#fff;--line:#d4d4cc;--warn:#fff3c4;--warnink:#4a3b00;--chip:#ececE6;--accent:#6a2fbe}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121215;--ink:#ececf0;--mute:#9b9ba6;--card:#1b1b20;--line:#33333b;--warn:#3a3210;--warnink:#f1e3a0;--chip:#26262c;--accent:#b88cf5}}
+:root[data-theme="dark"]{--bg:#121215;--ink:#ececf0;--mute:#9b9ba6;--card:#1b1b20;--line:#33333b;--warn:#3a3210;--warnink:#f1e3a0;--chip:#26262c;--accent:#b88cf5}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:15px/1.5 system-ui,sans-serif;padding:16px;max-width:980px;margin:0 auto;overflow-x:hidden}
+h1{font-size:22px;margin:0 0 8px}h2{font-size:18px;margin:28px 0 8px}h3{font-size:15px;margin:14px 0 6px}
+p{margin:6px 0}.mute{color:var(--mute)}
+.box{background:var(--warn);color:var(--warnink);border-radius:8px;padding:10px 12px;margin:12px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;margin:10px 0;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+canvas{image-rendering:pixelated;max-width:100%;background:#000;display:block}
+.cell{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute)}
+.tw{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-size:13px;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;white-space:nowrap}
+code{background:var(--chip);padding:1px 4px;border-radius:4px;font-size:13px}
+pre{background:var(--chip);padding:10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:8px 0}
+label{margin-right:14px;display:inline-block}
+.opt{border-left:4px solid var(--accent)}
+</style>
+</head>
+<body>
+<h1>Deep number glyphs: k, m, b and a point</h1>
+<p class="mute">Fight numbers over the endless serpent reach +181432 (level 25) and +1965763 (level 50). They need suffixes.</p>
+<div class="box"><b>This is a mock.</b> It is drawn from plain canvas shapes, not the game. Digits are copied exactly from <code>NUM_FONT</code> (src/config/deepdraw.js). It cannot show: the real camera and coil, the number flying into the bar's fill, the speed lines of a big blow, the dark-page negative, or how a wider string sits against the coil at the screen edge. The strips below imitate the kick arc and the heal's climb and swell with the game's constants, nothing more.</div>
+
+<h2>1. The font today</h2>
+<p>Four font pixels by six, one font pixel between glyphs, a drop line one font pixel under, two screen pixels a font pixel (a big blow gets three). Only <code>0-9</code> and <code>+</code> exist.</p>
+<div class="card"><div class="row" id="digits"></div></div>
+
+<h2>2. Suffix and point glyphs, three options</h2>
+<p class="mute">Each shown at 1x and 4x with the real drop line. Widths vary where the letter needs it (m is 5 wide); the glyph sheet would need a width per glyph, a small change.</p>
+<div id="glyphopts"></div>
+
+<h2>3. Shortening rule</h2>
+<p>The yard already has one: <code>fmt</code> in src/words.js (see section 6). The three rules:</p>
+<ul>
+<li><b>Yard</b>: the HUD's <code>fmt</code> as is. One decimal below 99.95 of a unit, whole above (18.4k, 181k, 2m, 21.6m).</li>
+<li><b>3 figures</b>: always three significant figures (1.23k, 18.4k, 181k, 1.97m, 21.6m).</li>
+<li><b>Whole</b>: no point at all (1k, 18k, 181k, 2m, 22m). Drops the "." glyph entirely.</li>
+</ul>
+<div class="card tw"><table id="rules"></table></div>
+<p class="mute">Under 1000 every rule prints the number whole. Rounding up to 1000 of a unit rolls to the next suffix (999999 is 1m).</p>
+
+<h2>4. In context</h2>
+<p>Black deep, the bar (400 wide, white fill, grey rim), a loop of blows (white) and a purple heal. Real scale: two screen pixels a font pixel. Pick the rule:</p>
+<p id="rulepick"></p>
+<div id="ctx"></div>
+
+<h2>5. Reading it</h2>
+<ul>
+<li><b>A, lowercase</b>: familiar and the widest read; m is the widest glyph and sits low.</li>
+<li><b>B, capitals</b>: same height as digits so a suffix never looks like a different kind of mark; K and M are crowded at four wide.</li>
+<li><b>C, raised</b>: the suffix is small and top-aligned like an exponent; keeps the string short, but at 2px a font pixel the m is only 5x4 cells.</li>
+</ul>
+
+<h2>6. What the yard does</h2>
+<pre>export const fmt = n => {
+  const v = Math.round(n || 0), a = Math.abs(v);
+  if (a &lt; 1000) return String(v);
+  for (const [d, s] of [[1e9,'b'],[1e6,'m'],[1e3,'k']]) {
+    if (a &lt; d) continue;
+    const q = Math.abs(v) / d;
+    const t = q &gt;= 99.95 ? Math.round(q) : Math.round(q * 10) / 10;
+    if (t &gt;= 1000) return (v&lt;0?'-':'') + 1 + {k:'m',m:'b',b:'t'}[s];
+    return (v&lt;0?'-':'') + t + s;
+  }
+};</pre>
+<p>Lowercase <code>k</code>, <code>m</code>, <code>b</code> (and <code>t</code> on overflow), one decimal under 100 of a unit, whole above, trailing ".0" dropped by number-to-string. Matching it in the deep needs nothing new except the point glyph (and a <code>t</code> if ever needed: it is not reached at the serpent's numbers).</p>
+
+<script>
+const DIG={
+'0':['.##.','#..#','#..#','#..#','#..#','.##.'],
+'1':['.#..','##..','.#..','.#..','.#..','###.'],
+'2':['.##.','#..#','..#.','.#..','#...','####'],
+'3':['###.','...#','.##.','...#','...#','###.'],
+'4':['#..#','#..#','####','...#','...#','...#'],
+'5':['####','#...','###.','...#','...#','###.'],
+'6':['.##.','#...','###.','#..#','#..#','.##.'],
+'7':['####','...#','..#.','.#..','.#..','.#..'],
+'8':['.##.','#..#','.##.','#..#','#..#','.##.'],
+'9':['.##.','#..#','#..#','.###','...#','.##.'],
+'+':['....','.#..','###.','.#..','....','....']};
+const padTop=(r,w)=>[...Array(6-r.length).fill('.'.repeat(w)),...r];
+const padBot=(r,w)=>[...r,...Array(6-r.length).fill('.'.repeat(w))];
+const OPTS={
+A:{name:'A  lowercase',note:'k and b full height, m at x-height and five wide, point on the baseline, kerned in (no gap before it).',kernDot:true,
+ g:{k:['#...','#...','#.#.','##..','#.#.','#..#'],
+    b:['#...','#...','###.','#..#','#..#','###.'],
+    m:padTop(['##.#.','#.#.#','#.#.#','#.#.#'],5),
+    '.':padTop(['#'],1)}},
+B:{name:'B  small capitals',note:'K, M, B at the digits\' height, four wide, same weight as a 0; point is a 2x2 dot with the usual gap.',kernDot:false,
+ g:{k:['#..#','#.#.','##..','##..','#.#.','#..#'],
+    b:['###.','#..#','###.','#..#','#..#','###.'],
+    m:['#..#','####','####','#..#','#..#','#..#'],
+    '.':padTop(['##','##'],2)}},
+C:{name:'C  raised suffix',note:'Suffix is four rows tall, top-aligned like an exponent; the point is a single cell kerned in. The string reads as a number with a unit mark.',kernDot:true,
+ g:{k:padBot(['#..','#.#','##.','#.#'],3),
+    b:padBot(['#..','###','#.#','###'],3),
+    m:padBot(['##.#.','#.#.#','#.#.#','#...#'],5),
+    '.':padTop(['#'],1)}}
+};
+for(const o of Object.values(OPTS))o.all={...DIG,...o.g};
+
+const FACE='#ffffff',DROP='#42424a';
+const HEAL=['#9b5de5','#6a2fbe','#5c2ba6','#412465','#2d1d47'],HDROP=['#2d1d47','#241739','#1b112c','#130b20','#130b20'];
+function layout(font,str,opt){let x=0,out=[];for(let i=0;i<str.length;i++){const g=font[str[i]],w=g[0].length;
+ if(i>0&&!(opt&&opt.kernDot&&str[i]==='.'))x+=1;out.push({ch:str[i],x,w});x+=w;}return{out,w:x};}
+function draw(g,font,str,px,left,top,face,drop,opt,bob){
+ const L=layout(font,str,opt);
+ const paint=(tone,oy)=>{g.fillStyle=tone;L.out.forEach((o,i)=>{const b=bob?bob(i)*px:0;font[o.ch].forEach((row,r)=>{for(let c=0;c<row.length;c++)if(row[c]==='#')g.fillRect(left+(o.x+c)*px,top+(r+oy)*px-b,px,px);});});};
+ paint(drop,1);paint(face,0);return L.w;
+}
+const wOf=(font,str,opt)=>layout(font,str,opt).w;
+function sheetCanvas(font,str,px,opt,face,drop,bg){
+ const c=document.createElement('canvas'),w=wOf(font,str,opt)*px+px,h=7*px;c.width=w;c.height=h;
+ const g=c.getContext('2d');if(bg){g.fillStyle=bg;g.fillRect(0,0,w,h);}draw(g,font,str,px,0,0,face||FACE,drop||DROP,opt);
+ return c;}
+function cell(label,canvas){const d=document.createElement('div');d.className='cell';d.appendChild(canvas);d.appendChild(document.createTextNode(label));return d;}
+function row1x4x(font,str,opt,label){const w=document.createElement('div');w.className='cell';
+ const r=document.createElement('div');r.className='row';
+ [1,4].forEach(px=>{const c=sheetCanvas(font,str,px,opt,FACE,DROP,'#000');c.style.padding='4px';c.style.boxSizing='content-box';r.appendChild(cell(px+'x',c));});
+ w.appendChild(r);w.appendChild(document.createTextNode(label));return w;}
+
+const dg=document.getElementById('digits');
+Object.keys(DIG).forEach(ch=>dg.appendChild(row1x4x(DIG,ch,null,"'"+ch+"'")));
+
+const go=document.getElementById('glyphopts');
+for(const [id,o] of Object.entries(OPTS)){
+ const card=document.createElement('div');card.className='card opt';
+ card.innerHTML='<h3>'+o.name+'</h3><p class="mute">'+o.note+'</p>';
+ const r=document.createElement('div');r.className='row';
+ ['k','m','b','.'].forEach(ch=>r.appendChild(row1x4x(o.all,ch,o,ch==='.'?'point':ch)));
+ card.appendChild(r);
+ const r2=document.createElement('div');r2.className='row';r2.style.marginTop='10px';
+ ['181k','1.97m','2b','21.6m','+181k'].forEach(s=>r2.appendChild(row1x4x(o.all,s,o,s)));
+ card.appendChild(r2);go.appendChild(card);
+}
+
+function short(n,rule){
+ const v=Math.round(n||0);if(v<1000)return String(v);
+ const U=[[1e9,'b'],[1e6,'m'],[1e3,'k']];
+ for(let i=0;i<U.length;i++){const [d,s]=U[i];if(v<d)continue;
+  const q=v/d;let t;
+  if(rule==='yard')t=q>=99.95?Math.round(q):Math.round(q*10)/10;
+  else if(rule==='sig3')t=q>=99.5?Math.round(q):+q.toPrecision(3);
+  else t=Math.round(q);
+  if(t>=1000)return '1'+({k:'m',m:'b',b:'t'}[s]);
+  return t+s;}
+}
+const SAMPLES=[9,75,999,1000,1234,18420,181432,1965763,21600000];
+const RN={yard:'Yard (fmt)',sig3:'3 figures',whole:'Whole'};
+const tb=document.getElementById('rules');
+tb.innerHTML='<tr><th>value</th>'+Object.values(RN).map(n=>'<th>'+n+'</th>').join('')+'<th>heal, Yard</th></tr>'+
+ SAMPLES.map(n=>'<tr><td>'+n+'</td>'+Object.keys(RN).map(k=>'<td>'+short(n,k)+'</td>').join('')+'<td>+'+short(n,'yard')+'</td></tr>').join('');
+
+let rule='yard';
+const rp=document.getElementById('rulepick');
+Object.entries(RN).forEach(([k,n],i)=>{const l=document.createElement('label');l.innerHTML='<input type="radio" name="r" value="'+k+'"'+(i?'':' checked')+'> '+n;l.firstChild.onchange=()=>rule=k;rp.appendChild(l);});
+const strips=[];
+const cx=document.getElementById('ctx');
+for(const [id,o] of Object.entries(OPTS)){
+ const card=document.createElement('div');card.className='card opt';card.innerHTML='<h3>'+o.name+'</h3>';
+ const c=document.createElement('canvas');c.style.width='100%';c.style.height='210px';card.appendChild(c);cx.appendChild(card);
+ strips.push({o,c});
+}
+const PX=2,BAR_H=14;
+const BLOWS=[{n:75,k:0.1,dir:-1,at:0.0},{n:1234,k:0.35,dir:1,at:0.55},{n:18420,k:0.8,dir:-1,at:1.1},{n:181432,k:1,dir:1,at:1.7}];
+const HEALS=[{n:181432,dir:1,at:0.3},{n:1965763,dir:-1,at:1.5}];
+const LOOP=4.2;
+function frame(t){
+ const s=(t/1000)%LOOP;
+ strips.forEach(({o,c})=>{
+  const dpr=window.devicePixelRatio||1,W=c.clientWidth,H=c.clientHeight;
+  if(c.width!==Math.round(W*dpr)||c.height!==Math.round(H*dpr)){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);}
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.imageSmoothingEnabled=false;
+  g.fillStyle='#000';g.fillRect(0,0,W,H);
+  const bw=Math.min(400,W-24),bx=Math.round((W-bw)/2),by=H-BAR_H-16;
+  g.fillStyle='#8b8b96';g.fillRect(bx-1,by-1,bw+2,BAR_H+2);g.fillStyle='#000';g.fillRect(bx,by,bw,BAR_H);
+  g.fillStyle='#fff';g.fillRect(bx,by,Math.round(bw*0.62),BAR_H);
+  g.fillStyle='#9b5de5';g.fillRect(bx+Math.round(bw*0.62),by,Math.round(bw*0.08),BAR_H);
+  const cxm=Math.round(W/2);
+  g.fillStyle='#2a2a30';g.fillRect(cxm-60,by-60,120,10);
+  BLOWS.forEach(b=>{
+   const age=((s-b.at)+LOOP)%LOOP,life=1.3;if(age>=life)return;
+   const up=110+40*b.k,top=up/500,tt=age<top?age:age<top+0.14?top:age-0.14;
+   const dx=b.dir*(26+20*b.k)*tt,dy=-up*tt+500*tt*tt/2;
+   const str=short(b.n,rule),px=b.k>0.5?PX+1:PX,w=wOf(o.all,str,o)*px;
+   let k=age<0.08?age/0.08:age>life*0.6?(life-age)/(life*0.4):1;k=Math.round(Math.max(0,Math.min(1,k))*8)/8;
+   g.globalAlpha=k;
+   const x=Math.round(Math.max(2,Math.min(W-w-2,cxm+dx-w/2))/px)*px,y=Math.round((by-62+dy)/px)*px;
+   draw(g,o.all,str,px,x,y,FACE,DROP,o);g.globalAlpha=1;
+  });
+  HEALS.forEach(h=>{
+   const age=((s-h.at)+LOOP)%LOOP,life=1.8;if(age>=life)return;
+   const str='+'+short(h.n,rule),w=wOf(o.all,str,o)*PX;
+   const fi=age<life*0.5?0:Math.min(4,Math.floor((age-life*0.5)/(life*0.5)*5));
+   const x=Math.round(Math.max(2,Math.min(W-w-2,cxm+h.dir*14-w/2))/PX)*PX;
+   const y=Math.round((by-30-Math.round(age*12/PX)*PX)/PX)*PX;
+   const bob=i=>Math.max(0,Math.round(Math.sin(age*7-i*0.9)));
+   draw(g,o.all,str,PX,x,y,HEAL[fi],HDROP[fi],o,bob);
+  });
+ });
+ requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
