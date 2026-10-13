@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creature Click Reactions</title>
+<style>
+/* Tokens: the mock page's chrome in both themes. The canvases are the deep,
+   which is dark water on either page, so they keep the deep's own ramps. */
+:root {
+  --page: #f2f2ef; --page-ink: #1a1a1a; --page-mute: #5c5c58; --page-line: #d6d6d0;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page); color: var(--page-ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 20px; margin: 44px 0 6px; padding-top: 16px; border-top: 2px solid var(--page-ink); }
+h3 { font-size: 16px; margin: 30px 0 2px; }
+h3 code { font-size: 16px; }
+p { margin: 6px 0; max-width: 72ch; }
+code { font-size: 13px; }
+.lede { color: var(--page-mute); }
+.mocknote { border: 1px dashed var(--page-mute); padding: 10px 14px; margin: 14px 0; max-width: 80ch; font-size: 14px; }
+.mocknote ul { margin: 6px 0 0; padding-left: 20px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; align-items: center; }
+.toolbar .lbl { font-size: 13px; color: var(--page-mute); margin-right: 2px; }
+.toolbar button {
+  font: 13px system-ui, sans-serif; padding: 5px 10px; cursor: pointer;
+  background: var(--page); color: var(--page-ink); border: 1px solid var(--page-mute);
+}
+.toolbar button[aria-pressed="true"] { background: var(--page-ink); color: var(--page); }
+.sticky { position: sticky; top: 0; z-index: 5; background: var(--page); padding: 6px 0; border-bottom: 1px solid var(--page-line); }
+.meta { font-size: 13px; color: var(--page-mute); max-width: 90ch; }
+.frames { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; margin: 10px 0; }
+.frame { flex: 1 1 320px; min-width: 0; max-width: 420px; }
+.frame .name { font-weight: 600; font-size: 14px; }
+.cap { font-size: 13px; color: var(--page-mute); margin: 2px 0 6px; min-height: 3em; }
+.beat { font: 12px ui-monospace, "Courier New", monospace; color: var(--page-mute); margin-top: 4px; }
+.keep { font-size: 12px; margin-top: 2px; }
+canvas { display: block; width: 100%; image-rendering: pixelated; cursor: pointer; border: 1px solid var(--page-line); background: #000; }
+</style>
+</head>
+<body>
+<main>
+<h1>Each creature its own click</h1>
+<p class="lede">Every creature in the deep, drawn from its own cells in the game, with two candidate reactions to a click (A and B). Each loops: a second of its idle swim, the click (the small grey cross), the reaction, and home again. Click a panel to play its reaction now.</p>
+
+<div class="mocknote">
+  <b>This is a mock, drawn from plain shapes on a canvas, not the game.</b> The zone creatures' drawings are copied cell for cell from <code>FAUNA_SPRITES</code> (<code>src/config/fauna.js</code>) with the game's tone rules (<code>render/fauna.js</code>: per-cell grey nudge, purple ramp, blinking lights, the midnight band two rungs dim); the eight stream creatures are the draw functions of <code>render/fish.js</code> copied as they are. The reactions, poses and timings are new and are the proposal.
+  <ul>
+    <li><b>Today:</b> the nine zone creatures swimming (<code>FAUNA</code>, one each) are clickable: a click within the bird's reach startles one, shakes loose the bird's handful (5 scales that sink for the gatherers) and it bolts for the nearer end of the deep in held poses, away 20 to 40 s. The eight stream creatures (<code>render/fish.js</code>: the near stream over the coil, the serpent's meals and now most of what is on screen, and the far stream) have no hit area at all: those are the ones not clickable today. Three zone kinds are switched off (<code>n: 0</code>) and sit at the end.</li>
+    <li><b>Per reaction</b> a line says whether today's click (the scale drop, and the bolt) stays alongside it. The "scales" switch shows or hides the drop in every panel.</li>
+    <li><b>What it cannot show:</b> the real deep around them (the coil, the stations, the portal, the camera and its zoom, the phone's scale), the zone tint as it will be (another change is reworking the band dithering; the water here is a flat stand-in dither of each zone's two tones), the far stream's parallax and darker tones (the stream creatures are drawn here at near-stream tones and size), the scales landing on the real bed and the gatherers fetching them, how many creatures there will be (the count is being cut separately), sound, and the hit area (a click anywhere on a panel plays it).</li>
+    <li><b>Left out:</b> <code>gulper</code> (the gulper eel) has a drawing in the code but no row in <code>FAUNA</code>, so it never swims; it is not drawn here. The meal's swim into the mouth and the rift-life crossings are pictures of the same eight stream creatures and are not separate kinds.</li>
+  </ul>
+</div>
+
+<div class="toolbar sticky">
+  <span class="lbl">scales:</span>
+  <button type="button" id="scalesOn" aria-pressed="true">shown</button>
+  <button type="button" id="scalesOff" aria-pressed="false">hidden</button>
+  <span class="lbl" style="margin-left:12px">speed:</span>
+  <button type="button" data-speed="1" aria-pressed="true">1x</button>
+  <button type="button" data-speed="0.5" aria-pressed="false">half</button>
+  <button type="button" data-speed="0.25" aria-pressed="false">quarter</button>
+</div>
+
+<div id="roster"></div>
+</main>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// The deep's ramps, as seen (config/rift.js ABYSS_TONES, ABYSS_MAGIC_TONES).
+const AB = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PU = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const clampI = i => Math.max(0, Math.min(11, i));
+const grey = i => AB[clampI(i)];
+const purple = i => PU[clampI(i)];
+// A tone n rungs darker on its own ramp: the smear is the body a held pose
+// ago, drawn darker, never a blend.
+const RUNG = new Map();
+AB.forEach((c, i) => RUNG.set(c, ['g', i]));
+PU.forEach((c, i) => { if (i) RUNG.set(c, ['p', i]); });
+const darker = n => c => { const r = RUNG.get(c); if (!r) return c; const i = Math.max(1, r[1] - n); return r[0] === 'g' ? AB[i] : PU[i]; };
+
+const unit = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const unit2 = (a, b) => unit(a * 31.7 + b * 113.3);
+
+// --- the zone creatures' drawings: config/fauna.js FAUNA_SPRITES -----------------
+const SPR = {
+  sardine: { fps: 6, f: [['d.cbw', 'dcccb'], ['.dcbw', 'dcccb']] },
+  jelly: { fps: 2.5, f: [
+    ['.bbb.', 'bcwcb', 'b...b', 'd.d.d', '.d.d.', 'd.d.d'],
+    ['.bbb.', 'bcwcb', '.b.b.', '.ddd.', '.d.d.', '.d.d.'],
+    ['..b..', '.bwb.', 'bc.cb', 'd.d.d', 'd.d.d', '.d.d.']] },
+  lantern: { fps: 5, f: [['..cccb.', 'dccccbw', 'd.L.L..'], ['d.cccb.', '.ccccbw', '..L.L..']] },
+  hatchet: { fps: 4, f: [['..bbw', '.bbbb', 'dbbbb', '.bbbL', '..LL.'], ['..bbw', '.bbbb', '.bbbb', 'dbbbL', '..LL.']] },
+  angler: { fps: 2, f: [
+    ['.....dddd.', '....d...dL', '..cccc....', 'dccccccw..', 'dcccccccc.', 'dcccwcwc..', '..ccccc...'],
+    ['.....dddd.', '....d...dL', '..cccc....', 'dccccccw..', 'dccccc....', 'dcccwcw...', '..cccccc..']] },
+  vampire: { fps: 2, f: [
+    ['...rr...', '..rrrr..', '.rqqqqr.', '.qbqqbq.', 'qqqqqqqq', 'q.q..q.q', 'q.q..q.q', '..q..q..'],
+    ['...rr...', '..rrrr..', '.rqqqqr.', '.qbqqbq.', '.qqqqqq.', '..qqqq..', '..q..q..', '.q.qq.q.']] },
+  dumbo: { fps: 3, f: [
+    ['b.ccc.b', 'bbcccbb', '.cwcwc.', '.ccccc.', 'c.c.c.c', 'c.c.c.c', '.c...c.'],
+    ['..ccc..', 'bbcccbb', 'bcwcwcb', '.ccccc.', '.c.c.c.', 'c.c.c.c', 'c.....c'],
+    ['..ccc..', '.ccccc.', 'bcwcwcb', 'bcccccb', '.c.c.c.', '.c.c.c.', 'c.c.c.c']] },
+  tripod: { fps: 1.5, f: [
+    ['.........b.', '......ccb..', 'dccccccccw.', '.ccccccc...', '.d....d....', '.d.....d...', 'd.......d..'],
+    ['..........b', '......cccb.', 'dccccccccw.', '.ccccccc...', '.d....d....', '.d.....d...', 'd.......d..']] },
+  cucumber: { fps: 1, f: [['.cbcbc.', 'ccccccc', 'd.d.d.d'], ['..cbcbc', '.cccccc', '.d.d.d.']] },
+  amphipod: { fps: 6, f: [['.bb.', 'bccw', 'd.d.'], ['.bb.', 'bccw', '.d.d']] },
+  snail: { fps: 3, f: [['....bbb.', 'dbbbbbbw', '....bbb.'], ['d...bbb.', '.bbbbbbw', '....bbb.']] },
+};
+const BASE = { d: 6, c: 8, b: 10 }, VARY = { lo: 0.2, hi: 0.85, floor: 4 };
+const INK = { w: 11, e: 4, q: [7, 6], qDark: 0.25, r: 9, p: 11 }, BLINK = { rate: 2.3, lit: 11, dark: 6 };
+function tone(ch, seed, r, c, dim) {
+  if (ch in BASE) {
+    const j = unit2(seed + r * 7.1, c * 3.3);
+    return grey(Math.max(VARY.floor, BASE[ch] + (j < VARY.lo ? -1 : j > VARY.hi ? 1 : 0)) - dim);
+  }
+  if (ch === 'w') return grey(INK.w - dim);
+  if (ch === 'e') return grey(INK.e - dim);
+  if (ch === 'q') return purple(INK.q[unit2(seed + r, c) < INK.qDark ? 1 : 0] - dim);
+  if (ch === 'r') return purple(INK.r - dim);
+  if (ch === 'p') return purple(INK.p - dim);
+  return null;
+}
+const lightTone = (seed, c, t, dim) => purple((Math.floor(t * BLINK.rate + seed * 5 + c * 0.7) % 3 ? BLINK.lit : BLINK.dark) - dim);
+const frameOf = (key, seed, t) => { const s = SPR[key]; return Math.floor(t * s.fps + seed * 10) % s.f.length; };
+
+// One drawing: rows of characters at cell (x, y), facing `dir`. `o.rows`
+// stands in a pose of the mock's own; `o.lights` 'off' or 'lit' holds the
+// lights; `o.ch` overrides a character's tone; `o.vflip` turns it over.
+function spr(d, key, x, y, dir, f, seed, t, o = {}) {
+  const rows = o.rows || SPR[key].f[f], w = rows[0].length, dim = o.dim ?? d.dim;
+  let li = 0;
+  for (let r = 0; r < rows.length; r++) for (let c = 0; c < w; c++) {
+    const ch = rows[r][c]; if (ch === '.') continue;
+    let col;
+    if (ch === 'L') {
+      const k = li++;
+      col = o.lights === 'off' || (o.litCount != null && k >= o.litCount) ? purple(2) : o.lights === 'lit' ? purple(11) : lightTone(seed, c, t, dim);
+    } else col = (o.ch && o.ch[ch]) || tone(ch, seed, r, c, dim);
+    if (!col) continue;
+    if (o.map) col = o.map(col);
+    const at = dir > 0 ? c : w - 1 - c;
+    d.put(x + at, y + (o.vflip ? rows.length - 1 - r : r), col);
+  }
+}
+
+// --- the stream creatures: render/fish.js SP, as they are ---------------------
+const G = [4, 6, 8, 9, 10, 11].map(i => AB[i]);
+const Pu = [2, 3, 4, 5, 7, 9, 10, 11, 11].map(i => PU[i]);
+const BLACK = AB[0];
+const ell = (put, cx, cy, rx, ry, tone) => {
+  for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++)
+    for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) {
+      const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+      if (d <= 1) put(x, y, tone(x, y, d));
+    }
+};
+const SP = [
+  { name: 'Lantern angler', L: 18,
+    draw(put, t) {
+      const flick = Math.sin(t * 9), jaw = Math.sin(t * 6) > 0.3 ? 1 : 0;
+      ell(put, 6.5, 0, 6, 3.2, (x, y, d) => y > 1 ? G[1] : d > 0.7 ? G[3] : G[2]);
+      for (let x = 0; x <= 4; x++) put(x, 2 + jaw, G[1]);
+      for (const x of [0, 2, 4]) put(x, 1, G[5]);
+      for (let i = 0; i < 4; i++) { put(11 + i, Math.round(flick * i * 0.4) - 1, G[2]); put(11 + i, Math.round(flick * i * 0.4) + 1, G[1]); }
+      put(12, Math.round(flick * 1.6), G[2]);
+      put(8, -4, G[1]); put(9, -4, G[1]);
+      put(4, -1, G[5]); put(3, -1, G[0]);
+      const bulb = Pu[6 + Math.round(Math.sin(t * 5) + 1)];
+      for (const [x, y] of [[9, -3], [8, -4], [6, -5], [4, -6], [2, -6], [1, -5]]) put(x, y, G[1]);
+      put(0, -5, bulb); put(0, -4, bulb); put(-1, -5, Pu[8]); put(-1, -4, bulb);
+    } },
+  { name: 'Ribbon eel', L: 26,
+    // `k` scales the wave (the mock's straighten); k = 1 is the game's
+    draw(put, t, k = 1) {
+      for (let i = 0; i < 26; i++) {
+        const amp = 0.6 + i * 0.09, yy = Math.round(Math.sin(i / 2.4 - t * 7) * Math.min(2.6, amp) * k), th = i < 3 ? 2 : i < 18 ? 1.5 : 1;
+        put(i, yy, Pu[i < 3 ? 7 : 6]);
+        if (th >= 1.5) put(i, yy + 1, Pu[i % 4 < 2 ? 8 : 7]);
+        if (i > 3 && i < 21 && i % 2 === 0) put(i, yy - 1, Pu[4]);
+        if (i < 3) put(i, yy - 1, Pu[6]);
+      }
+      put(1, Math.round(Math.sin(1 / 2.4 - t * 7) * 0.7 * k) - 1, G[5]);
+      put(-1, Math.round(Math.sin(-t * 7) * 0.6 * k), G[5]);
+    } },
+  { name: 'Glass jelly', L: 18,
+    draw(put, t) {
+      const pulse = Math.sin(t * 3.2), rx = 5 + pulse * 0.8, ry = 4 - pulse * 0.9;
+      for (let x = 0; x <= 6; x++) {
+        const w = ry * Math.sqrt(Math.max(0, 1 - ((rx - x) / rx) ** 2));
+        for (let y = -Math.round(w); y <= Math.round(w); y++)
+          put(x, y, Math.abs(y) >= Math.round(w) || x === 0 ? G[5] : G[3 + ((x + y) & 1)]);
+      }
+      for (let j = 0; j < 3; j++) put(2 + j * 1.5, Math.round(Math.sin(t * 3 + j * 2) * 1.4), Pu[Math.sin(t * 4 + j * 2.1) > 0 ? 8 : 6]);
+      for (let j = -2; j <= 2; j++)
+        for (let x = 7; x < 18; x++) put(x, Math.round(j * 0.9 + Math.sin((x - 7) / 1.6 - t * 4 + j) * (0.6 + (x - 7) * 0.12)), (x + j) % 3 ? G[2] : G[1]);
+      for (let x = 7; x < 12; x++) for (const o of [-1, 1]) put(x, o + Math.round(Math.sin(x - t * 3)), Pu[5]);
+    } },
+  { name: 'Skull fish', L: 20,
+    draw(put, t) {
+      const chat = Math.sin(t * 11) > 0 ? 1 : 0, sway = x => Math.round(Math.sin(x / 3.2 - t * 5) * 1.2);
+      ell(put, 4.5, -0.5, 4.3, 3.6, (x, y, d) => d > 0.72 ? G[5] : G[4]);
+      for (let x = 0; x <= 2; x++) { put(x, 0, G[4]); put(x, 1, G[4]); }
+      ell(put, 3.6, -1, 1.7, 1.6, () => G[0]);
+      put(3, -1, G[5]);
+      for (const x of [0, 1, 2, 3, 4]) put(x, 2, x % 2 ? G[5] : G[2]);
+      for (let x = 0; x <= 5; x++) { put(x, 3 + chat, G[3]); if (x % 2 === 0) put(x, 2 + chat, G[5]); }
+      for (let x = 7; x < 20; x++) put(x, sway(x), x % 2 ? G[4] : G[3]);
+      for (let x = 8; x <= 14; x += 2) for (const o of [-2, -1, 1, 2]) put(x, sway(x) + o, o === -1 || o === 1 ? G[3] : G[2]);
+      for (const o of [-2, -1, 1, 2]) put(19 + (Math.abs(o) === 2 ? 1 : 0), sway(19) + o, G[3]);
+    } },
+  { name: 'Wandering eye', L: 22,
+    draw(put, t) {
+      const blink = (t % 1.7) < 0.22 ? (t % 1.7) / 0.22 : 0, lid = Math.round(Math.sin(blink * Math.PI) * 7);
+      ell(put, 4, 0, 4.2, 4.2, (x, y, d) => d > 0.8 ? G[3] : G[5]);
+      ell(put, 2.4, 0, 2.2, 2.2, () => Pu[8]);
+      ell(put, 2.4, 0, 1.4, 1.4, () => Pu[6]);
+      ell(put, 2.2, 0, 0.7, 0.7, () => BLACK);
+      put(3, -1, G[5]);
+      for (const [x, y] of [[6, -2], [7, 0], [6, 2], [5, -3]]) put(x, y, Pu[4]);
+      for (let y = -5; y < -5 + lid; y++) for (let x = -1; x <= 9; x++) if (((x - 4) / 4.6) ** 2 + (y / 4.6) ** 2 <= 1) put(x, y, G[2]);
+      for (let i = 0; i < 16; i++) put(8 + i, Math.round(Math.sin(i / 2 - t * 5) * (0.8 + i * 0.1)), Pu[Math.max(1, 6 - (i >> 2))]);
+    } },
+  { name: 'Spiral drifter', L: 12,
+    draw(put, t) {
+      const rot = t * 2.6;
+      ell(put, 7, 0, 4.6, 4.6, (x, y, d) => {
+        const r = Math.hypot(x - 7, y), ang = Math.atan2(y, x - 7) - rot;
+        const turn = ((ang / (Math.PI * 2) + r / 1.7) % 1 + 1) % 1;
+        return d > 0.8 ? G[5] : turn < 0.35 ? G[1] : turn < 0.7 ? G[3] : G[4];
+      });
+      ell(put, 1.6, 1, 2.6, 1.6, () => Pu[5]);
+      ell(put, 1.2, 1, 1.4, 0.8, () => Pu[6]);
+      const w = Math.sin(t * 5);
+      put(-1, -1 + Math.round(w), Pu[7]); put(-2, -2 + Math.round(w * 1.5), Pu[6]);
+      put(-1, 2 - Math.round(w), Pu[7]); put(-2, 3 - Math.round(w * 1.5), Pu[6]);
+      put(1, 0, G[5]);
+    } },
+  { name: 'Many-mouthed blob', L: 16,
+    draw(put, t) {
+      const lobes = [[7, 0, 4.4 + Math.sin(t * 3) * 0.7, 3.6], [3.5, -1, 3 + Math.sin(t * 4 + 1) * 0.6, 2.8], [10.5, 1, 3.2 + Math.sin(t * 3.5 + 2) * 0.6, 3], [6, 2.4, 2.6 + Math.sin(t * 5 + 3) * 0.5, 2.4]];
+      const inside = (x, y) => { for (const l of lobes) if (((x - l[0]) / l[2]) ** 2 + ((y - l[1]) / l[3]) ** 2 <= 1) return true; return false; };
+      for (let x = -1; x < 16; x++) for (let y = -6; y <= 6; y++) {
+        if (!inside(x, y)) continue;
+        const rim = !inside(x + 1, y) || !inside(x - 1, y) || !inside(x, y + 1) || !inside(x, y - 1);
+        put(x, y, rim ? Pu[7] : Pu[4 + ((x * 3 + y * 5) & 1) + (unit(x * 7 + y) > 0.8 ? 1 : 0)]);
+      }
+      [[3, 0, 0], [7, -2, 1.7], [9, 2, 3.1], [5, 3, 4.4], [12, 0, 5.2]].forEach(([x, y, ph]) => {
+        const open = Math.max(0, Math.sin(t * 3 + ph)) * 1.4;
+        if (open > 0.3) { put(x, y, BLACK); if (open > 0.8) put(x, y + 1, BLACK); put(x + 1, y, G[5]); }
+      });
+      for (let x = 0; x < 15; x += 2) if (unit(x + Math.floor(t * 6)) > 0.5) { put(x, -5 - (unit(x) > 0.5 ? 1 : 0), Pu[6]); put(x, 5 + (unit(x + 3) > 0.5 ? 1 : 0), Pu[6]); }
+    } },
+  { name: 'Toothed ring', L: 10,
+    // `teeth` the outer teeth's radius and `shut` the hole closed (the mock's
+    // snap); 5.6 and false are the game's
+    draw(put, t, teeth = 5.6, shut = false) {
+      ell(put, 5, 0, 5.2, 5.2, (x, y, d) => d > 0.72 ? G[3] : d > 0.32 || shut ? G[2] : BLACK);
+      for (let i = 0; i < 12; i++) { const a = t * 5 + i * Math.PI / 6; put(5 + Math.cos(a) * teeth, Math.sin(a) * teeth, G[5]); }
+      for (let i = 0; i < 8; i++) { const a = -t * 7 + i * Math.PI / 4; put(5 + Math.cos(a) * 2.6, Math.sin(a) * 2.6, G[4]); }
+      if (!shut) put(5, 0, G[0]);
+    } },
+];
+// A stream creature at (x, y), its front tip there, its body trailing back
+// against `dir`. `o.map` changes a tone (null drops the cell), `o.off` moves
+// a cell (the blob's split), `o.args` the draw's extra knobs.
+function fish(d, k, x, y, dir, t, o = {}) {
+  const put = (lx, ly, col) => {
+    if (o.map) col = o.map(col, lx, ly); if (!col) return;
+    let ox = 0, oy = 0; if (o.off) [ox, oy] = o.off(lx, ly);
+    d.put(Math.round(x - dir * (lx + ox)), Math.round(y + ly + oy), col);
+  };
+  SP[k].draw(put, t, ...(o.args || []));
+}
+
+// ---------------------------------------------------------------------------
+// The panel: 48 by 26 cells, the click a second in, a five-second loop.
+const C = 48, R = 26, FLOOR = 23, LOOP = 5, CLICK = 1;
+const STEP = 1 / 12;                 // the house's held pose: twelve a second
+const S12 = t => Math.floor(t * 12) / 12;
+// A value along stepped keyframes [[t, v], ...]: held before the first and
+// after the last, straight between, whole cells.
+const kf = (s, pts) => {
+  if (s <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++) if (s < pts[i][0]) {
+    const [t0, v0] = pts[i - 1], [t1, v1] = pts[i];
+    return Math.round(v0 + (v1 - v0) * (s - t0) / (t1 - t0));
+  }
+  return pts[pts.length - 1][1];
+};
+const kfr = (s, pts) => { // the same, unrounded
+  if (s <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++) if (s < pts[i][0]) { const [t0, v0] = pts[i - 1], [t1, v1] = pts[i]; return v0 + (v1 - v0) * (s - t0) / (t1 - t0); }
+  return pts[pts.length - 1][1];
+};
+const within = (s, a, b) => s >= a && s < b;
+
+const ZONES = {
+  sun: { tones: [2, 3], share: 0.12, dim: 0, label: 'sunlit' },
+  twi: { tones: [1, 2], share: 0.14, dim: 0, label: 'twilight' },
+  mid: { tones: [0, 1], share: 0.07, dim: 2, label: 'midnight' },
+  aby: { tones: [0, 1], share: 0.02, dim: 0, label: 'abyssal' },
+  had: { tones: [0, 0], share: 0, dim: 0, label: 'hadal' },
+};
+
+// Silt kicked off the bed: a few cells either side of `x`, out a cell a held
+// step, darkening as they go.
+function silt(d, x, s) {
+  if (s < 0 || s > 0.5) return;
+  const k = Math.floor(s / STEP) + 1;
+  for (const side of [-1, 1]) for (let j = 0; j < 2; j++) {
+    const cx = x + side * (k + j), cy = FLOOR - 1 - (j === 0 && k < 4 ? 1 : 0);
+    d.put(cx, cy, grey(7 - Math.floor(k / 2)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The roster. A creature: its name in the code, its zone, where it sits
+// (x, y its drawing's top-left, or a stream creature's front tip), its size
+// for the click's spot, its draw (honoring whatever its reactions set on the
+// pose), and its two reactions. A reaction's pose(s, b) is the pose at s
+// seconds past the click, from the idle pose b; `end` is when it is home.
+const FAUNA = [];
+const seedOf = i => unit(i * 1.7 + 5);
+
+// school: a shoal of sardines (FAUNA_MOTION.school, spread [22, 8])
+FAUNA.push({
+  id: 'school', zone: 'sun', home: { x: 22, y: 11, dir: 1 }, w: 5, h: 2, n: 10, spread: [22, 8],
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(0);
+    for (let m = 0; m < this.n; m++) {
+      const dx0 = Math.round((unit(m + seed * 50) - 0.5) * this.spread[0] + Math.sin(p.t * 1.7 + m) * 1.2);
+      const dy0 = Math.round((unit(m * 3 + seed * 70) - 0.5) * this.spread[1] + Math.sin(p.t * 2.1 + m * 1.7) * 0.8);
+      let dx = dx0, dy = dy0, dir = p.dir;
+      if (p.burst) {           // thrown straight out from the middle, each its own way
+        const len = Math.hypot(dx0, dy0) || 1, k = p.burst * (6 + unit(m * 9) * 6);
+        dx = dx0 + Math.round(dx0 / len * k); dy = dy0 + Math.round(dy0 / len * k * 0.7);
+        dir = dx0 >= 0 ? 1 : -1;
+      }
+      spr(d, 'sardine', p.x + dx, p.y + dy, dir, frameOf('sardine', seed + m * 0.13, p.ft ?? p.t), seed + m * 0.13, p.t, { map: p.map });
+    }
+  },
+  A: { name: 'Bait ball bursts', cap: 'Every fish is thrown straight out from the middle in two held steps, hangs scattered, then each turns and closes back in a cell a step.',
+    keep: 'Scales kept; the bolt is dropped (the shoal stays).', end: 1.8,
+    beats: [[0, 'burst: two held steps out'], [0.2, 'held scattered'], [0.9, 'turning back in, a cell a step'], [1.8, 'regrouped']],
+    pose: (s, b) => ({ ...b, burst: s < 0.17 ? kfr(s, [[0, 0.4], [0.09, 1]]) : s < 0.9 ? 1 : Math.max(0, kfr(s, [[0.9, 1], [1.8, 0]])), mv: 0 }) },
+  B: { name: 'Flash-turn and away', cap: 'The whole shoal turns as one on the same frame, holds a beat, then streaks off in a smear; it comes back in from the far side.',
+    keep: 'Scales kept; this is today’s bolt with a unison turn in front of it.', end: 3.6,
+    beats: [[0, 'all turn on one frame'], [0.17, 'streak, smeared'], [0.8, 'away'], [1.8, 'swimming back in'], [3.6, 'home']],
+    pose: (s, b) => s < 0.8 ? { ...b, dir: -b.dir, x: b.x + kf(s, [[0.17, 0], [0.8, -48]]), ft: b.t * 3 }
+      : s < 1.8 ? { ...b, x: -40 } : s < 3.6 ? { ...b, dir: -b.dir, x: b.x + kf(s, [[1.8, 44], [3.6, 0]]) } : b },
+});
+
+// jelly
+FAUNA.push({
+  id: 'jelly', zone: 'sun', home: { x: 21, y: 11, dir: 1 }, w: 5, h: 6, jelly: true,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(1);
+    let rows = p.f != null ? SPR.jelly.f[p.f] : SPR.jelly.f[frameOf('jelly', seed, p.t)];
+    if (p.cut) rows = rows.slice(0, p.cut);
+    spr(d, 'jelly', p.x, p.y, p.dir, 0, seed, p.t, { rows, map: p.map, ch: p.glow ? { w: purple(11), c: purple(9), b: purple(7) } : null });
+  },
+  A: { name: 'Pulse and jet up', cap: 'Three hard pulses, each held in the shut bell for a beat and each jumping it two rows up; then it drifts back down, a row at a time.',
+    keep: 'Scales kept; the bolt is dropped (it jets up instead of off).', end: 3.2,
+    beats: [[0, 'pulse 1: shut, up two'], [0.45, 'pulse 2'], [0.9, 'pulse 3'], [1.3, 'drifting back down'], [3.2, 'home']],
+    pose: (s, b) => {
+      const n = s < 1.3 ? 1 + (s >= 0.45) + (s >= 0.9) : 0, shut = s < 1.3 && (s % 0.45) < 0.17;
+      const y = s < 1.3 ? b.y - 2 * n - (shut ? 0 : 0) : b.y - kf(s, [[1.3, 6], [3.2, 0]]);
+      return { ...b, y, f: s < 1.3 ? (shut ? 2 : 1) : undefined };
+    } },
+  B: { name: 'Reel in and glow', cap: 'Tentacles reel up into the bell in two steps, the bell lit in the purple ramp and held; it sinks lit, then lets the tentacles back out a row at a time and rises home.',
+    keep: 'Scales kept; the bolt is dropped.', end: 3.6,
+    beats: [[0, 'tentacles reel in'], [0.25, 'lit, sinking'], [1.6, 'tentacles let out'], [2.4, 'rising home'], [3.6, 'home']],
+    pose: (s, b) => ({ ...b, f: 0, cut: s < 0.12 ? 4 : s < 1.6 ? 3 : s < 2.4 ? Math.min(6, 3 + Math.floor((s - 1.6) / 0.25)) : undefined,
+      glow: within(s, 0.12, 1.6), y: b.y + (s < 2.4 ? kf(s, [[0.25, 0], [1.6, 4]]) : kf(s, [[2.4, 4], [3.6, 0]])) }) },
+});
+
+// lantern: a lanternfish
+FAUNA.push({
+  id: 'lantern', zone: 'twi', home: { x: 18, y: 12, dir: 1 }, w: 7, h: 3,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(3);
+    spr(d, 'lantern', p.x, p.y, p.dir, frameOf('lantern', seed, p.ft ?? p.t), seed, p.t,
+      { rows: p.rows, lights: p.lights, litCount: p.litCount, map: p.map });
+  },
+  A: { name: 'Lights out', cap: 'Its lights go dark on the click frame; it darts a few cells in the dark with a smear, holds, then the lights come back one at a time and it swims home.',
+    keep: 'Scales kept; the bolt is dropped.', end: 3.4,
+    beats: [[0, 'lights out'], [0.08, 'dart, smeared'], [0.3, 'held in the dark'], [1.4, 'light one'], [1.6, 'light two'], [1.8, 'back home']],
+    pose: (s, b) => ({ ...b, x: b.x + (s < 1.8 ? kf(s, [[0, 0], [0.17, 6], [0.25, 8]]) : kf(s, [[1.8, 8], [3.4, 0]])),
+      dir: within(s, 1.8, 3.4) ? -b.dir : b.dir, ft: s < 0.4 ? b.t * 3 : b.t,
+      litCount: s < 1.4 ? 0 : s < 1.6 ? 1 : undefined }) },
+  B: { name: 'Belly ripple, then bolt', cap: 'A row of belly lights wakes head to tail a cell a step and holds lit; then it turns and bolts, and comes back in from the far side.',
+    keep: 'Scales kept; the bolt is today’s, after the ripple.', end: 3.6,
+    beats: [[0, 'belly lights wake head to tail'], [0.4, 'held lit'], [0.7, 'turn and bolt'], [1.1, 'away'], [2.0, 'swimming back in'], [3.6, 'home']],
+    pose: (s, b) => {
+      if (s < 0.7) {
+        const lit = Math.min(5, Math.floor(s / 0.07) + 1);
+        return { ...b, rows: ['..cccb.', 'dccccbw', 'dLLLLL.'], rippleLit: lit };
+      }
+      if (s < 1.1) return { ...b, dir: -b.dir, x: b.x + kf(s, [[0.7, 0], [1.1, -44]]), ft: b.t * 3 };
+      if (s < 2.0) return { ...b, x: -40 };
+      return s < 3.6 ? { ...b, dir: -b.dir, x: b.x + kf(s, [[2.0, 44], [3.6, 0]]) } : b;
+    } },
+});
+// The ripple lights the belly row's lights in order: drawn as `rows` with a
+// lit count, so the unlit ones stay dark.
+{ const L = FAUNA[FAUNA.length - 1], d0 = L.draw.bind(L);
+  L.draw = function (d, p) {
+    if (p.rippleLit) { const seed = seedOf(3); spr(d, 'lantern', p.x, p.y, p.dir, 0, seed, p.t, { rows: p.rows, litCount: p.rippleLit, lights: 'lit' }); return; }
+    d0(d, p);
+  }; }
+
+// hatchet: a hatchetfish
+FAUNA.push({
+  id: 'hatchet', zone: 'twi', off: true, home: { x: 21, y: 9, dir: 1 }, w: 5, h: 5,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(5);
+    let rows = SPR.hatchet.f[frameOf('hatchet', seed, p.t)], x = p.x;
+    if (p.edge === 1) { rows = rows.map(r => r.slice(1, 4)); x += 1; }
+    if (p.edge === 2) { rows = rows.map(r => r[3]); x += 2; }
+    spr(d, 'hatchet', x, p.y, p.dir, 0, seed, p.t, { rows, lights: p.lights, map: p.map });
+  },
+  A: { name: 'Turns edge-on', cap: 'It turns its knife-thin edge to you: a held half-turn, then a one-cell sliver that nearly vanishes, sinking a little; then it turns back broadside.',
+    keep: 'Scales kept; the bolt is dropped (it hides instead).', end: 2.6,
+    beats: [[0, 'half-turn'], [0.08, 'edge-on sliver, held'], [1.4, 'half-turn back'], [1.5, 'broadside, rising home'], [2.6, 'home']],
+    pose: (s, b) => ({ ...b, edge: s < 0.08 ? 1 : s < 1.4 ? 2 : s < 1.5 ? 1 : 0,
+      y: b.y + (s < 1.5 ? kf(s, [[0.08, 0], [1.4, 2]]) : kf(s, [[1.5, 2], [2.6, 0]])) }) },
+  B: { name: 'Drops like a stone', cap: 'It drops straight down seven rows in three held steps, smeared above, lands on a held pose with its lights out, then rises back slowly.',
+    keep: 'Scales kept; the bolt is dropped.', end: 2.4,
+    beats: [[0, 'drop in three steps, smeared'], [0.25, 'held, lights out'], [0.6, 'rising home'], [2.4, 'home']],
+    pose: (s, b) => ({ ...b, y: b.y + (s < 0.6 ? kf(s, [[0, 0], [0.08, 2], [0.17, 5], [0.25, 7]]) : kf(s, [[0.6, 7], [2.4, 0]])),
+      lights: within(s, 0.25, 0.6) ? 'off' : undefined }) },
+});
+
+// siphon: a siphonophore (FAUNA_SIPHON)
+const SIPH = { bells: 26, glint: 6, wave: 0.45, sway: 1.2, amp: 1.6, float: [10, 9], bell: [7, 9], frond: 5, frondLit: 8, glintTone: 11 };
+FAUNA.push({
+  id: 'siphon', zone: 'twi', home: { x: 38, y: 12, dir: 1 }, w: 2, h: 2, cx: -8,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const K = SIPH, seed = seedOf(6), dim = d.dim, x = p.x, y = p.y, dir = p.dir, t = p.t;
+    const put = (cx, cy, c) => d.put(cx, cy, p.map ? p.map(c) : c);
+    const run = Math.floor(t * K.glint + seed * 40) % (K.bells + 8), sp = p.sp ?? 1, amp = p.amp ?? K.amp;
+    put(x, y - 1, grey(K.float[0] - dim)); put(x - dir, y - 1, grey(K.float[1] - dim));
+    for (let i = 0; i < K.bells; i++) {
+      const cx = x - dir * Math.round(i * sp), cy = y + Math.round(Math.sin(i * K.wave - t * K.sway + seed * 6) * amp);
+      let c = Math.abs(i - run) < 1 && p.wave == null ? purple(K.glintTone - dim) : grey(K.bell[i % 2 ? 0 : 1] - dim);
+      if (p.wave != null && i <= p.wave && p.wave - i < 8) c = purple(11 - (p.wave - i));
+      put(cx, cy, c);
+      if (i % 3 === 0) put(cx, cy + 1, i % 6 ? grey(K.frond - dim) : purple(K.frondLit - dim));
+    }
+  },
+  A: { name: 'Draws up the chain', cap: 'The chain of bells pulls up toward the float in two held steps, bunched and still; it hangs short, then lets itself back out in two steps.',
+    keep: 'Scales kept; the bolt is dropped (it stays and shortens).', end: 1.9,
+    beats: [[0, 'chain pulls up, two steps'], [0.17, 'held short'], [1.5, 'letting back out'], [1.9, 'home']],
+    pose: (s, b) => ({ ...b, sp: kfr(S12(s), [[0, 1], [0.08, 0.6], [0.17, 0.3], [1.5, 0.3], [1.67, 0.6], [1.84, 1]]),
+      amp: within(s, 0.08, 1.6) ? 0.4 : undefined }) },
+  B: { name: 'Light runs the chain', cap: 'A purple light runs the whole chain from the float to the tip, two bells a step, lighting each bell behind it a rung darker; the chain whips wider as it goes.',
+    keep: 'Scales kept; the bolt is dropped.', end: 1.6,
+    beats: [[0, 'light leaves the float'], [0.55, 'reaches the tip'], [0.9, 'chain settles'], [1.6, 'home']],
+    pose: (s, b) => ({ ...b, wave: s < 1.4 ? Math.floor(s / STEP) * 2 : undefined, amp: kfr(S12(s), [[0, 1.6], [0.1, 3], [0.9, 3], [1.4, 1.6]]) }) },
+});
+
+// angler
+FAUNA.push({
+  id: 'angler', zone: 'mid', home: { x: 16, y: 10, dir: 1 }, w: 10, h: 7,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(7), f = p.f ?? frameOf('angler', seed, p.t);
+    spr(d, 'angler', p.x, p.y, p.dir, f, seed, p.t, { rows: p.rows, lights: p.lights, map: p.map, dim: d.dim + (p.dimMore || 0) });
+    if (p.halo) {      // the lure's lit cell held, its four neighbors a rung of purple
+      const lx = p.dir > 0 ? p.x + 9 : p.x, ly = p.y + 1;
+      for (const [a, c] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) d.put(lx + a, ly + c, purple(7));
+    }
+  },
+  A: { name: 'Lure flares, jaws snap', cap: 'The lure is held lit with a purple halo; the jaws open, then it lunges three cells in a smear and snaps shut on a held impact pose before easing back.',
+    keep: 'Scales kept; the bolt is dropped (it bites instead).', end: 2.2,
+    beats: [[0, 'lure held lit, haloed'], [0.33, 'jaws open, held'], [0.5, 'lunge, smeared: SNAP'], [0.55, 'impact held'], [1.0, 'easing back'], [2.2, 'home']],
+    pose: (s, b) => ({ ...b, lights: s < 0.5 ? 'lit' : undefined, halo: s < 0.33, f: s < 0.33 ? 0 : s < 0.5 ? 1 : s < 1.0 ? 0 : undefined,
+      x: b.x + (s < 1.0 ? kf(s, [[0.42, 0], [0.5, 3]]) : kf(s, [[1.0, 3], [2.2, 0]])) }) },
+  B: { name: 'Douses the lure, sinks', cap: 'The lure goes dark and folds down onto the head; it turns away and sinks into the dark two rungs dimmer, hangs there, then comes back up and relights.',
+    keep: 'Scales kept; the bolt is dropped (it sinks away instead).', end: 3.4,
+    beats: [[0, 'lure out, folded'], [0.17, 'turning away, sinking'], [1.0, 'hanging in the dark'], [2.0, 'rising'], [3.4, 'lure relit, home']],
+    pose: (s, b) => s >= 3.4 ? b : ({ ...b, lights: 'off', dir: s < 2.0 ? -b.dir : b.dir,
+      rows: ['..........', '....dd....', ...SPR.angler.f[0].slice(2)],
+      y: b.y + (s < 2.0 ? kf(s, [[0.17, 0], [1.0, 5]]) : kf(s, [[2.0, 5], [3.4, 0]])),
+      map: s > 0.17 && s < 2.6 ? darker(2) : null }) },
+});
+
+// vampire: a vampire squid
+const PINEAPPLE = ['q..qq..q', '.q.ee.q.', '.qeeeeq.', 'qeeeeeeq', '.qbqqbq.', '.qqqqqq.', '..qqqq..', '........'];
+FAUNA.push({
+  id: 'vampire', zone: 'mid', off: true, home: { x: 22, y: 8, dir: 1 }, w: 8, h: 8,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(8);
+    spr(d, 'vampire', p.x, p.y, p.dir, p.f ?? frameOf('vampire', seed, p.t), seed, p.t, { rows: p.rows, map: p.map });
+  },
+  A: { name: 'Pineapple pose', cap: 'It throws its webbed arms up over its head in one held step, showing the dark underside and the spines, and holds there; then unfurls back in two steps.',
+    keep: 'Scales kept; the bolt is dropped (it stands its ground).', end: 2.0,
+    beats: [[0, 'arms half up'], [0.08, 'pineapple, held'], [1.8, 'unfurling'], [2.0, 'home']],
+    pose: (s, b) => ({ ...b, f: within(s, 0, 0.08) || within(s, 1.8, 1.92) ? 1 : undefined, rows: within(s, 0.08, 1.8) ? PINEAPPLE : undefined }) },
+  B: { name: 'Glowing cloud', cap: 'It squirts a cloud of glowing purple specks from its arm tips and backs off in a smear; the specks spread and darken a rung at a time while it hangs behind them.',
+    keep: 'Scales kept; the bolt is dropped (it hides behind the cloud).', end: 3.2,
+    beats: [[0, 'squirt'], [0.08, 'backing off, smeared'], [0.3, 'cloud spreading, darkening'], [1.8, 'coming back'], [3.2, 'home']],
+    pose: (s, b) => ({ ...b, cloud: s, cx0: b.x + 4, cy0: b.y + 7,
+      x: b.x + (s < 1.8 ? kf(s, [[0, 0], [0.08, -2], [0.17, -5], [0.25, -7]]) : kf(s, [[1.8, -7], [3.2, 0]])) }) },
+  after(d, p) {
+    if (p.cloud == null) return;
+    const s = S12(p.cloud), rung = 11 - Math.floor(s / 0.3) * 2;
+    if (rung <= 2) return;
+    for (let j = 0; j < 12; j++) {
+      const a = unit(j + 3) * Math.PI * 2, sp = 3 + unit(j + 9) * 5, r = Math.min(s, 1.4) * sp;
+      d.put(Math.round(p.cx0 + Math.cos(a) * r), Math.round(p.cy0 + Math.sin(a) * r * 0.7 + s * 0.8), purple(rung - (j % 3 === 0 ? 2 : 0)));
+    }
+  },
+});
+
+// dumbo: a dumbo octopus
+const BALL = ['..ccc..', '.ccccc.', '.cwcwc.', '.ccccc.', '..ccc..'];
+FAUNA.push({
+  id: 'dumbo', zone: 'aby', home: { x: 20, y: 10, dir: 1 }, w: 7, h: 7, floorBed: true,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(9);
+    spr(d, 'dumbo', p.x, p.y, p.dir, frameOf('dumbo', seed, p.ft ?? p.t), seed, p.t, { rows: p.rows, map: p.map });
+  },
+  A: { name: 'Flaps away', cap: 'Its ear-fins beat at four times the pace and it climbs away up and along in held steps, smeared below; then it glides back down home at its own pace.',
+    keep: 'Scales kept; the climb stands in for the bolt.', end: 3.2,
+    beats: [[0, 'ears beating hard'], [0.08, 'climbing, smeared'], [0.7, 'gliding'], [1.4, 'gliding back down'], [3.2, 'home']],
+    pose: (s, b) => ({ ...b, ft: s < 1.4 ? b.t * 4 : b.t,
+      y: b.y + (s < 1.4 ? kf(s, [[0, 0], [0.17, -2], [0.33, -4], [0.5, -6], [0.67, -8]]) : kf(s, [[1.4, -8], [3.2, 0]])),
+      x: b.x + (s < 1.4 ? kf(s, [[0, 0], [0.67, 5]]) : kf(s, [[1.4, 5], [3.2, 0]])) }) },
+  B: { name: 'Tucks into a ball', cap: 'Ears and arms fold in on one frame into a round ball, which drops three rows and sits; then it unfurls and flaps back up.',
+    keep: 'Scales kept; the bolt is dropped.', end: 2.8,
+    beats: [[0, 'tucked'], [0.08, 'dropping'], [0.4, 'sitting, a ball'], [1.6, 'unfurled, flapping up'], [2.8, 'home']],
+    pose: (s, b) => ({ ...b, rows: s < 1.6 ? BALL : undefined, ft: within(s, 1.6, 2.8) ? b.t * 3 : b.t,
+      y: b.y + (s < 1.6 ? 1 + kf(s, [[0.08, 0], [0.4, 3]]) : kf(s, [[1.6, 3], [2.8, 0]])) }) },
+});
+
+// tripod: a tripod fish, standing on the bed
+FAUNA.push({
+  id: 'tripod', zone: 'aby', home: { x: 18, y: FLOOR - 7, dir: 1 }, w: 11, h: 7, floor: true, floorBed: true,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end, then walks back to its spot',
+  draw(d, p) {
+    const seed = seedOf(10);
+    spr(d, 'tripod', p.x, p.y, p.dir, frameOf('tripod', seed, p.t), seed, p.t, { rows: p.rows, map: p.map });
+    if (p.silt != null) silt(d, p.siltX, p.silt);
+  },
+  A: { name: 'Hops off its stilts', cap: 'It lifts off its three fin-stilts in held steps with the legs folded under, hangs over the bed, then drops back onto them; silt puffs out at both ends.',
+    keep: 'Scales kept; the bolt and the walk back are dropped.', end: 2.0,
+    beats: [[0, 'lift off, silt'], [0.25, 'hanging, legs folded'], [1.2, 'dropping'], [1.42, 'landed on the stilts, silt'], [2.0, 'home']],
+    pose: (s, b) => {
+      const air = within(s, 0.08, 1.42);
+      return { ...b, rows: air ? [...SPR.tripod.f[0].slice(0, 4), '.dd...dd...'] : undefined,
+        y: b.y + (s < 1.2 ? kf(s, [[0, 0], [0.08, -2], [0.17, -4], [0.25, -5]]) : kf(s, [[1.2, -5], [1.33, -2], [1.42, 0]])),
+        silt: s < 0.5 ? s : s >= 1.42 ? s - 1.42 : null, siltX: b.x + 4 };
+    } },
+  B: { name: 'Kneels into the silt', cap: 'Its stilts fold and it drops onto the bed in one held step, silt puffing out; it crouches low, then rises back onto them in two steps.',
+    keep: 'Scales kept; the bolt and the walk back are dropped.', end: 1.6,
+    beats: [[0, 'stilts fold: down, silt'], [0.08, 'crouched'], [1.4, 'rising, step one'], [1.5, 'standing'], [1.6, 'home']],
+    pose: (s, b) => within(s, 0, 1.4) ? { ...b, rows: [...SPR.tripod.f[0].slice(0, 4), 'dd....dd...'], y: b.y + 2, silt: s, siltX: b.x + 4 }
+      : within(s, 1.4, 1.5) ? { ...b, rows: [...SPR.tripod.f[0].slice(0, 5), SPR.tripod.f[0][6]], y: b.y + 1 } : b },
+});
+
+// cucumber: a sea cucumber on the bed
+FAUNA.push({
+  id: 'cucumber', zone: 'aby', off: true, home: { x: 20, y: FLOOR - 3, dir: 1 }, w: 7, h: 3, floor: true, floorBed: true,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(11);
+    spr(d, 'cucumber', p.x, p.y, p.dir, frameOf('cucumber', seed, p.ft ?? p.t), seed, p.t, { rows: p.rows, map: p.map, dim: d.dim + (p.dimMore || 0) });
+    if (p.silt != null) silt(d, p.siltX, p.silt);
+  },
+  A: { name: 'Clenches short', cap: 'It contracts on one frame to a short, tall lump a rung darker, held; then stretches back out in one step.',
+    keep: 'Scales kept; the bolt is dropped (it clenches in place).', end: 1.8,
+    beats: [[0, 'clenched'], [1.6, 'stretching'], [1.75, 'home']],
+    pose: (s, b) => within(s, 0, 1.6) ? { ...b, rows: ['.cbc.', 'ccccc', 'ccccc', 'd.d.d'], x: b.x + 1, y: b.y - 1, dimMore: 1 }
+      : within(s, 1.6, 1.75) ? { ...b, rows: ['.cbcb.', 'cccccc', 'd.d.d.'], x: b.x + 1 } : b },
+  B: { name: 'Swims up off the bed', cap: 'It pushes off the bed with a silt puff and swims up, undulating at a quick frame, hangs, and settles back down with another puff.',
+    keep: 'Scales kept; the swim up stands in for the bolt.', end: 2.9,
+    beats: [[0, 'push off, silt'], [0.17, 'swimming up'], [0.85, 'hanging'], [1.6, 'settling'], [2.8, 'down, silt'], [2.9, 'home']],
+    pose: (s, b) => ({ ...b, ft: s < 2.8 ? b.t * 5 : b.t,
+      y: b.y + kf(s, [[0, 0], [0.17, -1], [0.5, -3], [0.83, -5], [1.6, -6], [2.8, 0]]),
+      silt: s < 0.5 ? s : s >= 2.8 ? s - 2.8 : null, siltX: b.x + 3 }) },
+});
+
+// amphipod: on the bed, in dashes
+FAUNA.push({
+  id: 'amphipod', zone: 'had', home: { x: 18, y: FLOOR - 3, dir: 1 }, w: 4, h: 3, floor: true, floorBed: true,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(12);
+    spr(d, 'amphipod', p.x, p.y, p.dir, frameOf('amphipod', seed, p.ft ?? p.t), seed, p.t, { rows: p.rows, vflip: p.vflip, map: p.map });
+    if (p.silt != null) silt(d, p.siltX, p.silt);
+  },
+  A: { name: 'Back-flip', cap: 'A tail-flick throws it up and over in an arc, upside down at the top, landing six cells along with a puff; it waits, then hops back the same way.',
+    keep: 'Scales kept; the bolt is dropped (it flips away a short hop).', end: 1.9,
+    beats: [[0, 'flick'], [0.08, 'over the top, upside down'], [0.33, 'landed, silt'], [1.2, 'flipping back'], [1.6, 'home']],
+    pose: (s, b) => {
+      if (s < 1.2) return { ...b, x: b.x + kf(s, [[0, 0], [0.08, 2], [0.17, 4], [0.25, 6], [0.33, 7]]), y: b.y + kf(s, [[0, 0], [0.08, -3], [0.17, -4], [0.25, -2], [0.33, 0]]),
+        vflip: within(s, 0.08, 0.25), silt: s >= 0.33 ? s - 0.33 : null, siltX: b.x + 9 };
+      return { ...b, dir: -b.dir, x: b.x + kf(s, [[1.2, 7], [1.28, 5], [1.37, 3], [1.45, 1], [1.53, 0]]), y: b.y + kf(s, [[1.2, 0], [1.28, -3], [1.37, -4], [1.45, -2], [1.53, 0]]),
+        vflip: within(s, 1.28, 1.45) };
+    } },
+  B: { name: 'Curls and rolls', cap: 'It curls into a two-cell ball and rolls along the bed, the ball turning a held frame a cell; it uncurls and walks back in dashes.',
+    keep: 'Scales kept; the bolt is dropped.', end: 2.6,
+    beats: [[0, 'curled'], [0.08, 'rolling'], [1.1, 'uncurled'], [1.4, 'dashing back'], [2.6, 'home']],
+    pose: (s, b) => {
+      if (s < 1.1) { const x = kf(s, [[0.08, 0], [1.0, 6]]); return { ...b, x: b.x + x + 1, y: b.y + 1, rows: x % 2 ? ['bc', 'cb'] : ['cb', 'bc'] }; }
+      if (s < 1.4) return { ...b, x: b.x + 6 };
+      return { ...b, dir: -b.dir, ft: b.t * 2, x: b.x + kf(s, [[1.4, 6], [2.6, 0]]) };
+    } },
+});
+
+// snail: a snailfish, hovering low over the bed
+FAUNA.push({
+  id: 'snail', zone: 'had', home: { x: 14, y: FLOOR - 6, dir: 1 }, w: 8, h: 3, low: true, floorBed: true,
+  today: 'clickable: startle, 5 scales, bolts for the nearer end',
+  draw(d, p) {
+    const seed = seedOf(13);
+    spr(d, 'snail', p.x, p.y, p.dir, frameOf('snail', seed, p.ft ?? p.t), seed, p.t, { map: p.map });
+  },
+  A: { name: 'Tail-smear dart', cap: 'Three held steps of a dart, each smeared, then a quick tail-wiggle held in place; it turns and glides home.',
+    keep: 'Scales kept; the bolt is dropped (a short dart).', end: 2.6,
+    beats: [[0, 'dart, smeared'], [0.25, 'tail wiggle'], [0.8, 'gliding home'], [2.6, 'home']],
+    pose: (s, b) => ({ ...b, ft: s < 0.8 ? b.t * 5 : b.t, dir: within(s, 0.8, 2.6) ? -b.dir : b.dir,
+      x: b.x + (s < 0.8 ? kf(s, [[0, 0], [0.08, 4], [0.17, 9], [0.25, 12]]) : kf(s, [[0.8, 12], [2.6, 0]])) }) },
+  B: { name: 'Hides in a silt cloud', cap: 'It dives onto the bed and kicks up a dome of silt over itself; the cloud thins cell by cell to show it lying there, then it rises home.',
+    keep: 'Scales kept; the bolt is dropped (it hides).', end: 3.0,
+    beats: [[0, 'dive'], [0.25, 'silt dome up'], [1.2, 'silt thinning'], [2.2, 'rising'], [3.0, 'home']],
+    pose: (s, b) => ({ ...b, y: b.y + (s < 2.2 ? kf(s, [[0, 0], [0.17, 2], [0.25, 3]]) : kf(s, [[2.2, 3], [3.0, 0]])), cloud: s, cx0: b.x + 4 }) },
+  after(d, p) {
+    if (p.cloud == null || p.cloud < 0.25 || p.cloud > 2.2) return;
+    const s = S12(p.cloud), r = Math.min(6, 2 + Math.floor((s - 0.25) / STEP) * 2), thin = s < 1.2 ? 0 : (s - 1.2) / 1.0;
+    for (let y = FLOOR - 1; y >= FLOOR - 1 - r; y--) for (let x = p.cx0 - r - 2; x <= p.cx0 + r + 2; x++) {
+      const dd = ((x - p.cx0) / (r + 2)) ** 2 + ((FLOOR - y) / (r * 0.8 + 1)) ** 2;
+      if (dd > 1 || unit2(x, y) < thin) continue;
+      d.put(x, y, grey(unit2(y, x) < 0.5 ? 5 : 6));
+    }
+  },
+});
+
+// --- the stream's eight: not clickable today ---------------------------------
+const STREAM_TODAY = 'not clickable today: crosses the far and near streams, and is a meal';
+const STREAM = [
+  { k: 0, id: 'Lantern angler', w: 15, h: 9,
+    A: { name: 'Lure flares, jaws snap', cap: 'The bulb is held lit with a purple halo, the jaw drops open, then it lunges four cells in a smear and snaps shut on a held impact.',
+      end: 2.2, beats: [[0, 'lure held lit, haloed'], [0.33, 'jaw open'], [0.5, 'lunge: SNAP'], [0.55, 'impact held'], [1.0, 'easing back'], [2.2, 'home']],
+      pose: (s, b) => ({ ...b, tf: s < 0.33 ? 0 : s < 0.5 ? 0.262 : s < 1.0 ? 0 : undefined, halo: s < 0.33,
+        x: b.x + (s < 1.0 ? kf(s, [[0.42, 0], [0.5, 4]]) : kf(s, [[1.0, 4], [2.2, 0]])) }) },
+    B: { name: 'Lure out, veers down', cap: 'The bulb goes black; it veers down and away two rungs darker in held steps, hangs in the dark, then climbs back and relights.',
+      end: 3.4, beats: [[0, 'lure out'], [0.1, 'veering down'], [1.0, 'hanging dark'], [2.0, 'climbing back'], [3.4, 'relit, home']],
+      pose: (s, b) => s >= 3.4 ? b : ({ ...b, lureOut: true, dk: s > 0.1 && s < 2.6 ? 2 : 0,
+        y: b.y + (s < 2.0 ? kf(s, [[0.1, 0], [1.0, 6]]) : kf(s, [[2.0, 6], [3.4, 0]])) }) } },
+  { k: 1, id: 'Ribbon eel', w: 27, h: 4,
+    A: { name: 'Ties itself in a knot', cap: 'Its body throws a loop and pulls it tight in one held step, a knot behind the head; it holds, then slides out of it and swims on.',
+      end: 1.8, beats: [[0, 'loop thrown'], [0.08, 'knotted, held'], [1.4, 'sliding out'], [1.8, 'home']],
+      pose: (s, b) => ({ ...b, knot: s < 1.4 ? (s < 0.08 ? 0.5 : 1) : s < 1.6 ? 0.5 : 0 }) },
+    B: { name: 'Straightens and darts', cap: 'It goes rigid on one frame, a straight purple line, then darts off in long smeared steps and comes back in from behind.',
+      end: 3.6, beats: [[0, 'rigid'], [0.08, 'dart, smeared'], [0.45, 'away'], [1.6, 'swimming back in'], [3.6, 'home']],
+      pose: (s, b) => s < 0.45 ? { ...b, wk: 0, x: b.x + kf(s, [[0.08, 0], [0.17, 7], [0.25, 15], [0.33, 24], [0.42, 36]]) }
+        : s < 1.6 ? { ...b, x: 120 } : s < 3.6 ? { ...b, x: b.x + kf(s, [[1.6, -44], [3.6, 0]]) } : b } },
+  { k: 2, id: 'Glass jelly', w: 18, h: 9,
+    A: { name: 'Pulses and drifts up', cap: 'Three hard pulses, each holding the bell squeezed for a beat and lifting it two rows, tentacles trailing; then it sinks back a row at a time.',
+      end: 3.2, beats: [[0, 'pulse 1'], [0.45, 'pulse 2'], [0.9, 'pulse 3'], [1.3, 'sinking back'], [3.2, 'home']],
+      pose: (s, b) => {
+        if (s >= 1.3) return { ...b, y: b.y - kf(s, [[1.3, 6], [3.2, 0]]) };
+        const n = 1 + (s >= 0.45) + (s >= 0.9), shut = (s % 0.45) < 0.17;
+        return { ...b, y: b.y - 2 * n, tf: shut ? 0.49 : 1.47 };
+      } },
+    B: { name: 'Lights inside, reels in', cap: 'The specks inside its bell all light and hold; the tentacles reel in toward the bell in two steps, then let back out.',
+      end: 2.0, beats: [[0, 'specks lit'], [0.08, 'tentacles reel in'], [0.17, 'held short'], [1.6, 'letting out'], [2.0, 'home']],
+      pose: (s, b) => s >= 1.84 ? b : ({ ...b, lit: s < 1.6, clip: s < 0.08 ? 14 : s < 1.6 ? 10 : s < 1.72 ? 12 : 15 }) } },
+  { k: 3, id: 'Skull fish', w: 21, h: 8,
+    A: { name: 'Chatters, then snaps', cap: 'Its jaw rattles open and shut a held frame each, then it lunges three cells in a smear and bites shut, held.',
+      end: 2.0, beats: [[0, 'chattering'], [0.6, 'lunge: SNAP'], [0.67, 'bite held'], [1.1, 'easing back'], [2.0, 'home']],
+      pose: (s, b) => ({ ...b, tf: s < 0.6 ? (Math.floor(s / STEP) % 2 ? 0.43 : 0.14) : s < 1.1 ? 0.43 : undefined,
+        x: b.x + (s < 1.1 ? kf(s, [[0.52, 0], [0.6, 3]]) : kf(s, [[1.1, 3], [2.0, 0]])) }) },
+    B: { name: 'Turns tail and flees', cap: 'It flips round on one frame, its bony fins splayed, then bolts off in a smear and swims back in from the other side.',
+      end: 3.6, beats: [[0, 'turned, fins splayed'], [0.17, 'bolting'], [0.6, 'away'], [1.8, 'swimming back in'], [3.6, 'home']],
+      pose: (s, b) => s < 0.6 ? { ...b, dir: -b.dir, x: b.x - 20 + kf(s, [[0.17, 0], [0.6, -44]]), tf: b.t * 2 }
+        : s < 1.8 ? { ...b, x: -80 } : s < 3.6 ? { ...b, dir: -b.dir, x: b.x - 20 + kf(s, [[1.8, 50], [3.6, 0]]) } : b } },
+  { k: 4, id: 'Wandering eye', w: 23, h: 11,
+    A: { name: 'Shuts, then glares', cap: 'The lid slams shut on one frame and holds; it opens halfway, holds a narrowed glare, then opens wide.',
+      end: 2.0, beats: [[0, 'shut, held'], [0.9, 'half open'], [1.0, 'narrowed glare, held'], [1.7, 'wide open'], [2.0, 'home']],
+      pose: (s, b) => ({ ...b, tf: s < 0.9 ? 0.11 : s < 1.0 ? 0.04 : s < 1.7 ? 0.03 : undefined }) },
+    B: { name: 'Pupil blows, recoils', cap: 'The pupil blows wide black on the click frame and it recoils backward in two smeared steps, tail lashing; then it eases back.',
+      end: 2.6, beats: [[0, 'pupil wide'], [0.08, 'recoil, smeared'], [0.2, 'held back'], [1.2, 'easing back'], [2.6, 'home']],
+      pose: (s, b) => ({ ...b, wide: s < 1.6, tt: b.t * (s < 1.2 ? 2.5 : 1),
+        x: b.x + (s < 1.2 ? kf(s, [[0, 0], [0.08, -3], [0.17, -6]]) : kf(s, [[1.2, -6], [2.6, 0]])) }) } },
+  { k: 5, id: 'Spiral drifter', w: 14, h: 10,
+    A: { name: 'Spins and rolls off', cap: 'Its shell spirals at four times the speed and it rolls off along in held steps; then it drifts back at its own pace.',
+      end: 3.0, beats: [[0, 'spinning'], [0.08, 'rolling off'], [0.6, 'spinning down'], [1.4, 'drifting back'], [3.0, 'home']],
+      pose: (s, b) => ({ ...b, tt: s < 1.2 ? b.t * 4 : b.t, x: b.x + (s < 1.4 ? kf(s, [[0, 0], [0.6, 10]]) : kf(s, [[1.4, 10], [3.0, 0]])) }) },
+    B: { name: 'Pulls into its shell', cap: 'Head and tentacles vanish into the shell on one frame; the still shell sinks two rows and sits, then the head comes back out and it rises.',
+      end: 2.4, beats: [[0, 'pulled in'], [0.17, 'sinking'], [0.33, 'still shell'], [1.6, 'head out'], [2.4, 'home']],
+      pose: (s, b) => s >= 2.4 ? b : ({ ...b, tucked: s < 1.6, tt: s < 1.6 ? 0 : b.t, y: b.y + (s < 1.6 ? kf(s, [[0, 0], [0.17, 1], [0.33, 2]]) : kf(s, [[1.6, 2], [2.4, 0]])) }) } },
+  { k: 6, id: 'Many-mouthed blob', w: 17, h: 13,
+    A: { name: 'Every mouth at once', cap: 'All five mouths gape open on the same frame and hold, the blob frozen mid-wobble; then they shut one by one.',
+      end: 1.6, beats: [[0, 'all mouths open, held'], [1.0, 'shutting one by one'], [1.5, 'home']],
+      pose: (s, b) => s >= 1.5 ? b : ({ ...b, tt: 0.4, mouths: s < 1.0 ? 5 : 5 - Math.floor((s - 1.0) / 0.1) }) },
+    B: { name: 'Splits apart', cap: 'It breaks into four lumps that jump apart in two held steps, hang, then pull back together a cell a step.',
+      end: 2.1, beats: [[0, 'split'], [0.17, 'apart, held'], [1.2, 'pulling back together'], [2.0, 'whole']],
+      pose: (s, b) => ({ ...b, split: s < 1.2 ? kf(s, [[0, 1], [0.08, 1], [0.17, 3]]) : kf(s, [[1.2, 3], [2.0, 0]]) }) } },
+  { k: 7, id: 'Toothed ring', w: 12, h: 12,
+    A: { name: 'Wheels away', cap: 'Its teeth whirl at four times the speed and it rolls off like a wheel in held steps; then turns back slow.',
+      end: 3.0, beats: [[0, 'teeth whirling'], [0.08, 'rolling off'], [0.6, 'rolled'], [1.4, 'rolling back'], [3.0, 'home']],
+      pose: (s, b) => ({ ...b, tt: s < 1.2 ? b.t * 4 : b.t, x: b.x + (s < 1.4 ? kf(s, [[0, 0], [0.6, 12]]) : kf(s, [[1.4, 12], [3.0, 0]])) }) },
+    B: { name: 'Snaps shut', cap: 'The ring clenches: the outer teeth fold in two held steps and the hole closes; it holds clenched, then opens back out.',
+      end: 1.3, beats: [[0, 'teeth folding'], [0.17, 'clenched, held'], [1.0, 'opening'], [1.2, 'home']],
+      pose: (s, b) => s >= 1.2 ? b : ({ ...b, teeth: kfr(S12(s), [[0, 4.2], [0.08, 4.2], [0.17, 2.6], [1.0, 2.6], [1.08, 4.2], [1.17, 5.6]]), shut: within(s, 0.08, 1.08), tt: s < 1.0 ? 0.3 : b.t }) } },
+];
+const LURE = new Set([Pu[6], Pu[7], Pu[8]]);
+for (const sc of STREAM) {
+  FAUNA.push({
+    id: sc.id, zone: 'stream', home: { x: sc.k === 1 ? 37 : 34, y: 12, dir: 1 }, w: sc.w, h: sc.h, stream: true, cx: -sc.w / 2, cyOff: 0,
+    today: STREAM_TODAY,
+    draw(d, p) {
+      const t = p.tf ?? p.tt ?? p.t;
+      let map = p.map || null;
+      const o = {};
+      if (sc.k === 0) {
+        if (p.lureOut) map = ((m) => (c, lx, ly) => { if (lx <= 0 && ly <= -4 && LURE.has(c)) c = AB[1]; return m ? m(c) : c; })(map);
+        if (p.dk) { const m0 = map, dk = darker(p.dk); map = (c, lx, ly) => { c = m0 ? m0(c, lx, ly) : c; return dk(c); }; }
+      }
+      if (sc.k === 1) {
+        if (p.knot) { knotEel(d, p, map); return; }
+        if (p.wk != null) o.args = [p.wk];
+      }
+      if (sc.k === 2 && (p.lit || p.clip)) {
+        const m0 = map;
+        map = (c, lx, ly) => { if (p.clip && lx >= p.clip) return null; if (p.lit && lx >= 1 && lx <= 6 && (c === Pu[6] || c === Pu[8])) c = Pu[8]; return m0 ? m0(c) : c; };
+      }
+      if (sc.k === 5 && p.tucked) { const m0 = map; map = (c, lx, ly) => (lx < 2.4 || (lx < 4 && (c === Pu[5] || c === Pu[6] || c === Pu[7])) ? null : m0 ? m0(c) : c); }
+      if (sc.k === 6 && p.split) o.off = (lx, ly) => [Math.sign(lx - 7 || 1) * p.split, Math.sign(ly || 1) * p.split];
+      if (sc.k === 7 && p.teeth) o.args = [p.teeth, p.shut];
+      if (map) o.map = map.length > 1 ? map : (c) => map(c);
+      fish(d, sc.k, p.x, p.y, p.dir, t, o);
+      const at = (lx, ly, c) => d.put(Math.round(p.x - p.dir * lx), p.y + ly, p.map ? p.map(c) : c);
+      if (sc.k === 0 && p.halo) for (const [a, c] of [[1, -5], [1, -4], [-2, -5], [-2, -4], [0, -6], [-1, -6], [0, -3], [-1, -3]]) at(a, c, Pu[4]);
+      if (sc.k === 4 && p.wide) ell(at, 2.2, 0, 1.4, 1.4, () => BLACK);
+      if (sc.k === 6 && p.mouths) [[3, 0], [7, -2], [9, 2], [5, 3], [12, 0]].slice(0, p.mouths).forEach(([x, y]) => { at(x, y, BLACK); at(x, y + 1, BLACK); at(x + 1, y, G[5]); });
+    },
+    A: { ...sc.A, keep: 'New click (no hit area today). With it: 5 scales, as the zone creatures shed; no bolt.' },
+    B: { ...sc.B, keep: sc.k === 1 || sc.k === 3 ? 'New click. With it: 5 scales, and this is a bolt like today’s zone creatures’.' : 'New click. With it: 5 scales; no bolt.' },
+  });
+}
+// The ribbon eel knotted: the head straight, a loop behind it, the tail on.
+function knotEel(d, p, map) {
+  const put = (lx, ly, c) => d.put(Math.round(p.x - p.dir * lx), Math.round(p.y + ly), map ? map(c) : c);
+  const r = 2.6 * p.knot;
+  for (let i = 0; i < 26; i++) {
+    let lx, ly;
+    if (i < 3) { lx = i; ly = 0; }
+    else if (i < 17) { const a = (i - 3) / 14 * Math.PI * 2; lx = 3 + Math.sin(a) * r + (i - 3) * 0.25; ly = -r + Math.cos(a) * r; }
+    else { lx = 6.5 + (i - 16); ly = Math.round(Math.sin(i / 2.4 - p.t * 7) * 0.8); }
+    put(lx, ly, Pu[i < 3 ? 7 : 6]);
+    if (i < 3 || i >= 17) put(lx, ly + 1, Pu[i % 4 < 2 ? 8 : 7]);
+  }
+  put(1, -1, G[5]);
+}
+
+// ---------------------------------------------------------------------------
+// Water: each zone's two tones dithered on the game's hash (a stand-in for the
+// band dithering being reworked), and the scale bed under the floor-dwellers.
+const bgs = new Map();
+function water(zone, bed) {
+  const id = zone + (bed ? '|bed' : '');
+  if (bgs.has(id)) return bgs.get(id);
+  const c = document.createElement('canvas'); c.width = C; c.height = R;
+  const g = c.getContext('2d'), z = ZONES[zone] || ZONES.mid;
+  g.fillStyle = AB[0]; g.fillRect(0, 0, C, R);
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
+    let rung;
+    if (bed && y >= FLOOR) rung = 3 + Math.floor(unit2(x * 0.9, y * 1.1) * 3) - (y === FLOOR ? 0 : 1);
+    else { const k = unit2(x * 1.3, y * 0.7); rung = k < z.share ? z.tones[1] : k < 0.6 ? z.tones[0] : 0; }
+    if (rung <= 0) continue;
+    g.fillStyle = AB[rung]; g.fillRect(x, y, 1, 1);
+  }
+  bgs.set(id, c);
+  return c;
+}
+
+// The click's five scales: shaken loose where it was, sinking a row a step at
+// first, leaning on the current, coming to rest on the bed.
+function scales(d, cx, cy, s, bed) {
+  for (let j = 0; j < 5; j++) {
+    const kick = (unit(j + 1) - 0.5) * 6, fall = Math.floor(s * 7 + s * s * 2);
+    const x = Math.round(cx + kick * Math.min(1, s * 3) + Math.sin(s * 2 + j) * 1.2);
+    const y = Math.min(Math.round(cy + fall + unit(j + 4) * 2), bed ? FLOOR - 1 : R + 2);
+    d.put(x, y, grey(8 + (j % 3)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+let SHOW_SCALES = true, SPEED = 1;
+const panels = [];
+function idle(cr, t) {
+  const h = cr.home, seed = seedOf(cr.id.length);
+  let y = h.y;
+  if (cr.low) y += Math.round(Math.sin(t * 1.1 + seed * 9) * 1.5);
+  else if (!cr.floor) y += Math.round(Math.sin(t * (cr.jelly ? 0.9 : 1.3) + seed * 11) * (cr.jelly ? 2 : 1));
+  return { x: h.x, y, dir: h.dir, t };
+}
+function center(cr, b) {
+  if (cr.stream) return { x: b.x - b.dir * cr.w / 2, y: b.y };
+  if (cr.id === 'siphon') return { x: b.x - 8, y: b.y };
+  return { x: b.x + cr.w / 2, y: b.y + cr.h / 2 };
+}
+function draw(p, wall) {
+  const { cr, opt, g } = p;
+  const t = (wall - p.t0) * SPEED, ph = ((t % LOOP) + LOOP) % LOOP, tt = ph - CLICK, s = S12(tt);
+  const at = t;   // the creature's own clock (its frames and swim)
+  const cells = [];
+  const d = { dim: ZONES[cr.zone]?.dim || 0, put: (x, y, c) => { if (c) cells.push(x, y, c); } };
+  g.drawImage(water(cr.stream ? 'mid' : cr.zone, cr.floorBed), 0, 0);
+  const b = idle(cr, at), c0 = center(cr, idle(cr, at - tt));
+  const live = tt >= 0 && tt < opt.end + 0.2;
+  if (SHOW_SCALES && tt >= 0) scales(d, Math.round(c0.x), Math.round(c0.y), S12(tt), cr.floorBed);
+  const st = live ? opt.pose(s, b) : b;
+  if (live && s >= STEP) {
+    const pv = opt.pose(s - STEP, idle(cr, at - STEP));
+    const moved = Math.abs(st.x - pv.x) + Math.abs(st.y - pv.y) + (cr.id === 'school' ? Math.abs((st.burst || 0) - (pv.burst || 0)) * 8 : 0);
+    if (moved >= 2 && Math.abs(st.x - pv.x) < 30) {
+      const prevMap = pv.map, dk = darker(4);
+      cr.draw(d, { ...pv, t: at, map: prevMap ? (c => dk(prevMap(c))) : dk, halo: false, cloud: undefined, silt: undefined });
+    }
+  }
+  cr.draw(d, st);
+  if (cr.after) cr.after(d, st);
+  // the pointer: a small grey cross held a few frames at the click
+  if (tt >= 0 && tt < 0.25) for (const [a, e] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) cells.push(Math.round(c0.x) + a, Math.round(c0.y) + e, a || e ? AB[9] : AB[11]);
+  for (let i = 0; i < cells.length; i += 3) { g.fillStyle = cells[i + 2]; g.fillRect(cells[i], cells[i + 1], 1, 1); }
+  // the beat line
+  let beat = tt < 0 ? 'idle' : 'home, idle';
+  if (tt >= 0) for (const [bt, txt] of opt.beats) if (tt >= bt) beat = txt;
+  if (p.beatEl.textContent !== beat) p.beatEl.textContent = beat;
+}
+
+// --- the page ------------------------------------------------------------------
+const root = document.getElementById('roster');
+function section(title, lede) {
+  const h = document.createElement('h2'); h.textContent = title; root.appendChild(h);
+  if (lede) { const p = document.createElement('p'); p.className = 'lede'; p.textContent = lede; root.appendChild(p); }
+}
+function creatureBlock(cr) {
+  const h = document.createElement('h3');
+  const code = document.createElement('code'); code.textContent = cr.id; h.appendChild(code);
+  root.appendChild(h);
+  const m = document.createElement('div'); m.className = 'meta';
+  m.textContent = (cr.stream ? 'stream creature (render/fish.js SP[' + STREAM.find(x => x.id === cr.id).k + '])' : 'zone: ' + ZONES[cr.zone].label + ' (FAUNA kind ' + cr.id + ')') + ' · today: ' + (cr.off ? 'switched off (n: 0); when it swims, ' : '') + cr.today;
+  root.appendChild(m);
+  const fr = document.createElement('div'); fr.className = 'frames'; root.appendChild(fr);
+  for (const key of ['A', 'B']) {
+    const opt = cr[key], f = document.createElement('div'); f.className = 'frame';
+    f.innerHTML = '<div class="name"></div><div class="cap"></div>';
+    f.querySelector('.name').textContent = key + ' · ' + opt.name;
+    f.querySelector('.cap').textContent = opt.cap;
+    const cv = document.createElement('canvas'); cv.width = C; cv.height = R;
+    cv.setAttribute('aria-label', cr.id + ', reaction ' + key + ': ' + opt.name);
+    f.appendChild(cv);
+    const beat = document.createElement('div'); beat.className = 'beat'; f.appendChild(beat);
+    const keep = document.createElement('div'); keep.className = 'keep'; keep.textContent = opt.keep; f.appendChild(keep);
+    fr.appendChild(f);
+    const p = { cr, opt, g: cv.getContext('2d'), beatEl: beat, t0: performance.now() / 1000 };
+    cv.addEventListener('click', () => { p.t0 = performance.now() / 1000 - (CLICK - 0.001) / SPEED; });
+    panels.push(p);
+  }
+}
+section('The zone creatures: clickable today', 'The nine kinds swimming in FAUNA (config/fauna.js) today, one of each, top of the deep to the floor. A click startles one: five scales, and it bolts for the nearer end.');
+for (const cr of FAUNA.filter(c => !c.stream && !c.off)) creatureBlock(cr);
+section('The stream creatures: not clickable today', 'The eight kinds render/fish.js draws (FLOW_KINDS). The near stream over the coil, the serpent’s meals, is now most of what swims on screen; the same eight cross the far stream, smaller and darker, up in the sunlit and twilight. None has a hit area today. Drawn here at near-stream tones and size.');
+for (const cr of FAUNA.filter(c => c.stream)) creatureBlock(cr);
+section('Switched off for now', 'Three zone kinds kept in the code at n: 0 since the population was cut (hatchet, vampire, cucumber). They do not swim today; their reactions are here in case they come back.');
+for (const cr of FAUNA.filter(c => c.off)) creatureBlock(cr);
+
+function setPressed(sel, el) { document.querySelectorAll(sel).forEach(b => b.setAttribute('aria-pressed', String(b === el))); }
+document.getElementById('scalesOn').onclick = e => { SHOW_SCALES = true; setPressed('#scalesOn,#scalesOff', e.currentTarget); };
+document.getElementById('scalesOff').onclick = e => { SHOW_SCALES = false; setPressed('#scalesOn,#scalesOff', e.currentTarget); };
+document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+  const now = performance.now() / 1000;
+  for (const p of panels) { const t = (now - p.t0) * SPEED; p.t0 = now - t / +b.dataset.speed; }
+  SPEED = +b.dataset.speed; setPressed('[data-speed]', b);
+});
+
+const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame() {
+  const wall = performance.now() / 1000;
+  for (const p of panels) draw(p, wall);
+  if (!still) requestAnimationFrame(frame);
+}
+if (still) { const w = performance.now() / 1000; for (const p of panels) p.t0 = w - (CLICK + 0.4); }
+frame();
+</script>
+</body>
+</html>
