@@ -21,7 +21,7 @@ where it shows. The glossary is the owner's: follow it.
   (반말/해라체) style, Chinese plain and colloquial, with no 您.
 - **The player has no gender.** Where a past tense or an adjective would
   give the player one (Russian `ты спас`/`ты спасла`, French `tu es allé`),
-  turn the line round so it does not (`квадражена спасена`).
+  turn the line round so it does not (`жена спасена`).
 - **Deliberate slips stay casual, not wrong.** The English drops apostrophes
   (`cant`, `lets`, `thats`) to sound offhand. Do not copy a spelling error into
   your language; give the line the same offhand register instead.
