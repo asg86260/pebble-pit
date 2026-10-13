@@ -2,7 +2,7 @@
 // and a migration (src/migrations/) names the `SAVE_V` it raises a save to
 // and runs only on saves below it. Raise it by one when a migration is
 // written, never otherwise (docs/saves.md).
-export const SAVE_V = 19;
+export const SAVE_V = 20;
 
 // Save slots: three yards, one open at a time (DESIGN.md, "Save slots"). Here
 // rather than in save.js so the cloud's worker, which cannot load save.js,

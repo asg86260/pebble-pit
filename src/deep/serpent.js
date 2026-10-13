@@ -5,14 +5,16 @@
 // and the heal is what the serpent closes a second, so a strike slower than
 // the heal never gets anywhere and a stage breaks only when the party can
 // hold the wound open to its depth (DESIGN.md, "The serpent is the rock").
-// The last break is the kill: the serpent comes apart, gathers itself again
-// and rises a level deeper (DESIGN.md, "Endless serpent"; `rise`).
+// The last break is the story's kill: the serpent comes apart, gathers itself
+// again and comes back once, on its last defense at level 2 (`rise`); from
+// there each bar emptied is a level, a recoil and the bar full again a level
+// deeper (DESIGN.md, "Endless serpent"; `recoil`).
 //
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
 import { SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_X, P,
-         KILL, KILL_REFORM_S, SERPENT_RISE_PAUSE_S,
+         KILL, KILL_REFORM_S,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
          CLICK_DMG, DAMAGE_KIND, BARRIER_FLARE_MS } from '../config.js';
@@ -21,7 +23,8 @@ import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned, streamS } from './meals.js';
-import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbMiddle, settleResist } from './phases.js';
+import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbMiddle, settleResist,
+         breakOrb, recoiling, recoilLen } from './phases.js';
 import { depthAt } from './depth.js';
 
 // The defenses are 0..LAST; the last break leaves the stage past it, which
@@ -94,7 +97,7 @@ function stun(blow, k) {
 // snatch there is no serpent to hit, and while he is sunk nothing reaches him.
 export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
   if (!S.snatched || !(dmg > 0)) return 0;
-  if (sunk() || breaking() || killA() != null) return 0;   // in the abyss, breaking, or down and gone (deep/phases.js)
+  if (sunk() || breaking() || recoiling() || killA() != null) return 0;   // in the abyss, breaking, reeling, or down and gone (deep/phases.js)
   const kept = guardOf(weapon);
   if (kept === undefined) return 0;
   const guard = o.through ? Math.max(1, kept) : kept;
@@ -186,6 +189,7 @@ export const stepSerpent = c => {
   forget(c.now);
   if (S.snatched && S.serpentFreed && stepDown(c)) return;
   if (!S.snatched || S.serpentStage > LAST) { S.serpentStun = S.serpentGrace = 0; return; }
+  if (S.recoilT != null) { stepRecoil(c); return; }
   const stunned = S.serpentStun > 0, secs = c.dt / 1000;
   if (stunned) {
     S.serpentStun = Math.max(0, S.serpentStun - secs);
@@ -198,6 +202,8 @@ export const stepSerpent = c => {
   stepMechanic(c);
   const d = depth();
   if (S.serpentWound < d) { stepMeal(c, stunned || has('held')); return; }
+  // Past the story the last defense never breaks: its bar emptied is a level.
+  if (S.serpentLevel > 1 && S.serpentStage === LAST) { recoil(); return; }
   S.serpentStage++;
   S.serpentWound = 0;
   S.mealT = 0;                              // a new defense opens a new window
@@ -211,17 +217,16 @@ export const stepSerpent = c => {
   for (const fn of breakers.slice()) fn(S.serpentStage);
 };
 
-// --- the rise ---------------------------------------------------------------------
-// After a kill the serpent is down: it goes limp and comes apart on the kill's
-// own clock (`killA`), the motes gather it again over KILL_REFORM_S from
-// `reformAt`, and then it rises a level deeper. The story's kill is put down
-// by its sheet (beats.js sets `reformAt`); every kill after it, and the
-// story's once its sheet is behind it, gathers by itself SERPENT_RISE_PAUSE_S
-// after the coming apart is done.
+// --- the return -------------------------------------------------------------------
+// After the story's kill the serpent is down: it goes limp and comes apart on
+// the kill's own clock (`killA`), its sheet puts it down (beats.js sets
+// `reformAt`), the motes gather it again over KILL_REFORM_S, and it comes back
+// once, on its last defense at level 2. A sheet put down before `reformAt`
+// was saved gathers as soon as the coming apart is done.
 //
 // A moment ahead of the clock was written by an older page (the clock starts
 // again with each one) and reads as long past.
-const DOWN_S = () => KILL.last + KILL.limp + KILL.apart + SERPENT_RISE_PAUSE_S;
+const DOWN_S = () => KILL.last + KILL.limp + KILL.apart;
 const storyDone = () => S.serpentLevel > 1 || S.beatsDone.includes('freedsheet');
 function stepDown(c) {
   if (S.reformAt == null) {
@@ -235,22 +240,17 @@ function stepDown(c) {
   return true;
 }
 
-// Who hears a rise: the kill's fang owed and not yet dropped (party.js).
+// Who hears the return: the kill's fang owed and not yet dropped (party.js).
 const risers = [];
 export function onRise(fn) {
   if (!risers.includes(fn)) risers.push(fn);
   return () => { const i = risers.indexOf(fn); if (i >= 0) risers.splice(i, 1); };
 }
 
-// Gathered whole: a level deeper, back at its first defense with the clean
-// slate a break gives a defense.
-export function rise() {
-  S.serpentLevel = Math.max(1, S.serpentLevel | 0) + 1;
-  S.serpentBest = Math.max(S.serpentBest | 0, S.serpentLevel);
-  S.serpentStage = 0;
+// The clean slate a break gives a defense: what was laid on the one before
+// goes, the turn opens calm, the meal's window opens again.
+function cleanSlate() {
   S.serpentWound = 0;
-  S.serpentFreed = false;
-  S.freedAt = S.reformAt = S.breakT = null;
   S.orb = null;
   S.serpentChips = [];
   S.serpentStun = S.serpentGrace = 0;
@@ -259,10 +259,54 @@ export function rise() {
   S.mealT = 0;
   S.mealI = null;
   S.meal++;
+}
+
+// Gathered whole: level 2, on its last defense, and never on another again.
+export function rise() {
+  S.serpentLevel = Math.max(1, S.serpentLevel | 0) + 1;
+  S.serpentBest = Math.max(S.serpentBest | 0, S.serpentLevel);
+  S.serpentStage = LAST;
+  S.serpentFreed = false;
+  S.freedAt = S.reformAt = S.breakT = S.recoilT = null;
+  cleanSlate();
   S.resistBy = {};
-  settleResist(0);
+  settleResist(LAST);
   S.shopStale = true;
   for (const fn of risers.slice()) fn(S.serpentLevel);
+}
+
+// --- the recoil -------------------------------------------------------------------
+// Past the story a level's bar emptied: the serpent reels in a held pose for
+// `recoilLen` (deep/phases.js, config RECOIL), nothing landing and nothing
+// healing, its sway held where the blow caught it; then the bar is full again
+// a level deeper. What was laid on the level goes on its first frame, the orb
+// with it (its fighter let go), and the bar's fang drops from the belly.
+const recoilers = [];
+export function onRecoil(fn) {
+  if (!recoilers.includes(fn)) recoilers.push(fn);
+  return () => { const i = recoilers.indexOf(fn); if (i >= 0) recoilers.splice(i, 1); };
+}
+function recoil() {
+  S.recoilT = 0;
+  S.serpentStun = S.serpentGrace = 0;
+  clearStatuses();
+  breakOrb();
+  resetMechanic();
+  for (const fn of recoilers.slice()) fn(S.serpentLevel);
+}
+function stepRecoil(c) {
+  S.serpentStill += c.dt;
+  S.recoilT += c.dt / 1000;
+  landTurned(c);
+  if (S.recoilT >= recoilLen()) levelUp();
+}
+function levelUp() {
+  S.recoilT = null;
+  S.serpentLevel = Math.max(1, S.serpentLevel | 0) + 1;
+  S.serpentBest = Math.max(S.serpentBest | 0, S.serpentLevel);
+  cleanSlate();
+  settleResist(LAST);
+  S.shopStale = true;
 }
 
 // The numbers' list keeps itself: a hit goes once its number has faded; and

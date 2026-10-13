@@ -19,7 +19,7 @@ import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DE
          WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
          BREAK_DIVE_OVER, BREAK_ROAR_H,
          PORTAL_LIP_TO, PORTAL_TEAR_LOBE, PORTAL_TEAR_JITTER } from '../config.js';
-import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop, killA } from './phases.js';
+import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop, killA, recoilK, recoilPose } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -183,6 +183,8 @@ const waveLine = t => {
   // The kill: the sway dying, and the line sunk until the body lies on the floor.
   const lie = killDrop() * (deepFloor() - base - COIL_GIRTH / 2);
   const amp = COIL_AMP * (1 - LASH_TAUT * taut) * killSway();
+  // A level's bar emptied: the recoil's pose, a bump held on the line.
+  const rk = recoilK(), rp = rk ? recoilPose() : null;
   return x => {
     const k = (x - x0) / span;
     let y = base + amp * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
@@ -190,6 +192,7 @@ const waveLine = t => {
     if (taut && k > COIL_TAIL_FROM) y -= taut * LASH_LIFT * (k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM);
     if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
     if (roar != null) y -= BREAK_ROAR_H * Math.exp(-((k - roar) ** 2) / (LASH_W * LASH_W));
+    if (rp) y -= rk * rp.lift * Math.exp(-((k - rp.at) ** 2) / (rp.w * rp.w));
     y += drop + lie;
     return y;
   };
@@ -205,22 +208,22 @@ export const coilK = x => (x - coilX0()) / coilSpan();
 // The line at `t`, kept while nothing it is worked out from has moved.
 // Every point of the body asks for it, thousands a frame, so the check is a
 // row of comparisons on what the line is made of -- the clock, the stage,
-// the phase's turn (`part`), the break (`breakKind`), the kill (`killA`) and
+// the phase's turn (`part`), the break (`breakKind`), the kill (`killA`), the recoil and
 // where the deep stands -- rather than on the bends worked out from them
 // (`tautK`, `lashK`, ...), which allocate a reading each: a reading, a key
 // or a line made a point is megabytes a second for the collector, and a
 // pause every few seconds. Anything `waveLine` comes to read belongs in
 // this row.
-const line = { t: NaN, now: NaN, snatched: false, stage: 0, freed: false, mechAt: 0, mechSkip: false, breakT: null,
+const line = { t: NaN, now: NaN, snatched: false, stage: 0, freed: false, mechAt: 0, mechSkip: false, breakT: null, recoilT: null,
                freedAt: null, reformAt: null, top: NaN, x0: NaN, wave: null, xs: null };
 export let lineBuilds = 0;                // how often the line was worked out afresh (test/deep-alloc.test.mjs)
 function lineAt(t) {
   const L = line, at = now(), top = deepTop(), x0 = coilX0();
   if (L.t === t && L.now === at && L.snatched === S.snatched && L.stage === S.serpentStage
-      && L.freed === S.serpentFreed && L.mechAt === S.mechAt && L.mechSkip === S.mechSkip && L.breakT === S.breakT
+      && L.freed === S.serpentFreed && L.mechAt === S.mechAt && L.mechSkip === S.mechSkip && L.breakT === S.breakT && L.recoilT === S.recoilT
       && L.freedAt === S.freedAt && L.reformAt === S.reformAt && L.top === top && L.x0 === x0) return L;
   L.t = t; L.now = at; L.snatched = S.snatched; L.stage = S.serpentStage; L.freed = S.serpentFreed;
-  L.mechAt = S.mechAt; L.mechSkip = S.mechSkip; L.breakT = S.breakT; L.freedAt = S.freedAt; L.reformAt = S.reformAt;
+  L.mechAt = S.mechAt; L.mechSkip = S.mechSkip; L.breakT = S.breakT; L.recoilT = S.recoilT; L.freedAt = S.freedAt; L.reformAt = S.reformAt;
   L.top = top; L.x0 = x0;
   L.wave = waveLine(t); L.xs = null;
   lineBuilds++;

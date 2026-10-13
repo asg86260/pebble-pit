@@ -494,8 +494,9 @@ export const S = {
   serpentWound: 0,
   serpentFreed: false,
   // The endless serpent (DESIGN.md, "Endless serpent"): the level being
-  // fought, 1 the story's, raised on each rise; the highest ever reached; and
-  // the fangs the kills have dropped (the breaks' are `fangsDropped`).
+  // fought, 1 the story's, raised as each bar empties; the highest ever
+  // reached; and the fangs the emptied bars have dropped (the breaks' are
+  // `fangsDropped`).
   serpentLevel: 1,
   serpentBest: 1,
   killFangs: 0,
@@ -514,6 +515,7 @@ export const S = {
   mechSkip: false,
   phaseAt: 0,             // seconds into the phase, for the fading's turns of resist
   breakT: null,           // seconds into a phase's break while it plays (deep/phases.js), null otherwise
+  recoilT: null,          // seconds into a level's recoil past the story (deep/serpent.js), null otherwise
   // The kill (snatch.js): when the fourth break landed, where he walks from
   // and to once he is out, and when the serpent began to gather itself again.
   freedAt: null, freedFrom: null, freedTo: null, reformAt: null,
@@ -729,7 +731,7 @@ export const SAVED = [
   'riftSwell',            // and the growth the rescue handed it on top
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'serpentLevel', 'serpentBest', 'killFangs', 'resistBy', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'recoilT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
   'retired',              // the two of them at the yard's end after the finale (finale.js)
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).

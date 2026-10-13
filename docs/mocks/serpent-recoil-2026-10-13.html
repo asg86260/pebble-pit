@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Recoil Mocks</title>
+<style>
+/* ------------------------------------------------------------------
+   Tokens. The page's chrome follows the theme; the deep in each frame is
+   drawn in the deep's own tones (config/rift.js ABYSS_TONES and
+   ABYSS_MAGIC_TONES, as seen), which are the same on either page.
+   ------------------------------------------------------------------ */
+:root {
+  --page: #f2f2ef; --page-ink: #1a1a1a; --page-mute: #5c5c58; --page-line: #d6d6d0;
+  --deep-edge: #1a1a1a;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+    --deep-edge: #555;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+  --deep-edge: #555;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page); color: var(--page-ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 20px; margin: 44px 0 6px; padding-top: 16px; border-top: 2px solid var(--page-ink); }
+p { margin: 6px 0; max-width: 72ch; }
+code { font-size: 13px; }
+.lede { color: var(--page-mute); }
+.mocknote { border: 1px dashed var(--page-mute); padding: 10px 14px; margin: 14px 0; max-width: 80ch; font-size: 14px; }
+.mocknote ul { margin: 6px 0 0; padding-left: 20px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; align-items: center; }
+.toolbar .lbl { font-size: 13px; color: var(--page-mute); margin-right: 2px; }
+.toolbar button {
+  font: 13px system-ui, sans-serif; padding: 5px 10px; cursor: pointer;
+  background: var(--page); color: var(--page-ink); border: 1px solid var(--page-mute);
+}
+.toolbar button[aria-pressed="true"] { background: var(--page-ink); color: var(--page); }
+.sticky { position: sticky; top: 0; z-index: 5; background: var(--page); padding: 6px 0; border-bottom: 1px solid var(--page-line); }
+.frame { min-width: 0; max-width: 100%; margin: 10px 0; }
+.cap { font-size: 12px; color: var(--page-mute); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+canvas { display: block; width: 100%; max-width: 1040px; height: auto; image-rendering: pixelated; border: 1px solid var(--deep-edge); background: #000; }
+.notes { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 14px; max-width: 90ch; margin-top: 8px; }
+.notes dt { font-weight: 600; }
+.notes dd { margin: 0; }
+@media (max-width: 520px) {
+  .notes { grid-template-columns: 1fr; }
+  .notes dd { margin-bottom: 6px; }
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Serpent recoil</h1>
+<p class="lede">Mocks for DESIGN.md, "Endless serpent": past the story each emptied health bar is a level. The serpent reels for a beat in a held pose, then the bar fills for the next level and the number on it ticks up. Three poses; vote one. <b>A is built</b> as the guess, and the vote is one line (<code>RECOIL_POSE</code> in <code>src/config/deepcrew.js</code>).</p>
+
+<div class="mocknote">
+  <b>This is a mock, drawn from plain shapes on a canvas, not the game.</b> The coil is laid from the game's own numbers (length, the head, neck, girth and tail taper, the belly, the sway, the crest, the jaws' hinge and gape, the cell grid) and the recoil's timing is the built one: a smear frame of 0.08 s past the pose, the pose held 0.7 s, back in three held steps over 0.36 s, the bar refilling over 0.6 s.
+  <ul>
+    <li><b>What it cannot show:</b> the fighters, their blows and numbers, the creatures and the meals, the orb (it bursts on the recoil's first frame), the statuses and the stun ring, the hide's ward and plates, the fang dropping from the belly, the real bar's shards and its pixel-font label (the number here is the page's font), and the camera; the body is laid along x rather than along its arc, so a steep bend is a little thinner here than in the game.</li>
+    <li><b>The smear:</b> the built recoil's smear frame is the pose overshot (1.35 times as far) for one held frame. The "ghost" switch adds the line it left behind, a dark trail of the rest pose for that frame; that is not built, and is a second vote.</li>
+    <li><b>The rest line</b> (an aid for this page, not in the game): through the recoil, where the body would be without it, in dark grey behind, so the three shapes can be told apart at a glance. Pause to hold a frame.</li>
+    <li><b>No shake, no white flash, no squash tween:</b> every frame of the recoil is a held pose on the cell grid.</li>
+  </ul>
+</div>
+
+<div class="toolbar sticky">
+  <span class="lbl">speed:</span>
+  <button type="button" data-speed="1" aria-pressed="true">1x</button>
+  <button type="button" data-speed="0.25">1/4x</button>
+  <button type="button" id="pause" aria-pressed="false">pause</button>
+  <span class="lbl" style="margin-left:10px">smear:</span>
+  <button type="button" id="ghost" aria-pressed="false">ghost trail: off</button>
+  <span class="lbl" style="margin-left:10px">aid:</span>
+  <button type="button" id="rest" aria-pressed="true">rest line: on</button>
+  <button type="button" id="themebtn">theme: follow system</button>
+</div>
+
+<h2>A. Rears back (built)</h2>
+<p>The head is thrown up and back off the line, the jaws wide, the neck following; the belly and tail stay where the blow caught them.</p>
+<div class="frame"><div class="cap" data-cap="rear"></div><canvas data-pose="rear"></canvas></div>
+<dl class="notes">
+  <dt>Reads as</dt><dd>A cry: the head is the part of him the player watches, and it is where the jaws already open for a meal and the roar.</dd>
+  <dt>Cost</dt><dd>The head rises toward the bar; at seven cells it comes up to it.</dd>
+</dl>
+
+<h2>B. Buckles at the wound</h2>
+<p>The body folds down where the bar was emptied, at the belly, as if the blow went in there; the jaws half open.</p>
+<div class="frame"><div class="cap" data-cap="buckle"></div><canvas data-pose="buckle"></canvas></div>
+<dl class="notes">
+  <dt>Reads as</dt><dd>Hurt, at the place the cracks run from. The head barely moves.</dd>
+  <dt>Cost</dt><dd>The fold dips toward the stations under the middle of the coil.</dd>
+</dl>
+
+<h2>C. Arches</h2>
+<p>The back arches up in the middle, head and tail held low, the jaws half open.</p>
+<div class="frame"><div class="cap" data-cap="arch"></div><canvas data-pose="arch"></canvas></div>
+<dl class="notes">
+  <dt>Reads as</dt><dd>A flinch of the whole body; the biggest shape of the three.</dd>
+  <dt>Cost</dt><dd>The roar's bump runs along the same stretch; this one holds still where the roar travels.</dd>
+</dl>
+</main>
+
+<script>
+// ---- the game's numbers, in cells (P = 6 px a cell) ---------------------------
+const DEEP_W = 520, DEEP_H = 130;
+const COIL_X0 = 0.28, COIL_X1 = 0.94, COIL_Y = 0.58, COIL_AMP = 9, COIL_WAVES = 3, COIL_SWAY_MS = 7000;
+const COIL_SEGS = 56, HEAD_SEGS = 3, COIL_HEAD = 8, COIL_NECK = 5, COIL_NECK_EASE = 2, COIL_GIRTH = 9;
+const COIL_TAIL_FROM = 0.75, COIL_TIP = 0.25, BELLY_AT = 0.58, SNOUT = 6, CREST_LEN = 34, CREST_H = 3;
+const BELLY_BULGE = 2, BELLY_LEN = 8, RIB_EVERY = 3, MEAL_GAPE = 5, MEAL_HINGE = 10, WOUND_GAP = 6, CRACK_REACH = 34;
+// the recoil as built (config/deepcrew.js); lifts in cells
+const RECOIL = { snap: 0.08, hold: 0.7, back: 0.36 }, RECOIL_SMEAR = 1.35, RECOIL_BACK_STEPS = 3, RECOIL_FILL_S = 0.6;
+const POSES = {
+  rear: { at: 0, w: 0.3, lift: 7, gape: 1 },
+  buckle: { at: 0.58, w: 0.14, lift: -9, gape: 0.5 },
+  arch: { at: 0.45, w: 0.28, lift: 8, gape: 0.5 }
+};
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const WHITE = 11;
+
+// ---- the view: cells, two canvas pixels each ------------------------------------
+const CS = 2;
+const VX0 = Math.floor(COIL_X0 * DEEP_W) - 26, VX1 = Math.ceil(COIL_X1 * DEEP_W) + 6;
+const VY0 = 38, VY1 = 112;
+const COLS = VX1 - VX0, ROWS = VY1 - VY0;
+const base = COIL_Y * DEEP_H;
+const span = (COIL_X1 - COIL_X0) * DEEP_W, x0 = COIL_X0 * DEEP_W;
+
+const thick = u => {
+  if (u < HEAD_SEGS) return COIL_HEAD;
+  const k = u / (COIL_SEGS - 1), headK = HEAD_SEGS / (COIL_SEGS - 1);
+  let body;
+  if (k < BELLY_AT) body = COIL_NECK + (COIL_GIRTH - COIL_NECK) * Math.sin(Math.PI / 2 * (k - headK) / (BELLY_AT - headK));
+  else if (k < COIL_TAIL_FROM) body = COIL_GIRTH;
+  else body = COIL_GIRTH * (1 - (1 - COIL_TIP) * ((k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM)) ** 1.5);
+  const e = Math.min(1, (u - HEAD_SEGS) / COIL_NECK_EASE);
+  return COIL_HEAD + (body - COIL_HEAD) * e * e * (3 - 2 * e);
+};
+
+// The recoil's frame: how far into the pose (held steps), as built.
+function recoilK(s) {
+  if (s == null) return 0;
+  if (s < RECOIL.snap) return RECOIL_SMEAR;
+  if (s < RECOIL.snap + RECOIL.hold) return 1;
+  const b = Math.min(1, (s - RECOIL.snap - RECOIL.hold) / RECOIL.back);
+  return 1 - Math.floor(b * RECOIL_BACK_STEPS) / RECOIL_BACK_STEPS;
+}
+const lineY = (x, t, pose, rk) => {
+  const k = (x - x0) / span;
+  let y = base + COIL_AMP * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
+  if (rk) y -= rk * pose.lift * Math.exp(-((k - pose.at) ** 2) / (pose.w * pose.w));
+  return y;
+};
+
+// The body laid along the line in samples, each with its frame and girth.
+function lay(t, pose, rk) {
+  const pts = [], du = 0.25;
+  const segPx = span / (COIL_SEGS - 1), snoutU = SNOUT / segPx;
+  let along = 0, last = null;
+  for (let u = -snoutU; u <= COIL_SEGS - 1; u += du) {
+    const x = x0 + u * segPx, y = lineY(x, t, pose, rk);
+    const x2 = x + du * segPx, y2 = lineY(x2, t, pose, rk);
+    if (last) along += Math.hypot(x - last.x, y - last.y);
+    last = { x, y };
+    const len = Math.hypot(x2 - x, y2 - y) || 1, tx = (x2 - x) / len, ty = (y2 - y) / len;
+    const r = (u < 0 ? COIL_HEAD / 2 * (1 - 0.55 * Math.min(1, -u / snoutU)) : thick(u) / 2);
+    pts.push({ u, x, y, tx, ty, nx: -ty, ny: tx, along, r, r0: r });
+  }
+  return pts;
+}
+
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+
+// One coil into the cell buffer: `wound` 0..1 for the cracks and the gap,
+// `open` the jaws, `ghost` a tone to paint the body flat in instead of the hide.
+function drawCoil(buf, pts, wound, open, ghost) {
+  const bellyU = BELLY_AT * (COIL_SEGS - 1);
+  let bellyA = 0, headA = 0;
+  for (const p of pts) { if (Math.abs(p.u - bellyU) < 0.13) bellyA = p.along; if (Math.abs(p.u) < 0.13) headA = p.along; }
+  for (const p of pts) { const d = Math.abs(p.along - bellyA); if (d < BELLY_LEN) p.r += BELLY_BULGE * Math.sqrt(1 - (d / BELLY_LEN) ** 2); }
+  const jaw = d => (open > 0 && d < MEAL_HINGE ? MEAL_GAPE * open * (1 - Math.max(0, d) / MEAL_HINGE) : 0);
+  if (open > 0) for (const p of pts) p.r += jaw(p.along);
+  const best = new Float32Array(COLS * ROWS).fill(Infinity), own = new Int32Array(COLS * ROWS).fill(-1);
+  pts.forEach((p, k) => {
+    const R = p.r + 1;
+    for (let cy = Math.floor(p.y - R) - 1; cy <= p.y + R; cy++) {
+      if (cy < VY0 || cy >= VY1) continue;
+      for (let cx = Math.floor(p.x - R) - 1; cx <= p.x + R; cx++) {
+        if (cx < VX0 || cx >= VX1) continue;
+        const d = Math.hypot(cx + 0.5 - p.x, cy + 0.5 - p.y);
+        if (d > R) continue;
+        const i = (cy - VY0) * COLS + (cx - VX0);
+        if (d < best[i]) { best[i] = d; own[i] = k; }
+      }
+    }
+  });
+  const gap = Math.round(wound * WOUND_GAP), reach = wound * CRACK_REACH;
+  const ribs = [];
+  for (let i = 0; i < own.length; i++) {
+    if (own[i] < 0) continue;
+    const p = pts[own[i]], cx = VX0 + (i % COLS), cy = VY0 + Math.floor(i / COLS);
+    const dx = cx + 0.5 - p.x, dy = cy + 0.5 - p.y, dist = best[i];
+    let r = p.r;
+    const along = p.along + dx * p.tx + dy * p.ty;
+    let across = dx * p.nx + dy * p.ny;
+    const da = along - bellyA;
+    if (gap && Math.abs(da) < gap / 2) continue;
+    if (dist > r) continue;
+    const g = open > 0 ? jaw(along) : 0;
+    let tooth = false;
+    if (g > 0) {
+      if (Math.abs(across) < g) continue;
+      tooth = Math.abs(across) - g < 1;
+      across -= Math.sign(across) * g; r -= g;
+      if (Math.abs(across) > r) continue;
+    }
+    if (ghost) { buf[i] = ghost; continue; }
+    const aI = Math.round(along), cI = Math.round(across);
+    if (Math.abs(da) < BELLY_LEN && dist < r - 1 && r > p.r0 + 0.5) {
+      if (((aI % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0) ribs.push(i);
+      else buf[i] = GREYS[WHITE - 4 - (seeth(aI, cI) % 2)];
+      continue;
+    }
+    let tone = GREYS[across > r - 1 ? WHITE - 3 : Math.abs(across) < 0.5 ? WHITE - 2 : across > 0.9 ? WHITE - 1 : WHITE];
+    if (reach > 0 && Math.abs(da) < reach) {
+      const w1 = Math.sin(along / 2.3) * r * 0.5, w2 = Math.sin(along / 3.1 + 2) * r * 0.55;
+      if (Math.abs(across - w1) < 0.6 || (Math.abs(across - w2) < 0.6 && seeth(aI, 7) % 3)) tone = GREYS[1 + Math.round(3 * Math.abs(da) / reach)];
+    }
+    if (tooth && (aI & 1) === 0 && along < MEAL_HINGE - 1) tone = GREYS[WHITE];
+    if (!g && along < headA && Math.abs(across) < 0.5) tone = GREYS[0];
+    if (Math.abs(along - headA - 1) < 0.5 && Math.abs(across + r - 2) < 0.5) tone = GREYS[0];
+    buf[i] = tone;
+  }
+  for (const i of ribs) buf[i] = GREYS[2];
+  if (ghost) return;
+  // the crest: spikes off the top edge from the snout back along the neck
+  const from = headA - SNOUT / 2, to = headA + CREST_LEN, spiked = new Set();
+  for (const p of pts) {
+    if (p.along < from || p.along > to) continue;
+    const j = Math.round(p.along - from);
+    if (spiked.has(j) || j % 2) continue;
+    spiked.add(j);
+    const left = 1 - (p.along - from) / (to - from);
+    const tall = Math.max(1, Math.round((j % 4 === 0 ? CREST_H : CREST_H - 1) * Math.min(1, left * 1.6)));
+    for (let m = 1; m <= tall; m++) {
+      const d = p.r - 0.5 + m;
+      const cx = Math.round(p.x - p.nx * d - 0.5), cy = Math.round(p.y - p.ny * d - 0.5);
+      if (cx < VX0 || cx >= VX1 || cy < VY0 || cy >= VY1) continue;
+      buf[(cy - VY0) * COLS + (cx - VX0)] = PURPLES[WHITE - 1 - (j % 2)];
+    }
+  }
+}
+
+// ---- the loop: three blows empty the bar, the recoil, the refill ------------------
+const BLOWS = [0.6, 1.1, 1.7], EMPTY = BLOWS[2];
+const RECOIL_LEN = RECOIL.snap + RECOIL.hold + RECOIL.back;
+const LOOP = EMPTY + RECOIL_LEN + RECOIL_FILL_S + 1.2;
+let speed = 1, paused = false, ghostOn = false, restOn = true, clock = 0, wall = performance.now();
+
+function frameAt(s, lap) {
+  // the bar: a third off at each blow, empty at the last
+  const hits = BLOWS.filter(b => s >= b).length;
+  const rs = s >= EMPTY && s < EMPTY + RECOIL_LEN ? s - EMPTY : null;
+  const after = s >= EMPTY + RECOIL_LEN;
+  const fill = after ? Math.min(1, (s - EMPTY - RECOIL_LEN) / RECOIL_FILL_S) : 1 - hits / 3;
+  const level = 2 + lap + (after ? 1 : 0);
+  // the sway is held from the last blow through the recoil
+  const still = s >= EMPTY ? Math.min(s, EMPTY + RECOIL_LEN) - EMPTY : 0;
+  const t = (lap * LOOP + s - still) * 1000;
+  // a bite at the belly's underside for a moment after each blow
+  const bite = BLOWS.some(b => s >= b && s - b < 0.25);
+  return { rs, rk: recoilK(rs), fill, level, t, bite, wound: after ? 0 : hits / 3 };
+}
+
+const canvases = [...document.querySelectorAll('canvas[data-pose]')];
+for (const c of canvases) { c.width = COLS * CS; c.height = ROWS * CS; }
+
+function paint(c, f) {
+  const pose = POSES[c.dataset.pose], g = c.getContext('2d');
+  const buf = new Array(COLS * ROWS).fill(null);
+  if (restOn && f.rk) drawCoil(buf, lay(f.t, pose, 0), f.wound, 0, GREYS[3]);
+  if (ghostOn && f.rs != null && f.rs < RECOIL.snap) drawCoil(buf, lay(f.t, pose, 0), f.wound, 0, GREYS[6]);
+  drawCoil(buf, lay(f.t, pose, f.rk), f.wound, Math.min(1, f.rk * pose.gape), false);
+  if (f.bite) {
+    // open water bitten out of the underside at the belly
+    const bx = Math.round(x0 + BELLY_AT * span) - 1, by = Math.round(lineY(bx, f.t, pose, f.rk) + COIL_GIRTH / 2 + BELLY_BULGE - 2);
+    for (let dy = 0; dy < 3; dy++) for (let dx = -1; dx < 2; dx++) {
+      const cx = bx + dx, cy = by + dy;
+      if (cy >= VY0 && cy < VY1) buf[(cy - VY0) * COLS + (cx - VX0)] = null;
+    }
+  }
+  g.fillStyle = '#000';
+  g.fillRect(0, 0, c.width, c.height);
+  for (let i = 0; i < buf.length; i++) {
+    if (!buf[i]) continue;
+    g.fillStyle = buf[i];
+    g.fillRect((i % COLS) * CS, Math.floor(i / COLS) * CS, CS, CS);
+  }
+  // the bar over the coil: the fill, four spent pips and the last lit, the level
+  const bw = 150, bx = Math.round((COLS - bw - 5 * 6 - 14) / 2), by = 4, bh = 5;
+  const cell = (x, y, w, h, tone) => { g.fillStyle = tone; g.fillRect(x * CS, y * CS, w * CS, h * CS); };
+  cell(bx - 1, by - 1, bw + 2, bh + 2, GREYS[8]);
+  cell(bx, by, bw, bh, GREYS[1]);
+  cell(bx, by, Math.round(bw * f.fill), bh, GREYS[WHITE]);
+  for (let s = 0; s < 5; s++) {
+    const px = bx + bw + 2 + s * 6;
+    cell(px - 1, by - 1, 5, bh + 2, GREYS[8]);
+    cell(px, by, 3, bh, s < 4 ? GREYS[1] : GREYS[WHITE]);
+  }
+  g.fillStyle = GREYS[WHITE];
+  g.font = `${7 * CS}px ui-monospace, "Courier New", monospace`;
+  g.textBaseline = 'top';
+  g.fillText(String(f.level), (bx + bw + 2 + 5 * 6 + 2) * CS, (by - 1) * CS);
+}
+
+const phaseOf = f => f.rs == null ? (f.fill < 1 && f.wound === 0 ? 'the bar filling, the level ticked' : 'the fight')
+  : f.rs < RECOIL.snap ? 'recoil: the smear frame' : f.rs < RECOIL.snap + RECOIL.hold ? 'recoil: held' : 'recoil: back, a step at a time';
+
+function tick() {
+  const nowMs = performance.now();
+  if (!paused) clock += (nowMs - wall) / 1000 * speed;
+  wall = nowMs;
+  const lap = Math.floor(clock / LOOP), s = clock - lap * LOOP;
+  const f = frameAt(s, lap);
+  for (const c of canvases) paint(c, f);
+  for (const cap of document.querySelectorAll('[data-cap]')) cap.textContent = `${cap.dataset.cap} · level ${f.level} · ${phaseOf(f)}`;
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// ---- the toolbar ------------------------------------------------------------------
+for (const b of document.querySelectorAll('[data-speed]')) b.addEventListener('click', () => {
+  speed = +b.dataset.speed;
+  for (const o of document.querySelectorAll('[data-speed]')) o.setAttribute('aria-pressed', String(o === b));
+});
+document.getElementById('pause').addEventListener('click', e => {
+  paused = !paused; e.currentTarget.setAttribute('aria-pressed', String(paused));
+});
+document.getElementById('ghost').addEventListener('click', e => {
+  ghostOn = !ghostOn; e.currentTarget.setAttribute('aria-pressed', String(ghostOn));
+  e.currentTarget.textContent = `ghost trail: ${ghostOn ? 'on' : 'off'}`;
+});
+document.getElementById('rest').addEventListener('click', e => {
+  restOn = !restOn; e.currentTarget.setAttribute('aria-pressed', String(restOn));
+  e.currentTarget.textContent = `rest line: ${restOn ? 'on' : 'off'}`;
+});
+const themes = ['follow system', 'light', 'dark'];
+let theme = 0;
+document.getElementById('themebtn').addEventListener('click', e => {
+  theme = (theme + 1) % themes.length;
+  if (theme === 0) document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', themes[theme]);
+  e.currentTarget.textContent = `theme: ${themes[theme]}`;
+});
+</script>
+</body>
+</html>

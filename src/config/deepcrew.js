@@ -154,20 +154,36 @@ export const KILL_MEET_GAP = P;
 export const KILL_MOTE_S = 1.5;        // a mote off the coming-apart hide, up and gone
 export const KILL_MOTE_RISE = 8;       // cells a second it climbs
 export const KILL_REFORM_S = 2.2;
-// A kill after the story's (DESIGN.md, "Endless serpent"): no beat and no
-// sheet, so nothing puts it down; the motes start gathering this long after
-// the coming apart is done.
-export let SERPENT_RISE_PAUSE_S = 6;
 // Let go where the belly was, he drops to the floor in KILL_DROP_STEPS held
 // steps over KILL_DROP_S.
 export const KILL_DROP_S = 0.4;
 export const KILL_DROP_STEPS = 3;
 
+// --- the recoil (DESIGN.md, "Endless serpent") ------------------------------------------
+// Past the story a level's bar emptied is no kill: the serpent reels in a
+// held pose and the bar fills for the next level. A smear frame past the pose
+// (`snap`, the pose times RECOIL_SMEAR), the pose held (`hold`), then back
+// in RECOIL_BACK_STEPS held steps (`back`). Seconds.
+export const RECOIL = { snap: 0.08, hold: 0.7, back: 0.36 };
+export const RECOIL_SMEAR = 1.35;
+export const RECOIL_BACK_STEPS = 3;
+// The bar's refill for the next level, once the recoil is done.
+export const RECOIL_FILL_S = 0.6;
+// The poses the owner votes on (docs/mocks/serpent-recoil-2026-10-13.html), a
+// bump laid on the coil's line: centered `at` along the body (head 0, tail
+// 1), `w` wide in the same, `lift` px up (down when negative); and the jaws
+// held `gape` open, 0..1. The head thrown back; folded down at the wound
+// (BELLY_AT, 0.58 of the way); the back arched.
+export const RECOIL_POSES = {
+  rear: { at: 0, w: 0.3, lift: P * 7, gape: 1 },
+  buckle: { at: 0.58, w: 0.14, lift: -P * 9, gape: 0.5 },
+  arch: { at: 0.45, w: 0.28, lift: P * 8, gape: 0.5 }
+};
+export const RECOIL_POSE = 'rear';
+
 export const DEEP_CREW_KNOBS = [
   { key: 'SHAFT_PACE', label: 'shaft pace, x', min: 0.1, max: 3, step: 0.1,
-    get: () => SHAFT_PACE, set: v => { SHAFT_PACE = v; } },
-  { key: 'SERPENT_RISE_PAUSE_S', label: 'serpent, pause before it rises again, s', min: 0, max: 30, step: 0.5,
-    get: () => SERPENT_RISE_PAUSE_S, set: v => { SERPENT_RISE_PAUSE_S = v; } }
+    get: () => SHAFT_PACE, set: v => { SHAFT_PACE = v; } }
 ];
 
 // The rescue's sheet with the second half on (DESIGN.md, "From the rescue

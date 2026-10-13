@@ -61,9 +61,12 @@ end: paid or volunteer translators, which Spanish, the picker's words, the
 sign (icons recommended), the CJK look, a localized title, Steam's
 achievement names.
 
-## Endless serpent -- BUILT, WORDS AND THE WALL OPEN (2026-10-12)
+## Endless serpent -- BUILT, WORDS, THE RECOIL VOTE AND THE WALL OPEN (2026-10-13)
 
-"Endless serpent" in DESIGN.md (built; its "As built" note). Open:
+"Endless serpent" in DESIGN.md (built: one bar a level on the last defense). Open:
+- **The recoil**: three poses in docs/mocks/serpent-recoil-2026-10-13.html;
+  `rear` is built as the guess. The vote is `RECOIL_POSE` in
+  config/deepcrew.js and nothing else.
 - **Words**: the level label (`serp-level`, drawn as the bare number until
   its letters are in `NUM_FONT`), the five notices' names and notes
   (`ach-serpent-*`, `ach-allstations-*`) and the books' row
@@ -71,8 +74,10 @@ achievement names.
   locales/en.ftl.
 - **Big numbers**: the k/m shortening and its glyphs are being voted; it
   drops into `sayNum` (render/numfont.js).
-- **The wall**: measured at level 3 for seven stations at rung 8 (the
-  constrict stops breaking at 4), far under the level-25 notice.
+- **The wall**: measured on the old loop at level 3 for seven stations at
+  rung 8 (the constrict stops breaking at 4), far under the level-25
+  notice; the fight is now the constrict alone, so re-measure it there
+  (`tools/node/deep-pace.mjs --stood 7 --wall`) before moving the notices.
 
 ## Controller support -- BUILT, WORDS AND STEAMWORKS OPEN (2026-10-12)
 

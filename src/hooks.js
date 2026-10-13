@@ -1118,12 +1118,16 @@ import { forgetSerpent, forgetFangs } from './verify.js';
 import { resetMechanic, settleResist, part as phasePart } from './deep/phases.js';
 import { FANG_BREAKS, SERPENT_PHASES } from './config.js';
 // `level` sets the serpent being fought (1 the story's), and the best with
-// it if it is higher: a fight set back never un-earns a record.
+// it if it is higher: a fight set back never un-earns a record. Past the
+// story the serpent is only ever on its last defense, so a level past 1 puts
+// it there whatever `stage` says.
 HANDLES.__serpent = ({ stage, wound, level } = {}) => {
   if (Number.isInteger(level) && level >= 1) {
     S.serpentLevel = level;
     S.serpentBest = Math.max(S.serpentBest | 0, level);
   }
+  S.recoilT = null;
+  if (S.serpentLevel > 1 && (Number.isInteger(stage) || Number.isInteger(level))) stage = SERPENT_PHASES - 1;
   if (Number.isInteger(stage)) {
     S.serpentStage = Math.max(0, Math.min(SERPENT_PHASES, stage));
     S.serpentFreed = S.serpentStage >= SERPENT_PHASES;

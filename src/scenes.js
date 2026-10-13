@@ -22,7 +22,7 @@ import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
 import { rockLeft, clampCam } from './world.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, SERPENT_RISE_PAUSE_S, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, RECOIL, rungValue } from './config.js';
 import { depthAt } from './deep/depth.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
@@ -278,6 +278,7 @@ const shieldBuilt = kind => {
 // less one, its depths that level's.
 function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scales = 400, loose = 0,
                     view = 'deep', run = 20, level = 1 } = {}) {
+  if (level > 1) stage = SERPENT_PHASES - 1;   // past the story it is only ever on its last
   rich();
   window.__fullSites();
   window.__snatch({ played: true });
@@ -400,32 +401,38 @@ const snatchAt = (phase, into = 0, pin = false) => () => {
   requestAnimationFrame(hold);
 };
 
-// The kill caught `a` seconds after the fourth break (or, with null, half
-// way through gathering itself again after the sheet), held for the shot.
-const killAt = a => () => {
+// The kill caught `a` seconds after the fourth break (or, with null, `back`
+// seconds into gathering itself again after the sheet), held for the shot.
+const killAt = (a, back = KILL_REFORM_S * 0.5) => () => {
   deepYard({ stage: SERPENT_PHASES - 1, party: [cast('brawler', 8), cast('mage', 8)] });
   window.__serpent({ stage: SERPENT_PHASES - 1, wound: depthAt(SERPENT_PHASES - 1) });
   window.__fast(1 / 60);
   if (a == null) {
     for (let i = 0; i < 60 * 120 && S.beat.sheet !== 'freedsheet'; i++) window.__fast(1 / 60);
     window.__skipBeat('sheet');
-    window.__fast(KILL_REFORM_S * 0.5);
+    window.__fast(back);
+    window.__view('deep');                     // the finale left the camera in the yard
   } else window.__fast(a);
   lookDeep(coilAt(bellySeg(), now()).x);
   window.__holdShot();
 };
 
-// A kill at level 3, `a` seconds after its last blow, or with null just past
-// its rise: the story behind the yard (the freed beat and the finale had),
-// so nothing but the kill, the pause and the gathering play.
-function endlessKill(a) {
-  deepYard({ level: 3, stage: SERPENT_PHASES - 1, party: [cast('brawler', 8), cast('mage', 8)] });
-  window.__serpent({ stage: SERPENT_PHASES - 1, wound: depthAt(SERPENT_PHASES - 1) });
-  window.__fast(1 / 60);
-  const down = KILL.last + KILL.limp + KILL.apart + SERPENT_RISE_PAUSE_S + KILL_REFORM_S;
-  window.__fast(a == null ? down + 0.6 : a);
-  lookDeep(coilAt(bellySeg(), now()).x);
+// A level's bar emptied past the story (DESIGN.md, "Endless serpent"): level 3
+// on its last defense one short of empty, the last of it by the hand, and
+// `a` seconds into the recoil, held for the shot.
+function recoilAt(a) {
+  deepYard({ level: 3, party: [cast('brawler', 8), cast('mage', 8)] });
+  window.__serpent({ wound: depthAt(SERPENT_PHASES - 1) - 1 });
+  for (let i = 0; i < 60 * 3 && S.recoilT == null; i++) {
+    const p = coilAt(bellySeg(), now());
+    clickDeep(p.x, p.y);
+    window.__fast(1 / 60);
+  }
+  if (a > 1 / 60) window.__fast(a - 1 / 60);
+  // between the head and the belly, so the pose and the wound are both in it
+  lookDeep(coilAt(0, now()).x + S.viewW / 4);
   window.__holdShot();
+  S.still = true;
 }
 
 // The finale (finale.js): a yard with a crew of every kind on it -- the gang,
@@ -856,12 +863,12 @@ const deepScenes = {
   'deep-kill-apart': { about: 'the deep', say: 'the kill: the hide coming apart into motes, tail first', run: killAt(KILL.last + KILL.limp + KILL.apart * 0.5) },
   'deep-kill-out': { about: 'the deep', say: 'the kill: him out on the floor, walking to her', run: killAt(KILL.last + KILL.limp + KILL.apart + 1) },
   'deep-kill-reform': { about: 'the deep', say: 'after the kill: the serpent gathering itself again, head first', run: killAt(null) },
-  // The endless serpent (DESIGN.md, "Endless serpent"): a serpent risen six
-  // times past the story's, its level after the pips and all five pips up
-  // from its first defense; the belly's ribs with nobody in them.
-  'deep-endless': { about: 'the deep', say: 'the serpent at level 7: its level after the bar\'s pips, every pip up, an empty belly',
+  // The endless serpent (DESIGN.md, "Endless serpent"): six bars emptied
+  // past the story's, on its last defense, its level after the pips and the
+  // four before it spent; the belly's ribs with nobody in them.
+  'deep-endless': { about: 'the deep', say: 'the serpent at level 7: on its last defense, its level after the pips, an empty belly',
     run: () => {
-      deepYard({ level: 7, stage: 1, wound: 0.4,
+      deepYard({ level: 7, wound: 0.4,
                  party: [cast('brawler', 6), cast('ranger', 6), cast('sapper', 5), cast('mage', 5)] });
       lookDeep(coilAt(bellySeg(), now()).x);
     } },
@@ -886,12 +893,17 @@ const deepScenes = {
       window.__holdShot();
       S.still = true;
     } },
-  // A kill past the story's: the last blow at level 3, no beat, no sheet, the
-  // camera left where it was; `a` seconds on (null: just after the rise).
-  'deep-endless-kill': { about: 'the deep', say: 'a kill at level 3: the last blow, no letterbox, no sheet, the camera the player\'s',
-    run: () => endlessKill(0.05) },
-  'deep-endless-rise': { about: 'the deep', say: 'a kill at level 3 a moment after it rose again: level 4 on the bar, its first defense up',
-    run: () => endlessKill(null) },
+  // The return, once: the story's sheet put down, the serpent gathered
+  // again, at level 2 on its last defense.
+  'deep-endless-rise': { about: 'the deep', say: 'after the story\'s kill, the serpent back: level 2 on its last defense, the four before it spent',
+    run: killAt(null, KILL_REFORM_S + 0.6) },
+  // A level's bar emptied: the recoil's smear frame, its held pose, and the
+  // next level just after it.
+  'deep-recoil-snap': { about: 'the deep', say: 'a level\'s bar emptied: the recoil\'s smear frame, past the pose', run: () => recoilAt(RECOIL.snap / 2) },
+  'deep-recoil': { about: 'the deep', say: 'a level\'s bar emptied: the serpent held in its recoil, the bar empty, level 3',
+    run: () => recoilAt(RECOIL.snap + RECOIL.hold / 2) },
+  'deep-recoil-next': { about: 'the deep', say: 'just past a recoil: level 4 on the bar, the bar filling again',
+    run: () => recoilAt(RECOIL.snap + RECOIL.hold + RECOIL.back + 0.25) },
   // The finale (finale.js), a moment of each of its parts.
   'finale-kill': { about: 'the deep', say: 'the finale from the top: a full yard, the last blow just landed', run: finaleAt('kill') },
   'finale-gear': { about: 'the deep', say: 'the finale: her gear going back onto her station in held steps, him beside her', run: finaleAt('hang', 0.4) },
