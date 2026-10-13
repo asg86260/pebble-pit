@@ -57,7 +57,9 @@ export async function browser({ port }) {
     // takes the frame rate from sixty to twenty-six on this machine -- and the
     // suite has checks in it that count on frames arriving at the usual rate.
     const win = process.env.WINDOW ? [`--window-size=${process.env.WINDOW}`] : [];
-    own = spawn(shellExe(), [`--remote-debugging-port=${port}`, '--no-first-run',
+    // Muted: a headless shell still plays the game's sound out of the speakers
+    // of whoever is sitting at this machine.
+    own = spawn(shellExe(), [`--remote-debugging-port=${port}`, '--no-first-run', '--mute-audio',
                              ...win, `--user-data-dir=${profile}`], { stdio: 'ignore' });
     for (let i = 0; i < 40 && !await alive(port); i++) await new Promise(r => setTimeout(r, 250));
   }
