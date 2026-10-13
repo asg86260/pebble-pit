@@ -164,11 +164,15 @@ test('a Steam build never has our cloud', () => {
     assert.equal(cloudUrlFor({ ...env, VITE_CLOUD_URL: url }), '', `.env.${mode} has no cloud, even pointed at one`);
   }
 
-  // The shell's Steam layer reaches nothing but the disk and the SDK.
-  const src = fs.readFileSync(new URL('../electron/steam.cjs', import.meta.url), 'utf8');
-  const required = [...src.matchAll(/require\('([^']+)'\)/g)].map(m => m[1]).sort();
-  assert.deepEqual(required, ['node:fs', 'node:path', 'steamworks.js']);
-  assert.doesNotMatch(src, /fetch\(|https?:\/\//);
+  // The shell's Steam layer reaches nothing but the disk and the SDK, and the
+  // language file its dialog's words are in (lang.cjs, the disk and Fluent).
+  const reach = file => {
+    const src = fs.readFileSync(new URL(`../electron/${file}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /fetch\(|https?:\/\//, file);
+    return [...src.matchAll(/require\('([^']+)'\)/g)].map(m => m[1]).sort();
+  };
+  assert.deepEqual(reach('steam.cjs'), ['./lang.cjs', 'node:fs', 'node:path', 'steamworks.js']);
+  assert.deepEqual(reach('lang.cjs'), ['@fluent/bundle', 'node:fs', 'node:path']);
 });
 
 test('the full game offers the demo\'s save on its first launch, once', () => {

@@ -6606,5 +6606,33 @@
   "where": "src/render/serpentbar.js",
   "context": "the serpent's level after the pips on its bar, from level 2 on; $n is the level. [owner's words: a level label, e.g. \"Lv 7\"] -- until then the bare number. Drawn in the pixel number font (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font",
   "text": "${n}"
+ },
+ {
+  "id": "shell-carry-title",
+  "group": "The shell",
+  "where": "electron/steam.cjs",
+  "context": "the Steam carry-over offer, on the full game's first launch when a demo save is found: the dialog's title (a placeholder for the owner's words)",
+  "text": "[owner's words: the carry-over offer's title]"
+ },
+ {
+  "id": "shell-carry-message",
+  "group": "The shell",
+  "where": "electron/steam.cjs",
+  "context": "the Steam carry-over offer: the question (a placeholder for the owner's words)",
+  "text": "[owner's words: a save from the demo was found -- carry it on?]"
+ },
+ {
+  "id": "shell-carry-yes",
+  "group": "The shell",
+  "where": "electron/steam.cjs",
+  "context": "the Steam carry-over offer: the button that carries the demo save over (a placeholder for the owner's words)",
+  "text": "[owner's words: carry it on]"
+ },
+ {
+  "id": "shell-carry-no",
+  "group": "The shell",
+  "where": "electron/steam.cjs",
+  "context": "the Steam carry-over offer: the button that starts a fresh yard (a placeholder for the owner's words)",
+  "text": "[owner's words: start fresh]"
  }
 ]

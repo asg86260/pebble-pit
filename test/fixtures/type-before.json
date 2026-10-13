@@ -1,0 +1,698 @@
+[
+ {
+  "file": "src/style.css",
+  "sel": "html, body",
+  "prop": "font",
+  "value": "12px/1.4 ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#hop button",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".page .title",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".page .title",
+  "prop": "letter-spacing",
+  "value": ".18em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".page .note",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".page .empty",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".rows .sect .badge",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".rows .sect .badge",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".rows button",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".rows button",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".rows .job",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".rows .job.pickrow .chosen",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".optspop",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".optspop",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".optspop .opt",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".optspop .opt",
+  "prop": "letter-spacing",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".optspop[data-potpick] .for",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".optspop[data-potpick] .for",
+  "prop": "letter-spacing",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".rows .job button",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".record",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".record .name",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".toast",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".toast .name",
+  "prop": "letter-spacing",
+  "value": ".12em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .word",
+  "prop": "letter-spacing",
+  "value": ".3em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".controls",
+  "prop": "letter-spacing",
+  "value": ".04em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".index",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .index .it",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".index .entry .name",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .why",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .cloudsheet .head",
+  "prop": "letter-spacing",
+  "value": ".25em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .cloudsheet .pair-code",
+  "prop": "letter-spacing",
+  "value": ".3em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .cloudsheet input",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .cloudsheet input",
+  "prop": "letter-spacing",
+  "value": ".3em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held textarea",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held textarea",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held button, .held a.store",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held button, .held a.store",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".queue",
+  "prop": "font",
+  "value": "12px/1.5 ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".queue",
+  "prop": "letter-spacing",
+  "value": ".08em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".queue button",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".queue button",
+  "prop": "letter-spacing",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".queue button .pips",
+  "prop": "letter-spacing",
+  "value": ".22em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#tip",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#tip",
+  "prop": "letter-spacing",
+  "value": ".08em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#hidedone",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#hidedone",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#stats",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#dev",
+  "prop": "font",
+  "value": "11px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#dev",
+  "prop": "letter-spacing",
+  "value": ".04em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#dev textarea",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#dev textarea",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#dev button",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#dev select",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".purse",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".panel .sheet",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#raise",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#raise",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".page .title .badge",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".page .title .badge",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".panel .sheet",
+  "prop": "letter-spacing",
+  "value": ".06em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".rows button",
+  "prop": "letter-spacing",
+  "value": ".06em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".handle",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".skip",
+  "prop": "font",
+  "value": "10px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".skip",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".messtag",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".modal",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".modalhead .title",
+  "prop": "letter-spacing",
+  "value": ".3em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#modalclose",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#objective",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#objective .next",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#objective .barrier .name",
+  "prop": "letter-spacing",
+  "value": ".08em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": "#objective .barrier button",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".g",
+  "prop": "font",
+  "value": "bold .78em ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".g",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves",
+  "prop": "font",
+  "value": "12px/1 ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves > .sect",
+  "prop": "letter-spacing",
+  "value": ".18em"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves > .tile",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves > .tile .what",
+  "prop": "letter-spacing",
+  "value": ".08em"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves > .tile .strip",
+  "prop": "letter-spacing",
+  "value": ".08em"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves > .tile .step, .rows.shelves > .tile .chosen",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves > .tile .step .less, .rows.shelves > .tile .step .more",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.shelves > .tile.goal .what",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.ledger",
+  "prop": "font",
+  "value": "12px/1 ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.ledger",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.ledger > .sect",
+  "prop": "letter-spacing",
+  "value": ".18em"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.ledger > button",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rows.ledger > button .what",
+  "prop": "letter-spacing",
+  "value": ".08em"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rails .rl-ask",
+  "prop": "letter-spacing",
+  "value": ".08em"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rails .rl-row",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rails .rl-reset",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rails .rl-node",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": ".rails .rl-root, .rails .rl-pick, .rails .rl-five",
+  "prop": "letter-spacing",
+  "value": "normal"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": "#buildbtn",
+  "prop": "font",
+  "value": "12px ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/shelf.css",
+  "sel": "#buildbtn",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .gamename",
+  "prop": "letter-spacing",
+  "value": ".34em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .line",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .word",
+  "prop": "letter-spacing",
+  "value": ".3em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col button",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col button",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .sub",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .said",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col textarea",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col textarea",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".foot",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".foot .cloud .go",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".foot .cloud .go",
+  "prop": "letter-spacing",
+  "value": "inherit"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .cloudsheet input",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .cloudsheet input",
+  "prop": "letter-spacing",
+  "value": ".3em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .cloudsheet .head",
+  "prop": "letter-spacing",
+  "value": ".25em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .cloudsheet .small",
+  "prop": "letter-spacing",
+  "value": ".1em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .cloudsheet .code",
+  "prop": "letter-spacing",
+  "value": ".04em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".col .cloudsheet .pair-code",
+  "prop": "letter-spacing",
+  "value": ".3em"
+ }
+]

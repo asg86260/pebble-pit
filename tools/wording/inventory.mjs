@@ -45,6 +45,8 @@ export function inventory() {
   const walk = d => { for (const f of readdirSync(d)) { const p = join(d, f).replace(/\\/g, '/'); if (statSync(p).isDirectory()) walk(p); else if (p.endsWith('.js')) files.push(p); } };
   walk('src');
   files.sort();
+  // the shell's own few (the carry-over dialog), after every page and module
+  for (const f of readdirSync('electron').sort()) if (f.endsWith('.cjs')) files.push(`electron/${f}`);
   // a call first, `msg('id'`, and failing one any literal of the id (an id
   // picked by a condition, or kept in a table)
   for (const re of [/\bmsg\(\s*'([a-z][\w-]*(?:\.[\w-]+)?)'/g, /'([a-z][\w-]*(?:\.[\w-]+)?)'/g]) {

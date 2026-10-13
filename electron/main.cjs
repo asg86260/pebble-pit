@@ -11,6 +11,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { openStore } = require('./store.cjs');
 const steam = require('./steam.cjs');
+const lang = require('./lang.cjs');
 
 // The window as it opens, and the least it may be shrunk to. The yard lays
 // itself out to any size; these are the sizes at which the boards read.
@@ -39,6 +40,8 @@ function openSaves() {
   if (build.target !== 'steam' && !process.env.STEAM_APP_ID) return disk;
   const client = steam.startClient({ appId: steam.appIdFor({ demo: !!build.demo, packaged: app.isPackaged }) });
   achievements = steam.achievementsOf(client);
+  asked.steam = steam.languageOf(client);
+  say = lang.sayer(lang.pickShellLanguage(asked));
   const remote = steam.startSteam({ client });
   const saves = steam.mirror(disk, remote);
   saves.reconcile();
@@ -47,6 +50,7 @@ function openSaves() {
       store: saves,
       demoSaves: path.join(steam.demoDirOf(userData), 'saves'),
       marker: path.join(userData, 'demo-carry.json'),
+      words: steam.carryWords(say),
       ask: w => dialog.showMessageBoxSync({
         type: 'question', title: w.title, message: w.message,
         buttons: [w.yes, w.no], defaultId: 0, cancelId: 1, noLink: true
@@ -62,6 +66,15 @@ const saveName = () => `boulder-${new Date().toISOString().slice(0, 10)}.json`;
 const FILTERS = [{ name: 'save', extensions: ['json'] }];
 
 let store = null;
+// What the shell knows about the player's language, handed to the page as
+// `desk.language()` (DESIGN.md, "Localization phase two", section 1): Steam's
+// language for the game, once the client is up (openSaves), and the system's
+// languages in order. Not navigator.languages: the packaged build ships only
+// the en-US locale, and Chromium's list follows the locales it has.
+const asked = { steam: null, system: [] };
+// The shell's own words (the window's title, the carry-over dialog), in
+// English until the app is ready and the language can be asked.
+let say = lang.sayer();
 // Steam's achievements, or ones that do nothing when this is not a Steam build.
 let achievements = steam.achievementsOf(null);
 // Read before the app is ready: the demo's saves live in a folder of their own,
@@ -109,6 +122,7 @@ function rememberWindow(win) {
 function wire() {
   ipcMain.on('desk:read', (e, slot) => { e.returnValue = store.read(slot); });
   ipcMain.on('desk:version', e => { e.returnValue = build; });
+  ipcMain.on('desk:language', e => { e.returnValue = asked; });
   // Fire and forget: a win is told to Steam and the page does not wait.
   ipcMain.on('desk:achievement', (e, name) => { achievements.unlock(name); });
   ipcMain.on('desk:achievements', (e, names) => { achievements.sync(names); });
@@ -134,7 +148,9 @@ function open() {
     ...(was ? { x: was.x, y: was.y, width: was.width, height: was.height } : {}),
     // White, so the first frame is not a flash of dark before the yard paints.
     backgroundColor: '#ffffff',
-    title: 'Pebble Pit',
+    // The page's own title message, the game's name, so a language that
+    // gives the name a title of its own gives the window the same one.
+    title: say('title-doctitle'),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -147,7 +163,7 @@ function open() {
     }
   });
   // The page's own <title> would otherwise take the window over; the shell
-  // is called Pebble Pit and stays so.
+  // is called by the game's name and stays so.
   win.on('page-title-updated', e => e.preventDefault());
   if (was && was.maximized) win.maximize();
   if (was && was.fullscreen) win.setFullScreen(true);
@@ -170,6 +186,8 @@ function open() {
 Menu.setApplicationMenu(null);
 
 app.whenReady().then(() => {
+  try { asked.system = app.getPreferredSystemLanguages(); } catch {}
+  say = lang.sayer(lang.pickShellLanguage(asked));
   store = openSaves();
   wire();
   open();

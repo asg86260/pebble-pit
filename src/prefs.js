@@ -12,13 +12,24 @@ const DEFAULTS = {
   touch: null,       // null = follow the pointer; true = a thumb; false = a mouse
   dark: null,        // null = follow the system; true = white on black; false = black on white
   crew: 'show',      // the crew drawn 'show', 'fade' or 'hide', so a crowded yard can still be read
-  lang: 'en',        // the language the words are in, a file in locales/ (lang.js); read at boot
+  language: null,    // null = follow Steam, the system or the browser; else a file in locales/ (lang.js); read at boot
 };
 
 let prefs = { ...DEFAULTS };
 try {
   const raw = localStorage.getItem(KEY);
-  if (raw) prefs = { ...DEFAULTS, ...JSON.parse(raw) };
+  if (raw) {
+    const had = JSON.parse(raw);
+    prefs = { ...DEFAULTS, ...had };
+    // Preferences kept before 2026-10-13 (phase two of the language work)
+    // carry `lang: 'en'`, written for every player who touched any switch, a
+    // choice none of them made, and no `language`. Such a player has been
+    // playing in English and goes on in English until they pick otherwise;
+    // the old key is dropped. Every blob written since has a `language` key,
+    // null or chosen, so this reads only the ones from before.
+    if (had && typeof had === 'object' && !('language' in had)) prefs.language = 'en';
+    delete prefs.lang;
+  }
 } catch {
   // no storage, or a bad blob: the defaults are the preference
 }

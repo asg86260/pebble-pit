@@ -10,6 +10,7 @@ import { drawMark } from './marks.js';
 import { shown } from '../tween.js';
 import { safeBottom } from '../world.js';
 import { portalNearEdge } from './portal.js';
+import { FACE } from '../lang.js';
 
 // Drawn in **screen** pixels, so it stays the size it is however far the yard
 // has been scaled down to fit the window.
@@ -69,7 +70,7 @@ export function countLines() {
 
 export function drawCount() {
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  ctx.font = '13px ui-monospace, "Courier New", monospace';
+  ctx.font = `13px ${FACE}`;
   ctx.textAlign = 'left';
   const lines = countLines();
 

@@ -1,8 +1,27 @@
 # Still to do
 
-## Localization, phase two -- DESIGNED, AWAITING APPROVAL (2026-10-13)
+## Localization, phase two -- PLUMBING BUILT, PICKER AND LOOK AWAIT MOCKS (2026-10-13)
 
-"Localization phase two (design, not built)" in DESIGN.md, on top of phase
+Built (DESIGN.md's "As built: the plumbing"): the language table
+(locales/languages.json, only English `ready`), the `language` preference
+and the default chain with `desk.language()`, the CJK faces cut at build
+(tools/fonts.mjs), `--face`/`--track` and `FACE`, the shell's words through
+the file, test/l10n-locales and l10n-default. Open, in order:
+- **The picker** (both settings panes, the landing page's foot link): its
+  look is being mocked; its words (`set-langbtn`, `set-lang-word`,
+  `set-langback`, the `title-` pair) are the owner's. It lists the rows with
+  `ready: true` and calls `chooseLang`. A language goes `ready` when its file
+  is approved and its overflow survey is clean; the guard then holds it
+  complete.
+- **The CJK look**: `--track` under `:lang(zh|ja|ko)` is still 1 (a TODO in
+  style.css), the size step and what replaces the capitals, Korean's
+  `word-break: keep-all` -- from the mock vote.
+- **Check on a packaged Windows build** that `app.getPreferredSystemLanguages()`
+  reports the system's list, not `en-US`.
+- The rest of the section: measure (`long`/`wide`, `l10nfit`), sync, the
+  sign, numbers and `list-sep`, the objective card's cap, Steam.
+
+"Localization phase two (design, part built)" in DESIGN.md, on top of phase
 one (built: every word in locales/en.ftl through `msg`). Nine languages,
 Steam's common set. Eight phases, each approvable alone: measure (pseudo
 locale `long`/`wide`, overflow survey, `l10nfit` browser group), choose

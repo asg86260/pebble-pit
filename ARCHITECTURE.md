@@ -61,7 +61,9 @@ field or two on `S` and a constant or two in `config.js`.
 | `catalog.js` | the notices' names and notes, data with no reach into the yard; `notices.js` joins the predicates by key | with a notice |
 | `fade.js` | a sheet up and down as a fade with `hidden` still the truth; the frame and `hold` call it every frame | never |
 | `copyout.js` | the save onto the clipboard, shared by three sheets | never |
-| `lang.js` | every word a player reads, looked up: `msg(id, args)` from the active language's bundle, English the fallback; the `lang` preference read once at boot; the pages' `data-l10n-id` written over as it loads (`localize`, `writeInto`). Imports only prefs.js and @fluent/bundle, so anything may import it (DESIGN.md, "Localization") | rarely |
+| `lang.js` | every word a player reads, looked up: `msg(id, args)` from the active language's bundle, English the fallback; the language settled once at boot (the `language` preference, else `desk.language()` or `navigator.languages` through languages.js); `FACE`, the canvas's font stack, and the CJK face loaded before any module measures; the pages' `data-l10n-id` written over as it loads (`localize`, `writeInto`). Imports only prefs.js, languages.js and @fluent/bundle, so anything may import it (DESIGN.md, "Localization") | rarely |
+| `languages.js` | which language a player who has not chosen reads: `pickLanguage` (choice, Steam, system, browser, English; ready languages only) and the tag and Steam-name maps, pure over `locales/languages.json` -- the one table of the nine (code, own name, Steam names, tags, `ready`, CJK face). `electron/lang.cjs` writes the same rules again for the shell; test/l10n-default.test.mjs holds them equal | with a language |
+| `tools/fonts.mjs` | the CJK faces: Noto Sans SC/JP/KR, fetched once a machine (pinned, hashed, cached outside the checkout) and cut by `subset-font` to each language file's characters into `src/fonts/<code>.woff2` (ignored); vite.config.js runs it at every build and dev start, and a missing file, network or hash is a warning, never a failed build | rarely |
 | `locales/en.ftl` | the words themselves, Mozilla Fluent, grouped by where they show, a comment over each; the source every other `locales/xx.ftl` is translated from. No module writes a sentence: a new line is a message here and a `msg` call. `test/l10n.test.mjs` is red for a sentence left in src/ or a page, an id with no message, a message nothing asks for, or a word that changed | a message a line |
 | `tools/wording/` | the words' tools: `inventory.mjs` writes docs/wording-inventory.json off en.ftl; `strings.mjs` is the scanner the guard uses; `pseudo.mjs` runs the yard with every message marked (test/l10n-pseudo.test.mjs); `extract.mjs` and `recast.mjs` moved the literals out; `surfaces.mjs` and `page.js` serve tools/wording-shots.mjs | yes |
 | `save.js` | the store seam: IndexedDB on a page (read once before the boot, `primeStore`), `window.desk` in the shell, localStorage as the way in and the fallback; the guard, the fallback and the save floor (`isSave`) over all of it; every key follows the open slot | rarely |
@@ -243,9 +245,12 @@ ships.
 `electron/` is the desktop shell, and the rule is that the renderer is the web
 build, unchanged, plus one adapter: nothing under `electron/` imports from
 `src/`, and nothing in `src/` reaches the shell except `save.js` (the store
-seam) and `settings.js` (the two dialog branches). `main.cjs` opens one window
-and answers five IPC calls; `preload.cjs` puts those five on `window.desk` --
-`read(slot)`, `write(slot, raw)`, `exportTo`, `importFrom`, `version` -- and nothing else
+seam), `settings.js` (the two dialog branches), `achievements.js` and
+`lang.js` (`desk.language()`, Steam's and the system's languages, asked once
+at boot). `main.cjs` opens one window
+and answers the IPC calls `preload.cjs` puts on `window.desk` --
+`read(slot)`, `write(slot, raw)`, `exportTo`, `importFrom`, `version`,
+`language`, and the two achievement calls -- and nothing else
 crosses, no path included; `store.cjs` is the save on disk, plain Node so
 `test/desk-store.test.mjs` can point it at a temp directory. It keeps
 `current.json` beside `last-good.json` under `userData/saves/`: a write goes to
@@ -256,7 +261,10 @@ builds"): every write also goes to Steam's remote storage through
 `steamworks.js` (required lazily, so nothing else needs it installed), each
 slot is settled against Steam at launch by `playedS`, and the full game's
 first launch offers the demo's save; plain Node too, checked against a fake
-remote in `test/desk-steam.test.mjs`. The shell learns which build it is from
+remote in `test/desk-steam.test.mjs`. `lang.cjs` is the shell's own few words
+(the window's title, the carry-over dialog), read out of `locales/*.ftl` with
+@fluent/bundle's CommonJS entry in Steam's or the system's language; the
+packaged app carries `locales/` for it. The shell learns which build it is from
 `dist/build.json` (`target`, `demo`), which vite.config.js stamps. Each notice
 is also a Steam achievement: `src/achievements.js` names it `ACH_` plus its key,
 `earn` tells the shell through `window.desk`, `main.js` re-sends the save's

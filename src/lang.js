@@ -5,15 +5,19 @@
 // the numbers and names that go in it, `msg('slots-since-min', { m })`, and
 // the language decides the words around them, the plural and the order.
 //
-// The language is read once, as the module loads, from the `lang`
-// preference (prefs.js): a module may look a message up at its own top level
-// and get the player's language, and changing it reloads the page, as the
-// dark switch does. The node yard has no vite and reads the files off disk.
+// The language is settled once, as the module loads: the `language`
+// preference (prefs.js) if the player chose one, else what Steam, the system
+// or the browser asks for, else English (languages.js, `pickLanguage`). A
+// module may look a message up at its own top level and get the player's
+// language, and changing it reloads the page, as the dark switch does. The
+// node yard has no vite and reads the files off disk; it follows nothing, so
+// a check reads English wherever it runs unless it chooses.
 
 import { FluentBundle, FluentResource, FluentNumber } from '@fluent/bundle';
 import { pref, setPref } from './prefs.js';
+import { SOURCE, pickLanguage, faceFamily } from './languages.js';
 
-export const SOURCE = 'en';
+export { SOURCE };
 
 // The files, by code. Under vite English is in the bundle and every other
 // language is a chunk fetched when it is the one asked for; in node each is
@@ -22,6 +26,11 @@ export const SOURCE = 'en';
 const VITE = !!import.meta.env;
 const LOADERS = VITE ? import.meta.glob('../locales/*.ftl', { query: '?raw', import: 'default' }) : null;
 const EAGER = VITE ? import.meta.glob('../locales/en.ftl', { query: '?raw', import: 'default', eager: true }) : null;
+const TABLE = VITE ? import.meta.glob('../locales/languages.json', { import: 'default', eager: true }) : null;
+// The faces cut for Chinese, Japanese and Korean (tools/fonts.mjs, run by the
+// build), by language code. A checkout that has not cut them, or a language
+// whose file does not exist yet, has none, and the system's own face answers.
+const FACES = VITE ? import.meta.glob('./fonts/*.woff2', { query: '?url', import: 'default', eager: true }) : null;
 const fs = VITE ? null : globalThis.process?.getBuiltinModule?.('node:fs');
 // The folder, for node. Not written as `new URL(path, import.meta.url)`: vite
 // reads that shape as an asset to ship, and the file would go out twice.
@@ -32,6 +41,9 @@ const codeOf = path => path.replace(/^.*\/|\.ftl$/g, '');
 export const LANGS = VITE
   ? Object.keys(LOADERS).map(codeOf).sort()
   : fs.readdirSync(DIR).filter(f => f.endsWith('.ftl')).map(codeOf).sort();
+
+// Every language the game is written for, ready or not (locales/languages.json).
+export const LANGUAGES = VITE ? Object.values(TABLE)[0] : JSON.parse(fs.readFileSync(new URL('languages.json', DIR), 'utf8'));
 
 // A file's text: at once for English and anywhere in node, a promise for
 // another language's chunk.
@@ -51,10 +63,44 @@ function bundleOf(code, text) {
   return b;
 }
 
+// What the shell says (Steam's language for the game, the system's list), or
+// null off the desk; a bridge that throws is a desk with nothing to say.
+function deskAsks() {
+  const d = globalThis.desk;
+  if (typeof d?.language !== 'function') return null;
+  try { return d.language() || { steam: null, system: [] }; } catch { return { steam: null, system: [] }; }
+}
+
 const english = bundleOf(SOURCE, source(SOURCE));
-const wanted = String(pref('lang') || SOURCE);
-export const LANG = wanted !== SOURCE && LANGS.includes(wanted) ? wanted : SOURCE;
+export const LANG = pickLanguage({
+  chosen: pref('language'),
+  desk: VITE ? deskAsks() : null,
+  browser: VITE && typeof navigator !== 'undefined' ? navigator.languages || [navigator.language] : null,
+  files: LANGS,
+  table: LANGUAGES,
+});
 const active = LANG === SOURCE ? english : bundleOf(LANG, await source(LANG));
+
+// The face the canvas writes in (DESIGN.md, "Localization phase two", section
+// 3): the house mono, with the language's cut face after it for Chinese,
+// Japanese and Korean, the stack style.css's `:lang` blocks write. The canvas
+// does not see `:lang`, so every `ctx.font` is `${px}px ${FACE}`.
+const ROW = LANGUAGES.find(r => r.code === LANG);
+const FAMILY = faceFamily(ROW);
+export const FACE = FAMILY ? `ui-monospace, "Courier New", "${FAMILY}", monospace` : 'ui-monospace, "Courier New", monospace';
+
+// A cut face is fetched before any module runs, so nothing measures a line
+// with the fallback and keeps the wrong width (ribbon.js sizes its cloth
+// once). Registered here rather than as an @font-face in a sheet, so a
+// language that does not need it never names the file.
+if (FAMILY && FACES && typeof FontFace === 'function' && typeof document !== 'undefined') {
+  const url = FACES[`./fonts/${LANG}.woff2`];
+  if (url) {
+    const face = new FontFace(FAMILY, `url(${url})`, { weight: '400 700' });
+    document.fonts.add(face);
+    try { await face.load(); } catch (e) { console.warn(`${FAMILY}: the face did not load`, e); }
+  }
+}
 
 // A number goes in as JavaScript writes it, `${n}`, so an English line reads
 // exactly as the template it replaced; a plural selector still reads it as a
@@ -158,5 +204,5 @@ if (typeof document !== 'undefined' && document.querySelectorAll) localize();
 
 // The language for the next load. The caller reloads.
 export function chooseLang(code) {
-  setPref('lang', LANGS.includes(code) ? code : SOURCE);
+  setPref('language', LANGS.includes(code) ? code : SOURCE);
 }

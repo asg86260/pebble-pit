@@ -28,6 +28,7 @@ import { withRise } from './rise.js';
 import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
+import { FACE } from '../lang.js';
 
 // The bench is not in the yard until there is something on it worth buying.
 // It is built rather than delivered (raise.js), so while it is going up it is
@@ -215,7 +216,7 @@ export function drawKitStands() {
 export function drawKitCounts(screenAt) {
   const stands = kitStands();
   if (!stands.length && !hasGarage()) return;
-  ctx.font = '13px ui-monospace, "Courier New", monospace';
+  ctx.font = `13px ${FACE}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000';
