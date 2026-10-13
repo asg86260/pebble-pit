@@ -2,6 +2,7 @@
 // A plain list, nothing for sale and nothing with a hover.
 
 import { S } from './state.js';
+import { msg } from './lang.js';
 // The catalog and not notices.js: this file is read on the landing page too,
 // where there is no yard for notices.js to reach.
 import { CATALOG as NOTICES } from './catalog.js';
@@ -30,15 +31,15 @@ export function recordListOf(won = [], wonAt = {}) {
     .sort((a, b) => (wonAt[b.key] || 0) - (wonAt[a.key] || 0))
     .map(n => ({ name: n.name, note: n.note }));
 }
-export const recordLabelOf = (won = []) => `achievements \u00b7 ${won.length} of ${noticeTotal()}`;
+export const recordLabelOf = (won = []) => msg('title-recordbtn-label', { count: won.length, total: noticeTotal() });
 
 // The line on the sheet's front, which is also the button that turns the page.
-export const recordLabel = () => `achievements \u00b7 ${noticeCount()} of ${noticeTotal()}`;
+export const recordLabel = () => msg('held-recordbtn-label', { count: noticeCount(), total: noticeTotal() });
 
 // What an empty page says. The held sheet and the landing page draw the same
 // list but carry the owner's words separately.
-export const NONE_HELD = "you haven't done anything yet.";
-export const NONE_TITLE = 'nothing yet';
+export const NONE_HELD = msg('held-record-none');
+export const NONE_TITLE = msg('title-record-none');
 
 // One card a notice: the name on top, what you did to earn it underneath.
 export function showRecord(el, rows = recordList(), noneSaid = NONE_HELD) {

@@ -13,6 +13,7 @@
 import { FS_SIZE } from './config.js';
 import { S } from './state.js';
 import { onTap } from './tap.js';
+import { msg } from './lang.js';
 
 const doc = typeof document !== 'undefined' ? document : null;
 const root = doc?.documentElement;
@@ -42,8 +43,8 @@ root?.style.setProperty?.('--fs-size', `${FS_SIZE}px`);
 // Two ways to say the same state, and the word says what pressing does.
 function dress() {
   const on = inFullscreen();
-  if (button) { button.dataset.on = on ? '1' : ''; button.title = on ? 'leave fullscreen' : 'fullscreen'; }
-  if (rowEl) rowEl.textContent = on ? 'fullscreen: on' : 'fullscreen: off';
+  if (button) { button.dataset.on = on ? '1' : ''; button.title = on ? msg('other-fullscreen-title-on') : msg('other-fullscreen-title-off'); }
+  if (rowEl) rowEl.textContent = on ? msg('set-fullscreen-on') : msg('set-fullscreen-off');
 }
 
 if (button) {

@@ -5,6 +5,7 @@
 // hands back a string. The one thing it asks a row is whether the ladder is
 // finished (`maxed`), because a finished row has nothing left to promise.
 
+import { msg, placeOf } from './lang.js';
 import { S } from './state.js';
 import { RUNGS } from './config.js';
 
@@ -146,10 +147,9 @@ export const leftText = ms => {
 // hour. Floored, so a yard reads the time it has actually had.
 export const sayPlayed = sec => {
   const m = Math.floor(Math.max(0, sec || 0) / 60), h = Math.floor(m / 60);
-  return h ? `${h}h ${m % 60}m` : `${m}m`;
+  return h ? msg('played-hm', { h, m: m % 60 }) : msg('played-m', { m });
 };
-export const ordinal = n =>
-  n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+export const ordinal = n => msg('ordinal', { n: placeOf(n) });
 
 // A signed change as arrows, against three steps: under the first is level,
 // then one arrow, two, three. The air filter's board and the books both draw

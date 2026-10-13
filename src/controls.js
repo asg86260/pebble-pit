@@ -8,15 +8,16 @@
 // written (padread.js, `glyph`).
 
 import { glyph } from './padread.js';
+import { msg } from './lang.js';
 
 export const CONTROLS = [
-  ['left click', 'interact'],
-  ['right click', 'focus workers'],
-  ['right click + left click', 'pick up workers'],
-  ['middle click', 'move camera'],
-  ['scroll wheel', 'move camera'],
-  ['← → / a d', 'move camera'],
-  ['1 – 9', 'jump to a place'],
+  [msg('ctl-leftclick-in'), msg('ctl-leftclick-do')],
+  [msg('ctl-rightclick-in'), msg('ctl-rightclick-do')],
+  [msg('ctl-rightleft-in'), msg('ctl-rightleft-do')],
+  [msg('ctl-middle-in'), msg('ctl-middle-do')],
+  [msg('ctl-wheel-in'), msg('ctl-wheel-do')],
+  [msg('ctl-arrows-in'), msg('ctl-arrows-do')],
+  [msg('ctl-digits-in'), msg('ctl-digits-do')],
 ];
 
 // The pad's buttons for the rows above, in the same order: a list of glyph
@@ -36,15 +37,15 @@ const PAD_FOR = [
 // they are marked as such where they stand, and the report that built them
 // lists them.
 export const PAD_WORDS = {
-  hop: "[owner's words: d-pad, move between places]",
-  back: "[owner's words: B, back]",
-  handBack: "[owner's words: Y, hand back a queued copy]",
-  turn: "[owner's words: LB / RB, the next station's board]",
-  hand: "[owner's words: RT held, the hand: sweep and throw]",
-  corner: "[owner's words: View, the corner cards]",
-  hold: "[owner's words: Menu, hold the yard]",
-  look: "[owner's words: R3, the camera back to the focus]",
-  way: "[owner's words: L3, through the portal]",
+  hop: msg('ctl-pad-hop'),
+  back: msg('ctl-pad-back'),
+  handBack: msg('ctl-pad-handback'),
+  turn: msg('ctl-pad-turn'),
+  hand: msg('ctl-pad-hand'),
+  corner: msg('ctl-pad-corner'),
+  hold: msg('ctl-pad-hold'),
+  look: msg('ctl-pad-look'),
+  way: msg('ctl-pad-way'),
 };
 const PAD_ONLY = [
   [['up', 'down'], PAD_WORDS.hop],

@@ -12,6 +12,7 @@ import { fillControls } from './controls.js';
 import { copyOut } from './copyout.js';
 import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
 import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
+import { msg } from './lang.js';
 
 const col = document.querySelector('.col');
 const said = document.getElementById('said');
@@ -90,9 +91,9 @@ const motionEl = document.getElementById('motion');
 const darkEl = document.getElementById('dark');
 const soundEl = document.getElementById('sound');
 const volumeEl = document.getElementById('volume');
-const sayMotion = () => { motionEl.textContent = reducedMotion() ? 'motion: less' : 'motion: full'; };
-const sayDark = () => { darkEl.textContent = dark() ? 'dark: on' : 'dark: off'; };
-const saySound = () => { soundEl.textContent = pref('muted') ? 'sound: off' : 'sound: on'; };
+const sayMotion = () => { motionEl.textContent = reducedMotion() ? msg('set-motion-less') : msg('set-motion-full'); };
+const sayDark = () => { darkEl.textContent = dark() ? msg('set-dark-on') : msg('set-dark-off'); };
+const saySound = () => { soundEl.textContent = pref('muted') ? msg('set-sound-off') : msg('set-sound-on'); };
 motionEl.addEventListener('click', () => {
   setPref('motion', !reducedMotion());
   sayMotion();
@@ -127,13 +128,13 @@ document.getElementById('loadsave').addEventListener('click', () => { paste.hidd
 document.getElementById('nevermind').addEventListener('click', () => { paste.hidden = true; box.value = ''; });
 document.getElementById('loadit').addEventListener('click', () => {
   let s;
-  try { s = JSON.parse(box.value); } catch { say('that is not a save'); return; }
-  if (!isSave(s)) { say('that is not a save'); return; }
+  try { s = JSON.parse(box.value); } catch { say(msg('title-said-notasave')); return; }
+  if (!isSave(s)) { say(msg('title-said-notasave')); return; }
   savePrev(slotRaw(openSlot()));
   saveRaw(box.value);
   box.value = '';
   showPane('main');
-  say('loaded');
+  say(msg('title-said-loaded'));
 });
 
 // Deleting the open slot, confirmed on its row (slots.js): the blob goes, and
@@ -141,7 +142,7 @@ document.getElementById('loadit').addEventListener('click', () => {
 function wipeOpen() {
   clear();
   showPane('main');
-  say('erased');
+  say(msg('title-said-erased'));
 }
 
 // The desk: a window with no menu bar needs a way out that is not a key.

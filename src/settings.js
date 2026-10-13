@@ -16,6 +16,7 @@ import { copyOut } from './copyout.js';
 import { showCloud, CLOUD_LOOK_MS } from './cloudsheet.js';
 import { cloudReady, cloudStatus } from './cloud.js';
 import { cloudNoticeDue } from './notices.js';
+import { msg } from './lang.js';
 // input.js imports this file; `hold` is a declaration, so it is there to
 // call however the ring is entered.
 import { hold } from './input.js';
@@ -90,7 +91,7 @@ async function leave(to) {
 // The switch says what is in force, not what was pressed: a system asking for
 // less motion reads "less" before the switch is ever touched.
 function sayMotion() {
-  motionEl.textContent = reducedMotion() ? 'motion: less' : 'motion: full';
+  motionEl.textContent = reducedMotion() ? msg('set-motion-less') : msg('set-motion-full');
 }
 
 motionEl.addEventListener('click', () => {
@@ -105,7 +106,7 @@ motionEl.addEventListener('click', () => {
 // has to be told.
 const touchEl = document.getElementById('touch');
 function sayTouch() {
-  touchEl.textContent = coarse() ? 'touch: on' : 'touch: off';
+  touchEl.textContent = coarse() ? msg('set-touch-on') : msg('set-touch-off');
 }
 touchEl.addEventListener('click', () => {
   setPref('touch', !coarse());
@@ -120,7 +121,7 @@ touchEl.addEventListener('click', () => {
 // lifts, so the change is one fade and not a cut.
 const darkEl = document.getElementById('dark');
 function sayDark() {
-  darkEl.textContent = dark() ? 'dark: on' : 'dark: off';
+  darkEl.textContent = dark() ? msg('set-dark-on') : msg('set-dark-off');
 }
 darkEl.addEventListener('click', () => {
   setPref('dark', !dark());
@@ -139,30 +140,30 @@ document.getElementById('savecopy').addEventListener('click', async () => {
   if (!d) return copyOut(exportSave(), said);
   let took = false;
   try { took = await d.exportTo(exportSave()); } catch {}
-  said.textContent = took ? 'saved' : 'not saved';
+  said.textContent = took ? msg('said-saved') : msg('said-notsaved');
 });
 
 // What the store has to say, said on the sheet when it comes up: each is a run
 // about to be lost quietly. `hold` in input.js calls this.
 export function sayStore() {
-  if (S.fellBack) said.textContent = 'the last save would not load; this is the one before it';
-  else if (S.broken) said.textContent = 'your last save could not be read. copy a save hands it over';
-  else if (S.yielded) said.textContent = 'this yard is open in another tab; that one is being saved';
+  if (S.fellBack) said.textContent = msg('said-fellback');
+  else if (S.broken) said.textContent = msg('said-broken');
+  else if (S.yielded) said.textContent = msg('said-yielded');
   else if (S.unsaved) said.textContent = unsavedLine();
   // Said once: the observer below clears it when the sheet goes down.
-  else if (S.newerSave) said.textContent = 'this save is from a newer build (' + S.newerSave + ')';
+  else if (S.newerSave) said.textContent = msg('said-newer', { build: S.newerSave });
 }
 
 // Blocked and full want different things of the player: blocked is a browser
 // setting or the game in its own tab; full is the origin's quota, mostly other
 // games' data on a shared host, and the number says so.
-const mb = n => (n / 1048576).toFixed(1) + ' mb';
-const kb = n => Math.ceil(n / 1024) + ' kb';
+const mb = n => (n / 1048576).toFixed(1);
+const kb = n => Math.ceil(n / 1024);
 export function unsavedLine() {
   const t = storeTrouble();
-  if (t?.kind === 'blocked') return 'not saving: your browser blocks storage inside this page. copy a save still works';
-  if (t?.kind === 'full') return `not saving: this site's storage is full (${mb(t.used)} used, ${kb(t.ours)} of it ours). copy a save still works`;
-  return 'not saving: storage refused the save' + (t ? ' (' + t.name + ')' : '') + '. copy a save still works';
+  if (t?.kind === 'blocked') return msg('said-unsaved-blocked');
+  if (t?.kind === 'full') return msg('said-unsaved-full', { used: mb(t.used), ours: kb(t.ours) });
+  return t ? msg('said-unsaved-refused', { name: t.name }) : msg('said-unsaved-refused-why');
 }
 
 // The paste box is asked for rather than always there.
@@ -189,10 +190,10 @@ function takeIn(raw) {
   try {
     took = importSave(raw);
   } catch (err) {
-    said.textContent = 'could not load: ' + (err && err.message ? err.message : String(err));
+    said.textContent = msg('said-couldnotload', { message: err && err.message ? err.message : String(err) });
     return false;
   }
-  said.textContent = took ? 'loaded' : 'that is not a save';
+  said.textContent = took ? msg('said-loaded') : msg('said-notasave');
   return took;
 }
 document.getElementById('nevermind').addEventListener('click', () => {
@@ -249,7 +250,7 @@ import { wakeAudio, muteAudio, setVolume } from './audio.js';
 
 const soundEl = document.getElementById('sound');
 function saySound() {
-  soundEl.textContent = pref('muted') ? 'sound: off' : 'sound: on';
+  soundEl.textContent = pref('muted') ? msg('set-sound-off') : msg('set-sound-on');
 }
 soundEl.addEventListener('click', () => {
   setPref('muted', !pref('muted'));
@@ -292,8 +293,8 @@ cloudNote.type = 'button';
 cloudNote.className = 'toast';
 cloudNote.hidden = true;
 // appendChild, not append: the node yard's page stand-in has only the one.
-cloudNote.appendChild(Object.assign(document.createElement('div'), { className: 'name', textContent: 'newer on another device' }));
-cloudNote.appendChild(Object.assign(document.createElement('div'), { className: 'note', textContent: 'saves has the answer' }));
+cloudNote.appendChild(Object.assign(document.createElement('div'), { className: 'name', textContent: msg('note-cloud-name') }));
+cloudNote.appendChild(Object.assign(document.createElement('div'), { className: 'note', textContent: msg('note-cloud-note') }));
 document.body.appendChild(cloudNote);
 let noteDown = 0;
 function dropCloudNote() {

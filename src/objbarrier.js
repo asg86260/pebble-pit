@@ -21,6 +21,7 @@ import { drawGlyph, glyphFor, badgeFor } from './glyphs.js';
 import { tagOf, pressRow, revealed, COIN_ORDER } from './shop.js';
 import { onTap } from './tap.js';
 import { setFill } from './billfill.js';
+import { msg } from './lang.js';
 
 const box = document.getElementById('objective')?.querySelector?.('.barrier') ?? null;
 
@@ -139,7 +140,7 @@ function update(u, mode) {
     // The bench strip's word and its count: the copies still waiting their
     // turn, which are the ones a cancel can hand back.
     const n = waitingOf(u);
-    if (n) say(parts.cancel, `cancel ×${n}`);
+    if (n) say(parts.cancel, msg('obj-barrier-cancel', { n }));
     parts.cancel.classList.toggle('on', n > 0);
     if (parts.cancel.disabled !== !n) parts.cancel.disabled = !n;
     return;

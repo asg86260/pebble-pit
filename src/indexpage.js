@@ -7,11 +7,12 @@
 //
 // What is met is met.js's; the words are config/index.js's alone.
 
-import { GROUPS } from './config/index.js';
+import { GROUPS, GROUP_NAMES } from './config/index.js';
 import { metEntries, unread, markRead } from './met.js';
 import { deepOn } from './snatch.js';
 import { GLYPHS } from './glyphs.js';
 import { MARK } from './words.js';
+import { msg } from './lang.js';
 
 const listed = () => metEntries(deepOn());
 // The entry open on the right, kept across openings so the page comes back
@@ -21,7 +22,7 @@ let chosen = null;
 // The front's button carries a dot while any entry met has never been opened.
 export const indexFresh = () => listed().some(unread);
 export function sayIndexButton(btn) {
-  btn.replaceChildren(document.createTextNode('index'));
+  btn.replaceChildren(document.createTextNode(msg('held-indexbtn')));
   if (indexFresh()) btn.appendChild(Object.assign(document.createElement('i'), { className: 'newdot' }));
 }
 
@@ -65,7 +66,7 @@ function fill(el) {
   for (const g of GROUPS) {
     const mine = all.filter(e => e.group === g);
     if (!mine.length) continue;
-    list.appendChild(Object.assign(document.createElement('div'), { className: 'grp', textContent: g }));
+    list.appendChild(Object.assign(document.createElement('div'), { className: 'grp', textContent: GROUP_NAMES[g] }));
     for (const e of mine) {
       const b = document.createElement('button');
       b.type = 'button';
@@ -84,7 +85,7 @@ function fill(el) {
     const back = document.createElement('button');
     back.type = 'button';
     back.className = 'ixback';
-    back.textContent = 'back';
+    back.textContent = msg('held-index-entryback');
     back.addEventListener('click', () => { el.classList.remove('reading'); fill(el); });
     const head = document.createElement('div');
     head.className = 'head';
@@ -92,7 +93,7 @@ function fill(el) {
     if (p) head.appendChild(Object.assign(document.createElement('span'), { className: 'pic' })).appendChild(p);
     const t = document.createElement('div');
     t.append(Object.assign(document.createElement('div'), { className: 'name', textContent: e.name }),
-             Object.assign(document.createElement('div'), { className: 'grp', textContent: e.group }));
+             Object.assign(document.createElement('div'), { className: 'grp', textContent: GROUP_NAMES[e.group] }));
     head.appendChild(t);
     entry.append(back, head, Object.assign(document.createElement('div'), { className: 'text', textContent: e.text }));
     entry.dataset.key = e.key;

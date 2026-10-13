@@ -12,6 +12,7 @@ import { shieldDone } from './shield.js';
 import { serpentOn, deepOn } from './snatch.js';
 import { beatDone } from './beats.js';
 import { open } from './stations.js';
+import { msg } from './lang.js';
 
 // In the order they come. `done` is the fact that finishes a step, and it
 // must imply every step before it (a fact that can come early, like the pit
@@ -20,39 +21,39 @@ import { open } from './stations.js';
 // step not done is the line. `row` is the shop row the step is bought
 // through: the card under the line sells it (objbarrier.js).
 export const STEPS = [
-  { key: 'rock', say: 'dig the boulder to save your sqwife!', done: () => S.boulderNo > 1 || beatDone('meet'),
+  { key: 'rock', say: msg('obj-rock'), done: () => S.boulderNo > 1 || beatDone('meet'),
     // the intro's quest (DESIGN.md, "Quests under the story's line")
     quest: [
-      { key: 'chip', say: 'mine the boulder', done: () => !!S.handChipped },
-      { key: 'pickup', say: 'grab a pebble', done: () => !!S.seenDrag },
-      { key: 'toss', say: 'toss the pebble into the pit', done: () => S.banked > 0 },
+      { key: 'chip', say: msg('obj-rock-q-chip'), done: () => !!S.handChipped },
+      { key: 'pickup', say: msg('obj-rock-q-pickup'), done: () => !!S.seenDrag },
+      { key: 'toss', say: msg('obj-rock-q-toss'), done: () => S.banked > 0 },
     ] },
-  { key: 'falling', say: 'try to dig the boulder again!', done: () => S.boulderNo > 1 },
-  { key: 'props', row: 'props', say: 'maybe building a wooden roof will stop the next boulder?', done: () => shieldDone('props') || S.rescued },
+  { key: 'falling', say: msg('obj-falling'), done: () => S.boulderNo > 1 },
+  { key: 'props', row: 'props', say: msg('obj-props'), done: () => shieldDone('props') || S.rescued },
   // A place step (no line of its own): the barrier that just fell opened the
   // next place, so the card sells it before the next barrier. It is done when
   // the place stands (or the barrier after it has fallen), so a place already
   // open is skipped.
   { key: 'farm', row: 'unlockfarm', place: 'farm', say: '', done: () => open('farm') || shieldDone('net') || !!S.rescued },
-  { key: 'net', row: 'net', say: 'nope, try catching the boulder and slowing it down', done: () => shieldDone('net') || S.rescued },
+  { key: 'net', row: 'net', say: msg('obj-net'), done: () => shieldDone('net') || S.rescued },
   { key: 'quarry', row: 'unlockquarry', place: 'quarry', say: '', done: () => open('quarry') || shieldDone('arch') || !!S.rescued },
-  { key: 'arch', row: 'arch', say: "lets try building an arch from the mined ore and stone. surely that's sturdy enough.", done: () => shieldDone('arch') || S.rescued },
+  { key: 'arch', row: 'arch', say: msg('obj-arch'), done: () => shieldDone('arch') || S.rescued },
   { key: 'buytower', row: 'unlocktower', place: 'tower', say: '', done: () => open('tower') || shieldDone('dome') || !!S.rescued },
-  { key: 'dome', row: 'dome', say: 'out of options, lets see if the wizards can help.', done: () => shieldDone('dome') || S.rescued },
-  { key: 'rescue', say: 'save your sqwife', done: () => !!S.rescued },
+  { key: 'dome', row: 'dome', say: msg('obj-dome'), done: () => shieldDone('dome') || S.rescued },
+  { key: 'rescue', say: msg('obj-rescue'), done: () => !!S.rescued },
   // The second half: the snatch waits on the pit drowning, then the way down
   // is the wizards', and the portal is a row on their board.
-  { key: 'drown', say: 'drown the pit', when: serpentOn, done: () => (!!S.drowned && !!S.rescued) || !!S.snatched },
+  { key: 'drown', say: msg('obj-drown'), when: serpentOn, done: () => (!!S.drowned && !!S.rescued) || !!S.snatched },
   { key: 'snatch', say: '', when: serpentOn, done: () => !!S.snatched },
-  { key: 'tower', say: 'build the wizards\' tower', when: serpentOn, done: () => !!S.snatched && (!!S.towerOpen || !!S.portalOpen) },
+  { key: 'tower', say: msg('obj-tower'), when: serpentOn, done: () => !!S.snatched && (!!S.towerOpen || !!S.portalOpen) },
   // Opening the wizards' board after the snatch is the talking (board.js sets
   // askedWizards); a save already at the portal is past it.
-  { key: 'talk', say: 'talk to the wizards about what just happened', when: serpentOn,
+  { key: 'talk', say: msg('obj-talk'), when: serpentOn,
     done: () => !!S.snatched && (!!S.askedWizards || S.portalPour > 0 || !!S.portalOpen) },
-  { key: 'portal', say: "conjure a portal to the abyss, what's down there?", when: deepOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
+  { key: 'portal', say: msg('obj-portal'), when: deepOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
   // Done for good on the story's kill: `serpentFreed` goes false again on
   // every rise (deep/serpent.js).
-  { key: 'free', say: 'free your sqhusband from the serpent\'s belly', when: deepOn,
+  { key: 'free', say: msg('obj-free'), when: deepOn,
     done: () => beatDone('freed') || !!S.serpentFreed || S.serpentLevel > 1 },
 ];
 

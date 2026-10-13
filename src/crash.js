@@ -6,6 +6,7 @@
 // still being evaluated has something listening for it too.
 
 import { S } from './state.js';
+import { msg } from './lang.js';
 
 const sheet = document.getElementById('crashed');
 const why = sheet.querySelector('.why');
@@ -15,7 +16,7 @@ const said = sheet.querySelector('.said');
 // front, which is the line a bug report wants; the whole goes to the console.
 function firstLine(err) {
   const s = err instanceof Error ? (err.stack || String(err)) : String(err);
-  return s.split('\n')[0].trim() || 'something threw';
+  return s.split('\n')[0].trim() || msg('crashed-why-fallback');
 }
 
 export function fatal(err) {

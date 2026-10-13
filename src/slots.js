@@ -9,15 +9,16 @@
 import { S } from './state.js';
 import { SLOTS, openSlot, slotRaw, writeSlot } from './save.js';
 import { sayPlayed } from './words.js';
+import { msg } from './lang.js';
 
 // Coarse on purpose: the page is read at a glance.
 export function since(then, now = Date.now()) {
   const s = Math.max(0, (now - then) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  if (s < 60) return msg('slots-since-now');
+  if (s < 3600) return msg('slots-since-min', { m: Math.floor(s / 60) });
+  if (s < 86400) return msg('slots-since-h', { h: Math.floor(s / 3600) });
   const d = Math.floor(s / 86400);
-  return d === 1 ? 'a day ago' : `${d} days ago`;
+  return msg('slots-since-days', { d });
 }
 
 // A blob that will not parse is `unreadable`, not `empty`: stepping into it is
@@ -36,14 +37,14 @@ export function slotLabels(now = Date.now(), playing = true) {
     // slot with no yard in it to have played.
     let played = '';
     if (open && playing) {
-      parts.push(`rock ${S.boulderNo}`, `${S.crew} crew`, 'playing');
+      parts.push(msg('slots-row-rock', { n: S.boulderNo }), msg('slots-row-crew', { n: S.crew }), msg('slots-row-playing'));
       played = sayPlayed(S.playedS);
     } else if (!raw) {
-      parts.push('empty');
+      parts.push(msg('slots-row-empty'));
     } else if (!s) {
-      parts.push('unreadable');
+      parts.push(msg('slots-row-unreadable'));
     } else {
-      parts.push(`rock ${s.boulderNo || 1}`, `${s.crew || 0} crew`);
+      parts.push(msg('slots-row-rock', { n: s.boulderNo || 1 }), msg('slots-row-crew', { n: s.crew || 0 }));
       if (Number.isFinite(s.savedAt)) parts.push(since(s.savedAt, now));
       played = sayPlayed(s.playedS);
     }
@@ -56,12 +57,12 @@ export function slotLabels(now = Date.now(), playing = true) {
 // without the slot's number, or `a new yard` for an empty one.
 export function playLabel(now = Date.now()) {
   const row = slotLabels(now, false).find(r => r.open);
-  if (!row || row.empty) return 'a new yard';
+  if (!row || row.empty) return msg('title-playlabel-new');
   return row.text.replace(/^\d+ · /, '');
 }
 
 // The line on the fronts: how many of the three are yards.
-export const slotsLabel = () => `saves · ${slotLabels(Date.now(), false).filter(r => !r.empty).length} of ${SLOTS}`;
+export const slotsLabel = () => msg('held-slotsbtn-label', { n: slotLabels(Date.now(), false).filter(r => !r.empty).length, total: SLOTS });
 
 // One card a slot on a grid: the row's button (its words and its playtime,
 // the open one inert) and a ✕ delete inside the same border, and under it the confirm
@@ -141,12 +142,12 @@ export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
         armed = setTimeout(disarm, 4000);
         armedRow = b;
         b.classList.add('armed');
-        setItems(b.querySelector('.what'), [String(slot), 'start a new yard?']);
+        setItems(b.querySelector('.what'), [String(slot), msg('slots-arm')]);
         return;
       }
       disarm();
       pick(slot, empty);
-      say(empty ? 'a new yard' : 'loaded');
+      say(empty ? msg('slots-said-new') : msg('slots-said-loaded'));
       showSlots(el, say, pick, playing, wipeOpen);
     });
 
@@ -157,7 +158,7 @@ export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
     del.type = 'button';
     del.className = 'del';
     del.dataset.slot = slot;
-    del.setAttribute('aria-label', 'delete');
+    del.setAttribute('aria-label', msg('slots-del-aria'));
     del.innerHTML = '<svg class="x" viewBox="0 0 5 5" aria-hidden="true">' +
       [[0, 0], [4, 0], [1, 1], [3, 1], [2, 2], [1, 3], [3, 3], [0, 4], [4, 4]]
         .map(([x, y]) => `<rect x="${x}" y="${y}" width="1" height="1"/>`).join('') + '</svg>';
@@ -170,8 +171,10 @@ export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
     const confirm = document.createElement('div');
     confirm.className = 'confirm';
     confirm.dataset.slot = slot;
-    confirm.innerHTML = '<div class="fold"><div class="pair"><button type="button" class="yes">delete</button>' +
-                        '<button type="button" class="no">back</button></div></div>';
+    confirm.innerHTML = '<div class="fold"><div class="pair"><button type="button" class="yes"></button>' +
+                        '<button type="button" class="no"></button></div></div>';
+    confirm.querySelector('.yes').textContent = msg('slots-confirm-yes');
+    confirm.querySelector('.no').textContent = msg('slots-confirm-no');
     asking(confirm, false);
 
     // One question at a time: asking about this row puts any other away.

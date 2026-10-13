@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="./icon.png">
-<title>Pebble Pit</title>
+<title data-l10n-id="play-doctitle">Pebble Pit</title>
 <link rel="icon" href="./icon.png">
 <link rel="stylesheet" href="./src/style.css">
 <!-- Dark mode before the first paint, straight from the store, so the page
@@ -42,56 +42,56 @@ try {
   <div id="purse" class="purse"></div>
   <div class="sheet">
   <div id="board" class="page" hidden>
-    <div class="title">the bench</div>
+    <div class="title" data-l10n-id="station-bench">the bench</div>
     <div id="shop" class="rows"></div>
   </div>
   <div id="lab" class="page" hidden>
-    <div class="title">the lab</div>
+    <div class="title" data-l10n-id="station-lab">the lab</div>
     <div id="labshop" class="rows"></div>
   </div>
   <div id="house" class="page" hidden>
-    <div class="title">the house</div>
+    <div class="title" data-l10n-id="station-house">the house</div>
     <div id="crewshop" class="rows"></div>
   </div>
   <div id="towerboard" class="page" hidden>
-    <div class="title">the tower</div>
+    <div class="title" data-l10n-id="station-tower">the tower</div>
     <div id="towershop" class="rows"></div>
   </div>
   <div id="quarryboard" class="page" hidden>
-    <div class="title">the quarry</div>
+    <div class="title" data-l10n-id="station-quarry">the quarry</div>
     <div id="quarryshop" class="rows"></div>
   </div>
   <div id="farmboard" class="page" hidden>
-    <div class="title">the farm</div>
+    <div class="title" data-l10n-id="station-farm">the farm</div>
     <div id="farmshop" class="rows"></div>
   </div>
   <div id="filter" class="page" hidden>
-    <div class="title">the air filter</div>
+    <div class="title" data-l10n-id="station-filter">the air filter</div>
     <div id="filtershop" class="rows"></div>
   </div>
   <div id="apothboard" class="page" hidden>
-    <div class="title">the apothecary</div>
+    <div class="title" data-l10n-id="station-apothecary">the apothecary</div>
     <div id="apothshop" class="rows"></div>
   </div>
   <!-- The shack: the rockhands' hut off the rock's flank, and the rock's own
        board. The row that puts it up is on the bench, like every other row that
        opens a place. -->
   <div id="shackboard" class="page" hidden>
-    <div class="title">the shack</div>
+    <div class="title" data-l10n-id="station-shack">the shack</div>
     <div id="shackshop" class="rows"></div>
   </div>
   <!-- The outhouse: the janitor's one building, and its board carries the
        job's rungs. The row that puts the shed up is on the bench, because a
        row that opens a place cannot live on the board of the place it opens. -->
   <div id="looboard" class="page" hidden>
-    <div class="title">the janitor's closet</div>
+    <div class="title" data-l10n-id="station-outhouse">the janitor's closet</div>
     <div id="looshop" class="rows"></div>
   </div>
   <!-- The books. It hangs over the pit rather than at a building, because the
        pit is the yard's bank: the counter floating above it says what you have,
        and this says how fast it is arriving. Nothing on it is for sale. -->
   <div id="statsboard" class="page" hidden>
-    <div class="title">the books</div>
+    <div class="title" data-l10n-id="station-stats">the books</div>
     <div id="statsshop" class="rows"></div>
   </div>
   <!-- A ladder that is finished stays on the board saying so, because seeing
@@ -128,14 +128,14 @@ try {
 <!-- The skip hint: up at the bottom edge while a scene has the yard, with a
      bar that fills under the words for as long as space is held. See
      skiphint.js. -->
-<button id="skip" class="skip" type="button" hidden><span class="bar"></span><span class="say">hold space to skip</span></button>
+<button id="skip" class="skip" type="button" hidden><span class="bar"></span><span class="say" data-l10n-id="other-skip-desk">hold space to skip</span></button>
 <!-- The mess tags: up at the top edge while mess lies on the ground, one a
      kind, with how many cells of it are left. The triangle is the pile-full
      mark's own drawing (warning() in render/pilemarks.js) at a radius of one.
      See messtags.js. -->
 <div id="messtags" class="messtags">
-  <div class="messtag" data-kind="muck" hidden><svg class="warn" viewBox="-1.1 -1.1 2.2 2" aria-hidden="true"><path class="tri" d="M0 -1L1 .8L-1 .8Z"/><rect class="sign" x="-.125" y="-.25" width=".25" height=".4"/><rect class="sign" x="-.125" y=".35" width=".25" height=".25"/></svg><span class="say">muck</span><span class="n"></span></div>
-  <div class="messtag" data-kind="poop" hidden><svg class="warn" viewBox="-1.1 -1.1 2.2 2" aria-hidden="true"><path class="tri" d="M0 -1L1 .8L-1 .8Z"/><rect class="sign" x="-.125" y="-.25" width=".25" height=".4"/><rect class="sign" x="-.125" y=".35" width=".25" height=".25"/></svg><span class="say">poop</span><span class="n"></span></div>
+  <div class="messtag" data-kind="muck" hidden><svg class="warn" viewBox="-1.1 -1.1 2.2 2" aria-hidden="true"><path class="tri" d="M0 -1L1 .8L-1 .8Z"/><rect class="sign" x="-.125" y="-.25" width=".25" height=".4"/><rect class="sign" x="-.125" y=".35" width=".25" height=".25"/></svg><span class="say" data-l10n-id="other-messtag-muck">muck</span><span class="n"></span></div>
+  <div class="messtag" data-kind="poop" hidden><svg class="warn" viewBox="-1.1 -1.1 2.2 2" aria-hidden="true"><path class="tri" d="M0 -1L1 .8L-1 .8Z"/><rect class="sign" x="-.125" y="-.25" width=".25" height=".4"/><rect class="sign" x="-.125" y=".35" width=".25" height=".25"/></svg><span class="say" data-l10n-id="other-messtag-poop">poop</span><span class="n"></span></div>
 </div>
 <!-- the wash behind the held sheet: the yard, dimmed and stippled, so the
      sheet reads as over something rather than pasted on it. The frame keeps
@@ -145,7 +145,7 @@ try {
      sheet stands over it. One body a kind; the open one is shown. -->
 <div id="modalwash" class="scrim modalwash" hidden></div>
 <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modaltitle" hidden>
-  <div class="modalhead"><span id="modaltitle" class="title"></span><button id="modalclose" type="button" aria-label="close">&#10005;</button></div>
+  <div class="modalhead"><span id="modaltitle" class="title"></span><button id="modalclose" type="button" aria-label="close" data-l10n-id="modal-close">&#10005;</button></div>
   <!-- the books: one ledger a sheet, laid side by side as the window allows -->
   <div id="modalbooks" class="modalbody books" hidden>
     <div id="bookincome" class="rows"></div>
@@ -169,83 +169,83 @@ try {
        front is what escape brings up; behind it the saves, the achievements
        and the settings, each with its own back. The title is a page of its
        own now (index.html; DESIGN.md, "The landing page"). -->
-  <div class="word" data-pane="main">paused</div>
-  <button id="resume" type="button" data-pane="main">resume</button>
+  <div class="word" data-pane="main" data-l10n-id="held-word">paused</div>
+  <button id="resume" type="button" data-pane="main" data-l10n-id="held-resume">resume</button>
   <div class="rule" data-pane="main"></div>
   <!-- The saves: three yards, one open at a time. A page of its own behind
        this button, which says which yard this is. See slots.js. -->
-  <button id="slotsbtn" type="button" data-pane="main">saves</button>
-  <div class="word" data-pane="slots" hidden>saves</div>
+  <button id="slotsbtn" type="button" data-pane="main" data-l10n-id="held-slotsbtn">saves</button>
+  <div class="word" data-pane="slots" hidden data-l10n-id="held-slots-word">saves</div>
   <div id="slots" class="saves" data-pane="slots" hidden></div>
   <div class="pair" data-pane="slots" hidden>
-    <button id="savecopy" type="button">copy a save</button>
-    <button id="loadsave" type="button">load a save</button>
+    <button id="savecopy" type="button" data-l10n-id="held-savecopy">copy a save</button>
+    <button id="loadsave" type="button" data-l10n-id="held-loadsave">load a save</button>
   </div>
   <!-- the paste, folded away until load a save asks for it -->
   <div id="paste" class="paste" data-pane="slots" hidden>
     <textarea id="pastebox" rows="6" spellcheck="false"></textarea>
     <div class="pair">
-      <button id="loadit" type="button">load it</button>
-      <button id="nevermind" type="button">never mind</button>
+      <button id="loadit" type="button" data-l10n-id="held-loadit">load it</button>
+      <button id="nevermind" type="button" data-l10n-id="held-nevermind">never mind</button>
     </div>
   </div>
   <!-- the cloud: every slot mirrored, and the answer when another device is
        ahead on this yard (cloudsheet.js). A build with no cloud leaves it
        hidden. -->
   <div id="cloudsheet" class="paste cloudsheet" data-pane="slots" hidden></div>
-  <button id="slotsback" type="button" data-pane="slots" hidden>back</button>
+  <button id="slotsback" type="button" data-pane="slots" hidden data-l10n-id="held-slotsback">back</button>
   <!-- The record: what the yard has done, newest first. A list and not a
        board -- nothing on it is for sale, nothing on it answers to a cursor
        -- and it hangs here rather than on the noticeboard because the
        noticeboard is the books, and the books are about what the yard is
        earning now. It is a page of its own behind this button, which carries
        the count. See record.js. -->
-  <button id="recordbtn" type="button" data-pane="main">achievements</button>
-  <div class="word" data-pane="record" hidden>achievements</div>
+  <button id="recordbtn" type="button" data-pane="main" data-l10n-id="held-recordbtn">achievements</button>
+  <div class="word" data-pane="record" hidden data-l10n-id="held-record-word">achievements</div>
   <div id="record" class="record" data-pane="record" hidden></div>
-  <button id="recordback" type="button" data-pane="record" hidden>back</button>
+  <button id="recordback" type="button" data-pane="record" hidden data-l10n-id="held-recordback">back</button>
   <!-- The index: every thing met, down the left by group, the chosen one on
        the right; on a phone the list, and the entry pushed over it. A page
        of its own behind this button, and `i` opens it straight. See
        indexpage.js; the words are config/index.js's. -->
-  <button id="indexbtn" type="button" data-pane="main">index</button>
-  <div class="word" data-pane="index" hidden>index</div>
+  <button id="indexbtn" type="button" data-pane="main" data-l10n-id="held-indexbtn">index</button>
+  <div class="word" data-pane="index" hidden data-l10n-id="held-index-word">index</div>
   <div id="index" class="index" data-pane="index" hidden></div>
-  <button id="indexback" type="button" data-pane="index" hidden>back</button>
+  <button id="indexback" type="button" data-pane="index" hidden data-l10n-id="held-indexback">back</button>
   <!-- The settings, behind one word: a title page with a volume slider on it
        is not a title page. -->
-  <button id="settingsbtn" type="button" data-pane="main">settings</button>
-  <div class="word" data-pane="settings" hidden>settings</div>
-  <button id="motion" type="button" data-pane="settings" hidden>motion: full</button>
+  <button id="settingsbtn" type="button" data-pane="main" data-l10n-id="held-settingsbtn">settings</button>
+  <div class="word" data-pane="settings" hidden data-l10n-id="held-settings-word">settings</div>
+  <button id="motion" type="button" data-pane="settings" hidden data-l10n-id="set-motion-full">motion: full</button>
   <!-- the thumb switch: the hop, the sheet and the tap gate follow the
        pointer the platform reports, and this overrides it (prefs.js, coarse) -->
-  <button id="touch" type="button" data-pane="settings" hidden>touch: off</button>
+  <button id="touch" type="button" data-pane="settings" hidden data-l10n-id="set-touch-off">touch: off</button>
   <!-- white on black (prefs.js, dark): follows the system until pressed -->
-  <button id="dark" type="button" data-pane="settings" hidden>dark: off</button>
+  <button id="dark" type="button" data-pane="settings" hidden data-l10n-id="set-dark-off">dark: off</button>
   <!-- the whole screen, where the platform will give it (fullscreen.js);
        where it will not -- an iphone -- the line under says what does -->
-  <button id="fullscreenrow" type="button" data-pane="settings" hidden>fullscreen: off</button>
-  <div id="fullscreennote" class="small" data-pane="" hidden>for the whole screen, add this page to the home screen</div>
+  <button id="fullscreenrow" type="button" data-pane="settings" hidden data-l10n-id="set-fullscreen-off">fullscreen: off</button>
+  <div id="fullscreennote" class="small" data-pane="" hidden data-l10n-id="set-fullscreen-note">for the whole screen, add this page to the home screen</div>
   <!-- wave-desk-sound, track B: the mute, which remembers. See settings.js. -->
-  <button id="sound" type="button" data-pane="settings" hidden>sound: on</button>
+  <button id="sound" type="button" data-pane="settings" hidden data-l10n-id="set-sound-on">sound: on</button>
   <!-- the volume: a share of the designed level, all the way up is still quiet -->
-  <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden>
-  <button id="controlsbtn" type="button" data-pane="settings" hidden>controls</button>
+  <input id="volume" type="range" min="0" max="1" step="0.05" data-pane="settings" aria-label="volume" hidden data-l10n-id="set-volume">
+  <button id="controlsbtn" type="button" data-pane="settings" hidden data-l10n-id="set-controlsbtn">controls</button>
   <!-- the controls page: input on the left, what it does on the right -->
-  <div class="word" data-pane="controls" hidden>controls</div>
+  <div class="word" data-pane="controls" hidden data-l10n-id="set-controls-word">controls</div>
   <div id="controlslist" class="controls" data-pane="controls" hidden></div>
-  <button id="controlsback" type="button" data-pane="controls" hidden>back</button>
+  <button id="controlsback" type="button" data-pane="controls" hidden data-l10n-id="set-controlsback">back</button>
   <!-- the sheet's one-line reply, on every page that has something to say -->
   <div class="said" data-pane="main slots settings"></div>
-  <button id="settingsback" type="button" data-pane="settings" hidden>back</button>
+  <button id="settingsback" type="button" data-pane="settings" hidden data-l10n-id="set-settingsback">back</button>
   <!-- the way out of a yard that is not the desk's quit: the landing page,
        once the store has taken the last write -->
-  <button id="titlebtn" type="button" data-pane="main">return to title</button>
+  <button id="titlebtn" type="button" data-pane="main" data-l10n-id="held-titlebtn">return to title</button>
   <!-- the desk only: a window with no menu bar needs a way out that is not a
        key combination. settings.js gives it both fronts when window.desk
        exists; without one the page-turn never shows it. -->
-  <button id="quit" type="button" hidden>exit to desktop</button>
-  <div class="small" data-pane="main">esc holds &middot; &larr; &rarr; look about &middot; hold space to skip a scene</div>
+  <button id="quit" type="button" hidden data-l10n-id="held-quit">exit to desktop</button>
+  <div class="small" data-pane="main" data-l10n-id="held-keys">esc holds &middot; &larr; &rarr; look about &middot; hold space to skip a scene</div>
   <div id="build" class="small" data-pane="main settings"></div>
 </div>
 
@@ -253,10 +253,10 @@ try {
      the word, the one line of what broke, and the one thing left worth doing,
      which is taking the save with you. See crash.js. -->
 <div id="crashed" class="held" hidden>
-  <div class="word">stopped</div>
+  <div class="word" data-l10n-id="crashed-word">stopped</div>
   <div class="why"></div>
   <div class="rule"></div>
-  <button id="copysave" type="button">copy save</button>
+  <button id="copysave" type="button" data-l10n-id="crashed-copysave">copy save</button>
   <div class="said"></div>
 </div>
 
@@ -266,42 +266,42 @@ try {
      goes on behind it, because nothing here stops for a rock -- and the one
      button puts it down. See ending.js. -->
 <div id="saved" class="held" hidden>
-  <div class="word">It's Over?</div>
-  <div class="why">you saved your sqwife in <span id="savedin"></span>!</div>
+  <div class="word" data-l10n-id="saved-word">It's Over?</div>
+  <div class="why" data-l10n-id="saved-why">you saved your sqwife in <span id="savedin" data-l10n-name="time"></span>!</div>
   <!-- With the second half on the sheet has no button (the snatch comes
        next), and the rule over the button goes with it (ending.js). -->
   <div class="rule endonly"></div>
-  <button id="keepplaying" type="button">Happily Ever After</button>
+  <button id="keepplaying" type="button" data-l10n-id="saved-keepplaying">Happily Ever After</button>
 </div>
 
 <!-- The demo's end: the net has failed (beats.js `demoend`, ending.js). The
      words are the owner's (2026-10-12). -->
 <div id="demoend" class="held" hidden>
-  <div class="word">thats it for the demo!</div>
-  <div class="why">cant save your sqwife just yet.</div>
+  <div class="word" data-l10n-id="demoend-word">thats it for the demo!</div>
+  <div class="why" data-l10n-id="demoend-why">cant save your sqwife just yet.</div>
   <div class="rule"></div>
-  <a id="demostore" class="store" href="#" target="_blank" rel="noopener" hidden>wishlist today!</a>
-  <button id="demokeep" type="button">keep playing</button>
+  <a id="demostore" class="store" href="#" target="_blank" rel="noopener" hidden data-l10n-id="demoend-store">wishlist today!</a>
+  <button id="demokeep" type="button" data-l10n-id="demoend-keep">keep playing</button>
 </div>
 
 <!-- The teaser's end on the free build: the snatch played, the wizards asked
      (beats.js `teaseend`, ending.js). The words are the owner's (2026-10-12). -->
 <div id="teaseend" class="held" hidden>
-  <div class="word">to be continued in the full game!</div>
+  <div class="word" data-l10n-id="teaseend-word">to be continued in the full game!</div>
   <div class="rule"></div>
-  <a id="teasestore" class="store" href="#" target="_blank" rel="noopener" hidden>get the full game</a>
-  <button id="teasekeep" type="button">keep playing</button>
+  <a id="teasestore" class="store" href="#" target="_blank" rel="noopener" hidden data-l10n-id="teaseend-store">get the full game</a>
+  <button id="teasekeep" type="button" data-l10n-id="teaseend-keep">keep playing</button>
 </div>
 
 <!-- The second half's end: the sqhusband out of the serpent (snatch.js),
      handled in ending.js the way #saved is. -->
 <div id="freed" class="held" hidden>
-  <div class="word">ok now its over</div>
-  <div class="why">you saved your sqhusband from the serpent's belly.</div>
+  <div class="word" data-l10n-id="freed-word">ok now its over</div>
+  <div class="why" data-l10n-id="freed-why">you saved your sqhusband from the serpent's belly.</div>
   <div class="rule"></div>
-  <div class="why">that's the end, feel free to keep slaying the serpent and farming on the surface!</div>
-  <div class="why">thank you!</div>
-  <button id="freedkeep" type="button">keep playing</button>
+  <div class="why" data-l10n-id="freed-end">that's the end, feel free to keep slaying the serpent and farming on the surface!</div>
+  <div class="why" data-l10n-id="freed-thanks">thank you!</div>
+  <button id="freedkeep" type="button" data-l10n-id="freed-keep">keep playing</button>
 </div>
 
 <div id="tip" hidden></div>
@@ -312,7 +312,7 @@ try {
      over the site are the announcement, the same as for every other build.
      See raise.js for why the bench is built at all, and `seatCall` in board.js
      for how it is put where the bench is. -->
-<button id="raise" type="button" hidden>build the bench</button>
+<button id="raise" type="button" hidden data-l10n-id="other-raise">build the bench</button>
 
 <!-- The story's next step, one line pinned top left (objline.js; DESIGN.md,
      "The story's objectives"). Words only: what, never where. On a shield
@@ -322,7 +322,7 @@ try {
      line (queue.js; absent when nothing is on the go). Two cards each pinned
      to the corner stood on top of each other. -->
 <div id="topleft">
-<div id="objective" aria-live="polite" hidden><span class="next">next</span><span class="say"></span><ul class="quest" hidden></ul><div class="barrier" hidden></div></div>
+<div id="objective" aria-live="polite" hidden><span class="next" data-l10n-id="obj-next">next</span><span class="say"></span><ul class="quest" hidden></ul><div class="barrier" hidden></div></div>
 <div id="queue" class="queue off" hidden></div>
 </div>
 
@@ -345,7 +345,7 @@ try {
   <button id="fullscreen" type="button" hidden><i class="frame"></i></button>
   <!-- the pause button, on a phone only: the way to the held sheet where
        there is no escape key (pause.js) -->
-  <button id="pause" type="button" hidden aria-label="pause"><i class="bars"></i></button>
+  <button id="pause" type="button" hidden aria-label="pause" data-l10n-id="other-pause"><i class="bars"></i></button>
   <!-- the crew drawn faint, so a late yard's crowd does not hide the
        buildings behind it (corner.js; render.js, a `dim` layer) -->
   <button id="crewfade" type="button" hidden><i class="body"></i></button>

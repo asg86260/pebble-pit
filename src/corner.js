@@ -16,6 +16,7 @@ import { onTap } from './tap.js';
 import { showTipAt } from './board.js';
 import { goDeep, goUp, gliding } from './view.js';
 import { recede } from './cutscene.js';
+import { msg } from './lang.js';
 
 const corner = document.getElementById('corner');
 const crew = document.getElementById('crewfade');
@@ -26,7 +27,7 @@ const way = document.getElementById('way');
 // does next -- the yard's own note (board.js, `#tip`) rather than the
 // browser's, so it reads like every other note in the game.
 const next = () => CREW_VIEWS[(CREW_VIEWS.indexOf(crewView()) + 1) % CREW_VIEWS.length];
-const NOTE = { show: 'show workers', fade: 'fade workers', hide: 'hide workers' };
+const NOTE = { show: msg('other-corner-show'), fade: msg('other-corner-fade'), hide: msg('other-corner-hide') };
 let noting = false;
 function note() {
   if (!noting) return;
@@ -64,7 +65,7 @@ function seatWay() {
   const up = S.view === 'deep';
   if (way.dataset.way !== (up ? 'up' : 'down')) {
     way.dataset.way = up ? 'up' : 'down';
-    way.setAttribute('aria-label', up ? 'up to the yard' : 'down to the deep');
+    way.setAttribute('aria-label', up ? msg('other-corner-up') : msg('other-corner-down'));
     wayNote();
   }
   if (way.hidden && wayNoting) { wayNoting = false; showTipAt(null); }

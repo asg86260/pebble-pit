@@ -1,0 +1,3861 @@
+{
+ "inventory": [
+  {
+   "id": "saved.word",
+   "text": "It's Over?"
+  },
+  {
+   "id": "saved.why",
+   "text": "you saved your sqwife in <span id=\"savedin\"></span>!"
+  },
+  {
+   "id": "saved.keepplaying",
+   "text": "Happily Ever After"
+  },
+  {
+   "id": "demoend.word",
+   "text": "thats it for the demo!"
+  },
+  {
+   "id": "demoend.why",
+   "text": "cant save your sqwife just yet."
+  },
+  {
+   "id": "demoend.store",
+   "text": "wishlist today!"
+  },
+  {
+   "id": "demoend.keep",
+   "text": "keep playing"
+  },
+  {
+   "id": "teaseend.word",
+   "text": "to be continued in the full game!"
+  },
+  {
+   "id": "teaseend.store",
+   "text": "get the full game"
+  },
+  {
+   "id": "teaseend.keep",
+   "text": "keep playing"
+  },
+  {
+   "id": "freed.word",
+   "text": "ok now its over"
+  },
+  {
+   "id": "freed.why",
+   "text": "you saved your sqhusband from the serpent's belly."
+  },
+  {
+   "id": "freed.end",
+   "text": "that's the end, feel free to keep slaying the serpent and farming on the surface!"
+  },
+  {
+   "id": "freed.thanks",
+   "text": "thank you!"
+  },
+  {
+   "id": "freed.keep",
+   "text": "keep playing"
+  },
+  {
+   "id": "crashed.word",
+   "text": "stopped"
+  },
+  {
+   "id": "crashed.copysave",
+   "text": "copy save"
+  },
+  {
+   "id": "crashed.why.fallback",
+   "text": "something threw"
+  },
+  {
+   "id": "held.word",
+   "text": "paused"
+  },
+  {
+   "id": "held.resume",
+   "text": "resume"
+  },
+  {
+   "id": "held.slotsbtn",
+   "text": "saves"
+  },
+  {
+   "id": "held.slotsbtn.label",
+   "text": "saves · ${n} of ${SLOTS}"
+  },
+  {
+   "id": "held.slots.word",
+   "text": "saves"
+  },
+  {
+   "id": "held.savecopy",
+   "text": "copy a save"
+  },
+  {
+   "id": "held.loadsave",
+   "text": "load a save"
+  },
+  {
+   "id": "held.loadit",
+   "text": "load it"
+  },
+  {
+   "id": "held.nevermind",
+   "text": "never mind"
+  },
+  {
+   "id": "held.slotsback",
+   "text": "back"
+  },
+  {
+   "id": "held.recordbtn",
+   "text": "achievements"
+  },
+  {
+   "id": "held.recordbtn.label",
+   "text": "achievements · ${count} of ${total}"
+  },
+  {
+   "id": "held.record.word",
+   "text": "achievements"
+  },
+  {
+   "id": "held.record.none",
+   "text": "you haven't done anything yet."
+  },
+  {
+   "id": "held.recordback",
+   "text": "back"
+  },
+  {
+   "id": "held.indexbtn",
+   "text": "index"
+  },
+  {
+   "id": "held.index.word",
+   "text": "index"
+  },
+  {
+   "id": "held.index.entryback",
+   "text": "back"
+  },
+  {
+   "id": "held.indexback",
+   "text": "back"
+  },
+  {
+   "id": "held.settingsbtn",
+   "text": "settings"
+  },
+  {
+   "id": "held.settings.word",
+   "text": "settings"
+  },
+  {
+   "id": "set.motion.full",
+   "text": "motion: full"
+  },
+  {
+   "id": "set.motion.less",
+   "text": "motion: less"
+  },
+  {
+   "id": "set.touch.on",
+   "text": "touch: on"
+  },
+  {
+   "id": "set.touch.off",
+   "text": "touch: off"
+  },
+  {
+   "id": "set.dark.on",
+   "text": "dark: on"
+  },
+  {
+   "id": "set.dark.off",
+   "text": "dark: off"
+  },
+  {
+   "id": "set.fullscreen.on",
+   "text": "fullscreen: on"
+  },
+  {
+   "id": "set.fullscreen.off",
+   "text": "fullscreen: off"
+  },
+  {
+   "id": "set.fullscreen.note",
+   "text": "for the whole screen, add this page to the home screen"
+  },
+  {
+   "id": "set.sound.on",
+   "text": "sound: on"
+  },
+  {
+   "id": "set.sound.off",
+   "text": "sound: off"
+  },
+  {
+   "id": "set.volume.aria",
+   "text": "volume"
+  },
+  {
+   "id": "set.controlsbtn",
+   "text": "controls"
+  },
+  {
+   "id": "set.controls.word",
+   "text": "controls"
+  },
+  {
+   "id": "set.controlsback",
+   "text": "back"
+  },
+  {
+   "id": "set.settingsback",
+   "text": "back"
+  },
+  {
+   "id": "ctl.leftclick.in",
+   "text": "left click"
+  },
+  {
+   "id": "ctl.leftclick.do",
+   "text": "interact"
+  },
+  {
+   "id": "ctl.rightclick.in",
+   "text": "right click"
+  },
+  {
+   "id": "ctl.rightclick.do",
+   "text": "focus workers"
+  },
+  {
+   "id": "ctl.rightleft.in",
+   "text": "right click + left click"
+  },
+  {
+   "id": "ctl.rightleft.do",
+   "text": "pick up workers"
+  },
+  {
+   "id": "ctl.middle.in",
+   "text": "middle click"
+  },
+  {
+   "id": "ctl.middle.do",
+   "text": "move camera"
+  },
+  {
+   "id": "ctl.wheel.in",
+   "text": "scroll wheel"
+  },
+  {
+   "id": "ctl.wheel.do",
+   "text": "move camera"
+  },
+  {
+   "id": "ctl.arrows.in",
+   "text": "← → / a d"
+  },
+  {
+   "id": "ctl.arrows.do",
+   "text": "move camera"
+  },
+  {
+   "id": "ctl.digits.in",
+   "text": "1 – 9"
+  },
+  {
+   "id": "ctl.digits.do",
+   "text": "jump to a place"
+  },
+  {
+   "id": "held.titlebtn",
+   "text": "return to title"
+  },
+  {
+   "id": "held.quit",
+   "text": "exit to desktop"
+  },
+  {
+   "id": "held.keys",
+   "text": "esc holds &middot; &larr; &rarr; look about &middot; hold space to skip a scene"
+  },
+  {
+   "id": "said.saved",
+   "text": "saved"
+  },
+  {
+   "id": "said.notsaved",
+   "text": "not saved"
+  },
+  {
+   "id": "said.fellback",
+   "text": "the last save would not load; this is the one before it"
+  },
+  {
+   "id": "said.broken",
+   "text": "your last save could not be read. copy a save hands it over"
+  },
+  {
+   "id": "said.yielded",
+   "text": "this yard is open in another tab; that one is being saved"
+  },
+  {
+   "id": "said.newer",
+   "text": "this save is from a newer build (${build})"
+  },
+  {
+   "id": "said.unsaved.blocked",
+   "text": "not saving: your browser blocks storage inside this page. copy a save still works"
+  },
+  {
+   "id": "said.unsaved.full",
+   "text": "not saving: this site's storage is full (${used} mb used, ${ours} kb of it ours). copy a save still works"
+  },
+  {
+   "id": "said.unsaved.refused",
+   "text": "not saving: storage refused the save (${name}). copy a save still works"
+  },
+  {
+   "id": "said.couldnotload",
+   "text": "could not load: ${message}"
+  },
+  {
+   "id": "said.loaded",
+   "text": "loaded"
+  },
+  {
+   "id": "said.notasave",
+   "text": "that is not a save"
+  },
+  {
+   "id": "said.copyout.none",
+   "text": "nothing saved yet"
+  },
+  {
+   "id": "said.copyout.copied",
+   "text": "copied ${n}kb"
+  },
+  {
+   "id": "said.copyout.window",
+   "text": "in window.__save"
+  },
+  {
+   "id": "slots.since.now",
+   "text": "just now"
+  },
+  {
+   "id": "slots.since.min",
+   "text": "${m} min ago"
+  },
+  {
+   "id": "slots.since.h",
+   "text": "${h} h ago"
+  },
+  {
+   "id": "slots.since.day",
+   "text": "a day ago"
+  },
+  {
+   "id": "slots.since.days",
+   "text": "${d} days ago"
+  },
+  {
+   "id": "slots.row.rock",
+   "text": "rock ${n}"
+  },
+  {
+   "id": "slots.row.crew",
+   "text": "${n} crew"
+  },
+  {
+   "id": "slots.row.playing",
+   "text": "playing"
+  },
+  {
+   "id": "slots.row.empty",
+   "text": "empty"
+  },
+  {
+   "id": "slots.row.unreadable",
+   "text": "unreadable"
+  },
+  {
+   "id": "slots.arm",
+   "text": "start a new yard?"
+  },
+  {
+   "id": "slots.said.new",
+   "text": "a new yard"
+  },
+  {
+   "id": "slots.said.loaded",
+   "text": "loaded"
+  },
+  {
+   "id": "slots.del.aria",
+   "text": "delete"
+  },
+  {
+   "id": "slots.confirm.yes",
+   "text": "delete"
+  },
+  {
+   "id": "slots.confirm.no",
+   "text": "back"
+  },
+  {
+   "id": "cloud.head",
+   "text": "cloud saves"
+  },
+  {
+   "id": "cloud.line.off",
+   "text": "cloud · off"
+  },
+  {
+   "id": "cloud.line.out",
+   "text": "cloud · signed out"
+  },
+  {
+   "id": "cloud.line.refused",
+   "text": "cloud · a save was refused"
+  },
+  {
+   "id": "cloud.line.offline",
+   "text": "cloud · not saved: offline"
+  },
+  {
+   "id": "cloud.line.behind",
+   "text": "cloud · newer on another device"
+  },
+  {
+   "id": "cloud.line.newer",
+   "text": "cloud · update to take the newer save"
+  },
+  {
+   "id": "cloud.line.big",
+   "text": "cloud · too big for the cloud"
+  },
+  {
+   "id": "cloud.line.full",
+   "text": "cloud · the cloud is full"
+  },
+  {
+   "id": "cloud.line.paused",
+   "text": "cloud · paused"
+  },
+  {
+   "id": "cloud.line.conflict",
+   "text": "cloud · choose a yard"
+  },
+  {
+   "id": "cloud.line.saved",
+   "text": "cloud · saved ${since}"
+  },
+  {
+   "id": "cloud.line.on",
+   "text": "cloud · on"
+  },
+  {
+   "id": "cloud.foot.choose",
+   "text": "choose a yard"
+  },
+  {
+   "id": "cloud.btn.linkcode",
+   "text": "enter a link code"
+  },
+  {
+   "id": "cloud.btn.recovery",
+   "text": "use a recovery code"
+  },
+  {
+   "id": "cloud.btn.stop",
+   "text": "stop cloud saves"
+  },
+  {
+   "id": "cloud.said.off",
+   "text": "the cloud is off on this device"
+  },
+  {
+   "id": "cloud.btn.enable",
+   "text": "enable cloud syncing"
+  },
+  {
+   "id": "cloud.why.noanswer",
+   "text": "the cloud did not answer"
+  },
+  {
+   "id": "cloud.why.resting",
+   "text": "the cloud is resting; try again later"
+  },
+  {
+   "id": "cloud.why.forbidden",
+   "text": "the cloud does not know this page"
+  },
+  {
+   "id": "cloud.btn.copy",
+   "text": "copy"
+  },
+  {
+   "id": "cloud.writedown",
+   "text": "write this down: it brings your yards back on a new device"
+  },
+  {
+   "id": "cloud.btn.take",
+   "text": "take it"
+  },
+  {
+   "id": "cloud.btn.keep",
+   "text": "keep this one"
+  },
+  {
+   "id": "cloud.said.kept",
+   "text": "kept"
+  },
+  {
+   "id": "cloud.pair.enter",
+   "text": "on the other device, enter"
+  },
+  {
+   "id": "cloud.pair.left",
+   "text": "${m:ss} left"
+  },
+  {
+   "id": "cloud.btn.done",
+   "text": "done"
+  },
+  {
+   "id": "cloud.btn.link",
+   "text": "link a device"
+  },
+  {
+   "id": "cloud.btn.hidecode",
+   "text": "hide recovery code"
+  },
+  {
+   "id": "cloud.btn.showcode",
+   "text": "show recovery code"
+  },
+  {
+   "id": "cloud.btn.newcode",
+   "text": "new recovery code"
+  },
+  {
+   "id": "cloud.btn.newcode.armed",
+   "text": "sign out other devices?"
+  },
+  {
+   "id": "cloud.box.linkph",
+   "text": "···-···"
+  },
+  {
+   "id": "cloud.box.recph",
+   "text": "····-····-····"
+  },
+  {
+   "id": "cloud.box.aria.link",
+   "text": "link code"
+  },
+  {
+   "id": "cloud.box.aria.rec",
+   "text": "recovery code"
+  },
+  {
+   "id": "cloud.wrong",
+   "text": "that code didn't work"
+  },
+  {
+   "id": "cloud.said.linked",
+   "text": "linked"
+  },
+  {
+   "id": "cloud.btn.dolink",
+   "text": "link"
+  },
+  {
+   "id": "cloud.btn.nevermind",
+   "text": "never mind"
+  },
+  {
+   "id": "cloud.typing.link",
+   "text": "the code on the other device"
+  },
+  {
+   "id": "cloud.typing.rec",
+   "text": "your recovery code"
+  },
+  {
+   "id": "cloud.clash.here",
+   "text": "this device · ${n} · ${here}"
+  },
+  {
+   "id": "cloud.clash.cloud",
+   "text": "cloud · ${n} · ${cloud}"
+  },
+  {
+   "id": "note.cloud.name",
+   "text": "newer on another device"
+  },
+  {
+   "id": "note.cloud.note",
+   "text": "saves has the answer"
+  },
+  {
+   "id": "modal.books",
+   "text": "the books"
+  },
+  {
+   "id": "modal.crew",
+   "text": "who lives here"
+  },
+  {
+   "id": "modal.close.aria",
+   "text": "close"
+  },
+  {
+   "id": "title.gamename",
+   "text": "pebble<br>pit"
+  },
+  {
+   "id": "title.line",
+   "text": "a rock. a hole. a few people between them."
+  },
+  {
+   "id": "title.play",
+   "text": "play"
+  },
+  {
+   "id": "title.playlabel.new",
+   "text": "a new yard"
+  },
+  {
+   "id": "title.playlabel.row",
+   "text": "rock ${n} · ${n} crew · ${since}"
+  },
+  {
+   "id": "title.slotsbtn",
+   "text": "saves"
+  },
+  {
+   "id": "title.recordbtn",
+   "text": "achievements"
+  },
+  {
+   "id": "title.settingsbtn",
+   "text": "settings"
+  },
+  {
+   "id": "title.quit",
+   "text": "exit to desktop"
+  },
+  {
+   "id": "title.slots.word",
+   "text": "saves"
+  },
+  {
+   "id": "title.savecopy",
+   "text": "copy a save"
+  },
+  {
+   "id": "title.loadsave",
+   "text": "load a save"
+  },
+  {
+   "id": "title.loadit",
+   "text": "load it"
+  },
+  {
+   "id": "title.nevermind",
+   "text": "never mind"
+  },
+  {
+   "id": "title.slotsback",
+   "text": "back"
+  },
+  {
+   "id": "title.record.word",
+   "text": "achievements"
+  },
+  {
+   "id": "title.record.none",
+   "text": "nothing yet"
+  },
+  {
+   "id": "title.recordback",
+   "text": "back"
+  },
+  {
+   "id": "title.settings.word",
+   "text": "settings"
+  },
+  {
+   "id": "title.motion",
+   "text": "motion: full / motion: less"
+  },
+  {
+   "id": "title.dark",
+   "text": "dark: on / dark: off"
+  },
+  {
+   "id": "title.sound",
+   "text": "sound: off / sound: on"
+  },
+  {
+   "id": "title.controlsbtn",
+   "text": "controls"
+  },
+  {
+   "id": "title.settingsback",
+   "text": "back"
+  },
+  {
+   "id": "title.controls.word",
+   "text": "controls"
+  },
+  {
+   "id": "title.controlsback",
+   "text": "back"
+  },
+  {
+   "id": "title.conflict.word",
+   "text": "choose a yard"
+  },
+  {
+   "id": "title.conflictback",
+   "text": "back"
+  },
+  {
+   "id": "title.link.itch",
+   "text": "itch"
+  },
+  {
+   "id": "title.link.github",
+   "text": "github"
+  },
+  {
+   "id": "title.said.notasave",
+   "text": "that is not a save"
+  },
+  {
+   "id": "title.said.loaded",
+   "text": "loaded"
+  },
+  {
+   "id": "title.said.erased",
+   "text": "erased"
+  },
+  {
+   "id": "title.doctitle",
+   "text": "Pebble Pit"
+  },
+  {
+   "id": "play.doctitle",
+   "text": "Pebble Pit"
+  },
+  {
+   "id": "obj.next",
+   "text": "next"
+  },
+  {
+   "id": "obj.rock",
+   "text": "dig the boulder to save your sqwife!"
+  },
+  {
+   "id": "obj.rock.q.chip",
+   "text": "mine the boulder"
+  },
+  {
+   "id": "obj.rock.q.pickup",
+   "text": "grab a pebble"
+  },
+  {
+   "id": "obj.rock.q.toss",
+   "text": "toss the pebble into the pit"
+  },
+  {
+   "id": "obj.falling",
+   "text": "try to dig the boulder again!"
+  },
+  {
+   "id": "obj.props",
+   "text": "maybe building a wooden roof will stop the next boulder?"
+  },
+  {
+   "id": "obj.net",
+   "text": "nope, try catching the boulder and slowing it down"
+  },
+  {
+   "id": "obj.arch",
+   "text": "lets try building an arch from the mined ore and stone. surely that's sturdy enough."
+  },
+  {
+   "id": "obj.dome",
+   "text": "out of options, lets see if the wizards can help."
+  },
+  {
+   "id": "obj.rescue",
+   "text": "save your sqwife"
+  },
+  {
+   "id": "obj.drown",
+   "text": "drown the pit"
+  },
+  {
+   "id": "obj.tower",
+   "text": "build the wizards' tower"
+  },
+  {
+   "id": "obj.talk",
+   "text": "talk to the wizards about what just happened"
+  },
+  {
+   "id": "obj.portal",
+   "text": "conjure a portal to the abyss, what's down there?"
+  },
+  {
+   "id": "obj.free",
+   "text": "free your sqhusband from the serpent's belly"
+  },
+  {
+   "id": "obj.barrier.cancel",
+   "text": "cancel ×${n}"
+  },
+  {
+   "id": "ach.firstgrain.name",
+   "text": "makin' money"
+  },
+  {
+   "id": "ach.firstgrain.note",
+   "text": "throw a pebble into the pit"
+  },
+  {
+   "id": "ach.firstrock.name",
+   "text": "better keep digging"
+  },
+  {
+   "id": "ach.firstrock.note",
+   "text": "clear the first rock"
+  },
+  {
+   "id": "ach.gotout.name",
+   "text": "you saved your sqwife"
+  },
+  {
+   "id": "ach.gotout.note",
+   "text": "no more rocks, you did it."
+  },
+  {
+   "id": "ach.firsthire.name",
+   "text": "you've constructed additional pylons"
+  },
+  {
+   "id": "ach.firsthire.note",
+   "text": "build another house"
+  },
+  {
+   "id": "ach.firstshard.name",
+   "text": "the first ore"
+  },
+  {
+   "id": "ach.firstshard.note",
+   "text": "bring ore up out of the quarry"
+  },
+  {
+   "id": "ach.firstspore.name",
+   "text": "cultivation"
+  },
+  {
+   "id": "ach.firstspore.note",
+   "text": "grow your first crop"
+  },
+  {
+   "id": "ach.firstspark.name",
+   "text": "magic in the air"
+  },
+  {
+   "id": "ach.firstspark.note",
+   "text": "earn your first spark"
+  },
+  {
+   "id": "ach.holefull.name",
+   "text": "the pit is full"
+  },
+  {
+   "id": "ach.holefull.note",
+   "text": "fill the pit to the brim"
+  },
+  {
+   "id": "ach.rifttorn.name",
+   "text": "the rift torn, storage is solved"
+  },
+  {
+   "id": "ach.rifttorn.note",
+   "text": "fill the pit causing an inter-dimensional rift"
+  },
+  {
+   "id": "ach.drowned.name",
+   "text": "the rift has gotten bigger"
+  },
+  {
+   "id": "ach.drowned.note",
+   "text": "a whole ocean of inter-dimensional storage."
+  },
+  {
+   "id": "ach.star.name",
+   "text": "conjure a star"
+  },
+  {
+   "id": "ach.star.note",
+   "text": "call a star down from the tower"
+  },
+  {
+   "id": "ach.firsthat.name",
+   "text": "you're a wizard squarey"
+  },
+  {
+   "id": "ach.firsthat.note",
+   "text": "finish a wizard hat at the tower"
+  },
+  {
+   "id": "ach.firstbrew.name",
+   "text": "hello, potion seller"
+  },
+  {
+   "id": "ach.firstbrew.note",
+   "text": "brew a batch at the apothecary"
+  },
+  {
+   "id": "ach.firsttrade.name",
+   "text": "first hat"
+  },
+  {
+   "id": "ach.firsttrade.note",
+   "text": "buy a station its first hat"
+  },
+  {
+   "id": "ach.alltrades.name",
+   "text": "educating the masses"
+  },
+  {
+   "id": "ach.alltrades.note",
+   "text": "stock every station with its hat"
+  },
+  {
+   "id": "ach.allbuilt.name",
+   "text": "building complete"
+  },
+  {
+   "id": "ach.allbuilt.note",
+   "text": "you built everything"
+  },
+  {
+   "id": "ach.rock0.name",
+   "text": "10 rocks"
+  },
+  {
+   "id": "ach.rock0.note",
+   "text": "clear 10 boulders"
+  },
+  {
+   "id": "ach.rock1.name",
+   "text": "25 rocks"
+  },
+  {
+   "id": "ach.rock1.note",
+   "text": "clear 25 boulders"
+  },
+  {
+   "id": "ach.rock2.name",
+   "text": "50 rocks"
+  },
+  {
+   "id": "ach.rock2.note",
+   "text": "clear 50 boulders"
+  },
+  {
+   "id": "ach.rock3.name",
+   "text": "100 rocks"
+  },
+  {
+   "id": "ach.rock3.note",
+   "text": "clear 100 boulders, that's a lot of rocks"
+  },
+  {
+   "id": "ach.pebble0.name",
+   "text": "10k pebbles"
+  },
+  {
+   "id": "ach.pebble0.note",
+   "text": "bank 10k pebbles"
+  },
+  {
+   "id": "ach.pebble1.name",
+   "text": "100k pebbles"
+  },
+  {
+   "id": "ach.pebble1.note",
+   "text": "bank 100k pebbles"
+  },
+  {
+   "id": "ach.pebble2.name",
+   "text": "1m pebbles"
+  },
+  {
+   "id": "ach.pebble2.note",
+   "text": "bank 1m pebbles"
+  },
+  {
+   "id": "ach.pebble3.name",
+   "text": "10m pebbles"
+  },
+  {
+   "id": "ach.pebble3.note",
+   "text": "bank 10m pebbles"
+  },
+  {
+   "id": "ach.pebble4.name",
+   "text": "100m pebbles"
+  },
+  {
+   "id": "ach.pebble4.note",
+   "text": "bank 100m pebbles"
+  },
+  {
+   "id": "ach.crew0.name",
+   "text": "5 squares"
+  },
+  {
+   "id": "ach.crew0.note",
+   "text": "hire a crew of 5"
+  },
+  {
+   "id": "ach.crew1.name",
+   "text": "10 squares"
+  },
+  {
+   "id": "ach.crew1.note",
+   "text": "hire a crew of 10"
+  },
+  {
+   "id": "ach.crew2.name",
+   "text": "25 squares"
+  },
+  {
+   "id": "ach.crew2.note",
+   "text": "hire a crew of 25"
+  },
+  {
+   "id": "ach.crew3.name",
+   "text": "50 squares"
+  },
+  {
+   "id": "ach.crew3.note",
+   "text": "hire a crew of 50"
+  },
+  {
+   "id": "ach.ore0.name",
+   "text": "1k ore out of the cut"
+  },
+  {
+   "id": "ach.ore0.note",
+   "text": "dig 1k ore out of the quarry"
+  },
+  {
+   "id": "ach.ore1.name",
+   "text": "10k ore"
+  },
+  {
+   "id": "ach.ore1.note",
+   "text": "dig 10k ore out of the quarry"
+  },
+  {
+   "id": "ach.rift1e6.name",
+   "text": "1m through the rift"
+  },
+  {
+   "id": "ach.rift1e6.note",
+   "text": "send 1m pebbles through the rift"
+  },
+  {
+   "id": "ach.brew100.name",
+   "text": "100 batches"
+  },
+  {
+   "id": "ach.brew100.note",
+   "text": "brew 100 batches"
+  },
+  {
+   "id": "ach.lived1h.name",
+   "text": "an hour on one clock"
+  },
+  {
+   "id": "ach.lived1h.note",
+   "text": "keep one body on the payroll for an hour"
+  },
+  {
+   "id": "ach.nobodyhired.name",
+   "text": "nobody hired"
+  },
+  {
+   "id": "ach.nobodyhired.note",
+   "text": "clear a whole boulder with nobody on the payroll"
+  },
+  {
+   "id": "ach.ownhand.name",
+   "text": "your own hand alone"
+  },
+  {
+   "id": "ach.ownhand.note",
+   "text": "clear a boulder without a single worker touching it"
+  },
+  {
+   "id": "ach.nevertouched.name",
+   "text": "never touched it"
+  },
+  {
+   "id": "ach.nevertouched.note",
+   "text": "clear a boulder without swinging at it once yourself"
+  },
+  {
+   "id": "ach.underminute.name",
+   "text": "a rock off in under a minute"
+  },
+  {
+   "id": "ach.underminute.note",
+   "text": "clear a boulder in under a minute"
+  },
+  {
+   "id": "ach.everyjob.name",
+   "text": "every job staffed at once"
+  },
+  {
+   "id": "ach.everyjob.note",
+   "text": "put at least one body on every job at once"
+  },
+  {
+   "id": "ach.tablebeaten.name",
+   "text": "we're so back"
+  },
+  {
+   "id": "ach.tablebeaten.note",
+   "text": "come out 50k up on a single hand at the casino"
+  },
+  {
+   "id": "ach.tableruin.name",
+   "text": "time to get a loan"
+  },
+  {
+   "id": "ach.tableruin.note",
+   "text": "come out 50k down on a single hand at the casino"
+  },
+  {
+   "id": "ach.bird.name",
+   "text": "get off my land"
+  },
+  {
+   "id": "ach.bird.note",
+   "text": "startle a bird"
+  },
+  {
+   "id": "ach.wholelot.name",
+   "text": "not one of you"
+  },
+  {
+   "id": "ach.wholelot.note",
+   "text": "startle every bird in one lot"
+  },
+  {
+   "id": "ach.catchall.name",
+   "text": "juggler"
+  },
+  {
+   "id": "ach.catchall.note",
+   "text": "throw a full hand of dust, at its biggest, and catch every grain"
+  },
+  {
+   "id": "ach.lifted.name",
+   "text": "come here you"
+  },
+  {
+   "id": "ach.lifted.note",
+   "text": "pick a worker up"
+  },
+  {
+   "id": "ach.shookload.name",
+   "text": "turn out your pockets"
+  },
+  {
+   "id": "ach.shookload.note",
+   "text": "shake a full load out of a worker"
+  },
+  {
+   "id": "ach.hatoff.name",
+   "text": "hats off"
+  },
+  {
+   "id": "ach.hatoff.note",
+   "text": "shake the hat off a worker"
+  },
+  {
+   "id": "ach.dizzy.name",
+   "text": "shaken baby syndrome"
+  },
+  {
+   "id": "ach.dizzy.note",
+   "text": "shake a worker dizzy"
+  },
+  {
+   "id": "ach.muckrain.name",
+   "text": "it never rains but it pours"
+  },
+  {
+   "id": "ach.muckrain.note",
+   "text": "stand through a muck rain"
+  },
+  {
+   "id": "serp.lash.calm",
+   "text": "Lash: stuns melee attackers"
+  },
+  {
+   "id": "serp.lash.coming",
+   "text": "Lash coming"
+  },
+  {
+   "id": "serp.lash.on",
+   "text": "Lash: stuns melee attackers"
+  },
+  {
+   "id": "serp.lash.stopped",
+   "text": "Lash: stopped"
+  },
+  {
+   "id": "serp.sink.coming",
+   "text": "Cloak coming"
+  },
+  {
+   "id": "serp.sink.on",
+   "text": "Cloak: out of reach"
+  },
+  {
+   "id": "serp.orb.coming",
+   "text": "Constrict coming"
+  },
+  {
+   "id": "serp.orb.on",
+   "text": "Constrict"
+  },
+  {
+   "id": "serp.orb.stopped",
+   "text": "Constrict"
+  },
+  {
+   "id": "serp.dazed",
+   "text": "Dazed: thrown off, seeing stars"
+  },
+  {
+   "id": "serp.constricted",
+   "text": "Constricted"
+  },
+  {
+   "id": "serp.barrier",
+   "text": "Barrier: absorbs explosive damage"
+  },
+  {
+   "id": "serp.ward",
+   "text": "Ward: magic damage cut in half"
+  },
+  {
+   "id": "serp.plates",
+   "text": "Plates: phys damage cut in half"
+  },
+  {
+   "id": "serp.stun",
+   "text": "Stun: holds still, stops healing"
+  },
+  {
+   "id": "serp.bleed",
+   "text": "Bleed: damage over time"
+  },
+  {
+   "id": "serp.haste",
+   "text": "Haste: attacks 20% faster"
+  },
+  {
+   "id": "serp.held",
+   "text": "Held: cannot heal"
+  },
+  {
+   "id": "serp.exposed",
+   "text": "Exposed: takes 15%-25% more damage"
+  },
+  {
+   "id": "serp.inspired",
+   "text": "Inspired: hits harder"
+  },
+  {
+   "id": "other.skip.desk",
+   "text": "hold space to skip"
+  },
+  {
+   "id": "other.skip.touch",
+   "text": "hold to skip"
+  },
+  {
+   "id": "other.messtag.muck",
+   "text": "muck"
+  },
+  {
+   "id": "other.messtag.poop",
+   "text": "poop"
+  },
+  {
+   "id": "other.raise",
+   "text": "build the bench"
+  },
+  {
+   "id": "other.hidedone.hide",
+   "text": "hide finished"
+  },
+  {
+   "id": "other.hidedone.show",
+   "text": "show finished"
+  },
+  {
+   "id": "other.queue.queued",
+   "text": "queued"
+  },
+  {
+   "id": "other.queue.site.yard",
+   "text": "the yard"
+  },
+  {
+   "id": "other.queue.site.sphere",
+   "text": "the sphere"
+  },
+  {
+   "id": "other.corner.show",
+   "text": "show workers"
+  },
+  {
+   "id": "other.corner.fade",
+   "text": "fade workers"
+  },
+  {
+   "id": "other.corner.hide",
+   "text": "hide workers"
+  },
+  {
+   "id": "other.corner.up",
+   "text": "up to the yard"
+  },
+  {
+   "id": "other.corner.down",
+   "text": "down to the deep"
+  },
+  {
+   "id": "other.fullscreen.title.on",
+   "text": "leave fullscreen"
+  },
+  {
+   "id": "other.fullscreen.title.off",
+   "text": "fullscreen"
+  },
+  {
+   "id": "other.pause.aria",
+   "text": "pause"
+  },
+  {
+   "id": "idx.grp.materials",
+   "text": "materials"
+  },
+  {
+   "id": "idx.grp.yard",
+   "text": "the yard"
+  },
+  {
+   "id": "idx.grp.sky",
+   "text": "the sky"
+  },
+  {
+   "id": "idx.grp.places",
+   "text": "places"
+  },
+  {
+   "id": "idx.grp.crew",
+   "text": "crew"
+  },
+  {
+   "id": "idx.grp.story",
+   "text": "the story"
+  },
+  {
+   "id": "idx.dust.name",
+   "text": "pebbles"
+  },
+  {
+   "id": "idx.dust.text",
+   "text": "chipped off the boulder by you, the diggers and the ram. toss them into the hole: what is in the hole pays for everything."
+  },
+  {
+   "id": "idx.shard.name",
+   "text": "ore"
+  },
+  {
+   "id": "idx.shard.text",
+   "text": "dug out of the quarry by the miners and carried up to the hole. pays for the arch and the later rungs of every ladder."
+  },
+  {
+   "id": "idx.spore.name",
+   "text": "crops"
+  },
+  {
+   "id": "idx.spore.text",
+   "text": "grown on the farm and harvested by the farmers. pays for the net, and the apothecary brews with them."
+  },
+  {
+   "id": "idx.spark.name",
+   "text": "sparks"
+  },
+  {
+   "id": "idx.spark.text",
+   "text": "shed by the star when the wizards bolt it apart. the machines' coin: every machine, every rung of their ladders, and the rift."
+  },
+  {
+   "id": "idx.scale.name",
+   "text": "scales"
+  },
+  {
+   "id": "idx.scale.text",
+   "text": "the deep's coin, crushed out of what the serpent drops."
+  },
+  {
+   "id": "idx.crit.name",
+   "text": "crits"
+  },
+  {
+   "id": "idx.crit.text",
+   "text": "now and then a hit lands hard, and a fountain of pebbles comes off instead of a chip. the bench sells the chance and the size."
+  },
+  {
+   "id": "idx.rock.name",
+   "text": "the boulder"
+  },
+  {
+   "id": "idx.rock.text",
+   "text": "falls out of the sky, one after another. chip it down for pebbles; each new one drives the last back into the ground."
+  },
+  {
+   "id": "idx.pit.name",
+   "text": "the hole"
+  },
+  {
+   "id": "idx.pit.text",
+   "text": "everything you bank lands here, and every bill is paid out of it. it fills up."
+  },
+  {
+   "id": "idx.rift.name",
+   "text": "the rift"
+  },
+  {
+   "id": "idx.rift.text",
+   "text": "torn open over the hole once it was full. it swallows what the hole cannot take, and grows as it eats."
+  },
+  {
+   "id": "idx.abyss.name",
+   "text": "the abyss"
+  },
+  {
+   "id": "idx.abyss.text",
+   "text": "the hole, drowned. bottomless: whatever goes in, there is always room."
+  },
+  {
+   "id": "idx.muck.name",
+   "text": "muck"
+  },
+  {
+   "id": "idx.muck.text",
+   "text": "dirty rain lands as muck. nobody touches it while the storm is still dropping it; after, the crew shovel it up. muck on a station slows the work there."
+  },
+  {
+   "id": "idx.poop.name",
+   "text": "poop"
+  },
+  {
+   "id": "idx.poop.text",
+   "text": "everybody has to go sometime. the janitors clean it up."
+  },
+  {
+   "id": "idx.bird.name",
+   "text": "birds"
+  },
+  {
+   "id": "idx.bird.text",
+   "text": "they cross the sky now and then. click one and it shakes a few pebbles loose."
+  },
+  {
+   "id": "idx.house.name",
+   "text": "the house"
+  },
+  {
+   "id": "idx.house.text",
+   "text": "a room for every body. buy another house to hire somebody; its board is the crew."
+  },
+  {
+   "id": "idx.pollution.name",
+   "text": "pollution"
+  },
+  {
+   "id": "idx.pollution.text",
+   "text": "every grain dug kicks a mote into the sky, and the machines put up soot. the fuller the sky, the dirtier the rain. only the air filter takes it down."
+  },
+  {
+   "id": "idx.cloud.name",
+   "text": "clouds"
+  },
+  {
+   "id": "idx.cloud.text",
+   "text": "they drift past at the back. when they swell and darken, rain is coming."
+  },
+  {
+   "id": "idx.rain.name",
+   "text": "rain"
+  },
+  {
+   "id": "idx.rain.text",
+   "text": "comes when it likes and washes some of the sky down. clean drops just wet the yard; dirty ones land as muck."
+  },
+  {
+   "id": "idx.lightning.name",
+   "text": "lightning"
+  },
+  {
+   "id": "idx.lightning.text",
+   "text": "comes with a heavy pour. all show: it touches nothing."
+  },
+  {
+   "id": "idx.star.name",
+   "text": "the star"
+  },
+  {
+   "id": "idx.star.text",
+   "text": "a rock in the sky only the wizards can reach. every bit they bolt off sheds sparks; when it is gone they call down the next."
+  },
+  {
+   "id": "idx.balloon.name",
+   "text": "balloon"
+  },
+  {
+   "id": "idx.balloon.text",
+   "text": "the air filter's craft: it rides up among the clouds and draws the haze in."
+  },
+  {
+   "id": "idx.recycler.name",
+   "text": "the recycler"
+  },
+  {
+   "id": "idx.recycler.text",
+   "text": "hands back some of what the air filter takes out of the sky."
+  },
+  {
+   "id": "idx.bench.name",
+   "text": "the bench"
+  },
+  {
+   "id": "idx.bench.text",
+   "text": "your own board: your click, carry and toss, the haulers' gear, crits, the barriers, and the door to every new place."
+  },
+  {
+   "id": "idx.shack.name",
+   "text": "the shack"
+  },
+  {
+   "id": "idx.shack.text",
+   "text": "the diggers' hut by the boulder. sells their swing and pick, the breaker hat and the ram."
+  },
+  {
+   "id": "idx.stats.name",
+   "text": "the books"
+  },
+  {
+   "id": "idx.stats.text",
+   "text": "the noticeboard: how long you have played and what the yard earns a second."
+  },
+  {
+   "id": "idx.farm.name",
+   "text": "the farm"
+  },
+  {
+   "id": "idx.farm.text",
+   "text": "plots that grow crops, worked by farmers. sells plots, tending and yield, the grower hat and the tiller."
+  },
+  {
+   "id": "idx.quarry.name",
+   "text": "the quarry"
+  },
+  {
+   "id": "idx.quarry.text",
+   "text": "an open cut; miners work its floor and carry ore up. sells depth, pace and seam, the blaster hat and the drill."
+  },
+  {
+   "id": "idx.apothecary.name",
+   "text": "the apothecary"
+  },
+  {
+   "id": "idx.apothecary.text",
+   "text": "a keeper lights the pot and it brews by itself. the brews walk out to the crew."
+  },
+  {
+   "id": "idx.tower.name",
+   "text": "the tower"
+  },
+  {
+   "id": "idx.tower.text",
+   "text": "summons wizards, a hat each, who fly up to the star. sells the spells, the sphere and the barrier."
+  },
+  {
+   "id": "idx.casino.name",
+   "text": "the casino"
+  },
+  {
+   "id": "idx.casino.text",
+   "text": "no board, just levers. pull the arm and a handful of grains pours down the pegs; the bins they land in pay."
+  },
+  {
+   "id": "idx.outhouse.name",
+   "text": "the janitor's closet"
+  },
+  {
+   "id": "idx.outhouse.text",
+   "text": "home of the janitors, who clean up the poop and the muck. sells caps and the roombas."
+  },
+  {
+   "id": "idx.filter.name",
+   "text": "the air filter"
+  },
+  {
+   "id": "idx.filter.text",
+   "text": "the only thing that empties the sky. air purifiers work it; its dial reads clean, dirty or filthy."
+  },
+  {
+   "id": "idx.ram.name",
+   "text": "the ram"
+  },
+  {
+   "id": "idx.ram.text",
+   "text": "the boulder's machine. bought and tuned with sparks, and it puts up soot."
+  },
+  {
+   "id": "idx.jaw.name",
+   "text": "the drill"
+  },
+  {
+   "id": "idx.jaw.text",
+   "text": "the quarry's machine. bought and tuned with sparks, and it puts up soot."
+  },
+  {
+   "id": "idx.tiller.name",
+   "text": "the tiller"
+  },
+  {
+   "id": "idx.tiller.text",
+   "text": "the farm's machine. bought and tuned with sparks, and it puts up soot."
+  },
+  {
+   "id": "idx.belt.name",
+   "text": "the belt"
+  },
+  {
+   "id": "idx.belt.text",
+   "text": "carries pebbles from the boulder to the hole with nobody minding it. the haulers tip their loads onto it."
+  },
+  {
+   "id": "idx.sphere.name",
+   "text": "the sphere"
+  },
+  {
+   "id": "idx.sphere.text",
+   "text": "a shell round the star that catches its light and lets it fall as sparks."
+  },
+  {
+   "id": "idx.roomba.name",
+   "text": "the roombas"
+  },
+  {
+   "id": "idx.roomba.text",
+   "text": "little machines that go out from their dock, pick up the mess and bin it."
+  },
+  {
+   "id": "idx.driver.name",
+   "text": "forklift"
+  },
+  {
+   "id": "idx.driver.text",
+   "text": "drives itself to the hole with nobody aboard, and smokes."
+  },
+  {
+   "id": "idx.props.name",
+   "text": "wooden barrier"
+  },
+  {
+   "id": "idx.props.text",
+   "text": "the first try at holding off the next boulder. it does not hold."
+  },
+  {
+   "id": "idx.net.name",
+   "text": "the net"
+  },
+  {
+   "id": "idx.net.text",
+   "text": "rope that catches the boulder and lets it down slowly. it does not hold either."
+  },
+  {
+   "id": "idx.arch.name",
+   "text": "the arch"
+  },
+  {
+   "id": "idx.arch.text",
+   "text": "stone that catches one, and then the crack runs."
+  },
+  {
+   "id": "idx.dome.name",
+   "text": "the barrier"
+  },
+  {
+   "id": "idx.dome.text",
+   "text": "poured by the wizards, not carried. this one holds."
+  },
+  {
+   "id": "idx.deep.name",
+   "text": "the deep"
+  },
+  {
+   "id": "idx.deep.text",
+   "text": "the water under the drowned hole, where the serpent lives."
+  },
+  {
+   "id": "idx.portal.name",
+   "text": "the portal"
+  },
+  {
+   "id": "idx.portal.text",
+   "text": "conjured by the wizards over the abyss: the way down to the deep."
+  },
+  {
+   "id": "idx.crusher.name",
+   "text": "the crusher"
+  },
+  {
+   "id": "idx.crusher.text",
+   "text": "where the deep's scales are crushed and kept."
+  },
+  {
+   "id": "idx.pods.name",
+   "text": "the pods"
+  },
+  {
+   "id": "idx.pods.text",
+   "text": "the deep's houses: a room for a body down there."
+  },
+  {
+   "id": "idx.haul.name",
+   "text": "haulers"
+  },
+  {
+   "id": "idx.haul.text",
+   "text": "carry pebbles from the ground to the hole. anybody without a job hauls, and they shovel muck too."
+  },
+  {
+   "id": "idx.rockcrew.name",
+   "text": "diggers"
+  },
+  {
+   "id": "idx.rockcrew.text",
+   "text": "swing at the boulder from its row. the shack sells their swing and pick."
+  },
+  {
+   "id": "idx.quarrycrew.name",
+   "text": "miners"
+  },
+  {
+   "id": "idx.quarrycrew.text",
+   "text": "work the quarry's floor and bring ore up."
+  },
+  {
+   "id": "idx.farmcrew.name",
+   "text": "farmers"
+  },
+  {
+   "id": "idx.farmcrew.text",
+   "text": "tend the plots and harvest the crops."
+  },
+  {
+   "id": "idx.purify.name",
+   "text": "air purifiers"
+  },
+  {
+   "id": "idx.purify.text",
+   "text": "work the air filter. only the ones inside it count."
+  },
+  {
+   "id": "idx.stir.name",
+   "text": "apothecary"
+  },
+  {
+   "id": "idx.stir.text",
+   "text": "the keeper who lights the pot."
+  },
+  {
+   "id": "idx.janitor.name",
+   "text": "janitors"
+  },
+  {
+   "id": "idx.janitor.text",
+   "text": "go after the poop first, then the muck."
+  },
+  {
+   "id": "idx.wizard.name",
+   "text": "wizards"
+  },
+  {
+   "id": "idx.wizard.text",
+   "text": "fly up and bolt the star apart for sparks, and call down a new one. they pour the barrier too."
+  },
+  {
+   "id": "idx.build.name",
+   "text": "builders"
+  },
+  {
+   "id": "idx.build.text",
+   "text": "spare hands lent to put up a building or a machine."
+  },
+  {
+   "id": "idx.breaker.name",
+   "text": "breaker"
+  },
+  {
+   "id": "idx.breaker.text",
+   "text": "the diggers' hat: twice the bite."
+  },
+  {
+   "id": "idx.carter.name",
+   "text": "carter"
+  },
+  {
+   "id": "idx.carter.text",
+   "text": "the haulers' cart: twice the load."
+  },
+  {
+   "id": "idx.blaster.name",
+   "text": "blaster"
+  },
+  {
+   "id": "idx.blaster.text",
+   "text": "the miners' hat: twice the trips."
+  },
+  {
+   "id": "idx.grower.name",
+   "text": "grower"
+  },
+  {
+   "id": "idx.grower.text",
+   "text": "the farmers' hat: twice the tending."
+  },
+  {
+   "id": "idx.brews.name",
+   "text": "brews"
+  },
+  {
+   "id": "idx.brews.text",
+   "text": "one for each coin. hearty stew speeds a body up, strong brew makes it stronger, bracing tonic makes it crit."
+  },
+  {
+   "id": "idx.party.name",
+   "text": "fighters"
+  },
+  {
+   "id": "idx.party.text",
+   "text": "crew gone down to the deep to fight the serpent, a fighter to a station."
+  },
+  {
+   "id": "idx.sqwife.name",
+   "text": "sqwife"
+  },
+  {
+   "id": "idx.sqwife.text",
+   "text": "buried by the first boulder. every one you clear, somebody runs to dig; every new one drives them back in."
+  },
+  {
+   "id": "idx.objective.name",
+   "text": "objective"
+  },
+  {
+   "id": "idx.objective.text",
+   "text": "the line at the top: the story's next step."
+  },
+  {
+   "id": "idx.notices.name",
+   "text": "achievements"
+  },
+  {
+   "id": "idx.notices.text",
+   "text": "the yard's milestones. this sheet keeps the ones you have earned."
+  },
+  {
+   "id": "idx.rescue.name",
+   "text": "you saved your sqwife"
+  },
+  {
+   "id": "idx.rescue.text",
+   "text": "the barrier held, and the sqwife came out."
+  },
+  {
+   "id": "idx.cutscene.name",
+   "text": "scenes"
+  },
+  {
+   "id": "idx.cutscene.text",
+   "text": "now and then a scene takes the camera. hold space to skip one."
+  },
+  {
+   "id": "idx.sqhusband.name",
+   "text": "sqhusband"
+  },
+  {
+   "id": "idx.sqhusband.text",
+   "text": "snatched by the serpent after the rescue. free him from its belly."
+  },
+  {
+   "id": "idx.serpent.name",
+   "text": "the serpent"
+  },
+  {
+   "id": "idx.serpent.text",
+   "text": "lives in the deep, and swallowed the sqhusband."
+  }
+ ],
+ "extracted": {
+  "set-motion-less": {
+   "text": "motion: less",
+   "from": "src/title.js:93"
+  },
+  "set-motion-full": {
+   "text": "motion: full",
+   "from": "src/title.js:93"
+  },
+  "set-touch-on": {
+   "text": "touch: on",
+   "from": "src/settings.js:108"
+  },
+  "set-touch-off": {
+   "text": "touch: off",
+   "from": "src/settings.js:108"
+  },
+  "set-dark-on": {
+   "text": "dark: on",
+   "from": "src/title.js:94"
+  },
+  "set-dark-off": {
+   "text": "dark: off",
+   "from": "src/title.js:94"
+  },
+  "set-sound-off": {
+   "text": "sound: off",
+   "from": "src/title.js:95"
+  },
+  "set-sound-on": {
+   "text": "sound: on",
+   "from": "src/title.js:95"
+  },
+  "said-saved": {
+   "text": "saved",
+   "from": "src/settings.js:142"
+  },
+  "said-notsaved": {
+   "text": "not saved",
+   "from": "src/settings.js:142"
+  },
+  "said-fellback": {
+   "text": "the last save would not load; this is the one before it",
+   "from": "src/settings.js:148"
+  },
+  "said-broken": {
+   "text": "your last save could not be read. copy a save hands it over",
+   "from": "src/settings.js:149"
+  },
+  "said-yielded": {
+   "text": "this yard is open in another tab; that one is being saved",
+   "from": "src/settings.js:150"
+  },
+  "said-unsaved-blocked": {
+   "text": "not saving: your browser blocks storage inside this page. copy a save still works",
+   "from": "src/settings.js:163"
+  },
+  "said-loaded": {
+   "text": "loaded",
+   "from": "src/settings.js:195"
+  },
+  "said-notasave": {
+   "text": "that is not a save",
+   "from": "src/settings.js:195"
+  },
+  "note-cloud-name": {
+   "text": "newer on another device",
+   "from": "src/settings.js:295"
+  },
+  "note-cloud-note": {
+   "text": "saves has the answer",
+   "from": "src/settings.js:296"
+  },
+  "crashed-why-fallback": {
+   "text": "something threw",
+   "from": "src/crash.js:18"
+  },
+  "slots-since-now": {
+   "text": "just now",
+   "from": "src/slots.js:16"
+  },
+  "slots-since-min": {
+   "text": "${m} min ago",
+   "from": "src/slots.js:17"
+  },
+  "slots-since-h": {
+   "text": "${h} h ago",
+   "from": "src/slots.js:18"
+  },
+  "slots-row-rock": {
+   "text": "rock ${n}",
+   "from": "src/cloud.js:182"
+  },
+  "slots-row-crew": {
+   "text": "${n} crew",
+   "from": "src/cloud.js:182"
+  },
+  "slots-row-playing": {
+   "text": "playing",
+   "from": "src/slots.js:39"
+  },
+  "slots-row-empty": {
+   "text": "empty",
+   "from": "src/cloud.js:181"
+  },
+  "slots-row-unreadable": {
+   "text": "unreadable",
+   "from": "src/slots.js:44"
+  },
+  "title-playlabel-new": {
+   "text": "a new yard",
+   "from": "src/slots.js:59"
+  },
+  "held-slotsbtn-label": {
+   "text": "saves · ${n} of ${total}",
+   "from": "src/slots.js:64"
+  },
+  "slots-arm": {
+   "text": "start a new yard?",
+   "from": "src/slots.js:144"
+  },
+  "slots-said-new": {
+   "text": "a new yard",
+   "from": "src/slots.js:149"
+  },
+  "slots-said-loaded": {
+   "text": "loaded",
+   "from": "src/slots.js:149"
+  },
+  "slots-del-aria": {
+   "text": "delete",
+   "from": "src/slots.js:160"
+  },
+  "title-recordbtn-label": {
+   "text": "achievements · ${count} of ${total}",
+   "from": "src/record.js:33"
+  },
+  "held-recordbtn-label": {
+   "text": "achievements · ${count} of ${total}",
+   "from": "src/record.js:36"
+  },
+  "held-record-none": {
+   "text": "you haven't done anything yet.",
+   "from": "src/record.js:40"
+  },
+  "title-record-none": {
+   "text": "nothing yet",
+   "from": "src/record.js:41"
+  },
+  "ctl-leftclick-in": {
+   "text": "left click",
+   "from": "src/controls.js:13"
+  },
+  "ctl-leftclick-do": {
+   "text": "interact",
+   "from": "src/controls.js:13"
+  },
+  "ctl-rightclick-in": {
+   "text": "right click",
+   "from": "src/controls.js:14"
+  },
+  "ctl-rightclick-do": {
+   "text": "focus workers",
+   "from": "src/controls.js:14"
+  },
+  "ctl-rightleft-in": {
+   "text": "right click + left click",
+   "from": "src/controls.js:15"
+  },
+  "ctl-rightleft-do": {
+   "text": "pick up workers",
+   "from": "src/controls.js:15"
+  },
+  "ctl-middle-in": {
+   "text": "middle click",
+   "from": "src/controls.js:16"
+  },
+  "ctl-middle-do": {
+   "text": "move camera",
+   "from": "src/controls.js:16"
+  },
+  "ctl-wheel-in": {
+   "text": "scroll wheel",
+   "from": "src/controls.js:17"
+  },
+  "ctl-wheel-do": {
+   "text": "move camera",
+   "from": "src/controls.js:17"
+  },
+  "ctl-arrows-in": {
+   "text": "← → / a d",
+   "from": "src/controls.js:18"
+  },
+  "ctl-arrows-do": {
+   "text": "move camera",
+   "from": "src/controls.js:18"
+  },
+  "ctl-digits-in": {
+   "text": "1 – 9",
+   "from": "src/controls.js:19"
+  },
+  "ctl-digits-do": {
+   "text": "jump to a place",
+   "from": "src/controls.js:19"
+  },
+  "ctl-pad-hop": {
+   "text": "[owner's words: d-pad, move between places]",
+   "from": "src/controls.js:39"
+  },
+  "ctl-pad-back": {
+   "text": "[owner's words: B, back]",
+   "from": "src/controls.js:40"
+  },
+  "ctl-pad-handback": {
+   "text": "[owner's words: Y, hand back a queued copy]",
+   "from": "src/controls.js:41"
+  },
+  "ctl-pad-turn": {
+   "text": "[owner's words: LB / RB, the next station's board]",
+   "from": "src/controls.js:42"
+  },
+  "ctl-pad-hand": {
+   "text": "[owner's words: RT held, the hand: sweep and throw]",
+   "from": "src/controls.js:43"
+  },
+  "ctl-pad-corner": {
+   "text": "[owner's words: View, the corner cards]",
+   "from": "src/controls.js:44"
+  },
+  "ctl-pad-hold": {
+   "text": "[owner's words: Menu, hold the yard]",
+   "from": "src/controls.js:45"
+  },
+  "ctl-pad-look": {
+   "text": "[owner's words: R3, the camera back to the focus]",
+   "from": "src/controls.js:46"
+  },
+  "ctl-pad-way": {
+   "text": "[owner's words: L3, through the portal]",
+   "from": "src/controls.js:47"
+  },
+  "said-copyout-none": {
+   "text": "nothing saved yet",
+   "from": "src/copyout.js:6"
+  },
+  "said-copyout-window": {
+   "text": "in window.__save",
+   "from": "src/copyout.js:12"
+  },
+  "other-fullscreen-title-on": {
+   "text": "leave fullscreen",
+   "from": "src/fullscreen.js:45"
+  },
+  "other-fullscreen-title-off": {
+   "text": "fullscreen",
+   "from": "src/fullscreen.js:45"
+  },
+  "set-fullscreen-on": {
+   "text": "fullscreen: on",
+   "from": "src/fullscreen.js:46"
+  },
+  "set-fullscreen-off": {
+   "text": "fullscreen: off",
+   "from": "src/fullscreen.js:46"
+  },
+  "held-indexbtn": {
+   "text": "index",
+   "from": "src/indexpage.js:24"
+  },
+  "held-index-entryback": {
+   "text": "back",
+   "from": "src/indexpage.js:87"
+  },
+  "cloud-foot-choose": {
+   "text": "choose a yard",
+   "from": "src/cloudsheet.js:109"
+  },
+  "cloud-head": {
+   "text": "cloud saves",
+   "from": "src/cloudsheet.js:154"
+  },
+  "cloud-btn-linkcode": {
+   "text": "enter a link code",
+   "from": "src/cloudsheet.js:179"
+  },
+  "cloud-btn-recovery": {
+   "text": "use a recovery code",
+   "from": "src/cloudsheet.js:180"
+  },
+  "cloud-btn-stop": {
+   "text": "stop cloud saves",
+   "from": "src/cloudsheet.js:249"
+  },
+  "cloud-said-off": {
+   "text": "the cloud is off on this device",
+   "from": "src/cloudsheet.js:252"
+  },
+  "cloud-btn-enable": {
+   "text": "enable cloud syncing",
+   "from": "src/cloudsheet.js:173"
+  },
+  "cloud-why-noanswer": {
+   "text": "the cloud did not answer",
+   "from": "src/cloud.js:768"
+  },
+  "cloud-btn-copy": {
+   "text": "copy",
+   "from": "src/cloudsheet.js:188"
+  },
+  "cloud-writedown": {
+   "text": "write this down: it brings your yards back on a new device",
+   "from": "src/cloudsheet.js:190"
+  },
+  "cloud-btn-take": {
+   "text": "take it",
+   "from": "src/cloudsheet.js:204"
+  },
+  "cloud-btn-keep": {
+   "text": "keep this one",
+   "from": "src/cloudsheet.js:205"
+  },
+  "cloud-said-kept": {
+   "text": "kept",
+   "from": "src/cloudsheet.js:316"
+  },
+  "cloud-pair-enter": {
+   "text": "on the other device, enter",
+   "from": "src/cloudsheet.js:213"
+  },
+  "cloud-btn-done": {
+   "text": "done",
+   "from": "src/cloudsheet.js:216"
+  },
+  "cloud-btn-link": {
+   "text": "link a device",
+   "from": "src/cloudsheet.js:219"
+  },
+  "cloud-btn-hidecode": {
+   "text": "hide recovery code",
+   "from": "src/cloudsheet.js:227"
+  },
+  "cloud-btn-showcode": {
+   "text": "show recovery code",
+   "from": "src/cloudsheet.js:227"
+  },
+  "cloud-btn-newcode": {
+   "text": "new recovery code",
+   "from": "src/cloudsheet.js:235"
+  },
+  "cloud-btn-newcode-armed": {
+   "text": "sign out other devices?",
+   "from": "src/cloudsheet.js:237"
+  },
+  "cloud-box-linkph": {
+   "text": "···-···",
+   "from": "src/cloudsheet.js:268"
+  },
+  "cloud-box-recph": {
+   "text": "····-····-····",
+   "from": "src/cloudsheet.js:272"
+  },
+  "cloud-box-aria-link": {
+   "text": "link code",
+   "from": "src/cloudsheet.js:274"
+  },
+  "cloud-box-aria-rec": {
+   "text": "recovery code",
+   "from": "src/cloudsheet.js:274"
+  },
+  "cloud-wrong": {
+   "text": "that code didn't work",
+   "from": "src/cloudsheet.js:275"
+  },
+  "cloud-said-linked": {
+   "text": "linked",
+   "from": "src/cloudsheet.js:287"
+  },
+  "cloud-btn-dolink": {
+   "text": "link",
+   "from": "src/cloudsheet.js:295"
+  },
+  "cloud-btn-nevermind": {
+   "text": "never mind",
+   "from": "src/cloudsheet.js:295"
+  },
+  "cloud-typing-link": {
+   "text": "the code on the other device",
+   "from": "src/cloudsheet.js:296"
+  },
+  "cloud-typing-rec": {
+   "text": "your recovery code",
+   "from": "src/cloudsheet.js:296"
+  },
+  "cloud-why-today": {
+   "text": "too many tries from here today; try tomorrow",
+   "from": "src/cloud.js:763"
+  },
+  "cloud-why-resting": {
+   "text": "the cloud is resting; try again later",
+   "from": "src/cloud.js:766"
+  },
+  "cloud-why-forbidden": {
+   "text": "the cloud does not know this page",
+   "from": "src/cloud.js:767"
+  },
+  "title-said-notasave": {
+   "text": "that is not a save",
+   "from": "src/title.js:131"
+  },
+  "title-said-loaded": {
+   "text": "loaded",
+   "from": "src/title.js:136"
+  },
+  "title-said-erased": {
+   "text": "erased",
+   "from": "src/title.js:144"
+  },
+  "obj-rock": {
+   "text": "dig the boulder to save your sqwife!",
+   "from": "src/objectives.js:23"
+  },
+  "obj-rock-q-chip": {
+   "text": "mine the boulder",
+   "from": "src/objectives.js:26"
+  },
+  "obj-rock-q-pickup": {
+   "text": "grab a pebble",
+   "from": "src/objectives.js:27"
+  },
+  "obj-rock-q-toss": {
+   "text": "toss the pebble into the pit",
+   "from": "src/objectives.js:28"
+  },
+  "obj-falling": {
+   "text": "try to dig the boulder again!",
+   "from": "src/objectives.js:30"
+  },
+  "obj-props": {
+   "text": "maybe building a wooden roof will stop the next boulder?",
+   "from": "src/objectives.js:31"
+  },
+  "obj-net": {
+   "text": "nope, try catching the boulder and slowing it down",
+   "from": "src/objectives.js:37"
+  },
+  "obj-arch": {
+   "text": "lets try building an arch from the mined ore and stone. surely that's sturdy enough.",
+   "from": "src/objectives.js:39"
+  },
+  "obj-dome": {
+   "text": "out of options, lets see if the wizards can help.",
+   "from": "src/objectives.js:41"
+  },
+  "obj-rescue": {
+   "text": "save your sqwife",
+   "from": "src/objectives.js:42"
+  },
+  "obj-drown": {
+   "text": "drown the pit",
+   "from": "src/objectives.js:45"
+  },
+  "obj-tower": {
+   "text": "build the wizards' tower",
+   "from": "src/objectives.js:47"
+  },
+  "obj-talk": {
+   "text": "talk to the wizards about what just happened",
+   "from": "src/objectives.js:50"
+  },
+  "obj-portal": {
+   "text": "conjure a portal to the abyss, what's down there?",
+   "from": "src/objectives.js:52"
+  },
+  "obj-free": {
+   "text": "free your sqhusband from the serpent's belly",
+   "from": "src/objectives.js:55"
+  },
+  "obj-barrier-cancel": {
+   "text": "cancel ×${n}",
+   "from": "src/objbarrier.js:142"
+  },
+  "ach-firstgrain-name": {
+   "text": "makin' money",
+   "from": "src/catalog.js:22"
+  },
+  "ach-firstgrain-note": {
+   "text": "throw a pebble into the pit",
+   "from": "src/catalog.js:22"
+  },
+  "ach-firstrock-name": {
+   "text": "better keep digging",
+   "from": "src/catalog.js:23"
+  },
+  "ach-firstrock-note": {
+   "text": "clear the first rock",
+   "from": "src/catalog.js:23"
+  },
+  "ach-gotout-name": {
+   "text": "you saved your sqwife",
+   "from": "src/catalog.js:24"
+  },
+  "ach-gotout-note": {
+   "text": "no more rocks, you did it.",
+   "from": "src/catalog.js:24"
+  },
+  "ach-firsthire-name": {
+   "text": "you've constructed additional pylons",
+   "from": "src/catalog.js:25"
+  },
+  "ach-firsthire-note": {
+   "text": "build another house",
+   "from": "src/catalog.js:25"
+  },
+  "ach-firstshard-name": {
+   "text": "the first ore",
+   "from": "src/catalog.js:26"
+  },
+  "ach-firstshard-note": {
+   "text": "bring ore up out of the quarry",
+   "from": "src/catalog.js:26"
+  },
+  "ach-firstspore-name": {
+   "text": "cultivation",
+   "from": "src/catalog.js:27"
+  },
+  "ach-firstspore-note": {
+   "text": "grow your first crop",
+   "from": "src/catalog.js:27"
+  },
+  "ach-firstspark-name": {
+   "text": "magic in the air",
+   "from": "src/catalog.js:28"
+  },
+  "ach-firstspark-note": {
+   "text": "earn your first spark",
+   "from": "src/catalog.js:28"
+  },
+  "ach-holefull-name": {
+   "text": "the pit is full",
+   "from": "src/catalog.js:29"
+  },
+  "ach-holefull-note": {
+   "text": "fill the pit to the brim",
+   "from": "src/catalog.js:29"
+  },
+  "ach-rifttorn-name": {
+   "text": "the rift torn, storage is solved",
+   "from": "src/catalog.js:30"
+  },
+  "ach-rifttorn-note": {
+   "text": "fill the pit causing an inter-dimensional rift",
+   "from": "src/catalog.js:30"
+  },
+  "ach-drowned-name": {
+   "text": "the rift has gotten bigger",
+   "from": "src/catalog.js:31"
+  },
+  "ach-drowned-note": {
+   "text": "a whole ocean of inter-dimensional storage.",
+   "from": "src/catalog.js:31"
+  },
+  "ach-star-name": {
+   "text": "conjure a star",
+   "from": "src/catalog.js:32"
+  },
+  "ach-star-note": {
+   "text": "call a star down from the tower",
+   "from": "src/catalog.js:32"
+  },
+  "ach-firsthat-name": {
+   "text": "you're a wizard squarey",
+   "from": "src/catalog.js:33"
+  },
+  "ach-firsthat-note": {
+   "text": "finish a wizard hat at the tower",
+   "from": "src/catalog.js:33"
+  },
+  "ach-firstbrew-name": {
+   "text": "hello, potion seller",
+   "from": "src/catalog.js:34"
+  },
+  "ach-firstbrew-note": {
+   "text": "brew a batch at the apothecary",
+   "from": "src/catalog.js:34"
+  },
+  "ach-firsttrade-name": {
+   "text": "first hat",
+   "from": "src/catalog.js:35"
+  },
+  "ach-firsttrade-note": {
+   "text": "buy a station its first hat",
+   "from": "src/catalog.js:35"
+  },
+  "ach-alltrades-name": {
+   "text": "educating the masses",
+   "from": "src/catalog.js:36"
+  },
+  "ach-alltrades-note": {
+   "text": "stock every station with its hat",
+   "from": "src/catalog.js:36"
+  },
+  "ach-allbuilt-name": {
+   "text": "building complete",
+   "from": "src/catalog.js:37"
+  },
+  "ach-allbuilt-note": {
+   "text": "you built everything",
+   "from": "src/catalog.js:37"
+  },
+  "ach-rift1e6-name": {
+   "text": "1m through the rift",
+   "from": "src/catalog.js:60"
+  },
+  "ach-rift1e6-note": {
+   "text": "send 1m pebbles through the rift",
+   "from": "src/catalog.js:60"
+  },
+  "ach-brew100-name": {
+   "text": "100 batches",
+   "from": "src/catalog.js:61"
+  },
+  "ach-brew100-note": {
+   "text": "brew 100 batches",
+   "from": "src/catalog.js:61"
+  },
+  "ach-lived1h-name": {
+   "text": "an hour on one clock",
+   "from": "src/catalog.js:62"
+  },
+  "ach-lived1h-note": {
+   "text": "keep one body on the payroll for an hour",
+   "from": "src/catalog.js:62"
+  },
+  "ach-nobodyhired-name": {
+   "text": "nobody hired",
+   "from": "src/catalog.js:65"
+  },
+  "ach-nobodyhired-note": {
+   "text": "clear a whole boulder with nobody on the payroll",
+   "from": "src/catalog.js:65"
+  },
+  "ach-ownhand-name": {
+   "text": "your own hand alone",
+   "from": "src/catalog.js:66"
+  },
+  "ach-ownhand-note": {
+   "text": "clear a boulder without a single worker touching it",
+   "from": "src/catalog.js:66"
+  },
+  "ach-nevertouched-name": {
+   "text": "never touched it",
+   "from": "src/catalog.js:67"
+  },
+  "ach-nevertouched-note": {
+   "text": "clear a boulder without swinging at it once yourself",
+   "from": "src/catalog.js:67"
+  },
+  "ach-underminute-name": {
+   "text": "a rock off in under a minute",
+   "from": "src/catalog.js:68"
+  },
+  "ach-underminute-note": {
+   "text": "clear a boulder in under a minute",
+   "from": "src/catalog.js:68"
+  },
+  "ach-everyjob-name": {
+   "text": "every job staffed at once",
+   "from": "src/catalog.js:69"
+  },
+  "ach-everyjob-note": {
+   "text": "put at least one body on every job at once",
+   "from": "src/catalog.js:69"
+  },
+  "ach-tablebeaten-name": {
+   "text": "we're so back",
+   "from": "src/catalog.js:70"
+  },
+  "ach-tablebeaten-note": {
+   "text": "come out 50k up on a single hand at the casino",
+   "from": "src/catalog.js:70"
+  },
+  "ach-tableruin-name": {
+   "text": "time to get a loan",
+   "from": "src/catalog.js:71"
+  },
+  "ach-tableruin-note": {
+   "text": "come out 50k down on a single hand at the casino",
+   "from": "src/catalog.js:71"
+  },
+  "ach-bird-name": {
+   "text": "get off my land",
+   "from": "src/catalog.js:74"
+  },
+  "ach-bird-note": {
+   "text": "startle a bird",
+   "from": "src/catalog.js:74"
+  },
+  "ach-wholelot-name": {
+   "text": "not one of you",
+   "from": "src/catalog.js:75"
+  },
+  "ach-wholelot-note": {
+   "text": "startle every bird in one lot",
+   "from": "src/catalog.js:75"
+  },
+  "ach-catchall-name": {
+   "text": "juggler",
+   "from": "src/catalog.js:76"
+  },
+  "ach-catchall-note": {
+   "text": "throw a full hand of dust, at its biggest, and catch every grain",
+   "from": "src/catalog.js:76"
+  },
+  "ach-lifted-name": {
+   "text": "come here you",
+   "from": "src/catalog.js:77"
+  },
+  "ach-lifted-note": {
+   "text": "pick a worker up",
+   "from": "src/catalog.js:77"
+  },
+  "ach-shookload-name": {
+   "text": "turn out your pockets",
+   "from": "src/catalog.js:78"
+  },
+  "ach-shookload-note": {
+   "text": "shake a full load out of a worker",
+   "from": "src/catalog.js:78"
+  },
+  "ach-hatoff-name": {
+   "text": "hats off",
+   "from": "src/catalog.js:79"
+  },
+  "ach-hatoff-note": {
+   "text": "shake the hat off a worker",
+   "from": "src/catalog.js:79"
+  },
+  "ach-dizzy-name": {
+   "text": "shaken baby syndrome",
+   "from": "src/catalog.js:80"
+  },
+  "ach-dizzy-note": {
+   "text": "shake a worker dizzy",
+   "from": "src/catalog.js:80"
+  },
+  "ach-muckrain-name": {
+   "text": "it never rains but it pours",
+   "from": "src/catalog.js:81"
+  },
+  "ach-muckrain-note": {
+   "text": "stand through a muck rain",
+   "from": "src/catalog.js:81"
+  },
+  "other-corner-show": {
+   "text": "show workers",
+   "from": "src/corner.js:29"
+  },
+  "other-corner-fade": {
+   "text": "fade workers",
+   "from": "src/corner.js:29"
+  },
+  "other-corner-hide": {
+   "text": "hide workers",
+   "from": "src/corner.js:29"
+  },
+  "other-corner-up": {
+   "text": "up to the yard",
+   "from": "src/corner.js:67"
+  },
+  "other-corner-down": {
+   "text": "down to the deep",
+   "from": "src/corner.js:67"
+  },
+  "other-queue-site-yard": {
+   "text": "the yard",
+   "from": "src/queue.js:26"
+  },
+  "other-queue-site-sphere": {
+   "text": "the sphere",
+   "from": "src/queue.js:26"
+  },
+  "other-queue-queued": {
+   "text": "queued",
+   "from": "src/queue.js:44"
+  },
+  "other-hidedone-show": {
+   "text": "show finished",
+   "from": "src/board.js:686"
+  },
+  "other-hidedone-hide": {
+   "text": "hide finished",
+   "from": "src/board.js:686"
+  },
+  "queue-place-next": {
+   "text": "next",
+   "from": "src/shop.js:457"
+  },
+  "crew-empty": {
+   "text": "nobody lives here yet",
+   "from": "src/shop.js:824"
+  },
+  "modal-books": {
+   "text": "the books",
+   "from": "src/shop.js:846"
+  },
+  "modal-crew": {
+   "text": "who lives here",
+   "from": "src/shop.js:879"
+  },
+  "station-bench": {
+   "text": "the bench",
+   "from": "src/shop.js:916"
+  },
+  "other-skip-touch": {
+   "text": "hold to skip",
+   "from": "src/skiphint.js:29"
+  },
+  "other-skip-desk": {
+   "text": "hold space to skip",
+   "from": "src/skiphint.js:29"
+  },
+  "idx-dust-name": {
+   "text": "pebbles",
+   "from": "src/config/index.js:31"
+  },
+  "idx-dust-text": {
+   "text": "chipped off the boulder by you, the diggers and the ram. toss them into the hole: what is in the hole pays for everything.",
+   "from": "src/config/index.js:32"
+  },
+  "idx-shard-name": {
+   "text": "ore",
+   "from": "src/config/index.js:33"
+  },
+  "idx-shard-text": {
+   "text": "dug out of the quarry by the miners and carried up to the hole. pays for the arch and the later rungs of every ladder.",
+   "from": "src/config/index.js:34"
+  },
+  "idx-spore-name": {
+   "text": "crops",
+   "from": "src/config/index.js:35"
+  },
+  "idx-spore-text": {
+   "text": "grown on the farm and harvested by the farmers. pays for the net, and the apothecary brews with them.",
+   "from": "src/config/index.js:36"
+  },
+  "idx-spark-name": {
+   "text": "sparks",
+   "from": "src/config/index.js:37"
+  },
+  "idx-spark-text": {
+   "text": "shed by the star when the wizards bolt it apart. the machines' coin: every machine, every rung of their ladders, and the rift.",
+   "from": "src/config/index.js:38"
+  },
+  "idx-scale-name": {
+   "text": "scales",
+   "from": "src/config/index.js:39"
+  },
+  "idx-scale-text": {
+   "text": "the deep's coin, crushed out of what the serpent drops.",
+   "from": "src/config/index.js:40"
+  },
+  "idx-crit-name": {
+   "text": "crits",
+   "from": "src/config/index.js:41"
+  },
+  "idx-crit-text": {
+   "text": "now and then a hit lands hard, and a fountain of pebbles comes off instead of a chip. the bench sells the chance and the size.",
+   "from": "src/config/index.js:42"
+  },
+  "idx-rock-name": {
+   "text": "the boulder",
+   "from": "src/config/index.js:45"
+  },
+  "idx-rock-text": {
+   "text": "falls out of the sky, one after another. chip it down for pebbles; each new one drives the last back into the ground.",
+   "from": "src/config/index.js:46"
+  },
+  "idx-pit-name": {
+   "text": "the hole",
+   "from": "src/config/index.js:47"
+  },
+  "idx-pit-text": {
+   "text": "everything you bank lands here, and every bill is paid out of it. it fills up.",
+   "from": "src/config/index.js:48"
+  },
+  "idx-rift-name": {
+   "text": "the rift",
+   "from": "src/config/index.js:49"
+  },
+  "idx-rift-text": {
+   "text": "torn open over the hole once it was full. it swallows what the hole cannot take, and grows as it eats.",
+   "from": "src/config/index.js:50"
+  },
+  "idx-abyss-name": {
+   "text": "the abyss",
+   "from": "src/config/index.js:51"
+  },
+  "idx-abyss-text": {
+   "text": "the hole, drowned. bottomless: whatever goes in, there is always room.",
+   "from": "src/config/index.js:52"
+  },
+  "idx-muck-name": {
+   "text": "muck",
+   "from": "src/config/index.js:53"
+  },
+  "idx-muck-text": {
+   "text": "dirty rain lands as muck. nobody touches it while the storm is still dropping it; after, the crew shovel it up. muck on a station slows the work there.",
+   "from": "src/config/index.js:54"
+  },
+  "idx-poop-name": {
+   "text": "poop",
+   "from": "src/config/index.js:55"
+  },
+  "idx-poop-text": {
+   "text": "everybody has to go sometime. the janitors clean it up.",
+   "from": "src/config/index.js:56"
+  },
+  "idx-bird-name": {
+   "text": "birds",
+   "from": "src/config/index.js:57"
+  },
+  "idx-bird-text": {
+   "text": "they cross the sky now and then. click one and it shakes a few pebbles loose.",
+   "from": "src/config/index.js:58"
+  },
+  "idx-house-name": {
+   "text": "the house",
+   "from": "src/config/index.js:59"
+  },
+  "idx-house-text": {
+   "text": "a room for every body. buy another house to hire somebody; its board is the crew.",
+   "from": "src/config/index.js:60"
+  },
+  "idx-pollution-name": {
+   "text": "pollution",
+   "from": "src/config/index.js:63"
+  },
+  "idx-pollution-text": {
+   "text": "every grain dug kicks a mote into the sky, and the machines put up soot. the fuller the sky, the dirtier the rain. only the air filter takes it down.",
+   "from": "src/config/index.js:64"
+  },
+  "idx-cloud-name": {
+   "text": "clouds",
+   "from": "src/config/index.js:65"
+  },
+  "idx-cloud-text": {
+   "text": "they drift past at the back. when they swell and darken, rain is coming.",
+   "from": "src/config/index.js:66"
+  },
+  "idx-rain-name": {
+   "text": "rain",
+   "from": "src/config/index.js:67"
+  },
+  "idx-rain-text": {
+   "text": "comes when it likes and washes some of the sky down. clean drops just wet the yard; dirty ones land as muck.",
+   "from": "src/config/index.js:68"
+  },
+  "idx-lightning-name": {
+   "text": "lightning",
+   "from": "src/config/index.js:69"
+  },
+  "idx-lightning-text": {
+   "text": "comes with a heavy pour. all show: it touches nothing.",
+   "from": "src/config/index.js:70"
+  },
+  "idx-star-name": {
+   "text": "the star",
+   "from": "src/config/index.js:71"
+  },
+  "idx-star-text": {
+   "text": "a rock in the sky only the wizards can reach. every bit they bolt off sheds sparks; when it is gone they call down the next.",
+   "from": "src/config/index.js:72"
+  },
+  "idx-balloon-name": {
+   "text": "balloon",
+   "from": "src/config/index.js:73"
+  },
+  "idx-balloon-text": {
+   "text": "the air filter's craft: it rides up among the clouds and draws the haze in.",
+   "from": "src/config/index.js:74"
+  },
+  "idx-recycler-name": {
+   "text": "the recycler",
+   "from": "src/config/index.js:75"
+  },
+  "idx-recycler-text": {
+   "text": "hands back some of what the air filter takes out of the sky.",
+   "from": "src/config/index.js:76"
+  },
+  "idx-bench-name": {
+   "text": "the bench",
+   "from": "src/config/index.js:79"
+  },
+  "idx-bench-text": {
+   "text": "your own board: your click, carry and toss, the haulers' gear, crits, the barriers, and the door to every new place.",
+   "from": "src/config/index.js:80"
+  },
+  "idx-shack-name": {
+   "text": "the shack",
+   "from": "src/config/index.js:81"
+  },
+  "idx-shack-text": {
+   "text": "the diggers' hut by the boulder. sells their swing and pick, the breaker hat and the ram.",
+   "from": "src/config/index.js:82"
+  },
+  "idx-stats-name": {
+   "text": "the books",
+   "from": "src/config/index.js:83"
+  },
+  "idx-stats-text": {
+   "text": "the noticeboard: how long you have played and what the yard earns a second.",
+   "from": "src/config/index.js:84"
+  },
+  "idx-farm-name": {
+   "text": "the farm",
+   "from": "src/config/index.js:85"
+  },
+  "idx-farm-text": {
+   "text": "plots that grow crops, worked by farmers. sells plots, tending and yield, the grower hat and the tiller.",
+   "from": "src/config/index.js:86"
+  },
+  "idx-quarry-name": {
+   "text": "the quarry",
+   "from": "src/config/index.js:87"
+  },
+  "idx-quarry-text": {
+   "text": "an open cut; miners work its floor and carry ore up. sells depth, pace and seam, the blaster hat and the drill.",
+   "from": "src/config/index.js:88"
+  },
+  "idx-apothecary-name": {
+   "text": "the apothecary",
+   "from": "src/config/index.js:89"
+  },
+  "idx-apothecary-text": {
+   "text": "a keeper lights the pot and it brews by itself. the brews walk out to the crew.",
+   "from": "src/config/index.js:90"
+  },
+  "idx-tower-name": {
+   "text": "the tower",
+   "from": "src/config/index.js:91"
+  },
+  "idx-tower-text": {
+   "text": "summons wizards, a hat each, who fly up to the star. sells the spells, the sphere and the barrier.",
+   "from": "src/config/index.js:92"
+  },
+  "idx-casino-name": {
+   "text": "the casino",
+   "from": "src/config/index.js:93"
+  },
+  "idx-casino-text": {
+   "text": "no board, just levers. pull the arm and a handful of grains pours down the pegs; the bins they land in pay.",
+   "from": "src/config/index.js:94"
+  },
+  "idx-outhouse-name": {
+   "text": "the janitor's closet",
+   "from": "src/config/index.js:95"
+  },
+  "idx-outhouse-text": {
+   "text": "home of the janitors, who clean up the poop and the muck. sells caps and the roombas.",
+   "from": "src/config/index.js:96"
+  },
+  "idx-filter-name": {
+   "text": "the air filter",
+   "from": "src/config/index.js:97"
+  },
+  "idx-filter-text": {
+   "text": "the only thing that empties the sky. air purifiers work it; its dial reads clean, dirty or filthy.",
+   "from": "src/config/index.js:98"
+  },
+  "idx-ram-name": {
+   "text": "the ram",
+   "from": "src/config/index.js:99"
+  },
+  "idx-ram-text": {
+   "text": "the boulder's machine. bought and tuned with sparks, and it puts up soot.",
+   "from": "src/config/index.js:100"
+  },
+  "idx-jaw-name": {
+   "text": "the drill",
+   "from": "src/config/index.js:101"
+  },
+  "idx-jaw-text": {
+   "text": "the quarry's machine. bought and tuned with sparks, and it puts up soot.",
+   "from": "src/config/index.js:102"
+  },
+  "idx-tiller-name": {
+   "text": "the tiller",
+   "from": "src/config/index.js:103"
+  },
+  "idx-tiller-text": {
+   "text": "the farm's machine. bought and tuned with sparks, and it puts up soot.",
+   "from": "src/config/index.js:104"
+  },
+  "idx-belt-name": {
+   "text": "the belt",
+   "from": "src/config/index.js:105"
+  },
+  "idx-belt-text": {
+   "text": "carries pebbles from the boulder to the hole with nobody minding it. the haulers tip their loads onto it.",
+   "from": "src/config/index.js:106"
+  },
+  "idx-sphere-name": {
+   "text": "the sphere",
+   "from": "src/config/index.js:107"
+  },
+  "idx-sphere-text": {
+   "text": "a shell round the star that catches its light and lets it fall as sparks.",
+   "from": "src/config/index.js:108"
+  },
+  "idx-roomba-name": {
+   "text": "the roombas",
+   "from": "src/config/index.js:109"
+  },
+  "idx-roomba-text": {
+   "text": "little machines that go out from their dock, pick up the mess and bin it.",
+   "from": "src/config/index.js:110"
+  },
+  "idx-driver-name": {
+   "text": "forklift",
+   "from": "src/config/index.js:111"
+  },
+  "idx-driver-text": {
+   "text": "drives itself to the hole with nobody aboard, and smokes.",
+   "from": "src/config/index.js:112"
+  },
+  "idx-props-name": {
+   "text": "wooden barrier",
+   "from": "src/config/index.js:113"
+  },
+  "idx-props-text": {
+   "text": "the first try at holding off the next boulder. it does not hold.",
+   "from": "src/config/index.js:114"
+  },
+  "idx-net-name": {
+   "text": "the net",
+   "from": "src/config/index.js:115"
+  },
+  "idx-net-text": {
+   "text": "rope that catches the boulder and lets it down slowly. it does not hold either.",
+   "from": "src/config/index.js:116"
+  },
+  "idx-arch-name": {
+   "text": "the arch",
+   "from": "src/config/index.js:117"
+  },
+  "idx-arch-text": {
+   "text": "stone that catches one, and then the crack runs.",
+   "from": "src/config/index.js:118"
+  },
+  "idx-dome-name": {
+   "text": "the barrier",
+   "from": "src/config/index.js:119"
+  },
+  "idx-dome-text": {
+   "text": "poured by the wizards, not carried. this one holds.",
+   "from": "src/config/index.js:120"
+  },
+  "idx-deep-name": {
+   "text": "the deep",
+   "from": "src/config/index.js:121"
+  },
+  "idx-deep-text": {
+   "text": "the water under the drowned hole, where the serpent lives.",
+   "from": "src/config/index.js:122"
+  },
+  "idx-portal-name": {
+   "text": "the portal",
+   "from": "src/config/index.js:123"
+  },
+  "idx-portal-text": {
+   "text": "conjured by the wizards over the abyss: the way down to the deep.",
+   "from": "src/config/index.js:124"
+  },
+  "idx-crusher-name": {
+   "text": "the crusher",
+   "from": "src/config/index.js:125"
+  },
+  "idx-crusher-text": {
+   "text": "where the deep's scales are crushed and kept.",
+   "from": "src/config/index.js:126"
+  },
+  "idx-pods-name": {
+   "text": "the pods",
+   "from": "src/config/index.js:127"
+  },
+  "idx-pods-text": {
+   "text": "the deep's houses: a room for a body down there.",
+   "from": "src/config/index.js:128"
+  },
+  "idx-haul-text": {
+   "text": "carry pebbles from the ground to the hole. anybody without a job hauls, and they shovel muck too.",
+   "from": "src/config/index.js:132"
+  },
+  "idx-rockcrew-name": {
+   "text": "diggers",
+   "from": "src/config/index.js:133"
+  },
+  "idx-rockcrew-text": {
+   "text": "swing at the boulder from its row. the shack sells their swing and pick.",
+   "from": "src/config/index.js:134"
+  },
+  "idx-quarrycrew-name": {
+   "text": "miners",
+   "from": "src/config/index.js:135"
+  },
+  "idx-quarrycrew-text": {
+   "text": "work the quarry's floor and bring ore up.",
+   "from": "src/config/index.js:136"
+  },
+  "idx-farmcrew-name": {
+   "text": "farmers",
+   "from": "src/config/index.js:137"
+  },
+  "idx-farmcrew-text": {
+   "text": "tend the plots and harvest the crops.",
+   "from": "src/config/index.js:138"
+  },
+  "idx-purify-name": {
+   "text": "air purifiers",
+   "from": "src/config/index.js:139"
+  },
+  "idx-purify-text": {
+   "text": "work the air filter. only the ones inside it count.",
+   "from": "src/config/index.js:140"
+  },
+  "idx-stir-name": {
+   "text": "apothecary",
+   "from": "src/config/index.js:141"
+  },
+  "idx-stir-text": {
+   "text": "the keeper who lights the pot.",
+   "from": "src/config/index.js:142"
+  },
+  "idx-janitor-text": {
+   "text": "go after the poop first, then the muck.",
+   "from": "src/config/index.js:144"
+  },
+  "idx-wizard-text": {
+   "text": "fly up and bolt the star apart for sparks, and call down a new one. they pour the barrier too.",
+   "from": "src/config/index.js:146"
+  },
+  "idx-build-text": {
+   "text": "spare hands lent to put up a building or a machine.",
+   "from": "src/config/index.js:148"
+  },
+  "idx-breaker-name": {
+   "text": "breaker",
+   "from": "src/config/index.js:149"
+  },
+  "idx-breaker-text": {
+   "text": "the diggers' hat: twice the bite.",
+   "from": "src/config/index.js:150"
+  },
+  "idx-carter-name": {
+   "text": "carter",
+   "from": "src/config/index.js:151"
+  },
+  "idx-carter-text": {
+   "text": "the haulers' cart: twice the load.",
+   "from": "src/config/index.js:152"
+  },
+  "idx-blaster-name": {
+   "text": "blaster",
+   "from": "src/config/index.js:153"
+  },
+  "idx-blaster-text": {
+   "text": "the miners' hat: twice the trips.",
+   "from": "src/config/index.js:154"
+  },
+  "idx-grower-name": {
+   "text": "grower",
+   "from": "src/config/index.js:155"
+  },
+  "idx-grower-text": {
+   "text": "the farmers' hat: twice the tending.",
+   "from": "src/config/index.js:156"
+  },
+  "idx-brews-name": {
+   "text": "brews",
+   "from": "src/config/index.js:157"
+  },
+  "idx-brews-text": {
+   "text": "one for each coin. hearty stew speeds a body up, strong brew makes it stronger, bracing tonic makes it crit.",
+   "from": "src/config/index.js:158"
+  },
+  "idx-party-text": {
+   "text": "crew gone down to the deep to fight the serpent, a fighter to a station.",
+   "from": "src/config/index.js:160"
+  },
+  "idx-sqwife-name": {
+   "text": "sqwife",
+   "from": "src/config/index.js:163"
+  },
+  "idx-sqwife-text": {
+   "text": "buried by the first boulder. every one you clear, somebody runs to dig; every new one drives them back in.",
+   "from": "src/config/index.js:164"
+  },
+  "idx-objective-name": {
+   "text": "objective",
+   "from": "src/config/index.js:165"
+  },
+  "idx-objective-text": {
+   "text": "the line at the top: the story's next step.",
+   "from": "src/config/index.js:166"
+  },
+  "idx-notices-name": {
+   "text": "achievements",
+   "from": "src/config/index.js:167"
+  },
+  "idx-notices-text": {
+   "text": "the yard's milestones. this sheet keeps the ones you have earned.",
+   "from": "src/config/index.js:168"
+  },
+  "idx-rescue-name": {
+   "text": "you saved your sqwife",
+   "from": "src/config/index.js:169"
+  },
+  "idx-rescue-text": {
+   "text": "the barrier held, and the sqwife came out.",
+   "from": "src/config/index.js:170"
+  },
+  "idx-cutscene-name": {
+   "text": "scenes",
+   "from": "src/config/index.js:171"
+  },
+  "idx-cutscene-text": {
+   "text": "now and then a scene takes the camera. hold space to skip one.",
+   "from": "src/config/index.js:172"
+  },
+  "idx-sqhusband-name": {
+   "text": "sqhusband",
+   "from": "src/config/index.js:173"
+  },
+  "idx-sqhusband-text": {
+   "text": "snatched by the serpent after the rescue. free him from its belly.",
+   "from": "src/config/index.js:174"
+  },
+  "idx-serpent-name": {
+   "text": "the serpent",
+   "from": "src/config/index.js:175"
+  },
+  "idx-serpent-text": {
+   "text": "lives in the deep, and swallowed the sqhusband.",
+   "from": "src/config/index.js:176"
+  }
+ },
+ "cases": {
+  "said-newer": [
+   {
+    "args": {
+     "build": "0.5.3 abc1234"
+    },
+    "text": "this save is from a newer build (0.5.3 abc1234)"
+   }
+  ],
+  "said-unsaved-full": [
+   {
+    "args": {
+     "used": "4.2",
+     "ours": 37
+    },
+    "text": "not saving: this site's storage is full (4.2 mb used, 37 kb of it ours). copy a save still works"
+   }
+  ],
+  "said-unsaved-refused": [
+   {
+    "args": {
+     "name": "QuotaExceededError"
+    },
+    "text": "not saving: storage refused the save (QuotaExceededError). copy a save still works"
+   }
+  ],
+  "said-unsaved-refused-why": [
+   {
+    "args": {},
+    "text": "not saving: storage refused the save. copy a save still works"
+   }
+  ],
+  "said-couldnotload": [
+   {
+    "args": {
+     "message": "Unexpected token"
+    },
+    "text": "could not load: Unexpected token"
+   }
+  ],
+  "slots-since-days": [
+   {
+    "args": {
+     "d": 1
+    },
+    "text": "a day ago"
+   },
+   {
+    "args": {
+     "d": 2
+    },
+    "text": "2 days ago"
+   },
+   {
+    "args": {
+     "d": 31
+    },
+    "text": "31 days ago"
+   }
+  ],
+  "slots-confirm-yes": [
+   {
+    "args": {},
+    "text": "delete"
+   }
+  ],
+  "slots-confirm-no": [
+   {
+    "args": {},
+    "text": "back"
+   }
+  ],
+  "played-hm": [
+   {
+    "args": {
+     "h": 3,
+     "m": 12
+    },
+    "text": "3h 12m"
+   }
+  ],
+  "played-m": [
+   {
+    "args": {
+     "m": 7
+    },
+    "text": "7m"
+   }
+  ],
+  "ordinal": [
+   {
+    "args": {
+     "n": {
+      "place": 1
+     }
+    },
+    "text": "1st"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 2
+     }
+    },
+    "text": "2nd"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 3
+     }
+    },
+    "text": "3rd"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 4
+     }
+    },
+    "text": "4th"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 11
+     }
+    },
+    "text": "11th"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 12
+     }
+    },
+    "text": "12th"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 13
+     }
+    },
+    "text": "13th"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 21
+     }
+    },
+    "text": "21st"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 22
+     }
+    },
+    "text": "22nd"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 23
+     }
+    },
+    "text": "23rd"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 101
+     }
+    },
+    "text": "101st"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 111
+     }
+    },
+    "text": "111th"
+   },
+   {
+    "args": {
+     "n": {
+      "place": 112
+     }
+    },
+    "text": "112th"
+   }
+  ],
+  "said-copyout-copied": [
+   {
+    "args": {
+     "n": 42
+    },
+    "text": "copied 42kb"
+   }
+  ],
+  "cloud-line": [
+   {
+    "args": {
+     "state": "off"
+    },
+    "text": "cloud · off"
+   },
+   {
+    "args": {
+     "state": ""
+    },
+    "text": "cloud · "
+   }
+  ],
+  "cloud-state-off": [
+   {
+    "args": {},
+    "text": "off"
+   }
+  ],
+  "cloud-state-out": [
+   {
+    "args": {},
+    "text": "signed out"
+   }
+  ],
+  "cloud-state-refused": [
+   {
+    "args": {},
+    "text": "a save was refused"
+   }
+  ],
+  "cloud-state-offline": [
+   {
+    "args": {},
+    "text": "not saved: offline"
+   }
+  ],
+  "cloud-state-behind": [
+   {
+    "args": {},
+    "text": "newer on another device"
+   }
+  ],
+  "cloud-state-newer": [
+   {
+    "args": {},
+    "text": "update to take the newer save"
+   }
+  ],
+  "cloud-state-big": [
+   {
+    "args": {},
+    "text": "too big for the cloud"
+   }
+  ],
+  "cloud-state-full": [
+   {
+    "args": {},
+    "text": "the cloud is full"
+   }
+  ],
+  "cloud-state-paused": [
+   {
+    "args": {},
+    "text": "paused"
+   }
+  ],
+  "cloud-state-conflict": [
+   {
+    "args": {},
+    "text": "choose a yard"
+   }
+  ],
+  "cloud-state-saved": [
+   {
+    "args": {
+     "since": "just now"
+    },
+    "text": "saved just now"
+   }
+  ],
+  "cloud-state-on": [
+   {
+    "args": {},
+    "text": "on"
+   }
+  ],
+  "cloud-pair-left": [
+   {
+    "args": {
+     "time": "9:58"
+    },
+    "text": "9:58 left"
+   }
+  ],
+  "cloud-clash-here": [
+   {
+    "args": {
+     "n": 2,
+     "here": "rock 3 · 4 crew · just now"
+    },
+    "text": "this device · 2 · rock 3 · 4 crew · just now"
+   }
+  ],
+  "cloud-clash-cloud": [
+   {
+    "args": {
+     "n": 2,
+     "cloud": "empty"
+    },
+    "text": "cloud · 2 · empty"
+   }
+  ],
+  "cloud-why-wait": [
+   {
+    "args": {
+     "m": 12
+    },
+    "text": "too many tries; try again in 12 min"
+   }
+  ],
+  "ach-rocks-name": [
+   {
+    "args": {
+     "n": "10"
+    },
+    "text": "10 rocks"
+   },
+   {
+    "args": {
+     "n": "25"
+    },
+    "text": "25 rocks"
+   },
+   {
+    "args": {
+     "n": "50"
+    },
+    "text": "50 rocks"
+   },
+   {
+    "args": {
+     "n": "100"
+    },
+    "text": "100 rocks"
+   }
+  ],
+  "ach-rocks-note": [
+   {
+    "args": {
+     "n": "10"
+    },
+    "text": "clear 10 boulders"
+   },
+   {
+    "args": {
+     "n": "25"
+    },
+    "text": "clear 25 boulders"
+   },
+   {
+    "args": {
+     "n": "50"
+    },
+    "text": "clear 50 boulders"
+   }
+  ],
+  "ach-rocks-note-last": [
+   {
+    "args": {
+     "n": "100"
+    },
+    "text": "clear 100 boulders, that's a lot of rocks"
+   }
+  ],
+  "ach-pebbles-name": [
+   {
+    "args": {
+     "n": "10k"
+    },
+    "text": "10k pebbles"
+   },
+   {
+    "args": {
+     "n": "100k"
+    },
+    "text": "100k pebbles"
+   },
+   {
+    "args": {
+     "n": "1m"
+    },
+    "text": "1m pebbles"
+   },
+   {
+    "args": {
+     "n": "10m"
+    },
+    "text": "10m pebbles"
+   },
+   {
+    "args": {
+     "n": "100m"
+    },
+    "text": "100m pebbles"
+   }
+  ],
+  "ach-pebbles-note": [
+   {
+    "args": {
+     "n": "10k"
+    },
+    "text": "bank 10k pebbles"
+   },
+   {
+    "args": {
+     "n": "1m"
+    },
+    "text": "bank 1m pebbles"
+   }
+  ],
+  "ach-crew-name": [
+   {
+    "args": {
+     "n": "5"
+    },
+    "text": "5 squares"
+   },
+   {
+    "args": {
+     "n": "10"
+    },
+    "text": "10 squares"
+   },
+   {
+    "args": {
+     "n": "25"
+    },
+    "text": "25 squares"
+   },
+   {
+    "args": {
+     "n": "50"
+    },
+    "text": "50 squares"
+   }
+  ],
+  "ach-crew-note": [
+   {
+    "args": {
+     "n": "5"
+    },
+    "text": "hire a crew of 5"
+   },
+   {
+    "args": {
+     "n": "50"
+    },
+    "text": "hire a crew of 50"
+   }
+  ],
+  "ach-ore0-name": [
+   {
+    "args": {},
+    "text": "1k ore out of the cut"
+   }
+  ],
+  "ach-ore1-name": [
+   {
+    "args": {},
+    "text": "10k ore"
+   }
+  ],
+  "ach-ore-note": [
+   {
+    "args": {
+     "n": "1k"
+    },
+    "text": "dig 1k ore out of the quarry"
+   },
+   {
+    "args": {
+     "n": "10k"
+    },
+    "text": "dig 10k ore out of the quarry"
+   }
+  ],
+  "ach-serpent-name": [
+   {
+    "args": {
+     "n": 5
+    },
+    "text": "[owner's words: name, serpent level 5]"
+   }
+  ],
+  "ach-serpent-note": [
+   {
+    "args": {
+     "n": 5
+    },
+    "text": "[owner's words: note, reach serpent level 5]"
+   }
+  ],
+  "ach-allstations-name": [
+   {
+    "args": {},
+    "text": "[owner's words: name, every station standing]"
+   }
+  ],
+  "ach-allstations-note": [
+   {
+    "args": {},
+    "text": "[owner's words: note, stand a station on every slot in the deep]"
+   }
+  ],
+  "other-skip-pad": [
+   {
+    "args": {},
+    "text": "hold <span data-l10n-name=\"key\"></span> to skip"
+   }
+  ],
+  "queue-run": [
+   {
+    "args": {
+     "name": "another house",
+     "n": 3
+    },
+    "text": "another house ×3"
+   }
+  ],
+  "idx-grp-materials": [
+   {
+    "args": {},
+    "text": "materials"
+   }
+  ],
+  "idx-grp-yard": [
+   {
+    "args": {},
+    "text": "the yard"
+   }
+  ],
+  "idx-grp-sky": [
+   {
+    "args": {},
+    "text": "the sky"
+   }
+  ],
+  "idx-grp-places": [
+   {
+    "args": {},
+    "text": "places"
+   }
+  ],
+  "idx-grp-crew": [
+   {
+    "args": {},
+    "text": "crew"
+   }
+  ],
+  "idx-grp-story": [
+   {
+    "args": {},
+    "text": "the story"
+   }
+  ]
+ }
+}

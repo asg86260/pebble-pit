@@ -6,6 +6,7 @@
 // key. The note says what you did, never a remark about it (DESIGN.md).
 
 import { NOTICE_ROCKS, NOTICE_PEBBLES, NOTICE_CREW, NOTICE_ORE, NOTICE_SERPENT } from './config.js';
+import { msg } from './lang.js';
 
 // Built from the config tables so the count on the board and the thresholds
 // cannot drift apart.
@@ -19,64 +20,62 @@ export const CREW_SAY = ['5', '10', '25', '50'];
 
 export const CATALOG = [
   // --- what happens on its own -------------------------------------------------
-  { key: 'firstgrain', name: "makin' money", note: 'throw a pebble into the pit' },
-  { key: 'firstrock', name: 'better keep digging', note: 'clear the first rock' },
-  { key: 'gotout', name: 'you saved your sqwife', note: 'no more rocks, you did it.' },
-  { key: 'firsthire', name: "you've constructed additional pylons", note: 'build another house' },
-  { key: 'firstshard', name: 'the first ore', note: 'bring ore up out of the quarry' },
-  { key: 'firstspore', name: 'cultivation', note: 'grow your first crop' },
-  { key: 'firstspark', name: 'magic in the air', note: 'earn your first spark' },
-  { key: 'holefull', name: 'the pit is full', note: 'fill the pit to the brim' },
-  { key: 'rifttorn', name: 'the rift torn, storage is solved', note: 'fill the pit causing an inter-dimensional rift' },
-  { key: 'drowned', name: 'the rift has gotten bigger', note: 'a whole ocean of inter-dimensional storage.' },
-  { key: 'star', name: 'conjure a star', note: 'call a star down from the tower' },
-  { key: 'firsthat', name: "you're a wizard squarey", note: 'finish a wizard hat at the tower' },
-  { key: 'firstbrew', name: 'hello, potion seller', note: 'brew a batch at the apothecary' },
-  { key: 'firsttrade', name: 'first hat', note: 'buy a station its first hat' },
-  { key: 'alltrades', name: 'educating the masses', note: 'stock every station with its hat' },
-  { key: 'allbuilt', name: 'building complete', note: 'you built everything' },
+  { key: 'firstgrain', name: msg('ach-firstgrain-name'), note: msg('ach-firstgrain-note') },
+  { key: 'firstrock', name: msg('ach-firstrock-name'), note: msg('ach-firstrock-note') },
+  { key: 'gotout', name: msg('ach-gotout-name'), note: msg('ach-gotout-note') },
+  { key: 'firsthire', name: msg('ach-firsthire-name'), note: msg('ach-firsthire-note') },
+  { key: 'firstshard', name: msg('ach-firstshard-name'), note: msg('ach-firstshard-note') },
+  { key: 'firstspore', name: msg('ach-firstspore-name'), note: msg('ach-firstspore-note') },
+  { key: 'firstspark', name: msg('ach-firstspark-name'), note: msg('ach-firstspark-note') },
+  { key: 'holefull', name: msg('ach-holefull-name'), note: msg('ach-holefull-note') },
+  { key: 'rifttorn', name: msg('ach-rifttorn-name'), note: msg('ach-rifttorn-note') },
+  { key: 'drowned', name: msg('ach-drowned-name'), note: msg('ach-drowned-note') },
+  { key: 'star', name: msg('ach-star-name'), note: msg('ach-star-note') },
+  { key: 'firsthat', name: msg('ach-firsthat-name'), note: msg('ach-firsthat-note') },
+  { key: 'firstbrew', name: msg('ach-firstbrew-name'), note: msg('ach-firstbrew-note') },
+  { key: 'firsttrade', name: msg('ach-firsttrade-name'), note: msg('ach-firsttrade-note') },
+  { key: 'alltrades', name: msg('ach-alltrades-name'), note: msg('ach-alltrades-note') },
+  { key: 'allbuilt', name: msg('ach-allbuilt-name'), note: msg('ach-allbuilt-note') },
 
   // --- numbers, for the long tail ----------------------------------------------
   ...ladder('rock', NOTICE_ROCKS,
-            (n, i) => `${SAY[i]} rocks`,
-            (n, i) => `clear ${SAY[i]} boulders` +
-                      (i === SAY.length - 1 ? ", that's a lot of rocks" : '')),
+            (n, i) => msg('ach-rocks-name', { n: SAY[i] }),
+            (n, i) => msg(i === SAY.length - 1 ? 'ach-rocks-note-last' : 'ach-rocks-note', { n: SAY[i] })),
   ...ladder('pebble', NOTICE_PEBBLES,
-            (n, i) => `${PEBBLE_SAY[i]} pebbles`,
-            (n, i) => `bank ${PEBBLE_SAY[i]} pebbles`),
+            (n, i) => msg('ach-pebbles-name', { n: PEBBLE_SAY[i] }),
+            (n, i) => msg('ach-pebbles-note', { n: PEBBLE_SAY[i] })),
   ...ladder('crew', NOTICE_CREW,
-            (n, i) => `${CREW_SAY[i]} squares`,
-            (n, i) => `hire a crew of ${CREW_SAY[i]}`),
+            (n, i) => msg('ach-crew-name', { n: CREW_SAY[i] }),
+            (n, i) => msg('ach-crew-note', { n: CREW_SAY[i] })),
   ...ladder('ore', NOTICE_ORE,
-            (n, i) => i === 0 ? '1k ore out of the cut' : '10k ore',
-            (n, i) => `dig ${i === 0 ? '1k' : '10k'} ore out of the quarry`),
+            (n, i) => i === 0 ? msg('ach-ore0-name') : msg('ach-ore1-name'),
+            (n, i) => msg('ach-ore-note', { n: i === 0 ? '1k' : '10k' })),
   // The endless serpent's (DESIGN.md, "Endless serpent"): the names and notes
   // are the owner's to write, placeholders until then.
   ...ladder('serpent', NOTICE_SERPENT,
-            n => `[owner's words: name, serpent level ${n}]`,
-            n => `[owner's words: note, reach serpent level ${n}]`),
-  { key: 'allstations', name: "[owner's words: name, every station standing]",
-    note: "[owner's words: note, stand a station on every slot in the deep]" },
-  { key: 'rift1e6', name: '1m through the rift', note: 'send 1m pebbles through the rift' },
-  { key: 'brew100', name: '100 batches', note: 'brew 100 batches' },
-  { key: 'lived1h', name: 'an hour on one clock', note: 'keep one body on the payroll for an hour' },
+            n => msg('ach-serpent-name', { n }),
+            n => msg('ach-serpent-note', { n })),
+  { key: 'allstations', name: msg('ach-allstations-name'), note: msg('ach-allstations-note') },
+  { key: 'rift1e6', name: msg('ach-rift1e6-name'), note: msg('ach-rift1e6-note') },
+  { key: 'brew100', name: msg('ach-brew100-name'), note: msg('ach-brew100-note') },
+  { key: 'lived1h', name: msg('ach-lived1h-name'), note: msg('ach-lived1h-note') },
 
   // --- feats you would have to set out for --------------------------------------
-  { key: 'nobodyhired', name: 'nobody hired', note: 'clear a whole boulder with nobody on the payroll' },
-  { key: 'ownhand', name: 'your own hand alone', note: 'clear a boulder without a single worker touching it' },
-  { key: 'nevertouched', name: 'never touched it', note: 'clear a boulder without swinging at it once yourself' },
-  { key: 'underminute', name: 'a rock off in under a minute', note: 'clear a boulder in under a minute' },
-  { key: 'everyjob', name: 'every job staffed at once', note: 'put at least one body on every job at once' },
-  { key: 'tablebeaten', name: "we're so back", note: 'come out 50k up on a single hand at the casino' },
-  { key: 'tableruin', name: 'time to get a loan', note: 'come out 50k down on a single hand at the casino' },
+  { key: 'nobodyhired', name: msg('ach-nobodyhired-name'), note: msg('ach-nobodyhired-note') },
+  { key: 'ownhand', name: msg('ach-ownhand-name'), note: msg('ach-ownhand-note') },
+  { key: 'nevertouched', name: msg('ach-nevertouched-name'), note: msg('ach-nevertouched-note') },
+  { key: 'underminute', name: msg('ach-underminute-name'), note: msg('ach-underminute-note') },
+  { key: 'everyjob', name: msg('ach-everyjob-name'), note: msg('ach-everyjob-note') },
+  { key: 'tablebeaten', name: msg('ach-tablebeaten-name'), note: msg('ach-tablebeaten-note') },
+  { key: 'tableruin', name: msg('ach-tableruin-name'), note: msg('ach-tableruin-note') },
 
   // --- things you do with your hands ---------------------------------------------
-  { key: 'bird', name: 'get off my land', note: 'startle a bird' },
-  { key: 'wholelot', name: 'not one of you', note: 'startle every bird in one lot' },
-  { key: 'catchall', name: 'juggler', note: 'throw a full hand of dust, at its biggest, and catch every grain' },
-  { key: 'lifted', name: 'come here you', note: 'pick a worker up' },
-  { key: 'shookload', name: 'turn out your pockets', note: 'shake a full load out of a worker' },
-  { key: 'hatoff', name: 'hats off', note: 'shake the hat off a worker' },
-  { key: 'dizzy', name: 'shaken baby syndrome', note: 'shake a worker dizzy' },   // the owner's
-  { key: 'muckrain', name: 'it never rains but it pours', note: 'stand through a muck rain' }
+  { key: 'bird', name: msg('ach-bird-name'), note: msg('ach-bird-note') },
+  { key: 'wholelot', name: msg('ach-wholelot-name'), note: msg('ach-wholelot-note') },
+  { key: 'catchall', name: msg('ach-catchall-name'), note: msg('ach-catchall-note') },
+  { key: 'lifted', name: msg('ach-lifted-name'), note: msg('ach-lifted-note') },
+  { key: 'shookload', name: msg('ach-shookload-name'), note: msg('ach-shookload-note') },
+  { key: 'hatoff', name: msg('ach-hatoff-name'), note: msg('ach-hatoff-note') },
+  { key: 'dizzy', name: msg('ach-dizzy-name'), note: msg('ach-dizzy-note') },   // the owner's
+  { key: 'muckrain', name: msg('ach-muckrain-name'), note: msg('ach-muckrain-note') }
 ];

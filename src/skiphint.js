@@ -15,6 +15,7 @@ import { fadeIn, fadeOut } from './fade.js';
 import { skippable, skipHeld, holdSkip } from './skip.js';
 import { coarse } from './prefs.js';
 import { glyph, markOf } from './padread.js';
+import { msg, writeInto } from './lang.js';
 
 const el = document.getElementById('skip');
 const bar = el.querySelector('.bar');
@@ -26,10 +27,10 @@ export function stepSkipHint() {
   (up ? fadeIn : fadeOut)(el);
   if (!up) return;
   bar.style.width = `${(skipHeld() * 100).toFixed(1)}%`;
-  const words = S.padOn ? `pad:${markOf('a')}` : coarse() ? 'hold to skip' : 'hold space to skip';
+  const words = S.padOn ? `pad:${markOf('a')}` : coarse() ? msg('other-skip-touch') : msg('other-skip-desk');
   if (words === said) return;
   said = words;
-  if (words.startsWith('pad:')) say.replaceChildren('hold ', glyph('a'), ' to skip');
+  if (words.startsWith('pad:')) writeInto(say, msg('other-skip-pad'), { key: glyph('a') });
   else say.textContent = words;
 }
 

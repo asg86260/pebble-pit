@@ -18,12 +18,13 @@ import { placeWord } from './shop.js';
 import { showTipAt } from './board.js';
 import { QUEUE_PIPS } from './config.js';
 import { nameOf } from './stations.js';
+import { msg } from './lang.js';
 
 const el = document.getElementById('queue');
 
 // A site's name is its station's (`nameOf`, the same words the pointer
 // answers with); these are the sites that are not a station.
-const NOT_A_STATION = { yard: 'the yard', sphere: 'the sphere' };
+const NOT_A_STATION = { yard: msg('other-queue-site-yard'), sphere: msg('other-queue-site-sphere') };
 const siteName = site => nameOf(site) || NOT_A_STATION[site] || site;
 
 // The same glyphs a ladder is drawn with on a row.
@@ -41,7 +42,7 @@ const clockOf = (site, list, i, end) => {
   const going = roomAt(site);
   // A front line nobody is at says `queued` and no clock: a clock over a work
   // nobody is doing is a promise the yard is not keeping.
-  if (i < going && stalled(site)) return 'queued';
+  if (i < going && stalled(site)) return msg('other-queue-queued');
   let ms = 0;
   for (let j = 0; j <= end; j++) ms += leftAt(site, list[j]);
   const place = i < going ? '' : `<em>${placeWord(i - going + 1)}</em> `;
@@ -85,7 +86,7 @@ export function fillQueue() {
       b.type = 'button';
       b.className = [l.front ? 'front' : '', l.back ? 'wait' : ''].join(' ').trim();
       b.disabled = !l.back;
-      const name = (rowFor(l.key)?.name || l.key) + (l.n > 1 ? ` ×${l.n}` : '');
+      const name = l.n > 1 ? msg('queue-run', { name: rowFor(l.key)?.name || l.key, n: l.n }) : (rowFor(l.key)?.name || l.key);
       if (l.front) {
         const p = document.createElement('span');
         p.className = 'pips';

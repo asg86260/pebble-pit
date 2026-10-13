@@ -33,6 +33,7 @@ import { stepWindow } from './modal.js';
 import { boardOf } from './boardrows.js';
 import { pageOf, shopOf } from './pages.js';
 import { BOARDS } from './stations.js';
+import { msg } from './lang.js';
 
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
@@ -303,7 +304,7 @@ raiseEl.addEventListener('click', raiseBench);
 
 // Measured when it appears and not again: its words change only for the arrow.
 let callSize = { w: 0, h: 0 };
-const CALL_TEXT = raiseEl.textContent;
+const CALL_TEXT = msg('other-raise');
 let callAt = { x: null, y: null };
 
 // Hidden while a board is up (its z-index assumes that never overlaps) and
@@ -683,7 +684,7 @@ export function sayHideDone() {
   if (S.hideDone === said) return;
   said = S.hideDone;
   // A verb, what pressing does, not a state.
-  hideEl.textContent = S.hideDone ? 'show finished' : 'hide finished';
+  hideEl.textContent = S.hideDone ? msg('other-hidedone-show') : msg('other-hidedone-hide');
   hideEl.classList.toggle('on', S.hideDone);
 }
 

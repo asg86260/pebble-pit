@@ -27,6 +27,7 @@ import {
   CLOUD_BACKOFF_MAX_S, CLOUD_KEEPALIVE_MAX, CLOUD_BLOB_MAX, CLOUD_PUSH_WINDOW_S
 } from './config/cloud.js';
 import { fold, normalSecret, normalPair, showSecret, showPair } from './codes.js';
+import { msg } from './lang.js';
 
 // --- where the worker is ------------------------------------------------------
 // The checks point the yard at the real worker's `handle`, in-process, with
@@ -178,8 +179,8 @@ function local(n) {
 // A copy as the saves page says a yard (slots.js, `slotLabels`), less the
 // slot's number: the conflict pane puts `this device` or `cloud` there.
 function lineOf(s, now = Date.now()) {
-  if (!s) return 'empty';
-  const parts = [`rock ${s.boulderNo || 1}`, `${s.crew || 0} crew`];
+  if (!s) return msg('slots-row-empty');
+  const parts = [msg('slots-row-rock', { n: s.boulderNo || 1 }), msg('slots-row-crew', { n: s.crew || 0 })];
   if (Number.isFinite(s.savedAt)) parts.push(since(s.savedAt, now));
   return parts.join(' · ');
 }
@@ -760,12 +761,12 @@ export function cloudWhy(otherwise) {
   const r = refusedLast;
   if (!r) return otherwise;
   if (r.status === 429) {
-    return r.retryS >= 3600 ? 'too many tries from here today; try tomorrow'
-         : `too many tries; try again in ${Math.max(1, Math.ceil(r.retryS / 60))} min`;
+    return r.retryS >= 3600 ? msg('cloud-why-today')
+         : msg('cloud-why-wait', { m: Math.max(1, Math.ceil(r.retryS / 60)) });
   }
-  if (r.status === 503) return 'the cloud is resting; try again later';
-  if (r.status === 403) return 'the cloud does not know this page';
-  if (!r.status || r.status >= 500) return 'the cloud did not answer';
+  if (r.status === 503) return msg('cloud-why-resting');
+  if (r.status === 403) return msg('cloud-why-forbidden');
+  if (!r.status || r.status >= 500) return msg('cloud-why-noanswer');
   return otherwise;
 }
 

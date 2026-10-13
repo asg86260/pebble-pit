@@ -34,6 +34,7 @@ import { station as stationRow } from './stations.js';
 import { boardOf } from './boardrows.js';
 import { shopOf } from './pages.js';
 import { BOARDS as BOARD_KEYS } from './stations.js';
+import { msg } from './lang.js';
 
 // A row with no drawing of its own wears the drawing of the station whose
 // board sells it, or of the site it is built at.
@@ -454,7 +455,7 @@ function build(el, list, sections, empty, heads, ledgerBoard = false) {
 const sayCount = (key, v) => typeof v === 'number' ? String(Math.round(shown('count:' + key, v))) : String(v);
 const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; reworded = true; } };
 // A place in a line: the first waiting is `next`, the rest count from there.
-export const placeWord = n => (n <= 1 ? 'next' : ordinal(n));
+export const placeWord = n => (n <= 1 ? msg('queue-place-next') : ordinal(n));
 // Whether a row's oldest copy is still in line rather than being built: its
 // picture is a plan and its word is `queued` then.
 const firstWaits = u => lineAt(u) > roomAt(u.site);
@@ -817,11 +818,11 @@ export function markRowSeen(u) {
 // The crew board, a list of people that changes length whenever anybody is
 // hired.
 export function buildCrew() {
-  build(crewEl, crewRows(), crewSections(), 'nobody lives here yet');
+  build(crewEl, crewRows(), crewSections(), msg('crew-empty'));
 }
 
 export function buildCrewList() {
-  build(crewListEl, crewList(), crewListSections(), 'nobody lives here yet');
+  build(crewListEl, crewList(), crewListSections(), msg('crew-empty'));
 }
 
 // --- the window's two kinds (modal.js) ---------------------------------------------
@@ -843,7 +844,7 @@ const holding = u => {
   return HOLDING.get(u.key);
 };
 windowFor('books', {
-  title: 'the books',
+  title: msg('modal-books'),
   body: 'modalbooks',
   open: () => held.clear(),
   fill: () => {
@@ -876,7 +877,7 @@ function fitCrewColumn() {
   crewFit = true;
 }
 windowFor('crew', {
-  title: 'who lives here',
+  title: msg('modal-crew'),
   body: 'modalcrew',
   open: () => { crewFit = false; },
   fill: () => { buildCrewList(); refresh(crewListEl, crewList(), null); if (!crewFit) fitCrewColumn(); }
@@ -913,7 +914,7 @@ export function buildShop() {
 // Draw rows into any element with no yard behind them, for the card bench
 // (cards.html) and the shelf bench (shelf.html, which hands `sections` through
 // so the planks are the real planks).
-export function mountRows(el, rows, title = 'the bench', sections = null) {
+export function mountRows(el, rows, title = msg('station-bench'), sections = null) {
   const list = rows.map(u => ({ show: () => true, ...u }));
   build(el, list, sections || [{ title, keys: list.map(u => u.key) }], '', null);
   refresh(el, list, null);

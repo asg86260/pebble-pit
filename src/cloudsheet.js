@@ -14,6 +14,7 @@ import { openSlot } from './save.js';
 import { copyOut } from './copyout.js';
 import { CLOUD_PAIR_LEN, CLOUD_TICK_MS, CLOUD_IDLE_MS, CLOUD_ARM_MS } from './config.js';
 import { typedPair } from './codes.js';
+import { msg } from './lang.js';
 export { typedPair };
 
 const TICK_MS = CLOUD_TICK_MS;
@@ -22,26 +23,29 @@ const IDLE_MS = CLOUD_IDLE_MS;
 // the player: the same slow beat.
 export const CLOUD_LOOK_MS = IDLE_MS;
 
-// Every line the cloud can be in, as the bar and the sheet both say it.
+// Every state the cloud can be in, as the bar and the sheet both say it.
 // `ok` carries its own time and is written below.
-const LINES = {
-  off: 'cloud · off',
-  out: 'cloud · signed out',
-  refused: 'cloud · a save was refused',
-  offline: 'cloud · not saved: offline',
-  behind: 'cloud · newer on another device',
-  newer: 'cloud · update to take the newer save',
-  big: 'cloud · too big for the cloud',
-  full: 'cloud · the cloud is full',
-  paused: 'cloud · paused',
-  conflict: 'cloud · choose a yard'
+const STATES = {
+  off: msg('cloud-state-off'),
+  out: msg('cloud-state-out'),
+  refused: msg('cloud-state-refused'),
+  offline: msg('cloud-state-offline'),
+  behind: msg('cloud-state-behind'),
+  newer: msg('cloud-state-newer'),
+  big: msg('cloud-state-big'),
+  full: msg('cloud-state-full'),
+  paused: msg('cloud-state-paused'),
+  conflict: msg('cloud-state-conflict')
+};
+// Inside the block the heading already says whose line it is, so the state
+// stands alone there; the foot bar names the cloud in front of it.
+const blockLine = (st, now) => {
+  if (st.state === 'ok') return st.at ? msg('cloud-state-saved', { since: since(st.at, now) }) : msg('cloud-state-on');
+  return STATES[st.state] || STATES.off;
 };
 export function cloudLine(st = cloudStatus(), now = Date.now()) {
-  if (st.state === 'ok') return st.at ? `cloud · saved ${since(st.at, now)}` : 'cloud · on';
-  return LINES[st.state] || LINES.off;
+  return msg('cloud-line', { state: blockLine(st, now) });
 }
-// Inside the block the heading already says whose line it is.
-const blockLine = (st, now) => cloudLine(st, now).replace(/^cloud · /, '');
 
 const clock = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
@@ -106,7 +110,7 @@ function drawFoot() {
   const st = cloudStatus();
   const tick = node('span', st.state === 'ok' ? 'tick' : 'tick off');
   if (st.state === 'conflict') {
-    el.replaceChildren(tick, 'cloud · ', button('choose a yard', () => foot.opts.conflict?.(), 'go'));
+    el.replaceChildren(tick, msg('cloud-line', { state: '' }), button(msg('cloud-foot-choose'), () => foot.opts.conflict?.(), 'go'));
   } else {
     el.replaceChildren(tick, cloudLine(st, Date.now()));
   }
@@ -151,7 +155,7 @@ function drawCloud(el, say, opts) {
   if (!cloudReady()) { el.hidden = true; return; }
   // A section of its own, titled, so every button in it -- stop above all --
   // reads as being about the cloud and not about the slots over it.
-  el.append(node('div', 'head', 'cloud saves'), node('div', 'small said', told.get(el) || ''));
+  el.append(node('div', 'head', msg('cloud-head')), node('div', 'small said', told.get(el) || ''));
   const st = cloudStatus();
   const now = Date.now();
   const done = line => { if (line) say(line); redrawAll(); opts.changed?.(); };
@@ -164,20 +168,20 @@ function drawCloud(el, say, opts) {
     // code from another device, the recovery code, or letting it go.
     if (st.state === 'out') {
       el.append(node('div', 'small', blockLine(st, now)),
-        button('enter a link code', open('link')),
-        button('use a recovery code', open('recovery')),
-        button('stop cloud saves', async () => { await stopCloud(); done('the cloud is off on this device'); }));
+        button(msg('cloud-btn-linkcode'), open('link')),
+        button(msg('cloud-btn-recovery'), open('recovery')),
+        button(msg('cloud-btn-stop'), async () => { await stopCloud(); done(msg('cloud-said-off')); }));
       return;
     }
     el.append(
-      button('enable cloud syncing', async e => {
+      button(msg('cloud-btn-enable'), async e => {
         e.currentTarget.disabled = true;
         await startCloud();
         fresh = recoveryCode();
-        done(fresh ? '' : cloudWhy('the cloud did not answer'));
+        done(fresh ? '' : cloudWhy(msg('cloud-why-noanswer')));
       }),
-      button('enter a link code', open('link')),
-      button('use a recovery code', open('recovery')));
+      button(msg('cloud-btn-linkcode'), open('link')),
+      button(msg('cloud-btn-recovery'), open('recovery')));
     return;
   }
 
@@ -185,9 +189,9 @@ function drawCloud(el, say, opts) {
   if (fresh || revealed) {
     const code = fresh || revealed;
     const pair = node('div', 'pair');
-    pair.append(button('copy', () => copyOut(code, sayer(say))));
+    pair.append(button(msg('cloud-btn-copy'), () => copyOut(code, sayer(say))));
     el.append(node('div', 'code', code), pair,
-      node('div', 'small', 'write this down: it brings your yards back on a new device'));
+      node('div', 'small', msg('cloud-writedown')));
   }
   if (st.state === 'conflict') {
     const rows = node('div', 'slots clashes');
@@ -201,8 +205,8 @@ function drawCloud(el, say, opts) {
     const n = st.slot ?? openSlot();
     const pair = node('div', 'pair');
     pair.append(
-      button('take it', async () => { await takeCloud(n); opts.took?.(n, 'cloud'); done(); }),
-      button('keep this one', async () => { await keepHere(n); done('kept'); }));
+      button(msg('cloud-btn-take'), async () => { await takeCloud(n); opts.took?.(n, 'cloud'); done(); }),
+      button(msg('cloud-btn-keep'), async () => { await keepHere(n); done(msg('cloud-said-kept')); }));
     el.append(pair);
   }
   // *link a device*: the code the other device types, counting down on its
@@ -210,31 +214,31 @@ function drawCloud(el, say, opts) {
   const pair = livePair(st, now);
   if (pair) {
     const left = Math.max(0, Math.ceil((pair.expires - now) / 1000));
-    el.append(node('div', 'small', 'on the other device, enter'),
+    el.append(node('div', 'small', msg('cloud-pair-enter')),
       node('div', 'code pair-code', typedPair(pair.pair)),
-      node('div', 'small count', `${clock(left)} left`),
-      button('done', () => { doneWith = pair.pair; redraw(); }));
+      node('div', 'small count', msg('cloud-pair-left', { time: clock(left) })),
+      button(msg('cloud-btn-done'), () => { doneWith = pair.pair; redraw(); }));
     tickers.set(el, setTimeout(() => { if (el.isConnected) redraw(); }, (pair.expires - now) % TICK_MS + 1));
   } else {
-    el.append(button('link a device', async e => {
+    el.append(button(msg('cloud-btn-link'), async e => {
       e.currentTarget.disabled = true;
       doneWith = null;
       await makePair();
-      if (!livePair(cloudStatus(), Date.now())) say(cloudWhy('the cloud did not answer'));
+      if (!livePair(cloudStatus(), Date.now())) say(cloudWhy(msg('cloud-why-noanswer')));
       redraw();
     }));
   }
-  if (!fresh) el.append(button(revealed ? 'hide recovery code' : 'show recovery code', () => {
+  if (!fresh) el.append(button(revealed ? msg('cloud-btn-hidecode') : msg('cloud-btn-showcode'), () => {
     revealed = revealed ? null : recoveryCode();
     redraw();
   }));
   // Armed like the reset: a new code signs every other device out, so one
   // press asks and a second within four seconds does it.
-  const again = button('new recovery code', async () => {
+  const again = button(msg('cloud-btn-newcode'), async () => {
     if (!armed) {
-      armed = setTimeout(() => { armed = 0; again.classList.remove('armed'); again.textContent = 'new recovery code'; }, CLOUD_ARM_MS);
+      armed = setTimeout(() => { armed = 0; again.classList.remove('armed'); again.textContent = msg('cloud-btn-newcode'); }, CLOUD_ARM_MS);
       again.classList.add('armed');
-      again.textContent = 'sign out other devices?';
+      again.textContent = msg('cloud-btn-newcode-armed');
       return;
     }
     clearTimeout(armed);
@@ -242,14 +246,14 @@ function drawCloud(el, say, opts) {
     await rotate();
     fresh = recoveryCode();
     revealed = null;
-    done(fresh ? '' : cloudWhy('the cloud did not answer'));
+    done(fresh ? '' : cloudWhy(msg('cloud-why-noanswer')));
   }, 'again');
   clearTimeout(armed);
   armed = 0;
-  el.append(again, button('stop cloud saves', async () => {
+  el.append(again, button(msg('cloud-btn-stop'), async () => {
     await stopCloud();
     fresh = revealed = null;
-    done('the cloud is off on this device');
+    done(msg('cloud-said-off'));
   }));
 }
 
@@ -265,14 +269,14 @@ function drawTyping(el, say, opts, done, redraw) {
   box.autocomplete = 'off';
   if (link) {
     box.maxLength = CLOUD_PAIR_LEN + 1;
-    box.placeholder = '···-···';
+    box.placeholder = msg('cloud-box-linkph');
     box.addEventListener('input', () => { box.value = typedPair(box.value); });
   } else {
     box.rows = 1;
-    box.placeholder = '····-····-····';
+    box.placeholder = msg('cloud-box-recph');
   }
-  box.setAttribute('aria-label', link ? 'link code' : 'recovery code');
-  const wrong = "that code didn't work";
+  box.setAttribute('aria-label', link ? msg('cloud-box-aria-link') : msg('cloud-box-aria-rec'));
+  const wrong = msg('cloud-wrong');
   const go = async () => {
     let ok;
     if (link) {
@@ -284,7 +288,7 @@ function drawTyping(el, say, opts, done, redraw) {
     }
     if (!ok) { say(cloudWhy(wrong)); box.focus(); return; }
     typing = null;
-    done('linked');
+    done(msg('cloud-said-linked'));
     if (conflicts().length) opts.conflict?.();
   };
   box.addEventListener('keydown', e => {
@@ -292,8 +296,8 @@ function drawTyping(el, say, opts, done, redraw) {
     if (e.key === 'Escape') { e.preventDefault(); typing = null; say(''); redraw(); }
   });
   const pair = node('div', 'pair');
-  pair.append(button('link', go), button('never mind', () => { typing = null; say(''); redraw(); }));
-  el.append(node('div', 'small', link ? 'the code on the other device' : 'your recovery code'), box, pair);
+  pair.append(button(msg('cloud-btn-dolink'), go), button(msg('cloud-btn-nevermind'), () => { typing = null; say(''); redraw(); }));
+  el.append(node('div', 'small', link ? msg('cloud-typing-link') : msg('cloud-typing-rec')), box, pair);
   box.focus();
 }
 
@@ -313,7 +317,7 @@ function drawClashes(el, say, opts) {
   const pick = async (n, side) => {
     await choose(n, side);
     opts.took?.(n, side);
-    say('kept');
+    say(msg('cloud-said-kept'));
     if (!conflicts().length) opts.done?.();
     redrawAll();
     opts.changed?.();
@@ -321,8 +325,8 @@ function drawClashes(el, say, opts) {
   for (const c of conflicts()) {
     const row = node('div', 'pair clash');
     row.dataset.slot = c.n;
-    row.append(button(`this device · ${c.n} · ${c.here}`, () => pick(c.n, 'here'), 'here'),
-               button(`cloud · ${c.n} · ${c.cloud}`, () => pick(c.n, 'cloud'), 'cloud'));
+    row.append(button(msg('cloud-clash-here', { n: c.n, here: c.here }), () => pick(c.n, 'here'), 'here'),
+               button(msg('cloud-clash-cloud', { n: c.n, cloud: c.cloud }), () => pick(c.n, 'cloud'), 'cloud'));
     el.append(row);
   }
 }
