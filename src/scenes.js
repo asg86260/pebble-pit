@@ -408,6 +408,7 @@ const killAt = (a, back = KILL_REFORM_S * 0.5) => () => {
     for (let i = 0; i < 60 * 120 && S.beat.sheet !== 'freedsheet'; i++) window.__fast(1 / 60);
     window.__skipBeat('sheet');
     window.__fast(back);
+    window.__view('deep');                     // the finale left the camera in the yard
   } else window.__fast(a);
   lookDeep(coilAt(bellySeg(), now()).x);
   window.__holdShot();
@@ -425,7 +426,8 @@ function recoilAt(a) {
     window.__fast(1 / 60);
   }
   if (a > 1 / 60) window.__fast(a - 1 / 60);
-  lookDeep(coilAt(bellySeg(), now()).x);
+  // between the head and the belly, so the pose and the wound are both in it
+  lookDeep(coilAt(0, now()).x + S.viewW / 4);
   window.__holdShot();
   S.still = true;
 }

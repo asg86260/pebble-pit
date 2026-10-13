@@ -175,9 +175,9 @@ export const RECOIL_FILL_S = 0.6;
 // held `gape` open, 0..1. The head thrown back; folded down at the wound
 // (BELLY_AT, 0.58 of the way); the back arched.
 export const RECOIL_POSES = {
-  rear: { at: 0, w: 0.3, lift: P * 9, gape: 1 },
-  buckle: { at: 0.58, w: 0.16, lift: -P * 6, gape: 0.5 },
-  arch: { at: 0.45, w: 0.32, lift: P * 7, gape: 0.5 }
+  rear: { at: 0, w: 0.3, lift: P * 7, gape: 1 },
+  buckle: { at: 0.58, w: 0.14, lift: -P * 9, gape: 0.5 },
+  arch: { at: 0.45, w: 0.28, lift: P * 8, gape: 0.5 }
 };
 export const RECOIL_POSE = 'rear';
 
