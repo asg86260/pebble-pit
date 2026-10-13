@@ -139,6 +139,8 @@ const SOURCES = ['play.html', 'index.html'].map(f => readFileSync(f, 'utf8'));
 import { readdirSync } from 'node:fs';
 const walk = d => readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(`${d}/${e.name}`) : e.name.endsWith('.js') ? [`${d}/${e.name}`] : []);
 for (const f of walk('src')) SOURCES.push(readFileSync(f, 'utf8'));
+// the words themselves live in the language file (src/lang.js)
+SOURCES.push(readFileSync('locales/en.ftl', 'utf8'));
 const inSource = text => {
   const frags = text.split(/\$\{[^}]*\}|<[^>]*>/).map(s => s.trim()).filter(s => s.length >= 2);
   if (!frags.length) return true;

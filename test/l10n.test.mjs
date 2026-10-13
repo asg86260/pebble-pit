@@ -20,6 +20,7 @@ import { join } from 'node:path';
 import { FluentBundle, FluentResource } from '@fluent/bundle';
 import { literals, looksLikeCopy, devFacing } from '../tools/wording/strings.mjs';
 import { msg, placeOf } from '../src/lang.js';
+import { inventory } from '../tools/wording/inventory.mjs';
 
 const FTL = readFileSync('locales/en.ftl', 'utf8');
 const BEFORE = JSON.parse(readFileSync('test/fixtures/wording-before.json', 'utf8'));
@@ -195,4 +196,11 @@ test('no words are left on the pages', () => {
     }
   }
   assert.deepEqual(left, []);
+});
+
+// The inventory is written off the language file (tools/wording/inventory.mjs),
+// so the shots and the wording page read what the game says.
+test('the wording inventory is the language file', () => {
+  const had = JSON.parse(readFileSync('docs/wording-inventory.json', 'utf8'));
+  assert.deepEqual(had, inventory(), 'run: node tools/wording/inventory.mjs');
 });
