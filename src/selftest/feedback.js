@@ -1,9 +1,9 @@
-// The feedback form says what it sends (DESIGN.md, "Feedback form", "Dev and
-// checks"): reached the way a player reaches it -- a press at each button's
-// own spot on the page, hit-tested, through settings to the button and the
-// form -- on the held sheet, the landing page's column, the crashed sheet,
-// and a phone's held sheet. The page cannot reach the worker's `handle`, so a
-// scripted `fetch` takes the report and keeps what it was sent; what the
+// The feedback form is a box, a tick and send (DESIGN.md, "Feedback form",
+// "Dev and checks"): reached the way a player reaches it -- a press at each
+// button's own spot on the page, hit-tested, to the button and the form --
+// on the held sheet's pause page, the landing page's settings column, the
+// crashed sheet, and a phone's held sheet. The page cannot reach the
+// worker's `handle`, so a scripted `fetch` takes the report and keeps what it was sent; what the
 // worker does with it is feedback/test's, and what the request carries is
 // the node tier's (test/feedback.test.mjs).
 
@@ -13,6 +13,9 @@ import { pref, setPref } from '../prefs.js';
 import { msg } from '../lang.js';
 import { fatal } from '../crash.js';
 import * as here from '../feedback.js';
+import { mountFeedback } from '../feedbackform.js';
+import { persist, claimSave } from '../persist.js';
+import { storeSettled } from '../save.js';
 
 const WORKER = 'http://feedback.test';
 const WORDS = 'the crew all stand still by the quarry';
@@ -66,6 +69,14 @@ async function holdSheet() {
   return until(() => document.getElementById('settingsbtn').getClientRects().length > 0);
 }
 
+// Whether the feedback button stands directly under settings on the pause
+// page: the next thing drawn after it, nothing between.
+function underSettings(d) {
+  const drawn = [...d.getElementById('held').children].filter(e => e.getClientRects().length > 0);
+  return drawn.indexOf(d.getElementById('fbbtn')) === drawn.indexOf(d.getElementById('settingsbtn')) + 1
+    && drawn.indexOf(d.getElementById('settingsbtn')) >= 0;
+}
+
 // A finger on a sheet's handle, pulled up a good way and lifted: the sheet
 // goes to its tall stop. Whether it moved.
 async function pullUp(d, handle) {
@@ -91,26 +102,30 @@ function type(d, box, text) {
   box.dispatchEvent(new d.defaultView.Event('input', { bubbles: true }));
 }
 
+// The form's parts a player can see, by name, top to bottom: anything drawn
+// with height or words, so an empty said line is not one.
+const PART = { 'fb-ask': 'ask', 'fb-box': 'box', tick: 'tick', send: 'send', 'fb-said': 'said', 'fb-where': 'where' };
+const partsOf = form => [...form.children]
+  .filter(e => e.getClientRects().length > 0 && e.getBoundingClientRect().height > 0)
+  .map(e => Object.entries(PART).find(([c]) => e.classList.contains(c))?.[1] || e.className || e.tagName);
+
 // What the form shows, read as a player reads it.
 function read(form) {
-  const goes = form.querySelector('.goes');
   return {
     box: form.querySelector('textarea'),
     tick: form.querySelector('.tick'),
     send: form.querySelector('.send'),
     said: form.querySelector('.fb-said')?.textContent || '',
     where: form.querySelector('.fb-where')?.textContent || '',
-    keys: [...(goes?.querySelectorAll('.v') || [])].map(v => v.dataset.key),
-    values: [...(goes?.querySelectorAll('.v') || [])].map(v => v.textContent),
-    save: goes?.querySelector('.v.save')?.textContent || '',
-    shown: !!goes && goes.getClientRects().length > 0,
+    parts: partsOf(form),
   };
 }
-// The request's keys, as the line names them.
+// The request's keys, the facts by name.
 const keysOf = body => Object.entries(body).flatMap(([k, v]) => (k === 'meta' ? Object.keys(v).map(m => `meta.${m}`) : [k]));
+const FACTS = ['version', 'target', 'shell', 'os', 'lang', 'page'].map(m => `meta.${m}`);
 
-// The walk through one form, from the box to the sent line: type, the line
-// without the save; tick, the line with it; send, what was sent.
+// The walk through one form, from the box to the sent line: type, tick,
+// send, and what was sent.
 async function walkForm(d, form, stub, reached = {}) {
   const out = {};
   if (!form.querySelector('.send')) throw new Error(`no form to walk: ${JSON.stringify(reached)} ${missed}`);
@@ -135,20 +150,23 @@ async function walkForm(d, form, stub, reached = {}) {
   return out;
 }
 
-// The checks a walk answers, the same on every page.
-function said(o, where) {
+// The checks a walk answers, the same on every page. `ask` is whether the
+// crashed sheet's line stands over the box.
+function said(o, where, { ask = false } = {}) {
   const b = o.body || {};
+  const form = [...(ask ? ['ask'] : []), 'box', 'tick', 'send'].join(',');
+  const want = ['text', ...FACTS, ...(b.meta?.page === 'crashed' ? ['meta.fatal'] : []), 'save'].join(',');
   return [
     ok(o.tickOff && o.sendGrey, `${where}: the tick off as the form opens, send grey while the box is empty`),
+    ok(o.before.parts.join(',') === form && o.after.parts.join(',') === form,
+      `${where}: the box, the tick and send, and nothing under them`, `${o.before.parts.join(',')} / ${o.after.parts.join(',')}`),
     ok(o.sendLive, `${where}: words make send live`),
-    ok(o.before.shown && !o.before.keys.includes('save') && o.before.keys[0] === 'text', `${where}: the line lists the words and the facts, no save before the tick`, o.before.keys.join(',')),
     ok(o.ticked && o.tickOn, `${where}: the tick, pressed, is on`),
-    ok(o.after.keys.at(-1) === 'save' && /\d+ KB$/.test(o.after.save), `${where}: the line gains the save and its size`, o.after.save),
     ok(o.sent && o.calls === 1, `${where}: send, pressed, sends once`, String(o.calls)),
     ok(b.text === WORDS && typeof b.save === 'string' && b.save.length > 0, `${where}: the words and the save went`),
-    ok(keysOf(b).join(',') === o.after.keys.join(','), `${where}: the line listed exactly what went`, `${keysOf(b).join(',')} vs ${o.after.keys.join(',')}`),
-    ok(o.after.values.includes(b.meta?.version) && o.after.values.includes(b.meta?.lang), `${where}: in the real values`, o.after.values.join(' | ')),
-    ok(o.done.said === msg('fb-sent') && o.done.where && !o.done.shown, `${where}: the sent state, the box and the line gone`, o.done.said),
+    ok(keysOf(b).join(',') === want, `${where}: the words, the facts and the save, and nothing else`, `${keysOf(b).join(',')} vs ${want}`),
+    ok(o.done.said === msg('fb-sent') && o.done.where && o.done.parts.join(',') === 'said,where',
+      `${where}: the sent state, the box, the tick and send gone`, o.done.parts.join(',')),
   ];
 }
 
@@ -179,7 +197,7 @@ async function framed(src, { width = 960, height = 600 } = {}) {
 }
 
 export const TESTS = [
-  ['the feedback form says what it sends: the held sheet, settings to the form and back', async () => {
+  ['the feedback form is a box, a tick and send: the held sheet, the pause page to the form and back', async () => {
     newRun();
     await settle();
     const draft = pref('feedbackDraft');
@@ -190,20 +208,18 @@ export const TESTS = [
     let o = null, reached = {}, back = false;
     try {
       reached.held = await holdSheet();
-      reached.settings = press(document, document.getElementById('settingsbtn'));
-      await raf();
       // A window short enough seats the sheet from the bottom, as a phone's:
       // pulled up to its tall stop, the rows under the fold come into reach.
       if (document.getElementById('held').classList.contains('bottom')) reached.tall = await pullUp(document, document.getElementById('heldhandle'));
       const btn = document.getElementById('fbbtn');
-      reached.under = btn.compareDocumentPosition(document.getElementById('controlsbtn')) & Node.DOCUMENT_POSITION_PRECEDING;
+      reached.under = underSettings(document);
       reached.button = press(document, btn);
       await raf();
-      reached.page = !document.getElementById('fbform').hidden && document.getElementById('motion').hidden;
+      reached.page = !document.getElementById('fbform').hidden && document.getElementById('settingsbtn').hidden;
       o = await walkForm(document, document.getElementById('fbform'), stub, reached);
       back = press(document, document.getElementById('fbback'));
       await raf();
-      back = back && !document.getElementById('motion').hidden && document.getElementById('fbform').hidden;
+      back = back && !document.getElementById('settingsbtn').hidden && !document.getElementById('resume').hidden && document.getElementById('fbform').hidden;
     } finally {
       here.setFeedbackUrl('');
       here.setFeedbackFetch(null);
@@ -212,42 +228,96 @@ export const TESTS = [
       await raf();
     }
     return [
-      ok(reached.settings && reached.button && reached.under, 'settings, then the button under controls', JSON.stringify(reached)),
+      ok(reached.held && reached.button && reached.under, 'the pause page, the button directly under settings', JSON.stringify(reached)),
       ok(reached.page, 'the button opens a page of its own'),
       ...said(o, 'held sheet'),
       ok(o.body.meta.page === 'game' && !('fatal' in o.body.meta), 'held sheet: the page is the game, and no crash line'),
-      ok(back, 'back turns to the settings'),
+      ok(back, 'back turns to the pause page'),
     ];
   }],
 
-  ['the feedback form says what it sends: no button where the build has no worker', async () => {
+  ['the feedback form is a box, a tick and send: no button where the build has no worker', async () => {
     newRun();
     await settle();
     here.setFeedbackUrl('');
     await holdSheet();
-    document.getElementById('settingsbtn').click();
-    await raf();
     const shown = document.getElementById('fbbtn').getClientRects().length > 0;
-    document.getElementById('settingsback').click();
     document.getElementById('resume')?.click();
     await raf();
-    return [ok(!shown, 'settings has no feedback button')];
+    return [ok(!shown, 'the pause page has no feedback button')];
   }],
 
-  ['the feedback form says what it sends: the landing page\'s column, and the yard named', async () => {
+  // An empty slot is the setup, not what is checked: the form is mounted on
+  // a blob of nothing, and the tick is pressed where a player would press it.
+  ['the feedback form is a box, a tick and send: no save, the tick grey and nothing ticked goes', async () => {
     newRun();
     await settle();
     const draft = pref('feedbackDraft');
     setPref('feedbackDraft', '');
+    const stub = worker();
+    here.setFeedbackUrl(WORKER);
+    here.setFeedbackFetch(stub.fetch);
+    const el = document.createElement('div');
+    el.className = 'paste feedback';
+    el.style.cssText = 'position:fixed;left:0;top:0;width:420px;z-index:99;background:#fff';
+    document.body.appendChild(el);
+    let o = {};
+    missed = '';
+    try {
+      const form = mountFeedback(el, { page: 'game', raw: () => '' });
+      await form.ready;
+      await raf();
+      const f = read(el);
+      o.grey = f.tick.disabled;
+      type(document, f.box, WORDS);
+      await raf();
+      o.pressed = press(document, read(el).tick);
+      await raf();
+      o.off = read(el).tick.getAttribute('aria-checked') === 'false';
+      o.parts = read(el).parts.join(',');
+      o.sent = press(document, read(el).send);
+      await until(() => stub.sent.length > 0);
+      o.body = stub.sent[0]?.body || {};
+    } finally {
+      el.remove();
+      here.setFeedbackUrl('');
+      here.setFeedbackFetch(null);
+      setPref('feedbackDraft', draft);
+    }
+    return [
+      ok(o.grey, 'no save: the tick is grey'),
+      ok(o.pressed && o.off, 'and pressed, it stays off', missed),
+      ok(o.parts === 'box,tick,send', 'the box, the tick and send, and nothing saying why', o.parts),
+      ok(o.sent && keysOf(o.body).join(',') === ['text', ...FACTS].join(','), 'send carries the words and the facts, no save', keysOf(o.body).join(',')),
+    ];
+  }],
+
+  ['the feedback form is a box, a tick and send: the landing page\'s column', async () => {
+    newRun();
+    await settle();
+    // The open slot holds this yard before the page reads it, whatever the
+    // groups before this one left there (a frame that played the game holds
+    // the save's claim; it is taken back first): the tick has a save to offer.
+    claimSave();
+    S.yielded = false;
+    persist();
+    await storeSettled();
+    const draft = pref('feedbackDraft');
+    setPref('feedbackDraft', '');
     const { d, stub, done } = await framed('index.html');
-    let o = null, reached = {}, yard = '';
+    let o = null, reached = {};
     try {
       await until(() => d.getElementById('playlabel').textContent);
-      reached.settings = press(d, d.getElementById('settingsbtn'));
+      // the page comes up from under its veil; a player presses once it has
+      const sb = d.getElementById('settingsbtn');
+      await until(() => {
+        const r = sb.getBoundingClientRect();
+        return sb.contains(d.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2));
+      });
+      reached.settings = press(d, sb);
       reached.button = press(d, d.getElementById('fbbtn'));
       reached.page = !d.getElementById('fbform').hidden;
       o = await walkForm(d, d.getElementById('fbform'), stub, reached);
-      yard = o.after.save;
       reached.back = press(d, d.getElementById('fbback')) && !d.getElementById('motion').hidden;
     } finally {
       done();
@@ -256,12 +326,11 @@ export const TESTS = [
     return [
       ok(reached.settings && reached.button && reached.page && reached.back, 'landing: settings, the button, the page, and back', JSON.stringify(reached)),
       ...said(o, 'landing'),
-      ok(/rock \d+ · \d+ crew · \d+ KB/.test(yard), 'landing: the save is named as the saves rows name a yard', yard),
       ok(o.body.meta.page === 'title', 'landing: the page is the title'),
     ];
   }],
 
-  ['the feedback form says what it sends: the crashed sheet, with the crash\'s line', async () => {
+  ['the feedback form is a box, a tick and send: the crashed sheet, with the crash\'s line', async () => {
     newRun();
     await settle();
     window.__crew(1, 1);
@@ -274,15 +343,14 @@ export const TESTS = [
     const sheet = document.getElementById('crashed');
     const btn = document.getElementById('crashfb');
     const form = document.getElementById('crashform');
-    let o = null, reached = {}, line = [];
+    let o = null, reached = {};
     try {
       fatal(new Error('the yard fell over'));
       reached.up = await until(() => !btn.hidden);
       reached.under = !!(btn.compareDocumentPosition(document.getElementById('copysave')) & Node.DOCUMENT_POSITION_PRECEDING);
       reached.button = press(document, btn);
-      reached.open = await until(() => form.querySelector('.goes'));
+      reached.open = await until(() => form.querySelector('.send'));
       reached.ask = form.querySelector('.fb-ask')?.textContent === msg('crashed-fb-ask');
-      line = read(form).values;
       o = await walkForm(document, form, stub);
     } finally {
       here.setFeedbackUrl('');
@@ -299,13 +367,12 @@ export const TESTS = [
     return [
       ok(reached.up && reached.under && reached.button && reached.open, 'the crashed sheet: a button under copy save opens the form in place', JSON.stringify(reached)),
       ok(reached.ask, 'with the sheet\'s line asking for the save'),
-      ok(line.some(v => /the yard fell over/.test(v)), 'the crash\'s first line is on the line', line.join(' | ')),
-      ...said(o, 'crashed sheet'),
-      ok(/the yard fell over/.test(o.body.meta.fatal || '') && o.body.meta.page === 'crashed', 'crashed sheet: and it went', o.body.meta.fatal),
+      ...said(o, 'crashed sheet', { ask: true }),
+      ok(/the yard fell over/.test(o.body.meta.fatal || '') && o.body.meta.page === 'crashed', 'crashed sheet: the crash\'s first line went', o.body.meta.fatal),
     ];
   }],
 
-  ['the feedback form says what it sends: a phone\'s held sheet, nothing off its side', async () => {
+  ['the feedback form is a box, a tick and send: a phone\'s held sheet, nothing off its side', async () => {
     newRun();
     await settle();
     const draft = pref('feedbackDraft');
@@ -321,11 +388,11 @@ export const TESTS = [
       await sleep(50);
       w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
       await sleep(150);
-      reached.settings = press(d, d.getElementById('settingsbtn'));
-      await sleep(50);
+      reached.held = !d.getElementById('held').hidden;
       // A thumb pulls the sheet up to its tall stop, and the rows under the
       // fold scroll into reach inside it.
       reached.tall = await pullUp(d, d.getElementById('heldhandle'));
+      reached.under = underSettings(d);
       const btn = d.getElementById('fbbtn');
       reached.button = press(d, btn);
       if (!reached.button) {
@@ -350,7 +417,7 @@ export const TESTS = [
     }
     const [sw, cw] = scroll.split('/').map(Number);
     return [
-      ok(reached.settings && reached.button, 'phone: settings and the button, pressed where they stand', JSON.stringify(reached)),
+      ok(reached.held && reached.under && reached.button, 'phone: the pause page, the button under settings, pressed where it stands', JSON.stringify(reached)),
       ok(wide.length === 0, 'phone: nothing on the sheet stands past the screen\'s sides', wide.join(', ')),
       ok(sw <= cw, 'phone: no sideways scroll', scroll),
       ...said(o, 'phone'),

@@ -52,9 +52,10 @@ let paneNow = 'main';
 export const pane = () => paneNow;
 export function showPane(name) {
   paneNow = name;
-  // The feedback button is on the settings page only where the build has a
-  // worker to send to: asked as the page turns, so a check can point it.
-  fbBtn.dataset.pane = feedbackReady() ? 'settings' : '';
+  // The feedback button is on the front, under settings, only where the
+  // build has a worker to send to: asked as the page turns, so a check can
+  // point it.
+  fbBtn.dataset.pane = feedbackReady() ? 'main' : '';
   for (const el of sheet.querySelectorAll('[data-pane]')) el.hidden = !el.dataset.pane.split(' ').includes(name);
   paste.hidden = true;                          // folded; asked for again if wanted
   recordBtn.textContent = recordLabel();
@@ -91,7 +92,7 @@ fillLanguages(document.getElementById('langlist'), { reload: () => leave(locatio
 langBtn.addEventListener('click', () => showPane('language'));
 document.getElementById('langback').addEventListener('click', () => showPane('settings'));
 fbBtn.addEventListener('click', () => showPane('feedback'));
-document.getElementById('fbback').addEventListener('click', () => showPane('settings'));
+document.getElementById('fbback').addEventListener('click', back);
 document.getElementById('titlebtn').addEventListener('click', () => leave('index.html'));
 
 // Leaving the page, for the landing page or the desk's exit: the veil goes up

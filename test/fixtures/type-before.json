@@ -462,12 +462,6 @@
   "value": "ui-monospace, \"Courier New\", monospace"
  },
  {
-  "file": "src/style.css",
-  "sel": ".feedback .goes, .feedback .fb-public, .feedback .fb-left",
-  "prop": "letter-spacing",
-  "value": ".06em"
- },
- {
   "file": "src/shelf.css",
   "sel": ".rows.shelves",
   "prop": "font",
