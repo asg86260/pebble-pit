@@ -14,6 +14,7 @@
 import { newRun, settle, sleep, cost } from './selftest/kit.js';
 import { TESTS as opening } from './selftest/opening.js';
 import { TESTS as boards } from './selftest/boards.js';
+import { TESTS as boardwords } from './selftest/boardwords.js';
 import { TESTS as wind } from './selftest/wind.js';
 import { TESTS as crew } from './selftest/crew.js';
 import { TESTS as stations } from './selftest/stations.js';
@@ -42,6 +43,7 @@ import { TESTS as language } from './selftest/language.js';   // the language pa
 const TESTS = [
   ...opening,
   ...boards,
+  ...boardwords,
   ...wind,
   ...crew,
   ...stations,

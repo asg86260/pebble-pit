@@ -72,8 +72,14 @@ function deskAsks() {
 }
 
 const english = bundleOf(SOURCE, source(SOURCE));
+// A dev page may name its language in its address (`play.html?bench&lang=ja`)
+// rather than in the preference, which every tab on the origin shares: the
+// board check stands a frame a language beside the suite's own page, and a
+// preference written for the frame was read by every group after it.
+const ASKED = VITE && import.meta.env.DEV && typeof location !== 'undefined'
+  ? new URLSearchParams(location.search).get('lang') : null;
 export const LANG = pickLanguage({
-  chosen: pref('language'),
+  chosen: ASKED ?? pref('language'),
   desk: VITE ? deskAsks() : null,
   browser: VITE && typeof navigator !== 'undefined' ? navigator.languages || [navigator.language] : null,
   files: LANGS,

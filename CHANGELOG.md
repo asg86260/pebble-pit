@@ -156,6 +156,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 - The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).
 - A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
+- In Japanese and Korean the shield card's cancel button no longer sits on its sentence, and in German, French, Portuguese and Russian a queued card's cancel and "another" no longer run into each other and off the card (src/selftest/boardwords.js, "board words never overlap, in every language").
 **New this release**
 - New words on the rescue sheet, the demo's store link and an empty achievements page.
 - The board of rescue times is gone: no name box or post on the rescue sheet, no times page, no name on the board in settings.
