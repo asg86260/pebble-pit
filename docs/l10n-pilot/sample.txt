@@ -1,0 +1,148 @@
+# The pilot sample: message ids from locales/en.ftl, one a line, with the
+# hard case each stands for. No index (idx-*) lines: the owner is rewriting
+# them. No [owner's words: ...] placeholders.
+#
+# id                          # why it is in the sample
+
+## Sheets
+saved-word                    # heading, a joke on the ending (question mark)
+saved-why                     # markup: data-l10n-name span mid-sentence; sqwife
+saved-keepplaying             # button, fairy-tale phrase in title case
+demoend-why                   # sqwife, deliberately unpunctuated "cant"
+freed-why                     # sqhusband, the serpent
+freed-end                     # long sentence
+held-nevermind                # short button
+held-keys                     # symbols (arrows, middle dot), three clauses
+modal-close                   # an attribute (.aria-label) with no value
+said-fellback                 # sentence with a semicolon
+said-yielded                  # long reply
+said-unsaved-full             # two numeric variables, units (mb, kb)
+said-couldnotload             # string variable at the end
+slots-since-min               # number variable + abbreviated unit
+slots-since-days              # plural selector
+slots-row-crew                # number before a game term
+held-slotsbtn-label           # two variables, "n of total"
+held-record-none              # deadpan line
+cloud-writedown               # instruction with a colon
+cloud-why-resting             # personification of the cloud
+cloud-why-today               # long reply with a semicolon
+cloud-btn-newcode-armed       # a question as a button
+cloud-state-saved             # string variable that is itself a translated phrase
+
+## Settings
+set-dark-on                   # "switch: state" label
+set-motion-less               # "switch: state" label
+set-fullscreen-note           # long instruction
+ctl-rightleft-do              # controls verb phrase
+
+## Title page
+title-gamename                # the game's name, markup <br>, never translated
+title-line                    # the tagline: three fragments, deadpan
+title-play                    # one-word button
+
+## Objectives
+obj-rock                      # sqwife, exclamation
+obj-props                     # long question, hedging voice
+obj-arch                      # two sentences, sarcasm ("surely")
+obj-dome                      # wizards
+obj-portal                    # question tacked on with a comma
+obj-free                      # sqhusband, the serpent's belly
+obj-barrier-cancel            # "×n" after a verb
+
+## Other
+other-skip-pad                # markup: data-l10n-name span for a button glyph
+queue-run                     # two variables only
+casino-drop                   # drawn in the sign's pixel capitals
+crew-empty                    # deadpan line
+
+## Numbers
+played-hm                     # unit letters glued to numbers
+ordinal                       # ordinal selector (one/two/few/other)
+
+## Achievements
+ach-gotout-name               # sqwife
+ach-firstgrain-name           # slang, dropped g
+ach-firsthire-name            # quotation joke (StarCraft "additional pylons")
+ach-firsthat-name             # quotation joke (Harry Potter), "squarey"
+ach-firstbrew-name            # meme ("potion seller")
+ach-dizzy-name                # dark joke on a medical term
+ach-muckrain-name             # idiom
+ach-tablebeaten-name          # internet slang ("we're so back")
+ach-tableruin-name            # deadpan joke
+ach-bird-name                 # catchphrase ("get off my lawn")
+ach-catchall-note             # long, comma-heavy instruction
+ach-rifttorn-name             # odd syntax ("the rift torn, storage is solved")
+ach-rifttorn-note             # "inter-dimensional"
+ach-drowned-note              # fragment, deadpan
+ach-rocks-note-last           # number variable + a joke tail
+ach-crew-name                 # "squares": the game's word for its people
+
+## Jobs
+job-rockhands                 # a trade, plural
+job-delvers                   # a trade, two words
+
+## Boards
+unit-per-s                    # html variable + "/s"
+unit-hits-s                   # unit abbreviation
+gain-does                     # two variables only
+unlock-grower                 # nested selectors: a string key and a plural
+row-carry                     # short row title
+row-autotoss                  # short row title, verb phrase
+row-unlockapothecary-note     # "sqworkers"
+row-unlockcasino-note         # gambling, "double or nothing"
+row-unlockouthouse-note       # poop, colloquial "lets"
+row-unlockfilter-note         # long sentence
+row-dome-note                 # solemn line, no full stop
+row-net-note                  # question with "?"
+kit-breaker-does              # three-word gain
+kit-note                      # three variables, punctuation between
+row-tuneram-note              # number variable + "x"
+card-another                  # "+ another": tiny strip label
+card-done                     # one word in a price slot
+spell-gmo                     # "genetically modify crops"
+spell-thrift-note             # percentage in the text
+spell-drive-note              # percentage in the text
+row-wizpower-note             # two number variables, "instead of"
+row-wizard-note               # long sentence
+row-roomba-note               # long sentence with a semicolon
+row-recycler-note             # pebbles vs muck
+tonic-stew                    # potion name
+tonic-gain                    # four variables, symbols
+row-potkeep-on                # setting state, idiom "batch after batch"
+row-driver-note               # long, colon, "smokes"
+needs-shard                   # short grey-out label
+
+## Stations
+station-party                 # numeric selector keys [0]..[3], ordinals in words, a name variable
+station-party-lot             # the same with an indefinite article
+station-apothecary-empty      # poetic empty-board line
+station-outhouse-empty        # poetic empty-board line
+station-crusher-full          # the deep's scales
+
+## Crew
+crew-where-lifted             # short status
+crew-now-idle                 # short status, deadpan
+crew-minding                  # string variable that is a machine's name with its article
+crew-card-new                 # short status
+
+## The books
+books-got                     # two string/number variables, "in"
+books-due-never               # dry joke
+books-tally-under             # sqwife, the line before a time
+books-tally-saved             # sqwife, the line before a time
+
+## Hover
+hover-counter                 # colon, explanation
+hover-dial                    # two string variables only
+hover-done                    # a list variable + "done"
+pot-nearest                   # "whoever is nearest"
+
+## The deep
+cls-bard-fork                 # sentence-case, a status variable mid-line
+status-exposed-does           # range of two variables
+status-line-n                 # three variables, "x"
+rail-become                   # "Become a { $name }": article and grammatical case
+rail-reset                    # en dash, "refunds everything"
+class-martial                 # a class name, title case
+serp-dazed                    # "seeing stars" idiom
+rail-recruit-ask              # sentence-case heading

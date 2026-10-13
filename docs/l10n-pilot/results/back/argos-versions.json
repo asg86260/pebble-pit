@@ -1,0 +1,12 @@
+{
+ "de": "translate-de_en 1.3",
+ "fr": "translate-fr_en 1.9",
+ "pt-BR": "translate-pt_en 1.9",
+ "ru": "translate-ru_en 1.9",
+ "zh-CN": "translate-zh_en 1.9",
+ "ja": "translate-ja_en 1.1",
+ "ko": "translate-ko_en 1.1",
+ "broken": {
+  "es": "translate-es_en 1.9 (degenerate output, left out)"
+ }
+}
