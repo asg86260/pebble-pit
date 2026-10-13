@@ -661,10 +661,13 @@ export const following = t => (S.follow && S.follow.pointed > t ? S.follow : nul
 // is wide enough to hold both, measured rather than assumed. When it does
 // not fit the seat is the seat and nothing else has a say: a guard of
 // `max(withBench, seat)` opened a phone on the bench with the rock off the
-// right-hand edge of a game about a rock.
+// right-hand edge of a game about a rock. The fit is measured against the
+// widest rock the yard makes, not the one standing: the view stays where it
+// opened while the rocks grow under it, and a seat that only fit the first
+// rock cut the later ones off at the edge.
 export const openingCamX = () => {
   const withBench = bench.x - OPENING_MARGIN;
-  const rockFar = rockLeft() + S.gw * P + OPENING_MARGIN;
+  const rockFar = S.cx + (ROCK_W_MAX / 2) * P + OPENING_MARGIN;
   return rockFar - withBench <= S.viewW ? withBench : S.cx - S.viewW * OPENING_ROCK_AT;
 };
 
