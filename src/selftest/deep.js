@@ -461,6 +461,22 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   // well over toward the body's ink from what is there with the sight let go.
   const tone = p => +p.split(',')[0];
   const toward = (held, free, ink) => Math.abs(tone(held) - tone(ink)) + 64 < Math.abs(tone(free) - tone(ink));
+  // The ring is read along one side of the body, chosen when the frame is
+  // drawn: a body stands over its neighbor's ring where they rest together
+  // (the crusher's gatherers do), so the side read is one no other body, nor
+  // the stack it carries over its head, reaches into.
+  const ringSides = w => {
+    const g0 = SIGHT_GAP, r = SIGHT_RING, W = WORKER, mid = r / 2;
+    const along = a => { const o = []; for (let d = P; d < W - P; d += 2) o.push(a(d)); return o; };
+    return [
+      { box: [w.x - g0 - r, w.y, r, W], pts: along(d => [w.x - g0 - mid, w.y + d]) },
+      { box: [w.x + W + g0, w.y, r, W], pts: along(d => [w.x + W + g0 + mid, w.y + d]) },
+      { box: [w.x, w.y + W + g0, W, r], pts: along(d => [w.x + d, w.y + W + g0 + mid]) },
+      { box: [w.x, w.y - g0 - r, W, r], pts: along(d => [w.x + d, w.y - g0 - mid]) }
+    ];
+  };
+  const covered = (w, [x, y, bw, bh]) => S.workers.some(o => o !== w && !o.lifted &&
+    o.x < x + bw && o.x + WORKER > x && o.y - P * 14 < y + bh && o.y + WORKER > y);
   const look = (half, w) => {
     const [x, y] = onScreen(w.x + WORKER / 2, w.y + WORKER / 2);
     point('pointerdown', x, y, 2, 2);
@@ -469,8 +485,8 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
     const read = () => {
       draw();
       const ink = px(w.x + 1, w.y + WORKER / 2);
-      const side = [];
-      for (let dy = P; dy < WORKER - P; dy += 2) side.push(px(w.x - SIGHT_GAP - SIGHT_RING / 2, w.y + dy));
+      const sides = ringSides(w), use = sides.find(o => !covered(w, o.box)) || sides[0];
+      const side = use.pts.map(([wx, wy]) => px(wx, wy));
       return { ink, side, all: g.getImageData(0, 0, c.width, c.height).data };
     };
     const on = read();
