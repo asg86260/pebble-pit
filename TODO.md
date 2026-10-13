@@ -1,14 +1,16 @@
 # Still to do
 
-## Endless serpent -- DESIGNED, AWAITING APPROVAL (2026-10-12)
+## Endless serpent -- BUILT, WORDS AND THE WALL OPEN (2026-10-12)
 
-"Endless serpent" in DESIGN.md (design, not built): after the story's kill
-the serpent rises again a level up, 1.1x the depth a level and nothing
-else; a kill drops a fang until all seven slots stand. Blocked on the
-owner's calls listed at the end of that section (the label's words, the
-camera on a later kill, the stun and the orb under scaling, the heal
-number's font, the wall, the achievements), and the label wants a mock
-before it is drawn.
+"Endless serpent" in DESIGN.md (built; its "As built" note). Open:
+- **Words**: the level label (`SERPENT_LEVEL_SAYS`, config/deepdraw.js,
+  drawn as the bare number until its letters are in `NUM_FONT`), the five
+  notices' names and notes (src/catalog.js) and the books' row
+  (`tallyserpent`, src/stats.js) are `[owner's words: ...]` placeholders.
+- **Big numbers**: the k/m shortening and its glyphs are being voted; it
+  drops into `sayNum` (render/numfont.js).
+- **The wall**: measured at level 3 for seven stations at rung 8 (the
+  constrict stops breaking at 4), far under the level-25 notice.
 
 ## Controller support -- BUILT, WORDS AND STEAMWORKS OPEN (2026-10-12)
 

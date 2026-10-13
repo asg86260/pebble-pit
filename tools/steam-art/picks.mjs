@@ -23,6 +23,8 @@ export const PICK = {
   lifted: ['lift', null, null, 'no hand; the lift (a forklift) stands in, and reads wrong'],
   shookload: ['sack'], hatoff: ['brim'],
   dizzy: ['spark', null, null, 'no dizzy mark; the spark stands in, and reads as the red coin'],
-  muckrain: ['balloon', null, null, 'no cloud or rain on the shelf; the balloon stands in']
+  muckrain: ['balloon', null, null, 'no cloud or rain on the shelf; the balloon stands in'],
+  serpent: ['blade', 'up', null, 'no serpent on the shelf; the blade stands in'],
+  allstations: ['shield', 'plus', null, 'no drawing of the party\'s floor; the shield stands in']
 };
 export const pickOf = key => PICK[key] || PICK[key.replace(/\d+$/, '')];

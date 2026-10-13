@@ -15,55 +15,16 @@ import { darkPage, turned } from '../ink.js';
 import { blowK } from '../deep/serpent.js';
 import { kickTop, leaveOf } from './barflight.js';
 import { barShown, barRect, barLeft } from './serpentbar.js';
-import { NUM_FONT, NUM_FONT_PX, NUM_FACE, NUM_DROP, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_IN_S, NUM_OUT, NUM_STEPS,
+import { sheetOf, write, widthOf, sayNum, GH } from './numfont.js';
+import { NUM_FONT_PX, NUM_FACE, NUM_DROP, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_IN_S, NUM_OUT, NUM_STEPS,
          NUM_LIFT, NUM_KICK_UP, NUM_KICK_UP_K, NUM_KICK_SIDE, NUM_KICK_SIDE_K, NUM_KICK_GRAV, NUM_KICK_HOLD_S,
          NUM_KICK_BIG, NUM_KICK_LINE, NUM_KICK_LINE_H, NUM_HEAL_SIDE, NUM_HEAL_DROP_BY, NUM_HEAL_RISE,
          NUM_HEAL_SWELL, NUM_HEAL_SWELL_LAG, NUM_HEAL_FADE, NUM_HEAL_FACES, NUM_HEAL_DROPS,
          NUM_BAR_IN_S, NUM_BAR_BITE_S } from '../config.js';
 
-const CHARS = Object.keys(NUM_FONT);
-const GW = NUM_FONT['0'][0].length, GH = NUM_FONT['0'].length;
-
 // On the dark page every color is mapped by its lightness (ink.js), and the
 // deep there is drawn turned so the map brings it back: the numbers too.
 const seen = c => darkPage ? turned(c) : c;
-
-// A small sheet of every glyph in one face on its drop line, at `px` device
-// pixels a font pixel: a number is a drawImage a glyph. One sheet a size and
-// a face, kept until a font pixel is a different number of device pixels.
-let sheets = new Map(), sheetsPx = 0;
-function sheetOf(px, face, drop) {
-  if (sheetsPx !== px) { sheets = new Map(); sheetsPx = px; }
-  const id = `${px}|${face}|${drop}`;
-  let c = sheets.get(id);
-  if (c) return c;
-  c = document.createElement('canvas');
-  c.width = CHARS.length * GW * px;
-  c.height = (GH + 1) * px;
-  const g = c.getContext('2d');
-  const paint = (ch, ox, oy, tone) => {
-    g.fillStyle = tone;
-    NUM_FONT[ch].forEach((row, r) => {
-      for (let i = 0; i < GW; i++) if (row[i] === '#') g.fillRect(ox + i * px, oy + r * px, px, px);
-    });
-  };
-  CHARS.forEach((ch, i) => {
-    paint(ch, i * GW * px, px, seen(drop));   // the drop, a font pixel under
-    paint(ch, i * GW * px, 0, seen(face));    // and the face over it
-  });
-  sheets.set(id, c);
-  return c;
-}
-// `str` with its bottom-left at (left, bottom) in device pixels; `bob(i)`
-// lifts glyph i by whole font pixels.
-function write(sheet, str, px, left, bottom, bob) {
-  const w1 = (GW + 1) * px, h = (GH + 1) * px;
-  for (let i = 0; i < str.length; i++) {
-    const at = CHARS.indexOf(str[i]) * GW * px;
-    ctx.drawImage(sheet, at, 0, GW * px, h, left + i * w1, bottom - h - (bob ? bob(i) * px : 0), GW * px, h);
-  }
-}
-const widthOf = (str, px) => str.length * (GW + 1) * px - px;
 
 // A number's opacity over its life, in whole steps, so it passes through the
 // tones of whatever is behind it: in quickly, held, out over its last share.
@@ -104,7 +65,7 @@ export function drawFightNumbers() {
     const n = Math.round(hit.done);
     if (age >= life || n < 1) continue;
     const wx = m.a * hit.x + m.e, wy = m.d * hit.y + m.f;
-    const str = heal ? '+' + n : String(n);
+    const str = heal ? '+' + sayNum(n) : sayNum(n);
     const k = heal ? 0 : blowK(hit.done), size = !heal && k > NUM_KICK_BIG ? big : px;
     const dir = hit.side % 2 ? 1 : -1;
     // A number's center and bottom at `a` seconds, before it goes in.

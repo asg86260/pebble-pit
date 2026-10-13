@@ -13,13 +13,13 @@
 import { S } from '../state.js';
 import { LEVELUP_S, LEVELUP_BURST_S, LEVELUP_RISE, LEVELUP_RISE_STEP } from '../config.js';
 import { P, WORKER, DEEP_GRAV, DEEP_DRAG, LADDER, DEEP_SLOTS, PARTY_IDS,
-         STATION_WORK_S, FANG_BREAKS, FANG_KICK } from '../config.js';
-import { CLASSES, RECRUIT, PAIRS, FIRST_KINDS, NEEDS_COMPANY, FORK_RUNG, FIGHT_STATIONS_MAX } from '../config/classes.js';
+         STATION_WORK_S, FANG_BREAKS, FANG_KICK, SERPENT_PHASES, FIGHT_STATIONS_MAX } from '../config.js';
+import { CLASSES, RECRUIT, PAIRS, FIRST_KINDS, NEEDS_COMPANY, FORK_RUNG } from '../config/classes.js';
 import { deepX0, deepX1, deepFloor, slotX, bellyAt, tossX, inHopper } from './place.js';
 import { start, registerRows, worksAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { frames, now } from '../clock.js';
-import { onBreak } from './serpent.js';
+import { onBreak, onRise } from './serpent.js';
 import { rand } from '../rng.js';
 import { refund } from '../pit.js';
 import { refundScales } from './scales.js';
@@ -306,8 +306,30 @@ function dropFangs(stage, t = now()) {
   const add = [];
   while (S.fangsDropped < due) {
     S.fangsDropped++;
-    const at = bellyAt(t);
-    add.push({ x: at.x, y: at.y, vx: (rand() * 2 - 1) * FANG_KICK, vy: 0, rest: false, by: null, held: false });
+    add.push(fangAtBelly(t));
+  }
+  S.fangsLoose = [...S.fangsLoose, ...add];
+}
+const fangAtBelly = t => {
+  const at = bellyAt(t);
+  return { x: at.x, y: at.y, vx: (rand() * 2 - 1) * FANG_KICK, vy: 0, rest: false, by: null, held: false };
+};
+
+// And one at each kill (DESIGN.md, "Endless serpent"), for as long as a slot
+// is free: a fang held or lying on the floor already promises one, and a
+// station is never taken down, so a kill with no room owes nothing later.
+// `killFangs` is the guard, as `fangsDropped` is the breaks': asked on the
+// kill and again on the rise, the other moment the belly is whole and in
+// place, which is how a save from before this drops its story kill's fang.
+export const killsHad = () => Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed ? 1 : 0);
+export function dropKillFang(t = now()) {
+  const room = FIGHT_STATIONS_MAX - S.stations.length - (S.fangs | 0) - S.fangsLoose.length;
+  const due = Math.min(killsHad(), (S.killFangs | 0) + Math.max(0, room));
+  if ((S.killFangs | 0) >= due) return;
+  const add = [];
+  while ((S.killFangs | 0) < due) {
+    S.killFangs = (S.killFangs | 0) + 1;
+    add.push(fangAtBelly(t));
   }
   S.fangsLoose = [...S.fangsLoose, ...add];
 }
@@ -340,12 +362,21 @@ function sinkFangs() {
   }
 }
 
-// Listening starts on the first frame, not at load: serpent.js is read
-// before this file on some import orders and after it on others, and asked
-// while it is still being read it has no list to hand the listener to.
+// Listening starts once both files are read, not at this one's load:
+// serpent.js is read before this file on some import orders and after it on
+// others, and asked while it is still being read it has no list to hand the
+// listener to. game.js calls this as it is read, which is before the first
+// frame -- a save's first frame can be a rise, whose fang is owed -- and the
+// frame asks again for a yard stood up without it.
 let listening = false;
+export function listenFangs() {
+  if (listening) return;
+  onBreak(stage => { dropFangs(stage); if (stage >= SERPENT_PHASES) dropKillFang(); });
+  onRise(() => dropKillFang());
+  listening = true;
+}
 export function stepParty() {
-  if (!listening) { onBreak(stage => dropFangs(stage)); listening = true; }
+  listenFangs();
   if (!S.snatched) return;
   raiseLots();
   sinkFangs();
@@ -387,15 +418,23 @@ export function carryFang(w) {
 // gatherer with scales in its arms takes the fang once they are in, so any
 // gatherer down there is enough to leave the fighters at their work. True
 // while this fighter is on the errand, which is the whole of its frame.
+// A fighter whose station's gear is hung up for it (the finale's heir) takes
+// the gear up first: it is not sent for a fang meanwhile, and a fang it
+// claimed while it gathered is let go where it is.
 const claimed = w => S.fangsLoose.some(f => f.by === w.name);
 const freeGatherer = () => S.workers.some(o => o.type === TYPE.GATHER && working(o));
+const gearHung = w => !!stationById(w.station)?.hung;
 export function fetchFang(w) {
+  if (gearHung(w)) {
+    for (const g of S.fangsLoose) if (g.by === w.name) { g.by = null; if (g.held) { g.held = false; g.rest = false; } }
+    return false;
+  }
   if (!claimed(w)) {
     const g = S.fangsLoose.find(f => f.rest && !f.by);
-    if (!g || !working(w) || freeGatherer()) return false;
+    if (!g || !working(w) || freeGatherer() || gearHung(w)) return false;
     let best = null, dist = Infinity;
     for (const o of S.workers) {
-      if (o.type !== TYPE.FIGHTER || !working(o) || claimed(o)) continue;
+      if (o.type !== TYPE.FIGHTER || !working(o) || claimed(o) || gearHung(o)) continue;
       const d = Math.hypot(mid(o) - g.x, o.y - g.y);
       if (d < dist) { dist = d; best = o; }
     }

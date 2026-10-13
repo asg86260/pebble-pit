@@ -154,6 +154,10 @@ export const KILL_MEET_GAP = P;
 export const KILL_MOTE_S = 1.5;        // a mote off the coming-apart hide, up and gone
 export const KILL_MOTE_RISE = 8;       // cells a second it climbs
 export const KILL_REFORM_S = 2.2;
+// A kill after the story's (DESIGN.md, "Endless serpent"): no beat and no
+// sheet, so nothing puts it down; the motes start gathering this long after
+// the coming apart is done.
+export let SERPENT_RISE_PAUSE_S = 6;
 // Let go where the belly was, he drops to the floor in KILL_DROP_STEPS held
 // steps over KILL_DROP_S.
 export const KILL_DROP_S = 0.4;
@@ -161,7 +165,9 @@ export const KILL_DROP_STEPS = 3;
 
 export const DEEP_CREW_KNOBS = [
   { key: 'SHAFT_PACE', label: 'shaft pace, x', min: 0.1, max: 3, step: 0.1,
-    get: () => SHAFT_PACE, set: v => { SHAFT_PACE = v; } }
+    get: () => SHAFT_PACE, set: v => { SHAFT_PACE = v; } },
+  { key: 'SERPENT_RISE_PAUSE_S', label: 'serpent, pause before it rises again, s', min: 0, max: 30, step: 0.5,
+    get: () => SERPENT_RISE_PAUSE_S, set: v => { SERPENT_RISE_PAUSE_S = v; } }
 ];
 
 // The rescue's sheet with the second half on (DESIGN.md, "From the rescue

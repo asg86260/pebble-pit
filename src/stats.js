@@ -202,7 +202,11 @@ const TALLY_ROWS = [
   readout('tallyunder', 'sqwife under the rock for', () => `${MARK.time} ${sayClock(S.buriedMs)}`,
           () => S.buried),
   readout('tallysaved', 'sqwife saved in', () => `${MARK.time} ${sayClock(S.buriedMs)}`,
-          () => S.rescued)
+          () => S.rescued),
+  // The record of the endless serpent (DESIGN.md, "Endless serpent"), shown
+  // once it has risen past the story's.
+  readout('tallyserpent', "[owner's words: e.g. \"deepest serpent\"]", () => `${S.serpentBest | 0}`,
+          () => (S.serpentBest | 0) > 1)
 ];
 
 // The books in the window (modal.js): every sheet, side by side. Each sheet

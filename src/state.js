@@ -493,6 +493,12 @@ export const S = {
   serpentStage: 0,
   serpentWound: 0,
   serpentFreed: false,
+  // The endless serpent (DESIGN.md, "Endless serpent"): the level being
+  // fought, 1 the story's, raised on each rise; the highest ever reached; and
+  // the fangs the kills have dropped (the breaks' are `fangsDropped`).
+  serpentLevel: 1,
+  serpentBest: 1,
+  killFangs: 0,
   resistBy: {},           // stage -> the kinds it resists, chosen at its break from the party (deep/phases.js)
   // A heavy blow's stun: seconds of it left (the heal stops while there
   // are), and seconds of the grace after one in which no new one can start.
@@ -722,7 +728,7 @@ export const SAVED = [
   'riftAte', 'drowned',   // every grain the rift ever swallowed, and whether the hole gave way
   'riftSwell',            // and the growth the rescue handed it on top
   // The deep (docs/wave-serpent.md).
-  'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'resistBy', 'scales', 'seenScale',
+  'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'serpentLevel', 'serpentBest', 'killFangs', 'resistBy', 'scales', 'seenScale',
   'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
   'retired',              // the two of them at the yard's end after the finale (finale.js)
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',

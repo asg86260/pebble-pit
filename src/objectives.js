@@ -50,7 +50,10 @@ export const STEPS = [
   { key: 'talk', say: 'talk to the wizards about what just happened', when: serpentOn,
     done: () => !!S.snatched && (!!S.askedWizards || S.portalPour > 0 || !!S.portalOpen) },
   { key: 'portal', say: "conjure a portal to the abyss, what's down there?", when: deepOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
-  { key: 'free', say: 'free your sqhusband from the serpent\'s belly', when: deepOn, done: () => !!S.serpentFreed },
+  // Done for good on the story's kill: `serpentFreed` goes false again on
+  // every rise (deep/serpent.js).
+  { key: 'free', say: 'free your sqhusband from the serpent\'s belly', when: deepOn,
+    done: () => beatDone('freed') || !!S.serpentFreed || S.serpentLevel > 1 },
 ];
 
 // The step the story is on, or null once it is told: the first step after

@@ -21,6 +21,9 @@ export const NOTICE_ORE     = [1e3, 1e4];
 export const NOTICE_RIFT    = 1e6;
 export const NOTICE_BREWS   = 100;
 export const NOTICE_LIVED_MS = 60 * 60 * 1000;   // an hour on one body's clock
+// The serpent's best level (DESIGN.md, "Endless serpent"): 2 is its first
+// rise past the story; the last should sit near where a full party stalls.
+export const NOTICE_SERPENT = [2, 5, 10, 25];
 
 // What counts as a big hand at the table, either way.
 export let CASINO_BIG = 50000;

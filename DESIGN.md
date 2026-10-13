@@ -18244,7 +18244,7 @@ crit's rumble exists at all.
   those rows' words are the owner's, placeholders until written
   (`PAD_WORDS`, src/controls.js).
 
-## Endless serpent (design, not built)
+## Endless serpent (built)
 
 *The owner's calls, 2026-10-12: after the story's kill the serpent keeps
 coming back, ten per cent stronger in health each time and in nothing else;
@@ -18252,6 +18252,61 @@ the game counts the level and keeps the best; each kill drops a fang until
 every slot stands; a kill after the first is the kill alone, short, then a
 pause and it rises again.* Everything below is written against the code as
 it stands on main at 6f8f6172.
+
+### As built (2026-10-12)
+
+Built as written, with the owner's answers to the open calls: the label from
+level 2 on; the camera left where the player has it on a later kill; the
+stun read off the level-1 depth and the orb's hit points scaled with the
+level; heal numbers left as raw digits; the wall a record, nothing to keep a
+maxed party climbing; notices at best level 2, 5, 10 and 25 and every slot
+standing. Where it differs from the text below, or settles what the text
+left open:
+
+- **Words still the owner's.** `SERPENT_LEVEL_SAYS` (config/deepdraw.js) is
+  `'{n}'`, marked `[owner's words: level label, e.g. "Lv 7"]`; the label is
+  drawn with what `NUM_FONT` has today, the digits, so the words need their
+  letters drawn into the font with them. The five notices
+  (`serpent0..3`, `allstations`, src/catalog.js) and the books' row
+  (`tallyserpent`, src/stats.js) carry `[owner's words: ...]` names and
+  notes. The notices are hidden on Steam (`STEAM_HIDDEN`), since they spoil
+  the deep, and borrow the blade and the shield for their icons
+  (tools/steam-art/picks.mjs).
+- **The number font's code** moved out of render/fightnums.js into
+  render/numfont.js, shared with the bar; `sayNum` there is the one place a
+  number is said, where the k/m shortening drops in once its glyphs are
+  voted.
+- **The freed beat** asks `serpentLevel <= 1` as well as `serpentFreed`, so a
+  fight a hook stands at level 3 cannot play the story's kill either.
+  `cradled()` is the story serpent's only (`serpentLevel <= 1` and the freed
+  beat not yet had); `bellyWhole()` is the cage and the gap at every level.
+- **The rise's clock** reads a `freedAt` or `reformAt` ahead of the page's
+  clock as long past (an older page wrote it, the clock not being saved), so
+  a save from before this rises on its first frame.
+- **The fang listeners** are hung by game.js as it is read (`listenFangs`),
+  not on the party's first frame: a save's first frame can be a rise, and the
+  party steps after the serpent.
+- **The ledger rule** takes what a setup hook (`__party`, `__serpent`) or a
+  save read back stood up beyond the drops as its starting point
+  (`forgetFangs` in verify.js); a fang from nowhere after that is red.
+- **A fighter taking up hung gear** (the finale's heir) is never sent for a
+  fang, and lets go of one it claimed as a gatherer: the story kill's fang
+  otherwise kept the heir from the gear.
+- **The past-the-kill check** loads the player's two-crews yard stood where
+  the old build left a kill (its beats are past the kill but its fight stood
+  at stage 2, with four fangs held, which promise every slot); no new
+  fixture file.
+- **Scenes:** `deep-endless` (level 7, the label, five pips, an empty belly),
+  `deep-endless-kill` and `deep-endless-rise` (a level-3 kill and just after
+  its rise), not `serpent-lv2`/`serpent-lv25`.
+- **The wall, measured** (`tools/node/deep-pace.mjs`, which gained
+  `--stood 7`; brawler, ranger, mage, monk, sapper, sword and assassin at
+  rung 8, mechanics answered): every defense breaks through **level 3**; at
+  level 4 the constrict no longer breaks inside its window, at level 15 the
+  fading, at 25 nothing. The arithmetic leaves out stuns, statuses, the Bard
+  and the hand, so the real wall stands somewhat higher, but well under the
+  level-25 notice: by the design's own rule the top threshold wants moving
+  down, or the constrict's depth or the growth wants the owner's look.
 
 ### The bargain
 

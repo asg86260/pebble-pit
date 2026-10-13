@@ -17,7 +17,7 @@ import { mouthX, deepFloor, bellyAt, bellySeg, coilAt, coilThick } from '../src/
 import { SERPENT_WOUND, SERPENT_PHASES, KILL, KILL_REFORM_S } from '../src/config.js';
 const LAST = SERPENT_PHASES - 1;
 import { strike } from '../src/deep/serpent.js';
-import { killDrop, apartK, reformK } from '../src/deep/phases.js';
+import { killDrop, apartK } from '../src/deep/phases.js';
 import { freedBody, ringAt, jawAt } from '../src/snatch.js';
 
 const done = key => S.beatsDone.filter(k => k === key).length;
@@ -247,7 +247,7 @@ group("the freeing: he is out, the two of them leave the crew, and the sheet com
 // down: he goes limp and lies on the floor, comes apart, nothing reaches him
 // while he is down, his freed one walks out to her, the finale takes the two
 // of them off the crew, and once the sheet is put down the serpent gathers
-// itself again.
+// itself again and rises a level deeper (DESIGN.md, "Endless serpent").
 group('the fourth break: limp to the floor, apart, him out to her, and the serpent back after the sheet', async () => {
   window.__snatch({ played: true });
   window.__deepCrew({ spare: 1 });
@@ -272,13 +272,16 @@ group('the fourth break: limp to the floor, apart, him out to her, and the serpe
     ok(apart >= 1, 'he comes apart, all of him', `${apart}`),
     ok(out && Math.abs(out.y + WORKER - deepFloor()) <= P, 'his freed one is out, on the floor', JSON.stringify(out)),
     ok(sheet === 'freedsheet' && crew === crew0 - 1, 'and the two of them are off the crew when the sheet comes up', `${sheet} crew ${crew0} then ${crew}`),
-    ok(reformK() === 1 && killDrop() === 0, 'put down, the serpent gathers itself whole again', `${reformK()} ${killDrop()}`)
+    ok(S.serpentLevel === 2 && S.serpentStage === 0 && !S.serpentFreed && killDrop() === 0,
+       'put down, the serpent gathers itself whole again and rises at level 2, its first defense up',
+       `level ${S.serpentLevel} stage ${S.serpentStage} freed ${S.serpentFreed} drop ${killDrop()}`)
   ];
 });
 
-// A fight set back after the kill (the dev hook, `__serpent`) has not had it:
-// the next fourth break plays the kill and the meeting again -- with the two
-// of them gone home already, no finale and nobody joining or leaving.
+// A fight set back after the kill (the dev hook, `__serpent`) to the story's
+// serpent has not had it: the next fourth break plays the kill and the
+// meeting again -- with the two of them gone home already, no finale and
+// nobody joining or leaving. The hook forgets the story only at level 1.
 group('set back after the kill, the next fourth break plays it all again', async () => {
   window.__snatch({ played: true });
   window.__deepCrew({ spare: 1 });
@@ -289,7 +292,7 @@ group('set back after the kill, the next fourth break plays it all again', async
   window.__skipBeat('sheet');
   run(KILL_REFORM_S + 0.5);
   const crew = S.crew;
-  window.__serpent({ stage: LAST, wound: 0 });
+  window.__serpent({ level: 1, stage: LAST, wound: 0 });
   hit();
   run(0.1);
   const again = S.beat.yard, stage = S.serpentStage, beats = S.beatsDone.filter(k => k.startsWith('freed')).join();

@@ -143,10 +143,11 @@ export const BEATS = [
   // And the camera pulled in on the plank while it plays (cutscene.js).
   { key: 'snatchcam', owns: 'camera', next: null,
     when: () => S.beat.yard === 'snatch', enter: () => play('snatchcam'), step: stepShot, skip: release },
-  // The fourth defense broken: the kill, and him out and back with her
-  // (snatch.js). A skip plays it out at once.
+  // The last defense broken: the kill, and him out and back with her
+  // (snatch.js). A skip plays it out at once. The story's serpent's only: a
+  // kill after it is the kill alone (DESIGN.md, "Endless serpent").
   { key: 'freed', owns: 'yard', next: 'finale',
-    when: () => S.serpentFreed, enter: startFreed, step: stepFreed, skip: cutFreed },
+    when: () => S.serpentFreed && S.serpentLevel <= 1, enter: startFreed, step: stepFreed, skip: cutFreed },
   // And straight on, the two of them going home (finale.js): her gear hung
   // on her station and taken up, up through the portal and the length of
   // the yard with the crew behind them, to the sunset. With nobody handed

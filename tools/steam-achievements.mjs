@@ -12,7 +12,8 @@ import { STEAM_ACHIEVEMENTS } from '../src/achievements.js';
 
 // Hidden on Steam: the notices that spoil what lies past the surface. The one
 // place the list is kept; the table below and the README read it from here.
-export const STEAM_HIDDEN = ['gotout', 'rifttorn', 'drowned', 'rift1e6', 'star', 'firsthat'];
+export const STEAM_HIDDEN = ['gotout', 'rifttorn', 'drowned', 'rift1e6', 'star', 'firsthat',
+                             'serpent0', 'serpent1', 'serpent2', 'serpent3', 'allstations'];
 
 export const steamRows = () => STEAM_ACHIEVEMENTS.map(a => ({
   ...a,

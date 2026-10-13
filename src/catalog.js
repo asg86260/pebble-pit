@@ -5,7 +5,7 @@
 // DOM into a page that has none. The predicates live in notices.js, joined by
 // key. The note says what you did, never a remark about it (DESIGN.md).
 
-import { NOTICE_ROCKS, NOTICE_PEBBLES, NOTICE_CREW, NOTICE_ORE } from './config.js';
+import { NOTICE_ROCKS, NOTICE_PEBBLES, NOTICE_CREW, NOTICE_ORE, NOTICE_SERPENT } from './config.js';
 
 // Built from the config tables so the count on the board and the thresholds
 // cannot drift apart.
@@ -50,6 +50,13 @@ export const CATALOG = [
   ...ladder('ore', NOTICE_ORE,
             (n, i) => i === 0 ? '1k ore out of the cut' : '10k ore',
             (n, i) => `dig ${i === 0 ? '1k' : '10k'} ore out of the quarry`),
+  // The endless serpent's (DESIGN.md, "Endless serpent"): the names and notes
+  // are the owner's to write, placeholders until then.
+  ...ladder('serpent', NOTICE_SERPENT,
+            n => `[owner's words: name, serpent level ${n}]`,
+            n => `[owner's words: note, reach serpent level ${n}]`),
+  { key: 'allstations', name: "[owner's words: name, every station standing]",
+    note: "[owner's words: note, stand a station on every slot in the deep]" },
   { key: 'rift1e6', name: '1m through the rift', note: 'send 1m pebbles through the rift' },
   { key: 'brew100', name: '100 batches', note: 'brew 100 batches' },
   { key: 'lived1h', name: 'an hour on one clock', note: 'keep one body on the payroll for an hour' },

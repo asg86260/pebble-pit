@@ -7,9 +7,9 @@
 // a uid, a place), because this file is about the rules and not about how a
 // body is seated.
 
-import { group, ok, yard } from './helpers.mjs';
+import { group, ok, yard, run } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { verifyParty } from '../src/verify.js';
+import { verifyParty, verifyWorld } from '../src/verify.js';
 import { deepFloor, deepX0 } from '../src/deep/place.js';
 import { fighterAt, CALLED } from '../src/deep/party.js';
 import { FIGHT_STATIONS_MAX, WORKER } from '../src/config.js';
@@ -17,6 +17,10 @@ import { FIGHT_STATIONS_MAX, WORKER } from '../src/config.js';
 // Whether the rules throw, and what they say.
 const broken = () => {
   try { verifyParty(); return ''; } catch (e) { return e.message; }
+};
+// And every rule, for the ones that remember the frame before (the serpent's).
+const brokenWorld = () => {
+  try { verifyWorld(); return ''; } catch (e) { return e.message; }
 };
 
 // A body on the deep's floor, or on the yard's ground.
@@ -53,6 +57,63 @@ group('more stations than the party holds is red', async () => {
   for (let i = 1; i <= FIGHT_STATIONS_MAX; i++) S.stations.push({ ...one, id: 's' + (i + 1), slot: i });
   const said = broken();
   return [ok(/more stations stand than the party holds/.test(said), 'the rule speaks', said)];
+});
+
+group('one past the slots is red, and the slots are seven', async () => {
+  window.__party({ stations: [{ kind: 'altar' }] });
+  const one = S.stations[0];
+  for (let i = 1; i < 8; i++) S.stations.push({ ...one, id: 's' + (i + 1), slot: i % 7, fighter: null });
+  const said = broken();
+  return [
+    ok(FIGHT_STATIONS_MAX === 7, 'a station a slot', `${FIGHT_STATIONS_MAX}`),
+    ok(/more stations stand than the party holds/.test(said), 'eight stations are red', said)
+  ];
+});
+
+// The ledger (DESIGN.md, "Endless serpent"): every station past the first
+// and every fang held or loose came from a break or a kill.
+group('a fang from nowhere is red; one a break or a kill dropped is not', async () => {
+  window.__party({ stations: [{ kind: 'altar' }, { kind: 'armory' }], fangs: 1 });
+  S.serpentStage = 2;                       // two breaks behind it, none of their fangs dropped yet
+  const fine = broken();
+  S.fangs++;
+  const nowhere = broken();
+  S.fangsDropped = 1;                       // a break's, counted
+  const broke = broken();
+  S.fangs++;
+  S.serpentLevel = 2; S.serpentBest = 2; S.killFangs = 1;   // a kill's, counted
+  const killed = broken();
+  S.killFangs = 2;
+  const unkilled = broken();
+  S.killFangs = 1;
+  return [
+    ok(fine === '', 'a party the setup stood up is its own starting point', fine),
+    ok(/a station or a fang came from nowhere/.test(nowhere), 'a fang with no drop under it is red', nowhere),
+    ok(broke === '' && killed === '', 'and with a break or a kill to its name it is not', `${broke} ${killed}`),
+    ok(/more fangs have dropped than the serpent has been killed/.test(unkilled), 'a kill\'s fang with no kill is red', unkilled)
+  ];
+});
+
+group('the defense goes back only on a rise, to the first, a level up', async () => {
+  window.__party({ stations: [{ kind: 'altar' }] });
+  window.__serpent({ stage: 2 });
+  run(1 / 60);
+  S.serpentStage = 0; S.serpentWound = 0; S.serpentLevel = 2; S.serpentBest = 2;
+  const rose = brokenWorld();
+  window.__serpent({ level: 2, stage: 2 });
+  run(1 / 60);
+  S.serpentStage = 0; S.serpentWound = 0;
+  const back = brokenWorld();
+  window.__serpent({ level: 2, stage: 2 });
+  run(1 / 60);
+  S.serpentStage = 0; S.serpentWound = 0; S.serpentLevel = 4; S.serpentBest = 4;
+  const jump = brokenWorld();
+  window.__serpent({ level: 4, stage: 2 });
+  return [
+    ok(rose === '', 'a rise is the one frame it may', rose),
+    ok(/the serpent's defense went back/.test(back), 'without one it is red', back),
+    ok(/the serpent's level jumped/.test(jump), 'and a level never rises by more than one', jump)
+  ];
 });
 
 group('one fighter a station, and one station a fighter', async () => {

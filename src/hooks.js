@@ -1113,10 +1113,16 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 import { layScales, looseScales } from './deep/scales.js';
 import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
-import { forgetSerpent } from './verify.js';
+import { forgetSerpent, forgetFangs } from './verify.js';
 import { resetMechanic, settleResist, part as phasePart } from './deep/phases.js';
 import { FANG_BREAKS, SERPENT_PHASES } from './config.js';
-HANDLES.__serpent = ({ stage, wound } = {}) => {
+// `level` sets the serpent being fought (1 the story's), and the best with
+// it if it is higher: a fight set back never un-earns a record.
+HANDLES.__serpent = ({ stage, wound, level } = {}) => {
+  if (Number.isInteger(level) && level >= 1) {
+    S.serpentLevel = level;
+    S.serpentBest = Math.max(S.serpentBest | 0, level);
+  }
   if (Number.isInteger(stage)) {
     S.serpentStage = Math.max(0, Math.min(SERPENT_PHASES, stage));
     S.serpentFreed = S.serpentStage >= SERPENT_PHASES;
@@ -1124,7 +1130,8 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
     // The breaks this stage says have happened have dropped their fangs: a
     // fight set back takes them back, and one set forward skipped them, so
     // the next break drops its own and not the ones before it.
-    S.fangsDropped = Math.min(S.serpentStage, FANG_BREAKS);
+    // Past the story's serpent its three breaks are all behind it.
+    S.fangsDropped = S.serpentLevel > 1 ? FANG_BREAKS : Math.min(S.serpentStage, FANG_BREAKS);
     // and a fang still in the water from a break taken back goes with it.
     if (S.fangsLoose.length > S.fangsDropped) S.fangsLoose = S.fangsLoose.slice(0, S.fangsDropped);
     resetMechanic();                    // a stage set opens calm, as a break's does
@@ -1132,16 +1139,24 @@ HANDLES.__serpent = ({ stage, wound } = {}) => {
     // the stages after it choose again when they are reached
     S.resistBy = Object.fromEntries(Object.entries(S.resistBy || {}).filter(([k]) => +k < S.serpentStage));
     settleResist(S.serpentStage);
-    // A fight set back before the kill has not had it: the kill, his walk,
-    // the gathering again and their beats are forgotten, so the next fourth
-    // break plays all of it (snatch.js).
+    // A fight set back before the kill has not had it: the kill and the
+    // gathering again are forgotten; and on the story's serpent so are his
+    // walk and their beats, so the next last break plays all of it
+    // (snatch.js). A fight set at a later level is that level's fight, not
+    // the story.
     if (S.serpentStage < SERPENT_PHASES) {
-      S.freedAt = S.freedFrom = S.freedTo = S.reformAt = S.breakT = null;
-      S.beatsDone = S.beatsDone.filter(k => k !== 'freed' && k !== 'finale' && k !== 'freedsheet');
-      if (S.beat.yard === 'freed' || S.beat.yard === 'finale') S.beat.yard = null;
-      if (S.beat.sheet === 'freedsheet') S.beat.sheet = null;
+      S.freedAt = S.reformAt = S.breakT = null;
+      if (S.serpentLevel === 1) {
+        S.freedFrom = S.freedTo = null;
+        S.beatsDone = S.beatsDone.filter(k => k !== 'freed' && k !== 'finale' && k !== 'freedsheet');
+        if (S.beat.yard === 'freed' || S.beat.yard === 'finale') S.beat.yard = null;
+        if (S.beat.sheet === 'freedsheet') S.beat.sheet = null;
+      }
     }
   }
+  // The kills a level says have been had are the most that can have dropped.
+  const kills = S.serpentLevel - 1 + (S.serpentFreed ? 1 : 0);
+  if (S.killFangs > kills) S.killFangs = kills;
   if (Number.isFinite(wound)) S.serpentWound = Math.max(0, wound);
   forgetSerpent();
   return { stage: S.serpentStage, wound: S.serpentWound };
@@ -1293,6 +1308,7 @@ HANDLES.__party = ({ stations = [], slots = null, fangs = 0 } = {}) => {
   }
   S.fangs = Math.max(0, fangs | 0);
   if (S.fangs) S.seenFang = true;
+  forgetFangs();                  // what the setup stood up is its starting point
   party.seat();
   rebalance(); syncWorkers();
   // Each new station's fighter stood at it, as a factory stands a body at its

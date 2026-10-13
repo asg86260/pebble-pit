@@ -13,6 +13,7 @@
 //   node tools/node/deep-pace.mjs --depths 9000,23000,36000,80000 --windows 40,32,26,20
 //   node tools/node/deep-pace.mjs --table            # a class's damage and shed, rung by rung
 //   node tools/node/deep-pace.mjs --answered         # every phase's mechanic answered
+//   node tools/node/deep-pace.mjs --stood 7          # stations standing from the start, not one a break
 //
 // Each phase's mechanic (deep/phases.js) is played unanswered -- the lash takes the melee fighters off the hide for its
 // length, the fall, the daze and the swim back (`LASH_OUT_S`), the sink takes
@@ -31,6 +32,10 @@ const party = (arg('--party') || 'brawler,ranger,mage,monk').split(',');
 const gather = arg('--gather') ? +arg('--gather') : Infinity;
 const clicks = +(arg('--clicks') || 2);          // punches a second from the hand
 const answered = process.argv.includes('--answered');
+// Stations standing at the first second (the story's fight stands one more a
+// break; a serpent past it meets every station the party has, DESIGN.md,
+// "Endless serpent", where its wall is measured with all seven).
+const stoodFrom = Math.max(1, +(arg('--stood') || 1));
 // Seconds a lashed fighter is off the hide past the lash itself: the sink to
 // the floor and the swim back up, a guess, besides the daze.
 const LASH_FALL_SWIM_S = 4;
@@ -83,7 +88,7 @@ const cost = (c, r) => LADDERS[c].dust[r];
 // minute each stage breaks and the depth is read off instead: the damage of
 // the last window before it, a share of it.
 function fight(depth, ends, windows = SERPENT_WINDOW) {
-  let st = 0, wound = 0, purse = 0, loose = 0, stood = 1, from = 0, win = 0;
+  let st = 0, wound = 0, purse = 0, loose = 0, stood = Math.min(party.length, stoodFrom), from = 0, win = 0;
   const rung = party.map(() => 0), made = SERPENT_WOUND.map(() => 0), at = [], last = [];
   let orbLeft = 0;
   for (let t = 0; st < SERPENT_WOUND.length && t < 86400 * 3; t++) {
