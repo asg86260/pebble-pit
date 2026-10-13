@@ -1,7 +1,7 @@
 // The serpent's bar: what is left of the defense up, drawn in screen pixels at
 // the top of the glass while the camera is in the deep (DESIGN.md, "The
-// serpent's bar"). Full at a closed wound, empty at the break; four pips after
-// it, one a defense. It reads the sim and keeps only what the picture needs to
+// serpent's bar"). Full at a closed wound, empty at the break; a pip after
+// it a defense, on the story's serpent only. It reads the sim and keeps only what the picture needs to
 // remember, all of it here and none of it saved, so a reload shows the bar as
 // it stands: where the fill is shown (it slides to the wound rather than
 // jumping), where a heal began flowing in (the purple), and the pieces the
@@ -50,7 +50,12 @@ const hash = n => { const v = Math.sin(n * 127.1 + 3.7) * 43758.5453; return v -
 // go (abyssintro.js).
 export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage < SERPENT_PHASES && barK(now()) > 0;
 
-// The level, after the pips: from level 2 on, the story's serpent being no
+// The pips' room after the bar: the story's serpent's defenses, one a pip.
+// Risen after the rescue it fights only its last, so there is no row of
+// them to read, only the level.
+export const pipRoom = () => (S.serpentLevel > 1 ? 0 : SERPENT_PHASES);
+
+// The level, after the bar: from level 2 on, the story's serpent being no
 // "level 1" to a player who does not yet know there are more. What of it the
 // number font can draw, and how wide that is in screen pixels.
 const levelSays = () => S.serpentLevel > 1
@@ -64,7 +69,7 @@ const levelW = str => (str ? BAR_LEVEL_GAP + widthOf(str, NUM_FONT_PX) : 0);
 export function barRect() {
   // measured with the level drawn after it, so the strip stays centered as
   // the number grows
-  const whole = BAR_W + SERPENT_PHASES * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
+  const whole = BAR_W + pipRoom() * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
   // The row of statuses stands over the bar (render/statusicons.js), so the
   // bar keeps room above it for the row, whether or not it has a status in it.
   const row = statusRowH() + STATUS_GAP;
@@ -169,7 +174,7 @@ export function drawSerpentBar() {
   step(t, dt, target);
   then = t;
 
-  const pips = SERPENT_PHASES;
+  const pips = pipRoom();
   const { x, y: rest } = barRect();
   // The number went in from underneath, so the bar recoils up: two held
   // poses, the full knock and then half of it.
@@ -204,9 +209,8 @@ export function drawSerpentBar() {
   }
   // The phase boxes: none on the story's first defense, which is the only one
   // the player knows of; they come up one by one as he rises from the first
-  // break. A serpent risen again is one the player knows all of.
-  const boxes = S.serpentLevel > 1 ? pips
-              : S.serpentStage === 0 ? 0
+  // break.
+  const boxes = S.serpentStage === 0 ? 0
               : breakKind() === 'dive' ? (rising() ? Math.round(breakFill(pips) * pips) : 0) : pips;
   for (let s = 0; s < boxes; s++) {
     const px = x + BAR_W + BAR_PIP_GAP + s * (BAR_PIP + BAR_PIP_GAP);

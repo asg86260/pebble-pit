@@ -18299,8 +18299,10 @@ and gathering again each time; that loop is gone.
    motes gather the serpent head first over `KILL_REFORM_S`, and `rise`
    (deep/serpent.js) stands it at **level 2 on the last defense**
    (`SERPENT_PHASES - 1`), its turn calm, its resists chosen from the party
-   standing, the bar up with all five pips, the four before it spent. It
-   never fights a defense before the last again.
+   standing, the bar up with no pips after it (the owner, 2026-10-13: a
+   serpent on its last defense for good has no row of defenses to read),
+   and no cage of ribs at the belly, which never held him. It never fights
+   a defense before the last again.
 3. **A level's bar empties** (the wound held to `depthAt(LAST, level)`): no
    break, no kill. The **recoil** starts (`S.recoilT`, seconds in, saved): a
    held pose, timed by `RECOIL` in config/deepcrew.js -- a smear frame
@@ -18343,7 +18345,8 @@ the return*, and is never true again.
   promises a slot). Carried, crushed and spent on the floating build button
   as a break's fang is. The return asks again, which drops an old save's
   story-kill fang.
-- **The bar:** the level label after the pips from level 2 (`serp-level`),
+- **The bar:** the level label straight after the bar from level 2, the
+  pips gone (`pipRoom`, render/serpentbar.js; `serp-level`),
   measured into the bar's centering; heal numbers said short through `fmt`
   in the number font (option A of docs/mocks/deep-number-glyphs-2026-10-13.html).
 - **The record and the achievements:** `tallyserpent` in the books; notices

@@ -36,7 +36,7 @@ import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
 import { coilLine, coilThick, mouthX, deepFloor, bellyAt } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift, recoilGape } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, caged, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift, recoilGape } from '../deep/phases.js';
 import { freedBody, jawAt, headLeft } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -194,9 +194,9 @@ function drawCoil() {
   const t = now();
   const stage = S.serpentStage;
   const { x0, x1 } = deepWindow();
-  // The belly is whole, its cage of ribs and the wound's gap in it, until the
-  // kill's coming apart reaches it; he is in it only on the story's serpent.
-  const whole = bellyWhole(), held = cradled();
+  // The belly is whole until the kill's coming apart reaches it; its cage of
+  // ribs, and the wound's gap in it, only on the story's serpent.
+  const whole = bellyWhole(), cage = caged(), held = cradled();
   const wk = stage >= SERPENT_PHASES ? 0 : woundK();
   const { pts: laid, alongAt } = lay(t, x0, x1);
   hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) };
@@ -207,7 +207,7 @@ function drawCoil() {
   if (!pts.length) return;
   const bit = bites(t, alongAt);
   const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
-  const gap = whole ? Math.round(wk * WOUND_GAP / P) * P : 0;
+  const gap = cage ? Math.round(wk * WOUND_GAP / P) * P : 0;
   const reach = wk * CRACK_REACH;
   const wardPh = t / WARD_MS * Math.PI * 2;
   // The resist up shows on the hide: the ward's purple shimmer for magic,
@@ -219,7 +219,7 @@ function drawCoil() {
   const renewing = breaking();
 
   // The belly swells round its cage.
-  if (whole) for (const p of pts) {
+  if (cage) for (const p of pts) {
     const d = Math.abs(p.along - bellyA);
     if (d < BELLY_LEN) p.r += BELLY_BULGE * Math.sqrt(1 - (d / BELLY_LEN) ** 2);
   }
@@ -313,7 +313,7 @@ function drawCoil() {
     // between. Pale because a body in the deep is dark with a light edge,
     // and on a dark inside he was a hole in a hole.
     mark(i);
-    if (whole && Math.abs(da) < BELLY_LEN && dist < r - P && r > p.r0 + P / 2) {
+    if (cage && Math.abs(da) < BELLY_LEN && dist < r - P && r > p.r0 + P / 2) {
       if (((aI % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0) ribs.push({ x, y });
       else coil.put(i, GREYS[WHITE - 4 - (seeth(aI, cI) % 2)]);
       continue;
@@ -380,7 +380,7 @@ function drawCoil() {
   }
   // Him, whole in the cage, and the ribs over him: the wound's gap has
   // already taken the ribs it crossed.
-  if (whole) {
+  if (cage) {
     let b = pts[0];
     for (const p of pts) if (Math.abs(p.along - bellyA) < Math.abs(b.along - bellyA)) b = p;
     // The first trip down has him hop against the ribs and call over the

@@ -290,6 +290,9 @@ export const bellyWhole = () => {
   const a = killA();
   return a != null && a < killFreeA();
 };
+// The cage of ribs he is held in is the story's serpent's alone: one risen
+// after his rescue has a belly that never held anyone.
+export const caged = () => S.serpentLevel <= 1 && bellyWhole();
 export const cradled = () => S.serpentLevel <= 1 && !S.beatsDone.includes('freed') && bellyWhole();
 // How much of him has gathered again, head first, 0..1; null when he is not.
 export const reformK = () => (S.reformAt == null ? null : clamp01((now() - S.reformAt) / 1000 / KILL_REFORM_S));

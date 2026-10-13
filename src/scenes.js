@@ -864,9 +864,9 @@ const deepScenes = {
   'deep-kill-out': { about: 'the deep', say: 'the kill: him out on the floor, walking to her', run: killAt(KILL.last + KILL.limp + KILL.apart + 1) },
   'deep-kill-reform': { about: 'the deep', say: 'after the kill: the serpent gathering itself again, head first', run: killAt(null) },
   // The endless serpent (DESIGN.md, "Endless serpent"): six bars emptied
-  // past the story's, on its last defense, its level after the pips and the
-  // four before it spent; the belly's ribs with nobody in them.
-  'deep-endless': { about: 'the deep', say: 'the serpent at level 7: on its last defense, its level after the pips, an empty belly',
+  // past the story's, on its last defense, its level after the bar, with no
+  // pips and no cage of ribs at the belly.
+  'deep-endless': { about: 'the deep', say: 'the serpent at level 7: on its last defense, its level after the bar, no pips, no ribs',
     run: () => {
       deepYard({ level: 7, wound: 0.4,
                  party: [cast('brawler', 6), cast('ranger', 6), cast('sapper', 5), cast('mage', 5)] });
@@ -895,7 +895,7 @@ const deepScenes = {
     } },
   // The return, once: the story's sheet put down, the serpent gathered
   // again, at level 2 on its last defense.
-  'deep-endless-rise': { about: 'the deep', say: 'after the story\'s kill, the serpent back: level 2 on its last defense, the four before it spent',
+  'deep-endless-rise': { about: 'the deep', say: 'after the story\'s kill, the serpent back: level 2 on its last defense, no pips, no ribs',
     run: killAt(null, KILL_REFORM_S + 0.6) },
   // A level's bar emptied: the recoil's smear frame, its held pose, and the
   // next level just after it.
