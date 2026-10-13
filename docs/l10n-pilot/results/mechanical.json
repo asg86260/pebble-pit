@@ -1,0 +1,1363 @@
+{
+ "english": {
+  "saved-word": "It's Over?",
+  "saved-why": "you saved your sqwife in X!",
+  "saved-keepplaying": "Happily Ever After",
+  "demoend-why": "cant save your sqwife just yet.",
+  "freed-why": "you saved your sqhusband from the serpent's belly.",
+  "freed-end": "that's the end, feel free to keep slaying the serpent and farming on the surface!",
+  "held-nevermind": "never mind",
+  "held-keys": "esc holds · ← → look about · hold space to skip a scene",
+  "modal-close": "close",
+  "said-fellback": "the last save would not load; this is the one before it",
+  "said-yielded": "this yard is open in another tab; that one is being saved",
+  "said-unsaved-full": "not saving: this site's storage is full (5 mb used, 5 kb of it ours). copy a save still works",
+  "said-couldnotload": "could not load: X",
+  "slots-since-min": "5 min ago",
+  "slots-since-days": "5 days ago",
+  "slots-row-crew": "5 crew",
+  "held-slotsbtn-label": "saves · 5 of 5",
+  "held-record-none": "you haven't done anything yet.",
+  "cloud-writedown": "write this down: it brings your yards back on a new device",
+  "cloud-why-resting": "the cloud is resting; try again later",
+  "cloud-why-today": "too many tries from here today; try tomorrow",
+  "cloud-btn-newcode-armed": "sign out other devices?",
+  "cloud-state-saved": "saved X",
+  "set-dark-on": "dark: on",
+  "set-motion-less": "motion: less",
+  "set-fullscreen-note": "for the whole screen, add this page to the home screen",
+  "ctl-rightleft-do": "pick up workers",
+  "title-gamename": "pebble pit",
+  "title-line": "a rock. a hole. a few people between them.",
+  "title-play": "play",
+  "obj-rock": "dig the boulder to save your sqwife!",
+  "obj-props": "maybe building a wooden roof will stop the next boulder?",
+  "obj-arch": "lets try building an arch from the mined ore and stone. surely that's sturdy enough.",
+  "obj-dome": "out of options, lets see if the wizards can help.",
+  "obj-portal": "conjure a portal to the abyss, what's down there?",
+  "obj-free": "free your sqhusband from the serpent's belly",
+  "obj-barrier-cancel": "cancel ×5",
+  "other-skip-pad": "hold X to skip",
+  "queue-run": "X ×5",
+  "casino-drop": "DROP IT",
+  "crew-empty": "nobody lives here yet",
+  "played-hm": "5h 5m",
+  "ordinal": "5th",
+  "ach-gotout-name": "you saved your sqwife",
+  "ach-firstgrain-name": "makin' money",
+  "ach-firsthire-name": "you've constructed additional pylons",
+  "ach-firsthat-name": "you're a wizard squarey",
+  "ach-firstbrew-name": "hello, potion seller",
+  "ach-dizzy-name": "shaken baby syndrome",
+  "ach-muckrain-name": "it never rains but it pours",
+  "ach-tablebeaten-name": "we're so back",
+  "ach-tableruin-name": "time to get a loan",
+  "ach-bird-name": "get off my land",
+  "ach-catchall-note": "throw a full hand of dust, at its biggest, and catch every grain",
+  "ach-rifttorn-name": "the rift torn, storage is solved",
+  "ach-rifttorn-note": "fill the pit causing an inter-dimensional rift",
+  "ach-drowned-note": "a whole ocean of inter-dimensional storage.",
+  "ach-rocks-note-last": "clear 5 boulders, that's a lot of rocks",
+  "ach-crew-name": "5 squares",
+  "job-rockhands": "diggers",
+  "job-delvers": "deep builders",
+  "unit-per-s": "X/s",
+  "unit-hits-s": "hits/s",
+  "gain-does": "X X",
+  "unlock-grower": "buy 5 growers to unlock",
+  "row-carry": "carry amount",
+  "row-autotoss": "hold to toss",
+  "row-unlockapothecary-note": "brew temporary boosts for your sqworkers",
+  "row-unlockcasino-note": "a table that takes a stake and pays double or nothing",
+  "row-unlockouthouse-note": "you've seen enough poop, lets clean it up",
+  "row-unlockfilter-note": "sells the balloons that pull the haze back out of the sky, and reads the sky",
+  "row-dome-note": "everything of the ground has failed. what is left is not of the ground",
+  "row-net-note": "that didn't work, try catching the rock with a net?",
+  "kit-breaker-does": "twice the bite",
+  "kit-note": "X: X, at X",
+  "row-tuneram-note": "the ram strikes 5x harder",
+  "card-another": "+ another",
+  "card-done": "done",
+  "spell-gmo": "genetically modify crops",
+  "spell-thrift-note": "every house from now on is 75% cheaper",
+  "spell-drive-note": "every machine in the yard runs 50% faster",
+  "row-wizpower-note": "each bolt knocks 5 cells off the star instead of 5",
+  "row-wizard-note": "flies up and bolts the star apart for sparks, and summons a new one when the sky is empty",
+  "row-roomba-note": "drives to the mess on the open yard and brings it home; one janitor minds them, and they smoke",
+  "row-recycler-note": "what the balloons catch comes down as pebbles instead of muck",
+  "tonic-stew": "hearty stew",
+  "tonic-gain": "+5% X, 5 s",
+  "row-potkeep-on": "batch after batch",
+  "row-driver-note": "a forklift that drives itself: it hauls to the pit with nobody aboard, and smokes",
+  "needs-shard": "needs a quarry",
+  "station-party": "the second X",
+  "station-party-lot": "a second station",
+  "station-apothecary-empty": "the pot stands cold",
+  "station-outhouse-empty": "the brooms are all on their hooks",
+  "station-crusher-full": "the floor is full of scales",
+  "crew-where-lifted": "in your hand",
+  "crew-now-idle": "nothing much",
+  "crew-minding": "minding X",
+  "crew-card-new": "new today",
+  "books-got": "5 in X",
+  "books-due-never": "not at this rate",
+  "books-tally-under": "sqwife under the rock for",
+  "books-tally-saved": "sqwife saved in",
+  "hover-counter": "pebbles in the pit: what everything costs",
+  "hover-dial": "X, X",
+  "hover-done": "X done",
+  "pot-nearest": "whoever is nearest",
+  "cls-bard-fork": "Give your party X",
+  "status-exposed-does": "takes X-X more damage",
+  "status-line-n": "X x5: X",
+  "rail-become": "Become a X",
+  "rail-reset": "reset – refunds everything",
+  "class-martial": "Martial Artist",
+  "serp-dazed": "Dazed: thrown off, seeing stars",
+  "rail-recruit-ask": "Choose your fighter"
+ },
+ "langs": {
+  "de": {
+   "draft": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "modal-close",
+      "kind": "long",
+      "msg": "9 columns against English 5 (80% longer)"
+     },
+     {
+      "id": "held-slotsbtn-label",
+      "kind": "long",
+      "msg": "21 columns against English 14 (50% longer)"
+     },
+     {
+      "id": "cloud-state-saved",
+      "kind": "long",
+      "msg": "13 columns against English 7 (86% longer)"
+     },
+     {
+      "id": "set-motion-less",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "title-play",
+      "kind": "long",
+      "msg": "7 columns against English 4 (75% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "25 columns against English 14 (79% longer)"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "9 columns against English 5 (80% longer)"
+     },
+     {
+      "id": "ach-tablebeaten-name",
+      "kind": "long",
+      "msg": "25 columns against English 13 (92% longer)"
+     },
+     {
+      "id": "job-rockhands",
+      "kind": "long",
+      "msg": "12 columns against English 7 (71% longer)"
+     },
+     {
+      "id": "unit-hits-s",
+      "kind": "long",
+      "msg": "9 columns against English 6 (50% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "card-done",
+      "kind": "long",
+      "msg": "6 columns against English 4 (50% longer)"
+     },
+     {
+      "id": "tonic-stew",
+      "kind": "long",
+      "msg": "16 columns against English 11 (45% longer)"
+     },
+     {
+      "id": "books-tally-saved",
+      "kind": "long",
+      "msg": "23 columns against English 15 (53% longer)"
+     }
+    ],
+    "medianLength": 1.1228070175438596,
+    "count": {
+     "long": 14
+    }
+   },
+   "machine": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "held-nevermind",
+      "kind": "long",
+      "msg": "22 columns against English 10 (120% longer)"
+     },
+     {
+      "id": "held-keys",
+      "kind": "english-left",
+      "msg": "English left: holds, look, about"
+     },
+     {
+      "id": "modal-close",
+      "kind": "long",
+      "msg": "9 columns against English 5 (80% longer)"
+     },
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "22 columns against English 6 (267% longer)"
+     },
+     {
+      "id": "cloud-state-saved",
+      "kind": "long",
+      "msg": "10 columns against English 7 (43% longer)"
+     },
+     {
+      "id": "set-motion-less",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "title-play",
+      "kind": "long",
+      "msg": "7 columns against English 4 (75% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "32 columns against English 14 (129% longer)"
+     },
+     {
+      "id": "casino-drop",
+      "kind": "long",
+      "msg": "14 columns against English 7 (100% longer)"
+     },
+     {
+      "id": "ach-tableruin-name",
+      "kind": "long",
+      "msg": "30 columns against English 18 (67% longer)"
+     },
+     {
+      "id": "unit-hits-s",
+      "kind": "long",
+      "msg": "9 columns against English 6 (50% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "20 columns against English 12 (67% longer)"
+     },
+     {
+      "id": "row-unlockapothecary-note",
+      "kind": "english-left",
+      "msg": "English left: boosts"
+     },
+     {
+      "id": "kit-breaker-does",
+      "kind": "long",
+      "msg": "23 columns against English 14 (64% longer)"
+     },
+     {
+      "id": "card-another",
+      "kind": "long",
+      "msg": "13 columns against English 9 (44% longer)"
+     },
+     {
+      "id": "tonic-stew",
+      "kind": "long",
+      "msg": "18 columns against English 11 (64% longer)"
+     },
+     {
+      "id": "needs-shard",
+      "kind": "long",
+      "msg": "28 columns against English 14 (100% longer)"
+     },
+     {
+      "id": "crew-minding",
+      "kind": "english-left",
+      "msg": "English left: minding"
+     },
+     {
+      "id": "books-tally-under",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "books-tally-saved",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "cls-bard-fork",
+      "kind": "english-left",
+      "msg": "English left: party"
+     }
+    ],
+    "medianLength": 1.1875,
+    "count": {
+     "long": 15,
+     "english-left": 6
+    }
+   }
+  },
+  "fr": {
+   "draft": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "said-couldnotload",
+      "kind": "long",
+      "msg": "25 columns against English 17 (47% longer)"
+     },
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "10 columns against English 6 (67% longer)"
+     },
+     {
+      "id": "held-slotsbtn-label",
+      "kind": "long",
+      "msg": "21 columns against English 14 (50% longer)"
+     },
+     {
+      "id": "cloud-state-saved",
+      "kind": "long",
+      "msg": "12 columns against English 7 (71% longer)"
+     },
+     {
+      "id": "set-dark-on",
+      "kind": "long",
+      "msg": "12 columns against English 8 (50% longer)"
+     },
+     {
+      "id": "set-motion-less",
+      "kind": "long",
+      "msg": "18 columns against English 12 (50% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "23 columns against English 14 (64% longer)"
+     },
+     {
+      "id": "casino-drop",
+      "kind": "long",
+      "msg": "10 columns against English 7 (43% longer)"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "9 columns against English 5 (80% longer)"
+     },
+     {
+      "id": "ach-tablebeaten-name",
+      "kind": "long",
+      "msg": "21 columns against English 13 (62% longer)"
+     },
+     {
+      "id": "ach-tableruin-name",
+      "kind": "long",
+      "msg": "28 columns against English 18 (56% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "21 columns against English 12 (75% longer)"
+     },
+     {
+      "id": "kit-breaker-does",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "needs-shard",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     }
+    ],
+    "medianLength": 1.1666666666666667,
+    "count": {
+     "long": 14
+    }
+   },
+   "machine": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "saved-keepplaying",
+      "kind": "long",
+      "msg": "32 columns against English 18 (78% longer)"
+     },
+     {
+      "id": "said-couldnotload",
+      "kind": "long",
+      "msg": "25 columns against English 17 (47% longer)"
+     },
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "10 columns against English 6 (67% longer)"
+     },
+     {
+      "id": "held-slotsbtn-label",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "set-motion-less",
+      "kind": "english-left",
+      "msg": "English left: motion"
+     },
+     {
+      "id": "ctl-rightleft-do",
+      "kind": "long",
+      "msg": "25 columns against English 15 (67% longer)"
+     },
+     {
+      "id": "ach-firstgrain-name",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "ach-tablebeaten-name",
+      "kind": "long",
+      "msg": "19 columns against English 13 (46% longer)"
+     },
+     {
+      "id": "ach-tableruin-name",
+      "kind": "long",
+      "msg": "26 columns against English 18 (44% longer)"
+     },
+     {
+      "id": "job-delvers",
+      "kind": "long",
+      "msg": "26 columns against English 13 (100% longer)"
+     },
+     {
+      "id": "unit-hits-s",
+      "kind": "untranslated",
+      "msg": "identical to the English"
+     },
+     {
+      "id": "row-carry",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "english-left",
+      "msg": "English left: toss"
+     },
+     {
+      "id": "kit-breaker-does",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "needs-shard",
+      "kind": "long",
+      "msg": "21 columns against English 14 (50% longer)"
+     },
+     {
+      "id": "crew-card-new",
+      "kind": "long",
+      "msg": "19 columns against English 9 (111% longer)"
+     },
+     {
+      "id": "pot-nearest",
+      "kind": "long",
+      "msg": "28 columns against English 18 (56% longer)"
+     },
+     {
+      "id": "rail-reset",
+      "kind": "english-left",
+      "msg": "English left: reset"
+     },
+     {
+      "id": "rail-recruit-ask",
+      "kind": "long",
+      "msg": "27 columns against English 19 (42% longer)"
+     }
+    ],
+    "medianLength": 1.1666666666666667,
+    "count": {
+     "long": 15,
+     "english-left": 3,
+     "untranslated": 1
+    }
+   }
+  },
+  "es": {
+   "draft": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "9 columns against English 6 (50% longer)"
+     },
+     {
+      "id": "cloud-state-saved",
+      "kind": "long",
+      "msg": "10 columns against English 7 (43% longer)"
+     },
+     {
+      "id": "set-motion-less",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "9 columns against English 5 (80% longer)"
+     },
+     {
+      "id": "job-delvers",
+      "kind": "long",
+      "msg": "23 columns against English 13 (77% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "20 columns against English 12 (67% longer)"
+     },
+     {
+      "id": "tonic-stew",
+      "kind": "long",
+      "msg": "17 columns against English 11 (55% longer)"
+     },
+     {
+      "id": "books-tally-saved",
+      "kind": "long",
+      "msg": "22 columns against English 15 (47% longer)"
+     },
+     {
+      "id": "rail-become",
+      "kind": "long",
+      "msg": "16 columns against English 10 (60% longer)"
+     }
+    ],
+    "medianLength": 1.1111111111111112,
+    "count": {
+     "long": 10
+    }
+   },
+   "machine": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "saved-keepplaying",
+      "kind": "long",
+      "msg": "26 columns against English 18 (44% longer)"
+     },
+     {
+      "id": "held-nevermind",
+      "kind": "long",
+      "msg": "16 columns against English 10 (60% longer)"
+     },
+     {
+      "id": "held-keys",
+      "kind": "english-left",
+      "msg": "English left: holds"
+     },
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "13 columns against English 6 (117% longer)"
+     },
+     {
+      "id": "set-dark-on",
+      "kind": "long",
+      "msg": "17 columns against English 8 (113% longer)"
+     },
+     {
+      "id": "set-motion-less",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "ctl-rightleft-do",
+      "kind": "long",
+      "msg": "25 columns against English 15 (67% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "22 columns against English 14 (57% longer)"
+     },
+     {
+      "id": "ach-tablebeaten-name",
+      "kind": "long",
+      "msg": "21 columns against English 13 (62% longer)"
+     },
+     {
+      "id": "ach-tableruin-name",
+      "kind": "long",
+      "msg": "30 columns against English 18 (67% longer)"
+     },
+     {
+      "id": "job-rockhands",
+      "kind": "long",
+      "msg": "16 columns against English 7 (129% longer)"
+     },
+     {
+      "id": "job-delvers",
+      "kind": "long",
+      "msg": "27 columns against English 13 (108% longer)"
+     },
+     {
+      "id": "unit-hits-s",
+      "kind": "untranslated",
+      "msg": "identical to the English"
+     },
+     {
+      "id": "row-carry",
+      "kind": "english-left",
+      "msg": "English left: carry"
+     },
+     {
+      "id": "row-carry",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "kit-breaker-does",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "kit-note",
+      "kind": "long",
+      "msg": "18 columns against English 10 (80% longer)"
+     },
+     {
+      "id": "card-done",
+      "kind": "long",
+      "msg": "9 columns against English 4 (125% longer)"
+     },
+     {
+      "id": "tonic-stew",
+      "kind": "long",
+      "msg": "18 columns against English 11 (64% longer)"
+     },
+     {
+      "id": "needs-shard",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "crew-minding",
+      "kind": "untranslated",
+      "msg": "identical to the English"
+     },
+     {
+      "id": "books-tally-under",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "rail-become",
+      "kind": "long",
+      "msg": "19 columns against English 10 (90% longer)"
+     },
+     {
+      "id": "rail-reset",
+      "kind": "english-left",
+      "msg": "English left: reset"
+     }
+    ],
+    "medianLength": 1.1311475409836065,
+    "count": {
+     "long": 18,
+     "english-left": 4,
+     "untranslated": 2
+    }
+   }
+  },
+  "pt-BR": {
+   "draft": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "9 columns against English 6 (50% longer)"
+     },
+     {
+      "id": "ctl-rightleft-do",
+      "kind": "long",
+      "msg": "22 columns against English 15 (47% longer)"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "9 columns against English 5 (80% longer)"
+     },
+     {
+      "id": "ach-tableruin-name",
+      "kind": "long",
+      "msg": "27 columns against English 18 (50% longer)"
+     },
+     {
+      "id": "job-rockhands",
+      "kind": "long",
+      "msg": "10 columns against English 7 (43% longer)"
+     },
+     {
+      "id": "job-delvers",
+      "kind": "long",
+      "msg": "28 columns against English 13 (115% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "card-done",
+      "kind": "long",
+      "msg": "6 columns against English 4 (50% longer)"
+     },
+     {
+      "id": "tonic-stew",
+      "kind": "long",
+      "msg": "18 columns against English 11 (64% longer)"
+     },
+     {
+      "id": "row-potkeep-on",
+      "kind": "long",
+      "msg": "24 columns against English 17 (41% longer)"
+     },
+     {
+      "id": "needs-shard",
+      "kind": "long",
+      "msg": "23 columns against English 14 (64% longer)"
+     },
+     {
+      "id": "crew-minding",
+      "kind": "long",
+      "msg": "13 columns against English 9 (44% longer)"
+     },
+     {
+      "id": "hover-done",
+      "kind": "long",
+      "msg": "9 columns against English 6 (50% longer)"
+     }
+    ],
+    "medianLength": 1.0561797752808988,
+    "count": {
+     "long": 13
+    }
+   },
+   "machine": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "saved-why",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "held-keys",
+      "kind": "english-left",
+      "msg": "English left: holds"
+     },
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "13 columns against English 6 (117% longer)"
+     },
+     {
+      "id": "held-slotsbtn-label",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "obj-rock",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "ach-gotout-name",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "ach-tablebeaten-name",
+      "kind": "long",
+      "msg": "20 columns against English 13 (54% longer)"
+     },
+     {
+      "id": "ach-tableruin-name",
+      "kind": "long",
+      "msg": "34 columns against English 18 (89% longer)"
+     },
+     {
+      "id": "job-rockhands",
+      "kind": "long",
+      "msg": "11 columns against English 7 (57% longer)"
+     },
+     {
+      "id": "job-delvers",
+      "kind": "long",
+      "msg": "22 columns against English 13 (69% longer)"
+     },
+     {
+      "id": "unit-hits-s",
+      "kind": "untranslated",
+      "msg": "identical to the English"
+     },
+     {
+      "id": "row-carry",
+      "kind": "long",
+      "msg": "22 columns against English 12 (83% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "20 columns against English 12 (67% longer)"
+     },
+     {
+      "id": "kit-breaker-does",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "kit-note",
+      "kind": "long",
+      "msg": "16 columns against English 10 (60% longer)"
+     },
+     {
+      "id": "tonic-stew",
+      "kind": "long",
+      "msg": "16 columns against English 11 (45% longer)"
+     },
+     {
+      "id": "needs-shard",
+      "kind": "long",
+      "msg": "23 columns against English 14 (64% longer)"
+     },
+     {
+      "id": "crew-minding",
+      "kind": "untranslated",
+      "msg": "identical to the English"
+     },
+     {
+      "id": "books-tally-under",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "books-tally-saved",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "rail-reset",
+      "kind": "english-left",
+      "msg": "English left: reset"
+     }
+    ],
+    "medianLength": 1.105263157894737,
+    "count": {
+     "english-left": 7,
+     "long": 12,
+     "untranslated": 2
+    }
+   }
+  },
+  "ru": {
+   "draft": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "cloud-state-saved",
+      "kind": "long",
+      "msg": "11 columns against English 7 (57% longer)"
+     },
+     {
+      "id": "title-play",
+      "kind": "long",
+      "msg": "6 columns against English 4 (50% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "25 columns against English 14 (79% longer)"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "9 columns against English 5 (80% longer)"
+     },
+     {
+      "id": "job-delvers",
+      "kind": "long",
+      "msg": "19 columns against English 13 (46% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "22 columns against English 12 (83% longer)"
+     },
+     {
+      "id": "card-done",
+      "kind": "long",
+      "msg": "6 columns against English 4 (50% longer)"
+     },
+     {
+      "id": "crew-now-idle",
+      "kind": "long",
+      "msg": "17 columns against English 12 (42% longer)"
+     },
+     {
+      "id": "hover-done",
+      "kind": "long",
+      "msg": "9 columns against English 6 (50% longer)"
+     },
+     {
+      "id": "class-martial",
+      "kind": "long",
+      "msg": "22 columns against English 14 (57% longer)"
+     }
+    ],
+    "medianLength": 1,
+    "count": {
+     "long": 10
+    }
+   },
+   "machine": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "16 columns against English 6 (167% longer)"
+     },
+     {
+      "id": "cloud-state-saved",
+      "kind": "long",
+      "msg": "11 columns against English 7 (57% longer)"
+     },
+     {
+      "id": "title-play",
+      "kind": "long",
+      "msg": "6 columns against English 4 (50% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "26 columns against English 14 (86% longer)"
+     },
+     {
+      "id": "casino-drop",
+      "kind": "untranslated",
+      "msg": "identical to the English"
+     },
+     {
+      "id": "ach-firstgrain-name",
+      "kind": "long",
+      "msg": "19 columns against English 12 (58% longer)"
+     },
+     {
+      "id": "ach-tableruin-name",
+      "kind": "long",
+      "msg": "37 columns against English 18 (106% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "25 columns against English 12 (108% longer)"
+     },
+     {
+      "id": "kit-breaker-does",
+      "kind": "long",
+      "msg": "24 columns against English 14 (71% longer)"
+     },
+     {
+      "id": "card-done",
+      "kind": "long",
+      "msg": "7 columns against English 4 (75% longer)"
+     },
+     {
+      "id": "crew-card-new",
+      "kind": "long",
+      "msg": "13 columns against English 9 (44% longer)"
+     },
+     {
+      "id": "books-tally-saved",
+      "kind": "long",
+      "msg": "22 columns against English 15 (47% longer)"
+     },
+     {
+      "id": "hover-done",
+      "kind": "long",
+      "msg": "9 columns against English 6 (50% longer)"
+     }
+    ],
+    "medianLength": 1.04,
+    "count": {
+     "long": 12,
+     "untranslated": 1
+    }
+   }
+  },
+  "zh-CN": {
+   "draft": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [],
+    "medianLength": 0.6470588235294118,
+    "count": {}
+   },
+   "machine": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "held-keys",
+      "kind": "english-left",
+      "msg": "English left: hand"
+     },
+     {
+      "id": "slots-since-days",
+      "kind": "variable",
+      "msg": "{ $d } lost"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "10 columns against English 5 (100% longer)"
+     },
+     {
+      "id": "ordinal",
+      "kind": "variable",
+      "msg": "{ $n } lost"
+     },
+     {
+      "id": "card-done",
+      "kind": "long",
+      "msg": "6 columns against English 4 (50% longer)"
+     },
+     {
+      "id": "station-party",
+      "kind": "variable",
+      "msg": "{ $who } lost in [2]"
+     },
+     {
+      "id": "books-got",
+      "kind": "long",
+      "msg": "11 columns against English 6 (83% longer)"
+     },
+     {
+      "id": "books-tally-saved",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     }
+    ],
+    "medianLength": 0.6853932584269663,
+    "count": {
+     "english-left": 2,
+     "variable": 3,
+     "long": 3
+    }
+   }
+  },
+  "ja": {
+   "draft": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "10 columns against English 6 (67% longer)"
+     },
+     {
+      "id": "cloud-state-saved",
+      "kind": "long",
+      "msg": "10 columns against English 7 (43% longer)"
+     },
+     {
+      "id": "set-dark-on",
+      "kind": "long",
+      "msg": "12 columns against English 8 (50% longer)"
+     },
+     {
+      "id": "title-play",
+      "kind": "long",
+      "msg": "8 columns against English 4 (100% longer)"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "8 columns against English 5 (60% longer)"
+     },
+     {
+      "id": "ordinal",
+      "kind": "long",
+      "msg": "5 columns against English 3 (67% longer)"
+     },
+     {
+      "id": "ach-bird-name",
+      "kind": "long",
+      "msg": "22 columns against English 15 (47% longer)"
+     },
+     {
+      "id": "tonic-stew",
+      "kind": "long",
+      "msg": "18 columns against English 11 (64% longer)"
+     }
+    ],
+    "medianLength": 0.8571428571428571,
+    "count": {
+     "long": 8
+    }
+   },
+   "machine": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "held-keys",
+      "kind": "english-left",
+      "msg": "English left: hobs"
+     },
+     {
+      "id": "slots-row-crew",
+      "kind": "long",
+      "msg": "11 columns against English 6 (83% longer)"
+     },
+     {
+      "id": "cloud-state-saved",
+      "kind": "long",
+      "msg": "11 columns against English 7 (57% longer)"
+     },
+     {
+      "id": "title-play",
+      "kind": "long",
+      "msg": "10 columns against English 4 (150% longer)"
+     },
+     {
+      "id": "obj-barrier-cancel",
+      "kind": "long",
+      "msg": "13 columns against English 9 (44% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "33 columns against English 14 (136% longer)"
+     },
+     {
+      "id": "casino-drop",
+      "kind": "long",
+      "msg": "10 columns against English 7 (43% longer)"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "8 columns against English 5 (60% longer)"
+     },
+     {
+      "id": "ach-tablebeaten-name",
+      "kind": "long",
+      "msg": "20 columns against English 13 (54% longer)"
+     },
+     {
+      "id": "card-done",
+      "kind": "long",
+      "msg": "12 columns against English 4 (200% longer)"
+     },
+     {
+      "id": "tonic-stew",
+      "kind": "long",
+      "msg": "24 columns against English 11 (118% longer)"
+     },
+     {
+      "id": "station-party",
+      "kind": "variable",
+      "msg": "{ $who } lost in [3]"
+     },
+     {
+      "id": "crew-minding",
+      "kind": "long",
+      "msg": "15 columns against English 9 (67% longer)"
+     },
+     {
+      "id": "cls-bard-fork",
+      "kind": "long",
+      "msg": "29 columns against English 17 (71% longer)"
+     }
+    ],
+    "medianLength": 1,
+    "count": {
+     "english-left": 1,
+     "long": 12,
+     "variable": 1
+    }
+   }
+  },
+  "ko": {
+   "draft": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "saved-keepplaying",
+      "kind": "long",
+      "msg": "27 columns against English 18 (50% longer)"
+     },
+     {
+      "id": "other-skip-pad",
+      "kind": "long",
+      "msg": "20 columns against English 14 (43% longer)"
+     },
+     {
+      "id": "played-hm",
+      "kind": "long",
+      "msg": "9 columns against English 5 (80% longer)"
+     },
+     {
+      "id": "ordinal",
+      "kind": "long",
+      "msg": "5 columns against English 3 (67% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "long",
+      "msg": "20 columns against English 12 (67% longer)"
+     }
+    ],
+    "medianLength": 0.8571428571428571,
+    "count": {
+     "long": 5
+    }
+   },
+   "machine": {
+    "junk": 0,
+    "messages": 115,
+    "issues": [
+     {
+      "id": "demoend-why",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "freed-why",
+      "kind": "english-left",
+      "msg": "English left: shusband"
+     },
+     {
+      "id": "held-nevermind",
+      "kind": "long",
+      "msg": "16 columns against English 10 (60% longer)"
+     },
+     {
+      "id": "held-keys",
+      "kind": "untranslated",
+      "msg": "identical to the English"
+     },
+     {
+      "id": "obj-rock",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "obj-free",
+      "kind": "english-left",
+      "msg": "English left: shusband"
+     },
+     {
+      "id": "casino-drop",
+      "kind": "english-left",
+      "msg": "English left: drop"
+     },
+     {
+      "id": "ach-gotout-name",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "ach-firstgrain-name",
+      "kind": "english-left",
+      "msg": "English left: makin"
+     },
+     {
+      "id": "ach-tablebeaten-name",
+      "kind": "long",
+      "msg": "21 columns against English 13 (62% longer)"
+     },
+     {
+      "id": "row-autotoss",
+      "kind": "english-left",
+      "msg": "English left: tos"
+     },
+     {
+      "id": "books-got",
+      "kind": "untranslated",
+      "msg": "identical to the English"
+     },
+     {
+      "id": "books-tally-under",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "books-tally-saved",
+      "kind": "english-left",
+      "msg": "English left: sqwife"
+     },
+     {
+      "id": "hover-dial",
+      "kind": "long",
+      "msg": "7 columns against English 4 (75% longer)"
+     },
+     {
+      "id": "serp-dazed",
+      "kind": "english-left",
+      "msg": "English left: dazed"
+     },
+     {
+      "id": "rail-recruit-ask",
+      "kind": "long",
+      "msg": "28 columns against English 19 (47% longer)"
+     }
+    ],
+    "medianLength": 1,
+    "count": {
+     "english-left": 11,
+     "long": 4,
+     "untranslated": 2
+    }
+   }
+  }
+ }
+}

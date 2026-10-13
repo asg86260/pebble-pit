@@ -1,0 +1,165 @@
+{
+ "table": ["saved-why", "demoend-why", "held-keys", "slots-since-days", "title-line", "obj-arch", "obj-free", "ach-firsthire-name", "ach-dizzy-name", "ach-muckrain-name", "row-unlockouthouse-note", "row-wizard-note", "books-tally-under", "crew-minding", "rail-become"],
+ "langs": {
+  "de": {
+   "notes": {
+    "saved-why": ["A", "B turns sqwife into plain \"wife\" (Frau): the meaning holds, the made-up word is gone. A uses the proposed blend quadratfrau."],
+    "demoend-why": ["A", "B says \"I can't save your wife yet\": the speaker is wrong. A is correct."],
+    "held-keys": ["A", "B leaves \"holds\" and \"look about\" in English and renders \"hold space\" as \"holding room\"."],
+    "slots-since-days": ["tie", "Both correct, with valid one/other plurals."],
+    "title-line": ["tie", "Both keep the three short fragments. B's \"zwischen ihnen\" is a little stiff."],
+    "obj-arch": ["A", "B switches to the formal Sie (\"lassen Sie uns\") and states \"surely\" flatly, so the sarcasm is lost."],
+    "obj-free": ["A", "B uses the formal Sie and plain \"Mann\" (husband)."],
+    "ach-firsthire-name": ["A", "B lowercases the formal Sie, so it reads \"they have built\". A keeps the joke, but a German reviewer should check it against the localized StarCraft line."],
+    "ach-dizzy-name": ["A", "A uses the real German medical term (Schütteltrauma), so the dark joke still lands. B is a word-for-word copy that no German speaker says."],
+    "ach-muckrain-name": ["A", "B copies the English idiom word for word, and it is not a German saying. A uses the German proverb, but the rain image is lost."],
+    "row-unlockouthouse-note": ["A", "B's grammar is broken (\"lass es sauber machen\")."],
+    "row-wizard-note": ["A", "B reads \"bolt\" as a screw bolt (\"schraubt den Stern auseinander\": unscrews the star)."],
+    "books-tally-under": ["A", "B leaves \"sqwife\" in English."],
+    "crew-minding": ["A", "B leaves \"Minding\" in English."],
+    "rail-become": ["A", "B: \"Werde eine X\" puts a feminine article in front of class names that are masculine. A drops the article."]
+   },
+   "verdict": "A. B is fluent German but switches to the formal Sie throughout, reads bolt, scale and save in the wrong sense, and leaves English in six lines. Most of A's long labels can be fixed by cutting words."
+  },
+  "fr": {
+   "notes": {
+    "saved-why": ["A", "B mangles sqwife into \"swife\" and uses the formal vous. A uses the proposed blend carrépouse."],
+    "demoend-why": ["A", "B says \"I can't save your wife\": the speaker is wrong."],
+    "held-keys": ["A", "B is nonsense: \"esc tient · regarder sur · tenir l'espace\"."],
+    "slots-since-days": ["tie", "Both correct."],
+    "title-line": ["A", "B joins the three fragments with commas, which flattens the rhythm."],
+    "obj-arch": ["A", "B uses the formal vous and drops the \"let's\"."],
+    "obj-free": ["A", "B turns the line into an infinitive and uses plain \"mari\"."],
+    "ach-firsthire-name": ["tie", "Both keep the line; B uses the formal vous."],
+    "ach-dizzy-name": ["tie", "Both use the real French term."],
+    "ach-muckrain-name": ["A", "B: \"il ne pleut jamais mais il coule\" means nothing in French. A uses the French proverb."],
+    "row-unlockouthouse-note": ["A", "B: \"laissez le nettoyer\" means \"let him clean it\"."],
+    "row-wizard-note": ["A", "B \"boulonne l'étoile\": bolts the star, as with nuts and bolts."],
+    "books-tally-under": ["A", "B uses \"swife\"."],
+    "crew-minding": ["A", "B: \"attention X\" reads as \"watch out, X\"."],
+    "rail-become": ["tie", "Both are acceptable."]
+   },
+   "verdict": "A. B's meaning holds up in long sentences, but it fails on short labels (\"proche\" for the close button, \"sombre : sur\"), uses the formal vous everywhere, and invents two words (LÂCE-LA, Désarré). A should use French non-breaking spaces before : ? ! in the real file."
+  },
+  "es": {
+   "notes": {
+    "saved-why": ["A", "B adds an article (\"en el X\") that breaks the time span, and turns sqwife into plain \"esposa\"."],
+    "demoend-why": ["A", "B says \"I can't save your wife\": the speaker is wrong."],
+    "held-keys": ["A", "B leaves \"holds\" in English, and \"mantener el espacio\" means \"keep the space\"."],
+    "slots-since-days": ["tie", "Both correct. B's \"5 días atrás\" leans Latin American, which is fine for a neutral file."],
+    "title-line": ["tie", "Both are fine."],
+    "obj-arch": ["A", "B is correct but literal; A is idiomatic and keeps the sarcasm (\"seguro que aguanta\")."],
+    "obj-free": ["A", "B uses plain \"marido\"."],
+    "ach-firsthire-name": ["tie", "Both are fine."],
+    "ach-dizzy-name": ["tie", "Both use the real term."],
+    "ach-muckrain-name": ["A", "B is a literal copy and means nothing. A uses the Spanish saying \"llueve sobre mojado\"."],
+    "row-unlockouthouse-note": ["tie", "B is good here."],
+    "row-wizard-note": ["A", "B \"cierra la estrella\": closes the star."],
+    "books-tally-under": ["A", "B leaves \"sqwife\" in English and uses the wrong preposition."],
+    "crew-minding": ["A", "B leaves \"minding\" in English."],
+    "rail-become": ["tie", "Both are acceptable."]
+   },
+   "verdict": "A. Of the European languages, B's Spanish is the best, but it opens ¡ and ¿ that it never closes (six lines), uses the formal usted in places, and leaves English in four lines. A was written in neutral Spanish: no vosotros, no Spain-only or Latin-America-only words, \"suelo\" over \"piso\"."
+  },
+  "pt-BR": {
+   "notes": {
+    "saved-why": ["A", "B leaves \"sqwife\" in English."],
+    "demoend-why": ["A", "B is in the third person and reads stiffly. A is natural Brazilian Portuguese."],
+    "held-keys": ["A", "B leaves \"holds\" in English."],
+    "slots-since-days": ["tie", "Both correct."],
+    "title-line": ["tie", "Both are fine."],
+    "obj-arch": ["A", "B is literal but correct; A has the voice."],
+    "obj-free": ["A", "B uses plain \"marido\"."],
+    "ach-firsthire-name": ["tie", "Both use \"pilões\", and a pilão is a pestle. Both need a reviewer to check the localized StarCraft term."],
+    "ach-dizzy-name": ["A", "B: \"bebê abalado\" is an upset baby, not a shaken one. A uses the real term."],
+    "ach-muckrain-name": ["A", "B is a literal copy. A uses a Brazilian saying."],
+    "row-unlockouthouse-note": ["A", "B's grammar is broken."],
+    "row-wizard-note": ["A", "B \"aparafusa\": screws the star."],
+    "books-tally-under": ["A", "B leaves \"sqwife\" in English."],
+    "crew-minding": ["A", "B leaves \"minding\" in English."],
+    "rail-become": ["tie", "Both are acceptable."]
+   },
+   "verdict": "A. The engine's model is generic Portuguese, not Brazilian: B slips into European forms (\"salvaste o teu marido\"). It also keeps sqwife in English five times and reads stake, scale and bolt in the wrong sense."
+  },
+  "ru": {
+   "notes": {
+    "saved-why": ["A", "B makes the player male (\"ты спас\") and uses the wrong preposition for a time span. A avoids gender."],
+    "demoend-why": ["A", "B says \"[I] can't save my own wife\": both the speaker and the possessive are wrong."],
+    "held-keys": ["A", "B: \"удерживайте пространство\" means \"hold outer space\"."],
+    "slots-since-days": ["tie", "Both correct with all four plural categories. The pipeline's per-category numbers made B's correct too."],
+    "title-line": ["tie", "Both are fine."],
+    "obj-arch": ["A", "B drops the second sentence, which carries the joke."],
+    "obj-free": ["A", "B: \"освободит своего мужа от живота змеи\" means \"he will free his husband from the (female) snake's stomach\"."],
+    "ach-firsthire-name": ["tie", "B uses the formal вы; A uses a neutral passive. Both work."],
+    "ach-dizzy-name": ["A", "A uses the medical term. B is a calque (\"shaken children's syndrome\")."],
+    "ach-muckrain-name": ["A", "B is a literal copy. A uses a Russian proverb."],
+    "row-unlockouthouse-note": ["A", "B's grammar is broken."],
+    "row-wizard-note": ["A", "B \"болтает звезду\": chatters the star."],
+    "books-tally-under": ["A", "B turns sqwife into \"свиная\" (pork)."],
+    "crew-minding": ["A", "B: \"Умение X\" means \"Skill X\"."],
+    "rail-become": ["A", "Russian wants the instrumental case after стать, and a $name in the nominative cannot give it. A works around it with a colon; B does not."]
+   },
+   "verdict": "A, by the widest margin of the European languages. B is ungrammatical in about a dozen lines, makes the player male, renders sqwife as \"pork\" and an invented word, drops a sentence, and writes a Cyrillic х for the Latin x in status-line-n."
+  },
+  "zh-CN": {
+   "notes": {
+    "saved-why": ["A", "B: \"你在X年救了\" means \"you saved her in the year X\"."],
+    "demoend-why": ["A", "B: \"救不了你的女生\" means \"can't save your girl\"."],
+    "held-keys": ["A", "B loses the ← arrow and writes \"esc hand\"."],
+    "slots-since-days": ["A", "B writes the number as a word (两天), so the variable is gone: every save would read \"two days ago\"."],
+    "title-line": ["tie", "Both are fine."],
+    "obj-arch": ["A", "B states \"surely\" flatly, so the sarcasm is lost."],
+    "obj-free": ["A", "B: \"你的女主人\" means \"your mistress\"."],
+    "ach-firsthire-name": ["A", "A uses 水晶塔, the Pylon's name in the Chinese StarCraft. B's 塔架 is an electricity pylon."],
+    "ach-dizzy-name": ["tie", "Both use a real term."],
+    "ach-muckrain-name": ["A", "B is a literal copy. A uses the Chinese idiom 屋漏偏逢连夜雨."],
+    "row-unlockouthouse-note": ["A", "B: \"让它清理干净\" means \"let it clean itself\"."],
+    "row-wizard-note": ["A", "B is close; A is more vivid."],
+    "books-tally-under": ["A", "B is garbled (石探下)."],
+    "crew-minding": ["A", "B: \"心想 X\" means \"thinking X\"."],
+    "rail-become": ["tie", "Both are fine."]
+   },
+   "verdict": "A. B loses two variables (the plural and the ordinal both turn into fixed words), turns the husband into a \"mistress\", and is wrong on most of the short labels."
+  },
+  "ja": {
+   "notes": {
+    "saved-why": ["A", "B: \"Xであなたの妻を救ってください\" means \"please save your wife with X\": the congratulation has become a request."],
+    "demoend-why": ["A", "B is stiff and roundabout."],
+    "held-keys": ["A", "B loses the ← arrow and writes \"hobs\"."],
+    "slots-since-days": ["tie", "Both correct."],
+    "title-line": ["tie", "Both are fine."],
+    "obj-arch": ["A", "B merges the two sentences into one conditional and loses the \"let's\"."],
+    "obj-free": ["A", "B turns sqhusband into a nonsense word (スズメバメ)."],
+    "ach-firsthire-name": ["A", "B's ピロン is the wrong katakana; the Japanese StarCraft uses パイロン."],
+    "ach-dizzy-name": ["A", "B drops \"shaken\" and just says \"baby syndrome\"."],
+    "ach-muckrain-name": ["A", "B is a literal copy. A uses the idiom 泣きっ面に蜂."],
+    "row-unlockouthouse-note": ["A", "B is garbled."],
+    "row-wizard-note": ["A", "B drops \"flies up\"."],
+    "books-tally-under": ["A", "B drops the \"for (how long)\", so the line becomes a label."],
+    "crew-minding": ["A", "B: マインドリング is a nonsense transliteration."],
+    "rail-become": ["A", "B: \"X歳になる\" means \"turn X years old\"."]
+   },
+   "verdict": "A. B is the weakest engine output in the set: three placeable-related meaning failures (\"turn X years old\", \"please save … with X\", \"the 5th day\" for the ordinal), polite です/ます mixed with plain form, and loanword errors."
+  },
+  "ko": {
+   "notes": {
+    "saved-why": ["A", "B: \"썰처를 저장\" stores (to disk) a nonsense word."],
+    "demoend-why": ["A", "B leaves \"sqwife\" in English and uses \"store\" (저장) for saving a person."],
+    "held-keys": ["A", "B leaves the whole line in English."],
+    "slots-since-days": ["tie", "Both correct."],
+    "title-line": ["tie", "B is good here."],
+    "obj-arch": ["A", "B is a formal command and loses the \"let's\"."],
+    "obj-free": ["A", "B leaves \"shusband\" in English."],
+    "ach-firsthire-name": ["A", "A uses 수정탑, the Pylon's name in the Korean StarCraft. B transliterates it as 필론."],
+    "ach-dizzy-name": ["tie", "Both use the real term."],
+    "ach-muckrain-name": ["A", "B is a literal copy. A uses the idiom 설상가상."],
+    "row-unlockouthouse-note": ["tie", "B is fine here."],
+    "row-wizard-note": ["A", "B is correct but formal."],
+    "books-tally-under": ["A", "B leaves \"sqwife\" in English."],
+    "crew-minding": ["A", "B: \"생각 X\" means \"thought X\"."],
+    "rail-become": ["A", "B's particle cannot follow the name. A's (으)로 fits any name."]
+   },
+   "verdict": "A. B leaves English in thirteen lines: it cannot handle the invented words and drops whole short lines untranslated. It also uses the formal 하십시오 register throughout and \"store\" for rescuing a person."
+  }
+ }
+}
