@@ -1,11 +1,12 @@
-// The deep's creatures (DESIGN.md, "The deep's zones"): picture only, read
+// The deep's creatures (DESIGN.md, "The deep's zones"): sparse, read
 // off each one's seed and the clock. Each stays in its own zone's rows, none
 // swims into the ground, and none teleports: a creature moves a few cells a
 // second, and comes back in at the far end only out beyond the deep's walls.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FAUNA, FAUNA_MOTION } from '../src/config.js';
+import './helpers.mjs';                // the yard's page: the creatures now read the deep's floor
+import { FAUNA, FAUNA_MOTION, FAUNA_ZONES } from '../src/config.js';
 import { POPULATION, COLS, ROWS, faunaAt, heightOf, zoneOf } from '../src/deep/fauna.js';
 
 const DT = 1 / 60;
@@ -14,6 +15,19 @@ test('the population is the table, and the same on every load', () => {
   assert.equal(POPULATION.length, FAUNA.reduce((n, r) => n + r.n, 0));
   const again = POPULATION.map(c => faunaAt(c, 12.5));
   assert.deepEqual(again, POPULATION.map(c => faunaAt(c, 12.5)));
+});
+
+// Sparse, the way the birds are (the owner, 2026-10-13): a fifth of the
+// seventy-six there were, every zone lived in, the midnight band round the
+// coil and the bar the quietest.
+test('the deep is sparse: a few in every zone, the fewest round the coil', () => {
+  assert.ok(POPULATION.length <= 16, `${POPULATION.length} creatures`);
+  const per = new Map(FAUNA_ZONES.map(z => [z.key, 0]));
+  for (const c of POPULATION) per.set(c.zone, per.get(c.zone) + 1);
+  for (const [k, n] of per) assert.ok(n > 0, `nobody lives in ${k}`);
+  const mid = per.get('mid');
+  for (const [k, n] of per) if (k !== 'mid') assert.ok(n > mid, `${k} (${n}) is no busier than the midnight band (${mid})`);
+  assert.ok(new Set(POPULATION.map(c => c.kind)).size >= 10, 'most kinds are still there');
 });
 
 test('each creature stays in its zone, and nothing swims into the floor', () => {

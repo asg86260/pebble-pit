@@ -8,7 +8,7 @@ import { ok, point, onScreen, run, settle, hoverStation, hoverAway } from './kit
 import { countRect } from '../render/counter.js';
 import { portalNearEdge } from '../render/portal.js';
 import { S } from '../state.js';
-import { P, VIEW_GLIDE_S, PORTAL_RX } from '../config.js';
+import { P, VIEW_GLIDE_S, PORTAL_RX, BIRD_DUST } from '../config.js';
 import { mouthX, portalX, portalCircle, deepPortal, deepTop, deepFloor, propRect, postX } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { arrowBox } from '../render/shaftway.js';
@@ -614,5 +614,30 @@ TESTS.push(['deep: a press on the constrict\'s orb hits the orb and opens no boa
     ok(orbOn() === o, 'the orb holds through the presses', JSON.stringify(S.orb)),
     ok(seen.every(s => s.hit), 'every press on the orb takes from it', say),
     ok(seen.every(s => !s.over && !s.open), 'and no board is up over it, on arrival or after the press', say)
+  ];
+}]);
+
+// A creature of the deep under a real pointer (deep/fauna.js): the click
+// reaches `startleFauna` past the coil and the stations, and shakes the
+// bird's handful loose where the creature was. The bolt, the sinking and the
+// carrying are test/deep-creature-click.test.mjs.
+TESTS.push(['deep: a click on a creature startles it, and it shakes loose a handful of scales', async () => {
+  deepYard();
+  window.__view('deep');
+  run(VIEW_GLIDE_S + 0.5);
+  // One up in the light, clear of the coil's band and the stations' floor.
+  const pickOne = () => window.__fauna().find(f => !f.bolting && f.inside && (f.zone === 'sun' || f.zone === 'twi'));
+  const first = pickOne();
+  window.__look(first.x - S.viewW / 2);
+  run(0.1);
+  const f = window.__fauna()[first.i];
+  const sinking = S.sinking.length;
+  click(f.x, f.y);
+  const shaken = S.sinking.length - sinking;
+  const after = window.__fauna()[f.i];
+  return [
+    ok(!f.bolting, 'it was there to be clicked', `${f.kind} at ${Math.round(f.x)},${Math.round(f.y)}`),
+    ok(after.bolting, 'the click startles it'),
+    ok(shaken === BIRD_DUST, "and it shakes loose the bird's handful", `${shaken}`)
   ];
 }]);

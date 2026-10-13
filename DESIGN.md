@@ -14805,11 +14805,28 @@ in two rungs of the deep's own ramp, mixed across a border a step a row; it
 is drawn before the water's field (`deep zones`), whose dark cells are left
 unpainted, so the field lies over it.
 
-**Picture only, for now.** A creature's place is read off its seed and the
-clock (`faunaAt`, deep/fauna.js), nothing is saved, and the serpent's meals
-and the fight are unchanged. Whether a meal comes down from its own zone and
-whether the creatures part round a blow are both open; either reads the one
-population table and the one position function.
+**Sparse, and clickable like the birds** (the owner, 2026-10-13: "tone down
+the amount of creatures in the deep. its a little noisy ... the same
+treatment as the birds above. sparse, and able to click and drop scales").
+Fifteen creatures where there were seventy-six: three in the sunlit, four in
+the twilight, two in the midnight band (the quietest, round the coil and the
+bar), three abyssal, three hadal; twelve of the thirteen kinds, the gulper
+eel the one left out. A click on one (the bird's reach, `BIRD_REACH`) shakes
+loose the bird's handful (`FAUNA_SCALES` is `BIRD_DUST`) as ordinary loose
+scales from where it was: they sink to the floor and are money only once a
+gatherer has carried them to the crusher. The creature bolts for the nearer
+end of the deep in held poses (`FAUNA_STARTLE`), is away a while past the
+end, and swims back in there on its own path; the tripod, which never swims,
+walks back to its spot. The serpent and the stations take a click first. No
+achievement, no hover word (none of them has a name in the index), and no
+pad stop: they move, and the birds are not pad stops either.
+
+**Nothing saved.** A creature's place is read off its seed and the clock
+(`faunaAt`, deep/fauna.js); a startle is kept on the creature for the session
+only, and a reload or a new game finds every one home (`resetFauna`). The
+serpent's meals and the fight are unchanged. Whether a meal comes down from
+its own zone is open; it reads the one population table and the one position
+function.
 
 ### The crew cross both ways
 

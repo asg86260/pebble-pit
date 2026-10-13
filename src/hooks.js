@@ -1111,6 +1111,7 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 // that is not about getting there, and the rule that the stage never goes
 // back is told the setup is a new starting point.
 import { layScales, looseScales } from './deep/scales.js';
+import { faunaReport } from './deep/fauna.js';
 import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
 import { forgetSerpent, forgetFangs } from './verify.js';
@@ -1163,6 +1164,7 @@ HANDLES.__serpent = ({ stage, wound, level } = {}) => {
 };
 HANDLES.__scales = n => layScales(n);                 // crushed: a purse to spend
 HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for the gatherers
+HANDLES.__fauna = () => faunaReport();                // the deep's creatures, in world pixels, to aim a click at
 HANDLES.__setScales = n => { S.scales = Math.max(0, Math.floor(n || 0)); return S.scales; };   // the crushed purse, set outright
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(),

@@ -1,9 +1,12 @@
+import { P } from './yard.js';
+import { BIRD_REACH, BIRD_DUST } from './weather.js';
+
 // --- the deep's creatures, by zone ------------------------------------------------
 // The owner's layout A of docs/mocks/deep-full-height-2026-10-12.html, "zones
 // over the fight": the deep's 130 rows cut into five ocean zones, each with
 // the few creatures its real-world kin are drawn from, from the portal down
-// to the floor. Picture only: nothing here is fought, eaten or saved
-// (DESIGN.md, "The deep's zones").
+// to the floor. Nothing here is fought, eaten or saved; a click startles
+// one off the way it startles a bird (DESIGN.md, "The deep's zones").
 //
 // Rows count down from the deep's ceiling, columns along from its left end,
 // in cells.
@@ -79,20 +82,22 @@ export const FAUNA_BLINK = { rate: 2.3, lit: 11, dark: 6 };
 // cells a second (one, or a range each draws from); every `flip`-th swims
 // the other way. A school is `school` sardines scattered over `spread`
 // cells; the amphipods `hop`, going in dashes. Same seeds every run.
+// Sparse, the way the birds are (the owner, 2026-10-13: "a little noisy"):
+// a few of each zone, a kind or two each, the midnight band round the coil
+// and the bar the fewest.
 export const FAUNA = [
-  { kind: 'school', zone: 'sun', n: 4, y: [5, 18], v: [5, 8], flip: 2, school: [9, 12], spread: [22, 8] },
-  { kind: 'jelly', zone: 'sun', n: 6, y: [4, 17], v: 0.5, flip: 2 },
-  { kind: 'lantern', zone: 'twi', n: 16, y: [24, 45], v: [2.5, 5], flip: 3 },
-  { kind: 'hatchet', zone: 'twi', n: 9, y: [25, 43], v: [1.5, 3], flip: 2 },
-  { kind: 'siphon', zone: 'twi', n: 3, y: [30, 44], v: 0.7, flip: 2 },
-  { kind: 'angler', zone: 'mid', n: 3, y: [50, 82], v: 1.2, flip: 2 },
-  { kind: 'gulper', zone: 'mid', n: 2, y: [52, 80], v: 2.2, flip: 2 },
-  { kind: 'vampire', zone: 'mid', n: 3, y: [50, 80], v: 0.9, flip: 2 },
-  { kind: 'dumbo', zone: 'aby', n: 4, y: [92, 106], v: 0.8, flip: 2 },
-  { kind: 'tripod', zone: 'aby', n: 5, floor: true, v: 0, flip: 2 },
-  { kind: 'cucumber', zone: 'aby', n: 6, floor: true, v: 0.25, flip: 2 },
-  { kind: 'amphipod', zone: 'had', n: 12, floor: true, v: 3.5, flip: 2, hop: true },
-  { kind: 'snail', zone: 'had', n: 3, low: true, v: 1.4, flip: 2 },
+  { kind: 'school', zone: 'sun', n: 1, y: [5, 18], v: [5, 8], flip: 2, school: [9, 12], spread: [22, 8] },
+  { kind: 'jelly', zone: 'sun', n: 2, y: [4, 17], v: 0.5, flip: 2 },
+  { kind: 'lantern', zone: 'twi', n: 2, y: [24, 45], v: [2.5, 5], flip: 2 },
+  { kind: 'hatchet', zone: 'twi', n: 1, y: [25, 43], v: [1.5, 3], flip: 2 },
+  { kind: 'siphon', zone: 'twi', n: 1, y: [30, 44], v: 0.7, flip: 2 },
+  { kind: 'angler', zone: 'mid', n: 1, y: [50, 82], v: 1.2, flip: 2 },
+  { kind: 'vampire', zone: 'mid', n: 1, y: [50, 80], v: 0.9, flip: 2 },
+  { kind: 'dumbo', zone: 'aby', n: 1, y: [92, 106], v: 0.8, flip: 2 },
+  { kind: 'tripod', zone: 'aby', n: 1, floor: true, v: 0, flip: 2 },
+  { kind: 'cucumber', zone: 'aby', n: 1, floor: true, v: 0.25, flip: 2 },
+  { kind: 'amphipod', zone: 'had', n: 2, floor: true, v: 3.5, flip: 2, hop: true },
+  { kind: 'snail', zone: 'had', n: 1, low: true, v: 1.4, flip: 2 },
 ];
 
 // The motions. A swimmer bobs a held cell or two on a slow sine (`bob`, per
@@ -142,3 +147,14 @@ export const FAUNA_SCARE = {
   rise: 0.3, fall: 2.2, rate: 12,
   floorK: 1, shoal: 0.45, lift: 0.6, keep: 24, core: 6,
 };
+
+// --- a startle --------------------------------------------------------------------
+// A click on a creature startles it the way it startles a bird: it shakes
+// loose the bird's handful, as scales that sink to the floor for the
+// gatherers, and darts for the nearer end of the deep, `pace` cells a second
+// in held poses `rate` a second, its frames `quick` times as fast. Out past
+// the end it is away `away` seconds (a range), then comes back in at the end
+// it left by its own path; one that never swims (the tripod) walks back to
+// its spot at `walkIn` cells a second. `reach` is the bird's, in cells.
+export const FAUNA_STARTLE = { pace: 30, rate: 12, quick: 2.5, away: [20, 40], walkIn: 2, reach: BIRD_REACH / P };
+export const FAUNA_SCALES = BIRD_DUST;
