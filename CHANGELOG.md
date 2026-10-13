@@ -17,6 +17,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
 - After the story's kill the serpent keeps rising again, a level deeper and a tenth tougher each time; each kill drops a fang until seven stations stand, and the level shows on its bar (test/endless.test.mjs).
+- Big numbers in the deep read short the way the yard's do, 18.4k, 181k, 2m (test/serpent-numbers.test.mjs).
 - The constrict's orb is as easy to break at every level as at the first; only the serpent's defenses grow (test/endless.test.mjs).
 - The serpent's bar slides down under blows, each blow's stretch breaking off in pixel pieces that fall away, and a meal's heal flows back in instead of jumping (`node tools/look.mjs deep-numbers`).
 - The deep is alive top to bottom: shoals and jellies by the portal, lanternfish and siphonophores under them, anglers round the fight, dumbo octopuses and tripod fish over the floor, each zone's water its own shade.

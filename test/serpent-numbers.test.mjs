@@ -122,3 +122,20 @@ group('the heal says what a meal closed, once a meal, in its own entry', async (
     ok(S.hits.every(h => h.weapon === 'heal'), 'and nothing else struck')
   ];
 });
+
+// A big number is said short, the way the yard's HUD says it (`fmt`), in
+// glyphs the font has: the mock's samples (docs/mocks/deep-number-glyphs-2026-10-13.html).
+group('the deep says a big number as the HUD does, every character of it drawn', async () => {
+  const { sayNum, drawable, widthOf } = await import('../src/render/numfont.js');
+  const { fmt } = await import('../src/words.js');
+  const SAMPLES = [9, 75, 999, 1000, 1234, 18420, 181432, 1965763, 21600000];
+  const said = SAMPLES.map(sayNum);
+  return [
+    ok(said.every((s, i) => s === fmt(SAMPLES[i])), 'sayNum is fmt over the samples', said.join(' ')),
+    ok(said.join(' ') === '9 75 999 1k 1.2k 18.4k 181k 2m 21.6m', 'and reads 1.2k, 181k, 2m, 21.6m', said.join(' ')),
+    ok(said.every(s => drawable('+' + s) === '+' + s), 'the font has a glyph for every character', said.join(' ')),
+    // m five wide, the point one and set tight: 4+1+1+4+1+4 and 4+1+5.
+    ok(widthOf('2.1k', 1) === 15 && widthOf('2m', 1) === 10, 'each glyph is its own width, the point tight',
+       `${widthOf('2.1k', 1)} ${widthOf('2m', 1)}`)
+  ];
+});

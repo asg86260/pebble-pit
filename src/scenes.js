@@ -855,6 +855,27 @@ const deepScenes = {
                  party: [cast('brawler', 6), cast('ranger', 6), cast('sapper', 5), cast('mage', 5)] });
       lookDeep(coilAt(bellySeg(), now()).x);
     } },
+  // A level-25 serpent's numbers, said short: the constrict nearly broken
+  // when its window runs out, so the meal's heal reads +16xk under the belly
+  // and the blows over it read in k.
+  'deep-endless-25': { about: 'the deep', say: 'the serpent at level 25: its heal under the belly said short, +16xk, the blows in k',
+    run: () => {
+      deepYard({ level: 25, stage: SERPENT_PHASES - 1, wound: 0.9, run: 10,
+                 party: [cast('brawler', 8), cast('ranger', 8), cast('sapper', 8), cast('mage', 8)] });
+      for (let i = 0; i < 60 * 60; i++) {
+        window.__fast(1 / 60);
+        if (S.hits.some(h => h.weapon === 'heal')) break;
+        // held short of breaking, so the window runs out on a deep wound
+        const d = depthAt(SERPENT_PHASES - 1);
+        if (S.serpentWound < 0.85 * d || S.serpentWound > 0.95 * d) S.serpentWound = 0.9 * d;
+      }
+      window.__fast(0.2);
+      lookDeep(coilAt(bellySeg(), now()).x);
+      // held, the page's own frames too: the heal's number is under the belly
+      // for under a second before it goes into the bar
+      window.__holdShot();
+      S.still = true;
+    } },
   // A kill past the story's: the last blow at level 3, no beat, no sheet, the
   // camera left where it was; `a` seconds on (null: just after the rise).
   'deep-endless-kill': { about: 'the deep', say: 'a kill at level 3: the last blow, no letterbox, no sheet, the camera the player\'s',

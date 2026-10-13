@@ -227,9 +227,11 @@ export const DEEP_DRAW_KNOBS = [
 // --- reading the fight: the numbers off the hits and the heal ----------------------
 // DESIGN.md, "Reading the fight" (the owner's font, option 4: carved). Drawn in
 // screen pixels, not on the P grid, so they stay one size however the camera
-// is zoomed. A glyph is four font pixels by six, NUM_FONT_PX screen pixels a
-// font pixel, one font pixel between glyphs, with its drop line one font pixel
-// under it.
+// is zoomed. A glyph is six font pixels tall and as wide as its rows (a digit
+// four, the m five, the point one), NUM_FONT_PX screen pixels a font pixel,
+// one font pixel between glyphs but none before a NUM_FONT_TIGHT one, with its
+// drop line one font pixel under it. The letters say a big number short, the
+// yard's way (docs/mocks/deep-number-glyphs-2026-10-13.html, option A).
 export const NUM_FONT = {
   '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'],
   '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
@@ -241,8 +243,13 @@ export const NUM_FONT = {
   '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
   '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'],
   '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.'],
-  '+': ['....', '.#..', '###.', '.#..', '....', '....']
+  '+': ['....', '.#..', '###.', '.#..', '....', '....'],
+  'k': ['#...', '#...', '#.#.', '##..', '#.#.', '#..#'],
+  'm': ['.....', '.....', '##.#.', '#.#.#', '#.#.#', '#.#.#'],
+  'b': ['#...', '#...', '###.', '#..#', '#..#', '###.'],
+  '.': ['.', '.', '.', '.', '.', '#']
 };
+export const NUM_FONT_TIGHT = '.';   // set against the glyph before, no gap
 export const NUM_FONT_PX = 2;        // screen pixels a font pixel
 // The tones as seen, after the deep's negative: the numbers are drawn over
 // the finished deep, not turned over with it.

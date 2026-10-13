@@ -6,15 +6,24 @@
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { darkPage, turned } from '../ink.js';
-import { NUM_FONT } from '../config.js';
+import { NUM_FONT, NUM_FONT_TIGHT } from '../config.js';
+import { fmt } from '../words.js';
 
 const CHARS = Object.keys(NUM_FONT);
-export const GW = NUM_FONT['0'][0].length, GH = NUM_FONT['0'].length;
+export const GH = NUM_FONT['0'].length;
+// Each glyph's width and where it starts on a sheet, in font pixels: worked
+// out once, so a number written a frame reads two lookups a glyph.
+const GLYPH_W = {}, GLYPH_AT = {};
+let sheetW = 0;
+for (const ch of CHARS) { GLYPH_W[ch] = NUM_FONT[ch][0].length; GLYPH_AT[ch] = sheetW; sheetW += GLYPH_W[ch]; }
+// The gap before glyph `i` of `str`, in font pixels.
+const gapBefore = (str, i) => (i > 0 && !NUM_FONT_TIGHT.includes(str[i]) ? 1 : 0);
 
-// How a number is said. The one place: shortening a big one ("+181k") drops
-// in here once its glyphs are drawn into NUM_FONT (DESIGN.md, "Endless
-// serpent", the owner's call 4, still being voted).
-export const sayNum = n => String(n);
+// How a number is said: the yard's own short scale (`fmt`, words.js: 875,
+// 1.2k, 18.4k, 181k, 21.6m), so the deep and the HUD read a number alike.
+// When `fmt` takes the language's decimal mark (DESIGN.md, localization phase
+// two), NUM_FONT wants a comma drawn, or `drawable` drops it.
+export const sayNum = n => fmt(n);
 
 // What of `str` the font can draw: anything it has no glyph for is left out.
 export const drawable = str => [...String(str)].filter(ch => ch in NUM_FONT).join('');
@@ -38,30 +47,38 @@ export function sheetOf(px, face, drop) {
   if (c) return c;
   c = document.createElement('canvas');
   sheetsMade++;
-  c.width = CHARS.length * GW * px;
+  c.width = sheetW * px;
   c.height = (GH + 1) * px;
   const g = c.getContext('2d');
   const paint = (ch, ox, oy, tone) => {
     g.fillStyle = tone;
     NUM_FONT[ch].forEach((row, r) => {
-      for (let i = 0; i < GW; i++) if (row[i] === '#') g.fillRect(ox + i * px, oy + r * px, px, px);
+      for (let i = 0; i < row.length; i++) if (row[i] === '#') g.fillRect(ox + i * px, oy + r * px, px, px);
     });
   };
-  CHARS.forEach((ch, i) => {
-    paint(ch, i * GW * px, px, seen(drop));   // the drop, a font pixel under
-    paint(ch, i * GW * px, 0, seen(face));    // and the face over it
-  });
+  for (const ch of CHARS) {
+    paint(ch, GLYPH_AT[ch] * px, px, seen(drop));   // the drop, a font pixel under
+    paint(ch, GLYPH_AT[ch] * px, 0, seen(face));    // and the face over it
+  }
   sheets.set(id, c);
   return c;
 }
 // `str` with its bottom-left at (left, bottom) in the transform's pixels;
-// `bob(i)` lifts glyph i by whole font pixels.
+// `bob(i)` lifts glyph i by whole font pixels. A character the font has no
+// glyph for takes no room.
 export function write(sheet, str, px, left, bottom, bob) {
-  const w1 = (GW + 1) * px, h = (GH + 1) * px;
+  const h = (GH + 1) * px;
+  let x = 0;
   for (let i = 0; i < str.length; i++) {
-    const at = CHARS.indexOf(str[i]) * GW * px;
-    if (at < 0) continue;
-    ctx.drawImage(sheet, at, 0, GW * px, h, left + i * w1, bottom - h - (bob ? bob(i) * px : 0), GW * px, h);
+    const ch = str[i], w = GLYPH_W[ch];
+    if (!w) continue;
+    x += gapBefore(str, i);
+    ctx.drawImage(sheet, GLYPH_AT[ch] * px, 0, w * px, h, left + x * px, bottom - h - (bob ? bob(i) * px : 0), w * px, h);
+    x += w;
   }
 }
-export const widthOf = (str, px) => Math.max(0, str.length * (GW + 1) * px - px);
+export function widthOf(str, px) {
+  let x = 0;
+  for (let i = 0; i < str.length; i++) if (GLYPH_W[str[i]]) x += gapBefore(str, i) + GLYPH_W[str[i]];
+  return x * px;
+}

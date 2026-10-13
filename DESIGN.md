@@ -18275,8 +18275,9 @@ it stands on main at 6f8f6172.
 Built as written, with the owner's answers to the open calls: the label from
 level 2 on; the camera left where the player has it on a later kill; the
 stun read off the level-1 depth and the orb's hit points scaled with the
-level (since 2026-10-13 pinned to level 1's, below); heal numbers left as raw digits; the wall a record, nothing to keep a
-maxed party climbing; notices at best level 2, 5, 10 and 25 and every slot
+level (since 2026-10-13 pinned to level 1's, below); heal numbers left as
+raw digits (since 2026-10-13 said short, below); the wall a record,
+nothing to keep a maxed party climbing; notices at best level 2, 5, 10 and 25 and every slot
 standing. Where it differs from the text below, or settles what the text
 left open:
 
@@ -18291,8 +18292,17 @@ left open:
   (tools/steam-art/picks.mjs).
 - **The number font's code** moved out of render/fightnums.js into
   render/numfont.js, shared with the bar; `sayNum` there is the one place a
-  number is said, where the k/m shortening drops in once its glyphs are
-  voted.
+  number is said. **Since 2026-10-13 it says a big one short** by calling
+  `fmt` (words.js), the HUD's own rule (one decimal under 99.95 of a unit,
+  whole above, rolling up at a thousand: 1.2k, 18.4k, 181k, 2m, 21.6m). The
+  owner voted option A of docs/mocks/deep-number-glyphs-2026-10-13.html
+  (branch mock/deep-number-glyphs): lowercase k and b at full height, m
+  four rows tall and five wide, the point one pixel on the baseline and set
+  tight (`NUM_FONT_TIGHT`). A glyph is as wide as its rows; the widths and
+  sheet offsets are worked out once. No `t`: `fmt` reaches it only at a
+  trillion. When `fmt` takes the language's decimal mark (localization
+  phase two) the font wants a comma, or `drawable` drops it. Scene:
+  `deep-endless-25`, a level-25 constrict's heal reading +165k.
 - **The freed beat** asks `serpentLevel <= 1` as well as `serpentFreed`, so a
   fight a hook stands at level 3 cannot play the story's kill either.
   `cradled()` is the story serpent's only (`serpentLevel <= 1` and the freed
