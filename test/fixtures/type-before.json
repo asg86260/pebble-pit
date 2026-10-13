@@ -456,6 +456,12 @@
   "value": "0"
  },
  {
+  "file": "src/style.css",
+  "sel": ".langs button",
+  "prop": "font-family",
+  "value": "ui-monospace, \"Courier New\", monospace"
+ },
+ {
   "file": "src/shelf.css",
   "sel": ".rows.shelves",
   "prop": "font",
@@ -646,6 +652,24 @@
   "sel": ".foot",
   "prop": "letter-spacing",
   "value": ".1em"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".foot .langfoot",
+  "prop": "font",
+  "value": "inherit"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".foot .langfoot",
+  "prop": "font-family",
+  "value": "ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/title.css",
+  "sel": ".foot .langfoot",
+  "prop": "letter-spacing",
+  "value": "inherit"
  },
  {
   "file": "src/title.css",
