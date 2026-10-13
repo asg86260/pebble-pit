@@ -302,11 +302,6 @@ export const NUM_FOLD_S = 1;
 // on the glass and held still BAR_GAP over the highest the coil's top edge
 // ever sways: full at a closed wound, empty at the break. Tones as seen, over
 // the finished deep.
-// The level after the pips (DESIGN.md, "Endless serpent"), from level 2 on:
-// `{n}` is the level. [owner's words: level label, e.g. "Lv 7"] -- until they
-// are given it is the bare number, and only what NUM_FONT has a glyph for is
-// drawn, so the words want their letters drawn into the font with them.
-export const SERPENT_LEVEL_SAYS = '{n}';
 export const BAR_LEVEL_GAP = 10;       // screen pixels between the last pip and the level
 export const BAR_W = 400;              // screen pixels, the bar's length
 export const BAR_H = 14;               // and its height

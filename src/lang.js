@@ -23,16 +23,20 @@ const VITE = !!import.meta.env;
 const LOADERS = VITE ? import.meta.glob('../locales/*.ftl', { query: '?raw', import: 'default' }) : null;
 const EAGER = VITE ? import.meta.glob('../locales/en.ftl', { query: '?raw', import: 'default', eager: true }) : null;
 const fs = VITE ? null : globalThis.process?.getBuiltinModule?.('node:fs');
+// The folder, for node. Not written as `new URL(path, import.meta.url)`: vite
+// reads that shape as an asset to ship, and the file would go out twice.
+const HERE = import.meta.url;
+const DIR = VITE ? null : new URL('../locales/', HERE);
 const codeOf = path => path.replace(/^.*\/|\.ftl$/g, '');
 
 export const LANGS = VITE
   ? Object.keys(LOADERS).map(codeOf).sort()
-  : fs.readdirSync(new URL('../locales/', import.meta.url)).filter(f => f.endsWith('.ftl')).map(codeOf).sort();
+  : fs.readdirSync(DIR).filter(f => f.endsWith('.ftl')).map(codeOf).sort();
 
 // A file's text: at once for English and anywhere in node, a promise for
 // another language's chunk.
 function source(code) {
-  if (!VITE) return fs.readFileSync(new URL(`../locales/${code}.ftl`, import.meta.url), 'utf8');
+  if (!VITE) return fs.readFileSync(new URL(code + '.ftl', DIR), 'utf8');
   if (code === SOURCE) return Object.values(EAGER)[0];
   return LOADERS[`../locales/${code}.ftl`]();
 }

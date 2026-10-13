@@ -5,7 +5,8 @@
 // fit side by side, so the list is the page and picking an entry pushes it
 // over the list, with its own back (style.css, `.index.reading`).
 //
-// What is met is met.js's; the words are config/index.js's alone.
+// What is met is met.js's; the entries are config/index.js's, their words
+// locales/en.ftl's.
 
 import { GROUPS, GROUP_NAMES } from './config/index.js';
 import { metEntries, unread, markRead } from './met.js';

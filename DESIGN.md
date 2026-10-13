@@ -18731,3 +18731,98 @@ see the label.
    (to be measured). Is that the intent -- the best level is a record of how
    near the wall you got -- or should something keep a maxed party climbing?
 6. **The achievements**: which thresholds, and their names.
+
+## Localization (phase one: one language file, built 2026-10-13)
+
+The owner: "abstract everything out into a language file, to make this as
+easy as possible." Phase one moves every word a player reads into one
+English file and changes no word, look or behavior; there are no
+translations yet.
+
+**The file.** `locales/en.ftl`, Mozilla Fluent, is the source of every word
+and the fallback for every other language. It is grouped by where the words
+show (`## Sheets`, `## Boards`, `## The deep`, ...) and each message has the
+line over it that says where it stands, so a translator never reads a bare
+id. A number or a name the game puts in is a variable (`{ $n }`), never text
+glued round a message; a plural is a selector on the number
+(`slots-since-days`), an ordinal one on `$n` the game hands over already
+asking for ordinal rules (`placeOf` in lang.js, since a translation cannot
+ask NUMBER() for that). Fluent ids allow no dots, so the wording
+inventory's `saved.word` is `saved-word`: the dots became dashes, and the
+inventory is now keyed by the Fluent ids and written off the file
+(`tools/wording/inventory.mjs`), so the file, the inventory and the wording
+shots cannot drift.
+
+**The lookup.** `src/lang.js` is the one door: `msg(id, args)` formats from
+the active bundle, English where the active language has no such message,
+and the id itself where no file has it. (Not `say`: a dozen files already
+hand the sheet's reply line around under that name.) Numbers go in as
+JavaScript writes them, so an English line reads byte for byte as the
+template it replaced; there are no isolation marks round a placeable. The
+language is the `lang` preference (prefs.js, default `en`), read once at
+boot, so a module may look a message up at its own top level; changing it
+reloads, as the dark switch does. `<html lang>` is set from it.
+
+**The pages.** Every element in play.html and index.html that says
+something carries a `data-l10n-id`, and lang.js writes the message over it
+as it loads -- before any module that writes words over one of them, since
+each of those imports it. A message's value is the text and its attributes
+(`.aria-label`, `.placeholder`, `.title`) the attributes. A value may carry
+a `<br>` and an empty `<span data-l10n-name="...">`, which stands for the
+element of that name already in the page (the rescue sheet's time), moved
+into place rather than made again; `writeInto` does the same for a line the
+code writes (the skip hint's pad button). The English stays in the HTML as
+the no-script words. @fluent/dom was not taken: those two kinds of markup
+are the whole of what the pages need, in forty lines.
+
+**What a message is keyed on, and what is not a message.** Keys stay keys:
+a section's `title` is its words, but the bench's sections carry a `key`
+too, the English title the save's `S.seenSects` has always held, so the
+mark reads the same in any language. Index groups are keys (`yard`) with
+their words in `GROUP_NAMES`. The crew's names are names and are not
+translated. The dev panel's knob labels, the sound bench's names, the
+render layers' names, the console's and the developer's errors are not
+player copy and stay in the code.
+
+**The guard.** `test/l10n.test.mjs`: the file parses with nothing skipped
+as junk; every message, given sample arguments, reads as the words it
+replaced (the inventory as it stood at 45761258, and every literal as it
+left the code, captured into `test/fixtures/wording-before.json` as it
+moved); every `msg('…')` and `data-l10n-id` is a message and every message
+is asked for; no string literal in src/ or text on a page reads as words
+outside the file, but for an allow list that names each string and says
+why (`test/fixtures/l10n-allow.json`) and the dev-facing shapes the scanner
+knows (a knob's label, a console line, a thrown error); and the inventory
+is current. `test/l10n-pseudo.test.mjs` runs the node yard with every
+message wrapped in marks, builds and fills every board at three points in
+a game, writes the held sheet's pages, the corner cards, the story's line
+and the canvas's text, asks the hover over a grid of the yard, and finds
+nothing the code wrote itself -- the single words and the sentences built
+from pieces that a scan of literals cannot see.
+
+**To add a language:** write `locales/xx.ftl` with the same ids (any it
+leaves out read in English) and give the picker an entry. Nothing else: the
+file is found by the build's glob and by node's directory read, loaded as a
+chunk of its own only when chosen, and `chooseLang('xx')` sets the
+preference for the next load.
+
+### Open -- phase two
+
+1. **The picker**: where it stands (the settings page, the landing page)
+   and its words, which are the owner's; each language named in itself.
+2. **Translators** and a sync with a platform (Crowdin, Weblate): both read
+   Fluent; the comments are the translators' context.
+3. **Fonts**: the DOM's faces have no CJK (or most non-Latin) glyphs, and
+   the canvas's pixel faces -- the casino's marquee (`GLYPH`,
+   render/casino.js) and the number font (`NUM_FONT`) -- draw only the
+   letters they have. A language with other letters needs them drawn.
+4. **Numbers**: the short forms (1.3k, 2m), clocks and `·` separators are
+   written by the code (words.js `fmt`, `leftText`), as is the list a done
+   mark joins with commas; a language that writes them otherwise needs them
+   moved into messages or `Intl`.
+5. **The shell**: the Electron window's title and the Steam carry-over
+   dialog (electron/) are not in the file; neither is the store pages'
+   copy (docs/itch-page.md, steam/).
+6. **A fifth like-named deep station** reads "the undefined Recruit", as the
+   code said before the words moved; the file keeps it, for the owner to
+   word (`station-party`).

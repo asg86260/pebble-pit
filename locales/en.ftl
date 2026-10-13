@@ -2976,3 +2976,8 @@ row-raise-station = raise a station
 
 # the deep's build button: the first station costs no fang
 build-free = free
+
+# the serpent's level after the pips on its bar, from level 2 on; $n is the level.
+# [owner's words: a level label, e.g. "Lv 7"] -- until then the bare number. Drawn in the pixel number font
+# (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font
+serp-level = { $n }

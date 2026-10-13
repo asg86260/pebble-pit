@@ -1,12 +1,24 @@
 # Still to do
 
+## Localization, phase two -- PHASE ONE BUILT, PICKER AND TRANSLATIONS OPEN (2026-10-13)
+
+"Localization (phase one: one language file, built)" in DESIGN.md. Every
+word a player reads is in locales/en.ftl and comes out through `msg`
+(src/lang.js); test/l10n.test.mjs and test/l10n-pseudo.test.mjs hold it
+there. Open, in its "Open -- phase two": the picker and its words (the
+owner's), translators and a Crowdin/Weblate sync, fonts for other scripts
+(the DOM's faces, the casino's marquee and the number font), the numbers
+and lists the code still writes (`fmt`, clocks, the done mark's commas),
+and the Electron shell's two strings.
+
 ## Endless serpent -- BUILT, WORDS AND THE WALL OPEN (2026-10-12)
 
 "Endless serpent" in DESIGN.md (built; its "As built" note). Open:
-- **Words**: the level label (`SERPENT_LEVEL_SAYS`, config/deepdraw.js,
-  drawn as the bare number until its letters are in `NUM_FONT`), the five
-  notices' names and notes (src/catalog.js) and the books' row
-  (`tallyserpent`, src/stats.js) are `[owner's words: ...]` placeholders.
+- **Words**: the level label (`serp-level`, drawn as the bare number until
+  its letters are in `NUM_FONT`), the five notices' names and notes
+  (`ach-serpent-*`, `ach-allstations-*`) and the books' row
+  (`books-tally-serpent`) are `[owner's words: ...]` placeholders in
+  locales/en.ftl.
 - **Big numbers**: the k/m shortening and its glyphs are being voted; it
   drops into `sayNum` (render/numfont.js).
 - **The wall**: measured at level 3 for seven stations at rung 8 (the
@@ -15,9 +27,9 @@
 ## Controller support -- BUILT, WORDS AND STEAMWORKS OPEN (2026-10-12)
 
 "Controller support" in DESIGN.md (built). Open:
-- **Words**: the controls page's pad-only rows (`PAD_WORDS`, src/controls.js)
+- **Words**: the controls page's pad-only rows (`ctl-pad-*`, locales/en.ftl)
   are placeholders marked `[owner's words: ...]`, shown to a player once a
-  pad has been seen. The owner writes them in that one object.
+  pad has been seen. The owner writes them there.
 - **Steam Input**: electron/steam-input/controller_neptune.vdf is the Deck's
   default config, unproven: there is no app id to upload it under (see
   "Three builds" below). Its binding names are from the published format,
@@ -28,9 +40,8 @@
 
 ## The index -- BUILT, WORDS AND DRAWINGS OPEN (2026-10-11)
 
-"The index" in DESIGN.md (built). Open: every entry's text in
-src/config/index.js is Claude's draft, for the owner to edit in that one
-file. Drawings to make in glyphs.html: muck, poop, pollution, rain,
+"The index" in DESIGN.md (built). Open: every entry's text (`idx-*` in
+locales/en.ftl) is Claude's draft, for the owner to edit there. Drawings to make in glyphs.html: muck, poop, pollution, rain,
 clouds, birds, the hole, the sqwife, the bench, the books, and the story's
 four (objective, achievements, the rescue, scenes); and whether the `i` key
 gets a line on the controls page (shared with the landing page).

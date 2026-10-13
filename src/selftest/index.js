@@ -5,7 +5,7 @@
 
 import { sleep, raf, newRun, settle, ok, run } from './kit.js';
 import { S } from '../state.js';
-import { INDEX, GROUPS } from '../config/index.js';
+import { INDEX, GROUPS, GROUP_NAMES } from '../config/index.js';
 import { metEntries } from '../met.js';
 import { serpentOn } from '../snatch.js';
 
@@ -28,7 +28,7 @@ export const TESTS = [
     const opened = onIndex() && S.paused;
     const want = metEntries(serpentOn()).map(e => e.key);
     const got = listedKeys();
-    const wantHeads = GROUPS.filter(g => metEntries(serpentOn()).some(e => e.group === g));
+    const wantHeads = GROUPS.filter(g => metEntries(serpentOn()).some(e => e.group === g)).map(g => GROUP_NAMES[g]);
     const unmet = INDEX.filter(e => !want.includes(e.key)).map(e => e.key);
     const pickBtn = book().querySelector('.it[data-key="rockhand"]');
     pickBtn?.click();

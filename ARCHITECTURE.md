@@ -61,6 +61,9 @@ field or two on `S` and a constant or two in `config.js`.
 | `catalog.js` | the notices' names and notes, data with no reach into the yard; `notices.js` joins the predicates by key | with a notice |
 | `fade.js` | a sheet up and down as a fade with `hidden` still the truth; the frame and `hold` call it every frame | never |
 | `copyout.js` | the save onto the clipboard, shared by three sheets | never |
+| `lang.js` | every word a player reads, looked up: `msg(id, args)` from the active language's bundle, English the fallback; the `lang` preference read once at boot; the pages' `data-l10n-id` written over as it loads (`localize`, `writeInto`). Imports only prefs.js and @fluent/bundle, so anything may import it (DESIGN.md, "Localization") | rarely |
+| `locales/en.ftl` | the words themselves, Mozilla Fluent, grouped by where they show, a comment over each; the source every other `locales/xx.ftl` is translated from. No module writes a sentence: a new line is a message here and a `msg` call. `test/l10n.test.mjs` is red for a sentence left in src/ or a page, an id with no message, a message nothing asks for, or a word that changed | a message a line |
+| `tools/wording/` | the words' tools: `inventory.mjs` writes docs/wording-inventory.json off en.ftl; `strings.mjs` is the scanner the guard uses; `pseudo.mjs` runs the yard with every message marked (test/l10n-pseudo.test.mjs); `extract.mjs` and `recast.mjs` moved the literals out; `surfaces.mjs` and `page.js` serve tools/wording-shots.mjs | yes |
 | `save.js` | the store seam: IndexedDB on a page (read once before the boot, `primeStore`), `window.desk` in the shell, localStorage as the way in and the fallback; the guard, the fallback and the save floor (`isSave`) over all of it; every key follows the open slot | rarely |
 | `idb.js` | IndexedDB as four promises over one key-value store; null wherever it is not to be had | rarely |
 | `slots.js` | the saves page: three yards, one open at a time, labelled off their own blobs | rarely |
@@ -100,7 +103,7 @@ touching them.
 
 **A new job for the crew.** One file in `src/crew/` for the work, one row in
 the `JOBS` registry in `src/crew/jobs.js` (`factory`, `want`, `step`), the words
-in `src/jobs.js`, the count on `S` and in `SAVED`, a shape in `drawWorkers`.
+in `src/jobs.js` (its `SAID` line, the words a `job-…` message in locales/en.ftl), the count on `S` and in `SAVED`, a shape in `drawWorkers`.
 `syncWorkers` and `FACTORY` read the registry, so nothing else changes.
 `S.haulers` is never assigned anywhere but `rebalance()` — it is whatever is
 left over once every job has taken its share.

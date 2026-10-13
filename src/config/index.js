@@ -3,8 +3,8 @@
 // read off the code).
 //
 // THE TEXTS ARE DRAFTS, for the owner to edit. Every word a player reads in
-// the index is here and nowhere else: change a `text` (or a `name`) in this
-// file and the book says it.
+// the index is in locales/en.ftl, under "## Index" (`idx-<key>-name`,
+// `idx-<key>-text`): change it there and the book says it.
 //
 // key    the entry's own key: what `S.seen` and `S.indexRead` hold
 // group  the heading it is listed under (GROUPS, in that order; its words

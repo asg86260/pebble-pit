@@ -7,6 +7,7 @@
 // jumping), where a heal began flowing in (the purple), and the pieces the
 // last blows knocked out of it.
 
+import { msg } from '../lang.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
@@ -25,7 +26,7 @@ import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRA
          BAR_SHARD_PX, BAR_SHARD_HOLD, BAR_SHARD_LIFT, BAR_SHARD_STAGGER_S, BAR_SHARD_POSES, BAR_SHARD_GRAV,
          BAR_SHARD_KICK, BAR_SHARD_FALL_S, BAR_SHARD_FADE_S, BAR_CHIP,
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
-         SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, SERPENT_LEVEL_SAYS, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP } from '../config.js';
+         SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
@@ -52,7 +53,7 @@ export const barShown = () => S.view === 'deep' && S.snatched && S.serpentStage 
 // "level 1" to a player who does not yet know there are more. What of it the
 // number font can draw, and how wide that is in screen pixels.
 const levelSays = () => S.serpentLevel > 1
-  ? drawable(SERPENT_LEVEL_SAYS.replace('{n}', sayNum(S.serpentLevel))) : '';
+  ? drawable(msg('serp-level', { n: sayNum(S.serpentLevel) })) : '';
 const levelW = str => (str ? BAR_LEVEL_GAP + widthOf(str, NUM_FONT_PX) : 0);
 
 // Where the bar stands on the glass, in screen pixels: centered with its pips
