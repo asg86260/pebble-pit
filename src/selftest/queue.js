@@ -75,15 +75,20 @@ export const TESTS = [
     const back = state().stored;
     // The card stands under the boards: on a short window a board reaches the
     // corner the card is in, and the board you walked up to read is the one on
-    // top. Read off the computed style, since that is the whole of the rule.
-    const under = +getComputedStyle(card()).zIndex < +getComputedStyle(panel()).zIndex;
+    // top. Read off the computed style, since that is the whole of the rule:
+    // the layer each stands in, which is the nearest box with a z-index of
+    // its own (the card sits in the #topleft column, which carries it).
+    const layer = el => { while (el && getComputedStyle(el).zIndex === 'auto') el = el.parentElement; return el; };
+    const z = el => { const l = layer(el); return l ? getComputedStyle(l).zIndex : 'none'; };
+    const zs = [z(card()), z(panel())];
+    const under = +zs[0] < +zs[1];
     newRun();
     return [
       ok(paid > 0, 'the second rung was paid for', `${paid}`),
       ok(!!wait && !!front && front.disabled, 'the front name is not a button; the waiting one is'),
       ok(left.length === 1, 'the waiting name is gone from the card', left.join(', ')),
       ok(back >= before, 'and the bill is back in the pile', `${before} -> ${back}`),
-      ok(under, 'the card stands under the boards', `${getComputedStyle(card()).zIndex} vs ${getComputedStyle(panel()).zIndex}`)
+      ok(under, 'the card stands under the boards', `${zs[0]} vs ${zs[1]}`)
     ];
   }]
 ];

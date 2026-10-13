@@ -5,6 +5,8 @@ import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onSc
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows } from './kit.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 import { offered } from '../stations.js';
+import { handsOf } from '../levels.js';
+import { JOB } from '../jobs.js';
 
 // The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -1685,10 +1687,12 @@ export const TESTS = [
     const inset = el => { const t = el.closest('.tile').getBoundingClientRect(); return Math.round(t.right - el.getBoundingClientRect().right); };
     const bandedEl = [...document.querySelectorAll('#panel .rows.shelves .tile .ladder')].find(l => l.querySelectorAll('b').length > 1);
     const mine = pips ? inset(pips) : -1, theirs = bandedEl ? inset(bandedEl) : -1;
+    // A lamp for every body the cut holds (`perHand` in kit.js): a pip a bench.
+    const hands = handsOf(JOB.QUARRY);
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(!!pips && pips.querySelectorAll('i').length === 3, 'the blaster row has three pips', String(pips?.querySelectorAll('i').length)),
+      ok(!!pips && pips.querySelectorAll('i').length === hands, 'the blaster row has a pip for every body the cut holds', `${pips?.querySelectorAll('i').length} of ${hands}`),
       ok(!!box && box.height > box.width, 'and they stand in a column', box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'none'),
       ok(!!bandedEl && mine === theirs, "the same distance in from the edge as a banded ladder's", `${mine} vs ${theirs}`),
     ];
@@ -1842,8 +1846,9 @@ export const TESTS = [
     // first so the timber waits its turn behind it, which is what a cancel
     // can hand back.
     // Not past what the pit holds: a pit filled over its brim tears, and
-    // the tear's scene takes the card off the screen.
-    window.__give(20000);
+    // the tear's scene takes the card off the screen. Read off the hole, so
+    // it stays short of the brim whatever the hole is cut to.
+    window.__give(Math.floor(state().pitCapacity * 0.8) - state().stored);
     window.__buy('house');
     await settle(0.6);
     // affordable is not done: the card stays up, still selling the props
@@ -1953,7 +1958,8 @@ export const TESTS = [
     await settle();
     window.__crew(2, 1);
     window.__jump(4);
-    window.__give(20000);
+    // short of the brim: a hole filled past it tears, and the tear takes the card
+    window.__give(Math.floor(state().pitCapacity * 0.8) - state().stored);
     window.__answered('props');
     window.__build();
     await settle(0.6);

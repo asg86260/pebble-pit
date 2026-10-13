@@ -148,6 +148,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A feedback page off settings, on the pause sheet and the title page, and under copy save when the game stops, sends your words and, if you tick it, your save, and lists everything that goes before you send (test/feedback.test.mjs).
 
 - The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
+- On a narrow window the game opens looking at the rock again, so the bigger rocks to come are not cut off at the right edge (src/selftest/view.js, "the opening view is looking at the rock").
 - With the conveyor belt running, a left click anywhere no longer puts a free handful of pebbles in your hand (src/selftest/dust.js, "a click on open sky over the belt's yard catches nothing"; test/belt-head.test.mjs).
 - In every cutscene the black bars frame what the scene is about instead of covering it, and notices and the corner buttons wait off the bars until the scene is over (test/letterbox-framing-desk.test.mjs).
 - A notice is always drawn on top, over a tall house or any building, instead of being pushed sideways out of the window (src/selftest/touch.js, "a notice is drawn over a building that reaches into the sky").
