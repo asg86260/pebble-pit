@@ -1,0 +1,168 @@
+// The deep's zones and the creatures living in them (DESIGN.md, "The deep's
+// zones"; the owner's layout A of docs/mocks/deep-full-height-2026-10-12.html).
+// Two layers: the zones' tint, behind the water's field, and the creatures,
+// behind the portal, the stations and the serpent. Picture only: where each
+// creature is comes from deep/fauna.js, off its seed and the clock.
+//
+// Both are kept cheap the way the deep's floor is: the tint never changes,
+// so it is painted once, a pixel a cell, and drawn scaled up; and each
+// creature's frame is painted once into an image of its own, its blinking
+// lights the only cells drawn every frame.
+
+import { now } from '../clock.js';
+import { P, FAUNA_ZONES, FAUNA_TINT_FILL, FAUNA_TINT_EDGE, FAUNA_TINT_MIX, FAUNA_TINT_HEAD, FAUNA_SPRITES, FAUNA_BASE,
+         FAUNA_VARY, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAUNA_GULPER } from '../config.js';
+import { ctx } from './ctx.js';
+import { GREYS, PURPLES } from './deeptones.js';
+import { deepTop, deepX0 } from '../deep/place.js';
+import { deepWindow, bedTop } from './deep.js';
+import { COLS, ROWS, POPULATION, unit2, zoneAtRow, faunaAt, schoolAt, frameOf, reachOf } from '../deep/fauna.js';
+
+const grey = i => GREYS[Math.max(0, Math.min(GREYS.length - 1, i))];
+const purple = i => PURPLES[Math.max(0, Math.min(PURPLES.length - 1, i))];
+
+// --- the zones' tint --------------------------------------------------------------
+// Each zone's own two greys, dithered on a fixed hash; across a border the
+// rows mix, the neighbor's cells thinning out a step a row. The field's lit
+// cells are drawn over it and its dark ones leave it showing.
+let tint = null;
+function tintImage() {
+  if (tint) return tint;
+  tint = document.createElement('canvas');
+  tint.width = COLS; tint.height = FAUNA_TINT_HEAD + ROWS;
+  const g = tint.getContext('2d'), step = FAUNA_TINT_MIX / FAUNA_TINT_EDGE;
+  for (let y = -FAUNA_TINT_HEAD; y < ROWS; y++) {
+    const z = zoneAtRow(y), here = FAUNA_ZONES[z], next = FAUNA_ZONES[z + 1], prev = FAUNA_ZONES[z - 1];
+    const toNext = here.to - y, fromPrev = y - here.from + 1;
+    for (let x = 0; x < COLS; x++) {
+      let q = here;
+      if (next && toNext <= FAUNA_TINT_EDGE && unit2(x, y) < FAUNA_TINT_MIX - (toNext - 1) * step) q = next;
+      if (prev && fromPrev <= FAUNA_TINT_EDGE && unit2(y, x) < FAUNA_TINT_MIX - (fromPrev - 1) * step) q = prev;
+      const k = unit2(x * 1.3, y * 0.7);
+      const rung = k < q.share ? q.tones[1] : k < FAUNA_TINT_FILL ? q.tones[0] : 0;
+      if (rung <= 0) continue;
+      g.fillStyle = GREYS[rung];
+      g.fillRect(x, y + FAUNA_TINT_HEAD, 1, 1);
+    }
+  }
+  return tint;
+}
+
+export function drawDeepZones() {
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(tintImage(), deepX0(), deepTop() - FAUNA_TINT_HEAD * P, COLS * P, (FAUNA_TINT_HEAD + ROWS) * P);
+  ctx.imageSmoothingEnabled = smooth;
+}
+
+// --- a creature's tones ------------------------------------------------------------
+// A grey body cell nudged a rung either way on its own hash, fixed per
+// creature; every tone `dim` rungs darker in a zone that is kept quiet.
+function tone(ch, seed, r, c, dim) {
+  if (ch in FAUNA_BASE) {
+    const j = unit2(seed + r * 7.1, c * 3.3);
+    const rung = Math.max(FAUNA_VARY.floor, FAUNA_BASE[ch] + (j < FAUNA_VARY.lo ? -1 : j > FAUNA_VARY.hi ? 1 : 0));
+    return grey(rung - dim);
+  }
+  if (ch === 'w') return grey(FAUNA_INK.w - dim);
+  if (ch === 'e') return grey(FAUNA_INK.e - dim);
+  if (ch === 'q') return purple(FAUNA_INK.q[unit2(seed + r, c) < FAUNA_INK.qDark ? 1 : 0] - dim);
+  if (ch === 'r') return purple(FAUNA_INK.r - dim);
+  if (ch === 'p') return purple(FAUNA_INK.p - dim);
+  return null;
+}
+const lightTone = (seed, c, t, dim) =>
+  purple((Math.floor(t * FAUNA_BLINK.rate + seed * 5 + c * 0.7) % 3 ? FAUNA_BLINK.lit : FAUNA_BLINK.dark) - dim);
+
+// A drawing's frame, painted once a pixel a cell, facing its way, and where
+// its lights are. Kept by creature (its seed), frame and way.
+const frames = new Map();
+function frameImage(key, f, dir, seed, dim) {
+  const id = `${key}|${f}|${dir}|${seed}|${dim}`;
+  let got = frames.get(id);
+  if (got) return got;
+  const rows = FAUNA_SPRITES[key].f[f], w = rows[0].length;
+  const img = document.createElement('canvas');
+  img.width = w; img.height = rows.length;
+  const g = img.getContext('2d'), lights = [];
+  for (let r = 0; r < rows.length; r++) for (let c = 0; c < w; c++) {
+    const ch = rows[r][c], at = dir > 0 ? c : w - 1 - c;
+    if (ch === 'L') { lights.push([at, r, c]); continue; }
+    const col = tone(ch, seed, r, c, dim);
+    if (!col) continue;
+    g.fillStyle = col;
+    g.fillRect(at, r, 1, 1);
+  }
+  got = { img, lights, w, h: rows.length };
+  frames.set(id, got);
+  return got;
+}
+
+// One drawing at cell (x, y) of the deep.
+function sprite(key, x, y, dir, seed, t, dim) {
+  const fr = frameImage(key, frameOf(key, seed, t), dir, seed, dim);
+  const wx = deepX0() + x * P, wy = deepTop() + y * P;
+  ctx.drawImage(fr.img, wx, wy, fr.w * P, fr.h * P);
+  for (const [at, r, c] of fr.lights) {
+    ctx.fillStyle = lightTone(seed, c, t, dim);
+    ctx.fillRect(wx + at * P, wy + r * P, P, P);
+  }
+}
+
+// A cell of the deep, for the two creatures that move along their length.
+function put(x, y, tone) {
+  ctx.fillStyle = tone;
+  ctx.fillRect(deepX0() + x * P, deepTop() + y * P, P, P);
+}
+
+// A siphonophore: its float, then the chain of bells swaying behind it, a
+// glint running down it.
+function siphon(x, y, dir, seed, t, dim) {
+  const K = FAUNA_SIPHON, run = Math.floor(t * K.glint + seed * 40) % (K.bells + 8);
+  put(x, y - 1, grey(K.float[0] - dim)); put(x - dir, y - 1, grey(K.float[1] - dim));
+  for (let i = 0; i < K.bells; i++) {
+    const cx = x - dir * i, cy = y + Math.round(Math.sin(i * K.wave - t * K.sway + seed * 6) * K.amp);
+    put(cx, cy, Math.abs(i - run) < 1 ? purple(K.glintTone - dim) : grey(K.bell[i % 2 ? 0 : 1] - dim));
+    if (i % 3 === 0) put(cx, cy + 1, i % 6 ? grey(K.frond - dim) : purple(K.frondLit - dim));
+  }
+}
+
+// A gulper eel: the great head, then the whip of its tail, the tip lit.
+function gulper(x, y, dir, seed, t, dim) {
+  const K = FAUNA_GULPER, head = FAUNA_SPRITES.gulperHead.f[0][0].length;
+  sprite('gulperHead', x, y, dir, seed, t, dim);
+  for (let i = 1; i <= K.tail; i++) {
+    const cx = dir > 0 ? x - i : x + head - 1 + i;
+    const cy = y + 2 + Math.round(Math.sin(i * K.wave - t * K.beat + seed * 6) * (i / K.tail) * K.amp);
+    put(cx, cy, i === K.tail ? purple(K.tip - dim) : grey((i > K.tail - K.dark ? K.under : K.body) - dim));
+    if (i < K.thick) put(cx, cy + 1, grey(K.under - dim));
+  }
+}
+
+// --- the creatures ----------------------------------------------------------------
+// Each zone's own dim, looked up once.
+const DIM = new Map(FAUNA_ZONES.map(z => [z.key, z.dim]));
+
+export function drawDeepFauna() {
+  const t = now() / 1000, { x0, x1 } = deepWindow();
+  const left = (x0 - deepX0()) / P, right = (x1 - deepX0()) / P;
+  // The ground under a column: the scales heaped on the floor, in rows.
+  const floorRow = col => (bedTop(deepX0() + col * P) - deepTop()) / P;
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  for (const c of POPULATION) {
+    const { x, y } = faunaAt(c, t, floorRow), reach = reachOf(c);
+    if (x + reach < left || x - reach > right) continue;
+    const col = Math.round(x), dim = DIM.get(c.zone) || 0;
+    if (c.kind === 'school') {
+      for (let m = 0; m < c.n; m++) {
+        const s = schoolAt(c, m, t);
+        sprite('sardine', col + s.dx, y + s.dy, c.dir, s.seed, t, dim);
+      }
+    } else if (c.kind === 'siphon') siphon(col, y, c.dir, c.seed, t, dim);
+    else if (c.kind === 'gulper') gulper(col, y, c.dir, c.seed, t, dim);
+    else sprite(c.kind, col, y, c.dir, c.seed, t, dim);
+  }
+  ctx.imageSmoothingEnabled = smooth;
+  ctx.fillStyle = '#000';
+}
