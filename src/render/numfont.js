@@ -3,6 +3,7 @@
 // numbers off the coil (render/fightnums.js) and the level on the serpent's
 // bar (render/serpentbar.js).
 
+import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { darkPage, turned } from '../ink.js';
 import { NUM_FONT } from '../config.js';
@@ -24,14 +25,19 @@ const seen = c => darkPage ? turned(c) : c;
 
 // A small sheet of every glyph in one face on its drop line, at `px` device
 // pixels a font pixel: a number is a drawImage a glyph. One sheet a size and
-// a face, kept until a font pixel is a different number of device pixels.
-let sheets = new Map(), sheetsPx = 0;
+// a face, kept until the device pixels a screen pixel change. A frame draws
+// at more than one size -- a big blow's number beside the small ones -- so
+// they are let go on the pixel ratio, never on the size: a canvas made
+// afresh a frame is a pause for the collector every few seconds.
+let sheets = new Map(), sheetsDpr = 0;
+export let sheetsMade = 0;                // test/deep-alloc.test.mjs
 export function sheetOf(px, face, drop) {
-  if (sheetsPx !== px) { sheets = new Map(); sheetsPx = px; }
+  if (sheetsDpr !== S.dpr) { sheets = new Map(); sheetsDpr = S.dpr; }
   const id = `${px}|${face}|${drop}`;
   let c = sheets.get(id);
   if (c) return c;
   c = document.createElement('canvas');
+  sheetsMade++;
   c.width = CHARS.length * GW * px;
   c.height = (GH + 1) * px;
   const g = c.getContext('2d');

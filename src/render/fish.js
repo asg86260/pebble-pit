@@ -117,7 +117,12 @@ const SP = [
   { name: 'Many-mouthed blob', L: FLOW_LENGTHS[6], bob: t => Math.sin(t * 2.2) * 2,
     draw(put, t) {
       const lobes = [[7, 0, 4.4 + Math.sin(t * 3) * 0.7, 3.6], [3.5, -1, 3 + Math.sin(t * 4 + 1) * 0.6, 2.8], [10.5, 1, 3.2 + Math.sin(t * 3.5 + 2) * 0.6, 3], [6, 2.4, 2.6 + Math.sin(t * 5 + 3) * 0.5, 2.4]];
-      const inside = (x, y) => lobes.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1);
+      // Indexed, not destructured: this is asked a thousand times a frame,
+      // and a destructured array is an iterator made each time.
+      const inside = (x, y) => {
+        for (const l of lobes) if (((x - l[0]) / l[2]) ** 2 + ((y - l[1]) / l[3]) ** 2 <= 1) return true;
+        return false;
+      };
       for (let x = -1; x < 16; x++) for (let y = -6; y <= 6; y++) {
         if (!inside(x, y)) continue;
         const rim = !inside(x + 1, y) || !inside(x - 1, y) || !inside(x, y + 1) || !inside(x, y - 1);

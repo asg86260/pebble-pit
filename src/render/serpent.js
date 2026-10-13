@@ -73,14 +73,17 @@ function lay(t, x0, x1) {
   const du = COIL_STEP / segPx, snoutU = SNOUT / segPx;
   const pts = [];
   let along = 0, last = null;
+  // A sample's next point is the one after it: asked once, not twice.
+  let p = coilLine(-snoutU, t);
   for (let u = -snoutU; u <= COIL_SEGS - 1; u += du) {
-    const p = coilLine(u, t), q = coilLine(u + du, t);
+    const q = coilLine(u + du, t);
     if (last) along += lengthOf(p.x - last.x, p.y - last.y);
     last = p;
     const len = lengthOf(q.x - p.x, q.y - p.y) || 1;
     const tx = (q.x - p.x) / len, ty = (q.y - p.y) / len;
     const r = radiusAt(u, snoutU);
     pts.push({ u, x: p.x, y: p.y, tx, ty, nx: -ty, ny: tx, along, r, r0: r });
+    p = q;
   }
   const alongAt = u => pts[Math.max(0, Math.min(pts.length - 1, Math.round((u + snoutU) / du)))].along;
   const reach = COIL_GIRTH * 2;

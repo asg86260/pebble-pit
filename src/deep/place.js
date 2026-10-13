@@ -10,6 +10,7 @@
 // Track SERPENT owns this file (docs/wave-serpent.md); every other track reads
 // it.
 
+import { now } from '../clock.js';
 import { S, pit } from '../state.js';
 import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
@@ -193,7 +194,7 @@ const waveLine = t => {
     return y;
   };
 };
-const waveY = (x, t) => waveLine(t)(x);
+const waveY = (x, t) => lineAt(t).wave(x);
 const coilX0 = () => deepX0() + COIL_X0 * DEEP_W;
 const coilSpan = () => (COIL_X1 - COIL_X0) * DEEP_W;
 // Where the body runs, head to tail, across the deep.
@@ -201,16 +202,39 @@ export const coilEnds = () => ({ x0: coilX0(), x1: coilX0() + coilSpan() });
 // How far along the body x is, head 0 to tail 1: what the lash is laid on.
 export const coilK = x => (x - coilX0()) / coilSpan();
 
-// The line walked once a frame: x at every step of arc length along it,
-// so a segment's place is a lookup. Keyed on the clock and the stage, the
-// only things the line moves with.
+// The line at `t`, kept while nothing it is worked out from has moved.
+// Every point of the body asks for it, thousands a frame, so the check is a
+// row of comparisons on what the line is made of -- the clock, the stage,
+// the phase's turn (`part`), the break (`breakKind`), the kill (`killA`) and
+// where the deep stands -- rather than on the bends worked out from them
+// (`tautK`, `lashK`, ...), which allocate a reading each: a reading, a key
+// or a line made a point is megabytes a second for the collector, and a
+// pause every few seconds. Anything `waveLine` comes to read belongs in
+// this row.
+const line = { t: NaN, now: NaN, snatched: false, stage: 0, freed: false, mechAt: 0, mechSkip: false, breakT: null,
+               freedAt: null, reformAt: null, top: NaN, x0: NaN, wave: null, xs: null };
+export let lineBuilds = 0;                // how often the line was worked out afresh (test/deep-alloc.test.mjs)
+function lineAt(t) {
+  const L = line, at = now(), top = deepTop(), x0 = coilX0();
+  if (L.t === t && L.now === at && L.snatched === S.snatched && L.stage === S.serpentStage
+      && L.freed === S.serpentFreed && L.mechAt === S.mechAt && L.mechSkip === S.mechSkip && L.breakT === S.breakT
+      && L.freedAt === S.freedAt && L.reformAt === S.reformAt && L.top === top && L.x0 === x0) return L;
+  L.t = t; L.now = at; L.snatched = S.snatched; L.stage = S.serpentStage; L.freed = S.serpentFreed;
+  L.mechAt = S.mechAt; L.mechSkip = S.mechSkip; L.breakT = S.breakT; L.freedAt = S.freedAt; L.reformAt = S.reformAt;
+  L.top = top; L.x0 = x0;
+  L.wave = waveLine(t); L.xs = null;
+  lineBuilds++;
+  return L;
+}
+
+// The line walked once: x at every step of arc length along it, so a
+// segment's place is a lookup.
 const STEP = 2;                           // px of arc a table entry
-let walked = null;
 function walk(t) {
-  const key = `${t}|${S.serpentStage}|${S.serpentFreed}|${coilX0()}|${tautK()}|${lashK()}|${diveK()}|${roarK()}|${killSway()}|${killDrop()}`;
-  if (walked?.key === key) return walked;
-  const xs = [coilX0()];
-  const wave = waveLine(t);
+  const L = lineAt(t);
+  if (L.xs) return L.xs;
+  const xs = [L.x0];
+  const wave = L.wave;
   let x = xs[0], y = wave(x), acc = 0;
   const end = coilSpan() * 1.02;          // the body's length, and a little over
   // Small x steps, arc summed, a table entry every STEP of arc. A step's
@@ -222,8 +246,8 @@ function walk(t) {
     x = nx; y = ny;
     while (xs.length * STEP <= acc) xs.push(x);
   }
-  walked = { key, xs };
-  return walked;
+  L.xs = xs;
+  return xs;
 }
 export function coilLine(u, t) {
   // The sway runs on the clock less what the stuns have held back, so a
@@ -239,7 +263,7 @@ export function coilLine(u, t) {
     const x = coilX0() + s;
     return { x, y: waveY(x, t) };
   }
-  const { xs } = walk(t);
+  const xs = walk(t);
   const i = Math.min(xs.length - 2, Math.floor(s / STEP)), f = s / STEP - i;
   const x = xs[i] + (xs[i + 1] - xs[i]) * f;
   return { x, y: waveY(x, t) };

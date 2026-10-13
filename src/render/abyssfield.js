@@ -101,7 +101,8 @@ function cellRung(c, r, dragX, dragY, depth, a, t, rampLen, magicLen, magicShare
   // thinning the filament to nothing along one stretch and swelling it
   // along another
   const wave2 = Math.sin(cx * ABYSS_FLOW_COL2 + ry * ABYSS_FLOW_ROW2 - a * ABYSS_FLOW_DRIFT2);
-  return rungOf(seeth(c, r), PATCH_OF[seeth(c >> 3, r >> 3)], f, wave2, depth, t, rampLen, magicLen, magicShare);
+  CELL[F] = f; CELL[WAVE2] = wave2; CELL[DEPTH] = depth; CELL[T] = t;
+  return rungOf(seeth(c, r), PATCH_OF[seeth(c >> 3, r >> 3)], rampLen, magicLen, magicShare);
 }
 
 // What a cell reads off its hash, a table a reading over the hash's 997
@@ -115,10 +116,19 @@ const JITTER_OF = byHash(h => h % 3 - 1);
 const PATCH_OF = byHash(h => h % 10);
 const STAR_KEEP_MOST = 4;
 
+// A cell's two waves, its row's depth and the clock reach `rungOf` through
+// this array rather than as arguments: a fractional number handed to a call
+// is a fresh object on the heap, and a call a cell of the water is a few
+// megabytes a frame for the collector.
+const CELL = new Float64Array(4);
+const F = 0, WAVE2 = 1, DEPTH = 2, T = 3;
+
 // The rest of a cell, given its hash `h`, its eight-cell patch's nature
-// `patch` (0..2 empty, 3..6 ordinary, 7+ nebula) and its two waves: `f` the
-// current's own and `wave2` the slow one riding over it as a strength.
-function rungOf(h, patch, f, wave2, depth, t, rampLen, magicLen, magicShare) {
+// `patch` (0..2 empty, 3..6 ordinary, 7+ nebula) and, in `CELL`, its two
+// waves: `f` the current's own and `wave2` the slow one riding over it as a
+// strength.
+function rungOf(h, patch, rampLen, magicLen, magicShare) {
+  const f = CELL[F], wave2 = CELL[WAVE2], depth = CELL[DEPTH], t = CELL[T];
   const keep = patch >= 7 ? STAR_KEEP_MOST : 1;  // nebula patches keep four times the stars
   if (patch >= 3 && STAR_OF[h] < keep) {
     // the breath, bent so a star spends most of its life dim, then lifted
@@ -198,14 +208,15 @@ export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, dee
     const v2 = dragX * ABYSS_FLOW_COL2 + r * ABYSS_FLOW_ROW2 - a * ABYSS_FLOW_DRIFT2;
     const sV = Math.sin(v), cV = Math.cos(v), sV2 = Math.sin(v2), cV2 = Math.cos(v2);
     const at = j * cols, hV = (r * HASH_R) | 0, pV = ((r >> 3) * HASH_R) | 0;
+    CELL[DEPTH] = depth; CELL[T] = t;
     for (let i = 0; i < n; i++) {
       // Most of the water is dark, and most of that is known dark from the
       // current alone: outside the veil's widest band, and on a hash no
       // patch seats a star on.
       const f = sU[i] * cV + cU[i] * sV, h = Math.abs(hU[i] ^ hV) % 997;
       if (STAR_OF[h] >= STAR_KEEP_MOST && Math.abs(f) > ABYSS_VEIL_AT) continue;
-      const rung = rungOf(h, PATCH_OF[Math.abs(pU[i] ^ pV) % 997],
-                          f, sU2[i] * cV2 + cU2[i] * sV2, depth, t, tones.length, magic.length, 1);
+      CELL[F] = f; CELL[WAVE2] = sU2[i] * cV2 + cU2[i] * sV2;
+      const rung = rungOf(h, PATCH_OF[Math.abs(pU[i] ^ pV) % 997], tones.length, magic.length, 1);
       if (rung > 0) data[at + i] = grey[rung];
       else if (rung < 0) data[at + i] = purple[-rung];
     }
