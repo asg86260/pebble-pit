@@ -2189,3 +2189,40 @@ body.pad :focus { outline: none; }
 .langs { display: flex; flex-direction: column; gap: 4px; align-self: stretch; }
 .langs button { width: 100%; font-family: var(--face); line-height: 1.4; }
 .langs button.on { color: var(--paper); background: var(--ink); }
+
+/* The feedback form (feedbackform.js; option A of
+   docs/mocks/feedback-form-2026-10-13.html), on the held sheet, the landing
+   page's column and the crashed sheet, in the paste box's hand. The tick is a
+   sheet button drawn as a one-cell box and its words, the box filled when on
+   as the boards fill a chosen thing; the line of what goes is small and lower
+   case, since its values are data, each value in full ink and the save
+   underlined. */
+.feedback { align-items: stretch; }
+.held .feedback textarea { width: 26em; max-width: 100%; box-sizing: border-box; }
+.col .feedback textarea { box-sizing: border-box; }
+.held .feedback .tick, .col .feedback .tick {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  border: 0; padding: 2px 0; background: none;
+}
+.feedback .tick .box { flex: none; width: 12px; height: 12px; border: 1px solid var(--ink); background: var(--paper);
+                       position: relative; box-sizing: border-box; }
+.feedback .tick.on .box::after { content: ''; position: absolute; inset: 2px; background: var(--ink); }
+.feedback .tick:disabled, .feedback .send:disabled { opacity: .4; cursor: default; }
+/* the tick's box is what fills, never the row; a grey send does not answer */
+@media (hover: hover) {
+  .held .feedback .tick:hover, .col .feedback .tick:hover,
+  .held .feedback .send:disabled:hover, .col .feedback .send:disabled:hover { color: var(--ink); background: none; }
+}
+.feedback .goes, .feedback .fb-public, .feedback .fb-left {
+  font-size: 10px; text-transform: none; letter-spacing: calc(.06em * var(--track));
+  color: var(--ink-2); line-height: 1.5; text-align: left;
+}
+.held .feedback .goes, .held .feedback .fb-public { width: 26em; max-width: 100%; }
+.col .feedback .goes, .col .feedback .fb-public { max-width: var(--col-w); }
+.feedback .goes .lead { margin-right: .5em; }
+.feedback .goes .v { color: var(--ink); overflow-wrap: anywhere; }
+.feedback .goes .v + .v::before { content: ' · '; color: var(--ink-4); }
+.feedback .goes .v.save { border-bottom: 1px solid var(--ink); }
+.feedback .goes .why, .feedback .goes .keep { display: block; }
+.feedback .fb-left { text-align: right; }
+.feedback [hidden] { display: none !important; }

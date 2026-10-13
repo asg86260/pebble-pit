@@ -1,0 +1,38 @@
+# The feedback worker (DESIGN.md, "Feedback form"; README.md here for the
+# deploy). Workers Free plan, no card on file: past the free limits
+# Cloudflare refuses requests instead of billing for them. A worker of its
+# own, not a route on pebble-cloud: the cloud is off on Steam and the form is
+# not, a flood of reports must not spend the cloud's write budget, and each
+# has its own kill switch.
+name = "pebble-feedback"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+# Served on the owner's own domain, not workers.dev.
+workers_dev = false
+routes = [{ pattern = "pebble-feedback.graham-things.com", custom_domain = true }]
+
+# The kill switch. `npx wrangler deploy --var FEEDBACK_PAUSED:1` answers every
+# route 503 with a day's Retry-After before D1 is touched.
+[vars]
+FEEDBACK_PAUSED = "0"
+
+# FEEDBACK_TOKEN and IP_PEPPER are secrets: `npx wrangler secret put <name>`.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pebble-feedback"
+# Set by the owner from `npx wrangler d1 create pebble-feedback` (README.md,
+# step 3). `wrangler dev --local` runs over a local database whatever it says.
+database_id = "00000000-0000-0000-0000-000000000000"
+# The same files feedback/test/d1.mjs builds its database from.
+migrations_dir = "migrations"
+
+# The daily sweep: old saves, old reports, yesterday's ip counts.
+[triggers]
+crons = ["37 3 * * *"]
+
+# Workers Logs: every refused request logs one line -- its status, route and
+# origin, never the words or the ip.
+[observability]
+enabled = true

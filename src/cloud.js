@@ -28,6 +28,7 @@ import {
 } from './config/cloud.js';
 import { fold, normalSecret, normalPair, showSecret, showPair } from './codes.js';
 import { msg } from './lang.js';
+import { gzip, gunzip } from './gzip.js';
 
 // --- where the worker is ------------------------------------------------------
 // The checks point the yard at the real worker's `handle`, in-process, with
@@ -148,12 +149,8 @@ async function call(method, path, { secret, body, headers = {}, keepalive = fals
   }
 }
 
-// A slot goes up gzipped: a busy yard is a few kilobytes that way.
-async function pipe(data, stream) {
-  return new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(stream)).arrayBuffer());
-}
-export const gzip = raw => pipe(new TextEncoder().encode(raw), new CompressionStream('gzip'));
-const gunzip = async b => (b.length ? new TextDecoder().decode(await pipe(b, new DecompressionStream('gzip'))) : '');
+// A slot goes up gzipped (gzip.js).
+export { gzip };
 
 // --- reading a slot ---------------------------------------------------------------
 const playedOf = s => (Number.isFinite(+s?.playedS) ? +s.playedS : 0);

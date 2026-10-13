@@ -14,6 +14,8 @@ import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
 import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
 import { msg } from './lang.js';
 import { fillLanguages, inForce } from './langpage.js';
+import { feedbackReady } from './feedback.js';
+import { mountFeedback } from './feedbackform.js';
 
 const col = document.querySelector('.col');
 const said = document.getElementById('said');
@@ -32,6 +34,8 @@ function opened() {
 // The column's pages, told apart by `data-pane` as the held sheet's are
 // (settings.js): a space-separated list, shown when it holds the name.
 function showPane(name) {
+  // The feedback button only where the build has a worker (feedback.js).
+  document.getElementById('fbbtn').dataset.pane = feedbackReady() ? 'settings' : '';
   for (const el of col.querySelectorAll('[data-pane]')) el.hidden = !el.dataset.pane.split(' ').includes(name);
   paste.hidden = true;
   say('');
@@ -47,6 +51,9 @@ function showPane(name) {
   if (name === 'settings') {
     sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume');
   }
+  // A new form each time: the tick off, the words the draft, and the save the
+  // open slot's blob, the one play would open, named as the saves rows name it.
+  if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'title', raw: () => slotRaw(openSlot()), yard: true });
   if (name === 'conflict') showConflicts(document.getElementById('clashes'), say, { done: () => showPane('main') });
 }
 // The front's three lines that read the store.
@@ -77,6 +84,8 @@ fillLanguages(document.getElementById('langlist'), { reload: reloadIn, stay: () 
 document.getElementById('langbtn').addEventListener('click', () => showPane('language'));
 langFoot.addEventListener('click', () => showPane('language'));
 document.getElementById('langback').addEventListener('click', () => showPane('settings'));
+document.getElementById('fbbtn').addEventListener('click', () => showPane('feedback'));
+document.getElementById('fbback').addEventListener('click', () => showPane('settings'));
 async function reloadIn() {
   if (leaving) return;
   leaving = true;
@@ -99,9 +108,10 @@ async function play() {
   location.href = 'play.html';
 }
 document.getElementById('play').addEventListener('click', play);
-// Not while typing: the paste box, and the cloud's code boxes.
+// Not while typing: the paste box, and the cloud's code boxes; nor on the
+// feedback form, whose tick and send are not play.
 addEventListener('keydown', e => {
-  if (e.target.closest?.('textarea, input')) return;
+  if (e.target.closest?.('textarea, input, .feedback')) return;
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); }
 });
 

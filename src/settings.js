@@ -6,7 +6,7 @@ import { pref, setPref, reducedMotion, coarse, dark } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot, restore, bootYard, reset } from './persist.js';
 import { S } from './state.js';
-import { storeTrouble, storeSettled, openSlot } from './save.js';
+import { storeTrouble, storeSettled, openSlot, slotRaw } from './save.js';
 import { VEIL_MS, LIGHT_PAPER, DARK_PAPER, TOAST_MS } from './config.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
@@ -18,6 +18,8 @@ import { cloudReady, cloudStatus } from './cloud.js';
 import { cloudNoticeDue } from './notices.js';
 import { msg } from './lang.js';
 import { fillLanguages, inForce } from './langpage.js';
+import { feedbackReady } from './feedback.js';
+import { mountFeedback } from './feedbackform.js';
 // input.js imports this file; `hold` is a declaration, so it is there to
 // call however the ring is entered.
 import { hold } from './input.js';
@@ -35,6 +37,7 @@ const slotsEl = document.getElementById('slots');
 const indexBtn = document.getElementById('indexbtn');
 const indexEl = document.getElementById('index');
 const cloudEl = document.getElementById('cloudsheet');
+const fbBtn = document.getElementById('fbbtn');
 
 // The sheet's pages: every child carries `data-pane`, a space-separated list
 // of the pages it is on. Two fronts (`title`, where the boot stops, and
@@ -49,6 +52,9 @@ let paneNow = 'main';
 export const pane = () => paneNow;
 export function showPane(name) {
   paneNow = name;
+  // The feedback button is on the settings page only where the build has a
+  // worker to send to: asked as the page turns, so a check can point it.
+  fbBtn.dataset.pane = feedbackReady() ? 'settings' : '';
   for (const el of sheet.querySelectorAll('[data-pane]')) el.hidden = !el.dataset.pane.split(' ').includes(name);
   paste.hidden = true;                          // folded; asked for again if wanted
   recordBtn.textContent = recordLabel();
@@ -56,6 +62,9 @@ export function showPane(name) {
   sayIndexButton(indexBtn);
   if (name === 'record') showRecord(recordEl);
   if (name === 'index') showIndex(indexEl);
+  // A new form every time the page is turned to: the tick off, the words the
+  // draft, the save the open slot's blob as the store holds it now.
+  if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'game', raw: () => slotRaw(openSlot()) });
   if (name === 'slots') {
     // Deleting the open slot is the reset it replaced: a new yard, standing.
     showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); }, true, () => reset());
@@ -81,6 +90,8 @@ langBtn.textContent = msg('set-langbtn', { name: inForce().name });
 fillLanguages(document.getElementById('langlist'), { reload: () => leave(location.href), stay: () => showPane('settings') });
 langBtn.addEventListener('click', () => showPane('language'));
 document.getElementById('langback').addEventListener('click', () => showPane('settings'));
+fbBtn.addEventListener('click', () => showPane('feedback'));
+document.getElementById('fbback').addEventListener('click', () => showPane('settings'));
 document.getElementById('titlebtn').addEventListener('click', () => leave('index.html'));
 
 // Leaving the page, for the landing page or the desk's exit: the veil goes up

@@ -63,6 +63,12 @@ crashed-word = stopped
 # crash sheet button
 crashed-copysave = copy save
 
+# crash sheet button under copy save, opening the feedback form in place (a placeholder for the owner's words)
+crashed-fbbtn = [owner's words: send a report]
+
+# crash sheet line over the feedback form's box, asking for the save with the report (a placeholder for the owner's words)
+crashed-fb-ask = [owner's words: the crashed sheet asks for the save]
+
 # pause sheet heading
 held-word = paused
 
@@ -389,7 +395,7 @@ set-controlsbtn = controls
 # controls page heading
 set-controls-word = controls
 
-# controls page back, and the language page's
+# controls page back, and the language page's and the feedback page's
 set-controlsback = back
 
 # settings button to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)
@@ -397,6 +403,67 @@ set-langbtn = [owner's words: language] · { $name }
 
 # language page heading (a placeholder for the owner's words)
 set-lang-word = [owner's words: heading]
+
+# settings button to the feedback page, under controls (a placeholder for the owner's words)
+set-fbbtn = [owner's words: feedback]
+
+# feedback page heading (a placeholder for the owner's words)
+set-fb-word = [owner's words: heading]
+
+# feedback form: the box's hint while it is empty (a placeholder for the owner's words)
+fb-box =
+    .placeholder = [owner's words: what went wrong, or what reads wrong]
+
+# feedback form: under the box in the last few hundred characters; $n is how many are left (a placeholder for the owner's words)
+fb-left = [owner's words: characters left] { $n }
+
+# feedback form: the tick that sends the save along (a placeholder for the owner's words)
+fb-tick = [owner's words: send my save]
+
+# feedback form: the lead-in to the line listing everything that will be sent, rebuilt as the form changes (a placeholder for the owner's words)
+fb-goes = [owner's words: what goes, before it goes]:
+
+# feedback form, on the line of what goes: the player's own words (a placeholder for the owner's words)
+fb-goes-words = [owner's words: your words]
+
+# feedback form, on the line of what goes while the tick is on: the save; $kb is its size in kilobytes (a placeholder for the owner's words)
+fb-goes-save = [owner's words: your save] { $kb } KB
+
+# feedback form on the landing page, on the line of what goes while the tick is on: the save; $yard is which yard, as the saves rows say it ("rock 12 · 7 crew"), $kb its size in kilobytes (a placeholder for the owner's words)
+fb-goes-save-yard = [owner's words: your save] { $yard } · { $kb } KB
+
+# feedback form, at the end of the line of what goes: how long it is kept; $reportDays for a report, $saveDays for a save (a placeholder for the owner's words)
+fb-goes-keep = [owner's words: a report is kept { $reportDays } days, a save { $saveDays } days]
+
+# feedback form, on the line of what goes when the tick is grey: the open slot has no save (a placeholder for the owner's words)
+fb-nosave-empty = [owner's words: no save to send, the slot is empty]
+
+# feedback form, on the line of what goes when the tick is grey: the save is past the size the worker takes; $kb is its size in kilobytes (a placeholder for the owner's words)
+fb-nosave-big = [owner's words: the save is too big to send] { $kb } KB
+
+# feedback form, under the line while the tick is on: whether a sent save may become a public test fixture (the owner's call is open; a placeholder for the owner's words)
+fb-public = [owner's words: a sent save may become a public test fixture]
+
+# feedback form's send button (a placeholder for the owner's words)
+fb-send = [owner's words: send]
+
+# feedback form's send button while the report is on its way (a placeholder for the owner's words)
+fb-sending = [owner's words: sending]
+
+# feedback form, once the report is taken (a placeholder for the owner's words)
+fb-sent = [owner's words: sent, thank you]
+
+# feedback form, once the report is taken but its save was not, the worker's store being full (a placeholder for the owner's words)
+fb-sent-nosave = [owner's words: sent, but the save was not kept]
+
+# feedback form, under the sent line: where a reply would be found; $target is the store, steam or itch (a placeholder for the owner's words)
+fb-sent-where = { $target ->
+    [steam] [owner's words: a reply is in the store page's discussions]
+   *[other] [owner's words: a reply is in the itch page's comments]
+}
+
+# feedback form, when a send did not go: the words and the tick are kept and nothing is sent later (a placeholder for the owner's words)
+fb-failed = [owner's words: did not send, your words are kept, try again]
 
 # settings page back
 set-settingsback = back
@@ -580,7 +647,7 @@ title-settingsback = back
 # landing controls page heading
 title-controls-word = controls
 
-# landing controls back, and the language page's
+# landing controls back, and the language page's and the feedback page's
 title-controlsback = back
 
 # landing settings to the language page; $name is the language in force, in its own name (a placeholder for the owner's words)
@@ -588,6 +655,12 @@ title-langbtn = [owner's words: language] · { $name }
 
 # landing language page heading (a placeholder for the owner's words)
 title-lang-word = [owner's words: heading]
+
+# landing settings button to the feedback page, under controls (a placeholder for the owner's words)
+title-fbbtn = [owner's words: feedback]
+
+# landing feedback page heading (a placeholder for the owner's words)
+title-fb-word = [owner's words: heading]
 
 # landing cloud conflict page heading
 title-conflict-word = choose a yard
