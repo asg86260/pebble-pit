@@ -2,8 +2,10 @@
 // the top of the glass while the camera is in the deep (DESIGN.md, "The
 // serpent's bar"). Full at a closed wound, empty at the break; four pips after
 // it, one a defense. It reads the sim and keeps only what the picture needs to
-// remember: where the bar stood before the last blow (the grey trail) and
-// where the last blow left it (the purple the heal has grown back since).
+// remember, all of it here and none of it saved, so a reload shows the bar as
+// it stands: where the fill is shown (it slides to the wound rather than
+// jumping), where a heal began flowing in (the purple), and the pieces the
+// last blows knocked out of it.
 
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
@@ -15,15 +17,30 @@ import { owedWound, landsAt } from './barflight.js';
 import { drawFoeStatuses, statusRowH } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
 import { breakKind, breakFill, rising } from '../deep/phases.js';
-import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT, BAR_TRAIL,
-         BAR_HEALED, BAR_TO_COME, BAR_TRAIL_HOLD_S, BAR_TRAIL_RATE, BAR_STUN, BAR_STUN_RIM,
-         BAR_CHIP_S, BAR_CHIP_OPEN_S, BAR_CHIP_POSE_S, BAR_CHIP_FALL, BAR_CHIP, BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP, STATUS_PX,
-         SERPENT_WOUND, BREAK_FILL_STEPS } from '../config.js';
+import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
+         BAR_HEALED, BAR_TO_COME, BAR_STUN, BAR_STUN_RIM, BAR_HEAL_FADE_S,
+         BAR_EASE_S, BAR_SETTLE, BAR_HEAL_RATE, BAR_FLOW_EASE, BAR_FLOW_MIN, BAR_STALE_S,
+         BAR_SHARD_PX, BAR_SHARD_HOLD, BAR_SHARD_LIFT, BAR_SHARD_STAGGER_S, BAR_SHARD_POSES, BAR_SHARD_GRAV,
+         BAR_SHARD_KICK, BAR_SHARD_FALL_S, BAR_SHARD_FADE_S, BAR_CHIP,
+         BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
+         SERPENT_WOUND, BREAK_DIVE, BREAK_ROAR } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
 
-let stage = -1, was = 1, trail = 1, low = 1, hitAt = 0, then = 0;
+// The picture's memory. `shown` is the fill as drawn, 0..1; `shownTo` where it
+// was heading last frame, so a blow's stretch is measured off it; `healLo`
+// where the purple starts (null for none), `healIn` when the heal finished
+// flowing in (null while it still is); `refilling` while a break's refill is
+// coming up, which is the new defense and not a heal, so it has no purple.
+let stage = -1, then = 0, shown = 1, shownTo = 1, healLo = null, healIn = null, refilling = false;
+// Blows from a defense that has broken, whose numbers are still flying in:
+// they land on the new defense's bar but took nothing from it.
+let stale = new WeakSet();
+// The pieces in the air, in screen pixels off the bar's resting top-left.
+let shards = [];
+let thrown = 0;
+const hash = n => { const v = Math.sin(n * 127.1 + 3.7) * 43758.5453; return v - Math.floor(v); };
 
 // Not while the first trip down has the camera, and faded back in as it lets
 // go (abyssintro.js).
@@ -45,27 +62,96 @@ export function barRect() {
   const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
   return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w: BAR_W, h: BAR_H };
 }
+const depthOf = st => SERPENT_WOUND[Math.min(st, SERPENT_WOUND.length - 1)];
 // What the bar shows of the defense up, 0..1: the wound as the numbers that
 // have landed in it say, not yet as the sim has it (render/barflight.js).
 export function barLeft(t) {
-  const d = SERPENT_WOUND[Math.min(S.serpentStage, SERPENT_WOUND.length - 1)];
+  const d = depthOf(S.serpentStage);
   return d > 0 ? 1 - Math.max(0, Math.min(1, (S.serpentWound + owedWound(t)) / d)) : 1;
+}
+const isBig = h => blowK(h.done) > NUM_KICK_BIG;
+
+// The stretch from `to` to `from` (shares of the bar) breaks into a grid of
+// pieces, each held lit in the notch, then thrown away from the side the blow
+// came from (`dir`) and spread outward from the middle of the stretch.
+function shatter(t, from, to, big, dir) {
+  const x0 = BAR_W * to, w = Math.max(1, BAR_W * (from - to));
+  const cols = Math.max(1, Math.round(w / BAR_SHARD_PX)), cw = w / cols;
+  const hold = big ? BAR_SHARD_HOLD.big : BAR_SHARD_HOLD.small, k = BAR_SHARD_KICK;
+  for (let c = 0; c < cols; c++) {
+    const wait = hold + (big ? c * BAR_SHARD_STAGGER_S : 0), out = (c + 0.5) / cols - 0.5;
+    for (let r = 0; r * BAR_SHARD_PX < BAR_H; r++) {
+      const n = thrown++;
+      shards.push({ at: t, x: x0 + c * cw, y: r * BAR_SHARD_PX,
+        w: Math.max(1, Math.round(cw)), h: Math.min(BAR_SHARD_PX, BAR_H - r * BAR_SHARD_PX),
+        hold: wait, lift: big ? BAR_SHARD_LIFT.big : BAR_SHARD_LIFT.small,
+        vx: dir * (k.side + hash(n) * k.sideRand) + out * k.spread,
+        vy: -(k.up + hash(n + 3) * k.upRand) + r * k.row });
+    }
+  }
+}
+
+// One frame of the picture's memory, `dt` seconds on: the blows landed since
+// the last frame break their stretches off, the fill slides down to the wound
+// or flows up to it, and the purple fades once the heal is all in.
+function step(t, dt, target) {
+  const s = t / 1000;
+  if (S.serpentStage !== stage) {
+    // A break: what was left goes all at once, a big blow's worth. The bar
+    // first coming up has nothing to break, and a new defense stands where
+    // the sim has it (empty, under a break's refill).
+    if (then && S.serpentStage === stage + 1 && stage >= 0 && shown > 0) shatter(s, shown, 0, true, 1);
+    stage = S.serpentStage;
+    shown = shownTo = target;
+    healLo = healIn = null;
+    stale = new WeakSet(S.hits);
+    refilling = false;
+  }
+  // Away from the deep, the bar's memory is too old to tell: it shows the bar
+  // as it stands, with nothing breaking off it.
+  if (dt > BAR_STALE_S) { shown = shownTo = target; healLo = healIn = null; refilling = false; shards = []; return; }
+  // Each blow that landed since the last frame, newest first, measured back
+  // up from where the bar stands now.
+  const landed = S.hits.filter(h => h.weapon !== 'heal' && !stale.has(h) && landsAt(h) > then && landsAt(h) <= t)
+                       .sort((a, b) => landsAt(b) - landsAt(a));
+  let end = Math.min(target, shownTo);
+  for (const h of landed) {
+    const from = Math.min(1, Math.max(end, shownTo), end + h.done / (depthOf(stage) || 1));
+    if (from > end) shatter(s, from, end, isBig(h), h.side % 2 ? 1 : -1);
+    end = from;
+  }
+  shownTo = target;
+  if (target < shown) {
+    // Down: a slide over a few hundredths of a second, sub-pixel, and a blow
+    // ends any heal still showing.
+    shown += (target - shown) * (1 - Math.exp(-dt / BAR_EASE_S));
+    if (shown - target < BAR_SETTLE) shown = target;
+    healLo = healIn = null;
+  } else if (target > shown + BAR_SETTLE) {
+    // Up: a break's refill at the break's pace, or a heal at its own, easing
+    // into the end either way.
+    if (breakKind()) refilling = true;
+    if (refilling) healLo = null;
+    else if (healLo == null || healIn != null) { healLo = shown; healIn = null; }
+    const pace = !refilling ? BAR_HEAL_RATE
+               : 1 / (breakKind() === 'roar' ? BREAK_ROAR.run : BREAK_DIVE.out);
+    shown = Math.min(target, shown + dt * Math.max(BAR_FLOW_MIN, Math.min(pace, (target - shown) * BAR_FLOW_EASE)));
+    if (shown >= target - BAR_SETTLE) {
+      shown = target;
+      if (healLo != null) healIn = s;
+      refilling = false;
+    }
+  } else if (target > shown) shown = target;
+  if (healIn != null && s - healIn >= BAR_HEAL_FADE_S) healLo = healIn = null;
+  shards = shards.filter(p => s - p.at < p.hold + BAR_SHARD_FALL_S);
 }
 
 export function drawSerpentBar() {
-  // A break refills the bar in held steps as it plays (deep/phases.js).
-  const t = now(), left = Math.min(barLeft(t), breakFill(BREAK_FILL_STEPS));
-  // A new defense starts full, with nothing to remember.
-  if (S.serpentStage !== stage) { stage = S.serpentStage; was = trail = low = left; hitAt = t; }
-  const dt = Math.max(0, (t - then) / 1000);
+  // A break refills the bar as it plays (deep/phases.js).
+  const t = now(), target = Math.min(barLeft(t), breakFill());
+  const dt = then ? Math.max(0, (t - then) / 1000) : 0;
+  step(t, dt, target);
   then = t;
-  // A blow: the bar drops, the trail holds where it stood, and the heal's
-  // purple is measured up from here.
-  if (left < was) { low = left; hitAt = t; }
-  was = left;
-  if (left >= trail) trail = left;
-  else if ((t - hitAt) / 1000 > BAR_TRAIL_HOLD_S) trail = Math.max(left, trail - BAR_TRAIL_RATE * dt);
-  if (low > left) low = left;
 
   const pips = SERPENT_WOUND.length;
   const { x, y: rest } = barRect();
@@ -76,20 +162,30 @@ export function drawSerpentBar() {
     if (h.weapon === 'heal') continue;
     const a = (t - landsAt(h)) / 1000;
     if (a < 0 || a >= BAR_KNOCK_S) continue;
-    const full = blowK(h.done) > NUM_KICK_BIG ? BAR_KNOCK_BIG : BAR_KNOCK;
+    const full = isBig(h) ? BAR_KNOCK_BIG : BAR_KNOCK;
     knock = Math.max(knock, a < BAR_KNOCK_S / 2 ? full : full / 2);
   }
   const y = rest - knock;
-  const fill = (c, fx, fy, w, h) => { ctx.fillStyle = seen(c); ctx.fillRect(fx, fy, w, h); };
-  const len = k => Math.round(BAR_W * k);
+  const fill = (c, fx, fy, w, h) => {
+    ctx.fillStyle = seen(c);
+    ctx.fillRect(Math.round(fx), Math.round(fy), Math.round(w), Math.round(h));
+  };
+  const alpha = barK(t);
   ctx.save();
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  ctx.globalAlpha = barK(t);
+  ctx.globalAlpha = alpha;
   fill(BAR_EDGE, x - 1, y - 1, BAR_W + 2, BAR_H + 2);
   fill(BAR_TRACK, x, y, BAR_W, BAR_H);
-  fill(BAR_TRAIL, x, y, len(trail), BAR_H);
-  fill(BAR_HEALED, x, y, len(left), BAR_H);
-  fill(BAR_LEFT, x, y, len(Math.min(low, left)), BAR_H);
+  fill(BAR_LEFT, x, y, BAR_W * shown, BAR_H);
+  // What the heal has brought back, purple while it flows in and fading out
+  // once it is all in.
+  if (healLo != null && shown > healLo) {
+    const s = t / 1000, k = healIn == null ? 1 : Math.max(0, 1 - (s - healIn) / BAR_HEAL_FADE_S);
+    const a = Math.round(BAR_W * healLo), b = Math.round(BAR_W * shown);
+    ctx.globalAlpha = alpha * k;
+    fill(BAR_HEALED, x + a, y, b - a, BAR_H);
+    ctx.globalAlpha = alpha;
+  }
   // The phase boxes: none on the first defense, which is the only one the
   // player knows of; they come up one by one as he rises from the first break.
   const boxes = S.serpentStage === 0 ? 0
@@ -106,24 +202,23 @@ export function drawSerpentBar() {
       fill(BAR_TRACK, px + BAR_STUN_RIM, py + BAR_STUN_RIM, BAR_PIP - BAR_STUN_RIM * 2, BAR_PIP - BAR_STUN_RIM * 2);
     }
   }
-  // Every blow that has landed lately knocks a sliver out of the fill's end.
-  const depthUp = SERPENT_WOUND[Math.min(S.serpentStage, SERPENT_WOUND.length - 1)] || 1;
-  const end = x + len(left);
-  for (const h of S.hits) {
-    if (h.weapon === 'heal') continue;
-    const a = (t - landsAt(h)) / 1000;
-    if (a < 0 || a >= BAR_CHIP_S) continue;
-    // The sliver the blow took: its share of the defense, the bar's whole
-    // height, a pixel at the least.
-    const w = Math.max(1, Math.round(BAR_W * h.done / depthUp));
-    const lit = a < BAR_CHIP_POSE_S, dir = h.side % 2 ? 1 : -1;
-    if (a < BAR_CHIP_OPEN_S) fill(lit ? BAR_CHIP : BAR_TRACK, end - w, y, w, BAR_H);
-    // and it, out of the notch and down past the bar, turned over a pose at a time
-    const flat = Math.floor(a / BAR_CHIP_POSE_S) % 2 === 0;
-    const cx = end - w / 2 + dir * BAR_CHIP_FALL.side * a, cy = y + BAR_CHIP_FALL.down * a + BAR_CHIP_FALL.grav * a * a;
-    const cw = flat ? w : BAR_H, ch = flat ? BAR_H : w;
-    fill(lit ? BAR_LEFT : BAR_CHIP, Math.round(cx - cw / 2), Math.round(cy), cw, ch);
+  // The pieces: held lit in the notch the blow made, where it struck and not
+  // where the fill has slid to since, then falling a held pose at a time and
+  // fading out whole.
+  const s = t / 1000;
+  for (const p of shards) {
+    const a = s - p.at;
+    let px = p.x, py = p.y, c = BAR_LEFT;
+    if (a < p.hold) { py -= p.lift; c = BAR_CHIP; }
+    else {
+      const f = Math.floor((a - p.hold) * BAR_SHARD_POSES) / BAR_SHARD_POSES;
+      px += p.vx * f; py += p.vy * f + 0.5 * BAR_SHARD_GRAV * f * f;
+    }
+    const life = p.hold + BAR_SHARD_FALL_S;
+    ctx.globalAlpha = alpha * Math.max(0, Math.min(1, (life - a) / BAR_SHARD_FADE_S));
+    fill(c, x + px, rest + py, p.w, p.h);
   }
+  ctx.globalAlpha = alpha;
   // what the fighters have laid on the serpent, in a row under the bar
   drawFoeStatuses(x, rest - statusRowH() - STATUS_GAP);
   ctx.restore();

@@ -308,7 +308,6 @@ export const BREAK_BUBBLE_RISE = 14;   // cells a bubble climbs before it is gon
 export const BREAK_ROAR = { gape: 0.4, run: 1.6, shut: 0.4 };
 export const BREAK_ROAR_H = P * 8;     // the bump, up off the line
 export const BREAK_ROAR_DAZE = 0.6;
-export const BREAK_FILL_STEPS = 8;     // the bar refills in this many held steps
 
 export const DEEP_KNOBS = [
   { key: 'SERPENT_WINDOW_1', label: 'serpent window, bare', min: 5, max: 120, step: 1,
