@@ -6,9 +6,13 @@ Built (DESIGN.md's "As built: the plumbing"): the language table
 (locales/languages.json, only English `ready`), the `language` preference
 and the default chain with `desk.language()`, the CJK faces cut at build
 (tools/fonts.mjs), `--face`/`--track` and `FACE`, the shell's words through
-the file, test/l10n-locales and l10n-default. Open, in order:
-- **The picker** (both settings panes, the landing page's foot link): its
-  look is being mocked; its words (`set-langbtn`, `set-lang-word`,
+the file, test/l10n-locales and l10n-default. All eight other languages are
+drafted (machine, to locales/STYLE.md) and unreviewed. **The owner's call
+(2026-10-13): launch English only; a language goes `ready`, and is ticked on
+Steam, only after one native reader has looked at its file** -- no paid
+translators. Readers are found by asking players (the feedback form,
+below, and the store page). Open, in order:
+- **The picker** (its own sheet, being built on `feat/lang-picker`); its words (`set-langbtn`, `set-lang-word`,
   `set-langback`, the `title-` pair) are the owner's. It lists the rows with
   `ready: true` and calls `chooseLang`. A language goes `ready` when its file
   is approved and its overflow survey is clean; the guard then holds it
