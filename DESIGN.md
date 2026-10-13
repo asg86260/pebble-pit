@@ -18779,8 +18779,8 @@ and the id itself where no file has it. (Not `say`: a dozen files already
 hand the sheet's reply line around under that name.) Numbers go in as
 JavaScript writes them, so an English line reads byte for byte as the
 template it replaced; there are no isolation marks round a placeable. The
-language is the `lang` preference (prefs.js, default `en`), read once at
-boot, so a module may look a message up at its own top level; changing it
+language is settled once at boot (phase two retired the `lang` preference
+for `language`; see its As-built note), so a module may look a message up at its own top level; changing it
 reloads, as the dark switch does. `<html lang>` is set from it.
 
 **The pages.** Every element in play.html and index.html that says
@@ -18828,7 +18828,7 @@ preference for the next load.
 
 ### Open -- phase two
 
-Designed in "Localization phase two (design, not built)", below.
+Designed in "Localization phase two (design, part built)", below.
 
 1. **The picker**: where it stands (the settings page, the landing page)
    and its words, which are the owner's; each language named in itself.
@@ -18849,7 +18849,7 @@ Designed in "Localization phase two (design, not built)", below.
    code said before the words moved; the file keeps it, for the owner to
    word (`station-party`).
 
-## Localization phase two (design, not built)
+## Localization phase two (design, part built)
 
 Phase one put every word in `locales/en.ftl` and changed nothing a player
 sees. Phase two is everything between that file and a player in Shanghai
@@ -18871,7 +18871,81 @@ is a small game to translate -- a week of one translator's time a language,
 not a month -- and most of the risk is in the layout and the faces, not the
 words.
 
-### The languages and their codes
+### As built: the plumbing (2026-10-13)
+
+The parts with no look to vote on are built, and nothing an English player
+sees has changed. Built: the default (section 1, all but the picker), the
+faces' machinery (section 3, all but the CJK look), the shell's words
+(section 6, its first two items) and the guard (section 8, all but `long`
+pseudo). Not built: the picker, the sync, the sign, the CJK typography,
+the numbers, `list-sep`, the objective card's derived cap, `l10nfit`.
+
+- **The table.** One table, `locales/languages.json`, not two config lists
+  (`LANG_NAMES`, `LANG_READY`): a row a language with its code, its name for
+  itself, Steam's API names for it, the tags it answers to (`xx` exact,
+  `xx-*` any under it), `ready`, and for the three CJK languages the face
+  (`SC`, `JP`, `KR`). JSON, beside the files, because the shell reads it too
+  and never imports from src/. Only English is ready. The picker will list
+  the ready rows; `LANGS` (every file found) is still what can be forced.
+- **The default.** `language` (prefs.js, null = follow) replaces `lang`. One
+  change from the text above: a player whose preferences were kept before
+  this day (a blob with no `language` key, which is every player who touched
+  a switch since phase one and carries `lang: 'en'`) is pinned to English,
+  not followed: they have been playing in English, and a game that changes
+  language under a player mid-run reads as broken. A new player, or one who
+  never touched a switch, follows. The order is src/languages.js's
+  `pickLanguage`: the choice (any file, ready or not), then on the desk
+  Steam's language and the system's in order, else in a browser
+  `navigator.languages` in order, then English; a language not ready or
+  with no file is passed over for the next, not stopped at (so a reader
+  with `de` then `fr` gets French while German waits). The node yard
+  follows nothing and reads English unless a check chooses.
+- **The bridge.** `desk.language()` -> `{ steam, system }` (preload.cjs, nine
+  functions): `steam.languageOf(client)` (`apps.currentGameLanguage()`, null
+  off Steam) and `app.getPreferredSystemLanguages()`. Whether the packaged
+  Windows build reports the system's list rather than `en-US` is still to be
+  checked on one, as the text says.
+- **The faces.** `tools/fonts.mjs`, run by vite.config.js at every build and
+  dev start: Noto Sans SC, JP and KR as variable TrueType from Google Fonts'
+  own repository (`google/fonts`, `ofl/notosans{sc,jp,kr}`), pinned to a
+  commit and checked against a SHA-256, fetched once a machine into
+  `~/.cache/pebble-pit/fonts` (or `PIT_FONT_CACHE`; 37 MB the three), and cut
+  by `subset-font` to the characters of the language file's messages (not
+  its comments) plus figures, marks, CJK punctuation and the full-width
+  forms (and all the kana for Japanese), the weight axis kept from 400 to
+  700, into `src/fonts/<code>.woff2` (ignored). The OFL goes out beside them
+  as `fonts/OFL.txt`. No file, no network, a bad hash: a warning, no face,
+  the system's CJK face as before. @fontsource was passed over: its CJK
+  packages are pre-split into unicode-range slices, the wrong shape to cut.
+  Measured on the pilot drafts (docs/l10n-pilot/draft, 115 of 948 messages):
+  zh-CN 145 KB (614 characters), ja 231 KB (635, most of it the kana), ko
+  86 KB (523). A whole translation should land near the estimate above.
+- **Loading.** lang.js registers the language's face with `FontFace` (family
+  `Pit SC`/`JP`/`KR`) and awaits its load before any module runs, rather
+  than an `@font-face` in a sheet, so no other language ever names the file.
+  `FACE`, the canvas's stack, is the house mono with that family after it;
+  the five `ctx.font` strings are `${px}px ${FACE}`.
+- **The two knobs.** Every face in the three sheets is `var(--face)` and
+  every rule that tracks words is `calc(<its em> * var(--track))` (47 rules;
+  the pips, the cloud's pairing code and its box, and the dev panel keep
+  their numbers; 72 `letter-spacing` declarations in all, not 73). `:root`
+  sets `--face` to the stack and `--track: 1`; `:lang(zh|ja|ko)` puts the
+  face after the stack and holds `--track: 1` until the CJK look is voted.
+  `test/l10n-type.test.mjs` reads every declaration back with the knobs put
+  in and holds it to the sheets as they stood (test/fixtures/type-before.json).
+- **The shell.** electron/lang.cjs reads `locales/*.ftl` and the table with
+  @fluent/bundle's CommonJS entry (now a runtime dependency, so the packaged
+  app has it; `files` takes `locales/`), in Steam's language then the
+  system's, ready only. The window's title is `title-doctitle`, the page's
+  own title message, rather than a new one, so a localized name, if the
+  owner wants one, is one message. The dialog's four strings are
+  `shell-carry-*`, still the owner's placeholders.
+- **The guard.** `test/l10n-locales.test.mjs` as section 8 says, plus: the
+  table names every file and the faces it names are the ones style.css's
+  `:lang` blocks write. `test/l10n-default.test.mjs` is the order, the maps,
+  the shell agreeing with the page, and the preference's migration.
+
+### The languages and their codes (built)
 
 One file a language, named by the tag a browser reports, so the match
 against `navigator.languages` is a string compare:
@@ -18894,7 +18968,7 @@ in their list, else English, and can still pick Simplified by hand. Steam
 splits Spanish into Spain (`spanish`) and Latin America (`latam`); one `es`
 file answers both (the open call below is which Spanish it is written in).
 
-### 1. The picker
+### 1. The picker (the default built; the picker not)
 
 **Where.** On both settings panes -- the held sheet's (play.html, the
 `settings` pane beside `dark`) and the landing page's (index.html, its own
@@ -19076,7 +19150,7 @@ picture).
   rectangles and the upload tool, the brief's draft, the per-language
   shots run, and the guard.
 
-### 3. Faces
+### 3. Faces (the machinery built; the CJK look not)
 
 **What the DOM uses today.** One stack, everywhere: `ui-monospace,
 "Courier New", monospace` (style.css, shelf.css, title.css, and five canvas
@@ -19270,7 +19344,7 @@ What the survey finds is fixed in the system where it can be (a derived
 width, `max-content`, a wrap allowed where a row can take two lines), and
 put to the owner as a mock where the fix changes a shape.
 
-### 6. What phase one left out
+### 6. What phase one left out (the shell built)
 
 - **The Electron window's title** stays `Pebble Pit` in every language: it
   is the name, not a sentence (main.cjs prevents the page's `<title>` from
@@ -19340,7 +19414,7 @@ put to the owner as a mock where the fix changes a shape.
   language the player set for it; the default (section 1) honors that, and
   the in-game picker overrides it for this install.
 
-### 8. Checks
+### 8. Checks (built, but for `long` pseudo)
 
 A new node file, `test/l10n-locales.test.mjs`, beside the two from phase
 one, over every `locales/*.ftl` but English:
