@@ -1846,8 +1846,9 @@ export const TESTS = [
     // first so the timber waits its turn behind it, which is what a cancel
     // can hand back.
     // Not past what the pit holds: a pit filled over its brim tears, and
-    // the tear's scene takes the card off the screen.
-    window.__give(20000);
+    // the tear's scene takes the card off the screen. Read off the hole, so
+    // it stays short of the brim whatever the hole is cut to.
+    window.__give(Math.floor(state().pitCapacity * 0.8) - state().stored);
     window.__buy('house');
     await settle(0.6);
     // affordable is not done: the card stays up, still selling the props
@@ -1957,7 +1958,8 @@ export const TESTS = [
     await settle();
     window.__crew(2, 1);
     window.__jump(4);
-    window.__give(20000);
+    // short of the brim: a hole filled past it tears, and the tear takes the card
+    window.__give(Math.floor(state().pitCapacity * 0.8) - state().stored);
     window.__answered('props');
     window.__build();
     await settle(0.6);
