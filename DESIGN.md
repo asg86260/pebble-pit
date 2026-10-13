@@ -18178,3 +18178,419 @@ crit's rumble exists at all.
   session, and rows for what the pad does that the mouse has no row for;
   those rows' words are the owner's, placeholders until written
   (`PAD_WORDS`, src/controls.js).
+
+## Endless serpent (design, not built)
+
+*The owner's calls, 2026-10-12: after the story's kill the serpent keeps
+coming back, ten per cent stronger in health each time and in nothing else;
+the game counts the level and keeps the best; each kill drops a fang until
+every slot stands; a kill after the first is the kill alone, short, then a
+pause and it rises again.* Everything below is written against the code as
+it stands on main at 6f8f6172.
+
+### The bargain
+
+Today the story's kill is the end of the deep: the sheet goes down, the
+motes gather the serpent again (`S.reformAt`, `KILL_REFORM_S`) and it swims
+at stage `SERPENT_PHASES`, defenseless, "to be slain at leisure" for its
+scales. Nothing climbs after that. Endless makes the kill a lap instead of a
+wall:
+
+- **What the player gets:** a fight that goes on. Each kill brings a fang
+  (while a slot is free), so the party grows from four stations to seven
+  over the first three laps -- three more fighters, three more ladders to
+  climb, three more classes to pick. And a number that only goes up: the
+  level on the bar, and the best level kept for the record and for Steam.
+- **What the player gives:** the leisure. The serpent never again lies there
+  to be farmed; it comes back with its four defenses, its windows, its meals,
+  its lash, dive, roar and orb -- the same fight -- and more of it to chew
+  through each time. A party that stops climbing stops winning.
+- **Where it ends:** it does not end, but the party does. Every ladder is
+  eight rungs and then done (CLAUDE.md, "A ladder is two rungs a coin"), and
+  seven stations is the floor full, so a party has a top speed and the
+  serpent does not. The level where a maxed seven-station party can no longer
+  hold a phase's depth open inside its window (`SERPENT_WINDOW`) is the wall,
+  and how near the wall a player gets -- by the classes they pair, the orb
+  pulled by hand, the clicks -- is what the best level records. Where the
+  wall falls is measured, not guessed: `tools/node/deep-pace.mjs` with seven
+  stations at rung 8 and the growth below gives the level, and that number
+  goes in this section when the work is built.
+
+### The level
+
+`S.serpentLevel` is the serpent being fought: 1 is the story's serpent, and
+a fresh game starts there. It rises by one on **the rise** (below), never at
+the kill: between a kill and its rise the serpent is gone and the level on
+record is the one just beaten. `S.serpentBest` is the highest level ever
+reached, raised on each rise; in play it equals the level, but it is what
+the record and the achievements read, so a dev hook that sets a fight back
+(`__serpent`) never un-earns anything, and a later "start the deep over"
+(not designed) would have a record to keep.
+
+How many kills a yard has had is derived, not stored:
+`kills = serpentLevel - 1 + (serpentFreed ? 1 : 0)`.
+
+### The state it adds
+
+Three fields on `S`, all in state.js's `SAVED` list:
+
+| field | starts | means |
+|---|---|---|
+| `serpentLevel` | 1 | the serpent being fought, 1 the story's |
+| `serpentBest` | 1 | the highest level reached |
+| `killFangs` | 0 | fangs dropped by kills (the breaks' are `fangsDropped`) |
+
+`S.serpentFreed` keeps its meaning to the sim exactly: *the serpent is down,
+between a kill and the rise* (stage `SERPENT_PHASES`). Rule 520 in
+verify.js, "freed iff stage past the last", stands unchanged. What it no
+longer means is "the story is past the kill", and every reader that meant
+that moves to `beatDone('freed')` (the story's kill beat, played once):
+
+- `objectives.js`, the `free` step: done when `beatDone('freed') ||
+  S.serpentFreed`. Without this the line "free your sqhusband" comes back at
+  every level, since `serpentFreed` goes false on each rise.
+- `cradled()` in deep/phases.js: he is in the belly only at level 1. At
+  level 2 and on, `cradled()` is false whatever the stage. `drawCoil`
+  (render/serpent.js) reads `held` for two things, him in the cage *and* the
+  wound's gap opening at the belly; these split into `cradled()` (him) and
+  the gap, which opens at every level, so the wound still reads on an empty
+  belly. The ribs stay -- they are the serpent's -- with nobody in them.
+- `abyssDue()` (abyssintro.js) reads `!S.serpentFreed`; the abyss beat is
+  played once (beats.js skips a done beat), so it needs no change, but it is
+  read again on every rise and a check says it does not replay.
+
+The rest of `serpentFreed`'s readers (`mechOf`, `orbOn`, `breakKind`,
+`resists`, render/fish.js, render/serpent.js's bar guard, pad.js) all mean
+"down, nothing to fight", which is still right at every level.
+
+**The migration** (`src/migrations/<date>-endless-serpent.js`, `SAVE_V`
+18 to 19): an old save gets `serpentLevel: 1, serpentBest: 1, killFangs: 0`
+-- the defaults -- and nothing else. **A save past the kill starts at level
+1, freed, and rises to level 2 by itself**, because level = kills + 1 and
+the story's serpent is the one it has beaten; it is not handed level 2 at
+load, since the rise is a thing that is *seen* (the motes gather) and
+nothing teleports. In practice:
+
+- past the kill with the sheet put down (`reformAt` set, the reform long
+  done, the serpent swimming at stage 5): the first frame's rise check finds
+  the reform finished and runs the rise -- level 2, stage 0, the bar back --
+  and the kill's fang, which the old build never dropped, drops from the
+  belly on that rise (the catch-up below) for a gatherer to carry in;
+- past the kill with the sheet still up: nothing until it is put down, then
+  the reform plays and the rise follows, as for a new kill;
+- before the kill: nothing changes; the story kill is the first lap.
+
+### How the depth scales: one place
+
+Health only, compounding: a defense's depth at level L is
+`SERPENT_WOUND[stage] * SERPENT_LEVEL_GROWTH ** (L - 1)`, rounded to a whole
+number, with `SERPENT_LEVEL_GROWTH = 1.1` in config/deep.js beside
+`SERPENT_DEPTHS` and a `TUNABLE` line on the dev panel.
+
+It lives in **one function**, `depthAt(stage, level = S.serpentLevel)`, in a
+new `src/deep/depth.js` that imports only state.js and config -- so
+deep/serpent.js, deep/phases.js and the renderer can all import it without
+the import-order trap party.js already documents. Every reader of
+`SERPENT_WOUND[...]` today goes through it:
+
+- deep/serpent.js `depth()` -- the wound's cap and the break;
+- deep/phases.js:89, the orb's hit points (`hp * depth`) -- the orb is
+  health, so it scales;
+- render/serpentbar.js:65 `depthOf` -- the shards' share of the bar;
+- verify.js:492, the wound's bound;
+- scenes.js's set-ups, so a scene at level 7 reads level 7's depth.
+
+`SERPENT_WOUND` itself stays as it is -- the level-1 table, scaled by the
+dev panel's knob -- and a grep-check (test/endless.test.mjs reads the
+source) says nothing outside depth.js and config indexes it.
+
+**What does not scale** ("attacks, timings and mechanics unchanged"): the
+windows, the meals' clock, every `MECHANICS` turn, the lash's and roar's
+hits, the dive, the resists (re-chosen at each break by "the serpent hardens
+against its strongest foes", from the party standing, as now), the scales a
+blow knocks loose (they read the blow, not the depth). One reader needs a
+call: **the stun** sizes itself on `blow / (depth * STUN_SHARE)`. Read off
+the scaled depth, the same blow stuns for shorter at every level -- a
+mechanic of the party's getting weaker, which is not health-only. The
+design reads the stun off the **level-1 depth** (`depthAt(stage, 1)`), so a
+party's stuns stay what they were. Asked below.
+
+**How big the numbers get** (the level-1 depths 5970 / 5070 / 5560 / 5670 /
+18420):
+
+| level | x | bare | warded | split | fading | constrict |
+|---|---|---|---|---|---|---|
+| 2 | 1.10 | 6,567 | 5,577 | 6,116 | 6,237 | 20,262 |
+| 10 | 2.36 | 14,077 | 11,955 | 13,110 | 13,370 | 43,433 |
+| 25 | 9.85 | 58,803 | 49,938 | 54,765 | 55,848 | 181,432 |
+| 50 | 106.7 | 637,112 | 541,065 | 593,357 | 605,096 | 1,965,763 |
+| 100 | 12,528 | 74.8m | 63.5m | 69.7m | 71.0m | 230.8m |
+
+Whether the numbers cope:
+
+- **The bar** draws a fraction (`woundK`) and no number, so it reads the
+  same at any level. The orb's bar likewise.
+- **Blow numbers** (render/fightnums.js) are what a blow did, which is the
+  party's, not the serpent's, so they do not grow with the level at all.
+- **Heal numbers** are what a meal closed, up to the whole depth: at level
+  25 the constrict's meal says "+181432", seven glyphs; at level 50,
+  "+1965763". fightnums.js draws `'+' + n` raw in `NUM_FONT`, which has only
+  the digits and `+`. Seven or eight glyphs at `NUM_FONT_PX` 2 is about 70
+  screen pixels -- legible, but a long string over the belly. The design
+  puts heal numbers through `fmt` (words.js) once they pass four digits --
+  "+181k", "+1.97m" -- which needs `k`, `m`, `b` and `.` drawn into
+  `NUM_FONT`. That is a drawing, so it is a mock before it is code (asked
+  below); until then the raw digits are correct, only long.
+- **Floats**: depths stay far inside exact integers for any level a player
+  can reach (level 300 is ~2e16 of the constrict; the wall comes long
+  before), and `depthAt` rounds.
+- **Hover and boards** print no depth today (checked: the deep's boards and
+  the badge hovers read rungs, coins and statuses), so nothing else grows.
+
+### The fang on a kill
+
+Each kill drops **one fang from the belly**, on the frame of the last blow,
+the way a break's fang drops today -- before the coil goes limp, while the
+belly is there to drop it from -- and it sinks and is carried to the crusher
+by the existing flow (`sinkFangs`, `carryFang`, the fighter's errand), counted into
+`S.fangs`, and spent on the floating build button (`layStation`) for the
+next slot. Nothing about carrying, counting or spending changes.
+
+- **Where:** in deep/party.js, which owns the fang. Its `onBreak` listener
+  already hears stage `SERPENT_PHASES` on the kill (and ignores it, since
+  `dropFangs` caps at `FANG_BREAKS`); a second function, `dropKillFang`,
+  answers that stage.
+- **The guard** is the existing pattern, a saved count and a catch-up:
+  `due = min(kills, killFangs + room)`, where `room = FIGHT_STATIONS_MAX -
+  S.stations.length - S.fangs - S.fangsLoose.length` -- a fang held or lying
+  on the floor already promises a slot. While `killFangs < due`, one drops
+  and `killFangs` goes up. A kill heard twice drops nothing twice; a kill
+  with no room drops nothing, and since stations are never taken down no
+  slot ever opens later to owe it.
+- **The catch-up runs on the rise too**, the only other moment the belly is
+  whole and in place. That is what drops an old save's story-kill fang
+  (above), and nothing else ever reaches it.
+- **Once all seven stand**, `room` is 0 and kills drop nothing.
+
+**The cap** becomes derived: `FIGHT_STATIONS_MAX = DEEP_SLOTS.length` (7),
+moved from config/classes.js into config/deepboard.js beside `DEEP_SLOTS`
+(today deepboard.js imports it from classes.js to mint `PARTY_IDS`; the
+import turns round). `PARTY_IDS` becomes `s1..s7`, and the station table
+(stations.js), the rows (deep/rows.js), the build sites
+(render/buildsites.js), `DOWN_THERE` (works.js) and the shop-rows coverage
+table (`test/shop-rows.mjs`) all pick up s5..s7 from it -- the coverage
+table needs its three new lines, and `FANG_RUNGS`/`FANG_RUNG_DUST` price
+their first rungs as for any fang's station. Each new station needs a
+fighter from the deep's crew, which the shaft and the pods already supply;
+no change there. `FANG_BREAKS` stays 3: the story's three breaks pay the
+story's three stations, the kills pay the rest.
+
+**What verify.js changes:**
+
+- `verifyParty`, the fang rule: `fangsDropped <= min(stage, FANG_BREAKS)` is
+  false at level 2 stage 0 (three dropped, no breaks this lap). It becomes
+  `fangsDropped <= (serpentLevel > 1 ? FANG_BREAKS : min(stage, FANG_BREAKS))`.
+- **New, the fang ledger:** `killFangs <= kills`, and `stations.length +
+  fangs + fangsLoose.length <= 1 + fangsDropped + killFangs` -- a fang from
+  nowhere is the thing that must never be possible, and every group watches
+  it at once.
+- The cap rule stands as written; it reads the derived 7. Its comment ("the
+  first and three fangs' worth") is rewritten.
+- The serpent block, "the defense went back": `stage < serpentWas` is
+  exactly what the rise does. It is allowed on a frame where the level rose
+  by one and the stage is 0, and nowhere else. **New:** the level is a whole
+  number at least 1, never goes back and never rises by more than one in a
+  frame; `serpentBest >= serpentLevel`.
+- **New:** at level 2 and on, nobody is cradled, and the `freed` and
+  `finale` beats never run (the story's kill is had once).
+
+### A kill after the first
+
+On the last blow of a level-2-or-later serpent:
+
+1. **The stage breaks as today** (`stepSerpent`: stage to `SERPENT_PHASES`,
+   `serpentFreed`, `freedAt = now`), the breakers hear it, the kill's fang
+   drops.
+2. **No beat.** The `freed` beat's `when` (`S.serpentFreed`) is true again,
+   but it is done and beats.js never replays a done beat, so neither it nor
+   the `finale` it leads to plays. Since no yard beat runs, there is no
+   letterbox and no hush (`HUSH_YARD`) for free, the sheet does not come up,
+   and the camera is not moved: `killFrame` is called only from
+   `stepFreed`, the story beat's step. The camera stays the player's.
+3. **The kill alone:** the drawing reads `S.freedAt` through `killA`,
+   `killSway`, `killDrop`, `apartK` (deep/phases.js), none of which knows
+   about the beat, so the last blow held (`KILL.last`), the limp to the
+   floor and the coming apart play exactly as in the story, 4.2 s. The
+   belly lets nobody out (`cradled()` is false), so no walk, no cheer.
+   The fighters stop and go back to their posts, as they do after the story
+   kill (test/snatch.test.mjs, "after the kill the fighters stop").
+4. **The pause:** `SERPENT_RISE_PAUSE_S` (first guess 6 s) after the coming
+   apart is done, the reform starts: `S.reformAt` is set and the motes
+   gather the serpent head first over `KILL_REFORM_S` (2.2 s), as after the
+   story's sheet. The number lives in config/deepcrew.js beside the `KILL_*`
+   numbers, with a `TUNABLE` line. Down time is 4.2 + 6 + 2.2, about
+   12 seconds a lap -- long enough for the gatherers to sweep and a fang to
+   be carried, short enough that the fight is the fight.
+5. **The rise**, when the reform is done (`reformK() === 1`): one function in
+   deep/serpent.js, beside the break it mirrors, run at the head of
+   `stepSerpent` --
+   `serpentLevel++`, `serpentBest = max(best, level)`, stage 0, wound 0,
+   `serpentFreed = false`, `freedAt = reformAt = breakT = null`, `orb =
+   null`, the chips and the stun cleared, `clearStatuses()`,
+   `resetMechanic()`, the meal's window reopened (`mealT = 0`, `meal++`),
+   `resistBy` emptied and `settleResist(0)` -- the same clean slate a break
+   gives a defense, and the same one `__serpent` gives a stage. Then the
+   rise's listeners (the kill-fang catch-up). The bar fades in with the new
+   level on it.
+
+**The story's kill joins the same road**: its sheet put down sets
+`reformAt` (beats.js, `freedsheet`'s skip, as now), the reform plays, and
+the rise makes it level 2. So there is one rise, reached two ways; only the
+first kill is preceded by the beat, the walk, the finale and the sheet.
+
+**The sqhusband and the belly:** he came out on the story's kill and went
+home in the finale (`S.retired`); nothing about him changes. At level 2 and
+on the belly is empty: the ribs are drawn and the wound's gap opens in them,
+with nobody inside, and on the kill nobody drops out of it.
+
+**Nothing teleports:** the serpent goes limp and comes apart on screen,
+gathers on screen and only then has a bar and a level; a fang drops from the
+belly and is carried; the fighters walk back to their posts and out again.
+A reload at any point picks the lap up where it was: `freedAt`, `reformAt`
+and the three new fields are saved, and the rise is a fact of the game clock.
+
+### What the bar draws
+
+render/serpentbar.js, nothing in the sim:
+
+- **The level label** after the phase pips: `[owner's words: e.g. "Lv 7"]`,
+  in `NUM_FONT` at the bar's own size and ink. The words are the owner's
+  ("Player copy is the owner's"); the design names a placeholder format
+  string in config/deepdraw.js (`SERPENT_LEVEL_SAYS`), and `NUM_FONT` gains
+  the glyphs that string needs (an `L` and a `v` for the example). Shown from
+  level 2 on -- the story's serpent is not "level 1" to a player who does not
+  yet know there are more (asked below).
+- **The bar's centering** (`barRect`) measures the label's drawn width along
+  with the bar and the pips, so the strip stays centered as the number grows
+  from one digit to three -- measured, not a guessed width.
+- **The pips from the first defense:** today no pips show on the first
+  defense ("the only one the player knows of") until the dive reveals them.
+  At level 2 and on the player knows all five, so all five show from stage 0.
+- Between a kill and its rise the bar is hidden, as it is today whenever no
+  defense is up (`barShown`), and fades in on the rise.
+
+The label is a drawing, so it is a mock first (the placement and the glyphs)
+before render/serpentbar.js is touched.
+
+### The record and the achievements
+
+- **The record:** `serpentBest`, saved. A row in the books (src/stats.js,
+  `TALLY_ROWS`) reads it: `[owner's words: e.g. "deepest serpent: Lv 12"]`.
+- **Achievements:** Steam's list is the notices' catalog (achievements.js,
+  `STEAM_ACHIEVEMENTS`), one a notice, so an achievement is a notice in
+  src/catalog.js whose predicate reads `S.serpentBest`. Suggested, all
+  **for the owner** (thresholds, names and notes are theirs):
+  - a serpent past the story: best level 2 (the first rise);
+  - best level 5, 10 and 25;
+  - every slot standing (`S.stations.length === FIGHT_STATIONS_MAX`).
+  The level-25 one should sit near the measured wall for a maxed party; if
+  the wall falls lower, the top threshold moves to it. Each new notice adds
+  a line to `node tools/steam-achievements.mjs`'s list for the Steamworks
+  dashboard, as the existing 49 have.
+
+### The checks
+
+A new node file, `test/endless.test.mjs`, each group from a fresh game:
+
+- **The level climbs by killing it** ("buy it like a player"): setup by
+  hooks the check is not about -- the snatch played, a strong party
+  (`__party`, rung 8) and the depths shrunk by the dev panel's
+  `SERPENT_WOUND_SCALE` so a lap is minutes of game time -- then nothing but
+  the fight: the fighters' own blows break every defense, the story's sheet
+  is put down (`__skipBeat('sheet')`, the player's press), and `runUntil`
+  level 3. Asserted: the level went 1, 2, 3 on rises; `serpentBest` is 3;
+  the `freed` and `finale` beats ran once, on the first kill only; `S.hush`
+  stayed 0 and no sheet came up through the second kill; the crew count did
+  not change on the second kill; the second lap's down time is the kill plus
+  `SERPENT_RISE_PAUSE_S` plus `KILL_REFORM_S` to a frame.
+- **The depth is 1.1 a level**: at level 7 (`__serpent({ level: 7, stage
+  })`, setup), a click-and-strike total of one under `depthAt` leaves the
+  defense standing and one more breaks it, for every stage; `depthAt(s, 7)`
+  equals `round(SERPENT_WOUND[s] * 1.1 ** 6)`; the stun from the same blow
+  is as long at level 7 as at level 1; and the source of deep/, render/ and
+  verify.js indexes `SERPENT_WOUND` only in depth.js.
+- **A kill's fang builds a station**: four stations standing, the fight
+  killed through; a fang drops from the belly on the last blow, a gatherer
+  carries it to the crusher (`S.fangs` 1), the floating build button's press
+  lays station s5 in slot 5 and a delver raises it. Then the yard at seven
+  stations: a kill drops none (`fangsLoose` empty, `killFangs` unchanged).
+  And a held fang counts: six stations and one fang unspent, a kill drops
+  none.
+- **An old save past the kill** (a save from before this, kept as
+  `test/fixtures/past-the-kill.json` -- the owner's, or one written by the
+  current build at stage 5 with the sheet down): loaded, it rises to level 2
+  on its first frames, one fang drops from the belly and is carried in, the
+  objective line does not come back, `cradled()` is false, and neither the
+  finale nor the abyss beat replays.
+- **A reload mid-lap**: saved during the pause and restored, the rise lands
+  at the same game time (the reload check in every group watches the bodies;
+  this one asks the level and the clock).
+
+Changes to existing files:
+
+- `test/snatch.test.mjs`, "the fourth break ... back after the sheet": its
+  last assertion (`reformK() === 1`) becomes "level 2, stage 0, the bar
+  up", since the rise clears `reformAt`. "set back after the kill, the next
+  fourth break plays it all again" passes `level: 1` to `__serpent`: the
+  hook forgets the story's beats only when it sets level 1, since a fight
+  set back at level 4 is a fight at level 4, not the story.
+- `test/party-verify.test.mjs`: a fang from nowhere fails the ledger rule; a
+  stage going back with the level rising passes and without it fails; eight
+  stations fail the cap.
+- `test/party.test.mjs`'s "three fangs build three more" still holds (three
+  breaks, four stations); its `FIGHT_STATIONS_MAX` reads 7 now, so the
+  assertion compares with `1 + FANG_BREAKS`.
+- `test/persist-roundtrip.test.mjs` is red until the three fields are in
+  `SAVED`.
+
+Shots: two scenes in src/scenes.js, `serpent-lv2` (the bar just risen, the
+label and all five pips) and `serpent-lv25` (a heal number at level 25's
+depth), and the bench's `look.mjs` shot is the check for both; no test can
+see the label.
+
+### What it must not break
+
+- **Nothing teleports.** The level rises only on a rise the player can
+  watch; a fang drops from the belly and is carried; a migrated save rises
+  on screen rather than loading at level 2.
+- **The finale plays once.** It is reached only through the `freed` beat,
+  which beats.js plays once; the `__serpent` hook forgets it only at level 1.
+  A rule says neither runs at level 2 and on.
+- **The deep's numbers stay readable** at high levels: the bar is a
+  fraction, the blows are the party's, and the heal number is the one that
+  grows -- shortened through `fmt` once the glyphs are drawn.
+- **The free build** never reaches the deep (`deepOn`), so none of this is
+  there; the demo likewise.
+- **config.js owns every number**: `SERPENT_LEVEL_GROWTH`,
+  `SERPENT_RISE_PAUSE_S`, the label's format, the derived
+  `FIGHT_STATIONS_MAX`; nothing in a module.
+
+### Open -- the owner's calls
+
+1. **The label's words** (`[owner's words: e.g. "Lv 7"]`) and the stats
+   line's, and whether the label shows on the story's serpent as "Lv 1" or
+   only from level 2 (the design: from 2).
+2. **The camera on a later kill**: left where the player has it (the
+   design), or the story's zoom in on the belly (`killFrame`) without the
+   letterbox?
+3. **The stun** under scaling: read off the level-1 depth so a party's stuns
+   stay as long (the design), or off the scaled depth so they shorten with
+   the level? And the orb's hit points: scaled with the depth (the design,
+   since they are health) or held at level 1's?
+4. **The heal number at high levels**: shortened to "+181k" with `k`, `m`,
+   `b`, `.` drawn into the number font (needs a mock), or left as raw
+   digits?
+5. **The wall**: a maxed seven-station party stops climbing at some level
+   (to be measured). Is that the intent -- the best level is a record of how
+   near the wall you got -- or should something keep a maxed party climbing?
+6. **The achievements**: which thresholds, and their names.

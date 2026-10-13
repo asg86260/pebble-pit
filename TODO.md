@@ -1,5 +1,15 @@
 # Still to do
 
+## Endless serpent -- DESIGNED, AWAITING APPROVAL (2026-10-12)
+
+"Endless serpent" in DESIGN.md (design, not built): after the story's kill
+the serpent rises again a level up, 1.1x the depth a level and nothing
+else; a kill drops a fang until all seven slots stand. Blocked on the
+owner's calls listed at the end of that section (the label's words, the
+camera on a later kill, the stun and the orb under scaling, the heal
+number's font, the wall, the achievements), and the label wants a mock
+before it is drawn.
+
 ## Controller support -- BUILT, WORDS AND STEAMWORKS OPEN (2026-10-12)
 
 "Controller support" in DESIGN.md (built). Open:
