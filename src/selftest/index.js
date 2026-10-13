@@ -134,7 +134,7 @@ export const TESTS = [
     book().querySelector('.it[data-key="rockhand"]')?.click();
     await raf();
     const h = book().querySelector('.entry .head');
-    out.push(ok(!!h && !h.querySelector('.pic, canvas, .mark') && !!h.firstElementChild?.querySelector('.name'),
+    out.push(ok(!!h && !h.querySelector('.pic, canvas, .mark') && !!h.firstElementChild?.matches('.name'),
       'an entry with no icon opens with no icon box, its name first'));
     await esc();
     return out;
