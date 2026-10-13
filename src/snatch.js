@@ -327,7 +327,7 @@ function herX(from) {
     const her = side < 0 ? d.x - WORKER - KILL_MEET_GAP : d.x + d.w + KILL_MEET_GAP;
     return Math.max(deepX0() + P, Math.min(deepX1() - WORKER - P, her + side * (WORKER + KILL_MEET_GAP)));
   }
-  const w = (st && S.workers.find(o => o.station === st.id)) || S.workers.find(o => belowYard(o));
+  const w = (st && S.workers.find(o => o.type === TYPE.FIGHTER && o.station === st.id)) || S.workers.find(o => belowYard(o));
   const x = w ? w.x : from - P * 12;
   return Math.max(deepX0() + P, Math.min(deepX1() - WORKER - P, x + WORKER + P));
 }

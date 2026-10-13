@@ -33,7 +33,7 @@ const ATTACKS = new Set([TYPE.ROCK, TYPE.FIGHTER]);
 
 // Her at the kill: the first station's fighter, whom he walks out to
 // (snatch.js, `herX`).
-const herAtKill = w => S.beat.yard === 'freed' && !!S.stations?.[0] && w.station === S.stations[0].id;
+const herAtKill = w => S.beat.yard === 'freed' && !!S.stations?.[0] && w.type === TYPE.FIGHTER && w.station === S.stations[0].id;
 
 export function roleOf(w) {
   if (w.cast || w.met || w.dig || OPENING.has(S.beat.yard)) return 'lead';

@@ -19,7 +19,6 @@ import { migrate } from '../src/migrations/index.js';
 import finale from '../src/migrations/2026-10-12-finale.js';
 
 const LAST = SERPENT_PHASES - 1;
-const HILL_SETTLE_S = 6;
 
 // A yard past the snatch with a crew of every kind up top, a party of two at
 // the last defense, and a gatherer by the crusher.
@@ -32,7 +31,7 @@ function yardAtTheEnd(hill = false) {
   window.__deepCrew({ spare: 2 });
   window.__serpent({ stage: LAST, wound: 0 });
   run(8);
-  if (hill) { runUntil(() => S.workers.some(w => w.type === TYPE.ROCK && wayAt(w.x, w.y).key === 'rock'), 90); run(HILL_SETTLE_S); }
+  if (hill) { runUntil(() => S.workers.some(w => w.type === TYPE.ROCK && wayAt(w.x, w.y).key === 'rock'), 90); }
   window.__serpent({ stage: LAST, wound: SERPENT_WOUND[LAST] * 0.95 });
 }
 // The party at it until the last defense goes, as a player's would.
