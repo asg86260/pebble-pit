@@ -230,15 +230,17 @@ export function renewed(k) {
   const at = roarK();
   return at == null ? S.breakT >= BREAK_ROAR.gape + BREAK_ROAR.run : k < at;
 }
-// How full the bar is let stand, 0..1, in held steps: it fills as he rises,
-// or as the bump runs.
-export function breakFill(steps) {
+// How full the bar is let stand, 0..1: it fills as he rises, or as the bump
+// runs. In `steps` held steps when asked for (the phase boxes), smooth when
+// not (the bar's own fill).
+export function breakFill(steps = 0) {
   const kind = breakKind();
   if (!kind) return 1;
   let f;
   if (kind === 'dive') f = rising() ? (S.breakT - BREAK_DIVE.in - BREAK_DIVE.under) / BREAK_DIVE.out : 0;
   else { const at = roarK(); f = at == null ? (S.breakT < BREAK_ROAR.gape ? 0 : 1) : at; }
-  return Math.floor(Math.min(1, f) * steps) / steps;
+  f = Math.max(0, Math.min(1, f));
+  return steps ? Math.floor(f * steps) / steps : f;
 }
 // One frame of a break; true while it plays, when nothing else of the
 // serpent's runs.

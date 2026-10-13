@@ -310,24 +310,45 @@ export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to 
 export const BAR_EDGE = '#8b8b96';     // a one-pixel rim round the bar and each pip
 export const BAR_TRACK = '#000000';    // the empty of it
 export const BAR_LEFT = '#ffffff';     // what the defense has left
-export const BAR_TRAIL = '#55555e';    // what a blow just took, lingering
-export const BAR_HEALED = '#9b5de5';   // what the heal has given back since the last blow
+export const BAR_HEALED = '#9b5de5';   // what a heal brings back, while it flows in
 export const BAR_TO_COME = '#55555e';  // a defense not yet reached
 export const BAR_STUN = '#9b5de5';     // the defense's pip while a stun has stopped the heal: a ring of the heal's purple
 export const BAR_STUN_RIM = 2;         // screen pixels, the ring's width
-export const BAR_TRAIL_HOLD_S = 0.5;  // the trail waits this long after the last blow
-export const BAR_TRAIL_RATE = 1;       // then drains at this share of the bar a second
-// A blow landing in the bar knocks a chip out of the end of its fill
-// (docs/mocks/bar-chip-2026-09-28.html, the owner's A): a blow is a tenth of
-// a percent of a defense, under a pixel of the bar, so the chip says it
-// landed. The notch is the blow's own sliver of the bar (a pixel at the
-// least), lit for a pose and open for BAR_CHIP_OPEN_S; the sliver falls out
-// of it, turning over a pose at a time, for BAR_CHIP_S.
-export const BAR_CHIP_S = 0.6;
-export const BAR_CHIP_OPEN_S = 0.3;
-export const BAR_CHIP_POSE_S = 0.08;
-export const BAR_CHIP_FALL = { side: 18, down: 20, grav: 90 };   // screen pixels a second, and a second a second
-export const BAR_CHIP = '#b4b4c0';      // the notch's first pose, and the chip after its first (white, as the fill)
+export const BAR_HEAL_FADE_S = 0.9;    // the heal's purple fades out over this once it is all in
+// How the bar moves (docs/mocks/serpent-hp-bar-2026-10-12.html, the owner's B,
+// "pixel shards"). A blow is a fraction of a pixel to a few pixels of the
+// bar, so the fill slides down to it rather than ticking: it closes on the
+// wound with a time constant of BAR_EASE_S, and is let sit on it once within
+// BAR_SETTLE of the bar. A heal flows in at BAR_HEAL_RATE of the bar a
+// second, slowed to BAR_FLOW_EASE times what is left to come (but never under
+// BAR_FLOW_MIN) so it eases into its end; a break's refill flows the same way
+// at the break's own pace. All of it is the picture's: the sim's wound moves
+// as it always did.
+export const BAR_EASE_S = 0.06;
+export const BAR_SETTLE = 0.0005;      // a share of the bar
+export const BAR_HEAL_RATE = 0.32;     // a share of the bar a second
+export const BAR_FLOW_EASE = 4;        // a second, against what is left to come
+export const BAR_FLOW_MIN = 0.05;      // a share of the bar a second
+export const BAR_STALE_S = 0.25;       // a gap between drawn frames longer than this (away from the deep) shows the bar as it stands
+// The stretch a blow took breaks into BAR_SHARD_PX-pixel pieces, held lit in
+// the notch where the blow struck for `hold` seconds (lifted `lift` screen
+// pixels, and on a big blow a column at a time, BAR_SHARD_STAGGER_S apart),
+// then falling on held poses, BAR_SHARD_POSES a second, under BAR_SHARD_GRAV
+// screen pixels a second a second. Each is thrown `side` px/s away from the
+// side the blow came from plus up to `sideRand`, spread outward by `spread`
+// across the stretch, and up by `up` plus up to `upRand` (less `row` for each
+// row down). It falls for BAR_SHARD_FALL_S and fades out whole over the last
+// BAR_SHARD_FADE_S of that. A big blow is one past NUM_KICK_BIG, as the knock.
+export const BAR_SHARD_PX = 3;
+export const BAR_SHARD_HOLD = { small: 0.06, big: 0.16 };
+export const BAR_SHARD_LIFT = { small: 1, big: 2 };
+export const BAR_SHARD_STAGGER_S = 0.012;
+export const BAR_SHARD_POSES = 15;
+export const BAR_SHARD_GRAV = 520;
+export const BAR_SHARD_KICK = { side: 10, sideRand: 26, spread: 40, up: 18, upRand: 40, row: 4 };
+export const BAR_SHARD_FALL_S = 0.85;
+export const BAR_SHARD_FADE_S = 0.4;
+export const BAR_CHIP = '#b4b4c0';     // a piece while it is held lit in the notch (white, as the fill, once it falls)
 // And the bar recoils from it, the whole of it and its pips, up and away from
 // the number that went into its underside: BAR_KNOCK screen pixels
 // (BAR_KNOCK_BIG for a blow past NUM_KICK_BIG) for half of BAR_KNOCK_S, half

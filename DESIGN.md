@@ -15289,12 +15289,19 @@ grey for those to come. Answering the old mock's question 2: the defense.
   pinned like it, only while the camera is in the deep and the serpent has a
   defense up. The toast shares that strip and is over it while it is up; the
   toast is the louder news and gone in seconds.
-- *The two memories:* what a blow just took lingers grey (`BAR_TRAIL_HOLD_S`,
-  then drains at `BAR_TRAIL_RATE`), and what the heal has grown back since the
-  last blow is the heal's purple. Both are kept by the renderer
-  (render/serpentbar.js), not the sim: they are the picture's, nothing saves
-  them. Under a steady fight the purple is a sliver, which is the honest
-  reading: the heal is small against a stage's depth until you stop.
+- *How it moves (the owner's B, "pixel shards", 2026-10-12;
+  `docs/mocks/serpent-hp-bar-2026-10-12.html` on `mock/deep-hp`):* the fill
+  slides down to each blow over a few hundredths of a second
+  (`BAR_EASE_S`), so a stream of blows is one drain and not a pixel ticking
+  when the rounding tips. The stretch a blow took breaks into 3-pixel pieces,
+  held lit in the notch where it struck (longer, lifted and a column at a time
+  on a big blow), then falling on held poses and fading out whole. A meal
+  still closes the wound at once in the sim; the bar shows it flowing in at
+  `BAR_HEAL_RATE` of the bar a second, purple over what came back, the purple
+  fading over `BAR_HEAL_FADE_S` once it is in. A break's refill flows the same
+  way at the break's own pace, with no purple. All of it -- the shown fill,
+  the purple, the pieces -- is the renderer's (render/serpentbar.js), not the
+  sim's: nothing saves it, and a reload shows the bar as it stands.
 - *Stages are not to scale:* each stage is its own full bar, since the depths
   run 60 to 30,000 and a bar drawn to scale would hide the first three.
 
