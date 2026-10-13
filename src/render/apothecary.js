@@ -15,6 +15,7 @@ import { bar } from './bars.js';
 import { ctx } from './ctx.js';
 import { rising as risingAt, withRise } from './rise.js';
 import { shown } from '../tween.js';
+import { FACE } from '../lang.js';
 
 // --- the two pictures ---------------------------------------------------------
 // One character to a cell: `#` is timber, `.` is empty (`drawSprite`). Everything
@@ -332,12 +333,12 @@ export function drawStockCount(screenAt) {
     const floor = SHELF_NUM_MIN * cell;
     const said = String(Math.round(shown('stock:' + book[i].key, n)));
     let size = Math.max(floor, h * 0.9);
-    ctx.font = `${size}px ui-monospace, "Courier New", monospace`;
+    ctx.font = `${size}px ${FACE}`;
     const room = w - cell;                       // a cell of air inside the well
     const wide = ctx.measureText(said).width;
     if (wide > room) {
       size = Math.max(floor, size * room / wide);
-      ctx.font = `${size}px ui-monospace, "Courier New", monospace`;
+      ctx.font = `${size}px ${FACE}`;
     }
     ctx.fillText(said, Math.round(at.x + w - cell / 2), Math.round(at.y + h / 2));
     ctx.restore();

@@ -105,7 +105,7 @@ export function looksLikeCopy(text) {
   if (/^\s*[\d.]+(px|em|rem)?\s+[\w"' ,-]+$/.test(text) && /px|monospace|serif/.test(text)) return false; // a canvas font
   if (/^[.#]?[\w-]+([ >.#:\[][\w-.#:\[\]="' >()]*)$/.test(text) && /[.#\[>]/.test(text) && !/[a-z]{2,} [a-z]{2,} [a-z]{2,}/i.test(text)) return false;   // a selector
   if (/^[a-z][\w-]*( [a-z][\w-]*)*$/.test(text) && /-/.test(text) && !/ [a-z]+ /.test(text)) return false; // class lists
-  if (/translate3d|^\$\{\}px |\bmonospace\b|^bold \$\{\}px|^hsla?\(/.test(text)) return false;         // a transform, a font, a color
+  if (/translate3d|^\$\{\}px |^\d+px \$\{\}$|\bmonospace\b|^bold \$\{\}px|^hsla?\(/.test(text)) return false;         // a transform, a font, a color
   if (/^\((prefers|pointer|hover|min-|max-)[\w-]*:/.test(text)) return false;                          // a media query
   if (/:scope\b/.test(text)) return false;                                                              // a scoped selector
   if (/^[\w.#:\[\]="$-]+(, [\w.#:\[\]="$-]+)+$/.test(text)) return false;                              // a selector list

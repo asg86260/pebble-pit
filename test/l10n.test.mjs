@@ -133,6 +133,10 @@ for (const f of SRC) {
 for (const p of PAGES) {
   for (const m of readFileSync(p, 'utf8').matchAll(/data-l10n-id="([^"]+)"/g)) { asked.push([p, m[1]]); standing.add(m[1]); }
 }
+// The shell says a few of its own (the carry-over dialog), off the same file.
+for (const f of readdirSync('electron').filter(f => f.endsWith('.cjs'))) {
+  for (const l of literals(readFileSync(join('electron', f), 'utf8'))) standing.add(l.text);
+}
 
 test('every id the code asks for is a message, and every message is asked for', () => {
   const missing = asked.filter(([, id]) => !FULL.includes(id)).map(([f, id]) => `${f}: ${id}`);

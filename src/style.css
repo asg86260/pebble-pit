@@ -6,7 +6,7 @@ html, body {
   overflow: hidden;
   /* on a phone: no rubber-banding or pull-to-refresh behind the game */
   overscroll-behavior: none;
-  font: 12px/1.4 ui-monospace, "Courier New", monospace;
+  font: 12px/1.4 var(--face);
   /* The shape of a board, written once. A sheet is this wide (border and all),
      with this much border and side padding, and this much air between its two
      columns of cards. */
@@ -63,7 +63,24 @@ html, body {
      down and right, in the palest gray (the counter on the canvas draws the
      same one: FLOAT_SHADOW in config/view.js). */
   --shadow-off: 6px;
+  /* The type, as two knobs a language can turn (DESIGN.md, "Localization
+     phase two", section 3): the face every rule writes as var(--face), and
+     the tracking every rule that spaces words multiplies its own em by. One
+     variable a language instead of seventy overrides; the pips and the codes
+     are pictures and keep their plain numbers. */
+  --face: ui-monospace, "Courier New", monospace;
+  --track: 1;
 }
+/* Chinese, Japanese and Korean: the house mono stays first, so the Latin
+   letters and figures in a line keep their look, and the language's own face
+   (cut to its file's characters at build, tools/fonts.mjs; loaded by lang.js
+   only when it is the one in force) answers for the ideographs, kana and
+   hangul. Tracking pulls ideographs into a stammer, but how much to take out,
+   and what stands in for the capitals, is the owner's vote on a mock: until
+   then --track is today's 1 and nothing a reader sees has changed. */
+:lang(zh) { --face: ui-monospace, "Courier New", "Pit SC", monospace; --track: 1; /* TODO(mock vote): the CJK tracking */ }
+:lang(ja) { --face: ui-monospace, "Courier New", "Pit JP", monospace; --track: 1; /* TODO(mock vote) */ }
+:lang(ko) { --face: ui-monospace, "Courier New", "Pit KR", monospace; --track: 1; /* TODO(mock vote) */ }
 /* Declared again wherever --ink-7 is: a custom property resolves its var()s
    where it is declared, so one inherited from the root would keep the root's
    gray on a card that inks itself the other way. */
@@ -131,7 +148,7 @@ canvas {
   color: var(--ink);
   border: 2px solid var(--ink);
   box-sizing: border-box;
-  font: 12px ui-monospace, "Courier New", monospace;
+  font: 12px var(--face);
   cursor: pointer;
 }
 #hop button.left { left: calc(var(--edge) + env(safe-area-inset-left, 0px)); }
@@ -336,7 +353,7 @@ body.still #scroller { scroll-behavior: auto; }
   padding-bottom: 4px;
   border-bottom: 2px solid var(--ink);
   font: inherit;
-  letter-spacing: .18em;
+  letter-spacing: calc(.18em * var(--track));
   text-transform: uppercase;
   color: var(--ink);
 }
@@ -348,7 +365,7 @@ body.still #scroller { scroll-behavior: auto; }
    smaller than the name, because it is the sentence under the name. */
 .page .note {
   margin: -4px 0 7px;
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
   font-size: .82em;
   color: var(--ink);
@@ -360,7 +377,7 @@ body.still #scroller { scroll-behavior: auto; }
 .page .empty {
   padding: 2px 0;
   color: var(--ink-5);
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
 }
 
@@ -406,7 +423,7 @@ body.still #scroller { scroll-behavior: auto; }
   gap: var(--card-gap);
   align-items: baseline;
   font: inherit;
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
   text-align: left;
   color: var(--ink);
@@ -797,7 +814,7 @@ body.still #scroller { scroll-behavior: auto; }
      card, and a name that ran into its stepper would read the same way. */
   gap: var(--card-gap);
   align-items: baseline;
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
   border: 1px solid var(--ink);
   padding: 6px 8px;
@@ -816,7 +833,7 @@ body.still #scroller { scroll-behavior: auto; }
   align-self: end;
   justify-self: end;
   text-align: right;
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
 }
 .rows .job.pickrow .chosen::after { content: ' \25BE'; opacity: .55; }
@@ -842,7 +859,7 @@ body.still #scroller { scroll-behavior: auto; }
   max-height: 60vh;
   overflow-y: auto;
   font: inherit;
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1015,8 +1032,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   padding: var(--pad-l);
   background: var(--paper);
   border: 1px solid var(--ink);
-  font: 12px ui-monospace, "Courier New", monospace;
-  letter-spacing: .14em;
+  font: 12px var(--face);
+  letter-spacing: calc(.14em * var(--track));
   text-transform: uppercase;
   color: var(--ink);
 }
@@ -1036,7 +1053,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    different heights, and a row of cards reads as a row when its notes line up. */
 .record .card { display: flex; flex-direction: column; justify-content: space-between; gap: 3px;
                       padding: 5px 8px; border: 1px solid var(--ink); }
-.record .name { letter-spacing: .1em; text-transform: uppercase; }
+.record .name { letter-spacing: calc(.1em * var(--track)); text-transform: uppercase; }
 .record .note { color: var(--ink-4); }
 .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
 /* The toast: the record's card, said out loud at the top edge as a notice
@@ -1069,7 +1086,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   box-shadow: var(--float-shadow);
   border: 1px solid var(--paper);
   outline: 1px solid var(--ink);
-  font: 12px ui-monospace, "Courier New", monospace;
+  font: 12px var(--face);
   color: var(--paper);
   text-align: center;
   cursor: pointer;
@@ -1085,7 +1102,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 
   .toast:hover .note { color: var(--ink); }
 }
-.toast .name { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
+.toast .name { font-size: 15px; letter-spacing: calc(.12em * var(--track)); text-transform: uppercase; }
 .toast .note { color: var(--ink-7); }
 /* the ring: a one-pixel edge that starts on the card's own and swells out as
    it fades. The card leaves the tree between two notices, so the animation
@@ -1095,7 +1112,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 @keyframes toastring { from { inset: 0; opacity: 1; } 50% { opacity: .8; } to { inset: -26px; opacity: 0; } }
 .toast.up::after { animation: toastring .8s ease-out .1s; }
 .toast.still::after { animation: none; }
-.held .word { font-size: 17px; letter-spacing: .3em; }
+.held .word { font-size: 17px; letter-spacing: calc(.3em * var(--track)); }
 /* the controls page: two columns sized by what is in them, not by a guessed
    width, so a longer line the owner writes later still lines up. The card is
    shrink-to-fit at half the viewport, so a column that may wrap is squeezed
@@ -1108,7 +1125,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 @media (max-width: 520px) {
   .controls { grid-template-columns: max-content; gap: 0; text-align: center; white-space: nowrap; }
   .controls > :nth-child(odd) { text-align: center; }
-  .controls { letter-spacing: .04em; }
+  .controls { letter-spacing: calc(.04em * var(--track)); }
   .controls > :nth-child(even) { margin-bottom: 10px; }
 }
 /* The index (indexpage.js): the list sized by its longest name, the entry a
@@ -1132,7 +1149,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .index .entry .head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .index .entry .head canvas.glyph { width: 32px; height: 32px; }
 .index .entry .head .mark { display: inline-flex; width: 32px; justify-content: center; transform: scale(2.4); }
-.index .entry .name { font-size: 14px; letter-spacing: .1em; text-transform: uppercase; }
+.index .entry .name { font-size: 14px; letter-spacing: calc(.1em * var(--track)); text-transform: uppercase; }
 .index .entry .text { line-height: 1.5; }
 .held .index .ixback { display: none; }
 /* the "new" mark: a dot after a word, until the thing is first opened */
@@ -1171,7 +1188,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 /* The cloud's block (cloudsheet.js): a boxed section under its own heading,
    so its buttons read as the cloud's and not the slots'. */
 .held .cloudsheet { border: 1px solid var(--ink); padding: 10px 12px; box-sizing: border-box; }
-.held .cloudsheet .head { letter-spacing: .25em; }
+.held .cloudsheet .head { letter-spacing: calc(.25em * var(--track)); }
 .held .cloudsheet .pair-code { font-size: 18px; letter-spacing: .3em; }
 .held .cloudsheet input {
   align-self: stretch; box-sizing: border-box;
@@ -1194,7 +1211,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held button,
 .held a.store {
   font: inherit;
-  letter-spacing: .14em;
+  letter-spacing: calc(.14em * var(--track));
   text-transform: uppercase;
   color: var(--ink);
   background: none;
@@ -1339,8 +1356,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   background: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
-  font: 12px/1.5 ui-monospace, "Courier New", monospace;
-  letter-spacing: .08em;
+  font: 12px/1.5 var(--face);
+  letter-spacing: calc(.08em * var(--track));
   text-transform: uppercase;
   color: var(--ink);
   transition: opacity .25s;
@@ -1390,8 +1407,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   padding: var(--pad-s);
   background: var(--paper);
   border: 1px solid var(--ink);
-  font: 12px ui-monospace, "Courier New", monospace;
-  letter-spacing: .08em;
+  font: 12px var(--face);
+  letter-spacing: calc(.08em * var(--track));
   text-transform: uppercase;
   color: var(--ink);
   pointer-events: none;
@@ -1403,7 +1420,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   align-self: flex-start;
   margin-top: 8px;
   font: inherit;
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
   color: var(--ink);
   background: var(--paper);
@@ -1504,7 +1521,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   grid-template-columns: 1fr auto;
   gap: 2px 10px;
   opacity: .75;
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
 }
 #stats b { font-weight: normal; text-align: right; }
@@ -1520,7 +1537,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   padding: 5px 7px;
   background: var(--paper);
   border: 1px solid var(--ink);
-  font: 11px ui-monospace, "Courier New", monospace;
+  font: 11px var(--face);
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--ink);
@@ -1610,7 +1627,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   padding: 8px 10px;
   background: var(--paper);
   border: 2px solid var(--ink);
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   white-space: nowrap;
   /* it fades with the board it belongs to, on the same beat */
   opacity: 0;
@@ -1660,7 +1677,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   padding: 10px var(--sheet-pad-x);
   background: var(--paper);
   border: var(--sheet-border) solid var(--ink);
-  letter-spacing: .1em;
+  letter-spacing: calc(.1em * var(--track));
   text-transform: uppercase;
   white-space: nowrap;
   opacity: 0;
@@ -1699,8 +1716,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   color: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
-  font: 12px ui-monospace, "Courier New", monospace;
-  letter-spacing: .14em;
+  font: 12px var(--face);
+  letter-spacing: calc(.14em * var(--track));
   text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
@@ -1768,7 +1785,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
        it scrolls inside itself rather than running off the top */
     max-height: calc(100dvh - 16px);
     overflow-y: auto;
-    letter-spacing: .06em;
+    letter-spacing: calc(.06em * var(--track));
   }
   /* The same air between cards as on a desk. It was a single pixel between
      rows here, which is two card borders touching with a hairline of white
@@ -1777,7 +1794,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   .rows { gap: var(--rows-gap); }
   .rows button {
     padding: 6px 3px;                /* a thumb, not a cursor */
-    letter-spacing: .06em;
+    letter-spacing: calc(.06em * var(--track));
   }
   .rows .job { padding: 4px 3px; }
   .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
@@ -1827,7 +1844,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   flex: 0 0 auto;
   display: flex; align-items: center; gap: 10px;
   padding: 14px 12px 6px;
-  letter-spacing: .1em; text-transform: uppercase;
+  letter-spacing: calc(.1em * var(--track)); text-transform: uppercase;
   cursor: grab;
   touch-action: none;                   /* the drag is ours: it is the sheet's own gesture */
   -webkit-user-select: none; user-select: none;
@@ -1904,8 +1921,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   background: var(--ink);
   border: 1px solid var(--paper);
   outline: 1px solid var(--ink);
-  font: 10px ui-monospace, "Courier New", monospace;
-  letter-spacing: .14em;
+  font: 10px var(--face);
+  letter-spacing: calc(.14em * var(--track));
   text-transform: uppercase;
   color: var(--paper);
   /* A button, since a phone has no space bar: held, it is the key held. */
@@ -1939,7 +1956,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   background: var(--ink);
   border: 1px solid var(--paper);
   outline: 1px solid var(--ink);
-  font: 12px ui-monospace, "Courier New", monospace;
+  font: 12px var(--face);
   color: var(--paper);
   opacity: 0;
   /* the skip hint's fade (SHEET_FADE_MS in config/view.js), and the toast's
@@ -1976,13 +1993,13 @@ body.still .messtag { transition: none; }
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
   color: var(--ink);
-  font: 12px ui-monospace, "Courier New", monospace;
+  font: 12px var(--face);
 }
 html.dark .modal {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 .modalhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.modalhead .title { font-size: 12px; letter-spacing: .3em; text-transform: uppercase; }
+.modalhead .title { font-size: 12px; letter-spacing: calc(.3em * var(--track)); text-transform: uppercase; }
 #modalclose { padding: 0 6px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; line-height: 1.4; cursor: pointer; }
 @media (hover: hover) {
   #modalclose:hover { background: var(--ink); color: var(--paper); }
@@ -2012,7 +2029,7 @@ html.dark .modal {
   gap: 1px;
   padding: var(--pad-m);
   --tab-h: 14px;
-  font: 12px ui-monospace, "Courier New", monospace;
+  font: 12px var(--face);
   color: var(--ink);
   background: var(--paper);
   border: 2px solid var(--ink);
@@ -2032,7 +2049,7 @@ html.dark .modal {
   transition: opacity .35s ease, translate .35s ease;
 }
 #objective .next { position: absolute; top: calc(-1 * var(--tab-h)); left: -2px; padding: 0 8px; line-height: var(--tab-h);
-                   font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+                   font-size: 10px; letter-spacing: calc(.1em * var(--track)); text-transform: uppercase;
                    background: var(--ink); color: var(--paper); }
 #objective .say { transition: opacity .35s ease; }
 #objective .say.done { text-decoration: line-through; text-decoration-thickness: 2px; }
@@ -2074,7 +2091,7 @@ html.dark .modal {
 /* style.css's `canvas` rule is the yard's window; a glyph is a canvas too */
 #objective .barrier > canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block;
                                    margin: 0 !important; background: none; image-rendering: pixelated; flex: none; }
-#objective .barrier .name { text-transform: uppercase; letter-spacing: .08em; font-weight: bold; }
+#objective .barrier .name { text-transform: uppercase; letter-spacing: calc(.08em * var(--track)); font-weight: bold; }
 #objective .barrier .note { color: var(--ink-2); }
 /* A bill line that fills (billfill.js): a grey fill grows behind it by have
    over need (--p), the line's own children stand over it. Shared by the
@@ -2132,7 +2149,7 @@ body.still .fill::before { transition: none; }
    as a line of type with a button in it. */
 .g { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
      min-width: 1.6em; height: 1.6em; padding: 0 .3em; vertical-align: middle;
-     font: bold .78em ui-monospace, "Courier New", monospace; letter-spacing: 0; text-transform: none;
+     font: bold .78em var(--face); letter-spacing: 0; text-transform: none;
      color: var(--paper); background: var(--ink); border: 1px solid var(--ink); }
 .g.face { border-radius: 50%; padding: 0; width: 1.6em; }
 .g.bump { border-radius: .35em; }

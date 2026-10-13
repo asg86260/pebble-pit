@@ -23,6 +23,7 @@ import { HATS, HATS_TIGHT, spriteW, spriteH } from './sprites.js';
 import { darkPage } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
+import { FACE } from './lang.js';
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -642,7 +643,7 @@ function drawPip(ctx, q) {
 
 // The counts, in screen pixels, after the world has been drawn.
 export function drawRosterCounts(ctx, screenAt) {
-  ctx.font = '13px ui-monospace, "Courier New", monospace';
+  ctx.font = `13px ${FACE}`;
   ctx.textAlign = 'center';                    // it sits in the middle of its own slot
   ctx.textBaseline = 'middle';
   for (const p of posts()) {

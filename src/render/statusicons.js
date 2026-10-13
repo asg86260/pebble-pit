@@ -7,7 +7,7 @@
 // In screen pixels, like the numbers and the bar: one size however the camera
 // is zoomed, over the finished deep, their tones written as seen.
 
-import { msg } from '../lang.js';
+import { msg, FACE } from '../lang.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
@@ -106,7 +106,7 @@ export function drawFoeStatuses(x, y) {
   // The label's type is set again for each column: a tile draws its timer in
   // its own, and a label measured in one and drawn in the other overlaps.
   const labelType = () => {
-    ctx.font = `${STATUS_LABEL_PX}px ui-monospace, "Courier New", monospace`;
+    ctx.font = `${STATUS_LABEL_PX}px ${FACE}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
   };

@@ -3,6 +3,7 @@ import { execSync } from 'node:child_process';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fontsPlugin } from './tools/fonts.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // a glob for everything under a folder of this checkout; forward slashes,
@@ -49,7 +50,9 @@ export default defineConfig(({ command, mode }) => {
     base: './',
     // two pages: the landing page and the game (DESIGN.md, "The landing page")
     build: { rollupOptions: { input: { index: 'index.html', play: 'play.html' } } },
-    plugins: command === 'build' ? [stampFile(stamp, cut)] : [],
+    // The CJK faces, cut from each language's file (tools/fonts.mjs): before
+    // the first module is read, so lang.js's glob finds them, in dev and build.
+    plugins: [fontsPlugin(), ...(command === 'build' ? [stampFile(stamp, cut)] : [])],
     define: {
       // Off the dev server the page says "dev": a stamp that changed on every
       // save would be a stamp nobody could compare against anything.

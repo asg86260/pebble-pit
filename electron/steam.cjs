@@ -18,6 +18,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { sayer } = require('./lang.cjs');
 
 // The Steam app ids. OWNER: none exist yet -- each is a placeholder until
 // Steamworks issues the app (the full game) and its demo (a child app), and
@@ -36,14 +37,23 @@ const DEV_APP = 480;
 // from src/, so the number is written twice and the check holds them equal.
 const SLOTS = 3;
 
-// The words of the carry-over offer. OWNER: every string here is a
-// placeholder for the owner to write (player copy is the owner's).
-const CARRY_WORDS = {
-  title: "[owner's words: the carry-over offer's title]",
-  message: "[owner's words: a save from the demo was found -- carry it on?]",
-  yes: "[owner's words: carry it on]",
-  no: "[owner's words: start fresh]"
-};
+// The words of the carry-over offer, from the language file (`shell-carry-*`
+// in locales/en.ftl, still the owner's placeholders) in the language `say`
+// reads; CARRY_WORDS is them in English.
+const carryWords = say => ({
+  title: say('shell-carry-title'),
+  message: say('shell-carry-message'),
+  yes: say('shell-carry-yes'),
+  no: say('shell-carry-no')
+});
+const CARRY_WORDS = carryWords(sayer());
+
+// Steam's language for this game (`schinese`, `latam`): what the player set
+// in the game's properties, or null without a client. steamworks.js 0.4.0's
+// `apps.currentGameLanguage()`; the shell and the page map it by one table.
+function languageOf(client) {
+  try { return client ? client.apps.currentGameLanguage() || null : null; } catch { return null; }
+}
 
 // The SDK, or null when it is not installed or will not load on this machine.
 function loadSdk() {
@@ -217,9 +227,10 @@ function demoSave({ demoSaves, demoRemote = null, slots = SLOTS }) {
 // marker is written whenever the offer is made, taken or not, so it is never
 // made again; a launch with no demo save to offer leaves no marker, and asks
 // again next time if the store is still empty. `ask` is the shell's dialog
-// (a yes is true); the save goes to slot 1 through the store it is given, so
-// on Steam it is mirrored like any other write. What happened, as a word.
-function offerDemoSave({ store, demoSaves, demoRemote = null, marker, ask, slots = SLOTS }) {
+// (a yes is true), handed `words` (carryWords, in the shell's language); the
+// save goes to slot 1 through the store it is given, so on Steam it is
+// mirrored like any other write. What happened, as a word.
+function offerDemoSave({ store, demoSaves, demoRemote = null, marker, ask, words = CARRY_WORDS, slots = SLOTS }) {
   if (fs.existsSync(marker)) return 'asked before';
   for (let n = 1; n <= slots; n++) {
     const r = store.read(n);
@@ -228,13 +239,13 @@ function offerDemoSave({ store, demoSaves, demoRemote = null, marker, ask, slots
   const raw = demoSave({ demoSaves, demoRemote, slots });
   if (!raw) return 'no demo save';
   let yes = false;
-  try { yes = !!ask(CARRY_WORDS); } catch {}
+  try { yes = !!ask(words); } catch {}
   try { fs.writeFileSync(marker, JSON.stringify({ offered: new Date().toISOString(), taken: yes }) + '\n'); } catch {}
   if (!yes) return 'declined';
   return store.write(1, raw) ? 'carried' : 'failed';
 }
 
 module.exports = {
-  APPS, DEV_APP, SLOTS, CARRY_WORDS,
-  loadSdk, appIdFor, startClient, startSteam, achievementsOf, ACH_NAME, nameOf, playedOf, mirror, demoDirOf, demoSave, offerDemoSave
+  APPS, DEV_APP, SLOTS, CARRY_WORDS, carryWords,
+  loadSdk, languageOf, appIdFor, startClient, startSteam, achievementsOf, ACH_NAME, nameOf, playedOf, mirror, demoDirOf, demoSave, offerDemoSave
 };

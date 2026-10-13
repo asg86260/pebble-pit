@@ -16,3 +16,6 @@ server/times.sqlite
 server/node_modules/
 server/logs/
 steam-output/
+
+# the CJK faces, cut from the language files by tools/fonts.mjs at build
+src/fonts/

@@ -2941,3 +2941,19 @@ build-free = free
 # [owner's words: a level label, e.g. "Lv 7"] -- until then the bare number. Drawn in the pixel number font
 # (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font
 serp-level = { $n }
+
+## The shell
+
+# the desk's window title is title-doctitle, read by the shell (electron/main.cjs)
+
+# the Steam carry-over offer, on the full game's first launch when a demo save is found: the dialog's title (a placeholder for the owner's words)
+shell-carry-title = [owner's words: the carry-over offer's title]
+
+# the Steam carry-over offer: the question (a placeholder for the owner's words)
+shell-carry-message = [owner's words: a save from the demo was found -- carry it on?]
+
+# the Steam carry-over offer: the button that carries the demo save over (a placeholder for the owner's words)
+shell-carry-yes = [owner's words: carry it on]
+
+# the Steam carry-over offer: the button that starts a fresh yard (a placeholder for the owner's words)
+shell-carry-no = [owner's words: start fresh]
