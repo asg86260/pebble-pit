@@ -5,6 +5,8 @@ import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onSc
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows } from './kit.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 import { offered } from '../stations.js';
+import { handsOf } from '../levels.js';
+import { JOB } from '../jobs.js';
 
 // The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -1685,10 +1687,12 @@ export const TESTS = [
     const inset = el => { const t = el.closest('.tile').getBoundingClientRect(); return Math.round(t.right - el.getBoundingClientRect().right); };
     const bandedEl = [...document.querySelectorAll('#panel .rows.shelves .tile .ladder')].find(l => l.querySelectorAll('b').length > 1);
     const mine = pips ? inset(pips) : -1, theirs = bandedEl ? inset(bandedEl) : -1;
+    // A lamp for every body the cut holds (`perHand` in kit.js): a pip a bench.
+    const hands = handsOf(JOB.QUARRY);
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(!!pips && pips.querySelectorAll('i').length === 3, 'the blaster row has three pips', String(pips?.querySelectorAll('i').length)),
+      ok(!!pips && pips.querySelectorAll('i').length === hands, 'the blaster row has a pip for every body the cut holds', `${pips?.querySelectorAll('i').length} of ${hands}`),
       ok(!!box && box.height > box.width, 'and they stand in a column', box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'none'),
       ok(!!bandedEl && mine === theirs, "the same distance in from the edge as a banded ladder's", `${mine} vs ${theirs}`),
     ];
