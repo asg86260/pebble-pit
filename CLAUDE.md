@@ -1,7 +1,8 @@
 # Working on Boulder Clicker
 
-Black-and-white pixel clicker. Vite + vanilla ES modules, canvas, no frameworks
-and no new dependencies. This file is the working agreement: the things that
+Black-and-white pixel clicker. Vite + vanilla ES modules, canvas, no frameworks.
+A new dependency is fine when it buys enough to earn its place (the owner,
+2026-10-13); say what it buys when proposing one. This file is the working agreement: the things that
 have been said more than once, written down so they do not have to be said
 again.
 
