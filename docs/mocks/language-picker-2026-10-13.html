@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Language Picker Mocks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap">
+<style>
+/* ------------------------------------------------------------------
+   Tokens. The game's own palette (style.css :root and html.dark), so
+   the sheets below wear the game's ink and paper in both themes.
+   ------------------------------------------------------------------ */
+:root {
+  --paper: #fff; --ink: #000;
+  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf;
+  --page: #f2f2ef; --page-ink: #1a1a1a; --page-mute: #5c5c58; --page-line: #d6d6d0;
+  --pad-accent: #6f36c9;                 /* PAD_ACCENT, config/pad.js */
+  --face: ui-monospace, "Courier New", monospace;
+  --track: 1; --step: 0px;
+  --pad-l-y: 14px; --pad-l-x: 24px; --pad-l: var(--pad-l-y) var(--pad-l-x);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1f1f1f; --ink: #e0e0e0;
+    --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+    --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1f1f1f; --ink: #e0e0e0;
+  --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+  --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------
+   The mock page's own chrome (not the game).
+   ------------------------------------------------------------------ */
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page); color: var(--page-ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 20px; margin: 44px 0 6px; padding-top: 16px; border-top: 2px solid var(--page-ink); }
+h3 { font-size: 16px; margin: 30px 0 6px; }
+p { margin: 6px 0; max-width: 72ch; }
+.lede { color: var(--page-mute); }
+.mocknote { border: 1px dashed var(--page-mute); padding: 10px 14px; margin: 14px 0; max-width: 80ch; font-size: 14px; }
+.mocknote b { font-weight: 600; }
+.mocknote ul { margin: 6px 0 0; padding-left: 20px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.toolbar button {
+  font: 13px system-ui, sans-serif; padding: 5px 10px; cursor: pointer;
+  background: var(--page); color: var(--page-ink); border: 1px solid var(--page-mute);
+}
+.toolbar button[aria-pressed="true"] { background: var(--page-ink); color: var(--page); }
+.opt { margin-top: 26px; }
+.opt h3 { margin-top: 0; }
+.frames { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; margin: 10px 0; }
+.frame { min-width: 0; max-width: 100%; }
+.cap { font-size: 12px; color: var(--page-mute); margin-bottom: 6px; }
+.notes { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 14px; max-width: 90ch; margin-top: 8px; }
+.notes dt { font-weight: 600; }
+.notes dd { margin: 0; }
+@media (max-width: 520px) {
+  .notes { grid-template-columns: 1fr; }
+  .notes dd { margin-bottom: 6px; }
+}
+
+/* ------------------------------------------------------------------
+   The game's sheets, copied from src/style.css and src/title.css.
+   Changes from the source: position fixed -> static so each sheet sits
+   in its frame; the face is var(--face) so a CJK face can follow the
+   stack (DESIGN.md, "3. Faces"); letter-spacing written as
+   calc(em * var(--track)) and the sizes plus var(--step), the two knobs
+   section 2 turns. At --track 1 and --step 0 these are the game's
+   numbers exactly.
+   ------------------------------------------------------------------ */
+.gm { color: var(--ink); }
+/* style.css: `hidden` means hidden, whatever the element's own display is */
+.gm [hidden] { display: none !important; }
+.gm .langbtns { display: contents; }
+.gm .held {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: var(--pad-l);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  font: calc(12px + var(--step)) var(--face);
+  letter-spacing: calc(.14em * var(--track));
+  text-transform: uppercase;
+  color: var(--ink);
+  width: max-content; max-width: 100%;
+}
+.gm .held .word { font-size: calc(17px + var(--step)); letter-spacing: calc(.3em * var(--track)); }
+.gm .held .rule { width: 60%; border-top: 1px solid var(--ink); }
+.gm .held .small { font-size: calc(10px + var(--step)); }
+.gm .held .why { text-transform: none; letter-spacing: 0; max-width: 34em; text-align: center; }
+.gm .held button {
+  font: inherit; letter-spacing: calc(.14em * var(--track)); text-transform: uppercase;
+  color: var(--ink); background: none; border: 1px solid var(--ink);
+  padding: 4px 14px; cursor: pointer; align-self: stretch; text-align: center;
+}
+@media (hover: hover) { .gm .held button:hover { color: var(--paper); background: var(--ink); } }
+.gm .held input[type=range] { -webkit-appearance: none; appearance: none; width: 140px; height: 12px; margin: 0; background: none; }
+.gm .held input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--ink); }
+.gm .held input[type=range]::-moz-range-track { height: 1px; background: var(--ink); }
+.gm .held input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; margin-top: -6px; background: var(--paper); border: 1px solid var(--ink); border-radius: 0; }
+.gm .held input[type=range]::-moz-range-thumb { width: 12px; height: 12px; background: var(--paper); border: 1px solid var(--ink); border-radius: 0; }
+
+/* the landing page's column (title.css .col), in a frame that stands in
+   for the window, with the demo yard left out */
+.gm.land {
+  position: relative; width: min(560px, calc(100vw - 32px)); height: 520px;
+  border: 1px solid var(--page-line); background: var(--paper); overflow: hidden;
+  font: 12px/1.4 var(--face);
+}
+.gm.land.tall { height: 640px; }
+.gm.land .yardnote { position: absolute; right: 18px; top: 50%; color: var(--ink-7); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.gm.land .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: var(--ink-8); }
+.gm .col {
+  position: absolute; left: 20px; top: 20px; max-height: calc(100% - 60px);
+  padding: 14px 16px 16px;
+  background: var(--paper); border: 1px solid var(--ink);
+  display: flex; flex-direction: column; align-items: stretch; gap: 7px;
+  letter-spacing: calc(.14em * var(--track)); text-transform: uppercase;
+  overflow-y: auto; max-width: calc(100% - 40px);
+  --col-w: 21em;
+}
+.gm .col .word { font-size: 17px; letter-spacing: calc(.3em * var(--track)); margin-bottom: 4px; }
+.gm .col button {
+  font: inherit; letter-spacing: calc(.14em * var(--track)); text-transform: uppercase;
+  color: var(--ink); background: var(--paper); border: 1px solid var(--ink);
+  padding: 5px 14px; cursor: pointer; text-align: left;
+}
+.gm .col > button, .gm .col > .langlist { min-width: min(var(--col-w), 100%); }
+@media (hover: hover) { .gm .col button:hover { color: var(--paper); background: var(--ink); } }
+.gm .col input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 12px; margin: 0; background: none; }
+.gm .col input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--ink); }
+.gm .col input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -6px; background: var(--paper); border: 1px solid var(--ink); border-radius: 0; }
+.gm .col input[type=range]::-moz-range-track { height: 1px; background: var(--ink); }
+.gm .col input[type=range]::-moz-range-thumb { width: 12px; height: 12px; background: var(--paper); border: 1px solid var(--ink); border-radius: 0; }
+.gm .foot {
+  position: absolute; left: 36px; right: 18px; bottom: 14px;
+  display: flex; justify-content: space-between; gap: 10px;
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2);
+}
+.gm .foot a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--ink-2); cursor: pointer; }
+.gm .foot .lang { color: var(--ink); border-color: var(--ink); }
+
+/* the veil (title.css .veil): the reload a language change costs */
+.gm .veil { position: absolute; inset: 0; background: var(--paper); opacity: 0; pointer-events: none; transition: opacity .35s linear; }
+.gm .veil.up { opacity: 1; }
+.gm.sheetbox { position: relative; display: inline-block; max-width: 100%; }
+
+/* A chosen thing inverts: the boards' `.pick.on`, the index's `.it.on`,
+   the saves' `.saverow.open`. The language in force is marked the same way. */
+.gm .held button.on, .gm .col button.on, .gm .langlist .it.on { color: var(--paper); background: var(--ink); }
+
+/* option (c)'s list: the index's list (style.css .index .list / .it), a
+   box with rows tight inside it, so nine rows are a list and not nine
+   buttons the height of a menu */
+.gm .langlist { border: 1px solid var(--ink); padding: 4px 0; align-self: stretch; display: flex; flex-direction: column; }
+.gm .langlist .it {
+  display: block; width: 100%; border: 0 !important; padding: 2px 10px !important; background: none;
+  font: inherit; color: var(--ink); text-align: left; white-space: nowrap; cursor: pointer;
+  letter-spacing: calc(.14em * var(--track)); text-transform: uppercase;
+}
+.gm .langhead { font-size: 10px; color: var(--ink-2); align-self: flex-start; margin: 4px 0 -4px; }
+
+/* The endonyms carry their own scripts, so each is tagged with its
+   language and takes the face for it. */
+.gm :lang(zh) { --face: ui-monospace, "Courier New", "Noto Sans SC", "Microsoft YaHei", monospace; }
+.gm :lang(ja) { --face: ui-monospace, "Courier New", "Noto Sans JP", "Yu Gothic", monospace; }
+.gm :lang(ko) { --face: ui-monospace, "Courier New", "Noto Sans KR", "Malgun Gothic", monospace; }
+.gm .endo:lang(zh), .gm .endo:lang(ja), .gm .endo:lang(ko) { font-family: var(--face); }
+/* the toggle: endonyms in the sheet's capitals, or as each language writes itself */
+.asis .gm .endo { text-transform: none; }
+
+/* the owner's words, not written yet */
+.gm .ph { text-transform: none; letter-spacing: .02em; color: var(--ink-4); font-style: italic; }
+.gm button.on .ph, .gm button:hover .ph { color: inherit; }
+
+/* The pad's marker (padglide.js bracketCells): four corner brackets in
+   the accent, two to three cells an arm, on the row the d-pad is on. */
+.gm .padon { position: relative; }
+.gm .padon::after {
+  content: ''; position: absolute; inset: -5px; pointer-events: none;
+  --c: var(--pad-accent);
+  background:
+    linear-gradient(var(--c), var(--c)) left top / 12px 3px no-repeat,
+    linear-gradient(var(--c), var(--c)) left top / 3px 12px no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / 12px 3px no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / 3px 12px no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / 12px 3px no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / 3px 12px no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / 12px 3px no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / 3px 12px no-repeat;
+}
+.gm .g { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; padding: 0 .3em; vertical-align: middle;
+         font: bold .78em ui-monospace, "Courier New", monospace; letter-spacing: 0; text-transform: none;
+         color: var(--paper); background: var(--ink); border: 1px solid var(--ink); }
+.gm .g.face { border-radius: 50%; padding: 0; width: 1.6em; }
+.gm .g.pad { color: var(--ink); background: var(--paper); }
+
+/* ---- the board (style.css .panel .sheet, .rows and the card) ---- */
+.gm .sheet {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px; background: var(--paper); border: 2px solid var(--ink);
+  font: calc(12px + var(--step))/1.4 var(--face);
+  letter-spacing: calc(.1em * var(--track)); text-transform: uppercase;
+  width: 540px; max-width: 100%;
+}
+.gm .rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; --card-gap: 2px 12px; white-space: normal; }
+.gm .rows > * { grid-column: 1 / -1; }
+.gm .rows > button { grid-column: auto; }
+.gm .rows .sect { margin-top: 6px; color: var(--ink); border-bottom: 1px solid var(--ink-5); }
+.gm .rows .sect:first-child { margin-top: 0; }
+.gm .rows .sect .badge { display: inline-block; margin-left: 6px; padding: 0 4px; color: var(--paper); background: var(--ink); font: 12px var(--face); letter-spacing: 0; }
+.gm .rows button {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto;
+  gap: var(--card-gap); align-items: baseline;
+  font: inherit; letter-spacing: calc(.1em * var(--track)); text-transform: uppercase; text-align: left;
+  color: var(--ink); background: none; border: 1px solid var(--ink); padding: 6px 8px; cursor: pointer;
+}
+.gm .rows button.goal { grid-column: 1 / -1; border: 3px double var(--ink); padding: 8px 10px 10px; }
+.gm .rows button:disabled.done { color: var(--ink); }
+.gm .rows .what { grid-column: 1 / -1; grid-row: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gm .rows .ladder { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; line-height: 1; opacity: .78; display: inline-flex; align-items: center; gap: .5em; font-size: 12px; }
+.gm .rows .ladder b { font-weight: normal; display: inline-flex; gap: .22em; }
+.gm .rows .ladder i { display: block; width: .6em; height: .6em; border: 1px solid currentColor; border-radius: 50%; }
+.gm .rows .ladder i.on { background: currentColor; }
+.gm .rows .ladder b:nth-child(2) { color: #2e9e4b; }
+.gm .rows .ladder b:nth-child(3) { color: #2f5fd0; }
+.gm .rows .ladder b:nth-child(4) { color: #d93a25; }
+.gm .rows button .gain { grid-column: 1; grid-row: 2; opacity: .75; min-width: 0; white-space: nowrap; }
+.gm .rows button .cost { grid-column: 1 / -1; grid-row: 3; opacity: .7; display: flex; flex-wrap: wrap; gap: 0 1.1em; align-items: baseline; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gm .rows button .cost > span { display: inline-flex; align-items: baseline; gap: 4px; }
+.gm .rows .note { grid-column: 1 / -1; grid-row: 4; opacity: .72; font-size: .9em; line-height: 1.35; margin-top: .1em; white-space: normal; }
+.gm .rows button.goal .gain:empty { display: none; }
+.gm .dust { display: inline-block; width: 7px; height: 7px; background: currentColor; }
+.gm .spore { display: inline-block; width: 9px; height: 9px; background: #2e9e4b; clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%); }
+.gm .spark { display: inline-block; width: 11px; height: 11px;
+  background: linear-gradient(#d93a25, #d93a25) center/3px 11px no-repeat, linear-gradient(#d93a25, #d93a25) center/11px 3px no-repeat; }
+/* numbers and coins on a card: tagged so they keep the Latin mono face and
+   the Latin size in treatment (c) */
+.gm .num { font-family: ui-monospace, "Courier New", monospace; }
+
+/* ------------------------------------------------------------------
+   Section 2's treatments. Every sample is tagged lang=zh-CN / ja / ko.
+   ------------------------------------------------------------------ */
+.tA { --track: 1; --step: 0px; }
+.tB { --track: 0; --step: 0px; }
+.tC { --track: 0; --step: 2px; }
+.tC .num, .tC .cost { font-size: 12px; }
+.tB :lang(ko), .tC :lang(ko) { word-break: keep-all; }
+.tB .held, .tC .held { max-width: 300px; }
+.cjkrow { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.cjkrow[data-t] .sheet { width: 390px; max-width: 100%; }
+.cjkrow[data-t] .cjkcell { width: 390px; max-width: 100%; }
+.cjkcell { display: flex; flex-direction: column; gap: 10px; min-width: 0; max-width: 100%; }
+
+/* heading emphasis variants (applied on treatment C) */
+.emph { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.emph .card { border: 1px solid var(--page-line); background: var(--paper); padding: 14px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.emph .tag { font: 12px system-ui, sans-serif; color: var(--page-mute); }
+.emph .w { font: calc(17px + var(--step)) var(--face); letter-spacing: calc(.3em * var(--track)); text-transform: uppercase; color: var(--ink); }
+.emph .s { font: calc(12px + var(--step))/1.4 var(--face); letter-spacing: calc(.1em * var(--track)); text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--ink-5); align-self: stretch; }
+.emph .s .badge { display: inline-block; margin-left: 6px; padding: 0 4px; color: var(--paper); background: var(--ink); font: 12px ui-monospace, "Courier New", monospace; letter-spacing: 0; }
+.e-bold .w, .e-bold .s { font-weight: 700; }
+.e-large .w { font-size: calc(21px + var(--step)); }
+.e-large .s { font-size: calc(14px + var(--step)); }
+.e-rule .w { padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
+.e-rule .s { border-bottom: 2px solid var(--ink); padding-bottom: 2px; }
+.e-mix .w { font-weight: 700; padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
+.e-mix .s { font-weight: 700; }
+.emph .ref .w, .emph .ref .s { font-family: ui-monospace, "Courier New", monospace; }
+.emph .ref { --track: 1; --step: 0px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Language picker and the CJK look</h1>
+<p class="lede">Mocks for DESIGN.md, "Localization phase two (design, not built)": section 1 is where the language is chosen, section 2 is how Chinese, Japanese and Korean sit in the house type. Nothing here is game code; vote, then it gets built.</p>
+
+<div class="mocknote">
+  <b>This is a mock, drawn from plain HTML, not the game.</b> The sheets reuse the game's own CSS rules, copied from <code>src/style.css</code> and <code>src/title.css</code>. The two knobs section 2 turns, <code>--track</code> and <code>--step</code>, are the design's proposal, and both are 1 and 0 (the game's numbers) everywhere in section 1.
+  <ul>
+    <li><b>What it cannot show:</b> the yard behind the sheets, the held sheet's wash, the phone's bottom-sheet seat and drag handle, the real pad marker's halo and glide, and the reload a language change costs (only a white veil stands in for it). Each panel is always light or dark with the page; the game's own dark switch is not wired up.</li>
+    <li><b>The faces:</b> the CJK glyphs come from Google's Noto Sans SC/JP/KR, standing in for the subset faces the design would bundle. Latin text is whatever <code>ui-monospace, "Courier New"</code> your machine has, as in the game.</li>
+    <li><b>The words:</b> anything in grey italics in brackets is a <span style="font-style:italic">[owner's words]</span> placeholder. The CJK lines are the machine-drafted pilot (<code>docs/l10n-pilot/draft/</code>), not approved translations. <code>locales/zh-CN.ftl</code> etc. do not exist on main yet. The pilot does not have "paused", "resume" or "settings", so the CJK sheet in section 2 is put together from drafted lines on several pages.</li>
+  </ul>
+</div>
+
+<div class="toolbar">
+  <button type="button" id="themebtn">theme: follow system</button>
+  <button type="button" id="casebtn" aria-pressed="false">endonyms: sheet capitals</button>
+  <button type="button" id="padbtn" aria-pressed="true">pad marker: shown</button>
+</div>
+
+<!-- =================================================================== -->
+<h2>1. The picker</h2>
+<p>Each option is shown on the held sheet's settings page (play.html) and on the landing page's settings (index.html). The language in force is English, marked by inverting it, the way the boards mark the brew on the boil and the saves mark the open yard. The purple corners are where the d-pad's marker would stand. Click the rows; they work.</p>
+<p>All three put the language in force in the landing page's foot as well, beside <span style="font-family:ui-monospace,monospace">itch · github</span>, in its own name, as the design asks. Clicking it opens the picker.</p>
+
+<!-- (a) -->
+<section class="opt" id="optA">
+  <h3>(a) A row that opens its own page</h3>
+  <p>One button on settings, beside <code>dark</code>. It opens a page of nine rows, each in its own name, with a back button. This is how <code>controls</code> already works.</p>
+  <div class="frames">
+    <div class="frame">
+      <div class="cap">held sheet · settings → language</div>
+      <div class="gm sheetbox" data-pick="a-held">
+        <div class="held" data-page="settings">
+          <div class="word">settings</div>
+          <button type="button">motion: full</button>
+          <button type="button">touch: off</button>
+          <button type="button">dark: off</button>
+          <button type="button" class="open-lang padon"><span class="ph">[owner's words: language]</span></button>
+          <button type="button">fullscreen: off</button>
+          <button type="button">sound: on</button>
+          <input type="range" min="0" max="1" step=".05" value=".6" aria-label="volume">
+          <button type="button">controls</button>
+          <button type="button" class="nop">back</button>
+          <div class="small">build 0.9.14</div>
+        </div>
+        <div class="held" data-page="lang" hidden>
+          <div class="word"><span class="ph">[owner's words: heading]</span></div>
+          <div class="langbtns"></div>
+          <button type="button" class="close-lang"><span class="ph">[owner's words: back]</span></button>
+        </div>
+        <div class="veil"></div>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="cap">the language page, the d-pad one row down from the one in force</div>
+      <div class="gm sheetbox" data-pick="a-held2">
+        <div class="held" data-page="lang">
+          <div class="word"><span class="ph">[owner's words: heading]</span></div>
+          <div class="langbtns" data-pad="1"></div>
+          <button type="button" class="nop"><span class="ph">[owner's words: back]</span></button>
+        </div>
+        <div class="veil"></div>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="cap">landing page · settings → language</div>
+      <div class="gm land tall" data-pick="a-land">
+        <div class="ground"></div><div class="yardnote">the demo yard plays here</div>
+        <div class="col" data-page="settings">
+          <div class="word">settings</div>
+          <button type="button">motion: full</button>
+          <button type="button">dark: off</button>
+          <button type="button" class="open-lang padon"><span class="ph">[owner's words: language]</span></button>
+          <button type="button">sound: on</button>
+          <input type="range" min="0" max="1" step=".05" value=".6" aria-label="volume">
+          <button type="button">controls</button>
+          <button type="button" class="nop">back</button>
+        </div>
+        <div class="col" data-page="lang" hidden>
+          <div class="word"><span class="ph">[owner's words: heading]</span></div>
+          <div class="langbtns"></div>
+          <button type="button" class="close-lang"><span class="ph">[owner's words: back]</span></button>
+        </div>
+        <div class="foot"><span>build 0.9.14</span><span><a>itch</a> &middot; <a>github</a> &middot; <a class="lang open-lang endo cur-name">English</a></span></div>
+        <div class="veil"></div>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="cap">landing page · the language page, the d-pad one row down</div>
+      <div class="gm land tall" data-pick="a-land2">
+        <div class="ground"></div><div class="yardnote">the demo yard plays here</div>
+        <div class="col">
+          <div class="word"><span class="ph">[owner's words: heading]</span></div>
+          <div class="langbtns" data-pad="1"></div>
+          <button type="button" class="nop"><span class="ph">[owner's words: back]</span></button>
+        </div>
+        <div class="foot"><span>build 0.9.14</span><span><a>itch</a> &middot; <a>github</a> &middot; <a class="lang endo cur-name">English</a></span></div>
+        <div class="veil"></div>
+      </div>
+    </div>
+  </div>
+  <dl class="notes">
+    <dt>Controller</dt><dd>D-pad down to the row, A opens the page. Up and down walk the nine, A picks one (the page goes white and reloads in that language), B or the back row returns. The page opens with the marker on the language in force. Nothing new for padpage.js: every row is a button.</dd>
+    <dt>Phone</dt><dd>Nine full-width tap targets on a page of their own, about 320px of rows at 12px. That fits a phone's held sheet without scrolling, and settings grows by only one row.</dd>
+    <dt>Cost</dt><dd>One more page (a <code>data-pane</code>), three placeholder messages. A player who cannot read the current language has to find the right row first. The foot link and a row label that names the current language (e.g. <span class="ph" style="font-style:italic">[language]</span> · English) both help there.</dd>
+  </dl>
+</section>
+
+<!-- (b) -->
+<section class="opt" id="optB">
+  <h3>(b) One row that cycles, like the on/off switches</h3>
+  <p>One button, <code>[language]: English</code>. Each press moves to the next of the nine. In the game every press reloads the page, the way <code>dark</code> does, so stepping from English to Korean means eight presses and eight white flashes. Press it to see the veil.</p>
+  <div class="frames">
+    <div class="frame">
+      <div class="cap">held sheet · settings</div>
+      <div class="gm sheetbox" data-pick="b-held">
+        <div class="held">
+          <div class="word">settings</div>
+          <button type="button">motion: full</button>
+          <button type="button">touch: off</button>
+          <button type="button">dark: off</button>
+          <button type="button" class="cycle padon"><span class="ph">[owner's words: language]</span>: <span class="endo cur-name">English</span></button>
+          <button type="button">fullscreen: off</button>
+          <button type="button">sound: on</button>
+          <input type="range" min="0" max="1" step=".05" value=".6" aria-label="volume">
+          <button type="button">controls</button>
+          <button type="button" class="nop">back</button>
+          <div class="small">build 0.9.14</div>
+        </div>
+        <div class="veil"></div>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="cap">landing page · settings</div>
+      <div class="gm land" data-pick="b-land">
+        <div class="ground"></div><div class="yardnote">the demo yard plays here</div>
+        <div class="col">
+          <div class="word">settings</div>
+          <button type="button">motion: full</button>
+          <button type="button">dark: off</button>
+          <button type="button" class="cycle padon"><span class="ph">[owner's words: language]</span>: <span class="endo cur-name">English</span></button>
+          <button type="button">sound: on</button>
+          <input type="range" min="0" max="1" step=".05" value=".6" aria-label="volume">
+          <button type="button">controls</button>
+          <button type="button" class="nop">back</button>
+        </div>
+        <div class="foot"><span>build 0.9.14</span><span><a>itch</a> &middot; <a>github</a> &middot; <a class="lang cycle endo cur-name">English</a></span></div>
+        <div class="veil"></div>
+      </div>
+    </div>
+  </div>
+  <dl class="notes">
+    <dt>Controller</dt><dd>D-pad to the row, A steps forward. Left and right could step both ways, but padpage.js gives left and right only to a slider today, so that would be new. Each step is a reload, or the switch waits a beat before it reloads, which no other switch on the sheet does.</dd>
+    <dt>Phone</dt><dd>The smallest footprint: settings does not grow at all. Up to eight taps, each a reload, to reach the far end of the list. A player who is lost in an unreadable language taps blindly until a script they recognize comes round.</dd>
+    <dt>Cost</dt><dd>The least markup. It is the shape the design already rejected for nine choices: a switch reads as on/off, and nine states behind one word are hidden until you step through them.</dd>
+  </dl>
+</section>
+
+<!-- (c) -->
+<section class="opt" id="optC">
+  <h3>(c) The list inline on the settings page</h3>
+  <p>Nine rows in a box on the settings page itself, under a small heading. The box is the index page's list (tight rows, chosen one inverted), so it reads as one list rather than nine more menu buttons.</p>
+  <div class="frames">
+    <div class="frame">
+      <div class="cap">held sheet · settings</div>
+      <div class="gm sheetbox" data-pick="c-held">
+        <div class="held">
+          <div class="word">settings</div>
+          <button type="button">motion: full</button>
+          <button type="button">touch: off</button>
+          <button type="button">dark: off</button>
+          <div class="langhead"><span class="ph">[owner's words: language]</span></div>
+          <div class="langlist" data-pad="2"></div>
+          <button type="button">fullscreen: off</button>
+          <button type="button">sound: on</button>
+          <input type="range" min="0" max="1" step=".05" value=".6" aria-label="volume">
+          <button type="button">controls</button>
+          <button type="button" class="nop">back</button>
+          <div class="small">build 0.9.14</div>
+        </div>
+        <div class="veil"></div>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="cap">landing page · settings</div>
+      <div class="gm land tall" data-pick="c-land">
+        <div class="ground"></div><div class="yardnote">the demo yard plays here</div>
+        <div class="col">
+          <div class="word">settings</div>
+          <button type="button">motion: full</button>
+          <button type="button">dark: off</button>
+          <div class="langhead"><span class="ph">[owner's words: language]</span></div>
+          <div class="langlist" data-pad="2"></div>
+          <button type="button">sound: on</button>
+          <input type="range" min="0" max="1" step=".05" value=".6" aria-label="volume">
+          <button type="button">controls</button>
+          <button type="button" class="nop">back</button>
+        </div>
+        <div class="foot"><span>build 0.9.14</span><span><a>itch</a> &middot; <a>github</a> &middot; <a class="lang endo cur-name">English</a></span></div>
+        <div class="veil"></div>
+      </div>
+    </div>
+  </div>
+  <dl class="notes">
+    <dt>Controller</dt><dd>Every row is a stop, so the d-pad walks nine language rows to get from <code>dark</code> to <code>sound</code>, <code>controls</code> and <code>back</code>, on every visit to settings. A is a pick and a reload, so a press meant for the row below costs a reload into the wrong language.</dd>
+    <dt>Phone</dt><dd>Rows only about 17px tall, under a comfortable thumb target unless they grow, and if they grow the settings page stops fitting. The held sheet's settings goes from about 330px to about 520px, which scrolls in landscape. The landing column runs past its frame (shown here at 640px tall).</dd>
+    <dt>Cost</dt><dd>No new page, and the choice is always visible. It puts a once-ever setting in the way of the settings people change often.</dd>
+  </dl>
+</section>
+
+<!-- =================================================================== -->
+<h2>2. The CJK look</h2>
+<p>The same composite held sheet and a board card, in Chinese, Japanese and Korean, under three treatments. In every treatment the face is the game's stack with the CJK face after it, so Latin letters, digits and the coin marks keep the game's mono and only the ideographs, kana and hangul fall through to Noto. English is shown once first for reference; none of the treatments touch it.</p>
+<p class="lede">Lines from the draft: <code>saved-word</code>, <code>saved-why</code>, <code>saved-keepplaying</code>, <code>set-dark-on</code>, <code>set-motion-less</code>, <code>held-nevermind</code>, <code>held-keys</code>, <code>job-rockhands</code>, <code>row-carry</code>, <code>row-autotoss</code>, <code>unit-per-s</code>, <code>kit-breaker-does</code>, <code>card-done</code>, <code>obj-rock</code>, <code>row-dome-note</code>. The time, the bill and the pips are made up.</p>
+
+<h3>English, for reference (the game today)</h3>
+<div class="cjkrow" id="enref"></div>
+
+<h3>(a) As today: capitals (no effect on CJK) and the wide tracking kept</h3>
+<p class="lede"><code>--track: 1</code>, <code>--step: 0</code>. The sheet's word is tracked .3em, buttons .14em, cards .1em, and all of it at 10 to 17px.</p>
+<div class="cjkrow tA" data-t="A"></div>
+
+<h3>(b) Tracking off for CJK, same size</h3>
+<p class="lede"><code>--track: 0</code> under <code>:lang(zh|ja|ko)</code>. Korean also takes <code>word-break: keep-all</code>.</p>
+<div class="cjkrow tB" data-t="B"></div>
+
+<h3>(c) Tracking off and a step larger, Latin numbers and coins kept in the mono at today's size</h3>
+<p class="lede"><code>--track: 0</code>, <code>--step: 2px</code> (12 → 14, sheet word 17 → 19, small 10 → 12). The bill line and the numbers stay at 12px in the mono.</p>
+<div class="cjkrow tC" data-t="C"></div>
+
+<h3>What stands in for the capitals: heading emphasis</h3>
+<p>In Latin, a heading is marked by capitals plus wide tracking. In CJK both are gone, so the sheet's word and a board's section heading need another mark. Every option below is on treatment (c), with the English (capitals) at the left for comparison. The badge keeps the mono.</p>
+<div class="emph tC" id="emph"></div>
+<p>Two things the shots show that no treatment fixes. In Korean the spaces between words, and the <code>?</code> and <code>!</code>, come from the Latin mono, because the CJK face stands after it in the stack. A mono space is a full cell, so Korean words sit far apart (<span lang="ko">끝난 건가?</span>). Putting the Korean face first for spaces and punctuation, or using <code>unicode-range</code> on the bundled face, would close that. Second, a card's name still runs under its pips when it is long, in Korean (<span lang="ko">누르고 있으면 던지기</span>) as in English. The game clips it with an ellipsis in the same place; that is the length rule in the translators' brief, not a type setting.</p>
+
+</main>
+
+<script>
+// ---------------------------------------------------------------- data
+const LANGS = [
+  ['en', 'English'], ['de', 'Deutsch'], ['fr', 'Français'], ['es', 'Español'],
+  ['pt-BR', 'Português (Brasil)'], ['ru', 'Русский'], ['zh-CN', '简体中文'],
+  ['ja', '日本語'], ['ko', '한국어'],
+];
+let cur = 0;
+
+// the drafted lines (docs/l10n-pilot/draft/*.ftl), and the English (locales/en.ftl)
+const L = {
+  en: { lang: 'en', word: "It's Over?", why: ['you saved your sqwife in ', '1:42:07', '!'], keep: 'Happily Ever After',
+        dark: 'dark: on', motion: 'motion: less', never: 'never mind', keys: 'esc holds · ← → look about · hold space to skip a scene',
+        job: 'diggers', carry: 'carry amount', per: '/s', toss: 'hold to toss', bite: 'twice the bite', done: 'done',
+        goal: 'dig the boulder to save your sqwife!', note: 'everything of the ground has failed. what is left is not of the ground' },
+  'zh-CN': { lang: 'zh-CN', word: '结束了？', why: ['你用 ', '1:42:07', ' 救出了你的方妻！'], keep: '从此幸福快乐',
+        dark: '深色：开', motion: '动效：少', never: '算了', keys: 'esc 暂停 · ← → 环顾 · 按住空格跳过过场',
+        job: '凿石工', carry: '携带量', per: '/秒', toss: '按住自动扔', bite: '两倍啃劲', done: '完成',
+        goal: '凿开巨石，救出你的方妻！', note: '地上的一切都失败了。剩下的不属于地上' },
+  ja: { lang: 'ja', word: '終わった？', why: ['', '1:42:07', 'で四角妻を救い出した！'], keep: 'めでたしめでたし',
+        dark: 'ダーク：オン', motion: '動き：少なめ', never: 'やめとく', keys: 'esc 一時停止 · ← → 見回す · スペース長押しでシーンをスキップ',
+        job: '石割り', carry: '運べる量', per: '/秒', toss: '長押しで投げる', bite: '噛みつき二倍', done: '完了',
+        goal: '岩を掘って四角妻を救え！', note: '地のものはすべて敗れた。残るのは地のものではない' },
+  ko: { lang: 'ko', word: '끝난 건가?', why: ['', '1:42:07', ' 만에 네모아내를 구했다!'], keep: '그 후로 행복하게 살았답니다',
+        dark: '어둡게: 켬', motion: '움직임: 적게', never: '됐어', keys: 'esc 일시정지 · ← → 둘러보기 · 스페이스 길게 눌러 장면 건너뛰기',
+        job: '돌깨는 이', carry: '운반량', per: '/초', toss: '누르고 있으면 던지기', bite: '두 배로 깨문다', done: '완료',
+        goal: '바위를 파서 네모아내를 구하자!', note: '땅의 것은 모두 실패했다. 남은 것은 땅의 것이 아니다' },
+};
+const NAMES = { 'zh-CN': 'Chinese (Simplified)', ja: 'Japanese', ko: 'Korean', en: 'English' };
+
+// ---------------------------------------------------------------- section 1
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+function langButtons(cls, padAt) {
+  return LANGS.map(([code, name], i) =>
+    `<button type="button" class="${cls} endo pick${i === cur ? ' on' : ''}${padAt != null && i === padAt ? ' padon' : ''}" lang="${code}" data-i="${i}">${esc(name)}</button>`).join('');
+}
+function paintLists() {
+  document.querySelectorAll('.langbtns').forEach(el => {
+    el.innerHTML = langButtons('', el.dataset.pad != null ? +el.dataset.pad : null);
+  });
+  document.querySelectorAll('.langlist').forEach(el => {
+    el.innerHTML = langButtons('it', el.dataset.pad != null ? +el.dataset.pad : null);
+  });
+  document.querySelectorAll('.cur-name').forEach(el => { el.textContent = LANGS[cur][1]; el.lang = LANGS[cur][0]; });
+}
+function veil(box) {
+  const v = box.querySelector('.veil'); if (!v) return;
+  v.classList.add('up'); setTimeout(() => v.classList.remove('up'), 380);
+}
+function showPage(box, page) {
+  box.querySelectorAll('[data-page]').forEach(p => { p.hidden = p.dataset.page !== page; });
+}
+document.addEventListener('click', e => {
+  const box = e.target.closest('.gm'); if (!box) return;
+  const pick = e.target.closest('.pick');
+  if (pick) { cur = +pick.dataset.i; veil(box); setTimeout(paintLists, 200); return; }
+  if (e.target.closest('.cycle')) { cur = (cur + 1) % LANGS.length; veil(box); setTimeout(paintLists, 200); return; }
+  if (e.target.closest('.open-lang')) { showPage(box, 'lang'); return; }
+  if (e.target.closest('.close-lang')) { showPage(box, 'settings'); return; }
+});
+paintLists();
+
+// ---------------------------------------------------------------- section 2
+function pips(on) {
+  let n = 0, out = '';
+  for (let b = 0; b < 4; b++) { out += '<b>'; for (let k = 0; k < 2; k++) out += `<i class="${n++ < on ? 'on' : ''}"></i>`; out += '</b>'; }
+  return `<i class="ladder">${out}</i>`;
+}
+function heldSheet(t) {
+  return `<div class="gm"><div class="held" lang="${t.lang}">
+    <div class="word">${esc(t.word)}</div>
+    <div class="why">${esc(t.why[0])}<span class="num">${t.why[1]}</span>${esc(t.why[2])}</div>
+    <div class="rule"></div>
+    <button type="button">${esc(t.keep)}</button>
+    <button type="button">${esc(t.dark)}</button>
+    <button type="button">${esc(t.motion)}</button>
+    <button type="button">${esc(t.never)}</button>
+    <div class="small">${esc(t.keys)}</div>
+  </div></div>`;
+}
+function board(t) {
+  return `<div class="gm"><div class="sheet" lang="${t.lang}"><div class="rows">
+    <div class="sect">${esc(t.job)}<span class="badge">3</span></div>
+    <button type="button"><span class="what">${esc(t.carry)}</span>${pips(3)}
+      <span class="gain"><span class="num">+1</span> <span class="dust"></span><span>${esc(t.per)}</span></span>
+      <span class="cost"><span><i class="dust"></i><span class="num">120</span></span><span><i class="spore"></i><span class="num">40</span></span></span></button>
+    <button type="button" class="done" disabled><span class="what">${esc(t.toss)}</span>${pips(8)}
+      <span class="gain">${esc(t.bite)}</span>
+      <span class="cost"><span>${esc(t.done)}</span></span></button>
+    <button type="button" class="goal"><span class="what">${esc(t.goal)}</span>
+      <span class="gain"></span>
+      <span class="cost"><span><i class="spark"></i><span class="num">1</span></span><span><i class="dust"></i><span class="num">900</span></span></span>
+      <span class="note">${esc(t.note)}</span></button>
+  </div></div></div>`;
+}
+function cell(code) {
+  const t = L[code];
+  return `<div class="cjkcell"><div class="cap">${NAMES[code]}</div>${heldSheet(t)}${board(t)}</div>`;
+}
+document.getElementById('enref').innerHTML = cell('en');
+document.querySelectorAll('.cjkrow[data-t]').forEach(row => { row.innerHTML = ['zh-CN', 'ja', 'ko'].map(cell).join(''); });
+
+const EMPH = [
+  ['', 'plain: no mark (treatment c as it stands)'],
+  ['e-bold', 'bold: the face\'s 700 weight'],
+  ['e-large', 'larger: the word +4px, a heading +2px'],
+  ['e-rule', 'a rule: 2px ink under it, as the board title wears'],
+  ['e-mix', 'bold word over a rule, bold heading'],
+];
+document.getElementById('emph').innerHTML = EMPH.map(([cls, tag]) => {
+  const rows = ['en', 'zh-CN', 'ja', 'ko'].map(code => {
+    const t = L[code];
+    return `<div class="${code === 'en' ? 'ref' : ''}" lang="${t.lang}" style="display:flex;flex-direction:column;gap:6px;align-self:stretch">
+      <div class="w">${esc(t.word)}</div><div class="s">${esc(t.job)}<span class="badge">3</span></div></div>`;
+  }).join('');
+  return `<div class="card gm ${cls}"><div class="tag">${tag}</div>${rows}</div>`;
+}).join('');
+
+// ---------------------------------------------------------------- toolbar
+const root = document.documentElement;
+const themes = [null, 'light', 'dark'];
+let ti = 0;
+document.getElementById('themebtn').addEventListener('click', e => {
+  ti = (ti + 1) % 3;
+  if (themes[ti]) root.dataset.theme = themes[ti]; else delete root.dataset.theme;
+  e.target.textContent = 'theme: ' + (themes[ti] || 'follow system');
+});
+document.getElementById('casebtn').addEventListener('click', e => {
+  const on = document.body.classList.toggle('asis');
+  e.target.setAttribute('aria-pressed', on);
+  e.target.textContent = 'endonyms: ' + (on ? 'as written' : 'sheet capitals');
+});
+const padStyle = document.createElement('style');
+document.head.appendChild(padStyle);
+document.getElementById('padbtn').addEventListener('click', e => {
+  const off = !padStyle.textContent;
+  padStyle.textContent = off ? '.gm .padon::after { display: none; }' : '';
+  e.target.setAttribute('aria-pressed', !off);
+  e.target.textContent = 'pad marker: ' + (off ? 'hidden' : 'shown');
+});
+</script>
+</body>
+</html>
