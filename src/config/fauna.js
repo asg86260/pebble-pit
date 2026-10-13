@@ -30,10 +30,6 @@ export const FAUNA_TINT_FILL = 0.6;
 // gradient.
 export const FAUNA_TINT_EDGE = 4;
 export const FAUNA_TINT_MIX = 0.4;
-// Rows of the sunlit's tint carried on over the deep's ceiling: a tall window
-// (a phone's) reaches above it, and the tint stopping there would draw a
-// hard edge across the water.
-export const FAUNA_TINT_HEAD = 60;
 
 // The drawings: rows of characters, two or three held frames each at `fps`.
 // d c b a grey body, each cell nudged a rung either way, fixed per creature

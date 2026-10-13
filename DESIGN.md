@@ -14803,7 +14803,9 @@ numbers, so its creatures are few and drawn two rungs darker (`dim`).
 **The tint is a few greys, never a gradient.** Each zone's water is dithered
 in two rungs of the deep's own ramp, mixed across a border a step a row; it
 is drawn before the water's field (`deep zones`), whose dark cells are left
-unpainted, so the field lies over it.
+unpainted, so the field lies over it. It reaches as far as the window does,
+not a margin guessed round the deep: a tall window shows far over the
+ceiling (the sunlit carried on up) and a wide one past the deep's far end.
 
 **Sparse, and clickable like the birds** (the owner, 2026-10-13: "tone down
 the amount of creatures in the deep. its a little noisy ... the same

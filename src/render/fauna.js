@@ -10,7 +10,7 @@
 // lights the only cells drawn every frame.
 
 import { now } from '../clock.js';
-import { P, FAUNA_ZONES, FAUNA_TINT_FILL, FAUNA_TINT_EDGE, FAUNA_TINT_MIX, FAUNA_TINT_HEAD, FAUNA_SPRITES, FAUNA_BASE,
+import { P, FAUNA_ZONES, FAUNA_TINT_FILL, FAUNA_TINT_EDGE, FAUNA_TINT_MIX, FAUNA_SPRITES, FAUNA_BASE,
          FAUNA_VARY, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAUNA_GULPER, FAUNA_SCARE, FAUNA_STARTLE, COIL_SEGS } from '../config.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
@@ -28,33 +28,58 @@ const purple = i => PURPLES[Math.max(0, Math.min(PURPLES.length - 1, i))];
 // Each zone's own two greys, dithered on a fixed hash; across a border the
 // rows mix, the neighbor's cells thinning out a step a row. The field's lit
 // cells are drawn over it and its dark ones leave it showing.
+//
+// It covers whatever the window shows of the deep's water, not a margin
+// guessed round it: the deep's zoom tops out at the yard's, so a tall window
+// reaches as far over the ceiling as it is tall, and one wider than the deep
+// past its far end. Above the ceiling is the sunlit's water and past either
+// end the row's own zone, on the same hash, so a regrown image is the old one
+// with more round it. Painted once a pixel a cell, again only when a window
+// shows past what is painted.
 let tint = null;
-function tintImage() {
-  if (tint) return tint;
-  tint = document.createElement('canvas');
-  tint.width = COLS; tint.height = FAUNA_TINT_HEAD + ROWS;
-  const g = tint.getContext('2d'), step = FAUNA_TINT_MIX / FAUNA_TINT_EDGE;
-  for (let y = -FAUNA_TINT_HEAD; y < ROWS; y++) {
-    const z = zoneAtRow(y), here = FAUNA_ZONES[z], next = FAUNA_ZONES[z + 1], prev = FAUNA_ZONES[z - 1];
-    const toNext = here.to - y, fromPrev = y - here.from + 1;
-    for (let x = 0; x < COLS; x++) {
-      let q = here;
-      if (next && toNext <= FAUNA_TINT_EDGE && unit2(x, y) < FAUNA_TINT_MIX - (toNext - 1) * step) q = next;
-      if (prev && fromPrev <= FAUNA_TINT_EDGE && unit2(y, x) < FAUNA_TINT_MIX - (fromPrev - 1) * step) q = prev;
-      const k = unit2(x * 1.3, y * 0.7);
-      const rung = k < q.share ? q.tones[1] : k < FAUNA_TINT_FILL ? q.tones[0] : 0;
+function tintRung(x, y) {
+  const step = FAUNA_TINT_MIX / FAUNA_TINT_EDGE;
+  const z = zoneAtRow(y), here = FAUNA_ZONES[z], next = FAUNA_ZONES[z + 1], prev = FAUNA_ZONES[z - 1];
+  const toNext = here.to - y, fromPrev = y - here.from + 1;
+  let q = here;
+  if (next && toNext <= FAUNA_TINT_EDGE && unit2(x, y) < FAUNA_TINT_MIX - (toNext - 1) * step) q = next;
+  if (prev && fromPrev <= FAUNA_TINT_EDGE && unit2(y, x) < FAUNA_TINT_MIX - (fromPrev - 1) * step) q = prev;
+  const k = unit2(x * 1.3, y * 0.7);
+  return k < q.share ? q.tones[1] : k < FAUNA_TINT_FILL ? q.tones[0] : 0;
+}
+function tintImage(span) {
+  if (tint && span.c0 >= tint.c0 && span.c1 <= tint.c1 && span.r0 >= tint.r0) return tint;
+  const c0 = Math.min(span.c0, tint ? tint.c0 : 0), c1 = Math.max(span.c1, tint ? tint.c1 : COLS);
+  const r0 = Math.min(span.r0, tint ? tint.r0 : 0);
+  const img = document.createElement('canvas');
+  img.width = c1 - c0; img.height = ROWS - r0;
+  const g = img.getContext('2d');
+  for (let y = r0; y < ROWS; y++) {
+    for (let x = c0; x < c1; x++) {
+      const rung = tintRung(x, y);
       if (rung <= 0) continue;
       g.fillStyle = GREYS[rung];
-      g.fillRect(x, y + FAUNA_TINT_HEAD, 1, 1);
+      g.fillRect(x - c0, y - r0, 1, 1);
     }
   }
-  return tint;
+  return (tint = { img, c0, c1, r0 });
+}
+
+// The cells, from the deep's top-left, the window shows of the deep's water
+// and the deep's own: columns [c0, c1), rows from r0 down to the floor.
+export function tintSpan(win = deepWindow()) {
+  const x0 = deepX0(), top = deepTop();
+  return {
+    c0: Math.min(0, Math.floor((win.x0 - x0) / P)), c1: Math.max(COLS, Math.ceil((win.x1 - x0) / P)),
+    r0: Math.min(0, Math.floor((win.y0 - top) / P)),
+  };
 }
 
 export function drawDeepZones() {
+  const t = tintImage(tintSpan());
   const smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(tintImage(), deepX0(), deepTop() - FAUNA_TINT_HEAD * P, COLS * P, (FAUNA_TINT_HEAD + ROWS) * P);
+  ctx.drawImage(t.img, deepX0() + t.c0 * P, deepTop() + t.r0 * P, (t.c1 - t.c0) * P, (ROWS - t.r0) * P);
   ctx.imageSmoothingEnabled = smooth;
 }
 
