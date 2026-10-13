@@ -4931,14 +4931,14 @@
   "id": "station-party",
   "group": "Stations",
   "where": "src/stations.js",
-  "context": "a deep station's name: its fighter's (Brawler, Recruit); $nth counts the like-named stations before it. (A fifth like-named station reads \"undefined\": that is what the code said before the words moved here, kept for the owner to word.)",
+  "context": "a deep station's name: its fighter's (Brawler, Recruit); $nth counts the like-named stations before it. (An eighth like-named station reads \"undefined\": what the code said before the words moved here, kept by the owner; the deep has seven.)",
   "text": "the undefined ${who}"
  },
  {
   "id": "station-party-lot",
   "group": "Stations",
   "where": "src/stations.js",
-  "context": "a deep station not yet given a fighter; $nth counts the empty lots before it (a fifth reads \"undefined\", as the code said)",
+  "context": "a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads \"undefined\", as the code said)",
   "text": "a undefined station"
  },
  {

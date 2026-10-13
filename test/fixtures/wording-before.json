@@ -4788,14 +4788,14 @@
      "nth": 4,
      "who": "Recruit"
     },
-    "text": "the undefined Recruit"
+    "text": "the fifth Recruit"
    },
    {
     "args": {
      "nth": 6,
      "who": "Recruit"
     },
-    "text": "the undefined Recruit"
+    "text": "the seventh Recruit"
    }
   ],
   "station-party-lot": [
@@ -4827,7 +4827,7 @@
     "args": {
      "nth": 5
     },
-    "text": "a undefined station"
+    "text": "a sixth station"
    }
   ],
   "spell-drive-blurb": [

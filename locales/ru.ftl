@@ -2142,23 +2142,29 @@ station-pods-empty = строить нечего
 station-lab = лаборатория
 
 # a deep station's name: its fighter's (Brawler, Recruit); $nth counts the like-named stations before it.
-# (A fifth like-named station reads "undefined": that is what the code said before the words moved here, kept for the owner to word.)
+# (An eighth like-named station reads "undefined": what the code said before the words moved here, kept by the owner; the deep has seven.)
 station-party =
     { $nth ->
         [0] { $who }
         [1] второй { $who }
         [2] третий { $who }
         [3] четвёртый { $who }
+        [4] пятый { $who }
+        [5] шестой { $who }
+        [6] седьмой { $who }
        *[other] undefined { $who }
     }
 
-# a deep station not yet given a fighter; $nth counts the empty lots before it (a fifth reads "undefined", as the code said)
+# a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads "undefined", as the code said)
 station-party-lot =
     { $nth ->
         [0] станция
         [1] вторая станция
         [2] третья станция
         [3] четвёртая станция
+        [4] пятая станция
+        [5] шестая станция
+        [6] седьмая станция
        *[other] undefined станция
     }
 

@@ -2035,23 +2035,29 @@ station-pods-empty = 지을 게 없다
 station-lab = 연구실
 
 # a deep station's name: its fighter's (Brawler, Recruit); $nth counts the like-named stations before it.
-# (A fifth like-named station reads "undefined": that is what the code said before the words moved here, kept for the owner to word.)
+# (An eighth like-named station reads "undefined": what the code said before the words moved here, kept by the owner; the deep has seven.)
 station-party =
     { $nth ->
         [0] { $who }
         [1] 두 번째 { $who }
         [2] 세 번째 { $who }
         [3] 네 번째 { $who }
+        [4] 다섯 번째 { $who }
+        [5] 여섯 번째 { $who }
+        [6] 일곱 번째 { $who }
        *[other] undefined 번째 { $who }
     }
 
-# a deep station not yet given a fighter; $nth counts the empty lots before it (a fifth reads "undefined", as the code said)
+# a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads "undefined", as the code said)
 station-party-lot =
     { $nth ->
         [0] 스테이션
         [1] 두 번째 스테이션
         [2] 세 번째 스테이션
         [3] 네 번째 스테이션
+        [4] 다섯 번째 스테이션
+        [5] 여섯 번째 스테이션
+        [6] 일곱 번째 스테이션
        *[other] undefined 번째 스테이션
     }
 
