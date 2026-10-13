@@ -17,6 +17,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
 - The serpent's bar slides down under blows, each blow's stretch breaking off in pixel pieces that fall away, and a meal's heal flows back in instead of jumping (`node tools/look.mjs deep-numbers`).
+- The deep is alive top to bottom: shoals and jellies by the portal, lanternfish and siphonophores under them, anglers round the fight, dumbo octopuses and tripod fish over the floor, each zone's water its own shade.
 - After the serpent dies she hangs her gear on her station for one of the deep's crew to take up, and the two of them go home through the portal and down the whole yard with the crew falling in behind, to sit at its far end for good (test/finale.test.mjs).
 - The first trip down into the deep plays a short scene: the camera finds him calling from the serpent's belly, then her under the portal, and she charges down and lands her first blow; her station stands, free, from the snatch (test/abyss-intro.test.mjs).
 - During the snatch the rest of the crew fade out of the shot, the portal waits until they are gone, and no rock comes down until it is over (test/ending-stage.test.mjs).

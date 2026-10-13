@@ -53,6 +53,7 @@ import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier } from './render/serpent.js';
 import { drawFish, drawFishFar, drawFishNear } from './render/fish.js';
+import { drawDeepZones, drawDeepFauna } from './render/fauna.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawStationStatuses } from './render/statusicons.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
@@ -198,9 +199,16 @@ const LAYERS = [
   // floor, the scales lying on it and its stations, then the serpent and
   // everything in the water with it. Before the roster, so a deep station's
   // post stands on the deep's floor like any other.
+  // The zones' tint first: the water's field leaves its dark cells unpainted,
+  // so the tint shows through them and the field's lit cells lie over it.
+  { name: 'deep zones', draw: drawDeepZones },
   { name: 'deep water', draw: drawDeepWater },
   { name: 'deep motes', draw: drawDeepMotes },
   { name: 'deep stream far', draw: drawFishFar },   // the giant and the far and middle crossings, behind all of it
+  // The zones' creatures, in the world in front of the far stream and behind
+  // the portal, the stations, the serpent and the bar, so nothing fought or
+  // read is ever under one.
+  { name: 'deep fauna', draw: drawDeepFauna },
   { name: 'deep portal', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
   { name: 'deep floor', draw: drawDeepFloor },
   { name: 'serpent diving', draw: drawSerpentDiving },   // the first break's dive, behind the stations and the bed
@@ -307,7 +315,7 @@ export { LAYERS };
 
 // The deep's fish are bystanders to every scene: they fade out with the
 // haulers while one holds.
-const FISH = new Set(['deep stream far', 'deep fish', 'deep stream near']);
+const FISH = new Set(['deep stream far', 'deep fauna', 'deep fish', 'deep stream near']);
 // The layers after the wash that are still the yard's background: drawn at
 // the receded share of their ink rather than washed.
 const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
@@ -331,7 +339,7 @@ export const asPicture = on => { picture = on; };
 // in the deep every other layer is the yard's and is not drawn; in the yard
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
-const DEEP = new Set(['deep water', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
+const DEEP = new Set(['deep zones', 'deep water', 'deep fauna', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
                       'deep fish', 'deep stream far', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the

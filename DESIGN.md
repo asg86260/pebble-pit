@@ -14776,6 +14776,41 @@ coil and scales in white and greys -- rather than black marks on white.
 Both are one ink; the inverted one is proposed, and it is settled by shots
 of each before any of it is drawn for real.
 
+### The deep's zones (built 2026-10-12)
+
+The owner's layout A of `docs/mocks/deep-full-height-2026-10-12.html`, "zones
+over the fight". The deep is four times as wide as it is tall and every row
+of it is always on the glass, yet almost everything drawn sat in its middle
+third -- the coil, the bar, the near stream -- and the top third held a few
+per cent of the ink. So the height is given to creatures, each in the band
+of water its real-world kin lives in: five zones on the deep's 130 rows,
+sunlit (0-22) by the portal, twilight (22-48), midnight (48-88) round the
+coil, abyssal (88-118) over the floor, hadal (118-130) on it. Thirteen
+creatures, two or three held frames each, from sardine shoals by the portal
+to amphipods on the scales (`FAUNA` in `config/fauna.js`).
+
+**Nothing that is fought moves.** The coil, the bar, the stations, the
+fighters' walk, the hit tests, the camera and the phone's zoom are as they
+were. The creatures are behind the portal, the stations and the serpent
+(the `deep fauna` layer, after the far stream), so nothing fought or read is
+ever under one. The far stream's crossings are moved up into the sunlit and
+twilight; the near stream keeps its band over the coil, because the meals
+come out of it and its swim to the mouth is tuned.
+
+**The midnight band is kept quiet.** It holds the bar and the fight's
+numbers, so its creatures are few and drawn two rungs darker (`dim`).
+
+**The tint is a few greys, never a gradient.** Each zone's water is dithered
+in two rungs of the deep's own ramp, mixed across a border a step a row; it
+is drawn before the water's field (`deep zones`), whose dark cells are left
+unpainted, so the field lies over it.
+
+**Picture only, for now.** A creature's place is read off its seed and the
+clock (`faunaAt`, deep/fauna.js), nothing is saved, and the serpent's meals
+and the fight are unchanged. Whether a meal comes down from its own zone and
+whether the creatures part round a blow are both open; either reads the one
+population table and the one position function.
+
 ### The crew cross both ways
 
 There is no crew of the deep's own. The deep's hands are the yard's crew,

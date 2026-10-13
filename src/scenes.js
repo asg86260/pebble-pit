@@ -24,7 +24,7 @@ import { rockLeft } from './world.js';
 import { now } from './clock.js';
 import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, SERPENT_WOUND, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, rungValue } from './config.js';
 import { strike, clickDeep } from './deep/serpent.js';
-import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor } from './deep/place.js';
+import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
 import { sweep } from './hands.js';
 import { nextMeal, turned, windowS, nowS } from './deep/meals.js';
 import { KINDS } from './render/fish.js';
@@ -37,7 +37,7 @@ import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
 import { INDEX } from './config/index.js';
-import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL } from './config.js';
+import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL, DEEP_W } from './config.js';
 import { riftCenter, riftRadius } from './rift.js';
 
 // The parts, in the order the sheet reads them.
@@ -779,6 +779,14 @@ const deepScenes = {
       deepYard({ stage: 1, wound: 0.33,
                  party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
       lookDeep((slotAt(0) + slotAt(3)) / 2);
+    } },
+  // The deep's full height: the zones' tint and their creatures from the
+  // portal down to the floor, a fight on, the camera on the deep's middle.
+  'deep-zones': { about: 'the deep', say: 'the deep top to bottom: shoals and jellies by the portal, lanternfish under them, anglers in the coil\'s band, dumbos and tripod fish over the floor',
+    run: () => {
+      deepYard({ stage: 1, wound: 0.33,
+                 party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
+      lookDeep(deepX0() + DEEP_W / 2);
     } },
   ...Object.fromEntries(Object.entries(PROP_SCENES).map(([name, party]) => [name, {
     about: 'the deep', say: `four stations' props: ${party.map(o => (o.cls || 'crate') + ' ' + o.rung).join(', ')}`,

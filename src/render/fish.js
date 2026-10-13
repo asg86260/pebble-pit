@@ -16,7 +16,8 @@ import { coilLine } from '../deep/place.js';
 import { mealNow, nearAt, nearAll, eatenBefore, nowS, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_SWIM_CELLS, MEAL_HINGE, MEAL_SQUEEZE,
          FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED,
-         FLOW_NEAR_BAND, FLOW_KINDS, FLOW_LENGTHS, DEEP_H, COIL_Y, SERPENT_PHASES } from '../config.js';
+         FLOW_NEAR_BAND, FLOW_KINDS, FLOW_LENGTHS, DEEP_H, COIL_Y, SERPENT_PHASES, FLOW_FAR_ZONES } from '../config.js';
+import { zoneOf, ROWS } from '../deep/fauna.js';
 import { deepTop, deepFloor, deepX0, deepX1 } from '../deep/place.js';
 
 // The mock's tones, on the deep's own ramps.
@@ -236,8 +237,9 @@ function crossings(want, now0) {
 function drawCrossing(c, t) {
   const { top, bottom } = water(), band = bottom - top;
   const cell = Math.max(1, Math.round(P * S.zoom * FLOW_CELL[c.d]));
-  // the far ones higher in the water, the near ones lower, all inside it
-  const y = top + band * (0.12 + c.d * 0.18 + c.y * 0.45) + Math.sin((t - c.at) * 1.3 + c.at) * cell * 2;
+  // each depth in its own zones (FLOW_FAR_ZONES), above the fight's band
+  const [hi, lo] = FLOW_FAR_ZONES[c.d].map(zoneOf), from = hi.from / ROWS, to = lo.to / ROWS;
+  const y = top + band * (from + c.y * (to - from)) + Math.sin((t - c.at) * 1.3 + c.at) * cell * 2;
   const put = (lx, ly, tone) => {
     ctx.fillStyle = toneAt(c.d, tone);
     ctx.fillRect(Math.round((c.x - c.dir * lx * cell) / cell) * cell, Math.round((y + ly * cell) / cell) * cell, cell, cell);
