@@ -148,6 +148,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Nine more index entries have a drawing: muck, poop, pollution, birds, the pit, your sqwife, the bench, the books and achievements.
 - The farm shed wears a barn roof, so it no longer looks like the quarry shed or the bench; the farm's flag flies from the ridge.
 - The deep's stations stand spread evenly under the whole serpent, the first four already spanning it, instead of bunched to one side.
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
