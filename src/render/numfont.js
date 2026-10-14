@@ -6,7 +6,7 @@
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { darkPage, turned } from '../ink.js';
-import { NUM_FONT, NUM_FONT_TIGHT } from '../config.js';
+import { NUM_FONT, NUM_FONT_TIGHT, NUM_FONT_PX } from '../config.js';
 import { fmt } from '../words.js';
 
 const CHARS = Object.keys(NUM_FONT);
@@ -76,6 +76,45 @@ export function write(sheet, str, px, left, bottom, bob) {
     ctx.drawImage(sheet, GLYPH_AT[ch] * px, 0, w * px, h, left + x * px, bottom - h - (bob ? bob(i) * px : 0), w * px, h);
     x += w;
   }
+}
+// The yard's counts (C14, the owner's option C): the same face at
+// NUM_FONT_PX screen pixels a font pixel, every glyph keyed in one font pixel
+// of paper all round, the way the deep's choose-mark is, so a count reads
+// where it lands -- on a heap, a dark roof or the water. Drawn a font pixel
+// at a time in the transform in hand (screen pixels), all the keylines first
+// so a tight glyph's never covers its neighbor's ink. `align` is the x's
+// side (left, center, right), `base` the y's (top, middle, bottom).
+const INK_AT = {}, KEY_AT = {};
+for (const ch of CHARS) {
+  const rows = NUM_FONT[ch], ink = [], key = new Set();
+  rows.forEach((row, r) => {
+    for (let c = 0; c < row.length; c++) {
+      if (row[c] !== '#') continue;
+      ink.push([c, r]);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) key.add(`${c + dx},${r + dy}`);
+    }
+  });
+  INK_AT[ch] = ink;
+  KEY_AT[ch] = [...key].map(s => s.split(',').map(Number));
+}
+export function writeCount(g, text, x, y, { px = NUM_FONT_PX, align = 'center', base = 'middle', ink = '#000', paper = '#fff' } = {}) {
+  const str = drawable(text);
+  const w = widthOf(str, px), h = GH * px;
+  const left = Math.round(align === 'center' ? x - w / 2 : align === 'right' ? x - w : x);
+  const top = Math.round(base === 'middle' ? y - h / 2 : base === 'bottom' ? y - h : y);
+  const at = [];
+  let fx = 0;
+  for (let i = 0; i < str.length; i++) {
+    fx += gapBefore(str, i);
+    at.push(fx);
+    fx += GLYPH_W[str[i]];
+  }
+  for (const [tone, cells] of [[paper, KEY_AT], [ink, INK_AT]]) {
+    g.fillStyle = tone;
+    for (let i = 0; i < str.length; i++)
+      for (const [c, r] of cells[str[i]]) g.fillRect(left + (at[i] + c) * px, top + r * px, px, px);
+  }
+  return { left, top, w, h };
 }
 export function widthOf(str, px) {
   let x = 0;

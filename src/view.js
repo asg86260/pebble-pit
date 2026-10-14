@@ -20,6 +20,7 @@ import { clampCam, setZoom, yardCell } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
 import { dropLift } from './cutscene.js';
+import { smoothstep as ease } from './motion.js';
 
 export const inDeep = () => S.view === 'deep';
 // A glide is running: the pointer waits for it.
@@ -189,7 +190,6 @@ export function setView(v) {
   frameOn(v === 'deep' ? 'deep' : 'yard');
 }
 
-const ease = k => k * k * (3 - 2 * k);
 
 export function stepView(c) {
   // A scene's framing outlives no scene: a new game or a read save drops

@@ -32,6 +32,7 @@ import { drawMark } from './marks.js';
 import { paintAbyssField } from './abyssfield.js';
 import { glimpseFrame } from '../glimpse.js';
 import { riftLifeFrame, drawRiftLife } from './riftlife.js';
+import { toned } from './tone.js';
 
 // What is lying on the hill, drawn after the rock and before the chips. Every
 // grain goes through `drawMark` so it looks like the thing it is; there are
@@ -170,8 +171,8 @@ function drawThrough(cx, cy, rad, t, life) {
         // clock alone, so they never blink together.
         const tw = 0.5 + 0.5 * Math.sin(t / RIFT_TWINKLE_MS * Math.PI * 2
                                         + spec(i + L * 13, j) * Math.PI * 2);
-        ctx.globalAlpha = 0.35 + tw * 0.65;
-        ctx.fillStyle = tone;
+        // dimmer down its own ramp toward the hole's black, not thinner
+        ctx.fillStyle = toned(tone, 0.35 + tw * 0.65, true);
         // Round, and off the lattice, like the tear that frames them. Sizes
         // vary with the layer and the star: identical dots are a texture.
         const size = P * (0.30 + spec(i + 5, j + L * 3) * 0.30) * (1 - f * 0.35);
@@ -180,10 +181,8 @@ function drawThrough(cx, cy, rad, t, life) {
         ctx.fill();
       }
     }
-    ctx.globalAlpha = 1;
     drawRiftLife(life, L);
   }
-  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -197,11 +196,10 @@ function drawPull(cx, cy, rad, t) {
     // In from RIFT_PULL_FROM to the rim, quickening as it arrives: the squared
     // term is the same falling shape the grains have.
     const r = rad * (RIFT_PULL_FROM - (RIFT_PULL_FROM - 1) * k * k);
-    ctx.globalAlpha = RIFT_PULL_INK * (1 - k) * (0.5 + spec(i, 5) * 0.5);
-    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))];
-    ctx.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), P, P);
+    ctx.fillStyle = toned(MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))],
+                          RIFT_PULL_INK * (1 - k) * (0.5 + spec(i, 5) * 0.5));
+    ctx.fillRect(Math.round((cx + Math.cos(a) * r) / P) * P, Math.round((cy + Math.sin(a) * r) / P) * P, P, P);
   }
-  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -319,12 +317,10 @@ export function drawRift() {
   ctx.save();
   rimPath(cx, cy, rad, t, 0);
   ctx.clip();
-  ctx.strokeStyle = MAGIC_TONES[0];
+  ctx.strokeStyle = toned(MAGIC_TONES[0], RIFT_RING_INK);
   ctx.lineWidth = RIFT_RING_W;
-  ctx.globalAlpha = RIFT_RING_INK;
   rimPath(cx, cy, rad, t, 0);
   ctx.stroke();
-  ctx.globalAlpha = 1;
   ctx.restore();
 
   // and the sky on the other side, cut to the hole
@@ -346,8 +342,9 @@ export function drawRift() {
     // `dim` is the grain's own slowed clock (`orbit` in game.js): the nearer
     // the horizon the less of a frame it gets and the fainter it is drawn, so
     // what you see going dim IS what is slowing down.
-    ctx.globalAlpha = m.dim === undefined ? 1 : Math.max(0, Math.min(1, m.dim));
-    ctx.fillStyle = inDisc(m.x, m.y) ? '#fff' : shadeOf(m.s);
+    const dim = m.dim === undefined ? 1 : Math.max(0, Math.min(1, m.dim));
+    const inside = inDisc(m.x, m.y);
+    ctx.fillStyle = toned(inside ? '#fff' : shadeOf(m.s), dim, inside);
     ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
     if (!d || d > rad * RIFT_TAIL_R) continue;
     const near = 1 - d / (rad * RIFT_TAIL_R);
@@ -358,7 +355,6 @@ export function drawRift() {
       ctx.fillRect(Math.round(tx / P) * P, Math.round(ty / P) * P, P, P);
     }
   }
-  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 

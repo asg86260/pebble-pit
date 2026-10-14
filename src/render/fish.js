@@ -16,16 +16,16 @@ import { GREYS, PURPLES } from './deeptones.js';
 import { coilLine } from '../deep/place.js';
 import { mealNow, nearAt, nearAll, eatenBefore, nowS, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SQUEEZE,
-         FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED, FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
+         FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED, FLOW_GIANT_LEN, FLOW_GIANT_R, FLOW_GIANT_AT, FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
          FAUNA_SMEAR } from '../config.js';
 import { nearY, crossings, farCell, farY, water, streamPose, streamLead } from '../deep/flow.js';
+import { smoothstep as ease } from '../motion.js';
 
 // The mock's tones, on the deep's own ramps.
 const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
 const Pu = [2, 3, 4, 5, 7, 9, 10, 11, 11].map(i => PURPLES[i]);
 const BLACK = GREYS[0];
 const unit = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
-const ease = x => x * x * (3 - 2 * x);
 
 const ell = (put, cx, cy, rx, ry, tone) => {
   for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++)
@@ -260,7 +260,7 @@ export function drawFish() {
 // Drawn on the glass rather than in the world (deep/flow.js places them).
 const darker = new Map();
 for (const ramp of [GREYS, PURPLES]) ramp.forEach((c, i) => darker.set(c, ramp[Math.max(1, i - 4)]));
-const FAR = PURPLES[3], GIANT = PURPLES[1];
+const FAR = PURPLES[3], GIANT = PURPLES[1], GIANT_DEEP = PURPLES[2];
 const toneAt = (d, c) => (d === 2 ? c : d === 1 ? (darker.get(c) || c) : FAR);
 
 function onGlass(draw) {
@@ -285,13 +285,19 @@ function drawCrossing(c, t) {
 export function drawFishFar() {
   onGlass(() => {
     const t = now() / 1000, { top, bottom } = water();
-    const len = 320, gx = -len - FLOW_MARGIN + (t % FLOW_GIANT_S) * FLOW_GIANT_SPEED;
+    const len = FLOW_GIANT_LEN, gx = -len - FLOW_MARGIN + (t % FLOW_GIANT_S) * FLOW_GIANT_SPEED;
     if (gx < S.W + FLOW_MARGIN) {
-      ctx.fillStyle = GIANT;
-      const mid = top + (bottom - top) * 0.3, cell = Math.max(2, Math.round(P * S.zoom * 0.5)), n = Math.ceil(len / cell);
+      // On the world's own cell, far by its tone alone, and dealt between two
+      // dark rungs a cell by a hash so the mass is not one flat purple.
+      const mid = top + (bottom - top) * FLOW_GIANT_AT, cell = Math.max(2, Math.round(P * S.zoom)), n = Math.ceil(len / cell);
+      const x0 = Math.round(gx / cell);
       for (let i = 0; i < n; i++) {
-        const r = 34 * Math.sin(Math.PI * i / n);
-        ctx.fillRect(Math.round((gx + i * cell) / cell) * cell, Math.round((mid - r * 0.6) / cell) * cell, cell, Math.round((r * 1.2 + 6) / cell) * cell);
+        const r = FLOW_GIANT_R * Math.sin(Math.PI * i / n);
+        const y0 = Math.round((mid - r / 2) / cell), y1 = Math.max(y0 + 1, Math.round((mid + r / 2) / cell));
+        for (let j = y0; j < y1; j++) {
+          ctx.fillStyle = Math.abs((x0 + i) * 73 + j * 151) % 7 < 2 ? GIANT_DEEP : GIANT;
+          ctx.fillRect((x0 + i) * cell, j * cell, cell, cell);
+        }
       }
     }
     for (const c of crossings(d => d < 2, t)) drawCrossing(c, t);

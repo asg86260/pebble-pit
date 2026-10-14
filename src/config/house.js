@@ -1,4 +1,5 @@
 import { P } from './yard.js';
+import { GREY } from './palette.js';
 
 // --- the house ---------------------------------------------------------------
 // Where the crew live: a shack per body, on the bare ground between the bench
@@ -19,7 +20,7 @@ export const HOUSE_SHUT = 0.3;
 // A drawn curtain. Not black: a window that goes black vanishes into the wall.
 // Grey says the window is still there and somebody has pulled something
 // across it.
-export const HOUSE_CURTAIN = '#8f8f8f';
+export const HOUSE_CURTAIN = GREY[5];
 // A hearth, not a furnace: the lab smokes steadily because work is being done
 // in it; this says something quieter, that somebody is in.
 export const HOUSE_PUFF_MS = 5200;

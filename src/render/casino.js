@@ -24,8 +24,10 @@ import { ARM_LENGTH, ARM_BOSS, ARM_PIVOT, ARM_KNOB, ARM_DEAD, MARK_CELLS, DIGIT_
 import { fmt } from '../words.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
+import { drawCoin, rule } from './marks.js';
 import { drawGrid } from './ground.js';
 import { rising as risingAt, withRise } from './rise.js';
+import { toned } from './tone.js';
 
 // --- the sign -----------------------------------------------------------------
 // The one place in this yard with writing on it, and it has earned it: every
@@ -129,9 +131,7 @@ function drawSign() {
   // the board itself: white paper with a black edge, like everything else here
   ctx.fillStyle = '#fff';
   ctx.fillRect(x, y, w * P, h * P);
-  ctx.lineWidth = Math.max(1, P / 3);
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(x, y, w * P, h * P);
+  rule(x, y, w * P, h * P);
 
   // the word, along the board, centered; the mid gap is the word's, and
   // a number stands on the gaps alone
@@ -304,7 +304,7 @@ function drawLabels(fx, fy) {
     } else ctx.fillStyle = '#000';
     // a converting bin's foot wears its coin's own color -- the tone the
     // purse counter and the sky's motes use for it -- lit or not
-    if (typeof m === 'string') { ctx.fillStyle = coinTone(m); cells(MARK[m], fx + col * P, top + LABEL_ROW * P); }
+    if (typeof m === 'string') { ctx.fillStyle = coinTone(m); cells(m, fx + col * P, top + LABEL_ROW * P); }
     else drawWord(labelOf(m), fx + col * P, top + LABEL_ROW * P);
   });
   ctx.fillStyle = '#000';
@@ -432,21 +432,12 @@ export function drawCasino() {
 }
 
 // --- the feet's marks --------------------------------------------------------------
-// The coins' marks at five cells, for the converting bins' feet: the plots'
-// hexagon, the quarry's triangle, the core's four-point spark -- the
-// counter's own shapes.
+// The coins' marks at five cells, for the converting bins' feet: the coins'
+// own bitmaps (COIN_MARKS), the counter's and the board's shapes.
 const COIN_CELL = { spore: SPORE_CELL, shard: SHARD_CELL, spark: SPARK_CELL };
+const COIN_NAME = { spore: 'crop', shard: 'ore', spark: 'spark' };
 const coinTone = kind => FIND_COLOR[COIN_CELL[kind]][0];
-const MARK = {
-  spore: ['01110', '11111', '11111', '11111', '01110'],
-  shard: ['00100', '00100', '01110', '01110', '11111'],
-  spark: ['00100', '01110', '11111', '01110', '00100']
-};
-function cells(rows, x0, y0) {
-  rows.forEach((row, r) => {
-    for (let c = 0; c < row.length; c++) if (row[c] === '1') ctx.fillRect(x0 + c * P, y0 + r * P, P, P);
-  });
-}
+const cells = (kind, x0, y0) => drawCoin(COIN_NAME[kind], x0, y0, P);
 
 // A round knob on the grid: a square of `n` cells with its corners knocked
 // off, centered on a cell.
@@ -473,11 +464,11 @@ function drawControl(l) {
   const ex = x + dir * Math.cos(a) * reach, ey = y - Math.sin(a) * reach;
   ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
   knob(x, y, ARM_PIVOT);
-  ctx.lineWidth = P;
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(ex, ey);
-  ctx.stroke();
+  // the stem in whole cells along its line, never a stroke
+  const steps = Math.max(1, Math.round(reach / P));
+  for (let i = 0; i <= steps; i++)
+    ctx.fillRect(Math.round((x + (ex - x) * i / steps - P / 2) / P) * P,
+                 Math.round((y + (ey - y) * i / steps - P / 2) / P) * P, P, P);
   knob(ex, ey, ARM_KNOB);
   // The ball's face says which way the arm is working, past the dead band:
   // a plus cut out of it pouring in, a minus of the same stroke pouring
@@ -543,11 +534,9 @@ export function drawSparks() {
     // A grain on its way out of the game fades as it goes. Everything else in
     // this yard either is somewhere or is not; this is the one thing that is
     // *leaving*, and it should look like it rather than blinking off.
-    if (k.fade) ctx.globalAlpha = Math.max(0, 1 - k.t / TABLE_LIFE);
-    ctx.fillStyle = shadeOf(k.s);
+    ctx.fillStyle = k.fade ? toned(shadeOf(k.s), 1 - k.t / TABLE_LIFE) : shadeOf(k.s);
     const d = k.big ? P * 2 : P;               // a hand's confetti is two cells a square
     ctx.fillRect(Math.round(k.x), Math.round(k.y), d, d);
-    ctx.globalAlpha = 1;
   }
   ctx.fillStyle = '#000';
 }
@@ -586,9 +575,7 @@ export function drawCasinoMark() {
 
   ctx.fillStyle = '#fff';
   ctx.fillRect(left, top, w * P, h * P);
-  ctx.lineWidth = Math.max(1, P / 3);
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(left, top, w * P, h * P);
+  rule(left, top, w * P, h * P);
   lines.forEach((l, i) => {
     const ly = top + (1 + i * (DIGIT_H + 1)) * P;
     if (l.kind === 'dust') {
@@ -597,7 +584,7 @@ export function drawCasinoMark() {
       ctx.fillRect(left + 2 * P, ly + P, 3 * P, 3 * P);
     } else {
       ctx.fillStyle = coinTone(l.kind);
-      cells(MARK[l.kind], left + P, ly);
+      cells(l.kind, left + P, ly);
     }
     ctx.fillStyle = '#000';
     drawWord(l.text, left + (1 + MARK_CELLS + 1) * P, ly);

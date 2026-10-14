@@ -7,9 +7,10 @@
 import { S } from '../state.js';
 import { SERPENT_WINDOW, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_JAW_LEAD_S, MEAL_JAW_OPEN_S,
          MEAL_JAW_SHUT_S, MEAL_GAPE, MEAL_HINGE, SNOUT, DEEP_W, FLOW_NEAR_EVERY_S, FLOW_NEAR_SPEED,
-         FLOW_NEAR_OUT, FLOW_NEAR_AWAY, FLOW_NEAR_JITTER, FLOW_KINDS } from '../config.js';
+         FLOW_NEAR_OUT, FLOW_NEAR_AWAY, FLOW_NEAR_JITTER, FLOW_KINDS, JAW_POSES } from '../config.js';
 import { now } from '../clock.js';
 import { deepX0, coilEnds } from './place.js';
+import { held } from '../motion.js';
 
 // The stream's clock, in seconds: the page's, carried on across a refresh.
 // The page's clock starts again near nought on every load, and the stream,
@@ -32,14 +33,18 @@ function unit(n) {
 export const BITE_BEFORE = MEAL_GULP_S + MEAL_SWALLOW_S;
 export const SWIM_BEFORE = () => MEAL_SWIM_S + BITE_BEFORE;
 
-const ease = k => k * k * (3 - 2 * k);
 // How far open the jaws are, 0..1: from a beat before the creature is at the
-// mouth, held while it goes in, shut as it is all in.
+// mouth, held while it goes in, shut as it is all in. Stepped through the
+// jaw's one pose table, as every opening of that mouth is (`jawPose`).
 export function jawOpen(toLand) {
   const from = BITE_BEFORE + MEAL_JAW_LEAD_S, shut = MEAL_SWALLOW_S;
   if (toLand > from || toLand < shut) return 0;
-  return ease(Math.min(1, (from - toLand) / MEAL_JAW_OPEN_S, (toLand - shut) / MEAL_JAW_SHUT_S));
+  return jawPose(Math.min(1, (from - toLand) / MEAL_JAW_OPEN_S, (toLand - shut) / MEAL_JAW_SHUT_S));
 }
+// The jaw's held poses (JAW_POSES: shut, ajar, gape): how far open `k` (0..1)
+// of the way to a full gape shows. The bite, the snatch and the roar all
+// step through it, so the one mouth opens one way.
+export const jawPose = k => JAW_POSES[Math.round(held(k, JAW_POSES.length - 1) * (JAW_POSES.length - 1))];
 // How far each jaw stands off the mouth's line `d` cells back from the tip,
 // for jaws `open` 0..1: widest at the tip, nothing at the hinge. Both the
 // head (render/serpent.js) and the creature going in (render/fish.js) read it,

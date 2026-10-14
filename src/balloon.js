@@ -26,6 +26,7 @@ import { climbTo, plant } from './route.js';
 import { TYPE } from './jobs.js';
 import { stream } from './rng.js';
 import { GUESTS } from './skyguests.js';
+import { smoothstep as ease, lerp } from './motion.js';
 
 // --- the craft ----------------------------------------------------------------------
 // A craft is `{ phase, t, hang }` to the yard:
@@ -235,8 +236,6 @@ export function bringDown(i, k) {
 // Chance off a stream of its own: which cloud a craft goes to next changes
 // only what the sky looks like.
 const roll = stream(0xba11007);
-const ease = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
-const lerp = (a, b, k) => a + (b - a) * k;
 const mix = (a, b, k) => ({ x: lerp(a.x, b.x, k), far: lerp(a.far, b.far, k), y: lerp(a.y, b.y, k) });
 const here = k => ({ x: k.x, far: k.far, y: k.y });
 const CRAFT_TALL = BALLOON_H + BALLOON_LINES + BALLOON_BASKET;

@@ -592,6 +592,10 @@ export function resize(after) {
   canvas.style.height = `${S.H}px`;
   canvas.width = Math.round(S.W * S.dpr);
   canvas.height = Math.round(S.H * S.dpr);
+  // Resizing a canvas resets its context, smoothing included: pinned off
+  // again, or every pattern and image laid at a scale is filtered into a grey
+  // fringe on a high-density screen.
+  canvas.getContext('2d').imageSmoothingEnabled = false;
 
   // A small window does not shrink the yard, it shows less of it. About
   // 830px of height shows the sky, the ground and the whole depth of the

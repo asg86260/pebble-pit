@@ -23,7 +23,7 @@ import { HATS, HATS_TIGHT, spriteW, spriteH } from './sprites.js';
 import { darkPage } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
-import { FACE } from './lang.js';
+import { writeCount } from './render/numfont.js';
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -643,14 +643,14 @@ function drawPip(ctx, q) {
 
 // The counts, in screen pixels, after the world has been drawn.
 export function drawRosterCounts(ctx, screenAt) {
-  ctx.font = `13px ${FACE}`;
-  ctx.textAlign = 'center';                    // it sits in the middle of its own slot
-  ctx.textBaseline = 'middle';
+  // In the number font, keyed in paper, in the middle of its own slot.
   for (const p of posts()) {
     // Drawn over the finished frame: on the light page the deep has been
     // turned over under it, so a deep post's number is written in the
-    // paper's white to stand on the black water like the post's own marks.
-    ctx.fillStyle = p.deep && !darkPage ? '#fff' : '#000';
+    // paper's white to stand on the black water like the post's own marks,
+    // its keyline the water's black.
+    const inv = p.deep && !darkPage;
+    const look = { ink: inv ? '#fff' : '#000', paper: inv ? '#000' : '#fff' };
     const b = boxes(p);
     // A counter is its own count up to its rows; past them, the rest under
     // the block, since nobody counts sixty dots.
@@ -658,22 +658,21 @@ export function drawRosterCounts(ctx, screenAt) {
       b.counters.list.forEach((c, i) => {
         if (!c.plus) return;
         const at = screenAt(c.plus.x, c.plus.y);
-        ctx.fillText(`+${Math.round(shown(`crowd:${p.key}:${i}`, c.plus.n))}`, Math.round(at.x), Math.round(at.y));
+        writeCount(ctx, `+${Math.round(shown(`crowd:${p.key}:${i}`, c.plus.n))}`, at.x, at.y, look);
       });
       continue;
     }
     const at = screenAt(b.num.x + b.num.w / 2, b.num.y);
-    ctx.fillText(String(Math.round(shown('roster:' + p.job, count(p)))), Math.round(at.x), Math.round(at.y));
+    writeCount(ctx, String(Math.round(shown('roster:' + p.job, count(p)))), at.x, at.y, look);
     // What the station owns, not what is being worn: the number says what is
     // waiting there for the next body you send. No second line where the
     // badge already wears the hat (see `drawRoster`).
     if (p.job !== JOB.WIZARD && TRADE_OF[p.job] && hats(p.job) > 0) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
-      ctx.fillText(String(Math.round(shown('hats:' + p.job, hats(p.job)))), Math.round(t.x), Math.round(t.y));
+      writeCount(ctx, String(Math.round(shown('hats:' + p.job, hats(p.job)))), t.x, t.y, look);
     }
   }
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#000';
 }
 
 // Whether this station has a machine standing at it. Whether it is *working*

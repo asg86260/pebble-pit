@@ -24,6 +24,7 @@ import { CLASSES, PAIRS } from '../config/classes.js';
 import { has } from './statuses.js';
 import { hitRect } from '../stations.js';
 import { depthAt } from './depth.js';
+import { jawPose } from './meals.js';
 
 const LAST = SERPENT_PHASES - 1;
 export const mechOf = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? MECHANICS[S.serpentStage] : null);
@@ -223,7 +224,7 @@ export const roarHits = k => { const at = roarK(); return at != null && Math.abs
 export function roarGape() {
   if (breakKind() !== 'roar') return 0;
   const b = BREAK_ROAR, s = S.breakT;
-  return Math.max(0, Math.min(1, s / b.gape, (lenOf(b) - s) / b.shut));
+  return jawPose(Math.max(0, Math.min(1, s / b.gape, (lenOf(b) - s) / b.shut)));
 }
 // Whether the hide at `k` along the body (head 0) is the new phase's yet: under
 // the dive it changes at the bottom, under the roar behind the bump.

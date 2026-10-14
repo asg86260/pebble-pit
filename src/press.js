@@ -1,14 +1,14 @@
-// Two looks laid over the finished frame, in 2D, without leaving the context.
+// One look laid over the finished frame, in 2D, without leaving the context:
+// every other row of device pixels is darker, a two-pixel pattern made once and
+// filled over the frame.
 //
-//   scanlines   every other row of device pixels is darker. A two-pixel pattern,
-//               made once and filled over the frame.
-//   vignette    the edge of a lit page falls away. One radial gradient, made
-//               once per size, filled over the frame.
+// There is no vignette: a radial falloff is a gradient, and the game draws none
+// (docs/design-language/canvas.md). The scanlines are the one screen-wide look,
+// and store shots are taken with them on.
 //
 // Never a WebGL pass: handing a Canvas2D picture to a second context costs a
 // hard sync and a screen of pixels each way, which is twenty milliseconds a
-// frame on a large window. The vignette goes on last because it is the light
-// in the room rather than anything on the sheet.
+// frame on a large window.
 //
 // Chromatic aberration is deliberately not here: lifting one color channel off
 // a 2D canvas is eight fullscreen operations and two more window-sized
@@ -19,12 +19,7 @@ import { PRESS_MIX } from './config.js';
 import { raw } from './ink.js';
 
 // No dial: a look you can move at runtime is a look nobody has decided on.
-const amount = {
-  scanlines: PRESS_MIX.scanlines || 0,
-  vignette: PRESS_MIX.vignette || 0
-};
-
-const anyOn = () => amount.scanlines > 0 || amount.vignette > 0;
+const amount = PRESS_MIX.scanlines || 0;
 
 // Black at an alpha over the top is `col * (1 - k)`: the ink under it is
 // multiplied by what is left of the light.
@@ -45,31 +40,9 @@ function scanlines(ctx, w, h, a) {
   ctx.fillRect(0, 0, w, h);
 }
 
-// The falloff is measured in units of the frame's *height* on both axes, so it
-// is a circle in real pixels rather than an ellipse stretched to the window;
-// the corners of a wide window sit outside the last stop and take the full
-// amount.
-let vig = null, vigKey = '';
-function vignette(ctx, w, h, a) {
-  const key = `${w}x${h}x${a}`;
-  if (vigKey !== key) {
-    const g = ctx.createRadialGradient(w / 2, h / 2, 0.35 * h, w / 2, h / 2, 0.95 * h);
-    // smoothstep, in eight stops: a straight ramp has a visible corner where it
-    // leaves the clear middle.
-    for (let i = 0; i <= 8; i++) {
-      const t = i / 8;
-      g.addColorStop(t, raw(`rgba(0,0,0,${a * 0.5 * t * t * (3 - 2 * t)})`));
-    }
-    vig = g;
-    vigKey = key;
-  }
-  ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, w, h);
-}
-
 // One pass over the finished frame, on the frame's own canvas.
 //
-// Both looks are static, so they are laid down once onto a sheet the size of
+// The look is static, so it is laid down once onto a sheet the size of
 // the canvas (rebuilt only when the window changes size) and dropped over the
 // picture as one image. This is the one line in the draw that is pure fill
 // rate: it touches every device pixel whatever the game is doing, and blitting
@@ -77,13 +50,10 @@ function vignette(ctx, w, h, a) {
 // pattern over the whole canvas every frame. `DEVICE_PIXELS` in config.js caps
 // the canvas, so that cap is the worst this ever has to do.
 //
-// Not bit-identical to blending the two layers separately: two eight-bit
-// roundings against one. A tenth of the pixels land one step of 255 away,
-// inside the rounding of a filter whose whole amplitude is fourteen steps.
 let sheet = null, sheetKey = '';
 
 export function press(src, ctx) {
-  if (!anyOn()) return;
+  if (!(amount > 0)) return;
   const w = src.width, h = src.height;
   const key = `${w}x${h}`;
   if (sheetKey !== key) {
@@ -91,8 +61,7 @@ export function press(src, ctx) {
     c.width = w;
     c.height = h;
     const cx = c.getContext('2d');
-    if (amount.scanlines > 0) scanlines(cx, w, h, amount.scanlines);
-    if (amount.vignette > 0) vignette(cx, w, h, amount.vignette);
+    scanlines(cx, w, h, amount);
     sheet = c;
     sheetKey = key;
   }

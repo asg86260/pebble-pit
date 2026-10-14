@@ -38,6 +38,7 @@ import { rand } from './rng.js';
 import { reducedMotion } from './prefs.js';
 import { doorAt } from './house.js';
 import { beatDone, beatRunning, ownsYard, markDone, startBeat } from './beats.js';
+import { outCubic as ease } from './motion.js';
 
 // Where the two of them stand: either side of the spot the rock lands on.
 // The one on the left is the one it lands on.
@@ -304,7 +305,6 @@ export function letGo() {
   S.danceUntil = 0;
 }
 
-const ease = k => 1 - Math.pow(1 - k, 3);
 
 // The view, for as long as the opening owns it: right in on the pair, and
 // easing back out over the last stretch. Nothing else in this game moves the

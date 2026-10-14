@@ -101,6 +101,18 @@ export const BADGES = {
   spark:  ['..#..', '..#..', '#####', '..#..', '..#..'],
 };
 
+// The coins' own marks, five cells square and centered, for anything that
+// draws a coin rather than badging a drawing with one: the counter's card and
+// the casino's feet. The DOM's coins are the same shapes (style.css): a
+// square of dust, the quarry's triangle, the plots' hexagon, the spark's plus.
+// The spark is the badge's plus, the one spark mark in the game.
+export const COIN_MARKS = {
+  dust:   ['.....', '.###.', '.###.', '.###.', '.....'],
+  ore:    ['..#..', '..#..', '.###.', '.###.', '#####'],
+  crop:   ['.###.', '#####', '#####', '#####', '.###.'],
+  spark:  BADGES.spark,
+};
+
 // The glyph editor (glyphs.html) keeps its work in the browser; a dev build
 // reads it over the tables above. Nothing of this ships.
 export const OVERRIDES_KEY = 'boulder-clicker/glyphs';

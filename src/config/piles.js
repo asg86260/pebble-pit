@@ -32,8 +32,6 @@ export const heapBase = key => {
 // The filter over the finished frame. See press.js for what each one is, and
 // why they are drawn in 2D rather than through a shader.
 //
-// A whisper of scanline, and enough falloff at the edges to put the page in a
-// room rather than on a light box. Neither may argue with a picture made of
-// whole black pixels, so both are small on purpose, and the look is the pair
-// of them rather than either one.
-export const PRESS_MIX = { scanlines: 0.2, vignette: 0.15 };
+// A whisper of scanline: it may not argue with a picture made of whole black
+// pixels, so it is small on purpose. No vignette -- the game draws no gradient.
+export const PRESS_MIX = { scanlines: 0.2 };

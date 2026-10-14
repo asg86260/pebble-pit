@@ -27,9 +27,9 @@ import { amble } from '../crew/idle.js';
 import { deepTop, deepFloor, deepX0, deepX1, spotX, tossX, crusherRect, inDeep } from './place.js';
 import { current } from './scales.js';
 import { mid, feet, swim, afloat } from './arms.js';
+import { quadInOut as ease } from '../motion.js';
 
 const between = ([lo, hi]) => lo + rand() * (hi - lo);
-const ease = k => k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
 
 // A station's ground: DEEP_STAND_W about its middle, inside the deep. `at` is
 // a key of DEEP_SPOTS, or the middle of a fighter's station as an x: the

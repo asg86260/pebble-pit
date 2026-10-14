@@ -36,12 +36,9 @@ import { feetOn, ways, sendTo, keepTo, stepRoute, belowYard } from './route.js';
 import { onYard } from './crew/body.js';
 import { wearing } from './kit.js';
 import { TYPE, isDeepType } from './jobs.js';
+import { clamp01, held, lerp, smoothstep as ease } from './motion.js';
 
-const clamp01 = k => Math.max(0, Math.min(1, k));
-const lerp = (a, b, k) => a + (b - a) * k;
-const ease = k => { k = clamp01(k); return k * k * (3 - 2 * k); };
 // A held step: `k` 0..1 in `n` whole steps, each taken as its stretch ends.
-const held = (k, n) => Math.min(1, Math.floor(clamp01(k) * n + 1e-6) / n);
 const seg = (t, a, b) => clamp01((t - a) / (b - a));
 
 // --- where it stands -------------------------------------------------------------

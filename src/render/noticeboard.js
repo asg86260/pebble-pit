@@ -4,7 +4,9 @@
 // doorway. Everything here is whole cells; anything off the six-pixel lattice
 // puts a hairline gutter between the sheets.
 
-import { BOARD_LEG, P, PAPER } from '../config.js';
+import { BOARD_LEG, NOTICEBOARD_IN_MS, P, PAPER, SHACK_EAVE } from '../config.js';
+import { now } from '../clock.js';
+import { withTone } from './tone.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 
@@ -26,12 +28,24 @@ const SHEETS = [
 // paint rather than paper.
 const toneOf = i => PAPER[(i * 3 + 1) % PAPER.length];
 
+// When the board was first seen to come up: null while the yard has banked
+// nothing, the moment it banks its first grain, and -Infinity for a yard that
+// had already banked when it was loaded, so a reload does not fade it in.
+let upAt;
+
 export function drawNoticeboard() {
-  // The board goes up with the first grain banked, when its sheet opens too.
-  if (!(S.banked > 0)) return;
+  // The board goes up with the first grain banked, when its sheet opens too,
+  // fading in down its ramp rather than appearing.
+  if (!(S.banked > 0)) { upAt = null; return; }
+  if (upAt === undefined) upAt = -Infinity;
+  else if (upAt === null) upAt = now();
 
   const r = S.noticeboard;
   if (!r || !r.w) return;
+  withTone(ctx, (now() - upAt) / NOTICEBOARD_IN_MS, () => drawBoard(r));
+}
+
+function drawBoard(r) {
 
   // the two posts, sunk to the ground line
   ctx.fillStyle = '#000';
@@ -39,9 +53,9 @@ export function drawNoticeboard() {
   ctx.fillRect(r.x + P, r.y + r.h, leg, BOARD_LEG);
   ctx.fillRect(r.x + r.w - P - leg, r.y + r.h, leg, BOARD_LEG);
 
-  // the panel, and the same half-cell eave every building in the yard wears
+  // the panel, and the same whole-cell eave every building in the yard wears
   ctx.fillRect(r.x, r.y, r.w, r.h);
-  ctx.fillRect(r.x - P / 2, r.y - P / 2, r.w + P, P / 2);
+  ctx.fillRect(r.x - SHACK_EAVE, r.y - SHACK_EAVE, r.w + SHACK_EAVE * 2, SHACK_EAVE);
 
   // the sheets, and the writing on them
   SHEETS.forEach((s, i) => {
@@ -49,6 +63,6 @@ export function drawNoticeboard() {
     ctx.fillStyle = toneOf(i);
     ctx.fillRect(x, y, s.w * P, s.h * P);
     ctx.fillStyle = '#000';
-    for (const [row, from, w] of s.ink) ctx.fillRect(x + from * P, y + row * P, w * P, P / 2);   // half-cell: a line of ink, on the half lattice
+    for (const [row, from, w] of s.ink) ctx.fillRect(x + from * P, y + row * P, w * P, P / 3);   // a line of ink, the world's thin line
   });
 }

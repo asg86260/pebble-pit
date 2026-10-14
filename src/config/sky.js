@@ -27,6 +27,8 @@ export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 export const SMOG_RAIN_AT = 3200;
 export const SMOG_CAP = 4200;        // never more than this in the sky at once
 
+import { GREY } from './palette.js';
+
 // --- when it breaks -----------------------------------------------------------
 // The rain is the sky's own and the dirt never starts it: a front is due every
 // RAIN_EVERY_S on average, rolled between (1 - GIVE) and (1 + GIVE) of that,
@@ -137,7 +139,7 @@ export let RAIN_PER_S = 300;
 // The tone of a clean drop: lighter than the lightest rock shade, since
 // nothing in the sky may borrow those, and paler than the muck a dirty drop
 // is drawn in, so the acid shows in the sheet before it lands.
-export const RAIN_WATER_TONE = '#a4a4a4';
+export const RAIN_WATER_TONE = GREY[4];
 
 // --- the shape of a storm -------------------------------------------------------
 // A storm is an event with a front and a tail, not a switch: it *brews* for
@@ -213,8 +215,6 @@ export const RAIN_BEHIND_DROP = 0;
 // BOLT_EVERY_S seconds.
 export let BOLT_EVERY_S = 9;        // mean seconds between strikes at full pour
 export const BOLT_LIFE_S = 0.6;     // how long the bolt hangs in the sky, fading out
-export const BOLT_FLASH_S = 0.12;   // and for how long the pane takes to fade off it
-export let BOLT_FLASH_INK = 0.2;    // and how dark it starts: the pane fades from this to nothing
 // The bolt's shape, in cells: it comes down BOLT_STEP cells a segment and jogs
 // up to BOLT_JOG cells sideways each one, with a shorter fork off it somewhere
 // between the two shares of its length, running BOLT_FORK_LEN segments.
@@ -304,8 +304,6 @@ export const SKY_KNOBS = [
     get: () => RAIN_LEAN, set: v => { RAIN_LEAN = v; } },
   { key: 'BOLT_EVERY_S', label: 'lightning every', min: 1, max: 60, step: 1,
     get: () => BOLT_EVERY_S, set: v => { BOLT_EVERY_S = v; } },
-  { key: 'BOLT_FLASH_INK', label: 'flash ink', min: 0, max: 1, step: 0.05,
-    get: () => BOLT_FLASH_INK, set: v => { BOLT_FLASH_INK = v; } },
   { key: 'PUFF_WANDER', label: 'puff wander', min: 0, max: 40, step: 1,
     get: () => PUFF_WANDER, set: v => { PUFF_WANDER = v; } }
 ];
