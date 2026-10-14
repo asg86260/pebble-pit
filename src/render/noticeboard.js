@@ -4,7 +4,9 @@
 // doorway. Everything here is whole cells; anything off the six-pixel lattice
 // puts a hairline gutter between the sheets.
 
-import { BOARD_LEG, P, PAPER, SHACK_EAVE } from '../config.js';
+import { BOARD_LEG, NOTICEBOARD_IN_MS, P, PAPER, SHACK_EAVE } from '../config.js';
+import { now } from '../clock.js';
+import { withTone } from './tone.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 
@@ -26,12 +28,24 @@ const SHEETS = [
 // paint rather than paper.
 const toneOf = i => PAPER[(i * 3 + 1) % PAPER.length];
 
+// When the board was first seen to come up: null while the yard has banked
+// nothing, the moment it banks its first grain, and -Infinity for a yard that
+// had already banked when it was loaded, so a reload does not fade it in.
+let upAt;
+
 export function drawNoticeboard() {
-  // The board goes up with the first grain banked, when its sheet opens too.
-  if (!(S.banked > 0)) return;
+  // The board goes up with the first grain banked, when its sheet opens too,
+  // fading in down its ramp rather than appearing.
+  if (!(S.banked > 0)) { upAt = null; return; }
+  if (upAt === undefined) upAt = -Infinity;
+  else if (upAt === null) upAt = now();
 
   const r = S.noticeboard;
   if (!r || !r.w) return;
+  withTone(ctx, (now() - upAt) / NOTICEBOARD_IN_MS, () => drawBoard(r));
+}
+
+function drawBoard(r) {
 
   // the two posts, sunk to the ground line
   ctx.fillStyle = '#000';

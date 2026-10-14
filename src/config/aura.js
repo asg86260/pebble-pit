@@ -56,9 +56,12 @@ export const OFFER_WAVE_INK = 0.35;  // the darkest the ring ever is
 // sits back from the black that is there.
 export const BUILD_GHOST_INK = GREY[3];
 // And it drifts while it waits and while it goes up, the shop tile's drift
-// (SHELF_FLOAT_MS) at the yard's scale: this many yard pixels a wave, two
-// waves summed an axis.
-export const BUILD_DRIFT = 2;
+// (SHELF_FLOAT_MS) at the yard's scale: this many cells either way at the
+// most, two waves summed an axis and held on whole cells.
+export const BUILD_DRIFT = 1;
+// The carried motes' turn round the pointer is written a frame at sixty: on
+// the clock it is this many of those a second, whatever the screen draws.
+export const MOTE_SPIN_FPS = 60;
 
 // While the board behind a flying flag holds a row you have never seen, the
 // tip keeps sending rings: the opening ring over again, several in flight at

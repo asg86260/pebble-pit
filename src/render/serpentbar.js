@@ -224,10 +224,11 @@ export function drawSerpentBar() {
   }
   // The phase boxes: none on the story's first defense, which is the only one
   // the player knows of; they come up one by one as he rises from the first
-  // break.
-  const boxes = S.serpentStage === 0 ? 0
-              : breakKind() === 'dive' ? (rising() ? Math.round(breakFill(pips) * pips) : 0) : pips;
-  for (let s = 0; s < boxes; s++) {
+  // break, each fading in down its ramp as its share of the rise comes.
+  const come = S.serpentStage === 0 ? 0
+             : breakKind() === 'dive' ? (rising() ? breakFill(pips) * pips : 0) : pips;
+  const boxes = Math.ceil(come);
+  for (let s = 0; s < boxes; s++) withTone(ctx, Math.min(1, come - s), () => {
     const px = x + BAR_W + BAR_PIP_GAP + s * (BAR_PIP + BAR_PIP_GAP);
     const py = y + Math.round((BAR_H - BAR_PIP) / 2);
     fill(BAR_EDGE, px - 1, py - 1, BAR_PIP + 2, BAR_PIP + 2);
@@ -238,7 +239,7 @@ export function drawSerpentBar() {
       fill(BAR_STUN, px, py, BAR_PIP, BAR_PIP);
       fill(BAR_TRACK, px + BAR_STUN_RIM, py + BAR_STUN_RIM, BAR_PIP - BAR_STUN_RIM * 2, BAR_PIP - BAR_STUN_RIM * 2);
     }
-  }
+  });
   // The level, in the number font on the bar's own height, white on the
   // fight numbers' drop; in device pixels, as the numbers are, so a glyph's
   // pixel is whole on any screen.
