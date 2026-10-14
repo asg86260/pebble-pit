@@ -19,7 +19,6 @@ import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SQ
          FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED, FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
          FAUNA_SMEAR } from '../config.js';
 import { nearY, crossings, farCell, farY, water, streamPose } from '../deep/flow.js';
-import { STEP } from '../deep/react.js';
 
 // The mock's tones, on the deep's own ramps.
 const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
@@ -188,22 +187,22 @@ function drawPosed(k, put, t, pose) {
   if (k === 0 && pose.halo) for (const [x, y] of HALO) at(x, y, Pu[4]);
   if (k === 6 && pose.mouths) for (const [x, y] of MOUTHS.slice(0, pose.mouths)) { at(x, y, BLACK); at(x, y + 1, BLACK); at(x + 1, y, G[5]); }
 }
-// The smear: a pose that moved two cells or more since the last held one
-// leaves the last drawn under it, darker.
+// The smear: on the frame a table marks for it, the pose a moment ago drawn
+// under it, darker, if it has come far enough since.
 const smearTone = new Map();
 for (const ramp of [GREYS, PURPLES]) ramp.forEach((c, i) => smearTone.set(c, ramp[Math.max(1, i - FAUNA_SMEAR.rungs)]));
 function drawReacting(k, put, t, poseNow, poseThen) {
   if (poseNow && poseThen) {
     const moved = Math.abs(poseNow.dx - poseThen.dx) + Math.abs(poseNow.dy - poseThen.dy);
     if (moved >= FAUNA_SMEAR.moved && moved < FAUNA_SMEAR.far)
-      drawPosed(k, (x, y, tone) => put(x, y, smearTone.get(tone) || tone), t - STEP, poseThen);
+      drawPosed(k, (x, y, tone) => put(x, y, smearTone.get(tone) || tone), t - FAUNA_SMEAR.lag, poseThen);
   }
   drawPosed(k, put, t, poseNow);
 }
-// A stream creature's pose now and a held step ago, on its own clock.
+// A stream creature's pose now, and a moment ago when its table smears it.
 const posesOf = (key, kind, t) => {
   const now0 = streamPose(key, kind, t);
-  return [now0, now0 && now0.s >= STEP ? streamPose(key, kind, t - STEP) : null];
+  return [now0, now0 && now0.smear && now0.s >= FAUNA_SMEAR.lag ? streamPose(key, kind, t - FAUNA_SMEAR.lag) : null];
 };
 
 // --- the near stream and the meal, in the world ------------------------------------

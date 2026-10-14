@@ -14,7 +14,8 @@
 // drawing's top-left.
 
 import { DEEP_W, DEEP_H, P, FAUNA, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_MOTION, FAUNA_GULPER,
-         FAUNA_SIPHON, FAUNA_SCARE, FAUNA_STARTLE, FAUNA_SCALES, FAUNA_REACT, FAUNA_POSES } from '../config.js';
+         FAUNA_SIPHON, FAUNA_SCARE, FAUNA_STARTLE, FAUNA_SCALES, FAUNA_REACT, FAUNA_POSES,
+         FAUNA_REACT_MOTION } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
@@ -163,15 +164,16 @@ export function faunaAt(c, t, floorRow = () => ROWS, scares = SCARES) {
 
 // --- a startle -------------------------------------------------------------------
 // Bolting for the nearer end of the deep: turned to face it and held a beat
-// where it was clicked, then whole cells, a held pose at a time, along its
+// where it was clicked, then whole cells at the frame rate, gathering speed, along its
 // own row or along the ground, and held just past the end until it is back
 // -- where the path it comes back in on starts, so nothing jumps.
 export const bolting = (c, t) => c.t0 >= 0 && t >= c.t0 && t < c.back;
 const holdOf = c => FAUNA_REACT[c.kind].hold || 0;
 function boltAt(c, t, floorRow) {
   const K = FAUNA_STARTLE, M = FAUNA_MOTION;
-  const off = Math.max(0, t - c.t0 - holdOf(c));
-  const went = Math.min(c.dist, Math.round(K.pace * Math.floor(off * K.rate) / K.rate));
+  const off = Math.max(0, t - c.t0 - holdOf(c)), ramp = FAUNA_REACT_MOTION.ramp;
+  const ran = off < ramp ? K.pace * off * off / (2 * ramp) : K.pace * (off - ramp / 2);
+  const went = Math.min(c.dist, Math.round(ran));
   const x = c.sx + c.ddir * went, col = Math.round(x);
   const y = c.floor ? floorRow(col + 2) - heightOf(c.kind)
     : c.low ? floorRow(col + 3) - M.low.up
@@ -275,7 +277,7 @@ function bolt(c, t, p, b) {
   c.ddir = b.x < COLS / 2 ? -1 : 1;
   c.edge = c.ddir < 0 ? -out : COLS + out;
   c.dist = Math.abs(c.edge - c.sx);
-  c.back = t + holdOf(c) + Math.ceil(c.dist / K.pace * K.rate) / K.rate + K.away[0] + rand() * (K.away[1] - K.away[0]);
+  c.back = t + holdOf(c) + c.dist / K.pace + FAUNA_REACT_MOTION.ramp / 2 + K.away[0] + rand() * (K.away[1] - K.away[0]);
   c.bdir = -c.ddir;
   c.bx0 = c.edge + M.wrap - c.bdir * c.v * run(c, c.back);
 }

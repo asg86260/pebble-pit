@@ -4,27 +4,31 @@
 // all ask the same question and get the same answer; who is reacting, and
 // since when, is the caller's (deep/fauna.js, deep/flow.js).
 
-import { FAUNA_STARTLE, FAUNA_SILT } from '../config.js';
+import { FAUNA_SILT, FAUNA_REACT_MOTION } from '../config.js';
 
-// The held clock: a pose changes on the startle's beat and holds between,
-// the way every reaction in the mock is drawn.
-const RATE = FAUNA_STARTLE.rate;
-export const held = s => Math.floor(s * RATE + 1e-6) / RATE;
-export const STEP = 1 / RATE;
+const smooth = k => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
 
-// Straight between keys, held past both ends; a second key at the same
-// second is a jump.
-function lin(pts, s, round) {
-  let v = pts[pts.length - 1][1];
-  if (s <= pts[0][0]) v = pts[0][1];
-  else for (let i = 1; i < pts.length; i++) {
-    if (s < pts[i][0]) {
-      const [t0, v0] = pts[i - 1], [t1, v1] = pts[i];
-      v = v0 + (v1 - v0) * (s - t0) / (t1 - t0);
-      break;
-    }
-  }
-  return round ? Math.round(v) : v;
+// Through the keys on a monotone cubic: still at the first and the last key
+// and at every key where the motion stops or turns back, carried through at
+// speed where it goes on the same way, and never past a key's value, so a
+// held stretch holds. Held before the first key and after the last.
+function curve(pts, s) {
+  const n = pts.length;
+  if (s <= pts[0][0]) return pts[0][1];
+  if (s >= pts[n - 1][0]) return pts[n - 1][1];
+  let i = 1;
+  while (s >= pts[i][0]) i++;
+  const [t0, v0] = pts[i - 1], [t1, v1] = pts[i], h = t1 - t0;
+  const slope = j => (j < 1 || j >= n ? 0 : (pts[j][1] - pts[j - 1][1]) / (pts[j][0] - pts[j - 1][0] || Infinity));
+  // the speed through key j: none where either side is still or the sides disagree
+  const tan = j => {
+    if (j <= 0 || j >= n - 1) return 0;
+    const a = slope(j), b = slope(j + 1);
+    return a * b <= 0 ? 0 : 2 * a * b / (a + b);
+  };
+  const u = (s - t0) / h, u2 = u * u, u3 = u2 * u;
+  return (2 * u3 - 3 * u2 + 1) * v0 + (u3 - 2 * u2 + u) * h * tan(i - 1)
+    + (-2 * u3 + 3 * u2) * v1 + (u3 - u2) * h * tan(i);
 }
 // The value from its key on; before the first, and on a null, nothing.
 function from(pts, s) {
@@ -46,26 +50,35 @@ function gain(pts, s) {
   return g;
 }
 
-// The pose of reaction `R` at `s` seconds after its click, on the held clock.
+// How much of the reaction's offset is laid over the path at `s`: none at the
+// click and none at the end, eased between, so it starts and ends on it.
+export function blendAt(R, s) {
+  const B = FAUNA_REACT_MOTION.blend;
+  return smooth(s / B) * smooth((R.end - s) / B);
+}
+
+// The pose of reaction `R` at `s` seconds after its click, at whatever moment
+// it is asked: the offset in whole cells, the drawing's holds on their keys.
 export function poseAt(R, s) {
-  const h = held(s);
+  const k = blendAt(R, s);
   return {
-    s: h,
-    dx: R.x ? lin(R.x, h, true) : 0,
-    dy: R.y ? lin(R.y, h, true) : 0,
-    turn: !!from(R.turn, h),
+    s,
+    dx: R.x ? Math.round(curve(R.x, s) * k) : 0,
+    dy: R.y ? Math.round(curve(R.y, s) * k) : 0,
+    turn: !!from(R.turn, s),
     gain: R.quick ? gain(R.quick, s) : 0,
-    pose: from(R.pose, h),
-    lights: from(R.lights, h),
-    halo: !!from(R.halo, h),
-    vflip: !!from(R.vflip, h),
-    spacing: R.spacing ? lin(R.spacing, h, false) : 1,
-    amp: from(R.amp, h),
-    clock: from(R.clock, h),
-    knot: from(R.knot, h) || 0,
-    mouths: from(R.mouths, h),
+    pose: from(R.pose, s),
+    lights: from(R.lights, s),
+    halo: !!from(R.halo, s),
+    vflip: !!from(R.vflip, s),
+    spacing: R.spacing ? 1 + (curve(R.spacing, s) - 1) * k : 1,
+    amp: from(R.amp, s),
+    clock: from(R.clock, s),
+    knot: from(R.knot, s) || 0,
+    mouths: from(R.mouths, s),
+    smear: !!from(R.smear, s),
     // how long ago each puff of silt was kicked up, those still out
-    silt: (R.silt || []).map(k => h - k).filter(a => a >= 0 && a < FAUNA_SILT.last),
+    silt: (R.silt || []).map(k0 => s - k0).filter(a => a >= 0 && a < FAUNA_SILT.last),
   };
 }
 

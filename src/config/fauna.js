@@ -150,8 +150,8 @@ export const FAUNA_SCARE = {
 // --- a startle --------------------------------------------------------------------
 // A click on a creature startles it the way it startles a bird: it shakes
 // loose the bird's handful, as scales that sink to the floor for the
-// gatherers, and plays its reaction (FAUNA_REACT) in held poses `rate` a
-// second. One whose reaction is a bolt darts for the nearer end of the deep,
+// gatherers, and plays its reaction (FAUNA_REACT); its silt runs out a cell
+// `rate` times a second. One whose reaction is a bolt darts for the nearer end of the deep,
 // `pace` cells a second, its frames `quick` times as fast; out past the end
 // it is away `away` seconds (a range), then comes back in at the end it left
 // by its own path. `reach` is the bird's, in cells.
@@ -160,15 +160,15 @@ export const FAUNA_SCALES = BIRD_DUST;
 
 // --- a click's reaction ----------------------------------------------------------
 // The owner's picks off docs/mocks/creature-clicks-2026-10-13.html (school B,
-// every other kind A): each kind answers a click its own way in held poses
+// every other kind A): each kind answers a click its own way
 // and is home on its own path `end` seconds after, its path carried on under
 // it the while. The school alone still bolts (`bolt`), every fish turned to
 // face the way it goes and held `hold` seconds first.
 //
 // The tracks, each [[seconds after the click, value], ...]:
 //   x, y      whole cells off its path, x forward along the way it faces, y
-//             down; straight between two keys, held before the first and
-//             after the last, and two keys at one second are a jump
+//             down; eased between keys (FAUNA_REACT_MOTION), held before the
+//             first and after the last
 //   spacing   the siphon's bells apart, the same way but not to whole cells
 //   the rest  a value from its second on, until the next (null: its own)
 //     pose    a frame of its drawing, or one of FAUNA_POSES
@@ -178,11 +178,12 @@ export const FAUNA_SCALES = BIRD_DUST;
 //     halo    its lights ringed in purple
 //     vflip   upside down
 //     amp     the siphon's sway
+//     smear   the frame its dart is drawn smeared (FAUNA_SMEAR)
 // `silt`: the seconds it kicks silt off the bed, either side of its middle.
 export const FAUNA_REACT = {
   school: { bolt: true, hold: 0.17 },
   jelly: { end: 3.2,
-    y: [[0, -2], [0.45, -2], [0.45, -4], [0.9, -4], [0.9, -6], [1.3, -6], [3.2, 0]],
+    y: [[0, -2], [0.37, -2], [0.47, -4], [0.82, -4], [0.92, -6], [1.3, -6], [3.2, 0]],
     pose: [[0, 2], [0.17, 1], [0.45, 2], [0.62, 1], [0.9, 2], [1.07, 1], [1.3, null]] },
   lantern: { end: 3.4,
     x: [[0, 0], [0.17, 6], [0.25, 8], [1.8, 8], [3.4, 0]],
@@ -223,10 +224,17 @@ export const FAUNA_POSES = {
 // A reaction's inks on the purple ramp, whatever the zone's dim: a light put
 // out, a light held lit, and the halo round it.
 export const FAUNA_REACT_INK = { out: 2, lit: 11, halo: 7 };
-// The smear: where a held pose moved `moved` cells or more since the last
-// (and less than `far`, one come back in from the other end), the last is
-// drawn under it `rungs` darker.
-export const FAUNA_SMEAR = { rungs: 4, moved: 2, far: 30 };
+// How a reaction moves between its keys: at the frame rate, eased in and out
+// of every stop, its whole offset blended in over the first `blend` seconds
+// and out over the last, so it leaves its path and rejoins it without a
+// jump; never more than `step` cells in a 60 fps frame. The school's bolt
+// gathers speed over its first `ramp` seconds.
+export const FAUNA_REACT_MOTION = { blend: 0.12, step: 2, ramp: 0.2 };
+// The smear: where a reaction's table asks for it (`smear`, the one frame a
+// dart reads as speed) and it moved `moved` cells or more in the last `lag`
+// seconds (and less than `far`, one come back in from the other end), where
+// it was then is drawn under it `rungs` darker.
+export const FAUNA_SMEAR = { rungs: 4, moved: 2, lag: 3 / 60, far: 30 };
 // Silt off the bed: out a cell a held pose either side for `last` seconds,
 // from rung `tone`, a rung darker every second step, the nearer cell a row
 // up for the first `lift` steps.

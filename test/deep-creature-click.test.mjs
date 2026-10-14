@@ -14,11 +14,11 @@
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { FAUNA, FAUNA_REACT, FAUNA_POSES, FAUNA_STARTLE, FAUNA_SCALES, BIRD_DUST, P, FLOW_REACT, FLOW_KINDS,
-         MEAL_SWIM_S } from '../src/config.js';
+         MEAL_SWIM_S, FAUNA_REACT_MOTION } from '../src/config.js';
 import { deepBed } from '../src/state.js';
 import { POPULATION, COLS, startleFauna, faunaUnder, faunaReport, faunaAt, floorRowAt } from '../src/deep/fauna.js';
 import { streamReport, startleStream } from '../src/deep/flow.js';
-import { poseAt, STEP } from '../src/deep/react.js';
+import { poseAt } from '../src/deep/react.js';
 import { mealNow, nowS, BITE_BEFORE } from '../src/deep/meals.js';
 import { deepX0, deepTop, hopperRect } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -58,7 +58,7 @@ const shedBy = fn => { const n = S.sinking.length; const r = fn(); return { r, s
 // stands off home, and where it ends.
 function walk(R) {
   let off = 0, last = null;
-  for (let s = 0; s < R.end + 0.5; s += STEP / 2) {
+  for (let s = 0; s < R.end + 0.5; s += 1 / 120) {
     const p = poseAt(R, s);
     const away = Math.abs(p.dx) + Math.abs(p.dy) + (p.pose != null) + p.turn + p.vflip + (p.lights != null) + p.halo
       + Math.abs(p.spacing - 1) + (p.clock != null) + (p.gain > 0) + (p.knot > 0) + (p.mouths != null);
@@ -84,6 +84,31 @@ group('every kind has its own reaction, and each ends home', async () => {
     ok(FLOW_REACT.length === FLOW_KINDS && stream.every(p => p.off > 0 && p.home), 'the stream\'s eight the same',
        stream.filter(p => !p.off || !p.home).map(p => p.k).join(' ')),
     ok(poses.every(p => FAUNA_POSES[p]), 'and every pose a reaction holds is drawn', poses.filter(p => !FAUNA_POSES[p]).join(' '))
+  ];
+});
+
+// Buttery: a reaction is stepped at the frame rate, so between two 60 fps
+// frames it moves at most FAUNA_REACT_MOTION.step cells, and it leaves its
+// path at the click and is back on it at its end exactly, nothing to jump.
+group('every reaction moves a few cells a frame at most, and starts and ends on its path', async () => {
+  const N = FAUNA_REACT_MOTION.step;
+  const tables = [...Object.entries(FAUNA_REACT).filter(([, R]) => !R.bolt), ...FLOW_REACT.map((R, k) => [`stream-${k}`, R])];
+  const out = tables.map(([k, R]) => {
+    let worst = 0, was = poseAt(R, 0);
+    for (let f = 1; f <= Math.ceil(R.end * 60) + 6; f++) {
+      const p = poseAt(R, f / 60);
+      worst = Math.max(worst, Math.abs(p.dx - was.dx) + Math.abs(p.dy - was.dy));
+      was = p;
+    }
+    const a = poseAt(R, 0), b = poseAt(R, R.end), c = poseAt(R, R.end - 1e-6);
+    const on = p => p.dx === 0 && p.dy === 0 && p.spacing === 1;
+    return { k, worst, starts: on(a), ends: on(b) && on(c) };
+  });
+  const say = out.map(o => `${o.k}: ${o.worst}${o.starts ? '' : ' off at the click'}${o.ends ? '' : ' off at the end'}`).join('; ');
+  return [
+    ok(N > 0 && N <= 2, 'the bound is a small one', `${N}`),
+    ok(out.every(o => o.worst <= N), `never more than ${N} cells between two frames`, say),
+    ok(out.every(o => o.starts && o.ends), 'on its path at the click and at the end', say),
   ];
 });
 
@@ -118,13 +143,13 @@ group('a click on each creature plays its own reaction and drops a handful; it n
     out.push({ kind: c.kind, hit, shaken, played, moved, worst, off, end: R.end });
   }
   const say = out.map(o => o.why ? `${o.kind}: ${o.why}` : `${o.kind}: hit ${o.hit}, ${o.shaken} scales, ${o.played} frames, off ${o.moved}, step ${o.worst}`).join('; ');
-  const STEP_MAX = 7;   // the lantern's dart, six cells in a held step, and its swim
+  const STEP_MAX = FAUNA_REACT_MOTION.step + 1;   // the reaction's frame at its quickest, and its swim
   return [
     ok(out.length === POPULATION.filter(c => !FAUNA_REACT[c.kind].bolt).length && out.every(o => o.hit), 'every one of them is there to be clicked', say),
     ok(out.every(o => o.shaken === FAUNA_SCALES && FAUNA_SCALES === BIRD_DUST), "each shakes loose the bird's handful", say),
     ok(out.every(o => Math.abs(o.played / 60 - o.end) < 0.1), 'each plays its reaction for its length', say),
     ok(out.every(o => o.moved > 0), 'and is not on its path the while: it moves or holds a pose', say),
-    ok(out.every(o => o.worst <= STEP_MAX), 'never a jump bigger than a held step', say),
+    ok(out.every(o => o.worst <= STEP_MAX), 'never a jump bigger than a frame of its quickest', say),
     ok(out.every(o => !o.off), 'and after, it is back on its own path', say)
   ];
 }, { reload: false });

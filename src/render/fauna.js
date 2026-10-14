@@ -9,7 +9,7 @@
 // creature's frame is painted once into an image of its own, its blinking
 // lights the only cells drawn every frame. A click's reaction is a pose
 // over the path (deep/fauna.js `faunaPose`): a frame or a drawing of its
-// own, held, moved, lit, with the last held pose smeared under a big move.
+// own, held, moved, lit, eased off its path and back at the frame rate.
 
 import { now } from '../clock.js';
 import { P, FAUNA_ZONES, FAUNA_TINT_FILL, FAUNA_TINT_EDGE, FAUNA_TINT_MIX, FAUNA_SPRITES, FAUNA_BASE,
@@ -21,7 +21,6 @@ import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, POPULATION, unit, unit2, zoneAtRow, schoolAt, frameOf, reachOf, addScare, scareOffset,
          clearScares, SCARES, bolting, faunaPose, poseInset, heightOf } from '../deep/fauna.js';
-import { STEP } from '../deep/react.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
 
@@ -251,11 +250,11 @@ export function drawDeepFauna() {
     const p = faunaPose(c, t), reach = reachOf(c) + FAUNA_SCARE.break.push + K.far;
     if (p.x + reach < left || p.x - reach > right) continue;
     const dim = DIM.get(c.zone) || 0;
-    // The smear: a held pose that moved far enough since the last one (the
-    // school's streak, a lunge, a jet) leaves the last drawn under it, darker.
-    if (p.r || bolting(c, t)) {
-      const was = faunaPose(c, t - STEP), moved = Math.abs(Math.round(p.x) - Math.round(was.x)) + Math.abs(p.y - was.y);
-      if (moved >= K.moved && moved < K.far && (was.r || bolting(c, t - STEP))) drawOne(c, { ...was, r: was.r && { ...was.r, halo: false } }, t, dim + K.rungs);
+    // The smear: on the frame a table marks for it, where it was a moment
+    // ago drawn under it, darker, if it has come far enough since.
+    if (p.r && p.r.smear) {
+      const was = faunaPose(c, t - K.lag), moved = Math.abs(Math.round(p.x) - Math.round(was.x)) + Math.abs(p.y - was.y);
+      if (moved >= K.moved && moved < K.far && was.r) drawOne(c, { ...was, r: { ...was.r, halo: false } }, t, dim + K.rungs);
     }
     drawOne(c, p, t, dim);
     // silt kicked off the bed either side of its middle, on the row its path stands on
