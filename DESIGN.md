@@ -18416,7 +18416,54 @@ the return*, and is never true again.
 - **The wall:** measured on the old loop (`tools/node/deep-pace.mjs --stood
   7 --wall`, seven at rung 8), the constrict was what stopped a maxed party,
   at level 4. It is now the whole fight, so the wall is that number;
-  re-measure on the constrict alone before moving the notices.
+  re-measure on the constrict alone before moving the notices. Superseded
+  by the measurement below: the arithmetic leaves out the stuns and Held.
+
+### Measured 2026-10-14
+
+`tools/node/endless-wall.mjs` plays the constrict in the node yard: a party
+at fixed rungs, the bar too deep to empty, twenty game minutes of windows,
+the hand punching twice a second and lifting the orb. The level grows only
+the bar, so one run gives every level: the wall is the first depth no window
+reached (the level it stalls at below), the wait a level is from a window's
+start to the first second that depth is reached, plus the recoil.
+
+| stations | rung 4 | rung 6 | rung 8, typical | rung 8, best distinct | rung 8, hexers stacked |
+|---|---|---|---|---|---|
+| 4 | 2 | 2 | 11 | 13 | 15 |
+| 5 | 2 | 2 | 14 | 18 | 23 |
+| 6 | 2 | 2-3 | 16 | 23 | 28 |
+| 7 | 2 | 3-4 | 17 | 26 | 31 |
+
+Typical is brawler, ranger, mage, hexer, monk, sword, sapper in that order;
+best distinct, a greedy search with no class twice, is hexer, brawler,
+ranger, bard, sapper, monk, assassin; stacked, with repeats, hexer, hexer,
+brawler, bard, hexer, brawler, ranger. Below rung 8 no party empties even the
+story's 18,420 bar (rung 7, seven typical: 8), so a party that reaches the
+return is at rung 8. Up to about three levels short of the wall a level
+takes a minute or two; the last two take 3 to 12 minutes each; the next
+never comes. A typical seven runs from 2 to 16 in about 11 game minutes, the
+best seven to 25 in about 42.
+
+**What the wall is made of:** not the orb (its hit points are level 1's; lifting
+the fighter or waiting it out changes nothing) and not damage alone. The
+capstones stop the window's clock -- stuns 20 to 60 per cent of the time, a
+hexer's Held 40 per cent each -- so an 18 s window runs 50 to 140 s, and that
+stretched window's best wound is a ceiling the bar outgrows at 1.1 a level.
+Rung 7 to 8 doubles the wall for that reason. It is a cliff in time, not a
+slope: a window's best varies about 30 per cent, which is two or three levels
+of growth, so a party goes from a level a minute to none in three levels, and
+with every ladder ended nothing raises the ceiling. Three hexers keep him
+Held 85 per cent of the time, which is worth five levels over the best mix
+without repeats.
+
+**Proposed notices** (for the owner; nothing changed): `NOTICE_SERPENT =
+[2, 5, 10, 15, 20, 25]`. 2, 5 and 10 come to any party that reached the
+return; 15 is a typical seven at its wall; 20 asks for a chosen mix; 25 is
+the best seven without repeats at its last level, a real stretch. The
+written [2, 5, 10, 25] already has the right ends. If stacking hexers is not
+meant, it is the Held that wants a cap, not the ladder; left as it is, 25 is
+a stacked seven's level 25 at five minutes a level.
 
 ### The migration
 
