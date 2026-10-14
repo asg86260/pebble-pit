@@ -256,16 +256,16 @@ the open yard; one janitor minds them and tips their bins. Open:
 
 ## Defects
 
-### `inWorking` reads the ground line to a pixel again (2026-09-22)
+### `wayAt` and `onBridge` still read the ground line to a pixel (2026-10-14)
 
-`onYard` is `!inWorking`, and since b58041ac `inWorking` answers true for any
-feet more than a pixel under the ground line -- the tolerance 8e16327f took out
-of the dance's duck because the idle bob crosses it (a body mid-bob sits about
-1.17px low). The duck, the commute's duck, the fall rule and the quarry's and
-farm's muck errands all ask it. b58041ac wanted a body under the ground with no
-working under it (the cut moved on a re-walk) read as down a hole; the fix is a
-depth that means that, not a pixel. Blocker: `inWorking` is asked across the
-yard, so it moves bodies in checks that are not about it.
+`inWorking` now uses `HOLE_DEPTH` (config/crew.js: the furthest a body's own
+sway and swing carry its feet below its footing), but `wayAt` (route.js, a
+body inside a working's span) and `onBridge` (crew/dance.js) still ask
+`feet > S.groundY + 1`, which the same bob crosses. A body mid-bob at ground
+level over a span, e.g. the bridge deck over the cut, reads as in the cut.
+8e16327f measured it as rare (drop zones never reach a mouth). Blocker: both
+steer routing everywhere, so it is its own change with its own check, like
+test/hole-depth.test.mjs.
 
 ---
 

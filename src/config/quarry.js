@@ -19,6 +19,10 @@ export const QUARRY_H = 126;      // and how deep the first cut goes
 // can see from the rim.
 export const QUARRY_BENCH0 = 2;    // bodies a fresh quarry has room for
 export const QUARRY_BENCH_MAX = 5; // and the deepest it is ever worked
+// Pixels either way a digging quarrier sways on top of its feet. Over a cut
+// not yet dug it stands at the ground line, so this is one of the reaches
+// `HOLE_DEPTH` (crew.js) has to clear.
+export const DIG_SWAY = 1.3;
 
 export const LIP_GANG = 6;
 export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes

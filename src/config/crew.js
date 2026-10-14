@@ -1,5 +1,7 @@
 import { SHARD_CELL, SPARK_CELL, SPORE_CELL } from './view.js';
 import { P } from './yard.js';
+import { SWING_BOB, SWING_DRIVE } from './rocks.js';
+import { DIG_SWAY } from './quarry.js';
 
 // --- nature ------------------------------------------------------------------
 // A body works all day and now and then it has to stop; what it leaves is the
@@ -51,6 +53,18 @@ export const KIT_MAX = 3;
 // the spark's, and a yard that far along has its benches and most plots.
 export const MACHINE_HATS = 5;
 export const WORKER = P * 3;     // worker square size
+
+// How far under the ground line a body's feet must be before it is down a
+// hole rather than standing on the yard. Two bodies ride below their footing
+// on their own motion: a rockhand's sway plus its swing's drive (rockhand.js),
+// and a quarrier's sway over a cut not dug yet. Either can be at the ground
+// line -- a rockhand on the rock's last row, a quarrier at an unopened cut --
+// and the dance takes its foot wherever the body is that frame, so a pixel of
+// tolerance read a bob as a hole and the duck out of a falling rock was
+// skipped. The depth is the deepest of those reaches: past it no body
+// standing on the yard can be, and every working floor sits a whole number of
+// cells down, so the first one deeper than this reads as a hole.
+export const HOLE_DEPTH = Math.max(SWING_BOB + SWING_DRIVE * P, DIG_SWAY);
 
 // How far either way loitering may take a body from the post it is minding,
 // and, out of the same number, how far off its post it has to be before it
