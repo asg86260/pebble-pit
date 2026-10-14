@@ -1,0 +1,507 @@
+[
+ {
+  "id": "C01",
+  "title": "The spark's mark has four shapes: DOM plus, counter four-point star, casino diamond, glyph plus",
+  "severity": "high",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "The spark is a plus everywhere: one 5x5 cell bitmap (glyphs.js pip 'spark'), drawn by the counter, the casino and the DOM alike.",
+  "findings": [
+   "C01"
+  ]
+ },
+ {
+  "id": "C04",
+  "title": "The air filter's dial is a green-amber-red traffic light",
+  "severity": "high",
+  "verdict": "reject",
+  "comment": "",
+  "proposal": "The dial reads in ink: clean/dirty/filthy as white, grey and black bands (or a SHADES ramp), never a coin color.",
+  "findings": [
+   "C04"
+  ]
+ },
+ {
+  "id": "C20",
+  "title": "Yard buildings and machines are flat #000; the deep's props, plinths, domes and the finale house are grained",
+  "severity": "high",
+  "verdict": "",
+  "comment": "if you want to propose a clean up of the deep, and the diff shades, im down. but i like the abyss having a bit more mystery and visual diff\n",
+  "proposal": "Write the split down: yard buildings are flat ink silhouettes (material is dust, sky and ground only), and the finale house and apothecary follow the yard; or grain everything with one tone hook in drawSprite. Pick one.",
+  "findings": [
+   "C20"
+  ]
+ },
+ {
+  "id": "C30",
+  "title": "Store screenshots are scaled 5/3 and blurred; the capsules are crisp",
+  "severity": "high",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Store shots are taken at an integer scale with smoothing off (and the press off); a shot has under ~100 colors.",
+  "findings": [
+   "C30"
+  ]
+ },
+ {
+  "id": "C31",
+  "title": "Achievement icons repeat: whole ladders share one byte-identical picture",
+  "severity": "high",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Every icon unique (md5 check in steam-art); a rung carries a rung mark (pips) on the glyph's own cell.",
+  "findings": [
+   "C31"
+  ]
+ },
+ {
+  "id": "DOM-01",
+  "title": "The landing page's volume slider is the browser's default blue, round control",
+  "severity": "high",
+  "verdict": "reject",
+  "comment": "",
+  "proposal": "Move the range rules off `.held` onto a shared selector (`.held, .col` or a `.range` class) so one slider exists.",
+  "findings": [
+   "DOM-01"
+  ]
+ },
+ {
+  "id": "DOM-02",
+  "title": "No focus style anywhere: keyboard focus is the browser's rounded auto ring, text boxes show nothing",
+  "severity": "high",
+  "verdict": "approve",
+  "comment": "lets reuse the gamepad styling corner brackets",
+  "proposal": "One house focus rule: `:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }` (square), applied to buttons, textareas and inputs alike.",
+  "findings": [
+   "DOM-02"
+  ]
+ },
+ {
+  "id": "buttonh",
+  "title": "One button height (the line-height cause)",
+  "severity": "high",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "One `--btn-h`/line-height and one padding for every sheet button; drop the per-page line-height and the landing's 5px. / Never re-declare `font:` shorthand on a component (use `font-size`); two line-heights: 1.4 text, 1 for single-line chips.",
+  "findings": [
+   "DOM-03",
+   "DOM-34"
+  ]
+ },
+ {
+  "id": "purple",
+  "title": "Purple: one accent, one ramp",
+  "severity": "high",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Purple is the game's one accent (the owner, 2026-10-14: black and white for the normal, purple for anything outside it). One purple ramp in config, used everywhere purple appears; the four purple families and the literals fold into it. Open: do the coins keep green/blue/red, or go purple too?",
+  "findings": [
+   "C02",
+   "C03",
+   "DOM-25"
+  ]
+ },
+ {
+  "id": "C07",
+  "title": "A radial-gradient vignette and an alpha scanline pattern over every frame",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "yea lets screen shot with the scanlines.",
+  "proposal": "Decide it explicitly: either the press is the one sanctioned gradient (written into the rules) or it goes; store shots are taken with it off.",
+  "findings": [
+   "C07"
+  ]
+ },
+ {
+  "id": "C14",
+  "title": "Two number faces on the canvas: a system font at 13 px and the pixel NUM_FONT",
+  "severity": "med",
+  "verdict": "",
+  "comment": "lets get some mocks of this before doing it.",
+  "proposal": "Every number drawn on the canvas uses NUM_FONT (at 2 px or at P); text labels stay DOM.",
+  "findings": [
+   "C14"
+  ]
+ },
+ {
+  "id": "C21",
+  "title": "Large one-tone masses that are material, not buildings: the muck band, a heap's deep core, the star's crust, the cauldrons",
+  "severity": "med",
+  "verdict": "",
+  "comment": "gimme a mock of this.",
+  "proposal": "Any mass of material wider than ~4 cells deals its cells from two or three neighboring rungs by a hash (the PLINTH_TONES pattern), including the darkest dust rung.",
+  "findings": [
+   "C21"
+  ]
+ },
+ {
+  "id": "C26",
+  "title": "Shake and flash in the yard against the held-pose, no-flash/no-shake taste",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Impacts are held poses; any shake or flash that remains goes through one reduced-motion gate (world.js's), and the strain shake becomes held lean steps.",
+  "findings": [
+   "C26"
+  ]
+ },
+ {
+  "id": "DOM-04",
+  "title": "Held sheet buttons are centered; the landing column's identical buttons are left-aligned",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Pick one alignment for menu buttons and page words and apply it to both `.held` and `.col` (the landing's left column can keep left only if the held sheet follows).",
+  "findings": [
+   "DOM-04"
+  ]
+ },
+ {
+  "id": "DOM-07",
+  "title": "Back rows differ page to page",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "A page foot is always the sheet's width: back alone, or back + the page's action as a `.pair`; the index's inner back becomes the page's back retargeted.",
+  "findings": [
+   "DOM-07"
+  ]
+ },
+ {
+  "id": "DOM-08",
+  "title": "The held sheet changes width every time a page is turned",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Give the held sheet a fixed min width (the landing's `--col-w`, shared) so pages turn in place.",
+  "findings": [
+   "DOM-08"
+  ]
+ },
+ {
+  "id": "DOM-14",
+  "title": "Selection lists come in four shapes",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "One 'list of choices' component (row padding, gap, case, inverted chosen) for index, language, saves and the popover.",
+  "findings": [
+   "DOM-14"
+  ]
+ },
+ {
+  "id": "DOM-21",
+  "title": "Landing page hovers are not gated by (hover: hover) and stick after a tap",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Wrap the landing hovers in `@media (hover: hover)` as style.css does.",
+  "findings": [
+   "DOM-21"
+  ]
+ },
+ {
+  "id": "DOM-29",
+  "title": "A shelf tile's gain is clipped with an ellipsis, against the card rule",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Let the shelf gain wrap to two lines (as `.locked` already does) and drop the ellipsis.",
+  "findings": [
+   "DOM-29"
+  ]
+ },
+ {
+  "id": "DOM-30",
+  "title": "Three card anatomies for one 'thing you can buy'",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Write the card anatomy once (name, price tag, pips, state) and make shelf/rails variants of it, starting with the price tag box.",
+  "findings": [
+   "DOM-30"
+  ]
+ },
+ {
+  "id": "alpha",
+  "title": "Fading: by tone down the ramp, not by alpha",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "A fade steps down its own palette ramp (as in the deep); globalAlpha only for the press and cutscene veils. / In the deep every fade is a ramp step (ABYSS_TONES / ABYSS_MAGIC_TONES); alpha is reserved for whole-screen veils. / Everything in the sky fades through paled(); balloons move on whole cells.",
+  "findings": [
+   "C09",
+   "C25",
+   "C27"
+  ]
+ },
+ {
+  "id": "coins",
+  "title": "Coin colors: tokens, dark mode, and the tonics",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "`--coin-ore`, `--coin-crop`, `--coin-spark` on :root (with dark values) and every literal replaced. / Lighter dark-mode coin values under `html.dark` (as the rails' `#a979ef` does) once the tokens of DOM-23 exist. / A tonic takes its reagent coin's FIND_COLOR ramp (tonicColor = FIND_COLOR[coin][k]); no tonic literals and no orange.",
+  "findings": [
+   "DOM-23",
+   "DOM-24",
+   "C05"
+  ]
+ },
+ {
+  "id": "greys",
+  "title": "Greys: one ramp, one muted text tone, one black",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "One yard grey ramp (SHADES extended to paper, about 8 rungs); every grey on the yard canvas is a SHADES index, and the deep keeps ABYSS_TONES as its own. / One `--muted` token for secondary text (ink-4), ink-5 kept for disabled only, and no opacity muting. / The darkest dust shade is #000 or buildings are SHADES[5]; one black for mass.",
+  "findings": [
+   "C06",
+   "DOM-26",
+   "C10"
+  ]
+ },
+ {
+  "id": "heads",
+  "title": "Headings and label case",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Write the case rule down (label = upper + track, sentence = lower + 0) and set case on the component, not by inheritance. / Two heading levels only: page title (regular, rule) and section (bold, rule or sign, one choice), shared by boards, ledger and windows.",
+  "findings": [
+   "DOM-12",
+   "DOM-13"
+  ]
+ },
+ {
+  "id": "lines",
+  "title": "Line weights and outlines: one rule",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "A 2-px rule always lies inside its box (inset 1 with lineWidth 2), never centered on the edge. / The thinnest line in the world is P/3 (2 px); 1 px only on screen-space UI rims. / Rule it: 2px = something floating over the yard, 1px = a control or a line inside it; one emphasis border (3px double) for goal cards everywhere. / No ctx.arc or diagonal stroke in the world: rings and slopes are cells (the kit's ring() helper and the belt ramp's steps are the models); the rift's deliberate arc stars stay as the one written exception. / The warning mark is a cell bitmap like the other station marks (a hollow 2-px-ruled triangle of whole cells).",
+  "findings": [
+   "C17",
+   "C19",
+   "DOM-17",
+   "C18",
+   "C16"
+  ]
+ },
+ {
+  "id": "motionvar",
+  "title": "The same kind of motion done several ways",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Reactions to a blow are held poses with a smear (the serpent's grammar); eased motion only for travel. / A crew hop is one held pose table (the finale's), shared by the dance, the landing and the rest. / The jaw has one held pose table (shut, ajar, gape) every caller steps through. / One motion module (smoothstep, outCubic, quadInOut, lerp, held(t, steps)) imported everywhere; a held step is floor.",
+  "findings": [
+   "C22",
+   "C23",
+   "C24",
+   "C28"
+  ]
+ },
+ {
+  "id": "offgrid",
+  "title": "Off the cell grid: half-cell edges and sizes",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Lips and eaves are a whole cell (P) or none; nothing on a building is a fraction of P. / Every fillRect is a whole number of cells at a cell-snapped origin; a gap between marks is a skipped cell, not P-1. / Far things are drawn on the same cell at a darker ramp rung, with hash-dealt tones; depth is tone, not a finer grid. / Drift moves a whole cell on a held beat; spins step by dt; nothing appears without a fade or a build.",
+  "findings": [
+   "C11",
+   "C12",
+   "C13",
+   "C29"
+  ]
+ },
+ {
+  "id": "onstate",
+  "title": "How \"on\", chosen and disabled look",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Decide one toggle anatomy (word plus a box tick on the right, or inversion for 'on') and use it for settings, hide finished and the feedback tick. / One `.tickbox` (size in em so it rides the text size, 1px stroke, fixed inset) used by the form, the quest list and the bill. / Disabled = `color: var(--ink-5)` + dashed border, for every control; drop the opacity variants and give `.col` the same. / Write hover = invert as the rule and keep the shelf lift as the one documented exception; bring the delete and hide-finished into it. / One `:active:not(:disabled)` inversion for every button, so touch gets the same feedback everywhere.",
+  "findings": [
+   "DOM-05",
+   "DOM-06",
+   "DOM-19",
+   "DOM-20",
+   "DOM-22"
+  ]
+ },
+ {
+  "id": "storeart",
+  "title": "Store capsules: the tool's own palette and details",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "steam-art imports every color from src/config and shades the rock with depthShade; one title drawing lives in src and both the title page and the capsules use it. / Capsules obey the yard: nothing floats, nothing is cut, no fractional fillRect, one cell size scaled by whole numbers.",
+  "findings": [
+   "C32",
+   "C33"
+  ]
+ },
+ {
+  "id": "type",
+  "title": "A type scale: sizes, letter-spacing, bold",
+  "severity": "med",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Four tracking steps as tokens (`--track-0: 0`, `--track-s: .08em`, `--track-m: .14em`, `--track-l: .3em`), always multiplied by `--track`. / A three-step scale (10px small, 12px body, 17px word, with 14px display) as tokens; replace the em fractions with the token. / Fold 14/15 into one 'name' size and 17/18 into the 'word' size; retire the rails' 13px body for the house 12px. / Bold for section level only (DOM-13), regular for page titles and names.",
+  "findings": [
+   "DOM-09",
+   "DOM-10",
+   "DOM-11",
+   "DOM-35"
+  ]
+ },
+ {
+  "id": "C08",
+  "title": "A red/cyan chromatic fringe on rising motes, against the press's own reasoning",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "No color fringes: motes are drawn in their SMOG_TINTS tone only (HAZE_CA = 0).",
+  "findings": [
+   "C08"
+  ]
+ },
+ {
+  "id": "C15",
+  "title": "Coin marks drawn as anti-aliased vector shapes at 9 px, off the cell",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Coin marks are bitmaps (the glyphs.js 5x5 pips) drawn at whole pixels; no vector paths for marks.",
+  "findings": [
+   "C15"
+  ]
+ },
+ {
+  "id": "DOM-27",
+  "title": "Colors outside the tokens in DOM chrome",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Dot pattern as one `--dots` custom property set per mode; `#5f5f66` to `--ink-7`; cards.html on the tokens.",
+  "findings": [
+   "DOM-27"
+  ]
+ },
+ {
+  "id": "DOM-28",
+  "title": "The cards bench has no dark mode",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Bench on `var(--paper)`/`var(--ink-4)` and honor `?dark` like play.html.",
+  "findings": [
+   "DOM-28"
+  ]
+ },
+ {
+  "id": "DOM-33",
+  "title": "Separator in setting labels: colon for toggles, middle dot for pages",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Ask the owner to confirm the rule (colon = toggle, dot = door) and write it into the rules; pair with DOM-05.",
+  "findings": [
+   "DOM-33"
+  ]
+ },
+ {
+  "id": "DOM-36",
+  "title": "Radii: round pips, round clock, rounded controller glyphs in a square house",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Write down that pips, the clock and pad glyphs are the only round shapes; everything else stays square.",
+  "findings": [
+   "DOM-36"
+  ]
+ },
+ {
+  "id": "DOM-37",
+  "title": "Tracking tightens on phone for boards and controls only",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Tighten by changing `--track` once on phone instead of per component.",
+  "findings": [
+   "DOM-37"
+  ]
+ },
+ {
+  "id": "DOM-38",
+  "title": "Landing foot sits 36px from the left and 18px from the right",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Foot on the column's 20px (`--edge`-based) margins on both sides.",
+  "findings": [
+   "DOM-38"
+  ]
+ },
+ {
+  "id": "DOM-39",
+  "title": "CJK language rows render larger than their neighbors",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Size the CJK faces with `size-adjust` (or a per-lang font-size) to the Latin face's x-height.",
+  "findings": [
+   "DOM-39"
+  ]
+ },
+ {
+  "id": "DOM-41",
+  "title": "The story card's deep variant ignores dark mode",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Deep card = the inverted tokens (`--paper: var(--ink)`) so it inverts correctly in both modes.",
+  "findings": [
+   "DOM-41"
+  ]
+ },
+ {
+  "id": "DOM-42",
+  "title": "Index on a phone: inner back button, no page back",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Keep the page's back at the foot and retarget it to 'list' while an entry is open.",
+  "findings": [
+   "DOM-42"
+  ]
+ },
+ {
+  "id": "dupecode",
+  "title": "The same component written twice",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "One `.badge` and one `.new` corner rule, sized in em. / One `.cloudsheet`/`textarea`/`.veil` rule set unscoped; the landing keeps only its layout differences. / One 'dark chip' label style (12px upper .1em) for mess tags and skip; the toast name stays the one display size.",
+  "findings": [
+   "DOM-31",
+   "DOM-32",
+   "DOM-40"
+  ]
+ },
+ {
+  "id": "spacing",
+  "title": "A spacing scale: gaps and paddings",
+  "severity": "low",
+  "verdict": "approve",
+  "comment": "",
+  "proposal": "Two stack gaps (tight 4px inside a list, loose 8px between controls) as tokens; use them everywhere. / Map every control to `--pad-s` or `--pad-m` and delete the literals. / Every 2px floating panel gets the shadow, or none of the large ones do; write which.",
+  "findings": [
+   "DOM-15",
+   "DOM-16",
+   "DOM-18"
+  ]
+ }
+]
