@@ -64,9 +64,8 @@ export function drawSky() {
         ctx.fillStyle = tones[(c * 7 + r * 13 + flick) % 2];
       } else {
         // The crust: the deepest of the reds rather than black, or a black body
-        // with a red middle reads as an eclipse; one cell in MASS_DEAL.crust
-        // the third red, never the core's two, so the core stays hotter.
-        ctx.fillStyle = tones[dealt(c, r, MASS_DEAL.crust) ? tones.length - 2 : tones.length - 1];
+        // with a red middle reads as an eclipse.
+        ctx.fillStyle = tones[tones.length - 1];
       }
       ctx.fillRect(cellX(c), cellY(r), sky.p, sky.p);
     }

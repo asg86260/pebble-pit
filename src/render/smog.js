@@ -88,13 +88,6 @@ export function drawMuck() {
     ctx.beginPath();
     for (let i = 0; i < body.length; i += 3) ctx.rect(body[i], body[i + 1], P, body[i + 2]);
     ctx.fill();
-    // one cell in MASS_DEAL.muck of the body in the muck's darker grain
-    ctx.fillStyle = MUCK_GRAIN;
-    ctx.beginPath();
-    for (let i = 0; i < body.length; i += 3)
-      for (let y = body[i + 1] + P; y < body[i + 1] + body[i + 2]; y += P)
-        if (dealt(body[i] / P, y / P, MASS_DEAL.muck)) ctx.rect(body[i], y, P, P);
-    ctx.fill();
     ctx.fillStyle = MUCK_EDGE;
     ctx.beginPath();
     for (let i = 0; i < skin.length; i += 2) ctx.rect(skin[i], skin[i + 1], P, P);

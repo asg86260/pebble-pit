@@ -66,9 +66,8 @@ dark-page color by hand.
 
 - Material is never one tone. Dust carries a shade per grain and the rock is
   depth-shaded.
-- A large mass of one material deals one cell in `MASS_DEAL` a neighboring tone
-  by a stable hash (`dealt` in `render/tone.js`). This covers the muck band, the
-  hill's deep core and the star's crust. The cauldrons take the hut's grain.
+- The muck band, the hill's deep core, the star's crust and the cauldrons stay
+  flat: a hash-dealt grain through them was tried and read worse.
 - Yard buildings are flat ink silhouettes. Whether the deep's props follow is
   C20, on hold.
 
