@@ -2,8 +2,8 @@
 // pots on their fires. Owns the HUT and CAULDRON pictures, the shelf, and the
 // count badges over it.
 
-import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_ROWS, APOTH_GAP, BOTTLE_W, BOTTLE_H, BOTTLE_PITCH, SHELF_CAP, SHELF_NUM_W, SHELF_NUM_WIDE, SHELF_NUM_MIN, SHELF_PAD, FLAME_HOT, FLAME_TIP, FLAME_STEAM, POT_SWATCH, POT_SWATCH_EDGE, POT_SWATCH_DROP } from '../config.js';
-import { APOTH_SMOKE } from '../config.js';
+import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_ROWS, APOTH_GAP, BOTTLE_W, BOTTLE_H, BOTTLE_PITCH, SHELF_CAP, SHELF_NUM_W, SHELF_NUM_WIDE, SHELF_PAD, FLAME_HOT, FLAME_TIP, FLAME_STEAM, POT_SWATCH, POT_SWATCH_EDGE, POT_SWATCH_DROP } from '../config.js';
+import { APOTH_SMOKE, NUM_FONT_PX } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
@@ -15,7 +15,7 @@ import { bar } from './bars.js';
 import { ctx } from './ctx.js';
 import { rising as risingAt, withRise } from './rise.js';
 import { shown } from '../tween.js';
-import { FACE } from '../lang.js';
+import { drawable, widthOf, writeCount } from './numfont.js';
 
 // --- the two pictures ---------------------------------------------------------
 // One character to a cell: `#` is timber, `.` is empty (`drawSprite`). Everything
@@ -321,30 +321,16 @@ export function drawStockCount(screenAt) {
     // A white ground under it, so the number reads whatever is drawn behind it.
     ctx.fillStyle = '#fff';
     ctx.fillRect(at.x, at.y, w, h);
-    ctx.fillStyle = '#000';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    // Sized off the well in cells, so the numeral grows and shrinks with the
-    // bottles beside it, with a floor of SHELF_NUM_MIN cells so it cannot shrink
-    // itself into a speck. If the digits still will not fit the width, it is
-    // taken down toward that floor and no further; the clip guarantees
-    // containment, this is so what survives the clip is readable.
-    const cell = h / BOTTLE_H;                   // one grid cell, in screen pixels
-    const floor = SHELF_NUM_MIN * cell;
+    // In the number font, as every count on the canvas is: at its own size
+    // (NUM_FONT_PX) where it fits the well, a font pixel a screen pixel where
+    // it does not; the clip guarantees containment.
     const said = String(Math.round(shown('stock:' + book[i].key, n)));
-    let size = Math.max(floor, h * 0.9);
-    ctx.font = `${size}px ${FACE}`;
-    const room = w - cell;                       // a cell of air inside the well
-    const wide = ctx.measureText(said).width;
-    if (wide > room) {
-      size = Math.max(floor, size * room / wide);
-      ctx.font = `${size}px ${FACE}`;
-    }
-    ctx.fillText(said, Math.round(at.x + w - cell / 2), Math.round(at.y + h / 2));
+    const cell = h / BOTTLE_H;                   // one grid cell, in screen pixels
+    const px = widthOf(drawable(said), NUM_FONT_PX) <= w - cell ? NUM_FONT_PX : 1;
+    writeCount(ctx, said, at.x + w - cell / 2, at.y + h / 2, { px, align: 'right' });
     ctx.restore();
   }
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#000';
 }
 
 // What each pot is set to, as a block of that brew's color under its belly. The

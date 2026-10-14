@@ -28,9 +28,9 @@ import { withRise } from './rise.js';
 import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
-import { FACE } from '../lang.js';
 import { withTone } from './tone.js';
 import { poseAt, topOf } from '../motion.js';
+import { writeCount } from './numfont.js';
 
 // The bench is not in the yard until there is something on it worth buying.
 // It is built rather than delivered (raise.js), so while it is going up it is
@@ -218,25 +218,20 @@ export function drawKitStands() {
 export function drawKitCounts(screenAt) {
   const stands = kitStands();
   if (!stands.length && !hasGarage()) return;
-  ctx.font = `13px ${FACE}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#000';
   // How many forklifts are in the garage, over its roof like a stand's count.
   if (hasGarage()) {
     const g = garage();
     const at = screenAt(g.x + g.w / 2, S.groundY - g.h - P * 3);
-    ctx.fillText(String(Math.round(shown('garage', inGarage()))), Math.round(at.x), Math.round(at.y));
+    writeCount(ctx, String(Math.round(shown('garage', inGarage()))), at.x, at.y);
   }
   for (const k of stands) {
     // A clear two cells over whatever is on the slab, measured off the mark
     // rather than fixed: the wizard's cone is three courses on its own.
     const at = screenAt(k.x - P + STAND_W / 2,
                         k.y - STAND_H - HAT_TALL[k.mark] - P * 2);
-    ctx.fillText(String(Math.round(shown('kit:' + k.mark, k.n))), Math.round(at.x), Math.round(at.y));
+    writeCount(ctx, String(Math.round(shown('kit:' + k.mark, k.n))), at.x, at.y);
   }
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#000';
 }
 
 // --- what a body on a break has to say ----------------------------------------

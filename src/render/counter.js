@@ -3,14 +3,14 @@
 
 import { openBoardRect } from '../board.js';
 import { fmt } from '../words.js';
-import { P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK, FLOAT_SHADOW, FLOAT_SHADOW_INK } from '../config.js';
+import { NUM_FONT_PX, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK, FLOAT_SHADOW, FLOAT_SHADOW_INK } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawCoin, drawMark } from './marks.js';
 import { shown } from '../tween.js';
 import { safeBottom } from '../world.js';
 import { portalNearEdge } from './portal.js';
-import { FACE } from '../lang.js';
+import { drawable, widthOf, writeCount } from './numfont.js';
 
 // Drawn in **screen** pixels, so it stays the size it is however far the yard
 // has been scaled down to fit the window.
@@ -73,8 +73,6 @@ export function countLines() {
 
 export function drawCount() {
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  ctx.font = `13px ${FACE}`;
-  ctx.textAlign = 'left';
   const lines = countLines();
 
   // The card: a white sheet with a black edge, the same panel every menu is
@@ -83,7 +81,7 @@ export function drawCount() {
   // Measured off every row, not the dust alone: the widest count is the dust
   // nearly always and that is not a rule, and the same figure has to be right
   // about the board it stands clear of.
-  const widest = lines.reduce((w, l) => Math.max(w, ctx.measureText(l.text).width), 0);
+  const widest = lines.reduce((w, l) => Math.max(w, widthOf(drawable(l.text), NUM_FONT_PX)), 0);
   const wide = Math.round(MARK * 2 + widest + PAD * 2);
   const tall = Math.round(MARK + (lines.length - 1) * ROW + PAD * 2);
 
@@ -188,9 +186,10 @@ export function drawCount() {
     ctx.setTransform(d, 0, 0, d, 0, 0);
   }
 
-  // and the counts themselves, which are the part that moves
-  ctx.fillStyle = '#000';
+  // and the counts themselves, which are the part that moves, in the number
+  // font as every count on the canvas is, their feet on the marks' feet
   lines.forEach((l, i) => {
-    ctx.fillText(l.text, x + MARK * 2, y - (lines.length - 1 - i) * ROW);
+    writeCount(ctx, l.text, x + MARK * 2, y - (lines.length - 1 - i) * ROW, { align: 'left', base: 'bottom' });
   });
+  ctx.fillStyle = '#000';
 }

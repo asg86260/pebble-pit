@@ -248,9 +248,14 @@ export const NUM_FONT = {
   'k': ['#...', '#...', '#.#.', '##..', '#.#.', '#..#'],
   'm': ['.....', '.....', '##.#.', '#.#.#', '#.#.#', '#.#.#'],
   'b': ['#...', '#...', '###.', '#..#', '#..#', '###.'],
-  '.': ['.', '.', '.', '.', '.', '#']
+  '.': ['.', '.', '.', '.', '.', '#'],
+  // what a count can need besides: a negative, the yard's trillions (fmt's
+  // 1t) and a language's decimal comma
+  '-': ['...', '...', '###', '...', '...', '...'],
+  't': ['.#..', '###.', '.#..', '.#..', '.#..', '..##'],
+  ',': ['..', '..', '..', '..', '.#', '#.']
 };
-export const NUM_FONT_TIGHT = '.';   // set against the glyph before, no gap
+export const NUM_FONT_TIGHT = '.,';  // set against the glyph before, no gap
 export const NUM_FONT_PX = 2;        // screen pixels a font pixel
 // The tones as seen, after the deep's negative: the numbers are drawn over
 // the finished deep, not turned over with it.
