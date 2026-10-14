@@ -15,7 +15,7 @@
 //   node tools/node/deep-pace.mjs --answered         # every phase's mechanic answered
 //   node tools/node/deep-pace.mjs --stood 7          # stations standing from the start, not one a break
 //   node tools/node/deep-pace.mjs --level 12         # the depths of a later serpent, the orb kept at level 1's
-//   node tools/node/deep-pace.mjs --stood 7 --wall   # the first defense that stops breaking, level by level
+//   node tools/node/deep-pace.mjs --stood 7 --wall   # the first level whose constrict holds (no stuns: endless-wall.mjs)
 //
 // Each phase's mechanic (deep/phases.js) is played unanswered -- the lash takes the melee fighters off the hide for its
 // length, the fall, the daze and the swim back (`LASH_OUT_S`), the sink takes
@@ -94,8 +94,8 @@ const atLevel = (depths, l) => depths.map(d => Math.round(d * SERPENT_LEVEL_GROW
 // the minute each stage breaks and the depth is read off instead: the damage
 // of the last window before it, a share of it. The orb's hit points read the
 // level-1 depth whatever the level, as the game's do.
-function fight(depth, ends, windows = SERPENT_WINDOW, orbDepth = SERPENT_WOUND) {
-  let st = 0, wound = 0, purse = 0, loose = 0, stood = Math.min(party.length, stoodFrom), from = 0, win = 0;
+function fight(depth, ends, windows = SERPENT_WINDOW, orbDepth = SERPENT_WOUND, first = 0) {
+  let st = first, wound = 0, purse = 0, loose = 0, stood = Math.min(party.length, stoodFrom), from = 0, win = 0;
   const rung = party.map(() => 0), made = SERPENT_WOUND.map(() => 0), at = [], last = [];
   let orbLeft = 0;
   for (let t = 0; st < SERPENT_WOUND.length && t < 86400 * 3; t++) {
@@ -143,14 +143,15 @@ if (process.argv.includes('--table')) {
   console.log('depths', r.made.map(x => Math.round(x)).join(' / '));
   console.log('rungs at each break', r.at.map(a => a.rungs).join('  '));
 } else if (process.argv.includes('--wall')) {
-  // Level by level until a defense holds: the first that stops breaking, and
-  // the level it stops at.
-  let was = -1;
+  // Past the story the serpent is only ever on its last defense, a bar a
+  // level, so the wall is the first level whose constrict holds. Stuns and
+  // Held stop the window's clock in play and are not here, so this is far
+  // short of the played wall: tools/node/endless-wall.mjs measures that.
+  const LAST = SERPENT_WOUND.length - 1;
   for (let l = 1; l <= 500; l++) {
-    const n = fight(atLevel(SERPENT_WOUND, l), null).at.length;
-    if (n !== was) console.log(`level ${String(l).padStart(3)}: ${n === SERPENT_WOUND.length ? 'every defense breaks' : `stage ${n + 1} holds`}`);
-    was = n;
-    if (n === 0) break;
+    if (fight(atLevel(SERPENT_WOUND, l), null, SERPENT_WINDOW, SERPENT_WOUND, LAST).at.length) continue;
+    console.log(`the constrict holds at level ${l}`);
+    break;
   }
 } else {
   // `--depths` and `--windows` try numbers before they go in config.
