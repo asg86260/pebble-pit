@@ -125,17 +125,26 @@ export function buildingGlyph(cx, cy, rows, at, tint = null, dx = 0, dy = 0, dee
   paintRects(d.ghost, deep ? TONE.stone : BUILD_GHOST_INK, x0, y0);
 }
 
-// One fill a color, the cells laid into a path the first time: a glyph is a
-// hundred-odd cells, and a stack of them is redrawn every frame.
+// One fill a color, the cells laid into a path the first time at each scale:
+// a glyph is a hundred-odd cells, and a stack of them is redrawn every
+// frame. Every edge on a whole device pixel at that scale, the thin strokes
+// too, so none comes out a blend of two inks.
 function paintRects(rects, color, x0, y0) {
   if (!rects.length) return;
-  if (!rects.path) {
-    rects.path = new Path2D();
-    for (let i = 0; i < rects.length; i += 4) rects.path.rect(rects[i], rects[i + 1], rects[i + 2], rects[i + 3]);
+  const k = S.zoom * S.dpr, at = v => Math.round(v * k) / k;
+  if (!rects.paths) rects.paths = new Map();
+  let path = rects.paths.get(k);
+  if (!path) {
+    path = new Path2D();
+    for (let i = 0; i < rects.length; i += 4) {
+      const x = at(rects[i]), y = at(rects[i + 1]);
+      path.rect(x, y, Math.max(1 / k, at(rects[i] + rects[i + 2]) - x), Math.max(1 / k, at(rects[i + 1] + rects[i + 3]) - y));
+    }
+    rects.paths.set(k, path);
   }
   ctx.fillStyle = color;
   ctx.translate(x0, y0);
-  ctx.fill(rects.path);
+  ctx.fill(path);
   ctx.translate(-x0, -y0);
 }
 

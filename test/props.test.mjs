@@ -20,7 +20,8 @@ import { slotX, deepX0, deepFloor, plinthTop, postY, standOfStation } from '../s
 import { PROPS, propCells } from '../src/deep/props.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawDeepStations, chooseMarkAt } from '../src/render/deep.js';
-import { GREYS, PURPLES } from '../src/render/deeptones.js';
+import { GREYS, PURPLES, breathAt } from '../src/render/deeptones.js';
+import { now } from '../src/clock.js';
 
 const S = yard.S;
 
@@ -67,11 +68,13 @@ function domeOf(st) {
   const d = onFloor(st).find(o => o.img.height > PLINTH_H * P);
   return d && { x: d.x, y: d.y, w: d.img.width, i: d.i };
 }
-// The prop `key`'s cells, as the drawing of it should hold them.
+// The prop `key`'s cells, as the drawing of it should hold them: a top edge
+// in the light from above as it breathes now.
 const want = (key, lit) => new Map(propCells(key, lit)
-  .map(([c, r, ramp, i]) => [`${c},${r}`, (ramp === 'p' ? PURPLES : GREYS)[i]]));
+  .map(([c, r, ramp, i]) => [`${c},${r}`, ramp === 'top' ? PURPLES[breathAt(now())] : (ramp === 'p' ? PURPLES : GREYS)[i]]));
 const same = (a, b) => a.size === b.size && [...a].every(([k, v]) => b.get(k) === v);
-const purple = cells => [...cells.values()].filter(t => PURPLES.includes(t) && !GREYS.includes(t)).length;
+// The accent's and the rung-8 parts' purple, which the top edges' light is not.
+const purple = (key, lit) => propCells(key, lit).filter(([, , ramp]) => ramp === 'p').length;
 // The body's left column at its post, which stands on the grid.
 const bodyCol = st => Math.round((slotX(st.slot) - WORKER / 2) / P);
 
@@ -98,12 +101,12 @@ group("a station stands beside a crate below the fork, its class's prop from it,
     ok(crate && right(crate) === bodyCol(st) - PROP_GAP, `its right-hand column ${PROP_GAP} cells short of the body`,
        crate && `${right(crate)} vs ${bodyCol(st)}`),
     ok(packed && same(packed.cells, want('crate', false)), 'and still the crate at the last rung below the fork'),
-    ok(rack && same(rack.cells, want('sword', false)) && purple(rack.cells) === 0,
+    ok(rack && same(rack.cells, want('sword', false)) && purple('sword', false) === 0,
        "at the fork the Swordsman's rack, with no purple on it"),
     ok(rack && right(rack) === bodyCol(st) - PROP_GAP_OF.sword, `his rack ${PROP_GAP_OF.sword} cells short of him`,
        rack && `${right(rack)} vs ${bodyCol(st)}`),
-    ok(top.rung === LADDER && lit && same(lit.cells, want('sword', true)) && purple(lit.cells) > 2,
-       'at rung 8 its parts are purple', lit && `rung ${top.rung}, ${purple(lit.cells)} purple cells`),
+    ok(top.rung === LADDER && lit && same(lit.cells, want('sword', true)) && purple('sword', true) > 2,
+       'at rung 8 its parts are purple', lit && `rung ${top.rung}, ${purple('sword', true)} purple cells`),
     ok(lit && plinthTop() < deepFloor() && lit.y === plinthTop() - PROPS.sword.rows.length * P, 'standing on its plinth, off the floor'),
     ok(plinth && lit && plinth.y === plinthTop() && plinth.x < lit.x && plinth.x + plinth.w > post + WORKER,
        'the plinth on the floor under the prop and the post', JSON.stringify(plinth)),

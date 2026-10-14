@@ -4,10 +4,10 @@
 // on the glass counted, and any the cap does not hold named with how much of
 // the glass it covers.
 //
-// Read at a whole device pixel a world pixel (the deep held at 1x): at a zoom
-// that is not whole, a mark laid between cells straddles device pixels and
-// the canvas blends its edge, which is the raster's doing and not a tone
-// anybody drew. The press's scanlines darken every odd row of device pixels,
+// Read at the window's fit and again pulled in: a mark laid between device
+// pixels comes out a blend of two inks at its edge, a tone nobody drew, and
+// whether it does depends on how many device pixels a cell is. The press's
+// scanlines darken every odd row of device pixels,
 // so only the even rows are read. The yard's reading -- the counter -- is the
 // yard's and is left out, and so is the bed of scales: the scales keep their
 // coin's own greys (the bed's per-cell dust tones), as the flutter of one
@@ -70,14 +70,18 @@ export const TESTS = [
     for (const name of SCENES) {
       window.__scene(name);
       run(1);
-      window.__deepZoom(P / CELL);   // a world pixel a device pixel, past this window's fit
-      run(1 / 60);
-      const off = offPalette();
-      // which layer draws them: the ones whose absence takes the most away
-      const by = off.length ? whose(off) : '';
+      // at the window's own fit, and pulled in past it: a cell is a different
+      // count of device pixels at each, so an edge laid off them shows at one
+      for (const zoom of [null, P / CELL]) {
+        window.__deepZoom(zoom);
+        run(1 / 60);
+        const off = offPalette();
+        // which layer draws them: the ones whose absence takes the most away
+        const by = off.length ? whose(off) : '';
+        out.push(ok(off.length === 0, `${name}${zoom ? ' pulled in' : ''}: nothing off the deep's palette`,
+                    off.slice(0, 8).map(([h, n]) => `${h} x${n}`).join(' ') + by));
+      }
       window.__deepZoom(null);
-      out.push(ok(off.length === 0, `${name}: nothing off the deep's palette`,
-                  off.slice(0, 8).map(([h, n]) => `${h} x${n}`).join(' ') + by));
     }
     return out;
   }]

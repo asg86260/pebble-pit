@@ -60,7 +60,7 @@ export function drawFang(f) {
   FANG_SPRITE.forEach((row, r) => [...row].forEach((ch, c) => {
     if (!FANG_TONE[ch]) return;
     ctx.fillStyle = FANG_TONE[ch];
-    ctx.fillRect(x + c * P, y + r * P, P, P);
+    fillOnPixels(ctx, x + c * P, y + r * P, P, P);
   }));
   ctx.fillStyle = '#000';
 }

@@ -45,7 +45,11 @@ function scrapOf(text, font, ink, k) {
 // and y the top of the line's ink. Returns the width it took.
 export function crispText(g, text, x, y, font, ink, align = 'left') {
   if (!text) return 0;
-  const m = g.getTransform(), k = m.a;
+  // A context that keeps no pixels (the node tier's sheets) is handed the
+  // words as words.
+  const m = g.getTransform?.();
+  if (!m) { g.font = font; g.fillStyle = ink; g.textAlign = align; g.textBaseline = 'top'; g.fillText?.(text, x, y); return 0; }
+  const k = m.a;
   const s = scrapOf(text, font, ink, k);
   const left = align === 'center' ? x - s.w / 2 : align === 'right' ? x - s.w : x;
   // its top-left on a whole device pixel, so no pixel of it is resampled

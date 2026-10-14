@@ -1,11 +1,11 @@
-// The deep's zones' tint and its floor cover everything the window shows of
+// The deep's water and its floor cover everything the window shows of
 // the deep, at any window (DESIGN.md, "The deep's zones"). The deep's zoom
 // tops out at the yard's, so a tall window reaches as far over the deep's
 // ceiling as it is tall, and a window wider than the deep is held at its left
 // end and shows past its right one; the tint stopped sixty rows over the
 // ceiling and at the deep's own ends, a hard edge across the water on a tall
-// screen. Read off what the layers actually draw: the rect each hands
-// `drawImage`, against the camera's.
+// screen. Read off what the layers actually draw: the rect each fills or
+// hands `drawImage`, against the camera's.
 
 import { group, ok, SEED, yard } from './helpers.mjs';
 
@@ -34,10 +34,12 @@ function windowOf(win) {
   window.__seed(SEED);
 }
 
-// The rect a layer draws its image to, caught on a sheet of its own.
+// The rect a layer fills or draws its image to, caught on a sheet of its own.
 function drawnBy(layer) {
   let rect = null;
-  const g = { imageSmoothingEnabled: true, drawImage: (img, x, y, w = img.width, h = img.height) => { rect = { x, y, w, h }; } };
+  const g = { imageSmoothingEnabled: true, fillStyle: null,
+              fillRect: (x, y, w, h) => { rect = { x, y, w, h }; },
+              drawImage: (img, x, y, w = img.width, h = img.height) => { rect = { x, y, w, h }; } };
   paintOn({ getContext: () => g }, layer);
   return rect;
 }
@@ -53,7 +55,7 @@ const covered = s => s.left + s.right + s.up + s.down === 0;
 const say = (s, win) => `short ${JSON.stringify(s)} of the window ${win.x0}..${win.x1} x ${win.y0}..${win.y1}`;
 
 for (const [name, win] of Object.entries(WINDOWS)) {
-  group(`at a ${name} window, the zones' tint and the floor cover the whole of the deep on screen`, async () => {
+  group(`at a ${name} window, the water and the floor cover the whole of the deep on screen`, async () => {
     windowOf(win);
     window.__crew(3, 3, 5, 7);
     window.__snatch({ played: true });
@@ -73,7 +75,7 @@ for (const [name, win] of Object.entries(WINDOWS)) {
       const w = deepWindow();
       const tint = drawnBy(drawDeepZones);
       const t = short(tint, w, Math.min(w.y1, deepFloor()));
-      checks.push(ok(covered(t), `${where}, the tint covers the water on screen`, say(t, w)));
+      checks.push(ok(covered(t), `${where}, the water covers the deep on screen`, say(t, w)));
       const ground = drawnBy(drawDeepFloor);
       const g = short({ ...ground, y: deepFloor() }, w, deepFloor());
       checks.push(ok(g.left + g.right === 0, `${where}, the floor runs the window's width`, say(g, w)));
