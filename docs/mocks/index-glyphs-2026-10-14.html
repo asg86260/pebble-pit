@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Index Glyphs</title>
+<style>
+/* Tokens: the game's ink and paper (style.css :root and html.dark). */
+:root {
+  --paper: #fff; --ink: #000;
+  --page: #f2f2ef; --page-ink: #1a1a1a; --page-mute: #5c5c58; --page-line: #d6d6d0;
+  --face: ui-monospace, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1f1f1f; --ink: #e0e0e0;
+    --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1f1f1f; --ink: #e0e0e0;
+  --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--page-ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 20px; margin: 40px 0 6px; padding-top: 14px; border-top: 2px solid var(--page-ink); }
+p { margin: 6px 0; max-width: 72ch; }
+code { font-size: 13px; }
+.lede { color: var(--page-mute); }
+.mocknote { border: 1px dashed var(--page-mute); padding: 10px 14px; margin: 14px 0; max-width: 80ch; font-size: 14px; }
+.mocknote ul { margin: 6px 0 0; padding-left: 20px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; align-items: center; }
+.toolbar .lbl { font-size: 13px; color: var(--page-mute); }
+.toolbar button { font: 13px system-ui, sans-serif; padding: 5px 10px; cursor: pointer; background: var(--page); color: var(--page-ink); border: 1px solid var(--page-mute); }
+.toolbar button[aria-pressed="true"] { background: var(--page-ink); color: var(--page); }
+.cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 14px; margin: 10px 0; }
+.cand { border: 1px solid var(--page-line); background: var(--paper); color: var(--ink); padding: 10px 12px; min-width: 0; }
+.cand h3 { font-size: 14px; margin: 0 0 2px; }
+.cand .say { font-size: 12px; color: var(--page-mute); margin: 0 0 8px; }
+.sizes { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.sizes figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.sizes figcaption { font-size: 11px; color: var(--page-mute); }
+canvas { display: block; image-rendering: pixelated; }
+.c6 { outline: 1px solid var(--page-line); }
+/* the index row: the list's button with the glyph beside the name, as
+   style.css .held .index .it draws it; and the entry head at 32px */
+.ix { display: flex; flex-direction: column; gap: 4px; font: 12px var(--face); }
+.ix .it { display: flex; align-items: center; gap: 8px; padding: 2px 10px; border: 1px solid var(--ink); width: max-content; }
+.ix .head { display: flex; align-items: center; gap: 12px; }
+.ix .head .name { font-size: 14px; letter-spacing: .1em; text-transform: uppercase; }
+.line { display: flex; gap: 6px; align-items: flex-start; margin-top: 8px; }
+.line code { flex: 1; min-width: 0; font: 11px/1.4 var(--face); background: var(--page); color: var(--page-ink); padding: 4px 6px; white-space: pre; overflow-x: auto; border: 1px solid var(--page-line); }
+.line button { font: 11px system-ui, sans-serif; padding: 3px 8px; cursor: pointer; background: var(--page); color: var(--page-ink); border: 1px solid var(--page-mute); }
+.refs { display: flex; flex-wrap: wrap; gap: 16px; }
+.refs figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; background: var(--paper); padding: 6px; border: 1px solid var(--page-line); }
+.refs figcaption { font: 11px var(--face); color: var(--page-mute); }
+.bad { color: #d93a25; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+<h1>Glyphs for the index</h1>
+<p class="lede">TODO.md, "The index": the entries with no drawing. Three candidates each, at the real size (eight cells square, the <code>GLYPHS</code> alphabet), shown at 1x, 3x and 6x, and as the index shows them: 16 px in the list, 32 px on the entry's head. Each card carries its <code>GLYPHS</code> line, so a vote is a copy-paste.</p>
+
+<div class="mocknote">
+  <b>This is a mock, drawn from plain cells on a canvas, not the game.</b> The glyphs are drawn the way <code>picture()</code> in <code>src/indexpage.js</code> draws one (a pixel a cell in the page's <code>--ink</code>, scaled up whole) and the reference row is copied from <code>GLYPHS</code> in <code>src/glyphs.js</code>. The candidates are the proposal.
+  <ul>
+    <li><b>What it cannot show:</b> the real index sheet around them (the held sheet, its list's scroll, the new-dot), the shelf's rung strokes and badges (an index glyph wears neither), the glyph among its real neighbors in the list, and the words beside it, which are the owner's.</li>
+    <li><b>Not entries yet:</b> rain, clouds, the objective, the rescue and the scenes have no row in <code>src/config/index.js</code> today (achievements is <code>notices</code>, the books is <code>stats</code>, the hole is <code>pit</code>, birds is <code>bird</code>). A vote for one of those is a drawing waiting for its entry.</li>
+    <li><b>Landing a pick:</b> the line goes into <code>GLYPHS</code>, and the entry's <code>glyph: null</code> in <code>src/config/index.js</code> becomes the name. Names are suggestions; a clash with an existing key is flagged in red.</li>
+  </ul>
+</div>
+
+<div class="toolbar">
+  <span class="lbl">theme:</span>
+  <button type="button" data-theme-set="auto" aria-pressed="true">auto</button>
+  <button type="button" data-theme-set="light">light</button>
+  <button type="button" data-theme-set="dark">dark</button>
+</div>
+
+<h2>For reference: drawings already in GLYPHS</h2>
+<p>At 1x and 3x. The house style: one-cell strokes, the thing sitting on the bottom row, outlines where a solid would read as a blob, white holes only where there is a hole.</p>
+<div class="refs" id="refs"></div>
+
+<div id="entries"></div>
+</main>
+
+<script>
+// Copied from GLYPHS in src/glyphs.js, for reference only.
+const REF = {
+  house:   ['........', '........', '........', '.#######', '..#####.', '..#...#.', '..#...#.', '..#...#.'],
+  hut:     ['########', '.##..##.', '.#....#.', '.######.', '.######.', '.#....#.', '.#....#.', '.#....#.'],
+  furrow:  ['........', '.#...#..', '.##..##.', '.#...#..', '##..##..', '.#...#..', '.##..##.', '.#...#..'],
+  hoist:   ['........', '#......#', '#......#', '##....##', '##....##', '.#....#.', '.#.##.#.', '.######.'],
+  pot:     ['########', '.######.', '########', '########', '########', '########', '.######.', '..#..#..'],
+  balloon: ['...##...', '..#..#..', '.#....#.', '.#....#.', '.#....#.', '..#..#..', '...##...', '...##...'],
+  cart:    ['........', '........', '........', '########', '#......#', '#......#', '########', '...##...'],
+  cracked: ['##....##', '###..###', '.######.', '..####..', '..####..', '.######.', '###..###', '##....##'],
+  bucket:  ['........', '........', '..#.....', '..#.....', '..#.....', '..#.....', '.###....', '.###....'],
+  door:    ['........', '........', '.######.', '.#....#.', '.#....#.', '.#....#.', '.#....#.', '.######.'],
+};
+// Every key GLYPHS already has, so a candidate name that clashes is flagged.
+const TAKEN = ['sack','planks','net','arch','point','lever','swing','pickhead','spark','cracked','boot','cart','belt','lift','hoist','furrow','die','hut','bucket','tower','door','house','cap','roomba','helmet','shovel','ore','jaw','ear','pot','ram','hoe','tiller','vial','bowl','star','wand','bolt','dome','portal','chip','balloon','lamp','brim','crate','shield','sphere','hat','again','fist','blade','bell','staff','target','dagger','rune','bomb','lyre','beamwand'];
+
+// The candidates. `entry` is the key in src/config/index.js (null: none yet).
+const E = [
+  { title: 'muck', entry: 'muck', opts: [
+    { glyph: 'muck', name: 'A. Heap and stink', say: 'A low heap, three wisps off it: the yard draws flies and stink over muck.',
+      rows: ['....#...', '..#.....', '....#...', '........', '..###...', '.#####..', '#######.', '########'] },
+    { glyph: 'muck', name: 'B. Drop on the layer', say: 'A drop over a lumpy layer: it comes down with the rain and lies there.',
+      rows: ['...#....', '..###...', '..###...', '........', '........', '.##..##.', '########', '########'] },
+    { glyph: 'muck', name: 'C. Uneven columns', say: 'The way the yard draws it: columns of different depth, a ragged top.',
+      rows: ['........', '........', '........', '.#......', '.##..#..', '###.###.', '########', '########'] },
+  ]},
+  { title: 'poop', entry: 'poop', opts: [
+    { glyph: 'poop', name: 'A. Three tiers, outlined', say: 'The swirl pile, three courses, the tip curled over.',
+      rows: ['....#...', '...##...', '..####..', '.#....#.', '.######.', '#......#', '########', '........'] },
+    { glyph: 'poop', name: 'B. Pile with flies', say: 'A solid pile, two flies over it, as the yard flies them over what a body left.',
+      rows: ['#.....#.', '..#.#...', '........', '...##...', '..####..', '.######.', '########', '........'] },
+    { glyph: 'poop', name: 'C. Pile with stink lines', say: 'Solid tiers, wavy stink rising.',
+      rows: ['.#..#...', '#..#....', '.#..#...', '...##...', '..####..', '.######.', '########', '########'] },
+  ]},
+  { title: 'pollution', entry: 'pollution', opts: [
+    { glyph: 'smog', name: 'A. Stack and puffs', say: 'A chimney, two puffs climbing off it: the cost of industry.',
+      rows: ['....###.', '...#...#', '....###.', '..##....', '..##....', '.##.....', '.##.....', '####....'] },
+    { glyph: 'smog', name: 'B. Speckled air', say: 'Motes over the ground line: the sky as the smog draws it, a cell here and there.',
+      rows: ['.#...#..', '...#...#', '#...#...', '..#...#.', '.#...#..', '...#...#', '........', '########'] },
+    { glyph: 'smog', name: 'C. Sooty cloud', say: 'A solid cloud dropping soot: dirty air, the thing that becomes muck.',
+      rows: ['........', '..###...', '.######.', '########', '.######.', '........', '.#.#.#..', '#.#.#...'] },
+  ]},
+  { title: 'rain', entry: null, opts: [
+    { glyph: 'rain', name: 'A. Cloud and drops', say: 'An outlined cloud, two rows of drops under it.',
+      rows: ['..###...', '.#...##.', '#......#', '########', '........', '.#..#..#', '#..#..#.', '........'] },
+    { glyph: 'rain', name: 'B. Slant', say: 'Only the rain: diagonal streaks across the square.',
+      rows: ['...#...#', '..#...#.', '.#...#..', '#...#...', '...#...#', '..#...#.', '.#...#..', '#...#...'] },
+    { glyph: 'rain', name: 'C. One drop', say: 'A single raindrop, outlined.',
+      rows: ['...#....', '..#.#...', '..#.#...', '.#...#..', '#.....#.', '#.....#.', '.#...#..', '..###...'] },
+  ]},
+  { title: 'clouds', entry: null, opts: [
+    { glyph: 'cloud', name: 'A. Outline', say: 'One cloud, outlined, flat bottom.',
+      rows: ['........', '..###...', '.#...##.', '#......#', '#......#', '.######.', '........', '........'] },
+    { glyph: 'cloud', name: 'B. Two in a sky', say: 'Two small outlined clouds, staggered.',
+      rows: ['.###....', '#...#...', '.###....', '........', '...####.', '..#....#', '...####.', '........'] },
+    { glyph: 'cloud', name: 'C. Solid', say: 'A solid cloud, a bumpy top.',
+      rows: ['........', '..##.##.', '.#######', '########', '.######.', '........', '........', '........'] },
+  ]},
+  { title: 'birds', entry: 'bird', opts: [
+    { glyph: 'bird', name: 'A. One wing-beat', say: 'The yard\'s bird at eight cells: a V.',
+      rows: ['........', '........', '#.....#.', '.#...#..', '..#.#...', '...#....', '........', '........'] },
+    { glyph: 'bird', name: 'B. A flock', say: 'Three of the yard\'s three-cell birds, as they fly.',
+      rows: ['#.#.....', '.#......', '.....#.#', '......#.', '..#.#...', '...#....', '........', '........'] },
+    { glyph: 'bird', name: 'C. Perched', say: 'A bird sat on a line: beak, body, tail, legs.',
+      rows: ['........', '.##.....', '####....', '.######.', '..#####.', '...###..', '...#.#..', '########'] },
+  ]},
+  { title: 'the hole', entry: 'pit', opts: [
+    { glyph: 'hole', name: 'A. A hole in the ground', say: 'The ground line, broken by a square-cut hole.',
+      rows: ['........', '........', '........', '........', '##....##', '.#....#.', '.#....#.', '.######.'] },
+    { glyph: 'hole', name: 'B. Pebbles in it', say: 'The same hole, deeper, a few pebbles lying in the bottom.',
+      rows: ['........', '........', '........', '##....##', '.#....#.', '.#.#..#.', '.#.##.#.', '.######.'] },
+    { glyph: 'hole', name: 'C. One going in', say: 'A pebble over the hole, on its way in: what the pit is for.',
+      rows: ['...##...', '...##...', '........', '##....##', '.#....#.', '.#....#.', '.#....#.', '.######.'] },
+  ]},
+  { title: 'the sqwife', entry: 'sqwife', opts: [
+    { glyph: 'sqwife', name: 'A. A body with a bow', say: 'The yard\'s body, the hollow square, with a bow on top.',
+      rows: ['.##.##..', '...#....', '.#####..', '.#...#..', '.#...#..', '.#...#..', '.#####..', '........'] },
+    { glyph: 'sqwife', name: 'B. Under the boulder', say: 'The story\'s premise: a rock sat on a squashed body.',
+      rows: ['..####..', '.######.', '########', '########', '.######.', '#######.', '#.....#.', '#######.'] },
+    { glyph: 'sqwife', name: 'C. A heart over a body', say: 'Who she is to you, over the hollow square.',
+      rows: ['.#.#....', '#####...', '.###....', '..#.....', '........', '#####...', '#...#...', '#####...'] },
+  ]},
+  { title: 'the bench', entry: 'bench', opts: [
+    { glyph: 'bench', name: 'A. The bench as drawn', say: 'The yard\'s bench shrunk to eight: slab, two legs, the clamped block.',
+      rows: ['........', '........', '..##....', '..##....', '########', '########', '.##..##.', '.##..##.'] },
+    { glyph: 'anvil', name: 'B. Anvil', say: 'The bench\'s trade: an anvil, horn to the left (and the shed mock\'s option A for the bench).',
+      rows: ['........', '........', '........', '#######.', '..#####.', '...##...', '...##...', '.######.'] },
+    { glyph: 'stall', name: 'C. A stall', say: 'The general store: a striped awning on posts over a counter.',
+      rows: ['########', '#.#.#.#.', '........', '.#....#.', '########', '.#....#.', '.#....#.', '.#....#.'] },
+  ]},
+  { title: 'the books', entry: 'stats', opts: [
+    { glyph: 'ledger', name: 'A. Open book', say: 'A book lying open, the spine down the middle.',
+      rows: ['........', '.##..##.', '#..##..#', '#..##..#', '#..##..#', '#..##..#', '########', '........'] },
+    { glyph: 'ledger', name: 'B. Ruled ledger', say: 'A closed ledger seen from the front: a spine, ruled lines.',
+      rows: ['.######.', '##....#.', '##.##.#.', '##....#.', '##.##.#.', '##....#.', '.######.', '........'] },
+    { glyph: 'ledger', name: 'C. A stack', say: 'Three books piled up, each a little off the one under it.',
+      rows: ['........', '.#####..', '.#...#..', '######..', '#....#..', '.######.', '.#....#.', '.######.'] },
+  ]},
+  { title: 'the objective', entry: null, opts: [
+    { glyph: 'flag', name: 'A. Flag', say: 'A flag on a pole on a foot: somewhere to get to.',
+      rows: ['.#......', '.####...', '.#####..', '.####...', '.#......', '.#......', '.#......', '###.....'] },
+    { glyph: 'flag', name: 'B. Ticked box', say: 'A box with a tick in it: a thing to get done.',
+      rows: ['#######.', '#.....#.', '#....##.', '#...#.#.', '##.#..#.', '#.#...#.', '#.....#.', '#######.'] },
+    { glyph: 'flag', name: 'C. A pinned note', say: 'A note pinned up, two lines on it.',
+      rows: ['...##...', '.######.', '.#....#.', '.#.##.#.', '.#....#.', '.#.##.#.', '.#....#.', '.######.'] },
+  ]},
+  { title: 'achievements', entry: 'notices', opts: [
+    { glyph: 'trophy', name: 'A. Cup', say: 'A cup with two handles, on a stem and a foot.',
+      rows: ['########', '#.####.#', '.######.', '..####..', '...##...', '...##...', '..####..', '.######.'] },
+    { glyph: 'trophy', name: 'B. Medal', say: 'A disc hung on a ribbon.',
+      rows: ['#.....#.', '.#...#..', '..#.#...', '..###...', '.#...#..', '#..#..#.', '.#...#..', '..###...'] },
+    { glyph: 'trophy', name: 'C. Rosette', say: 'A ring with a dot, two tails under it.',
+      rows: ['..####..', '.#....#.', '#..##..#', '#.####.#', '#..##..#', '.#....#.', '..#..#..', '.#....#.'] },
+  ]},
+  { title: 'the rescue', entry: null, opts: [
+    { glyph: 'rescue', name: 'A. Two together', say: 'Two bodies side by side, a heart over them.',
+      rows: ['........', '..#..#..', '..####..', '...##...', '........', '###..###', '#.#..#.#', '###..###'] },
+    { glyph: 'rescue', name: 'B. The rock split', say: 'The boulder broken in two halves, a body stood up between them.',
+      rows: ['##....##', '###..###', '###..###', '##....##', '........', '..####..', '..#..#..', '..####..'] },
+    { glyph: 'rescue', name: 'C. Out of the hole', say: 'A body lifted clear over the hole it was in.',
+      rows: ['..####..', '..#..#..', '..####..', '........', '........', '##....##', '.#....#.', '.######.'] },
+  ]},
+  { title: 'the scenes', entry: null, opts: [
+    { glyph: 'clapper', name: 'A. Clapperboard', say: 'A striped arm over a board.',
+      rows: ['##..##..', '..##..##', '########', '#......#', '#......#', '#......#', '########', '........'] },
+    { glyph: 'clapper', name: 'B. Film strip', say: 'A strip with its sprocket holes, two frames.',
+      rows: ['#.#.#.#.', '########', '#..#...#', '#..#...#', '#..#...#', '########', '#.#.#.#.', '........'] },
+    { glyph: 'clapper', name: 'C. A framed rock', say: 'A picture frame with the boulder in it: a moment, kept.',
+      rows: ['########', '#......#', '#..##..#', '#.####.#', '#.####.#', '#......#', '########', '........'] },
+  ]},
+];
+
+const tok = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const draws = [];
+function glyph(rows, scale) {
+  const c = document.createElement('canvas');
+  c.width = rows[0].length; c.height = rows.length;
+  c.style.width = rows[0].length * scale + 'px'; c.style.height = rows.length * scale + 'px';
+  const draw = () => {
+    const g = c.getContext('2d');
+    g.clearRect(0, 0, c.width, c.height);
+    g.fillStyle = tok('--ink');
+    rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') g.fillRect(x, y, 1, 1); }));
+  };
+  draws.push(draw); draw();
+  return c;
+}
+const fig = (node, cap) => { const f = document.createElement('figure'); const fc = document.createElement('figcaption'); fc.textContent = cap; f.append(node, fc); return f; };
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const okShape = rows => rows.length === 8 && rows.every(r => r.length === 8 && /^[#.]+$/.test(r));
+// The line as glyphs.js lays it out: the name padded to column 13.
+const lineOf = (name, rows) => `  ${(name + ':').padEnd(11)} [${rows.map(r => `'${r}'`).join(', ')}],`;
+
+{
+  const host = document.getElementById('refs');
+  for (const [k, rows] of Object.entries(REF)) {
+    const f = el('figure'); const wrap = el('div', 'sizes');
+    wrap.append(glyph(rows, 1), glyph(rows, 3));
+    f.append(wrap, el('figcaption', null, k));
+    host.append(f);
+  }
+}
+
+const host = document.getElementById('entries');
+for (const e of E) {
+  host.append(el('h2', null, e.title));
+  host.append(el('p', 'lede', e.entry ? `index entry: ${e.entry}` : 'no index entry yet'));
+  const grid = el('div', 'cands');
+  for (const o of e.opts) {
+    const card = el('div', 'cand');
+    card.append(el('h3', null, o.name), el('p', 'say', o.say));
+    if (!okShape(o.rows)) card.append(el('p', 'bad', 'not eight by eight'));
+    const sizes = el('div', 'sizes');
+    sizes.append(fig(glyph(o.rows, 1), '1x'), fig(glyph(o.rows, 3), '3x'));
+    const big = glyph(o.rows, 6); big.classList.add('c6');
+    sizes.append(fig(big, '6x'));
+    // as the index shows it: the list's row (16 px) and the entry's head (32 px)
+    const ix = el('div', 'ix');
+    const it = el('div', 'it'); it.append(glyph(o.rows, 2), el('span', null, e.title));
+    const head = el('div', 'head'); head.append(glyph(o.rows, 4), el('span', 'name', e.title));
+    ix.append(it, head);
+    sizes.append(fig(ix, 'in the index'));
+    card.append(sizes);
+    const line = el('div', 'line');
+    const code = el('code', null, lineOf(o.glyph, o.rows));
+    const btn = el('button', null, 'copy'); btn.type = 'button';
+    btn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(code.textContent); btn.textContent = 'copied'; }
+      catch { const r = document.createRange(); r.selectNodeContents(code); getSelection().removeAllRanges(); getSelection().addRange(r); btn.textContent = 'selected'; }
+      setTimeout(() => { btn.textContent = 'copy'; }, 1500);
+    });
+    line.append(code, btn);
+    card.append(line);
+    if (TAKEN.includes(o.glyph)) card.append(el('p', 'bad', `"${o.glyph}" is already a GLYPHS key`));
+    grid.append(card);
+  }
+  host.append(grid);
+}
+
+document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => {
+  const v = b.dataset.themeSet;
+  if (v === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.dataset.theme = v;
+  document.querySelectorAll('[data-theme-set]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  draws.forEach(d => d());
+}));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draws.forEach(d => d()));
+</script>
+</body>
+</html>
