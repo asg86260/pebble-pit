@@ -8,8 +8,8 @@
 //
 // The tag is the trigger: `.github/workflows/release.yml` builds the browser
 // game and the three desktop apps on GitHub's runners, pushes every itch
-// channel, and makes the GitHub release with this version's CHANGELOG
-// section as its notes. Nothing is built here, so the machine that cuts a
+// channel, uploads the Steam cuts once STEAM_APP_ID is set, and makes the
+// GitHub release with this version's CHANGELOG section as its notes. Nothing is built here, so the machine that cuts a
 // release needs git and nothing else -- no butler, no docker, no Mac.
 //
 // With `--dry` it stops before committing: nothing is committed, tagged or

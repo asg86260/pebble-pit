@@ -45,6 +45,22 @@
 #   STEAM_CONFIG_VDF   secret -- base64 of that account's steamcmd
 #                      config/config.vdf after one interactive login with its
 #                      Steam Guard code, so the runner never has to answer one.
+#
+# The game's own servers are repository variables too; unset, the build has
+# none of that feature and sends nothing:
+#   CLOUD_URL          variable -- the cloud-save worker (cloud/README.md);
+#                      never in a Steam cut, which saves to Steam Cloud.
+#   FEEDBACK_URL       variable -- the feedback worker (feedback/README.md);
+#                      in every build, the Steam cuts included.
+# TIMES_URL is no longer read: the board of times left the game on 2026-10-12,
+# so a TIMES_URL variable still set on the repository does nothing.
+#
+# Every `run` here is bash, on every runner (`defaults` below). The windows
+# runner's own default is pwsh, where `>> "$GITHUB_ENV"` names an unset
+# PowerShell variable rather than the environment file, so a line written that
+# way never reaches the next step -- the windows app shipped without its cloud
+# address that way. bash on windows is Git Bash, which the butler step's curl
+# and unzip already rely on.
 
 name: release
 
@@ -55,6 +71,10 @@ on:
 
 permissions:
   contents: write
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build:
@@ -89,7 +109,6 @@ jobs:
       # sets it too).
       - name: Feedback form
         if: vars.FEEDBACK_URL != ''
-        shell: bash
         run: echo "VITE_FEEDBACK_URL=${{ vars.FEEDBACK_URL }}" >> "$GITHUB_ENV"
       # The signing variables are only exported when the secrets exist: an
       # unset secret is an empty string, and electron-builder reads an empty
@@ -111,7 +130,6 @@ jobs:
           echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}" >> "$GITHUB_ENV"
 
       - name: Package
-        shell: bash
         run: bun run desk:build ${{ matrix.build }} --config.mac.notarize=${{ env.APPLE_ID != '' }}
 
       # The browser game, zipped the way itch's upload form wants it, so the
@@ -131,14 +149,12 @@ jobs:
           if-no-files-found: error
 
       - name: Install butler
-        shell: bash
         run: |
           curl -sL "https://broth.itch.zone/butler/${{ matrix.butler }}/LATEST/archive/default" -o butler.zip
           mkdir -p butler && unzip -q butler.zip -d butler && chmod +x butler/butler*
           echo "${{ github.workspace }}/butler" >> "$GITHUB_PATH"
 
       - name: Push to itch
-        shell: bash
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -149,12 +165,10 @@ jobs:
       # the free page's apps are never pushed to it, nor its apps to the free one.
       - name: Package the paid game
         if: vars.ITCH_FULL_TARGET != ''
-        shell: bash
         run: bun run desk:build --mode full ${{ matrix.build }} --config.directories.output=release/full --config.mac.notarize=${{ env.APPLE_ID != '' }}
 
       - name: Push to the paid page
         if: vars.ITCH_FULL_TARGET != ''
-        shell: bash
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
           ITCH_TARGET: ${{ vars.ITCH_FULL_TARGET }}
@@ -191,13 +205,10 @@ jobs:
       # (DESIGN.md, "Feedback form"); the cloud's address does not.
       - name: Feedback form
         if: vars.FEEDBACK_URL != ''
-        shell: bash
         run: echo "VITE_FEEDBACK_URL=${{ vars.FEEDBACK_URL }}" >> "$GITHUB_ENV"
       - name: Package
-        shell: bash
         run: bun run desk:build --${{ matrix.cut }} ${{ matrix.build }}
       - name: Pack the folder
-        shell: bash
         run: tar -czf ${{ matrix.cut }}-${{ matrix.plat }}.tgz -C release/${{ matrix.cut }} ${{ matrix.folder }}
       - uses: actions/upload-artifact@v4
         with:

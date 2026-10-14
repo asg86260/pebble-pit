@@ -265,6 +265,7 @@ this section; the release that switches it on moves these under Unreleased.
 - During a cutscene the counter, the station counters, the pile-full warnings and the "build the bench" call fade out with the yard and fade back after (test/cutscene-hold.test.mjs).
 - The first trip down no longer jumps the picture up as its scene starts (`node tools/look.mjs abyss-intro`).
 - The net no longer hangs through the ground once the rock has ridden it down (the `net>` scene, run through).
+- The Windows app offers cloud saves like the Mac and Linux ones instead of shipping without them (test/release-workflow.test.mjs).
 
 ## v0.5.2 — 2026-09-28
 

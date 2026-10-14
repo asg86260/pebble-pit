@@ -64,7 +64,6 @@ carry their own limits. When the machine is off the board is down, and the
 game says so on every surface ("the board is down right now"); a rescue
 posted then waits on the save for the next boot.
 
-The game's build reads the hostname from `VITE_TIMES_URL`: the release
-workflow takes it from the `TIMES_URL` repository variable, and a local
-build from a `.env.local` at the repo root. With no `VITE_TIMES_URL` the
-game has no board: no button, no ping, no post.
+The game has had no board since 2026-10-12 (DESIGN.md, "The board of
+times"): nothing in it reads `VITE_TIMES_URL`, and the release workflow no
+longer passes a `TIMES_URL` repository variable to the build.
