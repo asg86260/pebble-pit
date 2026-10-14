@@ -4,8 +4,11 @@
 
 import '../ink.js';        // the palette, on every context's setters, before the first fill
 
+// A page with no game canvas (the landing page) still imports modules that
+// draw, through the roster and the number font, without ever drawing: it gets
+// a null context rather than a throw at load.
 const screen = document.getElementById('c');
-export let ctx = screen.getContext('2d');
+export let ctx = screen?.getContext('2d') ?? null;
 export let canvas = screen;
 
 // Every layer paints on `ctx`, so the far half through the ripple between the
