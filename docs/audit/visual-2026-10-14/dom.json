@@ -1,0 +1,422 @@
+[
+  {
+    "id": "DOM-01",
+    "kind": "color",
+    "title": "The landing page's volume slider is the browser's default blue, round control",
+    "what": "The held sheet styles its range input (1px ink track, square paper thumb), but that rule is scoped to `.held`; title.css only sizes the slider. On the landing page's settings the volume control renders as Chrome's default blue pill with a round thumb, in light and dark alike, the one saturated non-coin color and the one rounded control on the page.",
+    "where": ["src/style.css:1243-1258", "src/title.css:69", "index.html:93"],
+    "evidence": ["landing-slider-default-blue.png"],
+    "severity": "high",
+    "proposal": "Move the range rules off `.held` onto a shared selector (`.held, .col` or a `.range` class) so one slider exists."
+  },
+  {
+    "id": "DOM-02",
+    "kind": "state",
+    "title": "No focus style anywhere: keyboard focus is the browser's rounded auto ring, text boxes show nothing",
+    "what": "There is no `:focus-visible` rule in any of the three sheets. Tabbing the held sheet or the landing column draws Chrome's rounded black/white auto outline (a radius in a square house), and both textareas and the cloud code input set `outline: none` with no replacement, so a focused text box looks exactly like an idle one. `body.pad :focus { outline: none }` hides even that while the pad marker is in use.",
+    "where": ["src/style.css:1201", "src/style.css:1213", "src/style.css:2184", "src/title.css:57", "src/title.css:113"],
+    "evidence": ["focus-ring-browser-default.png", "focus-ring-landing.png", "textarea-focus-no-ring.png"],
+    "severity": "high",
+    "proposal": "One house focus rule: `:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }` (square), applied to buttons, textareas and inputs alike."
+  },
+  {
+    "id": "DOM-03",
+    "kind": "component",
+    "title": "The same sheet button is three heights: 24px held, 27px language list, 29px landing",
+    "what": "`.held` sets `font: 12px var(--face)`, which resets line-height to normal, so its buttons are 24px tall (4px 14px padding). The language list re-adds `line-height: 1.4` (27px), and the landing column inherits body's 12px/1.4 plus its own `padding: 5px 14px` (29px). Measured on the live pages: settings rows 24px, language rows 27px, landing rows 29px.",
+    "where": ["src/style.css:1035", "src/style.css:1216-1233", "src/style.css:2195", "src/title.css:38-42"],
+    "evidence": ["button-three-heights.png"],
+    "severity": "high",
+    "proposal": "One `--btn-h`/line-height and one padding for every sheet button; drop the per-page line-height and the landing's 5px."
+  },
+  {
+    "id": "DOM-04",
+    "kind": "component",
+    "title": "Held sheet buttons are centered; the landing column's identical buttons are left-aligned",
+    "what": "The held sheet and the landing column are built from the same markup (settings, saves, achievements, controls, language, feedback) and title.css says it is in 'the held sheet's hand', but `.held button` is `text-align: center` while `.col button` is `text-align: left`, and the headings follow suit (`.held .word` centered, `.col .word` left). The same settings page reads differently depending on where it is opened.",
+    "where": ["src/style.css:1232", "src/style.css:1120", "src/title.css:41", "src/title.css:37"],
+    "evidence": ["button-three-heights.png", "toggle-states-four-ways.png"],
+    "severity": "med",
+    "proposal": "Pick one alignment for menu buttons and page words and apply it to both `.held` and `.col` (the landing's left column can keep left only if the held sheet follows)."
+  },
+  {
+    "id": "DOM-05",
+    "kind": "component",
+    "title": "Toggle rows have four different 'on' languages",
+    "what": "Settings toggles say their state in words ('dark: off') with no visual state; the language list marks the chosen row by inverting it; the feedback form uses a 12px checkbox with an inset square; 'hide finished' goes from dashed to solid border and from .7 to full opacity. Four mechanisms for 'this is on'.",
+    "where": ["play.html:196-206", "src/style.css:2196", "src/style.css:2206-2212", "src/style.css:1424-1436", "src/style.css:1517", "src/langpage.js:38"],
+    "evidence": ["toggle-states-four-ways.png", "feedback-back-send-pair-and-tick.png", "house-board-and-purse.png"],
+    "severity": "med",
+    "proposal": "Decide one toggle anatomy (word plus a box tick on the right, or inversion for 'on') and use it for settings, hide finished and the feedback tick."
+  },
+  {
+    "id": "DOM-06",
+    "kind": "component",
+    "title": "Four different tick boxes",
+    "what": "The feedback tick is a 12px box, 1px border, 2px-inset fill. The objective's quest list uses text glyphs '\\u25a1'/'\\u25a0' in the 11px face. The barrier bill uses a 7px box with a 1px inset that fades in. The landing foot's cloud mark is a 6px filled/hollow square. None share size, stroke or fill inset.",
+    "where": ["src/style.css:2210-2212", "src/style.css:2077-2079", "src/style.css:2128-2130", "src/title.css:88-89"],
+    "evidence": ["feedback-back-send-pair-and-tick.png", "objective-quest-and-queue.png", "objective-barrier.png"],
+    "severity": "med",
+    "proposal": "One `.tickbox` (size in em so it rides the text size, 1px stroke, fixed inset) used by the form, the quest list and the bill."
+  },
+  {
+    "id": "DOM-07",
+    "kind": "component",
+    "title": "Back rows differ page to page",
+    "what": "Most held pages end in a full-width 'back'. The feedback page puts back and send side by side in a half-width pair inside the 26em form, narrower than the sheet. The index on a phone hides the page's back and shows its own small auto-width 'back' inside the list box, top-left. The crashed sheet has none. On the landing page back is a left-aligned row in the column.",
+    "where": ["src/feedbackform.js:41-44", "src/style.css:2203-2204", "src/style.css:1168-1170", "src/indexpage.js:79-83", "play.html:174-216"],
+    "evidence": ["feedback-back-send-pair-and-tick.png", "phone-index-back.png", "controls-page.png"],
+    "severity": "med",
+    "proposal": "A page foot is always the sheet's width: back alone, or back + the page's action as a `.pair`; the index's inner back becomes the page's back retargeted."
+  },
+  {
+    "id": "DOM-08",
+    "kind": "spacing",
+    "title": "The held sheet changes width every time a page is turned",
+    "what": "`.held` is sized by its content, so the sheet is 422px of buttons on the front, 190px on settings and language, 354px on saves, 396px on achievements, 312px for the feedback form. Turning a page resizes and re-centers the whole sheet. The landing column, by contrast, holds a fixed `--col-w: 21em` minimum.",
+    "where": ["src/style.css:1023-1039", "src/title.css:33", "src/title.css:43"],
+    "evidence": ["held-sheet-width-per-page.png"],
+    "severity": "med",
+    "proposal": "Give the held sheet a fixed min width (the landing's `--col-w`, shared) so pages turn in place."
+  },
+  {
+    "id": "DOM-09",
+    "kind": "type",
+    "title": "Eleven letter-spacing values",
+    "what": "Tracking in use: .04em (phone controls), .06em (phone boards), .08em (tip, queue, tile names, ledger labels), .1em (cards, small print), .12em (toast name), .14em (held/landing buttons, raise), .18em (page titles, section signs), .22em (pips), .25em (cloud head), .3em (page words, modal title, pair code), .34em (game name), plus raw `.3em`/`.04em` not multiplied by `--track`. Small print inherits px tracking from its parent, so `.held .small` computes to .168em.",
+    "where": ["src/style.css:1036", "src/style.css:426", "src/style.css:1365", "src/style.css:1416", "src/style.css:1105", "src/style.css:356", "src/style.css:2007", "src/style.css:1793", "src/style.css:1133", "src/style.css:1197", "src/title.css:35", "src/title.css:117"],
+    "evidence": ["section-headings-four-ways.png", "books-modal-ledger.png"],
+    "severity": "med",
+    "proposal": "Four tracking steps as tokens (`--track-0: 0`, `--track-s: .08em`, `--track-m: .14em`, `--track-l: .3em`), always multiplied by `--track`."
+  },
+  {
+    "id": "DOM-10",
+    "kind": "type",
+    "title": "Five 'small' sizes: 9.84px, 10px, 10.2px, 10.8px, 11px",
+    "what": "Small print is written five ways: `.82em` (page notes, pot-picker notes = 9.84px), `10px` (held .small, landing sub/said/foot, objective 'next' tab, skip), `.85em` (shelf tile names, strip = 10.2px), `.9em` (card notes = 10.8px), `11px` (record, quest list, barrier, ledger notes). The measured sweep confirms all five on screen.",
+    "where": ["src/style.css:370", "src/style.css:914", "src/style.css:1185", "src/shelf.css:178", "src/shelf.css:337", "src/style.css:696", "src/style.css:1049", "src/style.css:2076", "src/style.css:2090", "src/shelf.css:656", "src/title.css:49-50", "src/title.css:77"],
+    "evidence": ["books-modal-ledger.png", "objective-quest-and-queue.png", "cards-disabled-dashed.png"],
+    "severity": "med",
+    "proposal": "A three-step scale (10px small, 12px body, 17px word, with 14px display) as tokens; replace the em fractions with the token."
+  },
+  {
+    "id": "DOM-11",
+    "kind": "type",
+    "title": "Display sizes 14, 15, 17, 18, 34px with no ladder between them",
+    "what": "Index entry name 14px, shelf goal name 14px bold, toast name 15px, page word 17px, pairing code 18px, game name 34px; the rails' private `--rl-text: 13px`/`--rl-head: 14px`/`--rl-tiny: 12px` add a 13px body nowhere else uses.",
+    "where": ["src/style.css:1157", "src/shelf.css:575", "src/style.css:1105", "src/style.css:1115", "src/style.css:1197", "src/title.css:119", "src/title.css:35", "src/shelf.css:678"],
+    "evidence": ["toast-vs-messtag-case.png", "index-page.png"],
+    "severity": "low",
+    "proposal": "Fold 14/15 into one 'name' size and 17/18 into the 'word' size; retire the rails' 13px body for the house 12px."
+  },
+  {
+    "id": "DOM-12",
+    "kind": "type",
+    "title": "Labels drop to lowercase in some places and not others",
+    "what": "The rule mostly reads 'names and labels upper, sentences lower'. Breaking it: the books ledger's row labels ('pebbles', 'ore', 'playtime') are lowercase and untracked; the index list's names are lowercase; the crew window's section 'the yard' is lowercase (the modal sets no case, so `.rows .sect` inherits none); the mess tags say 'muck'/'poop' lowercase under an uppercase toast name; shelf tags say 'done' and gains 'queued' lowercase.",
+    "where": ["src/shelf.css:610-617", "src/shelf.css:653", "src/style.css:1141-1146", "src/style.css:310-323", "src/style.css:1955-1966", "src/shelf.css:30-45"],
+    "evidence": ["ledger-labels-lowercase.png", "lists-three-shapes.png", "crewlist-modal-sect-and-close.png", "toast-vs-messtag-case.png", "shelf-done-tag-lowercase.png"],
+    "severity": "med",
+    "proposal": "Write the case rule down (label = upper + track, sentence = lower + 0) and set case on the component, not by inheritance."
+  },
+  {
+    "id": "DOM-13",
+    "kind": "component",
+    "title": "Section headings are drawn four ways",
+    "what": "Board page title: 12px, .18em, regular, 2px ink rule under. Shelf section sign: 12px bold .18em, inverted ink block, 5px plank above. Ledger section: 12px bold .18em, 1px ink rule under. Rows section in the crew window: inherited case, 1px ink-5 (grey) rule. The modal head title is a fifth: 12px .3em, no rule.",
+    "where": ["src/style.css:351-359", "src/shelf.css:79-94", "src/shelf.css:622-632", "src/style.css:310-323", "src/style.css:2007"],
+    "evidence": ["section-headings-four-ways.png", "books-modal-ledger.png", "crewlist-modal-sect-and-close.png"],
+    "severity": "med",
+    "proposal": "Two heading levels only: page title (regular, rule) and section (bold, rule or sign, one choice), shared by boards, ledger and windows."
+  },
+  {
+    "id": "DOM-14",
+    "kind": "component",
+    "title": "Selection lists come in four shapes",
+    "what": "Index list: borderless rows, lowercase, 0 tracking, 2px 10px padding, inverted chosen row. Language list: bordered 27px buttons, uppercase, 4px gap, inverted chosen. Saves: bordered subgrid rows, 6px gap, inverted open row, dashed divider before the delete. Pot picker popover: borderless rows, uppercase, 4px 14px 4px 10px. The settings list sits at a 10px gap.",
+    "where": ["src/style.css:1144-1147", "src/style.css:2194-2196", "src/style.css:1447-1475", "src/style.css:866-884", "src/style.css:1031"],
+    "evidence": ["lists-three-shapes.png", "language-list-cjk-rows.png"],
+    "severity": "med",
+    "proposal": "One 'list of choices' component (row padding, gap, case, inverted chosen) for index, language, saves and the popover."
+  },
+  {
+    "id": "DOM-15",
+    "kind": "spacing",
+    "title": "Gaps between stacked controls: 4, 6, 7 and 10px",
+    "what": "Held sheet stack 10px; landing column 7px; language list 4px; saves rows 6px; record cards 6px; board cards `--rows-gap` 4px; board sheet 6px; pairs 10px. The spacing tokens `--gap` 8px and `--pad-s/m/l` exist but no stack uses `--gap`.",
+    "where": ["src/style.css:1031", "src/title.css:24", "src/style.css:2194", "src/style.css:1448", "src/style.css:1047", "src/style.css:16", "src/style.css:1681", "src/style.css:58-61"],
+    "evidence": ["held-sheet-width-per-page.png", "lists-three-shapes.png"],
+    "severity": "low",
+    "proposal": "Two stack gaps (tight 4px inside a list, loose 8px between controls) as tokens; use them everywhere."
+  },
+  {
+    "id": "DOM-16",
+    "kind": "spacing",
+    "title": "Button paddings are hand-cut per component",
+    "what": "Held 4px 14px; landing 5px 14px; cards 6px 8px (6px 3px on phone); queue 1px 12px; popover 4px 14px 4px 10px; tip 3px 6px; hide finished 2px 6px (6px 8px on phone); modal close 0 6px; barrier buy 2px 6px; cancel 1px 6px; dev 0 4px. Only the tip, toast, raise, objective, modal and skip use the `--pad-s/m/l` tokens.",
+    "where": ["src/style.css:1224", "src/title.css:41", "src/style.css:432", "src/style.css:1375", "src/style.css:874", "src/style.css:1412", "src/style.css:1433", "src/style.css:2008", "src/style.css:2133", "src/style.css:2139"],
+    "evidence": ["button-three-heights.png", "crewlist-modal-sect-and-close.png", "objective-barrier.png"],
+    "severity": "low",
+    "proposal": "Map every control to `--pad-s` or `--pad-m` and delete the literals."
+  },
+  {
+    "id": "DOM-17",
+    "kind": "spacing",
+    "title": "Border weights: overlays are 1px or 2px with no rule for which",
+    "what": "The held sheet, landing column, tooltip and toast are 1px; the board sheet, modal, purse, queue, objective, corner buttons, hop, popover, raise and build button are 2px. The modal's close button is 2px while every button inside a sheet is 1px. Emphasis uses 3px double (goal card, barrier buy) and 3px solid (shelf goal), two ways of saying the same thing.",
+    "where": ["src/style.css:1034", "src/title.css:23", "src/style.css:1414", "src/style.css:1087", "src/style.css:1684", "src/style.css:1998", "src/style.css:2008", "src/style.css:335", "src/style.css:2133", "src/shelf.css:561"],
+    "evidence": ["crewlist-modal-sect-and-close.png", "house-board-and-purse.png", "objective-barrier.png"],
+    "severity": "med",
+    "proposal": "Rule it: 2px = something floating over the yard, 1px = a control or a line inside it; one emphasis border (3px double) for goal cards everywhere."
+  },
+  {
+    "id": "DOM-18",
+    "kind": "spacing",
+    "title": "The float shadow is on some floating panels and not others",
+    "what": "`--float-shadow` sits under the corner buttons, toast, queue, objective, modal, raise, build button, skip and mess tags, but not under the board sheet, the purse beside it, the held sheet or the tooltip, which float over the same yard.",
+    "where": ["src/style.css:87", "src/style.css:175", "src/style.css:1086", "src/style.css:1363", "src/style.css:1999", "src/style.css:2041", "src/style.css:1628-1642", "src/style.css:1656-1692"],
+    "evidence": ["house-board-and-purse.png", "corner-buttons.png"],
+    "severity": "low",
+    "proposal": "Every 2px floating panel gets the shadow, or none of the large ones do; write which."
+  },
+  {
+    "id": "DOM-19",
+    "kind": "state",
+    "title": "Disabled is written three ways, and not at all on the landing page",
+    "what": "Board cards go `--ink-5` and dashed; shelf tags dashed and ink-5; the barrier buy ink-5 border; the feedback tick and send drop to `opacity: .4`; the rails' locked arm to `.45`; the dev panel to `.4`. `.col button:disabled` only changes the cursor, so a disabled landing button looks live.",
+    "where": ["src/style.css:465-482", "src/shelf.css:300", "src/style.css:2136", "src/style.css:2213", "src/shelf.css:694", "src/title.css:47"],
+    "evidence": ["feedback-back-send-pair-and-tick.png", "cards-disabled-dashed.png"],
+    "severity": "med",
+    "proposal": "Disabled = `color: var(--ink-5)` + dashed border, for every control; drop the opacity variants and give `.col` the same."
+  },
+  {
+    "id": "DOM-20",
+    "kind": "state",
+    "title": "Hover is inversion almost everywhere, except shelves, toasts and a few one-offs",
+    "what": "Sheet buttons, cards, popover rows, queue rows, raise, modal close and barrier buttons invert on hover. Shelf tiles instead lift with a 1px offset shadow and sway; 'hide finished' and the save delete fade (.7); the toast inverts back to paper; footer links only darken the underline. The inversion is the rule; these are exceptions that are not written down.",
+    "where": ["src/style.css:436", "src/style.css:1238", "src/shelf.css:461-486", "src/style.css:1438", "src/style.css:1473", "src/style.css:1101", "src/title.css:80"],
+    "evidence": ["shelf-hover-lift.png"],
+    "severity": "low",
+    "proposal": "Write hover = invert as the rule and keep the shelf lift as the one documented exception; bring the delete and hide-finished into it."
+  },
+  {
+    "id": "DOM-21",
+    "kind": "phone",
+    "title": "Landing page hovers are not gated by (hover: hover) and stick after a tap",
+    "what": "Every hover in style.css is inside `@media (hover: hover)`, but title.css's `.col button:hover`, `.col button.play:hover`, `.foot a:hover` and `.foot .cloud .go:hover` are bare, so on a phone the tapped button stays inverted (and play flips to paper) until something else is tapped.",
+    "where": ["src/title.css:44", "src/title.css:46", "src/title.css:80", "src/title.css:101"],
+    "evidence": ["focus-ring-landing.png"],
+    "severity": "med",
+    "proposal": "Wrap the landing hovers in `@media (hover: hover)` as style.css does."
+  },
+  {
+    "id": "DOM-22",
+    "kind": "state",
+    "title": "Pressed state exists only on phone board cards",
+    "what": "`:active` inversion is defined once, for `.rows button` inside the phone media block. Sheet buttons, landing buttons, shelf tiles and popover rows have no pressed state on any device; on desktop the hover already inverts so it is moot, on touch it is the only feedback a tap gets.",
+    "where": ["src/style.css:1809"],
+    "evidence": ["phone-held-pages.png"],
+    "severity": "low",
+    "proposal": "One `:active:not(:disabled)` inversion for every button, so touch gets the same feedback everywhere."
+  },
+  {
+    "id": "DOM-23",
+    "kind": "color",
+    "title": "Coin colors are hex literals repeated across two sheets, with no tokens",
+    "what": "Ore blue `#2f5fd0`, spark red `#d93a25` and crop green `#2e9e4b` are written in the coin marks and again in the ladder pip bands (style.css) and again in shelf.css, eleven literals in all, with no `--coin-*` token and no dark-mode variant.",
+    "where": ["src/style.css:567", "src/style.css:581-582", "src/style.css:589", "src/style.css:779-781", "src/shelf.css:206-208"],
+    "evidence": ["house-board-and-purse.png", "dark-purse-coin-contrast.png"],
+    "severity": "med",
+    "proposal": "`--coin-ore`, `--coin-crop`, `--coin-spark` on :root (with dark values) and every literal replaced."
+  },
+  {
+    "id": "DOM-24",
+    "kind": "dark",
+    "title": "Ore blue on dark paper is below 3:1",
+    "what": "The coin colors do not change in dark mode. `#2f5fd0` on `--paper #1f1f1f` is about 2.9:1 (red about 3.6:1), so the ore triangle and the blue ladder pips sink into the board in dark mode, while the deep's purple accent does get a lighter dark variant.",
+    "where": ["src/style.css:567", "src/style.css:780", "src/shelf.css:207", "src/style.css:88-91"],
+    "evidence": ["dark-purse-coin-contrast.png", "dark-shelf.png"],
+    "severity": "med",
+    "proposal": "Lighter dark-mode coin values under `html.dark` (as the rails' `#a979ef` does) once the tokens of DOM-23 exist."
+  },
+  {
+    "id": "DOM-25",
+    "kind": "color",
+    "title": "The deep's purple accent is a literal in seven places",
+    "what": "`#6f36c9` (light) and `#a979ef` (dark) are written per rule in the rails: ask, cap pip, next outline, cap swatch and cap name, each with its own `html.dark` override. The `.next` outline has no dark override at all, so it stays the light purple on dark paper.",
+    "where": ["src/shelf.css:681-682", "src/shelf.css:701-704", "src/shelf.css:742-746"],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "`--accent` on :root with its dark value; the seven rules read it, and the missing dark `.next` comes for free."
+  },
+  {
+    "id": "DOM-26",
+    "kind": "color",
+    "title": "Muted text uses three different greys for the same role",
+    "what": "Secondary text is `--ink-2` on the landing tagline, sub-label and foot, `--ink-4` for achievement notes, shelf gains and the rails reset, and `--ink-5` for ledger notes and empty lines; `--ink-7` is the toast note. Cards instead mute with `opacity: .7/.72/.75`. Five treatments for 'quieter text'.",
+    "where": ["src/title.css:36", "src/title.css:49-50", "src/style.css:1057", "src/shelf.css:232", "src/shelf.css:656", "src/style.css:379", "src/style.css:625", "src/style.css:666", "src/style.css:695", "src/style.css:1106"],
+    "evidence": ["ledger-labels-lowercase.png", "toast-vs-messtag-case.png", "cards-disabled-dashed.png"],
+    "severity": "med",
+    "proposal": "One `--muted` token for secondary text (ink-4), ink-5 kept for disabled only, and no opacity muting."
+  },
+  {
+    "id": "DOM-27",
+    "kind": "color",
+    "title": "Colors outside the tokens in DOM chrome",
+    "what": "`#objective.deep` hard-codes `#000`/`#fff`/`#5f5f66` (the only blue-grey in the game). The dotted page texture is a data-URI written five times with `%23000` and three more with `%23e0e0e0` for dark, instead of reading `--ink`. The scrim is `rgb(0 0 0 / .4)` with white dots in both modes. A shelf tile's resting border is `rgba(0,0,0,0)`. cards.html hard-codes `#fff` and `#555`.",
+    "where": ["src/style.css:2064", "src/style.css:1997", "src/style.css:2004", "src/shelf.css:51", "src/shelf.css:381", "src/shelf.css:620", "src/shelf.css:668", "src/style.css:1005-1006", "src/shelf.css:391", "cards.html:13-17"],
+    "evidence": ["books-modal-ledger.png", "dark-objective.png"],
+    "severity": "low",
+    "proposal": "Dot pattern as one `--dots` custom property set per mode; `#5f5f66` to `--ink-7`; cards.html on the tokens."
+  },
+  {
+    "id": "DOM-28",
+    "kind": "dark",
+    "title": "The cards bench has no dark mode",
+    "what": "cards.html sets `body { background: #fff }` and `h2 { color: #555 }` and does not load the pre-paint dark script, so `?dark` renders dark-mode cards on a white page and a card's dark look cannot be checked on the bench.",
+    "where": ["cards.html:13-17"],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "Bench on `var(--paper)`/`var(--ink-4)` and honor `?dark` like play.html."
+  },
+  {
+    "id": "DOM-29",
+    "kind": "component",
+    "title": "A shelf tile's gain is clipped with an ellipsis, against the card rule",
+    "what": "style.css says what a row gives 'is never truncated', and the card's gain wraps. On a shelf the same `.gain` is `overflow: hidden; text-overflow: ellipsis` on one line, so 'wizards that light...' loses its words on the bench.",
+    "where": ["src/style.css:605-628", "src/shelf.css:215-233", "src/shelf.css:238"],
+    "evidence": ["shelf-gain-truncated.png"],
+    "severity": "med",
+    "proposal": "Let the shelf gain wrap to two lines (as `.locked` already does) and drop the ellipsis."
+  },
+  {
+    "id": "DOM-30",
+    "kind": "component",
+    "title": "Three card anatomies for one 'thing you can buy'",
+    "what": "style.css cards (name, pips top-right, gain, bill, time, note in a 2-column grid, 1px border, invert on hover), shelf tiles (glyph, name, gain, boxed tag, vertical pips, borderless, lift on hover) and the rails' `.rl-row` (bold title, 13px subtitle, its own tag, 1px border) each carry name, price and pips differently. The objective's barrier buy is a fourth (3px double border, centered bill).",
+    "where": ["src/style.css:398-434", "src/shelf.css:116-148", "src/shelf.css:714-728", "src/style.css:2133-2137"],
+    "evidence": ["cards-disabled-dashed.png", "crewlist-modal-sect-and-close.png", "objective-barrier.png"],
+    "severity": "med",
+    "proposal": "Write the card anatomy once (name, price tag, pips, state) and make shelf/rails variants of it, starting with the price tag box."
+  },
+  {
+    "id": "DOM-31",
+    "kind": "component",
+    "title": "The badge is defined twice, and inverts the other way on shelves",
+    "what": "`.rows .sect .badge` and `.page .title .badge` are identical rules written twice; on a shelf the section badge reverses to paper-on-ink inside an inverted sign. The 'new' corner is likewise drawn twice at two sizes (a 10px solid triangle on cards, a 4px bordered one on tiles).",
+    "where": ["src/style.css:388-396", "src/style.css:1747-1755", "src/shelf.css:106", "src/style.css:497-508", "src/shelf.css:358-361"],
+    "evidence": ["section-headings-four-ways.png", "crewlist-modal-sect-and-close.png", "shelf-done-tag-lowercase.png"],
+    "severity": "low",
+    "proposal": "One `.badge` and one `.new` corner rule, sized in em."
+  },
+  {
+    "id": "DOM-32",
+    "kind": "component",
+    "title": "The cloud section, textarea and veil are each written twice, for .held and .col",
+    "what": "`.held .cloudsheet` and `.col .cloudsheet` repeat border, padding, head tracking, pair-code size and input styling; the textarea rules are duplicated; `.veil` is defined in both sheets with different z-index (20 vs 9) and duration (.45s vs .35s), and the landing loads both so the later wins.",
+    "where": ["src/style.css:1195-1214", "src/title.css:55-58", "src/title.css:107-121", "src/style.css:1507-1509", "src/title.css:71-73"],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "One `.cloudsheet`/`textarea`/`.veil` rule set unscoped; the landing keeps only its layout differences."
+  },
+  {
+    "id": "DOM-33",
+    "kind": "component",
+    "title": "Separator in setting labels: colon for toggles, middle dot for pages",
+    "what": "Settings rows read 'motion: full', 'dark: off', 'sound: on' but 'language \u00b7 english'; the front reads 'saves \u00b7 0 of 3'. The dot means 'opens a page with this value'; the colon means 'press to flip'. The rule is unwritten, and the words are the owner's to change.",
+    "where": ["locales/en.ftl", "play.html:196-207", "src/langpage.js"],
+    "evidence": ["button-three-heights.png"],
+    "severity": "low",
+    "proposal": "Ask the owner to confirm the rule (colon = toggle, dot = door) and write it into the rules; pair with DOM-05."
+  },
+  {
+    "id": "DOM-34",
+    "kind": "type",
+    "title": "Line-heights: normal, 1, 1.3, 1.35, 1.4, 1.5 and 13px/16px fixed",
+    "what": "Body is 12px/1.4, but `font: 12px var(--face)` shorthands on `.held`, toast, tip, raise, objective and modal reset to `normal`; queue and tooltip set 1.5, index text 1.5, notes 1.35 and 1.3, shelf/ledger 1, tiles 13px and tags 16px fixed. This is the root of DOM-03's three button heights.",
+    "where": ["src/style.css:9", "src/style.css:1035", "src/style.css:1089", "src/style.css:1364", "src/style.css:1415", "src/style.css:1421", "src/style.css:1158", "src/style.css:697", "src/style.css:915", "src/shelf.css:40", "src/shelf.css:179", "src/shelf.css:257"],
+    "evidence": ["button-three-heights.png"],
+    "severity": "med",
+    "proposal": "Never re-declare `font:` shorthand on a component (use `font-size`); two line-heights: 1.4 text, 1 for single-line chips."
+  },
+  {
+    "id": "DOM-35",
+    "kind": "type",
+    "title": "Bold appears in shelf/ledger headings and the barrier name, nowhere else",
+    "what": "Weight 700 is used for the shelf section sign, the ledger section, the shelf goal name, the objective barrier name, the rails and the controller glyphs. Board page titles, modal titles, held words and toast names stay regular, so 'heading' is bold on one board and regular on the next.",
+    "where": ["src/shelf.css:91", "src/shelf.css:629", "src/shelf.css:575", "src/style.css:2099", "src/shelf.css:681", "src/style.css:2157"],
+    "evidence": ["section-headings-four-ways.png"],
+    "severity": "low",
+    "proposal": "Bold for section level only (DOM-13), regular for page titles and names."
+  },
+  {
+    "id": "DOM-36",
+    "kind": "spacing",
+    "title": "Radii: round pips, round clock, rounded controller glyphs in a square house",
+    "what": "The ladder pips (cards, tiles, rails) and the clock mark are circles; the controller glyphs use `border-radius: 50%` and `.35em`. These are glyph-level and arguably deliberate, but the pips are the one round shape on every card and the shelf's queued pip draws its dot with a gradient.",
+    "where": ["src/style.css:532", "src/style.css:776", "src/shelf.css:201", "src/shelf.css:205", "src/shelf.css:698", "src/style.css:2159-2163"],
+    "evidence": ["cards-disabled-dashed.png"],
+    "severity": "low",
+    "proposal": "Write down that pips, the clock and pad glyphs are the only round shapes; everything else stays square."
+  },
+  {
+    "id": "DOM-37",
+    "kind": "phone",
+    "title": "Tracking tightens on phone for boards and controls only",
+    "what": "Below 560px the board sheet and cards drop to .06em and the controls page to .04em, but the held sheet's buttons, the landing column and the toasts keep .14em, so a phone shows two trackings side by side.",
+    "where": ["src/style.css:1793", "src/style.css:1802", "src/style.css:1133"],
+    "evidence": ["phone-held-pages.png", "phone-board-sheet.png"],
+    "severity": "low",
+    "proposal": "Tighten by changing `--track` once on phone instead of per component."
+  },
+  {
+    "id": "DOM-38",
+    "kind": "phone",
+    "title": "Landing foot sits 36px from the left and 18px from the right",
+    "what": "`.foot { left: 36px; right: 18px }`, while the column above it stands 20px in. The build line does not align with the column's edge or mirror the links.",
+    "where": ["src/title.css:75"],
+    "evidence": ["landing-foot-asymmetric.png"],
+    "severity": "low",
+    "proposal": "Foot on the column's 20px (`--edge`-based) margins on both sides."
+  },
+  {
+    "id": "DOM-39",
+    "kind": "component",
+    "title": "CJK language rows render larger than their neighbors",
+    "what": "Each language is in its own face; the Chinese and Korean names come out visibly larger and heavier than the Latin rows in the same list (the `Pit SC/KR` fallbacks at 12px), so the list looks uneven.",
+    "where": ["src/style.css:81-83", "src/style.css:2195", "src/langpage.js:32-38"],
+    "evidence": ["language-list-cjk-rows.png"],
+    "severity": "low",
+    "proposal": "Size the CJK faces with `size-adjust` (or a per-lang font-size) to the Latin face's x-height."
+  },
+  {
+    "id": "DOM-40",
+    "kind": "component",
+    "title": "Toast and mess tags: same bar, different hand",
+    "what": "The toast and mess tags share the ink fill, 1px paper border plus 1px ink outline and the float shadow, but the toast name is 15px uppercase tracked and the mess tag label 12px lowercase untracked, and the skip button (same chrome) is 10px. Three dark bars, three type treatments.",
+    "where": ["src/style.css:1071-1106", "src/style.css:1955-1979", "src/style.css:1919-1941"],
+    "evidence": ["toast-vs-messtag-case.png"],
+    "severity": "low",
+    "proposal": "One 'dark chip' label style (12px upper .1em) for mess tags and skip; the toast name stays the one display size."
+  },
+  {
+    "id": "DOM-41",
+    "kind": "dark",
+    "title": "The story card's deep variant ignores dark mode",
+    "what": "`#objective.deep` pins `--paper: #000; --ink: #fff`, so in dark mode the deep card is pure black on a #1f1f1f page, and in light it is a black card among white ones; its shadow tone `#5f5f66` is off the grey ramp.",
+    "where": ["src/style.css:87", "src/style.css:2064"],
+    "evidence": ["dark-objective.png"],
+    "severity": "low",
+    "proposal": "Deep card = the inverted tokens (`--paper: var(--ink)`) so it inverts correctly in both modes."
+  },
+  {
+    "id": "DOM-42",
+    "kind": "phone",
+    "title": "Index on a phone: inner back button, no page back",
+    "what": "On a phone the index pushes the entry over the list and shows `.ixback`, an auto-width button inside the bordered index box, while hiding the sheet's own full-width back. Every other phone page keeps its back at the foot.",
+    "where": ["src/style.css:1159", "src/style.css:1168-1170", "src/indexpage.js:79-83"],
+    "evidence": ["phone-index-back.png"],
+    "severity": "low",
+    "proposal": "Keep the page's back at the foot and retarget it to 'list' while an entry is open."
+  }
+]
