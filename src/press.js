@@ -24,7 +24,10 @@ const amount = {
   vignette: PRESS_MIX.vignette || 0
 };
 
-const anyOn = () => amount.scanlines > 0 || amount.vignette > 0;
+// COMPARISON ONLY (mock/deep-palette-ingame): `?press=0` leaves the filter
+// off, so a capture's colors can be counted rung by rung.
+const pressOff = typeof location !== 'undefined' && new URLSearchParams(location.search).get('press') === '0';
+const anyOn = () => !pressOff && (amount.scanlines > 0 || amount.vignette > 0);
 
 // Black at an alpha over the top is `col * (1 - k)`: the ink under it is
 // multiplied by what is left of the light.

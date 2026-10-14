@@ -480,3 +480,10 @@ function drawRipples(rip) {
 import { seatRails } from './deep/rails.js';
 import { seatBuildButton } from './deep/buildbutton.js';
 LAYERS.push({ name: 'rails', draw: seatRails }, { name: 'build button', draw: seatBuildButton });
+
+// COMPARISON ONLY (mock/deep-palette-ingame): the deep's palette options, folded over its layers.
+import { foldDeepLayers } from './render/deeppalette.js';
+// The scales are the yard's coin in the yard's SHADES (the bed is painted
+// past any setter), so the ones in the water are left as the bed is.
+const SCALES = new Set(['sinking', 'lifting', 'into crusher']);
+foldDeepLayers(LAYERS, name => (DEEP.has(name) || name === 'serpent bar') && !SCALES.has(name));

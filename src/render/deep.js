@@ -48,6 +48,18 @@ import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
+import { DEEP_PAL, BANDS, BAND_OF, breathe, keptRamp } from './deeppalette.js';
+import { PROPS, R8_PARTS, ACC, PART_ACC, BREW } from '../deep/props.js';
+
+// COMPARISON ONLY: the props' noise (deep/props.js), so a band is dealt where
+// today's run was.
+const pHash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const pSeed = key => key.length * 3.1;
+const pTone = (list, c, r, seed) => list[Math.floor(pHash(c * 13.7 + r * 71.3 + seed) * list.length)];
+const two = (list, h) => list[Math.floor(h * list.length)];
+const optOn = DEEP_PAL !== 'today';
+const nowMs = () => now();
+const WATER_GREYS = keptRamp(GREYS);   // the field writes pixels straight, past the fold
 
 const isFighter = w => w.type === TYPE.FIGHTER;
 
@@ -57,6 +69,9 @@ const flip = seen;
 export { GREYS, PURPLES };
 const MOTE_TONES = Object.fromEntries(Object.entries(DEEP_MOTE_TINTS)
   .map(([k, v]) => [k, { tones: v.tones.map(flip), ink: v.ink }]));
+// COMPARISON ONLY: the silt's 0.8 ink lands between rungs; the options draw it
+// at full ink a rung down instead (4-7 at 0.8 is 3-6 at 1), so it is on the ramp.
+if (DEEP_PAL !== 'today') MOTE_TONES.silt = { tones: [3, 4, 5, 6].map(i => GREYS[i]), ink: 1 };
 
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 
@@ -84,7 +99,7 @@ export function drawDeepWater() {
   const top = y0, bottom = Math.min(y1, deepFloor());
   if (bottom <= top) return;
   paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
-                    deep: DEEP_WATER_DEPTH, tones: GREYS, magic: PURPLES, t: now() });
+                    deep: DEEP_WATER_DEPTH, tones: WATER_GREYS, magic: PURPLES, t: now() });
   ctx.fillStyle = '#000';
 }
 
@@ -110,7 +125,9 @@ export function drawDeepFloor() {
     for (let r = 0; r < GROUND_ROWS; r++) {
       for (let x = from; x < to; x += P) {
         const y = fy + r * P, h = seeth(x / P, y / P + 7);
-        g.fillStyle = GREYS[2 + (h % 3) + (r === 0 ? 2 : 0)];
+        // A, B and C deal the floor alike: its top course dark, the rest shade.
+        g.fillStyle = optOn ? GREYS[(r === 0 ? BANDS.dark : BANDS.shade)[h % 2]]
+          : GREYS[2 + (h % 3) + (r === 0 ? 2 : 0)];
         g.fillRect(x - from, r * P, P, P);
       }
     }
@@ -154,15 +171,28 @@ const SPRITE_INK = {
 // that has gone in lately (`S.crushes`).
 const FURNACE = CRUSHER_SPRITES.rest;
 let furnace = null;
+// COMPARISON ONLY: the furnace under each option. A: the frame lit 9, the
+// brick stone 6-7 dealt, the mortar dark 5. B: flat, brick and frame one
+// rung (7) and mortar a rung darker (5), its top edges the breathing purple.
+// C: a water-black cut-out, its frame the dome's purple rim.
+const BRICK_TOP_ROW = CRUSHER_SPRITES.rest.findIndex(row => row.includes('####'));
+function furnaceInk(ch, r, col, br) {
+  if (DEEP_PAL === 'today' || ch === 'o' || ch === '*' || ch === '.') return SPRITE_INK[ch];
+  const up = r === 0 || FURNACE[r - 1][col] === '.' || FURNACE[r - 1][col] === undefined;
+  if (DEEP_PAL === 'A') return ch === '#' ? GREYS[9] : ch === '+' ? GREYS[two(BANDS.stone, hash(col * 13 + r * 29))] : GREYS[5];
+  if (DEEP_PAL === 'B') return up && ch !== '-' ? PURPLES[br] : ch === '-' ? GREYS[5] : GREYS[7];
+  return ch === '#' ? PURPLES[up || r === BRICK_TOP_ROW ? br - 1 : 6] : GREYS[0];
+}
 function crusherImage(c) {
-  const id = `${c.x}|${c.y}`;
+  const br = DEEP_PAL === 'B' || DEEP_PAL === 'C' ? breathe(nowMs()) : 0;
+  const id = `${c.x}|${c.y}|${br}`;
   if (furnace && furnace.id === id) return furnace;
   const img = document.createElement('canvas');
   img.width = FURNACE[0].length * P; img.height = FURNACE.length * P;
   const g = img.getContext('2d');
   for (let r = 0; r < FURNACE.length; r++) {
     for (let col = 0; col < FURNACE[r].length; col++) {
-      const ink = SPRITE_INK[FURNACE[r][col]];
+      const ink = furnaceInk(FURNACE[r][col], r, col, br);
       if (!ink) continue;
       g.fillStyle = ink;
       g.fillRect(col * P, r * P, P, P);
@@ -255,6 +285,16 @@ function drawCrusher() {
 // The pods: a capsule for each of the crew who lives down here, stacked from
 // the floor. A hull a shade above the dark, a rim a shade above that, and a
 // porthole lit from inside, so a stack reads as somewhere people live.
+// COMPARISON ONLY: a pod's cell under each option. A: hull dark 4-5, rim
+// stone 6-7. B: hull flat 4, rim flat 6, the top edge the breathing purple.
+// C: a water-black hull, the rim the dome's purple, its top breathing.
+function podInk(rim, top, h) {
+  if (DEEP_PAL === 'today') return GREYS[(rim ? 7 : 4) + h];
+  if (DEEP_PAL === 'A') return GREYS[(rim ? BANDS.stone : BANDS.dark)[h]];
+  const br = breathe(nowMs());
+  if (DEEP_PAL === 'B') return top ? PURPLES[br] : GREYS[rim ? 6 : 4];
+  return top ? PURPLES[br - 1] : rim ? PURPLES[6] : GREYS[0];
+}
 function drawPods() {
   for (let i = 0; i < (S.pods || 0); i++) {
     const r = podAt(i);
@@ -262,12 +302,12 @@ function drawPods() {
       for (let x = r.x; x < r.x + r.w; x += P) {
         const edgeX = x === r.x || x === r.x + r.w - P, edgeY = y === r.y || y === r.y + r.h - P;
         if (edgeX && edgeY) continue;                                  // rounded
-        ctx.fillStyle = GREYS[(edgeX || edgeY ? 7 : 4) + (seeth(x / P, y / P) % 2)];
+        ctx.fillStyle = podInk(edgeX || edgeY, y === r.y, seeth(x / P, y / P) % 2);
         ctx.fillRect(x, y, P, P);
       }
     }
     const px = r.x + Math.round((r.w / 2 - P) / P) * P, py = r.y + P;
-    ctx.fillStyle = GREYS[GREYS.length - 2];
+    ctx.fillStyle = DEEP_PAL === 'today' ? GREYS[GREYS.length - 2] : GREYS[DEEP_PAL === 'A' ? 9 : 8];
     ctx.fillRect(px, py, P * 2, P * 2);
   }
 }
@@ -285,11 +325,35 @@ const toneOf = (ramp, i) => (ramp === 'p' ? PURPLES : GREYS)[i];
 // once into an image of its own, a cell a cell, and drawn from there. Kept by
 // the prop and whether it is lit; it is drawn at wherever its station stands.
 const painted = new Map();
+// COMPARISON ONLY: a prop's cells dealt by the option (the mock's DEALS).
+// A: every material its band, two rungs; the accent purple 11, the rung-8
+// parts purple 8-9. B: one flat stone 7, every cell with nothing over it the
+// breathing purple. C: one flat water-black. The accent and parts as A's.
+function optionCells(key, lit, br) {
+  const p = PROPS[key], seed = pSeed(key), parts = lit ? R8_PARTS[key] || [] : [], out = [];
+  const has = new Set();
+  p.rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.') has.add(`${c},${r}`); }));
+  p.rows.forEach((row, r) => [...row].forEach((ch0, c) => {
+    if (ch0 === '.') return;
+    let ch = ch0, acc = null;
+    if (ch === '*') { if (lit) acc = 'acc'; else ch = p.under; }
+    else if (parts.includes(ch)) acc = 'part';
+    if (ch === '.') return;
+    const top = !has.has(`${c},${r - 1}`);
+    if (acc === 'acc') { out.push([c, r, 'p', 11]); return; }
+    if (acc === 'part') { out.push([c, r, 'p', DEEP_PAL === 'A' ? pTone([9, 8], c, r, seed) : 9]); return; }
+    if (DEEP_PAL === 'A') out.push([c, r, 'g', pTone(BANDS[BAND_OF[ch]], c, r, seed)]);
+    else if (DEEP_PAL === 'B') out.push(top ? [c, r, 'p', br] : [c, r, 'g', 7]);
+    else out.push([c, r, 'g', 0]);
+  }));
+  return out;
+}
 function propImage(key, lit) {
-  const id = `${key}|${lit ? 8 : 0}`;
+  const br = DEEP_PAL === 'B' ? breathe(nowMs()) : 0;
+  const id = `${key}|${lit ? 8 : 0}|${br}`;
   let img = painted.get(id);
   if (img) return img;
-  const cells = propCells(key, lit);
+  const cells = optOn ? optionCells(key, lit, br) : propCells(key, lit);
   img = document.createElement('canvas');
   img.width = Math.max(...cells.map(c => c[0] + 1)) * P;
   img.height = Math.max(...cells.map(c => c[1] + 1)) * P;
@@ -314,7 +378,11 @@ function plinthImage(b) {
   for (let r = 0; r < PLINTH_H; r++) {
     const l = steps * (PLINTH_H - 1 - r), n = cols + 2 * steps * r;
     for (let c = 0; c < n; c++) {
-      const ramp = r === 0 ? PLINTH_TONES.top : c === 0 || c === n - 1 ? PLINTH_TONES.end : PLINTH_TONES.body;
+      // COMPARISON ONLY: A's top lit 8-9 and body stone 6-7 (ends as body);
+      // B's and C's top 7-8 and body 5-6.
+      const ramp = DEEP_PAL === 'A' ? (r === 0 ? BANDS.lit : BANDS.stone)
+        : optOn ? (r === 0 ? [7, 8] : [5, 6])
+        : r === 0 ? PLINTH_TONES.top : c === 0 || c === n - 1 ? PLINTH_TONES.end : PLINTH_TONES.body;
       g.fillStyle = GREYS[ramp[Math.floor(hash((l + c) * 7 + r * 131) * ramp.length)]];
       g.fillRect((l + c) * P, r * P, P, P);
     }
@@ -326,8 +394,18 @@ function plinthImage(b) {
 // inside, its rim a shade above that, every cell a tone of its own. The same
 // for every dome of one size, so painted once a size.
 const domes = new Map();
+// COMPARISON ONLY: a dome's cell under each option. A: rim dark 4-5, inside
+// shade 2-3. B: flat shade 2, its top edge purple a few rungs under the
+// props' breathing light. C: the grained glow, 4-5, its rim purple 6 and its
+// top edge breathing a rung under the props' light.
+function domeInk(rim, top, h, br) {
+  if (DEEP_PAL === 'A') return GREYS[two(rim ? BANDS.dark : BANDS.shade, h)];
+  if (DEEP_PAL === 'B') return top ? PURPLES[Math.max(5, br - 3)] : GREYS[2];
+  return rim ? PURPLES[top ? br - 1 : 6] : GREYS[two([4, 5], h)];
+}
 function domeImage(w, wall) {
-  const id = `${w}|${wall}`;
+  const br = DEEP_PAL === 'B' || DEEP_PAL === 'C' ? breathe(nowMs()) : 0;
+  const id = `${w}|${wall}|${br}`;
   let img = domes.get(id);
   if (img) return img;
   const cols = w / P, r = cols / 2, rows = Math.ceil(r) + wall;
@@ -342,8 +420,10 @@ function domeImage(w, wall) {
   const g = img.getContext('2d');
   for (let y = 0; y < rows; y++) for (let c = 0; c < cols; c++) {
     if (!inside(c, y)) continue;
-    const ramp = !inside(c - 1, y) || !inside(c + 1, y) || !inside(c, y - 1) ? DOME_TONES.rim : DOME_TONES.inside;
-    g.fillStyle = GREYS[ramp[Math.floor(hash(c * 13 + y * 29) * ramp.length)]];
+    const rim = !inside(c - 1, y) || !inside(c + 1, y) || !inside(c, y - 1);
+    const ramp = rim ? DOME_TONES.rim : DOME_TONES.inside;
+    g.fillStyle = optOn ? domeInk(rim, !inside(c, y - 1), hash(c * 13 + y * 29), br)
+      : GREYS[ramp[Math.floor(hash(c * 13 + y * 29) * ramp.length)]];
     g.fillRect(c * P, y * P, P, P);
   }
   domes.set(id, img);
@@ -363,7 +443,11 @@ function drawProp(st, t) {
   const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG;
   ctx.drawImage(propImage(p.key, lit), p.x, p.y);
   // the one prop that moves: the hexer's brew, over its pot
-  for (const [c, r, ramp, i] of brewCells(p.key, lit, t)) {
+  for (let [c, r, ramp, i] of brewCells(p.key, lit, t)) {
+    // COMPARISON ONLY: the unlit bubble is A's grey 5, B's purple 7, C's grey
+    // 6; A's lit surface is dealt from its rung-8 parts' purples, 8-9.
+    if (optOn && ramp === 'g') [ramp, i] = DEEP_PAL === 'B' ? ['p', 7] : ['g', DEEP_PAL === 'A' ? 5 : 6];
+    else if (DEEP_PAL === 'A' && ramp === 'p' && r === BREW.row) i = i >= 8 ? 9 : 8;
     ctx.fillStyle = toneOf(ramp, i);
     ctx.fillRect(p.x + c * P, p.y + r * P, P, P);
   }

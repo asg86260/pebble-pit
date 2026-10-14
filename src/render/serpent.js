@@ -43,6 +43,8 @@ import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
 import { seen } from './deeptones.js';
+import { DEEP_PAL } from './deeppalette.js';   // COMPARISON ONLY (mock/deep-palette-ingame)
+const flatHide = DEEP_PAL === 'B' || DEEP_PAL === 'C';
 import { barZone, barShown } from './serpentbar.js';
 import { drawBody, drawSaying } from './crew.js';
 import { hisHop, hisSay } from '../abyssintro.js';
@@ -323,7 +325,7 @@ function drawCoil() {
     mark(i);
     if (cage && Math.abs(da) < BELLY_LEN && dist < r - P && r > p.r0 + P / 2) {
       if (((aI % RIB_EVERY) + RIB_EVERY) % RIB_EVERY === 0) ribs.push({ x, y });
-      else coil.put(i, GREYS[WHITE - 4 - (seeth(aI, cI) % 2)]);
+      else coil.put(i, GREYS[WHITE - 4 - (flatHide ? 0 : seeth(aI, cI) % 2)]);
       continue;
     }
     let ramp = GREYS;

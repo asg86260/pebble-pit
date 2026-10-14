@@ -7,6 +7,7 @@
 
 import { P } from '../config.js';
 import { inkOf } from '../ink.js';
+import { foldNow } from './deeppalette.js';   // COMPARISON ONLY (mock/deep-palette-ingame)
 
 const rgbOf = new Map();
 function rgba(c) {
@@ -33,7 +34,7 @@ export function cellImage() {
     },
     // Cell `i` (row-major) in the color `c`.
     put(i, c) {
-      const [r, gg, b] = rgba(c), d = buf.data, k = i * 4;
+      const [r, gg, b] = rgba(foldNow(c)), d = buf.data, k = i * 4;
       d[k] = r; d[k + 1] = gg; d[k + 2] = b; d[k + 3] = 255;
     },
     // The block onto `ctx`, its first cell at world (x, y).

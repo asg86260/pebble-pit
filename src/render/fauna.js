@@ -17,6 +17,7 @@ import { P, FAUNA_ZONES, FAUNA_TINT_FILL, FAUNA_TINT_EDGE, FAUNA_TINT_MIX, FAUNA
          FAUNA_POSES, FAUNA_REACT_INK, FAUNA_SMEAR, FAUNA_SILT } from '../config.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
+import { DEEP_PAL } from './deeppalette.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, POPULATION, unit, unit2, zoneAtRow, schoolAt, frameOf, reachOf, addScare, scareOffset,
@@ -94,7 +95,10 @@ export function drawDeepZones() {
 function tone(ch, seed, r, c, dim) {
   if (ch in FAUNA_BASE) {
     const j = unit2(seed + r * 7.1, c * 3.3);
-    const rung = Math.max(FAUNA_VARY.floor, FAUNA_BASE[ch] + (j < FAUNA_VARY.lo ? -1 : j > FAUNA_VARY.hi ? 1 : 0));
+    // COMPARISON ONLY (mock/deep-palette-ingame): B and C draw a creature
+    // flat, its base rung with no nudge either way.
+    const nudge = DEEP_PAL === 'B' || DEEP_PAL === 'C' ? 0 : (j < FAUNA_VARY.lo ? -1 : j > FAUNA_VARY.hi ? 1 : 0);
+    const rung = Math.max(FAUNA_VARY.floor, FAUNA_BASE[ch] + nudge);
     return grey(rung - dim);
   }
   if (ch === 'w') return grey(FAUNA_INK.w - dim);
