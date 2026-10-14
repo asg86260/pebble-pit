@@ -201,9 +201,6 @@ said-copyout-none = まだセーブがない
 # sheet reply when clipboard unavailable
 said-copyout-window = window.__save に入れた
 
-# index entry back button on phone
-held-index-entryback = 戻る
-
 # saves page cloud section heading
 cloud-head = クラウドセーブ
 

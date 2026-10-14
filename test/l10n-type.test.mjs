@@ -38,10 +38,13 @@ const rootBlock = style.match(/:root\s*\{([^}]*)\}/)?.[1] || '';
 const knob = name => rootBlock.match(new RegExp(`--${name}\\s*:\\s*([^;]+);`))?.[1].trim();
 
 // A declaration with the root's knobs put back: `calc(.1em * var(--track))`
-// with --track 1 is `.1em`, and `var(--face)` is the stack.
+// with --track 1 is `.1em`, a step of the scale (`var(--track-s)`) is its
+// em, and `var(--face)` is the stack.
 function english(value) {
   const track = Number(knob('track'));
   return value
+    .replace(/var\(--track-(\w+)\)/g, (_, k) => knob(`track-${k}`))
+    .replace(/calc\(\s*([\d.]+)em\s*\*\s*var\(--track\)\s*\)/g, (_, n) => (track === 1 ? n : String(Number(n) * track)) + 'em')
     .replace(/calc\(\s*([\d.]+)em\s*\*\s*var\(--track\)\s*\)/g, (_, n) => (track === 1 ? n : String(Number(n) * track)) + 'em')
     .replace(/var\(--face\)/g, knob('face'));
 }

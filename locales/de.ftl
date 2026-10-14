@@ -208,9 +208,6 @@ said-copyout-none = noch nichts gespeichert
 # sheet reply when clipboard unavailable
 said-copyout-window = in window.__save
 
-# index entry back button on phone
-held-index-entryback = zurück
-
 # saves page cloud section heading
 cloud-head = cloud-spielstände
 

@@ -11,7 +11,8 @@ import { VEIL_MS, LIGHT_PAPER, DARK_PAPER, TOAST_MS } from './config.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
 import { fillControls } from './controls.js';
-import { showIndex, sayIndexButton } from './indexpage.js';
+import { showIndex, sayIndexButton, leaveEntry } from './indexpage.js';
+import './focusmark.js';   // the keyboard's focus, drawn as the pad's brackets
 import { copyOut } from './copyout.js';
 import { showCloud, CLOUD_LOOK_MS } from './cloudsheet.js';
 import { cloudReady, cloudStatus } from './cloud.js';
@@ -76,7 +77,7 @@ const back = () => showPane('main');
 recordBtn.addEventListener('click', () => showPane('record'));
 document.getElementById('recordback').addEventListener('click', back);
 indexBtn.addEventListener('click', () => showPane('index'));
-document.getElementById('indexback').addEventListener('click', back);
+document.getElementById('indexback').addEventListener('click', () => { if (!leaveEntry(indexEl)) back(); });
 slotsBtn.addEventListener('click', () => showPane('slots'));
 document.getElementById('slotsback').addEventListener('click', back);
 document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));

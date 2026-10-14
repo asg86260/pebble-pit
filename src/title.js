@@ -16,6 +16,7 @@ import { msg } from './lang.js';
 import { fillLanguages, inForce } from './langpage.js';
 import { feedbackReady } from './feedback.js';
 import { mountFeedback } from './feedbackform.js';
+import './focusmark.js';   // the keyboard's focus, drawn as the pad's brackets
 
 const col = document.querySelector('.col');
 const said = document.getElementById('said');

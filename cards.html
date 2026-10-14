@@ -7,14 +7,25 @@
 <!-- The boards are shelves in the game (main.js loads this beside style.css), so
      a tile here wears the same rules as one on a board. -->
 <link rel="stylesheet" href="/src/shelf.css">
+<!-- Dark mode as play.html takes it (`?dark`, the saved choice, the system),
+     so a card's dark look can be read on the bench. -->
+<script>
+try {
+  var d = /[?&]dark\b/.test(location.search) || null;
+  if (d == null) { var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs')); d = p && p.dark; }
+  if (d == null) d = matchMedia('(prefers-color-scheme: dark)').matches;
+  if (d) document.documentElement.classList.add('dark');
+} catch (e) {}
+</script>
 <style>
   /* The page shell the boards expect, and nothing else: a card here is drawn by
-     the same builder and the same stylesheet as one on the bench. */
-  body { background: #fff; margin: 0; padding: 12px; }
+     the same builder and the same stylesheet as one on the bench. On the
+     page's own tokens, so it follows the dark page. */
+  body { background: var(--paper); margin: 0; padding: 12px; }
   .page { position: static; display: block; width: 600px; }
   .variant { margin-bottom: 24px; }
-  .variant h2 { font: 12px/1 ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase;
-                margin: 0 0 8px; color: #555; }
+  .variant h2 { font-size: var(--fs-body); line-height: var(--lh-chip); letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase;
+                margin: 0 0 8px; color: var(--ink-4); }
 </style>
 </head>
 <body>
