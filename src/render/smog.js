@@ -2,7 +2,7 @@
 // leaves behind.
 
 import { now, ambient } from '../clock.js';
-import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_INK, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
+import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_INK, MUCK_GRAIN, MASS_DEAL, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
 import { DROPS, EMBERS, GOING, SPLASHES, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -11,7 +11,7 @@ import { paled, towardPage } from '../weather.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
 import { screenAt } from './frame.js';
-import { toned } from './tone.js';
+import { dealt, toned } from './tone.js';
 
 // What the rain left, drawn where it landed, one column at a time, stacked on
 // whatever that column has. The layer is the record: there is no number
@@ -87,6 +87,13 @@ export function drawMuck() {
     ctx.fillStyle = MUCK_GREY;
     ctx.beginPath();
     for (let i = 0; i < body.length; i += 3) ctx.rect(body[i], body[i + 1], P, body[i + 2]);
+    ctx.fill();
+    // one cell in MASS_DEAL.muck of the body in the muck's darker grain
+    ctx.fillStyle = MUCK_GRAIN;
+    ctx.beginPath();
+    for (let i = 0; i < body.length; i += 3)
+      for (let y = body[i + 1] + P; y < body[i + 1] + body[i + 2]; y += P)
+        if (dealt(body[i] / P, y / P, MASS_DEAL.muck)) ctx.rect(body[i], y, P, P);
     ctx.fill();
     ctx.fillStyle = MUCK_EDGE;
     ctx.beginPath();

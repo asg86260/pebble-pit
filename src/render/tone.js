@@ -56,6 +56,16 @@ function rampFor(rgb) {
   return null;
 }
 
+// Mild per-cell variation for a large mass of one material (C21): whether the
+// cell at (c, r) is one of the one-in-`every` dealt a neighboring tone. A
+// stable hash of the cell, so a mass reads as material and never strobes.
+// A mixing hash, not a product, or the one-in-n cells line up in diagonals.
+export const dealt = (c, r, every) => {
+  let h = (Math.imul(c, 374761393) + Math.imul(r, 668265263)) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) % every === 0;
+};
+
 // held(k): the share left, on FADE_STEPS steps, never rounded up to whole
 // once it has begun to go nor down to nothing while any is left.
 export const held = k => k >= 1 ? 1 : k <= 0 ? 0 : Math.max(1, Math.ceil(k * FADE_STEPS)) / FADE_STEPS;

@@ -2,7 +2,7 @@
 // bolts.
 
 import { now } from '../clock.js';
-import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_VENT, SPHERE_SWIRL_BANDS, SPHERE_STREAK_SHOWS } from '../config.js';
+import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_VENT, SPHERE_SWIRL_BANDS, SPHERE_STREAK_SHOWS, MASS_DEAL } from '../config.js';
 import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from '../meteor.js';
 import { S, floor, sky } from '../state.js';
 import { ctx } from './ctx.js';
@@ -10,7 +10,7 @@ import { domeRising, domeSpot, domeAt } from '../shield.js';
 import { domeEdge } from './shield.js';
 import { cell } from './marks.js';
 import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt, sphereVents, spinShare, shellR, swirlAt } from '../sphere.js';
-import { toned } from './tone.js';
+import { dealt, toned } from './tone.js';
 
 // The thing in the sky is a small star: a dead black crust with fire under it,
 // drawn cell by cell. A corona of rays breathes on a slow beat and takes its
@@ -64,8 +64,9 @@ export function drawSky() {
         ctx.fillStyle = tones[(c * 7 + r * 13 + flick) % 2];
       } else {
         // The crust: the deepest of the reds rather than black, or a black body
-        // with a red middle reads as an eclipse.
-        ctx.fillStyle = tones[tones.length - 1];
+        // with a red middle reads as an eclipse; one cell in MASS_DEAL.crust
+        // the third red, never the core's two, so the core stays hotter.
+        ctx.fillStyle = tones[dealt(c, r, MASS_DEAL.crust) ? tones.length - 2 : tones.length - 1];
       }
       ctx.fillRect(cellX(c), cellY(r), sky.p, sky.p);
     }

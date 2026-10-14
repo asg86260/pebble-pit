@@ -146,6 +146,8 @@ export const CLOUD_LEAN = 0.12;
 // Not grey: a pile of dust is a block of grey cells, so grey muck lying on a
 // pile read as more of the pile, the one thing it must never read as.
 export const MUCK_TONE = '#7a6047';
+// the muck's own darker grain, dealt through the band (MASS_DEAL.muck)
+export const MUCK_GRAIN = '#68503a';
 export const MUCK_SKIN = '#57402c';     // and the top course, so the layer has a lid
 // What a body left smells, and the yard says so: a couple of flies over it and
 // a wisp coming off it. Only over what a body left -- what the weather drops is

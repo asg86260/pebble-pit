@@ -165,8 +165,9 @@ function drawShelves() {
 function drawPot(i, g) {
   const px = potX(i);
   const topY = g - CAULDRON.length * P;
+  // in the hut's own grain, so a pot is iron and not a hole in the picture
+  drawGrained(CAULDRON, px, topY);
   ctx.fillStyle = '#000';
-  drawSprite(ctx, CAULDRON, px, topY);
 
   // Cell offsets into the grid: if you move the brew up or down in CAULDRON,
   // move CAULDRON_BREW_ROW to match.
