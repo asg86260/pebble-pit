@@ -284,23 +284,13 @@ minute, so without forklifts it stands idle on a full sky pile. Left as is
 (the owner's call): forklifts are its companion. If it reads badly in play,
 gating the row on owning a forklift is the one-line answer.
 
-### Rain muck clogs the air filter
-
-`clogged()` counts every grain of muck on the filter's strip (`outletMuck`,
-smog/band.js), and the rain drops muck everywhere, so a sky bad enough to rain
-stops the filter exactly when it is needed. For changing it: the clog was
-written about *what the filter makes*, and weather muck is not that. Against: a
-yard buried in muck stops every works, and no exception is the simpler rule. If
-it changes, muck has to carry where it came from (a field on the layer, since
-`MESS` does not record it). The balloon's clog below is the same question.
-
 ### The balloons: the clog, the fleet, the reading
 
 The craft flies, crewed, and pulls from the clouds. Left:
 
 - **The clog.** A craft drops wherever it is and nothing stops it. The design:
   it clogs on the column beneath it and clears by moving on, with the pile-full
-  mark on the mast when every craft is stalled. Settle the rain-muck call first.
+  mark on the mast when every craft is stalled. Settled (2026-10-14): count only the balloons' own loads, never weather muck (test/rain-muck-filter.test.mjs holds it).
 - **The fleet.** Lanes not looked at with two in the sky; each craft walks the
   whole sky list on its own. Fine for one, wasteful for three.
 - **The reading.** Nothing on the board says whether a craft is up, crewed or
