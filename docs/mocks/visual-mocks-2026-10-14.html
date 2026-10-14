@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visual Audit Mocks</title>
+<style>
+/* ------------------------------------------------------------------
+   Tokens: the game's own page palette (style.css :root and html.dark),
+   as the other mocks in docs/mocks carry it.
+   ------------------------------------------------------------------ */
+:root {
+  --paper: #fff; --ink: #000;
+  --page: #f2f2ef; --page-ink: #1a1a1a; --page-mute: #5c5c58; --page-line: #d6d6d0;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1f1f1f; --ink: #e0e0e0;
+    --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1f1f1f; --ink: #e0e0e0;
+  --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page); color: var(--page-ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 20px; margin: 44px 0 6px; padding-top: 16px; border-top: 2px solid var(--page-ink); }
+h3 { font-size: 16px; margin: 26px 0 6px; }
+p { margin: 6px 0; max-width: 78ch; }
+code { font-size: 13px; }
+.lede { color: var(--page-mute); }
+.mocknote { border: 1px dashed var(--page-mute); padding: 10px 14px; margin: 14px 0; max-width: 84ch; font-size: 14px; }
+.mocknote ul { margin: 6px 0 0; padding-left: 20px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; align-items: center; }
+.toolbar .lbl { font-size: 13px; color: var(--page-mute); margin-right: 2px; }
+.toolbar button {
+  font: 13px system-ui, sans-serif; padding: 5px 10px; cursor: pointer;
+  background: var(--page); color: var(--page-ink); border: 1px solid var(--page-mute);
+}
+.toolbar button[aria-pressed="true"] { background: var(--page-ink); color: var(--page); }
+.sticky { position: sticky; top: 0; z-index: 5; background: var(--page); padding: 6px 0; border-bottom: 1px solid var(--page-line); }
+.frames { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; margin: 10px 0; }
+.frames.stack { flex-direction: column; }
+.frame { min-width: 0; max-width: 100%; }
+.cap { font-size: 12px; color: var(--page-mute); margin-bottom: 6px; max-width: 60ch; }
+.cap b { color: var(--page-ink); }
+canvas { display: block; max-width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; border: 1px solid var(--page-line); }
+.notes { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 14px; max-width: 96ch; margin-top: 8px; }
+.notes dt { font-weight: 600; }
+.notes dd { margin: 0; }
+.ramp { display: flex; flex-wrap: wrap; gap: 0; margin: 4px 0 2px; }
+.ramp span { width: 26px; height: 18px; font: 9px ui-monospace, monospace; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 1px; }
+.rampcap { font-size: 12px; color: var(--page-mute); }
+.row21 { margin: 18px 0 4px; }
+@media (max-width: 520px) {
+  .notes { grid-template-columns: 1fr; }
+  .notes dd { margin-bottom: 6px; }
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Visual audit mocks</h1>
+<p class="lede">Three items from the visual consistency audit (<code>docs/audit/visual-2026-10-14/</code>) that the owner asked to see before anything is built: C14 (one number face), C21 (material masses in one tone) and C20 (the deep's shades). Each section draws today first, then the options. Vote per section.</p>
+
+<div class="mocknote">
+  <b>This is a mock, drawn on plain canvases, not the game.</b> The cells are copied from the code: <code>NUM_FONT</code> (config/deepdraw.js), the counter card's measures (render/counter.js), the roster's boxes (roster.js), <code>SHADES</code>/<code>depthShade</code> (grid.js), <code>MUCK_TONE</code>/<code>MUCK_SKIN</code>, the star's reds (<code>FIND_COLOR</code>), <code>CAULDRON</code> and the hut's <code>BOARD</code> grain (render/apothecary.js), <code>ABYSS_TONES</code>/<code>ABYSS_MAGIC_TONES</code>, <code>PLINTH_TONES</code>, <code>DOME_TONES</code>, <code>PROPS</code>/<code>MAT</code>/<code>R8_PARTS</code>/<code>BREW</code> (deep/props.js) and the place.js layout of a station.
+  <ul>
+    <li><b>What it cannot show:</b> the real yard around these pieces (the scenes are hand-set, the heap and the hill are drawn shapes, not the sand sim), the world zoom changing (the yard here is at zoom 1, the C21 and C20 strips at 2 screen px a game px), the deep's flowing water, veil and fauna, the fighters' kits and poses (each fighter is the plain square), the serpent, the hats (one stand-in hat), and the game's press scanlines over the frame.</li>
+    <li><b>Dark page:</b> the yard canvases are mapped by lightness the way <code>ink.js</code> does it; the deep is drawn as it is seen on either page (its tones turned and turned back). The theme button cycles system / light / dark.</li>
+    <li><b>Magnify</b> draws every canvas at three times, nearest-neighbor, to see the pixels.</li>
+  </ul>
+</div>
+
+<div class="toolbar sticky">
+  <span class="lbl">view:</span>
+  <button type="button" id="magbtn" aria-pressed="false">magnify 3x</button>
+  <button type="button" id="themebtn">theme: follow system</button>
+  <button type="button" id="playbtn" aria-pressed="true">motion on</button>
+</div>
+
+<!-- =================================================================== -->
+<h2>C14. One number face on the canvas</h2>
+<p>Today the counts over the yard (a stand's hats, the garage's forklifts), the roster's numbers and the corner counter are <code>fillText</code> in the page font at 13 px: anti-aliased and off the grid. The deep's fight numbers are the pixel <code>NUM_FONT</code> at 2 screen px a font pixel (the dark chip at the right of each frame is a blow's number, as the fight draws it, for comparison). The same scene, four ways.</p>
+
+<div class="frames" id="c14"></div>
+
+<h3>NUM_FONT as it stands</h3>
+<div class="frames"><div class="frame"><div class="cap">Every glyph, at 4 px a font pixel. A digit is 4 wide and 6 tall, one font pixel between glyphs.</div><canvas id="sheet"></canvas></div></div>
+<dl class="notes">
+  <dt>Missing glyphs</dt><dd><code>-</code> (a negative <code>fmt</code>, which no count shows today), <code>t</code> (<code>fmt</code> says <code>1t</code> past 999.96b dust), and <code>,</code> (the decimal comma <code>sayNum</code> already flags for localization). Nothing these counts draw today is missing: digits, <code>+</code>, <code>.</code>, <code>k</code>, <code>m</code>, <code>b</code> are all there.</dd>
+  <dt>Today</dt><dd>13 px <code>ui-monospace</code>, drawn centered over its point. The counter's digits are a different height from its 9 px marks and blur at every zoom.</dd>
+  <dt>A. NUM_FONT, 1x</dt><dd>One screen px a font pixel: 6 px tall. On the grid and crisp, but half the height of today's numbers; on a phone it is about two device pixels a stroke.</dd>
+  <dt>B. NUM_FONT, 2x</dt><dd>The fight's own size (<code>NUM_FONT_PX</code> = 2): 12 px, about today's height. One face for every number on the canvas, yard and deep.</dd>
+  <dt>C. NUM_FONT, 2x, keyline</dt><dd>B with one font pixel of paper round each glyph, the way the deep's choose-mark is keyed, so a count reads where it lands on a heap or a dark roof. The fight's numbers keep their grey drop line; the yard's take the keyline.</dd>
+</dl>
+
+<!-- =================================================================== -->
+<h2>C21. Large one-tone masses that are material</h2>
+<p>Each row is one mass: today, then dealt from neighboring rungs by a hash of the cell (the <code>PLINTH_TONES</code> pattern, so it never strobes the way <code>shadeNear</code>'s dice would), at two strengths: mild leans on the mass's own tone, strong deals its neighbors as often as itself. The notes under the strips say which rungs each deals.</p>
+<div id="c21"></div>
+<dl class="notes">
+  <dt>Muck band</dt><dd>Today one <code>MUCK_TONE</code> body under a <code>MUCK_SKIN</code> lid. Mild: one cell in three takes <code>#68503a</code>, the roomba's middle tone, already in config. Strong: a step either side (<span id="muckhex"></span>, mixed from <code>MUCK_TONE</code>), and the lid deals two.</dd>
+  <dt>A hill's deep core</dt><dd>Today <code>depthShade</code> bands, and everything thicker than the fifth band is one flat <code>#111</code>. Mild: one cell in four deals the next rung lighter (so the core is #111 with #2c2c2c in it). Strong: one in two deals a rung either side, clamped. Depth still reads; the bands lose their hard edges.</dd>
+  <dt>The star's crust</dt><dd>Today the deepest red, flat, round a flickering core of the two bright reds. Mild: one crust cell in four deals the third red. Strong: half. The crust never takes the core's two reds, so the core stays plainly hotter.</dd>
+  <dt>The cauldrons</dt><dd>Today flat <code>#000</code> sprites beside the hut, whose wall is grained in <code>BOARD</code> (<code>#000</code>-<code>#151515</code>, which hardly shows: compare the wall at the left). Mild: the pots take the hut's own <code>BOARD</code>. Strong: <code>#000</code>, <code>#111</code> and <code>#2c2c2c</code> (ink and the two darkest <code>SHADES</code>) for pots and wall alike, so the grain can be seen.</dd>
+</dl>
+
+<!-- =================================================================== -->
+<h2>C20. The deep's shades</h2>
+<p>The owner: keep the abyss more mysterious and visually different, but clean up the shades. What is actually there: the deep already draws from <b>one</b> grey ramp (<code>ABYSS_TONES</code>, twelve faintly blue rungs) and one purple ramp (<code>ABYSS_MAGIC_TONES</code>). The spread is in how it is dealt: twenty-one material runs in <code>MAT</code>, plus <code>PLINTH_TONES</code>, <code>DOME_TONES</code>, the floor and the pods each picking their own rungs, nine rungs of grey in use (2 through 10) on one strip, every cell a different pick. Off the ramp: one mote tone (<code>#9b9ba6</code>, the fleck), and <code>deepdraw.js</code> re-types ramp values as hex literals instead of indices. The finale's house (yard side) brings a fifth grey family, <code>FINALE_GREYS</code>.</p>
+<p>The strip below: three stations on the deep's floor (the brawler at rung 8, so its purple parts show, the monk, and the hexer with its brew bubbling), each a dome, a plinth, a prop and its fighter, with silt drifting in the water.</p>
+<div class="frames stack" id="c20"></div>
+<div id="ramps"></div>
+<dl class="notes">
+  <dt>Today</dt><dd>Every material its own short run, picked anywhere from rung 2 to rung 10. Rich, but nothing says which rung means what, and a new prop picks its own.</dd>
+  <dt>A. Four bands, grain kept</dt><dd>One ramp, four named bands of two neighboring rungs each: <b>shade</b> 2-3 (dome inside, floor), <b>dark</b> 4-5 (leather, iron, rings, the dome's rim), <b>stone</b> 6-7 (wood, chain, the plinth's body), <b>lit</b> 8-9 (straw, steel, paper, bell, the plinth's top). White (11) is only for what is made and held: kits, the fighters' rule. Every material is one of the four; a new prop picks a band, not rungs. Close to today's look, with fewer greys and a rule.</dd>
+  <dt>B. Flat things, grained ground, purple light</dt><dd>Grain only on material: the floor and the plinth's stone. Props and domes are flat silhouettes, each one rung (props stone 7, domes shade 2), and their top edges catch a purple light from above (purple 8, breathing a rung up and down in held steps). Purple is "outside the normal": the deep is lit by it. The rung-8 parts stay bright purple.</dd>
+  <dt>C. The yard's grammar, inverted</dt><dd>The yard draws its buildings as flat ink on white paper; this draws the deep's props as flat water-black cut-outs against a lit dome. The dome is grained (it is the glow: shade 4-5) with a purple rim; the plinth is grained stone; props are one tone, the black of the water, so they read as holes in the light. Most mysterious; detail inside a prop (the bell in its frame) reads by silhouette alone.</dd>
+</dl>
+
+</main>
+<script>
+// ===================================================================
+// The game's numbers, copied.
+// ===================================================================
+const P = 6, WORKER = P * 3;
+const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#111111'];
+const MAX_DEPTH = 6;
+const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
+const depthShade = (v, max) => Math.max(1, Math.min(SHADES.length, Math.ceil(SHADES.length * v / Math.max(1, max))));
+const FIND_SHARD = ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'];
+const FIND_SPARK = ['#e8503a', '#d93a25', '#c62d1c', '#9c2214'];
+const FLOAT_SHADOW = 6, FLOAT_SHADOW_INK = '#aaa';
+const MUCK_TONE = '#7a6047', MUCK_SKIN = '#57402c', ROOMBA_MID = '#68503a';
+const CORE_FLICK = 260;
+const CAULDRON = [
+  '#############', '.###########.', '#############', '#############', '#############',
+  '#############', '#############', '.###########.', '..#########..', '..#.......#..'];
+const BOARD = ['#000', '#0b0b0b', '#151515', '#060606'];
+const NUM_FONT = {
+  '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'],
+  '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+  '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'],
+  '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+  '4': ['#..#', '#..#', '####', '...#', '...#', '...#'],
+  '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+  '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'],
+  '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+  '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'],
+  '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.'],
+  '+': ['....', '.#..', '###.', '.#..', '....', '....'],
+  'k': ['#...', '#...', '#.#.', '##..', '#.#.', '#..#'],
+  'm': ['.....', '.....', '##.#.', '#.#.#', '#.#.#', '#.#.#'],
+  'b': ['#...', '#...', '###.', '#..#', '#..#', '###.'],
+  '.': ['.', '.', '.', '.', '.', '#']
+};
+const NUM_FONT_TIGHT = '.', GH = 6;
+const NUM_FACE = '#ffffff', NUM_DROP = '#42424a';
+const ABYSS_TONES = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const ABYSS_MAGIC_TONES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const SILT = ['#26262c', '#333339', '#42424a', '#55555e'];
+const PLINTH_H = 2, PLINTH_OVER = 1;
+const PLINTH_TONES = { top: [9, 8, 9], end: [8, 7], body: [6, 5, 6, 7] };
+const DOME_WALL = 2, DOME_REACH = 6, DOME_PAD = 1;
+const DOME_TONES = { inside: [2, 3], rim: [5, 6] };
+const PROP_GAP = 5;
+const MAT = {
+  W: [6, 5, 6], w: [7, 8, 7], L: [4, 5, 4], l: [6, 7], T: [8, 9], K: [8, 6], M: [9, 10, 9], I: [4, 5], i: [7, 8],
+  S: [9, 8, 10, 8], r: [5, 4], B: [8, 9, 8], m: [5, 6, 5], c: [7, 8], b: [3, 2], P: [10, 9], k: [6, 5], E: [7, 6],
+  p: [5, 4, 5], f: [8], v: [8, 9, 8], U: [7, 8, 7, 6]
+};
+const ACC = [11, 10, 11], PART_ACC = [9, 8, 9];
+const PROPS = {
+  brawler: { under: 'L', rows: ['WWWWWWW.', 'WW...K..', 'W...TTT.', 'W..lLLLL', 'W..lLL*L', 'W..lLLLL', 'W...TTT.', 'W.......', 'WWW.....'] },
+  monk: { under: 'B', rows: ['WWWWWWWWWWW', '.W.......W.', '.W...K...W.', '.W..BBB..W.', '.W..BBB..W.', '.W.BBBBB.W.', '.W...*...W.', 'mmmmmmmmmmm'] },
+  hexer: { under: 'b', rows: ['.IIIII.', 'IbbbbbI', 'iIIIIII', 'iIIIIII', '.iIIII.', '.I.I.I.'] }
+};
+const R8_PARTS = { brawler: ['T', 'K'], monk: ['B'], hexer: ['i'] };
+const BREW = { row: 1, from: 1, to: 5, lit: [7, 8, 6], rate: 2, period: 1.8, pace: 0.9, life: 1.2, step: 0.4, lane0: 2, lanes: 3, bubble: 5, bubbleLit: 9 };
+// the props' own noise (deep/props.js), so each cell is dealt what the game deals it
+const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const seedOf = key => key.length * 3.1;
+const toneAt = (mat, c, r, seed) => mat[Math.floor(hash(c * 13.7 + r * 71.3 + seed) * mat.length)];
+// an integer hash of a cell, for the mock's own grain (stable, never strobes)
+const ih = (c, r, s = 0) => { let h = (c * 73856093) ^ (r * 19349663) ^ (s * 83492791); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+
+// ===================================================================
+// The page's theme and the dark page's color map (ink.js).
+// ===================================================================
+let DARK = false, MAG = 1, PLAY = true;
+const isDark = () => {
+  const t = document.documentElement.dataset.theme;
+  if (t === 'dark') return true;
+  if (t === 'light') return false;
+  return matchMedia('(prefers-color-scheme: dark)').matches;
+};
+const hex = h => { if (h.length === 4) h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3]; const n = parseInt(h.slice(1, 7), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+function toHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min, s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h / 6, s, l];
+}
+function fromHsl(h, s, l) {
+  if (s === 0) { const v = Math.round(l * 255); return [v, v, v]; }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+  const f = t => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; };
+  return [f(h + 1 / 3), f(h), f(h - 1 / 3)].map(v => Math.round(v * 255));
+}
+const toHex = ([r, g, b]) => '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+const LP = 0x1f / 255, LI = 0xe0 / 255;   // DARK_PAPER, DARK_INK
+const yardMap = new Map(), deepMap = new Map();
+// a yard color as the dark page shows it: lightness turned between its paper and ink
+const Y = c => { if (!DARK) return c; let m = yardMap.get(c); if (!m) { const [h, s, l] = toHsl(...hex(c)); m = toHex(fromHsl(h, s, LP + (LI - LP) * (1 - l))); yardMap.set(c, m); } return m; };
+// a deep color as seen: turned, then turned back by the page, so only squeezed
+const D = c => { if (!DARK) return c; let m = deepMap.get(c); if (!m) { const [h, s, l] = toHsl(...hex(c)); m = toHex(fromHsl(h, s, LP + (LI - LP) * l)); deepMap.set(c, m); } return m; };
+const mix = (h, toward, amt) => toHex(hex(h).map(v => Math.round(v + (toward - v) * amt)));
+
+// ===================================================================
+// Canvas plumbing: a frame is a canvas sized in screen px, backed at the
+// device's whole pixel ratio, drawn by its own function each tick.
+// ===================================================================
+const frames = [];
+function frame(host, caption, w, h, draw) {
+  const div = document.createElement('div');
+  div.className = 'frame';
+  div.innerHTML = `<div class="cap">${caption}</div>`;
+  const cv = document.createElement('canvas');
+  div.appendChild(cv);
+  host.appendChild(div);
+  const f = { cv, w, h, draw };
+  frames.push(f);
+  size(f);
+  return f;
+}
+function size(f) {
+  const R = Math.max(1, Math.round(window.devicePixelRatio || 1)) * MAG;
+  f.R = R;
+  f.cv.width = f.w * R; f.cv.height = f.h * R;
+  f.cv.style.width = f.w * MAG + 'px';
+}
+function paint(t) {
+  for (const f of frames) {
+    const g = f.cv.getContext('2d');
+    g.setTransform(f.R, 0, 0, f.R, 0, 0);
+    g.imageSmoothingEnabled = false;
+    f.draw(g, t, f);
+  }
+}
+
+// ===================================================================
+// C14: the numbers
+// ===================================================================
+const CHARS = Object.keys(NUM_FONT);
+const gapBefore = (s, i) => (i > 0 && !NUM_FONT_TIGHT.includes(s[i]) ? 1 : 0);
+const nfWidth = s => { let x = 0; for (let i = 0; i < s.length; i++) if (NUM_FONT[s[i]]) x += gapBefore(s, i) + NUM_FONT[s[i]][0].length; return x; };
+// the font pixels of `s`, as [x, y] in font pixels from its top-left
+function nfCells(s) {
+  const out = []; let x = 0;
+  for (let i = 0; i < s.length; i++) {
+    const gl = NUM_FONT[s[i]]; if (!gl) continue;
+    x += gapBefore(s, i);
+    gl.forEach((row, r) => { for (let c = 0; c < row.length; c++) if (row[c] === '#') out.push([x + c, r]); });
+    x += gl[0].length;
+  }
+  return out;
+}
+// `s` with its top-left at (left, top), `px` screen px a font pixel; a keyline
+// of `key` paper round it, a drop line of `drop` under it, as asked
+function nfWrite(g, s, px, left, top, face, { key = null, drop = null } = {}) {
+  const cells = nfCells(s);
+  if (key) {
+    const on = new Set(cells.map(([x, y]) => x + ',' + y)), ring = new Set();
+    for (const [x, y] of cells) for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+      const k = (x + dx) + ',' + (y + dy); if (!on.has(k)) ring.add(k);
+    }
+    g.fillStyle = key;
+    for (const k of ring) { const [x, y] = k.split(',').map(Number); g.fillRect(left + x * px, top + y * px, px, px); }
+  }
+  if (drop) { g.fillStyle = drop; for (const [x, y] of cells) g.fillRect(left + x * px, top + (y + 1) * px, px, px); }
+  g.fillStyle = face;
+  for (const [x, y] of cells) g.fillRect(left + x * px, top + y * px, px, px);
+}
+
+// The four ways of writing a number in the C14 scene. `center` writes it
+// centered on (x, y) as fillText middle/center does; `base` with its foot on
+// a baseline, left-aligned, as the counter does.
+const FACE = '13px ui-monospace, "Courier New", monospace';
+const WAYS = [
+  { id: 'today', cap: '<b>Today.</b> 13 px page font, <code>fillText</code>.', px: 0 },
+  { id: 'a', cap: '<b>A. NUM_FONT at 1x</b> (6 px tall).', px: 1 },
+  { id: 'b', cap: '<b>B. NUM_FONT at 2x</b>, the fight\'s size (12 px).', px: 2 },
+  { id: 'c', cap: '<b>C. NUM_FONT at 2x with a paper keyline</b> one font pixel wide.', px: 2, key: true }
+];
+function writer(g, way) {
+  if (!way.px) return {
+    width: s => { g.font = FACE; return g.measureText(s).width; },
+    center(s, x, y) { g.font = FACE; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = Y('#000'); g.fillText(s, Math.round(x), Math.round(y)); },
+    base(s, x, y) { g.font = FACE; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillStyle = Y('#000'); g.fillText(s, x, y); }
+  };
+  const px = way.px, o = { key: way.key ? Y('#fff') : null };
+  return {
+    width: s => nfWidth(s) * px,
+    center(s, x, y) { nfWrite(g, s, px, Math.round(x - nfWidth(s) * px / 2), Math.round(y - GH * px / 2), Y('#000'), o); },
+    base(s, x, y) { nfWrite(g, s, px, Math.round(x), Math.round(y - GH * px), Y('#000'), o); }
+  };
+}
+// a body: white with a 2 px black rule inset 1 px
+function body(g, x, y) {
+  g.fillStyle = Y('#fff'); g.fillRect(x, y, WORKER, WORKER);
+  g.strokeStyle = Y('#000'); g.lineWidth = 2; g.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+}
+// a stand-in hat: a brim and a crown, two cells tall
+function hat(g, x, y) {
+  g.fillStyle = Y('#000');
+  g.fillRect(x, y - P, WORKER, P);
+  g.fillRect(x + P, y - P * 2, P, P);
+}
+// the roster's plus and minus (roster.js `button`): a bar, and an upright
+function button(g, b, kind) {
+  const x = b.x + b.w / 2, y = b.y + b.h / 2, BAR = P * 3, THIN = 2;
+  g.fillStyle = Y('#000');
+  g.fillRect(x - BAR / 2, y - THIN / 2, BAR, THIN);
+  if (kind === '+') g.fillRect(x - THIN / 2, y - BAR / 2, THIN, BAR);
+}
+// the counter's spark mark today (render/marks.js): four points
+function sparkMark(g, x, y, size) {
+  const h = size / 2;
+  g.beginPath();
+  g.moveTo(x, y - h); g.lineTo(x + h / 3, y - h / 3); g.lineTo(x + h, y); g.lineTo(x + h / 3, y + h / 3);
+  g.lineTo(x, y + h); g.lineTo(x - h / 3, y + h / 3); g.lineTo(x - h, y); g.lineTo(x - h / 3, y - h / 3);
+  g.closePath(); g.fill();
+}
+function shardMark(g, x, y, size) {
+  const h = size / 2;
+  g.beginPath(); g.moveTo(x, y - h); g.lineTo(x + h, y + h); g.lineTo(x - h, y + h); g.closePath(); g.fill();
+}
+
+const C14_W = 420, C14_H = 250, GROUND = 168;
+// the heap behind the stand, so its count lands on dust: a mound of SHADES
+// grains, each dealt its own shade (the shadeNear look), by a stable hash
+const HEAP = [];
+for (let c = 0; c < 22; c++) {
+  const h = Math.round(9 * Math.pow(Math.sin(Math.PI * (c + 0.5) / 22), 0.8));
+  for (let k = 0; k < h; k++) HEAP.push([c, k, 2 + Math.round(ih(c, k, 3) * 2 - 0.5 + (k < 2 ? 1 : 0))]);
+}
+function drawC14(g, t, f, way) {
+  const W = writer(g, way);
+  g.fillStyle = Y('#fff'); g.fillRect(0, 0, C14_W, C14_H);
+  // the ground line
+  g.fillStyle = Y('#000'); g.fillRect(0, GROUND, C14_W, 2);
+  // the garage, a flat ink block with its door, and its count over the roof
+  const gx = 12, gw = P * 9, gh = P * 6;
+  g.fillStyle = Y('#000'); g.fillRect(gx, GROUND - gh, gw, gh);
+  g.fillStyle = Y('#fff'); g.fillRect(gx + P * 2, GROUND - P * 4, P * 5, P * 4);
+  W.center('3', gx + gw / 2, GROUND - gh - P * 3);
+  // a dust heap, and the kit stand in front of it
+  const hx = 76;
+  for (const [c, k, s] of HEAP) { g.fillStyle = Y(shadeOf(s)); g.fillRect(hx + c * P, GROUND - (k + 1) * P, P, P); }
+  const kx = hx + P * 9, STAND_W = P * 5, STAND_H = P * 3, top = GROUND - STAND_H;
+  g.fillStyle = Y('#000');
+  g.fillRect(kx - P, top, STAND_W, P);
+  g.fillRect(kx - P, top + P, P, STAND_H - P);
+  g.fillRect(kx + STAND_W - P * 2, top + P, P, STAND_H - P);
+  hat(g, kx + (STAND_W - P * 2 - WORKER) / 2, top);
+  W.center('12', kx - P + STAND_W / 2, top - P * 2 - P * 2);
+  // a body walking by
+  body(g, 228, GROUND - WORKER);
+  // the roster post (roster.js `boxes`): - badge count +, and the trade under it
+  const BTN = P * 4, GAP = P, NUM = P * 4, left = 240, y = 34;
+  button(g, { x: left, y: y - BTN / 2, w: BTN, h: BTN }, '-');
+  body(g, left + BTN + GAP, y - WORKER / 2);
+  const num = { x: left + BTN + GAP + WORKER + GAP, y, w: NUM };
+  W.center('14', num.x + num.w / 2, num.y);
+  const wide = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
+  button(g, { x: left + wide - BTN, y: y - BTN / 2, w: BTN, h: BTN }, '+');
+  const under = y + WORKER + P * 3;
+  body(g, left + BTN + GAP, under - WORKER / 2);
+  hat(g, left + BTN + GAP, under - WORKER / 2);
+  W.center('6', num.x + num.w / 2, under);
+  // a counter row past its pips: "+N"
+  const py = under + P * 5;
+  g.strokeStyle = Y('#000'); g.lineWidth = 2;
+  for (let i = 0; i < 5; i++) g.strokeRect(left + i * P * 2 + 1, py - P / 2 + 1, P - 2, P - 2);
+  W.center('+27', left + 5 * P * 2 + P * 2.5, py);
+
+  // the corner counter (render/counter.js), at the floor of the glass
+  const MARK = 9, ROW = 19, PAD = 7;
+  const lines = [{ m: 'dust', s: '18.4k' }, { m: 'shard', s: '312' }, { m: 'spark', s: '47' }];
+  const widest = lines.reduce((w, l) => Math.max(w, W.width(l.s)), 0);
+  const wideC = Math.round(MARK * 2 + widest + PAD * 2);
+  const x = 10 + PAD, yb = C14_H - 10 - PAD;
+  const box = { x: x - PAD, y: Math.round(yb - MARK - (lines.length - 1) * ROW - PAD), w: wideC, h: Math.round(MARK + (lines.length - 1) * ROW + PAD * 2) };
+  g.fillStyle = Y(FLOAT_SHADOW_INK); g.fillRect(box.x + FLOAT_SHADOW, box.y + FLOAT_SHADOW, box.w, box.h);
+  g.fillStyle = Y('#fff'); g.fillRect(box.x, box.y, box.w, box.h);
+  g.strokeStyle = Y('#000'); g.lineWidth = 2; g.strokeRect(box.x + 1, box.y + 1, box.w - 2, box.h - 2);
+  lines.forEach((l, i) => {
+    const at = yb - (lines.length - 1 - i) * ROW;
+    if (l.m === 'dust') { g.fillStyle = Y('#000'); g.fillRect(x, at - MARK, MARK, MARK); }
+    else if (l.m === 'shard') { g.fillStyle = Y(FIND_SHARD[2]); shardMark(g, x + MARK / 2, at - MARK / 2, MARK); }
+    else { g.fillStyle = Y(FIND_SPARK[2]); sparkMark(g, x + MARK / 2, at - MARK / 2, MARK); }
+    W.base(l.s, x + MARK * 2, at);
+  });
+
+  // for comparison: a blow's number as the fight draws it, on the deep's water
+  const cx = C14_W - 96, cy = C14_H - 52;
+  g.fillStyle = D(ABYSS_TONES[0]); g.fillRect(cx, cy, 86, 42);
+  nfWrite(g, '1.2k', 2, cx + 12, cy + 14, D(NUM_FACE), { drop: D(NUM_DROP) });
+  nfWrite(g, '38', 2, cx + 56, cy + 22, D(NUM_FACE), { drop: D(NUM_DROP) });
+}
+const c14 = document.getElementById('c14');
+for (const way of WAYS) frame(c14, way.cap, C14_W, C14_H, (g, t, f) => drawC14(g, t, f, way));
+
+// the glyph sheet
+{
+  const host = document.getElementById('sheet').parentNode;
+  document.getElementById('sheet').remove();
+  const px = 4, cell = 7 * px;
+  frame(host, '', CHARS.length * cell + 8, 52, g => {
+    g.fillStyle = Y('#fff'); g.fillRect(0, 0, CHARS.length * cell + 8, 52);
+    CHARS.forEach((ch, i) => {
+      nfWrite(g, ch, px, 6 + i * cell, 6, Y('#000'));
+      g.font = '10px ui-monospace, monospace'; g.fillStyle = Y('#8a8a8a'); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+      g.fillText(ch, 6 + i * cell, 48);
+    });
+  });
+}
+
+// ===================================================================
+// C21: the masses
+// ===================================================================
+const Z = 2;   // screen px a game px for the C21 and C20 strips
+const STR = [
+  { cap: '<b>Today</b>' },
+  { cap: '<b>Mild</b>' },
+  { cap: '<b>Strong</b>' }
+];
+const muckUp = mix(MUCK_TONE, 255, 0.12), muckDown = ROOMBA_MID, skinDown = mix(MUCK_SKIN, 0, 0.18);
+document.getElementById('muckhex').textContent = `${muckUp} and ${muckDown}; the lid ${MUCK_SKIN} and ${skinDown}`;
+const deal = (list, c, r, s) => list[Math.floor(ih(c, r, s) * list.length)];
+
+const MASSES = [
+  {
+    name: 'The muck band (render/smog.js)', cols: 36, rows: 6,
+    draw(g, k) {
+      g.fillStyle = Y('#fff'); g.fillRect(0, 0, 36 * P, 6 * P);
+      const foot = 5 * P;
+      g.fillStyle = Y('#000'); g.fillRect(0, foot, 36 * P, 2);
+      for (let c = 0; c < 36; c++) {
+        const n = 1 + Math.floor(ih(Math.floor(c / 3), 0, 9) * 3);
+        for (let r = 0; r < n; r++) {
+          const lid = r === n - 1;
+          const tone = lid ? (k === 2 ? deal([MUCK_SKIN, MUCK_SKIN, skinDown], c, r, 1) : MUCK_SKIN)
+            : k === 0 ? MUCK_TONE : k === 1 ? deal([MUCK_TONE, MUCK_TONE, muckDown], c, r, 2) : deal([muckUp, MUCK_TONE, muckDown], c, r, 2);
+          g.fillStyle = Y(tone); g.fillRect(c * P, foot - (r + 1) * P, P, P);
+        }
+      }
+    }
+  },
+  {
+    name: 'A hill\'s deep core (render/rock.js, depthShade)', cols: 30, rows: 15,
+    draw(g, k) {
+      g.fillStyle = Y('#fff'); g.fillRect(0, 0, 30 * P, 15 * P);
+      const n = 30, foot = 15 * P;
+      const hOf = c => Math.round(14 * Math.pow(Math.sin(Math.PI * (c + 0.5) / n), 0.6));
+      for (let c = 0; c < n; c++) {
+        const h = hOf(c);
+        for (let r = 0; r < h; r++) {
+          // thickness: how much rock is over and beside this cell, capped
+          const v = Math.min(MAX_DEPTH, h - r, c + 1, n - c, r + 2);
+          let s = depthShade(v, MAX_DEPTH);
+          const u = ih(c, r, 5);
+          if (k === 1 && u < 0.25) s = Math.max(1, s - 1);
+          if (k === 2 && u < 0.5) s = Math.max(1, Math.min(SHADES.length, s + (ih(c, r, 6) < 0.5 ? -1 : 1)));
+          g.fillStyle = Y(shadeOf(s)); g.fillRect(c * P, foot - (r + 1) * P, P, P);
+        }
+      }
+    }
+  },
+  {
+    name: 'The star\'s crust (render/sky.js)', cols: 21, rows: 21,
+    draw(g, k, t) {
+      g.fillStyle = Y('#fff'); g.fillRect(0, 0, 21 * P, 21 * P);
+      const flick = Math.floor(t / CORE_FLICK);
+      for (let r = 0; r < 21; r++) for (let c = 0; c < 21; c++) {
+        const d = Math.hypot(c - 10, r - 10);
+        if (d > 9.6) continue;
+        let tone;
+        if (d < 5.2) tone = FIND_SPARK[(c * 7 + r * 13 + flick) % 2];
+        else {
+          const u = ih(c, r, 7);
+          tone = k === 0 ? FIND_SPARK[3] : k === 1 ? (u < 0.25 ? FIND_SPARK[2] : FIND_SPARK[3]) : (u < 0.5 ? FIND_SPARK[2] : FIND_SPARK[3]);
+        }
+        g.fillStyle = Y(tone); g.fillRect(c * P, r * P, P, P);
+      }
+    }
+  },
+  {
+    name: 'The cauldrons, beside the hut\'s grained wall (render/apothecary.js)', cols: 38, rows: 12,
+    draw(g, k) {
+      g.fillStyle = Y('#fff'); g.fillRect(0, 0, 38 * P, 12 * P);
+      const foot = 11 * P;
+      const STRONG = ['#000', '#111111', '#2c2c2c'];
+      const tone = (c, r, s, wall) => k === 0 ? (wall ? BOARD[Math.abs((c * 73856093) ^ (r * 19349663)) % BOARD.length] : '#000')
+        : k === 1 ? BOARD[Math.abs((c * 73856093) ^ (r * 19349663)) % BOARD.length]
+        : deal(STRONG, c, r, s);
+      // a stretch of the hut's wall, as it is grained today
+      for (let r = 0; r < 11; r++) for (let c = 0; c < 6; c++) { g.fillStyle = Y(tone(c, r, 11, true)); g.fillRect(c * P, foot - (r + 1) * P, P, P); }
+      for (let i = 0; i < 2; i++) {
+        const x0 = 8 + i * 15, top = foot - CAULDRON.length * P;
+        CAULDRON.forEach((row, r) => { for (let c = 0; c < row.length; c++) if (row[c] === '#') { g.fillStyle = Y(tone(c + x0, r, 12 + i, false)); g.fillRect((x0 + c) * P, top + r * P, P, P); } });
+      }
+      g.fillStyle = Y('#000'); g.fillRect(0, foot, 38 * P, 2);
+    }
+  }
+];
+const c21 = document.getElementById('c21');
+for (const m of MASSES) {
+  const h = document.createElement('h3'); h.className = 'row21'; h.textContent = m.name; c21.appendChild(h);
+  const row = document.createElement('div'); row.className = 'frames'; c21.appendChild(row);
+  STR.forEach((s, k) => frame(row, s.cap, m.cols * P * Z, m.rows * P * Z, (g, t) => { g.scale(Z, Z); m.draw(g, k, t); }));
+}
+
+// ===================================================================
+// C20: the deep's strip
+// ===================================================================
+const G = i => D(ABYSS_TONES[i]), PU = i => D(ABYSS_MAGIC_TONES[i]);
+const FLOOR = 25;                     // the floor's row, in cells from the strip's top
+const STRIP_COLS = 96, STRIP_ROWS = FLOOR + 4;
+const STATIONS = [ { key: 'brawler', post: 24, lit: true }, { key: 'monk', post: 56, lit: false }, { key: 'hexer', post: 84, lit: false } ];
+
+// where everything of a station stands, in cells (deep/place.js)
+function layout(st) {
+  const rows = PROPS[st.key].rows, pw = rows[0].length, ph = rows.length;
+  const plinthTop = FLOOR - PLINTH_H, postY = plinthTop - 3;
+  const right = st.post - PROP_GAP, px = right + 1 - pw, py = plinthTop - ph;
+  const bx = px - PLINTH_OVER, bw = st.post + 3 + PLINTH_OVER - bx;
+  const sx = bx - 1, sw = bw + 2, sy = Math.min(py, postY);
+  const mid = st.post + 1.5;
+  const dx = Math.round(Math.min(sx, mid - DOME_REACH) - DOME_PAD), dr = Math.round(Math.max(sx + sw, mid + DOME_REACH) + DOME_PAD);
+  const spring = postY - DOME_WALL;
+  return { pw, ph, px, py, plinthTop, postY, bx, bw, dome: { x: dx, w: dr - dx, wall: FLOOR - spring } };
+}
+// the dome's cells, and whether each is on its rim (render/deep.js `domeImage`)
+function domeCells(w, wall) {
+  const cols = w, r = cols / 2, rows = Math.ceil(r) + wall, out = [];
+  const inside = (c, y) => {
+    if (c < 0 || c >= cols || y < 0 || y >= rows) return false;
+    if (y >= rows - wall) return true;
+    const dx = c + 0.5 - r, dy = y + 0.5 - (rows - wall);
+    return dx * dx + dy * dy <= r * r;
+  };
+  for (let y = 0; y < rows; y++) for (let c = 0; c < cols; c++) {
+    if (!inside(c, y)) continue;
+    out.push({ c, y, rows, rim: !inside(c - 1, y) || !inside(c + 1, y) || !inside(c, y - 1), top: !inside(c, y - 1) });
+  }
+  return out;
+}
+// a prop's cells as [col, row, char, accent?]
+function propChars(key, lit) {
+  const p = PROPS[key], parts = lit ? R8_PARTS[key] || [] : [], out = [];
+  p.rows.forEach((row, r) => [...row].forEach((ch0, c) => {
+    if (ch0 === '.') return;
+    let ch = ch0, acc = null;
+    if (ch === '*') { if (lit) acc = 'acc'; else ch = p.under; }
+    else if (parts.includes(ch)) acc = 'part';
+    if (ch === '.') return;
+    out.push([c, r, ch, acc]);
+  }));
+  return out;
+}
+const above = (cells, c, r) => cells.some(([cc, rr]) => cc === c && rr === r - 1);
+
+// Option A's bands, and which band each material is
+const BANDS = { shade: [2, 3], dark: [4, 5], stone: [6, 7], lit: [8, 9] };
+const BAND_OF = { W: 'stone', w: 'lit', L: 'dark', l: 'stone', T: 'lit', K: 'lit', M: 'lit', I: 'dark', i: 'stone', S: 'lit', r: 'dark',
+                  B: 'lit', m: 'dark', c: 'stone', b: 'shade', P: 'lit', k: 'dark', E: 'stone', p: 'dark', f: 'lit', v: 'lit', U: 'stone' };
+
+// The four ways the strip is dealt. Each answers: a floor cell, a plinth
+// cell, a dome cell, a prop cell, and the brew's bubble.
+const breathe = t => [7, 8, 9, 8][Math.floor(t / 1100) % 4];   // held steps, a rung at a time
+const DEALS = [
+  { cap: '<b>Today.</b> MAT runs, PLINTH_TONES, DOME_TONES, the floor\'s own picks.',
+    floor: (c, r) => G(2 + Math.floor(ih(c, r, 1) * 3) + (r === 0 ? 2 : 0)),
+    plinth: (c, r, n, l) => { const ramp = r === 0 ? PLINTH_TONES.top : c === 0 || c === n - 1 ? PLINTH_TONES.end : PLINTH_TONES.body; return G(ramp[Math.floor(hash((l + c) * 7 + r * 131) * ramp.length)]); },
+    dome: d => G((d.rim ? DOME_TONES.rim : DOME_TONES.inside)[Math.floor(hash(d.c * 13 + d.y * 29) * 2)]),
+    prop: (key, c, r, ch, acc) => acc === 'acc' ? PU(toneAt(ACC, c, r, seedOf(key))) : acc === 'part' ? PU(toneAt(PART_ACC, c, r, seedOf(key))) : G(toneAt(MAT[ch], c, r, seedOf(key))),
+    bubble: () => G(BREW.bubble) },
+  { cap: '<b>A. Four bands, grain kept.</b> Every material is one of shade / dark / stone / lit, two neighboring rungs each.',
+    floor: (c, r) => G(BANDS[r === 0 ? 'dark' : 'shade'][Math.floor(ih(c, r, 1) * 2)]),
+    plinth: (c, r, n, l) => G(BANDS[r === 0 ? 'lit' : 'stone'][Math.floor(hash((l + c) * 7 + r * 131) * 2)]),
+    dome: d => G(BANDS[d.rim ? 'dark' : 'shade'][Math.floor(hash(d.c * 13 + d.y * 29) * 2)]),
+    prop: (key, c, r, ch, acc) => acc === 'acc' ? PU(11) : acc === 'part' ? PU(toneAt([9, 8], c, r, seedOf(key))) : G(toneAt(BANDS[BAND_OF[ch]], c, r, seedOf(key))),
+    bubble: () => G(5) },
+  { cap: '<b>B. Flat things, grained ground, purple light.</b> Props and domes one rung each, their top edges lit purple.',
+    floor: (c, r) => G((r === 0 ? [4, 5] : [2, 3])[Math.floor(ih(c, r, 1) * 2)]),
+    plinth: (c, r, n, l) => G((r === 0 ? [7, 8] : [5, 6])[Math.floor(hash((l + c) * 7 + r * 131) * 2)]),
+    dome: (d, t) => d.top ? PU(Math.max(5, breathe(t) - 3)) : G(2),
+    prop: (key, c, r, ch, acc, top, t) => acc === 'acc' ? PU(11) : acc === 'part' ? PU(9) : top ? PU(breathe(t)) : G(7),
+    bubble: () => PU(7) },
+  { cap: '<b>C. The yard\'s grammar, inverted.</b> The dome is the glow; props are flat water-black cut-outs against it.',
+    floor: (c, r) => G((r === 0 ? [4, 5] : [2, 3])[Math.floor(ih(c, r, 1) * 2)]),
+    plinth: (c, r, n, l) => G((r === 0 ? [7, 8] : [5, 6])[Math.floor(hash((l + c) * 7 + r * 131) * 2)]),
+    dome: (d, t) => d.rim ? PU(d.top ? breathe(t) - 1 : 6) : G([4, 5][Math.floor(hash(d.c * 13 + d.y * 29) * 2)]),
+    prop: (key, c, r, ch, acc) => acc === 'acc' ? PU(11) : acc === 'part' ? PU(9) : G(0),
+    bubble: () => G(6) }
+];
+
+// silt drifting: cell-snapped, a slow sideways sine and a slower rise
+const MOTES = Array.from({ length: 40 }, (_, i) => ({ x: ih(i, 0, 21) * STRIP_COLS, y: ih(i, 1, 21) * (FLOOR - 4), sp: 0.2 + ih(i, 2, 21) * 0.5, ph: ih(i, 3, 21) * 6.28, tone: SILT[Math.floor(ih(i, 4, 21) * 4)] }));
+
+function drawStrip(g, t, deal) {
+  const s = t / 1000;
+  g.fillStyle = G(0); g.fillRect(0, 0, STRIP_COLS * P, STRIP_ROWS * P);
+  for (const m of MOTES) {
+    const x = Math.floor(((m.x + s * m.sp) % STRIP_COLS + STRIP_COLS) % STRIP_COLS);
+    const y = Math.floor(((m.y - s * m.sp * 0.4 + Math.sin(s * 0.5 + m.ph) * 1.2) % (FLOOR - 2) + FLOOR - 2) % (FLOOR - 2));
+    g.fillStyle = D(m.tone); g.fillRect(x * P, y * P, P, P);
+  }
+  for (const st of STATIONS) {
+    const L = layout(st);
+    // the dome, behind
+    const dc = domeCells(L.dome.w, L.dome.wall);
+    for (const d of dc) { g.fillStyle = deal.dome(d, t); g.fillRect((L.dome.x + d.c) * P, (FLOOR - d.rows + d.y) * P, P, P); }
+    // the plinth: its top course, and each course under it a cell wider at both ends
+    for (let r = 0; r < PLINTH_H; r++) {
+      const l = r, n = L.bw + 2 * r;
+      for (let c = 0; c < n; c++) { g.fillStyle = deal.plinth(c, r, n, PLINTH_H - 1 - r); g.fillRect((L.bx - r + c) * P, (L.plinthTop + r) * P, P, P); }
+    }
+    // the prop
+    const pc = propChars(st.key, st.lit);
+    for (const [c, r, ch, acc] of pc) {
+      g.fillStyle = deal.prop(st.key, c, r, ch, acc, !above(pc, c, r), t);
+      g.fillRect((L.px + c) * P, (L.py + r) * P, P, P);
+    }
+    // the hexer's bubble (deep/props.js `brewCells`), grey before rung 8
+    if (st.key === 'hexer') {
+      const k = (s * BREW.pace) % BREW.period;
+      if (k < BREW.life) {
+        const bc = BREW.lane0 + Math.floor(s / BREW.period) % BREW.lanes, br = BREW.row - 1 - Math.floor(k / BREW.step);
+        g.fillStyle = deal.bubble(); g.fillRect((L.px + bc) * P, (L.py + br) * P, P, P);
+      }
+    }
+    // the fighter, the plain square, as seen on the water: dark with a white rule
+    const fx = st.post * P, fy = L.postY * P;
+    g.fillStyle = G(0); g.fillRect(fx, fy, WORKER, WORKER);
+    g.strokeStyle = G(11); g.lineWidth = 2; g.strokeRect(fx + 1, fy + 1, WORKER - 2, WORKER - 2);
+  }
+  // the floor
+  for (let r = 0; r < 4; r++) for (let c = 0; c < STRIP_COLS; c++) { g.fillStyle = deal.floor(c, r); g.fillRect(c * P, (FLOOR + r) * P, P, P); }
+}
+const c20 = document.getElementById('c20');
+for (const deal of DEALS) frame(c20, deal.cap, STRIP_COLS * P * Z, STRIP_ROWS * P * Z, (g, t) => { g.scale(Z, Z); drawStrip(g, t, deal); });
+
+// the rungs each option uses, under the strips
+function rampsFor() {
+  const used = [
+    ['Today', [2, 3, 4, 5, 6, 7, 8, 9, 10], [8, 9, 10, 11]],
+    ['A', [2, 3, 4, 5, 6, 7, 8, 9], [8, 9, 11]],
+    ['B', [2, 3, 4, 5, 6, 7, 8], [5, 6, 7, 8, 9, 11]],
+    ['C', [0, 2, 3, 4, 5, 6, 7, 8], [6, 7, 8, 9, 11]]
+  ];
+  const host = document.getElementById('ramps');
+  host.innerHTML = '<h3>Rungs each option uses</h3>' + used.map(([n, g, p]) =>
+    `<div class="rampcap">${n}: ${g.length} greys, ${p.length} purples</div><div class="ramp">` +
+    ABYSS_TONES.map((c, i) => `<span style="background:${g.includes(i) ? D(c) : 'transparent'};color:${i > 7 ? '#000' : '#fff'};outline:1px solid var(--page-line)">${g.includes(i) ? i : ''}</span>`).join('') +
+    '<span style="width:10px"></span>' +
+    ABYSS_MAGIC_TONES.map((c, i) => `<span style="background:${p.includes(i) ? D(c) : 'transparent'};color:#fff;outline:1px solid var(--page-line)">${p.includes(i) ? i : ''}</span>`).join('') + '</div>').join('');
+}
+
+// ===================================================================
+// The toolbar, and the clock.
+// ===================================================================
+function refresh() { DARK = isDark(); yardMap.clear(); deepMap.clear(); rampsFor(); paint(performance.now()); }
+document.getElementById('magbtn').onclick = e => {
+  MAG = MAG === 1 ? 3 : 1; e.target.setAttribute('aria-pressed', MAG === 3);
+  frames.forEach(size); refresh();
+};
+const THEMES = ['', 'light', 'dark'];
+document.getElementById('themebtn').onclick = e => {
+  const cur = document.documentElement.dataset.theme || '';
+  const next = THEMES[(THEMES.indexOf(cur) + 1) % 3];
+  if (next) document.documentElement.dataset.theme = next; else delete document.documentElement.dataset.theme;
+  e.target.textContent = 'theme: ' + (next || 'follow system');
+  refresh();
+};
+document.getElementById('playbtn').onclick = e => {
+  PLAY = !PLAY; e.target.setAttribute('aria-pressed', PLAY); e.target.textContent = PLAY ? 'motion on' : 'motion off';
+};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refresh);
+refresh();
+let last = 0;
+function tick(t) {
+  if (PLAY && t - last > 90) { last = t; paint(t); }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
