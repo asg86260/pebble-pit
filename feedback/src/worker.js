@@ -5,7 +5,7 @@ import { handle } from './app.js';
 import { sweep } from './sweep.js';
 
 export default {
-  fetch: (request, env) => handle(request, env),
+  fetch: (request, env, ctx) => handle(request, env, Date.now(), ctx),
   // The kill switch stops the cron too: a paused worker touches nothing.
   scheduled: (event, env, ctx) => {
     if (env.FEEDBACK_PAUSED === '1') return;

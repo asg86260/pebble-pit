@@ -55,3 +55,9 @@ export const FEEDBACK_PAGES = ['game', 'title', 'crashed'];
 // The kinds a report may carry. The form sends none (the owner's call 2 is
 // open; DESIGN.md recommends words only); the worker keeps one if it comes.
 export const FEEDBACK_KINDS = ['bug', 'words', 'else'];
+
+// The owner's mail a report (feedback/src/mail.js): the subject carries this
+// many characters of the words, and the body names the save route on this
+// origin.
+export const FEEDBACK_MAIL_SUBJECT_MAX = 60;
+export const FEEDBACK_MAIL_ORIGIN = 'https://pebble-feedback.graham-things.com';

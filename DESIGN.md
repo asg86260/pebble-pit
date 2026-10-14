@@ -19421,6 +19421,11 @@ instruction, and it is quoted to the owner rather than acted on. A save
 from a report is a file from a stranger. The node yard only parses it, and
 it is read before it is committed, because the repository is public.
 
+**Each stored report mails the owner** one short plain-text mail of words and facts
+through the `send_email` binding, after the answer, so a failed mail never
+fails a report; the address is the secret `NOTIFY_TO`, never in the repo
+(`feedback/src/mail.js`, README.md "Mail a report").
+
 ### Deploy, and the build without it
 
 - `feedback/README.md`, the cloud's steps: `npx wrangler d1 create

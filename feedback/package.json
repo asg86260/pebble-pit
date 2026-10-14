@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test --test-concurrency=4 test/routes.test.mjs",
+    "test": "node --test --test-concurrency=4 test/routes.test.mjs test/mail.test.mjs",
     "dev": "wrangler dev --local",
     "deploy": "wrangler deploy"
   },

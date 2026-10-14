@@ -16,8 +16,19 @@ routes = [{ pattern = "pebble-feedback.graham-things.com", custom_domain = true 
 # route 503 with a day's Retry-After before D1 is touched.
 [vars]
 FEEDBACK_PAUSED = "0"
+# The owner's mail a report comes from this address, on the owner's zone
+# (src/mail.js; README.md, "Mail a report").
+NOTIFY_FROM = "feedback@graham-things.com"
 
 # FEEDBACK_TOKEN and IP_PEPPER are secrets: `npx wrangler secret put <name>`.
+# So is NOTIFY_TO, the verified address the mail goes to: the repository is
+# public, so it is never written here. No NOTIFY_TO, no mail.
+
+# The mail's binding. No destination_address: an unrestricted binding sends
+# to any verified destination address on the account, and the one it sends
+# to is NOTIFY_TO.
+[[send_email]]
+name = "MAIL"
 
 [[d1_databases]]
 binding = "DB"

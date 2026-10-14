@@ -9,6 +9,7 @@ imports and wrangler bundles; the page list it answers is the cloud's
 
 - `src/app.js` -- `handle(request, env, now)`, every route.
 - `src/sweep.js` -- `sweep(env, now)`, the daily cron.
+- `src/mail.js` -- `notify(env, report)`, the owner's mail a stored report.
 - `src/worker.js` -- the Worker's `fetch` and `scheduled`.
 - `migrations/` -- the schema, as wrangler applies it; `test/d1.mjs` builds
   its in-memory database from the same files.
@@ -21,7 +22,7 @@ imports and wrangler bundles; the page list it answers is the cloud's
 
 ## Checks
 
-From the repo root: `node --test feedback/test/routes.test.mjs`. They run
+From the repo root: `node --test feedback/test/routes.test.mjs feedback/test/mail.test.mjs`. They run
 the real `handle` over `node:sqlite`; nothing needs installing. The game's
 side is `node --test test/feedback.test.mjs` (the form against this same
 `handle`) and the browser group `the feedback form is a box, a tick and send`.
@@ -62,6 +63,45 @@ cloud's):
 
 The commit that writes the database id into `wrangler.toml` is the only
 change to the repository the deploy needs.
+
+## Mail a report
+
+Every stored report (`POST /reports` answered `201`) sends the owner one
+short plain-text mail: subject `report #<id>: <the first 60 characters of the
+words>`, the words in full, the build's facts, whether a save came and its
+size, and the `curl` for `GET /reports/<id>/save` (the token is never in the
+mail). It goes through the `send_email` binding `MAIL` with
+`ctx.waitUntil`, after the answer, so a mail that fails is one log line
+(`{ mail: "failed", id, error }`) and the report is still taken. A refused
+report sends nothing, nor does a paused worker. Sending to a verified
+destination address is free on the Workers Free plan.
+
+The binding's structured `send({ from, to, subject, text })` writes the MIME,
+the Message-ID and the Date, so the worker has no `cloudflare:email` import
+and no new dependency.
+
+One-time, from the owner's account:
+
+1. Cloudflare dashboard: **Compute** > **Email Service** > **Email
+   Routing**, pick `graham-things.com` and enable it (it adds its MX and SPF
+   records; say yes).
+2. **Email Routing** > **Destination Addresses**: add the inbox the mail
+   should land in, and click the link in the verification mail Cloudflare
+   sends it. Until that link is clicked every send is refused.
+3. `cd feedback && npx wrangler secret put NOTIFY_TO` and paste that same
+   address. It is a secret so it never sits in this public repository.
+4. `npx wrangler deploy` (it picks up the `[[send_email]]` binding and the
+   `NOTIFY_FROM` var, `feedback@graham-things.com`, from `wrangler.toml`).
+5. Send one report from a build and watch the inbox; a failure shows in
+   Workers Logs as `{ mail: "failed", ... }` with the reason
+   (`E_RECIPIENT_NOT_ALLOWED` is an unverified address,
+   `E_SENDER_NOT_VERIFIED` is Email Routing not on for the zone).
+
+To turn the mail off: `npx wrangler secret delete NOTIFY_TO` (takes effect
+at once, no deploy), or delete the `[[send_email]]` block and
+`npx wrangler deploy`. With either gone the worker sends nothing and the
+reports are taken as before. Locally and in the checks neither is set, so
+nothing is ever sent from `wrangler dev` or `node --test`.
 
 ## Reading them
 

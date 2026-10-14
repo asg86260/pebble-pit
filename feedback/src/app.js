@@ -1,6 +1,6 @@
 // The feedback worker's routes (DESIGN.md, "Feedback form", "The worker").
-// `handle` is the whole worker as a function of the request, the bindings
-// and the clock, so the worker's checks and the game's node check run this
+// `handle` is the whole worker as a function of the request, the bindings,
+// the clock and the context that carries `waitUntil`, so the worker's checks and the game's node check run this
 // same code in-process over feedback/test/d1.mjs.
 //
 // A report is checked whole before D1 is touched, and a report that passes
@@ -16,6 +16,7 @@ import { gunzip } from '../../src/gzip.js';
 import { sha256hex, sameSecret } from '../../cloud/src/codes.js';
 import { utcDay, nextMidnight, secondsUntil } from '../../cloud/src/clock.js';
 import { originAllowed } from '../../cloud/src/app.js';
+import { mailOn, notify } from './mail.js';
 
 // Where a request comes from, for the day's cap only, and only ever hashed.
 const NO_IP = '0.0.0.0';
@@ -96,7 +97,7 @@ async function saveOf(b64) {
 
 // --- routes -----------------------------------------------------------------------
 
-async function takeReport(request, env, now) {
+async function takeReport(request, env, now, ctx) {
   // From the game's page, or nothing: a report has no other door.
   const origin = request.headers.get('origin');
   if (origin === null || !originAllowed(origin)) return reply(403, { error: 'not from the game' });
@@ -145,7 +146,17 @@ async function takeReport(request, env, now) {
   // The save rides the same batch, keyed on the row just written.
   if (gz) writes.splice(1, 0, env.DB.prepare('INSERT INTO saves (report_id, blob) VALUES (last_insert_rowid(), ?)').bind(blob(gz)));
   const [inserted] = await env.DB.batch(writes);
-  return reply(201, { id: inserted.results[0].id, save: !!gz });
+  const id = inserted.results[0].id;
+  // The owner's mail goes after the answer, on the worker's own time: a slow
+  // or failing mail never holds up or fails a report already stored.
+  if (mailOn(env)) later(ctx, notify(env, { id, text, kind, meta, saveBytes: size }));
+  return reply(201, { id, save: !!gz });
+}
+
+// `ctx.waitUntil` on Cloudflare; a caller with no ctx (the game's node check)
+// lets the promise run on, which `notify` never lets reject.
+function later(ctx, promise) {
+  if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(promise);
 }
 
 async function getSave(request, env, id) {
@@ -180,25 +191,25 @@ export async function statsOf(env, now) {
   };
 }
 
-async function route(request, env, now) {
+async function route(request, env, now, ctx) {
   const { pathname } = new URL(request.url);
   const path = pathname.replace(/\/+$/, '') || '/';
   const m = request.method;
   if (m === 'GET' && path === '/health') return reply(200, { ok: true });
-  if (m === 'POST' && path === '/reports') return takeReport(request, env, now);
+  if (m === 'POST' && path === '/reports') return takeReport(request, env, now, ctx);
   if (m === 'GET' && path === '/stats') return stats(request, env, now);
   const save = /^\/reports\/(\d+)\/save$/.exec(path);
   if (m === 'GET' && save) return getSave(request, env, +save[1]);
   return reply(404, { error: 'no route' });
 }
 
-export async function handle(request, env, now = Date.now()) {
+export async function handle(request, env, now = Date.now(), ctx = null) {
   const origin = request.headers.get('origin');
   let res;
   // A page that is not the game's is refused before anything runs, preflight
   // or not; the owner's routes come with no Origin, from a terminal.
   if (origin !== null && !originAllowed(origin)) res = reply(403, { error: 'not from the game' });
-  else res = await answer(request, env, now);
+  else res = await answer(request, env, now, ctx);
   if (origin !== null && originAllowed(origin)) {
     res.headers.set('access-control-allow-origin', origin);
     res.headers.set('vary', 'Origin');
@@ -212,14 +223,14 @@ export async function handle(request, env, now = Date.now()) {
   return res;
 }
 
-async function answer(request, env, now) {
+async function answer(request, env, now, ctx) {
   // A preflight touches nothing and passes even when paused: a browser that
   // fails it never sees the 503 or its Retry-After.
   if (request.method === 'OPTIONS') return reply(204);
   // The kill switch answers before anything else, D1 included.
   if (env.FEEDBACK_PAUSED === '1') return retry(503, FEEDBACK_PAUSED_RETRY_S);
   try {
-    return await route(request, env, now);
+    return await route(request, env, now, ctx);
   } catch (err) {
     console.error('feedback:', err?.stack || err);
     return reply(500, { error: 'worker' });

@@ -14,13 +14,36 @@ export const DAY = 24 * HOUR;
 export const GAME = 'https://html-classic.itch.zone';
 export const TOKEN = 'owner-token';
 
-export function worker({ pepper = 'pepper-a', token = TOKEN, paused } = {}) {
+// The owner's address the mail checks send to, and the sender wrangler.toml
+// names.
+export const NOTIFY_TO = 'owner@example.com';
+export const NOTIFY_FROM = 'feedback@graham-things.com';
+
+// A `send_email` binding that keeps what it is handed, or throws when told to.
+export function mailStub({ fails = false } = {}) {
+  const sent = [];
+  return {
+    sent,
+    async send(msg) {
+      if (fails) throw Object.assign(new Error('no route to the inbox'), { code: 'E_RECIPIENT_NOT_ALLOWED' });
+      sent.push(msg);
+      return { messageId: `m${sent.length}` };
+    }
+  };
+}
+
+export function worker({ pepper = 'pepper-a', token = TOKEN, paused, mail } = {}) {
   const d1 = makeD1();
   const env = { DB: d1.DB, IP_PEPPER: pepper, FEEDBACK_TOKEN: token };
   if (paused) env.FEEDBACK_PAUSED = paused;
+  if (mail) Object.assign(env, { MAIL: mail, NOTIFY_TO, NOTIFY_FROM });
   let now = NOON;
+  // What the worker hands `ctx.waitUntil`; `settle()` waits for all of it.
+  const pending = [];
+  const ctx = { waitUntil: p => pending.push(p) };
   const w = {
-    env, counter: d1.counter, raw: d1.raw,
+    env, counter: d1.counter, raw: d1.raw, pending,
+    settle: () => Promise.all(pending.splice(0)),
     get now() { return now; },
     set now(t) { now = t; },
     tick(ms) { now += ms; },
@@ -31,7 +54,7 @@ export function worker({ pepper = 'pepper-a', token = TOKEN, paused } = {}) {
       if (bearer) h.authorization = `Bearer ${bearer}`;
       let b = body;
       if (body != null && typeof body !== 'string') { b = JSON.stringify(body); h['content-type'] = 'application/json'; }
-      const res = await handle(new Request(`https://feedback.test${path}`, { method, headers: h, body: b }), env, now);
+      const res = await handle(new Request(`https://feedback.test${path}`, { method, headers: h, body: b }), env, now, ctx);
       const text = await res.text();
       let json = null;
       if ((res.headers.get('content-type') || '').includes('json') && text) json = JSON.parse(text);
