@@ -5295,7 +5295,17 @@ stops it. The house is the answer to pollution and the weather now switches it
 off. That was nearly unreachable before, because rain could not happen below the
 line at all. The clog was written to stop the house spraying its own walk with its
 own filters, so counting the sky's muck in it is arguably wrong; but changing that
-is a balance decision rather than a fix. See TODO.
+is a balance decision rather than a fix.
+
+**Decided (the owner, 2026-10-14): the weather's muck never clogs the filter.**
+Only what the filter itself makes may. By then there was nothing to change: the
+house's clog went with its spout and its heap when the balloons took over the
+cleaning ("The air filter is the balloons' shed"), and nothing in the yard reads
+muck to stop a craft. The rule stands for the balloons' clog when it is built
+(TODO): it counts the balloons' own loads and nothing the rain put down, which
+means muck carrying where it came from -- a field on the layer, since `MESS`
+does not record it. test/rain-muck-filter.test.mjs holds the line: a dirty
+shower over the shed and the yard under a craft leaves it up and drawing.
 
 ### Lightning (built)
 
@@ -13992,9 +14002,9 @@ side on the bench.
 
 ### Open, and not decided here
 
-- `clogged()` still counts the sky's muck at the house's door (TODO). A clean
-  shower no longer clogs it, which takes most of the sting out; the count
-  itself is left as it was.
+- ~~`clogged()` still counts the sky's muck at the house's door.~~ Decided
+  2026-10-14: the weather's muck never clogs the filter, and nothing does now
+  (see "The rain is a curve, not a line").
 - Whether a front should ever be made *more* likely by a fouled sky. Not in
   this design: the point is that the sky is not the cause. If the balance
   wants an ignored sky punished faster, `RAIN_WASH` is the lever, not the
