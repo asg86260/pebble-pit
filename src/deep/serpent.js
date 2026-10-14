@@ -7,8 +7,9 @@
 // hold the wound open to its depth (DESIGN.md, "The serpent is the rock").
 // The last break is the story's kill: the serpent comes apart, gathers itself
 // again and comes back once, on its last defense at level 2 (`rise`); from
-// there each bar emptied is a level, a recoil and the bar full again a level
-// deeper (DESIGN.md, "Endless serpent"; `recoil`).
+// there each bar emptied is a level: a recoil (the rear, the near-death, the
+// power-up) and the bar full again a level deeper (DESIGN.md, "Endless
+// serpent"; `recoil`).
 //
 // Track FIGHT owns this file (docs/wave-party.md).
 
@@ -24,7 +25,7 @@ import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealNow, turned, streamS } from './meals.js';
 import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbMiddle, settleResist,
-         breakOrb, recoiling, recoilLen } from './phases.js';
+         breakOrb, recoiling, recoilLen, recoilTickAt } from './phases.js';
 import { depthAt } from './depth.js';
 
 // The defenses are 0..LAST; the last break leaves the stage past it, which
@@ -276,11 +277,13 @@ export function rise() {
 }
 
 // --- the recoil -------------------------------------------------------------------
-// Past the story a level's bar emptied: the serpent reels in a held pose for
-// `recoilLen` (deep/phases.js, config RECOIL), nothing landing and nothing
-// healing, its sway held where the blow caught it; then the bar is full again
-// a level deeper. What was laid on the level goes on its first frame, the orb
-// with it (its fighter let go), and the bar's fang drops from the belly.
+// Past the story a level's bar emptied: the serpent rears, breaks near to
+// death and draws the deep in, for `recoilLen` (deep/phases.js, config
+// RECOIL, NEARDEATH, POWERUP), nothing landing and nothing healing, its sway
+// held where the blow caught it. The level goes up as the first mote lands
+// (`recoilTickAt`), and the sequence plays on until the bar is full. What was
+// laid on the level goes on its first frame, the orb with it (its fighter
+// let go), and the bar's fang drops from the belly.
 const recoilers = [];
 export function onRecoil(fn) {
   if (!recoilers.includes(fn)) recoilers.push(fn);
@@ -294,14 +297,17 @@ function recoil() {
   resetMechanic();
   for (const fn of recoilers.slice()) fn(S.serpentLevel);
 }
+// The tick is read off the clock crossing it, so a reload past it (the
+// level already up, saved) never ticks it twice.
 function stepRecoil(c) {
   S.serpentStill += c.dt;
+  const was = S.recoilT;
   S.recoilT += c.dt / 1000;
   landTurned(c);
-  if (S.recoilT >= recoilLen()) levelUp();
+  if (was < recoilTickAt() && S.recoilT >= recoilTickAt()) levelUp();
+  if (S.recoilT >= recoilLen()) S.recoilT = null;
 }
 function levelUp() {
-  S.recoilT = null;
   S.serpentLevel = Math.max(1, S.serpentLevel | 0) + 1;
   S.serpentBest = Math.max(S.serpentBest | 0, S.serpentLevel);
   cleanSlate();

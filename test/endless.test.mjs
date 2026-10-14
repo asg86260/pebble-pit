@@ -1,7 +1,9 @@
 // The endless serpent (DESIGN.md, "Endless serpent"): after the story's kill
 // the serpent comes back once, on its last defense at level 2, and stays
-// there; each bar emptied is a level -- a held recoil, then the bar full
-// again 1.1 times as deep -- and drops a fang until every slot stands.
+// there; each bar emptied is a level -- the rear, the near-death and the
+// power-up (the level ticking as its first mote lands, the bar a notch a
+// mote), then the bar full again 1.1 times as deep -- and drops a fang until
+// every slot stands.
 //
 // The setup a check is not about goes through the hooks (the snatch, a party
 // at its rungs, the dev panel's depth knob, a fight at a level); the level
@@ -12,10 +14,10 @@ import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { now } from '../src/clock.js';
 import { SERPENT_PHASES, SERPENT_WOUND, MECHANICS, KILL_REFORM_S, FIGHT_STATIONS_MAX, STUN_SHARE, FANG_BREAKS,
-         RECOIL } from '../src/config.js';
+         RECOIL, POWERUP } from '../src/config.js';
 import { depthAt } from '../src/deep/depth.js';
 import { strike, clickDeep, woundK, onRecoil } from '../src/deep/serpent.js';
-import { cradled, orbOn, recoilLen, recoiling } from '../src/deep/phases.js';
+import { cradled, orbOn, recoilLen, recoiling, recoilTickAt, powerFill } from '../src/deep/phases.js';
 import { bellyAt, coilAt, bellySeg } from '../src/deep/place.js';
 import { stationById } from '../src/deep/party.js';
 import { buildOffer } from '../src/deep/buildbutton.js';
@@ -80,9 +82,19 @@ group('after the story\'s kill it comes back once, on its last defense at level 
     for (const L of [2, 3]) {
       const emptied = runUntil(() => { watch(); return S.serpentLevel > L || S.recoilT != null; }, 1800);
       const ev = recoils[recoils.length - 1];
-      let ticked = null;
-      frameUntil(() => { watch(); if (S.serpentLevel === L + 1) { ticked = now(); return true; } return false; }, recoilLen() + 1);
+      let ticked = null, ended = null, notchAt = null;
+      frameUntil(() => { watch(); if (S.serpentLevel === L + 1) { ticked = now(); notchAt = powerFill(); return true; } return false; }, recoilLen() + 1);
+      // Past the tick it plays on, a notch of the bar a mote, to the let-go.
+      const notches = [];
+      frameUntil(() => {
+        watch();
+        if (S.recoilT == null) { ended = now(); return true; }
+        notches.push(powerFill());
+        return false;
+      }, recoilLen() + 1);
       levels.push({ L, emptied, ev, held: ev && ticked != null ? (ticked - ev.at) / 1000 : null,
+                    len: ev && ended != null ? (ended - ev.at) / 1000 : null, notchAt,
+                    climbs: notches.every((f, i) => f != null && (i === 0 || f >= notches[i - 1])), lastNotch: notches[notches.length - 1],
                     after: { level: S.serpentLevel, stage: S.serpentStage, woundK: woundK(), depth: depthAt(LAST) } });
     }
     const wantDepth = L => Math.round(SERPENT_WOUND[LAST] * 1.1 ** (L - 1));
@@ -94,8 +106,13 @@ group('after the story\'s kill it comes back once, on its last defense at level 
          'at level 2, on its last defense, its bar full', JSON.stringify(returned)),
       ok(levels.every(l => l.emptied && l.ev && l.ev.level === l.L && l.ev.stage === LAST && l.ev.wound === l.ev.depth),
          'the party\'s blows empty the bar at levels 2 and 3, on the last defense', JSON.stringify(levels.map(l => l.ev))),
-      ok(levels.every(l => l.held != null && Math.abs(l.held - recoilLen()) <= FRAME + 1e-6),
-         'each empty bar recoils for the recoil\'s length, then the level ticks up', JSON.stringify(levels.map(l => l.held))),
+      ok(Math.abs(recoilLen() - 3.31) < 1e-9, 'the rear, the near-death and the power-up are the mock\'s 3.31 s', `${recoilLen()}`),
+      ok(levels.every(l => l.held != null && Math.abs(l.held - recoilTickAt()) <= FRAME + 1e-6 && l.notchAt === 1 / POWERUP.motes),
+         'each empty bar ticks the level as the power-up\'s first mote lands, a notch of the bar',
+         JSON.stringify(levels.map(l => [l.held, l.notchAt]))),
+      ok(levels.every(l => l.len != null && Math.abs(l.len - recoilLen()) <= FRAME + 1e-6 && l.climbs && l.lastNotch === 1),
+         'and plays on, the bar climbing a notch a mote to full, for the whole length',
+         JSON.stringify(levels.map(l => [l.len, l.climbs, l.lastNotch]))),
       ok(levels.every(l => l.after.level === l.L + 1 && l.after.stage === LAST && l.after.depth === wantDepth(l.L + 1)),
          'onto the next level, still the last defense, 1.1 times as deep', JSON.stringify(levels.map(l => l.after))),
       ok(full, 'its bar full again', JSON.stringify(levels.map(l => l.after.woundK))),
@@ -134,6 +151,10 @@ group('a level is 1.1 times as deep, the recoil holds the hit, and only depth.js
   const landed = strike('punch', 1000, p.x, p.y);
   run(RECOIL.snap + RECOIL.hold / 2);
   const held = { wound: S.serpentWound, recoiling: recoiling(), orb: !!orbOn() };
+  // And past the tick, the motes still coming: the new level's bar is not hit.
+  run(recoilTickAt() + 0.2 - S.recoilT);
+  const landedLate = strike('punch', 1000, p.x, p.y);
+  const late = { level: S.serpentLevel, wound: S.serpentWound, recoiling: recoiling() };
   // The same stunning blow at level 1 and level 7.
   const stunOf = level => {
     window.__serpent({ level, stage: LAST, wound: 0 });
@@ -155,6 +176,8 @@ group('a level is 1.1 times as deep, the recoil holds the hit, and only depth.js
        'and one more empties it into a recoil, no break', JSON.stringify(during)),
     ok(landed === 0 && held.wound === d && held.recoiling && !held.orb, 'through the recoil nothing lands and nothing heals',
        `${landed} ${JSON.stringify(held)}`),
+    ok(landedLate === 0 && late.level === 8 && late.wound === 0 && late.recoiling,
+       'nor on the next level while the power-up plays on', `${landedLate} ${JSON.stringify(late)}`),
     ok(at7 > 0 && Math.abs(at7 - at1) < 1e-9, 'the same blow stuns as long at level 7 as at 1', `${at7} ${at1}`),
     ok(!indexing.length, 'and only depth.js indexes SERPENT_WOUND', indexing.join())
   ];
@@ -227,28 +250,41 @@ group('an emptied bar drops a fang that builds a fifth station; with every slot 
   ];
 });
 
-group('a reload mid-recoil and mid-level keeps the level and the stage', async () => {
+group('a reload mid-recoil, before and after the tick, and mid-level keeps the level and the stage', async () => {
   window.__snatch({ played: true });
   window.__party({ stations: FOUR });
   window.__serpent({ level: 3 });
   emptyByHand();
   const started = now();
-  run(RECOIL.snap + RECOIL.hold / 2);
+  // On the brink: the cracks run, the level not yet up.
+  run(recoilTickAt() - 0.6);
   const before = { level: S.serpentLevel, stage: S.serpentStage, recoilT: S.recoilT };
   window.__reload();
   const mid = { level: S.serpentLevel, stage: S.serpentStage, recoilT: S.recoilT };
   let tickedAt = null;
   frameUntil(() => { if (S.serpentLevel === 4) { tickedAt = now(); return true; } return false; }, recoilLen() + 1);
   const held = tickedAt == null ? null : (tickedAt - started) / 1000;
+  // Among the motes: the level up, the bar part full.
+  run(0.4);
+  const motes = { level: S.serpentLevel, recoilT: S.recoilT, fill: powerFill() };
+  window.__reload();
+  const back = { level: S.serpentLevel, recoilT: S.recoilT, fill: powerFill() };
+  let endedAt = null;
+  frameUntil(() => { if (S.recoilT == null) { endedAt = now(); return true; } return false; }, recoilLen());
+  const len = endedAt == null ? null : (endedAt - started) / 1000;
   run(3);
   const level = { level: S.serpentLevel, stage: S.serpentStage, best: S.serpentBest };
   window.__reload();
   const after = { level: S.serpentLevel, stage: S.serpentStage, best: S.serpentBest, recoilT: S.recoilT };
   return [
     ok(mid.level === 3 && mid.stage === LAST && Math.abs(mid.recoilT - before.recoilT) < 1e-9,
-       'read back mid-recoil: level 3, the last defense, as far into the recoil', `${JSON.stringify(before)} ${JSON.stringify(mid)}`),
-    ok(held != null && Math.abs(held - recoilLen()) <= FRAME + 1e-6, 'and the level ticks when it would have',
-       `${held} against ${recoilLen()}`),
+       'read back before the tick: level 3, the last defense, as far into the recoil', `${JSON.stringify(before)} ${JSON.stringify(mid)}`),
+    ok(held != null && Math.abs(held - recoilTickAt()) <= FRAME + 1e-6, 'and the level ticks when it would have',
+       `${held} against ${recoilTickAt()}`),
+    ok(motes.level === 4 && back.level === 4 && Math.abs(back.recoilT - motes.recoilT) < 1e-9 && back.fill === motes.fill
+       && motes.fill > 0 && motes.fill < 1,
+       'read back among the motes: level 4, never ticked twice, the bar as full', `${JSON.stringify(motes)} ${JSON.stringify(back)}`),
+    ok(len != null && Math.abs(len - recoilLen()) <= FRAME + 1e-6, 'and it ends when it would have', `${len} against ${recoilLen()}`),
     ok(after.level === 4 && after.stage === LAST && after.best === 4 && after.recoilT == null &&
        level.level === after.level, 'read back mid-level: level 4, the last defense', `${JSON.stringify(level)} ${JSON.stringify(after)}`)
   ];

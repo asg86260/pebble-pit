@@ -18,12 +18,13 @@ import { P, PLINTH_H, PLINTH_OVER, DOME_WALL, DOME_REACH, DOME_PAD, DEEP_GAP, DE
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
          WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
          BREAK_DIVE_OVER, BREAK_ROAR_H,
-         PORTAL_LIP_TO, PORTAL_TEAR_LOBE, PORTAL_TEAR_JITTER } from '../config.js';
-import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop, killA, recoilK, recoilPose } from './phases.js';
+         PORTAL_LIP_TO, PORTAL_TEAR_LOBE, PORTAL_TEAR_JITTER, NEARDEATH } from '../config.js';
+import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop, killA, recoilPose, rearPose } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
 const snap = v => Math.round(v / P) * P;
+const NEAR_SAG_TAIL = NEARDEATH.sagTail;
 
 export const deepTop = () => snap(S.worldH + DEEP_GAP);
 export const deepFloor = () => deepTop() + DEEP_H;
@@ -182,17 +183,21 @@ const waveLine = t => {
   const taut = tautK(), lash = lashK();
   // The kill: the sway dying, and the line sunk until the body lies on the floor.
   const lie = killDrop() * (deepFloor() - base - COIL_GIRTH / 2);
-  const amp = COIL_AMP * (1 - LASH_TAUT * taut) * killSway();
-  // A level's bar emptied: the recoil's pose, a bump held on the line.
-  const rk = recoilK(), rp = rk ? recoilPose() : null;
+  // A level's bar emptied (deep/phases.js, `recoilPose`): the rear's bump
+  // held on the line, the body slack and sunk on the brink, the coil wound
+  // tighter as the deep pours in -- deeper swings, and more of them.
+  const rp = recoilPose(), rk = rp ? rp.rk : 0, bump = rk ? rearPose() : null;
+  const wind = rp ? rp.m : 1, waves = COIL_WAVES * (1 + (wind - 1) / 2), sag = rp ? rp.sag : 0;
+  const amp = COIL_AMP * (1 - LASH_TAUT * taut) * killSway() * wind * (rp ? rp.amp : 1);
   return x => {
     const k = (x - x0) / span;
-    let y = base + amp * Math.sin(2 * Math.PI * (k * COIL_WAVES - t / COIL_SWAY_MS));
+    let y = base + amp * Math.sin(2 * Math.PI * (k * waves - t / COIL_SWAY_MS));
     if (split && renewed(k)) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
     if (taut && k > COIL_TAIL_FROM) y -= taut * LASH_LIFT * (k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM);
     if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
     if (roar != null) y -= BREAK_ROAR_H * Math.exp(-((k - roar) ** 2) / (LASH_W * LASH_W));
-    if (rp) y -= rk * rp.lift * Math.exp(-((k - rp.at) ** 2) / (rp.w * rp.w));
+    if (bump) y -= rk * bump.lift * Math.exp(-((k - bump.at) ** 2) / (bump.w * bump.w));
+    if (sag) y += sag * (1 - NEAR_SAG_TAIL * Math.max(0, k));
     y += drop + lie;
     return y;
   };

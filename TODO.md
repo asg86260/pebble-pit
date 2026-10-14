@@ -61,12 +61,9 @@ end: paid or volunteer translators, which Spanish, the picker's words, the
 sign (icons recommended), the CJK look, a localized title, Steam's
 achievement names.
 
-## Endless serpent -- BUILT, WORDS, THE RECOIL VOTE AND THE WALL OPEN (2026-10-13)
+## Endless serpent -- BUILT, WORDS AND THE WALL OPEN (2026-10-13)
 
 "Endless serpent" in DESIGN.md (built: one bar a level on the last defense). Open:
-- **The recoil**: three poses in docs/mocks/serpent-recoil-2026-10-13.html;
-  `rear` is built as the guess. The vote is `RECOIL_POSE` in
-  config/deepcrew.js and nothing else.
 - **Words**: the level label (`serp-level`, drawn as the bare number until
   its letters are in `NUM_FONT`), the five notices' names and notes
   (`ach-serpent-*`, `ach-allstations-*`) and the books' row

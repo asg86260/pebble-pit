@@ -310,6 +310,8 @@ export const NUM_FOLD_S = 1;
 // ever sways: full at a closed wound, empty at the break. Tones as seen, over
 // the finished deep.
 export const BAR_LEVEL_GAP = 10;       // screen pixels between the last pip and the level
+// The level knocked up BAR_KNOCK as it ticks in a recoil's power-up, held this long.
+export const LEVEL_KNOCK_S = 0.1;
 export const BAR_W = 400;              // screen pixels, the bar's length
 export const BAR_H = 14;               // and its height
 export const BAR_GAP = 14;             // over the coil's highest reach, from the bottom of the status row

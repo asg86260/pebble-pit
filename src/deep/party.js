@@ -21,6 +21,7 @@ import { start, registerRows, worksAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { frames, now } from '../clock.js';
 import { onBreak, onRise, onRecoil } from './serpent.js';
+import { recoilUnticked } from './phases.js';
 import { rand } from '../rng.js';
 import { refund } from '../pit.js';
 import { refundScales } from './scales.js';
@@ -324,8 +325,8 @@ const fangAtBelly = t => {
 // kill, on each recoil, and again on the return, the other moment the belly
 // is whole and in place, which is how a save from before the endless serpent
 // drops its story kill's fang. A bar emptied counts from its recoil's first
-// frame; the level goes up at its last.
-export const killsHad = () => Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed || S.recoilT != null ? 1 : 0);
+// frame; the level goes up as its first mote lands (deep/phases.js).
+export const killsHad = () => Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed || recoilUnticked() ? 1 : 0);
 export function dropKillFang(t = now()) {
   const room = FIGHT_STATIONS_MAX - S.stations.length - (S.fangs | 0) - S.fangsLoose.length;
   const due = Math.min(killsHad(), (S.killFangs | 0) + Math.max(0, room));

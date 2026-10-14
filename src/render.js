@@ -51,7 +51,7 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
          drawSwimmers, drawDeepInvert } from './render/deep.js';
 import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
-import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier } from './render/serpent.js';
+import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines } from './render/serpent.js';
 import { drawFish, drawFishFar, drawFishNear } from './render/fish.js';
 import { drawDeepZones, drawDeepFauna } from './render/fauna.js';
 import { drawFightNumbers } from './render/fightnums.js';
@@ -211,6 +211,7 @@ const LAYERS = [
   // read is ever under one.
   { name: 'deep fauna', draw: drawDeepFauna },
   { name: 'deep portal', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
+  { name: 'focus lines', draw: drawFocusLines },  // the serpent on the brink: rays in the water, behind the floor and all on it
   { name: 'deep floor', draw: drawDeepFloor },
   { name: 'serpent diving', draw: drawSerpentDiving },   // the first break's dive, behind the stations and the bed
   // The scales, then the stations standing in front of them: the bed can
@@ -340,7 +341,7 @@ export const asPicture = on => { picture = on; };
 // in the deep every other layer is the yard's and is not drawn; in the yard
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
-const DEEP = new Set(['deep zones', 'deep water', 'deep fauna', 'deep motes', 'deep portal', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
+const DEEP = new Set(['deep zones', 'deep water', 'deep fauna', 'deep motes', 'deep portal', 'focus lines', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
                       'deep fish', 'deep stream far', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the

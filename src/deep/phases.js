@@ -19,7 +19,7 @@ import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_
          BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT,
          SERPENT_PHASES, P, WORKER, ORB_R, ORB_CLOSE_S, ORB_RISE_S, ORB_STEP, ORB_CLEAR,
          ORB_BOB_S, ORB_GHOST_K, ORB_HANG_S, ORB_SINK_S, ORB_SINK_EASE, ORB_SQUASH_S,
-         RECOIL, RECOIL_SMEAR, RECOIL_BACK_STEPS, RECOIL_POSES, RECOIL_POSE } from '../config.js';
+         RECOIL, RECOIL_SMEAR, RECOIL_POSES, RECOIL_POSE, NEARDEATH, POWERUP, CRACK_REACH } from '../config.js';
 import { CLASSES, PAIRS } from '../config/classes.js';
 import { has } from './statuses.js';
 import { hitRect } from '../stations.js';
@@ -297,23 +297,84 @@ export const cradled = () => S.serpentLevel <= 1 && !S.beatsDone.includes('freed
 // How much of him has gathered again, head first, 0..1; null when he is not.
 export const reformK = () => (S.reformAt == null ? null : clamp01((now() - S.reformAt) / 1000 / KILL_REFORM_S));
 
-// --- the recoil (deep/serpent.js plays it; config RECOIL) ---------------------------
-// Past the story a level's bar emptied is no kill: the serpent reels in a held
-// pose, read here as how far into it, in held frames -- the smear frame past
-// the pose, the pose held, and back to the line in RECOIL_BACK_STEPS steps.
-export const recoilLen = () => RECOIL.snap + RECOIL.hold + RECOIL.back;
+// --- the recoil, the near-death and the power-up (deep/serpent.js plays it) ------------
+// Past the story a level's bar emptied is no kill: the serpent rears, breaks
+// near to death and draws the deep in (config RECOIL, NEARDEATH, POWERUP),
+// read here off `S.recoilT`, the seconds into it, as one pose of held steps.
+// The level ticks as the first mote lands (`recoilTickAt`), the sequence
+// running on past it until the bar is full again.
+const ND = NEARDEATH, PU = POWERUP;
+const rearEnd = () => RECOIL.snap + RECOIL.hold;
+const brinkAt = () => rearEnd() + ND.crack;
+const powerAt = () => brinkAt() + ND.brink;
+export const recoilLen = () => powerAt() + PU.len + PU.letGo;
 export const recoiling = () => S.recoilT != null && S.snatched && !S.serpentFreed;
-export function recoilK() {
-  if (!recoiling()) return 0;
+// Whether the bar emptied has not yet become the next level: a kill had
+// that the level does not count yet (deep/party.js, verify.js).
+export const recoilUnticked = () => S.recoilT != null && S.recoilT < recoilTickAt();
+// The `n`th held step of `d` seconds that `t` is in, 1-based, up to `n`.
+const stepOf = (t, d, n) => Math.min(n, Math.floor(t / d) + 1);
+// The motes, each when it leaves the water, where along the body (head 0,
+// tail 1) it lands, and where it starts from there in cells; one fixed set,
+// as the mock's, so a reload mid-crossing sees the same ones.
+const unit = k => { const x = Math.sin(k * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const SALT = 303;
+export const powerMotes = Array.from({ length: PU.motes }, (_, i) => {
+  const launch = PU.first + i * (PU.len - PU.cross - PU.spark) / Math.max(1, PU.motes - 1), s = i + SALT;
+  const ang = unit(s * 3 + 1) * Math.PI * 2, dist = PU.reach[0] + unit(s * 5 + 2) * (PU.reach[1] - PU.reach[0]);
+  return { i, launch, land: launch + PU.cross, k: 0.06 + unit(s * 7 + 3) * 0.9,
+           dx: Math.cos(ang) * dist, dy: Math.sin(ang) * dist * PU.squash, grey: i % 3 === 2 };
+});
+// Read off the clock against each landing as `recoilTickAt` reads the
+// first, the same sum, so the tick and the first notch are one frame.
+const landedBy = s => { const at = powerAt(); let n = 0; for (const q of powerMotes) if (s >= at + q.land) n++; return n; };
+export const recoilTickAt = () => powerAt() + powerMotes[0].land;
+// The pose this frame, or null when nothing is playing:
+//   rk     the rear's share of its bump (RECOIL_POSES), RECOIL_SMEAR on the smear frame
+//   m      how far the coil is wound, 1 at rest
+//   amp    the sway's depth, under 1 slack
+//   sag    px the body has sunk at the head
+//   reach  px the cracks run each way from the belly, or null for the wound's own
+//   lit    px of them filled with light, or null for none
+//   seal   whether they are sealing from their tips (the bar filling)
+//   lines  the focus lines: `rIn` the frame's edge 1, `tones` rungs; or null
+//   ps     seconds into the power-up, for the motes; null before it
+//   fill   the bar, 0..1, a notch a mote landed; null before the first
+export function recoilPose() {
+  if (!recoiling()) return null;
   const s = S.recoilT;
-  if (s < RECOIL.snap) return RECOIL_SMEAR;
-  if (s < RECOIL.snap + RECOIL.hold) return 1;
-  const b = Math.min(1, (s - RECOIL.snap - RECOIL.hold) / RECOIL.back);
-  return 1 - Math.floor(b * RECOIL_BACK_STEPS) / RECOIL_BACK_STEPS;
+  const o = { rk: 0, m: 1, amp: 1, sag: 0, reach: null, lit: null, seal: false, lines: null, ps: null, fill: null };
+  if (s < rearEnd()) { o.rk = s < RECOIL.snap ? RECOIL_SMEAR : 1; return o; }
+  if (s < powerAt()) {
+    const into = s - rearEnd(), j = stepOf(into, ND.headStep, ND.headSteps) / ND.headSteps;
+    o.rk = 1 - j; o.amp = 1 - ND.slack * j; o.sag = ND.sag * j;
+    o.reach = CRACK_REACH + (ND.full - CRACK_REACH) * stepOf(into, ND.crack / ND.crackSteps, ND.crackSteps) / ND.crackSteps;
+    if (s >= brinkAt()) o.lines = { rIn: ND.lines[stepOf(s - brinkAt(), ND.lineStep, ND.lines.length) - 1], tones: ND.lineTones };
+    return o;
+  }
+  const ps = s - powerAt();
+  o.ps = ps;
+  const landed = landedBy(s);
+  o.fill = landed ? landed / powerMotes.length : null;
+  if (ps >= PU.len) { o.m = PU.letGoWind; o.reach = 0; return o; }      // the let-go: one smear frame past the rest
+  const j = stepOf(ps, PU.backStep, PU.backSteps) / PU.backSteps;
+  o.sag = ND.sag * (1 - j); o.amp = 1 - ND.slack * (1 - j);
+  o.m = PU.wind[stepOf(ps, PU.backStep, PU.wind.length) - 1];
+  o.lit = stepOf(ps, PU.lightStep, PU.lightSteps) / PU.lightSteps * ND.full;
+  o.seal = landed > 0;
+  o.reach = ND.full * (1 - landed / powerMotes.length);
+  let at = 0;
+  for (const f of PU.lineFade) {
+    if (ps < at + f.s) { o.lines = { rIn: ND.lines[ND.lines.length - 1], tones: f.tones, purple: true }; break; }
+    at += f.s;
+  }
+  return o;
 }
-// The pose the owner chose; the bump it lays on the line, and the jaws.
-export const recoilPose = () => RECOIL_POSES[RECOIL_POSE] || Object.values(RECOIL_POSES)[0];
-export const recoilGape = () => Math.min(1, recoilK() * recoilPose().gape);
+// The pose the owner chose for the rear; the bump it lays on the line, and the jaws.
+export const rearPose = () => RECOIL_POSES[RECOIL_POSE] || Object.values(RECOIL_POSES)[0];
+export const recoilGape = () => { const o = recoilPose(); return o ? Math.min(1, o.rk * rearPose().gape) : 0; };
+// What the bar shows past the tick: a notch a mote; null when it reads the wound.
+export const powerFill = () => { const o = recoilPose(); return o && S.recoilT >= recoilTickAt() ? (o.fill ?? 0) : null; };
 
 // A phase broken: the next opens at the top of its turn.
 export function resetMechanic() { S.mechAt = 0; S.mechSkip = false; S.phaseAt = 0; }
