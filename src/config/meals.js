@@ -54,6 +54,11 @@ export const FLOW_SHARE = [0.55, 0.45, 0];   // the near depth is the world's st
 export const FLOW_MARGIN = 160;       // screen pixels off the glass a crossing starts and ends
 export const FLOW_GIANT_S = 300;   // longer than its crossing (the glass and twice the margin, at FLOW_GIANT_SPEED)
 export const FLOW_GIANT_SPEED = 6;
+// Its body, in screen pixels: this long, this deep at its thickest (a sine
+// along its length), its middle this far down the water.
+export const FLOW_GIANT_LEN = 320;
+export const FLOW_GIANT_R = 46;
+export const FLOW_GIANT_AT = 0.3;
 // The near creatures swim the world, not the glass, so the serpent can take
 // one that is passing (DESIGN.md, "The serpent eats to heal"): one sets off
 // every FLOW_NEAR_EVERY_S from FLOW_NEAR_OUT beyond a wall of the deep, at
