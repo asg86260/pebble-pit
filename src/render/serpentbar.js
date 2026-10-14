@@ -27,6 +27,7 @@ import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRA
          BAR_SHARD_KICK, BAR_SHARD_FALL_S, BAR_SHARD_FADE_S, BAR_CHIP,
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
          SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP, LEVEL_KNOCK_S } from '../config.js';
+import { toneOn, withTone } from './tone.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
@@ -208,7 +209,9 @@ export function drawSerpentBar() {
   const alpha = barK(t);
   ctx.save();
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  ctx.globalAlpha = alpha;
+  // faded down the deep's ramps as drawn, toward its black (render/tone.js)
+  const unfade = toneOn(ctx, alpha);
+  if (!unfade) { ctx.restore(); return; }
   fill(BAR_EDGE, x - 1, y - 1, BAR_W + 2, BAR_H + 2);
   fill(BAR_TRACK, x, y, BAR_W, BAR_H);
   fill(BAR_LEFT, x, y, BAR_W * shown, BAR_H);
@@ -217,9 +220,7 @@ export function drawSerpentBar() {
   if (healLo != null && shown > healLo) {
     const s = t / 1000, k = healIn == null ? 1 : Math.max(0, 1 - (s - healIn) / BAR_HEAL_FADE_S);
     const a = Math.round(BAR_W * healLo), b = Math.round(BAR_W * shown);
-    ctx.globalAlpha = alpha * k;
-    fill(BAR_HEALED, x + a, y, b - a, BAR_H);
-    ctx.globalAlpha = alpha;
+    withTone(ctx, k, () => fill(BAR_HEALED, x + a, y, b - a, BAR_H));
   }
   // The phase boxes: none on the story's first defense, which is the only one
   // the player knows of; they come up one by one as he rises from the first
@@ -264,11 +265,10 @@ export function drawSerpentBar() {
       px += p.vx * f; py += p.vy * f + 0.5 * BAR_SHARD_GRAV * f * f;
     }
     const life = p.hold + BAR_SHARD_FALL_S;
-    ctx.globalAlpha = alpha * Math.max(0, Math.min(1, (life - a) / BAR_SHARD_FADE_S));
-    fill(c, x + px, rest + py, p.w, p.h);
+    withTone(ctx, Math.max(0, Math.min(1, (life - a) / BAR_SHARD_FADE_S)), () => fill(c, x + px, rest + py, p.w, p.h));
   }
-  ctx.globalAlpha = alpha;
   // what the fighters have laid on the serpent, in a row under the bar
   drawFoeStatuses(x, rest - statusRowH() - STATUS_GAP);
+  unfade();
   ctx.restore();
 }

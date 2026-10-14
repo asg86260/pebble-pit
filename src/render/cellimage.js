@@ -3,10 +3,12 @@
 // large stretch of the window every frame -- the serpent's coil -- where a
 // fillRect a cell was the frame's whole cost on a large screen. The tones go
 // through the page's own palette (`inkOf`), as a fillStyle would, so a cell
-// comes out the color it would have been drawn.
+// comes out the color it would have been drawn; `begin`'s `k` tones every
+// cell put that frame down its ramp (render/tone.js), as a fade would.
 
 import { P } from '../config.js';
 import { inkOf } from '../ink.js';
+import { toned } from './tone.js';
 
 const rgbOf = new Map();
 function rgba(c) {
@@ -21,11 +23,11 @@ function rgba(c) {
 
 // One reusable image a caller, grown as needed.
 export function cellImage() {
-  let img = null, g = null, buf = null, cols = 0, rows = 0;
+  let img = null, g = null, buf = null, cols = 0, rows = 0, tone = 1;
   return {
     // Start a block `c` cells by `r`, every cell clear.
-    begin(c, r) {
-      cols = c; rows = r;
+    begin(c, r, k = 1) {
+      cols = c; rows = r; tone = k;
       if (!img) { img = document.createElement('canvas'); g = img.getContext('2d'); }
       if (img.width < c || img.height < r) { img.width = Math.max(img.width, c); img.height = Math.max(img.height, r); buf = null; }
       if (!buf || buf.width !== c || buf.height !== r) buf = g.createImageData(c, r);
@@ -33,7 +35,7 @@ export function cellImage() {
     },
     // Cell `i` (row-major) in the color `c`.
     put(i, c) {
-      const [r, gg, b] = rgba(c), d = buf.data, k = i * 4;
+      const [r, gg, b] = rgba(tone < 1 ? toned(c, tone) : c), d = buf.data, k = i * 4;
       d[k] = r; d[k + 1] = gg; d[k + 2] = b; d[k + 3] = 255;
     },
     // The block onto `ctx`, its first cell at world (x, y).

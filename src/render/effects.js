@@ -1,7 +1,8 @@
 // Effects you can look at on their own: every draw here takes a context, a
 // place and a few numbers, and reads nothing off `S`, so preview.html can draw
 // them side by side on a blank page with no simulation behind them. The import
-// list is the other half of it: config, and nothing else. The moment one of
+// list is the other half of it: config and the tone ramps (tone.js, which
+// reads no yard either), and nothing else. The moment one of
 // these reaches for the yard, the preview has to build a yard.
 import { P, DOSE_MOTE_HUE, CRIT_RING_WIDE } from '../config.js';
 import { toned } from './tone.js';

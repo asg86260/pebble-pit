@@ -7,16 +7,17 @@
 //
 // `toned(c, k)` is a color `k` of the way there (1 whole, 0 gone): mixed
 // toward the paper as written, then snapped to the nearest rung of the ramp
-// it belongs to with the paper on its end -- the grey ramp, the purple, a
-// coin's, or the deep's two as drawn (the deep is painted as a negative, so
-// its dark is the written white too). A color in no ramp keeps the mix, in
-// the same held steps.
+// it belongs to with the paper and the ink on its ends -- the grey ramp, the
+// purple, a coin's, or the deep's two as drawn (the deep is painted as a
+// negative, so its dark is the written white too). A color in no ramp keeps
+// the mix, in the same held steps. `toned(c, k, true)` goes toward the ink
+// instead, for a thing fading on a black ground (the rift's hole).
 
-import { COIN_TONES, FADE_STEPS, GREY, PURPLE } from '../config.js';
+import { ABYSS_TONES, COIN_TONES, FADE_STEPS, GREY, PURPLE } from '../config.js';
 import { GREYS as DEEP_GREYS, PURPLES as DEEP_PURPLES } from './deeptones.js';
 import { darkPage, raw } from '../ink.js';
 
-const PAPER = [255, 255, 255];
+const PAPER = [255, 255, 255], INK = [0, 0, 0];
 const rgbOf = c => {
   if (typeof c !== 'string') return null;
   if (c[0] === '#') {
@@ -31,14 +32,15 @@ const rgbOf = c => {
 const luma = ([r, g, b]) => 0.299 * r + 0.587 * g + 0.114 * b;
 const hexOf = ([r, g, b]) => '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
 
-// Every ramp, each with the paper on its light end, and which ramp each of
-// their rungs belongs to.
+// Every ramp, each with the paper on its light end and the ink on its dark
+// one, and which ramp each of their rungs belongs to.
 const ramp = list => {
   const r = list.map(rgbOf);
   if (!r.some(c => luma(c) > 250)) r.push(PAPER);
+  if (!r.some(c => luma(c) < 5)) r.unshift(INK);
   return r;
 };
-const RAMPS = { grey: ramp(GREY), purple: ramp(PURPLE), deepGrey: ramp(DEEP_GREYS), deepPurple: ramp(DEEP_PURPLES),
+const RAMPS = { grey: ramp(GREY), purple: ramp(PURPLE), abyss: ramp(ABYSS_TONES), deepGrey: ramp(DEEP_GREYS), deepPurple: ramp(DEEP_PURPLES),
                 ...Object.fromEntries(Object.entries(COIN_TONES).map(([k, v]) => [k, ramp(v)])) };
 const MEMBER = new Map();
 for (const [name, r] of Object.entries(RAMPS)) for (const c of r) if (!MEMBER.has(hexOf(c))) MEMBER.set(hexOf(c), name);
@@ -59,16 +61,17 @@ function rampFor(rgb) {
 export const held = k => k >= 1 ? 1 : k <= 0 ? 0 : Math.max(1, Math.ceil(k * FADE_STEPS)) / FADE_STEPS;
 
 const cache = new Map();
-export function toned(c, k) {
+export function toned(c, k, onInk = false) {
   const q = held(k);
   if (q >= 1) return c;
-  if (q <= 0) return '#ffffff';
-  const key = c + '|' + q;
+  if (q <= 0) return onInk ? '#000000' : '#ffffff';
+  const key = c + '|' + q + (onInk ? '|i' : '');
   let out = cache.get(key);
   if (out !== undefined) return out;
   const rgb = rgbOf(c);
   if (!rgb) { cache.set(key, c); return c; }
-  const want = rgb.map((v, i) => v + (PAPER[i] - v) * (1 - q));
+  const to = onInk ? INK : PAPER;
+  const want = rgb.map((v, i) => v + (to[i] - v) * (1 - q));
   const r = rampFor(rgb);
   if (r) {
     const at = luma(want);
@@ -80,15 +83,28 @@ export function toned(c, k) {
   return out;
 }
 
-// `fn` drawn on `g` `k` of the way there: every fill and stroke it sets is toned on
-// the way in. Set on the context in hand, not its prototype, so it costs
-// nothing outside a fade, and the dark page's own map (ink.js, on the
-// prototype) still sees the toned color after it. Nested fades multiply.
-let inTone = 1;
+// `fn` drawn on `g` `k` of the way there: every fill and stroke it sets is
+// toned on the way in. Set on the context in hand, not its prototype, so it
+// costs nothing outside a fade, and the dark page's own map (ink.js, on the
+// prototype) still sees the toned color after it. Nested fades multiply. An
+// image laid with drawImage is not a fill and is not toned: a cached picture
+// takes its tone where it is painted (cellimage.js, `begin`).
 export function withTone(g, k, fn) {
   if (k >= 1) return fn();
+  const end = toneOn(g, k);
+  if (!end) return;
+  try { return fn(); } finally { end(); }
+}
+
+// The same as a pair, for a stretch of drawing too long to hand over as a
+// function: `toneOn` starts it and hands back what ends it, or null when
+// there is nothing left to draw.
+let inTone = 1;
+const NO_END = () => {};
+export function toneOn(g, k) {
+  if (k >= 1) return NO_END;
   const outer = inTone, total = outer * Math.max(0, k);
-  if (held(total) <= 0) return;
+  if (held(total) <= 0) return null;
   const own = Object.prototype.hasOwnProperty.call(g, 'fillStyle');
   const wasFill = g.fillStyle, wasStroke = g.strokeStyle;
   if (!own) {
@@ -108,12 +124,12 @@ export function withTone(g, k, fn) {
   }
   inTone = total;
   g.__toneAgain();
-  try { return fn(); } finally {
+  return () => {
     inTone = outer;
     if (!own) {
       delete g.fillStyle; delete g.strokeStyle; delete g.__toneAgain;
       g.fillStyle = typeof wasFill === 'string' ? raw(wasFill) : wasFill;
       g.strokeStyle = typeof wasStroke === 'string' ? raw(wasStroke) : wasStroke;
     } else g.__toneAgain();
-  }
+  };
 }
