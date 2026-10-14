@@ -159,17 +159,18 @@ export const KILL_REFORM_S = 2.2;
 export const KILL_DROP_S = 0.4;
 export const KILL_DROP_STEPS = 3;
 
-// --- the recoil (DESIGN.md, "Endless serpent") ------------------------------------------
-// Past the story a level's bar emptied is no kill: the serpent reels in a
-// held pose and the bar fills for the next level. A smear frame past the pose
-// (`snap`, the pose times RECOIL_SMEAR), the pose held (`hold`), then back
-// in RECOIL_BACK_STEPS held steps (`back`). Seconds.
-export const RECOIL = { snap: 0.08, hold: 0.7, back: 0.36 };
+// --- the recoil, the near-death and the power-up (DESIGN.md, "Endless serpent") ----------
+// Past the story a level's bar emptied is no kill: the serpent rears, breaks
+// near to death, and draws the deep in to come back a level deeper (the
+// owner's votes: docs/mocks/serpent-powerup-2026-10-13.html B, and
+// serpent-neardeath-2026-10-13.html C on mock/serpent-neardeath). Seconds,
+// cells and counts; every part a run of held steps.
+//
+// The rear: a smear frame past the pose (`snap`, the pose times
+// RECOIL_SMEAR), then the pose held (`hold`).
+export const RECOIL = { snap: 0.08, hold: 0.7 };
 export const RECOIL_SMEAR = 1.35;
-export const RECOIL_BACK_STEPS = 3;
-// The bar's refill for the next level, once the recoil is done.
-export const RECOIL_FILL_S = 0.6;
-// The poses the owner votes on (docs/mocks/serpent-recoil-2026-10-13.html), a
+// The poses the owner voted between (docs/mocks/serpent-recoil-2026-10-13.html), a
 // bump laid on the coil's line: centered `at` along the body (head 0, tail
 // 1), `w` wide in the same, `lift` px up (down when negative); and the jaws
 // held `gape` open, 0..1. The head thrown back; folded down at the wound
@@ -180,6 +181,41 @@ export const RECOIL_POSES = {
   arch: { at: 0.45, w: 0.28, lift: P * 8, gape: 0.5 }
 };
 export const RECOIL_POSE = 'rear';
+// The near-death. `crack`: the wound's cracks run from the belly over the
+// whole body (to `full` px each way) in `crackSteps`, a third crack line
+// with them, while the head comes down in `headSteps` of `headStep`, the
+// sway slackening by `slack` and the body sinking `sag` px at the head (the
+// tail `sagTail` less of it). `brink`: held there, the focus lines closing in
+// from the frame's edge (1) to each of `lines` in steps of `lineStep`, their
+// tones `lineTones` (rungs of the deep's grey ramp); a ray starts up to
+// `lineRagged` further in, is `lineW` of its slot wide (and up to `lineWRand`
+// more), `lineRays` of them round the frame.
+export const NEARDEATH = {
+  crack: 0.5, crackSteps: 5, headSteps: 3, headStep: 0.12,
+  slack: 0.4, sag: P * 5, sagTail: 0.35, full: P * 240,
+  brink: 0.55, lines: [1, 0.82, 0.66], lineStep: 0.18, lineTones: [4, 3],
+  lineRays: 48, lineRagged: 0.3, lineW: 0.13, lineWRand: 0.06
+};
+// The power-up, `len` from the brink. The body comes back in `backSteps` of
+// `backStep` while the coil winds tighter, a step to each of `wind` (1 at
+// rest: the sway that much deeper, its waves half that much more). `motes`
+// leave the water round it, the first `first` in and the last a crossing
+// and its spark (`cross` + `spark`) before `len`, each `reach` cells out
+// (squashed `squash` up and down), crossing in `crossSteps` held steps with
+// a dim smear behind, then a spark on the hide (`ring` of it the ring round
+// the spark); a notch of the bar each, the level ticking on the first. The
+// cracks fill with light out from the belly in `lightSteps` of `lightStep`,
+// a `seam` px bright front, and seal from their tips as the bar fills; the
+// focus lines go purple, then dim (`lineFade`, each held that long, its
+// tones), then go. Then the let-go: one smear frame of `letGo`, the coil
+// `letGoWind` of its rest.
+export const POWERUP = {
+  len: 1.4, backSteps: 3, backStep: 0.12, wind: [1.15, 1.3, 1.45],
+  motes: 30, first: 0.05, cross: 0.4, spark: 0.1, ring: 0.05, crossSteps: 4, reach: [16, 34], squash: 0.7,
+  lightSteps: 4, lightStep: 0.08, seam: P * 16, seal: P * 6,
+  lineFade: [{ s: 0.16, tones: [4, 3] }, { s: 0.16, tones: [2, 2] }],
+  letGo: 0.08, letGoWind: 0.85
+};
 
 export const DEEP_CREW_KNOBS = [
   { key: 'SHAFT_PACE', label: 'shaft pace, x', min: 0.1, max: 3, step: 0.1,

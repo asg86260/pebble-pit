@@ -37,7 +37,7 @@ import { messCounts } from './smog/layer.js';
 import { SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
 import { CALLED } from './deep/party.js';
 import { depthAt } from './deep/depth.js';
-import { cradled, recoilLen } from './deep/phases.js';
+import { cradled, recoilLen, recoilUnticked } from './deep/phases.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor, deepX1 } from './deep/place.js';
@@ -526,7 +526,8 @@ export function verifyWorld() {
     const rose = levelWas >= 0 && level === levelWas + 1;
     if (level > 1 && stage !== SERPENT_PHASES - 1)
       fail('the serpent past the story is on a defense before its last', `level ${level}, stage ${stage}`);
-    // The recoil is a level's bar emptied, past the story, and lasts its length.
+    // The recoil is a level's bar emptied, past the story, and lasts its length
+    // (the rear, the near-death and the power-up, deep/phases.js).
     if (S.recoilT != null && (level < 2 || !(S.recoilT >= 0) || S.recoilT > recoilLen() + 1e-9))
       fail('the serpent recoils where it cannot', `level ${level}, ${S.recoilT}s of ${recoilLen()}`);
     if (stage < serpentWas && !rose)
@@ -643,7 +644,7 @@ export function verifyParty() {
   if (!Number.isInteger(S.fangsDropped) || S.fangsDropped < 0 || S.fangsDropped > breaks)
     fail('more fangs have dropped than the serpent has had breaks',
          `${S.fangsDropped} dropped, stage ${S.serpentStage}, level ${S.serpentLevel}`);
-  const kills = Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed || S.recoilT != null ? 1 : 0);
+  const kills = Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed || recoilUnticked() ? 1 : 0);
   if (!Number.isInteger(S.killFangs) || S.killFangs < 0 || S.killFangs > kills)
     fail('more fangs have dropped than the serpent has been killed', `${S.killFangs} dropped, ${kills} kills`);
   // The ledger: a fang from nowhere is the thing that must never be possible.

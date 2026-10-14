@@ -17,7 +17,7 @@ import { barK } from '../abyssintro.js';
 import { owedWound, landsAt } from './barflight.js';
 import { drawFoeStatuses, statusRowH } from './statusicons.js';
 import { blowK } from '../deep/serpent.js';
-import { breakKind, breakFill, rising } from '../deep/phases.js';
+import { breakKind, breakFill, rising, powerFill } from '../deep/phases.js';
 import { depthAt } from '../deep/depth.js';
 import { sheetOf, write, widthOf, sayNum, drawable } from './numfont.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
@@ -26,7 +26,7 @@ import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRA
          BAR_SHARD_PX, BAR_SHARD_HOLD, BAR_SHARD_LIFT, BAR_SHARD_STAGGER_S, BAR_SHARD_POSES, BAR_SHARD_GRAV,
          BAR_SHARD_KICK, BAR_SHARD_FALL_S, BAR_SHARD_FADE_S, BAR_CHIP,
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
-         SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP, RECOIL_FILL_S } from '../config.js';
+         SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP, LEVEL_KNOCK_S } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
@@ -37,7 +37,7 @@ const seen = c => darkPage ? turned(c) : c;
 // flowing in (null while it still is); `refilling` while a break's refill is
 // coming up, which is the new defense or the next level and not a heal, so it
 // has no purple; `level` the level it was last drawn at.
-let level = -1, stage = -1, then = 0, shown = 1, shownTo = 1, healLo = null, healIn = null, refilling = false;
+let level = -1, stage = -1, then = 0, shown = 1, shownTo = 1, healLo = null, healIn = null, refilling = false, tickedAt = -Infinity;
 // Blows from a defense that has broken, whose numbers are still flying in:
 // they land on the new defense's bar but took nothing from it.
 let stale = new WeakSet();
@@ -79,6 +79,14 @@ export function barRect() {
   const mid = b > a ? (a + b) / 2 : S.W / 2;
   const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
   return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w: BAR_W, h: BAR_H };
+}
+// The whole strip on the glass, screen pixels: the row of statuses over the
+// bar, the bar, its pips and its level, and the knock's room. What anything
+// drawn in the water keeps clear of (render/serpent.js, the focus lines).
+export function barZone() {
+  const r = barRect(), row = statusRowH() + STATUS_GAP;
+  const w = BAR_W + pipRoom() * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
+  return { x: r.x - BAR_KNOCK_BIG, y: r.y - row - BAR_KNOCK_BIG, w: w + BAR_KNOCK_BIG * 2, h: row + BAR_H + BAR_KNOCK_BIG * 2 };
 }
 const depthOf = st => depthAt(Math.min(st, SERPENT_PHASES - 1));
 // What the bar shows of the defense up, 0..1: the wound as the numbers that
@@ -126,8 +134,9 @@ function step(t, dt, target) {
     refilling = false;
     level = S.serpentLevel;
   }
-  // The next level, past a recoil: the same defense full again, a refill.
-  if (S.serpentLevel !== level) { if (level >= 0) refilling = true; level = S.serpentLevel; healLo = healIn = null; }
+  // The next level, in a recoil's power-up: the same defense full again, a
+  // notch a mote (deep/phases.js, `powerFill`); the number knocked up as it ticks.
+  if (S.serpentLevel !== level) { if (level >= 0) tickedAt = s; level = S.serpentLevel; healLo = healIn = null; }
   // Away from the deep, the bar's memory is too old to tell: it shows the bar
   // as it stands, with nothing breaking off it.
   if (dt > BAR_STALE_S) { shown = shownTo = target; healLo = healIn = null; refilling = false; shards = []; return; }
@@ -142,7 +151,10 @@ function step(t, dt, target) {
     end = from;
   }
   shownTo = target;
-  if (target < shown) {
+  if (powerFill() != null) {
+    // The power-up's notches are held steps, each mote's own.
+    shown = target; healLo = healIn = null; refilling = false;
+  } else if (target < shown) {
     // Down: a slide over a few hundredths of a second, sub-pixel, and a blow
     // ends any heal still showing.
     shown += (target - shown) * (1 - Math.exp(-dt / BAR_EASE_S));
@@ -155,7 +167,7 @@ function step(t, dt, target) {
     if (refilling) healLo = null;
     else if (healLo == null || healIn != null) { healLo = shown; healIn = null; }
     const pace = !refilling ? BAR_HEAL_RATE
-               : 1 / (breakKind() === 'roar' ? BREAK_ROAR.run : breakKind() === 'dive' ? BREAK_DIVE.out : RECOIL_FILL_S);
+               : 1 / (breakKind() === 'roar' ? BREAK_ROAR.run : BREAK_DIVE.out);
     shown = Math.min(target, shown + dt * Math.max(BAR_FLOW_MIN, Math.min(pace, (target - shown) * BAR_FLOW_EASE)));
     if (shown >= target - BAR_SETTLE) {
       shown = target;
@@ -168,8 +180,10 @@ function step(t, dt, target) {
 }
 
 export function drawSerpentBar() {
-  // A break refills the bar as it plays (deep/phases.js).
-  const t = now(), target = Math.min(barLeft(t), breakFill());
+  // A break refills the bar as it plays, and a recoil's power-up a notch a
+  // mote (deep/phases.js).
+  const t = now(), notch = powerFill();
+  const target = notch != null ? notch : Math.min(barLeft(t), breakFill());
   const dt = then ? Math.max(0, (t - then) / 1000) : 0;
   step(t, dt, target);
   then = t;
@@ -233,7 +247,8 @@ export function drawSerpentBar() {
     const lx = x + BAR_W + pips * (BAR_PIP + BAR_PIP_GAP) + BAR_LEVEL_GAP;
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    write(sheetOf(px, BAR_LEFT, NUM_DROP), says, px, Math.round(lx * u), Math.round((y + BAR_H) * u));
+    const up = t / 1000 - tickedAt < LEVEL_KNOCK_S ? BAR_KNOCK : 0;
+    write(sheetOf(px, BAR_LEFT, NUM_DROP), says, px, Math.round(lx * u), Math.round((y - up + BAR_H) * u));
     ctx.restore();
   }
   // The pieces: held lit in the notch the blow made, where it struck and not

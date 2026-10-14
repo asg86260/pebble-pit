@@ -22,7 +22,7 @@ import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
 import { rockLeft, clampCam } from './world.js';
 import { now } from './clock.js';
-import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, RECOIL, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, RECOIL, NEARDEATH, POWERUP, rungValue } from './config.js';
 import { depthAt } from './deep/depth.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
@@ -451,7 +451,9 @@ const killAt = (a, back = KILL_REFORM_S * 0.5) => () => {
 
 // A level's bar emptied past the story (DESIGN.md, "Endless serpent"): level 3
 // on its last defense one short of empty, the last of it by the hand, and
-// `a` seconds into the recoil, held for the shot.
+// `a` seconds into the recoil (the rear, the near-death, the power-up), held
+// for the shot, the coil's middle on the glass so the brink's lines close in
+// round it.
 function recoilAt(a) {
   deepYard({ level: 3, party: [cast('brawler', 8), cast('mage', 8)] });
   window.__serpent({ wound: depthAt(SERPENT_PHASES - 1) - 1 });
@@ -461,11 +463,12 @@ function recoilAt(a) {
     window.__fast(1 / 60);
   }
   if (a > 1 / 60) window.__fast(a - 1 / 60);
-  // between the head and the belly, so the pose and the wound are both in it
-  lookDeep(coilAt(0, now()).x + S.viewW / 4);
+  lookDeep(coilAt(Math.round(COIL_SEGS * 0.4), now()).x);
   window.__holdShot();
   S.still = true;
 }
+// The seconds into it each part starts, read off the config as phases.js does.
+const REAR_S = RECOIL.snap + RECOIL.hold, BRINK_S = REAR_S + NEARDEATH.crack, POWER_S = BRINK_S + NEARDEATH.brink;
 
 // The finale (finale.js): a yard with a crew of every kind on it -- the gang,
 // haulers and carters, the cut, the plots, the janitors, the wizards -- and a
@@ -942,13 +945,18 @@ const deepScenes = {
   // again, at level 2 on its last defense.
   'deep-endless-rise': { about: 'the deep', say: 'after the story\'s kill, the serpent back: level 2 on its last defense, no pips, no ribs',
     run: killAt(null, KILL_REFORM_S + 0.6) },
-  // A level's bar emptied: the recoil's smear frame, its held pose, and the
-  // next level just after it.
-  'deep-recoil-snap': { about: 'the deep', say: 'a level\'s bar emptied: the recoil\'s smear frame, past the pose', run: () => recoilAt(RECOIL.snap / 2) },
-  'deep-recoil': { about: 'the deep', say: 'a level\'s bar emptied: the serpent held in its recoil, the bar empty, level 3',
-    run: () => recoilAt(RECOIL.snap + RECOIL.hold / 2) },
-  'deep-recoil-next': { about: 'the deep', say: 'just past a recoil: level 4 on the bar, the bar filling again',
-    run: () => recoilAt(RECOIL.snap + RECOIL.hold + RECOIL.back + 0.25) },
+  // A level's bar emptied: the near-death (the cracks run, the brink, the
+  // light coming through), the power-up's motes, and the next level at rest.
+  'deep-neardeath-cracks': { about: 'the deep', say: 'a level\'s bar emptied: out of the rear, the cracks run over the whole body, the head down',
+    run: () => recoilAt(REAR_S + NEARDEATH.crack - 0.02) },
+  'deep-neardeath-brink': { about: 'the deep', say: 'on the brink: crazed snout to tail, the focus lines closed in to their last step',
+    run: () => recoilAt(BRINK_S + NEARDEATH.brink - 0.02) },
+  'deep-neardeath-light': { about: 'the deep', say: 'the light comes through: the cracks lit from the belly out, the lines purple, the first motes crossing',
+    run: () => recoilAt(POWER_S + POWERUP.lightStep * POWERUP.lightSteps + 0.01) },
+  'deep-powerup-motes': { about: 'the deep', say: 'the deep drawn in: motes crossing to the hide, the coil wound tight, level 4 and the bar half full',
+    run: () => recoilAt(POWER_S + POWERUP.len * 0.55) },
+  'deep-powerup-done': { about: 'the deep', say: 'just past it: level 4, the bar full, the coil whole and at rest',
+    run: () => recoilAt(POWER_S + POWERUP.len + POWERUP.letGo + 0.25) },
   // The finale (finale.js), a moment of each of its parts.
   'finale-kill': { about: 'the deep', say: 'the finale from the top: a full yard, the last blow just landed', run: finaleAt('kill') },
   'finale-gear': { about: 'the deep', say: 'the finale: her gear going back onto her station in held steps, him beside her', run: finaleAt('hang', 0.4) },

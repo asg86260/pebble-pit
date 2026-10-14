@@ -30,17 +30,20 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
          SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP, ORB_STEP, ORB_GHOSTS,
-         BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W } from '../config.js';
+         BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
+         NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
-import { coilLine, coilThick, mouthX, deepFloor, bellyAt } from '../deep/place.js';
+import { coilLine, coilThick, mouthX, deepFloor, bellyAt, deepTop, deepX0, deepX1, coilEnds } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, caged, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift, recoilGape } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, caged, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift, recoilGape, recoilPose, powerMotes } from '../deep/phases.js';
 import { freedBody, jawAt, headLeft } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
+import { seen } from './deeptones.js';
+import { barZone, barShown } from './serpentbar.js';
 import { drawBody, drawSaying } from './crew.js';
 import { hisHop, hisSay } from '../abyssintro.js';
 import { swellAt } from './cores.js';
@@ -208,7 +211,12 @@ function drawCoil() {
   const bit = bites(t, alongAt);
   const bellyA = alongAt(BELLY_AT * (COIL_SEGS - 1)), headA = alongAt(0);
   const gap = cage ? Math.round(wk * WOUND_GAP / P) * P : 0;
-  const reach = wk * CRACK_REACH;
+  // A level's bar emptied (deep/phases.js, `recoilPose`): the cracks run over
+  // the whole body, a third line with them, and fill with light out from the
+  // belly, sealing from their tips as the deep pours in.
+  const pose = recoilPose(), posed = !!pose && pose.reach != null;
+  const reach = posed ? pose.reach : wk * CRACK_REACH;
+  const light = pose ? pose.lit : null, seal = !!pose && pose.seal;
   const wardPh = t / WARD_MS * Math.PI * 2;
   // The resist up shows on the hide: the ward's purple shimmer for magic,
   // plates for physical; the coming one flickers in before the fading's
@@ -337,8 +345,15 @@ function drawCoil() {
     if (reach > 0 && Math.abs(da) < reach) {
       const w1 = Math.sin(along / (P * 2.3)) * r * 0.5;
       const w2 = Math.sin(along / (P * 3.1) + 2) * r * 0.55;
-      if (Math.abs(across - w1) < P * 0.6 || (Math.abs(across - w2) < P * 0.6 && seeth(aI, 7) % 3)) {
-        ramp = GREYS; rung = 1 + Math.round(3 * Math.abs(da) / reach);
+      const w3 = posed ? Math.sin(along / (P * 1.7) + 4) * r * 0.6 : 0;
+      if (Math.abs(across - w1) < P * 0.6 || (Math.abs(across - w2) < P * 0.6 && seeth(aI, 7) % 3)
+          || (posed && Math.abs(across - w3) < P * 0.5 && seeth(aI, 3) % 2)) {
+        const d = Math.abs(da);
+        if (light != null && d <= light) {
+          // the light's front bright as it runs out, and the sealing edge
+          ramp = PURPLES;
+          rung = (light < NEARDEATH.full && d > light - POWERUP.seam) || (seal && d > reach - POWERUP.seal) ? WHITE : WHITE - 1 - (seeth(aI, cI) % 2);
+        } else { ramp = GREYS; rung = 1 + Math.round(3 * d / reach); }
       }
     }
     // Teeth along the open jaws' edges, and the lump dark through the hide.
@@ -397,6 +412,7 @@ function drawCoil() {
   for (const p of pts) if (Math.abs(p.along - ringA) < P && (!head || Math.abs(p.along - ringA) < Math.abs(head.along - ringA))) head = p;
   drawStatuses(t / 1000);
   drawStunRing(t, head);
+  if (pose && pose.ps != null) drawPowerMotes(pose.ps, pts);
   if (whole) drawMealCrosses(t, pts, bellyA);
   ctx.globalAlpha = 1;
   drawVeil(t, pts);
@@ -421,6 +437,82 @@ function drawMealCrosses(t, pts, bellyA) {
     const x = snap(p.x - p.nx * p.r), y = snap(p.y - p.ny * p.r) - (2 + Math.floor(b * MEAL_CROSS_RISE)) * P;
     ctx.fillStyle = PURPLES[Math.max(2, WHITE - Math.floor(b * 7))];
     for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) ctx.fillRect(x + dx * P, y + dy * P, P, P);
+  }
+}
+
+// --- the power-up and the brink, as drawn ---------------------------------------
+// The motes (deep/phases.js, `powerMotes`): out of the water round the body,
+// two cells square so a mote reads at the deep's scale, each crossing to its
+// place on the hide in held steps with a dim smear a step behind and a cell
+// of it halfway, then a spark there, ringed on its first frames. Purple, and
+// every third the water's own grey flecks.
+const FLECKS = DEEP_MOTE_TINTS.fleck.tones.map(seen);
+const BLOB = [[0, 0], [1, 0], [0, 1], [1, 1]];
+const MOTE_OFF = 1 / COIL_SEGS;
+const RING = [[2, 0], [-1, 0], [0, 2], [0, -1], [3, 1], [-2, 1], [1, 3], [1, -2]];
+function drawPowerMotes(ps, pts) {
+  const PU = POWERUP, cells = (x, y, tone, at) => {
+    ctx.fillStyle = tone;
+    for (const [ox, oy] of at) ctx.fillRect(snap(x) + ox * P, snap(y) + oy * P, P, P);
+  };
+  for (const q of powerMotes) {
+    const a = ps - q.launch;
+    if (a < 0 || a >= PU.cross + PU.spark) continue;
+    let p = pts[0];
+    for (const s of pts) if (Math.abs(kOf(s) - q.k) < Math.abs(kOf(p) - q.k)) p = s;
+    if (Math.abs(kOf(p) - q.k) > MOTE_OFF) continue;       // its place on the hide is off the glass
+    if (a >= PU.cross) {
+      cells(p.x, p.y, PURPLES[WHITE], BLOB);
+      if (a < PU.cross + PU.ring) cells(p.x, p.y, PURPLES[WHITE - 1], RING);
+      continue;
+    }
+    const step = Math.floor(a / (PU.cross / PU.crossSteps)), f = step / PU.crossSteps, f0 = Math.max(0, step - 1) / PU.crossSteps;
+    const at = g => ({ x: p.x + q.dx * P * (1 - g), y: p.y + q.dy * P * (1 - g) });
+    if (step > 0) {
+      const b = at(f0), h = at((f + f0) / 2);
+      cells(b.x, b.y, PURPLES[5], BLOB);
+      cells(h.x, h.y, PURPLES[7], BLOB);
+    }
+    const c = at(f);
+    cells(c.x, c.y, q.grey ? FLECKS[q.i % FLECKS.length] : PURPLES[WHITE - (q.i % 2)], BLOB);
+  }
+}
+
+// The brink's focus lines: rays in the water toward the coil's middle, each
+// starting a ragged way in from the glass's edge (1, measured to each edge
+// on its own side, so a coil off the middle of the glass closes in evenly),
+// closing in as `rIn` drops (deep/phases.js). Behind the floor, the stations
+// and everything in front of them, and never over the serpent's bar.
+export function drawFocusLines() {
+  if (S.view !== 'deep') return;
+  const pose = recoilPose(), L = pose && pose.lines;
+  if (!L) return;
+  const ND = NEARDEATH, { x0, y0, x1, y1 } = deepWindow();
+  const left = Math.max(x0, deepX0()), right = Math.min(x1, deepX1()), bottom = Math.min(y1, deepFloor());
+  const ends = coilEnds();
+  const cx = Math.max(x0 + P, Math.min(x1 - P, (ends.x0 + ends.x1) / 2));
+  const cy = Math.max(y0 + P, Math.min(y1 - P, deepTop() + COIL_Y * DEEP_H));
+  const z = barShown() ? barZone() : null;
+  const zx0 = z ? S.camX + z.x / S.zoom : 0, zx1 = z ? S.camX + (z.x + z.w) / S.zoom : 0;
+  const zy0 = z ? S.camY + z.y / S.zoom : 0, zy1 = z ? S.camY + (z.y + z.h) / S.zoom : 0;
+  const ramp = L.purple ? PURPLES : GREYS, N = ND.lineRays;
+  const lit = [[], []];
+  for (let y = y0; y < bottom; y += P) {
+    const my = y + P / 2, ny = (my - cy) / (my >= cy ? y1 - cy : cy - y0);
+    for (let x = left; x < right; x += P) {
+      if (z && x + P > zx0 && x < zx1 && y + P > zy0 && y < zy1) continue;
+      const mx = x + P / 2, nx = (mx - cx) / (mx >= cx ? x1 - cx : cx - x0);
+      const rr = Math.sqrt(nx * nx + ny * ny);
+      if (rr < L.rIn) continue;
+      const slot = (Math.atan2(ny, nx) / (2 * Math.PI) + 1) * N, idx = Math.floor(slot) % N;
+      if (rr < L.rIn + unit(idx + 9) * ND.lineRagged) continue;
+      if (slot - Math.floor(slot) < ND.lineW + ND.lineWRand * unit(idx)) lit[idx % 2].push(x, y);
+    }
+  }
+  for (let k = 0; k < 2; k++) {
+    ctx.fillStyle = ramp[L.tones[k]];
+    const c = lit[k];
+    for (let i = 0; i < c.length; i += 2) ctx.fillRect(c[i], c[i + 1], P, P);
   }
 }
 
