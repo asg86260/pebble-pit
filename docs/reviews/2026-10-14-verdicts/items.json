@@ -1,0 +1,241 @@
+{
+ "title": "Your verdicts, applied",
+ "lede": "Before is what you reviewed (the visual pass and B4); after is main now. Approve, deny or comment as before.",
+ "base": "e243c0a0",
+ "head": "21e10cc2",
+ "items": [
+  {
+   "id": "fades",
+   "title": "Fades are smooth opacity again",
+   "what": "Your verdict: opacity fades are animation, outside the palette. Every stepped fade is back to a smooth one.",
+   "shots": [
+    {
+     "label": "the dome fading out",
+     "scene": "dome-",
+     "wait": 0,
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      200,
+      200,
+      800,
+      420
+     ],
+     "zoom": 0.75,
+     "gif": {
+      "seconds": 1.2,
+      "fps": 20
+     }
+    },
+    {
+     "label": "notices coming up on the noticeboard",
+     "scene": "notices",
+     "wait": 0,
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      300,
+      420,
+      260,
+      180
+     ],
+     "zoom": 2,
+     "gif": {
+      "seconds": 3,
+      "fps": 10
+     }
+    }
+   ]
+  },
+  {
+   "id": "lightning",
+   "title": "The lightning flash is back",
+   "what": "A strike flashes the window white again, as before the pass.",
+   "shots": [
+    {
+     "label": "a strike, frame by frame",
+     "scene": "lightningflash",
+     "wait": 0,
+     "window": [
+      800,
+      600
+     ],
+     "zoom": 0.75,
+     "gif": {
+      "seconds": 2,
+      "fps": 10
+     }
+    }
+   ]
+  },
+  {
+   "id": "masses",
+   "title": "Masses are flat again",
+   "what": "The muck band, the hill's deep core, the star's crust and the cauldrons lose the dealt neighboring tones.",
+   "shots": [
+    {
+     "label": "muck band",
+     "scene": "messtags",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      100,
+      470,
+      600,
+      110
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "the hill's deep core",
+     "scene": "rockhalf",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      460,
+      440,
+      280,
+      160
+     ],
+     "zoom": 3
+    },
+    {
+     "label": "the star's crust",
+     "scene": "westend",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      190,
+      110,
+      160,
+      140
+     ],
+     "zoom": 4
+    },
+    {
+     "label": "cauldrons",
+     "scene": "apothshelf",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      460,
+      480,
+      300,
+      120
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "lever",
+   "title": "The casino lever's arm is a moving stroke again",
+   "what": "The arm is the sloped stroke again, not cells; written down as an exception to 'no sloped strokes'.",
+   "shots": [
+    {
+     "label": "the casino's lever",
+     "scene": "casinoidle",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      740,
+      90,
+      120,
+      100
+     ],
+     "zoom": 4
+    },
+    {
+     "label": "the lever pulled",
+     "scene": "casinopour",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      740,
+      90,
+      120,
+      100
+     ],
+     "zoom": 4
+    }
+   ]
+  },
+  {
+   "id": "warning",
+   "title": "The pile-full warning is the old triangle",
+   "what": "The hollow triangle with a bar and a dot is back in place of the cell bitmap.",
+   "shots": [
+    {
+     "label": "warning mark",
+     "scene": "marks",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      530,
+      560,
+      80,
+      70
+     ],
+     "zoom": 4
+    }
+   ]
+  },
+  {
+   "id": "deep-fades",
+   "title": "The deep's B4 palette, with smooth fades",
+   "what": "B4 as you approved it, except the recede over the deep, the silt and the stars fade by opacity instead of stepping down tones.",
+   "shots": [
+    {
+     "label": "the deep receding as the scene closes",
+     "scene": "deep-kill-start",
+     "wait": 0,
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.6,
+     "gif": {
+      "seconds": 2,
+      "fps": 10
+     }
+    },
+    {
+     "label": "freed",
+     "scene": "deep-freed",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.6
+    },
+    {
+     "label": "the floor",
+     "scene": "deep-all",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.6
+    }
+   ]
+  }
+ ]
+}

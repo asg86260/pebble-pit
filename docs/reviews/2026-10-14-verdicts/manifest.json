@@ -1,0 +1,136 @@
+{
+ "base": "e243c0a0538de36f6f723a8db4c9402e38c0ce2f",
+ "head": "21e10cc27d39c1f3d5dff4ac0e6c659ebb0c0f2d",
+ "at": "2026-10-14T21:39:27.409Z",
+ "items": {
+  "fades": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   }
+  ],
+  "lightning": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   }
+  ],
+  "masses": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 3,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 4,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ],
+  "lever": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ],
+  "warning": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ],
+  "deep-fades": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 3,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ]
+ }
+}
