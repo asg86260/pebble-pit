@@ -50,13 +50,14 @@ html, body {
      the deep's story card and every section sign are that. */
   --c-paper: #fff; --c-ink: #000;
   --paper: var(--c-paper); --ink: var(--c-ink);
-  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf;
+  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #a4a4a4; --ink-8: #cfcfcf;
   /* The one accent: purple, for anything outside the black and white -- the
-     keyboard's focus, the deep's capstones and asks. The pad's marker's color
-     (PAD_ACCENT and PAD_DEEP_ACCENT in config/pad.js). */
-  --accent: #6f36c9;
-  /* The coins, the marks' own colors (FIND_COLOR in config/view.js); dark
-     mode takes the palest rung of each, so a mark keeps 3:1 on dark paper. */
+     keyboard's focus, the deep's capstones and asks. A rung of PURPLE in
+     config/palette.js (the pad's marker's, PAD_ACCENT); the dark page takes
+     a brighter rung, so it keeps 3:1 on charcoal. */
+  --accent: #6a2fbe;
+  /* The coins: COIN and COIN_DARK in config/palette.js, the one source the
+     yard draws them from too (test/ui-tokens.test.mjs holds the two equal). */
   --coin-ore: #2f5fd0; --coin-crop: #2e9e4b; --coin-spark: #d93a25;
   /* The page's dot texture -- one cell in six, in the ink at a seventh -- as
      one value a mode, since a data URI cannot read a variable. */
@@ -131,8 +132,8 @@ html.dark {
   --c-paper: #1f1f1f; --c-ink: #e0e0e0;
   --paper: var(--c-paper); --ink: var(--c-ink);
   --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
-  --accent: #a979ef;
-  --coin-ore: #5b83e0; --coin-crop: #3aa957; --coin-spark: #e8503a;
+  --accent: #9b5de5;
+  --coin-ore: #7d9cf0; --coin-crop: #6fd08a; --coin-spark: #f06a55;
   --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 body :not(canvas):not(#scroller):not(#spacer):not(.handle) { touch-action: manipulation; }
@@ -271,6 +272,8 @@ canvas {
   left: 0; right: 0; top: auto; bottom: 0;
   transform: none;
   max-height: none; overflow-y: auto; overscroll-behavior: contain;
+  /* the glass's width, not the desk's one width for every page */
+  max-width: none;
   align-items: center;
   padding: 6px var(--pad-l-x) calc(var(--pad-l-y) + var(--sheet-hidden, 0px) + env(safe-area-inset-bottom, 0px));
   opacity: 1;
@@ -2068,7 +2071,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 body.still .messtag { transition: none; }
 .messtag .warn { width: 14px; height: 13px; flex: none; }
 /* the pile mark's paper and ink, the right way round on the black card */
-.messtag .tri { fill: var(--paper); stroke: var(--ink); stroke-width: .17; }   /* r / 6, as drawTriangle */
+.messtag .tri { fill: var(--paper); stroke: var(--ink); stroke-width: .17; }   /* a sixth of the radius, the pile mark's rim (render/pilemarks.js, warning) */
 .messtag .sign { fill: var(--ink); }
 /* the count, behind a hairline, wide enough for two figures so the card
    does not breathe with every cell swept */

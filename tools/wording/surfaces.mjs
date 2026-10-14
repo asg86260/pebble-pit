@@ -609,7 +609,7 @@ export const SURFACES = [
       ids: ['other-skip-touch'] },
     { file: 'phone-index-entry', clip: 'full',
       setup: `window.__scene('indexphoneentry'); await W.sleep(600);`,
-      ids: ['held-index-entryback', 'held-index-word'] },
+      ids: ['held-index-word', 'held-indexback'] },
   ] },
 ];
 

@@ -99,16 +99,22 @@ export const TESTS = [
       ix.querySelector('.it[data-key="rockhand"]')?.click();
       await frame();
       const pushed = !vis(list()) && vis(entry()) && entry().querySelector('.name')?.textContent === 'diggers';
-      const pageBack = vis(d.getElementById('indexback'));
-      ix.querySelector('.ixback')?.click();
+      // one back, the page's own at the foot: while an entry is read it goes
+      // to the list rather than off the page
+      const pageBack = vis(d.getElementById('indexback')) && !ix.querySelector('.entry button');
+      d.getElementById('indexback').click();
       await frame();
-      const back = vis(list()) && !vis(entry()) && !d.getElementById('held').hidden;
+      const back = vis(list()) && !vis(entry()) && !d.getElementById('held').hidden && !ix.hidden;
+      d.getElementById('indexback').click();
+      await frame();
+      const front = ix.hidden && !d.getElementById('resume').hidden;
       return [
         ok(w.innerWidth === 390, 'a 390px glass', `${w.innerWidth}px`),
         ok(listFirst, 'the index opens on the list alone'),
         ok(pushed, 'a pick pushes its entry over the list'),
-        ok(!pageBack, 'with one back on the page, the entry\'s own'),
-        ok(back, 'and that back brings the list again, the sheet still up'),
+        ok(pageBack, 'one back on the page, the page\'s own at the foot'),
+        ok(back, 'and while an entry is read it brings the list again, the sheet still up'),
+        ok(front, 'and from the list it turns back to the front'),
       ];
     } finally { f.remove(); }
   }],

@@ -469,13 +469,6 @@
   "text": "in window.__save"
  },
  {
-  "id": "held-index-entryback",
-  "group": "Sheets",
-  "where": "src/indexpage.js",
-  "context": "index entry back button on phone",
-  "text": "back"
- },
- {
   "id": "cloud-head",
   "group": "Sheets",
   "where": "src/cloudsheet.js",
