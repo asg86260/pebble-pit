@@ -6,7 +6,8 @@
 // front of it and the mouth's gape is the only place it shows inside.
 //
 // Only drawn: which creature and when are `deep/meals.js`, off the saved meal
-// counter, and the heal itself is the sim's (`deep/serpent.js`).
+// counter, and the heal itself is the sim's (`deep/serpent.js`); where the
+// stream's creatures are, and which are reacting to a click, `deep/flow.js`.
 
 import { now } from '../clock.js';
 import { S } from '../state.js';
@@ -14,11 +15,11 @@ import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { coilLine } from '../deep/place.js';
 import { mealNow, nearAt, nearAll, eatenBefore, nowS, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
-import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_SWIM_CELLS, MEAL_HINGE, MEAL_SQUEEZE,
-         FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED,
-         FLOW_NEAR_BAND, FLOW_KINDS, FLOW_LENGTHS, DEEP_H, COIL_Y, SERPENT_PHASES, FLOW_FAR_ZONES } from '../config.js';
-import { zoneOf, ROWS } from '../deep/fauna.js';
-import { deepTop, deepFloor, deepX0, deepX1 } from '../deep/place.js';
+import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SQUEEZE,
+         FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED, FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
+         FAUNA_SMEAR } from '../config.js';
+import { nearY, crossings, farCell, farY, water, streamPose } from '../deep/flow.js';
+import { STEP } from '../deep/react.js';
 
 // The mock's tones, on the deep's own ramps.
 const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
@@ -154,11 +155,61 @@ if (SP.length !== FLOW_KINDS) throw new Error('fish: FLOW_KINDS is the creatures
 export const drawKind = (k, put, t) => SP[k].draw(put, t);
 export const bobOf = (k, t) => SP[k].bob(t);
 
+// --- a click's reaction ---------------------------------------------------------
+// The owner's A for each of the eight (docs/mocks/creature-clicks-2026-10-13.html),
+// the pose off deep/flow.js: moved along and down its own cells, its drawing
+// held at a moment (`clock`) or run quick (`gain`), and the cells a pose adds.
+// The angler's bulb ringed while it is held lit:
+const HALO = [[1, -5], [1, -4], [-2, -5], [-2, -4], [0, -6], [-1, -6], [0, -3], [-1, -3]];
+// The blob's five mouths, the order they shut in:
+const MOUTHS = [[3, 0], [7, -2], [9, 2], [5, 3], [12, 0]];
+// The ribbon eel tied in a knot `k` tight: the head straight, a loop thrown
+// behind it, the tail swimming on.
+function knotEel(put, t, k) {
+  const r = 2.6 * k;
+  for (let i = 0; i < 26; i++) {
+    let lx, ly;
+    if (i < 3) { lx = i; ly = 0; }
+    else if (i < 17) { const a = (i - 3) / 14 * Math.PI * 2; lx = 3 + Math.sin(a) * r + (i - 3) * 0.25; ly = -r + Math.cos(a) * r; }
+    else { lx = 6.5 + (i - 16); ly = Math.round(Math.sin(i / 2.4 - t * 7) * 0.8); }
+    put(Math.round(lx), Math.round(ly), Pu[i < 3 ? 7 : 6]);
+    if (i < 3 || i >= 17) put(Math.round(lx), Math.round(ly) + 1, Pu[i % 4 < 2 ? 8 : 7]);
+  }
+  put(1, -1, G[5]);
+}
+// One creature of kind `k` into `put` (its own frame: x back from the front
+// tip), on its own clock `t`, in `pose` or its own swim when that is null.
+function drawPosed(k, put, t, pose) {
+  if (!pose) { SP[k].draw(put, t); return; }
+  const at = (x, y, tone) => put(x - pose.dx, y + pose.dy, tone);
+  const clock = pose.clock ?? t + pose.gain;
+  if (k === 1 && pose.knot) knotEel(at, clock, pose.knot);
+  else SP[k].draw(at, clock);
+  if (k === 0 && pose.halo) for (const [x, y] of HALO) at(x, y, Pu[4]);
+  if (k === 6 && pose.mouths) for (const [x, y] of MOUTHS.slice(0, pose.mouths)) { at(x, y, BLACK); at(x, y + 1, BLACK); at(x + 1, y, G[5]); }
+}
+// The smear: a pose that moved two cells or more since the last held one
+// leaves the last drawn under it, darker.
+const smearTone = new Map();
+for (const ramp of [GREYS, PURPLES]) ramp.forEach((c, i) => smearTone.set(c, ramp[Math.max(1, i - FAUNA_SMEAR.rungs)]));
+function drawReacting(k, put, t, poseNow, poseThen) {
+  if (poseNow && poseThen) {
+    const moved = Math.abs(poseNow.dx - poseThen.dx) + Math.abs(poseNow.dy - poseThen.dy);
+    if (moved >= FAUNA_SMEAR.moved && moved < FAUNA_SMEAR.far)
+      drawPosed(k, (x, y, tone) => put(x, y, smearTone.get(tone) || tone), t - STEP, poseThen);
+  }
+  drawPosed(k, put, t, poseNow);
+}
+// A stream creature's pose now and a held step ago, on its own clock.
+const posesOf = (key, kind, t) => {
+  const now0 = streamPose(key, kind, t);
+  return [now0, now0 && now0.s >= STEP ? streamPose(key, kind, t - STEP) : null];
+};
+
 // --- the near stream and the meal, in the world ------------------------------------
 // Where each near creature is, and which one a meal is, are the sim's
-// (deep/meals.js); here they are drawn. A creature's height: its lane in the
-// band over the coil's middle, bobbing; the meal's drifts to the mouth's.
-const laneY = (c, t) => deepTop() + COIL_Y * DEEP_H - FLOW_NEAR_BAND * (0.2 + c.lane) + Math.sin((t - c.at) * 1.3 + c.at) * P * 2;
+// (deep/meals.js, deep/flow.js); here they are drawn. The meal's height
+// drifts from its lane to the mouth's.
 
 // Which creature meal `n` is, for the swallow's size (render/serpent.js).
 let lastMeal = { n: -1, kind: 0 };
@@ -172,13 +223,17 @@ export function drawFish() {
   const t = nowS(), head = coilLine(0, now());
   const mouthCol = Math.floor((head.x - SNOUT) / P), mouthRow = Math.round(head.y / P);
   const c = nearAt(meal.i, t), sp = SP[meal.kind];
+  // A click is not taken on the meal close to its turn (deep/flow.js), but a
+  // window moved after the click can make a reacting creature the meal: its
+  // reaction plays out on the swim in, short of the jaws, rather than stop.
+  const [pose, then] = posesOf('n' + meal.i, meal.kind, t);
   // Its own path and pace to the mouth; only its height drifts to the mouth's.
   // At the bite its front is at the tip of the jaws; then it is pulled in.
   const s = Math.max(0, Math.min(1, 1 - (toLand - BITE_BEFORE) / MEAL_SWIM_S)), e = ease(s);
   const gulp = Math.max(0, Math.min(1, (BITE_BEFORE - toLand) / MEAL_GULP_S));
   const front = c ? Math.min(c.x / P, mouthCol) : mouthCol;
   const col0 = Math.round(front + gulp * (sp.L + 1));
-  const fromY = c ? laneY(c, t) / P : mouthRow;
+  const fromY = c ? nearY(c, t) / P : mouthRow;
   const row0 = Math.round(fromY + (mouthRow - fromY) * e);
   const paint = (cc, r, tone) => { ctx.fillStyle = tone; ctx.fillRect(Math.round(cc) * P, Math.round(r) * P, P, P); };
   // Going in it is squeezed toward the mouth's line, and a cell past the tip
@@ -190,19 +245,15 @@ export function drawFish() {
     if (d >= 0 && (d >= MEAL_HINGE || Math.abs(r - mouthRow) >= jawGap(d, open))) return;
     paint(cc, r, tone);
   };
-  sp.draw(put, t);
+  drawReacting(meal.kind, put, t, pose, then);
 }
 
 // --- the stream -----------------------------------------------------------------
-// Drawn on the glass rather than in the world: each depth slides with
-// FLOW_PARALLAX of the camera's pan, and a crossing wraps round only off the
-// glass, so nothing appears in the water. Which creature, which way and how
-// deep is a fixed schedule off the clock, the same on every draw.
+// Drawn on the glass rather than in the world (deep/flow.js places them).
 const darker = new Map();
 for (const ramp of [GREYS, PURPLES]) ramp.forEach((c, i) => darker.set(c, ramp[Math.max(1, i - 4)]));
 const FAR = PURPLES[3], GIANT = PURPLES[1];
 const toneAt = (d, c) => (d === 2 ? c : d === 1 ? (darker.get(c) || c) : FAR);
-const depthOf = h => (h < FLOW_SHARE[0] ? 0 : h < FLOW_SHARE[0] + FLOW_SHARE[1] ? 1 : 2);
 
 function onGlass(draw) {
   if (S.view !== 'deep' || !S.snatched) return;
@@ -211,45 +262,15 @@ function onGlass(draw) {
   draw();
   ctx.restore();
 }
-// The water's band on the glass, top to bottom.
-const water = () => ({ top: (deepTop() - S.camY) * S.zoom, bottom: (deepFloor() - S.camY) * S.zoom });
 
-// Each depth's track runs, on its own sliding plane, from off the glass with
-// the camera at the deep's left end to off the glass with it at the right:
-// whatever the view, a crossing starts and ends out of sight. The schedule
-// runs a whole crossing ahead of the clock, so the water is full from the
-// first frame.
-function track(d) {
-  const z = S.zoom * FLOW_PARALLAX[d];
-  return { from: deepX0() * z - FLOW_MARGIN, to: Math.max(deepX0(), deepX1() - S.viewW) * z + S.W + FLOW_MARGIN };
-}
-const AHEAD = () => (Math.max(...[0, 1].map(d => track(d).to - track(d).from)) / (Math.min(...FLOW_SPEED) * 0.8));
-function crossings(want, now0) {
-  const out = [], ahead = AHEAD(), t = now0 + ahead;
-  for (let i = Math.max(0, Math.floor((t - ahead) / FLOW_EVERY_S) - 1); i <= Math.floor(t / FLOW_EVERY_S); i++) {
-    const at = i * FLOW_EVERY_S + unit(i * 31) * FLOW_EVERY_S;
-    const d = depthOf(unit(i * 5));
-    if (!want(d) || at > t) continue;
-    const { from, to } = track(d), span = to - from;
-    const dir = unit(i * 7) < 0.5 ? 1 : -1, speed = FLOW_SPEED[d] * (0.8 + unit(i * 19) * 0.4);
-    const run = (t - at) * speed;
-    if (run > span) continue;
-    const x = (dir > 0 ? from + run : to - run) - S.camX * S.zoom * FLOW_PARALLAX[d];
-    out.push({ d, dir, x, at, kind: Math.floor(unit(i * 13) * SP.length), y: unit(i * 17) });
-  }
-  return out;
-}
 function drawCrossing(c, t) {
-  const { top, bottom } = water(), band = bottom - top;
-  const cell = Math.max(1, Math.round(P * S.zoom * FLOW_CELL[c.d]));
-  // each depth in its own zones (FLOW_FAR_ZONES), above the fight's band
-  const [hi, lo] = FLOW_FAR_ZONES[c.d].map(zoneOf), from = hi.from / ROWS, to = lo.to / ROWS;
-  const y = top + band * (from + c.y * (to - from)) + Math.sin((t - c.at) * 1.3 + c.at) * cell * 2;
+  const cell = farCell(c), y = farY(c, t);
   const put = (lx, ly, tone) => {
     ctx.fillStyle = toneAt(c.d, tone);
     ctx.fillRect(Math.round((c.x - c.dir * lx * cell) / cell) * cell, Math.round((y + ly * cell) / cell) * cell, cell, cell);
   };
-  SP[c.kind].draw(put, t + c.at);
+  const [pose, then] = posesOf('f' + c.i, c.kind, t);
+  drawReacting(c.kind, put, t + c.at, pose, then);
 }
 
 // Behind everything in the deep: the giant, then the far and middle crossings.
@@ -277,10 +298,12 @@ export function drawFishNear() {
   if (meal && meal.toLand <= BITE_BEFORE + MEAL_SWIM_S) gone.add(meal.i);
   for (const c of nearAll(t)) {
     if (gone.has(c.i)) continue;
-    const sp = SP[c.kind], row = Math.round(laneY(c, t) / P);
-    sp.draw((x, y, tone) => {
+    const row = Math.round(nearY(c, t) / P);
+    const [pose, then] = posesOf('n' + c.i, c.kind, t);
+    drawReacting(c.kind, (x, y, tone) => {
       ctx.fillStyle = tone;
       ctx.fillRect(Math.round(c.x / P - c.dir * x) * P, (row + y) * P, P, P);
-    }, t + c.at);
+    }, t + c.at, pose, then);
   }
 }
+

@@ -53,6 +53,7 @@ import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
 import { clickDeep, onOrb } from './deep/serpent.js';
 import { startleFauna, overFauna } from './deep/fauna.js';
+import { startleStream, overStream } from './deep/flow.js';
 import { nearestSeg, coilThick } from './deep/place.js';
 import { stops, stopMid } from './stops.js';
 
@@ -186,9 +187,10 @@ canvas.addEventListener('pointerdown', e => {
   if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
   if (onPortal(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
   if (S.view === 'deep' && clickDeep(p.x, p.y)) return;
-  // A creature of the deep startles as a bird does, unless a station stands
-  // over it: the station is drawn in front, so the click is the station's.
-  if (S.view === 'deep' && !atStation(p.x, p.y) && startleFauna(p.x, p.y)) return;
+  // A creature of the deep, a zone's or the stream's, startles as a bird
+  // does, unless a station stands over it: the station is drawn in front, so
+  // the click is the station's.
+  if (S.view === 'deep' && !atStation(p.x, p.y) && (startleFauna(p.x, p.y) || startleStream(p.x, p.y))) return;
   // the sky first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
   // then the controls that stand in the yard, before the ground behind them:
@@ -611,7 +613,7 @@ const CURSORS = [
   [(x, y) => overAnyMark(x, y), 'help'],
   [(x, y) => inRect(dialRect(), x, y), 'help'],
   [(x, y) => overBird(x, y), 'pointer'],
-  [(x, y) => S.view === 'deep' && overFauna(x, y), 'pointer']
+  [(x, y) => S.view === 'deep' && (overFauna(x, y) || overStream(x, y)), 'pointer']
 ];
 
 // The marks `askedAbout` shows a tooltip for, asked without showing one: the

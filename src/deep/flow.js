@@ -1,0 +1,153 @@
+// The deep's stream (DESIGN.md, "The serpent eats to heal"; the owner's C,
+// docs/mocks/deep-flow-2026-10-03.html): where its creatures are, and a
+// click on one. The near stream swims the world (deep/meals.js keeps its
+// schedule, which the meals are picked from); the far and middle crossings
+// slide on the glass at their own parallax, a fixed schedule off the clock.
+// render/fish.js draws both from here.
+//
+// A click on one (the owner's A for each kind, FLOW_REACT) plays its
+// reaction over its path and shakes loose the bird's handful, as a zone
+// creature's does. The reaction is picture only: the stream's paths and the
+// meal's timing never read it, so a meal is due when it was due. The near
+// creature a meal is, or is about to be before its reaction would be over,
+// is not there to be clicked.
+
+import { S } from '../state.js';
+import { P, DEEP_H, COIL_Y, FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN,
+         FLOW_NEAR_BAND, FLOW_FAR_ZONES, FLOW_KINDS, FLOW_LENGTHS, FLOW_HEIGHTS, FLOW_REACT, FAUNA_SCALES, BIRD_REACH, SERPENT_PHASES, MEAL_SWIM_S } from '../config.js';
+import { now } from '../clock.js';
+import { unit, zoneOf, ROWS } from './fauna.js';
+import { deepTop, deepFloor, deepX0, deepX1 } from './place.js';
+import { nearAll, nowS, mealNow, eatenBefore, BITE_BEFORE } from './meals.js';
+import { shed } from './scales.js';
+import { poseAt, playing } from './react.js';
+
+// --- the near stream ------------------------------------------------------------
+// A near creature's height, world pixels: its lane in the band over the
+// coil's middle, bobbing.
+export const nearY = (c, t) => deepTop() + COIL_Y * DEEP_H - FLOW_NEAR_BAND * (0.2 + c.lane) + Math.sin((t - c.at) * 1.3 + c.at) * P * 2;
+
+// --- the far and middle crossings -----------------------------------------------
+// On the glass: each depth slides with FLOW_PARALLAX of the camera's pan, and
+// a crossing wraps round only off the glass, so nothing appears in the water.
+// Which creature, which way and how deep is a fixed schedule off the clock.
+export const depthOf = h => (h < FLOW_SHARE[0] ? 0 : h < FLOW_SHARE[0] + FLOW_SHARE[1] ? 1 : 2);
+// The water's band on the glass, top to bottom.
+export const water = () => ({ top: (deepTop() - S.camY) * S.zoom, bottom: (deepFloor() - S.camY) * S.zoom });
+
+// Each depth's track runs, on its own sliding plane, from off the glass with
+// the camera at the deep's left end to off the glass with it at the right:
+// whatever the view, a crossing starts and ends out of sight. The schedule
+// runs a whole crossing ahead of the clock, so the water is full from the
+// first frame.
+function track(d) {
+  const z = S.zoom * FLOW_PARALLAX[d];
+  return { from: deepX0() * z - FLOW_MARGIN, to: Math.max(deepX0(), deepX1() - S.viewW) * z + S.W + FLOW_MARGIN };
+}
+const AHEAD = () => (Math.max(...[0, 1].map(d => track(d).to - track(d).from)) / (Math.min(...FLOW_SPEED) * 0.8));
+export function crossings(want, now0) {
+  const out = [], ahead = AHEAD(), t = now0 + ahead;
+  for (let i = Math.max(0, Math.floor((t - ahead) / FLOW_EVERY_S) - 1); i <= Math.floor(t / FLOW_EVERY_S); i++) {
+    const at = i * FLOW_EVERY_S + unit(i * 31) * FLOW_EVERY_S;
+    const d = depthOf(unit(i * 5));
+    if (!want(d) || at > t) continue;
+    const { from, to } = track(d), span = to - from;
+    const dir = unit(i * 7) < 0.5 ? 1 : -1, speed = FLOW_SPEED[d] * (0.8 + unit(i * 19) * 0.4);
+    const run = (t - at) * speed;
+    if (run > span) continue;
+    const x = (dir > 0 ? from + run : to - run) - S.camX * S.zoom * FLOW_PARALLAX[d];
+    out.push({ i, d, dir, x, at, kind: Math.floor(unit(i * 13) * FLOW_KINDS), y: unit(i * 17) });
+  }
+  return out;
+}
+// A crossing's cell on the glass, and the height of its front tip there.
+export const farCell = c => Math.max(1, Math.round(P * S.zoom * FLOW_CELL[c.d]));
+export function farY(c, t) {
+  const { top, bottom } = water(), band = bottom - top;
+  // each depth in its own zones (FLOW_FAR_ZONES), above the fight's band
+  const [hi, lo] = FLOW_FAR_ZONES[c.d].map(zoneOf), from = hi.from / ROWS, to = lo.to / ROWS;
+  return top + band * (from + c.y * (to - from)) + Math.sin((t - c.at) * 1.3 + c.at) * farCell(c) * 2;
+}
+
+// --- a click's reaction ---------------------------------------------------------
+// Which stream creatures are reacting, and since when: `n<i>` a near one on
+// the stream's clock (`nowS`), `f<i>` a crossing on the page's (the clock
+// each is drawn on). This session's, like a zone creature's.
+const REACTS = new Map();
+const LONGEST = Math.max(...FLOW_REACT.map(R => R.end));
+const clockOf = key => (key[0] === 'n' ? nowS() : now() / 1000);
+export const streamReacting = (key, kind, t = clockOf(key)) => playing(FLOW_REACT[kind], REACTS.get(key), t);
+// The pose stream creature `key` holds at `t`, or null when it is not reacting.
+export function streamPose(key, kind, t = clockOf(key)) {
+  if (!streamReacting(key, kind, t)) return null;
+  return poseAt(FLOW_REACT[kind], t - REACTS.get(key));
+}
+export function resetStream() { REACTS.clear(); }
+// A save read back on the clock that wrote it keeps those under way.
+export function settleStream() {
+  for (const [key, r0] of REACTS) if (r0 > clockOf(key)) REACTS.delete(key);
+}
+
+const shown = () => S.view === 'deep' && S.snatched;
+const mealsOn = () => !S.serpentFreed && S.serpentStage < SERPENT_PHASES;
+
+// Every stream creature a click could find, each with its box and middle in
+// world pixels (the near ones' own, the crossings' where they stand on the
+// glass) and whether it can be clicked now: for the click, the cursor, the
+// checks and the scenes.
+export function streamReport() {
+  if (!shown()) return [];
+  const out = [], tn = nowS(), gone = eatenBefore();
+  const meal = mealsOn() ? mealNow(tn) : null;
+  for (const c of nearAll(tn)) {
+    const key = 'n' + c.i, L = FLOW_LENGTHS[c.kind], h = FLOW_HEIGHTS[c.kind];
+    const pose = streamPose(key, c.kind, tn);
+    const front = c.x / P + c.dir * (pose ? pose.dx : 0), row = Math.round(nearY(c, tn) / P) + (pose ? pose.dy : 0);
+    const a = front - c.dir * L, b = front + c.dir * 2;
+    // the meal in its swim is the serpent's, and one about to turn for the
+    // mouth is let be, so its reaction never runs into its swim
+    const due = meal && meal.i === c.i && meal.toLand - BITE_BEFORE - MEAL_SWIM_S < FLOW_REACT[c.kind].end;
+    out.push({ key, near: true, i: c.i, kind: c.kind, dir: c.dir, front, row,
+               l: Math.min(a, b) * P, r: Math.max(a, b) * P, top: (row - h / 2) * P, bot: (row + h / 2) * P,
+               x: (front - c.dir * L / 2) * P, y: row * P, reacting: !!pose, eaten: gone.has(c.i), meal: !!due,
+               clickable: !pose && !gone.has(c.i) && !due });
+  }
+  const tf = now() / 1000;
+  for (const c of crossings(d => d < 2, tf)) {
+    const key = 'f' + c.i, cell = farCell(c), L = FLOW_LENGTHS[c.kind], h = FLOW_HEIGHTS[c.kind];
+    const pose = streamPose(key, c.kind, tf);
+    // glass pixels to world
+    const wx = gx => gx / S.zoom + S.camX, wy = gy => gy / S.zoom + S.camY;
+    const front = c.x + c.dir * (pose ? pose.dx : 0) * cell, y = farY(c, tf) + (pose ? pose.dy : 0) * cell;
+    const a = front - c.dir * L * cell, b = front + c.dir * 2 * cell;
+    out.push({ key, near: false, i: c.i, kind: c.kind, dir: c.dir, depth: c.d,
+               l: wx(Math.min(a, b)), r: wx(Math.max(a, b)), top: wy(y - h / 2 * cell), bot: wy(y + h / 2 * cell),
+               x: wx(front - c.dir * L / 2 * cell), y: wy(y), reacting: !!pose, eaten: false, meal: false,
+               clickable: !pose });
+  }
+  return out;
+}
+
+// The stream creature a click at world (wx, wy) lands on, within the bird's
+// reach of its box, the nearest if several.
+export function streamUnder(wx, wy) {
+  let best = null, near = Infinity;
+  for (const f of streamReport()) {
+    if (!f.clickable) continue;
+    const d = Math.max(f.l - wx, 0, wx - f.r, f.top - wy, wy - f.bot);
+    if (d <= BIRD_REACH && d < near) { near = d; best = f; }
+  }
+  return best;
+}
+export const overStream = (wx, wy) => !!streamUnder(wx, wy);
+
+// A click on a stream creature: the bird's handful from its middle, and its
+// reaction. True if one was there.
+export function startleStream(wx, wy) {
+  const f = streamUnder(wx, wy);
+  if (!f) return false;
+  for (const [key, r0] of REACTS) if (clockOf(key) - r0 > LONGEST) REACTS.delete(key);   // played out
+  shed(f.x, f.y, FAUNA_SCALES);
+  REACTS.set(f.key, clockOf(f.key));
+  return true;
+}

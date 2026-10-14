@@ -70,3 +70,28 @@ export const FLOW_KINDS = 8;           // the creatures render/fish.js draws
 export const FLOW_LENGTHS = [18, 26, 18, 20, 22, 12, 16, 10];
 export const FLOW_NEAR_OUT = 200;
 export const FLOW_NEAR_BAND = 150;
+
+// A click on a stream creature, near or far (the owner's A for each of the
+// eight, docs/mocks/creature-clicks-2026-10-13.html): tracks as FAUNA_REACT's,
+// one a kind in the order render/fish.js draws them, x forward from the front
+// tip, in the creature's own cells. `clock` holds the drawing at a moment of
+// its own swim (a jaw open, a lid shut), `knot` the eel's knot drawn tight
+// (1) or half (0.5), `mouths` how many of the blob's mouths gape. Picture
+// only: the stream's path and the meal's timing never read them.
+export const FLOW_REACT = [
+  { end: 2.2, clock: [[0, 0], [0.33, 0.262], [0.5, 0], [1.0, null]], halo: [[0, true], [0.33, null]],
+    x: [[0.42, 0], [0.5, 4], [1.0, 4], [2.2, 0]] },
+  { end: 1.8, knot: [[0, 0.5], [0.08, 1], [1.4, 0.5], [1.6, null]] },
+  { end: 3.2, y: [[0, -2], [0.45, -2], [0.45, -4], [0.9, -4], [0.9, -6], [1.3, -6], [3.2, 0]],
+    clock: [[0, 0.49], [0.17, 1.47], [0.45, 0.49], [0.62, 1.47], [0.9, 0.49], [1.07, 1.47], [1.3, null]] },
+  { end: 2.0, x: [[0.52, 0], [0.6, 3], [1.1, 3], [2.0, 0]],
+    clock: [[0, 0.14], [1 / 12, 0.43], [2 / 12, 0.14], [3 / 12, 0.43], [4 / 12, 0.14], [5 / 12, 0.43],
+            [6 / 12, 0.14], [7 / 12, 0.43], [1.1, null]] },
+  { end: 2.0, clock: [[0, 0.11], [0.9, 0.04], [1.0, 0.03], [1.7, null]] },
+  { end: 3.0, quick: [[0, 4], [1.2, 1]], x: [[0, 0], [0.6, 10], [1.4, 10], [3.0, 0]] },
+  { end: 1.6, clock: [[0, 0.4], [1.5, null]], mouths: [[0, 5], [1.0, 4], [1.1, 3], [1.2, 2], [1.3, 1], [1.4, 0], [1.5, null]] },
+  { end: 3.0, quick: [[0, 4], [1.2, 1]], x: [[0, 0], [0.6, 12], [1.4, 12], [3.0, 0]] },
+];
+// How tall each is in its own cells, for the click's reach (the mock's
+// boxes); FLOW_LENGTHS is how long.
+export const FLOW_HEIGHTS = [9, 4, 9, 8, 11, 10, 13, 12];

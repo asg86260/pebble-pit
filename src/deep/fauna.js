@@ -3,21 +3,23 @@
 // the clock, so there is nothing to step and nothing to save, and a reader
 // other than the drawing -- a meal taken from a zone, a shoal parting round a
 // blow -- can ask the same function where a creature is without the drawing.
-// A click startles one (`startleFauna`): the moment and the way it bolts are
-// kept on the creature for this session only, and a reload finds every one
-// home.
+// A click startles one (`startleFauna`): it plays its own reaction
+// (FAUNA_REACT, deep/react.js) over its path, or for the school bolts. The
+// moment is kept on the creature for this session only: a save read back
+// on the same clock carries on with it, and a new page finds every one home.
 //
 // In cells: x along from the deep's left end, y down from its ceiling, the
 // drawing's top-left.
 
 import { DEEP_W, DEEP_H, P, FAUNA, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_MOTION, FAUNA_GULPER,
-         FAUNA_SIPHON, FAUNA_SCARE, FAUNA_STARTLE, FAUNA_SCALES } from '../config.js';
+         FAUNA_SIPHON, FAUNA_SCARE, FAUNA_STARTLE, FAUNA_SCALES, FAUNA_REACT, FAUNA_POSES } from '../config.js';
 import { deepBed } from '../state.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
 import { topRow } from '../grid.js';
 import { deepTop, deepX0, deepFloor } from './place.js';
 import { shed } from './scales.js';
+import { poseAt, playing } from './react.js';
 
 export const COLS = DEEP_W / P, ROWS = DEEP_H / P;
 
@@ -50,9 +52,11 @@ export const POPULATION = (() => {
         floor: !!row.floor, low: !!row.low, hop: !!row.hop,
         n: row.school ? Math.round(pick(row.school, i + 11)) : 0,
         spread: row.spread || null,
-        // a startle: the second it came (-1 none), where from and which way,
+        // a bolt: the second it came (-1 none), where from and which way,
         // the second it is back, and the path it comes back in on
         t0: -1, sx: 0, sy: 0, ddir: 0, dist: 0, back: 0, bx0: 0, bdir: 0, edge: 0,
+        // a reaction: the second it was clicked (-1 none)
+        r0: -1,
       });
     }
   }
@@ -132,12 +136,9 @@ export function faunaAt(c, t, floorRow = () => ROWS, scares = SCARES) {
   const startled = c.t0 >= 0 && t >= c.t0;
   if (startled && t < c.back) return boltAt(c, t, floorRow);
   const dir = startled ? c.bdir : c.dir;
-  let x = ((((startled ? c.bx0 : c.x0) + dir * c.v * run(c, t)) % span) + span) % span - M.wrap;
-  // One that never swims walks back from the end to its own spot.
-  if (startled && !c.v) {
-    const K = FAUNA_STARTLE, went = Math.round(Math.floor((t - c.back) * K.rate) / K.rate * K.walkIn);
-    if (went < Math.abs(x - c.edge)) x = c.edge + dir * went;
-  }
+  // One that never swims stands on its own spot, inside the deep: the wrap's
+  // shift is only for those that come back round.
+  const x = c.v ? ((((startled ? c.bx0 : c.x0) + dir * c.v * run(c, t)) % span) + span) % span - M.wrap : c.x0;
   const col = Math.round(x);
   let y;
   if (c.floor) y = floorRow(col + 2) - heightOf(c.kind);
@@ -155,13 +156,16 @@ export function faunaAt(c, t, floorRow = () => ROWS, scares = SCARES) {
 }
 
 // --- a startle -------------------------------------------------------------------
-// Bolting for the nearer end of the deep: whole cells, a held pose at a time,
-// along its own row or along the ground, and held just past the end until it
-// is back -- where the path it comes back in on starts, so nothing jumps.
+// Bolting for the nearer end of the deep: turned to face it and held a beat
+// where it was clicked, then whole cells, a held pose at a time, along its
+// own row or along the ground, and held just past the end until it is back
+// -- where the path it comes back in on starts, so nothing jumps.
 export const bolting = (c, t) => c.t0 >= 0 && t >= c.t0 && t < c.back;
+const holdOf = c => FAUNA_REACT[c.kind].hold || 0;
 function boltAt(c, t, floorRow) {
   const K = FAUNA_STARTLE, M = FAUNA_MOTION;
-  const went = Math.min(c.dist, Math.round(K.pace * Math.floor((t - c.t0) * K.rate) / K.rate));
+  const off = Math.max(0, t - c.t0 - holdOf(c));
+  const went = Math.min(c.dist, Math.round(K.pace * Math.floor(off * K.rate) / K.rate));
   const x = c.sx + c.ddir * went, col = Math.round(x);
   const y = c.floor ? floorRow(col + 2) - heightOf(c.kind)
     : c.low ? floorRow(col + 3) - M.low.up
@@ -190,14 +194,35 @@ function boxOf(c, p) {
   return { l: x, r: x + w, top: y, bot: y + h, x: x + w / 2, y: y + h / 2 };
 }
 
+// --- a reaction ------------------------------------------------------------------
+export const reactionOf = kind => FAUNA_REACT[kind];
+export const reacting = (c, t) => playing(FAUNA_REACT[c.kind], c.r0, t);
+// Mid-reaction or mid-bolt: not there to be clicked again until it is done.
+export const busy = (c, t) => bolting(c, t) || reacting(c, t);
+
+// Where creature `c` is drawn at `t`: its path (`faunaAt`) with its
+// reaction's pose over it, the frame clock `ft` its drawing turns on, the
+// pose itself (`r`, null when it is not reacting) and the row its path
+// stands on (`by`), where silt is kicked up.
+export function faunaPose(c, t, floorRow = floorRowAt) {
+  const p = faunaAt(c, t, floorRow);
+  if (bolting(c, t)) return { ...p, by: p.y, ft: c.t0 + (t - c.t0) * FAUNA_STARTLE.quick, r: null };
+  if (!reacting(c, t)) return { ...p, by: p.y, ft: t, r: null };
+  const r = poseAt(FAUNA_REACT[c.kind], t - c.r0);
+  const y = p.y + r.dy;
+  return { x: p.x + p.dir * r.dx, y: c.floor ? y : Math.max(0, y), dir: r.turn ? -p.dir : p.dir,
+           by: p.y, ft: t + r.gain, r };
+}
+
 // The creature a click at world (wx, wy) lands on, within the bird's reach,
-// the nearest if several: one already bolting is not there to be caught.
+// the nearest if several: one mid-reaction or bolting is not there to be
+// caught again until it is done.
 export function faunaUnder(wx, wy, t = now() / 1000) {
   const cx = (wx - deepX0()) / P, cy = (wy - deepTop()) / P, R = FAUNA_STARTLE.reach;
   if (cx < 0 || cx > COLS || cy < 0 || cy > ROWS) return null;
   let best = null, near = Infinity;
   for (const c of POPULATION) {
-    if (bolting(c, t)) continue;
+    if (busy(c, t)) continue;
     const b = boxOf(c, faunaAt(c, t, floorRowAt));
     const d = Math.max(b.l - cx, 0, cx - b.r, b.top - cy, cy - b.bot);
     if (d <= R && d < near) { near = d; best = c; }
@@ -208,23 +233,33 @@ export const overFauna = (wx, wy) => !!faunaUnder(wx, wy);
 
 // Every creature in world pixels, the spot a click on it would shake its
 // handful from: for the checks and the scenes, which have to aim at one.
+// `cx`, `cy` are where it is drawn, its reaction's pose and all.
 export function faunaReport(t = now() / 1000) {
   return POPULATION.map(c => {
-    const p = faunaAt(c, t, floorRowAt), b = boxOf(c, p);
+    const p = faunaPose(c, t), b = boxOf(c, p);
     return { kind: c.kind, zone: c.zone, i: c.i, x: deepX0() + b.x * P, y: deepTop() + b.y * P,
-             cx: p.x, cy: p.y, bolting: bolting(c, t), inside: b.r > 0 && b.l < COLS };
+             cx: p.x, cy: p.y, dir: p.dir, pose: p.r ? p.r.pose ?? null : null,
+             // what the reaction holds besides its place, so a check can see one that only changes its drawing
+             held: p.r ? [p.r.pose, p.r.turn, p.r.spacing, p.r.amp, p.r.lights, p.r.halo, p.r.vflip].join() : null,
+             bolting: bolting(c, t), reacting: reacting(c, t), inside: b.r > 0 && b.l < COLS };
   });
 }
 
 // A click on a creature: it shakes loose the bird's handful, which sinks as
-// loose scales for the gatherers, and bolts for the nearer end of the deep,
-// to come back in there a while after. True if one was there.
+// loose scales for the gatherers, and plays its reaction; the school bolts
+// for the nearer end of the deep, to come back in there a while after. True
+// if one was there.
 export function startleFauna(wx, wy) {
   const t = now() / 1000, c = faunaUnder(wx, wy, t);
   if (!c) return false;
-  const K = FAUNA_STARTLE, M = FAUNA_MOTION, span = COLS + 2 * M.wrap;
   const p = faunaAt(c, t, floorRowAt), b = boxOf(c, p);
   shed(deepX0() + b.x * P, deepTop() + b.y * P, FAUNA_SCALES);
+  if (FAUNA_REACT[c.kind].bolt) bolt(c, t, p, b);
+  else c.r0 = t;
+  return true;
+}
+function bolt(c, t, p, b) {
+  const K = FAUNA_STARTLE, M = FAUNA_MOTION;
   // Out past the end by its whole reach and short of the wrap, so the path
   // it comes back in on starts where the bolt left it.
   const out = Math.min(reachOf(c) + 1, M.wrap - 1);
@@ -232,22 +267,33 @@ export function startleFauna(wx, wy) {
   c.ddir = b.x < COLS / 2 ? -1 : 1;
   c.edge = c.ddir < 0 ? -out : COLS + out;
   c.dist = Math.abs(c.edge - c.sx);
-  c.back = t + Math.ceil(c.dist / K.pace * K.rate) / K.rate + K.away[0] + rand() * (K.away[1] - K.away[0]);
-  if (c.v) {
-    c.bdir = -c.ddir;
-    c.bx0 = c.edge + M.wrap - c.bdir * c.v * run(c, c.back);
-  } else {
-    // its own spot, which it walks back to
-    const home = ((c.x0 % span) + span) % span - M.wrap;
-    c.bdir = home >= c.edge ? 1 : -1;
-    c.bx0 = c.x0;
-  }
-  return true;
+  c.back = t + holdOf(c) + Math.ceil(c.dist / K.pace * K.rate) / K.rate + K.away[0] + rand() * (K.away[1] - K.away[0]);
+  c.bdir = -c.ddir;
+  c.bx0 = c.edge + M.wrap - c.bdir * c.v * run(c, c.back);
 }
 
-// Every creature home, unstartled: a new game, a save read back.
+// Every creature home, unstartled: a new game.
 export function resetFauna() {
-  for (const c of POPULATION) c.t0 = -1;
+  for (const c of POPULATION) { c.t0 = -1; c.r0 = -1; }
+}
+// A save read back on the clock that wrote it: a reaction or a bolt under
+// way carries on where it was, so nothing jumps; one dated after the clock
+// (a clock that went back) is dropped.
+export function settleFauna(t = now() / 1000) {
+  for (const c of POPULATION) {
+    if (c.t0 > t) c.t0 = -1;
+    if (c.r0 > t) c.r0 = -1;
+  }
+}
+
+// The cells a pose's drawing is set in from its box, mirrored when it faces
+// back (`FAUNA_POSES` `at`), and its width.
+export function poseInset(kind, pose, dir) {
+  const P0 = typeof pose === 'string' ? FAUNA_POSES[pose] : null;
+  if (!P0) return { x: 0, y: 0 };
+  const full = widthOf(kind), w = P0.rows ? P0.rows[0].length : P0.cols[1] - P0.cols[0];
+  const at = P0.at || [0, 0];
+  return { x: dir > 0 ? at[0] : full - w - at[0], y: at[1] };
 }
 
 // A school's members about its middle, each with a seed of its own.

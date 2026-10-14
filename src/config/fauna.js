@@ -148,10 +148,84 @@ export const FAUNA_SCARE = {
 // --- a startle --------------------------------------------------------------------
 // A click on a creature startles it the way it startles a bird: it shakes
 // loose the bird's handful, as scales that sink to the floor for the
-// gatherers, and darts for the nearer end of the deep, `pace` cells a second
-// in held poses `rate` a second, its frames `quick` times as fast. Out past
-// the end it is away `away` seconds (a range), then comes back in at the end
-// it left by its own path; one that never swims (the tripod) walks back to
-// its spot at `walkIn` cells a second. `reach` is the bird's, in cells.
-export const FAUNA_STARTLE = { pace: 30, rate: 12, quick: 2.5, away: [20, 40], walkIn: 2, reach: BIRD_REACH / P };
+// gatherers, and plays its reaction (FAUNA_REACT) in held poses `rate` a
+// second. One whose reaction is a bolt darts for the nearer end of the deep,
+// `pace` cells a second, its frames `quick` times as fast; out past the end
+// it is away `away` seconds (a range), then comes back in at the end it left
+// by its own path. `reach` is the bird's, in cells.
+export const FAUNA_STARTLE = { pace: 30, rate: 12, quick: 2.5, away: [20, 40], reach: BIRD_REACH / P };
 export const FAUNA_SCALES = BIRD_DUST;
+
+// --- a click's reaction ----------------------------------------------------------
+// The owner's picks off docs/mocks/creature-clicks-2026-10-13.html (school B,
+// every other kind A): each kind answers a click its own way in held poses
+// and is home on its own path `end` seconds after, its path carried on under
+// it the while. The school alone still bolts (`bolt`), every fish turned to
+// face the way it goes and held `hold` seconds first.
+//
+// The tracks, each [[seconds after the click, value], ...]:
+//   x, y      whole cells off its path, x forward along the way it faces, y
+//             down; straight between two keys, held before the first and
+//             after the last, and two keys at one second are a jump
+//   spacing   the siphon's bells apart, the same way but not to whole cells
+//   the rest  a value from its second on, until the next (null: its own)
+//     pose    a frame of its drawing, or one of FAUNA_POSES
+//     turn    facing back the way it came
+//     quick   its frames run this many times as fast
+//     lights  'off', 'lit', or how many of them are lit, the rest out
+//     halo    its lights ringed in purple
+//     vflip   upside down
+//     amp     the siphon's sway
+// `silt`: the seconds it kicks silt off the bed, either side of its middle.
+export const FAUNA_REACT = {
+  school: { bolt: true, hold: 0.17 },
+  jelly: { end: 3.2,
+    y: [[0, -2], [0.45, -2], [0.45, -4], [0.9, -4], [0.9, -6], [1.3, -6], [3.2, 0]],
+    pose: [[0, 2], [0.17, 1], [0.45, 2], [0.62, 1], [0.9, 2], [1.07, 1], [1.3, null]] },
+  lantern: { end: 3.4,
+    x: [[0, 0], [0.17, 6], [0.25, 8], [1.8, 8], [3.4, 0]],
+    turn: [[1.8, true], [3.4, null]], quick: [[0, 3], [0.4, 1]], lights: [[0, 0], [1.4, 1], [1.6, null]] },
+  hatchet: { end: 2.6,
+    pose: [[0, 'edgeHalf'], [0.08, 'edge'], [1.4, 'edgeHalf'], [1.5, null]],
+    y: [[0.08, 0], [1.4, 2], [1.5, 2], [2.6, 0]] },
+  siphon: { end: 1.9,
+    spacing: [[0, 1], [0.08, 0.6], [0.17, 0.3], [1.5, 0.3], [1.67, 0.6], [1.84, 1]], amp: [[0.08, 0.4], [1.6, null]] },
+  angler: { end: 2.2,
+    x: [[0.42, 0], [0.5, 3], [1.0, 3], [2.2, 0]],
+    lights: [[0, 'lit'], [0.5, null]], halo: [[0, true], [0.33, null]], pose: [[0, 0], [0.33, 1], [0.5, 0], [1.0, null]] },
+  vampire: { end: 2.0, pose: [[0, 1], [0.08, 'pineapple'], [1.8, 1], [1.92, null]] },
+  dumbo: { end: 3.2, quick: [[0, 4], [1.4, 1]],
+    x: [[0, 0], [0.67, 5], [1.4, 5], [3.2, 0]],
+    y: [[0, 0], [0.17, -2], [0.33, -4], [0.5, -6], [0.67, -8], [1.4, -8], [3.2, 0]] },
+  tripod: { end: 2.0, pose: [[0.08, 'stiltsUp'], [1.42, null]],
+    y: [[0, 0], [0.08, -2], [0.17, -4], [0.25, -5], [1.2, -5], [1.33, -2], [1.42, 0]], silt: [0, 1.42] },
+  cucumber: { end: 1.8, pose: [[0, 'clench'], [1.6, 'stretch'], [1.75, null]] },
+  amphipod: { end: 1.9,
+    x: [[0, 0], [0.08, 2], [0.17, 4], [0.25, 6], [0.33, 7], [1.2, 7], [1.28, 5], [1.37, 3], [1.45, 1], [1.53, 0]],
+    y: [[0, 0], [0.08, -3], [0.17, -4], [0.25, -2], [0.33, 0], [1.2, 0], [1.28, -3], [1.37, -4], [1.45, -2], [1.53, 0]],
+    vflip: [[0.08, true], [0.25, null], [1.28, true], [1.45, null]], turn: [[1.2, true], [1.9, null]], silt: [0.33] },
+  snail: { end: 2.6, quick: [[0, 5], [0.8, 1]], turn: [[0.8, true], [2.6, null]],
+    x: [[0, 0], [0.08, 4], [0.17, 9], [0.25, 12], [0.8, 12], [2.6, 0]] },
+};
+// The drawings a reaction holds that are not a frame of the kind's own:
+// `rows` drawn in its place, or `cols` [from, to) of the frame it is on; set
+// `at` cells into its box (mirrored when it faces back), `dim` rungs darker.
+export const FAUNA_POSES = {
+  stiltsUp: { rows: ['.........b.', '......ccb..', 'dccccccccw.', '.ccccccc...', '.dd...dd...'] },
+  edgeHalf: { cols: [1, 4], at: [1, 0] },
+  edge: { cols: [3, 4], at: [2, 0] },
+  pineapple: { rows: ['q..qq..q', '.q.ee.q.', '.qeeeeq.', 'qeeeeeeq', '.qbqqbq.', '.qqqqqq.', '..qqqq..', '........'] },
+  clench: { rows: ['.cbc.', 'ccccc', 'ccccc', 'd.d.d'], at: [1, -1], dim: 1 },
+  stretch: { rows: ['.cbcb.', 'cccccc', 'd.d.d.'], at: [1, 0] },
+};
+// A reaction's inks on the purple ramp, whatever the zone's dim: a light put
+// out, a light held lit, and the halo round it.
+export const FAUNA_REACT_INK = { out: 2, lit: 11, halo: 7 };
+// The smear: where a held pose moved `moved` cells or more since the last
+// (and less than `far`, one come back in from the other end), the last is
+// drawn under it `rungs` darker.
+export const FAUNA_SMEAR = { rungs: 4, moved: 2, far: 30 };
+// Silt off the bed: out a cell a held pose either side for `last` seconds,
+// from rung `tone`, a rung darker every second step, the nearer cell a row
+// up for the first `lift` steps.
+export const FAUNA_SILT = { last: 0.5, tone: 7, lift: 4 };

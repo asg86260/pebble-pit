@@ -10,7 +10,8 @@ import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, SAVE as SMOG } from './smog.js';
 import { resetWeather } from './weather.js';
-import { resetFauna } from './deep/fauna.js';
+import { resetFauna, settleFauna } from './deep/fauna.js';
+import { resetStream, settleStream } from './deep/flow.js';
 import { slideLayers } from './smog/layer.js';
 import { SAVE as BALLOON } from './balloon.js';
 import { showPanel } from './board.js';
@@ -530,7 +531,9 @@ function newYardName() {
 
 export function restore() {
   yardReads++;
-  resetFauna();                    // a startle is this session's: read back, every creature is home
+  // A creature's reaction is this session's: read back on the clock that
+  // wrote it, one under way carries on where it was rather than jump home.
+  settleFauna(); settleStream();
   const s = load();
   // The raw save is brought up to today's shape before a field of it is read
   // (src/migrations/); everything below reads today's shape and nothing else.
@@ -587,7 +590,7 @@ export function reset(fresh = true) {
   S.looPosts = LOO_POSTS;
   seedSmog();
   resetWeather();                  // a new run is a new sky, clouds and birds both
-  resetFauna();                    // and every creature of the deep home
+  resetFauna(); resetStream();     // and every creature of the deep home
   S.boulderNo = 1;                 // the rock's blank builds it
   for (const o of SAVERS) o.blank();
   // The old crew walk off with empty hands: what they carried is the old
