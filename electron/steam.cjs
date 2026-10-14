@@ -38,7 +38,7 @@ const DEV_APP = 480;
 const SLOTS = 3;
 
 // The words of the carry-over offer, from the language file (`shell-carry-*`
-// in locales/en.ftl, still the owner's placeholders) in the language `say`
+// in locales/en.ftl) in the language `say`
 // reads; CARRY_WORDS is them in English.
 const carryWords = say => ({
   title: say('shell-carry-title'),
