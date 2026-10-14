@@ -115,6 +115,7 @@ const VEIL_OF = byHash(h => h % ABYSS_VEIL_EVERY);
 const JITTER_OF = byHash(h => h % 3 - 1);
 const PATCH_OF = byHash(h => h % 10);
 const STAR_KEEP_MOST = 4;
+let veilOff = false;   // COMPARISON ONLY (mock/deep-palette-ingame): stars alone, no veil
 
 // A cell's two waves, its row's depth and the clock reach `rungOf` through
 // this array rather than as arguments: a fractional number handed to a call
@@ -146,6 +147,7 @@ function rungOf(h, patch, rampLen, magicLen, magicShare) {
     const rung = Math.min(len - 1, Math.round(k * ceiling));
     if (rung > 0) return purple ? -rung : rung;
   }
+  if (veilOff) return 0;
   const swell = 1 - ABYSS_FLOW_MIX + ABYSS_FLOW_MIX * (wave2 + 1) / 2;
   const off = Math.abs(f), band = ABYSS_VEIL_AT * swell;
   if (off > band || VEIL_OF[h] === 0) return 0;
@@ -179,7 +181,8 @@ export function abyssRung(x, y, { line, t, rampLen, magicLen, deep = 0, magicSha
 // its inversion. `deep` lifts every cell further in, as `abyssRung`'s does:
 // the pit's field darkens toward the surface it is seen through, and a place
 // with no surface on screen asks for the whole of its depth everywhere.
-export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, deep = 0, tones, magic, t }) {
+export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, deep = 0, tones, magic, t,
+                                 starsOnly = false, magicShare = 1 }) {
   const cols = Math.max(0, Math.round((to - from) / P)), rows = Math.max(0, Math.ceil((bottom - top) / P));
   if (!cols || !rows) return;
   const data = surface(cols, rows);
@@ -216,7 +219,9 @@ export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, dee
       const f = sU[i] * cV + cU[i] * sV, h = Math.abs(hU[i] ^ hV) % 997;
       if (STAR_OF[h] >= STAR_KEEP_MOST && Math.abs(f) > ABYSS_VEIL_AT) continue;
       CELL[F] = f; CELL[WAVE2] = sU2[i] * cV2 + cU2[i] * sV2;
-      const rung = rungOf(h, PATCH_OF[Math.abs(pU[i] ^ pV) % 997], tones.length, magic.length, 1);
+      veilOff = starsOnly;
+      const rung = rungOf(h, PATCH_OF[Math.abs(pU[i] ^ pV) % 997], tones.length, magic.length, magicShare);
+      veilOff = false;
       if (rung > 0) data[at + i] = grey[rung];
       else if (rung < 0) data[at + i] = purple[-rung];
     }

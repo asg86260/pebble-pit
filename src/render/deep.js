@@ -48,7 +48,7 @@ import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
-import { DEEP_PAL, BANDS, BAND_OF, breathe, keptRamp } from './deeppalette.js';
+import { DEEP_PAL, BANDS, BAND_OF, breathe, keptRamp, keptMagic, BG_MODE } from './deeppalette.js';
 import { PROPS, R8_PARTS, ACC, PART_ACC, BREW } from '../deep/props.js';
 
 // COMPARISON ONLY: the props' noise (deep/props.js), so a band is dealt where
@@ -60,6 +60,7 @@ const two = (list, h) => list[Math.floor(h * list.length)];
 const optOn = DEEP_PAL !== 'today';
 const nowMs = () => now();
 const WATER_GREYS = keptRamp(GREYS);   // the field writes pixels straight, past the fold
+const WATER_PURPLES = keptMagic(PURPLES);
 
 const isFighter = w => w.type === TYPE.FIGHTER;
 
@@ -72,6 +73,8 @@ const MOTE_TONES = Object.fromEntries(Object.entries(DEEP_MOTE_TINTS)
 // COMPARISON ONLY: the silt's 0.8 ink lands between rungs; the options draw it
 // at full ink a rung down instead (4-7 at 0.8 is 3-6 at 1), so it is on the ramp.
 if (DEEP_PAL !== 'today') MOTE_TONES.silt = { tones: [3, 4, 5, 6].map(i => GREYS[i]), ink: 1 };
+// COMPARISON ONLY: under the 'sparse' background the silt is the light in the dark, in purple.
+if (BG_MODE === 'sparse') MOTE_TONES.silt = { tones: [4, 5, 6, 7].map(i => PURPLES[i]), ink: 1 };
 
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 
@@ -98,8 +101,12 @@ export function drawDeepWater() {
   // higher than the deep's own top, as a tall one does.
   const top = y0, bottom = Math.min(y1, deepFloor());
   if (bottom <= top) return;
+  // COMPARISON ONLY: flat bands have no field at all; 'sparse' keeps its stars alone, all purple.
+  if (BG_MODE === 'bands' || BG_MODE === 'seams') return;
+  const sparse = BG_MODE === 'sparse';
   paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
-                    deep: DEEP_WATER_DEPTH, tones: WATER_GREYS, magic: PURPLES, t: now() });
+                    deep: DEEP_WATER_DEPTH, tones: WATER_GREYS, magic: WATER_PURPLES, t: now(),
+                    starsOnly: sparse, magicShare: sparse ? 7 : 1 });
   ctx.fillStyle = '#000';
 }
 

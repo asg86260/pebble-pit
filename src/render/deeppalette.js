@@ -22,7 +22,20 @@ import { ABYSS_TONES, ABYSS_MAGIC_TONES } from '../config.js';
 import { GREYS, PURPLES } from './deeptones.js';
 
 const asked = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('deep') : null;
-export const DEEP_PAL = ['A', 'B', 'C'].includes(asked) ? asked : 'today';
+// B1..B4 are B with the deep's background reworked (docs/mocks/deep-background-2026-10-14.html):
+// everything B branches on stays B, and DEEP_BG says what the water and the zones do.
+// B1 flat bands; B2 flat bands, purple-lit seams; B3 one flat water, purple stars and silt
+// the only texture; B4 B under a hard cap of six greys and five purples, on B4_BG's background.
+const BS = ['B1', 'B2', 'B3', 'B4'];
+export const DEEP_OPT = ['A', 'B', 'C', ...BS].includes(asked) ? asked : 'today';
+export const DEEP_PAL = BS.includes(DEEP_OPT) ? 'B' : DEEP_OPT;
+export const DEEP_BG = BS.includes(DEEP_OPT) ? DEEP_OPT : null;
+const B4_BG = 'sparse';
+export const BG_MODE = { B1: 'bands', B2: 'seams', B3: 'sparse', B4: B4_BG }[DEEP_BG] || null;
+// The flat tone of each zone under 'bands' and 'seams', stepping down the ramp with depth,
+// and the one water tone under 'sparse'.
+export const FLAT_BAND = { sun: 4, twi: 3, mid: 2, aby: 1, had: 0 };
+export const SPARSE_TONE = 1;
 
 if (import.meta.env?.DEV && typeof window !== 'undefined') {
   window.__deepPalette = m => {
@@ -30,7 +43,7 @@ if (import.meta.env?.DEV && typeof window !== 'undefined') {
     if (m && m !== 'today') u.searchParams.set('deep', m); else u.searchParams.delete('deep');
     location.href = u.href;
   };
-  window.__deepPaletteNow = () => DEEP_PAL;
+  window.__deepPaletteNow = () => DEEP_OPT;
 }
 
 // --- the options' rules, in rungs (ABYSS_TONES / ABYSS_MAGIC_TONES indices) -------
@@ -47,6 +60,10 @@ const KEEP = {
   B: [0, 1, 2, 3, 4, 5, 6, 7, 8, 11],
   C: [0, 1, 2, 3, 4, 5, 6, 7, 8, 11],
 }[DEEP_PAL];
+// B4: six greys and five purples, evenly spaced, white kept beside them.
+const CAP = DEEP_OPT === 'B4';
+if (CAP) KEEP.splice(0, KEEP.length, 0, 2, 4, 6, 8, 10, 11);
+const KEEP_P = CAP ? [0, 3, 5, 7, 9, 11] : null;
 
 // The grey ramp as the option keeps it, a rung for every rung: for what is
 // written straight into pixels and never meets a setter (the water's field).
@@ -54,6 +71,10 @@ const KEEP = {
 // nothing folds up into white.
 const TO = KEEP ? ABYSS_TONES.map((_, i) => (KEEP.includes(i) ? i : Math.max(...KEEP.filter(k => k < i)))) : null;
 export const keptRamp = ramp => (KEEP ? ramp.map((_, i) => ramp[TO[i]]) : ramp);
+// The purple ramp likewise, folded only under B4's cap; a dropped rung goes to the nearest kept one.
+const nearIdx = (i, list) => list.reduce((b, k) => (Math.abs(k - i) < Math.abs(b - i) ? k : b), list[0]);
+const TO_P = KEEP_P ? ABYSS_MAGIC_TONES.map((_, i) => nearIdx(i, KEEP_P)) : null;
+export const keptMagic = ramp => (TO_P ? ramp.map((_, i) => ramp[TO_P[i]]) : ramp);
 
 // The purple light from above (B, and C's dome rim): a rung at a time, held.
 export const breathe = ms => [7, 8, 9, 8][Math.floor(ms / 1100) % 4];
@@ -76,10 +97,12 @@ const near = (rgb, list) => {
 // after it (the numbers, the statuses, the bar) as ABYSS_TONES (as seen).
 function folder(ramp, purples) {
   const keep = KEEP.map(i => ramp[i].toLowerCase());
+  const keepP = KEEP_P ? KEEP_P.filter(i => i).map(i => purples[i].toLowerCase()) : null;
   const exact = new Map(), cache = new Map();
   ramp.forEach((c, i) => {
     if (TO[i] !== i) exact.set(c.toLowerCase(), ramp[TO[i]]);
   });
+  if (TO_P) purples.forEach((c, i) => { if (TO_P[i] !== i) exact.set(c.toLowerCase(), purples[TO_P[i]]); });
   const onRamp = new Set([...ramp, ...purples].map(c => c.toLowerCase()));
   return c => {
     if (typeof c !== 'string' || c[0] !== '#' || (c.length !== 4 && c.length !== 7)) return c;
@@ -90,6 +113,7 @@ function folder(ramp, purples) {
     if (exact.has(full)) out = exact.get(full);
     else if (onRamp.has(full)) out = c;
     else if (Math.max(...rgb) - Math.min(...rgb) <= 24) out = near(rgb, keep);   // a grey off the ramp
+    else if (keepP && rgb[2] >= rgb[0] && rgb[0] > rgb[1]) out = near(rgb, keepP); // B4: a purple off the ramp
     else out = c;                                                                  // a color: left alone
     cache.set(c, out);
     return out;
@@ -106,6 +130,15 @@ if (FOLD && typeof CanvasRenderingContext2D !== 'undefined') {
     Object.defineProperty(proto, key, {
       configurable: true, get: d.get,
       set(v) { d.set.call(this, phase && !(v instanceof String) ? FOLD[phase](v) : v); },
+    });
+  }
+  // B4: no fades in the deep -- an alpha is a color the cap does not hold, so
+  // a mark is drawn whole or not at all.
+  if (CAP) {
+    const proto = CanvasRenderingContext2D.prototype, d = Object.getOwnPropertyDescriptor(proto, 'globalAlpha');
+    Object.defineProperty(proto, 'globalAlpha', {
+      configurable: true, get: d.get,
+      set(v) { d.set.call(this, phase ? (v >= 0.5 ? 1 : 0) : v); },
     });
   }
 }

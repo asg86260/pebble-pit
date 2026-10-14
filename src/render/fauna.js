@@ -17,7 +17,7 @@ import { P, FAUNA_ZONES, FAUNA_TINT_FILL, FAUNA_TINT_EDGE, FAUNA_TINT_MIX, FAUNA
          FAUNA_POSES, FAUNA_REACT_INK, FAUNA_SMEAR, FAUNA_SILT } from '../config.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES } from './deeptones.js';
-import { DEEP_PAL } from './deeppalette.js';
+import { DEEP_PAL, BG_MODE, FLAT_BAND, SPARSE_TONE, breathe } from './deeppalette.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, POPULATION, unit, unit2, zoneAtRow, schoolAt, frameOf, reachOf, addScare, scareOffset,
@@ -44,6 +44,9 @@ const purple = i => PURPLES[Math.max(1, Math.min(PURPLES.length - 1, i))];
 // shows past what is painted.
 let tint = null;
 function tintRung(x, y) {
+  // COMPARISON ONLY: flat bands at hard edges, or one flat water.
+  if (BG_MODE === 'sparse') return SPARSE_TONE;
+  if (BG_MODE) return FLAT_BAND[FAUNA_ZONES[zoneAtRow(y)].key];
   const step = FAUNA_TINT_MIX / FAUNA_TINT_EDGE;
   const z = zoneAtRow(y), here = FAUNA_ZONES[z], next = FAUNA_ZONES[z + 1], prev = FAUNA_ZONES[z - 1];
   const toNext = here.to - y, fromPrev = y - here.from + 1;
@@ -87,6 +90,13 @@ export function drawDeepZones() {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(t.img, deepX0() + t.c0 * P, deepTop() + t.r0 * P, (t.c1 - t.c0) * P, (ROWS - t.r0) * P);
   ctx.imageSmoothingEnabled = smooth;
+  // COMPARISON ONLY: each band under the first lit along its top edge, a cell
+  // of the breathing purple two rungs under the props' own.
+  if (BG_MODE === 'seams') {
+    const win = deepWindow();
+    ctx.fillStyle = PURPLES[breathe(now()) - 2];
+    for (const z of FAUNA_ZONES.slice(1)) ctx.fillRect(win.x0, deepTop() + z.from * P, win.x1 - win.x0, P);
+  }
 }
 
 // --- a creature's tones ------------------------------------------------------------
