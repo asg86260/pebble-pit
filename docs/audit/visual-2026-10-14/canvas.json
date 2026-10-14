@@ -1,0 +1,581 @@
+[
+  {
+    "id": "C01",
+    "kind": "palette",
+    "title": "The spark's mark has four shapes: DOM plus, counter four-point star, casino diamond, glyph plus",
+    "what": "CLAUDE.md names the spark as red ✚ and the DOM coin (.spark in style.css) is an 11px plus. The canvas counter in the corner draws a vector four-point star (marks.js drawMark), the casino's bin foot draws a 5-cell diamond while its comment says it uses 'the counter's own shapes', and glyphs.js's pip spark is a 5x5 plus. On the bench screen the DOM counter and the canvas counter stand side by side with different spark shapes.",
+    "where": [
+      "src/render/marks.js:108-121",
+      "src/render/casino.js:434-444",
+      "src/glyphs.js:101",
+      "src/style.css:569-581",
+      "src/render/counter.js:62"
+    ],
+    "evidence": [
+      "spark-mark-three-shapes.png"
+    ],
+    "severity": "high",
+    "proposal": "The spark is a plus everywhere: one 5x5 cell bitmap (glyphs.js pip 'spark'), drawn by the counter, the casino and the DOM alike."
+  },
+  {
+    "id": "C02",
+    "kind": "palette",
+    "title": "Purple means seven things: wizard magic, serpent heal, statuses on the foe, crusher fire, deep light, the gamepad cursor, the capstone rung",
+    "what": "config/view.js says purple is 'the only purple in the game', meaning what the wizards throw. On canvas it also marks the serpent's heal (NUM_HEAL_FACES, BAR_HEALED), every status the party lays on the foe (STATUS_FOE, including the physical Bleed and Exposed), the crusher's fire, the creatures' bioluminescence and jelly bodies, the far stream and the giant, the gamepad's selection brackets (PAD_ACCENT), and rung 8's capstone parts on deep props. So purple stands for both the enemy healing and our debuffs on it, in the same fight.",
+    "where": [
+      "src/config/view.js:56-59",
+      "src/config/deepdraw.js:296-297",
+      "src/config/deepdraw.js:324-326",
+      "src/config/deepdraw.js:404",
+      "src/config/deepdraw.js:435",
+      "src/config/pad.js:7-11",
+      "src/config/fauna.js:68-74",
+      "src/render/fish.js:25",
+      "src/render/fish.js:263",
+      "src/config/deepdraw.js:55-62"
+    ],
+    "evidence": [
+      "purple-meanings-yard.png",
+      "purple-meanings-deep.png"
+    ],
+    "severity": "high",
+    "proposal": "Purple means magic only, on either side. Statuses on the foe and the pad cursor take ink or white, and heal-versus-debuff is told apart by shape, not hue."
+  },
+  {
+    "id": "C03",
+    "kind": "palette",
+    "title": "Four purple families for one meaning",
+    "what": "MAGIC_TONES (#9b5de5..#4e2090), ABYSS_MAGIC_TONES (12 rungs sharing only 3 of those values), the finale's FINALE_PURPLE/DARK/LIGHT (#7b3fe4, #3f2378, #b79af2, in none of the others) and the pad's PAD_ACCENT/PAD_DEEP_ACCENT (#6f36c9, #a979ef, 'the capstone purple of shelf.css') are all called 'the' purple. The finale's door and fireworks are visibly bluer than the wizards' rings beside them.",
+    "where": [
+      "src/config/view.js:59",
+      "src/config/rift.js:170-172",
+      "src/config/finale.js:209-211",
+      "src/config/pad.js:10-11",
+      "src/config/deepdraw.js:219"
+    ],
+    "evidence": [
+      "purple-meanings-yard.png"
+    ],
+    "severity": "med",
+    "proposal": "One purple ramp (ABYSS_MAGIC_TONES); MAGIC_TONES, FINALE_PURPLE* and PAD_* become indices into it."
+  },
+  {
+    "id": "C04",
+    "kind": "palette",
+    "title": "The air filter's dial is a green-amber-red traffic light",
+    "what": "DESIGN.md's casino section says 'Black and white, not red and green', calling a traffic-light wheel the first thing to use color for mood. Green and red already mean the farm's spores and the meteor's sparks. DIAL_ZONES paints the filter's dial #3aa655/#e2c12b/#d23b2e. The amber is in no palette, and the green and red are near-misses of the spore and spark tones.",
+    "where": [
+      "src/config/filter.js:45-48",
+      "DESIGN.md:305-312"
+    ],
+    "evidence": [
+      "filter-traffic-light-dial.png"
+    ],
+    "severity": "high",
+    "proposal": "The dial reads in ink: clean/dirty/filthy as white, grey and black bands (or a SHADES ramp), never a coin color."
+  },
+  {
+    "id": "C05",
+    "kind": "palette",
+    "title": "Tonic colors are near-duplicates of the coin colors, outside FIND_COLOR",
+    "what": "The three tonics are tinted #5fb84f, #4a86c7 and #e04848, each a step off its coin's FIND_COLOR ramp (#57c074, #3f68d4/#5b83e0, #e8503a) and in no palette. The fire's fallback is an orange #f5851f that exists nowhere else. On the apothecary the brew reads as a fourth, paler green next to the farm's spores.",
+    "where": [
+      "src/apothecary.js:73-79",
+      "src/render/apothecary.js:85",
+      "src/config/view.js:61-67"
+    ],
+    "evidence": [
+      "flat-black-masses.png"
+    ],
+    "severity": "med",
+    "proposal": "A tonic takes its reagent coin's FIND_COLOR ramp (tonicColor = FIND_COLOR[coin][k]); no tonic literals and no orange."
+  },
+  {
+    "id": "C06",
+    "kind": "palette",
+    "title": "Five grey ramps, with near-duplicates one or two steps apart in the same role",
+    "what": "The yard's greys are SHADES (#8a8a8a..#111111). Beside them sit FINALE_GREYS ('the yard's greys by name', but #262626..#e3e3e3, none equal to SHADES), the abyss's blue-tinted ABYSS_TONES, AIR_TINTS dust, PAPER, and one-off greys. The one-offs include a mid-grey cluster all meaning 'empty/inactive': #8a8a8a (PORTAL_TORN), #8c8c8c (SEAT_EMPTY_INK, SHELF_INK short), #8f8f8f (HOUSE_CURTAIN) and #909090 (CLOUD_UNDER). Also #a4a4a4 (rain) next to #a6a6a6 (air dust), #aaa (float shadow), #bdbdbd (build ghost), and #3a3a3a (apothecary smoke) next to finale #3d3d3d.",
+    "where": [
+      "src/config/view.js:17",
+      "src/config/finale.js:208",
+      "src/config/rift.js:164-166",
+      "src/config/air.js:52-56",
+      "src/config/notices.js:70",
+      "src/config/crew.js:208",
+      "src/config/boards.js:102-103",
+      "src/config/house.js:22",
+      "src/config/weather.js:140",
+      "src/config/weather.js:168-171",
+      "src/config/view.js:104",
+      "src/config/view.js:125",
+      "src/config/aura.js:56",
+      "src/config/deepcrew.js:104"
+    ],
+    "evidence": [],
+    "severity": "med",
+    "proposal": "One yard grey ramp (SHADES extended to paper, about 8 rungs); every grey on the yard canvas is a SHADES index, and the deep keeps ABYSS_TONES as its own."
+  },
+  {
+    "id": "C07",
+    "kind": "palette",
+    "title": "A radial-gradient vignette and an alpha scanline pattern over every frame",
+    "what": "CLAUDE.md says 'no gradients'. press.js lays a createRadialGradient vignette (PRESS_MIX.vignette 0.15) and a 1-px rgba scanline pattern over the finished frame, yard and deep alike. The scanlines put a second tone on every flat fill (rows alternate #111/#101010), and show up in every crop and in the store screenshots.",
+    "where": [
+      "src/press.js:29-68",
+      "src/config/piles.js:39"
+    ],
+    "evidence": [
+      "store-screenshot-blur.png",
+      "flat-black-masses.png"
+    ],
+    "severity": "med",
+    "proposal": "Decide it explicitly: either the press is the one sanctioned gradient (written into the rules) or it goes; store shots are taken with it off."
+  },
+  {
+    "id": "C08",
+    "kind": "palette",
+    "title": "A red/cyan chromatic fringe on rising motes, against the press's own reasoning",
+    "what": "press.js says chromatic aberration was left out because it is 'a fringe the whole pixel discipline exists to prevent'. render/smog.js draws exactly that fringe on the climbing plume motes toward the screen edges, in #c02a2a and #1f9ad0. Both colors are in no palette, and the red reads as a spark.",
+    "where": [
+      "src/render/smog.js:118-128",
+      "src/render/smog.js:160",
+      "src/config/dust.js:8",
+      "src/press.js:13-16"
+    ],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "No color fringes: motes are drawn in their SMOG_TINTS tone only (HAZE_CA = 0)."
+  },
+  {
+    "id": "C09",
+    "kind": "palette",
+    "title": "Yard alpha fades make off-palette pastels; the deep forbids alpha",
+    "what": "rift.js says 'There is no alpha here: a thing fades by being painted in a darker tone of its own family', and the deep keeps that rule. The yard fades by globalAlpha: about 80 sites in sky.js, smog.js, cores.js, crew.js and tower.js, plus the cutscene recede at 35% ink. The results are lavender rings around the tower, pale green and pale blue heaps under the finale, and grey-tinted crew. None of these tones is in any palette.",
+    "where": [
+      "src/render/tower.js:137",
+      "src/render/cores.js:173",
+      "src/render/crew.js:360-369",
+      "src/render/recede.js",
+      "src/config/cutscene.js:100",
+      "src/config/rift.js:167-169"
+    ],
+    "evidence": [
+      "purple-meanings-yard.png"
+    ],
+    "severity": "med",
+    "proposal": "A fade steps down its own palette ramp (as in the deep); globalAlpha only for the press and cutscene veils."
+  },
+  {
+    "id": "C10",
+    "kind": "palette",
+    "title": "Buildings are #000, the deepest dust is #111: two blacks for mass",
+    "what": "A heap's deepest dust is SHADES[5] #111111, one flat tone, while every building, the bench and the pot are pure #000. Where a heap stands against a building (the crew scene's rock beside the shack) the two blacks meet with no reason.",
+    "where": [
+      "src/config/view.js:17",
+      "src/house.js:170-171"
+    ],
+    "evidence": [
+      "flat-black-masses.png"
+    ],
+    "severity": "low",
+    "proposal": "The darkest dust shade is #000 or buildings are SHADES[5]; one black for mass."
+  },
+  {
+    "id": "C11",
+    "kind": "grid",
+    "title": "Half-cell eaves, chimney caps and roof lips put 3-px hairlines on the buildings",
+    "what": "SHACK_EAVE is P/2, and house.js hangs eaves P/2 past the wall at P/2 tall, with a chimney cap offset P/2. At the device pixel ratio the 3-px lip anti-aliases into a grey edge, visible in the shot as a grey line over the house roof. Everything else on the building is whole cells.",
+    "where": [
+      "src/config/sites.js:88",
+      "src/house.js:176-187",
+      "src/render/sites.js"
+    ],
+    "evidence": [
+      "house-half-cell-eave.png"
+    ],
+    "severity": "med",
+    "proposal": "Lips and eaves are a whole cell (P) or none; nothing on a building is a fraction of P."
+  },
+  {
+    "id": "C12",
+    "kind": "grid",
+    "title": "Off-grid cell sizes: P-1 'comic' marks, a 1.5-cell mooring stake, half-cell basket weave",
+    "what": "Crew speech marks (dizzy stars, swear bursts) are P-1 squares at P/2 offsets, so they sit between cells. The balloon's mooring stake is P*1.5 wide, and the basket's weave is P/2 tall. The rest of the crew and balloon sit on whole cells.",
+    "where": [
+      "src/render/crew.js:270-277",
+      "src/render/crew.js:329-331",
+      "src/render/crew.js:323",
+      "src/render/balloon.js:26",
+      "src/render/balloon.js:147"
+    ],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "Every fillRect is a whole number of cells at a cell-snapped origin; a gap between marks is a skipped cell, not P-1."
+  },
+  {
+    "id": "C13",
+    "kind": "grid",
+    "title": "The deep's giant is drawn on half cells as a flat smooth-edged lozenge",
+    "what": "The giant crossing behind the deep is a flat PURPLES[1] fill. Its cell is P*zoom*0.5 and its outline is a sine with hand constants (len 320, r 34, 0.6, 1.2, 6), so its edge reads smooth beside the cell-grid creatures and is one flat tone. That breaks both the grid and the per-cell variation rule. The far stream also uses its own smaller farCell.",
+    "where": [
+      "src/render/fish.js:284-296",
+      "src/render/fish.js:263"
+    ],
+    "evidence": [
+      "deep-dark-smear.png"
+    ],
+    "severity": "med",
+    "proposal": "Far things are drawn on the same cell at a darker ramp rung, with hash-dealt tones; depth is tone, not a finer grid."
+  },
+  {
+    "id": "C14",
+    "kind": "scale",
+    "title": "Two number faces on the canvas: a system font at 13 px and the pixel NUM_FONT",
+    "what": "Crew counts over stations, the roster's +N and hat counts, and the corner counter are fillText in the page font at 13 px (anti-aliased, off the grid). The status labels use 11 px. The deep's fight numbers and the serpent bar's level use the pixel NUM_FONT at 2 px a font pixel. A count over a shack and a blow's number are both small integers over the world, drawn in different faces.",
+    "where": [
+      "src/render/crew.js:219-234",
+      "src/roster.js:646-672",
+      "src/render/counter.js:73",
+      "src/render/statusicons.js:109",
+      "src/render/numfont.js",
+      "src/config/deepdraw.js:253"
+    ],
+    "evidence": [
+      "two-number-faces.png",
+      "spark-mark-three-shapes.png"
+    ],
+    "severity": "med",
+    "proposal": "Every number drawn on the canvas uses NUM_FONT (at 2 px or at P); text labels stay DOM."
+  },
+  {
+    "id": "C15",
+    "kind": "scale",
+    "title": "Coin marks drawn as anti-aliased vector shapes at 9 px, off the cell",
+    "what": "The counter's marks are 9-px vector triangles, hexagons and stars with paths (moveTo/lineTo), so they blur at their edges, and 9 is 1.5 cells. Out in the yard the same coins are whole-cell squares, and in the casino 5-cell bitmaps.",
+    "where": [
+      "src/render/counter.js:17",
+      "src/render/marks.js:88-121",
+      "src/render/marks.js:9-27"
+    ],
+    "evidence": [
+      "spark-mark-three-shapes.png"
+    ],
+    "severity": "low",
+    "proposal": "Coin marks are bitmaps (the glyphs.js 5x5 pips) drawn at whole pixels; no vector paths for marks."
+  },
+  {
+    "id": "C16",
+    "kind": "line",
+    "title": "The pile-full warning triangle is the one anti-aliased, hollow, fractional mark over a station",
+    "what": "warning() draws a vector triangle with a stroke r/6 = 2.6 px and a bar and dot sized r/8, r/4 and 0.35r (WARN_R = P*2.6), so every edge blurs and nothing sits on the cell grid. Every other over-station mark (done tick, building glyph, deep choose mark) is solid cells on the grid. style.css copies the r/6 stroke for the .messtag tags.",
+    "where": [
+      "src/render/pilemarks.js:40-50",
+      "src/render/marks.js:10-27"
+    ],
+    "evidence": [
+      "pile-mark-vs-choose-mark.png"
+    ],
+    "severity": "med",
+    "proposal": "The warning mark is a cell bitmap like the other station marks (a hollow 2-px-ruled triangle of whole cells)."
+  },
+  {
+    "id": "C17",
+    "kind": "line",
+    "title": "Board outlines straddle their edge in one place and inset in another",
+    "what": "Bodies, carts and the count card stroke 2 px inset by 1 px (strokeRect(x+1, y+1, w-2, h-2)), so the rule lies inside the box on whole pixels. Progress bars and both casino boards stroke max(1, P/3) centered on the edge, so half the rule falls outside the box and the outer edge is 1 px off the lattice. Same 2-px rule, two placements.",
+    "where": [
+      "src/render/crew.js:61-62",
+      "src/render/counter.js:135-137",
+      "src/render/bars.js:25-27",
+      "src/render/casino.js:132-134",
+      "src/render/casino.js:589-591"
+    ],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "A 2-px rule always lies inside its box (inset 1 with lineWidth 2), never centered on the edge."
+  },
+  {
+    "id": "C18",
+    "kind": "line",
+    "title": "Stroked arcs and diagonals in a cell-stepped world: sky ring, benched disc, bridge ramps, casino lever, kit pips",
+    "what": "Most rings and diagonals are stepped in cells: flag waves, tower rings, sphere halo, ram wheel, belt ramp, shield braces, filter needle. A few use canvas strokes and arcs that anti-alias: the benched star's skyRing (2 px arc, despite the file's own note that a stroked line would be the only stroke in the sky), the benched disc (filled arc), the bridge ramps (2 px diagonal), the casino lever (a P-wide diagonal stroke) and the kit pips (round arcs, where the serpent bar's pips are square).",
+    "where": [
+      "src/render/sky.js:31-34",
+      "src/render/sky.js:244-252",
+      "src/render/sky.js:74-75",
+      "src/render/sites.js:78-85",
+      "src/render/casino.js:476-480",
+      "src/deep/kits.js:77-83"
+    ],
+    "evidence": [],
+    "severity": "med",
+    "proposal": "No ctx.arc or diagonal stroke in the world: rings and slopes are cells (the kit's ring() helper and the belt ramp's steps are the models); the rift's deliberate arc stars stay as the one written exception."
+  },
+  {
+    "id": "C19",
+    "kind": "line",
+    "title": "Hairline widths disagree: 1 px ghost and hold ring vs 2 px everywhere else",
+    "what": "In the yard the de-facto thin line is 2 px (ladder rails, antenna, tape, sight ring, ground line). The build ghost outline is P/6 = 1 px (bars.js EDGE) while the tint stroke beside it is P/3, and the hold ring is a 1-px white hairline at +0.5. On the shelf both ghost and tint are 1 px at a 3-px cell, so the yard glyph has different proportions from the same glyph on the card. The rift ring is configured as 2 'screen px' but drawn in world px and half clipped.",
+    "where": [
+      "src/render/bars.js:110",
+      "src/render/bars.js:165",
+      "src/render/aura.js:49",
+      "src/render/aura.js:290-291",
+      "src/glyphs.js:274-280",
+      "src/config/effects.js:75",
+      "src/render/cores.js:319-326"
+    ],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "The thinnest line in the world is P/3 (2 px); 1 px only on screen-space UI rims."
+  },
+  {
+    "id": "C20",
+    "kind": "variation",
+    "title": "Yard buildings and machines are flat #000; the deep's props, plinths, domes and the finale house are grained",
+    "what": "The rule says no flat fills. In the deep every built mass is hash-grained (PLINTH_TONES, DOME_TONES, props' toneAt, pods, floor), and so is the finale's house (home.js). In the yard every building is one flat #000: tower (13x34 cells, the largest mass), shack, sheds, filter, casino, houses, garage, bench, outhouse, balloons, shield props, the 'stone' arch. The machines can't be anything else, because drawSprite hardcodes '#000'/'#fff'. house.js and shack.js call the black silhouette the house grammar; apothecary.js grains its hut, but in #000-#151515, which hardly shows.",
+    "where": [
+      "src/render/tower.js:91-95",
+      "src/render/shack.js:25-28",
+      "src/house.js:161-171",
+      "src/sprites.js:17-31",
+      "src/render/apothecary.js:57-71",
+      "src/render/deep.js:306-346",
+      "src/render/home.js:42-64",
+      "src/config/deepdraw.js:36-46"
+    ],
+    "evidence": [
+      "flat-black-masses.png",
+      "deep-plinth-grained.png",
+      "purple-meanings-yard.png"
+    ],
+    "severity": "high",
+    "proposal": "Write the split down: yard buildings are flat ink silhouettes (material is dust, sky and ground only), and the finale house and apothecary follow the yard; or grain everything with one tone hook in drawSprite. Pick one."
+  },
+  {
+    "id": "C21",
+    "kind": "variation",
+    "title": "Large one-tone masses that are material, not buildings: the muck band, a heap's deep core, the star's crust, the cauldrons",
+    "what": "The muck layer can run the world's width as one MUCK_TONE body under a one-tone skin row. A dust heap thick enough to reach SHADES[5] is one flat #111 across its whole core, so the crew scene's rock reads as printed. The star's crust is one deepest red, and the apothecary's 13x10-cell cauldrons are flat sprites beside the grained hut.",
+    "where": [
+      "src/render/smog.js:86-93",
+      "src/config/view.js:17",
+      "src/grid.js:26",
+      "src/render/sky.js:62-64",
+      "src/render/apothecary.js:168-169"
+    ],
+    "evidence": [
+      "flat-black-masses.png"
+    ],
+    "severity": "med",
+    "proposal": "Any mass of material wider than ~4 cells deals its cells from two or three neighboring rungs by a hash (the PLINTH_TONES pattern), including the darkest dust rung."
+  },
+  {
+    "id": "C22",
+    "kind": "motion",
+    "title": "A creature flinching from a hit moves three ways",
+    "what": "The serpent's dent is held whole-cell steps. A creature the player clicks eases through a Hermite cubic with a smoothstep blend, and the same creature scared by a lash steps in held floor(age*rate) frames. Whether a creature is touched by a click or a lash changes the animation grammar, not just the reaction.",
+    "where": [
+      "src/render/serpent.js:99-118",
+      "src/deep/react.js:9-83",
+      "src/deep/fauna.js:95-100"
+    ],
+    "evidence": [],
+    "severity": "med",
+    "proposal": "Reactions to a blow are held poses with a smear (the serpent's grammar); eased motion only for travel."
+  },
+  {
+    "id": "C23",
+    "kind": "motion",
+    "title": "Five hops, five motion styles",
+    "what": "The landing hop is a continuous parabola and the yard dance a continuous |sin|. The finale crowd hops on a held pose table, the abyss-intro hop is a two-state toggle, and the deep-rest hop is physics with drag. A body jumping for joy reads differently in each place it does it.",
+    "where": [
+      "src/render/crew.js:647-648",
+      "src/crew/dance.js:204",
+      "src/finale.js:514-523",
+      "src/abyssintro.js:192-194",
+      "src/deep/rest.js:73-79"
+    ],
+    "evidence": [],
+    "severity": "med",
+    "proposal": "A crew hop is one held pose table (the finale's), shared by the dance, the landing and the rest."
+  },
+  {
+    "id": "C24",
+    "kind": "motion",
+    "title": "The serpent's jaw opens four ways",
+    "what": "Meal bite: smoothstep. Snatch head: an inline smoothstep. Roar: linear. Recoil: a held smear and pose. They are the same mouth on the same creature.",
+    "where": [
+      "src/deep/meals.js:35-41",
+      "src/render/serpent.js:811-817",
+      "src/deep/phases.js:223-227",
+      "src/deep/phases.js:347-375"
+    ],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "The jaw has one held pose table (shut, ajar, gape) every caller steps through."
+  },
+  {
+    "id": "C25",
+    "kind": "motion",
+    "title": "The deep's 'no alpha, fade down the ramp' rule is broken by its own HUD and bodies",
+    "what": "rift.js, arms.js, cores.js:97 and riftlife.js all say there is no alpha. Yet globalAlpha fades the serpent's sink veil, fighters and swimmers (bodyInk), deep motes, fight numbers, the whole serpent bar with its heal and shards, and the rift's own twinkle and rings in cores.js, against its own comment. The fight numbers alone fade three ways on one screen: quantized alpha for blows, tone faces plus a 0.5-alpha pop for heals, continuous alpha for bar shards.",
+    "where": [
+      "src/config/rift.js:167-169",
+      "src/render/cores.js:97",
+      "src/render/cores.js:173",
+      "src/render/serpent.js:369",
+      "src/render/serpent.js:534",
+      "src/render/arms.js:254",
+      "src/render/deep.js:503",
+      "src/render/fightnums.js:31-34",
+      "src/render/fightnums.js:99-113",
+      "src/render/serpentbar.js:211-267"
+    ],
+    "evidence": [],
+    "severity": "med",
+    "proposal": "In the deep every fade is a ramp step (ABYSS_TONES / ABYSS_MAGIC_TONES); alpha is reserved for whole-screen veils."
+  },
+  {
+    "id": "C26",
+    "kind": "motion",
+    "title": "Shake and flash in the yard against the held-pose, no-flash/no-shake taste",
+    "what": "The owner's taste is held poses and held impacts, with no flash, shake or shudder. The yard has a full-window lightning flash, not gated on reduced motion (casino has a mayFlash gate, smog does not). It also has a shield strain shake at sin(now/42), about 3.8 Hz, in whole cells and ungated, a continuous dizzy wobble, a sine-throbbing serpent sink warning, and camera shake on casino hits, the arch catch and summons (that one gated).",
+    "where": [
+      "src/render/smog.js:416-426",
+      "src/render.js:311",
+      "src/render/shield.js:30-38",
+      "src/crew/step.js:131",
+      "src/render/serpent.js:523-528",
+      "src/world.js:827-853",
+      "src/casino.js:524-527"
+    ],
+    "evidence": [],
+    "severity": "med",
+    "proposal": "Impacts are held poses; any shake or flash that remains goes through one reduced-motion gate (world.js's), and the strain shake becomes held lean steps."
+  },
+  {
+    "id": "C27",
+    "kind": "motion",
+    "title": "Things in the same sky fade two ways: clouds by tone, balloons by alpha",
+    "what": "Clouds and rain fade toward the page by mixing tones (weather.js paled(), exported 'for anything in the sky that is not a cloud'). Balloons and their plumes, at the same depth and on the same fadeAt, use globalAlpha. Balloons also move eased and off-lattice in play, but in held steps in the finale.",
+    "where": [
+      "src/weather.js:126-157",
+      "src/render/balloon.js:48",
+      "src/render/balloon.js:64",
+      "src/balloon.js:300-354",
+      "src/finale.js:443"
+    ],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "Everything in the sky fades through paled(); balloons move on whole cells."
+  },
+  {
+    "id": "C28",
+    "kind": "motion",
+    "title": "Easing and step helpers copied about 20 times with different curves under one name",
+    "what": "smoothstep k*k*(3-2k) is written out at about 14 sites, some clamped and some not. Only deep/kits.js exports one. Quad in-out, out-cubic and lerp each have 4-7 copies, and `ease` names a quad in deep/rest.js but an out-cubic in cutscene.js. The held-step quantizers come in six variants mixing floor and ceil, and two different functions are both called stepOf.",
+    "where": [
+      "src/deep/kits.js:36-38",
+      "src/deep/react.js:9",
+      "src/render/fish.js:28",
+      "src/render/portal.js:32",
+      "src/weather.js:82",
+      "src/cutscene.js:165-166",
+      "src/deep/rest.js:32",
+      "src/finale.js:71-77",
+      "src/deep/phases.js:316",
+      "src/render/serpent.js:106",
+      "src/tween.js:38"
+    ],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "One motion module (smoothstep, outCubic, quadInOut, lerp, held(t, steps)) imported everywhere; a held step is floor."
+  },
+  {
+    "id": "C29",
+    "kind": "motion",
+    "title": "Off-grid continuous drift on things that are otherwise cell-snapped",
+    "what": "The glyph stacks over stations drift by two summed sines in whole yard pixels (BUILD_DRIFT 2), so they sit up to ±4 px off the 6-px lattice. The cursor motes spin per rendered frame (not per dt) and off the grid. The noticeboard pops in at the first banked grain with no fade, and the serpent bar's phase boxes appear one by one with no fade while the bar itself fades.",
+    "where": [
+      "src/render/bars.js:263-271",
+      "src/config/aura.js:60",
+      "src/render/cursor.js:15-18",
+      "src/render/noticeboard.js:31",
+      "src/render/serpentbar.js:227-233"
+    ],
+    "evidence": [],
+    "severity": "low",
+    "proposal": "Drift moves a whole cell on a held beat; spins step by dt; nothing appears without a fade or a build."
+  },
+  {
+    "id": "C30",
+    "kind": "store",
+    "title": "Store screenshots are scaled 5/3 and blurred; the capsules are crisp",
+    "what": "The five store screenshots are game renders scaled by 5/3, so every 2-px rule is smeared over about 4 px with grey ramps (steamhome.png has about 4,200 colors against 29 in header_920x430.png). The press scanlines are baked in. A player comparing the capsule to the screenshots sees two renderings.",
+    "where": [
+      "steam/store/screenshots/steamhome.png",
+      "docs/mocks/steam-capsules-2026-10-12.html:138"
+    ],
+    "evidence": [
+      "store-screenshot-blur.png",
+      "store-header-capsule.png"
+    ],
+    "severity": "high",
+    "proposal": "Store shots are taken at an integer scale with smoothing off (and the press off); a shot has under ~100 colors."
+  },
+  {
+    "id": "C31",
+    "kind": "store",
+    "title": "Achievement icons repeat: whole ladders share one byte-identical picture",
+    "what": "pickOf strips the rung digits, so PEBBLE0-4 and FIRSTGRAIN are six identical icons, and ROCK0-3, CREW0-3, ORE0/1 and EVERYJOB/WHOLELOT likewise. Steam's list will show rows that look the same. The badge cell is also 16 px on a 24-px glyph cell, a second grid.",
+    "where": [
+      "tools/steam-art/picks.mjs:5-6",
+      "tools/steam-art/icon-draw.js:18",
+      "tools/steam-art/icon-draw.js:62"
+    ],
+    "evidence": [
+      "store-achievements-duplicates.png"
+    ],
+    "severity": "high",
+    "proposal": "Every icon unique (md5 check in steam-art); a rung carries a rung mark (pips) on the glyph's own cell."
+  },
+  {
+    "id": "C32",
+    "kind": "store",
+    "title": "Capsule palette and title font are the tool's own, not the game's",
+    "what": "The capsules use warm off-whites and near-blacks (#f6f6f4 paper, #efefec earth, #e1e1dd hatch, #141414 ink, #cfc9c4 spray, warm cloud greys) found nowhere in src, where the game is #fff/#000 and neutral SHADES. The title is a private 5x7 bitmap font with a serifed I that the game never shows (in-game the name is DOM monospace text). Its letter cells are 13-20 px, not whole multiples of P. The capsule rock is three concentric noisy bands with no #000 core, unlike the game's depth-shaded rock.",
+    "where": [
+      "tools/steam-art/capsule-draw.js:18-26",
+      "tools/steam-art/capsule-draw.js:44-59",
+      "tools/steam-art/capsule-draw.js:151-165",
+      "tools/steam-art/capsule-draw.js:202",
+      "tools/steam-art/capsule-draw.js:214-224",
+      "tools/steam-art/icon-draw.js:61-63",
+      "src/title.css:41"
+    ],
+    "evidence": [
+      "store-header-capsule.png"
+    ],
+    "severity": "med",
+    "proposal": "steam-art imports every color from src/config and shades the rock with depthShade; one title drawing lives in src and both the title page and the capsules use it."
+  },
+  {
+    "id": "C33",
+    "kind": "store",
+    "title": "Capsule details break yard rules: clipped clouds, floating crew, half-cell rock steps",
+    "what": "The title knockout is painted over the clouds, leaving straight cut edges. About 30% of the crest crew stand a cell above the rock. The icon rock's (16-w)/2*u centering puts odd-width rows on half cells, which anti-alias (#858584 in small_462x174.png). The hero is drawn at c=12, a second scale.",
+    "where": [
+      "tools/steam-art/capsule-draw.js:86",
+      "tools/steam-art/capsule-draw.js:257",
+      "tools/steam-art/capsule-draw.js:195",
+      "tools/steam-art/capsule-draw.js:162-165",
+      "tools/steam-art/capsule-draw.js:217"
+    ],
+    "evidence": [
+      "store-header-capsule.png"
+    ],
+    "severity": "low",
+    "proposal": "Capsules obey the yard: nothing floats, nothing is cut, no fractional fillRect, one cell size scaled by whole numbers."
+  }
+]
