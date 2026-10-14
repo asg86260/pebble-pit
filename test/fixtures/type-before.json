@@ -469,12 +469,6 @@
  },
  {
   "file": "src/shelf.css",
-  "sel": ".rows.shelves > .tile .gain",
-  "prop": "letter-spacing",
-  "value": ".08em"
- },
- {
-  "file": "src/shelf.css",
   "sel": ".rows.shelves > .tile .tag",
   "prop": "letter-spacing",
   "value": ".08em"

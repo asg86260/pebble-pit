@@ -219,14 +219,17 @@
   grid-row: 3;
   white-space: nowrap;
   /* Never cut and never under the pips: what a tile gives is the reason to
-     press it, so a gain wider than the room between the pips' columns (a
-     door's blurb, `8 → 10 /harvest`) wraps to a second line inside it, as a
-     card's gain does; the plank's rows take the line for every tile beside
-     it. */
-  min-width: 0; max-width: 100%;
+     press it. The pips stand down the right edge only, so the gain takes the
+     left side's padding back (the right keeps it) and is centered in the
+     room the pips leave, and a gain wider than that
+     (a door's blurb) wraps to a second line, as a card's gain does; the
+     plank's rows take the line for every tile beside it. A quantity, read as
+     written rather than as a label: an amount glued to its unit
+     (`2 → 3 cells/bolt`) does not break, and in capitals it outgrew even
+     that room. */
+  min-width: 0; justify-self: stretch;
+  margin-left: calc(-1 * var(--shelf-side));
   white-space: normal;
-  letter-spacing: calc(var(--track-s) * var(--track));
-  text-transform: uppercase;
   /* the board's own size: at .85em the effect was the hardest line on the
      tile to read, and it is the one that says what you are buying */
   font-size: var(--fs-body);
