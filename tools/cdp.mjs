@@ -77,7 +77,11 @@ export async function closeOtherTabs(port) {
 // A tab on the game, ready to be asked things. `logs` is everything the page
 // says for itself, as it says it: a module that would not load says so there
 // and nowhere else, and a silent page is the confusing kind of broken.
-export async function openTab(port, url = gameUrl()) {
+//
+// `ready` is the expression waited on before the tab is handed back: the
+// game's suite by default; a page with no game in it (the landing page, the
+// card bench, about:blank) passes its own, or null to wait on nothing.
+export async function openTab(port, url = gameUrl(), { ready = "typeof window.__test === 'function'" } = {}) {
   const tab = await (await fetch(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(url)}`,
                                  { method: 'PUT' })).json();
   const ws = new WebSocket(tab.webSocketDebuggerUrl);
@@ -105,9 +109,9 @@ export async function openTab(port, url = gameUrl()) {
   await send('Runtime.enable');
   await send('Page.enable');
   // wait for the game to be there rather than guessing at how long it takes
-  for (let i = 0; i < 100; i++) {
-    const probe = await send('Runtime.evaluate', { expression: 'typeof window.__test', returnByValue: true });
-    if (probe.result?.result?.value === 'function') break;
+  for (let i = 0; ready && i < 100; i++) {
+    const probe = await send('Runtime.evaluate', { expression: ready, returnByValue: true });
+    if (probe.result?.result?.value === true) break;
     await new Promise(r => setTimeout(r, 100));
   }
 
@@ -133,10 +137,14 @@ export async function openTab(port, url = gameUrl()) {
   // `CLIP=x,y,w,h` names the window rectangle to blow up instead of the
   // middle: the pit is at the bottom of the window and a look at anything in
   // it is a look at the sky when cropped to the center.
-  async function shot(file) {
+  //
+  // `opts.clip` is a capture rectangle ({ x, y, width, height, scale }) that
+  // overrides both, for a caller that frames each shot itself; `file` may be
+  // null, and the png comes back either way.
+  async function shot(file, opts = {}) {
     const z = Number(process.env.ZOOM || 0);
     const at = process.env.CLIP ? process.env.CLIP.split(',').map(Number) : null;
-    const clip = at && at.length === 4 ? { x: at[0], y: at[1], width: at[2], height: at[3], scale: z > 1 ? z : 1 }
+    const clip = opts.clip ? opts.clip : at && at.length === 4 ? { x: at[0], y: at[1], width: at[2], height: at[3], scale: z > 1 ? z : 1 }
                : z > 1 ? (() => {
       const [w, h] = (process.env.WINDOW || '800,600').split(',').map(Number);
       return { x: w / 2 - w / z / 2, y: h / 2 - h / z / 2, width: w / z, height: h / z, scale: z };
@@ -151,7 +159,9 @@ export async function openTab(port, url = gameUrl()) {
       requestAnimationFrame(look);
     })`);
     const png = await send('Page.captureScreenshot', clip ? { format: 'png', clip } : { format: 'png' });
-    writeFileSync(file, Buffer.from(png.result.data, 'base64'));
+    const buf = Buffer.from(png.result.data, 'base64');
+    if (file) writeFileSync(file, buf);
+    return buf;
   }
 
   // Shut the tab. A page left open goes on running the game for ever --
@@ -162,4 +172,19 @@ export async function openTab(port, url = gameUrl()) {
   const close = async () => { try { await fetch(`http://127.0.0.1:${port}/json/close/${tab.id}`); } catch {} };
 
   return { send, evaluate, shot, close, logs };
+}
+
+// A scene stood up the way every shot of one is: the scene, `secs` more of
+// the yard so everything that animates is somewhere sensible, then two
+// frames actually painted. Without that wait the shot is taken between the
+// state change and the draw, and every scene came out a blank white page.
+// Shared by `look.mjs` and `review/shoot.mjs`, so a scene looks the same in
+// both. False when the page does not know the name.
+export async function standScene(tab, name, secs = 1) {
+  const r = await tab.evaluate(`(() => { const ok = window.__scene(${JSON.stringify(name)});
+    window.__fast(${+secs});
+    return new Promise(r => requestAnimationFrame(
+      () => requestAnimationFrame(() => r(ok !== false)))); })()`);
+  if (r.result?.exceptionDetails) tab.logs.push('EXCEPTION ' + (r.result.exceptionDetails.exception?.description || r.result.exceptionDetails.text || ''));
+  return r.result?.result?.value === true;
 }

@@ -35,7 +35,7 @@
 // to install.
 
 import { mkdirSync } from 'node:fs';
-import { browser, closeOtherTabs, openTab } from './cdp.mjs';
+import { browser, closeOtherTabs, openTab, standScene } from './cdp.mjs';
 
 const args = process.argv.slice(2);
 const outAt = args.indexOf('--out');
@@ -81,15 +81,8 @@ mkdirSync(out, { recursive: true });
 
 for (const name of want) {
   const file = `${out}/${name}.png`;
-  // Set the scene, run a second of the yard so everything that animates is
-  // somewhere sensible, then wait for two frames to actually paint. Without
-  // that wait the shot is taken between the state change and the draw, and
-  // every scene came out a blank white page.
   const said = tab.logs.length;
-  await tab.evaluate(`(() => { window.__scene(${JSON.stringify(name)});
-    window.__fast(1);
-    return new Promise(r => requestAnimationFrame(
-      () => requestAnimationFrame(() => r(1)))); })()`);
+  await standScene(tab, name);
   await tab.shot(file);
   // What the page threw while this scene stood up, and only this one.
   const bad = tab.logs.slice(said).find(l => l.startsWith('EXCEPTION'));

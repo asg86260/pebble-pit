@@ -1,0 +1,1266 @@
+{
+ "title": "Visual consistency pass: before and after",
+ "lede": "What the visual consistency pass changed, shot from main before it (67baaa3a) and main after it. One card per change the audit approved; approve it, deny it, or say what is off.",
+ "base": "67baaa3a",
+ "items": [
+  {
+   "id": "spark-plus",
+   "title": "The spark is a plus everywhere; coin marks are cell bitmaps",
+   "what": "One coin alphabet drawn as 5x5 cell bitmaps: the corner counter, the casino's bins and pay box, the warning mark.",
+   "audit": [
+    "C01",
+    "C15",
+    "C16"
+   ],
+   "shots": [
+    {
+     "label": "corner counter",
+     "scene": "kitshack",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      1080,
+      700,
+      120,
+      100
+     ],
+     "zoom": 4
+    },
+    {
+     "label": "casino bins",
+     "scene": "casinoidle",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      220,
+      400,
+      560,
+      50
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "casino pay box",
+     "scene": "casinopaying",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      770,
+      350,
+      100,
+      110
+     ],
+     "zoom": 3
+    },
+    {
+     "label": "warning mark",
+     "scene": "marks",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      530,
+      560,
+      80,
+      70
+     ],
+     "zoom": 4
+    }
+   ]
+  },
+  {
+   "id": "lightning",
+   "title": "No lightning flash",
+   "what": "A strike is the bolt itself; the white pane over the window is gone.",
+   "audit": [
+    "C26"
+   ],
+   "shots": [
+    {
+     "label": "a strike, frame by frame",
+     "scene": "lightningflash",
+     "wait": 0,
+     "window": [
+      800,
+      600
+     ],
+     "zoom": 0.75,
+     "gif": {
+      "seconds": 2,
+      "fps": 10
+     }
+    }
+   ]
+  },
+  {
+   "id": "numbers",
+   "title": "Every count on the canvas in the pixel number face",
+   "what": "The corner counter, the roster counts and the kit stands drop the system font for NUM_FONT at 2 screen px, keyed in paper.",
+   "audit": [
+    "C14"
+   ],
+   "shots": [
+    {
+     "label": "corner counter",
+     "scene": "boards",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      1080,
+      700,
+      120,
+      100
+     ],
+     "zoom": 3
+    },
+    {
+     "label": "house and garage counters",
+     "scene": "carriers",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      420,
+      480,
+      260,
+      180
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "kit stand by the shack",
+     "scene": "kitshack",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      340,
+      500,
+      180,
+      150
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "masses",
+   "title": "Large masses deal a neighboring tone",
+   "what": "The muck band, the hill's deep core and the star's crust deal one cell in three or four a neighboring tone; the cauldrons take the hut's grain.",
+   "audit": [
+    "C21"
+   ],
+   "shots": [
+    {
+     "label": "muck band",
+     "scene": "messtags",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      100,
+      470,
+      600,
+      110
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "the hill's deep core",
+     "scene": "rockhalf",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      460,
+      440,
+      280,
+      160
+     ],
+     "zoom": 3
+    },
+    {
+     "label": "the star's crust",
+     "scene": "westend",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      190,
+      110,
+      160,
+      140
+     ],
+     "zoom": 4
+    },
+    {
+     "label": "cauldrons",
+     "scene": "apothshelf",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      460,
+      480,
+      300,
+      120
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "greys",
+   "title": "One grey ramp: clouds, notices, the sky",
+   "what": "Every grey is a rung of GREY in config/palette.js; the clouds, the noticeboard and the sky's dirt read off it.",
+   "audit": [
+    "greys",
+    "C03"
+   ],
+   "shots": [
+    {
+     "label": "a heavy front",
+     "scene": "cloudswell",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      0,
+      0,
+      1200,
+      400
+     ],
+     "zoom": 1
+    },
+    {
+     "label": "noticeboard",
+     "scene": "notices2",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      300,
+      420,
+      260,
+      180
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "purple",
+   "title": "Purple is one ramp, for magic and what is outside the normal",
+   "what": "Wizards' magic, the foe's statuses, the heal and the pad's marker are all rungs of one PURPLE ramp.",
+   "audit": [
+    "purple",
+    "C02",
+    "C03"
+   ],
+   "shots": [
+    {
+     "label": "wizards at the tower",
+     "scene": "seatstower",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      280,
+      80,
+      280,
+      340
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "statuses on the serpent",
+     "scene": "party-statuses",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      330,
+      290,
+      300,
+      100
+     ],
+     "zoom": 3
+    },
+    {
+     "label": "the pad's marker",
+     "scene": "pad-yard",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      500,
+      480,
+      240,
+      150
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "fades",
+   "title": "Fades step down the ramp, not through alpha",
+   "what": "A fade steps toward the ground it is on in held tones; nothing thins with globalAlpha.",
+   "audit": [
+    "alpha"
+   ],
+   "shots": [
+    {
+     "label": "the dome fading out",
+     "scene": "dome-",
+     "wait": 0,
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      200,
+      200,
+      800,
+      420
+     ],
+     "zoom": 0.75,
+     "gif": {
+      "seconds": 1.2,
+      "fps": 20
+     }
+    },
+    {
+     "label": "notices coming up on the noticeboard",
+     "scene": "notices",
+     "wait": 0,
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      300,
+      420,
+      260,
+      180
+     ],
+     "zoom": 2,
+     "gif": {
+      "seconds": 3,
+      "fps": 10
+     }
+    }
+   ]
+  },
+  {
+   "id": "press",
+   "title": "The press keeps its scanlines and drops the vignette",
+   "what": "No radial vignette over the frame: the game draws no gradient.",
+   "audit": [
+    "C07"
+   ],
+   "shots": [
+    {
+     "label": "the whole frame",
+     "scene": "steamhome",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.75
+    }
+   ]
+  },
+  {
+   "id": "motes",
+   "title": "No red/cyan fringe on rising motes",
+   "what": "A rising mote is its SMOG_TINTS tone, not a chromatic fringe.",
+   "audit": [
+    "C08"
+   ],
+   "shots": [
+    {
+     "label": "the jaw's plume",
+     "scene": "plume",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      100,
+      380,
+      220,
+      160
+     ],
+     "zoom": 4
+    }
+   ]
+  },
+  {
+   "id": "grid",
+   "title": "Whole-cell eaves, rules inside their box, no sloped strokes",
+   "what": "Eaves and caps are a whole cell or none; rules sit inside their box; slopes and rings are cells.",
+   "audit": [
+    "offgrid",
+    "lines"
+   ],
+   "shots": [
+    {
+     "label": "the house's roof",
+     "scene": "house",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      300,
+      400,
+      220,
+      170
+     ],
+     "zoom": 3
+    },
+    {
+     "label": "the shack",
+     "scene": "shack",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      290,
+      440,
+      180,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "label": "the belt's ramp",
+     "scene": "beltramp",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      0,
+      440,
+      420,
+      160
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "the casino's lever",
+     "scene": "casinoidle",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      740,
+      90,
+      120,
+      100
+     ],
+     "zoom": 4
+    }
+   ]
+  },
+  {
+   "id": "hop",
+   "title": "One hop: the landing steps through the finale's held poses",
+   "what": "The landing hop and his hop against the ribs use HOP_POSES; the jaw uses one pose table.",
+   "audit": [
+    "motionvar"
+   ],
+   "shots": [
+    {
+     "label": "a rock landing on a crew",
+     "scene": "landing",
+     "wait": 0,
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      200,
+      300,
+      800,
+      340
+     ],
+     "zoom": 0.75,
+     "gif": {
+      "seconds": 4,
+      "fps": 10
+     }
+    }
+   ]
+  },
+  {
+   "id": "focus",
+   "title": "Keyboard focus wears the pad's corner brackets",
+   "what": "Tabbing the held sheet or the landing column draws the gamepad's purple brackets, not the browser's rounded ring.",
+   "audit": [
+    "DOM-02"
+   ],
+   "shots": [
+    {
+     "label": "held sheet, tabbed",
+     "scene": "toast",
+     "window": [
+      1200,
+      800
+     ],
+     "keys": [
+      "Escape",
+      "Tab",
+      "Tab"
+     ],
+     "crop": [
+      380,
+      200,
+      440,
+      400
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "landing column, tabbed",
+     "url": "index.html",
+     "window": [
+      1200,
+      800
+     ],
+     "keys": [
+      "Tab",
+      "Tab"
+     ],
+     "crop": [
+      0,
+      0,
+      400,
+      500
+     ],
+     "zoom": 2
+    }
+   ]
+  },
+  {
+   "id": "buttons",
+   "title": "One button height, centered labels, everywhere",
+   "what": "The held sheet, the language list and the landing column's buttons share one height, padding and centered label.",
+   "audit": [
+    "buttonh",
+    "DOM-04"
+   ],
+   "shots": [
+    {
+     "label": "held sheet, front",
+     "scene": "toast",
+     "window": [
+      1200,
+      800
+     ],
+     "keys": [
+      "Escape"
+     ],
+     "crop": [
+      300,
+      150,
+      600,
+      500
+     ],
+     "zoom": 1.5
+    },
+    {
+     "label": "language page",
+     "scene": "toast",
+     "window": [
+      1200,
+      800
+     ],
+     "keys": [
+      "Escape"
+     ],
+     "setup": "(document.getElementById('settingsbtn').click(), document.getElementById('langbtn').click(), 1)",
+     "crop": [
+      300,
+      150,
+      600,
+      500
+     ],
+     "zoom": 1.5
+    },
+    {
+     "label": "landing column",
+     "url": "index.html",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      0,
+      0,
+      600,
+      800
+     ],
+     "zoom": 1
+    }
+   ]
+  },
+  {
+   "id": "sheet-width",
+   "title": "The held sheet is one width on every page",
+   "what": "Turning a page no longer resizes and re-centers the sheet.",
+   "audit": [
+    "DOM-08",
+    "DOM-07"
+   ],
+   "shots": [
+    {
+     "label": "front",
+     "scene": "toast",
+     "window": [
+      1200,
+      800
+     ],
+     "keys": [
+      "Escape"
+     ],
+     "zoom": 0.6
+    },
+    {
+     "label": "settings",
+     "scene": "toast",
+     "window": [
+      1200,
+      800
+     ],
+     "keys": [
+      "Escape"
+     ],
+     "setup": "(document.getElementById('settingsbtn').click(), 1)",
+     "zoom": 0.6
+    },
+    {
+     "label": "saves",
+     "scene": "savespage",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.6
+    },
+    {
+     "label": "controls",
+     "scene": "controlspage",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.6
+    },
+    {
+     "label": "feedback",
+     "scene": "feedback",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.6
+    }
+   ]
+  },
+  {
+   "id": "lists",
+   "title": "One list of choices: index, languages, saves",
+   "what": "Rows at one padding and tracking, upper case, the chosen one inverted; CJK names set at the capitals' height.",
+   "audit": [
+    "DOM-14",
+    "DOM-39"
+   ],
+   "shots": [
+    {
+     "label": "index",
+     "scene": "index",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      300,
+      150,
+      600,
+      500
+     ],
+     "zoom": 1.5
+    },
+    {
+     "label": "languages",
+     "scene": "toast",
+     "window": [
+      1200,
+      800
+     ],
+     "keys": [
+      "Escape"
+     ],
+     "setup": "(document.getElementById('settingsbtn').click(), document.getElementById('langbtn').click(), 1)",
+     "crop": [
+      400,
+      200,
+      400,
+      400
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "saves",
+     "scene": "savespage",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      300,
+      250,
+      600,
+      300
+     ],
+     "zoom": 1.5
+    }
+   ]
+  },
+  {
+   "id": "states",
+   "title": "Disabled and can't-afford are dashed and grey, never faded",
+   "what": "Disabled controls take --ink-5 and a dashed edge; a card short of a coin goes dashed with the short coin grey.",
+   "audit": [
+    "onstate"
+   ],
+   "shots": [
+    {
+     "label": "the cut's board, the drill short",
+     "scene": "drillshort",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      80,
+      60,
+      330,
+      460
+     ],
+     "zoom": 2
+    },
+    {
+     "label": "the bench's board",
+     "scene": "tossboard",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 1
+    }
+   ]
+  },
+  {
+   "id": "shelf-gain",
+   "title": "A shelf tile's gain wraps instead of cutting off",
+   "what": "No ellipsis: the gain wraps in the room the pips leave.",
+   "audit": [
+    "DOM-29",
+    "DOM-30"
+   ],
+   "shots": [
+    {
+     "label": "the bench's shelves",
+     "scene": "benchdeep",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 1.5,
+     "crop": [
+      90,
+      20,
+      460,
+      760
+     ]
+    },
+    {
+     "label": "the farm's board",
+     "scene": "farmboard",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      90,
+      60,
+      320,
+      450
+     ],
+     "zoom": 2
+    }
+   ]
+  },
+  {
+   "id": "headings",
+   "title": "Section signs and page titles",
+   "what": "Two heading levels: a page title over a 2px rule, and a section as a sign inked the other way.",
+   "audit": [
+    "heads",
+    "type"
+   ],
+   "shots": [
+    {
+     "label": "the tower's board",
+     "scene": "towerboard",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      80,
+      60,
+      760,
+      480
+     ],
+     "zoom": 1.5
+    },
+    {
+     "label": "the shack's board",
+     "scene": "kitshack",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      230,
+      220,
+      480,
+      280
+     ],
+     "zoom": 2
+    }
+   ]
+  },
+  {
+   "id": "coins-dark",
+   "title": "Coin colors stay readable in dark mode",
+   "what": "--coin-ore, --coin-crop and --coin-spark come from the palette with a dark-page tone that keeps 3:1.",
+   "audit": [
+    "coins",
+    "DOM-27"
+   ],
+   "shots": [
+    {
+     "label": "the tower's board, dark",
+     "scene": "towerboard",
+     "theme": "dark",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      0,
+      60,
+      840,
+      480
+     ],
+     "zoom": 1.5
+    },
+    {
+     "label": "the farm's board, dark",
+     "scene": "farmboard",
+     "theme": "dark",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      90,
+      60,
+      320,
+      450
+     ],
+     "zoom": 2
+    }
+   ]
+  },
+  {
+   "id": "type",
+   "title": "One type scale: notices, the story card, the sheet",
+   "what": "Four sizes and four trackings; never a font: shorthand on a component; bold only for sections.",
+   "audit": [
+    "type",
+    "spacing"
+   ],
+   "shots": [
+    {
+     "label": "a notice",
+     "scene": "messtoast",
+     "keepToasts": true,
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      380,
+      0,
+      440,
+      120
+     ],
+     "zoom": 2.5
+    },
+    {
+     "label": "the story card",
+     "scene": "storyquest",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      0,
+      0,
+      420,
+      140
+     ],
+     "zoom": 2.5
+    }
+   ]
+  },
+  {
+   "id": "phone-index",
+   "title": "On a phone the index keeps the page's own back",
+   "what": "The index on a phone shows the sheet's full-width back, retargeted to the list while an entry is open.",
+   "audit": [
+    "DOM-42"
+   ],
+   "shots": [
+    {
+     "label": "list",
+     "scene": "indexphone",
+     "window": [
+      390,
+      844
+     ],
+     "zoom": 1
+    },
+    {
+     "label": "entry pushed over the list",
+     "scene": "indexphoneentry",
+     "window": [
+      390,
+      844
+     ],
+     "zoom": 1
+    }
+   ]
+  },
+  {
+   "id": "phone-sheet",
+   "title": "The held sheet is the glass on a phone",
+   "what": "A phone's held sheet runs full width; its tracking tightens with the boards'.",
+   "audit": [
+    "DOM-08",
+    "DOM-37"
+   ],
+   "shots": [
+    {
+     "label": "front",
+     "scene": "toast",
+     "window": [
+      390,
+      844
+     ],
+     "keys": [
+      "Escape"
+     ],
+     "zoom": 1
+    },
+    {
+     "label": "settings",
+     "scene": "toast",
+     "window": [
+      390,
+      844
+     ],
+     "keys": [
+      "Escape"
+     ],
+     "setup": "(document.getElementById('settingsbtn').click(), 1)",
+     "zoom": 1
+    }
+   ]
+  },
+  {
+   "id": "landing",
+   "title": "The title page: centered column, matched foot",
+   "what": "Pages centered as on the held sheet; the foot stands in by the column's edge on both sides; hovers gated to hover devices.",
+   "audit": [
+    "DOM-04",
+    "DOM-38",
+    "DOM-21"
+   ],
+   "shots": [
+    {
+     "label": "light",
+     "url": "index.html",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.75
+    },
+    {
+     "label": "dark",
+     "url": "index.html",
+     "theme": "dark",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.75
+    },
+    {
+     "label": "phone",
+     "url": "index.html",
+     "window": [
+      390,
+      844
+     ],
+     "zoom": 1
+    }
+   ]
+  },
+  {
+   "id": "cards-bench",
+   "title": "The cards bench has a dark mode",
+   "what": "cards.html draws its rows through the real builder in both modes.",
+   "audit": [
+    "DOM-28"
+   ],
+   "shots": [
+    {
+     "label": "light",
+     "url": "cards.html",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.75
+    },
+    {
+     "label": "dark",
+     "url": "cards.html",
+     "theme": "dark",
+     "window": [
+      1200,
+      800
+     ],
+     "zoom": 0.75
+    }
+   ]
+  },
+  {
+   "id": "story-deep",
+   "title": "The deep's story card follows dark mode",
+   "what": "The deep card inks itself the other way through --c-paper/--c-ink, off the grey ramp's tones.",
+   "audit": [
+    "DOM-41"
+   ],
+   "shots": [
+    {
+     "label": "light",
+     "scene": "deep",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      0,
+      0,
+      420,
+      140
+     ],
+     "zoom": 2.5
+    },
+    {
+     "label": "dark",
+     "scene": "deep",
+     "theme": "dark",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      0,
+      0,
+      420,
+      140
+     ],
+     "zoom": 2.5
+    }
+   ]
+  },
+  {
+   "id": "tickbox",
+   "title": "One tick box, in em",
+   "what": "The feedback form's tick box rides its text, filled inside a 1px margin when on.",
+   "audit": [
+    "onstate",
+    "dupecode"
+   ],
+   "shots": [
+    {
+     "label": "feedback page",
+     "scene": "feedback",
+     "window": [
+      1200,
+      800
+     ],
+     "crop": [
+      380,
+      280,
+      440,
+      260
+     ],
+     "zoom": 2
+    }
+   ]
+  },
+  {
+   "id": "store-shots",
+   "title": "Store screenshots taken crisp",
+   "what": "A world pixel to two device pixels, smoothing off, no press: the shots match the capsules.",
+   "audit": [
+    "C30"
+   ],
+   "shots": [
+    {
+     "label": "steamhome",
+     "file": "steam/store/screenshots/steamhome.png"
+    },
+    {
+     "label": "steamhome, detail",
+     "file": "steam/store/screenshots/steamhome.png",
+     "crop": [
+      600,
+      500,
+      300,
+      200
+     ],
+     "zoom": 3
+    },
+    {
+     "label": "steamstorm",
+     "file": "steam/store/screenshots/steamstorm.png"
+    },
+    {
+     "label": "steamboard",
+     "file": "steam/store/screenshots/steamboard.png"
+    }
+   ]
+  },
+  {
+   "id": "achievements",
+   "title": "Every achievement icon is its own; a rung carries pips",
+   "what": "The pebble, rock and crew ladders no longer share one picture; the rung is pips on the glyph's own cell.",
+   "audit": [
+    "C31"
+   ],
+   "shots": [
+    {
+     "label": "pebble ladder",
+     "files": [
+      "steam/store/achievements/ACH_FIRSTGRAIN.png",
+      "steam/store/achievements/ACH_PEBBLE0.png",
+      "steam/store/achievements/ACH_PEBBLE1.png",
+      "steam/store/achievements/ACH_PEBBLE2.png",
+      "steam/store/achievements/ACH_PEBBLE3.png",
+      "steam/store/achievements/ACH_PEBBLE4.png"
+     ],
+     "cols": 6
+    },
+    {
+     "label": "rock and crew ladders",
+     "files": [
+      "steam/store/achievements/ACH_ROCK0.png",
+      "steam/store/achievements/ACH_ROCK1.png",
+      "steam/store/achievements/ACH_ROCK2.png",
+      "steam/store/achievements/ACH_ROCK3.png",
+      "steam/store/achievements/ACH_CREW0.png",
+      "steam/store/achievements/ACH_CREW1.png",
+      "steam/store/achievements/ACH_CREW2.png",
+      "steam/store/achievements/ACH_CREW3.png"
+     ],
+     "cols": 4
+    },
+    {
+     "label": "locked",
+     "files": [
+      "steam/store/achievements/ACH_PEBBLE0_locked.png",
+      "steam/store/achievements/ACH_PEBBLE1_locked.png",
+      "steam/store/achievements/ACH_ROCK0_locked.png",
+      "steam/store/achievements/ACH_ROCK1_locked.png"
+     ],
+     "cols": 4
+    }
+   ]
+  },
+  {
+   "id": "capsules",
+   "title": "Store capsules in the game's palette and the yard's rules",
+   "what": "The capsules take config/palette.js and the cell grid instead of the art tool's own colors and details.",
+   "audit": [
+    "C32",
+    "C33",
+    "storeart"
+   ],
+   "shots": [
+    {
+     "label": "header 920x430",
+     "file": "steam/store/capsules/header_920x430.png"
+    },
+    {
+     "label": "small 462x174",
+     "file": "steam/store/capsules/small_462x174.png",
+     "zoom": 2
+    },
+    {
+     "label": "main 1232x706",
+     "file": "steam/store/capsules/main_1232x706.png"
+    },
+    {
+     "label": "library capital 600x900",
+     "file": "steam/store/capsules/library-capital_600x900.png"
+    }
+   ]
+  }
+ ],
+ "head": "691fe41c0437fc410256005518151f316de1324c"
+}

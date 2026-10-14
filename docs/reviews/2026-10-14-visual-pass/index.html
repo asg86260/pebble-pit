@@ -1,0 +1,174 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Visual consistency pass</title>
+<style>
+:root{--bg:#f2f2ef;--card:#fff;--ink:#1a1a1a;--mute:#5c5c58;--line:#d6d6d0;--well:#e8e8e4;--ok:#2f7a3b;--no:#b3261e;--scrim:rgb(20 20 20 / .97)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141414;--card:#1f1f1f;--ink:#e6e6e6;--mute:#9a9a95;--line:#333;--well:#2a2a2a;--ok:#7fcf8b;--no:#f2b8b5}}
+:root[data-theme="dark"]{--bg:#141414;--card:#1f1f1f;--ink:#e6e6e6;--mute:#9a9a95;--line:#333;--well:#2a2a2a;--ok:#7fcf8b;--no:#f2b8b5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+main{max-width:1240px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:24px;margin:0 0 4px}.lede{color:var(--mute);max-width:80ch;margin:4px 0}.refs{font-size:12px;color:var(--mute)}
+.refs code{font-size:12px}
+.bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-bottom:1px solid var(--line);z-index:2;margin-top:12px}
+button{font:13px system-ui,sans-serif;padding:4px 10px;background:var(--card);color:var(--ink);border:1px solid var(--line);cursor:pointer}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.bar button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.count,.status{font-size:12px;color:var(--mute)}.status.bad{color:var(--no)}
+.item{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);padding:12px 14px;margin:14px 0;min-width:0}
+.item.approve{border-left-color:var(--ok)}.item.deny{border-left-color:var(--no)}
+.item h2{margin:2px 0 2px;font-size:17px}.tag{font-size:12px;color:var(--mute)}.what{margin:2px 0 8px;max-width:90ch}
+.shot{border-top:1px dashed var(--line);padding:8px 0}
+.shot .label{font-size:13px;color:var(--mute);margin-bottom:4px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+@media (max-width:700px){.pair{grid-template-columns:1fr}}
+figure{margin:0;min-width:0}
+figcaption{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:2px}
+.pic{display:block;width:100%;padding:0;border:1px solid var(--line);background:var(--well);cursor:zoom-in}
+.pic img{display:block;max-width:100%;max-height:520px;margin:0 auto;height:auto}
+.px img{image-rendering:pixelated}
+.none{padding:18px 10px;font-size:13px;color:var(--mute);border:1px dashed var(--line);text-align:center}
+.note{font-size:12px;color:var(--mute)}
+.act{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.act .ok[aria-pressed="true"]{background:var(--ok);color:var(--bg);border-color:var(--ok)}
+.act .no[aria-pressed="true"]{background:var(--no);color:var(--bg);border-color:var(--no)}
+textarea{font:14px system-ui,sans-serif;width:100%;min-height:2.4em;margin-top:6px;padding:4px 6px;background:var(--bg);color:var(--ink);border:1px solid var(--line);resize:vertical}
+.saved{font-size:11px;color:var(--mute)}
+.lb{position:fixed;inset:0;background:var(--scrim);display:flex;flex-direction:column;z-index:10;color:#eee}
+.lb[hidden]{display:none}
+.lb .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;font-size:13px}
+.lb .top .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.lb button{background:#222;color:#eee;border-color:#555}
+.lb button[aria-pressed="true"]{background:#eee;color:#111;border-color:#eee}
+.lb .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px}
+.lb .stage img{max-width:100%;max-height:100%;object-fit:contain}
+.lb .side{font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.lb .hint{font-size:11px;color:#aaa;padding:0 12px 8px}
+</style></head><body><main>
+<h1 id="title"></h1>
+<p class="lede" id="lede"></p>
+<p class="refs" id="refs"></p>
+<div class="bar" id="bar"><button data-f="all" aria-pressed="true">all</button><button data-f="open">unreviewed</button><button data-f="approve">approved</button><button data-f="deny">denied</button><span class="count" id="count"></span><span class="status" id="status">connecting…</span></div>
+<div id="list"></div></main>
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="enlarged shot">
+ <div class="top"><span class="t" id="lbt"></span><button id="lbb" aria-pressed="true">before</button><button id="lba" aria-pressed="false">after</button><button id="lbx">close</button></div>
+ <div class="stage" id="lbs"><img id="lbi" alt=""></div>
+ <div class="hint">space flips before and after · ← → step through shots · esc closes</div>
+</div>
+<script id="data" type="application/json">{"title":"Visual consistency pass: before and after","lede":"What the visual consistency pass changed, shot from main before it (67baaa3a) and main after it. One card per change the audit approved; approve it, deny it, or say what is off.","base":"67baaa3ae3f20f6a32d8f609973b722bab282b4b","head":"691fe41c0437fc410256005518151f316de1324c","at":"2026-10-14T20:51:24.742Z","items":[{"id":"spark-plus","title":"The spark is a plus everywhere; coin marks are cell bitmaps","what":"One coin alphabet drawn as 5x5 cell bitmaps: the corner counter, the casino's bins and pay box, the warning mark.","audit":["C01","C15","C16"],"shots":[{"label":"corner counter","before":{"src":"spark-plus/1-before.png","gif":false,"note":""},"after":{"src":"spark-plus/1-after.png","gif":false,"note":""},"pixel":true},{"label":"casino bins","before":{"src":"spark-plus/2-before.png","gif":false,"note":""},"after":{"src":"spark-plus/2-after.png","gif":false,"note":""},"pixel":true},{"label":"casino pay box","before":{"src":"spark-plus/3-before.png","gif":false,"note":""},"after":{"src":"spark-plus/3-after.png","gif":false,"note":""},"pixel":true},{"label":"warning mark","before":{"src":"spark-plus/4-before.png","gif":false,"note":""},"after":{"src":"spark-plus/4-after.png","gif":false,"note":""},"pixel":true}]},{"id":"lightning","title":"No lightning flash","what":"A strike is the bolt itself; the white pane over the window is gone.","audit":["C26"],"shots":[{"label":"a strike, frame by frame","before":{"src":"lightning/1-before.gif","gif":true,"note":""},"after":{"src":"lightning/1-after.gif","gif":true,"note":""},"pixel":false}]},{"id":"numbers","title":"Every count on the canvas in the pixel number face","what":"The corner counter, the roster counts and the kit stands drop the system font for NUM_FONT at 2 screen px, keyed in paper.","audit":["C14"],"shots":[{"label":"corner counter","before":{"src":"numbers/1-before.png","gif":false,"note":""},"after":{"src":"numbers/1-after.png","gif":false,"note":""},"pixel":true},{"label":"house and garage counters","before":{"src":"numbers/2-before.png","gif":false,"note":""},"after":{"src":"numbers/2-after.png","gif":false,"note":""},"pixel":true},{"label":"kit stand by the shack","before":{"src":"numbers/3-before.png","gif":false,"note":""},"after":{"src":"numbers/3-after.png","gif":false,"note":""},"pixel":true}]},{"id":"masses","title":"Large masses deal a neighboring tone","what":"The muck band, the hill's deep core and the star's crust deal one cell in three or four a neighboring tone; the cauldrons take the hut's grain.","audit":["C21"],"shots":[{"label":"muck band","before":{"src":"masses/1-before.png","gif":false,"note":""},"after":{"src":"masses/1-after.png","gif":false,"note":""},"pixel":true},{"label":"the hill's deep core","before":{"src":"masses/2-before.png","gif":false,"note":""},"after":{"src":"masses/2-after.png","gif":false,"note":""},"pixel":true},{"label":"the star's crust","before":{"src":"masses/3-before.png","gif":false,"note":""},"after":{"src":"masses/3-after.png","gif":false,"note":""},"pixel":true},{"label":"cauldrons","before":{"src":"masses/4-before.png","gif":false,"note":""},"after":{"src":"masses/4-after.png","gif":false,"note":""},"pixel":true}]},{"id":"greys","title":"One grey ramp: clouds, notices, the sky","what":"Every grey is a rung of GREY in config/palette.js; the clouds, the noticeboard and the sky's dirt read off it.","audit":["greys","C03"],"shots":[{"label":"a heavy front","before":{"src":"greys/1-before.png","gif":false,"note":""},"after":{"src":"greys/1-after.png","gif":false,"note":""},"pixel":false},{"label":"noticeboard","before":{"src":"greys/2-before.png","gif":false,"note":""},"after":{"src":"greys/2-after.png","gif":false,"note":""},"pixel":true}]},{"id":"purple","title":"Purple is one ramp, for magic and what is outside the normal","what":"Wizards' magic, the foe's statuses, the heal and the pad's marker are all rungs of one PURPLE ramp.","audit":["purple","C02","C03"],"shots":[{"label":"wizards at the tower","before":{"src":"purple/1-before.png","gif":false,"note":""},"after":{"src":"purple/1-after.png","gif":false,"note":""},"pixel":true},{"label":"statuses on the serpent","before":{"src":"purple/2-before.png","gif":false,"note":""},"after":{"src":"purple/2-after.png","gif":false,"note":""},"pixel":true},{"label":"the pad's marker","before":{"src":"purple/3-before.png","gif":false,"note":""},"after":{"src":"purple/3-after.png","gif":false,"note":""},"pixel":true}]},{"id":"fades","title":"Fades step down the ramp, not through alpha","what":"A fade steps toward the ground it is on in held tones; nothing thins with globalAlpha.","audit":["alpha"],"shots":[{"label":"the dome fading out","before":{"src":"fades/1-before.gif","gif":true,"note":""},"after":{"src":"fades/1-after.gif","gif":true,"note":""},"pixel":false},{"label":"notices coming up on the noticeboard","before":{"src":"fades/2-before.gif","gif":true,"note":""},"after":{"src":"fades/2-after.gif","gif":true,"note":""},"pixel":true}]},{"id":"press","title":"The press keeps its scanlines and drops the vignette","what":"No radial vignette over the frame: the game draws no gradient.","audit":["C07"],"shots":[{"label":"the whole frame","before":{"src":"press/1-before.png","gif":false,"note":""},"after":{"src":"press/1-after.png","gif":false,"note":""},"pixel":false}]},{"id":"motes","title":"No red/cyan fringe on rising motes","what":"A rising mote is its SMOG_TINTS tone, not a chromatic fringe.","audit":["C08"],"shots":[{"label":"the jaw's plume","before":{"src":"motes/1-before.png","gif":false,"note":""},"after":{"src":"motes/1-after.png","gif":false,"note":""},"pixel":true}]},{"id":"grid","title":"Whole-cell eaves, rules inside their box, no sloped strokes","what":"Eaves and caps are a whole cell or none; rules sit inside their box; slopes and rings are cells.","audit":["offgrid","lines"],"shots":[{"label":"the house's roof","before":{"src":"grid/1-before.png","gif":false,"note":""},"after":{"src":"grid/1-after.png","gif":false,"note":""},"pixel":true},{"label":"the shack","before":{"src":"grid/2-before.png","gif":false,"note":""},"after":{"src":"grid/2-after.png","gif":false,"note":""},"pixel":true},{"label":"the belt's ramp","before":{"src":"grid/3-before.png","gif":false,"note":""},"after":{"src":"grid/3-after.png","gif":false,"note":""},"pixel":true},{"label":"the casino's lever","before":{"src":"grid/4-before.png","gif":false,"note":""},"after":{"src":"grid/4-after.png","gif":false,"note":""},"pixel":true}]},{"id":"hop","title":"One hop: the landing steps through the finale's held poses","what":"The landing hop and his hop against the ribs use HOP_POSES; the jaw uses one pose table.","audit":["motionvar"],"shots":[{"label":"a rock landing on a crew","before":{"src":"hop/1-before.gif","gif":true,"note":""},"after":{"src":"hop/1-after.gif","gif":true,"note":""},"pixel":false}]},{"id":"focus","title":"Keyboard focus wears the pad's corner brackets","what":"Tabbing the held sheet or the landing column draws the gamepad's purple brackets, not the browser's rounded ring.","audit":["DOM-02"],"shots":[{"label":"held sheet, tabbed","before":{"src":"focus/1-before.png","gif":false,"note":""},"after":{"src":"focus/1-after.png","gif":false,"note":""},"pixel":true},{"label":"landing column, tabbed","before":{"src":"focus/2-before.png","gif":false,"note":""},"after":{"src":"focus/2-after.png","gif":false,"note":""},"pixel":true}]},{"id":"buttons","title":"One button height, centered labels, everywhere","what":"The held sheet, the language list and the landing column's buttons share one height, padding and centered label.","audit":["buttonh","DOM-04"],"shots":[{"label":"held sheet, front","before":{"src":"buttons/1-before.png","gif":false,"note":""},"after":{"src":"buttons/1-after.png","gif":false,"note":""},"pixel":true},{"label":"language page","before":{"src":"buttons/2-before.png","gif":false,"note":""},"after":{"src":"buttons/2-after.png","gif":false,"note":""},"pixel":true},{"label":"landing column","before":{"src":"buttons/3-before.png","gif":false,"note":""},"after":{"src":"buttons/3-after.png","gif":false,"note":""},"pixel":false}]},{"id":"sheet-width","title":"The held sheet is one width on every page","what":"Turning a page no longer resizes and re-centers the sheet.","audit":["DOM-08","DOM-07"],"shots":[{"label":"front","before":{"src":"sheet-width/1-before.png","gif":false,"note":""},"after":{"src":"sheet-width/1-after.png","gif":false,"note":""},"pixel":false},{"label":"settings","before":{"src":"sheet-width/2-before.png","gif":false,"note":""},"after":{"src":"sheet-width/2-after.png","gif":false,"note":""},"pixel":false},{"label":"saves","before":{"src":"sheet-width/3-before.png","gif":false,"note":""},"after":{"src":"sheet-width/3-after.png","gif":false,"note":""},"pixel":false},{"label":"controls","before":{"src":"sheet-width/4-before.png","gif":false,"note":""},"after":{"src":"sheet-width/4-after.png","gif":false,"note":""},"pixel":false},{"label":"feedback","before":{"src":"sheet-width/5-before.png","gif":false,"note":""},"after":{"src":"sheet-width/5-after.png","gif":false,"note":""},"pixel":false}]},{"id":"lists","title":"One list of choices: index, languages, saves","what":"Rows at one padding and tracking, upper case, the chosen one inverted; CJK names set at the capitals' height.","audit":["DOM-14","DOM-39"],"shots":[{"label":"index","before":{"src":"lists/1-before.png","gif":false,"note":""},"after":{"src":"lists/1-after.png","gif":false,"note":""},"pixel":true},{"label":"languages","before":{"src":"lists/2-before.png","gif":false,"note":""},"after":{"src":"lists/2-after.png","gif":false,"note":""},"pixel":true},{"label":"saves","before":{"src":"lists/3-before.png","gif":false,"note":""},"after":{"src":"lists/3-after.png","gif":false,"note":""},"pixel":true}]},{"id":"states","title":"Disabled and can't-afford are dashed and grey, never faded","what":"Disabled controls take --ink-5 and a dashed edge; a card short of a coin goes dashed with the short coin grey.","audit":["onstate"],"shots":[{"label":"the cut's board, the drill short","before":{"src":"states/1-before.png","gif":false,"note":""},"after":{"src":"states/1-after.png","gif":false,"note":""},"pixel":true},{"label":"the bench's board","before":{"src":"states/2-before.png","gif":false,"note":""},"after":{"src":"states/2-after.png","gif":false,"note":""},"pixel":false}]},{"id":"shelf-gain","title":"A shelf tile's gain wraps instead of cutting off","what":"No ellipsis: the gain wraps in the room the pips leave.","audit":["DOM-29","DOM-30"],"shots":[{"label":"the bench's shelves","before":{"src":"shelf-gain/1-before.png","gif":false,"note":""},"after":{"src":"shelf-gain/1-after.png","gif":false,"note":""},"pixel":true},{"label":"the farm's board","before":{"src":"shelf-gain/2-before.png","gif":false,"note":""},"after":{"src":"shelf-gain/2-after.png","gif":false,"note":""},"pixel":true}]},{"id":"headings","title":"Section signs and page titles","what":"Two heading levels: a page title over a 2px rule, and a section as a sign inked the other way.","audit":["heads","type"],"shots":[{"label":"the tower's board","before":{"src":"headings/1-before.png","gif":false,"note":""},"after":{"src":"headings/1-after.png","gif":false,"note":""},"pixel":true},{"label":"the shack's board","before":{"src":"headings/2-before.png","gif":false,"note":""},"after":{"src":"headings/2-after.png","gif":false,"note":""},"pixel":true}]},{"id":"coins-dark","title":"Coin colors stay readable in dark mode","what":"--coin-ore, --coin-crop and --coin-spark come from the palette with a dark-page tone that keeps 3:1.","audit":["coins","DOM-27"],"shots":[{"label":"the tower's board, dark","before":{"src":"coins-dark/1-before.png","gif":false,"note":""},"after":{"src":"coins-dark/1-after.png","gif":false,"note":""},"pixel":true},{"label":"the farm's board, dark","before":{"src":"coins-dark/2-before.png","gif":false,"note":""},"after":{"src":"coins-dark/2-after.png","gif":false,"note":""},"pixel":true}]},{"id":"type","title":"One type scale: notices, the story card, the sheet","what":"Four sizes and four trackings; never a font: shorthand on a component; bold only for sections.","audit":["type","spacing"],"shots":[{"label":"a notice","before":{"src":"type/1-before.png","gif":false,"note":""},"after":{"src":"type/1-after.png","gif":false,"note":""},"pixel":true},{"label":"the story card","before":{"src":"type/2-before.png","gif":false,"note":""},"after":{"src":"type/2-after.png","gif":false,"note":""},"pixel":true}]},{"id":"phone-index","title":"On a phone the index keeps the page's own back","what":"The index on a phone shows the sheet's full-width back, retargeted to the list while an entry is open.","audit":["DOM-42"],"shots":[{"label":"list","before":{"src":"phone-index/1-before.png","gif":false,"note":""},"after":{"src":"phone-index/1-after.png","gif":false,"note":""},"pixel":false},{"label":"entry pushed over the list","before":{"src":"phone-index/2-before.png","gif":false,"note":""},"after":{"src":"phone-index/2-after.png","gif":false,"note":""},"pixel":false}]},{"id":"phone-sheet","title":"The held sheet is the glass on a phone","what":"A phone's held sheet runs full width; its tracking tightens with the boards'.","audit":["DOM-08","DOM-37"],"shots":[{"label":"front","before":{"src":"phone-sheet/1-before.png","gif":false,"note":""},"after":{"src":"phone-sheet/1-after.png","gif":false,"note":""},"pixel":false},{"label":"settings","before":{"src":"phone-sheet/2-before.png","gif":false,"note":""},"after":{"src":"phone-sheet/2-after.png","gif":false,"note":""},"pixel":false}]},{"id":"landing","title":"The title page: centered column, matched foot","what":"Pages centered as on the held sheet; the foot stands in by the column's edge on both sides; hovers gated to hover devices.","audit":["DOM-04","DOM-38","DOM-21"],"shots":[{"label":"light","before":{"src":"landing/1-before.png","gif":false,"note":""},"after":{"src":"landing/1-after.png","gif":false,"note":""},"pixel":false},{"label":"dark","before":{"src":"landing/2-before.png","gif":false,"note":""},"after":{"src":"landing/2-after.png","gif":false,"note":""},"pixel":false},{"label":"phone","before":{"src":"landing/3-before.png","gif":false,"note":""},"after":{"src":"landing/3-after.png","gif":false,"note":""},"pixel":false}]},{"id":"cards-bench","title":"The cards bench has a dark mode","what":"cards.html draws its rows through the real builder in both modes.","audit":["DOM-28"],"shots":[{"label":"light","before":{"src":"cards-bench/1-before.png","gif":false,"note":""},"after":{"src":"cards-bench/1-after.png","gif":false,"note":""},"pixel":false},{"label":"dark","before":{"src":"cards-bench/2-before.png","gif":false,"note":""},"after":{"src":"cards-bench/2-after.png","gif":false,"note":""},"pixel":false}]},{"id":"story-deep","title":"The deep's story card follows dark mode","what":"The deep card inks itself the other way through --c-paper/--c-ink, off the grey ramp's tones.","audit":["DOM-41"],"shots":[{"label":"light","before":{"src":"story-deep/1-before.png","gif":false,"note":""},"after":{"src":"story-deep/1-after.png","gif":false,"note":""},"pixel":true},{"label":"dark","before":{"src":"story-deep/2-before.png","gif":false,"note":""},"after":{"src":"story-deep/2-after.png","gif":false,"note":""},"pixel":true}]},{"id":"tickbox","title":"One tick box, in em","what":"The feedback form's tick box rides its text, filled inside a 1px margin when on.","audit":["onstate","dupecode"],"shots":[{"label":"feedback page","before":{"src":"tickbox/1-before.png","gif":false,"note":""},"after":{"src":"tickbox/1-after.png","gif":false,"note":""},"pixel":true}]},{"id":"store-shots","title":"Store screenshots taken crisp","what":"A world pixel to two device pixels, smoothing off, no press: the shots match the capsules.","audit":["C30"],"shots":[{"label":"steamhome","before":{"src":"store-shots/1-before.png","gif":false,"note":""},"after":{"src":"store-shots/1-after.png","gif":false,"note":""},"pixel":true},{"label":"steamhome, detail","before":{"src":"store-shots/2-before.png","gif":false,"note":""},"after":{"src":"store-shots/2-after.png","gif":false,"note":""},"pixel":true},{"label":"steamstorm","before":{"src":"store-shots/3-before.png","gif":false,"note":""},"after":{"src":"store-shots/3-after.png","gif":false,"note":""},"pixel":true},{"label":"steamboard","before":{"src":"store-shots/4-before.png","gif":false,"note":""},"after":{"src":"store-shots/4-after.png","gif":false,"note":""},"pixel":true}]},{"id":"achievements","title":"Every achievement icon is its own; a rung carries pips","what":"The pebble, rock and crew ladders no longer share one picture; the rung is pips on the glyph's own cell.","audit":["C31"],"shots":[{"label":"pebble ladder","before":{"src":"achievements/1-before.png","gif":false,"note":""},"after":{"src":"achievements/1-after.png","gif":false,"note":""},"pixel":true},{"label":"rock and crew ladders","before":{"src":"achievements/2-before.png","gif":false,"note":""},"after":{"src":"achievements/2-after.png","gif":false,"note":""},"pixel":true},{"label":"locked","before":{"src":"achievements/3-before.png","gif":false,"note":""},"after":{"src":"achievements/3-after.png","gif":false,"note":""},"pixel":true}]},{"id":"capsules","title":"Store capsules in the game's palette and the yard's rules","what":"The capsules take config/palette.js and the cell grid instead of the art tool's own colors and details.","audit":["C32","C33","storeart"],"shots":[{"label":"header 920x430","before":{"src":"capsules/1-before.png","gif":false,"note":""},"after":{"src":"capsules/1-after.png","gif":false,"note":""},"pixel":true},{"label":"small 462x174","before":{"src":"capsules/2-before.png","gif":false,"note":""},"after":{"src":"capsules/2-after.png","gif":false,"note":""},"pixel":true},{"label":"main 1232x706","before":{"src":"capsules/3-before.png","gif":false,"note":""},"after":{"src":"capsules/3-after.png","gif":false,"note":""},"pixel":true},{"label":"library capital 600x900","before":{"src":"capsules/4-before.png","gif":false,"note":""},"after":{"src":"capsules/4-after.png","gif":false,"note":""},"pixel":true}]}]}</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const rev = {}; let db = null, filter = 'all';
+const list = document.getElementById('list'), rows = new Map();
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.getElementById('title').textContent = D.title;
+document.getElementById('lede').textContent = D.lede;
+document.getElementById('refs').innerHTML = 'before <code>' + esc(D.base.slice(0, 8)) + '</code> · after <code>' + esc(D.head.slice(0, 8)) + '</code> · shot ' + esc(D.at.slice(0, 16).replace('T', ' ')) + ' UTC';
+
+// Every enlargeable shot in page order, for the lightbox's arrows.
+const flat = [];
+const side = (s, which) => {
+  if (!s.src) return '<div class="none">' + esc(s.note || 'not shot') + '</div>';
+  const k = flat.length;
+  return '<button class="pic" data-k="' + k + '" data-side="' + which + '" aria-label="enlarge ' + which + '"><img loading="lazy" src="' + esc(s.src) + '" alt="' + which + '"></button>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '');
+};
+for (const it of D.items) {
+  const el = document.createElement('article'); el.className = 'item'; el.id = it.id;
+  let shots = '';
+  it.shots.forEach((s, n) => {
+    shots += '<div class="shot' + (s.pixel ? ' px' : '') + '"><div class="label">' + (n + 1) + '. ' + esc(s.label) + '</div><div class="pair">'
+      + '<figure><figcaption>before</figcaption>' + side(s.before, 'before') + '</figure>'
+      + '<figure><figcaption>after</figcaption>' + side(s.after, 'after') + '</figure></div></div>';
+    // pushed after both sides are written, so the pair share one entry
+    flat.push({ it, n, s });
+  });
+  el.innerHTML = '<div class="tag">' + esc(it.id) + (it.audit.length ? ' · audit ' + it.audit.map(esc).join(', ') : '') + '</div>'
+    + '<h2>' + esc(it.title) + '</h2><p class="what">' + esc(it.what) + '</p>' + shots
+    + '<div class="act"><button class="ok" aria-pressed="false">approve</button><button class="no" aria-pressed="false">deny</button><span class="saved"></span></div>'
+    + '<textarea placeholder="comment (optional)" aria-label="comment on ' + esc(it.title) + '"></textarea>';
+  list.append(el);
+  const r = { it, el, ok: el.querySelector('.ok'), no: el.querySelector('.no'), note: el.querySelector('textarea'), saved: el.querySelector('.saved'), timer: null };
+  rows.set(it.id, r);
+  r.ok.onclick = () => setVerdict(r, rev[it.id]?.verdict === 'approve' ? '' : 'approve');
+  r.no.onclick = () => setVerdict(r, rev[it.id]?.verdict === 'deny' ? '' : 'deny');
+  r.note.addEventListener('input', () => { clearTimeout(r.timer); r.saved.textContent = db ? 'saving…' : 'not saved: open the published page'; r.timer = setTimeout(() => save(r), 600); });
+  r.note.addEventListener('blur', () => { if (r.timer) { clearTimeout(r.timer); save(r); } });
+}
+
+function setVerdict(r, v) { rev[r.it.id] = { ...(rev[r.it.id] || {}), verdict: v }; paint(r); save(r); }
+function paint(r) {
+  const v = rev[r.it.id]?.verdict || '';
+  r.ok.setAttribute('aria-pressed', v === 'approve'); r.no.setAttribute('aria-pressed', v === 'deny');
+  r.el.classList.toggle('approve', v === 'approve'); r.el.classList.toggle('deny', v === 'deny');
+}
+async function save(r) {
+  r.timer = null;
+  if (!db) { r.saved.textContent = 'not saved: open the published page'; render(); return; }
+  const verdict = rev[r.it.id]?.verdict || '', comment = r.note.value;
+  rev[r.it.id] = { verdict, comment };
+  try {
+    const ref = db.collection('reviews').doc(r.it.id);
+    if (!verdict && !comment.trim()) await ref.delete();
+    else await ref.set({ verdict, comment, title: r.it.title, at: new Date().toISOString() });
+    r.saved.textContent = 'saved';
+  } catch (e) { r.saved.textContent = 'not saved: ' + (e && e.code || 'error'); }
+  render();
+}
+function render() {
+  let n = 0, done = 0, ok = 0, no = 0;
+  for (const r of rows.values()) {
+    const v = rev[r.it.id]?.verdict || '';
+    if (v) done++; if (v === 'approve') ok++; if (v === 'deny') no++;
+    const show = filter === 'all' || (filter === 'open' ? !v : filter === v);
+    r.el.hidden = !show; if (show) n++;
+  }
+  for (const b of document.querySelectorAll('#bar button')) b.setAttribute('aria-pressed', b.dataset.f === filter);
+  document.getElementById('count').textContent = n + ' shown · ' + done + ' of ' + D.items.length + ' reviewed · ' + ok + ' approved · ' + no + ' denied';
+}
+document.getElementById('bar').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.f; render(); } });
+render();
+
+// The lightbox: one shot at a time, before or after, flipped in place.
+const lb = document.getElementById('lb'), lbi = document.getElementById('lbi'), lbt = document.getElementById('lbt');
+const lbb = document.getElementById('lbb'), lba = document.getElementById('lba');
+let at = 0, showing = 'before', opener = null;
+function show() {
+  const f = flat[at], s = f.s[showing].src ? showing : (showing === 'before' ? 'after' : 'before');
+  showing = s;
+  lbi.src = f.s[s].src || ''; lbi.alt = s;
+  lbi.style.imageRendering = f.s.pixel ? 'pixelated' : '';
+  lbt.textContent = f.it.title + ' — ' + (f.n + 1) + '. ' + f.s.label + '  (' + s + ')';
+  lbb.setAttribute('aria-pressed', s === 'before'); lba.setAttribute('aria-pressed', s === 'after');
+  lbb.disabled = !f.s.before.src; lba.disabled = !f.s.after.src;
+}
+function openAt(k, which) { opener = document.activeElement; at = k; showing = which; lb.hidden = false; show(); lbb.focus(); }
+function close() { lb.hidden = true; lbi.src = ''; opener?.focus?.(); }
+list.addEventListener('click', e => { const b = e.target.closest('.pic'); if (b) openAt(+b.dataset.k, b.dataset.side); });
+lbb.onclick = () => { showing = 'before'; show(); };
+lba.onclick = () => { showing = 'after'; show(); };
+document.getElementById('lbx').onclick = close;
+document.getElementById('lbs').addEventListener('click', e => { if (e.target === e.currentTarget) close(); });
+addEventListener('keydown', e => {
+  if (lb.hidden) return;
+  if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); showing = showing === 'before' ? 'after' : 'before'; show(); }
+  else if (e.key === 'Escape') close();
+  else if (e.key === 'ArrowRight') { at = (at + 1) % flat.length; show(); }
+  else if (e.key === 'ArrowLeft') { at = (at - 1 + flat.length) % flat.length; show(); }
+});
+
+(async () => {
+  const st = document.getElementById('status');
+  try { db = window.claude ? await window.claude.use('db') : null; } catch { db = null; }
+  if (!db) { st.textContent = 'read-only here: verdicts save only on the published page, signed in'; st.className = 'status bad'; return; }
+  st.textContent = 'saves as you go';
+  db.collection('reviews').onSnapshot(snap => {
+    const seen = new Set();
+    for (const d of snap.docs) {
+      const v = d.data() || {}; seen.add(d.id); rev[d.id] = { verdict: v.verdict || '', comment: v.comment || '' };
+      const r = rows.get(d.id);
+      if (r) { if (document.activeElement !== r.note && !r.timer) r.note.value = v.comment || ''; paint(r); }
+    }
+    for (const id of Object.keys(rev)) if (!seen.has(id)) { delete rev[id]; const r = rows.get(id); if (r && !r.timer) { r.note.value = ''; paint(r); } }
+    render();
+  }, () => { st.textContent = 'lost the connection; reload the page'; st.className = 'status bad'; });
+})();
+</script></body></html>

@@ -165,6 +165,7 @@ node tools/node/carters.mjs [s] [--crew N]  # the carters against fed heaps and 
 node tools/node/builders.mjs [s] [--open]   # every builder's frames over a backlog: hammering, walking, waiting
 node tools/node/file-times.mjs [name...]   # wall time per node-tier file, slowest first (a sweep: once, on main)
 node tools/node/rank-prof.mjs <cpuprofile> # a --cpu-prof ranked by self time
+node tools/review/shoot.mjs --base <ref> --head <ref> --items <json> --out <dir>  # before/after shots for the owner (tools/review/README.md)
 ```
 
 **A slow file is profiled, not read.** Every file that has taken minutes here
