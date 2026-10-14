@@ -74,7 +74,7 @@ export function poseAt(R, s) {
     spacing: R.spacing ? 1 + (curve(R.spacing, s) - 1) * k : 1,
     amp: from(R.amp, s),
     clock: from(R.clock, s),
-    knot: from(R.knot, s) || 0,
+    knot: R.knot ? Math.max(0, curve(R.knot, s) * k) : 0,
     mouths: from(R.mouths, s),
     smear: !!from(R.smear, s),
     // how long ago each puff of silt was kicked up, those still out

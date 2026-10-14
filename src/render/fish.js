@@ -162,19 +162,28 @@ export const bobOf = (k, t) => SP[k].bob(t);
 const HALO = [[1, -5], [1, -4], [-2, -5], [-2, -4], [0, -6], [-1, -6], [0, -3], [-1, -3]];
 // The blob's five mouths, the order they shut in:
 const MOUTHS = [[3, 0], [7, -2], [9, 2], [5, 3], [12, 0]];
-// The ribbon eel tied in a knot `k` tight: the head straight, a loop thrown
-// behind it, the tail swimming on.
+// The ribbon eel tied `k` of the way into its knot: each cell of it moved
+// that far from where its own swim has it to where the knot does -- the head
+// straight, a loop thrown behind it, the tail swimming on -- so it ties and
+// unties a cell at a time rather than popping from one drawing to the other.
 function knotEel(put, t, k) {
-  const r = 2.6 * k;
+  const r = 2.6;
   for (let i = 0; i < 26; i++) {
     let lx, ly;
     if (i < 3) { lx = i; ly = 0; }
     else if (i < 17) { const a = (i - 3) / 14 * Math.PI * 2; lx = 3 + Math.sin(a) * r + (i - 3) * 0.25; ly = -r + Math.cos(a) * r; }
-    else { lx = 6.5 + (i - 16); ly = Math.round(Math.sin(i / 2.4 - t * 7) * 0.8); }
-    put(Math.round(lx), Math.round(ly), Pu[i < 3 ? 7 : 6]);
-    if (i < 3 || i >= 17) put(Math.round(lx), Math.round(ly) + 1, Pu[i % 4 < 2 ? 8 : 7]);
+    else { lx = 6.5 + (i - 16); ly = Math.sin(i / 2.4 - t * 7) * 0.8; }
+    const sy = Math.round(Math.sin(i / 2.4 - t * 7) * Math.min(2.6, 0.6 + i * 0.09));
+    const x = Math.round(i + (lx - i) * k), y = Math.round(sy + (ly - sy) * k);
+    // the swim's drawing, cell for cell (SP[1]), carried along
+    put(x, y, Pu[i < 3 ? 7 : 6]);
+    if (i < 18) put(x, y + 1, Pu[i % 4 < 2 ? 8 : 7]);
+    if (i > 3 && i < 21 && i % 2 === 0) put(x, y - 1, Pu[4]);
+    if (i < 3) put(x, y - 1, Pu[6]);
   }
-  put(1, -1, G[5]);
+  const eye = Math.round(Math.sin(1 / 2.4 - t * 7) * 0.7) - 1;
+  put(1, Math.round(eye + (-1 - eye) * k), G[5]);
+  if (k < 0.5) put(-1, Math.round(Math.sin(-t * 7) * 0.6), G[5]);
 }
 // One creature of kind `k` into `put` (its own frame: x back from the front
 // tip), on its own clock `t`, in `pose` or its own swim when that is null.

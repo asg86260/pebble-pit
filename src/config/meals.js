@@ -75,13 +75,14 @@ export const FLOW_NEAR_BAND = 150;
 // eight, docs/mocks/creature-clicks-2026-10-13.html): tracks as FAUNA_REACT's,
 // one a kind in the order render/fish.js draws them, x forward from the front
 // tip, in the creature's own cells. `clock` holds the drawing at a moment of
-// its own swim (a jaw open, a lid shut), `knot` the eel's knot drawn tight
-// (1) or half (0.5), `mouths` how many of the blob's mouths gape. Picture
+// its own swim (a jaw open, a lid shut), `knot` how far the eel is tied
+// (0 straight, 1 tight; eased as x and y are), `mouths` how many of the
+// blob's mouths gape. Picture
 // only: the stream's path and the meal's timing never read them.
 export const FLOW_REACT = [
   { end: 2.2, clock: [[0, 0], [0.33, 0.262], [0.5, 0], [1.0, null]], halo: [[0, true], [0.33, null]],
-    x: [[0.42, 0], [0.5, 4], [1.0, 4], [2.2, 0]] },
-  { end: 1.8, knot: [[0, 0.5], [0.08, 1], [1.4, 0.5], [1.6, null]] },
+    x: [[0.42, 0], [0.5, 4], [1.0, 4], [2.2, 0]], smear: [[0.475, true], [0.49, null]] },
+  { end: 1.8, knot: [[0, 0], [0.12, 0.5], [0.25, 1], [1.35, 1], [1.5, 0.5], [1.75, 0]] },
   { end: 3.2, y: [[0, -2], [0.37, -2], [0.47, -4], [0.82, -4], [0.92, -6], [1.3, -6], [3.2, 0]],
     clock: [[0, 0.49], [0.17, 1.47], [0.45, 0.49], [0.62, 1.47], [0.9, 0.49], [1.07, 1.47], [1.3, null]] },
   { end: 2.0, x: [[0.52, 0], [0.6, 3], [1.1, 3], [2.0, 0]],
