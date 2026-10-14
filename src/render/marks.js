@@ -75,6 +75,18 @@ export function drawCoin(name, x, y, px, g = ctx) {
       if (rows[r][c] === '#') g.fillRect(x + c * px, y + r * px, px, px);
 }
 
+// A box's rule: the world's thin line (P / 3) lying inside the box, as four
+// filled strips, never a stroke centered on the edge -- half a centered rule
+// falls outside the box and off the lattice.
+export function rule(x, y, w, h, ink = '#000', g = ctx) {
+  const t = P / 3;
+  g.fillStyle = ink;
+  g.fillRect(x, y, w, t);
+  g.fillRect(x, y + h - t, w, t);
+  g.fillRect(x, y + t, t, h - 2 * t);
+  g.fillRect(x + w - t, y + t, t, h - 2 * t);
+}
+
 // A cell of a ring, put down *centered* on the point rather than hanging off
 // it by its top-left corner: half a cell down and right is exactly enough to
 // make a ring read as slipped off whatever it is coming out of.

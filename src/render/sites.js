@@ -75,14 +75,24 @@ function drawLadder() {
 export function drawBridge() {
   if (!S.quarryOpen) return;
   const { x0, d0, d1, x1, top } = bridgeSpan();
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(x0, S.groundY);
-  ctx.lineTo(d0, top);
-  ctx.lineTo(d1, top);
-  ctx.lineTo(x1, S.groundY);
-  ctx.stroke();
+  // The ramps in steps, a cell across a step at the world's thin line, as the
+  // belt's ramp is: a diagonal stroke is the one smeared edge in the yard.
+  const t = P / 3;
+  ctx.fillStyle = '#000';
+  const ramp = (a, b, ya, yb) => {
+    const n = Math.max(1, Math.round(Math.abs(b - a) / P)), dir = Math.sign(b - a) || 1;
+    let last = null;
+    for (let i = 0; i < n; i++) {
+      const y = Math.round((ya + (yb - ya) * (i + 0.5) / n) / t) * t;
+      const x = Math.round(a / t) * t + dir * i * P - (dir < 0 ? P : 0);
+      ctx.fillRect(x, y, P, t);
+      if (last != null && last !== y) ctx.fillRect(dir > 0 ? x : x + P - t, Math.min(last, y), t, Math.abs(last - y) + t);
+      last = y;
+    }
+  };
+  ramp(x0, d0, S.groundY, top);
+  ctx.fillRect(Math.round(d0 / t) * t, Math.round(top / t) * t, Math.round((d1 - d0) / t) * t, t);
+  ramp(x1, d1, S.groundY, top);
 }
 
 

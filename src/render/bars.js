@@ -13,6 +13,7 @@ import { flagReach } from './aura.js';
 import { risingPlaces } from './rise.js';
 import { ctx } from './ctx.js';
 import { groundOf } from '../deep/place.js';
+import { rule } from './marks.js';
 
 // One bar for every site that builds: a thing filling a cell at a time, over
 // the place it is happening, that stops dead while nobody is standing there.
@@ -22,9 +23,7 @@ export function bar(cx, cy, at) {
 
   ctx.fillStyle = '#fff';
   ctx.fillRect(x, y, w, h);
-  ctx.lineWidth = Math.max(1, P / 3);
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(x, y, w, h);
+  rule(x, y, w, h);
 
   ctx.fillStyle = '#000';
   const room = w - P * 2;
@@ -107,7 +106,7 @@ export function barSpot(site, w = null) {
 // stroke (`tint`, the card's `tintOf`) as thick as the done mark's, growing
 // with the fill. The same picture on the tile and over the station, so a
 // glance at either says what is coming.
-const EDGE = P / 6;                      // the outline's stroke, one yard pixel
+const EDGE = P / 3;                      // the outline's stroke, the world's thin line
 export function buildingGlyph(cx, cy, rows, at, tint = null, dx = 0, dy = 0) {
   const g = glyphPlan(rows);
   const up = Math.floor(at * g.laid.length);

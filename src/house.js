@@ -5,7 +5,7 @@
 // anything random.
 
 import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_FLIP_MS, HOUSE_SHUT,
-         HOUSE_CURTAIN, HOUSE_PUFF_MS, DOOR_W, DOOR_H } from './config.js';
+         HOUSE_CURTAIN, HOUSE_PUFF_MS, DOOR_W, DOOR_H, SHACK_EAVE } from './config.js';
 import { S, bench } from './state.js';
 import { puff } from './puff.js';
 import { rockLeft } from './world.js';
@@ -170,21 +170,21 @@ export function drawHouses(ctx) {
   ctx.fillStyle = '#000';
   for (const r of rooms) ctx.fillRect(r.x, r.y, C, C);
 
-  // The eaves: a lip over whatever has sky above it, hanging half a cell past
-  // the end of a run of rooms. It is the only thing that says roof rather
-  // than top edge.
+  // The eaves: a lip a cell deep over whatever has sky above it, hanging a
+  // cell past the end of a run of rooms. It is the only thing that says roof
+  // rather than top edge. Whole cells: a half-cell lip is a grey hairline.
   for (const r of rooms) {
     if (room(r.x, r.y - C)) continue;
-    const over = P / 2;
+    const over = SHACK_EAVE;
     const l = room(r.x - C, r.y) ? 0 : over;
     const w = C + l + (room(r.x + C, r.y) ? 0 : over);
-    ctx.fillRect(r.x - l, r.y - P / 2, w, P / 2);
+    ctx.fillRect(r.x - l, r.y - SHACK_EAVE, w, SHACK_EAVE);
   }
 
   // The chimney, drawn with the mass because it is part of the building.
   const flue = chimneyAt();
   ctx.fillRect(flue.x, flue.y - P * 4, P * 2, P * 4);
-  ctx.fillRect(flue.x - P / 2, flue.y - P * 4, P * 3, P);
+  ctx.fillRect(flue.x - P, flue.y - P * 4, P * 4, P);       // its cap, a cell proud either side
 
   // The holes. The doorway is always a hole: a way in, not a light. A window
   // is white when somebody is behind it and grey when not, and grey is also

@@ -85,7 +85,7 @@ export const STAND_REACH = P;
 // post (FARM_GATE, six) and the bridge's near ramp (BRIDGE_RUN, eleven) all
 // fall inside it.
 const kitHang = key => KIT_OUT[key] + STAND_REACH;
-export const SHACK_EAVE = P / 2;   // how far a roof hangs past its own wall
+export const SHACK_EAVE = P;       // how far a roof hangs past its own wall: a whole cell, never a fraction of one
 // Bare ground between the widest shield's foot and the hut's eave. Not a
 // STATION_GAP: the shield is the rock's, not a neighbor with a heap or a
 // stand to keep off. The hut's kit stand hangs on its far side and it has no

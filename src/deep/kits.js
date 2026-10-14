@@ -65,7 +65,7 @@ export function kitOnly(fn) {
   try { fn(); } finally { bare = false; }
 }
 // A build-up's pips under a body: `n` lit of `of`, all lit on a `flash`.
-// The shop's pips: a ring for one to come, a disc for a lit one, drawn in
+// Square pips: a hollow box for one to come, a solid one lit, drawn in
 // screen pixels so the ring still reads when the deep is zoomed out. The
 // last is purple: it is the big hit the row builds to.
 export function pips(g, x, y, n, of, flash = 0) {
@@ -77,10 +77,11 @@ export function pips(g, x, y, n, of, flash = 0) {
   g.lineWidth = PIP_RING * d;
   for (let i = 0; i < of; i++) {
     g.fillStyle = g.strokeStyle = i === of - 1 ? PURPLES[11] : WHITE;
-    const px = Math.round(cx - w / 2 + i * (r * 2 + gap) + r), py = Math.round(top + r);
-    g.beginPath();
-    if (flash || i < n) { g.arc(px, py, r, 0, Math.PI * 2); g.fill(); }
-    else { g.arc(px, py, r - g.lineWidth / 2, 0, Math.PI * 2); g.stroke(); }
+    // square, as the serpent bar's pips are: no arcs on the canvas
+    const px = Math.round(cx - w / 2 + i * (r * 2 + gap)), py = Math.round(top), s = Math.round(r * 2);
+    const ring = Math.max(1, Math.round(g.lineWidth));
+    if (flash || i < n) g.fillRect(px, py, s, s);
+    else { g.fillRect(px, py, s, ring); g.fillRect(px, py + s - ring, s, ring); g.fillRect(px, py, ring, s); g.fillRect(px + s - ring, py, ring, s); }
   }
   g.restore();
 }

@@ -36,8 +36,8 @@ import { toned } from './tone.js';
 // inset on the walls, 1 fully out past them. The caller owns the stroke state.
 //
 // The breath runs from INSIDE the walls to just outside: the ground is white,
-// so a ring wholly outside the box would be white on white. Whole pixels, so
-// the 1-px line stays a 1-px line rather than a two-pixel gray fringe.
+// so a ring wholly outside the box would be white on white. The world's thin
+// line (P / 3) lying inside the ring's box, on whole pixels.
 export function auraRing(rect, phase) {
   const out = Math.round(-AURA_IN + phase * (AURA_IN + AURA_BREATH));
   // The box is snapped to the cell grid; the breath pushes it out by whole
@@ -47,7 +47,9 @@ export function auraRing(rect, phase) {
   const y = Math.round(rect.y / P) * P - out;
   const w = Math.round(rect.w / P) * P + out * 2;
   const h = Math.round(rect.h / P) * P + out * 2;
-  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  const t = P / 3;
+  ctx.lineWidth = t;
+  ctx.strokeRect(x + t / 2, y + t / 2, w - t, h - t);
 }
 
 // The roof peak: the middle column of the stand box, at its top edge. Derived
@@ -289,7 +291,6 @@ export function drawAuras() {
     ctx.fillRect(cx, y + P, P, P);
   }
   ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 1;
   // The station under a held body wears the same ring, steady, at phase 0:
   // fully inset, the line lies on the black of the building; swelled out it
   // would sit in the white sky, which is no ring at all. holdTarget is null

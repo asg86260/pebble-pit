@@ -24,7 +24,7 @@ import { ARM_LENGTH, ARM_BOSS, ARM_PIVOT, ARM_KNOB, ARM_DEAD, MARK_CELLS, DIGIT_
 import { fmt } from '../words.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
-import { drawCoin } from './marks.js';
+import { drawCoin, rule } from './marks.js';
 import { drawGrid } from './ground.js';
 import { rising as risingAt, withRise } from './rise.js';
 import { toned } from './tone.js';
@@ -131,9 +131,7 @@ function drawSign() {
   // the board itself: white paper with a black edge, like everything else here
   ctx.fillStyle = '#fff';
   ctx.fillRect(x, y, w * P, h * P);
-  ctx.lineWidth = Math.max(1, P / 3);
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(x, y, w * P, h * P);
+  rule(x, y, w * P, h * P);
 
   // the word, along the board, centered; the mid gap is the word's, and
   // a number stands on the gaps alone
@@ -466,11 +464,11 @@ function drawControl(l) {
   const ex = x + dir * Math.cos(a) * reach, ey = y - Math.sin(a) * reach;
   ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
   knob(x, y, ARM_PIVOT);
-  ctx.lineWidth = P;
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(ex, ey);
-  ctx.stroke();
+  // the stem in whole cells along its line, never a stroke
+  const steps = Math.max(1, Math.round(reach / P));
+  for (let i = 0; i <= steps; i++)
+    ctx.fillRect(Math.round((x + (ex - x) * i / steps - P / 2) / P) * P,
+                 Math.round((y + (ey - y) * i / steps - P / 2) / P) * P, P, P);
   knob(ex, ey, ARM_KNOB);
   // The ball's face says which way the arm is working, past the dead band:
   // a plus cut out of it pouring in, a minus of the same stroke pouring
@@ -577,9 +575,7 @@ export function drawCasinoMark() {
 
   ctx.fillStyle = '#fff';
   ctx.fillRect(left, top, w * P, h * P);
-  ctx.lineWidth = Math.max(1, P / 3);
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(left, top, w * P, h * P);
+  rule(left, top, w * P, h * P);
   lines.forEach((l, i) => {
     const ly = top + (1 + i * (DIGIT_H + 1)) * P;
     if (l.kind === 'dust') {

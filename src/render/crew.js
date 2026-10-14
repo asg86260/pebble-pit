@@ -262,8 +262,9 @@ function drawSay(w, say) {
 
   if (say.mark === 'dots') {
     const n = say.n || 2;
+    // whole cells with a skipped cell between, never a cell a pixel short
     for (let i = 0; i < n; i++)
-      ctx.fillRect(Math.round(x - (n * P) / 2 + i * P), top - P, P - 1, P - 1);
+      ctx.fillRect(onCell(x - (2 * n - 1) * P / 2 + i * 2 * P), top - P, P, P);
     return;
   }
 
@@ -273,8 +274,8 @@ function drawSay(w, say) {
     const t = now() / 160;
     for (const off of [0, Math.PI]) {
       const a = t + off;
-      ctx.fillRect(Math.round(x + Math.cos(a) * P * 2.2) - P / 2,
-                   Math.round(top - P * 1.4 + Math.sin(a) * P), P - 1, P - 1);
+      ctx.fillRect(onCell(x + Math.cos(a) * P * 2.2 - P / 2),
+                   onCell(top - P * 1.4 + Math.sin(a) * P), P, P);
     }
     return;
   }
@@ -292,10 +293,10 @@ function drawSay(w, say) {
   if (say.mark === 'yuck') {
     const wave = Math.floor(now() / 240) % 2 ? P : -P;
     for (const sx of [-P, P]) {
-      const cx = Math.round(x + sx - P / 2);
-      ctx.fillRect(cx, top - P, P - 1, P - 1);
-      ctx.fillRect(cx + wave * (sx > 0 ? 1 : -1), top - P * 2, P - 1, P - 1);
-      ctx.fillRect(cx, top - P * 3, P - 1, P - 1);
+      const cx = onCell(x + sx * 1.5 - P / 2);
+      ctx.fillRect(cx, top - P, P, P);
+      ctx.fillRect(cx + wave * (sx > 0 ? 1 : -1), top - P * 2, P, P);
+      ctx.fillRect(cx, top - P * 3, P, P);
     }
     return;
   }
@@ -322,15 +323,19 @@ function drawSay(w, say) {
 
   if (say.mark === 'note') {
     // a head and a stem: the smallest thing that is unmistakably a note
-    ctx.fillRect(Math.round(x - P), top - P, P, P);
-    ctx.fillRect(Math.round(x), top - P * 2, P - 2, P + 1);
+    ctx.fillRect(onCell(x - P), top - P, P, P);
+    ctx.fillRect(onCell(x), top - P * 3, P, P * 2);
     return;
   }
 
   // a burst: four cells off a corner, the comic shape of a swear word
+  // (a skipped cell between the arms, so it reads as four marks, not a plus)
   for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]])
-    ctx.fillRect(Math.round(x + dx * P) - P / 2, top - P + dy * P, P - 1, P - 1);
+    ctx.fillRect(onCell(x + dx * P * 2 - P / 2), top - P * 2 + dy * P * 2, P, P);
 }
+
+// A mark's cell, snapped to the lattice.
+function onCell(v) { return Math.round(v / P) * P; }
 
 // Somebody you have just asked for by name: a solid arrow over the head,
 // bobbing so it reads as put there rather than drawn on.
@@ -409,7 +414,7 @@ export function drawSaying(x, y, say) {
 
   const n = say.n || 2;
   for (let i = 0; i < n; i++)
-    ctx.fillRect(Math.round(mid - (n * P) / 2 + i * P), top, P - 1, P - 1);
+    ctx.fillRect(onCell(mid - (2 * n - 1) * P / 2 + i * 2 * P), top, P, P);
 }
 
 // A body knocked flat: the same square lying down, two cells tall and three

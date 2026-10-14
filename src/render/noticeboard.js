@@ -4,7 +4,7 @@
 // doorway. Everything here is whole cells; anything off the six-pixel lattice
 // puts a hairline gutter between the sheets.
 
-import { BOARD_LEG, P, PAPER } from '../config.js';
+import { BOARD_LEG, P, PAPER, SHACK_EAVE } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 
@@ -39,9 +39,9 @@ export function drawNoticeboard() {
   ctx.fillRect(r.x + P, r.y + r.h, leg, BOARD_LEG);
   ctx.fillRect(r.x + r.w - P - leg, r.y + r.h, leg, BOARD_LEG);
 
-  // the panel, and the same half-cell eave every building in the yard wears
+  // the panel, and the same whole-cell eave every building in the yard wears
   ctx.fillRect(r.x, r.y, r.w, r.h);
-  ctx.fillRect(r.x - P / 2, r.y - P / 2, r.w + P, P / 2);
+  ctx.fillRect(r.x - SHACK_EAVE, r.y - SHACK_EAVE, r.w + SHACK_EAVE * 2, SHACK_EAVE);
 
   // the sheets, and the writing on them
   SHEETS.forEach((s, i) => {
@@ -49,6 +49,6 @@ export function drawNoticeboard() {
     ctx.fillStyle = toneOf(i);
     ctx.fillRect(x, y, s.w * P, s.h * P);
     ctx.fillStyle = '#000';
-    for (const [row, from, w] of s.ink) ctx.fillRect(x + from * P, y + row * P, w * P, P / 2);   // half-cell: a line of ink, on the half lattice
+    for (const [row, from, w] of s.ink) ctx.fillRect(x + from * P, y + row * P, w * P, P / 3);   // a line of ink, the world's thin line
   });
 }
