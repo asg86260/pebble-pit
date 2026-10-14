@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Near-death Mocks</title>
+<style>
+/* ------------------------------------------------------------------
+   Tokens. The page's chrome follows the theme; the deep in each frame is
+   drawn in the deep's own tones (config/rift.js ABYSS_TONES and
+   ABYSS_MAGIC_TONES, as seen), which are the same on either page.
+   ------------------------------------------------------------------ */
+:root {
+  --page: #f2f2ef; --page-ink: #1a1a1a; --page-mute: #5c5c58; --page-line: #d6d6d0;
+  --deep-edge: #1a1a1a;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+    --deep-edge: #555;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #141414; --page-ink: #e6e6e6; --page-mute: #9a9a95; --page-line: #333;
+  --deep-edge: #555;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page); color: var(--page-ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 20px; margin: 44px 0 6px; padding-top: 16px; border-top: 2px solid var(--page-ink); }
+p { margin: 6px 0; max-width: 72ch; }
+code { font-size: 13px; }
+.lede { color: var(--page-mute); }
+.mocknote { border: 1px dashed var(--page-mute); padding: 10px 14px; margin: 14px 0; max-width: 80ch; font-size: 14px; }
+.mocknote ul { margin: 6px 0 0; padding-left: 20px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; align-items: center; }
+.toolbar .lbl { font-size: 13px; color: var(--page-mute); margin-right: 2px; }
+.toolbar button {
+  font: 13px system-ui, sans-serif; padding: 5px 10px; cursor: pointer;
+  background: var(--page); color: var(--page-ink); border: 1px solid var(--page-mute);
+}
+.toolbar button[aria-pressed="true"] { background: var(--page-ink); color: var(--page); }
+.sticky { position: sticky; top: 0; z-index: 5; background: var(--page); padding: 6px 0; border-bottom: 1px solid var(--page-line); }
+.frame { min-width: 0; max-width: 100%; margin: 10px 0; }
+.cap { font-size: 12px; color: var(--page-mute); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+canvas { display: block; width: 100%; max-width: 1040px; height: auto; image-rendering: pixelated; border: 1px solid var(--deep-edge); background: #000; }
+.notes { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 14px; max-width: 90ch; margin-top: 8px; }
+.notes dt { font-weight: 600; }
+.notes dd { margin: 0; }
+@media (max-width: 520px) {
+  .notes { grid-template-columns: 1fr; }
+  .notes dd { margin-bottom: 6px; }
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Serpent near-death</h1>
+<p class="lede">Mocks for DESIGN.md, "Endless serpent", after the vote on the power-up: the owner chose <b>B, draws the deep in</b>, and asked for "a little animation of it almost dying, then powering up. anime style." Each emptied bar: the serpent rears (as built), then a near-death beat, then B's power-up (the coil winds tighter, motes cross the water into it, a notch of the bar a mote, the let-go smear), and ends at rest with the bar full and the level ticked. The three differ only in the near-death beat; vote one. Nothing here is built.</p>
+
+<div class="mocknote">
+  <b>This is a mock, drawn from plain shapes on a canvas, not the game.</b> The coil is laid from the game's own numbers (length, head, neck, girth and tail taper, the sway, the crest, the jaws' hinge and gape, the cell grid), the rear is the built one (a smear frame of 0.08 s past the pose, 1.35 times as far, the pose held 0.7 s), and the power-up is B as voted: three held steps tighter, motes crossing in four held steps of 0.1 s with a dim smear behind and a spark on landing, a notch of the bar each, the level ticking on the first, the let-go one smear frame past the rest line. What sits between the rear and the power-up is each option's own, timed below; all three read in 3.3 to 4 s from the empty bar to rest (built today: 1.74 s).
+  <ul>
+    <li><b>As built:</b> the risen serpent's bar has no pips, only the level after it, and its belly no cage of ribs; the mock draws it that way.</li>
+    <li><b>What it cannot show:</b> the fighters, their blows and numbers, the creatures and the meals, the orb, the statuses and the stun ring, the hide's ward and plates as the resist draws them, the fang dropping from the belly, the real bar's shards and its pixel-font level (the number here is the page's font), the stations' water and the deep's floor (the slack body sinks into open water here; in the game it would come down onto whatever lies under it), the camera, and how long the fighters stand idle through a 3 to 4 s beat; the body is laid along x rather than along its arc, so a steep bend is a little thinner here than in the game.</li>
+    <li><b>The rest line</b> (an aid for this page, not in the game): where the body would be at rest, in dark grey behind, through the whole beat. Pause to hold a frame; 1/4x to read the steps.</li>
+    <li><b>No shake, no white flash, no squash tween:</b> every frame is a held pose on the cell grid; a smear is one held frame past the pose; the sway is held still from the last blow to the rest. Greys and the deep's purples only (the ward's ramp).</li>
+  </ul>
+</div>
+
+<div class="toolbar sticky">
+  <span class="lbl">speed:</span>
+  <button type="button" data-speed="1" aria-pressed="true">1x</button>
+  <button type="button" data-speed="0.25">1/4x</button>
+  <button type="button" id="pause" aria-pressed="false">pause</button>
+  <span class="lbl" style="margin-left:10px">aid:</span>
+  <button type="button" id="rest" aria-pressed="true">rest line: on</button>
+  <button type="button" id="themebtn">theme: follow system</button>
+</div>
+
+<h2>A. Goes grey, then the eye</h2>
+<p>Out of the rear the body goes slack: it sags toward the floor in three held steps, the sway flattening and the head drooping lowest, while the hide greys out a sixth at a time from the tail to the head, the crest last. At the bottom the eye shuts to a dim slit. A held beat of stillness. Then the eye snaps open purple with a glint struck across it for one held frame, and the motes start; the body rises back in three steps as the coil winds tighter, and the grey lifts from head to tail as the bar fills.</p>
+<div class="frame"><div class="cap" data-cap="grey"></div><canvas data-opt="grey"></canvas></div>
+<dl class="notes">
+  <dt>Timing</dt><dd>rear 0.78 (smear 0.08, held 0.7); the sag 0.45 (three steps of 0.15, the grey in six of 0.075); still 0.6; the eye 0.12; the power-up 1.4 (30 motes); the let-go 0.08. 3.43 s.</dd>
+  <dt>Reads as</dt><dd>The classic "the light goes out of its eyes", and the eye is what comes back first; the most legible of the three at a glance.</dd>
+  <dt>Cost</dt><dd>A grey serpent for a second can read as a status (a stun or a slow) rather than near-death; the sag brings the belly down onto the fighters' heads.</dd>
+</dl>
+
+<h2>B. Last breath</h2>
+<p>Out of the rear the head falls to the floor in three held steps, the last one landing three cells past and held there as the impact, jaws ajar. A long held frame: nothing moves. Then one heartbeat: a single purple pulse runs out from the belly to the snout and to the tail in held steps, a dim band behind its front. When it reaches the ends the power-up erupts: the head is thrown back up in one smear frame, crest lit, and three purple outline rings step out from the body one after another, each fading as it goes; the motes come and the head comes down in three steps as in B.</p>
+<div class="frame"><div class="cap" data-cap="breath"></div><canvas data-opt="breath"></canvas></div>
+<dl class="notes">
+  <dt>Timing</dt><dd>rear 0.78; the fall 0.36 (three steps of 0.12, the impact 0.06 of the last); silence 0.7; the pulse 0.48 (six steps of 0.08); the eruption 0.24 (smear 0.08, held 0.16), the rings over 0.64 from it (three rings 0.12 apart, five steps of 0.08); the power-up 1.3 (30 motes); the let-go 0.08. 3.94 s, the longest.</dd>
+  <dt>Reads as</dt><dd>Dead, and then not: the silence is the beat the player is meant to doubt, and the pulse says what is about to happen before it does.</dd>
+  <dt>Cost</dt><dd>The longest, and 0.7 s of nothing is long in an idle game the second time; the rings cross the fighters as the motes do.</dd>
+</dl>
+
+<h2>C. Breaks, then the light comes through</h2>
+<p>Out of the rear the head comes down in three steps and the wound's cracks run from the belly over the whole body in five held steps, the body slackening, until the hide is crazed snout to tail. Held on the brink, while dark focus lines close in from the frame's edge in three steps. Then the cracks fill with purple light from the inside, out from the belly in four held steps, as the motes rush in; each crack seals from its tips back toward the belly as the bar fills, a bright seam at the sealing edge, and the coil lets go whole.</p>
+<div class="frame"><div class="cap" data-cap="kintsugi"></div><canvas data-opt="kintsugi"></canvas></div>
+<dl class="notes">
+  <dt>Timing</dt><dd>rear 0.78; the cracks 0.5 (five steps of 0.1, the head down in three of 0.12); the brink 0.55 (the focus lines in three steps of 0.18); the power-up 1.4 (30 motes; the light out in four steps of 0.08, the lines gone in two of 0.16); the let-go 0.08. 3.31 s, the shortest.</dd>
+  <dt>Reads as</dt><dd>Breaking apart and mended by the deep; it grows out of the wound the player has been opening all level, so the near-death is the fight's own damage.</dd>
+  <dt>Cost</dt><dd>The busiest frame of the three on the brink (cracks and lines at once); the lines darken the stations' water at the edges of the deep.</dd>
+</dl>
+</main>
+
+<script>
+// ---- the game's numbers, in cells (P = 6 px a cell) ---------------------------
+const DEEP_W = 520, DEEP_H = 130;
+const COIL_X0 = 0.28, COIL_X1 = 0.94, COIL_Y = 0.58, COIL_AMP = 9, COIL_WAVES = 3, COIL_SWAY_MS = 7000;
+const COIL_SEGS = 56, HEAD_SEGS = 3, COIL_HEAD = 8, COIL_NECK = 5, COIL_NECK_EASE = 2, COIL_GIRTH = 9;
+const COIL_TAIL_FROM = 0.75, COIL_TIP = 0.25, BELLY_AT = 0.58, SNOUT = 6, CREST_LEN = 34, CREST_H = 3;
+const MEAL_GAPE = 5, MEAL_HINGE = 10, CRACK_REACH = 34;
+// the rear as built (config/deepcrew.js RECOIL_POSES.rear); the lift in cells
+const REAR = { at: 0, w: 0.3, lift: 7, gape: 1 }, SNAP = 0.08, HOLD = 0.7, SMEAR = 1.35;
+const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a', '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURPLES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#9b5de5'];
+const WHITE = 11;
+
+// ---- the view: cells, two canvas pixels each ------------------------------------
+// Deeper than the power-up page's, so the slack body has room to sink.
+const CS = 2;
+const VX0 = Math.floor(COIL_X0 * DEEP_W) - 26, VX1 = Math.ceil(COIL_X1 * DEEP_W) + 6;
+const VY0 = 36, VY1 = 122;
+const COLS = VX1 - VX0, ROWS = VY1 - VY0;
+const base = COIL_Y * DEEP_H;
+const span = (COIL_X1 - COIL_X0) * DEEP_W, x0 = COIL_X0 * DEEP_W;
+
+const thick = u => {
+  if (u < HEAD_SEGS) return COIL_HEAD;
+  const k = u / (COIL_SEGS - 1), headK = HEAD_SEGS / (COIL_SEGS - 1);
+  let body;
+  if (k < BELLY_AT) body = COIL_NECK + (COIL_GIRTH - COIL_NECK) * Math.sin(Math.PI / 2 * (k - headK) / (BELLY_AT - headK));
+  else if (k < COIL_TAIL_FROM) body = COIL_GIRTH;
+  else body = COIL_GIRTH * (1 - (1 - COIL_TIP) * ((k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM)) ** 1.5);
+  const e = Math.min(1, (u - HEAD_SEGS) / COIL_NECK_EASE);
+  return COIL_HEAD + (body - COIL_HEAD) * e * e * (3 - 2 * e);
+};
+
+// A pose: the rear's share `rk`, the coil wound tighter by `m` (1 at rest),
+// the sway's depth `amp` (slack below 1), the whole body sunk `sag` cells
+// (the tail a little less) and the head `droop` cells further.
+const POSE = { rk: 0, open: 0, m: 1, amp: 1, sag: 0, droop: 0, girth: 0 };
+const lineY = (x, t, P) => {
+  const k = (x - x0) / span;
+  let y = base + COIL_AMP * P.m * P.amp * Math.sin(2 * Math.PI * (k * COIL_WAVES * (1 + (P.m - 1) * 0.5) - t / COIL_SWAY_MS));
+  if (P.rk) y -= P.rk * REAR.lift * Math.exp(-(k ** 2) / (REAR.w * REAR.w));
+  if (P.sag) y += P.sag * (1 - 0.35 * Math.max(0, k));
+  if (P.droop) y += P.droop * Math.exp(-(Math.max(0, k) ** 2) / (0.14 * 0.14));
+  return y;
+};
+
+function lay(t, P) {
+  const pts = [], du = 0.25;
+  const segPx = span / (COIL_SEGS - 1), snoutU = SNOUT / segPx;
+  let along = 0, last = null;
+  for (let u = -snoutU; u <= COIL_SEGS - 1; u += du) {
+    const x = x0 + u * segPx, y = lineY(x, t, P);
+    const x2 = x + du * segPx, y2 = lineY(x2, t, P);
+    if (last) along += Math.hypot(x - last.x, y - last.y);
+    last = { x, y };
+    const len = Math.hypot(x2 - x, y2 - y) || 1, tx = (x2 - x) / len, ty = (y2 - y) / len;
+    const r = (u < 0 ? COIL_HEAD / 2 * (1 - 0.55 * Math.min(1, -u / snoutU)) : thick(u) / 2) + (u < 0 ? 0 : P.girth);
+    pts.push({ u, k: Math.max(0, u) / (COIL_SEGS - 1), x, y, tx, ty, nx: -ty, ny: tx, along, r });
+  }
+  return pts;
+}
+
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+const unit = k => { const x = Math.sin(k * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+const put = (buf, cx, cy, tone) => {
+  cx = Math.round(cx); cy = Math.round(cy);
+  if (cx >= VX0 && cx < VX1 && cy >= VY0 && cy < VY1) buf[(cy - VY0) * COLS + (cx - VX0)] = tone;
+};
+
+// One coil into the cell buffer: `wound` 0..1 for the cracks, `open` the jaws,
+// `ghost` a tone to paint the body flat in. `fx` is the beat's say over a cell:
+// `tint(p, along, across, r, aI, cI, rung)` a tone or null for the hide;
+// `reach` the cracks' reach (else the wound's), `crack(p, da, reach, aI, cI)` a
+// crack's tone or null, `moreCracks` a third crack line for a crazed hide;
+// `eyeTone` and `eye(buf, x, y)` the eye; `crestLit`, `crestTone` the crest.
+function drawCoil(buf, pts, wound, open, ghost, fx = {}) {
+  const bellyU = BELLY_AT * (COIL_SEGS - 1);
+  let bellyA = 0, headA = 0, eye = null;
+  for (const p of pts) { if (Math.abs(p.u - bellyU) < 0.13) bellyA = p.along; if (Math.abs(p.u) < 0.13) headA = p.along; }
+  const jaw = d => (open > 0 && d < MEAL_HINGE ? MEAL_GAPE * open * (1 - Math.max(0, d) / MEAL_HINGE) : 0);
+  if (open > 0) for (const p of pts) p.r += jaw(p.along);
+  const best = new Float32Array(COLS * ROWS).fill(Infinity), own = new Int32Array(COLS * ROWS).fill(-1);
+  pts.forEach((p, k) => {
+    const R = p.r + 1;
+    for (let cy = Math.floor(p.y - R) - 1; cy <= p.y + R; cy++) {
+      if (cy < VY0 || cy >= VY1) continue;
+      for (let cx = Math.floor(p.x - R) - 1; cx <= p.x + R; cx++) {
+        if (cx < VX0 || cx >= VX1) continue;
+        const d = Math.hypot(cx + 0.5 - p.x, cy + 0.5 - p.y);
+        if (d > R) continue;
+        const i = (cy - VY0) * COLS + (cx - VX0);
+        if (d < best[i]) { best[i] = d; own[i] = k; }
+      }
+    }
+  });
+  const reach = fx.reach != null ? fx.reach : wound * CRACK_REACH;
+  for (let i = 0; i < own.length; i++) {
+    if (own[i] < 0) continue;
+    const p = pts[own[i]], cx = VX0 + (i % COLS), cy = VY0 + Math.floor(i / COLS);
+    const dx = cx + 0.5 - p.x, dy = cy + 0.5 - p.y, dist = best[i];
+    let r = p.r;
+    const along = p.along + dx * p.tx + dy * p.ty;
+    let across = dx * p.nx + dy * p.ny;
+    const da = along - bellyA;
+    if (dist > r) continue;
+    const g = open > 0 ? jaw(along) : 0;
+    let tooth = false;
+    if (g > 0) {
+      if (Math.abs(across) < g) continue;
+      tooth = Math.abs(across) - g < 1;
+      across -= Math.sign(across) * g; r -= g;
+      if (Math.abs(across) > r) continue;
+    }
+    if (ghost) { buf[i] = ghost; continue; }
+    const aI = Math.round(along), cI = Math.round(across);
+    const rung = across > r - 1 ? WHITE - 3 : Math.abs(across) < 0.5 ? WHITE - 2 : across > 0.9 ? WHITE - 1 : WHITE;
+    let tone = (fx.tint && fx.tint(p, along, across, r, aI, cI, rung)) || GREYS[rung];
+    if (reach > 0 && Math.abs(da) < reach) {
+      const w1 = Math.sin(along / 2.3) * r * 0.5, w2 = Math.sin(along / 3.1 + 2) * r * 0.55, w3 = Math.sin(along / 1.7 + 4) * r * 0.6;
+      if (Math.abs(across - w1) < 0.6 || (Math.abs(across - w2) < 0.6 && seeth(aI, 7) % 3) || (fx.moreCracks && Math.abs(across - w3) < 0.5 && seeth(aI, 3) % 2))
+        tone = (fx.crack && fx.crack(p, da, reach, aI, cI)) || GREYS[1 + Math.round(3 * Math.abs(da) / reach)];
+    }
+    if (tooth && (aI & 1) === 0 && along < MEAL_HINGE - 1) tone = GREYS[WHITE];
+    if (!g && along < headA && Math.abs(across) < 0.5) tone = GREYS[0];
+    if (Math.abs(along - headA - 1) < 0.5 && Math.abs(across + r - 2) < 0.5) { tone = fx.eyeTone || GREYS[0]; if (!eye) eye = { cx, cy }; }
+    buf[i] = tone;
+  }
+  if (ghost) return;
+  // the crest: spikes off the top edge from the snout back along the neck
+  const from = headA - SNOUT / 2, to = headA + CREST_LEN, spiked = new Set();
+  for (const p of pts) {
+    if (p.along < from || p.along > to) continue;
+    const j = Math.round(p.along - from);
+    if (spiked.has(j) || j % 2) continue;
+    spiked.add(j);
+    const left = 1 - (p.along - from) / (to - from);
+    const tall = Math.max(1, Math.round((j % 4 === 0 ? CREST_H : CREST_H - 1) * Math.min(1, left * 1.6)));
+    for (let m = 1; m <= tall; m++) {
+      const d = p.r - 0.5 + m;
+      const tone = fx.crestLit ? (m === tall ? GREYS[WHITE] : PURPLES[WHITE]) : fx.crestTone || PURPLES[WHITE - 1 - (j % 2)];
+      put(buf, p.x - p.nx * d - 0.5, p.y - p.ny * d - 0.5, tone);
+    }
+  }
+  if (eye && fx.eye) fx.eye(buf, eye.cx, eye.cy);
+}
+
+// ---- the eye: shut to a dim slit, or open purple with a glint struck across ---
+const eyeShut = (buf, x, y) => { for (const dx of [-1, 0, 1]) put(buf, x + dx, y, GREYS[4]); };
+const eyeLit = glint => (buf, x, y) => {
+  if (glint) for (let dx = -7; dx <= 8; dx++) put(buf, x + dx, y, Math.abs(dx - 0.5) < 3 ? PURPLES[WHITE] : PURPLES[WHITE - 2]);
+  for (const [ox, oy] of [[0, 0], [1, 0], [0, -1], [1, -1]]) put(buf, x + ox, y + oy, PURPLES[WHITE]);
+  if (glint) put(buf, x, y - 1, GREYS[WHITE]);
+};
+
+// ---- B's power-up, from wherever the near-death left the body -----------------
+// The body comes back from `from` in three held steps of 0.12 while the coil
+// winds tighter in three; the motes land through `PW`; the let-go is one smear
+// frame of 0.08 past the rest line.
+const R0 = SNAP + HOLD;
+const rear = rs => (rs < SNAP ? SMEAR : 1);
+const steps = (t, d, n) => Math.min(n, Math.floor(t / d) + 1);
+const fresh = () => ({ ...POSE, fx: {}, fill: 0, ticked: false });
+const rearAt = (o, rs) => { o.rk = rear(rs); o.open = Math.min(1, o.rk * REAR.gape); };
+
+function moteList(n, PW, salt) {
+  return Array.from({ length: n }, (_, i) => {
+    const launch = 0.05 + i * (PW - 0.5) / (n - 1), s = i + salt * 101;
+    const ang = unit(s * 3 + 1) * Math.PI * 2, dist = 16 + unit(s * 5 + 2) * 18;
+    return { launch, land: launch + 0.4, k: 0.06 + unit(s * 7 + 3) * 0.9, dx: Math.cos(ang) * dist, dy: Math.sin(ang) * dist * 0.7,
+             tone: i % 3 === 2 ? GREYS[9] : PURPLES[WHITE - (i % 2)] };
+  });
+}
+function power(o, ps, PW, list, from) {
+  if (ps < PW) {
+    const j = steps(ps, 0.12, 3) / 3;
+    o.rk = from.rk * (1 - j); o.sag = from.sag * (1 - j); o.droop = from.droop * (1 - j);
+    o.amp = from.amp + (1 - from.amp) * j;
+    o.m = ps < 0.12 ? 1.15 : ps < 0.24 ? 1.3 : 1.45;
+  } else o.m = 0.85;                               // the let-go: one smear frame past the rest
+  o.open = Math.min(1, o.rk * REAR.gape);
+  const landed = list.filter(q => ps >= q.land).length;
+  o.fill = landed / list.length; o.ticked = landed > 0;
+  o.motes = { ps, list };
+}
+function drawMotes(buf, { ps, list }, pts) {
+  for (const q of list) {
+    const a = ps - q.launch;
+    if (a < 0 || a >= 0.5) continue;
+    let p = pts[0];
+    for (const s of pts) if (Math.abs(s.k - q.k) < Math.abs(p.k - q.k)) p = s;
+    if (a >= 0.4) {                               // landed: a spark on the hide, a held frame
+      for (const [ox, oy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) put(buf, p.x + ox, p.y + oy, PURPLES[WHITE]);
+      if (a < 0.45) for (const [ox, oy] of [[2, 0], [-1, 0], [0, 2], [0, -1], [3, 1], [-2, 1], [1, 3], [1, -2]]) put(buf, p.x + ox, p.y + oy, PURPLES[WHITE - 1]);
+      continue;
+    }
+    const step = Math.floor(a / 0.1), f = step / 4, f0 = Math.max(0, step - 1) / 4;
+    const blob = (x, y, tone) => { for (const [ox, oy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) put(buf, x + ox, y + oy, tone); };
+    if (step > 0) {
+      blob(p.x + q.dx * (1 - f0), p.y + q.dy * (1 - f0), PURPLES[5]);
+      blob(p.x + q.dx * (1 - (f + f0) / 2), p.y + q.dy * (1 - (f + f0) / 2), PURPLES[7]);
+    }
+    blob(p.x + q.dx * (1 - f), p.y + q.dy * (1 - f), q.tone);
+  }
+}
+
+// ---- the three near-deaths ------------------------------------------------------
+// Each is read at `rs`, seconds since the bar emptied, and returns a pose, its
+// fx, the bar's fill and whether the level has ticked; `len` is when it is at
+// rest with the bar full; `phases` name the steps for the caption.
+const A = { sag: R0 + 0.45 }; A.still = A.sag + 0.6; A.eye = A.still + 0.12; A.PW = 1.4;
+const B = { fall: R0 + 0.36 }; B.silence = B.fall + 0.7; B.erupt = B.silence + 0.48; B.up = B.erupt + 0.24; B.PW = 1.3;
+const C = { crack: R0 + 0.5 }; C.brink = C.crack + 0.55; C.PW = 1.4; C.FULL = 240;
+
+const OPTS = {
+  // A: slack and grey, the eye shut; still; the eye snaps open purple.
+  grey: { len: A.eye + A.PW + 0.08, list: moteList(30, A.PW, 1),
+    phases: [[SNAP, 'rear: the smear frame'], [R0, 'rear held'], [A.sag, 'going slack, greying tail to head'], [A.still, 'still'], [A.eye, 'the eye snaps open'], [A.eye + A.PW, 'rising, the motes landing, the grey lifting'], [99, 'the let-go']],
+    at(rs) {
+      const o = fresh();
+      let grey = 0, restore = 0;
+      if (rs < R0) rearAt(o, rs);
+      else if (rs < A.eye) {
+        const j = steps(rs - R0, 0.15, 3) / 3;
+        o.rk = 1 - j; o.sag = 12 * j; o.droop = 9 * j; o.amp = 1 - 0.84 * j;
+        o.open = Math.max(Math.min(1, o.rk * REAR.gape), 0.3 * j);    // the jaws fall slack, ajar
+        grey = steps(rs - R0, 0.075, 6) / 6;
+        if (rs < A.still) { if (j === 1) { o.fx.eyeTone = GREYS[4]; o.fx.eye = eyeShut; } }
+        else o.fx.eye = eyeLit(true);
+      } else {
+        power(o, rs - A.eye, A.PW, this.list, { rk: 0, sag: 12, droop: 9, amp: 0.16 });
+        grey = 1; restore = o.fill;
+        if (rs - A.eye < A.PW) o.fx.eye = eyeLit(false);
+      }
+      if (grey > 0) {
+        // greyed from the tail up; restored from the head down as the bar fills
+        o.fx.tint = (p, a, c, r, aI, cI, rung) => (1 - p.k <= grey + 1e-6 && p.k >= restore ? GREYS[Math.max(3, rung - 4)] : null);
+        if (grey >= 1 && restore < 0.05) o.fx.crestTone = GREYS[5];
+      }
+      return o;
+    } },
+  // B: the head falls; silence; one pulse from the belly out; the eruption
+  // and the rings; then the power-up from the rear.
+  breath: { len: B.up + B.PW + 0.08, list: moteList(30, B.PW, 2),
+    phases: [[SNAP, 'rear: the smear frame'], [R0, 'rear held'], [B.fall, 'the head falls'], [B.silence, 'silence'], [B.erupt, 'the pulse'], [B.erupt + SNAP, 'erupts: the smear frame'], [B.up, 'erupted, the rings'], [B.up + B.PW, 'down in three steps, the motes landing'], [99, 'the let-go']],
+    at(rs) {
+      const o = fresh();
+      if (rs < R0) rearAt(o, rs);
+      else if (rs < B.erupt) {
+        const j = steps(rs - R0, 0.12, 3) / 3, into = rs - R0;
+        o.rk = 1 - j; o.droop = into >= 0.24 && into < 0.30 ? 27 : 24 * j;   // the impact: three cells past, held
+        o.sag = 6 * j; o.amp = 1 - 0.6 * j;
+        o.open = Math.max(Math.min(1, o.rk * REAR.gape), 0.35 * j);
+        if (rs >= B.silence) {
+          const s = Math.floor((rs - B.silence) / 0.08), f = (s + 1) / 6 * 0.62;
+          o.fx.tint = p => {
+            const dk = Math.abs(p.k - BELLY_AT);
+            if (Math.abs(dk - f) < 0.035) return PURPLES[WHITE];
+            if (dk < f - 0.035 && dk > f - 0.12) return PURPLES[WHITE - 3];
+            return null;
+          };
+        }
+      } else if (rs < B.up) {
+        o.rk = rs < B.erupt + SNAP ? SMEAR : 1; o.open = 1; o.fx.crestLit = true;
+      } else power(o, rs - B.up, B.PW, this.list, { rk: 1, sag: 0, droop: 0, amp: 1 });
+      if (rs >= B.erupt) {
+        o.rings = [];
+        for (let i = 0; i < 3; i++) {
+          const age = rs - B.erupt - i * 0.12;
+          if (age < 0) continue;
+          const s = Math.floor(age / 0.08);
+          if (s < 5) o.rings.push({ R: 2 + 3 * s, tone: PURPLES[WHITE - 2 * s] });
+        }
+      }
+      return o;
+    } },
+  // C: the cracks run over the whole body; the brink and the focus lines; the
+  // light comes through the cracks from the belly out, and they seal.
+  kintsugi: { len: C.brink + C.PW + 0.08, list: moteList(30, C.PW, 3),
+    phases: [[SNAP, 'rear: the smear frame'], [R0, 'rear held'], [C.crack, 'the cracks run'], [C.brink, 'on the brink'], [C.brink + 0.32, 'the light comes through'], [C.brink + C.PW, 'the motes landing, the cracks sealing'], [99, 'the let-go']],
+    at(rs) {
+      const o = fresh();
+      if (rs < R0) rearAt(o, rs);
+      else if (rs < C.brink) {
+        const j = steps(rs - R0, 0.12, 3) / 3;
+        o.rk = 1 - j; o.open = Math.min(1, o.rk * REAR.gape); o.amp = 1 - 0.4 * j; o.sag = 5 * j;
+        o.fx.moreCracks = true;
+        o.fx.reach = CRACK_REACH + (C.FULL - CRACK_REACH) * steps(rs - R0, 0.1, 5) / 5;
+        if (rs >= C.crack) o.lines = { rIn: [1.0, 0.82, 0.66][steps(rs - C.crack, 0.18, 3) - 1], tones: [GREYS[4], GREYS[3]] };
+      } else {
+        const ps = rs - C.brink;
+        power(o, ps, C.PW, this.list, { rk: 0, sag: 5, droop: 0, amp: 0.6 });
+        const lit = steps(ps, 0.08, 4) / 4 * C.FULL;
+        o.fx.moreCracks = true;
+        o.fx.reach = C.FULL * (1 - o.fill);
+        o.fx.crack = (p, da, R, aI, cI) => {
+          const d = Math.abs(da);
+          if (d > lit) return null;
+          if ((lit < C.FULL && d > lit - 16) || (o.fill > 0 && d > R - 6)) return PURPLES[WHITE];
+          return PURPLES[WHITE - 1 - (seeth(aI, cI) % 2)];
+        };
+        if (ps < 0.16) o.lines = { rIn: 0.6, tones: [PURPLES[4], PURPLES[3]] };
+        else if (ps < 0.32) o.lines = { rIn: 0.6, tones: [PURPLES[2], PURPLES[2]] };
+      }
+      return o;
+    } }
+};
+
+// ---- the overlays: focus lines and the aura rings ----------------------------------
+// The lines are rays toward the body's middle, each starting a little further
+// in than `rIn` (the frame's edge at 1), so the water closes in as rIn drops.
+function drawLines(buf, { rIn, tones }) {
+  const N = 48, hx = COLS / 2, hy = ROWS / 2, cx = x0 + span / 2 - VX0, cy = base - VY0;
+  for (let i = 0; i < buf.length; i++) {
+    const nx = ((i % COLS) + 0.5 - cx) / hx, ny = (Math.floor(i / COLS) + 0.5 - cy) / hy;
+    const rr = Math.hypot(nx, ny);
+    if (rr < rIn) continue;
+    const slot = (Math.atan2(ny, nx) / (2 * Math.PI) + 1) * N, idx = Math.floor(slot) % N;
+    if (rr < rIn + unit(idx + 9) * 0.3) continue;
+    if (slot - Math.floor(slot) < 0.13 + 0.06 * unit(idx)) buf[i] = tones[idx % 2];
+  }
+}
+// The rings: cells at a chamfer distance `R` from the body, behind it.
+function drawRings(buf, body, rings) {
+  const d = new Float32Array(body.length).fill(1e9);
+  for (let i = 0; i < body.length; i++) if (body[i]) d[i] = 0;
+  const at = (x, y) => (x < 0 || y < 0 || x >= COLS || y >= ROWS ? 1e9 : d[y * COLS + x]);
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    const i = y * COLS + x;
+    d[i] = Math.min(d[i], at(x - 1, y) + 3, at(x - 1, y - 1) + 4, at(x, y - 1) + 3, at(x + 1, y - 1) + 4);
+  }
+  for (let y = ROWS - 1; y >= 0; y--) for (let x = COLS - 1; x >= 0; x--) {
+    const i = y * COLS + x;
+    d[i] = Math.min(d[i], at(x + 1, y) + 3, at(x + 1, y + 1) + 4, at(x, y + 1) + 3, at(x - 1, y + 1) + 4);
+  }
+  for (let i = 0; i < body.length; i++) {
+    if (body[i]) continue;
+    const r = Math.round(d[i] / 3);
+    for (const g of rings) if (r === g.R) buf[i] = g.tone;
+  }
+}
+
+// ---- the loop: three blows empty the bar, the near-death, the power-up ------------
+const BLOWS = [0.6, 1.1, 1.7], EMPTY = BLOWS[2];
+const LONGEST = Math.max(...Object.values(OPTS).map(o => o.len));
+const LOOP = EMPTY + LONGEST + 1.2;
+let speed = 1, paused = false, restOn = true, clock = 0, wall = performance.now();
+
+function frameAt(opt, s, lap) {
+  const O = OPTS[opt];
+  const hits = BLOWS.filter(b => s >= b).length;
+  const rs = s >= EMPTY && s < EMPTY + O.len ? s - EMPTY : null;
+  const after = s >= EMPTY + O.len;
+  // the sway is held from the last blow through the whole beat
+  const still = s >= EMPTY ? Math.min(s, EMPTY + O.len) - EMPTY : 0;
+  const t = (lap * LOOP + s - still) * 1000;
+  const bite = BLOWS.some(b => s >= b && s - b < 0.25);
+  const head = { rs, t, bite, ...POSE, fx: {} };
+  if (rs == null) return { ...head, fill: after ? 1 : 1 - hits / 3, level: 2 + lap + (after ? 1 : 0), wound: after ? 0 : hits / 3, tick: -1 };
+  const o = O.at(rs);
+  const tickAt = o.ticked ? firstTick(O) : -1;
+  return { ...head, ...o, level: 2 + lap + (o.ticked ? 1 : 0), wound: 1 - o.fill, tick: tickAt >= 0 ? rs - tickAt : -1 };
+}
+const ticks = new Map();
+function firstTick(O) {
+  if (!ticks.has(O)) { let s = 0; while (s < O.len && !O.at(s).ticked) s += 0.005; ticks.set(O, s); }
+  return ticks.get(O);
+}
+
+const canvases = [...document.querySelectorAll('canvas[data-opt]')];
+for (const c of canvases) { c.width = COLS * CS; c.height = ROWS * CS; }
+
+function paint(c, f) {
+  const g = c.getContext('2d');
+  const buf = new Array(COLS * ROWS).fill(null);
+  if (f.lines) drawLines(buf, f.lines);
+  if (restOn && f.rs != null) drawCoil(buf, lay(f.t, POSE), f.wound, 0, GREYS[3]);
+  const body = new Array(COLS * ROWS).fill(null);
+  const pts = lay(f.t, f);
+  drawCoil(body, pts, f.wound, f.open, false, f.fx);
+  if (f.rings && f.rings.length) drawRings(buf, body, f.rings);
+  for (let i = 0; i < body.length; i++) if (body[i]) buf[i] = body[i];
+  if (f.motes) drawMotes(buf, f.motes, pts);
+  if (f.bite) {
+    // open water bitten out of the underside at the belly
+    const bx = Math.round(x0 + BELLY_AT * span) - 1, by = Math.round(lineY(bx, f.t, f) + COIL_GIRTH / 2 - 2);
+    for (let dy = 0; dy < 3; dy++) for (let dx = -1; dx < 2; dx++) put(buf, bx + dx, by + dy, null);
+  }
+  g.fillStyle = '#000';
+  g.fillRect(0, 0, c.width, c.height);
+  for (let i = 0; i < buf.length; i++) {
+    if (!buf[i]) continue;
+    g.fillStyle = buf[i];
+    g.fillRect((i % COLS) * CS, Math.floor(i / COLS) * CS, CS, CS);
+  }
+  // the bar over the coil: the fill and the level, no pips
+  const bw = 150, bx = Math.round((COLS - bw - 14) / 2), by = 4, bh = 5;
+  const cell = (x, y, w, h, tone) => { g.fillStyle = tone; g.fillRect(x * CS, y * CS, w * CS, h * CS); };
+  cell(bx - 1, by - 1, bw + 2, bh + 2, GREYS[8]);
+  cell(bx, by, bw, bh, GREYS[1]);
+  cell(bx, by, Math.round(bw * f.fill), bh, GREYS[WHITE]);
+  const knock = f.tick >= 0 && f.tick < 0.1 ? 1 : 0;
+  g.fillStyle = GREYS[WHITE];
+  g.font = `${7 * CS}px ui-monospace, "Courier New", monospace`;
+  g.textBaseline = 'top';
+  g.fillText(String(f.level), (bx + bw + 3) * CS, (by - 1 - knock) * CS);
+}
+
+const phaseOf = (opt, f) => {
+  if (f.rs == null) return f.wound === 0 && f.fill === 1 ? 'at rest, the next level' : 'the fight';
+  return OPTS[opt].phases.find(([end]) => f.rs < end)[1];
+};
+
+function tick() {
+  const nowMs = performance.now();
+  if (!paused) clock += (nowMs - wall) / 1000 * speed;
+  wall = nowMs;
+  const lap = Math.floor(clock / LOOP), s = clock - lap * LOOP;
+  for (const c of canvases) {
+    const f = frameAt(c.dataset.opt, s, lap);
+    paint(c, f);
+    const cap = document.querySelector(`[data-cap="${c.dataset.opt}"]`);
+    cap.textContent = `${c.dataset.opt} · ${s.toFixed(2)} s · level ${f.level} · ${phaseOf(c.dataset.opt, f)}`;
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// ---- the toolbar ------------------------------------------------------------------
+for (const b of document.querySelectorAll('[data-speed]')) b.addEventListener('click', () => {
+  speed = +b.dataset.speed;
+  for (const o of document.querySelectorAll('[data-speed]')) o.setAttribute('aria-pressed', String(o === b));
+});
+document.getElementById('pause').addEventListener('click', e => {
+  paused = !paused; e.currentTarget.setAttribute('aria-pressed', String(paused));
+});
+document.getElementById('rest').addEventListener('click', e => {
+  restOn = !restOn; e.currentTarget.setAttribute('aria-pressed', String(restOn));
+  e.currentTarget.textContent = `rest line: ${restOn ? 'on' : 'off'}`;
+});
+const themes = ['follow system', 'light', 'dark'];
+let theme = 0;
+document.getElementById('themebtn').addEventListener('click', e => {
+  theme = (theme + 1) % themes.length;
+  if (theme === 0) document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', themes[theme]);
+  e.currentTarget.textContent = `theme: ${themes[theme]}`;
+});
+</script>
+</body>
+</html>
