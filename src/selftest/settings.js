@@ -14,6 +14,7 @@ import { earn, noticeFor } from '../notices.js';
 import { toastUp, toastWaiting } from '../toast.js';
 import { TOAST_MS, TOAST_GAP_MS, SHEET_FADE_MS } from '../config.js';
 import { msg } from '../lang.js';
+import { feedbackReady } from '../feedback.js';
 import { inForce } from '../langpage.js';
 
 const held = () => document.getElementById('held');
@@ -288,6 +289,8 @@ export const TESTS = [
       'achievements',                         // the button to the page behind -- see record.js
       'index',                                // every thing met -- see indexpage.js
       'settings',                             // and the settings, behind one word
+      // the feedback page, only in a build pointed at the worker -- see feedback.js
+      ...(feedbackReady() ? [msg('held-fbbtn')] : []),
       'return to title',
       'esc holds · ← → look about · hold space to skip a scene',
       version(),

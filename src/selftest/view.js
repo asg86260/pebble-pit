@@ -151,12 +151,18 @@ export const TESTS = [
     // what the game keeps is the pair that started as a sweep, since the
     // touchstart gate claimed both from the platform.
     window.__nocine();
-    const s0 = state();
-    window.__pile(s0.camX + s0.viewW / 2, 40);
-    run(2);
-    const s = state();
-    let spot = null;
-    for (let dx = -60; dx <= 60 && spot == null; dx += 6) if ([-6, 0, 6].every(k => window.__dustUnder(s.camX + s.viewW / 2 + dx + k, s.groundY - 6) && window.__dustUnder(s.camX + s.viewW / 2 + dx, s.groundY - 6 + k))) spot = s.camX + s.viewW / 2 + dx;
+    // A heap on bare ground somewhere in view, away from the rock: the opening
+    // view is the rock's, and a press on dust at its foot mines the rock.
+    let s = state(), spot = null;
+    const lying = x => [-6, 0, 6].every(k => window.__dustUnder(x + k, s.groundY - 6) && window.__dustUnder(x, s.groundY - 6 + k));
+    for (const f of [0.12, 0.88, 0.25, 0.75]) {
+      const at = s.camX + s.viewW * f;
+      window.__pile(at, 40);
+      run(2);
+      s = state();
+      for (let dx = -60; dx <= 60 && spot == null; dx += 6) if (lying(at + dx)) spot = at + dx;
+      if (spot != null) break;
+    }
     const [x, y] = [(spot - s.camX) * s.zoom, (s.groundY - 6 - s.camY) * s.zoom];
     const before = state();
     finger('pointerdown', 1, x, y);
@@ -183,7 +189,7 @@ export const TESTS = [
     touch('touchend', canvas(), 252, skyY, 3);
     await sleep(50);
     return [
-      ok(spot != null && sweeping, 'the first finger is sweeping'),
+      ok(spot != null && sweeping, 'the first finger is sweeping', `spot ${spot && Math.round(spot)} at ${Math.round(x)},${Math.round(y)} under ${document.elementFromPoint(x, y)?.id || document.elementFromPoint(x, y)?.tagName} cam ${Math.round(s.camX)}+${Math.round(s.viewW)} zoom ${s.zoom}`),
       ok(second === true, 'the second finger is claimed from the platform too'),
       ok(after.camX > before.camX, 'and the pair drag the view', `${before.camX} -> ${after.camX}`),
       ok(!after.dragging, 'with the sweep dropped'),
