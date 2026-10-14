@@ -13,13 +13,14 @@ import { ctx } from './ctx.js';
 import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
 import { crispText } from './crisptext.js';
+import { DEEP_SEEN_GREYS } from './deeptones.js';
 import { inspiredK, hasted } from '../deep/statuses.js';
 import { standOfStation, deepFloor } from '../deep/place.js';
 import { part, resistNow, resistNext, inOrb, orbOn } from '../deep/phases.js';
 import { statusLine, statusLineOf, statusName } from '../deep/rails.js';
 import { STATUS_ICONS, STATUS_PX, STATUS_GAP, STATUS_STEPS, STATUS_RENEW_MS, STATUS_TILE, STATUS_RIM,
          STATUS_FOE, STATUS_FACE, STATUS_TIMER, STATUS_SPENT, STATUS_POST, STATUS_POST_OUT, STATUS_POST_FOOT,
-         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, STATUS_NAMES, MECHANICS, STATUS_BAR_PX, STATUS_LABEL_PX, STATUS_LABEL_GAP } from '../config.js';
+         STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, STATUS_NAMES, MECHANICS, STATUS_BAR_PX, STATUS_LABEL_PX, STATUS_LABEL_GAP, STATUS_LABEL_GROUND } from '../config.js';
 
 const seen = c => darkPage ? turned(c) : c;
 
@@ -117,8 +118,10 @@ export function drawFoeStatuses(x, y) {
     const tx = x + Math.round((w - s) / 2);
     barTiles.push({ x: tx, y, w: s, h: s, text });
     tile(key, tx, y, k, n, { ...o, px: STATUS_BAR_PX });
-    // on the pixel grid: a smoothed label is a fringe of greys the deep does not hold
-    crispText(ctx, label, x + w / 2, y + s + 4 + STATUS_LABEL_GAP, ctx.font, seen(STATUS_FACE), 'center');
+    // its smoothing in the deep's own greys: a smoothed label is otherwise a
+    // fringe of tones the deep does not hold
+    crispText(ctx, label, x + w / 2, y + s + 4 + STATUS_LABEL_GAP, ctx.font, seen(STATUS_FACE), 'center',
+              seen(STATUS_LABEL_GROUND), DEEP_SEEN_GREYS.map(seen));
     x += w + STATUS_GAP * 2;
   };
   // first the serpent's own, the phase's mechanic, up all phase (the owner,

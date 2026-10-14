@@ -48,7 +48,7 @@ import { hisHop, hisSay } from '../abyssintro.js';
 import { swellAt } from './cores.js';
 import { cellImage } from './cellimage.js';
 import { dentsNow } from './arms.js';
-import { toneOn } from './tone.js';
+import { toneOn, toneNow } from './tone.js';
 
 const coil = cellImage();
 
@@ -283,7 +283,8 @@ function drawCoil() {
 
   // Sinking into the abyss the whole of him dims, and flickers dim in the
   // warning (deep/phases.js): down his ramps, not thinner.
-  const dim = 1 - dimOf(t);
+  // A scene holding the deep steps him down too (render/tone.js, `toneNow`).
+  const dim = (1 - dimOf(t)) * toneNow();
   coil.begin(cols, rows, dim);
   const ribs = [];
   // the hide's columns as drawn, for everything aimed at it

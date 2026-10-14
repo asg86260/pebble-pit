@@ -13,7 +13,7 @@ import { ABYSS_TONES, ABYSS_MAGIC_TONES } from './rift.js';
 // hide, the fire's heart -- and the scales' own coin colors. No alpha: a
 // thing fades by stepping down these rungs (render/tone.js), never by
 // thinning, because a thinned tone is a color the deep does not hold.
-// test/deep-palette.test.mjs and the browser's `deep palette` group hold it
+// The browser's `deep palette` group (src/selftest/deeppalette.js) holds it
 // there (docs/design-language/canvas.md, "The deep's palette").
 export const DEEP_GREY_RUNGS = [0, 2, 4, 6, 8, 10];
 export const DEEP_PURPLE_RUNGS = [3, 5, 7, 9, 11];
@@ -457,7 +457,8 @@ export const STATUS_PX = 3;
 export const STATUS_BAR_PX = 6;
 export const STATUS_LABEL_PX = 11;
 export const STATUS_LABEL_GAP = 3;
-export const CRISP_TEXT_KEEP = 64;   // labels set on the pixel grid kept at once (render/crisptext.js)
+export const STATUS_LABEL_GROUND = seenGrey('water');   // what a label stands on, for its smoothing's steps
+export const CRISP_TEXT_KEEP = 64;   // labels set in the palette's steps kept at once (render/crisptext.js)
 export const STATUS_GAP = 5;
 export const STATUS_STEPS = 5;
 export const STATUS_RENEW_MS = 5;

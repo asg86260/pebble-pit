@@ -14,7 +14,7 @@
 // instead, for a thing fading on a black ground (the rift's hole).
 
 import { ABYSS_TONES, ABYSS_MAGIC_TONES, COIN_TONES, FADE_STEPS, GREY, PURPLE, DEEP_GREY_RUNGS,
-         DEEP_PURPLE_RUNGS } from '../config.js';
+         DEEP_PURPLE_RUNGS, DEEP_GREY } from '../config.js';
 import { GREYS as DEEP_GREYS, PURPLES as DEEP_PURPLES } from './deeptones.js';
 import { darkPage, raw } from '../ink.js';
 
@@ -51,15 +51,19 @@ const memberOf = ramps => {
 const MEMBER = memberOf(RAMPS);
 
 // The deep holds six greys and five purples (config DEEP_GREY_RUNGS): a fade
-// drawn there steps along those and nothing else. Before its negative a tone
-// is written turned over (render/deeptones.js), after it as seen, so each
-// side has its own pair of ramps. `toneDeep` says which side is drawing
-// (render.js, a layer at a time), or null in the yard.
+// drawn there steps along those and nothing else, and goes toward the water
+// rather than the paper or the ink -- the water is the one grey kept over
+// black, and a thing faded to black there is a hole in it. Before its
+// negative a tone is written turned over (render/deeptones.js), after it as
+// seen, so each side has its own pair of ramps, the water on both.
+// `toneDeep` says which side is drawing (render.js, a layer at a time), or
+// null in the yard.
 const seenGreys = [...DEEP_GREY_RUNGS.map(k => ABYSS_TONES[k]), ABYSS_TONES[ABYSS_TONES.length - 1]];
 const seenPurples = [ABYSS_MAGIC_TONES[0], ...DEEP_PURPLE_RUNGS.map(k => ABYSS_MAGIC_TONES[k])];
+const WATER = { pre: rgbOf(DEEP_GREYS[DEEP_GREY.water]), post: rgbOf(ABYSS_TONES[DEEP_GREY.water]) };
 const DEEP_RAMPS = {
-  pre: { deepGrey: ramp([...new Set(DEEP_GREYS)]), deepPurple: ramp([...new Set(DEEP_PURPLES)]), ...COINS },
-  post: { deepGrey: ramp(seenGreys), deepPurple: ramp(seenPurples), ...COINS }
+  pre: { deepGrey: ramp([...new Set(DEEP_GREYS)]), deepPurple: ramp([...new Set(DEEP_PURPLES)]).concat([WATER.pre]), ...COINS },
+  post: { deepGrey: ramp(seenGreys), deepPurple: ramp(seenPurples).concat([WATER.post]), ...COINS }
 };
 const DEEP_MEMBER = { pre: memberOf(DEEP_RAMPS.pre), post: memberOf(DEEP_RAMPS.post) };
 let deepSide = null;
@@ -111,13 +115,13 @@ const cache = new Map();
 export function toned(c, k, onInk = false) {
   const q = held(k);
   if (q >= 1) return c;
-  if (q <= 0) return onInk ? '#000000' : '#ffffff';
+  if (q <= 0) return deepSide ? hexOf(WATER[deepSide]) : onInk ? '#000000' : '#ffffff';
   const key = c + '|' + q + (onInk ? '|i' : '') + (deepSide ? '|' + deepSide : '');
   let out = cache.get(key);
   if (out !== undefined) return out;
   const rgb = rgbOf(c);
   if (!rgb) { cache.set(key, c); return c; }
-  const to = onInk ? INK : PAPER;
+  const to = deepSide ? WATER[deepSide] : onInk ? INK : PAPER;
   const want = rgb.map((v, i) => v + (to[i] - v) * (1 - q));
   const r = rampFor(rgb);
   if (r) {
@@ -148,6 +152,10 @@ export function withTone(g, k, fn) {
 // there is nothing left to draw.
 let inTone = 1;
 const NO_END = () => {};
+// The fade in hand, held to its steps: for a picture painted once into an
+// image of its own and kept (render/deep.js, render/fauna.js), which takes
+// its tone where it is painted and is kept a tone apiece.
+export const toneNow = () => held(inTone);
 export function toneOn(g, k) {
   if (k >= 1) return NO_END;
   const outer = inTone, total = outer * Math.max(0, k);

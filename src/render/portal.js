@@ -15,7 +15,7 @@ import { P, PORTAL_RX, PORTAL_RY, PORTAL_TURN_MS, ABYSS_TONES, ABYSS_MAGIC_TONES
          PORTAL_LIP_SEATS, PORTAL_LIP_LAP_MS, PORTAL_LIP_SEAT_EVERY, PORTAL_LIP_SEAT_W,
          PORTAL_TEAR_JITTER, PORTAL_TEAR_LOBES, PORTAL_TEAR_LOBE, PORTAL_TORN,
          PORTAL_MOUTH_DEEP, PORTAL_MOUTH_PURPLE, PORTAL_MOUTH_DIM, PORTAL_MOUTH_DIM_PURPLE,
-         PORTAL_CRUMBS, PORTAL_CRUMB_MS, PORTAL_CRUMB_TURNS } from '../config.js';
+         PORTAL_CRUMBS, PORTAL_CRUMB_MS, PORTAL_CRUMB_TURNS, DEEP_GREY, DEEP_PURPLE } from '../config.js';
 import { S, pit } from '../state.js';
 import { now } from '../clock.js';
 import { portalCircle, deepPortal, portalReach } from '../deep/place.js';
@@ -26,6 +26,7 @@ import { ctx } from './ctx.js';
 import { ringAt } from '../snatch.js';
 import { cellImage } from './cellimage.js';
 import { GREYS, PURPLES } from './deep.js';
+import { TONE } from './deeptones.js';
 import { abyssRung } from './abyssfield.js';
 import { smoothstep as ease } from '../motion.js';
 
@@ -72,10 +73,16 @@ export function drawPortal() {
 // The deep's end, once the portal stands: the same lip hanging in its
 // water, with no ground to tear, round a mouth of solid black rather than
 // the water seen through (the owner's call). The deep is drawn turned over,
-// so its ramps are the turned-over ones and their foot is the black as seen.
+// so its ramps are the turned-over ones. Its water is the one grey kept over
+// black, so the black mouth reads as a hole in it; the lip's rungs under the
+// ground's grey are left unpainted, so the lip frays into the water rather
+// than into black specks round the hole.
+const LIP_GREYS = GREYS.map((c, i) => (i < DEEP_GREY.ground ? null : c));
+const LIP_PURPLES = PURPLES.map((c, i) => (i < DEEP_PURPLE.dim ? null : c));
 export function drawDeepPortal() {
   if (!S.portalOpen) return;
-  drawHole(deepPortal(), 1, { tones: GREYS, magic: PURPLES, skip: () => false, torn: () => false, sample: () => 0 });
+  drawHole(deepPortal(), 1, { tones: LIP_GREYS, magic: LIP_PURPLES, mouth: TONE.hole,
+                              skip: () => false, torn: () => false, sample: () => 0 });
 }
 
 function drawSnatch() {
@@ -152,7 +159,7 @@ export function portalNearEdge() {
 // hole the abyss's depth across is over a thousand cells.
 const hole = cellImage();
 const rung = (ramp, k) => Math.max(0, Math.min(ramp.length - 1, Math.round(k * (ramp.length - 1))));
-function drawHole(c, k, { tones, magic, sample, skip, torn }) {
+function drawHole(c, k, { tones, magic, sample, skip, torn, mouth = tones[0] }) {
   const t = now(), r = Math.max(P, c.r * k);
   const out = reach(r) + P;
   const x0 = snap(c.x - out), y0 = snap(c.y - out);
@@ -176,7 +183,7 @@ function drawHole(c, k, { tones, magic, sample, skip, torn }) {
       }
       const v = sample(x, y);
       hole.put(j * cols + i, v > 0 ? tones[Math.max(0, v - PORTAL_MOUTH_DIM)]
-                          : v < 0 ? magic[Math.max(0, -v - PORTAL_MOUTH_DIM_PURPLE)] : tones[0]);
+                          : v < 0 ? magic[Math.max(0, -v - PORTAL_MOUTH_DIM_PURPLE)] : mouth);
     }
   }
   hole.draw(ctx, x0, y0);

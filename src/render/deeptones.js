@@ -40,8 +40,8 @@ export const LIGHT = Object.fromEntries(Object.entries(DEEP_PURPLE).map(([k, i])
 
 // Every color the deep may draw, as seen: the kept rungs and white. The
 // scales' coin colors are the yard's own and are not listed here.
-export const DEEP_SEEN = [...DEEP_GREY_RUNGS.map(k => ABYSS_TONES[k]), ABYSS_TONES[WHITE],
-                          ...DEEP_PURPLE_RUNGS.map(k => ABYSS_MAGIC_TONES[k])];
+export const DEEP_SEEN_GREYS = [...DEEP_GREY_RUNGS.map(k => ABYSS_TONES[k]), ABYSS_TONES[WHITE]];
+export const DEEP_SEEN = [...DEEP_SEEN_GREYS, ...DEEP_PURPLE_RUNGS.map(k => ABYSS_MAGIC_TONES[k])];
 
 // A tone `n` rungs further down its own ramp, folded onto the kept ones and
 // never under the faintest mark the water still shows (the ground's grey,
