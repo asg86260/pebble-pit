@@ -162,6 +162,7 @@ node tools/headless.mjs --shard 2/6        # a sixth of the browser groups
 node tools/test.mjs                        # the browser groups in parallel
 node tools/node/break-perf.mjs [s] [tune]  # the driven endgame yard, frame by frame
 node tools/node/carters.mjs [s] [--crew N]  # the carters against fed heaps and finds, a row a scenario
+node tools/node/builders.mjs [s] [--open]   # every builder's frames over a backlog: hammering, walking, waiting
 node tools/node/file-times.mjs [name...]   # wall time per node-tier file, slowest first (a sweep: once, on main)
 node tools/node/rank-prof.mjs <cpuprofile> # a --cpu-prof ranked by self time
 ```

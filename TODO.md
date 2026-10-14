@@ -296,16 +296,6 @@ The craft flies, crewed, and pulls from the clouds. Left:
 - **The reading.** Nothing on the board says whether a craft is up, crewed or
   tied to its mast.
 
-### The builder bottleneck (2026-09-08)
-
-"The one bench carries two ladders' worth of waiting" in DESIGN.md. A
-representative backlog (2,332 worker-seconds) did not clear in 2,000 game
-seconds at the top of both builder ladders; builders did useful work ~37% of the
-time. Not root-caused, roughly 4x what the ladders predict, and only with
-several works competing. Instrument `handsAt('yard')` against builder
-positions -- walking, `slotFor` thrash, or `stepWorks`'s accounting -- before
-touching `src/config/build.js`.
-
 ### Numbers nobody has played
 
 - The grind pass's re-measure: the quarry/lab doors may sit heavy (bot: 200 min /
