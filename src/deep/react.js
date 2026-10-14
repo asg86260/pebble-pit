@@ -5,8 +5,8 @@
 // since when, is the caller's (deep/fauna.js, deep/flow.js).
 
 import { FAUNA_SILT, FAUNA_REACT_MOTION } from '../config.js';
+import { smoothstep as smooth } from '../motion.js';
 
-const smooth = k => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
 
 // Through the keys on a monotone cubic: still at the first and the last key
 // and at every key where the motion stops or turns back, carried through at

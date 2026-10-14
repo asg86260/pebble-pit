@@ -38,6 +38,7 @@ import { GREYS, PURPLES, WHITE, BODY, R4, R8, hash, lerp, ease, cell, ring, body
 import { ATTACKS, SEGMENTS, REST, liftOf, loopOf, sauceOf, dentsOf, sparksOf, starAt, speedLines,
          streakAt, MOTE_TONES } from './attacks.js';
 import { hideBot } from './serpent.js';
+import { toneOn } from './tone.js';
 
 // The deep's bodies that fight: a pod resident seated at a station.
 export const isFighter = w => w.type === TYPE.FIGHTER;
@@ -239,7 +240,6 @@ export function drawFighters() {
   // receding pass is drawn at that moment, the front pass at this one
   // (render/recede.js).
   const t = (S.hushOn && !inFront() ? S.hushAt : now()) / 1000, list = fighters(t);
-  const was = ctx.globalAlpha;
   queued = [];
   // A fighter still coming down the shaft is in the liquid over the deep's
   // surface and not drawn, as every swimmer is (render/deep.js).
@@ -251,7 +251,8 @@ export function drawFighters() {
   for (const f of list) {
     const ink = f.w ? bodyInk(f.w) : inFront() ? 0 : 1;
     if (ink <= 0) continue;
-    ctx.globalAlpha = was * ink;
+    const end = toneOn(ctx, ink);          // down its ramps, not thinner
+    if (!end) continue;
     // landed home from the constrict's orb: squashed on its feet for a beat
     const squash = orbSquash(f.st);
     if (squash) {
@@ -288,8 +289,8 @@ export function drawFighters() {
     if (b.inspired) paintInspired(t, at[0], at[1], b.inspired);
     if (b.hasted) paintHasted(t, at[0], at[1]);
     if (squash) ctx.restore();
+    end();
   }
-  ctx.globalAlpha = was;
   ctx.restore();
   ctx.fillStyle = '#000';
 }

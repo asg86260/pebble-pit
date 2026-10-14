@@ -72,9 +72,6 @@ export const SHELF_NUM_W = 3;          // cells of the plank always kept for the
 // ...and what it takes once there IS a count in it: the last bottle's place as
 // well, since the fifth bottle was only ever saying "and more".
 export const SHELF_NUM_WIDE = SHELF_NUM_W + BOTTLE_PITCH;
-// The floor on the numeral, in cells of its own height: shrunk to fit by
-// fractions of a CSS pixel it comes out unreadable.
-export const SHELF_NUM_MIN = 2;
 export const SHELF_PAD = 1;            // and a cell of air inside each wall
 export const APOTH_SHELF_ROWS = BOTTLE_H + 1;    // a bottle and the plank under it
 export const APOTH_SHELF_W = P * (2 + SHELF_PAD * 2

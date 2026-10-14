@@ -1,4 +1,5 @@
 import { P } from './yard.js';
+import { GREY } from './palette.js';
 
 // --- the sky ----------------------------------------------------------------
 // Clouds and birds, and nothing else up there: the far end of the parallax the
@@ -145,6 +146,8 @@ export const CLOUD_LEAN = 0.12;
 // Not grey: a pile of dust is a block of grey cells, so grey muck lying on a
 // pile read as more of the pile, the one thing it must never read as.
 export const MUCK_TONE = '#7a6047';
+// the muck's own darker grain, dealt through the band (MASS_DEAL.muck)
+export const MUCK_GRAIN = '#68503a';
 export const MUCK_SKIN = '#57402c';     // and the top course, so the layer has a lid
 // What a body left smells, and the yard says so: a couple of flies over it and
 // a wisp coming off it. Only over what a body left -- what the weather drops is
@@ -159,16 +162,17 @@ export const FLY_ORBIT = P * 1.7;    // how far one strays from the column
 export const FLY_BEAT = 3.1;         // radians a second it goes round at
 export const STINK_RISE = 26;        // pixels a second a wisp climbs
 export const STINK_LIFE = 2.4;       // seconds before it has gone
+export const STINK_INK = 0.28;       // how dark a wisp starts, a step of the greys
 export const STINK_EVERY = 3;        // one column in this many gets one
 
 // The two ends of a dry cloud's shading, its lit crown and its base; the
 // steps between are mixed. The base stays lighter than the lightest rock
 // shade, since the six shades are the rock's and nothing in the sky borrows
 // them.
-export const CLOUD_TONE = '#dadada';
-export const CLOUD_UNDER = '#909090';
+export const CLOUD_TONE = GREY[2];
+export const CLOUD_UNDER = GREY[5];
 export const CLOUD_DRIFT = 0.05;  // world pixels a frame, before its depth is taken off
-export const BIRD_TONE = '#5f5f5f';
+export const BIRD_TONE = GREY[7];
 export const BIRD_GAP = 26000;    // milliseconds between one lot of birds and the next
 export const BIRD_FLOCK = 4;      // at most this many in a lot
 // A bird can be clicked, and shakes a few grains loose as it bolts. The amount

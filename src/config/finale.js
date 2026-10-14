@@ -6,6 +6,7 @@
 // house up there; they go in, the door shuts, the window lights. Seconds
 // unless named; a pace is pixels a second.
 import { P } from './yard.js';
+import { GREY, PURPLE } from './palette.js';
 
 // The kill settles the yard at once: the background still from its first
 // frame, the bands stepping in over this rather than CUT_SETTLE_S.
@@ -82,6 +83,10 @@ export const FINALE_HOP_POSES = [
   { s: 0.08, lift: 1, smear: 'over' },
   { s: 0.12, rows: 2, dust: true },
 ];
+// The one drawn hop: the finale's crowd, a landing and
+// his hop against the ribs all step through this table (motion.js, `poseAt`),
+// scaled to their own length and height.
+export const HOP_POSES = FINALE_HOP_POSES;
 export const FINALE_MARK_EVERY_S = 3;     // a mark over each of the crowd this often
 export const FINALE_MARK_S = 1.2;         // and up this long
 export const FINALE_MARK_AFTER_S = 0.6;   // the first not until it has been in its place this long
@@ -202,13 +207,13 @@ export const RETIRED_NIP = { door: 0.8, steps: 5, dim: 1.6, out: 2.0, undim: 2.6
 export const RETIRED_IN_SHUT_AT_S = 2.8;
 
 // --- how it is drawn (render/finale.js, render/home.js) -------------------------------
-// The yard's greys by name, darkest first (the page's own map turns them on a
-// dark page, ink.js), and the accent: the portal's purple, with its dark and
-// its light (the lit room).
-export const FINALE_GREYS = ['#262626', '#3d3d3d', '#666666', '#959595', '#c4c4c4', '#e3e3e3'];
-export const FINALE_PURPLE = '#7b3fe4';
-export const FINALE_PURPLE_DARK = '#3f2378';
-export const FINALE_PURPLE_LIGHT = '#b79af2';
+// Six rungs of the yard's one grey ramp, darkest first (the page's own map
+// turns them on a dark page, ink.js), and the accent: rungs of the one purple,
+// with its dark and its light (the lit room). All palette.js's.
+export const FINALE_GREYS = [GREY[9], GREY[8], GREY[7], GREY[5], GREY[3], GREY[1]];
+export const FINALE_PURPLE = PURPLE[11];
+export const FINALE_PURPLE_DARK = PURPLE[7];
+export const FINALE_PURPLE_LIGHT = PURPLE[13];
 // Each firework's shape, in cells and seconds from its burst (render/finale.js):
 //   peony       a purple core and a ring opening to `r`, held, then falling out
 //   crossette   `arms` arms opening and held, then every head splitting into a cross

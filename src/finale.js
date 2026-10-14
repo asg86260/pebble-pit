@@ -65,10 +65,10 @@ import { markDone } from './beats.js';
 import { inBasket, bringDown } from './balloon.js';
 import { takeBuilders, planBuild, stepBuilder, builderPose, freeBuilders, finishHouse, houseDone,
          houseX, doorX, stepRetired, retiredIn, goInto, afterPair as afterOf } from './home.js';
+import { lerp } from './motion.js';
 
 const F = () => S.finale;
 const clamp01 = k => Math.max(0, Math.min(1, k));
-const lerp = (a, b, k) => a + (b - a) * k;
 const easeInOut = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 const snap = v => Math.round(v / P) * P;
 // A held step: `k` 0..1 in `n` whole steps, each taken as its stretch begins.

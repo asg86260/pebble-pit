@@ -1,5 +1,6 @@
 import { rand } from '../rng.js';
 import { P } from './yard.js';
+import { COIN_TONES, GREY, GREY_DUST_FROM, PURPLE } from './palette.js';
 
 export let DEVICE_PIXELS = 9e6;
 // cells of sand any one grid is allowed to look at in a frame. The ground can
@@ -11,8 +12,9 @@ export const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 // pales as you dig through it; an empty cell is the white page showing through.
 // These stay grey on purpose: shade is how deep the rock was, and it is not
 // free to mean anything else. Color in this game belongs to the things that
-// never came off the rock.
-export const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#111111'];
+// never came off the rock. Six rungs of the one grey ramp (palette.js), the
+// last of them the buildings' black, so a heap and a wall share one black.
+export const SHADES = GREY.slice(GREY_DUST_FROM, GREY_DUST_FROM + 6);
 // The page's two inks, and the dark page's (DESIGN.md, "Dark mode"): not
 // white on black but a light gray on charcoal, so the dark page is a page and
 // not a negative. ink.js maps every other color between them by lightness,
@@ -53,17 +55,17 @@ export const ROCK_CELL = FIND_TOP + 1;
 // Everything the *ground* makes is a grey, because grey is how deep the rock
 // was; the things the sites give up never came off the rock, so they are the
 // one thing a color can mean something about. Flat and strong, not pastel.
-// What the wizards throw, and what comes off them while they fly: purple, and
-// the only purple in the game. Everything else in the sky is the star, and
-// that is red. Red is the stuff; purple is the magic moving it.
-export const MAGIC_TONES = ['#9b5de5', '#8244d8', '#6a2fbe', '#4e2090'];
+// What the wizards throw, and what comes off them while they fly: the one
+// purple, the accent for everything outside black and white. Everything else
+// in the sky is the star, and that is red. Red is the stuff; purple is the
+// magic moving it.
+export const MAGIC_TONES = [PURPLE[12], PURPLE[11], PURPLE[10], PURPLE[8]];
 
+// The coins' tones (palette.js), by the cell a find of each kind starts at.
 export const FIND_COLOR = {
-  [SHARD_CELL]: ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'],   // the quarry: a cold blue
-  [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a'],   // the farm: green, it grew
-  // The meteor's core: red, and the only red in the game. The quarry is cold and
-  // the plots are alive; this came out of the sky and is still hot.
-  [SPARK_CELL]: ['#e8503a', '#d93a25', '#c62d1c', '#9c2214']
+  [SHARD_CELL]: COIN_TONES.ore,
+  [SPORE_CELL]: COIN_TONES.crop,
+  [SPARK_CELL]: COIN_TONES.spark
 };
 
 // which kind a cell belongs to, and one of that kind with a tone of its own
@@ -98,10 +100,11 @@ export const SHEET_FADE_MS = 180;
 // cap and a plus, since a storm lays hundreds and the figure is a nudge.
 export const MESS_TAG_CAP = 99;
 // The hard shadow every floating card casts, down and right, in screen
-// pixels, and its gray: the page's --shadow-off and --ink-7 (style.css), for
+// pixels, and its gray, a rung of the one ramp: the page's --shadow-off and
+// --ink-7 (style.css), for
 // the one card drawn on the canvas rather than the page (render/counter.js).
 export const FLOAT_SHADOW = 6;
-export const FLOAT_SHADOW_INK = '#aaa';
+export const FLOAT_SHADOW_INK = GREY[4];
 // The most the landing page waits for its picture (the demo frame's first
 // drawn frame) before lifting its veil regardless: a frame that will not come
 // must not hold the page white.
@@ -122,4 +125,4 @@ export const VIEW_KNOBS = [
 ];
 
 // The wisp off the apothecary's fire.
-export const APOTH_SMOKE = '#3a3a3a';
+export const APOTH_SMOKE = GREY[8];

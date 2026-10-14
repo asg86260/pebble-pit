@@ -2,6 +2,7 @@ import { SHARD_CELL, SPARK_CELL, SPORE_CELL } from './view.js';
 import { P } from './yard.js';
 import { SWING_BOB, SWING_DRIVE } from './rocks.js';
 import { DIG_SWAY } from './quarry.js';
+import { GREY } from './palette.js';
 
 // --- nature ------------------------------------------------------------------
 // A body works all day and now and then it has to stop; what it leaves is the
@@ -205,7 +206,7 @@ export const SEAT_GAP = P;
 // boards' bill-line grey, mapped by ink.js on the dark page like every other
 // gray.
 export const SEAT_RING = 2;
-export const SEAT_EMPTY_INK = '#8c8c8c';
+export const SEAT_EMPTY_INK = GREY[5];
 // A body sent off has no seat to walk away from (it carries where it stands),
 // so its pip empties on a clock: three held thirds over this long.
 export const SEAT_LEAVE_MS = 600;

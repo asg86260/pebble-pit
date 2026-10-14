@@ -1,5 +1,5 @@
 import { P } from './yard.js';
-import { MUCK_TONE, MUCK_SKIN } from './weather.js';
+import { MUCK_TONE, MUCK_SKIN, MUCK_GRAIN } from './weather.js';
 
 // --- the roombas -----------------------------------------------------------------
 // The janitors' closet's machine: low discs that drive out along the yard's
@@ -41,7 +41,7 @@ export let ROOMBA_TIP_MS = 90;
 export const ROOMBA_OWED = 4;
 // The mess's own tones, for a grain in the air and the cells of the bin's
 // gauge: the layer's body and its lid (render/smog.js), and one between.
-export const ROOMBA_TONES = [MUCK_TONE, MUCK_SKIN, '#68503a'];
+export const ROOMBA_TONES = [MUCK_TONE, MUCK_SKIN, MUCK_GRAIN];
 // And how long a tipped grain is in the air on its way to the door, ms.
 export const ROOMBA_TIP_FLY_MS = 380;
 // A grain taken in is seen going: it flies from the patch into the mouth,

@@ -2,7 +2,7 @@
 // leaves behind.
 
 import { now, ambient } from '../clock.js';
-import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
+import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_INK, MUCK_GRAIN, MASS_DEAL, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
 import { DROPS, EMBERS, GOING, SPLASHES, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -11,6 +11,7 @@ import { paled, towardPage } from '../weather.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
 import { screenAt } from './frame.js';
+import { dealt, toned } from './tone.js';
 
 // What the rain left, drawn where it landed, one column at a time, stacked on
 // whatever that column has. The layer is the record: there is no number
@@ -47,9 +48,9 @@ function drawStink(from, to, poo) {
     const age = (t + seed) % STINK_LIFE;
     const wy = Math.round((top - P - age * STINK_RISE) / P) * P;
     const wx = Math.round((c * P + Math.sin(t + seed) * P) / P) * P;
-    ctx.globalAlpha = 0.28 * (1 - age / STINK_LIFE);
+    ctx.fillStyle = toned('#000', STINK_INK * (1 - age / STINK_LIFE));
     ctx.fillRect(wx, wy, P, P);
-    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#000';
   }
 }
 
@@ -87,6 +88,13 @@ export function drawMuck() {
     ctx.beginPath();
     for (let i = 0; i < body.length; i += 3) ctx.rect(body[i], body[i + 1], P, body[i + 2]);
     ctx.fill();
+    // one cell in MASS_DEAL.muck of the body in the muck's darker grain
+    ctx.fillStyle = MUCK_GRAIN;
+    ctx.beginPath();
+    for (let i = 0; i < body.length; i += 3)
+      for (let y = body[i + 1] + P; y < body[i + 1] + body[i + 2]; y += P)
+        if (dealt(body[i] / P, y / P, MASS_DEAL.muck)) ctx.rect(body[i], y, P, P);
+    ctx.fill();
     ctx.fillStyle = MUCK_EDGE;
     ctx.beginPath();
     for (let i = 0; i < skin.length; i += 2) ctx.rect(skin[i], skin[i + 1], P, P);
@@ -107,38 +115,24 @@ function drawMuckGhosts() {
     const k = 1 - (t - g.at) / (CUT_MUCK_FADE_S * 1000);
     const a = Math.ceil(k * CUT_MUCK_FADE_STEPS) / CUT_MUCK_FADE_STEPS;
     if (a <= 0) continue;
-    ctx.globalAlpha = a;
     // each went as the top course, so each fades as one
-    ctx.fillStyle = MUCK_EDGE;
+    ctx.fillStyle = toned(MUCK_EDGE, a);
     ctx.fillRect(sc.col * P, foot - g.n * P, P, P);
   }
-  ctx.globalAlpha = 1;
 }
 
 // What the yard has put up there: the motes themselves, every one of which
-// climbed off a swing. Nobody draws an outline, so there are no edges in it.
-// It is the one thing here you look *through*, so it comes apart into color
-// the way a lens makes it: nothing at the middle of the window, a hair of red
-// one side and cyan the other by the edges. A fringe under half a pixel is a
-// fringe nobody can see, so the middle of the screen draws one rectangle a
-// mote and only the edges draw three.
-const CA_FLOOR = 0.5;              // separation not worth drawing
-const CA_INK = 0.55;               // how solid a fringe is against the mote itself
-const CA_WARM = '#c02a2a';         // the red edge
-const CA_COOL = '#1f9ad0';         // and the cyan one
-
+// climbed off a swing. Nobody draws an outline, so there are no edges in it,
+// and no color fringe either: a mote is its SMOG_TINTS tone and nothing else.
 // Drawn as a handful of fills rather than thousands of rectangles: every call
 // into the canvas costs the same setup whatever it draws, and a shower is a
 // couple of thousand specks on the glass at once.
 export function drawSmog() {
   if (!SKY.length && !GOING.length && !STACK.length) return;
-  const mid = S.camX + S.viewW / 2;
-  const half = Math.max(1, S.viewW / 2);
 
   // One bucket a tint *and a weight*: every speck carries its own ink (see
   // `skyMote`), and specks of the same color and weight go down together.
   const runs = new Map();
-  const warm = [], cool = [];
   for (const m of SKY) {
     // Only the plume, not the band: the smoke still climbing off the works is
     // drawn -- so a swing visibly puts something up -- but the settled sky is
@@ -147,21 +141,16 @@ export function drawSmog() {
     // there is only counted. And not a machine's motes at all: the smoke off
     // a stack is the puffs (`puffStack`, below), and its motes are the count
     // behind them -- drawing both put the old speck-plume up beside the
-    // smoke, in the soot browns with a fringe on, and the two read as two
+    // smoke, in the soot browns, and the two read as two
     // kinds of pollution.
     if (!m.up || m.kind === 'mach') continue;
     // Asked of the sky rather than read off the mote: a settled mote is not
     // written every frame (`moteX` in smog.js). The cull on x comes first, so
-    // the height and the fringe are only worked out for what is on the glass.
+    // the height is only worked out for what is on the glass.
     const mx = moteX(m);
     if (!onScreen(mx)) continue;
     const my = moteY(m);
     const x = Math.round(mx), y = Math.round(my);
-    const off = Math.max(-1, Math.min(1, (mx - mid) / half)) * HAZE_CA;
-    if (Math.abs(off) >= CA_FLOOR) {
-      warm.push(Math.round(mx - off), y);
-      cool.push(Math.round(mx + off), y);
-    }
     // Both fixed on the mote, so a speck does not shimmer between colors.
     const shades = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
     const tint = shades[(m.tone ?? 0) % shades.length];
@@ -177,8 +166,7 @@ export function drawSmog() {
   }
 
   // The ones a mouth has taken, thinning where they stood: the same speck at
-  // a lighter weight, so the same buckets. No fringe on them; the chromatic
-  // edge is a thing about the sky's depth, and these are on their way out.
+  // a lighter weight, so the same buckets.
   for (const g of GOING) {
     if (g.kind === 'mach' || !onScreen(g.x)) continue;
     const shades = SMOG_TINTS[g.kind] || SMOG_TINTS.dust;
@@ -208,13 +196,10 @@ export function drawSmog() {
   const thin = P / (P + tail);
   const spill = (pts, colour, ink) => {
     if (!pts.length) return;
-    ctx.globalAlpha = ink * thin;
-    ctx.fillStyle = colour;
+    ctx.fillStyle = toned(colour, ink * thin);
     for (let i = 0; i < pts.length; i += 2)
       ctx.fillRect(pts[i] + from, pts[i + 1], P + tail, P);
   };
-  spill(warm, CA_WARM, HAZE_INK * CA_INK);
-  spill(cool, CA_COOL, HAZE_INK * CA_INK);
   for (const run of runs.values()) spill(run.at, run.tint, HAZE_INK * run.ink);
 
   // The smoke off the stacks, at smoke's own weight and not the haze's: the
@@ -234,13 +219,11 @@ export function drawSmog() {
       run.at.push(Math.round(q.x / P) * P, Math.round(q.y / P) * P);
     }
     for (const run of stack.values()) {
-      ctx.globalAlpha = STACK_INK * run.ink;
-      ctx.fillStyle = run.tint;
+      ctx.fillStyle = toned(run.tint, STACK_INK * run.ink);
       for (let i = 0; i < run.at.length; i += 2) ctx.fillRect(run.at[i], run.at[i + 1], P, P);
     }
   }
 
-  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -375,18 +358,17 @@ function drawSplashes() {
   }
 }
 
-// The bolt: black, full for the first half of its life and fading through the
-// second. Black even through the flash; the flash is what turns it white
-// (`drawFlash`).
+// The bolt: a held strike, black for the first half of its life and stepping
+// down the greys through the second. No flash over the frame: the strike is
+// the bolt standing there, not the window blinking.
 export function drawBolt() {
   const b = S.bolt;
   if (b) {
-    ctx.fillStyle = '#000';
-    ctx.globalAlpha = Math.min(1, b.left / (BOLT_LIFE_S / 2));
+    ctx.fillStyle = toned('#000', Math.min(1, b.left / (BOLT_LIFE_S / 2)));
     ctx.beginPath();
     for (const [x, y] of b.cells) ctx.rect(x, y, P, P);
     ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#000';
   }
   // and the embers off it, bucketed by weight like the haze so a burst is a
   // handful of fills and not one per speck
@@ -401,31 +383,11 @@ export function drawBolt() {
     if (!run) runs.set(a, run = []);
     run.push(Math.round(e.x / P) * P, Math.round(e.y / P) * P);
   }
-  ctx.fillStyle = '#000';
   for (const [a, at] of runs) {
-    ctx.globalAlpha = a;
+    ctx.fillStyle = toned('#000', a);
     ctx.beginPath();
     for (let i = 0; i < at.length; i += 2) ctx.rect(at[i], at[i + 1], P, P);
     ctx.fill();
   }
-  ctx.globalAlpha = 1;
-}
-
-// The flash: for the first instant of a strike a dark pane drops over the
-// finished frame, in screen space, and the bolt is drawn white on top. Dark
-// because the page is already white: the only way a white page can flash is
-// to go dark, and inverting the whole window is a blow to the eye.
-export function drawFlash() {
-  const b = S.bolt;
-  if (!b || b.flash <= 0) return;
   ctx.fillStyle = '#000';
-  // fading off from the first frame, not held and cut: a held pane is a blink
-  ctx.globalAlpha = BOLT_FLASH_INK * Math.min(1, b.flash / BOLT_FLASH_S);
-  ctx.fillRect(0, 0, S.W, S.H);
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  const k = P * S.zoom;
-  for (const [x, y] of b.cells) { const p = screenAt(x, y); ctx.rect(p.x, p.y, k, k); }
-  ctx.fill();
 }

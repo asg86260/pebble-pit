@@ -149,6 +149,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The drawn yard speaks one visual language: one grey and one purple ramp, fades that step down a tone instead of thinning, a plus for the spark everywhere, pixel numbers on every count, no lightning flash or shaking, and everything on the cell grid.
 - Nine more index entries have a drawing: muck, poop, pollution, birds, the pit, your sqwife, the bench, the books and achievements.
 - The farm shed wears a barn roof, so it no longer looks like the quarry shed or the bench; the farm's flag flies from the ridge.
 - The deep's stations stand spread evenly under the whole serpent, the first four already spanning it, instead of bunched to one side.

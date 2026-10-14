@@ -1,4 +1,5 @@
 import { P } from './yard.js';
+import { PURPLE } from './palette.js';
 
 // --- the rift ----------------------------------------------------------------
 // The hole in the air past the far wall of the pit: what the hole in the ground
@@ -167,9 +168,9 @@ export const ABYSS_TONES = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c
 // The purples run the same way, dark to bright. There is no alpha here: a
 // thing fades by being painted in a darker tone of its own family, so every
 // family needs its dark end written down.
-export const ABYSS_MAGIC_TONES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739',
-                                  '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6',
-                                  '#6a2fbe', '#9b5de5'];
+// Twelve rungs of the one purple (palette.js), the bright end skipping the
+// yard's middle rung so the deep keeps its steps.
+export const ABYSS_MAGIC_TONES = [...PURPLE.slice(0, 11), PURPLE[12]];
 // The breath's curve is bent the other way from the obvious one: the bottom
 // rungs are invisible, so an exponent under one runs through them quickly and
 // dwells up where the star can be seen. Every rung is still crossed, one at a

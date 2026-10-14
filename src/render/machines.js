@@ -17,6 +17,7 @@ import { S, band } from '../state.js';
 import { walkY } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
+import { smoothstep as ease } from '../motion.js';
 
 // --- the machines ---------------------------------------------------------------
 // Each machine moves differently, which is what makes three black blocks read
@@ -80,7 +81,6 @@ export function drawDrill() {
 // of frames. When the strikes stop it backs out from wherever it was and the
 // wheel stands still. The cycle's start and the stop are remembered here, as
 // the ram's drive is in `ramX`: the picture's memory, never the yard's.
-const ease = f => f * f * (3 - 2 * f);
 const seg = (v, a, b) => Math.min(1, Math.max(0, (v - a) / (b - a)));
 const cycleIn = ph => RAM_BORE_IN * (ph < RAM_BORE_PUSH ? ease(seg(ph, 0, RAM_BORE_PUSH))
                                    : ph < RAM_BORE_BACK ? 1

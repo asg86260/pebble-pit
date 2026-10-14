@@ -1,43 +1,10 @@
 // The small shapes everything else in the yard is drawn out of: the one mark a
-// grain gets wherever it is, the triangle, the diamond, the ring cell and the
-// disc.
+// grain gets wherever it is, the coins' bitmaps and the ring cell.
 
 import { FIND_COLOR, MARK_SIZE, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, findKind } from '../config.js';
 import { isDust, shadeOf } from '../grid.js';
 import { ctx } from './ctx.js';
-
-// a shard: a triangle, filled or hollow, the mark that means the quarry
-export function drawTriangle(x, y, r, hollow) {
-  ctx.beginPath();
-  ctx.moveTo(x, y - r);
-  ctx.lineTo(x + r, y + r * 0.8);
-  ctx.lineTo(x - r, y + r * 0.8);
-  ctx.closePath();
-  if (hollow) {
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    ctx.lineWidth = Math.max(1, r / 6);
-    ctx.strokeStyle = '#000';
-    ctx.stroke();
-  } else {
-    ctx.fillStyle = '#000';
-    ctx.fill();
-  }
-  ctx.fillStyle = '#000';
-}
-
-// a diamond: not a currency mark, kept because it is a shape worth having
-export function drawDiamond(x, y, r) {
-  ctx.beginPath();
-  ctx.moveTo(x, y - r);
-  ctx.lineTo(x + r, y);
-  ctx.lineTo(x, y + r);
-  ctx.lineTo(x - r, y);
-  ctx.closePath();
-  ctx.fillStyle = '#000';
-  ctx.fill();
-}
-
+import { COIN_MARKS } from '../glyphs.js';
 
 // One glyph, one size, everywhere a grain is drawn outside the sand painter.
 // Every one is drawn inside the same cell-sized box, centered on `x, y`: a
@@ -86,48 +53,38 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false, g = ctx) {
     return;
   }
   // No backing square: a resting find stands in a slot of its own, and a white
-  // box behind a triangle is a white box on the ground.
-  const h = size / 2;
-  g.fillStyle = tones ? tones[Math.min(2, v - findKind(v))] : '#000';
+  // box behind a triangle is a white box on the ground. The mark is the coin's
+  // bitmap (COIN_MARKS), a fifth of `size` a cell, so it lands on whole pixels.
   const kind = findKind(v) || v;
-  if (kind === SHARD_CELL) {
-    g.beginPath();
-    g.moveTo(x, y - h);
-    g.lineTo(x + h, y + h);
-    g.lineTo(x - h, y + h);
-    g.closePath();
-    g.fill();
-  } else if (kind === SPORE_CELL) {
-    const k = h * 0.866;                       // flat-topped, so it fills the width
-    g.beginPath();
-    g.moveTo(x - h, y);
-    g.lineTo(x - h / 2, y - k);
-    g.lineTo(x + h / 2, y - k);
-    g.lineTo(x + h, y);
-    g.lineTo(x + h / 2, y + k);
-    g.lineTo(x - h / 2, y + k);
-    g.closePath();
-    g.fill();
-  } else if (kind === SPARK_CELL) {
-    // A spark: four points, a thing with no sides, where the quarry's triangle
-    // and the plots' hexagon both have sides.
-    g.beginPath();
-    g.moveTo(x, y - h);
-    g.lineTo(x + h / 3, y - h / 3);
-    g.lineTo(x + h, y);
-    g.lineTo(x + h / 3, y + h / 3);
-    g.lineTo(x, y + h);
-    g.lineTo(x - h / 3, y + h / 3);
-    g.lineTo(x - h, y);
-    g.lineTo(x - h / 3, y - h / 3);
-    g.closePath();
-    g.fill();
-  } else {
-    const t = size / 3;
-    g.fillRect(x - t / 2, y - h, t, size);
-    g.fillRect(x - h, y - t / 2, size, t);
-  }
+  g.fillStyle = tones ? tones[Math.min(2, v - findKind(v))] : '#000';
+  const px = Math.max(1, Math.round(size / 5));
+  drawCoin(COIN_OF[kind] || 'dust', Math.round(x - px * 2.5), Math.round(y - px * 2.5), px, g);
   g.fillStyle = '#000';
+}
+
+// Which coin mark a find's cell is drawn as.
+const COIN_OF = { [SHARD_CELL]: 'ore', [SPORE_CELL]: 'crop', [SPARK_CELL]: 'spark' };
+
+// A coin's mark (COIN_MARKS in glyphs.js) with its top-left at `x, y`, `px`
+// pixels a cell, in whatever fill is set: the counter, the casino's feet and a
+// find drawn as a glyph all put down the one bitmap.
+export function drawCoin(name, x, y, px, g = ctx) {
+  const rows = COIN_MARKS[name];
+  for (let r = 0; r < rows.length; r++)
+    for (let c = 0; c < rows[r].length; c++)
+      if (rows[r][c] === '#') g.fillRect(x + c * px, y + r * px, px, px);
+}
+
+// A box's rule: the world's thin line (P / 3) lying inside the box, as four
+// filled strips, never a stroke centered on the edge -- half a centered rule
+// falls outside the box and off the lattice.
+export function rule(x, y, w, h, ink = '#000', g = ctx) {
+  const t = P / 3;
+  g.fillStyle = ink;
+  g.fillRect(x, y, w, t);
+  g.fillRect(x, y + h - t, w, t);
+  g.fillRect(x, y + t, t, h - 2 * t);
+  g.fillRect(x + w - t, y + t, t, h - 2 * t);
 }
 
 // A cell of a ring, put down *centered* on the point rather than hanging off

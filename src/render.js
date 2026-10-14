@@ -41,7 +41,7 @@ import { drawFilter, drawClods } from './render/filter.js';
 import { drawShocks } from './render/shock.js';
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
-import { drawBolt, drawFlash, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
+import { drawBolt, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
 import { drawDoseMotes, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
@@ -66,11 +66,12 @@ import { drawHome } from './render/home.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
 import { wash, setPass, backInk, byInk, hudInk, drawLetterbox } from './render/recede.js';
+import { withTone } from './render/tone.js';
 
 // The drawing side's public surface: the rest of the game imports every one of
 // these from render.js and has no business knowing which file each is in.
 export { canvas, ctx } from './render/ctx.js';
-export { cell, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
+export { cell, drawCoin, drawMark } from './render/marks.js';
 export { risingPlaces, rising, withRise } from './render/rise.js';
 export { bar, barSpot, drawWorkBars } from './render/bars.js';
 export { drawBuildSites, drawGrit } from './render/buildsites.js';
@@ -308,7 +309,6 @@ const LAYERS = [
 
   // A strike's instant, a dark pane over the finished frame. In screen pixels
   // it would be shared with the deep, which is under water and has no sky.
-  { name: 'flash', draw: drawFlash, when: () => S.view !== 'deep' },
 
   { name: 'press', draw: pressFrame },           // and then the filter, over the finished frame
 ];
@@ -361,7 +361,7 @@ const inHalf = (layer, i, deep) =>
 // hold on a window taller than the deep.
 // The body in your hand goes where the pointer goes, so it is the pointer's.
 const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'held', 'cursor', 'counter', 'serpent bar',
-                        'flash', 'press']);
+                        'press']);
 const halfLine = () => (S.worldH + deepTop()) / 2;
 
 // One half, every layer that belongs to it, with whatever camera is standing.
@@ -388,9 +388,8 @@ function drawHalf(deep) {
     const ink = !held ? 1 : FISH.has(layer.name) ? byInk() : HUD.has(layer.name) ? hudInk()
               : AFTER_WASH.has(layer.name) ? backInk() : 1;
     if (ink <= 0) continue;
-    if (ink < 1) ctx.globalAlpha = ink;
-    drawLayer(layer, i, deep);
-    if (ink < 1) ctx.globalAlpha = 1;
+    // faded by tone down each layer's own ramps, not by alpha (render/tone.js)
+    withTone(ctx, ink, () => drawLayer(layer, i, deep));
   }
 }
 
@@ -399,7 +398,9 @@ function drawLayer(layer, i, deep) {
   // takes ink out of it, or takes it out of the picture, so the buildings
   // behind a late yard's crowd can be read (prefs.js, `crewView`). Only the
   // picture: the bodies still walk and work where nobody is drawing them.
-  // The alpha is put back the same frame: nothing else is ever drawn faint.
+  // The alpha is put back the same frame. The one fade left to alpha: it is
+  // there to see the yard through the crowd, and a body toned paler would
+  // still cover what stands behind it.
   const view = layer.dim ? crewView() : 'show';
   if (view === 'hide') return;
   const faint = view === 'fade';

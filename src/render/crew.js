@@ -7,7 +7,7 @@ import { drawHopMarks, drawHeldPiece } from './finale.js';
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
 import { bodyInk } from './recede.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, HOP_POSES, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedShown, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -28,7 +28,9 @@ import { withRise } from './rise.js';
 import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
-import { FACE } from '../lang.js';
+import { withTone } from './tone.js';
+import { poseAt, topOf } from '../motion.js';
+import { writeCount } from './numfont.js';
 
 // The bench is not in the yard until there is something on it worth buying.
 // It is built rather than delivered (raise.js), so while it is going up it is
@@ -216,25 +218,20 @@ export function drawKitStands() {
 export function drawKitCounts(screenAt) {
   const stands = kitStands();
   if (!stands.length && !hasGarage()) return;
-  ctx.font = `13px ${FACE}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#000';
   // How many forklifts are in the garage, over its roof like a stand's count.
   if (hasGarage()) {
     const g = garage();
     const at = screenAt(g.x + g.w / 2, S.groundY - g.h - P * 3);
-    ctx.fillText(String(Math.round(shown('garage', inGarage()))), Math.round(at.x), Math.round(at.y));
+    writeCount(ctx, String(Math.round(shown('garage', inGarage()))), at.x, at.y);
   }
   for (const k of stands) {
     // A clear two cells over whatever is on the slab, measured off the mark
     // rather than fixed: the wizard's cone is three courses on its own.
     const at = screenAt(k.x - P + STAND_W / 2,
                         k.y - STAND_H - HAT_TALL[k.mark] - P * 2);
-    ctx.fillText(String(Math.round(shown('kit:' + k.mark, k.n))), Math.round(at.x), Math.round(at.y));
+    writeCount(ctx, String(Math.round(shown('kit:' + k.mark, k.n))), at.x, at.y);
   }
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#000';
 }
 
 // --- what a body on a break has to say ----------------------------------------
@@ -261,8 +258,9 @@ function drawSay(w, say) {
 
   if (say.mark === 'dots') {
     const n = say.n || 2;
+    // whole cells with a skipped cell between, never a cell a pixel short
     for (let i = 0; i < n; i++)
-      ctx.fillRect(Math.round(x - (n * P) / 2 + i * P), top - P, P - 1, P - 1);
+      ctx.fillRect(onCell(x - (2 * n - 1) * P / 2 + i * 2 * P), top - P, P, P);
     return;
   }
 
@@ -272,8 +270,8 @@ function drawSay(w, say) {
     const t = now() / 160;
     for (const off of [0, Math.PI]) {
       const a = t + off;
-      ctx.fillRect(Math.round(x + Math.cos(a) * P * 2.2) - P / 2,
-                   Math.round(top - P * 1.4 + Math.sin(a) * P), P - 1, P - 1);
+      ctx.fillRect(onCell(x + Math.cos(a) * P * 2.2 - P / 2),
+                   onCell(top - P * 1.4 + Math.sin(a) * P), P, P);
     }
     return;
   }
@@ -291,10 +289,10 @@ function drawSay(w, say) {
   if (say.mark === 'yuck') {
     const wave = Math.floor(now() / 240) % 2 ? P : -P;
     for (const sx of [-P, P]) {
-      const cx = Math.round(x + sx - P / 2);
-      ctx.fillRect(cx, top - P, P - 1, P - 1);
-      ctx.fillRect(cx + wave * (sx > 0 ? 1 : -1), top - P * 2, P - 1, P - 1);
-      ctx.fillRect(cx, top - P * 3, P - 1, P - 1);
+      const cx = onCell(x + sx * 1.5 - P / 2);
+      ctx.fillRect(cx, top - P, P, P);
+      ctx.fillRect(cx + wave * (sx > 0 ? 1 : -1), top - P * 2, P, P);
+      ctx.fillRect(cx, top - P * 3, P, P);
     }
     return;
   }
@@ -321,15 +319,29 @@ function drawSay(w, say) {
 
   if (say.mark === 'note') {
     // a head and a stem: the smallest thing that is unmistakably a note
-    ctx.fillRect(Math.round(x - P), top - P, P, P);
-    ctx.fillRect(Math.round(x), top - P * 2, P - 2, P + 1);
+    ctx.fillRect(onCell(x - P), top - P, P, P);
+    ctx.fillRect(onCell(x), top - P * 3, P, P * 2);
     return;
   }
 
   // a burst: four cells off a corner, the comic shape of a swear word
+  // (a skipped cell between the arms, so it reads as four marks, not a plus)
   for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]])
-    ctx.fillRect(Math.round(x + dx * P) - P / 2, top - P + dy * P, P - 1, P - 1);
+    ctx.fillRect(onCell(x + dx * P * 2 - P / 2), top - P * 2 + dy * P * 2, P, P);
 }
+
+// A landing's hop: the one hop's poses (HOP_POSES) over LAND_HOP_MS, its top
+// LAND_HOP_H cells for a first-sized rock, in whole cells; lift in pixels.
+const HOP_TOP = topOf(HOP_POSES);
+function landPose(w, t0) {
+  const k = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
+  if (!(k >= 0 && k < 1)) return null;
+  const p = poseAt(HOP_POSES, k);
+  return { ...p, lift: Math.round((p.lift || 0) / HOP_TOP * LAND_HOP_H * (w.hopK || 1)) * P };
+}
+
+// A mark's cell, snapped to the lattice.
+function onCell(v) { return Math.round(v / P) * P; }
 
 // Somebody you have just asked for by name: a solid arrow over the head,
 // bobbing so it reads as put there rather than drawn on.
@@ -357,16 +369,13 @@ export function drawPointed() {
 const FALLING_DIZZY = { mark: 'dizzy' };
 
 export function drawSays() {
-  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     const say = w.say || (w.falling && w.dizzyFor ? FALLING_DIZZY : null);
     if (!say || underground(w) || atHome(w)) continue;
     const ink = bodyInk(w);
     if (ink <= 0) continue;
-    ctx.globalAlpha = was * ink;
-    drawSay(w, say);
+    withTone(ctx, ink, () => drawSay(w, say));
   }
-  ctx.globalAlpha = was;
   ctx.fillStyle = '#000';
 }
 
@@ -411,7 +420,7 @@ export function drawSaying(x, y, say) {
 
   const n = say.n || 2;
   for (let i = 0; i < n; i++)
-    ctx.fillRect(Math.round(mid - (n * P) / 2 + i * P), top, P - 1, P - 1);
+    ctx.fillRect(onCell(mid - (2 * n - 1) * P / 2 + i * 2 * P), top, P, P);
 }
 
 // A body knocked flat: the same square lying down, two cells tall and three
@@ -588,7 +597,6 @@ export function drawDeepSight() {
 
 export function drawWorkers() {
   const t0 = now();
-  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     // Out of sight: in the lab, down the quarry, in the outhouse, or home. The
     // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
@@ -599,22 +607,22 @@ export function drawWorkers() {
     // (render/recede.js)
     const ink = bodyInk(w);
     if (ink <= 0) continue;
-    ctx.globalAlpha = was * ink;
-    if (S.crewSight != null && underSurface(w) == null) ring(w);
-    const sunk = underSurface(w);
-    if (sunk != null) {
-      if (w.y >= sunk) continue;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(w.x - P * 8, w.y - P * 16, WORKER + P * 16, sunk - w.y + P * 16);
-      ctx.clip();
+    withTone(ctx, ink, () => {
+      if (S.crewSight != null && underSurface(w) == null) ring(w);
+      const sunk = underSurface(w);
+      if (sunk != null) {
+        if (w.y >= sunk) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(w.x - P * 8, w.y - P * 16, WORKER + P * 16, sunk - w.y + P * 16);
+        ctx.clip();
+        drawWorker(w, t0);
+        ctx.restore();
+        return;
+      }
       drawWorker(w, t0);
-      ctx.restore();
-      continue;
-    }
-    drawWorker(w, t0);
+    });
   }
-  ctx.globalAlpha = was;
 }
 
 // The body in your hand is the pointer's, not the ground's: drawn whole, over
@@ -639,17 +647,13 @@ function drawWorker(w, t0) {
     // swing, which is a janitor jittering while it cleans.
     const leanOn = throwOn > LEAN_HOLD ? 1 : 0;
     const x = Math.round(w.x + leanOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
-    // The landing hop is drawn here and nowhere else: `landRock` stamps the
-    // moment and the weight, and this lifts the body along one parabola
-    // without ever moving `w.y`, so nothing that reasons about where a body
-    // stands has a body in the air to reason about. Whole pixels, or a body
-    // drawn between pixels smears a hairline off its own edge.
-    const ht = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
-    const hop = ht >= 0 && ht < 1 ? LAND_HOP_H * (w.hopK || 1) * 4 * ht * (1 - ht) * P : 0;
-    // and the finale's crowd hopping in held poses and its builders stooping
-    // (finale.js), drawn the same way
-    const pose = finalePose(w);
-    const ground = Math.round(w.y + throwOn * look.lunge * P - hop - (pose ? pose.lift || 0 : 0));
+    // The finale's crowd hopping in held poses and its builders stooping
+    // (finale.js), or the landing hop, drawn here and nowhere else:
+    // `landRock` stamps the moment and the weight, and this steps the body
+    // through the one hop's held poses without ever moving `w.y`, so nothing
+    // that reasons about where a body stands has a body in the air.
+    const pose = finalePose(w) || landPose(w, t0);
+    const ground = Math.round(w.y + throwOn * look.lunge * P - (pose ? pose.lift || 0 : 0));
 
     // A cart is kit like any other, drawn off what the body is holding rather
     // than what the books say it is: the same rule a helmet has.

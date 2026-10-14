@@ -14,7 +14,7 @@ import { hash } from './flicker.js';
 import { houseStands, houseX, doorX, pileX, pieces, pieceUp, pileNow, afterDoor, afterLit } from '../home.js';
 
 const [G1, G2, G3, G4] = FINALE_GREYS;
-const INK = '#000', WHITE = '#fafafa', PU = FINALE_PURPLE, PUL = FINALE_PURPLE_LIGHT;
+const INK = '#000', WHITE = '#fff', PU = FINALE_PURPLE, PUL = FINALE_PURPLE_LIGHT;
 const clamp01 = k => Math.max(0, Math.min(1, k));
 const cell = (x, y, tone) => { ctx.fillStyle = tone; ctx.fillRect(x * P, y * P, P, P); };
 

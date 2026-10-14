@@ -1,4 +1,5 @@
 import { P } from './yard.js';
+import { GREY } from './palette.js';
 
 // The noticeboard's numbers: how often the rules are asked, and every threshold
 // a notice is earned at. See DESIGN.md, "The noticeboard, and the record on it".
@@ -63,8 +64,10 @@ export const NOTICE_KNOBS = [
 export const BOARD_W = P * 13;
 export const BOARD_H = P * 8;          // the panel
 export const BOARD_LEG = P * 3;        // and how far it stands off the ground
+// how long the board takes to come up, down its ramp, the first time a grain is banked
+export const NOTICEBOARD_IN_MS = 600;
 // What the sheets pinned to it are drawn in: paper, not dust. The heap shades
 // top out at a mid grey and read as dirt against the black panel; these are
 // the clouds' whites and a step under. Each sheet takes one off its own index,
 // because paper on a board is not one white (render/noticeboard.js).
-export const PAPER = ['#f2f2f2', '#e3e3e3', '#d4d4d4', '#ebebeb'];
+export const PAPER = [GREY[1], GREY[2], GREY[3], GREY[1]];

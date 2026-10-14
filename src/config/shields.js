@@ -10,6 +10,9 @@
 import { msg } from '../lang.js';
 
 export const SHIELD_LEG_W = 2;       // cells across a leg or a pier
+// The most cells a shield under a rock it cannot take leans over, a held cell
+// at a time as its strain climbs (render/shield.js): a held pose, not a shake.
+export const SHIELD_LEAN = 2;
 export const SHIELD_LID_T = 2;       // courses thick across the lid, and the arch's band
 export const SHIELD_CLEAR_C = 4;     // courses of daylight kept over the rock's peak
 export const SHIELD_PIECE_DUST = 25; // cells a piece breaks back into, so most of the spend comes home

@@ -11,6 +11,7 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawBody } from './crew.js';
 import { GUESTS } from '../skyguests.js';
+import { withTone } from './tone.js';
 
 // The row of moorings beside the filter's dial, one a craft: a stake in the
 // ground to the left of where the basket rests, the craft's tether tied off
@@ -23,7 +24,7 @@ export function drawBalloonPosts() {
   for (let i = 0; i < CRAFT.length; i++) {
     const sx = Math.round((mastX(i) - P * 5) / P) * P, foot = Math.round(postY(i));
     ctx.fillRect(sx, foot - P * STAKE, P, P * STAKE);
-    if (CRAFT[i].phase === 'moored') ctx.fillRect(sx + P, foot - P * STAKE, P * 1.5, P);
+    if (CRAFT[i].phase === 'moored') ctx.fillRect(sx + P, foot - P * STAKE, P * 2, P);   // whole cells, a tie of two
   }
 }
 
@@ -44,30 +45,27 @@ export function skyGuests() {
   // craft it came off so it is in front of the basket.
   for (const p of S.smoke) {
     if (p.far == null || !p.color) continue;
-    out.push({ far: p.far + 0.001, draw: () => {
-      ctx.globalAlpha = 1 - Math.max(0, fadeAt(p.far));
-      drawDoseMote(ctx, skyX(p.x, p.far), p.y, p.color, Math.min(1, p.t / p.life), p.v, sizeAt(p.far));
-      ctx.globalAlpha = 1;
-    } });
+    out.push({ far: p.far + 0.001, draw: () => withTone(ctx, 1 - Math.max(0, fadeAt(p.far)), () =>
+      drawDoseMote(ctx, skyX(p.x, p.far), p.y, p.color, Math.min(1, p.t / p.life), p.v, sizeAt(p.far))) });
   }
   return out;
 }
 GUESTS.list = skyGuests;
 
-// One craft, drawn about the bottom-middle of its basket at its size: whole
-// cells of its own, and not the lattice, since a balloon is not standing on
-// anything and snapping it turns a slow drift into a six-pixel stutter.
+// One craft, drawn about the bottom-middle of its basket at its size, on the
+// lattice: it drifts a whole cell at a time like everything else in the sky,
+// and fades toward the page by its depth down the ramps, as a cloud does.
 function drawCraft(i, a) {
   ctx.save();
-  ctx.translate(Math.round(a.x), Math.round(a.y));
+  ctx.translate(Math.round(a.x / P) * P, Math.round(a.y / P) * P);
   ctx.scale(a.s, a.s);
-  ctx.globalAlpha = 1 - Math.max(0, fadeAt(a.far));
-  drawDrawnIn(i);
-  drawEnvelope(i);
-  if (aboard(i)) drawBody(-WORKER / 2, -P - WORKER);
-  drawBasket();
+  withTone(ctx, 1 - Math.max(0, fadeAt(a.far)), () => {
+    drawDrawnIn(i);
+    drawEnvelope(i);
+    if (aboard(i)) drawBody(-WORKER / 2, -P - WORKER);
+    drawBasket();
+  });
   ctx.restore();
-  ctx.globalAlpha = 1;
 }
 
 const NECK = -BALLOON_BASKET - BALLOON_LINES;   // the envelope's neck, from the basket's bottom
@@ -137,12 +135,13 @@ function drawEnvelope(look) {
 }
 
 // The basket, hanging on the lines, drawn over whoever is in it so they stand
-// in it rather than on it: solid, with a course of weave through it.
+// in it rather than on it: solid, with a course of weave through it, a whole
+// cell of paper every other cell.
 const BASKET_W = P * 5;
 const RIM = -P * 2;                            // its top, from its bottom
 function drawBasket() {
   ctx.fillStyle = '#000';
   ctx.fillRect(-BASKET_W / 2, RIM, BASKET_W, -RIM);
   ctx.fillStyle = '#fff';
-  for (let c = 1; c < BASKET_W / P - 1; c += 2) ctx.fillRect(-BASKET_W / 2 + c * P, RIM + P, P, P / 2);
+  for (let c = 1; c < BASKET_W / P - 1; c += 2) ctx.fillRect(-BASKET_W / 2 + c * P, RIM + P, P, P);
 }
