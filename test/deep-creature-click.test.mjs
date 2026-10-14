@@ -96,9 +96,10 @@ group('a click on each creature plays its own reaction and drops a handful; it n
     if (FAUNA_REACT[c.kind].bolt) continue;
     // wait for it to be somewhere it can be clicked
     let f = null;
-    runUntil(() => (f = faunaReport()[c.i], clear(f) && !f.reacting), 120);
-    // one that never swims may stand out past the deep's ends, where no click reaches
-    if (!clear(f)) { if (c.v) out.push({ kind: c.kind, why: 'never in reach' }); continue; }
+    // anywhere in the deep: the handful's way to the crusher is not this group's
+    const there = g => g.inside && g.cx > 2 && g.cx < COLS - 2;
+    runUntil(() => (f = faunaReport()[c.i], there(f) && !f.reacting), 120);
+    if (!there(f)) { out.push({ kind: c.kind, why: 'never in reach' }); continue; }
     const { r: hit, shaken } = shedBy(() => startleFauna(f.x, f.y));
     const R = FAUNA_REACT[c.kind];
     let was = faunaReport()[c.i], worst = 0, played = 0, moved = 0, off = false;
@@ -119,7 +120,7 @@ group('a click on each creature plays its own reaction and drops a handful; it n
   const say = out.map(o => o.why ? `${o.kind}: ${o.why}` : `${o.kind}: hit ${o.hit}, ${o.shaken} scales, ${o.played} frames, off ${o.moved}, step ${o.worst}`).join('; ');
   const STEP_MAX = 7;   // the lantern's dart, six cells in a held step, and its swim
   return [
-    ok(out.length >= POPULATION.filter(c => c.v && !FAUNA_REACT[c.kind].bolt).length && out.every(o => o.hit), 'every one of them is there to be clicked', say),
+    ok(out.length === POPULATION.filter(c => !FAUNA_REACT[c.kind].bolt).length && out.every(o => o.hit), 'every one of them is there to be clicked', say),
     ok(out.every(o => o.shaken === FAUNA_SCALES && FAUNA_SCALES === BIRD_DUST), "each shakes loose the bird's handful", say),
     ok(out.every(o => Math.abs(o.played / 60 - o.end) < 0.1), 'each plays its reaction for its length', say),
     ok(out.every(o => o.moved > 0), 'and is not on its path the while: it moves or holds a pose', say),

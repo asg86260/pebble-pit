@@ -102,11 +102,13 @@ export const FAUNA = [
 // `up` rows over the floor. A creature leaves one end and comes back in at
 // the other `wrap` cells beyond it, so nothing pops in. Nothing swims nearer
 // the floor than `clear` rows. The amphipods dash `dash` a second, each dash
-// `step` of a second's way, `burst` times as fast as their pace.
+// `step` of a second's way, `burst` times as fast as their pace. One that
+// never swims stands at least `stand` cells in from either end, out from
+// under the purse and the corner at the window's edges.
 export const FAUNA_MOTION = {
   bob: 1.3, amp: 1, jellyBob: 0.9, jellyAmp: 2,
   low: { up: 6, bob: 1.1, amp: 1.5 },
-  wrap: 30, clear: 8,
+  wrap: 30, clear: 8, stand: 60,
   hop: { dash: 1.5, step: 0.45, burst: 2.2 },
   school: { drift: 1.7, driftAmp: 1.2, bob: 2.1, bobAmp: 0.8, seedStep: 0.13 },
 };

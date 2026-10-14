@@ -136,9 +136,10 @@ export function faunaAt(c, t, floorRow = () => ROWS, scares = SCARES) {
   const startled = c.t0 >= 0 && t >= c.t0;
   if (startled && t < c.back) return boltAt(c, t, floorRow);
   const dir = startled ? c.bdir : c.dir;
-  // One that never swims stands on its own spot, inside the deep: the wrap's
-  // shift is only for those that come back round.
-  const x = c.v ? ((((startled ? c.bx0 : c.x0) + dir * c.v * run(c, t)) % span) + span) % span - M.wrap : c.x0;
+  // One that never swims stands on its own spot, well inside the deep: the
+  // wrap's shift is only for those that come back round.
+  const x = c.v ? ((((startled ? c.bx0 : c.x0) + dir * c.v * run(c, t)) % span) + span) % span - M.wrap
+    : M.stand + c.x0 / COLS * (COLS - 2 * M.stand);
   const col = Math.round(x);
   let y;
   if (c.floor) y = floorRow(col + 2) - heightOf(c.kind);

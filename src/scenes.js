@@ -28,6 +28,8 @@ import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
 import { sweep } from './hands.js';
 import { nextMeal, turned, windowS, nowS } from './deep/meals.js';
+import { startleFauna } from './deep/fauna.js';
+import { startleStream } from './deep/flow.js';
 import { KINDS } from './render/fish.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
@@ -303,6 +305,36 @@ function deepYard({ stage = 0, wound = 0, party = [], fangs = 0, spare = 0, scal
 }
 
 const lookDeep = x => window.__look(x - S.viewW / 2);
+
+// A creature clicked and held `at` seconds into its reaction: the deep set
+// up with no fight to scatter it, the camera on it, the click the pointer's
+// call, and the moment held against the second the shot tool runs after
+// (`__holdShot`). `window.__reactAt` moves the moment, for a strip of them;
+// `window.__reactSpot()` is where it is on the glass, to crop a shot to.
+const REACT_AT = { school: 0.3, jelly: 0.5, lantern: 0.2, siphon: 0.6, angler: 0.5, dumbo: 0.6, tripod: 0.5,
+                   amphipod: 0.17, snail: 0.17 };
+const STREAM_AT = [0.5, 0.6, 0.5, 0.6, 0.5, 0.4, 0.5, 0.4];
+// Clear of the coil, which is drawn in front of the zones' creatures.
+const clearOfCoil = (x, y, cells) => {
+  for (let i = 0; i < COIL_SEGS; i++) { const p = coilAt(i, now()); if (Math.hypot(p.x - x, p.y - y) < P * cells) return false; }
+  return true;
+};
+function reactScene(find, click, at, again) {
+  deepYard({ run: 2 });
+  let f = null;
+  for (let i = 0; i < 300 && !(f = find()); i++) window.__fast(0.5);
+  if (!f) return;
+  lookDeep(f.x);
+  f = find() || f;
+  click(f);
+  const want = window.__reactAt ?? at;
+  if (want > 0) window.__fast(want);
+  window.__reactSpot = () => {
+    const g = again(f);
+    return g && { x: (g.x - S.camX) * S.zoom, y: (g.y - S.camY) * S.zoom };
+  };
+  window.__holdShot();
+}
 const beltSeg = f => Math.round(f * (COIL_SEGS - 1));
 
 // A floor slot's middle, and the lowest slot no station stands on, as the
@@ -840,6 +872,19 @@ const deepScenes = {
       S.serpentWound = depthAt(1) - 0.01;
       lookDeep(coilAt(Math.round(COIL_SEGS * 0.5), now()).x);
     } },
+  // A creature's reaction to a click (the owner's picks,
+  // docs/mocks/creature-clicks-2026-10-13.html), held at its moment: a zone
+  // kind's by name, a stream kind's by its number in render/fish.js.
+  ...Object.fromEntries(Object.entries(REACT_AT).map(([kind, at]) => [`deep-react-${kind}`, {
+    about: 'the deep', say: `a ${kind} clicked, ${at}s into its reaction`,
+    run: () => reactScene(() => window.__fauna().find(f => f.kind === kind && f.inside && !f.bolting && !f.reacting
+                                                          && f.cx > 0 && f.cx < DEEP_W / P - 12 && clearOfCoil(f.x, f.y, 16)),
+                          f => startleFauna(f.x, f.y), at, f => window.__fauna()[f.i]) }])),
+  ...Object.fromEntries(STREAM_AT.map((at, k) => [`deep-react-stream-${k}`, {
+    about: 'the deep', say: `stream creature ${k} clicked, ${at}s into its reaction`,
+    run: () => reactScene(() => window.__stream().find(s => s.near && s.kind === k && s.clickable
+                                                           && s.x > deepX0() + P * 40 && s.x < deepX0() + DEEP_W - P * 40 && clearOfCoil(s.x, s.y, 12)),
+                          s => startleStream(s.x, s.y), at, s => window.__stream().find(g => g.key === s.key)) }])),
   ...Object.fromEntries(Object.entries(PROP_SCENES).map(([name, party]) => [name, {
     about: 'the deep', say: `four stations' props: ${party.map(o => (o.cls || 'crate') + ' ' + o.rung).join(', ')}`,
     run: () => {

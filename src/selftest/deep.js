@@ -618,15 +618,16 @@ TESTS.push(['deep: a press on the constrict\'s orb hits the orb and opens no boa
 }]);
 
 // A creature of the deep under a real pointer (deep/fauna.js): the click
-// reaches `startleFauna` past the coil and the stations, and shakes the
-// bird's handful loose where the creature was. The bolt, the sinking and the
-// carrying are test/deep-creature-click.test.mjs.
+// reaches `startleFauna` past the coil and the stations, shakes the bird's
+// handful loose where the creature was, and it plays its reaction (the
+// school bolts). The reactions frame by frame, the sinking and the carrying
+// are test/deep-creature-click.test.mjs.
 TESTS.push(['deep: a click on a creature startles it, and it shakes loose a handful of scales', async () => {
   deepYard();
   window.__view('deep');
   run(VIEW_GLIDE_S + 0.5);
   // One up in the light, clear of the coil's band and the stations' floor.
-  const pickOne = () => window.__fauna().find(f => !f.bolting && f.inside && (f.zone === 'sun' || f.zone === 'twi'));
+  const pickOne = () => window.__fauna().find(f => !f.bolting && !f.reacting && f.inside && (f.zone === 'sun' || f.zone === 'twi'));
   const first = pickOne();
   window.__look(first.x - S.viewW / 2);
   run(0.1);
@@ -636,8 +637,29 @@ TESTS.push(['deep: a click on a creature startles it, and it shakes loose a hand
   const shaken = S.sinking.length - sinking;
   const after = window.__fauna()[f.i];
   return [
-    ok(!f.bolting, 'it was there to be clicked', `${f.kind} at ${Math.round(f.x)},${Math.round(f.y)}`),
-    ok(after.bolting, 'the click startles it'),
+    ok(!f.bolting && !f.reacting, 'it was there to be clicked', `${f.kind} at ${Math.round(f.x)},${Math.round(f.y)}`),
+    ok(after.reacting || after.bolting, 'the click startles it into its reaction', after.kind),
+    ok(shaken === BIRD_DUST, "and it shakes loose the bird's handful", `${shaken}`)
+  ];
+}]);
+
+// A stream creature under a real pointer (deep/flow.js): one of the far
+// crossings, up over the fight where neither the serpent nor a station takes
+// the click first. It reacts, and shakes loose the same handful.
+TESTS.push(['deep: a click on a stream creature makes it react, and it shakes loose a handful of scales', async () => {
+  deepYard();
+  window.__view('deep');
+  run(VIEW_GLIDE_S + 0.5);
+  const seen = s => !s.near && s.clickable && s.x > S.camX + P * 10 && s.x < S.camX + S.viewW - P * 10;
+  let s = null;
+  for (let i = 0; i < 60 && !(s = window.__stream().find(seen)); i++) run(4);
+  const sinking = S.sinking.length;
+  if (s) click(s.x, s.y);
+  const shaken = S.sinking.length - sinking;
+  const after = s && window.__stream().find(g => g.key === s.key);
+  return [
+    ok(s, 'a crossing came by on the glass', s ? `kind ${s.kind} at ${Math.round(s.x)},${Math.round(s.y)}` : 'none'),
+    ok(after && after.reacting, 'the click makes it react'),
     ok(shaken === BIRD_DUST, "and it shakes loose the bird's handful", `${shaken}`)
   ];
 }]);

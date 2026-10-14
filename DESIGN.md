@@ -14819,19 +14819,50 @@ The far and middle crossings set off a third as often (one a minute); the
 near stream is the serpent's meals and is left as it is. A click on one (the bird's reach, `BIRD_REACH`) shakes
 loose the bird's handful (`FAUNA_SCALES` is `BIRD_DUST`) as ordinary loose
 scales from where it was: they sink to the floor and are money only once a
-gatherer has carried them to the crusher. The creature bolts for the nearer
-end of the deep in held poses (`FAUNA_STARTLE`), is away a while past the
-end, and swims back in there on its own path; the tripod, which never swims,
-walks back to its spot. The serpent and the stations take a click first. No
-achievement, no hover word (none of them has a name in the index), and no
-pad stop: they move, and the birds are not pad stops either.
+gatherer has carried them to the crusher. The serpent and the stations take
+a click first. No achievement, no hover word (none of them has a name in the
+index), and no pad stop: they move, and the birds are not pad stops either.
+
+**Each kind its own click** (built; the owner's picks off
+docs/mocks/creature-clicks-2026-10-13.html, 2026-10-13: school B, every
+other kind A). A click plays the kind's own reaction in held poses, with a
+smear under any held step of two cells or more: the jelly pulses up three
+times and drifts back, the lanternfish puts its lights out and darts, the
+siphonophore draws its chain up short, the angler flares its lure and snaps,
+the dumbo flaps up and away, the tripod hops off its stilts in a puff of
+silt, the amphipod back-flips, the snailfish darts; the three kinds kept at
+nought have theirs ready (the hatchetfish turns edge-on, the vampire squid
+throws its pineapple pose, the sea cucumber clenches). The reaction is a
+pose over the creature's path, which carries on under it, so when it is
+over the creature is simply where its path has brought it. Only the school
+still bolts, because its reaction is one: every fish turns on the same frame
+to face the nearer end, holds a beat, and streaks off, away a while past the
+end and back in there on its own path. Every reaction is a written table
+(`FAUNA_REACT`, `FAUNA_POSES` in config/fauna.js; deep/react.js reads it),
+and a creature mid-reaction is not there to be clicked again until it is
+done. The tripod, which never swims, stands `FAUNA_MOTION.stand` cells in
+from either end (it stood off the left end, where no click reached it).
+
+**The stream is clicked too.** The near stream and the far and middle
+crossings (deep/flow.js) take the same click within the bird's reach and
+shed the same handful, each of the eight with its A (`FLOW_REACT`). The near
+stream is where the serpent's meals come from, so a reaction there is
+picture only: the stream's paths and the meal's timing never read it, and a
+meal lands when it was due. The meal in its swim is the serpent's and is not
+clickable, and nor is the creature a meal will be once its turn for the
+mouth is nearer than its reaction is long, so no reaction runs into a swim.
+A window moved after a click (a stun, Held) can still make a reacting
+creature the meal; it then plays its reaction out on the swim in rather
+than stop.
 
 **Nothing saved.** A creature's place is read off its seed and the clock
-(`faunaAt`, deep/fauna.js); a startle is kept on the creature for the session
-only, and a reload or a new game finds every one home (`resetFauna`). The
-serpent's meals and the fight are unchanged. Whether a meal comes down from
-its own zone is open; it reads the one population table and the one position
-function.
+(`faunaAt`, deep/fauna.js); a reaction or a bolt is kept for the session
+only. A save read back on the clock that wrote it carries one under way on
+from the pose it was in (`settleFauna`, `settleStream`), so nothing jumps;
+a new game finds every one home (`resetFauna`, `resetStream`), and a new
+page places the whole deep afresh off its own clock. Whether a meal comes
+down from its own zone is open; it reads the one population table and the
+one position function.
 
 ### The crew cross both ways
 
