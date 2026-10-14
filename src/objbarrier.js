@@ -119,7 +119,7 @@ function draw(u, mode, step) {
     const li = document.createElement('li');
     li.className = 'fill';
     li.dataset.money = money;
-    li.innerHTML = `<i class="box"></i>${MARK[money]}<span class="num"></span>`;
+    li.innerHTML = `<i class="tickbox"></i>${MARK[money]}<span class="num"></span>`;
     list.appendChild(li);
     lines.push(li);
   }

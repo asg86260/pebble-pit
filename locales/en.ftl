@@ -217,9 +217,6 @@ said-copyout-none = nothing saved yet
 # sheet reply when clipboard unavailable
 said-copyout-window = in window.__save
 
-# index entry back button on phone
-held-index-entryback = back
-
 # saves page cloud section heading
 cloud-head = cloud saves
 

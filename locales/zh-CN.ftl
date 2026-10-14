@@ -207,9 +207,6 @@ said-copyout-none = 还没有存档
 # sheet reply when clipboard unavailable
 said-copyout-window = 在 window.__save 里
 
-# index entry back button on phone
-held-index-entryback = 返回
-
 # saves page cloud section heading
 cloud-head = 云存档
 

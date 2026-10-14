@@ -35,7 +35,7 @@ export function mountFeedback(el, { page, raw, fatal = null, ask = false, back =
   const tick = make('button', 'tick');
   tick.type = 'button';
   tick.setAttribute('role', 'checkbox');
-  tick.append(make('span', 'box'), make('span', 'label', msg('fb-tick')));
+  tick.append(make('span', 'tickbox'), make('span', 'label', msg('fb-tick')));
   const send = make('button', 'send');
   send.type = 'button';
   const said = make('div', 'said fb-said');

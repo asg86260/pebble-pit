@@ -45,8 +45,35 @@ html, body {
    paper + (ink - paper) * (1 - v / 255). Scrims (rgba black) are shade, not
    ink, and stay dark on both pages. */
 :root {
-  --paper: #fff; --ink: #000;
-  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #aaa; --ink-8: #cfcfcf;
+  /* The two ends, named apart from what they are used as, so a box can ink
+     itself the other way round (`--paper: var(--c-ink)`) without a cycle:
+     the deep's story card and every section sign are that. */
+  --c-paper: #fff; --c-ink: #000;
+  --paper: var(--c-paper); --ink: var(--c-ink);
+  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #a4a4a4; --ink-8: #cfcfcf;
+  /* The one accent: purple, for anything outside the black and white -- the
+     keyboard's focus, the deep's capstones and asks. A rung of PURPLE in
+     config/palette.js (the pad's marker's, PAD_ACCENT); the dark page takes
+     a brighter rung, so it keeps 3:1 on charcoal. */
+  --accent: #6a2fbe;
+  /* The coins: COIN and COIN_DARK in config/palette.js, the one source the
+     yard draws them from too (test/ui-tokens.test.mjs holds the two equal). */
+  --coin-ore: #2f5fd0; --coin-crop: #2e9e4b; --coin-spark: #d93a25;
+  /* The page's dot texture -- one cell in six, in the ink at a seventh -- as
+     one value a mode, since a data URI cannot read a variable. */
+  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+  /* The type scale: four sizes and four trackings. A tracking is always
+     multiplied by --track, the knob a language or a phone turns:
+     `letter-spacing: calc(var(--track-m) * var(--track))`. Two line heights:
+     text, and a single-line chip. */
+  --fs-small: 10px; --fs-body: 12px; --fs-name: 14px; --fs-word: 17px; --fs-title: 34px;
+  --track-0: 0em; --track-s: .08em; --track-m: .14em; --track-l: .3em;
+  --lh-text: 1.4; --lh-chip: 1;
+  /* The two stack gaps: tight between the rows of one list, loose between
+     controls. */
+  --gap-s: 4px; --gap-m: 8px;
+  /* The held sheet's width (its content box): every page turns at it. */
+  --held-w: 36em;
   /* The page's spacing, written once so a new element inherits it rather than
      guessing its own. Every element pinned to an edge or a corner of the
      glass stands --edge in from it (plus the safe area); things stacked
@@ -59,6 +86,11 @@ html, body {
   --pad-s-y: 3px;  --pad-s-x: 6px;  --pad-s: var(--pad-s-y) var(--pad-s-x);
   --pad-m-y: 8px;  --pad-m-x: 12px; --pad-m: var(--pad-m-y) var(--pad-m-x);
   --pad-l-y: 14px; --pad-l-x: 24px; --pad-l: var(--pad-l-y) var(--pad-l-x);
+  /* A control on a sheet and a row in a list of choices: the small padding
+     top and bottom, the medium at the sides. */
+  --pad-btn: var(--pad-s-y) var(--pad-m-x);
+  /* A card on a board: the cards' own, set to the bill's line. */
+  --pad-card: 6px 8px;
   /* Every card that floats over the yard casts the same hard one-cell shadow,
      down and right, in the palest gray (the counter on the canvas draws the
      same one: FLOAT_SHADOW in config/view.js). */
@@ -77,17 +109,32 @@ html, body {
    only when it is the one in force) answers for the ideographs, kana and
    hangul. Tracking pulls ideographs into a stammer, but how much to take out,
    and what stands in for the capitals, is the owner's vote on a mock: until
-   then --track is today's 1 and nothing a reader sees has changed. */
-:lang(zh) { --face: ui-monospace, "Courier New", "Pit SC", monospace; --track: 1; /* TODO(mock vote): the CJK tracking */ }
-:lang(ja) { --face: ui-monospace, "Courier New", "Pit JP", monospace; --track: 1; /* TODO(mock vote) */ }
-:lang(ko) { --face: ui-monospace, "Courier New", "Pit KR", monospace; --track: 1; /* TODO(mock vote) */ }
+   then --track is inherited as it is for every language, so a phone's
+   tightening (below) reaches these too. */
+:lang(zh) { --face: ui-monospace, "Courier New", "Pit SC", monospace; /* TODO(mock vote): the CJK tracking */ }
+:lang(ja) { --face: ui-monospace, "Courier New", "Pit JP", monospace; /* TODO(mock vote) */ }
+:lang(ko) { --face: ui-monospace, "Courier New", "Pit KR", monospace; /* TODO(mock vote) */ }
+/* An ideograph fills its em where a mono capital stands about two thirds of
+   it, so a CJK name among Latin ones -- the language list, the landing
+   page's foot -- is set at the capitals' height rather than the em's. In a
+   page that is all one script nothing stands beside it, and it keeps the
+   body size. */
+.langs button:is(:lang(zh), :lang(ja), :lang(ko)),
+.foot .langfoot:is(:lang(zh), :lang(ja), :lang(ko)) { font-size: var(--fs-small); }
 /* Declared again wherever --ink-7 is: a custom property resolves its var()s
    where it is declared, so one inherited from the root would keep the root's
    gray on a card that inks itself the other way. */
-:root, #objective.deep { --float-shadow: var(--shadow-off) var(--shadow-off) 0 var(--ink-7); }
+:root { --float-shadow: var(--shadow-off) var(--shadow-off) 0 var(--ink-7); }
+/* A phone tightens every tracking at once: the words are the same, the
+   glass is narrower. */
+@media (max-width: 560px) { :root { --track: .6; } }
 html.dark {
-  --paper: #1f1f1f; --ink: #e0e0e0;
+  --c-paper: #1f1f1f; --c-ink: #e0e0e0;
+  --paper: var(--c-paper); --ink: var(--c-ink);
   --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+  --accent: #9b5de5;
+  --coin-ore: #7d9cf0; --coin-crop: #6fd08a; --coin-spark: #f06a55;
+  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 body :not(canvas):not(#scroller):not(#spacer):not(.handle) { touch-action: manipulation; }
 /* The scroller: the window, scrolled sideways by the platform (DESIGN.md,
@@ -148,7 +195,7 @@ canvas {
   color: var(--ink);
   border: 2px solid var(--ink);
   box-sizing: border-box;
-  font: 12px var(--face);
+  font: inherit;
   cursor: pointer;
 }
 #hop button.left { left: calc(var(--edge) + env(safe-area-inset-left, 0px)); }
@@ -225,6 +272,8 @@ canvas {
   left: 0; right: 0; top: auto; bottom: 0;
   transform: none;
   max-height: none; overflow-y: auto; overscroll-behavior: contain;
+  /* the glass's width, not the desk's one width for every page */
+  max-width: none;
   align-items: center;
   padding: 6px var(--pad-l-x) calc(var(--pad-l-y) + var(--sheet-hidden, 0px) + env(safe-area-inset-bottom, 0px));
   opacity: 1;
@@ -307,19 +356,23 @@ body.still #scroller { scroll-behavior: auto; }
 .rows > * { grid-column: 1 / -1; }
 .rows > button, .rows > .job { grid-column: auto; }
 
+/* A section: the second of the two heading levels (the board's title is the
+   first), and the one drawn bold. A sign -- a plate of ink with the words in
+   paper -- on every board, the books and the windows alike, as the shelves
+   hang it over their planks. The plate is the page inked the other way round,
+   so whatever sits on it (the headcount's badge) inverts against it by the
+   same rules it follows on the page. */
 .rows .sect {
-  margin-top: 6px;
-  /* Black, like everything else on the sheet. It was dimmed for a while, on the
-     grounds that a heading is scaffolding and the rows are the content -- but a
-     heading is how you find the row you came for, and this board is the only
-     place in the game where anything is drawn in grey on purpose. The rule under
-     it is what separates it from the rows; it does not need to be faint as well.
-
-     Dimmed through colour rather than opacity, when it was dimmed: opacity would
-     have flattened the badge inside it to the same fade, and the headcount is
-     the one thing on this line worth reading at a glance. */
+  --paper: var(--c-ink); --ink: var(--c-paper);
+  justify-self: start;
+  margin-top: var(--gap-m);
+  padding: 3px 10px 4px;
+  background: var(--paper);
   color: var(--ink);
-  border-bottom: 1px solid var(--ink-5);
+  font-weight: bold;
+  line-height: var(--lh-chip);
+  letter-spacing: calc(var(--track-m) * var(--track));
+  text-transform: uppercase;
 }
 .rows .sect:first-child { margin-top: 0; }
 
@@ -329,7 +382,7 @@ body.still #scroller { scroll-behavior: auto; }
    in a single line; this is the one thing the yard is working toward, and it
    should read as a notice rather than as a row. The story line (`.note`) is
    its text, so the card is a name, a sentence and a price. */
-.rows .sect.goal { border-bottom: 0; margin-bottom: -2px; }
+.rows .sect.goal { margin-bottom: -2px; }
 .rows button.goal {
   grid-column: 1 / -1;
   border: 3px double var(--ink);
@@ -353,7 +406,7 @@ body.still #scroller { scroll-behavior: auto; }
   padding-bottom: 4px;
   border-bottom: 2px solid var(--ink);
   font: inherit;
-  letter-spacing: calc(.18em * var(--track));
+  letter-spacing: calc(var(--track-m) * var(--track));
   text-transform: uppercase;
   color: var(--ink);
 }
@@ -365,9 +418,9 @@ body.still #scroller { scroll-behavior: auto; }
    smaller than the name, because it is the sentence under the name. */
 .page .note {
   margin: -4px 0 7px;
-  letter-spacing: calc(.1em * var(--track));
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
-  font-size: .82em;
+  font-size: var(--fs-small);
   color: var(--ink);
 }
 
@@ -377,18 +430,18 @@ body.still #scroller { scroll-behavior: auto; }
 .page .empty {
   padding: 2px 0;
   color: var(--ink-5);
-  letter-spacing: calc(.1em * var(--track));
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
 }
 
-/* The headcount: black rectangle, white numeral, the board's own monospace, so
-   a heading with people under it reads as a badge rather than as "x3". Padding
-   stays tight so a heading that gains one does not grow taller and shove the
-   rows below it. */
-.rows .sect .badge {
+/* The headcount: the words' ink as a block and the numeral in paper, so a
+   heading with people under it reads as a badge rather than as "x3" -- on a
+   title, on a sign (where the ink is the paper), anywhere. Padding stays tight
+   so a heading that gains one does not grow taller and shove the rows below. */
+.badge {
   display: inline-block;
-  margin-left: 6px;
-  padding: 0 4px;
+  margin-left: .5em;
+  padding: 0 .33em;
   color: var(--paper);
   background: var(--ink);
   font: inherit;
@@ -423,13 +476,13 @@ body.still #scroller { scroll-behavior: auto; }
   gap: var(--card-gap);
   align-items: baseline;
   font: inherit;
-  letter-spacing: calc(.1em * var(--track));
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   text-align: left;
   color: var(--ink);
   background: none;
   border: 1px solid var(--ink);
-  padding: 6px 8px;
+  padding: var(--pad-card);
   cursor: pointer;
 }
 @media (hover: hover) {
@@ -494,17 +547,19 @@ body.still #scroller { scroll-behavior: auto; }
    words, so it inverts under the cursor and pales with a card you cannot pay
    for, exactly as the dot did. */
 .rows button { position: relative; }
-.rows button.new::before {
+/* One corner for every card and tile, in the type's own size; a tile stands
+   it in from its edge (`--new-x`, `--new-y`, shelf.css). */
+.rows button.new::before, .rows.shelves > .tile.new::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 0;
+  left: var(--new-x, 0);
+  top: var(--new-y, 0);
   width: 0;
   height: 0;
   /* A right triangle out of two borders: the solid one is the face, the clear
      one is the diagonal cut across it. */
-  border-top: 10px solid currentColor;
-  border-right: 10px solid transparent;
+  border-top: calc(5em / 6) solid currentColor;
+  border-right: calc(5em / 6) solid transparent;
 }
 
 /* The same marks the game draws in the yard, in the same colours: a grain of
@@ -564,7 +619,7 @@ body.still #scroller { scroll-behavior: auto; }
   width: 0; height: 0;
   border-left: 4.5px solid transparent;
   border-right: 4.5px solid transparent;
-  border-bottom: 8px solid #2f5fd0;    /* the quarry */
+  border-bottom: 8px solid var(--coin-ore);    /* the quarry */
 }
 /* a spark: the mark that means the meteor's core, and the only red in the game.
 
@@ -578,15 +633,15 @@ body.still #scroller { scroll-behavior: auto; }
   position: relative;
   width: 11px; height: 11px;
   background:
-    linear-gradient(#d93a25, #d93a25) center/3px 11px no-repeat,   /* the sky */
-    linear-gradient(#d93a25, #d93a25) center/11px 3px no-repeat;
+    linear-gradient(var(--coin-spark), var(--coin-spark)) center/3px 11px no-repeat,   /* the sky */
+    linear-gradient(var(--coin-spark), var(--coin-spark)) center/11px 3px no-repeat;
 }
 /* a spore: the mark that means the farm. A hexagon, the same shape the game
    draws out in the yard -- the board and the world use one alphabet. */
 .spore {
   display: inline-block;
   width: 9px; height: 9px;
-  background: #2e9e4b;   /* the farm */
+  background: var(--coin-crop);   /* the farm */
   clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%);
 }
 /* a scale: the mark that means the deep. Ink and paper, like the place it
@@ -693,8 +748,8 @@ body.still #scroller { scroll-behavior: auto; }
   /* Readable at rest, not merely findable: half-strength ink at .82em was a
      line you had to lean into. Hover still lifts it brighter than this. */
   opacity: .72;
-  font-size: .9em;
-  line-height: 1.35;
+  font-size: var(--fs-small);
+  line-height: var(--lh-text);
   margin-top: .1em;
   white-space: normal;
   max-width: 46ch;
@@ -776,9 +831,9 @@ body.still #scroller { scroll-behavior: auto; }
   border: 1px solid currentColor; border-radius: 50%;
 }
 .rows .ladder i.on { background: currentColor; }
-.rows .ladder b:nth-child(2) { color: #2e9e4b; }   /* the farm's green, as the spore mark */
-.rows .ladder b:nth-child(3) { color: #2f5fd0; }   /* the quarry's blue, as the shard mark */
-.rows .ladder b:nth-child(4) { color: #d93a25; }   /* the spark's red: the grounds' last rung */
+.rows .ladder b:nth-child(2) { color: var(--coin-crop); }   /* the farm's green, as the spore mark */
+.rows .ladder b:nth-child(3) { color: var(--coin-ore); }   /* the quarry's blue, as the shard mark */
+.rows .ladder b:nth-child(4) { color: var(--coin-spark); }   /* the spark's red: the grounds' last rung */
 /* A deep ladder's second band adds dust, not crops (`lead: 'scale'` in
    upgrades/tiers.js): its pips are the ink the dust and the scale are both
    drawn in. The shelf's column (shelf.css) the same way. */
@@ -814,10 +869,10 @@ body.still #scroller { scroll-behavior: auto; }
      card, and a name that ran into its stepper would read the same way. */
   gap: var(--card-gap);
   align-items: baseline;
-  letter-spacing: calc(.1em * var(--track));
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   border: 1px solid var(--ink);
-  padding: 6px 8px;
+  padding: var(--pad-card);
 }
 .rows .job .count { text-align: center; }
 
@@ -833,7 +888,7 @@ body.still #scroller { scroll-behavior: auto; }
   align-self: end;
   justify-self: end;
   text-align: right;
-  letter-spacing: calc(.1em * var(--track));
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
 }
 .rows .job.pickrow .chosen::after { content: ' \25BE'; opacity: .55; }
@@ -859,7 +914,7 @@ body.still #scroller { scroll-behavior: auto; }
   max-height: 60vh;
   overflow-y: auto;
   font: inherit;
-  letter-spacing: calc(.1em * var(--track));
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -871,14 +926,8 @@ body.still #scroller { scroll-behavior: auto; }
   color: var(--ink);
   background: none;
   border: 0;
-  padding: 4px 14px 4px 10px;
   cursor: pointer;
 }
-/* The one that is set, and the one under the cursor, both read the way a chosen
-   thing reads everywhere else on these boards: inverted. A dot in the margin was
-   a mark this game does not use anywhere, and it made the list look like a
-   document rather than a menu. */
-.optspop .opt.on { color: var(--paper); background: var(--ink); }
 @media (hover: hover) {
   .optspop .opt:hover { color: var(--paper); background: var(--ink); }
 }
@@ -911,8 +960,8 @@ body.still #scroller { scroll-behavior: auto; }
    so a second line reads as a footnote rather than as a second row. */
 .optspop[data-potpick] .opt .note {
   opacity: .5;
-  font-size: .82em;
-  line-height: 1.3;
+  font-size: var(--fs-small);
+  line-height: var(--lh-text);
   margin-top: .1em;
 }
 .optspop[data-potpick] .opt.on .note { opacity: .6; }
@@ -926,11 +975,11 @@ body.still #scroller { scroll-behavior: auto; }
    bill's column. A row is a button like the rest, and the set one is inverted
    the way a chosen thing is everywhere on these boards. */
 .optspop[data-potpick] .forhead {
-  padding: 6px 14px 2px 10px;
+  padding: 6px var(--pad-m-x) 2px;
   border-top: 1px solid var(--ink);
   margin-top: 4px;
   opacity: .5;
-  font-size: .82em;
+  font-size: var(--fs-small);
 }
 .optspop[data-potpick] .for {
   font: inherit;
@@ -940,14 +989,12 @@ body.still #scroller { scroll-behavior: auto; }
   color: var(--ink);
   background: none;
   border: 0;
-  padding: 4px 14px 4px 10px;
   cursor: pointer;
   display: flex;
   align-items: baseline;
 }
 .optspop[data-potpick] .for .who { flex: 1 1 auto; }
 .optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; opacity: .6; }
-.optspop[data-potpick] .for.on { color: var(--paper); background: var(--ink); }
 @media (hover: hover) {
   .optspop[data-potpick] .for:hover { color: var(--paper); background: var(--ink); }
 }
@@ -1028,12 +1075,17 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--gap-m);
+  /* One width for every page, so a page turns in place rather than the sheet
+     resizing and re-centering under the hand; the window is the only thing
+     that narrows it. */
+  width: var(--held-w);
+  max-width: calc(100vw - 2 * var(--edge) - 2 * var(--pad-l-x));
   padding: var(--pad-l);
   background: var(--paper);
   border: 1px solid var(--ink);
-  font: 12px var(--face);
-  letter-spacing: calc(.14em * var(--track));
+  font: inherit;
+  letter-spacing: calc(var(--track-m) * var(--track));
   text-transform: uppercase;
   color: var(--ink);
 }
@@ -1044,16 +1096,15 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    border is the same one-pixel edge a bought card has. Held to a screen's
    worth and scrolled past that, so forty cards do not push the back button
    off the window. */
-.record { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 36em; max-width: 80vw;
-                max-height: 60vh; overflow-y: auto; text-transform: none; letter-spacing: 0;
-                font-size: 11px; }
+.record { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap-s); align-self: stretch;
+                max-height: 60vh; overflow-y: auto; text-transform: none; letter-spacing: 0; }
 /* The name sits at the top of the card and what earned it at the bottom, with
    the slack between them: a row's cards are stretched to the tallest, so a
    two-line name beside a one-line name would otherwise leave the two notes at
    different heights, and a row of cards reads as a row when its notes line up. */
 .record .card { display: flex; flex-direction: column; justify-content: space-between; gap: 3px;
                       padding: 5px 8px; border: 1px solid var(--ink); }
-.record .name { letter-spacing: calc(.1em * var(--track)); text-transform: uppercase; }
+.record .name { letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase; }
 .record .note { color: var(--ink-4); }
 .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
 /* The toast: the record's card, said out loud at the top edge as a notice
@@ -1086,7 +1137,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   box-shadow: var(--float-shadow);
   border: 1px solid var(--paper);
   outline: 1px solid var(--ink);
-  font: 12px var(--face);
+  font: inherit;
   color: var(--paper);
   text-align: center;
   cursor: pointer;
@@ -1102,7 +1153,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 
   .toast:hover .note { color: var(--ink); }
 }
-.toast .name { font-size: 15px; letter-spacing: calc(.12em * var(--track)); text-transform: uppercase; }
+.toast .name { font-size: var(--fs-name); letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase; }
 .toast .note { color: var(--ink-7); }
 /* the ring: a one-pixel edge that starts on the card's own and swells out as
    it fades. The card leaves the tree between two notices, so the animation
@@ -1112,12 +1163,15 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 @keyframes toastring { from { inset: 0; opacity: 1; } 50% { opacity: .8; } to { inset: -26px; opacity: 0; } }
 .toast.up::after { animation: toastring .8s ease-out .1s; }
 .toast.still::after { animation: none; }
-.held .word { font-size: 17px; letter-spacing: calc(.3em * var(--track)); }
-/* A sheet's heading asks for its whole width, so the sheet grows to hold it
-   on one line: pinned at the window's middle, the sheet would otherwise be
-   capped at half the window and fold a long heading. Past the window's own
-   width it folds after all. */
-.held .word { width: max-content; max-width: calc(100vw - 2 * var(--edge) - 2 * var(--pad-l-x)); text-align: center; }
+/* A page's word, on the held sheet and the landing page's column alike:
+   centered, and padded on the left by its own tracking, since the tracking
+   trails every letter and the last one's would push the word off center. */
+.held .word, .col .word, .col .gamename {
+  text-align: center;
+  padding-left: calc(var(--track-l) * var(--track));
+}
+.held .word, .col .word { font-size: var(--fs-word); letter-spacing: calc(var(--track-l) * var(--track)); }
+.held .word { max-width: 100%; }
 /* the controls page: two columns sized by what is in them, not by a guessed
    width, so a longer line the owner writes later still lines up. The card is
    shrink-to-fit at half the viewport, so a column that may wrap is squeezed
@@ -1130,21 +1184,17 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 @media (max-width: 520px) {
   .controls { grid-template-columns: max-content; gap: 0; text-align: center; white-space: nowrap; }
   .controls > :nth-child(odd) { text-align: center; }
-  .controls { letter-spacing: calc(.04em * var(--track)); }
   .controls > :nth-child(even) { margin-bottom: 10px; }
 }
-/* The index (indexpage.js): the list sized by its longest name, the entry a
-   reading measure beside it, the two as one boxed book with the list scrolled
-   inside it past a screen's worth. Lower case like the record's notes: it is
-   reading, not a label. The chosen row inverts, the boards' way of saying
-   "this one". */
-.index { display: grid; grid-template-columns: max-content min(30em, 56vw); max-width: 86vw;
-         border: 1px solid var(--ink); text-transform: none; letter-spacing: 0; font-size: 12px;
+/* The index (indexpage.js): the list sized by its longest name, the entry
+   the rest of the sheet's width beside it, the two as one boxed book with the
+   list scrolled inside it past a screen's worth. The names are labels; the
+   entry's words are reading, lower case like the record's notes. */
+.index { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-self: stretch;
+         border: 1px solid var(--ink); text-transform: none; letter-spacing: 0;
          text-align: left; }
-.index .list { border-right: 1px solid var(--ink); padding: 4px 0; max-height: 56vh; overflow-y: auto; scrollbar-width: thin; }
-.held .index .it { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; padding: 2px 10px;
-                   text-transform: none; letter-spacing: 0; text-align: left; white-space: nowrap; }
-.held .index .it.on { color: var(--paper); background: var(--ink); }
+.index .list { border-right: 1px solid var(--ink); padding: var(--gap-s) 0; max-height: 56vh; overflow-y: auto; scrollbar-width: thin; }
+.held .index .it { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; white-space: nowrap; text-align: left; }
 .index .it .newdot { margin-left: auto; }
 /* a glyph is a canvas too: the yard-window rule is undone for it, and the
    drawing's one pixel a cell sized up by a whole number */
@@ -1154,20 +1204,17 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .index .entry .head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .index .entry .head canvas.glyph { width: 32px; height: 32px; }
 .index .entry .head .mark { display: inline-flex; width: 32px; justify-content: center; transform: scale(2.4); }
-.index .entry .name { font-size: 14px; letter-spacing: calc(.1em * var(--track)); text-transform: uppercase; }
-.index .entry .text { line-height: 1.5; }
-.held .index .ixback { display: none; }
+.index .entry .name { font-size: var(--fs-name); letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase; }
+.index .entry .text { line-height: var(--lh-text); }
 /* the "new" mark: a dot after a word, until the thing is first opened */
 .newdot { display: inline-block; width: 5px; height: 5px; background: currentColor; margin-left: 8px; vertical-align: middle; }
 /* A phone: no room for both halves, so the list is the page and an entry
-   picked is pushed over it, with its own back. */
+   picked is pushed over it; the page's own back, at the foot, takes it back
+   to the list (indexpage.js, `leaveEntry`). */
 @media (max-width: 520px) {
-  .index { grid-template-columns: minmax(0, 1fr); max-width: none; align-self: stretch; }
+  .index { grid-template-columns: minmax(0, 1fr); }
   .index .list { border-right: 0; max-height: none; }
   .index:not(.reading) .entry, .index.reading .list { display: none; }
-  .held .index .ixback { display: block; align-self: flex-start; width: auto; margin-bottom: 10px; }
-  /* one back at a time: the entry's own, to the list, while one is read */
-  #held:has(.index.reading) #indexback { display: none; }
 }
 /* what broke, in the browser's own words: lower case, since it is a quotation
    and not a label, and held to one line's width so a long stack does not turn
@@ -1182,26 +1229,37 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held .rule { width: 60%; border-top: 1px solid var(--ink); }
 /* the sheet's small hand, for the lines that are said rather than offered:
    the keys, the build, the one sentence about there being no ending */
-.held .small { font-size: 10px; }
-/* two buttons on one line, since they are two halves of the same thing */
-.held .pair { display: flex; gap: 10px; }
+.held .small { font-size: var(--fs-small); }
+/* Two buttons on one line, since they are two halves of the same thing: a
+   page's foot is its back alone, or its back and its action as a pair, and
+   either is the sheet's whole width. */
+.held .pair, .col .pair { display: flex; gap: var(--gap-m); align-self: stretch; }
+.held .pair button, .col .pair button { flex: 1; }
 /* The paste, for a save coming back in: as wide as the sheet, one hand, and
-   no resize handle, because the sheet is shrink-wrapped to its words and a
-   corner that stretched it would stretch everything. It folds away entirely
-   when it is not asked for rather than leaving a gap. */
-.held .paste { display: flex; flex-direction: column; align-items: center; gap: 10px; align-self: stretch; }
-/* The cloud's block (cloudsheet.js): a boxed section under its own heading,
-   so its buttons read as the cloud's and not the slots'. */
-.held .cloudsheet { border: 1px solid var(--ink); padding: 10px 12px; box-sizing: border-box; }
-.held .cloudsheet .head { letter-spacing: calc(.25em * var(--track)); }
-.held .cloudsheet .pair-code { font-size: 18px; letter-spacing: .3em; }
-.held .cloudsheet input {
+   no resize handle, because a corner that stretched it would stretch
+   everything. It folds away entirely when it is not asked for rather than
+   leaving a gap. */
+.held .paste { display: flex; flex-direction: column; align-items: center; gap: var(--gap-m); align-self: stretch; }
+/* The cloud's block (cloudsheet.js), on the held sheet and the landing
+   page's column alike: a boxed section under its own heading, so its buttons
+   read as the cloud's and not the slots'. */
+.cloudsheet { border: 1px solid var(--ink); padding: var(--pad-m); box-sizing: border-box; }
+.cloudsheet .head { letter-spacing: calc(var(--track-l) * var(--track)); }
+.cloudsheet .small { font-size: var(--fs-small); }
+.cloudsheet .code { white-space: nowrap; }
+/* A pairing code stands a size up, to be read off from across a room; it is
+   a picture of the code, so its spacing is its own, not the type's. */
+.cloudsheet .pair-code { font-size: var(--fs-word); letter-spacing: .3em; }
+.cloudsheet input {
   align-self: stretch; box-sizing: border-box;
   font: inherit; letter-spacing: .3em; text-transform: uppercase; text-align: center;
   color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 4px; outline: none;
 }
-.held textarea {
+/* Every text box a menu has: the paste, the cloud's, the feedback form's. The
+   focus mark (focusmark.js) stands round it rather than a ring in it. */
+.held textarea, .col textarea {
   align-self: stretch;
+  box-sizing: border-box;
   font: inherit;
   letter-spacing: 0;
   text-transform: none;
@@ -1213,30 +1271,37 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   outline: none;
 }
 
+/* The menu's button, on the held sheet and the landing page's column alike:
+   the sheet's width, one line high, its words centered. One height for all
+   of them: the type's own line and the small padding top and bottom. */
 .held button,
-.held a.store {
+.held a.store,
+.col button {
   font: inherit;
-  letter-spacing: calc(.14em * var(--track));
+  letter-spacing: calc(var(--track-m) * var(--track));
   text-transform: uppercase;
   color: var(--ink);
-  background: none;
+  background: var(--paper);
   border: 1px solid var(--ink);
-  padding: 4px 14px;
+  padding: var(--pad-btn);
   cursor: pointer;
-  /* every button the width of the sheet: the sheet is as wide as its
-     widest line, and a column of buttons of one width reads as a menu */
   align-self: stretch;
   box-sizing: border-box;
   /* the store link is an <a> that opens the store, drawn as the sheet's buttons */
   text-decoration: none;
   text-align: center;
 }
-.held .pair button { flex: 1; }
-.held .pair { align-self: stretch; }
 .held .slots, .held .saves { align-self: stretch; }
+/* The one that opens the game stands inverted on the landing page's front:
+   the one thing the page is for. */
+.col button.play { color: var(--paper); background: var(--ink); }
 @media (hover: hover) {
-  .held button:hover, .held a.store:hover { color: var(--paper); background: var(--ink); }
+  .held button:hover:not(:disabled), .held a.store:hover, .col button:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
+  .col button.play:hover { color: var(--ink); background: var(--paper); }
 }
+/* One disabled look for every menu control: the disabled grey and a dashed
+   edge, the outline of a button rather than a button. */
+.held button:disabled, .col button:disabled { color: var(--ink-5); border-style: dashed; cursor: default; }
 /* The volume: the sheet's one slider, drawn in its ink -- a hairline for the
    track and a square for the thumb, the same square everything else here is
    made of. Both engines want the parts named separately. */
@@ -1361,8 +1426,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   background: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
-  font: 12px/1.5 var(--face);
-  letter-spacing: calc(.08em * var(--track));
+  font: inherit;
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   color: var(--ink);
   transition: opacity .25s;
@@ -1412,30 +1477,31 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   padding: var(--pad-s);
   background: var(--paper);
   border: 1px solid var(--ink);
-  font: 12px var(--face);
-  letter-spacing: calc(.08em * var(--track));
+  font: inherit;
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   color: var(--ink);
   pointer-events: none;
   white-space: pre;
-  line-height: 1.5;
+  line-height: var(--lh-text);
 }
 
+/* A toggle says its state in its words ("hide finished" / "show
+   finished"), as the settings' rows do; it is drawn as any small control. */
 #hidedone {
   align-self: flex-start;
-  margin-top: 8px;
+  margin-top: var(--gap-m);
   font: inherit;
-  letter-spacing: calc(.1em * var(--track));
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   color: var(--ink);
   background: var(--paper);
-  border: 1px dashed var(--ink);
-  padding: 2px 6px;
-  opacity: .7;
+  border: 1px solid var(--ink);
+  padding: var(--pad-s);
   cursor: pointer;
 }
 @media (hover: hover) {
-  #hidedone:hover { opacity: 1; }
+  #hidedone:hover { color: var(--paper); background: var(--ink); }
 }
 /* The saves page (slots.js), on the held sheet and the landing page alike: a
    line a yard -- the row's button carrying its words and its playtime, a
@@ -1445,7 +1511,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    rows' gap is a margin rather than a row-gap, so a shut confirm takes no room
    at all. An empty row is armed before it starts a yard. */
 .saves { display: grid; grid-template-columns: repeat(3, max-content) minmax(max-content, 1fr) max-content max-content; column-gap: 6px; }
-.saves > .saverow { margin-bottom: 6px; }
+.saves > .saverow { margin-bottom: var(--gap-s); }
 /* One bordered card a yard: the slot's button on the shared columns, the ✕
    inside the same border behind a dashed rule. The open card inverts whole. */
 .saves .saverow {
@@ -1470,7 +1536,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .saves .del .x { width: 15px; height: 15px; display: block; shape-rendering: crispEdges; }
 .saves .del .x rect { fill: currentColor; }
 @media (hover: hover) {
-  .saves .del:hover { opacity: .7; }
+  .saves .del:hover { color: var(--paper); background: var(--ink); }
+  .saves .saverow.open .del:hover { color: var(--ink); background: var(--paper); }
 }
 .saves .saverow.open .del { border-left-color: var(--paper); }
 .saves .del.none { visibility: hidden; }
@@ -1478,9 +1545,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   grid-column: 1 / -1; display: grid; grid-template-rows: 0fr; opacity: 0;
   transition: grid-template-rows .3s linear, opacity .3s linear, margin-bottom .3s linear;
 }
-.saves .confirm.asking { grid-template-rows: 1fr; opacity: 1; margin-bottom: 6px; }
+.saves .confirm.asking { grid-template-rows: 1fr; opacity: 1; margin-bottom: var(--gap-s); }
 .saves .confirm .fold { min-height: 0; overflow: hidden; }
-.saves .confirm .pair { display: flex; gap: 10px; }
+.saves .confirm .pair { display: flex; gap: var(--gap-m); }
 .saves .confirm .pair button { flex: 1; text-align: center; }
 .saves .confirm .yes { color: var(--paper); background: var(--ink); }
 body.still .saves .confirm { transition: none; }
@@ -1513,8 +1580,6 @@ body.still .veil { transition: none; }
 body.demo > :not(#scroller) { display: none !important; }
 body.demo canvas { cursor: default; pointer-events: none; }
 body.demo #scroller { overflow: hidden; pointer-events: none; }
-/* the switch reads as thrown when it is thrown */
-#hidedone.on { opacity: 1; border-style: solid; }
 
 
 /* the lab's stats page: a plain list of rates, under its rows */
@@ -1526,7 +1591,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   grid-template-columns: 1fr auto;
   gap: 2px 10px;
   opacity: .75;
-  letter-spacing: calc(.1em * var(--track));
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
 }
 #stats b { font-weight: normal; text-align: right; }
@@ -1632,7 +1697,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   padding: 8px 10px;
   background: var(--paper);
   border: 2px solid var(--ink);
-  letter-spacing: calc(.1em * var(--track));
+  box-shadow: var(--float-shadow);
+  letter-spacing: calc(var(--track-s) * var(--track));
   white-space: nowrap;
   /* it fades with the board it belongs to, on the same beat */
   opacity: 0;
@@ -1678,11 +1744,12 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--ink) var(--paper);
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; flex-direction: column; gap: var(--gap-m);
   padding: 10px var(--sheet-pad-x);
   background: var(--paper);
   border: var(--sheet-border) solid var(--ink);
-  letter-spacing: calc(.1em * var(--track));
+  box-shadow: var(--float-shadow);
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   white-space: nowrap;
   opacity: 0;
@@ -1721,8 +1788,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   color: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
-  font: 12px var(--face);
-  letter-spacing: calc(.14em * var(--track));
+  font: inherit;
+  letter-spacing: calc(var(--track-m) * var(--track));
   text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
@@ -1738,21 +1805,54 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   #raise:hover { background: var(--paper); color: var(--ink); }
 }
 
-/* wave-release: track F */
-/* The same headcount, worn on the title of a board with a single group -- the
-   shack, whose one group is the rock miners and whose sheet is about nobody
-   else. The section rule above is the look; this one only widens where the
-   badge is allowed to sit, so a count on a title and a count on a heading
-   read as the same thing. Solid black on a title that is already black. */
-.page .title .badge {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 0 4px;
-  color: var(--paper);
-  background: var(--ink);
-  font: inherit;
-  letter-spacing: 0;
+/* --- the shared parts (docs/design-language/ui.md) ----------------------------- */
+
+/* A list of choices: the index's names, the languages, the saves, a dial's
+   popover. A row is padded as a sheet button is and says its words as a
+   label; the chosen one is inverted, the way a chosen thing is everywhere.
+   A list standing on the sheet keeps its rows' borders (languages, saves);
+   a list inside a frame of its own (the index, the popover) does not. */
+.langs button, .held .index .it, .optspop .opt, .optspop[data-potpick] .for, .saves .slot {
+  padding: var(--pad-btn);
+  letter-spacing: calc(var(--track-s) * var(--track));
+  text-transform: uppercase;
 }
+.langs button.on, .held .index .it.on, .optspop .opt.on, .optspop[data-potpick] .for.on {
+  color: var(--paper); background: var(--ink);
+}
+
+/* A tick box, in the type's own size so it rides the text beside it: a
+   one-pixel box, filled inside a one-pixel margin when on. The feedback
+   form's tick, the story card's quest and its bill, the landing page's cloud
+   line. */
+.tickbox, #objective .quest li::before {
+  display: inline-block;
+  box-sizing: border-box;
+  flex: none;
+  vertical-align: -1px;
+  width: .75em; height: .75em;
+  width: round(.75em, 1px); height: round(.75em, 1px);
+  border: 1px solid currentColor;
+  background: transparent;
+}
+.tickbox.on, .feedback .tick.on .tickbox, #objective .quest li.done::before,
+#objective .barrier .bill li.done .tickbox {
+  background: currentColor;
+  box-shadow: inset 0 0 0 1px var(--paper);
+}
+.feedback .tick:disabled .tickbox { border-style: dashed; }
+
+/* Pressed: every button inverts while it is held down, so a tap on glass
+   gets the answer a cursor gets from the hover. A shelf's tile lifts instead
+   (shelf.css), its hover being a lift too; a control that is inverted at rest
+   goes to paper. */
+.held button:active:not(:disabled), .held a.store:active, .col button:active:not(:disabled),
+.rows button:not(.tile):active:not(:disabled):not(.stat), .optspop .opt:active, .optspop .for:active:not(.only),
+.queue button.wait:active, #hidedone:active, #modalclose:active, #objective .barrier button:active:not(:disabled),
+#corner > button:active, #hop button:active, #buildbtn:active, .saves .del:active {
+  color: var(--paper); background: var(--ink);
+}
+.col button.play:active, #raise:active, .toast:active { color: var(--ink); background: var(--paper); }
 
 /* LAST ON PURPOSE. Everything in here overrides a rule above by the same
    selector, and two rules of one specificity are settled by order alone --
@@ -1790,7 +1890,6 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
        it scrolls inside itself rather than running off the top */
     max-height: calc(100dvh - 16px);
     overflow-y: auto;
-    letter-spacing: calc(.06em * var(--track));
   }
   /* The same air between cards as on a desk. It was a single pixel between
      rows here, which is two card borders touching with a hairline of white
@@ -1798,16 +1897,14 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
      is the cost of one extra row on a long board, and the cards read as cards. */
   .rows { gap: var(--rows-gap); }
   .rows button {
-    padding: 6px 3px;                /* a thumb, not a cursor */
-    letter-spacing: calc(.06em * var(--track));
+    padding: var(--pad-s-x) var(--pad-s-y);   /* a thumb, not a cursor */
   }
   .rows .job { padding: 4px 3px; }
   .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
   @media (hover: hover) {
     .rows button:hover:not(:disabled) { color: var(--ink); background: none; }
   }
-  .rows button:active:not(:disabled) { color: var(--paper); background: var(--ink); }
-  #hidedone { padding: 6px 8px; }
+  #hidedone { padding: var(--pad-card); }
 }
 
 /* The board as a sheet from the bottom, on a phone (board.js, `placeSheet`;
@@ -1849,7 +1946,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   flex: 0 0 auto;
   display: flex; align-items: center; gap: 10px;
   padding: 14px 12px 6px;
-  letter-spacing: calc(.1em * var(--track)); text-transform: uppercase;
+  letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase;
   cursor: grab;
   touch-action: none;                   /* the drag is ours: it is the sheet's own gesture */
   -webkit-user-select: none; user-select: none;
@@ -1860,7 +1957,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   margin-left: calc(var(--sheet-grip-w, 36px) / -2);
   background: var(--ink);
 }
-.handle .name { font-size: 12px; }
+.handle .name { font-size: var(--fs-body); }
 #panel.bottom .purse {
   flex: 0 0 auto;
   flex-direction: row; justify-content: space-between;
@@ -1926,8 +2023,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   background: var(--ink);
   border: 1px solid var(--paper);
   outline: 1px solid var(--ink);
-  font: 10px var(--face);
-  letter-spacing: calc(.14em * var(--track));
+  font: inherit;
+  letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   color: var(--paper);
   /* A button, since a phone has no space bar: held, it is the key held. */
@@ -1961,7 +2058,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   background: var(--ink);
   border: 1px solid var(--paper);
   outline: 1px solid var(--ink);
-  font: 12px var(--face);
+  font: inherit;
+  letter-spacing: calc(var(--track-s) * var(--track));
+  text-transform: uppercase;
   color: var(--paper);
   opacity: 0;
   /* the skip hint's fade (SHEET_FADE_MS in config/view.js), and the toast's
@@ -1972,7 +2071,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 body.still .messtag { transition: none; }
 .messtag .warn { width: 14px; height: 13px; flex: none; }
 /* the pile mark's paper and ink, the right way round on the black card */
-.messtag .tri { fill: var(--paper); stroke: var(--ink); stroke-width: .17; }   /* r / 6, as drawTriangle */
+.messtag .tri { fill: var(--paper); stroke: var(--ink); stroke-width: .17; }   /* a sixth of the radius, the pile mark's rim (render/pilemarks.js, warning) */
 .messtag .sign { fill: var(--ink); }
 /* the count, behind a hairline, wide enough for two figures so the card
    does not breathe with every cell swept */
@@ -1994,18 +2093,17 @@ body.still .messtag { transition: none; }
   max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
   padding: var(--pad-m);
   background-color: var(--paper);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+  background-image: var(--dots);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
   color: var(--ink);
-  font: 12px var(--face);
+  font: inherit;
 }
-html.dark .modal {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
-}
-.modalhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.modalhead .title { font-size: 12px; letter-spacing: calc(.3em * var(--track)); text-transform: uppercase; }
-#modalclose { padding: 0 6px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; line-height: 1.4; cursor: pointer; }
+/* The window's head is a page title, as a board's is: regular, ruled. */
+.modalhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px;
+             padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
+.modalhead .title { letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase; }
+#modalclose { padding: 0 var(--pad-s-x); border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; line-height: var(--lh-text); cursor: pointer; }
 @media (hover: hover) {
   #modalclose:hover { background: var(--ink); color: var(--paper); }
 }
@@ -2034,7 +2132,7 @@ html.dark .modal {
   gap: 1px;
   padding: var(--pad-m);
   --tab-h: 14px;
-  font: 12px var(--face);
+  font: inherit;
   color: var(--ink);
   background: var(--paper);
   border: 2px solid var(--ink);
@@ -2054,14 +2152,14 @@ html.dark .modal {
   transition: opacity .35s ease, translate .35s ease;
 }
 #objective .next { position: absolute; top: calc(-1 * var(--tab-h)); left: -2px; padding: 0 8px; line-height: var(--tab-h);
-                   font-size: 10px; letter-spacing: calc(.1em * var(--track)); text-transform: uppercase;
+                   font-size: var(--fs-small); letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase;
                    background: var(--ink); color: var(--paper); }
 #objective .say { transition: opacity .35s ease; }
 #objective .say.done { text-decoration: line-through; text-decoration-thickness: 2px; }
 #objective .say.in { opacity: 0; }
 /* the step done: the strike stands a beat, then the card goes */
 #objective.going { opacity: 0; translate: 0 -8px; transition: opacity .35s ease .55s, translate .35s ease .55s; }
-#objective.deep { --paper: #000; --ink: #fff; --ink-7: #5f5f66; }
+#objective.deep { --paper: var(--c-ink); --ink: var(--c-paper); }
 /* A scene holding the yard: the card fades out where it stands and back in
    after (objline.js), as the letterbox steps in and out. */
 #objective.scened { opacity: 0; transition: opacity .6s ease; }
@@ -2073,10 +2171,9 @@ html.dark .modal {
 
 /* The step's quest (objline.js): a short checklist under the line, an item
    struck through as it is done; the list goes when every item is. */
-#objective .quest { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 1px; font-size: 11px; }
-#objective .quest li::before { content: "□ "; }
+#objective .quest { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 1px; font-size: var(--fs-small); }
+#objective .quest li::before { content: ''; margin-right: .5em; }
 #objective .quest li.done { text-decoration: line-through; opacity: .55; }
-#objective .quest li.done::before { content: "■ "; }
 
 /* The shield on a shield step (objbarrier.js; the owner's B,
    2026-10-10, laid out as the owner's layout B the same day): the glyph in a
@@ -2087,7 +2184,7 @@ html.dark .modal {
    second, the box filling as it goes. */
 #objective .barrier { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: start;
                       margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--ink-4);
-                      font-size: 11px; transition: opacity .35s ease; }
+                      font-size: var(--fs-small); transition: opacity .35s ease; }
 #objective .barrier .side { display: grid; gap: 2px; justify-items: start; min-width: 0; }
 #objective .barrier[hidden] { display: none; }
 /* a step with no line: the block starts the card, with no rule over it */
@@ -2096,7 +2193,7 @@ html.dark .modal {
 /* style.css's `canvas` rule is the yard's window; a glyph is a canvas too */
 #objective .barrier > canvas { position: static; inset: auto; z-index: auto; width: auto; height: auto; display: block;
                                    margin: 0 !important; background: none; image-rendering: pixelated; flex: none; }
-#objective .barrier .name { text-transform: uppercase; letter-spacing: calc(.08em * var(--track)); font-weight: bold; }
+#objective .barrier .name { text-transform: uppercase; letter-spacing: calc(var(--track-s) * var(--track)); }
 #objective .barrier .note { color: var(--ink-2); }
 /* A bill line that fills (billfill.js): a grey fill grows behind it by have
    over need (--p), the line's own children stand over it. Shared by the
@@ -2125,25 +2222,23 @@ body.still .fill::before { transition: none; }
 #objective .barrier .bill li > * { transition: opacity 1s ease; }
 #objective .barrier .bill li.done > * { opacity: .55; }
 #objective .barrier .bill .num { text-align: right; padding-left: 2px; font-variant-numeric: tabular-nums; }
-#objective .barrier .bill .box { position: relative; flex: none; width: 7px; height: 7px; border: 1px solid currentColor; }
-#objective .barrier .bill .box::after { content: ''; position: absolute; inset: 1px; background: currentColor; opacity: 0; transition: opacity 1s ease; }
-#objective .barrier .bill li.done .box::after { opacity: 1; }
+#objective .barrier .bill .tickbox { transition: background-color 1s ease; }
 #objective .barrier button { pointer-events: auto; font: inherit; color: var(--ink); background: var(--paper); cursor: pointer;
                              transition: opacity .35s ease, border-color 1s ease, color 1s ease; }
-#objective .barrier .buy { padding: 2px 6px; border: 3px double var(--ink); max-width: 100%; }
+#objective .barrier .buy { padding: var(--pad-s); border: 3px double var(--ink); max-width: 100%; }
 #objective .barrier .buy .cost { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; }
 #objective .barrier .buy .cost > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-#objective .barrier .buy:disabled { cursor: default; border-color: var(--ink-5); color: var(--ink-5); }
+#objective .barrier .buy:disabled { cursor: default; border-color: var(--ink-5); border-style: dashed; color: var(--ink-5); }
 #objective .barrier .buy .short { color: var(--ink-5); }
 #objective .barrier .track { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-#objective .barrier .cancel { flex: none; padding: 1px 6px; border: 1px solid var(--ink); white-space: nowrap; }
+#objective .barrier .cancel { flex: none; padding: var(--pad-s); border: 1px solid var(--ink); white-space: nowrap; }
 #objective .barrier .cancel:not(.on) { opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s .35s; }
 @media (hover: hover) {
   #objective .barrier button:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
   #objective .barrier button:hover:not(:disabled) .short { color: var(--ink-8); }
 }
 @media (prefers-reduced-motion: reduce) {
-  #objective .barrier, #objective .barrier .bill li, #objective .barrier .bill .box::after,
+  #objective .barrier, #objective .barrier .bill li, #objective .barrier .bill .tickbox,
   #objective .barrier button { transition: none; }
 }
 
@@ -2177,11 +2272,13 @@ body.still .fill::before { transition: none; }
 }
 /* The marker over a page's rows: a sheet over everything, painted by
    padpage.js, that no press ever lands on. */
-#padmark { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 22; pointer-events: none;
+#padmark, #focusmark { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 22; pointer-events: none;
            background: none; cursor: auto; }
-/* The marker is the pad's focus ring, so the browser's own is not drawn twice
-   over a row the pad is on. */
-body.pad :focus { outline: none; }
+/* The keyboard's focus is the pad's marker -- corner brackets in the accent
+   (focusmark.js draws them, padglide.js's `bracketCells`) -- so the
+   browser's own ring is never drawn: not a rounded ring in a square house,
+   and not twice over a row the pad is on. */
+:focus-visible, body.pad :focus { outline: none; }
 
 /* The language page (langpage.js; option (a) of
    docs/mocks/language-picker-2026-10-13.html), on the held sheet and the
@@ -2191,9 +2288,8 @@ body.pad :focus { outline: none; }
    takes that language's face (the :lang blocks above) rather than inheriting
    the page's. A line height of its own, since a face with ideographs stands
    taller than the mono and would make its row a different height. */
-.langs { display: flex; flex-direction: column; gap: 4px; align-self: stretch; }
-.langs button { width: 100%; font-family: var(--face); line-height: 1.4; }
-.langs button.on { color: var(--paper); background: var(--ink); }
+.langs { display: flex; flex-direction: column; gap: var(--gap-s); align-self: stretch; }
+.langs button { width: 100%; font-family: var(--face); }
 
 /* The feedback form (feedbackform.js; option A of
    docs/mocks/feedback-form-2026-10-13.html), on the held sheet, the landing
@@ -2201,16 +2297,10 @@ body.pad :focus { outline: none; }
    sheet button drawn as a one-cell box and its words, the box filled when on
    as the boards fill a chosen thing. */
 .held .paste.feedback, .col .paste.feedback { align-items: stretch; }
-.held .feedback { width: 26em; max-width: 100%; align-self: center; }
-.feedback textarea { box-sizing: border-box; }
 .held .feedback .tick, .col .feedback .tick {
   display: flex; align-items: center; gap: 10px; text-align: left;
   border: 0; padding: 2px 0; background: none;
 }
-.feedback .tick .box { flex: none; width: 12px; height: 12px; border: 1px solid var(--ink); background: var(--paper);
-                       position: relative; box-sizing: border-box; }
-.feedback .tick.on .box::after { content: ''; position: absolute; inset: 2px; background: var(--ink); }
-.feedback .tick:disabled, .feedback .send:disabled { opacity: .4; cursor: default; }
 /* the tick's box is what fills, never the row; a grey send does not answer */
 @media (hover: hover) {
   .held .feedback .tick:hover, .col .feedback .tick:hover,

@@ -18,66 +18,52 @@ body.title { overflow: hidden; }
    tall as what is on it, and its own scroller past the window's height;
    inside TITLE_COLUMN (config/view.js), the room the demo yard leaves it. */
 .col {
-  position: fixed; left: 20px; top: 20px; max-height: calc(100vh - 40px);
+  position: fixed; left: var(--title-edge); top: var(--title-edge); max-height: calc(100vh - 2 * var(--title-edge));
   padding: 14px 16px 16px; box-sizing: border-box;
   background: var(--paper); border: 1px solid var(--ink);
-  display: flex; flex-direction: column; align-items: stretch; gap: 7px;
-  letter-spacing: calc(.14em * var(--track)); text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--gap-m);
+  letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase;
+  /* Centered, as the held sheet is: the same pages read the same in both. */
+  text-align: center;
   overflow-y: auto;
   /* Never past the window: the same margin on the right as on the left. */
-  max-width: calc(100vw - 40px);
+  max-width: calc(100vw - 2 * var(--title-edge));
   /* The column's narrowest width, border and padding included: every
      button, pair and box in it is at least this wide, and all of them stand
      as wide as the widest (the saves page's rows, as wide as their words),
      so none stands past the rest. */
   --col-w: 21em;
 }
-.col .gamename { font-size: 34px; letter-spacing: calc(.34em * var(--track)); line-height: 1.1; margin-bottom: 4px; }
-.col .line { text-transform: none; letter-spacing: calc(.1em * var(--track)); color: var(--ink-2); margin-bottom: 14px; max-width: 20em; }
-.col .word { font-size: 17px; letter-spacing: calc(.3em * var(--track)); margin-bottom: 4px; }
-.col button {
-  font: inherit; letter-spacing: calc(.14em * var(--track)); text-transform: uppercase;
-  color: var(--ink); background: var(--paper); border: 1px solid var(--ink);
-  padding: 5px 14px; cursor: pointer; text-align: left; box-sizing: border-box;
-}
+/* How far the column and the foot stand in from the window's edges. */
+body.title { --title-edge: 20px; }
+.col .gamename { font-size: var(--fs-title); letter-spacing: calc(var(--track-l) * var(--track)); line-height: 1.1; margin-bottom: 4px; }
+.col .line { text-transform: none; letter-spacing: calc(var(--track-s) * var(--track)); color: var(--ink-2); margin: 0 auto 14px; max-width: 20em; }
+.col .word { margin-bottom: 4px; }
 .col > button, .col > .pair, .col > .paste { min-width: var(--col-w); }
-.col button:hover { color: var(--paper); background: var(--ink); }
-.col button.play { color: var(--paper); background: var(--ink); }
-.col button.play:hover { color: var(--ink); background: var(--paper); }
-.col button:disabled { cursor: default; }
 /* what play opens, under it */
-.col .sub { font-size: 10px; color: var(--ink-2); letter-spacing: calc(.1em * var(--track)); margin: -4px 0 4px 15px; }
-.col .said { font-size: 10px; color: var(--ink-2); letter-spacing: calc(.1em * var(--track)); max-width: 24em; }
+.col .sub { font-size: var(--fs-small); color: var(--ink-2); letter-spacing: calc(var(--track-s) * var(--track)); margin: -4px 0 4px; }
+.col .said { font-size: var(--fs-small); color: var(--ink-2); letter-spacing: calc(var(--track-s) * var(--track)); max-width: 24em; margin-inline: auto; }
 .col .said:empty { display: none; }
-.col .pair { display: flex; gap: 10px; }
-.col .pair button { width: auto; flex: 1; min-width: 0; text-align: center; }
-.col .paste { display: flex; flex-direction: column; gap: 7px; }
-.col textarea {
-  font: inherit; letter-spacing: 0; text-transform: none;
-  color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 4px; resize: none; outline: none;
-}
-/* the saves: one row a yard, the open one filled (the rows are style.css's
-   `.saves`); the cloud's clashes are a plain column */
-.col .slots { display: flex; flex-direction: column; gap: 6px; }
-.col .slot.open { color: var(--paper); background: var(--ink); }
-.col .slot.armed { color: var(--paper); background: var(--ink); }
+.col .pair button { width: auto; min-width: 0; }
+.col .paste { display: flex; flex-direction: column; gap: var(--gap-m); }
+/* the saves: the cloud's clashes are a plain column */
+.col .slots { display: flex; flex-direction: column; gap: var(--gap-s); }
 /* the record's cards, one across in the column */
 .col .record { grid-template-columns: 1fr; width: var(--col-w); max-width: none; max-height: 50vh; box-sizing: border-box; }
 .col .record .card { background: var(--paper); }
 /* The slider as wide as the column, as the buttons are: at least its
    narrowest, and stretched with them when a longer line widens it. */
 .col input[type=range] { width: auto; min-width: var(--col-w); align-self: stretch; box-sizing: border-box; margin-left: 0; margin-right: 0; }
-/* the veil: white, over everything, up on play (title.js) */
-.veil { position: fixed; inset: 0; background: var(--paper); opacity: 0; pointer-events: none; transition: opacity .35s linear; z-index: 9; }
-.veil.up { opacity: 1; pointer-events: auto; }
-body.still .veil { transition: none; }   /* motion: less: see style.css */
+/* The foot: on the column's own margins, both sides. */
 .foot {
-  position: fixed; left: 36px; right: 18px; bottom: 14px;
+  position: fixed; left: var(--title-edge); right: var(--title-edge); bottom: 14px;
   display: flex; justify-content: space-between;
-  font-size: 10px; letter-spacing: calc(.1em * var(--track)); text-transform: uppercase; color: var(--ink-2);
+  font-size: var(--fs-small); letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase; color: var(--ink-2);
 }
 .foot a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--ink-2); }
-.foot a:hover { color: var(--ink); border-color: var(--ink); }
+@media (hover: hover) {
+  .foot a:hover { color: var(--ink); border-color: var(--ink); }
+}
 /* The cloud (cloudsheet.js; mock A1 of docs/mocks/cloud-footnote-2026-09-27.html):
    a status line in the foot bar beside the build, in the bar's own small
    print; every verb is in the settings section. The square says the open
@@ -85,8 +71,7 @@ body.still .veil { transition: none; }   /* motion: less: see style.css */
 .foot .left { display: flex; gap: 14px; align-items: baseline; }
 .foot .cloud:empty { display: none; }
 .foot .cloud.row { display: inline-flex; align-items: center; gap: 6px; }
-.foot .cloud .tick { display: inline-block; width: 6px; height: 6px; background: var(--ink); margin-right: 5px; vertical-align: 1px; }
-.foot .cloud .tick.off { background: none; border: 1px solid var(--ink-2); box-sizing: border-box; }
+.foot .cloud .tickbox { margin-right: 5px; }
 /* The language in force, in its own name (langpage.js): a button drawn as
    the links beside it, in its language's face, and in full ink so it is the
    one a player looking for a way out sees. */
@@ -98,27 +83,12 @@ body.still .veil { transition: none; }   /* motion: less: see style.css */
   font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit;
   background: none; border: 0; border-bottom: 1px solid var(--ink-2); padding: 0; cursor: pointer;
 }
-.foot .cloud .go:hover { color: var(--ink); border-color: var(--ink); }
-/* and its section on the saves page (option B of
-   docs/mocks/cloud-menu-2026-09-28.html), and the rows that ask which yard a
-   slot keeps: each side a full button, one over the other. The section is
-   the column's width, border and padding included, and everything in it
-   the width of its inside, so nothing in it can stand out past the box. */
-.col .cloudsheet { border: 1px solid var(--ink); padding: 10px 12px; box-sizing: border-box; }
-.col .cloudsheet button, .col .cloudsheet input, .col .cloudsheet .pair { width: 100%; }
-.col .cloudsheet .pair button { width: auto; flex: 1; }
-.col .cloudsheet .clash button { width: 100%; }
-.col .cloudsheet input {
-  font: inherit; letter-spacing: .3em; text-transform: uppercase;
-  color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 4px; outline: none;
+@media (hover: hover) {
+  .foot .cloud .go:hover { color: var(--ink); border-color: var(--ink); }
 }
-.col .cloudsheet .head { letter-spacing: calc(.25em * var(--track)); }
-.col .cloudsheet .small { font-size: 10px; color: var(--ink-2); letter-spacing: calc(.1em * var(--track)); }
-.col .cloudsheet .code { font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
-/* A pairing code stands a size up, to be read off from across a room. */
-.col .cloudsheet .pair-code { font-size: 18px; letter-spacing: .3em; }
-.col .cloudsheet textarea { width: 100%; box-sizing: border-box; }
-.col .cloudsheet .again.armed { color: var(--paper); background: var(--ink); }
-.col .clash { flex-direction: column; gap: 4px; }
+/* The cloud's section on the saves page and the rows that ask which yard a
+   slot keeps (style.css's `.cloudsheet`): in the column, each side a full
+   button the column's width, one over the other. */
+.col .clash { flex-direction: column; gap: var(--gap-s); }
 .col .clash button { width: var(--col-w); }
 .col .clashes { gap: 12px; }

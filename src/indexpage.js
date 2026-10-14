@@ -2,7 +2,8 @@
 // met, down the left in one flat list, and the chosen one on the right -- its
 // drawing, its name, its words. Nothing unmet is named. On a narrow window the two halves do not
 // fit side by side, so the list is the page and picking an entry pushes it
-// over the list, with its own back (style.css, `.index.reading`).
+// over the list (style.css, `.index.reading`), and the page's own back takes
+// it back to the list (`leaveEntry`).
 //
 // What is met is met.js's; the entries are config/index.js's, their words
 // locales/en.ftl's.
@@ -76,22 +77,30 @@ function fill(el) {
   entry.className = 'entry';
   const e = all.find(x => x.key === chosen);
   if (e) {
-    const back = document.createElement('button');
-    back.type = 'button';
-    back.className = 'ixback';
-    back.textContent = msg('held-index-entryback');
-    back.addEventListener('click', () => { el.classList.remove('reading'); fill(el); });
     const head = document.createElement('div');
     head.className = 'head';
     const p = picture(e);
     if (p) head.appendChild(Object.assign(document.createElement('span'), { className: 'pic' })).appendChild(p);
     head.appendChild(Object.assign(document.createElement('div'), { className: 'name', textContent: e.name }));
-    entry.append(back, head, Object.assign(document.createElement('div'), { className: 'text', textContent: e.text }));
+    entry.append(head, Object.assign(document.createElement('div'), { className: 'text', textContent: e.text }));
     entry.dataset.key = e.key;
   }
   el.replaceChildren(list, entry);
   // a remembered choice that is off the list's view is scrolled to
   list.querySelector('.it.on')?.scrollIntoView?.({ block: 'nearest' });
+}
+
+// The page's back, while an entry is pushed over the list: to the list, and
+// true, so the sheet stays on the index; false where there is nothing to
+// leave -- a desk shows both halves -- and the back turns the page as usual.
+// Whether the list is hidden is asked of the stylesheet, which owns the width
+// the two halves stop fitting at.
+export function leaveEntry(el) {
+  const list = el.querySelector('.list');
+  if (!el.classList.contains('reading') || !list || getComputedStyle(list).display !== 'none') return false;
+  el.classList.remove('reading');
+  fill(el);
+  return true;
 }
 
 // Turned to: the list on a phone, the list and the chosen entry beside it on

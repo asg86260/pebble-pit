@@ -201,9 +201,6 @@ said-copyout-none = 아직 저장된 게 없다
 # sheet reply when clipboard unavailable
 said-copyout-window = window.__save에 넣었다
 
-# index entry back button on phone
-held-index-entryback = 뒤로
-
 # saves page cloud section heading
 cloud-head = 클라우드 저장
 

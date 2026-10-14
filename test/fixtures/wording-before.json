@@ -141,10 +141,6 @@
    "text": "index"
   },
   {
-   "id": "held.index.entryback",
-   "text": "back"
-  },
-  {
    "id": "held.indexback",
    "text": "back"
   },
@@ -2129,10 +2125,6 @@
   "held-indexbtn": {
    "text": "index",
    "from": "src/indexpage.js:24"
-  },
-  "held-index-entryback": {
-   "text": "back",
-   "from": "src/indexpage.js:87"
   },
   "cloud-foot-choose": {
    "text": "choose a yard",

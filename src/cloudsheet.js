@@ -108,7 +108,7 @@ function drawFoot() {
   if (!cloudReady()) { el.replaceChildren(); el.hidden = true; return; }
   el.hidden = false;
   const st = cloudStatus();
-  const tick = node('span', st.state === 'ok' ? 'tick' : 'tick off');
+  const tick = node('span', st.state === 'ok' ? 'tickbox on' : 'tickbox');
   if (st.state === 'conflict') {
     el.replaceChildren(tick, msg('cloud-line', { state: '' }), button(msg('cloud-foot-choose'), () => foot.opts.conflict?.(), 'go'));
   } else {
