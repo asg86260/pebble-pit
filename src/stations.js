@@ -16,7 +16,7 @@
 
 import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS, CLASSES, BASES, RECRUIT } from './config.js';
 import { S, bench, casino, filter, tower, outhouse, shack } from './state.js';
-import { farmShed, quarryShed } from './world.js';
+import { farmShedRoofed, quarryShed } from './world.js';
 import { houseRect } from './house.js';
 import { apothHut } from './apothecary.js';
 import { shieldDone } from './shield.js';
@@ -150,7 +150,7 @@ export const STATIONS = [
     needs: () => shieldDone('net') && !demoOn() },
   { key: 'farm', name: msg('station-farm'), glyph: 'furrow',
     empty: msg('station-farm-empty'), post: { key: 'farmjob', job: JOB.FARM, kit: true },
-    open: () => S.farmOpen, stand: () => farmShed(), board: 'farmBoardOpen',
+    open: () => S.farmOpen, stand: () => farmShedRoofed(), board: 'farmBoardOpen',
     after: [],
     // Sticky: `nearly` reads the dust in the hole, and as a plain `show` the
     // door came and went every time you spent. The props failing opens it.

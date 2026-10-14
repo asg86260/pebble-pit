@@ -1560,6 +1560,8 @@ export const SCENES = {
   // whether it reads as a different building from the other one.
   shacks: { about: 'the bench', say: "the cut's shed and the field's, side by side",
     run: () => { rich(); window.__look(st().farmShed.x - 60); } },
+  farmshed: { about: 'the bench', say: "the field's shed with its barn roof, the cut's and the bench in the same view",
+    run: () => { rich(); window.__fullSites(); window.__look(st().farmShed.x - 160); } },
   // The scene for where a site's bar hangs; `quarry` and `farm` finish their
   // builds, so neither ever shows one.
   sitebars: { about: 'the bench', say: 'a bar over each shed, both sites at work',

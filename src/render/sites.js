@@ -6,7 +6,7 @@ import { DOOR_W, FARM_GATE, FARM_H, P, SHACK_EAVE, SPORE_CELL } from '../config.
 import { plotX } from '../farm.js';
 import { ladder, quarryCells } from '../quarry.js';
 import { S, cut, farm, quarry } from '../state.js';
-import { bridgeSpan, farmShed, plotSlots, quarryShed } from '../world.js';
+import { barnSteps, bridgeSpan, farmShed, farmShedRoofed, plotSlots, quarryShed } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 import { rising as risingAt, withRise } from './rise.js';
@@ -186,14 +186,25 @@ function farmTrough({ x }) {
   ctx.fillRect(x - P * 2, foot - P * 2, P, P);
 }
 
+// The farm shed's roof: a stepped gable sat on the eave, the one roof everybody
+// draws on a farm, so at a glance the field's shack is not the cut's or the
+// bench (the owner's pick, docs/mocks/shed-silhouettes-2026-10-14.html, C). Each
+// course a cell in from the one under it, down to two cells at the ridge.
+function barnRoof({ x, y, w }) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y - P * 2, w, P * 2 - SHACK_EAVE);
+  for (let k = 1; k <= barnSteps(w); k++) ctx.fillRect(x + P * k, y - P * (2 + k), w - P * 2 * k, P);
+}
+const farmDetail = (rect, head) => { farmTrough(rect); barnRoof(rect); };
+
 // Both sheds rise out of the ground while being built, like every other
 // building: neither site is *drawn* as a building (a hole, a row of furrows),
 // so the shed that carries each one's board is what the rise clips.
 export function drawFarmShed() {
   const rising = risingAt('farm') && 'farm';
   if (!S.farmOpen && !rising) return;
-  const r = farmShed();
-  withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r, farmTrough));
+  const r = farmShed(), roofed = farmShedRoofed();
+  withRise(rising, roofed.x, S.groundY, roofed.w, roofed.h, () => drawShed(r, farmDetail));
 }
 
 export function drawQuarryShed() {

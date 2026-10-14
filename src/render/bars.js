@@ -6,7 +6,7 @@ import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, filter, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
 import { tintOf } from '../upgrades.js';
-import { farmShed, quarryShed } from '../world.js';
+import { farmShedRoofed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
 import { KINDS, shieldPlan } from '../shield.js';
 import { flagReach } from './aura.js';
@@ -46,11 +46,11 @@ const BAR_STEP = P * 4;                  // a bar's depth and a cell, between st
 const towerSpireBox = () =>
   ({ x: tower.x, w: P * TOWER_SHAFT, y: tower.y - P * 4, h: tower.h + P * 4 });
 
-// Sites whose box is wider than their building hang the bar over the building.
-// The quarry's, farm's and apothecary's boxes are their sheds already
-// (`SITE_BOX` in works.js), so the tower is the one entry.
+// Sites whose box is not their building's top hang the bar over the building:
+// the tower's spire, and the farm shed's barn roof (its box in works.js is the
+// shed's walls). The quarry's and apothecary's boxes are their sheds already.
 const BUILDING_OF = {
-                      tower: towerSpireBox };
+                      tower: towerSpireBox, farm: () => farmShedRoofed() };
 
 // The finished rect of each place a `kind: 'building'` work can raise, keyed
 // the way risingPlace names them, readable mid-build.
@@ -58,7 +58,7 @@ const RISING_BOX = { lab: () => lab, filter: () => filter,
                      casino: () => casino, outhouse: () => outhouse,
                      tower: towerSpireBox,
                      apothecary: () => apothHut(),
-                     quarry: () => quarryShed(), farm: () => farmShed(),
+                     quarry: () => quarryShed(), farm: () => farmShedRoofed(),
                      house: () => siteBox('yard') };
 
 // Which place a yard work is raising, per WORK: the yard holds two builds at

@@ -148,6 +148,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The farm shed wears a barn roof, so it no longer looks like the quarry shed or the bench; the farm's flag flies from the ridge.
 - The deep's stations stand spread evenly under the whole serpent, the first four already spanning it, instead of bunched to one side.
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
 - A feedback page on the pause sheet under settings, off settings on the title page, and under copy save when the game stops, sends your words and, if you tick it, your save (test/feedback.test.mjs).

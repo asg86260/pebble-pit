@@ -61,6 +61,15 @@ export const farmShed = () => ({
   x: farm.x - SHED_GAP - FARM_SHED_W, y: S.groundY - FARM_SHED_H - SHACK_RISE,
   w: FARM_SHED_W, h: FARM_SHED_H + SHACK_RISE
 });
+// The farm shed with its barn roof on (render/sites.js barnRoof): two cells
+// of roof over the eave, then a course a cell in each side until it is two
+// cells wide at the ridge. What hangs over the shed, and what rises when it
+// is built, reads this, not the bare walls.
+export const barnSteps = w => Math.max(0, Math.floor((w / P - 2) / 2));
+export const farmShedRoofed = () => {
+  const r = farmShed(), up = P * (2 + barnSteps(r.w));
+  return { x: r.x, w: r.w, y: r.y - up, h: r.h + up };
+};
 export const quarryShed = () => ({
   x: quarry.x - QUARRY_SHED_GAP - QUARRY_SHED_W, y: S.groundY - QUARRY_SHED_H - SHACK_RISE,
   w: QUARRY_SHED_W, h: QUARRY_SHED_H + SHACK_RISE
