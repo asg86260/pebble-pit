@@ -62,4 +62,4 @@ new piece of chrome follows these; one that cannot is a question for the owner.
 - Chosen, on and open are inversion.
 - Disabled: `--ink-5` and a dashed edge, for every control; never opacity.
 - Can't afford: a card or tag goes dashed, the coin short in `--ink-5` and the ones held in ink.
-- Focus: the pad's marker -- corner brackets of whole 3px cells a cell clear of the control, in `--accent`, on a one-cell `--paper` halo that stops at the control's edge (`src/focusmark.js`, through `padglide.js`'s `bracketCells`). The browser's ring is never drawn; a text box is marked as soon as it is in use; with a pad in hand the pad's marker is the one drawn.
+- Focus: the pad's marker -- corner brackets of whole 3px cells a cell clear of the control, in the pad's own `PAD_ACCENT` on a one-cell `PAD_HALO` halo (turned for the dark page by `ink.js`, as the pad's are) that stops at the control's edge (`src/focusmark.js`, through `padglide.js`'s `bracketCells`). The browser's ring is never drawn; a text box is marked as soon as it is in use; with a pad in hand the pad's marker is the one drawn.

@@ -12,8 +12,9 @@
 // box is, as soon as it is in use, since that is where typing goes. With a pad
 // in hand (`body.pad`) the pad's marker is the one drawn.
 
+import './ink.js';   // the dark page's map, on this context as on the yard's
 import { bracketCells, haloCells } from './padglide.js';
-import { PAD_ARM_MIN, PAD_ARM_MAX, PAD_PAGE_CELL } from './config.js';
+import { PAD_ACCENT, PAD_HALO, PAD_ARM_MIN, PAD_ARM_MAX, PAD_PAGE_CELL } from './config.js';
 
 let canvas = null, ctx = null, looping = false;
 
@@ -47,14 +48,15 @@ function paint() {
   if (b.width && b.height) {
     const u = PAD_PAGE_CELL;
     const cells = bracketCells({ x: b.left, y: b.top, w: b.width, h: b.height }, 1, u, PAD_ARM_MIN, PAD_ARM_MAX);
-    const css = getComputedStyle(document.documentElement);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = css.getPropertyValue('--paper').trim() || '#fff';
+    // The pad's own colors, which ink.js turns for the dark page on every
+    // context, this one with them.
+    ctx.fillStyle = PAD_HALO;
     // The halo stops at the control's own edge: on a sheet its border is the
     // thing being marked, and a cell of paper over it read as a broken box.
     const off = ([x, y]) => (x + 1) * u <= b.left || x * u >= b.right || (y + 1) * u <= b.top || y * u >= b.bottom;
     for (const [x, y] of haloCells(cells).filter(off)) ctx.fillRect(x * u, y * u, u, u);
-    ctx.fillStyle = css.getPropertyValue('--accent').trim() || '#6f36c9';
+    ctx.fillStyle = PAD_ACCENT;
     for (const [x, y] of cells) ctx.fillRect(x * u, y * u, u, u);
   }
   // Every frame while something is marked: a board slides, a sheet scrolls,
