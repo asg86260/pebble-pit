@@ -16,13 +16,14 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The deep draws from six greys, five purples and white: one flat water with only purple stars in it, its stations, domes, pods and furnace flat silhouettes lit along their top edges, its creatures flat, and the portal a black hole in the water (src/selftest/deeppalette.js).
 - After the story's kill the serpent comes back once and stays on its last phase: each health bar emptied is a new level -- it rears, cracks to the brink and draws the deep's motes in to fill the bar again a tenth tougher -- the level on its bar, and a fang drops each level until seven stations stand (test/endless.test.mjs).
 - Once he is rescued, the serpent's bar drops its row of phase pips and keeps only the level, and its belly loses the cage of ribs that held him (test/serpent-after-rescue.test.mjs).
 - Big numbers in the deep read short the way the yard's do, 18.4k, 181k, 2m (test/serpent-numbers.test.mjs).
 - The constrict's orb is as easy to break at every level as at the first; only the serpent's defenses grow (test/endless.test.mjs).
 - The serpent's bar slides down under blows, each blow's stretch breaking off in pixel pieces that fall away, and a meal's heal flows back in instead of jumping (`node tools/look.mjs deep-numbers`).
-- The deep is alive top to bottom: a shoal by the portal, a lanternfish under it, an angler round the fight, a dumbo octopus over the floor and an amphipod on it, each zone's water its own shade.
-- The deep's shaded water and its floor reach the edges of a tall or ultrawide window instead of stopping in a hard line partway across it (test/deep-zones-reach.test.mjs).
+- The deep is alive top to bottom: a shoal by the portal, a lanternfish under it, an angler round the fight, a dumbo octopus over the floor and an amphipod on it.
+- The deep's water and its floor reach the edges of a tall or ultrawide window instead of stopping in a hard line partway across it (test/deep-zones-reach.test.mjs).
 - The deep's creatures dart away from a lash and scatter harder when a defense breaks, then ease back to their own paths; floor-dwellers skitter along the floor and shoals scatter fish by fish (test/deep-fauna.test.mjs, `node tools/look.mjs deep-scatter-lash,deep-scatter-break`).
 - The deep's creatures are few now, like the birds: a click startles one off the end of the deep and shakes loose a handful of scales for the gatherers, and it drifts back in a while later (test/deep-creature-click.test.mjs).
 - Every creature in the deep, the stream's included, answers a click with its own move -- the lanternfish darts, the angler snaps, the amphipod back-flips, the shoal turns as one and flees -- and drops a handful of scales (test/deep-creature-click.test.mjs, `node tools/look.mjs deep-react-angler`).

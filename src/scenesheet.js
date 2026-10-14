@@ -9,6 +9,7 @@
 
 import { S } from './state.js';
 import { forceCoarse } from './prefs.js';
+import { letGoDeepFrame } from './view.js';
 import { SCENES, byPart } from './scenes.js';
 import { hold } from './input.js';
 import { restore, bootYard } from './persist.js';
@@ -43,6 +44,7 @@ export function scene(name) {
   hold(false);          // the clock runs from the first frame of the scene
   // A scene that stood the page up as a phone does not leave it one.
   forceCoarse(null);
+  letGoDeepFrame();
   sc.run();
   refresh();
   return true;

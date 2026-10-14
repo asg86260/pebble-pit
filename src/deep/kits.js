@@ -23,6 +23,7 @@
 import { P, WORKER, KIT_BOX, MOTE_PERIOD, MOTE_RISE, PIP_PX, PIP_RING, PIP_GAP } from '../config.js';
 import { GREYS, PURPLES } from '../render/deeptones.js';
 import { drawBody } from '../render/crew.js';
+import { fillOnPixels } from '../render/frame.js';
 import { MOVE_RUNG, CAPSTONE_RUNG } from '../config/classes.js';
 
 export { GREYS, PURPLES };
@@ -40,8 +41,10 @@ export { smoothstep as ease } from '../motion.js';
 // --- cells --------------------------------------------------------------------
 // A cell at world cell (cx, cy), laid at whole pixels. `fillRect` takes the
 // top-left, and so does this.
-export function cell(g, cx, cy, tone) { if (!tone) return; g.fillStyle = tone; g.fillRect(Math.round(cx * P), Math.round(cy * P), P, P); }
-export function rect(g, cx, cy, w, h, tone) { g.fillStyle = tone; g.fillRect(Math.round(cx * P), Math.round(cy * P), Math.round(w) * P, Math.round(h) * P); }
+// On whole device pixels too (`fillOnPixels`), so a kit swung between cells
+// at a zoom that is not whole keeps its tones at its edges.
+export function cell(g, cx, cy, tone) { if (!tone) return; g.fillStyle = tone; fillOnPixels(g, Math.round(cx * P), Math.round(cy * P), P, P); }
+export function rect(g, cx, cy, w, h, tone) { g.fillStyle = tone; fillOnPixels(g, Math.round(cx * P), Math.round(cy * P), Math.round(w) * P, Math.round(h) * P); }
 export function line(ax, ay, bx, by, fn) {
   const n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay)));
   for (let i = 0; i <= n; i++) fn(ax + (bx - ax) * i / n, ay + (by - ay) * i / n, i, n);

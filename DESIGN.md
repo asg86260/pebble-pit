@@ -14784,11 +14784,47 @@ thing the yard's picture is made of, each one the abyss's version:
   numbers in config.js (a fall rate, a drag, a current), one block for the
   deep.
 
-The palette is the one open picture call: the liquid is black, so the deep
-is most naturally the yard's picture inverted -- a black field, the bodies,
-coil and scales in white and greys -- rather than black marks on white.
-Both are one ink; the inverted one is proposed, and it is settled by shots
-of each before any of it is drawn for real.
+The palette: the liquid is dark, so the deep is the yard's picture inverted
+-- a dark field, the bodies, coil and scales in white and greys -- rather
+than black marks on white.
+
+### The deep's palette (built 2026-10-14)
+
+The owner's B4 of `docs/mocks/deep-background-2026-10-14.html` (after B on
+`docs/mocks/deep-palette-ingame-2026-10-14.html`; "it reads sloppy"): the
+deep had every rung of two twelve-step ramps, every station dealt a grain of
+its own, a dithered tint a zone, a veil flowing over all of it, and alpha
+fades and smoothed text in between -- seventy-odd tones a frame, a hundred at
+worst. It now holds a hard cap: six greys and five purples, every other rung
+of the abyss's ramps, plus white for what is made or held, plus the scales'
+own coin greys. The rungs and their roles (`DEEP_GREY`, `DEEP_PURPLE`) are
+in `config/deepdraw.js` and `docs/design-language/canvas.md`.
+
+- **What is built is a silhouette.** Props, domes, plinths, the floor, the
+  pods and the furnace are each one flat rung, and every cell with nothing
+  over it is lit by the light from above: a purple stepping a held rung at a
+  time (`DEEP_BREATH`). Material is the shape, not a grain.
+- **One water.** The zones are who lives in them, not a tint: one flat water
+  top to floor, its only texture the abyss's stars, every one purple, and the
+  silt, also purple. No veil.
+- **The water is the one grey over black,** not black itself, so that a hole
+  in it -- the portal's mouth, the furnace's door -- reads as a hole (on B4's
+  black water the portal read as a ring). The lip's rungs under the ground's
+  grey are left unpainted, so it frays into the water and not into specks.
+- **Dimmed is fainter, never a hole.** A creature further off, a smear, the
+  far stream and the giant never go under the ground's grey or the dimmest
+  purple; the near-death's rays are the ground's grey, then the dimmest
+  purple, light in the water rather than bars across it.
+- **No alpha.** A fade steps down the kept rungs toward the water. A scene
+  holding the deep (the recede) steps its background down that way rather
+  than washing it, and a picture painted once and kept is kept a tone apiece.
+- **On the pixel grid.** Numbers are the number font; a status's name keeps
+  its smoothing, in the deep's own greys. A body, a kit, a scale or a glyph
+  stack laid between device pixels at a zoom that is not whole would blend at
+  its edge, so each is laid on whole device pixels.
+- **Held by a check,** the browser's `deep palette` group: the deep's
+  scenes at two zooms, every color on the glass counted, any the cap does
+  not hold named with the layer that drew it.
 
 ### The deep's zones (built 2026-10-12)
 
@@ -14814,12 +14850,11 @@ come out of it and its swim to the mouth is tuned.
 **The midnight band is kept quiet.** It holds the bar and the fight's
 numbers, so its creatures are few and drawn two rungs darker (`dim`).
 
-**The tint is a few greys, never a gradient.** Each zone's water is dithered
-in two rungs of the deep's own ramp, mixed across a border a step a row; it
-is drawn before the water's field (`deep zones`), whose dark cells are left
-unpainted, so the field lies over it. It reaches as far as the window does,
-not a margin guessed round the deep: a tall window shows far over the
-ceiling (the sunlit carried on up) and a wide one past the deep's far end.
+**One water.** The zones' dithered tint is gone with the deep's palette
+(above): the `deep zones` layer lays one flat water and the stars lie over
+it. It reaches as far as the window does, not a margin guessed round the
+deep: a tall window shows far over the ceiling and a wide one past the
+deep's far end.
 
 **Sparse, and clickable like the birds** (the owner, 2026-10-13: "tone down
 the amount of creatures in the deep. its a little noisy ... the same

@@ -12,12 +12,12 @@
 import { now } from '../clock.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { GREYS, PURPLES } from './deeptones.js';
+import { GREYS, PURPLES, LIGHT, dimmed } from './deeptones.js';
 import { coilLine } from '../deep/place.js';
 import { mealNow, nearAt, nearAll, eatenBefore, nowS, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SQUEEZE,
          FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED, FLOW_GIANT_LEN, FLOW_GIANT_R, FLOW_GIANT_AT, FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
-         FAUNA_SMEAR } from '../config.js';
+         FAUNA_SMEAR, FLOW_MIDDLE_DIM } from '../config.js';
 import { nearY, crossings, farCell, farY, water, streamPose, streamLead } from '../deep/flow.js';
 import { smoothstep as ease } from '../motion.js';
 
@@ -199,7 +199,7 @@ function drawPosed(k, put, t, pose) {
 // The smear: on the frame a table marks for it, the pose a moment ago drawn
 // under it, darker, if it has come far enough since.
 const smearTone = new Map();
-for (const ramp of [GREYS, PURPLES]) ramp.forEach((c, i) => smearTone.set(c, ramp[Math.max(1, i - FAUNA_SMEAR.rungs)]));
+for (const c of [...GREYS, ...PURPLES]) smearTone.set(c, dimmed(c, FAUNA_SMEAR.rungs));
 function drawReacting(k, put, t, poseNow, poseThen) {
   if (poseNow && poseThen) {
     const moved = Math.abs(poseNow.dx - poseThen.dx) + Math.abs(poseNow.dy - poseThen.dy);
@@ -258,9 +258,12 @@ export function drawFish() {
 
 // --- the stream -----------------------------------------------------------------
 // Drawn on the glass rather than in the world (deep/flow.js places them).
+// The middle crossings a few rungs down their own tones, never under the
+// faintest mark the water shows; the far ones and the giant one flat dim
+// purple, far by their tone alone.
 const darker = new Map();
-for (const ramp of [GREYS, PURPLES]) ramp.forEach((c, i) => darker.set(c, ramp[Math.max(1, i - 4)]));
-const FAR = PURPLES[3], GIANT = PURPLES[1], GIANT_DEEP = PURPLES[2];
+for (const c of [...GREYS, ...PURPLES]) darker.set(c, dimmed(c, FLOW_MIDDLE_DIM));
+const FAR = LIGHT.dim, GIANT = LIGHT.dim;
 const toneAt = (d, c) => (d === 2 ? c : d === 1 ? (darker.get(c) || c) : FAR);
 
 function onGlass(draw) {
@@ -287,15 +290,14 @@ export function drawFishFar() {
     const t = now() / 1000, { top, bottom } = water();
     const len = FLOW_GIANT_LEN, gx = -len - FLOW_MARGIN + (t % FLOW_GIANT_S) * FLOW_GIANT_SPEED;
     if (gx < S.W + FLOW_MARGIN) {
-      // On the world's own cell, far by its tone alone, and dealt between two
-      // dark rungs a cell by a hash so the mass is not one flat purple.
+      // On the world's own cell, far by its tone alone.
       const mid = top + (bottom - top) * FLOW_GIANT_AT, cell = Math.max(2, Math.round(P * S.zoom)), n = Math.ceil(len / cell);
       const x0 = Math.round(gx / cell);
       for (let i = 0; i < n; i++) {
         const r = FLOW_GIANT_R * Math.sin(Math.PI * i / n);
         const y0 = Math.round((mid - r / 2) / cell), y1 = Math.max(y0 + 1, Math.round((mid + r / 2) / cell));
         for (let j = y0; j < y1; j++) {
-          ctx.fillStyle = Math.abs((x0 + i) * 73 + j * 151) % 7 < 2 ? GIANT_DEEP : GIANT;
+          ctx.fillStyle = GIANT;
           ctx.fillRect((x0 + i) * cell, j * cell, cell, cell);
         }
       }
@@ -316,7 +318,7 @@ export function drawFishNear() {
     const [pose, then] = posesOf('n' + c.i, c.kind, t);
     drawReacting(c.kind, (x, y, tone) => {
       ctx.fillStyle = tone;
-      ctx.fillRect(Math.round(c.x / P - c.dir * x) * P, (row + y) * P, P, P);
+      ctx.fillRect(Math.round(c.x / P - c.dir * x) * P, Math.round(row + y) * P, P, P);
     }, t + c.at + streamLead('n' + c.i, c.kind, t), pose, then);
   }
 }

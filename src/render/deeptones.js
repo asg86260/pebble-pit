@@ -5,14 +5,64 @@
 // which the page's own map turns back -- a channel flip there would come out
 // the complement, the purples green.
 //
+// The deep's ramps are the abyss's, capped (config DEEP_GREY_RUNGS,
+// DEEP_PURPLE_RUNGS): `GREYS[i]` is rung `i` of ABYSS_TONES as the deep
+// draws it -- a grey rung the deep does not keep is the kept one under it,
+// so nothing is lifted into the white the kits and bodies wear -- and
+// `PURPLES[i]` the nearest kept purple, its foot still the black. A drawer
+// that steps down a ramp by index stays on the six greys and five purples
+// whatever step it takes.
+//
 // A leaf of its own, so the kits (deep/kits.js) and the scales can name the
 // deep's tones without importing the deep's whole drawing, which imports
 // them back.
 
-import { ABYSS_TONES, ABYSS_MAGIC_TONES } from '../config.js';
+import { ABYSS_TONES, ABYSS_MAGIC_TONES, DEEP_GREY_RUNGS, DEEP_PURPLE_RUNGS, DEEP_GREY, DEEP_PURPLE,
+         DEEP_BREATH } from '../config.js';
 import { darkPage, turned } from '../ink.js';
 
 const xor = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
 export const seen = darkPage ? turned : xor;
-export const GREYS = ABYSS_TONES.map(seen);         // the deep's grey ramp, black to white as seen
-export const PURPLES = ABYSS_MAGIC_TONES.map(seen); // and its purple one
+
+const WHITE = ABYSS_TONES.length - 1;
+const greyRung = i => (i >= WHITE ? WHITE : Math.max(...DEEP_GREY_RUNGS.filter(k => k <= i)));
+const purpleRung = i => (i <= 0 ? 0
+  : DEEP_PURPLE_RUNGS.reduce((b, k) => (Math.abs(k - i) < Math.abs(b - i) ? k : b), DEEP_PURPLE_RUNGS[0]));
+export const GREY_RUNG = ABYSS_TONES.map((_, i) => greyRung(i));
+export const PURPLE_RUNG = ABYSS_MAGIC_TONES.map((_, i) => purpleRung(i));
+
+export const GREYS = GREY_RUNG.map(k => seen(ABYSS_TONES[k]));         // the deep's grey ramp, black to white as seen
+export const PURPLES = PURPLE_RUNG.map(k => seen(ABYSS_MAGIC_TONES[k])); // and its purple one
+
+// Each role's tone as drawn (config DEEP_GREY, DEEP_PURPLE).
+export const TONE = Object.fromEntries(Object.entries(DEEP_GREY).map(([k, i]) => [k, GREYS[i]]));
+export const LIGHT = Object.fromEntries(Object.entries(DEEP_PURPLE).map(([k, i]) => [k, PURPLES[i]]));
+
+// Every color the deep may draw, as seen: the kept rungs and white. The
+// scales' coin colors are the yard's own and are not listed here.
+export const DEEP_SEEN_GREYS = [...DEEP_GREY_RUNGS.map(k => ABYSS_TONES[k]), ABYSS_TONES[WHITE]];
+export const DEEP_SEEN = [...DEEP_SEEN_GREYS, ...DEEP_PURPLE_RUNGS.map(k => ABYSS_MAGIC_TONES[k])];
+
+// A tone `n` rungs further down its own ramp, folded onto the kept ones and
+// never under the faintest mark the water still shows (the ground's grey,
+// the dimmest purple): a thing dimmed in the deep is a fainter mark, never a
+// hole in the water. A tone on neither ramp is left as it is.
+const RUNG_OF = new Map();
+GREYS.forEach((c, i) => RUNG_OF.set(c, ['g', GREY_RUNG[i]]));
+PURPLES.forEach((c, i) => { if (i && !RUNG_OF.has(c)) RUNG_OF.set(c, ['p', PURPLE_RUNG[i]]); });
+export const greyAt = i => GREYS[Math.max(DEEP_GREY.ground, Math.min(WHITE, i))];
+export const purpleAt = i => PURPLES[Math.max(DEEP_PURPLE.dim, Math.min(PURPLES.length - 1, i))];
+export function dimmed(c, n) {
+  const r = RUNG_OF.get(c);
+  if (!r) return c;
+  return r[0] === 'g' ? greyAt(r[1] - n) : purpleAt(r[1] - n);
+}
+
+// The light along every built top edge at `ms`, as a rung of the purple ramp:
+// held a step at a time, never between.
+export const breathAt = ms => DEEP_BREATH.rungs[Math.floor(ms / DEEP_BREATH.ms) % DEEP_BREATH.rungs.length];
+
+// The abyss's whole ramps, turned: for the yard's rift, which draws them
+// all (render/riftlife.js).
+export const ABYSS_SEEN = ABYSS_TONES.map(seen);
+export const ABYSS_MAGIC_SEEN = ABYSS_MAGIC_TONES.map(seen);

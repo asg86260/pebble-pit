@@ -193,7 +193,7 @@ export const RECOIL_POSE = 'rear';
 export const NEARDEATH = {
   crack: 0.5, crackSteps: 5, headSteps: 3, headStep: 0.12,
   slack: 0.4, sag: P * 5, sagTail: 0.35, full: P * 240,
-  brink: 0.55, lines: [1, 0.82, 0.66], lineStep: 0.18, lineTones: [4, 3],
+  brink: 0.55, lines: [1, 0.82, 0.66], lineStep: 0.18, lineTones: [4, 4],
   lineRays: 48, lineRagged: 0.3, lineW: 0.13, lineWRand: 0.06
 };
 // The power-up, `len` from the brink. The body comes back in `backSteps` of
@@ -213,7 +213,7 @@ export const POWERUP = {
   len: 1.4, backSteps: 3, backStep: 0.12, wind: [1.15, 1.3, 1.45],
   motes: 30, first: 0.05, cross: 0.4, spark: 0.1, ring: 0.05, crossSteps: 4, reach: [16, 34], squash: 0.7,
   lightSteps: 4, lightStep: 0.08, seam: P * 16, seal: P * 6,
-  lineFade: [{ s: 0.16, tones: [4, 3] }, { s: 0.16, tones: [2, 2] }],
+  lineFade: [{ s: 0.16, tones: [5, 3] }, { s: 0.16, tones: [3, 3] }],
   letGo: 0.08, letGoWind: 0.85
 };
 

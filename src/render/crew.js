@@ -7,7 +7,7 @@ import { drawHopMarks, drawHeldPiece } from './finale.js';
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
 import { bodyInk } from './recede.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, HOP_POSES, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BODY_RIM, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, HOP_POSES, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedShown, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -57,22 +57,30 @@ export function drawBody(x, y) {
   // Filled, not see-through: an outlined square on a black rock shows the rock
   // through its middle and reads as a hole in whatever is behind it. The page
   // is white, so a body is white.
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
-  ctx.fillStyle = '#000';
+  square(x, y, WORKER, WORKER);
 }
 
 // The same square squashed to two rows, its feet on the ground of a body
 // stood at (x, y): the crouch before a hop and the landing after it.
 export function drawSquat(x, y) {
+  square(x, y + P, WORKER, WORKER - P);
+}
+
+// A body's square: a black rim BODY_RIM world pixels thick round a white
+// middle, its edges on whole device pixels. A body walks a world pixel at a
+// time, and at a zoom that is not whole a rim laid at its own place
+// straddles device pixels and comes out a blend of the two inks: a grey the
+// deep's palette does not hold (docs/design-language/canvas.md).
+function square(x, y, w, h) {
+  const m = ctx.getTransform ? ctx.getTransform() : null;
+  const k = m ? m.a : 1, e = m ? m.e : 0, f = m ? m.f : 0;
+  const sx = v => (Math.round(v * k + e) - e) / k, sy = v => (Math.round(v * k + f) - f) / k;
+  const x0 = sx(x), y0 = sy(y), x1 = sx(x + w), y1 = sy(y + h);
+  const rim = Math.max(1, Math.round(BODY_RIM * k)) / k;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x + 1, y + P + 1, WORKER - 2, WORKER - P - 2);
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x + 1, y + P + 1, WORKER - 2, WORKER - P - 2);
+  ctx.fillRect(x0 + rim, y0 + rim, x1 - x0 - 2 * rim, y1 - y0 - 2 * rim);
   ctx.fillStyle = '#000';
 }
 

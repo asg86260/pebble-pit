@@ -6,12 +6,13 @@ import { P, SHELF_GLYPH_CELLS } from '../config.js';
 import { glyphFor } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
-import { doneAt, doneBillsAt, rowFor } from '../works.js';
+import { doneAt, doneBillsAt, rowFor, DOWN_THERE } from '../works.js';
 import { buildingGlyph, stackSlot, drift } from './bars.js';
 
 // The key a fighter's station's build goes by (deep/party.js, `stationRow`).
 const STATION_BUILD = 'station-';
 import { ctx } from './ctx.js';
+import { onPixel } from './frame.js';
 
 // The thing that finished stays where it stood in the stack over the station
 // (`drawWorkBars`), drawn whole with a tick laid over it, and the next thing
@@ -25,13 +26,23 @@ import { ctx } from './ctx.js';
 const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
 
 // cells on the grid about the origin, a cell at nought starting on it
+// Every edge on a whole device pixel at the scale it is drawn at (`onPixel`),
+// so a cell or a stroke between cells is never a blend of two inks; a path
+// a shape a scale.
 const FILLS = new WeakMap();
+const pathsOf = (map, cells) => { let m = map.get(cells); if (!m) map.set(cells, m = new Map()); return m; };
+const scaleNow = () => (ctx.getTransform ? ctx.getTransform().a : S.zoom * S.dpr);
+function snappedRect(path, x0, y0, x1, y1, k) {
+  const at = v => Math.round(v * k) / k;
+  path.rect(at(x0), at(y0), at(x1) - at(x0), at(y1) - at(y0));
+}
 function fillCells(cells, color) {
-  let path = FILLS.get(cells);
+  const k = scaleNow(), m = pathsOf(FILLS, cells);
+  let path = m.get(k);
   if (!path) {
     path = new Path2D();
-    for (const [dx, dy] of cells) path.rect(dx * P, dy * P, P, P);
-    FILLS.set(cells, path);
+    for (const [dx, dy] of cells) snappedRect(path, dx * P, dy * P, dx * P + P, dy * P + P, k);
+    m.set(k, path);
   }
   ctx.fillStyle = color;
   ctx.fill(path);
@@ -43,7 +54,8 @@ function fillCells(cells, color) {
 // frame, and the flood under it never changes.
 const STROKES = new WeakMap();
 function strokeCells(cells, color) {
-  let path = STROKES.get(cells);
+  const k = scaleNow(), m = pathsOf(STROKES, cells);
+  let path = m.get(k);
   if (!path) {
     path = new Path2D();
     const t = Math.max(1, P / 3);
@@ -52,9 +64,9 @@ function strokeCells(cells, color) {
         if (Math.abs(dx - ox) > 1 || Math.abs(dy - oy) > 1) continue;
         const x0 = Math.max(ox * P, dx * P - t), x1 = Math.min(ox * P + P, dx * P + P + t);
         const y0 = Math.max(oy * P, dy * P - t), y1 = Math.min(oy * P + P, dy * P + P + t);
-        if (x1 > x0 && y1 > y0) path.rect(x0, y0, x1 - x0, y1 - y0);
+        if (x1 > x0 && y1 > y0) snappedRect(path, x0, y0, x1, y1, k);
       }
-    STROKES.set(cells, path);
+    m.set(k, path);
   }
   ctx.fillStyle = color;
   ctx.fill(path);
@@ -114,10 +126,14 @@ export function drawDoneMarks() {
       // Swaying on as it did while it was building: the same drift, by the
       // same name, so finishing does not stop it still.
       const [dx, dy] = drift(site + key);
-      if (!bare) buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u, bills[i] ? { bill: bills[i] } : null) : null, dx, dy);
+      if (!bare) buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u, bills[i] ? { bill: bills[i] } : null) : null, dx, dy,
+                               DOWN_THERE.has(site));
       ctx.save();
-      ctx.translate(at.x - P / 2 + dx, at.cy - P / 2 + dy);   // five wide: half a cell puts it true
-      if (bare) { ctx.translate(-P / 2, -P / 2); ctx.scale(2, 2); }
+      // five wide: half a cell puts it true (and twice the size, a cell);
+      // on a whole device pixel, as a cell is
+      const half = bare ? P : P / 2;
+      ctx.translate(onPixel(at.x - half + dx), onPixel(at.cy - half + dy));
+      if (bare) ctx.scale(2, 2);
       strokeCells(TICK, '#fff');
       fillCells(TICK, '#000');
       ctx.restore();

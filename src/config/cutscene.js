@@ -92,11 +92,11 @@ export const CUT_BAND_SHARE = 0.09;
 // What a scene is about is framed inside the window between the bands, kept
 // CUT_FRAME_MARGIN world pixels clear of either (cutscene.js, `frameHeight`).
 export const CUT_FRAME_MARGIN = P * 2;
-// In the deep the bands are black on the black water, so each carries a rule
-// on its inner edge, CUT_BAND_RULE_PX screen pixels of the deep's rung
-// CUT_BAND_RULE_TONE (ABYSS_TONES), as seen.
+// In the deep the bands are black against the near-black water, so each
+// carries a rule on its inner edge, CUT_BAND_RULE_PX screen pixels of the
+// deep's rung CUT_BAND_RULE_TONE (ABYSS_TONES, one it keeps), as seen.
 export const CUT_BAND_RULE_PX = 2;
-export const CUT_BAND_RULE_TONE = 9;
+export const CUT_BAND_RULE_TONE = 8;
 export const CUT_RECEDE_INK = 0.35;
 export const CUT_SETTLE_S = 1.6;
 // and the glide's top speed, in the yard's pixels a second: a longer way

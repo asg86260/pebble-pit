@@ -19,6 +19,7 @@ import { shadeOf } from '../grid.js';
 import { S } from '../state.js';
 import { crusherRect } from '../deep/place.js';
 import { ctx } from './ctx.js';
+import { fillOnPixels } from './frame.js';
 import { GREYS } from './deeptones.js';
 
 const EDGE = Math.max(1, Math.round(P / 3));   // a scale seen edge-on
@@ -38,8 +39,8 @@ function drawFlutter(list, behind) {
     ctx.fillStyle = typeof m.s === 'number' ? shadeOf(m.s) : '#000';
     // each on its own phase, off where it is, so a shower does not flip in step
     const edge = Math.sin(t / FLUTTER_MS * Math.PI * 2 + x * 0.7 + i) > 0.6;
-    if (edge) ctx.fillRect(x, y + Math.floor((P - EDGE) / 2), P, EDGE);
-    else ctx.fillRect(x, y, P, P);
+    if (edge) fillOnPixels(ctx, x, y + Math.floor((P - EDGE) / 2), P, EDGE);
+    else fillOnPixels(ctx, x, y, P, P);
   }
   ctx.fillStyle = '#000';
 }
@@ -59,7 +60,7 @@ export function drawFang(f) {
   FANG_SPRITE.forEach((row, r) => [...row].forEach((ch, c) => {
     if (!FANG_TONE[ch]) return;
     ctx.fillStyle = FANG_TONE[ch];
-    ctx.fillRect(x + c * P, y + r * P, P, P);
+    fillOnPixels(ctx, x + c * P, y + r * P, P, P);
   }));
   ctx.fillStyle = '#000';
 }

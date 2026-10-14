@@ -1,102 +1,51 @@
 // The deep's zones and the creatures living in them (DESIGN.md, "The deep's
 // zones"; the owner's layout A of docs/mocks/deep-full-height-2026-10-12.html).
-// Two layers: the zones' tint, behind the water's field, and the creatures,
+// Two layers: the zones' water, behind the water's stars, and the creatures,
 // behind the portal, the stations and the serpent. Picture only: where each
 // creature is comes from deep/fauna.js, off its seed and the clock.
 //
-// Both are kept cheap the way the deep's floor is: the tint never changes,
-// so it is painted once, a pixel a cell, and drawn scaled up; and each
-// creature's frame is painted once into an image of its own, its blinking
+// Each creature's frame is painted once into an image of its own, its blinking
 // lights the only cells drawn every frame. A click's reaction is a pose
 // over the path (deep/fauna.js `faunaPose`): a frame or a drawing of its
 // own, held, moved, lit, eased off its path and back at the frame rate.
 
 import { now } from '../clock.js';
-import { P, FAUNA_ZONES, FAUNA_TINT_FILL, FAUNA_TINT_EDGE, FAUNA_TINT_MIX, FAUNA_SPRITES, FAUNA_BASE,
-         FAUNA_VARY, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAUNA_GULPER, FAUNA_SCARE, FAUNA_STARTLE, COIL_SEGS,
+import { P, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_BASE, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAUNA_GULPER, FAUNA_SCARE, FAUNA_STARTLE, COIL_SEGS,
          FAUNA_POSES, FAUNA_REACT_INK, FAUNA_SMEAR, FAUNA_SILT } from '../config.js';
 import { ctx } from './ctx.js';
-import { GREYS, PURPLES } from './deeptones.js';
+import { TONE, greyAt, purpleAt } from './deeptones.js';
+import { toned, toneNow } from './tone.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
-import { COLS, ROWS, POPULATION, unit, unit2, zoneAtRow, schoolAt, frameOf, reachOf, addScare, scareOffset,
+import { COLS, ROWS, POPULATION, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
          clearScares, SCARES, bolting, faunaPose, poseInset, heightOf } from '../deep/fauna.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
 
-// Never the ramp's black: a smear a few rungs down a dark creature is still
-// a mark in the water, not a hole in it.
-const grey = i => GREYS[Math.max(1, Math.min(GREYS.length - 1, i))];
-const purple = i => PURPLES[Math.max(1, Math.min(PURPLES.length - 1, i))];
+// Never under the faintest mark the water shows: a smear a few rungs down a
+// dark creature is still a mark in the water, not a hole in it.
+const grey = greyAt;
+const purple = purpleAt;
 
-// --- the zones' tint --------------------------------------------------------------
-// Each zone's own two greys, dithered on a fixed hash; across a border the
-// rows mix, the neighbor's cells thinning out a step a row. The field's lit
-// cells are drawn over it and its dark ones leave it showing.
-//
-// It covers whatever the window shows of the deep's water, not a margin
-// guessed round it: the deep's zoom tops out at the yard's, so a tall window
-// reaches as far over the ceiling as it is tall, and one wider than the deep
-// past its far end. Above the ceiling is the sunlit's water and past either
-// end the row's own zone, on the same hash, so a regrown image is the old one
-// with more round it. Painted once a pixel a cell, again only when a window
-// shows past what is painted.
-let tint = null;
-function tintRung(x, y) {
-  const step = FAUNA_TINT_MIX / FAUNA_TINT_EDGE;
-  const z = zoneAtRow(y), here = FAUNA_ZONES[z], next = FAUNA_ZONES[z + 1], prev = FAUNA_ZONES[z - 1];
-  const toNext = here.to - y, fromPrev = y - here.from + 1;
-  let q = here;
-  if (next && toNext <= FAUNA_TINT_EDGE && unit2(x, y) < FAUNA_TINT_MIX - (toNext - 1) * step) q = next;
-  if (prev && fromPrev <= FAUNA_TINT_EDGE && unit2(y, x) < FAUNA_TINT_MIX - (fromPrev - 1) * step) q = prev;
-  const k = unit2(x * 1.3, y * 0.7);
-  return k < q.share ? q.tones[1] : k < FAUNA_TINT_FILL ? q.tones[0] : 0;
-}
-function tintImage(span) {
-  if (tint && span.c0 >= tint.c0 && span.c1 <= tint.c1 && span.r0 >= tint.r0) return tint;
-  const c0 = Math.min(span.c0, tint ? tint.c0 : 0), c1 = Math.max(span.c1, tint ? tint.c1 : COLS);
-  const r0 = Math.min(span.r0, tint ? tint.r0 : 0);
-  const img = document.createElement('canvas');
-  img.width = c1 - c0; img.height = ROWS - r0;
-  const g = img.getContext('2d');
-  for (let y = r0; y < ROWS; y++) {
-    for (let x = c0; x < c1; x++) {
-      const rung = tintRung(x, y);
-      if (rung <= 0) continue;
-      g.fillStyle = GREYS[rung];
-      g.fillRect(x - c0, y - r0, 1, 1);
-    }
-  }
-  return (tint = { img, c0, c1, r0 });
-}
-
-// The cells, from the deep's top-left, the window shows of the deep's water
-// and the deep's own: columns [c0, c1), rows from r0 down to the floor.
-export function tintSpan(win = deepWindow()) {
-  const x0 = deepX0(), top = deepTop();
-  return {
-    c0: Math.min(0, Math.floor((win.x0 - x0) / P)), c1: Math.max(COLS, Math.ceil((win.x1 - x0) / P)),
-    r0: Math.min(0, Math.floor((win.y0 - top) / P)),
-  };
-}
-
+// --- the zones' water -------------------------------------------------------------
+// One flat water, top to floor (the owner's B4): the zones are who lives in
+// them, not a tint. It covers whatever the window shows of the deep's water,
+// not a margin guessed round it: the deep's zoom tops out at the yard's, so a
+// tall window reaches as far over the ceiling as it is tall, and one wider
+// than the deep past its far end.
 export function drawDeepZones() {
-  const t = tintImage(tintSpan());
-  const smooth = ctx.imageSmoothingEnabled;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(t.img, deepX0() + t.c0 * P, deepTop() + t.r0 * P, (t.c1 - t.c0) * P, (ROWS - t.r0) * P);
-  ctx.imageSmoothingEnabled = smooth;
+  const win = deepWindow(), x0 = deepX0(), top = deepTop();
+  const left = Math.min(x0, win.x0), right = Math.max(x0 + COLS * P, win.x1), from = Math.min(top, win.y0);
+  ctx.fillStyle = TONE.water;
+  ctx.fillRect(left, from, right - left, top + ROWS * P - from);
+  ctx.fillStyle = '#000';
 }
 
 // --- a creature's tones ------------------------------------------------------------
-// A grey body cell nudged a rung either way on its own hash, fixed per
-// creature; every tone `dim` rungs darker in a zone that is kept quiet.
+// A grey body cell its character's flat rung; every tone `dim` rungs darker
+// in a zone that is kept quiet.
 function tone(ch, seed, r, c, dim) {
-  if (ch in FAUNA_BASE) {
-    const j = unit2(seed + r * 7.1, c * 3.3);
-    const rung = Math.max(FAUNA_VARY.floor, FAUNA_BASE[ch] + (j < FAUNA_VARY.lo ? -1 : j > FAUNA_VARY.hi ? 1 : 0));
-    return grey(rung - dim);
-  }
+  if (ch in FAUNA_BASE) return grey(FAUNA_BASE[ch] - dim);
   if (ch === 'w') return grey(FAUNA_INK.w - dim);
   if (ch === 'e') return grey(FAUNA_INK.e - dim);
   if (ch === 'q') return purple(FAUNA_INK.q[unit2(seed + r, c) < FAUNA_INK.qDark ? 1 : 0] - dim);
@@ -119,7 +68,7 @@ function rowsOf(key, f, pose) {
 // its lights are. Kept by creature (its seed), frame, pose and way.
 const frames = new Map();
 function frameImage(key, f, dir, seed, dim, pose = null, vflip = false) {
-  const id = `${key}|${f}|${dir}|${seed}|${dim}|${pose}|${vflip}`;
+  const q = toneNow(), id = `${key}|${f}|${dir}|${seed}|${dim}|${pose}|${vflip}|${q}`;
   let got = frames.get(id);
   if (got) return got;
   const rows = rowsOf(key, f, pose), w = rows[0].length, h = rows.length;
@@ -131,7 +80,7 @@ function frameImage(key, f, dir, seed, dim, pose = null, vflip = false) {
     if (ch === 'L') { lights.push([at, row, c]); continue; }
     const col = tone(ch, seed, r, c, dim);
     if (!col) continue;
-    g.fillStyle = col;
+    g.fillStyle = q < 1 ? toned(col, q) : col;   // a kept picture takes its tone where it is painted
     g.fillRect(at, row, 1, 1);
   }
   got = { img, lights, w, h };

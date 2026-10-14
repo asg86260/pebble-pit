@@ -4,6 +4,30 @@
 import { msg } from '../lang.js';
 import { P } from './yard.js';
 import { PURPLE } from './palette.js';
+import { ABYSS_TONES, ABYSS_MAGIC_TONES } from './rift.js';
+
+// --- the deep's palette (the owner's B4, 2026-10-14) --------------------------------
+// The deep draws from six greys and five purples and nothing else: every
+// other rung of the abyss's two ramps (ABYSS_TONES, ABYSS_MAGIC_TONES), plus
+// white for what is made or held -- the kits, the bodies, the serpent's
+// hide, the fire's heart -- and the scales' own coin colors. No alpha: a
+// thing fades by stepping down these rungs (render/tone.js), never by
+// thinning, because a thinned tone is a color the deep does not hold.
+// The browser's `deep palette` group (src/selftest/deeppalette.js) holds it
+// there (docs/design-language/canvas.md, "The deep's palette").
+export const DEEP_GREY_RUNGS = [0, 2, 4, 6, 8, 10];
+export const DEEP_PURPLE_RUNGS = [3, 5, 7, 9, 11];
+// What each is for, as a rung. The water is the one grey kept over black, so
+// a hole in it -- the portal's mouth, the furnace's door -- reads as a hole.
+export const DEEP_GREY = { hole: 0, water: 2, ground: 4, stone: 6, lit: 8, pale: 10, white: 11 };
+export const DEEP_PURPLE = { dim: 3, low: 5, mid: 7, glow: 9, bright: 11 };
+// The light from above along every top edge of what is built down there:
+// these rungs in turn, each held this long.
+export const DEEP_BREATH = { rungs: [DEEP_PURPLE.low, DEEP_PURPLE.mid, DEEP_PURPLE.glow, DEEP_PURPLE.mid], ms: 1100 };
+// As seen, for what is drawn over the finished deep (the numbers, the bar,
+// the statuses) and not turned over with it.
+const seenGrey = k => ABYSS_TONES[DEEP_GREY[k]];
+const seenPurple = k => ABYSS_MAGIC_TONES[DEEP_PURPLE[k]];
 
 // --- the view, and the glide between the two halves -----------------------------
 // The glide is one clock: a ripple out of the wizards' portal that the deep
@@ -34,7 +58,7 @@ export const PROP_GAP_OF = { sword: 7 };
 // cells past the prop and the body at its top.
 export const PLINTH_H = 2;
 export const PLINTH_OVER = 1;
-export const PLINTH_TONES = { top: [9, 8, 9], end: [8, 7], body: [6, 5, 6, 7] };   // GREYS indices, one picked a cell
+export const PLINTH_TONES = { top: DEEP_GREY.lit, body: DEEP_GREY.stone };   // flat, a rung each
 // A low dome behind every built station (docs/mocks/station-backdrop-2026-09-28.html,
 // B), so the bed of scales heaped on the floor sits behind it and a grey kit
 // reads on dark: its walls rise DOME_WALL cells over the fighter's head
@@ -44,7 +68,7 @@ export const PLINTH_TONES = { top: [9, 8, 9], end: [8, 7], body: [6, 5, 6, 7] };
 export const DOME_WALL = 2;
 export const DOME_REACH = 6;
 export const DOME_PAD = 1;
-export const DOME_TONES = { inside: [2, 3], rim: [5, 6] };   // GREYS indices, one picked a cell
+export const DOME_TONES = { wall: DEEP_GREY.ground, edge: DEEP_PURPLE.low };   // flat, its top edge lit
 // The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
 // the door's inside is one heat field. A cell's heat is the base, raised by
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from
@@ -112,13 +136,15 @@ export const SHAFT_ARROW_MS = 1600;
 
 // --- its motes ---------------------------------------------------------------------
 // The deep's own kinds, the way the sky's are SMOG_TINTS: silt hanging, flecks
-// shed off the serpent. A kind is its tones (dark to
-// light, as they will be seen on the black) and an `ink`, the weight it is
-// drawn at. Motes are drawing only (render/deep.js steps them).
+// shed off the serpent. A kind is its rungs, dealt one a mote: the silt the
+// purple light hanging in the water, the flecks the hide's greys. Motes are
+// drawing only (render/deep.js steps them).
 export const DEEP_MOTE_TINTS = {
-  silt:  { tones: ['#26262c', '#333339', '#42424a', '#55555e'], ink: 0.8 },
-  fleck: { tones: ['#8b8b96', '#b4b4c0', '#6e6e78', '#9b9ba6'], ink: 1 }
+  silt:  { tones: [DEEP_PURPLE.dim, DEEP_PURPLE.low, DEEP_PURPLE.low, DEEP_PURPLE.mid], purple: true },
+  fleck: { tones: [DEEP_GREY.lit, DEEP_GREY.pale, DEEP_GREY.stone, DEEP_GREY.lit] }
 };
+// A chip off a builder's blows in the deep, a held step down these as it goes (render/buildsites.js).
+export const DEEP_GRIT_RUNGS = [DEEP_PURPLE.dim, DEEP_PURPLE.low, DEEP_PURPLE.mid];
 export const DEEP_SILT = 150;        // silt motes hanging in a window of the deep
 export const DEEP_SILT_SINK = 0.04;  // px a frame the silt settles, against the current's push
 export const DEEP_FLECK_EVERY = 0.35; // seconds between flecks off a swaying coil
@@ -259,8 +285,8 @@ export const NUM_FONT_TIGHT = '.,';  // set against the glyph before, no gap
 export const NUM_FONT_PX = 2;        // screen pixels a font pixel
 // The tones as seen, after the deep's negative: the numbers are drawn over
 // the finished deep, not turned over with it.
-export const NUM_FACE = '#ffffff';   // a blow: white
-export const NUM_DROP = '#42424a';   // on a grey drop line
+export const NUM_FACE = seenGrey('white');   // a blow: white
+export const NUM_DROP = seenGrey('stone');   // on a grey drop line
 export const NUM_LIFE_S = 1.3;       // a blow's number, in and out
 export const NUM_HEAL_LIFE_S = 1.8;  // the heal's, a little longer
 export const NUM_IN_S = 0.08;        // faded in over this
@@ -280,7 +306,7 @@ export const NUM_KICK_SIDE_K = 20;
 export const NUM_KICK_GRAV = 500;
 export const NUM_KICK_HOLD_S = 0.14;
 export const NUM_KICK_BIG = 0.5;
-export const NUM_KICK_LINE = '#6e6e78';
+export const NUM_KICK_LINE = seenGrey('lit');
 export const NUM_KICK_LINE_H = 8;
 // The heal's number (B's partner, H2): under the belly, the side turn and turn
 // about, climbing slow while a swell runs along its digits a font pixel up and
@@ -299,8 +325,8 @@ export const NUM_HEAL_FADE = 0.5;
 export const NUM_HEAL_LEAVE_S = 0.7;
 export const NUM_BAR_IN_S = 0.26;
 export const NUM_BAR_BITE_S = 0.12;
-export const NUM_HEAL_FACES = [PURPLE[12], PURPLE[10], PURPLE[9], PURPLE[7], PURPLE[5]];
-export const NUM_HEAL_DROPS = [PURPLE[5], PURPLE[4], PURPLE[3], PURPLE[2], PURPLE[2]];
+export const NUM_HEAL_FACES = ['bright', 'glow', 'mid', 'low', 'dim'].map(seenPurple);
+export const NUM_HEAL_DROPS = ['low', 'dim', 'dim', 'dim', 'dim'].map(seenPurple);
 // What the sim keeps for them (deep/serpent.js): a weapon that hurts while it
 // is held (the lance, the beam) says its sum once this often, a body at a
 // time; the heal says what it closed once a meal (config/meals.js).
@@ -324,12 +350,12 @@ export const BAR_GAP = 14;             // over the coil's highest reach, from th
 export const BAR_TOP = 12;             // and never nearer the top of the glass than this
 export const BAR_PIP = 14;             // a defense's pip, square, after the bar
 export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to pip
-export const BAR_EDGE = '#8b8b96';     // a one-pixel rim round the bar and each pip
-export const BAR_TRACK = '#000000';    // the empty of it
-export const BAR_LEFT = '#ffffff';     // what the defense has left
-export const BAR_HEALED = PURPLE[12];   // what a heal brings back, while it flows in
-export const BAR_TO_COME = '#55555e';  // a defense not yet reached
-export const BAR_STUN = PURPLE[12];     // the defense's pip while a stun has stopped the heal: a ring of the heal's purple
+export const BAR_EDGE = seenGrey('lit');     // a one-pixel rim round the bar and each pip
+export const BAR_TRACK = seenGrey('hole');    // the empty of it
+export const BAR_LEFT = seenGrey('white');     // what the defense has left
+export const BAR_HEALED = seenPurple('bright');   // what a heal brings back, while it flows in
+export const BAR_TO_COME = seenGrey('stone');  // a defense not yet reached
+export const BAR_STUN = seenPurple('bright');     // the defense's pip while a stun has stopped the heal: a ring of the heal's purple
 export const BAR_STUN_RIM = 2;         // screen pixels, the ring's width
 export const BAR_HEAL_FADE_S = 0.9;    // the heal's purple fades out over this once it is all in
 // How the bar moves (docs/mocks/serpent-hp-bar-2026-10-12.html, the owner's B,
@@ -365,7 +391,7 @@ export const BAR_SHARD_GRAV = 520;
 export const BAR_SHARD_KICK = { side: 10, sideRand: 26, spread: 40, up: 18, upRand: 40, row: 4 };
 export const BAR_SHARD_FALL_S = 0.85;
 export const BAR_SHARD_FADE_S = 0.4;
-export const BAR_CHIP = '#b4b4c0';     // a piece while it is held lit in the notch (white, as the fill, once it falls)
+export const BAR_CHIP = seenGrey('pale');     // a piece while it is held lit in the notch (white, as the fill, once it falls)
 // And the bar recoils from it, the whole of it and its pips, up and away from
 // the number that went into its underside: BAR_KNOCK screen pixels
 // (BAR_KNOCK_BIG for a blow past NUM_KICK_BIG) for half of BAR_KNOCK_S, half
@@ -406,8 +432,8 @@ export const STATUS_ICONS = {
 // steps, STATUS_WARN_HZ a second. Answered, it is struck through for the rest
 // of its turn.
 export const STATUS_WARN_HZ = 4;
-export const STATUS_WARN_RIM = ['#ffffff', '#42424a'];
-export const STATUS_STRUCK = PURPLE[12];
+export const STATUS_WARN_RIM = [seenGrey('white'), seenGrey('stone')];
+export const STATUS_STRUCK = seenPurple('bright');
 // What a mechanic's tile and a dazed fighter's say on hover; the statuses' own
 // lines are the boards' (deep/rails.js, `statusLine`).
 export const STATUS_SAYS = {
@@ -431,18 +457,20 @@ export const STATUS_PX = 3;
 export const STATUS_BAR_PX = 6;
 export const STATUS_LABEL_PX = 11;
 export const STATUS_LABEL_GAP = 3;
+export const STATUS_LABEL_GROUND = seenGrey('water');   // what a label stands on, for its smoothing's steps
+export const CRISP_TEXT_KEEP = 64;   // labels set in the palette's steps kept at once (render/crisptext.js)
 export const STATUS_GAP = 5;
 export const STATUS_STEPS = 5;
 export const STATUS_RENEW_MS = 5;
 export const STATUS_POST_OUT = 4;
 export const STATUS_POST_FOOT = 2;
-export const STATUS_TILE = '#0a0a0c';
-export const STATUS_RIM = '#8b8b96';
-export const STATUS_FOE = PURPLE[12];
-export const STATUS_FACE = '#ffffff';
-export const STATUS_TIMER = '#ffffff';
-export const STATUS_SPENT = '#333339';
-export const STATUS_POST = '#6e6e78';
+export const STATUS_TILE = seenGrey('hole');
+export const STATUS_RIM = seenGrey('lit');
+export const STATUS_FOE = seenPurple('bright');
+export const STATUS_FACE = seenGrey('white');
+export const STATUS_TIMER = seenGrey('white');
+export const STATUS_SPENT = seenGrey('ground');
+export const STATUS_POST = seenGrey('lit');
 // Bleeding's count of sources in a tile's corner, three by four.
 export const STATUS_COUNT = { 2: ['##.', '..#', '.#.', '###'], 3: ['##.', '.##', '..#', '##.'], 4: ['#.#', '###', '..#', '..#'] };
 
