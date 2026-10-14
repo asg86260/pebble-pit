@@ -17,17 +17,17 @@ test('the population is the table, and the same on every load', () => {
   assert.deepEqual(again, POPULATION.map(c => faunaAt(c, 12.5)));
 });
 
-// Sparse, the way the birds are (the owner, 2026-10-13, twice): nine of the
-// seventy-six there were, every zone lived in, the midnight band round the
-// coil and the bar the quietest.
-test('the deep is sparse: a few in every zone, the fewest round the coil', () => {
-  assert.ok(POPULATION.length <= 9, `${POPULATION.length} creatures`);
+// Sparse, the way the birds are (the owner, 2026-10-13, three times): five
+// of the seventy-six there were, one in every zone, each a kind of its own,
+// and the midnight band round the coil and the bar no busier than any.
+test('the deep is sparse: one in every zone, none busier round the coil', () => {
+  assert.ok(POPULATION.length <= 5, `${POPULATION.length} creatures`);
   const per = new Map(FAUNA_ZONES.map(z => [z.key, 0]));
   for (const c of POPULATION) per.set(c.zone, per.get(c.zone) + 1);
   for (const [k, n] of per) assert.ok(n > 0, `nobody lives in ${k}`);
   const mid = per.get('mid');
-  for (const [k, n] of per) if (k !== 'mid') assert.ok(n > mid, `${k} (${n}) is no busier than the midnight band (${mid})`);
-  assert.ok(new Set(POPULATION.map(c => c.kind)).size >= 9, 'every one a kind of its own');
+  for (const [k, n] of per) assert.ok(n >= mid, `${k} (${n}) is quieter than the midnight band (${mid})`);
+  assert.ok(new Set(POPULATION.map(c => c.kind)).size === POPULATION.length, 'every one a kind of its own');
 });
 
 test('each creature stays in its zone, and nothing swims into the floor', () => {

@@ -14810,13 +14810,17 @@ ceiling (the sunlit carried on up) and a wide one past the deep's far end.
 **Sparse, and clickable like the birds** (the owner, 2026-10-13: "tone down
 the amount of creatures in the deep. its a little noisy ... the same
 treatment as the birds above. sparse, and able to click and drop scales").
-And again ("still have too many creatures around"): nine where there were
-seventy-six, two in each zone and one in the midnight band (the quietest,
-round the coil and the bar) -- shoal and jelly, lanternfish and
-siphonophore, angler, dumbo and tripod fish, amphipod and snail; the
-hatchetfish, vampire squid, sea cucumber and gulper eel are kept at nought.
-The far and middle crossings set off a third as often (one a minute); the
-near stream is the serpent's meals and is left as it is. A click on one (the bird's reach, `BIRD_REACH`) shakes
+And again ("still have too many creatures around"), and again ("cut down on
+creatures by 30% again"): five where there were seventy-six, one in each
+zone -- the shoal, a lanternfish, an angler, a dumbo, an amphipod; the
+jelly, siphonophore, tripod fish, snailfish, hatchetfish, vampire squid, sea
+cucumber and gulper eel are kept at nought. The far and middle crossings
+set off one every two minutes. The near stream is the serpent's meals and is
+left as it is: a meal is the first creature heading for the mouth once the
+window has run, so thinning it would move the meals. Counted on screen (a
+creature's middle in the window) over ten minutes of `deep-zones`, the deep
+held 9.9 at once at 1280x800 and holds 6.7 (zone 3.5 -> 1.9, near 3.3,
+crossings 3.1 -> 1.5); at 1600x2400 12.8 -> 8.7. A click on one (the bird's reach, `BIRD_REACH`) shakes
 loose the bird's handful (`FAUNA_SCALES` is `BIRD_DUST`) as ordinary loose
 scales from where it was: they sink to the floor and are money only once a
 gatherer has carried them to the crusher. The serpent and the stations take
@@ -14842,6 +14846,20 @@ end and back in there on its own path. Every reaction is a written table
 and a creature mid-reaction is not there to be clicked again until it is
 done. The tripod, which never swims, stands `FAUNA_MOTION.stand` cells in
 from either end (it stood off the left end, where no click reached it).
+
+**A handful once a visit** (built; the owner, 2026-10-13: "only have them
+drop scales once"). Only a creature's first click sheds the handful; every
+later one plays its reaction and drops nothing, or the deep's five would be a
+tap-for-scales machine that never runs dry. A creature that lives in the deep
+has had its visit for good: its key (kind and number, so a row changed
+elsewhere in the table leaves its mark where it was) goes in `S.faunaShed`,
+saved, so a reload hands back nothing. The school's bolt ends its visit, so
+it is never marked: it is back in a while, and drops again. Each stream
+creature that swims in is a visit of its own: its `streamReport` key goes in
+`S.streamShed`, saved, and the keys of those swum off or eaten are let go at
+the next click. The far and middle crossings run on the page's clock, so a
+real refresh shows other crossings than the page before; those are new
+creatures and drop their own.
 
 **The stream is clicked too.** The near stream and the far and middle
 crossings (deep/flow.js) take the same click within the bird's reach and

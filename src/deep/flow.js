@@ -6,8 +6,9 @@
 // render/fish.js draws both from here.
 //
 // A click on one (the owner's A for each kind, FLOW_REACT) plays its
-// reaction over its path and shakes loose the bird's handful, as a zone
-// creature's does. The reaction is picture only: the stream's paths and the
+// reaction over its path, and the first click on it shakes loose the bird's
+// handful, as a zone creature's does (`S.streamShed`, saved: each creature
+// that swims in is a visit of its own). The reaction is picture only: the stream's paths and the
 // meal's timing never read it, so a meal is due when it was due. The near
 // creature a meal is, or is about to be before its reaction would be over,
 // is not there to be clicked.
@@ -130,9 +131,9 @@ export function streamReport() {
 
 // The stream creature a click at world (wx, wy) lands on, within the bird's
 // reach of its box, the nearest if several.
-export function streamUnder(wx, wy) {
+export function streamUnder(wx, wy, all = streamReport()) {
   let best = null, near = Infinity;
-  for (const f of streamReport()) {
+  for (const f of all) {
     if (!f.clickable) continue;
     const d = Math.max(f.l - wx, 0, wx - f.r, f.top - wy, wy - f.bot);
     if (d <= BIRD_REACH && d < near) { near = d; best = f; }
@@ -141,13 +142,18 @@ export function streamUnder(wx, wy) {
 }
 export const overStream = (wx, wy) => !!streamUnder(wx, wy);
 
-// A click on a stream creature: the bird's handful from its middle, and its
-// reaction. True if one was there.
+// A click on a stream creature: its reaction, and the first time the bird's
+// handful from its middle. True if one was there.
 export function startleStream(wx, wy) {
-  const f = streamUnder(wx, wy);
+  const all = streamReport(), f = streamUnder(wx, wy, all);
   if (!f) return false;
   for (const [key, r0] of REACTS) if (clockOf(key) - r0 > LONGEST) REACTS.delete(key);   // played out
-  shed(f.x, f.y, FAUNA_SCALES);
+  // the marks of those swum off or eaten go: their visits are over
+  const here = new Set(all.map(c => c.key)), had = (S.streamShed || []).filter(k => here.has(k));
+  if (!had.includes(f.key)) { shed(f.x, f.y, FAUNA_SCALES); had.push(f.key); }
+  S.streamShed = had;
   REACTS.set(f.key, clockOf(f.key));
   return true;
 }
+// Whether stream creature `key` (a `streamReport` key) has shaken its handful loose.
+export const streamShed = key => (S.streamShed || []).includes(key);

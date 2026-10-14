@@ -7,13 +7,15 @@
 // (FAUNA_REACT, deep/react.js) over its path, or for the school bolts. The
 // moment is kept on the creature for this session only: a save read back
 // on the same clock carries on with it, and a new page finds every one home.
+// Its handful is shaken loose once a visit (`S.faunaShed`, saved): one that
+// lives in the deep has had its visit for good, and a bolt ends the school's.
 //
 // In cells: x along from the deep's left end, y down from its ceiling, the
 // drawing's top-left.
 
 import { DEEP_W, DEEP_H, P, FAUNA, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_MOTION, FAUNA_GULPER,
          FAUNA_SIPHON, FAUNA_SCARE, FAUNA_STARTLE, FAUNA_SCALES, FAUNA_REACT, FAUNA_POSES } from '../config.js';
-import { deepBed } from '../state.js';
+import { S, deepBed } from '../state.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
 import { topRow } from '../grid.js';
@@ -44,6 +46,9 @@ export const POPULATION = (() => {
     for (let s = 0; s < row.n; s++, i++) {
       out.push({
         kind: row.kind, zone: row.zone, i,
+        // its name in the save: the kind and which of them, so a row changed
+        // elsewhere in the table leaves its marks where they were
+        key: row.kind + s,
         x0: unit(i) * COLS,
         y: row.y ? Math.round(pick(row.y, i + 7)) : null,
         v: pick(row.v, i + 2),
@@ -246,19 +251,21 @@ export function faunaReport(t = now() / 1000) {
   });
 }
 
-// A click on a creature: it shakes loose the bird's handful, which sinks as
-// loose scales for the gatherers, and plays its reaction; the school bolts
-// for the nearer end of the deep, to come back in there a while after. True
-// if one was there.
+// A click on a creature: it plays its reaction, and the first click of its
+// visit shakes loose the bird's handful, which sinks as loose scales for the
+// gatherers; the school bolts for the nearer end of the deep, to come back in
+// there a while after, a new visit. True if one was there.
 export function startleFauna(wx, wy) {
   const t = now() / 1000, c = faunaUnder(wx, wy, t);
   if (!c) return false;
   const p = faunaAt(c, t, floorRowAt), b = boxOf(c, p);
-  shed(deepX0() + b.x * P, deepTop() + b.y * P, FAUNA_SCALES);
+  if (!faunaShed(c)) shed(deepX0() + b.x * P, deepTop() + b.y * P, FAUNA_SCALES);
   if (FAUNA_REACT[c.kind].bolt) bolt(c, t, p, b);
-  else c.r0 = t;
+  else { c.r0 = t; S.faunaShed = [...(S.faunaShed || []), c.key]; }
   return true;
 }
+// Whether creature `c` has shaken its handful loose this visit.
+export const faunaShed = c => (S.faunaShed || []).includes(c.key);
 function bolt(c, t, p, b) {
   const K = FAUNA_STARTLE, M = FAUNA_MOTION;
   // Out past the end by its whole reach and short of the wrap, so the path

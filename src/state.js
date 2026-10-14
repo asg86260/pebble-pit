@@ -566,6 +566,8 @@ export const S = {
   eaten: [],              // the last creatures eaten, which the stream does not draw again
   meal: 0,                // the meals the serpent has had: which creature is next, and how long it waits
   mealT: 0,               // seconds since the last meal landed
+  faunaShed: [],          // the zone creatures that have shaken their handful loose, by key (deep/fauna.js)
+  streamShed: [],         // and the stream creatures in the water that have (deep/flow.js)
   streamOff: 0,           // how far the stream's clock stands ahead of the page's (deep/meals.js)
   mealLandedAt: 0,        // when the last one landed, on the game's clock, for the ring at the belly (drawn only)
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
@@ -731,7 +733,7 @@ export const SAVED = [
   'riftSwell',            // and the growth the rescue handed it on top
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'serpentLevel', 'serpentBest', 'killFangs', 'resistBy', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'recoilT', 'meal', 'mealT', 'mealI', 'eaten', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'recoilT', 'meal', 'mealT', 'mealI', 'eaten', 'faunaShed', 'streamShed', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
   'retired',              // the two of them at the yard's end after the finale (finale.js)
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).

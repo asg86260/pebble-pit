@@ -46,7 +46,7 @@ export const MEAL_KNOBS = [];
 // stream each depth is. One sets off every FLOW_EVERY_S on average, from off
 // the glass: slow as they cross, a few at a time is already a busy deep. A
 // giant crosses far behind everything every FLOW_GIANT_S.
-export const FLOW_EVERY_S = 60;
+export const FLOW_EVERY_S = 120;
 export const FLOW_CELL = [0.35, 0.55, 0.85];
 export const FLOW_SPEED = [5, 9, 14];
 export const FLOW_PARALLAX = [0.25, 0.55, 0.85];

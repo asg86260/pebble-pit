@@ -146,7 +146,50 @@ group('a creature mid-reaction cannot be clicked again until it is done', async 
   return [
     ok(mid.reacting, 'it is in its reaction', f.kind),
     ok(under !== c && !again && shaken === 0 && same, 'a click on it finds nothing, and nothing is shed', `${under && under.kind} ${shaken}`),
-    ok(after.r && after.shaken === FAUNA_SCALES && c.r0 > r0, 'once it is done, the next click plays it again')
+    ok(after.r && c.r0 > r0, 'once it is done, the next click plays it again', `${after.r} ${c.r0} ${r0}`),
+    ok(after.shaken === 0, 'and drops nothing: its handful was the first click\'s', `${after.shaken}`)
+  ];
+}, { reload: false });
+
+// Its handful once a visit (the owner, 2026-10-13: "only have them drop
+// scales once"): a creature living in the deep has had its visit for good,
+// across a save read back; the school's bolt ends its visit, and every
+// stream creature that swims in is a visit of its own.
+group('a creature drops its handful once a visit: not on a second click, not after a reload', async () => {
+  deepStream();
+  const f = target(g => g.kind !== 'school');
+  const c = POPULATION[f.i];
+  const first = shedBy(() => startleFauna(f.x, f.y));
+  runUntil(() => !faunaReport()[f.i].reacting, 10);
+  const g = faunaReport()[f.i];
+  const second = shedBy(() => startleFauna(g.x, g.y));
+  const r0 = c.r0;
+  runUntil(() => !faunaReport()[f.i].reacting, 10);
+  window.__reload();
+  const h = faunaReport()[f.i];
+  const third = shedBy(() => startleFauna(h.x, h.y));
+  const r3 = faunaReport()[f.i];
+  // a near creature, the same way
+  let s = null;
+  runUntil(() => (s = streamReport().find(x => x.near && x.clickable && within(x) && x.x > deepX0() + P * 30)), 60);
+  const sFirst = shedBy(() => startleStream(s.x, s.y));
+  runUntil(() => { const x = streamReport().find(y => y.key === s.key); return !x || !x.reacting; }, 10);
+  window.__reload();
+  const s2 = streamReport().find(y => y.key === s.key);
+  const sSecond = s2 && s2.clickable ? shedBy(() => startleStream(s2.x, s2.y)) : null;
+  const sPlayed = s2 && streamReport().find(y => y.key === s.key).reacting;
+  // and the next one to swim in is a new visit
+  let n = null;
+  runUntil(() => (n = streamReport().find(x => x.near && x.clickable && x.key !== s.key && within(x))), 60);
+  const sNew = n ? shedBy(() => startleStream(n.x, n.y)) : null;
+  return [
+    ok(first.r && first.shaken === FAUNA_SCALES, "the first click shakes loose the bird's handful", `${f.kind} ${first.shaken}`),
+    ok(second.r && second.shaken === 0 && r0 > 0, 'a second plays its reaction and drops nothing', `${second.r} ${second.shaken}`),
+    ok(third.r && third.shaken === 0 && r3.reacting, 'nor does one after a reload', `${third.r} ${third.shaken} ${r3.reacting}`),
+    ok(sFirst.r && sFirst.shaken === FAUNA_SCALES, 'a stream creature drops its handful', `${s.key} ${sFirst.shaken}`),
+    ok(sSecond && sSecond.r && sSecond.shaken === 0 && sPlayed, 'and a click after a reload plays its reaction and drops nothing',
+       JSON.stringify({ s2: !!s2, sSecond, sPlayed })),
+    ok(sNew && sNew.r && sNew.shaken === FAUNA_SCALES, 'the next to swim in drops its own', JSON.stringify({ n: n && n.key, sNew }))
   ];
 }, { reload: false });
 
@@ -227,11 +270,12 @@ group('the bolted school comes back: in at the end it left, swimming, and clicka
     was = r;
   }
   const r = faunaReport()[f.i];
-  const again = back && startleFauna(r.x, r.y);
+  const { r: again, shaken } = back ? shedBy(() => startleFauna(r.x, r.y)) : { r: false, shaken: 0 };
   return [
     ok(back, 'it swims back into the deep', `${c.kind}, back at ${c.back.toFixed(1)}s`),
     ok(worst <= step, 'never jumping inside it', `${worst} cells in a frame`),
-    ok(again, 'and can be startled again')
+    ok(again, 'and can be startled again'),
+    ok(shaken === FAUNA_SCALES, "a new visit: it drops its handful again", `${shaken}`)
   ];
 }, { reload: false });
 
@@ -269,7 +313,8 @@ group('a new game finds every creature home', async () => {
   window.__seed(7);
   return [
     ok(was, 'it was reacting'),
-    ok(POPULATION.every(c => c.t0 < 0 && c.r0 < 0), 'and after a new game nobody is')
+    ok(POPULATION.every(c => c.t0 < 0 && c.r0 < 0), 'and after a new game nobody is'),
+    ok(!S.faunaShed.length && !S.streamShed.length, 'and every one has its handful to drop again', `${S.faunaShed} ${S.streamShed}`)
   ];
 }, { reload: false });
 

@@ -850,7 +850,7 @@ const deepScenes = {
     } },
   // The deep's full height: the zones' tint and their creatures from the
   // portal down to the floor, a fight on, the camera on the deep's middle.
-  'deep-zones': { about: 'the deep', say: 'the deep top to bottom: shoals and jellies by the portal, lanternfish under them, anglers in the coil\'s band, dumbos and tripod fish over the floor',
+  'deep-zones': { about: 'the deep', say: 'the deep top to bottom: a shoal by the portal, a lanternfish under it, an angler in the coil\'s band, a dumbo over the floor and an amphipod on it',
     run: () => {
       deepYard({ stage: 1, wound: 0.33,
                  party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
