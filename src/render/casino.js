@@ -27,7 +27,6 @@ import { ctx } from './ctx.js';
 import { drawCoin, rule } from './marks.js';
 import { drawGrid } from './ground.js';
 import { rising as risingAt, withRise } from './rise.js';
-import { toned } from './tone.js';
 
 // --- the sign -----------------------------------------------------------------
 // The one place in this yard with writing on it, and it has earned it: every
@@ -534,9 +533,11 @@ export function drawSparks() {
     // A grain on its way out of the game fades as it goes. Everything else in
     // this yard either is somewhere or is not; this is the one thing that is
     // *leaving*, and it should look like it rather than blinking off.
-    ctx.fillStyle = k.fade ? toned(shadeOf(k.s), 1 - k.t / TABLE_LIFE) : shadeOf(k.s);
+    if (k.fade) ctx.globalAlpha = Math.max(0, 1 - k.t / TABLE_LIFE);
+    ctx.fillStyle = shadeOf(k.s);
     const d = k.big ? P * 2 : P;               // a hand's confetti is two cells a square
     ctx.fillRect(Math.round(k.x), Math.round(k.y), d, d);
+    ctx.globalAlpha = 1;
   }
   ctx.fillStyle = '#000';
 }

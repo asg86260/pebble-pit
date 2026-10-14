@@ -6,7 +6,6 @@
 
 import { BOARD_LEG, NOTICEBOARD_IN_MS, P, PAPER, SHACK_EAVE } from '../config.js';
 import { now } from '../clock.js';
-import { withTone } from './tone.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 
@@ -35,14 +34,18 @@ let upAt;
 
 export function drawNoticeboard() {
   // The board goes up with the first grain banked, when its sheet opens too,
-  // fading in down its ramp rather than appearing.
+  // fading in rather than appearing.
   if (!(S.banked > 0)) { upAt = null; return; }
   if (upAt === undefined) upAt = -Infinity;
   else if (upAt === null) upAt = now();
 
   const r = S.noticeboard;
   if (!r || !r.w) return;
-  withTone(ctx, (now() - upAt) / NOTICEBOARD_IN_MS, () => drawBoard(r));
+  const k = Math.min(1, (now() - upAt) / NOTICEBOARD_IN_MS);
+  if (k <= 0) return;
+  ctx.globalAlpha = k;
+  drawBoard(r);
+  ctx.globalAlpha = 1;
 }
 
 function drawBoard(r) {

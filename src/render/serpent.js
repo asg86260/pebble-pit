@@ -31,7 +31,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
          SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP, ORB_STEP, ORB_GHOSTS,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
-         NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y, FADE_STEPS } from '../config.js';
+         NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap, jawPose } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
@@ -49,7 +49,6 @@ import { hisHop, hisSay } from '../abyssintro.js';
 import { swellAt } from './cores.js';
 import { cellImage } from './cellimage.js';
 import { dentsNow } from './arms.js';
-import { toneOn } from './tone.js';
 
 const coil = cellImage();
 
@@ -282,10 +281,7 @@ function drawCoil() {
     }
   }
 
-  // Sinking into the abyss the whole of him dims, and flickers dim in the
-  // warning (deep/phases.js): down his ramps, not thinner.
-  const dim = 1 - dimOf(t);
-  coil.begin(cols, rows, dim);
+  coil.begin(cols, rows);
   const ribs = [];
   // the hide's columns as drawn, for everything aimed at it
   const c0 = minX / P, r0 = minY / P;
@@ -368,8 +364,10 @@ function drawCoil() {
     if (Math.abs(along - headA - P) < P / 2 && Math.abs(across + r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
     coil.put(i, ramp[rung]);
   }
+  // Sinking into the abyss the whole of him dims, and flickers dim in the
+  // warning (deep/phases.js).
+  ctx.globalAlpha = 1 - dimOf(t);
   coil.draw(ctx, minX, minY);
-  const undim = toneOn(ctx, Math.max(dim, 1 / FADE_STEPS));   // the faintest step at most
   hide = { c0, top, bot };
   // The crest: a fin of the abyss's purple standing up off the head and
   // running back along the neck, spikes a cell apart, every other one a cell
@@ -416,7 +414,7 @@ function drawCoil() {
   drawStunRing(t, head);
   if (pose && pose.ps != null) drawPowerMotes(pose.ps, pts);
   if (whole) drawMealCrosses(t, pts, bellyA);
-  undim();
+  ctx.globalAlpha = 1;
   drawVeil(t, pts);
   drawBubbles(pts);
   ctx.fillStyle = '#000';
@@ -525,8 +523,7 @@ export function drawFocusLines() {
 function dimOf(t) {
   const p = part();
   if (p.m?.kind !== 'sink' || S.mechSkip) return 0;
-  // the warning's throb in held steps (half, then full), not a smooth pulse
-  if (p.part === 'warn') return SINK_WARN_DIM * (Math.floor(t / 1000 * 2 * THROB_HZ) % 2 ? 1 : 0.5);
+  if (p.part === 'warn') return SINK_WARN_DIM * (0.5 + 0.5 * Math.sin(t / 1000 * Math.PI * 2 * THROB_HZ));
   return sinkK() * SINK_DIM;
 }
 // The abyss's veil flowing over him while he is under: purple cells along
@@ -534,8 +531,7 @@ function dimOf(t) {
 function drawVeil(t, pts) {
   const k = sinkK();
   if (!(k > 0)) return;
-  const end = toneOn(ctx, k);
-  if (!end) return;
+  ctx.globalAlpha = k;
   let last = -Infinity;
   for (const p of pts) {
     if (p.along - last < P * SINK_VEIL_EVERY) continue;
@@ -545,7 +541,7 @@ function drawVeil(t, pts) {
     ctx.fillStyle = PURPLES[WHITE - 1 - (i % 3)];
     ctx.fillRect(snap(p.x + p.nx * across - P / 2), snap(p.y + p.ny * across - P / 2), P, P);
   }
-  end();
+  ctx.globalAlpha = 1;
 }
 // --- the constrict's orb --------------------------------------------------------------
 // How much of the comb is lit, head first, 0..1: through the orb's warning,

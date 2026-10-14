@@ -2,7 +2,7 @@
 // leaves behind.
 
 import { now, ambient } from '../clock.js';
-import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_INK, MUCK_GRAIN, MASS_DEAL, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
+import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_INK, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
 import { DROPS, EMBERS, GOING, SPLASHES, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -11,7 +11,6 @@ import { paled, towardPage } from '../weather.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
 import { screenAt } from './frame.js';
-import { dealt, toned } from './tone.js';
 
 // What the rain left, drawn where it landed, one column at a time, stacked on
 // whatever that column has. The layer is the record: there is no number
@@ -48,9 +47,9 @@ function drawStink(from, to, poo) {
     const age = (t + seed) % STINK_LIFE;
     const wy = Math.round((top - P - age * STINK_RISE) / P) * P;
     const wx = Math.round((c * P + Math.sin(t + seed) * P) / P) * P;
-    ctx.fillStyle = toned('#000', STINK_INK * (1 - age / STINK_LIFE));
+    ctx.globalAlpha = STINK_INK * (1 - age / STINK_LIFE);
     ctx.fillRect(wx, wy, P, P);
-    ctx.fillStyle = '#000';
+    ctx.globalAlpha = 1;
   }
 }
 
@@ -108,10 +107,12 @@ function drawMuckGhosts() {
     const k = 1 - (t - g.at) / (CUT_MUCK_FADE_S * 1000);
     const a = Math.ceil(k * CUT_MUCK_FADE_STEPS) / CUT_MUCK_FADE_STEPS;
     if (a <= 0) continue;
+    ctx.globalAlpha = a;
     // each went as the top course, so each fades as one
-    ctx.fillStyle = toned(MUCK_EDGE, a);
+    ctx.fillStyle = MUCK_EDGE;
     ctx.fillRect(sc.col * P, foot - g.n * P, P, P);
   }
+  ctx.globalAlpha = 1;
 }
 
 // What the yard has put up there: the motes themselves, every one of which
@@ -189,7 +190,8 @@ export function drawSmog() {
   const thin = P / (P + tail);
   const spill = (pts, colour, ink) => {
     if (!pts.length) return;
-    ctx.fillStyle = toned(colour, ink * thin);
+    ctx.globalAlpha = ink * thin;
+    ctx.fillStyle = colour;
     for (let i = 0; i < pts.length; i += 2)
       ctx.fillRect(pts[i] + from, pts[i + 1], P + tail, P);
   };
@@ -212,11 +214,13 @@ export function drawSmog() {
       run.at.push(Math.round(q.x / P) * P, Math.round(q.y / P) * P);
     }
     for (const run of stack.values()) {
-      ctx.fillStyle = toned(run.tint, STACK_INK * run.ink);
+      ctx.globalAlpha = STACK_INK * run.ink;
+      ctx.fillStyle = run.tint;
       for (let i = 0; i < run.at.length; i += 2) ctx.fillRect(run.at[i], run.at[i + 1], P, P);
     }
   }
 
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -351,17 +355,18 @@ function drawSplashes() {
   }
 }
 
-// The bolt: a held strike, black for the first half of its life and stepping
-// down the greys through the second. No flash over the frame: the strike is
-// the bolt standing there, not the window blinking.
+// The bolt: black, full for the first half of its life and fading through the
+// second. Black even through the flash; the flash is what turns it white
+// (`drawFlash`).
 export function drawBolt() {
   const b = S.bolt;
   if (b) {
-    ctx.fillStyle = toned('#000', Math.min(1, b.left / (BOLT_LIFE_S / 2)));
+    ctx.fillStyle = '#000';
+    ctx.globalAlpha = Math.min(1, b.left / (BOLT_LIFE_S / 2));
     ctx.beginPath();
     for (const [x, y] of b.cells) ctx.rect(x, y, P, P);
     ctx.fill();
-    ctx.fillStyle = '#000';
+    ctx.globalAlpha = 1;
   }
   // and the embers off it, bucketed by weight like the haze so a burst is a
   // handful of fills and not one per speck
@@ -376,11 +381,31 @@ export function drawBolt() {
     if (!run) runs.set(a, run = []);
     run.push(Math.round(e.x / P) * P, Math.round(e.y / P) * P);
   }
+  ctx.fillStyle = '#000';
   for (const [a, at] of runs) {
-    ctx.fillStyle = toned('#000', a);
+    ctx.globalAlpha = a;
     ctx.beginPath();
     for (let i = 0; i < at.length; i += 2) ctx.rect(at[i], at[i + 1], P, P);
     ctx.fill();
   }
+  ctx.globalAlpha = 1;
+}
+
+// The flash: for the first instant of a strike a dark pane drops over the
+// finished frame, in screen space, and the bolt is drawn white on top. Dark
+// because the page is already white: the only way a white page can flash is
+// to go dark, and inverting the whole window is a blow to the eye.
+export function drawFlash() {
+  const b = S.bolt;
+  if (!b || b.flash <= 0) return;
   ctx.fillStyle = '#000';
+  // fading off from the first frame, not held and cut: a held pane is a blink
+  ctx.globalAlpha = BOLT_FLASH_INK * Math.min(1, b.flash / BOLT_FLASH_S);
+  ctx.fillRect(0, 0, S.W, S.H);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  const k = P * S.zoom;
+  for (const [x, y] of b.cells) { const p = screenAt(x, y); ctx.rect(p.x, p.y, k, k); }
+  ctx.fill();
 }

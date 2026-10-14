@@ -11,7 +11,6 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawBody } from './crew.js';
 import { GUESTS } from '../skyguests.js';
-import { withTone } from './tone.js';
 
 // The row of moorings beside the filter's dial, one a craft: a stake in the
 // ground to the left of where the basket rests, the craft's tether tied off
@@ -45,8 +44,11 @@ export function skyGuests() {
   // craft it came off so it is in front of the basket.
   for (const p of S.smoke) {
     if (p.far == null || !p.color) continue;
-    out.push({ far: p.far + 0.001, draw: () => withTone(ctx, 1 - Math.max(0, fadeAt(p.far)), () =>
-      drawDoseMote(ctx, skyX(p.x, p.far), p.y, p.color, Math.min(1, p.t / p.life), p.v, sizeAt(p.far))) });
+    out.push({ far: p.far + 0.001, draw: () => {
+      ctx.globalAlpha = 1 - Math.max(0, fadeAt(p.far));
+      drawDoseMote(ctx, skyX(p.x, p.far), p.y, p.color, Math.min(1, p.t / p.life), p.v, sizeAt(p.far));
+      ctx.globalAlpha = 1;
+    } });
   }
   return out;
 }
@@ -54,18 +56,18 @@ GUESTS.list = skyGuests;
 
 // One craft, drawn about the bottom-middle of its basket at its size, on the
 // lattice: it drifts a whole cell at a time like everything else in the sky,
-// and fades toward the page by its depth down the ramps, as a cloud does.
+// and fades toward the page by its depth, as a cloud does.
 function drawCraft(i, a) {
   ctx.save();
   ctx.translate(Math.round(a.x / P) * P, Math.round(a.y / P) * P);
   ctx.scale(a.s, a.s);
-  withTone(ctx, 1 - Math.max(0, fadeAt(a.far)), () => {
-    drawDrawnIn(i);
-    drawEnvelope(i);
-    if (aboard(i)) drawBody(-WORKER / 2, -P - WORKER);
-    drawBasket();
-  });
+  ctx.globalAlpha = 1 - Math.max(0, fadeAt(a.far));
+  drawDrawnIn(i);
+  drawEnvelope(i);
+  if (aboard(i)) drawBody(-WORKER / 2, -P - WORKER);
+  drawBasket();
   ctx.restore();
+  ctx.globalAlpha = 1;
 }
 
 const NECK = -BALLOON_BASKET - BALLOON_LINES;   // the envelope's neck, from the basket's bottom

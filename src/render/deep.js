@@ -48,7 +48,6 @@ import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
-import { toned, toneOn } from './tone.js';
 
 const isFighter = w => w.type === TYPE.FIGHTER;
 
@@ -501,9 +500,11 @@ export function drawDeepMotes() {
     // a mote nearing the end of its life thins out a cell at a time rather
     // than fading: it is drawn on fewer and fewer frames
     if (m.life < 600 && hash(m.x + now() / 100) > m.life / 600) continue;
-    ctx.fillStyle = toned(m.s, ink);
+    ctx.globalAlpha = ink;
+    ctx.fillStyle = m.s;
     ctx.fillRect(Math.round(m.x / P) * P, Math.round(m.y / P) * P, P, P);
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -521,14 +522,14 @@ export function drawSwimmers() {
   ctx.beginPath();
   ctx.rect(deepX0() - P * 8, cut, deepX1() - deepX0() + P * 16, deepFloor() - cut + P * 4);
   ctx.clip();
+  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     if (w.lifted || !inTheDeep(w)) continue;   // the one in your hand: `drawHeld`
     // a fighter at a built station is the fighters' layer's (render/arms.js)
     if (isFighter(w) && (S.stations || []).some(st => st.built && st.id === w.station)) continue;
     const ink = bodyInk(w);                    // a scene holding the deep (render/recede.js)
     if (ink <= 0) continue;
-    const end = toneOn(ctx, ink);          // down its ramps, not thinner
-    if (!end) continue;
+    ctx.globalAlpha = was * ink;
     const x = Math.round(w.x), y = Math.round(w.y);
     drawBody(x, y);
     // A gatherer's handful, overhead two abreast, each scale as it is. A
@@ -538,8 +539,8 @@ export function drawSwimmers() {
       drawMark(w.load?.[i] || 1, x + (WORKER - P * 2) / 2 + (i % 2) * P + P / 2,
                y - P * (Math.floor(i / 2) + 1) + P / 2);
     }
-    end();
   }
+  ctx.globalAlpha = was;
   ctx.restore();
   ctx.fillStyle = '#000';
 }

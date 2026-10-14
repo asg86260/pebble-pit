@@ -1,11 +1,9 @@
 // Effects you can look at on their own: every draw here takes a context, a
 // place and a few numbers, and reads nothing off `S`, so preview.html can draw
 // them side by side on a blank page with no simulation behind them. The import
-// list is the other half of it: config and the tone ramps (tone.js, which
-// reads no yard either), and nothing else. The moment one of
+// list is the other half of it: config, and nothing else. The moment one of
 // these reaches for the yard, the preview has to build a yard.
 import { P, DOSE_MOTE_HUE, CRIT_RING_WIDE } from '../config.js';
-import { toned } from './tone.js';
 
 // A tonic's color as HSL, so a mote can be shifted round the wheel from it.
 // A table rather than converted every frame: three tonics, a great many motes.
@@ -63,7 +61,8 @@ export function drawShockRing(g, x, y, r, k, color = '#000') {
   const seen = new Set();
   // Fading straight rather than off a square: a ring squared is nearly gone by
   // the time it is wide enough to read.
-  g.fillStyle = toned(color, 1 - k);
+  g.globalAlpha = 1 - k;
+  g.fillStyle = color;
   // A leaf module has no rng, so the roll is a sine hash of the spoke and
   // this tick.
   const tick = Math.floor(k * 24);
@@ -89,6 +88,7 @@ export function drawShockRing(g, x, y, r, k, color = '#000') {
     path.rect(cx - CRIT_RING_WIDE / 2, cy - CRIT_RING_WIDE / 2, CRIT_RING_WIDE, CRIT_RING_WIDE);
   }
   g.fill(path);
+  g.globalAlpha = 1;
 }
 
 // One speck of the burst: a whole cell at full ink for most of its life, half

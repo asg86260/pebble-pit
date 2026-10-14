@@ -2,7 +2,7 @@
 // bolts.
 
 import { now } from '../clock.js';
-import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_VENT, SPHERE_SWIRL_BANDS, SPHERE_STREAK_SHOWS, MASS_DEAL } from '../config.js';
+import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER, SHADES, SPHERE_VENT, SPHERE_SWIRL_BANDS } from '../config.js';
 import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from '../meteor.js';
 import { S, floor, sky } from '../state.js';
 import { ctx } from './ctx.js';
@@ -10,7 +10,6 @@ import { domeRising, domeSpot, domeAt } from '../shield.js';
 import { domeEdge } from './shield.js';
 import { cell } from './marks.js';
 import { sphereBought, sphereUp, sphereRising, shellCells, laid, covered, flareOf, sphereEdges, pouredAt, sphereVents, spinShare, shellR, swirlAt } from '../sphere.js';
-import { dealt, toned } from './tone.js';
 
 // The thing in the sky is a small star: a dead black crust with fire under it,
 // drawn cell by cell. A corona of rays breathes on a slow beat and takes its
@@ -91,11 +90,14 @@ function drawCorona(hot) {
       const x = Math.round((sky.x + Math.cos(a) * d - P / 2) / P) * P;
       const y = Math.round((sky.y + Math.sin(a) * d - P / 2) / P) * P;
       // Paler the further out, a corona thinning into the sky rather than a
-      // starburst cut out of paper; brighter the more of the fire is uncovered.
-      ctx.fillStyle = toned(tones[hot > 0.25 ? 0 : hot > 0.05 ? 1 : 2], 1 - k / (RAY_MAX + 1));
+      // starburst cut out of paper.
+      ctx.globalAlpha = 1 - k / (RAY_MAX + 1);
+      // Brighter the more of the fire is uncovered.
+      ctx.fillStyle = tones[hot > 0.25 ? 0 : hot > 0.05 ? 1 : 2];
       ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);   // about its middle
     }
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -119,7 +121,8 @@ function drawBeams(endsOf, at, dome = false) {
       const from = P * 2, to = len - P * 2;
 
       // The dome's beam starts strong: it is landing on a thing already there.
-      ctx.fillStyle = toned(MAGIC_TONES[2], dome ? 0.5 + at * 0.3 : 0.2 + at * 0.35);
+      ctx.globalAlpha = dome ? 0.5 + at * 0.3 : 0.2 + at * 0.35;
+      ctx.fillStyle = MAGIC_TONES[2];
       ctx.beginPath();
       for (let d = from; d < to; d += P) {
         ctx.rect(Math.round((fx + dx * (d / len)) / P) * P,
@@ -129,7 +132,8 @@ function drawBeams(endsOf, at, dome = false) {
 
       // and the bead, on this body's own phase so a ring of them is not one
       // flash repeated
-      ctx.fillStyle = toned(MAGIC_TONES[0], 0.55 + at * 0.45);
+      ctx.globalAlpha = 0.55 + at * 0.45;
+      ctx.fillStyle = MAGIC_TONES[0];
       const k = (t * 0.55 + (w.ph || 0) / (Math.PI * 2)) % 1;
       for (const off of [0, P]) {
         const d = from + (to - from) * k + off;
@@ -139,6 +143,7 @@ function drawBeams(endsOf, at, dome = false) {
       }
     }
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -188,7 +193,8 @@ function drawFlash() {
   ];
   for (const ring of rings) {
     if (ring.r <= sky.r || ring.ink <= 0) continue;
-    ctx.fillStyle = toned(ring.colour, ring.ink);
+    ctx.globalAlpha = ring.ink;
+    ctx.fillStyle = ring.colour;
     const n = Math.max(12, Math.round((Math.PI * 2 * ring.r) / (P * ring.step)));
     ctx.beginPath();
     for (let i = 0; i < n; i++) {
@@ -197,6 +203,7 @@ function drawFlash() {
     }
     ctx.fill();
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -210,10 +217,12 @@ function drawTrail() {
     if (life <= 0) continue;
     // Down the tones as it ages, so a speck ends deeper and fainter than it
     // started: a thing burning out rather than being turned off.
-    ctx.fillStyle = toned(MAGIC_TONES[Math.min(MAGIC_TONES.length - 1,
-                                               k.tone + Math.floor((1 - life) * 2))], life * 0.8);
+    ctx.globalAlpha = Math.max(0, life) * 0.8;
+    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1,
+                                         k.tone + Math.floor((1 - life) * 2))];
     ctx.fillRect(Math.round(k.x / P) * P, Math.round(k.y / P) * P, P, P);
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -224,11 +233,14 @@ function drawBolts() {
     // the cell behind it, fainter: two cells says which way a thing is going,
     // and a longer tail on a six pixel cell is a streak. The specks it has
     // shed are drawn in `drawTrail`.
-    ctx.fillStyle = toned(MAGIC_TONES[2], 0.45);
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = MAGIC_TONES[2];
     ctx.fillRect(Math.round(b.px / P) * P, Math.round(b.py / P) * P, P, P);
+    ctx.globalAlpha = 1;
     ctx.fillStyle = MAGIC_TONES[0];
     ctx.fillRect(Math.round(b.x / P) * P, Math.round(b.y / P) * P, P, P);
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -303,12 +315,14 @@ function drawShell() {
       if (f >= 1) continue;
       const dx = c.x + P / 2 - sky.x, dy = c.y + P / 2 - sky.y;
       const d = Math.hypot(dx, dy) || 1;
+      ctx.fillStyle = tones[0];
       for (let k = 1; k <= 2; k++) {
-        ctx.fillStyle = toned(tones[0], (1 - f) * (1 - k / 3));
+        ctx.globalAlpha = (1 - f) * (1 - k / 3);
         ctx.fillRect(Math.round((c.x + dx / d * P * k) / P) * P,
                      Math.round((c.y + dy / d * P * k) / P) * P, P, P);
       }
     }
+    ctx.globalAlpha = 1;
   }
   ctx.fillStyle = '#000';
   // The ring pours on to the two growing edges; the tender on to the rim
@@ -328,10 +342,9 @@ function drawShell() {
 
 // The magic that turns it: streaks of the wizards' purple laid on the ball
 // like the plates are, turning on the same axis a little faster than the
-// metal, so they are seen sweeping it round. Only as strong as the turn: a
-// sphere nobody is beaming has none. Solid cells of the purple ramp where a
-// streak is strong enough to show, never a glaze: the plates between them
-// are the plates.
+// metal, so they are seen sweeping it round -- over a faint wash, a little
+// stronger at the edge. Only as strong as the turn: a sphere nobody is
+// beaming has none.
 function drawAura(cells) {
   const k = spinShare();
   if (k <= 0) return;
@@ -340,14 +353,14 @@ function drawAura(cells) {
   for (const c of cells) {
     const s = Math.max(0, Math.cos(SPHERE_SWIRL_BANDS * (c.lon + sw)));
     const streak = s * s * s * s * s * s;
-    const ink = ((c.band ? 0.16 : 0.05) + 0.4 * streak) * k * breath;
-    if (ink < SPHERE_STREAK_SHOWS) continue;
-    ctx.fillStyle = MAGIC_TONES[ink > 2 * SPHERE_STREAK_SHOWS ? 1 : 2];
+    ctx.fillStyle = streak > 0.5 ? MAGIC_TONES[1] : MAGIC_TONES[2];
+    ctx.globalAlpha = ((c.band ? 0.16 : 0.05) + 0.4 * streak) * k * breath;
     ctx.fillRect(c.x, c.y, P, P);
   }
-  // and a halo a cell out, paler
+  ctx.fillStyle = MAGIC_TONES[2];
+  // and a halo a cell out, thinner
   const R = shellR() + P, n = Math.round(Math.PI * 2 * R / P);
-  ctx.fillStyle = toned(MAGIC_TONES[2], 0.14 * k * breath);
+  ctx.globalAlpha = 0.14 * k * breath;
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2;
@@ -355,5 +368,6 @@ function drawAura(cells) {
              Math.round((sky.y + Math.sin(a) * R - P / 2) / P) * P, P, P);
   }
   ctx.fill();
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }

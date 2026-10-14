@@ -73,19 +73,11 @@ dark-page color by hand.
 
 ## Fades
 
-A fade steps down its own ramp, toward the ground it is on, in `FADE_STEPS`
-held steps. It never thins with alpha.
-
-- `toned(c, k)` gives a color `k` of the way there, snapped to its ramp.
-  `toned(c, k, true)` fades toward black, for the rift's hole and the deep's
-  numbers.
-- `withTone(g, k, fn)` and `toneOn(g, k)` fade everything a stretch of drawing
-  sets. `cellImage().begin(c, r, k)` does the same for a cached picture.
-- `globalAlpha` is left only for:
-  - the press's scanlines;
-  - whole-frame veils (the recede's wash, the crew sight veil);
-  - the crew-view fade switch, which is there to see through;
-  - the grit's difference patch.
+Fading by opacity is an animation effect, not a color: it is outside the
+palette rules. A thing coming or going fades smoothly with `globalAlpha`, and
+the tones it passes through mid-fade are not palette tones and need not be.
+The palette rules are about what is drawn at full ink. Stepping a fade down a
+ramp in held tones was tried and read worse; the smooth fade stays.
 
 ## Motion
 
@@ -97,10 +89,11 @@ held steps. It never thins with alpha.
     against the ribs.
   - The jaw is `JAW_POSES` (shut, ajar, gape) through `jawPose`: the bite, the
     snatch and the roar.
-- No flash and no shake.
-  - A strike is the bolt itself, with no pane over the window.
+- No shake. The strike's flash is the one flash, and it is kept for effect:
+  a dark pane over the frame for `BOLT_FLASH_S` with the bolt white on top
+  (`drawFlash`), never in the deep.
   - A strained shield leans a held cell at a time (`SHIELD_LEAN`).
-  - Throbs and drifts move in held steps on whole cells.
-  - Nothing appears without a fade or a build.
+  - Drifts move in held steps on whole cells; a throb of opacity (the sink's warning) is a fade, and smooth.
+  - Nothing appears without a fade or a build; a fade is a smooth one.
 - The press is scanlines only. There is no vignette, because the game draws no
   gradient.
