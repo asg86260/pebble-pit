@@ -1,6 +1,6 @@
 // The boulder itself, and the chips coming off it.
 
-import { MARK_SIZE, MAX_DEPTH, P, SQUASH_WIDE, SQUASH_FLAT, RAM_CHIP_CURL, RAM_CHIP_CURL_SPIN, RAM_CHIP_CURL_S, SHADES, MASS_DEAL } from '../config.js';
+import { MARK_SIZE, MAX_DEPTH, P, SQUASH_WIDE, SQUASH_FLAT, RAM_CHIP_CURL, RAM_CHIP_CURL_SPIN, RAM_CHIP_CURL_S } from '../config.js';
 import { now } from '../clock.js';
 import { depthShade, shadeOf } from '../grid.js';
 import { depthOf, rockFootY, rockShape, lumpCells } from '../rock.js';
@@ -9,7 +9,6 @@ import { S } from '../state.js';
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
 import { fillMarks, markInto } from './marks.js';
-import { dealt } from './tone.js';
 
 // the tone of every thickness a rock cell can hold, filled in once a frame
 // rather than worked out per cell
@@ -53,17 +52,6 @@ export function drawRock() {
                      (ex(e) - ex(x)) * P, Math.max(P, (top - bot) * P));
       }
       x = e;
-    }
-  }
-  // The deep core, the darkest band, is the darkest rung with one cell in
-  // MASS_DEAL.core dealt the next lighter, so it reads as rock and not paint.
-  if (!squash) {
-    const core = SHADES[SHADES.length - 1];
-    ctx.fillStyle = SHADES[SHADES.length - 2];
-    for (let y = 0; y < S.gh; y++) {
-      const row = S.boulder[y], py = foot - (S.gh - y) * P;
-      for (let x = 0; x < S.gw; x++)
-        if (row[x] && TONE[row[x]] === core && dealt(x, y, MASS_DEAL.core)) ctx.fillRect(left + x * P, py, P, P);
     }
   }
 }

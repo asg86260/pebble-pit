@@ -14815,16 +14815,20 @@ in `config/deepdraw.js` and `docs/design-language/canvas.md`.
   far stream and the giant never go under the ground's grey or the dimmest
   purple; the near-death's rays are the ground's grey, then the dimmest
   purple, light in the water rather than bars across it.
-- **No alpha.** A fade steps down the kept rungs toward the water. A scene
-  holding the deep (the recede) steps its background down that way rather
-  than washing it, and a picture painted once and kept is kept a tone apiece.
+- **A fade is not a color.** Fading by opacity is an animation effect and
+  outside the cap (the owner, reviewing the visual pass: "the opacity fading
+  should not be included in the color scheme blocks"). Things in the deep
+  fade smoothly by alpha, and a scene holding the deep (the recede) washes it
+  as it washes the yard; the cap is about what is drawn at full ink.
 - **On the pixel grid.** Numbers are the number font; a status's name keeps
   its smoothing, in the deep's own greys. A body, a kit, a scale or a glyph
   stack laid between device pixels at a zoom that is not whole would blend at
   its edge, so each is laid on whole device pixels.
 - **Held by a check,** the browser's `deep palette` group: the deep's
   scenes at two zooms, every color on the glass counted, any the cap does
-  not hold named with the layer that drew it.
+  not hold named with the layer that drew it. It reads each frame at full
+  ink (globalAlpha held at 1 while that frame is drawn), so a fade is exempt
+  and what is fading is still held to the cap.
 
 ### The deep's zones (built 2026-10-12)
 

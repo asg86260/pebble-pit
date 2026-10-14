@@ -12,6 +12,12 @@
 // yard's and is left out, and so is the bed of scales: the scales keep their
 // coin's own greys (the bed's per-cell dust tones), as the flutter of one
 // thrown or sinking does (`shadeOf`, turned with the deep).
+//
+// A fade is not a color (canvas.md, "Fades"): opacity is an animation effect,
+// outside the cap. So the frame is read at full ink -- every draw made with
+// globalAlpha held at 1 for the one frame read -- and the cap is asked of
+// what is drawn, whatever is mid-fade in the scene. Only that frame: the
+// context's own alpha is never touched, so nothing after it is.
 
 import { ok, run } from './kit.js';
 import { draw, LAYERS } from '../render.js';
@@ -35,8 +41,12 @@ function offPalette(hide = null) {
     .map(c => c.toLowerCase()));
   const off = LAYERS.filter(l => l.name === 'deep bed' || l === hide), was = off.map(l => l.when);
   off.forEach(l => { l.when = () => false; });
-  try { draw(); } finally { off.forEach((l, i) => { l.when = was[i]; }); }
   const c = document.getElementById('c'), g = c.getContext('2d'), k = devicePixelRatio || 1;
+  Object.defineProperty(g, 'globalAlpha', { configurable: true, get: () => 1, set: () => {} });
+  try { draw(); } finally {
+    delete g.globalAlpha;
+    off.forEach((l, i) => { l.when = was[i]; });
+  }
   const d = g.getImageData(0, 0, c.width, c.height).data;
   const box = countRect(), pad = 8;
   const inCount = (x, y) => box && x >= (box.x - pad) * k && x < (box.x + box.w + pad) * k

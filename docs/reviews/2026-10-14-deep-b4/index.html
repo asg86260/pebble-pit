@@ -1,0 +1,174 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The deep's palette (B4)</title>
+<style>
+:root{--bg:#f2f2ef;--card:#fff;--ink:#1a1a1a;--mute:#5c5c58;--line:#d6d6d0;--well:#e8e8e4;--ok:#2f7a3b;--no:#b3261e;--scrim:rgb(20 20 20 / .97)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141414;--card:#1f1f1f;--ink:#e6e6e6;--mute:#9a9a95;--line:#333;--well:#2a2a2a;--ok:#7fcf8b;--no:#f2b8b5}}
+:root[data-theme="dark"]{--bg:#141414;--card:#1f1f1f;--ink:#e6e6e6;--mute:#9a9a95;--line:#333;--well:#2a2a2a;--ok:#7fcf8b;--no:#f2b8b5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+main{max-width:1240px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:24px;margin:0 0 4px}.lede{color:var(--mute);max-width:80ch;margin:4px 0}.refs{font-size:12px;color:var(--mute)}
+.refs code{font-size:12px}
+.bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-bottom:1px solid var(--line);z-index:2;margin-top:12px}
+button{font:13px system-ui,sans-serif;padding:4px 10px;background:var(--card);color:var(--ink);border:1px solid var(--line);cursor:pointer}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.bar button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.count,.status{font-size:12px;color:var(--mute)}.status.bad{color:var(--no)}
+.item{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);padding:12px 14px;margin:14px 0;min-width:0}
+.item.approve{border-left-color:var(--ok)}.item.deny{border-left-color:var(--no)}
+.item h2{margin:2px 0 2px;font-size:17px}.tag{font-size:12px;color:var(--mute)}.what{margin:2px 0 8px;max-width:90ch}
+.shot{border-top:1px dashed var(--line);padding:8px 0}
+.shot .label{font-size:13px;color:var(--mute);margin-bottom:4px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+@media (max-width:700px){.pair{grid-template-columns:1fr}}
+figure{margin:0;min-width:0}
+figcaption{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:2px}
+.pic{display:block;width:100%;padding:0;border:1px solid var(--line);background:var(--well);cursor:zoom-in}
+.pic img{display:block;max-width:100%;max-height:520px;margin:0 auto;height:auto}
+.px img{image-rendering:pixelated}
+.none{padding:18px 10px;font-size:13px;color:var(--mute);border:1px dashed var(--line);text-align:center}
+.note{font-size:12px;color:var(--mute)}
+.act{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.act .ok[aria-pressed="true"]{background:var(--ok);color:var(--bg);border-color:var(--ok)}
+.act .no[aria-pressed="true"]{background:var(--no);color:var(--bg);border-color:var(--no)}
+textarea{font:14px system-ui,sans-serif;width:100%;min-height:2.4em;margin-top:6px;padding:4px 6px;background:var(--bg);color:var(--ink);border:1px solid var(--line);resize:vertical}
+.saved{font-size:11px;color:var(--mute)}
+.lb{position:fixed;inset:0;background:var(--scrim);display:flex;flex-direction:column;z-index:10;color:#eee}
+.lb[hidden]{display:none}
+.lb .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;font-size:13px}
+.lb .top .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.lb button{background:#222;color:#eee;border-color:#555}
+.lb button[aria-pressed="true"]{background:#eee;color:#111;border-color:#eee}
+.lb .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px}
+.lb .stage img{max-width:100%;max-height:100%;object-fit:contain}
+.lb .side{font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.lb .hint{font-size:11px;color:#aaa;padding:0 12px 8px}
+</style></head><body><main>
+<h1 id="title"></h1>
+<p class="lede" id="lede"></p>
+<p class="refs" id="refs"></p>
+<div class="bar" id="bar"><button data-f="all" aria-pressed="true">all</button><button data-f="open">unreviewed</button><button data-f="approve">approved</button><button data-f="deny">denied</button><span class="count" id="count"></span><span class="status" id="status">connecting…</span></div>
+<div id="list"></div></main>
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="enlarged shot">
+ <div class="top"><span class="t" id="lbt"></span><button id="lbb" aria-pressed="true">before</button><button id="lba" aria-pressed="false">after</button><button id="lbx">close</button></div>
+ <div class="stage" id="lbs"><img id="lbi" alt=""></div>
+ <div class="hint">space flips before and after · ← → step through shots · esc closes</div>
+</div>
+<script id="data" type="application/json">{"title":"The deep's palette (B4): before and after","lede":"Main against the B4 build: the whole deep on 6 greys and 5 purples, flat props lit purple, one flat water. Not on main yet: approve to land it.","base":"ad61ad3fd58f9e9d6c99b2c8414a59b4bcb118b6","head":"e243c0a0538de36f6f723a8db4c9402e38c0ce2f","at":"2026-10-14T20:57:47.950Z","items":[{"id":"floor","title":"Props and domes flat, lit purple along their tops","what":"Every station's prop and dome is one flat tone; their top edges breathe purple. Floor and plinth flat.","audit":[],"shots":[{"label":"every station","before":{"src":"floor/1-before.png","gif":false,"note":""},"after":{"src":"floor/1-after.png","gif":false,"note":""},"pixel":false},{"label":"seven stations","before":{"src":"floor/2-before.png","gif":false,"note":""},"after":{"src":"floor/2-after.png","gif":false,"note":""},"pixel":false},{"label":"the party at rest","before":{"src":"floor/3-before.png","gif":false,"note":""},"after":{"src":"floor/3-after.png","gif":false,"note":""},"pixel":false}]},{"id":"water","title":"One flat dark water; purple stars and silt are the only texture","what":"The dithered zones and the flowing veil are gone; the water is one grey, lit by purple stars and drifting purple silt.","audit":[],"shots":[{"label":"the zones","before":{"src":"water/1-before.png","gif":false,"note":""},"after":{"src":"water/1-after.png","gif":false,"note":""},"pixel":false},{"label":"tall window","before":{"src":"water/2-before.png","gif":false,"note":""},"after":{"src":"water/2-after.png","gif":false,"note":""},"pixel":false}]},{"id":"portal","title":"The portal still reads as a hole","what":"The water is the one kept grey above black, so the portal's black mouth stands out from it.","audit":[],"shots":[{"label":"the portal","before":{"src":"portal/1-before.png","gif":false,"note":""},"after":{"src":"portal/1-after.png","gif":false,"note":""},"pixel":false}]},{"id":"creatures","title":"Creatures and the stream drawn flat, never darker than the water","what":"Zone creatures and the stream are flat tones from the capped palette; the far stream never sinks below the water.","audit":[],"shots":[{"label":"the angler reacting","before":{"src":"creatures/1-before.gif","gif":true,"note":""},"after":{"src":"creatures/1-after.gif","gif":true,"note":""},"pixel":false},{"label":"a stream fish","before":{"src":"creatures/2-before.png","gif":false,"note":""},"after":{"src":"creatures/2-after.png","gif":false,"note":""},"pixel":false}]},{"id":"fight","title":"The serpent fight on the capped palette","what":"Body, cage, cracks, statuses, the bar and the fight numbers all on the deep's 6 greys and 5 purples; status names smoothed only in the deep's greys.","audit":[],"shots":[{"label":"stunned, mid-defense","before":{"src":"fight/1-before.png","gif":false,"note":""},"after":{"src":"fight/1-after.png","gif":false,"note":""},"pixel":false},{"label":"statuses","before":{"src":"fight/2-before.png","gif":false,"note":""},"after":{"src":"fight/2-after.png","gif":false,"note":""},"pixel":false},{"label":"fight numbers","before":{"src":"fight/3-before.png","gif":false,"note":""},"after":{"src":"fight/3-after.png","gif":false,"note":""},"pixel":false}]},{"id":"neardeath","title":"The near-death and power-up on the capped palette","what":"The cracks, the light, the rays and the motes step through the kept tones; the rays read as light, not bars.","audit":[],"shots":[{"label":"the light through the cracks","before":{"src":"neardeath/1-before.png","gif":false,"note":""},"after":{"src":"neardeath/1-after.png","gif":false,"note":""},"pixel":false},{"label":"the motes","before":{"src":"neardeath/2-before.png","gif":false,"note":""},"after":{"src":"neardeath/2-after.png","gif":false,"note":""},"pixel":false},{"label":"the whole beat","before":{"src":"neardeath/3-before.gif","gif":true,"note":""},"after":{"src":"neardeath/3-after.gif","gif":true,"note":""},"pixel":false}]},{"id":"works","title":"Furnace, pods and a station going up","what":"Flat silhouettes with breathing purple tops; the furnace keeps its brick in two tones.","audit":[],"shots":[{"label":"the furnace","before":{"src":"works/1-before.png","gif":false,"note":""},"after":{"src":"works/1-after.png","gif":false,"note":""},"pixel":false},{"label":"the pods","before":{"src":"works/2-before.png","gif":false,"note":""},"after":{"src":"works/2-after.png","gif":false,"note":""},"pixel":false},{"label":"a station going up","before":{"src":"works/3-before.png","gif":false,"note":""},"after":{"src":"works/3-after.png","gif":false,"note":""},"pixel":false}]},{"id":"story","title":"The kill, him freed, the finale's deep part, endless","what":"The cutscenes fade by stepping toward the water instead of a wash; the letterbox rule moved to the lit grey.","audit":[],"shots":[{"label":"the kill","before":{"src":"story/1-before.png","gif":false,"note":""},"after":{"src":"story/1-after.png","gif":false,"note":""},"pixel":false},{"label":"him freed","before":{"src":"story/2-before.png","gif":false,"note":""},"after":{"src":"story/2-after.png","gif":false,"note":""},"pixel":false},{"label":"the finale's gear","before":{"src":"story/3-before.png","gif":false,"note":""},"after":{"src":"story/3-after.png","gif":false,"note":""},"pixel":false},{"label":"endless","before":{"src":"story/4-before.png","gif":false,"note":""},"after":{"src":"story/4-after.png","gif":false,"note":""},"pixel":false}]},{"id":"crisp","title":"Side effect in the yard: bodies and glyph stacks snap to whole pixels","what":"Snapping to whole device pixels makes the yard's bodies and the glyph stacks over stations slightly crisper.","audit":[],"shots":[{"label":"the crew, 2x","before":{"src":"crisp/1-before.png","gif":false,"note":""},"after":{"src":"crisp/1-after.png","gif":false,"note":""},"pixel":true}]}]}</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const rev = {}; let db = null, filter = 'all';
+const list = document.getElementById('list'), rows = new Map();
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.getElementById('title').textContent = D.title;
+document.getElementById('lede').textContent = D.lede;
+document.getElementById('refs').innerHTML = 'before <code>' + esc(D.base.slice(0, 8)) + '</code> · after <code>' + esc(D.head.slice(0, 8)) + '</code> · shot ' + esc(D.at.slice(0, 16).replace('T', ' ')) + ' UTC';
+
+// Every enlargeable shot in page order, for the lightbox's arrows.
+const flat = [];
+const side = (s, which) => {
+  if (!s.src) return '<div class="none">' + esc(s.note || 'not shot') + '</div>';
+  const k = flat.length;
+  return '<button class="pic" data-k="' + k + '" data-side="' + which + '" aria-label="enlarge ' + which + '"><img loading="lazy" src="' + esc(s.src) + '" alt="' + which + '"></button>' + (s.note ? '<div class="note">' + esc(s.note) + '</div>' : '');
+};
+for (const it of D.items) {
+  const el = document.createElement('article'); el.className = 'item'; el.id = it.id;
+  let shots = '';
+  it.shots.forEach((s, n) => {
+    shots += '<div class="shot' + (s.pixel ? ' px' : '') + '"><div class="label">' + (n + 1) + '. ' + esc(s.label) + '</div><div class="pair">'
+      + '<figure><figcaption>before</figcaption>' + side(s.before, 'before') + '</figure>'
+      + '<figure><figcaption>after</figcaption>' + side(s.after, 'after') + '</figure></div></div>';
+    // pushed after both sides are written, so the pair share one entry
+    flat.push({ it, n, s });
+  });
+  el.innerHTML = '<div class="tag">' + esc(it.id) + (it.audit.length ? ' · audit ' + it.audit.map(esc).join(', ') : '') + '</div>'
+    + '<h2>' + esc(it.title) + '</h2><p class="what">' + esc(it.what) + '</p>' + shots
+    + '<div class="act"><button class="ok" aria-pressed="false">approve</button><button class="no" aria-pressed="false">deny</button><span class="saved"></span></div>'
+    + '<textarea placeholder="comment (optional)" aria-label="comment on ' + esc(it.title) + '"></textarea>';
+  list.append(el);
+  const r = { it, el, ok: el.querySelector('.ok'), no: el.querySelector('.no'), note: el.querySelector('textarea'), saved: el.querySelector('.saved'), timer: null };
+  rows.set(it.id, r);
+  r.ok.onclick = () => setVerdict(r, rev[it.id]?.verdict === 'approve' ? '' : 'approve');
+  r.no.onclick = () => setVerdict(r, rev[it.id]?.verdict === 'deny' ? '' : 'deny');
+  r.note.addEventListener('input', () => { clearTimeout(r.timer); r.saved.textContent = db ? 'saving…' : 'not saved: open the published page'; r.timer = setTimeout(() => save(r), 600); });
+  r.note.addEventListener('blur', () => { if (r.timer) { clearTimeout(r.timer); save(r); } });
+}
+
+function setVerdict(r, v) { rev[r.it.id] = { ...(rev[r.it.id] || {}), verdict: v }; paint(r); save(r); }
+function paint(r) {
+  const v = rev[r.it.id]?.verdict || '';
+  r.ok.setAttribute('aria-pressed', v === 'approve'); r.no.setAttribute('aria-pressed', v === 'deny');
+  r.el.classList.toggle('approve', v === 'approve'); r.el.classList.toggle('deny', v === 'deny');
+}
+async function save(r) {
+  r.timer = null;
+  if (!db) { r.saved.textContent = 'not saved: open the published page'; render(); return; }
+  const verdict = rev[r.it.id]?.verdict || '', comment = r.note.value;
+  rev[r.it.id] = { verdict, comment };
+  try {
+    const ref = db.collection('reviews').doc(r.it.id);
+    if (!verdict && !comment.trim()) await ref.delete();
+    else await ref.set({ verdict, comment, title: r.it.title, at: new Date().toISOString() });
+    r.saved.textContent = 'saved';
+  } catch (e) { r.saved.textContent = 'not saved: ' + (e && e.code || 'error'); }
+  render();
+}
+function render() {
+  let n = 0, done = 0, ok = 0, no = 0;
+  for (const r of rows.values()) {
+    const v = rev[r.it.id]?.verdict || '';
+    if (v) done++; if (v === 'approve') ok++; if (v === 'deny') no++;
+    const show = filter === 'all' || (filter === 'open' ? !v : filter === v);
+    r.el.hidden = !show; if (show) n++;
+  }
+  for (const b of document.querySelectorAll('#bar button')) b.setAttribute('aria-pressed', b.dataset.f === filter);
+  document.getElementById('count').textContent = n + ' shown · ' + done + ' of ' + D.items.length + ' reviewed · ' + ok + ' approved · ' + no + ' denied';
+}
+document.getElementById('bar').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.f; render(); } });
+render();
+
+// The lightbox: one shot at a time, before or after, flipped in place.
+const lb = document.getElementById('lb'), lbi = document.getElementById('lbi'), lbt = document.getElementById('lbt');
+const lbb = document.getElementById('lbb'), lba = document.getElementById('lba');
+let at = 0, showing = 'before', opener = null;
+function show() {
+  const f = flat[at], s = f.s[showing].src ? showing : (showing === 'before' ? 'after' : 'before');
+  showing = s;
+  lbi.src = f.s[s].src || ''; lbi.alt = s;
+  lbi.style.imageRendering = f.s.pixel ? 'pixelated' : '';
+  lbt.textContent = f.it.title + ' — ' + (f.n + 1) + '. ' + f.s.label + '  (' + s + ')';
+  lbb.setAttribute('aria-pressed', s === 'before'); lba.setAttribute('aria-pressed', s === 'after');
+  lbb.disabled = !f.s.before.src; lba.disabled = !f.s.after.src;
+}
+function openAt(k, which) { opener = document.activeElement; at = k; showing = which; lb.hidden = false; show(); lbb.focus(); }
+function close() { lb.hidden = true; lbi.src = ''; opener?.focus?.(); }
+list.addEventListener('click', e => { const b = e.target.closest('.pic'); if (b) openAt(+b.dataset.k, b.dataset.side); });
+lbb.onclick = () => { showing = 'before'; show(); };
+lba.onclick = () => { showing = 'after'; show(); };
+document.getElementById('lbx').onclick = close;
+document.getElementById('lbs').addEventListener('click', e => { if (e.target === e.currentTarget) close(); });
+addEventListener('keydown', e => {
+  if (lb.hidden) return;
+  if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); showing = showing === 'before' ? 'after' : 'before'; show(); }
+  else if (e.key === 'Escape') close();
+  else if (e.key === 'ArrowRight') { at = (at + 1) % flat.length; show(); }
+  else if (e.key === 'ArrowLeft') { at = (at - 1 + flat.length) % flat.length; show(); }
+});
+
+(async () => {
+  const st = document.getElementById('status');
+  try { db = window.claude ? await window.claude.use('db') : null; } catch { db = null; }
+  if (!db) { st.textContent = 'read-only here: verdicts save only on the published page, signed in'; st.className = 'status bad'; return; }
+  st.textContent = 'saves as you go';
+  db.collection('reviews').onSnapshot(snap => {
+    const seen = new Set();
+    for (const d of snap.docs) {
+      const v = d.data() || {}; seen.add(d.id); rev[d.id] = { verdict: v.verdict || '', comment: v.comment || '' };
+      const r = rows.get(d.id);
+      if (r) { if (document.activeElement !== r.note && !r.timer) r.note.value = v.comment || ''; paint(r); }
+    }
+    for (const id of Object.keys(rev)) if (!seen.has(id)) { delete rev[id]; const r = rows.get(id); if (r && !r.timer) { r.note.value = ''; paint(r); } }
+    render();
+  }, () => { st.textContent = 'lost the connection; reload the page'; st.className = 'status bad'; });
+})();
+</script></body></html>

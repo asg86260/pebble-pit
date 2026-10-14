@@ -7,7 +7,6 @@ import { brewing } from '../tower.js';
 import { ctx } from './ctx.js';
 import { cell } from './marks.js';
 import { rising as risingAt, withRise } from './rise.js';
-import { toned } from './tone.js';
 
 // The outhouse: a black shed with a pitched roof, a door cut white out of it,
 // and the moon over the door. The moon goes solid once the tower has seen to
@@ -135,7 +134,8 @@ export function drawTowerWaves() {
     if (rad < P) continue;
     // fainter as it goes out, and deeper down the purples with it, so it reads
     // as spending itself on the air rather than as a hoop
-    ctx.fillStyle = toned(MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))], (1 - k) * ink);
+    ctx.globalAlpha = (1 - k) * ink;
+    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))];
     // a cell every cell round the circumference, so it is a ring rather than a
     // dotted line
     const n = Math.max(10, Math.round((Math.PI * 2 * rad) / P));
@@ -146,5 +146,6 @@ export function drawTowerWaves() {
     }
     ctx.fill();
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }

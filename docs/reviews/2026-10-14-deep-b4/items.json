@@ -1,0 +1,258 @@
+{
+ "title": "The deep's palette (B4): before and after",
+ "lede": "Main against the B4 build: the whole deep on 6 greys and 5 purples, flat props lit purple, one flat water. Not on main yet: approve to land it.",
+ "base": "ad61ad3fd58f9e9d6c99b2c8414a59b4bcb118b6",
+ "head": "e243c0a0538de36f6f723a8db4c9402e38c0ce2f",
+ "items": [
+  {
+   "id": "floor",
+   "title": "Props and domes flat, lit purple along their tops",
+   "what": "Every station's prop and dome is one flat tone; their top edges breathe purple. Floor and plinth flat.",
+   "shots": [
+    {
+     "scene": "deep-all",
+     "label": "every station",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-seven",
+     "label": "seven stations",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-rest",
+     "label": "the party at rest",
+     "window": [
+      1280,
+      800
+     ]
+    }
+   ]
+  },
+  {
+   "id": "water",
+   "title": "One flat dark water; purple stars and silt are the only texture",
+   "what": "The dithered zones and the flowing veil are gone; the water is one grey, lit by purple stars and drifting purple silt.",
+   "shots": [
+    {
+     "scene": "deep-zones",
+     "label": "the zones",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-zones",
+     "label": "tall window",
+     "window": [
+      720,
+      1400
+     ]
+    }
+   ]
+  },
+  {
+   "id": "portal",
+   "title": "The portal still reads as a hole",
+   "what": "The water is the one kept grey above black, so the portal's black mouth stands out from it.",
+   "shots": [
+    {
+     "scene": "deep-portal",
+     "label": "the portal",
+     "window": [
+      1280,
+      800
+     ]
+    }
+   ]
+  },
+  {
+   "id": "creatures",
+   "title": "Creatures and the stream drawn flat, never darker than the water",
+   "what": "Zone creatures and the stream are flat tones from the capped palette; the far stream never sinks below the water.",
+   "shots": [
+    {
+     "scene": "deep-react-angler",
+     "label": "the angler reacting",
+     "window": [
+      1280,
+      800
+     ],
+     "gif": {
+      "seconds": 2,
+      "fps": 10
+     },
+     "wait": 0
+    },
+    {
+     "scene": "deep-react-stream-0",
+     "label": "a stream fish",
+     "window": [
+      1280,
+      800
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fight",
+   "title": "The serpent fight on the capped palette",
+   "what": "Body, cage, cracks, statuses, the bar and the fight numbers all on the deep's 6 greys and 5 purples; status names smoothed only in the deep's greys.",
+   "shots": [
+    {
+     "scene": "deep-stun",
+     "label": "stunned, mid-defense",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "party-statuses",
+     "label": "statuses",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-numbers",
+     "label": "fight numbers",
+     "window": [
+      1280,
+      800
+     ]
+    }
+   ]
+  },
+  {
+   "id": "neardeath",
+   "title": "The near-death and power-up on the capped palette",
+   "what": "The cracks, the light, the rays and the motes step through the kept tones; the rays read as light, not bars.",
+   "shots": [
+    {
+     "scene": "deep-neardeath-light",
+     "label": "the light through the cracks",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-powerup-motes",
+     "label": "the motes",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-neardeath-cracks",
+     "label": "the whole beat",
+     "window": [
+      1280,
+      800
+     ],
+     "gif": {
+      "seconds": 3.4,
+      "fps": 10
+     },
+     "wait": 0
+    }
+   ]
+  },
+  {
+   "id": "works",
+   "title": "Furnace, pods and a station going up",
+   "what": "Flat silhouettes with breathing purple tops; the furnace keeps its brick in two tones.",
+   "shots": [
+    {
+     "scene": "crusher",
+     "label": "the furnace",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "pods",
+     "label": "the pods",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-build",
+     "label": "a station going up",
+     "window": [
+      1280,
+      800
+     ]
+    }
+   ]
+  },
+  {
+   "id": "story",
+   "title": "The kill, him freed, the finale's deep part, endless",
+   "what": "The cutscenes fade by stepping toward the water instead of a wash; the letterbox rule moved to the lit grey.",
+   "shots": [
+    {
+     "scene": "deep-kill-start",
+     "label": "the kill",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-freed",
+     "label": "him freed",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "finale-gear",
+     "label": "the finale's gear",
+     "window": [
+      1280,
+      800
+     ]
+    },
+    {
+     "scene": "deep-endless",
+     "label": "endless",
+     "window": [
+      1280,
+      800
+     ]
+    }
+   ]
+  },
+  {
+   "id": "crisp",
+   "title": "Side effect in the yard: bodies and glyph stacks snap to whole pixels",
+   "what": "Snapping to whole device pixels makes the yard's bodies and the glyph stacks over stations slightly crisper.",
+   "shots": [
+    {
+     "scene": "crew",
+     "label": "the crew, 2x",
+     "window": [
+      1280,
+      800
+     ],
+     "zoom": 2
+    }
+   ]
+  }
+ ]
+}

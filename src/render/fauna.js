@@ -14,7 +14,6 @@ import { P, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_BASE, FAUNA_INK, FAUNA_BLINK, FAUN
          FAUNA_POSES, FAUNA_REACT_INK, FAUNA_SMEAR, FAUNA_SILT } from '../config.js';
 import { ctx } from './ctx.js';
 import { TONE, greyAt, purpleAt } from './deeptones.js';
-import { toned, toneNow } from './tone.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, POPULATION, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
@@ -68,7 +67,7 @@ function rowsOf(key, f, pose) {
 // its lights are. Kept by creature (its seed), frame, pose and way.
 const frames = new Map();
 function frameImage(key, f, dir, seed, dim, pose = null, vflip = false) {
-  const q = toneNow(), id = `${key}|${f}|${dir}|${seed}|${dim}|${pose}|${vflip}|${q}`;
+  const id = `${key}|${f}|${dir}|${seed}|${dim}|${pose}|${vflip}`;
   let got = frames.get(id);
   if (got) return got;
   const rows = rowsOf(key, f, pose), w = rows[0].length, h = rows.length;
@@ -80,7 +79,7 @@ function frameImage(key, f, dir, seed, dim, pose = null, vflip = false) {
     if (ch === 'L') { lights.push([at, row, c]); continue; }
     const col = tone(ch, seed, r, c, dim);
     if (!col) continue;
-    g.fillStyle = q < 1 ? toned(col, q) : col;   // a kept picture takes its tone where it is painted
+    g.fillStyle = col;
     g.fillRect(at, row, 1, 1);
   }
   got = { img, lights, w, h };

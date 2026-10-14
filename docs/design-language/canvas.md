@@ -66,12 +66,13 @@ is drawn there. The rungs and their roles are `config/deepdraw.js`:
   -- is snapped to them (`fillOnPixels`, `onPixel` in `render/frame.js`;
   `drawBody`'s square): at a zoom that is not whole, an edge laid between
   pixels is a blend of two inks.
-- No alpha. A fade in the deep steps along the capped ramps toward the water
-  (`toneDeep`, `render/tone.js`), and a scene holding the deep steps its
-  background down that way instead of washing it.
+- A fade in the deep is opacity, as in the yard (Fades, below): outside the
+  cap. A scene holding the deep washes it as it washes the yard.
 - The browser's `deep palette` group (`src/selftest/deeppalette.js`) stands the
   deep's scenes, at the window's fit and pulled in, and names any color on the
-  glass the cap does not hold, and the layer that drew it.
+  glass the cap does not hold, and the layer that drew it. It reads the frame
+  at full ink (globalAlpha held at 1 for the frame it reads), so whatever is
+  mid-fade is checked as drawn and the fade itself is exempt.
 
 ## Grid
 
@@ -96,8 +97,9 @@ is drawn there. The rungs and their roles are `config/deepdraw.js`:
   (`render/numfont.js`): the pixel face keyed in one font pixel of paper. That
   covers the corner counter, the roster, the kit stands and the stock. The
   fight's numbers keep their grey drop line.
-- **The warning.** It is a bitmap at `P / 3` a pixel, hollow, like the other
-  station marks.
+- **The warning.** The pile-full mark is the hollow triangle with a bar and a
+  dot (`warning` in `render/pilemarks.js`), as it was before the pass: the
+  bitmap at `P / 3` was tried and read worse.
 
 ## Line
 
@@ -107,37 +109,29 @@ is drawn there. The rungs and their roles are `config/deepdraw.js`:
   `render/marks.js`, or `strokeRect(x + 1, y + 1, w - 2, h - 2)` at
   `lineWidth = 2`.
 - No `ctx.arc` and no diagonal stroke in the world. Rings and slopes are cells:
-  `cell()`, the bridge's and the belt's steps, the casino lever's stem. The
-  rift's round stars and its rim are the one written exception.
+  `cell()`, the bridge's and the belt's steps. The written exceptions: the
+  rift's round stars and its rim, and the casino lever's arm, a stroke along
+  its swing, which reads better as a moving thing than as stepped cells.
 
 ## Variation
 
 - Material is never one tone. Dust carries a shade per grain and the rock is
   depth-shaded.
-- A large mass of one material deals one cell in `MASS_DEAL` a neighboring tone
-  by a stable hash (`dealt` in `render/tone.js`). This covers the muck band, the
-  hill's deep core and the star's crust. The cauldrons take the hut's grain.
+- The muck band, the hill's deep core, the star's crust and the cauldrons stay
+  flat: a hash-dealt grain through them was tried and read worse.
 - Yard buildings are flat ink silhouettes, and so is what is built in the
   deep: one rung each, its top edges lit (the deep's palette, above). The deep's
   only texture is its stars and its silt.
 
 ## Fades
 
-A fade steps down its own ramp, toward the ground it is on, in `FADE_STEPS`
-held steps. It never thins with alpha.
-
-- `toned(c, k)` gives a color `k` of the way there, snapped to its ramp.
-  `toned(c, k, true)` fades toward black, for the rift's hole. In the deep
-  every fade goes toward its water, on its capped ramps.
-- `withTone(g, k, fn)` and `toneOn(g, k)` fade everything a stretch of drawing
-  sets. `cellImage().begin(c, r, k)` does the same for a cached picture, and a
-  picture painted once and kept is kept a tone apiece (`toneNow`).
-- `globalAlpha` is left only for:
-  - the press's scanlines;
-  - whole-frame veils (the recede's wash in the yard, the crew sight veil);
-  - the crew-view fade switch, which is there to see through;
-  - the yard's grit's difference patch (in the deep a chip is the deep's
-    purple, `DEEP_GRIT_RUNGS`).
+Fading by opacity is an animation effect, not a color: it is outside the
+palette rules, the deep's cap included. A thing coming or going fades
+smoothly with `globalAlpha`, and the tones it passes through mid-fade are not
+palette tones and need not be. The palette rules are about what is drawn at
+full ink. Stepping a fade down a ramp in held tones was tried and read worse;
+the smooth fade stays. A scene holding the deep washes it as it washes the
+yard.
 
 ## Motion
 
@@ -149,10 +143,11 @@ held steps. It never thins with alpha.
     against the ribs.
   - The jaw is `JAW_POSES` (shut, ajar, gape) through `jawPose`: the bite, the
     snatch and the roar.
-- No flash and no shake.
-  - A strike is the bolt itself, with no pane over the window.
+- No shake. The strike's flash is the one flash, and it is kept for effect:
+  a dark pane over the frame for `BOLT_FLASH_S` with the bolt white on top
+  (`drawFlash`), never in the deep.
   - A strained shield leans a held cell at a time (`SHIELD_LEAN`).
-  - Throbs and drifts move in held steps on whole cells.
-  - Nothing appears without a fade or a build.
+  - Drifts move in held steps on whole cells; a throb of opacity (the sink's warning) is a fade, and smooth.
+  - Nothing appears without a fade or a build; a fade is a smooth one.
 - The press is scanlines only. There is no vignette, because the game draws no
   gradient.

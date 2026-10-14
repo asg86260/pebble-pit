@@ -21,15 +21,13 @@ import { NUM_FONT_PX, NUM_FACE, NUM_DROP, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_IN_S,
          NUM_KICK_BIG, NUM_KICK_LINE, NUM_KICK_LINE_H, NUM_HEAL_SIDE, NUM_HEAL_DROP_BY, NUM_HEAL_RISE,
          NUM_HEAL_SWELL, NUM_HEAL_SWELL_LAG, NUM_HEAL_FADE, NUM_HEAL_FACES, NUM_HEAL_DROPS,
          NUM_BAR_IN_S, NUM_BAR_BITE_S } from '../config.js';
-import { toned } from './tone.js';
 
 // On the dark page every color is mapped by its lightness (ink.js), and the
 // deep there is drawn turned so the map brings it back: the numbers too.
 const seen = c => darkPage ? turned(c) : c;
 
-// A number's weight over its life, in whole steps: in quickly, held, out
-// over its last share, each step a rung down its ramp toward the deep's black
-// (render/tone.js), never a thinning.
+// A number's opacity over its life, in whole steps, so it passes through the
+// tones of whatever is behind it: in quickly, held, out over its last share.
 function lifeK(age, life) {
   const k = age < NUM_IN_S ? age / NUM_IN_S : age > life * (1 - NUM_OUT) ? (life - age) / (life * NUM_OUT) : 1;
   return Math.round(Math.max(0, Math.min(1, k)) * NUM_STEPS) / NUM_STEPS;
@@ -82,6 +80,7 @@ export function drawFightNumbers() {
       const v = (age - leave) / NUM_BAR_IN_S;
       if (v >= 1) {
         if (age - leave - NUM_BAR_IN_S < NUM_BAR_BITE_S) {
+          ctx.globalAlpha = 1;
           ctx.fillStyle = seen(face);
           for (const [dx, dy] of [[-2, -2], [1, -3], [-1, 1], [2, 2]])
             ctx.fillRect(Math.round(into.x + dx * px), Math.round((dy < 0 ? into.top : into.top + into.h) + dy * px), px, px);
@@ -90,6 +89,7 @@ export function drawFightNumbers() {
       }
       const from = at(leave), q = v * v;
       const x = from.x + (into.x - from.x) * q, y = from.y + (into.y + (GH + 1) * size / 2 - from.y) * q;
+      ctx.globalAlpha = 1;
       write(sheetOf(size, face, drop), str, size, Math.round(x / size) * size - Math.round(widthOf(str, size) / 2),
             Math.round(y / size) * size);
       continue;
@@ -99,8 +99,8 @@ export function drawFightNumbers() {
       const f = Math.min(NUM_HEAL_FACES.length - 1,
         Math.floor(Math.max(0, age / life - NUM_HEAL_FADE) / (1 - NUM_HEAL_FADE) * NUM_HEAL_FACES.length));
       const p = at(age);
-      const k = age < NUM_IN_S ? 0.5 : 1;
-      write(sheetOf(px, toned(NUM_HEAL_FACES[f], k, true), toned(NUM_HEAL_DROPS[f], k, true)), str, px, Math.round(p.x - widthOf(str, px) / 2),
+      ctx.globalAlpha = age < NUM_IN_S ? 0.5 : 1;
+      write(sheetOf(px, NUM_HEAL_FACES[f], NUM_HEAL_DROPS[f]), str, px, Math.round(p.x - widthOf(str, px) / 2),
             Math.round(p.y), i => Math.round(Math.sin(age * NUM_HEAL_SWELL - i * NUM_HEAL_SWELL_LAG)));
       continue;
     }
@@ -110,13 +110,14 @@ export function drawFightNumbers() {
     const p = at(age);
     const left = Math.round(p.x / size) * size - Math.round(widthOf(str, size) / 2);
     const bottom = Math.round(p.y / size) * size;
+    ctx.globalAlpha = a;
     if (size === big && p.rising) {
       // held speed lines under a big one on its way up
-      ctx.fillStyle = seen(toned(NUM_KICK_LINE, a, true));
+      ctx.fillStyle = seen(NUM_KICK_LINE);
       const mid = left + Math.round(widthOf(str, size) / 2);
       for (const d of [-2, 0, 2]) ctx.fillRect(mid + d * size, bottom + 2 * size, size, NUM_KICK_LINE_H * u);
     }
-    write(sheetOf(size, toned(NUM_FACE, a, true), toned(NUM_DROP, a, true)), str, size, left, bottom);
+    write(sheetOf(size, NUM_FACE, NUM_DROP), str, size, left, bottom);
   }
   ctx.restore();
 }

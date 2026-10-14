@@ -48,7 +48,6 @@ import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, TONE, LIGHT, breathAt } from './deeptones.js';
-import { toneOn, toned, toneNow } from './tone.js';
 
 const isFighter = w => w.type === TYPE.FIGHTER;
 
@@ -58,9 +57,6 @@ const isFighter = w => w.type === TYPE.FIGHTER;
 export { GREYS, PURPLES };
 const MOTE_TONES = Object.fromEntries(Object.entries(DEEP_MOTE_TINTS)
   .map(([k, v]) => [k, v.tones.map(i => (v.purple ? PURPLES : GREYS)[i])]));
-// A picture painted once and kept takes its tone where it is painted: kept a
-// tone apiece (render/tone.js, `toneNow`).
-const inked = (c, q) => (q < 1 ? toned(c, q) : c);
 // The breathing light along a top edge, as drawn, at `ms`.
 const breath = ms => PURPLES[breathAt(ms)];
 
@@ -81,13 +77,6 @@ export function deepWindow() {
 // since the water is the one grey over black and a darker star is a hole.
 const STAR_SHARE = 7;   // stars in seven that are purple: all of them
 const STARS = PURPLES.map((c, i) => (i < DEEP_PURPLE.dim ? null : c));
-// and as a scene holding the deep has them, a ramp a step of its fade
-const starsAt = new Map();
-const starsOf = q => {
-  let r = starsAt.get(q);
-  if (!r) starsAt.set(q, r = STARS.map(c => c && inked(c, q)));
-  return r;
-};
 export function drawDeepWater() {
   const { x0, y0, x1, y1 } = deepWindow();
   // The whole window, top edge to floor: the deep has no surface on screen
@@ -99,7 +88,7 @@ export function drawDeepWater() {
   const top = y0, bottom = Math.min(y1, deepFloor());
   if (bottom <= top) return;
   paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
-                    deep: DEEP_WATER_DEPTH, tones: GREYS, magic: starsOf(toneNow()), t: now(),
+                    deep: DEEP_WATER_DEPTH, tones: GREYS, magic: STARS, t: now(),
                     veil: false, magicShare: STAR_SHARE });
   ctx.fillStyle = '#000';
 }
@@ -110,8 +99,7 @@ export function drawDeepWater() {
 // bed's own painter (deep/scales.js lays it): a plot like the pit's. Deep
 // enough for the tallest window the deep is framed in, and as wide as the
 // deep or the window, whichever is wider: a window wider than the deep is
-// held at its left end and shows past its right one. Two fills, so a scene
-// holding the deep steps it down its ramp as it does everything else.
+// held at its left end and shows past its right one. Two flat fills.
 const GROUND_ROWS = 40;
 export function drawDeepFloor() {
   const win = deepWindow();
@@ -160,7 +148,7 @@ const isBrick = ch => ch === '#' || ch === '+' || ch === '-';
 const topEdge = (r, col) => isBrick(FURNACE[r][col]) && !isBrick(FURNACE[r - 1]?.[col]);
 let furnace = null;
 function crusherImage(c, t) {
-  const lit = breath(t), q = toneNow(), id = `${c.x}|${c.y}|${lit}|${q}`;
+  const lit = breath(t), id = `${c.x}|${c.y}|${lit}`;
   if (furnace && furnace.id === id) return furnace;
   const img = document.createElement('canvas');
   img.width = FURNACE[0].length * P; img.height = FURNACE.length * P;
@@ -169,7 +157,7 @@ function crusherImage(c, t) {
     for (let col = 0; col < FURNACE[r].length; col++) {
       const ink = topEdge(r, col) ? lit : SPRITE_INK[FURNACE[r][col]];
       if (!ink) continue;
-      g.fillStyle = inked(ink, q);
+      g.fillStyle = ink;
       g.fillRect(col * P, r * P, P, P);
     }
   }
@@ -295,7 +283,7 @@ const toneOf = (ramp, i, lit) => (ramp === 'top' ? lit : (ramp === 'p' ? PURPLES
 // the prop and whether it is lit; it is drawn at wherever its station stands.
 const painted = new Map();
 function propImage(key, lit, light) {
-  const q = toneNow(), id = `${key}|${lit ? 8 : 0}|${light}|${q}`;
+  const id = `${key}|${lit ? 8 : 0}|${light}`;
   let img = painted.get(id);
   if (img) return img;
   const cells = propCells(key, lit);
@@ -303,17 +291,17 @@ function propImage(key, lit, light) {
   img.width = Math.max(...cells.map(c => c[0] + 1)) * P;
   img.height = Math.max(...cells.map(c => c[1] + 1)) * P;
   const g = img.getContext('2d');
-  for (const [c, r, ramp, i] of cells) { g.fillStyle = inked(toneOf(ramp, i, light), q); g.fillRect(c * P, r * P, P, P); }
+  for (const [c, r, ramp, i] of cells) { g.fillStyle = toneOf(ramp, i, light); g.fillRect(c * P, r * P, P, P); }
   painted.set(id, img);
   return img;
 }
 
 // The plinth under a station (`plinthRect`): a lit top course over flat
 // stone, each course a cell further out than the one over it. The same for
-// every station of one width, so painted once a width (and a tone).
+// every station of one width, so painted once a width.
 const plinths = new Map();
 function plinthImage(b) {
-  const cols = b.w / P, steps = b.step / P, q = toneNow(), id = `${cols}|${steps}|${q}`;
+  const cols = b.w / P, steps = b.step / P, id = `${cols}|${steps}`;
   let img = plinths.get(id);
   if (img) return img;
   const across = cols + 2 * steps * (PLINTH_H - 1);
@@ -322,7 +310,7 @@ function plinthImage(b) {
   const g = img.getContext('2d');
   for (let r = 0; r < PLINTH_H; r++) {
     const l = steps * (PLINTH_H - 1 - r), n = cols + 2 * steps * r;
-    g.fillStyle = inked(GREYS[r === 0 ? PLINTH_TONES.top : PLINTH_TONES.body], q);
+    g.fillStyle = GREYS[r === 0 ? PLINTH_TONES.top : PLINTH_TONES.body];
     g.fillRect(l * P, r * P, n * P, P);
   }
   plinths.set(id, img);
@@ -338,7 +326,7 @@ function drawPlinth(st) {
 // for every dome of one size, so painted once a size.
 const domes = new Map();
 function domeImage(w, wall) {
-  const q = toneNow(), id = `${w}|${wall}|${q}`;
+  const id = `${w}|${wall}`;
   let img = domes.get(id);
   if (img) return img;
   const cols = w / P, r = cols / 2, rows = Math.ceil(r) + wall;
@@ -353,7 +341,7 @@ function domeImage(w, wall) {
   const g = img.getContext('2d');
   for (let y = 0; y < rows; y++) for (let c = 0; c < cols; c++) {
     if (!inside(c, y)) continue;
-    g.fillStyle = inked(inside(c, y - 1) ? GREYS[DOME_TONES.wall] : PURPLES[DOME_TONES.edge], q);
+    g.fillStyle = inside(c, y - 1) ? GREYS[DOME_TONES.wall] : PURPLES[DOME_TONES.edge];
     g.fillRect(c * P, y * P, P, P);
   }
   domes.set(id, img);
@@ -525,14 +513,14 @@ export function drawSwimmers() {
   ctx.beginPath();
   ctx.rect(deepX0() - P * 8, cut, deepX1() - deepX0() + P * 16, deepFloor() - cut + P * 4);
   ctx.clip();
+  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     if (w.lifted || !inTheDeep(w)) continue;   // the one in your hand: `drawHeld`
     // a fighter at a built station is the fighters' layer's (render/arms.js)
     if (isFighter(w) && (S.stations || []).some(st => st.built && st.id === w.station)) continue;
     const ink = bodyInk(w);                    // a scene holding the deep (render/recede.js)
     if (ink <= 0) continue;
-    const end = toneOn(ctx, ink);          // down its ramps, not thinner
-    if (!end) continue;
+    ctx.globalAlpha = was * ink;
     const x = Math.round(w.x), y = Math.round(w.y);
     drawBody(x, y);
     // A gatherer's handful, overhead two abreast, each scale as it is. A
@@ -542,8 +530,8 @@ export function drawSwimmers() {
       drawMark(w.load?.[i] || 1, x + (WORKER - P * 2) / 2 + (i % 2) * P + P / 2,
                y - P * (Math.floor(i / 2) + 1) + P / 2);
     }
-    end();
   }
+  ctx.globalAlpha = was;
   ctx.restore();
   ctx.fillStyle = '#000';
 }

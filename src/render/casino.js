@@ -27,7 +27,6 @@ import { ctx } from './ctx.js';
 import { drawCoin, rule } from './marks.js';
 import { drawGrid } from './ground.js';
 import { rising as risingAt, withRise } from './rise.js';
-import { toned } from './tone.js';
 
 // --- the sign -----------------------------------------------------------------
 // The one place in this yard with writing on it, and it has earned it: every
@@ -464,11 +463,11 @@ function drawControl(l) {
   const ex = x + dir * Math.cos(a) * reach, ey = y - Math.sin(a) * reach;
   ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
   knob(x, y, ARM_PIVOT);
-  // the stem in whole cells along its line, never a stroke
-  const steps = Math.max(1, Math.round(reach / P));
-  for (let i = 0; i <= steps; i++)
-    ctx.fillRect(Math.round((x + (ex - x) * i / steps - P / 2) / P) * P,
-                 Math.round((y + (ey - y) * i / steps - P / 2) / P) * P, P, P);
+  ctx.lineWidth = P;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
   knob(ex, ey, ARM_KNOB);
   // The ball's face says which way the arm is working, past the dead band:
   // a plus cut out of it pouring in, a minus of the same stroke pouring
@@ -534,9 +533,11 @@ export function drawSparks() {
     // A grain on its way out of the game fades as it goes. Everything else in
     // this yard either is somewhere or is not; this is the one thing that is
     // *leaving*, and it should look like it rather than blinking off.
-    ctx.fillStyle = k.fade ? toned(shadeOf(k.s), 1 - k.t / TABLE_LIFE) : shadeOf(k.s);
+    if (k.fade) ctx.globalAlpha = Math.max(0, 1 - k.t / TABLE_LIFE);
+    ctx.fillStyle = shadeOf(k.s);
     const d = k.big ? P * 2 : P;               // a hand's confetti is two cells a square
     ctx.fillRect(Math.round(k.x), Math.round(k.y), d, d);
+    ctx.globalAlpha = 1;
   }
   ctx.fillStyle = '#000';
 }

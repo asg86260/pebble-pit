@@ -64,7 +64,7 @@ export const NOTICE_KNOBS = [
 export const BOARD_W = P * 13;
 export const BOARD_H = P * 8;          // the panel
 export const BOARD_LEG = P * 3;        // and how far it stands off the ground
-// how long the board takes to come up, down its ramp, the first time a grain is banked
+// how long the board takes to fade in, the first time a grain is banked
 export const NOTICEBOARD_IN_MS = 600;
 // What the sheets pinned to it are drawn in: paper, not dust. The heap shades
 // top out at a mid grey and read as dirt against the black panel; these are

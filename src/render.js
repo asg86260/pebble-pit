@@ -41,7 +41,7 @@ import { drawFilter, drawClods } from './render/filter.js';
 import { drawShocks } from './render/shock.js';
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
-import { drawBolt, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
+import { drawBolt, drawFlash, drawMuck, drawPuffs, drawRain, drawRainBack, drawSmog } from './render/smog.js';
 import { drawDoseMotes, drawSmoke } from './render/stations.js';
 import { drawNoticeboard } from './render/noticeboard.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
@@ -66,7 +66,6 @@ import { drawHome } from './render/home.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
 import { wash, setPass, backInk, byInk, hudInk, drawLetterbox } from './render/recede.js';
-import { withTone, toneDeep } from './render/tone.js';
 
 // The drawing side's public surface: the rest of the game imports every one of
 // these from render.js and has no business knowing which file each is in.
@@ -309,6 +308,7 @@ const LAYERS = [
 
   // A strike's instant, a dark pane over the finished frame. In screen pixels
   // it would be shared with the deep, which is under water and has no sky.
+  { name: 'flash', draw: drawFlash, when: () => S.view !== 'deep' },
 
   { name: 'press', draw: pressFrame },           // and then the filter, over the finished frame
 ];
@@ -361,17 +361,8 @@ const inHalf = (layer, i, deep) =>
 // hold on a window taller than the deep.
 // The body in your hand goes where the pointer goes, so it is the pointer's.
 const PINNED = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'held', 'cursor', 'counter', 'serpent bar',
-                        'press']);
+                        'flash', 'press']);
 const halfLine = () => (S.worldH + deepTop()) / 2;
-
-// Which side of the deep's negative a layer draws on, for its fades
-// (render/tone.js, `toneDeep`): the deep's world before the turn, its numbers
-// and posts after it, and the bar over the glass; nothing in the yard, and
-// none of the yard's reading on the glass.
-const TURN = LAYERS.findIndex(l => l.name === 'deep invert');
-const WORLD_END = LAYERS.findIndex((l, i) => i > TURN && l.name === 'world:done');
-const deepSide = (layer, i) => (layer.name === 'serpent bar' ? 'post'
-  : i < TURN ? 'pre' : i < WORLD_END ? 'post' : null);
 
 // One half, every layer that belongs to it, with whatever camera is standing.
 // While a scene holds the yard the layers it is about are held back from the
@@ -387,23 +378,20 @@ function drawHalf(deep) {
     if (layer.when && !layer.when()) continue;
     if (held && (front.has(layer.name) || MIXED.has(layer.name))) later.push(i);
     if (held && front.has(layer.name)) continue;
-    toneDeep(deep ? deepSide(layer, i) : null);
-    // The deep holds no wash (an alpha is a color it does not hold): its
-    // background steps down its own rungs instead, a layer at a time.
     if (held && layer.name === 'recede') {
-      if (!deep) drawLayer(layer, i, deep);
+      drawLayer(layer, i, deep);
       setPass('front');
       for (const j of later) drawLayer(LAYERS[j], j, deep);
       setPass('back');
       continue;
     }
     const ink = !held ? 1 : FISH.has(layer.name) ? byInk() : HUD.has(layer.name) ? hudInk()
-              : AFTER_WASH.has(layer.name) || (deep && i < TURN) ? backInk() : 1;
+              : AFTER_WASH.has(layer.name) ? backInk() : 1;
     if (ink <= 0) continue;
-    // faded by tone down each layer's own ramps, not by alpha (render/tone.js)
-    withTone(ctx, ink, () => drawLayer(layer, i, deep));
+    if (ink < 1) ctx.globalAlpha = ink;
+    drawLayer(layer, i, deep);
+    if (ink < 1) ctx.globalAlpha = 1;
   }
-  toneDeep(null);
 }
 
 function drawLayer(layer, i, deep) {
@@ -411,9 +399,7 @@ function drawLayer(layer, i, deep) {
   // takes ink out of it, or takes it out of the picture, so the buildings
   // behind a late yard's crowd can be read (prefs.js, `crewView`). Only the
   // picture: the bodies still walk and work where nobody is drawing them.
-  // The alpha is put back the same frame. The one fade left to alpha: it is
-  // there to see the yard through the crowd, and a body toned paler would
-  // still cover what stands behind it.
+  // The alpha is put back the same frame: nothing else is ever drawn faint.
   const view = layer.dim ? crewView() : 'show';
   if (view === 'hide') return;
   const faint = view === 'fade';

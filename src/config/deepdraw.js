@@ -10,9 +10,9 @@ import { ABYSS_TONES, ABYSS_MAGIC_TONES } from './rift.js';
 // The deep draws from six greys and five purples and nothing else: every
 // other rung of the abyss's two ramps (ABYSS_TONES, ABYSS_MAGIC_TONES), plus
 // white for what is made or held -- the kits, the bodies, the serpent's
-// hide, the fire's heart -- and the scales' own coin colors. No alpha: a
-// thing fades by stepping down these rungs (render/tone.js), never by
-// thinning, because a thinned tone is a color the deep does not hold.
+// hide, the fire's heart -- and the scales' own coin colors. A fade is
+// opacity, an animation effect, and outside the cap: what is drawn at full
+// ink holds to it.
 // The browser's `deep palette` group (src/selftest/deeppalette.js) holds it
 // there (docs/design-language/canvas.md, "The deep's palette").
 export const DEEP_GREY_RUNGS = [0, 2, 4, 6, 8, 10];
@@ -143,8 +143,8 @@ export const DEEP_MOTE_TINTS = {
   silt:  { tones: [DEEP_PURPLE.dim, DEEP_PURPLE.low, DEEP_PURPLE.low, DEEP_PURPLE.mid], purple: true },
   fleck: { tones: [DEEP_GREY.lit, DEEP_GREY.pale, DEEP_GREY.stone, DEEP_GREY.lit] }
 };
-// A chip off a builder's blows in the deep, a held step down these as it goes (render/buildsites.js).
-export const DEEP_GRIT_RUNGS = [DEEP_PURPLE.dim, DEEP_PURPLE.low, DEEP_PURPLE.mid];
+// A chip off a builder's blows in the deep, fading out by opacity as it goes (render/buildsites.js).
+export const DEEP_GRIT_RUNG = DEEP_PURPLE.mid;
 export const DEEP_SILT = 150;        // silt motes hanging in a window of the deep
 export const DEEP_SILT_SINK = 0.04;  // px a frame the silt settles, against the current's push
 export const DEEP_FLECK_EVERY = 0.35; // seconds between flecks off a swaying coil

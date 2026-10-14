@@ -26,7 +26,6 @@ import { ctx } from './ctx.js';
 import { flagRip } from '../flagwave.js';
 import { cell } from './marks.js';
 import { groundOf } from '../deep/place.js';
-import { toned } from './tone.js';
 import { smoothstep as ease } from '../motion.js';
 
 // Whether a station is offering is `hasOffer`, one rule for every station, the
@@ -204,15 +203,15 @@ function ring(rect, which, k, reach, ink) {
   const from = { x: x + P / 2, y: y - FLAG_POLE * P };
   const rad = k * reach;
   if (rad < P) return;
+  ctx.globalAlpha = (1 - k) * ink;
   const n = Math.max(10, Math.round((Math.PI * 2 * rad) / P));
   ctx.beginPath();
   for (let j = 0; j < n; j++) {
     const a = (j / n) * Math.PI * 2;
     cell(from.x + Math.cos(a) * rad, from.y + Math.sin(a) * rad);
   }
-  ctx.fillStyle = toned('#000', (1 - k) * ink);
   ctx.fill();
-  ctx.fillStyle = '#000';
+  ctx.globalAlpha = 1;
 }
 const drawOpeningWave = (rect, which, since, t) =>
   ring(rect, which, (t - since) / OFFER_WAVE_MS, OFFER_WAVE_R, OFFER_WAVE_INK);

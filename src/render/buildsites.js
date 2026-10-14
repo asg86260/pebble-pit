@@ -1,7 +1,7 @@
 // A site with work on it looks like a building site: barriers, tape, and the
 // chips off the builder's hammer.
 
-import { P, INVERT_PROBE, PARTY_IDS, DEEP_GRIT_RUNGS } from '../config.js';
+import { P, INVERT_PROBE, PARTY_IDS, DEEP_GRIT_RUNG } from '../config.js';
 import { PURPLES } from './deeptones.js';
 import { S } from '../state.js';
 import { SITES, rowFor, siteBox, worksAt } from '../works.js';
@@ -80,16 +80,19 @@ export function drawGrit() { paintGrit(false); }
 // The same chips struck in the deep, painted with the deep's layers: the water
 // is laid down after the yard's, and silt under it was never seen. Not the
 // frame turned over at an alpha, as in the yard: that is a tone the deep's
-// palette does not hold. A chip is the deep's light, a held step down the
-// kept purples (DEEP_GRIT_RUNGS, dimmest first) as it goes.
+// palette does not hold. A chip is the deep's light, one kept purple
+// (DEEP_GRIT_RUNG), fading out by opacity as it goes.
+const SILT = PURPLES[DEEP_GRIT_RUNG];
 export function drawSilt() {
+  ctx.fillStyle = SILT;
   for (const g of S.grit) {
     if (!g.sea) continue;
     const a = fade(g);
     if (a <= 0) continue;
-    ctx.fillStyle = PURPLES[DEEP_GRIT_RUNGS[Math.min(DEEP_GRIT_RUNGS.length - 1, Math.floor(a * DEEP_GRIT_RUNGS.length))]];
+    ctx.globalAlpha = Math.min(1, a);
     ctx.fillRect(Math.round(g.x / P) * P, Math.round(g.y / P) * P, P, P);
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
