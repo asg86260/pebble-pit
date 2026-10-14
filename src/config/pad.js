@@ -3,12 +3,13 @@
 // padpage.js and render/padmark.js read.
 
 import { P } from './yard.js';
+import { PURPLE } from './palette.js';
 
 // --- the marker ---------------------------------------------------------------
-// The accent, the one color the game draws besides its grays: the capstone
-// purple of shelf.css, and the deep's lighter one down there.
-export const PAD_ACCENT = '#6f36c9';
-export const PAD_DEEP_ACCENT = '#a979ef';
+// The accent, the one color the game draws besides its grays: a rung of the
+// one purple (palette.js), and its lit rung down in the deep.
+export const PAD_ACCENT = PURPLE[10];
+export const PAD_DEEP_ACCENT = PURPLE[13];
 // The halo the marker wears so it reads over ink, grey and the dark: the
 // paper in the yard, the deep's own dark down there (the mock's `--deep`).
 export const PAD_HALO = '#ffffff';

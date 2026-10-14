@@ -16,7 +16,7 @@
 //  * Potency is climbed one tonic at a time; batch speed, dose length, batch
 //    size and carry are the building's.
 
-import { LADDER, BREW_BILL, BREW_MS, rungValue, TONIC_STEW_SPEED, TONIC_STRONG_STRENGTH, TONIC_BRACE_CRIT, APOTH_POTS_MAX, POT_COST, POT_RATE, DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH, POT_W, POT_H, WORKER, APOTH_HUT_W, APOTH_HUT_H, P, DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
+import { LADDER, BREW_BILL, BREW_MS, rungValue, TONIC_STEW_SPEED, TONIC_STRONG_STRENGTH, TONIC_BRACE_CRIT, APOTH_POTS_MAX, POT_COST, POT_RATE, DOSE_CARRY, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH, POT_W, POT_H, WORKER, APOTH_HUT_W, APOTH_HUT_H, P, DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE, COIN } from './config.js';
 import { S, apothecary } from './state.js';
 import { posts } from './roster.js';
 import { now, frames } from './clock.js';
@@ -59,7 +59,8 @@ export const carryDoses = () => DOSE_CARRY;
 // on. `color` is the liquid: the shelf, the carried vial, the fire under the
 // pot and the plume off a dosed body all read as the same brew by color
 // (`tonicColor`, render/crew.js, render/apothecary.js). The bracing tonic is
-// red because it is priced in sparks and red is the machines' color.
+// red because it is priced in sparks and red is the machines' color. Each is
+// its reagent coin's own tone (COIN, config/palette.js), never a near copy.
 // `short` is the one word that tells the three apart on a row that already
 // says what it is doing ("a stronger strong brew" is a joke).
 // `jobs` is who a brew reaches: haulers and purifiers have no crit, so a dose
@@ -70,13 +71,13 @@ const EVERY = YARD_JOBS.filter(j => j !== JOB.STIR);
 const ROLLERS = EVERY.filter(j => j !== JOB.HAUL && j !== JOB.PURIFY);
 export const TONICS = [
   { key: 'stew',   name: msg('tonic-stew'),   reagent: 'spore', kind: 'speed',
-    base: TONIC_STEW_SPEED,      unit: 'faster',   color: '#5fb84f', short: 'stew',
+    base: TONIC_STEW_SPEED,      unit: 'faster',   color: COIN.crop, short: 'stew',
     jobs: EVERY },                                                               // green
   { key: 'strong', name: msg('tonic-strong'),   reagent: 'shard', kind: 'strength',
-    base: TONIC_STRONG_STRENGTH, unit: 'stronger', color: '#4a86c7', short: 'brew',
+    base: TONIC_STRONG_STRENGTH, unit: 'stronger', color: COIN.ore, short: 'brew',
     jobs: EVERY },                                                               // blue
   { key: 'brace',  name: msg('tonic-brace'), reagent: 'spark', kind: 'crit',
-    base: TONIC_BRACE_CRIT,      unit: 'crit',     color: '#e04848', short: 'tonic',
+    base: TONIC_BRACE_CRIT,      unit: 'crit',     color: COIN.spark, short: 'tonic',
     jobs: ROLLERS }                                                              // red
 ];
 // A recipe is hidden until its reagent has been seen: a brew priced in a

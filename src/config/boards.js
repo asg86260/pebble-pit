@@ -1,6 +1,8 @@
 // The boards: the numbers behind what a row looks like and what the books
 // measure.
 
+import { COIN, GREY } from './palette.js';
+
 // --- the rungs under a row's name -------------------------------------------
 // How far up a ladder you are is a row of pips under the words. Two numbers,
 // and only two: the pips are drawn on nine boards and every one wants the same
@@ -99,8 +101,8 @@ export const SHELF_FOLLOW = 2;      // px a lifted tile leans toward the cursor 
 // mark is ink and paper, the deep being the one place in the game with no
 // color in it, so its stroke is a dark grey: a coin of its own, and never the
 // light grey of a glyph you cannot pay for.
-export const SHELF_INK = { spore: '#2e9e4b', shard: '#2f5fd0', spark: '#d93a25', scale: '#5a5a5a',
-                           short: '#8c8c8c', ghost: '#8c8c8c' };  // ghost: the outline of the unbuilt part of a glyph
+export const SHELF_INK = { spore: COIN.crop, shard: COIN.ore, spark: COIN.spark, scale: GREY[7],
+                           short: GREY[5], ghost: GREY[5] };  // ghost: the outline of the unbuilt part of a glyph
 
 // The shield sold on the story's card (objbarrier.js): how long its block
 // takes to fade out before it comes back in its next shape (on offer, then

@@ -1,4 +1,5 @@
 import { P } from './yard.js';
+import { GREY } from './palette.js';
 
 // --- the air ----------------------------------------------------------------
 // Nothing stands in the background of this game, so the dust hanging in the
@@ -50,7 +51,7 @@ export const SMOG_TINTS = {
 // further back is paler, which is what makes the bands read as depth.
 export const AIR_KINDS = ['dust', 'shard', 'spore'];
 export const AIR_TINTS = {
-  dust:  ['#dedede', '#c2c2c2', '#a6a6a6'],
+  dust:  [GREY[2], GREY[3], GREY[4]],
   shard: ['#ccd8f4', '#a8bce9', '#8aa2dc'],
   spore: ['#cfe8d7', '#a4d2b2', '#80bf93']
 };

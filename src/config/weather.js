@@ -1,4 +1,5 @@
 import { P } from './yard.js';
+import { GREY } from './palette.js';
 
 // --- the sky ----------------------------------------------------------------
 // Clouds and birds, and nothing else up there: the far end of the parallax the
@@ -165,10 +166,10 @@ export const STINK_EVERY = 3;        // one column in this many gets one
 // steps between are mixed. The base stays lighter than the lightest rock
 // shade, since the six shades are the rock's and nothing in the sky borrows
 // them.
-export const CLOUD_TONE = '#dadada';
-export const CLOUD_UNDER = '#909090';
+export const CLOUD_TONE = GREY[2];
+export const CLOUD_UNDER = GREY[5];
 export const CLOUD_DRIFT = 0.05;  // world pixels a frame, before its depth is taken off
-export const BIRD_TONE = '#5f5f5f';
+export const BIRD_TONE = GREY[7];
 export const BIRD_GAP = 26000;    // milliseconds between one lot of birds and the next
 export const BIRD_FLOCK = 4;      // at most this many in a lot
 // A bird can be clicked, and shakes a few grains loose as it bolts. The amount

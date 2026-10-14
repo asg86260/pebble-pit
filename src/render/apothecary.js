@@ -72,8 +72,8 @@ function drawGrained(rows, x, y) {
 
 // --- a tonic's fire -----------------------------------------------------------
 // Each pot's flame runs its own brew's color, so which pot is on which recipe
-// reads from across the yard without a label. A tonic with no color falls back
-// to a plain fire.
+// reads from across the yard without a label. A pot with no tonic burns a
+// plain fire, ink washed toward the paper.
 const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const mix = (h, toward, amt) => {
   const [r, g, b] = hex(h);
@@ -82,7 +82,7 @@ const mix = (h, toward, amt) => {
 };
 function flameOf(key) {
   const t = TONICS.find(x => x.key === key);
-  const c = t ? t.color : '#f5851f';
+  const c = t ? t.color : '#000000';
   // Foot washed out toward white, middle a shade of the brew, tip the brew at
   // full strength.
   return { hot: mix(c, 255, FLAME_HOT), mid: mix(c, 255, FLAME_TIP), tip: c,

@@ -3,6 +3,7 @@
 // lives here; a magic number in a module is a bug.
 import { msg } from '../lang.js';
 import { P } from './yard.js';
+import { PURPLE } from './palette.js';
 
 // --- the view, and the glide between the two halves -----------------------------
 // The glide is one clock: a ripple out of the wizards' portal that the deep
@@ -216,7 +217,7 @@ export const SNATCH_NECK_W = P * 7;
 // cells at the tip; the crest in the abyss's purples, as seen in the yard.
 export const SNATCH_HINGE = 10;
 export const SNATCH_GAPE = 4;
-export const SNATCH_CREST = ['#6a2fbe', '#9b5de5'];
+export const SNATCH_CREST = [PURPLE[10], PURPLE[12]];
 export const SNATCH_HIDE = ['#000', '#1c1c21', '#26262c', '#6e6e78'];   // edge, hide, the lattice, the brow
 
 export const DEEP_DRAW_KNOBS = [
@@ -293,8 +294,8 @@ export const NUM_HEAL_FADE = 0.5;
 export const NUM_HEAL_LEAVE_S = 0.7;
 export const NUM_BAR_IN_S = 0.26;
 export const NUM_BAR_BITE_S = 0.12;
-export const NUM_HEAL_FACES = ['#9b5de5', '#6a2fbe', '#5c2ba6', '#412465', '#2d1d47'];
-export const NUM_HEAL_DROPS = ['#2d1d47', '#241739', '#1b112c', '#130b20', '#130b20'];
+export const NUM_HEAL_FACES = [PURPLE[12], PURPLE[10], PURPLE[9], PURPLE[7], PURPLE[5]];
+export const NUM_HEAL_DROPS = [PURPLE[5], PURPLE[4], PURPLE[3], PURPLE[2], PURPLE[2]];
 // What the sim keeps for them (deep/serpent.js): a weapon that hurts while it
 // is held (the lance, the beam) says its sum once this often, a body at a
 // time; the heal says what it closed once a meal (config/meals.js).
@@ -321,9 +322,9 @@ export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to 
 export const BAR_EDGE = '#8b8b96';     // a one-pixel rim round the bar and each pip
 export const BAR_TRACK = '#000000';    // the empty of it
 export const BAR_LEFT = '#ffffff';     // what the defense has left
-export const BAR_HEALED = '#9b5de5';   // what a heal brings back, while it flows in
+export const BAR_HEALED = PURPLE[12];   // what a heal brings back, while it flows in
 export const BAR_TO_COME = '#55555e';  // a defense not yet reached
-export const BAR_STUN = '#9b5de5';     // the defense's pip while a stun has stopped the heal: a ring of the heal's purple
+export const BAR_STUN = PURPLE[12];     // the defense's pip while a stun has stopped the heal: a ring of the heal's purple
 export const BAR_STUN_RIM = 2;         // screen pixels, the ring's width
 export const BAR_HEAL_FADE_S = 0.9;    // the heal's purple fades out over this once it is all in
 // How the bar moves (docs/mocks/serpent-hp-bar-2026-10-12.html, the owner's B,
@@ -401,7 +402,7 @@ export const STATUS_ICONS = {
 // of its turn.
 export const STATUS_WARN_HZ = 4;
 export const STATUS_WARN_RIM = ['#ffffff', '#42424a'];
-export const STATUS_STRUCK = '#9b5de5';
+export const STATUS_STRUCK = PURPLE[12];
 // What a mechanic's tile and a dazed fighter's say on hover; the statuses' own
 // lines are the boards' (deep/rails.js, `statusLine`).
 export const STATUS_SAYS = {
@@ -432,7 +433,7 @@ export const STATUS_POST_OUT = 4;
 export const STATUS_POST_FOOT = 2;
 export const STATUS_TILE = '#0a0a0c';
 export const STATUS_RIM = '#8b8b96';
-export const STATUS_FOE = '#9b5de5';
+export const STATUS_FOE = PURPLE[12];
 export const STATUS_FACE = '#ffffff';
 export const STATUS_TIMER = '#ffffff';
 export const STATUS_SPENT = '#333339';

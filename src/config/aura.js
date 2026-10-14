@@ -1,4 +1,5 @@
 import { P } from './yard.js';
+import { GREY } from './palette.js';
 
 // --- the hold-a-body ring -----------------------------------------------------
 // The steady ring a station wears under a held body. Offers fly a flag, below.
@@ -53,7 +54,7 @@ export const OFFER_WAVE_INK = 0.35;  // the darkest the ring ever is
 // The thing a station is working on, drawn over it (render/bars.js): the part
 // not up yet is an outline in this gray, lighter than the card's ghost so it
 // sits back from the black that is there.
-export const BUILD_GHOST_INK = '#bdbdbd';
+export const BUILD_GHOST_INK = GREY[3];
 // And it drifts while it waits and while it goes up, the shop tile's drift
 // (SHELF_FLOAT_MS) at the yard's scale: this many yard pixels a wave, two
 // waves summed an axis.

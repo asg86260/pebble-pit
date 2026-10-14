@@ -27,6 +27,8 @@ export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 export const SMOG_RAIN_AT = 3200;
 export const SMOG_CAP = 4200;        // never more than this in the sky at once
 
+import { GREY } from './palette.js';
+
 // --- when it breaks -----------------------------------------------------------
 // The rain is the sky's own and the dirt never starts it: a front is due every
 // RAIN_EVERY_S on average, rolled between (1 - GIVE) and (1 + GIVE) of that,
@@ -137,7 +139,7 @@ export let RAIN_PER_S = 300;
 // The tone of a clean drop: lighter than the lightest rock shade, since
 // nothing in the sky may borrow those, and paler than the muck a dirty drop
 // is drawn in, so the acid shows in the sheet before it lands.
-export const RAIN_WATER_TONE = '#a4a4a4';
+export const RAIN_WATER_TONE = GREY[4];
 
 // --- the shape of a storm -------------------------------------------------------
 // A storm is an event with a front and a tail, not a switch: it *brews* for
