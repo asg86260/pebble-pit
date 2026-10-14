@@ -6,7 +6,7 @@ import { fmt } from '../words.js';
 import { P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK, FLOAT_SHADOW, FLOAT_SHADOW_INK } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
-import { drawMark } from './marks.js';
+import { drawCoin, drawMark } from './marks.js';
 import { shown } from '../tween.js';
 import { safeBottom } from '../world.js';
 import { portalNearEdge } from './portal.js';
@@ -14,7 +14,10 @@ import { FACE } from '../lang.js';
 
 // Drawn in **screen** pixels, so it stays the size it is however far the yard
 // has been scaled down to fit the window.
-const MARK = 9;          // a mark on the counter, in screen pixels
+// A coin's mark is its five-cell bitmap (COIN_MARKS) at two screen pixels a
+// cell, so it is whole pixels on any screen and the same shape as the board's.
+const MARK_PX = 2;
+const MARK = 5 * MARK_PX;  // a mark on the counter, in screen pixels
 const ROW = 19;          // and the gap between one row and the next
 const EDGE = 10;         // and how close to the glass it will stand
 const CLEAR = 8;         // the air it keeps between itself and an open board
@@ -99,10 +102,11 @@ export function drawCount() {
   // In the deep the pit is overhead, not beside the card: the card keeps to
   // the left edge of the glass, over the crusher that is the purse down there.
   if (S.view === 'deep') x = EDGE;
+  x = Math.round(x);                // whole pixels, so the marks' cells stay crisp
   // `y` is the bottom row's baseline and the box hangs above it, so the card's
   // own bottom edge is `y + PAD`.
   // Above the safe area, where a phone has one.
-  const y = S.H - safeBottom() - EDGE - PAD;
+  const y = Math.round(S.H - safeBottom() - EDGE - PAD);
 
   const box = { x: Math.round(x - PAD), y: Math.round(y - MARK - (lines.length - 1) * ROW - PAD),
                 w: wide, h: tall };
@@ -156,7 +160,7 @@ export function drawCount() {
   if (!key) {
     markKey = '';
     ctx.fillStyle = '#000';
-    ctx.fillRect(x, y - MARK, MARK, MARK);
+    drawCoin('dust', x, y - MARK, MARK_PX);
   } else {
     if (markKey !== key) {
       markCan = markCan || document.createElement('canvas');
@@ -172,7 +176,7 @@ export function drawCount() {
       g.fillStyle = '#000';
       lines.forEach((l, i) => {
         const at = y - (lines.length - 1 - i) * ROW;
-        if (!l.cell) g.fillRect(x, at - MARK, MARK, MARK);
+        if (!l.cell) drawCoin('dust', x, at - MARK, MARK_PX, g);
         else if (l.cell === 'scale') drawScale(g, x, at - MARK);
         else if (l.cell === 'fang') drawScale(g, x, at - MARK, FANG_MARK);
         else drawMark(l.cell, x + MARK / 2, at - MARK / 2, MARK, true, g);

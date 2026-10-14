@@ -24,6 +24,7 @@ import { ARM_LENGTH, ARM_BOSS, ARM_PIVOT, ARM_KNOB, ARM_DEAD, MARK_CELLS, DIGIT_
 import { fmt } from '../words.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
+import { drawCoin } from './marks.js';
 import { drawGrid } from './ground.js';
 import { rising as risingAt, withRise } from './rise.js';
 
@@ -304,7 +305,7 @@ function drawLabels(fx, fy) {
     } else ctx.fillStyle = '#000';
     // a converting bin's foot wears its coin's own color -- the tone the
     // purse counter and the sky's motes use for it -- lit or not
-    if (typeof m === 'string') { ctx.fillStyle = coinTone(m); cells(MARK[m], fx + col * P, top + LABEL_ROW * P); }
+    if (typeof m === 'string') { ctx.fillStyle = coinTone(m); cells(m, fx + col * P, top + LABEL_ROW * P); }
     else drawWord(labelOf(m), fx + col * P, top + LABEL_ROW * P);
   });
   ctx.fillStyle = '#000';
@@ -432,21 +433,12 @@ export function drawCasino() {
 }
 
 // --- the feet's marks --------------------------------------------------------------
-// The coins' marks at five cells, for the converting bins' feet: the plots'
-// hexagon, the quarry's triangle, the core's four-point spark -- the
-// counter's own shapes.
+// The coins' marks at five cells, for the converting bins' feet: the coins'
+// own bitmaps (COIN_MARKS), the counter's and the board's shapes.
 const COIN_CELL = { spore: SPORE_CELL, shard: SHARD_CELL, spark: SPARK_CELL };
+const COIN_NAME = { spore: 'crop', shard: 'ore', spark: 'spark' };
 const coinTone = kind => FIND_COLOR[COIN_CELL[kind]][0];
-const MARK = {
-  spore: ['01110', '11111', '11111', '11111', '01110'],
-  shard: ['00100', '00100', '01110', '01110', '11111'],
-  spark: ['00100', '01110', '11111', '01110', '00100']
-};
-function cells(rows, x0, y0) {
-  rows.forEach((row, r) => {
-    for (let c = 0; c < row.length; c++) if (row[c] === '1') ctx.fillRect(x0 + c * P, y0 + r * P, P, P);
-  });
-}
+const cells = (kind, x0, y0) => drawCoin(COIN_NAME[kind], x0, y0, P);
 
 // A round knob on the grid: a square of `n` cells with its corners knocked
 // off, centered on a cell.
@@ -597,7 +589,7 @@ export function drawCasinoMark() {
       ctx.fillRect(left + 2 * P, ly + P, 3 * P, 3 * P);
     } else {
       ctx.fillStyle = coinTone(l.kind);
-      cells(MARK[l.kind], left + P, ly);
+      cells(l.kind, left + P, ly);
     }
     ctx.fillStyle = '#000';
     drawWord(l.text, left + (1 + MARK_CELLS + 1) * P, ly);

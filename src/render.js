@@ -70,7 +70,7 @@ import { wash, setPass, backInk, byInk, hudInk, drawLetterbox } from './render/r
 // The drawing side's public surface: the rest of the game imports every one of
 // these from render.js and has no business knowing which file each is in.
 export { canvas, ctx } from './render/ctx.js';
-export { cell, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
+export { cell, drawCoin, drawMark } from './render/marks.js';
 export { risingPlaces, rising, withRise } from './render/rise.js';
 export { bar, barSpot, drawWorkBars } from './render/bars.js';
 export { drawBuildSites, drawGrit } from './render/buildsites.js';
