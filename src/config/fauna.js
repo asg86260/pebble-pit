@@ -209,7 +209,7 @@ export const FAUNA_REACT = {
     y: [[0, 0], [0.08, -3], [0.17, -4], [0.25, -2], [0.33, 0], [1.2, 0], [1.28, -3], [1.37, -4], [1.45, -2], [1.53, 0]],
     vflip: [[0.08, true], [0.25, null], [1.28, true], [1.45, null]], turn: [[1.2, true], [1.9, null]], silt: [0.33] },
   snail: { end: 2.6, quick: [[0, 5], [0.8, 1]], turn: [[0.8, true], [2.6, null]],
-    x: [[0, 0], [0.08, 4], [0.17, 9], [0.25, 12], [0.8, 12], [2.6, 0]] },
+    x: [[0, 0], [0.08, 4], [0.17, 9], [0.25, 12], [0.8, 12], [2.6, 0]], smear: [[0.095, true], [0.112, null]] },
 };
 // The drawings a reaction holds that are not a frame of the kind's own:
 // `rows` drawn in its place, or `cols` [from, to) of the frame it is on; set
