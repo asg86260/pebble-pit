@@ -661,3 +661,20 @@ export function drawDeepInvert() {
   ctx.fillStyle = '#000';
 }
 
+
+// COMPARISON ONLY (mock/deep-palette-ingame): where a station is on the glass,
+// for the comparison page's zoomed crop -- the built station nearest the
+// window's middle, or the furnace, or the pods.
+if (import.meta.env?.DEV) window.__deepStationBox = () => {
+  const { x0, x1 } = deepWindow(), mid = (x0 + x1) / 2;
+  const onGlass = r => r.x + r.w > x0 && r.x < x1;
+  const built = (S.stations || []).filter(st => st.slot != null && st.built).map(st => place.domeRect(st))
+    .map(d => { const top = d.spring - d.w / 2; return { x: d.x, w: d.w, y: top, h: deepFloor() - top }; })
+    .filter(onGlass).sort((a, b) => Math.abs(a.x + a.w / 2 - mid) - Math.abs(b.x + b.w / 2 - mid));
+  let r = built[0];
+  if (!r && S.snatched) { const c = crusherRect(); if (onGlass(c)) r = c; }
+  if (!r && S.pods) r = podAt(0);
+  if (!r) return null;
+  const z = S.zoom;
+  return { x: (r.x - S.camX) * z, y: (r.y - S.camY) * z, w: r.w * z, h: r.h * z };
+};
