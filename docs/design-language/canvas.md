@@ -57,8 +57,9 @@ dark-page color by hand.
   `render/marks.js`, or `strokeRect(x + 1, y + 1, w - 2, h - 2)` at
   `lineWidth = 2`.
 - No `ctx.arc` and no diagonal stroke in the world. Rings and slopes are cells:
-  `cell()`, the bridge's and the belt's steps, the casino lever's stem. The
-  rift's round stars and its rim are the one written exception.
+  `cell()`, the bridge's and the belt's steps. The written exceptions: the
+  rift's round stars and its rim, and the casino lever's arm, a stroke along
+  its swing, which reads better as a moving thing than as stepped cells.
 
 ## Variation
 

@@ -464,11 +464,11 @@ function drawControl(l) {
   const ex = x + dir * Math.cos(a) * reach, ey = y - Math.sin(a) * reach;
   ctx.fillRect(Math.min(wall, x), y - P, ARM_BOSS * P, P * 2);
   knob(x, y, ARM_PIVOT);
-  // the stem in whole cells along its line, never a stroke
-  const steps = Math.max(1, Math.round(reach / P));
-  for (let i = 0; i <= steps; i++)
-    ctx.fillRect(Math.round((x + (ex - x) * i / steps - P / 2) / P) * P,
-                 Math.round((y + (ey - y) * i / steps - P / 2) / P) * P, P, P);
+  ctx.lineWidth = P;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
   knob(ex, ey, ARM_KNOB);
   // The ball's face says which way the arm is working, past the dead band:
   // a plus cut out of it pouring in, a minus of the same stroke pouring
