@@ -21,7 +21,7 @@ import { unit, zoneOf, ROWS } from './fauna.js';
 import { deepTop, deepFloor, deepX0, deepX1 } from './place.js';
 import { nearAll, nowS, mealNow, eatenBefore, BITE_BEFORE } from './meals.js';
 import { shed } from './scales.js';
-import { poseAt, playing } from './react.js';
+import { poseAt, playing, leadOf } from './react.js';
 
 // --- the near stream ------------------------------------------------------------
 // A near creature's height, world pixels: its lane in the band over the
@@ -83,7 +83,15 @@ export function streamPose(key, kind, t = clockOf(key)) {
   if (!streamReacting(key, kind, t)) return null;
   return poseAt(FLOW_REACT[kind], t - REACTS.get(key));
 }
-export function resetStream() { REACTS.clear(); }
+// How far ahead each one's frame clock runs for its quickened reactions, so
+// its drawing carries on from the reaction rather than snapping back: `from`
+// while one plays, `to` after.
+const LEADS = new Map();
+export function streamLead(key, kind, t = clockOf(key)) {
+  const L = LEADS.get(key);
+  return !L ? 0 : streamReacting(key, kind, t) ? L.from : L.to;
+}
+export function resetStream() { REACTS.clear(); LEADS.clear(); }
 // A save read back on the clock that wrote it keeps those under way.
 export function settleStream() {
   for (const [key, r0] of REACTS) if (r0 > clockOf(key)) REACTS.delete(key);
@@ -150,9 +158,12 @@ export function startleStream(wx, wy) {
   for (const [key, r0] of REACTS) if (clockOf(key) - r0 > LONGEST) REACTS.delete(key);   // played out
   // the marks of those swum off or eaten go: their visits are over
   const here = new Set(all.map(c => c.key)), had = (S.streamShed || []).filter(k => here.has(k));
+  for (const k of LEADS.keys()) if (!here.has(k) && k !== f.key) LEADS.delete(k);
   if (!had.includes(f.key)) { shed(f.x, f.y, FAUNA_SCALES); had.push(f.key); }
   S.streamShed = had;
   REACTS.set(f.key, clockOf(f.key));
+  const was = LEADS.has(f.key) ? LEADS.get(f.key).to : 0;
+  LEADS.set(f.key, { from: was, to: was + leadOf(FLOW_REACT[f.kind]) });
   return true;
 }
 // Whether stream creature `key` (a `streamReport` key) has shaken its handful loose.

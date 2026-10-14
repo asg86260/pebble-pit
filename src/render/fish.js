@@ -18,7 +18,7 @@ import { mealNow, nearAt, nearAll, eatenBefore, nowS, BITE_BEFORE, jawOpen, jawG
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SQUEEZE,
          FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED, FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
          FAUNA_SMEAR } from '../config.js';
-import { nearY, crossings, farCell, farY, water, streamPose } from '../deep/flow.js';
+import { nearY, crossings, farCell, farY, water, streamPose, streamLead } from '../deep/flow.js';
 
 // The mock's tones, on the deep's own ramps.
 const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
@@ -253,7 +253,7 @@ export function drawFish() {
     if (d >= 0 && (d >= MEAL_HINGE || Math.abs(r - mouthRow) >= jawGap(d, open))) return;
     paint(cc, r, tone);
   };
-  drawReacting(meal.kind, put, t, pose, then);
+  drawReacting(meal.kind, put, t + streamLead('n' + meal.i, meal.kind, t), pose, then);
 }
 
 // --- the stream -----------------------------------------------------------------
@@ -278,7 +278,7 @@ function drawCrossing(c, t) {
     ctx.fillRect(Math.round((c.x - c.dir * lx * cell) / cell) * cell, Math.round((y + ly * cell) / cell) * cell, cell, cell);
   };
   const [pose, then] = posesOf('f' + c.i, c.kind, t);
-  drawReacting(c.kind, put, t + c.at, pose, then);
+  drawReacting(c.kind, put, t + c.at + streamLead('f' + c.i, c.kind, t), pose, then);
 }
 
 // Behind everything in the deep: the giant, then the far and middle crossings.
@@ -311,7 +311,7 @@ export function drawFishNear() {
     drawReacting(c.kind, (x, y, tone) => {
       ctx.fillStyle = tone;
       ctx.fillRect(Math.round(c.x / P - c.dir * x) * P, (row + y) * P, P, P);
-    }, t + c.at, pose, then);
+    }, t + c.at + streamLead('n' + c.i, c.kind, t), pose, then);
   }
 }
 

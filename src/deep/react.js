@@ -82,6 +82,11 @@ export function poseAt(R, s) {
   };
 }
 
+// How far ahead a reaction leaves its creature's frame clock: what its
+// quickened stretch gained. The caller carries it on after the end, so the
+// drawing goes on from where the reaction left it instead of snapping back.
+export const leadOf = R => (R.quick ? gain(R.quick, R.end) : 0);
+
 // Whether a reaction started at `r0` is playing at `t`: one started after
 // `t` (a clock that has gone back) is not.
 export const playing = (R, r0, t) => r0 != null && r0 >= 0 && t >= r0 && t < r0 + R.end;

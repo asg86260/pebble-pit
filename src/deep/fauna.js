@@ -22,7 +22,7 @@ import { rand } from '../rng.js';
 import { topRow } from '../grid.js';
 import { deepTop, deepX0, deepFloor } from './place.js';
 import { shed } from './scales.js';
-import { poseAt, playing } from './react.js';
+import { poseAt, playing, leadOf } from './react.js';
 
 export const COLS = DEEP_W / P, ROWS = DEEP_H / P;
 
@@ -215,11 +215,11 @@ export const busy = (c, t) => bolting(c, t) || reacting(c, t);
 export function faunaPose(c, t, floorRow = floorRowAt) {
   const p = faunaAt(c, t, floorRow);
   if (bolting(c, t)) return { ...p, by: p.y, ft: c.t0 + (t - c.t0) * FAUNA_STARTLE.quick, r: null };
-  if (!reacting(c, t)) return { ...p, by: p.y, ft: t, r: null };
+  if (!reacting(c, t)) return { ...p, by: p.y, ft: t + (c.lead || 0), r: null };
   const r = poseAt(FAUNA_REACT[c.kind], t - c.r0);
   const y = p.y + r.dy;
   return { x: p.x + p.dir * r.dx, y: c.floor ? y : Math.max(0, y), dir: r.turn ? -p.dir : p.dir,
-           by: p.y, ft: t + r.gain, r };
+           by: p.y, ft: t + (c.lead0 || 0) + r.gain, r };
 }
 
 // The creature a click at world (wx, wy) lands on, within the bird's reach,
@@ -263,7 +263,7 @@ export function startleFauna(wx, wy) {
   const p = faunaAt(c, t, floorRowAt), b = boxOf(c, p);
   if (!faunaShed(c)) shed(deepX0() + b.x * P, deepTop() + b.y * P, FAUNA_SCALES);
   if (FAUNA_REACT[c.kind].bolt) bolt(c, t, p, b);
-  else { c.r0 = t; S.faunaShed = [...(S.faunaShed || []), c.key]; }
+  else { c.r0 = t; c.lead0 = c.lead || 0; c.lead = c.lead0 + leadOf(FAUNA_REACT[c.kind]); S.faunaShed = [...(S.faunaShed || []), c.key]; }
   return true;
 }
 // Whether creature `c` has shaken its handful loose this visit.
@@ -284,7 +284,7 @@ function bolt(c, t, p, b) {
 
 // Every creature home, unstartled: a new game.
 export function resetFauna() {
-  for (const c of POPULATION) { c.t0 = -1; c.r0 = -1; }
+  for (const c of POPULATION) { c.t0 = -1; c.r0 = -1; c.lead = c.lead0 = 0; }
 }
 // A save read back on the clock that wrote it: a reaction or a bolt under
 // way carries on where it was, so nothing jumps; one dated after the clock
