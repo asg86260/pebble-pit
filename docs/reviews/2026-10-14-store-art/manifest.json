@@ -1,0 +1,112 @@
+{
+ "base": "82b006b396d4608f66ba7361ff36f8ec2eccb4f3",
+ "head": "e7268e74d384d4efd081d88d9cacea90d9bd98e4",
+ "at": "2026-10-14T21:47:34.735Z",
+ "items": {
+  "screenshots": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 3,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 4,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 5,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ],
+  "capsules": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 3,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 4,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 5,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ],
+  "locked-icons": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ]
+ }
+}

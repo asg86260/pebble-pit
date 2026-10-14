@@ -1,0 +1,92 @@
+{
+ "title": "Store art, redrawn",
+ "lede": "Before is the store art as committed; after is the art redrawn from main now.",
+ "base": "82b006b3",
+ "head": "e7268e74",
+ "items": [
+  {
+   "id": "screenshots",
+   "title": "Store screenshots retaken",
+   "what": "The five store screenshots taken again from main: smooth fades, flash, flat masses.",
+   "shots": [
+    {
+     "label": "steamhome",
+     "file": "steam/store/screenshots/steamhome.png",
+     "zoom": 0.5
+    },
+    {
+     "label": "steamrock",
+     "file": "steam/store/screenshots/steamrock.png",
+     "zoom": 0.5
+    },
+    {
+     "label": "steamsites",
+     "file": "steam/store/screenshots/steamsites.png",
+     "zoom": 0.5
+    },
+    {
+     "label": "steamstorm",
+     "file": "steam/store/screenshots/steamstorm.png",
+     "zoom": 0.5
+    },
+    {
+     "label": "steamboard",
+     "file": "steam/store/screenshots/steamboard.png",
+     "zoom": 0.5
+    }
+   ]
+  },
+  {
+   "id": "capsules",
+   "title": "Capsules redrawn",
+   "what": "The store capsules redrawn from the palette as it stands now.",
+   "shots": [
+    {
+     "label": "header_920x430",
+     "file": "steam/store/capsules/header_920x430.png",
+     "zoom": 0.75
+    },
+    {
+     "label": "main_1232x706",
+     "file": "steam/store/capsules/main_1232x706.png",
+     "zoom": 0.6
+    },
+    {
+     "label": "vertical_748x896",
+     "file": "steam/store/capsules/vertical_748x896.png",
+     "zoom": 0.5
+    },
+    {
+     "label": "library-capital_600x900",
+     "file": "steam/store/capsules/library-capital_600x900.png",
+     "zoom": 0.5
+    },
+    {
+     "label": "library-hero_3840x1240",
+     "file": "steam/store/capsules/library-hero_3840x1240.png",
+     "zoom": 0.2
+    }
+   ]
+  },
+  {
+   "id": "locked-icons",
+   "title": "Locked achievement icons",
+   "what": "The locked achievement icons take their grey from the one grey ramp; unlocked icons are unchanged.",
+   "shots": [
+    {
+     "label": "a sample of locked icons",
+     "files": [
+      "steam/store/achievements/ACH_ALLBUILT_locked.png",
+      "steam/store/achievements/ACH_BIRD_locked.png",
+      "steam/store/achievements/ACH_CREW0_locked.png",
+      "steam/store/achievements/ACH_BREW100_locked.png",
+      "steam/store/achievements/ACH_CATCHALL_locked.png",
+      "steam/store/achievements/ACH_ALLTRADES_locked.png"
+     ],
+     "cols": 6,
+     "zoom": 0.5
+    }
+   ]
+  }
+ ]
+}
