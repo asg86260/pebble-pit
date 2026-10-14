@@ -7498,7 +7498,7 @@ be. The save migration gets a fixture: a save with a bought-out lab in `test/fix
 with a check that the levels landed on the inheriting rows. The boards' own look is a shot, not a
 suite.
 
-## The one bench carries two ladders' worth of waiting (design, not built)
+## The one bench carries two ladders' worth of waiting (built)
 
 "The lab is deleted" named this as a real blocker rather than a detail: once every timed purchase
 in the game — every building, both machines, all four multiplier ladders, and the bench's own kit
@@ -7538,57 +7538,61 @@ representative backlog                                      2,332 worker-seconds
   worse.
 - **Measured utilization at the top of both ladders: builders were doing useful work at the yard
   about 37% of the time** — three bodies assigned, three slots open, three or four distinct works
-  queued. That is the finding that changes the shape of the fix. Raw effort math
-  (2,332 / (3 x 2.46) ≈ 315s) says the backlog should clear in about five minutes; measured, it
-  does not clear in half an hour. The gap is not the ladders' own numbers — it is time builders
-  spend not attached to any work while several are queued at once, which the solo-work case never
-  exercises. This was not root-caused further (candidate causes not yet distinguished: walking
-  between the yard's scattered site coordinates, `slotFor`'s per-frame reassignment, or the
-  `each`/`own` split in `stepWorks` under-crediting a body mid-transition) and is flagged rather
-  than guessed at.
+  queued. Raw effort math (2,332 / (3 x 2.46) ≈ 315s) said the backlog should clear in about five
+  minutes; measured, it did not clear in half an hour.
 
-### What this means for `buildposts` and `buildpace`
+### What it was (measured 2026-10-14)
 
-**Retuning the two ladders' price or step is not obviously the fix, and might be the wrong fix
-entirely.** The measured shortfall is roughly 4x (half an hour observed against five minutes
-predicted from the ladders' own numbers), and it shows up precisely when several works are queued
-together, not in the one-body case the ladders were presumably tuned against. Cutting
-`buildpace`'s price or raising its cap moves the effort-math prediction, which is not the number
-that is wrong. If the gap is a body spending most of a queued build walking rather than swinging,
-no amount of `buildpace` fixes that — a builder who is faster *while working* and idle two-thirds
-of the time is still idle two-thirds of the time.
+`node tools/node/builders.mjs` puts every builder's every frame in a bucket (walking to its work,
+at it and credited, at it and not credited, no work) and counts, per busy site, the frames nobody
+is credited there. Run against the tree as it stood when the 37% was measured (`f9f3d81c`, posts
+and pace at their tops, three builders assigned, a smaller backlog of seven works), one body's
+trace reads: hammering the school at
+x≈4,290, the school lands, and the body's next slot is a multiplier rung whose work stands at
+x≈6,072 -- eight game-seconds of walking for a rung that takes 5 / 2.46 = two seconds to fit. The
+buckets for that run: **43% walking, 57% credited** (`tools/node/builders.mjs` ported to that
+tree; the hooks have moved since). So it was walking, the second candidate:
+`siteFor` handed the freed body the emptiest slot with no regard to where it stood, and the
+bench's pace ladder made each work shorter without making the walk between works any shorter --
+the faster the builders swung, the larger the share of their day spent crossing the yard. Neither
+`slotFor` thrash nor `stepWorks`'s accounting showed up: no body was ever at a work and not
+credited.
 
-**The honest next step is root-causing the 37%, not re-costing the ladders.** Candidates, in the
-order they are cheapest to rule out:
+**That yard no longer exists.** The construction bench, `buildposts` and `buildpace` were scrapped
+the next day ("Scrap the construction bench", 2026-09-09): every site is back to one work on the
+go and one builder a busy site (`rebalance`), so a body whose work lands takes the next work *at
+the same site* and walks nowhere. Measured on today's tree, a backlog over seven sites (54 works,
+1,647 worker-seconds, `--open`): builders hammering **96%** of their frames, walking 4% (each
+site's first walk out), and the backlog clearing in 635 s against a floor of 627 s -- the
+deepest site's line at one body (the tower's, 627 worker-seconds).
 
-1. Instrument `handsAt('yard')` per frame against `S.workers` positions for the three assigned
-   builders, across one run of the representative backlog, and see whether the gap is walking
-   (bodies in transit), reassignment thrash (`slotFor` moving a body off a work it just reached),
-   or something in `stepWorks`'s own accounting.
-2. If it is walking: the sites a builder is asked to cover at once (the school, the tower, the
-   mult ladders' `siteX` fallback, which for a multiplier row with no station box centers on
-   `S.cx`) may simply be far enough apart that three builders queued on four to eight scattered
-   targets spend more time in transit than any pace number can buy back — which would make this a
-   placement question (how far apart builder-manned sites stand) rather than a ladder-pricing one.
-3. Only once the mechanism is known does re-pricing `buildposts` / `buildpace` — or adding a rung
-   to either — become a number to argue about rather than a guess.
+**One fault was left, and it is the same shape at a smaller size.** A build landing makes one
+builder fewer, and `syncWorkers` gave up whichever builder stood *last in the crew's list* -- not
+the one whose work had just landed. That was usually a body hammering at another site, so the
+freed body walked the yard to take over the work its neighbor was pulled off, and that site
+stood empty for the walk: four times in the run above (the tower three times, 3 s each; the bench
+once, 11 s), six with every builder lent off a station. The fix stands down the builder with no
+work on the go first (`offWork` in crew/builders.js, ordered last in `syncWorkers`): no body is
+given up off a standing work, no site once manned waits on a cross-yard walk, hammering 97%, and
+the backlog clears in 630 s against the 627 s floor.
 
-### What is NOT proposed here
+### What this means for the ladders
 
-No change to `BUILD_POST_RUNGS`, `BUILD_PACE_RUNGS`, `BUILDPOSTS_SPARKS0`, `BUILDPACE_SPORES0`,
-`BUILD_PACE_STEP` or `WORK_STEP` is proposed in this section. Guessing a new number against a
-mechanism that has not been found would be exactly the kind of tuned-constant bug CLAUDE.md warns
-against — a constant right about today's content and wrong the moment a ninth building or a fifth
-mult ladder is added. The measurement says there is real debt; it does not yet say which file owns
-the fix.
+There are no builder ladders to re-cost any more, and the measurement says none is owed: at one
+body a site, today's yard clears a seven-site backlog within a few seconds of its own floor. If a
+builder ladder ever comes back that makes a site take several works at once, the bench's lesson
+stands: a pace ladder shrinks the swing and not the walk, so the slot a freed body takes should
+be the nearest, or the works at one site should stand together.
 
-### How it would be checked
+### How it is checked
 
-A node-tier check belongs in `test/wave7b-build.test.mjs` or a new `test/build-throughput.test.mjs`
-once the mechanism is known: bought through `__buy`/`__assign` the way a player reaches it,
-asserting utilization at the bench stays above some floor once several works are queued together (a
-regression guard, not a balance target by itself). Until the mechanism is found, a check would only
-pin down today's number rather than the cause.
+`test/build-throughput.test.mjs` buys the seven-site backlog through `__buy` and follows every
+builder for the whole of it: no builder given up off a work still on the go (four before the
+fix), no manned site left more than 5 s waiting on a walk (the yard's own walk between two
+buildings that stand apart is 2.7 s; the pulled-off cover was 3 to 11 s), the backlog clear
+within 20 s of its floor (one walk the length of the yard at a trip's pace, which the deepest
+site's first builder can be owed), and builders hammering at least 95% of their frames (97%
+measured with the fix).
 
 ## A board has a size (built)
 

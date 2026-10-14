@@ -49,6 +49,12 @@ function siteFor(w) {
   return pick;
 }
 
+// A builder with no work on the go to its name: just made, or its work has
+// landed and it has not been given the next.
+export const offWork = w =>
+  (w.type === TYPE.BUILD || w.type === TYPE.DELVE)
+  && !(w.site && onTheGo(w.site).some(x => x.id === w.workId));
+
 // The ground inside a site's zone nearest a given x: the whole box less the
 // body's own width, the same span `jigSpan` works across in dance.js, so the
 // spot a builder walks to and the patch it shuffles along are one rule.

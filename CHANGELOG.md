@@ -160,6 +160,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A rockhand on the hill no longer walks off and sinks into the ground when the serpent falls (test/freed-rockhand.test.mjs).
 - A worker caught mid-swing or mid-sway at ground level counts as up in the yard, so it still steps out from under a falling rock and still goes for the muck (test/hole-depth.test.mjs).
 - A yard already past the serpent retires the sqhusband along with her, instead of leaving him on the crew (test/finale.test.mjs).
+- With several things being built at once, finishing one no longer pulls a builder off another site and walks a different one across the yard to take its place (test/build-throughput.test.mjs).
 - The store links on the demo's and teaser's last sheets are drawn as buttons like "keep playing", no longer a blue underlined link (src/selftest/ending.js, "the store links ... drawn as the sheet buttons").
 
 - The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).

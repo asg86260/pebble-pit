@@ -12,6 +12,7 @@ import { TYPE, TYPE_OF, DEEP_JOBS, isDeepType } from '../jobs.js';
 import { deepTop, postY } from '../deep/place.js';
 import { bindFighters, bindNew, unbound } from '../deep/party.js';
 import { deepPost } from './deep.js';
+import { offWork } from './builders.js';
 import { belowYard } from '../route.js';
 import { now } from '../clock.js';
 import { newRecord } from './records.js';
@@ -88,9 +89,13 @@ export function syncWorkers() {
   // is counted.
   bindFighters();
   const last = w => !!w.lentFrom || unbound(w);
-  const ordered = [...S.workers.filter(w => !last(w) && !away(w)),
-                   ...S.workers.filter(w => !last(w) && away(w)),
-                   ...S.workers.filter(last)];
+  const tiers = [...S.workers.filter(w => !last(w) && !away(w)),
+                 ...S.workers.filter(w => !last(w) && away(w)),
+                 ...S.workers.filter(last)];
+  // A build landing makes one builder fewer, and the one given up is the one
+  // whose work just landed: any other is hammering at a site of its own, and
+  // the freed body would walk the yard to take over the work it left.
+  const ordered = [...tiers.filter(w => !offWork(w)), ...tiers.filter(offWork)];
   const kept = new Set();
   for (const w of ordered) (room[w.type]-- > 0 ? kept.add(w) : stood.push(w));
   keep.push(...S.workers.filter(w => kept.has(w)));
