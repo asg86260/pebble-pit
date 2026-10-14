@@ -36,36 +36,25 @@ export const markedPiles = () => [...S.piles, ...STATIONS.filter(r => r.pile && 
 // What the hover says over one: the row's own words, or the yard's.
 export const fullSays = key => station(key)?.full || msg('hover-pile-full');
 
-// A warning triangle: hollow, with a bar and a dot inside it, drawn as a
-// bitmap at the world's thinnest rule (P / 3) a pixel, so every edge is a
-// whole-pixel step on the cell grid like the other marks over a station.
-const WARN = [
-  '.......#.......',
-  '.......#.......',
-  '......#.#......',
-  '......#.#......',
-  '.....#...#.....',
-  '.....#.#.#.....',
-  '....#..#..#....',
-  '....#..#..#....',
-  '...#...#...#...',
-  '...#.......#...',
-  '..#....#....#..',
-  '..#.........#..',
-  '.#...........#.',
-  '###############',
-];
-const WARN_PX = P / 3;
-export function warning(x, y) {
-  const w = WARN[0].length, x0 = x - Math.floor(w / 2) * WARN_PX, y0 = y - Math.floor(WARN.length / 2) * WARN_PX;
-  WARN.forEach((row, r) => {
-    // the paper first, edge to edge, so the triangle is hollow over a heap
-    const from = row.indexOf('#'), to = row.lastIndexOf('#');
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(x0 + from * WARN_PX, y0 + r * WARN_PX, (to - from + 1) * WARN_PX, WARN_PX);
-    ctx.fillStyle = '#000';
-    for (let c = from; c <= to; c++) if (row[c] === '#') ctx.fillRect(x0 + c * WARN_PX, y0 + r * WARN_PX, WARN_PX, WARN_PX);
-  });
+// A warning triangle: hollow, with a bar and a dot inside it. One radius, and
+// everything inside is a fraction of it, so changing it changes the whole sign.
+const WARN_R = P * 2.6;
+export function warning(x, y, r = WARN_R) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r, y + r * 0.8);
+  ctx.lineTo(x - r, y + r * 0.8);
+  ctx.closePath();
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.lineWidth = Math.max(1, r / 6);
+  ctx.strokeStyle = '#000';
+  ctx.stroke();
+  ctx.fillStyle = '#000';
+  // inside the outline rather than on it: a triangle's base is its lowest
+  // edge, and a dot resting on that reads as a smudge
+  ctx.fillRect(x - r / 8, y - r / 4, r / 4, r * 0.4);
+  ctx.fillRect(x - r / 8, y + r * 0.35, r / 4, r / 4);
 }
 
 // --- where a station's marks go -------------------------------------------------

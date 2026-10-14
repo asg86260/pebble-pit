@@ -46,8 +46,9 @@ dark-page color by hand.
   (`render/numfont.js`): the pixel face keyed in one font pixel of paper. That
   covers the corner counter, the roster, the kit stands and the stock. The
   fight's numbers keep their grey drop line.
-- **The warning.** It is a bitmap at `P / 3` a pixel, hollow, like the other
-  station marks.
+- **The warning.** The pile-full mark is the hollow triangle with a bar and a
+  dot (`warning` in `render/pilemarks.js`), as it was before the pass: the
+  bitmap at `P / 3` was tried and read worse.
 
 ## Line
 
