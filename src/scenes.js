@@ -452,8 +452,8 @@ const killAt = (a, back = KILL_REFORM_S * 0.5) => () => {
 // A level's bar emptied past the story (DESIGN.md, "Endless serpent"): level 3
 // on its last defense one short of empty, the last of it by the hand, and
 // `a` seconds into the recoil (the rear, the near-death, the power-up), held
-// for the shot, the coil's middle on the glass so the brink's lines close in
-// round it.
+// for the shot, between the head and the belly so the head and the wound are
+// both in it.
 function recoilAt(a) {
   deepYard({ level: 3, party: [cast('brawler', 8), cast('mage', 8)] });
   window.__serpent({ wound: depthAt(SERPENT_PHASES - 1) - 1 });
@@ -463,7 +463,7 @@ function recoilAt(a) {
     window.__fast(1 / 60);
   }
   if (a > 1 / 60) window.__fast(a - 1 / 60);
-  lookDeep(coilAt(Math.round(COIL_SEGS * 0.4), now()).x);
+  lookDeep(coilAt(0, now()).x + S.viewW / 4);
   window.__holdShot();
   S.still = true;
 }
@@ -952,8 +952,8 @@ const deepScenes = {
   'deep-neardeath-brink': { about: 'the deep', say: 'on the brink: crazed snout to tail, the focus lines closed in to their last step',
     run: () => recoilAt(BRINK_S + NEARDEATH.brink - 0.02) },
   'deep-neardeath-light': { about: 'the deep', say: 'the light comes through: the cracks lit from the belly out, the lines purple, the first motes crossing',
-    run: () => recoilAt(POWER_S + POWERUP.lightStep * POWERUP.lightSteps + 0.01) },
-  'deep-powerup-motes': { about: 'the deep', say: 'the deep drawn in: motes crossing to the hide, the coil wound tight, level 4 and the bar half full',
+    run: () => recoilAt(POWER_S + POWERUP.lightStep * (POWERUP.lightSteps - 1) + 0.01) },
+  'deep-powerup-motes': { about: 'the deep', say: 'the deep drawn in: motes crossing to the hide, the coil wound tight, level 4 and the bar a notch a mote',
     run: () => recoilAt(POWER_S + POWERUP.len * 0.55) },
   'deep-powerup-done': { about: 'the deep', say: 'just past it: level 4, the bar full, the coil whole and at rest',
     run: () => recoilAt(POWER_S + POWERUP.len + POWERUP.letGo + 0.25) },

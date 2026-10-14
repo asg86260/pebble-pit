@@ -18310,7 +18310,7 @@ and gathering again each time; that loop is gone.
 - **What the player gets:** a fight that goes on past the story. After the
   story's kill the serpent comes back **once**, straight onto its last
   defense (the constrict), at level 2, and stays there. Each emptied bar is a
-  level: a short recoil, then the bar fills again for the next level, ten per
+  level: it nearly dies and powers up, the bar filling again for the next level, ten per
   cent deeper, the level on the bar ticking up. Each emptied bar drops a fang
   while a slot is free, so the party grows from four stations to seven, and
   the best level is kept for the record and for Steam.
@@ -18335,28 +18335,38 @@ and gathering again each time; that loop is gone.
    and no cage of ribs at the belly, which never held him. It never fights
    a defense before the last again.
 3. **A level's bar empties** (the wound held to `depthAt(LAST, level)`): no
-   break, no kill. The **recoil** starts (`S.recoilT`, seconds in, saved): a
-   held pose, timed by `RECOIL` in config/deepcrew.js -- a smear frame
-   (`snap`), the pose held (`hold`), and back in `RECOIL_BACK_STEPS` held
-   steps (`back`). Which pose is `RECOIL_POSE`, a key of `RECOIL_POSES` (the
-   owner votes on docs/mocks/serpent-recoil-2026-10-13.html; the vote swaps
-   the key). Through it the sway is held where the blow caught it, nothing
-   lands, nothing heals, the turn does not run; the orb, the stun and the
-   statuses go on its first frame, and the bar's fang drops from the belly.
-4. **The recoil done:** `serpentLevel + 1`, `serpentBest` with it, the wound
-   0, the meal's window reopened, the turn calm, the resists chosen again.
-   The bar refills over `RECOIL_FILL_S` with no heal's purple, the label
-   ticking up, and the fight is on again.
+   break, no kill. The **recoil** starts (`S.recoilT`, seconds in, saved),
+   3.31 s of held steps read off it as one pose (`recoilPose`,
+   deep/phases.js): the rear (`RECOIL`, `RECOIL_POSE`), then the near-death
+   the owner voted (C of docs/mocks/serpent-neardeath-2026-10-13.html, on
+   mock/serpent-neardeath; `NEARDEATH`) -- the cracks run from the belly
+   over the whole body in five steps as the head comes down, and on the
+   brink dark focus lines close in from the glass's edge round the coil in
+   three -- then the power-up (B of serpent-powerup-2026-10-13.html;
+   `POWERUP`): the cracks fill with purple light from the belly out while
+   thirty motes cross the water into the coil, which winds tighter in three
+   steps; each mote landed is a notch of the bar and the cracks seal from
+   their tips as it fills; one let-go smear frame, then rest. Through all of
+   it the sway is held where the blow caught it, nothing lands, nothing
+   heals, the turn does not run; the orb, the stun and the statuses go on
+   its first frame, and the bar's fang drops from the belly.
+4. **The first mote lands** (`recoilTickAt`): `serpentLevel + 1`,
+   `serpentBest` with it, the wound 0, the meal's window reopened, the turn
+   calm, the resists chosen again, the label knocked up as it ticks; the
+   sequence plays on to its end, the bar a notch a mote, and the fight is on
+   again.
 
 A reload anywhere keeps the level and the stage; a reload mid-recoil picks
-the recoil up where it was (`recoilT` is game seconds, not the page clock).
+the recoil up where it was (`recoilT` is game seconds, not the page clock),
+and the tick is the clock crossing it, so a reload past it never ticks twice.
 
 ### The level
 
 `S.serpentLevel` is the bar being fought, 1 the story's serpent.
 `S.serpentBest` is the highest reached, what the record and the achievements
 read. The bars emptied are derived, not stored:
-`kills = serpentLevel - 1 + (serpentFreed || recoiling ? 1 : 0)`.
+`kills = serpentLevel - 1 + (serpentFreed || recoiling before the tick ? 1 : 0)`
+(`recoilUnticked`).
 
 At level 2 and on the serpent is always on its last defense and never down
 (verify.js): `serpentFreed` keeps its meaning, *between the story's kill and
@@ -18403,12 +18413,14 @@ story, after it the return plays as for a new kill.
 
 `test/endless.test.mjs`, the party's own blows doing the fighting: after the
 story's kill the serpent is on its last defense at level 2 and never on
-another; an emptied bar recoils for `RECOIL`'s length and lands on level+1
-with the bar full at 1.1 times the depth; a fang each level until seven
-stand; a reload mid-recoil and mid-level keeps level and stage; an old save
+another; an emptied bar ticks the level as the power-up's first mote lands,
+fills a notch a mote and is full at 1.1 times the depth at the sequence's
+3.31 s; a fang each level until seven stand; a reload before and after the
+tick and mid-level keeps level, stage and bar; an old save
 on a middle defense at level 3 loads on the last at level 3. Scenes
-`deep-endless`, `deep-endless-25`, `deep-endless-rise` (the return) and
-`deep-recoil`.
+`deep-endless`, `deep-endless-25`, `deep-endless-rise` (the return),
+`deep-neardeath-cracks`, `deep-neardeath-brink`, `deep-neardeath-light`,
+`deep-powerup-motes` and `deep-powerup-done`.
 
 ## Localization (phase one: one language file, built 2026-10-13)
 

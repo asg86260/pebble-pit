@@ -16,7 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
-- After the story's kill the serpent comes back once and stays on its last phase: each health bar emptied is a new level, a short recoil and the bar full again a tenth tougher, the level on its bar, and a fang drops each level until seven stations stand (test/endless.test.mjs).
+- After the story's kill the serpent comes back once and stays on its last phase: each health bar emptied is a new level -- it rears, cracks to the brink and draws the deep's motes in to fill the bar again a tenth tougher -- the level on its bar, and a fang drops each level until seven stations stand (test/endless.test.mjs).
 - Once he is rescued, the serpent's bar drops its row of phase pips and keeps only the level, and its belly loses the cage of ribs that held him (test/serpent-after-rescue.test.mjs).
 - Big numbers in the deep read short the way the yard's do, 18.4k, 181k, 2m (test/serpent-numbers.test.mjs).
 - The constrict's orb is as easy to break at every level as at the first; only the serpent's defenses grow (test/endless.test.mjs).

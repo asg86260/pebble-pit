@@ -478,7 +478,7 @@ function drawPowerMotes(ps, pts) {
   }
 }
 
-// The brink's focus lines: rays in the water toward the coil's middle, each
+// The brink's focus lines: rays in the water toward the coil, each
 // starting a ragged way in from the glass's edge (1, measured to each edge
 // on its own side, so a coil off the middle of the glass closes in evenly),
 // closing in as `rIn` drops (deep/phases.js). Behind the floor, the stations
@@ -489,8 +489,10 @@ export function drawFocusLines() {
   if (!L) return;
   const ND = NEARDEATH, { x0, y0, x1, y1 } = deepWindow();
   const left = Math.max(x0, deepX0()), right = Math.min(x1, deepX1()), bottom = Math.min(y1, deepFloor());
-  const ends = coilEnds();
-  const cx = Math.max(x0 + P, Math.min(x1 - P, (ends.x0 + ends.x1) / 2));
+  // toward the middle of the stretch of coil on the glass, as the bar is
+  // centered (render/serpentbar.js), so a narrow glass still closes in round it
+  const ends = coilEnds(), a = Math.max(x0, ends.x0), b = Math.min(x1, ends.x1);
+  const cx = Math.max(x0 + P, Math.min(x1 - P, b > a ? (a + b) / 2 : (x0 + x1) / 2));
   const cy = Math.max(y0 + P, Math.min(y1 - P, deepTop() + COIL_Y * DEEP_H));
   const z = barShown() ? barZone() : null;
   const zx0 = z ? S.camX + z.x / S.zoom : 0, zx1 = z ? S.camX + (z.x + z.w) / S.zoom : 0;
