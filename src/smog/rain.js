@@ -1,5 +1,5 @@
 import { ambientFrames } from '../clock.js';
-import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FLASH_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, RAIN_SHEETS, RAIN_NEAR, RAIN_BEHIND_DROP, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { EMBER_EASE, EMBER_LEAN, EMBER_PER_CELL, EMBER_LIFE_S, EMBER_RISE, EMBER_SCATTER, BOLT_EVERY_S, BOLT_FORK_AT, BOLT_FORK_LEN, BOLT_JOG, BOLT_KINK, BOLT_LIFE_S, BOLT_STEP, GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_EVERY_GIVE, RAIN_EVERY_S, RAIN_FALL, RAIN_FALL_GIVE, RAIN_GAP, RAIN_LEAN, RAIN_LEN_MIN_S, RAIN_LEN_S, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_FLOOR, RAIN_TAPER_S, RAIN_WASH, RAIN_SHEETS, RAIN_NEAR, RAIN_BEHIND_DROP, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_GO_MS, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand, stream } from '../rng.js';
 import { gust } from '../wind.js';
 import { S } from '../state.js';
@@ -288,7 +288,7 @@ function strike() {
   // embers along the whole of it, not a burst at the foot: the bolt is the
   // hot thing, all the way down
   for (const [x, y] of cells) if (boltRand() < EMBER_PER_CELL) ember(x, y);
-  return { cells, x: x0, left: BOLT_LIFE_S, flash: BOLT_FLASH_S };
+  return { cells, x: x0, left: BOLT_LIFE_S };
 }
 
 // --- embers ------------------------------------------------------------------
@@ -320,14 +320,12 @@ export function stepEmbers(secs) {
   }
 }
 
-// dev: a strike now, held for `hold` seconds with the flash on for `flash` of
-// them, so a scene can stand at either frame of one.
-export function forceStrike(hold = BOLT_LIFE_S, flash = BOLT_FLASH_S) {
+// dev: a strike now, held for `hold` seconds, so a scene can stand at it.
+export function forceStrike(hold = BOLT_LIFE_S) {
   const had = EMBERS.length;
   S.bolt = strike();
   if (!S.bolt) return;
   S.bolt.left = hold;
-  S.bolt.flash = flash;
   // the embers it threw are held with it, so a shot a second later still has
   // them
   for (let i = had; i < EMBERS.length; i++) EMBERS[i].t = EMBERS[i].life = Math.max(EMBERS[i].life, hold);
@@ -336,7 +334,6 @@ export function forceStrike(hold = BOLT_LIFE_S, flash = BOLT_FLASH_S) {
 export function stepBolt(secs) {
   if (!S.bolt) return;
   S.bolt.left -= secs;
-  S.bolt.flash -= secs;
   if (S.bolt.left <= 0) S.bolt = null;
 }
 

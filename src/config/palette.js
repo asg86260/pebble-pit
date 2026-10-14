@@ -38,3 +38,8 @@ export const COIN_TONES = {
 };
 export const COIN = { ore: COIN_TONES.ore[2], crop: COIN_TONES.crop[2], spark: COIN_TONES.spark[1] };
 export const COIN_DARK = { ore: '#7d9cf0', crop: '#6fd08a', spark: '#f06a55' };
+
+// A fade is held steps down its own ramp (render/tone.js): this many between
+// whole and gone, so a thing on its way out reads as going rather than as a
+// smooth thinning, and every step is a tone the ramp already has.
+export const FADE_STEPS = 5;

@@ -160,6 +160,7 @@ export const FLY_ORBIT = P * 1.7;    // how far one strays from the column
 export const FLY_BEAT = 3.1;         // radians a second it goes round at
 export const STINK_RISE = 26;        // pixels a second a wisp climbs
 export const STINK_LIFE = 2.4;       // seconds before it has gone
+export const STINK_INK = 0.28;       // how dark a wisp starts, a step of the greys
 export const STINK_EVERY = 3;        // one column in this many gets one
 
 // The two ends of a dry cloud's shading, its lit crown and its base; the

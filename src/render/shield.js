@@ -2,12 +2,13 @@
 // kind grows out of the trips that built it rather than fading in, so a frame
 // at six planks is visibly six planks. See DESIGN.md, "The shields".
 
-import { P, SHIELD_LEG_W, SHIELD_LID_T, MAGIC_TONES, DOME_FLARE_MS, DOME_FLARE_W, DOME_FLARE_TRAIL } from '../config.js';
+import { P, SHIELD_LEAN, SHIELD_LEG_W, SHIELD_LID_T, MAGIC_TONES, DOME_FLARE_MS, DOME_FLARE_W, DOME_FLARE_TRAIL } from '../config.js';
 import { reducedMotion } from '../prefs.js';
 import { S } from '../state.js';
 import { now } from '../clock.js';
 import { KINDS, risingShield, domeAt, domeFade } from '../shield.js';
 import { ctx } from './ctx.js';
+import { withTone } from './tone.js';
 
 export function drawShield() {
   let s = S.shield;
@@ -27,15 +28,15 @@ export function drawShield() {
   const cols = s.w / P;
   ctx.fillStyle = '#000';
 
-  // A shield with a rock on it that it cannot take shakes, harder the nearer
-  // it is to going: the whole thing at once, by moving the canvas, since a
-  // structure that trembles in pieces is coming apart. Whole cells, or the
-  // shudder is a hairline through the picture.
-  const shake = s.strain && S.rockHeld
-    ? Math.round(Math.sin(now() / 42) * s.strain * 1.6) * P : 0;
-  if (shake) { ctx.save(); ctx.translate(shake, 0); }
+  // A shield with a rock on it that it cannot take leans, further the nearer
+  // it is to going: the whole thing at once, held a cell at a time, since a
+  // structure that trembles in pieces is coming apart and a shudder is the
+  // flash-and-shake the yard does not do. Whole cells, or the lean is a
+  // hairline through the picture.
+  const lean = s.strain && S.rockHeld ? Math.min(SHIELD_LEAN, Math.floor(s.strain * (SHIELD_LEAN + 1))) * P : 0;
+  if (lean) { ctx.save(); ctx.translate(lean, 0); }
   drawShieldOf(s, done, topY, cols);
-  if (shake) ctx.restore();
+  if (lean) ctx.restore();
 }
 
 function drawShieldOf(s, done, topY, cols) {
@@ -136,15 +137,18 @@ export function domeEdge(side) {
            y: S.groundY - (Math.sin(ang) * R + 0.5) * P };
 }
 
+// Once the rescue is done the dome goes the way it came, as light: the whole
+// drawing stepped down its ramp over DOME_FADE_MS, because a field does not
+// come apart in pieces and nothing in this yard pops out of existence.
 function drawDome(s, done, topY, cols) {
+  const fade = domeFade(s);
+  withTone(ctx, fade ? 1 - fade : 1, () => drawDomeAt(s, done, topY, cols));
+}
+
+function drawDomeAt(s, done, topY, cols) {
   const t = now() / 1000;
   const { a, R, total } = domeShell(s);
   const T = 2;
-  // Once the rescue is done the dome goes the way it came, as light: alpha on
-  // the whole drawing over DOME_FADE_MS, because a field does not come apart
-  // in pieces and nothing in this yard pops out of existence.
-  const fade = domeFade(s);
-  if (fade) { ctx.save(); ctx.globalAlpha = Math.max(0, 1 - fade); }
   // The burst lights the band: a bright front runs from the crown down to
   // both feet, a paler one trailing it. Left out under reduced motion.
   const k = s.burstAt && !reducedMotion() ? (now() - s.burstAt) / DOME_FLARE_MS : 1;
@@ -188,7 +192,7 @@ function drawDome(s, done, topY, cols) {
     ctx.fillStyle = MAGIC_TONES[life < 0.3 ? 1 : life < 0.65 ? 2 : 3];
     ctx.fillRect(s.x + cx * P, S.groundY - (cy + 1) * P, P, P);
   }
-  if (fade) ctx.restore();
+
   ctx.fillStyle = '#000';
 }
 

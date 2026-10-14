@@ -29,6 +29,7 @@ import { raising } from '../raise.js';
 import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
 import { FACE } from '../lang.js';
+import { withTone } from './tone.js';
 
 // The bench is not in the yard until there is something on it worth buying.
 // It is built rather than delivered (raise.js), so while it is going up it is
@@ -357,16 +358,13 @@ export function drawPointed() {
 const FALLING_DIZZY = { mark: 'dizzy' };
 
 export function drawSays() {
-  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     const say = w.say || (w.falling && w.dizzyFor ? FALLING_DIZZY : null);
     if (!say || underground(w) || atHome(w)) continue;
     const ink = bodyInk(w);
     if (ink <= 0) continue;
-    ctx.globalAlpha = was * ink;
-    drawSay(w, say);
+    withTone(ctx, ink, () => drawSay(w, say));
   }
-  ctx.globalAlpha = was;
   ctx.fillStyle = '#000';
 }
 
@@ -588,7 +586,6 @@ export function drawDeepSight() {
 
 export function drawWorkers() {
   const t0 = now();
-  const was = ctx.globalAlpha;
   for (const w of S.workers) {
     // Out of sight: in the lab, down the quarry, in the outhouse, or home. The
     // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
@@ -599,22 +596,22 @@ export function drawWorkers() {
     // (render/recede.js)
     const ink = bodyInk(w);
     if (ink <= 0) continue;
-    ctx.globalAlpha = was * ink;
-    if (S.crewSight != null && underSurface(w) == null) ring(w);
-    const sunk = underSurface(w);
-    if (sunk != null) {
-      if (w.y >= sunk) continue;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(w.x - P * 8, w.y - P * 16, WORKER + P * 16, sunk - w.y + P * 16);
-      ctx.clip();
+    withTone(ctx, ink, () => {
+      if (S.crewSight != null && underSurface(w) == null) ring(w);
+      const sunk = underSurface(w);
+      if (sunk != null) {
+        if (w.y >= sunk) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(w.x - P * 8, w.y - P * 16, WORKER + P * 16, sunk - w.y + P * 16);
+        ctx.clip();
+        drawWorker(w, t0);
+        ctx.restore();
+        return;
+      }
       drawWorker(w, t0);
-      ctx.restore();
-      continue;
-    }
-    drawWorker(w, t0);
+    });
   }
-  ctx.globalAlpha = was;
 }
 
 // The body in your hand is the pointer's, not the ground's: drawn whole, over

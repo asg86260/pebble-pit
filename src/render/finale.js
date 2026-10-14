@@ -20,6 +20,7 @@ import { keyOf, fighterAt, stationById } from '../deep/party.js';
 import { deepPortal } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { hungAt, pairInYard } from '../finale.js';
+import { withTone } from './tone.js';
 
 const snap = v => Math.round(v / P) * P;
 const clamp01 = k => Math.max(0, Math.min(1, k));
@@ -148,10 +149,13 @@ export function drawHeldPiece(x, y, hold, arms) {
 export function drawFinaleYard() {
   const pair = pairInYard();
   if (!pair) return;
-  const was = ctx.globalAlpha;
   const ink = inFront() ? 1 : 1 - recede();
   if (ink <= 0) return;
-  ctx.globalAlpha = was * ink;
+  withTone(ctx, ink, () => drawPair(pair));
+  ctx.fillStyle = INK;
+}
+
+function drawPair(pair) {
   const f = S.finale, r = S.retired;
   const mode = !f && r ? r.mode : null;
   const line = abyssLine();
@@ -171,8 +175,6 @@ export function drawFinaleYard() {
     ctx.fillRect(Math.round(a.x) + WORKER, Math.round(a.y) + P, FINALE_PAIR_GAP, P);
   }
   if (mode === 'heart' && a && b) drawSaying(Math.round((a.x + b.x) / 2), Math.round(Math.min(a.y, b.y)) + P, { mark: 'heart' });
-  ctx.globalAlpha = was;
-  ctx.fillStyle = INK;
 }
 
 // --- the fireworks ---------------------------------------------------------------------------
