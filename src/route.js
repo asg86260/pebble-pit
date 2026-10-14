@@ -20,7 +20,7 @@
 // its floor is one level line, and the only link to it is the shaft, from the
 // plank over the drowned pit straight down through the liquid.
 
-import { P, WORKER, CLIMB_PACE, SHAFT_PACE } from './config.js';
+import { P, WORKER, CLIMB_PACE, SHAFT_PACE, HOLE_DEPTH } from './config.js';
 import { S, floor, pit, quarry } from './state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX } from './deep/place.js';
 import { groundAt, rockLeft } from './world.js';
@@ -330,13 +330,15 @@ export function wayOver(x, all = ways()) {
 
 // Is this body down a working: below the ground, in the cut or the hole?
 //
-// Below the ground line at all counts, not only inside a working's span: the
+// Deep under the ground line counts, not only inside a working's span: the
 // yard re-walks when a station grows (`DRAWN_W` in world.js) and the cut can
 // move a hundred pixels out from under a quarrier mid-swing. For the one
 // frame before the quarrier's guard sends it back, `wayAt` reads that body as
 // on the yard, and a stage that took it at its word held a body on a break
-// standing in rock.
-export const inWorking = w => w.y + WORKER > S.groundY + 1
+// standing in rock. Deep means past `HOLE_DEPTH`, the furthest a body's own
+// sway and swing carry its feet under the ground it stands on: any less and a
+// body bobbing on the yard reads as down a hole.
+export const inWorking = w => w.y + WORKER > S.groundY + HOLE_DEPTH
                            || downAWorking(wayAt(w.x, w.y).key);
 
 // --- the links ----------------------------------------------------------------

@@ -9,7 +9,7 @@ import { BENCH_SHARDS, BENCH_RATE, rungValue,
          QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SWING_MIN, CUT_SEAM, JAW_BILL,
          CUT_BEAT_MS, CUT_BEAT_MIN, CUT_POCKET, CUT_RUN, CUT_BLAST_POWER } from './config.js';
 import { shockAt } from './shock.js';
-import { P, WORKER, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG, SHARD_CELL, someFind, findKind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
+import { P, WORKER, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG, SHARD_CELL, someFind, findKind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0, DIG_SWAY } from './config.js';
 import { throughQuarryMuck, yardMuckFor } from './smog.js';
 
 import { spriteW, spriteH, stackCol, roofRow, seatCol, DRILL } from './sprites.js';
@@ -480,7 +480,7 @@ export function stepQuarrier(w, now, ctx = null) {
   // the whole gang slid down to the floor a cell a frame. The sway is on top
   // of the feet, not a position the climber is asked to trust.
   plant(w, cutTop(w.x + WORKER / 2) - WORKER);
-  w.y += Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
+  w.y += Math.sin(now / 1000 * w.sp + w.ph) * DIG_SWAY;
 
   // Nowhere to put a seam: stand on the dirt (break.js), unless there is a
   // mess up top, in which case it asks to be up top and the route takes it
