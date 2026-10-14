@@ -12,7 +12,6 @@ import { TYPE, TYPE_OF, DEEP_JOBS, isDeepType } from '../jobs.js';
 import { deepTop, postY } from '../deep/place.js';
 import { bindFighters, bindNew, unbound } from '../deep/party.js';
 import { deepPost } from './deep.js';
-import { offWork } from './builders.js';
 import { belowYard } from '../route.js';
 import { now } from '../clock.js';
 import { newRecord } from './records.js';
@@ -21,6 +20,14 @@ import { unbook } from './hole.js';
 import { FACTORY, TYPES, wanted, newUid } from './jobs.js';
 import { syncLifts } from './lifts.js';
 import { syncRoombas } from './roomba.js';
+
+// A builder with no work on the go to its name: just made, or its work has
+// landed and it has not been given the next. Kept here, not in builders.js:
+// builders.js is imported by jobs.js's factory table, and an import of it
+// from muster.js closes a cycle that leaves that table reading it unset.
+const offWork = w =>
+  (w.type === TYPE.BUILD || w.type === TYPE.DELVE)
+  && !(w.site && onTheGo(w.site).some(x => x.id === w.workId));
 
 // --- who is actually at a site ------------------------------------------------
 // The one question works.js cannot answer for itself: a count is not a body,
