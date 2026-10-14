@@ -51,6 +51,14 @@ let killIn = 0;
 // Null lets go. Never saved, and nothing in the game sets it.
 let held = null;
 export const holdDeepZoom = k => { held = k; if (S.view === 'deep') setZoom(deepZoom()); };
+// Every hold on the deep's framing let go -- a zoom held, the kill's pull,
+// a scene's shot -- for a scene stood up afresh (scenesheet.js): the kill's
+// pull is let go by the finale as it ends, and a scene stood in the middle
+// of it otherwise kept it, pulled in, for every scene after.
+export function letGoDeepFrame() {
+  held = null; killIn = 0; killY = null; shot = null;
+  if (S.view === 'deep' && !gliding()) setZoom(deepZoom());
+}
 const zoomOf = v => (v === 'deep' ? deepZoom() : 1);
 
 // Where each half is looked at from: the floor of the deep on the bottom of

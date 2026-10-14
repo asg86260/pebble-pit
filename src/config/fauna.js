@@ -11,29 +11,20 @@ import { BIRD_REACH, BIRD_DUST } from './weather.js';
 // Rows count down from the deep's ceiling, columns along from its left end,
 // in cells.
 
-// The zones, top to bottom. `tones` are the two rungs of the deep's grey ramp
-// (ABYSS_TONES) its water is dithered in -- `tones[1]` on `share` of the
-// cells, `tones[0]` up to FAUNA_TINT_FILL of them unless it is black -- and
-// `dim` the rungs every creature in it is drawn darker by. The midnight band
-// holds the serpent's bar and the fight's numbers, so it is kept dim there.
+// The zones, top to bottom: one flat water through all of them (the owner's
+// B4), so a zone is who lives in it, and `dim` the rungs every creature in
+// it is drawn darker by. The midnight band holds the serpent's bar and the
+// fight's numbers, so it is kept dim there.
 export const FAUNA_ZONES = [
-  { key: 'sun', from: 0, to: 22, tones: [2, 3], share: 0.12, dim: 0 },
-  { key: 'twi', from: 22, to: 48, tones: [1, 2], share: 0.14, dim: 0 },
-  { key: 'mid', from: 48, to: 88, tones: [0, 1], share: 0.07, dim: 2 },
-  { key: 'aby', from: 88, to: 118, tones: [0, 1], share: 0.02, dim: 0 },
-  { key: 'had', from: 118, to: 130, tones: [0, 0], share: 0, dim: 0 },
+  { key: 'sun', from: 0, to: 22, dim: 0 },
+  { key: 'twi', from: 22, to: 48, dim: 0 },
+  { key: 'mid', from: 48, to: 88, dim: 2 },
+  { key: 'aby', from: 88, to: 118, dim: 0 },
+  { key: 'had', from: 118, to: 130, dim: 0 },
 ];
-export const FAUNA_TINT_FILL = 0.6;
-// Rows either side of a border where the two zones' cells are mixed, and the
-// chance a cell on the row next to the border takes its neighbor's, falling
-// an equal step a row to nothing past the edge: dithered across, never a
-// gradient.
-export const FAUNA_TINT_EDGE = 4;
-export const FAUNA_TINT_MIX = 0.4;
 
 // The drawings: rows of characters, two or three held frames each at `fps`.
-// d c b a grey body, each cell nudged a rung either way, fixed per creature
-// (FAUNA_BASE, FAUNA_VARY); w white; e near-black; q r p the purple ramp; L a
+// d c b a grey body, each flat (FAUNA_BASE); w white; e an eye's dark; q r p the purple ramp; L a
 // light that blinks on its own clock (FAUNA_BLINK).
 export const FAUNA_SPRITES = {
   sardine: { fps: 6, f: [['d.cbw', 'dcccb'], ['.dcbw', 'dcccb']] },
@@ -61,17 +52,16 @@ export const FAUNA_SPRITES = {
   snail: { fps: 3, f: [['....bbb.', 'dbbbbbbw', '....bbb.'], ['d...bbb.', '.bbbbbbw', '....bbb.']] },
   gulperHead: { fps: 1.5, f: [['cc...', 'cccw.', 'ccccc', 'cccc.', 'cc...'], ['cccc.', 'cc.w.', 'c....', 'c....', 'cccc.']] },
 };
-// The grey body's rungs of ABYSS_TONES, and each cell's nudge: a rung down
-// under `lo` of its hash, a rung up over `hi`, never under `floor`.
+// The grey body's rungs of ABYSS_TONES, each flat: a creature is a
+// silhouette in a few kept rungs (the owner's B4), no cell nudged.
 export const FAUNA_BASE = { d: 6, c: 8, b: 10 };
-export const FAUNA_VARY = { lo: 0.2, hi: 0.85, floor: 4 };
-// The rungs the other characters are drawn in: white, near-black, and the
-// purple ramp's (ABYSS_MAGIC_TONES) -- `q` its two body rungs, the darker on
-// `qDark` of the cells.
-export const FAUNA_INK = { w: 11, e: 4, q: [7, 6], qDark: 0.25, r: 9, p: 11 };
+// The rungs the other characters are drawn in: white, the dark of an eye,
+// and the purple ramp's (ABYSS_MAGIC_TONES) -- `q` its two body rungs, the
+// darker on `qDark` of the cells.
+export const FAUNA_INK = { w: 11, e: 4, q: [7, 5], qDark: 0.25, r: 9, p: 11 };
 // A light: lit on two beats in three, a beat `rate` a second, each light on
 // its own phase; lit and dark rungs of the purple ramp.
-export const FAUNA_BLINK = { rate: 2.3, lit: 11, dark: 6 };
+export const FAUNA_BLINK = { rate: 2.3, lit: 11, dark: 5 };
 
 // Who lives where. `n` of each `kind` in `zone`, each at a height in `y`
 // (rows) or on the floor (`floor`), or hovering `low` over it; a pace `v` in
@@ -115,7 +105,7 @@ export const FAUNA_MOTION = {
 // A siphonophore: a float, then a chain of `bells` cells swaying on a wave
 // with a glint running down it, a frond every third bell.
 export const FAUNA_SIPHON = { bells: 26, glint: 6, wave: 0.45, sway: 1.2, amp: 1.6,
-  float: [10, 9], bell: [7, 9], frond: 5, frondLit: 8, glintTone: 11 };
+  float: [10, 8], bell: [6, 8], frond: 4, frondLit: 7, glintTone: 11 };
 // A gulper eel: the head drawing, then a whip of a tail `tail` cells long
 // with a lit tip, thick for its first `thick`, dark for its last `dark`.
 export const FAUNA_GULPER = { tail: 24, wave: 0.35, beat: 3, amp: 3, thick: 8, dark: 6,
@@ -224,7 +214,7 @@ export const FAUNA_POSES = {
 };
 // A reaction's inks on the purple ramp, whatever the zone's dim: a light put
 // out, a light held lit, and the halo round it.
-export const FAUNA_REACT_INK = { out: 2, lit: 11, halo: 7 };
+export const FAUNA_REACT_INK = { out: 3, lit: 11, halo: 7 };
 // How a reaction moves between its keys: at the frame rate, eased in and out
 // of every stop, its whole offset blended in over the first `blend` seconds
 // and out over the last, so it leaves its path and rejoins it without a
@@ -239,4 +229,4 @@ export const FAUNA_SMEAR = { rungs: 4, moved: 2, lag: 3 / 60, far: 30 };
 // Silt off the bed: out a cell a held pose either side for `last` seconds,
 // from rung `tone`, a rung darker every second step, the nearer cell a row
 // up for the first `lift` steps.
-export const FAUNA_SILT = { last: 0.5, tone: 7, lift: 4 };
+export const FAUNA_SILT = { last: 0.5, tone: 8, lift: 4 };

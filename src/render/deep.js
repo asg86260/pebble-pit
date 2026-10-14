@@ -27,7 +27,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
          DEEP_SURFACE, DEEP_WATER_DEPTH,
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
-         DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_MOTES_MAX } from '../config.js';
+         DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_MOTES_MAX, DEEP_PURPLE } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, podAt,
          waterShift } from '../deep/place.js';
@@ -47,19 +47,19 @@ import { SCAFFOLD_BANDS, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, DOME_TONES, CHOO
 import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
-import { GREYS, PURPLES, seen } from './deeptones.js';
-import { toned, toneOn } from './tone.js';
+import { GREYS, PURPLES, TONE, LIGHT, seen, breathAt } from './deeptones.js';
+import { toneOn } from './tone.js';
 
 const isFighter = w => w.type === TYPE.FIGHTER;
 
 // --- the inverted palette ---------------------------------------------------------
-// A tone as it is to be seen, turned into what is drawn to get it (render/deeptones.js).
-const flip = seen;
+// A tone as it is to be seen, turned into what is drawn to get it
+// (render/deeptones.js): six greys and five purples, and white.
 export { GREYS, PURPLES };
 const MOTE_TONES = Object.fromEntries(Object.entries(DEEP_MOTE_TINTS)
-  .map(([k, v]) => [k, { tones: v.tones.map(flip), ink: v.ink }]));
-
-const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+  .map(([k, v]) => [k, v.tones.map(i => (v.purple ? PURPLES : GREYS)[i])]));
+// The breathing light along a top edge, as drawn, at `ms`.
+const breath = ms => PURPLES[breathAt(ms)];
 
 // --- where the deep is on the screen ----------------------------------------------
 // The window over the deep, in world pixels on the cell lattice. The deep's
@@ -70,10 +70,14 @@ export function deepWindow() {
 }
 
 // --- the water ----------------------------------------------------------------
-// The drowned pit's flowing interference, everywhere and faint: the same
-// field (`drawAbyss`, render/cores.js), the same constants, so the deep is
-// plainly the same fluid seen from inside it. Stars breathe in it more
-// sparsely, and never reach the bright end of their ramp.
+// One flat water (the zones' layer lays it, render/fauna.js), and in it the
+// drowned pit's stars alone, every one purple: the same field
+// (`drawAbyss`, render/cores.js), the same constants, so the deep is plainly
+// the same fluid seen from inside it, but with no veil. A star breathes up
+// the kept purples a held step at a time; under the dimmest it is not drawn,
+// since the water is the one grey over black and a darker star is a hole.
+const STAR_SHARE = 7;   // stars in seven that are purple: all of them
+const STARS = PURPLES.map((c, i) => (i < DEEP_PURPLE.dim ? null : c));
 export function drawDeepWater() {
   const { x0, y0, x1, y1 } = deepWindow();
   // The whole window, top edge to floor: the deep has no surface on screen
@@ -85,12 +89,14 @@ export function drawDeepWater() {
   const top = y0, bottom = Math.min(y1, deepFloor());
   if (bottom <= top) return;
   paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
-                    deep: DEEP_WATER_DEPTH, tones: GREYS, magic: PURPLES, t: now() });
+                    deep: DEEP_WATER_DEPTH, tones: GREYS, magic: STARS, t: now(),
+                    veil: false, magicShare: STAR_SHARE });
   ctx.fillStyle = '#000';
 }
 
 // --- the floor -----------------------------------------------------------------
-// The ground under the deep, mottled dark, and the scales lying on it through
+// The ground under the deep, flat, its top course a rung lighter so the floor
+// has an edge against the water, and the scales lying on it through
 // the bed's own painter (deep/scales.js lays it): a plot like the pit's.
 // The ground never changes, so it is painted once into an image, a world
 // pixel a pixel, and drawn from there (a fillRect a cell was a sizeable share
@@ -110,8 +116,7 @@ export function drawDeepFloor() {
     const g = img.getContext('2d');
     for (let r = 0; r < GROUND_ROWS; r++) {
       for (let x = from; x < to; x += P) {
-        const y = fy + r * P, h = seeth(x / P, y / P + 7);
-        g.fillStyle = GREYS[2 + (h % 3) + (r === 0 ? 2 : 0)];
+        g.fillStyle = r === 0 ? TONE.stone : TONE.ground;
         g.fillRect(x - from, r * P, P, P);
       }
     }
@@ -143,10 +148,11 @@ export function bedTop(x) {
 
 // --- the crusher -----------------------------------------------------------------
 // The furnace's drawing is the deep's geometry (deep/sprites.js); these are
-// the tones its characters are seen in.
-const SPRITE_INK = {
-  '#': seen('#ffffff'), '+': GREYS[9], '-': GREYS[6], 'o': seen('#000000'), '*': PURPLES[11]
-};
+// the tones its characters are seen in: frame and brick one flat stone, the
+// mortar a rung under it so it still reads as brick, its door the hole, and
+// every cell with nothing over it the breathing light (`TOP`).
+const SPRITE_INK = { '#': TONE.stone, '+': TONE.stone, '-': TONE.ground, 'o': TONE.hole, '*': LIGHT.bright };
+const TOP = 'top';
 
 // The crusher, a brick furnace (deep/sprites.js), painted at crusherRect():
 // the drawing, painted once into an image of its own as a station is and
@@ -154,16 +160,19 @@ const SPRITE_INK = {
 // in its door, drawn over that every frame; then the sparks of each scale
 // that has gone in lately (`S.crushes`).
 const FURNACE = CRUSHER_SPRITES.rest;
+// A cell of the frame or the brick with open water over it: the edge the light catches.
+const isBrick = ch => ch === '#' || ch === '+' || ch === '-';
+const topEdge = (r, col) => isBrick(FURNACE[r][col]) && !isBrick(FURNACE[r - 1]?.[col]);
 let furnace = null;
-function crusherImage(c) {
-  const id = `${c.x}|${c.y}`;
+function crusherImage(c, t) {
+  const lit = breath(t), id = `${c.x}|${c.y}|${lit}`;
   if (furnace && furnace.id === id) return furnace;
   const img = document.createElement('canvas');
   img.width = FURNACE[0].length * P; img.height = FURNACE.length * P;
   const g = img.getContext('2d');
   for (let r = 0; r < FURNACE.length; r++) {
     for (let col = 0; col < FURNACE[r].length; col++) {
-      const ink = SPRITE_INK[FURNACE[r][col]];
+      const ink = topEdge(r, col) ? lit : SPRITE_INK[FURNACE[r][col]];
       if (!ink) continue;
       g.fillStyle = ink;
       g.fillRect(col * P, r * P, P, P);
@@ -183,7 +192,7 @@ FURNACE.forEach((row, r) => {
 });
 const DOOR_FOOT = Math.max(...DOOR.map(([r]) => r));
 const DOOR_MID = DOOR.reduce((sum, [, c]) => sum + c, 0) / DOOR.length;
-const FIRE_WHITE = seen('#ffffff'), FIRE_GREY = GREYS[GREYS.length - 2];
+const FIRE_WHITE = TONE.white, FIRE_GREY = TONE.pale;
 const rung = k => PURPLES[Math.max(0, Math.min(PURPLES.length - 1, Math.round(k)))];
 
 // How warm the scales going in have made it, 0..1: each swells in and eases
@@ -246,7 +255,7 @@ function drawCrusher() {
   const c = crusherRect(), t = now();
   const smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(crusherImage(c).img, c.x, c.y);
+  ctx.drawImage(crusherImage(c, t).img, c.x, c.y);
   ctx.imageSmoothingEnabled = smooth;
   drawFire(c, t);
   drawSparks(c, t);
@@ -254,21 +263,23 @@ function drawCrusher() {
 }
 
 // The pods: a capsule for each of the crew who lives down here, stacked from
-// the floor. A hull a shade above the dark, a rim a shade above that, and a
-// porthole lit from inside, so a stack reads as somewhere people live.
+// the floor. A flat hull, a rim a rung above it with its top edge the
+// breathing light, and a porthole lit from inside, so a stack reads as
+// somewhere people live.
 function drawPods() {
+  const lit = breath(now());
   for (let i = 0; i < (S.pods || 0); i++) {
     const r = podAt(i);
     for (let y = r.y; y < r.y + r.h; y += P) {
       for (let x = r.x; x < r.x + r.w; x += P) {
         const edgeX = x === r.x || x === r.x + r.w - P, edgeY = y === r.y || y === r.y + r.h - P;
         if (edgeX && edgeY) continue;                                  // rounded
-        ctx.fillStyle = GREYS[(edgeX || edgeY ? 7 : 4) + (seeth(x / P, y / P) % 2)];
+        ctx.fillStyle = y === r.y ? lit : edgeX || edgeY ? TONE.stone : TONE.ground;
         ctx.fillRect(x, y, P, P);
       }
     }
     const px = r.x + Math.round((r.w / 2 - P) / P) * P, py = r.y + P;
-    ctx.fillStyle = GREYS[GREYS.length - 2];
+    ctx.fillStyle = TONE.lit;
     ctx.fillRect(px, py, P * 2, P * 2);
   }
 }
@@ -280,14 +291,16 @@ function drawPods() {
 // own from it, its parts purple from rung 8. Where it stands is place.js's
 // (`propRect`), and what it is made of props.js's (`propCells`).
 const snap = v => Math.round(v / P) * P;
-const toneOf = (ramp, i) => (ramp === 'p' ? PURPLES : GREYS)[i];
+// A prop's cell as drawn: 'g' a grey rung, 'p' a purple one, 'top' the
+// breathing light along its top edges (deep/props.js, `propCells`).
+const toneOf = (ramp, i, lit) => (ramp === 'top' ? lit : (ramp === 'p' ? PURPLES : GREYS)[i]);
 
 // A prop never changes but at the fork and at rung 8, so each is painted
 // once into an image of its own, a cell a cell, and drawn from there. Kept by
 // the prop and whether it is lit; it is drawn at wherever its station stands.
 const painted = new Map();
-function propImage(key, lit) {
-  const id = `${key}|${lit ? 8 : 0}`;
+function propImage(key, lit, light) {
+  const id = `${key}|${lit ? 8 : 0}|${light}`;
   let img = painted.get(id);
   if (img) return img;
   const cells = propCells(key, lit);
@@ -295,14 +308,13 @@ function propImage(key, lit) {
   img.width = Math.max(...cells.map(c => c[0] + 1)) * P;
   img.height = Math.max(...cells.map(c => c[1] + 1)) * P;
   const g = img.getContext('2d');
-  for (const [c, r, ramp, i] of cells) { g.fillStyle = toneOf(ramp, i); g.fillRect(c * P, r * P, P, P); }
+  for (const [c, r, ramp, i] of cells) { g.fillStyle = toneOf(ramp, i, light); g.fillRect(c * P, r * P, P, P); }
   painted.set(id, img);
   return img;
 }
 
-// The plinth under a station (`plinthRect`): a lit top course, its ends a
-// step brighter than the stone between, every cell a tone of its own. The
-// same for every station of one width, so painted once a width.
+// The plinth under a station (`plinthRect`): a lit top course over flat
+// stone. The same for every station of one width, so painted once a width.
 const plinths = new Map();
 function plinthImage(b) {
   const cols = b.w / P, steps = b.step / P, id = `${cols}|${steps}`;
@@ -315,16 +327,16 @@ function plinthImage(b) {
   for (let r = 0; r < PLINTH_H; r++) {
     const l = steps * (PLINTH_H - 1 - r), n = cols + 2 * steps * r;
     for (let c = 0; c < n; c++) {
-      const ramp = r === 0 ? PLINTH_TONES.top : c === 0 || c === n - 1 ? PLINTH_TONES.end : PLINTH_TONES.body;
-      g.fillStyle = GREYS[ramp[Math.floor(hash((l + c) * 7 + r * 131) * ramp.length)]];
+      g.fillStyle = GREYS[r === 0 ? PLINTH_TONES.top : PLINTH_TONES.body];
       g.fillRect((l + c) * P, r * P, P, P);
     }
   }
   plinths.set(id, img);
   return img;
 }
-// The low dome behind a built station (`domeRect`): a shade above the water
-// inside, its rim a shade above that, every cell a tone of its own. The same
+// The low dome behind a built station (`domeRect`): one flat rung over the
+// water, the floor's own, and along its top edge a dim purple, a few rungs
+// under the light the props breathe so the dome stays behind them. The same
 // for every dome of one size, so painted once a size.
 const domes = new Map();
 function domeImage(w, wall) {
@@ -343,8 +355,7 @@ function domeImage(w, wall) {
   const g = img.getContext('2d');
   for (let y = 0; y < rows; y++) for (let c = 0; c < cols; c++) {
     if (!inside(c, y)) continue;
-    const ramp = !inside(c - 1, y) || !inside(c + 1, y) || !inside(c, y - 1) ? DOME_TONES.rim : DOME_TONES.inside;
-    g.fillStyle = GREYS[ramp[Math.floor(hash(c * 13 + y * 29) * ramp.length)]];
+    g.fillStyle = inside(c, y - 1) ? GREYS[DOME_TONES.wall] : PURPLES[DOME_TONES.edge];
     g.fillRect(c * P, y * P, P, P);
   }
   domes.set(id, img);
@@ -361,11 +372,11 @@ function drawPlinth(st) {
 }
 
 function drawProp(st, t) {
-  const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG;
-  ctx.drawImage(propImage(p.key, lit), p.x, p.y);
+  const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG, light = breath(t * 1000);
+  ctx.drawImage(propImage(p.key, lit, light), p.x, p.y);
   // the one prop that moves: the hexer's brew, over its pot
   for (const [c, r, ramp, i] of brewCells(p.key, lit, t)) {
-    ctx.fillStyle = toneOf(ramp, i);
+    ctx.fillStyle = toneOf(ramp, i, light);
     ctx.fillRect(p.x + c * P, p.y + r * P, P, P);
   }
 }
@@ -377,7 +388,7 @@ function drawScaffold(stand) {
   const postW = P * 2, postH = P * SCAFFOLD_BANDS;
   const left = snap(stand.x) - P * 3 - postW, right = snap(stand.x + stand.w) + P * 3;
   const top = deepFloor() - postH;
-  ctx.fillStyle = GREYS[9];
+  ctx.fillStyle = TONE.lit;
   for (const x of [left, right]) for (let i = 0; i < SCAFFOLD_BANDS; i += 2) ctx.fillRect(x, top + i * P, postW, P);
   for (let x = left + postW; x < right; x += P * 2) ctx.fillRect(x, deepFloor() - P * 3, P, 2);
 }
@@ -399,17 +410,17 @@ export const overChooseMark = (x, y) => (S.stations || []).find(st => {
   const m = chooseMarkAt(st);
   return x >= m.x - P && x < m.x + m.w + P && y >= m.y - P && y < m.y + m.h + 2 * P;
 }) || null;
-// White on a dark keyline: every empty cell touching the ink, then the ink.
+// White on a black keyline: every empty cell touching the ink, then the ink.
 function drawChooseMark(st) {
   const m = chooseMarkAt(st), rows = CHOOSE_MARK, ink = (r, c) => rows[r]?.[c] === '#';
-  ctx.fillStyle = GREYS[2];
+  ctx.fillStyle = TONE.hole;
   for (let r = -1; r <= rows.length; r++) for (let c = -1; c <= rows[0].length; c++) {
     if (ink(r, c)) continue;
     let touch = false;
     for (let dr = -1; dr <= 1 && !touch; dr++) for (let dc = -1; dc <= 1; dc++) if (ink(r + dr, c + dc)) { touch = true; break; }
     if (touch) ctx.fillRect(m.x + c * P, m.y + r * P, P, P);
   }
-  ctx.fillStyle = GREYS[11];
+  ctx.fillStyle = TONE.white;
   rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') ctx.fillRect(m.x + c * P, m.y + r * P, P, P); }));
 }
 
@@ -445,7 +456,7 @@ let motesAt = 0, fleckOwed = 0;
 const current = (y, t) => DEEP_CURRENT * Math.sin(t / DEEP_CURRENT_MS * Math.PI * 2 + y / (P * 40));
 
 function mote(kind, x, y, vx = 0, vy = 0, life = Infinity) {
-  const tones = MOTE_TONES[kind].tones;
+  const tones = MOTE_TONES[kind];
   S.deepMotes.push({ kind, x, y, vx, vy, life, s: tones[Math.floor(Math.random() * tones.length)] });
 }
 
@@ -497,11 +508,10 @@ function stepMotes() {
 export function drawDeepMotes() {
   stepMotes();
   for (const m of S.deepMotes) {
-    const ink = MOTE_TONES[m.kind].ink;
     // a mote nearing the end of its life thins out a cell at a time rather
     // than fading: it is drawn on fewer and fewer frames
     if (m.life < 600 && hash(m.x + now() / 100) > m.life / 600) continue;
-    ctx.fillStyle = toned(m.s, ink);
+    ctx.fillStyle = m.s;
     ctx.fillRect(Math.round(m.x / P) * P, Math.round(m.y / P) * P, P, P);
   }
   ctx.fillStyle = '#000';

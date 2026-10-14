@@ -4,7 +4,7 @@ import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK, BUILD_DRIF
 import { now } from '../clock.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, filter, tower } from '../state.js';
-import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
+import { OPENS_PLACE, SITES, DOWN_THERE, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
 import { tintOf } from '../upgrades.js';
 import { farmShedRoofed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
@@ -12,6 +12,8 @@ import { KINDS, shieldPlan } from '../shield.js';
 import { flagReach } from './aura.js';
 import { risingPlaces } from './rise.js';
 import { ctx } from './ctx.js';
+import { onPixel } from './frame.js';
+import { TONE, LIGHT } from './deeptones.js';
 import { groundOf } from '../deep/place.js';
 import { rule } from './marks.js';
 
@@ -107,17 +109,20 @@ export function barSpot(site, w = null) {
 // with the fill. The same picture on the tile and over the station, so a
 // glance at either says what is coming.
 const EDGE = P / 3;                      // the outline's stroke, the world's thin line
-export function buildingGlyph(cx, cy, rows, at, tint = null, dx = 0, dy = 0) {
+// In the deep (`deep`) the stroke is the deep's light and the outline its
+// stone: the yard's grey and a coin's color turned over with the deep are
+// tones its palette does not hold. Laid on whole device pixels, as a cell is.
+export function buildingGlyph(cx, cy, rows, at, tint = null, dx = 0, dy = 0, deep = false) {
   const g = glyphPlan(rows);
   const up = Math.floor(at * g.laid.length);
   const d = g.at[up] ||= drawnAt(g, up);
   // Centred on the ink, not the box: a drawing off to one side of its grid
   // (the shovel, the lamp) would otherwise hang beside the station.
   // The drift (`dx`, `dy`) goes on after, or the centering would snap it off.
-  const x0 = Math.round(cx / P - g.mid) * P + dx, y0 = cy - (CELLS * P) / 2 + dy;
-  if (tint && up) paintRects(d.stroke, tint, x0, y0);
+  const x0 = onPixel(Math.round(cx / P - g.mid) * P + dx), y0 = onPixel(cy - (CELLS * P) / 2 + dy);
+  if (tint && up) paintRects(d.stroke, deep ? LIGHT.glow : tint, x0, y0);
   paintRects(d.ink, '#000', x0, y0);
-  paintRects(d.ghost, BUILD_GHOST_INK, x0, y0);
+  paintRects(d.ghost, deep ? TONE.stone : BUILD_GHOST_INK, x0, y0);
 }
 
 // One fill a color, the cells laid into a path the first time: a glyph is a
@@ -249,7 +254,7 @@ export function drawWorkBars() {
       if (b) { bar(b.x, b.y, progressOf(w)); continue; }
       const row = rowFor(w.key);
       const [dx, dy] = drift(site + w.key);
-      buildingGlyph(glyph.x, glyph.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null, dx, dy);
+      buildingGlyph(glyph.x, glyph.cy, glyphFor(w.key), progressOf(w), row ? tintOf(row, w) : null, dx, dy, DOWN_THERE.has(site));
     }
   }
 }

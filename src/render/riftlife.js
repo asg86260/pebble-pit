@@ -13,17 +13,18 @@ import { P, ABYSS_TONES, ABYSS_MAGIC_TONES, RIFT_DEEP_LAYERS, RIFT_DEEP_NEAR, RI
          RIFTLIFE_SCALE, RIFTLIFE_DIM, RIFTLIFE_SILHOUETTE, RIFTLIFE_COIL, RIFTLIFE_COIL_WAVE,
          RIFTLIFE_COIL_WAVE_SPEED, RIFTLIFE_COIL_WAVE_STEP, RIFTLIFE_COIL_TAPER_HEAD, RIFTLIFE_COIL_TAPER_TAIL,
          RIFTLIFE_EYE } from '../config.js';
-import { GREYS, PURPLES } from './deeptones.js';
+import { GREYS, PURPLES, GREY_RUNG, PURPLE_RUNG } from './deeptones.js';
 import { drawKind, bobOf } from './fish.js';
 import { lead, lifeLen, heldS } from '../riftlife.js';
 import { ctx } from './ctx.js';
 
 // The creatures are drawn in the deep's tones as they are put down for its
 // negative; behind the tear they are seen as they are, so each is read back
-// to its rung on the ramp it came from.
+// to its rung on the ramp it came from: the deep's capped ramps hold only
+// their kept rungs (render/deeptones.js), so a tone reads back to the one it is.
 const RUNG = new Map();
-ABYSS_TONES.forEach((c, i) => RUNG.set(GREYS[i], [ABYSS_TONES, i]));
-ABYSS_MAGIC_TONES.forEach((c, i) => { if (i) RUNG.set(PURPLES[i], [ABYSS_MAGIC_TONES, i]); });
+ABYSS_TONES.forEach((c, i) => { if (GREY_RUNG[i] === i) RUNG.set(GREYS[i], [ABYSS_TONES, i]); });
+ABYSS_MAGIC_TONES.forEach((c, i) => { if (i && PURPLE_RUNG[i] === i) RUNG.set(PURPLES[i], [ABYSS_MAGIC_TONES, i]); });
 // A thing further off is painted lower down its own ramp: there is no alpha.
 // Never to black, which is the window itself.
 const dimmed = (drawn, n) => {

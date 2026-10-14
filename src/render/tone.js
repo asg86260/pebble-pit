@@ -13,7 +13,8 @@
 // the mix, in the same held steps. `toned(c, k, true)` goes toward the ink
 // instead, for a thing fading on a black ground (the rift's hole).
 
-import { ABYSS_TONES, COIN_TONES, FADE_STEPS, GREY, PURPLE } from '../config.js';
+import { ABYSS_TONES, ABYSS_MAGIC_TONES, COIN_TONES, FADE_STEPS, GREY, PURPLE, DEEP_GREY_RUNGS,
+         DEEP_PURPLE_RUNGS } from '../config.js';
 import { GREYS as DEEP_GREYS, PURPLES as DEEP_PURPLES } from './deeptones.js';
 import { darkPage, raw } from '../ink.js';
 
@@ -40,14 +41,50 @@ const ramp = list => {
   if (!r.some(c => luma(c) < 5)) r.unshift(INK);
   return r;
 };
-const RAMPS = { grey: ramp(GREY), purple: ramp(PURPLE), abyss: ramp(ABYSS_TONES), deepGrey: ramp(DEEP_GREYS), deepPurple: ramp(DEEP_PURPLES),
-                ...Object.fromEntries(Object.entries(COIN_TONES).map(([k, v]) => [k, ramp(v)])) };
-const MEMBER = new Map();
-for (const [name, r] of Object.entries(RAMPS)) for (const c of r) if (!MEMBER.has(hexOf(c))) MEMBER.set(hexOf(c), name);
+const COINS = Object.fromEntries(Object.entries(COIN_TONES).map(([k, v]) => [k, ramp(v)]));
+const RAMPS = { grey: ramp(GREY), purple: ramp(PURPLE), abyss: ramp(ABYSS_TONES), ...COINS };
+const memberOf = ramps => {
+  const m = new Map();
+  for (const [name, r] of Object.entries(ramps)) for (const c of r) if (!m.has(hexOf(c))) m.set(hexOf(c), name);
+  return m;
+};
+const MEMBER = memberOf(RAMPS);
+
+// The deep holds six greys and five purples (config DEEP_GREY_RUNGS): a fade
+// drawn there steps along those and nothing else. Before its negative a tone
+// is written turned over (render/deeptones.js), after it as seen, so each
+// side has its own pair of ramps. `toneDeep` says which side is drawing
+// (render.js, a layer at a time), or null in the yard.
+const seenGreys = [...DEEP_GREY_RUNGS.map(k => ABYSS_TONES[k]), ABYSS_TONES[ABYSS_TONES.length - 1]];
+const seenPurples = [ABYSS_MAGIC_TONES[0], ...DEEP_PURPLE_RUNGS.map(k => ABYSS_MAGIC_TONES[k])];
+const DEEP_RAMPS = {
+  pre: { deepGrey: ramp([...new Set(DEEP_GREYS)]), deepPurple: ramp([...new Set(DEEP_PURPLES)]), ...COINS },
+  post: { deepGrey: ramp(seenGreys), deepPurple: ramp(seenPurples), ...COINS }
+};
+const DEEP_MEMBER = { pre: memberOf(DEEP_RAMPS.pre), post: memberOf(DEEP_RAMPS.post) };
+let deepSide = null;
+export const toneDeep = side => { deepSide = side; };
+
+// The nearest of the deep's own tones to a color it does not hold, by
+// distance in the channels: in the deep nothing keeps a mix of its own.
+function deepNearest(rgb) {
+  let best = null, bd = Infinity;
+  for (const r of [DEEP_RAMPS[deepSide].deepGrey, DEEP_RAMPS[deepSide].deepPurple]) for (const c of r) {
+    const d = (c[0] - rgb[0]) ** 2 + (c[1] - rgb[1]) ** 2 + (c[2] - rgb[2]) ** 2;
+    if (d < bd) { bd = d; best = c; }
+  }
+  return best;
+}
 
 // A color in no ramp is placed by its look: a grey is the grey ramp's, a
 // purple the purple's, anything else keeps its own mix.
 function rampFor(rgb) {
+  if (deepSide) {
+    const named = DEEP_MEMBER[deepSide].get(hexOf(rgb));
+    if (named) return DEEP_RAMPS[deepSide][named];
+    const near = DEEP_MEMBER[deepSide].get(hexOf(deepNearest(rgb)));
+    return DEEP_RAMPS[deepSide][near];
+  }
   const named = MEMBER.get(hexOf(rgb));
   if (named) return RAMPS[named];
   const [r, g, b] = rgb, hi = Math.max(r, g, b), lo = Math.min(r, g, b);
@@ -75,7 +112,7 @@ export function toned(c, k, onInk = false) {
   const q = held(k);
   if (q >= 1) return c;
   if (q <= 0) return onInk ? '#000000' : '#ffffff';
-  const key = c + '|' + q + (onInk ? '|i' : '');
+  const key = c + '|' + q + (onInk ? '|i' : '') + (deepSide ? '|' + deepSide : '');
   let out = cache.get(key);
   if (out !== undefined) return out;
   const rgb = rgbOf(c);

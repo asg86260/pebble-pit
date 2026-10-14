@@ -25,6 +25,19 @@ export function enterWorld() {
                    Math.round((-S.camY + S.shakeY) * k));
 }
 
+// A world rectangle filled with its edges on whole device pixels: at a zoom
+// that is not whole, a cell laid at a world pixel straddles device pixels and
+// its edge comes out a blend of two inks, a tone the deep's palette does not
+// hold. Only on the frame's own context in the world's space (`enterWorld`,
+// whose offset is already whole); anywhere else it is a plain fill.
+export function fillOnPixels(g, x, y, w, h) {
+  if (g !== ctx) { g.fillRect(x, y, w, h); return; }
+  const x0 = onPixel(x), y0 = onPixel(y);
+  g.fillRect(x0, y0, onPixel(x + w) - x0, onPixel(y + h) - y0);
+}
+// A world coordinate moved to the nearest whole device pixel, in the world's space.
+export const onPixel = v => { const k = S.zoom * S.dpr; return Math.round(v * k) / k; };
+
 // The world, cut off at the ground line: the sky is drawn before the yard and
 // nothing paints the earth over it, so on a window too short for the clouds'
 // depth under its top they came through below the line.

@@ -54,6 +54,7 @@ export const KIT_MAX = 3;
 // the spark's, and a yard that far along has its benches and most plots.
 export const MACHINE_HATS = 5;
 export const WORKER = P * 3;     // worker square size
+export const BODY_RIM = 2;     // the black rim round its white middle, in world pixels
 
 // How far under the ground line a body's feet must be before it is down a
 // hole rather than standing on the yard. Two bodies ride below their footing

@@ -62,6 +62,8 @@ export const FLOW_GIANT_SPEED = 6;
 export const FLOW_GIANT_LEN = 320;
 export const FLOW_GIANT_R = 46;
 export const FLOW_GIANT_AT = 0.3;
+// The middle depth's crossings are drawn this many rungs down their own tones.
+export const FLOW_MIDDLE_DIM = 4;
 // The near creatures swim the world, not the glass, so the serpent can take
 // one that is passing (DESIGN.md, "The serpent eats to heal"): one sets off
 // every FLOW_NEAR_EVERY_S from FLOW_NEAR_OUT beyond a wall of the deep, at

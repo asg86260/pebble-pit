@@ -42,7 +42,6 @@ import { freedBody, jawAt, headLeft } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
 import { GREYS, PURPLES, deepWindow } from './deep.js';
-import { seen } from './deeptones.js';
 import { barZone, barShown } from './serpentbar.js';
 import { drawBody, drawSaying } from './crew.js';
 import { hisHop, hisSay } from '../abyssintro.js';
@@ -448,7 +447,7 @@ function drawMealCrosses(t, pts, bellyA) {
 // place on the hide in held steps with a dim smear a step behind and a cell
 // of it halfway, then a spark there, ringed on its first frames. Purple, and
 // every third the water's own grey flecks.
-const FLECKS = DEEP_MOTE_TINTS.fleck.tones.map(seen);
+const FLECKS = DEEP_MOTE_TINTS.fleck.tones.map(i => GREYS[i]);
 const BLOB = [[0, 0], [1, 0], [0, 1], [1, 1]];
 const MOTE_OFF = 1 / COIL_SEGS;
 const RING = [[2, 0], [-1, 0], [0, 2], [0, -1], [3, 1], [-2, 1], [1, 3], [1, -2]];

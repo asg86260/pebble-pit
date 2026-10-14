@@ -6,12 +6,13 @@ import { P, SHELF_GLYPH_CELLS } from '../config.js';
 import { glyphFor } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
-import { doneAt, doneBillsAt, rowFor } from '../works.js';
+import { doneAt, doneBillsAt, rowFor, DOWN_THERE } from '../works.js';
 import { buildingGlyph, stackSlot, drift } from './bars.js';
 
 // The key a fighter's station's build goes by (deep/party.js, `stationRow`).
 const STATION_BUILD = 'station-';
 import { ctx } from './ctx.js';
+import { onPixel } from './frame.js';
 
 // The thing that finished stays where it stood in the stack over the station
 // (`drawWorkBars`), drawn whole with a tick laid over it, and the next thing
@@ -114,9 +115,11 @@ export function drawDoneMarks() {
       // Swaying on as it did while it was building: the same drift, by the
       // same name, so finishing does not stop it still.
       const [dx, dy] = drift(site + key);
-      if (!bare) buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u, bills[i] ? { bill: bills[i] } : null) : null, dx, dy);
+      if (!bare) buildingGlyph(at.x, at.cy, glyphFor(key), 1, u ? tintOf(u, bills[i] ? { bill: bills[i] } : null) : null, dx, dy,
+                               DOWN_THERE.has(site));
       ctx.save();
-      ctx.translate(at.x - P / 2 + dx, at.cy - P / 2 + dy);   // five wide: half a cell puts it true
+      // five wide: half a cell puts it true; on a whole device pixel, as a cell is
+      ctx.translate(onPixel(at.x - P / 2 + dx), onPixel(at.cy - P / 2 + dy));
       if (bare) { ctx.translate(-P / 2, -P / 2); ctx.scale(2, 2); }
       strokeCells(TICK, '#fff');
       fillCells(TICK, '#000');

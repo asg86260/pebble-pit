@@ -12,6 +12,7 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
+import { crispText } from './crisptext.js';
 import { inspiredK, hasted } from '../deep/statuses.js';
 import { standOfStation, deepFloor } from '../deep/place.js';
 import { part, resistNow, resistNext, inOrb, orbOn } from '../deep/phases.js';
@@ -116,9 +117,8 @@ export function drawFoeStatuses(x, y) {
     const tx = x + Math.round((w - s) / 2);
     barTiles.push({ x: tx, y, w: s, h: s, text });
     tile(key, tx, y, k, n, { ...o, px: STATUS_BAR_PX });
-    labelType();
-    ctx.fillStyle = seen(STATUS_FACE);
-    ctx.fillText(label, x + w / 2, y + s + 4 + STATUS_LABEL_GAP);
+    // on the pixel grid: a smoothed label is a fringe of greys the deep does not hold
+    crispText(ctx, label, x + w / 2, y + s + 4 + STATUS_LABEL_GAP, ctx.font, seen(STATUS_FACE), 'center');
     x += w + STATUS_GAP * 2;
   };
   // first the serpent's own, the phase's mechanic, up all phase (the owner,
