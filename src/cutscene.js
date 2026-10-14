@@ -39,6 +39,7 @@ import { reducedMotion } from './prefs.js';
 import { beatRunning, skipBeat } from './beats.js';
 import { now, frameMs, setStill } from './clock.js';
 import { keepCast, dropCast } from './stage.js';
+import { outCubic as ease } from './motion.js';
 
 // How long a scene may run, where it looks, and what it is about. `spot`
 // is asked every frame where the thing watched moves (the disc grows under
@@ -162,7 +163,6 @@ export function skipCutscene() {
   return true;
 }
 
-const ease = k => 1 - Math.pow(1 - k, 3);
 const easeInOut = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 
 // One frame of the camera's beat: true while it still has the camera, the

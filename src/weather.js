@@ -27,6 +27,7 @@ import { rand } from './rng.js';
 import { meet } from './met.js';
 import { sfx } from './audio.js';
 import { earn } from './notices.js';
+import { smoothstep as smooth } from './motion.js';
 
 const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may stretch
 
@@ -79,7 +80,6 @@ function cloudY(c) {
 // the brew, held through the pour, and down again over CLOUD_SETTLE_S once the
 // shower has stopped -- so a reload mid-brew comes back at the same swell,
 // and a game picked up again after one is a settled sky, like a dry one.
-const smooth = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 export function swell() {
   const heft = S.stormHeft || 0;
   if (S.stormFor >= 0) return heft * smooth(S.stormFor / STORM_BREW_S);

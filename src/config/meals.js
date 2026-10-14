@@ -20,6 +20,9 @@ export const MEAL_SWIM_CELLS = 44;   // at least: it starts off the glass if the
 export const MEAL_JAW_LEAD_S = 0.7;
 export const MEAL_JAW_OPEN_S = 0.5;
 export const MEAL_JAW_SHUT_S = 0.25;
+// The jaw's held poses, how far open: shut, ajar, the full gape. Every
+// opening of the mouth steps through these (deep/meals.js, `jawPose`).
+export const JAW_POSES = [0, 0.5, 1];
 export const MEAL_GAPE = 5;
 export const MEAL_HINGE = 10;
 // A creature is squeezed to this share of its height by the time it is in.

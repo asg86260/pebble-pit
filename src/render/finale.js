@@ -21,11 +21,11 @@ import { deepPortal } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { hungAt, pairInYard } from '../finale.js';
 import { withTone } from './tone.js';
+import { lerp } from '../motion.js';
 
 const snap = v => Math.round(v / P) * P;
 const clamp01 = k => Math.max(0, Math.min(1, k));
 const stepped = (k, n) => Math.min(1, Math.ceil(clamp01(k) * n) / n);
-const lerp = (a, b, k) => a + (b - a) * k;
 const [, G2, G3, G4, G5, G6] = FINALE_GREYS;
 const INK = '#000', PU = FINALE_PURPLE, PUD = FINALE_PURPLE_DARK, PUL = FINALE_PURPLE_LIGHT, WHITE = '#fff';
 

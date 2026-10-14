@@ -33,7 +33,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
          NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y, FADE_STEPS } from '../config.js';
 import { S } from '../state.js';
-import { mealNow, jawOpen, jawGap } from '../deep/meals.js';
+import { mealNow, jawOpen, jawGap, jawPose } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
 import { coilLine, coilThick, mouthX, deepFloor, bellyAt, deepTop, deepX0, deepX1, coilEnds } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
@@ -812,13 +812,12 @@ export function drawSnatch() {
   }
   if (sn.headY >= surface) return;
   const k = Math.max(0, Math.min(1, (surface - sn.headY) / SNATCH_RISE));   // how far up
-  const ease = x => x * x * (3 - 2 * x);
   // It comes straight up under him, snout toward the plank, its mouth's
   // middle on the take (snatch.js, `headLeft`, `jawAt`) and the neck at the
   // head's far end; the jaws part as it reaches him and shut on him. Before
   // it has him it sways; with him, it holds still, so he is where the take
   // left him.
-  const open = sn.carried ? 0 : ease(Math.max(0, Math.min(1, k * 1.6 - 0.6)));
+  const open = sn.carried ? 0 : jawPose(k * 1.6 - 0.6);
   const sway = sn.carried ? 0 : Math.round(Math.sin(t / 700)) * P;
   const cols = SNATCH_HEAD_W / P, rows = SNATCH_HEAD_H / P, mid = Math.floor(rows / 2), neckC = SNATCH_NECK_W / P;
   const hy = snap(sn.headY), neckTop = hy + (mid + 1) * P;

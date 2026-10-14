@@ -34,10 +34,11 @@ import { TYPE } from './jobs.js';
 import { deepPortal, deepFloor, bellyAt, coilAt, coilThick, segAbove, postX, postY, slotX } from './deep/place.js';
 import { fighterAt, classOf } from './deep/party.js';
 import { swim, mid } from './deep/arms.js';
+import { poseAt, smoothstep as ease, topOf } from './motion.js';
+import { HOP_POSES } from './config.js';
 
 export const KEY = 'abyss';
 
-const ease = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 const mix = (a, b, k) => ({ k: a.k + (b.k - a.k) * k, x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k });
 // Under reduced motion a glide between two framings is a cut.
 const glided = (t, at, s) => (reducedMotion() ? 1 : ease((t - at) / (s * 1000)));
@@ -188,10 +189,13 @@ export function holdHer(w, c) {
 
 // --- what the drawing reads --------------------------------------------------------
 const calling = t => S.abyss && S.abyss.freeAt == null && S.abyss.phase === 'call' ? t - S.abyss.phaseAt : null;
-// His hop against the ribs: a cell up and back, held each, all through the call.
+// His hop against the ribs, all through the call: the one hop's held poses
+// (HOP_POSES), a hop every two ABYSS_HOP_S, its top a cell.
 export function hisHop(t) {
   const u = calling(t);
-  return u != null && Math.floor(u / (ABYSS_HOP_S * 1000)) % 2 === 0 ? P : 0;
+  if (u == null) return 0;
+  const k = (u / (ABYSS_HOP_S * 2000)) % 1;
+  return Math.round((poseAt(HOP_POSES, k).lift || 0) / topOf(HOP_POSES)) * P;
 }
 // And his call: two bangs, for help.
 export function hisSay(t) {

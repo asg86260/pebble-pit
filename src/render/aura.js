@@ -27,6 +27,7 @@ import { flagRip } from '../flagwave.js';
 import { cell } from './marks.js';
 import { groundOf } from '../deep/place.js';
 import { toned } from './tone.js';
+import { smoothstep as ease } from '../motion.js';
 
 // Whether a station is offering is `hasOffer`, one rule for every station, the
 // bench included: `benchMark()` counts an unread heading as well and would fly
@@ -237,7 +238,6 @@ const RAISE_TOTAL = FLAG_RAISE_MS + FLAG_HOIST_MS;
 let lastFrame = 0;
 
 // Smoothstep, so the mast eases out of the roof and settles at the top.
-const ease = k => k * k * (3 - 2 * k);
 
 // Painted before the buildings so the poles stand behind the rooflines. The
 // hold ring stays in drawAuras, over everything.

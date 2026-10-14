@@ -19,6 +19,7 @@ import { skyCam } from '../view.js';   // the yard's window, even with the deep 
 // into the band (the same `SMOG_SINK` the sinking-in uses). Picking from the
 // whole sky pulls a puff you just watched climb straight back down as a drop.
 export const settled = m => !m.up && m.age >= SMOG_SINK;
+import { smoothstep as smooth } from '../motion.js';
 
 // ...and part of *this* shower. Without the mark a shower feeds on the smoke
 // the works put up during it and runs far longer than there was sky to
@@ -26,7 +27,6 @@ export const settled = m => !m.up && m.age >= SMOG_SINK;
 const doomed = m => settled(m) && m.rain === S.rains;
 
 // A plain smoothstep, nought to one across [0, 1]: a shower has no corners.
-const smooth = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 
 // The front's share of the settled sky, marked at the roll: a uniform pick,
 // so the wash is spread over the whole band and not one end of it. What is

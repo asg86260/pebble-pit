@@ -19,13 +19,13 @@ import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SQ
          FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED, FLOW_GIANT_LEN, FLOW_GIANT_R, FLOW_GIANT_AT, FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
          FAUNA_SMEAR } from '../config.js';
 import { nearY, crossings, farCell, farY, water, streamPose, streamLead } from '../deep/flow.js';
+import { smoothstep as ease } from '../motion.js';
 
 // The mock's tones, on the deep's own ramps.
 const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
 const Pu = [2, 3, 4, 5, 7, 9, 10, 11, 11].map(i => PURPLES[i]);
 const BLACK = GREYS[0];
 const unit = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
-const ease = x => x * x * (3 - 2 * x);
 
 const ell = (put, cx, cy, rx, ry, tone) => {
   for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++)

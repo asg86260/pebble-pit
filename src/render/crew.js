@@ -7,7 +7,7 @@ import { drawHopMarks, drawHeldPiece } from './finale.js';
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
 import { bodyInk } from './recede.js';
-import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
+import { MUCK_TONE, P, SHARD_CELL, WORKER, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, HOP_POSES, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedShown, buriedVisible, buriedOut } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
@@ -30,6 +30,7 @@ import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
 import { FACE } from '../lang.js';
 import { withTone } from './tone.js';
+import { poseAt, topOf } from '../motion.js';
 
 // The bench is not in the yard until there is something on it worth buying.
 // It is built rather than delivered (raise.js), so while it is going up it is
@@ -332,6 +333,16 @@ function drawSay(w, say) {
   // (a skipped cell between the arms, so it reads as four marks, not a plus)
   for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]])
     ctx.fillRect(onCell(x + dx * P * 2 - P / 2), top - P * 2 + dy * P * 2, P, P);
+}
+
+// A landing's hop: the one hop's poses (HOP_POSES) over LAND_HOP_MS, its top
+// LAND_HOP_H cells for a first-sized rock, in whole cells; lift in pixels.
+const HOP_TOP = topOf(HOP_POSES);
+function landPose(w, t0) {
+  const k = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
+  if (!(k >= 0 && k < 1)) return null;
+  const p = poseAt(HOP_POSES, k);
+  return { ...p, lift: Math.round((p.lift || 0) / HOP_TOP * LAND_HOP_H * (w.hopK || 1)) * P };
 }
 
 // A mark's cell, snapped to the lattice.
@@ -641,17 +652,13 @@ function drawWorker(w, t0) {
     // swing, which is a janitor jittering while it cleans.
     const leanOn = throwOn > LEAN_HOLD ? 1 : 0;
     const x = Math.round(w.x + leanOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
-    // The landing hop is drawn here and nowhere else: `landRock` stamps the
-    // moment and the weight, and this lifts the body along one parabola
-    // without ever moving `w.y`, so nothing that reasons about where a body
-    // stands has a body in the air to reason about. Whole pixels, or a body
-    // drawn between pixels smears a hairline off its own edge.
-    const ht = (t0 - (w.hopAt || -Infinity)) / LAND_HOP_MS;
-    const hop = ht >= 0 && ht < 1 ? LAND_HOP_H * (w.hopK || 1) * 4 * ht * (1 - ht) * P : 0;
-    // and the finale's crowd hopping in held poses and its builders stooping
-    // (finale.js), drawn the same way
-    const pose = finalePose(w);
-    const ground = Math.round(w.y + throwOn * look.lunge * P - hop - (pose ? pose.lift || 0 : 0));
+    // The finale's crowd hopping in held poses and its builders stooping
+    // (finale.js), or the landing hop, drawn here and nowhere else:
+    // `landRock` stamps the moment and the weight, and this steps the body
+    // through the one hop's held poses without ever moving `w.y`, so nothing
+    // that reasons about where a body stands has a body in the air.
+    const pose = finalePose(w) || landPose(w, t0);
+    const ground = Math.round(w.y + throwOn * look.lunge * P - (pose ? pose.lift || 0 : 0));
 
     // A cart is kit like any other, drawn off what the body is holding rather
     // than what the books say it is: the same rule a helmet has.

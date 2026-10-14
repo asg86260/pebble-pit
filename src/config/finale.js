@@ -83,6 +83,10 @@ export const FINALE_HOP_POSES = [
   { s: 0.08, lift: 1, smear: 'over' },
   { s: 0.12, rows: 2, dust: true },
 ];
+// The one drawn hop: the finale's crowd, a landing and
+// his hop against the ribs all step through this table (motion.js, `poseAt`),
+// scaled to their own length and height.
+export const HOP_POSES = FINALE_HOP_POSES;
 export const FINALE_MARK_EVERY_S = 3;     // a mark over each of the crowd this often
 export const FINALE_MARK_S = 1.2;         // and up this long
 export const FINALE_MARK_AFTER_S = 0.6;   // the first not until it has been in its place this long

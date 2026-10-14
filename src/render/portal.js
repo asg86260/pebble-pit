@@ -27,9 +27,9 @@ import { ringAt } from '../snatch.js';
 import { cellImage } from './cellimage.js';
 import { GREYS, PURPLES } from './deep.js';
 import { abyssRung } from './abyssfield.js';
+import { smoothstep as ease } from '../motion.js';
 
 const snap = v => Math.round(v / P) * P;
-const ease = k => k * k * (3 - 2 * k);
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 
 // How open each is: the snatch's whirlpool at the mouth while it plays; the
