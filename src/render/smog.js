@@ -2,7 +2,7 @@
 // leaves behind.
 
 import { now, ambient } from '../clock.js';
-import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
+import { CUT_MUCK_FADE_S, CUT_MUCK_FADE_STEPS, BOLT_FLASH_INK, BOLT_FLASH_S, BOLT_LIFE_S, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, RAIN_DASH_MAX, RAIN_DASH_MIN, RAIN_FALL, RAIN_FALL_GIVE, RAIN_LEAN, RAIN_SHEETS, RAIN_NEAR, RAIN_SPLASH, RAIN_SPLASH_HOLD_S, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE, RAIN_WATER_TONE } from '../config.js';
 import { at } from '../grid.js';
 import { DROPS, EMBERS, GOING, SPLASHES, SKY, STACK, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { gust } from '../wind.js';
@@ -116,29 +116,17 @@ function drawMuckGhosts() {
 }
 
 // What the yard has put up there: the motes themselves, every one of which
-// climbed off a swing. Nobody draws an outline, so there are no edges in it.
-// It is the one thing here you look *through*, so it comes apart into color
-// the way a lens makes it: nothing at the middle of the window, a hair of red
-// one side and cyan the other by the edges. A fringe under half a pixel is a
-// fringe nobody can see, so the middle of the screen draws one rectangle a
-// mote and only the edges draw three.
-const CA_FLOOR = 0.5;              // separation not worth drawing
-const CA_INK = 0.55;               // how solid a fringe is against the mote itself
-const CA_WARM = '#c02a2a';         // the red edge
-const CA_COOL = '#1f9ad0';         // and the cyan one
-
+// climbed off a swing. Nobody draws an outline, so there are no edges in it,
+// and no color fringe either: a mote is its SMOG_TINTS tone and nothing else.
 // Drawn as a handful of fills rather than thousands of rectangles: every call
 // into the canvas costs the same setup whatever it draws, and a shower is a
 // couple of thousand specks on the glass at once.
 export function drawSmog() {
   if (!SKY.length && !GOING.length && !STACK.length) return;
-  const mid = S.camX + S.viewW / 2;
-  const half = Math.max(1, S.viewW / 2);
 
   // One bucket a tint *and a weight*: every speck carries its own ink (see
   // `skyMote`), and specks of the same color and weight go down together.
   const runs = new Map();
-  const warm = [], cool = [];
   for (const m of SKY) {
     // Only the plume, not the band: the smoke still climbing off the works is
     // drawn -- so a swing visibly puts something up -- but the settled sky is
@@ -147,21 +135,16 @@ export function drawSmog() {
     // there is only counted. And not a machine's motes at all: the smoke off
     // a stack is the puffs (`puffStack`, below), and its motes are the count
     // behind them -- drawing both put the old speck-plume up beside the
-    // smoke, in the soot browns with a fringe on, and the two read as two
+    // smoke, in the soot browns, and the two read as two
     // kinds of pollution.
     if (!m.up || m.kind === 'mach') continue;
     // Asked of the sky rather than read off the mote: a settled mote is not
     // written every frame (`moteX` in smog.js). The cull on x comes first, so
-    // the height and the fringe are only worked out for what is on the glass.
+    // the height is only worked out for what is on the glass.
     const mx = moteX(m);
     if (!onScreen(mx)) continue;
     const my = moteY(m);
     const x = Math.round(mx), y = Math.round(my);
-    const off = Math.max(-1, Math.min(1, (mx - mid) / half)) * HAZE_CA;
-    if (Math.abs(off) >= CA_FLOOR) {
-      warm.push(Math.round(mx - off), y);
-      cool.push(Math.round(mx + off), y);
-    }
     // Both fixed on the mote, so a speck does not shimmer between colors.
     const shades = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
     const tint = shades[(m.tone ?? 0) % shades.length];
@@ -177,8 +160,7 @@ export function drawSmog() {
   }
 
   // The ones a mouth has taken, thinning where they stood: the same speck at
-  // a lighter weight, so the same buckets. No fringe on them; the chromatic
-  // edge is a thing about the sky's depth, and these are on their way out.
+  // a lighter weight, so the same buckets.
   for (const g of GOING) {
     if (g.kind === 'mach' || !onScreen(g.x)) continue;
     const shades = SMOG_TINTS[g.kind] || SMOG_TINTS.dust;
@@ -213,8 +195,6 @@ export function drawSmog() {
     for (let i = 0; i < pts.length; i += 2)
       ctx.fillRect(pts[i] + from, pts[i + 1], P + tail, P);
   };
-  spill(warm, CA_WARM, HAZE_INK * CA_INK);
-  spill(cool, CA_COOL, HAZE_INK * CA_INK);
   for (const run of runs.values()) spill(run.at, run.tint, HAZE_INK * run.ink);
 
   // The smoke off the stacks, at smoke's own weight and not the haze's: the

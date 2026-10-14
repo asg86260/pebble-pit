@@ -1,11 +1,6 @@
 import { P } from './yard.js';
 
 export let GRAV = 1;
-// How far the haze comes apart into color at the edge of the view: a hair of
-// red one side and cyan the other says the sky is being looked *through*.
-// Nothing at the middle of the window, most at the edges, like glass.
-//
-export let HAZE_CA = 1.7;        // pixels of separation, at the edge of the view
 // --- throwing somebody --------------------------------------------------------
 // A body let go of is thrown off the same flick the dust is thrown with, but
 // gentler: a person is heavier than a grain, and a body flung the length of
@@ -56,8 +51,6 @@ export let BELT_SCATTER = 0.18;    // and each grain's own give either side of i
 export const DUST_KNOBS = [
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05,
     get: () => GRAV, set: v => { GRAV = v; } },
-  { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1,
-    get: () => HAZE_CA, set: v => { HAZE_CA = v; } },
   { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05,
     get: () => HURL, set: v => { HURL = v; } },
   { key: 'THROW', label: 'throw dust', min: 2, max: 40, step: 1,
