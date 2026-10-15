@@ -28,7 +28,7 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_SURFACE, DEEP_WATER_DEPTH,
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_MOTES_MAX, DEEP_PURPLE,
-         DEEP_STAR_THIN, DEEP_STAR_DIM } from '../config.js';
+         DEEP_STAR_THIN, DEEP_STAR_DIM, DEEP_MOTE_FADE_MS, DEEP_MOTE_RIM } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, podAt,
          waterShift } from '../deep/place.js';
@@ -90,7 +90,7 @@ export function drawDeepWater() {
   if (bottom <= top) return;
   paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
                     deep: DEEP_WATER_DEPTH, tones: GREYS, magic: STARS, t: now(),
-                    veil: false, magicShare: STAR_SHARE, thin: DEEP_STAR_THIN, dim: DEEP_STAR_DIM });
+                    veil: false, magicShare: STAR_SHARE, thin: DEEP_STAR_THIN, dim: DEEP_STAR_DIM, fade: true });
   ctx.fillStyle = '#000';
 }
 
@@ -440,7 +440,7 @@ const current = (y, t) => DEEP_CURRENT * Math.sin(t / DEEP_CURRENT_MS * Math.PI 
 
 function mote(kind, x, y, vx = 0, vy = 0, life = Infinity) {
   const tones = MOTE_TONES[kind];
-  S.deepMotes.push({ kind, x, y, vx, vy, life, s: tones[Math.floor(Math.random() * tones.length)] });
+  S.deepMotes.push({ kind, x, y, vx, vy, life, age: 0, s: tones[Math.floor(Math.random() * tones.length)] });
 }
 
 function stepMotes() {
@@ -475,6 +475,7 @@ function stepMotes() {
   let n = 0;
   for (const m of list) {
     m.life -= dt;
+    m.age = (m.age || 0) + dt;
     if (m.life <= 0) continue;
     m.vx *= Math.pow(0.97, f); m.vy *= Math.pow(0.97, f);
     m.x += (m.vx + current(m.y, t)) * f;
@@ -490,13 +491,20 @@ function stepMotes() {
 
 export function drawDeepMotes() {
   stepMotes();
+  // A mote fades in as it is born and out as its life ends, by opacity, and
+  // thins toward the window's edges, where silt wraps round to the far side:
+  // nothing in the water blinks on or off.
+  const was = ctx.globalAlpha, { x0, y0, x1, y1 } = deepWindow(), rim = P * DEEP_MOTE_RIM;
+  const bottom = Math.min(y1, deepFloor());
   for (const m of S.deepMotes) {
-    // a mote nearing the end of its life thins out a cell at a time rather
-    // than fading: it is drawn on fewer and fewer frames
-    if (m.life < 600 && hash(m.x + now() / 100) > m.life / 600) continue;
+    const edge = m.kind === 'silt' ? Math.min(m.x - x0, x1 - m.x, m.y - y0, bottom - m.y) / rim : 1;
+    const a = Math.min(1, (m.age || 0) / DEEP_MOTE_FADE_MS, m.life / DEEP_MOTE_FADE_MS, edge);
+    if (a <= 0) continue;
+    ctx.globalAlpha = was * a;
     ctx.fillStyle = m.s;
     ctx.fillRect(Math.round(m.x / P) * P, Math.round(m.y / P) * P, P, P);
   }
+  ctx.globalAlpha = was;
   ctx.fillStyle = '#000';
 }
 

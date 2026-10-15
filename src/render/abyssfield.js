@@ -113,6 +113,8 @@ const STAR_OF = byHash(h => h % ABYSS_STAR_EVERY);
 const SEVEN_OF = byHash(h => h % 7);
 const VARY_OF = byHash(h => (h >> 3) % ABYSS_STAR_VARY);
 const THIN_OF = byHash(h => (h >> 5) % 16);
+// Set by `paintAbyssField` for one paint, and by `rungOf` for one star.
+let FADE = false, STAR_A = 1;
 const VEIL_OF = byHash(h => h % ABYSS_VEIL_EVERY);
 const JITTER_OF = byHash(h => h % 3 - 1);
 const PATCH_OF = byHash(h => h % 10);
@@ -145,8 +147,17 @@ function rungOf(h, patch, rampLen, magicLen, magicShare, thin = 16, dim = 0) {
     // rather than a switch.
     const allowed = ABYSS_STAR_FLOOR + Math.round(depth * (len - 1 - ABYSS_STAR_FLOOR));
     const ceiling = allowed - VARY_OF[h] - dim;
-    const rung = Math.min(len - 1, Math.round(k * ceiling));
-    if (rung > 0) return purple ? -rung : rung;
+    // Where the field fades its stars (`fade`), a star is drawn at its top
+    // rung and breathes by opacity (`STAR_A`), so it never blinks on or off;
+    // otherwise it steps up its ramp a rung at a time.
+    if (FADE) {
+      const top = Math.min(len - 1, ceiling);
+      STAR_A = k;
+      if (top > 0 && k > 0.02) return purple ? -top : top;
+    } else {
+      const rung = Math.min(len - 1, Math.round(k * ceiling));
+      if (rung > 0) return purple ? -rung : rung;
+    }
   }
   const swell = 1 - ABYSS_FLOW_MIX + ABYSS_FLOW_MIX * (wave2 + 1) / 2;
   const off = Math.abs(f), band = ABYSS_VEIL_AT * swell;
@@ -185,12 +196,15 @@ export function abyssRung(x, y, { line, t, rampLen, magicLen, deep = 0, magicSha
 // seven are purple (the deep asks for its stars only, all purple: B4).
 // `thin` is how many stars in sixteen are shown at all and `dim` how many
 // rungs each one's brightest is held under, for a place that wants a quieter
-// sky than the pit's. A rung a ramp holds as null is left unpainted.
+// sky than the pit's; `fade` breathes each star by opacity at its top rung
+// instead of stepping it up the ramp. A rung a ramp holds as null is left
+// unpainted.
 export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, deep = 0, tones, magic, t,
-                                  veil = true, magicShare = 1, thin = 16, dim = 0 }) {
+                                  veil = true, magicShare = 1, thin = 16, dim = 0, fade = false }) {
   const cols = Math.max(0, Math.round((to - from) / P)), rows = Math.max(0, Math.ceil((bottom - top) / P));
   if (!cols || !rows) return;
   const data = surface(cols, rows);
+  FADE = fade;
   const a = flow(t);
   const grey = packed(tones), purple = packed(magic);
   // Both waves' phases are a column's part plus a row's part (the drags
@@ -224,9 +238,10 @@ export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, dee
       const f = sU[i] * cV + cU[i] * sV, h = Math.abs(hU[i] ^ hV) % 997;
       if (STAR_OF[h] >= STAR_KEEP_MOST && (!veil || Math.abs(f) > ABYSS_VEIL_AT)) continue;
       CELL[F] = f; CELL[WAVE2] = sU2[i] * cV2 + cU2[i] * sV2;
+      STAR_A = 1;
       const rung = rungOf(h, PATCH_OF[Math.abs(pU[i] ^ pV) % 997], tones.length, magic.length, magicShare, thin, dim);
-      if (rung > 0) { if (veil) data[at + i] = grey[rung]; }
-      else if (rung < 0) data[at + i] = purple[-rung];
+      const px = rung > 0 ? (veil ? grey[rung] : 0) : rung < 0 ? purple[-rung] : 0;
+      if (px) data[at + i] = STAR_A >= 1 ? px : ((px & 0x00ffffff) | (Math.round(STAR_A * ((px >>> 24) & 255)) << 24)) >>> 0;
     }
   }
   octx.putImageData(buf, 0, 0);
