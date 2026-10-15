@@ -157,7 +157,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep no longer hitches every few seconds during a fight (test/deep-alloc.test.mjs).
 - The game no longer stops in the deep when a station's crew climbs a rung (test/reexport-local.test.mjs).
 - The counter in the deep stands at the left edge again and the furnace stands further in, so the card no longer covers it (src/selftest/deep.js).
-- The furnace's fire burns in one steady purple instead of cycling through white, grey and the purples, and its sparks stay that purple as they fade (`node tools/look.mjs crusher`).
+- The furnace's fire burns in one steady purple under a white and grey heart, instead of cycling through the purples, and its sparks leave white and stay that purple as they fade (`node tools/look.mjs crusher`).
 
 ## Unreleased
 

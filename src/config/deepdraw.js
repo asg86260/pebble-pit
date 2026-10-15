@@ -76,17 +76,22 @@ export const DOME_TONES = { wall: DEEP_GREY.ground, edge: DEEP_PURPLE.low };   /
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from
 // the door's foot and CRUSH_FIRE.side times the square of its distance from
 // the door's middle, stirred by CRUSH_STIR; a cell at `dark` or over burns,
-// one under it is the bare door. The stir climbs `climb` rows a second.
+// one under it is the bare door; of those that burn, `white` or over paints
+// white, `grey` or over the palest grey, the rest the one purple. The stir climbs `climb` rows a second.
 // Times in seconds.
 export const CRUSH_FIRE = {
   breathS: 1.4, base: 4.6, breath: 1.1, heat: 2, rise: 0.62, side: 0.16,
-  stir: 0.9, climb: 2.2, dark: 0.4
+  stir: 0.9, climb: 2.2, dark: 0.4, white: 5.3, grey: 4.6
 };
-// What every burning cell and every spark is painted: one purple, a role of
+// What the burning cells below the white and grey, and the sparks once they
+// leave the door, are painted: one purple, a role of
 // DEEP_PURPLE. The owner, 2026-10-15: "the furnace is constantly changing
 // colors ... it should be one color" -- the field used to paint a ramp, white
 // and grey at its heart down the purples, and every cell cycled through them.
-// `mid` is the rung the old ramp painted most.
+// `mid` is the rung the old ramp painted most. The white and grey cells at
+// the heart are the fire's details (owner, same day: "there were some white
+// details in the fire"); they are steady tones too, only which cells they
+// fall on moves with the shape.
 export const CRUSH_FIRE_TONE = 'mid';
 // The stir: two sine waves summed and halved, the first bent by a third.
 // sin(col * a.col + t * a.t + sin(row * bend.row - t * bend.t) * bend.amp)
@@ -102,11 +107,12 @@ export const CRUSH_HEAT_KEEP = 32;     // landings kept at most, however fast th
 // Each scale spits CRUSH_SPARKS sparks out of the door, one each way, that
 // fly CRUSH_SPARK_MS: `up` rows over the door's foot, out `out` cells plus
 // `speed` (and up to `spread` more) across the flight, up `rise` and down
-// `fall` on a parabola, onto the floor at the drawing's foot. In the fire's
-// one tone throughout, fading out by opacity from `fadeAfter` of the flight.
+// `fall` on a parabola, onto the floor at the drawing's foot. White for the
+// first `whiteFor` of the flight, then the fire's one purple, fading out by
+// opacity from `fadeAfter` of the flight.
 export const CRUSH_SPARKS = 2;
 export const CRUSH_SPARK_MS = 1000;
-export const CRUSH_SPARK = { up: 2, out: 1, speed: 5, spread: 4, rise: 9, fall: 12, fadeAfter: 0.5 };
+export const CRUSH_SPARK = { up: 2, out: 1, speed: 5, spread: 4, rise: 9, fall: 12, whiteFor: 0.1, fadeAfter: 0.5 };
 // Where the water line stands, under the deep's top edge, and how far it
 // breathes (the same swell the drowned pit's surface has).
 export const DEEP_SURFACE = P * 5;

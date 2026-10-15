@@ -182,7 +182,7 @@ FURNACE.forEach((row, r) => {
 });
 const DOOR_FOOT = Math.max(...DOOR.map(([r]) => r));
 const DOOR_MID = DOOR.reduce((sum, [, c]) => sum + c, 0) / DOOR.length;
-const FIRE = LIGHT[CRUSH_FIRE_TONE];
+const FIRE = LIGHT[CRUSH_FIRE_TONE], FIRE_WHITE = TONE.white, FIRE_GREY = TONE.pale;
 
 // How warm the scales going in have made it, 0..1: each swells in and eases
 // back, summed and bent under one.
@@ -205,28 +205,28 @@ function stir(x, y, t) {
 }
 
 // The fire: every cell of the door reads a heat -- highest at the heart,
-// falling off upward and outward, stirred by the climbing noise -- and burns,
-// in the one tone, where it is hot enough. The whole field breathes, and
+// falling off upward and outward, stirred by the climbing noise -- and burns where it
+// is hot enough: white at the hottest, the palest grey under that, then
+// the one purple. The whole field breathes, and
 // burns up as scales go in, in its shape and never its color.
 function drawFire(c, t) {
   const F = CRUSH_FIRE, s = t / 1000;
   const breath = 0.5 + 0.5 * Math.sin(2 * Math.PI * s / F.breathS);
   const base = F.base + breath * F.breath + fireHeat(t) * F.heat;
-  ctx.fillStyle = FIRE;
   for (const [r, col] of DOOR) {
     const up = DOOR_FOOT - r, side = col - DOOR_MID;
     const v = base - up * F.rise - side * side * F.side + stir(col, r + s * F.climb, s) * F.stir;
     if (v < F.dark) continue;
+    ctx.fillStyle = v > F.white ? FIRE_WHITE : v > F.grey ? FIRE_GREY : FIRE;
     ctx.fillRect(c.x + col * P, c.y + r * P, P, P);
   }
 }
 
 // Each scale's sparks: out of the door's foot either way, over the brick and
-// down onto the floor at the drawing's foot, in the fire's tone, fading out
-// as they land.
+// down onto the floor at the drawing's foot, white as they leave, then the
+// fire's purple, fading out as they land.
 function drawSparks(c, t) {
   const K = CRUSH_SPARK, floor = FURNACE.length - 1, was = ctx.globalAlpha;
-  ctx.fillStyle = FIRE;
   for (const q of S.crushes) {
     const u = (t - q.at) / CRUSH_SPARK_MS;
     if (u < 0 || u > 1) continue;
@@ -234,6 +234,7 @@ function drawSparks(c, t) {
       const dir = i % 2 ? 1 : -1, speed = K.speed + hash(q.id * 5 + i) * K.spread;
       const x = Math.round(DOOR_MID + dir * (K.out + speed * u));
       const y = Math.round(Math.min(DOOR_FOOT - K.up - K.rise * u + K.fall * u * u, floor));
+      ctx.fillStyle = u < K.whiteFor ? FIRE_WHITE : FIRE;
       ctx.globalAlpha = was * Math.min(1, (1 - u) / (1 - K.fadeAfter));
       ctx.fillRect(c.x + x * P, c.y + y * P, P, P);
     }
