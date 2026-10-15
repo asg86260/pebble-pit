@@ -944,9 +944,11 @@ const deepScenes = {
       for (let i = 0; i < 60 * 60; i++) {
         window.__fast(1 / 60);
         if (S.hits.some(h => h.weapon === 'heal')) break;
-        // held short of breaking, so the window runs out on a deep wound
+        // held short of breaking, so the window runs out on a deep wound; never
+        // pulled back while stunned, since a stunned serpent does not heal
+        // (verify.js)
         const d = depthAt(SERPENT_PHASES - 1);
-        if (S.serpentWound < 0.85 * d || S.serpentWound > 0.95 * d) S.serpentWound = 0.9 * d;
+        if (S.serpentWound < 0.85 * d || (S.serpentWound > 0.95 * d && !(S.serpentStun > 0))) S.serpentWound = 0.9 * d;
       }
       window.__fast(0.2);
       lookDeep(coilAt(bellySeg(), now()).x);

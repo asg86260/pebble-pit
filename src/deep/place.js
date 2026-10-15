@@ -205,7 +205,8 @@ const waveLine = t => {
   };
   // How much longer than its span the body's arc can run: the line's steepest
   // slope in this pose, taken all along it.
-  wave.stretch = Math.hypot(1, 2 * Math.PI * amp * waves / span);
+  const slope = 2 * Math.PI * amp * waves / span;
+  wave.stretch = Math.sqrt(1 + slope * slope);
   return wave;
 };
 const waveY = (x, t) => lineAt(t).wave(x);
