@@ -135,7 +135,7 @@ export const PROPS = {
     '...FFFFFFF......',
     '..F...F...F.....',
     '.F....F....F....'] },
-  // a sacking dummy on a post, arms out, a dagger stuck in its side
+  // a sacking dummy on a post, arms out, a dagger stuck straight out of its chest
   assassin: { rows: [
     '.....HHHH...........',
     '....HHHHHH..........',
@@ -146,11 +146,11 @@ export const PROPS = {
     '3HHHHHHHHHHHH3......',
     '3HHHHHHHHHHHH3......',
     '..HHHHHHHHHH........',
-    '..HHHHHHHHHH...*....',
-    '..HHHHHHHHHH..R.....',
-    '..HHHHHHHHHH.R......',
-    '...HHHHHHHHRR.......',
-    '...HHHHHHHHR........',
+    '..HHHHHHHHHH..Q.....',
+    '..HHHHHHHHH2hhQrr*..',
+    '..HHHHHHHHHH..Q.....',
+    '...HHHHHHHH.........',
+    '...HHHHHHHH.........',
     '...KKKKKKKK.........',
     '....HHHHHH..........',
     '......FF............',
