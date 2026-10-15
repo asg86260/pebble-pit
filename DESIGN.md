@@ -14958,12 +14958,10 @@ saved, so a reload hands back nothing. The school's bolt ends its visit, so
 it is never marked: it is back in a while, and drops again. Each stream
 creature that swims in is a visit of its own: its `streamReport` key goes in
 `S.streamShed`, saved, and the keys of those swum off or eaten are let go at
-the next click. The far and middle crossings run on the page's clock, so a
-real refresh shows other crossings than the page before; those are new
-creatures and drop their own.
+the next click.
 
-**The stream is clicked too.** The near stream and the far and middle
-crossings (deep/flow.js) take the same click within the bird's reach and
+**The stream is clicked too.** The near stream (deep/flow.js; the far and
+middle crossings it once had are gone, 2026-10-15) takes the same click within the bird's reach and
 shed the same handful, each of the eight with its A (`FLOW_REACT`). The near
 stream is where the serpent's meals come from, so a reaction there is
 picture only: the stream's paths and the meal's timing never read it, and a
@@ -17189,10 +17187,10 @@ break").
 ### The picture
 
 - The stream (the owner's C, `docs/mocks/deep-flow-2026-10-03.html`): the eight
-  cross the glass both ways at three depths -- far as flat dark silhouettes,
-  middle dimmed, near as drawn and in front of the serpent -- with a giant far
-  behind every `FLOW_GIANT_S`, each depth sliding with its share of the pan.
-  Every crossing starts and ends off the glass. No creature trails anything.
+  swim the world as drawn and in front of the serpent. The far and middle
+  crossings on the glass and the giant behind them are gone (the owner,
+  2026-10-15: "remove the big creature shadows from the sky"): scheduling,
+  drawing and config. No creature trails anything.
 - The near ones swim the world, end to end of the deep and in from beyond its
   walls, a fixed schedule off the clock; a meal takes one of them (the owner,
   2026-10-04: no creature spawned to be eaten, none dashing). A meal is the
